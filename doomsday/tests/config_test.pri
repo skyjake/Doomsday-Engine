@@ -2,48 +2,47 @@
 CONFIG += deng_testapp
 
 include(../config.pri)
-include(../dep_deng2.pri)
-
-mod.files = \
-    $$DENG_MODULES_DIR/Config.de \
-    $$DENG_MODULES_DIR/recutil.de
+include(../dep_core.pri)
 
 macx {
-    mod.path = Contents/Resources/modules
-
     defineTest(deployTest) {
-        fwDir = \"$${OUT_PWD}/$${1}.app/Contents/Frameworks\"
-        # Quite a hack: directly use the client's Frameworks folder.
-        doPostLink("rm -rf $$fwDir")
-        doPostLink("ln -s \"$$OUT_PWD/../../client/Doomsday.app/Contents/Frameworks\" $$fwDir")
-        #doPostLink("mkdir $$fwDir")
-        #doPostLink("ln -s $$OUT_PWD/../../libdeng2/libdeng2.dylib $$fwDir/libdeng2.dylib")
-        #doPostLink("ln -s $$OUT_PWD/../../libdeng2/libdeng2.2.dylib $$fwDir/libdeng2.2.dylib")
-
         # Fix the dynamic linker paths so they point to ../Frameworks/ inside the bundle.
-        fixInstallName($${1}.app/Contents/MacOS/$${1}, libdeng2.2.dylib, ..)
+        fixInstallName($${1}.app/Contents/MacOS/$${1}, libdeng_core.2.dylib, ..)
 
-        QMAKE_BUNDLE_DATA += mod
+        deployPackages($$DENG_PACKAGES, $$OUT_PWD/../..)
         export(QMAKE_BUNDLE_DATA)
+        export(dengPacks.files)
+        export(dengPacks.path)
+    }
+
+    # In an SDK build, we can access the libraries directly from the built SDK.
+    deng_sdk {
+        QMAKE_LFLAGS += \
+            -Wl,-rpath,$$DENG_SDK_LIB_DIR \
+            -Wl,-rpath,$$[QT_INSTALL_LIBS]
     }
 }
 else:win32 {
     CONFIG += console
 
     target.path = $$DENG_BIN_DIR
-    mod.path = $$DENG_DATA_DIR/modules
 
-    defineTest(deployTest) {
-        INSTALLS += mod target
+    defineTest(deployTest) {        
+        deployPackages($$DENG_PACKAGES, $$OUT_PWD/../..)
         export(INSTALLS)
+        export(dengPacks.files)
+        export(dengPacks.path)
     }
 }
 else {
     target.path = $$DENG_BIN_DIR
-    mod.path = $$DENG_DATA_DIR/modules
 
     defineTest(deployTest) {
-        INSTALLS += mod target
+        deployPackages($$DENG_PACKAGES, $$OUT_PWD/../..)
         export(INSTALLS)
+        export(dengPacks.files)
+        export(dengPacks.path)
     }
 }
+
+deployTarget()

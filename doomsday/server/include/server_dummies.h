@@ -4,7 +4,7 @@
  * Empty dummy functions that replace certain client-only functionality on
  * engine-side. Ideally none of these would be needed; each one represents a
  * client-only function call that should not be done in common/shared code.
- * (There should be no shared code outside libdeng1/2.)
+ * (There should be no shared code outside libcore/liblegacy.)
  *
  * @todo Add a @c libdeng_gui for UI/graphics code. Many of these belong there
  * instead of being exported out of the client executable for game plugins'
@@ -29,9 +29,8 @@
 #ifndef SERVER_DUMMIES_H
 #define SERVER_DUMMIES_H
 
-#include <de/libdeng1.h>
-
-#include "def_data.h"
+#include <de/liblegacy.h>
+#include <doomsday/defs/ded.h>
 #include "world/map.h"
 
 #ifndef __SERVER__
@@ -50,8 +49,6 @@ DENG_EXTERN_C void R_InitSvgs(void);
 DENG_EXTERN_C void R_ShutdownSvgs(void);
 DENG_EXTERN_C struct font_s* R_CreateFontFromDef(ded_compositefont_t* def);
 
-DENG_EXTERN_C void FR_Init(void);
-
 DENG_EXTERN_C void Rend_CacheForMobjType(int num);
 DENG_EXTERN_C void Rend_ConsoleInit();
 DENG_EXTERN_C void Rend_ConsoleResize(int force);
@@ -62,9 +59,7 @@ DENG_EXTERN_C void Rend_ConsoleCursorResetBlink();
 
 DENG_EXTERN_C void Cl_InitPlayers(void);
 
-DENG_EXTERN_C void UI_Init();
 DENG_EXTERN_C void UI_Ticker(timespan_t t);
-DENG_EXTERN_C void UI2_Ticker(timespan_t t);
 DENG_EXTERN_C void UI_Shutdown();
 
 #endif // SERVER_DUMMIES_H

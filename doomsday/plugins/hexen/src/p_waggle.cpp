@@ -1,7 +1,7 @@
 /** @file p_waggle.cpp
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 1999 Activision
  *
  * @par License
@@ -58,8 +58,8 @@ void T_FloorWaggle(waggle_t *waggle)
             // Remove.
             P_SetDoublep(waggle->sector, DMU_FLOOR_HEIGHT, waggle->originalHeight);
             P_ChangeSector(waggle->sector, 1 /*crush damage*/);
-            P_ToXSector(waggle->sector)->specialData = NULL;
-            Game_ACScriptInterpreter().tagFinished(P_ToXSector(waggle->sector)->tag);
+            P_ToXSector(waggle->sector)->specialData = nullptr;
+            P_NotifySectorFinished(P_ToXSector(waggle->sector)->tag);
             Thinker_Remove(&waggle->thinker);
             return;
         }

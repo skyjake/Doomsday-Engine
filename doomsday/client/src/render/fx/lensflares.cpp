@@ -20,11 +20,12 @@
 #include "render/ilightsource.h"
 #include "render/viewports.h"
 #include "render/rend_main.h"
+#include "world/p_players.h"
 #include "gl/gl_main.h"
-#include "con_main.h"
 #include "clientapp.h"
 
 #include <de/concurrency.h>
+#include <doomsday/console/cmd.h>
 #include <de/Drawable>
 #include <de/KdTreeAtlasAllocator>
 #include <de/Log>
@@ -34,7 +35,7 @@
 #include <QHash>
 #include <cmath>
 
-//#define FX_TEST_LIGHT
+//#define FX_TEST_LIGHT // draw a test light (positioned for Doom E1M1)
 
 using namespace de;
 
@@ -45,6 +46,7 @@ namespace fx {
  */
 struct FlareData
 {
+    ImageBank images;
     AtlasTexture atlas;
     enum FlareId {
         Burst,
@@ -61,22 +63,32 @@ struct FlareData
         BottomRight,
         BottomLeft
     };
-    Id flare[MAX_FLARES];
+    NoneId flare[MAX_FLARES];
 
     FlareData()
         : atlas(Atlas::BackingStore, Atlas::Size(1024, 1024))
     {
-        DENG_ASSERT_IN_MAIN_THREAD();
-        DENG_ASSERT_GL_CONTEXT_ACTIVE();
+        try
+        {
+            DENG_ASSERT_IN_MAIN_THREAD();
+            DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-        atlas.setAllocator(new KdTreeAtlasAllocator);
+            images.addFromInfo(App::rootFolder().locate<File>("/packs/feature.lensflares/images.dei"));
 
-        flare[Exponent] = atlas.alloc(flareImage("exponent"));
-        flare[Star]     = atlas.alloc(flareImage("star"));
-        flare[Halo]     = atlas.alloc(flareImage("halo"));
-        flare[Circle]   = atlas.alloc(flareImage("circle"));
-        flare[Ring]     = atlas.alloc(flareImage("ring"));
-        flare[Burst]    = atlas.alloc(flareImage("burst"));
+            atlas.setAllocator(new KdTreeAtlasAllocator);
+
+            flare[Exponent] = atlas.alloc(flareImage("exponent"));
+            flare[Star]     = atlas.alloc(flareImage("star"));
+            flare[Halo]     = atlas.alloc(flareImage("halo"));
+            flare[Circle]   = atlas.alloc(flareImage("circle"));
+            flare[Ring]     = atlas.alloc(flareImage("ring"));
+            flare[Burst]    = atlas.alloc(flareImage("burst"));
+        }
+        catch(Error const &er)
+        {
+            LOG_GL_ERROR("Failed to initialize shared lens flare resources: %s")
+                    << er.asText();
+        }
     }
 
     ~FlareData()
@@ -87,9 +99,9 @@ struct FlareData
         LOGDEV_GL_XVERBOSE("Releasing shared data");
     }
 
-    static Image const &flareImage(String const &name)
+    Image const &flareImage(String const &name)
     {
-        return ClientApp::renderSystem().images().image("fx.lensflares." + name);
+        return images.image("fx.lensflares." + name);
     }
 
     Rectanglef uvRect(FlareId id) const
@@ -119,7 +131,7 @@ struct FlareData
 };
 
 #ifdef FX_TEST_LIGHT
-struct TestLight : public ILightSource
+struct TestLight : public IPointLightSource
 {
 public:
     float radius;
@@ -214,14 +226,14 @@ DENG2_PIMPL(LensFlares)
      */
     struct PVLight
     {
-        ILightSource const *light;
+        IPointLightSource const *light;
         int seenFrame; // R_FrameCount()
 
         PVLight() : light(0), seenFrame(0)
         {}
     };
 
-    typedef QHash<ILightSource::LightId, PVLight *> PVSet;
+    typedef QHash<IPointLightSource::LightId, PVLight *> PVSet;
     PVSet pvs;
 
     Vector3f eyeFront;
@@ -284,7 +296,7 @@ DENG2_PIMPL(LensFlares)
         pvs.clear();
     }
 
-    void addToPvs(ILightSource const *light)
+    void addToPvs(IPointLightSource const *light)
     {
         PVSet::iterator found = pvs.find(light->lightSourceId());
         if(found == pvs.end())
@@ -351,18 +363,18 @@ DENG2_PIMPL(LensFlares)
             /// @todo If so, it might be time to purge it from the PVS.
             if(pvl->seenFrame != thisFrame) continue;
 
-            coord_t const distanceSquared = (vOrigin - pvl->light->lightSourceOrigin().xzy()).lengthSquared();
+            coord_t const distanceSquared = (Rend_EyeOrigin() - pvl->light->lightSourceOrigin().xzy()).lengthSquared();
             coord_t const distance = std::sqrt(distanceSquared);
 
             // Light intensity is always quadratic per distance.
-            float intensity = pvl->light->lightSourceIntensity(vOrigin) / distanceSquared;
+            float intensity = pvl->light->lightSourceIntensity(Rend_EyeOrigin()) / distanceSquared;
 
             // Projected radius of the light.
             float const RADIUS_FACTOR = 128; // Light radius of 1 at this distance produces a visible radius of 1.
             /// @todo The factor should be FOV-dependent.
             float radius = pvl->light->lightSourceRadius() / distance * RADIUS_FACTOR;
 
-            float const dot = (pvl->light->lightSourceOrigin().xzy() - vOrigin).normalize().dot(eyeFront);
+            float const dot = (pvl->light->lightSourceOrigin().xzy() - Rend_EyeOrigin()).normalize().dot(eyeFront);
             float const angle = radianToDegree(std::acos(dot));
 
             //qDebug() << "i:" << intensity << "r:" << radius << "IR:" << radius*intensity;
@@ -453,7 +465,7 @@ void LensFlares::clearLights()
     d->clearPvs();
 }
 
-void LensFlares::markLightPotentiallyVisibleForCurrentFrame(ILightSource const *lightSource)
+void LensFlares::markLightPotentiallyVisibleForCurrentFrame(IPointLightSource const *lightSource)
 {
     d->addToPvs(lightSource);
 }
@@ -485,6 +497,14 @@ void fx::LensFlares::beginFrame()
 
 void LensFlares::draw()
 {
+    if(!ClientApp::worldSystem().hasMap())
+    {
+        // Flares are not visbile unless a map is loaded.
+        return;
+    }
+
+    if(!viewPlayer) return; /// @todo How'd we get here? -ds
+
     viewdata_t const *viewData = R_ViewData(console());
     d->eyeFront = Vector3f(viewData->frontVec);
 
@@ -495,7 +515,15 @@ void LensFlares::draw()
 
     d->uViewUnit  = Vector2f(aspect, 1.f);
     d->uPixelAsUv = Vector2f(1.f / canvas.width(), 1.f / canvas.height());
-    d->uMvpMatrix = GL_GetProjectionMatrix() * Rend_GetModelViewMatrix(console());
+    d->uMvpMatrix = Viewer_Matrix(); //GL_GetProjectionMatrix() * Rend_GetModelViewMatrix(console());
+
+    DENG2_ASSERT(console() == displayPlayer);
+    //DENG2_ASSERT(viewPlayer - ddPlayers == displayPlayer);
+    if(viewPlayer - ddPlayers != displayPlayer)
+    {
+        qDebug() << "LensFrames::draw: viewPlayer != displayPlayer";
+        return;
+    }
 
     // Depth information is required for occlusion.
     GLTarget &target = GLState::current().target();

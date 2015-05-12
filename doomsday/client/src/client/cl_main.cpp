@@ -27,14 +27,16 @@
 #include "client/cl_sound.h"
 #include "client/cl_world.h"
 
-#include "con_main.h"
-
 #include "audio/s_main.h"
+#include "network/net_main.h"
+#include "network/net_buf.h"
 #include "network/net_demo.h"
 
 #include "world/map.h"
 #include "world/p_players.h"
 
+#include <doomsday/console/exec.h>
+#include <doomsday/filesys/fs_main.h>
 #include <de/timer.h>
 #include <cstdio>
 #include <cstdlib>
@@ -105,7 +107,11 @@ void Cl_CleanUp()
     // Discard the translation tables for the server we've just left.
     Cl_ResetTransTables();
 
-    GL_SetFilter(false);
+    // Reset any view effects.
+    GL_ResetViewEffects();
+    
+    // Forget all packets we've received but haven't yet handled.
+    N_ClearMessages();
 }
 
 void Cl_SendHello()

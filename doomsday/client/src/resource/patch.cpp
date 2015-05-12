@@ -20,7 +20,7 @@
 
 #include <QList>
 #include <QRect>
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <de/Log>
 
 #include "resource/patch.h"

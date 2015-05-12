@@ -21,7 +21,7 @@
 #include <de/IReadable>
 #include <de/Reader>
 #include <de/String>
-#include "filesys/fs_main.h"
+#include <doomsday/filesys/fs_main.h>
 
 #include "resource/patchname.h"
 

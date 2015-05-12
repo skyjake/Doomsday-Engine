@@ -1,7 +1,7 @@
-/** @file lightdecoration.cpp World surface light decoration.
+/** @file lightdecoration.cpp  World surface light decoration.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -19,31 +19,33 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
-#include "de_console.h"
-#include "de_render.h"
+#include "render/lightdecoration.h"
 
+#include <doomsday/console/var.h>
 #include "def_main.h"
 
 #include "world/map.h"
 #include "BspLeaf"
+#include "ConvexSubspace"
+#include "SectorCluster"
 #include "Surface"
 
-#include "render/lightdecoration.h"
+#include "render/rend_main.h" // Rend_ApplyLightAdaptation
 
 using namespace de;
 
 static float angleFadeFactor = .1f; ///< cvar
 static float brightFactor    = 1;   ///< cvar
 
-LightDecoration::LightDecoration(MaterialSnapshotDecoration &source, const Vector3d &origin)
-    : Decoration(source, origin), Source()
+LightDecoration::LightDecoration(MaterialAnimator::Decoration const &source, Vector3d const &origin)
+    : Decoration(source, origin)
+    , Source()
 {}
 
 float LightDecoration::occlusion(Vector3d const &eye) const
 {
     // Halo brightness drops as the angle gets too big.
-    if(source().elevation < 2 && ::angleFadeFactor > 0) // Close the surface?
+    if(source().elevation() < 2 && ::angleFadeFactor > 0) // Close the surface?
     {
         Vector3d const vecFromOriginToEye = (origin() - eye).normalize();
 
@@ -73,33 +75,38 @@ static float checkLightLevel(float lightlevel, float min, float max)
 Lumobj *LightDecoration::generateLumobj() const
 {
     // Decorations with zero color intensity produce no light.
-    if(source().color == Vector3f(0, 0, 0))
-        return 0;
+    if(source().color() == Vector3f(0, 0, 0))
+        return nullptr;
+
+    ConvexSubspace *subspace = bspLeafAtOrigin().subspacePtr();
+    if(!subspace) return nullptr;
 
     // Does it pass the ambient light limitation?
-    float lightLevel = bspLeafAtOrigin().sector().lightLevel();
-    Rend_ApplyLightAdaptation(lightLevel);
+    float intensity = subspace->cluster().lightSourceIntensity();
+    Rend_ApplyLightAdaptation(intensity);
 
-    float intensity = checkLightLevel(lightLevel,
-        source().lightLevels[0], source().lightLevels[1]);
+    float lightLevels[2];
+    source().lightLevels(lightLevels[0], lightLevels[1]);
+
+    intensity = checkLightLevel(intensity, lightLevels[0], lightLevels[1]);
     if(intensity < .0001f)
-        return 0;
+        return nullptr;
 
     // Apply the brightness factor (was calculated using sector lightlevel).
     float fadeMul = intensity * ::brightFactor;
     if(fadeMul <= 0)
-        return 0;
+        return nullptr;
 
-    Lumobj *lum = new Lumobj(origin(), source().radius, source().color * fadeMul);
+    Lumobj *lum = new Lumobj(origin(), source().radius(), source().color() * fadeMul);
 
     lum->setSource(this);
 
     lum->setMaxDistance (MAX_DECOR_DISTANCE)
-        .setLightmap    (Lumobj::Side, source().tex)
-        .setLightmap    (Lumobj::Down, source().floorTex)
-        .setLightmap    (Lumobj::Up,   source().ceilTex)
-        .setFlareSize   (source().flareSize)
-        .setFlareTexture(source().flareTex);
+        .setLightmap    (Lumobj::Side, source().tex())
+        .setLightmap    (Lumobj::Down, source().floorTex())
+        .setLightmap    (Lumobj::Up,   source().ceilTex())
+        .setFlareSize   (source().flareSize())
+        .setFlareTexture(source().flareTex());
 
     return lum;
 }

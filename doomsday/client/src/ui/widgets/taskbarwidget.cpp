@@ -35,9 +35,13 @@
 #include "clientapp.h"
 #include "CommandAction"
 #include "client/cl_def.h" // clientPaused
-
 #include "ui/ui_main.h"
-#include "con_main.h"
+#include "ui/progress.h"
+#include "versioninfo.h"
+#include "dd_main.h"
+
+#include <doomsday/filesys/fs_main.h>
+#include <doomsday/console/exec.h>
 
 #include <de/KeyEvent>
 #include <de/Drawable>
@@ -50,8 +54,7 @@
 #include <de/PopupMenuWidget>
 #include <de/BlurWidget>
 
-#include "versioninfo.h"
-#include "dd_main.h"
+#include <QFileDialog>
 
 using namespace de;
 using namespace ui;
@@ -63,9 +66,10 @@ enum MenuItemPositions
     // DE menu:
     POS_GAMES             = 0,
     POS_UNLOAD            = 1,
-    POS_GAMES_SEPARATOR   = 2,
-    POS_MULTIPLAYER       = 3,
-    POS_CONNECT           = 4,
+    POS_IWAD_FOLDER       = 2,
+    POS_GAMES_SEPARATOR   = 3,
+    POS_MULTIPLAYER       = 4,
+    POS_CONNECT           = 5,
 
     // Config menu:
     POS_RENDERER_SETTINGS = 0,
@@ -92,6 +96,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
 
     bool opened;
 
+    GuiWidget *backBlur;
     ConsoleWidget *console;
     ButtonWidget *logo;
     ButtonWidget *conf;
@@ -265,7 +270,8 @@ DENG_GUI_PIMPL(TaskBarWidget)
 
         itemWidget(mainMenu, POS_GAMES)            .show(!game.isNull());
         itemWidget(mainMenu, POS_UNLOAD)           .show(!game.isNull());
-        itemWidget(mainMenu, POS_GAMES_SEPARATOR)  .show(!game.isNull());
+        itemWidget(mainMenu, POS_IWAD_FOLDER)      .show(game.isNull());
+        //itemWidget(mainMenu, POS_GAMES_SEPARATOR)  .show(!game.isNull());
         itemWidget(mainMenu, POS_MULTIPLAYER)      .show(!game.isNull());
         itemWidget(mainMenu, POS_CONNECT)          .show(game.isNull());
 
@@ -282,10 +288,11 @@ DENG_GUI_PIMPL(TaskBarWidget)
         }
     }
 
-    void currentGameChanged(game::Game const &newGame)
+    void currentGameChanged(game::Game const &)
     {
         updateStatus();
         showOrHideMenuItems();
+        backBlur->show(style().isBlurringAllowed());
     }
 
     void networkGameJoined()
@@ -320,7 +327,7 @@ PopupWidget *makeUpdaterSettings() {
 TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
 {
 #if 0
-    // GameWidget is presently incompatible with blurring.
+    // GameWidget is presently too inefficient with blurring.
     BlurWidget *blur = new BlurWidget("taskbar_blur");
     add(blur);
     Background bg(*blur, style().colors().colorf("background"));
@@ -330,6 +337,15 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
 
     Rule const &gap = style().rules().rule("gap");
 
+    d->backBlur = new LabelWidget;
+    d->backBlur->rule()
+            .setInput(Rule::Left, rule().left())
+            .setInput(Rule::Bottom, rule().bottom())
+            .setInput(Rule::Right, rule().right())
+            .setInput(Rule::Top, rule().top());
+    d->backBlur->set(Background(ClientWindow::main().taskBarBlur(), Vector4f(1, 1, 1, 1)));
+    add(d->backBlur);
+
     d->console = new ConsoleWidget;
     d->console->rule()
             .setInput(Rule::Left, rule().left() + d->console->shift());
@@ -338,9 +354,8 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     //d->console->log().set(bg);
 
     // Position the console button and command line in the task bar.
-    d->console->button().rule()
+    d->console->buttons().rule()
             .setInput(Rule::Left,   rule().left())
-            .setInput(Rule::Width,  d->console->button().rule().height())
             .setInput(Rule::Bottom, rule().bottom())
             .setInput(Rule::Height, rule().height());
 
@@ -401,7 +416,8 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     d->mainMenu->setAnchorAndOpeningDirection(d->logo->rule(), ui::Up);
 
     // Game unloading confirmation submenu.
-    ui::SubmenuItem *unloadMenu = new ui::SubmenuItem(tr("Unload Game"), ui::Left);
+    ui::SubmenuItem *unloadMenu = new ui::SubmenuItem(style().images().image("close.ring"),
+                                                      tr("Unload Game"), ui::Left);
     unloadMenu->items()
             << new ui::Item(ui::Item::Separator, tr("Really unload the game?"))
             << new ui::ActionItem(tr("Unload") + " " _E(b) + tr("(discard progress)"), new SignalAction(this, SLOT(unloadGame())))
@@ -424,12 +440,18 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     d->mainMenu->items()
             << new ui::ActionItem(tr("Switch Game..."), new SignalAction(this, SLOT(switchGame())))
             << unloadMenu                           // hidden with null-game
+            << new ui::ActionItem(tr("IWAD Folder..."), new SignalAction(this, SLOT(chooseIWADFolder())))
             << new ui::Item(ui::Item::Separator)
             << new ui::ActionItem(tr("Multiplayer Games..."), new SignalAction(this, SLOT(showMultiplayer())))
             << new ui::ActionItem(tr("Connect to Server..."), new SignalAction(this, SLOT(connectToServerManually())))
             << new ui::Item(ui::Item::Separator)
-            << new ui::ActionItem(tr("Check for Updates..."), new CommandAction("updateandnotify"))
+            //<< new ui::Item(ui::Item::Separator, tr("Help"))
             << new ui::ActionItem(tr("Show Tutorial"), new SignalAction(this, SLOT(showTutorial())))
+            << new ui::VariableToggleItem(tr("Menu Annotations"), App::config("ui.showAnnotations"))
+            << new ui::Item(ui::Item::Annotation, tr("Annotations briefly describe menu functions."))
+            << new ui::Item(ui::Item::Separator)
+            << new ui::Item(ui::Item::Separator, tr("Application"))
+            << new ui::ActionItem(tr("Check for Updates..."), new CommandAction("updateandnotify"))
             << new ui::ActionItem(tr("About Doomsday"), new SignalAction(this, SLOT(showAbout())))
             << new ui::Item(ui::Item::Separator)
             << new ui::ActionItem(tr("Quit Doomsday"), new CommandAction("quit"));
@@ -543,6 +565,8 @@ bool TaskBarWidget::handleEvent(Event const &event)
     // Don't let modifier keys fall through to the game.
     if(isOpen() && event.isKey() && event.as<KeyEvent>().isModifier())
     {
+        // However, let the bindings system know about the modifier state.
+        ClientApp::inputSystem().trackEvent(event);
         return true;
     }
 
@@ -597,7 +621,7 @@ void TaskBarWidget::open()
 
         unsetBehavior(DisableEventDispatchToChildren);
 
-        d->console->clearLog();
+        d->console->zeroLogHeight();
 
         d->vertShift->set(0, OPEN_CLOSE_SPAN);
         setOpacity(1, OPEN_CLOSE_SPAN);
@@ -689,6 +713,42 @@ void TaskBarWidget::closeMainMenu()
     d->mainMenu->close();
 }
 
+void TaskBarWidget::chooseIWADFolder()
+{
+    DENG2_ASSERT(!App_GameLoaded());
+
+    bool reload = false;
+
+    // Use a native dialog to select the IWAD folder.
+    ClientApp::app().beginNativeUIMode();
+
+    QFileDialog dlg(&ClientWindow::main(),
+                    tr("Select IWAD Folder"),
+                    App::config().gets("resource.iwadFolder", ""));
+    dlg.setFileMode(QFileDialog::Directory);
+    dlg.setReadOnly(true);
+    dlg.setNameFilter("*.wad");
+    dlg.setLabelText(QFileDialog::Accept, tr("Select"));
+    if(dlg.exec())
+    {
+        App::config().set("resource.iwadFolder", dlg.selectedFiles().at(0));
+        reload = true;
+    }
+
+    ClientApp::app().endNativeUIMode();
+
+    // Reload packages and recheck for game availability.
+    if(reload)
+    {
+        ClientApp::resourceSystem().updateOverrideIWADPathFromConfig();
+        ClientWindow::main().console().closeLogAndUnfocusCommandLine();
+
+        Con_InitProgress(200);
+        App_Games().forgetAllResources();
+        App_Games().locateAllResources();
+    }
+}
+
 void TaskBarWidget::openMultiplayerMenu()
 {
     d->multiMenu->open();
@@ -773,7 +833,7 @@ void TaskBarWidget::updateCommandLineLayout()
 
     // The command line extends the rest of the way.
     RuleRectangle &cmdRule = d->console->commandLine().rule();
-    cmdRule.setInput(Rule::Left,   d->console->button().rule().right())
+    cmdRule.setInput(Rule::Left,   d->console->buttons().rule().right())
            .setInput(Rule::Bottom, rule().bottom())
            .setInput(Rule::Right,  layout.widgets().last()->as<GuiWidget>().rule().left());
 

@@ -19,6 +19,7 @@
  */
 
 #include "resource/fontscheme.h"
+#include "dd_types.h"
 #include <de/Log>
 #include <QList>
 

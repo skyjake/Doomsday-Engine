@@ -1,7 +1,7 @@
-/** @file s_main.h Sound Subsystem
+/** @file s_main.h  Audio Subsystem
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_SOUND_MAIN_H
-#define LIBDENG_SOUND_MAIN_H
+#ifndef DENG_AUDIO_S_MAIN_H
+#define DENG_AUDIO_S_MAIN_H
 
 #include "world/p_object.h"
 #include "def_main.h"
@@ -34,12 +34,12 @@ extern "C" {
  * @ingroup flags
  * @{
  */
-#define SF_RANDOM_SHIFT     0x1    ///< Random frequency shift.
-#define SF_RANDOM_SHIFT2    0x2    ///< 2x bigger random frequency shift.
-#define SF_GLOBAL_EXCLUDE   0x4    ///< Exclude all emitters.
-#define SF_NO_ATTENUATION   0x8    ///< Very, very loud...
-#define SF_REPEAT           0x10   ///< Repeats until stopped.
-#define SF_DONT_STOP        0x20   ///< Sound can't be stopped while playing.
+#define SF_RANDOM_SHIFT     0x1   ///< Random frequency shift.
+#define SF_RANDOM_SHIFT2    0x2   ///< 2x bigger random frequency shift.
+#define SF_GLOBAL_EXCLUDE   0x4   ///< Exclude all emitters.
+#define SF_NO_ATTENUATION   0x8   ///< Very, very loud...
+#define SF_REPEAT           0x10  ///< Repeats until stopped.
+#define SF_DONT_STOP        0x20  ///< Sound can't be stopped while playing.
 /// @}
 
 extern int showSoundInfo;
@@ -87,12 +87,23 @@ void S_EndFrame(void);
  */
 sfxinfo_t *S_GetSoundInfo(int soundID, float *freq, float *volume);
 
+/**
+ * @return  @c true if the specified ID is a repeating sound.
+ */
+dd_bool S_IsRepeating(int idFlags);
+
+/**
+ * Usually the display player.
+ */
 mobj_t *S_GetListenerMobj(void);
 
+/**
+ * Draws debug information on-screen.
+ */
 void S_Drawer(void);
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif // LIBDENG_SOUND_MAIN_H
+#endif // DENG_AUDIO_S_MAIN_H

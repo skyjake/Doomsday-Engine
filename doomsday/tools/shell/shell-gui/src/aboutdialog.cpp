@@ -15,7 +15,11 @@ AboutDialog::AboutDialog(QWidget *parent)
     setLayout(box);
     box->setSizeConstraint(QLayout::SetFixedSize);
 
+#ifdef DENG2_QT_5_1_OR_NEWER
+    QImage logo(devicePixelRatio() > 1? ":/images/shell@2x.png" : ":/images/shell.png");
+#else
     QImage logo(":/images/shell.png");
+#endif
 
     QLabel *img = new QLabel;
     img->setPixmap(QPixmap::fromImage(logo));
@@ -30,7 +34,7 @@ AboutDialog::AboutDialog(QWidget *parent)
                     "The Shell is a utility for controlling and monitoring "
                     "Doomsday servers.")
                  .arg(SHELL_VERSION)
-                 .arg("2013 <a href=\"http://dengine.net/\">Deng Team</a>"));
+                 .arg("2014 <a href=\"http://dengine.net/\">Deng Team</a>"));
 
     connect(txt, SIGNAL(linkActivated(QString)), &GuiShellApp::app(), SLOT(openWebAddress(QString)));
 

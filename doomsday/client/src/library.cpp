@@ -52,7 +52,7 @@ struct library_s { // typedef Library
     Str* path;              ///< de::FS path of the library (e.g., "/bin/doom.dll").
     de::LibraryFile* file;  ///< File where the plugin has been loaded from.
     bool isGamePlugin;      ///< Is this a game plugin? (only one should be in use at a time)
-    std::string typeId;     ///< deng2 library type ID e.g., "deng-plugin/game".
+    std::string typeId;     ///< Library type ID e.g., "deng-plugin/game".
 
     library_s() : path(0), file(0), isGamePlugin(false) {}
 };
@@ -203,7 +203,6 @@ void Library_PublishAPIs(Library *lib)
         PUBLISH(_api_S);
         PUBLISH(_api_Thinker);
         PUBLISH(_api_Uri);
-        PUBLISH(_api_W);
 
 #ifdef __CLIENT__
         // Client-only APIs.
@@ -256,12 +255,12 @@ int Library_IterateAvailableLibraries(int (*func)(void *, const char *, const ch
 
     DENG2_FOR_EACH_CONST(FS::Index, i, libs)
     {
-        LibraryFile *lib = static_cast<LibraryFile *>(i->second);
-        NativeFile const *src = dynamic_cast<de::NativeFile const *>(lib->source());
+        LibraryFile &lib = i->second->as<LibraryFile>();
+        NativeFile const *src = lib.source()->maybeAs<NativeFile>();
         if(src)
         {
-            int result = func(lib, src->name().toUtf8().constData(),
-                              lib->path().toUtf8().constData(), data);
+            int result = func(&lib, src->name().toUtf8().constData(),
+                              lib.path().toUtf8().constData(), data);
             if(result) return result;
         }
     }

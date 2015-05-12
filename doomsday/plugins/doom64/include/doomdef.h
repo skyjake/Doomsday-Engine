@@ -33,7 +33,9 @@
 #endif
 
 #ifdef WIN32
-#  pragma warning(disable:4244)
+#  ifdef MSVC
+#    pragma warning(disable:4244)
+#  endif
 #  define stricmp _stricmp
 #  define strnicmp _strnicmp
 #  define strlwr _strlwr
@@ -42,17 +44,13 @@
 
 #include <de/c_wrapper.h>
 #include <de/fixedpoint.h>
-#include <de/gui/ddkey.h>
+#include <de/input/ddkey.h>
 #include "doomsday.h"
 #include "version.h"
 #include "info.h"
 
 #define Set                 DD_SetInteger
 #define Get                 DD_GetInteger
-
-// Verbose messages.
-#define VERBOSE(code)       { if(verbose >= 1) { code; } }
-#define VERBOSE2(code)      { if(verbose >= 2) { code; } }
 
 DENG_EXTERN_C game_export_t gx;
 

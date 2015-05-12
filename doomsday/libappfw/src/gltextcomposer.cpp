@@ -28,13 +28,14 @@ static Rangei const MAX_VISIBLE_RANGE(0, 0x7fffffff);
 
 DENG2_PIMPL(GLTextComposer)
 {    
-    Font const *font;
-    Atlas *atlas;
+    Font const *font = nullptr;
+    Atlas *atlas = nullptr;
     String text;
-    FontLineWrapping const *wraps;
+    FontLineWrapping const *wraps = nullptr;
     Font::RichFormat format;
-    bool needRedo;
-    Rangei visibleLineRange; ///< Only these lines will be updated/drawn.
+    bool needRedo = false;
+    Rangei visibleLineRange { MAX_VISIBLE_RANGE }; ///< Only these lines will be updated/drawn.
+    int maxGeneratedWidth = 0;
 
     struct Line {
         struct Segment {
@@ -53,10 +54,7 @@ DENG2_PIMPL(GLTextComposer)
     typedef QList<Line> Lines;
     Lines lines;
 
-    Instance(Public *i)
-        : Base(i), font(0), atlas(0), wraps(0), needRedo(false),
-          visibleLineRange(MAX_VISIBLE_RANGE)
-    {}
+    Instance(Public *i) : Base(i) {}
 
     ~Instance()
     {
@@ -83,12 +81,14 @@ DENG2_PIMPL(GLTextComposer)
         {
             if(!isLineVisible(i))
             {
-                releaseLine(i);
+                releaseLine(i, ReleaseButKeepSegs);
             }
         }
     }
 
-    void releaseLine(int index)
+    enum ReleaseBehavior { ReleaseFully, ReleaseButKeepSegs };
+
+    void releaseLine(int index, ReleaseBehavior behavior = ReleaseFully)
     {
         Line &ln = lines[index];
         for(int i = 0; i < ln.segs.size(); ++i)
@@ -96,9 +96,13 @@ DENG2_PIMPL(GLTextComposer)
             if(!ln.segs[i].id.isNone())
             {
                 atlas->release(ln.segs[i].id);
+                ln.segs[i].id = Id::None;
             }
         }
-        ln.segs.clear();
+        if(behavior == ReleaseFully)
+        {
+            ln.segs.clear();
+        }
     }
 
     bool isLineVisible(int line) const
@@ -154,7 +158,7 @@ DENG2_PIMPL(GLTextComposer)
             if(i < lines.size())
             {
                 // Is the rasterized copy up to date?
-                if(!isLineVisible(i) || matchingSegments(i, info))
+                if(/*!isLineVisible(i) ||*/ matchingSegments(i, info))
                 {
                     // This line can be kept as is.
                     continue;
@@ -201,6 +205,8 @@ DENG2_PIMPL(GLTextComposer)
                 }
                 line.segs << seg;
             }
+
+            DENG2_ASSERT(line.segs.size() == info.segs.size());
         }
 
         // Remove the excess lines.
@@ -286,7 +292,8 @@ DENG2_PIMPL(GLTextComposer)
         // Set segment X coordinates by stacking them left-to-right on each line.
         for(int i = lineRange.start; i < rangeEnd; ++i)
         {
-            if(lines[i].segs.isEmpty()) continue;
+            if(lines[i].segs.isEmpty() || i >= visibleLineRange.end)
+                continue;
 
             lines[i].segs[0].x = wraps->lineInfo(i).indent;
 
@@ -305,7 +312,11 @@ DENG2_PIMPL(GLTextComposer)
             // Find the maximum right edge for this spot.
             for(int i = lineRange.start; i < rangeEnd; ++i)
             {
-                FontLineWrapping::LineInfo const &info = wraps->lineInfo(i);
+                if(i >= visibleLineRange.end) break;
+
+                FontLineWrapping::LineInfo const &info = wraps->lineInfo(i);                                               
+
+                DENG2_ASSERT(info.segs.size() == lines[i].segs.size());
                 for(int k = 0; k < info.segs.size(); ++k)
                 {
                     Instance::Line::Segment &seg = lines[i].segs[k];
@@ -319,6 +330,8 @@ DENG2_PIMPL(GLTextComposer)
             // Move the segments to this position.
             for(int i = lineRange.start; i < rangeEnd; ++i)
             {
+                if(i >= visibleLineRange.end) break;
+
                 int localRight = maxRight;
 
                 FontLineWrapping::LineInfo const &info = wraps->lineInfo(i);
@@ -359,7 +372,11 @@ void GLTextComposer::setAtlas(Atlas &atlas)
 
 void GLTextComposer::setWrapping(FontLineWrapping const &wrappedLines)
 {
-    d->wraps = &wrappedLines;
+    if(d->wraps != &wrappedLines)
+    {
+        d->wraps = &wrappedLines;
+        forceUpdate();
+    }
 }
 
 void GLTextComposer::setText(String const &text)
@@ -394,6 +411,9 @@ Rangei GLTextComposer::range() const
 bool GLTextComposer::update()
 {
     DENG2_ASSERT(d->wraps != 0);
+
+    // If a font hasn't been defined, there isn't much to do.
+    if(!d->wraps->hasFont()) return false;
 
     if(d->font != &d->wraps->font())
     {
@@ -467,6 +487,8 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
         }
     }
 
+    d->maxGeneratedWidth = 0;
+
     // Generate vertices for each line.
     for(int i = 0; i < d->wraps->height(); ++i)
     {
@@ -506,13 +528,21 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
 
                 Rectanglef const uv = d->atlas->imageRectf(seg.id);
 
-                triStrip.makeQuad(Rectanglef::fromSize(linePos + Vector2f(seg.x, 0), size),
-                                  color, uv);
+                auto const segRect = Rectanglef::fromSize(linePos + Vector2f(seg.x, 0), size);
+                triStrip.makeQuad(segRect, color, uv);
+
+                // Keep track of how wide the geometry really is.
+                d->maxGeneratedWidth = de::max(d->maxGeneratedWidth, int(segRect.right() - p.x));
             }
         }
 
         p.y += d->font->lineSpacing().value();
     }
+}
+
+int GLTextComposer::verticesMaxWidth() const
+{
+    return d->maxGeneratedWidth;
 }
 
 } // namespace de

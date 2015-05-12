@@ -1,7 +1,7 @@
 /** @file con_config.cpp  Config file IO.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,32 +17,38 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de_base.h"
 #include "con_config.h"
 
-#include "con_main.h"
+#include <cctype>
+#include <de/Log>
+#include <de/Path>
+#include <doomsday/help.h>
+#include <doomsday/console/exec.h>
+#include <doomsday/console/var.h>
+#include <doomsday/console/alias.h>
+#include <doomsday/console/knownword.h>
+#include <doomsday/filesys/fs_main.h>
+#include <doomsday/filesys/fs_util.h>
+
 #include "dd_main.h"
 #include "dd_def.h"
-#include "dd_help.h"
 #include "m_misc.h"
 
 #include "Games"
 
-#include "api_filesys.h"
-#include "filesys/fs_main.h"
-#include "filesys/fs_util.h"
-
 #ifdef __CLIENT__
-#  include "ui/b_main.h"
-#endif
+#  include "clientapp.h"
 
-#include <de/Log>
-#include <de/Path>
-#include <cctype>
+#  include "world/p_players.h"
+
+#  include "BindContext"
+#  include "CommandBinding"
+#  include "ImpulseBinding"
+#endif
 
 using namespace de;
 
-static filename_t cfgFile;
+static Path cfgFile;
 static int flagsAllow;
 
 static void writeHeaderComment(FILE *file)
@@ -106,8 +112,7 @@ static int writeVariableToFileWorker(knownword_t const *word, void *context)
         fprintf(file, "\"");
         if(CV_URIPTR(var))
         {
-            AutoStr *valPath = Uri_Compose(CV_URIPTR(var));
-            fprintf(file, "%s", Str_Text(valPath));
+            fprintf(file, "%s", CV_URIPTR(var)->compose().toUtf8().constData());
         }
         fprintf(file, "\"");
         break;
@@ -192,11 +197,46 @@ static bool writeBindingsState(Path const &filePath)
 
     if(FILE *file = fopen(filePath.toUtf8().constData(), "wt"))
     {
+        InputSystem &isys = ClientApp::inputSystem();
+
         LOG_SCR_VERBOSE("Writing bindings to \"%s\"...")
                 << NativePath(filePath).pretty();
 
         writeHeaderComment(file);
-        B_WriteToFile(file);
+
+        // Start with a clean slate when restoring the bindings.
+        fprintf(file, "clearbindings\n\n");
+
+        isys.forAllContexts([&isys, &file] (BindContext &context)
+        {
+            // Commands.
+            context.forAllCommandBindings([&file, &context] (Record &rec)
+            {
+                CommandBinding bind(rec);
+                fprintf(file, "bindevent \"%s:%s\" \"", context.name().toUtf8().constData(),
+                               bind.composeDescriptor().toUtf8().constData());
+                M_WriteTextEsc(file, bind.gets("command").toUtf8().constData());
+                fprintf(file, "\"\n");
+                return LoopContinue;
+            });
+
+            // Impulses.
+            context.forAllImpulseBindings([&file, &context] (Record &rec)
+            {
+                ImpulseBinding bind(rec);
+                PlayerImpulse const *impulse = P_PlayerImpulsePtr(bind.geti("impulseId"));
+                DENG2_ASSERT(impulse);
+
+                fprintf(file, "bindcontrol local%i-%s \"%s\"\n",
+                              bind.geti("localPlayer") + 1,
+                              impulse->name.toUtf8().constData(),
+                              bind.composeDescriptor().toUtf8().constData());
+                return LoopContinue;
+            });
+
+            return LoopContinue;
+        });
+
         fclose(file);
         return true;
     }
@@ -220,58 +260,30 @@ static bool writeState(Path const &filePath, Path const &bindingsFileName = "")
         // Bindings go into a separate file.
         writeBindingsState(bindingsFileName);
     }
+#else
+    DENG2_UNUSED(bindingsFileName);
 #endif
     return true;
 }
 
-bool Con_ParseCommands(char const *fileName, int flags)
+bool Con_ParseCommands(Path const &fileName, int flags)
 {
     bool const setDefault = (flags & CPCF_SET_DEFAULT) != 0;
 
     // Is this supposed to be the default?
     if(setDefault)
     {
-        strncpy(cfgFile, fileName, FILENAME_T_MAXLEN);
-        cfgFile[FILENAME_T_LASTINDEX] = '\0';
+        cfgFile = fileName;
     }
 
     // Update the allowed operations.
     flagsAllow |= flags & (CPCF_ALLOW_SAVE_STATE | CPCF_ALLOW_SAVE_BINDINGS);
 
-    // Open the file.
-    filehandle_s *file = F_Open(fileName, "rt");
-    if(!file)
-    {
-        LOG_SCR_WARNING("Failed to open \"%s\" for write") << fileName;
-        return false;
-    }
+    LOG_SCR_VERBOSE("Parsing \"%s\" (setdef:%b)")
+            << NativePath(fileName).pretty()
+            << setDefault;
 
-    LOG_SCR_VERBOSE("Parsing \"%s\" (setdef:%b)") << F_PrettyPath(fileName) << setDefault;
-
-    // This file is filled with console commands.
-    // Each line is a command.
-    char buff[512];
-    for(int line = 1; ;)
-    {
-        M_ReadLine(buff, 512, file);
-        if(buff[0] && !M_IsComment(buff))
-        {
-            // Execute the commands silently.
-            if(!Con_Execute(CMDS_CONFIG, buff, setDefault, false))
-            {
-                LOG_SCR_WARNING("%s(%i): error executing command \"%s\"")
-                        << F_PrettyPath(fileName) << line << buff;
-            }
-        }
-
-        if(FileHandle_AtEnd(file)) break;
-
-        line++;
-    }
-
-    F_Delete(file);
-
-    return true;
+    return Con_Parse(fileName, setDefault /* => silently */);
 }
 
 void Con_SaveDefaults()

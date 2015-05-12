@@ -24,6 +24,7 @@
 #include "de_console.h"
 #include "dd_def.h" // texGamma
 #include "dd_main.h" // App_ResourceSystem()
+#include "sys_system.h"
 
 #include "gl/gl_main.h"
 #include "gl/gl_tex.h"
@@ -32,6 +33,7 @@
 
 #include <de/GLInfo>
 #include <de/memory.h>
+#include <de/concurrency.h>
 #include <cstring>
 
 using namespace de;
@@ -50,7 +52,7 @@ static int BytesPerPixelFmt(dgltexformat_t format)
 
     case DGL_RGBA:                  return 4;
     default:
-        Con_Error("BytesPerPixelFmt: Unknown format %i, don't know pixel size.\n", format);
+        App_Error("BytesPerPixelFmt: Unknown format %i, don't know pixel size.\n", format);
         return 0; // Unreachable.
     }
 }
@@ -83,7 +85,7 @@ static int BytesPerPixel(GLint format)
     case GL_BGRA:                   return 4;
 
     default:
-        Con_Error("BytesPerPixel: Unknown format %i.", (int) format);
+        App_Error("BytesPerPixel: Unknown format %i.", (int) format);
         return 0; // Unreachable.
     }
 }
@@ -441,7 +443,7 @@ static GLint ChooseTextureFormat(dgltexformat_t format, dd_bool allowCompression
         return !compress ? GL_LUMINANCE_ALPHA : GL_COMPRESSED_LUMINANCE_ALPHA;
 
     default:
-        Con_Error("ChooseTextureFormat: Invalid source format %i.", (int) format);
+        App_Error("ChooseTextureFormat: Invalid source format %i.", (int) format);
         return 0; // Unreachable.
     }
 }

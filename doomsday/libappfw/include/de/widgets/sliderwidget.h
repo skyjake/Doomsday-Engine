@@ -41,6 +41,7 @@ public:
     void setRange(Rangef const &floatRange, float step = 0);
     void setRange(Ranged const &doubleRange, ddouble step = 0);
     void setPrecision(int precisionDecimals);
+    void setStep(double step);
     void setValue(ddouble value);
 
     void setMinLabel(String const &labelText);

@@ -1,7 +1,7 @@
 /** @file cl_world.cpp  Clientside world management.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -29,8 +29,9 @@
 #include "network/net_msg.h"
 #include "network/protocol.h"
 
-#include "Surface"
 #include "world/map.h"
+#include "Sector"
+#include "Surface"
 
 #include <QVector>
 
@@ -162,9 +163,8 @@ void Cl_ReadSectorDelta(int /*deltaType*/)
     float speed[2]  = { 0, 0 };
 
     // Sector index number.
-    int const index = Reader_ReadUInt16(msgReader);
-    DENG2_ASSERT(index < map.sectorCount());
-    Sector *sec = map.sectors().at(index);
+    Sector *sec = map.sectorPtr(Reader_ReadUInt16(msgReader));
+    DENG2_ASSERT(sec);
 
     // Flags.
     int df = Reader_ReadPackedUInt32(msgReader);
@@ -237,20 +237,20 @@ void Cl_ReadSectorDelta(int /*deltaType*/)
     // Do we need to start any moving planes?
     if(df & SDF_FLOOR_HEIGHT)
     {
-        map.newClPlaneMover(sec->floor(), height[PLN_FLOOR], 0);
+        ClPlaneMover::newThinker(sec->floor(), height[PLN_FLOOR], 0);
     }
     else if(df & (SDF_FLOOR_TARGET | SDF_FLOOR_SPEED))
     {
-        map.newClPlaneMover(sec->floor(), target[PLN_FLOOR], speed[PLN_FLOOR]);
+        ClPlaneMover::newThinker(sec->floor(), target[PLN_FLOOR], speed[PLN_FLOOR]);
     }
 
     if(df & SDF_CEILING_HEIGHT)
     {
-        map.newClPlaneMover(sec->ceiling(), height[PLN_CEILING], 0);
+        ClPlaneMover::newThinker(sec->ceiling(), height[PLN_CEILING], 0);
     }
     else if(df & (SDF_CEILING_TARGET | SDF_CEILING_SPEED))
     {
-        map.newClPlaneMover(sec->ceiling(), target[PLN_CEILING], speed[PLN_CEILING]);
+        ClPlaneMover::newThinker(sec->ceiling(), target[PLN_CEILING], speed[PLN_CEILING]);
     }
 
 #undef PLN_CEILING
@@ -265,7 +265,7 @@ void Cl_ReadSideDelta(int /*deltaType*/)
     int const index = Reader_ReadUInt16(msgReader);
     int const df    = Reader_ReadPackedUInt32(msgReader); // Flags.
 
-    LineSide *side = map.sideByIndex(index);
+    LineSide *side = map.sidePtr(index);
     DENG2_ASSERT(side != 0);
 
     if(df & SIDF_TOP_MATERIAL)
@@ -350,46 +350,42 @@ void Cl_ReadSideDelta(int /*deltaType*/)
 void Cl_ReadPolyDelta()
 {
     /// @todo Do not assume the CURRENT map.
-    Map &map = App_WorldSystem().map();
+    Map &map     = App_WorldSystem().map();
+    Polyobj &pob = map.polyobj(Reader_ReadPackedUInt16(msgReader));
 
-    int const index = Reader_ReadPackedUInt16(msgReader);
-    int const df    = Reader_ReadByte(msgReader); // Flags.
-
-    DENG2_ASSERT(index < map.polyobjCount());
-    Polyobj *po = map.polyobjs().at(index);
-
+    int const df = Reader_ReadByte(msgReader); // Flags.
     if(df & PODF_DEST_X)
     {
-        po->dest[VX] = Reader_ReadFloat(msgReader);
+        pob.dest[VX] = Reader_ReadFloat(msgReader);
     }
 
     if(df & PODF_DEST_Y)
     {
-        po->dest[VY] = Reader_ReadFloat(msgReader);
+        pob.dest[VY] = Reader_ReadFloat(msgReader);
     }
 
     if(df & PODF_SPEED)
     {
-        po->speed = Reader_ReadFloat(msgReader);
+        pob.speed = Reader_ReadFloat(msgReader);
     }
 
     if(df & PODF_DEST_ANGLE)
     {
-        po->destAngle = ((angle_t)Reader_ReadInt16(msgReader)) << 16;
+        pob.destAngle = ((angle_t)Reader_ReadInt16(msgReader)) << 16;
     }
 
     if(df & PODF_ANGSPEED)
     {
-        po->angleSpeed = ((angle_t)Reader_ReadInt16(msgReader)) << 16;
+        pob.angleSpeed = ((angle_t)Reader_ReadInt16(msgReader)) << 16;
     }
 
     if(df & PODF_PERPETUAL_ROTATE)
     {
-        po->destAngle = -1;
+        pob.destAngle = -1;
     }
 
     // Update/create the polymover thinker.
-    ClPolyMover *mover = map.clPolyMoverFor(*po, true/*create if necessary*/);
-    mover->move   = CPP_BOOL(df & (PODF_DEST_X | PODF_DEST_Y | PODF_SPEED));
-    mover->rotate = CPP_BOOL(df & (PODF_DEST_ANGLE | PODF_ANGSPEED | PODF_PERPETUAL_ROTATE));
+    ClPolyMover::newThinker(pob,
+            /* move: */   CPP_BOOL(df & (PODF_DEST_X | PODF_DEST_Y | PODF_SPEED)),
+            /* rotate: */ CPP_BOOL(df & (PODF_DEST_ANGLE | PODF_ANGSPEED | PODF_PERPETUAL_ROTATE)));
 }

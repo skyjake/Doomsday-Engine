@@ -16,14 +16,10 @@ DEFINES += __JDOOM__
 gamedata.files = $$OUT_PWD/../../libdoom.pk3
 
 macx {
-    gamedata.path = Contents/Resources
-
     QMAKE_BUNDLE_DATA += gamedata
 }
 else {
-    INSTALLS += target gamedata
-
-    target.path = $$DENG_PLUGIN_LIB_DIR
+    INSTALLS += gamedata
     gamedata.path = $$DENG_DATA_DIR/jdoom
 }
 
@@ -49,6 +45,7 @@ HEADERS += \
     include/dstrings.h \
     include/g_game.h \
     include/info.h \
+    include/intermission.h \
     include/jdoom.h \
     include/m_cheat.h \
     include/m_random.h \
@@ -66,18 +63,18 @@ HEADERS += \
     include/r_defs.h \
     include/st_stuff.h \
     include/tables.h \
-    include/version.h \
-    include/wi_stuff.h
+    include/version.h
 
 SOURCES += \
     src/acfnlink.c \
     src/bossbrain.cpp \
     src/d_api.c \
-    src/d_console.c \
+    src/d_console.cpp \
     src/d_items.c \
     src/d_main.cpp \
     src/d_refresh.cpp \
     src/doomv9mapstatereader.cpp \
+    src/intermission.cpp \
     src/m_cheat.cpp \
     src/m_random.c \
     src/p_enemy.c \
@@ -87,14 +84,15 @@ SOURCES += \
     src/p_mobj.c \
     src/p_pspr.c \
     src/p_setup.c \
-    src/p_spec.c \
+    src/p_spec.cpp \
     src/p_telept.c \
-    src/st_stuff.c \
-    src/tables.c \
-    src/wi_stuff.c
+    src/st_stuff.cpp \
+    src/tables.c
 
 win32 {
-    QMAKE_LFLAGS += /DEF:\"$$PWD/api/doom.def\"
+    deng_msvc:  QMAKE_LFLAGS += /DEF:\"$$PWD/api/doom.def\"
+    deng_mingw: QMAKE_LFLAGS += --def \"$$PWD/api/doom.def\"
+
     OTHER_FILES += api/doom.def
 
     RC_FILE = res/doom.rc
@@ -102,6 +100,6 @@ win32 {
 
 macx {
     fixPluginInstallId($$TARGET, 1)
-    linkToBundledLibdeng2($$TARGET)
-    linkToBundledLibdeng1($$TARGET)
+    linkToBundledLibcore($$TARGET)
+    linkToBundledLiblegacy($$TARGET)
 }

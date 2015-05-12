@@ -26,7 +26,7 @@ win32: LIBS += -L$$DENG_SDK_DIR/lib
  else: QMAKE_LFLAGS = -L$$DENG_SDK_DIR/lib $$QMAKE_LFLAGS
 
 # The core library is always required.
-LIBS += -ldeng2
+LIBS += -ldeng_core
 
 contains(DENG_CONFIG, appfw): DENG_CONFIG *= gui shell
 
@@ -35,18 +35,34 @@ contains(DENG_CONFIG, gui):   LIBS += -ldeng_gui
 contains(DENG_CONFIG, appfw): LIBS += -ldeng_appfw
 contains(DENG_CONFIG, shell): LIBS += -ldeng_shell
 
-# Instruct the dynamic linker to load the libs from the SDK lib dir.
-*-g++*|*-gcc*|*-clang* {
-    QMAKE_LFLAGS += -Wl,-rpath,$$DENG_SDK_DIR/lib
+# Appropriate packages.
+DENG_PACKAGES += net.dengine.stdlib
+contains(DENG_CONFIG, gui): DENG_PACKAGES += net.dengine.stdlib.gui
+
+defineTest(dengDynamicLinkPath) {
+    # 1: path to search dynamic libraries from
+    *-g++*|*-gcc*|*-clang* {
+        QMAKE_LFLAGS += -Wl,-rpath,$$1
+        export(QMAKE_LFLAGS)
+    }
+    win32 {
+        LIBS += -L$$1
+    }
 }
+
+# Instruct the dynamic linker to load the libs from the SDK lib dir.
+dengDynamicLinkPath($$DENG_SDK_DIR/lib)
 
 macx {
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
 }
 
-DENG_MODULES = $$DENG_SDK_DIR/modules/*.de
-
 # Macros ---------------------------------------------------------------------
+
+defineTest(dengRunPython2) {
+    win32: system(python $$1)       # 2.7 still expected
+     else: system(/usr/bin/env python2.7 $$1)
+}
 
 defineTest(dengPostLink) {
     isEmpty(QMAKE_POST_LINK) {
@@ -57,22 +73,22 @@ defineTest(dengPostLink) {
     export(QMAKE_POST_LINK)
 }
 
-defineTest(dengClear) {
-    # 1: file to remove
-    win32: system(del /q \"$$1\")
-     else: system(rm -f \"$$1\")
+defineTest(dengPackage) {
+    # 1: path of a .pack source directory (without the ".pack")
+    # 2: target directory where the zipped .pack is written
+    dengRunPython2($$DENG_SDK_DIR/buildpackage.py \"$${1}.pack\" \"$$2\")
+
+    # Automatically deploy the package.
+    appPackages.files += $$2/$${1}.pack
+    export(appPackages.files)
 }
 
-defineTest(dengPack) {
-    # 1: path of a .pack file
-    # 2: actual root directory
-    # 3: files to include, relative to the root
-    system(cd \"$$2\" && zip -r \"$$1\" $$3 -x \\*~)
-}
-
-defineTest(dengPackModules) {
-    # 1: path of a .pack file
-    dengPack($$1, $$DENG_SDK_DIR, modules/*.de)
+defineTest(dengSdkPackage) {
+    # 1: identifier of the package
+    exists($$DENG_SDK_DIR/packs/$${1}.pack) {
+        sdkPackages.files *= $$DENG_SDK_DIR/packs/$${1}.pack
+        export(sdkPackages.files)
+    }
 }
 
 defineReplace(dengFindLibDir) {
@@ -113,28 +129,42 @@ defineReplace(dengSdkLib) {
 defineTest(dengDeploy) {
     # 1: app name
     # 2: install prefix
-    # 3: base pack file
-    prefix = $$2
-    INSTALLS += target basepack denglibs
-    basepack.files = $$3
 
-    denglibs.files = $$dengSdkLib(deng2)
+    for(i, DENG_PACKAGES): dengSdkPackage($$i)
+
+    prefix = $$2
+    INSTALLS += target denglibs appPackages sdkPackages
+
+    denglibs.files = $$dengSdkLib(deng_core)
     contains(DENG_CONFIG, gui):   denglibs.files += $$dengSdkLib(deng_gui)
     contains(DENG_CONFIG, appfw): denglibs.files += $$dengSdkLib(deng_appfw)
     contains(DENG_CONFIG, shell): denglibs.files += $$dengSdkLib(deng_shell)
 
     win32 {
+        denglibs.files += $$DENG_SDK_DIR/lib/zlib1.dll
+        contains(DENG_CONFIG, gui) {
+            denglibs.files += \
+                $$DENG_SDK_DIR/lib/assimpd.dll \
+                $$DENG_SDK_DIR/lib/assimp.dll
+        }
+
+        target.path      = $$prefix/bin
+        denglibs.path    = $$target.path
+        appPackages.path = $$prefix/data
+        sdkPackages.path = $$prefix/data
     }
     else:macx {
         QMAKE_BUNDLE_DATA += $$INSTALLS
         QMAKE_BUNDLE_DATA -= target
-        basepack.path = Contents/Resources
-        denglibs.path = Contents/Frameworks
+        appPackages.path = Contents/Resources
+        sdkPackages.path = Contents/Resources
+        denglibs.path    = Contents/Frameworks
     }
     else {
-        target.path   = $$prefix/bin
-        basepack.path = $$prefix/share/$${1}
-        denglibs.path = $$dengFindLibDir($$prefix)
+        target.path      = $$prefix/bin
+        denglibs.path    = $$dengFindLibDir($$prefix)
+        appPackages.path = $$prefix/share/$$1
+        sdkPackages.path = $$prefix/share/$$1
     }
 
     contains(DENG_CONFIG, symlink):unix {
@@ -152,13 +182,20 @@ defineTest(dengDeploy) {
         }
     }
 
+    win32 {
+        contains(DENG_CONFIG, gui): deployOpts += -opengl
+        denglibs.extra = windeployqt \"$$target.path\" -network $$deployOpts
+        export(denglibs.extra)
+    }
+
     macx: export(QMAKE_BUNDLE_DATA)
     else {
         export(INSTALLS)
         export(target.path)
     }
-    export(basepack.files)
-    export(basepack.path)
+    export(appPackages.path)
+    export(sdkPackages.files)
+    export(sdkPackages.path)
     export(denglibs.files)
     export(denglibs.path)
 }

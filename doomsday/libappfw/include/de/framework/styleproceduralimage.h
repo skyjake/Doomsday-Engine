@@ -28,8 +28,8 @@ namespace de {
 class StyleProceduralImage : public ProceduralImage
 {
 public:
-    StyleProceduralImage(DotPath const &styleImageId, GuiWidget &owner)
-        : _owner(owner), _imageId(styleImageId), _id(Id::None)
+    StyleProceduralImage(DotPath const &styleImageId, GuiWidget &owner, float angle = 0)
+        : _owner(owner), _imageId(styleImageId), _id(Id::None), _angle(angle)
     {
         if(_owner.hasRoot())
         {
@@ -41,6 +41,11 @@ public:
     GuiRootWidget &root()
     {
         return _owner.root();
+    }
+
+    void setAngle(float angle)
+    {
+        _angle = angle;
     }
 
     void alloc()
@@ -63,7 +68,8 @@ public:
     {
         if(!_id.isNone())
         {
-            verts.makeQuad(rect, color(), root().atlas().imageRectf(_id));
+            Matrix4f turn = Matrix4f::rotateAround(rect.middle(), _angle);
+            verts.makeQuad(rect, color(), root().atlas().imageRectf(_id), &turn);
         }
     }
 
@@ -71,6 +77,7 @@ private:
     GuiWidget &_owner;
     DotPath _imageId;
     Id _id;
+    float _angle;
 };
 
 } // namespace de

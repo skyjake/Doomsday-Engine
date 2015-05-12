@@ -1,9 +1,9 @@
-/**
- * @file dehread.h
- * DeHackEd patch reader plugin for Doomsday Engine. @ingroup dehread
+/** @file dehread.h  DeHackEd patch reader plugin for Doomsday Engine.
  *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @ingroup dehread
+ *
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,11 +20,6 @@
  * 02110-1301 USA</small>
  */
 
-/**
- * @defgroup dehread
- * DeHackEd patch reader plugin.
- */
-
 #ifndef LIBDEHREAD_DEHREAD_H
 #define LIBDEHREAD_DEHREAD_H
 
@@ -33,22 +28,22 @@
  * This dependency should be removed entirely, by making this plugin modify the
  * definitions via a public API provided by the engine.
  */
-#include "../../../client/include/def_data.h"
+#include <doomsday/defs/ded.h>
 struct font_s;
 
 #define DENG_INTERNAL_DATA_ACCESS
 #include <doomsday.h>
 
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <de/types.h>
 
-DENG_EXTERN_C void DP_Initialize(void);
+DENG_EXTERN_C void DP_Initialize();
 
 // Internal:
-extern ded_t* ded; // @todo Remove me.
+extern ded_t *ded; // @todo Remove me.
 
-const int NUMSPRITES = 138;
-const int NUMSTATES  = 968;
+int const NUMSPRITES = 138;
+int const NUMSTATES  = 968;
 extern ded_sprid_t  origSpriteNames[NUMSPRITES];
 extern ded_funcid_t origActionNames[NUMSTATES];
 
@@ -57,7 +52,5 @@ DENG_USING_API(Con);
 DENG_USING_API(Def);
 DENG_USING_API(F);
 DENG_USING_API(Plug);
-DENG_USING_API(Uri);
-DENG_USING_API(W);
 
 #endif // LIBDEHREAD_DEHREAD_H

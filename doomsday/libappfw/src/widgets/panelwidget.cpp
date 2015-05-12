@@ -132,7 +132,7 @@ DENG_GUI_PIMPL(PanelWidget)
         {
             openingRule->set(content->rule().width(), span);
         }
-        openingRule->setStyle(Animation::Bounce, 8);
+        openingRule->setStyle(Animation::Bounce, 12);
     }
 
     void close(TimeDelta delay)

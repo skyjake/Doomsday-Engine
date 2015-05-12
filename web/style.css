@@ -1,12 +1,47 @@
 
 @import url(http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,700italic,400,700,300);
 
+
+/* normalize */
+p, h1, h2, h3, h4, h5, h6, h7, h8, h9 { margin-top: 0; }
+dl, ol, ul { padding: 0; margin: 0; }
+
+/* fixes */
+.clearfix  { height: 1%; overflow: hidden; }
+
+/* responsive content inclusion */
+.inlcnt     { display: none; }
+span.inlcnt { padding: 0.4ex; }
+@media handheld, only screen and (max-width: 480px) { .inlcnt { display:initial; } }
+
+/* responsive content exclusion */
+@media handheld, only screen and (max-width: 480px) { .exlcnt { display:none; } }
+
+.forumrow .expcol { width: 50%; }
+
+/**
+ * Responsive list with dynamic column expansion
+ */
+.reslist > li { vertical-align: top; /* clear fix */ height: 1%; overflow: hidden; }
+.reslist dt,
+.reslist dd   { float: right; margin: 0; }
+.reslist dt   { margin-left: .2em; margin-right: .2em; display:none; }
+/* responsive column expansion */
+.reslist .expcol { display: inline-block; float: left; }
+@media handheld, only screen and (max-width: 480px) {
+  .reslist .expcol { width:100%; }
+  .reslist dt { display:block; }
+}
+/* responsive column exclusion */
+@media handheld, only screen and (max-width: 480px) {
+  .reslist dl > dt.exlcol,
+  .reslist dl > dd.exlcol { width:auto; margin-left: 0; }
+}
+
 body {
     background: #282D2B url(panoramarotator) no-repeat fixed;
     background-position: center 100%;
     background-size: 200% 200%;
-
-    color: #A7A29C;
 
     font-family: "Open Sans",sans-serif !important;
     font-size: 100%;
@@ -22,13 +57,15 @@ body {
     vertical-align: baseline;
 }
 
+body, a p { color: #A7A29C; }
+
 @media only screen and (min-width: 476px) {
 body { margin: 1.2em; }
 }
 
 h1, h2, h3, h4, h5, h6 {
     margin-bottom: 0;
-    margin-top: .6em;
+    margin-top: 0;
     font-weight: normal;
     font-variant: normal;
     font-weight: 300;
@@ -41,7 +78,7 @@ h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
     color: #F0F0F0;
 }
 
-label { cursor:help; }
+/*label { cursor:help; }*/
 
 /* ------- begin old forum normalization ------- */
 
@@ -53,7 +90,7 @@ label { cursor:help; }
     display: none;
 }
 
-code br, .topiclist br, .post br, .content br {
+code br, /*.topiclist br,*/ .post br, .content br {
     display:inline;
     margin:0;
 }
@@ -167,24 +204,27 @@ hr.dashed {
 }
 
 .block {
-    padding: 1.2em;
-    margin: 1.2em .6em 0 .6em;
+    padding: 22px;
+    margin: 0 .6em 1.2em .6em;
+    height: 1%; overflow: hidden;
+}
+
+.block article {
+    margin-top: 0;
+}
+
+.block section {
+    margin-top: 1.2em;
 }
 
 .block article:first-of-type,
 .block section:first-of-type {
-    margin-top: -1.2em;
-}
-
-.block article header {
-    margin-bottom: .8em;
+    margin-top: 0;
 }
 
 /* metadata */
 .block article header p {
     font-style: italic;
-    margin-top: 0;
-    margin-bottom: 1.2em;
 }
 
 /* related links bar */
@@ -194,6 +234,7 @@ hr.dashed {
     right: -1.3em;
     float: right;
     font-size: 8pt;
+    height:0;
 }
 
 /*
@@ -202,9 +243,6 @@ hr.dashed {
 
 #menu {
     background-color: rgba(0, 0, 0, 0.8);
-    /*position: relative;
-    width: 200%;
-    left: -50%;/**/
 }
 
 #menu a:focus { outline-color: white; }
@@ -212,7 +250,7 @@ hr.dashed {
 .block {
     background-color: rgba(0, 0, 0, 0.7);
     box-shadow: 1px 2px 3px 0px rgba(20, 20, 20, 0.4);
-    box-shadow: 0 0 28px -8px rgb(110, 110, 110);/**/
+    box-shadow: 0 0 24px -8px rgb(110, 110, 110);
 }
 
 .rules {
@@ -231,14 +269,15 @@ hr.dashed {
 .block a:hover { color: #FFCB0F; }
 
 .major_issue { background-color:#ff4444; /* red */ }
-
 .minor_issue { background-color:#ffee00; /* yellow */ }
-
-.no_issue { background-color:#00ee00; /* green */ }
+.no_issue    { background-color:#00ee00; /* green */ }
 
 .nobackground {
     background:none;
     box-shadow:none;
+    padding: 0;
+    margin-bottom: 0.6em;
+    margin-top: -.6em;
 }
 
 .rules h1, .rules h2, .rules h3, .rules h4, .rules h5, .rules h6 { color:#FFD9BB; }
@@ -280,69 +319,64 @@ table.directory td {
     font-size: small;
 }
 
-table.directory tbody tr,
+.topiclist > li,
 dl.codebox,
-ul.topiclist li,
+table.directory tbody tr,
 table.table1 tbody td {
     border-color: #333;
     border-style: solid;
     border-width: 2px;
+    border-radius: 4px;
 }
 
-ul.topiclist dd {
-    margin: 0;
-}
+.topiclist > li { padding: 11px 22px 11px 16px; margin: 2px; }
 
-ul.topiclist {
-    list-style-type: none;
-    margin: -6px;
-    padding: 0;
-    font-size: .8em;
-}
-
-ul.topiclist li {
-    display: block;
-    margin: 6px;
-}
-
-ul.topiclist li.header {
+.topiclist li.header {
     border-width: 0;
+    color: white;
+    font-size: 1em;
+    font-weight: 300;
+    text-shadow: 0px 1px 1px #666;
+    white-space: nowrap;
+    margin-top: 0;
+    margin-bottom: 0;
 }
 
-ul.topiclist li:not(.header):hover,
+.block.topiclist { padding: 0; }
+
+.topiclist li:not(.header):hover,
 table.directory tbody tr:hover,
 table.table1 tbody tr:hover,
 table.table1 tbody tr.hover {
-    border-color: #535353;
+    border-color: #666;
 }
 
-ul.topiclist dl {
-    position: relative;
-}
+/* ---- */
 
-ul.topiclist dt, ul.topiclist dd {
-    display: block;
-    float: left;
-    padding: 5px;
-}
+.topiclist { list-style-type: none; }
 
-ul.topiclist dt {
-    width: 48%;
-}
+.forumrow           { font-size: .75em; }
+.forumrow .posts,
+.forumrow .topics,
+.forumrow .views    { width: 25%; text-align: center; }
+.forumrow .lastpost { width: 49%; }
 
-ul.topiclist dfn {
-    /* Labels for post/view counts */
-    display: none;
-}
-
-ul.topiclist li.row dt a.subforum {
-    background-image: none;
-    background-position: 0 50%;
+.forumitem header > a {
+    background-image: url("forums/styles/Deng/imageset/forum_read.png");
     background-repeat: no-repeat;
-    position: relative;
-    white-space: nowrap;
-    padding: 0 0 0 12px;
+    background-position-y: 50%;
+    padding-left: 48px; /* padding - margin + image_width */
+    display: block;
+    height: 100%;
 }
+
+.forumitem.unread header > a        { background-image: url("forums/styles/Deng/imageset/forum_unread.png"); }
+.forumitem.locked header > a        { background-image: url("forums/styles/Deng/imageset/forum_read_locked.png"); }
+.forumitem.locked.unread header > a { background-image: url("forums/styles/Deng/imageset/forum_unread_locked.png"); }
+
+.forumitem .subforums { margin-left: 48px; }
+
+/* ---- */
 
 table.table1 {
     border-collapse:collapse;
@@ -619,16 +653,14 @@ ol.jumplist li {
     padding: 0;
 }
 
-#menu section {
+#menu li.section {
     display: inline-block;
     min-width: 12em;
     text-align: right;
 }
 
 #menu li {
-    position: relative;
     list-style-type: none;
-    display: inline;
 }
 
 #menu li.logo {
@@ -636,12 +668,12 @@ ol.jumplist li {
     background-position: 50%;
     background-size: 110%;
     padding: 26px 0;
-    margin: 0;
+    margin: -26px 0;
 }
 
 #menu li.logo a {
-    padding-top: 48px;
-    padding-bottom: 33px;
+    padding-top: 28px;
+    padding-bottom: 28px;
     padding-left: 68px;
     outline: 0 none;
 }
@@ -666,8 +698,8 @@ span.paddle_left_select, span.paddle_right_select {
 
 @media only screen and (min-width: 767px) {
 #menu { font-size: 100%; }
-#menu section { min-width: 13em; }
-#menu li.logo { background-size: 100%; padding: 64px 0; }
+#menu li.section { min-width: 13em; }
+#menu li.logo { background-size: 85%; /*padding: 64px 0;*/ }
 #menu li.logo a { padding-left: 104px; }
 }
 
@@ -701,7 +733,7 @@ span.paddle_left_select, span.paddle_right_select {
 }
 
 #framepanel_top, #panorama {
-    height: 160px;
+    height: 150px;
 }
 
 #framepanel_bottom {
@@ -738,7 +770,7 @@ span.paddle_left_select, span.paddle_right_select {
 #latestversion a:hover { color: #FFCB0F; }
 
 @media only screen and (min-width: 767px) {
-#framepanel_top, #panorama { height: 280px; }
+#framepanel_top, #panorama { height: 270px; }
 #framepanel_bottom { margin-top: 270px; }
 #pageheading, #latestversion { margin-top: -7.5em; }
 #pageheading h1, #latestversion h1 { font-size: 2.5em; }
@@ -790,6 +822,7 @@ div.clear {
     top: -150px; /* minus (image height - divider height) */
     font-size: xx-small;
     text-align: right;
+    height: auto;
 }
 
 @media only screen and (min-width: 767px) {
@@ -941,10 +974,11 @@ div.clear {
 }
 
 .ohloh-button {
-    margin-top: .4em;
     /* The button is visually smaller than the defined dimensions of the iframe... */
-    margin-bottom: -14px;
-    margin-right: -14px;
+    height: 32px;
+    width: 148px;
+    position: relative;
+    top: 14px;
 }
 
 .google-plusone {

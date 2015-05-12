@@ -1,4 +1,4 @@
-/** @file s_mus.h
+/** @file s_mus.h  Music Subsystem.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
@@ -17,18 +17,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Music Subsystem.
- */
-
 #ifndef LIBDENG_SOUND_MUSIC_H
 #define LIBDENG_SOUND_MUSIC_H
 
 #include "api_audiod_mus.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <de/Record>
 
 // Music preference. If multiple resources are available, this setting
 // is used to determine which one to use (mus < ext < cd).
@@ -38,12 +31,33 @@ enum {
     MUSP_CD
 };
 
-void Mus_Register(void);
-dd_bool Mus_Init(void);
-void Mus_Shutdown(void);
+/**
+ * Register the console commands and variables of this module.
+ */
+void Mus_Register();
+
+/**
+ * Initialize the Mus module.
+ * @return  @c true, if no errors occur.
+ */
+bool Mus_Init();
+
+void Mus_Shutdown();
+
+/**
+ * Set the general music volume. Affects all music played by all interfaces.
+ */
 void Mus_SetVolume(float vol);
-void Mus_Pause(dd_bool doPause);
-void Mus_StartFrame(void);
+
+/**
+ * Pauses or resumes the music.
+ */
+void Mus_Pause(bool doPause);
+
+/**
+ * Called on each frame by S_StartFrame.
+ */
+void Mus_StartFrame();
 
 /**
  * Start playing a song. The chosen interface depends on what's available
@@ -52,14 +66,14 @@ void Mus_StartFrame(void);
  *
  * @return  Non-zero if the song is successfully played.
  */
-int Mus_Start(ded_music_t* def, dd_bool looped);
+int Mus_Start(de::Record const *def, bool looped);
 
-int Mus_StartLump(lumpnum_t lump, dd_bool looped, dd_bool canPlayMUS);
+/**
+ * @return 1, if music was started. 0, if attempted to start but failed.
+ *        -1, if it was MUS data and @a canPlayMUS says we can't play it.
+ */
+int Mus_StartLump(lumpnum_t lump, bool looped, bool canPlayMUS);
 
-void Mus_Stop(void);
+void Mus_Stop();
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif /* LIBDENG_SOUND_MUSIC_H */
+#endif // LIBDENG_SOUND_MUSIC_H

@@ -20,11 +20,14 @@
 #include "ui/widgets/cvarsliderwidget.h"
 #include "ui/widgets/cvartogglewidget.h"
 #include "ui/widgets/cvarchoicewidget.h"
-
 #include "render/vr.h"
-#include "con_main.h"
+#include "clientapp.h"
+#include "api_console.h"
+#include <doomsday/console/exec.h>
 
+#include <de/VariableSliderWidget>
 #include <de/SignalAction>
+#include "CommandAction"
 
 using namespace de;
 using namespace ui;
@@ -36,14 +39,15 @@ DENG_GUI_PIMPL(VRSettingsDialog)
     CVarSliderWidget *dominantEye;
     CVarSliderWidget *humanHeight;
     CVarSliderWidget *ipd;
+    VariableSliderWidget *riftDensity;
     CVarSliderWidget *riftSamples;
-    CVarSliderWidget *riftPredictionLatency;
+    ButtonWidget *riftReset;
     ButtonWidget *riftSetup;
     ButtonWidget *desktopSetup;
 
     Instance(Public *i)
         : Base(i)
-        , riftPredictionLatency(0)
+        , riftReset(0)
         , riftSetup(0)
     {
         ScrollAreaWidget &area = self.area();
@@ -69,20 +73,26 @@ DENG_GUI_PIMPL(VRSettingsDialog)
 
         area.add(ipd = new CVarSliderWidget("rend-vr-ipd"));
         ipd->setDisplayFactor(1000);
+        ipd->setPrecision(1);
 
         if(vrCfg().oculusRift().isReady())
         {
-            area.add(riftPredictionLatency = new CVarSliderWidget("rend-vr-rift-latency"));
-            riftPredictionLatency->setDisplayFactor(1000);
+            area.add(riftDensity = new VariableSliderWidget(App::config("vr.oculusRift.pixelDensity"),
+                     Ranged(0.5, 1.0), .01));
+            riftDensity->setPrecision(2);
+
+            area.add(riftReset = new ButtonWidget);
+            riftReset->setText(tr("Recenter Tracking"));
+            riftReset->setAction(new CommandAction("resetriftpose"));
 
             area.add(riftSetup = new ButtonWidget);
             riftSetup->setText(tr("Apply Rift Settings"));
             riftSetup->setAction(new SignalAction(thisPublic, SLOT(autoConfigForOculusRift())));
-
-            area.add(desktopSetup = new ButtonWidget);
-            desktopSetup->setText(tr("Apply Desktop Settings"));
-            desktopSetup->setAction(new SignalAction(thisPublic, SLOT(autoConfigForDesktop())));
         }
+
+        area.add(desktopSetup = new ButtonWidget);
+        desktopSetup->setText(tr("Apply Desktop Settings"));
+        desktopSetup->setAction(new SignalAction(thisPublic, SLOT(autoConfigForDesktop())));
     }
 
     void fetch()
@@ -118,22 +128,29 @@ VRSettingsDialog::VRSettingsDialog(String const &name)
            << *dominantLabel << *d->dominantEye
            << Const(0)       << *d->swapEyes;
 
-    LabelWidget *ovrLabel    = LabelWidget::newWithText(_E(1)_E(D) + tr("Oculus Rift"), &area());
+    LabelWidget *ovrLabel    = LabelWidget::newWithText(_E(D) + tr("Oculus Rift"), &area());
     LabelWidget *sampleLabel = LabelWidget::newWithText(tr("Multisampling:"), &area());
+    ovrLabel->setFont("separator.label");
     ovrLabel->margins().setTop("gap");
     sampleLabel->setTextLineAlignment(ui::AlignRight);
 
     layout.setCellAlignment(Vector2i(0, 5), ui::AlignLeft);
-    layout.append(*ovrLabel, 2) << *sampleLabel << *d->riftSamples;
+    layout.append(*ovrLabel, 2);
 
+    LabelWidget *utilLabel = LabelWidget::newWithText(tr("Utilities:"), &area());
     if(vrCfg().oculusRift().isReady())
     {
-        LabelWidget *latencyLabel = LabelWidget::newWithText(tr("Prediction Latency:"), &area());
-        LabelWidget *utilLabel    = LabelWidget::newWithText(tr("Utilities:"), &area());
+        layout << *sampleLabel << *d->riftSamples
+               << *LabelWidget::newWithText(tr("Pixel Density:"), &area())
+               << *d->riftDensity;
 
-        layout << *latencyLabel << *d->riftPredictionLatency
-               << *utilLabel    << *d->riftSetup
-               << Const(0)      << *d->desktopSetup;
+        layout << *utilLabel << *d->riftReset
+               << Const(0)   << *d->riftSetup
+               << Const(0)   << *d->desktopSetup;
+    }
+    else
+    {
+        layout << *utilLabel << *d->desktopSetup;
     }
 
     area().setContentSize(layout.width(), layout.height());
@@ -161,14 +178,15 @@ void VRSettingsDialog::resetToDefaults()
 
 void VRSettingsDialog::autoConfigForOculusRift()
 {
-    Con_Execute(CMDS_DDAY, "setfullres 1280 800", false, false);
+    //Con_Execute(CMDS_DDAY, "setfullres 1280 800", false, false);
+
     Con_Execute(CMDS_DDAY, "bindcontrol lookpitch head-pitch", false, false);
     Con_Execute(CMDS_DDAY, "bindcontrol yawbody head-yaw", false, false);
 
     /// @todo This would be a good use case for cvar overriding. -jk
 
     Con_SetInteger("rend-vr-mode", VRConfig::OculusRift);
-    Con_SetInteger("vid-fsaa", 0);
+    App::config().set("window.main.fsaa", false);
     Con_SetFloat  ("vid-gamma", 1.176f);
     Con_SetFloat  ("vid-contrast", 1.186f);
     Con_SetFloat  ("vid-bright", .034f);
@@ -177,6 +195,8 @@ void VRSettingsDialog::autoConfigForOculusRift()
     Con_SetFloat  ("hud-scale", 1);
 
     d->fetch();
+
+    ClientApp::vr().oculusRift().moveWindowToScreen(OculusRift::HMDScreen);
 }
 
 void VRSettingsDialog::autoConfigForDesktop()
@@ -190,4 +210,6 @@ void VRSettingsDialog::autoConfigForDesktop()
     Con_SetFloat  ("hud-scale", .6f);
 
     d->fetch();
+
+    ClientApp::vr().oculusRift().moveWindowToScreen(OculusRift::DefaultScreen);
 }

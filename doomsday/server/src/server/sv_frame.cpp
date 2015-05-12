@@ -323,7 +323,7 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
     if(df & MDF_STATE)
     {
         assert(d->state != 0);
-        Writer_WritePackedUInt16(msgWriter, d->state - states);
+        Writer_WritePackedUInt16(msgWriter, runtimeDefs.states.indexOf(d->state));
     }
 
     if(df & MDF_FLAGS)
@@ -411,7 +411,7 @@ void Sv_WritePlayerDelta(const void* deltaPtr)
             Writer_WriteByte(msgWriter, psdf);
             if(psdf & PSDF_STATEPTR)
             {
-                Writer_WritePackedUInt16(msgWriter, psp->statePtr? (psp->statePtr - states + 1) : 0);
+                Writer_WritePackedUInt16(msgWriter, psp->statePtr? (runtimeDefs.states.indexOf(psp->statePtr) + 1) : 0);
             }
             /*if(psdf & PSDF_LIGHT)
             {
@@ -681,7 +681,7 @@ void Sv_WriteDeltaHeader(byte type, const delta_t* delta)
 #ifdef _DEBUG
 if(type >= NUM_DELTA_TYPES)
 {
-    Con_Error("Sv_WriteDeltaHeader: Invalid delta type %i.\n", type);
+    App_Error("Sv_WriteDeltaHeader: Invalid delta type %i.\n", type);
 }
 #endif
 
@@ -786,7 +786,7 @@ void Sv_WriteDelta(const delta_t* delta)
            break; */
 
     default:
-        Con_Error("Sv_WriteDelta: Unknown delta type %i.\n", delta->type);
+        App_Error("Sv_WriteDelta: Unknown delta type %i.\n", delta->type);
     }
 
 #ifdef _NETDEBUG

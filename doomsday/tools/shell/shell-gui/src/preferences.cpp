@@ -1,7 +1,7 @@
 #include "preferences.h"
 #include "folderselection.h"
 #include "guishellapp.h"
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <QCheckBox>
 #include <QFormLayout>
 #include <QSettings>

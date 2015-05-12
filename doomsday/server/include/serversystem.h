@@ -19,7 +19,7 @@
 #ifndef SERVERSYSTEM_H
 #define SERVERSYSTEM_H
 
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <de/System>
 #include <de/Id>
 #include <de/Error>

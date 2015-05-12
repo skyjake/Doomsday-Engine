@@ -17,13 +17,11 @@
  */
 
 #include "de_platform.h"
-#include "con_main.h"
 #include "settingsregister.h"
-
-#include <QMap>
-#include <QList>
+#include "api_console.h"
 
 #include <de/App>
+#include <de/game/Game>
 #include <de/Script>
 #include <de/Process>
 #include <de/RecordValue>
@@ -31,6 +29,8 @@
 #include <de/ZipArchive>
 #include <de/Info>
 
+#include <QMap>
+#include <QList>
 #include <QTextStream>
 
 using namespace de;
@@ -369,6 +369,19 @@ DENG2_OBSERVES(App, GameChange)
         }
     }
 
+    bool addCustomProfileIfMissing()
+    {
+        if(!profiles.contains(CUSTOM_PROFILE))
+        {
+            addProfile(CUSTOM_PROFILE);
+
+            // Use whatever values are currently in effect.
+            fetch(CUSTOM_PROFILE);
+            return true;
+        }
+        return false; // nothing added
+    }
+
     /**
      * Deserializes all the profiles (see aboutToUnloadGame()). In addition,
      * fixed/built-in profiles are loaded from /data/profiles/(persistentName)/
@@ -412,44 +425,36 @@ DENG2_OBSERVES(App, GameChange)
         {
             // Settings haven't previously been created -- make sure we at least
             // have the Custom profile.
-            if(!profiles.contains(CUSTOM_PROFILE))
+            if(addCustomProfileIfMissing())
             {
-                addProfile(CUSTOM_PROFILE);
-
-                // Use whatever values are currently in effect.
-                fetch(CUSTOM_PROFILE);
                 current = CUSTOM_PROFILE;
             }
         }
 
         // Still nothing?
-        if(profiles.isEmpty())
-        {
-            addProfile(CUSTOM_PROFILE);
-            fetch(CUSTOM_PROFILE);
-        }
+        addCustomProfileIfMissing();
 
         if(App::config().names().has(confName()))
         {
             // Update current profile.
             current = App::config()[confName()].value().asText();
-
-            if(!profiles.contains(current))
-            {
-                // Fall back to the one profile we know is available.
-                if(profiles.contains(CUSTOM_PROFILE))
-                {
-                    current = CUSTOM_PROFILE;
-                }
-                else
-                {
-                    current = profiles.keys().first();
-                }
-            }
-
-            // Make sure these are the values now in use.
-            apply(current);
         }
+
+        if(!profiles.contains(current))
+        {
+            // Fall back to the one profile we know is available.
+            if(profiles.contains(CUSTOM_PROFILE))
+            {
+                current = CUSTOM_PROFILE;
+            }
+            else
+            {
+                current = profiles.keys().first();
+            }
+        }
+
+        // Make sure these are the values now in use.
+        apply(current);
 
         App::config().set(confName(), current);
     }
@@ -457,7 +462,7 @@ DENG2_OBSERVES(App, GameChange)
     /**
      * Serializes all the profiles:
      * - Config.(persistentName).profile stores the name of the current profile
-     * - /home/configs/(persistentName).pack contains all the existing profile
+     * - /home/configs/(persistentName).dei contains all the existing profile
      *   values, with one file per profile
      *
      * @param gameBeingUnloaded  Current game.

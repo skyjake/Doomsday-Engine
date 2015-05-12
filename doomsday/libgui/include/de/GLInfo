@@ -1,1 +1,1 @@
-#include "gui/glinfo.h"
+#include "graphics/glinfo.h"

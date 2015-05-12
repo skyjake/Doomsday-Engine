@@ -120,7 +120,7 @@ int EV_Teleport(Line* line, int side, mobj_t* mo, dd_bool spawnFog)
 
         // In Final Doom things teleported to their destination but the
         // height wasn't set to the floor.
-        if(gameMode != GM_DOOM2_TNT && gameMode != GM_DOOM2_PLUT)
+        if(gameMode != doom2_tnt && gameMode != doom2_plut)
             mo->origin[VZ] = mo->floorZ;
 
         if(spawnFog)
@@ -174,7 +174,7 @@ int EV_Teleport(Line* line, int side, mobj_t* mo, dd_bool spawnFog)
                 //mo->dPlayer->clLookDir = 0; /* $unifiedangles */
                 mo->dPlayer->lookDir = 0;
             }
-            mo->player->viewHeight = (coord_t) cfg.plrViewHeight;
+            mo->player->viewHeight = (coord_t) cfg.common.plrViewHeight;
             mo->player->viewHeightDelta = 0;
             mo->player->viewZ = mo->origin[VZ] + mo->player->viewHeight;
             mo->player->viewOffset[VX] = mo->player->viewOffset[VY] = mo->player->viewOffset[VZ] = 0;

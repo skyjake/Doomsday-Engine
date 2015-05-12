@@ -1,7 +1,7 @@
-/** @file blockmap.h World map element blockmap.
+/** @file blockmap.h  World map element blockmap.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,16 +21,13 @@
 #ifndef DENG_WORLD_BLOCKMAP_H
 #define DENG_WORLD_BLOCKMAP_H
 
+#include <functional>
 #include <de/aabox.h>
-
 #include <de/Vector>
 
-#ifdef min
-#   undef min
-#endif
-
-#ifdef max
-#   undef max
+#ifdef WIN32
+#  undef max
+#  undef min
 #endif
 
 namespace de {
@@ -152,27 +149,28 @@ public:
     void unlinkAll();
 
     /**
-     * Iterate over all elements in the specified @a cell.
+     * Iterate through all objects in the given @a cell.
      */
-    int iterate(Cell const &cell, int (*callback) (void *elem, void *context), void *context = 0) const;
+    LoopResult forAllInCell(Cell const &cell, std::function<LoopResult (void *object)> func) const;
 
     /**
-     * Iterate over all elements in cells which intercept the specified map space
-     * @a region.
+     * Iterate through all objects in all cells which intercept the given map
+     * space, axis-aligned bounding @a box.
      */
-    int iterate(AABoxd const &region, int (*callback) (void *elem, void *context), void *context = 0) const;
+    LoopResult forAllInBox(AABoxd const &box, std::function<LoopResult (void *object)> func) const;
 
     /**
-     * Iterate over all elements in cells which intercept the line specified by
-     * the two map space points @a from and @a to. Note that if an element is
+     * Iterate over all objects in cells which intercept the line specified by
+     * the two map space points @a from and @a to. Note that if an object is
      * processed/visited it does @em not mean that the line actually intercepts
-     * the element. Further testing between the line and the geometry of the map
-     * element is necessary if this is a requirement.
+     * the objects. Further testing between the line and the geometry of the map
+     * object is necessary if this is a requirement.
      *
      * @param from  Map space point defining the origin of the line.
      * @param to    Map space point defining the destination of the line.
      */
-    int iterate(Vector2d const &from, Vector2d const &to, int (*callback) (void *elem, void *context), void *context = 0) const;
+    LoopResult forAllInPath(Vector2d const &from, Vector2d const &to,
+                            std::function<LoopResult (void *object)> func) const;
 
     /**
      * Render a visual for this gridmap to assist in debugging (etc...).

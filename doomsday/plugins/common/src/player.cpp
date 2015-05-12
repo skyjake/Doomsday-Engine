@@ -21,8 +21,9 @@
 #include "common.h"
 #include "player.h"
 
-#include "d_netsv.h"
 #include "d_net.h"
+#include "d_netcl.h"
+#include "d_netsv.h"
 #include "dmu_lib.h"
 #include "g_common.h"
 #include "gamesession.h"
@@ -39,6 +40,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
+
+using namespace de;
 
 #define MESSAGETICS             (4 * TICSPERSEC)
 #define CAMERA_FRICTION_THRESHOLD (.4f)
@@ -242,7 +245,7 @@ int P_GetPlayerCheats(player_t const *player)
     if(player->plr->flags & DDPF_CAMERA)
     {
         return (player->cheats |
-                (CF_GODMODE | cfg.cameraNoClip? CF_NOCLIP : 0));
+                (CF_GODMODE | cfg.common.cameraNoClip? CF_NOCLIP : 0));
     }
     return player->cheats;
 }
@@ -346,7 +349,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon, ammotype
         // Preferences are set by the user.
         for(int i = 0; i < NUM_WEAPON_TYPES && !found; ++i)
         {
-            weapontype_t candidate = weapontype_t(cfg.weaponOrder[i]);
+            weapontype_t candidate = weapontype_t(cfg.common.weaponOrder[i]);
             weaponinfo_t *winf     = &weaponInfo[candidate][pclass];
 
             // Is candidate available in this game mode?
@@ -398,21 +401,21 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon, ammotype
             retVal = weapon;
         }
         // Is the player currently firing?
-        else if(!((player->brain.attack) && cfg.noWeaponAutoSwitchIfFiring))
+        else if(!((player->brain.attack) && cfg.common.noWeaponAutoSwitchIfFiring))
         {
             // Should we change weapon automatically?
 
-            if(cfg.weaponAutoSwitch == 2) // Behavior: Always change
+            if(cfg.common.weaponAutoSwitch == 2) // Behavior: Always change
             {
                 retVal = weapon;
             }
-            else if(cfg.weaponAutoSwitch == 1) // Behavior: Change if better
+            else if(cfg.common.weaponAutoSwitch == 1) // Behavior: Change if better
             {
                 // Iterate the weapon order array and see if a weapon change
                 // should be made. Preferences are user selectable.
                 for(int i = 0; i < NUM_WEAPON_TYPES; ++i)
                 {
-                    weapontype_t candidate = weapontype_t(cfg.weaponOrder[i]);
+                    weapontype_t candidate = weapontype_t(cfg.common.weaponOrder[i]);
                     weaponinfo_t *winf     = &weaponInfo[candidate][pclass];
 
                     // Is candidate available in this game mode?
@@ -435,7 +438,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon, ammotype
     }
     else if(ammo != AT_NOAMMO) // Player is about to be given some ammo.
     {
-        if(force || (!(player->ammo[ammo].owned > 0) && cfg.ammoAutoSwitch != 0))
+        if(force || (!(player->ammo[ammo].owned > 0) && cfg.common.ammoAutoSwitch))
         {
             // We were down to zero, so select a new weapon.
 
@@ -444,7 +447,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon, ammotype
             // Preferences are user selectable.
             for(int i = 0; i < NUM_WEAPON_TYPES; ++i)
             {
-                weapontype_t candidate = weapontype_t(cfg.weaponOrder[i]);
+                weapontype_t candidate = weapontype_t(cfg.common.weaponOrder[i]);
                 weaponinfo_t *winf     = &weaponInfo[candidate][pclass];
 
                 // Is candidate available in this game mode?
@@ -469,12 +472,12 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon, ammotype
                  * logic to decipher first...
                  */
 
-                if(cfg.ammoAutoSwitch == 2) // Behavior: Always change
+                if(cfg.common.ammoAutoSwitch == 2) // Behavior: Always change
                 {
                     retVal = candidate;
                     break;
                 }
-                else if(cfg.ammoAutoSwitch == 1 && player->readyWeapon == candidate)
+                else if(cfg.common.ammoAutoSwitch == 1 && player->readyWeapon == candidate)
                 {
                     // readyweapon has a higher priority so don't change.
                     break;
@@ -594,9 +597,9 @@ weapontype_t P_PlayerFindWeapon(player_t *player, dd_bool prev)
 
     // Are we using weapon order preferences for next/previous?
     weapontype_t *list;
-    if(cfg.weaponNextMode)
+    if(cfg.common.weaponNextMode)
     {
-        list = (weapontype_t *) cfg.weaponOrder;
+        list = (weapontype_t *) cfg.common.weaponOrder;
         prev = !prev; // Invert order.
     }
     else
@@ -611,7 +614,7 @@ weapontype_t P_PlayerFindWeapon(player_t *player, dd_bool prev)
     for(; i < NUM_WEAPON_TYPES; ++i)
     {
         w = list[i];
-        if(!cfg.weaponCycleSequential || player->pendingWeapon == WT_NOCHANGE)
+        if(!cfg.common.weaponCycleSequential || player->pendingWeapon == WT_NOCHANGE)
         {
             if(w == player->readyWeapon)
                 break;
@@ -700,7 +703,7 @@ void P_SetMessage(player_t *pl, int flags, char const *msg)
 
     if(pl == &players[CONSOLEPLAYER])
     {
-        App_Log(DE2_LOG_MAP | (cfg.echoMsg? DE2_LOG_NOTE : DE2_LOG_VERBOSE), "%s", msg);
+        App_Log(DE2_LOG_MAP | (cfg.common.echoMsg? DE2_LOG_NOTE : DE2_LOG_VERBOSE), "%s", msg);
     }
 
     // Servers are responsible for sending these messages to the clients.
@@ -726,7 +729,7 @@ void P_SetYellowMessage(player_t *pl, int flags, char const *msg)
 
     if(pl == &players[CONSOLEPLAYER])
     {
-        App_Log(DE2_LOG_MAP | (cfg.echoMsg? DE2_LOG_NOTE : DE2_LOG_VERBOSE), "%s", msg);
+        App_Log(DE2_LOG_MAP | (cfg.common.echoMsg? DE2_LOG_NOTE : DE2_LOG_VERBOSE), "%s", msg);
     }
 
     // Servers are responsible for sending these messages to the clients.
@@ -1014,7 +1017,7 @@ D_CMD(SetViewLock)
 
     int pl = CONSOLEPLAYER, lock;
 
-    if(!stricmp(argv[0], "lockmode"))
+    if(!qstricmp(argv[0], "lockmode"))
     {
         lock = atoi(argv[1]);
         if(lock)
@@ -1162,18 +1165,18 @@ D_CMD(SpawnMobj)
     pos[VZ] = 0;
 
     int spawnFlags = 0;
-    if(!stricmp(argv[4], "ceil"))
+    if(!qstricmp(argv[4], "ceil"))
     {
         spawnFlags |= MSF_Z_CEIL;
     }
-    else if(!stricmp(argv[4], "random"))
+    else if(!qstricmp(argv[4], "random"))
     {
         spawnFlags |= MSF_Z_RANDOM;
     }
     else
     {
         spawnFlags |= MSF_Z_FLOOR;
-        if(stricmp(argv[4], "floor"))
+        if(qstricmp(argv[4], "floor"))
         {
             pos[VZ] = strtod(argv[4], 0);
         }
@@ -1209,6 +1212,117 @@ D_CMD(SpawnMobj)
     return true;
 }
 
+void Player_LeaveMap(player_t *player, dd_bool newHub)
+{
+    DENG2_ASSERT(player);
+    int const plrNum = player - players;
+#if !__JHEXEN__
+    DENG2_UNUSED(newHub);
+#endif
+
+    if(!player->plr->inGame) return;
+
+#if __JHEXEN__
+    // Remember if flying.
+    int const flightPower = player->powers[PT_FLIGHT];
+#endif
+
+#if __JHERETIC__
+    // Empty the inventory of excess items
+    for(int i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
+    {
+        inventoryitemtype_t type = inventoryitemtype_t(IIT_FIRST + i);
+        uint count = P_InventoryCount(plrNum, type);
+
+        if(count)
+        {
+            if(type != IIT_FLY)
+            {
+                count--;
+            }
+
+            for(uint k = 0; k < count; ++k)
+            {
+                P_InventoryTake(plrNum, type, true);
+            }
+        }
+    }
+#endif
+
+#if __JHEXEN__
+    if(newHub)
+    {
+        uint count = P_InventoryCount(plrNum, IIT_FLY);
+        for(uint i = 0; i < count; ++i)
+        {
+            P_InventoryTake(plrNum, IIT_FLY, true);
+        }
+    }
+#endif
+
+    // Remove their powers.
+    player->update |= PSF_POWERS;
+    de::zap(player->powers);
+
+#if __JDOOM__
+    G_UpdateSpecialFilterWithTimeDelta(plrNum, 0 /* instantly */);
+#endif
+
+#if __JHEXEN__
+    if(!newHub && !COMMON_GAMESESSION->rules().deathmatch)
+    {
+        player->powers[PT_FLIGHT] = flightPower; // Restore flight.
+    }
+#endif
+
+    // Remove their keys.
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+    player->update |= PSF_KEYS;
+    de::zap(player->keys);
+#else
+    if(!COMMON_GAMESESSION->rules().deathmatch && newHub)
+    {
+        player->keys = 0;
+    }
+#endif
+
+    // Misc
+#if __JHERETIC__
+    player->rain1 = nullptr;
+    player->rain2 = nullptr;
+#endif
+
+    // Un-morph?
+#if __JHERETIC__ || __JHEXEN__
+    player->update |= PSF_MORPH_TIME;
+    if(player->morphTics)
+    {
+        player->readyWeapon = weapontype_t(player->plr->mo->special1); // Restore weapon.
+        player->morphTics = 0;
+    }
+#endif
+
+    player->plr->mo->flags &= ~MF_SHADOW; // Cancel invisibility.
+
+    player->plr->lookDir       = 0;
+    player->plr->extraLight    = 0; // Cancel gun flashes.
+    player->plr->fixedColorMap = 0; // Cancel IR goggles.
+
+    // Clear filter.
+    player->plr->flags &= ~DDPF_VIEW_FILTER;
+    player->damageCount = 0; // No palette changes.
+    player->bonusCount  = 0;
+
+#if __JHEXEN__
+    player->poisonCount = 0;
+#endif
+
+    ST_LogEmpty(plrNum);
+
+    // Update this client's stats.
+    NetSv_SendPlayerState(plrNum, DDSP_ALL_PLAYERS, PSF_FRAGS | PSF_COUNTERS, true);
+}
+
 dd_bool Player_WaitingForReborn(player_t const *plr)
 {
     DENG2_ASSERT(plr != 0);
@@ -1234,7 +1348,7 @@ angle_t Player_ViewYawAngle(int playerNum)
     return ang;
 }
 
-void player_s::write(Writer *writer, playerheader_t &plrHdr) const
+void player_s::write(writer_s *writer, playerheader_t &plrHdr) const
 {
 #if __JDOOM64__ || __JHERETIC__ || __JHEXEN__
     int const plrnum = P_GetPlayerNum(this);
@@ -1415,7 +1529,7 @@ void player_s::write(Writer *writer, playerheader_t &plrHdr) const
 #endif
 }
 
-void player_s::read(Reader *reader, playerheader_t &plrHdr)
+void player_s::read(reader_s *reader, playerheader_t &plrHdr)
 {
     int const plrnum = P_GetPlayerNum(this);
 
@@ -1667,4 +1781,208 @@ void player_s::read(Reader *reader, playerheader_t &plrHdr)
     // Mark the player for fixpos and fixangles.
     dp->flags |= DDPF_FIXORIGIN | DDPF_FIXANGLES | DDPF_FIXMOM;
     update |= PSF_REBORN;
+}
+
+/**
+ * Updates game status cvars for the specified player.
+ */
+void Player_UpdateStatusCVars(player_t const *player)
+{
+    DENG2_ASSERT(player);
+
+    Con_SetInteger2("player-health", player->health, SVF_WRITE_OVERRIDE);
+
+#if !__JHEXEN__
+    // Map stats.
+    Con_SetInteger2("game-stats-kills",   player->killCount,   SVF_WRITE_OVERRIDE);
+    Con_SetInteger2("game-stats-items",   player->itemCount,   SVF_WRITE_OVERRIDE);
+    Con_SetInteger2("game-stats-secrets", player->secretCount, SVF_WRITE_OVERRIDE);
+#endif
+
+    // Armor.
+#if __JHEXEN__
+    int const armorPoints = FixedDiv(PCLASS_INFO(player->class_)->autoArmorSave
+                                     + player->armorPoints[ARMOR_ARMOR]
+                                     + player->armorPoints[ARMOR_SHIELD]
+                                     + player->armorPoints[ARMOR_HELMET]
+                                     + player->armorPoints[ARMOR_AMULET], 5 * FRACUNIT) >> FRACBITS;
+    Con_SetInteger2("player-armor", armorPoints, SVF_WRITE_OVERRIDE);
+#else
+    Con_SetInteger2("player-armor", player->armorPoints, SVF_WRITE_OVERRIDE);
+#endif
+
+    // Owned keys.
+    static char const *keyIds[NUM_KEY_TYPES] = {
+#if __JDOOM__ || __JDOOM64__
+        /* KT_BLUECARD */    "blue",
+        /* KT_YELLOWCARD */  "yellow",
+        /* KT_REDCARD */     "red",
+        /* KT_BLUESKULL */   "blueskull",
+        /* KT_YELLOWSKULL */ "yellowskull",
+        /* KT_REDSKULL */    "redskull"
+#elif __JHERETIC__
+        /* KT_YELLOW */      "yellow",
+        /* KT_GREEN */       "green",
+        /* KT_BLUE */        "blue"
+#elif __JHEXEN__
+        /* KT_KEY1 */        "steel",
+        /* KT_KEY2 */        "cave",
+        /* KT_KEY3 */        "axe",
+        /* KT_KEY4 */        "fire",
+        /* KT_KEY5 */        "emerald",
+        /* KT_KEY6 */        "dungeon",
+        /* KT_KEY7 */        "silver",
+        /* KT_KEY8 */        "rusted",
+        /* KT_KEY9 */        "horn",
+        /* KT_KEYA */        "swamp",
+        /* KT_KEYB */        "castle"
+#endif
+    };
+    for(int i = 0; i < NUM_KEY_TYPES; ++i)
+    {
+#if __JHEXEN__
+        int ownedKeys = (player->keys & (1 << i))? 1 : 0;
+#else
+        int ownedKeys = player->keys[i];
+#endif
+        String cvarName = String("player-key-%1").arg(keyIds[i]);
+        Con_SetInteger2(cvarName.toUtf8().constData(), ownedKeys, SVF_WRITE_OVERRIDE);
+    }
+
+    // Current weapon
+    Con_SetInteger2("player-weapon-current", player->readyWeapon, SVF_WRITE_OVERRIDE);
+
+    // Owned weapons
+    static char const *weaponIds[NUM_WEAPON_TYPES] = {
+#if __JDOOM__ || __JDOOM64__
+        /* WT_FIRST */   "fist",
+        /* WT_SECOND */  "pistol",
+        /* WT_THIRD */   "shotgun",
+        /* WT_FOURTH */  "chaingun",
+        /* WT_FIFTH */   "mlauncher",
+        /* WT_SIXTH */   "plasmarifle",
+        /* WT_SEVENTH */ "bfg",
+        /* WT_EIGHTH */  "chainsaw",
+        /* WT_NINETH */  "sshotgun"
+#elif __JHERETIC__
+        /* WT_FIRST */   "staff",
+        /* WT_SECOND */  "goldwand",
+        /* WT_THIRD */   "crossbow",
+        /* WT_FOURTH */  "dragonclaw",
+        /* WT_FIFTH */   "hellstaff",
+        /* WT_SIXTH */   "phoenixrod",
+        /* WT_SEVENTH */ "mace",
+        /* WT_EIGHTH */  "gauntlets"
+#elif __JHEXEN__
+        /* WT_FIRST */   "first",
+        /* WT_SECOND */  "second",
+        /* WT_THIRD */   "third",
+        /* WT_FOURTH*/   "fourth"
+#endif
+    };
+    for(int i = 0; i < NUM_WEAPON_TYPES; ++i)
+    {
+        Block cvarName = String("player-weapon-%1").arg(weaponIds[i]).toUtf8();
+        Con_SetInteger2(cvarName.constData(), player->weapons[i].owned, SVF_WRITE_OVERRIDE);
+    }
+
+#if __JHEXEN__
+    for(int i = 0; i < WEAPON_FOURTH_PIECE_COUNT; ++i)
+    {
+        Block cvarName = String("player-weapon-piece%1").arg(i + 1).toUtf8();
+        Con_SetInteger2(cvarName.constData(),  (player->pieces & (1 << i))? 1 : 0, SVF_WRITE_OVERRIDE);
+    }
+    Con_SetInteger2("player-weapon-allpieces", (player->pieces == WEAPON_FOURTH_COMPLETE)? 1 : 0, SVF_WRITE_OVERRIDE);
+#endif
+
+    // Current ammo amounts.
+    static char const *ammoIds[NUM_AMMO_TYPES] = {
+#if __JDOOM__ || __JDOOM64__
+        /* AT_CLIP */      "bullets",
+        /* AT_SHELL */     "shells",
+        /* AT_CELL */      "cells",
+        /* AT_MISSILE */   "missiles"
+#elif __JHERETIC__
+        /* AT_CRYSTAL */   "goldwand",
+        /* AT_ARROW */     "crossbow",
+        /* AT_ORB */       "dragonclaw",
+        /* AT_RUNE */      "hellstaff",
+        /* AT_FIREORB */   "phoenixrod",
+        /* AT_MSPHERE */   "mace"
+#elif __JHEXEN__
+        /* AT_BLUEMANA */  "bluemana",
+        /* AT_GREENMANA */ "greenmana"
+#endif
+    };
+    for(int i = 0; i < NUM_AMMO_TYPES; ++i)
+    {
+        Block cvarName = String("player-ammo-%1").arg(ammoIds[i]).toUtf8();
+        Con_SetInteger2(cvarName.constData(), player->ammo[i].owned, SVF_WRITE_OVERRIDE);
+    }
+
+#if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
+    // Inventory items.
+    static char const *invItemIds[NUM_INVENTORYITEM_TYPES] = {
+#  if __JDOOM64__
+        /* IIT_DEMONKEY1 */         "bluedemonkey",
+        /* IIT_DEMONKEY2 */         "yellowdemonkey",
+        /* IIT_DEMONKEY3 */         "reddemonkey"
+#  elif __JHERETIC__
+        /* IIT_INVULNERABILITY */   "ring",
+        /* IIT_INVISIBILITY */      "shadowsphere",
+        /* IIT_HEALTH */            "crystalvial",
+        /* IIT_SUPERHEALTH */       "mysticurn",
+        /* IIT_TOMBOFPOWER */       "tomeofpower",
+        /* IIT_TORCH */             "torch",
+        /* IIT_FIREBOMB */          "firebomb",
+        /* IIT_EGG */               "egg",
+        /* IIT_FLY */               "wings",
+        /* IIT_TELEPORT */          "chaosdevice"
+#  elif __JHEXEN__
+        /* IIT_INVULNERABILITY */   "defender",
+        /* IIT_HEALTH */            "quartzflask",
+        /* IIT_SUPERHEALTH */       "mysticurn",
+        /* IIT_HEALINGRADIUS */     "mysticambit",
+        /* IIT_SUMMON */            "darkservant",
+        /* IIT_TORCH */             "torch",
+        /* IIT_EGG */               "porkalator",
+        /* IIT_FLY */               "wings",
+        /* IIT_BLASTRADIUS */       "repulsion",
+        /* IIT_POISONBAG */         "flechette",
+        /* IIT_TELEPORTOTHER */     "banishment",
+        /* IIT_SPEED */             "speed",
+        /* IIT_BOOSTMANA */         "might",
+        /* IIT_BOOSTARMOR */        "bracers",
+        /* IIT_TELEPORT */          "chaosdevice",
+        /* IIT_PUZZSKULL */         "skull",
+        /* IIT_PUZZGEMBIG */        "heart",
+        /* IIT_PUZZGEMRED */        "ruby",
+        /* IIT_PUZZGEMGREEN1 */     "emerald1",
+        /* IIT_PUZZGEMGREEN2 */     "emerald2",
+        /* IIT_PUZZGEMBLUE1 */      "sapphire1",
+        /* IIT_PUZZGEMBLUE2 */      "sapphire2",
+        /* IIT_PUZZBOOK1 */         "daemoncodex",
+        /* IIT_PUZZBOOK2 */         "liberoscura",
+        /* IIT_PUZZSKULL2 */        "flamemask",
+        /* IIT_PUZZFWEAPON */       "glaiveseal",
+        /* IIT_PUZZCWEAPON */       "holyrelic",
+        /* IIT_PUZZMWEAPON */       "sigilmagus",
+        /* IIT_PUZZGEAR1 */         "gear1",
+        /* IIT_PUZZGEAR2 */         "gear2",
+        /* IIT_PUZZGEAR3 */         "gear3",
+        /* IIT_PUZZGEAR4 */         "gear4"
+#  endif
+    };
+    int const plrNum = player - players;
+    for(int i = IIT_FIRST; i < NUM_INVENTORYITEM_TYPES; ++i)
+    {
+        String cvarName = String("player-artifact-%1").arg(invItemIds[i - 1]);
+        int numItems = 0;
+        if(player->plr->inGame && G_GameState() == GS_MAP)
+        {
+            numItems = P_InventoryCount(plrNum, inventoryitemtype_t(i));
+        }
+        Con_SetInteger2(cvarName.toUtf8().constData(), numItems, SVF_WRITE_OVERRIDE);
+    }
+#endif
 }

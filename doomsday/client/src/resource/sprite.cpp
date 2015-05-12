@@ -24,7 +24,6 @@
 #include "resource/sprite.h"
 
 #ifdef __CLIENT__
-#  include "MaterialSnapshot"
 #  include "TextureManifest"
 
 #  include "gl/gl_tex.h" // pointlight_analysis_t
@@ -137,9 +136,10 @@ double Sprite::visualRadius() const
 {
     if(hasViewAngle(0))
     {
-        Material *material = viewAngle(0).material;
-        MaterialSnapshot const &ms = material->prepare(Rend_SpriteMaterialSpec());
-        return ms.width() / 2;
+        MaterialAnimator &matAnimator = viewAngle(0).material->getAnimator(Rend_SpriteMaterialSpec());
+        // Ensure we've up to date info about the material.
+        matAnimator.prepare();
+        return matAnimator.dimensions().x / 2;
     }
     return 0;
 }
@@ -150,24 +150,26 @@ Lumobj *Sprite::generateLumobj() const
 
     // Always use rotation zero.
     /// @todo We could do better here...
-    if(!hasViewAngle(0)) return 0;
-    Material *mat = viewAngle(0).material;
+    if(!hasViewAngle(0)) return nullptr;
+
+    MaterialAnimator &matAnimator = viewAngle(0).material->getAnimator(Rend_SpriteMaterialSpec());
 
     // Ensure we have up-to-date information about the material.
-    MaterialSnapshot const &ms = mat->prepare(Rend_SpriteMaterialSpec());
-    if(!ms.hasTexture(MTU_PRIMARY)) return 0; // Unloadable texture?
-    Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
+    matAnimator.prepare();
 
-    pointlight_analysis_t const *pl = reinterpret_cast<pointlight_analysis_t const *>(ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::BrightPointAnalysis));
+    TextureVariant *texture = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
+    if(!texture) return nullptr;  // Unloadable texture?
+
+    auto const *pl = (pointlight_analysis_t const *)texture->base().analysisDataPointer(Texture::BrightPointAnalysis);
     if(!pl)
     {
         LOGDEV_RES_WARNING("Texture \"%s\" has no BrightPointAnalysis")
-            << ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri();
-        return 0;
+                << texture->base().manifest().composeUri();
+        return nullptr;
     }
 
     // Apply the auto-calculated color.
     return &(new Lumobj(Vector3d(), pl->brightMul, pl->color.rgb))
-                    ->setZOffset(-tex.origin().y - pl->originY * ms.height());
+                    ->setZOffset(-texture->base().origin().y - pl->originY * matAnimator.dimensions().y);
 }
-#endif // __CLIENT__
+#endif  // __CLIENT__

@@ -25,6 +25,7 @@
 #include "api_base.h"
 #include <de/reader.h>
 #include <de/writer.h>
+#include <doomsday/world/thinker.h>
 
 #ifdef __DOOMSDAY__
 namespace de {
@@ -42,22 +43,6 @@ extern "C" {
  */
 ///@{
 
-struct thinker_s;
-
-/// Function pointer to a function to handle an actor's thinking.
-/// The argument is a pointer to the object doing the thinking.
-typedef void (*thinkfunc_t) (void *);
-
-/**
- * Base for all thinker objects.
- */
-typedef struct thinker_s {
-    struct thinker_s *prev, *next;
-    thinkfunc_t function;
-    dd_bool inStasis;
-    thid_t id; ///< Only used for mobjs (zero is not an ID).
-} thinker_t;
-
 DENG_API_TYPEDEF(Thinker)
 {
     de_api_t api;
@@ -66,14 +51,6 @@ DENG_API_TYPEDEF(Thinker)
     void (*Run)(void);
     void (*Add)(thinker_t *th);
     void (*Remove)(thinker_t *th);
-
-    /**
-     * Change the 'in stasis' state of a thinker (stop it from thinking).
-     *
-     * @param th  The thinker to change.
-     * @param on  @c true, put into stasis.
-     */
-    void (*SetStasis)(thinker_t *th, dd_bool on);
 
     int (*Iterate)(thinkfunc_t func, int (*callback) (thinker_t *, void *), void *context);
 }
@@ -84,7 +61,6 @@ DENG_API_T(Thinker);
 #define Thinker_Run         _api_Thinker.Run
 #define Thinker_Add         _api_Thinker.Add
 #define Thinker_Remove      _api_Thinker.Remove
-#define Thinker_SetStasis   _api_Thinker.SetStasis
 #define Thinker_Iterate     _api_Thinker.Iterate
 #endif
 

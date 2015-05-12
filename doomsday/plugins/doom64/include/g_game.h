@@ -27,8 +27,8 @@
  * Top-level (common) game routines jDoom64 - specific.
  */
 
-#ifndef LIBJDOOM64_G_GAME_H
-#define LIBJDOOM64_G_GAME_H
+#ifndef LIBDOOM64_G_GAME_H
+#define LIBDOOM64_G_GAME_H
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
@@ -37,15 +37,11 @@
 #include "doomdef.h"
 #include "d_player.h"
 #include "gamerules.h"
-#include "wi_stuff.h"
+#include "intermission.h"
 
 DENG_EXTERN_C player_t players[MAXPLAYERS];
 
-DENG_EXTERN_C uint nextMap; // If non zero this will be the next map.
-DENG_EXTERN_C uint nextMapEntrance;
-DENG_EXTERN_C dd_bool secretExit;
 DENG_EXTERN_C int totalKills, totalItems, totalSecret;
-DENG_EXTERN_C wbstartstruct_t wmInfo;
 DENG_EXTERN_C int bodyQueueSlot;
 DENG_EXTERN_C dd_bool paused;
 DENG_EXTERN_C dd_bool precache;
@@ -53,18 +49,28 @@ DENG_EXTERN_C dd_bool customPal;
 DENG_EXTERN_C dd_bool briefDisabled;
 
 #ifdef __cplusplus
+
+extern bool secretExit;
+
+extern wbstartstruct_t wmInfo;
+
 extern "C" {
 #endif
 
-void G_Register(void);
+void G_ConsoleRegister(void);
 void G_CommonPreInit(void);
 void G_CommonPostInit(void);
+
+/**
+ * To be called post-game initialization, to examine the command line to determine if
+ * a new game session should be started automatically, or, begin the title loop.
+ */
+void G_AutoStartOrBeginTitleLoop(void);
+
 void G_CommonShutdown(void);
 
 void R_InitRefresh(void);
 void G_DeathMatchSpawnPlayer(int playernum);
-
-void G_PrintMapList(void);
 
 void G_DeferredPlayDemo(char* demo);
 
@@ -92,4 +98,4 @@ void G_QueueBody(mobj_t* body);
 } // extern "C"
 #endif
 
-#endif /* LIBJDOOM64_G_GAME_H */
+#endif /* LIBDOOM64_G_GAME_H */

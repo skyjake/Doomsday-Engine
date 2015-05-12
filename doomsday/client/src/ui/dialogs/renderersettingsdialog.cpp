@@ -23,14 +23,15 @@
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/editors/rendererappearanceeditor.h"
 #include "ui/widgets/profilepickerwidget.h"
-#include "con_main.h"
 #include "clientapp.h"
+#include "ui/clientwindow.h"
 
 #include <de/GridPopupWidget>
 #include <de/GridLayout>
 #include <de/SignalAction>
 #include <de/DialogContentStylist>
 #include <de/InputDialog>
+#include <de/VariableSliderWidget>
 
 using namespace de;
 using namespace ui;
@@ -60,12 +61,6 @@ DENG_GUI_PIMPL(RendererSettingsDialog)
         fov->setPrecision(0);
         fov->setRange(Ranged(30, 160));
 
-        area.add(precacheModels  = new CVarToggleWidget("rend-model-precache"));
-        area.add(precacheSprites = new CVarToggleWidget("rend-sprite-precache"));
-        area.add(multiLight      = new CVarToggleWidget("rend-light-multitex"));
-        area.add(multiShiny      = new CVarToggleWidget("rend-model-shiny-multitex"));
-        area.add(multiDetail     = new CVarToggleWidget("rend-tex-detail-multitex"));
-
         // Set up a separate popup for developer settings.
         self.add(devPopup = new GridPopupWidget);
 
@@ -81,6 +76,20 @@ DENG_GUI_PIMPL(RendererSettingsDialog)
                 << new ChoiceItem(tr("Game world"), 1)
                 << new ChoiceItem(tr("Game world and UI"), 2);
 
+        precacheModels  = new CVarToggleWidget("rend-model-precache",       tr("3D Models"));
+        precacheSprites = new CVarToggleWidget("rend-sprite-precache",      tr("Sprites"));
+        multiLight      = new CVarToggleWidget("rend-light-multitex",       tr("Dynamic Lights"));
+        multiShiny      = new CVarToggleWidget("rend-model-shiny-multitex", tr("3D Model Shiny Surfaces"));
+        multiDetail     = new CVarToggleWidget("rend-tex-detail-multitex",  tr("Surface Details"));
+
+        devPopup->addSeparatorLabel(tr("Behavior"));
+        *devPopup << LabelWidget::newWithText(tr("Precaching:")) << precacheModels
+                  << Const(0) << precacheSprites
+                  << LabelWidget::newWithText(tr("Multitexturing:")) << multiLight
+                  << Const(0) << multiShiny
+                  << Const(0) << multiDetail;
+
+        devPopup->addSeparatorLabel(tr("Diagnosis"));
         *devPopup << LabelWidget::newWithText(tr("Surface Texturing:"))
                   << rendTex
                   << LabelWidget::newWithText(tr("Draw as Wireframe:"))
@@ -125,18 +134,6 @@ RendererSettingsDialog::RendererSettingsDialog(String const &name)
     appearLabel->setName("appearance-label"); // for lookup from tutorial
     LabelWidget *fovLabel = LabelWidget::newWithText(tr("Field of View:"), &area());
 
-    LabelWidget *precacheLabel = LabelWidget::newWithText(tr("Precaching:"), &area());
-    d->precacheModels->setText(tr("3D Models"));
-    d->precacheSprites->setText(tr("Sprites"));
-
-    LabelWidget *multiLabel = LabelWidget::newWithText(tr("Multitexturing:"), &area());
-    d->multiLight->setText(tr("Dynamic Lights"));
-    d->multiShiny->setText(tr("3D Model Shiny Surfaces"));
-    d->multiDetail->setText(tr("Surface Details"));
-
-    LabelWidget *capLabel = LabelWidget::newWithText(_E(1)_E(D) + tr("Behavior"), &area());
-    capLabel->margins().setTop("gap");
-
     // Layout.
     GridLayout layout(area().contentRule().left(), area().contentRule().top());
     layout.setGridSize(2, 0);
@@ -148,16 +145,15 @@ RendererSettingsDialog::RendererSettingsDialog(String const &name)
 
     layout << *fovLabel << *d->fov;
 
-    // Label for the tech caps.
-    layout.setCellAlignment(Vector2i(0, 2), ui::AlignLeft);
-    layout.append(*capLabel, 2);
+    // Slider for modifying the global pixel density factor. This allows slower
+    // GPUs to compensate for large resolutions.
+    {
+        auto *pd = new VariableSliderWidget(App::config("render.pixelDensity"), Ranged(0, 1), .05);
+        pd->setPrecision(2);
+        area().add(pd);
 
-    layout
-           << *precacheLabel << *d->precacheModels
-           << Const(0)       << *d->precacheSprites
-           << *multiLabel    << *d->multiLight
-           << Const(0)       << *d->multiShiny
-           << Const(0)       << *d->multiDetail;
+        layout << *LabelWidget::newWithText(tr("Pixel Density:"), &area()) << *pd;
+    }
 
     area().setContentSize(layout.width(), layout.height());
 

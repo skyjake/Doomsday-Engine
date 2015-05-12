@@ -32,21 +32,21 @@
 
 void X_Register(void)
 {
-    C_VAR_FLOAT("view-cross-angle", &cfg.xhairAngle, 0, 0, 1);
-    C_VAR_FLOAT("view-cross-size", &cfg.xhairSize, 0, 0, 1);
-    C_VAR_INT  ("view-cross-type", &cfg.xhair, 0, 0, NUM_XHAIRS);
-    C_VAR_BYTE ("view-cross-vitality", &cfg.xhairVitality, 0, 0, 1);
-    C_VAR_FLOAT("view-cross-r", &cfg.xhairColor[0], 0, 0, 1);
-    C_VAR_FLOAT("view-cross-g", &cfg.xhairColor[1], 0, 0, 1);
-    C_VAR_FLOAT("view-cross-b", &cfg.xhairColor[2], 0, 0, 1);
-    C_VAR_FLOAT("view-cross-a", &cfg.xhairColor[3], 0, 0, 1);
+    C_VAR_FLOAT("view-cross-angle", &cfg.common.xhairAngle, 0, 0, 1);
+    C_VAR_FLOAT("view-cross-size", &cfg.common.xhairSize, 0, 0, 1);
+    C_VAR_INT  ("view-cross-type", &cfg.common.xhair, 0, 0, NUM_XHAIRS);
+    C_VAR_BYTE ("view-cross-vitality", &cfg.common.xhairVitality, 0, 0, 1);
+    C_VAR_FLOAT("view-cross-r", &cfg.common.xhairColor[0], 0, 0, 1);
+    C_VAR_FLOAT("view-cross-g", &cfg.common.xhairColor[1], 0, 0, 1);
+    C_VAR_FLOAT("view-cross-b", &cfg.common.xhairColor[2], 0, 0, 1);
+    C_VAR_FLOAT("view-cross-a", &cfg.common.xhairColor[3], 0, 0, 1);
 }
 
 static dd_bool currentColor(player_t* player, float color[3])
 {
     if(!player || !color) return false;
 
-    if(cfg.xhairVitality)
+    if(cfg.common.xhairVitality)
     {
         // Color the crosshair according to how close the player is to death.
         /// @todo These colors should be cvars.
@@ -63,16 +63,16 @@ static dd_bool currentColor(player_t* player, float color[3])
     else
     {
         // Custom color.
-        color[CR] = MINMAX_OF(0, cfg.xhairColor[CR], 1);
-        color[CG] = MINMAX_OF(0, cfg.xhairColor[CG], 1);
-        color[CB] = MINMAX_OF(0, cfg.xhairColor[CB], 1);
+        color[CR] = MINMAX_OF(0, cfg.common.xhairColor[CR], 1);
+        color[CG] = MINMAX_OF(0, cfg.common.xhairColor[CG], 1);
+        color[CB] = MINMAX_OF(0, cfg.common.xhairColor[CB], 1);
     }
     return true;
 }
 
 static float currentOpacity(player_t* player)
 {
-    float opacity = MINMAX_OF(0, cfg.xhairColor[3], 1);
+    float opacity = MINMAX_OF(0, cfg.common.xhairColor[3], 1);
 
     // Dead players are incapable of aiming so we want to fade out the crosshair on death.
     if(player->plr->flags & DDPF_DEAD)
@@ -93,7 +93,7 @@ void X_Drawer(int pnum)
 #define XHAIR_LINE_WIDTH    1.f
 
     player_t* player = players + pnum;
-    int xhair = MINMAX_OF(0, cfg.xhair, NUM_XHAIRS);
+    int xhair = MINMAX_OF(0, cfg.common.xhair, NUM_XHAIRS);
     float scale, oldLineWidth, color[4];
     Point2Rawf origin;
     RectRaw win;
@@ -109,7 +109,7 @@ void X_Drawer(int pnum)
     R_ViewWindowGeometry(pnum, &win);
     origin.x = win.origin.x + (win.size.width  / 2);
     origin.y = win.origin.y + (win.size.height / 2);
-    scale = .125f + MINMAX_OF(0, cfg.xhairSize, 1) * .125f * win.size.height * ((float)80/SCREENHEIGHT);
+    scale = .125f + MINMAX_OF(0, cfg.common.xhairSize, 1) * .125f * win.size.height * ((float)80/SCREENHEIGHT);
 
     oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
     DGL_SetFloat(DGL_LINE_WIDTH, XHAIR_LINE_WIDTH);
@@ -117,7 +117,7 @@ void X_Drawer(int pnum)
     currentColor(player, color);
     DGL_Color4fv(color);
 
-    GL_DrawSvg3(VG_XHAIR1 + (xhair-1), &origin, scale, MINMAX_OF(0.f, cfg.xhairAngle, 1.f) * 360);
+    GL_DrawSvg3(VG_XHAIR1 + (xhair-1), &origin, scale, MINMAX_OF(0.f, cfg.common.xhairAngle, 1.f) * 360);
 
     // Restore the previous state.
     DGL_SetFloat(DGL_LINE_WIDTH, oldLineWidth);

@@ -36,8 +36,6 @@ extern "C" {
  */
 void P_MobjRemove(mobj_t *mo, dd_bool noRespawn);
 
-void P_RemoveAllPlayerMobjs(void);
-
 /**
  * To be called after a move, to link the mobj back into the world.
  *
@@ -97,7 +95,7 @@ dd_bool Mobj_IsDroppedItem(mobj_t *mobj);
  *
  * @param mobj  Mobj instance.
  */
-terraintype_t const *P_MobjFloorTerrain(mobj_t *mobj);
+terraintype_t const *P_MobjFloorTerrain(mobj_t const *mobj);
 
 /**
  * The first three bits of the selector special byte contain a relative

@@ -1,7 +1,10 @@
-/** @file net_main.cpp
+/** @file net_main.cpp  Client/server networking.
+ *
+ * Player number zero is always the server. In single-player games there is only
+ * the server present.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -16,15 +19,6 @@
  * General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small>
  */
-
-/**
- * Client/server networking.
- *
- * Player number zero is always the server.
- * In single-player games there is only the server present.
- */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <stdlib.h>             // for atoi()
 
@@ -41,11 +35,13 @@
 #endif
 
 #ifdef __CLIENT__
+#  include "api_fontrender.h"
 //#  include "render/rend_console.h"
 #  include "render/rend_main.h"
 #  include "render/lightgrid.h"
 #  include "render/blockmapvisual.h"
 #  include "edit_bias.h"
+#  include "ui/inputdebug.h"
 #  include "ui/widgets/taskbarwidget.h"
 #endif
 
@@ -184,10 +180,11 @@ void Net_Register(void)
     C_CMD_FLAGS("conlocp", "i", MakeCamera, CMDF_NO_NULLGAME);
 #ifdef __CLIENT__
     C_CMD_FLAGS("connect", NULL, Connect, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("login", NULL, Login, CMDF_NO_NULLGAME);
+    /// @todo Must reimplement using libshell. -jk
+    //C_CMD_FLAGS("login", NULL, Login, CMDF_NO_NULLGAME);
 #endif
 #ifdef __SERVER__
-    C_CMD_FLAGS("logout", "", Logout, CMDF_NO_NULLGAME);
+    //C_CMD_FLAGS("logout", "", Logout, CMDF_NO_NULLGAME);
     C_CMD_FLAGS("kick", "i", Kick, CMDF_NO_NULLGAME);
 #endif
     C_CMD_FLAGS("net", NULL, Net, CMDF_NO_NULLGAME);
@@ -737,13 +734,15 @@ void Net_Drawer()
     // Draw the light range debug display.
     Rend_DrawLightModMatrix();
 
-    // Draw the input device debug display.
-    Rend_AllInputDeviceStateVisuals();
+# ifdef DENG2_DEBUG
+    // Draw the input debug display.
+    I_DebugDrawer();
+# endif
 
     // Draw the demo recording overlay.
     Net_DrawDemoOverlay();
 
-# ifdef _DEBUG
+# ifdef DENG2_DEBUG
     Z_DebugDrawer();
 # endif
 #endif // __CLIENT__
@@ -809,11 +808,11 @@ de::String ServerInfo_AsStyledText(serverinfo_t const *sv)
 #define TABBED(A, B) _E(Ta)_E(l) "  " A _E(.) " " _E(\t) B "\n"
     return de::String(_E(b) "%1" _E(.) "\n%2\n" _E(T`)
                       TABBED("Joinable:", "%5")
-                      TABBED("Players:", "%3 / %4%13")
-                      TABBED("Game:", "%9\n%10\n%12 %11")
-                      TABBED("PWADs:", "%14")
+                      TABBED("Players:", "%3 / %4%12")
+                      TABBED("Game:", "%8\n%9\n%11 %10")
+                      TABBED("PWADs:", "%13")
                       TABBED("Address:", "%6:%7")
-                      TABBED("Ping:", "%8 ms (approx)"))
+                      /*TABBED("Ping:", "%8 ms (approx)")*/)
             .arg(sv->name)
             .arg(sv->description)
             .arg(sv->numPlayers)
@@ -821,7 +820,7 @@ de::String ServerInfo_AsStyledText(serverinfo_t const *sv)
             .arg(sv->canJoin? "Yes" : "No") // 5
             .arg(sv->address)
             .arg(sv->port)
-            .arg(sv->ping)
+            //.arg(sv->ping)
             .arg(sv->plugin)
             .arg(sv->gameIdentityKey) // 10
             .arg(sv->gameConfig)
@@ -1307,14 +1306,10 @@ D_CMD(Net)
             // Start network setup.
             if(!stricmp(argv[2], "client"))
             {
-                CmdReturnValue = true;
                 ClientWindow::main().taskBar().close();
                 ClientWindow::main().taskBar().showMultiplayer();
             }
-            else
-                return false;
-            //DD_NetSetup(!stricmp(argv[2], "server"));
-            //CmdReturnValue = true;
+            else return false;
         }
 #endif
     }

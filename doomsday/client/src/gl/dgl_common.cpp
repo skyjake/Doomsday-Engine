@@ -21,8 +21,8 @@
 
 #define DENG_NO_API_MACROS_GL
 
-#include <cstdlib>
-#include <cmath>
+#include <de/GLState>
+#include <de/GLInfo>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -35,8 +35,9 @@
 #include "api_gl.h"
 #include "gl/gl_texmanager.h"
 
-#include <de/GLState>
-#include <de/GLInfo>
+#include <cstdlib>
+#include <cmath>
+#include <de/concurrency.h>
 
 using namespace de;
 
@@ -454,7 +455,7 @@ dd_bool DGL_GetIntegerv(int name, int *v)
 #undef DGL_GetInteger
 int DGL_GetInteger(int name)
 {
-    int values[10];
+    int values[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     DGL_GetIntegerv(name, values);
     return values[0];
 }
@@ -719,7 +720,7 @@ void DGL_PushMatrix(void)
 
 #if _DEBUG
 if(glGetError() == GL_STACK_OVERFLOW)
-    Con_Error("DG_PushMatrix: Stack overflow.\n");
+    App_Error("DG_PushMatrix: Stack overflow.\n");
 #endif
 }
 
@@ -738,7 +739,7 @@ static gl::Wrapping DGL_ToGLWrapCap(DGLint cap)
 
     case DGL_REPEAT:        return gl::Repeat;
     default:
-        Con_Error("DGL_ToGLWrapCap: Unknown cap value %i.", (int)cap);
+        App_Error("DGL_ToGLWrapCap: Unknown cap value %i.", (int)cap);
         exit(1); // Unreachable.
     }
 }
@@ -799,7 +800,7 @@ void DGL_PopMatrix(void)
 
 #if _DEBUG
 if(glGetError() == GL_STACK_UNDERFLOW)
-    Con_Error("DG_PopMatrix: Stack underflow.\n");
+    App_Error("DG_PopMatrix: Stack underflow.\n");
 #endif
 }
 
@@ -928,6 +929,7 @@ DENG_EXTERN_C void GL_ConfigureBorderedProjection2(dgl_borderedprojectionstate_t
 DENG_EXTERN_C void GL_ConfigureBorderedProjection(dgl_borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);
 DENG_EXTERN_C void GL_BeginBorderedProjection(dgl_borderedprojectionstate_t* bp);
 DENG_EXTERN_C void GL_EndBorderedProjection(dgl_borderedprojectionstate_t* bp);
+DENG_EXTERN_C void GL_ResetViewEffects();
 
 DENG_DECLARE_API(GL) =
 {
@@ -1004,5 +1006,6 @@ DENG_DECLARE_API(GL) =
     GL_ConfigureBorderedProjection2,
     GL_ConfigureBorderedProjection,
     GL_BeginBorderedProjection,
-    GL_EndBorderedProjection
+    GL_EndBorderedProjection,
+    GL_ResetViewEffects
 };

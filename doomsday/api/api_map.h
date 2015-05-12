@@ -1,12 +1,12 @@
-/** @file api_map.h Public API to the world (map) data.
+/** @file api_map.h  Public API to the world (map) data.
+ *
+ * @ingroup world
  *
  * World data comprises the map and all the objects in it. The public API
  * includes accessing and modifying map data objects via DMU.
  *
- * @ingroup world
- *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -29,6 +29,8 @@
 #include "apis.h"
 #include <de/aabox.h>
 #include <de/mathutil.h>
+#include <de/str.h>
+#include <doomsday/world/thinker.h>
 
 #define DMT_ARCHIVE_INDEX DDVT_INT
 
@@ -95,6 +97,7 @@
 
 // Opaque types for public use.
 struct bspleaf_s;
+struct convexsubspace_s;
 struct bspnode_s;
 struct segment_s;
 struct line_s;
@@ -102,28 +105,32 @@ struct mobj_s;
 struct plane_s;
 struct sector_s;
 struct side_s;
+struct sky_s;
 struct vertex_s;
 struct material_s;
 struct interceptor_s;
 
-typedef struct bspleaf_s    BspLeaf;
-typedef struct bspnode_s    BspNode;
-typedef struct line_s       Line;
-typedef struct plane_s      Plane;
-typedef struct sector_s     Sector;
-typedef struct side_s       Side;
-typedef struct vertex_s     Vertex;
-typedef struct material_s   Material;
-typedef struct interceptor_s Interceptor;
+typedef struct bspleaf_s        BspLeaf;
+typedef struct convexsubspace_s ConvexSubspace;
+typedef struct bspnode_s        BspNode;
+typedef struct line_s           Line;
+typedef struct plane_s          Plane;
+typedef struct sector_s         Sector;
+typedef struct side_s           Side;
+typedef struct vertex_s         Vertex;
+typedef struct material_s       Material;
+typedef struct interceptor_s    Interceptor;
 
 #elif defined __cplusplus
 
 // Foward declarations.
-class Line;
-class Sector;
-class Material;
 class BspLeaf;
+class ConvexSubspace;
 class Interceptor;
+class Line;
+class Material;
+class Sector;
+class Sky;
 
 #endif
 
@@ -228,30 +235,30 @@ DENG_API_TYPEDEF(Map)
     de_api_t api;
 
     /**
-     * Is there a known map referenced by @a uri and if so, is it available for
-     * loading?
-     *
-     * @param uri  Uri identifying the map to be searched for.
-     * @return  @c true: a known and loadable map.
+     * Determines whether the given @a uri references a known map.
      */
     dd_bool         (*Exists)(char const *uri);
 
+    /**
+     * Determines whether the given @a uri references a known map, which, does
+     * not originate form the currently loaded game.
+     */
     dd_bool         (*IsCustom)(char const *uri);
 
     /**
-     * Retrieve the name of the source file containing the map referenced by @a
-     * uri if known and available for loading.
+     * Determines whether the given @a uri references a known map and if so returns
+     * the full path of the source file which contains it.
      *
-     * @param uri  Uri identifying the map to be searched for.
-     * @return  Fully qualified (i.e., absolute) path to the source file.
+     * @return  Fully qualified (i.e., absolute) path to the source file if known;
+     *          otherwise a zero-length string.
      */
     AutoStr        *(*SourceFile)(char const *uri);
 
     /**
-     * Change the current map (will be loaded if necessary).
+     * Attempt to change the current map (will be loaded if necessary) to that
+     * referenced by @a uri.
      *
-     * @param uri  Uri identifying the map to change to.
-     * @return  @c true= map was changed successfully.
+     * @return  @c true= the current map was changed.
      */
     dd_bool         (*Change)(char const *uri);
 
@@ -310,6 +317,13 @@ DENG_API_TYPEDEF(Map)
     struct mobj_s  *(*MO_CreateXYZ)(thinkfunc_t function, coord_t x, coord_t y, coord_t z, angle_t angle, coord_t radius, coord_t height, int ddflags);
     void            (*MO_Destroy)(struct mobj_s *mobj);
     struct mobj_s  *(*MO_ById)(int id);
+
+    /**
+     * @note validCount should be incremented before calling this to begin a
+     * new logical traversal. Otherwise Mobjs marked with a validCount equal
+     * to this will be skipped over (can be used to avoid processing a mobj
+     * multiple times during a complex and/or non-linear traversal.
+     */
     int             (*MO_BoxIterator)(AABoxd const *box, int (*callback) (struct mobj_s *, void *), void *context);
 
     /**
@@ -407,6 +421,12 @@ DENG_API_TYPEDEF(Map)
      */
     struct polyobj_s *(*PO_ByTag)(int tag);
 
+    /**
+     * @note validCount should be incremented before calling this to begin a
+     * new logical traversal. Otherwise Polyobjs marked with a validCount equal
+     * to this will be skipped over (can be used to avoid processing a polyobj
+     * multiple times during a complex and/or non-linear traversal.
+     */
     int             (*PO_BoxIterator)(AABoxd const *box, int (*callback) (struct polyobj_s *, void *), void *context);
 
     /**
@@ -414,7 +434,13 @@ DENG_API_TYPEDEF(Map)
      */
     void            (*PO_SetCallback)(void (*func)(struct mobj_s *, void *, void *));
 
-    int             (*BL_BoxIterator)(AABoxd const *box, int (*callback) (BspLeaf *, void *), void *context);
+    /**
+     * @note validCount should be incremented before calling this to begin a
+     * new logical traversal. Otherwise Polyobjs marked with a validCount equal
+     * to this will be skipped over (can be used to avoid processing a polyobj
+     * multiple times during a complex and/or non-linear traversal.
+     */
+    int             (*SS_BoxIterator)(AABoxd const *box, int (*callback) (ConvexSubspace *, void *), void *context);
 
     // Traversers
 
@@ -698,7 +724,7 @@ DENG_API_T(Map);
 #define Polyobj_BoxIterator                 _api_Map.PO_BoxIterator
 #define Polyobj_SetCallback                 _api_Map.PO_SetCallback
 
-#define BspLeaf_BoxIterator                 _api_Map.BL_BoxIterator
+#define Subspace_BoxIterator                _api_Map.SS_BoxIterator
 
 #define P_PathTraverse                      _api_Map.PathTraverse
 #define P_PathTraverse2                     _api_Map.PathTraverse2

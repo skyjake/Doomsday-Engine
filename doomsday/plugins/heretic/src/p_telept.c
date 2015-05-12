@@ -73,7 +73,7 @@ dd_bool P_Teleport(mobj_t* mo, coord_t x, coord_t y, angle_t angle, dd_bool spaw
             mo->origin[VZ] = mo->floorZ;
         }
 
-        player->viewHeight = (coord_t) cfg.plrViewHeight;
+        player->viewHeight = (coord_t) cfg.common.plrViewHeight;
         player->viewHeightDelta = 0;
         player->viewZ = mo->origin[VZ] + player->viewHeight;
         player->viewOffset[VX] = player->viewOffset[VY] = player->viewOffset[VZ] = 0;

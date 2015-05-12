@@ -62,7 +62,7 @@ void P_SpawnAllSpecialThinkers(void);
 void P_InitAmbientSound(void);
 
 /**
- * Called by spawnMapThing during (P_setup):P_SetupMap.
+ * Called by spawnMapThing during @ref P_SetupMap()
  */
 void P_AddAmbientSfx(int sequence);
 

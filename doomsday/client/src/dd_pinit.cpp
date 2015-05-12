@@ -4,7 +4,7 @@
  * @todo Move these to dd_init.cpp.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -34,8 +34,13 @@
 #include "de_ui.h"
 #include "de_filesys.h"
 
+#ifdef __CLIENT__
+#  include "clientapp.h"
+#endif
+
 #include "def_main.h"
 #include "gl/svg.h"
+
 #ifdef __CLIENT__
 #  include "render/r_draw.h"
 #  include "render/r_main.h"
@@ -56,10 +61,10 @@ using namespace de;
 DENG_DECLARE_API(InternalData) =
 {
     { DE_API_INTERNAL_DATA },
-    &mobjInfo,
-    &states,
-    &sprNames,
-    &texts,
+    runtimeDefs.mobjInfo.elementsPtr(),
+    runtimeDefs.states  .elementsPtr(),
+    runtimeDefs.sprNames.elementsPtr(),
+    runtimeDefs.texts   .elementsPtr(),
     &validCount
 };
 game_export_t __gx;
@@ -115,25 +120,37 @@ void DD_InitCommandLine()
     CommandLine_Alias("-verbose", "-v");
 }
 
+static void App_AddKnownWords()
+{
+    // Add games as known words.
+    foreach(Game *game, App_Games().all())
+    {
+        Con_AddKnownWord(WT_GAME, game);
+    }
+}
+
 void DD_ConsoleInit()
 {
     // Get the console online ASAP.
     Con_Init();
+    Con_SetApplicationKnownWordCallback(App_AddKnownWords);
 
     LOG_NOTE("Executable: " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_FULLTEXT);
 
     // Print the used command line.
-    LOG_VERBOSE("Command line " _E(l) "(%i strings):") << CommandLine_Count();
+    LOG_MSG("Command line options:");
     for(int p = 0; p < CommandLine_Count(); ++p)
     {
-        LOG_VERBOSE("  %i: " _E(>) "%s") << p << CommandLine_At(p);
+        LOG_MSG("  %i: " _E(>) "%s") << p << CommandLine_At(p);
     }
 }
 
 void DD_ShutdownAll()
 {
-    FI_Shutdown();
-    UI_Shutdown();
+    App_InFineSystem().reset();
+#ifdef __CLIENT__
+    App_InFineSystem().deinitBindingContext();
+#endif
     Con_Shutdown();
     DD_ShutdownHelp();
 
@@ -150,14 +167,17 @@ void DD_ShutdownAll()
     }
 #endif
 
-    P_ControlShutdown();
+    P_ClearPlayerImpulses();
 #ifdef __SERVER__
     Sv_Shutdown();
 #endif
     R_ShutdownSvgs();
 #ifdef __CLIENT__
     R_ShutdownViewWindow();
-    Rend_Shutdown();
+    if(ClientApp::hasRenderSystem())
+    {
+        ClientApp::renderSystem().clearDrawLists();
+    }
 #endif
     Def_Destroy();
     F_Shutdown();

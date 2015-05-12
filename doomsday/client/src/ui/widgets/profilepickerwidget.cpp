@@ -133,7 +133,8 @@ void ProfilePickerWidget::openMenu()
             << new ActionItem(tr("Duplicate..."), new SignalAction(this, SLOT(duplicate())))
             << new ui::Item(Item::Separator)
             << new ActionItem(tr("Reset to Defaults..."), new SignalAction(this, SLOT(reset())))
-            << new ActionItem(tr("Delete..."), new SignalAction(this, SLOT(remove())));
+            << new ActionItem(style().images().image("close.ring"), tr("Delete..."),
+                              new SignalAction(this, SLOT(remove())));
     add(d->menu);
 
     ChildWidgetOrganizer const &org = d->menu->menu().organizer();

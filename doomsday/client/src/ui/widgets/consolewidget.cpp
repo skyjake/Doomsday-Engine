@@ -37,7 +37,9 @@
 #include <de/ToggleWidget>
 #include <de/LogWidget>
 #include <de/PersistentState>
+#include <de/NativeFile>
 #include <QCursor>
+#include <QClipboard>
 
 using namespace de;
 
@@ -46,15 +48,21 @@ static TimeDelta const LOG_OPEN_CLOSE_SPAN = 0.2;
 DENG_GUI_PIMPL(ConsoleWidget),
 DENG2_OBSERVES(Variable, Change)
 {
-    ButtonWidget *button;
-    ConsoleCommandWidget *cmdLine;
-    ScriptCommandWidget *scriptCmd;
-    PopupMenuWidget *menu;
-    LogWidget *log;
+    GuiWidget *buttons = nullptr;
+    ButtonWidget *button = nullptr;
+    ButtonWidget *promptButton = nullptr;
+    PopupMenuWidget *logMenu = nullptr;
+    PopupMenuWidget *promptMenu = nullptr;
+    ConsoleCommandWidget *cmdLine = nullptr;
+    ScriptCommandWidget *scriptCmd = nullptr;
+    LogWidget *log = nullptr;
     ScalarRule *horizShift;
     ScalarRule *height;
     ScalarRule *width;
     StyledLogSinkFormatter formatter;
+    bool opened = true;
+    bool scriptMode = false;
+    int grabWidth = 0;
 
     enum GrabEdge {
         NotGrabbed = 0,
@@ -62,24 +70,10 @@ DENG2_OBSERVES(Variable, Change)
         TopEdge
     };
 
-    bool opened;
-    bool scriptMode;
-    int grabWidth;
-    GrabEdge grabHover;
-    GrabEdge grabbed;
+    GrabEdge grabHover = NotGrabbed;
+    GrabEdge grabbed = NotGrabbed;
 
-    Instance(Public *i)
-        : Base(i),
-          button(0),
-          cmdLine(0),
-          scriptCmd(0),
-          menu(0),
-          log(0),
-          opened(true),
-          scriptMode(false),
-          grabWidth(0),
-          grabHover(NotGrabbed),
-          grabbed(NotGrabbed)
+    Instance(Public *i) : Base(i)
     {
         horizShift = new ScalarRule(0);
         width      = new ScalarRule(style().rules().rule("console.width").valuei());
@@ -87,12 +81,12 @@ DENG2_OBSERVES(Variable, Change)
 
         grabWidth  = style().rules().rule("gap").valuei();
 
-        App::config()["console.script"].audienceForChange() += this;
+        App::config("console.script").audienceForChange() += this;
     }
 
     ~Instance()
     {
-        App::config()["console.script"].audienceForChange() -= this;
+        App::config("console.script").audienceForChange() -= this;
 
         releaseRef(horizShift);
         releaseRef(width);
@@ -206,7 +200,7 @@ DENG2_OBSERVES(Variable, Change)
         }
 
         // Update the prompt to reflect the mode.
-        button->setText(yes? _E(b) "$" : _E(b) ">");
+        promptButton->setText(yes? _E(b)_E(F) "$" : ">");
 
         // Bottom of the console must follow the active command line height.
         self.rule().setInput(Rule::Bottom, next->rule().top() - style().rules().rule("unit"));
@@ -215,6 +209,9 @@ DENG2_OBSERVES(Variable, Change)
         {
             return; // No need to change anything else.
         }
+
+        scriptCmd->setAttribute(AnimateOpacityWhenEnabledOrDisabled, UnsetFlags);
+        cmdLine  ->setAttribute(AnimateOpacityWhenEnabledOrDisabled, UnsetFlags);
 
         scriptCmd->show(yes);        
         scriptCmd->enable(yes);
@@ -231,16 +228,41 @@ DENG2_OBSERVES(Variable, Change)
 
         emit self.commandModeChanged();
     }
+
+    struct RightClick : public GuiWidget::IEventHandler
+    {
+        Instance *d;
+
+        RightClick(Instance *inst) : d(inst) {}
+
+        bool handleEvent(GuiWidget &widget, Event const &event)
+        {
+            switch(widget.handleMouseClick(event, MouseEvent::Right))
+            {
+            case MouseClickFinished:
+                // Toggle the script mode.
+                App::config().set("console.script", !d->scriptMode);
+                return true;
+
+            case MouseClickUnrelated:
+                break; // not consumed
+
+            default:
+                return true;
+            }
+            return false;
+        }
+    };
 };
 
 static PopupWidget *consoleShortcutPopup()
 {
-    PopupWidget *pop = new PopupWidget;
+    auto *pop = new PopupWidget;
     // The 'padding' widget will provide empty margins around the content.
     // Popups normally do not provide any margins.
-    GuiWidget *padding = new GuiWidget;
+    auto *padding = new GuiWidget;
     padding->margins().set("dialog.gap");
-    InputBindingWidget *bind = InputBindingWidget::newTaskBarShortcut();
+    auto *bind = InputBindingWidget::newTaskBarShortcut();
     bind->setSizePolicy(ui::Expand, ui::Expand);
     padding->add(bind);
     // Place the binding inside the padding.
@@ -256,9 +278,36 @@ static PopupWidget *consoleShortcutPopup()
 
 ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
 {
+    d->buttons = new GuiWidget;
+    add(d->buttons);
+
+    // Button for opening the Log History menu.    
     d->button = new ButtonWidget;
-    d->button->setAction(new SignalAction(this, SLOT(openMenu())));
-    add(d->button);
+    d->button->setSizePolicy(ui::Expand, ui::Expand);
+    d->button->setImage(style().images().image("log"));
+    d->button->setOverrideImageSize(style().fonts().font("default").height().valuei());
+    d->buttons->add(d->button);
+
+    d->button->rule()
+            .setInput(Rule::Top,    d->buttons->rule().top())
+            .setInput(Rule::Left,   d->buttons->rule().left())
+            .setInput(Rule::Height, d->buttons->rule().height())
+            .setInput(Rule::Width,  d->button->rule().height()); // square
+
+    // Button for opening the console prompt menu.
+    d->promptButton = new ButtonWidget;
+    d->promptButton->addEventHandler(new Instance::RightClick(d));
+
+    d->promptButton->rule()
+            .setInput(Rule::Width,  d->promptButton->rule().height())
+            .setInput(Rule::Height, d->buttons->rule().height())
+            .setInput(Rule::Left,   d->button->rule().right())
+            .setInput(Rule::Top,    d->buttons->rule().top());
+    d->buttons->add(d->promptButton);
+
+    // Width of the button area is known; the task bar will define the rest.
+    d->buttons->rule().setInput(Rule::Width, d->button->rule().width() +
+                                             d->promptButton->rule().width());
 
     d->cmdLine = new ConsoleCommandWidget("commandline");
     d->cmdLine->setEmptyContentHint(tr("Enter commands here") /*  " _E(r)_E(l)_E(t) "SHIFT-ESC" */);
@@ -268,7 +317,7 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
     d->scriptCmd->setEmptyContentHint(tr("Enter scripts here"));
     add(d->scriptCmd);
 
-    d->button->setOpacity(.75f);
+    d->buttons->setOpacity(.75f);
     d->cmdLine->setOpacity(.75f);
     d->scriptCmd->setOpacity(.75f);
 
@@ -292,23 +341,43 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
 
     closeLog();
 
-    // Menu for console related functions.
-    d->menu = new PopupMenuWidget;
-    d->menu->setAnchor(d->button->rule().left() + d->button->rule().width() / 2,
-                       d->button->rule().top());
-
-    d->menu->items()
-            << new ui::ActionItem(tr("Clear Log"), new CommandAction("clear"))
+    // Menu for log history related features.
+    d->logMenu = new PopupMenuWidget;
+    d->logMenu->setAnchor(d->button->rule().midX(), d->button->rule().top());
+    d->logMenu->items()
             << new ui::ActionItem(tr("Show Full Log"), new SignalAction(this, SLOT(showFullLog())))
-            << new ui::ActionItem(tr("Scroll to Bottom"), new SignalAction(d->log, SLOT(scrollToBottom())))
-            << new ui::VariableToggleItem(tr("Go to Bottom on Enter"), App::config()["console.snap"])
+            << new ui::ActionItem(tr("Close Log"), new SignalAction(this, SLOT(closeLogAndUnfocusCommandLine())))
+            << new ui::ActionItem(tr("Go to Latest"), new SignalAction(d->log, SLOT(scrollToBottom())))
+            << new ui::ActionItem(tr("Copy Path to Clipboard"),
+                                  new SignalAction(this, SLOT(copyLogPathToClipboard())))
+            << new ui::Item(ui::Item::Annotation,
+                            tr("Copies the location of the log output file to the OS clipboard."))
             << new ui::Item(ui::Item::Separator)
-            << new ui::SubwidgetItem(tr("Log Filter & Alerts..."), ui::Right, makePopup<LogSettingsDialog>)
-            << new ui::SubwidgetItem(tr("Shortcut Key"), ui::Right, consoleShortcutPopup)
+            << new ui::ActionItem(style().images().image("close.ring"), tr("Clear Log"),
+                                  new CommandAction("clear"))
             << new ui::Item(ui::Item::Separator)
-            << new ui::VariableToggleItem(tr("Doomsday Script"), App::config()["console.script"]);
+            << new ui::VariableToggleItem(tr("Snap to Latest Entry"), App::config("console.snap"))
+            << new ui::Item(ui::Item::Annotation, tr("Running a command or script causes the log to scroll down to the latest entry."))
+            << new ui::VariableToggleItem(tr("Entry Metadata"), App::config("log.showMetadata"))
+            << new ui::Item(ui::Item::Annotation, tr("Time and subsystem of each new entry is printed."))
+            << new ui::Item(ui::Item::Separator)
+            << new ui::SubwidgetItem(tr("Log Filter & Alerts..."), ui::Right, makePopup<LogSettingsDialog>);
 
-    add(d->menu);
+    add(d->logMenu);
+    d->button->setAction(new SignalAction(d->logMenu, SLOT(open())));
+
+    // Menu for console prompt behavior.
+    d->promptMenu = new PopupMenuWidget;
+    d->promptMenu->setAnchor(d->promptButton->rule().midX(), d->promptButton->rule().top());
+    d->promptMenu->items()
+            << new ui::SubwidgetItem(tr("Shortcut Key..."), ui::Right, consoleShortcutPopup)
+            << new ui::Item(ui::Item::Separator)
+            << new ui::VariableToggleItem(tr("Doomsday Script"), App::config("console.script"))
+            << new ui::Item(ui::Item::Annotation,
+                            tr("The command prompt becomes an interactive script "
+                               "process with access to all the runtime DS modules."));
+    add(d->promptMenu);
+    d->promptButton->setAction(new SignalAction(d->promptMenu, SLOT(open())));
 
     d->setScriptMode(App::config().getb("console.script"));
 
@@ -324,9 +393,9 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
     connect(d->scriptCmd, SIGNAL(commandEntered(de::String)), this, SLOT(commandWasEntered(de::String)));
 }
 
-ButtonWidget &ConsoleWidget::button()
+GuiWidget &ConsoleWidget::buttons()
 {
-    return *d->button;
+    return *d->buttons;
 }
 
 CommandWidget &ConsoleWidget::commandLine()
@@ -355,7 +424,8 @@ void ConsoleWidget::enableBlur(bool yes)
     Background logBg = d->log->background();
     if(yes)
     {
-        logBg.type = Background::Blurred;
+        logBg.type = Background::SharedBlur;
+        logBg.blur = &ClientWindow::main().taskBarBlur();
     }
     else
     {
@@ -478,7 +548,19 @@ void ConsoleWidget::closeLog()
     d->log->setBehavior(DisableEventDispatch);
 }
 
+void ConsoleWidget::closeLogAndUnfocusCommandLine()
+{
+    closeLog();
+    root().setFocus(nullptr);
+}
+
 void ConsoleWidget::clearLog()
+{
+    zeroLogHeight();
+    d->log->clear();
+}
+
+void ConsoleWidget::zeroLogHeight()
 {
     d->height->set(0);
     d->log->scrollToBottom();
@@ -499,7 +581,10 @@ void ConsoleWidget::logContentHeightIncreased(int delta)
 
 void ConsoleWidget::setFullyOpaque()
 {
-    d->button->setOpacity(1, .25f);
+    d->scriptCmd->setAttribute(AnimateOpacityWhenEnabledOrDisabled);
+    d->cmdLine->setAttribute(AnimateOpacityWhenEnabledOrDisabled);
+
+    d->buttons->setOpacity(1, .25f);
     d->cmdLine->setOpacity(1, .25f);
     d->scriptCmd->setOpacity(1, .25f);
 }
@@ -514,7 +599,10 @@ void ConsoleWidget::commandLineFocusGained()
 
 void ConsoleWidget::commandLineFocusLost()
 {
-    d->button->setOpacity(.75f, .25f);
+    d->scriptCmd->setAttribute(AnimateOpacityWhenEnabledOrDisabled);
+    d->cmdLine->setAttribute(AnimateOpacityWhenEnabledOrDisabled);
+
+    d->buttons->setOpacity(.75f, .25f);
     d->cmdLine->setOpacity(.75f, .25f);
     d->scriptCmd->setOpacity(.75f, .25f);
     closeLog();
@@ -525,14 +613,10 @@ void ConsoleWidget::focusOnCommandLine()
     root().setFocus(&commandLine());
 }
 
-void ConsoleWidget::openMenu()
-{
-    d->menu->open();
-}
-
 void ConsoleWidget::closeMenu()
 {
-    d->menu->close();
+    d->logMenu->close();
+    d->promptMenu->close();
 }
 
 void ConsoleWidget::commandWasEntered(String const &)
@@ -540,5 +624,13 @@ void ConsoleWidget::commandWasEntered(String const &)
     if(App::config().getb("console.snap") && !d->log->isAtBottom())
     {
         d->log->scrollToBottom();
+    }
+}
+
+void ConsoleWidget::copyLogPathToClipboard()
+{
+    if(NativeFile *native = App::rootFolder().tryLocate<NativeFile>(LogBuffer::get().outputFile()))
+    {
+        qApp->clipboard()->setText(native->nativePath());
     }
 }

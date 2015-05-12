@@ -1,0 +1,6 @@
+title: Application Framework Test
+version: 1.0
+license: GPL 3+
+tags: test
+
+importPath <modules>

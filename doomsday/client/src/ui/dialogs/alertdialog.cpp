@@ -23,16 +23,25 @@
 
 #include <de/FIFO>
 #include <de/App>
+#include <de/ChoiceWidget>
+
+#include <de/DialogContentStylist>
 #include <de/NotificationAreaWidget>
+#include <de/SequentialLayout>
 #include <de/SignalAction>
 #include <de/ui/ListData>
 #include <de/ui/ActionItem>
 
+#include <QTimer>
+
 using namespace de;
+
+static String const VAR_AUTOHIDE = "alert.autoHide";
 
 DENG_GUI_PIMPL(AlertDialog)
 , DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
 , DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
+, DENG2_OBSERVES(Variable, Change)
 {
     /// Data model item representing an alert in the list.
     class AlertItem : public ui::ActionItem
@@ -74,10 +83,13 @@ DENG_GUI_PIMPL(AlertDialog)
         }
     };
 
-    ButtonWidget *notification;
+    UniqueWidgetPtr<ButtonWidget> notification;
     MenuWidget *alerts;
     bool clearOnDismiss;
     TextStyling styling;
+    QTimer hideTimer; ///< Automatically hides the notification.
+    ChoiceWidget *autohideTimes;
+    DialogContentStylist stylist;
 
     dsize maxCount;
     typedef FIFO<AlertItem> Pending;
@@ -88,7 +100,7 @@ DENG_GUI_PIMPL(AlertDialog)
         , clearOnDismiss(false)
         , maxCount(100)
     {
-        notification = new ButtonWidget;
+        notification.reset(new ButtonWidget);
         notification->setSizePolicy(ui::Expand, ui::Expand);
         notification->setImage(style().images().image("alert"));
         notification->setOverrideImageSize(style().fonts().font("default").height().value());
@@ -108,11 +120,41 @@ DENG_GUI_PIMPL(AlertDialog)
 
         alerts->organizer().audienceForWidgetCreation() += this;
         alerts->organizer().audienceForWidgetUpdate() += this;
+        
+        // Set up the automatic hide timer.
+        QObject::connect(&hideTimer, SIGNAL(timeout()), thisPublic, SLOT(hideNotification()));
+        hideTimer.setSingleShot(true);
+        App::config(VAR_AUTOHIDE).audienceForChange() += this;
+    }
+
+    ~Instance()
+    {
+        App::config(VAR_AUTOHIDE).audienceForChange() -= this;
     }
 
     NotificationAreaWidget &notifs()
     {
         return ClientWindow::main().notifications();
+    }
+
+    int autoHideAfterSeconds() const
+    {
+        return App::config().geti(VAR_AUTOHIDE, 3 * 60);
+    }
+
+    void variableValueChanged(Variable &, Value const &)
+    {
+        // Update the auto-hide timer.
+        if(!autoHideAfterSeconds())
+        {
+            // Never autohide.
+            hideTimer.stop();
+        }
+        else
+        {
+            hideTimer.setInterval(autoHideAfterSeconds() * 1000);
+            if(!hideTimer.isActive()) hideTimer.start();
+        }
     }
 
     void queueAlert(String const &msg, Level level)
@@ -204,7 +246,18 @@ DENG_GUI_PIMPL(AlertDialog)
         // Change color to indicate new alerts.
         notification->setImageColor(style().colors().colorf("accent"));
 
-        notifs().showOrHide(notification, true);
+        notifs().showOrHide(*notification, true);
+
+        // Restart the autohiding timer.
+        if(autoHideAfterSeconds() > 0)
+        {
+            hideTimer.start(autoHideAfterSeconds() * 1000);
+        }
+    }
+    
+    void hideNotification()
+    {
+        notifs().hideChild(*notification);
     }
 
     /**
@@ -216,14 +269,28 @@ DENG_GUI_PIMPL(AlertDialog)
         if(alerts->items().isEmpty())
         {
             // No alerts to show.
-            notifs().hideChild(*notification);
+            hideNotification();
             return true; // was hidden
         }
         return false;
     }
+
+    void updateAutohideTimeSelection()
+    {
+        int const time = autoHideAfterSeconds();
+        ui::DataPos pos = autohideTimes->items().findData(time);
+        if(pos != ui::Data::InvalidPos)
+        {
+            autohideTimes->setSelected(pos);
+        }
+        else
+        {
+            autohideTimes->setSelected(autohideTimes->items().findData(0));
+        }
+    }
 };
 
-AlertDialog::AlertDialog(String const &name) : d(new Instance(this))
+AlertDialog::AlertDialog(String const &/*name*/) : d(new Instance(this))
 {
     // The dialog is connected to the notification icon.
     setAnchorAndOpeningDirection(d->notification->rule(), ui::Down);
@@ -233,6 +300,39 @@ AlertDialog::AlertDialog(String const &name) : d(new Instance(this))
               << new DialogButtonItem(DialogWidget::Action | DialogWidget::Id1,
                                       style().images().image("gear"),
                                       new SignalAction(this, SLOT(showLogFilterSettings())));
+
+    // Auto-hide setting, positioned next to the Gear button.
+    // These are not part of the dialog proper, but should be styled like regular
+    // dialog contents.
+    d->stylist.setContainer(*this);
+    ButtonWidget const &gearButton = *buttonWidget(DialogWidget::Id1);
+
+    auto *lab = LabelWidget::newWithText(tr("Hide After:"), this);
+
+    add(d->autohideTimes = new ChoiceWidget);
+    d->autohideTimes->items()
+            << new ChoiceItem(tr("1 min"),   60)
+            << new ChoiceItem(tr("3 mins"),  3 * 60)
+            << new ChoiceItem(tr("5 mins"),  5 * 60)
+            << new ChoiceItem(tr("10 mins"), 10 * 60)
+            << new ChoiceItem(tr("Never"),   0);
+    d->updateAutohideTimeSelection();
+    
+    lab->rule()
+        .setInput(Rule::Left, gearButton.rule().right())
+        .setMidAnchorY(gearButton.rule().midY());
+    
+    d->autohideTimes->rule()
+        .setInput(Rule::Left, lab->rule().right())
+        .setInput(Rule::Top,  lab->rule().top());
+
+    // Tell the dialog about the additional space requirements.
+    setMinimumContentWidth(extraButtonsMenu().rule().width() +
+                           buttonsMenu().rule().width() +
+                           lab->rule().width() +
+                           d->autohideTimes->rule().width());
+
+    connect(d->autohideTimes, SIGNAL(selectionChangedByUser(uint)), this, SLOT(autohideTimeChanged()));
 }
 
 void AlertDialog::newAlert(String const &message, Level level)
@@ -268,6 +368,16 @@ void AlertDialog::showLogFilterSettings()
     st->setDeleteAfterDismissed(true);
     connect(this, SIGNAL(closed()), st, SLOT(close()));
     st->exec(root());
+}
+
+void AlertDialog::hideNotification()
+{
+    d->hideNotification();
+}
+
+void AlertDialog::autohideTimeChanged()
+{
+    App::config().set(VAR_AUTOHIDE, d->autohideTimes->selectedItem().data().toInt());
 }
 
 void AlertDialog::finish(int result)

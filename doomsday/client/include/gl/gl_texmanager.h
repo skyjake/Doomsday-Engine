@@ -28,7 +28,7 @@
 #include "api_gl.h"
 #include "gl/sys_opengl.h"
 #include "resource/rawtexture.h"
-#include "uri.hh"
+#include <doomsday/uri.h>
 
 /**
  * Textures used in the lighting system.

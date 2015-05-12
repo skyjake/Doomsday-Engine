@@ -1,43 +1,34 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file p_inter.c  Handling interactions (i.e., collisions).
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
- *\author Copyright © 1993-1996 by id Software, Inc.
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
+ * @authors Copyright © 1993-1996 by id Software, Inc.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
-/**
- * p_inter.c: Handling interactions (i.e., collisions).
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifdef MSVC
 #  pragma optimize("g", off)
 #endif
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "jdoom64.h"
 
 #include "am_map.h"
 #include "d_net.h"
+#include "d_netsv.h"
 #include "dmu_lib.h"
 #include "player.h"
 #include "p_map.h"
@@ -47,29 +38,11 @@
 #include "p_inventory.h"
 #include "p_start.h"
 
-// MACROS ------------------------------------------------------------------
-
 #define BONUSADD            (6)
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // A weapon is found with two clip loads, a big item has five clip loads.
 int maxAmmo[NUM_AMMO_TYPES] = { 200, 50, 300, 50 };
 int clipAmmo[NUM_AMMO_TYPES] = { 10, 4, 20, 1 };
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 /**
  * @param player        Player to be given ammo.
@@ -349,7 +322,7 @@ dd_bool P_TakePower(player_t* player, int power)
     player->update |= PSF_POWERS;
     if(player->powers[PT_FLIGHT])
     {
-        if(plrmo->origin[VZ] != plrmo->floorZ && cfg.lookSpring)
+        if(plrmo->origin[VZ] != plrmo->floorZ && cfg.common.lookSpring)
         {
             player->centering = true;
         }
@@ -954,10 +927,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target, dd_bool stomping)
         P_DropWeapon(target->player);
 
         // Don't die with the automap open.
-        ST_AutomapOpen(target->player - players, false, false);
-#if __JHERETIC__ || __JHEXEN__
-        Hu_InventoryOpen(target->player - players, false);
-#endif
+        ST_CloseAll(target->player - players, false);
     }
 
     if((state = P_GetState(target->type, SN_XDEATH)) != S_NULL &&
@@ -1023,23 +993,22 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
  *
  * @return              Actual amount of damage done.
  */
-int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
+int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
     int damageP, dd_bool stomping, dd_bool skipNetworkCheck)
 {
 // Follow a player exlusively for 3 seconds.
 #define BASETHRESHOLD           (100)
 
-    uint                an;
-    angle_t             angle;
-    int                 saved;
-    player_t*           player;
-    float               thrust;
-    int                 temp;
-    int                 originalHealth;
+    uint an;
+    angle_t angle;
+    int saved;
+    player_t *player;
+    float thrust;
+    //int temp;
+    int originalHealth;
 
-    // The actual damage (== damageP * netMobDamageModifier for any
-    // non-player mobj).
-    int                 damage = damageP;
+    // The actual damage (== damageP * netMobDamageModifier for any non-player mobj).
+    int damage = damageP;
 
     if(!target)
         return 0; // Wha?
@@ -1123,7 +1092,7 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
     {
         // damage = (int) ((float) damage * netMobDamageModifier);
         if(IS_NETGAME)
-            damage *= cfg.netMobDamageModifier;
+            damage *= cfg.common.netMobDamageModifier;
     }
 
     // Some close combat weapons should not inflict thrust and push the
@@ -1204,7 +1173,7 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
         if(player->damageCount > 100)
             player->damageCount = 100; // Teleport stomp does 10k points...
 
-        temp = damage < 100 ? damage : 100;
+        // temp = damage < 100 ? damage : 100; Unused?
 
         // Maybe unhide the HUD?
         ST_HUDUnHide(player - players, HUE_ON_DAMAGE);

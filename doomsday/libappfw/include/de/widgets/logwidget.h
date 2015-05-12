@@ -69,9 +69,6 @@ public:
     void drawContent();
     bool handleEvent(Event const &event);
 
-protected slots:
-    void pruneExcessEntries();
-
 signals:
     //void scrollPositionChanged(int pos);
     //void scrollMaxChanged(int maximum);

@@ -42,7 +42,7 @@ DENG2_PIMPL_NOREF(ServerFinder)
     };
     QMap<Address, Found> servers;
 
-    Instance() : beacon(13209) {}
+    Instance() : beacon(DEFAULT_PORT) {}
 
     ~Instance()
     {
@@ -82,8 +82,6 @@ ServerFinder::ServerFinder() : d(new Instance)
 {
     try
     {
-        qsrand(Time().asDateTime().toTime_t());
-
         connect(&d->beacon, SIGNAL(found(de::Address, de::Block)), this, SLOT(found(de::Address, de::Block)));
         QTimer::singleShot(1000, this, SLOT(expire()));
 
@@ -115,17 +113,17 @@ QList<Address> ServerFinder::foundServers() const
 
 String ServerFinder::name(Address const &server) const
 {
-    return messageFromServer(server)["name"].value<TextValue>();
+    return messageFromServer(server).gets("name");
 }
 
 int ServerFinder::playerCount(Address const &server) const
 {
-    return messageFromServer(server)["nump"].value<NumberValue>().as<int>();
+    return messageFromServer(server).geti("nump");
 }
 
 int ServerFinder::maxPlayers(Address const &server) const
 {
-    return messageFromServer(server)["maxp"].value<NumberValue>().as<int>();
+    return messageFromServer(server).geti("maxp");
 }
 
 Record const &ServerFinder::messageFromServer(Address const &address) const

@@ -194,8 +194,10 @@ DENG2_PIMPL(PersistentCanvasWindow)
             config.set(configName("maximize"),   isMaximized());
             config.set(configName("fullscreen"), isFullscreen());
             config.set(configName("colorDepth"), colorDepthBits);
-            config.set(configName("fsaa"),       isAntialiased());
-            config.set(configName("vsync"),      isVSync());
+
+            // FSAA and vsync are saved as part of the Config.
+            //config.set(configName("fsaa"),       isAntialiased());
+            //config.set(configName("vsync"),      isVSync());
         }
 
         void restoreFromConfig()
@@ -318,7 +320,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
          */
         void modifyAccordingToOptions()
         {
-            CommandLine const &cmdLine = App::app().commandLine();
+            CommandLine const &cmdLine = App::commandLine();
 
             // We will compose a set of attributes based on the options.
             QVector<int> attribs;
@@ -430,8 +432,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
 
     struct Task
     {
-        enum Type
-        {
+        enum Type {
             ShowNormal,
             ShowFullscreen,
             ShowMaximized,
@@ -455,16 +456,18 @@ DENG2_PIMPL(PersistentCanvasWindow)
 
     // Logical state.
     State state;
+    State savedState; // used by saveState(), restoreState()
     bool neverShown;
 
     typedef QList<Task> Tasks;
     Tasks queue;
 
     Instance(Public *i, String const &windowId)
-        : Base(i),
-          id(windowId),
-          state(windowId),
-          neverShown(true)
+        : Base(i)
+        , id(windowId)
+        , state(windowId)
+        , savedState(windowId)
+        , neverShown(true)
     {
         // Keep a global pointer to the main window.
         if(id == MAIN_WINDOW_ID)
@@ -586,7 +589,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
 
         if(!self.isVisible())
         {
-            // Change size immediately.
+            // Update geometry for windowed mode right away.
             queue << Task(newState.windowRect);
         }
 
@@ -662,7 +665,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
             queue << Task(Task::NotifyModeChange, .1);
         }
 
-        if(trapped /*|| newState.isFullscreen()*/)
+        if(trapped)
         {
             queue << Task(Task::TrapMouse);
         }
@@ -670,7 +673,16 @@ DENG2_PIMPL(PersistentCanvasWindow)
         state.fullSize = newState.fullSize;
         state.flags    = newState.flags;
 
-        checkQueue();
+        if(self.isVisible())
+        {
+            // Carry out queued operations after dropping back to the event loop.
+            QTimer::singleShot(10, thisPublic, SLOT(performQueuedTasks()));
+        }
+        else
+        {
+            // Not visible yet so we can do anything we want.
+            checkQueue();
+        }
     }
 
     void checkQueue()
@@ -782,6 +794,11 @@ PersistentCanvasWindow::PersistentCanvasWindow(String const &id)
     }
 }
 
+String PersistentCanvasWindow::id() const
+{
+    return d->id;
+}
+
 void PersistentCanvasWindow::saveToConfig()
 {
     try
@@ -800,6 +817,16 @@ void PersistentCanvasWindow::restoreFromConfig()
     d->state.restoreFromConfig();
     d->state.modifyAccordingToOptions();
     d->applyToWidget(d->state);
+}
+
+void PersistentCanvasWindow::saveState()
+{
+    d->savedState = d->widgetState();
+}
+
+void PersistentCanvasWindow::restoreState()
+{
+    d->applyToWidget(d->savedState);
 }
 
 bool PersistentCanvasWindow::isCentered() const
@@ -836,7 +863,19 @@ void PersistentCanvasWindow::show(bool yes)
     {
         if(d->state.isFullscreen())
         {
+#ifdef WIN32
+            /*
+             * On Windows, changes to windows appear to be carried out immediately.
+             * Without this delay, sometimes (randomly) the Qt desktop widget would
+             * not have been updated to the correct size after a display mode change.
+             * (Likely due to the behavior of the event loop on Windows; the desktop
+             * widget would or would not get the resize event depending on how the
+             * events play out during engine startup and main window setup.)
+             */
+            QTimer::singleShot(100, this, SLOT(showFullScreen()));
+#else
             showFullScreen();
+#endif
         }
         else if(d->state.isMaximized())
         {

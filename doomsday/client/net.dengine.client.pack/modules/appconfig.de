@@ -1,0 +1,103 @@
+# The Doomsday Engine Project -- Doomsday Client
+#
+# Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>.
+
+#----------------------------------------------------------------------------
+# CONFIGURATION FOR THE DOOMSDAY CLIENT
+#
+# This module contains configuration related scripts for the client 
+# application. It is automatically imported by Config and used as needed.
+#
+# TODO: make sure the server doesn't run this
+
+import gui
+import Version
+import Updater
+import Log
+
+def setDefaults(d)
+    # Applies the client's defaults.
+    # - d: Record where to set the values.
+
+    gui.setDefaults(d)    
+    
+    # Additional Log defaults.
+    d.log.filterBySubsystem = False
+    d.log.showMetadata = False
+    record d.alert()
+        generic  = Log.WARNING
+        resource = Log.WARNING
+        map      = Log.WARNING
+        script   = Log.WARNING
+        gl       = Log.WARNING
+        audio    = Log.WARNING
+        input    = Log.WARNING
+        network  = Log.WARNING
+        
+        # Alert notification dismissed after 3 minutes by default.
+        autoHide = 3 * 60
+    end
+    
+    # Input defaults.
+    record d.input
+    record d.input.mouse
+    d.input.mouse.syncSensitivity = True
+
+    # Defaults for the automatic updater.
+    record d.updater()
+        frequency = Updater.WEEKLY
+        if Version.STABLE
+            channel = Updater.CHANNEL_STABLE
+        else
+            channel = Updater.CHANNEL_UNSTABLE
+        end
+        lastChecked = Time("")
+        onlyManually = (Version.OS == 'unix')
+        autoDownload = False
+        delete = True
+        downloadPath = "${DEFAULT}"
+        deleteAtStartup = ""
+    end
+    
+    # Console defaults.
+    record d.console()
+        snap = True
+        script = False
+    end
+    
+    # Master server settings.
+    record d.masterServer
+    d.masterServer.apiUrl = "www.dengine.net/master.php"
+    
+    # Resource settings.
+    record d.resource
+    d.resource.iwadFolder = ''
+    
+    # Renderer settings.
+    record d.render
+    d.render.pixelDensity = 1.0     # Overall pixel density.
+
+    # LensFx settings.
+    record d.render.fx
+    record d.render.fx.resize
+    d.render.fx.resize.factor = 1.0
+    
+    # VR/3D settings.
+    record d.vr
+    record d.vr.oculusRift
+    d.vr.oculusRift.pixelDensity = 1.0
+end
+

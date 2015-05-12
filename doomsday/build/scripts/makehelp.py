@@ -11,7 +11,7 @@ conHelp = os.path.join(dengRoot, 'build', 'scripts', 'conhelp.py')
 os.chdir(os.path.join(dengRoot, 'doc'))
 
 print "Engine help"
-cpHelpTxt = os.path.join(dengRoot, 'client', 'data', 'cphelp.txt')
+cpHelpTxt = os.path.join(dengRoot, 'net.dengine.base.pack', 'helpstrings.txt')
 conhelp.makeHelp(cpHelpTxt, ['engine'])
 
 panel = conhelp.amethyst(file(os.path.join('engine', 'controlpanel.ame')).read())

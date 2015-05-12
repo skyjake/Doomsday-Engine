@@ -29,6 +29,8 @@
 #include "resource/image.h"
 #include "ui/widgets/gamewidget.h"
 
+#undef main
+
 /**
  * Macro for conveniently accessing the current active window. There is always
  * one active window, so no need to worry about NULLs. The easiest way to get
@@ -52,7 +54,7 @@ class BusyWidget;
 class AlertDialog;
 
 /**
- * Top-level window that contains a libdeng2 UI widgets. @ingroup gui
+ * Top-level window that contains UI widgets. @ingroup gui
  */
 class ClientWindow : public de::BaseWindow,
                      DENG2_OBSERVES(de::Canvas, GLInit),
@@ -148,6 +150,9 @@ public:
      */
     void drawGameContent();
 
+    void fadeInTaskBarBlur(de::TimeDelta span);
+    void fadeOutTaskBarBlur(de::TimeDelta span);
+
     void updateCanvasFormat();
     void updateRootSize();
 
@@ -168,6 +173,7 @@ public:
     bool handleFallbackEvent(de::Event const &event);
 
     static ClientWindow &main();
+    static bool mainExists();
 
 protected:
     bool prepareForDraw();
@@ -175,6 +181,7 @@ protected:
 public slots:
     void toggleFPSCounter();
     void showColorAdjustments();
+    void hideTaskBarBlur();
 
 private:
     DENG2_PRIVATE(d)

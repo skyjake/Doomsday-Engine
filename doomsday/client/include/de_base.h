@@ -1,7 +1,7 @@
-/** @file
+/** @file de_base.h  Engine Core.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -15,10 +15,6 @@
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small>
- */
-
-/**
- * Engine Core.
  */
 
 #ifndef LIBDENG_BASE_H
@@ -43,13 +39,13 @@
 #include "api_plugin.h"
 #include "dd_main.h"
 #include "dd_loop.h"
-#include "dd_help.h"
 #include "library.h"
 #include "busymode.h"
-#include "ui/dd_input.h"
+#include "ui/ddevent.h"
 #include "ui/nativeui.h"
 #include "ui/zonedebug.h"
-#include "uri.hh"
+#include <doomsday/uri.h>
+#include <doomsday/help.h>
 
 #ifdef __SERVER__
 // Many subsystems do not exist on the server. This is a temporary measure
@@ -57,4 +53,4 @@
 #  include "server_dummies.h"
 #endif
 
-#endif /* LIBDENG_BASE_H */
+#endif // LIBDENG_BASE_H

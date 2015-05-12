@@ -93,7 +93,7 @@ dd_bool P_CheckMeleeRange(mobj_t* actor)
     dist = M_ApproxDistance(pl->origin[VX] - actor->origin[VX],
                             pl->origin[VY] - actor->origin[VY]);
 
-    if(!cfg.netNoMaxZMonsterMeleeAttack)
+    if(!cfg.common.netNoMaxZMonsterMeleeAttack)
     {
         // Account for Z height difference.
         if(pl->origin[VZ] > actor->origin[VZ] + actor->height ||
@@ -268,7 +268,7 @@ static dd_bool tryMoveMobj(mobj_t *actor)
 
 static void doNewChaseDir(mobj_t *actor, coord_t deltaX, coord_t deltaY)
 {
-    dirtype_t xdir, ydir, tdir;
+    dirtype_t xdir, ydir;
     dirtype_t olddir = actor->moveDir;
     dirtype_t turnaround = olddir;
 
@@ -310,17 +310,23 @@ static void doNewChaseDir(mobj_t *actor, coord_t deltaX, coord_t deltaY)
     // Randomly determine direction of search.
     if(P_Random() & 1)
     {
+        int tdir;
         for(tdir = DI_EAST; tdir <= DI_SOUTHEAST; tdir++)
-            if(tdir != turnaround &&
+        {
+            if((dirtype_t)tdir != turnaround &&
                (actor->moveDir = tdir, tryMoveMobj(actor)))
                 return;
+        }
     }
     else
     {
+        int tdir;
         for(tdir = DI_SOUTHEAST; tdir != DI_EAST - 1; tdir--)
-            if(tdir != turnaround &&
+        {
+            if((dirtype_t)tdir != turnaround &&
                (actor->moveDir = tdir, tryMoveMobj(actor)))
                 return;
+        }
     }
 
     if((actor->moveDir = turnaround) != DI_NODIR && !tryMoveMobj(actor))
@@ -589,7 +595,7 @@ void C_DECL A_Look(mobj_t *actor)
         else
         {
             S_StartSound(sound, actor);
-		}
+        }
     }
 
     P_MobjChangeState(actor, P_GetState(actor->type, SN_SEE));
@@ -2079,69 +2085,113 @@ int P_Massacre(void)
 }
 
 typedef struct {
-    mobjtype_t          type;
-    size_t              count;
+    mobjtype_t type;
+    size_t count;
 } countmobjoftypeparams_t;
 
-static int countMobjOfType(thinker_t* th, void* context)
+static int countMobjOfType(thinker_t *th, void *context)
 {
-    countmobjoftypeparams_t *params = (countmobjoftypeparams_t*) context;
-    mobj_t*             mo = (mobj_t *) th;
+    countmobjoftypeparams_t *params = (countmobjoftypeparams_t *) context;
+    mobj_t *mo = (mobj_t *) th;
 
     if(params->type == mo->type && mo->health > 0)
+    {
         params->count++;
+    }
 
     return false; // Continue iteration.
 }
 
+typedef enum {
+    ST_SPAWN_FLOOR,
+    //ST_SPAWN_DOOR,
+    ST_LEAVEMAP
+} SpecialType;
+
+/// @todo Should be defined in MapInfo.
+typedef struct {
+    //int gameModeBits;
+    char const *mapPath;
+    //dd_bool compatAnyBoss; ///< @c true= type requirement optional by compat option.
+    mobjtype_t bossType;
+    dd_bool massacreOnDeath;
+    SpecialType special;
+    int tag;
+    int type;
+} BossTrigger;
+
 /**
- * Trigger special effects if all bosses are dead.
+ * Trigger special effects on certain maps if all "bosses" are dead.
  */
-void C_DECL A_BossDeath(mobj_t* actor)
+void C_DECL A_BossDeath(mobj_t *actor)
 {
-    static mobjtype_t   bossType[6] = {
-        MT_HEAD,
-        MT_MINOTAUR,
-        MT_SORCERER2,
-        MT_HEAD,
-        MT_MINOTAUR,
-        -1
+    static BossTrigger const bossTriggers[] =
+    {
+        { "E1M8", MT_HEAD,      false, ST_SPAWN_FLOOR, 666, FT_LOWER },
+        { "E2M8", MT_MINOTAUR,  true,  ST_SPAWN_FLOOR, 666, FT_LOWER },
+        { "E3M8", MT_SORCERER2, true,  ST_SPAWN_FLOOR, 666, FT_LOWER },
+        { "E4M8", MT_HEAD,      true,  ST_SPAWN_FLOOR, 666, FT_LOWER },
+        { "E5M8", MT_MINOTAUR,  true,  ST_SPAWN_FLOOR, 666, FT_LOWER },
     };
+    static int const numBossTriggers = sizeof(bossTriggers) / sizeof(bossTriggers[0]);
 
-    Line*               dummyLine;
-    countmobjoftypeparams_t params;
+    int i;
+    AutoStr *currentMapPath = G_CurrentMapUriPath();
+    for(i = 0; i < numBossTriggers; ++i)
+    {
+        BossTrigger const *trigger = &bossTriggers[i];
 
-    // Not a boss level?
-    if(gameMap != 7)
-        return;
+        // Not a boss on this map?
+        if(actor->type != trigger->bossType) continue;
 
-    // Not considered a boss in this episode?
-    if(actor->type != bossType[gameEpisode])
-        return;
+        if(Str_CompareIgnoreCase(currentMapPath, trigger->mapPath)) continue;
 
-    // Scan the remaining thinkers to see if all bosses are dead.
-    params.type = actor->type;
-    params.count = 0;
-    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
+        // Scan the remaining thinkers to determine if this is indeed the last boss.
+        {
+            countmobjoftypeparams_t parm;
+            parm.type  = actor->type;
+            parm.count = 0;
+            Thinker_Iterate(P_MobjThinker, countMobjOfType, &parm);
 
-    if(params.count)
-    {   // Other boss not dead.
-        return;
+            // Anything left alive?
+            if(parm.count) continue;
+        }
+
+        // Kill all remaining enemies?
+        if(trigger->massacreOnDeath)
+        {
+            P_Massacre();
+        }
+
+        // Trigger the special.
+        switch(trigger->special)
+        {
+        case ST_SPAWN_FLOOR: {
+            Line *dummyLine = P_AllocDummyLine();
+            P_ToXLine(dummyLine)->tag = trigger->tag;
+            EV_DoFloor(dummyLine, (floortype_e)trigger->type);
+            P_FreeDummyLine(dummyLine);
+            break; }
+
+        /*case ST_SPAWN_DOOR: {
+            Line *dummyLine = P_AllocDummyLine();
+            P_ToXLine(dummyLine)->tag = trigger->tag;
+            EV_DoDoor(dummyLine, (doortype_e)trigger->type);
+            P_FreeDummyLine(dummyLine);
+            break; }*/
+
+        case ST_LEAVEMAP:
+            G_SetGameActionMapCompletedAndSetNextMap();
+            break;
+
+        default: DENG_ASSERT(!"A_BossDeath: Unknown trigger special type");
+        }
     }
-
-    // Kill any remaining monsters.
-    if(gameEpisode != 0)
-        P_Massacre();
-
-    dummyLine = P_AllocDummyLine();
-    P_ToXLine(dummyLine)->tag = 666;
-    EV_DoFloor(dummyLine, FT_LOWER);
-    P_FreeDummyLine(dummyLine);
 }
 
 void C_DECL A_ESound(mobj_t *mo)
 {
-    int     sound;
+    int sound;
 
     switch(mo->type)
     {

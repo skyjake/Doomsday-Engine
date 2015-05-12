@@ -24,6 +24,7 @@
 
 #include <de/GuiApp>
 #include <de/GLShaderBank>
+#include <de/WaveformBank>
 
 /**
  * Macro for conveniently accessing the de::BaseGuiApp singleton instance.
@@ -50,6 +51,7 @@ public:
     static BaseGuiApp &app();
     static PersistentState &persistentUIState();
     static GLShaderBank &shaders();
+    static WaveformBank &waveforms();
     static VRConfig &vr();
 
 private:

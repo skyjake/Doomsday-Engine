@@ -1,7 +1,7 @@
 /** @file generator.cpp  World map (particle) generator.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -23,13 +23,15 @@
 #include "world/generator.h"
 
 #include "clientapp.h"
-#include "con_main.h"
 #include "dd_def.h"
 #include "Face"
 
 #include "world/worldsystem.h" // validCount
 #include "world/thinkers.h"
+#include "client/cl_mobj.h"
 #include "BspLeaf"
+#include "ConvexSubspace"
+#include "SectorCluster"
 #include "Surface"
 
 #include "render/rend_model.h"
@@ -37,6 +39,7 @@
 
 #include "api_sound.h"
 
+#include <doomsday/console/var.h>
 #include <de/String>
 #include <de/Time>
 #include <de/fixedpoint.h>
@@ -103,6 +106,7 @@ Generator::Id Generator::id() const
 
 void Generator::setId(Id newId)
 {
+    DENG2_ASSERT(newId >= 1 && newId <= Map::MAX_GENERATORS); // 1-based
     _id = newId;
 }
 
@@ -142,9 +146,9 @@ void Generator::configureFromDef(ded_ptcgen_t const *newDef)
     def    = newDef;
     _flags = Flags(def->flags);
     _pinfo = (ParticleInfo *) Z_Calloc(sizeof(ParticleInfo) * count, PU_MAP, 0);
-    stages = (ParticleStage *) Z_Calloc(sizeof(ParticleStage) * def->stageCount.num, PU_MAP, 0);
+    stages = (ParticleStage *) Z_Calloc(sizeof(ParticleStage) * def->stages.size(), PU_MAP, 0);
 
-    for(int i = 0; i < def->stageCount.num; ++i)
+    for(int i = 0; i < def->stages.size(); ++i)
     {
         ded_ptcstage_t const *sdef = &def->stages[i];
         ParticleStage *s = &stages[i];
@@ -361,7 +365,7 @@ int Generator::newParticle()
         pinfo->origin[VZ] += originAtSpawn[VZ];
 
         // Include bobbing in the spawn height.
-        pinfo->origin[VZ] -= FLT2FIX(Mobj_BobOffset(source));
+        pinfo->origin[VZ] -= FLT2FIX(Mobj_BobOffset(*source));
 
         // Calculate XY center with mobj angle.
         angle_t const angle = Mobj_AngleSmoothed(source) + (fixed_t) (FIX2FLT(originAtSpawn[VY]) / 180.0f * ANG180);
@@ -439,10 +443,10 @@ int Generator::newParticle()
          * Choosing the XY spot is a bit more difficult.
          * But we must be fast and only sufficiently accurate.
          *
-         * @todo Nothing prevents spawning on the wrong side (or inside)
-         * of one-sided walls (large diagonal BSP leafs!).
+         * @todo Nothing prevents spawning on the wrong side (or inside) of one-sided
+         * walls (large diagonal subspaces!).
          */
-        BspLeaf *bspLeaf;
+        ConvexSubspace *subspace = 0;
         for(int i = 0; i < 5; ++i) // Try a couple of times (max).
         {
             float x = sector->aaBox().minX +
@@ -450,33 +454,34 @@ int Generator::newParticle()
             float y = sector->aaBox().minY +
                 RNG_RandFloat() * (sector->aaBox().maxY - sector->aaBox().minY);
 
-            bspLeaf = &map().bspLeafAt(Vector2d(x, y));
-            if(bspLeaf->sectorPtr() == sector) break;
+            subspace = map().bspLeafAt(Vector2d(x, y)).subspacePtr();
+            if(subspace && sector == &subspace->sector())
+                break;
 
-            bspLeaf = 0;
+            subspace = 0;
         }
 
-        if(!bspLeaf || !bspLeaf->hasPoly())
+        if(!subspace)
         {
             pinfo->stage = -1;
             return -1;
         }
 
-        AABoxd const &leafAABox = bspLeaf->poly().aaBox();
+        AABoxd const &subAABox = subspace->poly().aaBox();
 
         // Try a couple of times to get a good random spot.
         int tries;
         for(tries = 0; tries < 10; ++tries) // Max this many tries before giving up.
         {
-            float x = leafAABox.minX +
-                RNG_RandFloat() * (leafAABox.maxX - leafAABox.minX);
-            float y = leafAABox.minY +
-                RNG_RandFloat() * (leafAABox.maxY - leafAABox.minY);
+            float x = subAABox.minX +
+                RNG_RandFloat() * (subAABox.maxX - subAABox.minX);
+            float y = subAABox.minY +
+                RNG_RandFloat() * (subAABox.maxY - subAABox.minY);
 
             pinfo->origin[VX] = FLT2FIX(x);
             pinfo->origin[VY] = FLT2FIX(y);
 
-            if(&map().bspLeafAt(Vector2d(x, y)) == bspLeaf)
+            if(subspace == map().bspLeafAt(Vector2d(x, y)).subspacePtr())
                 break; // This is a good place.
         }
 
@@ -511,7 +516,7 @@ int Generator::newParticle()
         pinfo->bspLeaf = &map().bspLeafAt(ptOrigin);
 
         // A BSP leaf with no geometry is not a suitable place for a particle.
-        if(!pinfo->bspLeaf->hasPoly())
+        if(!pinfo->bspLeaf->hasSubspace())
         {
             pinfo->stage = -1;
             return -1;
@@ -535,7 +540,7 @@ int Generator::newParticle()
 static int newGeneratorParticlesWorker(mobj_t *cmo, void *context)
 {
     Generator *gen = (Generator *) context;
-    ClMobjInfo *info = ClMobj_GetInfo(cmo);
+    ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(cmo);
 
     // If the clmobj is not valid at the moment, don't do anything.
     if(info->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN))
@@ -555,92 +560,6 @@ static int newGeneratorParticlesWorker(mobj_t *cmo, void *context)
 }
 
 #endif
-
-/**
- * Spawn multiple new particles using all applicable sources.
- */
-static int manyNewParticlesWorker(thinker_t *th, void *context)
-{
-    Generator *gen = (Generator *) context;
-    mobj_t *mo = (mobj_t *) th;
-
-    // Type match?
-    if(gen->type == DED_PTCGEN_ANY_MOBJ_TYPE || mo->type == gen->type || mo->type == gen->type2)
-    {
-        // Someone might think this is a slight hack...
-        gen->source = mo;
-        gen->newParticle();
-    }
-
-    return false; // Continue iteration.
-}
-
-struct checklineworker_params_t
-{
-    AABoxd mbox;
-    fixed_t tmpz, tmprad, tmpx1, tmpx2, tmpy1, tmpy2;
-    bool tmcross;
-    Line *ptcHitLine;
-};
-
-static int checkLineWorker(Line *ld, void *context)
-{
-    checklineworker_params_t &parm = *static_cast<checklineworker_params_t *>(context);
-
-    // Does the bounding box miss the line completely?
-    if(parm.mbox.maxX <= ld->aaBox().minX || parm.mbox.minX >= ld->aaBox().maxX ||
-       parm.mbox.maxY <= ld->aaBox().minY || parm.mbox.minY >= ld->aaBox().maxY)
-        return false;
-
-    // Movement must cross the line.
-    if((ld->pointOnSide(Vector2d(FIX2FLT(parm.tmpx1), FIX2FLT(parm.tmpy1))) < 0) ==
-       (ld->pointOnSide(Vector2d(FIX2FLT(parm.tmpx2), FIX2FLT(parm.tmpy2))) < 0))
-        return false;
-
-    /*
-     * We are possibly hitting something here.
-     */
-
-    // Bounce if we hit a solid wall.
-    /// @todo fixme: What about "one-way" window lines?
-    parm.ptcHitLine = ld;
-    if(!ld->hasBackSector()) return true; // Boing!
-
-    Sector *front = ld->frontSectorPtr();
-    Sector *back  = ld->backSectorPtr();
-
-    // Determine the opening we have here.
-    /// @todo Use R_OpenRange()
-    fixed_t ceil;
-    if(front->ceiling().height() < back->ceiling().height())
-    {
-        ceil = FLT2FIX(front->ceiling().height());
-    }
-    else
-    {
-        ceil = FLT2FIX(back->ceiling().height());
-    }
-
-    fixed_t floor;
-    if(front->floor().height() > back->floor().height())
-    {
-        floor = FLT2FIX(front->floor().height());
-    }
-    else
-    {
-        floor = FLT2FIX(back->floor().height());
-    }
-
-    // There is a backsector. We possibly might hit something.
-    if(parm.tmpz - parm.tmprad < floor || parm.tmpz + parm.tmprad > ceil)
-        return true; // Boing!
-
-    // There is a possibility that the new position is in a new sector.
-    parm.tmcross = true; // Afterwards, update the sector pointer.
-
-    // False alarm, continue checking.
-    return false;
-}
 
 /**
  * Particle touches something solid. Returns false iff the particle dies.
@@ -672,7 +591,7 @@ static int touchParticle(ParticleInfo *pinfo, Generator::ParticleStage *stage,
 
 float Generator::particleZ(ParticleInfo const &pinfo) const
 {
-    SectorCluster &cluster = pinfo.bspLeaf->cluster();
+    SectorCluster &cluster = pinfo.bspLeaf->subspace().cluster();
     if(pinfo.origin[VZ] == DDMAXINT)
     {
         return cluster.visCeiling().heightSmoothed() - 2;
@@ -829,7 +748,7 @@ void Generator::moveParticle(int index)
     bool zBounce = false, hitFloor = false;
     if(pinfo->origin[VZ] != DDMININT && pinfo->origin[VZ] != DDMAXINT && pinfo->bspLeaf)
     {
-        SectorCluster &cluster = pinfo->bspLeaf->cluster();
+        SectorCluster &cluster = pinfo->bspLeaf->subspace().cluster();
         if(z > FLT2FIX(cluster.visCeiling().heightSmoothed()) - hardRadius)
         {
             // The Z is through the roof!
@@ -892,6 +811,13 @@ void Generator::moveParticle(int index)
     fixed_t x = pinfo->origin[VX] + pinfo->mov[VX];
     fixed_t y = pinfo->origin[VY] + pinfo->mov[VY];
 
+    struct checklineworker_params_t
+    {
+        AABoxd box;
+        fixed_t tmpz, tmprad, tmpx1, tmpx2, tmpy1, tmpy2;
+        bool tmcross;
+        Line *ptcHitLine;
+    };
     checklineworker_params_t clParm; zap(clParm);
     clParm.tmcross = false; // Has crossed potential sector boundary?
 
@@ -959,15 +885,82 @@ void Generator::moveParticle(int index)
     vec2d_t point;
     V2d_Set(point, FIX2FLT(MIN_OF(x, pinfo->origin[VX]) - st->radius),
                    FIX2FLT(MIN_OF(y, pinfo->origin[VY]) - st->radius));
-    V2d_InitBox(clParm.mbox.arvec2, point);
+    V2d_InitBox(clParm.box.arvec2, point);
     V2d_Set(point, FIX2FLT(MAX_OF(x, pinfo->origin[VX]) + st->radius),
                    FIX2FLT(MAX_OF(y, pinfo->origin[VY]) + st->radius));
-    V2d_AddToBox(clParm.mbox.arvec2, point);
+    V2d_AddToBox(clParm.box.arvec2, point);
 
     // Iterate the lines in the contacted blocks.
 
     validCount++;
-    if(map().lineBoxIterator(clParm.mbox, checkLineWorker, &clParm))
+    DENG2_ASSERT(!clParm.ptcHitLine);
+    map().forAllLinesInBox(clParm.box, [&clParm] (Line &line)
+    {
+        // Does the bounding box miss the line completely?
+        if(clParm.box.maxX <= line.aaBox().minX || clParm.box.minX >= line.aaBox().maxX ||
+           clParm.box.maxY <= line.aaBox().minY || clParm.box.minY >= line.aaBox().maxY)
+        {
+            return LoopContinue;
+        }
+
+        // Movement must cross the line.
+        if((line.pointOnSide(Vector2d(FIX2FLT(clParm.tmpx1), FIX2FLT(clParm.tmpy1))) < 0) ==
+           (line.pointOnSide(Vector2d(FIX2FLT(clParm.tmpx2), FIX2FLT(clParm.tmpy2))) < 0))
+        {
+            return LoopContinue;
+        }
+
+        /*
+         * We are possibly hitting something here.
+         */
+
+        // Bounce if we hit a solid wall.
+        /// @todo fixme: What about "one-way" window lines?
+        clParm.ptcHitLine = &line;
+        if(!line.hasBackSector())
+        {
+            return LoopAbort; // Boing!
+        }
+
+        Sector *front = line.frontSectorPtr();
+        Sector *back  = line.backSectorPtr();
+
+        // Determine the opening we have here.
+        /// @todo Use R_OpenRange()
+        fixed_t ceil;
+        if(front->ceiling().height() < back->ceiling().height())
+        {
+            ceil = FLT2FIX(front->ceiling().height());
+        }
+        else
+        {
+            ceil = FLT2FIX(back->ceiling().height());
+        }
+
+        fixed_t floor;
+        if(front->floor().height() > back->floor().height())
+        {
+            floor = FLT2FIX(front->floor().height());
+        }
+        else
+        {
+            floor = FLT2FIX(back->floor().height());
+        }
+
+        // There is a backsector. We possibly might hit something.
+        if(clParm.tmpz - clParm.tmprad < floor || clParm.tmpz + clParm.tmprad > ceil)
+        {
+            return LoopAbort; // Boing!
+        }
+
+        // False alarm, continue checking.
+        clParm.ptcHitLine = nullptr;
+        // There is a possibility that the new position is in a new sector.
+        clParm.tmcross    = true; // Afterwards, update the sector pointer.
+        return LoopContinue;
+    });
+
+    if(clParm.ptcHitLine)
     {
         fixed_t normal[2], dotp;
 
@@ -1016,7 +1009,7 @@ void Generator::moveParticle(int index)
         pinfo->bspLeaf = &map().bspLeafAt(Vector2d(FIX2FLT(x), FIX2FLT(y)));
 
         // A BSP leaf with no geometry is not a suitable place for a particle.
-        if(!pinfo->bspLeaf->hasPoly())
+        if(!pinfo->bspLeaf->hasSubspace())
         {
             // Kill the particle.
             pinfo->stage = -1;
@@ -1030,11 +1023,11 @@ void Generator::runTick()
     if(!isUntriggered() && !map().thinkers().isUsedMobjId(srcid))
     {
         // Blasted... Spawning new particles becomes impossible.
-        source = 0;
+        source = nullptr;
     }
 
     // Time to die?
-    DENG2_ASSERT(def != 0);
+    DENG2_ASSERT(def);
     if(++_age > def->maxAge && def->maxAge >= 0)
     {
         Generator_Delete(this);
@@ -1042,7 +1035,7 @@ void Generator::runTick()
     }
 
     // Spawn new particles?
-    float newParts = 0;
+    dfloat newParts = 0;
     if((_age <= def->spawnAge || def->spawnAge < 0) &&
        (source || plane || type >= 0 || type == DED_PTCGEN_ANY_MOBJ_TYPE ||
         isUntriggered()))
@@ -1056,7 +1049,7 @@ void Generator::runTick()
         while(_spawnCount >= 1)
         {
             // Spawn a new particle.
-            if(type == DED_PTCGEN_ANY_MOBJ_TYPE || type >= 0) // Type-triggered?
+            if(type == DED_PTCGEN_ANY_MOBJ_TYPE || type >= 0)  // Type-triggered?
             {
 #ifdef __CLIENT__
                 // Client's should also check the client mobjs.
@@ -1065,12 +1058,23 @@ void Generator::runTick()
                     map().clMobjIterator(newGeneratorParticlesWorker, this);
                 }
 #endif
-                map().thinkers()
-                    .iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1 /*mobjs are public*/,
-                             manyNewParticlesWorker, this);
+
+                // Spawn new particles using all applicable sources.
+                map().thinkers().forAll(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1 /*public*/, [this] (thinker_t *th)
+                {
+                    // Type match?
+                    auto &mob = *reinterpret_cast<mobj_t *>(th);
+                    if(type == DED_PTCGEN_ANY_MOBJ_TYPE || mob.type == type || mob.type == type2)
+                    {
+                        // Someone might think this is a slight hack...
+                        source = &mob;
+                        newParticle();
+                    }
+                    return LoopContinue;
+                });
 
                 // The generator has no real source.
-                source = 0;
+                source = nullptr;
             }
             else
             {
@@ -1083,14 +1087,14 @@ void Generator::runTick()
 
     // Move particles.
     ParticleInfo *pinfo = _pinfo;
-    for(int i = 0; i < count; ++i, pinfo++)
+    for(dint i = 0; i < count; ++i, pinfo++)
     {
         if(pinfo->stage < 0) continue; // Not in use.
 
         if(pinfo->tics-- <= 0)
         {
             // Advance to next stage.
-            if(++pinfo->stage == def->stageCount.num ||
+            if(++pinfo->stage == def->stages.size() ||
                stages[pinfo->stage].type == PTC_NONE)
             {
                 // Kill the particle.
@@ -1123,6 +1127,7 @@ void Generator_Delete(Generator *gen)
     gen->map().unlink(*gen);
     gen->map().thinkers().remove(gen->thinker);
     gen->clearParticles();
+    Z_Free(gen->stages); gen->stages = nullptr;
     // The generator itself is free'd when it's next turn for thinking comes.
 }
 

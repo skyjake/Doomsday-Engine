@@ -56,6 +56,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
     ChoiceWidget *paths;
     ToggleWidget *autoDown;
     ToggleWidget *deleteAfter;
+    bool didApply = false;
 
     Instance(Public *i, Mode mode) : Base(i)
     {
@@ -94,6 +95,8 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
                 << new ChoiceItem(tr("Monthly"),    UpdaterSettings::Monthly);
 
         lastChecked->margins().setTop("");
+        lastChecked->setFont("separator.annotation");
+        lastChecked->setTextColor("altaccent");
 
         releaseLabel->setText("Release type:");
 
@@ -146,11 +149,11 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         String ago = st.lastCheckAgo();
         if(!ago.isEmpty())
         {
-            lastChecked->setText(_E(D)_E(t) + tr("Last checked %1.").arg(st.lastCheckAgo()));
+            lastChecked->setText(tr("Last checked %1.").arg(st.lastCheckAgo()));
         }
         else
         {
-            lastChecked->setText(_E(D)_E(t) + tr("Never checked."));
+            lastChecked->setText(tr("Never checked."));
         }
 
         autoCheck->setActive(!st.onlyCheckManually());
@@ -217,9 +220,15 @@ UpdaterSettingsDialog::UpdaterSettingsDialog(Mode mode, String const &name)
     heading().setText(tr("Updater Settings"));
 }
 
+bool UpdaterSettingsDialog::settingsHaveChanged() const
+{
+    return d->didApply;
+}
+
 void UpdaterSettingsDialog::apply()
 {
     d->apply();
+    d->didApply = true;
 }
 
 void UpdaterSettingsDialog::applyAndCheckNow()

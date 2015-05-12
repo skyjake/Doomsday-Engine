@@ -53,13 +53,13 @@ def fileRegOff(fn, pattern, startAtPos=0):
     return found.start()
     
 
-for proj in ['libdeng2\deng2.vcxproj', 'tools\shell\shell-gui\Doomsday-Shell.vcxproj']:
+for proj in ['libcore\deng_core.vcxproj', 'tools\shell\shell-gui\Doomsday-Shell.vcxproj']:
     fileRegex(proj, 
               r'=\\&quot;([A-Za-z0-9_\-\. ]+)\\&quot;', 
               r'=&quot;\1&quot;')
     
 copyScript = 'python &quot;%s\\\\build\win32\copy_to_products.py' % rootPath + '&quot; &quot;' + solPath + '&quot;'
-rcDirs = '&quot;' + rootPath + '\\\\api&quot;;&quot;' + rootPath + '\\\\libdeng1\include' + '&quot;'
+rcDirs = '&quot;' + rootPath + '\\\\api&quot;;&quot;' + rootPath + '\\\\liblegacy\include' + '&quot;'
 
 def find_projs(path):
     found = []
@@ -118,7 +118,11 @@ for fn in allProjs:
     fileRegex(fn,
               r'</ResourceCompile>\n',
               r"""  <AdditionalIncludeDirectories>""" + rcDirs + """</AdditionalIncludeDirectories>\n    </ResourceCompile>\n""", 
-              1, start)    
+              1, start)
+              
+    # Enable debug symbols in all configs, not just Debug.
+    fileRegex(fn, r'<GenerateDebugInformation>false</GenerateDebugInformation>', 
+              '<GenerateDebugInformation>true</GenerateDebugInformation>')
     
 print "\nAll done!\n"
 print 'Solution generated:', os.path.join(solPath, 'doomsday.sln')

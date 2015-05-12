@@ -1,6 +1,7 @@
 /** @file gameuiwidget.cpp  Widget for legacy game UI elements.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2014-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -16,21 +17,35 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/widgets/gameuiwidget.h"
-
 #include "de_base.h"
-#include "de_console.h"
-#include "de_ui.h"
-#include "de_render.h"
-#include "audio/s_main.h"
-
-#include "gl/gl_main.h"
-#include "edit_bias.h"
-#include "ui/busyvisual.h"
+#include "ui/widgets/gameuiwidget.h"
 
 #include <de/GLState>
 
+#include "api_console.h"
+#include "edit_bias.h"
+
+#include "audio/s_main.h"
+#include "network/net_main.h"
+#include "gl/gl_main.h"
+
+#include "world/map.h"
+
+#include "render/rend_main.h"
+
+#include "ui/busyvisual.h"
+#include "ui/infine/finaleinterpreter.h"
+#include "ui/infine/finalepagewidget.h"
+
 using namespace de;
+
+static void setupProjectionForFinale(dgl_borderedprojectionstate_t *bp)
+{
+    GL_ConfigureBorderedProjection(bp, BPF_OVERDRAW_CLIP,
+                                   SCREENWIDTH, SCREENHEIGHT,
+                                   DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT,
+                                   scalemode_t(Con_GetByte("rend-finale-stretch")));
+}
 
 DENG2_PIMPL(GameUIWidget)
 {
@@ -43,7 +58,34 @@ DENG2_PIMPL(GameUIWidget)
         {
             R_RenderViewPorts(HUDLayer);
 
-            UI2_Drawer();
+            // Draw finales.
+            if(App_InFineSystem().finaleInProgess())
+            {
+                dgl_borderedprojectionstate_t bp;
+                //dd_bool bordered;
+
+                setupProjectionForFinale(&bp);
+                GL_BeginBorderedProjection(&bp);
+
+                /*bordered = (FI_ScriptActive() && FI_ScriptCmdExecuted());
+                if(bordered)
+                {
+                    // Draw using the special bordered projection.
+                    GL_ConfigureBorderedProjection(&borderedProjection);
+                    GL_BeginBorderedProjection(&borderedProjection);
+                }*/
+
+                for(Finale *finale : App_InFineSystem().finales())
+                {
+                    finale->interpreter().page(FinaleInterpreter::Anims).draw();
+                    finale->interpreter().page(FinaleInterpreter::Texts).draw();
+                }
+
+                GL_EndBorderedProjection(&bp);
+
+                //if(bordered)
+                //    GL_EndBorderedProjection(&borderedProjection);
+            }
 
             // Draw any full window game graphics.
             if(gx.DrawWindow)
@@ -61,7 +103,7 @@ DENG2_PIMPL(GameUIWidget)
          */
         if(App_WorldSystem().hasMap() && App_WorldSystem().map().hasLightGrid())
         {
-            App_WorldSystem().map().lightGrid().drawDebugVisual();
+            Rend_LightGridVisual(App_WorldSystem().map().lightGrid());
         }
         Net_Drawer();
         S_Drawer();
@@ -94,3 +136,9 @@ void GameUIWidget::drawContent()
     GLState::pop().apply();
 }
 
+bool GameUIWidget::finaleStretch() //static
+{
+    dgl_borderedprojectionstate_t bp;
+    setupProjectionForFinale(&bp);
+    return (bp.scaleMode == SCALEMODE_STRETCH);
+}

@@ -85,8 +85,8 @@ DENG2_PIMPL_NOREF(FoldPanelWidget)
             ColorBank::Colorf const &textColor = fold.title().textColorf();
 
             // Frame.
-            verts.makeFlexibleFrame(rect.toRectanglei(), 5, textColor,
-                                    atlas.imageRectf(root.roundCorners()));
+            /*verts.makeFlexibleFrame(rect.toRectanglei(), 5, textColor,
+                                    atlas.imageRectf(root.roundCorners()));*/
 
             Rectanglef uv = atlas.imageRectf(root.styleTexture("fold"));
             Matrix4f const turn = Matrix4f::rotateAround(rect.middle(), angle);
@@ -94,11 +94,17 @@ DENG2_PIMPL_NOREF(FoldPanelWidget)
         }
     };
 
-    ButtonWidget *title; // not owned
-    GuiWidget *container; ///< Held here while not part of the widget tree.
+    ButtonWidget *title  = nullptr; // not owned
+    GuiWidget *container = nullptr; ///< Held here while not part of the widget tree.
     DialogContentStylist stylist;    
-
-    Instance() : title(0), container(0) {}
+    
+    ~Instance()
+    {
+        stylist.clear(); // References the container.
+        
+        // We have ownership of the content when the fold is closed.
+        delete container;
+    }
 };
 
 FoldPanelWidget::FoldPanelWidget(String const &name) : PanelWidget(name), d(new Instance)

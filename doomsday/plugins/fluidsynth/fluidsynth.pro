@@ -1,11 +1,11 @@
 # The Doomsday Engine Project
 # Copyright (c) 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
 
-# This plugin uses the full libdeng2 C++ API.
-CONFIG += dengplugin_libdeng2_full
+# This plugin uses the full libcore C++ API.
+CONFIG += dengplugin_libcore_full
 
 include(../config_plugin.pri)
-include(../../dep_glib.pri)
+deng_embedfluidsynth: include(../../dep_glib.pri)
 
 TEMPLATE = lib
 TARGET   = audio_fluidsynth
@@ -22,18 +22,11 @@ win32 {
 
     QMAKE_LFLAGS += /DEF:\"$$PWD/api/dsfluidsynth.def\"
     OTHER_FILES += api/dsfluidsynth.def
-
-    INSTALLS += target
-    target.path = $$DENG_PLUGIN_LIB_DIR
 }
 macx {
     fixPluginInstallId($$TARGET, 1)
-    linkToBundledLibdeng2($$TARGET)
-    linkToBundledLibdeng1($$TARGET)
-}
-unix:!macx {
-    INSTALLS += target
-    target.path = $$DENG_PLUGIN_LIB_DIR
+    linkToBundledLibcore($$TARGET)
+    linkToBundledLiblegacy($$TARGET)
 }
 
 INCLUDEPATH += include

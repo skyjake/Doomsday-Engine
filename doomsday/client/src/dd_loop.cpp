@@ -38,6 +38,7 @@
 #endif
 
 #ifdef __CLIENT__
+#  include "clientapp.h"
 #  include "ui/busyvisual.h"
 #  include "ui/clientwindow.h"
 #endif
@@ -55,6 +56,13 @@
  * The length of one tic can be at most this.
  */
 #define MAX_FRAME_TIME (1.0/MIN_TIC_RATE)
+
+/**
+ * If the loop is stuck for more than this number of seconds, the elapsed time is
+ * ignored. The assumption is that the app was suspended or was not able to run,
+ * so no point in running tics.
+ */
+#define MAX_ELAPSED_TIME 5
 
 float frameTimePos; // 0...1: fractional part for sharp game tics.
 
@@ -159,10 +167,12 @@ static void baseTicker(timespan_t time)
         Demo_Ticker(time);
 #endif
         P_Ticker(time);
-        UI2_Ticker(time);
+#ifdef __CLIENT__
+        FR_Ticker(time);
+#endif
 
         // InFine ticks whenever it's active.
-        FI_Ticker();
+        App_InFineSystem().runTicks(time);
 
         // Game logic.
         if(App_GameLoaded() && gx.Ticker)
@@ -230,13 +240,10 @@ static void baseTicker(timespan_t time)
 
     // Console is always ticking.
     Con_Ticker(time);
-
-    /*
-    // User interface ticks.
-    if(tickUI)
+    if(tickFrame)
     {
-        UI_Ticker(time);
-    }*/
+        Con_TransitionTicker(time);
+    }
 
     // Plugins tick always.
     DD_CallHooks(HOOK_TICKER, 0, &time);
@@ -366,9 +373,16 @@ timespan_t DD_LatestRunTicsStartTime(void)
     return lastRunTicsTime;
 }
 
+static double ticLength;
+
+timespan_t DD_CurrentTickDuration()
+{
+    return ticLength;
+}
+
 void Loop_RunTics(void)
 {
-    double elapsedTime, ticLength, nowTime;
+    double elapsedTime, nowTime;
 
     // Do a network update first.
     N_Update();
@@ -386,6 +400,11 @@ void Loop_RunTics(void)
     // Let's see how much time has passed. This is affected by "settics".
     nowTime = Timer_Seconds();
     elapsedTime = nowTime - lastRunTicsTime;
+    if(elapsedTime > MAX_ELAPSED_TIME)
+    {
+        // It was too long ago, no point in running individual ticks. Just do one.
+        elapsedTime = MAX_FRAME_TIME;
+    }
 
     // Remember when this frame started.
     lastRunTicsTime = nowTime;
@@ -401,11 +420,11 @@ void Loop_RunTics(void)
 
 #ifdef __CLIENT__
         // Process input events.
-        DD_ProcessEvents(ticLength);
+        ClientApp::inputSystem().processEvents(ticLength);
         if(!processSharpEventsAfterTickers)
         {
             // We are allowed to process sharp events before tickers.
-            DD_ProcessSharpEvents(ticLength);
+            ClientApp::inputSystem().processSharpEvents(ticLength);
         }
 #endif
 
@@ -416,7 +435,7 @@ void Loop_RunTics(void)
         if(processSharpEventsAfterTickers)
         {
             // This is done after tickers for compatibility with ye olde game logic.
-            DD_ProcessSharpEvents(ticLength);
+            ClientApp::inputSystem().processSharpEvents(ticLength);
         }
 #endif
 

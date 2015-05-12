@@ -98,6 +98,7 @@ public ChildWidgetOrganizer::IFilter
     bool animatingGlow;
     QScopedPointer<Untrapper> untrapper;
     DialogContentStylist stylist;
+    IndirectRule *minWidth;
 
     Instance(Public *i, Flags const &dialogFlags)
         : Base(i)
@@ -108,6 +109,8 @@ public ChildWidgetOrganizer::IFilter
         , needButtonUpdate(false)
         , animatingGlow(false)
     {
+        minWidth = new IndirectRule;
+
         // Initialize the border glow.
         normalGlow = style().colors().colorf("glow").w;
         glow.setValue(normalGlow);
@@ -182,7 +185,8 @@ public ChildWidgetOrganizer::IFilter
         // A blank container widget acts as the popup content parent.
         container->rule().setInput(Rule::Width, OperatorRule::maximum(
                                        area->rule().width(),
-                                       buttons->rule().width() + extraButtons->rule().width()));
+                                       buttons->rule().width() + extraButtons->rule().width(),
+                                       *minWidth));
 
         if(flags.testFlag(WithHeading))
         {
@@ -201,6 +205,7 @@ public ChildWidgetOrganizer::IFilter
 
     ~Instance()
     {
+        releaseRef(minWidth);
         releaseRef(acceptAction);
     }
 
@@ -393,10 +398,11 @@ public ChildWidgetOrganizer::IFilter
         {
             bg = self.infoStyleBackground();
         }
-        else if(Style::appStyle().isBlurringAllowed())
+        else if(Style::get().isBlurringAllowed())
         {
             /// @todo Should use the Style for this.
-            bg.type = Background::BlurredWithBorderGlow;
+            bg.type = Background::SharedBlurWithBorderGlow;
+            bg.blur = style().sharedBlurWidget();
             bg.solidFill = Vector4f(0, 0, 0, .65f);
         }
         else
@@ -432,6 +438,11 @@ ScrollAreaWidget &DialogWidget::area()
     return *d->area;
 }
 
+void DialogWidget::setMinimumContentWidth(Rule const &minWidth)
+{
+    d->minWidth->setSource(minWidth);
+}
+
 MenuWidget &DialogWidget::buttonsMenu()
 {
     return *d->buttons;
@@ -453,9 +464,9 @@ ButtonWidget &DialogWidget::buttonWidget(de::String const &label) const
     if(w) return w->as<ButtonWidget>();
 
     w = d->extraButtons->organizer().itemWidget(label);
-    DENG2_ASSERT(w != 0);
+    if(w) return w->as<ButtonWidget>();
 
-    return w->as<ButtonWidget>();
+    throw UndefinedLabel("DialogWidget::buttonWidget", "Undefined label \"" + label + "\"");
 }
 
 ButtonWidget *DialogWidget::buttonWidget(int roleId) const

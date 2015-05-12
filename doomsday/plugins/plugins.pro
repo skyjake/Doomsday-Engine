@@ -4,7 +4,7 @@
 include(../config.pri)
 
 TEMPLATE = subdirs
-SUBDIRS = dehread savegameconverter wadmapconverter example
+SUBDIRS = dehread savegameconverter idtech1converter example
 
 # Games.
 SUBDIRS += doom heretic hexen

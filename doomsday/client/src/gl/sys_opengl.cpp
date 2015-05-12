@@ -24,9 +24,11 @@
 #include "de_graphics.h"
 #include "de_misc.h"
 
+#include "sys_system.h"
 #include "gl/sys_opengl.h"
 
-#include <de/libdeng2.h>
+#include <de/libcore.h>
+#include <de/concurrency.h>
 #include <de/GLInfo>
 #include <de/GLState>
 #include <QSet>
@@ -97,7 +99,7 @@ static void initialize(void)
 #else
     GL_state.features.texCompression = false;
 #endif
-    if(CommandLine_Exists("-notexcomp"))
+    if(!CommandLine_Exists("-texcomp") || CommandLine_Exists("-notexcomp"))
     {
         GL_state.features.texCompression = false;
     }
@@ -147,6 +149,8 @@ de::String Sys_GLDescription()
         os << TABBED("Compressed texture formats:", iVal);
     }
 #endif
+
+    os << TABBED("Use texture compression:", (GL_state.features.texCompression? "yes" : "no"));
 
     glGetIntegerv(GL_MAX_TEXTURE_UNITS, &iVal);
     os << TABBED("Available texture units:", iVal);
@@ -233,7 +237,7 @@ dd_bool Sys_GLInitialize(void)
         {
             if(!CommandLine_Exists("-noglcheck"))
             {
-                Sys_CriticalMessagef("OpenGL implementation is too old!\n"
+                Sys_CriticalMessagef("Your OpenGL is too old!\n"
                                      "  Driver version: %s\n"
                                      "  The minimum supported version is 2.0",
                                      glGetString(GL_VERSION));
@@ -241,7 +245,7 @@ dd_bool Sys_GLInitialize(void)
             }
             else
             {
-                LOG_GL_WARNING("OpenGL implementation may be too old (2.0+ required, "
+                LOG_GL_WARNING("OpenGL may be too old (2.0+ required, "
                                "but driver reports %s)") << glGetString(GL_VERSION);
             }
         }
@@ -368,6 +372,8 @@ static de::String omitGLPrefix(de::String str)
 
 static void printExtensions(QStringList extensions)
 {
+    qSort(extensions);
+
     // Find all the prefixes.
     QSet<QString> prefixes;
     foreach(QString ext, extensions)

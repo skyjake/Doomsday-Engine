@@ -26,6 +26,8 @@
 
 namespace de {
 
+#undef main
+
 /**
  * General-purpose top-level window with persistent state. Each instance must
  * be identified by a unique name (e.g., "main") that is used when saving the
@@ -93,6 +95,8 @@ public:
      */
     PersistentCanvasWindow(String const &id);
 
+    String id() const;
+
     /**
      * Returns @c true iff the window is currently centered.
      */
@@ -139,6 +143,17 @@ public:
      * a window to determine its persistent configuration.
      */
     void restoreFromConfig();
+
+    /**
+     * Saves the current state in memory (not persistently). The saved state can
+     * later be restored with a call to restoreState().
+     */
+    void saveState();
+
+    /**
+     * Restores the attribuets of the window from previously saved state.
+     */
+    void restoreState();
 
     static PersistentCanvasWindow &main();
 

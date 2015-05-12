@@ -1,9 +1,9 @@
-/** @file ui_main.h Graphical User Interface (obsolete).
+/** @file ui_main.h  Graphical User Interface (obsolete).
  *
  * Has ties to the console routines.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -23,7 +23,7 @@
 #define LIBDENG_UI_MAIN_H
 
 #include <de/rect.h>
-#include "dd_input.h" // ddevent_t
+#include "ddevent.h"
 #ifdef __CLIENT__
 #  include "MaterialVariantSpec"
 #endif
@@ -33,6 +33,22 @@ enum fontstyle_t {
     FS_BOLD,
     FS_LIGHT,
     FONTSTYLE_COUNT
+};
+
+/// Numeric identifiers of predefined colors.
+/// @ingroup infine
+enum {
+    UIC_TEXT,
+    UIC_TITLE,
+    UIC_SHADOW,
+    UIC_BG_LIGHT,
+    UIC_BG_MEDIUM,
+    UIC_BG_DARK,
+    UIC_BRD_HI,
+    UIC_BRD_MED,
+    UIC_BRD_LOW,
+    UIC_HELP,
+    NUM_UI_COLORS
 };
 
 /// Standard dimensions.

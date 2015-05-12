@@ -6,8 +6,8 @@
 # http://www.gnu.org/licenses/gpl.html for details.
 
 include(../../config.pri)
-include(../../dep_deng2.pri)
-include(../../dep_deng1.pri)
+include(../../dep_core.pri)
+include(../../dep_legacy.pri)
 include(../../dep_lzss.pri)
 
 TEMPLATE = app
@@ -33,10 +33,10 @@ SOURCES += \
 # Deployment -------------------------------------------------------------------
 
 macx {
-    linkBinaryToBundledLibdeng2($$TARGET)
-    linkBinaryToBundledLibdeng1($$TARGET)
+    xcodeFinalizeAppBuild()
+    linkBinaryToBundledLibcore($$TARGET)
+    linkBinaryToBundledLiblegacy($$TARGET)
 }
-else {
-    INSTALLS += target
-    target.path = $$DENG_BIN_DIR
-}
+
+deployTarget()
+

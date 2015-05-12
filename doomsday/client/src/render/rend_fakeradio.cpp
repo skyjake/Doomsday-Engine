@@ -1,7 +1,7 @@
-/** @file rend_fakeradio.cpp Faked Radiosity Lighting.
+/** @file rend_fakeradio.cpp  Faked Radiosity Lighting.
  *
- * @authors Copyright &copy; 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2004-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,12 +18,6 @@
  * 02110-1301 USA</small>
  */
 
-#include <cstring>
-
-#include <QBitArray>
-
-#include <de/Vector>
-
 #include "de_base.h"
 #include "de_console.h"
 #include "de_render.h"
@@ -31,24 +25,24 @@
 #include "de_misc.h"
 #include "de_play.h"
 #include "clientapp.h"
-
 #include "gl/gl_texmanager.h"
 #include "gl/sys_opengl.h"
-#include "MaterialSnapshot"
 #include "MaterialVariantSpec"
-
 #include "Face"
-
+#include "ConvexSubspace"
+#include "SectorCluster"
+#include "WallEdge"
 #include "world/map.h"
 #include "world/maputil.h"
 #include "world/lineowner.h"
-#include "BspLeaf"
-
-#include "WallEdge"
 #include "render/rendpoly.h"
 #include "render/shadowedge.h"
-
 #include "render/rend_fakeradio.h"
+
+#include <de/concurrency.h>
+#include <de/Vector>
+#include <QBitArray>
+#include <cstring>
 
 using namespace de;
 
@@ -1103,12 +1097,12 @@ void Rend_RadioWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge,
 
     LineSide &side = leftEdge.mapLineSide();
     HEdge const *hedge = side.leftHEdge();
-    SectorCluster const *cluster = &hedge->face().mapElementAs<BspLeaf>().cluster();
+    SectorCluster const *cluster = &hedge->face().mapElementAs<ConvexSubspace>().cluster();
     SectorCluster const *backCluster = 0;
 
     if(leftEdge.spec().section != LineSide::Middle && hedge->twin().hasFace())
     {
-        backCluster = hedge->twin().face().mapElementAs<BspLeaf>().clusterPtr();
+        backCluster = hedge->twin().face().mapElementAs<ConvexSubspace>().clusterPtr();
     }
 
     bool const haveBottomShadower = Rend_RadioPlaneCastsShadow(cluster->visFloor());
@@ -1262,8 +1256,8 @@ static void writeShadowSection2(ShadowEdge const &leftEdge, ShadowEdge const &ri
 
 static void writeShadowSection(int planeIndex, LineSide const &side, float shadowDark)
 {
-    DENG_ASSERT(side.hasSections());
-    DENG_ASSERT(!side.line().definesPolyobj());
+    DENG2_ASSERT(side.hasSections());
+    DENG2_ASSERT(!side.line().definesPolyobj());
 
     if(!(shadowDark > .0001)) return;
 
@@ -1276,17 +1270,24 @@ static void writeShadowSection(int planeIndex, LineSide const &side, float shado
     // Surfaces with a missing material don't shadow.
     if(!suf->hasMaterial()) return;
 
-    // Missing, glowing or sky-masked materials are exempted.
-    Material const &material = suf->material();
-    if(material.isSkyMasked() || material.hasGlow()) return;
+    // Surfaces with a sky-masked material don't shadow.
+    if(suf->material().isSkyMasked()) return;
+
+    // Ensure we have up to date info about the material.
+    MaterialAnimator &matAnimator = suf->material().getAnimator(Rend_MapSurfaceMaterialSpec());
+    matAnimator.prepare();
+
+    // Surfaces with a glowing material don't shadow.
+    if(matAnimator.glowStrength() > 0)
+        return;
 
     // If the sector containing the shadowing line section is fully closed (i.e., volume
     // is not positive) then skip shadow drawing entirely.
     /// @todo Encapsulate this logic in ShadowEdge -ds
-    if(!leftHEdge->hasFace()) return;
+    if(!leftHEdge->hasFace() || !leftHEdge->face().hasMapElement())
+        return;
 
-    BspLeaf const &frontLeaf = leftHEdge->face().mapElementAs<BspLeaf>();
-    if(!frontLeaf.hasCluster() || !frontLeaf.cluster().hasWorldVolume())
+    if(!leftHEdge->face().mapElementAs<ConvexSubspace>().cluster().hasWorldVolume())
         return;
 
     static ShadowEdge leftEdge; // this function is called often; keep these around
@@ -1304,18 +1305,18 @@ static void writeShadowSection(int planeIndex, LineSide const &side, float shado
 }
 
 /**
- * @attention Do not use the global radio state in here, as @a bspLeaf can be
- * part of any sector, not the one chosen for wall rendering.
+ * @attention Do not use the global radio state in here, as @a subspace can be
+ * part of any Sector, not the one chosen for wall rendering.
  */
-void Rend_RadioBspLeafEdges(BspLeaf const &bspLeaf)
+void Rend_RadioSubspaceEdges(ConvexSubspace const &subspace)
 {
     if(!rendFakeRadio) return;
     if(levelFullBright) return;
 
-    if(bspLeaf.shadowLines().isEmpty()) return;
+    if(!subspace.shadowLineCount()) return;
 
-    SectorCluster const &cluster = bspLeaf.cluster();
-    float sectorlight = cluster.sector().lightLevel();
+    SectorCluster &cluster = subspace.cluster();
+    float sectorlight = cluster.lightSourceIntensity();
 
     // Determine the shadow properties.
     /// @todo Make cvars out of constants.
@@ -1325,30 +1326,30 @@ void Rend_RadioBspLeafEdges(BspLeaf const &bspLeaf)
     // Any need to continue?
     if(shadowDark < .0001f) return;
 
-    Vector3f const eyeToSurface(Vector2d(vOrigin.x, vOrigin.z) - bspLeaf.poly().center());
+    Vector3f const eyeToSurface(Vector2d(Rend_EyeOrigin().x, Rend_EyeOrigin().z) - subspace.poly().center());
 
-    // We need to check all the shadow lines linked to this BspLeaf for
+    // We need to check all the shadow lines linked to this subspace for
     // the purpose of fakeradio shadowing.
-    BspLeaf::ShadowLines const &shadowLines = bspLeaf.shadowLines();
-    foreach(LineSide *side, shadowLines)
+    subspace.forAllShadowLines([&cluster, &shadowDark, &eyeToSurface] (LineSide &side)
     {
         // Already rendered during the current frame? We only want to
         // render each shadow once per frame.
-        if(side->shadowVisCount() != R_FrameCount())
+        if(side.shadowVisCount() != R_FrameCount())
         {
-            side->setShadowVisCount(R_FrameCount());
+            side.setShadowVisCount(R_FrameCount());
 
             for(int pln = 0; pln < cluster.visPlaneCount(); ++pln)
             {
                 Plane const &plane = cluster.visPlane(pln);
-                if(Vector3f(eyeToSurface, vOrigin.y - plane.heightSmoothed())
+                if(Vector3f(eyeToSurface, Rend_EyeOrigin().y - plane.heightSmoothed())
                         .dot(plane.surface().normal()) >= 0)
                 {
-                    writeShadowSection(pln, *side, shadowDark);
+                    writeShadowSection(pln, side, shadowDark);
                 }
             }
         }
-    }
+        return LoopContinue;
+    });
 }
 
 #ifdef DENG_DEBUG
@@ -1359,7 +1360,7 @@ static void drawPoint(Vector3d const &point, int radius, float const color[4])
     Vector3d const leftOff      = viewData->upVec + viewData->sideVec;
     Vector3d const rightOff     = viewData->upVec - viewData->sideVec;
 
-    //Vector3d const viewToCenter = point - vOrigin;
+    //Vector3d const viewToCenter = point - Rend_EyeOrigin();
     //float scale = float(viewToCenter.dot(viewData->frontVec)) /
     //                viewData->frontVec.dot(viewData->frontVec);
 
@@ -1414,24 +1415,28 @@ void Rend_DrawShadowOffsetVerts()
     glEnable(GL_TEXTURE_2D);
 
     /// @todo fixme: Should use the visual plane heights of sector clusters.
-    foreach(Line *line, map.lines())
-    for(uint k = 0; k < 2; ++k)
+    map.forAllLines([] (Line &line)
     {
-        Vertex &vtx = line->vertex(k);
-        LineOwner const *base = vtx.firstLineOwner();
-        LineOwner const *own = base;
-        do
+        for(int i = 0; i < 2; ++i)
         {
-            Vector2d xy = vtx.origin() + own->extendedShadowOffset();
-            coord_t z = own->line().frontSector().floor().heightSmoothed();
-            drawPoint(Vector3d(xy.x, xy.y, z), 1, yellow);
+            Vertex &vtx = line.vertex(i);
 
-            xy = vtx.origin() + own->innerShadowOffset();
-            drawPoint(Vector3d(xy.x, xy.y, z), 1, red);
+            LineOwner const *base = vtx.firstLineOwner();
+            LineOwner const *own  = base;
+            do
+            {
+                Vector2d xy = vtx.origin() + own->extendedShadowOffset();
+                coord_t z   = own->line().frontSector().floor().heightSmoothed();
+                drawPoint(Vector3d(xy.x, xy.y, z), 1, yellow);
 
-            own = &own->next();
-        } while(own != base);
-    }
+                xy = vtx.origin() + own->innerShadowOffset();
+                drawPoint(Vector3d(xy.x, xy.y, z), 1, red);
+
+                own = &own->next();
+            } while(own != base);
+        }
+        return LoopContinue;
+    });
 
     glDisable(GL_TEXTURE_2D);
     glDepthMask(GL_TRUE);

@@ -1,7 +1,7 @@
 /** @file worldsystem.cpp  World subsystem.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,22 +18,40 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
 #include "world/worldsystem.h"
+
+#include <map>
+#include <utility>
+#include <QMap>
+#include <QtAlgorithms>
+#include <de/memoryzone.h>
+#include <de/timer.h>
+#include <de/Error>
+#include <de/Log>
+#include <de/Time>
+#include <doomsday/console/cmd.h>
+#include <doomsday/console/exec.h>
+#include <doomsday/console/var.h>
 
 #include "de_defs.h"
 #include "de_play.h"
 #include "de_filesys.h"
-#include "con_main.h"
-#include "con_bar.h"
+#include "dd_main.h"
+#include "dd_def.h"
+#include "dd_loop.h"
 
 #include "audio/s_main.h"
-#include "edit_map.h"
 #include "network/net_main.h"
 
-#include "BspLeaf"
+#include "edit_map.h"
 #include "Plane"
 #include "Sector"
+#include "SectorCluster"
+#include "world/p_ticker.h"
+#include "world/sky.h"
+#include "world/thinkers.h"
+
+#include "ui/progress.h"
 
 #ifdef __CLIENT__
 #  include "clientapp.h"
@@ -44,29 +62,19 @@
 #  include "Hand"
 #  include "HueCircle"
 
+#  include "gl/gl_main.h"
+
 #  include "Lumobj"
+#  include "MaterialAnimator"
 #  include "render/viewports.h" // R_ResetViewer
-#  include "render/projector.h"
 #  include "render/rend_fakeradio.h"
 #  include "render/rend_main.h"
-#  include "render/sky.h"
-#  include "render/vlight.h"
+#  include "render/skydrawable.h"
 #endif
 
 #ifdef __SERVER__
 #  include "server/sv_pool.h"
 #endif
-
-#include "world/thinkers.h"
-
-#include <de/Error>
-#include <de/Log>
-#include <de/Time>
-#include <de/memoryzone.h>
-#include <QMap>
-#include <QtAlgorithms>
-#include <map>
-#include <utility>
 
 using namespace de;
 
@@ -74,6 +82,18 @@ int validCount = 1; // Increment every time a check is made.
 
 #ifdef __CLIENT__
 static float handDistance = 300; //cvar
+#endif
+
+static inline ResourceSystem &resSys()
+{
+    return App_ResourceSystem();
+}
+
+#ifdef __CLIENT__
+static inline RenderSystem &rendSys()
+{
+    return ClientApp::renderSystem();
+}
 #endif
 
 /**
@@ -242,7 +262,7 @@ private:
         }
     }
 
-    Map *_map; ///< Map currently being reported on, if any (not owned).
+    Map *_map = nullptr;  ///< Map currently being reported on, if any (not owned).
     UnclosedSectorMap _unclosedSectors;
     OneWayWindowMap   _oneWayWindows;
 };
@@ -255,21 +275,6 @@ dd_bool ddMapSetup;
 //static byte mapCache = true; // cvar
 
 static char const *mapCacheDir = "mapcache/";
-
-static inline lumpnum_t markerLumpNumForPath(String path)
-{
-    return App_FileSystem().lumpNumForName(path);
-}
-
-static String composeUniqueMapId(de::File1 &markerLump)
-{
-    return String("%1|%2|%3|%4")
-              .arg(markerLump.name().fileNameWithoutExtension())
-              .arg(markerLump.container().name().fileNameWithoutExtension())
-              .arg(markerLump.container().hasCustom()? "pwad" : "iwad")
-              .arg(App_CurrentGame().identityKey())
-              .toLower();
-}
 
 /// Determine the identity key for maps loaded from the specified @a sourcePath.
 static String cacheIdForMap(String const &sourcePath)
@@ -289,37 +294,19 @@ namespace de {
 
 DENG2_PIMPL(WorldSystem)
 {
-    /**
-     * Information about a map in the cache.
-     */
-    struct MapCacheRecord
-    {
-        Uri mapUri;                 ///< Unique identifier for the map.
-        //String path;                ///< Path to the cached map data.
-        //bool dataAvailable;
-        //bool lastLoadAttemptFailed;
-    };
-    typedef QMap<String, MapCacheRecord> MapRecords;
-    MapRecords records;
+    Map *map = nullptr;          ///< Current map.
+    Record fallbackMapInfo;      ///< Used when no effective MapInfo definition.
 
-    Map *map;                  ///< Current map.
-    timespan_t time;           ///< World-wide time.
+    timespan_t time = 0;         ///< World-wide time.
 #ifdef __CLIENT__
-    QScopedPointer<Hand> hand; ///< For map editing/manipulation.
+    std::unique_ptr<Hand> hand;  ///< For map editing/manipulation.
+    SkyDrawable::Animator skyAnimator;
 #endif
 
-    Instance(Public *i)
-        : Base(i)
-        , map(0)
-        , time(0)
-    {}
-
-    void notifyMapChange()
+    Instance(Public *i) : Base(i)
     {
-        DENG2_FOR_PUBLIC_AUDIENCE(MapChange, i)
-        {
-            i->worldSystemMapChanged();
-        }
+        // One time init of the fallback MapInfo definition.
+        defn::MapInfo(fallbackMapInfo).resetToDefaults();
     }
 
     /**
@@ -343,54 +330,6 @@ DENG2_PIMPL(WorldSystem)
     }
 
     /**
-     * Try to locate a cache record for a map by URI.
-     *
-     * @param uri  Map identifier.
-     *
-     * @return  Pointer to the found MapCacheRecord; otherwise @c 0.
-     */
-    MapCacheRecord *findCacheRecord(Uri const &uri) const
-    {
-        MapRecords::const_iterator found = records.find(uri.resolved());
-        if(found != records.end())
-        {
-            return const_cast<MapCacheRecord *>(&found.value());
-        }
-        return 0; // Not found.
-    }
-
-    /**
-     * Create a new MapCacheRecord for the map. If an existing record is found it
-     * will be returned instead (becomes a no-op).
-     *
-     * @param uri  Map identifier.
-     *
-     * @return  Possibly newly-created MapCacheRecord.
-     */
-    MapCacheRecord &createCacheRecord(Uri const &uri)
-    {
-        // Do we have an existing record for this?
-        if(MapCacheRecord *record = findCacheRecord(uri))
-            return *record;
-
-        // Prepare a new record.
-        MapCacheRecord rec;
-        rec.mapUri = uri;
-
-        // Compose the cache directory path.
-        /*lumpnum_t markerLumpNum = App_FileSystem().lumpNumForName(uri.path().toString().toLatin1().constData());
-        if(markerLumpNum >= 0)
-        {
-            File1 &lump = App_FileSystem().nameIndex().lump(markerLumpNum);
-            String cacheDir = cachePath(lump.container().composePath());
-
-            rec.path = cacheDir + lump.name() + ".dcm";
-        }*/
-
-        return records.insert(uri.resolved(), rec).value();
-    }
-
-    /**
      * Attempt JIT conversion of the map data with the help of a plugin. Note that
      * the map is left in an editable state in case the caller wishes to perform
      * any further changes.
@@ -399,25 +338,23 @@ DENG2_PIMPL(WorldSystem)
      *
      * @return  The newly converted map (if any).
      */
-    Map *convertMap(Uri const &uri, MapConversionReporter *reporter = 0)
+    Map *convertMap(MapDef const &mapDef, MapConversionReporter *reporter = 0)
     {
-        // Record this map if we haven't already.
-        /*MapCacheRecord &record =*/ createCacheRecord(uri);
-
         // We require a map converter for this.
         if(!Plug_CheckForHook(HOOK_MAP_CONVERT))
             return 0;
 
-        //LOG_DEBUG("Attempting \"%s\"...") << uri;
+        LOG_DEBUG("Attempting \"%s\"...") << mapDef.composeUri().path();
 
-        lumpnum_t markerLumpNum = markerLumpNumForPath(uri.path());
-        if(markerLumpNum < 0)
-            return 0;
+        if(!mapDef.sourceFile()) return 0;
 
         // Initiate the conversion process.
-        MPE_Begin(reinterpret_cast<uri_s const *>(&uri));
+        MPE_Begin(0/*dummy*/);
 
         Map *newMap = MPE_Map();
+
+        // Associate the map with its corresponding definition.
+        newMap->setDef(&const_cast<MapDef &>(mapDef));
 
         if(reporter)
         {
@@ -425,16 +362,10 @@ DENG2_PIMPL(WorldSystem)
             reporter->setMap(newMap);
         }
 
-        // Generate and attribute the old unique map id.
-        File1 &markerLump       = App_FileSystem().nameIndex().lump(markerLumpNum);
-        String uniqueId         = composeUniqueMapId(markerLump);
-        QByteArray uniqueIdUtf8 = uniqueId.toUtf8();
-        newMap->setOldUniqueId(uniqueIdUtf8.constData());
-
         // Ask each converter in turn whether the map format is recognizable
         // and if so to interpret and transfer it to us via the runtime map
         // editing interface.
-        if(!DD_CallHooks(HOOK_MAP_CONVERT, 0, (void *) reinterpret_cast<uri_s const *>(&uri)))
+        if(!DD_CallHooks(HOOK_MAP_CONVERT, 0, const_cast<Id1MapRecognizer *>(&mapDef.recognizer())))
             return 0;
 
         // A converter signalled success.
@@ -450,13 +381,11 @@ DENG2_PIMPL(WorldSystem)
     /**
      * Returns @c true iff data for the map is available in the cache.
      */
-    bool isCacheDataAvailable(MapCacheRecord &rec)
+    bool haveCachedMap(MapDef &mapDef)
     {
-        if(DAM_MapIsValid(Str_Text(&rec.path), markerLumpNum()))
-        {
-            rec.dataAvailable = true;
-        }
-        return rec.dataAvailable;
+        // Disabled?
+        if(!mapCache) return false;
+        return DAM_MapIsValid(mapDef.cachePath, mapDef.id());
     }
 
     /**
@@ -466,17 +395,15 @@ DENG2_PIMPL(WorldSystem)
      *
      * @return @c true if loading completed successfully.
      */
-    Map *loadMapFromCache(Uri const &uri)
+    Map *loadMapFromCache(MapDef &mapDef)
     {
-        // Record this map if we haven't already.
-        MapCacheRecord &rec = createCacheRecord(uri);
-
-        Map *map = DAM_MapRead(Str_Text(&rec.path));
+        Uri const mapUri = mapDef.composeUri();
+        Map *map = DAM_MapRead(mapDef.cachePath);
         if(!map)
             /// Failed to load the map specified from the data cache.
-            throw Error("loadMapFromCache", QString("Failed loading map \"%1\" from cache.").arg(uri.asText()));
+            throw Error("loadMapFromCache", "Failed loading map \"" + mapUri.asText() + "\" from cache");
 
-        map->_uri = rec.mapUri;
+        map->_uri = mapUri;
         return map;
     }
 #endif
@@ -486,28 +413,25 @@ DENG2_PIMPL(WorldSystem)
      *
      * @return  The loaded map if successful. Ownership given to the caller.
      */
-    Map *loadMap(Uri const &uri, MapConversionReporter *reporter = 0)
+    Map *loadMap(MapDef &mapDef, MapConversionReporter *reporter = 0)
     {
         LOG_AS("WorldSystem::loadMap");
 
-        // Record this map if we haven't already.
-        /*MapCacheRecord &rec =*/ createCacheRecord(uri);
-
-        /*if(rec.lastLoadAttemptFailed && !forceRetry)
+        /*if(mapDef.lastLoadAttemptFailed && !forceRetry)
             return 0;
 
         // Load from cache?
-        if(mapCache && rec.dataAvailable)
+        if(haveCachedMap(mapDef))
         {
-            return loadMapFromCache(uri);
+            return loadMapFromCache(mapDef);
         }*/
 
         // Try a JIT conversion with the help of a plugin.
-        Map *map = convertMap(uri, reporter);
+        Map *map = convertMap(mapDef, reporter);
         if(!map)
         {
-            LOG_WARNING("Failed conversion of \"%s\".") << uri;
-            //rec.lastLoadAttemptFailed = true;
+            LOG_WARNING("Failed conversion of \"%s\".") << mapDef.composeUri().path();
+            //mapDef.lastLoadAttemptFailed = true;
         }
         return map;
     }
@@ -525,14 +449,13 @@ DENG2_PIMPL(WorldSystem)
         DENG2_ASSERT(!map->isEditable());
 
         // Should we cache this map?
-        /*MapCacheRecord &rec = createCacheRecord(map->uri());
-        if(mapCache && !rec.dataAvailable)
+        /*if(mapCache && !haveCachedMap(&map->def()))
         {
             // Ensure the destination directory exists.
-            F_MakePath(rec.cachePath.toUtf8().constData());
+            F_MakePath(map->def().cachePath.toUtf8().constData());
 
             // Cache the map!
-            DAM_MapWrite(map, rec.cachePath);
+            DAM_MapWrite(map);
         }*/
 
 #ifdef __CLIENT__
@@ -541,7 +464,7 @@ DENG2_PIMPL(WorldSystem)
         /// so that it may perform the connection itself. Such notification
         /// would also afford the map the opportunity to prepare various data
         /// which is only needed when made current (e.g., caches for render).
-        self.audienceForFrameBegin += map;
+        self.audienceForFrameBegin() += map;
 #endif
 
         // Print summary information about this map.
@@ -549,37 +472,27 @@ DENG2_PIMPL(WorldSystem)
         LOG_MAP_NOTE("%s") << map->elementSummaryAsStyledText();
 
         // See what MapInfo says about this map.
-        ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s const *>(&map->uri()));
-        if(!mapInfo)
-        {
-            // Use the default def instead.
-            Uri defaultMapUri(Path("*"));
-            mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&defaultMapUri));
-        }
+        Record const &mapInfo = map->mapInfo();
 
-        if(mapInfo)
-        {
-            map->_globalGravity = mapInfo->gravity;
-            map->_ambientLightLevel = mapInfo->ambient * 255;
-        }
-        else
-        {
-            // No map info found -- apply defaults.
-            map->_globalGravity = 1.0f;
-            map->_ambientLightLevel = 0;
-        }
-
-        map->_effectiveGravity = map->_globalGravity;
+        map->_ambientLightLevel = mapInfo.getf("ambient") * 255;
+        map->_globalGravity     = mapInfo.getf("gravity");
+        map->_effectiveGravity  = map->_globalGravity;
 
 #ifdef __CLIENT__
         // Reconfigure the sky.
-        ded_sky_t *skyDef = 0;
-        if(mapInfo)
+        defn::Sky skyDef;
+        if(Record const *def = defs.skies.tryFind("id", mapInfo.gets("skyId")))
         {
-            skyDef = Def_GetSky(mapInfo->skyID);
-            if(!skyDef) skyDef = &mapInfo->sky;
+            skyDef = *def;
         }
-        theSky->configure(skyDef);
+        else
+        {
+            skyDef = mapInfo.subrecord("sky");
+        }
+        map->sky().configure(&skyDef);
+
+        // Set up the SkyDrawable to get its config from the map's Sky.
+        skyAnimator.setSky(&rendSys().sky().configure(&map->sky()));
 #endif
 
         // Init the thinker lists (public and private).
@@ -602,9 +515,10 @@ DENG2_PIMPL(WorldSystem)
 
         // The game may need to perform it's own finalization now that the
         // "current" map has changed.
+        de::Uri const mapUri = (map->def()? map->def()->composeUri() : de::Uri("Maps:", RC_NULL));
         if(gx.FinalizeMapChange)
         {
-            gx.FinalizeMapChange(reinterpret_cast<uri_s const *>(&map->uri()));
+            gx.FinalizeMapChange(reinterpret_cast<uri_s const *>(&mapUri));
         }
 
         if(gameTime > 20000000 / TICSPERSEC)
@@ -647,11 +561,15 @@ DENG2_PIMPL(WorldSystem)
 
 #ifdef __CLIENT__
         /// @todo Refactor away:
-        foreach(Sector *sector, map->sectors())
-        foreach(LineSide *side, sector->sides())
+        map->forAllSectors([] (Sector &sector)
         {
-            side->fixMissingMaterials();
-        }
+            sector.forAllSides([] (LineSide &side)
+            {
+                side.fixMissingMaterials();
+                return LoopContinue;
+            });
+            return LoopContinue;
+        });
 #endif
 
         map->initPolyobjs();
@@ -666,6 +584,8 @@ DENG2_PIMPL(WorldSystem)
 #endif
 
 #ifdef __CLIENT__
+        GL_SetupFogFromMapInfo(mapInfo.accessedRecordPtr());
+
         map->initLightGrid();
         map->initSkyFix();
         map->buildMaterialLists();
@@ -674,11 +594,13 @@ DENG2_PIMPL(WorldSystem)
         // Precaching from 100 to 200.
         Con_SetProgress(100);
         Time begunPrecacheAt;
-        App_ResourceSystem().cacheForCurrentMap();
-        App_ResourceSystem().processCacheQueue();
+        // Sky models usually have big skins.
+        rendSys().sky().cacheAssets();
+        resSys().cacheForCurrentMap();
+        resSys().processCacheQueue();
         LOG_RES_VERBOSE("Precaching completed in %.2f seconds") << begunPrecacheAt.since();
 
-        ClientApp::renderSystem().clearDrawLists();
+        rendSys().clearDrawLists();
         R_InitRendPolyPools();
         Rend_UpdateLightModMatrix();
 
@@ -686,12 +608,19 @@ DENG2_PIMPL(WorldSystem)
 
         map->initContactBlockmaps();
         R_InitContactLists(*map);
-        Rend_ProjectorInitForMap(*map);
-        VL_InitForMap(*map); // Converted vlights (from lumobjs).
-        map->initBias(); // Shadow bias sources and surfaces.
+        rendSys().worldSystemMapChanged(*map);
+        map->initBias();      // Shadow bias sources and surfaces.
 
-        // Restart all material animations.
-        App_ResourceSystem().restartAllMaterialAnimations();
+        // Rewind/restart material animators.
+        /// @todo Only rewind animators responsible for map-surface contexts.
+        resSys().forAllMaterials([] (Material &material)
+        {
+            return material.forAllAnimators([] (MaterialAnimator &animator)
+            {
+                animator.rewind();
+                return LoopContinue;
+            });
+        });
 #endif
 
         /*
@@ -699,17 +628,21 @@ DENG2_PIMPL(WorldSystem)
          */
 
         // Run any commands specified in MapInfo.
-        if(mapInfo && mapInfo->execute)
+        String execute = mapInfo.gets("execute");
+        if(!execute.isEmpty())
         {
-            Con_Execute(CMDS_SCRIPT, mapInfo->execute, true, false);
+            Con_Execute(CMDS_SCRIPT, execute.toUtf8().constData(), true, false);
         }
 
         // Run the special map setup command, which the user may alias to do
         // something useful.
-        String cmd = "init-" + map->uri().resolved();
-        if(Con_IsValidCommand(cmd.toUtf8().constData()))
+        if(!mapUri.isEmpty())
         {
-            Con_Executef(CMDS_SCRIPT, false, "%s", cmd.toUtf8().constData());
+            String cmd = String("init-") + mapUri.path();
+            if(Con_IsValidCommand(cmd.toUtf8().constData()))
+            {
+                Con_Executef(CMDS_SCRIPT, false, "%s", cmd.toUtf8().constData());
+            }
         }
 
         // Reset world time.
@@ -724,7 +657,7 @@ DENG2_PIMPL(WorldSystem)
         R_ResetViewer();
 
         // Clear any input events that might have accumulated during setup.
-        DD_ClearEvents();
+        ClientApp::inputSystem().clearEvents();
 
         // Inform the timing system to suspend the starting of the clock.
         firstFrameAfterLoad = true;
@@ -737,14 +670,14 @@ DENG2_PIMPL(WorldSystem)
     }
 
     /// @todo Split this into subtasks (load, make current, cache assets).
-    bool changeMap(de::Uri const &uri)
+    bool changeMap(MapDef *mapDef = 0)
     {
 #ifdef __CLIENT__
         if(map)
         {
             // Remove the current map from our audiences.
             /// @todo Map should handle this.
-            self.audienceForFrameBegin -= map;
+            self.audienceForFrameBegin() -= map;
         }
 #endif
 
@@ -761,16 +694,16 @@ DENG2_PIMPL(WorldSystem)
         Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
 
         // Are we just unloading the current map?
-        if(uri.isEmpty()) return true;
+        if(!mapDef) return true;
 
-        LOG_MSG("Loading map \"%s\"...") << uri;
+        LOG_MSG("Loading map \"%s\"...") << mapDef->composeUri().path();
 
         // A new map is about to be set up.
         ddMapSetup = true;
 
         // Attempt to load in the new map.
         MapConversionReporter reporter;
-        Map *newMap = loadMap(uri, &reporter);
+        Map *newMap = loadMap(*mapDef, &reporter);
         if(newMap)
         {
             // The map may still be in an editable state -- switch to playable.
@@ -802,13 +735,13 @@ DENG2_PIMPL(WorldSystem)
     struct changemapworker_params_t
     {
         Instance *inst;
-        de::Uri const *uri;
+        MapDef *mapDef;
     };
 
     static int changeMapWorker(void *context)
     {
         changemapworker_params_t &p = *static_cast<changemapworker_params_t *>(context);
-        int result = p.inst->changeMap(*p.uri);
+        int result = p.inst->changeMap(p.mapDef);
         BusyMode_WorkerEnd();
         return result;
     }
@@ -822,7 +755,24 @@ DENG2_PIMPL(WorldSystem)
         hand->setOrigin(viewData->current.origin + viewData->frontVec.xzy() * handDistance);
     }
 #endif
+
+    void notifyMapChange()
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE2(MapChange, i) i->worldSystemMapChanged();
+    }
+
+    DENG2_PIMPL_AUDIENCE(MapChange)
+#ifdef __CLIENT__
+    DENG2_PIMPL_AUDIENCE(FrameBegin)
+    DENG2_PIMPL_AUDIENCE(FrameEnd)
+#endif
 };
+
+DENG2_AUDIENCE_METHOD(WorldSystem, MapChange)
+#ifdef __CLIENT__
+DENG2_AUDIENCE_METHOD(WorldSystem, FrameBegin)
+DENG2_AUDIENCE_METHOD(WorldSystem, FrameEnd)
+#endif
 
 WorldSystem::WorldSystem() : d(new Instance(this))
 {}
@@ -847,14 +797,21 @@ Map &WorldSystem::map() const
     throw MapError("WorldSystem::map", "No map is currently loaded");
 }
 
-bool WorldSystem::changeMap(de::Uri const &uri)
+bool WorldSystem::changeMap(de::Uri const &mapUri)
 {
+    MapDef *mapDef = 0;
+
+    if(!mapUri.path().isEmpty())
+    {
+        mapDef = resSys().mapDef(mapUri);
+    }
+
     // Switch to busy mode (if we haven't already) except when simply unloading.
-    if(!uri.isEmpty() && !BusyMode_Active())
+    if(!mapUri.path().isEmpty() && !BusyMode_Active())
     {
         Instance::changemapworker_params_t parm;
-        parm.inst = d;
-        parm.uri  = &uri;
+        parm.inst   = d;
+        parm.mapDef = mapDef;
 
         BusyTask task; zap(task);
         /// @todo Use progress bar mode and update progress during the setup.
@@ -867,7 +824,7 @@ bool WorldSystem::changeMap(de::Uri const &uri)
     }
     else
     {
-        return d->changeMap(uri);
+        return d->changeMap(mapDef);
     }
 }
 
@@ -875,7 +832,7 @@ void WorldSystem::reset()
 {
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        player_t *plr = &ddPlayers[i];
+        player_t *plr    = &ddPlayers[i];
         ddplayer_t *ddpl = &plr->shared;
 
         // Mobjs go down with the map.
@@ -904,12 +861,9 @@ void WorldSystem::reset()
 
 void WorldSystem::update()
 {
-    // Reset the archived map cache (the available maps may have changed).
-    d->records.clear();
-
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        player_t *plr = &ddPlayers[i];
+        player_t *plr    = &ddPlayers[i];
         ddplayer_t *ddpl = &plr->shared;
 
         // States have changed, the state pointers are unknown.
@@ -921,6 +875,22 @@ void WorldSystem::update()
     {
         d->map->update();
     }
+}
+
+Record const &WorldSystem::mapInfoForMapUri(de::Uri const &mapUri) const
+{
+    // Is there a MapInfo definition for the given URI?
+    if(Record const *def = defs.mapInfos.tryFind("id", mapUri.compose()))
+    {
+        return *def;
+    }
+    // Is there is a default definition (for all maps)?
+    if(Record const *def = defs.mapInfos.tryFind("id", de::Uri("Maps", Path("*")).compose()))
+    {
+        return *def;
+    }
+    // Use the fallback.
+    return d->fallbackMapInfo;
 }
 
 void WorldSystem::advanceTime(timespan_t delta)
@@ -936,14 +906,37 @@ timespan_t WorldSystem::time() const
     return d->time;
 }
 
+void WorldSystem::tick(timespan_t elapsed)
+{
 #ifdef __CLIENT__
+    d->skyAnimator.advanceTime(elapsed);
+
+    if(DD_IsSharpTick() && d->map)
+    {
+        d->map->thinkers().forAll(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1, [] (thinker_t *th)
+        {
+            Mobj_AnimateHaloOcclussion(*reinterpret_cast<mobj_t *>(th));
+            return LoopContinue;
+        });
+    }
+#else
+    DENG2_UNUSED(elapsed);
+#endif
+}
+
+#ifdef __CLIENT__
+SkyDrawable::Animator &WorldSystem::skyAnimator() const
+{
+    return d->skyAnimator;
+}
+
 Hand &WorldSystem::hand(coord_t *distance) const
 {
     // Time to create the hand?
-    if(d->hand.isNull())
+    if(!d->hand)
     {
         d->hand.reset(new Hand());
-        audienceForFrameEnd += *d->hand;
+        audienceForFrameEnd() += *d->hand;
         if(d->map)
         {
             d->updateHandOrigin();
@@ -959,12 +952,12 @@ Hand &WorldSystem::hand(coord_t *distance) const
 void WorldSystem::beginFrame(bool resetNextViewer)
 {
     // Notify interested parties that a new frame has begun.
-    DENG2_FOR_AUDIENCE(FrameBegin, i) i->worldSystemFrameBegins(resetNextViewer);
+    DENG2_FOR_AUDIENCE2(FrameBegin, i) i->worldSystemFrameBegins(resetNextViewer);
 }
 
 void WorldSystem::endFrame()
 {
-    if(d->map && !d->hand.isNull())
+    if(d->map && d->hand)
     {
         d->updateHandOrigin();
 
@@ -977,7 +970,41 @@ void WorldSystem::endFrame()
     }
 
     // Notify interested parties that the current frame has ended.
-    DENG2_FOR_AUDIENCE(FrameEnd, i) i->worldSystemFrameEnds();
+    DENG2_FOR_AUDIENCE2(FrameEnd, i) i->worldSystemFrameEnds();
+}
+
+bool WorldSystem::isPointInVoid(Vector3d const &pos) const
+{
+    // Everything is void if there is no map.
+    if(!hasMap()) return true;
+
+    SectorCluster const *cluster = map().clusterAt(pos);
+    if(!cluster) return true;
+
+    // Check the planes of the cluster.
+    if(cluster->visCeiling().surface().hasSkyMaskedMaterial())
+    {
+        coord_t const skyCeil = cluster->sector().map().skyFixCeiling();
+        if(skyCeil < DDMAXFLOAT && pos.z > skyCeil)
+            return true;
+    }
+    else if(pos.z > cluster->visCeiling().heightSmoothed())
+    {
+        return true;
+    }
+
+    if(cluster->visFloor().surface().hasSkyMaskedMaterial())
+    {
+        coord_t const skyFloor = cluster->sector().map().skyFixFloor();
+        if(skyFloor > DDMINFLOAT && pos.z < skyFloor)
+            return true;
+    }
+    else if(pos.z < cluster->visFloor().heightSmoothed())
+    {
+        return true;
+    }
+
+    return false; // Not in the void.
 }
 
 #endif // __CLIENT__

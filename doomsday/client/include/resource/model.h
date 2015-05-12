@@ -20,7 +20,7 @@
 #ifndef DENG_RESOURCE_MODEL_H
 #define DENG_RESOURCE_MODEL_H
 
-#include "filehandle.h"
+#include <doomsday/filesys/filehandle.h>
 #include "Texture"
 #include <de/Error>
 #include <de/String>
@@ -155,6 +155,7 @@ public:
     /**
      * Attempt to load a new model resource from the specified @a file.
      *
+     * @param file         Handle for the model file to load from.
      * @param aspectScale  Optionally apply y-aspect scaling.
      *
      * @return  The new Model (if any). Ownership is given to the caller.

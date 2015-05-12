@@ -21,20 +21,102 @@
 #include "de/ToggleWidget"
 #include "de/GuiRootWidget"
 #include "de/ChildWidgetOrganizer"
+#include "de/AtlasProceduralImage"
 #include "de/ui/Item"
+#include "de/App"
+
+#include <de/IndirectRule>
+#include <de/OperatorRule>
 
 namespace de {
+
+static String const VAR_SHOW_ANNOTATIONS("ui.showAnnotations");
 
 DENG_GUI_PIMPL(PopupMenuWidget)
 , DENG2_OBSERVES(ButtonWidget, StateChange)
 , DENG2_OBSERVES(ButtonWidget, Triggered)
 , DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
 , DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
+, DENG2_OBSERVES(Variable, Change)
 {
+    class HeadingOverlayImage : public ProceduralImage
+    {
+    public:
+        HeadingOverlayImage(GuiWidget &owner)
+            : _owner(owner)
+            , _id(Id::None)
+        {
+            if(_owner.hasRoot())
+            {
+                // We can set this up right away.
+                alloc();
+            }
+        }
+
+        GuiRootWidget &root()
+        {
+            return _owner.root();
+        }
+
+        void alloc()
+        {
+            _id = root().solidWhitePixel();
+            setSize(Vector2f(1, 1)); //root().atlas().imageRect(_id).size());
+        }
+
+        void glInit()
+        {
+            alloc();
+        }
+
+        void glDeinit()
+        {
+            _id = Id::None;
+        }
+
+        void glMakeGeometry(DefaultVertexBuf::Builder &verts, Rectanglef const &rect)
+        {
+            if(!_id.isNone())
+            {
+                Rectanglef visible = rect;
+                visible.setWidth(_owner.rule().width().value());
+                verts.makeQuad(visible, color(), root().atlas().imageRectf(_id));
+            }
+        }
+
+    private:
+        GuiWidget &_owner;
+        Id _id;
+    };
+
     ButtonWidget *hover;
     int oldScrollY;
+    Rule const *widestItem;
+    IndirectRule *maxItemWidth;
 
-    Instance(Public *i) : Base(i), hover(0), oldScrollY(0) {}
+    Instance(Public *i)
+        : Base(i)
+        , hover(0)
+        , oldScrollY(0)
+        , widestItem(0)
+        , maxItemWidth(0)
+    {
+        maxItemWidth = new IndirectRule;
+        App::config(VAR_SHOW_ANNOTATIONS).audienceForChange() += this;
+    }
+
+    ~Instance()
+    {
+        App::config(VAR_SHOW_ANNOTATIONS).audienceForChange() -= this;
+        releaseRef(maxItemWidth);
+        releaseRef(widestItem);
+    }
+
+    void addToMaxWidth(GuiWidget &widget)
+    {
+        maxInto(widestItem, widget.rule().width());
+        maxItemWidth->setSource(*widestItem);
+    }
 
     void widgetCreatedForItem(GuiWidget &widget, ui::Item const &item)
     {
@@ -44,13 +126,16 @@ DENG_GUI_PIMPL(PopupMenuWidget)
         if(item.semantics().testFlag(ui::Item::Separator))
         {
             LabelWidget &lab = widget.as<LabelWidget>();
-            lab.setTextColor("label.accent");
+            lab.setTextColor(item.semantics().testFlag(ui::Item::Annotation)? "label.altaccent" : "label.accent");
+            lab.setMaximumTextWidth(*maxItemWidth);
+            lab.rule().setInput(Rule::Width, *maxItemWidth);
             return;
         }
 
         if(LabelWidget *lab = widget.maybeAs<LabelWidget>())
         {
-            lab->margins().set("unit");
+            lab->margins().set("popup.menu.margin");
+            addToMaxWidth(widget);
         }
 
         // Customize buttons for use in the popup. We will observe the button
@@ -58,6 +143,8 @@ DENG_GUI_PIMPL(PopupMenuWidget)
         // gets triggered.
         if(ButtonWidget *b = widget.maybeAs<ButtonWidget>())
         {
+            addToMaxWidth(widget);
+
             b->setHoverTextColor("inverted.text");
             b->setSizePolicy(ui::Expand, ui::Expand);
 
@@ -79,18 +166,37 @@ DENG_GUI_PIMPL(PopupMenuWidget)
 
     void widgetUpdatedForItem(GuiWidget &widget, ui::Item const &item)
     {
-        if(item.semantics().testFlag(ui::Item::Separator))
+        if(item.semantics().testFlag(ui::Item::Annotation))
+        {
+            if(!App::config().getb(VAR_SHOW_ANNOTATIONS))
+            {
+                widget.hide();
+            }
+
+            widget.margins().set("halfunit").setLeft("popup.menu.margin");
+            widget.setFont("separator.annotation");
+        }
+        else if(item.semantics().testFlag(ui::Item::Separator))
         {
             // The label of a separator may change.
             if(item.label().isEmpty())
             {
                 widget.margins().set("");
                 widget.setFont("separator.empty");
+                widget.as<LabelWidget>().setOverlayImage(0);
             }
             else
             {
-                widget.margins().set("halfunit");
+                widget.margins().set("halfunit").setLeft("popup.menu.margin");
                 widget.setFont("separator.label");
+
+                /*
+                LabelWidget &lab = widget.as<LabelWidget>();
+                //lab.setAlignment(ui::AlignCenter);
+                HeadingOverlayImage *img = new HeadingOverlayImage(widget);
+                img->setColor(style().colors().colorf("accent"));
+                lab.setOverlayImage(img, ui::AlignBottomLeft);
+                */
             }
         }
     }
@@ -102,7 +208,6 @@ DENG_GUI_PIMPL(PopupMenuWidget)
         foreach(Widget *child, self.menu().childWidgets())
         {
             GuiWidget &widget = child->as<GuiWidget>();
-
             if(self.menu().isWidgetPartOfMenu(widget))
             {
                 Vector2i cell = layout.widgetPos(widget);
@@ -115,6 +220,78 @@ DENG_GUI_PIMPL(PopupMenuWidget)
                                                          layout.columnLeft(cell.x)))
                         .setInput(Rule::Right, (cell.x == layout.gridSize().x - 1? self.rule().right() :
                                                                                    layout.columnRight(cell.x)));
+            }
+        }
+    }
+
+    bool hasButtonsWithImages() const
+    {
+        foreach(Widget *child, self.menu().childWidgets())
+        {
+            if(ButtonWidget *button = child->maybeAs<ButtonWidget>())
+            {
+                if(button->hasImage())
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Adjusts the left margins of clickable items so that icons are aligned by their
+     * text, with the possible icon hanging on the left. If there are no items with
+     * icons, no extra padding is applied.
+     */
+    void updateItemMargins()
+    {
+        bool const useExtraPadding = hasButtonsWithImages();
+
+        auto const &padding = style().rules().rule("popup.menu.paddedmargin");
+        auto const &none    = style().rules().rule("popup.menu.margin");
+
+        foreach(Widget *child, self.menu().childWidgets())
+        {
+            GuiWidget &widget = child->as<GuiWidget>();
+
+            // Pad annotations with the full amount.
+            if(LabelWidget *label = widget.maybeAs<LabelWidget>())
+            {
+                ui::Item const *item = self.menu().organizer().findItemForWidget(widget);
+                if(item->semantics().testFlag(ui::Item::Annotation))
+                {
+                    if(useExtraPadding)
+                    {
+                        label->setMaximumTextWidth(*maxItemWidth - padding);
+                        widget.margins().setLeft(padding);
+                    }
+                    else
+                    {
+                        label->setMaximumTextWidth(*maxItemWidth);
+                        widget.margins().setLeft(none);
+                    }
+                }
+            }
+
+            // Pad buttons according to their image size.
+            if(ButtonWidget *button = widget.maybeAs<ButtonWidget>())
+            {
+                if(useExtraPadding)
+                {
+                    Rule const *padRule = holdRef(padding);
+                    if(button->hasImage())
+                    {
+                        LabelWidget::ContentLayout layout;
+                        button->contentLayout(layout);
+                        sumInto(padRule, -Const(layout.image.width()) -
+                                style().rules().rule(button->textGap()));
+                    }
+                    widget.margins().setLeft(*padRule);
+                    releaseRef(padRule);
+                }
+                else
+                {
+                    widget.margins().setLeft(none);
+                }
             }
         }
     }
@@ -182,6 +359,25 @@ DENG_GUI_PIMPL(PopupMenuWidget)
 
         self.requestGeometry();
     }
+
+    void variableValueChanged(Variable &, Value const &newValue)
+    {
+        bool changed = false;
+
+        // Update widgets of annotation items.
+        self.items().forAll([this, &newValue, &changed] (ui::Item const &item) {
+            if(item.semantics().testFlag(ui::Item::Annotation)) {
+                self.menu().itemWidget<GuiWidget>(item).show(newValue.isTrue());
+                changed = true;
+            }
+            return LoopContinue;
+        });
+
+        if(changed)
+        {
+            self.menu().updateLayout();
+        }
+    }
 };
 
 PopupMenuWidget::PopupMenuWidget(String const &name)
@@ -225,6 +421,7 @@ void PopupMenuWidget::preparePanelForOpening()
     // Redo the layout.
     menu().updateLayout();
     d->updateItemHitRules();
+    d->updateItemMargins();
 
     // Make sure the menu doesn't go beyond the top of the view.
     if(openingDirection() == ui::Up)

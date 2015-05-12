@@ -52,6 +52,6 @@ void LensFx_EndFrame();
 /**
  * Marks a light potentially visible in the current frame.
  */
-void LensFx_MarkLightVisible(ILightSource const &lightSource);
+void LensFx_MarkLightVisible(IPointLightSource const &lightSource);
 
 #endif // DENG_CLIENT_CAMERALENSFX_H

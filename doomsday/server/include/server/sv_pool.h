@@ -99,6 +99,8 @@ typedef mobj_t  dt_mobj_t;
 typedef struct mobjdelta_s {
     delta_t         delta; // The header.
     dt_mobj_t       mo; // The data of the delta.
+
+    mobjdelta_s() : mo(thinker_s::InitializeToZero) {}
 } mobjdelta_t;
 
 typedef struct {

@@ -21,7 +21,6 @@
 #ifndef DENG_CLIENT_WORLD_GENERATOR_H
 #define DENG_CLIENT_WORLD_GENERATOR_H
 
-#include "def_data.h"
 #include "map.h"
 #include <de/Vector>
 
@@ -107,7 +106,7 @@ struct Generator
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
-    /// Unique identifier associated with each generator.
+    /// Unique identifier associated with each generator (1-based).
     typedef short Id;
 
 public: /// @todo make private:
@@ -133,12 +132,12 @@ public:
     de::Map &map() const;
 
     /**
-     * Returns the unique identifier of the generator.
+     * Returns the unique identifier of the generator. The identifier is 1-based.
      */
     Id id() const;
 
     /**
-     * Change the unique identifier of the generator.
+     * Change the unique identifier of the generator. The identifier is 1-based.
      *
      * @param newId  New identifier to apply.
      */

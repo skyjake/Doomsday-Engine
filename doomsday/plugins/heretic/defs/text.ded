@@ -44,12 +44,12 @@ Text {
 
 Text {
   ID = "QSPROMPT";
-  Text = "Save over your game named\n\n'%s'?";
+  Text = "Really save over the game in slot %s named\n\n'%s' ?";
 }
 
 Text {
   ID = "QLPROMPT";
-  Text = "Are you sure you want to load the game named\n\n'%s'?";
+  Text = "Really load the game in slot %s named\n\n'%s' ?";
 }
 
 Text {

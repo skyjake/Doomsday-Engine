@@ -29,7 +29,7 @@
 #define LIBSAVEGAMECONVERTER_MAIN_H
 
 #include <doomsday.h>
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 //#include <de/types.h>
 
 DENG_EXTERN_C void DP_Initialize(void);

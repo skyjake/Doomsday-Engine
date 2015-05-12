@@ -32,8 +32,8 @@
 #include "dd_main.h"
 #include "dd_def.h"
 #include "dd_loop.h"
-#include "con_main.h"
 #include "sys_system.h"
+#include "def_main.h"
 
 #if WIN32
 #  include "dd_winit.h"
@@ -56,6 +56,7 @@ DENG2_PIMPL(ServerApp)
     Games games;
     QScopedPointer<ResourceSystem> resourceSys;
     WorldSystem worldSys;
+    InFineSystem infineSys;
 
     Instance(Public *i)
         : Base(i)
@@ -115,6 +116,7 @@ ServerApp::ServerApp(int &argc, char **argv)
     addSystem(*d->resourceSys);
 
     addSystem(d->worldSys);
+    //addSystem(d->infineSys);
 
     // We must presently set the current game manually (the collection is global).
     setGame(d->games.nullGame());
@@ -149,9 +151,13 @@ void ServerApp::initialize()
     if(!CommandLine_Exists("-stdout"))
     {
         // In server mode, stay quiet on the standard outputs.
-        LogBuffer::appBuffer().enableStandardOutput(false);
+        LogBuffer::get().enableStandardOutput(false);
     }
 
+    Def_Init();
+
+    // Load the server's packages.
+    addInitPackage("net.dengine.base");
     initSubsystems();
 
     // Initialize.
@@ -181,6 +187,11 @@ ServerApp &ServerApp::app()
 ServerSystem &ServerApp::serverSystem()
 {
     return *app().d->serverSystem;
+}
+
+InFineSystem &ServerApp::infineSystem()
+{
+    return app().d->infineSys;
 }
 
 ResourceSystem &ServerApp::resourceSystem()

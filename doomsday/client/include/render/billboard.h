@@ -1,9 +1,7 @@
 /** @file billboard.h  Rendering billboard "sprites".
  *
- * @ingroup render
- *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,122 +18,118 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_RENDER_BILLBOARD_H
-#define DENG_CLIENT_RENDER_BILLBOARD_H
+#ifndef CLIENT_RENDER_BILLBOARD_H
+#define CLIENT_RENDER_BILLBOARD_H
 
 #include "dd_types.h"
 #include "Material"
+#include "MaterialAnimator"
 #include "MaterialVariantSpec"
 
 class BspLeaf;
+struct vissprite_t;
 
 /**
  * Billboard drawing arguments for a masked wall.
  *
  * A sort of a sprite, I guess... Masked walls must be rendered sorted with
  * sprites, so no artifacts appear when sprites are seen behind masked walls.
+ *
+ * @ingroup render
  */
 struct drawmaskedwallparams_t
 {
-    void *material; /// MaterialVariant
-    blendmode_t blendMode; ///< Blendmode to be used when drawing
-                               /// (two sided mid textures only)
+    MaterialAnimator *animator;
+    blendmode_t blendMode;         ///< Blendmode to be used when drawing (two sided mid textures only)
+
     struct wall_vertex_s {
-        float pos[3]; ///< x y and z coordinates.
-        float color[4];
+        de::dfloat pos[3];         ///< x y and z coordinates.
+        de::dfloat color[4];
     } vertices[4];
 
-    double texOffset[2];
-    float texCoord[2][2]; ///< u and v coordinates.
+    de::ddouble texOffset[2];
+    de::dfloat texCoord[2][2];     ///< u and v coordinates.
 
-    DGLuint modTex; ///< Texture to modulate with.
-    float modTexCoord[2][2]; ///< [top-left, bottom-right][x, y]
-    float modColor[4];
+    DGLuint modTex;                ///< Texture to modulate with.
+    de::dfloat modTexCoord[2][2];  ///< [top-left, bottom-right][x, y]
+    de::dfloat modColor[4];
 };
 
 void Rend_DrawMaskedWall(drawmaskedwallparams_t const &parms);
 
 /**
  * Billboard drawing arguments for a "player" sprite (HUD sprite).
+ * @ingroup render
  */
 struct rendpspriteparams_t
 {
-    float pos[2]; // {X, Y} Screen-space position.
-    float width, height;
+    de::dfloat pos[2];           ///< [X, Y] Screen-space position.
+    de::dfloat width;
+    de::dfloat height;
 
     Material *mat;
-    float texOffset[2];
-    dd_bool texFlip[2]; // {X, Y} Flip along the specified axis.
+    de::dfloat texOffset[2];
+    dd_bool texFlip[2];          ///< [X, Y] Flip along the specified axis.
 
-    float ambientColor[4];
-    uint vLightListIdx;
+    de::dfloat ambientColor[4];
+    de::duint vLightListIdx;
 };
 
 void Rend_DrawPSprite(rendpspriteparams_t const &parms);
 
 /**
  * Billboard drawing arguments for a map entity, sprite visualization.
+ * @ingroup render
  */
 struct drawspriteparams_t
 {
-// Position/Orientation/Scale
-    coord_t center[3]; // The real center point.
-    coord_t srvo[3]; // Short-range visual offset.
-    coord_t distance; // Distance from viewer.
-    dd_bool viewAligned;
-
-// Appearance
     dd_bool noZWrite;
     blendmode_t blendMode;
-
-    // Material:
-    void *material; /// MaterialVariant
-    dd_bool matFlip[2]; // [S, T] Flip along the specified axis.
-
-    // Lighting/color:
-    float ambientColor[4];
-    uint vLightListIdx;
-
-// Misc
+    MaterialAnimator *matAnimator;
+    dd_bool matFlip[2];             ///< [S, T] Flip along the specified axis.
     BspLeaf *bspLeaf;
 };
 
-void Rend_DrawSprite(drawspriteparams_t const &parms);
+void Rend_DrawSprite(vissprite_t const &spr);
 
-de::MaterialVariantSpec const &Rend_SpriteMaterialSpec(int tclass = 0, int tmap = 0);
+de::MaterialVariantSpec const &Rend_SpriteMaterialSpec(de::dint tclass = 0, de::dint tmap = 0);
 
 /**
  * @defgroup rendFlareFlags  Flare renderer flags
+ * @ingroup render
  * @{
  */
-#define RFF_NO_PRIMARY      0x1 ///< Do not draw a primary flare (aka halo).
-#define RFF_NO_TURN         0x2 ///< Flares do not turn in response to viewangle/viewdir
+#define RFF_NO_PRIMARY      0x1  ///< Do not draw a primary flare (aka halo).
+#define RFF_NO_TURN         0x2  ///< Flares do not turn in response to viewangle/viewdir
 /**@}*/
 
 /**
  * Billboard drawing arguments for a lens flare.
  *
  * @see H_RenderHalo()
+ * @ingroup render
  */
 struct drawflareparams_t
 {
-    byte flags; // @ref rendFlareFlags.
-    int size;
-    float color[3];
-    byte factor;
-    float xOff;
-    DGLuint tex; // Flaremap if flareCustom ELSE (flaretexName id. Zero = automatical)
-    float mul; // Flare brightness factor.
+    de::dbyte flags;       ///< @ref rendFlareFlags.
+    de::dint size;
+    de::dfloat color[3];
+    de::dbyte factor;
+    de::dfloat xOff;
+    DGLuint tex;           ///< Flaremap if flareCustom ELSE (flaretexName id. Zero = automatical)
+    de::dfloat mul;        ///< Flare brightness factor.
     dd_bool isDecoration;
-    int lumIdx;
+    de::dint lumIdx;
 };
 
-DENG_EXTERN_C int alwaysAlign;
-DENG_EXTERN_C int spriteLight, useSpriteAlpha, useSpriteBlend;
-DENG_EXTERN_C int noSpriteZWrite;
-DENG_EXTERN_C byte noSpriteTrans;
-DENG_EXTERN_C byte devNoSprites;
+DENG_EXTERN_C de::dint alwaysAlign;
+DENG_EXTERN_C de::dint spriteLight;
+DENG_EXTERN_C de::dint useSpriteAlpha;
+DENG_EXTERN_C de::dint useSpriteBlend;
+DENG_EXTERN_C de::dint noSpriteZWrite;
+DENG_EXTERN_C de::dbyte noSpriteTrans;
+DENG_EXTERN_C de::dbyte devNoSprites;
 
 DENG_EXTERN_C void Rend_SpriteRegister();
 
-#endif // DENG_CLIENT_RENDER_BILLBOARD_H
+#endif  // CLIENT_RENDER_BILLBOARD_H

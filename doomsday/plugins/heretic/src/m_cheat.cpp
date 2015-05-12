@@ -1,4 +1,4 @@
-/** @file m_cheat.c Cheat code sequences
+/** @file m_cheat.cpp  Cheat code sequences
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -19,13 +19,15 @@
  * 02110-1301 USA</small>
  */
 
-#include <stdlib.h>
-#include <errno.h>
-
 #include "jheretic.h"
+#include "m_cheat.h"
 
+#include <cerrno>
+#include <cstdlib>
 #include "am_map.h"
 #include "d_net.h"
+#include "d_netcl.h"
+#include "d_netsv.h"
 #include "dmu_lib.h"
 #include "hu_msg.h"
 #include "g_eventsequence.h"
@@ -58,7 +60,7 @@ CHEAT_FUNC(Reveal);
 void G_RegisterCheats(void)
 {
     ADDCHEATCMD("cockadoodledoo",   "chicken %p");
-    ADDCHEATCMD("engage%1%2",       "warp %1%2");
+    ADDCHEATCMD("engage%1%2",       "warp %1 %2");
     ADDCHEAT("gimme%1%2",           InvItem3); // Final stage.
     ADDCHEAT("gimme%1",             InvItem2); // 2nd stage (ask for count).
     ADDCHEAT("gimme",               InvItem);  // 1st stage (ask for type).
@@ -682,7 +684,7 @@ D_CMD(CheatWhere)
     if(!plrMo) return true;
 
     sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
-                        Str_Text(Uri_ToString(gameMapUri)),
+                        COMMON_GAMESESSION->mapUri().path().toUtf8().constData(),
                         plrMo->origin[VX], plrMo->origin[VY], plrMo->origin[VZ]);
     P_SetMessage(plr, LMF_NO_HIDE, textBuffer);
 
@@ -704,28 +706,6 @@ D_CMD(CheatWhere)
     App_Log(DE2_MAP_MSG, "Player height:%g Player radius:%g",
                           plrMo->height, plrMo->radius);
 
-    return true;
-}
-
-/**
- * Exit the current map and go to the intermission.
- */
-D_CMD(CheatLeaveMap)
-{
-    DENG2_UNUSED3(src, argc, argv);
-
-    // Only the server operator can end the map this way.
-    if(IS_NETGAME && !IS_NETWORK_SERVER)
-        return false;
-
-    if(G_GameState() != GS_MAP)
-    {
-        S_LocalSound(SFX_CHAT, NULL);
-        App_Log(DE2_LOG_MAP | DE2_LOG_ERROR, "Can only exit a map when in a game!");
-        return true;
-    }
-
-    G_SetGameActionMapCompleted(G_NextLogicalMapNumber(false), 0, false);
     return true;
 }
 

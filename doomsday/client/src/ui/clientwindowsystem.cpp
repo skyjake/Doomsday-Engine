@@ -32,17 +32,26 @@ DENG2_PIMPL(ClientWindowSystem)
         bool isBlurringAllowed() const {
             return !App_GameLoaded();
         }
+        GuiWidget *sharedBlurWidget() const {
+            if(!ClientWindow::mainExists()) return nullptr;
+            return &ClientWindow::main().taskBarBlur();
+        }
     };
 
     Instance(Public *i)
         : Base(i)
     {
         self.setStyle(new ClientStyle);
-        self.style().load(App::fileSystem().find("defaultstyle.pack").path());
+        self.style().load(App::packageLoader().load("net.dengine.client.defaultstyle"));
 
-        settings.define(SettingsRegister::ConfigVariable, "window.main.showFps")
-                .define(SettingsRegister::IntCVar,        "vid-fsaa", 1)
-                .define(SettingsRegister::IntCVar,        "vid-vsync", 1);
+        using SReg = SettingsRegister;
+        settings.define(SReg::ConfigVariable, "window.main.showFps")
+                .define(SReg::ConfigVariable, "window.main.fsaa")
+                .define(SReg::ConfigVariable, "window.main.vsync")
+                .define(SReg::IntCVar,        "rend-finale-stretch", SCALEMODE_SMART_STRETCH)
+                .define(SReg::IntCVar,        "rend-hud-stretch", SCALEMODE_SMART_STRETCH)
+                .define(SReg::IntCVar,        "inlude-stretch", SCALEMODE_SMART_STRETCH)
+                .define(SReg::IntCVar,        "menu-stretch", SCALEMODE_SMART_STRETCH);
     }
 };
 

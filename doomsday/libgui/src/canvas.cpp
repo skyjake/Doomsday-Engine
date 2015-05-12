@@ -20,7 +20,7 @@
 #include "de/CanvasWindow"
 #include "de/GLState"
 #include "de/GLTexture"
-#include "de/gui/opengl.h"
+#include "de/graphics/opengl.h"
 
 #include <de/App>
 #include <de/Log>
@@ -42,11 +42,9 @@
 
 namespace de {
 
-#ifdef Q_WS_X11
+#ifdef DENG_X11
 #  define LIBGUI_CANVAS_USE_DEFERRED_RESIZE
 #endif
-
-static const int MOUSE_WHEEL_CONTINUOUS_THRESHOLD_MS = 100;
 
 DENG2_PIMPL(Canvas)
 {
@@ -65,6 +63,7 @@ DENG2_PIMPL(Canvas)
 #endif
     QPoint prevMousePos;
     QTime prevWheelAt;
+    QPoint wheelAngleAccum;
     int wheelDir[2];
 
     Instance(Public *i, CanvasWindow *parentWindow)
@@ -114,7 +113,7 @@ DENG2_PIMPL(Canvas)
 
         if(mouseGrabbed)
         {
-            LOG_INPUT_VERBOSE("Ungrabbing mouse") << mouseGrabbed;
+            LOG_INPUT_VERBOSE("Ungrabbing mouse");
 
             // Tell the mouse driver that the mouse is untrapped.
             mouseGrabbed = false;
@@ -216,6 +215,16 @@ DENG2_PIMPL(Canvas)
         framebuf.swapBuffers(self, mode);
     }
 
+    template <typename QtEventType>
+    Vector2i translatePosition(QtEventType const *ev) const
+    {
+#ifdef DENG2_QT_5_1_OR_NEWER
+        return Vector2i(ev->pos().x(), ev->pos().y()) * self.devicePixelRatio();
+#else
+        return Vector2i(ev->pos().x(), ev->pos().y());
+#endif
+    }
+
     DENG2_PIMPL_AUDIENCE(GLReady)
     DENG2_PIMPL_AUDIENCE(GLInit)
     DENG2_PIMPL_AUDIENCE(GLResize)
@@ -233,8 +242,8 @@ Canvas::Canvas(CanvasWindow* parent, QGLWidget* shared)
     : QGLWidget(parent, shared), d(new Instance(this, parent))
 {
     LOG_AS("Canvas");
-    LOGDEV_GL_VERBOSE("swap interval: ") << format().swapInterval();
-    LOGDEV_GL_VERBOSE("multisample: %b") << (GLFramebuffer::defaultMultisampling() > 1);
+    LOGDEV_GL_VERBOSE("Swap interval: ") << format().swapInterval();
+    LOGDEV_GL_VERBOSE("Multisampling: %b") << (GLFramebuffer::defaultMultisampling() > 1);
 
     // We will be doing buffer swaps manually (for timing purposes).
     setAutoBufferSwap(false);
@@ -439,13 +448,7 @@ void Canvas::paintGL()
 {
     if(!d->parent || d->parent->isRecreationInProgress()) return;
 
-/*#ifdef LIBGUI_CANVAS_USE_DEFERRED_RESIZE
-    if(d->resizeTimer.isActive())
-    {
-        d->resizeTimer.stop();
-        updateSize();
-    }
-#endif*/
+    DENG2_ASSERT(QGLContext::currentContext() != 0);
 
     LIBGUI_ASSERT_GL_OK();
 
@@ -503,37 +506,23 @@ static MouseEvent::Button translateButton(Qt::MouseButton btn)
 
 void Canvas::mousePressEvent(QMouseEvent *ev)
 {
-    /*
-    if(!d->mouseGrabbed)
-    {
-        // The mouse will be grabbed when the button is released.
-        ev->ignore();
-        return;
-    }*/
-
     ev->accept();
 
     DENG2_FOR_AUDIENCE2(MouseEvent, i)
     {
         i->mouseEvent(MouseEvent(translateButton(ev->button()), MouseEvent::Pressed,
-                                 Vector2i(ev->pos().x(), ev->pos().y())));
+                                 d->translatePosition(ev)));
     }
 }
 
 void Canvas::mouseReleaseEvent(QMouseEvent* ev)
 {
-    /*if(d->mouseDisabled)
-    {
-        ev->ignore();
-        return;
-    }*/
-
     ev->accept();
 
     DENG2_FOR_AUDIENCE2(MouseEvent, i)
     {
         i->mouseEvent(MouseEvent(translateButton(ev->button()), MouseEvent::Released,
-                                 Vector2i(ev->pos().x(), ev->pos().y())));
+                                 d->translatePosition(ev)));
     }
 }
 
@@ -547,19 +536,60 @@ void Canvas::mouseMoveEvent(QMouseEvent *ev)
         DENG2_FOR_AUDIENCE2(MouseEvent, i)
         {
             i->mouseEvent(MouseEvent(MouseEvent::Absolute,
-                                     Vector2i(ev->pos().x(), ev->pos().y())));
+                                     d->translatePosition(ev)));
         }
     }
 }
 
 void Canvas::wheelEvent(QWheelEvent *ev)
 {
-    /*if(d->mouseDisabled)
-    {
-        ev->ignore();
-        return;
-    }*/
     ev->accept();
+
+#ifdef DENG2_QT_5_0_OR_NEWER
+    float const devicePixels = d->parent->devicePixelRatio();
+
+    QPoint numPixels = ev->pixelDelta();
+    QPoint numDegrees = ev->angleDelta() / 8;
+    d->wheelAngleAccum += numDegrees;
+
+    if(!numPixels.isNull())
+    {
+        DENG2_FOR_AUDIENCE2(MouseEvent, i)
+        {
+            if(numPixels.x())
+            {
+                i->mouseEvent(MouseEvent(MouseEvent::FineAngle, Vector2i(devicePixels * numPixels.x(), 0),
+                                         d->translatePosition(ev)));
+            }
+            if(numPixels.y())
+            {
+                i->mouseEvent(MouseEvent(MouseEvent::FineAngle, Vector2i(0, devicePixels * numPixels.y()),
+                                         d->translatePosition(ev)));
+            }
+        }
+    }
+
+    QPoint const steps = d->wheelAngleAccum / 15;
+    if(!steps.isNull())
+    {
+        DENG2_FOR_AUDIENCE2(MouseEvent, i)
+        {
+            if(steps.x())
+            {
+                i->mouseEvent(MouseEvent(MouseEvent::Step, Vector2i(steps.x(), 0),
+                                         !d->mouseGrabbed? d->translatePosition(ev) : Vector2i()));
+            }
+            if(steps.y())
+            {
+                i->mouseEvent(MouseEvent(MouseEvent::Step, Vector2i(0, steps.y()),
+                                         !d->mouseGrabbed? d->translatePosition(ev) : Vector2i()));
+            }
+        }
+        d->wheelAngleAccum -= steps * 15;
+    }
+
+#else
+    static const int MOUSE_WHEEL_CONTINUOUS_THRESHOLD_MS = 100;
 
     bool continuousMovement = (d->prevWheelAt.elapsed() < MOUSE_WHEEL_CONTINUOUS_THRESHOLD_MS);
     int axis = (ev->orientation() == Qt::Horizontal? 0 : 1);
@@ -570,7 +600,7 @@ void Canvas::wheelEvent(QWheelEvent *ev)
         i->mouseEvent(MouseEvent(MouseEvent::FineAngle,
                                  axis == 0? Vector2i(ev->delta(), 0) :
                                             Vector2i(0, ev->delta()),
-                                 Vector2i(ev->pos().x(), ev->pos().y())));
+                                 d->translatePosition(ev)));
     }
 
     if(!continuousMovement || d->wheelDir[axis] != dir)
@@ -582,9 +612,10 @@ void Canvas::wheelEvent(QWheelEvent *ev)
             i->mouseEvent(MouseEvent(MouseEvent::Step,
                                      axis == 0? Vector2i(dir, 0) :
                                      axis == 1? Vector2i(0, dir) : Vector2i(),
-                                     !d->mouseGrabbed? Vector2i(ev->pos().x(), ev->pos().y()) : Vector2i()));
+                                     !d->mouseGrabbed? d->translatePosition(ev) : Vector2i()));
         }
     }
+#endif
 
     d->prevWheelAt.start();
 }

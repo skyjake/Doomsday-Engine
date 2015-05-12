@@ -94,10 +94,10 @@ DENG_GUI_PIMPL(GameSelectionWidget)
                 break;
             }
 
-            QObject::connect(menu,              SIGNAL(sessionSelected(de::ui::Item const *)),
-                             owner->thisPublic, SLOT  (select(de::ui::Item const *)));
-            QObject::connect(menu,              SIGNAL(availabilityChanged()),
-                             owner->thisPublic, SLOT  (updateSubsetLayout()));
+            QObject::connect(menu,         SIGNAL(sessionSelected(de::ui::Item const *)),
+                             &owner->self, SLOT  (select(de::ui::Item const *)));
+            QObject::connect(menu,         SIGNAL(availabilityChanged()),
+                             &owner->self, SLOT  (updateSubsetLayout()));
 
             menu->items().audienceForAddition() += this;
 
@@ -147,15 +147,12 @@ DENG_GUI_PIMPL(GameSelectionWidget)
             return menu->items();
         }
 
-        GameWidget &gameWidget(ui::Item const &item)
-        {
-            return menu->itemWidget<GameWidget>(item);
-        }
-
         String textForTitle(bool whenOpen) const
         {
             if(whenOpen) return titleText;
-            return QString("%1 (%2)").arg(titleText).arg(menu->count());
+            int count = menu->count();
+            if(!noGames->behavior().testFlag(Widget::Hidden)) count = 0;
+            return QString("%1 (%2)").arg(titleText).arg(count);
         }
 
         void preparePanelForOpening()
@@ -463,13 +460,16 @@ void GameSelectionWidget::updateSubsetLayout()
 void GameSelectionWidget::select(ui::Item const *item)
 {
     if(!item) return;
-
+    
+    // Should we perform an action afterwards? The signal handling may lead to
+    // destruction of the widget, so we'll hold a ref to the action.
+    AutoRef<Action> postAction(d->doAction? makeAction(*item) : nullptr);
+    
+    // Notify.
     emit gameSessionSelected(item);
-
-    // Should we also perform the action?
-    if(d->doAction)
+    
+    if(bool(postAction))
     {
-        AutoRef<Action> act = makeAction(*item);
-        act->trigger();
+        postAction->trigger();
     }
 }

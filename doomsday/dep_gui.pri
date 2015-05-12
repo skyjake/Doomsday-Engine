@@ -1,4 +1,6 @@
 # Build configuration for using the libdeng_gui library.
+include(dep_assimp.pri)
+
 INCLUDEPATH += $$PWD/libgui/include
 
 !libgui_headers_only {
@@ -23,3 +25,4 @@ INCLUDEPATH += $$PWD/libgui/include
     }
 }
 
+DENG_PACKAGES += net.dengine.stdlib.gui.pack

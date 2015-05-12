@@ -34,7 +34,7 @@
 
 /// @todo Find a better way to access the private data of the zone
 /// (e.g., move this into the library and use an abstract graphics interface).
-#include "../../libdeng1/src/memoryzone_private.h"
+#include "../../liblegacy/src/memoryzone_private.h"
 
 using namespace de;
 

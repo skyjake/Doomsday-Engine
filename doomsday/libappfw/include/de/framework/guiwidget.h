@@ -103,19 +103,21 @@ public:
             BorderGlow,         ///< Border glow with specified color/thickness.
             Blurred,            ///< Blurs whatever is showing behind the widget.
             BlurredWithBorderGlow,
+            BlurredWithSolidFill,
             SharedBlur,         ///< Use the blur background from a BlurWidget.
+            SharedBlurWithBorderGlow,
             Rounded
         };
         Vector4f solidFill;     ///< Always applied if opacity > 0.
         Type type;
         Vector4f color;         ///< Secondary color.
         float thickness;        ///< Frame border thickenss.
-        BlurWidget *blur;
+        GuiWidget *blur;
 
         Background()
             : type(None), thickness(0), blur(0) {}
 
-        Background(BlurWidget &blurred, Vector4f const &blurColor)
+        Background(GuiWidget &blurred, Vector4f const &blurColor)
             : solidFill(blurColor), type(SharedBlur), thickness(0), blur(&blurred) {}
 
         Background(Vector4f const &solid, Type t = None)
@@ -165,6 +167,32 @@ public:
         virtual bool handleEvent(GuiWidget &widget, Event const &event) = 0;
     };
 
+    enum Attribute
+    {
+        /**
+         * Enables or disables automatic state serialization for widgets derived from
+         * IPersistent. State serialization occurs when the widget is gl(De)Init'd.
+         */
+        RetainStatePersistently = 0x1,
+
+        AnimateOpacityWhenEnabledOrDisabled = 0x2,
+
+        /**
+         * Prevents the drawing of the widget contents even if it visible. The texture
+         * containing the blurred background is updated regardless.
+         */
+        DontDrawContent = 0x4,
+
+        /**
+         * Visible opacity determined solely by the widget itself, not affected by
+         * ancestors.
+         */
+        IndependentOpacity = 0x8,
+
+        DefaultAttributes = RetainStatePersistently | AnimateOpacityWhenEnabledOrDisabled
+    };
+    Q_DECLARE_FLAGS(Attributes, Attribute)
+
 public:
     GuiWidget(String const &name = "");
 
@@ -175,7 +203,14 @@ public:
      */
     static void destroy(GuiWidget *widget);
 
-    GuiRootWidget &root();
+    /**
+     * Deletes a widget at a later point in time. However, the widget is immediately
+     * deinitialized.
+     *
+     * @param widget  Widget to deinitialize now and destroy layer.
+     */
+    static void destroyLater(GuiWidget *widget);
+
     GuiRootWidget &root() const;
     Widget::Children childWidgets() const;
     Widget *parentWidget() const;
@@ -186,6 +221,8 @@ public:
      * the target canvas.
      */
     RuleRectangle &rule();
+
+    Rectanglei contentRect() const;
 
     /**
      * Returns the rule rectangle that defines the placement of the widget on
@@ -254,12 +291,17 @@ public:
     void removeEventHandler(IEventHandler *handler);
 
     /**
-     * Enables or disables automatic state serialization for widgets derived from
-     * IPersistent. State serialization occurs when the widget is gl(De)Init'd.
+     * Sets, unsets, or replaces one or more widget attributes.
      *
-     * @param enabled  @c true to enable, @c false to disable.
+     * @param attr  Attribute(s) to modify.
+     * @param op    Flag operation.
      */
-    void enableStateSerialization(bool enabled = true);
+    void setAttribute(Attributes const &attr, FlagOp op = SetFlags);
+
+    /**
+     * Returns the current widget attributes.
+     */
+    Attributes attributes() const;
 
     /**
      * Save the state of the widget and all its children (those who support state
@@ -278,7 +320,7 @@ public:
     void deinitialize();
     void viewResized();
     void update();
-    void draw() /*final*/;
+    void draw() final;
     bool handleEvent(Event const &event);
 
     /**
@@ -355,6 +397,22 @@ public:
     static Rectanglef normalizedRect(Rectanglei const &rect,
                                      Rectanglei const &containerRect);
 
+    static float toDevicePixels(float logicalPixels);
+
+    inline static int toDevicePixels(int logicalPixels) {
+        return int(toDevicePixels(float(logicalPixels)));
+    }
+
+    inline static duint toDevicePixels(duint logicalPixels) {
+        return duint(toDevicePixels(float(logicalPixels)));
+    }
+
+    template <typename Vector2>
+    static Vector2 toDevicePixels(Vector2 const &type) {
+        return Vector2(typename Vector2::ValueType(toDevicePixels(type.x)),
+                       typename Vector2::ValueType(toDevicePixels(type.y)));
+    }
+
     /**
      * Immediately deletes all the widgets in the garbage. This is useful to
      * avoid double deletion in case a trashed widget's parent is deleted
@@ -423,6 +481,22 @@ private:
     DENG2_PRIVATE(d)
 };
 
+Q_DECLARE_OPERATORS_FOR_FLAGS(GuiWidget::Attributes)
+
+template <typename WidgetType>
+struct GuiWidgetDeleter {
+    void operator () (WidgetType *w) {
+        GuiWidget::destroy(w);
+    }
+};
+    
+template <typename WidgetType>
+class UniqueWidgetPtr : public std::unique_ptr<WidgetType, GuiWidgetDeleter<WidgetType>> {
+public:
+    UniqueWidgetPtr(WidgetType *w = nullptr)
+        : std::unique_ptr<WidgetType, GuiWidgetDeleter<WidgetType>>(w) {}
+};
+    
 } // namespace de
 
 #endif // LIBAPPFW_GUIWIDGET_H

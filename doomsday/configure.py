@@ -49,7 +49,7 @@ def print_version(out, id, fn):
 
 print_version(out, 'DEHREAD',           'plugins/dehread/include/version.h')
 print_version(out, 'SAVEGAMECONVERTER', 'plugins/savegameconverter/include/version.h')
-print_version(out, 'WADMAPCONVERTER',   'plugins/wadmapconverter/include/version.h')
+print_version(out, 'IDTECH1CONVERTER',  'plugins/idtech1converter/include/version.h')
 print_version(out, 'DIRECTSOUND',       'plugins/directsound/include/version.h')
 print_version(out, 'OPENAL',            'plugins/openal/include/version.h')
 print_version(out, 'FMOD',              'plugins/fmod/include/version.h')

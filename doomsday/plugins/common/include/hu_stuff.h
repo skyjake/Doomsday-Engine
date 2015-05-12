@@ -27,8 +27,9 @@
 #include "doomsday.h"
 #include "gl_drawpatch.h"
 
-DENG_EXTERN_C patchid_t *pMapNames; // Name graphics of each map.
-DENG_EXTERN_C uint pMapNamesSize;
+#ifdef __cplusplus
+#  include <de/Vector>
+#endif
 
 #if __JHERETIC__ || __JHEXEN__
 DENG_EXTERN_C patchid_t pInvItemBox;
@@ -49,7 +50,8 @@ DENG_EXTERN_C patchid_t borderPatches[8];
 
 // The fonts.
 typedef enum {
-    GF_FIRST = 1,
+    GF_NONE,
+    GF_FIRST,
     GF_FONTA = GF_FIRST,
     GF_FONTB,
     GF_STATUS,
@@ -123,68 +125,6 @@ void M_DrawShadowedPatch(patchid_t id, int x, int y);
 void M_DrawShadowedPatch2(patchid_t id, int x, int y, int alignFlags, int patchFlags);
 void M_DrawShadowedPatch3(patchid_t id, int x, int y, int alignFlags, int patchFlags, float r, float g, float b, float a);
 
-typedef enum {
-    PRM_NONE                    = 0, ///< No replacement.
-    PRM_ALLOW_TEXT                   ///< Use a text replacement if found.
-} patchreplacemode_t;
-
-#define PRM_FIRST               (PRM_NONE)
-#define PRM_LAST                (PRM_ALLOW_TEXT)
-
-/**
- * @defgroup patchReplacementFlags  Patch Replacement Flags.
- * @{
- */
-#define PRF_NO_IWAD             0x1 ///< Allow if resource does not originate from an IWAD.
-#define PRF_NO_PWAD             0x2 ///< Allow if resource does not originate from a PWAD/external source.
-/**@}*/
-
-/**
- * Given a unique patch identifier (@a id) lookup a patch replacement string
- * associated with this.
- *
- * @param patchId       Unique patch identifier.
- * @param flags         @ref patchReplacementFlags
- *
- * @return  Patch replacement string if defined/found else @c NULL.
- */
-const char* Hu_FindPatchReplacementString(patchid_t patchId, int flags);
-
-/**
- * Determine whether a string-replacement for the specified patch is allowed
- * according the current user and/or game configuration.
- *
- * @note If the patch does not originate from an IWAD it will not be replaced.
- *
- * @param replaceMode   Replacement mode.
- * @param patchId       Unique identifier of the patch to choose a replacement for.
- * @param text          A prechoosen string replacement to be used if appropriate.
- */
-const char* Hu_ChoosePatchReplacement2(patchreplacemode_t replaceMode, patchid_t patchId, const char* text);
-const char* Hu_ChoosePatchReplacement(patchreplacemode_t replaceMode, patchid_t patchId);
-
-/**
- * Implements patch replacement.
- *
- * @param patchId   Unique identifier of the patch to be drawn if no replacement.
- * @param replacement   Patch replacement string. Will be drawn instead of the
- *                      patch if not @c NULL.
- * @param origin        Orient drawing about this offset (topleft:[0,0]).
- * @param alignFlags    @ref alignmentFlags
- * @param patchFlags    @ref drawPatchFlags
- * @param textFlags     @ref drawTextFlags
- */
-void WI_DrawPatch3(patchid_t patchId, const char* replacement, const Point2Raw* origin, int alignFlags, int patchFlags, short textFlags);
-void WI_DrawPatch2(patchid_t patchId, const char* replacement, const Point2Raw* origin, int alignFlags);
-void WI_DrawPatch(patchid_t patchId, const char* replacement, const Point2Raw* origin);
-
-/**
- * Same as @a WI_DrawPatch except origin is specified with separate xy coordinates.
- */
-void WI_DrawPatchXY3(patchid_t patchId, const char* replacement, int x, int y, int alignFlags, int patchFlags, short textFlags);
-void WI_DrawPatchXY2(patchid_t patchId, const char* replacement, int x, int y, int alignFlags);
-void WI_DrawPatchXY(patchid_t patchId, const char* replacement, int x, int y);
-
 /**
  * Misc specialised elements:
  */
@@ -193,6 +133,62 @@ void M_DrawGlowBar(const float a[2], const float b[2], float thickness, dd_bool 
 
 #ifdef __cplusplus
 } // extern "C"
-#endif
 
-#endif /* LIBCOMMON_HU_STUFF_H */
+enum patchreplacemode_t
+{
+    PRM_NONE,       ///< No replacement.
+    PRM_ALLOW_TEXT  ///< Use a text replacement if found.
+};
+
+/**
+ * @defgroup patchReplacementFlags  Patch Replacement Flags.
+ * @{
+ */
+#define PRF_NO_IWAD             0x1  ///< Allow if resource does not originate from an IWAD.
+#define PRF_NO_PWAD             0x2  ///< Allow if resource does not originate from a PWAD/external source.
+/**@}*/
+
+/**
+ * Given a unique patch identifier (@a id) lookup a patch replacement string
+ * associated with this.
+ *
+ * @param patchId  Unique patch identifier.
+ * @param flags    @ref patchReplacementFlags
+ *
+ * @return  Patch replacement string if defined/found else @c nullptr.
+ */
+char const *Hu_FindPatchReplacementString(patchid_t patchId, int flags);
+
+/**
+ * Determine whether a string-replacement for the specified patch is allowed
+ * according the current user and/or game configuration.
+ *
+ * @note If the patch does not originate from an IWAD it will not be replaced.
+ *
+ * @param replaceMode  Replacement mode.
+ * @param patchId      Unique identifier of the patch to choose a replacement for.
+ * @param text         A prechoosen string replacement to be used if appropriate.
+ */
+de::String Hu_ChoosePatchReplacement(patchreplacemode_t replaceMode, patchid_t patchId,
+                                     de::String const &text = "");
+
+/**
+ * Implements patch replacement.
+ *
+ * @param patchId      Unique identifier of the patch to be drawn if no replacement.
+ * @param replacement  Patch replacement string. Will be drawn instead of the
+ *                     patch if not @c nullptr.
+ * @param origin       Orient drawing about this offset (topleft:[0,0]).
+ * @param alignFlags   @ref alignmentFlags
+ * @param patchFlags   @ref drawPatchFlags
+ * @param textFlags    @ref drawTextFlags
+ */
+void WI_DrawPatch(patchid_t patchId,
+                  de::String const &replacement = "",
+                  de::Vector2i const &origin    = de::Vector2i(0, 0),
+                  int alignFlags                = ALIGN_TOPLEFT,
+                  int patchFlags                = 0,
+                  short textFlags               = 0);
+
+#endif // __cplusplus
+#endif // LIBCOMMON_HU_STUFF_H

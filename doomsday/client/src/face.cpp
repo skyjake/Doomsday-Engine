@@ -1,6 +1,6 @@
-/** @file face.cpp Mesh Geometry Face.
+/** @file face.cpp  Mesh, face geometry.
  *
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -16,36 +16,25 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#include "face.h"
 #include <de/mathutil.h>
 #include <de/vector1.h> /// @todo remove me
-
 #include <de/Log>
-
 #include "HEdge"
-
-#include "face.h"
 
 namespace de {
 
 DENG2_PIMPL_NOREF(Face)
 {
-    /// First half-edge in the face geometry.
-    HEdge *hedge;
-
-    /// Vertex bounding box.
-    AABoxd aaBox;
-
-    /// Center of vertices.
-    Vector2d center;
-
-    Instance() : hedge(0)
-    {}
+    HEdge *hedge = nullptr;  ///< First half-edge in the face geometry.
+    AABoxd aaBox;            ///< Vertex bounding box.
+    Vector2d center;         ///< Center of vertices.
 };
 
 Face::Face(Mesh &mesh)
-    : MeshElement(mesh),
-      _hedgeCount(0),
-      d(new Instance())
+    : MeshElement(mesh)
+    , _hedgeCount(0)
+    , d(new Instance())
 {}
 
 int Face::hedgeCount() const
@@ -104,7 +93,7 @@ bool Face::isConvex() const
 String Face::description() const
 {
     String text = String("Face [0x%1] comprises %2 half-edges")
-            .arg(de::dintptr(this), 0, 16).arg(_hedgeCount);
+                      .arg(de::dintptr(this), 0, 16).arg(_hedgeCount);
 
     if(HEdge const *hedge = d->hedge)
     {

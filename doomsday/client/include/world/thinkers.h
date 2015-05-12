@@ -1,7 +1,7 @@
-/** @file thinkers.h World map thinkers.
+/** @file thinkers.h  World map thinkers.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,9 +20,9 @@
 #ifndef DENG_WORLD_THINKERS_H
 #define DENG_WORLD_THINKERS_H
 
-#include "api_thinker.h"
-
+#include <functional>
 #include <de/Error>
+#include "api_thinker.h"
 
 namespace de {
 
@@ -49,7 +49,7 @@ public:
      * @param flags  @c 0x1 = Init public thinkers.
      *               @c 0x2 = Init private (engine-internal) thinkers.
      */
-    void initLists(byte flags);
+    void initLists(dbyte flags);
 
     /**
      * @param thinker     Thinker to be added.
@@ -67,22 +67,28 @@ public:
     /**
      * Iterate the list of thinkers making a callback for each.
      *
-     * @param thinkFunc  If not @c NULL, only make a callback for thinkers
-     *                   whose function matches this.
-     * @param flags      Thinker filter flags.
-     * @param callback   The callback to make. Iteration will continue
-     *                   until a callback returns a non-zero value.
-     * @param context  Passed to the callback function.
+     * @param flags     Thinker filter flags.
+     * @param callback  Callback to make for each thinker_t.
      */
-    int iterate(thinkfunc_t thinkFunc, byte flags,
-                int (*callback) (thinker_t *th, void *), void *context = 0);
+    de::LoopResult forAll(dbyte flags, std::function<de::LoopResult (thinker_t *th)> func) const;
+
+    /**
+     * Iterate the list of thinkers making a callback for each.
+     *
+     * @param thinkFunc  Only make a callback for thinkers whose function matches this.
+     * @param flags      Thinker filter flags.
+     * @param callback   Callback to make for each thinker_t.
+     *
+     * @overload
+     */
+    de::LoopResult forAll(thinkfunc_t thinkFunc, dbyte flags, std::function<de::LoopResult (thinker_t *th)> func) const;
 
     /**
      * Locates a mobj by it's unique identifier in the map.
      *
      * @param id  Unique id of the mobj to lookup.
      */
-    struct mobj_s *mobjById(int id);
+    struct mobj_s *mobjById(dint id);
 
     /**
      * @param id  Thinker id to test.
@@ -98,11 +104,11 @@ public:
     /**
      * Returns the total number of thinkers (of any type) in the collection.
      *
-     * @param numInStasis  If not @c NULL, the number of thinkers in stasis will
+     * @param numInStasis  If not @c nullptr, the number of thinkers in stasis will
      *                     be added to the current value (caller must ensure to
      *                     initialize this).
      */
-    int count(int *numInStasis = 0) const;
+    dint count(dint *numInStasis = nullptr) const;
 
 private:
     DENG2_PRIVATE(d)
@@ -113,4 +119,15 @@ private:
 dd_bool Thinker_IsMobjFunc(thinkfunc_t func);
 de::Map &Thinker_Map(thinker_t const &th);
 
-#endif // DENG_WORLD_THINKERS_H
+/**
+ * Initializes the private data object of a thinker. The type of private data is chosen
+ * based on whether the thinker is on the client or server, and possibly based on other
+ * factors.
+ *
+ * Only call this when the thinker does not have a private data object.
+ *
+ * @param th  Thinker.
+ */
+void Thinker_InitPrivateData(thinker_t *th);
+
+#endif  // DENG_WORLD_THINKERS_H

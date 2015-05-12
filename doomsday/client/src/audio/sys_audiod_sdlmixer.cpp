@@ -30,6 +30,7 @@
 
 #include <SDL.h>
 #include <SDL_mixer.h>
+#undef main
 
 #include "de_base.h"
 #include "de_console.h"
@@ -205,8 +206,8 @@ int DS_SDLMixerInit(void)
     // Announce capabilites.
     LOG_AUDIO_VERBOSE("SDLMixer configuration:");
     LOG_AUDIO_VERBOSE("  " _E(>) "Output: %s\n"
-                      "Format: %#x (%#x)\n"
-                      "Frequency: %iHz (%iHz)"
+                      "Format: %x (%x)\n"
+                      "Frequency: %iHz (%iHz)\n"
                       "Initial Channels: %i")
             << (channels > 1? "stereo" : "mono")
             << format << (uint16_t) AUDIO_S16LSB
@@ -243,7 +244,7 @@ void DS_SDLMixerShutdown(void)
     sdlInitOk = false;
 }
 
-void DS_SDLMixerEvent(int type)
+void DS_SDLMixerEvent(int)
 {
     // Not supported.
 }
@@ -459,22 +460,22 @@ void DS_SDLMixer_SFX_Set(sfxbuffer_t* buf, int prop, float value)
     }
 }
 
-void DS_SDLMixer_SFX_Setv(sfxbuffer_t* buf, int prop, float* values)
+void DS_SDLMixer_SFX_Setv(sfxbuffer_t *, int , float *)
 {
     // Not supported.
 }
 
-void DS_SDLMixer_SFX_Listener(int prop, float value)
+void DS_SDLMixer_SFX_Listener(int, float)
 {
     // Not supported.
 }
 
-void SetEnvironment(float* rev)
+void SetEnvironment(float *)
 {
     // Not supported.
 }
 
-void DS_SDLMixer_SFX_Listenerv(int prop, float* values)
+void DS_SDLMixer_SFX_Listenerv(int, float *)
 {
     // Not supported.
 }

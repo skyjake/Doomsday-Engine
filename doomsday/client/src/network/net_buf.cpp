@@ -239,6 +239,8 @@ void N_SendPacket(int flags)
 {
 #ifdef __SERVER__
     uint dest = 0;
+#else
+    DENG2_UNUSED(flags);
 #endif
 
     // Is the network available?
@@ -305,15 +307,16 @@ void N_AddSentBytes(size_t bytes)
 int N_IdentifyPlayer(nodeid_t id)
 {
 #ifdef __SERVER__
+    // What is the corresponding player number? Only the server keeps
+    // a list of all the IDs.
+    for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        // What is the corresponding player number? Only the server keeps
-        // a list of all the IDs.
-        int i;
-        for(i = 0; i < DDMAXPLAYERS; ++i)
-            if(clients[i].nodeID == id)
-                return i;
-        return -1;
+        if(clients[i].nodeID == id)
+            return i;
     }
+    return -1;
+#else
+    DENG2_UNUSED(id);
 #endif
 
     // Clients receive messages only from the server.

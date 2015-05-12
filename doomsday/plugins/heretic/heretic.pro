@@ -16,14 +16,10 @@ DEFINES += __JHERETIC__
 gamedata.files = $$OUT_PWD/../../libheretic.pk3
 
 macx {
-    gamedata.path = Contents/Resources
-
     QMAKE_BUNDLE_DATA += gamedata
 }
 else {
-    INSTALLS += target gamedata
-
-    target.path = $$DENG_PLUGIN_LIB_DIR
+    INSTALLS += gamedata
     gamedata.path = $$DENG_DATA_DIR/jheretic
 }
 
@@ -47,8 +43,8 @@ HEADERS += \
     include/h_think.h \
     include/h_type.h \
     include/hereticv13mapstatereader.h \
-    include/in_lude.h \
     include/info.h \
+    include/intermission.h \
     include/jheretic.h \
     include/m_cheat.h \
     include/m_random.h \
@@ -73,11 +69,11 @@ HEADERS += \
 SOURCES += \
     src/acfnlink.c \
     src/h_api.c \
-    src/h_console.c \
+    src/h_console.cpp \
     src/h_main.cpp \
     src/h_refresh.cpp \
     src/hereticv13mapstatereader.cpp \
-    src/in_lude.cpp \
+    src/intermission.cpp \
     src/m_cheat.cpp \
     src/m_random.c \
     src/p_enemy.c \
@@ -87,13 +83,15 @@ SOURCES += \
     src/p_mobj.c \
     src/p_pspr.c \
     src/p_setup.c \
-    src/p_spec.c \
+    src/p_spec.cpp \
     src/p_telept.c \
-    src/st_stuff.c \
+    src/st_stuff.cpp \
     src/tables.c
 
 win32 {
-    QMAKE_LFLAGS += /DEF:\"$$PWD/api/heretic.def\"
+    deng_msvc:  QMAKE_LFLAGS += /DEF:\"$$PWD/api/heretic.def\"
+    deng_mingw: QMAKE_LFLAGS += --def \"$$PWD/api/heretic.def\"
+
     OTHER_FILES += api/heretic.def
 
     RC_FILE = res/heretic.rc
@@ -101,6 +99,6 @@ win32 {
 
 macx {
     fixPluginInstallId($$TARGET, 1)
-    linkToBundledLibdeng2($$TARGET)
-    linkToBundledLibdeng1($$TARGET)
+    linkToBundledLibcore($$TARGET)
+    linkToBundledLiblegacy($$TARGET)
 }

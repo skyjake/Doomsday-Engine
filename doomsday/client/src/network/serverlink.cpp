@@ -66,7 +66,7 @@ DENG2_PIMPL(ServerLink)
 
     ~Instance()
     {
-        Loop::appLoop().audienceForIteration() -= this;
+        Loop::get().audienceForIteration() -= this;
     }
 
     void notifyDiscoveryUpdate()
@@ -183,7 +183,7 @@ DENG2_PIMPL(ServerLink)
         fetching = true;
         N_MAPost(MAC_REQUEST);
         N_MAPost(MAC_WAIT);
-        Loop::appLoop().audienceForIteration() += this;
+        Loop::get().audienceForIteration() += this;
     }
 
     void loopIteration()
@@ -193,7 +193,7 @@ DENG2_PIMPL(ServerLink)
         if(N_MADone())
         {
             fetching = false;
-            Loop::appLoop().audienceForIteration() -= this;
+            Loop::get().audienceForIteration() -= this;
 
             fromMaster.clear();
             int const count = N_MasterGet(0, 0);
@@ -353,7 +353,13 @@ QList<Address> ServerLink::foundServers(FoundMask mask) const
 
 bool ServerLink::isFound(Address const &host, FoundMask mask) const
 {
-    return d->allFound(mask).contains(host);
+    Address addr = host;
+    if(!addr.port())
+    {
+        // Zero means default port.
+        addr.setPort(shell::DEFAULT_PORT);
+    }
+    return d->allFound(mask).contains(addr);
 }
 
 bool ServerLink::foundServerInfo(int index, serverinfo_t *info, FoundMask mask) const

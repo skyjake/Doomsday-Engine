@@ -11,7 +11,7 @@ TEMPLATE = subdirs
 CONFIG += ordered
 SUBDIRS = \
     build \
-    libdeng2 \
+    libcore \
     libshell
 
 !deng_noclient|macx {
@@ -22,8 +22,6 @@ SUBDIRS = \
 
 SUBDIRS += \
     tests
-
-#SUBDIRS += postbuild
 
 OTHER_FILES += doomsday_sdk.pri
 

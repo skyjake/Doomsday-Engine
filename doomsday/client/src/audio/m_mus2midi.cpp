@@ -19,14 +19,14 @@
  * 02110-1301 USA</small>
  */
 
+#include "de_platform.h"
+#include "audio/m_mus2midi.h"
+
+#include <doomsday/filesys/fs_util.h>
+#include <de/Log>
+#include <de/NativePath>
 #include <stdio.h>
 #include <string.h>
-
-#include "de_platform.h"
-#include "con_main.h"
-#include "api_filesys.h"
-#include "filesys/fs_util.h"
-#include "audio/m_mus2midi.h"
 
 // MUS event types.
 enum {
@@ -244,7 +244,7 @@ dd_bool M_Mus2Midi(void* data, size_t length, const char* outFile)
     file = fopen(Str_Text(&nativePath), "wb");
     if(!file)
     {
-        LOG_RES_WARNING("Failed opening output file \"%s\"") << F_PrettyPath(Str_Text(&nativePath));
+        LOG_RES_WARNING("Failed opening output file \"%s\"") << de::NativePath(Str_Text(&nativePath)).pretty();
         Str_Free(&nativePath);
         return false;
     }

@@ -21,7 +21,7 @@
 
 #include "libshell.h"
 #include "ITextEditor"
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <de/String>
 #include <de/Vector>
 

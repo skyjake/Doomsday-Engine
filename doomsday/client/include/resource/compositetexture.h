@@ -1,8 +1,7 @@
-/**
- * @file compositetexture.h Composite Texture.
+/** @file compositetexture.h  Composite Texture.
  *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -48,23 +47,17 @@ public:
     /**
      * Flags denoting usage traits.
      */
-    enum Flag
-    {
-        Custom = 0x1  /**< The texture does not originate from a definition
-                           of the current game. */
+    enum Flag {
+        Custom = 0x1  ///< The texture does not originate from the current game.
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
     /**
      * Archived format variants.
      */
-    enum ArchiveFormat
-    {
-        /// Original format used by most id-tech 1 games.
-        DoomFormat,
-
-        /// StrifeFormat differs only slightly from DoomFormat (ommits some unused values).
-        StrifeFormat
+    enum ArchiveFormat {
+        DoomFormat,   ///< Format used by most id Tech 1 games.
+        StrifeFormat  ///< Differs slightly from DoomFormat (omits unused values).
     };
 
     /**
@@ -73,11 +66,17 @@ public:
     struct Component
     {
     protected:
-        explicit Component(int xOrigin = 0, int yOrigin = 0);
+        explicit Component(Vector2i const &origin = Vector2i());
 
     public:
         /// Origin of the top left corner of the component (in texture space units).
         Vector2i const &origin() const;
+
+        bool operator == (Component const &other) const;
+
+        inline bool operator != (Component const &other) const {
+            return !(*this == other);
+        }
 
         /// X-axis origin of the top left corner of the component (in texture space units).
         inline int xOrigin() const { return origin().x; }
@@ -92,11 +91,8 @@ public:
         friend class CompositeTexture;
 
     private:
-        /// Origin of the top left corner in the texture coordinate space.
-        Vector2i origin_;
-
-        /// Index of the lump containing the associated image.
-        lumpnum_t lumpNum_;
+        Vector2i _origin;    ///< Top left corner in the texture coordinate space.
+        lumpnum_t _lumpNum;  ///< Index of the lump containing the associated image.
     };
     typedef QList<Component> Components;
 
@@ -104,8 +100,9 @@ public:
     /**
      * Construct a default composite texture.
      */
-    explicit CompositeTexture(String percentEncodedName = "", int logicalWidth = 0,
-        int logicalHeight = 0, Flags _flags = 0);
+    explicit CompositeTexture(String const &percentEncodedName = "",
+                              de::Vector2i logicalDimensions   = de::Vector2i(),
+                              Flags flags                      = 0);
 
     /**
      * Construct a composite texture by deserializing an archived id-tech 1
@@ -121,6 +118,17 @@ public:
      */
     static CompositeTexture *constructFrom(Reader &reader, QList<PatchName> patchNames,
                                            ArchiveFormat format = DoomFormat);
+
+    /**
+     * Compare two composite texture definitions for equality.
+     *
+     * @return @c true if the definitions are equal.
+     */
+    bool operator == (CompositeTexture const &other) const;
+
+    inline bool operator != (CompositeTexture const &other) const {
+        return !(*this == other);
+    }
 
     /// Returns the percent-endcoded symbolic name of the texture.
     String percentEncodedName() const;
@@ -184,8 +192,7 @@ private:
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(CompositeTexture::Flags)
 
-/// A map from String -> CompositeTexture
-typedef QMultiMap<String, CompositeTexture *> CompositeTextureMap;
+typedef CompositeTexture::Component CompositeTextureComponent;
 
 } // namespace de
 

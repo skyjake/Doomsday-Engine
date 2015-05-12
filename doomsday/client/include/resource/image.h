@@ -24,7 +24,7 @@
 #define DENG_RESOURCE_IMAGE_H
 
 #include "dd_share.h" // gfxmode_t
-#include "filehandle.h"
+#include <doomsday/filesys/filehandle.h>
 #include <de/String>
 #include <de/Vector>
 #include <de/size.h>

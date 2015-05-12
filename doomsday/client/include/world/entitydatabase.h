@@ -20,7 +20,7 @@
 #ifndef DENG_WORLD_ENTITYDATABASE_H
 #define DENG_WORLD_ENTITYDATABASE_H
 
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <de/Error>
 
 #include "api_mapedit.h" // valuetype_t

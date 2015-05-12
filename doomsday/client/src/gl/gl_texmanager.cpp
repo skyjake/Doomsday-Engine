@@ -28,22 +28,20 @@
 #include "de_resource.h"
 #include "clientapp.h"
 #include "dd_main.h" // App_ResourceSystem()
-#include "con_main.h"
-#include "con_bar.h"
 #include "def_main.h"
-
+#include "sys_system.h"
+#include "ui/progress.h"
 #include "gl/gl_main.h" // DENG_ASSERT_GL_CONTEXT_ACTIVE
 #include "gl/texturecontent.h"
-
 #include "render/r_main.h" // R_BuildTexGammaLut
 #include "render/rend_halo.h" // haloRealistic
 #include "render/rend_main.h" // misc global vars
 #include "render/rend_particle.h" // Rend_ParticleLoadSystemTextures()
-
 #include "resource/hq2x.h"
 
 #include <de/memory.h>
 #include <de/memoryzone.h>
+#include <de/concurrency.h>
 #include <QList>
 #include <QMutableListIterator>
 #include <cstring>
@@ -263,7 +261,7 @@ GLuint GL_PrepareFlaremap(de::Uri const &resourceUri)
             return GL_PrepareSysFlaremap(flaretexid_t(number - 1));
         }
     }
-    if(Texture *tex = App_ResourceSystem().texture("Flaremaps", &resourceUri))
+    if(Texture *tex = App_ResourceSystem().texture("Flaremaps", resourceUri))
     {
         if(TextureVariant const *variant = tex->prepareVariant(Rend_HaloTextureSpec()))
         {
@@ -293,7 +291,7 @@ static res::Source loadRaw(image_t &image, rawtex_t const &raw)
 
     try
     {
-        de::FileHandle &file = fileSys.openLump(fileSys.nameIndex().lump(raw.lumpNum));
+        FileHandle &file = fileSys.openLump(fileSys.lump(raw.lumpNum));
         if(Image_LoadFromFile(image, file))
         {
             fileSys.releaseFile(file.file());
@@ -337,7 +335,7 @@ static res::Source loadRaw(image_t &image, rawtex_t const &raw)
 
 GLuint GL_PrepareRawTexture(rawtex_t &raw)
 {
-    if(raw.lumpNum < 0 || raw.lumpNum >= F_LumpCount()) return 0;
+    if(raw.lumpNum < 0 || raw.lumpNum >= App_FileSystem().lumpCount()) return 0;
 
     if(!raw.tex)
     {

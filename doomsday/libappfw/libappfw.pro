@@ -1,4 +1,4 @@
-# The Doomsday Engine Project -- GUI application framework for libdeng2
+# The Doomsday Engine Project -- GUI Application Framework
 # Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
 #
 # This program is distributed under the GNU Lesser General Public License
@@ -13,11 +13,11 @@ VERSION  = $$DENG_VERSION
 
 CONFIG += deng_qtgui deng_qtopengl
 
-include(../dep_deng2.pri)
+include(../dep_core.pri)
 include(../dep_shell.pri)
 include(../dep_gui.pri)
 include(../dep_opengl.pri)
-include(../dep_rift.pri)
+include(../dep_ovr.pri)
 
 DEFINES += __LIBAPPFW__
 INCLUDEPATH += include
@@ -26,6 +26,10 @@ win32 {
     # Keep the version number out of the file name.
     TARGET_EXT = .dll
 }
+
+PRECOMPILED_HEADER = src/precompiled.h
+
+HEADERS += src/precompiled.h
 
 # Public headers.
 publicHeaders(root, \
@@ -66,6 +70,7 @@ publicHeaders(root, \
     include/de/PopupWidget \
     include/de/ProceduralImage \
     include/de/ProgressWidget \
+    include/de/RelayWidget \
     include/de/ScriptCommandWidget \
     include/de/ScrollAreaWidget \
     include/de/SequentialLayout \
@@ -82,6 +87,7 @@ publicHeaders(root, \
     include/de/WindowTransform \
     include/de/VariableChoiceWidget \
     include/de/VariableLineEditWidget \
+    include/de/VariableSliderWidget \
     include/de/VariableToggleWidget \
     include/de/VRConfig \
     \
@@ -165,6 +171,7 @@ publicHeaders(widgets, \
     include/de/widgets/popupmenuwidget.h \
     include/de/widgets/popupwidget.h \
     include/de/widgets/progresswidget.h \
+    include/de/widgets/relaywidget.h \
     include/de/widgets/scriptcommandwidget.h \
     include/de/widgets/scrollareawidget.h \
     include/de/widgets/sliderwidget.h \
@@ -172,6 +179,7 @@ publicHeaders(widgets, \
     include/de/widgets/togglewidget.h \
     include/de/widgets/variablechoicewidget.h \
     include/de/widgets/variablelineeditwidget.h \
+    include/de/widgets/variablesliderwidget.h \
     include/de/widgets/variabletogglewidget.h \
 )
 
@@ -227,6 +235,7 @@ SOURCES += \
     src/widgets/popupmenuwidget.cpp \
     src/widgets/popupwidget.cpp \
     src/widgets/progresswidget.cpp \
+    src/widgets/relaywidget.cpp \
     src/widgets/scriptcommandwidget.cpp \
     src/widgets/scrollareawidget.cpp \
     src/widgets/sliderwidget.cpp \
@@ -234,6 +243,7 @@ SOURCES += \
     src/widgets/togglewidget.cpp \
     src/widgets/variablechoicewidget.cpp \
     src/widgets/variablelineeditwidget.cpp \
+    src/widgets/variablesliderwidget.cpp \
     src/widgets/variabletogglewidget.cpp \
     src/windowsystem.cpp \
     src/windowtransform.cpp
@@ -241,20 +251,14 @@ SOURCES += \
 # Installation ---------------------------------------------------------------
 
 macx {
-    linkDylibToBundledLibdeng2(libdeng_appfw)
+    xcodeFinalizeBuild($$TARGET)
+    linkDylibToBundledLibcore(libdeng_appfw)
 
-    doPostLink("install_name_tool -id @executable_path/../Frameworks/libdeng_appfw.1.dylib libdeng_appfw.1.dylib")
+    doPostLink("install_name_tool -id @rpath/libdeng_appfw.1.dylib libdeng_appfw.1.dylib")
 
     # Update the library included in the main app bundle.
     doPostLink("mkdir -p ../client/Doomsday.app/Contents/Frameworks")
     doPostLink("cp -fRp libdeng_appfw*dylib ../client/Doomsday.app/Contents/Frameworks")
 }
-else {
-    INSTALLS += target
-    target.path = $$DENG_LIB_DIR
-}
 
-deng_sdk {
-    INSTALLS *= target
-    target.path = $$DENG_SDK_LIB_DIR
-}
+deployLibrary()

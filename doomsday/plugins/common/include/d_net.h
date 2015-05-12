@@ -23,11 +23,13 @@
 #ifndef LIBCOMMON_NETWORK_DEF_H
 #define LIBCOMMON_NETWORK_DEF_H
 
-#include "dd_share.h"
+#include "doomsday.h"
 #include <de/reader.h>
 #include <de/writer.h>
-
-#include "common.h"
+#ifdef __cplusplus
+#  include <de/String>
+#  include <doomsday/uri.h>
+#endif
 
 #define NETBUFFER_MAXMESSAGE 255
 
@@ -75,7 +77,8 @@ enum {
     GPT_MAYBE_CHANGE_WEAPON,       // Server suggests weapon change.
     GPT_FINALE_STATE,              // State of the InFine script.
     GPT_LOCAL_MOBJ_STATE,          // Set a state on a mobj and enable local actions.
-    GPT_TOTAL_COUNTS               // Total kill, item, secret counts in the map.
+    GPT_TOTAL_COUNTS,              // Total kill, item, secret counts in the map.
+    GPT_DISMISS_HUDS               // Hide client's automap, inventory (added in 1.15)
 };
 
 #if 0
@@ -228,7 +231,7 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data);
  * @return  @c true = no further processing of the damage should be done else, process the
  * damage as normally.
  */
-dd_bool D_NetDamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source, int damage);
+dd_bool D_NetDamageMobj(struct mobj_s *target, struct mobj_s *inflictor, struct mobj_s *source, int damage);
 
 int D_NetWorldEvent(int type, int tic, void *data);
 
@@ -241,7 +244,7 @@ void *D_NetReadCommands(size_t pktLength, void *data);
 /**
  * Register the console commands and variables of the common netcode.
  */
-void D_NetConsoleRegistration(void);
+void D_NetConsoleRegister(void);
 
 /**
  * Show message on screen and play chat sound.
@@ -259,9 +262,9 @@ void D_NetMessageNoSound(int player, char const *msg);
 
 #ifdef __cplusplus
 } // extern "C"
+
+de::String D_NetDefaultEpisode();
+de::Uri D_NetDefaultMap();
 #endif
 
-#include "d_netsv.h"
-#include "d_netcl.h"
-
-#endif // LIBCOMMON_NETWORK_DEF_H
+#endif  // LIBCOMMON_NETWORK_DEF_H

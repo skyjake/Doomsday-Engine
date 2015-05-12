@@ -16,14 +16,10 @@ DEFINES += __JHEXEN__
 gamedata.files = $$OUT_PWD/../../libhexen.pk3
 
 macx {
-    gamedata.path = Contents/Resources
-
     QMAKE_BUNDLE_DATA += gamedata
 }
 else {
-    INSTALLS += target gamedata
-
-    target.path = $$DENG_PLUGIN_LIB_DIR
+    INSTALLS += gamedata
     gamedata.path = $$DENG_DATA_DIR/jhexen
 }
 
@@ -32,20 +28,19 @@ INCLUDEPATH += include
 HEADERS += \
     include/a_action.h \
     include/acfnlink.h \
-    include/acscript.h \
     include/dstrings.h \
     include/g_game.h \
     include/h2def.h \
-    include/in_lude.h \
+    include/intermission.h \
     include/info.h \
     include/jhexen.h \
+    include/lightninganimator.h \
     include/m_cheat.h \
     include/m_random.h \
     include/p_enemy.h \
     include/p_inter.h \
     include/p_lights.h \
     include/p_local.h \
-    include/p_mapinfo.h \
     include/p_maputl.h \
     include/p_mobj.h \
     include/p_pillar.h \
@@ -76,33 +71,34 @@ HEADERS += \
 SOURCES += \
     src/a_action.c \
     src/acfnlink.c \
-    src/acscript.cpp \
     src/h2_main.cpp \
-    src/hconsole.c \
-    src/hrefresh.c \
-    src/in_lude.c \
-    src/m_cheat.c \
+    src/hconsole.cpp \
+    src/hrefresh.cpp \
+    src/intermission.cpp \
+    src/lightninganimator.cpp \
+    src/m_cheat.cpp \
     src/m_random.c \
     src/p_enemy.c \
     src/p_inter.c \
     src/p_lights.cpp \
-    src/p_mapinfo.cpp \
     src/p_maputl.c \
     src/p_mobj.c \
     src/p_pillar.cpp \
     src/p_pspr.c \
     src/p_setup.c \
-    src/p_spec.c \
+    src/p_spec.cpp \
     src/p_telept.c \
     src/p_things.c \
     src/p_waggle.cpp \
     src/sn_sonix.cpp \
-    src/st_stuff.c \
+    src/st_stuff.cpp \
     src/tables.c \
     src/x_api.c
 
 win32 {
-    QMAKE_LFLAGS += /DEF:\"$$PWD/api/hexen.def\"
+    deng_msvc:  QMAKE_LFLAGS += /DEF:\"$$PWD/api/hexen.def\"
+    deng_mingw: QMAKE_LFLAGS += --def \"$$PWD/api/hexen.def\"
+
     OTHER_FILES += api/hexen.def
 
     RC_FILE = res/hexen.rc
@@ -110,6 +106,6 @@ win32 {
 
 macx {
     fixPluginInstallId($$TARGET, 1)
-    linkToBundledLibdeng2($$TARGET)
-    linkToBundledLibdeng1($$TARGET)
+    linkToBundledLibcore($$TARGET)
+    linkToBundledLiblegacy($$TARGET)
 }

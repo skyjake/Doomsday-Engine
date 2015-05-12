@@ -266,7 +266,7 @@ void Demo_WritePacket(int playerNum)
 
 #if _DEBUG
     if(!file)
-        Con_Error("Demo_WritePacket: No demo file!\n");
+        App_Error("Demo_WritePacket: No demo file!\n");
 #endif
 
     if(!inf->first)
@@ -287,7 +287,7 @@ void Demo_WritePacket(int playerNum)
 
 #if _DEBUG
     if(netBuffer.length >= sizeof(hdr.length))
-        Con_Error("Demo_WritePacket: Write buffer too large!\n");
+        App_Error("Demo_WritePacket: Write buffer too large!\n");
 #endif
 
     hdr.length = (ushort) 1 + netBuffer.length;

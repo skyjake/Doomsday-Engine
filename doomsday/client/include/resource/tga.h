@@ -21,7 +21,7 @@
 #ifndef DENG_RESOURCE_TGA_H
 #define DENG_RESOURCE_TGA_H
 
-#include "filehandle.h"
+#include <doomsday/filesys/filehandle.h>
 #include <de/Vector>
 
 /// @addtogroup resource

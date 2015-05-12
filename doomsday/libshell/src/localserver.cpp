@@ -96,7 +96,7 @@ void LocalServer::start(duint16 port,
     }
 
     /**
-     * @todo These options will be much simpler when libdeng2 FS is used for
+     * @todo These options will be much simpler when FS2 is used for
      * all file access.
      */
 

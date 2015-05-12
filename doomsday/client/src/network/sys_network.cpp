@@ -24,11 +24,16 @@
 
 #include "de_console.h"
 #include "clientapp.h"
+#include "network/net_buf.h"
 
 using namespace de;
 
 char *nptIPAddress = (char *) ""; ///< Address to connect to by default (cvar).
 int   nptIPPort = 0;              ///< Port to connect to by default (cvar).
+
+#ifdef _DEBUG
+D_CMD(NetFreqs);
+#endif
 
 void N_Register(void)
 {

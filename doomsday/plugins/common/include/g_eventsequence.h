@@ -1,15 +1,15 @@
-/**
- * @file g_eventsequence.h
- * Input (keyboard) event sequences. @ingroup libcommon
+/** @file g_eventsequence.h  Input (keyboard) event sequences.
  *
  * An "event sequence" is a chain of two or more keyboard input events which
  * when entered in-sequence trigger a callback when the last event of that
  * sequence is received.
  *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
- * @author Copyright &copy; 1999 Activision
- * @author Copyright &copy; 1993-1996 by id Software, Inc.
+ * @ingroup libcommon
+ *
+ * @author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
+ * @author Copyright © 1999 Activision
+ * @author Copyright © 1993-1996 by id Software, Inc.
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -43,7 +43,7 @@ typedef int EventSequenceArg;
 /**
  * Event sequence callback handler.
  */
-typedef int (*eventsequencehandler_t) (int player, const EventSequenceArg* args, int numArgs);
+typedef int (*eventsequencehandler_t) (int player, EventSequenceArg const *args, int numArgs);
 
 // Initialize this subsystem.
 void G_InitEventSequences(void);
@@ -54,29 +54,29 @@ void G_ShutdownEventSequences(void);
 /**
  * Responds to an input event if determined to be part of a known event sequence.
  *
- * @param ev            Input event to be processed.
- * @return              @c true= input event @a ev was 'eaten'.
+ * @param ev  Input event to be processed.
+ * @return  @c true= input event @a ev was 'eaten'.
  */
-int G_EventSequenceResponder(event_t* ev);
+int G_EventSequenceResponder(event_t *ev);
 
 /**
  * Add a new event sequence.
  *
- * @param sequence      Text description of the sequence.
- * @param callback      Handler function to be called upon sequence completion.
+ * @param sequence  Text description of the sequence.
+ * @param callback  Handler function to be called upon sequence completion.
  */
-void G_AddEventSequence(const char* sequence, eventsequencehandler_t callback);
+void G_AddEventSequence(char const *sequence, eventsequencehandler_t callback);
 
 /**
  * Add a new event sequence.
  *
- * @param sequence      Text description of the sequence.
- * @param cmdTemplate   Templated console command to be executed upon sequence completion.
+ * @param sequence     Text description of the sequence.
+ * @param cmdTemplate  Templated console command to be executed upon sequence completion.
  */
-void G_AddEventSequenceCommand(const char* sequence, const char* commandTemplate);
+void G_AddEventSequenceCommand(char const *sequence, char const *commandTemplate);
 
 #if __cplusplus
 } // extern "C"
 #endif
 
-#endif /* LIBCOMMON_EVENTSEQUENCE_H */
+#endif  // LIBCOMMON_EVENTSEQUENCE_H

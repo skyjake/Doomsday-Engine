@@ -72,42 +72,50 @@ int G_RegisterGames(int hookType, int param, void *data)
     GameDef const hacxDef = {
         "hacx", "hacx",
         "HACX - Twitch 'n Kill", "Banjo Software",
-        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
+        "$(App.DataPath)/$(GamePlugin.Name)/hacx.mapinfo"
     };
     GameDef const chexDef = {
         "chex", "chex",
         "Chex(R) Quest", "Digital Cafe",
-        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
+        "$(App.DataPath)/$(GamePlugin.Name)/chex.mapinfo"
     };
     GameDef const doom2TntDef = {
         "doom2-tnt", "doom",
         "Final DOOM: TNT: Evilution", "Team TNT",
-        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
+        "$(App.DataPath)/$(GamePlugin.Name)/doom2-tnt.mapinfo"
     };
     GameDef const doom2PlutDef = {
         "doom2-plut", "doom",
         "Final DOOM: The Plutonia Experiment", "Dario Casali and Milo Casali",
-        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
+        "$(App.DataPath)/$(GamePlugin.Name)/doom2-plut.mapinfo"
     };
     GameDef const doom2Def = {
         "doom2", "doom",
         "DOOM 2: Hell on Earth", "id Software",
-        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
+        "$(App.DataPath)/$(GamePlugin.Name)/doom2.mapinfo"
     };
     GameDef const doomUltimateDef = {
         "doom1-ultimate", "doom",
         "Ultimate DOOM", "id Software",
-        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
+        "$(App.DataPath)/$(GamePlugin.Name)/doom1-ultimate.mapinfo"
     };
     GameDef const doomDef = {
         "doom1", "doom",
         "DOOM Registered", "id Software",
-        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
+        "$(App.DataPath)/$(GamePlugin.Name)/doom1.mapinfo"
     };
     GameDef const doomShareDef = {
         "doom1-share", "doom",
         "DOOM Shareware", "id Software",
-        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
+        "$(App.DataPath)/$(GamePlugin.Name)/doom1-share.mapinfo"
     };
 
     DENG_UNUSED(hookType); DENG_UNUSED(param); DENG_UNUSED(data);
@@ -240,7 +248,7 @@ game_export_t* GetGameAPI(void)
     gx.Responder = G_Responder;
     gx.EndFrame = D_EndFrame;
     gx.MobjThinker = P_MobjThinker;
-    gx.MobjFriction = (coord_t (*)(void *)) P_MobjGetFriction;
+    gx.MobjFriction = Mobj_Friction;
     gx.MobjCheckPositionXYZ = P_CheckPositionXYZ;
     gx.MobjTryMoveXYZ = P_TryMoveXYZ;
     gx.SectorHeightChangeNotification = P_HandleSectorHeightChange;
@@ -311,7 +319,6 @@ DENG_DECLARE_API(Server);
 DENG_DECLARE_API(Svg);
 DENG_DECLARE_API(Thinker);
 DENG_DECLARE_API(Uri);
-DENG_DECLARE_API(W);
 
 DENG_API_EXCHANGE(
     DENG_GET_API(DE_API_BASE, Base);
@@ -338,5 +345,4 @@ DENG_API_EXCHANGE(
     DENG_GET_API(DE_API_SVG, Svg);
     DENG_GET_API(DE_API_THINKER, Thinker);
     DENG_GET_API(DE_API_URI, Uri);
-    DENG_GET_API(DE_API_WAD, W);
 )

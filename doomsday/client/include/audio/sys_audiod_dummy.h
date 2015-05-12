@@ -26,7 +26,7 @@
 #ifndef __DOOMSDAY_SYSTEM_AUDIO_DUMMY_H__
 #define __DOOMSDAY_SYSTEM_AUDIO_DUMMY_H__
 
-#include <de/libdeng1.h>
+#include <de/liblegacy.h>
 #include "api_audiod.h"
 #include "api_audiod_sfx.h"
 

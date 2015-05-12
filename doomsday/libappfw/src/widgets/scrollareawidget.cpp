@@ -380,13 +380,32 @@ bool ScrollAreaWidget::handleEvent(Event const &event)
     if(d->scrollingEnabled && event.type() == Event::MouseWheel && hitTest(event))
     {
         MouseEvent const &mouse = event.as<MouseEvent>();
+#ifdef MACOSX
         if(mouse.wheelMotion() == MouseEvent::FineAngle)
         {
             d->y->set(de::clamp(0, int(d->y->animation().target()) +
-                                mouse.wheel().y / 2 * (d->origin == Top? -1 : 1),
+                                toDevicePixels(mouse.wheel().y / 2 * (d->origin == Top? -1 : 1)),
                                 d->maxY->valuei()), .05f);
             d->restartScrollOpacityFade();
         }
+#else
+        if(mouse.wheelMotion() == MouseEvent::Step)
+        {
+            unsigned int lineCount = 1;
+#ifdef WIN32
+            // Use the number of lines to scroll from system preferences.
+            SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &lineCount, 0);
+            if(lineCount == WHEEL_PAGESCROLL)
+            {
+                lineCount = contentRect().height() / style().fonts().font("default").height().valuei();
+            }
+#endif
+            d->y->set(de::clamp(0, int(d->y->animation().target()) +
+                                int(mouse.wheel().y * lineCount * style().fonts().font("default").height().valuei() *
+                                (d->origin == Top? -1 : 1)), d->maxY->valuei()), .15f);
+            d->restartScrollOpacityFade();
+        }
+#endif
         return true;
     }
 

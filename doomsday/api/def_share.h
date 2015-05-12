@@ -2,8 +2,8 @@
  * @file def_share.h
  * Shared definition data structures and constants. @ingroup defs
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -114,33 +114,11 @@ typedef struct {
  * @ingroup defs apiFlags
  */
 ///@{
-#define MIF_FOG             0x1 ///< Fog is used in the map.
-#define MIF_DRAW_SPHERE     0x2 ///< Always draw the sky sphere.
-#define MIF_NO_INTERMISSION 0x4 ///< Skip any intermission between maps.
+#define MIF_FOG             0x1  ///< Fog is used in the map.
+#define MIF_DRAW_SPHERE     0x2  ///< Always draw the sky sphere.
+#define MIF_NO_INTERMISSION 0x4  ///< Skip any intermission between maps.
+#define MIF_LIGHTNING       0x8  ///< Lightning is used in the map.
 ///@}
-
-typedef struct {
-    char*           name;
-    char*           author;
-    int             music;
-    int             flags; ///< MIF_* flags.
-    float           ambient;
-    float           gravity;
-    float           parTime;
-    float           fogColor[3]; // Fog color (RGB).
-    float           fogStart;
-    float           fogEnd;
-    float           fogDensity;
-} ddmapinfo_t;
-
-typedef struct {
-    const Uri*      after;
-    const Uri*      before;
-    int             game;
-    char*           script;
-} ddfinale_t;
-
-typedef ddfinale_t finalescript_t;
 
 #define DDLT_MAX_APARAMS    10
 #define DDLT_MAX_PARAMS     20

@@ -74,9 +74,9 @@ public:
      */
     Str const *token();
 
-    int readNumber();
+    de::ddouble readNumber();
     Str const *readString();
-    Uri *readUri(char const *defaultScheme = "");
+    de::Uri readUri(de::String const &defaultScheme = "");
 
     /**
      * Returns the line number at the current position in the script.

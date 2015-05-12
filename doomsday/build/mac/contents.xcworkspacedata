@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+   version = "1.0">
+   <FileRef
+      location = "group:client/Doomsday.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:server/doomsday-server.xcodeproj">
+   </FileRef>
+   <Group
+      location = "container:"
+      name = "Plugins">
+      <FileRef
+         location = "group:plugins/doom/doom.xcodeproj">
+      </FileRef>
+      <FileRef
+         location = "group:plugins/doom64/doom64.xcodeproj">
+      </FileRef>
+      <FileRef
+         location = "group:plugins/heretic/heretic.xcodeproj">
+      </FileRef>
+      <FileRef
+         location = "group:plugins/hexen/hexen.xcodeproj">
+      </FileRef>
+      <FileRef
+         location = "group:plugins/dehread/dehread.xcodeproj">
+      </FileRef>
+      <FileRef
+         location = "group:plugins/idtech1converter/idtech1converter.xcodeproj">
+      </FileRef>
+      <FileRef
+         location = "group:plugins/savegameconverter/savegameconverter.xcodeproj">
+      </FileRef>
+      <FileRef
+         location = "group:plugins/fmod/audio_fmod.xcodeproj">
+      </FileRef>
+      <FileRef
+         location = "group:plugins/fluidsynth/audio_fluidsynth.xcodeproj">
+      </FileRef>
+   </Group>
+   <Group
+      location = "container:"
+      name = "Tools">
+      <FileRef
+         location = "group:tools/shell/shell-gui/Shell.xcodeproj">
+      </FileRef>
+      <FileRef
+         location = "group:tools/savegametool/savegametool.xcodeproj">
+      </FileRef>
+   </Group>
+   <Group
+      location = "container:"
+      name = "Libraries">
+      <FileRef
+         location = "group:libcore/deng_core.xcodeproj">
+      </FileRef>
+      <FileRef
+         location = "group:libgui/deng_gui.xcodeproj">
+      </FileRef>
+      <FileRef
+         location = "group:libappfw/deng_appfw.xcodeproj">
+      </FileRef>
+      <FileRef
+         location = "group:libshell/deng_shell.xcodeproj">
+      </FileRef>
+      <FileRef
+         location = "group:liblegacy/deng_legacy.xcodeproj">
+      </FileRef>
+      <FileRef
+         location = "group:libdoomsday/deng_doomsday.xcodeproj">
+      </FileRef>
+   </Group>
+</Workspace>

@@ -1,6 +1,7 @@
 /** @file gameuiwidget.h  Widget for legacy game UI elements.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -30,6 +31,12 @@ public:
     GameUIWidget();
 
     void drawContent();
+
+    /**
+     * Determines if InFine animations will be drawn stretched to cover
+     * the entire view.
+     */
+    static bool finaleStretch();
 
 private:
     DENG2_PRIVATE(d)

@@ -41,16 +41,17 @@
 #include "render/cameralensfx.h"
 #include "render/rend_main.h"
 #include "render/viewports.h"
+#include "render/fx/bloom.h"
 #include "render/fx/colorfilter.h"
 #include "render/fx/lensflares.h"
 #include "render/fx/postprocessing.h"
+#include "render/fx/resize.h"
 #include "render/fx/vignette.h"
-#include "render/fx/bloom.h"
-#include "con_main.h"
 
 #include "ui/clientwindow.h"
 
-#include <de/libdeng2.h>
+#include <doomsday/console/cmd.h>
+#include <de/libcore.h>
 #include <de/Rectangle>
 #include <de/Drawable>
 #include <de/GLTarget>
@@ -78,11 +79,13 @@ struct ConsoleEffectStack
 
 static ConsoleEffectStack fxConsole[DDMAXPLAYERS];
 
-#define IDX_LENS_FLARES         2
-#define IDX_POST_PROCESSING     4
+#define IDX_LENS_FLARES         3
+#define IDX_POST_PROCESSING     5
 
 D_CMD(PostFx)
 {
+    DENG2_UNUSED(src);
+
     int console = String(argv[1]).toInt();
     String const shader = argv[2];
     TimeDelta const span = (argc == 4? String(argv[3]).toFloat() : 0);
@@ -114,7 +117,7 @@ D_CMD(PostFx)
 
 void LensFx_Register()
 {
-    C_CMD("postfx", "is", PostFx);
+    C_CMD("postfx", "is",  PostFx);
     C_CMD("postfx", "isf", PostFx);
 }
 
@@ -124,6 +127,7 @@ void LensFx_Init()
     {
         ConsoleEffectStack &stack = fxConsole[i];
         stack.effects
+                << new fx::Resize(i)
                 << new fx::Bloom(i)
                 << new fx::Vignette(i)
                 << new fx::LensFlares(i)        // IDX_LENS_FLARES
@@ -192,7 +196,7 @@ void LensFx_EndFrame()
     }
 }
 
-void LensFx_MarkLightVisibleInFrame(ILightSource const &lightSource)
+void LensFx_MarkLightVisibleInFrame(IPointLightSource const &lightSource)
 {
     ConsoleEffectStack::EffectList const &effects = fxConsole[fxFramePlayerNum].effects;
 

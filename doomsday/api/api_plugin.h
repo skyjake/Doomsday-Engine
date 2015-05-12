@@ -1,8 +1,8 @@
-/** @file api_plugin.h Plugin subsystem.
+/** @file api_plugin.h  Plugin subsystem.
  * @ingroup base
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -56,6 +56,11 @@ enum {
     HOOK_FINALE_EVAL_IF = 9,        ///< Called to evaluate an IF conditional statement.
     HOOK_VIEWPORT_RESHAPE = 10,     ///< Called when viewport dimensions change.
     HOOK_SAVEGAME_CONVERT = 11,     ///< Called when a legacy savegame needs converting.
+    HOOK_GAME_INIT = 12,            /**< Called when initializing a loaded game. This occurs
+                                         once all startup resources are loaded but @em before
+                                         parsing of definitions and processing game data.
+                                         This is a suitable time for game data conversion. */
+    HOOK_MAPINFO_CONVERT = 13,      ///< Called when map definition data needs converting.
     NUM_HOOK_TYPES
 };
 
@@ -63,19 +68,19 @@ enum {
 /// Zero is not a valid ID.
 typedef int pluginid_t;
 
-/// Paramaters for HOOK_FINALE_EVAL_IF
+/// Parameters for HOOK_FINALE_EVAL_IF
 typedef struct {
     const char* token;
     dd_bool     returnVal;
 } ddhook_finale_script_evalif_paramaters_t;
 
-/// Paramaters for HOOK_FINALE_SCRIPT_TICKER
+/// Parameters for HOOK_FINALE_SCRIPT_TICKER
 typedef struct {
     dd_bool runTick;
     dd_bool canSkip;
 } ddhook_finale_script_ticker_paramaters_t;
 
-/// Paramaters for HOOK_VIEWPORT_RESHAPE
+/// Parameters for HOOK_VIEWPORT_RESHAPE
 typedef struct {
     RectRaw geometry; // New/Current.
     RectRaw oldGeometry; // Previous.
@@ -87,6 +92,13 @@ typedef struct {
     Str outputPath;
     Str fallbackGameId;
 } ddhook_savegame_convert_t;
+
+/// Parameters for HOOK_MAPINFO_CONVERT
+typedef struct {
+    Str paths; // ';' delimited
+    Str translated;
+    Str translatedCustom;
+} ddhook_mapinfo_convert_t;
 
 DENG_API_TYPEDEF(Plug) // v1
 {
@@ -130,7 +142,7 @@ DENG_API_TYPEDEF(Plug) // v1
      * @param param         Additional arguments about the notification,
      *                      depending on the notification type.
      */
-    void (*Notify)(int notification, void* param);
+    void (*Notify)(int notification, void *param);
 
 } DENG_API_T(Plug);
 

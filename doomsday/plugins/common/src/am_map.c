@@ -48,8 +48,8 @@ automapcfg_t* ST_AutomapConfig(void)
 
 void AM_GetMapColor(float* rgb, const float* uColor, int palidx, dd_bool customPal)
 {
-    if((!customPal && !cfg.automapCustomColors) ||
-       (customPal && cfg.automapCustomColors != 2))
+    if((!customPal && !cfg.common.automapCustomColors) ||
+       (customPal && cfg.common.automapCustomColors != 2))
     {
         R_GetColorPaletteRGBf(0, palidx, rgb, false);
         return;
@@ -236,19 +236,19 @@ static void initAutomapConfig(automapcfg_t* mcfg)
     AM_SetVectorGraphic(mcfg, AMO_THING, VG_TRIANGLE);
     AM_SetVectorGraphic(mcfg, AMO_THINGPLAYER, VG_ARROW);
 
-    AM_GetMapColor(rgb, cfg.automapL0, GRAYS+3, customPal);
+    AM_GetMapColor(rgb, cfg.common.automapL0, GRAYS+3, customPal);
     AM_SetColorAndOpacity(mcfg, AMO_UNSEENLINE, rgb[0], rgb[1], rgb[2], 1);
 
-    AM_GetMapColor(rgb, cfg.automapL1, WALLCOLORS, customPal);
+    AM_GetMapColor(rgb, cfg.common.automapL1, WALLCOLORS, customPal);
     AM_SetColorAndOpacity(mcfg, AMO_SINGLESIDEDLINE, rgb[0], rgb[1], rgb[2], 1);
 
-    AM_GetMapColor(rgb, cfg.automapL0, TSWALLCOLORS, customPal);
+    AM_GetMapColor(rgb, cfg.common.automapL0, TSWALLCOLORS, customPal);
     AM_SetColorAndOpacity(mcfg, AMO_TWOSIDEDLINE, rgb[0], rgb[1], rgb[2], 1);
 
-    AM_GetMapColor(rgb, cfg.automapL2, FDWALLCOLORS, customPal);
+    AM_GetMapColor(rgb, cfg.common.automapL2, FDWALLCOLORS, customPal);
     AM_SetColorAndOpacity(mcfg, AMO_FLOORCHANGELINE, rgb[0], rgb[1], rgb[2], 1);
 
-    AM_GetMapColor(rgb, cfg.automapL3, CDWALLCOLORS, customPal);
+    AM_GetMapColor(rgb, cfg.common.automapL3, CDWALLCOLORS, customPal);
     AM_SetColorAndOpacity(mcfg, AMO_CEILINGCHANGELINE, rgb[0], rgb[1], rgb[2], 1);
     }
 }

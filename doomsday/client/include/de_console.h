@@ -28,14 +28,16 @@
 #  include "de_platform.h"
 #endif
 
-#include "con_main.h"
+#include <doomsday/console/exec.h>
+#include <doomsday/console/cmd.h>
+#include <doomsday/console/var.h>
+#include <doomsday/console/knownword.h>
 #include "con_config.h"
-#include "con_bar.h"
 
 #ifdef __CLIENT__
-#  include "ui/widgetactions.h"
+#  include "ui/progress.h"
 #  include "ui/b_main.h"
-#  include "ui/b_context.h"
+#  include "BindContext"
 #endif
 
 #include "api_console.h"

@@ -20,6 +20,7 @@
 #define LIBAPPFW_GRIDPOPUPWIDGET_H
 
 #include "../PopupWidget"
+#include "../LabelWidget"
 
 namespace de {
 
@@ -42,6 +43,8 @@ public:
      * Returns the layout used by the popup's contents.
      */
     GridLayout &layout();
+
+    LabelWidget &addSeparatorLabel(String const &labelText);
 
     /**
      * Adds a widget to the popup grid. The widget becomes a child of the

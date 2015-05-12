@@ -46,7 +46,7 @@ public Font::RichFormat::IStyle
     float imageScale;
     Vector4f imageColor;
     Vector4f textGLColor;
-    int maxTextWidth;
+    Rule const *maxTextWidth;
 
     ConstantRule *width;
     ConstantRule *height;
@@ -112,6 +112,7 @@ public Font::RichFormat::IStyle
         releaseRef(width);
         releaseRef(height);
         releaseRef(appearSize);
+        releaseRef(maxTextWidth);
     }
 
     void updateStyle()
@@ -128,6 +129,7 @@ public Font::RichFormat::IStyle
         altAccentColor = st.colors().color("label.altaccent");
 
         glText.setFont(self.font());
+        glText.forceUpdate();
 
         self.requestGeometry();
     }
@@ -229,11 +231,17 @@ public Font::RichFormat::IStyle
 
     Vector2f imageSize() const
     {
-        if(overrideImageSize.x > 0 && overrideImageSize.y > 0)
+        Vector2f size = image.isNull()? Vector2f() : image->size();
+        // Override components separately.
+        if(overrideImageSize.x > 0)
         {
-            return overrideImageSize;
+            size.x = overrideImageSize.x;
         }
-        return image.isNull()? Vector2f() : image->size();
+        if(overrideImageSize.y > 0)
+        {
+            size.y = overrideImageSize.y;
+        }
+        return size;
     }
 
     Vector2ui textSize() const
@@ -245,11 +253,6 @@ public Font::RichFormat::IStyle
         return latestTextSize;
     }
 
-    Rectanglei contentArea() const
-    {
-        return self.rule().recti().adjusted(margin().xy(), -margin().zw());
-    }
-
     /**
      * Determines where the label's image and text should be drawn.
      *
@@ -257,7 +260,7 @@ public Font::RichFormat::IStyle
      */
     void contentPlacement(ContentLayout &layout) const
     {
-        Rectanglei const contentRect = contentArea();
+        Rectanglei const contentRect = self.contentRect();
 
         Vector2f const imgSize = imageSize() * imageScale;
 
@@ -451,9 +454,9 @@ public Font::RichFormat::IStyle
             }
         }
         // Apply an optional manual constraint to the text width.
-        if(maxTextWidth > 0)
+        if(maxTextWidth)
         {
-            return de::min(maxTextWidth, w);
+            return de::min(maxTextWidth->valuei(), w);
         }
         return w;
     }
@@ -617,6 +620,11 @@ void LabelWidget::setTextGap(DotPath const &styleRuleId)
     d->updateStyle();
 }
 
+DotPath const &LabelWidget::textGap() const
+{
+    return d->gapId;
+}
+
 void LabelWidget::setAlignment(Alignment const &align, AlignmentMode mode)
 {
     d->align = align;
@@ -639,6 +647,11 @@ void LabelWidget::setTextModulationColorf(Vector4f const &colorf)
     requestGeometry();
 }
 
+Vector4f LabelWidget::textModulationColorf() const
+{
+    return d->textGLColor;
+}
+
 void LabelWidget::setImageAlignment(Alignment const &imageAlign)
 {
     d->imageAlign = imageAlign;
@@ -651,7 +664,12 @@ void LabelWidget::setImageFit(ContentFit const &fit)
 
 void LabelWidget::setMaximumTextWidth(int pixels)
 {
-    d->maxTextWidth = pixels;
+    setMaximumTextWidth(Const(pixels));
+}
+
+void de::LabelWidget::setMaximumTextWidth(Rule const &pixels)
+{
+    changeRef(d->maxTextWidth, pixels);
     requestGeometry();
 }
 
@@ -759,7 +777,7 @@ void LabelWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
     if(!d->overlayImage.isNull())
     {
         Rectanglef rect = Rectanglef::fromSize(d->overlayImage->size());
-        applyAlignment(d->overlayAlign, rect, d->contentArea());
+        applyAlignment(d->overlayAlign, rect, contentRect());
         d->overlayImage->glMakeGeometry(verts, rect);
     }
 }

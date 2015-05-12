@@ -36,10 +36,12 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <math.h>
+#include "jdoom.h"
+#include "p_pspr.h"
 
-#include "common.h"
+#include <math.h>
 #include "d_net.h"
+#include "d_netcl.h"
 #include "player.h"
 #include "p_map.h"
 #include "p_tick.h"
@@ -64,7 +66,7 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static float swing[2];
+//static float swing[2];
 static float bulletSlope;
 
 // CODE --------------------------------------------------------------------
@@ -73,13 +75,13 @@ void R_GetWeaponBob(int player, float* x, float* y)
 {
     if(x)
     {
-        *x = 1 + (cfg.bobWeapon * players[player].bob) *
+        *x = 1 + (cfg.common.bobWeapon * players[player].bob) *
             FIX2FLT(finecosine[(128 * mapTime) & FINEMASK]);
     }
 
     if(y)
     {
-        *y = 32 + (cfg.bobWeapon * players[player].bob) *
+        *y = 32 + (cfg.common.bobWeapon * players[player].bob) *
             FIX2FLT(finesine[(128 * mapTime) & FINEMASK & (FINEANGLES / 2 - 1)]);
     }
 }
@@ -400,6 +402,8 @@ void C_DECL A_Saw(player_t *player, pspdef_t *psp)
     int damage;
     float slope;
 
+    DENG_UNUSED(psp);
+
     P_ShotAmmo(player);
     player->update |= PSF_AMMO;
 
@@ -486,7 +490,7 @@ void P_BulletSlope(mobj_t *mo)
     // See which target is to be aimed at.
     angle = mo->angle;
     bulletSlope = P_AimLineAttack(mo, angle, 16 * 64);
-    if(!cfg.noAutoAim)
+    if(!cfg.common.noAutoAim)
     {
         if(!lineTarget)
         {

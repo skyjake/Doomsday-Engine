@@ -89,7 +89,7 @@ static void initialize(void)
     if(joy)
     {
         // Show some info.
-        LOG_INPUT_MSG("Joystick name: %s" ) << SDL_JoystickName(SDL_JoystickIndex(joy));
+        LOG_INPUT_MSG("Joystick name: %s" ) << SDL_JoystickName(joy);
 
         // We'll handle joystick events manually
         SDL_JoystickEventState(SDL_ENABLE);

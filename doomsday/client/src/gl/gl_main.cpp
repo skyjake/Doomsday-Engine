@@ -1,9 +1,9 @@
 /** @file gl_main.cpp GL-Graphics Subsystem
  * @ingroup gl
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright &copy; 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -27,134 +27,71 @@
 #endif
 
 #include "de_base.h"
-#include "de_console.h"
-#include "de_system.h"
-#include "de_graphics.h"
-#include "de_render.h"
-#include "de_misc.h"
-#include "de_ui.h"
-#include "de_defs.h"
+#include "gl/gl_main.h"
 
-#include "world/map.h"
-#include "world/p_object.h"
-#include "gl/gl_texmanager.h"
-#include "gl/texturecontent.h"
-#include "ui/clientwindowsystem.h"
-#include "resource/hq2x.h"
-#include "MaterialSnapshot"
-#include "MaterialVariantSpec"
-#include "Texture"
-#include "api_render.h"
-#include "render/vr.h"
-
+#include <de/concurrency.h>
+#include <de/App>
 #include <de/DisplayMode>
 #include <de/GLInfo>
 #include <de/GLState>
-#include <de/App>
+#include <doomsday/console/cmd.h>
+#include <doomsday/console/var.h>
+#include <doomsday/defs/mapinfo.h>
+#include <doomsday/filesys/fs_main.h>
+#include "clientapp.h"
+#include "sys_system.h"  // novideo
 
-D_CMD(Fog);
-D_CMD(SetBPP);
-D_CMD(SetRes);
-D_CMD(SetFullRes);
-D_CMD(SetWinRes);
-D_CMD(ToggleFullscreen);
-D_CMD(ToggleMaximized);
-D_CMD(ToggleCentered);
-D_CMD(CenterWindow);
-D_CMD(DisplayModeInfo);
-D_CMD(ListDisplayModes);
+#include "world/map.h"
+#include "world/p_object.h"
+
+#include "gl/gl_tex.h"
+#include "gl/gl_texmanager.h"
+#include "gl/texturecontent.h"
+
+#include "resource/hq2x.h"
+#include "MaterialAnimator"
+#include "MaterialVariantSpec"
+#include "Texture"
+
+#include "api_render.h"
+#include "render/rend_main.h"
+#include "render/r_main.h"
+#include "render/cameralensfx.h"
+#include "render/rend_font.h"
+#include "render/rend_model.h"
+#include "render/rend_particle.h"
+#include "render/vr.h"
+#include "r_util.h"
+
+#include "ui/ui_main.h"
+#include "ui/clientwindowsystem.h"
 
 using namespace de;
 
-void GL_SetGamma();
-
-extern int maxnumnodes;
+extern dint maxnumnodes;
 extern dd_bool fillOutlines;
 
-int     defResX = 640, defResY = 480, defBPP = 32;
-int     defFullscreen = true;
+dint numTexUnits = 1;
+dd_bool envModAdd;     ///< TexEnv: modulate and add is available.
+dint test3dfx;
+dint r_detail = true;  ///< Draw detail textures (if available).
 
-int     numTexUnits = 1;
-dd_bool envModAdd; // TexEnv: modulate and add is available.
-int     test3dfx = 0;
-int     r_detail = true; // Render detail textures (if available).
+dfloat vid_gamma = 1.0f, vid_bright, vid_contrast = 1.0f;
+dfloat glNearClip, glFarClip;
 
-float   vid_gamma = 1.0f, vid_bright = 0, vid_contrast = 1.0f;
-float   glNearClip, glFarClip;
+static dd_bool initGLOk;
+static dd_bool initFullGLOk;
 
-static dd_bool initGLOk = false;
-static dd_bool initFullGLOk = false;
+static dd_bool gamma_support;
+static dfloat oldgamma, oldcontrast, oldbright;
 
-static dd_bool gamma_support = false;
-static float oldgamma, oldcontrast, oldbright;
-
-static int fogModeDefault = 0;
-
-static byte fsaaEnabled   = true; // default value also specified in CanvasWindow
-static byte vsyncEnabled  = true;
+static dint fogModeDefault;
 
 static viewport_t currentView;
 
-static void videoFSAAChanged()
+static inline ResourceSystem &resSys()
 {
-    if(novideo || !WindowSystem::mainExists()) return;
-    ClientWindow::main().updateCanvasFormat();
-}
-
-static void videoVsyncChanged()
-{
-    if(novideo || !WindowSystem::mainExists()) return;
-
-#ifdef WIN32
-    ClientWindow::main().updateCanvasFormat();
-#else
-    GL_SetVSync(Con_GetByte("vid-vsync") != 0);
-#endif
-}
-
-void GL_Register()
-{
-    // Update values from saved Config.
-    fsaaEnabled = App::config().getb("window.fsaa", true);
-
-    // Cvars
-    C_VAR_INT  ("rend-dev-wireframe",    &renderWireframe,  CVF_NO_ARCHIVE, 0, 2);
-    C_VAR_INT  ("rend-fog-default",      &fogModeDefault,   0, 0, 2);
-
-    // * Render-HUD
-    C_VAR_FLOAT("rend-hud-offset-scale", &weaponOffsetScale,CVF_NO_MAX, 0, 0);
-    C_VAR_FLOAT("rend-hud-fov-shift",    &weaponFOVShift,   CVF_NO_MAX, 0, 1);
-    C_VAR_BYTE ("rend-hud-stretch",      &weaponScaleMode,  0, SCALEMODE_FIRST, SCALEMODE_LAST);
-
-    // * Render-Mobj
-    C_VAR_INT  ("rend-mobj-smooth-move", &useSRVO,          0, 0, 2);
-    C_VAR_INT  ("rend-mobj-smooth-turn", &useSRVOAngle,     0, 0, 1);
-
-    // * video
-    C_VAR_BYTE2("vid-vsync",             &vsyncEnabled,     0, 0, 1, videoVsyncChanged);
-    C_VAR_BYTE2("vid-fsaa",              &fsaaEnabled,      0, 0, 1, videoFSAAChanged);
-    C_VAR_INT  ("vid-res-x",             &defResX,          CVF_NO_MAX | CVF_READ_ONLY | CVF_NO_ARCHIVE, 320, 0);
-    C_VAR_INT  ("vid-res-y",             &defResY,          CVF_NO_MAX | CVF_READ_ONLY | CVF_NO_ARCHIVE, 240, 0);
-    C_VAR_INT  ("vid-bpp",               &defBPP,           CVF_READ_ONLY | CVF_NO_ARCHIVE, 16, 32);
-    C_VAR_INT  ("vid-fullscreen",        &defFullscreen,    CVF_READ_ONLY | CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_FLOAT("vid-gamma",             &vid_gamma,        0, 0.1f, 4);
-    C_VAR_FLOAT("vid-contrast",          &vid_contrast,     0, 0, 2.5f);
-    C_VAR_FLOAT("vid-bright",            &vid_bright,       0, -1, 1);
-
-    // Ccmds
-    C_CMD_FLAGS("fog",              NULL,   Fog,                CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
-    C_CMD      ("displaymode",      "",     DisplayModeInfo);
-    C_CMD      ("listdisplaymodes", "",     ListDisplayModes);
-    C_CMD      ("setcolordepth",    "i",    SetBPP);
-    C_CMD      ("setbpp",           "i",    SetBPP);
-    C_CMD      ("setres",           "ii",   SetRes);
-    C_CMD      ("setfullres",       "ii",   SetFullRes);
-    C_CMD      ("setwinres",        "ii",   SetWinRes);
-    C_CMD      ("setvidramp",       "",     UpdateGammaRamp);
-    C_CMD      ("togglefullscreen", "",     ToggleFullscreen);
-    C_CMD      ("togglemaximized",  "",     ToggleMaximized);
-    C_CMD      ("togglecentered",   "",     ToggleCentered);
-    C_CMD      ("centerwindow",     "",     CenterWindow);
+    return App_ResourceSystem();
 }
 
 dd_bool GL_IsInited()
@@ -171,36 +108,12 @@ dd_bool GL_IsFullyInited()
 void GL_AssertContextActive()
 {
 #ifdef WIN32
-    assert(wglGetCurrentContext() != 0);
+    DENG2_ASSERT(wglGetCurrentContext() != 0);
 #else
-    assert(CGLGetCurrentContext() != 0);
+    DENG2_ASSERT(CGLGetCurrentContext() != 0);
 #endif
 }
 #endif
-
-void GL_DoUpdate()
-{
-    // Check for color adjustment changes.
-    if(oldgamma != vid_gamma || oldcontrast != vid_contrast || oldbright != vid_bright)
-    {
-        GL_SetGamma();
-    }
-
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    // Wait until the right time to show the frame so that the realized
-    // frame rate is exactly right.
-    glFlush();
-    DD_WaitForOptimalUpdateTime();
-
-    // Blit screen to video.
-    ClientWindow::main().swapBuffers();
-
-    // We will arrive here always at the same time in relation to the displayed
-    // frame: it is a good time to update the mouse state.
-    Mouse_Poll();
-}
 
 void GL_GetGammaRamp(DisplayColorTransfer *ramp)
 {
@@ -221,16 +134,16 @@ void GL_SetGammaRamp(DisplayColorTransfer const *ramp)
  *
  * @todo  Allow for finer control of the curves (separate red, green, blue).
  *
- * @param ramp          Ptr to the ramp table to write to. Must point to a ushort[768] area of memory.
- * @param gamma         Non-linear factor (curvature; >1.0 multiplies).
- * @param contrast      Steepness.
- * @param bright        Brightness, uniform offset.
+ * @param ramp      Ptr to the ramp table to write to. Must point to a ushort[768] area of memory.
+ * @param gamma     Non-linear factor (curvature; >1.0 multiplies).
+ * @param contrast  Steepness.
+ * @param bright    Brightness, uniform offset.
  */
-void GL_MakeGammaRamp(ushort *ramp, float gamma, float contrast, float bright)
+void GL_MakeGammaRamp(ushort *ramp, dfloat gamma, dfloat contrast, dfloat bright)
 {
-    DENG_ASSERT(ramp);
+    DENG2_ASSERT(ramp);
 
-    double ideal[256]; // After processing clamped to unsigned short.
+    ddouble ideal[256];  // After processing clamped to unsigned short.
 
     // Don't allow stupid values.
     if(contrast < 0.1f)
@@ -240,7 +153,7 @@ void GL_MakeGammaRamp(ushort *ramp, float gamma, float contrast, float bright)
     if(bright < -0.8f) bright = -0.8f;
 
     // Init the ramp as a line with the steepness defined by contrast.
-    for(int i = 0; i < 256; ++i)
+    for(dint i = 0; i < 256; ++i)
     {
         ideal[i] = i * contrast - (contrast - 1) * 127;
     }
@@ -250,27 +163,27 @@ void GL_MakeGammaRamp(ushort *ramp, float gamma, float contrast, float bright)
     {
         if(gamma <= 0.1f) gamma = 0.1f;
 
-        double norm = pow(255, 1 / double(gamma) - 1); // Normalizing factor.
-        for(int i = 0; i < 256; ++i)
+        ddouble norm = pow(255, 1 / ddouble( gamma ) - 1);  // Normalizing factor.
+        for(dint i = 0; i < 256; ++i)
         {
-            ideal[i] = pow(ideal[i], 1 / double(gamma)) / norm;
+            ideal[i] = pow(ideal[i], 1 / ddouble( gamma )) / norm;
         }
     }
 
     // The last step is to add the brightness offset.
-    for(int i = 0; i < 256; ++i)
+    for(dint i = 0; i < 256; ++i)
     {
         ideal[i] += bright * 128;
     }
 
     // Clamp it and write the ramp table.
-    for(int i = 0; i < 256; ++i)
+    for(dint i = 0; i < 256; ++i)
     {
-        ideal[i] *= 0x100; // Byte => word
+        ideal[i] *= 0x100;  // Byte => word
         if(ideal[i] < 0)        ideal[i] = 0;
         if(ideal[i] > 0xffff)   ideal[i] = 0xffff;
 
-        ramp[i] = ramp[i + 256] = ramp[i + 512] = (unsigned short) ideal[i];
+        ramp[i] = ramp[i + 256] = ramp[i + 512] = (dushort) ideal[i];
     }
 }
 
@@ -287,6 +200,28 @@ void GL_SetGamma()
 
     GL_MakeGammaRamp(myramp.table, vid_gamma, vid_contrast, vid_bright);
     GL_SetGammaRamp(&myramp);
+}
+
+void GL_DoUpdate()
+{
+    if(ClientApp::vr().mode() == VRConfig::OculusRift) return;
+
+    // Check for color adjustment changes.
+    if(oldgamma != vid_gamma || oldcontrast != vid_contrast || oldbright != vid_bright)
+    {
+        GL_SetGamma();
+    }
+
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+
+    // Wait until the right time to show the frame so that the realized
+    // frame rate is exactly right.
+    glFlush();
+    DD_WaitForOptimalUpdateTime();
+
+    // Blit screen to video.
+    ClientWindow::main().swapBuffers();
 }
 
 static void printConfiguration()
@@ -311,10 +246,12 @@ dd_bool GL_EarlyInit()
 
     LOG_GL_VERBOSE("Initializing Render subsystem...");
 
+    ClientApp::renderSystem().glInit();
+
     gamma_support = !CommandLine_Check("-noramp");
 
     // We are simple people; two texture units is enough.
-    numTexUnits = MIN_OF(GLInfo::limits().maxTexUnits, MAX_TEX_UNITS);
+    numTexUnits = de::min(GLInfo::limits().maxTexUnits, MAX_TEX_UNITS);
     envModAdd = (GLInfo::extensions().NV_texture_env_combine4 ||
                  GLInfo::extensions().ATI_texture_env_combine3);
 
@@ -343,7 +280,7 @@ dd_bool GL_EarlyInit()
     // Initialize the renderer into a 2D state.
     GL_Init2DState();
 
-    GL_SetVSync(true); // will be overridden from vid-vsync
+    GL_SetVSync(App::config().getb("window.main.vsync"));
 
     initGLOk = true;
     return true;
@@ -355,7 +292,7 @@ void GL_Init()
 
     if(!initGLOk)
     {
-        Con_Error("GL_Init: GL_EarlyInit has not been done yet.\n");
+        App_Error("GL_Init: GL_EarlyInit has not been done yet.\n");
     }
 
     // Set the gamma in accordance with vid-gamma, vid-bright and vid-contrast.
@@ -395,13 +332,14 @@ void GL_Shutdown()
     // Render a few black frames before we continue.
     if(!novideo)
     {
-        int i = 0;
+        dint i = 0;
         do
         {
             glClear(GL_COLOR_BUFFER_BIT);
             GL_DoUpdate();
         } while(++i < 3);
     }
+    ClientApp::renderSystem().glDeinit();
     GL_ShutdownDeferredTask();
     FR_Shutdown();
     Rend_ModelShutdown();
@@ -420,7 +358,7 @@ void GL_Init2DState()
 {
     // The variables.
     glNearClip = 5;
-    glFarClip = 16500;
+    glFarClip  = 16500;
 
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -458,6 +396,7 @@ void GL_Init2DState()
 
 void GL_SwitchTo3DState(dd_bool push_state, viewport_t const *port, viewdata_t const *viewData)
 {
+    DENG2_ASSERT(port && viewData);
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
@@ -487,15 +426,16 @@ void GL_SwitchTo3DState(dd_bool push_state, viewport_t const *port, viewdata_t c
     GL_ProjectionMatrix();
 }
 
-void GL_Restore2DState(int step, viewport_t const *port, viewdata_t const *viewData)
+void GL_Restore2DState(dint step, viewport_t const *port, viewdata_t const *viewData)
 {
+    DENG2_ASSERT(port && viewData);
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     switch(step)
     {
     case 1: { // After Restore Step 1 normal player sprites are rendered.
-        int height = (float)(port->geometry.width() * viewData->window.height() / viewData->window.width()) / port->geometry.height() * SCREENHEIGHT;
+        dint height = dfloat( port->geometry.width() * viewData->window.height() / viewData->window.width() ) / port->geometry.height() * SCREENHEIGHT;
         scalemode_t sm = R_ChooseScaleMode(SCREENWIDTH, SCREENHEIGHT,
                                            port->geometry.width(), port->geometry.height(),
                                            scalemode_t(weaponScaleMode));
@@ -509,33 +449,31 @@ void GL_Restore2DState(int step, viewport_t const *port, viewdata_t const *viewD
         }
         else
         {
-            /**
-             * Use an orthographic projection in native screenspace. Then
-             * translate and scale the projection to produce an aspect
-             * corrected coordinate space at 4:3, aligned vertically to
-             * the bottom and centered horizontally in the window.
-             */
+            // Use an orthographic projection in native screenspace. Then
+            // translate and scale the projection to produce an aspect
+            // corrected coordinate space at 4:3, aligned vertically to
+            // the bottom and centered horizontally in the window.
             glOrtho(0, port->geometry.width(), port->geometry.height(), 0, -1, 1);
             glTranslatef(port->geometry.width()/2, port->geometry.height(), 0);
 
             if(port->geometry.width() >= port->geometry.height())
-                glScalef((float)port->geometry.height() / SCREENHEIGHT,
-                         (float)port->geometry.height() / SCREENHEIGHT, 1);
+                glScalef(dfloat( port->geometry.height() ) / SCREENHEIGHT,
+                         dfloat( port->geometry.height() ) / SCREENHEIGHT, 1);
             else
-                glScalef((float)port->geometry.width() / SCREENWIDTH,
-                         (float)port->geometry.width() / SCREENWIDTH, 1);
+                glScalef(dfloat( port->geometry.width() ) / SCREENWIDTH,
+                         dfloat( port->geometry.width() ) / SCREENWIDTH, 1);
 
             // Special case: viewport height is greater than width.
             // Apply an additional scaling factor to prevent player sprites
             // looking too small.
             if(port->geometry.height() > port->geometry.width())
             {
-                float extraScale = (((float)port->geometry.height()*2)/port->geometry.width()) / 2;
+                dfloat extraScale = (dfloat(port->geometry.height() * 2) / port->geometry.width()) / 2;
                 glScalef(extraScale, extraScale, 1);
             }
 
-            glTranslatef(-(SCREENWIDTH/2), -SCREENHEIGHT, 0);
-            glScalef(1, (float)SCREENHEIGHT/height, 1);
+            glTranslatef(-(SCREENWIDTH / 2), -SCREENHEIGHT, 0);
+            glScalef(1, dfloat( SCREENHEIGHT ) / height, 1);
         }
 
         glMatrixMode(GL_MODELVIEW);
@@ -557,14 +495,14 @@ void GL_Restore2DState(int step, viewport_t const *port, viewdata_t const *viewD
         break;
 
     default:
-        Con_Error("GL_Restore2DState: Invalid value, step = %i.", step);
+        App_Error("GL_Restore2DState: Invalid value, step = %i.", step);
         break;
     }
 }
 
 Matrix4f GL_GetProjectionMatrix()
 {
-    float const fov = Rend_FieldOfView();
+    dfloat const fov = Rend_FieldOfView();
     Vector2f const size(viewpw, viewph);
     yfov = vrCfg().verticalFieldOfView(fov, size);
     return vrCfg().projectionMatrix(Rend_FieldOfView(), size, glNearClip, glFarClip) *
@@ -582,25 +520,56 @@ void GL_ProjectionMatrix()
     glLoadMatrixf(GL_GetProjectionMatrix().values());
 }
 
+void GL_SetupFogFromMapInfo(Record const *mapInfo)
+{
+    if(!mapInfo || !(mapInfo->geti("flags") & MIF_FOG))
+    {
+        R_SetupFogDefaults();
+    }
+    else
+    {
+        dfloat fogColor[3];
+        Vector3f(mapInfo->get("fogColor")).decompose(fogColor);
+        R_SetupFog(mapInfo->getf("fogStart"), mapInfo->getf("fogEnd"), mapInfo->getf("fogDensity"), fogColor);
+    }
+
+    String fadeTable = (mapInfo? mapInfo->gets("fadeTable") : "");
+    if(!fadeTable.isEmpty())
+    {
+        LumpIndex const &lumps = App_FileSystem().nameIndex();
+        dint lumpNum = lumps.findLast(fadeTable + ".lmp");
+        if(lumpNum == lumps.findLast("COLORMAP.lmp"))
+        {
+            // We don't want fog in this case.
+            GL_UseFog(false);
+        }
+        // Probably fog ... don't use fullbright sprites.
+        else if(lumpNum == lumps.findLast("FOGMAP.lmp"))
+        {
+            GL_UseFog(true);
+        }
+    }
+}
+
 #undef GL_UseFog
-DENG_EXTERN_C void GL_UseFog(int yes)
+DENG_EXTERN_C void GL_UseFog(dint yes)
 {
     usingFog = yes;
 }
 
-void GL_SelectTexUnits(int count)
+void GL_SelectTexUnits(dint count)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    for(int i = numTexUnits - 1; i >= count; i--)
+    for(dint i = numTexUnits - 1; i >= count; i--)
     {
         glActiveTexture(GL_TEXTURE0 + i);
         glDisable(GL_TEXTURE_2D);
     }
 
     // Enable the selected units.
-    for(int i = count - 1; i >= 0; i--)
+    for(dint i = count - 1; i >= 0; i--)
     {
         if(i >= numTexUnits) continue;
 
@@ -617,8 +586,8 @@ void GL_TotalReset()
     //Rend_ConsoleUpdateTitle();
 
     // Release all texture memory.
-    App_ResourceSystem().releaseAllGLTextures();
-    App_ResourceSystem().pruneUnusedTextureSpecs();
+    resSys().releaseAllGLTextures();
+    resSys().pruneUnusedTextureSpecs();
     GL_LoadLightingSystemTextures();
     GL_LoadFlareTextures();
     Rend_ParticleLoadSystemTextures();
@@ -642,23 +611,9 @@ void GL_TotalRestore()
     UI_LoadFonts();
     //Con_Resize();
 
-    /// @todo fixme: Should this use the default MapInfo def if none found? -ds
-    ded_mapinfo_t *mapInfo = 0;
-    if(App_WorldSystem().hasMap())
-    {
-        de::Uri mapUri = App_WorldSystem().map().uri();
-        mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
-    }
-
-    // Restore map's fog settings.
-    if(!mapInfo || !(mapInfo->flags & MIF_FOG))
-    {
-        R_SetupFogDefaults();
-    }
-    else
-    {
-        R_SetupFog(mapInfo->fogStart, mapInfo->fogEnd, mapInfo->fogDensity, mapInfo->fogColor);
-    }
+    // Restore the fog settings.
+    Map const *map = App_WorldSystem().mapPtr();
+    GL_SetupFogFromMapInfo(map? &map->mapInfo() : nullptr);
 
 #if _DEBUG
     Z_CheckHeap();
@@ -755,9 +710,9 @@ GLenum GL_Wrap(gl::Wrapping w)
     return GL_REPEAT;
 }
 
-int GL_NumMipmapLevels(int width, int height)
+dint GL_NumMipmapLevels(dint width, dint height)
 {
-    int numLevels = 0;
+    dint numLevels = 0;
     while(width > 1 || height > 1)
     {
         width  /= 2;
@@ -767,10 +722,10 @@ int GL_NumMipmapLevels(int width, int height)
     return numLevels;
 }
 
-dd_bool GL_OptimalTextureSize(int width, int height, dd_bool noStretch, dd_bool isMipMapped,
-    int *optWidth, int *optHeight)
+dd_bool GL_OptimalTextureSize(dint width, dint height, dd_bool noStretch, dd_bool isMipMapped,
+    dint *optWidth, dint *optHeight)
 {
-    DENG_ASSERT(optWidth && optHeight);
+    DENG2_ASSERT(optWidth && optHeight);
     if(GL_state.features.texNonPowTwo && !isMipMapped)
     {
         *optWidth  = width;
@@ -784,7 +739,7 @@ dd_bool GL_OptimalTextureSize(int width, int height, dd_bool noStretch, dd_bool 
     else
     {
         // Determine the most favorable size for the texture.
-        if(texQuality == TEXQ_BEST) // The best quality.
+        if(texQuality == TEXQ_BEST)
         {
             // At the best texture quality *opt, all textures are
             // sized *upwards*, so no details are lost. This takes
@@ -802,8 +757,8 @@ dd_bool GL_OptimalTextureSize(int width, int height, dd_bool noStretch, dd_bool 
         else
         {
             // At the other quality *opts, a weighted rounding is used.
-            *optWidth  = M_WeightPow2(width,  1 - texQuality / (float) TEXQ_BEST);
-            *optHeight = M_WeightPow2(height, 1 - texQuality / (float) TEXQ_BEST);
+            *optWidth  = M_WeightPow2(width,  1 - texQuality / dfloat( TEXQ_BEST ));
+            *optHeight = M_WeightPow2(height, 1 - texQuality / dfloat( TEXQ_BEST ));
         }
     }
 
@@ -827,12 +782,12 @@ dd_bool GL_OptimalTextureSize(int width, int height, dd_bool noStretch, dd_bool 
 
     if(ratioLimit)
     {
-        if(*optWidth > *optHeight) // Wide texture.
+        if(*optWidth > *optHeight)  // Wide texture.
         {
             if(*optHeight < *optWidth / ratioLimit)
                 *optHeight = *optWidth / ratioLimit;
         }
-        else // Tall texture.
+        else  // Tall texture.
         {
             if(*optWidth < *optHeight / ratioLimit)
                 *optWidth = *optHeight / ratioLimit;
@@ -842,39 +797,31 @@ dd_bool GL_OptimalTextureSize(int width, int height, dd_bool noStretch, dd_bool 
     return noStretch;
 }
 
-int GL_GetTexAnisoMul(int level)
+dint GL_GetTexAnisoMul(dint level)
 {
-    int mul = 1;
-
     // Should anisotropic filtering be used?
-    if(GL_state.features.texFilterAniso)
+    if(!GL_state.features.texFilterAniso)
+        return 1;
+
+    if(level < 0)
     {
-        if(level < 0)
-        {   // Go with the maximum!
-            mul = GLInfo::limits().maxTexFilterAniso;
-        }
-        else
-        {   // Convert from a DGL aniso level to a multiplier.
-            // i.e 0 > 1, 1 > 2, 2 > 4, 3 > 8, 4 > 16
-            switch(level)
-            {
-            case 0: mul = 1; break; // x1 (normal)
-            case 1: mul = 2; break; // x2
-            case 2: mul = 4; break; // x4
-            case 3: mul = 8; break; // x8
-            case 4: mul = 16; break; // x16
-
-            default: // Wha?
-                mul = 1;
-                break;
-            }
-
-            // Clamp.
-            mul = MIN_OF(mul, GLInfo::limits().maxTexFilterAniso);
-        }
+        // Go with the maximum!
+        return GLInfo::limits().maxTexFilterAniso;
     }
 
-    return mul;
+    // Convert from a DGL aniso-level to a multiplier.
+    dint mul;
+    switch(level)
+    {
+    default: mul =  1; break;
+    case 1:  mul =  2; break;
+    case 2:  mul =  4; break;
+    case 3:  mul =  8; break;
+    case 4:  mul = 16; break;
+    }
+
+    // Clamp.
+    return de::min(mul, GLInfo::limits().maxTexFilterAniso);
 }
 
 static void uploadContentUnmanaged(texturecontent_t const &content)
@@ -893,56 +840,67 @@ static void uploadContentUnmanaged(texturecontent_t const &content)
     GL_UploadTextureContent(content, uploadMethod);
 }
 
-GLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height,
-    uint8_t const *pixels, int flags)
+GLuint GL_NewTextureWithParams(dgltexformat_t format, dint width, dint height,
+    duint8 const *pixels, dint flags)
 {
     texturecontent_t c;
-
     GL_InitTextureContent(&c);
-    c.name = GL_GetReservedTextureName();
+    c.name   = GL_GetReservedTextureName();
     c.format = format;
-    c.width = width;
+    c.width  = width;
     c.height = height;
     c.pixels = pixels;
-    c.flags = flags;
+    c.flags  = flags;
 
     uploadContentUnmanaged(c);
     return c.name;
 }
 
-GLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height,
-    uint8_t const *pixels, int flags, int grayMipmap, int minFilter, int magFilter,
-    int anisoFilter, int wrapS, int wrapT)
+GLuint GL_NewTextureWithParams(dgltexformat_t format, dint width, dint height,
+    uint8_t const *pixels, dint flags, dint grayMipmap, dint minFilter, dint magFilter,
+    dint anisoFilter, dint wrapS, dint wrapT)
 {
     texturecontent_t c;
-
     GL_InitTextureContent(&c);
-    c.name = GL_GetReservedTextureName();
-    c.format = format;
-    c.width = width;
-    c.height = height;
-    c.pixels = pixels;
-    c.flags = flags;
-    c.grayMipmap = grayMipmap;
-    c.minFilter = minFilter;
-    c.magFilter = magFilter;
+    c.name        = GL_GetReservedTextureName();
+    c.format      = format;
+    c.width       = width;
+    c.height      = height;
+    c.pixels      = pixels;
+    c.flags       = flags;
+    c.grayMipmap  = grayMipmap;
+    c.minFilter   = minFilter;
+    c.magFilter   = magFilter;
     c.anisoFilter = anisoFilter;
-    c.wrap[0] = wrapS;
-    c.wrap[1] = wrapT;
+    c.wrap[0]     = wrapS;
+    c.wrap[1]     = wrapT;
 
     uploadContentUnmanaged(c);
     return c.name;
 }
 
-void GL_SetMaterialUI2(Material *mat, gl::Wrapping wrapS, gl::Wrapping wrapT)
+static inline MaterialVariantSpec const &uiMaterialSpec(gl::Wrapping wrapS, gl::Wrapping wrapT)
 {
-    if(!mat) return; // @todo we need a "NULL material".
+    return resSys().materialSpec(UiContext, 0, 1, 0, 0, GL_Wrap(wrapS), GL_Wrap(wrapT),
+                                 0, 1, 0, false, false, false, false);
+}
 
-    MaterialVariantSpec const &spec =
-        App_ResourceSystem().materialSpec(UiContext, 0, 1, 0, 0, GL_Wrap(wrapS),
-                                          GL_Wrap(wrapT), 0, 1, 0, false, false,
-                                          false, false);
-    GL_BindTexture(&mat->prepare(spec).texture(MTU_PRIMARY));
+static inline MaterialVariantSpec const &pspriteMaterialSpec(dint tClass, dint tMap)
+{
+    return resSys().materialSpec(PSpriteContext, 0, 1, tClass, tMap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                 0, 1, 0, false, true, true, false);
+}
+
+void GL_SetMaterialUI2(Material *material, gl::Wrapping wrapS, gl::Wrapping wrapT)
+{
+    if(!material) return; // @todo we need a "NULL material".
+
+    MaterialAnimator &matAnimator = material->getAnimator(uiMaterialSpec(wrapS, wrapT));
+
+    // Ensure we have up to date info about the material.
+    matAnimator.prepare();
+
+    GL_BindTexture(matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture);
 }
 
 void GL_SetMaterialUI(Material *mat)
@@ -950,20 +908,21 @@ void GL_SetMaterialUI(Material *mat)
     GL_SetMaterialUI2(mat, gl::ClampToEdge, gl::ClampToEdge);
 }
 
-void GL_SetPSprite(Material *mat, int tClass, int tMap)
+void GL_SetPSprite(Material *material, dint tClass, dint tMap)
 {
-    if(!mat) return; // @todo we need a "NULL material".
+    if(!material) return;
 
-    MaterialVariantSpec const &spec =
-        App_ResourceSystem().materialSpec(PSpriteContext, 0, 1, tClass, tMap,
-                                          GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                          0, 1, 0, false, true, true, false);
-    GL_BindTexture(&mat->prepare(spec).texture(MTU_PRIMARY));
+    MaterialAnimator &matAnimator = material->getAnimator(pspriteMaterialSpec(tClass, tMap));
+
+    // Ensure we have up to date info about the material.
+    matAnimator.prepare();
+
+    GL_BindTexture(matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture);
 }
 
 void GL_SetRawImage(lumpnum_t lumpNum, gl::Wrapping wrapS, gl::Wrapping wrapT)
 {
-    if(rawtex_t *rawTex = App_ResourceSystem().declareRawTexture(lumpNum))
+    if(rawtex_t *rawTex = resSys().declareRawTexture(lumpNum))
     {
         GL_BindTextureUnmanaged(GL_PrepareRawTexture(*rawTex), wrapS, wrapT,
                                 (filterUI ? gl::Linear : gl::Nearest));
@@ -975,7 +934,7 @@ void GL_BindTexture(TextureVariant *vtexture)
     if(BusyMode_InWorkerThread()) return;
 
     // Ensure we have a prepared texture.
-    uint glTexName = vtexture? vtexture->prepare() : 0;
+    duint glTexName = vtexture? vtexture->prepare() : 0;
     if(glTexName == 0)
     {
         GL_SetNoTexture();
@@ -1051,13 +1010,13 @@ void GL_Bind(GLTextureUnit const &glTU)
     }
 }
 
-void GL_BindTo(GLTextureUnit const &glTU, int unit)
+void GL_BindTo(GLTextureUnit const &glTU, dint unit)
 {
     if(!glTU.hasTexture()) return;
 
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
-    glActiveTexture(GL_TEXTURE0 + byte(unit));
+    glActiveTexture(GL_TEXTURE0 + dbyte(unit));
     GL_Bind(glTU);
 }
 
@@ -1073,45 +1032,46 @@ void GL_SetNoTexture()
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-int GL_ChooseSmartFilter(int width, int height, int /*flags*/)
+dint GL_ChooseSmartFilter(dint width, dint height, dint /*flags*/)
 {
     if(width >= MINTEXWIDTH && height >= MINTEXHEIGHT)
-        return 2; // hq2x
-    return 1; // nearest neighbor.
+        return 2;  // hq2x
+    return 1;  // nearest neighbor.
 }
 
-uint8_t* GL_SmartFilter(int method, const uint8_t* src, int width, int height,
-    int flags, int* outWidth, int* outHeight)
+duint8 *GL_SmartFilter(dint method, duint8 const *src, dint width, dint height,
+    dint flags, dint *outWidth, dint *outHeight)
 {
-    int newWidth, newHeight;
-    uint8_t* out = NULL;
+    dint newWidth, newHeight;
+    duint8 *out = nullptr;
 
     switch(method)
     {
-    default: // linear interpolation.
+    default:  // linear interpolation.
         newWidth  = width  * 2;
         newHeight = height * 2;
         out = GL_ScaleBuffer(src, width, height, 4, newWidth, newHeight);
         break;
 
-    case 1: // nearest neighbor.
+    case 1:  // nearest neighbor.
         newWidth  = width  * 2;
         newHeight = height * 2;
         out = GL_ScaleBufferNearest(src, width, height, 4, newWidth, newHeight);
         break;
 
-    case 2: // hq2x
+    case 2:  // hq2x
         newWidth  = width  * 2;
         newHeight = height * 2;
         out = GL_SmartFilterHQ2x(src, width, height, flags);
         break;
     };
 
-    if(NULL == out)
-    {   // Unchanged, return the source image.
+    if(!out)
+    {
+        // Unchanged, return the source image.
         if(outWidth)  *outWidth  = width;
         if(outHeight) *outHeight = height;
-        return (uint8_t*)src;
+        return const_cast<duint8 *>(src);
     }
 
     if(outWidth)  *outWidth  = newWidth;
@@ -1119,26 +1079,26 @@ uint8_t* GL_SmartFilter(int method, const uint8_t* src, int width, int height,
     return out;
 }
 
-uint8_t *GL_ConvertBuffer(uint8_t const *in, int width, int height, int informat,
-    colorpaletteid_t paletteId, int outformat)
+duint8 *GL_ConvertBuffer(duint8 const *in, dint width, dint height, dint informat,
+    colorpaletteid_t paletteId, dint outformat)
 {
-    DENG2_ASSERT(in != 0);
+    DENG2_ASSERT(in);
 
     if(informat == outformat)
     {
         // No conversion necessary.
-        return (uint8_t*)in;
+        return const_cast<duint8 *>(in);
     }
 
     if(width <= 0 || height <= 0)
     {
-        Con_Error("GL_ConvertBuffer: Attempt to convert zero-sized image.");
+        App_Error("GL_ConvertBuffer: Attempt to convert zero-sized image.");
         exit(1); // Unreachable.
     }
 
-    ColorPalette *palette = (informat <= 2? &App_ResourceSystem().colorPalette(paletteId) : 0);
+    ColorPalette *palette = (informat <= 2? &resSys().colorPalette(paletteId) : nullptr);
 
-    uint8_t *out = (uint8_t*) M_Malloc(outformat * width * height);
+    auto *out = (duint8 *) M_Malloc(outformat * width * height);
 
     // Conversion from pal8(a) to RGB(A).
     if(informat <= 2 && outformat >= 3)
@@ -1156,15 +1116,15 @@ uint8_t *GL_ConvertBuffer(uint8_t const *in, int width, int height, int informat
 
     if(informat == 3 && outformat == 4)
     {
-        long i, numPels = width * height;
-        uint8_t const *src = in;
-        uint8_t *dst = out;
-        for(i = 0; i < numPels; ++i)
+        long const numPels = width * height;
+        duint8 const *src  = in;
+        duint8 *dst        = out;
+        for(long i = 0; i < numPels; ++i)
         {
-            dst[CR] = src[CR];
-            dst[CG] = src[CG];
-            dst[CB] = src[CB];
-            dst[CA] = 255; // Opaque.
+            dst[0] = src[0];
+            dst[1] = src[1];
+            dst[2] = src[2];
+            dst[3] = 255;  // Opaque.
 
             src += informat;
             dst += outformat;
@@ -1173,57 +1133,55 @@ uint8_t *GL_ConvertBuffer(uint8_t const *in, int width, int height, int informat
     return out;
 }
 
-void GL_CalcLuminance(uint8_t const *buffer, int width, int height, int pixelSize,
-    colorpaletteid_t paletteId, float *retBrightX, float *retBrightY,
-    ColorRawf *retColor, float *retLumSize)
+void GL_CalcLuminance(duint8 const *buffer, dint width, dint height, dint pixelSize,
+    colorpaletteid_t paletteId, dfloat *retBrightX, dfloat *retBrightY,
+    ColorRawf *retColor, dfloat *retLumSize)
 {
-    DENG_ASSERT(buffer && retBrightX && retBrightY && retColor && retLumSize);
+    DENG2_ASSERT(buffer && retBrightX && retBrightY && retColor && retLumSize);
 
-    uint8_t const sizeLimit = 192, brightLimit = 224, colLimit = 192;
-    uint8_t const *src, *alphaSrc;
-    int avgCnt = 0, lowCnt = 0;
-    int cnt = 0, posCnt = 0;
-    int i, x, y, c;
-    long average[3], lowAvg[3];
-    long bright[2];
-    uint8_t rgb[3];
+    static duint8 const sizeLimit = 192, brightLimit = 224, colLimit = 192;
 
-    ColorPalette *palette = (pixelSize == 1? &App_ResourceSystem().colorPalette(paletteId) : 0);
+    ColorPalette *palette = (pixelSize == 1? &resSys().colorPalette(paletteId) : nullptr);
 
     // Apply the defaults.
     // Default to the center of the texture.
     *retBrightX = *retBrightY = .5f;
 
     // Default to black (i.e., no light).
-    for(c = 0; c < 3; ++c)
+    for(dint c = 0; c < 3; ++c)
+    {
         retColor->rgb[c] = 0;
+    }
     retColor->alpha = 1;
 
     // Default to a zero-size light.
     *retLumSize = 0;
 
-    int region[4];
+    dint region[4];
     FindClipRegionNonAlpha(buffer, width, height, pixelSize, region);
     dd_bool zeroAreaRegion = (region[0] > region[1] || region[2] > region[3]);
     if(zeroAreaRegion) return;
 
-    /*
-     * Image contains at least one non-transparent pixel.
-     */
+    //
+    // Image contains at least one non-transparent pixel.
+    //
 
-    for(i = 0; i < 2; ++i)
+    long bright[2];
+    for(dint i = 0; i < 2; ++i)
     {
         bright[i] = 0;
     }
-    for(i = 0; i < 3; ++i)
+
+    long average[3], lowAvg[3];
+    for(dint i = 0; i < 3; ++i)
     {
         average[i] = 0;
         lowAvg[i]  = 0;
     }
 
-    src = buffer;
+    duint8 const *src = buffer;
     // In paletted mode, the alpha channel follows the actual image.
-    alphaSrc = buffer + width * height;
+    duint8 const *alphaSrc = &buffer[width * height];
 
     // Skip to the start of the first column.
     if(region[2] > 0)
@@ -1232,7 +1190,10 @@ void GL_CalcLuminance(uint8_t const *buffer, int width, int height, int pixelSiz
         alphaSrc += width * region[2];
     }
 
-    for(y = region[2]; y <= region[3]; ++y)
+    duint8 rgb[3];
+    dint avgCnt = 0, lowCnt = 0;
+    dint cnt = 0, posCnt = 0;
+    for(dint y = region[2]; y <= region[3]; ++y)
     {
         // Skip to the beginning of the row.
         if(region[0] > 0)
@@ -1241,7 +1202,7 @@ void GL_CalcLuminance(uint8_t const *buffer, int width, int height, int pixelSiz
             alphaSrc += region[0];
         }
 
-        for(x = region[0]; x <= region[1]; ++x, src += pixelSize, alphaSrc++)
+        for(dint x = region[0]; x <= region[1]; ++x, src += pixelSize, alphaSrc++)
         {
             // Alpha pixels don't count. Why? -ds
             dd_bool const pixelIsTransparent = (pixelSize == 1? *alphaSrc < 255 :
@@ -1252,13 +1213,13 @@ void GL_CalcLuminance(uint8_t const *buffer, int width, int height, int pixelSiz
             if(pixelSize == 1)
             {
                 Vector3ub palColor = palette->color(*src);
-                rgb[CR] = palColor.x;
-                rgb[CG] = palColor.y;
-                rgb[CB] = palColor.z;
+                rgb[0] = palColor.x;
+                rgb[1] = palColor.y;
+                rgb[2] = palColor.z;
             }
             else if(pixelSize >= 3)
             {
-                memcpy(rgb, src, 3);
+                std::memcpy(rgb, src, 3);
             }
 
             // Bright enough?
@@ -1278,14 +1239,18 @@ void GL_CalcLuminance(uint8_t const *buffer, int width, int height, int pixelSiz
             if(rgb[0] > colLimit || rgb[1] > colLimit || rgb[2] > colLimit)
             {
                 avgCnt++;
-                for(c = 0; c < 3; ++c)
+                for(dint c = 0; c < 3; ++c)
+                {
                     average[c] += rgb[c];
+                }
             }
             else
             {
                 lowCnt++;
-                for(c = 0; c < 3; ++c)
+                for(dint c = 0; c < 3; ++c)
+                {
                     lowAvg[c] += rgb[c];
+                }
             }
         }
 
@@ -1311,12 +1276,12 @@ void GL_CalcLuminance(uint8_t const *buffer, int width, int height, int pixelSiz
     }
 
     // Determine rounding (to the nearest pixel center).
-    int roundXDir = int( *retBrightX + .5f ) == int( *retBrightX )? 1 : -1;
-    int roundYDir = int( *retBrightY + .5f ) == int( *retBrightY )? 1 : -1;
+    dint roundXDir = dint( *retBrightX + .5f ) == dint( *retBrightX )? 1 : -1;
+    dint roundYDir = dint( *retBrightY + .5f ) == dint( *retBrightY )? 1 : -1;
 
     // Apply all rounding and output as decimal.
-    *retBrightX = (ROUND(*retBrightX) + .5f * roundXDir) / float( width );
-    *retBrightY = (ROUND(*retBrightY) + .5f * roundYDir) / float( height );
+    *retBrightX = (ROUND(*retBrightX) + .5f * roundXDir) / dfloat( width );
+    *retBrightY = (ROUND(*retBrightY) + .5f * roundYDir) / dfloat( height );
 
     if(avgCnt || lowCnt)
     {
@@ -1324,19 +1289,23 @@ void GL_CalcLuminance(uint8_t const *buffer, int width, int height, int pixelSiz
         if(!avgCnt)
         {
             // Low-intensity color average.
-            for(c = 0; c < 3; ++c)
+            for(dint c = 0; c < 3; ++c)
+            {
                 retColor->rgb[c] = lowAvg[c] / lowCnt / 255.f;
+            }
         }
         else
         {
             // High-intensity color average.
-            for(c = 0; c < 3; ++c)
+            for(dint c = 0; c < 3; ++c)
+            {
                 retColor->rgb[c] = average[c] / avgCnt / 255.f;
+            }
         }
 
         Vector3f color(retColor->rgb);
         R_AmplifyColor(color);
-        for(int i = 0; i < 3; ++i)
+        for(dint i = 0; i < 3; ++i)
         {
             retColor->rgb[i] = color[i];
         }
@@ -1366,19 +1335,13 @@ D_CMD(SetRes)
     DENG2_UNUSED3(src, argc, argv);
 
     ClientWindow *win = ClientWindowSystem::mainPtr();
-
-    if(!win)
-        return false;
+    if(!win) return false;
 
     bool isFull = win->isFullScreen();
 
-    int attribs[] = {
-        isFull? ClientWindow::FullscreenWidth : ClientWindow::Width,
-        atoi(argv[1]),
-
-        isFull? ClientWindow::FullscreenHeight : ClientWindow::Height,
-        atoi(argv[2]),
-
+    dint attribs[] = {
+        isFull? ClientWindow::FullscreenWidth  : ClientWindow::Width,  String(argv[1]).toInt(),
+        isFull? ClientWindow::FullscreenHeight : ClientWindow::Height, String(argv[2]).toInt(),
         ClientWindow::End
     };
     return win->changeAttributes(attribs);
@@ -1389,13 +1352,11 @@ D_CMD(SetFullRes)
     DENG2_UNUSED2(src, argc);
 
     ClientWindow *win = ClientWindowSystem::mainPtr();
+    if(!win) return false;
 
-    if(!win)
-        return false;
-
-    int attribs[] = {
-        ClientWindow::FullscreenWidth,  atoi(argv[1]),
-        ClientWindow::FullscreenHeight, atoi(argv[2]),
+    dint attribs[] = {
+        ClientWindow::FullscreenWidth,  String(argv[1]).toInt(),
+        ClientWindow::FullscreenHeight, String(argv[2]).toInt(),
         ClientWindow::Fullscreen,       true,
         ClientWindow::End
     };
@@ -1407,13 +1368,11 @@ D_CMD(SetWinRes)
     DENG2_UNUSED2(src, argc);
 
     ClientWindow *win = ClientWindowSystem::mainPtr();
+    if(!win) return false;
 
-    if(!win)
-        return false;
-
-    int attribs[] = {
-        ClientWindow::Width,      atoi(argv[1]),
-        ClientWindow::Height,     atoi(argv[2]),
+    dint attribs[] = {
+        ClientWindow::Width,      String(argv[1]).toInt(),
+        ClientWindow::Height,     String(argv[2]).toInt(),
         ClientWindow::Fullscreen, false,
         ClientWindow::Maximized,  false,
         ClientWindow::End
@@ -1426,11 +1385,9 @@ D_CMD(ToggleFullscreen)
     DENG2_UNUSED3(src, argc, argv);
 
     ClientWindow *win = ClientWindowSystem::mainPtr();
+    if(!win) return false;
 
-    if(!win)
-        return false;
-
-    int attribs[] = {
+    dint attribs[] = {
         ClientWindow::Fullscreen, !win->isFullScreen(),
         ClientWindow::End
     };
@@ -1442,11 +1399,9 @@ D_CMD(ToggleMaximized)
     DENG2_UNUSED3(src, argc, argv);
 
     ClientWindow *win = ClientWindowSystem::mainPtr();
+    if(!win) return false;
 
-    if(!win)
-        return false;
-
-    int attribs[] = {
+    dint attribs[] = {
         ClientWindow::Maximized, !win->isMaximized(),
         ClientWindow::End
     };
@@ -1458,11 +1413,9 @@ D_CMD(ToggleCentered)
     DENG2_UNUSED3(src, argc, argv);
 
     ClientWindow *win = ClientWindowSystem::mainPtr();
+    if(!win) return false;
 
-    if(!win)
-        return false;
-
-    int attribs[] = {
+    dint attribs[] = {
         ClientWindow::Centered, !win->isCentered(),
         ClientWindow::End
     };
@@ -1474,11 +1427,9 @@ D_CMD(CenterWindow)
     DENG2_UNUSED3(src, argc, argv);
 
     ClientWindow *win = ClientWindowSystem::mainPtr();
+    if(!win) return false;
 
-    if(!win)
-        return false;
-
-    int attribs[] = {
+    dint attribs[] = {
         ClientWindow::Centered, true,
         ClientWindow::End
     };
@@ -1490,12 +1441,10 @@ D_CMD(SetBPP)
     DENG2_UNUSED2(src, argc);
 
     ClientWindow *win = ClientWindowSystem::mainPtr();
+    if(!win) return false;
 
-    if(!win)
-        return false;
-
-    int attribs[] = {
-        ClientWindow::ColorDepthBits, atoi(argv[1]),
+    dint attribs[] = {
+        ClientWindow::ColorDepthBits, String(argv[1]).toInt(),
         ClientWindow::End
     };
     return win->changeAttributes(attribs);
@@ -1506,33 +1455,31 @@ D_CMD(DisplayModeInfo)
     DENG2_UNUSED3(src, argc, argv);
 
     ClientWindow *win = ClientWindowSystem::mainPtr();
-
-    if(!win)
-        return false;
+    if(!win) return false;
 
     DisplayMode const *mode = DisplayMode_Current();
 
-    QString str = QString("Current display mode:%1 depth:%2 (%3:%4")
-                      .arg(de::Vector2i(mode->width, mode->height).asText())
-                      .arg(mode->depth)
-                      .arg(mode->ratioX)
-                      .arg(mode->ratioY);
+    String str = String("Current display mode:%1 depth:%2 (%3:%4")
+                     .arg(Vector2i(mode->width, mode->height).asText())
+                     .arg(mode->depth)
+                     .arg(mode->ratioX)
+                     .arg(mode->ratioY);
     if(mode->refreshRate > 0)
     {
-        str += QString(", refresh: %1 Hz").arg(mode->refreshRate, 0, 'f', 1);
+        str += String(", refresh: %1 Hz").arg(mode->refreshRate, 0, 'f', 1);
     }
-    str += QString(")\nMain window:\n  current origin:%1 size:%2"
-                   "\n  windowed origin:%3 size:%4"
-                   "\n  fullscreen size:%5")
-                .arg(win->pos().asText())
-                .arg(win->size().asText())
-                .arg(win->windowRect().topLeft.asText())
-                .arg(win->windowRect().size().asText())
-                .arg(win->fullscreenSize().asText());
-    str += QString("\n  fullscreen:%1 centered:%2 maximized:%3")
-                .arg(win->isFullScreen()     ? "yes" : "no")
-                .arg(win->isCentered()       ? "yes" : "no")
-                .arg(win->isMaximized()      ? "yes" : "no");
+    str += String(")\nMain window:\n  current origin:%1 size:%2"
+                  "\n  windowed origin:%3 size:%4"
+                  "\n  fullscreen size:%5")
+               .arg(win->pos().asText())
+               .arg(win->size().asText())
+               .arg(win->windowRect().topLeft.asText())
+               .arg(win->windowRect().size().asText())
+               .arg(win->fullscreenSize().asText());
+    str += String("\n  fullscreen:%1 centered:%2 maximized:%3")
+               .arg(DENG2_BOOL_YESNO( win->isFullScreen() ))
+               .arg(DENG2_BOOL_YESNO( win->isCentered()   ))
+               .arg(DENG2_BOOL_YESNO( win->isMaximized()  ));
 
     LOG_GL_MSG("%s") << str;
     return true;
@@ -1543,7 +1490,7 @@ D_CMD(ListDisplayModes)
     DENG2_UNUSED3(src, argc, argv);
 
     LOG_GL_MSG("There are %i display modes available:") << DisplayMode_Count();
-    for(int i = 0; i < DisplayMode_Count(); ++i)
+    for(dint i = 0; i < DisplayMode_Count(); ++i)
     {
         DisplayMode const *mode = DisplayMode_ByIndex(i);
         if(mode->refreshRate > 0)
@@ -1573,7 +1520,7 @@ D_CMD(UpdateGammaRamp)
 
 D_CMD(Fog)
 {
-    DENG_UNUSED(src);
+    DENG2_UNUSED(src);
 
     if(argc == 1)
     {
@@ -1599,9 +1546,9 @@ D_CMD(Fog)
     }
     if(!stricmp(argv[1], "color") && argc == 5)
     {
-        for(int i = 0; i < 3; i++)
+        for(dint i = 0; i < 3; ++i)
         {
-            fogColor[i] = strtol(argv[2 + i], NULL, 0) / 255.0f;
+            fogColor[i] = strtol(argv[2 + i], nullptr, 0) / 255.0f;
         }
         fogColor[3] = 1;
 
@@ -1611,19 +1558,19 @@ D_CMD(Fog)
     }
     if(!stricmp(argv[1], "start") && argc == 3)
     {
-        glFogf(GL_FOG_START, (GLfloat) strtod(argv[2], NULL));
+        glFogf(GL_FOG_START, (GLfloat) strtod(argv[2], nullptr));
         LOG_GL_VERBOSE("Fog start distance set");
         return true;
     }
     if(!stricmp(argv[1], "end") && argc == 3)
     {
-        glFogf(GL_FOG_END, (GLfloat) strtod(argv[2], NULL));
+        glFogf(GL_FOG_END, (GLfloat) strtod(argv[2], nullptr));
         LOG_GL_VERBOSE("Fog end distance set");
         return true;
     }
     if(!stricmp(argv[1], "density") && argc == 3)
     {
-        glFogf(GL_FOG_DENSITY, (GLfloat) strtod(argv[2], NULL));
+        glFogf(GL_FOG_DENSITY, (GLfloat) strtod(argv[2], nullptr));
         LOG_GL_VERBOSE("Fog density set");
         return true;
     }
@@ -1650,4 +1597,44 @@ D_CMD(Fog)
     }
 
     return false;
+}
+
+void GL_Register()
+{
+    // Cvars
+    C_VAR_INT  ("rend-dev-wireframe",    &renderWireframe,  CVF_NO_ARCHIVE, 0, 2);
+    C_VAR_INT  ("rend-fog-default",      &fogModeDefault,   0, 0, 2);
+
+    // * Render-HUD
+    C_VAR_FLOAT("rend-hud-offset-scale", &weaponOffsetScale,CVF_NO_MAX, 0, 0);
+    C_VAR_FLOAT("rend-hud-fov-shift",    &weaponFOVShift,   CVF_NO_MAX, 0, 1);
+    C_VAR_BYTE ("rend-hud-stretch",      &weaponScaleMode,  0, SCALEMODE_FIRST, SCALEMODE_LAST);
+
+    // * Render-Mobj
+    C_VAR_INT  ("rend-mobj-smooth-move", &useSRVO,          0, 0, 2);
+    C_VAR_INT  ("rend-mobj-smooth-turn", &useSRVOAngle,     0, 0, 1);
+
+    // * video
+    C_VAR_FLOAT("vid-gamma",             &vid_gamma,        0, 0.1f, 4);
+    C_VAR_FLOAT("vid-contrast",          &vid_contrast,     0, 0, 2.5f);
+    C_VAR_FLOAT("vid-bright",            &vid_bright,       0, -1, 1);
+
+    Con_AddMappedConfigVariable("vid-vsync", "i", "window.main.vsync");
+    Con_AddMappedConfigVariable("vid-fsaa",  "i", "window.main.fsaa");
+    Con_AddMappedConfigVariable("vid-fps",   "i", "window.main.showFps");
+
+    // Ccmds
+    C_CMD_FLAGS("fog",              nullptr,   Fog,                CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
+    C_CMD      ("displaymode",      "",     DisplayModeInfo);
+    C_CMD      ("listdisplaymodes", "",     ListDisplayModes);
+    C_CMD      ("setcolordepth",    "i",    SetBPP);
+    C_CMD      ("setbpp",           "i",    SetBPP);
+    C_CMD      ("setres",           "ii",   SetRes);
+    C_CMD      ("setfullres",       "ii",   SetFullRes);
+    C_CMD      ("setwinres",        "ii",   SetWinRes);
+    C_CMD      ("setvidramp",       "",     UpdateGammaRamp);
+    C_CMD      ("togglefullscreen", "",     ToggleFullscreen);
+    C_CMD      ("togglemaximized",  "",     ToggleMaximized);
+    C_CMD      ("togglecentered",   "",     ToggleCentered);
+    C_CMD      ("centerwindow",     "",     CenterWindow);
 }

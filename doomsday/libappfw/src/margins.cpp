@@ -72,7 +72,7 @@ DENG2_PIMPL(Margins)
 
     void setInput(int side, DotPath const &styleId)
     {
-        setInput(side, Style::appStyle().rules().rule(styleId));
+        setInput(side, Style::get().rules().rule(styleId));
     }
 
     void setInput(int side, Rule const &rule)

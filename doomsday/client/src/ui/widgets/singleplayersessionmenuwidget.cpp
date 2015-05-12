@@ -29,8 +29,8 @@ using namespace de;
 
 DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
 , DENG2_OBSERVES(Games, Addition)
+, DENG2_OBSERVES(Games, Readiness)
 , DENG2_OBSERVES(Loop, Iteration) // deferred updates
-, DENG2_OBSERVES(App, StartupComplete)
 , DENG2_OBSERVES(App, GameChange)
 {
     /// ActionItem with a Game member, for loading a particular game.
@@ -72,17 +72,17 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
     Instance(Public *i) : Base(i)
     {
         App_Games().audienceForAddition() += this;
+        App_Games().audienceForReadiness() += this;
         App::app().audienceForGameChange() += this;
-        App::app().audienceForStartupComplete() += this;
     }
 
     ~Instance()
     {
-        Loop::appLoop().audienceForIteration() -= this;
+        Loop::get().audienceForIteration() -= this;
 
         App_Games().audienceForAddition() -= this;
+        App_Games().audienceForReadiness() -= this;
         App::app().audienceForGameChange() -= this;
-        App::app().audienceForStartupComplete() -= this;
     }
 
     void gameAdded(Game &game)
@@ -91,7 +91,7 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
         pendingGames.put(&game);
 
         // Update from main thread later.
-        Loop::appLoop().audienceForIteration() += this;
+        Loop::get().audienceForIteration() += this;
     }
 
     void addExistingGames()
@@ -111,7 +111,7 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
 
     void loopIteration()
     {
-        Loop::appLoop().audienceForIteration() -= this;
+        Loop::get().audienceForIteration() -= this;
         addPendingGames();
         updateGameAvailability();
     }
@@ -173,14 +173,14 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
         emit self.availabilityChanged();
     }
 
-    void appStartupCompleted()
+    void gameReadinessUpdated()
     {
         updateGameAvailability();
     }
 
     void currentGameChanged(game::Game const &)
     {
-        Loop::appLoop().audienceForIteration() += this;
+        Loop::get().audienceForIteration() += this;
     }
 };
 
@@ -203,7 +203,7 @@ Action *SingleplayerSessionMenuWidget::makeAction(ui::Item const &item)
     return new CommandAction("load " + item.as<Instance::GameItem>().gameIdentityKey());
 }
 
-GuiWidget *SingleplayerSessionMenuWidget::makeItemWidget(ui::Item const &item, GuiWidget const *parent)
+GuiWidget *SingleplayerSessionMenuWidget::makeItemWidget(ui::Item const &, GuiWidget const *)
 {
     return new Instance::GameWidget;
 }

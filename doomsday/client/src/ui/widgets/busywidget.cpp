@@ -1,6 +1,6 @@
 /** @file busywidget.cpp
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2013-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -25,7 +25,6 @@
 #include "render/r_main.h"
 #include "busymode.h"
 #include "sys_system.h"
-#include "con_main.h"
 
 #include <de/concurrency.h>
 #include <de/Drawable>
@@ -43,13 +42,10 @@ DENG_GUI_PIMPL(BusyWidget)
     Time frameDrawnAt;
     GLFramebuffer transitionFrame;
     Drawable drawable;
-    GLUniform uTex;
-    GLUniform uMvpMatrix;
+    GLUniform uTex       { "uTex",       GLUniform::Sampler2D };
+    GLUniform uMvpMatrix { "uMvpMatrix", GLUniform::Mat4      };
 
-    Instance(Public *i)
-        : Base(i),
-          uTex("uTex", GLUniform::Sampler2D),
-          uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
+    Instance(Public *i) : Base(i)
     {
         progress = new ProgressWidget;
         progress->setAlignment(ui::AlignCenter, LabelWidget::AlignOnlyByImage);
@@ -163,13 +159,11 @@ bool BusyWidget::handleEvent(Event const &)
     return true;
 }
 
-static TimeDelta const TRANSITION_FRAME_VALID_DURATION = 0.5; // seconds
-
 void BusyWidget::renderTransitionFrame()
 {
     LOG_AS("BusyWidget");
 
-    if(d->haveTransitionFrame() && d->frameDrawnAt.since() < TRANSITION_FRAME_VALID_DURATION)
+    if(d->haveTransitionFrame())
     {
         // We already have a valid frame, no need to render again.
         LOGDEV_GL_VERBOSE("Skipping rendering of transition frame (got one already)");
@@ -182,23 +176,9 @@ void BusyWidget::renderTransitionFrame()
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    //GLTexture::Size size(rule().width().valuei() / 2,
-    //                         rule().height().valuei() / 2);
-
     Rectanglei grabRect = Rectanglei::fromSize(root().window().canvas().size());
 
     LOGDEV_GL_VERBOSE("Rendering transition frame, size ") << grabRect.size().asText();
-
-    /*
-    if(BusyMode_IsTransitionAnimated())
-    {
-        // Animation transitions are drawn only inside GameWidget, so just
-        // grab that portion of the screen.
-        grabRect = root().window().game().rule().recti();
-    }
-
-    // Grab the game view's rectangle, as that's where the transition will be drawn.
-    GLuint grabbed = root().window().grabAsTexture(grabRect, ClientWindow::GrabHalfSized);*/
 
     d->transitionFrame.resize(grabRect.size());
     if(!d->transitionFrame.isReady())
@@ -210,9 +190,6 @@ void BusyWidget::renderTransitionFrame()
             .setTarget(d->transitionFrame.target())
             .setViewport(Rectangleui::fromSize(d->transitionFrame.size()))
             .apply();
-
-    //d->transitionTex.reset(new GLTexture); //grabbed, grabRect.size() / 2));
-    //d->transitionTex->setUndefinedImage(grabRect.size(), Image::RGB_888);
 
     root().window().as<ClientWindow>().drawGameContent();
 

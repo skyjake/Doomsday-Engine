@@ -179,7 +179,7 @@ String GameRuleset::asText() const
     String str;
     QTextStream os(&str);
     os << "skillmode: " << int(skill);
-    //os << " jumping: "  << (cfg.jumpEnabled ? "yes" : "no");
+    //os << " jumping: "  << (cfg.common.jumpEnabled ? "yes" : "no");
 #if __JHEXEN__
     os << " random player classes: " << (randomClasses ? "yes" : "no");
 #endif

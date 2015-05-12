@@ -303,9 +303,9 @@ class FrontController
 <html dir="ltr" lang="en-GB">
 <head>
     <title><?=$siteTitle?></title>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8" /><?php/*
     <meta http-equiv="cleartype" content="on">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">*/?>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="author" content="<?=$this->siteAuthor()?>" />
     <meta name="keywords" content="<?php { $keywords = $this->defaultPageKeywords(); foreach($keywords as $keyword) echo $keyword.','; } ?>" />
@@ -423,14 +423,15 @@ class FrontController
 ?>
         <div id="menuouter"><nav id="menu" class="hnav">
         <div id="divider"></div>
-            <ul><section class="left">
+            <ul><li class="section left"><ul>
 <?php
             echo $this->buildTabs($leftTabs, $page, "paddle_left", "paddle_left_select");
-?></section>
-<li class="logo"><a href="/" title="<?=$this->homeURL()?>"><span class="hidden">.</span></a></li><section class="right">
+?></ul></li>
+<li class="logo"><a href="/" title="<?=$this->homeURL()?>"><span class="hidden">.</span></a></li>
+<li class="section right"><ul>
 <?php
             echo $this->buildTabs($rightTabs, $page, "paddle_right", "paddle_right_select");
-?></section>
+?></ul></li>
             </ul>
         <div id="divider2"></div>
         </nav></div>

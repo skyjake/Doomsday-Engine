@@ -28,7 +28,7 @@
 
 #include "dd_types.h"
 #include <de/vector1.h>
-#include "filehandle.h"
+#include <doomsday/filesys/filehandle.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -51,7 +51,6 @@ void M_ReadBits(uint numBits, const uint8_t** src, uint8_t* cb, uint8_t* out);
 // Text utilities.
 void M_WriteCommented(FILE* file, const char* text);
 void M_WriteTextEsc(FILE* file, const char* text);
-void M_ReadLine(char* buffer, size_t len, FileHandle* file);
 
 /**
  * Check the spatial relationship between the given box and a partitioning line.

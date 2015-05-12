@@ -23,6 +23,7 @@
 #include <de/Error>
 #include <de/Path>
 #include <de/String>
+#include <de/game/SavedSession>
 
 /**
  * Maps saved game session file names into a finite set of "save slots".
@@ -87,6 +88,13 @@ public:
          * @param newName  New of the saved session to bind to.
          */
         void bindSaveName(de::String newName);
+
+        /**
+         * Force a manual update of the save slot status and update any linked menu item.
+         * Calling this is usually unnecessary as the status is automatically updated when
+         * the associated saved session changes.
+         */
+        void updateStatus();
 
     private:
         friend class SaveSlots;
@@ -166,6 +174,13 @@ public:
     Slot *slotByUserInput(de::String const &str) const;
 
     /**
+     * Force a manual update of all save slot statuses and update any linked menu items.
+     * Calling this is usually unnecessary as the status of a slot is automatically updated
+     * when the associated saved session changes.
+     */
+    void updateAll();
+
+    /**
      * Register the console commands and variables of this module.
      *
      * - game-save-last-slot   Last-used slot. Can be @c -1 (not set).
@@ -179,4 +194,4 @@ private:
 
 typedef SaveSlots::Slot SaveSlot;
 
-#endif // LIBCOMMON_SAVESLOTS_H
+#endif  // LIBCOMMON_SAVESLOTS_H

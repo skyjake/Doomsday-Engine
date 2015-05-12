@@ -99,7 +99,7 @@ DENG2_PIMPL(LinkWindow)
     ~Instance()
     {
         // Make sure the local sink is removed.
-        LogBuffer::appBuffer().removeSink(console->log().logSink());
+        LogBuffer::get().removeSink(console->log().logSink());
     }
 
     void updateStyle()
@@ -170,7 +170,7 @@ DENG2_PIMPL(LinkWindow)
         // Show a message box.
         ErrorLogDialog dlg;
         dlg.setLogContent(text);
-        dlg.setMessage(tr("Starting of the local server failed. This may explain why:"));
+        dlg.setMessage(tr("Failed to start the server. This may explain why:"));
         dlg.exec();
     }
 
@@ -330,11 +330,11 @@ void LinkWindow::changeEvent(QEvent *ev)
         if(isActiveWindow())
         {
             // Log local messages here.
-            LogBuffer::appBuffer().addSink(d->console->log().logSink());
+            LogBuffer::get().addSink(d->console->log().logSink());
         }
         else
         {
-            LogBuffer::appBuffer().removeSink(d->console->log().logSink());
+            LogBuffer::get().removeSink(d->console->log().logSink());
         }
     }
 }

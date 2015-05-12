@@ -19,7 +19,7 @@
 #ifndef FOLDERSELECTION_H
 #define FOLDERSELECTION_H
 
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <de/NativePath>
 #include <QWidget>
 

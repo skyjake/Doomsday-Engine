@@ -95,18 +95,22 @@ def prepare_work_dir():
 def mac_os_version():
     """Determines the Mac OS version."""
     return builder.utils.mac_os_version()
+    
+    
+def mac_os_8_or_later():
+    return mac_os_version() in ['10.8', '10.9', '10.10', '10.11']
 
 
 def mac_target_ext():
-    if mac_os_version() == '10.8' or mac_os_version() == '10.9': return '.dmg'
+    if mac_os_8_or_later(): return '.dmg'
     if mac_os_version() == '10.6': return '_mac10_6.dmg'
     return '_32bit.dmg'
     
     
 def mac_osx_suffix():
-    if mac_os_version() == '10.8' or mac_os_version() == '10.9': return 'osx8'
-    if mac_os_version() == '10.6': return 'osx6'
-    return 'osx'
+    if mac_os_8_or_later(): return 'macx8'
+    if mac_os_version() == '10.6': return 'macx6'
+    return 'macx'
 
 
 def output_filename(ext='', extra=''):
@@ -208,15 +212,9 @@ def mac_release():
     MAC_WORK_DIR = os.path.abspath(os.path.join(DOOMSDAY_DIR, '../macx_release_build'))
     remkdir(MAC_WORK_DIR)
     os.chdir(MAC_WORK_DIR)
-
-    # Choose the appropriate compiler.
-    if mac_os_version() == '10.8' or mac_os_version() == '10.9':
-        mkspec = 'unsupported/macx-clang'
-    else:
-        mkspec = 'macx-g++'
         
-    if os.system('qmake -r -spec %s CONFIG+=release DENG_BUILD=%s ' % (mkspec, DOOMSDAY_BUILD_NUMBER) +
-                 '../doomsday/doomsday.pro && make -j2 -w'):
+    if os.system('PATH=`qmake-qt5 -query QT_INSTALL_BINS`:$PATH qmake -r CONFIG+=release DENG_BUILD=%s ' % (DOOMSDAY_BUILD_NUMBER) +
+                 '../doomsday/doomsday.pro && PATH=`qmake-qt5 -query QT_INSTALL_BINS`:$PATH make -j2 -w'):
         raise Exception("Failed to build from source.")
 
     # Now we can proceed to packaging.
@@ -233,15 +231,35 @@ def mac_release():
 
     print 'Copying release binaries into the launcher bundle.'
     duptree(os.path.join(MAC_WORK_DIR, 'client/Doomsday.app'), 'Doomsday Engine.app/Contents/Doomsday.app')
-    for f in glob.glob(os.path.join(MAC_WORK_DIR, 'client/*.bundle')):
-        # Exclude jDoom64.
-        if not 'jDoom64' in f:
-            duptree(f, 'Doomsday Engine.app/Contents/' + os.path.basename(f))
+    # Remove plugins unsuitable for general distribution.
+    for omit in ['doom64', 'example']:
+        builder.utils.deltree('Doomsday Engine.app/Contents/Doomsday.app/Contents/DengPlugins/%s.bundle' % omit)
     duptree(os.path.join(MAC_WORK_DIR, 'tools/shell/shell-gui/Doomsday Shell.app'), 'Doomsday Shell.app')
 
     print 'Correcting permissions...'
     os.system('chmod -R o-w "Doomsday Engine.app"')
     os.system('chmod -R o-w "Doomsday Shell.app"')
+
+    if mac_os_version() != '10.6':
+        print 'Packaging apps onto a disk image (unsigned)...'
+        templateFile = 'appdisk.sparseimage'
+        os.system('bunzip2 -k -c %s > %s' % (os.path.join(SNOWBERRY_DIR, 'template-image/template.sparseimage.bz2'),
+                                             templateFile))
+        remkdir('imaging')
+        os.system('hdiutil attach %s -noautoopen -quiet -mountpoint imaging' % templateFile)
+    
+        remove('imaging/Doomsday.pkg') # included in bzipped image
+        duptree('Doomsday Engine.app', 'imaging/Doomsday Engine.app')
+        duptree('Doomsday Shell.app',  'imaging/Doomsday Shell.app')
+        shutil.copy(os.path.join(DOOMSDAY_DIR, "doc/output/Read Me.rtf"), 'imaging/Read Me.rtf')
+
+        volumeName = "Doomsday Engine " + DOOMSDAY_VERSION_FULL
+        os.system('/usr/sbin/diskutil rename ' + os.path.abspath('imaging') + ' "' + volumeName + '"')
+    
+        os.system('hdiutil detach -quiet imaging')
+        os.system('hdiutil convert %s -format UDZO -imagekey zlib-level=9 -o "../releases/%s"' % (
+                templateFile, output_filename('_apps-' + mac_osx_suffix() + '.dmg')))
+        remove(templateFile)
 
     def codesign(fn, opts=''):
         os.system('codesign --verbose -s "Developer ID Application: Jaakko Keranen" %s "%s"' % (opts, fn))
@@ -264,7 +282,7 @@ def mac_release():
     fw_codesign('Doomsday Shell.app')
 
     print 'Signing Doomsday.app...'
-    codesign('Doomsday Engine.app/Contents/Doomsday.app/Contents/Frameworks/SDL.framework/SDL')
+    codesign('Doomsday Engine.app/Contents/Doomsday.app/Contents/Frameworks/SDL2.framework/SDL2')
     codesign("Doomsday Engine.app/Contents/Doomsday.app")
 
     print 'Signing Doomsday Engine.app...'
@@ -277,13 +295,28 @@ def mac_release():
     print 'Signing Doomsday Shell.app...'
     codesign("Doomsday Shell.app")
     
-    print 'Packaging apps as individual ZIPs...'
-    os.system('zip -9 -r -q "../releases/%s" "Doomsday Engine.app"' % output_filename('.zip', mac_osx_suffix()))
-    os.system('zip -9 -r -q "../releases/%s" "Doomsday Shell.app"'  % output_filename('.zip', 'shell_' + mac_osx_suffix()))
+    # Package the apps and create an installer package.
+    os.system('mkdir package')
+    duptree('Doomsday Engine.app', 'package/Doomsday Engine.app')
+    os.system('pkgbuild --identifier net.dengine.doomsday.frontend.pkg --version %s ' % DOOMSDAY_VERSION_FULL + \
+        '--install-location /Applications --root package Frontend.pkg')
+    os.system('rm -rf package')
+
+    os.system('mkdir package')
+    duptree('Doomsday Shell.app', 'package/Doomsday Shell.app')
+    os.system('pkgbuild --identifier net.dengine.doomsday.shell.pkg --version %s ' % DOOMSDAY_VERSION_FULL + \
+        '--install-location /Applications --root package Shell.pkg')
+    os.system('rm -rf package')
     
+    os.system("sed 's/${Version}/%s/' < ../macx/Distribution.xml.in > Distribution.xml" % DOOMSDAY_VERSION_FULL)
+    os.system('mkdir res')
+    shutil.copy(os.path.join(DOOMSDAY_DIR, "doc/output/Read Me.rtf"), 'res/Read Me.rtf')
+    shutil.copy('../macx/background.png', 'res/background.png')
+    os.system('productbuild --distribution Distribution.xml --package-path . --resources res --sign "Developer ID Installer: Jaakko Keranen" Doomsday.pkg')
+        
     print 'Creating disk:', target
-    os.system('osascript /Users/jaakko/Dropbox/Doomsday/package-installer.applescript')
-    
+        
+    # Compress a disk image containing the installer package.
     masterPkg = target
     volumeName = "Doomsday Engine " + DOOMSDAY_VERSION_FULL
     templateFile = os.path.join(SNOWBERRY_DIR, 'template-image/template.sparseimage')
@@ -294,7 +327,7 @@ def mac_release():
     remkdir('imaging')
     os.system('hdiutil attach imaging.sparseimage -noautoopen -quiet -mountpoint imaging')
     try:
-        shutil.copy('/Users/jaakko/Desktop/Doomsday.pkg', 'imaging/Doomsday.pkg')
+        shutil.copy('Doomsday.pkg', 'imaging/Doomsday.pkg')
     except Exception, ex:
         print 'No installer available:', ex
     shutil.copy(os.path.join(DOOMSDAY_DIR, "doc/output/Read Me.rtf"), 'imaging/Read Me.rtf')
@@ -302,7 +335,7 @@ def mac_release():
     volumeName = "Doomsday Engine " + DOOMSDAY_VERSION_FULL
     os.system('/usr/sbin/diskutil rename ' + os.path.abspath('imaging') + ' "' + volumeName + '"')
 
-    os.system('hdiutil detach -quiet imaging')
+    os.system('hdiutil detach -quiet imaging; rmdir imaging')
     os.system('hdiutil convert imaging.sparseimage -format UDZO -imagekey zlib-level=9 -o "' + target + '"')
     remove('imaging.sparseimage')
 
@@ -355,7 +388,7 @@ def linux_release():
 
     # Check that the changelog exists.
     if not os.path.exists('debian/changelog'):
-        os.system('dch --check-dirname-level=0 --create --package doomsday -v %s-%s "Initial release."' % (DOOMSDAY_VERSION, DOOMSDAY_BUILD))
+        os.system('dch --check-dirname-level=0 --create --package doomsday -v %s-%s "Initial release."' % (DOOMSDAY_VERSION_FULL_PLAIN, DOOMSDAY_BUILD))
 
     if os.system('linux/gencontrol.sh && dpkg-buildpackage -b'):
         raise Exception("Failure to build from source.")
@@ -363,7 +396,7 @@ def linux_release():
     # Build dsFMOD separately.
     os.chdir('dsfmod')
     logSuffix = "%s-%s.txt" % (sys.platform, platform.architecture()[0])
-    if os.system('LD_LIBRARY_PATH=`pwd`/../builddir/libdeng2:`pwd`/../builddir/libdeng dpkg-buildpackage -b > fmod-out-%s 2> fmod-err-%s' % (logSuffix, logSuffix)):
+    if os.system('LD_LIBRARY_PATH=`pwd`/../builddir/libcore:`pwd`/../builddir/liblegacy dpkg-buildpackage -b > fmod-out-%s 2> fmod-err-%s' % (logSuffix, logSuffix)):
         raise Exception("Failure to build dsFMOD from source.")
     shutil.copy(glob.glob('../doomsday-fmod*.deb')[0], OUTPUT_DIR)
     shutil.copy(glob.glob('../doomsday-fmod*.changes')[0], OUTPUT_DIR)    

@@ -9,9 +9,9 @@ include(../config.pri)
 
 TEMPLATE = lib
 TARGET   = deng_shell
-VERSION  = 0.1.0
+VERSION  = $$DENG_VERSION
 
-include(../dep_deng2.pri)
+include(../dep_core.pri)
 
 win32 {
     # Keep the version number out of the file name.
@@ -21,6 +21,8 @@ win32 {
 DEFINES += __LIBSHELL__
 
 INCLUDEPATH += include
+
+PRECOMPILED_HEADER = src/precompiled.h
 
 # Public headers.
 publicHeaders(shell, \
@@ -105,20 +107,14 @@ SOURCES += \
 # Installation ---------------------------------------------------------------
 
 macx {
-    linkDylibToBundledLibdeng2(libdeng_shell)
+    xcodeFinalizeBuild($$TARGET)
+    linkDylibToBundledLibcore(libdeng_shell)
 
-    doPostLink("install_name_tool -id @executable_path/../Frameworks/libdeng_shell.0.dylib libdeng_shell.0.dylib")
+    doPostLink("install_name_tool -id @rpath/libdeng_shell.1.dylib libdeng_shell.1.dylib")
 
     # Update the library included in the main app bundle.
     doPostLink("mkdir -p ../client/Doomsday.app/Contents/Frameworks")
     doPostLink("cp -fRp libdeng_shell*dylib ../client/Doomsday.app/Contents/Frameworks")
 }
-else {
-    INSTALLS += target
-    target.path = $$DENG_LIB_DIR
-}
 
-deng_sdk {
-    INSTALLS *= target
-    target.path = $$DENG_SDK_LIB_DIR
-}
+deployLibrary()

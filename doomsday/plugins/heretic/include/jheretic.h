@@ -43,7 +43,7 @@
 #include "../../heretic/include/h_refresh.h"
 #include "../../heretic/include/h_stat.h"
 #include "../../heretic/include/h_type.h"
-#include "../../heretic/include/in_lude.h"
+#include "../../heretic/include/intermission.h"
 #include "../../heretic/include/m_cheat.h"
 #include "../../heretic/include/m_random.h"
 #include "../../heretic/include/p_enemy.h"

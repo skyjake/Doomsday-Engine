@@ -29,6 +29,7 @@
 
 #include "world/entitydatabase.h"
 #include "world/map.h"
+#include "world/polyobjdata.h"
 #include "Plane"
 #include "Sector"
 #include "Surface"
@@ -200,12 +201,12 @@ Map *MPE_TakeMap()
 }
 
 #undef MPE_Begin
-dd_bool MPE_Begin(uri_s const *mapUri)
+dd_bool MPE_Begin(uri_s const * /*mapUri*/)
 {
     if(!editMapInited)
     {
         delete editMap;
-        editMap = new Map(*reinterpret_cast<de::Uri const *>(mapUri));
+        editMap = new Map;
         editMapInited = true;
     }
     return true;
@@ -272,15 +273,15 @@ int MPE_LineCreate(int v1, int v2, int frontSectorIdx, int backSectorIdx, int fl
 
     // Next, check the length is not zero.
     /// @todo fixme: We need to allow these... -ds
-    Vertex *vtx1 = editMap->vertexes().at(v1);
-    Vertex *vtx2 = editMap->vertexes().at(v2);
-    if(de::abs(Vector2d(vtx1->origin() - vtx2->origin()).length()) <= 0.0001) return -1;
+    Vertex &vtx1 = editMap->vertex(v1);
+    Vertex &vtx2 = editMap->vertex(v2);
+    if(de::abs(Vector2d(vtx1.origin() - vtx2.origin()).length()) <= 0.0001) return -1;
 
     Sector *frontSector = (frontSectorIdx >= 0? editMap->editableSectors().at(frontSectorIdx) : 0);
     Sector *backSector  = (backSectorIdx  >= 0? editMap->editableSectors().at(backSectorIdx) : 0);
 
-    return editMap->createLine(*vtx1, *vtx2, flags, frontSector, backSector,
-                              archiveIndex)->indexInMap();
+    return editMap->createLine(vtx1, vtx2, flags, frontSector, backSector, archiveIndex)
+                        ->indexInMap();
 }
 
 #undef MPE_LineAddSide
@@ -388,7 +389,7 @@ int MPE_PolyobjCreate(int const *lines, int lineCount, int tag, int sequenceType
 
         // This line belongs to a polyobj.
         line->setPolyobj(po);
-        static_cast<Polyobj::Lines *>(po->_lines)->append(line);
+        po->data().lines.append(line);
     }
 
     return po->indexInMap();

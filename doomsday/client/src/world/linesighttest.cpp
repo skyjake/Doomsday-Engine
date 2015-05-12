@@ -26,6 +26,7 @@
 #include "world/worldsystem.h" /// For validCount, @todo Remove me.
 #include "BspLeaf"
 #include "BspNode"
+#include "ConvexSubspace"
 #include "Line"
 #include "Polyobj"
 #include "Sector"
@@ -232,19 +233,25 @@ DENG2_PIMPL(LineSightTest)
      */
     bool crossBspLeaf(BspLeaf const &bspLeaf)
     {
-        if(!bspLeaf.hasPoly())
+        if(!bspLeaf.hasSubspace())
             return false;
 
-        // Check polyobj lines.
-        foreach(Polyobj *po, bspLeaf.polyobjs())
-        foreach(Line *line, po->lines())
-        {
-            if(!crossLine(line->front()))
-                return false; // Stop traversal.
-        }
+        ConvexSubspace const &subspace = bspLeaf.subspace();
 
-        // Check the BSP leaf line geometries.
-        HEdge *base = bspLeaf.poly().hedge();
+        // Check polyobj lines.
+        LoopResult blocked = subspace.forAllPolyobjs([this] (Polyobj &pob)
+        {
+            for(Line *line : pob.lines())
+            {
+                if(!crossLine(line->front()))
+                    return LoopAbort;
+            }
+            return LoopContinue;
+        });
+        if(blocked) return false;
+
+        // Check lines for the edges of the subspace geometry.
+        HEdge *base = subspace.poly().hedge();
         HEdge *hedge = base;
         do
         {
@@ -255,30 +262,34 @@ DENG2_PIMPL(LineSightTest)
             }
         } while((hedge = &hedge->next()) != base);
 
-        foreach(Mesh *mesh, bspLeaf.extraMeshes())
-        foreach(HEdge *hedge, mesh->hedges())
+        // Check lines for the extra meshes.
+        blocked = subspace.forAllExtraMeshes([this] (Mesh &mesh)
         {
-            // Is this on the back of a one-sided line?
-            if(!hedge->hasMapElement())
-                continue;
+            for(HEdge *hedge : mesh.hedges())
+            {
+                // Is this on the back of a one-sided line?
+                if(!hedge->hasMapElement())
+                    continue;
 
-            if(!crossLine(hedge->mapElementAs<LineSideSegment>().lineSide()))
-                return false;
-        }
+                if(!crossLine(hedge->mapElementAs<LineSideSegment>().lineSide()))
+                    return LoopAbort;
+            }
+            return LoopContinue;
+        });
 
-        return true; // Continue traversal.
+        return !blocked;
     }
 
     /**
-     * @return  @c true if the ray passes @a bspElement; otherwise @c false.
+     * @return  @c true if the ray passes @a bspTree; otherwise @c false.
      */
-    bool crossBspNode(MapElement const *bspElement)
+    bool crossBspNode(BspTree const *bspTree)
     {
-        DENG2_ASSERT(bspElement != 0);
+        DENG2_ASSERT(bspTree != 0);
 
-        while(bspElement->type() != DMU_BSPLEAF)
+        while(!bspTree->isLeaf())
         {
-            BspNode const &bspNode = bspElement->as<BspNode>();
+            BspNode const &bspNode = bspTree->userData()->as<BspNode>();
 
             // Does the ray intersect the partition?
             /// @todo Optionally use the fixed precision version -ds
@@ -287,20 +298,20 @@ DENG2_PIMPL(LineSightTest)
             if(fromSide != toSide)
             {
                 // Yes.
-                if(!crossBspNode(bspNode.childPtr(fromSide)))
+                if(!crossBspNode(bspTree->childPtr(BspTree::ChildId(fromSide))))
                     return false; // Cross the From side.
 
-                bspElement = bspNode.childPtr(fromSide ^ 1); // Cross the To side.
+                bspTree = bspTree->childPtr(BspTree::ChildId(fromSide ^ 1)); // Cross the To side.
             }
             else
             {
                 // No - descend!
-                bspElement = bspNode.childPtr(fromSide);
+                bspTree = bspTree->childPtr(BspTree::ChildId(fromSide));
             }
         }
 
         // We've arrived at a leaf.
-        return crossBspLeaf(bspElement->as<BspLeaf>());
+        return crossBspLeaf(bspTree->userData()->as<BspLeaf>());
     }
 };
 
@@ -309,7 +320,7 @@ LineSightTest::LineSightTest(Vector3d const &from, Vector3d const &to,
     : d(new Instance(this, from, to, bottomSlope, topSlope, flags))
 {}
 
-bool LineSightTest::trace(MapElement const &bspRoot)
+bool LineSightTest::trace(BspTree const &bspRoot)
 {
     validCount++;
 

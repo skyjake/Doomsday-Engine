@@ -32,10 +32,13 @@
 #include "ui/busyvisual.h"
 
 #include <de/c_wrapper.h>
+#include <de/concurrency.h>
 #include <de/Log>
 #include <QEventLoop>
+#include <de/timer.h>
 
 #ifdef __CLIENT__
+#include "sys_system.h"
 #include "clientapp.h"
 #include "ui/clientwindowsystem.h"
 #include "ui/widgets/busywidget.h"
@@ -134,7 +137,7 @@ static void beginTask(BusyTask* task)
     }
     if(busyInited)
     {
-        Con_Error("Con_Busy: Already busy.\n");
+        App_Error("Con_Busy: Already busy.\n");
     }
 
     BusyVisual_PrepareResources();
@@ -173,7 +176,7 @@ static void endTask(BusyTask* task)
 
     if(busyTaskEndedWithError)
     {
-        Con_AbnormalShutdown(busyError);
+        App_AbnormalShutdown(busyError);
     }
 
     if(busyWillAnimateTransition)
@@ -255,8 +258,6 @@ void BusyMode_FreezeGameForBusyMode(void)
 static void preBusySetup(int initialMode)
 {
 #ifdef __CLIENT__
-    //ClientWindow::main().busy().renderTransitionFrame();
-
     // Are we doing a transition effect?
     busyWillAnimateTransition = animatedTransitionActive(initialMode);
     if(busyWillAnimateTransition)
@@ -264,13 +265,7 @@ static void preBusySetup(int initialMode)
         Con_TransitionConfigure();
     }
 
-    busyWasIgnoringInput = DD_IgnoreInput(true);
-
-    // Load any resources needed beforehand.
-    //BusyVisual_PrepareResources();
-
-    //BusyVisual_PrepareFont();
-    //BusyVisual_LoadTextures();
+    busyWasIgnoringInput = ClientApp::inputSystem().ignoreEvents();
 
     // Limit frame rate to 60, no point pushing it any faster while busy.
     ClientApp::app().loop().setRate(60);   
@@ -287,21 +282,14 @@ static void postBusyCleanup()
 {
 #ifdef __CLIENT__
     // Discard input events so that any and all accumulated input events are ignored.
-    DD_IgnoreInput(busyWasIgnoringInput);
+    ClientApp::inputSystem().ignoreEvents(busyWasIgnoringInput);
     DD_ResetTimer();
-
-    //BusyVisual_ReleaseTextures();
 
     // Back to unlimited frame rate.
     ClientApp::app().loop().setRate(0);
 
     // Switch the window to normal UI.
     ClientWindowSystem::main().setMode(ClientWindow::Normal);
-
-    if(!Con_TransitionInProgress())
-    {
-        ClientWindow::main().busy().releaseTransitionFrame();
-    }
 #endif
 }
 
@@ -343,7 +331,7 @@ int BusyMode_RunTasks(BusyTask* tasks, int numTasks)
 
     if(BusyMode_Active())
     {
-        Con_Error("BusyMode: Internal error, already busy...");
+        App_Error("BusyMode: Internal error, already busy...");
         exit(1); // Unreachable.
     }
 
@@ -468,8 +456,8 @@ void BusyMode_Loop(void)
     timespan_t oldTime;
 
     // Post and discard all input events.
-    DD_ProcessEvents(0);
-    DD_ProcessSharpEvents(0);
+    ClientApp::inputSystem().processEvents(0);
+    ClientApp::inputSystem().processSharpEvents(0);
 
     if(canUpload)
     {
@@ -496,7 +484,7 @@ void BusyMode_Loop(void)
        !Con_IsProgressAnimationCompleted())
     {
         // Let's keep running the busy loop.
-        ClientWindowSystem::main().draw();
+        //ClientWindowSystem::main().draw();
         return;
     }
 

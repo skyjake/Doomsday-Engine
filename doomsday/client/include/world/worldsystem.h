@@ -30,11 +30,16 @@
 #ifndef DENG_WORLDSYSTEM_H
 #define DENG_WORLDSYSTEM_H
 
-#include "uri.hh"
-#include <de/libdeng1.h>
+#include <de/liblegacy.h>
 #include <de/Error>
 #include <de/Observers>
+#include <de/Vector>
 #include <de/System>
+#include <doomsday/uri.h>
+
+#ifdef __CLIENT__
+#  include "render/skydrawable.h"
+#endif
 
 #ifdef __CLIENT__
 class Hand;
@@ -54,14 +59,14 @@ public:
     DENG2_ERROR(MapError);
 
     /// Notified whenever the "current" map changes.
-    DENG2_DEFINE_AUDIENCE(MapChange, void worldSystemMapChanged())
+    DENG2_DEFINE_AUDIENCE2(MapChange, void worldSystemMapChanged())
 
 #ifdef __CLIENT__
     /// Notified when a new frame begins.
-    DENG2_DEFINE_AUDIENCE(FrameBegin, void worldSystemFrameBegins(bool resetNextViewer))
+    DENG2_DEFINE_AUDIENCE2(FrameBegin, void worldSystemFrameBegins(bool resetNextViewer))
 
     /// Notified when the "current" frame ends.
-    DENG2_DEFINE_AUDIENCE(FrameEnd, void worldSystemFrameEnds())
+    DENG2_DEFINE_AUDIENCE2(FrameEnd, void worldSystemFrameEnds())
 #endif
 
 public:
@@ -73,10 +78,6 @@ public:
     // System.
     void timeChanged(de::Clock const &);
 
-    /**
-     * To be called to register the commands and variables of this module.
-     */
-    static void consoleRegister();
 
     /**
      * To be called to reset the world back to the initial state. Any currently
@@ -92,7 +93,7 @@ public:
     void update();
 
     /**
-     * Returns @c true iff a map is currently loaded.
+     * Returns @c true if a map is currently loaded.
      */
     bool hasMap() const;
 
@@ -102,6 +103,11 @@ public:
      * @see hasMap()
      */
     Map &map() const;
+
+    /**
+     * Returns a pointer to the currently loaded map, if any.
+     */
+    inline Map *mapPtr() const { return hasMap()? &map() : nullptr; }
 
     /**
      * @param uri  Universal resource identifier (URI) for the map to change to.
@@ -119,6 +125,14 @@ public:
     inline void unloadMap() { changeMap(Uri()); }
 
     /**
+     * Returns the effective map-info definition Record associated with the given
+     * @a mapUri (which may be the default definition, if invalid/unknown).
+     *
+     * @param mapUri  Unique identifier for the map to lookup map-info data for.
+     */
+    Record const &mapInfoForMapUri(Uri const &mapUri) const;
+
+    /**
      * Advance time in the world.
      *
      * @param delta  Time delta to apply.
@@ -129,6 +143,8 @@ public:
      * Returns the current world time.
      */
     timespan_t time() const;
+
+    void tick(timespan_t elapsed);
 
 #ifdef __CLIENT__
     /**
@@ -143,6 +159,8 @@ public:
      */
     void endFrame();
 
+    SkyDrawable::Animator &skyAnimator() const;
+
     /**
      * Returns the hand of the "user" in the world. Used for manipulating elements
      * for the purposes of runtime map editing.
@@ -150,9 +168,24 @@ public:
      * @param distance  The current distance of the hand from the viewer will be
      *                  written here if not @c 0.
      */
-    Hand &hand(coord_t *distance = 0) const;
+    Hand &hand(coord_t *distance = nullptr) const;
+
+    /**
+     * Determines if a point is in the void.
+     *
+     * @param pos  Point.
+     *
+     * @return @c true, if the point is outside any of the world's maps.
+     */
+    bool isPointInVoid(de::Vector3d const &pos) const;
 
 #endif // __CLIENT__
+
+public:
+    /**
+     * To be called to register the commands and variables of this module.
+     */
+    static void consoleRegister();
 
 private:
     DENG2_PRIVATE(d)

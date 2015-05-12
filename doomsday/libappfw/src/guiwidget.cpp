@@ -47,7 +47,7 @@ DENG2_PIMPL(GuiWidget)
     bool inited;
     bool needGeometry;
     bool styleChanged;
-    bool stateSerializationEnabled;
+    Attributes attribs;
     Background background;
     Animation opacity;
     Animation opacityWhenDisabled;
@@ -75,7 +75,7 @@ DENG2_PIMPL(GuiWidget)
         , inited(false)
         , needGeometry(true)
         , styleChanged(false)
-        , stateSerializationEnabled(true)
+        , attribs(DefaultAttributes)
         , opacity(1.f, Animation::Linear)
         , opacityWhenDisabled(1.f, Animation::Linear)
         , firstUpdateAfterCreation(true)
@@ -180,7 +180,7 @@ DENG2_PIMPL(GuiWidget)
         if(blurInited) return;
 
         // The blurred version of the view is downsampled.
-        blurSize = (self.root().viewSize() / 4).max(Vector2ui(1, 1));
+        blurSize = (self.root().viewSize() / GuiWidget::toDevicePixels(4)).max(Vector2ui(1, 1));
 
         for(int i = 0; i < 2; ++i)
         {
@@ -252,16 +252,21 @@ DENG2_PIMPL(GuiWidget)
 
     void drawBlurredBackground()
     {
-        if(background.type == Background::SharedBlur)
+        if(background.type == Background::SharedBlur ||
+           background.type == Background::SharedBlurWithBorderGlow)
         {
             // Use another widget's blur.
             DENG2_ASSERT(background.blur != 0);
-            background.blur->drawBlurredRect(self.rule().recti(), background.solidFill);
+            if(background.blur)
+            {
+                background.blur->drawBlurredRect(self.rule().recti(), background.solidFill);
+            }
             return;
         }
 
         if(background.type != Background::Blurred &&
-           background.type != Background::BlurredWithBorderGlow)
+           background.type != Background::BlurredWithBorderGlow &&
+           background.type != Background::BlurredWithSolidFill)
         {
             deinitBlur();
             return;
@@ -295,9 +300,15 @@ DENG2_PIMPL(GuiWidget)
 
         // Pass 3: apply the vertical blur filter, drawing the final result
         // into the original target.
-        if(background.solidFill.w > 0)
+        Vector4f blurColor = background.solidFill;
+        float blurOpacity  = self.visibleOpacity();
+        if(background.type == Background::BlurredWithSolidFill)
         {
-            self.drawBlurredRect(self.rule().recti(), background.solidFill, self.visibleOpacity());
+            blurColor.w = 1;
+        }
+        if(!attribs.testFlag(DontDrawContent) && blurColor.w > 0 && blurOpacity > 0)
+        {
+            self.drawBlurredRect(self.rule().recti(), blurColor, blurOpacity);
         }
     }
 
@@ -313,7 +324,8 @@ DENG2_PIMPL(GuiWidget)
         {
             opacityWhenDisabled.setValue(opac, .3f);
         }
-        if(firstUpdateAfterCreation)
+        if(firstUpdateAfterCreation ||
+           !attribs.testFlag(AnimateOpacityWhenEnabledOrDisabled))
         {
             opacityWhenDisabled.finish();
         }
@@ -351,6 +363,15 @@ DENG2_PIMPL(GuiWidget)
                     << self.path() << er.asText();
         }
     }
+
+    static float toDevicePixels(float logicalPixels)
+    {
+#ifdef DENG2_QT_5_0_OR_NEWER
+        return logicalPixels * qApp->devicePixelRatio();
+#else
+        return logicalPixels;
+#endif
+    }
 };
 
 GuiWidget::GuiWidget(String const &name) : Widget(name), d(new Instance(this))
@@ -360,20 +381,27 @@ GuiWidget::GuiWidget(String const &name) : Widget(name), d(new Instance(this))
 
 void GuiWidget::destroy(GuiWidget *widget)
 {
-    widget->deinitialize();
-    delete widget;
+    if(widget)
+    {
+        widget->deinitialize();
+        delete widget;
+    }
 }
 
-GuiRootWidget &GuiWidget::root()
+void GuiWidget::destroyLater(GuiWidget *widget)
 {
-    return static_cast<GuiRootWidget &>(Widget::root());
+    if(widget)
+    {
+        widget->deinitialize();
+        widget->guiDeleteLater();
+    }
 }
 
 GuiRootWidget &GuiWidget::root() const
 {
     return static_cast<GuiRootWidget &>(Widget::root());
 }
-
+    
 Widget::Children GuiWidget::childWidgets() const
 {
     return Widget::children();
@@ -386,7 +414,7 @@ Widget *GuiWidget::parentWidget() const
 
 Style const &GuiWidget::style() const
 {
-    return Style::appStyle();
+    return Style::get();
 }
 
 Font const &GuiWidget::font() const
@@ -426,6 +454,12 @@ RuleRectangle &GuiWidget::rule()
     return d->rule;
 }
 
+Rectanglei GuiWidget::contentRect() const
+{
+    Vector4i const pad = margins().toVector();
+    return rule().recti().adjusted(pad.xy(), -pad.zw());
+}
+
 RuleRectangle const &GuiWidget::rule() const
 {
     return d->rule;
@@ -450,6 +484,11 @@ Rectanglef GuiWidget::normalizedRect(de::Rectanglei const &rect,
                                rectf.top()    / contSize.y),
                       Vector2f(rectf.right()  / contSize.x,
                                rectf.bottom() / contSize.y));
+}
+
+float GuiWidget::toDevicePixels(float logicalPixels)
+{
+    return Instance::toDevicePixels(logicalPixels);
 }
 
 Rectanglef GuiWidget::normalizedRect() const
@@ -521,11 +560,14 @@ Animation GuiWidget::opacity() const
 float GuiWidget::visibleOpacity() const
 {
     float opacity = d->currentOpacity();
-    for(Widget *i = Widget::parent(); i != 0; i = i->parent())
+    if(!d->attribs.testFlag(IndependentOpacity))
     {
-        if(GuiWidget *w = i->maybeAs<GuiWidget>())
+        for(Widget *i = Widget::parent(); i != 0; i = i->parent())
         {
-            opacity *= w->d->currentOpacity();
+            if(GuiWidget *w = i->maybeAs<GuiWidget>())
+            {
+                opacity *= w->d->currentOpacity();
+            }
         }
     }
     return opacity;
@@ -541,9 +583,14 @@ void GuiWidget::removeEventHandler(IEventHandler *handler)
     d->eventHandlers.removeOne(handler);
 }
 
-void GuiWidget::enableStateSerialization(bool enabled)
+void GuiWidget::setAttribute(Attributes const &attr, FlagOp op)
 {
-    d->stateSerializationEnabled = enabled;
+    applyFlagOperation(d->attribs, attr, op);
+}
+
+GuiWidget::Attributes GuiWidget::attributes() const
+{
+    return d->attribs;
 }
 
 void GuiWidget::saveState()
@@ -581,7 +628,7 @@ void GuiWidget::initialize()
         d->inited = true;
         glInit();
 
-        if(d->stateSerializationEnabled)
+        if(d->attribs.testFlag(RetainStatePersistently))
         {
             d->restoreState();
         }
@@ -599,7 +646,7 @@ void GuiWidget::deinitialize()
 
     try
     {
-        if(d->stateSerializationEnabled)
+        if(d->attribs.testFlag(RetainStatePersistently))
         {
             d->saveState();
         }
@@ -647,16 +694,19 @@ void GuiWidget::draw()
 
         d->drawBlurredBackground();
 
-        if(isClipped())
+        if(!d->attribs.testFlag(DontDrawContent))
         {
-            GLState::push().setNormalizedScissor(normalizedRect());
-        }
+            if(isClipped())
+            {
+                GLState::push().setNormalizedScissor(normalizedRect());
+            }
 
-        drawContent();
+            drawContent();
 
-        if(isClipped())
-        {
-            GLState::pop();
+            if(isClipped())
+            {
+                GLState::pop();
+            }
         }
 
         DENG2_ASSERT(GLState::stackDepth() == depthBeforeDrawingWidget);
@@ -775,7 +825,7 @@ void GuiWidget::drawContent()
 
 void GuiWidget::drawBlurredRect(Rectanglei const &rect, Vector4f const &color, float opacity)
 {
-    DENG2_ASSERT(d->blurInited);
+    //DENG2_ASSERT(d->blurInited);
     if(!d->blurInited) return;
 
     DENG2_ASSERT(d->blurFB[1]->isReady());
@@ -827,7 +877,8 @@ void GuiWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 {
     if(d->background.type != Background::Blurred &&
        d->background.type != Background::BlurredWithBorderGlow &&
-       d->background.type != Background::SharedBlur)
+       d->background.type != Background::SharedBlur &&
+       d->background.type != Background::SharedBlurWithBorderGlow)
     {
         // Is there a solid fill?
         if(d->background.solidFill.w > 0)
@@ -838,32 +889,36 @@ void GuiWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
         }
     }
 
+    float const thick = d->toDevicePixels(d->background.thickness);
+
     switch(d->background.type)
     {
     case Background::GradientFrame:
-        verts.makeFlexibleFrame(rule().recti().shrunk(1),
-                                d->background.thickness,
+        verts.makeFlexibleFrame(rule().recti().shrunk(d->toDevicePixels(1)),
+                                thick,
                                 d->background.color,
                                 root().atlas().imageRectf(root().boldRoundCorners()));
         break;
 
     case Background::Rounded:
-        verts.makeFlexibleFrame(rule().recti().shrunk(d->background.thickness - 4),
-                                d->background.thickness,
+        verts.makeFlexibleFrame(rule().recti().shrunk(d->toDevicePixels(d->background.thickness - 4)),
+                                thick,
                                 d->background.color,
                                 root().atlas().imageRectf(root().roundCorners()));
         break;
 
     case Background::BorderGlow:
     case Background::BlurredWithBorderGlow:
-        verts.makeFlexibleFrame(rule().recti().expanded(d->background.thickness),
-                                d->background.thickness,
+    case Background::SharedBlurWithBorderGlow:
+        verts.makeFlexibleFrame(rule().recti().expanded(thick),
+                                thick,
                                 d->background.color,
                                 root().atlas().imageRectf(root().borderGlow()));
         break;
 
     case Background::Blurred: // blurs drawn separately in GuiWidget::draw()
     case Background::SharedBlur:
+    case Background::BlurredWithSolidFill:
         break;
 
     case Background::None:

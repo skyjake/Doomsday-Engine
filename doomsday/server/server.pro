@@ -1,11 +1,11 @@
 # The Doomsday Engine Project
-# Copyright (c) 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
-# Copyright (c) 2012-2013 Daniel Swanson <danij@dengine.net>
+# Copyright (c) 2012-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2012-2014 Daniel Swanson <danij@dengine.net>
 
 TEMPLATE = app
 TARGET = doomsday-server
 
-# Build Configuration --------------------------------------------------------
+# Build Configuration ----------------------------------------------------------
 
 include(../config.pri)
 
@@ -22,15 +22,16 @@ CONFIG -= app_bundle
         -Wno-missing-braces
 }
 
-# External Dependencies ------------------------------------------------------
+# External Dependencies --------------------------------------------------------
 
 include(../dep_zlib.pri)
 include(../dep_lzss.pri)
-include(../dep_deng2.pri)
-include(../dep_deng1.pri)
+include(../dep_core.pri)
+include(../dep_legacy.pri)
 include(../dep_shell.pri)
+include(../dep_doomsday.pri)
 
-# Definitions ----------------------------------------------------------------
+# Definitions ------------------------------------------------------------------
 
 DEFINES += __DOOMSDAY__ __SERVER__
 
@@ -46,16 +47,15 @@ DEFINES += __DOOMSDAY__ __SERVER__
     DEFINES += __USE_BSD _GNU_SOURCE=1
 }
 
-# Linking --------------------------------------------------------------------
+# Linking ----------------------------------------------------------------------
 
 win32 {
     RC_FILE = res/windows/doomsday.rc
     OTHER_FILES += $$RC_FILE
 
-    QMAKE_LFLAGS += /NODEFAULTLIB:libcmt
+    deng_msvc: QMAKE_LFLAGS += /NODEFAULTLIB:libcmt
 
-    LIBS += -lkernel32 -lgdi32 -lole32 -luser32 -lwsock32 \
-        -lopengl32 -lglu32
+    LIBS += -lkernel32 -lgdi32 -lole32 -luser32 -lwsock32 -lopengl32 -lglu32
 }
 else:macx {
 }
@@ -66,10 +66,15 @@ else {
     !freebsd-*: LIBS += -ldl
 }
 
-# Source Files ---------------------------------------------------------------
+# Source Files -----------------------------------------------------------------
 
 # Prefix for source files (shared for now):
 SRC = ../client
+
+PRECOMPILED_HEADER = include/precompiled.h
+
+HEADERS += \
+    include/precompiled.h
 
 DENG_API_HEADERS = \
     $$DENG_API_DIR/apis.h \
@@ -101,13 +106,13 @@ DENG_API_HEADERS = \
     $$DENG_API_DIR/api_svg.h \
     $$DENG_API_DIR/api_thinker.h \
     $$DENG_API_DIR/api_uri.h \
-    $$DENG_API_DIR/api_wad.h \
     $$DENG_API_DIR/dd_share.h \
     $$DENG_API_DIR/dd_types.h \
     $$DENG_API_DIR/dd_version.h \
     $$DENG_API_DIR/def_share.h \
     $$DENG_API_DIR/dengproject.h \
-    $$DENG_API_DIR/doomsday.h
+    $$DENG_API_DIR/doomsday.h \
+    $$DENG_API_DIR/xgclass.h
 
 # Convenience headers.
 DENG_HEADERS += \
@@ -132,17 +137,12 @@ DENG_HEADERS += \
     include/server/sv_sound.h \
     $$SRC/include/audio/s_cache.h \
     $$SRC/include/audio/s_environ.h \
-    $$SRC/include/audio/s_logic.h \
     $$SRC/include/audio/s_main.h \
-    $$SRC/include/audio/s_wav.h \
     $$SRC/include/busymode.h \
-    $$SRC/include/cbuffer.h \
     $$SRC/include/color.h \
     $$SRC/include/con_config.h \
-    $$SRC/include/con_main.h \
     $$SRC/include/dd_def.h \
     $$SRC/include/games.h \
-    $$SRC/include/dd_help.h \
     $$SRC/include/dd_loop.h \
     $$SRC/include/dd_main.h \
     $$SRC/include/dd_pinit.h \
@@ -162,22 +162,9 @@ DENG_HEADERS += \
     $$SRC/include/de_render.h \
     $$SRC/include/de_system.h \
     $$SRC/include/de_ui.h \
-    $$SRC/include/def_data.h \
     $$SRC/include/def_main.h \
-    $$SRC/include/dualstring.h \
     $$SRC/include/edit_map.h \
     $$SRC/include/face.h \
-    $$SRC/include/filehandle.h \
-    $$SRC/include/filesys/file.h \
-    $$SRC/include/filesys/filehandlebuilder.h \
-    $$SRC/include/filesys/fileinfo.h \
-    $$SRC/include/filesys/fs_main.h \
-    $$SRC/include/filesys/fs_util.h \
-    $$SRC/include/filesys/lumpindex.h \
-    $$SRC/include/filesys/manifest.h \
-    $$SRC/include/filesys/searchpath.h \
-    $$SRC/include/filesys/sys_direc.h \
-    $$SRC/include/filetype.h \
     $$SRC/include/game.h \
     $$SRC/include/hedge.h \
     $$SRC/include/library.h \
@@ -198,11 +185,15 @@ DENG_HEADERS += \
     $$SRC/include/resource/colorpalette.h \
     $$SRC/include/resource/compositetexture.h \
     $$SRC/include/resource/image.h \
-    $$SRC/include/resource/lumpcache.h \
+    $$SRC/include/resource/manifest.h \
+    $$SRC/include/resource/mapdef.h \
     $$SRC/include/resource/material.h \
     $$SRC/include/resource/materialarchive.h \
+    $$SRC/include/resource/materialdetaillayer.h \
     $$SRC/include/resource/materialmanifest.h \
     $$SRC/include/resource/materialscheme.h \
+    $$SRC/include/resource/materialshinelayer.h \
+    $$SRC/include/resource/materialtexturelayer.h \
     $$SRC/include/resource/patch.h \
     $$SRC/include/resource/patchname.h \
     $$SRC/include/resource/rawtexture.h \
@@ -211,32 +202,30 @@ DENG_HEADERS += \
     $$SRC/include/resource/texture.h \
     $$SRC/include/resource/texturemanifest.h \
     $$SRC/include/resource/texturescheme.h \
-    $$SRC/include/resource/wad.h \
-    $$SRC/include/resource/zip.h \
-    $$SRC/include/resourceclass.h \
     $$SRC/include/sys_system.h \
     $$SRC/include/tab_anorms.h \
     $$SRC/include/ui/busyvisual.h \
-    $$SRC/include/ui/dd_ui.h \
-    $$SRC/include/ui/fi_main.h \
-    $$SRC/include/ui/finaleinterpreter.h \
-    $$SRC/include/ui/p_control.h \
-    $$SRC/include/ui/ui2_main.h \
-    $$SRC/include/uri.hh \
+    $$SRC/include/ui/infine/finale.h \
+    $$SRC/include/ui/infine/finaleanimwidget.h \
+    $$SRC/include/ui/infine/finaleinterpreter.h \
+    $$SRC/include/ui/infine/finalepagewidget.h \
+    $$SRC/include/ui/infine/finaletextwidget.h \
+    $$SRC/include/ui/infine/finalewidget.h \
     $$SRC/include/world/dmuargs.h \
     $$SRC/include/world/blockmap.h \
-    $$SRC/include/world/bsp/bsptreenode.h \
-    $$SRC/include/world/bsp/convexsubspace.h \
+    $$SRC/include/world/bsp/convexsubspaceproxy.h \
     $$SRC/include/world/bsp/edgetip.h \
     $$SRC/include/world/bsp/hplane.h \
     $$SRC/include/world/bsp/linesegment.h \
-    $$SRC/include/world/bsp/partitioncost.h \
     $$SRC/include/world/bsp/partitioner.h \
+    $$SRC/include/world/bsp/partitionevaluator.h \
     $$SRC/include/world/bsp/superblockmap.h \
     $$SRC/include/world/bspleaf.h \
     $$SRC/include/world/bspnode.h \
+    $$SRC/include/world/convexsubspace.h \
     $$SRC/include/world/entitydatabase.h \
     $$SRC/include/world/entitydef.h \
+    $$SRC/include/world/impulseaccumulator.h \
     $$SRC/include/world/interceptor.h \
     $$SRC/include/world/line.h \
     $$SRC/include/world/lineblockmap.h \
@@ -249,9 +238,11 @@ DENG_HEADERS += \
     $$SRC/include/world/p_ticker.h \
     $$SRC/include/world/plane.h \
     $$SRC/include/world/polyobj.h \
+    $$SRC/include/world/polyobjdata.h \
     $$SRC/include/world/propertyvalue.h \
     $$SRC/include/world/reject.h \
     $$SRC/include/world/sector.h \
+    $$SRC/include/world/sky.h \
     $$SRC/include/world/surface.h \
     $$SRC/include/world/thinkers.h \
     $$SRC/include/world/vertex.h \
@@ -311,39 +302,21 @@ SOURCES += \
     src/server/sv_missile.cpp \
     src/server/sv_pool.cpp \
     src/server/sv_sound.cpp \
+    $$SRC/src/api_console.cpp \
+    $$SRC/src/api_filesys.cpp \
     $$SRC/src/api_uri.cpp \
     $$SRC/src/audio/s_cache.cpp \
-    $$SRC/src/audio/s_logic.cpp \
     $$SRC/src/audio/s_main.cpp \
-    $$SRC/src/audio/s_wav.cpp \
     $$SRC/src/busymode.cpp \
-    $$SRC/src/cbuffer.cpp \
     $$SRC/src/color.cpp \
     $$SRC/src/con_config.cpp \
-    $$SRC/src/con_data.cpp \
-    $$SRC/src/con_main.cpp \
     $$SRC/src/games.cpp \
-    $$SRC/src/dd_help.cpp \
     $$SRC/src/dd_loop.cpp \
     $$SRC/src/dd_main.cpp \
     $$SRC/src/dd_pinit.cpp \
     $$SRC/src/dd_plugin.cpp \
-    $$SRC/src/dd_wad.cpp \
-    $$SRC/src/def_data.cpp \
     $$SRC/src/def_main.cpp \
-    $$SRC/src/def_read.cpp \
-    $$SRC/src/dualstring.cpp \
     $$SRC/src/face.cpp \
-    $$SRC/src/filesys/file.cpp \
-    $$SRC/src/filesys/filehandle.cpp \
-    $$SRC/src/filesys/fileid.cpp \
-    $$SRC/src/filesys/fs_main.cpp \
-    $$SRC/src/filesys/fs_scheme.cpp \
-    $$SRC/src/filesys/fs_util.cpp \
-    $$SRC/src/filesys/lumpindex.cpp \
-    $$SRC/src/filesys/manifest.cpp \
-    $$SRC/src/filesys/searchpath.cpp \
-    $$SRC/src/filesys/sys_direc.cpp \
     $$SRC/src/game.cpp \
     $$SRC/src/hedge.cpp \
     $$SRC/src/library.cpp \
@@ -366,10 +339,15 @@ SOURCES += \
     $$SRC/src/resource/compositetexture.cpp \
     $$SRC/src/resource/hq2x.cpp \
     $$SRC/src/resource/image.cpp \
+    $$SRC/src/resource/manifest.cpp \
+    $$SRC/src/resource/mapdef.cpp \
     $$SRC/src/resource/material.cpp \
     $$SRC/src/resource/materialarchive.cpp \
+    $$SRC/src/resource/materialdetaillayer.cpp \
     $$SRC/src/resource/materialmanifest.cpp \
     $$SRC/src/resource/materialscheme.cpp \
+    $$SRC/src/resource/materialshinelayer.cpp \
+    $$SRC/src/resource/materialtexturelayer.cpp \
     $$SRC/src/resource/patch.cpp \
     $$SRC/src/resource/patchname.cpp \
     $$SRC/src/resource/pcx.cpp \
@@ -379,28 +357,31 @@ SOURCES += \
     $$SRC/src/resource/texturemanifest.cpp \
     $$SRC/src/resource/texturescheme.cpp \
     $$SRC/src/resource/tga.cpp \
-    $$SRC/src/resource/wad.cpp \
-    $$SRC/src/resource/zip.cpp \
     $$SRC/src/sys_system.cpp \
     $$SRC/src/tab_tables.c \
-    $$SRC/src/ui/fi_main.cpp \
-    $$SRC/src/ui/finaleinterpreter.cpp \
-    $$SRC/src/ui/p_control.cpp \
-    $$SRC/src/ui/ui2_main.cpp \
-    $$SRC/src/uri.cpp \
+    $$SRC/src/ui/infine/finale.cpp \
+    $$SRC/src/ui/infine/finaleanimwidget.cpp \
+    $$SRC/src/ui/infine/finaleinterpreter.cpp \
+    $$SRC/src/ui/infine/finalepagewidget.cpp \
+    $$SRC/src/ui/infine/finaletextwidget.cpp \
+    $$SRC/src/ui/infine/finalewidget.cpp \
+    $$SRC/src/ui/infine/infinesystem.cpp \
     $$SRC/src/world/api_map.cpp \
     $$SRC/src/world/api_mapedit.cpp \
     $$SRC/src/world/blockmap.cpp \
-    $$SRC/src/world/bsp/convexsubspace.cpp \
+    $$SRC/src/world/bsp/convexsubspaceproxy.cpp \
     $$SRC/src/world/bsp/hplane.cpp \
     $$SRC/src/world/bsp/linesegment.cpp \
     $$SRC/src/world/bsp/partitioner.cpp \
+    $$SRC/src/world/bsp/partitionevaluator.cpp \
     $$SRC/src/world/bsp/superblockmap.cpp \
     $$SRC/src/world/bspleaf.cpp \
     $$SRC/src/world/bspnode.cpp \
+    $$SRC/src/world/convexsubspace.cpp \
     $$SRC/src/world/dmuargs.cpp \
     $$SRC/src/world/entitydatabase.cpp \
     $$SRC/src/world/entitydef.cpp \
+    $$SRC/src/world/impulseaccumulator.cpp \
     $$SRC/src/world/interceptor.cpp \
     $$SRC/src/world/line.cpp \
     $$SRC/src/world/lineblockmap.cpp \
@@ -413,27 +394,24 @@ SOURCES += \
     $$SRC/src/world/p_ticker.cpp \
     $$SRC/src/world/plane.cpp \
     $$SRC/src/world/polyobj.cpp \
+    $$SRC/src/world/polyobjdata.cpp \
     $$SRC/src/world/propertyvalue.cpp \
     $$SRC/src/world/reject.cpp \
     $$SRC/src/world/sector.cpp \
     $$SRC/src/world/sectorcluster.cpp \
+    $$SRC/src/world/sky.cpp \
     $$SRC/src/world/surface.cpp \
     $$SRC/src/world/thinkers.cpp \
     $$SRC/src/world/vertex.cpp \
     $$SRC/src/world/worldsystem.cpp
 
 OTHER_FILES += \
-    data/cphelp.txt \
     include/template.h.template \
     src/template.c.template
 
 # Resources ------------------------------------------------------------------
 
 data.files = $$OUT_PWD/../doomsday.pk3
-
-mod.files = \
-    $$DENG_MODULES_DIR/Config.de \
-    $$DENG_MODULES_DIR/recutil.de
 
 macx {
     res.path = Contents/Resources
@@ -442,25 +420,28 @@ macx {
         $$SRC/res/macx/deng.icns
 
     data.path = $${res.path}
-    mod.path  = $${res.path}/modules
 
-    QMAKE_BUNDLE_DATA += mod res data
+    QMAKE_BUNDLE_DATA += res data
 
     QMAKE_INFO_PLIST = ../build/mac/Info.plist
 
-    linkBinaryToBundledLibdeng2($$TARGET)
-    linkBinaryToBundledLibdengShell($$TARGET)
+    xcodeFinalizeAppBuild()
+    linkBinaryToBundledLibcore($$TARGET)
+    linkBinaryToBundledLibshell($$TARGET)
 }
 
 # Installation ---------------------------------------------------------------
 
+deng_noclient {
+    # Packages are usually deployed by the client project.
+    deployPackages($$DENG_PACKAGES, $$OUT_PWD/..)
+}
+deployTarget()
+
 !macx {
     # Common (non-Mac) parts of the installation.
-    INSTALLS += target data mod
-
-    target.path = $$DENG_BIN_DIR
-    data.path   = $$DENG_DATA_DIR
-    mod.path    = $$DENG_BASE_DIR/modules
+    INSTALLS += data
+    data.path = $$DENG_DATA_DIR
 
     win32 {
         # Windows-specific installation.

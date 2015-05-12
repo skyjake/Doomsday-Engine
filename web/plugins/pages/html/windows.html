@@ -10,8 +10,8 @@
 </article>
 <article><h1>Minimum System Requirements</h1>
 <ul>
-<li>Windows XP, Vista, 7 or 8 running <a href="http://www.microsoft.com/directx" rel="nofollow" class="link-external" title="http://www.microsoft.com/directx">DirectX 8</a> (or later).</li>
-<li>Display adapter capable of 3D hardware acceleration using OpenGL.</li>
+<li>Windows Vista, 7 or 8 running <a href="http://www.microsoft.com/directx" rel="nofollow" class="link-external" title="http://www.microsoft.com/directx">DirectX 8</a> (or later).</li>
+<li>Display adapter capable of 3D hardware acceleration using OpenGL 2.0.</li>
 <li>Original game data files for each supported game that you wish to play (e.g., in the case of <strong>DOOM</strong> the only file needed is <em>doom.wad</em>).</li>
 <li>Some <a href="/addons" title="Doomsday add-ons">add-ons</a> may require a large amount of disk space (especially high quality texture and music packs).</li>
 </ul></article>
@@ -77,7 +77,7 @@ function genPackageBadgeHTML(json, downloadUri)
         var shortDate = (releaseDate.getDate()) + '/' + (1 + releaseDate.getMonth()) + '/' + releaseDate.getFullYear();
         metaData += '<span title="Release Date">' + shortDate + '</span> &middot; ';
     }
-    metaData += /*json.platform_name + */'Windows XP sp2+</span>';
+    metaData += /*json.platform_name + */'Windows Vista (or later)</span>';
 
     return $('<div class="package_badge"><a class="package_name" href="' + downloadUri + '" title="Download ' + json.fulltitle + '">' + cleanTitle + '</a><br />' + metaData + '</div>');
 }

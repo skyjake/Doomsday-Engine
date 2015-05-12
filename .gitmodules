@@ -1,0 +1,3 @@
+[submodule "doomsday/external/assimp"]
+	path = doomsday/external/assimp
+	url = https://github.com/skyjake/assimp

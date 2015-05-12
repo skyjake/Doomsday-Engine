@@ -1,7 +1,7 @@
-/** @file b_main.h Event and device state bindings system.
+/** @file b_main.h  Event and device state bindings system.
  *
  * @authors Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,59 +17,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_BIND_MAIN_H
-#define DENG_CLIENT_BIND_MAIN_H
+#ifndef CLIENT_INPUTSYSTEM_BINDINGS_H
+#define CLIENT_INPUTSYSTEM_BINDINGS_H
 
-#ifndef __CLIENT__
-#  error "Bindings only exist in the Client"
-#endif
+void B_Init();
 
-#include <de/types.h>
-#include "dd_input.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#define DEFAULT_BINDING_CONTEXT_NAME    "game"
-#define CONSOLE_BINDING_CONTEXT_NAME    "console"
-#define UI_BINDING_CONTEXT_NAME         "deui"
-#define GLOBAL_BINDING_CONTEXT_NAME     "global"
-
-extern int symbolicEchoMode;
-
-void            B_Register(void);
-void            B_Init(void);
-void            B_Shutdown(void);
-dd_bool         B_Delete(int bid);
-dd_bool         B_Responder(ddevent_t* ev);
-void            B_WriteToFile(FILE* file);
-
-/**
- * Enable the contexts for the initial state.
- */
-void B_InitialContextActivations(void);
-
-void B_BindDefaults(void);
-void B_BindGameDefaults(void);
-
-struct evbinding_s* B_BindCommand(const char* eventDesc, const char* command);
-struct dbinding_s* B_BindControl(const char* controlDesc, const char* device);
-struct dbinding_s* B_GetControlDeviceBindings(int localNum, int control, struct bcontext_s** bContext);
-
-bool B_UnbindCommand(char const *command);
-
-// Utils
-/// @todo: move to b_util.h
-int B_NewIdentifier(void);
-
-const char* B_ShortNameForKey2(int ddKey, dd_bool forceLowercase);
-const char* B_ShortNameForKey(int ddkey);
-
-int B_KeyForShortName(const char* key);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif // DENG_CLIENT_BIND_MAIN_H
+#endif // CLIENT_INPUTSYSTEM_BINDINGS_H

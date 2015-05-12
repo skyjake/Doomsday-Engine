@@ -33,6 +33,8 @@ class SavedSessionMenuWidget : public SessionMenuWidget
 public:
     SavedSessionMenuWidget();
 
+    void update();
+
     de::Action *makeAction(de::ui::Item const &item);
 
     // Widget factory.

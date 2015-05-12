@@ -38,9 +38,6 @@ desc = Show the Help screens.
 [kill]
 desc = Kill all the monsters on the map.
 
-[listmaps]
-desc = List all loaded maps.
-
 [loadgame]
 desc = Load a game-save or open the load menu.
 inf = Params: loadgame (game-save-name|<keyword>|save-slot-num) (confirm)\nKeywords: last, quick\nExamples:\nOpen load menu: 'loadgame'\nLoading named game: 'loadgame "running low on ammo"'\nLoading current "quick" slot, confirmed: 'loadgame quick confirm'\nLoading slot #0: 'loadgame 0'
@@ -102,9 +99,6 @@ desc = Move a sector's both planes.
 
 [noclip]
 desc = Toggle movement clipping on/off, to walk through walls (cheat).
-
-[notarget]
-desc = Enemies will not target the player (cheat).
 
 [pause]
 desc = Pause the game (same as pressing the pause key).
@@ -413,7 +407,10 @@ desc = 1=Show door colors in automap.
 desc = Door glow thickness in the automap (with map-door-colors).
 
 [map-episode]
-desc = Current episode.
+desc = Current episode id.
+
+[map-hub]
+desc = Current hub id.
 
 [map-huddisplay]
 desc = 0=No HUD when in the automap 1=Current HUD display shown when in the automap 2=Always show Status Bar when in the automap
@@ -813,9 +810,6 @@ desc = 1=Show keys in HUD.
 
 [hud-status-weaponslots-ownedfix]
 desc = 1=Fix original DOOM behavior when drawing the statusbar owned weapon display.
-
-[map-mission]
-desc = Current mission.
 
 [menu-quitsound]
 desc = 1=Play a sound when quitting the game.

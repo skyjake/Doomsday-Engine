@@ -1,7 +1,7 @@
 /** @file shelluser.cpp  Remote user of a shell connection.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,14 +18,18 @@
  */
 
 #include "shelluser.h"
+
 #include <de/shell/Protocol>
 #include <de/shell/Lexicon>
-#include <de/LogSink>
 #include <de/Log>
 #include <de/LogBuffer>
+#include <de/LogSink>
+#include <doomsday/console/exec.h>
+#include <doomsday/console/knownword.h>
 
-#include "de_base.h"
-#include "con_main.h"
+#include "api_console.h"
+
+#include "dd_main.h"
 #include "games.h"
 #include "Game"
 #include "network/net_main.h"
@@ -43,12 +47,12 @@ DENG2_PIMPL(ShellUser), public LogSink
     Instance(Public &i) : Base(i)
     {
         // We will send all log entries to a shell user.
-        LogBuffer::appBuffer().addSink(*this);
+        LogBuffer::get().addSink(*this);
     }
 
     ~Instance()
     {
-        LogBuffer::appBuffer().removeSink(*this);
+        LogBuffer::get().removeSink(*this);
     }
 
     LogSink &operator << (LogEntry const &entry)
@@ -121,7 +125,7 @@ void ShellUser::sendGameState()
     {
         Map &map = App_WorldSystem().map();
 
-        mapId = map.uri().resolvedRef();
+        mapId = (map.def()? map.def()->composeUri().path() : "(unknown map)");
 
         /// @todo A cvar is not an appropriate place to ask for this --
         /// should be moved to the Map class.
@@ -136,15 +140,16 @@ void ShellUser::sendMapOutline()
 {
     if(!App_WorldSystem().hasMap()) return;
 
-    QScopedPointer<shell::MapOutlinePacket> packet(new shell::MapOutlinePacket);
+    std::unique_ptr<shell::MapOutlinePacket> packet(new shell::MapOutlinePacket);
 
-    foreach(Line *line, App_WorldSystem().map().lines())
+    App_WorldSystem().map().forAllLines([&packet] (Line &line)
     {
-        packet->addLine(Vector2i(line->fromOrigin().x, line->fromOrigin().y),
-                        Vector2i(line->toOrigin().x, line->toOrigin().y),
-                        (line->hasFrontSector() && line->hasBackSector())?
+        packet->addLine(Vector2i(line.fromOrigin().x, line.fromOrigin().y),
+                        Vector2i(line.toOrigin().x, line.toOrigin().y),
+                        (line.hasFrontSector() && line.hasBackSector())?
                                  shell::MapOutlinePacket::TwoSidedLine : shell::MapOutlinePacket::OneSidedLine);
-    }
+        return LoopContinue;
+    });
 
     *this << *packet;
 }

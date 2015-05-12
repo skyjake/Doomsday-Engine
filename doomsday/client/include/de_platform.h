@@ -26,6 +26,7 @@
 #define __DOOMSDAY_PLATFORM__
 
 #include "dd_types.h"
+#include <de/libcore.h>
 
 /*
  * The Win32 Platform
@@ -38,7 +39,9 @@
 #  include <QIODevice>
 #  include <QFile>
 #  include <QTemporaryFile>
-#  include <QAbstractFileEngine>
+#  ifndef DENG2_QT_5_0_OR_NEWER
+#    include <QAbstractFileEngine>
+#  endif
 #endif
 
 #define WIN32_LEAN_AND_MEAN
@@ -47,32 +50,12 @@
 
 #define INTEGER64 __int64
 
-#define DIR_SEP_CHAR    '\\'
-#define DIR_SEP_STR     "\\"
-#define DIR_WRONG_SEP_CHAR  '/'
-
-#define stricmp _stricmp
+#define stricmp  _stricmp
 #define strnicmp _strnicmp
-//#define open _open
-//#define close _close
-//#define read _read
-//#define write _write
-#define access _access
-#define mkdir _mkdir
-#define strlwr _strlwr
-#define strupr _strupr
-#define strdup _strdup
-#define spawnlp _spawnlp
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-const char* strcasestr(const char* text, const char* sub);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
+#define strlwr   _strlwr
+#define strupr   _strupr
+#define strdup   _strdup
+#define spawnlp  _spawnlp
 
 #endif                          // WIN32
 
@@ -108,10 +91,6 @@ typedef unsigned int DWORD;
 #define _chdrive(x)
 #define _getcwd         getcwd
 #define _chdir          chdir
-
-#define DIR_SEP_CHAR        '/'
-#define DIR_SEP_STR         "/"
-#define DIR_WRONG_SEP_CHAR  '\\'
 
 #endif                          // UNIX
 

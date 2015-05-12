@@ -33,6 +33,8 @@ namespace de {
  */
 class LIBAPPFW_PUBLIC ButtonWidget : public LabelWidget
 {
+    Q_OBJECT
+
 public:
     enum State {
         Up,
@@ -66,7 +68,9 @@ public:
         ModulateColor
     };
 
-    void useInfoStyle();
+    void useInfoStyle(bool yes = true);
+
+    void useNormalStyle() { useInfoStyle(false); }
 
     bool isUsingInfoStyle() const;
 
@@ -101,6 +105,9 @@ public:
     // Events.
     void update();
     bool handleEvent(Event const &event);
+
+signals:
+    void pressed();
 
 protected:
     void updateModelViewProjection(GLUniform &uMvp);

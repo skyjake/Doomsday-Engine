@@ -1,4 +1,4 @@
-/** @file example.c Example of Doomsday plugin which is called at startup.
+/** @file example.c  Example of Doomsday plugin that is called at startup.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
@@ -18,7 +18,7 @@
  */
 
 #include <doomsday.h>
-#include <de/c_wrapper.h> // libdeng2 C API
+#include <de/c_wrapper.h> // libcore C API
 #include "version.h"
 
 /*

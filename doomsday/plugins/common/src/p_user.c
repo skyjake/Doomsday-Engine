@@ -30,20 +30,20 @@
  * Bobbing POV/weapon, movement, pending weapon...
  */
 
+#include "common.h"
+#include "p_user.h"
+
 #include <math.h>
 #include <string.h>
-
-#include "common.h"
 #include "fi_lib.h"
-#include "doomsday.h"
 #include "g_common.h"
+#include "d_net.h"
+#include "d_netcl.h"
 #include "player.h"
 #include "p_tick.h" // for Pause_IsPaused()
 #include "p_view.h"
-#include "d_net.h"
 #include "player.h"
 #include "p_map.h"
-#include "p_user.h"
 #include "g_common.h"
 #include "am_map.h"
 #include "hu_log.h"
@@ -143,9 +143,9 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
         18,
         SFX_PLAYER_FIGHTER_FAILED_USE,
         {25 * FRACUNIT, 20 * FRACUNIT, 15 * FRACUNIT, 5 * FRACUNIT},
-        {190, 225, 234},
-        { TXT_SKILLF1, TXT_SKILLF2, TXT_SKILLF3, TXT_SKILLF4, TXT_SKILLF5 }
-
+        { TXT_SKILLF1, TXT_SKILLF2, TXT_SKILLF3, TXT_SKILLF4, TXT_SKILLF5 },
+        { { { 190, 0 }, "WPIECEF1" }, { { 225, 0 }, "WPIECEF2" }, { { 234, 0 }, "WPIECEF3" } },
+        "WPFULL0"
     },
     {   // Cleric
         PCLASS_CLERIC, NULL, true,
@@ -164,8 +164,9 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
         18,
         SFX_PLAYER_CLERIC_FAILED_USE,
         {10 * FRACUNIT, 25 * FRACUNIT, 5 * FRACUNIT, 20 * FRACUNIT},
-        {190, 212, 225},
-        { TXT_SKILLC1, TXT_SKILLC2, TXT_SKILLC3, TXT_SKILLC4, TXT_SKILLC5 }
+        { TXT_SKILLC1, TXT_SKILLC2, TXT_SKILLC3, TXT_SKILLC4, TXT_SKILLC5 },
+        { { { 190, 0 }, "WPIECEC1" }, { { 212, 0 }, "WPIECEC2" }, { { 225, 0 }, "WPIECEC3" } },
+        "WPFULL1"
     },
     {   // Mage
         PCLASS_MAGE, NULL, true,
@@ -184,8 +185,9 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
         18,
         SFX_PLAYER_MAGE_FAILED_USE,
         {5 * FRACUNIT, 15 * FRACUNIT, 10 * FRACUNIT, 25 * FRACUNIT},
-        {190, 205, 224},
-        { TXT_SKILLM1, TXT_SKILLM2, TXT_SKILLM3, TXT_SKILLM4, TXT_SKILLM5 }
+        { TXT_SKILLM1, TXT_SKILLM2, TXT_SKILLM3, TXT_SKILLM4, TXT_SKILLM5 },
+        { { { 190, 0 }, "WPIECEM1" }, { { 205, 0 }, "WPIECEM2" }, { { 224, 0 }, "WPIECEM3" } },
+        "WPFULL2"
     },
     {   // Pig
         PCLASS_PIG, NULL, false,
@@ -230,30 +232,7 @@ void P_Thrust(player_t *player, angle_t angle, coord_t move)
 
     if(!(player->powers[PT_FLIGHT] && !(mo->origin[VZ] <= mo->floorZ)))
     {
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-        Sector *sec = Mobj_Sector(mo);
-#endif
-#if __JHEXEN__
-        terraintype_t const *tt = P_MobjFloorTerrain(mo);
-#endif
-
-#if __JHEXEN__
-        if(tt->flags & TTF_FRICTION_LOW)
-        {
-            move /= 2;
-        }
-#elif __JHERETIC__
-        if(P_ToXSector(sec)->special == 15) // Friction_Low
-        {
-            move /= 4;
-        }
-        else
-#endif
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-        {
-            move *= XS_ThrustMul(sec);
-        }
-#endif
+        move *= Mobj_ThrustMul(mo);
     }
 
     mo->mom[MX] += move * FIX2FLT(finecosine[an]);
@@ -291,13 +270,13 @@ dd_bool P_IsPlayerOnGround(player_t* player)
  */
 void P_CheckPlayerJump(player_t* player)
 {
-    float power = (IS_CLIENT ? netJumpPower : cfg.jumpPower);
+    float power = (IS_CLIENT ? netJumpPower : cfg.common.jumpPower);
 
     if(player->plr->flags & DDPF_CAMERA)
         return; // Cameras don't jump.
 
     // Check if we are allowed to jump.
-    if(cfg.jumpEnabled && power > 0 && P_IsPlayerOnGround(player) &&
+    if(cfg.common.jumpEnabled && power > 0 && P_IsPlayerOnGround(player) &&
        player->brain.jump && player->jumpTics <= 0)
     {
         // Jump, then!
@@ -428,7 +407,7 @@ void P_MovePlayer(player_t *player)
 
     // Slow > fast. Fast > slow.
     speed = brain->speed;
-    if(cfg.alwaysRun)
+    if(cfg.common.alwaysRun)
         speed = !speed;
 
     // Do not let the player control movement if not onground.
@@ -447,8 +426,8 @@ void P_MovePlayer(player_t *player)
     {
         // 'Move while in air' hack (server doesn't know about this!!).
         // Movement while in air traditionally disabled.
-        int const movemul = (onground || (plrmo->flags2 & MF2_FLY))? pClassInfo->moveMul
-                                                                   : (cfg.airborneMovement? cfg.airborneMovement * 64 : 0);
+        int const movemul = (onground || (plrmo->flags2 & MF2_FLY))?
+                    pClassInfo->moveMul : (cfg.common.airborneMovement? cfg.common.airborneMovement * 64 : 0);
 
         if(!brain->lunge)
         {
@@ -458,10 +437,10 @@ void P_MovePlayer(player_t *player)
             sideMove    = FIX2FLT(pClassInfo->sideMove[speed])    * turboMul * MINMAX_OF(-1.f, brain->sideMove,    1.f);
 
             // Players can opt to reduce their maximum possible movement speed.
-            if((int) cfg.playerMoveSpeed != 1)
+            if((int) cfg.common.playerMoveSpeed != 1)
             {
                 // A divsor has been specified, apply it.
-                coord_t m = MINMAX_OF(0.f, cfg.playerMoveSpeed, 1.f);
+                coord_t m = MINMAX_OF(0.f, cfg.common.playerMoveSpeed, 1.f);
                 forwardMove *= m;
                 sideMove    *= m;
             }
@@ -682,9 +661,9 @@ void P_DeathThink(player_t* player)
  *
  * @param player        Player that wishes to be reborn.
  */
-void P_PlayerReborn(player_t* player)
+void P_PlayerReborn(player_t *player)
 {
-    const uint plrNum = player - players;
+    int const plrNum = player - players;
 
     if(plrNum == CONSOLEPLAYER)
     {
@@ -1213,17 +1192,20 @@ void P_PlayerThinkItems(player_t *player)
 #if __JHERETIC__ || __JHEXEN__
     if(player->brain.upMove > 0 && !player->powers[PT_FLIGHT])
     {
-        // Start flying automatically.
-        P_InventoryUse(pnum, IIT_FLY, false);
+        // Start flying automatically, if Wings are available.
+        if(P_InventoryCount(pnum, IIT_FLY))
+        {
+            P_InventoryUse(pnum, IIT_FLY, false);
+        }
     }
 #endif
 }
 
-void P_PlayerThinkWeapons(player_t* player)
+void P_PlayerThinkWeapons(player_t *player)
 {
-    playerbrain_t*      brain = &player->brain;
-    weapontype_t        oldweapon = player->pendingWeapon;
-    weapontype_t        newweapon = WT_NOCHANGE;
+    playerbrain_t *brain = &player->brain;
+    //weapontype_t oldweapon = player->pendingWeapon;
+    weapontype_t newweapon = WT_NOCHANGE;
 
     if(IS_NETWORK_SERVER)
     {
@@ -1364,9 +1346,9 @@ void P_PlayerThinkMap(player_t* player)
 
     if(brain->mapRotate)
     {
-        cfg.automapRotate = !cfg.automapRotate;
-        ST_SetAutomapCameraRotation(playerIdx, cfg.automapRotate);
-        P_SetMessage(player, LMF_NO_HIDE, (cfg.automapRotate ? AMSTR_ROTATEON : AMSTR_ROTATEOFF));
+        cfg.common.automapRotate = !cfg.common.automapRotate;
+        ST_SetAutomapCameraRotation(playerIdx, cfg.common.automapRotate);
+        P_SetMessage(player, LMF_NO_HIDE, (cfg.common.automapRotate ? AMSTR_ROTATEON : AMSTR_ROTATEOFF));
     }
 
     if(brain->mapZoomMax)
@@ -1427,7 +1409,7 @@ void P_PlayerThinkPowers(player_t* player)
     {
         if(!--player->powers[PT_FLIGHT])
         {
-            if(player->plr->mo->origin[VZ] != player->plr->mo->floorZ && cfg.lookSpring)
+            if(player->plr->mo->origin[VZ] != player->plr->mo->floorZ && cfg.common.lookSpring)
             {
                 player->centering = true;
             }
@@ -1621,7 +1603,7 @@ void P_PlayerThinkLookYaw(player_t* player, timespan_t ticLength)
 
     // Check for extra speed.
     P_GetControlState(playerNum, CTL_SPEED, &vel, NULL);
-    if(!FEQUAL(vel, 0) ^ (cfg.alwaysRun != 0))
+    if(!FEQUAL(vel, 0) ^ (cfg.common.alwaysRun != 0))
     {
         // Hurry, good man!
         turnSpeedPerTic = pClassInfo->turnSpeed[1];
@@ -1717,15 +1699,15 @@ void P_PlayerThinkLookPitch(player_t* player, timespan_t ticLength)
     plr->lookDir = MINMAX_OF(-LOOKDIRMAX, plr->lookDir, LOOKDIRMAX);
 }
 
-void P_PlayerThinkUpdateControls(player_t* player)
+void P_PlayerThinkUpdateControls(player_t *player)
 {
-    int                 playerNum = player - players;
-    ddplayer_t         *dp = player->plr;
-    float               vel, off, offsetSensitivity = 100;
-    int                 i;
-    dd_bool             strafe = false;
-    playerbrain_t      *brain = &player->brain;
-    dd_bool             oldAttack = brain->attack;
+    int playerNum = player - players;
+    ddplayer_t *dp = player->plr;
+    float vel, off, offsetSensitivity = 100;
+    int i;
+    //dd_bool strafe = false;
+    playerbrain_t *brain = &player->brain;
+    dd_bool oldAttack = brain->attack;
 
     if(IS_DEDICATED) return;
 
@@ -1735,7 +1717,7 @@ void P_PlayerThinkUpdateControls(player_t* player)
 
     // Check for strafe.
     P_GetControlState(playerNum, CTL_MODIFIER_1, &vel, 0);
-    strafe = (!FEQUAL(vel, 0));
+    //strafe = (!FEQUAL(vel, 0));
 
     // Move status.
     P_GetControlState(playerNum, CTL_WALK, &vel, &off);
@@ -1764,7 +1746,7 @@ void P_PlayerThinkUpdateControls(player_t* player)
     }
 
     // Check for look centering based on lookSpring.
-    if(cfg.lookSpring &&
+    if(cfg.common.lookSpring &&
        (fabs(brain->forwardMove) > .333f || fabs(brain->sideMove) > .333f))
     {
         // Center view when mlook released w/lookspring, or when moving.

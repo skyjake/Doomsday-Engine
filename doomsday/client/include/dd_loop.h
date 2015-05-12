@@ -80,6 +80,11 @@ dd_bool DD_IsFrameTimeAdvancing(void);
 timespan_t DD_LatestRunTicsStartTime(void);
 
 /**
+ * Returns how much time has elapsed during the current tick.
+ */
+timespan_t DD_CurrentTickDuration(void);
+
+/**
  * Sets the exit code for the main loop. Does not cause the main loop
  * to stop; you need to call Sys_Quit() to do that.
  */

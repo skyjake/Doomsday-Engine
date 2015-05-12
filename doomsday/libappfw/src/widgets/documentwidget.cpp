@@ -32,7 +32,7 @@ public Font::RichFormat::IStyle
 {
     typedef DefaultVertexBuf VertexBuf;
 
-    ProgressWidget *progress;
+    ProgressWidget *progress = nullptr;
 
     // Style.
     ColorBank::Color normalColor;
@@ -42,9 +42,9 @@ public Font::RichFormat::IStyle
     ColorBank::Color dimAccentColor;
 
     // State.
-    ui::SizePolicy widthPolicy;
-    int maxLineWidth;
-    int oldScrollY;
+    ui::SizePolicy widthPolicy = ui::Expand;
+    int maxLineWidth = 1000;
+    int oldScrollY = 0;
     String styledText;
     String text;
 
@@ -52,20 +52,12 @@ public Font::RichFormat::IStyle
     TextDrawable glText;
     Drawable drawable;
     Matrix4f modelMatrix;
-    GLUniform uMvpMatrix;
-    GLUniform uScrollMvpMatrix;
-    GLUniform uColor;
     GLState clippedTextState;
+    GLUniform uMvpMatrix       { "uMvpMatrix", GLUniform::Mat4 };
+    GLUniform uScrollMvpMatrix { "uMvpMatrix", GLUniform::Mat4 };
+    GLUniform uColor           { "uColor",     GLUniform::Vec4 };
 
-    Instance(Public *i)
-        : Base(i)
-        , progress(0)
-        , widthPolicy(ui::Expand)
-        , maxLineWidth(1000)
-        , oldScrollY(0)
-        , uMvpMatrix      ("uMvpMatrix", GLUniform::Mat4)
-        , uScrollMvpMatrix("uMvpMatrix", GLUniform::Mat4)
-        , uColor          ("uColor",     GLUniform::Vec4)
+    Instance(Public *i) : Base(i)
     {
         updateStyle();
 
@@ -121,6 +113,11 @@ public Font::RichFormat::IStyle
                          int &colorIndex) const
     {
         return style().richStyleFormat(contentStyle, sizeFactor, fontWeight, fontStyle, colorIndex);
+    }
+
+    Font const *richStyleFont(Font::RichFormat::Style fontStyle) const
+    {
+        return style().richStyleFont(fontStyle);
     }
 
     void glInit()
@@ -185,8 +182,8 @@ public Font::RichFormat::IStyle
         glText.setLineWrapWidth(wrapWidth);
         if(glText.update())
         {
-            // Text is ready for drawing.
-            if(progress->isVisible())
+            // Text is ready for drawing?
+            if(!glText.isBeingWrapped() && progress->isVisible())
             {
                 self.setContentSize(glText.wrappedSize());
                 progress->hide();
@@ -210,11 +207,11 @@ public Font::RichFormat::IStyle
             DENG2_ASSERT(glText.isReady());
 
             // Determine visible range of lines.
-            Font const &font = self.font();
-            int contentHeight = self.contentHeight();
+            Font const &font     = self.font();
+            int contentHeight    = self.contentHeight();
             int const extraLines = 1;
-            int numVisLines = contentHeight / font.lineSpacing().valuei() + 2 * extraLines;
-            int firstVisLine = scrollY / font.lineSpacing().valuei() - extraLines + 1;
+            int numVisLines      = contentHeight / font.lineSpacing().valuei() + 2 * extraLines;
+            int firstVisLine     = scrollY / font.lineSpacing().valuei() - extraLines + 1;
 
             // Update visible range and release/alloc lines accordingly.
             Rangei visRange(firstVisLine, firstVisLine + numVisLines);
@@ -226,6 +223,9 @@ public Font::RichFormat::IStyle
                 VertexBuf::Builder verts;
                 glText.makeVertices(verts, Vector2i(0, 0), ui::AlignLeft);
                 drawable.buffer<VertexBuf>(ID_TEXT).setVertices(gl::TriangleStrip, verts, gl::Static);
+
+                // Update content size to match the generated vertices exactly.
+                self.setContentWidth(glText.verticesMaxWidth());
             }
 
             uScrollMvpMatrix = root().projMatrix2D() *
@@ -271,6 +271,7 @@ void DocumentWidget::setText(String const &styledText)
         }
 
         d->progress->show();
+
         int indSize = style().rules().rule("document.progress").valuei();
         setContentSize(Vector2i(indSize, indSize));
 
@@ -314,28 +315,20 @@ void DocumentWidget::viewResized()
     requestGeometry();
 }
 
-void DocumentWidget::update()
-{
-    ScrollAreaWidget::update();
-}
-
 void DocumentWidget::drawContent()
 {
     d->draw();
 }
 
-bool DocumentWidget::handleEvent(Event const &event)
-{
-    return ScrollAreaWidget::handleEvent(event);
-}
-
 void DocumentWidget::glInit()
 {
+    ScrollAreaWidget::glInit();
     d->glInit();
 }
 
 void DocumentWidget::glDeinit()
 {
+    ScrollAreaWidget::glDeinit();
     d->glDeinit();
 }
 
@@ -349,6 +342,7 @@ void DocumentWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 
 void DocumentWidget::updateStyle()
 {
+    ScrollAreaWidget::updateStyle();
     d->updateStyle();
 }
 

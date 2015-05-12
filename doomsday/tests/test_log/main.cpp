@@ -53,7 +53,7 @@ int main(int argc, char **argv)
                                 << LogEntry::levelToText(level)
                                 << LogEntry::levelToText(other)
                                 << LogEntry::contextToText(other)
-                                << LogBuffer::appBuffer().isEnabled(LogEntry::Generic | other);
+                                << LogBuffer::get().isEnabled(LogEntry::Generic | other);
                     }
                 }
             }

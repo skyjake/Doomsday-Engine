@@ -1,7 +1,7 @@
 /** @file
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2009-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -24,8 +24,13 @@
 #ifndef __DOOMSDAY_DEFINITIONS_H__
 #define __DOOMSDAY_DEFINITIONS_H__
 
-#include "def_main.h"
-#include "def_data.h"
 #include "def_share.h"
+#include "def_main.h"
+#include <doomsday/defs/ded.h>
+#include <doomsday/defs/mapinfo.h>
+#include <doomsday/defs/model.h>
+#include <doomsday/defs/sky.h>
+#include <doomsday/defs/dedfile.h>
+#include <doomsday/defs/dedparser.h>
 
 #endif

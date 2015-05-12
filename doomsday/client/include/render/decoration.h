@@ -1,7 +1,7 @@
-/** @file decoration.h World surface decoration.
+/** @file decoration.h  World surface decoration.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,14 +18,14 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_RENDER_DECORATION_H
-#define DENG_CLIENT_RENDER_DECORATION_H
+#ifndef CLIENT_RENDER_DECORATION_H
+#define CLIENT_RENDER_DECORATION_H
 
 #include <de/Error>
 #include <de/Vector>
 
 #include "MapObject"
-#include "MaterialSnapshot"
+#include "MaterialAnimator"
 
 class Surface;
 
@@ -49,7 +49,7 @@ public:
      * @param source  Source of the decoration (a material).
      * @param origin  Origin of the decoration in map space.
      */
-    Decoration(de::MaterialSnapshotDecoration &source,
+    Decoration(MaterialAnimator::Decoration const &source,
                de::Vector3d const &origin = de::Vector3d());
     virtual ~Decoration();
 
@@ -58,10 +58,7 @@ public:
      *
      * @see hasSource(), setSource()
      */
-    de::MaterialSnapshotDecoration &source();
-
-    /// @copydoc source()
-    de::MaterialSnapshotDecoration const &source() const;
+    MaterialAnimator::Decoration const &source() const;
 
     /**
      * Returns @c true iff a surface is attributed for the decoration.
@@ -73,9 +70,7 @@ public:
     /**
      * Convenient method which returns the surface owner of the decoration.
      */
-    Surface &surface();
-
-    /// @copydoc surface()
+    Surface       &surface();
     Surface const &surface() const;
 
     /**
@@ -89,4 +84,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_RENDER_DECORATION_H
+#endif  // CLIENT_RENDER_DECORATION_H

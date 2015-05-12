@@ -18,7 +18,7 @@
 
 #include "de_platform.h"
 #include "CommandAction"
-#include "con_main.h"
+#include <doomsday/console/exec.h>
 
 using namespace de;
 

@@ -1,7 +1,7 @@
-/** @file rend_main.cpp World Map Renderer.
+/** @file rend_main.cpp  World Map Renderer.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -19,68 +19,76 @@
  * 02110-1301 USA</small>
  */
 
-#include <cstdio>
-#include <cstdlib>
-#include <cmath>
-
-#include <QtAlgorithms>
-#include <QBitArray>
-
-#include <de/vector1.h>
-#include <de/libdeng2.h>
-#include <de/GLState>
-
 #include "de_base.h"
+#include "render/rend_main.h"
+
 #include "de_console.h"
 #include "de_render.h"
 #include "de_resource.h"
 #include "de_graphics.h"
 #include "de_ui.h"
+
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <QtAlgorithms>
+#include <QBitArray>
+//#include <de/libcore.h>
+#include <de/concurrency.h>
+#include <de/timer.h>
+#include <de/vector1.h>
+#include <de/GLState>
+
 #include "clientapp.h"
+#include "sys_system.h"
+#include "api_fontrender.h"
 
-#include "ui/editors/rendererappearanceeditor.h"
+#include "edit_bias.h"         /// @todo remove me
+//#include "network/net_main.h"  /// @todo remove me
 
-#include "edit_bias.h" /// @todo remove me
-#include "network/net_main.h" /// @todo remove me
-
-#include "MaterialSnapshot"
 #include "MaterialVariantSpec"
 #include "Texture"
 
 #include "Face"
-
-#include "BspLeaf"
-#include "BspNode"
-#include "Hand"
-#include "Surface"
 #include "world/map.h"
+#include "world/blockmap.h"
 #include "world/lineowner.h"
 #include "world/p_object.h"
-#include "Contact"
 #include "world/p_players.h"
+#include "world/sky.h"
 #include "world/thinkers.h"
-
+#include "BspLeaf"
+#include "BspNode"
+#include "Contact"
+#include "ConvexSubspace"
+#include "Hand"
+#include "SectorCluster"
+#include "Surface"
 #include "BiasIllum"
-#include "BiasSurface"
 #include "HueCircleVisual"
 #include "LightDecoration"
 #include "Lumobj"
+#include "Shard"
 #include "SkyFixEdge"
 #include "SurfaceDecorator"
 #include "TriangleStripBuilder"
 #include "WallEdge"
-#include "render/blockmapvisual.h"
-#include "render/billboard.h"
-#include "render/vissprite.h"
-#include "render/fx/bloom.h"
-#include "render/fx/vignette.h"
-#include "render/fx/lensflares.h"
-#include "render/vr.h"
 
 #include "gl/gl_texmanager.h"
 #include "gl/sys_opengl.h"
 
-#include "render/rend_main.h"
+#include "render/fx/bloom.h"
+#include "render/fx/vignette.h"
+#include "render/fx/lensflares.h"
+#include "render/rend_particle.h"
+#include "render/angleclipper.h"
+#include "render/blockmapvisual.h"
+#include "render/billboard.h"
+#include "render/vissprite.h"
+#include "render/skydrawable.h"
+#include "render/vr.h"
+
+#include "ui/editors/rendererappearanceeditor.h"
 
 using namespace de;
 
@@ -100,74 +108,73 @@ using namespace de;
 #define SOF_SIDE                0x04
 ///@}
 
-void Rend_DrawBBox(Vector3d const &pos, coord_t w, coord_t l, coord_t h, float a,
-    float const color[3], float alpha, float br, bool alignToBase = true);
+void Rend_DrawBBox(Vector3d const &pos, coord_t w, coord_t l, coord_t h, dfloat a,
+    dfloat const color[3], dfloat alpha, dfloat br, bool alignToBase = true);
 
-void Rend_DrawArrow(Vector3d const &pos, float a, float s, float const color3f[3], float alpha);
+void Rend_DrawArrow(Vector3d const &pos, dfloat a, dfloat s, dfloat const color3f[3], dfloat alpha);
 
 D_CMD(OpenRendererAppearanceEditor);
 D_CMD(LowRes);
 D_CMD(MipMap);
 D_CMD(TexReset);
 
-int useBias; // Shadow Bias enabled? cvar
+dint useBias;  ///< Shadow Bias enabled? cvar
 
-dd_bool usingFog; // Is the fog in use?
-float fogColor[4];
-float fieldOfView = 95.0f;
-byte smoothTexAnim = true;
+dd_bool usingFog;  ///< Is the fog in use?
+dfloat fogColor[4];
+dfloat fieldOfView = 95.0f;
+dbyte smoothTexAnim = true;
 
-int renderTextures = true;
-int renderWireframe = false;
-int useMultiTexLights = true;
-int useMultiTexDetails = true;
+dint renderTextures = true;
+dint renderWireframe;
+dint useMultiTexLights = true;
+dint useMultiTexDetails = true;
 
-// Rendering paramaters for dynamic lights.
-int dynlightBlend = 0;
+dint dynlightBlend;
 
 Vector3f torchColor(1, 1, 1);
-int torchAdditive = true;
+dint torchAdditive = true;
 
-int useShinySurfaces = true;
+dint useShinySurfaces = true;
 
-int useDynLights = true;
-float dynlightFactor = .5f;
-float dynlightFogBright = .15f;
+dint useDynLights = true;
+dfloat dynlightFactor = .5f;
+dfloat dynlightFogBright = .15f;
 
-int useGlowOnWalls = true;
-float glowFactor = .8f;
-float glowHeightFactor = 3; // Glow height as a multiplier.
-int glowHeightMax = 100; // 100 is the default (0-1024).
+dint useGlowOnWalls = true;
+dfloat glowFactor = .8f;
+dfloat glowHeightFactor = 3;  ///< Glow height as a multiplier.
+dint glowHeightMax = 100;     ///< 100 is the default (0-1024).
 
-int useShadows = true;
-float shadowFactor = 1.2f;
-int shadowMaxRadius = 80;
-int shadowMaxDistance = 1000;
+dint useShadows = true;
+dfloat shadowFactor = 1.2f;
+dint shadowMaxRadius = 80;
+dint shadowMaxDistance = 1000;
 
-byte useLightDecorations = true; ///< cvar
+dbyte useLightDecorations = true;  ///< cvar
 
-float detailFactor = .5f;
-float detailScale = 4;
+dfloat detailFactor = .5f;
+dfloat detailScale = 4;
 
-int mipmapping = 5;
-int filterUI   = 1;
-int texQuality = TEXQ_BEST;
+dint mipmapping = 5;
+dint filterUI   = 1;
+dint texQuality = TEXQ_BEST;
 
-int ratioLimit = 0; // Zero if none.
+dint ratioLimit;      ///< Zero if none.
 dd_bool fillOutlines = true;
-int useSmartFilter = 0; // Smart filter mode (cvar: 1=hq2x)
-int filterSprites = true;
-int texMagMode = 1; // Linear.
-int texAniso = -1; // Use best.
+dint useSmartFilter;  ///< Smart filter mode (cvar: 1=hq2x)
+dint filterSprites = true;
+dint texMagMode = 1;  ///< Linear.
+dint texAniso = -1;   ///< Use best.
 
-dd_bool noHighResTex = false;
-dd_bool noHighResPatches = false;
-dd_bool highResWithPWAD = false;
-byte loadExtAlways = false; // Always check for extres (cvar)
+dd_bool noHighResTex;
+dd_bool noHighResPatches;
+dd_bool highResWithPWAD;
+dbyte loadExtAlways;  ///< Always check for extres (cvar)
 
-float texGamma = 0;
+dfloat texGamma;
 
-int glmode[6] = // Indexed by 'mipmapping'.
+dint glmode[6] = // Indexed by 'mipmapping'.
 {
     GL_NEAREST,
     GL_LINEAR,
@@ -178,25 +185,26 @@ int glmode[6] = // Indexed by 'mipmapping'.
 };
 
 Vector3d vOrigin;
-float vang, vpitch;
-float viewsidex, viewsidey;
+dfloat vang, vpitch;
+dfloat viewsidex, viewsidey;
 
-byte freezeRLs;
-int devRendSkyMode;
-byte devRendSkyAlways;
+dbyte freezeRLs;
+dint devNoCulling;  ///< @c 1= disabled (cvar).
+dint devRendSkyMode;
+dbyte devRendSkyAlways;
 
 // Ambient lighting, rAmbient is used within the renderer, ambientLight is
 // used to store the value of the ambient light cvar.
 // The value chosen for rAmbient occurs in Rend_UpdateLightModMatrix
 // for convenience (since we would have to recalculate the matrix anyway).
-int rAmbient, ambientLight;
+dint rAmbient, ambientLight;
 
-int viewpw, viewph; // Viewport size, in pixels.
-int viewpx, viewpy; // Viewpoint top left corner, in pixels.
+dint viewpw, viewph;  ///< Viewport size, in pixels.
+dint viewpx, viewpy;  ///< Viewpoint top left corner, in pixels.
 
-float yfov;
+dfloat yfov;
 
-int gameDrawHUD = 1; // Set to zero when we advise that the HUD should not be drawn
+dint gameDrawHUD = 1;  ///< Set to zero when we advise that the HUD should not be drawn
 
 /**
  * Implements a pre-calculated LUT for light level limiting and range
@@ -206,48 +214,49 @@ int gameDrawHUD = 1; // Set to zero when we advise that the HUD should not be dr
  * that when summed with the original light value the result remains in
  * the normalized range [0..1].
  */
-float lightRangeCompression;
-float lightModRange[255];
+dfloat lightRangeCompression;
+dfloat lightModRange[255];
 byte devLightModRange;
 
-float rendLightDistanceAttenuation = 924;
-int rendLightAttenuateFixedColormap = 1;
+dfloat rendLightDistanceAttenuation = 924;
+dint rendLightAttenuateFixedColormap = 1;
 
-float rendLightWallAngle = 1.2f; // Intensity of angle-based wall lighting.
-byte rendLightWallAngleSmooth = true;
+dfloat rendLightWallAngle = 1.2f; ///< Intensity of angle-based wall lighting.
+dbyte rendLightWallAngleSmooth = true;
 
-float rendSkyLight = .273f; // Intensity factor.
-byte rendSkyLightAuto = true;
+dfloat rendSkyLight = .273f;     ///< Intensity factor.
+dbyte rendSkyLightAuto = true;
+dint rendMaxLumobjs;             ///< Max lumobjs per viewer, per frame. @c 0= no maximum.
 
-int rendMaxLumobjs; ///< Max lumobjs per viewer, per frame. @c 0= no maximum.
+dint extraLight;  ///< Bumped light from gun blasts.
+dfloat extraLightDelta;
 
-int extraLight; // Bumped light from gun blasts.
-float extraLightDelta;
-
-// Display list id for the active-textured bbox model.
-DGLuint dlBBox;
+DGLuint dlBBox;  ///< Display list id for the active-textured bbox model.
 
 /*
  * Debug/Development cvars:
  */
 
-byte devMobjVLights;    ///< @c 1= Draw mobj vertex lighting vector.
-int devMobjBBox;        ///< @c 1= Draw mobj bounding boxes.
-int devPolyobjBBox;     ///< @c 1= Draw polyobj bounding boxes.
+dbyte devMobjVLights;            ///< @c 1= Draw mobj vertex lighting vector.
+dint devMobjBBox;                ///< @c 1= Draw mobj bounding boxes.
+dint devPolyobjBBox;             ///< @c 1= Draw polyobj bounding boxes.
 
-byte devVertexIndices;  ///< @c 1= Draw vertex indices.
-byte devVertexBars;     ///< @c 1= Draw vertex position bars.
+dbyte devVertexIndices;          ///< @c 1= Draw vertex indices.
+dbyte devVertexBars;             ///< @c 1= Draw vertex position bars.
 
-byte devDrawGenerators; ///< @c 1= Draw active generators.
-byte devSoundEmitters;  ///< @c 1= Draw sound emitters.
-byte devSurfaceVectors; ///< @c 1= Draw tangent space vectors for surfaces.
-byte devNoTexFix;       ///< @c 1= Draw "missing" rather than fix materials.
+dbyte devDrawGenerators;         ///< @c 1= Draw active generators.
+dbyte devSoundEmitters;          ///< @c 1= Draw sound emitters.
+dbyte devSurfaceVectors;         ///< @c 1= Draw tangent space vectors for surfaces.
+dbyte devNoTexFix;               ///< @c 1= Draw "missing" rather than fix materials.
 
-byte devSectorIndices;  ///< @c 1= Draw sector indicies.
-byte devThinkerIds;     ///< @c 1= Draw (mobj) thinker indicies.
+dbyte devSectorIndices;          ///< @c 1= Draw sector indicies.
+dbyte devThinkerIds;             ///< @c 1= Draw (mobj) thinker indicies.
 
-byte rendInfoLums;      ///< @c 1= Print lumobj debug info to the console.
-byte devDrawLums;       ///< @c 1= Draw lumobjs origins.
+dbyte rendInfoLums;              ///< @c 1= Print lumobj debug info to the console.
+dbyte devDrawLums;               ///< @c 1= Draw lumobjs origins.
+
+dbyte devLightGrid;              ///< @c 1= Draw lightgrid debug visual.
+dfloat devLightGridSize = 1.5f;  ///< Lightgrid debug visual size factor.
 
 static void drawMobjBoundingBoxes(Map &map);
 static void drawSoundEmitters(Map &map);
@@ -260,38 +269,50 @@ static void drawThinkers(Map &map);
 static void drawVertexes(Map &map);
 
 // Draw state:
-static Vector3d eyeOrigin; // Viewer origin.
-static BspLeaf *currentBspLeaf; // BSP leaf currently being drawn.
-static Vector3f currentSectorLightColor;
-static float currentSectorLightLevel;
-static bool firstBspLeaf; // No range checking for the first one.
+static Vector3d eyeOrigin;  ///< Viewer origin.
+static ConvexSubspace *curSubspace;  ///< Subspace currently being drawn.
+static Vector3f curSectorLightColor;
+static dfloat curSectorLightLevel;
+static bool firstSubspace;  ///< No range checking for the first one.
 
-static void markLightGridForFullUpdate()
+static inline RenderSystem &rendSys()
+{
+    return ClientApp::renderSystem();
+}
+
+static inline ResourceSystem &resSys()
+{
+    return ClientApp::resourceSystem();
+}
+
+static inline WorldSystem &worldSys()
+{
+    return ClientApp::worldSystem();
+}
+
+static void scheduleFullLightGridUpdate()
 {
     if(App_WorldSystem().hasMap())
     {
         Map &map = App_WorldSystem().map();
         if(map.hasLightGrid())
-            map.lightGrid().markAllForUpdate();
+            map.lightGrid().scheduleFullUpdate();
     }
-}
-
-static int unlinkMobjLumobjWorker(thinker_t *th, void *)
-{
-    Mobj_UnlinkLumobjs(reinterpret_cast<mobj_t *>(th));
-    return false; // Continue iteration.
 }
 
 static void unlinkMobjLumobjs()
 {
-    if(App_WorldSystem().hasMap())
+    if(!worldSys().hasMap()) return;
+
+    worldSys().map().thinkers()
+            .forAll(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1, [] (thinker_t *th)
     {
-        Map &map = App_WorldSystem().map();
-        map.thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1,
-                               unlinkMobjLumobjWorker);
-    }
+        Mobj_UnlinkLumobjs(reinterpret_cast<mobj_t *>(th));
+        return LoopContinue;
+    });
 }
 
+/*
 static void fieldOfViewChanged()
 {
     if(vrCfg().mode() == VRConfig::OculusRift)
@@ -304,7 +325,7 @@ static void fieldOfViewChanged()
         if(Con_GetFloat("rend-vr-nonrift-fovx") != fieldOfView)
             Con_SetFloat("rend-vr-nonrift-fovx", fieldOfView);
     }
-}
+}*/
 
 static void detailFactorChanged()
 {
@@ -341,7 +362,7 @@ static void texQualityChanged()
 void Rend_Register()
 {
     C_VAR_INT   ("rend-bias",                       &useBias,                       0, 0, 1);
-    C_VAR_FLOAT2("rend-camera-fov",                 &fieldOfView,                   0, 1, 179, fieldOfViewChanged);
+    C_VAR_FLOAT ("rend-camera-fov",                 &fieldOfView,                   0, 1, 179);
 
     C_VAR_FLOAT ("rend-glow",                       &glowFactor,                    0, 0, 2);
     C_VAR_INT   ("rend-glow-height",                &glowHeightMax,                 0, 0, 1024);
@@ -360,8 +381,8 @@ void Rend_Register()
     C_VAR_FLOAT ("rend-light-fog-bright",           &dynlightFogBright,             0, 0, 1);
     C_VAR_INT   ("rend-light-multitex",             &useMultiTexLights,             0, 0, 1);
     C_VAR_INT   ("rend-light-num",                  &rendMaxLumobjs,                CVF_NO_MAX, 0, 0);
-    C_VAR_FLOAT2("rend-light-sky",                  &rendSkyLight,                  0, 0, 1, markLightGridForFullUpdate);
-    C_VAR_BYTE2 ("rend-light-sky-auto",             &rendSkyLightAuto,              0, 0, 1, markLightGridForFullUpdate);
+    C_VAR_FLOAT2("rend-light-sky",                  &rendSkyLight,                  0, 0, 1, scheduleFullLightGridUpdate);
+    C_VAR_BYTE2 ("rend-light-sky-auto",             &rendSkyLightAuto,              0, 0, 1, scheduleFullLightGridUpdate);
     C_VAR_FLOAT ("rend-light-wall-angle",           &rendLightWallAngle,            CVF_NO_MAX, 0, 0);
     C_VAR_BYTE  ("rend-light-wall-angle-smooth",    &rendLightWallAngleSmooth,      0, 0, 1);
 
@@ -389,6 +410,8 @@ void Rend_Register()
     C_VAR_INT2  ("rend-tex-quality",                &texQuality,                    0, 0, 8, texQualityChanged);
     C_VAR_INT   ("rend-tex-shiny",                  &useShinySurfaces,              0, 0, 1);
 
+    C_VAR_BYTE  ("rend-bias-grid-debug",            &devLightGrid,                  CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_FLOAT ("rend-bias-grid-debug-size",       &devLightGridSize,              0,              .1f, 100);
     C_VAR_BYTE  ("rend-dev-blockmap-debug",         &bmapShowDebug,                 CVF_NO_ARCHIVE, 0, 4);
     C_VAR_FLOAT ("rend-dev-blockmap-debug-size",    &bmapDebugSize,                 CVF_NO_ARCHIVE, .1f, 100);
     C_VAR_INT   ("rend-dev-cull-leafs",             &devNoCulling,                  CVF_NO_ARCHIVE, 0, 1);
@@ -402,7 +425,7 @@ void Rend_Register()
     C_VAR_BYTE  ("rend-dev-sector-show-indices",    &devSectorIndices,              CVF_NO_ARCHIVE, 0, 1);
     C_VAR_INT   ("rend-dev-sky",                    &devRendSkyMode,                CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE  ("rend-dev-sky-always",             &devRendSkyAlways,              CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE  ("rend-dev-soundorigins",           &devSoundEmitters,               CVF_NO_ARCHIVE, 0, 7);
+    C_VAR_BYTE  ("rend-dev-soundorigins",           &devSoundEmitters,              CVF_NO_ARCHIVE, 0, 7);
     C_VAR_BYTE  ("rend-dev-surface-show-vectors",   &devSurfaceVectors,             CVF_NO_ARCHIVE, 0, 7);
     C_VAR_BYTE  ("rend-dev-thinker-ids",            &devThinkerIds,                 CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE  ("rend-dev-tex-showfix",            &devNoTexFix,                   CVF_NO_ARCHIVE, 0, 1);
@@ -417,11 +440,10 @@ void Rend_Register()
     C_CMD_FLAGS ("texreset",    "s",    TexReset, CMDF_NO_DEDICATED);
 
     BiasIllum::consoleRegister();
-    BiasSurface::consoleRegister();
     LightDecoration::consoleRegister();
     LightGrid::consoleRegister();
     Lumobj::consoleRegister();
-    Sky::consoleRegister();
+    SkyDrawable::consoleRegister();
     Rend_ModelRegister();
     Rend_ParticleRegister();
     Generator::consoleRegister();
@@ -431,13 +453,14 @@ void Rend_Register()
     fx::Bloom::consoleRegister();
     fx::Vignette::consoleRegister();
     fx::LensFlares::consoleRegister();
+    Shard::consoleRegister();
     VR_ConsoleRegister();
 }
 
 static void reportWallSectionDrawn(Line &line)
 {
     // Already been here?
-    int playerNum = viewPlayer - ddPlayers;
+    dint playerNum = viewPlayer - ddPlayers;
     if(line.isMappedByPlayer(playerNum)) return;
 
     // Mark as drawn.
@@ -449,16 +472,6 @@ static void reportWallSectionDrawn(Line &line)
         gx.HandleMapObjectStatusReport(DMUSC_LINE_FIRSTRENDERED, line.indexInMap(),
                                        DMU_LINE, &playerNum);
     }
-}
-
-void Rend_Init()
-{
-    C_Init();
-}
-
-void Rend_Shutdown()
-{
-    ClientApp::renderSystem().clearDrawLists();
 }
 
 /// World/map renderer reset.
@@ -486,59 +499,100 @@ bool Rend_IsMTexDetails()
     return IS_MTEX_DETAILS;
 }
 
-float Rend_FieldOfView()
+dfloat Rend_FieldOfView()
 {
     if(vrCfg().mode() == VRConfig::OculusRift)
     {
-        // fieldOfView = VR::riftFovX(); // Update for culling
-        // return VR::riftFovX();
-        return fieldOfView;
+        // OVR tells us which FOV to use.
+        return vrCfg().oculusRift().fovX();
     }
     else
     {
-        float widescreenCorrection = float(viewpw)/float(viewph) / (4.f / 3.f);
-        widescreenCorrection = (1 + 2 * widescreenCorrection) / 3;
-        return de::clamp(1.f, widescreenCorrection * fieldOfView, 179.f);
+        // Correction is applied for wide screens so that when the FOV is kept
+        // at a certain value (e.g., the default FOV), a 16:9 view has a wider angle
+        // than a 4:3, but not just scaled linearly since that would go too far
+        // into the fish eye territory.
+        dfloat widescreenCorrection = dfloat(viewpw) / dfloat(viewph) / (4.f / 3.f);
+        if(widescreenCorrection < 1.5)  // up to ~16:9
+        {
+            widescreenCorrection = (1 + 2 * widescreenCorrection) / 3;
+            return de::clamp(1.f, widescreenCorrection * fieldOfView, 179.f);
+        }
+        // This is an unusually wide (perhaps multimonitor) setup, so just use the
+        // configured FOV as is.
+        return de::clamp(1.f, fieldOfView, 179.f);
     }
 }
 
-Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool useAngles)
+static Vector3d vEyeOrigin;
+
+Vector3d Rend_EyeOrigin()
+{
+    return vEyeOrigin;
+}
+
+Matrix4f Rend_GetModelViewMatrix(dint consoleNum, bool inWorldSpace)
 {
     viewdata_t const *viewData = R_ViewData(consoleNum);
 
+    dfloat bodyAngle = viewData->current.angleWithoutHeadTracking() / (dfloat) ANGLE_MAX * 360 - 90;
+
+    /// @todo vOrigin et al. shouldn't be changed in a getter function. -jk
+
     vOrigin = viewData->current.origin.xzy();
-    vang    = viewData->current.angle() / (float) ANGLE_MAX * 360 - 90; // head tracking included
+    vang    = viewData->current.angle() / (dfloat) ANGLE_MAX * 360 - 90;  // head tracking included
     vpitch  = viewData->current.pitch * 85.0 / 110.0;
 
-    Matrix4f modelView;
+    vEyeOrigin = vOrigin;
 
-    if(useAngles)
+    OculusRift &ovr = vrCfg().oculusRift();
+    bool const applyHead = (vrCfg().mode() == VRConfig::OculusRift && ovr.isReady());
+
+    Matrix4f modelView;
+    Matrix4f headOrientation;
+    Matrix4f headOffset;
+
+    if(applyHead)
     {
-        float yaw   = vang;
-        float pitch = vpitch;
-        float roll  = 0;
+        Vector3f headPos = swizzle(Matrix4f::rotate(bodyAngle, Vector3f(0, 1, 0)) *
+                                   ovr.headPosition() * vrCfg().mapUnitsPerMeter(),
+                                   AxisNegX, AxisNegY, AxisZ);
+        headOffset = Matrix4f::translate(headPos);
+
+        vEyeOrigin -= headPos;
+    }
+
+    if(inWorldSpace)
+    {
+        dfloat yaw   = vang;
+        dfloat pitch = vpitch;
+        dfloat roll  = 0;
 
         /// @todo Elevate roll angle use into viewer_t, and maybe all the way up into player
         /// model.
 
-        /*
-         * Pitch and yaw can be taken directly from the head tracker, as the game is aware of
-         * these values and is syncing with them independently (however, game has more
-         * latency).
-         */
-        if((vrCfg().mode() == VRConfig::OculusRift) && vrCfg().oculusRift().isReady())
+        // Pitch and yaw can be taken directly from the head tracker, as the game is aware of
+        // these values and is syncing with them independently (however, game has more
+        // latency).
+        if(applyHead)
         {
-            Vector3f const pry = vrCfg().oculusRift().headOrientation();
-
             // Use angles directly from the Rift for best response.
+            Vector3f const pry = ovr.headOrientation();
             roll  = -radianToDegree(pry[1]);
             pitch =  radianToDegree(pry[0]);
-
         }
 
-        modelView = Matrix4f::rotate(roll,  Vector3f(0, 0, 1)) *
-                    Matrix4f::rotate(pitch, Vector3f(1, 0, 0)) *
-                    Matrix4f::rotate(yaw,   Vector3f(0, 1, 0));
+        headOrientation = Matrix4f::rotate(roll,  Vector3f(0, 0, 1)) *
+                          Matrix4f::rotate(pitch, Vector3f(1, 0, 0)) *
+                          Matrix4f::rotate(yaw,   Vector3f(0, 1, 0));
+
+        modelView = headOrientation * headOffset;
+    }
+
+    if(applyHead)
+    {
+        // Apply the current eye offset to the eye origin.
+        vEyeOrigin -= headOrientation.inverse() * (ovr.eyeOffset() * vrCfg().mapUnitsPerMeter());
     }
 
     return (modelView *
@@ -546,27 +600,27 @@ Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool useAngles)
             Matrix4f::translate(-vOrigin));
 }
 
-void Rend_ModelViewMatrix(bool useAngles)
+void Rend_ModelViewMatrix(bool inWorldSpace)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glMatrixMode(GL_MODELVIEW);
-    glLoadMatrixf(Rend_GetModelViewMatrix(viewPlayer - ddPlayers, useAngles).values());
+    glLoadMatrixf(Rend_GetModelViewMatrix(viewPlayer - ddPlayers, inWorldSpace).values());
 }
 
-static inline double viewFacingDot(Vector2d const &v1, Vector2d const &v2)
+static inline ddouble viewFacingDot(Vector2d const &v1, Vector2d const &v2)
 {
     // The dot product.
-    return (v1.y - v2.y) * (v1.x - vOrigin.x) + (v2.x - v1.x) * (v1.y - vOrigin.z);
+    return (v1.y - v2.y) * (v1.x - Rend_EyeOrigin().x) + (v2.x - v1.x) * (v1.y - Rend_EyeOrigin().z);
 }
 
-float Rend_ExtraLightDelta()
+dfloat Rend_ExtraLightDelta()
 {
     return extraLightDelta;
 }
 
-void Rend_ApplyTorchLight(Vector4f &color, float distance)
+void Rend_ApplyTorchLight(Vector4f &color, dfloat distance)
 {
     ddplayer_t *ddpl = &viewPlayer->shared;
 
@@ -578,7 +632,7 @@ void Rend_ApplyTorchLight(Vector4f &color, float distance)
     {
         // Colormap 1 is the brightest. I'm guessing 16 would be
         // the darkest.
-        float d = (16 - ddpl->fixedColorMap) / 15.0f;
+        dfloat d = (16 - ddpl->fixedColorMap) / 15.0f;
         if(rendLightAttenuateFixedColormap)
         {
             d *= (1024 - distance) / 1024.0f;
@@ -595,25 +649,25 @@ void Rend_ApplyTorchLight(Vector4f &color, float distance)
     }
 }
 
-void Rend_ApplyTorchLight(float *color3, float distance)
+void Rend_ApplyTorchLight(dfloat *color3, dfloat distance)
 {
     Vector4f tmp(color3, 0);
     Rend_ApplyTorchLight(tmp, distance);
-    for(int i = 0; i < 3; ++i)
+    for(dint i = 0; i < 3; ++i)
     {
         color3[i] = tmp[i];
     }
 }
 
-float Rend_AttenuateLightLevel(float distToViewer, float lightLevel)
+dfloat Rend_AttenuateLightLevel(dfloat distToViewer, dfloat lightLevel)
 {
     if(distToViewer > 0 && rendLightDistanceAttenuation > 0)
     {
-        float real = lightLevel -
+        dfloat real = lightLevel -
             (distToViewer - 32) / rendLightDistanceAttenuation *
                 (1 - lightLevel);
 
-        float minimum = de::max(0.f, de::squared(lightLevel) + (lightLevel - .63f) * .5f);
+        dfloat minimum = de::max(0.f, de::squared(lightLevel) + (lightLevel - .63f) * .5f);
         if(real < minimum)
             real = minimum; // Clamp it.
 
@@ -623,7 +677,7 @@ float Rend_AttenuateLightLevel(float distToViewer, float lightLevel)
     return lightLevel;
 }
 
-float Rend_ShadowAttenuationFactor(coord_t distance)
+dfloat Rend_ShadowAttenuationFactor(coord_t distance)
 {
     if(shadowMaxDistance > 0 && distance > 3 * shadowMaxDistance / 4)
     {
@@ -634,13 +688,19 @@ float Rend_ShadowAttenuationFactor(coord_t distance)
 
 static Vector3f skyLightColor;
 static Vector3f oldSkyAmbientColor(-1.f, -1.f, -1.f);
-static float oldRendSkyLight = -1;
+static dfloat oldRendSkyLight = -1;
 
-Vector3f const &Rend_SectorLightColor(SectorCluster const &cluster)
+bool Rend_SkyLightIsEnabled()
 {
-    if(rendSkyLight > .001f && cluster.hasSkyMaskedPlane())
+    return rendSkyLight > .001f;
+}
+
+Vector3f Rend_SkyLightColor()
+{
+    if(Rend_SkyLightIsEnabled() && ClientApp::worldSystem().hasMap())
     {
-        Vector3f const &ambientColor = theSky->ambientColor();
+        Sky &sky = ClientApp::worldSystem().map().sky();
+        Vector3f const &ambientColor = sky.ambientColor();
 
         if(rendSkyLight != oldRendSkyLight ||
            !INRANGE_OF(ambientColor.x, oldSkyAmbientColor.x, .001f) ||
@@ -651,13 +711,13 @@ Vector3f const &Rend_SectorLightColor(SectorCluster const &cluster)
             R_AmplifyColor(skyLightColor);
 
             // Apply the intensity factor cvar.
-            for(int i = 0; i < 3; ++i)
+            for(dint i = 0; i < 3; ++i)
             {
                 skyLightColor[i] = skyLightColor[i] + (1 - rendSkyLight) * (1.f - skyLightColor[i]);
             }
 
             // When the sky light color changes we must update the light grid.
-            markLightGridForFullUpdate();
+            scheduleFullLightGridUpdate();
             oldSkyAmbientColor = ambientColor;
         }
 
@@ -665,49 +725,20 @@ Vector3f const &Rend_SectorLightColor(SectorCluster const &cluster)
         return skyLightColor;
     }
 
-    // A non-skylight sector (i.e., everything else!)
-    // Return the sector's ambient light color.
-    return cluster.sector().lightColor();
+    return Vector3f(1, 1, 1);
 }
 
-static bool sectorHasSkyMaskedPlane(Sector const &sector)
+/**
+ * Determine the effective ambient light color for the given @a sector. Usually
+ * one would obtain this info from SectorCluster, however in some situations the
+ * correct light color is *not* that of the cluster (e.g., where map hacks use
+ * mapped planes to reference another sector).
+ */
+static Vector3f Rend_AmbientLightColor(Sector const &sector)
 {
-    foreach(Plane *plane, sector.planes())
+    if(Rend_SkyLightIsEnabled() && sector.hasSkyMaskedPlane())
     {
-        if(plane->surface().hasSkyMaskedMaterial())
-            return true;
-    }
-    return false;
-}
-
-/// @todo refactor away.
-Vector3f const &Rend_SectorLightColor(Sector const &sector)
-{
-    if(rendSkyLight > .001f && sectorHasSkyMaskedPlane(sector))
-    {
-        Vector3f const &ambientColor = theSky->ambientColor();
-
-        if(rendSkyLight != oldRendSkyLight ||
-           !INRANGE_OF(ambientColor.x, oldSkyAmbientColor.x, .001f) ||
-           !INRANGE_OF(ambientColor.y, oldSkyAmbientColor.y, .001f) ||
-           !INRANGE_OF(ambientColor.z, oldSkyAmbientColor.z, .001f))
-        {
-            skyLightColor = ambientColor;
-            R_AmplifyColor(skyLightColor);
-
-            // Apply the intensity factor cvar.
-            for(int i = 0; i < 3; ++i)
-            {
-                skyLightColor[i] = skyLightColor[i] + (1 - rendSkyLight) * (1.f - skyLightColor[i]);
-            }
-
-            // When the sky light color changes we must update the light grid.
-            markLightGridForFullUpdate();
-            oldSkyAmbientColor = ambientColor;
-        }
-
-        oldRendSkyLight = rendSkyLight;
-        return skyLightColor;
+        return Rend_SkyLightColor();
     }
 
     // A non-skylight sector (i.e., everything else!)
@@ -715,7 +746,7 @@ Vector3f const &Rend_SectorLightColor(Sector const &sector)
     return sector.lightColor();
 }
 
-Vector3f Rend_LuminousColor(Vector3f const &color, float light)
+Vector3f Rend_LuminousColor(Vector3f const &color, dfloat light)
 {
     light = de::clamp(0.f, light, 1.f) * dynlightFactor;
 
@@ -726,33 +757,33 @@ Vector3f Rend_LuminousColor(Vector3f const &color, float light)
     return color * light;
 }
 
-coord_t Rend_PlaneGlowHeight(float intensity)
+coord_t Rend_PlaneGlowHeight(dfloat intensity)
 {
-    return de::clamp<double>(0, GLOW_HEIGHT_MAX * intensity * glowHeightFactor, glowHeightMax);
+    return de::clamp<ddouble>(0, GLOW_HEIGHT_MAX * intensity * glowHeightFactor, glowHeightMax);
 }
 
 Material *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
 {
     switch(renderTextures)
     {
-    case 0: // No texture mode.
-    case 1: // Normal mode.
-        if(devNoTexFix && surface.hasFixMaterial())
+    case 0:  // No texture mode.
+    case 1:  // Normal mode.
+        if(!(devNoTexFix && surface.hasFixMaterial()))
         {
-            // Missing material debug mode -- use special "missing" material.
-            return &ClientApp::resourceSystem().material(de::Uri("System", Path("missing")));
+            if(surface.hasMaterial() || surface.parent().type() != DMU_PLANE)
+                return surface.materialPtr();
         }
 
-        // Use the surface-bound material.
-        return surface.materialPtr();
+        // Use special "missing" material.
+        return &resSys().material(de::Uri("System", Path("missing")));
 
-    case 2: // Lighting debug mode.
+    case 2:  // Lighting debug mode.
         if(surface.hasMaterial() && !(!devNoTexFix && surface.hasFixMaterial()))
         {
             if(!surface.hasSkyMaskedMaterial() || devRendSkyMode)
             {
                 // Use the special "gray" material.
-                return &ClientApp::resourceSystem().material(de::Uri("System", Path("gray")));
+                return &resSys().material(de::Uri("System", Path("gray")));
             }
         }
         break;
@@ -761,13 +792,13 @@ Material *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
     }
 
     // No material, then.
-    return 0;
+    return nullptr;
 }
 
-static void lightVertex(Vector4f &color, Vector3f const &vtx, float lightLevel,
+static void lightVertex(Vector4f &color, Vector3f const &vtx, dfloat lightLevel,
                         Vector3f const &ambientColor)
 {
-    float const dist = Rend_PointDist2D(vtx);
+    dfloat const dist = Rend_PointDist2D(vtx);
 
     // Apply distance attenuation.
     lightLevel = Rend_AttenuateLightLevel(dist, lightLevel);
@@ -777,27 +808,19 @@ static void lightVertex(Vector4f &color, Vector3f const &vtx, float lightLevel,
 
     Rend_ApplyLightAdaptation(lightLevel);
 
-    // Mix with the surface color.
-    for(int i = 0; i < 3; ++i)
+    for(dint i = 0; i < 3; ++i)
     {
         color[i] = lightLevel * ambientColor[i];
     }
 }
 
-static void lightVertices(uint num, Vector4f *colors, Vector3f const *verts,
-                          float lightLevel, Vector3f const &ambientColor)
+static void lightVertices(duint num, Vector4f *colors, Vector3f const *verts,
+                          dfloat lightLevel, Vector3f const &ambientColor)
 {
-    for(uint i = 0; i < num; ++i)
+    for(duint i = 0; i < num; ++i)
     {
         lightVertex(colors[i], verts[i], lightLevel, ambientColor);
     }
-}
-
-int RIT_FirstDynlightIterator(TexProjection const *dyn, void *parameters)
-{
-    TexProjection const **ptr = (TexProjection const **)parameters;
-    *ptr = dyn;
-    return 1; // Stop iteration.
 }
 
 /**
@@ -807,16 +830,16 @@ int RIT_FirstDynlightIterator(TexProjection const *dyn, void *parameters)
  * rendered back-to-front, or there will be alpha artifacts along edges.
  */
 void Rend_AddMaskedPoly(Vector3f const *rvertices, Vector4f const *rcolors,
-    coord_t wallLength, MaterialVariant *material, Vector2f const &materialOrigin,
-    blendmode_t blendMode, uint lightListIdx, float glow)
+    coord_t wallLength, MaterialAnimator *matAnimator, Vector2f const &materialOrigin,
+    blendmode_t blendMode, duint lightListIdx, dfloat glow)
 {
     vissprite_t *vis = R_NewVisSprite(VSPR_MASKED_WALL);
 
-    vis->origin   = (rvertices[0] + rvertices[3]) / 2;
-    vis->distance = Rend_PointDist2D(vis->origin);
+    vis->pose.origin   = (rvertices[0] + rvertices[3]) / 2;
+    vis->pose.distance = Rend_PointDist2D(vis->pose.origin);
 
-    VS_WALL(vis)->texOffset[0] = materialOrigin[VX];
-    VS_WALL(vis)->texOffset[1] = materialOrigin[VY];
+    VS_WALL(vis)->texOffset[0] = materialOrigin[0];
+    VS_WALL(vis)->texOffset[1] = materialOrigin[1];
 
     // Masked walls are sometimes used for special effects like arcs,
     // cobwebs and bottoms of sails. In order for them to look right,
@@ -826,48 +849,49 @@ void Rend_AddMaskedPoly(Vector3f const *rvertices, Vector4f const *rcolors,
     // wrapping.
     if(renderTextures)
     {
-        MaterialSnapshot const &ms = material->prepare();
-        int wrapS = GL_REPEAT, wrapT = GL_REPEAT;
+        // Ensure we've up to date info about the material.
+        matAnimator->prepare();
 
-        VS_WALL(vis)->texCoord[0][VX] = VS_WALL(vis)->texOffset[0] / ms.width();
-        VS_WALL(vis)->texCoord[1][VX] = VS_WALL(vis)->texCoord[0][VX] + wallLength / ms.width();
-        VS_WALL(vis)->texCoord[0][VY] = VS_WALL(vis)->texOffset[1] / ms.height();
-        VS_WALL(vis)->texCoord[1][VY] = VS_WALL(vis)->texCoord[0][VY] +
-                (rvertices[3].z - rvertices[0].z) / ms.height();
+        Vector2i const &matDimensions = matAnimator->dimensions();
 
-        if(!ms.isOpaque())
+        VS_WALL(vis)->texCoord[0][0] = VS_WALL(vis)->texOffset[0] / matDimensions.x;
+        VS_WALL(vis)->texCoord[1][0] = VS_WALL(vis)->texCoord[0][0] + wallLength / matDimensions.x;
+        VS_WALL(vis)->texCoord[0][1] = VS_WALL(vis)->texOffset[1] / matDimensions.y;
+        VS_WALL(vis)->texCoord[1][1] = VS_WALL(vis)->texCoord[0][1] +
+                (rvertices[3].z - rvertices[0].z) / matDimensions.y;
+
+        dint wrapS = GL_REPEAT, wrapT = GL_REPEAT;
+        if(!matAnimator->isOpaque())
         {
-            if(!(VS_WALL(vis)->texCoord[0][VX] < 0 || VS_WALL(vis)->texCoord[0][VX] > 1 ||
-                 VS_WALL(vis)->texCoord[1][VX] < 0 || VS_WALL(vis)->texCoord[1][VX] > 1))
+            if(!(VS_WALL(vis)->texCoord[0][0] < 0 || VS_WALL(vis)->texCoord[0][0] > 1 ||
+                 VS_WALL(vis)->texCoord[1][0] < 0 || VS_WALL(vis)->texCoord[1][0] > 1))
             {
                 // Visible portion is within the actual [0..1] range.
                 wrapS = GL_CLAMP_TO_EDGE;
             }
 
             // Clamp on the vertical axis if the coords are in the normal [0..1] range.
-            if(!(VS_WALL(vis)->texCoord[0][VY] < 0 || VS_WALL(vis)->texCoord[0][VY] > 1 ||
-                 VS_WALL(vis)->texCoord[1][VY] < 0 || VS_WALL(vis)->texCoord[1][VY] > 1))
+            if(!(VS_WALL(vis)->texCoord[0][1] < 0 || VS_WALL(vis)->texCoord[0][1] > 1 ||
+                 VS_WALL(vis)->texCoord[1][1] < 0 || VS_WALL(vis)->texCoord[1][1] > 1))
             {
                 wrapT = GL_CLAMP_TO_EDGE;
             }
         }
 
         // Choose a specific variant for use as a middle wall section.
-        material = material->generalCase()
-                       .chooseVariant(Rend_MapSurfaceMaterialSpec(wrapS, wrapT),
-                                      true /*can create variant*/);
+        matAnimator = &matAnimator->material().getAnimator(Rend_MapSurfaceMaterialSpec(wrapS, wrapT));
     }
 
-    VS_WALL(vis)->material = material;
+    VS_WALL(vis)->animator  = matAnimator;
     VS_WALL(vis)->blendMode = blendMode;
 
-    for(int i = 0; i < 4; ++i)
+    for(dint i = 0; i < 4; ++i)
     {
-        VS_WALL(vis)->vertices[i].pos[VX] = rvertices[i].x;
-        VS_WALL(vis)->vertices[i].pos[VY] = rvertices[i].y;
-        VS_WALL(vis)->vertices[i].pos[VZ] = rvertices[i].z;
+        VS_WALL(vis)->vertices[i].pos[0] = rvertices[i].x;
+        VS_WALL(vis)->vertices[i].pos[1] = rvertices[i].y;
+        VS_WALL(vis)->vertices[i].pos[2] = rvertices[i].z;
 
-        for(int c = 0; c < 4; ++c)
+        for(dint c = 0; c < 4; ++c)
         {
             /// @todo Do not clamp here.
             VS_WALL(vis)->vertices[i].color[c] = de::clamp(0.f, rcolors[i][c], 1.f);
@@ -878,20 +902,21 @@ void Rend_AddMaskedPoly(Vector3f const *rvertices, Vector4f const *rcolors,
     if(glow < 1 && lightListIdx && numTexUnits > 1 && envModAdd &&
        !(rcolors[0].w < 1))
     {
-        TexProjection const *dyn = 0;
-
-        /**
-         * The dynlights will have already been sorted so that the brightest
-         * and largest of them is first in the list. So grab that one.
-         */
-        Rend_IterateProjectionList(lightListIdx, RIT_FirstDynlightIterator, (void *)&dyn);
+        // The dynlights will have already been sorted so that the brightest
+        // and largest of them is first in the list. So grab that one.
+        ProjectedTextureData const *dyn = nullptr;
+        rendSys().forAllSurfaceProjections(lightListIdx, [&dyn] (ProjectedTextureData const &tp)
+        {
+            dyn = &tp;
+            return LoopAbort;
+        });
 
         VS_WALL(vis)->modTex = dyn->texture;
         VS_WALL(vis)->modTexCoord[0][0] = dyn->topLeft.x;
         VS_WALL(vis)->modTexCoord[0][1] = dyn->topLeft.y;
         VS_WALL(vis)->modTexCoord[1][0] = dyn->bottomRight.x;
         VS_WALL(vis)->modTexCoord[1][1] = dyn->bottomRight.y;
-        for(int c = 0; c < 4; ++c)
+        for(dint c = 0; c < 4; ++c)
         {
             VS_WALL(vis)->modColor[c] = dyn->color[c];
         }
@@ -920,40 +945,39 @@ static void quadLightCoords(Vector2f *tc, Vector2f const &topLeft, Vector2f cons
     tc[2].y = tc[0].y = bottomRight.y;
 }
 
-static float shinyVertical(float dy, float dx)
+static dfloat shinyVertical(dfloat dy, dfloat dx)
 {
-    return ((atan(dy/dx) / (PI/2)) + 1) / 2;
+    return ((std::atan(dy/dx) / (PI/2)) + 1) / 2;
 }
 
 static void quadShinyTexCoords(Vector2f *tc, Vector3f const *topLeft,
     Vector3f const *bottomRight, coord_t wallLength)
 {
-    vec2f_t surface, normal, projected, s, reflected, view;
-    float distance, angle, prevAngle = 0;
-    uint i;
-
     // Quad surface vector.
-    V2f_Set(surface, (bottomRight->x - topLeft->x) / wallLength,
-                     (bottomRight->y - topLeft->y) / wallLength);
+    vec2f_t surface; V2f_Set(surface, (bottomRight->x - topLeft->x) / wallLength,
+                                      (bottomRight->y - topLeft->y) / wallLength);
 
-    V2f_Set(normal, surface[VY], -surface[VX]);
+    vec2f_t normal; V2f_Set(normal, surface[1], -surface[0]);
 
     // Calculate coordinates based on viewpoint and surface normal.
-    for(i = 0; i < 2; ++i)
+    dfloat prevAngle = 0;
+    for(duint i = 0; i < 2; ++i)
     {
         // View vector.
-        V2f_Set(view, vOrigin.x - (i == 0? topLeft->x : bottomRight->x),
-                      vOrigin.z - (i == 0? topLeft->y : bottomRight->y));
+        vec2f_t view; V2f_Set(view, Rend_EyeOrigin().x - (i == 0? topLeft->x : bottomRight->x),
+                                    Rend_EyeOrigin().z - (i == 0? topLeft->y : bottomRight->y));
 
-        distance = V2f_Normalize(view);
+        dfloat distance = V2f_Normalize(view);
 
-        V2f_Project(projected, view, normal);
-        V2f_Subtract(s, projected, view);
+        vec2f_t projected; V2f_Project(projected, view, normal);
+
+        vec2f_t s; V2f_Subtract(s, projected, view);
         V2f_Scale(s, 2);
-        V2f_Sum(reflected, view, s);
 
-        angle = acos(reflected[VY]) / PI;
-        if(reflected[VX] < 0)
+        vec2f_t reflected; V2f_Sum(reflected, view, s);
+
+        dfloat angle = std::acos(reflected[1]) / PI;
+        if(reflected[0] < 0)
         {
             angle = 1 - angle;
         }
@@ -970,19 +994,21 @@ static void quadShinyTexCoords(Vector2f *tc, Vector3f const *topLeft,
 
         // Horizontal coordinates.
         tc[ (i == 0 ? 1 : 2) ].x =
-            tc[ (i == 0 ? 0 : 3) ].x = angle + .3f; /*acos(-dot)/PI*/
+            tc[ (i == 0 ? 0 : 3) ].x = angle + .3f; /*std::acos(-dot)/PI*/
 
         // Vertical coordinates.
-        tc[ (i == 0 ? 0 : 2) ].y = shinyVertical(vOrigin.y - bottomRight->z, distance);
-        tc[ (i == 0 ? 1 : 3) ].y = shinyVertical(vOrigin.y - topLeft->z, distance);
+        tc[ (i == 0 ? 0 : 2) ].y = shinyVertical(Rend_EyeOrigin().y - bottomRight->z, distance);
+        tc[ (i == 0 ? 1 : 3) ].y = shinyVertical(Rend_EyeOrigin().y - topLeft->z, distance);
     }
 }
 
 static void flatShinyTexCoords(Vector2f *tc, Vector3f const &point)
 {
+    DENG2_ASSERT(tc);
+
     // Determine distance to viewer.
-    float distToEye = Vector2f(vOrigin.x - point.x, vOrigin.z - point.y)
-                          .normalize().length();
+    dfloat distToEye = Vector2f(Rend_EyeOrigin().x - point.x, Rend_EyeOrigin().z - point.y)
+                           .normalize().length();
     if(distToEye < 10)
     {
         // Too small distances cause an ugly 'crunch' below and above
@@ -991,76 +1017,339 @@ static void flatShinyTexCoords(Vector2f *tc, Vector3f const &point)
     }
 
     // Offset from the normal view plane.
-    Vector2f start(vOrigin.x, vOrigin.z);
+    Vector2f start(Rend_EyeOrigin().x, Rend_EyeOrigin().z);
 
-    float offset = ((start.y - point.y) * sin(.4f)/*viewFrontVec[VX]*/ -
-                    (start.x - point.x) * cos(.4f)/*viewFrontVec[VZ]*/);
+    dfloat offset = ((start.y - point.y) * sin(.4f)/*viewFrontVec[0]*/ -
+                     (start.x - point.x) * cos(.4f)/*viewFrontVec[2]*/);
 
     tc->x = ((shinyVertical(offset, distToEye) - .5f) * 2) + .5f;
-    tc->y = shinyVertical(vOrigin.y - point.z, distToEye);
+    tc->y = shinyVertical(Rend_EyeOrigin().y - point.z, distToEye);
+}
+
+/// Paramaters for drawProjectedLights (POD).
+struct drawprojectedlights_parameters_t
+{
+    duint lastIdx;
+    Vector3f const *rvertices;
+    duint numVertices, realNumVertices;
+    Vector3d const *topLeft;
+    Vector3d const *bottomRight;
+    bool isWall;
+    struct {
+        WallEdge const *leftEdge;
+        WallEdge const *rightEdge;
+    } wall;
+};
+
+/**
+ * Render all dynlights in projection list @a listIdx according to @a paramaters
+ * writing them to the renderering lists for the current frame.
+ *
+ * @note If multi-texturing is being used for the first light; it is skipped.
+ *
+ * @return  Number of lights rendered.
+ */
+static duint drawProjectedLights(duint listIdx, drawprojectedlights_parameters_t &parm)
+{
+    duint numDrawn = parm.lastIdx;
+
+    // Generate a new primitive for each light projection.
+    rendSys().forAllSurfaceProjections(listIdx, [&parm] (ProjectedTextureData const &tp)
+    {
+        // If multitexturing is in use we skip the first.
+        if(!(Rend_IsMTexLights() && parm.lastIdx == 0))
+        {
+            // Allocate enough for the divisions too.
+            Vector3f *verts       = R_AllocRendVertices(parm.realNumVertices);
+            Vector2f *texCoords   = R_AllocRendTexCoords(parm.realNumVertices);
+            Vector4f *colorCoords = R_AllocRendColors(parm.realNumVertices);
+            bool const mustSubdivide = (parm.isWall && (parm.wall.leftEdge->divisionCount() || parm.wall.rightEdge->divisionCount() ));
+
+            for(duint i = 0; i < parm.numVertices; ++i)
+            {
+                colorCoords[i] = tp.color;
+            }
+
+            if(parm.isWall)
+            {
+                WallEdge const &leftEdge  = *parm.wall.leftEdge;
+                WallEdge const &rightEdge = *parm.wall.rightEdge;
+
+                texCoords[1].x = texCoords[0].x = tp.topLeft.x;
+                texCoords[1].y = texCoords[3].y = tp.topLeft.y;
+                texCoords[3].x = texCoords[2].x = tp.bottomRight.x;
+                texCoords[2].y = texCoords[0].y = tp.bottomRight.y;
+
+                if(mustSubdivide)
+                {
+                    // Need to swap indices around into fans set the position
+                    // of the division vertices, interpolate texcoords and color.
+
+                    Vector3f origVerts[4]; std::memcpy(origVerts, parm.rvertices, sizeof(Vector3f) * 4);
+                    Vector2f origTexCoords[4]; std::memcpy(origTexCoords, texCoords, sizeof(Vector2f) * 4);
+                    Vector4f origColors[4]; std::memcpy(origColors, colorCoords, sizeof(Vector4f) * 4);
+
+                    R_DivVerts(verts, origVerts, leftEdge, rightEdge);
+                    R_DivTexCoords(texCoords, origTexCoords, leftEdge, rightEdge);
+                    R_DivVertColors(colorCoords, origColors, leftEdge, rightEdge);
+                }
+                else
+                {
+                    std::memcpy(verts, parm.rvertices, sizeof(Vector3f) * parm.numVertices);
+                }
+            }
+            else
+            {
+                // It's a flat.
+                dfloat const width  = parm.bottomRight->x - parm.topLeft->x;
+                dfloat const height = parm.bottomRight->y - parm.topLeft->y;
+
+                for(duint i = 0; i < parm.numVertices; ++i)
+                {
+                    texCoords[i].x = ((parm.bottomRight->x - parm.rvertices[i].x) / width * tp.topLeft.x) +
+                        ((parm.rvertices[i].x - parm.topLeft->x) / width * tp.bottomRight.x);
+
+                    texCoords[i].y = ((parm.bottomRight->y - parm.rvertices[i].y) / height * tp.topLeft.y) +
+                        ((parm.rvertices[i].y - parm.topLeft->y) / height * tp.bottomRight.y);
+                }
+
+                std::memcpy(verts, parm.rvertices, sizeof(Vector3f) * parm.numVertices);
+            }
+
+            DrawListSpec listSpec;
+            listSpec.group = LightGeom;
+            listSpec.texunits[TU_PRIMARY] = GLTextureUnit(tp.texture, gl::ClampToEdge, gl::ClampToEdge);
+
+            DrawList &lightList = rendSys().drawLists().find(listSpec);
+
+            if(mustSubdivide)
+            {
+                WallEdge const &leftEdge  = *parm.wall.leftEdge;
+                WallEdge const &rightEdge = *parm.wall.rightEdge;
+
+                lightList.write(gl::TriangleFan,
+                                BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                                Vector2f(1, 1), Vector2f(0, 0),
+                                0, 3 + rightEdge.divisionCount(),
+                                verts       + 3 + leftEdge.divisionCount(),
+                                colorCoords + 3 + leftEdge.divisionCount(),
+                                texCoords   + 3 + leftEdge.divisionCount())
+                         .write(gl::TriangleFan,
+                                BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                                Vector2f(1, 1), Vector2f(0, 0),
+                                0, 3 + leftEdge.divisionCount(),
+                                verts, colorCoords, texCoords);
+            }
+            else
+            {
+                lightList.write(parm.isWall? gl::TriangleStrip : gl::TriangleFan,
+                                BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                                Vector2f(1, 1), Vector2f(0, 0),
+                                0, parm.numVertices,
+                                verts, colorCoords, texCoords);
+            }
+
+            R_FreeRendVertices(verts);
+            R_FreeRendTexCoords(texCoords);
+            R_FreeRendColors(colorCoords);
+        }
+        parm.lastIdx++;
+        return LoopContinue;
+    });
+
+    numDrawn = parm.lastIdx - numDrawn;
+    if(Rend_IsMTexLights())
+        numDrawn -= 1;
+
+    return numDrawn;
+}
+
+/// Parameters for drawProjectedShadows (POD).
+struct drawprojectedshadows_parameters_t
+{
+    duint lastIdx;
+    Vector3f const *rvertices;
+    duint numVertices, realNumVertices;
+    Vector3d const *topLeft;
+    Vector3d const *bottomRight;
+    bool isWall;
+    struct {
+        WallEdge const *leftEdge;
+        WallEdge const *rightEdge;
+    } wall;
+};
+
+/**
+ * Draw all shadows in projection list @a listIdx according to @a parameters
+ * writing them to the renderering lists for the current frame.
+ */
+static void drawProjectedShadows(duint listIdx, drawprojectedshadows_parameters_t &parm)
+{
+    DrawListSpec listSpec;
+    listSpec.group = ShadowGeom;
+    listSpec.texunits[TU_PRIMARY] = GLTextureUnit(GL_PrepareLSTexture(LST_DYNAMIC),
+                                                  gl::ClampToEdge, gl::ClampToEdge);
+
+    // Write shadows to the draw lists.
+    DrawList &shadowList = rendSys().drawLists().find(listSpec);
+    rendSys().forAllSurfaceProjections(listIdx, [&shadowList, &parm] (ProjectedTextureData const &tp)
+    {
+        // Allocate enough for the divisions too.
+        Vector3f *verts       = R_AllocRendVertices(parm.realNumVertices);
+        Vector2f *texCoords   = R_AllocRendTexCoords(parm.realNumVertices);
+        Vector4f *colorCoords = R_AllocRendColors(parm.realNumVertices);
+        bool const mustSubdivide = (parm.isWall && (parm.wall.leftEdge->divisionCount() || parm.wall.rightEdge->divisionCount() ));
+
+        for(duint i = 0; i < parm.numVertices; ++i)
+        {
+            colorCoords[i] = tp.color;
+        }
+
+        if(parm.isWall)
+        {
+            WallEdge const &leftEdge  = *parm.wall.leftEdge;
+            WallEdge const &rightEdge = *parm.wall.rightEdge;
+
+            texCoords[1].x = texCoords[0].x = tp.topLeft.x;
+            texCoords[1].y = texCoords[3].y = tp.topLeft.y;
+            texCoords[3].x = texCoords[2].x = tp.bottomRight.x;
+            texCoords[2].y = texCoords[0].y = tp.bottomRight.y;
+
+            if(mustSubdivide)
+            {
+                // Need to swap indices around into fans set the position of the
+                // division vertices, interpolate texcoords and color.
+
+                Vector3f origVerts[4]; std::memcpy(origVerts, parm.rvertices, sizeof(Vector3f) * 4);
+                Vector2f origTexCoords[4]; std::memcpy(origTexCoords, texCoords, sizeof(Vector2f) * 4);
+                Vector4f origColors[4]; std::memcpy(origColors, colorCoords, sizeof(Vector4f) * 4);
+
+                R_DivVerts(verts, origVerts, leftEdge, rightEdge);
+                R_DivTexCoords(texCoords, origTexCoords, leftEdge, rightEdge);
+                R_DivVertColors(colorCoords, origColors, leftEdge, rightEdge);
+            }
+            else
+            {
+                std::memcpy(verts, parm.rvertices, sizeof(Vector3f) * parm.numVertices);
+            }
+        }
+        else
+        {
+            // It's a flat.
+            dfloat const width  = parm.bottomRight->x - parm.topLeft->x;
+            dfloat const height = parm.bottomRight->y - parm.topLeft->y;
+
+            for(duint i = 0; i < parm.numVertices; ++i)
+            {
+                texCoords[i].x = ((parm.bottomRight->x - parm.rvertices[i].x) / width * tp.topLeft.x) +
+                    ((parm.rvertices[i].x - parm.topLeft->x) / width * tp.bottomRight.x);
+
+                texCoords[i].y = ((parm.bottomRight->y - parm.rvertices[i].y) / height * tp.topLeft.y) +
+                    ((parm.rvertices[i].y - parm.topLeft->y) / height * tp.bottomRight.y);
+            }
+
+            std::memcpy(verts, parm.rvertices, sizeof(Vector3f) * parm.numVertices);
+        }
+
+        if(mustSubdivide)
+        {
+            WallEdge const &leftEdge  = *parm.wall.leftEdge;
+            WallEdge const &rightEdge = *parm.wall.rightEdge;
+
+            shadowList.write(gl::TriangleFan,
+                             BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                             Vector2f(1, 1), Vector2f(0, 0),
+                             0, 3 + rightEdge.divisionCount(),
+                             verts       + 3 + leftEdge.divisionCount(),
+                             colorCoords + 3 + leftEdge.divisionCount(),
+                             texCoords   + 3 + leftEdge.divisionCount())
+                      .write(gl::TriangleFan,
+                             BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                             Vector2f(1, 1), Vector2f(0, 0),
+                             0, 3 + leftEdge.divisionCount(),
+                             verts, colorCoords, texCoords);
+        }
+        else
+        {
+            shadowList.write(parm.isWall? gl::TriangleStrip : gl::TriangleFan,
+                             BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                             Vector2f(1, 1), Vector2f(0, 0),
+                             0, parm.numVertices,
+                             verts, colorCoords, texCoords);
+        }
+
+        R_FreeRendVertices(verts);
+        R_FreeRendTexCoords(texCoords);
+        R_FreeRendColors(colorCoords);
+
+        return LoopContinue;
+    });
 }
 
 struct rendworldpoly_params_t
 {
-    //int             flags; /// @ref rendpolyFlags
     bool            skyMasked;
     blendmode_t     blendMode;
     Vector3d const *topLeft;
     Vector3d const *bottomRight;
     Vector2f const *materialOrigin;
     Vector2f const *materialScale;
-    float           alpha;
-    float           surfaceLightLevelDL;
-    float           surfaceLightLevelDR;
+    dfloat          alpha;
+    dfloat          surfaceLightLevelDL;
+    dfloat          surfaceLightLevelDR;
     Vector3f const *surfaceColor;
+    Matrix3f const *surfaceTangentMatrix;
 
-    uint            lightListIdx; // List of lights that affect this poly.
-    uint            shadowListIdx; // List of shadows that affect this poly.
-    float           glowing;
+    duint           lightListIdx;   ///< List of lights that affect this poly.
+    duint           shadowListIdx;  ///< List of shadows that affect this poly.
+    dfloat          glowing;
     bool            forceOpaque;
-    BiasSurface    *bsuf;
-    int             geomGroup;
+    MapElement     *mapElement;
+    dint            geomGroup;
 
     bool            isWall;
 // Wall only:
     struct {
         coord_t sectionWidth;
-        Vector3f const *surfaceColor2; // Secondary color.
+        Vector3f const *surfaceColor2;  ///< Secondary color.
         WallEdge const *leftEdge;
         WallEdge const *rightEdge;
     } wall;
 };
 
-static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
-    rendworldpoly_params_t const &p, MaterialSnapshot const &ms)
+static bool renderWorldPoly(Vector3f *posCoords, duint numVertices,
+    rendworldpoly_params_t const &p, MaterialAnimator &matAnimator)
 {
-    BspLeaf *leaf = currentBspLeaf;
+    DENG2_ASSERT(posCoords);
 
-    DENG_ASSERT(posCoords != 0);
+    SectorCluster &cluster = curSubspace->cluster();
 
-    uint const realNumVertices   = (p.isWall? 3 + p.wall.leftEdge->divisionCount() + 3 + p.wall.rightEdge->divisionCount() : numVertices);
+    // Ensure we've up to date info about the material.
+    matAnimator.prepare();
+
+    duint const realNumVertices  = (p.isWall? 3 + p.wall.leftEdge->divisionCount() + 3 + p.wall.rightEdge->divisionCount() : numVertices);
     bool const mustSubdivide     = (p.isWall && (p.wall.leftEdge->divisionCount() || p.wall.rightEdge->divisionCount()));
 
-    bool const skyMaskedMaterial = (p.skyMasked || (ms.material().isSkyMasked()));
-    bool const drawAsVisSprite   = (!p.forceOpaque && !p.skyMasked && (!ms.isOpaque() || p.alpha < 1 || p.blendMode > 0));
+    bool const skyMaskedMaterial = (p.skyMasked || (matAnimator.material().isSkyMasked()));
+    bool const drawAsVisSprite   = (!p.forceOpaque && !p.skyMasked && (!matAnimator.isOpaque() || p.alpha < 1 || p.blendMode > 0));
 
     bool useLights = false, useShadows = false, hasDynlights = false;
 
-    // Map RTU configuration from prepared MaterialSnapshot(s).
-    GLTextureUnit const *primaryRTU       = (!p.skyMasked)? &ms.unit(RTU_PRIMARY) : NULL;
-    GLTextureUnit const *primaryDetailRTU = (r_detail && !p.skyMasked && ms.unit(RTU_PRIMARY_DETAIL).hasTexture())? &ms.unit(RTU_PRIMARY_DETAIL) : NULL;
-    GLTextureUnit const *interRTU         = (!p.skyMasked && ms.unit(RTU_INTER).hasTexture())? &ms.unit(RTU_INTER) : NULL;
-    GLTextureUnit const *interDetailRTU   = (r_detail && !p.skyMasked && ms.unit(RTU_INTER_DETAIL).hasTexture())? &ms.unit(RTU_INTER_DETAIL) : NULL;
-    GLTextureUnit const *shinyRTU         = (useShinySurfaces && !p.skyMasked && ms.unit(RTU_REFLECTION).hasTexture())? &ms.unit(RTU_REFLECTION) : NULL;
-    GLTextureUnit const *shinyMaskRTU     = (useShinySurfaces && !p.skyMasked && ms.unit(RTU_REFLECTION).hasTexture() && ms.unit(RTU_REFLECTION_MASK).hasTexture())? &ms.unit(RTU_REFLECTION_MASK) : NULL;
+    // Map RTU configuration.
+    GLTextureUnit const *detailRTU      = (r_detail && !p.skyMasked && matAnimator.texUnit(MaterialAnimator::TU_DETAIL).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_DETAIL) : nullptr;
+    GLTextureUnit const *detailInterRTU = (r_detail && !p.skyMasked && matAnimator.texUnit(MaterialAnimator::TU_DETAIL_INTER).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_DETAIL_INTER) : nullptr;
+    GLTextureUnit const *layer0RTU      = (!p.skyMasked)? &matAnimator.texUnit(MaterialAnimator::TU_LAYER0) : nullptr;
+    GLTextureUnit const *layer0InterRTU = (!p.skyMasked && matAnimator.texUnit(MaterialAnimator::TU_LAYER0_INTER).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_LAYER0_INTER) : nullptr;
+    GLTextureUnit const *shineRTU       = (useShinySurfaces && !p.skyMasked && matAnimator.texUnit(MaterialAnimator::TU_SHINE).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_SHINE) : nullptr;
+    GLTextureUnit const *shineMaskRTU   = (useShinySurfaces && !p.skyMasked && matAnimator.texUnit(MaterialAnimator::TU_SHINE).hasTexture() && matAnimator.texUnit(MaterialAnimator::TU_SHINE_MASK).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_SHINE_MASK) : nullptr;
 
-    Vector4f *colorCoords    = !skyMaskedMaterial? R_AllocRendColors(realNumVertices) : 0;
+    Vector4f *colorCoords    = !skyMaskedMaterial? R_AllocRendColors(realNumVertices) : nullptr;
     Vector2f *primaryCoords  = R_AllocRendTexCoords(realNumVertices);
-    Vector2f *interCoords    = interRTU? R_AllocRendTexCoords(realNumVertices) : 0;
+    Vector2f *interCoords    = layer0InterRTU? R_AllocRendTexCoords(realNumVertices) : nullptr;
 
-    Vector4f *shinyColors    = 0;
-    Vector2f *shinyTexCoords = 0;
-    Vector2f *modCoords      = 0;
+    Vector4f *shinyColors    = nullptr;
+    Vector2f *shinyTexCoords = nullptr;
+    Vector2f *modCoords      = nullptr;
 
     DGLuint modTex = 0;
     Vector2f modTexSt[2]; // [topLeft, bottomRight]
@@ -1069,7 +1358,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
     if(!skyMaskedMaterial)
     {
         // ShinySurface?
-        if(shinyRTU && !drawAsVisSprite)
+        if(shineRTU && !drawAsVisSprite)
         {
             // We'll reuse the same verts but we need new colors.
             shinyColors = R_AllocRendColors(realNumVertices);
@@ -1083,15 +1372,16 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
             useLights  = (p.lightListIdx ? true : false);
             useShadows = (p.shadowListIdx? true : false);
 
-            /**
-             * If multitexturing is enabled and there is at least one
-             * dynlight affecting this surface, grab the parameters
-             * needed to draw it.
-             */
+            // If multitexturing is enabled and there is at least one dynlight
+            // affecting this surface, grab the parameters needed to draw it.
             if(useLights && Rend_IsMTexLights())
             {
-                TexProjection *dyn = 0;
-                Rend_IterateProjectionList(p.lightListIdx, RIT_FirstDynlightIterator, (void *)&dyn);
+                ProjectedTextureData const *dyn = nullptr;
+                rendSys().forAllSurfaceProjections(p.lightListIdx, [&dyn] (ProjectedTextureData const &tp)
+                {
+                    dyn = &tp;
+                    return LoopAbort;
+                });
 
                 modTex      = dyn->texture;
                 modCoords   = R_AllocRendTexCoords(realNumVertices);
@@ -1108,11 +1398,11 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
         quadTexCoords(primaryCoords, posCoords, p.wall.sectionWidth, *p.topLeft);
 
         // Blend texture coordinates.
-        if(interRTU && !drawAsVisSprite)
+        if(layer0InterRTU && !drawAsVisSprite)
             quadTexCoords(interCoords, posCoords, p.wall.sectionWidth, *p.topLeft);
 
         // Shiny texture coordinates.
-        if(shinyRTU && !drawAsVisSprite)
+        if(shineRTU && !drawAsVisSprite)
             quadShinyTexCoords(shinyTexCoords, &posCoords[1], &posCoords[2], p.wall.sectionWidth);
 
         // First light texture coordinates.
@@ -1121,25 +1411,25 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
     }
     else
     {
-        for(uint i = 0; i < numVertices; ++i)
+        for(duint i = 0; i < numVertices; ++i)
         {
             Vector3f const &vtx = posCoords[i];
             Vector3f const delta(vtx - *p.topLeft);
 
             // Primary texture coordinates.
-            if(primaryRTU)
+            if(layer0RTU)
             {
                 primaryCoords[i] = Vector2f(delta.x, -delta.y);
             }
 
             // Blend primary texture coordinates.
-            if(interRTU)
+            if(layer0InterRTU)
             {
                 interCoords[i] = Vector2f(delta.x, -delta.y);
             }
 
             // Shiny texture coordinates.
-            if(shinyRTU)
+            if(shineRTU)
             {
                 flatShinyTexCoords(&shinyTexCoords[i], vtx);
             }
@@ -1147,8 +1437,8 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
             // First light texture coordinates.
             if(modTex && Rend_IsMTexLights())
             {
-                float const width  = p.bottomRight->x - p.topLeft->x;
-                float const height = p.bottomRight->y - p.topLeft->y;
+                dfloat const width  = p.bottomRight->x - p.topLeft->x;
+                dfloat const height = p.bottomRight->y - p.topLeft->y;
 
                 modCoords[i] = Vector2f(((p.bottomRight->x - vtx.x) / width  * modTexSt[0].x) + (delta.x / width  * modTexSt[1].x),
                                         ((p.bottomRight->y - vtx.y) / height * modTexSt[0].y) + (delta.y / height * modTexSt[1].y));
@@ -1162,9 +1452,9 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
         if(levelFullBright || !(p.glowing < 1))
         {
             // Uniform color. Apply to all vertices.
-            float ll = de::clamp(0.f, currentSectorLightLevel + (levelFullBright? 1 : p.glowing), 1.f);
+            dfloat ll = de::clamp(0.f, curSectorLightLevel + (levelFullBright? 1 : p.glowing), 1.f);
             Vector4f *colorIt = colorCoords;
-            for(uint i = 0; i < numVertices; ++i, colorIt++)
+            for(duint i = 0; i < numVertices; ++i, colorIt++)
             {
                 colorIt->x = colorIt->y = colorIt->z = ll;
             }
@@ -1174,42 +1464,56 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
             // Non-uniform color.
             if(useBias)
             {
+                Map &map     = cluster.sector().map();
+                Shard &shard = cluster.shard(*p.mapElement, p.geomGroup);
+
                 // Apply the ambient light term from the grid (if available).
-                if(leaf->map().hasLightGrid())
+                if(map.hasLightGrid())
                 {
                     Vector3f const *posIt = posCoords;
-                    Vector4f *colorIt = colorCoords;
-                    for(uint i = 0; i < numVertices; ++i, posIt++, colorIt++)
+                    Vector4f *colorIt     = colorCoords;
+                    for(duint i = 0; i < numVertices; ++i, posIt++, colorIt++)
                     {
-                        *colorIt = leaf->map().lightGrid().evaluate(*posIt);
+                        *colorIt = map.lightGrid().evaluate(*posIt);
                     }
                 }
 
-                // Apply shadow bias contributions.
-                p.bsuf->lightBiasPoly(p.geomGroup, posCoords, colorCoords);
+                // Apply bias light source contributions.
+                shard.lightWithBiasSources(posCoords, colorCoords, *p.surfaceTangentMatrix,
+                                           map.biasCurrentTime());
 
+                // Apply surface glow.
                 if(p.glowing > 0)
                 {
-                    static const Vector3f saturated(1, 1, 1);
-                    float const glow = p.glowing;
+                    Vector4f const glow(p.glowing, p.glowing, p.glowing, 0);
                     Vector4f *colorIt = colorCoords;
-                    for(uint i = 0; i < numVertices; ++i, colorIt++)
+                    for(duint i = 0; i < numVertices; ++i, colorIt++)
                     {
-                        *colorIt = (Vector3f(*colorIt) + Vector3f(glow, glow, glow))
-                                   .min(saturated); // clamp
+                        *colorIt += glow;
+                    }
+                }
+
+                // Apply light range compression and clamp.
+                Vector3f const *posIt = posCoords;
+                Vector4f *colorIt     = colorCoords;
+                for(duint i = 0; i < numVertices; ++i, posIt++, colorIt++)
+                {
+                    for(dint i = 0; i < 3; ++i)
+                    {
+                        (*colorIt)[i] = de::clamp(0.f, (*colorIt)[i] + Rend_LightAdaptationDelta((*colorIt)[i]), 1.f);
                     }
                 }
             }
             else
             {
-                float llL = de::clamp(0.f, currentSectorLightLevel + p.surfaceLightLevelDL + p.glowing, 1.f);
-                float llR = de::clamp(0.f, currentSectorLightLevel + p.surfaceLightLevelDR + p.glowing, 1.f);
+                dfloat llL = de::clamp(0.f, curSectorLightLevel + p.surfaceLightLevelDL + p.glowing, 1.f);
+                dfloat llR = de::clamp(0.f, curSectorLightLevel + p.surfaceLightLevelDR + p.glowing, 1.f);
 
                 // Calculate the color for each vertex, blended with plane color?
                 if(p.surfaceColor->x < 1 || p.surfaceColor->y < 1 || p.surfaceColor->z < 1)
                 {
                     // Blend sector light+color+surfacecolor
-                    Vector3f vColor = (*p.surfaceColor) * currentSectorLightColor;
+                    Vector3f vColor = (*p.surfaceColor) * curSectorLightColor;
 
                     if(p.isWall && llL != llR)
                     {
@@ -1228,14 +1532,14 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                     // Use sector light+color only.
                     if(p.isWall && llL != llR)
                     {
-                        lightVertex(colorCoords[0], posCoords[0], llL, currentSectorLightColor);
-                        lightVertex(colorCoords[1], posCoords[1], llL, currentSectorLightColor);
-                        lightVertex(colorCoords[2], posCoords[2], llR, currentSectorLightColor);
-                        lightVertex(colorCoords[3], posCoords[3], llR, currentSectorLightColor);
+                        lightVertex(colorCoords[0], posCoords[0], llL, curSectorLightColor);
+                        lightVertex(colorCoords[1], posCoords[1], llL, curSectorLightColor);
+                        lightVertex(colorCoords[2], posCoords[2], llR, curSectorLightColor);
+                        lightVertex(colorCoords[3], posCoords[3], llR, curSectorLightColor);
                     }
                     else
                     {
-                        lightVertices(numVertices, colorCoords, posCoords, llL, currentSectorLightColor);
+                        lightVertices(numVertices, colorCoords, posCoords, llL, curSectorLightColor);
                     }
                 }
 
@@ -1243,7 +1547,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                 if(p.isWall && p.wall.surfaceColor2)
                 {
                     // Blend sector light+color+surfacecolor
-                    Vector3f vColor = (*p.wall.surfaceColor2) * currentSectorLightColor;
+                    Vector3f vColor = (*p.wall.surfaceColor2) * curSectorLightColor;
 
                     lightVertex(colorCoords[0], posCoords[0], llL, vColor);
                     lightVertex(colorCoords[2], posCoords[2], llR, vColor);
@@ -1255,28 +1559,28 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
             {
                 Vector3f const *posIt = posCoords;
                 Vector4f *colorIt = colorCoords;
-                for(uint i = 0; i < numVertices; ++i, colorIt++, posIt++)
+                for(duint i = 0; i < numVertices; ++i, colorIt++, posIt++)
                 {
                     Rend_ApplyTorchLight(*colorIt, Rend_PointDist2D(*posIt));
                 }
             }
         }
 
-        if(shinyRTU && !drawAsVisSprite)
+        if(shineRTU && !drawAsVisSprite)
         {
             // Strength of the shine.
-            Vector3f const &minColor = ms.shineMinColor();
-            for(uint i = 0; i < numVertices; ++i)
+            Vector3f const &minColor = matAnimator.shineMinColor();
+            for(duint i = 0; i < numVertices; ++i)
             {
                 Vector4f &color = shinyColors[i];
                 color = Vector3f(colorCoords[i]).max(minColor);
-                color.w = shinyRTU->opacity;
+                color.w = shineRTU->opacity;
             }
         }
 
-        // Apply uniform alpha.
+        // Apply uniform alpha (overwritting luminance factors).
         Vector4f *colorIt = colorCoords;
-        for(uint i = 0; i < numVertices; ++i, colorIt++)
+        for(duint i = 0; i < numVertices; ++i, colorIt++)
         {
             colorIt->w = p.alpha;
         }
@@ -1284,13 +1588,11 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
 
     if(useLights || useShadows)
     {
-        /*
-         * Surfaces lit by dynamic lights may need to be rendered differently
-         * than non-lit surfaces. Determine the average light level of this rend
-         * poly, if too bright; do not bother with lights.
-         */
-        float avgLightlevel = 0;
-        for(uint i = 0; i < numVertices; ++i)
+        // Surfaces lit by dynamic lights may need to be rendered differently
+        // than non-lit surfaces. Determine the average light level of this rend
+        // poly, if too bright; do not bother with lights.
+        dfloat avgLightlevel = 0;
+        for(duint i = 0; i < numVertices; ++i)
         {
             avgLightlevel += colorCoords[i].x;
             avgLightlevel += colorCoords[i].y;
@@ -1312,12 +1614,10 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
     {
         DENG2_ASSERT(p.isWall);
 
-        /*
-         * Masked polys (walls) get a special treatment (=> vissprite). This is
-         * needed because all masked polys must be sorted (sprites are masked
-         * polys). Otherwise there will be artifacts.
-         */
-        Rend_AddMaskedPoly(posCoords, colorCoords, p.wall.sectionWidth, &ms.materialVariant(),
+        // Masked polys (walls) get a special treatment (=> vissprite). This is
+        // needed because all masked polys must be sorted (sprites are masked
+        // polys). Otherwise there will be artifacts.
+        Rend_AddMaskedPoly(posCoords, colorCoords, p.wall.sectionWidth, &matAnimator,
                            *p.materialOrigin, p.blendMode, p.lightListIdx, p.glowing);
 
         R_FreeRendTexCoords(primaryCoords);
@@ -1327,15 +1627,13 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
         R_FreeRendTexCoords(shinyTexCoords);
         R_FreeRendColors(shinyColors);
 
-        return false; // We HAD to use a vissprite, so it MUST not be opaque.
+        return false;  // We HAD to use a vissprite, so it MUST not be opaque.
     }
 
     if(useLights)
     {
         // Render all lights projected onto this surface.
-        renderlightprojectionparams_t parm;
-
-        zap(parm);
+        drawprojectedlights_parameters_t parm; de::zap(parm);
         parm.rvertices       = posCoords;
         parm.numVertices     = numVertices;
         parm.realNumVertices = realNumVertices;
@@ -1349,15 +1647,13 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
             parm.wall.rightEdge = p.wall.rightEdge;
         }
 
-        hasDynlights = (0 != Rend_RenderLightProjections(p.lightListIdx, parm));
+        hasDynlights = (0 != drawProjectedLights(p.lightListIdx, parm));
     }
 
     if(useShadows)
     {
         // Render all shadows projected onto this surface.
-        rendershadowprojectionparams_t parm;
-
-        zap(parm);
+        drawprojectedshadows_parameters_t parm; de::zap(parm);
         parm.rvertices       = posCoords;
         parm.numVertices     = numVertices;
         parm.realNumVertices = realNumVertices;
@@ -1370,19 +1666,17 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
             parm.wall.rightEdge = p.wall.rightEdge;
         }
 
-        Rend_RenderShadowProjections(p.shadowListIdx, parm);
+        drawProjectedShadows(p.shadowListIdx, parm);
     }
 
     // Write multiple polys depending on rend params.
     if(mustSubdivide)
     {
-        WallEdge const &leftEdge = *p.wall.leftEdge;
+        WallEdge const &leftEdge  = *p.wall.leftEdge;
         WallEdge const &rightEdge = *p.wall.rightEdge;
 
-        /*
-         * Need to swap indices around into fans set the position of the division
-         * vertices, interpolate texcoords and color.
-         */
+        // Need to swap indices around into fans set the position of the division
+        // vertices, interpolate texcoords and color.
 
         Vector3f origVerts[4];
         std::memcpy(origVerts, posCoords, sizeof(origVerts));
@@ -1451,9 +1745,9 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
         {
             DrawListSpec listSpec((modTex || hasDynlights)? LitGeom : UnlitGeom);
 
-            if(primaryRTU)
+            if(layer0RTU)
             {
-                listSpec.texunits[TU_PRIMARY] = *primaryRTU;
+                listSpec.texunits[TU_PRIMARY] = *layer0RTU;
                 if(p.materialOrigin)
                 {
                     listSpec.texunits[TU_PRIMARY].offset += *p.materialOrigin;
@@ -1465,18 +1759,18 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                 }
             }
 
-            if(primaryDetailRTU)
+            if(detailRTU)
             {
-                listSpec.texunits[TU_PRIMARY_DETAIL] = *primaryDetailRTU;
+                listSpec.texunits[TU_PRIMARY_DETAIL] = *detailRTU;
                 if(p.materialOrigin)
                 {
                     listSpec.texunits[TU_PRIMARY_DETAIL].offset += *p.materialOrigin;
                 }
             }
 
-            if(interRTU)
+            if(layer0InterRTU)
             {
-                listSpec.texunits[TU_INTER] = *interRTU;
+                listSpec.texunits[TU_INTER] = *layer0InterRTU;
                 if(p.materialOrigin)
                 {
                     listSpec.texunits[TU_INTER].offset += *p.materialOrigin;
@@ -1488,9 +1782,9 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                 }
             }
 
-            if(interDetailRTU)
+            if(detailInterRTU)
             {
-                listSpec.texunits[TU_INTER_DETAIL] = *interDetailRTU;
+                listSpec.texunits[TU_INTER_DETAIL] = *detailInterRTU;
                 if(p.materialOrigin)
                 {
                     listSpec.texunits[TU_INTER_DETAIL].offset += *p.materialOrigin;
@@ -1519,15 +1813,15 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                                  posCoords, colorCoords, primaryCoords,
                                  interCoords, modTex, &modColor, modCoords);
 
-            if(shinyRTU)
+            if(shineRTU)
             {
                 DrawListSpec listSpec(ShineGeom);
 
-                listSpec.texunits[TU_PRIMARY] = *shinyRTU;
+                listSpec.texunits[TU_PRIMARY] = *shineRTU;
 
-                if(shinyMaskRTU)
+                if(shineMaskRTU)
                 {
-                    listSpec.texunits[TU_INTER] = *shinyMaskRTU;
+                    listSpec.texunits[TU_INTER] = *shineMaskRTU;
                     if(p.materialOrigin)
                     {
                         listSpec.texunits[TU_INTER].offset += *p.materialOrigin;
@@ -1541,7 +1835,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
 
                 ClientApp::renderSystem().drawLists()
                           .find(listSpec)
-                              .write(gl::TriangleFan, ms.shineBlendMode(),
+                              .write(gl::TriangleFan, matAnimator.shineBlendMode(),
                                      listSpec.unit(TU_INTER).scale,
                                      listSpec.unit(TU_INTER).offset,
                                      Vector2f(1, 1), Vector2f(0, 0),
@@ -1549,14 +1843,14 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                                      posCoords + 3 + leftEdge.divisionCount(),
                                      shinyColors + 3 + leftEdge.divisionCount(),
                                      shinyTexCoords? shinyTexCoords + 3 + leftEdge.divisionCount() : 0,
-                                     shinyMaskRTU? primaryCoords + 3 + leftEdge.divisionCount() : 0)
-                              .write(gl::TriangleFan, ms.shineBlendMode(),
+                                     shineMaskRTU? primaryCoords + 3 + leftEdge.divisionCount() : 0)
+                              .write(gl::TriangleFan, matAnimator.shineBlendMode(),
                                      listSpec.unit(TU_INTER).scale,
                                      listSpec.unit(TU_INTER).offset,
                                      Vector2f(1, 1), Vector2f(0, 0),
                                      false, 3 + leftEdge.divisionCount(),
                                      posCoords, shinyColors, shinyTexCoords,
-                                     shinyMaskRTU? primaryCoords : 0);
+                                     shineMaskRTU? primaryCoords : 0);
             }
         }
     }
@@ -1576,9 +1870,9 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
         {
             DrawListSpec listSpec((modTex || hasDynlights)? LitGeom : UnlitGeom);
 
-            if(primaryRTU)
+            if(layer0RTU)
             {
-                listSpec.texunits[TU_PRIMARY] = *primaryRTU;
+                listSpec.texunits[TU_PRIMARY] = *layer0RTU;
                 if(p.materialOrigin)
                 {
                     listSpec.texunits[TU_PRIMARY].offset += *p.materialOrigin;
@@ -1590,18 +1884,18 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                 }
             }
 
-            if(primaryDetailRTU)
+            if(detailRTU)
             {
-                listSpec.texunits[TU_PRIMARY_DETAIL] = *primaryDetailRTU;
+                listSpec.texunits[TU_PRIMARY_DETAIL] = *detailRTU;
                 if(p.materialOrigin)
                 {
                     listSpec.texunits[TU_PRIMARY_DETAIL].offset += *p.materialOrigin;
                 }
             }
 
-            if(interRTU)
+            if(layer0InterRTU)
             {
-                listSpec.texunits[TU_INTER] = *interRTU;
+                listSpec.texunits[TU_INTER] = *layer0InterRTU;
                 if(p.materialOrigin)
                 {
                     listSpec.texunits[TU_INTER].offset += *p.materialOrigin;
@@ -1613,9 +1907,9 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                 }
             }
 
-            if(interDetailRTU)
+            if(detailInterRTU)
             {
-                listSpec.texunits[TU_INTER_DETAIL] = *interDetailRTU;
+                listSpec.texunits[TU_INTER_DETAIL] = *detailInterRTU;
                 if(p.materialOrigin)
                 {
                     listSpec.texunits[TU_INTER_DETAIL].offset += *p.materialOrigin;
@@ -1634,15 +1928,15 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                                  posCoords, colorCoords, primaryCoords, interCoords,
                                  modTex, &modColor, modCoords);
 
-            if(shinyRTU)
+            if(shineRTU)
             {
                 DrawListSpec listSpec(ShineGeom);
 
-                listSpec.texunits[TU_PRIMARY] = *shinyRTU;
+                listSpec.texunits[TU_PRIMARY] = *shineRTU;
 
-                if(shinyMaskRTU)
+                if(shineMaskRTU)
                 {
-                    listSpec.texunits[TU_INTER] = *shinyMaskRTU;
+                    listSpec.texunits[TU_INTER] = *shineMaskRTU;
                     if(p.materialOrigin)
                     {
                         listSpec.texunits[TU_INTER].offset += *p.materialOrigin;
@@ -1657,13 +1951,13 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                 ClientApp::renderSystem().drawLists()
                           .find(listSpec)
                               .write(p.isWall? gl::TriangleStrip : gl::TriangleFan,
-                                     ms.shineBlendMode(),
+                                     matAnimator.shineBlendMode(),
                                      listSpec.unit(TU_INTER         ).scale,
                                      listSpec.unit(TU_INTER         ).offset,
                                      listSpec.unit(TU_PRIMARY_DETAIL).scale,
                                      listSpec.unit(TU_PRIMARY_DETAIL).offset,
                                      false, numVertices,
-                                     posCoords, shinyColors, shinyTexCoords, shinyMaskRTU? primaryCoords : 0);
+                                     posCoords, shinyColors, shinyTexCoords, shineMaskRTU? primaryCoords : 0);
             }
         }
     }
@@ -1676,56 +1970,442 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
     R_FreeRendColors(shinyColors);
 
     return (p.forceOpaque || skyMaskedMaterial ||
-            !(p.alpha < 1 || !ms.isOpaque() || p.blendMode > 0));
+            !(p.alpha < 1 || !matAnimator.isOpaque() || p.blendMode > 0));
 }
 
 static Lumobj::LightmapSemantic lightmapForSurface(Surface const &surface)
 {
     if(surface.parent().type() == DMU_SIDE) return Lumobj::Side;
     // Must be a plane then.
-    Plane const &plane = surface.parent().as<Plane>();
+    auto const &plane = surface.parent().as<Plane>();
     return plane.isSectorFloor()? Lumobj::Down : Lumobj::Up;
 }
 
-static void projectDynamics(Surface const &surface, float glowStrength,
+static DGLuint prepareLightmap(Texture *tex = nullptr)
+{
+    if(tex)
+    {
+        if(TextureVariant *variant = tex->prepareVariant(Rend_MapSurfaceLightmapTextureSpec()))
+        {
+            return variant->glName();
+        }
+        // Dang...
+    }
+    // Prepare the default/fallback lightmap instead.
+    return GL_PrepareLSTexture(LST_DYNAMIC);
+}
+
+static bool projectDynlight(Vector3d const &topLeft, Vector3d const &bottomRight,
+    Lumobj const &lum, Surface const &surface, dfloat blendFactor,
+    ProjectedTextureData &projected)
+{
+    if(blendFactor < OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN)
+        return false;
+
+    // Has this already been occluded?
+    if(R_ViewerLumobjIsHidden(lum.indexInMap()))
+        return false;
+
+    // No lightmap texture?
+    DGLuint tex = prepareLightmap(lum.lightmap(lightmapForSurface(surface)));
+    if(!tex) return false;
+
+    Vector3d lumCenter = lum.origin();
+    lumCenter.z += lum.zOffset();
+
+    // On the right side?
+    Vector3d topLeftToLum = topLeft - lumCenter;
+    if(topLeftToLum.dot(surface.tangentMatrix().column(2)) > 0.f)
+        return false;
+
+    // Calculate 3D distance between surface and lumobj.
+    Vector3d pointOnPlane = R_ClosestPointOnPlane(surface.tangentMatrix().column(2)/*normal*/,
+                                                  topLeft, lumCenter);
+
+    coord_t distToLum = (lumCenter - pointOnPlane).length();
+    if(distToLum <= 0 || distToLum > lum.radius())
+        return false;
+
+    // Calculate the final surface light attribution factor.
+    dfloat luma = 1.5f - 1.5f * distToLum / lum.radius();
+
+    // Fade out as distance from viewer increases.
+    luma *= lum.attenuation(R_ViewerLumobjDistance(lum.indexInMap()));
+
+    // Would this be seen?
+    if(luma * blendFactor < OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN)
+        return false;
+
+    // Project, counteracting aspect correction slightly.
+    Vector2f s, t;
+    dfloat const scale = 1.0f / ((2.f * lum.radius()) - distToLum);
+    if(!R_GenerateTexCoords(s, t, pointOnPlane, scale, scale * 1.08f,
+                            topLeft, bottomRight, surface.tangentMatrix()))
+        return false;
+
+    de::zap(projected);
+    projected.texture     = tex;
+    projected.topLeft     = Vector2f(s[0], t[0]);
+    projected.bottomRight = Vector2f(s[1], t[1]);
+    projected.color       = Vector4f(Rend_LuminousColor(lum.color(), luma), blendFactor);
+
+    return true;
+}
+
+static bool projectPlaneGlow(Vector3d const &topLeft, Vector3d const &bottomRight,
+    Plane const &plane, Vector3d const &pointOnPlane, dfloat blendFactor,
+    ProjectedTextureData &projected)
+{
+    if(blendFactor < OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN)
+        return false;
+
+    Surface const &surface = plane.surface();
+    Vector3f color;
+    dfloat intensity = surface.glow(color);
+
+    // Is the material glowing at this moment?
+    if(intensity < .05f)
+        return false;
+
+    coord_t glowHeight = Rend_PlaneGlowHeight(intensity);
+    if(glowHeight < 2) return false;  // Not too small!
+
+    // Calculate coords.
+    dfloat bottom, top;
+    if(surface.normal().z < 0)
+    {
+        // Cast downward.
+              bottom = (pointOnPlane.z - topLeft.z) / glowHeight;
+        top = bottom + (topLeft.z - bottomRight.z) / glowHeight;
+    }
+    else
+    {
+        // Cast upward.
+                 top = (bottomRight.z - pointOnPlane.z) / glowHeight;
+        bottom = top + (topLeft.z - bottomRight.z) / glowHeight;
+    }
+
+    // Within range on the Z axis?
+    if(!(bottom <= 1 || top >= 0)) return false;
+
+    de::zap(projected);
+    projected.texture     = GL_PrepareLSTexture(LST_GRADIENT);
+    projected.topLeft     = Vector2f(0, bottom);
+    projected.bottomRight = Vector2f(1, top);
+    projected.color       = Vector4f(Rend_LuminousColor(color, intensity), blendFactor);
+    return true;
+}
+
+static bool projectShadow(Vector3d const &topLeft, Vector3d const &bottomRight,
+    mobj_t const &mob, Surface const &surface, dfloat blendFactor,
+    ProjectedTextureData &projected)
+{
+    static Vector3f const black;  // shadows are black
+
+    coord_t mobOrigin[3];
+    Mobj_OriginSmoothed(const_cast<mobj_t *>(&mob), mobOrigin);
+
+    // Is this too far?
+    coord_t distanceFromViewer = 0;
+    if(shadowMaxDistance > 0)
+    {
+        distanceFromViewer = Rend_PointDist2D(mobOrigin);
+        if(distanceFromViewer > shadowMaxDistance)
+            return LoopContinue;
+    }
+
+    // Should this mobj even have a shadow?
+    dfloat shadowStrength = Mobj_ShadowStrength(mob) * ::shadowFactor;
+    if(::usingFog) shadowStrength /= 2;
+    if(shadowStrength <= 0) return LoopContinue;
+
+    coord_t shadowRadius = Mobj_ShadowRadius(mob);
+    if(shadowRadius > ::shadowMaxRadius)
+        shadowRadius = ::shadowMaxRadius;
+    if(shadowRadius <= 0) return LoopContinue;
+
+    mobOrigin[2] -= mob.floorClip;
+    if(mob.ddFlags & DDMF_BOB)
+        mobOrigin[2] -= Mobj_BobOffset(mob);
+
+    coord_t mobHeight = mob.height;
+    if(!mobHeight) mobHeight = 1;
+
+    // If this were a light this is where we would check whether the origin is on
+    // the right side of the surface. However this is a shadow and light is moving
+    // in the opposite direction (inward toward the mobj's origin), therefore this
+    // has "volume/depth".
+
+    // Calculate 3D distance between surface and mobj.
+    Vector3d point = R_ClosestPointOnPlane(surface.tangentMatrix().column(2)/*normal*/,
+                                           topLeft, mobOrigin);
+    coord_t distFromSurface = (Vector3d(mobOrigin) - Vector3d(point)).length();
+
+    // Too far above or below the shadowed surface?
+    if(distFromSurface > mob.height)
+        return false;
+    if(mobOrigin[2] + mob.height < point.z)
+        return false;
+    if(distFromSurface > shadowRadius)
+        return false;
+
+    // Calculate the final strength of the shadow's attribution to the surface.
+    shadowStrength *= 1.5f - 1.5f * distFromSurface / shadowRadius;
+
+    // Fade at half mobj height for smooth fade out when embedded in the surface.
+    coord_t halfMobjHeight = mobHeight / 2;
+    if(distFromSurface > halfMobjHeight)
+    {
+        shadowStrength *= 1 - (distFromSurface - halfMobjHeight) / (mobHeight - halfMobjHeight);
+    }
+
+    // Fade when nearing the maximum distance?
+    shadowStrength *= Rend_ShadowAttenuationFactor(distanceFromViewer);
+    shadowStrength *= blendFactor;
+
+    // Would this shadow be seen?
+    if(shadowStrength < SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN)
+        return false;
+
+    // Project, counteracting aspect correction slightly.
+    Vector2f s, t;
+    dfloat const scale = 1.0f / ((2.f * shadowRadius) - distFromSurface);
+    if(!R_GenerateTexCoords(s, t, point, scale, scale * 1.08f,
+                            topLeft, bottomRight, surface.tangentMatrix()))
+        return false;
+
+    de::zap(projected);
+    projected.texture     = GL_PrepareLSTexture(LST_DYNAMIC);
+    projected.topLeft     = Vector2f(s[0], t[0]);
+    projected.bottomRight = Vector2f(s[1], t[1]);
+    projected.color       = Vector4f(black, shadowStrength);
+    return true;
+}
+
+/**
+ * @pre The coordinates of the given quad must be contained wholly within the subspoce
+ * specified. This is due to an optimization within the lumobj management which separates
+ * them by subspace.
+ */
+static void projectDynamics(Surface const &surface, dfloat glowStrength,
     Vector3d const &topLeft, Vector3d const &bottomRight,
     bool noLights, bool noShadows, bool sortLights,
-    uint &lightListIdx, uint &shadowListIdx)
+    duint &lightListIdx, duint &shadowListIdx)
 {
-    BspLeaf *leaf = currentBspLeaf;
+    DENG2_ASSERT(curSubspace);
 
-    if(glowStrength >= 1 || levelFullBright)
-        return;
+    if(levelFullBright) return;
+    if(glowStrength >= 1) return;
 
     // lights?
     if(!noLights)
     {
-        float const blendFactor = 1;
+        dfloat const blendFactor = 1;
 
-        if(useDynLights)
+        if(::useDynLights)
         {
-            Rend_ProjectLumobjs(leaf, topLeft, bottomRight, surface.tangentMatrix(),
-                                blendFactor, lightmapForSurface(surface), sortLights,
-                                lightListIdx);
+            // Project all lumobjs affecting the given quad (world space), calculate
+            // coordinates (in texture space) then store into a new list of projections.
+            R_ForAllSubspaceLumContacts(*curSubspace, [&topLeft, &bottomRight, &surface
+                                                      , &blendFactor, &sortLights
+                                                      , &lightListIdx] (Lumobj &lum)
+            {
+                ProjectedTextureData projected;
+                if(projectDynlight(topLeft, bottomRight, lum, surface, blendFactor,
+                                   projected))
+                {
+                    rendSys().findSurfaceProjectionList(&lightListIdx, sortLights)
+                                << projected;  // a copy is made
+                }
+                return LoopContinue;
+            });
         }
 
-        if(useGlowOnWalls && surface.parent().type() == DMU_SIDE)
+        if(::useGlowOnWalls && surface.parent().type() == DMU_SIDE && bottomRight.z < topLeft.z)
         {
-            Rend_ProjectPlaneGlows(leaf, topLeft, bottomRight, surface.tangentMatrix(),
-                                   blendFactor, sortLights,
-                                   lightListIdx);
+            // Project all plane glows affecting the given quad (world space), calculate
+            // coordinates (in texture space) then store into a new list of projections.
+            SectorCluster const &cluster = curSubspace->cluster();
+            for(dint i = 0; i < cluster.visPlaneCount(); ++i)
+            {
+                Plane const &plane = cluster.visPlane(i);
+                Vector3d const pointOnPlane(cluster.center(), plane.heightSmoothed());
+
+                ProjectedTextureData projected;
+                if(projectPlaneGlow(topLeft, bottomRight, plane, pointOnPlane, blendFactor,
+                                    projected))
+                {
+                    rendSys().findSurfaceProjectionList(&lightListIdx, sortLights)
+                                << projected;  // a copy is made.
+                }
+            }
         }
     }
 
     // Shadows?
-    if(!noShadows && useShadows)
+    if(!noShadows && ::useShadows)
     {
         // Glow inversely diminishes shadow strength.
-        float const blendFactor = 1 - glowStrength;
+        dfloat blendFactor = 1 - glowStrength;
+        if(blendFactor >= SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN)
+        {
+            blendFactor = de::clamp(0.f, blendFactor, 1.f);
 
-        Rend_ProjectMobjShadows(leaf, topLeft, bottomRight, surface.tangentMatrix(),
-                                blendFactor, shadowListIdx);
+            // Project all mobj shadows affecting the given quad (world space), calculate
+            // coordinates (in texture space) then store into a new list of projections.
+            R_ForAllSubspaceMobContacts(*curSubspace, [&topLeft, &bottomRight, &surface
+                                                      , &blendFactor, &shadowListIdx] (mobj_t &mob)
+            {
+                ProjectedTextureData projected;
+                if(projectShadow(topLeft, bottomRight, mob, surface, blendFactor,
+                                 projected))
+                {
+                    rendSys().findSurfaceProjectionList(&shadowListIdx)
+                                << projected;  // a copy is made.
+                }
+                return LoopContinue;
+            });
+        }
     }
+}
+
+/**
+ * World light can both light and shade. Normal objects get more shade than light
+ * (preventing them from ending up too bright compared to the ambient light).
+ */
+static bool lightWithWorldLight(Vector3d const & /*point*/, Vector3f const &ambientColor,
+    bool starkLight, VectorLightData &vlight)
+{
+    static Vector3f const worldLight(-.400891f, -.200445f, .601336f);
+
+    de::zap(vlight);
+    vlight.direction         = worldLight;
+    vlight.color             = ambientColor;
+    vlight.affectedByAmbient = false;
+    vlight.approxDist        = 0;
+    if(starkLight)
+    {
+        vlight.lightSide = .35f;
+        vlight.darkSide  = .5f;
+        vlight.offset    = 0;
+    }
+    else
+    {
+        vlight.lightSide = .2f;
+        vlight.darkSide  = .8f;
+        vlight.offset    = .3f;
+    }
+    return true;
+}
+
+static bool lightWithLumobj(Vector3d const &point, Lumobj const &lum, VectorLightData &vlight)
+{
+    Vector3d const lumCenter(lum.x(), lum.y(), lum.z() + lum.zOffset());
+
+    // Is this light close enough?
+    ddouble const dist = M_ApproxDistance(M_ApproxDistance(lumCenter.x - point.x,
+                                                           lumCenter.y - point.y),
+                                          point.z - lumCenter.z);
+    dfloat intensity = 0;
+    if(dist < Lumobj::radiusMax())
+    {
+        intensity = de::clamp(0.f, dfloat(1 - dist / lum.radius()) * 2, 1.f);
+    }
+    if(intensity < .05f) return false;
+
+    de::zap(vlight);
+    vlight.direction         = (lumCenter - point) / dist;
+    vlight.color             = lum.color() * intensity;
+    vlight.affectedByAmbient = true;
+    vlight.approxDist        = dist;
+    vlight.lightSide         = 1;
+    vlight.darkSide          = 0;
+    vlight.offset            = 0;
+    return true;
+}
+
+static bool lightWithPlaneGlow(Vector3d const &point, SectorCluster const &cluster,
+    dint visPlaneIndex, VectorLightData &vlight)
+{
+    Plane const &plane     = cluster.visPlane(visPlaneIndex);
+    Surface const &surface = plane.surface();
+
+    // Glowing at this moment?
+    Vector3f glowColor;
+    dfloat intensity = surface.glow(glowColor);
+    if(intensity < .05f) return false;
+
+    coord_t const glowHeight = Rend_PlaneGlowHeight(intensity);
+    if(glowHeight < 2) return false;  // Not too small!
+
+    // In front of the plane?
+    Vector3d const pointOnPlane(cluster.center(), plane.heightSmoothed());
+    ddouble const dist = (point - pointOnPlane).dot(surface.normal());
+    if(dist < 0) return false;
+
+    intensity *= 1 - dist / glowHeight;
+    if(intensity < .05f) return false;
+
+    Vector3f const color = Rend_LuminousColor(glowColor, intensity);
+    if(color == Vector3f()) return false;
+
+    de::zap(vlight);
+    vlight.direction         = Vector3f(surface.normal().x, surface.normal().y, -surface.normal().z);
+    vlight.color             = color;
+    vlight.affectedByAmbient = true;
+    vlight.approxDist        = dist;
+    vlight.lightSide         = 1;
+    vlight.darkSide          = 0;
+    vlight.offset            = 0.3f;
+    return true;
+}
+
+duint Rend_CollectAffectingLights(Vector3d const &point, Vector3f const &ambientColor,
+    ConvexSubspace *subspace, bool starkLight)
+{
+    duint lightListIdx = 0;
+
+    // Always apply an ambient world light.
+    {
+        VectorLightData vlight;
+        if(lightWithWorldLight(point, ambientColor, starkLight, vlight))
+        {
+            rendSys().findVectorLightList(&lightListIdx)
+                    << vlight;  // a copy is made.
+        }
+    }
+
+    // Add extra light by interpreting nearby sources.
+    if(subspace)
+    {
+        // Interpret lighting from luminous-objects near the origin and which
+        // are in contact the specified subspace and add them to the identified list.
+        R_ForAllSubspaceLumContacts(*subspace, [&point, &lightListIdx] (Lumobj &lum)
+        {
+            VectorLightData vlight;
+            if(lightWithLumobj(point, lum, vlight))
+            {
+                rendSys().findVectorLightList(&lightListIdx)
+                        << vlight;  // a copy is made.
+            }
+            return LoopContinue;
+        });
+
+        // Interpret vlights from glowing planes at the origin in the specfified
+        // subspace and add them to the identified list.
+        SectorCluster const &cluster = subspace->cluster();
+        for(dint i = 0; i < cluster.sector().planeCount(); ++i)
+        {
+            VectorLightData vlight;
+            if(lightWithPlaneGlow(point, cluster, i, vlight))
+            {
+                rendSys().findVectorLightList(&lightListIdx)
+                        << vlight;  // a copy is made.
+            }
+        }
+    }
+
+    return lightListIdx;
 }
 
 /**
@@ -1739,9 +2419,9 @@ static void projectDynamics(Surface const &surface, float glowStrength,
  * @return  @c true= fading was applied (see above note), otherwise @c false.
  */
 static bool nearFadeOpacity(WallEdge const &leftEdge, WallEdge const &rightEdge,
-                            float &opacity)
+                            dfloat &opacity)
 {
-    if(vOrigin.y < leftEdge.bottom().z() || vOrigin.y > rightEdge.top().z())
+    if(Rend_EyeOrigin().y < leftEdge.bottom().z() || Rend_EyeOrigin().y > rightEdge.top().z())
         return false;
 
     mobj_t const *mo         = viewPlayer->shared.mo;
@@ -1750,14 +2430,14 @@ static bool nearFadeOpacity(WallEdge const &leftEdge, WallEdge const &rightEdge,
     coord_t linePoint[2]     = { line.fromOrigin().x, line.fromOrigin().y };
     coord_t lineDirection[2] = {  line.direction().x,  line.direction().y };
     vec2d_t result;
-    double pos = V2d_ProjectOnLine(result, mo->origin, linePoint, lineDirection);
+    ddouble pos = V2d_ProjectOnLine(result, mo->origin, linePoint, lineDirection);
 
     if(!(pos > 0 && pos < 1))
         return false;
 
     coord_t const maxDistance = Mobj_Radius(*mo) * .8f;
 
-    Vector2d delta = Vector2d(result) - Vector2d(mo->origin);
+    auto delta       = Vector2d(result) - Vector2d(mo->origin);
     coord_t distance = delta.length();
 
     if(de::abs(distance) > maxDistance)
@@ -1778,13 +2458,13 @@ static bool nearFadeOpacity(WallEdge const &leftEdge, WallEdge const &rightEdge,
  *
  * @todo WallEdge should encapsulate.
  */
-static float calcLightLevelDelta(Vector3f const &normal)
+static dfloat calcLightLevelDelta(Vector3f const &normal)
 {
-    return (1.0f / 255) * (normal.x * 18) * rendLightWallAngle;
+    return (1.0f / 255) * (normal.x * 18) * ::rendLightWallAngle;
 }
 
 static void wallSectionLightLevelDeltas(WallEdge const &leftEdge, WallEdge const &rightEdge,
-    float &leftDelta, float &rightDelta)
+    dfloat &leftDelta, dfloat &rightDelta)
 {
     leftDelta = calcLightLevelDelta(leftEdge.normal());
 
@@ -1802,19 +2482,19 @@ static void wallSectionLightLevelDeltas(WallEdge const &leftEdge, WallEdge const
         coord_t const sectionOffset = leftEdge.mapLineSideOffset();
         coord_t const sectionWidth  = de::abs(Vector2d(rightEdge.origin() - leftEdge.origin()).length());
 
-        float deltaDiff = rightDelta - leftDelta;
+        dfloat deltaDiff = rightDelta - leftDelta;
         rightDelta = leftDelta + ((sectionOffset + sectionWidth) / lineLength) * deltaDiff;
         leftDelta += (sectionOffset / lineLength) * deltaDiff;
     }
 }
 
-static void writeWallSection(HEdge &hedge, int section,
-    bool *retWroteOpaque = 0, coord_t *retBottomZ = 0, coord_t *retTopZ = 0)
+static void writeWallSection(HEdge &hedge, dint section,
+    bool *retWroteOpaque = nullptr, coord_t *retBottomZ = nullptr, coord_t *retTopZ = nullptr)
 {
-    BspLeaf *leaf = currentBspLeaf;
+    SectorCluster &cluster = curSubspace->cluster();
 
-    LineSideSegment &segment = hedge.mapElementAs<LineSideSegment>();
-    DENG_ASSERT(segment.isFrontFacing() && segment.lineSide().hasSections());
+    auto &segment = hedge.mapElementAs<LineSideSegment>();
+    DENG2_ASSERT(segment.isFrontFacing() && segment.lineSide().hasSections());
 
     if(retWroteOpaque) *retWroteOpaque = false;
     if(retBottomZ)     *retBottomZ     = 0;
@@ -1824,7 +2504,7 @@ static void writeWallSection(HEdge &hedge, int section,
     Surface &surface  = side.surface(section);
 
     // Skip nearly transparent surfaces.
-    float opacity = surface.opacity();
+    dfloat opacity = surface.opacity();
     if(opacity < .001f)
         return;
 
@@ -1836,7 +2516,7 @@ static void writeWallSection(HEdge &hedge, int section,
         return;
 
     // Generate edge geometries.
-    WallSpec const wallSpec = WallSpec::fromMapSide(side, section);
+    auto const wallSpec = WallSpec::fromMapSide(side, section);
 
     WallEdge leftEdge(wallSpec, hedge, Line::From);
     WallEdge rightEdge(wallSpec, hedge, Line::To);
@@ -1856,24 +2536,23 @@ static void writeWallSection(HEdge &hedge, int section,
     bool const skyMasked       = material->isSkyMasked() && !devRendSkyMode;
     bool const twoSidedMiddle  = (wallSpec.section == LineSide::Middle && !side.considerOneSided());
 
-    MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
-
-    Vector2f const materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
-                                 (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
+    MaterialAnimator &matAnimator = material->getAnimator(Rend_MapSurfaceMaterialSpec());
+    Vector2f const materialScale  = surface.materialScale();
 
     rendworldpoly_params_t parm; zap(parm);
 
-    Vector3f materialOrigin = leftEdge.materialOrigin();
-    Vector3d topLeft        = leftEdge.top().origin();
-    Vector3d bottomRight    = rightEdge.bottom().origin();
+    Vector3f materialOrigin   = leftEdge.materialOrigin();
+    Vector3d topLeft          = leftEdge.top().origin();
+    Vector3d bottomRight      = rightEdge.bottom().origin();
 
-    parm.skyMasked           = skyMasked;
-    parm.bsuf                = &segment;
-    parm.geomGroup           = wallSpec.section;
-    parm.topLeft             = &topLeft;
-    parm.bottomRight         = &bottomRight;
-    parm.forceOpaque         = wallSpec.flags.testFlag(WallSpec::ForceOpaque);
-    parm.alpha               = parm.forceOpaque? 1 : opacity;
+    parm.skyMasked            = skyMasked;
+    parm.mapElement           = &segment;
+    parm.geomGroup            = wallSpec.section;
+    parm.topLeft              = &topLeft;
+    parm.bottomRight          = &bottomRight;
+    parm.forceOpaque          = wallSpec.flags.testFlag(WallSpec::ForceOpaque);
+    parm.alpha                = parm.forceOpaque? 1 : opacity;
+    parm.surfaceTangentMatrix = &surface.tangentMatrix();
 
     // Calculate the light level deltas for this wall section?
     if(!wallSpec.flags.testFlag(WallSpec::NoLightDeltas))
@@ -1897,19 +2576,18 @@ static void writeWallSection(HEdge &hedge, int section,
         {
             if(material == surface.materialPtr())
             {
-                parm.glowing = ms.glowStrength();
+                parm.glowing = matAnimator.glowStrength();
             }
             else
             {
                 Material *actualMaterial =
                     surface.hasMaterial()? surface.materialPtr()
-                                         : &ClientApp::resourceSystem().material(de::Uri("System", Path("missing")));
+                                         : &resSys().material(de::Uri("System", Path("missing")));
 
-                MaterialSnapshot const &ms = actualMaterial->prepare(Rend_MapSurfaceMaterialSpec());
-                parm.glowing = ms.glowStrength();
+                parm.glowing = actualMaterial->getAnimator(Rend_MapSurfaceMaterialSpec()).glowStrength();
             }
 
-            parm.glowing *= glowFactor; // Global scale factor.
+            parm.glowing *= ::glowFactor;
         }
 
         projectDynamics(surface, parm.glowing, *parm.topLeft, *parm.bottomRight,
@@ -1922,21 +2600,21 @@ static void writeWallSection(HEdge &hedge, int section,
         {
             parm.blendMode = surface.blendMode();
             if(parm.blendMode == BM_NORMAL && noSpriteTrans)
-                parm.blendMode = BM_ZEROALPHA; // "no translucency" mode
+                parm.blendMode = BM_ZEROALPHA;  // "no translucency" mode
         }
 
         side.chooseSurfaceTintColors(wallSpec.section, &parm.surfaceColor, &parm.wall.surfaceColor2);
     }
 
-    /*
-     * Geometry write/drawing begins.
-     */
+    //
+    // Geometry write/drawing begins.
+    //
 
-    if(twoSidedMiddle && side.sectorPtr() != leaf->sectorPtr())
+    if(twoSidedMiddle && side.sectorPtr() != &cluster.sector())
     {
         // Temporarily modify the draw state.
-        currentSectorLightColor = Rend_SectorLightColor(side.sector());
-        currentSectorLightLevel = side.sector().lightLevel();
+        curSectorLightColor = Rend_AmbientLightColor(side.sector());
+        curSectorLightLevel = side.sector().lightLevel();
     }
 
     // Allocate position coordinates.
@@ -1959,29 +2637,30 @@ static void writeWallSection(HEdge &hedge, int section,
     posCoords[3] =    rightEdge.top().origin();
 
     // Draw this section.
-    bool wroteOpaque = renderWorldPoly(posCoords, 4, parm, ms);
+    bool wroteOpaque = renderWorldPoly(posCoords, 4, parm, matAnimator);
     if(wroteOpaque)
     {
         // Render FakeRadio for this section?
         if(!wallSpec.flags.testFlag(WallSpec::NoFakeRadio) && !skyMasked &&
-           !(parm.glowing > 0) && currentSectorLightLevel > 0)
+           !(parm.glowing > 0) && curSectorLightLevel > 0)
         {
             Rend_RadioUpdateForLineSide(side);
 
             // Determine the shadow properties.
             /// @todo Make cvars out of constants.
-            float shadowSize = 2 * (8 + 16 - currentSectorLightLevel * 16);
-            float shadowDark = Rend_RadioCalcShadowDarkness(currentSectorLightLevel);
+            dfloat shadowSize = 2 * (8 + 16 - curSectorLightLevel * 16);
+            dfloat shadowDark = Rend_RadioCalcShadowDarkness(curSectorLightLevel);
 
             Rend_RadioWallSection(leftEdge, rightEdge, shadowDark, shadowSize);
         }
     }
 
-    if(twoSidedMiddle && side.sectorPtr() != leaf->sectorPtr())
+    if(twoSidedMiddle && side.sectorPtr() != &cluster.sector())
     {
         // Undo temporary draw state changes.
-        currentSectorLightColor = Rend_SectorLightColor(leaf->cluster());
-        currentSectorLightLevel = leaf->sector().lightLevel();
+        Vector4f const color = cluster.lightSourceColorfIntensity();
+        curSectorLightColor = color.toVector3f();
+        curSectorLightLevel = color.w;
     }
 
     R_FreeRendVertices(posCoords);
@@ -1992,7 +2671,7 @@ static void writeWallSection(HEdge &hedge, int section,
 }
 
 /**
- * Prepare a trifan geometry according to the edges of the current BSP leaf.
+ * Prepare a trifan geometry according to the edges of the current subspace.
  * If a fan base HEdge has been chosen it will be used as the center of the
  * trifan, else the mid point of this leaf will be used instead.
  *
@@ -2004,28 +2683,26 @@ static void writeWallSection(HEdge &hedge, int section,
  *
  * @return  Number of built vertices.
  */
-static uint buildLeafPlaneGeometry(ClockDirection direction, coord_t height,
+static duint buildSubspacePlaneGeometry(ClockDirection direction, coord_t height,
     Vector3f **verts)
 {
-    DENG2_ASSERT(verts != 0);
+    DENG2_ASSERT(verts);
 
-    BspLeaf const *leaf = currentBspLeaf;
-    Face const &face    = leaf->poly();
-
-    HEdge *fanBase  = leaf->fanBase();
-    uint totalVerts = face.hedgeCount() + (!fanBase? 2 : 0);
+    Face const &poly       = curSubspace->poly();
+    HEdge *fanBase         = curSubspace->fanBase();
+    duint const totalVerts = poly.hedgeCount() + (!fanBase? 2 : 0);
 
     *verts = R_AllocRendVertices(totalVerts);
 
-    uint n = 0;
+    duint n = 0;
     if(!fanBase)
     {
-        (*verts)[n] = Vector3f(face.center(), height);
+        (*verts)[n] = Vector3f(poly.center(), height);
         n++;
     }
 
     // Add the vertices for each hedge.
-    HEdge *baseNode = fanBase? fanBase : face.hedge();
+    HEdge *baseNode = fanBase? fanBase : poly.hedge();
     HEdge *node = baseNode;
     do
     {
@@ -2036,20 +2713,19 @@ static uint buildLeafPlaneGeometry(ClockDirection direction, coord_t height,
     // The last vertex is always equal to the first.
     if(!fanBase)
     {
-        (*verts)[n] = Vector3f(face.hedge()->origin(), height);
+        (*verts)[n] = Vector3f(poly.hedge()->origin(), height);
     }
 
     return totalVerts;
 }
 
-static void writeLeafPlane(Plane &plane)
+static void writeSubspacePlane(Plane &plane)
 {
-    BspLeaf *leaf          = currentBspLeaf;
-    Face const &poly       = leaf->poly();
+    Face const &poly       = curSubspace->poly();
     Surface const &surface = plane.surface();
 
     // Skip nearly transparent surfaces.
-    float const opacity = surface.opacity();
+    dfloat const opacity = surface.opacity();
     if(opacity < .001f) return;
 
     // Determine which Material to use.
@@ -2068,9 +2744,9 @@ static void writeLeafPlane(Plane &plane)
         }
     }
 
-    MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
+    MaterialAnimator &matAnimator = material->getAnimator(Rend_MapSurfaceMaterialSpec());
 
-    Vector2f materialOrigin = leaf->worldGridOffset() // Align to the worldwide grid.
+    Vector2f materialOrigin = curSubspace->worldGridOffset() // Align to the worldwide grid.
                             + surface.materialOriginSmoothed();
 
     // Add the Y offset to orient the Y flipped material.
@@ -2081,27 +2757,26 @@ static void writeLeafPlane(Plane &plane)
     }
     materialOrigin.y = -materialOrigin.y;
 
-    Vector2f const materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
-                                 (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
+    Vector2f const materialScale = surface.materialScale();
 
     // Set the texture origin, Y is flipped for the ceiling.
     Vector3d topLeft(poly.aaBox().minX,
-                     poly.aaBox().arvec2[plane.isSectorFloor()? 1 : 0][VY],
+                     poly.aaBox().arvec2[plane.isSectorFloor()? 1 : 0][1],
                      plane.heightSmoothed());
     Vector3d bottomRight(poly.aaBox().maxX,
-                         poly.aaBox().arvec2[plane.isSectorFloor()? 0 : 1][VY],
+                         poly.aaBox().arvec2[plane.isSectorFloor()? 0 : 1][1],
                          plane.heightSmoothed());
 
-    rendworldpoly_params_t parm; zap(parm);
-
-    parm.bsuf                = leaf;
-    parm.geomGroup           = plane.indexInSector();
-    parm.topLeft             = &topLeft;
-    parm.bottomRight         = &bottomRight;
-    parm.materialOrigin      = &materialOrigin;
-    parm.materialScale       = &materialScale;
-    parm.surfaceLightLevelDL = parm.surfaceLightLevelDR = 0;
-    parm.surfaceColor        = &surface.tintColor();
+    rendworldpoly_params_t parm; de::zap(parm);
+    parm.mapElement           = curSubspace;
+    parm.geomGroup            = plane.indexInSector();
+    parm.topLeft              = &topLeft;
+    parm.bottomRight          = &bottomRight;
+    parm.materialOrigin       = &materialOrigin;
+    parm.materialScale        = &materialScale;
+    parm.surfaceLightLevelDL  = parm.surfaceLightLevelDR = 0;
+    parm.surfaceColor         = &surface.tintColor();
+    parm.surfaceTangentMatrix = &surface.tangentMatrix();
 
     if(material->isSkyMasked())
     {
@@ -2128,7 +2803,7 @@ static void writeLeafPlane(Plane &plane)
         parm.blendMode = surface.blendMode();
         if(parm.blendMode == BM_NORMAL && noSpriteTrans)
         {
-            parm.blendMode = BM_ZEROALPHA; // "no translucency" mode
+            parm.blendMode = BM_ZEROALPHA;  // "no translucency" mode
         }
 
         parm.alpha = surface.opacity();
@@ -2140,19 +2815,18 @@ static void writeLeafPlane(Plane &plane)
         {
             if(material == surface.materialPtr())
             {
-                parm.glowing = ms.glowStrength();
+                parm.glowing = matAnimator.glowStrength();
             }
             else
             {
                 Material *actualMaterial =
                     surface.hasMaterial()? surface.materialPtr()
-                                         : &ClientApp::resourceSystem().material(de::Uri("System", Path("missing")));
+                                         : &resSys().material(de::Uri("System", Path("missing")));
 
-                MaterialSnapshot const &ms = actualMaterial->prepare(Rend_MapSurfaceMaterialSpec());
-                parm.glowing = ms.glowStrength();
+                parm.glowing = actualMaterial->getAnimator(Rend_MapSurfaceMaterialSpec()).glowStrength();
             }
 
-            parm.glowing *= glowFactor; // Global scale factor.
+            parm.glowing *= ::glowFactor;
         }
 
         projectDynamics(surface, parm.glowing, *parm.topLeft, *parm.bottomRight,
@@ -2160,39 +2834,40 @@ static void writeLeafPlane(Plane &plane)
                         parm.lightListIdx, parm.shadowListIdx);
     }
 
-    /*
-     * Geometry write/drawing begins.
-     */
+    //
+    // Geometry write/drawing begins.
+    //
 
-    if(&plane.sector() != leaf->sectorPtr())
+    if(&plane.sector() != &curSubspace->sector())
     {
         // Temporarily modify the draw state.
-        currentSectorLightColor = Rend_SectorLightColor(plane.sector());
-        currentSectorLightLevel = plane.sector().lightLevel();
+        curSectorLightColor = Rend_AmbientLightColor(plane.sector());
+        curSectorLightLevel = plane.sector().lightLevel();
     }
 
     // Allocate position coordinates.
     Vector3f *posCoords;
-    uint vertCount = buildLeafPlaneGeometry((plane.isSectorCeiling())? Anticlockwise : Clockwise,
-                                            plane.heightSmoothed(), &posCoords);
+    duint vertCount = buildSubspacePlaneGeometry((plane.isSectorCeiling())? Anticlockwise : Clockwise,
+                                                 plane.heightSmoothed(), &posCoords);
 
     // Draw this section.
-    renderWorldPoly(posCoords, vertCount, parm, ms);
+    renderWorldPoly(posCoords, vertCount, parm, matAnimator);
 
-    if(&plane.sector() != leaf->sectorPtr())
+    if(&plane.sector() != &curSubspace->sector())
     {
         // Undo temporary draw state changes.
-        currentSectorLightColor = Rend_SectorLightColor(leaf->cluster());
-        currentSectorLightLevel = leaf->sector().lightLevel();
+        Vector4f const color = curSubspace->cluster().lightSourceColorfIntensity();
+        curSectorLightColor = color.toVector3f();
+        curSectorLightLevel = color.w;
     }
 
     R_FreeRendVertices(posCoords);
 }
 
-static void writeSkyMaskStrip(int vertCount, Vector3f const *posCoords,
+static void writeSkyMaskStrip(dint vertCount, Vector3f const *posCoords,
     Vector2f const *texCoords, Material *material)
 {
-    DENG2_ASSERT(posCoords != 0);
+    DENG2_ASSERT(posCoords);
 
     if(!devRendSkyMode)
     {
@@ -2206,20 +2881,23 @@ static void writeSkyMaskStrip(int vertCount, Vector3f const *posCoords,
     }
     else
     {
-        DENG2_ASSERT(texCoords != 0);
+        DENG2_ASSERT(texCoords);
 
         DrawListSpec listSpec;
         listSpec.group = UnlitGeom;
         if(renderTextures != 2)
         {
-            DENG2_ASSERT(material != 0);
+            DENG2_ASSERT(material);
+            MaterialAnimator &matAnimator = material->getAnimator(Rend_MapSurfaceMaterialSpec());
+
+            // Ensure we've up to date info about the material.
+            matAnimator.prepare();
 
             // Map RTU configuration from the sky surface material.
-            MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
-            listSpec.texunits[TU_PRIMARY]        = ms.unit(RTU_PRIMARY);
-            listSpec.texunits[TU_PRIMARY_DETAIL] = ms.unit(RTU_PRIMARY_DETAIL);
-            listSpec.texunits[TU_INTER]          = ms.unit(RTU_INTER);
-            listSpec.texunits[TU_INTER_DETAIL]   = ms.unit(RTU_INTER_DETAIL);
+            listSpec.texunits[TU_PRIMARY]        = matAnimator.texUnit(MaterialAnimator::TU_LAYER0);
+            listSpec.texunits[TU_PRIMARY_DETAIL] = matAnimator.texUnit(MaterialAnimator::TU_DETAIL);
+            listSpec.texunits[TU_INTER]          = matAnimator.texUnit(MaterialAnimator::TU_LAYER0_INTER);
+            listSpec.texunits[TU_INTER_DETAIL]   = matAnimator.texUnit(MaterialAnimator::TU_DETAIL_INTER);
         }
 
         ClientApp::renderSystem().drawLists()
@@ -2234,10 +2912,8 @@ static void writeSkyMaskStrip(int vertCount, Vector3f const *posCoords,
     }
 }
 
-static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
+static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
 {
-    BspLeaf *leaf = currentBspLeaf;
-
     // Determine strip generation behavior.
     ClockDirection const direction   = Clockwise;
     bool const buildTexCoords        = CPP_BOOL(devRendSkyMode);
@@ -2248,30 +2924,30 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
 
     // Configure the strip build state (we'll most likely need to break
     // edge loop into multiple strips).
-    HEdge *startNode          = 0;
-    coord_t startZBottom      = 0;
-    coord_t startZTop         = 0;
-    Material *startMaterial   = 0;
-    float startMaterialOffset = 0;
+    HEdge *startNode           = nullptr;
+    coord_t startZBottom       = 0;
+    coord_t startZTop          = 0;
+    Material *startMaterial    = nullptr;
+    dfloat startMaterialOffset = 0;
 
     // Determine the relative sky plane (for monitoring material changes).
-    int relPlane = fixType == SkyFixEdge::Upper? Sector::Ceiling : Sector::Floor;
+    dint relPlane = fixType == SkyFixEdge::Upper? Sector::Ceiling : Sector::Floor;
 
     // Begin generating geometry.
-    HEdge *base  = leaf->poly().hedge();
+    HEdge *base  = curSubspace->poly().hedge();
     HEdge *hedge = base;
     forever
     {
         // Are we monitoring material changes?
-        Material *skyMaterial = 0;
+        Material *skyMaterial = nullptr;
         if(splitOnMaterialChange)
         {
-            skyMaterial = hedge->face().mapElementAs<BspLeaf>()
+            skyMaterial = hedge->face().mapElementAs<ConvexSubspace>()
                               .cluster().visPlane(relPlane).surface().materialPtr();
         }
 
         // Add a first (left) edge to the current strip?
-        if(startNode == 0 && hedge->hasMapElement())
+        if(!startNode && hedge->hasMapElement())
         {
             startMaterialOffset = hedge->mapElementAs<LineSideSegment>().lineSideOffset();
 
@@ -2296,7 +2972,7 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
         bool beginNewStrip = false;
 
         // Add the i'th (right) edge to the current strip?
-        if(startNode != 0)
+        if(startNode)
         {
             // Stop if we've reached a "null" edge.
             bool endStrip = false;
@@ -2336,16 +3012,17 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
             if(endStrip || &hedge->neighbor(direction) == base)
             {
                 // End the current strip.
-                startNode = 0;
+                startNode = nullptr;
 
                 // Take ownership of the built geometry.
-                PositionBuffer *positions = 0;
-                TexCoordBuffer *texcoords = 0;
-                int numVerts = stripBuilder.take(&positions, &texcoords);
+                PositionBuffer *positions = nullptr;
+                TexCoordBuffer *texcoords = nullptr;
+                dint numVerts = stripBuilder.take(&positions, &texcoords);
 
                 // Write the strip geometry to the render lists.
                 writeSkyMaskStrip(numVerts, positions->constData(),
-                                  texcoords? texcoords->constData() : 0, startMaterial);
+                                  texcoords? texcoords->constData() : nullptr,
+                                  startMaterial);
 
                 delete positions;
                 delete texcoords;
@@ -2368,33 +3045,33 @@ static void writeLeafSkyMaskStrips(SkyFixEdge::FixType fixType)
  * @ingroup flags
  */
 ///@{
-#define SKYCAP_LOWER                0x1
-#define SKYCAP_UPPER                0x2
+#define SKYCAP_LOWER        0x1
+#define SKYCAP_UPPER        0x2
 ///@}
 
-static coord_t skyPlaneZ(int skyCap)
+static coord_t skyPlaneZ(dint skyCap)
 {
-    BspLeaf *leaf = currentBspLeaf;
+    SectorCluster &cluster = curSubspace->cluster();
 
-    int const relPlane = (skyCap & SKYCAP_UPPER)? Sector::Ceiling : Sector::Floor;
+    dint const relPlane = (skyCap & SKYCAP_UPPER)? Sector::Ceiling : Sector::Floor;
     if(!P_IsInVoid(viewPlayer))
     {
-        return leaf->map().skyFix(relPlane == Sector::Ceiling);
+        return cluster.sector().map().skyFix(relPlane == Sector::Ceiling);
     }
 
-    return leaf->cluster().visPlane(relPlane).heightSmoothed();
+    return cluster.visPlane(relPlane).heightSmoothed();
 }
 
 /// @param skyCap  @ref skyCapFlags.
-static void writeLeafSkyMaskCap(int skyCap)
+static void writeSubspaceSkyMaskCap(dint skyCap)
 {
     // Caps are unnecessary in sky debug mode (will be drawn as regular planes).
     if(devRendSkyMode) return;
     if(!skyCap) return;
 
     Vector3f *posCoords;
-    uint vertCount = buildLeafPlaneGeometry((skyCap & SKYCAP_UPPER)? Anticlockwise : Clockwise,
-                                            skyPlaneZ(skyCap), &posCoords);
+    duint vertCount = buildSubspacePlaneGeometry((skyCap & SKYCAP_UPPER)? Anticlockwise : Clockwise,
+                                                 skyPlaneZ(skyCap), &posCoords);
 
     ClientApp::renderSystem().drawLists()
               .find(DrawListSpec(SkyMaskGeom))
@@ -2407,10 +3084,9 @@ static void writeLeafSkyMaskCap(int skyCap)
 }
 
 /// @param skyCap  @ref skyCapFlags
-static void writeLeafSkyMask(int skyCap = SKYCAP_LOWER|SKYCAP_UPPER)
+static void writeSubspaceSkyMask(dint skyCap = SKYCAP_LOWER | SKYCAP_UPPER)
 {
-    BspLeaf *leaf = currentBspLeaf;
-    SectorCluster &cluster = leaf->cluster();
+    SectorCluster &cluster = curSubspace->cluster();
 
     // Any work to do?
     // Sky caps are only necessary in sectors with sky-masked planes.
@@ -2430,15 +3106,15 @@ static void writeLeafSkyMask(int skyCap = SKYCAP_LOWER|SKYCAP_UPPER)
     // Lower?
     if(skyCap & SKYCAP_LOWER)
     {
-        writeLeafSkyMaskStrips(SkyFixEdge::Lower);
-        writeLeafSkyMaskCap(SKYCAP_LOWER);
+        writeSubspaceSkyMaskStrips(SkyFixEdge::Lower);
+        writeSubspaceSkyMaskCap(SKYCAP_LOWER);
     }
 
     // Upper?
     if(skyCap & SKYCAP_UPPER)
     {
-        writeLeafSkyMaskStrips(SkyFixEdge::Upper);
-        writeLeafSkyMaskCap(SKYCAP_UPPER);
+        writeSubspaceSkyMaskStrips(SkyFixEdge::Upper);
+        writeSubspaceSkyMaskCap(SKYCAP_UPPER);
     }
 }
 
@@ -2460,8 +3136,8 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
         return wroteOpaqueMiddle;
     }
 
-    SectorCluster const &cluster     = hedge.face().mapElementAs<BspLeaf>().cluster();
-    SectorCluster const &backCluster = hedge.twin().face().mapElementAs<BspLeaf>().cluster();
+    SectorCluster const &cluster     = hedge.face().mapElementAs<ConvexSubspace>().cluster();
+    SectorCluster const &backCluster = hedge.twin().face().mapElementAs<ConvexSubspace>().cluster();
 
     coord_t const ffloor   = cluster.visFloor().heightSmoothed();
     coord_t const fceil    = cluster.visCeiling().heightSmoothed();
@@ -2553,40 +3229,43 @@ static void writeAllWallSections(HEdge *hedge)
     if(!P_IsInVoid(viewPlayer) &&
        coveredOpenRange(*hedge, middleBottomZ, middleTopZ, wroteOpaqueMiddle))
     {
-        C_AddRangeFromViewRelPoints(hedge->origin(), hedge->twin().origin());
+        rendSys().angleClipper().addRangeFromViewRelPoints(hedge->origin(), hedge->twin().origin());
     }
 }
 
-static void writeLeafWallSections()
+static void writeSubspaceWallSections()
 {
-    BspLeaf *leaf = currentBspLeaf;
-
-    HEdge *base = leaf->poly().hedge();
+    HEdge *base  = curSubspace->poly().hedge();
     HEdge *hedge = base;
     do
     {
         writeAllWallSections(hedge);
     } while((hedge = &hedge->next()) != base);
 
-    foreach(Mesh *mesh, leaf->extraMeshes())
-    foreach(HEdge *hedge, mesh->hedges())
+    curSubspace->forAllExtraMeshes([] (Mesh &mesh)
     {
-        writeAllWallSections(hedge);
-    }
+        for(HEdge *hedge : mesh.hedges())
+        {
+            writeAllWallSections(hedge);
+        }
+        return LoopContinue;
+    });
 
-    foreach(Polyobj *po, leaf->polyobjs())
-    foreach(HEdge *hedge, po->mesh().hedges())
+    curSubspace->forAllPolyobjs([] (Polyobj &pob)
     {
-        writeAllWallSections(hedge);
-    }
+        for(HEdge *hedge : pob.mesh().hedges())
+        {
+            writeAllWallSections(hedge);
+        }
+        return LoopContinue;
+    });
 }
 
-static void writeLeafPlanes()
+static void writeSubspacePlanes()
 {
-    BspLeaf *leaf = currentBspLeaf;
-    SectorCluster &cluster = leaf->cluster();
+    SectorCluster &cluster = curSubspace->cluster();
 
-    for(int i = 0; i < cluster.visPlaneCount(); ++i)
+    for(dint i = 0; i < cluster.visPlaneCount(); ++i)
     {
         Plane &plane = cluster.visPlane(i);
 
@@ -2595,40 +3274,44 @@ static void writeLeafPlanes()
         if((eyeOrigin - pointOnPlane).dot(plane.surface().normal()) < 0)
             continue;
 
-        writeLeafPlane(plane);
+        writeSubspacePlane(plane);
     }
 }
 
 static void markFrontFacingWalls(HEdge *hedge)
 {
     if(!hedge || !hedge->hasMapElement()) return;
-    LineSideSegment &seg = hedge->mapElementAs<LineSideSegment>();
+    auto &seg = hedge->mapElementAs<LineSideSegment>();
     // Which way is the line segment facing?
     seg.setFrontFacing(viewFacingDot(hedge->origin(), hedge->twin().origin()) >= 0);
 }
 
-static void markLeafFrontFacingWalls()
+static void markSubspaceFrontFacingWalls()
 {
-    BspLeaf *leaf = currentBspLeaf;
-
-    HEdge *base = leaf->poly().hedge();
+    HEdge *base = curSubspace->poly().hedge();
     HEdge *hedge = base;
     do
     {
         markFrontFacingWalls(hedge);
     } while((hedge = &hedge->next()) != base);
 
-    foreach(Mesh *mesh, leaf->extraMeshes())
-    foreach(HEdge *hedge, mesh->hedges())
+    curSubspace->forAllExtraMeshes([] (Mesh &mesh)
     {
-        markFrontFacingWalls(hedge);
-    }
+        for(HEdge *hedge : mesh.hedges())
+        {
+            markFrontFacingWalls(hedge);
+        }
+        return LoopContinue;
+    });
 
-    foreach(Polyobj *po, leaf->polyobjs())
-    foreach(HEdge *hedge, po->mesh().hedges())
+    curSubspace->forAllPolyobjs([] (Polyobj &pob)
     {
-        markFrontFacingWalls(hedge);
-    }
+        for(HEdge *hedge : pob.mesh().hedges())
+        {
+            markFrontFacingWalls(hedge);
+        }
+        return LoopContinue;
+    });
 }
 
 static inline bool canOccludeEdgeBetweenPlanes(Plane &frontPlane, Plane const &backPlane)
@@ -2640,17 +3323,18 @@ static inline bool canOccludeEdgeBetweenPlanes(Plane &frontPlane, Plane const &b
 }
 
 /**
- * Add angle clipper occlusion ranges for the edges of the current leaf.
+ * Add angle clipper occlusion ranges for the edges of the current subspace.
  */
-static void occludeLeaf(bool frontFacing)
+static void occludeSubspace(bool frontFacing)
 {
-    BspLeaf *leaf = currentBspLeaf;
-    SectorCluster &cluster = leaf->cluster();
-
     if(devNoCulling) return;
     if(P_IsInVoid(viewPlayer)) return;
 
-    HEdge *base = leaf->poly().hedge();
+    AngleClipper &clipper  = rendSys().angleClipper();
+
+    SectorCluster &cluster = curSubspace->cluster();
+
+    HEdge *base  = curSubspace->poly().hedge();
     HEdge *hedge = base;
     do
     {
@@ -2658,7 +3342,7 @@ static void occludeLeaf(bool frontFacing)
         if(!hedge->hasMapElement())
             continue;
 
-        LineSideSegment &seg = hedge->mapElementAs<LineSideSegment>();
+        auto &seg = hedge->mapElementAs<LineSideSegment>();
 
         // Edges without line segment surface sections can never occlude.
         if(!seg.lineSide().hasSections())
@@ -2669,13 +3353,10 @@ static void occludeLeaf(bool frontFacing)
             continue;
 
         // Occlusions should only happen where two sectors meet.
-        if(!hedge->hasTwin() || !hedge->twin().hasFace())
+        if(!hedge->hasTwin() || !hedge->twin().hasFace() || !hedge->twin().face().hasMapElement())
             continue;
 
-        BspLeaf &backLeaf = hedge->twin().face().mapElementAs<BspLeaf>();
-        if(!backLeaf.hasCluster())
-            continue;
-        SectorCluster &backCluster = backLeaf.cluster();
+        SectorCluster &backCluster = hedge->twin().face().mapElementAs<ConvexSubspace>().cluster();
 
         // Determine the opening between the visual sector planes at this edge.
         coord_t openBottom;
@@ -2703,46 +3384,49 @@ static void occludeLeaf(bool frontFacing)
         Vertex const &to   = frontFacing? hedge->twin().vertex() : hedge->vertex();
 
         // Does the floor create an occlusion?
-        if(((openBottom > cluster.visFloor().heightSmoothed() && vOrigin.y <= openBottom)
-            || (openBottom >  backCluster.visFloor().heightSmoothed() && vOrigin.y >= openBottom))
+        if(((openBottom > cluster.visFloor().heightSmoothed() && Rend_EyeOrigin().y <= openBottom)
+            || (openBottom >  backCluster.visFloor().heightSmoothed() && Rend_EyeOrigin().y >= openBottom))
            && canOccludeEdgeBetweenPlanes(cluster.visFloor(), backCluster.visFloor()))
         {
-            C_AddViewRelOcclusion(from.origin(), to.origin(), openBottom, false);
+            clipper.addViewRelOcclusion(from.origin(), to.origin(), openBottom, false);
         }
 
         // Does the ceiling create an occlusion?
-        if(((openTop < cluster.visCeiling().heightSmoothed() && vOrigin.y >= openTop)
-            || (openTop <  backCluster.visCeiling().heightSmoothed() && vOrigin.y <= openTop))
+        if(((openTop < cluster.visCeiling().heightSmoothed() && Rend_EyeOrigin().y >= openTop)
+            || (openTop <  backCluster.visCeiling().heightSmoothed() && Rend_EyeOrigin().y <= openTop))
            && canOccludeEdgeBetweenPlanes(cluster.visCeiling(), backCluster.visCeiling()))
         {
-            C_AddViewRelOcclusion(from.origin(), to.origin(), openTop, true);
+            clipper.addViewRelOcclusion(from.origin(), to.origin(), openTop, true);
         }
     } while((hedge = &hedge->next()) != base);
 }
 
-static void clipLeafLumobjs()
+static void clipSubspaceLumobjs()
 {
-    BspLeaf *leaf = currentBspLeaf;
-
-    foreach(Lumobj *lum, leaf->lumobjs())
+    DENG2_ASSERT(curSubspace);
+    curSubspace->forAllLumobjs([] (Lumobj &lob)
     {
-        R_ViewerClipLumobj(lum);
-    }
+        R_ViewerClipLumobj(&lob);
+        return LoopContinue;
+    });
 }
 
 /**
- * In the situation where a BSP leaf contains both lumobjs and a polyobj, lumobjs
- * must be clipped more carefully. Here we check if the line of sight intersects any
- * of the polyobj half-edges facing the viewer.
+ * In the situation where a subspace contains both lumobjs and a polyobj, lumobjs
+ * must be clipped more carefully. Here we check if the line of sight intersects
+ * any of the polyobj half-edges facing the viewer.
  */
-static void clipLeafLumobjsBySight()
+static void clipSubspaceLumobjsBySight()
 {
-    BspLeaf *leaf = currentBspLeaf;
+    // Any work to do?
+    DENG2_ASSERT(curSubspace);
+    if(!curSubspace->polyobjCount()) return;
 
-    foreach(Lumobj *lum, leaf->lumobjs())
+    curSubspace->forAllLumobjs([] (Lumobj &lob)
     {
-        R_ViewerClipLumobjBySight(lum, leaf);
-    }
+        R_ViewerClipLumobjBySight(&lob, curSubspace);
+        return LoopContinue;
+    });
 }
 
 /// If not front facing this is no-op.
@@ -2754,218 +3438,212 @@ static void clipFrontFacingWalls(HEdge *hedge)
     LineSideSegment &seg = hedge->mapElementAs<LineSideSegment>();
     if(seg.isFrontFacing())
     {
-        if(!C_CheckRangeFromViewRelPoints(hedge->origin(), hedge->twin().origin()))
+        if(!rendSys().angleClipper().checkRangeFromViewRelPoints(hedge->origin(), hedge->twin().origin()))
         {
             seg.setFrontFacing(false);
         }
     }
 }
 
-static void clipLeafFrontFacingWalls()
+static void clipSubspaceFrontFacingWalls()
 {
-    BspLeaf *leaf = currentBspLeaf;
-
-    HEdge *base = leaf->poly().hedge();
+    HEdge *base = curSubspace->poly().hedge();
     HEdge *hedge = base;
     do
     {
         clipFrontFacingWalls(hedge);
     } while((hedge = &hedge->next()) != base);
 
-    foreach(Mesh *mesh, leaf->extraMeshes())
-    foreach(HEdge *hedge, mesh->hedges())
+    curSubspace->forAllExtraMeshes([] (Mesh &mesh)
     {
-        clipFrontFacingWalls(hedge);
-    }
+        for(HEdge *hedge : mesh.hedges())
+        {
+            clipFrontFacingWalls(hedge);
+        }
+        return LoopContinue;
+    });
 
-    foreach(Polyobj *po, leaf->polyobjs())
-    foreach(HEdge *hedge, po->mesh().hedges())
+    curSubspace->forAllPolyobjs([] (Polyobj &pob)
     {
-        clipFrontFacingWalls(hedge);
-    }
+        for(HEdge *hedge : pob.mesh().hedges())
+        {
+            clipFrontFacingWalls(hedge);
+        }
+        return LoopContinue;
+    });
 }
 
-static int projectSpriteWorker(mobj_t &mo, void * /*context*/)
+static void projectSubspaceSprites()
 {
-    BspLeaf const *leaf = currentBspLeaf;
-    SectorCluster &cluster = leaf->cluster();
+    // Do not use validCount because other parts of the renderer may change it.
+    if(curSubspace->lastSpriteProjectFrame() == R_FrameCount())
+        return;  // Already added.
 
-    if(mo.addFrameCount != R_FrameCount())
+    R_ForAllSubspaceMobContacts(*curSubspace, [] (mobj_t &mob)
     {
-        mo.addFrameCount = R_FrameCount();
-
-        R_ProjectSprite(&mo);
-
-        // Hack: Sprites have a tendency to extend into the ceiling in
-        // sky sectors. Here we will raise the skyfix dynamically, to make sure
-        // that no sprites get clipped by the sky.
-
-        if(cluster.visCeiling().surface().hasSkyMaskedMaterial())
+        SectorCluster &cluster = curSubspace->cluster();
+        if(mob.addFrameCount != R_FrameCount())
         {
-            if(Sprite *sprite = Mobj_Sprite(mo))
+            mob.addFrameCount = R_FrameCount();
+
+            R_ProjectSprite(mob);
+
+            // Hack: Sprites have a tendency to extend into the ceiling in
+            // sky sectors. Here we will raise the skyfix dynamically, to make sure
+            // that no sprites get clipped by the sky.
+
+            if(cluster.visCeiling().surface().hasSkyMaskedMaterial())
             {
-                if(sprite->hasViewAngle(0))
+                if(Sprite *sprite = Mobj_Sprite(mob))
                 {
-                    Material *material = sprite->viewAngle(0).material;
-                    if(!(mo.dPlayer && (mo.dPlayer->flags & DDPF_CAMERA))
-                       && mo.origin[VZ] <= cluster.visCeiling().heightSmoothed()
-                       && mo.origin[VZ] >= cluster.visFloor().heightSmoothed())
+                    if(sprite->hasViewAngle(0))
                     {
-                        coord_t visibleTop = mo.origin[VZ] + material->height();
-                        if(visibleTop > cluster.sector().map().skyFixCeiling())
+                        Material *material = sprite->viewAngle(0).material;
+                        if(!(mob.dPlayer && (mob.dPlayer->flags & DDPF_CAMERA))
+                           && mob.origin[2] <= cluster.visCeiling().heightSmoothed()
+                           && mob.origin[2] >= cluster.visFloor().heightSmoothed())
                         {
-                            // Raise skyfix ceiling.
-                            cluster.sector().map().setSkyFixCeiling(visibleTop + 16/*leeway*/);
+                            coord_t visibleTop = mob.origin[2] + material->height();
+                            if(visibleTop > cluster.sector().map().skyFixCeiling())
+                            {
+                                // Raise skyfix ceiling.
+                                cluster.sector().map().setSkyFixCeiling(visibleTop + 16/*leeway*/);
+                            }
                         }
                     }
                 }
             }
         }
-    }
+        return LoopContinue;
+    });
 
-    return false; // Continue iteration.
-}
-
-static void projectLeafSprites()
-{
-    BspLeaf *leaf = currentBspLeaf;
-
-    // Do not use validCount because other parts of the renderer may change it.
-    if(leaf->lastSpriteProjectFrame() == R_FrameCount())
-        return; // Already added.
-
-    R_BspLeafMobjContactIterator(*leaf, projectSpriteWorker);
-
-    leaf->setLastSpriteProjectFrame(R_FrameCount());
-}
-
-static int generatorMarkVisibleWorker(Generator *generator, void * /*context*/)
-{
-    R_ViewerGeneratorMarkVisible(*generator);
-    return 0; // Continue iteration.
+    curSubspace->setLastSpriteProjectFrame(R_FrameCount());
 }
 
 /**
- * @pre Assumes the leaf is at least partially visible.
+ * @pre Assumes the subspace is at least partially visible.
  */
-static void drawCurrentLeaf()
+static void drawCurrentSubspace()
 {
-    BspLeaf *leaf = currentBspLeaf;
+    Sector &sector = curSubspace->sector();
 
     // Mark the leaf as visible for this frame.
-    R_ViewerBspLeafMarkVisible(*leaf);
+    R_ViewerSubspaceMarkVisible(*curSubspace);
 
-    markLeafFrontFacingWalls();
+    markSubspaceFrontFacingWalls();
 
     // Perform contact spreading for this map region.
-    leaf->map().spreadAllContacts(leaf->poly().aaBox());
+    sector.map().spreadAllContacts(curSubspace->poly().aaBox());
 
-    Rend_RadioBspLeafEdges(*leaf);
+    Rend_RadioSubspaceEdges(*curSubspace);
 
-    /*
-     * Before clip testing lumobjs (for halos), range-occlude the back facing edges.
-     * After testing, range-occlude the front facing edges. Done before drawing wall
-     * sections so that opening occlusions cut out unnecessary oranges.
-     */
+    // Before clip testing lumobjs (for halos), range-occlude the back facing edges.
+    // After testing, range-occlude the front facing edges. Done before drawing wall
+    // sections so that opening occlusions cut out unnecessary oranges.
 
-    occludeLeaf(false /* back facing */);
-    clipLeafLumobjs();
-    occludeLeaf(true /* front facing */);
+    occludeSubspace(false /* back facing */);
+    clipSubspaceLumobjs();
+    occludeSubspace(true /* front facing */);
 
-    clipLeafFrontFacingWalls();
-
-    if(leaf->polyobjCount())
-    {
-        // Polyobjs don't obstruct - clip lights with another algorithm.
-        clipLeafLumobjsBySight();
-    }
+    clipSubspaceFrontFacingWalls();
+    clipSubspaceLumobjsBySight();
 
     // Mark generators in the sector visible.
     if(useParticles)
     {
-        leaf->map().generatorListIterator(leaf->sector().indexInMap(), generatorMarkVisibleWorker);
+        sector.map().forAllGeneratorsInSector(sector, [] (Generator &gen)
+        {
+            R_ViewerGeneratorMarkVisible(gen);
+            return LoopContinue;
+        });
     }
 
-    /*
-     * Sprites for this BSP leaf have to be drawn.
-     *
-     * Must be done BEFORE the segments of this BspLeaf are added to the clipper.
-     * Otherwise the sprites would get clipped by them, and that wouldn't be right.
-     *
-     * Must be done AFTER the lumobjs have been clipped as this affects the projection
-     * of halos.
-     */
-    projectLeafSprites();
+    // Sprites for this subspace have to be drawn.
+    //
+    // Must be done BEFORE the wall segments of this subspace are added to the
+    // clipper. Otherwise the sprites would get clipped by them, and that wouldn't
+    // be right.
+    //
+    // Must be done AFTER the lumobjs have been clipped as this affects the projection
+    // of halos.
+    projectSubspaceSprites();
 
-    writeLeafSkyMask();
-    writeLeafWallSections();
-    writeLeafPlanes();
+    writeSubspaceSkyMask();
+    writeSubspaceWallSections();
+    writeSubspacePlanes();
 }
 
 /**
- * Change the current BspLeaf (updating any relevant draw state properties
+ * Change the current subspace (updating any relevant draw state properties
  * accordingly).
  *
- * @param bspLeaf  The new BSP leaf to make current.
+ * @param subspace  The new subspace to make current.
  */
-static void makeCurrent(BspLeaf &bspLeaf)
+static void makeCurrent(ConvexSubspace &subspace)
 {
-    bool sectorChanged = (!currentBspLeaf || currentBspLeaf->sectorPtr() != bspLeaf.sectorPtr());
+    bool clusterChanged = (!curSubspace || curSubspace->clusterPtr() != subspace.clusterPtr());
 
-    currentBspLeaf = &bspLeaf;
+    curSubspace = &subspace;
 
     // Update draw state.
-    if(sectorChanged)
+    if(clusterChanged)
     {
-        currentSectorLightColor = Rend_SectorLightColor(bspLeaf.cluster());
-        currentSectorLightLevel = bspLeaf.sector().lightLevel();
+        Vector4f const color = subspace.cluster().lightSourceColorfIntensity();
+        curSectorLightColor = color.toVector3f();
+        curSectorLightLevel = color.w;
     }
 }
 
-static void traverseBspAndDrawLeafs(MapElement *bspElement)
+static void traverseBspTreeAndDrawSubspaces(Map::BspTree const *bspTree)
 {
-    DENG_ASSERT(bspElement != 0);
+    DENG2_ASSERT(bspTree);
 
-    while(bspElement->type() != DMU_BSPLEAF)
+    AngleClipper &clipper = rendSys().angleClipper();
+
+    while(!bspTree->isLeaf())
     {
         // Descend deeper into the nodes.
-        BspNode &bspNode = bspElement->as<BspNode>();
+        BspNode &bspNode = bspTree->userData()->as<BspNode>();
 
         // Decide which side the view point is on.
-        int eyeSide = bspNode.partition().pointOnSide(eyeOrigin) < 0;
+        dint eyeSide = bspNode.partition().pointOnSide(eyeOrigin) < 0;
 
         // Recursively divide front space.
-        traverseBspAndDrawLeafs(bspNode.childPtr(eyeSide));
+        traverseBspTreeAndDrawSubspaces(bspTree->childPtr(Map::BspTree::ChildId(eyeSide)));
 
         // If the clipper is full we're pretty much done. This means no geometry
         // will be visible in the distance because every direction has already
         // been fully covered by geometry.
-        if(!firstBspLeaf && C_IsFull())
+        if(!firstSubspace && clipper.isFull())
             return;
 
         // ...and back space.
-        bspElement = bspNode.childPtr(eyeSide ^ 1);
+        bspTree = bspTree->childPtr(Map::BspTree::ChildId(eyeSide ^ 1));
     }
-
     // We've arrived at a leaf.
-    BspLeaf &bspLeaf = bspElement->as<BspLeaf>();
 
-    // Skip null leafs (those with zero volume). Neighbors handle adding the
-    // angle clipper ranges.
-    if(!bspLeaf.hasCluster() || !bspLeaf.cluster().hasWorldVolume())
-        return;
+    // Only leafs with a convex subspace geometry have drawable geometries.
+    if(ConvexSubspace *subspace = bspTree->userData()->as<BspLeaf>().subspacePtr())
+    {
+        DENG2_ASSERT(subspace->hasCluster());
 
-    // Is this leaf visible?
-    if(!firstBspLeaf && !C_IsPolyVisible(bspLeaf.poly()))
-        return;
+        // Skip zero-volume subspaces.
+        // (Neighbors handle the angle clipper ranges.)
+        if(!subspace->cluster().hasWorldVolume())
+            return;
 
-    // This is now the current leaf.
-    makeCurrent(bspLeaf);
+        // Is this subspace visible?
+        if(!firstSubspace && !clipper.isPolyVisible(subspace->poly()))
+            return;
 
-    drawCurrentLeaf();
+        // This is now the current subspace.
+        makeCurrent(*subspace);
 
-    // This is no longer the first leaf.
-    firstBspLeaf = false;
+        drawCurrentSubspace();
+
+        // This is no longer the first subspace.
+        firstSubspace = false;
+    }
 }
 
 /**
@@ -2973,14 +3651,14 @@ static void traverseBspAndDrawLeafs(MapElement *bspElement)
  */
 static void generateDecorationFlares(Map &map)
 {
-    Vector3d const viewPos = vOrigin.xzy();
-
-    foreach(Lumobj *lum, map.lumobjs())
+    Vector3d const viewPos = Rend_EyeOrigin().xzy();
+    map.forAllLumobjs([&viewPos] (Lumobj &lob)
     {
-        lum->generateFlare(viewPos, R_ViewerLumobjDistance(lum->indexInMap()));
+        lob.generateFlare(viewPos, R_ViewerLumobjDistance(lob.indexInMap()));
 
         /// @todo mark these light sources visible for LensFx
-    }
+        return LoopContinue;
+    });
 }
 
 /**
@@ -2988,9 +3666,9 @@ static void generateDecorationFlares(Map &map)
  */
 static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
 {
-    static float const black[4] = { 0, 0, 0, 0 };
+    static dfloat const black[] = { 0, 0, 0, 0 };
 
-    zap(texUnitMap);
+    de::zap(texUnitMap);
 
     switch(mode)
     {
@@ -3033,13 +3711,13 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         {
             texUnitMap[0] = Store::TCA_LIGHT + 1;
             texUnitMap[1] = Store::TCA_MAIN + 1;
-            GL_ModulateTexture(4); // Light * texture.
+            GL_ModulateTexture(4);  // Light * texture.
         }
         else
         {
             texUnitMap[0] = Store::TCA_MAIN + 1;
             texUnitMap[1] = Store::TCA_LIGHT + 1;
-            GL_ModulateTexture(5); // Texture + light.
+            GL_ModulateTexture(5);  // Texture + light.
         }
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_TRUE);
@@ -3072,7 +3750,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         // One additive light, no texture.
         GL_SelectTexUnits(1);
         texUnitMap[0] = Store::TCA_LIGHT + 1;
-        GL_ModulateTexture(7); // Add light, no color.
+        GL_ModulateTexture(7);  // Add light, no color.
         glEnable(GL_ALPHA_TEST);
         glAlphaFunc(GL_GREATER, 1 / 255.0f);
         glDepthMask(GL_FALSE);
@@ -3176,7 +3854,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         if(usingFog)
         {
             glEnable(GL_FOG);
-            float const midGray[4] = { .5f, .5f, .5f, fogColor[3] }; // The alpha is probably meaningless?
+            dfloat const midGray[] = { .5f, .5f, .5f, fogColor[3] };  // The alpha is probably meaningless?
             glFogfv(GL_FOG_COLOR, midGray);
         }
         break;
@@ -3198,7 +3876,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         if(usingFog)
         {
             glEnable(GL_FOG);
-            float const midGray[4] = { .5f, .5f, .5f, fogColor[3] }; // The alpha is probably meaningless?
+            dfloat const midGray[] = { .5f, .5f, .5f, fogColor[3] };  // The alpha is probably meaningless?
             glFogfv(GL_FOG_COLOR, midGray);
         }
         break;
@@ -3226,26 +3904,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
     case DM_SHINY:
         GL_SelectTexUnits(1);
         texUnitMap[0] = Store::TCA_MAIN + 1;
-        GL_ModulateTexture(1); // 8 for multitexture
-        glDisable(GL_ALPHA_TEST);
-        glDepthMask(GL_FALSE);
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LEQUAL);
-
-        if(usingFog)
-        {   // Fog makes the shininess diminish in the distance.
-            glEnable(GL_FOG);
-            glFogfv(GL_FOG_COLOR, black);
-        }
-        glEnable(GL_BLEND);
-        GL_BlendMode(BM_ADD); // Purely additive.
-        break;
-
-    case DM_MASKED_SHINY:
-        GL_SelectTexUnits(2);
-        texUnitMap[0] = Store::TCA_MAIN + 1;
-        texUnitMap[1] = Store::TCA_BLEND + 1; // the mask
-        GL_ModulateTexture(8); // same as with details
+        GL_ModulateTexture(1);  // 8 for multitexture
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_FALSE);
         glEnable(GL_DEPTH_TEST);
@@ -3258,7 +3917,27 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
             glFogfv(GL_FOG_COLOR, black);
         }
         glEnable(GL_BLEND);
-        GL_BlendMode(BM_ADD); // Purely additive.
+        GL_BlendMode(BM_ADD);  // Purely additive.
+        break;
+
+    case DM_MASKED_SHINY:
+        GL_SelectTexUnits(2);
+        texUnitMap[0] = Store::TCA_MAIN + 1;
+        texUnitMap[1] = Store::TCA_BLEND + 1;  // the mask
+        GL_ModulateTexture(8);  // same as with details
+        glDisable(GL_ALPHA_TEST);
+        glDepthMask(GL_FALSE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+
+        if(usingFog)
+        {
+            // Fog makes the shininess diminish in the distance.
+            glEnable(GL_FOG);
+            glFogfv(GL_FOG_COLOR, black);
+        }
+        glEnable(GL_BLEND);
+        GL_BlendMode(BM_ADD);  // Purely additive.
         break;
 
     default: break;
@@ -3424,7 +4103,7 @@ static void drawLists(DrawLists::FoundLists const &lists, DrawMode mode)
     pushGLStateForPass(mode, texUnitMap);
 
     // Draw each given list.
-    for(int i = 0; i < lists.count(); ++i)
+    for(dint i = 0; i < lists.count(); ++i)
     {
         lists.at(i)->draw(mode, texUnitMap);
     }
@@ -3435,15 +4114,18 @@ static void drawLists(DrawLists::FoundLists const &lists, DrawMode mode)
 static void drawSky()
 {
     DrawLists::FoundLists lists;
-    ClientApp::renderSystem().drawLists().findAll(SkyMaskGeom, lists);
+    rendSys().drawLists().findAll(SkyMaskGeom, lists);
     if(!devRendSkyAlways && lists.isEmpty())
     {
         return;
     }
 
     // We do not want to update color and/or depth.
-    glDisable(GL_DEPTH_TEST);
-    GLState::push().setColorMask(gl::WriteNone).apply();
+    GLState::push()
+            .setDepthTest(false)
+            .setDepthWrite(false)
+            .setColorMask(gl::WriteNone)
+            .apply();
 
     // Mask out stencil buffer, setting the drawn areas to 1.
     glEnable(GL_STENCIL_TEST);
@@ -3462,7 +4144,6 @@ static void drawSky()
 
     // Restore previous GL state.
     GLState::pop().apply();
-    glEnable(GL_DEPTH_TEST);
     glDisable(GL_STENCIL_TEST);
 
     // Now, only render where the stencil is set to 1.
@@ -3470,7 +4151,7 @@ static void drawSky()
     glStencilFunc(GL_EQUAL, 1, 0xffffffff);
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
-    theSky->draw();
+    rendSys().sky().draw(&worldSys().skyAnimator());
 
     if(!devRendSkyAlways)
     {
@@ -3479,12 +4160,11 @@ static void drawSky()
 
     // Return GL state to normal.
     glDisable(GL_STENCIL_TEST);
-    glEnable(GL_DEPTH_TEST);
 }
 
 static bool generateHaloForVisSprite(vissprite_t const *spr, bool primary = false)
 {
-    float occlusionFactor;
+    dfloat occlusionFactor;
 
     if(primary && (spr->data.flare.flags & RFF_NO_PRIMARY))
     {
@@ -3493,11 +4173,9 @@ static bool generateHaloForVisSprite(vissprite_t const *spr, bool primary = fals
 
     if(spr->data.flare.isDecoration)
     {
-        /*
-         * Surface decorations do not yet persist over frames, so we do
-         * not smoothly occlude their flares. Instead, we will have to
-         * put up with them instantly appearing/disappearing.
-         */
+        // Surface decorations do not yet persist over frames, so we do
+        // not smoothly occlude their flares. Instead, we will have to
+        // put up with them instantly appearing/disappearing.
         occlusionFactor = R_ViewerLumobjIsClipped(spr->data.flare.lumIdx)? 0 : 1;
     }
     else
@@ -3505,11 +4183,11 @@ static bool generateHaloForVisSprite(vissprite_t const *spr, bool primary = fals
         occlusionFactor = (spr->data.flare.factor & 0x7f) / 127.0f;
     }
 
-    return H_RenderHalo(spr->origin,
+    return H_RenderHalo(spr->pose.origin,
                         spr->data.flare.size,
                         spr->data.flare.tex,
                         spr->data.flare.color,
-                        spr->distance,
+                        spr->pose.distance,
                         occlusionFactor, spr->data.flare.mul,
                         spr->data.flare.xOff, primary,
                         (spr->data.flare.flags & RFF_NO_TURN) == 0);
@@ -3531,7 +4209,7 @@ static void drawMasked()
 
     R_SortVisSprites();
 
-    if(visSpriteP > visSprites)
+    if(visSpriteP && visSpriteP > visSprites)
     {
         bool primaryHaloDrawn = false;
 
@@ -3550,11 +4228,15 @@ static void drawMasked()
 
             case VSPR_SPRITE:
                 // Render an old fashioned sprite, ah the nostalgia...
-                Rend_DrawSprite(spr->data.sprite);
+                Rend_DrawSprite(*spr);
                 break;
 
             case VSPR_MODEL:
-                Rend_DrawModel(spr->data.model);
+                Rend_DrawModel(*spr);
+                break;
+
+            case VSPR_MODEL_GL2:
+                Rend_DrawModel2(*spr);
                 break;
 
             case VSPR_FLARE:
@@ -3586,14 +4268,14 @@ static void drawMasked()
     }
 }
 
-/*
+/**
  * We have several different paths to accommodate both multitextured details and
  * dynamic lights. Details take precedence (they always cover entire primitives
  * and usually *all* of the surfaces in a scene).
  */
 static void drawAllLists(Map &map)
 {
-    DENG_ASSERT(!Sys_GLCheckError());
+    DENG2_ASSERT(!Sys_GLCheckError());
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
@@ -3601,10 +4283,9 @@ static void drawAllLists(Map &map)
 
     // Render the real surfaces of the visible world.
 
-    /*
-     * Pass: Unlit geometries (all normal lists).
-     */
-
+    //
+    // Pass: Unlit geometries (all normal lists).
+    //
     DrawLists::FoundLists lists;
     ClientApp::renderSystem().drawLists().findAll(UnlitGeom, lists);
     if(IS_MTEX_DETAILS)
@@ -3621,10 +4302,9 @@ static void drawAllLists(Map &map)
         drawLists(lists, DM_ALL);
     }
 
-    /*
-     * Pass: Lit geometries.
-     */
-
+    //
+    // Pass: Lit geometries.
+    //
     ClientApp::renderSystem().drawLists().findAll(LitGeom, lists);
 
     // If multitexturing is available, we'll use it to our advantage when
@@ -3681,18 +4361,18 @@ static void drawAllLists(Map &map)
         }
     }
 
-    /*
-     * Pass: All light geometries (always additive).
-     */
+    //
+    // Pass: All light geometries (always additive).
+    //
     if(dynlightBlend != 2)
     {
         ClientApp::renderSystem().drawLists().findAll(LightGeom, lists);
         drawLists(lists, DM_LIGHTS);
     }
 
-    /*
-     * Pass: Geometries with texture modulation.
-     */
+    //
+    // Pass: Geometries with texture modulation.
+    //
     if(IS_MUL)
     {
         // Finish the lit surfaces that didn't yet get a texture.
@@ -3716,12 +4396,12 @@ static void drawAllLists(Map &map)
         }
     }
 
-    /*
-     * Pass: Geometries with details & modulation.
-     *
-     * If multitexturing is not available for details, we need to apply them as
-     * an extra pass over all the detailed surfaces.
-     */
+    //
+    // Pass: Geometries with details & modulation.
+    //
+    // If multitexturing is not available for details, we need to apply them as
+    // an extra pass over all the detailed surfaces.
+    //
     if(r_detail)
     {
         // Render detail textures for all surfaces that need them.
@@ -3740,14 +4420,14 @@ static void drawAllLists(Map &map)
         }
     }
 
-    /*
-     * Pass: Shiny geometries.
-     *
-     * If we have two texture units, the shiny masks will be enabled. Otherwise
-     * the masks are ignored. The shine is basically specular environmental
-     * additive light, multiplied by the mask so that black texels from the mask
-     * produce areas without shine.
-     */
+    //
+    // Pass: Shiny geometries.
+    //
+    // If we have two texture units, the shiny masks will be enabled. Otherwise
+    // the masks are ignored. The shine is basically specular environmental
+    // additive light, multiplied by the mask so that black texels from the mask
+    // produce areas without shine.
+    //
 
     ClientApp::renderSystem().drawLists().findAll(ShineGeom, lists);
     if(numTexUnits > 1)
@@ -3761,10 +4441,10 @@ static void drawAllLists(Map &map)
         drawLists(lists, DM_ALL_SHINY);
     }
 
-    /*
-     * Pass: Shadow geometries (objects and Fake Radio).
-     */
-    int const oldRenderTextures = renderTextures;
+    //
+    // Pass: Shadow geometries (objects and Fake Radio).
+    //
+    dint const oldRenderTextures = renderTextures;
 
     renderTextures = true;
 
@@ -3812,14 +4492,7 @@ void Rend_RenderMap(Map &map)
     if(!freezeRLs)
     {
         // Prepare for rendering.
-        ClientApp::renderSystem().resetDrawLists(); // Clear the lists for new geometry.
-        C_ClearRanges(); // Clear the clipper.
-
-        // Recycle the vlight lists. Currently done here as the lists are
-        // not shared by all viewports.
-        VL_InitForNewFrame();
-
-        R_BeginFrame();
+        rendSys().beginFrame();
 
         // Make vissprites of all the visible decorations.
         generateDecorationFlares(map);
@@ -3830,27 +4503,29 @@ void Rend_RenderMap(Map &map)
         // Add the backside clipping range (if vpitch allows).
         if(vpitch <= 90 - yfov / 2 && vpitch >= -90 + yfov / 2)
         {
-            float a = de::abs(vpitch) / (90 - yfov / 2);
+            AngleClipper &clipper = rendSys().angleClipper();
+
+            dfloat a = de::abs(vpitch) / (90 - yfov / 2);
             binangle_t startAngle = binangle_t(BANG_45 * Rend_FieldOfView() / 90) * (1 + a);
             binangle_t angLen = BANG_180 - startAngle;
 
             binangle_t viewside = (viewData->current.angle() >> (32 - BAMS_BITS)) + startAngle;
-            C_SafeAddRange(viewside, viewside + angLen);
-            C_SafeAddRange(viewside + angLen, viewside + 2 * angLen);
+            clipper.safeAddRange(viewside, viewside + angLen);
+            clipper.safeAddRange(viewside + angLen, viewside + 2 * angLen);
         }
 
         // The viewside line for the depth cue.
         viewsidex = -viewData->viewSin;
         viewsidey = viewData->viewCos;
 
-        // We don't want BSP clip checking for the first BSP leaf.
-        firstBspLeaf = true;
+        // We don't want BSP clip checking for the first subspace.
+        firstSubspace = true;
 
-        // No current BSP leaf as of yet.
-        currentBspLeaf = 0;
+        // No current subspace as of yet.
+        curSubspace = nullptr;
 
         // Draw the world!
-        traverseBspAndDrawLeafs(&map.bspRoot());
+        traverseBspTreeAndDrawSubspaces(&map.bspTree());
     }
     drawAllLists(map);
 
@@ -3868,9 +4543,9 @@ void Rend_RenderMap(Map &map)
     GL_SetMultisample(false);
 }
 
-static void drawStar(Vector3d const &origin, float size, Vector4f const &color)
+static void drawStar(Vector3d const &origin, dfloat size, Vector4f const &color)
 {
-    float const black[4] = { 0, 0, 0, 0 };
+    static dfloat const black[] = { 0, 0, 0, 0 };
 
     glBegin(GL_LINES);
         glColor4fv(black);
@@ -3897,7 +4572,7 @@ static void drawStar(Vector3d const &origin, float size, Vector4f const &color)
     glEnd();
 }
 
-static void drawLabel(Vector3d const &origin, String const &label, float scale, float alpha)
+static void drawLabel(Vector3d const &origin, String const &label, dfloat scale, dfloat alpha)
 {
     if(label.isEmpty()) return;
 
@@ -3928,7 +4603,7 @@ static void drawLabel(Vector3d const &origin, String const &label, float scale, 
 
 static void drawLabel(Vector3d const &origin, String const &label)
 {
-    ddouble distToEye = (vOrigin.xzy() - origin).length();
+    ddouble distToEye = (Rend_EyeOrigin().xzy() - origin).length();
     drawLabel(origin, label, distToEye / (DENG_GAMEVIEW_WIDTH / 2), 1 - distToEye / 2000);
 }
 
@@ -3940,7 +4615,7 @@ static String labelForSource(BiasSource *s)
 {
     if(!s || !editShowIndices) return String();
     /// @todo Don't assume the current map.
-    return String::number(App_WorldSystem().map().toIndex(*s));
+    return String::number(App_WorldSystem().map().indexOf(*s));
 }
 
 static void drawSource(BiasSource *s)
@@ -3954,7 +4629,7 @@ static void drawSource(BiasSource *s)
     drawLabel(s->origin(), labelForSource(s));
 }
 
-static void drawLock(Vector3d const &origin, double unit, double t)
+static void drawLock(Vector3d const &origin, ddouble unit, ddouble t)
 {
     glColor4f(1, 1, 1, 1);
 
@@ -3992,7 +4667,7 @@ static void drawBiasEditingVisuals(Map &map)
     if(!map.biasSourceCount())
         return;
 
-    double const t = Timer_RealMilliseconds() / 100.0f;
+    ddouble const t = Timer_RealMilliseconds() / 100.0f;
 
     if(HueCircle *hueCircle = SBE_HueCircle())
     {
@@ -4004,11 +4679,11 @@ static void drawBiasEditingVisuals(Map &map)
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
 
-        glTranslatef(vOrigin.x, vOrigin.y, vOrigin.z);
+        glTranslatef(Rend_EyeOrigin().x, Rend_EyeOrigin().y, Rend_EyeOrigin().z);
         glScalef(1, 1.0f/1.2f, 1);
-        glTranslatef(-vOrigin.x, -vOrigin.y, -vOrigin.z);
+        glTranslatef(-Rend_EyeOrigin().x, -Rend_EyeOrigin().y, -Rend_EyeOrigin().z);
 
-        HueCircleVisual::draw(*hueCircle, vOrigin, viewData->frontVec);
+        HueCircleVisual::draw(*hueCircle, Rend_EyeOrigin(), viewData->frontVec);
 
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();
@@ -4028,7 +4703,7 @@ static void drawBiasEditingVisuals(Map &map)
         grabbedColor = Vector4f(.7f, .7f, .5f, .4f);
 
     BiasSource *nearSource = map.biasSourceNear(hand.origin());
-    DENG_ASSERT(nearSource != 0);
+    DENG2_ASSERT(nearSource);
 
     if((hand.origin() - nearSource->origin()).length() > 2 * handDistance)
     {
@@ -4050,7 +4725,7 @@ static void drawBiasEditingVisuals(Map &map)
     if(nearSource->isLocked())
         drawLock(nearSource->origin(), 2 + (nearSource->origin() - eyeOrigin).length() / 100, t);
 
-    foreach(Grabbable *grabbable, hand.grabbed())
+    for(Grabbable *grabbable : hand.grabbed())
     {
         if(de::internal::cannotCastGrabbableTo<BiasSource>(grabbable)) continue;
         BiasSource *s = &grabbable->as<BiasSource>();
@@ -4075,13 +4750,14 @@ static void drawBiasEditingVisuals(Map &map)
     // Show all sources?
     if(editShowAll)
     {
-        foreach(BiasSource *source, map.biasSources())
+        map.forAllBiasSources([&nearSource] (BiasSource &source)
         {
-            if(source == nearSource) continue;
-            if(source->isGrabbed()) continue;
-
-            drawSource(source);
-        }
+            if(&source != nearSource && !source.isGrabbed())
+            {
+                drawSource(&source);
+            }
+            return LoopContinue;
+        });
     }
 
     glEnable(GL_DEPTH_TEST);
@@ -4091,7 +4767,7 @@ void Rend_UpdateLightModMatrix()
 {
     if(novideo) return;
 
-    zap(lightModRange);
+    de::zap(lightModRange);
 
     if(!App_WorldSystem().hasMap())
     {
@@ -4099,7 +4775,7 @@ void Rend_UpdateLightModMatrix()
         return;
     }
 
-    int mapAmbient = App_WorldSystem().map().ambientLightLevel();
+    dint mapAmbient = App_WorldSystem().map().ambientLightLevel();
     if(mapAmbient > ambientLight)
     {
         rAmbient = mapAmbient;
@@ -4109,21 +4785,21 @@ void Rend_UpdateLightModMatrix()
         rAmbient = ambientLight;
     }
 
-    for(int i = 0; i < 255; ++i)
+    for(dint i = 0; i < 255; ++i)
     {
         // Adjust the white point/dark point?
-        float lightlevel = 0;
+        dfloat lightlevel = 0;
         if(lightRangeCompression != 0)
         {
             if(lightRangeCompression >= 0)
             {
                 // Brighten dark areas.
-                lightlevel = float(255 - i) * lightRangeCompression;
+                lightlevel = dfloat(255 - i) * lightRangeCompression;
             }
             else
             {
                 // Darken bright areas.
-                lightlevel = float(-i) * -lightRangeCompression;
+                lightlevel = dfloat(-i) * -lightRangeCompression;
             }
         }
 
@@ -4151,22 +4827,22 @@ void Rend_UpdateLightModMatrix()
     }
 }
 
-float Rend_LightAdaptationDelta(float val)
+dfloat Rend_LightAdaptationDelta(dfloat val)
 {
-    int clampedVal = de::clamp(0, ROUND(255.0f * val), 254);
+    dint clampedVal = de::clamp(0, de::roundi(255.0f * val), 254);
     return lightModRange[clampedVal];
 }
 
-void Rend_ApplyLightAdaptation(float &val)
+void Rend_ApplyLightAdaptation(dfloat &val)
 {
     val += Rend_LightAdaptationDelta(val);
 }
 
 void Rend_DrawLightModMatrix()
 {
-#define BLOCK_WIDTH             (1.0f)
-#define BLOCK_HEIGHT            (BLOCK_WIDTH * 255.0f)
-#define BORDER                  (20)
+#define BLOCK_WIDTH             ( 1.0f )
+#define BLOCK_HEIGHT            ( BLOCK_WIDTH * 255.0f )
+#define BORDER                  ( 20 )
 
     // Disabled?
     if(!devLightModRange) return;
@@ -4177,12 +4853,6 @@ void Rend_DrawLightModMatrix()
     glOrtho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
 
     glTranslatef(BORDER, BORDER, 0);
-
-    /*
-    color.red = 0.2f;
-    color.green = 0;
-    color.blue = 0.6f;
-    */
 
     // Draw an outside border.
     glColor4f(1, 1, 0, 1);
@@ -4198,11 +4868,11 @@ void Rend_DrawLightModMatrix()
     glEnd();
 
     glBegin(GL_QUADS);
-    float c = 0;
-    for(int i = 0; i < 255; ++i, c += (1.0f/255.0f))
+    dfloat c = 0;
+    for(dint i = 0; i < 255; ++i, c += (1.0f/255.0f))
     {
         // Get the result of the source light level + offset.
-        float off = lightModRange[i];
+        dfloat off = lightModRange[i];
 
         glColor4f(c + off, c + off, c + off, 1);
         glVertex2f(i * BLOCK_WIDTH, 0);
@@ -4220,7 +4890,7 @@ void Rend_DrawLightModMatrix()
 #undef BLOCK_WIDTH
 }
 
-static DGLuint constructBBox(DGLuint name, float br)
+static DGLuint constructBBox(DGLuint name, dfloat br)
 {
     if(GL_NewList(name, GL_COMPILE))
     {
@@ -4267,19 +4937,18 @@ static DGLuint constructBBox(DGLuint name, float br)
  * Draws a textured cube using the currently bound gl texture.
  * Used to draw mobj bounding boxes.
  *
- * @param pos           Coordinates of the center of the box (in map space units).
- * @param w             Width of the box.
- * @param l             Length of the box.
- * @param h             Height of the box.
- * @param a             Angle of the box.
- * @param color         Color to make the box (uniform vertex color).
- * @param alpha         Alpha to make the box (uniform vertex color).
- * @param br            Border amount to overlap box faces.
- * @param alignToBase   If @c true, align the base of the box
- *                      to the Z coordinate.
+ * @param pos          Coordinates of the center of the box (in map space units).
+ * @param w            Width of the box.
+ * @param l            Length of the box.
+ * @param h            Height of the box.
+ * @param a            Angle of the box.
+ * @param color        Color to make the box (uniform vertex color).
+ * @param alpha        Alpha to make the box (uniform vertex color).
+ * @param br           Border amount to overlap box faces.
+ * @param alignToBase  @c true= align the base of the box to the Z coordinate.
  */
 void Rend_DrawBBox(Vector3d const &pos, coord_t w, coord_t l, coord_t h,
-    float a, float const color[3], float alpha, float br, bool alignToBase)
+    dfloat a, dfloat const color[3], dfloat alpha, dfloat br, bool alignToBase)
 {
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -4295,7 +4964,7 @@ void Rend_DrawBBox(Vector3d const &pos, coord_t w, coord_t l, coord_t h,
     glRotatef(a, 0, 1, 0);
 
     glScaled(w - br - br, h - br - br, l - br - br);
-    glColor4f(color[CR], color[CG], color[CB], alpha);
+    glColor4f(color[0], color[1], color[2], alpha);
 
     GL_CallList(dlBBox);
 
@@ -4307,15 +4976,14 @@ void Rend_DrawBBox(Vector3d const &pos, coord_t w, coord_t l, coord_t h,
  * Draws a textured triangle using the currently bound gl texture.
  * Used to draw mobj angle direction arrow.
  *
- * @param pos           Coordinates of the center of the base of the
- *                      triangle (in "world" coordinates [VX, VY, VZ]).
- * @param a             Angle to point the triangle in.
- * @param s             Scale of the triangle.
- * @param color         Color to make the box (uniform vertex color).
- * @param alpha         Alpha to make the box (uniform vertex color).
+ * @param pos    World space coordinates of the center of the base of the triangle.
+ * @param a      Angle to point the triangle in.
+ * @param s      Scale of the triangle.
+ * @param color  Color to make the box (uniform vertex color).
+ * @param alpha  Alpha to make the box (uniform vertex color).
  */
-void Rend_DrawArrow(Vector3d const &pos, float a, float s, float const color[3],
-    float alpha)
+void Rend_DrawArrow(Vector3d const &pos, dfloat a, dfloat s, dfloat const color[3],
+    dfloat alpha)
 {
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -4348,37 +5016,38 @@ void Rend_DrawArrow(Vector3d const &pos, float a, float s, float const color[3],
     glPopMatrix();
 }
 
-static int drawMobjBBox(thinker_t *th, void * /*context*/)
+static void drawMobjBBox(mobj_t &mob)
 {
-    static float const red[3]    = { 1, 0.2f, 0.2f}; // non-solid objects
-    static float const green[3]  = { 0.2f, 1, 0.2f}; // solid objects
-    static float const yellow[3] = {0.7f, 0.7f, 0.2f}; // missiles
-
-    mobj_t *mo = (mobj_t *) th;
+    static dfloat const red   [] = { 1,    0.2f, 0.2f };  // non-solid objects
+    static dfloat const green [] = { 0.2f, 1,    0.2f };  // solid objects
+    static dfloat const yellow[] = { 0.7f, 0.7f, 0.2f };  // missiles
 
     // We don't want the console player.
-    if(mo == ddPlayers[consolePlayer].shared.mo)
-        return false; // Continue iteration.
-    // Is it vissible?
-    if(!Mobj_IsLinked(*mo) || !R_ViewerBspLeafIsVisible(Mobj_BspLeafAtOrigin(*mo)))
-        return false; // Continue iteration.
+    if(&mob == ddPlayers[consolePlayer].shared.mo)
+        return;
 
-    ddouble const distToEye = (eyeOrigin - Mobj_Origin(*mo)).length();
-    float alpha = 1 - ((distToEye / (DENG_GAMEVIEW_WIDTH/2)) / 4);
+    // Is it vissible?
+    if(!Mobj_IsLinked(mob)) return;
+
+    BspLeaf const &bspLeaf = Mobj_BspLeafAtOrigin(mob);
+    if(!bspLeaf.hasSubspace() || !R_ViewerSubspaceIsVisible(bspLeaf.subspace()))
+        return;
+
+    ddouble const distToEye = (eyeOrigin - Mobj_Origin(mob)).length();
+    dfloat alpha = 1 - ((distToEye / (DENG_GAMEVIEW_WIDTH/2)) / 4);
     if(alpha < .25f)
         alpha = .25f; // Don't make them totally invisible.
 
     // Draw a bounding box in an appropriate color.
-    coord_t size = Mobj_Radius(*mo);
-    Rend_DrawBBox(mo->origin, size, size, mo->height/2, 0,
-                  (mo->ddFlags & DDMF_MISSILE)? yellow :
-                  (mo->ddFlags & DDMF_SOLID)? green : red,
+    coord_t size = Mobj_Radius(mob);
+    Rend_DrawBBox(mob.origin, size, size, mob.height/2, 0,
+                  (mob.ddFlags & DDMF_MISSILE)? yellow :
+                  (mob.ddFlags & DDMF_SOLID)? green : red,
                   alpha, .08f);
 
-    Rend_DrawArrow(mo->origin, ((mo->angle + ANG45 + ANG90) / (float) ANGLE_MAX *-360), size*1.25,
-                   (mo->ddFlags & DDMF_MISSILE)? yellow :
-                   (mo->ddFlags & DDMF_SOLID)? green : red, alpha);
-    return false; // Continue iteration.
+    Rend_DrawArrow(mob.origin, ((mob.angle + ANG45 + ANG90) / (dfloat) ANGLE_MAX *-360), size*1.25,
+                   (mob.ddFlags & DDMF_MISSILE)? yellow :
+                   (mob.ddFlags & DDMF_SOLID)? green : red, alpha);
 }
 
 /**
@@ -4390,9 +5059,9 @@ static int drawMobjBBox(thinker_t *th, void * /*context*/)
  */
 static void drawMobjBoundingBoxes(Map &map)
 {
-    //static float const red[3]   = { 1, 0.2f, 0.2f}; // non-solid objects
-    static float const green[3]  = { 0.2f, 1, 0.2f}; // solid objects
-    static float const yellow[3] = {0.7f, 0.7f, 0.2f}; // missiles
+    //static dfloat const red   [] = { 1,    0.2f, 0.2f };  // non-solid objects
+    static dfloat const green [] = { 0.2f, 1,    0.2f };  // solid objects
+    static dfloat const yellow[] = { 0.7f, 0.7f, 0.2f };  // missiles
 
     if(!devMobjBBox && !devPolyobjBBox) return;
 
@@ -4408,40 +5077,46 @@ static void drawMobjBoundingBoxes(Map &map)
     glEnable(GL_TEXTURE_2D);
     glDisable(GL_CULL_FACE);
 
-    MaterialSnapshot const &ms =
-        ClientApp::resourceSystem().material(de::Uri("System", Path("bbox")))
-                  .prepare(Rend_SpriteMaterialSpec());
+    MaterialAnimator &matAnimator = resSys().material(de::Uri("System", Path("bbox")))
+                                                .getAnimator(Rend_SpriteMaterialSpec());
 
-    GL_BindTexture(&ms.texture(MTU_PRIMARY));
+    // Ensure we've up to date info about the material.
+    matAnimator.prepare();
+
+    GL_BindTexture(matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture);
     GL_BlendMode(BM_ADD);
 
     if(devMobjBBox)
     {
-        map.thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1,
-                               drawMobjBBox);
+        map.thinkers().forAll(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1, [] (thinker_t *th)
+        {
+            drawMobjBBox(*reinterpret_cast<mobj_t *>(th));
+            return LoopContinue;
+        });
     }
 
     if(devPolyobjBBox)
     {
-        foreach(Polyobj const *polyobj, map.polyobjs())
+        map.forAllPolyobjs([] (Polyobj &pob)
         {
-            Sector const &sec = polyobj->sector();
-            coord_t width  = (polyobj->aaBox.maxX - polyobj->aaBox.minX)/2;
-            coord_t length = (polyobj->aaBox.maxY - polyobj->aaBox.minY)/2;
+            Sector const &sec = pob.sector();
+
+            coord_t width  = (pob.aaBox.maxX - pob.aaBox.minX)/2;
+            coord_t length = (pob.aaBox.maxY - pob.aaBox.minY)/2;
             coord_t height = (sec.ceiling().height() - sec.floor().height())/2;
 
-            Vector3d pos(polyobj->aaBox.minX + width,
-                         polyobj->aaBox.minY + length,
+            Vector3d pos(pob.aaBox.minX + width,
+                         pob.aaBox.minY + length,
                          sec.floor().height());
 
             ddouble const distToEye = (eyeOrigin - pos).length();
-            float alpha = 1 - ((distToEye / (DENG_GAMEVIEW_WIDTH/2)) / 4);
+            dfloat alpha = 1 - ((distToEye / (DENG_GAMEVIEW_WIDTH/2)) / 4);
             if(alpha < .25f)
                 alpha = .25f; // Don't make them totally invisible.
 
             Rend_DrawBBox(pos, width, length, height, 0, yellow, alpha, .08f);
 
-            foreach(Line *line, polyobj->lines())
+            for(Line *line : pob.lines())
             {
                 Vector3d pos(line->center(), sec.floor().height());
 
@@ -4449,7 +5124,9 @@ static void drawMobjBoundingBoxes(Map &map)
                               BANG2DEG(BANG_90 - line->angle()),
                               green, alpha, 0);
             }
-        }
+
+            return LoopContinue;
+        });
     }
 
     GL_BlendMode(BM_NORMAL);
@@ -4459,9 +5136,9 @@ static void drawMobjBoundingBoxes(Map &map)
     glEnable(GL_DEPTH_TEST);
 }
 
-static void drawVector(Vector3f const &vector, float scalar, const float color[3])
+static void drawVector(Vector3f const &vector, dfloat scalar, dfloat const color[3])
 {
-    static const float black[4] = { 0, 0, 0, 0 };
+    static dfloat const black[] = { 0, 0, 0, 0 };
 
     glBegin(GL_LINES);
         glColor4fv(black);
@@ -4473,11 +5150,10 @@ static void drawVector(Vector3f const &vector, float scalar, const float color[3
 
 static void drawTangentVectorsForSurface(Surface const &suf, Vector3d const &origin)
 {
-    int const VISUAL_LENGTH = 20;
-
-    static float const red[3]   = { 1, 0, 0 };
-    static float const green[3] = { 0, 1, 0 };
-    static float const blue[3]  = { 0, 0, 1 };
+    static dint const VISUAL_LENGTH = 20;
+    static dfloat const red  [] = { 1, 0, 0 };
+    static dfloat const green[] = { 0, 1, 0 };
+    static dfloat const blue [] = { 0, 0, 1 };
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -4507,8 +5183,8 @@ static void drawTangentVectorsForWallSections(HEdge const *hedge)
     if(lineSide.considerOneSided())
     {
         SectorCluster &cluster =
-            (line.definesPolyobj()? line.polyobj().bspLeaf()
-                                  : hedge->face().mapElementAs<BspLeaf>()).cluster();
+            (line.definesPolyobj()? line.polyobj().bspLeaf().subspace()
+                                  : hedge->face().mapElementAs<ConvexSubspace>()).cluster();
 
         coord_t const bottom = cluster.  visFloor().heightSmoothed();
         coord_t const top    = cluster.visCeiling().heightSmoothed();
@@ -4519,11 +5195,11 @@ static void drawTangentVectorsForWallSections(HEdge const *hedge)
     else
     {
         SectorCluster &cluster =
-            (line.definesPolyobj()? line.polyobj().bspLeaf()
-                                  : hedge->face().mapElementAs<BspLeaf>()).cluster();
+            (line.definesPolyobj()? line.polyobj().bspLeaf().subspace()
+                                  : hedge->face().mapElementAs<ConvexSubspace>()).cluster();
         SectorCluster &backCluster =
-            (line.definesPolyobj()? line.polyobj().bspLeaf()
-                                  : hedge->twin().face().mapElementAs<BspLeaf>()).cluster();
+            (line.definesPolyobj()? line.polyobj().bspLeaf().subspace()
+                                  : hedge->twin().face().mapElementAs<ConvexSubspace>()).cluster();
 
         if(lineSide.middle().hasMaterial())
         {
@@ -4561,36 +5237,40 @@ static void drawTangentVectorsForWallSections(HEdge const *hedge)
 /**
  * @todo Use drawTangentVectorsForWallSections() for polyobjs too.
  */
-static void drawSurfaceTangentVectors(SectorCluster *cluster)
+static void drawSurfaceTangentVectors(SectorCluster &cluster)
 {
-    if(!cluster) return;
-
-    foreach(BspLeaf *bspLeaf, cluster->bspLeafs())
+    for(ConvexSubspace *subspace : cluster.subspaces())
     {
-        HEdge const *base  = bspLeaf->poly().hedge();
+        HEdge const *base  = subspace->poly().hedge();
         HEdge const *hedge = base;
         do
         {
             drawTangentVectorsForWallSections(hedge);
         } while((hedge = &hedge->next()) != base);
 
-        foreach(Mesh *mesh, bspLeaf->extraMeshes())
-        foreach(HEdge *hedge, mesh->hedges())
+        subspace->forAllExtraMeshes([] (Mesh &mesh)
         {
-            drawTangentVectorsForWallSections(hedge);
-        }
+            for(HEdge *hedge : mesh.hedges())
+            {
+                drawTangentVectorsForWallSections(hedge);
+            }
+            return LoopContinue;
+        });
 
-        foreach(Polyobj *polyobj, bspLeaf->polyobjs())
-        foreach(HEdge *hedge, polyobj->mesh().hedges())
+        subspace->forAllPolyobjs([] (Polyobj &pob)
         {
-            drawTangentVectorsForWallSections(hedge);
-        }
+            for(HEdge *hedge : pob.mesh().hedges())
+            {
+                drawTangentVectorsForWallSections(hedge);
+            }
+            return LoopContinue;
+        });
     }
 
-    int const planeCount = cluster->sector().planeCount();
-    for(int i = 0; i < planeCount; ++i)
+    dint const planeCount = cluster.sector().planeCount();
+    for(dint i = 0; i < planeCount; ++i)
     {
-        Plane const &plane = cluster->visPlane(i);
+        Plane const &plane = cluster.visPlane(i);
         coord_t height     = 0;
 
         if(plane.surface().hasSkyMaskedMaterial() &&
@@ -4603,8 +5283,7 @@ static void drawSurfaceTangentVectors(SectorCluster *cluster)
             height = plane.heightSmoothed();
         }
 
-        drawTangentVectorsForSurface(plane.surface(),
-                                     Vector3d(cluster->center(), height));
+        drawTangentVectorsForSurface(plane.surface(), Vector3d(cluster.center(), height));
     }
 }
 
@@ -4617,67 +5296,64 @@ static void drawAllSurfaceTangentVectors(Map &map)
 
     glDisable(GL_CULL_FACE);
 
-    foreach(Sector *sector, map.sectors())
-    foreach(SectorCluster *cluster, sector->clusters())
+    map.forAllClusters([] (SectorCluster &cluster)
     {
         drawSurfaceTangentVectors(cluster);
-    }
+        return LoopContinue;
+    });
 
     glEnable(GL_CULL_FACE);
 }
 
 static void drawLumobjs(Map &map)
 {
-    DENG_UNUSED(map);
-
-    static float const black[4] = { 0, 0, 0, 0 };
+    static dfloat const black[] = { 0, 0, 0, 0 };
 
     if(!devDrawLums) return;
 
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
 
-    for(int i = 0; i < map.lumobjCount(); ++i)
+    map.forAllLumobjs([] (Lumobj &lob)
     {
-        Lumobj *lum = map.lumobj(i);
-
-        if(rendMaxLumobjs > 0 && R_ViewerLumobjIsHidden(i))
-            continue;
+        if(rendMaxLumobjs > 0 && R_ViewerLumobjIsHidden(lob.indexInMap()))
+            return LoopContinue;
 
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
 
-        glTranslated(lum->origin().x, lum->origin().z + lum->zOffset(), lum->origin().y);
+        glTranslated(lob.origin().x, lob.origin().z + lob.zOffset(), lob.origin().y);
 
         glBegin(GL_LINES);
         {
             glColor4fv(black);
-            glVertex3f(-lum->radius(), 0, 0);
-            glColor4f(lum->color().x, lum->color().y, lum->color().z, 1);
+            glVertex3f(-lob.radius(), 0, 0);
+            glColor4f(lob.color().x, lob.color().y, lob.color().z, 1);
             glVertex3f(0, 0, 0);
             glVertex3f(0, 0, 0);
             glColor4fv(black);
-            glVertex3f(lum->radius(), 0, 0);
+            glVertex3f(lob.radius(), 0, 0);
 
-            glVertex3f(0, -lum->radius(), 0);
-            glColor4f(lum->color().x, lum->color().y, lum->color().z, 1);
+            glVertex3f(0, -lob.radius(), 0);
+            glColor4f(lob.color().x, lob.color().y, lob.color().z, 1);
             glVertex3f(0, 0, 0);
             glVertex3f(0, 0, 0);
             glColor4fv(black);
-            glVertex3f(0, lum->radius(), 0);
+            glVertex3f(0, lob.radius(), 0);
 
-            glVertex3f(0, 0, -lum->radius());
-            glColor4f(lum->color().x, lum->color().y, lum->color().z, 1);
+            glVertex3f(0, 0, -lob.radius());
+            glColor4f(lob.color().x, lob.color().y, lob.color().z, 1);
             glVertex3f(0, 0, 0);
             glVertex3f(0, 0, 0);
             glColor4fv(black);
-            glVertex3f(0, 0, lum->radius());
+            glVertex3f(0, 0, lob.radius());
         }
         glEnd();
 
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();
-    }
+        return LoopContinue;
+    });
 
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
@@ -4685,9 +5361,9 @@ static void drawLumobjs(Map &map)
 
 static void drawSoundEmitter(SoundEmitter &emitter, String const &label)
 {
-#define MAX_SOUNDORIGIN_DIST 384
+#define MAX_SOUNDORIGIN_DIST  384
 
-    Vector3d const &origin  = Vector3d(emitter.origin);
+    Vector3d const &origin(emitter.origin);
     ddouble const distToEye = (eyeOrigin - origin).length();
     if(distToEye < MAX_SOUNDORIGIN_DIST)
     {
@@ -4708,66 +5384,83 @@ static void drawSoundEmitters(Map &map)
 
     if(devSoundEmitters & SOF_SIDE)
     {
-        foreach(Line *line, map.lines())
-        for(int i = 0; i < 2; ++i)
+        map.forAllLines([] (Line &line)
         {
-            LineSide &side = line->side(i);
-            if(!side.hasSections()) continue;
+            for(dint i = 0; i < 2; ++i)
+            {
+                LineSide &side = line.side(i);
+                if(!side.hasSections()) continue;
 
-            drawSoundEmitter(side.middleSoundEmitter(),
-                             String("Line #%1 (%2, middle)")
-                                 .arg(line->indexInMap())
-                                 .arg(i? "back" : "front"));
+                drawSoundEmitter(side.middleSoundEmitter(),
+                                 String("Line #%1 (%2, middle)")
+                                     .arg(line.indexInMap())
+                                     .arg(i? "back" : "front"));
 
-            drawSoundEmitter(side.bottomSoundEmitter(),
-                             String("Line #%1 (%2, bottom)")
-                                 .arg(line->indexInMap())
-                                 .arg(i? "back" : "front"));
+                drawSoundEmitter(side.bottomSoundEmitter(),
+                                 String("Line #%1 (%2, bottom)")
+                                     .arg(line.indexInMap())
+                                     .arg(i? "back" : "front"));
 
-            drawSoundEmitter(side.topSoundEmitter(),
-                             String("Line #%1 (%2, top)")
-                                 .arg(line->indexInMap())
-                                 .arg(i? "back" : "front"));
-        }
+                drawSoundEmitter(side.topSoundEmitter(),
+                                 String("Line #%1 (%2, top)")
+                                     .arg(line.indexInMap())
+                                     .arg(i? "back" : "front"));
+            }
+            return LoopContinue;
+        });
     }
 
-    if(devSoundEmitters & (SOF_SECTOR|SOF_PLANE))
+    if(devSoundEmitters & (SOF_SECTOR | SOF_PLANE))
     {
-        foreach(Sector *sec, map.sectors())
+        map.forAllSectors([] (Sector &sector)
         {
             if(devSoundEmitters & SOF_PLANE)
             {
-                foreach(Plane *plane, sec->planes())
+                sector.forAllPlanes([] (Plane &plane)
                 {
-                    drawSoundEmitter(plane->soundEmitter(),
+                    drawSoundEmitter(plane.soundEmitter(),
                                      String("Sector #%1 (pln:%2)")
-                                         .arg(sec->indexInMap())
-                                         .arg(plane->indexInSector()));
-                }
+                                         .arg(plane.sector().indexInMap())
+                                         .arg(plane.indexInSector()));
+                    return LoopContinue;
+                });
             }
 
             if(devSoundEmitters & SOF_SECTOR)
             {
-                drawSoundEmitter(sec->soundEmitter(),
-                                 String("Sector #%1").arg(sec->indexInMap()));
+                drawSoundEmitter(sector.soundEmitter(),
+                                 String("Sector #%1").arg(sector.indexInMap()));
             }
-        }
+            return LoopContinue;
+        });
     }
 }
 
-static String labelForGenerator(Generator const *gen)
+void Rend_DrawVectorLight(VectorLightData const &vlight, dfloat alpha)
 {
-    DENG2_ASSERT(gen != 0);
-    return String("%1").arg(gen->id());
+    if(alpha < .0001f) return;
+
+    dfloat const unitLength = 100;
+    glBegin(GL_LINES);
+        glColor4f(vlight.color.x, vlight.color.y, vlight.color.z, alpha);
+        glVertex3f(unitLength * vlight.direction.x, unitLength * vlight.direction.z, unitLength * vlight.direction.y);
+        glColor4f(vlight.color.x, vlight.color.y, vlight.color.z, 0);
+        glVertex3f(0, 0, 0);
+    glEnd();
 }
 
-static int drawGenerator(Generator *gen, void * /*context*/)
+static String labelForGenerator(Generator const &gen)
 {
-#define MAX_GENERATOR_DIST  2048
+    return String("%1").arg(gen.id());
+}
 
-    if(gen->source || gen->isUntriggered())
+static void drawGenerator(Generator const &gen)
+{
+    static dint const MAX_GENERATOR_DIST = 2048;
+
+    if(gen.source || gen.isUntriggered())
     {
-        Vector3d const origin   = gen->origin();
+        Vector3d const origin   = gen.origin();
         ddouble const distToEye = (eyeOrigin - origin).length();
         if(distToEye < MAX_GENERATOR_DIST)
         {
@@ -4776,10 +5469,6 @@ static int drawGenerator(Generator *gen, void * /*context*/)
                       1 - distToEye / MAX_GENERATOR_DIST);
         }
     }
-
-    return false; // Continue iteration.
-
-#undef MAX_GENERATOR_DIST
 }
 
 /**
@@ -4788,10 +5477,15 @@ static int drawGenerator(Generator *gen, void * /*context*/)
 static void drawGenerators(Map &map)
 {
     if(!devDrawGenerators) return;
-    map.generatorIterator(drawGenerator);
+
+    map.forAllGenerators([] (Generator &gen)
+    {
+        drawGenerator(gen);
+        return LoopContinue;
+    });
 }
 
-static void drawPoint(Vector3d const &origin, float opacity)
+static void drawPoint(Vector3d const &origin, dfloat opacity)
 {
     glBegin(GL_POINTS);
         glColor4f(.7f, .7f, .2f, opacity * 2);
@@ -4799,11 +5493,10 @@ static void drawPoint(Vector3d const &origin, float opacity)
     glEnd();
 }
 
-static void drawBar(Vector3d const &origin, coord_t height, float opacity)
+static void drawBar(Vector3d const &origin, coord_t height, dfloat opacity)
 {
-    int const EXTEND_DIST = 64;
-
-    static float const black[4] = { 0, 0, 0, 0 };
+    static dint const EXTEND_DIST = 64;
+    static dfloat const black[] = { 0, 0, 0, 0 };
 
     glBegin(GL_LINES);
         glColor4fv(black);
@@ -4820,13 +5513,13 @@ static void drawBar(Vector3d const &origin, coord_t height, float opacity)
 
 static String labelForVertex(Vertex const *vtx)
 {
-    DENG_ASSERT(vtx != 0);
+    DENG2_ASSERT(vtx);
     return String("%1").arg(vtx->indexInMap());
 }
 
-struct drawVertexVisual_params_t
+struct drawvertexvisual_parameters_t
 {
-    int maxDistance;
+    dint maxDistance;
     bool drawOrigin;
     bool drawBar;
     bool drawLabel;
@@ -4834,7 +5527,7 @@ struct drawVertexVisual_params_t
 };
 
 static void drawVertexVisual(Vertex const &vertex, ddouble minHeight, ddouble maxHeight,
-    drawVertexVisual_params_t &parms)
+    drawvertexvisual_parameters_t &parms)
 {
     if(!parms.drawOrigin && !parms.drawBar && !parms.drawLabel)
         return;
@@ -4857,7 +5550,7 @@ static void drawVertexVisual(Vertex const &vertex, ddouble minHeight, ddouble ma
         return;
 
     Vector3d const origin(vertex.origin(), minHeight);
-    float const opacity = 1 - distToEye / parms.maxDistance;
+    dfloat const opacity = 1 - distToEye / parms.maxDistance;
 
     if(parms.drawBar)
     {
@@ -4881,24 +5574,23 @@ static void drawVertexVisual(Vertex const &vertex, ddouble minHeight, ddouble ma
  * @param base  Base half-edge to find heights for.
  * @param edge  Edge of the half-edge.
  * @param min   Current minimal height to use as a base (will be overwritten).
- *              Use DDMAXFLOAT if the base is unknown. Can be @c 0.
+ *              Use DDMAXFLOAT if the base is unknown.
  * @param min   Current maximal height to use as a base (will be overwritten).
- *              Use DDMINFLOAT if the base is unknown. Can be @c 0.
+ *              Use DDMINFLOAT if the base is unknown.
  *
  * @todo Don't stop when a zero-volume back neighbor is found; process all of
  * the neighbors at the specified vertex (the half-edge geometry will need to
  * be linked such that "outside" edges are neighbor-linked similarly to those
  * with a face).
  */
-static void findMinMaxPlaneHeightsAtVertex(HEdge *base, int edge,
+static void findMinMaxPlaneHeightsAtVertex(HEdge *base, dint edge,
     ddouble &min, ddouble &max)
 {
     if(!base) return;
     if(!base->hasFace() || !base->face().hasMapElement())
         return;
 
-    BspLeaf &bspLeaf = base->face().mapElementAs<BspLeaf>();
-    if(!bspLeaf.hasCluster())
+    if(!base->face().mapElementAs<ConvexSubspace>().hasCluster())
         return;
 
     // Process neighbors?
@@ -4908,31 +5600,26 @@ static void findMinMaxPlaneHeightsAtVertex(HEdge *base, int edge,
         HEdge *hedge = base;
         while((hedge = &SectorClusterCirculator::findBackNeighbor(*hedge, direction)) != base)
         {
-            // Stop if there is no back cluster.
-            BspLeaf *backLeaf = hedge->hasFace()? &hedge->face().mapElementAs<BspLeaf>() : 0;
-            if(!backLeaf || !backLeaf->hasCluster())
-                break;
+            // Stop if there is no back subspace.
+            ConvexSubspace *subspace = hedge->hasFace()? &hedge->face().mapElementAs<ConvexSubspace>() : nullptr;
+            if(!subspace) break;
 
-            if(backLeaf->cluster().visFloor().heightSmoothed() < min)
-                min = backLeaf->cluster().visFloor().heightSmoothed();
+            if(subspace->cluster().visFloor().heightSmoothed() < min)
+                min = subspace->cluster().visFloor().heightSmoothed();
 
-            if(backLeaf->cluster().visCeiling().heightSmoothed() > max)
-                max = backLeaf->cluster().visCeiling().heightSmoothed();
+            if(subspace->cluster().visCeiling().heightSmoothed() > max)
+                max = subspace->cluster().visCeiling().heightSmoothed();
         }
     }
 }
 
-static int drawBspLeafVertexWorker(BspLeaf *bspLeaf, void *context)
+static void drawSubspaceVertexs(ConvexSubspace &sub, drawvertexvisual_parameters_t &parms)
 {
-    drawVertexVisual_params_t &parms = *static_cast<drawVertexVisual_params_t *>(context);
+    SectorCluster &cluster = sub.cluster();
+    ddouble const min      = cluster.  visFloor().heightSmoothed();
+    ddouble const max      = cluster.visCeiling().heightSmoothed();
 
-    if(!bspLeaf->hasCluster())
-        return false; // Continue iteration.
-
-    ddouble min = bspLeaf->cluster().  visFloor().heightSmoothed();
-    ddouble max = bspLeaf->cluster().visCeiling().heightSmoothed();
-
-    HEdge *base  = bspLeaf->poly().hedge();
+    HEdge *base  = sub.poly().hedge();
     HEdge *hedge = base;
     do
     {
@@ -4944,21 +5631,25 @@ static int drawBspLeafVertexWorker(BspLeaf *bspLeaf, void *context)
 
     } while((hedge = &hedge->next()) != base);
 
-    foreach(Mesh *mesh, bspLeaf->extraMeshes())
-    foreach(HEdge *hedge, mesh->hedges())
+    sub.forAllExtraMeshes([&min, &max, &parms] (Mesh &mesh)
     {
-        drawVertexVisual(hedge->vertex(), min, max, parms);
-        drawVertexVisual(hedge->twin().vertex(), min, max, parms);
-    }
+        for(HEdge *hedge : mesh.hedges())
+        {
+            drawVertexVisual(hedge->vertex(), min, max, parms);
+            drawVertexVisual(hedge->twin().vertex(), min, max, parms);
+        }
+        return LoopContinue;
+    });
 
-    foreach(Polyobj *polyobj, bspLeaf->polyobjs())
-    foreach(Line *line, polyobj->lines())
+    sub.forAllPolyobjs([&min, &max, &parms] (Polyobj &pob)
     {
-        drawVertexVisual(line->from(), min, max, parms);
-        drawVertexVisual(line->to(), min, max, parms);
-    }
-
-    return false; // Continue iteration.
+        for(Line *line : pob.lines())
+        {
+            drawVertexVisual(line->from(), min, max, parms);
+            drawVertexVisual(line->to(), min, max, parms);
+        }
+        return LoopContinue;
+    });
 }
 
 /**
@@ -4966,9 +5657,9 @@ static int drawBspLeafVertexWorker(BspLeaf *bspLeaf, void *context)
  */
 static void drawVertexes(Map &map)
 {
-#define MAX_DISTANCE            1280 ///< From the viewer.
+#define MAX_DISTANCE            1280  ///< From the viewer.
 
-    float oldLineWidth = -1;
+    dfloat oldLineWidth = -1;
 
     if(!devVertexBars && !devVertexIndices)
         return;
@@ -4977,7 +5668,7 @@ static void drawVertexes(Map &map)
                eyeOrigin.x + MAX_DISTANCE, eyeOrigin.y + MAX_DISTANCE);
 
     QBitArray drawnVerts(map.vertexCount());
-    drawVertexVisual_params_t parms;
+    drawvertexvisual_parameters_t parms;
     parms.maxDistance = MAX_DISTANCE;
     parms.drawnVerts  = &drawnVerts;
 
@@ -4989,34 +5680,74 @@ static void drawVertexes(Map &map)
         oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
         DGL_SetFloat(DGL_LINE_WIDTH, 2);
 
-        parms.drawBar = true;
+        parms.drawBar   = true;
         parms.drawLabel = parms.drawOrigin = false;
-        map.bspLeafBoxIterator(box, drawBspLeafVertexWorker, &parms);
+
+        map.subspaceBlockmap().forAllInBox(box, [&box, &parms] (void *object)
+        {
+            // Check the bounds.
+            auto &subspace = *(ConvexSubspace *)object;
+            AABoxd const &polyBox = subspace.poly().aaBox();
+            if(!(polyBox.maxX < box.minX ||
+                 polyBox.minX > box.maxX ||
+                 polyBox.minY > box.maxY ||
+                 polyBox.maxY < box.minY))
+            {
+                drawSubspaceVertexs(subspace, parms);
+            }
+            return LoopContinue;
+        });
 
         glEnable(GL_DEPTH_TEST);
     }
 
     // Draw the vertex origins.
-    float const oldPointSize = DGL_GetFloat(DGL_POINT_SIZE);
+    dfloat const oldPointSize = DGL_GetFloat(DGL_POINT_SIZE);
 
     glEnable(GL_POINT_SMOOTH);
     DGL_SetFloat(DGL_POINT_SIZE, 6);
 
     glDisable(GL_DEPTH_TEST);
 
-    parms.drawnVerts->fill(false); // Process all again.
+    parms.drawnVerts->fill(false);  // Process all again.
     parms.drawOrigin = true;
-    parms.drawBar = parms.drawLabel = false;
-    map.bspLeafBoxIterator(box, drawBspLeafVertexWorker, &parms);
+    parms.drawBar    = parms.drawLabel = false;
+    map.subspaceBlockmap().forAllInBox(box, [&box, &parms] (void *object)
+    {
+        // Check the bounds.
+        auto &subspace = *(ConvexSubspace *)object;
+        AABoxd const &polyBox = subspace.poly().aaBox();
+        if(!(polyBox.maxX < box.minX ||
+             polyBox.minX > box.maxX ||
+             polyBox.minY > box.maxY ||
+             polyBox.maxY < box.minY))
+        {
+            drawSubspaceVertexs(subspace, parms);
+        }
+        return LoopContinue;
+    });
 
     glEnable(GL_DEPTH_TEST);
 
     if(devVertexIndices)
     {
-        parms.drawnVerts->fill(false); // Process all again.
+        parms.drawnVerts->fill(false);  // Process all again.
         parms.drawLabel = true;
-        parms.drawBar = parms.drawOrigin = false;
-        map.bspLeafBoxIterator(box, drawBspLeafVertexWorker, &parms);
+        parms.drawBar   = parms.drawOrigin = false;
+        map.subspaceBlockmap().forAllInBox(box, [&box, &parms] (void *object)
+        {
+            auto &subspace = *(ConvexSubspace *)object;
+            // Check the bounds.
+            AABoxd const &polyBox = subspace.poly().aaBox();
+            if(!(polyBox.maxX < box.minX ||
+                 polyBox.minX > box.maxX ||
+                 polyBox.minY > box.maxY ||
+                 polyBox.maxY < box.minY))
+            {
+                drawSubspaceVertexs(subspace, parms);
+            }
+            return LoopContinue;
+        });
     }
 
     // Restore previous state.
@@ -5031,10 +5762,9 @@ static void drawVertexes(Map &map)
 #undef MAX_VERTEX_POINT_DIST
 }
 
-static String labelForCluster(SectorCluster const *cluster)
+static String labelForCluster(SectorCluster const &cluster)
 {
-    DENG_ASSERT(cluster != 0);
-    return String("%1").arg(cluster->sector().indexInMap());
+    return String::number(cluster.sector().indexInMap());
 }
 
 /**
@@ -5047,11 +5777,9 @@ static void drawSectors(Map &map)
     if(!devSectorIndices) return;
 
     // Draw per-cluster sector labels:
-
-    foreach(Sector *sector, map.sectors())
-    foreach(SectorCluster *cluster, sector->clusters())
+    map.forAllClusters([] (SectorCluster &cluster)
     {
-        Vector3d const origin(cluster->center(), cluster->visPlane(Sector::Floor).heightSmoothed());
+        Vector3d const origin(cluster.center(), cluster.visPlane(Sector::Floor).heightSmoothed());
         ddouble const distToEye = (eyeOrigin - origin).length();
         if(distToEye < MAX_LABEL_DIST)
         {
@@ -5059,39 +5787,16 @@ static void drawSectors(Map &map)
                       distToEye / (DENG_GAMEVIEW_WIDTH / 2),
                       1 - distToEye / MAX_LABEL_DIST);
         }
-    }
+        return LoopContinue;
+    });
 
 #undef MAX_LABEL_DIST
 }
 
 static String labelForThinker(thinker_t *thinker)
 {
-    DENG_ASSERT(thinker != 0);
+    DENG2_ASSERT(thinker);
     return String("%1").arg(thinker->id);
-}
-
-static int drawThinkersWorker(thinker_t *thinker, void *context)
-{
-    DENG2_UNUSED(context);
-
-#define MAX_THINKER_DIST 2048
-
-    // Skip non-mobjs.
-    if(!Thinker_IsMobjFunc(thinker->function))
-        return false;
-
-    Vector3d const origin = Mobj_Center(*(mobj_t *)thinker);
-    ddouble const distToEye = (eyeOrigin - origin).length();
-    if(distToEye < MAX_THINKER_DIST)
-    {
-        drawLabel(origin, labelForThinker(thinker),
-                  distToEye / (DENG_GAMEVIEW_WIDTH / 2),
-                  1 - distToEye / MAX_THINKER_DIST);
-    }
-
-    return false; // Continue iteration.
-
-#undef MAX_THINKER_DIST
 }
 
 /**
@@ -5099,15 +5804,92 @@ static int drawThinkersWorker(thinker_t *thinker, void *context)
  */
 static void drawThinkers(Map &map)
 {
+    static coord_t const MAX_THINKER_DIST = 2048;
+
     if(!devThinkerIds) return;
-    map.thinkers().iterate(NULL, 0x1 | 0x2, drawThinkersWorker);
+
+    map.thinkers().forAll(0x1 | 0x2, [] (thinker_t *th)
+    {
+        // Ignore non-mobjs.
+        if(Thinker_IsMobjFunc(th->function))
+        {
+            Vector3d const origin   = Mobj_Center(*(mobj_t *)th);
+            ddouble const distToEye = (eyeOrigin - origin).length();
+            if(distToEye < MAX_THINKER_DIST)
+            {
+                drawLabel(origin, labelForThinker(th),
+                          distToEye / (DENG_GAMEVIEW_WIDTH / 2),
+                          1 - distToEye / MAX_THINKER_DIST);
+            }
+        }
+        return LoopContinue;
+    });
 }
 
-MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec(int wrapS, int wrapT)
+void Rend_LightGridVisual(LightGrid &lg)
 {
-    return ClientApp::resourceSystem().materialSpec(MapSurfaceContext, 0, 0, 0, 0,
-                                                    wrapS, wrapT, -1, -1, -1, true,
-                                                    true, false, false);
+    static Vector3f const red(1, 0, 0);
+    static dint blink = 0;
+
+    // Disabled?
+    if(!devLightGrid) return;
+
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+
+    // Determine the grid reference of the view player.
+    LightGrid::Index viewerGridIndex = 0;
+    if(viewPlayer)
+    {
+        blink++;
+        viewerGridIndex = lg.toIndex(lg.toRef(viewPlayer->shared.mo->origin));
+    }
+
+    // Go into screen projection mode.
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
+
+    for(dint y = 0; y < lg.dimensions().y; ++y)
+    {
+        glBegin(GL_QUADS);
+        for(dint x = 0; x < lg.dimensions().x; ++x)
+        {
+            LightGrid::Index gridIndex = lg.toIndex(x, lg.dimensions().y - 1 - y);
+            bool const isViewerIndex   = (viewPlayer && viewerGridIndex == gridIndex);
+
+            Vector3f const *color = 0;
+            if(isViewerIndex && (blink & 16))
+            {
+                color = &red;
+            }
+            else if(lg.primarySource(gridIndex))
+            {
+                color = &lg.rawColorRef(gridIndex);
+            }
+
+            if(!color) continue;
+
+            glColor3f(color->x, color->y, color->z);
+
+            glVertex2f(x * devLightGridSize, y * devLightGridSize);
+            glVertex2f(x * devLightGridSize + devLightGridSize, y * devLightGridSize);
+            glVertex2f(x * devLightGridSize + devLightGridSize,
+                       y * devLightGridSize + devLightGridSize);
+            glVertex2f(x * devLightGridSize, y * devLightGridSize + devLightGridSize);
+        }
+        glEnd();
+    }
+
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+}
+
+MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec(dint wrapS, dint wrapT)
+{
+    return resSys().materialSpec(MapSurfaceContext, 0, 0, 0, 0, wrapS, wrapT,
+                                 -1, -1, -1, true, true, false, false);
 }
 
 MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec()
@@ -5115,17 +5897,23 @@ MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec()
     return Rend_MapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT);
 }
 
+/// Returns the texture variant specification for lightmaps.
+TextureVariantSpec const &Rend_MapSurfaceLightmapTextureSpec()
+{
+    return resSys().textureSpec(TC_MAPSURFACE_LIGHTMAP, 0, 0, 0, 0, GL_CLAMP, GL_CLAMP,
+                                1, -1, -1, false, false, false, true);
+}
+
 TextureVariantSpec const &Rend_MapSurfaceShinyTextureSpec()
 {
-    return ClientApp::resourceSystem().textureSpec(TC_MAPSURFACE_REFLECTION,
-        TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, 1, -1, false,
-        false, false, false);
+    return resSys().textureSpec(TC_MAPSURFACE_REFLECTION, TSF_NO_COMPRESSION, 0, 0, 0,
+                                GL_REPEAT, GL_REPEAT, 1, 1, -1, false, false, false, false);
 }
 
 TextureVariantSpec const &Rend_MapSurfaceShinyMaskTextureSpec()
 {
-    return ClientApp::resourceSystem().textureSpec(TC_MAPSURFACE_REFLECTIONMASK,
-        0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, false, false, false);
+    return resSys().textureSpec(TC_MAPSURFACE_REFLECTIONMASK, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
+                                -1, -1, -1, true, false, false, false);
 }
 
 D_CMD(OpenRendererAppearanceEditor)
@@ -5186,7 +5974,7 @@ D_CMD(MipMap)
 {
     DENG2_UNUSED2(src, argc);
 
-    int newMipMode = String(argv[1]).toInt();
+    dint newMipMode = String(argv[1]).toInt();
     if(newMipMode < 0 || newMipMode > 5)
     {
         LOG_SCR_ERROR("Invalid mipmapping mode %i; the valid range is 0...5") << newMipMode;

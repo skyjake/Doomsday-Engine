@@ -20,11 +20,17 @@
 
 #include "de_base.h"
 #include "world/polyobj.h"
+#include "world/polyobjdata.h"
 
 #include "world/worldsystem.h" // validCount
 #include "world/map.h"
 #include "world/p_object.h"
 #include "BspLeaf"
+#include "ConvexSubspace"
+#ifdef __CLIENT__
+#  include "SectorCluster"
+#  include "Shard"
+#endif
 
 #ifdef __CLIENT__
 #  include "render/rend_main.h" // useBias
@@ -39,9 +45,6 @@ using namespace de;
 // Function to be called when the polyobj collides with some map element.
 static void (*collisionCallback) (mobj_t *mobj, void *line, void *polyobj);
 
-/// Used to store the original/previous vertex coordinates.
-typedef QVector<Vector2d> VertexCoords;
-
 static void notifyGeometryChanged(Polyobj &po)
 {
 #ifdef __CLIENT__
@@ -54,8 +57,12 @@ static void notifyGeometryChanged(Polyobj &po)
             if(!hedge->hasMapElement())
                 continue;
 
-            hedge->mapElementAs<LineSideSegment>().
-                    updateBiasAfterGeometryMove(LineSide::Middle);
+            /// @note If polyobjs are allowed to move between sector clusters
+            /// then we'll need to revise the bias illumination storage specially.
+            if(Shard *shard = po.bspLeaf().subspace().cluster().findShard(hedge->mapElement(), LineSide::Middle))
+            {
+                shard->updateBiasAfterMove();
+            }
         }
     }
 #else // !__CLIENT__
@@ -77,33 +84,38 @@ static void notifyCollision(Polyobj &po, mobj_t *mobj, Line *line)
 }
 
 polyobj_s::polyobj_s(de::Vector2d const &origin_)
+    : thinker(thinker_s::InitializeToZero)
 {
     origin[VX] = origin_.x;
     origin[VY] = origin_.y;
-    _bspLeaf = 0;
     tag = 0;
     validCount = 0;
     dest[0] = dest[1] = 0;
     angle = destAngle = 0;
     angleSpeed = 0;
-    _mesh = new de::Mesh;
-    _lines = new Lines;
-    _uniqueVertexes = new Vertexes;
-    _originalPts = new VertexCoords;
-    _prevPts = new VertexCoords;
     speed = 0;
     crush = false;
     seqType = 0;
-    _indexInMap = MapElement::NoIndex;
+    _bspLeaf = 0;
+
+    // Allocate private data.
+    thinker.d = new PolyobjData;
+    THINKER_DATA(thinker, PolyobjData).setThinker(&thinker);
 }
 
 polyobj_s::~polyobj_s()
 {
-    delete static_cast<Lines *>(_lines);
-    delete static_cast<Vertexes *>(_uniqueVertexes);
-    delete static_cast<VertexCoords *>(_originalPts);
-    delete static_cast<VertexCoords *>(_prevPts);
-    delete static_cast<de::Mesh *>(_mesh);
+    delete THINKER_DATA_MAYBE(thinker, PolyobjData);
+}
+
+PolyobjData &polyobj_s::data()
+{
+    return THINKER_DATA(thinker, PolyobjData);
+}
+
+PolyobjData const &polyobj_s::data() const
+{
+    return THINKER_DATA(thinker, PolyobjData);
 }
 
 void Polyobj::setCollisionCallback(void (*func) (mobj_t *mobj, void *line, void *polyobj)) // static
@@ -119,7 +131,7 @@ Map &Polyobj::map() const
 
 Mesh &Polyobj::mesh() const
 {
-    return *static_cast<de::Mesh *>(_mesh);
+    return *data().mesh;
 }
 
 bool Polyobj::isLinked()
@@ -131,12 +143,13 @@ void Polyobj::unlink()
 {
     if(_bspLeaf)
     {
-        Map &map = _bspLeaf->map();
-
-        _bspLeaf->unlink(*this);
+        if(_bspLeaf->hasSubspace())
+        {
+            _bspLeaf->subspace().unlink(*this);
+        }
         _bspLeaf = 0;
 
-        map.unlink(*this);
+        map().unlink(*this);
     }
 }
 
@@ -156,7 +169,10 @@ void Polyobj::link()
 
         // Given the center point determine in which BSP leaf the polyobj resides.
         _bspLeaf = &map().bspLeafAt(avg);
-        _bspLeaf->link(*this);
+        if(_bspLeaf->hasSubspace())
+        {
+            _bspLeaf->subspace().link(*this);
+        }
     }
 }
 
@@ -177,12 +193,12 @@ BspLeaf &Polyobj::bspLeaf() const
 
 bool Polyobj::hasSector() const
 {
-    return hasBspLeaf() && bspLeaf().hasCluster();
+    return hasBspLeaf() && bspLeaf().hasSubspace();
 }
 
 Sector &Polyobj::sector() const
 {
-    return bspLeaf().sector();
+    return *bspLeaf().sectorPtr();
 }
 
 Sector *Polyobj::sectorPtr() const
@@ -202,12 +218,12 @@ SoundEmitter const &Polyobj::soundEmitter() const
 
 Polyobj::Lines const &Polyobj::lines() const
 {
-    return *static_cast<Lines *>(_lines);
+    return data().lines;
 }
 
 Polyobj::Vertexes const &Polyobj::uniqueVertexes() const
 {
-    return *static_cast<Vertexes *>(_uniqueVertexes);
+    return data().uniqueVertexes;
 }
 
 void Polyobj::buildUniqueVertexes()
@@ -219,17 +235,17 @@ void Polyobj::buildUniqueVertexes()
         vertexSet.insert(&line->to());
     }
 
-    Vertexes &uniqueVertexes = *static_cast<Vertexes *>(_uniqueVertexes);
+    Vertexes &uniqueVertexes = data().uniqueVertexes;
     uniqueVertexes = vertexSet.toList();
 
     // Resize the coordinate vectors as they are implicitly linked to the unique vertexes.
-    static_cast<VertexCoords *>(_originalPts)->resize(uniqueVertexes.count());
-    static_cast<VertexCoords *>(_prevPts)->resize(uniqueVertexes.count());
+    data().originalPts.resize(uniqueVertexes.count());
+    data().prevPts.resize(uniqueVertexes.count());
 }
 
 void Polyobj::updateOriginalVertexCoords()
 {
-    VertexCoords::iterator origCoordsIt = static_cast<VertexCoords *>(_originalPts)->begin();
+    PolyobjData::VertexCoords::iterator origCoordsIt = data().originalPts.begin();
     foreach(Vertex *vertex, uniqueVertexes())
     {
         // The original coordinates are relative to the polyobj origin.
@@ -339,7 +355,7 @@ bool Polyobj::move(Vector2d const &delta)
 
     unlink();
     {
-        VertexCoords::iterator prevCoordsIt = static_cast<VertexCoords *>(_prevPts)->begin();
+        PolyobjData::VertexCoords::iterator prevCoordsIt = data().prevPts.begin();
         foreach(Vertex *vertex, uniqueVertexes())
         {
             // Remember the previous coords in case we need to undo.
@@ -370,7 +386,7 @@ bool Polyobj::move(Vector2d const &delta)
 
         unlink();
         {
-            VertexCoords::const_iterator prevCoordsIt = static_cast<VertexCoords *>(_prevPts)->constBegin();
+            PolyobjData::VertexCoords::const_iterator prevCoordsIt = data().prevPts.constBegin();
             foreach(Vertex *vertex, uniqueVertexes())
             {
                 vertex->setOrigin(*prevCoordsIt);
@@ -424,8 +440,8 @@ bool Polyobj::rotate(angle_t delta)
     {
         uint fineAngle = (angle + delta) >> ANGLETOFINESHIFT;
 
-        VertexCoords::const_iterator origCoordsIt = static_cast<VertexCoords *>(_originalPts)->constBegin();
-        VertexCoords::iterator prevCoordsIt = static_cast<VertexCoords *>(_prevPts)->begin();
+        PolyobjData::VertexCoords::const_iterator origCoordsIt = data().originalPts.constBegin();
+        PolyobjData::VertexCoords::iterator prevCoordsIt = data().prevPts.begin();
         foreach(Vertex *vertex, uniqueVertexes())
         {
             // Remember the previous coords in case we need to undo.
@@ -457,7 +473,7 @@ bool Polyobj::rotate(angle_t delta)
 
         unlink();
         {
-            VertexCoords::const_iterator prevCoordsIt = static_cast<VertexCoords *>(_prevPts)->constBegin();
+            PolyobjData::VertexCoords::const_iterator prevCoordsIt = data().prevPts.constBegin();
             foreach(Vertex *vertex, uniqueVertexes())
             {
                 vertex->setOrigin(*prevCoordsIt);
@@ -497,10 +513,10 @@ void Polyobj::setSequenceType(int newType)
 
 int Polyobj::indexInMap() const
 {
-    return _indexInMap;
+    return data().indexInMap;
 }
 
 void Polyobj::setIndexInMap(int newIndex)
 {
-    _indexInMap = newIndex;
+    data().indexInMap = newIndex;
 }

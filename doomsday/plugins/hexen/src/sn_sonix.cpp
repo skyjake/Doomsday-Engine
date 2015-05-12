@@ -202,7 +202,7 @@ void SndSeqParser(Str const *path)
             *tempDataPtr++ = SS_CMD_PLAY;
             *tempDataPtr++ = Def_Get(DD_DEF_SOUND_BY_NAME, Str_Text(lexer.readString()), 0);
             *tempDataPtr++ = SS_CMD_DELAY;
-            *tempDataPtr++ = lexer.readNumber();
+            *tempDataPtr++ = (int)lexer.readNumber();
             continue;
         }
         if(!Str_CompareIgnoreCase(lexer.token(), "playuntildone"))
@@ -227,8 +227,8 @@ void SndSeqParser(Str const *path)
             verifySequencePtr(tempDataStart, tempDataPtr);
 
             *tempDataPtr++ = SS_CMD_DELAYRAND;
-            *tempDataPtr++ = lexer.readNumber();
-            *tempDataPtr++ = lexer.readNumber();
+            *tempDataPtr++ = (int)lexer.readNumber();
+            *tempDataPtr++ = (int)lexer.readNumber();
             continue;
         }
         if(!Str_CompareIgnoreCase(lexer.token(), "delay"))
@@ -236,7 +236,7 @@ void SndSeqParser(Str const *path)
             verifySequencePtr(tempDataStart, tempDataPtr);
 
             *tempDataPtr++ = SS_CMD_DELAY;
-            *tempDataPtr++ = lexer.readNumber();
+            *tempDataPtr++ = (int)lexer.readNumber();
             continue;
         }
         if(!Str_CompareIgnoreCase(lexer.token(), "volume"))
@@ -244,7 +244,7 @@ void SndSeqParser(Str const *path)
             verifySequencePtr(tempDataStart, tempDataPtr);
 
             *tempDataPtr++ = SS_CMD_VOLUME;
-            *tempDataPtr++ = lexer.readNumber();
+            *tempDataPtr++ = (int)lexer.readNumber();
             continue;
         }
         if(!Str_CompareIgnoreCase(lexer.token(), "stopsound"))

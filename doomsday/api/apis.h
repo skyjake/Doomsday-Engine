@@ -1,4 +1,4 @@
-/** @file api/apis.h Doomsday's public API mechanism.
+/** @file apis.h  Doomsday's public API mechanism.
  * @ingroup base
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -21,7 +21,7 @@
 #define DOOMSDAY_APIS_H
 
 #ifndef RC_INVOKED
-#  include <de/libdeng1.h>
+#  include <de/liblegacy.h>
 #  include <string.h>
 #endif
 
@@ -56,6 +56,15 @@
  * compatibility, it must be manually added to the set of published APIs (see
  * library.cpp) and the API struct in question should be copied to a separate
  * header file for that version of the API (e.g., api_map_v1.h).
+ *
+ * @par Deprecating/removing an API
+ *
+ * When an API becomes fully obsolete, a new version with a "_REMOVED" suffix should be
+ * added. This new enum should have a new identification number to differentiate it from
+ * previous valid versions. As always, the old enums of the API should be retained for
+ * historical reasons. In the future, possible new APIs should not use the same
+ * identification numbers. A removed API does not need a 'versionless' enumeration,
+ * though, as there is no more latest version of the API available.
  */
 enum {
     DE_API_BASE_v1              = 0,       // 1.10
@@ -63,7 +72,8 @@ enum {
     DE_API_BASE                 = DE_API_BASE_v2,
 
     DE_API_BINDING_v1           = 100,     // 1.10
-    DE_API_BINDING              = DE_API_BINDING_v1,
+    DE_API_BINDING_v2           = 101,     // 1.15
+    DE_API_BINDING              = DE_API_BINDING_v2,
 
     DE_API_BUSY_v1              = 200,     // 1.10
     DE_API_BUSY_v2              = 201,     // 1.13
@@ -77,18 +87,21 @@ enum {
     DE_API_CONSOLE              = DE_API_CONSOLE_v2,
 
     DE_API_DEFINITIONS_v1       = 500,     // 1.10
-    DE_API_DEFINITIONS          = DE_API_DEFINITIONS_v1,
+    DE_API_DEFINITIONS_v2       = 501,     // 1.15
+    DE_API_DEFINITIONS          = DE_API_DEFINITIONS_v2,
 
     DE_API_FILE_SYSTEM_v1       = 600,     // 1.10
     DE_API_FILE_SYSTEM_v2       = 601,     // 1.14
-    DE_API_FILE_SYSTEM          = DE_API_FILE_SYSTEM_v2,
+    DE_API_FILE_SYSTEM_v3       = 602,     // 1.15
+    DE_API_FILE_SYSTEM          = DE_API_FILE_SYSTEM_v3,
 
     DE_API_FONT_RENDER_v1       = 700,     // 1.10
     DE_API_FONT_RENDER          = DE_API_FONT_RENDER_v1,
 
     DE_API_GL_v1                = 800,     // 1.10
     DE_API_GL_v2                = 801,     // 1.13
-    DE_API_GL                   = DE_API_GL_v2,
+    DE_API_GL_v3                = 802,     // 1.15
+    DE_API_GL                   = DE_API_GL_v3,
 
     DE_API_INFINE_v1            = 900,     // 1.10
     DE_API_INFINE               = DE_API_INFINE_v1,
@@ -99,7 +112,8 @@ enum {
     DE_API_MAP_v1               = 1100,    // 1.10
     DE_API_MAP_v2               = 1101,    // 1.11
     DE_API_MAP_v3               = 1102,    // 1.13
-    DE_API_MAP                  = DE_API_MAP_v3,
+    DE_API_MAP_v4               = 1103,    // 1.15
+    DE_API_MAP                  = DE_API_MAP_v4,
 
     DE_API_MAP_EDIT_v1          = 1200,    // 1.10
     DE_API_MAP_EDIT_v2          = 1201,    // 1.11
@@ -135,7 +149,8 @@ enum {
     DE_API_SVG                  = DE_API_SVG_v1,
 
     DE_API_THINKER_v1           = 2200,    // 1.10
-    DE_API_THINKER              = DE_API_THINKER_v1,
+    DE_API_THINKER_v2           = 2201,    // 1.15
+    DE_API_THINKER              = DE_API_THINKER_v2,
 
     DE_API_URI_v1               = 2300,    // 1.10
     DE_API_URI_v2               = 2301,    // 1.14
@@ -143,7 +158,7 @@ enum {
 
     DE_API_WAD_v1               = 2400,    // 1.10
     DE_API_WAD_v2               = 2401,    // 1.14
-    DE_API_WAD                  = DE_API_WAD_v2
+    DE_API_WAD_REMOVED          = 2402     // 1.15 (API removed)
 };
 
 /**

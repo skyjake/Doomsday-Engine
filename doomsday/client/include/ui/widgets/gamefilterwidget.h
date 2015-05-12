@@ -61,8 +61,20 @@ public:
     void useInvertedStyle();
     void setFilter(Filter flt, FilterMode mode = UserChangeable);
 
+    /**
+     * Enables a background for the filter. Opacity of the background is controlled
+     * by the provided scroll position rule, so that the background is visible only
+     * when the scroll position is greater than zero.
+     *
+     * @param scrollPositionRule  Rule.
+     */
+    void enableBackground(de::Rule const &scrollPositionRule);
+
     Filter filter() const;
     SortOrder sortOrder() const;
+
+    // Events.
+    void update();
 
     // Implements IPersistent.
     void operator >> (de::PersistentState &toState) const;

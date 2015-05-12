@@ -21,21 +21,22 @@
 #include "common.h"
 #include "saveslots.h"
 
-#include "g_common.h"
-#include "gamesession.h"
-#include "hu_menu.h"
+#include <map>
+#include <utility>
 #include <de/App>
 #include <de/Folder>
 #include <de/Observers>
 #include <de/Writer>
-#include <map>
-#include <utility>
+#include "g_common.h"
+#include "gamesession.h"
 
-static int cvarLastSlot  = -1; ///< @c -1= Not yet loaded/saved in this game session.
-static int cvarQuickSlot = -1; ///< @c -1= Not yet chosen/determined.
+#include "hu_menu.h"
+#include "menu/page.h"
+#include "menu/widgets/lineeditwidget.h"
 
 using namespace de;
 using namespace common;
+using namespace menu;
 
 using de::game::SavedSession;
 
@@ -80,41 +81,41 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
             }
         }
 
-        // Update the menu widget right away.
-        updateMenuWidget();
+        // Update the menu widget(s) right away.
+        updateMenuWidget("LoadGame");
+        updateMenuWidget("SaveGame");
     }
 
-    void updateMenuWidget()
+    void updateMenuWidget(String const pageName)
     {
         if(!menuWidgetId) return;
 
-        mn_page_t *page = Hu_MenuFindPageByName("LoadGame");
-        if(!page) return; // Not initialized yet?
+        if(!Hu_MenuHasPage(pageName)) return; // Not initialized yet?
 
-        mn_object_t *ob = MNPage_FindObject(page, 0, menuWidgetId);
-        if(!ob)
+        Page &page = Hu_MenuPage(pageName);
+        Widget *wi = page.tryFindWidget(menuWidgetId);
+        if(!wi)
         {
             LOG_DEBUG("Failed locating menu widget with id ") << menuWidgetId;
             return;
         }
-        DENG2_ASSERT(ob->_type == MN_EDIT);
+        LineEditWidget &edit = wi->as<LineEditWidget>();
 
-        MNObject_SetFlags(ob, FO_SET, MNF_DISABLED);
+        wi->setFlags(Widget::Disabled);
         if(status == Loadable)
         {
-            MNEdit_SetText(ob, MNEDIT_STF_NO_ACTION, session->metadata().gets("userDescription", "").toUtf8().constData());
-            MNObject_SetFlags(ob, FO_CLEAR, MNF_DISABLED);
+            edit.setText(session->metadata().gets("userDescription", ""));
+            wi->setFlags(Widget::Disabled, UnsetFlags);
         }
         else
         {
-            MNEdit_SetText(ob, MNEDIT_STF_NO_ACTION, "");
+            edit.setText("");
         }
 
-        if(Hu_MenuIsActive() &&
-           (Hu_MenuActivePage() == page || Hu_MenuActivePage() == Hu_MenuFindPageByName("SaveGame")))
+        if(Hu_MenuIsActive() && Hu_MenuPagePtr() == &page)
         {
             // Re-open the active page to update focus if necessary.
-            Hu_MenuSetActivePage2(page, true);
+            Hu_MenuSetPage(&page, true);
         }
     }
 
@@ -213,6 +214,11 @@ void SaveSlots::Slot::setSavedSession(SavedSession *newSession)
         }
         LOG_VERBOSE("Save slot '%s' now %s") << d->id << statusText;
     }
+}
+
+void SaveSlots::Slot::updateStatus()
+{
+    d->updateStatus();
 }
 
 DENG2_PIMPL(SaveSlots)
@@ -368,8 +374,23 @@ SaveSlots::Slot *SaveSlots::slotByUserInput(String const &str) const
     return d->slotById(id);
 }
 
+void SaveSlots::updateAll()
+{
+    DENG2_FOR_EACH(Instance::Slots, i, d->sslots)
+    {
+        i->second->updateStatus();
+    }
+}
+
+namespace {
+int cvarLastSlot;  ///< @c -1= Not yet loaded/saved in this game session.
+int cvarQuickSlot; ///< @c -1= Not yet chosen/determined.
+}
+
 void SaveSlots::consoleRegister() // static
 {
-    C_VAR_INT("game-save-last-slot",    &cvarLastSlot,  CVF_NO_MIN|CVF_NO_MAX|CVF_NO_ARCHIVE|CVF_READ_ONLY, 0, 0);
+    cvarLastSlot  = -1;
+    cvarQuickSlot = -1;
+    C_VAR_INT("game-save-last-slot",    &cvarLastSlot,  CVF_NO_MIN|CVF_NO_MAX|CVF_NO_ARCHIVE|CVF_READ_ONLY, -1, 0);
     C_VAR_INT("game-save-quick-slot",   &cvarQuickSlot, CVF_NO_MAX|CVF_NO_ARCHIVE, -1, 0);
 }

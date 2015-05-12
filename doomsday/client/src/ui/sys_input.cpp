@@ -90,7 +90,7 @@ static void Mouse_Init(void)
     useMouse = true;
 }
 
-dd_bool I_Init(void)
+dd_bool I_InitInterfaces(void)
 {
     if(initOk)
         return true; // Already initialized.
@@ -113,7 +113,7 @@ dd_bool I_Init(void)
     return true;
 }
 
-void I_Shutdown(void)
+void I_ShutdownInterfaces()
 {
     if(!initOk)
         return; // Not initialized.
@@ -167,7 +167,7 @@ size_t Keyboard_GetEvents(keyevent_t *evbuf, size_t bufsize)
 
 dd_bool Mouse_IsPresent(void)
 {
-    //if(!initOk) I_Init();
+    //if(!initOk) I_InitInterfaces();
     return useMouse;
 }
 

@@ -1,7 +1,7 @@
-/** @file r_fakeradio.cpp Faked Radiosity Lighting.
+/** @file r_fakeradio.cpp  Faked Radiosity Lighting.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -28,9 +28,12 @@
 #include "de_base.h"
 #include "de_render.h"
 
+#include "world/blockmap.h"
 #include "world/lineowner.h"
 #include "world/map.h"
-#include "BspLeaf"
+#include "ConvexSubspace"
+#include "Face"
+#include "SectorCluster"
 #include "Surface"
 #include "Vertex"
 
@@ -56,10 +59,15 @@ bool Rend_RadioPlaneCastsShadow(Plane const &plane)
 {
     if(plane.surface().hasMaterial())
     {
-        Material const &surfaceMaterial = plane.surface().material();
-        if(!surfaceMaterial.isDrawable()) return false;
-        if(surfaceMaterial.hasGlow())     return false;
-        if(surfaceMaterial.isSkyMasked()) return false;
+        MaterialAnimator &matAnimator = plane.surface().material().getAnimator(Rend_MapSurfaceMaterialSpec());
+
+        // Ensure we have up to date info about the material.
+        matAnimator.prepare();
+
+        if(!matAnimator.material().isDrawable()) return false;
+        if(matAnimator.material().isSkyMasked()) return false;
+
+        if(matAnimator.glowStrength() > 0) return false;
     }
     return true;
 }
@@ -192,16 +200,6 @@ void Rend_RadioUpdateVertexShadowOffsets(Vertex &vtx)
     } while(own != base);
 }
 
-static int linkShadowLineToBspLeafWorker(BspLeaf *bspLeaf, void *context)
-{
-    LineSide &side = *static_cast<LineSide *>(context);
-    if(bspLeaf->sectorPtr() == side.sectorPtr())
-    {
-        bspLeaf->addShadowLine(side);
-    }
-    return false; // Continue iteration.
-}
-
 void Rend_RadioInitForMap(Map &map)
 {
     Time begunAt;
@@ -211,10 +209,11 @@ void Rend_RadioInitForMap(Map &map)
     lineSideRadioData = reinterpret_cast<LineSideRadioData *>(
         Z_Calloc(sizeof(*lineSideRadioData) * map.sideCount(), PU_MAP, 0));
 
-    foreach(Vertex *vertex, map.vertexes())
+    map.forAllVertexs([] (Vertex &vertex)
     {
-        Rend_RadioUpdateVertexShadowOffsets(*vertex);
-    }
+        Rend_RadioUpdateVertexShadowOffsets(vertex);
+        return LoopContinue;
+    });
 
     /**
      * The algorithm:
@@ -222,43 +221,67 @@ void Rend_RadioInitForMap(Map &map)
      * 1. Use the BSP leaf blockmap to look for all the blocks that are
      *    within the line's shadow bounding box.
      *
-     * 2. Check the BspLeafs whose sector is the same as the line.
+     * 2. Check the ConvexSubspaces whose sector is the same as the line.
      *
-     * 3. If any of the shadow points are in the BSP leaf, or any of the
-     *    shadow edges cross one of the BSP leaf's edges (not parallel),
-     *    link the line to the BspLeaf.
+     * 3. If any of the shadow points are in the subspace, or any of the
+     *    shadow edges cross one of the subspace's edges (not parallel),
+     *    link the line to the ConvexSubspace.
      */
-    foreach(Line *line, map.lines())
+    map.forAllLines([] (Line &line)
     {
-        if(!Rend_RadioLineCastsShadow(*line)) continue;
-
-        // For each side of the line.
-        for(uint i = 0; i < 2; ++i)
+        if(Rend_RadioLineCastsShadow(line))
         {
-            LineSide &side = line->side(i);
+            // For each side of the line.
+            for(int i = 0; i < 2; ++i)
+            {
+                LineSide &side = line.side(i);
 
-            if(!side.hasSector()) continue;
-            if(!side.hasSections()) continue;
+                if(!side.hasSector()) continue;
+                if(!side.hasSections()) continue;
 
-            Vertex const &vtx0 = line->vertex(i);
-            Vertex const &vtx1 = line->vertex(i^1);
-            LineOwner const &vo0 = line->vertexOwner(i)->next();
-            LineOwner const &vo1 = line->vertexOwner(i^1)->prev();
+                Vertex const &vtx0   = line.vertex(i);
+                Vertex const &vtx1   = line.vertex(i ^ 1);
+                LineOwner const &vo0 = line.vertexOwner(i)->next();
+                LineOwner const &vo1 = line.vertexOwner(i ^ 1)->prev();
 
-            AABoxd bounds = line->aaBox();
+                AABoxd box = line.aaBox();
 
-            // Use the extended points, they are wider than inoffsets.
-            Vector2d point = vtx0.origin() + vo0.extendedShadowOffset();
-            V2d_AddToBoxXY(bounds.arvec2, point.x, point.y);
+                // Use the extended points, they are wider than inoffsets.
+                Vector2d point = vtx0.origin() + vo0.extendedShadowOffset();
+                V2d_AddToBoxXY(box.arvec2, point.x, point.y);
 
-            point = vtx1.origin() + vo1.extendedShadowOffset();
-            V2d_AddToBoxXY(bounds.arvec2, point.x, point.y);
+                point = vtx1.origin() + vo1.extendedShadowOffset();
+                V2d_AddToBoxXY(box.arvec2, point.x, point.y);
 
-            // Link the shadowing line to all the BspLeafs whose axis-aligned
-            // bounding box intersects 'bounds'.
-            map.bspLeafBoxIterator(bounds, linkShadowLineToBspLeafWorker, &side);
+                // Link the shadowing line to all the subspaces whose axis-aligned
+                // bounding box intersects 'bounds'.
+                validCount++;
+                int const localValidCount = validCount;
+                line.map().subspaceBlockmap().forAllInBox(box, [&box, &side, &localValidCount] (void *object)
+                {
+                    ConvexSubspace &sub = *(ConvexSubspace *)object;
+                    if(sub.validCount() != localValidCount) // not yet processed
+                    {
+                        sub.setValidCount(localValidCount);
+                        if(&sub.sector() == side.sectorPtr())
+                        {
+                            // Check the bounds.
+                            AABoxd const &polyBox = sub.poly().aaBox();
+                            if(!(polyBox.maxX < box.minX ||
+                                 polyBox.minX > box.maxX ||
+                                 polyBox.minY > box.maxY ||
+                                 polyBox.maxY < box.minY))
+                            {
+                                sub.addShadowLine(side);
+                            }
+                        }
+                    }
+                    return LoopContinue;
+                });
+            }
         }
-    }
+        return LoopContinue;
+    });
 
     LOGDEV_GL_MSG("Completed in %.2f seconds") << begunAt.since();
 }

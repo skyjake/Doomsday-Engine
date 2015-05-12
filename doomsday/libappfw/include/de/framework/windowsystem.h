@@ -33,6 +33,8 @@
 
 namespace de {
 
+#undef main
+
 /**
  * Window management subsystem.
  *
@@ -117,7 +119,7 @@ public:
 
 public:
     static void setAppWindowSystem(WindowSystem &winSys);
-    static WindowSystem &appWindowSystem();
+    static WindowSystem &get();
 
 protected:
     virtual void closingAllWindows();

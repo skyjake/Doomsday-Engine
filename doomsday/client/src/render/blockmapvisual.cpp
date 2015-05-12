@@ -29,6 +29,8 @@
 #include "de_render.h"
 #include "de_ui.h"
 
+#include "api_fontrender.h"
+
 #include "Face"
 #include "HEdge"
 
@@ -39,7 +41,7 @@
 #include "world/map.h"
 #include "world/p_object.h"
 #include "world/p_players.h"
-#include "BspLeaf"
+#include "ConvexSubspace"
 
 #include "render/blockmapvisual.h"
 
@@ -58,43 +60,18 @@ static void drawMobj(mobj_t const &mobj)
     glVertex2f(bounds.minX, bounds.maxY);
 }
 
-static int drawMobjWorker(void *mobjPtr, void * /*context*/)
-{
-    mobj_t &mobj = *static_cast<mobj_t *>(mobjPtr);
-    if(mobj.validCount != validCount)
-    {
-        mobj.validCount = validCount;
-        drawMobj(mobj);
-    }
-    return false; // Continue iteration.
-}
-
 static void drawLine(Line const &line)
 {
     glVertex2f(line.fromOrigin().x, line.fromOrigin().y);
     glVertex2f(  line.toOrigin().x,   line.toOrigin().y);
 }
 
-static int drawLineWorker(void *linePtr, void * /*context*/)
+static void drawSubspace(ConvexSubspace const &subspace)
 {
-    Line &line = *static_cast<Line *>(linePtr);
-    if(line.validCount() != validCount)
-    {
-        line.setValidCount(validCount);
-        drawLine(line);
-    }
-    return false; // Continue iteration.
-}
-
-static void drawBspLeaf(BspLeaf const &bspLeaf)
-{
-    if(!bspLeaf.hasPoly())
-        return;
-
     float const scale = de::max(bmapDebugSize, 1.f);
     float const width = (DENG_GAMEVIEW_WIDTH / 16) / scale;
 
-    Face const &poly = bspLeaf.poly();
+    Face const &poly = subspace.poly();
     HEdge *base = poly.hedge();
     HEdge *hedge = base;
     do
@@ -150,55 +127,72 @@ static void drawBspLeaf(BspLeaf const &bspLeaf)
     } while((hedge = &hedge->next()) != base);
 }
 
-static int drawBspLeafWorker(void *bspLeafPtr, void * /*context*/)
-{
-    BspLeaf &bspLeaf = *static_cast<BspLeaf *>(bspLeafPtr);
-    if(bspLeaf.validCount() != validCount)
-    {
-        bspLeaf.setValidCount(validCount);
-        drawBspLeaf(bspLeaf);
-    }
-    return false; // Continue iteration.
-}
-
-static int drawCellLines(Blockmap const &bmap, BlockmapCell const &cell, void *context)
+static int drawCellLines(Blockmap const &bmap, BlockmapCell const &cell, void *)
 {
     glBegin(GL_LINES);
-        bmap.iterate(cell, (int (*)(void*,void*)) drawLineWorker, context);
+        bmap.forAllInCell(cell, [] (void *object)
+        {
+            Line &line = *(Line *)object;
+            if(line.validCount() != validCount)
+            {
+                line.setValidCount(validCount);
+                drawLine(line);
+            }
+            return LoopContinue;
+        });
     glEnd();
-    return false; // Continue iteration.
-}
-
-static int drawCellPolyobjLineWorker(void *object, void *context)
-{
-    Polyobj *po = (Polyobj *)object;
-    foreach(Line *line, po->lines())
-    {
-        if(int result = drawLineWorker(line, context))
-            return result;
-    }
     return false; // Continue iteration.
 }
 
 static int drawCellPolyobjs(Blockmap const &bmap, BlockmapCell const &cell, void *context)
 {
     glBegin(GL_LINES);
-        bmap.iterate(cell, (int (*)(void*,void*)) drawCellPolyobjLineWorker, context);
+        bmap.forAllInCell(cell, [&context] (void *object)
+        {
+            Polyobj &pob = *(Polyobj *)object;
+            for(Line *line : pob.lines())
+            {
+                if(line->validCount() != validCount)
+                {
+                    line->setValidCount(validCount);
+                    drawLine(*line);
+                }
+            }
+            return LoopContinue;
+        });
     glEnd();
     return false; // Continue iteration.
 }
 
-static int drawCellMobjs(Blockmap const &bmap, BlockmapCell const &cell, void *context)
+static int drawCellMobjs(Blockmap const &bmap, BlockmapCell const &cell, void *)
 {
     glBegin(GL_QUADS);
-        bmap.iterate(cell, (int (*)(void*,void*)) drawMobjWorker, context);
+        bmap.forAllInCell(cell, [] (void *object)
+        {
+            mobj_t &mob = *(mobj_t *)object;
+            if(mob.validCount != validCount)
+            {
+                mob.validCount = validCount;
+                drawMobj(mob);
+            }
+            return LoopContinue;
+        });
     glEnd();
     return false; // Continue iteration.
 }
 
-static int drawCellBspLeafs(Blockmap const &bmap, BlockmapCell const &cell, void *context)
+static int drawCellSubspaces(Blockmap const &bmap, BlockmapCell const &cell, void *)
 {
-    bmap.iterate(cell, (int (*)(void*,void*)) drawBspLeafWorker, context);
+    bmap.forAllInCell(cell, [] (void *object)
+    {
+        ConvexSubspace *sub = (ConvexSubspace *)object;
+        if(sub->validCount() != validCount)
+        {
+            sub->setValidCount(validCount);
+            drawSubspace(*sub);
+        }
+        return LoopContinue;
+    });
     return false; // Continue iteration.
 }
 
@@ -537,9 +531,9 @@ void Rend_BlockmapDebug()
         break;
 
     case 3: // BSP leafs.
-        blockmap = &map.bspLeafBlockmap();
-        cellDrawer = drawCellBspLeafs;
-        objectTypeName = "BSP Leafs";
+        blockmap = &map.subspaceBlockmap();
+        cellDrawer = drawCellSubspaces;
+        objectTypeName = "Subspaces";
         break;
 
     case 4: // Polyobjs.

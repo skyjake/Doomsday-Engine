@@ -22,11 +22,6 @@ Sound {
   Max channels = -1;
 }
 
-# The contents of the 'currentmap' definition change at runtime.
-Music {
-  ID = "currentmap";
-}
-
 Include "flags.ded";
 Include "fonts.ded";
 Include "objects.ded";

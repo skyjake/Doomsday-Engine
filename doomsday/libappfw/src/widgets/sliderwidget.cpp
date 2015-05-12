@@ -167,16 +167,10 @@ DENG_GUI_PIMPL(SliderWidget)
         }
     }
 
-    Rectanglei contentRect() const
-    {
-        Vector4i margins = self.margins().toVector();
-        return self.rule().recti().adjusted(margins.xy(), -margins.zw());
-    }
-
     /// Determines the total area where the slider is moving.
     Rectanglei sliderRect() const
     {
-        Rectanglei const rect = contentRect();
+        Rectanglei const rect = self.contentRect();
         return Rectanglei(Vector2i(rect.topLeft.x + endLabelSize,     rect.topLeft.y),
                           Vector2i(rect.bottomRight.x - endLabelSize, rect.bottomRight.y));
     }
@@ -223,7 +217,7 @@ DENG_GUI_PIMPL(SliderWidget)
 
         // Range dots.
         int numDots = de::clamp(5, round<int>(range.size() / step) + 1, 11);
-        int dotSpace = sliderArea.width() - endLabelSize;
+        int dotSpace = (sliderArea.width() - endLabelSize) / toDevicePixels(1.f); // in logical space
         int dotX = sliderArea.topLeft.x + endLabelSize / 2;
         float altAlpha = 0;
         if(dotSpace / numDots > 30)
@@ -234,7 +228,8 @@ DENG_GUI_PIMPL(SliderWidget)
         Image::Size const dotSize = atlas().imageRect(root().tinyDot()).size();
         for(int i = 0; i < numDots; ++i)
         {
-            Vector2i dotPos(dotX + dotSpace * float(i) / float(numDots - 1),
+            // dotSpace converted back to device pixels.
+            Vector2i dotPos(dotX + toDevicePixels(dotSpace * float(i) / float(numDots - 1)),
                             sliderArea.middle().y);
 
             Vector4f dotColor = textColor;
@@ -252,7 +247,9 @@ DENG_GUI_PIMPL(SliderWidget)
         Rectanglei slider = sliderValueRect();
         verts.makeQuad(slider.expanded(2), state == Grabbed? textColor : invTextColor,
                        atlas().imageRectf(root().solidWhitePixel()).middle());
-        verts.makeFlexibleFrame(slider.expanded(5), 6, Vector4f(1, 1, 1, frameOpacity),
+        verts.makeFlexibleFrame(slider.expanded(SliderWidget::toDevicePixels(5)),
+                                SliderWidget::toDevicePixels(6),
+                                Vector4f(1, 1, 1, frameOpacity),
                                 atlas().imageRectf(root().boldRoundCorners()));
 
         // Labels.        
@@ -382,8 +379,8 @@ DENG_GUI_PIMPL(SliderWidget)
 
     void updateRangeLabels()
     {
-        labels[Start].setText(minLabel.isEmpty()? QString::number(range.start * displayFactor) : minLabel);
-        labels[End].setText(maxLabel.isEmpty()?   QString::number(range.end * displayFactor)   : maxLabel);
+        labels[Start].setText(minLabel.isEmpty()? QString::number(range.start * displayFactor, 'f', precision) : minLabel);
+        labels[End].setText(maxLabel.isEmpty()?   QString::number(range.end * displayFactor, 'f', precision)   : maxLabel);
     }
 
     void startGrab(MouseEvent const &ev)
@@ -428,7 +425,7 @@ DENG_GUI_PIMPL(SliderWidget)
         }
         else
         {
-            Rectanglei const rect = contentRect();
+            Rectanglei const rect = self.contentRect();
 
             //qDebug() << "click step:" << clickStep() << "value:" << value << "range:"
             //   << range.asText() << "new value:" << value - clickStep();
@@ -454,13 +451,6 @@ DENG_GUI_PIMPL(SliderWidget)
 SliderWidget::SliderWidget(String const &name)
     : GuiWidget(name), d(new Instance(this))
 {
-    /*
-    // Testing.
-    setRange(Rangef(0, 1));
-    setPrecision(2);
-    setValue(.5f);
-    */
-
     // Default size.
     rule().setInput(Rule::Width,  style().rules().rule("slider.width"))
           .setInput(Rule::Height, OperatorRule::maximum(
@@ -492,6 +482,12 @@ void SliderWidget::setPrecision(int precisionDecimals)
 {
     d->precision = precisionDecimals;
     d->updateValueLabel();
+    d->updateRangeLabels();
+}
+
+void SliderWidget::setStep(double step)
+{
+    d->step = step;
 }
 
 void SliderWidget::setValue(ddouble value)

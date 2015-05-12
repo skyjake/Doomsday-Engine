@@ -218,7 +218,18 @@ int P_CameraZMovement(mobj_t *mo);
 void P_Thrust3D(player_t *player, angle_t angle, float lookdir, coord_t forwardMove, coord_t sideMove);
 
 /**
- * Determines whether the player is currently waiting to be reborn.
+ * Called when a player leaves the current map.
+ *
+ * Jobs include; striping keys, inventory and powers from the player and configuring other
+ * player-specific properties ready for the next map.
+ *
+ * @param player  Player to configure.
+ * @param newHub  @c true, if the next map is in a different hub.
+ */
+void Player_LeaveMap(player_t *player, dd_bool newHub);
+
+/**
+ * Determines whether the player is currently waiting to be reborn in the current map.
  */
 dd_bool Player_WaitingForReborn(player_t const *player);
 
@@ -231,6 +242,11 @@ dd_bool Player_WaitingForReborn(player_t const *player);
  * @return View yaw angle.
  */
 angle_t Player_ViewYawAngle(int playerNum);
+
+/**
+ * Updates game status cvars for the player.
+ */
+void Player_UpdateStatusCVars(player_t const *player);
 
 #ifdef __cplusplus
 } // extern "C"

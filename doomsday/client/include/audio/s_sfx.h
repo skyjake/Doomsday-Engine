@@ -82,8 +82,7 @@ void Sfx_Reset(void);
 void Sfx_AllowRefresh(dd_bool allow);
 
 /**
- * Must be done before the map is changed (from P_SetupMap, via
- * S_MapChange).
+ * Must be done before the map is changed.
  */
 void Sfx_MapChange(void);
 

@@ -3,7 +3,7 @@ isEmpty(FMOD_DIR) {
     error("dep_fmod: FMOD SDK path not defined, check your config_user.pri (FMOD_DIR)")
 }
 
-INCLUDEPATH += $$FMOD_DIR/api/inc
+INCLUDEPATH += \"$$FMOD_DIR/api/inc\"
 
 win32 {
     # Windows.

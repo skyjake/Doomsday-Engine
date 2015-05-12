@@ -20,8 +20,9 @@
 #include "ui/widgets/cvarsliderwidget.h"
 #include "ui/widgets/cvartogglewidget.h"
 #include "ui/widgets/keygrabberwidget.h"
+#include "ui/inputdeviceaxiscontrol.h"
 #include "clientapp.h"
-#include "con_main.h"
+#include "api_console.h"
 
 #include <de/VariableToggleWidget>
 #include <de/GridPopupWidget>
@@ -49,7 +50,7 @@ DENG_GUI_PIMPL(InputSettingsDialog)
     {
         ScrollAreaWidget &area = self.area();
 
-        area.add(syncMouse     = new VariableToggleWidget(App::config()["input.mouse.syncSensitivity"]));
+        area.add(syncMouse     = new VariableToggleWidget(App::config("input.mouse.syncSensitivity")));
         area.add(syncInput     = new CVarToggleWidget("input-sharp"));
         area.add(mouseSensiX   = new CVarSliderWidget("input-mouse-x-scale"));
         area.add(mouseSensiY   = new CVarSliderWidget("input-mouse-y-scale"));
@@ -119,8 +120,10 @@ InputSettingsDialog::InputSettingsDialog(String const &name)
     d->syncInput->setText(tr("Vanilla 35Hz Input Rate"));
     d->syncMouse->setText(tr("Uniform Mouse Axis Sensitivity"));
 
-    LabelWidget *mouseXLabel = LabelWidget::newWithText(_E(1)_E(D) + tr("Mouse X"), &area());
-    LabelWidget *mouseYLabel = LabelWidget::newWithText(_E(1)_E(D) + tr("Mouse Y"), &area());
+    LabelWidget *mouseXLabel = LabelWidget::newWithText(_E(D) + tr("Mouse: Horizontal"), &area());
+    LabelWidget *mouseYLabel = LabelWidget::newWithText(_E(D) + tr("Mouse: Vertical"), &area());
+    mouseXLabel->setFont("separator.label");
+    mouseYLabel->setFont("separator.label");
 
     mouseXLabel->margins().setTop(style().rules().rule("gap"));
     mouseYLabel->margins().setTop(style().rules().rule("gap"));

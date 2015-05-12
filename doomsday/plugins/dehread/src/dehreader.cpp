@@ -22,7 +22,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "dehread.h"
+#include "dehreader.h"
 
 #include <QDebug>
 #include <QDir>
@@ -30,14 +30,16 @@
 #include <QRegExp>
 #include <QStringList>
 
+#include <de/memory.h>
+#include <doomsday/filesys/lumpindex.h>
 #include <de/App>
 #include <de/Block>
 #include <de/Error>
 #include <de/Log>
 #include <de/String>
-#include <de/memory.h>
+#include <de/game/Game>
 
-#include "dehreader.h"
+#include "dehread.h"
 #include "dehreader_util.h"
 #include "info.h"
 
@@ -50,6 +52,14 @@ static const int maxIncludeDepth = de::max(0, DEHREADER_INCLUDE_DEPTH_MAX);
 /// parser to any child parsers for file include statements.
 static DehReaderFlag const DehReaderFlagsIncludeMask = IgnoreEOF;
 
+// Helper for managing a dummy definition allocated on the stack.
+template <typename T>
+struct Dummy : public T {
+    Dummy() { zap(*this); }
+    ~Dummy() { T::release(); }
+    void clear() { T::release(); zap(*this); }
+};
+
 /**
  * Not exposed outside this source file; use readDehPatch() instead.
  */
@@ -57,31 +67,30 @@ class DehReader
 {
     /// The parser encountered a syntax error in the source file. @ingroup errors
     DENG2_ERROR(SyntaxError);
+
     /// The parser encountered an unknown section in the source file. @ingroup errors
     DENG2_ERROR(UnknownSection);
+
     /// The parser reached the end of the source file. @ingroup errors
     DENG2_ERROR(EndOfFile);
 
+public:
     Block const &patch;
-    int pos;
-    int currentLineNumber;
+    bool patchIsCustom = true;
 
-    DehReaderFlags flags;
+    int pos = 0;
+    int currentLineNumber = 0;
 
-    int patchVersion;
-    int doomVersion;
+    DehReaderFlags flags = 0;
 
-    String line; ///< Current line.
+    int patchVersion = -1;  ///< @c -1= Unknown.
+    int doomVersion  = -1;  ///< @c -1= Unknown.
+
+    String line;            ///< Current line.
 
 public:
-    DehReader(Block const &_patch, DehReaderFlags _flags = 0)
-        : patch(_patch)
-        , pos(0)
-        , currentLineNumber(0)
-        , flags(_flags)
-        , patchVersion(-1) // unknown
-        , doomVersion(-1) // unknown
-        , line("")
+    DehReader(Block const &patch, bool patchIsCustom = true, DehReaderFlags flags = 0)
+        : patch(patch), patchIsCustom(patchIsCustom), flags(flags)
     {
         stackDepth++;
     }
@@ -138,7 +147,7 @@ public:
         case '\0':
             if(size_t(pos) != patch.size() - 1)
             {
-                LOG_WARNING("Unexpected EOF encountered on line #%i, ignoring.") << currentLineNumber;
+                LOG_WARNING("Unexpected EOF encountered on line #%i") << currentLineNumber;
             }
             break;
         case '\n':
@@ -216,12 +225,12 @@ public:
     void logPatchInfo()
     {
         // Log reader settings and patch version information.
-        LOG_RES_MSG("DeHackEd patch version: %i, Doom version: %i\nNoText: %b")
+        LOG_RES_MSG("Patch version: %i, Doom version: %i\nNoText: %b")
             << patchVersion << doomVersion << bool(flags & NoText);
 
         if(patchVersion != 6)
         {
-            LOG_WARNING("Unknown DeHackEd patch version, unexpected results may occur") << patchVersion;
+            LOG_WARNING("Patch version %i unknown, unexpected results may occur") << patchVersion;
         }
     }
 
@@ -239,7 +248,7 @@ public:
         }
         else
         {
-            LOG_WARNING("Patch is missing a signature, assuming BEX.");
+            LOG_WARNING("Patch is missing a signature, assuming BEX");
             doomVersion  = 19;
             patchVersion = 6;
         }
@@ -249,7 +258,7 @@ public:
         // Is this for a known Doom version?
         if(!normalizeDoomVersion(doomVersion))
         {
-            LOG_WARNING("Unknown Doom version, assuming v1.9.");
+            LOG_WARNING("Doom version undefined, assuming v1.9");
             doomVersion = 3;
         }
 
@@ -261,70 +270,94 @@ public:
                 try
                 {
                     /// @note Some sections have their own grammar quirks!
-                    if(line.beginsWith("include", Qt::CaseInsensitive)) // .bex
+                    if(line.beginsWith("include", Qt::CaseInsensitive)) // BEX
                     {
                         parseInclude(line.substr(7).leftStrip());
                         skipToNextSection();
                     }
                     else if(line.beginsWith("Thing", Qt::CaseInsensitive))
                     {
-                        String const arg           = line.substr(5).leftStrip();
-                        int mobjType               = 0;
-                        bool const isKnownMobjType = parseMobjType(arg, &mobjType);
-                        bool const ignore          = !isKnownMobjType;
+                        ded_mobj_t *mobj;
+                        Dummy<ded_mobj_t> dummyMobj;
 
-                        if(!isKnownMobjType)
+                        String const arg  = line.substr(5).leftStrip();
+                        int const mobjNum = parseMobjNum(arg);
+                        if(mobjNum >= 0)
                         {
-                            LOG_WARNING("Thing '%s' out of range, ignoring. (Create more Thing defs.)") << arg;
+                            mobj = &ded->mobjs[mobjNum];
+                        }
+                        else
+                        {
+                            LOG_WARNING("DeHackEd Thing '%s' out of range\n(Create more Thing defs)") << arg;
+                            dummyMobj.clear();
+                            mobj = &dummyMobj;
                         }
 
                         skipToNextLine();
-                        parseThing(ded->mobjs + mobjType, ignore);
+                        parseThing(mobj, mobj == &dummyMobj);
                     }
                     else if(line.beginsWith("Frame", Qt::CaseInsensitive))
                     {
-                        String const arg           = line.substr(5).leftStrip();
-                        int stateNum               = 0;
-                        bool const isKnownStateNum = parseStateNum(arg, &stateNum);
-                        bool const ignore          = !isKnownStateNum;
+                        ded_state_t *state;
+                        Dummy<ded_state_t> dummyState;
 
-                        if(!isKnownStateNum)
+                        String const arg   = line.substr(5).leftStrip();
+                        int const stateNum = parseStateNum(arg);
+                        if(stateNum >= 0)
                         {
-                            LOG_WARNING("Frame '%s' out of range, ignoring. (Create more State defs.)") << arg;
+                            state = &ded->states[stateNum];
+                        }
+                        else
+                        {
+                            LOG_WARNING("DeHackEd Frame '%s' out of range\n(Create more State defs)") << arg;
+                            dummyState.clear();
+                            state = &dummyState;
                         }
 
                         skipToNextLine();
-                        parseFrame(ded->states + stateNum, ignore);
+                        parseFrame(state, state == &dummyState);
                     }
                     else if(line.beginsWith("Pointer", Qt::CaseInsensitive))
                     {
-                        String const arg           = line.substr(7).leftStrip();
-                        int stateNum               = 0;
-                        bool const isKnownStateNum = parseStateNumFromActionOffset(arg, &stateNum);
-                        bool const ignore          = !isKnownStateNum;
+                        ded_state_t *state;
+                        Dummy<ded_state_t> dummyState;
 
-                        if(!isKnownStateNum)
+                        String const arg   = line.substr(7).leftStrip();
+                        int const stateNum = parseStateNumFromActionOffset(arg);
+                        if(stateNum >= 0)
                         {
-                            LOG_WARNING("Pointer '%s' out of range, ignoring. (Create more State defs.)") << arg;
+                            state = &ded->states[stateNum];
+                        }
+                        else
+                        {
+                            LOG_WARNING("DeHackEd Pointer '%s' out of range\n(Create more State defs)") << arg;
+                            dummyState.clear();
+                            state = &dummyState;
                         }
 
                         skipToNextLine();
-                        parsePointer(ded->states + stateNum, ignore);
+                        parsePointer(state, state == &dummyState);
                     }
                     else if(line.beginsWith("Sprite", Qt::CaseInsensitive))
                     {
-                        String const arg            = line.substr(6).leftStrip();
-                        int spriteNum               = 0;
-                        bool const isKnownSpriteNum = parseSpriteNum(arg, &spriteNum);
-                        bool const ignore           = !isKnownSpriteNum;
+                        ded_sprid_t *sprite;
+                        Dummy<ded_sprid_t> dummySprite;
 
-                        if(!isKnownSpriteNum)
+                        String const arg    = line.substr(6).leftStrip();
+                        int const spriteNum = parseSpriteNum(arg);
+                        if(spriteNum >= 0)
                         {
-                            LOG_WARNING("Sprite '%s' out of range, ignoring. (Create more Sprite defs.)") << arg;
+                            sprite = &ded->sprites[spriteNum];
+                        }
+                        else
+                        {
+                            LOG_WARNING("DeHackEd Sprite '%s' out of range\n(Create more Sprite defs)") << arg;
+                            dummySprite.clear();
+                            sprite = &dummySprite;
                         }
 
                         skipToNextLine();
-                        parseSprite(ded->sprites + spriteNum, ignore);
+                        parseSprite(sprite, sprite == &dummySprite);
                     }
                     else if(line.beginsWith("Ammo", Qt::CaseInsensitive))
                     {
@@ -335,7 +368,7 @@ public:
 
                         if(!isKnownAmmoNum)
                         {
-                            LOG_WARNING("Ammo '%s' out of range, ignoring.") << arg;
+                            LOG_WARNING("DeHackEd Ammo '%s' out of range") << arg;
                         }
 
                         skipToNextLine();
@@ -350,7 +383,7 @@ public:
 
                         if(!isKnownWeaponNum)
                         {
-                            LOG_WARNING("Weapon '%s' out of range, ignoring.") << arg;
+                            LOG_WARNING("DeHackEd Weapon '%s' out of range") << arg;
                         }
 
                         skipToNextLine();
@@ -358,18 +391,24 @@ public:
                     }
                     else if(line.beginsWith("Sound", Qt::CaseInsensitive))
                     {
-                        String const arg           = line.substr(5).leftStrip();
-                        int soundNum               = 0;
-                        bool const isKnownSoundNum = parseSoundNum(arg, &soundNum);
-                        bool const ignore          = !isKnownSoundNum;
+                        ded_sound_t *sound;
+                        Dummy<ded_sound_t> dummySound;
 
-                        if(!isKnownSoundNum)
+                        String const arg   = line.substr(5).leftStrip();
+                        int const soundNum = parseSoundNum(arg);
+                        if(soundNum >= 0)
                         {
-                            LOG_WARNING("Sound '%s' out of range, ignoring. (Create more Sound defs.)") << arg;
+                            sound = &ded->sounds[soundNum];
+                        }
+                        else
+                        {
+                            LOG_WARNING("DeHackEd Sound '%s' out of range\n(Create more Sound defs)") << arg;
+                            dummySound.clear();
+                            sound = &dummySound;
                         }
 
                         skipToNextLine();
-                        parseSound(ded->sounds + soundNum, ignore);
+                        parseSound(sound, sound == &dummySound);
                     }
                     else if(line.beginsWith("Text", Qt::CaseInsensitive))
                     {
@@ -407,49 +446,50 @@ public:
                     }
                     else if(line.beginsWith("Cheat", Qt::CaseInsensitive))
                     {
-                        LOG_WARNING("[Cheat] patches are not supported.");
+                        if(!(!patchIsCustom && App::game().id() == "hacx"))
+                        {
+                            LOG_WARNING("DeHackEd [Cheat] patches are not supported");
+                        }
                         skipToNextSection();
                     }
-                    else if(line.beginsWith("[CODEPTR]", Qt::CaseInsensitive)) // .bex
+                    else if(line.beginsWith("[CODEPTR]", Qt::CaseInsensitive)) // BEX
                     {
                         skipToNextLine();
-                        parsePointerBex();
+                        parseCodePointers();
                     }
-                    else if(line.beginsWith("[PARS]", Qt::CaseInsensitive)) // .bex
+                    else if(line.beginsWith("[PARS]", Qt::CaseInsensitive)) // BEX
                     {
                         skipToNextLine();
-                        parseParsBex();
+                        parsePars();
                     }
-                    else if(line.beginsWith("[STRINGS]", Qt::CaseInsensitive)) // .bex
+                    else if(line.beginsWith("[STRINGS]", Qt::CaseInsensitive)) // BEX
                     {
-                        // Not yet supported.
-                        //skipToNextLine();
-                        parseStringsBex();
-                        skipToNextSection();
+                        skipToNextLine();
+                        parseStrings();
                     }
-                    else if(line.beginsWith("[HELPER]", Qt::CaseInsensitive)) // .bex
+                    else if(line.beginsWith("[HELPER]", Qt::CaseInsensitive)) // Eternity
                     {
                         // Not yet supported (Helper Dogs from MBF).
                         //skipToNextLine();
-                        parseHelperBex();
+                        parseHelper();
                         skipToNextSection();
                     }
-                    else if(line.beginsWith("[SPRITES]", Qt::CaseInsensitive)) // .bex
+                    else if(line.beginsWith("[SPRITES]", Qt::CaseInsensitive)) // Eternity
                     {
                         // Not yet supported.
                         //skipToNextLine();
-                        parseSpritesBex();
+                        parseSprites();
                         skipToNextSection();
                     }
-                    else if(line.beginsWith("[SOUNDS]", Qt::CaseInsensitive)) // .bex
+                    else if(line.beginsWith("[SOUNDS]", Qt::CaseInsensitive)) // Eternity
                     {
                         skipToNextLine();
-                        parseSoundsBex();
+                        parseSounds();
                     }
-                    else if(line.beginsWith("[MUSIC]", Qt::CaseInsensitive)) // .bex
+                    else if(line.beginsWith("[MUSIC]", Qt::CaseInsensitive)) // Eternity
                     {
                         skipToNextLine();
-                        parseMusicBex();
+                        parseMusic();
                     }
                     else
                     {
@@ -506,39 +546,39 @@ public:
         return (result >= 0 && result < 4);
     }
 
-    bool parseMobjType(String const &str, int *mobjType)
+    int parseMobjNum(String const &str)
     {
-        int result = str.toInt(0, 0, String::AllowSuffix) - 1; // Patch indices are 1-based.
-        if(mobjType) *mobjType = result;
-        return (result >= 0 && result < ded->count.mobjs.num);
+        int const num = str.toInt(0, 0, String::AllowSuffix) - 1; // Patch indices are 1-based.
+        if(num < 0 || num >= ded->mobjs.size()) return -1;
+        return num;
     }
 
-    bool parseSoundNum(String const &str, int *soundNum)
+    int parseSoundNum(String const &str)
     {
-        int result = str.toInt(0, 0, String::AllowSuffix);
-        if(soundNum) *soundNum = result;
-        return (result >= 0 && result < ded->count.sounds.num);
+        int const num = str.toInt(0, 0, String::AllowSuffix);
+        if(num < 0 || num >= ded->sounds.size()) return -1;
+        return num;
     }
 
-    bool parseSpriteNum(String const &str, int *spriteNum)
+    int parseSpriteNum(String const &str)
     {
-        int result = str.toInt(0, 0, String::AllowSuffix);
-        if(spriteNum) *spriteNum = result;
-        return (result >= 0 && result < NUMSPRITES);
+        int const num = str.toInt(0, 0, String::AllowSuffix);
+        if(num < 0 || num >= NUMSPRITES) return -1;
+        return num;
     }
 
-    bool parseStateNum(String const &str, int *stateNum)
+    int parseStateNum(String const &str)
     {
-        int result = str.toInt(0, 0, String::AllowSuffix);
-        if(stateNum) *stateNum = result;
-        return (result >= 0 && result < ded->count.states.num);
+        int const num = str.toInt(0, 0, String::AllowSuffix);
+        if(num < 0 || num >= ded->states.size()) return -1;
+        return num;
     }
 
-    bool parseStateNumFromActionOffset(String const &str, int *stateNum)
+    int parseStateNumFromActionOffset(String const &str)
     {
-        int result = stateIndexForActionOffset(str.toInt(0, 0, String::AllowSuffix));
-        if(stateNum) *stateNum = result;
-        return (result >= 0 && result < ded->count.states.num);
+        int const num = stateIndexForActionOffset(str.toInt(0, 0, String::AllowSuffix));
+        if(num < 0 || num >= ded->states.size()) return -1;
+        return num;
     }
 
     bool parseWeaponNum(String const &str, int *weaponNum)
@@ -595,7 +635,7 @@ public:
             }
             else
             {
-                LOG_WARNING("Unexpected symbol \"%s\" encountered on line #%i, ignoring.")
+                LOG_WARNING("Unexpected symbol \"%s\" encountered on line #%i")
                         << var << currentLineNumber;
             }
         }
@@ -606,7 +646,7 @@ public:
         if(flags & NoInclude)
         {
             LOG_AS("parseInclude");
-            LOG_DEBUG("Skipping disabled Include directive.");
+            LOG_DEBUG("Skipping disabled Include directive");
             return;
         }
 
@@ -615,12 +655,12 @@ public:
             LOG_AS("parseInclude");
             if(!maxIncludeDepth)
             {
-                LOG_WARNING("Sorry, nested includes are not supported. Directive ignored.");
+                LOG_WARNING("Sorry, nested includes are not supported. Directive ignored");
             }
             else
             {
                 char const *includes = (maxIncludeDepth == 1? "include" : "includes");
-                LOG_WARNING("Sorry, there can be at most %i nested %s. Directive ignored.")
+                LOG_WARNING("Sorry, there can be at most %i nested %s. Directive ignored")
                         << maxIncludeDepth << includes;
             }
         }
@@ -650,12 +690,11 @@ public:
                     deh.append(QChar(0));
                     file.close();
 
-                    LOG_RES_VERBOSE("Including \"%s\"...")
-                            << F_PrettyPath(filePath.toUtf8().constData());
+                    LOG_RES_VERBOSE("Including \"%s\"...") << filePath.pretty();
 
                     try
                     {
-                        DehReader(deh, includeFlags).parse();
+                        DehReader(deh, true/*is-custom*/, includeFlags).parse();
                     }
                     catch(Error const &er)
                     {
@@ -666,7 +705,7 @@ public:
             else
             {
                 LOG_AS("parseInclude");
-                LOG_RES_WARNING("DeHackEd Include directive missing filename");
+                LOG_RES_WARNING("Include directive missing filename");
             }
         }
     }
@@ -726,7 +765,7 @@ public:
                 continue;
             }
 
-            // Flags can also be specified by name (a .bex extension).
+            // Flags can also be specified by name (a BEX extension).
             FlagMapping const *flag;
             if(parseMobjTypeFlag(token, &flag))
             {
@@ -744,8 +783,7 @@ public:
                 continue;
             }
 
-            LOG_WARNING("Unknown flag mnemonic '%s' on line #%i, ignoring.")
-                    << token << currentLineNumber;
+            LOG_WARNING("DeHackEd Unknown flag mnemonic '%s'") << token;
         }
 
         return changedGroups;
@@ -753,10 +791,11 @@ public:
 
     void parseThing(ded_mobj_t *mobj, bool ignore = false)
     {
-        int const mobjType = (mobj - ded->mobjs);
+        LOG_AS("parseThing");
+
+        int const thingNum = ded->mobjs.indexOf(mobj);
         bool hadHeight     = false, checkHeight = false;
 
-        LOG_AS("parseThing");
         for(; lineInCurrentSection(); skipToNextLine())
         {
             String var, expr;
@@ -769,17 +808,18 @@ public:
                 if(!parseMobjTypeState(dehStateName, &mapping))
                 {
                     if(!ignore)
-                        LOG_WARNING("Unknown frame '%s' on line #%i, ignoring.")
-                                << dehStateName << currentLineNumber;
+                    {
+                        LOG_WARNING("DeHackEd Frame '%s' unknown") << dehStateName;
+                    }
                 }
                 else
                 {
                     int const value = expr.toInt(0, 0, String::AllowSuffix);
                     if(!ignore)
                     {
-                        if(value < 0 || value >= ded->count.states.num)
+                        if(value < 0 || value >= ded->states.size())
                         {
-                            LOG_WARNING("Frame #%i out of range, ignoring.") << value;
+                            LOG_WARNING("DeHackEd Frame #%i out of range") << value;
                         }
                         else
                         {
@@ -790,7 +830,7 @@ public:
                             qstrncpy(mobj->states[mapping->id], state.id, DED_STRINGID_LEN + 1);
 
                             LOG_DEBUG("Type #%i \"%s\" state:%s => \"%s\" (#%i)")
-                                    << mobjType << mobj->id << mapping->name
+                                    << thingNum << mobj->id << mapping->name
                                     << mobj->states[mapping->id] << stateIdx;
                         }
                     }
@@ -803,17 +843,18 @@ public:
                 if(!parseMobjTypeSound(dehSoundName, &mapping))
                 {
                     if(!ignore)
-                        LOG_WARNING("Unknown sound '%s' on line #%i, ignoring.")
-                                << dehSoundName << currentLineNumber;
+                    {
+                        LOG_WARNING("DeHackEd Sound '%s' unknown") << dehSoundName;
+                    }
                 }
                 else
                 {
                     int const value = expr.toInt(0, 0, String::AllowSuffix);
                     if(!ignore)
                     {
-                        if(value < 0 || value >= ded->count.sounds.num)
+                        if(value < 0 || value >= ded->sounds.size())
                         {
-                            LOG_WARNING("Sound #%i out of range, ignoring.") << value;
+                            LOG_WARNING("DeHackEd Sound #%i out of range") << value;
                         }
                         else
                         {
@@ -827,14 +868,14 @@ public:
                             case SDN_ATTACK:    soundAdr = &mobj->attackSound; break;
                             case SDN_SEE:       soundAdr = &mobj->seeSound;    break;
                             default:
-                                throw Error("DehReader", String("Unknown soundname id %i").arg(mapping->id));
+                                throw Error("DehReader", String("Thing Sound %i unknown").arg(mapping->id));
                             }
 
                             ded_sound_t const &sound = ded->sounds[soundsIdx];
                             qstrncpy((char *)soundAdr, sound.id, DED_STRINGID_LEN + 1);
 
                             LOG_DEBUG("Type #%i \"%s\" sound:%s => \"%s\" (#%i)")
-                                    << mobjType << mobj->id << mapping->name
+                                    << thingNum << mobj->id << mapping->name
                                     << (char *)soundAdr << soundsIdx;
                         }
                     }
@@ -853,7 +894,7 @@ public:
 
                         mobj->flags[k] = flags[k];
                         LOG_DEBUG("Type #%i \"%s\" flags:%i => %X (%i)")
-                                << mobjType << mobj->id << k
+                                << thingNum << mobj->id << k
                                 << mobj->flags[k] << mobj->flags[k];
                     }
 
@@ -873,12 +914,12 @@ public:
             else if(!var.compareWithoutCase("Bits2")) // Eternity
             {
                 /// @todo Support this extension.
-                LOG_WARNING("Thing - \"Bits2\" patches are not supported.");
+                LOG_WARNING("DeHackEd Thing.Bits2 is not supported");
             }
             else if(!var.compareWithoutCase("Bits3")) // Eternity
             {
                 /// @todo Support this extension.
-                LOG_WARNING("Thing - \"Bits3\" patches are not supported.");
+                LOG_WARNING("DeHackEd Thing.Bits3 is not supported");
             }
             else if(!var.compareWithoutCase("Blood color")) // Eternity
             {
@@ -894,7 +935,7 @@ public:
                  * Orange              8
                  */
                 /// @todo Support this extension.
-                LOG_WARNING("Thing - \"Blood color\" patches are not supported.");
+                LOG_WARNING("DeHackEd Thing.Blood color is not supported");
             }
             else if(!var.compareWithoutCase("ID #"))
             {
@@ -902,7 +943,7 @@ public:
                 if(!ignore)
                 {
                     mobj->doomEdNum = value;
-                    LOG_DEBUG("Type #%i \"%s\" doomEdNum => %i") << mobjType << mobj->id << mobj->doomEdNum;
+                    LOG_DEBUG("Type #%i \"%s\" doomEdNum => %i") << thingNum << mobj->id << mobj->doomEdNum;
                 }
             }
             else if(!var.compareWithoutCase("Height"))
@@ -912,7 +953,7 @@ public:
                 {
                     mobj->height = value / float(0x10000);
                     hadHeight = true;
-                    LOG_DEBUG("Type #%i \"%s\" height => %f") << mobjType << mobj->id << mobj->height;
+                    LOG_DEBUG("Type #%i \"%s\" height => %f") << thingNum << mobj->id << mobj->height;
                 }
             }
             else if(!var.compareWithoutCase("Hit points"))
@@ -921,7 +962,7 @@ public:
                 if(!ignore)
                 {
                     mobj->spawnHealth = value;
-                    LOG_DEBUG("Type #%i \"%s\" spawnHealth => %i") << mobjType << mobj->id << mobj->spawnHealth;
+                    LOG_DEBUG("Type #%i \"%s\" spawnHealth => %i") << thingNum << mobj->id << mobj->spawnHealth;
                 }
             }
             else if(!var.compareWithoutCase("Mass"))
@@ -930,7 +971,7 @@ public:
                 if(!ignore)
                 {
                     mobj->mass = value;
-                    LOG_DEBUG("Type #%i \"%s\" mass => %i") << mobjType << mobj->id << mobj->mass;
+                    LOG_DEBUG("Type #%i \"%s\" mass => %i") << thingNum << mobj->id << mobj->mass;
                 }
             }
             else if(!var.compareWithoutCase("Missile damage"))
@@ -939,7 +980,7 @@ public:
                 if(!ignore)
                 {
                     mobj->damage = value;
-                    LOG_DEBUG("Type #%i \"%s\" damage => %i") << mobjType << mobj->id << mobj->damage;
+                    LOG_DEBUG("Type #%i \"%s\" damage => %i") << thingNum << mobj->id << mobj->damage;
                 }
             }
             else if(!var.compareWithoutCase("Pain chance"))
@@ -948,7 +989,7 @@ public:
                 if(!ignore)
                 {
                     mobj->painChance = value;
-                    LOG_DEBUG("Type #%i \"%s\" painChance => %i") << mobjType << mobj->id << mobj->painChance;
+                    LOG_DEBUG("Type #%i \"%s\" painChance => %i") << thingNum << mobj->id << mobj->painChance;
                 }
             }
             else if(!var.compareWithoutCase("Reaction time"))
@@ -957,7 +998,7 @@ public:
                 if(!ignore)
                 {
                     mobj->reactionTime = value;
-                    LOG_DEBUG("Type #%i \"%s\" reactionTime => %i") << mobjType << mobj->id << mobj->reactionTime;
+                    LOG_DEBUG("Type #%i \"%s\" reactionTime => %i") << thingNum << mobj->id << mobj->reactionTime;
                 }
             }
             else if(!var.compareWithoutCase("Speed"))
@@ -967,7 +1008,7 @@ public:
                 {
                     /// @todo Is this right??
                     mobj->speed = (abs(value) < 256 ? float(value) : FIX2FLT(value));
-                    LOG_DEBUG("Type #%i \"%s\" speed => %f") << mobjType << mobj->id << mobj->speed;
+                    LOG_DEBUG("Type #%i \"%s\" speed => %f") << thingNum << mobj->id << mobj->speed;
                 }
             }
             else if(!var.compareWithoutCase("Translucency")) // Eternity
@@ -975,7 +1016,7 @@ public:
                 //int const value = expr.toInt(0, 10, String::AllowSuffix);
                 //float const opacity = de::clamp(0, value, 65536) / 65536.f;
                 /// @todo Support this extension.
-                LOG_WARNING("Thing - \"Translucency\" patches are not supported.");
+                LOG_WARNING("DeHackEd Thing.Translucency is not supported");
             }
             else if(!var.compareWithoutCase("Width"))
             {
@@ -983,12 +1024,12 @@ public:
                 if(!ignore)
                 {
                     mobj->radius = value / float(0x10000);
-                    LOG_DEBUG("Type #%i \"%s\" radius => %f") << mobjType << mobj->id << mobj->radius;
+                    LOG_DEBUG("Type #%i \"%s\" radius => %f") << thingNum << mobj->id << mobj->radius;
                 }
             }
             else
             {
-                LOG_WARNING("Unexpected symbol \"%s\" encountered on line #%i, ignoring.")
+                LOG_WARNING("Unexpected symbol \"%s\" encountered on line #%i")
                         << var << currentLineNumber;
             }
         }
@@ -996,14 +1037,15 @@ public:
         /// @todo Does this still make sense given DED can change the values?
         if(checkHeight && !hadHeight)
         {
-            mobj->height = originalHeightForMobjType(mobjType);
+            mobj->height = originalHeightForMobjType(thingNum);
         }
     }
 
     void parseFrame(ded_state_t *state, bool ignore = false)
     {
-        int const stateNum = (state - ded->states);
         LOG_AS("parseFrame");
+        int const stateNum = ded->states.indexOf(state);
+
         for(; lineInCurrentSection(); skipToNextLine())
         {
             String var, expr;
@@ -1023,9 +1065,9 @@ public:
                 int const value = expr.toInt(0, 0, String::AllowSuffix);
                 if(!ignore)
                 {
-                    if(value < 0 || value >= ded->count.states.num)
+                    if(value < 0 || value >= ded->states.size())
                     {
-                        LOG_WARNING("Frame #%i out of range, ignoring.") << value;
+                        LOG_WARNING("DeHackEd Frame #%i out of range") << value;
                     }
                     else
                     {
@@ -1039,16 +1081,16 @@ public:
             else if(!var.compareWithoutCase("Particle event")) // Eternity
             {
                 /// @todo Support this extension.
-                LOG_WARNING("Frame - \"Particle event\" patches are not supported.");
+                LOG_WARNING("DeHackEd Frame.Particle event is not supported");
             }
             else if(!var.compareWithoutCase("Sprite number"))
             {
                 int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
-                    if(value < 0 || value > ded->count.sprites.num)
+                    if(value < 0 || value > ded->sprites.size())
                     {
-                        LOG_WARNING("Sprite #%i out of range, ignoring.") << value;
+                        LOG_WARNING("DeHackEd Sprite #%i out of range") << value;
                     }
                     else
                     {
@@ -1083,8 +1125,8 @@ public:
                 {
                     if(miscIdx < 0 || miscIdx >= NUM_STATE_MISC)
                     {
-                        LOG_WARNING("Unknown unknown-value '%s' on line #%i, ignoring.")
-                                << var.mid(8) << currentLineNumber;
+                        LOG_WARNING("DeHackEd Unknown-value '%s' unknown")
+                                << var.mid(8);
                     }
                     else
                     {
@@ -1096,11 +1138,11 @@ public:
             }
             else if(var.beginsWith("Args", Qt::CaseInsensitive)) // Eternity
             {
-                LOG_WARNING("Frame - \"%s\" patches are not supported.") << var;
+                LOG_WARNING("DeHackEd Frame.%s is not supported") << var;
             }
             else
             {
-                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring.")
+                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i")
                         << var << currentLineNumber;
             }
         }
@@ -1108,7 +1150,7 @@ public:
 
     void parseSprite(ded_sprid_t *sprite, bool ignore = false)
     {
-        int const sprNum = sprite - ded->sprites;
+        int const sprNum = ded->sprites.indexOf(sprite);
         LOG_AS("parseSprite");
         for(; lineInCurrentSection(); skipToNextLine())
         {
@@ -1130,9 +1172,9 @@ public:
                         offset = (value - spriteNameTableOffset[doomVersion] - 22044) / 8;
                     }
 
-                    if(offset < 0 || offset >= ded->count.sprites.num)
+                    if(offset < 0 || offset >= ded->sprites.size())
                     {
-                        LOG_WARNING("Sprite offset #%i out of range, ignoring.") << value;
+                        LOG_WARNING("DeHackEd Sprite offset #%i out of range") << value;
                     }
                     else
                     {
@@ -1144,7 +1186,7 @@ public:
             }
             else
             {
-                LOG_WARNING("Unexpected symbol \"%s\" encountered on line #%i, ignoring.")
+                LOG_WARNING("Unexpected symbol \"%s\" encountered on line #%i.")
                         << var << currentLineNumber;
             }
         }
@@ -1152,8 +1194,9 @@ public:
 
     void parseSound(ded_sound_t *sound, bool ignore = false)
     {
-        int const soundIdx = sound - ded->sounds;
         LOG_AS("parseSound");
+        int const soundNum = ded->sounds.indexOf(sound);
+
         for(; lineInCurrentSection(); skipToNextLine())
         {
             String var, expr;
@@ -1161,7 +1204,7 @@ public:
 
             if(!var.compareWithoutCase("Offset")) // sound->id
             {
-                LOG_WARNING("Sound - \"Offset\" patches are not supported.");
+                LOG_WARNING("DeHackEd Sound.Offset is not supported");
             }
             else if(!var.compareWithoutCase("Zero/One"))
             {
@@ -1170,7 +1213,7 @@ public:
                 {
                     sound->group = value;
                     LOG_DEBUG("Sound #%i \"%s\" group => %i")
-                            << soundIdx << sound->id << sound->group;
+                            << soundNum << sound->id << sound->group;
                 }
             }
             else if(!var.compareWithoutCase("Value"))
@@ -1180,12 +1223,12 @@ public:
                 {
                     sound->priority = value;
                     LOG_DEBUG("Sound #%i \"%s\" priority => %i")
-                            << soundIdx << sound->id << sound->priority;
+                            << soundNum << sound->id << sound->priority;
                 }
             }
             else if(!var.compareWithoutCase("Zero 1")) // sound->link
             {
-                LOG_WARNING("Sound - \"Zero 1\" patches are not supported.");
+                LOG_WARNING("DeHackEd Sound.Zero 1 is not supported");
             }
             else if(!var.compareWithoutCase("Zero 2"))
             {
@@ -1194,7 +1237,7 @@ public:
                 {
                     sound->linkPitch = value;
                     LOG_DEBUG("Sound #%i \"%s\" linkPitch => %i")
-                            << soundIdx << sound->id << sound->linkPitch;
+                            << soundNum << sound->id << sound->linkPitch;
                 }
             }
             else if(!var.compareWithoutCase("Zero 3"))
@@ -1204,38 +1247,39 @@ public:
                 {
                     sound->linkVolume = value;
                     LOG_DEBUG("Sound #%i \"%s\" linkVolume => %i")
-                            << soundIdx << sound->id << sound->linkVolume;
+                            << soundNum << sound->id << sound->linkVolume;
                 }
             }
             else if(!var.compareWithoutCase("Zero 4")) // ??
             {
-                LOG_WARNING("Sound - \"Zero 4\" patches are not supported.");
+                LOG_WARNING("DeHackEd Sound.Zero 4 is not supported");
             }
             else if(!var.compareWithoutCase("Neg. One 1")) // ??
             {
-                LOG_WARNING("Sound - \"Neg. One 1\" patches are not supported.");
+                LOG_WARNING("DeHackEd Sound.Neg. One 1 is not supported");
             }
             else if(!var.compareWithoutCase("Neg. One 2"))
             {
                 int const lumpNum = expr.toInt(0, 0, String::AllowSuffix);
                 if(!ignore)
                 {
-                    int const numLumps = *reinterpret_cast<int*>(DD_GetVariable(DD_NUMLUMPS));
+                    LumpIndex const &lumpIndex = *reinterpret_cast<LumpIndex const *>(F_LumpIndex());
+                    int const numLumps = lumpIndex.size();
                     if(lumpNum < 0 || lumpNum >= numLumps)
                     {
-                        LOG_WARNING("Neg. One 2 #%i out of range, ignoring.") << lumpNum;
+                        LOG_WARNING("DeHackEd Neg. One 2 #%i out of range") << lumpNum;
                     }
                     else
                     {
-                        qstrncpy(sound->lumpName, Str_Text(W_LumpName(lumpNum)), DED_STRINGID_LEN + 1);
+                        qstrncpy(sound->lumpName, lumpIndex[lumpNum].name().toUtf8().constData(), DED_STRINGID_LEN + 1);
                         LOG_DEBUG("Sound #%i \"%s\" lumpName => \"%s\"")
-                                << soundIdx << sound->id << sound->lumpName;
+                                << soundNum << sound->id << sound->lumpName;
                     }
                 }
             }
             else
             {
-                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring.")
+                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i")
                         << var << currentLineNumber;
             }
         }
@@ -1263,7 +1307,7 @@ public:
             }
             else
             {
-                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring.")
+                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i")
                         << var << currentLineNumber;
             }
         }
@@ -1286,20 +1330,21 @@ public:
                 if(!parseWeaponState(dehStateName, &weapon))
                 {
                     if(!ignore)
-                        LOG_WARNING("Unknown frame '%s' on line #%i, ignoring.")
-                                << dehStateName << currentLineNumber;
+                    {
+                        LOG_WARNING("DeHackEd Frame '%s' unknown") << dehStateName;
+                    }
                 }
                 else
                 {
                     if(!ignore)
                     {
-                        if(value < 0 || value > ded->count.states.num)
+                        if(value < 0 || value > ded->states.size())
                         {
-                            LOG_WARNING("Frame #%i out of range, ignoring.") << value;
+                            LOG_WARNING("DeHackEd Frame #%i out of range") << value;
                         }
                         else
                         {
-                            DENG2_ASSERT(weapon->id >= 0 && weapon->id < ded->count.states.num);
+                            DENG2_ASSERT(weapon->id >= 0 && weapon->id < ded->states.size());
 
                             ded_state_t const &state = ded->states[value];
                             createValueDef(String("Weapon Info|%1|%2").arg(weapNum).arg(weapon->name),
@@ -1316,8 +1361,7 @@ public:
                 {
                     if(value < 0 || value >= 6)
                     {
-                        LOG_WARNING("Unknown ammotype %i on line #%i, ignoring.")
-                                << value << currentLineNumber;
+                        LOG_WARNING("DeHackEd Ammo Type %i unknown") << value;
                     }
                     else
                     {
@@ -1332,7 +1376,7 @@ public:
             }
             else
             {
-                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring.")
+                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i")
                         << var << currentLineNumber;
             }
         }
@@ -1340,8 +1384,9 @@ public:
 
     void parsePointer(ded_state_t *state, bool ignore)
     {
-        int const stateIdx = state - ded->states;
         LOG_AS("parsePointer");
+        int const stateNum = ded->states.indexOf(state);
+
         for(; lineInCurrentSection(); skipToNextLine())
         {
             String var, expr;
@@ -1354,20 +1399,20 @@ public:
                 {
                     if(actionIdx < 0 || actionIdx >= NUMSTATES)
                     {
-                        LOG_WARNING("Codep frame #%i out of range, ignoring.") << actionIdx;
+                        LOG_WARNING("DeHackEd Codep frame #%i out of range") << actionIdx;
                     }
                     else
                     {
                         ded_funcid_t const &newAction = origActionNames[actionIdx];
                         qstrncpy(state->action, newAction, DED_STRINGID_LEN + 1);
                         LOG_DEBUG("State #%i \"%s\" action => \"%s\"")
-                                << stateIdx << state->id << state->action;
+                                << stateNum << state->id << state->action;
                     }
                 }
             }
             else
             {
-                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring.")
+                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i")
                         << var << currentLineNumber;
             }
         }
@@ -1389,16 +1434,15 @@ public:
             }
             else
             {
-                LOG_WARNING("Unknown value \"%s\" on line #%i, ignoring.")
-                        << var << currentLineNumber;
+                LOG_WARNING("Misc-value \"%s\" unknown") << var;
             }
         }
     }
 
-    void parseParsBex()
+    void parsePars() // BEX
     {
-        LOG_AS("parseParsBex");
-        // .bex doesn't follow the same rules as .deh
+        LOG_AS("parsePars");
+        // BEX doesn't follow the same rules as .deh
         for(; !line.trimmed().isEmpty(); readLine())
         {
             // Skip comment lines.
@@ -1447,28 +1491,24 @@ public:
                     float parTime = float(String(args.at(arg++)).toInt(0, 10, String::AllowSuffix));
 
                     // Apply.
-                    uri_s *uri    = composeMapUri(episode, map);
-                    AutoStr *path = Uri_ToString(uri);
-
-                    ded_mapinfo_t *def;
-                    int idx = mapInfoDefForUri(*uri, &def);
+                    de::Uri const uri = composeMapUri(episode, map);
+                    int idx = ded->getMapInfoNum(uri);
                     if(idx >= 0)
                     {
-                        def->parTime = parTime;
+                        ded->mapInfos[idx].set("parTime", parTime);
                         LOG_DEBUG("MapInfo #%i \"%s\" parTime => %d")
-                                << idx << Str_Text(path) << def->parTime;
+                                << idx << uri << parTime;
                     }
                     else
                     {
-                        LOG_WARNING("Failed locating MapInfo for \"%s\" (episode:%i, map:%i), ignoring.")
-                                << Str_Text(path) << episode << map;
+                        LOG_WARNING("Failed locating MapInfo for \"%s\" (episode:%i, map:%i)")
+                                << uri << episode << map;
                     }
-                    Uri_Delete(uri);
                 }
             }
             catch(SyntaxError const &er)
             {
-                LOG_WARNING("%s, ignoring.") << er.asText();
+                LOG_WARNING("%s") << er.asText();
             }
         }
 
@@ -1478,22 +1518,22 @@ public:
         }
     }
 
-    void parseHelperBex()
+    void parseHelper() // Eternity
     {
-        LOG_AS("parseHelperBex");
-        LOG_WARNING("[HELPER] patches are not supported.");
+        LOG_AS("parseHelper");
+        LOG_WARNING("DeHackEd [HELPER] patches are not supported");
     }
 
-    void parseSpritesBex()
+    void parseSprites() // Eternity
     {
-        LOG_AS("parseSpritesBex");
-        LOG_WARNING("[SPRITES] patches are not supported.");
+        LOG_AS("parseSprites");
+        LOG_WARNING("DeHackEd [SPRITES] patches are not supported");
     }
 
-    void parseSoundsBex()
+    void parseSounds() // Eternity
     {
-        LOG_AS("parseSoundsBex");
-        // .bex doesn't follow the same rules as .deh
+        LOG_AS("parseSounds");
+        // BEX doesn't follow the same rules as .deh
         for(; !line.trimmed().isEmpty(); readLine())
         {
             // Skip comment lines.
@@ -1505,12 +1545,12 @@ public:
                 parseAssignmentStatement(line, var, expr);
                 if(!patchSoundLumpNames(var, expr))
                 {
-                    LOG_WARNING("Failed to locate sound \"%s\" for patching.") << var;
+                    LOG_WARNING("Failed to locate sound \"%s\" for patching") << var;
                 }
             }
             catch(SyntaxError const &er)
             {
-                LOG_WARNING("%s, ignoring.") << er.asText();
+                LOG_WARNING("%s") << er.asText();
             }
         }
 
@@ -1520,10 +1560,10 @@ public:
         }
     }
 
-    void parseMusicBex()
+    void parseMusic() // Eternity
     {
-        LOG_AS("parseMusicBex");
-        // .bex doesn't follow the same rules as .deh
+        LOG_AS("parseMusic");
+        // BEX doesn't follow the same rules as .deh
         for(; !line.trimmed().isEmpty(); readLine())
         {
             // Skip comment lines.
@@ -1535,12 +1575,12 @@ public:
                 parseAssignmentStatement(line, var, expr);
                 if(!patchMusicLumpNames(var, expr))
                 {
-                    LOG_WARNING("Failed to locate music \"%s\" for patching.") << var;
+                    LOG_WARNING("Failed to locate music \"%s\" for patching") << var;
                 }
             }
             catch(SyntaxError const &er)
             {
-                LOG_WARNING("%s, ignoring.") << er.asText();
+                LOG_WARNING("%s") << er.asText();
             }
         }
 
@@ -1550,10 +1590,10 @@ public:
         }
     }
 
-    void parsePointerBex()
+    void parseCodePointers() // BEX
     {
-        LOG_AS("parsePointerBex");
-        // .bex doesn't follow the same rules as .deh
+        LOG_AS("parseCodePointers");
+        // BEX doesn't follow the same rules as .deh
         for(; !line.trimmed().isEmpty(); readLine())
         {
             // Skip comment lines.
@@ -1565,9 +1605,9 @@ public:
             if(var.startsWith("Frame ", Qt::CaseInsensitive))
             {
                 int const stateNum = var.substr(6).toInt(0, 0, String::AllowSuffix);
-                if(stateNum < 0 || stateNum >= ded->count.states.num)
+                if(stateNum < 0 || stateNum >= ded->states.size())
                 {
-                    LOG_WARNING("Frame #%d out of range, ignoring. (Create more State defs!)")
+                    LOG_WARNING("DeHackEd Frame #%d out of range\n(Create more State defs!)")
                             << stateNum;
                 }
                 else
@@ -1598,8 +1638,8 @@ public:
                         }
                         else
                         {
-                            LOG_WARNING("Unknown action '%s' on line #%i, ignoring.")
-                                    << action.mid(2) << currentLineNumber;
+                            LOG_WARNING("DeHackEd Action '%s' unknown")
+                                    << action.mid(2);
                         }
                     }
                 }
@@ -1616,8 +1656,8 @@ public:
     {
         LOG_AS("parseText");
 
-        String oldStr = readTextBlob(oldSize);
-        String newStr = readTextBlob(newSize);
+        String const oldStr = readTextBlob(oldSize);
+        String const newStr = readTextBlob(newSize);
 
         if(!(flags & NoText)) // Disabled?
         {
@@ -1638,19 +1678,89 @@ public:
         }
         else
         {
-            LOG_DEBUG("Skipping disabled Text patch.");
+            LOG_DEBUG("Skipping disabled Text patch");
         }
 
         skipToNextLine();
     }
 
-    void parseStringsBex()
+    static void replaceTextValue(String const &id, String newValue)
     {
-        LOG_AS("parseStringsBex");
-        LOG_WARNING("[Strings] patches not supported.");
+        if(id.isEmpty()) return;
+
+        int textIdx = ded->getTextNum(id.toUtf8().constData());
+        if(textIdx < 0) return;
+
+        // We must escape new lines.
+        newValue.replace("\n", "\\n");
+
+        // Replace this text.
+        ded->text[textIdx].setText(newValue.toUtf8().constData());
+        LOG_DEBUG("Text #%i \"%s\" is now:\n%s")
+                << textIdx << id << newValue;
     }
 
-    void createValueDef(QString const &path, QString const &value)
+    void parseStrings() // BEX
+    {
+        LOG_AS("parseStrings");
+
+        bool multiline = false;
+        String textId;
+        String newValue;
+
+        // BEX doesn't follow the same rules as .deh
+        for(;; readLine())
+        {
+            if(!multiline)
+            {
+                if(line.trimmed().isEmpty()) break;
+
+                // Skip comment lines.
+                if(line.at(0) == '#') continue;
+
+                // Determine the split (or 'pivot') position.
+                int assign = line.indexOf('=');
+                if(assign < 0)
+                {
+                    throw SyntaxError("parseStrings", String("Expected assignment statement but encountered \"%1\" on line #%2")
+                                                        .arg(line).arg(currentLineNumber));
+                }
+
+                textId = line.substr(0, assign).rightStrip();
+
+                // Nothing before '=' ?
+                if(textId.isEmpty())
+                {
+                    throw SyntaxError("parseStrings", String("Expected keyword before '=' on line #%1")
+                                                        .arg(currentLineNumber));
+                }
+
+                newValue = line.substr(assign + 1).leftStrip();
+            }
+            else
+            {
+                newValue += line.leftStrip();
+            }
+
+            // Concatenate another multi-line replacement?
+            if(newValue.endsWith('\\'))
+            {
+                newValue.truncate(newValue.length() - 1);
+                multiline = true;
+                continue;
+            }
+
+            replaceTextValue(textId, newValue);
+            multiline = false;
+        }
+
+        if(line.trimmed().isEmpty())
+        {
+            skipToNextSection();
+        }
+    }
+
+    void createValueDef(String const &path, String const &value)
     {
         // An existing value?
         ded_value_t *def;
@@ -1658,16 +1768,15 @@ public:
         if(idx < 0)
         {
             // Not found - create a new Value.
-            Block pathUtf8 = path.toUtf8();
-            idx = _api_Def.DED_AddValue(ded, pathUtf8.constData());
-            def = &ded->values[idx];
+            def = ded->values.append();
+            def->id   = M_StrDup(path.toUtf8());
             def->text = 0;
+
+            idx = ded->values.indexOf(def);
         }
 
-        // Must allocate memory using DD_Realloc.
-        def->text = static_cast<char *>(DD_Realloc(def->text, value.length() + 1));
-        Block valueUtf8 = value.toUtf8();
-        qstrcpy(def->text, valueUtf8.constData());
+        def->text = static_cast<char *>(M_Realloc(def->text, value.length() + 1));
+        qstrcpy(def->text, value.toUtf8());
 
         LOG_DEBUG("Value #%i \"%s\" => \"%s\"") << idx << path << def->text;
     }
@@ -1684,13 +1793,13 @@ public:
 
         /// @todo Presently disabled because the engine can't handle remapping.
         DENG2_UNUSED(newName);
-        LOG_WARNING("Sprite name table remapping is not supported.");
+        LOG_WARNING("DeHackEd sprite name table remapping is not supported");
         return true; // Pretend success.
 
 #if 0
         if(spriteIdx >= ded->count.sprites.num)
         {
-            LOG_WARNING("Sprite name #%i out of range, ignoring.") << spriteIdx;
+            LOG_WARNING("Sprite name #%i out of range.") << spriteIdx;
             return false;
         }
 
@@ -1717,21 +1826,21 @@ public:
         /// @todo Why the restriction?
         if(findMusicLumpNameInMap(origName) < 0) return false;
 
-        Block origNamePrefUtf8 = String("D_%1").arg(origName).toUtf8();
-        Block newNamePrefUtf8  = String("D_%1").arg(newName ).toUtf8();
+        String origNamePref = String("D_%1").arg(origName);
+        String newNamePref = String("D_%1").arg(newName);
 
         // Update ALL songs using this lump name.
         int numPatched = 0;
-        for(int i = 0; i < ded->count.music.num; ++i)
+        for(int i = 0; i < ded->musics.size(); ++i)
         {
-            ded_music_t &music = ded->music[i];
-            if(qstricmp(music.lumpName, origNamePrefUtf8.constData())) continue;
+            Record &music = ded->musics[i];
+            if(music.gets("lumpName").compareWithoutCase(origNamePref)) continue;
 
-            qstrncpy(music.lumpName, newNamePrefUtf8.constData(), 9);
+            music.set("lumpName", newNamePref);
             numPatched++;
 
             LOG_DEBUG("Music #%i \"%s\" lumpName => \"%s\"")
-                    << i << music.id << music.lumpName;
+                    << i << music.gets("id") << music.gets("lumpName");
         }
         return (numPatched > 0);
     }
@@ -1747,7 +1856,7 @@ public:
 
         // Update ALL sounds using this lump name.
         int numPatched = 0;
-        for(int i = 0; i < ded->count.sounds.num; ++i)
+        for(int i = 0; i < ded->sounds.size(); ++i)
         {
             ded_sound_t &sound = ded->sounds[i];
             if(qstricmp(sound.lumpName, origNamePrefUtf8.constData())) continue;
@@ -1771,8 +1880,7 @@ public:
         // Is replacement disallowed/not-supported?
         if(textMapping->name.isEmpty()) return true; // Pretend success.
 
-        Block textNameUtf8 = textMapping->name.toUtf8();
-        int textIdx = Def_Get(DD_DEF_TEXT, textNameUtf8.constData(), NULL);
+        int textIdx = ded->getTextNum(textMapping->name.toUtf8().constData());
         if(textIdx < 0) return false;
 
         // We must escape new lines.
@@ -1780,7 +1888,7 @@ public:
         Block newStrUtf8 = newStrCopy.replace("\n", "\\n").toUtf8();
 
         // Replace this text.
-        Def_Set(DD_DEF_TEXT, textIdx, 0, newStrUtf8.constData());
+        ded->text[textIdx].setText(newStrUtf8.constData());
 
         LOG_DEBUG("Text #%i \"%s\" is now:\n%s")
                 << textIdx << textMapping->name << newStrUtf8.constData();
@@ -1788,11 +1896,11 @@ public:
     }
 };
 
-void readDehPatch(Block const &patch, DehReaderFlags flags)
+void readDehPatch(Block const &patch, bool patchIsCustom, DehReaderFlags flags)
 {
     try
     {
-        DehReader(patch, flags).parse();
+        DehReader(patch, patchIsCustom, flags).parse();
     }
     catch(Error const &er)
     {

@@ -33,8 +33,9 @@
 
 #include "audio/s_main.h"
 #include "world/thinkers.h"
-
 #include "server/sv_pool.h"
+
+#include <de/timer.h>
 
 using namespace de;
 
@@ -100,7 +101,12 @@ static float deltaBaseScores[NUM_DELTA_TYPES];
 
 // Keep this zeroed out. Used if the register doesn't have data for
 // the mobj being compared.
-static dt_mobj_t dummyZeroMobj;
+static ThinkerT<dt_mobj_t> dummyZeroMobj;
+
+static inline WorldSystem &worldSys()
+{
+    return App_WorldSystem();
+}
 
 /**
  * Called once for each map, from R_SetupMap(). Initialize the world
@@ -412,21 +418,24 @@ void Sv_RegisterPlayer(dt_player_t* reg, uint number)
  * Store the state of the sector into the register-sector.
  * Called at register init and after each delta generation.
  *
- * @param reg           The sector register to be initialized.
- * @param number        The world sector number to be registered.
+ * @param reg     The sector register to be initialized.
+ * @param number  The world sector number to be registered.
  */
 void Sv_RegisterSector(dt_sector_t *reg, int number)
 {
-    Sector *sector = App_WorldSystem().map().sectors().at(number);
+    DENG2_ASSERT(reg);
+    Sector &sector = worldSys().map().sector(number);
 
-    reg->lightLevel = sector->lightLevel();
+    reg->lightLevel = sector.lightLevel();
     for(int i = 0; i < 3; ++i)
-        reg->rgb[i] = sector->lightColor()[i];
+    {
+        reg->rgb[i] = sector.lightColor()[i];
+    }
 
     // @todo $nplanes
     for(int i = 0; i < 2; ++i) // number of planes in sector.
     {
-        Plane const &plane = sector->plane(i);
+        Plane const &plane = sector.plane(i);
 
         // Plane properties
         reg->planes[i].height = plane.height();
@@ -455,7 +464,7 @@ void Sv_RegisterSide(dt_side_t *reg, int number)
 {
     DENG2_ASSERT(reg != 0);
 
-    LineSide *side = App_WorldSystem().map().sideByIndex(number);
+    LineSide *side = worldSys().map().sidePtr(number);
 
     if(side->hasSections())
     {
@@ -485,15 +494,14 @@ void Sv_RegisterSide(dt_side_t *reg, int number)
  */
 void Sv_RegisterPoly(dt_poly_t *reg, uint number)
 {
-    DENG_ASSERT(reg != 0);
+    DENG_ASSERT(reg);
+    Polyobj const &pob = worldSys().map().polyobj(number);
 
-    Polyobj *poly = App_WorldSystem().map().polyobjs().at(number);
-
-    reg->dest[VX]   = poly->dest[VX];
-    reg->dest[VY]   = poly->dest[VY];
-    reg->speed      = poly->speed;
-    reg->destAngle  = poly->destAngle;
-    reg->angleSpeed = poly->angleSpeed;
+    reg->dest[VX]   = pob.dest[VX];
+    reg->dest[VY]   = pob.dest[VY];
+    reg->speed      = pob.speed;
+    reg->destAngle  = pob.destAngle;
+    reg->angleSpeed = pob.angleSpeed;
 }
 
 /**
@@ -503,7 +511,7 @@ dd_bool Sv_RegisterCompareMobj(cregister_t *reg, mobj_t const *s, mobjdelta_t *d
 {
     int df;
     reg_mobj_t *regMo = 0;
-    dt_mobj_t const *r = &dummyZeroMobj;
+    dt_mobj_t const *r = dummyZeroMobj;
 
     if((regMo = Sv_RegisterFindMobj(reg, s->thinker.id)) != NULL)
     {
@@ -623,41 +631,41 @@ dd_bool Sv_RegisterComparePlayer(cregister_t* reg, uint number,
 }
 
 /**
- * @return  @c true, if the result is not void.
+ * @return  @c true if the result is not void.
  */
-dd_bool Sv_RegisterCompareSector(cregister_t *reg, int number,
-                                 sectordelta_t *d, byte doUpdate)
+dd_bool Sv_RegisterCompareSector(cregister_t *reg, int number, sectordelta_t *d, byte doUpdate)
 {
-    dt_sector_t *r = &reg->sectors[number];
-    Sector const *s = App_WorldSystem().map().sectors().at(number);
+    DENG2_ASSERT(reg && d);
+    dt_sector_t *r  = &reg->sectors[number];
+    Sector const &s = worldSys().map().sector(number);
     int df = 0;
 
     // Determine which data is different.
-    if(s->floorSurface().materialPtr() != r->planes[PLN_FLOOR].surface.material)
+    if(s.floorSurface().materialPtr() != r->planes[PLN_FLOOR].surface.material)
         df |= SDF_FLOOR_MATERIAL;
-    if(s->ceilingSurface().materialPtr() != r->planes[PLN_CEILING].surface.material)
+    if(s.ceilingSurface().materialPtr() != r->planes[PLN_CEILING].surface.material)
        df |= SDF_CEILING_MATERIAL;
-    if(r->lightLevel != s->lightLevel())
+    if(r->lightLevel != s.lightLevel())
         df |= SDF_LIGHT;
-    if(r->rgb[0] != s->lightColor().x)
+    if(r->rgb[0] != s.lightColor().x)
         df |= SDF_COLOR_RED;
-    if(r->rgb[1] != s->lightColor().y)
+    if(r->rgb[1] != s.lightColor().y)
         df |= SDF_COLOR_GREEN;
-    if(r->rgb[2] != s->lightColor().z)
+    if(r->rgb[2] != s.lightColor().z)
         df |= SDF_COLOR_BLUE;
 
-    if(r->planes[PLN_FLOOR].surface.rgba[0] != s->floorSurface().tintColor().x)
+    if(r->planes[PLN_FLOOR].surface.rgba[0] != s.floorSurface().tintColor().x)
         df |= SDF_FLOOR_COLOR_RED;
-    if(r->planes[PLN_FLOOR].surface.rgba[1] != s->floorSurface().tintColor().y)
+    if(r->planes[PLN_FLOOR].surface.rgba[1] != s.floorSurface().tintColor().y)
         df |= SDF_FLOOR_COLOR_GREEN;
-    if(r->planes[PLN_FLOOR].surface.rgba[2] != s->floorSurface().tintColor().z)
+    if(r->planes[PLN_FLOOR].surface.rgba[2] != s.floorSurface().tintColor().z)
         df |= SDF_FLOOR_COLOR_BLUE;
 
-    if(r->planes[PLN_CEILING].surface.rgba[0] != s->ceilingSurface().tintColor().x)
+    if(r->planes[PLN_CEILING].surface.rgba[0] != s.ceilingSurface().tintColor().x)
         df |= SDF_CEIL_COLOR_RED;
-    if(r->planes[PLN_CEILING].surface.rgba[1] != s->ceilingSurface().tintColor().y)
+    if(r->planes[PLN_CEILING].surface.rgba[1] != s.ceilingSurface().tintColor().y)
         df |= SDF_CEIL_COLOR_GREEN;
-    if(r->planes[PLN_CEILING].surface.rgba[2] != s->ceilingSurface().tintColor().z)
+    if(r->planes[PLN_CEILING].surface.rgba[2] != s.ceilingSurface().tintColor().z)
         df |= SDF_CEIL_COLOR_BLUE;
 
     // The cases where an immediate change to a plane's height is needed:
@@ -667,46 +675,46 @@ dd_bool Sv_RegisterCompareSector(cregister_t *reg, int number,
     //    The clientside height should be fixed.
 
     // Should we make an immediate change in floor height?
-    if(FEQUAL(r->planes[PLN_FLOOR].speed, 0) && FEQUAL(s->floor().speed(), 0))
+    if(FEQUAL(r->planes[PLN_FLOOR].speed, 0) && FEQUAL(s.floor().speed(), 0))
     {
-        if(!FEQUAL(r->planes[PLN_FLOOR].height, s->floor().height()))
+        if(!FEQUAL(r->planes[PLN_FLOOR].height, s.floor().height()))
             df |= SDF_FLOOR_HEIGHT;
     }
     else
     {
-        if(fabs(r->planes[PLN_FLOOR].height - s->floor().height()) > PLANE_SKIP_LIMIT)
+        if(fabs(r->planes[PLN_FLOOR].height - s.floor().height()) > PLANE_SKIP_LIMIT)
             df |= SDF_FLOOR_HEIGHT;
     }
 
     // How about the ceiling?
-    if(FEQUAL(r->planes[PLN_CEILING].speed, 0) && FEQUAL(s->ceiling().speed(), 0))
+    if(FEQUAL(r->planes[PLN_CEILING].speed, 0) && FEQUAL(s.ceiling().speed(), 0))
     {
-        if(!FEQUAL(r->planes[PLN_CEILING].height, s->ceiling().height()))
+        if(!FEQUAL(r->planes[PLN_CEILING].height, s.ceiling().height()))
             df |= SDF_CEILING_HEIGHT;
     }
     else
     {
-        if(fabs(r->planes[PLN_CEILING].height - s->ceiling().height()) > PLANE_SKIP_LIMIT)
+        if(fabs(r->planes[PLN_CEILING].height - s.ceiling().height()) > PLANE_SKIP_LIMIT)
             df |= SDF_CEILING_HEIGHT;
     }
 
     // Check planes, too.
-    if(!FEQUAL(r->planes[PLN_FLOOR].target, s->floor().targetHeight()))
+    if(!FEQUAL(r->planes[PLN_FLOOR].target, s.floor().targetHeight()))
     {
         // Target and speed are always sent together.
         df |= SDF_FLOOR_TARGET | SDF_FLOOR_SPEED;
     }
-    if(!FEQUAL(r->planes[PLN_FLOOR].speed, s->floor().speed()))
+    if(!FEQUAL(r->planes[PLN_FLOOR].speed, s.floor().speed()))
     {
         // Target and speed are always sent together.
         df |= SDF_FLOOR_SPEED | SDF_FLOOR_TARGET;
     }
-    if(!FEQUAL(r->planes[PLN_CEILING].target, s->ceiling().targetHeight()))
+    if(!FEQUAL(r->planes[PLN_CEILING].target, s.ceiling().targetHeight()))
     {
         // Target and speed are always sent together.
         df |= SDF_CEILING_TARGET | SDF_CEILING_SPEED;
     }
-    if(!FEQUAL(r->planes[PLN_CEILING].speed, s->ceiling().speed()))
+    if(!FEQUAL(r->planes[PLN_CEILING].speed, s.ceiling().speed()))
     {
         // Target and speed are always sent together.
         df |= SDF_CEILING_SPEED | SDF_CEILING_TARGET;
@@ -716,7 +724,7 @@ dd_bool Sv_RegisterCompareSector(cregister_t *reg, int number,
     if(df & (SDF_CEILING_HEIGHT | SDF_CEILING_SPEED | SDF_CEILING_TARGET))
     {
         LOGDEV_NET_XVERBOSE("Sector %i: ceiling state change noted (target = %f)")
-                << number << s->ceiling().targetHeight();
+                << number << s.ceiling().targetHeight();
     }
 #endif
 
@@ -737,8 +745,8 @@ dd_bool Sv_RegisterCompareSector(cregister_t *reg, int number,
     {
         // The plane heights should be tracked regardless of the
         // change flags.
-        r->planes[PLN_FLOOR].height = s->floor().height();
-        r->planes[PLN_CEILING].height = s->ceiling().height();
+        r->planes[PLN_FLOOR].height = s.floor().height();
+        r->planes[PLN_CEILING].height = s.ceiling().height();
     }
 
     d->delta.flags = df;
@@ -751,7 +759,7 @@ dd_bool Sv_RegisterCompareSector(cregister_t *reg, int number,
 dd_bool Sv_RegisterCompareSide(cregister_t *reg, uint number,
     sidedelta_t *d, byte doUpdate)
 {
-    LineSide const *side = App_WorldSystem().map().sideByIndex(number);
+    LineSide const *side = worldSys().map().sidePtr(number);
     dt_side_t *r = &reg->sides[number];
     byte lineFlags = side->line().flags() & 0xff;
     byte sideFlags = side->flags() & 0xff;
@@ -916,19 +924,17 @@ dd_bool Sv_RegisterComparePoly(cregister_t* reg, int number,
 }
 
 /**
- * @return              @c true, if the mobj can be excluded from delta
- *                      processing.
+ * Returns @c true if the map-object can be excluded from delta processing.
  */
-dd_bool Sv_IsMobjIgnored(mobj_t* mo)
+dd_bool Sv_IsMobjIgnored(mobj_t const &mob)
 {
-    return (mo->ddFlags & DDMF_LOCAL) != 0;
+    return (mob.ddFlags & DDMF_LOCAL) != 0;
 }
 
 /**
- * @return              @c true, if the player can be excluded from delta
- *                      processing.
+ * Returns @c true if the player can be excluded from delta processing.
  */
-dd_bool Sv_IsPlayerIgnored(int plrNum)
+dd_bool Sv_IsPlayerIgnored(dint plrNum)
 {
     return !ddPlayers[plrNum].shared.inGame;
 }
@@ -946,7 +952,7 @@ void Sv_RegisterWorld(cregister_t *reg, dd_bool isInitial)
 {
     DENG_ASSERT(reg != 0);
 
-    Map &map = App_WorldSystem().map();
+    Map &map = worldSys().map();
 
     de::zapPtr(reg);
     reg->gametic = SECONDS_TO_TICKS(gameTime);
@@ -1132,7 +1138,7 @@ void* Sv_CopyDelta(void* deltaPtr)
 
     if(size == 0)
     {
-        Con_Error("Sv_CopyDelta: Unknown delta type %i.\n", delta->type);
+        App_Error("Sv_CopyDelta: Unknown delta type %i.\n", delta->type);
     }
 
     newDelta = Z_Malloc(size, PU_MAP, 0);
@@ -1156,7 +1162,7 @@ void Sv_SubtractDelta(void* deltaPtr1, const void* deltaPtr2)
 #ifdef _DEBUG
     if(!Sv_IsSameDelta(delta, sub))
     {
-        Con_Error("Sv_SubtractDelta: Not the same!\n");
+        App_Error("Sv_SubtractDelta: Not the same!\n");
     }
 #endif
 
@@ -1405,7 +1411,7 @@ void Sv_ApplyDeltaData(void *destDelta, void const *srcDelta)
     }
     else
     {
-        Con_Error("Sv_ApplyDeltaData: Unknown delta type %i.\n", src->type);
+        App_Error("Sv_ApplyDeltaData: Unknown delta type %i.\n", src->type);
     }
 }
 
@@ -1423,11 +1429,11 @@ dd_bool Sv_MergeDelta(void* destDelta, const void* srcDelta)
 #ifdef _DEBUG
     if(!Sv_IsSameDelta(src, dest))
     {
-        Con_Error("Sv_MergeDelta: Not the same!\n");
+        App_Error("Sv_MergeDelta: Not the same!\n");
     }
     if(dest->state != DELTA_NEW)
     {
-        Con_Error("Sv_MergeDelta: Dest is not NEW.\n");
+        App_Error("Sv_MergeDelta: Dest is not NEW.\n");
     }
 #endif
 
@@ -1529,24 +1535,26 @@ coord_t Sv_MobjDistance(mobj_t const *mo, ownerinfo_t const *info, dd_bool isRea
  */
 coord_t Sv_SectorDistance(int index, ownerinfo_t const *info)
 {
-    Sector const *sector = App_WorldSystem().map().sectors().at(index);
+    DENG2_ASSERT(info);
+    Sector const &sector = worldSys().map().sector(index);
 
-    return M_ApproxDistance3(info->origin[VX] - sector->soundEmitter().origin[VX],
-                             info->origin[VY] - sector->soundEmitter().origin[VY],
-                             (info->origin[VZ] - sector->soundEmitter().origin[VZ]) * 1.2);
+    return M_ApproxDistance3(info->origin[0] - sector.soundEmitter().origin[0],
+                             info->origin[1] - sector.soundEmitter().origin[1],
+                             (info->origin[2] - sector.soundEmitter().origin[2]) * 1.2);
 }
 
 coord_t Sv_SideDistance(int index, int deltaFlags, ownerinfo_t const *info)
 {
-    LineSide const *side = App_WorldSystem().map().sideByIndex(index);
+    DENG2_ASSERT(info);
+    LineSide const *side = worldSys().map().sidePtr(index);
 
-    SoundEmitter const &emitter = (deltaFlags & SNDDF_SIDE_MIDDLE? side->middleSoundEmitter()
-                                     : deltaFlags & SNDDF_SIDE_TOP? side->topSoundEmitter()
-                                                                  : side->bottomSoundEmitter());
+    SoundEmitter const &emitter = (  deltaFlags & SNDDF_SIDE_MIDDLE? side->middleSoundEmitter()
+                                   : deltaFlags & SNDDF_SIDE_TOP   ? side->topSoundEmitter()
+                                                                   : side->bottomSoundEmitter());
 
-    return M_ApproxDistance3(info->origin[VX]  - emitter.origin[VX],
-                             info->origin[VY]  - emitter.origin[VY],
-                             (info->origin[VZ] - emitter.origin[VZ]) * 1.2);
+    return M_ApproxDistance3(info->origin[0]  - emitter.origin[0],
+                             info->origin[1]  - emitter.origin[1],
+                             (info->origin[2] - emitter.origin[2]) * 1.2);
 }
 
 /**
@@ -1580,7 +1588,7 @@ coord_t Sv_DeltaDistance(void const *deltaPtr, ownerinfo_t const *info)
 
     if(delta->type == DT_SIDE)
     {
-        LineSide *side = App_WorldSystem().map().sideByIndex(delta->id);
+        LineSide *side = worldSys().map().sidePtr(delta->id);
         Line &line = side->line();
         return M_ApproxDistance(info->origin[VX] - line.center().x,
                                 info->origin[VY] - line.center().y);
@@ -1588,9 +1596,9 @@ coord_t Sv_DeltaDistance(void const *deltaPtr, ownerinfo_t const *info)
 
     if(delta->type == DT_POLY)
     {
-        Polyobj *po = App_WorldSystem().map().polyobjs().at(delta->id);
-        return M_ApproxDistance(info->origin[VX] - po->origin[VX],
-                                info->origin[VY] - po->origin[VY]);
+        Polyobj const &pob = worldSys().map().polyobj(delta->id);
+        return M_ApproxDistance(info->origin[VX] - pob.origin[VX],
+                                info->origin[VY] - pob.origin[VY]);
     }
 
     if(delta->type == DT_MOBJ_SOUND)
@@ -1611,9 +1619,9 @@ coord_t Sv_DeltaDistance(void const *deltaPtr, ownerinfo_t const *info)
 
     if(delta->type == DT_POLY_SOUND)
     {
-        Polyobj *po = App_WorldSystem().map().polyobjs().at(delta->id);
-        return M_ApproxDistance(info->origin[VX] - po->origin[VX],
-                                info->origin[VY] - po->origin[VY]);
+        Polyobj const &pob = worldSys().map().polyobj(delta->id);
+        return M_ApproxDistance(info->origin[VX] - pob.origin[VX],
+                                info->origin[VY] - pob.origin[VY]);
     }
 
     // Unknown distance.
@@ -2073,7 +2081,7 @@ void Sv_NewNullDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
             next = obj->next;
 
             /// @todo Do not assume mobj is from the CURRENT map.
-            if(!App_WorldSystem().map().thinkers().isUsedMobjId(obj->mo.thinker.id))
+            if(!worldSys().map().thinkers().isUsedMobjId(obj->mo.thinker.id))
             {
                 // This object no longer exists!
                 Sv_NewDelta(&null, DT_MOBJ, obj->mo.thinker.id);
@@ -2094,55 +2102,34 @@ void Sv_NewNullDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
     }
 }
 
-typedef struct {
-    cregister_t*        reg;
-    dd_bool             doUpdate;
-    pool_t**            targets;
-} newmobjdeltaparams_t;
-
-static int newMobjDelta(thinker_t* th, void* context)
-{
-    newmobjdeltaparams_t* params = (newmobjdeltaparams_t*) context;
-    mobj_t*             mo = (mobj_t *) th;
-
-    // Some objects should not be processed.
-    if(!Sv_IsMobjIgnored(mo))
-    {
-        mobjdelta_t         delta;
-
-        // Compare to produce a delta.
-        if(Sv_RegisterCompareMobj(params->reg, mo, &delta))
-        {
-            Sv_AddDeltaToPools(&delta, params->targets);
-
-            if(params->doUpdate)
-            {
-                reg_mobj_t*         obj;
-
-                // This'll add a new register-mobj if it doesn't
-                // already exist.
-                obj = Sv_RegisterAddMobj(params->reg, mo->thinker.id);
-                Sv_RegisterMobj(&obj->mo, mo);
-            }
-        }
-    }
-
-    return false; // Continue iteration.
-}
-
 /**
  * Mobj deltas are generated for all mobjs that have changed.
  */
 void Sv_NewMobjDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
 {
-    newmobjdeltaparams_t parm;
+    worldSys().map().thinkers().forAll(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+                                       0x1 /*public*/, [&reg, &doUpdate, &targets] (thinker_t *th)
+    {
+        auto &mob = *reinterpret_cast<mobj_t *>(th);
 
-    parm.reg = reg;
-    parm.doUpdate = doUpdate;
-    parm.targets = targets;
+        // Some objects should not be processed.
+        if(!Sv_IsMobjIgnored(mob))
+        {
+            // Compare to produce a delta.
+            mobjdelta_t delta;
+            if(Sv_RegisterCompareMobj(reg, &mob, &delta))
+            {
+                Sv_AddDeltaToPools(&delta, targets);
 
-    App_WorldSystem().map().thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
-                                         0x1 /*mobjs are public*/, newMobjDelta, &parm);
+                if(doUpdate)
+                {
+                    // This'll add a new register-mobj if it doesn't already exist.
+                    Sv_RegisterMobj(&Sv_RegisterAddMobj(reg, mob.thinker.id)->mo, &mob);
+                }
+            }
+        }
+        return LoopContinue;
+    });
 }
 
 /**
@@ -2233,7 +2220,7 @@ void Sv_NewSectorDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
 {
     sectordelta_t delta;
 
-    for(int i = 0; i < App_WorldSystem().map().sectorCount(); ++i)
+    for(int i = 0; i < worldSys().map().sectorCount(); ++i)
     {
         if(Sv_RegisterCompareSector(reg, i, &delta, doUpdate))
         {
@@ -2252,7 +2239,7 @@ void Sv_NewSideDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
     static uint numShifts = 2, shift = 0;
 
     /// @todo fixme: Do not assume the current map.
-    Map &map = App_WorldSystem().map();
+    Map &map = worldSys().map();
 
     // When comparing against an initial register, always compare all
     // sides (since the comparing is only done once, not continuously).
@@ -2292,7 +2279,7 @@ void Sv_NewPolyDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
     polydelta_t delta;
 
     /// @todo fixme: Do not assume the current map.
-    for(int i = 0; i < App_WorldSystem().map().polyobjCount(); ++i)
+    for(int i = 0; i < worldSys().map().polyobjCount(); ++i)
     {
         if(Sv_RegisterComparePoly(reg, i, &delta))
         {
@@ -2786,7 +2773,7 @@ void Sv_RatePool(pool_t* pool)
 #ifdef _DEBUG
     if(!plr->shared.mo)
     {
-        Con_Error("Sv_RatePool: Player %i has no mobj.\n", pool->owner);
+        App_Error("Sv_RatePool: Player %i has no mobj.\n", pool->owner);
     }
 #endif
 

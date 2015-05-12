@@ -22,6 +22,10 @@ CONFIG -= app_bundle
 TEMPLATE = app
 TARGET = amethyst
 
+greaterThan(QT_MAJOR_VERSION, 4) {
+    DEFINES += HAVE_QT5
+}
+
 SOURCES += \
     src/block.cpp \
     src/callstack.cpp \

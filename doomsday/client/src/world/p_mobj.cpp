@@ -3,7 +3,7 @@
  * Various routines for moving mobjs, collision and Z checking.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 1993-1996 by id Software, Inc.
  *
  * @par License
@@ -37,18 +37,22 @@
 #include "world/worldsystem.h" // validCount
 #include "world/thinkers.h"
 #include "BspLeaf"
+#include "ConvexSubspace"
+#include "SectorCluster"
 
 #ifdef __CLIENT__
 #  include "Lumobj"
 #  include "render/viewports.h"
 #  include "render/rend_main.h"
 #  include "render/rend_model.h"
+#  include "render/rend_halo.h"
 #  include "render/billboard.h"
 
 #  include "gl/gl_tex.h"
 #endif
 
 #include <de/Error>
+#include <doomsday/world/mobjthinkerdata.h>
 #include <cmath>
 
 using namespace de;
@@ -78,10 +82,10 @@ void P_InitUnusedMobjList()
  * All mobjs must be allocated through this routine. Part of the public API.
  */
 mobj_t *P_MobjCreate(thinkfunc_t function, Vector3d const &origin, angle_t angle,
-    coord_t radius, coord_t height, int ddflags)
+                     coord_t radius, coord_t height, int ddflags)
 {
     if(!function)
-        Con_Error("P_MobjCreate: Think function invalid, cannot create mobj.");
+        App_Error("P_MobjCreate: Think function invalid, cannot create mobj.");
 
 #ifdef _DEBUG
     if(isClient)
@@ -97,12 +101,11 @@ mobj_t *P_MobjCreate(thinkfunc_t function, Vector3d const &origin, angle_t angle
     {
         mo = unusedMobjs;
         unusedMobjs = unusedMobjs->sNext;
-        std::memset(mo, 0, MOBJ_SIZE);
     }
     else
     {
         // No, we need to allocate another.
-        mo = (mobj_t *) Z_Calloc(MOBJ_SIZE, PU_MAP, NULL);
+        mo = MobjThinker(Thinker::AllocateMemoryZone).take();
     }
 
     V3d_Set(mo->origin, origin.x, origin.y, origin.z);
@@ -149,6 +152,9 @@ DENG_EXTERN_C void Mobj_Destroy(mobj_t *mo)
  */
 void P_MobjRecycle(mobj_t* mo)
 {
+    // Release the private data.
+    MobjThinker::zap(*mo);
+
     // The sector next link is used as the unused mobj list links.
     mo->sNext = unusedMobjs;
     unusedMobjs = mo;
@@ -164,36 +170,26 @@ DENG_EXTERN_C void Mobj_SetState(mobj_t *mobj, int statenum)
 {
     if(!mobj) return;
 
-#ifdef __CLIENT__
-    bool spawning = (mobj->state == 0);
-#endif
+    state_t const *oldState = mobj->state;
 
-#ifdef DENG_DEBUG
-    if(statenum < 0 || statenum >= defs.count.states.num)
-        Con_Error("Mobj_SetState: statenum %i out of bounds.\n", statenum);
-#endif
+    DENG_ASSERT(statenum >= 0 && statenum < defs.states.size());
 
-    mobj->state  = states + statenum;
+    mobj->state  = &runtimeDefs.states[statenum];
     mobj->tics   = mobj->state->tics;
     mobj->sprite = mobj->state->sprite;
     mobj->frame  = mobj->state->frame;
-
-#ifdef __CLIENT__
-    // Check for a ptcgen trigger.
-    for(ded_ptcgen_t *pg = statePtcGens[statenum]; pg; pg = pg->stateNext)
-    {
-        if(!(pg->flags & Generator::SpawnOnly) || spawning)
-        {
-            // We are allowed to spawn the generator.
-            Mobj_SpawnParticleGen(mobj, pg);
-        }
-    }
-#endif
 
     if(!(mobj->ddFlags & DDMF_REMOTE))
     {
         if(defs.states[statenum].execute)
             Con_Execute(CMDS_SCRIPT, defs.states[statenum].execute, true, false);
+    }
+
+    // Notify private data about the changed state.
+    if(mobj->thinker.d == nullptr) Thinker_InitPrivateData(&mobj->thinker);
+    if(MobjThinkerData *data = THINKER_DATA_MAYBE(mobj->thinker, MobjThinkerData))
+    {
+        data->stateChanged(oldState);
     }
 }
 
@@ -276,27 +272,27 @@ BspLeaf &Mobj_BspLeafAtOrigin(mobj_t const &mobj)
     throw Error("Mobj_BspLeafAtOrigin", "Mobj is not yet linked");
 }
 
-bool Mobj_HasCluster(mobj_t const &mobj)
+bool Mobj_HasSubspace(mobj_t const &mobj)
 {
     if(!Mobj_IsLinked(mobj)) return false;
-    return Mobj_BspLeafAtOrigin(mobj).hasCluster();
+    return Mobj_BspLeafAtOrigin(mobj).hasSubspace();
 }
 
 SectorCluster &Mobj_Cluster(mobj_t const &mobj)
 {
-    return Mobj_BspLeafAtOrigin(mobj).cluster();
+    return Mobj_BspLeafAtOrigin(mobj).subspace().cluster();
 }
 
 SectorCluster *Mobj_ClusterPtr(mobj_t const &mobj)
 {
-    return Mobj_HasCluster(mobj)? &Mobj_Cluster(mobj) : 0;
+    return Mobj_HasSubspace(mobj)? &Mobj_Cluster(mobj) : 0;
 }
 
 #undef Mobj_Sector
-DENG_EXTERN_C Sector *Mobj_Sector(mobj_t const *mobj)
+DENG_EXTERN_C Sector *Mobj_Sector(mobj_t const *mob)
 {
-    if(!mobj) return 0;
-    return Mobj_BspLeafAtOrigin(*mobj).sectorPtr();
+    if(!mob || !Mobj_IsLinked(*mob)) return nullptr;
+    return Mobj_BspLeafAtOrigin(*mob).sectorPtr();
 }
 
 void Mobj_SpawnParticleGen(mobj_t *source, ded_ptcgen_t const *def)
@@ -318,7 +314,7 @@ void Mobj_SpawnParticleGen(mobj_t *source, ded_ptcgen_t const *def)
     // Size of source sector might determine count.
     if(def->flags & Generator::ScaledRate)
     {
-        gen->spawnRateMultiplier = Mobj_BspLeafAtOrigin(*source).sector().roughArea() / (128 * 128);
+        gen->spawnRateMultiplier = Mobj_BspLeafAtOrigin(*source).sectorPtr()->roughArea() / (128 * 128);
     }
     else
     {
@@ -389,7 +385,7 @@ DENG_EXTERN_C void Mobj_SpawnDamageParticleGen(mobj_t *mo, mobj_t *inflictor, in
 
 dd_bool Mobj_OriginBehindVisPlane(mobj_t *mo)
 {
-    if(!mo || !Mobj_HasCluster(*mo))
+    if(!mo || !Mobj_HasSubspace(*mo))
         return false;
     SectorCluster &cluster = Mobj_Cluster(*mo);
 
@@ -414,14 +410,15 @@ static ded_light_t *lightDefByMobjState(state_t const *state)
 {
     if(state)
     {
-        return stateLights[state - states];
+        return runtimeDefs.stateInfo[runtimeDefs.states.indexOf(state)].light;
     }
     return 0;
 }
 
-static inline Texture *lightmap(uri_s const *textureUri)
+static inline Texture *lightmap(de::Uri const *textureUri)
 {
-    return App_ResourceSystem().texture("Lightmaps", reinterpret_cast<de::Uri const *>(textureUri));
+    if(!textureUri) return nullptr;
+    return App_ResourceSystem().texture("Lightmaps", *textureUri);
 }
 
 void Mobj_GenerateLumobjs(mobj_t *mo)
@@ -430,7 +427,7 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
 
     Mobj_UnlinkLumobjs(mo);
 
-    if(!Mobj_HasCluster(*mo)) return;
+    if(!Mobj_HasSubspace(*mo)) return;
     SectorCluster &cluster = Mobj_Cluster(*mo);
 
     if(!(((mo->state && (mo->state->flags & STF_FULLBRIGHT)) &&
@@ -443,7 +440,7 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
     // Are the automatically calculated light values for fullbright sprite frames in use?
     if(mo->state &&
        (!mobjAutoLights || (mo->state->flags & STF_NOAUTOLIGHT)) &&
-       !stateLights[mo->state - states])
+       !runtimeDefs.stateInfo[runtimeDefs.states.indexOf(mo->state)].light)
     {
        return;
     }
@@ -451,7 +448,7 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
     // If the mobj's origin is outside the BSP leaf it is linked within, then
     // this means it is outside the playable map (and no light should be emitted).
     /// @todo Optimize: Mobj_Link() should do this and flag the mobj accordingly.
-    if(!Mobj_BspLeafAtOrigin(*mo).polyContains(mo->origin))
+    if(!Mobj_BspLeafAtOrigin(*mo).subspace().contains(mo->origin))
     {
         return;
     }
@@ -461,15 +458,21 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
 
     // Always use the front rotation when determining light properties.
     if(!sprite->hasViewAngle(0)) return;
-    Material *mat = sprite->viewAngle(0).material;
+    SpriteViewAngle const &sprViewAngle = sprite->viewAngle(0);
 
-    MaterialSnapshot const &ms = mat->prepare(Rend_SpriteMaterialSpec());
-    if(!ms.hasTexture(MTU_PRIMARY)) return; // Unloadable texture?
-    Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
+    DENG2_ASSERT(sprViewAngle.material);
+    MaterialAnimator &matAnimator = sprViewAngle.material->getAnimator(Rend_SpriteMaterialSpec());
+
+    // Ensure we've up to date info about the material.
+    matAnimator.prepare();
+
+    TextureVariant *tex = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
+    if(!tex) return;  // Unloadable texture?
+    Vector2i const &texOrigin = tex->base().origin();
 
     // Will the visual be allowed to go inside the floor?
     /// @todo Handle this as occlusion so that the halo fades smoothly.
-    coord_t impacted = mo->origin[VZ] + -tex.origin().y - ms.height() - cluster.visFloor().heightSmoothed();
+    coord_t impacted = mo->origin[VZ] + -texOrigin.y - matAnimator.dimensions().y - cluster.visFloor().heightSmoothed();
 
     // If the floor is a visual plane then no light should be emitted.
     if(impacted < 0 && &cluster.visFloor() != &cluster.floor())
@@ -489,7 +492,7 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
 
         if(!de::fequal(def->offset[1], 0))
         {
-            lum->setZOffset(-tex.origin().y - def->offset[1]);
+            lum->setZOffset(-texOrigin.y - def->offset[1]);
         }
 
         if(Vector3f(def->color) != Vector3f(0, 0, 0))
@@ -506,7 +509,7 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
     lum->move(mo->origin);
 
     // Does the mobj need a Z origin offset?
-    coord_t zOffset = -mo->floorClip - Mobj_BobOffset(mo);
+    coord_t zOffset = -mo->floorClip - Mobj_BobOffset(*mo);
     if(!(mo->ddFlags & DDMF_NOFITBOTTOM) && impacted < 0)
     {
         // Raise the light out of the impacted surface.
@@ -519,67 +522,123 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
     mo->lumIdx = cluster.sector().map().addLumobj(*lum).indexInMap();
 }
 
-float Mobj_ShadowStrength(mobj_t *mo)
+void Mobj_AnimateHaloOcclussion(mobj_t &mob)
 {
-    if(!mo) return 0;
+    for(dint i = 0; i < DDMAXPLAYERS; ++i)
+    {
+        dbyte *haloFactor = &mob.haloFactors[i];
 
-    float const minSpriteAlphaLimit = .1f;
-    float ambientLightLevel, strength = .65f; ///< Default strength factor.
+        // Set the high bit of halofactor if the light is clipped. This will
+        // make P_Ticker diminish the factor to zero. Take the first step here
+        // and now, though.
+        if(mob.lumIdx == Lumobj::NoIndex || R_ViewerLumobjIsClipped(mob.lumIdx))
+        {
+            if(*haloFactor & 0x80)
+            {
+                dint f = (*haloFactor & 0x7f);  // - haloOccludeSpeed;
+                if(f < 0) f = 0;
+                *haloFactor = f;
+            }
+        }
+        else
+        {
+            if(!(*haloFactor & 0x80))
+            {
+                dint f = (*haloFactor & 0x7f);  // + haloOccludeSpeed;
+                if(f > 127) f = 127;
+                *haloFactor = 0x80 | f;
+            }
+        }
+
+        // Handle halofactor.
+        dint f = *haloFactor & 0x7f;
+        if(*haloFactor & 0x80)
+        {
+            // Going up.
+            f += ::haloOccludeSpeed;
+            if(f > 127)
+                f = 127;
+        }
+        else
+        {
+            // Going down.
+            f -= ::haloOccludeSpeed;
+            if(f < 0)
+                f = 0;
+        }
+
+        *haloFactor &= ~0x7f;
+        *haloFactor |= f;
+    }
+}
+
+dfloat Mobj_ShadowStrength(mobj_t const &mob)
+{
+    dfloat const minSpriteAlphaLimit = .1f;
+    dfloat ambientLightLevel, strength = .65f; ///< Default strength factor.
 
     // Is this mobj in a valid state for shadow casting?
-    if(!mo->state) return 0;
-    if(!Mobj_IsLinked(*mo)) return 0;
+    if(!mob.state) return 0;
+    if(!Mobj_HasSubspace(mob)) return 0;
 
     // Should this mobj even have a shadow?
-    if((mo->state->flags & STF_FULLBRIGHT) ||
-       (mo->ddFlags & DDMF_DONTDRAW) || (mo->ddFlags & DDMF_ALWAYSLIT))
+    if((mob.state->flags & STF_FULLBRIGHT) ||
+       (mob.ddFlags & DDMF_DONTDRAW) || (mob.ddFlags & DDMF_ALWAYSLIT))
         return 0;
 
-    Map &map = Mobj_BspLeafAtOrigin(*mo).map();
+    SectorCluster &cluster = Mobj_Cluster(mob);
 
     // Sample the ambient light level at the mobj's position.
+    Map &map = cluster.sector().map();
     if(useBias && map.hasLightGrid())
     {
         // Evaluate in the light grid.
-        ambientLightLevel = map.lightGrid().evaluateLightLevel(mo->origin);
+        ambientLightLevel = map.lightGrid().evaluateIntensity(mob.origin);
     }
     else
     {
-        ambientLightLevel = Mobj_BspLeafAtOrigin(*mo).sector().lightLevel();
-        Rend_ApplyLightAdaptation(ambientLightLevel);
+        ambientLightLevel = cluster.lightSourceIntensity();
     }
+    Rend_ApplyLightAdaptation(ambientLightLevel);
 
     // Sprites have their own shadow strength factor.
-    if(!useModels || !Mobj_ModelDef(*mo))
+    if(!useModels || !Mobj_ModelDef(mob))
     {
-        if(Sprite *sprite = Mobj_Sprite(*mo))
+        if(Sprite *sprite = Mobj_Sprite(mob))
         {
             if(sprite->hasViewAngle(0))
             {
-                Material *mat = sprite->viewAngle(0).material;
-                // Ensure we've prepared this.
-                MaterialSnapshot const &ms = mat->prepare(Rend_SpriteMaterialSpec());
+                SpriteViewAngle const &sprViewAngle = sprite->viewAngle(0);
+                DENG2_ASSERT(sprViewAngle.material);
+                MaterialAnimator &matAnimator = sprViewAngle.material->getAnimator(Rend_SpriteMaterialSpec());
 
-                averagealpha_analysis_t const *aa = (averagealpha_analysis_t const *)
-                    ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::AverageAlphaAnalysis);
-                DENG2_ASSERT(aa != 0);
+                // Ensure we've up to date info about the material.
+                matAnimator.prepare();
 
-                // We use an average which factors in the coverage ratio
-                // of alpha:non-alpha pixels.
-                /// @todo Constant weights could stand some tweaking...
-                float weightedSpriteAlpha = aa->alpha * (0.4f + (1 - aa->coverage) * 0.6f);
+                TextureVariant const *texture = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
+                DENG2_ASSERT(texture);
+                if(texture)
+                {
+                    auto const *aa = (averagealpha_analysis_t const *)texture->base().analysisDataPointer(Texture::AverageAlphaAnalysis);
+                    DENG2_ASSERT(aa);
 
-                // Almost entirely translucent sprite? => no shadow.
-                if(weightedSpriteAlpha < minSpriteAlphaLimit) return 0;
+                    // We use an average which factors in the coverage ratio
+                    // of alpha:non-alpha pixels.
+                    /// @todo Constant weights could stand some tweaking...
+                    float weightedSpriteAlpha = aa->alpha * (0.4f + (1 - aa->coverage) * 0.6f);
 
-                // Apply this factor.
-                strength *= de::min(1.f, .2f + weightedSpriteAlpha);
+                    // Almost entirely translucent sprite? => no shadow.
+                    if(weightedSpriteAlpha < minSpriteAlphaLimit) return 0;
+
+                    // Apply this factor.
+                    strength *= de::min(1.f, .2f + weightedSpriteAlpha);
+                }
             }
         }
     }
 
     // Factor in Mobj alpha.
-    strength *= Mobj_Alpha(mo);
+    strength *= Mobj_Alpha(mob);
 
     /// @note This equation is the same as that used for fakeradio.
     return (0.6f - ambientLightLevel * 0.4f) * strength;
@@ -602,7 +661,7 @@ ModelDef *Mobj_ModelDef(mobj_t const &mo, ModelDef **retNextModef, float *retInt
     if(!mo.state) return 0;
 
     state_t &st = *mo.state;
-    ModelDef *modef = resSys.modelDefForState(&st - states, mo.selector);
+    ModelDef *modef = resSys.modelDefForState(runtimeDefs.states.indexOf(&st), mo.selector);
     if(!modef) return 0; // No model available.
 
     float interp = -1;
@@ -662,12 +721,12 @@ ModelDef *Mobj_ModelDef(mobj_t const &mo, ModelDef **retNextModef, float *retInt
         }
         else if(worldTime)
         {
-            *retNextModef = resSys.modelDefForState(&st - states, mo.selector);
+            *retNextModef = resSys.modelDefForState(runtimeDefs.states.indexOf(&st), mo.selector);
         }
         else if(st.nextState > 0) // Check next state.
         {
             // Find the appropriate state based on interrange.
-            state_t *it = states + st.nextState;
+            state_t *it = &runtimeDefs.states[st.nextState];
             bool foundNext = false;
             if(modef->interRange[1] < 1)
             {
@@ -678,8 +737,8 @@ ModelDef *Mobj_ModelDef(mobj_t const &mo, ModelDef **retNextModef, float *retInt
                 int max = 20; // Let's not be here forever...
                 while(!stopScan)
                 {
-                    if(!((!resSys.modelDefForState(it - states) ||
-                          resSys.modelDefForState(it - states, mo.selector)->interRange[0] > 0) &&
+                    if(!((!resSys.modelDefForState(runtimeDefs.states.indexOf(it)) ||
+                          resSys.modelDefForState(runtimeDefs.states.indexOf(it), mo.selector)->interRange[0] > 0) &&
                          it->nextState > 0))
                     {
                         stopScan = true;
@@ -687,7 +746,7 @@ ModelDef *Mobj_ModelDef(mobj_t const &mo, ModelDef **retNextModef, float *retInt
                     else
                     {
                         // Scan interlinks, then go to the next state.
-                        ModelDef *mdit = resSys.modelDefForState(it - states, mo.selector);
+                        ModelDef *mdit = resSys.modelDefForState(runtimeDefs.states.indexOf(it), mo.selector);
                         if(mdit && mdit->interNext)
                         {
                             forever
@@ -715,7 +774,7 @@ ModelDef *Mobj_ModelDef(mobj_t const &mo, ModelDef **retNextModef, float *retInt
                         }
                         else
                         {
-                            it = states + it->nextState;
+                            it = &runtimeDefs.states[it->nextState];
                         }
                     }
 
@@ -727,7 +786,7 @@ ModelDef *Mobj_ModelDef(mobj_t const &mo, ModelDef **retNextModef, float *retInt
 
             if(!foundNext)
             {
-                *retNextModef = resSys.modelDefForState(it - states, mo.selector);
+                *retNextModef = resSys.modelDefForState(runtimeDefs.states.indexOf(it), mo.selector);
             }
         }
     }
@@ -775,37 +834,34 @@ coord_t Mobj_ApproxPointDistance(mobj_t* mo, coord_t const* point)
                                              point[VY] - mo->origin[VY]));
 }
 
-coord_t Mobj_BobOffset(mobj_t *mo)
+coord_t Mobj_BobOffset(mobj_t const &mob)
 {
-    if(mo->ddFlags & DDMF_BOB)
+    if(mob.ddFlags & DDMF_BOB)
     {
-        return (sin(MOBJ_TO_ID(mo) + App_WorldSystem().time() / 1.8286 * 2 * PI) * 8);
+        return (sin(MOBJ_TO_ID(&mob) + App_WorldSystem().time() / 1.8286 * 2 * PI) * 8);
     }
     return 0;
 }
 
-float Mobj_Alpha(mobj_t *mo)
+dfloat Mobj_Alpha(mobj_t const &mob)
 {
-    DENG_ASSERT(mo);
+    dfloat alpha = (mob.ddFlags & DDMF_BRIGHTSHADOW)? .80f :
+                   (mob.ddFlags & DDMF_SHADOW      )? .33f :
+                   (mob.ddFlags & DDMF_ALTSHADOW   )? .66f : 1;
 
-    float alpha = (mo->ddFlags & DDMF_BRIGHTSHADOW)? .80f :
-                  (mo->ddFlags & DDMF_SHADOW      )? .33f :
-                  (mo->ddFlags & DDMF_ALTSHADOW   )? .66f : 1;
-    /**
-     * The three highest bits of the selector are used for alpha.
-     * 0 = opaque (alpha -1)
-     * 1 = 1/8 transparent
-     * 4 = 1/2 transparent
-     * 7 = 7/8 transparent
-     */
-    int selAlpha = mo->selector >> DDMOBJ_SELECTOR_SHIFT;
+    // The three highest bits of the selector are used for alpha.
+    // 0 = opaque (alpha -1)
+    // 1 = 1/8 transparent
+    // 4 = 1/2 transparent
+    // 7 = 7/8 transparent
+    dint selAlpha = mob.selector >> DDMOBJ_SELECTOR_SHIFT;
     if(selAlpha & 0xe0)
     {
         alpha *= 1 - ((selAlpha & 0xe0) >> 5) / 8.0f;
     }
-    else if(mo->translucency)
+    else if(mob.translucency)
     {
-        alpha *= 1 - mo->translucency * reciprocal255;
+        alpha *= 1 - mob.translucency * reciprocal255;
     }
     return alpha;
 }
@@ -814,6 +870,24 @@ coord_t Mobj_Radius(mobj_t const &mobj)
 {
     return mobj.radius;
 }
+
+#ifdef __CLIENT__
+coord_t Mobj_ShadowRadius(mobj_t const &mobj)
+{
+    if(useModels)
+    {
+        if(ModelDef *modef = Mobj_ModelDef(mobj))
+        {
+            if(modef->shadowRadius > 0)
+            {
+                return modef->shadowRadius;
+            }
+        }
+    }
+    // Fall back to the visual radius.
+    return Mobj_VisualRadius(mobj);
+}
+#endif
 
 coord_t Mobj_VisualRadius(mobj_t const &mobj)
 {
@@ -846,13 +920,6 @@ AABoxd Mobj_AABox(mobj_t const &mobj)
                   origin.x + radius, origin.y + radius);
 }
 
-void Mobj_ConsoleRegister()
-{
-#ifdef __CLIENT__
-    C_VAR_BYTE("rend-mobj-light-auto", &mobjAutoLights, 0, 0, 1);
-#endif
-}
-
 D_CMD(InspectMobj)
 {
     DENG2_UNUSED(src);
@@ -876,15 +943,15 @@ D_CMD(InspectMobj)
 
     char const *moType = "Mobj";
 #ifdef __CLIENT__
-    ClMobjInfo *info = ClMobj_GetInfo(mo);
+    ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(mo);
     if(info) moType = "CLMOBJ";
 #endif
 
     LOG_MAP_MSG("%s %i [%p] State:%s (%i)")
-            << moType << id << mo << Def_GetStateName(mo->state) << (int)(mo->state - states);
+            << moType << id << mo << Def_GetStateName(mo->state) << runtimeDefs.states.indexOf(mo->state);
     LOG_MAP_MSG("Type:%s (%i) Info:[%p] %s")
             << Def_GetMobjName(mo->type) << mo->type << mo->info
-            << (mo->info? QString(" (%1)").arg(mo->info - mobjInfo) : "");
+            << (mo->info? QString(" (%1)").arg(runtimeDefs.mobjInfo.indexOf(mo->info)) : "");
     LOG_MAP_MSG("Tics:%i ddFlags:%08x") << mo->tics << mo->ddFlags;
 #ifdef __CLIENT__
     if(info)
@@ -912,4 +979,13 @@ D_CMD(InspectMobj)
     }
 
     return true;
+}
+
+void Mobj_ConsoleRegister()
+{
+    C_CMD("inspectmobj",    "i",    InspectMobj);
+
+#ifdef __CLIENT__
+    C_VAR_BYTE("rend-mobj-light-auto", &mobjAutoLights, 0, 0, 1);
+#endif
 }

@@ -1,6 +1,7 @@
 /** @file gamewidget.cpp
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,13 +21,13 @@
 
 #include "ui/widgets/gamewidget.h"
 #include "clientapp.h"
-#include "ui/dd_input.h"
+#include "ui/ddevent.h"
 #include "ui/ui_main.h"
-#include "ui/ui2_main.h"
 #include "ui/sys_input.h"
 #include "ui/busyvisual.h"
 #include "ui/clientwindowsystem.h"
 #include "ui/widgets/taskbarwidget.h"
+#include "ui/widgets/busywidget.h"
 #include "dd_def.h"
 #include "dd_main.h"
 #include "dd_loop.h"
@@ -152,11 +153,12 @@ void GameWidget::update()
 
     GL_ProcessDeferredTasks(FRAME_DEFERRED_UPLOAD_TIMEOUT);
 
-    // Request update of window contents.
-    root().as<ClientRootWidget>().window().draw();
-
-    // After the first frame, start timedemo.
-    //DD_CheckTimeDemo();
+    // Release the busy transition frame now when we can be sure that busy mode
+    // is over / didn't start at all.
+    if(!Con_TransitionInProgress())
+    {
+        ClientWindow::main().busy().releaseTransitionFrame();
+    }
 }
 
 void GameWidget::drawContent()

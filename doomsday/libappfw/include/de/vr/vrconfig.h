@@ -54,6 +54,13 @@ public:
         NUM_STEREO_MODES
     };
 
+    enum Eye
+    {
+        NeitherEye,
+        LeftEye,
+        RightEye
+    };
+
 public:
     VRConfig();
 
@@ -97,12 +104,6 @@ public:
      * @param heightInMeters  Height of the player in meters.
      */
     void setPhysicalPlayerHeight(float heightInMeters);
-
-    enum Eye {
-        NeitherEye,
-        LeftEye,
-        RightEye
-    };
 
     /**
      * Sets the eye currently used for rendering a frame. In stereoscopic modes,
@@ -156,6 +157,8 @@ public:
 
     float eyeHeightInMapUnits() const;
 
+    float mapUnitsPerMeter() const;
+
     float physicalPlayerHeight() const;
 
     /**
@@ -206,6 +209,16 @@ public:
     de::OculusRift const &oculusRift() const;
 
 public:
+    /**
+     * Determines if the VR mode will be applying a transformation to window contents
+     * that displaces the content from its "actual" location.
+     *
+     * @param mode  Mode.
+     *
+     * @return @c true, if contents will change position on screen.
+     */
+    static bool modeAppliesDisplacement(StereoMode mode);
+
     static bool modeNeedsStereoGLFormat(StereoMode mode);
 
 private:

@@ -1,7 +1,7 @@
-/** @file sector.h World map sector.
+/** @file sector.h  World map sector.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,131 +18,121 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
 #include "world/sector.h"
 
-#include "Face"
+#include <QList>
+#include <QtAlgorithms>
+#include <de/vector1.h>
+#include <de/Log>
 
-#include "BspLeaf"
+#include "world/map.h"
+#include "world/p_object.h"
 #include "Line"
 #include "Plane"
 #include "Surface"
-#include "world/map.h"
-#include "world/p_object.h"
-
-#include <de/Log>
-#include <de/vector1.h>
-#include <QList>
-#include <QtAlgorithms>
+#include "SectorCluster"
 
 using namespace de;
 
 DENG2_PIMPL(Sector)
 , DENG2_OBSERVES(Plane, HeightChange)
 {
-    AABoxd aaBox;         ///< Bounding box for the whole sector (all clusters).
-    bool needAABoxUpdate; ///< @c true= marked for update.
+    AABoxd aaBox;                     ///< Bounding box for the whole sector (all clusters).
+    bool needAABoxUpdate = true;
 
-    SoundEmitter emitter; ///< Head of the sound emitter chain.
+    ThinkerT<SoundEmitter> emitter;   ///< Head of the sound emitter chain.
 
-    Planes planes;        ///< All owned planes.
-    Clusters clusters;    ///< All owned BSP leaf clusters.
-    Sides sides;          ///< All referencing line sides (not owned).
-    mobj_t *mobjList;     ///< All mobjs "in" the sector (not owned).
+    typedef QList<Plane *> Planes;
+    Planes planes;                    ///< All owned planes.
 
-    float lightLevel;     ///< Ambient light level.
-    Vector3f lightColor;  ///< Ambient light color.
+    typedef QList<LineSide *> Sides;
+    Sides sides;                      ///< All referencing line sides (not owned).
 
-    int validCount;
+    mobj_t *mobjList = nullptr;       ///< All mobjs "in" the sector (not owned).
+
+    float lightLevel = 0;             ///< Ambient light level.
+    Vector3f lightColor;              ///< Ambient light color.
+
+    int validCount = 0;
 
 #ifdef __CLIENT__
-    coord_t roughArea;    ///< Approximated. @c <0 means an update is needed.
-
-    /// Ambient lighting data for the bias lighting model.
-    LightGridData lightGridData;
+    coord_t roughArea = 0;            ///< Approximated. @c <0 means an update is needed.
+    bool needRoughAreaUpdate = true;
 #endif
 
-    Instance(Public *i)
-        : Base(i)
-        , needAABoxUpdate(false) // No BSP leafs thus no geometry.
-        , mobjList(0)
-        , lightLevel(0)
-        , lightColor(Vector3f(0, 0, 0))
-        , validCount(0)
-#ifdef __CLIENT__
-        , roughArea(-1) // needs updating
-#endif
-    {
-        zap(emitter);
-#ifdef __CLIENT__
-        zap(lightGridData);
-#endif
-    }
-
-    ~Instance()
-    {
-        qDeleteAll(planes);
-        qDeleteAll(clusters);
-    }
+    Instance(Public *i) : Base(i) {}
+    ~Instance() { qDeleteAll(planes); }
 
     void notifyLightLevelChanged()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE(LightLevelChange, i)
-        {
-            i->sectorLightLevelChanged(self);
-        }
+        DENG2_FOR_PUBLIC_AUDIENCE(LightLevelChange, i) i->sectorLightLevelChanged(self);
     }
 
     void notifyLightColorChanged()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE(LightColorChange, i)
-        {
-            i->sectorLightColorChanged(self);
-        }
+        DENG2_FOR_PUBLIC_AUDIENCE(LightColorChange, i) i->sectorLightColorChanged(self);
     }
 
     /**
      * Update the axis-aligned bounding box in the map coordinate space to
      * encompass the geometry of all BSP leaf clusters of the sector.
      */
-    void updateAABox()
+    void updateAABoxIfNeeded()
     {
+        if(!needAABoxUpdate) return;
         needAABoxUpdate = false;
 
         aaBox.clear();
         bool haveGeometry = false;
-        foreach(Cluster *cluster, clusters)
+
+        self.map().forAllClusters(thisPublic, [this, &haveGeometry] (SectorCluster &cluster)
         {
             if(haveGeometry)
             {
-                V2d_UniteBox(aaBox.arvec2, cluster->aaBox().arvec2);
+                V2d_UniteBox(aaBox.arvec2, cluster.aaBox().arvec2);
             }
             else
             {
-                aaBox = cluster->aaBox();
+                aaBox = cluster.aaBox();
                 haveGeometry = true;
             }
-        }
+            return LoopContinue;
+        });
 
         // The XY origin of our sound emitter can now be updated as the center
         // point of the sector geometry is now known.
         if(haveGeometry)
         {
-            emitter.origin[VX] = (aaBox.minX + aaBox.maxX) / 2;
-            emitter.origin[VY] = (aaBox.minY + aaBox.maxY) / 2;
+            emitter->origin[0] = (aaBox.minX + aaBox.maxX) / 2;
+            emitter->origin[1] = (aaBox.minY + aaBox.maxY) / 2;
         }
         else
         {
-            emitter.origin[VX] = emitter.origin[VY] = 0;
+            emitter->origin[0] = emitter->origin[1] = 0;
         }
     }
+
+#ifdef __CLIENT__
+    void updateRoughAreaIfNeeded()
+    {
+        if(!needRoughAreaUpdate) return;
+        needRoughAreaUpdate = false;
+
+        roughArea = 0;
+        self.map().forAllClusters(thisPublic, [&] (SectorCluster &cluster)
+        {
+            roughArea += cluster.roughArea();
+            return LoopContinue;
+        });
+    }
+#endif // __CLIENT__
 
     /**
      * To be called to update sound emitter origins for all dependent surfaces.
      */
     void updateDependentSurfaceSoundEmitterOrigins()
     {
-        foreach(LineSide *side, sides)
+        for(LineSide *side : sides)
         {
             side->updateAllSoundEmitterOrigins();
             side->back().updateAllSoundEmitterOrigins();
@@ -153,11 +143,11 @@ DENG2_PIMPL(Sector)
     void planeHeightChanged(Plane & /*plane*/)
     {
         // Update the z-height origin of our sound emitter right away.
-        emitter.origin[VZ] = (self.floor().height() + self.ceiling().height()) / 2;
+        emitter->origin[2] = (self.floor().height() + self.ceiling().height()) / 2;
 
 #ifdef __CLIENT__
         // A plane move means we must re-apply missing material fixes.
-        foreach(LineSide *side, sides)
+        for(LineSide *side : sides)
         {
             side->fixMissingMaterials();
             side->back().fixMissingMaterials();
@@ -166,17 +156,6 @@ DENG2_PIMPL(Sector)
 
         updateDependentSurfaceSoundEmitterOrigins();
     }
-
-#ifdef __CLIENT__
-    void updateRoughArea()
-    {
-        roughArea = 0;
-        foreach(Cluster *cluster, clusters)
-        {
-            roughArea += cluster->roughArea();
-        }
-    }
-#endif // __CLIENT__
 };
 
 Sector::Sector(float lightLevel, Vector3f const &lightColor)
@@ -242,13 +221,29 @@ void Sector::unlink(mobj_t *mobj)
         mobj->sNext->sPrev = mobj->sPrev;
 
     // Not linked any more.
-    mobj->sNext = 0;
-    mobj->sPrev = 0;
+    mobj->sNext = nullptr;
+    mobj->sPrev = nullptr;
+
+    // Ensure this has been completely unlinked.
+#ifdef DENG2_DEBUG
+    for(mobj_t *iter = d->mobjList; iter; iter = iter->sNext)
+    {
+        DENG2_ASSERT(iter != mobj);
+    }
+#endif
 }
 
 void Sector::link(mobj_t *mobj)
 {
     if(!mobj) return;
+
+    // Ensure this isn't already linked.
+#ifdef DENG2_DEBUG
+    for(mobj_t *iter = d->mobjList; iter; iter = iter->sNext)
+    {
+        DENG2_ASSERT(iter != mobj);
+    }
+#endif
 
     // Prev pointers point to the pointer that points back to us.
     // (Which practically disallows traversing the list backwards.)
@@ -261,12 +256,8 @@ void Sector::link(mobj_t *mobj)
 
 SoundEmitter &Sector::soundEmitter()
 {
-    // The origin is determined by the axis-aligned bounding box, so perform
-    // any scheduled update now.
-    if(d->needAABoxUpdate)
-    {
-        d->updateAABox();
-    }
+    // Emitter origin depends on the axis-aligned bounding box.
+    d->updateAABoxIfNeeded();
     return d->emitter;
 }
 
@@ -285,12 +276,22 @@ void Sector::setValidCount(int newValidCount)
     d->validCount = newValidCount;
 }
 
-Plane &Sector::plane(int planeIndex)
+bool Sector::hasSkyMaskedPlane() const
 {
-    return const_cast<Plane &>(const_cast<Sector const &>(*this).plane(planeIndex));
+    for(Plane *plane : d->planes)
+    {
+        if(plane->surface().hasSkyMaskedMaterial())
+            return true;
+    }
+    return false;
 }
 
-Plane const &Sector::plane(int planeIndex) const
+int Sector::planeCount() const
+{
+    return d->planes.count();
+}
+
+Plane &Sector::plane(int planeIndex)
 {
     if(planeIndex >= 0 && planeIndex < d->planes.count())
     {
@@ -300,41 +301,9 @@ Plane const &Sector::plane(int planeIndex) const
     throw MissingPlaneError("Sector::plane", QString("Missing plane %1").arg(planeIndex));
 }
 
-Sector::Sides const &Sector::sides() const
+Plane const &Sector::plane(int planeIndex) const
 {
-    return d->sides;
-}
-
-void Sector::buildSides()
-{
-    d->sides.clear();
-
-#ifdef DENG2_QT_4_7_OR_NEWER
-    int count = 0;
-    foreach(Line *line, map().lines())
-    {
-        if(line->frontSectorPtr() == this || line->backSectorPtr()  == this)
-            ++count;
-    }
-
-    if(!count) return;
-
-    d->sides.reserve(count);
-#endif
-
-    foreach(Line *line, map().lines())
-    {
-        if(line->frontSectorPtr() == this)
-        {
-            // Ownership of the side is not given to the sector.
-            d->sides.append(&line->front());
-        }
-        else if(line->backSectorPtr()  == this)
-        {
-            // Ownership of the side is not given to the sector.
-            d->sides.append(&line->back());
-        }
-    }
+    return const_cast<Sector *>(this)->plane(planeIndex);
 }
 
 Plane *Sector::addPlane(Vector3f const &normal, coord_t height)
@@ -348,7 +317,7 @@ Plane *Sector::addPlane(Vector3f const &normal, coord_t height)
     {
         // We want notification of height changes so that we can update sound
         // emitter origins of dependent surfaces.
-        plane->audienceForHeightChange += d;
+        plane->audienceForHeightChange() += d;
     }
 
     // Once both floor and ceiling are known we can determine the z-height origin
@@ -356,107 +325,69 @@ Plane *Sector::addPlane(Vector3f const &normal, coord_t height)
     /// @todo fixme: Assume planes are defined in order.
     if(planeCount() == 2)
     {
-        d->emitter.origin[VZ] = (floor().height() + ceiling().height()) / 2;
+        d->emitter->origin[2] = (floor().height() + ceiling().height()) / 2;
     }
 
     return plane;
 }
 
-Sector::Planes const &Sector::planes() const
+LoopResult Sector::forAllPlanes(std::function<LoopResult (Plane &)> func) const
 {
-    return d->planes;
+    for(Plane *plane : d->planes)
+    {
+        if(auto result = func(*plane)) return result;
+    }
+    return LoopContinue;
 }
 
-Sector::Clusters const &Sector::clusters() const
+int Sector::sideCount() const
 {
-    return d->clusters;
+    return d->sides.count();
 }
 
-void Sector::buildClusters()
+LoopResult Sector::forAllSides(std::function<LoopResult (LineSide &)> func) const
 {
-    d->clusters.clear();
+    for(LineSide *side : d->sides)
+    {
+        if(auto result = func(*side)) return result;
+    }
+    return LoopContinue;
+}
 
-    // We'll need to recalculate the axis-aligned bounding box.
-    d->needAABoxUpdate = true;
-#ifdef __CLIENT__
-    // ...and the rough area approximation.
-    d->roughArea = -1;
+void Sector::buildSides()
+{
+    d->sides.clear();
+
+#ifdef DENG2_QT_4_7_OR_NEWER
+    int count = 0;
+    map().forAllLines([this, &count] (Line &line)
+    {
+        if(line.frontSectorPtr() == this || line.backSectorPtr()  == this)
+        {
+            ++count;
+        }
+        return LoopContinue;
+    });
+
+    if(!count) return;
+
+    d->sides.reserve(count);
 #endif
 
-    typedef QList<BspLeaf *> BspLeafs;
-    typedef QList<BspLeafs> BspLeafSets;
-    BspLeafSets bspLeafSets;
-
-    /*
-     * Separate the BSP leafs into edge-adjacency clusters. We'll do this by
-     * starting with a set per BSP leaf and then keep merging these sets until
-     * no more shared edges are found.
-     */
-    foreach(BspLeaf *bspLeaf, map().bspLeafs())
+    map().forAllLines([this] (Line &line)
     {
-        if(&bspLeaf->parent().as<Sector>() != this)
-            continue;
-
-        // BSP leaf with no geometry are excluded.
-        if(!bspLeaf->hasPoly())
-            continue;
-
-        bspLeafSets.append(BspLeafs());
-        bspLeafSets.last().append(bspLeaf);
-    }
-
-    if(bspLeafSets.isEmpty()) return;
-
-    // Merge sets whose BSP leafs share a common edge.
-    while(bspLeafSets.count() > 1)
-    {
-        bool didMerge = false;
-        for(int i = 0; i < bspLeafSets.count(); ++i)
-        for(int k = 0; k < bspLeafSets.count(); ++k)
+        if(line.frontSectorPtr() == this)
         {
-            if(i == k) continue;
-
-            foreach(BspLeaf *leaf, bspLeafSets[i])
-            {
-                HEdge *baseHEdge = leaf->poly().hedge();
-                HEdge *hedge = baseHEdge;
-                do
-                {
-                    if(hedge->twin().hasFace())
-                    {
-                        BspLeaf &otherLeaf = hedge->twin().face().mapElementAs<BspLeaf>();
-                        if(&otherLeaf.parent() == this &&
-                           bspLeafSets[k].contains(&otherLeaf))
-                        {
-                            // Merge k into i.
-                            bspLeafSets[i].append(bspLeafSets[k]);
-                            bspLeafSets.removeAt(k);
-
-                            // Compare the next pair.
-                            if(i >= k) i -= 1;
-                            k -= 1;
-
-                            // We'll need to repeat in any case.
-                            didMerge = true;
-                            break;
-                        }
-                    }
-                } while((hedge = &hedge->next()) != baseHEdge);
-
-                if(didMerge) break;
-            }
+            // Ownership of the side is not given to the sector.
+            d->sides.append(&line.front());
         }
-
-        if(!didMerge) break;
-    }
-    // Clustering complete.
-
-    // Build clusters.
-    foreach(BspLeafs const &bspLeafSet, bspLeafSets)
-    {
-        // BSP leaf ownership is not given to the cluster.
-        d->clusters.append(new Cluster(bspLeafSet));
-    }
+        else if(line.backSectorPtr()  == this)
+        {
+            // Ownership of the side is not given to the sector.
+            d->sides.append(&line.back());
+        }
+        return LoopContinue;
+    });
 }
 
 static void linkSoundEmitter(SoundEmitter &root, SoundEmitter &newEmitter)
@@ -474,16 +405,16 @@ void Sector::chainSoundEmitters()
     SoundEmitter &root = d->emitter;
 
     // Clear the root of the emitter chain.
-    root.thinker.next = root.thinker.prev = 0;
+    root.thinker.next = root.thinker.prev = nullptr;
 
     // Link plane surface emitters:
-    foreach(Plane *plane, d->planes)
+    for(Plane *plane : d->planes)
     {
         linkSoundEmitter(root, plane->soundEmitter());
     }
 
     // Link wall surface emitters:
-    foreach(LineSide *side, d->sides)
+    for(LineSide *side : d->sides)
     {
         if(side->hasSections())
         {
@@ -505,27 +436,14 @@ void Sector::chainSoundEmitters()
 
 AABoxd const &Sector::aaBox() const
 {
-    // Perform any scheduled update now.
-    if(d->needAABoxUpdate)
-    {
-        d->updateAABox();
-    }
+    d->updateAABoxIfNeeded();
     return d->aaBox;
 }
 
 coord_t Sector::roughArea() const
 {
-    // Perform any scheduled update now.
-    if(d->roughArea < 0)
-    {
-        d->updateRoughArea();
-    }
+    d->updateRoughAreaIfNeeded();
     return d->roughArea;
-}
-
-Sector::LightGridData &Sector::lightGridData()
-{
-    return d->lightGridData;
 }
 
 #endif // __CLIENT__
@@ -552,7 +470,7 @@ int Sector::property(DmuArgs &args) const
         args.setValue(DMT_SECTOR_RGB, &d->lightColor.z, 0);
         break;
     case DMU_EMITTER: {
-        SoundEmitter const *emitterAdr = &d->emitter;
+        SoundEmitter const *emitterAdr = d->emitter;
         args.setValue(DMT_SECTOR_EMITTER, &emitterAdr, 0);
         break; }
     case DMT_MOBJS:

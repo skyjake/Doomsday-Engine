@@ -65,7 +65,6 @@ DENG_USING_API(Server);
 DENG_USING_API(Svg);
 DENG_USING_API(Thinker);
 DENG_USING_API(Uri);
-DENG_USING_API(W);
 
 #ifdef __cplusplus
 } // extern "C"

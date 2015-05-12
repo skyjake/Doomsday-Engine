@@ -1,7 +1,7 @@
-/** @file biassource.cpp Shadow Bias (light) source.
+/** @file biassource.cpp  Shadow Bias (light) source.
  *
  * @authors Copyright © 2005-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,12 +18,12 @@
  */
 
 #include "de_base.h"
-#include "def_data.h"
 
 #include "world/worldsystem.h"
 #include "world/map.h"
 #include "BspLeaf"
-#include "Sector"
+#include "ConvexSubspace"
+#include "SectorCluster"
 
 #include "BiasDigest"
 
@@ -60,31 +60,31 @@ DENG2_PIMPL(BiasSource)
 
     Instance(Public *i, Vector3d const &origin, float intensity,
              Vector3f const &color, float minLight, float maxLight)
-        : Base(i),
-          origin(origin),
-          bspLeaf(0),
-          inVoid(true),
-          primaryIntensity(intensity),
-          intensity(intensity),
-          color(color),
-          minLight(minLight),
-          maxLight(maxLight),
-          lastUpdateTime(0), // Force an update.
-          changed(true)
+        : Base(i)
+        , origin          (origin)
+        , bspLeaf         (0)
+        , inVoid          (true)
+        , primaryIntensity(intensity)
+        , intensity       (intensity)
+        , color           (color)
+        , minLight        (minLight)
+        , maxLight        (maxLight)
+        , lastUpdateTime  (0) // Force an update.
+        , changed         (true)
     {}
 
     Instance(Public *i, Instance const &other)
-        : Base(i),
-          origin(other.origin),
-          bspLeaf(other.bspLeaf),
-          inVoid(other.inVoid),
-          primaryIntensity(other.primaryIntensity),
-          intensity(other.intensity),
-          color(other.color),
-          minLight(other.minLight),
-          maxLight(other.maxLight),
-          lastUpdateTime(0), // Force an update.
-          changed(true)
+        : Base(i)
+        , origin          (other.origin)
+        , bspLeaf         (other.bspLeaf)
+        , inVoid          (other.inVoid)
+        , primaryIntensity(other.primaryIntensity)
+        , intensity       (other.intensity)
+        , color           (other.color)
+        , minLight        (other.minLight)
+        , maxLight        (other.maxLight)
+        , lastUpdateTime  (0) // Force an update.
+        , changed         (true)
     {}
 
     void updateBspLocation()
@@ -93,7 +93,7 @@ DENG2_PIMPL(BiasSource)
         /// @todo Do not assume the current map.
         bspLeaf = &App_WorldSystem().map().bspLeafAt(origin);
 
-        bool newInVoidState = !(bspLeaf->polyContains(origin));
+        bool newInVoidState = !(bspLeaf->hasSubspace() && bspLeaf->subspace().contains(origin));
         if(inVoid != newInVoidState)
         {
             inVoid = newInVoidState;
@@ -279,18 +279,21 @@ bool BiasSource::trackChanges(BiasDigest &changes, uint digestIndex, uint curren
         float const oldIntensity = intensity();
         float newIntensity = 0;
 
-        Sector const &sector = d->bspLeaf->sector();
-
-        // Lower intensities are useless for light emission.
-        if(sector.lightLevel() >= d->maxLight)
+        if(ConvexSubspace *subspace = d->bspLeaf->subspacePtr())
         {
-            newIntensity = d->primaryIntensity;
-        }
+            SectorCluster &cluster = subspace->cluster();
 
-        if(sector.lightLevel() >= d->minLight && d->minLight != d->maxLight)
-        {
-            newIntensity = d->primaryIntensity *
-                (sector.lightLevel() - d->minLight) / (d->maxLight - d->minLight);
+            // Lower intensities are useless for light emission.
+            if(cluster.lightSourceIntensity() >= d->maxLight)
+            {
+                newIntensity = d->primaryIntensity;
+            }
+
+            if(cluster.lightSourceIntensity() >= d->minLight && d->minLight != d->maxLight)
+            {
+                newIntensity = d->primaryIntensity *
+                    (cluster.lightSourceIntensity() - d->minLight) / (d->maxLight - d->minLight);
+            }
         }
 
         if(newIntensity != oldIntensity)

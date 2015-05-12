@@ -32,7 +32,7 @@ static Value *Function_App_LoadFont(Context &, Function::ArgumentValues const &a
     try
     {
         // Try to load the specific font.
-        Block data(App::fileSystem().root().locate<File const>(args.at(0)->asText()));
+        Block data(App::rootFolder().locate<File const>(args.at(0)->asText()));
         int id;
         id = QFontDatabase::addApplicationFontFromData(data);
         if(id < 0)
@@ -86,6 +86,7 @@ DENG2_PIMPL_NOREF(BaseGuiApp)
     Binder binder;
     QScopedPointer<PersistentState> uiState;
     GLShaderBank shaders;
+    WaveformBank waveforms;
     VRConfig vr;
 };
 
@@ -103,6 +104,20 @@ BaseGuiApp::BaseGuiApp(int &argc, char **argv)
 void BaseGuiApp::initSubsystems(SubsystemInitFlags flags)
 {
     GuiApp::initSubsystems(flags);
+    
+    double dpiFactor = 1.0;
+
+#ifdef DENG2_QT_5_0_OR_NEWER
+    dpiFactor = devicePixelRatio();
+#endif
+
+    // The "-dpi" option overrides the detected DPI factor.
+    if(auto dpi = commandLine().check("-dpi", 1))
+    {
+        dpiFactor = dpi.params.at(0).toDouble();
+    }
+
+    scriptSystem().nativeModule("DisplayMode").set("DPI_FACTOR", dpiFactor);
 
     d->uiState.reset(new PersistentState("UIState"));
 }
@@ -120,6 +135,11 @@ PersistentState &BaseGuiApp::persistentUIState()
 GLShaderBank &BaseGuiApp::shaders()
 {
     return app().d->shaders;
+}
+
+WaveformBank &BaseGuiApp::waveforms()
+{
+    return app().d->waveforms;
 }
 
 VRConfig &BaseGuiApp::vr()

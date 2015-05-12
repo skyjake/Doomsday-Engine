@@ -151,22 +151,22 @@ DENG_API_T(Rend);
 #ifndef DENG_NO_API_MACROS_RENDER
 #define R_SetupFogDefaults          _api_Rend.SetupFogDefaults
 #define R_SetupFog                  _api_Rend.SetupFog
-#define Rend_CacheForMobjType		_api_Rend.CacheForMobjType
-#define Models_CacheForState		_api_Rend.CacheModelsForState
+#define Rend_CacheForMobjType       _api_Rend.CacheForMobjType
+#define Models_CacheForState        _api_Rend.CacheModelsForState
 #define R_RenderPlayerView          _api_Rend.RenderPlayerView
 #define R_SetViewOrigin             _api_Rend.SetViewOrigin
 #define R_SetViewAngle              _api_Rend.SetViewAngle
 #define R_SetViewPitch              _api_Rend.SetViewPitch
-#define R_ViewWindowGeometry		_api_Rend.ViewWindowGeometry
+#define R_ViewWindowGeometry        _api_Rend.ViewWindowGeometry
 #define R_ViewWindowOrigin          _api_Rend.ViewWindowOrigin
 #define R_ViewWindowSize            _api_Rend.ViewWindowSize
-#define R_SetViewWindowGeometry		_api_Rend.SetViewWindowGeometry
+#define R_SetViewWindowGeometry     _api_Rend.SetViewWindowGeometry
 #define R_SetBorderGfx              _api_Rend.SetBorderGfx
 #define R_ViewPortGeometry          _api_Rend.ViewPortGeometry
 #define R_ViewPortOrigin            _api_Rend.ViewPortOrigin
 #define R_ViewPortSize              _api_Rend.ViewPortSize
 #define R_SetViewPortPlayer         _api_Rend.SetViewPortPlayer
-#define R_ChooseAlignModeAndScaleFactor		_api_Rend.ChooseAlignModeAndScaleFactor
+#define R_ChooseAlignModeAndScaleFactor     _api_Rend.ChooseAlignModeAndScaleFactor
 #define R_ChooseScaleMode2          _api_Rend.ChooseScaleMode2
 #define R_ChooseScaleMode           _api_Rend.ChooseScaleMode
 #define R_GetSpriteInfo             _api_Rend.GetSpriteInfo

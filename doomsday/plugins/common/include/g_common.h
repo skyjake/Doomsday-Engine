@@ -1,7 +1,7 @@
 /** @file g_common.h  Top-level (common) game routines.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -22,62 +22,29 @@
 #define LIBCOMMON_GAME_H
 
 #include "dd_share.h"
+#include <doomsday/uri.h>
 #include "fi_lib.h"
 #include "mobj.h"
 #include "player.h"
 
-DENG_EXTERN_C dd_bool singledemo;
-
-DENG_EXTERN_C uint gameEpisode;
-
-DENG_EXTERN_C Uri *gameMapUri;
-DENG_EXTERN_C uint gameMapEntrance;
-DENG_EXTERN_C uint gameMap; ///< @todo refactor away.
-
-// Game status cvars:
-DENG_EXTERN_C int gsvEpisode;
-DENG_EXTERN_C int gsvMap;
-#if __JHEXEN__
-DENG_EXTERN_C int gsvHub;
-#endif
-
 #if __cplusplus
-extern "C" {
-#endif
-
-void G_Register(void);
-
-dd_bool G_QuitInProgress(void);
-
-/**
- * Returns the current logical game state.
- */
-gamestate_t G_GameState(void);
-
-/**
- * Change the game's state.
- *
- * @param state  The state to change to.
- */
-void G_ChangeGameState(gamestate_t state);
-
-gameaction_t G_GameAction(void);
-
-void G_SetGameAction(gameaction_t action);
-
-#if __cplusplus
-} // extern "C"
+class SaveSlots;
 
 extern GameRuleset defaultGameRules;
+
+extern de::Uri nextMapUri;
+extern uint nextMapEntryPoint;
 
 /**
  * Schedule a new game session (deferred).
  *
+ * @param rules        Game rules to apply.
+ * @param episodeId    Episode identifier.
  * @param mapUri       Map identifier.
  * @param mapEntrance  Logical map entry point number.
- * @param rules        Game rules to apply.
  */
-void G_SetGameActionNewSession(Uri const &mapUri, uint mapEntrance, GameRuleset const &rules);
+void G_SetGameActionNewSession(GameRuleset const &rules, de::String episodeId,
+                               de::Uri const &mapUri, uint mapEntrance = 0);
 
 /**
  * Schedule a game session save (deferred).
@@ -100,34 +67,128 @@ bool G_SetGameActionSaveSession(de::String slotId, de::String *userDescription =
  */
 bool G_SetGameActionLoadSession(de::String slotId);
 
-extern "C" {
-#endif
-
 /**
  * Schedule a game session map exit, possibly leading into an intermission sequence.
  * (if __JHEXEN__ the intermission will only be displayed when exiting a
  * hub and in DeathMatch games)
  *
- * @param newMap         Logical map number we are entering (i.e., not a warp/translated number).
- * @param mapEntryPoint  Logical map entry point on the new map.
- * @param secretExit     @c true if the exit taken was marked as 'secret'.
+ * @param nextMapUri         Unique identifier of the map number we are entering.
+ * @param nextMapEntryPoint  Logical map entry point on the new map.
+ * @param secretExit         @c true if the exit taken was marked as 'secret'.
  */
-void G_SetGameActionMapCompleted(uint newMap, uint entryPoint, dd_bool secretExit);
+void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint nextMapEntryPoint = 0,
+                                 bool secretExit = false);
 
 /**
- * Returns the InFine script with the specified @a scriptId; otherwise @c 0.
+ * @param episodeId  Identifier of the episode to lookup the title of.
  */
-char const *G_InFine(char const *scriptId);
+de::String G_EpisodeTitle(de::String episodeId);
 
 /**
- * Returns the InFine @em briefing script for the specified @a mapUri; otherwise @c 0.
+ * Returns the effective map-info definition Record associated with the given
+ * @a mapUri (which may be the default definition, if invalid/unknown).
+ *
+ * @param mapUri  Unique identifier for the map to lookup map-info data for.
+ *
+ * @todo: Should use WorldSystem::mapInfoForMapUri() instead.
  */
-char const *G_InFineBriefing(Uri const *mapUri);
+de::Record const &G_MapInfoForMapUri(de::Uri const &mapUri);
 
 /**
- * Returns the InFine @em debriefing script for the specified @a mapUri; otherwise @c 0.
+ * @param mapUri  Identifier of the map to lookup the author of.
  */
-char const *G_InFineDebriefing(Uri const *mapUri);
+de::String G_MapAuthor(de::Uri const &mapUri, bool supressGameAuthor = false);
+
+/**
+ * @param mapUri  Identifier of the map to lookup the title of.
+ */
+de::String G_MapTitle(de::Uri const &mapUri);
+
+/**
+ * @param mapUri  Identifier of the map to lookup the title of.
+ */
+de::Uri G_MapTitleImage(de::Uri const &mapUri);
+
+/**
+ * Compose a textual, rich-formatted description of the the referenced map, containing
+ * pertinent information and/or metadata (such as the title and author).
+ *
+ * @param episodeId  Unique episode identifier.
+ * @param mapUri     Unique map identifier.
+ *
+ * @return  Rich-formatted description of the map.
+ */
+de::String G_MapDescription(de::String episodeId, de::Uri const &mapUri);
+
+/**
+ * Attempt to extract the logical map number encoded in the @a mapUri. Assumes the default
+ * form for the current game mode (i.e., MAPXX or EXMY).
+ *
+ * @param mapUri  Unique identifier of the map.
+ *
+ * @return  Extracted/decoded map number, otherwise @c 0.
+ *
+ * @deprecated  Should use map URIs instead.
+ */
+uint G_MapNumberFor(de::Uri const &mapUri);
+
+/**
+ * Compose a Uri for the identified @a episode and @a map combination using the default
+ * form for the current game mode (i.e., MAPXX or EXMY).
+ *
+ * @param episode  Logical episode number.
+ * @param map      Logical map number.
+ *
+ * @return  Resultant Uri.
+ *
+ * @deprecated  Should use map URIs instead. Map references composed of a logical episode
+ * and map number pair are a historical legacy that should only be used when necessary,
+ * for compatibility reasons.
+ */
+de::Uri G_ComposeMapUri(uint episode, uint map);
+
+/**
+ * Chooses a default user description for a saved session.
+ *
+ * @param saveName      Name of the saved session from which the existing description should
+ *                      be re-used. Use a zero-length string to disable.
+ * @param autogenerate  @c true to generate a useful description (map name, map time, etc...)
+ *                      if none exists for the @a saveName referenced.
+ */
+de::String G_DefaultSavedSessionUserDescription(de::String const &saveName, bool autogenerate = true);
+
+/**
+ * Returns the game's SaveSlots.
+ */
+SaveSlots &G_SaveSlots();
+
+extern "C" {
+#endif
+
+/**
+ * Returns @c true, if the game is currently quiting.
+ */
+dd_bool G_QuitInProgress(void);
+
+/**
+ * Returns the current logical game state.
+ */
+gamestate_t G_GameState(void);
+
+/**
+ * Change the current logical game state to @a newState.
+ */
+void G_ChangeGameState(gamestate_t newState);
+
+/**
+ * Returns the current game action.
+ */
+gameaction_t G_GameAction(void);
+
+/**
+ * Change the current game action to @a newAction.
+ */
+void G_SetGameAction(gameaction_t newAction);
 
 /**
  * Reveal the game @em help display.
@@ -143,85 +204,11 @@ dd_bool G_StartFinale(char const *script, int flags, finale_mode_t mode, char co
 void G_BeginMap(void);
 
 /**
- * Called when a player leaves a map.
- *
- * Jobs include; striping keys, inventory and powers from the player and configuring other
- * player-specific properties ready for the next map.
- *
- * @param player  Id of the player to configure.
- */
-void G_PlayerLeaveMap(int player);
-
-/**
- * Determines whether an intermission should be scheduled (if any) when the players leave the
- * @em current map.
- */
-dd_bool G_IntermissionActive(void);
-
-/**
- * To be called to initiate the intermission.
- */
-void G_IntermissionBegin(void);
-
-/**
  * To be called when the intermission ends.
  */
 void G_IntermissionDone(void);
 
-/**
- * Returns the logical episode number for the identified map.
- *
- * @param mapUri  Unique identifier of the map to lookup.
- */
-uint G_EpisodeNumberFor(Uri const *mapUri);
-
-/**
- * Returns the logical map number for the identified map.
- *
- * @param mapUri  Unique identifier of the map to lookup.
- */
-uint G_MapNumberFor(Uri const *mapUri);
-
-/**
- * Compose a Uri for the identified @a episode and @a map combination.
- *
- * @param episode  Logical episode number.
- * @param map      Logical map number.
- *
- * @return  Resultant Uri. Must be destroyed with Uri_Delete() when no longer needed.
- */
-Uri *G_ComposeMapUri(uint episode, uint map);
-
-/**
- * Determine if the specified @a episode and @a map value pair are valid and if not,
- * adjust their are values within the ranges defined by the current game type and mode.
- *
- * @param episode  Logical episode number to be validated.
- * @param map      Logical map number to be validated.
- *
- * @return  @c true= The original @a episode and @a map value pair were already valid.
- */
-dd_bool G_ValidateMap(uint *episode, uint *map);
-
-/**
- * Return the next map according to the default map progression.
- *
- * @param episode     Current episode.
- * @param map         Current map.
- * @param secretExit
- *
- * @return  The next map.
- */
-uint G_GetNextMap(uint episode, uint map, dd_bool secretExit);
-
-/// @return  Logical map number.
-uint G_NextLogicalMapNumber(dd_bool secretExit);
-
-/// @return  Logical map number.
-uint G_LogicalMapNumber(uint episode, uint map);
-
-/// @return  Logical map number.
-uint G_CurrentLogicalMapNumber(void);
+AutoStr *G_CurrentMapUriPath(void);
 
 int G_Ruleset_Skill();
 #if !__JHEXEN__
@@ -235,6 +222,9 @@ byte G_Ruleset_RandomClasses();
 byte G_Ruleset_RespawnMonsters();
 #endif
 
+/// @todo remove me
+void G_SetGameActionMapCompletedAndSetNextMap(void);
+
 D_CMD( CCmdMakeLocal );
 D_CMD( CCmdSetCamera );
 D_CMD( CCmdSetViewLock );
@@ -245,32 +235,6 @@ D_CMD( CCmdExitLevel );
 } // extern "C"
 #endif
 
-#if __cplusplus
-#include <de/String>
+DENG_EXTERN_C dd_bool singledemo;
 
-class SaveSlots;
-
-/**
- * Chooses a default user description for a saved session.
- *
- * @param saveName      Name of the saved session from which the existing description should be
- *                      re-used. Use a zero-length string to disable.
- * @param autogenerate  @c true= generate a useful description (map name, map time, etc...) if none
- *                      exists for the referenced save @a slotId.
- */
-de::String G_DefaultSavedSessionUserDescription(de::String const &saveName, bool autogenerate = true);
-
-/**
- * Configures @a metadata according to the current game session configuration.
- *
- * @param metadata  Current session metadata is written here.
- */
-void G_ApplyCurrentSessionMetadata(de::game::SessionMetadata &metadata);
-
-/**
- * Returns the game's SaveSlots.
- */
-SaveSlots &G_SaveSlots();
-
-#endif // __cplusplus
-#endif // LIBCOMMON_GAME_H
+#endif  // LIBCOMMON_GAME_H

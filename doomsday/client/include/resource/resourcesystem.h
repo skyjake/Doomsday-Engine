@@ -1,6 +1,6 @@
 /** @file resourcesystem.h  Resource subsystem.
  *
- * @authors Copyright © 2013-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,10 +19,11 @@
 #ifndef DENG_RESOURCESYSTEM_H
 #define DENG_RESOURCESYSTEM_H
 
-#include "def_data.h"
-#include "resourceclass.h"
+#include <doomsday/defs/ded.h>
+#include <doomsday/resource/resourceclass.h>
 #include "resource/animgroup.h"
 #include "resource/colorpalette.h"
+#include "MapDef"
 #ifdef __CLIENT__
 #  include "AbstractFont"
 #  include "BitmapFont"
@@ -38,9 +39,9 @@
 #include "Texture"
 #include "TextureScheme"
 #include "resource/rawtexture.h"
-#include "resource/wad.h"
-#include "resource/zip.h"
-#include "uri.hh"
+#include <doomsday/filesys/wad.h>
+#include <doomsday/filesys/zip.h>
+#include <doomsday/uri.h>
 #include <de/Error>
 #include <de/String>
 #include <de/System>
@@ -109,12 +110,9 @@ public:
     DENG2_ERROR(UnknownFontIdError);
 #endif
 
-    typedef QSet<de::MaterialManifest *> MaterialManifestSet;
+    typedef QSet<MaterialManifest *> MaterialManifestSet;
     typedef MaterialManifestSet MaterialManifestGroup; // Alias
     typedef QList<MaterialManifestGroup *> MaterialManifestGroups;
-
-    typedef QMap<de::String, de::MaterialScheme *> MaterialSchemes;
-    typedef QList<Material *> AllMaterials;
 
     typedef QMap<de::String, de::TextureScheme *> TextureSchemes;
     typedef QList<de::Texture *> AllTextures;
@@ -125,6 +123,7 @@ public:
 #endif
 
     typedef QList<Sprite *> SpriteSet;
+    typedef de::PathTreeT<MapDef> MapDefs;
 
 public:
     /**
@@ -139,13 +138,19 @@ public:
     /**
      * Lookup a ResourceClass by symbolic @a name.
      */
-    de::ResourceClass &resClass(de::String name);
+    ResourceClass &resClass(de::String name);
 
     /**
      * Lookup a ResourceClass by @a id.
      * @todo Refactor away.
      */
-    de::ResourceClass &resClass(resourceclassid_t id);
+    ResourceClass &resClass(resourceclassid_t id);
+
+    /**
+     * Gets the path from "Config.resource.iwadFolder" and makes it the sole override
+     * path for the Packages scheme.
+     */
+    void updateOverrideIWADPathFromConfig();
 
     void clearAllResources();
     void clearAllRuntimeResources();
@@ -234,7 +239,7 @@ public:
      * @param path  The path to search for.
      * @return  Found material manifest.
      */
-    de::MaterialManifest &materialManifest(de::Uri const &path) const;
+    MaterialManifest &materialManifest(de::Uri const &path) const;
 
     /**
      * Lookup a manifest by unique identifier.
@@ -244,12 +249,12 @@ public:
      *
      * @return  The associated manifest.
      */
-    de::MaterialManifest &toMaterialManifest(materialid_t id) const;
+    MaterialManifest &toMaterialManifest(materialid_t id) const;
 
     /**
      * Returns the total number of unique materials in the collection.
      */
-    uint materialCount() const { return allMaterials().count(); }
+    int materialCount() const;
 
     /**
      * Returns @c true iff a MaterialScheme exists with the symbolic @a name.
@@ -269,25 +274,28 @@ public:
     de::MaterialScheme &materialScheme(de::String name) const;
 
     /**
-     * Returns a list of all the schemes for efficient traversal.
-     */
-    MaterialSchemes const &allMaterialSchemes() const;
-
-    /**
      * Returns the total number of material manifest schemes in the collection.
      */
-    inline int materialSchemeCount() const { return allMaterialSchemes().count(); }
+    int materialSchemeCount() const;
+
+    /**
+     * Iterate through all the material resource schemes of the resource system.
+     *
+     * @param func  Callback to make for each MaterialScheme.
+     */
+    de::LoopResult forAllMaterialSchemes(std::function<de::LoopResult (de::MaterialScheme &)> func) const;
 
     /**
      * Clear all materials (and their manifests) in all schemes.
      *
-     * @see allMaterialSchemes(), MaterialScheme::clear().
+     * @see forAllMaterialSchemes(), MaterialScheme::clear().
      */
     inline void clearAllMaterialSchemes() {
-        foreach(de::MaterialScheme *scheme, allMaterialSchemes()) {
-            scheme->clear();
-        }
-        DENG2_ASSERT(allMaterials().isEmpty()); // sanity check
+        forAllMaterialSchemes([] (de::MaterialScheme &scheme) {
+            scheme.clear();
+            return de::LoopContinue;
+        });
+        DENG2_ASSERT(materialCount() == 0); // sanity check
     }
 
     /**
@@ -324,15 +332,16 @@ public:
      *
      * @return  Manifest for this URI.
      */
-    inline de::MaterialManifest &declareMaterial(de::Uri const &uri) {
+    inline MaterialManifest &declareMaterial(de::Uri const &uri) {
         return materialScheme(uri.scheme()).declare(uri.path());
     }
 
     /**
-     * Returns a list of all the unique material instances in the collection,
-     * from all schemes.
+     * Iterate through all the materials of the resource system.
+     *
+     * @param func  Callback to make for each Material.
      */
-    AllMaterials const &allMaterials() const;
+    de::LoopResult forAllMaterials(std::function<de::LoopResult (Material &)> func) const;
 
     /**
      * Determines if a texture exists for @a path.
@@ -371,12 +380,12 @@ public:
      * Convenient method of searching the texture collection for a texture with
      * the specified @a schemeName and @a resourceUri.
      *
-     * @param schemeName  Unique name of the scheme in which to search.
+     * @param schemeName   Unique name of the scheme in which to search.
      * @param resourceUri  Path to the (image) resource to find the texture for.
      *
-     * @return  The found texture; otherwise @c 0.
+     * @return  The found texture; otherwise @c nullptr.
      */
-    de::Texture *texture(de::String schemeName, de::Uri const *resourceUri);
+    de::Texture *texture(de::String schemeName, de::Uri const &resourceUri);
 
     /**
      * Determines if a texture manifest exists for a declared texture on @a path.
@@ -736,6 +745,27 @@ public:
 #endif // __CLIENT__
 
     /**
+     * Convenient method of locating a MapDef for the given @a mapUri.
+     */
+    MapDef *mapDef(de::Uri const &mapUri) const;
+
+    /**
+     * Provides immutable access to a list containing all MapDefs in the system,
+     * for efficient traversal.
+     */
+    MapDefs const &allMapDefs() const;
+
+    /**
+     * @overload
+     */
+    MapDefs &allMapDefs();
+
+    /**
+     * Returns the total number of MapDefs in the system.
+     */
+    inline int mapDefCount() const { return allMapDefs().size(); }
+
+    /**
      * Returns the total number of animation/precache groups.
      */
     int animGroupCount();
@@ -746,16 +776,18 @@ public:
     void clearAllAnimGroups();
 
     /**
-     * Returns the AnimGroup associated with @a uniqueId (1-based); otherwise @c 0.
-     */
-    de::AnimGroup *animGroup(int uniqueId);
-
-    /**
      * Construct a new animation group.
      *
      * @param flags  @ref animationGroupFlags
      */
     de::AnimGroup &newAnimGroup(int flags);
+
+    /**
+     * Returns the AnimGroup associated with @a uniqueId (1-based); otherwise @c 0.
+     */
+    de::AnimGroup *animGroup(int uniqueId);
+
+    de::AnimGroup *animGroupForTexture(de::TextureManifest const &textureManifest);
 
     /**
      * Returns the total number of color palettes.
@@ -810,18 +842,6 @@ public:
     void setDefaultColorPalette(ColorPalette *newDefaultPalette);
 
 #ifdef __CLIENT__
-
-    /**
-     * Rewind all material animations back to their initial/starting state.
-     *
-     * @see allMaterials(), MaterialAnimation::restart()
-     */
-    inline void restartAllMaterialAnimations() {
-        foreach(Material *material, allMaterials())
-        foreach(MaterialAnimation *animation, material->animations()) {
-            animation->restart();
-        }
-    }
 
     /**
      * Prepare resources for the current Map.
@@ -884,16 +904,17 @@ public:
     bool convertLegacySavegames(de::String const &gameId, de::String const &sourcePath = "");
 
 public: /// @todo Should be private:
-    void initCompositeTextures();
-    void initFlatTextures();
-    void initRawTextures();
-    void initSpriteTextures();
+    void initTextures();
     void initSystemTextures();
 
+    void initMapDefs();
     void initSprites();
 #ifdef __CLIENT__
     void initModels();
 #endif
+
+    void clearAllMapDefs();
+    void clearAllRawTextures();
 
     void clearAllTextureSpecs();
     void pruneUnusedTextureSpecs();
@@ -903,6 +924,8 @@ public:
      * Register the console commands, variables, etc..., of this module.
      */
     static void consoleRegister();
+
+    static de::String resolveSymbol(de::String const &symbol);
 
 private:
     DENG2_PRIVATE(d)

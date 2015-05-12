@@ -34,7 +34,7 @@ public:
     ButtonWidget &auxiliary();
 
     void useNormalStyle();
-    void useInvertedStyle();
+    void invertStyle();
 
 protected:
     void updateStyle();

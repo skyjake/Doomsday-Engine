@@ -1,11 +1,9 @@
-/**
- * @file joystick.h
- * Joystick input pre-processing. @ingroup input
+/** @file joystick.h  Joystick input pre-processing.
  *
  * @see sys_input.h
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -44,13 +42,13 @@ extern "C" {
 #define IJOY_POV_CENTER -1
 
 typedef struct joystate_s {
-    int             numAxes;        // Number of axes present.
-    int             numButtons;     // Number of buttons present.
-    int             numHats;        // Number of hats present.
-    int             axis[IJOY_MAXAXES];
-    int             buttonDowns[IJOY_MAXBUTTONS]; // Button down count.
-    int             buttonUps[IJOY_MAXBUTTONS]; // Button up count.
-    float           hatAngle[IJOY_MAXHATS];    // 0 - 359 degrees.
+    int numAxes;                       ///< Number of axes present.
+    int numButtons;                    ///< Number of buttons present.
+    int numHats;                       ///< Number of hats present.
+    int axis[IJOY_MAXAXES];
+    int buttonDowns[IJOY_MAXBUTTONS];  ///< Button down count.
+    int buttonUps[IJOY_MAXBUTTONS];    ///< Button up count.
+    float hatAngle[IJOY_MAXHATS];      ///< 0 - 359 degrees.
 } joystate_t;
 
 void Joystick_Register(void);
@@ -61,7 +59,7 @@ void Joystick_Shutdown(void);
 
 dd_bool Joystick_IsPresent(void);
 
-void Joystick_GetState(joystate_t* state);
+void Joystick_GetState(joystate_t *state);
 
 #ifdef __cplusplus
 } // extern "C"

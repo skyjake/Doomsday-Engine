@@ -28,7 +28,7 @@
 #define LIBGUI_DISPLAYMODE_H
 
 #include "libgui.h"
-#include "de/libdeng2.h"
+#include "de/libcore.h"
 
 #ifdef __cplusplus
 extern "C" {

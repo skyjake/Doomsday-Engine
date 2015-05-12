@@ -70,6 +70,56 @@ defineTest(doPostLink) {
     export(QMAKE_POST_LINK)
 }
 
+defineTest(buildPackage) {
+    # 1: path of a .pack source directory
+    # 2: target directory where the zipped .pack is written
+    runPython2($$PWD/../build/scripts/buildpackage.py \"$${1}.pack\" \"$$2\")
+
+    # Automatically deploy the package.
+    builtpacks.files += $$2/$${1}.pack
+    export(builtpacks.files)
+}
+
+defineTest(deployTarget) {
+    unix:!macx {
+        INSTALLS += target
+        target.path = $$DENG_BIN_DIR
+        export(INSTALLS)
+        export(target.path)
+    }
+    else:win32 {
+        DESTDIR = $$DENG_BIN_DIR
+        export(DESTDIR)
+    }
+}
+
+defineTest(deployLibrary) {
+    win32:!deng_sdk {
+        DLLDESTDIR = $$DENG_LIB_DIR
+        export(DLLDESTDIR)
+    }
+    unix:!macx {
+        INSTALLS += target
+        target.path = $$DENG_LIB_DIR
+        export(target.path)
+    }
+    deng_sdk {
+        INSTALLS *= target
+        target.path = $$DENG_SDK_LIB_DIR
+        export(target.path)
+        win32 {
+            INSTALLS *= targetlib
+            deng_debug: targetlib.files = $$OUT_PWD/Debug/$${TARGET}.lib
+                  else: targetlib.files = $$OUT_PWD/Release/$${TARGET}.lib
+            targetlib.path = $$DENG_SDK_LIB_DIR
+            export(targetlib.files)
+            export(targetlib.path)
+        }
+        INSTALLS *= builtpacks
+    }
+    export(INSTALLS)
+}
+
 macx {
     defineTest(removeQtLibPrefix) {
         doPostLink("install_name_tool -change $$[QT_INSTALL_LIBS]/$$2 $$2 $$1")
@@ -79,7 +129,7 @@ macx {
         # 2: library name
         # 3: path to Frameworks/
         removeQtLibPrefix($$1, $$2)
-        doPostLink("install_name_tool -change $$2 @executable_path/$$3/Frameworks/$$2 $$1")
+        doPostLink("install_name_tool -change $$2 @rpath/$$2 $$1")
     }
     defineTest(fixPluginInstallId) {
         # 1: target name
@@ -88,19 +138,54 @@ macx {
     }
 }
 
-defineTest(publicHeaders) {
-    # 1: id ("root" for the main include dir)
-    # 2: header files
+defineTest(publicSubHeaders) {
+    # 1: id
+    # 2: "root" for the main include dir
+    # 3: header files
     deng_sdk {
-        dir = $$1
+        ident = $$1
+        dir = $$2
         contains(1, root): dir = .
-        eval(sdk_headers_$${1}.files += $$2)
+        eval(sdk_headers_$${1}.files += $$3)
         eval(sdk_headers_$${1}.path = $$DENG_SDK_HEADER_DIR/$$dir)
         INSTALLS *= sdk_headers_$$1
         export(INSTALLS)
         export(sdk_headers_$${1}.files)
         export(sdk_headers_$${1}.path)
     }
-    HEADERS += $$2
+    HEADERS += $$3
     export(HEADERS)
+}
+
+defineTest(publicHeaders) {
+    # 1: id/root dir
+    # 2: header files
+    publicSubHeaders($$1, $$1, $$2)
+    export(HEADERS)
+    deng_sdk {
+        export(INSTALLS)
+        export(sdk_headers_$${1}.files)
+        export(sdk_headers_$${1}.path)
+    }
+}
+
+defineTest(deployPackages) {
+    # 1: list of package identifiers
+    # 2: path where packages are installed from
+    for(pkg, 1) {
+        fn = "$$2/$$pkg"
+        exists($$fn): dengPacks.files += $$fn
+    }
+    macx {
+        dengPacks.path = Contents/Resources
+        QMAKE_BUNDLE_DATA += dengPacks
+        export(QMAKE_BUNDLE_DATA)
+    }
+    else {
+        dengPacks.path = $$DENG_DATA_DIR
+        INSTALLS += dengPacks
+        export(INSTALLS)
+    }
+    export(dengPacks.files)
+    export(dengPacks.path)
 }

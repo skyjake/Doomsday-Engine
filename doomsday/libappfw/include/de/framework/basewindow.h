@@ -85,8 +85,6 @@ public:
 
     void swapBuffers();
 
-    DENG2_AS_IS_METHODS()
-
 protected:
     /**
      * Called when a draw request has been received. This method should carry out any

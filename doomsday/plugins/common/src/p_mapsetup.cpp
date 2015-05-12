@@ -1,9 +1,9 @@
-/** @file p_mapsetup.cpp Common map setup routines.
+/** @file p_mapsetup.cpp  Common map setup routines.
  *
  * Management of extended map data objects (e.g., xlines).
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,31 +20,35 @@
  * 02110-1301 USA</small>
  */
 
+#include "common.h"
+#include "p_mapsetup.h"
+
 #include <cmath>
 #include <cctype>  // isspace
 #include <cstring>
-
-#include "common.h"
-
+#include "acs/script.h"
+#include "acs/system.h"
 #include "am_map.h"
+#include "d_net.h"
+#include "d_netsv.h"
 #include "dmu_lib.h"
 #include "g_common.h"
 #include "gamesession.h"
-#include "r_common.h"
+#include "hu_pspr.h"
+#include "hu_stuff.h"
 #include "p_actor.h"
 #include "p_scroll.h"
 #include "p_start.h"
 #include "p_tick.h"
 #include "polyobjs.h"
-#include "hu_pspr.h"
-#include "hu_stuff.h"
-#include "d_net.h"
-
-#include "p_mapsetup.h"
+#include "r_common.h"
 
 #if __JDOOM64__
 # define TOLIGHTIDX(c) (!((c) >> 8)? 0 : ((c) - 0x100) + 1)
 #endif
+
+using namespace de;
+using namespace common;
 
 // Our private map data structures
 xsector_t *xsectors;
@@ -102,6 +106,11 @@ xsector_t *P_ToXSector(Sector *sector)
     {
         return &xsectors[P_ToIndex(sector)];
     }
+}
+
+xsector_t const *P_ToXSector_const(Sector const *sector)
+{
+    return P_ToXSector(const_cast<Sector *>(sector));
 }
 
 xsector_t *P_GetXSector(int index)
@@ -642,53 +651,15 @@ static void spawnMapObjects()
     P_SpawnPlayers();
 }
 
-/// @param mapInfo  Can be @c NULL.
-static void initFog(ddmapinfo_t *ddMapInfo)
+void P_SetupMap(de::Uri const &mapUri)
 {
-    if(IS_DEDICATED) return;
-
-    if(!ddMapInfo || !(ddMapInfo->flags & MIF_FOG))
-    {
-        R_SetupFogDefaults();
-    }
-    else
-    {
-        R_SetupFog(ddMapInfo->fogStart, ddMapInfo->fogEnd, ddMapInfo->fogDensity, ddMapInfo->fogColor);
-    }
-
-#if __JHEXEN__
-    if(mapinfo_t const *mapInfo = P_MapInfo(0/*current map*/))
-    {
-        int fadeTable = mapInfo->fadeTable;
-        if(fadeTable == W_GetLumpNumForName("COLORMAP"))
-        {
-            // We don't want fog in this case.
-            GL_UseFog(false);
-        }
-        else
-        {
-            // Probably fog ... don't use fullbright sprites
-            if(fadeTable == W_GetLumpNumForName("FOGMAP"))
-            {
-                // Tell the renderer to turn on the fog.
-                GL_UseFog(true);
-            }
-        }
-    }
-#endif
-}
-
-void P_SetupMap(Uri const *mapUri)
-{
-    DENG2_ASSERT(mapUri != 0);
-
     if(IS_DEDICATED)
     {
         // Whenever the map changes, update the game rule config.
         GameRuleset newRules(COMMON_GAMESESSION->rules()); // make a copy
-        newRules.deathmatch      = cfg.netDeathmatch;
-        newRules.noMonsters      = cfg.netNoMonsters;
-        /*newRules.*/cfg.jumpEnabled = cfg.netJumping;
+        newRules.deathmatch      = cfg.common.netDeathmatch;
+        newRules.noMonsters      = cfg.common.netNoMonsters;
+        /*newRules.*/cfg.common.jumpEnabled = cfg.common.netJumping;
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
         newRules.respawnMonsters = cfg.netRespawn;
 #endif
@@ -719,20 +690,10 @@ void P_SetupMap(Uri const *mapUri)
     // Initialize the logical sound manager.
     S_MapChange();
 
-    AutoStr *mapUriStr = Uri_Compose(mapUri);
-    if(!P_MapChange(Str_Text(mapUriStr)))
+    if(!P_MapChange(mapUri.compose().toUtf8().constData()))
     {
-        AutoStr *path = Uri_ToString(mapUri);
-        Con_Error("P_SetupMap: Failed changing/loading map \"%s\".\n", Str_Text(path));
+        Con_Error("P_SetupMap: Failed changing/loading map \"%s\".\n", mapUri.compose().toUtf8().constData());
         exit(1); // Unreachable.
-    }
-
-    // Is MapInfo data available for this map?
-    {
-        AutoStr *mapUriStr = Uri_Compose(mapUri);
-        ddmapinfo_t mapInfo;
-        bool haveMapInfo = Def_Get(DD_DEF_MAP_INFO, Str_Text(mapUriStr), &mapInfo);
-        initFog(haveMapInfo? &mapInfo : 0);
     }
 
     // Make sure the game is paused for the requested period.
@@ -742,10 +703,11 @@ void P_SetupMap(Uri const *mapUri)
     mapSetup = false;
 }
 
-typedef struct {
+struct mobjtype_precachedata_t
+{
     mobjtype_t type;
     int gameModeBits;
-} mobjtype_precachedata_t;
+};
 
 static void precacheResources()
 {
@@ -903,16 +865,18 @@ static void precacheResources()
 #  else // __JHERETIC__
         Rend_CacheForMobjType(MT_RAINPLR1);
         Rend_CacheForMobjType(MT_RAINPLR2);
+        Rend_CacheForMobjType(MT_RAINPLR3);
         Rend_CacheForMobjType(MT_RAINPLR4);
 #  endif
     }
 #endif
 }
 
-void P_FinalizeMapChange(Uri const *uri)
+void P_FinalizeMapChange(uri_s const *mapUri_)
 {
+    de::Uri const &mapUri = *reinterpret_cast<de::Uri const *>(mapUri_);
 #if !__JHEXEN__
-    DENG_UNUSED(uri);
+    DENG2_UNUSED(mapUri);
 #endif
 
     initXLines();
@@ -930,40 +894,24 @@ void P_FinalizeMapChange(Uri const *uri)
     spawnMapObjects();
     PO_InitForMap();
 
-#if __JHEXEN__
-    /// @todo Should be translated by the map converter.
-    lumpnum_t acsLumpNum = W_CheckLumpNumForName(Str_Text(Uri_Path(uri))) + 11 /*ML_BEHAVIOR*/;
-    if(acsLumpNum >= 0 && !IS_CLIENT)
-    {
-        ACScriptInterpreter &interp = Game_ACScriptInterpreter();
-
-        interp.loadBytecode(acsLumpNum);
-
-        memset(interp.mapVars, 0, sizeof(interp.mapVars));
-
-        // Start all scripts flagged to begin immediately.
-        interp.startOpenScripts();
-    }
-#endif
-
     HU_UpdatePsprites();
 
     // Set up world state.
     P_BuildAllTagLists();
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    P_FindSecrets();
-#endif
-    P_SpawnAllSpecialThinkers();
-    P_SpawnAllMaterialOriginScrollers();
 
 #if !__JHEXEN__
     // Init extended generalized lines and sectors.
     XG_Init();
 #endif
 
-#if __JHEXEN__
-    P_InitSky(uri);
+    COMMON_GAMESESSION->acsSystem().loadModuleForMap(mapUri);
+    COMMON_GAMESESSION->acsSystem().worldSystemMapChanged();
+
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    P_FindSecrets();
 #endif
+    P_SpawnAllSpecialThinkers();
+    P_SpawnAllMaterialOriginScrollers();
 
     // Preload resources we'll likely need but which aren't present (usually) in the map.
     precacheResources();
@@ -1027,16 +975,25 @@ void P_ResetWorldState()
     static int firstFragReset = 1;
 #endif
 
-    nextMap = 0;
-
+    ::wmInfo.nextMap.clear();
+#if __JHEXEN__
+    ::wmInfo.nextMapEntryPoint = 0;
+#endif
 #if __JDOOM__ || __JDOOM64__
-    wmInfo.maxFrags = 0;
-    wmInfo.parTime = -1;
+    ::wmInfo.maxFrags = 0;
+    ::wmInfo.parTime = -1;
+#endif
+
+#if !__JHEXEN__
+    if(!IS_CLIENT)
+    {
+        ::totalKills = ::totalItems = ::totalSecret = 0;
+    }
 #endif
 
 #if __JDOOM__
-    delete theBossBrain;
-    theBossBrain = new BossBrain;
+    delete ::theBossBrain;
+    ::theBossBrain = new BossBrain;
 #endif
 
 #if __JHEXEN__
@@ -1044,24 +1001,17 @@ void P_ResetWorldState()
 #endif
 
 #if __JHERETIC__
-    maceSpotCount = 0;
-    maceSpots     = 0;
-    bossSpotCount = 0;
-    bossSpots     = 0;
+    ::maceSpotCount = 0;
+    ::maceSpots     = 0;
+    ::bossSpotCount = 0;
+    ::bossSpots     = 0;
 #endif
 
     P_PurgeDeferredSpawns();
 
-    if(!IS_CLIENT)
-    {
-#if !__JHEXEN__
-        totalKills = totalItems = totalSecret = 0;
-#endif
-    }
-
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t *plr = &players[i];
+        player_t *plr = &::players[i];
         ddplayer_t *ddplr = plr->plr;
 
         ddplr->mo = NULL;
@@ -1085,7 +1035,7 @@ void P_ResetWorldState()
     }
 
 #if __JDOOM__ || __JDOOM64__
-    bodyQueueSlot = 0;
+    ::bodyQueueSlot = 0;
 #endif
 
     P_DestroyPlayerStarts();
@@ -1096,114 +1046,6 @@ void P_ResetWorldState()
 #endif
 }
 
-char const *P_MapTitle(Uri const *mapUri)
-{
-    if(!mapUri) mapUri = gameMapUri;
-
-    char const *title = 0;
-
-    // Perhaps a MapInfo definition exists for the map?
-    ddmapinfo_t mapInfo;
-    if(Def_Get(DD_DEF_MAP_INFO, Str_Text(Uri_Compose(mapUri)), &mapInfo))
-    {
-        if(mapInfo.name[0])
-        {
-            // Perhaps the title string is a reference to a Text definition?
-            void *ptr;
-            if(Def_Get(DD_DEF_TEXT, mapInfo.name, &ptr) != -1)
-            {
-                title = (char const *) ptr; // Yes, use the resolved text string.
-            }
-            else
-            {
-                title = mapInfo.name;
-            }
-        }
-    }
-
-#if __JHEXEN__
-    // In Hexen we can also look in MAPINFO for the map title.
-    if(!title)
-    {
-        if(mapinfo_t const *mapInfo = P_MapInfo(mapUri))
-        {
-            title = mapInfo->title;
-        }
-    }
-#endif
-
-    if(!title || !title[0])
-        return 0;
-
-    // Skip the "ExMx" part, if present.
-    if(char const *ptr = strchr(title, ':'))
-    {
-        title = ptr + 1;
-        while(*title && isspace(*title))
-        {
-            title++;
-        }
-    }
-
-    return title;
-}
-
-char const *P_MapAuthor(Uri const *mapUri, dd_bool supressGameAuthor)
-{
-    if(!mapUri) mapUri = gameMapUri;
-
-    AutoStr *path = Uri_Resolved(mapUri);
-    if(!path || Str_IsEmpty(path))
-        return 0;
-
-    // Perhaps a MapInfo definition exists for the map?
-    ddmapinfo_t mapInfo;
-    char const *author = 0;
-    if(Def_Get(DD_DEF_MAP_INFO, Str_Text(path), &mapInfo))
-    {
-        author = mapInfo.author;
-    }
-
-    if(!author || !author[0])
-        return 0;
-
-    // Should we suppress the author?
-    /// @todo Do not do this here.
-    GameInfo gameInfo;
-    DD_GameInfo(&gameInfo);
-    if(supressGameAuthor || P_MapIsCustom(Str_Text(path)))
-    {
-        if(!Str_CompareIgnoreCase(gameInfo.author, author))
-            return 0;
-    }
-
-    return author;
-}
-
-patchid_t P_MapTitlePatch(Uri const *mapUri)
-{
-    if(!mapUri) mapUri = gameMapUri;
-
-#if __JDOOM__ || __JDOOM64__
-    uint map = G_MapNumberFor(mapUri);
-#  if __JDOOM__
-    if(!(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX)))
-    {
-        uint episode = G_EpisodeNumberFor(mapUri);
-        map = (episode * 9) + map;
-    }
-#  endif
-    if(map < pMapNamesSize)
-    {
-        return pMapNames[map];
-    }
-#else
-    DENG2_UNUSED(mapUri);
-#endif
-
-    return 0;
-}
-
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 void P_FindSecrets()
 {
@@ -1212,16 +1054,30 @@ void P_FindSecrets()
     // Find secret sectors.
     for(int i = 0; i < numsectors; ++i)
     {
-        if(P_ToXSector((Sector *)P_ToPtr(DMU_SECTOR, i))->special == 9)
+        xsector_t *xsec = P_ToXSector((Sector *)P_ToPtr(DMU_SECTOR, i));
+
+        // XG sector types override the game's built-in types.
+        if(xsec->xg) continue;
+
+        if(xsec->special == 9)
+        {
             totalSecret++;
+        }
     }
 
 #if __JDOOM64__
     // Find secret lines.
     for(int i = 0; i < numlines; ++i)
     {
-        if(P_ToXLine((Line *)P_ToPtr(DMU_LINE, i))->special == 994)
+        xline_t *xline = P_ToXLine((Line *)P_ToPtr(DMU_LINE, i));
+
+        // XG line types override the game's built-in types.
+        if(xline->xg) continue;
+
+        if(xline->special == 994)
+        {
             totalSecret++;
+        }
     }
 #endif
 }
@@ -1237,9 +1093,11 @@ void P_SpawnSectorMaterialOriginScrollers()
         Sector *sec     = (Sector *)P_ToPtr(DMU_SECTOR, i);
         xsector_t *xsec = P_ToXSector(sec);
 
-        if(!xsec->special) continue;
+#if !__JHEXEN__
+        // XG sector types override the game's built-in types.
+        if(xsec->xg) continue;
+#endif
 
-        // A scroller?
         P_SpawnSectorMaterialOriginScroller(sec, PLN_FLOOR, xsec->special);
     }
 }
@@ -1254,7 +1112,10 @@ void P_SpawnSideMaterialOriginScrollers()
         Line *line     = (Line *)P_ToPtr(DMU_LINE, i);
         xline_t *xline = P_ToXLine(line);
 
-        if(!xline->special) continue;
+#if !__JHEXEN__
+        // XG line types override the game's built-in types.
+        if(xline->xg) continue;
+#endif
 
         Side *frontSide = (Side *)P_GetPtrp(line, DMU_FRONT);
         P_SpawnSideMaterialOriginScroller(frontSide, xline->special);

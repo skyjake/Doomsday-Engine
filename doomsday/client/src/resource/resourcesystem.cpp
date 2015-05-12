@@ -1,7 +1,7 @@
 /** @file resourcesystem.cpp  Resource subsystem.
  *
  * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -23,23 +23,17 @@
 
 #ifdef __CLIENT__
 #  include "clientapp.h"
-#  include "con_bar.h"
+#  include "ui/progress.h"
 #  include "sys_system.h" // novideo
 #endif
 
-#include "con_main.h"
 #include "def_main.h"
+#include "dd_main.h"
+#include "dd_def.h"
 
 #include "resource/compositetexture.h"
 #include "resource/patch.h"
 #include "resource/patchname.h"
-#ifdef __CLIENT__
-#  include "MaterialSnapshot"
-#endif
-
-#include "api_filesys.h"
-#include "filesys/fs_main.h"
-#include "filesys/lumpindex.h"
 
 #ifdef __CLIENT__
 #  include "gl/gl_tex.h"
@@ -51,14 +45,21 @@
 #  include "network/net_demo.h" // playback
 #  include "render/rend_main.h" // Rend_MapSurfaceMaterialSpec
 #  include "render/billboard.h" // Rend_SpriteMaterialSpec
-#  include "render/sky.h"
+#  include "render/skydrawable.h"
 
 #  include "world/worldsystem.h"
 #  include "world/map.h"
 #  include "world/p_object.h"
+#  include "world/sky.h"
 #  include "world/thinkers.h"
+#  include "Sector"
 #  include "Surface"
 #endif
+
+#include <doomsday/console/cmd.h>
+#include <doomsday/filesys/fs_main.h>
+#include <doomsday/filesys/fs_util.h>
+#include <doomsday/filesys/lumpindex.h>
 
 #include <de/App>
 #include <de/ByteRefArray>
@@ -68,6 +69,7 @@
 #include <de/Log>
 #include <de/Loop>
 #include <de/Module>
+#include <de/ArrayValue>
 #include <de/NumberValue>
 #include <de/Reader>
 #include <de/Task>
@@ -79,92 +81,337 @@
 #  include <de/StringPool>
 #endif
 #include <de/stack.h> /// @todo remove me
+#include <de/memory.h>
 #include <QHash>
 #include <QVector>
 #include <QtAlgorithms>
 
-using namespace de;
-
-typedef QList<CompositeTexture *> CompositeTextures;
-
-static QList<de::File1 *> collectPatchCompositeDefinitionFiles();
-
-/**
- * Compose the path to the data resource.
- * @note We do not use the lump name, instead we use the logical lump index
- * in the global LumpIndex. This is necessary because of the way id tech 1
- * manages graphic references in animations (intermediate frames are chosen
- * by their 'original indices' rather than by name).
- */
-static inline de::Uri composeLumpIndexResourceUrn(lumpnum_t lumpNum)
+namespace de {
+namespace internal
 {
-    return de::Uri("LumpIndex", Path(String("%1").arg(lumpNum)));
-}
-
-/// Ensure a texture has been derived for @a manifest.
-static Texture *deriveTexture(TextureManifest &manifest)
-{
-    LOG_AS("deriveTexture");
-    Texture *tex = manifest.derive();
-    if(!tex)
+    /**
+     * Compose the path to the data resource.
+     * @note We do not use the lump name, instead we use the logical lump index
+     * in the global LumpIndex. This is necessary because of the way id tech 1
+     * manages graphic references in animations (intermediate frames are chosen
+     * by their 'original indices' rather than by name).
+     */
+    static inline de::Uri composeLumpIndexResourceUrn(lumpnum_t lumpNum)
     {
-        LOGDEV_RES_WARNING("Failed to derive a Texture for \"%s\", ignoring") << manifest.composeUri();
+        return de::Uri("LumpIndex", Path(String("%1").arg(lumpNum)));
     }
-    return tex;
-}
+
+    /// Returns a value in the range [0..Sprite::max_angles] if @a rotCode can be
+    /// interpreted as a sprite rotation number; otherwise @c -1
+    static int toSpriteRotation(QChar rotCode)
+    {
+        int rot = -1; // Unknown.
+
+        if(rotCode.isDigit())
+        {
+            rot = rotCode.digitValue();
+        }
+        else if(rotCode.isLetter())
+        {
+            char charCodeLatin1 = rotCode.toUpper().toLatin1();
+            if(charCodeLatin1 >= 'A')
+            {
+                rot = charCodeLatin1 - 'A' + 10;
+            }
+        }
+
+        if(rot > Sprite::max_angles)
+        {
+            rot = -1;
+        }
+        else if(rot > 0)
+        {
+            if(rot <= Sprite::max_angles / 2)
+            {
+                rot = (rot - 1) * 2 + 1;
+            }
+            else
+            {
+                rot = (rot - 9) * 2 + 2;
+            }
+        }
+
+        return rot;
+    }
+
+    /// Returns @c true iff @a name is a well-formed sprite name.
+    static bool validateSpriteName(String name)
+    {
+        if(name.length() < 6) return false;
+
+        // Character at position 5 is a rotation number.
+        if(toSpriteRotation(name.at(5)) < 0)
+        {
+            return false;
+        }
+
+        // If defined, the character at position 7 is also a rotation number.
+        if(name.length() > 7)
+        {
+            if(toSpriteRotation(name.at(7)) < 0)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// Ensure a texture has been derived for @a manifest.
+    static Texture *deriveTexture(TextureManifest &manifest)
+    {
+        LOG_AS("deriveTexture");
+        Texture *tex = manifest.derive();
+        if(!tex)
+        {
+            LOGDEV_RES_WARNING("Failed to derive a Texture for \"%s\", ignoring") << manifest.composeUri();
+        }
+        return tex;
+    }
+
+    static QList<File1 *> collectPatchCompositeDefinitionFiles()
+    {
+        QList<File1 *> result;
+
+        /*
+         * Precedence order of definitions is defined by id tech1 which processes
+         * the TEXTURE1/2 lumps in the following order:
+         *
+         * (last)TEXTURE2 > (last)TEXTURE1
+         */
+        LumpIndex const &index  = App_FileSystem().nameIndex();
+        lumpnum_t firstTexLump  = App_FileSystem().lumpNumForName("TEXTURE1");
+        lumpnum_t secondTexLump = App_FileSystem().lumpNumForName("TEXTURE2");
+
+        /*
+         * Also process all other lumps named TEXTURE1/2.
+         */
+        for(int i = 0; i < index.size(); ++i)
+        {
+            File1 &file = index[i];
+
+            // Will this be processed anyway?
+            if(i == firstTexLump) continue;
+            if(i == secondTexLump) continue;
+
+            String fileName = file.name().fileNameWithoutExtension();
+            if(fileName.compareWithoutCase("TEXTURE1") &&
+               fileName.compareWithoutCase("TEXTURE2"))
+            {
+                continue;
+            }
+
+            result.append(&file);
+        }
+
+        if(firstTexLump >= 0)
+        {
+            result.append(&index[firstTexLump]);
+        }
+
+        if(secondTexLump >= 0)
+        {
+            result.append(&index[secondTexLump]);
+        }
+
+        return result;
+    }
+
+    typedef QList<CompositeTexture *> CompositeTextures;
+    typedef QList<PatchName> PatchNames;
+
+    static PatchNames readPatchNames(File1 &file)
+    {
+        LOG_AS("readPatchNames");
+        PatchNames names;
+
+        if(file.size() < 4)
+        {
+            LOG_RES_WARNING("File \"%s\" does not appear to be valid PNAMES data")
+                    << NativePath(file.composeUri().asText()).pretty();
+            return names;
+        }
+
+        ByteRefArray lumpData(file.cache(), file.size());
+        de::Reader from(lumpData);
+
+        // The data begins with the total number of patch names.
+        dint32 numNames;
+        from >> numNames;
+
+        // Followed by the names (eight character ASCII strings).
+        if(numNames > 0)
+        {
+            if((unsigned) numNames > (file.size() - 4) / 8)
+            {
+                // The data appears to be truncated.
+                LOG_RES_WARNING("File \"%s\" appears to be truncated (%u bytes, expected %u)")
+                        << NativePath(file.composeUri().asText()).pretty()
+                        << file.size() << (numNames * 8 + 4);
+
+                // We'll only read this many names.
+                numNames = (file.size() - 4) / 8;
+            }
+
+            // Read the names.
+            for(int i = 0; i < numNames; ++i)
+            {
+                PatchName name;
+                from >> name;
+                names.append(name);
+            }
+        }
+
+        file.unlock();
+
+        return names;
+    }
+
+    /**
+     * Reads patch composite texture definitions from @a file.
+     *
+     * @param file           File to be read.
+     * @param origIndexBase  Base value for the "original index" logic.
+     * @param archiveCount   Will be updated with the total number of definitions
+     *                       in the file (which may not necessarily equal the total
+     *                       number of definitions which are actually read).
+     */
+    static CompositeTextures readCompositeTextureDefs(File1 &file,
+        PatchNames const &patchNames, int origIndexBase, int &archiveCount)
+    {
+        LOG_AS("readCompositeTextureDefs");
+
+        CompositeTextures result; ///< The resulting set of validated definitions.
+
+        // The game data format determines the format of the archived data.
+        CompositeTexture::ArchiveFormat format =
+                (gameDataFormat == 0? CompositeTexture::DoomFormat : CompositeTexture::StrifeFormat);
+
+        ByteRefArray data(file.cache(), file.size());
+        de::Reader reader(data);
+
+        // First is a count of the total number of definitions.
+        dint32 definitionCount;
+        reader >> definitionCount;
+
+        // Next is directory of offsets to the definitions.
+        typedef QMap<dint32, int> Offsets;
+        Offsets offsets;
+        for(int i = 0; i < definitionCount; ++i)
+        {
+            dint32 offset;
+            reader >> offset;
+
+            // Ensure the offset is within valid range.
+            if(offset < 0 || (unsigned) offset < definitionCount * sizeof(offset) ||
+               (dsize) offset > reader.source()->size())
+            {
+                LOG_RES_WARNING("Ignoring definition #%i: invalid offset %i") << i << offset;
+            }
+            else
+            {
+                offsets.insert(offset, origIndexBase + i);
+            }
+        }
+
+        // Seek to each offset and deserialize the definition.
+        DENG2_FOR_EACH_CONST(Offsets, i, offsets)
+        {
+            // Read the next definition.
+            reader.setOffset(i.key());
+            CompositeTexture *def = CompositeTexture::constructFrom(reader, patchNames, format);
+
+            // Attribute the "original index".
+            def->setOrigIndex(i.value());
+
+            // If the composite contains at least one known component image it is
+            // considered valid and we will therefore produce a Texture for it.
+            DENG2_FOR_EACH_CONST(CompositeTexture::Components, it, def->components())
+            {
+                if(it->lumpNum() >= 0)
+                {
+                    // Its valid - include in the result.
+                    result.append(def);
+                    def = 0;
+                    break;
+                }
+            }
+
+            // Failed to validate? Dump it.
+            if(def) delete def;
+        }
+
+        file.unlock(); // We have now finished with this file.
+
+        archiveCount = definitionCount;
+        return result;
+    }
 
 #ifdef __CLIENT__
-static int hashDetailTextureSpec(detailvariantspecification_t const &spec)
-{
-    return (spec.contrast * (1/255.f) * DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR + .5f);
-}
-
-static variantspecification_t &configureTextureSpec(variantspecification_t &spec,
-    texturevariantusagecontext_t tc, int flags, byte border, int tClass, int tMap,
-    int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
-    dd_bool mipmapped, dd_bool gammaCorrection, dd_bool noStretch, dd_bool toAlpha)
-{
-    DENG2_ASSERT(tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc));
-
-    flags &= ~TSF_INTERNAL_MASK;
-
-    spec.context         = tc;
-    spec.flags           = flags;
-    spec.border          = (flags & TSF_UPSCALE_AND_SHARPEN)? 1 : border;
-    spec.mipmapped       = mipmapped;
-    spec.wrapS           = wrapS;
-    spec.wrapT           = wrapT;
-    spec.minFilter       = de::clamp(-1, minFilter, spec.mipmapped? 3:1);
-    spec.magFilter       = de::clamp(-3, magFilter, 1);
-    spec.anisoFilter     = de::clamp(-1, anisoFilter, 4);
-    spec.gammaCorrection = gammaCorrection;
-    spec.noStretch       = noStretch;
-    spec.toAlpha         = toAlpha;
-
-    if(tClass || tMap)
+    static int hashDetailTextureSpec(detailvariantspecification_t const &spec)
     {
-        spec.flags      |= TSF_HAS_COLORPALETTE_XLAT;
-        spec.tClass      = de::max(0, tClass);
-        spec.tMap        = de::max(0, tMap);
+        return (spec.contrast * (1/255.f) * DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR + .5f);
     }
 
-    return spec;
-}
+    static variantspecification_t &configureTextureSpec(variantspecification_t &spec,
+        texturevariantusagecontext_t tc, int flags, byte border, int tClass, int tMap,
+        int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
+        dd_bool mipmapped, dd_bool gammaCorrection, dd_bool noStretch, dd_bool toAlpha)
+    {
+        DENG2_ASSERT(tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc));
 
-static detailvariantspecification_t &configureDetailTextureSpec(
-    detailvariantspecification_t &spec, float contrast)
-{
-    int const quantFactor = DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR;
+        flags &= ~TSF_INTERNAL_MASK;
 
-    spec.contrast = 255 * de::clamp<int>(0, contrast * quantFactor + .5f, quantFactor) * (1 / float(quantFactor));
-    return spec;
-}
+        spec.context         = tc;
+        spec.flags           = flags;
+        spec.border          = (flags & TSF_UPSCALE_AND_SHARPEN)? 1 : border;
+        spec.mipmapped       = mipmapped;
+        spec.wrapS           = wrapS;
+        spec.wrapT           = wrapT;
+        spec.minFilter       = de::clamp(-1, minFilter, spec.mipmapped? 3:1);
+        spec.magFilter       = de::clamp(-3, magFilter, 1);
+        spec.anisoFilter     = de::clamp(-1, anisoFilter, 4);
+        spec.gammaCorrection = gammaCorrection;
+        spec.noStretch       = noStretch;
+        spec.toAlpha         = toAlpha;
 
+        if(tClass || tMap)
+        {
+            spec.flags      |= TSF_HAS_COLORPALETTE_XLAT;
+            spec.tClass      = de::max(0, tClass);
+            spec.tMap        = de::max(0, tMap);
+        }
+
+        return spec;
+    }
+
+    static detailvariantspecification_t &configureDetailTextureSpec(
+        detailvariantspecification_t &spec, float contrast)
+    {
+        int const quantFactor = DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR;
+
+        spec.contrast = 255 * de::clamp<int>(0, contrast * quantFactor + .5f, quantFactor) * (1 / float(quantFactor));
+        return spec;
+    }
+
+#endif // __CLIENT__
+
+} // namespace internal
+} // namespace de
+
+#ifdef __CLIENT__
 /// @c TST_DETAIL type specifications are stored separately into a set of
 /// buckets. Bucket selection is determined by their quantized contrast value.
 #define DETAILVARIANT_CONTRAST_HASHSIZE     (DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR+1)
+#endif
 
-#endif // __CLIENT__
+using namespace de;
+using namespace internal;
 
 /**
  * Native Doomsday Script utility for scheduling conversion of a single legacy savegame.
@@ -187,8 +434,8 @@ Value *Function_SavedSession_ConvertAll(Context &, Function::ArgumentValues cons
 }
 
 DENG2_PIMPL(ResourceSystem)
-, DENG2_OBSERVES(Loop,             Iteration)       // post savegame conversion FS population
-, DENG2_OBSERVES(Games,            Addition)        // savegames folder setup
+, DENG2_OBSERVES(Loop,             Iteration)        // post savegame conversion FS population
+, DENG2_OBSERVES(Games,            Addition)         // savegames folder setup
 , DENG2_OBSERVES(MaterialScheme,   ManifestDefined)
 , DENG2_OBSERVES(MaterialManifest, MaterialDerived)
 , DENG2_OBSERVES(MaterialManifest, Deletion)
@@ -203,15 +450,12 @@ DENG2_PIMPL(ResourceSystem)
 , DENG2_OBSERVES(ColorPalette,     ColorTableChange)
 #endif
 {
-    typedef QList<de::ResourceClass *> ResourceClasses;
+    typedef QList<ResourceClass *> ResourceClasses;
     ResourceClasses resClasses;
     NullResourceClass nullResourceClass;
 
     typedef QList<AnimGroup *> AnimGroups;
     AnimGroups animGroups;
-
-    typedef QList<PatchName> PatchNames;
-    PatchNames patchNames;
 
     typedef QMap<colorpaletteid_t, ColorPalette *> ColorPalettes;
     ColorPalettes colorPalettes;
@@ -231,34 +475,36 @@ DENG2_PIMPL(ResourceSystem)
     RawTextureHash rawTexHash;
 
     /// System subspace schemes containing the manifests/resources.
-    MaterialSchemes materialSchemes;
+    QMap<String, MaterialScheme *> materialSchemes;
     QList<MaterialScheme *> materialSchemeCreationOrder;
 
-    AllMaterials materials; ///< From all schemes.
-    uint materialManifestCount; ///< Total number of material manifests (in all schemes).
+    QList<Material *> materials;       ///< From all schemes.
+    int materialManifestCount = 0;     ///< Total number of material manifests (in all schemes).
 
     MaterialManifestGroups materialGroups;
 
     uint materialManifestIdMapSize;
-    MaterialManifest **materialManifestIdMap; ///< Index with materialid_t-1
+    MaterialManifest **materialManifestIdMap;  ///< Index with materialid_t-1
+
+    MapDefs mapDefs;
 
 #ifdef __CLIENT__
     /// System subspace schemes containing the manifests/resources.
     FontSchemes fontSchemes;
     QList<FontScheme *> fontSchemeCreationOrder;
 
-    AllFonts fonts; ///< From all schemes.
-    uint fontManifestCount; ///< Total number of font manifests (in all schemes).
+    AllFonts fonts;                    ///< From all schemes.
+    uint fontManifestCount;            ///< Total number of font manifests (in all schemes).
 
     uint fontManifestIdMapSize;
-    FontManifest **fontManifestIdMap; ///< Index with fontid_t-1
+    FontManifest **fontManifestIdMap;  ///< Index with fontid_t-1
 
     typedef QVector<ModelDef> ModelDefs;
     ModelDefs modefs;
-    QVector<int> stateModefs; // Index to the modefs array.
+    QVector<int> stateModefs;          ///< Index to the modefs array.
 
     typedef StringPool ModelRepository;
-    ModelRepository *modelRepository; // Owns Model instances.
+    ModelRepository *modelRepository;  ///< Owns Model instances.
 
     /// A list of specifications for material variants.
     typedef QList<MaterialVariantSpec *> MaterialSpecs;
@@ -283,52 +529,15 @@ DENG2_PIMPL(ResourceSystem)
         MaterialVariantSpec const *spec; /// Interned context specification.
 
         MaterialCacheTask(Material &resource, MaterialVariantSpec const &contextSpec)
-            : CacheTask(), material(&resource), spec(&contextSpec)
+            : CacheTask()
+            , material(&resource)
+            , spec(&contextSpec)
         {}
 
         void run()
         {
-            ResourceSystem &resSys = App_ResourceSystem();
-
-            // Ensure a variant for the specified context is created.
-            material->createVariant(*spec);
-            DENG2_ASSERT(material->chooseVariant(*spec) != 0);
-
-            // Prepare all layer textures.
-            foreach(MaterialLayer *layer, material->layers())
-            foreach(MaterialLayer::Stage *stage, layer->stages())
-            {
-                if(stage->texture)
-                {
-                    stage->texture->prepareVariant(*spec->primarySpec);
-                }
-            }
-
-            // Do we need to prepare detail texture(s)?
-            if(!material->isSkyMasked() && material->isDetailed())
-            foreach(MaterialDetailLayer::Stage *stage, material->detailLayer().stages())
-            {
-                if(stage->texture)
-                {
-                    float const contrast = de::clamp(0.f, stage->strength, 1.f)
-                                         * detailFactor /*Global strength multiplier*/;
-                    stage->texture->prepareVariant(resSys.detailTextureSpec(contrast));
-                }
-            }
-
-            // Do we need to prepare a shiny texture (and possibly a mask)?
-            if(!material->isSkyMasked() && material->isShiny())
-            foreach(MaterialShineLayer::Stage *stage, material->shineLayer().stages())
-            {
-               if(stage->texture)
-               {
-                   stage->texture->prepareVariant(Rend_MapSurfaceShinyTextureSpec());
-                   if(stage->maskTexture)
-                   {
-                       stage->maskTexture->prepareVariant(Rend_MapSurfaceShinyMaskTextureSpec());
-                   }
-               }
-            }
+            // Cache all dependent assets and upload GL textures if necessary.
+            material->getAnimator(*spec).cacheAssets();
         }
     };
 
@@ -339,15 +548,7 @@ DENG2_PIMPL(ResourceSystem)
     CacheQueue cacheQueue;
 #endif
 
-    struct SpriteGroup {
-        SpriteSet sprites;
-
-        ~SpriteGroup() {
-            qDeleteAll(sprites);
-        }
-    };
-    typedef QMap<spritenum_t, SpriteGroup> SpriteGroups;
-    SpriteGroups spriteGroups;
+    QMap<spritenum_t, SpriteSet> spritesByFrame;
 
     NativePath nativeSavePath;
 
@@ -357,7 +558,6 @@ DENG2_PIMPL(ResourceSystem)
     Instance(Public *i)
         : Base(i)
         , defaultColorPalette      (0)
-        , materialManifestCount    (0)
         , materialManifestIdMapSize(0)
         , materialManifestIdMap    (0)
 #ifdef __CLIENT__
@@ -368,6 +568,8 @@ DENG2_PIMPL(ResourceSystem)
 #endif
         , nativeSavePath           (App::app().nativeHomePath() / "savegames") // default
     {
+        de::Uri::setResolverFunc(ResourceSystem::resolveSymbol);
+
         LOG_AS("ResourceSystem");
         resClasses.append(new ResourceClass("RC_PACKAGE",    "Packages"));
         resClasses.append(new ResourceClass("RC_DEFINITION", "Defs"));
@@ -429,6 +631,8 @@ DENG2_PIMPL(ResourceSystem)
 
         // Create the legacy savegame folder.
         App::fileSystem().makeFolder("/legacysavegames");
+
+        App::packageLoader().loadFromCommandLine();
     }
 
     ~Instance()
@@ -446,7 +650,7 @@ DENG2_PIMPL(ResourceSystem)
         self.clearAllTextureSchemes();
         clearTextureManifests();
 #ifdef __CLIENT__
-        clearAllRawTextures();
+        self.clearAllRawTextures();
 #endif
 
 #ifdef __CLIENT__
@@ -467,9 +671,10 @@ DENG2_PIMPL(ResourceSystem)
         clearModels();
 #endif
         self.clearAllColorPalettes();
+        self.clearAllMapDefs();
     }
 
-    inline de::FS1 &fileSystem()
+    inline de::FS1 &fileSys()
     {
         return App_FileSystem();
     }
@@ -530,12 +735,6 @@ DENG2_PIMPL(ResourceSystem)
         newScheme->audienceForManifestDefined += this;
     }
 
-    void clearAllRawTextures()
-    {
-        qDeleteAll(rawTexHash);
-        rawTexHash.clear();
-    }
-
 #ifdef __CLIENT__
     void clearFontManifests()
     {
@@ -568,23 +767,39 @@ DENG2_PIMPL(ResourceSystem)
 
     void clearSprites()
     {
-        spriteGroups.clear();
+        for(SpriteSet &sprFrames : spritesByFrame)
+        {
+            qDeleteAll(sprFrames);
+        }
+        spritesByFrame.clear();
     }
 
-    SpriteGroup *spriteGroup(spritenum_t spriteId)
+    inline bool hasSpriteFrameSet(spritenum_t spriteId) const
     {
-        SpriteGroups::iterator found = spriteGroups.find(spriteId);
-        if(found != spriteGroups.end())
+        return spritesByFrame.contains(spriteId);
+    }
+
+    SpriteSet *tryFindSpriteFrameSet(spritenum_t spriteId)
+    {
+        auto found = spritesByFrame.find(spriteId);
+        if(found != spritesByFrame.end())
         {
             return &found.value();
         }
-        return 0;
+        return nullptr;
     }
 
-    SpriteGroup &newSpriteGroup(spritenum_t spriteId)
+    SpriteSet &findSpriteFrameSet(spritenum_t spriteId)
     {
-        DENG2_ASSERT(!spriteGroup(spriteId)); // sanity check.
-        return spriteGroups.insert(spriteId, SpriteGroup()).value();
+        if(SpriteSet *sprFrames = tryFindSpriteFrameSet(spriteId)) return *sprFrames;
+        /// @throw MissingResourceError An unknown/invalid id was specified.
+        throw MissingResourceError("ResourceSystem::findSpriteFrameSet", "Unknown sprite id " + String::number(spriteId));
+    }
+
+    SpriteSet &newSpriteFrameSet(spritenum_t spriteId)
+    {
+        DENG2_ASSERT(!tryFindSpriteFrameSet(spriteId)); // sanity check.
+        return spritesByFrame.insert(spriteId, SpriteSet()).value();
     }
 
 #ifdef __CLIENT__
@@ -649,7 +864,7 @@ DENG2_PIMPL(ResourceSystem)
                              noStretch, toAlpha);
 
         // Apply the normalized spec to the template.
-        tpl.context     = contextId;
+        tpl.contextId     = contextId;
         tpl.primarySpec = &primarySpec;
 
         return *findMaterialSpec(tpl, true);
@@ -737,8 +952,8 @@ DENG2_PIMPL(ResourceSystem)
 
     bool textureSpecInUse(TextureVariantSpec const &spec)
     {
-        foreach(Texture *texture, textures)
-        foreach(TextureVariant *variant, texture->variants())
+        for(Texture *texture : textures)
+        for(TextureVariant *variant : texture->variants())
         {
             if(&variant->spec() == &spec)
             {
@@ -883,15 +1098,14 @@ DENG2_PIMPL(ResourceSystem)
     void queueCacheTasksForSprite(spritenum_t spriteId, MaterialVariantSpec const &contextSpec,
         bool cacheGroups = true)
     {
-        if(SpriteGroup *group = spriteGroup(spriteId))
+        if(!hasSpriteFrameSet(spriteId)) return;
+
+        for(Sprite *sprite : findSpriteFrameSet(spriteId))
+        for(SpriteViewAngle const &viewAngle : sprite->viewAngles())
         {
-            foreach(Sprite *sprite, group->sprites)
-            foreach(SpriteViewAngle const &viewAngle, sprite->viewAngles())
+            if(Material *material = viewAngle.material)
             {
-                if(Material *material = viewAngle.material)
-                {
-                    queueCacheTasksForMaterial(*material, contextSpec, cacheGroups);
-                }
+                queueCacheTasksForMaterial(*material, contextSpec, cacheGroups);
             }
         }
     }
@@ -907,7 +1121,7 @@ DENG2_PIMPL(ResourceSystem)
             if(!mdl) continue;
 
             // Load all skins.
-            foreach(ModelSkin const &skin, mdl->skins())
+            for(ModelSkin const &skin : mdl->skins())
             {
                 if(Texture *tex = skin.texture)
                 {
@@ -936,56 +1150,17 @@ DENG2_PIMPL(ResourceSystem)
         }
     }
 
-    void loadPatchNames(String lumpName)
+    CompositeTextures loadCompositeTextureDefs()
     {
-        LOG_AS("loadPatchNames");
+        LOG_AS("loadCompositeTextureDefs");
 
-        // Clear any previously exisiting names.
-        patchNames.clear();
+        typedef QMultiMap<String, CompositeTexture *> CompositeTextureMap;
 
+        // Load the patch names from the PNAMES lump.
+        PatchNames pnames;
         try
         {
-            lumpnum_t lumpNum = fileSystem().lumpNumForName(lumpName);
-            de::File1 &file = fileSystem().nameIndex().lump(lumpNum);
-
-            if(file.size() < 4)
-            {
-                LOG_RES_WARNING("File \"%s\" (#%i) does not appear to be valid PNAMES data")
-                    << NativePath(file.composeUri().asText()).pretty() << lumpNum;
-                return;
-            }
-
-            ByteRefArray lumpData = ByteRefArray(file.cache(), file.size());
-            de::Reader from = de::Reader(lumpData);
-
-            // The data begins with the total number of patch names.
-            dint32 numNames;
-            from >> numNames;
-
-            // Followed by the names (eight character ASCII strings).
-            if(numNames > 0)
-            {
-                if((unsigned) numNames > (file.size() - 4) / 8)
-                {
-                    // The data appears to be truncated.
-                    LOG_RES_WARNING("File \"%s\" (#%i) appears to be truncated (%u bytes, expected %u)")
-                        << NativePath(file.composeUri().asText()).pretty() << lumpNum
-                        << file.size() << (numNames * 8 + 4);
-
-                    // We'll only read this many names.
-                    numNames = (file.size() - 4) / 8;
-                }
-
-                // Read the names.
-                for(int i = 0; i < numNames; ++i)
-                {
-                    PatchName name;
-                    from >> name;
-                    patchNames.append(name);
-                }
-            }
-
-            file.unlock();
+            pnames = readPatchNames(fileSys().lump(fileSys().lumpNumForName("PNAMES")));
         }
         catch(LumpIndex::NotFoundError const &er)
         {
@@ -994,20 +1169,12 @@ DENG2_PIMPL(ResourceSystem)
                 LOGDEV_RES_WARNING(er.asText());
             }
         }
-    }
-
-    CompositeTextures loadCompositeTextureDefs()
-    {
-        LOG_AS("loadCompositeTextureDefs");
-
-        // Load the patch names from the PNAMES lump.
-        loadPatchNames("PNAMES");
 
         // If no patch names - there is no point continuing further.
-        if(!patchNames.count()) return CompositeTextures();
+        if(!pnames.count()) return CompositeTextures();
 
         // Collate an ordered list of all the definition files we intend to process.
-        QList<de::File1 *> defFiles = collectPatchCompositeDefinitionFiles();
+        QList<File1 *> defFiles = collectPatchCompositeDefinitionFiles();
 
         /**
          * Definitions are read into two discreet sets.
@@ -1023,26 +1190,20 @@ DENG2_PIMPL(ResourceSystem)
 
         // Process each definition file.
         int origIndexBase = 0;
-        DENG2_FOR_EACH_CONST(QList<de::File1 *>, i, defFiles)
+        DENG2_FOR_EACH_CONST(QList<File1 *>, i, defFiles)
         {
-            de::File1 &file = **i;
+            File1 &file = **i;
 
             LOG_RES_VERBOSE("Processing \"%s:%s\"...")
                 << NativePath(file.container().composeUri().asText()).pretty()
                 << NativePath(file.composeUri().asText()).pretty();
 
-            // Buffer the file.
-            ByteRefArray dataBuffer = ByteRefArray(file.cache(), file.size());
-
-            // Read the next set of definitions.
+            // Buffer the file and read the next set of definitions.
             int archiveCount;
-            CompositeTextures newDefs = readCompositeTextureDefs(dataBuffer, origIndexBase, archiveCount);
-
-            // We have now finished with this file.
-            file.unlock();
+            CompositeTextures newDefs = readCompositeTextureDefs(file, pnames, origIndexBase, archiveCount);
 
             // In which set do these belong?
-            CompositeTextures* existingDefs =
+            CompositeTextures *existingDefs =
                     (file.container().hasCustom()? &customDefs : &defs);
 
             if(!existingDefs->isEmpty())
@@ -1095,32 +1256,9 @@ DENG2_PIMPL(ResourceSystem)
                 {
                     haveReplacement = true; // Uses a custom patch.
                 }
-                else
+                else if(*orig != *custom)
                 {
-                    // Do the definitions differ?
-                    if(custom->dimensions()        != orig->dimensions()  ||
-                       custom->logicalDimensions() != orig->logicalDimensions() ||
-                       custom->componentCount()    != orig->componentCount())
-                    {
-                        haveReplacement = true;
-                    }
-                    else
-                    {
-                        // Check the patches.
-                        for(int k = 0; k < orig->componentCount(); ++k)
-                        {
-                            CompositeTexture::Component const &origP   = orig->components()[k];
-                            CompositeTexture::Component const &customP = custom->components()[k];
-
-                            if(origP.lumpNum() != customP.lumpNum() &&
-                               origP.xOrigin() != customP.xOrigin() &&
-                               origP.yOrigin() != customP.yOrigin())
-                            {
-                                haveReplacement = true;
-                                break;
-                            }
-                        }
-                    }
+                    haveReplacement = true;
                 }
 
                 if(haveReplacement)
@@ -1136,8 +1274,8 @@ DENG2_PIMPL(ResourceSystem)
             }
 
             /*
-             * List 'defs' now contains only those definitions which are not superceeded
-             * by those in the 'customDefs' list.
+             * List 'defs' now contains only those definitions which are not
+             * superceeded by those in the 'customDefs' list.
              */
 
             // Add definitions from the custom list to the end of the main set.
@@ -1147,93 +1285,17 @@ DENG2_PIMPL(ResourceSystem)
         return defs;
     }
 
-    /**
-     * Reads patch composite texture definitions from @a file.
-     *
-     * @param data  The data buffer to be read.
-     * @param origIndexBase  Base value for the "original index" logic.
-     * @param archiveCount  Will be updated with the total number of definitions
-     *                      in the file (which may not necessarily equal the total
-     *                      number of definitions which are actually read).
-     */
-    CompositeTextures readCompositeTextureDefs(IByteArray &data,
-        int origIndexBase, int& archiveCount)
+    void initCompositeTextures()
     {
-        LOG_AS("readCompositeTextureDefs");
+        Time begunAt;
 
-        CompositeTextures result; ///< The resulting set of validated definitions.
+        LOG_RES_VERBOSE("Initializing CompositeTextures...");
 
-        // The game data format determines the format of the archived data.
-        CompositeTexture::ArchiveFormat format =
-                (gameDataFormat == 0? CompositeTexture::DoomFormat : CompositeTexture::StrifeFormat);
-
-        de::Reader reader(data);
-
-        // First is a count of the total number of definitions.
-        dint32 definitionCount;
-        reader >> definitionCount;
-
-        // Next is directory of offsets to the definitions.
-        typedef QMap<dint32, int> Offsets;
-        Offsets offsets;
-        for(int i = 0; i < definitionCount; ++i)
+        // Load texture definitions from TEXTURE1/2 lumps.
+        CompositeTextures allDefs = loadCompositeTextureDefs();
+        while(!allDefs.isEmpty())
         {
-            dint32 offset;
-            reader >> offset;
-
-            // Ensure the offset is within valid range.
-            if(offset < 0 || (unsigned) offset < definitionCount * sizeof(offset) ||
-               (dsize) offset > reader.source()->size())
-            {
-                LOG_RES_WARNING("Ignoring definition #%i: invalid offset %i") << i << offset;
-            }
-            else
-            {
-                offsets.insert(offset, origIndexBase + i);
-            }
-        }
-
-        // Seek to each offset and deserialize the definition.
-        DENG2_FOR_EACH_CONST(Offsets, i, offsets)
-        {
-            // Read the next definition.
-            reader.setOffset(i.key());
-            CompositeTexture* def = CompositeTexture::constructFrom(reader, patchNames, format);
-
-            // Attribute the "original index".
-            def->setOrigIndex(i.value());
-
-            // If the composite contains at least one known component image it is
-            // considered valid and we will therefore produce a Texture for it.
-            DENG2_FOR_EACH_CONST(CompositeTexture::Components, it, def->components())
-            {
-                if(it->lumpNum() >= 0)
-                {
-                    // Its valid - include in the result.
-                    result.append(def);
-                    def = 0;
-                    break;
-                }
-            }
-
-            // Failed to validate? Dump it.
-            if(def) delete def;
-        }
-
-        archiveCount = definitionCount;
-        return result;
-    }
-
-    /**
-     * @param defs  Definitions to be processed.
-     */
-    void processCompositeTextureDefs(CompositeTextures &defs)
-    {
-        LOG_AS("processCompositeTextureDefs");
-
-        while(!defs.isEmpty())
-        {
-            CompositeTexture &def = *defs.takeFirst();
+            CompositeTexture &def = *allDefs.takeFirst();
             de::Uri uri("Textures", Path(def.percentEncodedName()));
 
             Texture::Flags flags;
@@ -1284,6 +1346,184 @@ DENG2_PIMPL(ResourceSystem)
 
             delete &def;
         }
+
+        LOG_RES_VERBOSE("initCompositeTextures: Completed in %.2f seconds") << begunAt.since();
+    }
+
+    void initFlatTextures()
+    {
+        Time begunAt;
+
+        LOG_RES_VERBOSE("Initializing Flat textures...");
+
+        LumpIndex const &index = fileSys().nameIndex();
+        lumpnum_t firstFlatMarkerLumpNum = index.findFirst(Path("F_START.lmp"));
+        if(firstFlatMarkerLumpNum >= 0)
+        {
+            lumpnum_t lumpNum;
+            File1 *blockContainer = 0;
+            for(lumpNum = index.size(); lumpNum --> firstFlatMarkerLumpNum + 1;)
+            {
+                File1 &file = index[lumpNum];
+                String percentEncodedName = file.name().fileNameWithoutExtension();
+
+                if(blockContainer && blockContainer != &file.container())
+                {
+                    blockContainer = 0;
+                }
+
+                if(!blockContainer)
+                {
+                    if(!percentEncodedName.compareWithoutCase("F_END") ||
+                       !percentEncodedName.compareWithoutCase("FF_END"))
+                    {
+                        blockContainer = &file.container();
+                    }
+                    continue;
+                }
+
+                if(!percentEncodedName.compareWithoutCase("F_START"))
+                {
+                    blockContainer = 0;
+                    continue;
+                }
+
+                // Ignore extra marker lumps.
+                if(!percentEncodedName.compareWithoutCase("FF_START") ||
+                   !percentEncodedName.compareWithoutCase("F_END")    ||
+                   !percentEncodedName.compareWithoutCase("FF_END")) continue;
+
+                de::Uri uri("Flats", Path(percentEncodedName));
+                if(self.hasTextureManifest(uri)) continue;
+
+                Texture::Flags flags;
+                if(file.container().hasCustom()) flags |= Texture::Custom;
+
+                /*
+                 * Kludge Assume 64x64 else when the flat is loaded it will inherit the
+                 * pixel dimensions of the graphic, which, if it has been replaced with
+                 * a hires version - will be much larger than it should be.
+                 *
+                 * @todo Always determine size from the lowres original.
+                 */
+                Vector2i dimensions(64, 64);
+                Vector2i origin(0, 0);
+                int const uniqueId  = lumpNum - (firstFlatMarkerLumpNum + 1);
+                de::Uri resourceUri = composeLumpIndexResourceUrn(lumpNum);
+
+                self.declareTexture(uri, flags, dimensions, origin, uniqueId, &resourceUri);
+            }
+        }
+
+        // Define any as yet undefined flat textures.
+        /// @todo Defer until necessary (manifest texture is first referenced).
+        deriveAllTexturesInScheme("Flats");
+
+        LOG_RES_VERBOSE("Flat textures initialized in %.2f seconds") << begunAt.since();
+    }
+
+    void initSpriteTextures()
+    {
+        Time begunAt;
+
+        LOG_RES_VERBOSE("Initializing Sprite textures...");
+
+        int uniqueId = 1/*1-based index*/;
+
+        /// @todo fixme: Order here does not respect id Tech 1 logic.
+        ddstack_t *stack = Stack_New();
+
+        LumpIndex const &index = fileSys().nameIndex();
+        for(int i = 0; i < index.size(); ++i)
+        {
+            File1 &file = index[i];
+            String fileName = file.name().fileNameWithoutExtension();
+
+            if(fileName.beginsWith('S', Qt::CaseInsensitive) && fileName.length() >= 5)
+            {
+                if(fileName.endsWith("_START", Qt::CaseInsensitive))
+                {
+                    // We've arrived at *a* sprite block.
+                    Stack_Push(stack, NULL);
+                    continue;
+                }
+
+                if(fileName.endsWith("_END", Qt::CaseInsensitive))
+                {
+                    // The sprite block ends.
+                    Stack_Pop(stack);
+                    continue;
+                }
+            }
+
+            if(!Stack_Height(stack)) continue;
+
+            String decodedFileName = QString(QByteArray::fromPercentEncoding(fileName.toUtf8()));
+            if(!validateSpriteName(decodedFileName))
+            {
+                LOG_RES_NOTE("Ignoring invalid sprite name '%s'") << decodedFileName;
+                continue;
+            }
+
+            de::Uri uri("Sprites", Path(fileName));
+
+            Texture::Flags flags = 0;
+            // If this is from an add-on flag it as "custom".
+            if(file.container().hasCustom())
+            {
+                flags |= Texture::Custom;
+            }
+
+            Vector2i dimensions;
+            Vector2i origin;
+
+            if(file.size())
+            {
+                // If this is a Patch read the world dimension and origin offset values.
+                ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
+                if(Patch::recognize(fileData))
+                {
+                    try
+                    {
+                        PatchMetadata info = Patch::loadMetadata(fileData);
+
+                        dimensions = info.logicalDimensions;
+                        origin     = -info.origin;
+                    }
+                    catch(IByteArray::OffsetError const &)
+                    {
+                        LOG_RES_WARNING("File \"%s:%s\" does not appear to be a valid Patch. "
+                                        "World dimension and origin offset not set for sprite \"%s\".")
+                                << NativePath(file.container().composePath()).pretty()
+                                << NativePath(file.composePath()).pretty()
+                                << uri;
+                    }
+                }
+                file.unlock();
+            }
+
+            de::Uri resourceUri = composeLumpIndexResourceUrn(i);
+            try
+            {
+                self.declareTexture(uri, flags, dimensions, origin, uniqueId, &resourceUri);
+                uniqueId++;
+            }
+            catch(TextureScheme::InvalidPathError const &er)
+            {
+                LOG_RES_WARNING("Failed declaring texture \"%s\": %s") << uri << er.asText();
+            }
+        }
+
+        while(Stack_Height(stack))
+        { Stack_Pop(stack); }
+
+        Stack_Delete(stack);
+
+        // Define any as yet undefined sprite textures.
+        /// @todo Defer until necessary (manifest texture is first referenced).
+        deriveAllTexturesInScheme("Sprites");
+
+        LOG_RES_VERBOSE("Sprite textures initialized in %.2f seconds") << begunAt.since();
     }
 
 #ifdef __CLIENT__
@@ -1337,7 +1577,7 @@ DENG2_PIMPL(ResourceSystem)
     ModelDef *getModelDef(int state, float interMark, int select)
     {
         // Is this a valid state?
-        if(state < 0 || state >= countStates.num)
+        if(state < 0 || state >= runtimeDefs.states.size())
         {
             return 0;
         }
@@ -1345,8 +1585,8 @@ DENG2_PIMPL(ResourceSystem)
         // First try to find an existing modef.
         foreach(ModelDef const &modef, modefs)
         {
-            if(modef.state == &states[state] &&
-               modef.interMark == interMark && modef.select == select)
+            if(modef.state == &runtimeDefs.states[state] &&
+               fequal(modef.interMark, interMark) && modef.select == select)
             {
                 // Models are loaded in reverse order; this one already has a model.
                 return 0;
@@ -1357,7 +1597,7 @@ DENG2_PIMPL(ResourceSystem)
         ModelDef *md = &modefs.last();
 
         // Set initial data.
-        md->state     = &states[state];
+        md->state     = &runtimeDefs.states[state];
         md->interMark = interMark;
         md->select    = select;
 
@@ -1374,16 +1614,16 @@ DENG2_PIMPL(ResourceSystem)
             // The "first choice" directory is that in which the model file resides.
             try
             {
-                return fileSystem().findPath(de::Uri("Models", modelFilePath.toString().fileNamePath() / skinPath.fileName()),
-                                             RLF_DEFAULT, self.resClass(RC_GRAPHIC));
+                return fileSys().findPath(de::Uri("Models", modelFilePath.toString().fileNamePath() / skinPath.fileName()),
+                                          RLF_DEFAULT, self.resClass(RC_GRAPHIC));
             }
             catch(FS1::NotFoundError const &)
             {} // Ignore this error.
         }
 
         /// @throws FS1::NotFoundError if no resource was found.
-        return fileSystem().findPath(de::Uri("Models", skinPath), RLF_DEFAULT,
-                                     self.resClass(RC_GRAPHIC));
+        return fileSys().findPath(de::Uri("Models", skinPath), RLF_DEFAULT,
+                                  self.resClass(RC_GRAPHIC));
     }
 
     /**
@@ -1416,10 +1656,6 @@ DENG2_PIMPL(ResourceSystem)
         for(int i = 0; i < mdl.skinCount(); ++i)
         {
             ModelSkin &skin = mdl.skin(i);
-
-            if(skin.name.isEmpty())
-                continue;
-
             try
             {
                 de::Uri foundResourceUri(Path(findSkinPath(skin.name, modelFilePath)));
@@ -1429,10 +1665,10 @@ DENG2_PIMPL(ResourceSystem)
                 // We have found one more skin for this model.
                 numFoundSkins += 1;
             }
-            catch(FS1::NotFoundError const&)
+            catch(FS1::NotFoundError const &)
             {
                 LOG_RES_WARNING("Failed to locate \"%s\" (#%i) for model \"%s\"")
-                    << skin.name << i << NativePath(modelFilePath).pretty();
+                        << skin.name << i << NativePath(modelFilePath).pretty();
             }
         }
 
@@ -1440,11 +1676,10 @@ DENG2_PIMPL(ResourceSystem)
         {
             // Lastly try a skin named similarly to the model in the same directory.
             de::Uri searchPath(modelFilePath.fileNamePath() / modelFilePath.fileNameWithoutExtension(), RC_GRAPHIC);
-
             try
             {
-                String foundPath = fileSystem().findPath(searchPath, RLF_DEFAULT,
-                                                         self.resClass(RC_GRAPHIC));
+                String foundPath = fileSys().findPath(searchPath, RLF_DEFAULT,
+                                                      self.resClass(RC_GRAPHIC));
                 // Ensure the found path is absolute.
                 foundPath = App_BasePath() / foundPath;
 
@@ -1465,6 +1700,19 @@ DENG2_PIMPL(ResourceSystem)
             LOG_RES_WARNING("Model \"%s\" will be rendered without a skin (none found)")
                 << NativePath(modelFilePath).pretty();
         }
+
+#ifdef DENG2_DEBUG
+        LOGDEV_RES_XVERBOSE("Model \"%s\" skins:") << NativePath(modelFilePath).pretty();
+        int skinIdx = 0;
+        for(ModelSkin const &skin : mdl.skins())
+        {
+            TextureManifest const *texManifest = skin.texture? &skin.texture->manifest() : 0;
+            LOGDEV_RES_XVERBOSE("  %i: %s %s")
+                    << (skinIdx++) << skin.name
+                    << (texManifest? (String("\"") + texManifest->composeUri() + "\"") : "(missing texture)")
+                    << (texManifest? (String(" => \"") + NativePath(texManifest->resourceUri().compose()).pretty() + "\"") : "");
+        }
+#endif
     }
 
     /**
@@ -1496,10 +1744,15 @@ DENG2_PIMPL(ResourceSystem)
         if(!sprite) return;
         if(!sprite->hasViewAngle(0)) return;
 
-        MaterialSnapshot const &ms = sprite->viewAngle(0).material->prepare(Rend_SpriteMaterialSpec());
-        Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
-        int off = de::max(0, -tex.origin().y - ms.height());
-        scaleModel(mf, ms.height(), off);
+        MaterialAnimator &matAnimator = sprite->viewAngle(0).material->getAnimator(Rend_SpriteMaterialSpec());
+
+        // Ensure we've up to date info about the material.
+        matAnimator.prepare();
+
+        Texture const &texture = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture->base();
+        int off = de::max(0, -texture.origin().y - matAnimator.dimensions().y);
+
+        scaleModel(mf, matAnimator.dimensions().y, off);
     }
 
     float calcModelVisualRadius(ModelDef *def)
@@ -1536,56 +1789,57 @@ DENG2_PIMPL(ResourceSystem)
      * Model DEDs, each State that has a model will have a pointer to the one
      * with the smallest intermark (start of a chain).
      */
-    void setupModel(ded_model_t &def)
+    void setupModel(defn::Model const &def)
     {
         LOG_AS("setupModel");
 
-        int const modelScopeFlags = def.flags | defs.modelFlags;
-        int const statenum = Def_GetStateNum(def.state);
+        int const modelScopeFlags = def.geti("flags") | defs.modelFlags;
+        int const statenum = defs.getStateNum(def.gets("state"));
 
         // Is this an ID'd model?
-        ModelDef *modef = getModelDefWithId(def.id);
+        ModelDef *modef = getModelDefWithId(def.gets("id"));
         if(!modef)
         {
             // No, normal State-model.
             if(statenum < 0) return;
 
-            modef = getModelDef(statenum + def.off, def.interMark, def.selector);
-            if(!modef) return; // Can't get a modef, quit!
+            modef = getModelDef(statenum + def.geti("off"), def.getf("interMark"), def.geti("selector"));
+            if(!modef) return; // Overridden or invalid definition.
         }
 
         // Init modef info (state & intermark already set).
-        modef->def       = &def;
-        modef->group     = def.group;
+        modef->def       = def;
+        modef->group     = def.getui("group");
         modef->flags     = modelScopeFlags;
-        modef->offset    = def.offset;
+        modef->offset    = Vector3f(def.get("offset"));
         modef->offset.y += defs.modelOffset; // Common Y axis offset.
-        modef->scale     = def.scale;
+        modef->scale     = Vector3f(def.get("scale"));
         modef->scale.y  *= defs.modelScale;  // Common Y axis scaling.
-        modef->resize    = def.resize;
-        modef->skinTics  = de::max(def.skinTics, 1);
+        modef->resize    = def.getf("resize");
+        modef->skinTics  = de::max(def.geti("skinTics"), 1);
         for(int i = 0; i < 2; ++i)
         {
-            modef->interRange[i] = def.interRange[i];
+            modef->interRange[i] = float(def.geta("interRange")[i].asNumber());
         }
 
         // Submodels.
         modef->clearSubs();
-        for(uint i = 0; i < def.subCount(); ++i)
+        for(int i = 0; i < def.subCount(); ++i)
         {
-            ded_submodel_t const *subdef = &def.sub(i);
+            Record const &subdef = def.sub(i);
             SubmodelDef *sub = modef->addSub();
 
             sub->modelId = 0;
 
-            if(!subdef->filename) continue;
-            de::Uri const &searchPath = reinterpret_cast<de::Uri &>(*subdef->filename);
+            if(subdef.gets("filename").isEmpty()) continue;
+
+            de::Uri const searchPath(subdef.gets("filename"));
             if(searchPath.isEmpty()) continue;
 
             try
             {
-                String foundPath = fileSystem().findPath(searchPath, RLF_DEFAULT,
-                                                         self.resClass(RC_MODEL));
+                String foundPath = fileSys().findPath(searchPath, RLF_DEFAULT,
+                                                      self.resClass(RC_MODEL));
                 // Ensure the found path is absolute.
                 foundPath = App_BasePath() / foundPath;
 
@@ -1595,12 +1849,12 @@ DENG2_PIMPL(ResourceSystem)
                 if(!mdl)
                 {
                     // Attempt to load it in now.
-                    QScopedPointer<de::FileHandle> hndl(&fileSystem().openFile(foundPath, "rb"));
+                    QScopedPointer<FileHandle> hndl(&fileSys().openFile(foundPath, "rb"));
 
                     mdl = Model::loadFromFile(*hndl, modelAspectMod);
 
                     // We're done with the file.
-                    fileSystem().releaseFile(hndl->file());
+                    fileSys().releaseFile(hndl->file());
 
                     // Loaded?
                     if(mdl)
@@ -1625,15 +1879,15 @@ DENG2_PIMPL(ResourceSystem)
                 if(!mdl) continue;
 
                 sub->modelId    = mdl->modelId();
-                sub->frame      = mdl->frameNumber(subdef->frame);
+                sub->frame      = mdl->frameNumber(subdef.gets("frame"));
                 if(sub->frame < 0) sub->frame = 0;
-                sub->frameRange = de::max(1, subdef->frameRange); // Frame range must always be greater than zero.
+                sub->frameRange = de::max(1, subdef.geti("frameRange")); // Frame range must always be greater than zero.
 
-                sub->alpha      = byte(255 - subdef->alpha * 255);
-                sub->blendMode  = subdef->blendMode;
+                sub->alpha      = byte(de::clamp(0, int(255 - subdef.getf("alpha") * 255), 255));
+                sub->blendMode  = blendmode_t(subdef.geti("blendMode"));
 
                 // Submodel-specific flags cancel out model-scope flags!
-                sub->setFlags(modelScopeFlags ^ subdef->flags);
+                sub->setFlags(modelScopeFlags ^ subdef.geti("flags"));
 
                 // Flags may override alpha and/or blendmode.
                 if(sub->testFlag(MFF_BRIGHTSHADOW))
@@ -1668,10 +1922,10 @@ DENG2_PIMPL(ResourceSystem)
                     sub->blendMode = BM_SUBTRACT;
                 }
 
-                if(subdef->skinFilename && !Uri_IsEmpty(subdef->skinFilename))
+                if(!subdef.gets("skinFilename").isEmpty())
                 {
                     // A specific file name has been given for the skin.
-                    String const &skinFilePath  = reinterpret_cast<de::Uri &>(*subdef->skinFilename).path();
+                    String const &skinFilePath  = de::Uri(subdef.gets("skinFilename")).path();
                     String const &modelFilePath = findModelPath(sub->modelId);
                     try
                     {
@@ -1679,26 +1933,26 @@ DENG2_PIMPL(ResourceSystem)
 
                         sub->skin = defineSkinAndAddToModelIndex(*mdl, foundResourcePath);
                     }
-                    catch(FS1::NotFoundError const&)
+                    catch(FS1::NotFoundError const &)
                     {
                         LOG_RES_WARNING("Failed to locate skin \"%s\" for model \"%s\"")
-                            << reinterpret_cast<de::Uri &>(*subdef->skinFilename) << NativePath(modelFilePath).pretty();
+                            << subdef.gets("skinFilename") << NativePath(modelFilePath).pretty();
                     }
                 }
                 else
                 {
-                    sub->skin = subdef->skin;
+                    sub->skin = subdef.geti("skin");
                 }
 
                 // Skin range must always be greater than zero.
-                sub->skinRange = de::max(subdef->skinRange, 1);
+                sub->skinRange = de::max(subdef.geti("skinRange"), 1);
 
                 // Offset within the model.
-                sub->offset = subdef->offset;
+                sub->offset = subdef.get("offset");
 
-                if(subdef->shinySkin && !Uri_IsEmpty(subdef->shinySkin))
+                if(!subdef.gets("shinySkin").isEmpty())
                 {
-                    String const &skinFilePath  = reinterpret_cast<de::Uri &>(*subdef->shinySkin).path();
+                    String const &skinFilePath  = de::Uri(subdef.gets("shinySkin")).path();
                     String const &modelFilePath = findModelPath(sub->modelId);
                     try
                     {
@@ -1737,8 +1991,8 @@ DENG2_PIMPL(ResourceSystem)
         }
         else if(modef->state && modef->testSubFlag(0, MFF_AUTOSCALE))
         {
-            spritenum_t sprNum = Def_GetSpriteNum(def.sprite.id);
-            int sprFrame       = def.spriteFrame;
+            spritenum_t sprNum = Def_GetSpriteNum(def.gets("sprite"));
+            int sprFrame       = def.geti("spriteFrame");
 
             if(sprNum < 0)
             {
@@ -1755,7 +2009,7 @@ DENG2_PIMPL(ResourceSystem)
 
         if(modef->state)
         {
-            int stateNum = modef->state - states;
+            int stateNum = runtimeDefs.states.indexOf(modef->state);
 
             // Associate this modeldef with its state.
             if(stateModefs[stateNum] < 0)
@@ -1788,16 +2042,10 @@ DENG2_PIMPL(ResourceSystem)
             }
         }
 
-        // Calculate visual radius for shadows.
-        /// @todo fixme: use a separate property.
-        /*if(def.shadowRadius)
-        {
-            modef->visualRadius = def.shadowRadius;
-        }
-        else*/
-        {
-            modef->visualRadius = calcModelVisualRadius(modef);
-        }
+        modef->visualRadius = calcModelVisualRadius(modef); // based on geometry bounds
+
+        // Shadow radius can be specified manually.
+        modef->shadowRadius = def.getf("shadowRadius");
     }
 
     static int destroyModelInRepository(StringPool::Id id, void *context)
@@ -1836,7 +2084,7 @@ DENG2_PIMPL(ResourceSystem)
         manifest.setId(id);
 
         // Add the new manifest to the id index/map.
-        if(materialManifestCount > materialManifestIdMapSize)
+        if(materialManifestCount > (int)materialManifestIdMapSize)
         {
             // Allocate more memory.
             materialManifestIdMapSize += MANIFESTIDMAP_BLOCK_ALLOC;
@@ -1852,7 +2100,7 @@ DENG2_PIMPL(ResourceSystem)
         materials.append(&material);
 
         // We want notification when the material is about to be deleted.
-        material.audienceForDeletion += this;
+        material.audienceForDeletion() += this;
     }
 
     /// Observes MaterialManifest Deletion.
@@ -1995,7 +2243,6 @@ DENG2_PIMPL(ResourceSystem)
 
         void runTask()
         {
-            /// @todo fixme: Concurrent active plugins!!
             DD_CallHooks(HOOK_SAVEGAME_CONVERT, 0, &parm);
         }
     };
@@ -2006,7 +2253,7 @@ DENG2_PIMPL(ResourceSystem)
         if(convertSavegameTasks.isDone())
         {
             LOG_AS("ResourceSystem");
-            Loop::appLoop().audienceForIteration() -= this;
+            Loop::get().audienceForIteration() -= this;
             try
             {
                 // The newly converted savegame(s) should now be somewhere in /home/savegames
@@ -2021,7 +2268,7 @@ DENG2_PIMPL(ResourceSystem)
     {
         LOG_AS("ResourceSystem");
         LOG_TRACE("Scheduling legacy savegame conversion for %s (gameId:%s)") << sourcePath << gameId;
-        Loop::appLoop().audienceForIteration() += this;
+        Loop::get().audienceForIteration() += this;
         convertSavegameTasks.start(new ConvertSavegameTask(sourcePath, gameId));
     }
 
@@ -2086,6 +2333,20 @@ ResourceClass &ResourceSystem::resClass(resourceclassid_t id)
     throw UnknownResourceClassError("ResourceSystem::toClass", QString("Invalid id '%1'").arg(int(id)));
 }
 
+void ResourceSystem::updateOverrideIWADPathFromConfig()
+{
+    String path = App::config().gets("resource.iwadFolder", "");
+    if(!path.isEmpty())
+    {
+        LOG_RES_NOTE("Using user-selected primary IWAD folder: \"%s\"") << path;
+
+        FS1::Scheme &ps = App_FileSystem().scheme(App_ResourceClass("RC_PACKAGE").defaultScheme());
+        ps.clearSearchPathGroup(FS1::OverridePaths);
+        ps.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path, RC_PACKAGE),
+                                    SearchPath::NoDescend), FS1::OverridePaths);
+    }
+}
+
 void ResourceSystem::clearAllResources()
 {
     clearAllRuntimeResources();
@@ -2110,34 +2371,36 @@ void ResourceSystem::clearAllSystemResources()
 
 int ResourceSystem::spriteCount()
 {
-    return d->spriteGroups.count();
+    return d->spritesByFrame.count();
 }
 
 bool ResourceSystem::hasSprite(spritenum_t spriteId, int frame)
 {
-    if(Instance::SpriteGroup *group = d->spriteGroup(spriteId))
+    if(d->hasSpriteFrameSet(spriteId))
     {
-        if(frame >= 0 && frame < group->sprites.count())
-        {
+        if(frame >= 0 && frame < d->findSpriteFrameSet(spriteId).count())
             return true;
-        }
     }
     return false;
 }
 
 Sprite &ResourceSystem::sprite(spritenum_t spriteId, int frame)
 {
-    return *spriteSet(spriteId).at(frame);
+    return *d->findSpriteFrameSet(spriteId).at(frame);
 }
 
 ResourceSystem::SpriteSet const &ResourceSystem::spriteSet(spritenum_t spriteId)
 {
-    if(Instance::SpriteGroup *group = d->spriteGroup(spriteId))
-    {
-        return group->sprites;
-    }
-    /// @throw MissingResourceError An unknown/invalid id was specified.
-    throw MissingResourceError("ResourceSystem::spriteSet", "Invalid sprite id " + String::number(spriteId));
+    return d->findSpriteFrameSet(spriteId);
+}
+
+void ResourceSystem::initTextures()
+{
+    LOG_AS("ResourceSystem");
+
+    d->initCompositeTextures();
+    d->initFlatTextures();
+    d->initSpriteTextures();
 }
 
 void ResourceSystem::initSystemTextures()
@@ -2152,13 +2415,9 @@ void ResourceSystem::initSystemTextures()
         { "missing",    "missing" },
         { "bbox",       "bbox" },
         { "gray",       "gray" },
-        { "mouse",      "ui/mouse" },
         { "boxcorner",  "ui/boxcorner" },
         { "boxfill",    "ui/boxfill" },
         { "boxshade",   "ui/boxshade" },
-        { "hint",       "ui/hint" },
-        { "logo",       "ui/logo" },
-        { "background", "ui/background" },
         { "", "" }
     };
 
@@ -2180,322 +2439,25 @@ void ResourceSystem::initSystemTextures()
     d->deriveAllTexturesInScheme("System");
 }
 
-static QList<de::File1 *> collectPatchCompositeDefinitionFiles()
+Texture *ResourceSystem::texture(String schemeName, de::Uri const &resourceUri)
 {
-    QList<de::File1 *> result;
-
-    /*
-     * Precedence order of definitions is defined by id tech1 which processes
-     * the TEXTURE1/2 lumps in the following order:
-     *
-     * (last)TEXTURE2 > (last)TEXTURE1
-     */
-    LumpIndex const &index  = App_FileSystem().nameIndex();
-    lumpnum_t firstTexLump  = App_FileSystem().lumpNumForName("TEXTURE1");
-    lumpnum_t secondTexLump = App_FileSystem().lumpNumForName("TEXTURE2");
-
-    /*
-     * Also process all other lumps named TEXTURE1/2.
-     */
-    for(int i = 0; i < index.size(); ++i)
+    if(!resourceUri.isEmpty())
     {
-        de::File1 &file = index.lump(i);
-
-        // Will this be processed anyway?
-        if(i == firstTexLump) continue;
-        if(i == secondTexLump) continue;
-
-        String fileName = file.name().fileNameWithoutExtension();
-        if(fileName.compareWithoutCase("TEXTURE1") &&
-           fileName.compareWithoutCase("TEXTURE2"))
+        if(!resourceUri.path().toStringRef().compareWithoutCase("-"))
         {
-            continue;
+            return nullptr;
         }
-
-        result.append(&file);
-    }
-
-    if(firstTexLump >= 0)
-    {
-        result.append(&index.lump(firstTexLump));
-    }
-
-    if(secondTexLump >= 0)
-    {
-        result.append(&index.lump(secondTexLump));
-    }
-
-    return result;
-}
-
-void ResourceSystem::initCompositeTextures()
-{
-    Time begunAt;
-
-    LOG_AS("ResourceSystem");
-    LOG_RES_VERBOSE("Initializing PatchComposite textures...");
-
-    // Load texture definitions from TEXTURE1/2 lumps.
-    CompositeTextures texs = d->loadCompositeTextureDefs();
-    d->processCompositeTextureDefs(texs);
-
-    DENG_ASSERT(texs.isEmpty());
-
-    LOG_RES_VERBOSE("initCompositeTextures: Completed in %.2f seconds") << begunAt.since();
-}
-
-void ResourceSystem::initFlatTextures()
-{
-    Time begunAt;
-
-    LOG_AS("ResourceSystem");
-    LOG_RES_VERBOSE("Initializing Flat textures...");
-
-    LumpIndex const &index = d->fileSystem().nameIndex();
-    lumpnum_t firstFlatMarkerLumpNum = index.firstIndexForPath(Path("F_START.lmp"));
-    if(firstFlatMarkerLumpNum >= 0)
-    {
-        lumpnum_t lumpNum;
-        de::File1 *blockContainer = 0;
-        for(lumpNum = index.size(); lumpNum --> firstFlatMarkerLumpNum + 1;)
-        {
-            de::File1 &file = index.lump(lumpNum);
-            String percentEncodedName = file.name().fileNameWithoutExtension();
-
-            if(blockContainer && blockContainer != &file.container())
-            {
-                blockContainer = 0;
-            }
-
-            if(!blockContainer)
-            {
-                if(!percentEncodedName.compareWithoutCase("F_END") ||
-                   !percentEncodedName.compareWithoutCase("FF_END"))
-                {
-                    blockContainer = &file.container();
-                }
-                continue;
-            }
-
-            if(!percentEncodedName.compareWithoutCase("F_START"))
-            {
-                blockContainer = 0;
-                continue;
-            }
-
-            // Ignore extra marker lumps.
-            if(!percentEncodedName.compareWithoutCase("FF_START") ||
-               !percentEncodedName.compareWithoutCase("F_END")    ||
-               !percentEncodedName.compareWithoutCase("FF_END")) continue;
-
-            de::Uri uri("Flats", Path(percentEncodedName));
-            if(hasTextureManifest(uri)) continue;
-
-            Texture::Flags flags;
-            if(file.container().hasCustom()) flags |= Texture::Custom;
-
-            /*
-             * Kludge Assume 64x64 else when the flat is loaded it will inherit the
-             * pixel dimensions of the graphic, which, if it has been replaced with
-             * a hires version - will be much larger than it should be.
-             *
-             * @todo Always determine size from the lowres original.
-             */
-            Vector2i dimensions(64, 64);
-            Vector2i origin(0, 0);
-            int const uniqueId  = lumpNum - (firstFlatMarkerLumpNum + 1);
-            de::Uri resourceUri = composeLumpIndexResourceUrn(lumpNum);
-
-            declareTexture(uri, flags, dimensions, origin, uniqueId, &resourceUri);
-        }
-    }
-
-    // Define any as yet undefined flat textures.
-    /// @todo Defer until necessary (manifest texture is first referenced).
-    d->deriveAllTexturesInScheme("Flats");
-
-    LOG_RES_VERBOSE("Flat textures initialized in %.2f seconds") << begunAt.since();
-}
-
-/// Returns a value in the range [0..Sprite::max_angles] if @a rotCode can be
-/// interpreted as a sprite rotation number; otherwise @c -1
-static int toSpriteRotation(QChar rotCode)
-{
-    int rot = -1; // Unknown.
-
-    if(rotCode.isDigit())
-    {
-        rot = rotCode.digitValue();
-    }
-    else if(rotCode.isLetter())
-    {
-        char charCodeLatin1 = rotCode.toUpper().toLatin1();
-        if(charCodeLatin1 >= 'A')
-        {
-            rot = charCodeLatin1 - 'A' + 10;
-        }
-    }
-
-    if(rot > Sprite::max_angles)
-    {
-        rot = -1;
-    }
-    else if(rot > 0)
-    {
-        if(rot <= Sprite::max_angles / 2)
-        {
-            rot = (rot - 1) * 2 + 1;
-        }
-        else
-        {
-            rot = (rot - 9) * 2 + 2;
-        }
-    }
-
-    return rot;
-}
-
-/// Returns @c true iff @a name is a well-formed sprite name.
-static bool validateSpriteName(String name)
-{
-    if(name.length() < 6) return false;
-
-    // Character at position 5 is a rotation number.
-    if(toSpriteRotation(name.at(5)) < 0)
-    {
-        return false;
-    }
-
-    // If defined, the character at position 7 is also a rotation number.
-    if(name.length() >= 7)
-    {
-        if(toSpriteRotation(name.at(7)) < 0)
-        {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-void ResourceSystem::initSpriteTextures()
-{
-    Time begunAt;
-
-    LOG_AS("ResourceSystem");
-    LOG_RES_VERBOSE("Initializing Sprite textures...");
-
-    int uniqueId = 1/*1-based index*/;
-
-    /// @todo fixme: Order here does not respect id tech1 logic.
-    ddstack_t *stack = Stack_New();
-
-    LumpIndex const &index = d->fileSystem().nameIndex();
-    for(int i = 0; i < index.size(); ++i)
-    {
-        de::File1 &file = index.lump(i);
-        String fileName = file.name().fileNameWithoutExtension();
-
-        if(fileName.beginsWith('S', Qt::CaseInsensitive) && fileName.length() >= 5)
-        {
-            if(fileName.endsWith("_START", Qt::CaseInsensitive))
-            {
-                // We've arrived at *a* sprite block.
-                Stack_Push(stack, NULL);
-                continue;
-            }
-
-            if(fileName.endsWith("_END", Qt::CaseInsensitive))
-            {
-                // The sprite block ends.
-                Stack_Pop(stack);
-                continue;
-            }
-        }
-
-        if(!Stack_Height(stack)) continue;
-
-        String decodedFileName = QString(QByteArray::fromPercentEncoding(fileName.toUtf8()));
-        if(!validateSpriteName(decodedFileName))
-        {
-            LOG_RES_NOTE("Ignoring invalid sprite name '%s'") << decodedFileName;
-            continue;
-        }
-
-        de::Uri uri("Sprites", Path(fileName));
-
-        Texture::Flags flags = 0;
-        // If this is from an add-on flag it as "custom".
-        if(file.container().hasCustom())
-        {
-            flags |= Texture::Custom;
-        }
-
-        Vector2i dimensions;
-        Vector2i origin;
-
-        // If this is a Patch read the world dimension and origin offset values.
-        ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
-        if(Patch::recognize(fileData))
-        {
-            try
-            {
-                Patch::Metadata info = Patch::loadMetadata(fileData);
-
-                dimensions = info.logicalDimensions;
-                origin     = -info.origin;
-            }
-            catch(IByteArray::OffsetError const &)
-            {
-                LOG_RES_WARNING("File \"%s:%s\" does not appear to be a valid Patch. "
-                            "World dimension and origin offset not set for sprite \"%s\".")
-                    << NativePath(file.container().composePath()).pretty()
-                    << NativePath(file.composePath()).pretty()
-                    << uri;
-            }
-        }
-        file.unlock();
-
-        de::Uri resourceUri = composeLumpIndexResourceUrn(i);
-        try
-        {
-            declareTexture(uri, flags, dimensions, origin, uniqueId, &resourceUri);
-            uniqueId++;
-        }
-        catch(TextureScheme::InvalidPathError const &er)
-        {
-            LOG_RES_WARNING("Failed declaring texture \"%s\": %s") << uri << er.asText();
-        }
-    }
-
-    while(Stack_Height(stack))
-    { Stack_Pop(stack); }
-
-    Stack_Delete(stack);
-
-    // Define any as yet undefined sprite textures.
-    /// @todo Defer until necessary (manifest texture is first referenced).
-    d->deriveAllTexturesInScheme("Sprites");
-
-    LOG_RES_VERBOSE("Sprite textures initialized in %.2f seconds") << begunAt.since();
-}
-
-Texture *ResourceSystem::texture(String schemeName, de::Uri const *resourceUri)
-{
-    if(resourceUri && !resourceUri->isEmpty())
-    {
-        if(!resourceUri->path().toStringRef().compareWithoutCase("-")) return 0;
 
         try
         {
-            return &textureScheme(schemeName).findByResourceUri(*resourceUri).texture();
+            return &textureScheme(schemeName).findByResourceUri(resourceUri).texture();
         }
         catch(TextureManifest::MissingTextureError const &)
-        {} // Ignore this error.
+        {}  // Ignore this error.
         catch(TextureScheme::NotFoundError const &)
-        {} // Ignore this error.
+        {}  // Ignore this error.
     }
-    return 0;
+    return nullptr;
 }
 
 Texture *ResourceSystem::defineTexture(String schemeName, de::Uri const &resourceUri,
@@ -2560,14 +2522,14 @@ patchid_t ResourceSystem::declarePatch(String encodedName)
     {} // Ignore this error.
 
     Path lumpPath = uri.path() + ".lmp";
-    lumpnum_t lumpNum = d->fileSystem().nameIndex().lastIndexForPath(lumpPath);
-    if(lumpNum < 0)
+    if(!d->fileSys().nameIndex().contains(lumpPath))
     {
         LOG_RES_WARNING("Failed to locate lump for \"%s\"") << uri;
         return 0;
     }
 
-    de::File1 &file = d->fileSystem().nameIndex().lump(lumpNum);
+    lumpnum_t const lumpNum = d->fileSys().nameIndex().findLast(lumpPath);
+    File1 &file = d->fileSys().lump(lumpNum);
 
     Texture::Flags flags;
     if(file.container().hasCustom()) flags |= Texture::Custom;
@@ -2620,9 +2582,10 @@ patchid_t ResourceSystem::declarePatch(String encodedName)
 rawtex_t *ResourceSystem::rawTexture(lumpnum_t lumpNum)
 {
     LOG_AS("ResourceSystem::rawTexture");
-    if(-1 == lumpNum || lumpNum >= F_LumpCount())
+    if(-1 == lumpNum || lumpNum >= App_FileSystem().lumpCount())
     {
-        LOGDEV_RES_WARNING("LumpNum #%i out of bounds (%i), returning 0") << lumpNum << F_LumpCount();
+        LOGDEV_RES_WARNING("LumpNum #%i out of bounds (%i), returning 0")
+                << lumpNum << App_FileSystem().lumpCount();
         return 0;
     }
 
@@ -2637,10 +2600,10 @@ rawtex_t *ResourceSystem::rawTexture(lumpnum_t lumpNum)
 rawtex_t *ResourceSystem::declareRawTexture(lumpnum_t lumpNum)
 {
     LOG_AS("ResourceSystem::rawTexture");
-    if(-1 == lumpNum || lumpNum >= F_LumpCount())
+    if(-1 == lumpNum || lumpNum >= App_FileSystem().lumpCount())
     {
         LOGDEV_RES_WARNING("LumpNum #%i out of range %s, returning 0")
-            << lumpNum << Rangeui(0, F_LumpCount()).asText();
+            << lumpNum << Rangeui(0, App_FileSystem().lumpCount()).asText();
         return 0;
     }
 
@@ -2649,7 +2612,7 @@ rawtex_t *ResourceSystem::declareRawTexture(lumpnum_t lumpNum)
     if(!raw)
     {
         // An entirely new raw texture.
-        String const &name = App_FileSystem().nameIndex().lump(lumpNum).name();
+        String const &name = App_FileSystem().lump(lumpNum).name();
         raw = new rawtex_t(name, lumpNum);
         d->rawTexHash.insert(lumpNum, raw);
     }
@@ -2662,9 +2625,10 @@ QList<rawtex_t *> ResourceSystem::collectRawTextures() const
     return d->rawTexHash.values();
 }
 
-void ResourceSystem::initRawTextures()
+void ResourceSystem::clearAllRawTextures()
 {
-    d->clearAllRawTextures();
+    qDeleteAll(d->rawTexHash);
+    d->rawTexHash.clear();
 }
 
 MaterialScheme &ResourceSystem::materialScheme(String name) const
@@ -2672,11 +2636,8 @@ MaterialScheme &ResourceSystem::materialScheme(String name) const
     LOG_AS("ResourceSystem::materialScheme");
     if(!name.isEmpty())
     {
-        MaterialSchemes::iterator found = d->materialSchemes.find(name.toLower());
-        if(found != d->materialSchemes.end())
-        {
-            return **found;
-        }
+        auto found = d->materialSchemes.find(name.toLower());
+        if(found != d->materialSchemes.end()) return **found;
     }
     /// @throw UnknownSchemeError An unknown scheme was referenced.
     throw UnknownSchemeError("ResourceSystem::materialScheme", "No scheme found matching '" + name + "'");
@@ -2691,15 +2652,24 @@ bool ResourceSystem::knownMaterialScheme(String name) const
     return false;
 }
 
-ResourceSystem::MaterialSchemes const &ResourceSystem::allMaterialSchemes() const
+int ResourceSystem::materialSchemeCount() const
 {
-    return d->materialSchemes;
+    return d->materialSchemes.count();
+}
+
+LoopResult ResourceSystem::forAllMaterialSchemes(std::function<LoopResult (MaterialScheme &)> func) const
+{
+    for(MaterialScheme *scheme : d->materialSchemes)
+    {
+        if(auto result = func(*scheme)) return result;
+    }
+    return LoopContinue;
 }
 
 MaterialManifest &ResourceSystem::toMaterialManifest(materialid_t id) const
 {
     duint32 idx = id - 1; // 1-based index.
-    if(idx < d->materialManifestCount)
+    if(idx < (duint32)d->materialManifestCount)
     {
         if(d->materialManifestIdMap[idx])
         {
@@ -2709,7 +2679,7 @@ MaterialManifest &ResourceSystem::toMaterialManifest(materialid_t id) const
         DENG2_ASSERT(false);
     }
     /// @throw InvalidMaterialIdError The specified material id is invalid.
-    throw UnknownMaterialIdError("ResourceSystem::toMaterialManifest", "Invalid material ID " + String::number(id) + ", valid range " + Rangeui(1, d->materialManifestCount + 1).asText());
+    throw UnknownMaterialIdError("ResourceSystem::toMaterialManifest", "Invalid material ID " + String::number(id) + ", valid range " + Rangei(1, d->materialManifestCount + 1).asText());
 }
 
 bool ResourceSystem::hasMaterialManifest(de::Uri const &path) const
@@ -2753,9 +2723,18 @@ MaterialManifest &ResourceSystem::materialManifest(de::Uri const &uri) const
     throw MissingManifestError("ResourceSystem::materialManifest", "Failed to locate a manifest matching \"" + uri.asText() + "\"");
 }
 
-ResourceSystem::AllMaterials const &ResourceSystem::allMaterials() const
+int ResourceSystem::materialCount() const
 {
-    return d->materials;
+    return d->materials.count();
+}
+
+LoopResult ResourceSystem::forAllMaterials(std::function<LoopResult (Material &)> func) const
+{
+    for(Material *mat : d->materials)
+    {
+        if(auto result = func(*mat)) return result;
+    }
+    return LoopContinue;
 }
 
 ResourceSystem::MaterialManifestGroup &ResourceSystem::newMaterialGroup()
@@ -3135,7 +3114,7 @@ AbstractFont *ResourceSystem::newFontFromDef(ded_compositefont_t const &def)
     LOG_AS("ResourceSystem::newFontFromDef");
 
     if(!def.uri) return 0;
-    de::Uri const &uri = *reinterpret_cast<de::Uri *>(def.uri);
+    de::Uri const &uri = *def.uri;
 
     try
     {
@@ -3190,7 +3169,7 @@ AbstractFont *ResourceSystem::newFontFromFile(de::Uri const &uri, String filePat
 {
     LOG_AS("ResourceSystem::newFontFromFile");
 
-    if(!d->fileSystem().accessFile(de::Uri::fromNativePath(filePath)))
+    if(!d->fileSys().accessFile(de::Uri::fromNativePath(filePath)))
     {
         LOGDEV_RES_WARNING("Ignoring invalid filePath: ") << filePath;
         return 0;
@@ -3313,7 +3292,7 @@ ModelDef &ResourceSystem::modelDef(String id)
 
 ModelDef *ResourceSystem::modelDefForState(int stateIndex, int select)
 {
-    if(stateIndex < 0 || stateIndex >= defs.count.states.num)
+    if(stateIndex < 0 || stateIndex >= defs.states.size())
     {
         return 0;
     }
@@ -3374,8 +3353,8 @@ void ResourceSystem::initModels()
     d->modefs.resize(defs.models.size());
 
     // Clear the stateid => modeldef LUT.
-    d->stateModefs.resize(countStates.num);
-    for(int i = 0; i < countStates.num; ++i)
+    d->stateModefs.resize(runtimeDefs.states.size());
+    for(int i = 0; i < runtimeDefs.states.size(); ++i)
     {
         d->stateModefs[i] = -1;
     }
@@ -3408,8 +3387,11 @@ void ResourceSystem::initModels()
         {
             ModelDef *other = &d->modefs[k];
 
+            /// @todo Need an index by state. -jk
+            if(other->state != me->state) continue;
+
             // Same state and a bigger order are the requirements.
-            if(other->state == me->state && other->def > me->def && // Defined after me.
+            if(other->def.order() > me->def.order() && // Defined after me.
                other->interMark > me->interMark &&
                other->interMark < minmark)
             {
@@ -3436,7 +3418,8 @@ void ResourceSystem::initModels()
             ModelDef *other = &d->modefs[k];
 
             // Same state and a bigger order are the requirements.
-            if(other->state == me->state && other->def > me->def && // Defined after me.
+            if(other->state == me->state &&
+               other->def.order() > me->def.order() && // Defined after me.
                other->select > me->select && other->select < minsel &&
                other->interMark >= me->interMark)
             {
@@ -3475,6 +3458,53 @@ void ResourceSystem::setModelDefFrame(ModelDef &modef, int frame)
 
 #endif // __CLIENT__
 
+void ResourceSystem::initMapDefs()
+{
+    clearAllMapDefs();
+
+    // Locate all the maps using the central lump index:
+    /// @todo Locate new maps each time a package is loaded rather than rely on
+    /// the central lump index.
+    LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
+    lumpnum_t lastLump = -1;
+    while(lastLump < lumpIndex.size())
+    {
+        QScopedPointer<Id1MapRecognizer> recognizer(new Id1MapRecognizer(lumpIndex, lastLump));
+        lastLump = recognizer->lastLump();
+        if(recognizer->format() != Id1MapRecognizer::UnknownFormat)
+        {
+            File1 *sourceFile  = recognizer->sourceFile();
+            String const mapId = recognizer->id();
+            MapDef &mapDef = d->mapDefs.insert(mapId);
+            mapDef.set("id", mapId);
+            mapDef.setSourceFile(sourceFile)
+                  .setRecognizer(recognizer.take());
+        }
+    }
+}
+
+void ResourceSystem::clearAllMapDefs()
+{
+    d->mapDefs.clear();
+}
+
+MapDef *ResourceSystem::mapDef(de::Uri const &mapUri) const
+{
+    // Only one resource scheme is known for maps.
+    if(mapUri.scheme().compareWithoutCase("Maps")) return 0;
+    return d->mapDefs.tryFind(mapUri.path(), MapDefs::MatchFull | MapDefs::NoBranch);
+}
+
+ResourceSystem::MapDefs const &ResourceSystem::allMapDefs() const
+{
+    return d->mapDefs;
+}
+
+ResourceSystem::MapDefs &ResourceSystem::allMapDefs()
+{
+    return d->mapDefs;
+}
+
 void ResourceSystem::clearAllAnimGroups()
 {
     qDeleteAll(d->animGroups);
@@ -3486,6 +3516,15 @@ int ResourceSystem::animGroupCount()
     return d->animGroups.count();
 }
 
+AnimGroup &ResourceSystem::newAnimGroup(int flags)
+{
+    LOG_AS("ResourceSystem");
+    int const uniqueId = d->animGroups.count() + 1; // 1-based.
+    // Allocating one by one is inefficient but it doesn't really matter.
+    d->animGroups.append(new AnimGroup(uniqueId, flags));
+    return *d->animGroups.last();
+}
+
 AnimGroup *ResourceSystem::animGroup(int uniqueId)
 {
     LOG_AS("ResourceSystem::animGroup");
@@ -3494,16 +3533,22 @@ AnimGroup *ResourceSystem::animGroup(int uniqueId)
         return d->animGroups.at(uniqueId - 1);
     }
     LOGDEV_RES_WARNING("Invalid group #%i, returning NULL") << uniqueId;
-    return 0;
+    return nullptr;
 }
 
-AnimGroup &ResourceSystem::newAnimGroup(int flags)
+AnimGroup *ResourceSystem::animGroupForTexture(TextureManifest const &textureManifest)
 {
-    LOG_AS("ResourceSystem");
-    int const uniqueId = d->animGroups.count() + 1; // 1-based.
-    // Allocating one by one is inefficient but it doesn't really matter.
-    d->animGroups.append(new AnimGroup(uniqueId, flags));
-    return *d->animGroups.last();
+    // Group ids are 1-based.
+    // Search backwards to allow patching.
+    for(int i = animGroupCount(); i > 0; i--)
+    {
+        AnimGroup *group = animGroup(i);
+        if(group->hasFrameFor(textureManifest))
+        {
+            return group;
+        }
+    }
+    return nullptr;  // Not found.
 }
 
 struct SpriteFrameDef
@@ -3553,15 +3598,12 @@ typedef QHash<String, SpriteDef> SpriteDefs;
  * CLOCKWISE around the axis. This is not the same as the angle, which increases
  * counter clockwise (protractor).
  */
-static SpriteDefs generateSpriteDefs()
+static SpriteDefs buildSpriteDefsForTextures(TextureScheme::Index const &texIndex)
 {
-    ResourceSystem &resSys = App_ResourceSystem();
-    TextureScheme::Index const &spriteTexIndex = resSys.textureScheme("Sprites").index();
+    SpriteDefs sprDefs;
+    sprDefs.reserve(texIndex.leafNodes().count() / 8); // overestimate
 
-    SpriteDefs spriteDefs;
-    spriteDefs.reserve(spriteTexIndex.leafNodes().count() / 8); // overestimate
-
-    PathTreeIterator<TextureScheme::Index> iter(spriteTexIndex.leafNodes());
+    PathTreeIterator<TextureScheme::Index> iter(texIndex.leafNodes());
     while(iter.hasNext())
     {
         TextureManifest &manifest = iter.next();
@@ -3570,7 +3612,7 @@ static SpriteDefs generateSpriteDefs()
         String const name = desc.left(4).toLower();
 
         // Have we already encountered this name?
-        SpriteDef *def = &spriteDefs[name];
+        SpriteDef *def = &sprDefs[name];
         if(def->frames.isEmpty())
         {
             // An entirely new sprite.
@@ -3599,7 +3641,7 @@ static SpriteDefs generateSpriteDefs()
             frameDef = &def->addFrame();
         }
 
-        frameDef->mat         = &resSys.material(de::Uri("Sprites", manifest.path()));
+        frameDef->mat         = &App_ResourceSystem().material(de::Uri("Sprites", manifest.path()));
         frameDef->frame[0]    = frameNumber;
         frameDef->rotation[0] = rotationNumber;
 
@@ -3616,7 +3658,82 @@ static SpriteDefs generateSpriteDefs()
         }
     }
 
-    return spriteDefs;
+    return sprDefs;
+}
+
+/**
+ * Generates a Sprite frame set from the given sprite @a definition.
+ *
+ * @note Gaps in the frame number range used in @a definition will be filled
+ * with dummy Sprite instances (no view angles added).
+ *
+ * @param definition  SpriteDef description of one or more Sprites.
+ *
+ * @return  Built Sprites in frame order. Ownership of the Sprite instances
+ * is given to the caller.
+ */
+static QList<Sprite *> buildSpritesFromDefinition(SpriteDef const &definition)
+{
+    // Build sprite frames and add view angles.
+    QMap<int, Sprite *> spritesByFrame;
+    for(SpriteFrameDef const &frameDef : definition.frames)
+    for(int i = 0; i < 2; ++i)
+    {
+        int const frame = frameDef.frame[i] - 1;
+        if(frame < 0) continue;
+
+        auto const found = spritesByFrame.find(frame);
+        Sprite *sprite;
+        if(found != spritesByFrame.end())
+        {
+            sprite = found.value();
+        }
+        else
+        {
+            sprite = spritesByFrame.insert(frame, new Sprite).value();
+        }
+
+        sprite->newViewAngle(frameDef.mat, frameDef.rotation[i], i == 1);
+    }
+    // Duplicate view angles to complete rotation sets (if defined).
+    for(Sprite *sprite : spritesByFrame)
+    {
+        if(sprite->viewAngleCount() < 2)
+            continue;
+
+        for(int rot = 0; rot < Sprite::max_angles / 2; ++rot)
+        {
+            if(!sprite->hasViewAngle(rot * 2 + 1))
+            {
+                auto const &src = sprite->viewAngle(rot * 2);
+                sprite->newViewAngle(src.material, rot * 2 + 2, src.mirrorX);
+            }
+            if(!sprite->hasViewAngle(rot * 2))
+            {
+                auto const &src = sprite->viewAngle(rot * 2 + 1);
+                sprite->newViewAngle(src.material, rot * 2 + 1, src.mirrorX);
+            }
+        }
+    }
+
+    // Output a frame ordered list.
+    QList<Sprite *> sprites;
+    int lastFrame = -1;
+    auto it = spritesByFrame.constBegin();
+    while(it != spritesByFrame.constEnd())
+    {
+        int frame = it.key();
+        // Insert dummy sprites to fill any gaps in the frame set.
+        for(int i = lastFrame + 1; i < frame; ++i)
+        {
+            sprites << new Sprite;
+        }
+
+        sprites << it.value();
+        lastFrame = frame;
+        ++it;
+    }
+    return sprites;
 }
 
 void ResourceSystem::initSprites()
@@ -3628,86 +3745,24 @@ void ResourceSystem::initSprites()
 
     d->clearSprites();
 
-    SpriteDefs defs = generateSpriteDefs();
-
-    if(!defs.isEmpty())
+    /// @todo It should no longer be necessary to split this into two phases -ds
+    SpriteDefs spriteDefs = buildSpriteDefsForTextures(App_ResourceSystem().textureScheme("Sprites").index());
+    if(!spriteDefs.isEmpty())
     {
-        // Build the final sprites.
+        // Build Sprite frame sets from their definitions.
         int customIdx = 0;
-        foreach(SpriteDef const &def, defs)
+        for(SpriteDef const &def : spriteDefs)
         {
+            // Format or generate an id for the sprite.
             spritenum_t spriteId = Def_GetSpriteNum(def.name.toUtf8().constData());
-            if(spriteId == -1)
-            {
-                spriteId = countSprNames.num + customIdx++;
-            }
+            if(spriteId == -1) spriteId = (runtimeDefs.sprNames.size() + customIdx++);
 
-            Instance::SpriteGroup &group = d->newSpriteGroup(spriteId);
-
-            Sprite sprTemp[29];
-
-            int maxSprite = -1;
-            foreach(SpriteFrameDef const &frameDef, def.frames)
-            {
-                int frame = frameDef.frame[0] - 1;
-                DENG2_ASSERT(frame >= 0);
-                if(frame < 29)
-                {
-                    sprTemp[frame].newViewAngle(frameDef.mat, frameDef.rotation[0], false);
-                    if(frame > maxSprite)
-                    {
-                        maxSprite = frame;
-                    }
-                }
-
-                if(frameDef.frame[1])
-                {
-                    frame = frameDef.frame[1] - 1;
-                    DENG2_ASSERT(frame >= 0);
-                    if(frame < 29)
-                    {
-                        sprTemp[frame].newViewAngle(frameDef.mat, frameDef.rotation[1], true);
-                        if(frame > maxSprite)
-                        {
-                            maxSprite = frame;
-                        }
-                    }
-                }
-            }
-            ++maxSprite;
-
-            // Duplicate view angles to complete the rotation set (if defined).
-            for(int frame = 0; frame < maxSprite; ++frame)
-            {
-                Sprite &sprite = sprTemp[frame];
-
-                if(sprite.viewAngleCount() < 2)
-                    continue;
-
-                for(int rot = 0; rot < Sprite::max_angles / 2; ++rot)
-                {
-                    if(!sprite.hasViewAngle(rot * 2 + 1))
-                    {
-                        SpriteViewAngle const &src = sprite.viewAngle(rot * 2);
-                        sprite.newViewAngle(src.material, rot * 2 + 2, src.mirrorX);
-                    }
-                    if(!sprite.hasViewAngle(rot * 2))
-                    {
-                        SpriteViewAngle const &src = sprite.viewAngle(rot * 2 + 1);
-                        sprite.newViewAngle(src.material, rot * 2 + 1, src.mirrorX);
-                    }
-                }
-            }
-
-            for(int k = 0; k < maxSprite; ++k)
-            {
-                group.sprites.append(new Sprite(sprTemp[k]));
-            }
+            // Append another frame set to the relevant sprite.
+            d->newSpriteFrameSet(spriteId).append(buildSpritesFromDefinition(def));
         }
     }
-
     // We're done with the definitions.
-    defs.clear();
+    spriteDefs.clear();
 
     LOG_RES_VERBOSE("Sprites built in %.2f seconds") << begunAt.since();
 }
@@ -3848,61 +3903,6 @@ MaterialVariantSpec const &ResourceSystem::materialSpec(MaterialContextId contex
                                         mipmapped, gammaCorrection, noStretch, toAlpha);
 }
 
-static int findSpriteOwner(thinker_t *th, void *context)
-{
-    mobj_t *mo = reinterpret_cast<mobj_t *>(th);
-    int const sprite = *static_cast<int *>(context);
-
-    if(mo->type >= 0 && mo->type < defs.count.mobjs.num)
-    {
-        /// @todo optimize: traverses the entire state list!
-        for(int i = 0; i < defs.count.states.num; ++i)
-        {
-            if(stateOwners[i] != &mobjInfo[mo->type])
-            {
-                continue;
-            }
-
-            state_t *state = Def_GetState(i);
-            DENG2_ASSERT(state != 0);
-
-            if(state->sprite == sprite)
-            {
-                return true; // Found one.
-            }
-        }
-    }
-
-    return false; // Continue iteration.
-}
-
-/**
- * @note The skins are also bound here once so they should be ready for use
- *       the next time they are needed.
- */
-static int cacheModelsForMobj(thinker_t *th, void *context)
-{
-    mobj_t *mo = (mobj_t *) th;
-    ResourceSystem &resSys = *static_cast<ResourceSystem *>(context);
-
-    if(!(useModels && precacheSkins))
-        return true;
-
-    // Check through all the model definitions.
-    for(int i = 0; i < resSys.modelDefCount(); ++i)
-    {
-        ModelDef &modef = resSys.modelDef(i);
-
-        if(!modef.state) continue;
-        if(mo->type < 0 || mo->type >= defs.count.mobjs.num) continue; // Hmm?
-        if(stateOwners[modef.state - states] != &mobjInfo[mo->type]) continue;
-
-        resSys.cache(&modef);
-    }
-
-    return false; // Used as iterator.
-}
-
 void ResourceSystem::cacheForCurrentMap()
 {
     // Don't precache when playing a demo (why not? -ds).
@@ -3914,60 +3914,102 @@ void ResourceSystem::cacheForCurrentMap()
     {
         MaterialVariantSpec const &spec = Rend_MapSurfaceMaterialSpec();
 
-        foreach(Line *line, map.lines())
-        for(int i = 0; i < 2; ++i)
+        map.forAllLines([this, &spec] (Line &line)
         {
-            LineSide &side = line->side(i);
-            if(!side.hasSections()) continue;
+            for(int i = 0; i < 2; ++i)
+            {
+                LineSide &side = line.side(i);
+                if(!side.hasSections()) continue;
 
-            if(side.middle().hasMaterial())
-                cache(side.middle().material(), spec);
+                if(side.middle().hasMaterial())
+                    cache(side.middle().material(), spec);
 
-            if(side.top().hasMaterial())
-                cache(side.top().material(), spec);
+                if(side.top().hasMaterial())
+                    cache(side.top().material(), spec);
 
-            if(side.bottom().hasMaterial())
-                cache(side.bottom().material(), spec);
-        }
+                if(side.bottom().hasMaterial())
+                    cache(side.bottom().material(), spec);
+            }
+            return LoopContinue;
+        });
 
-        foreach(Sector *sector, map.sectors())
+        map.forAllSectors([this, &spec] (Sector &sector)
         {
             // Skip sectors with no line sides as their planes will never be drawn.
-            if(!sector->sideCount()) continue;
-
-            foreach(Plane *plane, sector->planes())
+            if(sector.sideCount())
             {
-                if(plane->surface().hasMaterial())
-                    cache(plane->surface().material(), spec);
+                sector.forAllPlanes([this, &spec] (Plane &plane)
+                {
+                    if(plane.surface().hasMaterial())
+                    {
+                        cache(plane.surface().material(), spec);
+                    }
+                    return LoopContinue;
+                });
             }
-        }
+            return LoopContinue;
+        });
     }
 
     if(precacheSprites)
     {
-        MaterialVariantSpec const &spec = Rend_SpriteMaterialSpec();
+        MaterialVariantSpec const &matSpec = Rend_SpriteMaterialSpec();
 
-        for(int i = 0; i < spriteCount(); ++i)
+        for(dint i = 0; i < spriteCount(); ++i)
         {
-            if(map.thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
-                                      0x1/*mobjs are public*/,
-                                      findSpriteOwner, &i))
+            auto const sprite = spritenum_t(i);
+
+            // Is this sprite used by a state of at least one mobj?
+            LoopResult found = map.thinkers().forAll(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+                                                     0x1/*public*/, [&sprite] (thinker_t *th)
             {
-                // This sprite is used by some state of at least one mobj.
-                cache(spritenum_t(i), spec);
+                auto const &mob = *reinterpret_cast<mobj_t *>(th);
+                if(mob.type >= 0 && mob.type < defs.mobjs.size())
+                {
+                    /// @todo optimize: traverses the entire state list!
+                    for(dint k = 0; k < defs.states.size(); ++k)
+                    {
+                        if(runtimeDefs.stateInfo[k].owner != &runtimeDefs.mobjInfo[mob.type])
+                            continue;
+
+                        if(Def_GetState(k)->sprite == sprite)
+                        {
+                            return LoopAbort;  // Found one.
+                        }
+                    }
+                }
+                return LoopContinue;
+            });
+
+            if(found)
+            {
+                cache(sprite, matSpec);
             }
         }
     }
 
-     // Sky models usually have big skins.
-    theSky->cacheDrawableAssets();
-
     // Precache model skins?
+    /// @note The skins are also bound here once so they should be ready
+    /// for use the next time they are needed.
     if(useModels && precacheSkins)
     {
-        // All mobjs are public.
-        map.thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1,
-                               cacheModelsForMobj, this);
+        map.thinkers().forAll(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+                              0x1/*public*/, [this] (thinker_t *th)
+        {
+            auto const &mob = *reinterpret_cast<mobj_t *>(th);
+            // Check through all the model definitions.
+            for(dint i = 0; i < modelDefCount(); ++i)
+            {
+                ModelDef &modef = modelDef(i);
+
+                if(!modef.state) continue;
+                if(mob.type < 0 || mob.type >= defs.mobjs.size()) continue; // Hmm?
+                if(runtimeDefs.stateInfo[runtimeDefs.states.indexOf(modef.state)].owner != &runtimeDefs.mobjInfo[mob.type]) continue;
+
+                cache(&modef);
+            }
+            return LoopContinue;
+        });
     }
 }
 
@@ -4049,144 +4091,52 @@ static bool pathBeginsWithComparator(ManifestType const &manifest, void *context
 }
 
 /**
- * @todo This logic should be implemented in de::PathTree -ds
- */
-template <typename SchemeType, typename ManifestType>
-static int collectManifestsInScheme(SchemeType const &scheme,
-    bool (*predicate)(ManifestType const &manifest, void *context), void *context,
-    QList<ManifestType *> *storage = 0)
-{
-    int count = 0;
-    PathTreeIterator<typename SchemeType::Index> iter(scheme.index().leafNodes());
-    while(iter.hasNext())
-    {
-        ManifestType &manifest = iter.next();
-        if(predicate(manifest, context))
-        {
-            count += 1;
-            if(storage) // Store mode?
-            {
-                storage->append(&manifest);
-            }
-        }
-    }
-    return count;
-}
-
-static QList<MaterialManifest *> collectMaterialManifests(MaterialScheme *scheme,
-    Path const &path, QList<MaterialManifest *> *storage = 0)
-{
-    int count = 0;
-
-    if(scheme)
-    {
-        // Consider resources in the specified scheme only.
-        count += collectManifestsInScheme<MaterialScheme, MaterialManifest>(*scheme,
-                     pathBeginsWithComparator, (void *)&path, storage);
-    }
-    else
-    {
-        // Consider resources in any scheme.
-        foreach(MaterialScheme *scheme, App_ResourceSystem().allMaterialSchemes())
-        {
-            count += collectManifestsInScheme<MaterialScheme, MaterialManifest>(*scheme,
-                         pathBeginsWithComparator, (void *)&path, storage);
-        }
-    }
-
-    // Are we done?
-    if(storage) return *storage;
-
-    // Collect and populate.
-    QList<MaterialManifest *> result;
-    if(count == 0) return result;
-
-#ifdef DENG2_QT_4_7_OR_NEWER
-    result.reserve(count);
-#endif
-    return collectMaterialManifests(scheme, path, &result);
-}
-
-static QList<TextureManifest *> collectTextureManifests(TextureScheme *scheme,
-    Path const &path, QList<TextureManifest *> *storage = 0)
-{
-    int count = 0;
-
-    if(scheme)
-    {
-        // Consider resources in the specified scheme only.
-        count += collectManifestsInScheme<TextureScheme, TextureManifest>(*scheme,
-                    pathBeginsWithComparator, (void *)&path, storage);
-    }
-    else
-    {
-        // Consider resources in any scheme.
-        foreach(TextureScheme *scheme, App_ResourceSystem().allTextureSchemes())
-        {
-            count += collectManifestsInScheme<TextureScheme, TextureManifest>(*scheme,
-                        pathBeginsWithComparator, (void *)&path, storage);
-        }
-    }
-
-    // Are we done?
-    if(storage) return *storage;
-
-    // Collect and populate.
-    QList<TextureManifest *> result;
-    if(count == 0) return result;
-
-#ifdef DENG2_QT_4_7_OR_NEWER
-    result.reserve(count);
-#endif
-    return collectTextureManifests(scheme, path, &result);
-}
-
-#ifdef __CLIENT__
-static QList<FontManifest *> collectFontManifests(FontScheme *scheme,
-    Path const &path, QList<FontManifest *> *storage = 0)
-{
-    int count = 0;
-
-    if(scheme)
-    {
-        // Consider resources in the specified scheme only.
-        count += collectManifestsInScheme<FontScheme, FontManifest>(*scheme,
-                    pathBeginsWithComparator, (void *)&path, storage);
-    }
-    else
-    {
-        // Consider resources in any scheme.
-        foreach(FontScheme *scheme, App_ResourceSystem().allFontSchemes())
-        {
-            count += collectManifestsInScheme<FontScheme, FontManifest>(*scheme,
-                        pathBeginsWithComparator, (void *)&path, storage);
-        }
-    }
-
-    // Are we done?
-    if(storage) return *storage;
-
-    // Collect and populate.
-    QList<FontManifest *> result;
-    if(count == 0) return result;
-
-#ifdef DENG2_QT_4_7_OR_NEWER
-    result.reserve(count);
-#endif
-    return collectFontManifests(scheme, path, &result);
-}
-#endif // __CLIENT__
-
-/**
  * Decode and then lexicographically compare the two manifest paths,
  * returning @c true if @a is less than @a b.
  */
-template <typename ManifestType>
-static bool compareManifestPathsAscending(ManifestType const *a, ManifestType const *b)
+template <typename PathTreeNodeType>
+static bool comparePathTreeNodePathsAscending(PathTreeNodeType const *a, PathTreeNodeType const *b)
 {
     String pathA(QString(QByteArray::fromPercentEncoding(a->path().toUtf8())));
     String pathB(QString(QByteArray::fromPercentEncoding(b->path().toUtf8())));
     return pathA.compareWithoutCase(pathB) < 0;
+}
+
+/**
+ * @param like             Map path search term.
+ * @param composeUriFlags  Flags governing how URIs should be composed.
+ */
+static int printMapsIndex2(Path const &like, de::Uri::ComposeAsTextFlags composeUriFlags)
+{
+    ResourceSystem::MapDefs::FoundNodes found;
+    App_ResourceSystem().allMapDefs().findAll(found, pathBeginsWithComparator, const_cast<Path *>(&like));
+    if(found.isEmpty()) return 0;
+
+    //bool const printSchemeName = !(composeUriFlags & de::Uri::OmitScheme);
+
+    // Print a heading.
+    String heading = "Known maps";
+    //if(!printSchemeName && scheme)
+    //    heading += " in scheme '" + scheme->name() + "'";
+    if(!like.isEmpty())
+        heading += " like \"" _E(b) + like.toStringRef() + _E(.) "\"";
+    LOG_RES_MSG(_E(D) "%s:" _E(.)) << heading;
+
+    // Print the result index.
+    qSort(found.begin(), found.end(), comparePathTreeNodePathsAscending<MapDef>);
+    int const numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
+    int idx = 0;
+    foreach(MapDef *mapDef, found)
+    {
+        String info = String("%1: " _E(1) "%2" _E(.))
+                        .arg(idx, numFoundDigits)
+                        .arg(mapDef->description(composeUriFlags));
+
+        LOG_RES_MSG("  " _E(>)) << info;
+        idx++;
+    }
+
+    return found.count();
 }
 
 /**
@@ -4198,7 +4148,19 @@ static bool compareManifestPathsAscending(ManifestType const *a, ManifestType co
 static int printMaterialIndex2(MaterialScheme *scheme, Path const &like,
     de::Uri::ComposeAsTextFlags composeUriFlags)
 {
-    QList<MaterialManifest *> found = collectMaterialManifests(scheme, like);
+    MaterialScheme::Index::FoundNodes found;
+    if(scheme) // Consider resources in the specified scheme only.
+    {
+        scheme->index().findAll(found, pathBeginsWithComparator, const_cast<Path *>(&like));
+    }
+    else // Consider resources in any scheme.
+    {
+        App_ResourceSystem().forAllMaterialSchemes([&found, &like] (MaterialScheme &scheme)
+        {
+            scheme.index().findAll(found, pathBeginsWithComparator, const_cast<Path *>(&like));
+            return LoopContinue;
+        });
+    }
     if(found.isEmpty()) return 0;
 
     bool const printSchemeName = !(composeUriFlags & de::Uri::OmitScheme);
@@ -4212,7 +4174,7 @@ static int printMaterialIndex2(MaterialScheme *scheme, Path const &like,
     LOG_RES_MSG(_E(D) "%s:" _E(.)) << heading;
 
     // Print the result index.
-    qSort(found.begin(), found.end(), compareManifestPathsAscending<MaterialManifest>);
+    qSort(found.begin(), found.end(), comparePathTreeNodePathsAscending<MaterialManifest>);
     int const numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
     int idx = 0;
     foreach(MaterialManifest *manifest, found)
@@ -4228,6 +4190,112 @@ static int printMaterialIndex2(MaterialScheme *scheme, Path const &like,
 
     return found.count();
 }
+
+/**
+ * @param scheme    Texture subspace scheme being printed. Can be @c NULL in
+ *                  which case textures are printed from all schemes.
+ * @param like      Texture path search term.
+ * @param composeUriFlags  Flags governing how URIs should be composed.
+ */
+static int printTextureIndex2(TextureScheme *scheme, Path const &like,
+    de::Uri::ComposeAsTextFlags composeUriFlags)
+{
+    TextureScheme::Index::FoundNodes found;
+    if(scheme)  // Consider resources in the specified scheme only.
+    {
+        scheme->index().findAll(found, pathBeginsWithComparator, const_cast<Path *>(&like));
+    }
+    else  // Consider resources in any scheme.
+    {
+        foreach(TextureScheme *scheme, App_ResourceSystem().allTextureSchemes())
+        {
+            scheme->index().findAll(found, pathBeginsWithComparator, const_cast<Path *>(&like));
+        }
+    }
+    if(found.isEmpty()) return 0;
+
+    bool const printSchemeName = !(composeUriFlags & de::Uri::OmitScheme);
+
+    // Print a heading.
+    String heading = "Known textures";
+    if(!printSchemeName && scheme)
+        heading += " in scheme '" + scheme->name() + "'";
+    if(!like.isEmpty())
+        heading += " like \"" _E(b) + like.toStringRef() + _E(.) "\"";
+    LOG_RES_MSG(_E(D) "%s:" _E(.)) << heading;
+
+    // Print the result index key.
+    qSort(found.begin(), found.end(), comparePathTreeNodePathsAscending<TextureManifest>);
+    int numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
+    int idx = 0;
+    foreach(TextureManifest *manifest, found)
+    {
+        String info = String("%1: %2%3")
+                        .arg(idx, numFoundDigits)
+                        .arg(manifest->hasTexture()? _E(0) : _E(2))
+                        .arg(manifest->description(composeUriFlags));
+
+        LOG_RES_MSG("  " _E(>)) << info;
+        idx++;
+    }
+
+    return found.count();
+}
+
+#ifdef __CLIENT__
+
+/**
+ * @param scheme    Resource subspace scheme being printed. Can be @c NULL in
+ *                  which case resources are printed from all schemes.
+ * @param like      Resource path search term.
+ * @param composeUriFlags  Flags governing how URIs should be composed.
+ */
+static int printFontIndex2(FontScheme *scheme, Path const &like,
+    de::Uri::ComposeAsTextFlags composeUriFlags)
+{
+    FontScheme::Index::FoundNodes found;
+    if(scheme) // Only resources in this scheme.
+    {
+        scheme->index().findAll(found, pathBeginsWithComparator, const_cast<Path *>(&like));
+    }
+    else // Consider resources in any scheme.
+    {
+        foreach(FontScheme *scheme, App_ResourceSystem().allFontSchemes())
+        {
+            scheme->index().findAll(found, pathBeginsWithComparator, const_cast<Path *>(&like));
+        }
+    }
+    if(found.isEmpty()) return 0;
+
+    bool const printSchemeName = !(composeUriFlags & de::Uri::OmitScheme);
+
+    // Print a heading.
+    String heading = "Known fonts";
+    if(!printSchemeName && scheme)
+        heading += " in scheme '" + scheme->name() + "'";
+    if(!like.isEmpty())
+        heading += " like \"" _E(b) + like.toStringRef() + _E(.) "\"";
+    LOG_RES_MSG(_E(D) "%s:" _E(.)) << heading;
+
+    // Print the result index.
+    qSort(found.begin(), found.end(), comparePathTreeNodePathsAscending<FontManifest>);
+    int numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
+    int idx = 0;
+    foreach(FontManifest *manifest, found)
+    {
+        String info = String("%1: %2%3" _E(.))
+                        .arg(idx, numFoundDigits)
+                        .arg(manifest->hasResource()? _E(1) : _E(2))
+                        .arg(manifest->description(composeUriFlags));
+
+        LOG_RES_MSG("  " _E(>)) << info;
+        idx++;
+    }
+
+    return found.count();
+}
+
+#endif // __CLIENT__
 
 static void printMaterialIndex(de::Uri const &search,
     de::Uri::ComposeAsTextFlags flags = de::Uri::DefaultComposeAsTextFlags)
@@ -4250,57 +4318,26 @@ static void printMaterialIndex(de::Uri const &search,
     else
     {
         // Collect and sort results in each scheme separately.
-        foreach(MaterialScheme *scheme, App_ResourceSystem().allMaterialSchemes())
+        App_ResourceSystem().forAllMaterialSchemes([&search, &flags, &printTotal] (MaterialScheme &scheme)
         {
-            int numPrinted = printMaterialIndex2(scheme, search.path(), flags | de::Uri::OmitScheme);
+            int numPrinted = printMaterialIndex2(&scheme, search.path(), flags | de::Uri::OmitScheme);
             if(numPrinted)
             {
                 LOG_MSG(_E(R));
                 printTotal += numPrinted;
             }
-        }
+            return LoopContinue;
+        });
     }
     LOG_RES_MSG("Found " _E(b) "%i" _E(.) " %s.") << printTotal << (printTotal == 1? "material" : "materials in total");
 }
 
-/**
- * @param scheme    Texture subspace scheme being printed. Can be @c NULL in
- *                  which case textures are printed from all schemes.
- * @param like      Texture path search term.
- * @param composeUriFlags  Flags governing how URIs should be composed.
- */
-static int printTextureIndex2(TextureScheme *scheme, Path const &like,
-    de::Uri::ComposeAsTextFlags composeUriFlags)
+static void printMapsIndex(de::Uri const &search,
+    de::Uri::ComposeAsTextFlags flags = de::Uri::DefaultComposeAsTextFlags)
 {
-    QList<TextureManifest *> found = collectTextureManifests(scheme, like);
-    if(found.isEmpty()) return 0;
-
-    bool const printSchemeName = !(composeUriFlags & de::Uri::OmitScheme);
-
-    // Print a heading.
-    String heading = "Known textures";
-    if(!printSchemeName && scheme)
-        heading += " in scheme '" + scheme->name() + "'";
-    if(!like.isEmpty())
-        heading += " like \"" _E(b) + like.toStringRef() + _E(.) "\"";
-    LOG_RES_MSG(_E(D) "%s:" _E(.)) << heading;
-
-    // Print the result index key.
-    qSort(found.begin(), found.end(), compareManifestPathsAscending<TextureManifest>);
-    int numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
-    int idx = 0;
-    foreach(TextureManifest *manifest, found)
-    {
-        String info = String("%1: %2%3")
-                        .arg(idx, numFoundDigits)
-                        .arg(manifest->hasTexture()? _E(0) : _E(2))
-                        .arg(manifest->description(composeUriFlags));
-
-        LOG_RES_MSG("  " _E(>)) << info;
-        idx++;
-    }
-
-    return found.count();
+    int printTotal = printMapsIndex2(search.path(), flags | de::Uri::OmitScheme);
+    LOG_RES_MSG(_E(R));
+    LOG_RES_MSG("Found " _E(b) "%i" _E(.) " %s.") << printTotal << (printTotal == 1? "map" : "maps in total");
 }
 
 static void printTextureIndex(de::Uri const &search,
@@ -4338,46 +4375,6 @@ static void printTextureIndex(de::Uri const &search,
 }
 
 #ifdef __CLIENT__
-
-/**
- * @param scheme    Resource subspace scheme being printed. Can be @c NULL in
- *                  which case resources are printed from all schemes.
- * @param like      Resource path search term.
- * @param composeUriFlags  Flags governing how URIs should be composed.
- */
-static int printFontIndex2(FontScheme *scheme, Path const &like,
-    de::Uri::ComposeAsTextFlags composeUriFlags)
-{
-    QList<FontManifest *> found = collectFontManifests(scheme, like);
-    if(found.isEmpty()) return 0;
-
-    bool const printSchemeName = !(composeUriFlags & de::Uri::OmitScheme);
-
-    // Print a heading.
-    String heading = "Known fonts";
-    if(!printSchemeName && scheme)
-        heading += " in scheme '" + scheme->name() + "'";
-    if(!like.isEmpty())
-        heading += " like \"" _E(b) + like.toStringRef() + _E(.) "\"";
-    LOG_RES_MSG(_E(D) "%s:" _E(.)) << heading;
-
-    // Print the result index.
-    qSort(found.begin(), found.end(), compareManifestPathsAscending<FontManifest>);
-    int numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
-    int idx = 0;
-    foreach(FontManifest *manifest, found)
-    {
-        String info = String("%1: %2%3" _E(.))
-                        .arg(idx, numFoundDigits)
-                        .arg(manifest->hasResource()? _E(1) : _E(2))
-                        .arg(manifest->description(composeUriFlags));
-
-        LOG_RES_MSG("  " _E(>)) << info;
-        idx++;
-    }
-
-    return found.count();
-}
 
 static void printFontIndex(de::Uri const &search,
     de::Uri::ComposeAsTextFlags flags = de::Uri::DefaultComposeAsTextFlags)
@@ -4431,6 +4428,32 @@ static bool isKnownFontSchemeCallback(String name)
     return App_ResourceSystem().knownFontScheme(name);
 }
 #endif
+
+/**
+ * Print a list of all currently available maps and the location of the source
+ * file which contains them.
+ *
+ * @todo Improve output: find common map id prefixes, find "suffixed" numerical
+ * ranges, etc... (Do not assume *anything* about the formatting of map ids -
+ * ZDoom allows the mod author to give a map any id they wish, which, is then
+ * specified in MAPINFO when defining the map progression, clusters, etc...).
+ */
+D_CMD(ListMaps)
+{
+    DENG2_UNUSED(src);
+
+    de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1);
+    if(search.scheme().isEmpty()) search.setScheme("Maps");
+
+    if(!search.scheme().isEmpty() && search.scheme().compareWithoutCase("Maps"))
+    {
+        LOG_RES_WARNING("Unknown scheme %s") << search.scheme();
+        return false;
+    }
+
+    printMapsIndex(search);
+    return true;
+}
 
 D_CMD(ListMaterials)
 {
@@ -4490,16 +4513,17 @@ D_CMD(PrintMaterialStats)
     DENG2_UNUSED3(src, argc, argv);
 
     LOG_MSG(_E(b) "Material Statistics:");
-    foreach(MaterialScheme *scheme, App_ResourceSystem().allMaterialSchemes())
+    App_ResourceSystem().forAllMaterialSchemes([] (MaterialScheme &scheme)
     {
-        MaterialScheme::Index const &index = scheme->index();
+        MaterialScheme::Index const &index = scheme.index();
 
         uint count = index.count();
         LOG_MSG("Scheme: %s (%u %s)")
-            << scheme->name() << count << (count == 1? "material" : "materials");
+                << scheme.name() << count << (count == 1? "material" : "materials");
         index.debugPrintHashDistribution();
         index.debugPrint();
-    }
+        return LoopContinue;
+    });
     return true;
 }
 
@@ -4594,7 +4618,47 @@ void ResourceSystem::consoleRegister() // static
 #ifdef DENG_DEBUG
     C_CMD("materialstats",  NULL,   PrintMaterialStats)
 #endif
+    C_CMD("listmaps",       "s",    ListMaps)
+    C_CMD("listmaps",       "",     ListMaps)
 
     Texture::consoleRegister();
     Material::consoleRegister();
+}
+
+String ResourceSystem::resolveSymbol(String const &symbol) // static
+{
+    if(!symbol.compare("App.DataPath", Qt::CaseInsensitive))
+    {
+        return "data";
+    }
+    else if(!symbol.compare("App.DefsPath", Qt::CaseInsensitive))
+    {
+        return "defs";
+    }
+    else if(!symbol.compare("Game.IdentityKey", Qt::CaseInsensitive))
+    {
+        if(!App_GameLoaded())
+        {
+            /// @throw de::Uri::ResolveSymbolError  An unresolveable symbol was encountered.
+            throw de::Uri::ResolveSymbolError("ResourceSystem::resolveSymbol",
+                    "Symbol 'Game' did not resolve (no game loaded)");
+        }
+        return App_CurrentGame().identityKey();
+    }
+    else if(!symbol.compare("GamePlugin.Name", Qt::CaseInsensitive))
+    {
+        if(!App_GameLoaded() || !gx.GetVariable)
+        {
+            /// @throw de::Uri::ResolveSymbolError  An unresolveable symbol was encountered.
+            throw de::Uri::ResolveSymbolError("ResourceSystem::resolveSymbol",
+                    "Symbol 'GamePlugin' did not resolve (no game plugin loaded)");
+        }
+        return String((char *)gx.GetVariable(DD_PLUGIN_NAME));
+    }
+    else
+    {
+        /// @throw UnknownSymbolError  An unknown symbol was encountered.
+        throw de::Uri::UnknownSymbolError("ResourceSystem::resolveSymbol",
+                                          "Symbol '" + symbol + "' is unknown");
+    }
 }

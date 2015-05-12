@@ -1,10 +1,10 @@
-/** @file dd_plugin.cpp Plugin subsystem.
+/** @file dd_plugin.cpp  Plugin subsystem.
  * @ingroup base
  *
  * @todo Convert to C++, rename.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2009-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -37,21 +37,25 @@
 #endif
 
 #include <de/findfile.h>
+#include <de/strutil.h>
 #include <QThreadStorage>
 
 #define HOOKMASK(x)         ((x) & 0xffffff)
 
-typedef struct {
+using namespace de;
+
+struct hookreg_t
+{
     int exclude;
     struct {
         hookfunc_t func;
         pluginid_t pluginId;
     } list[MAX_HOOKS]; /// @todo Remove arbitrary MAX_HOOKS.
-} hookreg_t;
+};
 
-typedef Library* PluginHandle;
+typedef ::Library *PluginHandle;
 
-static Library* hInstPlug[MAX_PLUGS]; /// @todo Remove arbitrary MAX_PLUGS.
+static ::Library *hInstPlug[MAX_PLUGS]; /// @todo Remove arbitrary MAX_PLUGS.
 static hookreg_t hooks[NUM_HOOK_TYPES];
 
 struct ThreadState
@@ -70,29 +74,25 @@ static void initLocalData() {
 static QThreadStorage<ThreadState> pluginState; ///< Thread-local plugin state.
 #endif
 
-static PluginHandle* findFirstUnusedPluginHandle(void)
+static PluginHandle *findFirstUnusedPluginHandle()
 {
-    int i;
-    for(i = 0; i < MAX_PLUGS; ++i)
+    for(int i = 0; i < MAX_PLUGS; ++i)
     {
-        if(!hInstPlug[i]) return &hInstPlug[i];
+        if(!hInstPlug[i])
+        {
+            return &hInstPlug[i];
+        }
     }
     return 0; // none available
 }
 
-static int loadPlugin(void* libraryFile, const char* fileName, const char* pluginPath, void* param)
+static int loadPlugin(void * /*libraryFile*/, char const *fileName, char const *pluginPath, void *)
 {
-    Library* plugin;
-    PluginHandle* handle;
-    void (*initializer)(void);
-    filename_t name;
-    pluginid_t plugId;
+    typedef void (*PluginInitializer)(void);
 
-    DENG_UNUSED(libraryFile); // this is not C++...
-    DENG_UNUSED(param);
-
-    DENG_ASSERT(fileName && fileName[0]);
-    DENG_ASSERT(pluginPath && pluginPath[0]);
+    DENG_UNUSED(fileName);
+    DENG2_ASSERT(fileName != 0 && fileName[0]);
+    DENG2_ASSERT(pluginPath != 0 && pluginPath[0]);
 
     if(strcasestr("/bin/audio_", pluginPath))
     {
@@ -100,9 +100,17 @@ static int loadPlugin(void* libraryFile, const char* fileName, const char* plugi
         return true;
     }
 
-    plugin = Library_New(pluginPath);
+    ::Library *plugin = Library_New(pluginPath);
     if(!plugin)
     {
+#ifdef UNIX
+        String const fn = Path(pluginPath).fileName();
+        if(fn.contains("libfmodex") || fn.contains("libassimp"))
+        {
+            // No need to warn about these shared libs.
+            return 0;
+        }
+#endif
         LOG_RES_WARNING("Failed to load \"%s\": %s") << pluginPath << Library_LastError();
         return 0; // Continue iteration.
     }
@@ -114,7 +122,7 @@ static int loadPlugin(void* libraryFile, const char* fileName, const char* plugi
         return 0;
     }
 
-    initializer = de::function_cast<void (*)()>(Library_Symbol(plugin, "DP_Initialize"));
+    PluginInitializer initializer = de::function_cast<void (*)()>(Library_Symbol(plugin, "DP_Initialize"));
     if(!initializer)
     {
         LOG_RES_WARNING("Cannot load plugin \"%s\": no entrypoint called 'DP_Initialize'")
@@ -126,19 +134,20 @@ static int loadPlugin(void* libraryFile, const char* fileName, const char* plugi
     }
 
     // Assign a handle and ID to the plugin.
-    handle = findFirstUnusedPluginHandle();
-    plugId = handle - hInstPlug + 1;
+    PluginHandle *handle = findFirstUnusedPluginHandle();
+    pluginid_t plugId    = handle - hInstPlug + 1;
     if(!handle)
     {
-        LOG_RES_WARNING("Cannot load \"%s\": too many plugins loaded already loaded") << pluginPath;
+        LOG_RES_WARNING("Cannot load \"%s\": too many plugins loaded already loaded")
+                << pluginPath;
 
         Library_Delete(plugin);
         return 0; // Continue iteration.
     }
 
     // This seems to be a Doomsday plugin.
-    _splitpath(pluginPath, NULL, NULL, name, NULL);
-    LOGDEV_MSG("Plugin id:%i name:%s") << plugId << name;
+    LOGDEV_MSG("Plugin id:%i name:%s")
+            << plugId << String(pluginPath).fileNameWithoutExtension();
 
     *handle = plugin;
 
@@ -149,9 +158,9 @@ static int loadPlugin(void* libraryFile, const char* fileName, const char* plugi
     return 0; // Continue iteration.
 }
 
-static dd_bool unloadPlugin(PluginHandle* handle)
+static bool unloadPlugin(PluginHandle *handle)
 {
-    assert(handle);
+    DENG2_ASSERT(handle != 0);
     if(!*handle) return false;
 
     Library_Delete(*handle);
@@ -159,39 +168,36 @@ static dd_bool unloadPlugin(PluginHandle* handle)
     return true;
 }
 
-void Plug_LoadAll(void)
+void Plug_LoadAll()
 {
     LOG_RES_VERBOSE("Initializing plugins...");
 
     Library_IterateAvailableLibraries(loadPlugin, 0);
 }
 
-void Plug_UnloadAll(void)
+void Plug_UnloadAll()
 {
-    int i;
-
-    for(i = 0; i < MAX_PLUGS && hInstPlug[i]; ++i)
+    for(int i = 0; i < MAX_PLUGS && hInstPlug[i]; ++i)
     {
         unloadPlugin(&hInstPlug[i]);
     }
 }
 
-de::LibraryFile const &Plug_FileForPlugin(pluginid_t id)
+LibraryFile const &Plug_FileForPlugin(pluginid_t id)
 {
     DENG2_ASSERT(id > 0 && id <= MAX_PLUGS);
     return Library_File(hInstPlug[id - 1]);
 }
 
+#undef Plug_AddHook
 DENG_EXTERN_C int Plug_AddHook(int hookType, hookfunc_t hook)
 {
-    int i, type = HOOKMASK(hookType);
+    int const type = HOOKMASK(hookType);
 
-    /**
-     * The current plugin must be set before calling this. The engine has the
-     * responsibility to call DD_SetActivePluginId() whenever it passes control
-     * to a plugin, and then set it back to zero after it gets control back.
-     */
-    DENG_ASSERT(DD_ActivePluginId() != 0);
+    // The current plugin must be set before calling this. The engine has the
+    // responsibility to call DD_SetActivePluginId() whenever it passes control
+    // to a plugin, and then set it back to zero after it gets control back.
+    DENG2_ASSERT(DD_ActivePluginId() != 0);
 
     // The type must be good.
     if(type < 0 || type >= NUM_HOOK_TYPES)
@@ -201,7 +207,7 @@ DENG_EXTERN_C int Plug_AddHook(int hookType, hookfunc_t hook)
     if(hookType & HOOKF_EXCLUSIVE)
     {
         hooks[type].exclude = true;
-        memset(hooks[type].list, 0, sizeof(hooks[type].list));
+        std::memset(hooks[type].list, 0, sizeof(hooks[type].list));
     }
     else if(hooks[type].exclude)
     {
@@ -209,7 +215,9 @@ DENG_EXTERN_C int Plug_AddHook(int hookType, hookfunc_t hook)
         return false;
     }
 
+    int i;
     for(i = 0; i < MAX_HOOKS && hooks[type].list[i].func; ++i) {};
+
     if(i == MAX_HOOKS)
         return false; // No more hooks allowed!
 
@@ -219,34 +227,42 @@ DENG_EXTERN_C int Plug_AddHook(int hookType, hookfunc_t hook)
     return true;
 }
 
+#undef Plug_RemoveHook
 DENG_EXTERN_C int Plug_RemoveHook(int hookType, hookfunc_t hook)
 {
-    int i, type = HOOKMASK(hookType);
+    int const type = HOOKMASK(hookType);
 
     // The type must be good.
     if(type < 0 || type >= NUM_HOOK_TYPES)
         return false;
-    for(i = 0; i < MAX_HOOKS; ++i)
+
+    for(int i = 0; i < MAX_HOOKS; ++i)
     {
         if(hooks[type].list[i].func != hook)
             continue;
-        hooks[type].list[i].func = 0;
+
+        hooks[type].list[i].func     = 0;
         hooks[type].list[i].pluginId = 0;
         if(hookType & HOOKF_EXCLUSIVE)
-        {   // Exclusive hook removed; allow normal hooks.
+        {
+            // Exclusive hook removed; allow normal hooks.
             hooks[type].exclude = false;
         }
+
         return true;
     }
+
     return false;
 }
 
+#undef Plug_CheckForHook
 DENG_EXTERN_C int Plug_CheckForHook(int hookType)
 {
-    size_t i;
-    for(i = 0; i < MAX_HOOKS; ++i)
+    for(int i = 0; i < MAX_HOOKS; ++i)
+    {
         if(hooks[hookType].list[i].func)
             return true;
+    }
     return false;
 }
 
@@ -260,7 +276,7 @@ void DD_SetActivePluginId(pluginid_t id)
 #endif
 }
 
-pluginid_t DD_ActivePluginId(void)
+pluginid_t DD_ActivePluginId()
 {
 #ifdef DENG_LOCAL_DATA_POINTER
     initLocalData();
@@ -303,12 +319,12 @@ int DD_CallHooks(int hookType, int parm, void *data)
     return ret;
 }
 
-void* DD_FindEntryPoint(pluginid_t pluginId, const char* fn)
+void *DD_FindEntryPoint(pluginid_t pluginId, char const *fn)
 {
-    void* addr = 0;
-    int plugIndex = pluginId - 1;
-    assert(plugIndex >= 0 && plugIndex < MAX_PLUGS);
-    addr = Library_Symbol(hInstPlug[plugIndex], fn);
+    int const plugIndex = pluginId - 1;
+    DENG2_ASSERT(plugIndex >= 0 && plugIndex < MAX_PLUGS);
+
+    void *addr = Library_Symbol(hInstPlug[plugIndex], fn);
     if(!addr)
     {
         LOGDEV_RES_WARNING("Error getting address of \"%s\": %s")
@@ -317,23 +333,21 @@ void* DD_FindEntryPoint(pluginid_t pluginId, const char* fn)
     return addr;
 }
 
-DENG_EXTERN_C void Plug_Notify(int notification, void* param)
+#undef Plug_Notify
+DENG_EXTERN_C void Plug_Notify(int notification, void *)
 {
-    DENG_UNUSED(param);
-
 #ifdef __CLIENT__
     switch(notification)
     {
     case DD_NOTIFY_GAME_SAVED:
         // If an update has been downloaded and is ready to go, we should
-        // re-show the dialog now that the user has saved the game as
-        // prompted.
+        // re-show the dialog now that the user has saved the game as prompted.
         LOG_DEBUG("Plug_Notify: Game saved");
         DownloadDialog::showCompletedDownload();
         break;
     }
 #else
-    DENG_UNUSED(notification);
+    DENG2_UNUSED(notification);
 #endif
 }
 

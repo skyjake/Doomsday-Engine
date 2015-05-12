@@ -26,8 +26,8 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_platform.h"
-#include "de_console.h"
 #include "de_misc.h"
+#include "dd_main.h"
 
 #include <de/memoryzone.h>
 
@@ -120,7 +120,7 @@ nodeindex_t NP_New(nodepile_t *pile, void *ptr)
         {
             // This happens *theoretically* only in freakishly complex
             // maps with lots and lots of mobjs.
-            Con_Error("NP_New: Out of linknodes! Contact the developer.\n");
+            App_Error("NP_New: Out of linknodes! Contact the developer.\n");
         }
 
         // Double the number of nodes, but add at most 1024.

@@ -20,6 +20,7 @@
 #define LIBAPPFW_UI_DATA_H
 
 #include <de/Observers>
+#include <functional>
 #include "../GuiWidget"
 
 namespace de {
@@ -127,6 +128,8 @@ public:
      * Returns the total number of items in the data context.
      */
     virtual dsize size() const = 0;
+
+    LoopResult forAll(std::function<LoopResult (Item const &)> func) const;
 
 private:
     DENG2_PRIVATE(d)

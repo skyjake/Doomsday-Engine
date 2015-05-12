@@ -19,7 +19,6 @@
 
 #include "server_dummies.h"
 #include "ui/nativeui.h"
-#include "ui/finaleinterpreter.h"
 #include "Texture"
 
 void Con_TransitionTicker(timespan_t t)
@@ -33,9 +32,6 @@ void Con_SetProgress(int progress)
 }
 
 void GL_Shutdown()
-{}
-
-void FR_Init(void)
 {}
 
 void R_RenderPlayerView(int num)

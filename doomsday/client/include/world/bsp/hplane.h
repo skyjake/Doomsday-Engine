@@ -1,9 +1,9 @@
-/** @file world/bsp/hplane.h World BSP Half-plane.
+/** @file hplane.h  World BSP Half-plane.
  *
  * Originally based on glBSP 2.24 (in turn, based on BSP 2.3)
  * @see http://sourceforge.net/projects/glbsp/
  *
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  * @authors Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
  * @authors Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
@@ -27,9 +27,7 @@
 #define DENG_WORLD_BSP_HPLANE_H
 
 #include <QList>
-
 #include <de/Vector>
-
 #include "world/bsp/linesegment.h"
 #include "partition.h"
 
@@ -115,7 +113,7 @@ public:
         LineSegmentSide *beforeLineSegment() const;
         LineSegmentSide *afterLineSegment() const;
 
-#ifdef DENG_DEBUG
+#ifdef DENG2_DEBUG
         void debugPrint() const;
 #endif
 
@@ -179,7 +177,7 @@ public:
      * @param edgeTips  Set of EdgeTips for the identified @a edge of
      *                  @a lineSeg. (@todo Refactor away -ds)
      *
-     * @return  The resultant new intercept; otherwise @a 0.
+     * @return  The resultant new intercept; otherwise @c nullptr.
      */
     Intercept *intercept(LineSegmentSide const &lineSeg, int edge,
                          EdgeTips const &edgeTips);
@@ -207,7 +205,7 @@ public:
      */
     void clearIntercepts();
 
-#ifdef DENG_DEBUG
+#ifdef DENG2_DEBUG
     void printIntercepts() const;
 #endif
 
@@ -245,8 +243,8 @@ public:
 
     /**
      * Returns a pointer to the map Line attributed to the line segment which was
-     * chosen as the half-plane partition. May return @c 0 (if no map line was
-     * attributed).
+     * chosen as the half-plane partition. May return @c nullptr (if no map line
+     * was attributed).
      */
     LineSegmentSide *lineSegment() const;
 
@@ -261,11 +259,11 @@ public:
      * @param other     Other line segment to determine vertex distances to.
      *
      * Return values:
-     * @param fromDist  Perpendicular distance from the "from" vertex. Can be @c 0.
-     * @param toDist    Perpendicular distance from the "to" vertex. Can be @c 0.
+     * @param fromDist  Perpendicular distance from the "from" vertex. Can be @c nullptr.
+     * @param toDist    Perpendicular distance from the "to" vertex. Can be @c nullptr.
      */
-    void distance(LineSegmentSide const &lineSegment, coord_t *fromDist = 0,
-                  coord_t *toDist = 0) const;
+    void distance(LineSegmentSide const &lineSegment, coord_t *fromDist = nullptr,
+                  coord_t *toDist = nullptr) const;
 
     /**
      * Determine the logical relationship between the partition line and the given
@@ -275,13 +273,14 @@ public:
      * @param lineSegment  Line segment to determine relationship to.
      *
      * Return values:
-     * @param fromDist  Perpendicular distance from the "from" vertex. Can be @c 0.
-     * @param toDist    Perpendicular distance from the "to" vertex. Can be @c 0.
+     * @param fromDist  Perpendicular distance from the "from" vertex. Can be @c nullptr.
+     * @param toDist    Perpendicular distance from the "to" vertex. Can be @c nullptr.
      *
      * @return LineRelationship between the partition line and the line segment.
      */
     LineRelationship relationship(LineSegmentSide const &lineSegment,
-                                  coord_t *retFromDist, coord_t *retToDist) const;
+                                  coord_t *retFromDist = nullptr,
+                                  coord_t *retToDist   = nullptr) const;
 
     /**
      * Returns the list of intercepts for the half-plane for efficient traversal.

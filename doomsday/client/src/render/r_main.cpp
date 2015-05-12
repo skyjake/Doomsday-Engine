@@ -1,7 +1,7 @@
 /** @file r_main.cpp
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,75 +21,89 @@
 #include "de_platform.h"
 #include "render/r_main.h"
 
+#include <de/vector1.h>
+#include <de/GLState>
 #include "dd_def.h" // finesine
 #include "clientapp.h"
 
 #include "render/billboard.h"
 #include "render/rend_main.h"
+#include "render/rend_model.h"
 #include "render/vissprite.h"
-#include "render/vlight.h"
-
-#include "MaterialSnapshot"
 
 #include "world/map.h"
 #include "world/p_players.h"
 #include "BspLeaf"
-
-#include <de/GLState>
-#include <de/vector1.h>
+#include "ConvexSubspace"
+#include "SectorCluster"
 
 using namespace de;
 
-int levelFullBright;
-int weaponOffsetScaleY = 1000;
-int psp3d;
+dint levelFullBright;
+dint weaponOffsetScaleY = 1000;
+dint psp3d;
 
-float pspLightLevelMultiplier = 1;
-float pspOffset[2];
+dfloat pspLightLevelMultiplier = 1;
+dfloat pspOffset[2];
 
 /*
  * Console variables:
  */
-float weaponFOVShift    = 45;
-float weaponOffsetScale = 0.3183f; // 1/Pi
-byte weaponScaleMode    = SCALEMODE_SMART_STRETCH;
+dfloat weaponFOVShift    = 45;
+dfloat weaponOffsetScale = 0.3183f;  // 1/Pi
+dbyte weaponScaleMode    = SCALEMODE_SMART_STRETCH;
+
+static inline RenderSystem &rendSys()
+{
+    return ClientApp::renderSystem();
+}
+
+static inline ResourceSystem &resSys()
+{
+    return ClientApp::resourceSystem();
+}
+
+static MaterialVariantSpec const &pspriteMaterialSpec()
+{
+    return resSys().materialSpec(PSpriteContext, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                 0, -2, 0, false, true, true, false);
+}
 
 static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
 {
-    ddpsprite_t *psp      = spr->psp;
-    int const spriteIdx   = psp->statePtr->sprite;
-    int const frameIdx    = psp->statePtr->frame;
-    float const offScaleY = weaponOffsetScaleY / 1000.0f;
+    static dint const WEAPONTOP = 32;  /// @todo Currently hardcoded here and in the plugins.
 
-    SpriteViewAngle const &sprViewAngle =
-        ClientApp::resourceSystem().sprite(spriteIdx, frameIdx).viewAngle(0);
+    ddpsprite_t *psp       = spr->psp;
+    dfloat const offScaleY = weaponOffsetScaleY / 1000.0f;
+    dint const spriteIdx   = psp->statePtr->sprite;
+    dint const frameIdx    = psp->statePtr->frame;
+    Sprite const &sprite   = resSys().sprite(spriteIdx, frameIdx);
 
-    Material *material = sprViewAngle.material;
-    bool flip          = sprViewAngle.mirrorX;
+    SpriteViewAngle const &sprViewAngle = sprite.viewAngle(0);
+    MaterialAnimator &matAnimator       = sprViewAngle.material->getAnimator(pspriteMaterialSpec());
 
-    MaterialVariantSpec const &spec =
-        ClientApp::resourceSystem().materialSpec(PSpriteContext, 0, 1, 0, 0,
-                                                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                                 0, -2, 0, false, true, true, false);
-    MaterialSnapshot const &ms = material->prepare(spec);
+    // Ensure we've up to date info about the material.
+    matAnimator.prepare();
 
-    Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
-    variantspecification_t const &texSpec = ms.texture(MTU_PRIMARY).spec().variant;
+    Vector2i const &matDimensions         = matAnimator.dimensions();
+    TextureVariant const &tex             = *matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
+    Vector2i const &texOrigin             = tex.base().origin();
+    variantspecification_t const &texSpec = tex.spec().variant;
 
-#define WEAPONTOP   32   /// @todo Currently hardcoded here and in the plugins.
 
-    params->pos[VX] = psp->pos[VX] + tex.origin().x + pspOffset[VX] - texSpec.border;
-    params->pos[VY] = WEAPONTOP + offScaleY * (psp->pos[VY] - WEAPONTOP) + tex.origin().y +
-                      pspOffset[VY] - texSpec.border;
-    params->width  = ms.width() + texSpec.border*2;
-    params->height = ms.height() + texSpec.border*2;
+    params->pos[0] = psp->pos[0] + texOrigin.x + pspOffset[0] - texSpec.border;
+    params->pos[1] = WEAPONTOP + offScaleY * (psp->pos[1] - WEAPONTOP) + texOrigin.y +
+                      pspOffset[1] - texSpec.border;
 
-    ms.texture(MTU_PRIMARY).glCoords(&params->texOffset[0], &params->texOffset[1]);
+    params->width  = matDimensions.x + texSpec.border * 2;
+    params->height = matDimensions.y + texSpec.border * 2;
 
-    params->texFlip[0] = flip;
+    tex.glCoords(&params->texOffset[0], &params->texOffset[1]);
+
+    params->texFlip[0] = sprViewAngle.mirrorX;
     params->texFlip[1] = false;
 
-    params->mat = material;
+    params->mat = &matAnimator.material();
     params->ambientColor[3] = spr->data.sprite.alpha;
 
     if(spr->data.sprite.isFullBright)
@@ -106,41 +120,43 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
         if(useBias && map.hasLightGrid())
         {
             // Evaluate the position in the light grid.
-            Vector3f tmp = map.lightGrid().evaluate(spr->origin);
-            V3f_Set(params->ambientColor, tmp.x, tmp.y, tmp.z);
+            Vector4f color = map.lightGrid().evaluate(spr->origin);
+
+            // Apply light range compression.
+            for(dint i = 0; i < 3; ++i)
+            {
+                color[i] += Rend_LightAdaptationDelta(color[i]);
+            }
+
+            V3f_Set(params->ambientColor, color.x, color.y, color.z);
         }
         else
         {
-            SectorCluster &cluster = spr->data.sprite.bspLeaf->cluster();
-            Vector3f const &secColor = Rend_SectorLightColor(cluster);
+            Vector4f const color = spr->data.sprite.bspLeaf->subspace().cluster().lightSourceColorfIntensity();
 
             // No need for distance attentuation.
-            float lightLevel = cluster.sector().lightLevel();
+            dfloat lightLevel = color.w;
 
             // Add extra light plus bonus.
             lightLevel += Rend_ExtraLightDelta();
             lightLevel *= pspLightLevelMultiplier;
 
+            // The last step is to compress the resultant light value by
+            // the global lighting function.
             Rend_ApplyLightAdaptation(lightLevel);
 
-            // Determine the final ambientColor in affect.
-            for(int i = 0; i < 3; ++i)
+            // Determine the final ambientColor.
+            for(dint i = 0; i < 3; ++i)
             {
-                params->ambientColor[i] = lightLevel * secColor[i];
+                params->ambientColor[i] = lightLevel * color[i];
             }
         }
-
         Rend_ApplyTorchLight(params->ambientColor, 0);
 
-        collectaffectinglights_params_t lparams; zap(lparams);
-        lparams.origin       = Vector3d(spr->origin);
-        lparams.bspLeaf      = spr->data.sprite.bspLeaf;
-        lparams.ambientColor = Vector3f(params->ambientColor);
-
-        params->vLightListIdx = R_CollectAffectingLights(&lparams);
+        params->vLightListIdx =
+                Rend_CollectAffectingLights(spr->origin, Vector3f(params->ambientColor),
+                                            spr->data.sprite.bspLeaf->subspacePtr());
     }
-
-#undef WEAPONTOP
 }
 
 void Rend_Draw2DPlayerSprites()
@@ -182,8 +198,10 @@ void Rend_Draw2DPlayerSprites()
     }
 }
 
-static void setupModelParamsForVisPSprite(drawmodelparams_t *params, vispsprite_t *spr)
+static void setupModelParamsForVisPSprite(vissprite_t &vis, vispsprite_t const *spr)
 {
+    drawmodelparams_t *params = VS_MODEL(&vis);
+
     params->mf = spr->data.model.mf;
     params->nextMF = spr->data.model.nextMF;
     params->inter = spr->data.model.inter;
@@ -191,34 +209,32 @@ static void setupModelParamsForVisPSprite(drawmodelparams_t *params, vispsprite_
     params->id = spr->data.model.id;
     params->selector = spr->data.model.selector;
     params->flags = spr->data.model.flags;
-    params->origin[VX] = spr->origin[VX];
-    params->origin[VY] = spr->origin[VY];
-    params->origin[VZ] = spr->origin[VZ];
-    params->srvo[VX] = spr->data.model.visOff[VX];
-    params->srvo[VY] = spr->data.model.visOff[VY];
-    params->srvo[VZ] = spr->data.model.visOff[VZ] - spr->data.model.floorClip;
-    params->gzt = spr->data.model.gzt;
-    params->distance = -10;
-    params->yaw = spr->data.model.yaw;
-    params->extraYawAngle = 0;
-    params->yawAngleOffset = spr->data.model.yawAngleOffset;
-    params->pitch = spr->data.model.pitch;
-    params->extraPitchAngle = 0;
-    params->pitchAngleOffset = spr->data.model.pitchAngleOffset;
-    params->extraScale = 0;
-    params->viewAlign = spr->data.model.viewAligned;
-    params->mirror = (mirrorHudModels? true : false);
+    vis.pose.origin = spr->origin;
+    vis.pose.srvo[0] = spr->data.model.visOff[0];
+    vis.pose.srvo[1] = spr->data.model.visOff[1];
+    vis.pose.srvo[2] = spr->data.model.visOff[2] - spr->data.model.floorClip;
+    vis.pose.topZ = spr->data.model.topZ;
+    vis.pose.distance = -10;
+    vis.pose.yaw = spr->data.model.yaw;
+    vis.pose.extraYawAngle = 0;
+    vis.pose.yawAngleOffset = spr->data.model.yawAngleOffset;
+    vis.pose.pitch = spr->data.model.pitch;
+    vis.pose.extraPitchAngle = 0;
+    vis.pose.pitchAngleOffset = spr->data.model.pitchAngleOffset;
+    vis.pose.extraScale = 0;
+    vis.pose.viewAligned = spr->data.model.viewAligned;
+    vis.pose.mirrored = (mirrorHudModels? true : false);
     params->shineYawOffset = -vang;
     params->shinePitchOffset = vpitch + 90;
     params->shineTranslateWithViewerPos = false;
     params->shinepspriteCoordSpace = true;
-    params->ambientColor[CA] = spr->data.model.alpha;
+    vis.light.ambientColor[3] = spr->data.model.alpha;
 
     if((levelFullBright || spr->data.model.stateFullBright) &&
        !spr->data.model.mf->testSubFlag(0, MFF_DIM))
     {
-        params->ambientColor[CR] = params->ambientColor[CG] = params->ambientColor[CB] = 1;
-        params->vLightListIdx = 0;
+        vis.light.ambientColor[0] = vis.light.ambientColor[1] = vis.light.ambientColor[2] = 1;
+        vis.light.vLightListIdx = 0;
     }
     else
     {
@@ -226,18 +242,22 @@ static void setupModelParamsForVisPSprite(drawmodelparams_t *params, vispsprite_
 
         if(useBias && map.hasLightGrid())
         {
-            Vector3f tmp = map.lightGrid().evaluate(params->origin);
-            V3f_Set(params->ambientColor, tmp.x, tmp.y, tmp.z);
+            Vector4f color = map.lightGrid().evaluate(vis.pose.origin);
+            // Apply light range compression.
+            for(dint i = 0; i < 3; ++i)
+            {
+                color[i] += Rend_LightAdaptationDelta(color[i]);
+            }
+            vis.light.ambientColor.x = color.x;
+            vis.light.ambientColor.y = color.y;
+            vis.light.ambientColor.z = color.z;
         }
         else
         {
-            SectorCluster &cluster = spr->data.model.bspLeaf->cluster();
-            Vector3f const &secColor = Rend_SectorLightColor(cluster);
-
-            // Diminished light (with compression).
-            float lightLevel = cluster.sector().lightLevel();
+            Vector4f const color = spr->data.model.bspLeaf->subspace().cluster().lightSourceColorfIntensity();
 
             // No need for distance attentuation.
+            dfloat lightLevel = color.w;
 
             // Add extra light.
             lightLevel += Rend_ExtraLightDelta();
@@ -246,22 +266,18 @@ static void setupModelParamsForVisPSprite(drawmodelparams_t *params, vispsprite_
             // the global lighting function.
             Rend_ApplyLightAdaptation(lightLevel);
 
-            // Determine the final ambientColor in effect.
-            for(int i = 0; i < 3; ++i)
+            // Determine the final ambientColor.
+            for(dint i = 0; i < 3; ++i)
             {
-                params->ambientColor[i] = lightLevel * secColor[i];
+                vis.light.ambientColor[i] = lightLevel * color[i];
             }
         }
+        Rend_ApplyTorchLight(vis.light.ambientColor, vis.pose.distance);
 
-        Rend_ApplyTorchLight(params->ambientColor, params->distance);
-
-        collectaffectinglights_params_t lparams; zap(lparams);
-        lparams.origin       = Vector3d(spr->origin);
-        lparams.bspLeaf      = spr->data.model.bspLeaf;
-        lparams.ambientColor = Vector3f(params->ambientColor);
-        lparams.starkLight   = true;
-
-        params->vLightListIdx = R_CollectAffectingLights(&lparams);
+        vis.light.vLightListIdx =
+                Rend_CollectAffectingLights(spr->origin, vis.light.ambientColor,
+                                            spr->data.model.bspLeaf->subspacePtr(),
+                                            true /*stark world light*/);
     }
 }
 
@@ -271,9 +287,10 @@ void Rend_Draw3DPlayerSprites()
     Rend_ModelViewMatrix(false /* don't apply view angle rotation */);
 
     static GLTexture localDepth; // note: static!
-    GLTarget::AlternativeBuffer altDepth(GLState::current().target(), localDepth, GLTarget::DepthStencil);
+    GLTarget::AlternativeBuffer altDepth(GLState::current().target(), localDepth,
+                                         GLTarget::DepthStencil);
 
-    for(int i = 0; i < DDMAXPSPRITES; ++i)
+    for(dint i = 0; i < DDMAXPSPRITES; ++i)
     {
         vispsprite_t *spr = &visPSprites[i];
 
@@ -285,8 +302,9 @@ void Rend_Draw3DPlayerSprites()
             altDepth.target().clear(GLTarget::DepthStencil);
         }
 
-        drawmodelparams_t parms; zap(parms);
-        setupModelParamsForVisPSprite(&parms, spr);
-        Rend_DrawModel(parms);
+        //drawmodelparams_t parms; zap(parms);
+        vissprite_t temp; de::zap(temp);
+        setupModelParamsForVisPSprite(temp, spr);
+        Rend_DrawModel(temp);
     }
 }

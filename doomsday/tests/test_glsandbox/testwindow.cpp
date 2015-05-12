@@ -21,6 +21,7 @@
 
 #include <QMessageBox>
 #include <QPainter>
+#include <QGLFormat>
 
 #include <de/ImageBank>
 #include <de/GLState>
@@ -30,6 +31,7 @@
 #include <de/GLTexture>
 #include <de/GLTarget>
 #include <de/AtlasTexture>
+#include <de/ModelDrawable>
 #include <de/GuiApp>
 #include <de/Clock>
 
@@ -41,10 +43,13 @@ DENG2_OBSERVES(Canvas, GLResize),
 DENG2_OBSERVES(Clock, TimeChange),
 DENG2_OBSERVES(Bank, Load)
 {
+    QToolBar *modelChoice;
+
     enum Mode
     {
         TestRenderToTexture,
-        TestDynamicAtlas
+        TestDynamicAtlas,
+        TestModel
     };
 
     Mode mode;
@@ -59,8 +64,13 @@ DENG2_OBSERVES(Bank, Load)
     GLUniform uTex;
     GLTexture frameTex;
     GLTexture testpic;
-    std::auto_ptr<AtlasTexture> atlas;
-    std::auto_ptr<GLTarget> frameTarget;
+    ModelDrawable model;
+    ModelDrawable::Animator modelAnim;
+    QScopedPointer<AtlasTexture> modelAtlas;
+    GLUniform uModelTex;
+    GLProgram modelProgram;
+    QScopedPointer<AtlasTexture> atlas;
+    QScopedPointer<GLTarget> frameTarget;
     Time startedAt;
     Time lastAtlasAdditionAt;
     bool eraseAtlas;
@@ -76,7 +86,9 @@ DENG2_OBSERVES(Bank, Load)
           uColor    ("uColor",     GLUniform::Vec4),
           uTime     ("uTime",      GLUniform::Float),
           uTex      ("uTex",       GLUniform::Sampler2D),
-          atlas     (AtlasTexture::newWithKdTreeAllocator(Atlas::AllowDefragment |
+          modelAnim (model),
+          uModelTex ("uTex",       GLUniform::Sampler2D),
+          atlas     (AtlasTexture::newWithRowAllocator(Atlas::AllowDefragment |
                                                           Atlas::BackingStore |
                                                           Atlas::WrapBordersInBackingStore))
     {
@@ -85,16 +97,27 @@ DENG2_OBSERVES(Bank, Load)
 
         self.canvas().audienceForGLInit() += this;
         self.canvas().audienceForGLResize() += this;
-        Clock::appClock().audienceForTimeChange() += this;
+        Clock::get().audienceForTimeChange() += this;
 
         uColor = Vector4f(.5f, .75f, .5f, 1);
         atlas->setTotalSize(Vector2ui(256, 256));
         atlas->setBorderSize(2);
         atlas->setMagFilter(gl::Nearest);
 
-        imageBank.add("rtt.cube", "/data/graphics/testpic.png");
+        imageBank.add("rtt.cube", "/packs/net.dengine.test.glsandbox/testpic.png");
         //imageBank.loadAll();
         imageBank.audienceForLoad() += this;
+
+        //model.load(App::rootFolder().locate<File>("/data/models/marine.md2")); //boblampclean.md5mesh"));
+
+        modelAtlas.reset(AtlasTexture::newWithKdTreeAllocator(Atlas::DefaultFlags, Atlas::Size(2048, 2048)));
+        model.setAtlas(*modelAtlas);
+        uModelTex = *modelAtlas;
+    }
+
+    ~Instance()
+    {
+        model.glDeinit();
     }
 
     void canvasGLInit(Canvas &cv)
@@ -106,6 +129,8 @@ DENG2_OBSERVES(Bank, Load)
         }
         catch(Error const &er)
         {
+            qWarning() << er.asText();
+
             QMessageBox::critical(thisPublic, "GL Init Error", er.asText());
             exit(1);
         }
@@ -226,6 +251,48 @@ DENG2_OBSERVES(Bank, Load)
                 << uTex;
 
         cv.renderTarget().setClearColor(Vector4f(.2f, .2f, .2f, 0));
+
+        modelProgram.build(
+                    ByteRefArray::fromCStr(
+                        "uniform highp mat4 uMvpMatrix;\n"
+                        "uniform highp vec4 uColor;\n"
+                        "uniform highp mat4 uBoneMatrices[64];\n"
+
+                        "attribute highp vec4 aVertex;\n"
+                        "attribute highp vec3 aNormal;\n"
+                        "attribute highp vec2 aUV;\n"
+                        "attribute highp vec4 aBounds;\n"
+                        "attribute highp vec4 aColor;\n"
+                        "attribute highp vec4 aBoneIDs;\n"
+                        "attribute highp vec4 aBoneWeights;\n"
+
+                        "varying highp vec2 vUV;\n"
+                        "varying highp vec4 vColor;\n"
+                        "varying highp vec3 vNormal;\n"
+
+                        "void main(void) {\n"
+                        "  highp mat4 bone =\n"
+                        "    uBoneMatrices[int(aBoneIDs.x + 0.5)] * aBoneWeights.x + \n"
+                        "    uBoneMatrices[int(aBoneIDs.y + 0.5)] * aBoneWeights.y + \n"
+                        "    uBoneMatrices[int(aBoneIDs.z + 0.5)] * aBoneWeights.z + \n"
+                        "    uBoneMatrices[int(aBoneIDs.w + 0.5)] * aBoneWeights.w;\n"
+                        "  highp vec4 modelPos = bone * aVertex;\n"
+                        "  gl_Position = uMvpMatrix * modelPos;\n"
+                        "  vUV = aBounds.xy + aUV * aBounds.zw;\n"
+                        "  vColor = aColor;\n"
+                        "  vNormal = (bone * vec4(aNormal, 0.0)).xyz;\n"
+                        "}\n"),
+                    ByteRefArray::fromCStr(
+                        "uniform sampler2D uTex;\n"
+                        "varying highp vec2 vUV;\n"
+                        "varying highp vec3 vNormal;\n"
+                        "void main(void) {\n"
+                        "  gl_FragColor = texture2D(uTex, vUV) * "
+                            "vec4(vec3((vNormal.x + 1.0) / 2.0), 1.0);"
+                        "}\n"))
+                << uMvpMatrix
+                << uModelTex;
+        model.setProgram(modelProgram);
     }
 
     void bankLoaded(DotPath const &path)
@@ -272,6 +339,12 @@ DENG2_OBSERVES(Bank, Load)
                     Matrix4f::scale(cv.height()/150.f) *
                     Matrix4f::translate(Vector2f(-50, -50));
             break;
+
+        case TestModel:
+            // 3D projection.
+            projMatrix = Matrix4f::perspective(40, float(cv.width())/float(cv.height())) *
+                         Matrix4f::lookAt(Vector3f(), Vector3f(0, -3, 0), Vector3f(0, 0, 1));
+            break;
         }
     }
 
@@ -280,11 +353,17 @@ DENG2_OBSERVES(Bank, Load)
         mode = newMode;
         updateProjection(self.canvas());
 
+        modelChoice->hide();
+
         switch(mode)
         {
         case TestDynamicAtlas:
             lastAtlasAdditionAt = Time();
             uMvpMatrix = projMatrix;
+            break;
+
+        case TestModel:
+            modelChoice->show();
             break;
 
         default:
@@ -312,6 +391,10 @@ DENG2_OBSERVES(Bank, Load)
             GLState::push().setBlend(false);
             drawAtlasFrame();
             GLState::pop();
+            break;
+
+        case TestModel:
+            drawModel();
             break;
         }
     }
@@ -342,6 +425,26 @@ DENG2_OBSERVES(Bank, Load)
         atlasOb.draw();
     }
 
+    void initModelAnimation()
+    {
+        modelAnim.clear();
+        modelAnim.start(0);
+    }
+
+    void drawModel()
+    {
+        GLState::current().target().clear(GLTarget::ColorDepth);
+
+        uMvpMatrix = projMatrix * modelMatrix;
+
+        if(!modelAnim.isEmpty())
+        {
+            modelAnim.at(0).time = startedAt.since();
+        }
+
+        model.draw(&modelAnim);
+    }
+
     void timeChanged(Clock const &clock)
     {
         if(!startedAt.isValid())
@@ -355,6 +458,14 @@ DENG2_OBSERVES(Bank, Load)
         case TestRenderToTexture:
             modelMatrix = Matrix4f::rotate(std::cos(uTime.toFloat()/2) * 45, Vector3f(1, 0, 0)) *
                           Matrix4f::rotate(std::sin(uTime.toFloat()/3) * 60, Vector3f(0, 1, 0));
+            break;
+
+        case TestModel:
+            modelMatrix = Matrix4f::translate(Vector3f(0, std::cos(uTime.toFloat()/2.5f), 0)) *
+                          Matrix4f::rotate(std::cos(uTime.toFloat()/2) * 45, Vector3f(1, 0, 0)) *
+                          Matrix4f::rotate(std::sin(uTime.toFloat()/3) * 60, Vector3f(0, 1, 0)) *                         
+                          Matrix4f::scale(3.f / de::max(model.dimensions().x, model.dimensions().y, model.dimensions().z)) *
+                          Matrix4f::translate(-model.midPoint());
             break;
 
         case TestDynamicAtlas:
@@ -379,7 +490,7 @@ DENG2_OBSERVES(Bank, Load)
         }
 
 #if 1
-        if(!(qrand() % 3) && !atlas->isEmpty())
+        if((qrand() % 10) <= 5 && !atlas->isEmpty())
         {
             // Randomly remove one of the allocations.
             QList<Id> ids;
@@ -392,7 +503,7 @@ DENG2_OBSERVES(Bank, Load)
 #endif
 
         // Generate a random image.
-        QSize imgSize(10 + qrand() % 40, 10 + qrand() % 40);
+        QSize imgSize(10 + qrand() % 40, 10 + 10 * (qrand() % 2));
         QImage img(imgSize, QImage::Format_ARGB32);
         QPainter painter(&img);
         painter.fillRect(img.rect(), QColor(qrand() % 256, qrand() % 256, qrand() % 256));
@@ -421,10 +532,19 @@ TestWindow::TestWindow() : d(new Instance(this))
     QToolBar *tools = addToolBar(tr("Tests"));
     tools->addAction("RTT", this, SLOT(testRenderToTexture()));
     tools->addAction("Atlas", this, SLOT(testDynamicAtlas()));
+    tools->addAction("Model", this, SLOT(testModel()));
+
+    d->modelChoice = addToolBar(tr("Models"));
+    d->modelChoice->addAction("MD2", this, SLOT(loadMD2Model()));
+    d->modelChoice->addAction("MD5", this, SLOT(loadMD5Model()));
+    //addToolBar(Qt::TopToolBarArea, d->modelChoice);
+    //d->modelChoice->hide();
 }
 
 void TestWindow::canvasGLDraw(Canvas &canvas)
 {
+    LIBGUI_ASSERT_GL_OK();
+
     d->draw(canvas);
     canvas.swapBuffers();
 
@@ -439,4 +559,21 @@ void TestWindow::testRenderToTexture()
 void TestWindow::testDynamicAtlas()
 {
     d->setMode(Instance::TestDynamicAtlas);
+}
+
+void TestWindow::testModel()
+{
+    d->setMode(Instance::TestModel);
+}
+
+void TestWindow::loadMD2Model()
+{
+    d->model.load(App::rootFolder().locate<File>("/packs/net.dengine.test.glsandbox/models/marine.md2"));
+    d->initModelAnimation();
+}
+
+void TestWindow::loadMD5Model()
+{
+    d->model.load(App::rootFolder().locate<File>("/packs/net.dengine.test.glsandbox/models/boblampclean.md5mesh"));
+    d->initModelAnimation();
 }

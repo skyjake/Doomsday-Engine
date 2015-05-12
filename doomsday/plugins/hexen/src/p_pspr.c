@@ -1,9 +1,7 @@
-/** @file p_pspr.c Weapon sprite animation.
- *
- * Weapon sprite animation, weapon objects. Action functions for weapons.
+/** @file p_pspr.c  Weapon sprite animation.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 1999 Activision
  *
  * @par License
@@ -21,15 +19,17 @@
  * 02110-1301 USA</small>
  */
 
+#include "jhexen.h"
+#include "p_pspr.h"
+
 #include <math.h>
-
-#include "common.h"
-#include "r_common.h"
-
-#include "player.h"
-#include "p_map.h"
+#include "d_netcl.h"
+#include "g_common.h"
 #include "mobj.h"
 #include "p_inventory.h"
+#include "p_map.h"
+#include "player.h"
+#include "r_common.h"
 
 #define LOWERSPEED          (6)
 #define RAISESPEED          (6)
@@ -244,7 +244,7 @@ void R_GetWeaponBob(int player, float* x, float* y)
         if(players[player].morphTics > 0)
             *x = 0;
         else
-            *x = 1 + (cfg.bobWeapon * players[player].bob) *
+            *x = 1 + (cfg.common.bobWeapon * players[player].bob) *
                 FIX2FLT(finecosine[(128 * mapTime) & FINEMASK]);
     }
 
@@ -253,7 +253,7 @@ void R_GetWeaponBob(int player, float* x, float* y)
         if(players[player].morphTics > 0)
             *y = 0;
         else
-            *y = 32 + (cfg.bobWeapon * players[player].bob) *
+            *y = 32 + (cfg.common.bobWeapon * players[player].bob) *
                 FIX2FLT(finesine[(128 * mapTime) & FINEMASK & (FINEANGLES / 2 - 1)]);
     }
 }
@@ -432,7 +432,7 @@ void P_FireWeapon(player_t *plr)
     if(!P_CheckAmmo(plr))
         return;
 
-    NetCl_PlayerActionRequest(plr, GPA_FIRE, 0);
+    NetCl_PlayerActionRequest(plr, GPA_FIRE, plr->refire);
 
     // Psprite state.
     P_MobjChangeState(plr->plr->mo, PCLASS_INFO(plr->class_)->attackState);
@@ -1447,12 +1447,12 @@ void C_DECL A_CFlamePuff(mobj_t* mo)
     S_StartSound(SFX_CLERIC_FLAME_EXPLODE, mo);
 }
 
-void C_DECL A_CFlameMissile(mobj_t* mo)
+void C_DECL A_CFlameMissile(mobj_t *mo)
 {
     int i;
-    uint an, an90;
+    uint an;// an90;
     coord_t dist;
-    mobj_t* pmo;
+    mobj_t *pmo;
 
     if(!mo) return;
 
@@ -1466,7 +1466,7 @@ void C_DECL A_CFlameMissile(mobj_t* mo)
         for(i = 0; i < 4; ++i)
         {
             an = (i * ANG45) >> ANGLETOFINESHIFT;
-            an90 = (i * ANG45 + ANG90) >> ANGLETOFINESHIFT;
+            //an90 = (i * ANG45 + ANG90) >> ANGLETOFINESHIFT;
 
             if((pmo = P_SpawnMobjXYZ(MT_CIRCLEFLAME,
                                      tmBlockingMobj->origin[VX] + dist * FIX2FLT(finecosine[an]),
@@ -1598,14 +1598,12 @@ void C_DECL A_CHolyAttack2(mobj_t* mo)
     }
 }
 
-void C_DECL A_CHolyAttack(player_t* plr, pspdef_t* psp)
+void C_DECL A_CHolyAttack(player_t *plr, pspdef_t *psp)
 {
-    mobj_t *pmo;
-
     if(IS_CLIENT) return;
 
     P_ShotAmmo(plr);
-    pmo = P_SpawnPlayerMissile(MT_HOLY_MISSILE, plr->plr->mo);
+    P_SpawnPlayerMissile(MT_HOLY_MISSILE, plr->plr->mo);
     plr->damageCount = 0;
     plr->bonusCount = 0;
 

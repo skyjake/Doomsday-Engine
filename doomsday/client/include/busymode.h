@@ -36,6 +36,7 @@
 #define LIBDENG_CORE_BUSYMODE_H
 
 #include "dd_share.h"
+#include "api_busy.h"
 
 /// Enables or disables busy mode; if disabled, work is done synchronously
 /// in the main thread.

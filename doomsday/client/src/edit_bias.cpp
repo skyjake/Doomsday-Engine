@@ -1,7 +1,7 @@
-/** @file edit_bias.cpp Shadow Bias editor UI.
+/** @file edit_bias.cpp  Shadow Bias editor UI.
  *
  * @authors Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -19,23 +19,22 @@
  */
 
 #ifdef __CLIENT__
-
-#include <de/Log>
-
 #include "de_base.h"
 #include "de_console.h"
 #include "de_filesys.h"
 #include "de_ui.h"
 
-#include "Hand"
-#include "HueCircle"
 #include "world/map.h"
 #include "world/p_players.h" // viewPlayer
-
+#include "ConvexSubspace"
+#include "Hand"
+#include "HueCircle"
 #include "render/viewports.h"
 #include "render/rend_main.h" // gameDrawHUD/vOrigin, remove me
-
 #include "edit_bias.h"
+
+#include <de/Log>
+#include <de/concurrency.h>
 
 using namespace de;
 
@@ -220,7 +219,7 @@ static void SBE_Grab(int which)
 {
     DENG_ASSERT(editActive);
     Hand &hand = App_WorldSystem().hand();
-    if(BiasSource *source = App_WorldSystem().map().biasSource(which))
+    if(BiasSource *source = App_WorldSystem().map().biasSourcePtr(which))
     {
         if(hand.isEmpty())
         {
@@ -237,7 +236,7 @@ static void SBE_Ungrab(int which)
 {
     DENG_ASSERT(editActive);
     Hand &hand = App_WorldSystem().hand();
-    if(BiasSource *source = App_WorldSystem().map().biasSource(which))
+    if(BiasSource *source = App_WorldSystem().map().biasSourcePtr(which))
     {
         hand.ungrab(*source);
     }
@@ -251,14 +250,14 @@ static void SBE_SetLock(int which, bool enable = true)
 {
     DENG_ASSERT(editActive);
     Hand &hand = App_WorldSystem().hand();
-    if(BiasSource *source = App_WorldSystem().map().biasSource(which))
+    if(BiasSource *source = App_WorldSystem().map().biasSourcePtr(which))
     {
         if(enable) source->lock();
         else       source->unlock();
         return;
     }
 
-    foreach(Grabbable *grabbable, hand.grabbed())
+    for(Grabbable *grabbable : hand.grabbed())
     {
         if(enable) grabbable->lock();
         else       grabbable->unlock();
@@ -267,25 +266,27 @@ static void SBE_SetLock(int which, bool enable = true)
 
 static bool SBE_Save(char const *name = 0)
 {
-    DENG_ASSERT(editActive);
+    DENG2_ASSERT(editActive);
 
     LOG_AS("Bias");
+
+    Map &map = App_WorldSystem().map();
 
     ddstring_t fileName; Str_Init(&fileName);
     if(!name || !name[0])
     {
-        String mapPath = App_WorldSystem().map().uri().resolvedRef() + ".ded";
-        Str_Set(&fileName, mapPath.toUtf8().constData());
+        Str_Set(&fileName, String(map.def()? map.def()->composeUri().path() : "unknownmap").toUtf8().constData());
     }
     else
     {
         Str_Set(&fileName, name);
         F_ExpandBasePath(&fileName, &fileName);
-        // Do we need to append an extension?
-        if(!F_FindFileExtension(Str_Text(&fileName)))
-        {
-            Str_Append(&fileName, ".ded");
-        }
+    }
+
+    // Do we need to append an extension?
+    if(String(Str_Text(&fileName)).fileNameExtension().isEmpty())
+    {
+        Str_Append(&fileName, ".ded");
     }
 
     F_ToNativeSlashes(&fileName, &fileName);
@@ -293,37 +294,36 @@ static bool SBE_Save(char const *name = 0)
     if(!file)
     {
         LOG_RES_WARNING("Failed to save light sources to \"%s\": could not open file")
-                << F_PrettyPath(Str_Text(&fileName));
+                << NativePath(Str_Text(&fileName)).pretty();
         Str_Free(&fileName);
         return false;
     }
 
-    LOG_RES_VERBOSE("Saving to \"%s\"...") << F_PrettyPath(Str_Text(&fileName));
+    LOG_RES_VERBOSE("Saving to \"%s\"...")
+            << NativePath(Str_Text(&fileName)).pretty();
 
-    Map &map = App_WorldSystem().map();
-
-    char const *uid = map.oldUniqueId();
-    fprintf(file, "# %i Bias Lights for %s\n\n", map.biasSourceCount(), uid);
+    String uid = (map.def()? map.def()->composeUniqueId(App_CurrentGame()) : "(unknown map)");
+    fprintf(file, "# %i Bias Lights for %s", map.biasSourceCount(), uid.toUtf8().constData());
 
     // Since there can be quite a lot of these, make sure we'll skip
     // the ones that are definitely not suitable.
-    fprintf(file, "SkipIf Not %s\n", App_CurrentGame().identityKey().toUtf8().constData());
+    fprintf(file, "\n\nSkipIf Not %s", App_CurrentGame().identityKey().toUtf8().constData());
 
-    foreach(BiasSource *src, map.biasSources())
+    map.forAllBiasSources([&file, &uid] (BiasSource &bsrc)
     {
-        fprintf(file, "\nLight {\n");
-        fprintf(file, "  Map = \"%s\"\n", uid);
-        fprintf(file, "  Origin { %g %g %g }\n",
-                      src->origin().x, src->origin().y, src->origin().z);
-        fprintf(file, "  Color { %g %g %g }\n",
-                      src->color().x, src->color().y, src->color().z);
-        fprintf(file, "  Intensity = %g\n", src->intensity());
-
         float minLight, maxLight;
-        src->lightLevels(minLight, maxLight);
-        fprintf(file, "  Sector levels { %g %g }\n", minLight, maxLight);
-        fprintf(file, "}\n");
-    }
+        bsrc.lightLevels(minLight, maxLight);
+
+        fprintf(file, "\n\nLight {");
+        fprintf(file, "\n  Map = \"%s\"", uid.toUtf8().constData());
+        fprintf(file, "\n  Origin { %g %g %g }", bsrc.origin().x, bsrc.origin().y, bsrc.origin().z);
+        fprintf(file, "\n  Color { %g %g %g }", bsrc.color().x, bsrc.color().y, bsrc.color().z);
+        fprintf(file, "\n  Intensity = %g", bsrc.intensity());
+        fprintf(file, "\n  Sector levels { %g %g }", minLight, maxLight);
+        fprintf(file, "\n}");
+
+        return LoopContinue;
+    });
 
     fclose(file);
     Str_Free(&fileName);
@@ -401,7 +401,7 @@ D_CMD(BLEditor)
 
     if(!qstricmp(cmd, "grab"))
     {
-        SBE_Grab(map.toIndex(*map.biasSourceNear(hand.origin())));
+        SBE_Grab(map.indexOf(*map.biasSourceNear(hand.origin())));
         return true;
     }
 
@@ -427,11 +427,11 @@ D_CMD(BLEditor)
     int which = -1;
     if(!hand.isEmpty())
     {
-        which = map.toIndex(hand.grabbed().first()->as<BiasSource>());
+        which = map.indexOf(hand.grabbed().first()->as<BiasSource>());
     }
     else
     {
-        which = map.toIndex(*map.biasSourceNear(hand.origin()));
+        which = map.indexOf(*map.biasSourceNear(hand.origin()));
     }
 
     if(argc > 1)
@@ -453,7 +453,7 @@ D_CMD(BLEditor)
 
     if(!qstricmp(cmd, "dup"))
     {
-        return SBE_Dupe(*map.biasSource(which)) != 0;
+        return SBE_Dupe(map.biasSource(which)) != nullptr;
     }
 
     if(!qstricmp(cmd, "levels"))
@@ -464,7 +464,7 @@ D_CMD(BLEditor)
             minLight = strtod(argv[1], 0) / 255.0f;
             maxLight = argc >= 3? strtod(argv[2], 0) / 255.0f : minLight;
         }
-        map.biasSource(which)->setLightLevels(minLight, maxLight);
+        map.biasSource(which).setLightLevels(minLight, maxLight);
         return true;
     }
 
@@ -475,9 +475,11 @@ D_CMD(BLEditor)
  * Editor visuals (would-be widgets):
  */
 
+#include "api_fontrender.h"
 #include "world/map.h"
 #include "world/p_players.h"
 #include "BspLeaf"
+#include "SectorCluster"
 
 #include "render/rend_font.h"
 
@@ -540,7 +542,7 @@ static void drawInfoBox(BiasSource *s, int rightX, String const title, float alp
     drawText(title, origin, UI_Color(UIC_TITLE), alpha);
     origin.y += th;
 
-    int sourceIndex = App_WorldSystem().map().toIndex(*s);
+    int sourceIndex = App_WorldSystem().map().indexOf(*s);
     coord_t distance = (s->origin() - vOrigin.xzy()).length();
     float minLight, maxLight;
     s->lightLevels(minLight, maxLight);
@@ -573,27 +575,27 @@ static void drawInfoBox(BiasSource *s, int rightX, String const title, float alp
 static void drawLightGauge(Vector2i const &origin, int height = 255)
 {
     static float minLevel = 0, maxLevel = 0;
-    static Sector *lastSector = 0;
+    static SectorCluster *lastCluster = 0;
 
     Hand &hand = App_WorldSystem().hand();
     Map &map = App_WorldSystem().map();
 
-    BiasSource *src;
+    BiasSource *source;
     if(!hand.isEmpty())
-        src = &hand.grabbed().first()->as<BiasSource>();
+        source = &hand.grabbed().first()->as<BiasSource>();
     else
-        src = map.biasSourceNear(hand.origin());
+        source = map.biasSourceNear(hand.origin());
 
-    if(Sector *sector = src->bspLeafAtOrigin().sectorPtr())
+    if(ConvexSubspace *subspace = source->bspLeafAtOrigin().subspacePtr())
     {
-        if(lastSector != sector)
+        if(subspace->hasCluster() && lastCluster != subspace->clusterPtr())
         {
-            minLevel = maxLevel = sector->lightLevel();
-            lastSector = sector;
+            lastCluster = &subspace->cluster();
+            minLevel = maxLevel = lastCluster->lightSourceIntensity();
         }
     }
 
-    float const lightLevel = lastSector->lightLevel();
+    float const lightLevel = lastCluster? lastCluster->lightSourceIntensity() : 0;
     if(lightLevel < minLevel)
         minLevel = lightLevel;
     if(lightLevel > maxLevel)
@@ -630,7 +632,7 @@ static void drawLightGauge(Vector2i const &origin, int height = 255)
 
     // Current min/max bias sector level.
     float minLight, maxLight;
-    src->lightLevels(minLight, maxLight);
+    source->lightLevels(minLight, maxLight);
     if(minLight > 0 || maxLight > 0)
     {
         glColor3f(1, 0, 0);
@@ -708,7 +710,8 @@ void SBE_DrawGui()
     origin.y = top - size.y / 2;
 
     // The map ID.
-    drawText(String(map.oldUniqueId()), origin, UI_Color(UIC_TITLE), opacity);
+    String label = (map.def()? map.def()->composeUniqueId(App_CurrentGame()) : "(unknown map)");
+    drawText(label, origin, UI_Color(UIC_TITLE), opacity);
 
     glDisable(GL_TEXTURE_2D);
 

@@ -23,7 +23,4 @@ SOURCES += md2tool.c
 HEADERS += md2tool.h anorms.h
 
 # Installation.
-!macx {
-    INSTALLS += target
-    target.path = $$DENG_BIN_DIR
-}
+deployTarget()

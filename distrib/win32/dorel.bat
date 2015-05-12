@@ -21,7 +21,7 @@ SET BUILDFAILURE=0
 rd/s/q work
 md work
 cd work
-qmake -spec win32-msvc2010 ..\..\..\doomsday\doomsday.pro CONFIG+=release DENG_BUILD=%DOOMSDAY_BUILD%
+qmake -spec win32-msvc2013 ..\..\..\doomsday\doomsday.pro CONFIG+=release DENG_BUILD=%DOOMSDAY_BUILD%
 IF NOT %ERRORLEVEL% == 0 SET BUILDFAILURE=1
 %JOM%
 IF NOT %ERRORLEVEL% == 0 SET BUILDFAILURE=1
@@ -34,6 +34,9 @@ IF %BUILDFAILURE% == 1 GOTO Failure
 
 REM -- Update readme (could also run Amethyst here).
 copy "C:\Users\Virtual\Dropbox\Doomsday\readme\readme.txt" ..\products\doc
+
+REM -- Ensure Qt deployment is complete.
+windeployqt ..\products\bin\doomsday.exe
 
 REM -- Run the Inno Setup Compiler.
 IF EXIST "c:\Program Files\Inno Setup 5\Compil32.exe" (

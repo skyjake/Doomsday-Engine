@@ -14,6 +14,7 @@
 # - deng_aptstable              Include the stable apt repository .list
 # - deng_aptunstable            Include the unstable apt repository .list
 # - deng_ccache                 (Unix|Mac) Use ccache when compiling
+# - deng_extassimp              (Unix) Get assimp from external/assimp/
 # - deng_fluidsynth             Build the FluidSynth sound driver
 # - deng_fmod                   Build the FMOD Ex sound driver
 # - deng_nativesdk              (Mac) Use current OS's SDK for non-distrib use
@@ -27,29 +28,29 @@
 # - deng_notools                Do not build and deploy the tools
 # - deng_openal                 Build the OpenAL sound driver
 # - deng_qtautoselect           (Mac) Select OS X SDK based on Qt version
-# - deng_qtgui                  Use the QtGui module in dep_deng2.pri
-# - deng_qtopengl               Use the QtOpenGL module in dep_deng2.pri
-# - deng_qtwidgets              Use the QtWidgets module in dep_deng2.pri
+# - deng_qtgui                  Use the QtGui module in dep_core.pri
+# - deng_qtopengl               Use the QtOpenGL module in dep_core.pri
+# - deng_qtwidgets              Use the QtWidgets module in dep_core.pri
 # - deng_nopackres              Do not package the Doomsday resources
 # - deng_rangecheck             Parameter range checking/value assertions
 # - deng_snowberry              (Unix) Include Snowberry in installation
 # - deng_tests                  Build and deploy the test suite
 # - deng_writertypecheck        Enable type checking in Writer/Reader
 #
-# Read-only options (set automatically):
-# - deng_debug                  Debug build.
+# Read-only options (do not set manually):
+# - deng_debug                  Debug build (due to CONFIG+=debug).
 
 QT -= core gui
 CONFIG *= thread
 
 # Directories ----------------------------------------------------------------
 
+DENG_ROOT_DIR         = $$PWD
 DENG_API_DIR          = $$PWD/api
 DENG_INCLUDE_DIR      = $$PWD/client/include
 DENG_UNIX_INCLUDE_DIR = $$DENG_INCLUDE_DIR/unix
 DENG_MAC_INCLUDE_DIR  = $$DENG_INCLUDE_DIR/macx
 DENG_WIN_INCLUDE_DIR  = $$DENG_INCLUDE_DIR/windows
-DENG_MODULES_DIR      = $$PWD/libdeng2/modules
 
 # Macros ---------------------------------------------------------------------
 
@@ -63,6 +64,9 @@ include(macros.pri)
 include(versions.pri)
 
 # Build Options --------------------------------------------------------------
+
+# C++11 is the C++ standard used in this codebase.
+CONFIG += deng_c++11
 
 # Configure for Debug/Release build.
 CONFIG(debug, debug|release) {
@@ -85,8 +89,11 @@ deng_fakememoryzone: DEFINES += LIBDENG_FAKE_MEMORY_ZONE
 
 # Check for Qt 5.
 greaterThan(QT_MAJOR_VERSION, 4) {
-    CONFIG += deng_qt5 c++11
+    CONFIG += deng_qt5
 }
+
+# Enable C++11 everywhere.
+CONFIG += c++11
 
 # Check for a 64-bit compiler.
 contains(QMAKE_HOST.arch, x86_64) {
@@ -117,8 +124,12 @@ deng_sdk {
         DENG_SDK_HEADER_DIR = $$DENG_SDK_DIR/include/de
         DENG_SDK_LIB_DIR    = $$DENG_SDK_DIR/lib
     }
-    echo(SDK header directory: $$DENG_SDK_HEADER_DIR)
-    echo(SDK library directory: $$DENG_SDK_LIB_DIR)
+    DENG_SDK_PACKS_DIR = $$DENG_SDK_DIR/packs
+    builtpacks.path    = $$DENG_SDK_PACKS_DIR
+
+    echo(SDK header directory:   $$DENG_SDK_HEADER_DIR)
+    echo(SDK library directory:  $$DENG_SDK_LIB_DIR)
+    echo(SDK packages directory: $$DENG_SDK_PACKS_DIR)
 }
 
     win32: include(config_win32.pri)
@@ -140,10 +151,17 @@ deng_nosdl {
     DEFINES += DENG_NO_SDL
 }
 
-unix:deng_ccache {
+unix:deng_distcc {
+    macx:*-clang* {
+        QMAKE_CC  = distcc $$QMAKE_CC  -Qunused-arguments
+        QMAKE_CXX = distcc $$QMAKE_CXX -Qunused-arguments
+    }
+}
+
+unix:!deng_noccache:deng_ccache {
     # ccache can be used to speed up recompilation.
     *-clang* {
-        QMAKE_CC  = ccache $$QMAKE_CC -Qunused-arguments
+        QMAKE_CC  = ccache $$QMAKE_CC  -Qunused-arguments
         QMAKE_CXX = ccache $$QMAKE_CXX -Qunused-arguments
         QMAKE_CXXFLAGS_WARN_ON += -Wno-self-assign
     }

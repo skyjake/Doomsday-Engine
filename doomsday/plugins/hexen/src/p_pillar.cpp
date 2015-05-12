@@ -1,7 +1,7 @@
 /** @file p_pillar.cpp
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 1999 Activision
  *
  * @par License
@@ -28,7 +28,7 @@
 
 void T_BuildPillar(pillar_t *pillar)
 {
-    DENG_ASSERT(pillar != 0);
+    DENG2_ASSERT(pillar);
 
     // First, raise the floor
     result_e res1 = T_MovePlane(pillar->sector, pillar->floorSpeed, pillar->floorDest, pillar->crush, 0, pillar->direction); // floorOrCeiling, direction
@@ -38,7 +38,7 @@ void T_BuildPillar(pillar_t *pillar)
     {
         P_ToXSector(pillar->sector)->specialData = 0;
         SN_StopSequenceInSec(pillar->sector);
-        Game_ACScriptInterpreter().tagFinished(P_ToXSector(pillar->sector)->tag);
+        P_NotifySectorFinished(P_ToXSector(pillar->sector)->tag);
         Thinker_Remove(&pillar->thinker);
     }
 }

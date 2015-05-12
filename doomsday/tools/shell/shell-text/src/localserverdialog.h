@@ -19,7 +19,7 @@
 #ifndef LOCALSERVERDIALOG_H
 #define LOCALSERVERDIALOG_H
 
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <de/shell/InputDialog>
 
 class LocalServerDialog : public de::shell::InputDialog

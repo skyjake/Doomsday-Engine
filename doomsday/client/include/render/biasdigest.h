@@ -20,7 +20,7 @@
 #ifndef DENG_RENDER_SHADOWBIAS_DIGEST_H
 #define DENG_RENDER_SHADOWBIAS_DIGEST_H
 
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 
 /**
  * Change digest for updating trackers in the Shadow Bias lighting model.

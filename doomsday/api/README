@@ -9,4 +9,4 @@ and accessing the engine's runtime functionality.
 Note that in the future, more and more of this functionality will be moving
 into the shared libraries.
 
-See also: libdeng1, libdeng2
+See also: libcore, liblegacy

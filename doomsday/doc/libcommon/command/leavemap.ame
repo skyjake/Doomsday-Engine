@@ -1,0 +1,11 @@
+@summary{
+    Leave the current map and load the next according to the map progression of the current episode.
+}
+@description{
+    @usage
+    @ident{leavemap} @help_optionalarg{exit}
+    
+    If @help_arg{exit} is specified, an exit by this name will be searched
+    for in the defined map progression for the current episode, rather than
+    the default exit; "next".  
+}

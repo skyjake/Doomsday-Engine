@@ -28,41 +28,96 @@
 #include "common.h"
 #include "mobj.h"
 
+#include <cmath>
+#include <de/mathutil.h>
 #include "dmu_lib.h"
+#include "mapstatereader.h"
+#include "mapstatewriter.h"
 #include "p_actor.h"
-#include "player.h"
 #include "p_map.h"
 #include "p_saveg.h"
-
-#include <de/mathutil.h>
-#include <cmath>
-#include <cassert>
+#include "player.h"
 
 #define DROPOFFMOMENTUM_THRESHOLD (1.0 / 4)
-
-/// Threshold for killing momentum of a freely moving object affected by friction.
-#define WALKSTOP_THRESHOLD      (0.062484741) // FIX2FLT(0x1000-1)
 
 /// Threshold for stopping walk animation.
 #define STANDSPEED              (1.0 / 2) // FIX2FLT(0x8000)
 
-static coord_t getFriction(mobj_t *mo)
+coord_t Mobj_ThrustMulForFriction(coord_t friction)
 {
-    if((mo->flags2 & MF2_FLY) && !(mo->origin[VZ] <= mo->floorZ) && !mo->onMobj)
+    if(friction <= FRICTION_NORMAL)
+        return 1; // Normal friction.
+
+    if(friction > 1)
+        return 0; // There's nothing to thrust from!
+
+    // Decrease thrust exponentially when nearing friction == 1.0.
+    // {c = -93.31092643, b = 208.0448223, a = -114.7338958}
+    return (-114.7338958 * friction * friction + 208.0448223 * friction - 93.31092643);
+}
+
+coord_t Mobj_ThrustMul(mobj_t const *mo)
+{
+    coord_t mul = 1.0;
+
+#if __JHEXEN__
+    if(P_MobjFloorTerrain(mo)->flags & TTF_FRICTION_LOW)
+    {
+        mul /= 2;
+    }
+#else // !__JHEXEN__
+    Sector *sec = Mobj_Sector(mo);
+
+#if __JHERETIC__
+    if(P_ToXSector(sec)->special == 15) // Friction_Low
+    {
+        mul /= 4;
+        return mul; // XG friction ignored.
+    }
+#endif
+
+    // Use a thrust multiplier based on the sector's friction.
+    mul = Mobj_ThrustMulForFriction(XS_Friction(sec));
+
+#endif
+
+    return mul;
+}
+
+dd_bool Mobj_IsAirborne(mobj_t const *mo)
+{
+    return ((mo->flags2 & MF2_FLY) && !(mo->origin[VZ] <= mo->floorZ) && !mo->onMobj) != 0;
+}
+
+coord_t Mobj_Friction(mobj_t const *mo)
+{
+    if(Mobj_IsAirborne(mo))
     {
         // Airborne "friction".
         return FRICTION_FLY;
     }
 
-#ifdef __JHERETIC__
-    if(P_ToXSector(Mobj_Sector(mo))->special == 15)
+#if __JHERETIC__
+    if(P_ToXSector(Mobj_Sector(mo))->special == 15) // Low friction.
     {
-        // Low friction.
         return FRICTION_LOW;
     }
 #endif
 
-    return P_MobjGetFriction(mo);
+#if __JHEXEN__
+    terraintype_t const *tt = P_MobjFloorTerrain(mo);
+    if(tt->flags & TTF_FRICTION_LOW)
+    {
+        return FRICTION_LOW;
+    }
+#endif
+
+#if LIBCOMMON_HAVE_XG
+    // Use the current sector's friction.
+    return XS_Friction(Mobj_Sector(mo));
+#else
+    return FRICTION_NORMAL;
+#endif
 }
 
 dd_bool Mobj_IsVoodooDoll(mobj_t const *mo)
@@ -153,7 +208,7 @@ void Mobj_XYMoveStopping(mobj_t *mo)
     }
     else
     {
-        coord_t friction = getFriction(mo);
+        coord_t friction = Mobj_Friction(mo);
         mo->mom[MX] *= friction;
         mo->mom[MY] *= friction;
     }
@@ -174,10 +229,31 @@ dd_bool Mobj_IsPlayerClMobj(mobj_t *mo)
     return false;
 }
 
-dd_bool Mobj_IsPlayer(mobj_t const *mo)
+dd_bool Mobj_IsPlayer(mobj_t const *mob)
 {
-    if(!mo) return false;
-    return (mo->player != 0);
+    if(!mob) return false;
+    return (mob->player != 0);
+}
+
+angle_t Mobj_AimAtPoint2(mobj_t *mob, coord_t const point[], dd_bool pointShadowed)
+{
+    DENG2_ASSERT(mob);
+    return P_AimAtPoint2(mob->origin, point, pointShadowed);
+}
+
+angle_t Mobj_AimAtPoint(mobj_t *mob, coord_t const point[])
+{
+    return Mobj_AimAtPoint2(mob, point, false/* not shadowed*/);
+}
+
+angle_t Mobj_AimAtTarget(mobj_t *mob)
+{
+    DENG2_ASSERT(mob);
+    if(auto const *target = mob->target)
+    {
+        return Mobj_AimAtPoint2(mob, target->origin, target->flags & MF_SHADOW);
+    }
+    return mob->angle;
 }
 
 dd_bool Mobj_LookForPlayers(mobj_t *mo, dd_bool allAround)
@@ -342,9 +418,9 @@ void mobj_s::write(MapStateWriter *msw) const
     Writer *writer = msw->writer();
 
     mobj_t const *original = (mobj_t *) this;
-    mobj_t temp, *mo = &temp;
+    ThinkerT<mobj_t> temp(*original);
+    mobj_t *mo = temp;
 
-    std::memcpy(mo, original, sizeof(*mo));
     // Mangle it!
     mo->state = (state_t *) (mo->state - STATES);
     if(mo->player)
@@ -868,4 +944,79 @@ int mobj_s::read(MapStateReader *msr)
 
 #undef FF_FRAMEMASK
 #undef FF_FULLBRIGHT
+}
+
+mobj_t *Mobj_ExplodeIfObstructed(mobj_t *mob)
+{
+    return P_CheckMissileSpawn(mob)? mob : nullptr;
+}
+
+mobj_t *P_LaunchMissile(mobj_t *missile, angle_t angle, coord_t const targetPos[],
+    coord_t const sourcePos[], coord_t extraMomZ)
+{
+    DENG2_ASSERT(targetPos);
+    if(missile)
+    {
+        DENG2_ASSERT(missile->info);
+
+        // Play the launch sound.
+        if(missile->info->seeSound)
+        {
+            S_StartSound(missile->info->seeSound, missile);
+        }
+
+        if(!sourcePos)
+        {
+            sourcePos = missile->origin;
+        }
+
+        // Determine speed.
+        /// @todo Should optionally calculate this in true 3D.
+        coord_t dist;
+        uint an = angle >> ANGLETOFINESHIFT;
+        missile->mom[0] = missile->info->speed * FIX2FLT(finecosine[an]);
+        missile->mom[1] = missile->info->speed * FIX2FLT(finesine  [an]);
+
+        dist = M_ApproxDistance(targetPos[0] - sourcePos[0], targetPos[1] - sourcePos[1]);
+        dist /= missile->info->speed;
+        if(dist < 1) dist = 1;
+
+        missile->mom[2] = (targetPos[2] - sourcePos[2] + extraMomZ) / dist;
+    }
+    return Mobj_ExplodeIfObstructed(missile);
+}
+
+mobj_t *Mobj_LaunchMissileAtAngle2(mobj_t *mob, mobj_t *missile, angle_t angle,
+    coord_t const targetPos[], coord_t const sourcePos[], coord_t extraMomZ)
+{
+    DENG2_ASSERT(mob);
+
+    if(missile)
+    {
+        // Remember the source (i.e., us) for tracking kills, etc...
+        missile->target = mob;
+    }
+
+    return P_LaunchMissile(missile, angle, targetPos, sourcePos, extraMomZ);
+}
+
+mobj_t *Mobj_LaunchMissileAtAngle(mobj_t *mob, mobj_t *missile, angle_t angle,
+    coord_t const targetPos[], coord_t const sourcePos[])
+{
+    return Mobj_LaunchMissileAtAngle2(mob, missile, angle, targetPos, sourcePos,
+                                      0/*no extra z-momentum*/);
+}
+
+mobj_t *Mobj_LaunchMissile2(mobj_t *mob, mobj_t *missile, coord_t const targetPos[],
+    coord_t const sourcePos[], coord_t extraMomZ)
+{
+    DENG2_ASSERT(mob);
+    return Mobj_LaunchMissileAtAngle2(mob, missile, missile? missile->angle : mob->angle,
+                                      targetPos, sourcePos, extraMomZ);
+}
+
+mobj_t *Mobj_LaunchMissile(mobj_t *mob, mobj_t *missile, coord_t const targetPos[],
+    coord_t const sourcePos[])
+{
+    return Mobj_LaunchMissile2(mob, missile, targetPos, sourcePos, 0/*no extra z-momentum*/);
 }

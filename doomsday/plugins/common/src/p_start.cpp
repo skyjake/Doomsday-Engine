@@ -1,4 +1,4 @@
-/** @file p_start.cpp Common player (re)spawning logic.
+/** @file p_start.cpp  Common player (re)spawning logic.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -20,32 +20,36 @@
  * 02110-1301 USA</small>
  */
 
+#include "common.h"
+#include "p_start.h"
+
 #include <cmath>
 #include <cstdio>
 #include <cstring>
-
-#include "common.h"
-
-#include "p_tick.h"
+#include <de/NativePath>
+#include "am_map.h"
+#include "d_net.h"
+#include "d_netsv.h"
+#include "dmu_lib.h"
+#include "gamesession.h"
+#include "g_common.h"
+#include "g_defs.h"
+#include "hu_chat.h"
+#include "hu_stuff.h"
+#include "p_actor.h"
+#include "p_inventory.h"
+#include "p_map.h"
 #include "p_mapsetup.h"
+#include "p_mapspec.h"
+#include "p_switch.h"
+#include "p_terraintype.h"
+#include "p_tick.h"
 #include "p_user.h"
 #include "player.h"
-#include "d_net.h"
-#include "p_map.h"
-#include "am_map.h"
-#include "p_terraintype.h"
-#include "g_common.h"
-#include "gamesession.h"
-#include "p_start.h"
-#include "p_actor.h"
-#include "p_switch.h"
-#include "g_defs.h"
-#include "p_inventory.h"
-#include "p_mapspec.h"
-#include "dmu_lib.h"
-#include "hu_stuff.h"
-#include "hu_chat.h"
 #include "r_common.h"
+
+using namespace de;
+using namespace common;
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 #  define TELEPORTSOUND     SFX_TELEPT
@@ -187,10 +191,7 @@ void P_Update()
 #if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
     P_InitInventory();
 #endif
-#if __JHEXEN__
-    MapInfoParser(sc_FileScripts? Str_Appendf(AutoStr_New(), "%sMAPINFO.txt", sc_ScriptsDir)
-                                : AutoStr_FromText("Lumps:MAPINFO"));
-#endif
+
     P_InitSwitchList();
     P_InitTerrainTypes();
 
@@ -259,8 +260,7 @@ void P_CreatePlayerStart(int defaultPlrNum, uint entryPoint, dd_bool deathmatch,
 
     if(deathmatch)
     {
-        deathmatchStarts = (playerstart_t *)
-            Z_Realloc(deathmatchStarts, sizeof(playerstart_t) * ++numPlayerDMStarts, PU_MAP);
+        deathmatchStarts = (playerstart_t *) Z_Realloc(deathmatchStarts, sizeof(playerstart_t) * ++numPlayerDMStarts, PU_MAP);
         start = &deathmatchStarts[numPlayerDMStarts - 1];
 
         App_Log(DE2_DEV_MAP_VERBOSE, "P_CreatePlayerStart: DM #%i plrNum=%i entryPoint=%i spot=%i",
@@ -268,8 +268,7 @@ void P_CreatePlayerStart(int defaultPlrNum, uint entryPoint, dd_bool deathmatch,
     }
     else
     {
-        playerStarts = (playerstart_t *)
-            Z_Realloc(playerStarts, sizeof(playerstart_t) * ++numPlayerStarts, PU_MAP);
+        playerStarts = (playerstart_t *) Z_Realloc(playerStarts, sizeof(playerstart_t) * ++numPlayerStarts, PU_MAP);
         start = &playerStarts[numPlayerStarts - 1];
 
         App_Log(DE2_DEV_MAP_VERBOSE, "P_CreatePlayerStart: Normal #%i plrNum=%i entryPoint=%i spot=%i",
@@ -283,20 +282,16 @@ void P_CreatePlayerStart(int defaultPlrNum, uint entryPoint, dd_bool deathmatch,
 
 void P_DestroyPlayerStarts()
 {
-    if(playerStarts)
-        Z_Free(playerStarts);
-    playerStarts = 0;
+    Z_Free(playerStarts); playerStarts = 0;
     numPlayerStarts = 0;
 
-    if(deathmatchStarts)
-        Z_Free(deathmatchStarts);
-    deathmatchStarts = 0;
+    Z_Free(deathmatchStarts); deathmatchStarts = 0;
     numPlayerDMStarts = 0;
 }
 
 playerstart_t const *P_GetPlayerStart(uint entryPoint, int pnum, dd_bool deathmatch)
 {
-    DENG_UNUSED(entryPoint);
+    DENG2_UNUSED(entryPoint);
 
     if((deathmatch && !numPlayerDMStarts) || !numPlayerStarts)
         return 0;
@@ -304,7 +299,7 @@ playerstart_t const *P_GetPlayerStart(uint entryPoint, int pnum, dd_bool deathma
     if(pnum < 0)
         pnum = P_Random() % (deathmatch? numPlayerDMStarts:numPlayerStarts);
     else
-        pnum = MINMAX_OF(0, pnum, MAXPLAYERS-1);
+        pnum = de::clamp(0, pnum, MAXPLAYERS - 1);
 
     if(deathmatch)
     {
@@ -322,7 +317,7 @@ playerstart_t const *P_GetPlayerStart(uint entryPoint, int pnum, dd_bool deathma
     {
         playerstart_t const *start = &playerStarts[i];
 
-        if(start->entryPoint == nextMapEntrance && start->plrNum - 1 == pnum)
+        if(start->entryPoint == COMMON_GAMESESSION->mapEntryPoint() && start->plrNum - 1 == pnum)
             return start;
         if(!start->entryPoint && start->plrNum - 1 == pnum)
             def = start;
@@ -337,10 +332,7 @@ playerstart_t const *P_GetPlayerStart(uint entryPoint, int pnum, dd_bool deathma
 
 uint P_GetNumPlayerStarts(dd_bool deathmatch)
 {
-    if(deathmatch)
-        return numPlayerDMStarts;
-
-    return numPlayerStarts;
+    return deathmatch? numPlayerDMStarts : numPlayerStarts;
 }
 
 void P_DealPlayerStarts(uint entryPoint)
@@ -490,12 +482,12 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord
     {
         App_Log(DE2_MAP_MSG, "Player #%i spawned as a camera", plrNum);
 
-        p->plr->mo->origin[VZ] += (coord_t) cfg.plrViewHeight;
+        p->plr->mo->origin[VZ] += (coord_t) cfg.common.plrViewHeight;
         p->viewHeight = 0;
     }
     else
     {
-        p->viewHeight = (coord_t) cfg.plrViewHeight;
+        p->viewHeight = (coord_t) cfg.common.plrViewHeight;
     }
     p->viewHeightDelta = 0;
 
@@ -615,7 +607,7 @@ void P_SpawnClient(int plrNum)
                 -30000, -30000, 0, 0, MSF_Z_FLOOR, false, false, false);
 
     player_t *p = &players[plrNum];
-    p->viewHeight = cfg.plrViewHeight;
+    p->viewHeight = cfg.common.plrViewHeight;
     p->viewHeightDelta = 0;
 
     // The mobj was just spawned onto invalid coordinates. The view cannot
@@ -692,7 +684,7 @@ void P_RebornPlayerInMultiplayer(int plrNum)
     int spawnFlags = 0;
     dd_bool makeCamera = false;
 
-    uint entryPoint = gameMapEntrance;
+    uint entryPoint = COMMON_GAMESESSION->mapEntryPoint();
     dd_bool foundSpot = false;
     playerstart_t const *assigned = P_GetPlayerStart(entryPoint, plrNum, false);
 
@@ -750,7 +742,7 @@ void P_RebornPlayerInMultiplayer(int plrNum)
         // Try to spawn at one of the other player start spots.
         for(int i = 0; i < MAXPLAYERS; ++i)
         {
-            if(playerstart_t const *start = P_GetPlayerStart(gameMapEntrance, i, false))
+            if(playerstart_t const *start = P_GetPlayerStart(entryPoint, i, false))
             {
                 mapspot_t const *spot = &mapSpots[start->spot];
 
@@ -779,7 +771,7 @@ void P_RebornPlayerInMultiplayer(int plrNum)
     if(!foundSpot)
     {
         // Player's going to be inside something.
-        if(playerstart_t const *start = P_GetPlayerStart(gameMapEntrance, plrNum, false))
+        if(playerstart_t const *start = P_GetPlayerStart(entryPoint, plrNum, false))
         {
             mapspot_t const *spot = &mapSpots[start->spot];
 

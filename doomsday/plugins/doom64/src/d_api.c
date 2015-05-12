@@ -68,8 +68,9 @@ int G_RegisterGames(int hookType, int param, void* data)
 
     GameDef const doom64Def = {
         "doom64", CONFIGDIR,
-        "Doom 64", "Midway Software",
-        "", ""
+        "Doom 64: Absolution", "Kaiser et al.",
+        "", "",
+        "$(App.DataPath)/$(GamePlugin.Name)/doom64.mapinfo"
     };
 
     DENG_UNUSED(hookType); DENG_UNUSED(param); DENG_UNUSED(data);
@@ -153,7 +154,7 @@ game_export_t* GetGameAPI(void)
     gx.Responder = G_Responder;
     gx.EndFrame = D_EndFrame;
     gx.MobjThinker = P_MobjThinker;
-    gx.MobjFriction = (coord_t (*)(void *)) P_MobjGetFriction;
+    gx.MobjFriction = Mobj_Friction;
     gx.MobjCheckPositionXYZ = P_CheckPositionXYZ;
     gx.MobjTryMoveXYZ = P_TryMoveXYZ;
     gx.SectorHeightChangeNotification = P_HandleSectorHeightChange;
@@ -224,7 +225,6 @@ DENG_DECLARE_API(Server);
 DENG_DECLARE_API(Svg);
 DENG_DECLARE_API(Thinker);
 DENG_DECLARE_API(Uri);
-DENG_DECLARE_API(W);
 
 DENG_API_EXCHANGE(
     DENG_GET_API(DE_API_BASE, Base);
@@ -251,5 +251,4 @@ DENG_API_EXCHANGE(
     DENG_GET_API(DE_API_SVG, Svg);
     DENG_GET_API(DE_API_THINKER, Thinker);
     DENG_GET_API(DE_API_URI, Uri);
-    DENG_GET_API(DE_API_WAD, W);
 )

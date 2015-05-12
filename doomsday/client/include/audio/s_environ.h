@@ -22,7 +22,7 @@
 #ifndef DENG_SOUND_ENVIRON
 #define DENG_SOUND_ENVIRON
 
-#include "api_uri.h"
+#include <doomsday/uri.h>
 
 enum AudioEnvironmentId
 {
@@ -60,6 +60,6 @@ AudioEnvironment const &S_AudioEnvironment(AudioEnvironmentId id);
  * Lookup the audio environment associated with material @a uri. If no environment
  * is defined then @c AE_NONE is returned.
  */
-AudioEnvironmentId S_AudioEnvironmentId(Uri const *uri);
+AudioEnvironmentId S_AudioEnvironmentId(de::Uri const *uri);
 
 #endif // DENG_SOUND_ENVIRON

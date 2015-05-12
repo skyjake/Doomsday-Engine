@@ -35,50 +35,41 @@
 #endif
 
 #include "doomdef.h"
-#include "d_event.h"
 #include "d_player.h"
-#include "wi_stuff.h"
 #include "gamerules.h"
+#include "intermission.h"
 
 DENG_EXTERN_C player_t players[MAXPLAYERS];
 
-DENG_EXTERN_C uint nextMap; // If non zero this will be the next map.
-DENG_EXTERN_C uint nextMapEntrance;
-DENG_EXTERN_C dd_bool secretExit;
 DENG_EXTERN_C int totalKills, totalItems, totalSecret;
-DENG_EXTERN_C wbstartstruct_t wmInfo;
 DENG_EXTERN_C int bodyQueueSlot;
 DENG_EXTERN_C dd_bool paused;
 DENG_EXTERN_C dd_bool precache;
 DENG_EXTERN_C dd_bool customPal;
 DENG_EXTERN_C dd_bool briefDisabled;
 
-DENG_EXTERN_C int gsvMapMusic;
-
 #ifdef __cplusplus
+
+extern bool secretExit;
+
+extern wbstartstruct_t wmInfo;
+
 extern "C" {
 #endif
 
-void G_Register(void);
-
+void G_ConsoleRegister(void);
 void G_CommonPreInit(void);
+void G_CommonPostInit(void);
 
 /**
- * Common Post Game Initialization routine.
- * Game-specific post init actions should be placed in eg D_PostInit()
- * (for jDoom) and NOT here.
+ * To be called post-game initialization, to examine the command line to determine if
+ * a new game session should be started automatically, or, begin the title loop.
  */
-void G_CommonPostInit(void);
+void G_AutoStartOrBeginTitleLoop(void);
 
 void G_CommonShutdown(void);
 
 void R_InitRefresh(void);
-
-/**
- * Print a list of all currently available maps and the location of the
- * source file/directory which contains them.
- */
-void G_PrintMapList(void);
 
 void G_DeferredPlayDemo(char *demo);
 

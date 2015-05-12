@@ -7,5 +7,9 @@ else:win32 {
 }
 else {
     # Generic Unix.
-    LIBS += -lncurses
+    !system(pkg-config --exists ncurses) {
+        error(Missing dependency: ncurses)
+    }
+    QMAKE_CXXFLAGS += $$system(pkg-config --cflags ncurses)
+              LIBS += $$system(pkg-config --libs   ncurses)
 }

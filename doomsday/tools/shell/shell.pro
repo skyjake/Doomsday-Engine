@@ -12,6 +12,8 @@
 # application based on Qt, and a command line utility with text-mode console
 # connection to the server.
 
+include(../../config.pri)
+
 TEMPLATE = subdirs
 CONFIG += ordered
 

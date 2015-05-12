@@ -130,6 +130,9 @@ public:
         RoleFlags _role;
     };
 
+    /// Asked for a label that does not exist in the dialog. @ingroup errors
+    DENG2_ERROR(UndefinedLabel);
+
 public:
     DialogWidget(String const &name = "", Flags const &flags = DefaultFlags);
 
@@ -142,6 +145,15 @@ public:
     LabelWidget &heading();
 
     ScrollAreaWidget &area();
+
+    /**
+     * Sets the rule for the minimum width of the dialog. The default is that the
+     * dialog is at least as wide as the content area, or all the button widths
+     * summed together.
+     *
+     * @param minWidth  Custom minimum width for the dialog.
+     */
+    void setMinimumContentWidth(Rule const &minWidth);
 
     MenuWidget &buttonsMenu();
 

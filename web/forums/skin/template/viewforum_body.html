@@ -2,7 +2,7 @@
 <!-- INCLUDE overall_header.html -->
 
 <!-- IF S_FORUM_RULES -->
-<article><div class="rules block">
+<div class="rules block">
 
     <!-- IF U_FORUM_RULES -->
         <a href="{U_FORUM_RULES}">{L_FORUM_RULES}</a>
@@ -10,7 +10,7 @@
         {FORUM_RULES}
     <!-- ENDIF -->
 
-</div></article>
+</div>
 <!-- ENDIF -->
 
 <!-- IF S_DISPLAY_POST_INFO or PAGINATION or TOTAL_POSTS or TOTAL_TOPICS or S_SELECT_SORT_DAYS -->
@@ -110,12 +110,13 @@
     <!-- ENDIF -->
 
 <!-- ENDIF -->
-<div class="block">
 <!-- IF S_HAS_SUBFORUM -->
 <!-- IF not S_IS_BOT and U_MARK_FORUMS -->
+<div class="block nobackground">
 <ul class="linklist rightside">
     <li><a href="{U_MARK_FORUMS}">{L_MARK_FORUMS_READ}</a></li>
 </ul>
+</div>
 <!-- ENDIF -->
 <!-- INCLUDE forumlist_body.html -->
 <!-- ENDIF -->
@@ -123,44 +124,51 @@
 <!-- BEGIN topicrow -->
 
     <!-- IF not topicrow.S_TOPIC_TYPE_SWITCH and not topicrow.S_FIRST_ROW -->
-        </ul>
+        </ol>
     </section>
     <!-- ENDIF -->
 
     <!-- IF topicrow.S_FIRST_ROW or not topicrow.S_TOPIC_TYPE_SWITCH -->
-        <section class="<!-- IF topicrow.S_TOPIC_TYPE_SWITCH and (topicrow.S_POST_ANNOUNCE or topicrow.S_POST_GLOBAL) --> announcement<!-- ENDIF -->">
-        <h1><!-- IF S_DISPLAY_ACTIVE -->{L_ACTIVE_TOPICS}<!-- ELSEIF topicrow.S_TOPIC_TYPE_SWITCH and (topicrow.S_POST_ANNOUNCE or topicrow.S_POST_GLOBAL) -->{L_ANNOUNCEMENTS}<!-- ELSE --><!-- IF TOTAL_TOPICS -->{TOTAL_TOPICS}<!-- ELSE -->{L_TOPICS}<!-- ENDIF --><!-- ENDIF --></h1>
-        <ul class="topiclist">
-            <li class="header">
-                <dl class="icon">
-                    <dt></dt>
-                    <dd class="posts">{L_REPLIES}</dd>
-                    <dd class="views">{L_VIEWS}</dd>
-                    <dd class="lastpost"><span>{L_LAST_POST}</span></dd>
+    <section>
+        <ul class="block nobackground topiclist reslist <!-- IF topicrow.S_TOPIC_TYPE_SWITCH and (topicrow.S_POST_ANNOUNCE or topicrow.S_POST_GLOBAL) --> announcement<!-- ENDIF -->">
+            <li class="forumrow header">
+                <h3 class="expcol"><!-- IF S_DISPLAY_ACTIVE -->{L_ACTIVE_TOPICS}<!-- ELSEIF topicrow.S_TOPIC_TYPE_SWITCH and (topicrow.S_POST_ANNOUNCE or topicrow.S_POST_GLOBAL) -->{L_ANNOUNCEMENTS}<!-- ELSE --><!-- IF TOTAL_TOPICS -->{TOTAL_TOPICS}<!-- ELSE -->{L_TOPICS}<!-- ENDIF --><!-- ENDIF --></h3>
+                <dl class="expcol"><dt></dt>
+                    <dd class="exlcnt lastpost"><span>{L_LAST_POST}</span></dd>
+                    <dd class="exlcnt posts"   >{L_REPLIES}</dd>
+                    <dd class="exlcnt views"   >{L_VIEWS}</dd>
                 </dl>
             </li>
         </ul>
-        <ul class="topiclist topics">
+        <ol class="block topiclist reslist topics">
     <!-- ENDIF -->
 
-        <li class="row<!-- IF topicrow.S_POST_GLOBAL --> global-announce<!-- ENDIF --><!-- IF topicrow.S_POST_ANNOUNCE --> announce<!-- ENDIF --><!-- IF topicrow.S_POST_STICKY --> sticky<!-- ENDIF --><!-- IF topicrow.S_TOPIC_REPORTED --> reported<!-- ENDIF -->">
-            <dl class="icon" style="background-image: url({topicrow.TOPIC_FOLDER_IMG_SRC}); background-repeat: no-repeat;">
-                <dt <!-- IF topicrow.TOPIC_ICON_IMG and S_TOPIC_ICONS --> style="background-image: url({T_ICONS_PATH}{topicrow.TOPIC_ICON_IMG}); background-repeat: no-repeat;"<!-- ENDIF --> title="{topicrow.TOPIC_FOLDER_IMG_ALT}"><!-- IF topicrow.S_UNREAD_TOPIC --><a href="{topicrow.U_NEWEST_POST}">{NEWEST_POST_IMG}</a> <!-- ENDIF --><a href="{topicrow.U_VIEW_TOPIC}#topic" class="topictitle">{topicrow.TOPIC_TITLE}</a>
-                    <!-- IF topicrow.ATTACH_ICON_IMG -->{topicrow.ATTACH_ICON_IMG} <!-- ENDIF -->
-                    <!-- IF topicrow.S_TOPIC_UNAPPROVED or topicrow.S_POSTS_UNAPPROVED --><a href="{topicrow.U_MCP_QUEUE}">{topicrow.UNAPPROVED_IMG}</a> <!-- ENDIF -->
-                    <!-- IF topicrow.S_TOPIC_REPORTED --><a href="{topicrow.U_MCP_REPORT}">{REPORTED_IMG}</a><!-- ENDIF --><br />
-                    <!-- IF topicrow.PAGINATION --><strong class="pagination"><span>{topicrow.PAGINATION}</span></strong><!-- ENDIF -->
+        <li class="forumrow<!-- IF topicrow.S_POST_GLOBAL --> global-announce<!-- ENDIF --><!-- IF topicrow.S_POST_ANNOUNCE --> announce<!-- ENDIF --><!-- IF topicrow.S_POST_STICKY --> sticky<!-- ENDIF --><!-- IF topicrow.S_TOPIC_REPORTED --> reported<!-- ENDIF -->">
+            <article>
+                <header class="expcol" <!-- IF topicrow.TOPIC_ICON_IMG and S_TOPIC_ICONS --> style="background-image: url({T_ICONS_PATH}{topicrow.TOPIC_ICON_IMG}); background-repeat: no-repeat;"<!-- ENDIF --> title="{topicrow.TOPIC_FOLDER_IMG_ALT}">
+    <!-- IF topicrow.PAGINATION --><strong class="pagination"><span>{topicrow.PAGINATION}</span></strong><!-- ENDIF -->
+                    <h4><!-- IF topicrow.S_UNREAD_TOPIC --><a href="{topicrow.U_NEWEST_POST}">{NEWEST_POST_IMG}</a> <!-- ENDIF --><a href="{topicrow.U_VIEW_TOPIC}#topic">{topicrow.TOPIC_TITLE}</a></h4>
+                    <p>
+    <!-- IF topicrow.ATTACH_ICON_IMG -->{topicrow.ATTACH_ICON_IMG} <!-- ENDIF -->
+    <!-- IF topicrow.S_TOPIC_UNAPPROVED or topicrow.S_POSTS_UNAPPROVED --><a href="{topicrow.U_MCP_QUEUE}">{topicrow.UNAPPROVED_IMG}</a> <!-- ENDIF -->
+    <!-- IF topicrow.S_TOPIC_REPORTED --><a href="{topicrow.U_MCP_REPORT}">{REPORTED_IMG}</a><!-- ENDIF -->
                     {topicrow.FIRST_POST_TIME} {L_POST_BY_AUTHOR} {topicrow.TOPIC_AUTHOR_FULL}
-                </dt>
-                <dd class="posts">{topicrow.REPLIES} <dfn>{L_REPLIES}</dfn></dd>
-                <dd class="views">{topicrow.VIEWS} <dfn>{L_VIEWS}</dfn></dd>
-                <dd class="lastpost"><span><dfn>{L_LAST_POST}</dfn><!-- IF not S_IS_BOT --><a href="{topicrow.U_LAST_POST}">{LAST_POST_IMG}</a> <!-- ENDIF -->{topicrow.LAST_POST_TIME}<br />{L_POST_BY_AUTHOR} {topicrow.LAST_POST_AUTHOR_FULL}</span>
+                    </p>
+                </header>
+            <dl class="expcol icon">
+                <dt></dt>
+                <dd class="exlcol lastpost"><!-- IF not S_IS_BOT --><a href="{topicrow.U_LAST_POST}" title="{L_VIEW_LATEST_POST}">{LAST_POST_IMG} <span class="inlcnt">{L_LAST_POST}</span></a> <!-- ENDIF --><time datetime="{topicrow.LAST_POST_TIMEISO861}">{topicrow.LAST_POST_TIME}</time> {L_POST_BY_AUTHOR} {topicrow.LAST_POST_AUTHOR_FULL}</span>
+                <dt style="clear:both">replies.</dt>
+                <dd class="exlcol posts"   ><strong>{topicrow.REPLIES}</strong></dd>
+                <dt>views,</dt>
+                <dd class="exlcol views"   ><strong>{topicrow.VIEWS}</strong></dd>
                 </dd>
             </dl>
+            </article>
         </li>
 
     <!-- IF topicrow.S_LAST_ROW -->
-            </ul>
+        </ol>
     </section>
     <!-- ENDIF -->
 
@@ -172,7 +180,7 @@
     <!-- ENDIF -->
 <!-- END topicrow -->
 <!-- IF .topicrow and not S_DISPLAY_ACTIVE -->
-    <div class="topic-actions">
+    <div class="block nobackground">
         <!-- IF PAGINATION or TOTAL_POSTS or TOTAL_TOPICS -->
         <div class="pagination">
             <!-- IF TOTAL_TOPICS and not S_IS_BOT and U_MARK_TOPICS --><a href="{U_MARK_TOPICS}">{L_MARK_TOPICS_READ}</a><!-- ENDIF -->
@@ -184,20 +192,19 @@
         <!-- ENDIF -->
     </div>
 <!-- ENDIF -->
-</div>
 
 <div class="block">
 <!-- INCLUDE jumpbox.html -->
 <!-- IF S_DISPLAY_ONLINE_LIST -->
     <section class="whoisonline">
-    <h1><!-- IF U_VIEWONLINE --><a href="{U_VIEWONLINE}">{L_WHO_IS_ONLINE}</a><!-- ELSE -->{L_WHO_IS_ONLINE}<!-- ENDIF --></h1>
+    <h3><!-- IF U_VIEWONLINE --><a href="{U_VIEWONLINE}">{L_WHO_IS_ONLINE}</a><!-- ELSE -->{L_WHO_IS_ONLINE}<!-- ENDIF --></h3>
     <p>{LOGGED_IN_USER_LIST}</p>
     </section>
 <!-- ENDIF -->
 
 <!-- IF S_DISPLAY_POST_INFO -->
     <section class="forumpermissions">
-    <h1>{L_FORUM_PERMISSIONS}</h1>
+    <h3>{L_FORUM_PERMISSIONS}</h3>
     <p><!-- BEGIN rules -->{rules.RULE}<br /><!-- END rules --></p>
     </section>
 <!-- ENDIF -->

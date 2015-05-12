@@ -22,6 +22,8 @@
 #include <de/WindowSystem>
 #include "SettingsRegister"
 
+#undef main
+
 class ClientWindow;
 
 /**

@@ -19,7 +19,7 @@
 #ifndef DENG_CLIENT_CONSOLEEFFECT_H
 #define DENG_CLIENT_CONSOLEEFFECT_H
 
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <de/Rectangle>
 #include <de/GLShaderBank>
 

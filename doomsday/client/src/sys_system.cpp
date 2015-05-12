@@ -34,6 +34,9 @@
 #include "de_system.h"
 #include "de_graphics.h"
 #include "de_misc.h"
+#ifdef __CLIENT__
+#  include "clientapp.h"
+#endif
 
 #include "dd_main.h"
 #include "dd_loop.h"
@@ -46,6 +49,7 @@
 #include "audio/s_main.h"
 
 #include <de/App>
+#include <de/Loop>
 
 #if defined(WIN32) && !defined(_DEBUG)
 #  define DENG_CATCH_SIGNALS
@@ -63,7 +67,7 @@ static void C_DECL handler(int s)
 {
     signal(s, SIG_IGN);  // Ignore future instances of this signal.
 
-    Con_Error(s==SIGSEGV ? "Segmentation Violation\n" :
+    App_Error(s==SIGSEGV ? "Segmentation Violation\n" :
               s==SIGINT  ? "Interrupted by User\n" :
               s==SIGILL  ? "Illegal Instruction\n" :
               s==SIGFPE  ? "Floating Point Exception\n" :
@@ -131,7 +135,7 @@ void Sys_Shutdown(void)
     S_Shutdown();
 #ifdef __CLIENT__
     GL_Shutdown();
-    DD_ClearEvents();
+    ClientApp::inputSystem().clearEvents();
 #endif
 
     DD_DestroyGames();
@@ -139,6 +143,9 @@ void Sys_Shutdown(void)
 
 static int showCriticalMessage(const char* msg)
 {
+    // This is going to be the end, I'm afraid.
+    de::Loop::get().stop();
+
     Sys_MessageBox(MBT_WARNING, DOOMSDAY_NICENAME, msg, 0);
     return 0;
 
@@ -265,7 +272,6 @@ void Sys_HideMouse(void)
 /**
  * Called when Doomsday should quit (will be deferred until convenient).
  */
-#undef Sys_Quit
 DENG_EXTERN_C void Sys_Quit(void)
 {
     if(BusyMode_Active())

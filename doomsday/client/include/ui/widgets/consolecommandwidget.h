@@ -36,6 +36,8 @@ public:
     ConsoleCommandWidget(de::String const &name = "");
 
     // Events.
+    void focusGained();
+    void focusLost();
     bool handleEvent(de::Event const &event);
 
 protected:

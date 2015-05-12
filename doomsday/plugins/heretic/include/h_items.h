@@ -70,6 +70,11 @@ DENG_EXTERN_C weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES];
 extern "C" {
 #endif
 
+/**
+ * Returns the AmmoDef for the specified ammunition @a type; otherwise @c 0.
+ */
+AmmoDef const *P_AmmoDef(ammotype_t type);
+
 void P_InitWeaponInfo(void);
 
 #ifdef __cplusplus

@@ -19,7 +19,7 @@ DefaultGroupName=Doomsday Engine
 AllowNoIcons=yes
 SetupIconFile=..\..\snowberry\graphics\snowberry.ico
 UninstallIconFile=..\..\snowberry\graphics\snowberry.ico
-UninstallDisplayIcon=..\..\snowberry\graphics\snowberry.ico
+UninstallDisplayIcon=..\..\snowberry\graphics\uninstaller.ico
 SourceDir=..\products
 OutputDir=..\releases
 LicenseFile=..\win32\license.txt
@@ -51,6 +51,18 @@ Name: "{app}\doc"
 
 ; Obsolete files which should be removed if present when upgrading.
 [InstallDelete]
+Type: files; Name: "{app}\bin\QtCore4.dll"
+Type: files; Name: "{app}\bin\QtGui4.dll"
+Type: files; Name: "{app}\bin\QtNetwork4.dll"
+Type: files; Name: "{app}\bin\QtOpenGL4.dll"
+Type: files; Name: "{app}\bin\imageformats\qjpeg4.dll"
+Type: files; Name: "{app}\bin\SDL.dll"
+Type: files; Name: "{app}\bin\SDL_mixer.dll"
+Type: files; Name: "{app}\bin\mikmod.dll"
+Type: files; Name: "{app}\bin\smpeg.dll"
+Type: files; Name: "{app}\bin\doomsday.dll"
+Type: files; Name: "{app}\bin\deng1.dll"
+Type: files; Name: "{app}\bin\deng2.dll"
 Type: files; Name: "{app}\bin\libcurl.dll"
 Type: files; Name: "{app}\bin\libpng15.dll"
 Type: files; Name: "{app}\bin\SDL_net.dll"
@@ -62,12 +74,14 @@ Type: files; Name: "{app}\bin\dsopenal.dll"
 Type: files; Name: "{app}\bin\dsdirectsound.dll"
 Type: files; Name: "{app}\bin\dsfmod.dll"
 Type: files; Name: "{app}\bin\dpdehread.dll"
+Type: files; Name: "{app}\bin\plugins\dpwadmapconverter.dll"
 Type: files; Name: "{app}\bin\dpwadmapconverter.dll"
 Type: files; Name: "{app}\data\cphelp.txt"
 Type: files; Name: "{app}\data\jdoom\jDoom.pk3"
 Type: files; Name: "{app}\data\jheretic\jHeretic.pk3"
 Type: files; Name: "{app}\data\jhexen\jHexen.pk3"
 Type: filesandordirs; Name: "{app}\config"
+Type: filesandordirs; Name: "{app}\modules"
 
 [Files]
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
@@ -77,8 +91,8 @@ Source: "bin\doomsday-server.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; C
 Source: "bin\doomsday-shell.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\plugins\audio_*.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine
 Source: "bin\plugins\dehread.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine
+Source: "bin\plugins\idtech1converter.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine
 Source: "bin\plugins\savegameconverter.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine
-Source: "bin\plugins\wadmapconverter.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine
 Source: "bin\plugins\doom.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine\Libdoom
 Source: "bin\plugins\heretic.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine\Libheretic
 Source: "bin\plugins\hexen.dll"; DestDir: "{app}\bin\plugins"; Flags: ignoreversion; Components: Engine\Libhexen
@@ -91,25 +105,47 @@ Source: "bin\wadtool.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Component
 
 ; Libraries
 Source: "..\win32\vcredist_x86.exe"; DestDir: "{app}\bin"; Flags: ignoreversion deleteafterinstall; Components: Engine
-Source: "bin\deng1.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "bin\deng2.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "bin\deng_shell.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "bin\deng_gui.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\deng_doomsday.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\deng_appfw.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "bin\QtCore4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "bin\QtGui4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "bin\QtNetwork4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "bin\QtOpenGL4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "bin\imageformats\qjpeg4.dll"; DestDir: "{app}\bin\imageformats"; Flags: ignoreversion; Components: Engine
-Source: "bin\SDL.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\deng_core.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\deng_gui.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\deng_legacy.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\deng_shell.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+
+; Qt 4
+; Source: "bin\QtCore4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+; Source: "bin\QtGui4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+; Source: "bin\QtNetwork4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+; Source: "bin\QtOpenGL4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+; Source: "bin\imageformats\qjpeg4.dll"; DestDir: "{app}\bin\imageformats"; Flags: ignoreversion; Components: Engine 
+
+; Qt 5
+Source: "bin\Qt5Core.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\Qt5Gui.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\Qt5Network.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\Qt5OpenGL.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\Qt5Widgets.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\icuin52.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\icuuc52.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\icudt52.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\accessible\*.dll"; DestDir: "{app}\bin\accessible"; Flags: ignoreversion; Components: Engine
+Source: "bin\bearer\*.dll"; DestDir: "{app}\bin\bearer"; Flags: ignoreversion; Components: Engine
+Source: "bin\iconengines\*.dll"; DestDir: "{app}\bin\iconengines"; Flags: ignoreversion; Components: Engine
+Source: "bin\imageformats\*.dll"; DestDir: "{app}\bin\imageformats"; Flags: ignoreversion; Components: Engine
+Source: "bin\platforms\*.dll"; DestDir: "{app}\bin\platforms"; Flags: ignoreversion; Components: Engine
+
+Source: "bin\assimp.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\OpenAL32.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\eax.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\SDL2.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\SDL2_mixer.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\libFLAC-8.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\libmikmod-2.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\libmodplug-1.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\libogg-0.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\libvorbis-0.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\libvorbisfile-3.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "bin\mikmod.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "bin\SDL_mixer.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "bin\smpeg.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\smpeg2.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\lzss.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\zlib1.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\fmodex.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
@@ -131,18 +167,11 @@ Source: "doc\LICENSE"; DestDir: "{app}\doc"; Components: Engine
 Source: "doc\readme.txt"; DestDir: "{app}\doc"; Components: Engine
 
 ; Resources
-Source: "modules\appconfig.de"; DestDir: "{app}\modules"; Components: Engine
-Source: "modules\bootstrap.de"; DestDir: "{app}\modules"; Components: Engine
-Source: "modules\Config.de"; DestDir: "{app}\modules"; Components: Engine
-Source: "modules\gui.de"; DestDir: "{app}\modules"; Components: Engine
-Source: "modules\Log.de"; DestDir: "{app}\modules"; Components: Engine
-Source: "modules\recutil.de"; DestDir: "{app}\modules"; Components: Engine
-Source: "modules\Updater.de"; DestDir: "{app}\modules"; Components: Engine
+Source: "data\net.dengine.base.pack"; DestDir: "{app}\data"; Components: Engine
+Source: "data\net.dengine.client.pack"; DestDir: "{app}\data"; Components: Engine
+Source: "data\net.dengine.stdlib.pack"; DestDir: "{app}\data"; Components: Engine
+Source: "data\net.dengine.stdlib.gui.pack"; DestDir: "{app}\data"; Components: Engine
 Source: "data\doomsday.pk3"; DestDir: "{app}\data"; Components: Engine
-Source: "data\graphics\background.pcx"; DestDir: "{app}\data\graphics"; Components: Engine
-Source: "data\graphics\loading1.png"; DestDir: "{app}\data\graphics"; Components: Engine
-Source: "data\graphics\loading2.png"; DestDir: "{app}\data\graphics"; Components: Engine
-Source: "data\graphics\logo.png"; DestDir: "{app}\data\graphics"; Components: Engine
 Source: "data\graphics\doomsday.ico"; DestDir: "{app}\data\graphics"; Components: Engine
 Source: "data\fonts\console11.dfn"; DestDir: "{app}\data\fonts"; Components: Engine
 Source: "data\fonts\console14.dfn"; DestDir: "{app}\data\fonts"; Components: Engine

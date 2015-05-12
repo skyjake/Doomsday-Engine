@@ -1,1 +1,1 @@
-#include "gui/image.h"
+#include "graphics/image.h"

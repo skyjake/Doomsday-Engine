@@ -34,6 +34,7 @@
 #include <de/ByteArrayFile>
 #include <de/ArrayValue>
 #include <de/DictionaryValue>
+#include <de/VRConfig>
 #include <de/c_wrapper.h>
 #include <de/Garbage>
 
@@ -43,12 +44,14 @@
 #include "dd_def.h"
 #include "dd_loop.h"
 #include "de_audio.h"
-#include "con_main.h"
+#include "def_main.h"
 #include "sys_system.h"
 #include "audio/s_main.h"
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
 #include "ui/inputsystem.h"
+#include "ui/b_main.h"
+#include "ui/sys_input.h"
 #include "ui/clientwindowsystem.h"
 #include "ui/clientwindow.h"
 #include "ui/widgets/taskbarwidget.h"
@@ -62,13 +65,15 @@
 #  include "dd_uinit.h"
 #endif
 
+#include <de/timer.h>
+
 using namespace de;
 
 static ClientApp *clientAppSingleton = 0;
 
 static void handleLegacyCoreTerminate(char const *msg)
 {
-    Con_Error("Application terminated due to exception:\n%s\n", msg);
+    App_Error("Application terminated due to exception:\n%s\n", msg);
 }
 
 static void continueInitWithEventLoopRunning()
@@ -107,10 +112,10 @@ DENG2_PIMPL(ClientApp)
     SettingsRegister logSettings;
     QMenuBar *menuBar;
     InputSystem *inputSys;
-    QScopedPointer<WidgetActions> widgetActions;
-    RenderSystem *renderSys;
+    RenderSystem *rendSys;
     ResourceSystem *resourceSys;
     ClientWindowSystem *winSys;
+    InFineSystem infineSys; // instantiated at construction time
     ServerLink *svLink;
     Games games;
     WorldSystem *worldSys;
@@ -148,10 +153,15 @@ DENG2_PIMPL(ClientApp)
                 // We don't want to raise alerts about problems in id/Raven WADs,
                 // since these just have to be accepted by the user.
                 if((entry.metadata() & LogEntry::Map) &&
-                   ClientApp::worldSystem().hasMap() &&
-                   !ClientApp::worldSystem().map().isCustom())
+                   ClientApp::worldSystem().hasMap())
                 {
-                    return *this;
+                    if(MapDef *mapDef = ClientApp::worldSystem().map().def())
+                    {
+                        if(!mapDef->sourceFile()->hasCustom())
+                        {
+                            return *this;
+                        }
+                    }
                 }
 
                 foreach(String msg, formatter.logEntryToTextLines(entry))
@@ -175,30 +185,35 @@ DENG2_PIMPL(ClientApp)
 
     Instance(Public *i)
         : Base(i)
-        , menuBar(0)
-        , inputSys(0)
-        , renderSys(0)
+        , menuBar    (0)
+        , inputSys   (0)
+        , rendSys  (0)
         , resourceSys(0)
-        , winSys(0)
-        , svLink(0)
-        , worldSys(0)
+        , winSys     (0)
+        //, infineSys  (0)
+        , svLink     (0)
+        , worldSys   (0)
     {
         clientAppSingleton = thisPublic;
 
-        LogBuffer::appBuffer().addSink(logAlarm);
+        LogBuffer::get().addSink(logAlarm);
     }
 
     ~Instance()
     {
-        LogBuffer::appBuffer().removeSink(logAlarm);
+        LogBuffer::get().removeSink(logAlarm);
+
+        self.vr().oculusRift().deinit();
 
         Sys_Shutdown();
         DD_Shutdown();
 
+        updater.reset();
         delete worldSys;
+        //delete infineSys;
         delete winSys;
         delete svLink;
-        delete renderSys;
+        delete rendSys;
         delete resourceSys;
         delete inputSys;
         delete menuBar;
@@ -242,15 +257,16 @@ DENG2_PIMPL(ClientApp)
                 .define(SReg::IntCVar,    "net-dev",            0);
 
         audioSettings
-                .define(SReg::IntCVar,   "sound-volume",        255)
-                .define(SReg::IntCVar,   "music-volume",        255)
-                .define(SReg::FloatCVar, "sound-reverb-volume", 0.5f)
-                .define(SReg::IntCVar,   "sound-info",          0)
-                .define(SReg::IntCVar,   "sound-rate",          11025)
-                .define(SReg::IntCVar,   "sound-16bit",         0)
-                .define(SReg::IntCVar,   "sound-3d",            0)
-                .define(SReg::IntCVar,   "sound-overlap-stop",  0)
-                .define(SReg::IntCVar,   "music-source",        MUSP_EXT);
+                .define(SReg::IntCVar,    "sound-volume",        255 * 2/3)
+                .define(SReg::IntCVar,    "music-volume",        255 * 2/3)
+                .define(SReg::FloatCVar,  "sound-reverb-volume", 0.5f)
+                .define(SReg::IntCVar,    "sound-info",          0)
+                .define(SReg::IntCVar,    "sound-rate",          11025)
+                .define(SReg::IntCVar,    "sound-16bit",         0)
+                .define(SReg::IntCVar,    "sound-3d",            0)
+                .define(SReg::IntCVar,    "sound-overlap-stop",  0)
+                .define(SReg::IntCVar,    "music-source",        MUSP_EXT)
+                .define(SReg::StringCVar, "music-soundfont",     "");
     }
 
 #ifdef UNIX
@@ -320,10 +336,15 @@ void ClientApp::initialize()
 
     d->svLink = new ServerLink;
 
-    // Config needs DisplayMode, so let's initialize it before the libdeng2
+    // Config needs DisplayMode, so let's initialize it before the libcore
     // subsystems and Config.
     DisplayMode_Init();
 
+    // Initialize definitions before the files are indexed.
+    Def_Init();
+
+    addInitPackage("net.dengine.base");
+    addInitPackage("net.dengine.client");
     initSubsystems(); // loads Config
 
     // Set up the log alerts (observes Config variables).
@@ -348,8 +369,8 @@ void ClientApp::initialize()
 #endif
 
     // Create the render system.
-    d->renderSys = new RenderSystem;
-    addSystem(*d->renderSys);
+    d->rendSys = new RenderSystem;
+    addSystem(*d->rendSys);
 
     // Create the window system.
     d->winSys = new ClientWindowSystem;
@@ -372,7 +393,10 @@ void ClientApp::initialize()
     // Create the input system.
     d->inputSys = new InputSystem;
     addSystem(*d->inputSys);
-    d->widgetActions.reset(new WidgetActions);
+    B_Init();
+
+    //d->infineSys = new InFineSystem;
+    //addSystem(*d->infineSys);
 
     // Create the world system.
     d->worldSys = new WorldSystem;
@@ -399,6 +423,10 @@ void ClientApp::postFrame()
 {
     /// @todo Should these be here? Consider multiple windows, each having a postFrame?
     /// Or maybe the frames need to be synced? Or only one of them has a postFrame?
+
+    // We will arrive here always at the same time in relation to the displayed
+    // frame: it is a good time to update the mouse state.
+    Mouse_Poll();
 
     if(gx.EndFrame)
     {
@@ -462,6 +490,13 @@ ServerLink &ClientApp::serverLink()
     return *a.d->svLink;
 }
 
+InFineSystem &ClientApp::infineSystem()
+{
+    ClientApp &a = ClientApp::app();
+    //DENG2_ASSERT(a.d->infineSys != 0);
+    return a.d->infineSys;
+}
+
 InputSystem &ClientApp::inputSystem()
 {
     ClientApp &a = ClientApp::app();
@@ -472,8 +507,13 @@ InputSystem &ClientApp::inputSystem()
 RenderSystem &ClientApp::renderSystem()
 {
     ClientApp &a = ClientApp::app();
-    DENG2_ASSERT(a.d->renderSys != 0);
-    return *a.d->renderSys;
+    DENG2_ASSERT(hasRenderSystem());
+    return *a.d->rendSys;
+}
+
+bool ClientApp::hasRenderSystem()
+{
+    return ClientApp::app().d->rendSys != 0;
 }
 
 ResourceSystem &ClientApp::resourceSystem()
@@ -488,11 +528,6 @@ ClientWindowSystem &ClientApp::windowSystem()
     ClientApp &a = ClientApp::app();
     DENG2_ASSERT(a.d->winSys != 0);
     return *a.d->winSys;
-}
-
-WidgetActions &ClientApp::widgetActions()
-{
-    return *app().d->widgetActions;
 }
 
 Games &ClientApp::games()
@@ -522,4 +557,26 @@ void ClientApp::openInBrowser(QUrl url)
     ClientWindow::main().changeAttributes(windowed);
 
     QDesktopServices::openUrl(url);
+}
+
+void ClientApp::beginNativeUIMode()
+{
+    // Switch temporarily to windowed mode. Not needed on OS X because the display mode
+    // is never changed on that platform.
+#ifndef MACOSX
+    auto &win = ClientWindow::main();
+    win.saveState();
+    int const windowedMode[] = {
+        ClientWindow::Fullscreen, false,
+        ClientWindow::End
+    };
+    win.changeAttributes(windowedMode);
+#endif
+}
+
+void ClientApp::endNativeUIMode()
+{
+#ifndef MACOSX
+    ClientWindow::main().restoreState();
+#endif
 }

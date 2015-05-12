@@ -1,0 +1,59 @@
+# Images for the default UI style
+
+script { import gui, DisplayMode }
+
+group window {
+    image background { path = "graphics/background.jpg" }
+    image borderglow { path = "graphics/borderglow.png" }
+    image icon       { path = "graphics/window.png" }
+    image cursor     { path = "graphics/mouse.png" }
+}
+
+group logo {
+    image px128 { path = "graphics/deng-logo-128.png" }
+    image px256 { path = "graphics/deng-logo-256.png" }
+
+    # With HiDPI displays use the 2x versions of the logo.
+    group {    
+        condition: DisplayMode.DPI_FACTOR == 2
+        image px128 { path = "graphics/deng-logo-256.png" }
+        image px256 { path = "graphics/deng-logo-512.png" }
+    }
+    
+    group game {
+        image libdoom    { path = "graphics/game-libdoom.png" }
+        image libheretic { path = "graphics/game-libheretic.png" }
+        image libhexen   { path = "graphics/game-libhexen.png" }
+    }
+}
+
+# Generic:
+image fold     { path = "graphics/fold.png" }
+image gauge    { path = "graphics/gauge.png" }
+image gear     { path = "graphics/gear.png" }
+group close {
+    image ring     { path = "graphics/close.png" }
+    image ringless { path = "graphics/close-ringless.png" }
+}
+image alert    { path = "graphics/alert.png" }
+
+# Subsystems:
+image log      { path = "graphics/log.png" }
+image display  { path = "graphics/display.png" }
+image network  { path = "graphics/network.png" }
+image renderer { path = "graphics/renderer.png" }
+image vr       { path = "graphics/vr.png" }
+image input    { path = "graphics/input.png" }
+image audio    { path = "graphics/audio.png" }
+image updater  { path = "graphics/updater.png" }
+
+# Widgets:
+image toggle.onoff {
+    path $= gui.dpiScaledImagePath("graphics/toggle-onoff.png")
+}
+
+group progress {
+    image wheel { path = "graphics/progress-wheel.png" }
+    image gear  { path = "graphics/progress-gear.png" }
+    image mini  { path = "graphics/progress-mini.png" }
+}

@@ -49,7 +49,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define VIEW_HEIGHT         (cfg.plrViewHeight)
+#define VIEW_HEIGHT         (cfg.common.plrViewHeight)
 
 #define MAXBOB              (16) // pixels.
 
@@ -72,13 +72,15 @@
 /**
  * Calculate the walking / running height adjustment.
  */
-void P_CalcHeight(player_t* plr)
+void P_CalcHeight(player_t *plr)
 {
+#if __JHEXEN__
     int plrNum = plr - players;
+#endif
     dd_bool airborne;
     dd_bool morphed = false;
-    ddplayer_t* ddplr = plr->plr;
-    mobj_t* pmo = ddplr->mo;
+    ddplayer_t *ddplr = plr->plr;
+    mobj_t *pmo = ddplr->mo;
     coord_t target, step;
 
     // Regular movement bobbing (needs to be calculated for gun swing even
@@ -117,7 +119,7 @@ void P_CalcHeight(player_t* plr)
     else
     {
         angle_t angle = (FINEANGLES / 20 * mapTime) & FINEMASK;
-        target = cfg.bobView * ((plr->bob / 2) * FIX2FLT(finesine[angle]));
+        target = cfg.common.bobView * ((plr->bob / 2) * FIX2FLT(finesine[angle]));
     }
 
     // Do the change gradually.

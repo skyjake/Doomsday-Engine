@@ -1,6 +1,6 @@
-/**
- * @file audiodriver_music.h
- * Low-level music interface of the audio driver. @ingroup audio
+/** @file audiodriver_music.h  Low-level music interface of the audio driver.
+ *
+ * @ingroup audio
  *
  * The main purpose of this low-level thin layer is to group individual music
  * interfaces together as an aggregate that can be treated as one interface.
@@ -9,7 +9,7 @@
  * regular Music interfaces.
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -26,8 +26,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_AUDIODRIVER_MUSIC_H
-#define LIBDENG_AUDIODRIVER_MUSIC_H
+#ifndef CLIENT_AUDIODRIVER_MUSIC_H
+#define CLIENT_AUDIODRIVER_MUSIC_H
 
 #include <de/str.h>
 #include "dd_types.h"
@@ -39,11 +39,11 @@ extern "C" {
 
 void AudioDriver_Music_Set(int property, void const *ptr);
 
-int AudioDriver_Music_PlayNativeFile(const char* fileName, dd_bool looped);
+int AudioDriver_Music_PlayNativeFile(char const *fileName, dd_bool looped);
 
 int AudioDriver_Music_PlayLump(lumpnum_t lump, dd_bool looped);
 
-int AudioDriver_Music_PlayFile(const char* virtualOrNativePath, dd_bool looped);
+int AudioDriver_Music_PlayFile(char const *virtualOrNativePath, dd_bool looped);
 
 int AudioDriver_Music_PlayCDTrack(int track, dd_bool looped);
 
@@ -51,7 +51,7 @@ int AudioDriver_Music_PlayCDTrack(int track, dd_bool looped);
  * Determines if music is currently playing on any of the Music or CD audio
  * interfaces.
  *
- * @return @c true if music is playing.
+ * @return  @c true if music is playing.
  */
 dd_bool AudioDriver_Music_IsPlaying(void);
 
@@ -61,10 +61,10 @@ dd_bool AudioDriver_Music_IsPlaying(void);
  */
 void AudioDriver_Music_SwitchBufferFilenames(void);
 
-AutoStr* AudioDriver_Music_ComposeTempBufferFilename(const char* ext);
+AutoStr *AudioDriver_Music_ComposeTempBufferFilename(char const *ext);
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif // LIBDENG_AUDIODRIVER_MUSIC_H
+#endif // CLIENT_AUDIODRIVER_MUSIC_H

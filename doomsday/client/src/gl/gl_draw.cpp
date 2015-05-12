@@ -17,12 +17,6 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <cstdio>
-#include <cstdlib>
-#include <cmath>
-
-#include <de/Vector>
-
 #include "de_base.h"
 #include "de_console.h"
 #include "de_graphics.h"
@@ -31,11 +25,15 @@
 #include "de_play.h"
 
 #include "gl/sys_opengl.h"
+#include "gl/gl_draw.h"
 #include "api_render.h"
 
+#include <cstdio>
+#include <cstdlib>
+#include <cmath>
 #include <de/GLState>
-
-#include "gl/gl_draw.h"
+#include <de/Vector>
+#include <de/concurrency.h>
 
 using namespace de;
 
@@ -302,6 +300,14 @@ DENG_EXTERN_C void GL_SetFilter(dd_bool enabled)
     drawFilter = CPP_BOOL(enabled);
 }
 
+#undef GL_ResetViewEffects
+DENG_EXTERN_C void GL_ResetViewEffects()
+{
+    GL_SetFilter(false);
+    Con_Executef(CMDS_DDAY, true, "postfx %i none", consolePlayer);
+    DD_SetInteger(DD_FULLBRIGHT, false);
+}
+
 #undef GL_SetFilterColor
 DENG_EXTERN_C void GL_SetFilterColor(float r, float g, float b, float a)
 {
@@ -344,7 +350,7 @@ DENG_EXTERN_C void GL_ConfigureBorderedProjection2(dgl_borderedprojectionstate_t
     int width, int height, int availWidth, int availHeight, scalemode_t overrideMode,
     float stretchEpsilon)
 {
-    if(!bp) Con_Error("GL_ConfigureBorderedProjection2: Invalid 'bp' argument.");
+    if(!bp) App_Error("GL_ConfigureBorderedProjection2: Invalid 'bp' argument.");
 
     bp->flags  = flags;
     bp->width  = width;
@@ -442,7 +448,7 @@ DENG_EXTERN_C void GL_EndBorderedProjection(dgl_borderedprojectionstate_t* bp)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    GLState::pop();
+    GLState::pop().apply();
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();

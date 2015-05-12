@@ -23,7 +23,4 @@ SOURCES += import.cpp texc.cpp
 HEADERS += texc.h
 
 # Installation.
-!macx {
-    INSTALLS += target
-    target.path = $$DENG_BIN_DIR
-}
+deployTarget()

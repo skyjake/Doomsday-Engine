@@ -1,0 +1,6 @@
+# Doomsday Engine 1.9
+# Definitions shared by all games.
+
+Include "flags.ded";
+Include "xg.ded";
+Include "materials.ded";

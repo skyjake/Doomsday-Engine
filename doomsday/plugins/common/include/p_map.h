@@ -56,6 +56,21 @@ extern "C" {
 dd_bool P_CheckSight(mobj_t const *beholder, mobj_t const *target);
 
 /**
+ * Determines the world space angle between the points @a from and @a to.
+ *
+ * @param from      World space vanatage point to look from.
+ * @param to        World space point to look to.
+ * @param shadowed  @c true= @a to is considered "shadowed", meaning that the
+ *                  final angle should include some random variance to simulate
+ *                  inaccuracy (e.g., the partial-invisibility sphere in DOOM makes
+ *                  the player harder to aim at).
+ *
+ * @return  The final angle of aim.
+ */
+angle_t P_AimAtPoint2(coord_t const from[3], coord_t const to[3], dd_bool shadowed);
+angle_t P_AimAtPoint (coord_t const from[3], coord_t const to[3]/*, dd_bool shadowed = false*/);
+
+/**
  * This is purely informative, nothing is modified (except things picked up).
  *
  * in:
@@ -114,6 +129,8 @@ dd_bool P_TryMoveXY(mobj_t *thing, coord_t x, coord_t y);
  * @return  @c true iff the move was successful.
  */
 dd_bool P_TeleportMove(mobj_t *thing, coord_t x, coord_t y, dd_bool alwaysStomp);
+
+void P_Telefrag(mobj_t *thing);
 
 void P_TelefragMobjsTouchingPlayers(void);
 

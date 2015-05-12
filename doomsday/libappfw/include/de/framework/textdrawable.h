@@ -94,8 +94,8 @@ public:
 
     Vector2ui wrappedSize() const;
     String text() const;
-    String plainText() const;
     bool isBeingWrapped() const;
+    Font const &font() const;
 
 private:
     DENG2_PRIVATE(d)

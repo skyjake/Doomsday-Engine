@@ -111,6 +111,8 @@ public:
      */
     void setTextGap(DotPath const &styleRuleId);
 
+    DotPath const &textGap() const;
+
     enum AlignmentMode {
         AlignByCombination,
         AlignOnlyByImage,
@@ -133,6 +135,8 @@ public:
 
     void setTextModulationColorf(Vector4f const &colorf);
 
+    Vector4f textModulationColorf() const;
+
     /**
      * Sets the maximum width used for text. By default, the maximum width is determined
      * automatically based on the layout of the label content.
@@ -140,6 +144,8 @@ public:
      * @param pixels  Maximum width of text, or 0 to determine automatically.
      */
     void setMaximumTextWidth(int pixels);
+
+    void setMaximumTextWidth(Rule const &pixels);
 
     /**
      * Sets an alternative style for text. By default, the rich text styling comes

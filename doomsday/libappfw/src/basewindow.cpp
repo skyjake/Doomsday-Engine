@@ -22,6 +22,8 @@
 #include "de/BaseGuiApp"
 #include "de/VRConfig"
 
+#include <de/GLState>
+
 namespace de {
 
 DENG2_PIMPL(BaseWindow)
@@ -53,7 +55,7 @@ DENG2_PIMPL(BaseWindow)
         /// subsystem passes it to window system. -jk
 
         // Pass the event onto the window system.
-        if(!WindowSystem::appWindowSystem().processEvent(ev))
+        if(!WindowSystem::get().processEvent(ev))
         {
             // Maybe the fallback handler has use for this.
             self.handleFallbackEvent(ev);
@@ -72,7 +74,7 @@ DENG2_PIMPL(BaseWindow)
             ev.setPos(xf->windowToLogicalCoords(event.pos()).toVector2i());
         }
 
-        if(!WindowSystem::appWindowSystem().processEvent(ev))
+        if(!WindowSystem::get().processEvent(ev))
         {
             // Maybe the fallback handler has use for this.
             self.handleFallbackEvent(ev);
@@ -122,6 +124,22 @@ void BaseWindow::draw()
         return;
     }
 
+    // Initialize Oculus Rift if needed.
+    auto &vr = DENG2_BASE_GUI_APP->vr();
+    if(vr.mode() == VRConfig::OculusRift)
+    {
+        if(canvas().isGLReady())
+        {
+            canvas().makeCurrent();
+            vr.oculusRift().init();
+        }
+    }
+    else
+    {
+        canvas().makeCurrent();
+        vr.oculusRift().deinit();
+    }
+
     if(shouldRepaintManually())
     {
         DENG2_ASSERT_IN_MAIN_THREAD();
@@ -148,15 +166,29 @@ void BaseWindow::canvasGLDraw(Canvas &cv)
 
 void BaseWindow::swapBuffers()
 {
+    DENG2_ASSERT(DENG2_BASE_GUI_APP->vr().mode() != VRConfig::OculusRift);
+
     PersistentCanvasWindow::swapBuffers(DENG2_BASE_GUI_APP->vr().needsStereoGLFormat()?
                                             gl::SwapStereoBuffers : gl::SwapMonoBuffer);
 }
 
 void BaseWindow::preDraw()
-{}
+{
+    auto &vr = DENG2_BASE_GUI_APP->vr();
+    if(vr.mode() == VRConfig::OculusRift)
+    {
+        vr.oculusRift().beginFrame();
+    }
+}
 
 void BaseWindow::postDraw()
 {
+    auto &vr = DENG2_BASE_GUI_APP->vr();
+    if(vr.mode() == VRConfig::OculusRift)
+    {
+        vr.oculusRift().endFrame();
+    }
+
     // The timer loop was paused when the frame was requested to be drawn.
     DENG2_GUI_APP->loop().resume();
 }

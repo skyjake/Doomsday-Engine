@@ -27,7 +27,8 @@ namespace de {
 namespace shell {
 
 /**
- * Lexicon containing terms and grammatical rules.
+ * Lexicon containing terms and grammatical rules. By default, the lexicon is
+ * case insensitive.
  */
 class LIBSHELL_PUBLIC Lexicon
 {
@@ -36,6 +37,8 @@ public:
 
 public:
     Lexicon();
+    Lexicon(Lexicon const &other);
+    Lexicon &operator = (Lexicon const &other);
 
     Terms terms() const;
 
@@ -43,13 +46,16 @@ public:
 
     bool isWordChar(QChar ch) const;
 
+    bool isCaseSensitive() const;
+
     void addTerm(String const &term);
 
     void setAdditionalWordChars(String const &chars);
 
+    void setCaseSensitive(bool sensitive);
+
 private:
-    Terms _terms;
-    String _extraChars;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace shell

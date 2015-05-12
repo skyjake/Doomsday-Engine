@@ -1,7 +1,7 @@
-/** @file s_sfx.cpp Sound Effects.
+/** @file s_sfx.cpp  Sound Effects.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -28,8 +28,8 @@
 #include "de_misc.h"
 #include "de_render.h"
 
-#include "BspLeaf"
 #include "Sector"
+#include "SectorCluster"
 
 #include "audio/sys_audio.h"
 #include "api_fontrender.h"
@@ -71,7 +71,7 @@ static byte refMonitor;
 
 void Sfx_UpdateReverb()
 {
-    listenerCluster = 0;
+    listenerCluster = nullptr;
 }
 
 #ifdef __CLIENT__
@@ -79,7 +79,7 @@ void Sfx_UpdateReverb()
 /**
  * This is a high-priority thread that periodically checks if the channels
  * need to be updated with more data. The thread terminates when it notices
- * that the channels have been destroyed. The Sfx audioDriver maintains a 250ms
+ * that the channels have been destroyed. The Sfx audio driver maintains a 250ms
  * buffer for each channel, which means the refresh must be done often
  * enough to keep them filled.
  *
@@ -501,9 +501,10 @@ void Sfx_ListenerUpdate()
         AudioDriver_SFX()->Listenerv(SFXLP_VELOCITY, vec);
 
         // Reverb effects. Has the current sector cluster changed?
-        if(listenerCluster != &Mobj_Cluster(*listener))
+        SectorCluster *newCluster = Mobj_ClusterPtr(*listener);
+        if(newCluster && (!listenerCluster || listenerCluster != newCluster))
         {
-            listenerCluster = &Mobj_Cluster(*listener);
+            listenerCluster = newCluster;
 
             // It may be necessary to recalculate the reverb properties...
             AudioEnvironmentFactors const &envFactors = listenerCluster->reverb();
@@ -599,7 +600,7 @@ int Sfx_StartSound(sfxsample_t *sample, float volume, float freq, mobj_t *emitte
 
     if(!sfxAvail) return false;
 
-    if(sample->id < 1 || sample->id >= defs.count.sounds.num) return false;
+    if(sample->id < 1 || sample->id >= defs.sounds.size()) return false;
     if(volume <= 0 || !sample->size) return false;
 
     if(emitter && sfxOneSoundPerEmitter)
@@ -624,7 +625,7 @@ int Sfx_StartSound(sfxsample_t *sample, float volume, float freq, mobj_t *emitte
     float lowPrio = 0;
 
     // Ensure there aren't already too many channels playing this sample.
-    sfxinfo_t *info = sounds + sample->id;
+    sfxinfo_t *info = &runtimeDefs.sounds[sample->id];
     if(info->channels > 0)
     {
         // The decision to stop channels is based on priorities.
@@ -793,7 +794,7 @@ int Sfx_StartSound(sfxsample_t *sample, float volume, float freq, mobj_t *emitte
 
     /**
      * Load in the sample. Must load prior to setting properties, because
-     * the audioDriver might actually create the real buffer only upon loading.
+     * the audio driver might actually create the real buffer only upon loading.
      *
      * @note The sample is not reloaded if a sample with the same ID is already
      * loaded on the channel.
@@ -869,7 +870,7 @@ void Sfx_StartFrame()
     if(!sfxAvail)
         return;
 
-    // Tell the audioDriver that the sound frame begins.
+    // Tell the audio driver that the sound frame begins.
     AudioDriver_Interface(AudioDriver_SFX())->Event(SFXEV_BEGIN);
 
     // Have there been changes to the cvar settings?
@@ -1044,7 +1045,7 @@ dd_bool Sfx_Init()
     AudioDriver_SFX()->Listener(SFXLP_UNITS_PER_METER, 30);
     AudioDriver_SFX()->Listener(SFXLP_DOPPLER, 1.5f);
 
-    // The audioDriver is working, let's create the channels.
+    // The audio driver is working, let's create the channels.
     Sfx_InitChannels();
 
     // Init the sample cache.

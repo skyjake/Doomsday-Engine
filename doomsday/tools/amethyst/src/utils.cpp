@@ -546,7 +546,7 @@ String applyFilter(String input, const String& filter, FilterApplyMode mode, Gem
             continue;
         }
         // Normal 2-char escape.
-        switch(c.toAscii())
+        switch(c.toLatin1())
         {
         case '@':
         case '{':
@@ -818,7 +818,7 @@ int visualSize(const String& str)
     int len = 0;
     for(int i = 0; i < str.size(); i++)
     {
-        switch(str[i].toAscii())
+        switch(str[i].toLatin1())
         {
         case OutputContext::CtrlAlign:
         case OutputContext::CtrlFill:

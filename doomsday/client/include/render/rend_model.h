@@ -1,9 +1,7 @@
 /** @file rend_model.h  Model renderer (v2.1).
  *
- * @ingroup render
- *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,63 +18,63 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_RENDER_MODEL_H
-#define DENG_CLIENT_RENDER_MODEL_H
+#ifndef CLIENT_RENDER_MODEL_H
+#define CLIENT_RENDER_MODEL_H
 
 #include "ModelDef"
+#include "rend_main.h"
+#include <de/Vector>
+#include <de/ModelDrawable>
 
 class TextureVariantSpec;
+struct vissprite_t;
 
 /// Absolute maximum number of vertices per submodel supported by this module.
 #define RENDER_MAX_MODEL_VERTS  16192
 
-/// @todo Split this large inflexible structure into logical subcomponent pieces.
+/**
+ * @todo Split this large inflexible structure into logical subcomponent pieces.
+ * @ingroup render
+ */
 struct drawmodelparams_t
 {
-// Animation, frame interpolation.
-    ModelDef *mf, *nextMF;
-    float           inter;
-    dd_bool         alwaysInterpolate;
-    int             id; // For a unique skin offset.
-    int             selector;
+// Animation, frame interpolation:
+    ModelDef *mf;
+    ModelDef *nextMF;
+    de::dfloat inter;
+    dd_bool alwaysInterpolate;
+    de::dint id;                ///< For a unique skin offset.
+    de::dint selector;
 
-// Position/Orientation/Scale
-    coord_t         origin[3], gzt; // The real center point and global top z for silhouette clipping.
-    coord_t         srvo[3]; // Short-range visual offset.
-    coord_t         distance; // Distance from viewer.
-    float           yaw, extraYawAngle, yawAngleOffset; ///< @todo We do not need three sets of angles...
-    float           pitch, extraPitchAngle, pitchAngleOffset;
-
-    float           extraScale;
-
-    dd_bool         viewAlign;
-    dd_bool         mirror; // If true the model will be mirrored about its Z axis (in model space).
-
-// Appearance
-    int             flags; // Mobj flags.
-    int             tmap;
-
-    // Lighting/color:
-    float           ambientColor[4];
-    uint            vLightListIdx;
+// Appearance:
+    de::dint flags;  ///< Mobj flags.
+    de::dint tmap;
 
     // Shiney texture mapping:
-    float           shineYawOffset;
-    float           shinePitchOffset;
-    dd_bool         shineTranslateWithViewerPos;
-    dd_bool         shinepspriteCoordSpace; // Use the psprite coordinate space hack.
+    de::dfloat shineYawOffset;
+    de::dfloat shinePitchOffset;
+    dd_bool shineTranslateWithViewerPos;
+    dd_bool shinepspriteCoordSpace;       ///< Use the psprite coordinate space hack.
 };
 
-DENG_EXTERN_C byte useModels;
-DENG_EXTERN_C int modelLight;
-DENG_EXTERN_C int frameInter;
-DENG_EXTERN_C float modelAspectMod;
-DENG_EXTERN_C int mirrorHudModels;
-DENG_EXTERN_C int modelShinyMultitex;
-DENG_EXTERN_C float modelSpinSpeed;
-DENG_EXTERN_C int maxModelDistance;
-DENG_EXTERN_C float rendModelLOD;
-DENG_EXTERN_C byte precacheSkins;
+/// @ingroup render
+struct drawmodel2params_t
+{
+    struct mobj_s const *object;
+    de::ModelDrawable const *model;
+    de::ModelDrawable::Animator const *animator;
+};
+
+DENG_EXTERN_C de::dbyte useModels;
+DENG_EXTERN_C de::dint modelLight;
+DENG_EXTERN_C de::dint frameInter;
+DENG_EXTERN_C de::dfloat modelAspectMod;
+DENG_EXTERN_C de::dint mirrorHudModels;
+DENG_EXTERN_C de::dint modelShinyMultitex;
+DENG_EXTERN_C de::dfloat modelSpinSpeed;
+DENG_EXTERN_C de::dint maxModelDistance;
+DENG_EXTERN_C de::dfloat rendModelLOD;
+DENG_EXTERN_C de::dbyte precacheSkins;
 
 /**
  * Registers the console commands and variables used by this module.
@@ -110,7 +108,7 @@ void Rend_ModelShutdown();
  * @return  @c true= successfully expanded. May fail if @a numVertices is larger
  *          than RENDER_MAX_MODEL_VERTS.
  */
-bool Rend_ModelExpandVertexBuffers(uint numVertices);
+bool Rend_ModelExpandVertexBuffers(de::duint numVertices);
 
 /**
  * Lookup the texture specification for diffuse model skins.
@@ -130,6 +128,13 @@ TextureVariantSpec const &Rend_ModelShinyTextureSpec();
 /**
  * Render all the submodels of a model.
  */
-void Rend_DrawModel(drawmodelparams_t const &parms);
+void Rend_DrawModel(vissprite_t const &spr);
 
-#endif // DENG_CLIENT_RENDER_MODEL_H
+/**
+ * Render a GL2 model.
+ *
+ * @param parms  Parameters for the draw operation.
+ */
+void Rend_DrawModel2(vissprite_t const &spr);
+
+#endif  // CLIENT_RENDER_MODEL_H

@@ -2,10 +2,11 @@
 # Copyright (c) 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
 # Copyright (c) 2011-2013 Daniel Swanson <danij@dengine.net>
 
-# This plugin uses the full libdeng2 C++ API.
-CONFIG += dengplugin_libdeng2_full
+# This plugin uses the full libcore C++ API.
+CONFIG += dengplugin_libcore_full
 
 include(../config_plugin.pri)
+include(../../dep_doomsday.pri)
 
 TEMPLATE = lib
 TARGET   = dehread
@@ -29,19 +30,17 @@ SOURCES += src/dehread.cpp \
     src/info.cpp
 
 win32 {
-    QMAKE_LFLAGS += /DEF:\"$$PWD/api/dpdehread.def\"
+    deng_msvc:  QMAKE_LFLAGS += /DEF:\"$$PWD/api/dpdehread.def\"
+    deng_mingw: QMAKE_LFLAGS += --def \"$$PWD/api/dpdehread.def\"
+
     OTHER_FILES += api/dpdehread.def
 
     RC_FILE = res/dehread.rc
 }
 
-!macx {
-    INSTALLS += target
-    target.path = $$DENG_PLUGIN_LIB_DIR
-}
-
 macx {
     fixPluginInstallId($$TARGET, 2)
-    linkToBundledLibdeng2($$TARGET)
-    linkToBundledLibdeng1($$TARGET)
+    linkToBundledLibcore    ($$TARGET)
+    linkToBundledLiblegacy  ($$TARGET)
+    linkToBundledLibdoomsday($$TARGET)
 }

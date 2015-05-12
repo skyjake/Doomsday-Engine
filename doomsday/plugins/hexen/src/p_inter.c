@@ -19,19 +19,21 @@
  * 02110-1301 USA</small>
  */
 
+#include <string.h>
+#include <math.h>
+
 #include "jhexen.h"
 #include "p_inter.h"
 
 #include "am_map.h"
-#include "p_inventory.h"
+#include "d_netsv.h"
+#include "g_common.h"
 #include "hu_inventory.h"
-#include "player.h"
-#include "p_map.h"
 #include "mobj.h"
+#include "p_inventory.h"
+#include "p_map.h"
 #include "p_user.h"
-
-#include <string.h>
-#include <math.h>
+#include "player.h"
 
 #define BONUSADD                (6)
 
@@ -403,7 +405,7 @@ dd_bool P_GiveWeapon2(player_t *plr, weapontype_t weaponType, playerclass_t matc
     {
         // Give all weapons.
         int i = 0;
-        for(i = 0; i < NUM_WEAPON_TYPES; ++i)
+        for(; i < NUM_WEAPON_TYPES; ++i)
         {
             gaveWeapons |= (int)giveOneWeapon(plr, (weapontype_t) i, matchClass) << i;
         }
@@ -414,6 +416,10 @@ dd_bool P_GiveWeapon2(player_t *plr, weapontype_t weaponType, playerclass_t matc
         gaveWeapons |= (int)giveOneWeapon(plr, weaponType, matchClass) << (int)weaponType;
     }
 
+    // Leave placed weapons forever on net games.
+    if(IS_NETGAME && !G_Ruleset_Deathmatch())
+        return false;
+
     return gaveWeapons != 0;
 }
 
@@ -423,9 +429,21 @@ dd_bool P_GiveWeapon(player_t *plr, weapontype_t weaponType)
     return P_GiveWeapon2(plr, weaponType, plr->class_);
 }
 
-dd_bool P_GiveWeaponPiece2(player_t *plr, int pieceValue, playerclass_t matchClass)
+dd_bool P_GiveWeaponPiece2(player_t *plr, int piece, playerclass_t matchClass)
 {
     dd_bool gaveAmmo = false;
+
+    // Give all pieces?
+    if(piece < 0 || piece >= WEAPON_FOURTH_PIECE_COUNT)
+    {
+        int gavePieces = 0;
+        int i = 0;
+        for(; i < WEAPON_FOURTH_PIECE_COUNT; ++i)
+        {
+            gavePieces |= (int)P_GiveWeaponPiece2(plr, i, matchClass);
+        }
+        return gavePieces != 0;
+    }
 
     if(plr->class_ != matchClass)
     {
@@ -438,13 +456,12 @@ dd_bool P_GiveWeaponPiece2(player_t *plr, int pieceValue, playerclass_t matchCla
 
     // Always attempt to give mana unless this a cooperative game and the
     // player already has this weapon piece.
-    if(!((plr->pieces & pieceValue) && IS_NETGAME && !G_Ruleset_Deathmatch()))
+    if(!((plr->pieces & (1 << piece)) && IS_NETGAME && !G_Ruleset_Deathmatch()))
     {
-        gaveAmmo = P_GiveAmmo(plr, AT_BLUEMANA, 20) ||
-                   P_GiveAmmo(plr, AT_GREENMANA, 20);
+        gaveAmmo = P_GiveAmmo(plr, AT_BLUEMANA, 20) | P_GiveAmmo(plr, AT_GREENMANA, 20);
     }
 
-    if(plr->pieces & pieceValue)
+    if(plr->pieces & (1 << piece))
     {
         // Already has the piece.
         if(IS_NETGAME && !G_Ruleset_Deathmatch()) // Cooperative net-game.
@@ -452,40 +469,37 @@ dd_bool P_GiveWeaponPiece2(player_t *plr, int pieceValue, playerclass_t matchCla
 
         // Deathmatch or single player.
 
-        if(!gaveAmmo) // Didn't need the mana, so don't pick it up.
+        if(!gaveAmmo) // Didn't need the ammo so don't pick it up.
             return false;
     }
 
-    // Check if fourth weapon assembled.
-    if(IS_NETGAME && !G_Ruleset_Deathmatch()) // Cooperative net-game.
-    {
-        static int pieceValueTrans[] = {
-            0,                            // 0: never
-            WPIECE1 | WPIECE2 | WPIECE3,  // WPIECE1 (1)
-            WPIECE2 | WPIECE3,            // WPIECE2 (2)
-            0,                            // 3: never
-            WPIECE3                       // WPIECE3 (4)
-        };
-        pieceValue = pieceValueTrans[pieceValue];
-    }
+    // Give the specified weapon piece.
+    plr->pieces |= (1 << piece);
 
-    if(!(plr->pieces & pieceValue))
+    // In a cooperative net-game, give the "lesser" pieces also.
+    if(IS_NETGAME && !G_Ruleset_Deathmatch())
     {
-        plr->pieces |= pieceValue;
-
-        if(plr->pieces == (WPIECE1 | WPIECE2 | WPIECE3))
+        for(int i = 0; i < piece; ++i)
         {
-            plr->weapons[WT_FOURTH].owned = true;
-            plr->pendingWeapon = WT_FOURTH;
-            plr->update |= PSF_WEAPONS | PSF_OWNED_WEAPONS;
-
-            // Should we change weapon automatically?
-            P_MaybeChangeWeapon(plr, WT_FOURTH, AT_NOAMMO, false);
+            plr->pieces |= (1 << i);
         }
-
-        // Maybe unhide the HUD?
-        ST_HUDUnHide(plr - players, HUE_ON_PICKUP_WEAPON);
     }
+
+    // Can we now assemble the fourth-weapon?
+    if(plr->pieces == WEAPON_FOURTH_COMPLETE)
+    {
+        // Bestow the fourth-weapon.
+        /// @todo Should use @ref P_GiveWeapon() here.
+        plr->weapons[WT_FOURTH].owned = true;
+        plr->pendingWeapon = WT_FOURTH;
+        plr->update       |= PSF_WEAPONS | PSF_OWNED_WEAPONS;
+
+        // Should we change weapon automatically?
+        P_MaybeChangeWeapon(plr, WT_FOURTH, AT_NOAMMO, false);
+    }
+
+    // Maybe unhide the HUD?
+    ST_HUDUnHide(plr - players, HUE_ON_PICKUP_WEAPON);
 
     return true;
 }
@@ -1163,47 +1177,47 @@ static dd_bool pickupFireStorm(player_t *plr)
 
 static dd_bool pickupQuietus1(player_t *plr)
 {
-    return P_GiveWeaponPiece2(plr, WPIECE1, PCLASS_FIGHTER);
+    return P_GiveWeaponPiece2(plr, 0, PCLASS_FIGHTER);
 }
 
 static dd_bool pickupQuietus2(player_t *plr)
 {
-    return P_GiveWeaponPiece2(plr, WPIECE2, PCLASS_FIGHTER);
+    return P_GiveWeaponPiece2(plr, 1, PCLASS_FIGHTER);
 }
 
 static dd_bool pickupQuietus3(player_t *plr)
 {
-    return P_GiveWeaponPiece2(plr, WPIECE3, PCLASS_FIGHTER);
+    return P_GiveWeaponPiece2(plr, 2, PCLASS_FIGHTER);
 }
 
 static dd_bool pickupWraithVerge1(player_t *plr)
 {
-    return P_GiveWeaponPiece2(plr, WPIECE1, PCLASS_CLERIC);
+    return P_GiveWeaponPiece2(plr, 0, PCLASS_CLERIC);
 }
 
 static dd_bool pickupWraithVerge2(player_t *plr)
 {
-    return P_GiveWeaponPiece2(plr, WPIECE2, PCLASS_CLERIC);
+    return P_GiveWeaponPiece2(plr, 1, PCLASS_CLERIC);
 }
 
 static dd_bool pickupWraithVerge3(player_t *plr)
 {
-    return P_GiveWeaponPiece2(plr, WPIECE3, PCLASS_CLERIC);
+    return P_GiveWeaponPiece2(plr, 2, PCLASS_CLERIC);
 }
 
 static dd_bool pickupBloodScourge1(player_t *plr)
 {
-    return P_GiveWeaponPiece2(plr, WPIECE1, PCLASS_MAGE);
+    return P_GiveWeaponPiece2(plr, 0, PCLASS_MAGE);
 }
 
 static dd_bool pickupBloodScourge2(player_t *plr)
 {
-    return P_GiveWeaponPiece2(plr, WPIECE2, PCLASS_MAGE);
+    return P_GiveWeaponPiece2(plr, 1, PCLASS_MAGE);
 }
 
 static dd_bool pickupBloodScourge3(player_t *plr)
 {
-    return P_GiveWeaponPiece2(plr, WPIECE3, PCLASS_MAGE);
+    return P_GiveWeaponPiece2(plr, 2, PCLASS_MAGE);
 }
 
 static dd_bool giveItem(player_t *plr, itemtype_t item)
@@ -1230,7 +1244,7 @@ static dd_bool giveItem(player_t *plr, itemtype_t item)
     case IT_WEAPON_BLOODSCOURGE2:
     case IT_WEAPON_BLOODSCOURGE3:
         if(plr->pieces != oldPieces &&
-           plr->pieces == (WPIECE1 | WPIECE2 | WPIECE3))
+           plr->pieces == WEAPON_FOURTH_COMPLETE)
         {
             int msg;
 
@@ -1429,26 +1443,23 @@ mobj_t* ActiveMinotaur(player_t* master)
 
 void P_KillMobj(mobj_t *source, mobj_t *target)
 {
-    int dummy;
-    mobj_t *master;
     statenum_t state;
 
-    if(!target)
-        return; // Nothing to kill.
+    // Nothing to kill?
+    if(!target) return;
 
     target->flags &= ~(MF_SHOOTABLE | MF_FLOAT | MF_SKULLFLY | MF_NOGRAVITY);
     target->flags |= MF_CORPSE | MF_DROPOFF;
     target->flags2 &= ~MF2_PASSMOBJ;
-    target->height /= 2*2;
+    target->height /= 2 * 2;
+
     if((target->flags & MF_COUNTKILL || target->type == MT_ZBELL) &&
        target->special)
     {
         // Initiate monster death actions.
         if(target->type == MT_SORCBOSS)
         {
-            dummy = 0;
-            Game_ACScriptInterpreter_StartScript(target->special, 0/*current-map*/,
-                                                 (byte *) &dummy, target, NULL, 0);
+            P_StartACScript(target->special, NULL, target, NULL, 0);
         }
         else
         {
@@ -1552,10 +1563,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
         }
 
         // Don't die with the automap open.
-        ST_AutomapOpen(target->player - players, false, false);
-#if __JHERETIC__ || __JHEXEN__
-        Hu_InventoryOpen(target->player - players, false);
-#endif
+        ST_CloseAll(target->player - players, false);
     }
     else
     {   // Target is some monster or an object.
@@ -1686,7 +1694,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
 
     if(target->type == MT_MINOTAUR)
     {
-        master = target->tracer;
+        mobj_t *master = target->tracer;
         if(master && master->health > 0)
         {
             if(!ActiveMinotaur(master->player))
@@ -1934,16 +1942,16 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
  * @param source            Is the mobj to target after taking damage
  *                          creature or @c NULL.
  */
-int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damageP,
+int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source, int damageP,
     dd_bool stomping, dd_bool skipNetworkCheck)
 {
     uint an;
     angle_t angle;
-    int i, temp, originalHealth;
+    int i, /*temp,*/ originalHealth;
     coord_t thrust;
     float saved, savedPercent;
-    player_t* player;
-    mobj_t* master;
+    player_t *player;
+    mobj_t *master;
     int damage;
 
     if(!target) return 0; // Wha?
@@ -2001,8 +2009,15 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damageP
         }
     }
 
-    if(target->player)
-    {   // Player specific.
+    if(target->player) // Player specific.
+    {
+        if(damage < 1000 &&
+           ((P_GetPlayerCheats(target->player) & CF_GODMODE) ||
+            target->player->powers[PT_INVULNERABILITY]))
+        {
+            return 0;
+        }
+
         // Check if player-player damage is disabled.
         if(source && source->player && source->player != target->player)
         {
@@ -2039,7 +2054,7 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damageP
     {
         // damage = (int) ((float) damage * netMobDamageModifier);
         if(IS_NETGAME)
-            damage *= cfg.netMobDamageModifier;
+            damage *= cfg.common.netMobDamageModifier;
     }
 
     // Special damage types.
@@ -2226,12 +2241,12 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damageP
     {
         target->player->update |= PSF_HEALTH;
 
-        if(damage < 1000 &&
+        /*if(damage < 1000 &&
            ((P_GetPlayerCheats(target->player) & CF_GODMODE) ||
             target->player->powers[PT_INVULNERABILITY]))
         {
             return 0;
-        }
+        }*/
 
         savedPercent = FIX2FLT(
             PCLASS_INFO(player->class_)->autoArmorSave + player->armorPoints[ARMOR_ARMOR] +
@@ -2286,7 +2301,7 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damageP
         if(player->damageCount > 100)
             player->damageCount = 100; // Teleport stomp does 10k points...
 
-        temp = (damage < 100 ? damage : 100);
+        // temp = (damage < 100 ? damage : 100); Unused?
 
         // Maybe unhide the HUD?
         ST_HUDUnHide(player - players, HUE_ON_DAMAGE);

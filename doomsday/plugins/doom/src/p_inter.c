@@ -32,9 +32,11 @@
 #endif
 
 #include "jdoom.h"
+#include "p_inter.h"
 
 #include "am_map.h"
 #include "d_net.h"
+#include "d_netsv.h"
 #include "dmu_lib.h"
 #include "player.h"
 #include "p_user.h"
@@ -385,7 +387,7 @@ dd_bool P_TakePower(player_t *player, powertype_t powerType)
     case PT_FLIGHT: {
         mobj_t *plrmo = player->plr->mo;
 
-        if(plrmo->origin[VZ] != plrmo->floorZ && cfg.lookSpring)
+        if(plrmo->origin[VZ] != plrmo->floorZ && cfg.common.lookSpring)
         {
             player->centering = true;
         }
@@ -548,6 +550,12 @@ static dd_bool pickupWeapon(player_t *plr, weapontype_t weaponType,
         {
             S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         }
+    }
+
+    if(IS_NETGAME && G_Ruleset_Deathmatch() != 2 && !dropped)
+    {
+        // Leave placed weapons forever on net games.
+        return false;
     }
 
     return pickedWeapon;
@@ -1016,10 +1024,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target, dd_bool stomping)
         P_DropWeapon(target->player);
 
         // Don't die with the automap open.
-        ST_AutomapOpen(target->player - players, false, false);
-#if __JHERETIC__ || __JHEXEN__
-        Hu_InventoryOpen(target->player - players, false);
-#endif
+        ST_CloseAll(target->player - players, false);
     }
 
     if(target->health < -target->info->spawnHealth &&
@@ -1091,13 +1096,13 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
  *
  * @return              Actual amount of damage done.
  */
-int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
+int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
                   int damageP, dd_bool stomping, dd_bool skipNetworkCheck)
 {
-    angle_t             angle;
-    int                 saved, originalHealth;
-    player_t*           player;
-    int                 temp, damage;
+    angle_t angle;
+    int saved, originalHealth;
+    player_t *player;
+    int /*temp,*/ damage;
 
     if(!target)
         return 0; // Wha?
@@ -1158,7 +1163,7 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
     {
         // damage = (int) ((float) damage * netMobDamageModifier);
         if(IS_NETGAME)
-            damage *= cfg.netMobDamageModifier;
+            damage *= cfg.common.netMobDamageModifier;
     }
 
     // Some close combat weapons should not inflict thrust and push the
@@ -1239,7 +1244,7 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
         if(player->damageCount > 100)
             player->damageCount = 100; // Teleport stomp does 10k points...
 
-        temp = damage < 100 ? damage : 100;
+        // temp = damage < 100 ? damage : 100; Unused?
 
         // Maybe unhide the HUD?
         ST_HUDUnHide(player - players, HUE_ON_DAMAGE);

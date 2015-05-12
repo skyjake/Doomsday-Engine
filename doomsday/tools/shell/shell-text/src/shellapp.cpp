@@ -140,7 +140,7 @@ ShellApp::ShellApp(int &argc, char **argv)
     setApplicationVersion (SHELL_VERSION);
 
     // Configure the log buffer.
-    LogBuffer &buf = LogBuffer::appBuffer();
+    LogBuffer &buf = LogBuffer::get();
     buf.setMaxEntryCount(50); // buffered here rather than appBuffer
     buf.enableFlushing();
     buf.addSink(d->log->logSink());
@@ -155,14 +155,14 @@ ShellApp::ShellApp(int &argc, char **argv)
 
 ShellApp::~ShellApp()
 {
-    LogBuffer::appBuffer().removeSink(d->log->logSink());
+    LogBuffer::get().removeSink(d->log->logSink());
 }
 
 void ShellApp::openConnection(String const &address)
 {
     closeConnection();
 
-    LogBuffer::appBuffer().flush();
+    LogBuffer::get().flush();
     d->log->clear();
 
     LOG_NET_NOTE("Opening connection to %s") << address;
@@ -327,7 +327,7 @@ void ShellApp::handleIncomingPackets()
             break;
         }
 
-        LogBuffer::appBuffer().flush();
+        LogBuffer::get().flush();
     }
 }
 

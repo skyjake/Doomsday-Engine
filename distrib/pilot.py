@@ -78,6 +78,8 @@ def main():
             checkForTasks()
     except Exception, x:
         # Unexpected problem!
+	import traceback
+	traceback.print_exc()
         print APP_NAME + ':', x
     finally:
         endPilotInstance()
@@ -386,24 +388,23 @@ def handleCompletedTasks():
             newTask('tag_build', forClient='master')
         
         elif task == 'tag_build':
-            newTask('deb_changes', forClient='ubuntu')
+            newTask('deb_changes', forClient='ubuntu-32bit')
             newTask('mac_meta', forClient='master')
-            newTask('generate_readme', forClient='clikits')
+            newTask('generate_readme', forClient='dox')
         
         elif task == 'deb_changes':
             newTask('build', allClients=True)
             newTask('generate_wiki', forClient='master')
         
         elif task == 'build':
-            newTask('source', forClient='ubuntu')
-            newTask('source', forClient='saucy')
+            newTask('source', forClient='ubuntu-64bit')
 
         elif task == 'source':
             newTask('sign', forClient='master')
 
         elif task == 'sign':
             newTask('publish', forClient='master')
-            newTask('apt_refresh', forClient='ubuntu')
+            newTask('apt_refresh', forClient='ubuntu-32bit')
             # After the build we can switch to the master again.
             newTask('branch_master', allClients=True)
             

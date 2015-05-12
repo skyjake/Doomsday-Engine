@@ -9,9 +9,14 @@ INCLUDEPATH += \
     $$DENG_LZSS_DIR/portable/include
 
 HEADERS += \
+    $$common_inc/acs/interpreter.h \
+    $$common_inc/acs/module.h \
+    $$common_inc/acs/script.h \
+    $$common_inc/acs/system.h \
     $$common_inc/am_map.h \
     $$common_inc/animdefs.h \
     $$common_inc/common.h \
+    $$common_inc/config.h \
     $$common_inc/d_net.h \
     $$common_inc/d_netcl.h \
     $$common_inc/d_netsv.h \
@@ -72,9 +77,30 @@ HEADERS += \
     $$common_inc/thingarchive.h \
     $$common_inc/thinkerinfo.h \
     $$common_inc/x_hair.h \
-    $$common_inc/xgclass.h
+    $$common_inc/menu/page.h \
+    $$common_inc/menu/widgets/buttonwidget.h \
+    $$common_inc/menu/widgets/coloreditwidget.h \
+    $$common_inc/menu/widgets/cvarcoloreditwidget.h \
+    $$common_inc/menu/widgets/cvarinlinelistwidget.h \
+    $$common_inc/menu/widgets/cvarlineeditwidget.h \
+    $$common_inc/menu/widgets/cvarsliderwidget.h \
+    $$common_inc/menu/widgets/cvartextualsliderwidget.h \
+    $$common_inc/menu/widgets/cvartogglewidget.h \
+    $$common_inc/menu/widgets/inlinelistwidget.h \
+    $$common_inc/menu/widgets/inputbindingwidget.h \
+    $$common_inc/menu/widgets/labelwidget.h \
+    $$common_inc/menu/widgets/lineeditwidget.h \
+    $$common_inc/menu/widgets/listwidget.h \
+    $$common_inc/menu/widgets/mobjpreviewwidget.h \
+    $$common_inc/menu/widgets/rectwidget.h \
+    $$common_inc/menu/widgets/sliderwidget.h \
+    $$common_inc/menu/widgets/widget.h
 
 SOURCES += \
+    $$common_src/acs/interpreter.cpp \
+    $$common_src/acs/module.cpp \
+    $$common_src/acs/script.cpp \
+    $$common_src/acs/system.cpp \
     $$common_src/am_map.c \
     $$common_src/animdefs.cpp \
     $$common_src/common.c \
@@ -84,28 +110,28 @@ SOURCES += \
     $$common_src/dmu_lib.cpp \
     $$common_src/fi_lib.cpp \
     $$common_src/g_controls.c \
-    $$common_src/g_defs.c \
+    $$common_src/g_defs.cpp \
     $$common_src/g_eventsequence.cpp \
     $$common_src/g_game.cpp \
-    $$common_src/g_update.c \
+    $$common_src/g_update.cpp \
     $$common_src/gamerules.cpp \
     $$common_src/gamesession.cpp \
-    $$common_src/gl_drawpatch.c \
+    $$common_src/gl_drawpatch.cpp \
     $$common_src/hexlex.cpp \
     $$common_src/hu_automap.cpp \
-    $$common_src/hu_chat.c \
-    $$common_src/hu_inventory.c \
-    $$common_src/hu_lib.c \
-    $$common_src/hu_log.c \
+    $$common_src/hu_chat.cpp \
+    $$common_src/hu_inventory.cpp \
+    $$common_src/hu_lib.cpp \
+    $$common_src/hu_log.cpp \
     $$common_src/hu_menu.cpp \
-    $$common_src/hu_msg.c \
+    $$common_src/hu_msg.cpp \
     $$common_src/hu_pspr.c \
     $$common_src/hu_stuff.cpp \
-    $$common_src/m_ctrl.c \
+    $$common_src/m_ctrl.cpp \
     $$common_src/mapstatereader.cpp \
     $$common_src/mapstatewriter.cpp \
     $$common_src/mobj.cpp \
-    $$common_src/pause.c \
+    $$common_src/pause.cpp \
     $$common_src/p_actor.cpp \
     $$common_src/p_ceiling.cpp \
     $$common_src/p_door.cpp \
@@ -114,7 +140,7 @@ SOURCES += \
     $$common_src/p_iterlist.c \
     $$common_src/p_map.cpp \
     $$common_src/p_mapsetup.cpp \
-    $$common_src/p_mapspec.c \
+    $$common_src/p_mapspec.cpp \
     $$common_src/p_plat.cpp \
     $$common_src/p_saveg.cpp \
     $$common_src/p_saveio.cpp \
@@ -123,17 +149,35 @@ SOURCES += \
     $$common_src/p_start.cpp \
     $$common_src/p_switch.cpp \
     $$common_src/p_terraintype.c \
-    $$common_src/p_tick.c \
+    $$common_src/p_tick.cpp \
     $$common_src/p_user.c \
     $$common_src/p_view.c \
     $$common_src/p_xgfile.cpp \
     $$common_src/p_xgline.cpp \
     $$common_src/p_xgsave.cpp \
-    $$common_src/p_xgsec.c \
+    $$common_src/p_xgsec.cpp \
     $$common_src/player.cpp \
     $$common_src/polyobjs.cpp \
     $$common_src/r_common.c \
     $$common_src/saveslots.cpp \
     $$common_src/thingarchive.cpp \
     $$common_src/thinkerinfo.cpp \
-    $$common_src/x_hair.c
+    $$common_src/x_hair.c \
+    $$common_src/menu/page.cpp \
+    $$common_src/menu/widgets/coloreditwidget.cpp \
+    $$common_src/menu/widgets/cvarcoloreditwidget.cpp \
+    $$common_src/menu/widgets/cvarinlinelistwidget.cpp \
+    $$common_src/menu/widgets/cvarlineeditwidget.cpp \
+    $$common_src/menu/widgets/cvarsliderwidget.cpp \
+    $$common_src/menu/widgets/cvartextualsliderwidget.cpp \
+    $$common_src/menu/widgets/cvartogglewidget.cpp \
+    $$common_src/menu/widgets/buttonwidget.cpp \
+    $$common_src/menu/widgets/inlinelistwidget.cpp \
+    $$common_src/menu/widgets/inputbindingwidget.cpp \
+    $$common_src/menu/widgets/labelwidget.cpp \
+    $$common_src/menu/widgets/lineeditwidget.cpp \
+    $$common_src/menu/widgets/listwidget.cpp \
+    $$common_src/menu/widgets/mobjpreviewwidget.cpp \
+    $$common_src/menu/widgets/rectwidget.cpp \
+    $$common_src/menu/widgets/sliderwidget.cpp \
+    $$common_src/menu/widgets/widget.cpp

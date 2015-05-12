@@ -1,7 +1,7 @@
 /** @file plane.h  World map plane.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,78 +18,64 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
 #include "world/plane.h"
 
+#include <de/Log>
 #include "dd_loop.h" // frameTimePos
 #include "world/map.h"
+#include "world/thinkers.h"
 #include "world/worldsystem.h" /// ddMapSetup
 #include "Surface"
 #include "Sector"
-#include <de/Log>
 
 using namespace de;
 
 DENG2_PIMPL(Plane)
 {
-    SoundEmitter soundEmitter;
-    int indexInSector;           ///< Index in the owning sector.
-    coord_t height;              ///< Current @em sharp height.
-    coord_t targetHeight;        ///< Target @em sharp height.
-    coord_t speed;               ///< Movement speed (map space units per tic).
     Surface surface;
+    ThinkerT<SoundEmitter> soundEmitter;
+
+    dint indexInSector = -1;          ///< Index in the owning sector.
+
+    coord_t height = 0;               ///< Current @em sharp height.
+    coord_t targetHeight = 0;         ///< Target @em sharp height.
+    coord_t speed = 0;                ///< Movement speed (map space units per tic).
 
 #ifdef __CLIENT__
-    coord_t oldHeight[2];        ///< @em sharp height change tracking buffer (for smoothing).
-    coord_t heightSmoothed;      ///< @ref height (smoothed).
-    coord_t heightSmoothedDelta; ///< Delta between the current @em sharp height and the visual height.
+    coord_t oldHeight[2];             ///< @em sharp height change tracking buffer (for smoothing).
+    coord_t heightSmoothed = 0;       ///< @ref height (smoothed).
+    coord_t heightSmoothedDelta = 0;  ///< Delta between the current @em sharp height and the visual height.
+    ClPlaneMover *mover = nullptr;    ///< The current mover.
 #endif
 
-    Instance(Public *i, coord_t height)
-        : Base(i)
-        , indexInSector(-1)
-        , height(height)
-        , targetHeight(height)
-        , speed(0)
-        , surface(dynamic_cast<MapElement &>(*i))
-#ifdef __CLIENT__
-        , heightSmoothed(height)
-        , heightSmoothedDelta(0)
-#endif
+    Instance(Public *i) : Base(i), surface(dynamic_cast<MapElement &>(*i))
     {
 #ifdef __CLIENT__
-        oldHeight[0] = oldHeight[1] = height;
+        de::zap(oldHeight);
 #endif
-        zap(soundEmitter);
     }
 
     ~Instance()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->planeBeingDeleted(self);
+        DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->planeBeingDeleted(self);
 
 #ifdef __CLIENT__
         // Stop movement tracking of this plane.
-        self.map().trackedPlanes().remove(&self);
+        map().trackedPlanes().remove(&self);
 #endif
     }
 
-    void notifyHeightChanged()
+    inline Map &map() const { return self.map(); }
+
+    void setHeight(coord_t newHeight)
     {
-        DENG2_FOR_PUBLIC_AUDIENCE(HeightChange, i)
-        {
-            i->planeHeightChanged(self);
-        }
-    }
+        height = targetHeight = newHeight;
 
 #ifdef __CLIENT__
-    void notifySmoothedHeightChanged()
-    {
-        DENG2_FOR_PUBLIC_AUDIENCE(HeightSmoothedChange, i)
-        {
-            i->planeHeightSmoothedChanged(self);
-        }
-    }
+        heightSmoothed = newHeight;
+        oldHeight[0] = oldHeight[1] = newHeight;
 #endif
+    }
 
     void applySharpHeightChange(coord_t newHeight)
     {
@@ -109,7 +95,7 @@ DENG2_PIMPL(Plane)
             /// @todo optimize: Translation on the world up axis would be a
             /// trivial operation to perform, which, would not require plotting
             /// decorations again. This frequent case should be designed for.
-            surface.markAsNeedingDecorationUpdate();
+            surface.markForDecorationUpdate();
 #endif
         }
 
@@ -119,45 +105,59 @@ DENG2_PIMPL(Plane)
         if(!ddMapSetup)
         {
             // Add ourself to tracked plane list (for movement interpolation).
-            self.map().trackedPlanes().insert(&self);
+            map().trackedPlanes().insert(&self);
         }
 #endif
     }
 
 #ifdef __CLIENT__
-    struct findgeneratorworker_params_t
-    {
-        Plane *plane;
-        Generator *found;
-    };
-
-    static int findGeneratorWorker(Generator *gen, void *context)
-    {
-        findgeneratorworker_params_t *p = (findgeneratorworker_params_t *)context;
-        if(gen->plane == p->plane)
-        {
-            p->found = gen;
-            return true; // Stop iteration.
-        }
-        return false; // Continue iteration.
-    }
-
     /// @todo Cache this result.
-    Generator *findGenerator()
+    Generator *tryFindGenerator()
     {
-        findgeneratorworker_params_t parm;
-        parm.plane = thisPublic;
-        parm.found = 0;
-        self.map().generatorIterator(findGeneratorWorker, &parm);
-        return parm.found;
+        Generator *found = nullptr;
+        map().forAllGenerators([this, &found] (Generator &gen)
+        {
+            if(gen.plane == thisPublic)
+            {
+                found = &gen;
+                return LoopAbort;  // Found it.
+            }
+            return LoopContinue;
+        });
+        return found;
     }
+#endif
+
+    void notifyHeightChanged()
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE2(HeightChange, i) i->planeHeightChanged(self);
+    }
+
+#ifdef __CLIENT__
+    void notifySmoothedHeightChanged()
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE2(HeightSmoothedChange, i) i->planeHeightSmoothedChanged(self);
+    }
+#endif
+
+    DENG2_PIMPL_AUDIENCE(Deletion)
+    DENG2_PIMPL_AUDIENCE(HeightChange)
+#ifdef __CLIENT__
+    DENG2_PIMPL_AUDIENCE(HeightSmoothedChange)
 #endif
 };
 
+DENG2_AUDIENCE_METHOD(Plane, Deletion)
+DENG2_AUDIENCE_METHOD(Plane, HeightChange)
+#ifdef __CLIENT__
+DENG2_AUDIENCE_METHOD(Plane, HeightSmoothedChange)
+#endif
+
 Plane::Plane(Sector &sector, Vector3f const &normal, coord_t height)
     : MapElement(DMU_PLANE, &sector)
-    , d(new Instance(this, height))
+    , d(new Instance(this))
 {
+    d->setHeight(height);
     setNormal(normal);
 }
 
@@ -171,12 +171,12 @@ Sector const &Plane::sector() const
     return parent().as<Sector>();
 }
 
-int Plane::indexInSector() const
+dint Plane::indexInSector() const
 {
     return d->indexInSector;
 }
 
-void Plane::setIndexInSector(int newIndex)
+void Plane::setIndexInSector(dint newIndex)
 {
     d->indexInSector = newIndex;
 }
@@ -220,9 +220,9 @@ void Plane::updateSoundEmitterOrigin()
 {
     LOG_AS("Plane::updateSoundEmitterOrigin");
 
-    d->soundEmitter.origin[VX] = sector().soundEmitter().origin[VX];
-    d->soundEmitter.origin[VY] = sector().soundEmitter().origin[VY];
-    d->soundEmitter.origin[VZ] = d->height;
+    d->soundEmitter->origin[0] = sector().soundEmitter().origin[0];
+    d->soundEmitter->origin[1] = sector().soundEmitter().origin[1];
+    d->soundEmitter->origin[2] = d->height;
 }
 
 coord_t Plane::height() const
@@ -263,6 +263,7 @@ void Plane::lerpSmoothedHeight()
     {
         d->heightSmoothed = newHeightSmoothed;
         d->notifySmoothedHeightChanged();
+        d->surface.markForDecorationUpdate();
     }
 }
 
@@ -276,6 +277,7 @@ void Plane::resetSmoothedHeight()
     {
         d->heightSmoothed = newHeightSmoothed;
         d->notifySmoothedHeightChanged();
+        d->surface.markForDecorationUpdate();
     }
 }
 
@@ -291,20 +293,18 @@ void Plane::updateHeightTracking()
             // Too fast: make an instantaneous jump.
             d->oldHeight[0] = d->oldHeight[1];
         }
+        d->surface.markForDecorationUpdate();
     }
 }
 
 bool Plane::hasGenerator() const
 {
-    return d->findGenerator() != 0;
+    return d->tryFindGenerator() != nullptr;
 }
 
 Generator &Plane::generator() const
 {
-    if(Generator *gen = d->findGenerator())
-    {
-        return *gen;
-    }
+    if(Generator *gen = d->tryFindGenerator()) return *gen;
     /// @throw MissingGeneratorError No generator is attached.
     throw MissingGeneratorError("Plane::generator", "No generator is attached");
 }
@@ -316,7 +316,7 @@ void Plane::spawnParticleGen(ded_ptcgen_t const *def)
     if(!def) return;
 
     // Plane we spawn relative to may not be this one.
-    int relPlane = indexInSector();
+    dint relPlane = indexInSector();
     if(def->flags & Generator::SpawnCeiling)
         relPlane = Sector::Ceiling;
     if(def->flags & Generator::SpawnFloor)
@@ -356,14 +356,41 @@ void Plane::spawnParticleGen(ded_ptcgen_t const *def)
     // Is there a need to pre-simulate?
     gen->presimulate(def->preSim);
 }
+
+void Plane::addMover(ClPlaneMover &mover)
+{
+    // Forcibly remove the existing mover for this plane.
+    if(d->mover)
+    {
+        LOG_MAP_XVERBOSE("Removing existing mover %p in sector #%i, plane %i")
+                << &d->mover->thinker()
+                << sector().indexInMap()
+                << indexInSector();
+
+        map().thinkers().remove(d->mover->thinker());
+
+        DENG2_ASSERT(!d->mover);
+    }
+
+    d->mover = &mover;
+}
+
+void Plane::removeMover(ClPlaneMover &mover)
+{
+    if(d->mover == &mover)
+    {
+        d->mover = nullptr;
+    }
+}
+
 #endif // __CLIENT__
 
-int Plane::property(DmuArgs &args) const
+dint Plane::property(DmuArgs &args) const
 {
     switch(args.prop)
     {
     case DMU_EMITTER:
-        args.setValue(DMT_PLANE_EMITTER, &d->soundEmitter, 0);
+        args.setValue(DMT_PLANE_EMITTER, d->soundEmitter, 0);
         break;
     case DMU_SECTOR: {
         Sector const *secPtr = &sector();
@@ -382,10 +409,10 @@ int Plane::property(DmuArgs &args) const
         return MapElement::property(args);
     }
 
-    return false; // Continue iteration.
+    return false;  // Continue iteration.
 }
 
-int Plane::setProperty(DmuArgs const &args)
+dint Plane::setProperty(DmuArgs const &args)
 {
     switch(args.prop)
     {
@@ -404,5 +431,5 @@ int Plane::setProperty(DmuArgs const &args)
         return MapElement::setProperty(args);
     }
 
-    return false; // Continue iteration.
+    return false;  // Continue iteration.
 }

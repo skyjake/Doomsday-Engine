@@ -21,7 +21,6 @@
 #define CLIENT_RESOURCE_COMPOSITEBITMAPFONT_H
 
 #include "abstractfont.h"
-#include "def_main.h"
 #include "Texture"
 #include <de/Rectangle>
 #include <de/String>

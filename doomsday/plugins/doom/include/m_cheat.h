@@ -1,9 +1,9 @@
-/**
- * @file m_cheat.h
- * Cheats - Doom (plus Chex and Hacx). @ingroup libdoom
+/** @file m_cheat.h  Cheats - Doom (plus Chex and Hacx).
  *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @ingroup libdoom
+ *
+ * @author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -40,4 +40,4 @@ void G_RegisterCheats(void);
 } // extern "C"
 #endif
 
-#endif // LIBDOOM_M_CHEAT_H
+#endif  // LIBDOOM_M_CHEAT_H

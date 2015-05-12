@@ -36,15 +36,6 @@ static void releaseScreenshotTexture()
     ClientWindow::main().busy().releaseTransitionFrame();
 }
 
-void BusyVisual_ReleaseTextures()
-{
-    // Don't release yet if doing a transition.
-    if(!Con_TransitionInProgress())
-    {
-        releaseScreenshotTexture();
-    }
-}
-
 void BusyVisual_PrepareResources(void)
 {
     BusyTask* task = BusyMode_CurrentTask();
@@ -120,7 +111,7 @@ static void Con_EndTransition(void)
     transition.inProgress = false;
 }
 
-void Con_TransitionTicker(timespan_t ticLength)
+void Con_TransitionTicker(timespan_t /*ticLength*/)
 {
     if(isDedicated) return;
     if(!Con_TransitionInProgress()) return;

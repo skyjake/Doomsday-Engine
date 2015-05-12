@@ -1,0 +1,17 @@
+# Doomsday's Core Set of Shaders
+#
+# In each "shader" block, there can be:
+# - path:          path to both the .vsh and .fsh files (omit extension:
+#                  "shaders/test" => shaders/test.vsh, shaders/test.fsh)
+# - path.vertex:   path to the vertex shader file
+# - path.fragment: path to the fragment shader file
+# - vertex:        source of the vertex shader
+# - fragment:      source of the fragment shader
+
+@include <shaders/generic.dei>
+@include <shaders/model.dei>
+@include <shaders/fx/blur.dei>
+@include <shaders/fx/bloom.dei>
+@include <shaders/fx/post.dei>
+@include <shaders/vr.dei>
+@include <shaders/debug.dei>

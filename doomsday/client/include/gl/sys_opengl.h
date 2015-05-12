@@ -35,18 +35,18 @@
 #ifdef __CLIENT__
 
 #ifdef WIN32
-#  include <de/gui/opengl.h>
+#  include <de/graphics/opengl.h>
 #  define GL_CALL __stdcall
 #endif
 
 #if defined(UNIX) && !defined(MACOSX)
-#  include <de/gui/opengl.h>
+#  include <de/graphics/opengl.h>
 #  define GL_CALL
 #endif
 
 #if defined(UNIX) && defined(MACOSX)
 #  define GL_GLEXT_PROTOTYPES
-#  include <OpenGL/gl.h>
+#  include <de/graphics/opengl.h>
 #  include <OpenGL/glext.h>
 #  include <OpenGL/OpenGL.h>
 #  define GL_CALL

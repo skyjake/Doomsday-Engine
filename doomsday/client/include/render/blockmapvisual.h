@@ -21,7 +21,7 @@
 #ifndef DENG_CLIENT_RENDER_BLOCKMAPVISUAL_H
 #define DENG_CLIENT_RENDER_BLOCKMAPVISUAL_H
 
-#include <de/libdeng1.h>
+#include <de/liblegacy.h>
 
 DENG_EXTERN_C byte bmapShowDebug; ///< cvar
 DENG_EXTERN_C float bmapDebugSize; ///< cvar

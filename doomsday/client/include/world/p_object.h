@@ -1,7 +1,7 @@
-/** @file p_object.h World map objects.
+/** @file p_object.h  World map objects.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -26,28 +26,32 @@
 #endif
 
 #include "api_map.h"
-#include "def_data.h"
+#include "dd_def.h"
 #ifdef __CLIENT__
 #  include "ModelDef"
 #  include "Sprite"
 #endif
-#include "Sector"
 #include <de/Vector>
 #include <de/aabox.h>
+#include <doomsday/world/thinker.h>
+#include <doomsday/world/mobj.h>
+#include <doomsday/defs/ded.h>
 
 class BspLeaf;
 class Plane;
-
-// This macro can be used to calculate a mobj-specific 'random' number.
-#define MOBJ_TO_ID(mo)          ( (long)(mo)->thinker.id * 48 + ((unsigned long)(mo)/1000) )
-
-// We'll use the base mobj template directly as our mobj.
-typedef struct mobj_s
-{
-    DD_BASE_MOBJ_ELEMENTS()
-} mobj_t;
+class SectorCluster;
 
 #define MOBJ_SIZE               gx.mobjSize
+
+class MobjThinker : public ThinkerT<mobj_t>
+{
+public:
+    MobjThinker(AllocMethod alloc = AllocateStandard) : ThinkerT(MOBJ_SIZE, alloc) {}
+    MobjThinker(mobj_t const &existingToCopy) : ThinkerT(existingToCopy, MOBJ_SIZE) {}
+    MobjThinker(mobj_t *existingToTake) : ThinkerT(existingToTake, MOBJ_SIZE) {}
+
+    static void zap(mobj_t &mobj) { ThinkerT::zap(mobj, MOBJ_SIZE); }
+};
 
 #define DEFAULT_FRICTION        FIX2FLT(0xe800)
 #define NOMOMENTUM_THRESHOLD    (0.0001)
@@ -118,20 +122,20 @@ dd_bool Mobj_SetOrigin(mobj_t *mobj, coord_t x, coord_t y, coord_t z);
 BspLeaf &Mobj_BspLeafAtOrigin(mobj_t const &mobj);
 
 /**
- * Returns @c true iff the sector cluster at the mobj's origin is known (i.e.,
- * it has been linked into the map by calling @ref Mobj_SetOrigin() and the BSP
- * leaf at the origin has a convex geometry (not degenerate)).
+ * Returns @c true iff the BSP leaf at the mobj's origin is known (i.e.,
+ * it has been linked into the map by calling @ref Mobj_SetOrigin() and has a
+ * convex geometry).
  *
  * @param mobj  Mobj instance.
  */
-bool Mobj_HasCluster(mobj_t const &mobj);
+bool Mobj_HasSubspace(mobj_t const &mobj);
 
 /**
  * Returns the sector cluster in which the mobj currently resides.
  *
  * @param mobj  Mobj instance.
  *
- * @see Mobj_HasCluster()
+ * @see Mobj_HasSubspace()
  */
 SectorCluster &Mobj_Cluster(mobj_t const &mobj);
 
@@ -172,19 +176,21 @@ void Mobj_UnlinkLumobjs(mobj_t *mobj);
  */
 void Mobj_GenerateLumobjs(mobj_t *mobj);
 
+void Mobj_AnimateHaloOcclussion(mobj_t &mob);
+
 /**
- * Calculate the strength of the shadow this mobj should cast.
+ * Calculate the strength of the shadow this map-object should cast.
  *
  * @note Implemented using a greatly simplified version of the lighting equation;
  *       no light diminishing or light range compression.
  */
-float Mobj_ShadowStrength(mobj_t *mobj);
+de::dfloat Mobj_ShadowStrength(mobj_t const &mob);
 
 /**
  * Determines which of the available sprites is in effect for the current mobj
  * state and frame. May return @c 0 if the state and/or frame is not valid.
  */
-Sprite *Mobj_Sprite(mobj_t const &mobj);
+Sprite *Mobj_Sprite(mobj_t const &mob);
 
 /**
  * Determines which of the available model definitions (if any), are in effect
@@ -200,6 +206,15 @@ Sprite *Mobj_Sprite(mobj_t const &mobj);
 ModelDef *Mobj_ModelDef(mobj_t const &mobj, ModelDef **nextModef = 0,
                         float *interp = 0);
 
+/**
+ * Determines the shadow radius of a mobj. Falls back to Mobj_VisualRadius().
+ *
+ * @param mobj  Map object.
+ *
+ * @return Radius for shadow.
+ */
+coord_t Mobj_ShadowRadius(mobj_t const &mobj);
+
 #endif // __CLIENT__
 
 coord_t Mobj_ApproxPointDistance(mobj_t *start, coord_t const *point);
@@ -207,31 +222,30 @@ coord_t Mobj_ApproxPointDistance(mobj_t *start, coord_t const *point);
 dd_bool Mobj_IsSectorLinked(mobj_t *mobj);
 
 /**
- * @return  The current floatbob offset for the mobj, if the mobj is flagged
- *          for bobbing; otherwise @c 0.
+ * Returns the current "float bob" offset for the given map-object @a mob (if enabled); otherwise @c 0.
  */
-coord_t Mobj_BobOffset(mobj_t *mobj);
+coord_t Mobj_BobOffset(mobj_t const &mob);
 
-float Mobj_Alpha(mobj_t *mobj);
+de::dfloat Mobj_Alpha(mobj_t const &mob);
 
 /**
  * Returns the physical radius of the mobj.
  *
- * @param mobj  Mobj instance.
+ * @param mob  Map-object.
  *
  * @see Mobj_VisualRadius()
  */
-coord_t Mobj_Radius(mobj_t const &mobj);
+coord_t Mobj_Radius(mobj_t const &mob);
 
 /**
  * Returns the radius of the mobj as it would visually appear to be, according
  * to the current visualization (either a sprite or a 3D model).
  *
- * @param mobj  Mobj instance.
+ * @param mob  Map-object.
  *
  * @see Mobj_Radius()
  */
-coord_t Mobj_VisualRadius(mobj_t const &mobj);
+coord_t Mobj_VisualRadius(mobj_t const &mob);
 
 /**
  * Returns an axis-aligned bounding box for the mobj in map space, centered

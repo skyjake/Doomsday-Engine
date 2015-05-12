@@ -58,10 +58,9 @@
  */
 static void stopPlat(plat_t *plat)
 {
-    P_ToXSector(plat->sector)->specialData = 0;
-#if __JHEXEN__
-    Game_ACScriptInterpreter().tagFinished(P_ToXSector(plat->sector)->tag);
-#endif
+    DENG2_ASSERT(plat);
+    P_ToXSector(plat->sector)->specialData = nullptr;
+    P_NotifySectorFinished(P_ToXSector(plat->sector)->tag);
     Thinker_Remove(&plat->thinker);
 }
 
@@ -550,7 +549,7 @@ static int activatePlat(thinker_t *th, void *context)
     plat_t *plat = (plat_t *) th;
     activateplatparams_t *params = (activateplatparams_t *) context;
 
-    if(plat->tag == (int) params->tag && plat->thinker.inStasis)
+    if(plat->tag == (int) params->tag && Thinker_InStasis(&plat->thinker))
     {
         plat->state = plat->oldState;
         Thinker_SetStasis(&plat->thinker, false);
@@ -594,7 +593,7 @@ static int deactivatePlat(thinker_t *th, void *context)
     }
 #else
     // For one with the tag and not in stasis.
-    if(plat->tag == (int) params->tag && !plat->thinker.inStasis)
+    if(plat->tag == (int) params->tag && !Thinker_InStasis(&plat->thinker))
     {
         // Put it in stasis.
         plat->oldState = plat->state;

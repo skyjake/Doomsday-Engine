@@ -1,4 +1,4 @@
-/** @file biastracker.cpp Shadow Bias illumination tracker.
+/** @file biastracker.cpp  Shadow Bias illumination tracker.
  *
  * @authors Copyright © 2005-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
@@ -55,16 +55,6 @@ DENG2_PIMPL_NOREF(BiasTracker)
         de::zap(contributors);
     }
 
-    Instance(Instance const &other)
-        : de::IPrivate()
-        , BiasSource::IDeletionObserver()
-        , activeContributors  (other.activeContributors)
-        , changedContributions(other.changedContributions)
-        , lastSourceDeletion  (other.lastSourceDeletion)
-    {
-        std::memcpy(contributors, other.contributors, sizeof(contributors));
-    }
-
     /// Observes BiasSource Deletion
     void biasSourceBeingDeleted(BiasSource const &source)
     {
@@ -88,15 +78,6 @@ DENG2_PIMPL_NOREF(BiasTracker)
 
 BiasTracker::BiasTracker() : d(new Instance())
 {}
-
-BiasTracker::BiasTracker(BiasTracker const &other) : d(new Instance(*other.d))
-{}
-
-BiasTracker &BiasTracker::operator = (BiasTracker const &other)
-{
-    d.reset(new Instance(*other.d));
-    return *this;
-}
 
 void BiasTracker::clearContributors()
 {
@@ -257,7 +238,7 @@ void BiasTracker::applyChanges(BiasDigest &changes)
         /// sources by unique in-map index, and 2) re-index source references
         /// here upon deletion. The assumption being that affection changes
         /// occur far more frequently.
-        if(changes.isSourceChanged(App_WorldSystem().map().toIndex(*ctbr->source)))
+        if(changes.isSourceChanged(App_WorldSystem().map().indexOf(*ctbr->source)))
         {
             d->changedContributions |= 1 << i;
         }

@@ -1,7 +1,7 @@
-/** @file dd_winit.h
+/** @file dd_winit.h  Win32 Initialization.
  *
- * @authors Copyright © 2003-2013 Jaakko Kernen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Kernen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,10 +17,6 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Win32 Initialization.
- */
-
 #ifndef LIBDENG_WINIT_H
 #define LIBDENG_WINIT_H
 
@@ -33,17 +29,9 @@
 extern "C" {
 #endif
 
-//#define MAINWCLASS          "DoomsdayMainWClass"
-
 typedef struct {
     HINSTANCE hInstance;
-/*
-#ifdef UNICODE
-    LPCWSTR className;
-#else
-    LPCSTR className;
-#endif
-*/
+
     /// @c true = We are using a custom user dir specified on the command line.
     BOOL usingUserDir;
 
@@ -55,17 +43,7 @@ extern application_t app;
 dd_bool DD_Win32_Init(void);
 void DD_Shutdown(void);
 
-const char* DD_Win32_GetLastErrorMessage(void);
-
-#ifdef UNICODE
-LPCWSTR ToWideString(const char* str);
-LPCSTR  ToAnsiString(const wchar_t* wstr);
-#  define WIN_STRING(s)     (ToWideString(s))
-#  define UTF_STRING(ws)    (ToAnsiString(ws))
-#else
-#  define WIN_STRING(s)     (s)
-#  define UTF_STRING(ws)    (ws)
-#endif
+char const *DD_Win32_GetLastErrorMessage(void);
 
 #ifdef __cplusplus
 } // extern "C"

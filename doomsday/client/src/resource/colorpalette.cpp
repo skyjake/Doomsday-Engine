@@ -87,7 +87,7 @@ static void parseColorFormat(QString const &fmt, Vector3ui &compOrder, Vector3ui
 
 } // namespace internal
 
-using namespace internal;
+using namespace ::internal;
 
 typedef QVector<de::Vector3ub> ColorTable;
 

@@ -1,6 +1,6 @@
-/** @file render/materialcontext.h Material render-contexts
+/** @file materialcontext.h  Material render-context identifiers.
  *
- * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2009-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -16,11 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_RENDER_MATERIALCONTEXT_H
-#define LIBDENG_RENDER_MATERIALCONTEXT_H
+#ifndef CLIENT_RENDER_MATERIALCONTEXT_H
+#define CLIENT_RENDER_MATERIALCONTEXT_H
 
 /**
- * Material render-context identifiers:
+ * Material render-context identifier.
  *
  * @ingroup render
  */
@@ -38,4 +38,4 @@ enum MaterialContextId
     LastMaterialContextId = SkySphereContext
 };
 
-#endif // LIBDENG_RENDER_MATERIALCONTEXT_H
+#endif  // CLIENT_RENDER_MATERIALCONTEXT_H

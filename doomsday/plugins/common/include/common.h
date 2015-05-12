@@ -34,6 +34,8 @@
 #define IS_NETWORK_SERVER       (DD_GetInteger(DD_SERVER) && DD_GetInteger(DD_NETGAME))
 #define IS_NETWORK_CLIENT       (DD_GetInteger(DD_CLIENT) && DD_GetInteger(DD_NETGAME))
 
+#include "config.h"
+
 #if __JDOOM__
 #  include "jdoom.h"
 #elif __JDOOM64__
@@ -44,20 +46,32 @@
 #  include "jhexen.h"
 #endif
 
+#ifdef __cplusplus
+#  include <doomsday/filesys/lumpindex.h>
+#endif
 #include "gamerules.h"
+#include "g_defs.h"
 #include "pause.h"
-
-DENG_EXTERN_C dd_bool sc_FileScripts;
-DENG_EXTERN_C char const *sc_ScriptsDir;
+#include "p_mapsetup.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 int Common_GetInteger(int id);
+void Common_Register();
 
 #ifdef __cplusplus
 } // extern "C"
+
+/**
+ * Returns the central LumpIndex from the engine. For use with old subsystems
+ * which still depend on this old fashioned mechanism for file access.
+ *
+ * @deprecated  Implement file access without depending on this specialized behavior.
+ */
+inline de::LumpIndex const &CentralLumpIndex() { return *reinterpret_cast<de::LumpIndex const *>(F_LumpIndex()); }
+
 #endif
 
 #endif // LIBCOMMON_GAME_INCLUDES

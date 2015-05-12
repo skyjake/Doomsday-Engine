@@ -22,7 +22,6 @@
  */
 
 #include "de_base.h"
-#include "con_main.h"
 #include "ui/sys_input.h"
 #include "ui/clientwindowsystem.h"
 #include "ui/clientwindow.h"
@@ -79,6 +78,9 @@ static void Mouse_Qt_Poll()
 
             // Keep the cursor centered.
             QPoint mid(win->width() / 2, win->height() / 2);
+#ifdef DENG2_QT_5_0_OR_NEWER
+            mid /= qApp->devicePixelRatio();
+#endif
             QCursor::setPos(win->mapToGlobal(mid));
             prevMousePos = mid;
         }
@@ -197,11 +199,12 @@ void Mouse_Qt_SubmitMotion(int axis, int deltaX, int deltaY)
         // We are not yet equipped to handle finer wheel motions.
         Mouse_Qt_SubmitButton(idx, true);
         Mouse_Qt_SubmitButton(idx, false);
-        return;
     }
-
-    mouseDelta[axis].dx += deltaX;
-    mouseDelta[axis].dy += deltaY;
+    else
+    {
+        mouseDelta[axis].dx += deltaX;
+        mouseDelta[axis].dy += deltaY;
+    }
 }
 
 void Mouse_Qt_SubmitWindowPosition(int x, int y)

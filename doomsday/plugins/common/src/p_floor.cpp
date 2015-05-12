@@ -78,9 +78,6 @@ static int stairQueueHead;
 static int stairQueueTail;
 #endif
 
-/**
- * Move a plane (floor or ceiling) and check for crushing.
- */
 result_e T_MovePlane(Sector *sector, float speed, coord_t dest, int crush,
     int isCeiling, int direction)
 {
@@ -388,9 +385,7 @@ void T_MoveFloor(void *floorThinkerPtr)
             }
         }
 #endif
-#if __JHEXEN__
-        Game_ACScriptInterpreter().tagFinished(P_ToXSector(floor->sector)->tag);
-#endif
+        P_NotifySectorFinished(P_ToXSector(floor->sector)->tag);
         Thinker_Remove(&floor->thinker);
     }
 }
@@ -456,13 +451,8 @@ int floor_s::read(MapStateReader *msr)
         else
         {
             // Flat number is an absolute lump index.
-            Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
-            ddstring_t name; Str_Init(&name);
-            F_FileName(&name, Str_Text(W_LumpName(Reader_ReadInt16(reader))));
-            Uri_SetPath(uri, Str_Text(&name));
-            material = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
-            Uri_Delete(uri);
-            Str_Free(&name);
+            de::Uri uri("Flats:", CentralLumpIndex()[Reader_ReadInt16(reader)].name().fileNameWithoutExtension());
+            material = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(reinterpret_cast<uri_s *>(&uri)));
         }
 
         floorDestHeight        = (float) Reader_ReadInt16(reader);
@@ -505,13 +495,8 @@ int floor_s::read(MapStateReader *msr)
         newSpecial             = Reader_ReadInt32(reader);
 
         // Flat number is an absolute lump index.
-        Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
-        ddstring_t name; Str_Init(&name);
-        F_FileName(&name, Str_Text(W_LumpName(Reader_ReadInt16(reader))));
-        Uri_SetPath(uri, Str_Text(&name));
-        material               = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
-        Uri_Delete(uri);
-        Str_Free(&name);
+        de::Uri uri("Flats:", CentralLumpIndex()[Reader_ReadInt16(reader)].name().fileNameWithoutExtension());
+        material               = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(reinterpret_cast<uri_s *>(&uri)));
 
         floorDestHeight        = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
         speed                  = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
@@ -1501,8 +1486,8 @@ static int stopFloorCrush(thinker_t *th, void *context)
     {
         // Completely remove the crushing floor
         SN_StopSequence((mobj_t *)P_GetPtrp(floor->sector, DMU_EMITTER));
-        P_ToXSector(floor->sector)->specialData = NULL;
-        Game_ACScriptInterpreter().tagFinished(P_ToXSector(floor->sector)->tag);
+        P_ToXSector(floor->sector)->specialData = nullptr;
+        P_NotifySectorFinished(P_ToXSector(floor->sector)->tag);
         Thinker_Remove(&floor->thinker);
         (*found) = true;
     }

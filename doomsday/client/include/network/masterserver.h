@@ -26,7 +26,7 @@
 
 #include "dd_share.h"
 
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <QObject>
 #include <QNetworkReply>
 #include <QByteArray>

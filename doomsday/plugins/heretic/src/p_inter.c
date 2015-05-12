@@ -1,26 +1,22 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file p_inter.c  Handling interactions (i.e., collisions).
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 Activision
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1999 Activision
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #include <string.h>
@@ -29,6 +25,7 @@
 
 #include "am_map.h"
 #include "d_net.h"
+#include "d_netsv.h"
 #include "dmu_lib.h"
 #include "player.h"
 #include "p_inventory.h"
@@ -75,7 +72,7 @@ static dd_bool giveOneAmmo(player_t *plr, ammotype_t ammoType, int numRounds)
     if(G_Ruleset_Skill() == SM_BABY ||
        G_Ruleset_Skill() == SM_NIGHTMARE)
     {
-        numRounds += numRounds / 1;
+        numRounds += numRounds >> 1;
     }
 
     // Given the new ammo the player may want to change weapon automatically.
@@ -393,7 +390,7 @@ dd_bool P_TakePower(player_t *player, powertype_t powerType)
     case PT_FLIGHT: {
         mobj_t *plrmo = player->plr->mo;
 
-        if(plrmo->origin[VZ] != plrmo->floorZ && cfg.lookSpring)
+        if(plrmo->origin[VZ] != plrmo->floorZ && cfg.common.lookSpring)
         {
             player->centering = true;
         }
@@ -575,6 +572,10 @@ static dd_bool pickupWeapon(player_t *plr, weapontype_t weaponType,
             S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         }
     }
+
+    // Leave placed weapons forever on net games.
+    if(IS_NETGAME && !G_Ruleset_Deathmatch())
+        return false;
 
     return pickedWeapon;
 }
@@ -1044,10 +1045,7 @@ static void killMobj(mobj_t *source, mobj_t *target)
         }
 
         // Don't die with the automap open.
-        ST_AutomapOpen(target->player - players, false, false);
-#if __JHERETIC__ || __JHEXEN__
-        Hu_InventoryOpen(target->player - players, false);
-#endif
+        ST_CloseAll(target->player - players, false);
     }
 
     if((state = P_GetState(target->type, SN_XDEATH)) != S_NULL &&
@@ -1256,7 +1254,7 @@ int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
     angle_t angle;
     int saved, originalHealth;
     player_t *player;
-    int temp, damage;
+    int /*temp,*/ damage;
 
     if(!target)
         return 0; // Wha?
@@ -1327,7 +1325,7 @@ int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
     {
         // damage = (int) ((float) damage * netMobDamageModifier);
         if(IS_NETGAME)
-            damage *= cfg.netMobDamageModifier;
+            damage *= cfg.common.netMobDamageModifier;
     }
 
     // Special damage types.
@@ -1563,7 +1561,7 @@ int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         if(player->damageCount > 100)
             player->damageCount = 100; // Teleport stomp does 10k points...
 
-        temp = damage < 100 ? damage : 100;
+        // temp = damage < 100 ? damage : 100; Unused?
 
         // Maybe unhide the HUD?
         ST_HUDUnHide(player - players, HUE_ON_DAMAGE);

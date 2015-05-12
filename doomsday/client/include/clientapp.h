@@ -26,9 +26,9 @@
 #include "network/serverlink.h"
 #include "ui/inputsystem.h"
 #include "ui/clientwindowsystem.h"
+#include "ui/infine/infinesystem.h"
 #include "render/rendersystem.h"
 #include "resource/resourcesystem.h"
-#include "WidgetActions"
 #include "updater.h"
 #include "Games"
 #include "world/worldsystem.h"
@@ -68,17 +68,34 @@ public:
     static SettingsRegister &networkSettings();
     static SettingsRegister &audioSettings();    ///< @todo Belongs in AudioSystem.
     static ServerLink &serverLink();
+    static InFineSystem &infineSystem();
     static InputSystem &inputSystem();
     static ClientWindowSystem &windowSystem();
     static RenderSystem &renderSystem();
     static ResourceSystem &resourceSystem();
-    static WidgetActions &widgetActions();
     static de::Games &games();
     static de::WorldSystem &worldSystem();
+
+    static bool hasRenderSystem();
 
 public slots:
     void openHomepageInBrowser();
     void openInBrowser(QUrl url);
+
+    /**
+     * Enters the "native UI" mode that temporarily switches the main window to a
+     * regular window and restores the desktop display mode. This allows the user to
+     * access native UI widgets normally.
+     *
+     * Call this before showing native UI widgets. You must call endNativeUIMode()
+     * afterwards.
+     */
+    void beginNativeUIMode();
+
+    /**
+     * Ends the "native UI" mode, restoring the previous main window properties.
+     */
+    void endNativeUIMode();
 
 private:
     DENG2_PRIVATE(d)

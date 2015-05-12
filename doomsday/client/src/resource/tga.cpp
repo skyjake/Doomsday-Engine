@@ -110,14 +110,14 @@ static void writeShort(FILE *f, int16_t s)
     fwrite(&v, sizeof(v), 1, f);
 }
 
-static uint8_t readByte(de::FileHandle &f)
+static uint8_t readByte(FileHandle &f)
 {
     uint8_t v;
     f.read(&v, 1);
     return v;
 }
 
-static int16_t readShort(de::FileHandle &f)
+static int16_t readShort(FileHandle &f)
 {
     int16_t v;
     f.read((uint8_t *)&v, sizeof(v));
@@ -148,7 +148,7 @@ static void writeHeader(uint8_t idLength, uint8_t colorMapType,
     writeByte(file, imageType);
 }
 
-static void readHeader(tga_header_t *dst, de::FileHandle &file)
+static void readHeader(tga_header_t *dst, FileHandle &file)
 {
     dst->idLength     = readByte(file);
     dst->colorMapType = readByte(file);
@@ -169,7 +169,7 @@ static void writeColorMapSpec(int16_t index, int16_t length, uint8_t entrySize,
     writeByte(file, entrySize);
 }
 
-static void readColorMapSpec(tga_colormapspec_t *dst, de::FileHandle &file)
+static void readColorMapSpec(tga_colormapspec_t *dst, FileHandle &file)
 {
     dst->index     = readShort(file);
     dst->length    = readShort(file);
@@ -202,7 +202,7 @@ static void writeImageSpec(int16_t xOrigin, int16_t yOrigin, int16_t width,
     writeByte(file, 0);
 }
 
-static void readImageSpec(tga_imagespec_t *dst, de::FileHandle &file)
+static void readImageSpec(tga_imagespec_t *dst, FileHandle &file)
 {
     dst->xOrigin    = readShort(file);
     dst->yOrigin    = readShort(file);
@@ -363,7 +363,7 @@ int TGA_Save16_rgb888(FILE* file, int w, int h, const uint8_t* buf)
     return 1; // Success.
 }
 
-uint8_t *TGA_Load(de::FileHandle &file, Vector2ui &outSize, int &pixelSize)
+uint8_t *TGA_Load(FileHandle &file, Vector2ui &outSize, int &pixelSize)
 {
     uint8_t *dstBuf = 0;
 

@@ -1,9 +1,7 @@
-/**
- * @file common.c
- * Top-level libcommon routines.
+/** @file common.c  Top-level libcommon routines.
  *
- * @authors Copyright &copy; 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -23,9 +21,6 @@
 #include "common.h"
 #include "g_common.h"
 
-dd_bool sc_FileScripts = false;
-char const *sc_ScriptsDir = "";
-
 int Common_GetInteger(int id)
 {
     switch(id)
@@ -35,9 +30,17 @@ int Common_GetInteger(int id)
         // manually save the game before, e.g., upgrading to a new version.
         return G_GameState() == GS_MAP;
 
-    default:
-        break;
+    default: break;
     }
+
     return 0;
 }
 
+void Common_Register()
+{
+    // Movement
+    C_VAR_FLOAT("player-move-speed",                    &cfg.common.playerMoveSpeed,               0, 0, 1);
+    C_VAR_INT  ("player-jump",                          &cfg.common.jumpEnabled,                   0, 0, 1);
+    C_VAR_FLOAT("player-jump-power",                    &cfg.common.jumpPower,                     0, 0, 100);
+    C_VAR_BYTE ("player-air-movement",                  &cfg.common.airborneMovement,              0, 0, 32);
+}

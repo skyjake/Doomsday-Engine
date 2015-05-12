@@ -1,4 +1,4 @@
-/** @file mpselectionwidget.cpp
+/** @file mpsessionmenuwidget.cpp
  *
  * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -21,19 +21,22 @@
 #include "ui/widgets/gamesessionwidget.h"
 #include "network/serverlink.h"
 #include "clientapp.h"
+#include "ui/clientwindow.h"
 #include "dd_main.h"
-#include "con_main.h"
 
+#include <doomsday/console/exec.h>
 #include <de/charsymbols.h>
 #include <de/SignalAction>
 #include <de/SequentialLayout>
 #include <de/DocumentPopupWidget>
 #include <de/ui/Item>
+#include <de/IndirectRule>
 
 using namespace de;
 
 DENG_GUI_PIMPL(MPSessionMenuWidget)
 , DENG2_OBSERVES(App, GameChange)
+, DENG2_OBSERVES(Games, Readiness)
 , DENG2_OBSERVES(ServerLink, DiscoveryUpdate)
 {
     static ServerLink &link() { return ClientApp::serverLink(); }
@@ -62,6 +65,12 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
 
             BusyMode_FreezeGameForBusyMode();
             ClientWindow::main().taskBar().close();
+
+            // Automatically leave the current MP game.
+            if(netGame && isClient)
+            {
+                ClientApp::serverLink().disconnect();
+            }
 
             App_ChangeGame(App_Games().byIdentityKey(gameId), false /*no reload*/);
             Con_Execute(CMDS_DDAY, cmd.toLatin1(), false, false);
@@ -111,19 +120,25 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
      */
     struct ServerWidget : public GameSessionWidget
     {
+        ServerListItem const *svItem = nullptr;
+
         ServerWidget()
         {
             loadButton().disable();
+        }
 
-            // Don't clip any of the provided information.
-            loadButton().setHeightPolicy(ui::Expand);
+        Game const *game() const
+        {
+            if(!svItem) return nullptr;
+            return &App_Games().byIdentityKey(svItem->info().gameIdentityKey);
         }
 
         void updateFromItem(ServerListItem const &item)
         {
             try
             {
-                Game const &svGame = App_Games().byIdentityKey(item.info().gameIdentityKey);
+                svItem = &item;
+                Game const &svGame = *game();
 
                 if(style().images().has(svGame.logoImageId()))
                 {
@@ -131,32 +146,39 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
                 }
 
                 serverinfo_t const &sv = item.info();
-
-                loadButton().enable(sv.canJoin &&
-                                    sv.version == DOOMSDAY_VERSION &&
-                                    svGame.allStartupFilesFound());
-
-                loadButton().setText(String(_E(1) "%1 " _E(.) DENG2_CHAR_MDASH" %2" _E(C) " (%5)" _E(.)
-                                            _E(D)_E(l) "\n%6 %4")
+                loadButton().setText(String(_E(F)_E(s) "%2\n" _E(.)_E(.)
+                                            _E(1) "%1" _E(.)_E(C) "%4" _E(.)_E(D)_E(l) "\n%5 %3")
                                .arg(sv.name)
                                .arg(svGame.title())
                                .arg(sv.gameConfig)
-                               .arg(sv.numPlayers)
-                               //.arg(sv.maxPlayers)
+                               .arg(sv.numPlayers? QString(" " DENG2_CHAR_MDASH " %1").arg(sv.numPlayers) : QString())
                                .arg(sv.map));
 
                 // Extra information.
                 document().setText(ServerInfo_AsStyledText(&sv));
+
+                updateAvailability();
             }
             catch(Error const &)
             {
+                svItem = nullptr;
+
                 /// @todo
             }
+        }
+
+        void updateAvailability()
+        {
+            loadButton().enable(svItem &&
+                                svItem->info().canJoin &&
+                                svItem->info().version == DOOMSDAY_VERSION &&
+                                game()->allStartupFilesFound());
         }
     };
 
     DiscoveryMode mode;
     ServerLink::FoundMask mask;
+    IndirectRule *maxHeightRule = new IndirectRule;
 
     Instance(Public *i)
         : Base(i)
@@ -164,12 +186,50 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
     {
         link().audienceForDiscoveryUpdate += this;
         App::app().audienceForGameChange() += this;
+        App_Games().audienceForReadiness() += this;
     }
 
     ~Instance()
     {
+        releaseRef(maxHeightRule);
         link().audienceForDiscoveryUpdate -= this;
         App::app().audienceForGameChange() -= this;
+        App_Games().audienceForReadiness() -= this;
+    }
+
+    /**
+     * Puts together a rule that determines the tallest load button of those present
+     * in the menu. This will be used to size all the buttons uniformly.
+     */
+    void updateItemMaxHeight()
+    {
+        // Form a rule that is the maximum of all load button heights.
+        Rule const *maxHgt = nullptr;
+        foreach(Widget *w, self.childWidgets())
+        {
+            if(ServerWidget *sw = w->maybeAs<ServerWidget>())
+            {
+                auto const &itemHeight = sw->loadButton().contentHeight();
+                if(!maxHgt)
+                {
+                    maxHgt = holdRef(itemHeight);
+                }
+                else
+                {
+                    changeRef(maxHgt, OperatorRule::maximum(*maxHgt, itemHeight));
+                }
+            }
+        }
+
+        if(maxHgt)
+        {
+            maxHeightRule->setSource(*maxHgt);
+        }
+        else
+        {
+            maxHeightRule->unsetSource();
+        }
+        releaseRef(maxHgt);
     }
 
     void linkDiscoveryUpdate(ServerLink const &link)
@@ -209,6 +269,9 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
 
         if(changed)
         {
+            updateItemMaxHeight();
+            self.sort();
+
             // Let others know that one or more games have appeared or disappeared
             // from the menu.
             emit self.availabilityChanged();
@@ -222,6 +285,17 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
             // If the session menu exists across game changes, it's good to
             // keep it up to date.
             link().discoverUsingMaster();
+        }
+    }
+
+    void gameReadinessUpdated()
+    {
+        foreach(Widget *w, self.childWidgets())
+        {
+            if(ServerWidget *sw = w->maybeAs<ServerWidget>())
+            {
+                sw->updateAvailability();
+            }
         }
     }
 };
@@ -252,9 +326,11 @@ Action *MPSessionMenuWidget::makeAction(ui::Item const &item)
     return new Instance::JoinAction(item.as<Instance::ServerListItem>().info());
 }
 
-GuiWidget *MPSessionMenuWidget::makeItemWidget(ui::Item const &item, GuiWidget const *)
+GuiWidget *MPSessionMenuWidget::makeItemWidget(ui::Item const &, GuiWidget const *)
 {
-    return new Instance::ServerWidget;
+    auto *sw = new Instance::ServerWidget;
+    sw->rule().setInput(Rule::Height, *d->maxHeightRule);
+    return sw;
 }
 
 void MPSessionMenuWidget::updateItemWidget(GuiWidget &widget, ui::Item const &item)

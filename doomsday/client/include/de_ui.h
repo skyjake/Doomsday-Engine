@@ -24,11 +24,10 @@
 #ifndef LIBDENG_USER_INTERFACE_H
 #define LIBDENG_USER_INTERFACE_H
 
-#include "ui/ui2_main.h"
-#include "ui/fi_main.h"
+#include "ui/infine/infinesystem.h"
 
 #ifdef __CLIENT__
-#  include <de/gui/ddkey.h>
+#  include <de/input/ddkey.h>
 #  include "ui/clientwindowsystem.h"
 #  include "ui/clientwindow.h"
 #  include "ui/ui_main.h"

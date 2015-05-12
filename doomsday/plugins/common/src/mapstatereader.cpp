@@ -18,12 +18,16 @@
  * 02110-1301 USA</small>
  */
 
-#include "common.h"
 #include "mapstatereader.h"
 
+#include <de/ArrayValue>
+#include <de/NativePath>
+#include <de/String>
+#include "d_netsv.h"           /// @todo remove me
 #include "dmu_lib.h"
 #include "dmu_archiveindex.h"
-#include "d_netsv.h"           /// @todo remove me
+#include "g_game.h"
+#include "gamesession.h"
 #include "hu_log.h"
 #include "mapstatewriter.h"    // ChunkId
 #include "p_actor.h"
@@ -35,9 +39,6 @@
 #include "polyobjs.h"
 #include "r_common.h"
 #include "thinkerinfo.h"
-#include <de/ArrayValue>
-#include <de/NativePath>
-#include <de/String>
 
 namespace internal
 {
@@ -514,8 +515,6 @@ DENG2_PIMPL(MapStateReader)
 
         bool const formatHasStasisInfo = (mapVersion >= 6);
 
-        removeLoadSpawnedThinkers();
-
 #if __JHEXEN__
         if(mapVersion < 4)
             beginSegment(ASEG_MOBJS);
@@ -537,7 +536,7 @@ DENG2_PIMPL(MapStateReader)
 #endif
 
         byte tClass = 0;
-        for(;;)
+        forever
         {
 #if __JHEXEN__
             if(reachedSpecialsBlock)
@@ -615,7 +614,7 @@ DENG2_PIMPL(MapStateReader)
             }
             else
             {
-                th = reinterpret_cast<thinker_t *>(Z_Calloc(thInfo->size, PU_MAP, 0));
+                th = Thinker(Thinker::AllocateMemoryZone, thInfo->size).take();
             }
 
             bool putThinkerInStasis = (formatHasStasisInfo? CPP_BOOL(Reader_ReadByte(reader)) : false);
@@ -668,7 +667,7 @@ DENG2_PIMPL(MapStateReader)
     {
 #if __JHEXEN__
         beginSegment(ASEG_SCRIPTS);
-        Game_ACScriptInterpreter().readMapState(thisPublic);
+        COMMON_GAMESESSION->acsSystem().readMapState(thisPublic);
         // endSegment();
 #endif
     }
@@ -735,7 +734,8 @@ MapStateReader::~MapStateReader()
 
 void MapStateReader::read(String const &mapUriStr)
 {
-    File const &mapStateFile = folder().locate<File const>(String("maps") / mapUriStr + "State");
+    de::Uri const mapUri(mapUriStr, RC_NULL);
+    File const &mapStateFile = folder().locate<File const>(String("maps") / mapUri.path() + "State");
     SV_OpenFileForRead(mapStateFile);
     d->reader = SV_NewReader();
 
@@ -764,6 +764,7 @@ void MapStateReader::read(String const &mapUriStr)
 #if !__JHEXEN__
         d->thingArchive->initForLoad(d->thingArchiveSize);
 #endif
+        d->removeLoadSpawnedThinkers();
 
         d->readElements();
         d->readPolyobjs();

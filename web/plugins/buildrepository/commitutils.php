@@ -189,7 +189,7 @@ function outputCommitJumpList(&$groups)
         for($i = (integer)0; $i < $numLists; $i++)
         {
             $subList = array_slice($groups, $i*5, 5);
-            outputCommitJumpList2(&$subList);
+            outputCommitJumpList2($subList);
         }
     }
     else

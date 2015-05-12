@@ -1,7 +1,7 @@
 /** @file rend_particle.cpp  Particle effect rendering.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,30 +21,35 @@
 #include "de_base.h"
 #include "render/rend_particle.h"
 
+#include <cstdlib>
+#include <de/concurrency.h>
+#include <de/vector1.h>
+#include <doomsday/console/var.h>
+#include <doomsday/filesys/fs_main.h>
+
 #include "clientapp.h"
-#include "con_main.h"
 #include "r_util.h"
+#include "sys_system.h"  // novideo
 
-#include "filesys/fs_main.h"
-
+#include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
 #include "gl/texturecontent.h"
 
-#include "BspLeaf"
-#include "Line"
-#include "Plane"
 #include "world/map.h"
 #include "world/p_players.h"
+#include "BspLeaf"
+#include "ConvexSubspace"
+#include "Line"
+#include "Plane"
+#include "SectorCluster"
 
 #include "resource/image.h"
 
 #include "render/r_main.h"
+#include "render/viewports.h"
 #include "render/rend_main.h"
 #include "render/rend_model.h"
-#include "render/vlight.h"
-
-#include <de/vector1.h>
-#include <cstdlib>
+#include "render/vissprite.h"
 
 using namespace de;
 
@@ -53,14 +58,14 @@ using namespace de;
 
 static DGLuint pointTex, ptctexname[MAX_PTC_TEXTURES];
 
-static bool hasPoints, hasLines, hasModels, hasNoBlend, hasBlend;
+static bool hasPoints, hasLines, hasModels, hasNoBlend, hasAdditive;
 static bool hasPointTexs[NUM_TEX_NAMES];
 
 struct OrderedParticle
 {
-    Generator *generator;
-    int ptID; // Particle id.
-    float distance;
+    Generator const *generator;
+    dint particleId;
+    dfloat distance;
 };
 static OrderedParticle *order;
 static size_t orderSize;
@@ -70,34 +75,25 @@ static size_t numParts;
 /*
  * Console variables:
  */
-byte useParticles = true;
-static int maxParticles; ///< @c 0= Unlimited.
-static int particleNearLimit;
-static float particleDiffuse = 4;
+dbyte useParticles = true;
+static dint maxParticles;           ///< @c 0= Unlimited.
+static dint particleNearLimit;
+static dfloat particleDiffuse = 4;
 
-void Rend_ParticleRegister()
-{
-    // Cvars
-    C_VAR_BYTE ("rend-particle",                   &useParticles,      0,              0, 1);
-    C_VAR_INT  ("rend-particle-max",               &maxParticles,      CVF_NO_MAX,     0, 0);
-    C_VAR_FLOAT("rend-particle-diffuse",           &particleDiffuse,   CVF_NO_MAX,     0, 0);
-    C_VAR_INT  ("rend-particle-visible-near",      &particleNearLimit, CVF_NO_MAX,     0, 0);
-}
-
-static float pointDist(fixed_t const c[3])
+static dfloat pointDist(fixed_t const c[3])
 {
     viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
-    float dist = ((viewData->current.origin.y - FIX2FLT(c[VY])) * -viewData->viewSin) -
-        ((viewData->current.origin.x - FIX2FLT(c[VX])) * viewData->viewCos);
+    dfloat dist = ((viewData->current.origin.y - FIX2FLT(c[1])) * -viewData->viewSin)
+                - ((viewData->current.origin.x - FIX2FLT(c[0])) * viewData->viewCos);
 
-    return de::abs(dist); // Always return positive.
+    return de::abs(dist);  // Always return positive.
 }
 
 static Path tryFindImage(String name)
 {
-    /*
-     * First look for a colorkeyed version.
-     */
+    //
+    // First look for a colorkeyed version.
+    //
     try
     {
         String foundPath = App_FileSystem().findPath(de::Uri("Textures", name + "-ck"),
@@ -106,11 +102,11 @@ static Path tryFindImage(String name)
         return App_BasePath() / foundPath;
     }
     catch(FS1::NotFoundError const&)
-    {} // Ignore this error.
+    {}  // Ignore this error.
 
-    /*
-     * Look for the regular version.
-     */
+    //
+    // Look for the regular version.
+    //
     try
     {
         String foundPath = App_FileSystem().findPath(de::Uri("Textures", name),
@@ -119,17 +115,17 @@ static Path tryFindImage(String name)
         return App_BasePath() / foundPath;
     }
     catch(FS1::NotFoundError const&)
-    {} // Ignore this error.
+    {}  // Ignore this error.
 
-    return Path(); // Not found.
+    return Path();  // Not found.
 }
 
 // Try to load the texture.
-static byte loadParticleTexture(uint particleTex)
+static dbyte loadParticleTexture(duint particleTex)
 {
     DENG2_ASSERT(particleTex < MAX_PTC_TEXTURES);
 
-    String particleImageName = String("Particle%1").arg(particleTex, 2, 10, QChar('0'));
+    auto particleImageName = String("Particle%1").arg(particleTex, 2, 10, QChar('0'));
     Path foundPath = tryFindImage(particleImageName);
     if(foundPath.isEmpty())
         return 0;
@@ -137,7 +133,7 @@ static byte loadParticleTexture(uint particleTex)
     image_t image;
     if(!GL_LoadImage(image, foundPath.toUtf8().constData()))
     {
-        LOG_RES_WARNING("Failed to load \"%s\"") << foundPath;
+        LOG_RES_WARNING("Failed to load \"%s\"") << NativePath(foundPath).pretty();
         return 0;
     }
 
@@ -191,8 +187,8 @@ void Rend_ParticleLoadExtraTextures()
     Rend_ParticleReleaseExtraTextures();
     if(!App_GameLoaded()) return;
 
-    QList<int> loaded;
-    for(int i = 0; i < MAX_PTC_TEXTURES; ++i)
+    QList<dint> loaded;
+    for(dint i = 0; i < MAX_PTC_TEXTURES; ++i)
     {
         if(loadParticleTexture(i))
         {
@@ -225,12 +221,14 @@ void Rend_ParticleReleaseExtraTextures()
 /**
  * Sorts in descending order.
  */
-static int comparePOrder(void const *pt1, void const *pt2)
+static dint comparePOrder(void const *a, void const *b)
 {
-    if(((OrderedParticle *) pt1)->distance > ((OrderedParticle *) pt2)->distance) return -1;
-    else if(((OrderedParticle *) pt1)->distance < ((OrderedParticle *) pt2)->distance) return 1;
-    // Highly unlikely (but possible)...
-    return 0;
+    auto const &ptA = *(OrderedParticle const *) a;
+    auto const &ptB = *(OrderedParticle const *) b;
+
+    if(ptA.distance > ptB.distance) return -1;
+    if(ptA.distance < ptB.distance) return 1;
+    return 0;  // Highly unlikely (but possible).
 }
 
 /**
@@ -258,136 +256,135 @@ static void expandOrderBuffer(size_t max)
     }
 }
 
-static int countActiveGeneratorParticlesWorker(Generator *gen, void *context)
+/**
+ * Determines whether the given particle is potentially visible for the current viewer.
+ */
+static bool particlePVisible(ParticleInfo const &pinfo)
 {
-    if(R_ViewerGeneratorIsVisible(*gen))
-    {
-        *static_cast<size_t *>(context) += gen->activeParticleCount();
-    }
-    return false; // Continue iteration.
-}
+    // Never if it has already expired.
+    if(pinfo.stage < 0) return false;
 
-static int populateSortBuffer(Generator *gen, void *context)
-{
-    size_t *sortIndex = (size_t *) context;
+    // Never if the origin lies outside the map.
+    if(!pinfo.bspLeaf || !pinfo.bspLeaf->hasSubspace())
+        return false;
 
-    if(!R_ViewerGeneratorIsVisible(*gen))
-        return false; // Continue iteration.
-
-    ded_ptcgen_t const *def = gen->def;
-    ParticleInfo const *pinfo = gen->particleInfo();
-    for(int p = 0; p < gen->count; ++p, pinfo++)
-    {
-        if(pinfo->stage < 0 || !pinfo->bspLeaf)
-            continue;
-
-        // Is the BSP leaf at the particle's origin visible?
-        if(!R_ViewerBspLeafIsVisible(*pinfo->bspLeaf))
-            continue; // No; this particle can't be seen.
-
-        // Don't allow zero distance.
-        float dist = de::max(pointDist(pinfo->origin), 1.f);
-        if(def->maxDist != 0 && dist > def->maxDist)
-            continue; // Too far.
-        if(dist < (float) particleNearLimit)
-            continue; // Too near.
-
-        // This particle is visible. Add it to the sort buffer.
-        OrderedParticle *slot = &order[(*sortIndex)++];
-
-        slot->generator = gen;
-        slot->ptID      = p;
-        slot->distance  = dist;
-
-        // Determine what type of particle this is, as this will affect how
-        // we go order our render passes and manipulate the render state.
-        int stagetype = gen->stages[pinfo->stage].type;
-        if(stagetype == PTC_POINT)
-        {
-            hasPoints = true;
-        }
-        else if(stagetype == PTC_LINE)
-        {
-            hasLines = true;
-        }
-        else if(stagetype >= PTC_TEXTURE && stagetype < PTC_TEXTURE + MAX_PTC_TEXTURES)
-        {
-            if(ptctexname[stagetype - PTC_TEXTURE])
-                hasPointTexs[stagetype - PTC_TEXTURE] = true;
-            else
-                hasPoints = true;
-        }
-        else if(stagetype >= PTC_MODEL && stagetype < PTC_MODEL + MAX_PTC_MODELS)
-        {
-            hasModels = true;
-        }
-
-        if(gen->blendmode() == BM_ADD)
-        {
-            hasBlend = true;
-        }
-        else
-        {
-            hasNoBlend = true;
-        }
-    }
-
-    return false; // Continue iteration.
+    // Potentially, if the subspace at the origin is visible.
+    return R_ViewerSubspaceIsVisible(pinfo.bspLeaf->subspace());
 }
 
 /**
  * @return  @c true if there are particles to be drawn.
  */
-static int listVisibleParticles(Map &map)
+static dint listVisibleParticles(Map &map)
 {
-    size_t numVisibleParticles;
+    ::hasPoints = ::hasModels = ::hasLines = false;
+    ::hasAdditive = ::hasNoBlend = false;
+    de::zap(::hasPointTexs);
 
-    hasPoints = hasModels = hasLines = hasBlend = hasNoBlend = false;
-    de::zap(hasPointTexs);
-
-    // First count how many particles are in the visible generators.
-    numParts = 0;
-    map.generatorIterator(countActiveGeneratorParticlesWorker, &numParts);
-    if(!numParts)
-        return false; // No visible generators.
+    // Count the total number of particles used by generators marked 'visible'.
+    ::numParts = 0;
+    map.forAllGenerators([] (Generator &gen)
+    {
+        if(R_ViewerGeneratorIsVisible(gen))
+        {
+            ::numParts += gen.activeParticleCount();
+        }
+        return LoopContinue;
+    });
+    if(!::numParts) return false;
 
     // Allocate the particle depth sort buffer.
-    expandOrderBuffer(numParts);
+    expandOrderBuffer(::numParts);
 
     // Populate the particle sort buffer and determine what type(s) of
     // particle (model/point/line/etc...) we'll need to draw.
-    numVisibleParticles = 0;
-    map.generatorIterator(populateSortBuffer, &numVisibleParticles);
-    if(!numVisibleParticles)
-        return false; // No visible particles (all too far?).
+    size_t numVisibleParts = 0;
+    map.forAllGenerators([&numVisibleParts] (Generator &gen)
+    {
+        if(!R_ViewerGeneratorIsVisible(gen)) return LoopContinue;  // Skip.
+
+        for(dint i = 0; i < gen.count; ++i)
+        {
+            ParticleInfo const &pinfo = gen.particleInfo()[i];
+
+            if(!particlePVisible(pinfo)) continue;  // Skip.
+
+            // Skip particles too far from, or near to, the viewer.
+            dfloat const dist = de::max(pointDist(pinfo.origin), 1.f);
+            if(gen.def->maxDist != 0 && dist > gen.def->maxDist) continue;
+            if(dist < dfloat( ::particleNearLimit )) continue;
+
+            // This particle is visible. Add it to the sort buffer.
+            OrderedParticle *slot = &::order[numVisibleParts++];
+            slot->generator  = &gen;
+            slot->particleId = i;
+            slot->distance   = dist;
+
+            // Determine what type of particle this is, as this will affect how
+            // we go order our render passes and manipulate the render state.
+            dint const psType = gen.stages[pinfo.stage].type;
+            if(psType == PTC_POINT)
+            {
+                ::hasPoints = true;
+            }
+            else if(psType == PTC_LINE)
+            {
+                ::hasLines = true;
+            }
+            else if(psType >= PTC_TEXTURE && psType < PTC_TEXTURE + MAX_PTC_TEXTURES)
+            {
+                if(::ptctexname[psType - PTC_TEXTURE])
+                {
+                    ::hasPointTexs[psType - PTC_TEXTURE] = true;
+                }
+                else
+                {
+                    ::hasPoints = true;
+                }
+            }
+            else if(psType >= PTC_MODEL && psType < PTC_MODEL + MAX_PTC_MODELS)
+            {
+                ::hasModels = true;
+            }
+
+            if(gen.blendmode() == BM_ADD)
+            {
+                ::hasAdditive = true;
+            }
+            else
+            {
+                ::hasNoBlend = true;
+            }
+        }
+        return LoopContinue;
+    });
+
+    // No visible particles?
+    if(!numVisibleParts) return false;
 
     // This is the real number of possibly visible particles.
-    numParts = numVisibleParticles;
+    ::numParts = numVisibleParts;
 
     // Sort the order list back->front. A quicksort is fast enough.
-    qsort(order, numParts, sizeof(OrderedParticle), comparePOrder);
+    qsort(::order, ::numParts, sizeof(OrderedParticle), comparePOrder);
 
     return true;
 }
 
-static void setupModelParamsForParticle(drawmodelparams_t &parm,
-    ParticleInfo const *pinfo, GeneratorParticleStage const *st,
-    ded_ptcstage_t const *dst, Vector3f const &origin, float dist, float size,
-    float mark, float alpha)
+static void setupModelParamsForParticle(vissprite_t &spr, ParticleInfo const *pinfo,
+    GeneratorParticleStage const *st, ded_ptcstage_t const *dst, Vector3f const &origin,
+    dfloat dist, dfloat size, dfloat mark, dfloat alpha)
 {
-    zap(parm);
+    drawmodelparams_t &parm = *VS_MODEL(&spr);
 
-    // Render the particle as a model.
-    parm.origin[VX] = origin.x;
-    parm.origin[VY] = origin.z;
-    parm.origin[VZ] = parm.gzt = origin.y;
-    parm.distance = dist;
+    spr.pose.origin     = Vector3d(origin.xz(), spr.pose.topZ = origin.y);
+    spr.pose.distance   = dist;
+    spr.pose.extraScale = size;  // Extra scaling factor.
 
-    parm.extraScale = size; // Extra scaling factor.
     parm.mf = &ClientApp::resourceSystem().modelDef(dst->model);
     parm.alwaysInterpolate = true;
 
-    int frame;
+    dint frame;
     if(dst->endFrame < 0)
     {
         frame = dst->frame;
@@ -403,67 +400,72 @@ static void setupModelParamsForParticle(drawmodelparams_t &parm,
     // Set the correct orientation for the particle.
     if(parm.mf->testSubFlag(0, MFF_MOVEMENT_YAW))
     {
-        parm.yaw = R_MovementXYYaw(FIX2FLT(pinfo->mov[0]), FIX2FLT(pinfo->mov[1]));
+        spr.pose.yaw = R_MovementXYYaw(FIX2FLT(pinfo->mov[0]), FIX2FLT(pinfo->mov[1]));
     }
     else
     {
-        parm.yaw = pinfo->yaw / 32768.0f * 180;
+        spr.pose.yaw = pinfo->yaw / 32768.0f * 180;
     }
 
     if(parm.mf->testSubFlag(0, MFF_MOVEMENT_PITCH))
     {
-        parm.pitch = R_MovementXYZPitch(FIX2FLT(pinfo->mov[0]), FIX2FLT(pinfo->mov[1]), FIX2FLT(pinfo->mov[2]));
+        spr.pose.pitch = R_MovementXYZPitch(FIX2FLT(pinfo->mov[0]), FIX2FLT(pinfo->mov[1]), FIX2FLT(pinfo->mov[2]));
     }
     else
     {
-        parm.pitch = pinfo->pitch / 32768.0f * 180;
+        spr.pose.pitch = pinfo->pitch / 32768.0f * 180;
     }
 
-    parm.ambientColor[CA] = alpha;
+    spr.light.ambientColor.w = alpha;
 
     if(st->flags.testFlag(GeneratorParticleStage::Bright) || levelFullBright)
     {
-        parm.ambientColor[CR] = parm.ambientColor[CG] = parm.ambientColor[CB] = 1;
-        parm.vLightListIdx = 0;
+        spr.light.ambientColor.x = spr.light.ambientColor.y = spr.light.ambientColor.z = 1;
+        spr.light.vLightListIdx = 0;
     }
     else
     {
-        Map &map = pinfo->bspLeaf->map();
+        Map &map = pinfo->bspLeaf->subspace().sector().map();
 
         if(useBias && map.hasLightGrid())
         {
-            Vector3f tmp = map.lightGrid().evaluate(parm.origin);
-            V3f_Set(parm.ambientColor, tmp.x, tmp.y, tmp.z);
+            Vector4f color = map.lightGrid().evaluate(spr.pose.origin);
+            // Apply light range compression.
+            for(dint i = 0; i < 3; ++i)
+            {
+                color[i] += Rend_LightAdaptationDelta(color[i]);
+            }
+            spr.light.ambientColor.x = color.x;
+            spr.light.ambientColor.y = color.y;
+            spr.light.ambientColor.z = color.z;
         }
         else
         {
-            SectorCluster &cluster = pinfo->bspLeaf->cluster();
-            float lightLevel = cluster.sector().lightLevel();
-            Vector3f const &secColor = Rend_SectorLightColor(cluster);
+            Vector4f const color = pinfo->bspLeaf->subspace().cluster().lightSourceColorfIntensity();
+
+            dfloat lightLevel = color.w;
 
             // Apply distance attenuation.
-            lightLevel = Rend_AttenuateLightLevel(parm.distance, lightLevel);
+            lightLevel = Rend_AttenuateLightLevel(spr.pose.distance, lightLevel);
 
             // Add extra light.
-            lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
+            lightLevel += Rend_ExtraLightDelta();
 
+            // The last step is to compress the resultant light value by
+            // the global lighting function.
             Rend_ApplyLightAdaptation(lightLevel);
 
-            // Determine the final ambientColor in affect.
-            for(int i = 0; i < 3; ++i)
+            // Determine the final ambientColor.
+            for(dint i = 0; i < 3; ++i)
             {
-                parm.ambientColor[i] = lightLevel * secColor[i];
+                spr.light.ambientColor[i] = lightLevel * color[i];
             }
         }
+        Rend_ApplyTorchLight(spr.light.ambientColor, spr.pose.distance);
 
-        Rend_ApplyTorchLight(parm.ambientColor, parm.distance);
-
-        collectaffectinglights_params_t lparams; zap(lparams);
-        lparams.origin       = Vector3d(parm.origin);
-        lparams.bspLeaf      = &map.bspLeafAt(lparams.origin);
-        lparams.ambientColor = Vector3f(parm.ambientColor);
-
-        parm.vLightListIdx = R_CollectAffectingLights(&lparams);
+        spr.light.vLightListIdx =
+                Rend_CollectAffectingLights(spr.pose.origin, spr.light.ambientColor,
+                                            map.bspLeafAt(spr.pose.origin).subspacePtr());
     }
 }
 
@@ -481,18 +483,17 @@ static Vector2f lineUnitVector(Line const &line)
     {
         return line.direction() / len;
     }
-    return Vector2f(0, 0);
+    return Vector2f();
 }
 
-static void renderParticles(int rtype, bool withBlend)
+static void drawParticles(dint rtype, bool withBlend)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
-
-    Vector3f const leftoff  = viewData->upVec + viewData->sideVec;
-    Vector3f const rightoff = viewData->upVec - viewData->sideVec;
+    Vector3f const leftoff     = viewData->upVec + viewData->sideVec;
+    Vector3f const rightoff    = viewData->upVec - viewData->sideVec;
 
     // Should we use a texture?
     DGLuint tex = 0;
@@ -540,14 +541,14 @@ static void renderParticles(int rtype, bool withBlend)
     blendmode_t mode = BM_NORMAL, newMode;
     for(; i < numParts; ++i)
     {
-        OrderedParticle const *slot      = &order[i];
-        Generator const *gen      = slot->generator;
-        ParticleInfo const *pinfo = &gen->particleInfo()[slot->ptID];
+        OrderedParticle const *slot = &order[i];
+        Generator const *gen        = slot->generator;
+        ParticleInfo const *pinfo   = &gen->particleInfo()[slot->particleId];
 
         GeneratorParticleStage const *st = &gen->stages[pinfo->stage];
         ded_ptcstage_t const *stDef      = &gen->def->stages[pinfo->stage];
 
-        short stageType = st->type;
+        dshort stageType = st->type;
         if(stageType >= PTC_TEXTURE && stageType < PTC_TEXTURE + MAX_PTC_TEXTURES &&
            0 == ptctexname[stageType - PTC_TEXTURE])
         {
@@ -583,43 +584,42 @@ static void renderParticles(int rtype, bool withBlend)
 
         // Is there a next stage for this particle?
         ded_ptcstage_t const *nextStDef;
-        if(pinfo->stage >= gen->def->stageCount.num - 1 ||
+        if(pinfo->stage >= gen->def->stages.size() - 1 ||
            !gen->stages[pinfo->stage + 1].type)
         {
             // There is no "next stage". Use the current one.
-            nextStDef = gen->def->stages + pinfo->stage;
+            nextStDef = &gen->def->stages[pinfo->stage];
         }
         else
         {
-            nextStDef = gen->def->stages + (pinfo->stage + 1);
+            nextStDef = &gen->def->stages[pinfo->stage + 1];
         }
 
         // Where is intermark?
-        float const inter = 1 - float(pinfo->tics) / stDef->tics;
+        dfloat const inter = 1 - dfloat( pinfo->tics ) / stDef->tics;
 
         // Calculate size and color.
-        float size = de::lerp(    stDef->particleRadius(slot->ptID),
-                              nextStDef->particleRadius(slot->ptID), inter);
+        dfloat size = de::lerp(    stDef->particleRadius(slot->particleId),
+                               nextStDef->particleRadius(slot->particleId), inter);
 
         // Infinitely small?
         if(!size) continue;
 
-        Vector4f color = de::lerp(Vector4f(stDef->color),
-                                  Vector4f(nextStDef->color), inter);
+        Vector4f color = de::lerp(Vector4f(stDef->color), Vector4f(nextStDef->color), inter);
 
         if(!st->flags.testFlag(GeneratorParticleStage::Bright) && !levelFullBright)
         {
             // This is a simplified version of sectorlight (no distance
             // attenuation or range compression).
-            if(SectorCluster *cluster = pinfo->bspLeaf->clusterPtr())
+            if(ConvexSubspace *subspace = pinfo->bspLeaf->subspacePtr())
             {
-                float const lightLevel = cluster->sector().lightLevel();
-                color *= Vector4f(lightLevel, lightLevel, lightLevel, 1);
+                dfloat const intensity = subspace->cluster().lightSourceIntensity();
+                color *= Vector4f(intensity, intensity, intensity, 1);
             }
         }
 
-        float const maxDist = gen->def->maxDist;
-        float const dist    = order[i].distance;
+        dfloat const maxDist = gen->def->maxDist;
+        dfloat const dist    = order[i].distance;
 
         // Far diffuse?
         if(maxDist)
@@ -644,13 +644,14 @@ static void renderParticles(int rtype, bool withBlend)
 
         glColor4f(color.x, color.y, color.z, color.w);
 
-        bool nearWall = (pinfo->contact && !pinfo->mov[VX] && !pinfo->mov[VY]);
+        bool const nearWall = (pinfo->contact && !pinfo->mov[0] && !pinfo->mov[1]);
 
         bool nearPlane = false;
-        if(SectorCluster *cluster = pinfo->bspLeaf->clusterPtr())
+        if(ConvexSubspace *subspace = pinfo->bspLeaf->subspacePtr())
         {
-            if(FLT2FIX(cluster->  visFloor().heightSmoothed()) + 2 * FRACUNIT >= pinfo->origin[VZ] ||
-               FLT2FIX(cluster->visCeiling().heightSmoothed()) - 2 * FRACUNIT <= pinfo->origin[VZ])
+            SectorCluster &cluster = subspace->cluster();
+            if(FLT2FIX(cluster.  visFloor().heightSmoothed()) + 2 * FRACUNIT >= pinfo->origin[2] ||
+               FLT2FIX(cluster.visCeiling().heightSmoothed()) - 2 * FRACUNIT <= pinfo->origin[2])
             {
                 nearPlane = true;
             }
@@ -677,9 +678,9 @@ static void renderParticles(int rtype, bool withBlend)
         // Model particles are rendered using the normal model rendering routine.
         if(rtype == PTC_MODEL && stDef->model >= 0)
         {
-            drawmodelparams_t parms;
-            setupModelParamsForParticle(parms, pinfo, st, stDef, center, dist, size, inter, color.w);
-            Rend_DrawModel(parms);
+            vissprite_t temp; de::zap(temp);
+            setupModelParamsForParticle(temp, pinfo, st, stDef, center, dist, size, inter, color.w);
+            Rend_DrawModel(temp);
             continue;
         }
 
@@ -711,70 +712,70 @@ static void renderParticles(int rtype, bool withBlend)
                 // collisions.
 
                 // Calculate a new center point (project onto the wall).
-                V2d_Set(origin, FIX2FLT(pinfo->origin[VX]), FIX2FLT(pinfo->origin[VY]));
+                V2d_Set(origin, FIX2FLT(pinfo->origin[0]), FIX2FLT(pinfo->origin[1]));
 
                 coord_t linePoint[2]     = { pinfo->contact->fromOrigin().x, pinfo->contact->fromOrigin().y };
                 coord_t lineDirection[2] = { pinfo->contact->direction().x, pinfo->contact->direction().y };
                 V2d_ProjectOnLine(projected, origin, linePoint, lineDirection);
 
                 // Move away from the wall to avoid the worst Z-fighting.
-                double const gap = -1; // 1 map unit.
-                double diff[2], dist;
+                ddouble const gap = -1;  // 1 map unit.
+                ddouble diff[2], dist;
                 V2d_Subtract(diff, projected, origin);
                 if((dist = V2d_Length(diff)) != 0)
                 {
-                    projected[VX] += diff[VX] / dist * gap;
-                    projected[VY] += diff[VY] / dist * gap;
+                    projected[0] += diff[0] / dist * gap;
+                    projected[1] += diff[1] / dist * gap;
                 }
 
-                DENG2_ASSERT(pinfo->contact != 0);
+                DENG2_ASSERT(pinfo->contact);
                 Vector2f unitVec = lineUnitVector(*pinfo->contact);
 
                 glTexCoord2f(0, 0);
-                glVertex3d(projected[VX] - size * unitVec.x, center.y - size,
-                           projected[VY] - size * unitVec.y);
+                glVertex3d(projected[0] - size * unitVec.x, center.y - size,
+                           projected[1] - size * unitVec.y);
 
                 glTexCoord2f(1, 0);
-                glVertex3d(projected[VX] - size * unitVec.x, center.y + size,
-                           projected[VY] - size * unitVec.y);
+                glVertex3d(projected[0] - size * unitVec.x, center.y + size,
+                           projected[1] - size * unitVec.y);
 
                 glTexCoord2f(1, 1);
-                glVertex3d(projected[VX] + size * unitVec.x, center.y + size,
-                           projected[VY] + size * unitVec.y);
+                glVertex3d(projected[0] + size * unitVec.x, center.y + size,
+                           projected[1] + size * unitVec.y);
 
                 glTexCoord2f(0, 1);
-                glVertex3d(projected[VX] + size * unitVec.x, center.y - size,
-                           projected[VY] + size * unitVec.y);
+                glVertex3d(projected[0] + size * unitVec.x, center.y - size,
+                           projected[1] + size * unitVec.y);
             }
             else
             {
                 glTexCoord2f(0, 0);
-                glVertex3f(center.x + size * leftoff[VX],
-                           center.y + size * leftoff[VY] / 1.2f,
-                           center.z + size * leftoff[VZ]);
+                glVertex3f(center.x + size * leftoff.x,
+                           center.y + size * leftoff.y / 1.2f,
+                           center.z + size * leftoff.z);
 
                 glTexCoord2f(1, 0);
-                glVertex3f(center.x + size * rightoff[VX],
-                           center.y + size * rightoff[VY] / 1.2f,
-                           center.z + size * rightoff[VZ]);
+                glVertex3f(center.x + size * rightoff.x,
+                           center.y + size * rightoff.y / 1.2f,
+                           center.z + size * rightoff.z);
 
                 glTexCoord2f(1, 1);
-                glVertex3f(center.x - size * leftoff[VX],
-                           center.y - size * leftoff[VY] / 1.2f,
-                           center.z - size * leftoff[VZ]);
+                glVertex3f(center.x - size * leftoff.x,
+                           center.y - size * leftoff.y / 1.2f,
+                           center.z - size * leftoff.z);
 
                 glTexCoord2f(0, 1);
-                glVertex3f(center.x - size * rightoff[VX],
-                           center.y - size * rightoff[VY] / 1.2f,
-                           center.z - size * rightoff[VZ]);
+                glVertex3f(center.x - size * rightoff.x,
+                           center.y - size * rightoff.y / 1.2f,
+                           center.z - size * rightoff.z);
             }
         }
-        else // It's a line.
+        else  // It's a line.
         {
             glVertex3f(center.x, center.y, center.z);
-            glVertex3f(center.x - FIX2FLT(pinfo->mov[VX]),
-                       center.y - FIX2FLT(pinfo->mov[VZ]),
-                       center.z - FIX2FLT(pinfo->mov[VY]));
+            glVertex3f(center.x - FIX2FLT(pinfo->mov[0]),
+                       center.y - FIX2FLT(pinfo->mov[2]),
+                       center.z - FIX2FLT(pinfo->mov[1]));
         }
     }
 
@@ -811,24 +812,24 @@ static void renderPass(bool useBlending)
 
     if(hasModels)
     {
-        renderParticles(PTC_MODEL, useBlending);
+        drawParticles(PTC_MODEL, useBlending);
     }
 
     if(hasLines)
     {
-        renderParticles(PTC_LINE, useBlending);
+        drawParticles(PTC_LINE, useBlending);
     }
 
     if(hasPoints)
     {
-        renderParticles(PTC_POINT, useBlending);
+        drawParticles(PTC_POINT, useBlending);
     }
 
-    for(int i = 0; i < NUM_TEX_NAMES; ++i)
+    for(dint i = 0; i < NUM_TEX_NAMES; ++i)
     {
         if(hasPointTexs[i])
         {
-            renderParticles(PTC_TEXTURE + i, useBlending);
+            drawParticles(PTC_TEXTURE + i, useBlending);
         }
     }
 
@@ -854,11 +855,19 @@ void Rend_RenderParticles(Map &map)
         renderPass(false);
     }
 
-    if(hasBlend)
+    if(hasAdditive)
     {
         // A second pass with additive blending.
         // This makes the additive particles 'glow' through all other
         // particles.
         renderPass(true);
     }
+}
+
+void Rend_ParticleRegister()
+{
+    C_VAR_BYTE ("rend-particle",                   &useParticles,      0,              0, 1);
+    C_VAR_INT  ("rend-particle-max",               &maxParticles,      CVF_NO_MAX,     0, 0);
+    C_VAR_FLOAT("rend-particle-diffuse",           &particleDiffuse,   CVF_NO_MAX,     0, 0);
+    C_VAR_INT  ("rend-particle-visible-near",      &particleNearLimit, CVF_NO_MAX,     0, 0);
 }

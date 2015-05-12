@@ -1,4 +1,4 @@
-/** @file p_mobj.c World map object interaction.
+/** @file p_mobj.c  World map object interaction.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -23,15 +23,17 @@
 #  pragma optimize("g", off)
 #endif
 
+#include "jhexen.h"
+#include "p_mobj.h"
+
 #include <math.h>
 #include <string.h>
 #include <de/binangle.h>
-
-#include "jhexen.h"
+#include "d_netcl.h"
 #include "dmu_lib.h"
+#include "g_common.h"
 #include "p_map.h"
 #include "player.h"
-#include "g_common.h"
 
 #define MAX_BOB_OFFSET          8
 
@@ -256,23 +258,6 @@ dd_bool P_SeekerMissile(mobj_t* actor, angle_t thresh, angle_t turnMax)
 static __inline dd_bool isInWalkState(player_t* pl)
 {
     return pl->plr->mo->state - STATES - PCLASS_INFO(pl->class_)->runState < 4;
-}
-
-coord_t P_MobjGetFriction(mobj_t* mo)
-{
-    if((mo->flags2 & MF2_FLY) && !(mo->origin[VZ] <= mo->floorZ) && !mo->onMobj)
-    {
-        return FRICTION_FLY;
-    }
-    else
-    {
-        const terraintype_t* tt = P_MobjFloorTerrain(mo);
-
-        if(tt->flags & TTF_FRICTION_LOW)
-            return FRICTION_LOW;
-    }
-
-    return FRICTION_NORMAL;
 }
 
 void P_MobjMoveXY(mobj_t* mo)
@@ -586,7 +571,7 @@ explode:
     }
     else
     {
-        coord_t friction = P_MobjGetFriction(mo);
+        coord_t friction = Mobj_Friction(mo);
         mo->mom[MX] *= friction;
         mo->mom[MY] *= friction;
     }
@@ -629,7 +614,7 @@ void P_MobjMoveZ(mobj_t* mo)
     {
         mo->player->viewHeight -= mo->floorZ - mo->origin[VZ];
         mo->player->viewHeightDelta =
-            (cfg.plrViewHeight - mo->player->viewHeight) / 8;
+            (cfg.common.plrViewHeight - mo->player->viewHeight) / 8;
     }
 
     // Adjust height.
@@ -762,7 +747,7 @@ void P_MobjMoveZ(mobj_t* mo)
                             S_StartSound(SFX_PLAYER_LAND, mo);
                     }
 
-                    if(cfg.lookSpring)
+                    if(cfg.common.lookSpring)
                         mo->player->centering = true;
                 }
             }
@@ -897,7 +882,7 @@ static void landedOnThing(mobj_t* mo)
         S_StartSound(SFX_PLAYER_LAND, mo);
     }
 
-    if(cfg.lookSpring) // || demorecording || demoplayback)
+    if(cfg.common.lookSpring) // || demorecording || demoplayback)
         mo->player->centering = true;
 }
 
@@ -1054,7 +1039,7 @@ void P_MobjThinker(void *thinkerPtr)
                         mobj->player->viewHeight -=
                             mobj->onMobj->origin[VZ] + mobj->onMobj->height - mobj->origin[VZ];
                         mobj->player->viewHeightDelta =
-                            (cfg.plrViewHeight - mobj->player->viewHeight) / 8;
+                            (cfg.common.plrViewHeight - mobj->player->viewHeight) / 8;
                     }
 
                     mobj->origin[VZ] = mobj->onMobj->origin[VZ] + mobj->onMobj->height;
@@ -1155,7 +1140,7 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
     mo->flags3 = info->flags3;
     // This doesn't appear to actually be used see P_DamageMobj in P_inter.c
     mo->damage = info->damage;
-    mo->health = info->spawnHealth * (IS_NETGAME ? cfg.netMobHealthModifier : 1);
+    mo->health = info->spawnHealth * (IS_NETGAME ? cfg.common.netMobHealthModifier : 1);
     mo->moveDir = DI_NODIR;
     mo->selector = 0;
     P_UpdateHealthBits(mo); // Set the health bits of the selector.
@@ -1355,7 +1340,7 @@ dd_bool P_HitFloor(mobj_t *thing)
         S_StartSound(SFX_LAVA_SIZZLE, mo);
         if(thing->player && mapTime & 31)
         {
-            P_DamageMobj(thing, &lavaInflictor, NULL, 5, false);
+            P_DamageMobj(thing, P_LavaInflictor(), NULL, 5, false);
         }
         return true;
     }
@@ -1794,47 +1779,7 @@ mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest)
     return NULL;
 }
 
-mobj_t* P_SpawnMissileXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
-    mobj_t* source, mobj_t* dest)
-{
-    uint an;
-    mobj_t* th;
-    angle_t angle;
-    coord_t dist;
-
-    z -= source->floorClip;
-
-    angle = M_PointToAngle2(source->origin, dest->origin);
-    if(dest->flags & MF_SHADOW)
-    {
-        // Invisible target
-        angle += (P_Random() - P_Random()) << 21;
-    }
-
-    if(!(th = P_SpawnMobjXYZ(type, x, y, z, angle, 0)))
-        return NULL;
-
-    if(th->info->seeSound)
-        S_StartSound(th->info->seeSound, th);
-
-    th->target = source; // Originator
-    an = angle >> ANGLETOFINESHIFT;
-    th->mom[MX] = th->info->speed * FIX2FLT(finecosine[an]);
-    th->mom[MY] = th->info->speed * FIX2FLT(finesine[an]);
-    dist = M_ApproxDistance(dest->origin[VX] - source->origin[VX],
-                            dest->origin[VY] - source->origin[VY]);
-    dist /= th->info->speed;
-    if(dist < 1)
-        dist = 1;
-    th->mom[MZ] = (dest->origin[VZ] - source->origin[VZ]) / dist;
-
-    if(P_CheckMissileSpawn(th))
-        return th;
-
-    return NULL;
-}
-
-mobj_t* P_SpawnMissileAngle(mobjtype_t type, mobj_t* source, angle_t angle, coord_t momz)
+mobj_t *P_SpawnMissileAngle(mobjtype_t type, mobj_t *source, angle_t angle, coord_t momz)
 {
     unsigned int an;
     coord_t pos[3], spawnZOff = 0;
@@ -1860,7 +1805,7 @@ mobj_t* P_SpawnMissileAngle(mobjtype_t type, mobj_t* source, angle_t angle, coor
         if(source->player)
         {
             if(!P_MobjIsCamera(source->player->plr->mo))
-                spawnZOff = cfg.plrViewHeight - 9 +
+                spawnZOff = cfg.common.plrViewHeight - 9 +
                     source->player->plr->lookDir / 173;
         }
         else
@@ -1933,7 +1878,7 @@ mobj_t *P_SpawnPlayerMissile(mobjtype_t type, mobj_t *source)
     coord_t pos[3];
     float fangle = LOOKDIR2RAD(source->player->plr->lookDir);
     float movfac = 1, slope;
-    dd_bool dontAim = cfg.noAutoAim;
+    dd_bool dontAim = cfg.common.noAutoAim;
     int spawnFlags = 0;
     mobj_t *missile;
 
@@ -1976,7 +1921,7 @@ mobj_t *P_SpawnPlayerMissile(mobjtype_t type, mobj_t *source)
     else
     {
         if(!P_MobjIsCamera(source->player->plr->mo))
-            pos[VZ] += cfg.plrViewHeight - 9 +
+            pos[VZ] += cfg.common.plrViewHeight - 9 +
                 (source->player->plr->lookDir / 173);
         pos[VZ] -= source->floorClip;
     }
@@ -2028,7 +1973,7 @@ mobj_t* P_SPMAngle(mobjtype_t type, mobj_t* source, angle_t origAngle)
     coord_t pos[3];
     float fangle = LOOKDIR2RAD(source->player->plr->lookDir);
     float slope, movfac = 1;
-    dd_bool dontAim = cfg.noAutoAim;
+    dd_bool dontAim = cfg.common.noAutoAim;
 
     // See which target is to be aimed at.
     angle = origAngle;
@@ -2054,7 +1999,7 @@ mobj_t* P_SPMAngle(mobjtype_t type, mobj_t* source, angle_t origAngle)
 
     memcpy(pos, source->origin, sizeof(pos));
     if(!P_MobjIsCamera(source->player->plr->mo))
-        pos[VZ] += cfg.plrViewHeight - 9 +
+        pos[VZ] += cfg.common.plrViewHeight - 9 +
             (source->player->plr->lookDir / 173);
     pos[VZ] -= source->floorClip;
 
@@ -2081,7 +2026,7 @@ mobj_t* P_SPMAngleXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
     angle_t angle;
     float slope, movfac = 1;
     float fangle = LOOKDIR2RAD(source->player->plr->lookDir);
-    dd_bool dontAim = cfg.noAutoAim;
+    dd_bool dontAim = cfg.common.noAutoAim;
 
     // See which target is to be aimed at.
     angle = origAngle;
@@ -2105,7 +2050,7 @@ mobj_t* P_SPMAngleXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
     }
 
     if(!P_MobjIsCamera(source->player->plr->mo))
-        z += cfg.plrViewHeight - 9 + (source->player->plr->lookDir / 173);
+        z += cfg.common.plrViewHeight - 9 + (source->player->plr->lookDir / 173);
     z -= source->floorClip;
 
     if((th = P_SpawnMobjXYZ(type, x, y, z, angle, 0)))
@@ -2115,46 +2060,6 @@ mobj_t* P_SPMAngleXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
         th->mom[MX] = movfac * th->info->speed * FIX2FLT(finecosine[an]);
         th->mom[MY] = movfac * th->info->speed * FIX2FLT(finesine[an]);
         th->mom[MZ] = th->info->speed * slope;
-
-        if(P_CheckMissileSpawn(th))
-            return th;
-    }
-
-    return NULL;
-}
-
-mobj_t* P_SpawnKoraxMissile(mobjtype_t type, coord_t x, coord_t y, coord_t z,
-    mobj_t* source, mobj_t* dest)
-{
-    uint an;
-    mobj_t* th;
-    angle_t angle;
-    coord_t dist;
-
-    z -= source->floorClip;
-
-    angle = M_PointXYToAngle2(x, y, dest->origin[VX], dest->origin[VY]);
-    if(dest->flags & MF_SHADOW)
-    {
-        // Invisible target
-        angle += (P_Random() - P_Random()) << 21;
-    }
-
-    if((th = P_SpawnMobjXYZ(type, x, y, z, angle, 0)))
-    {
-        if(th->info->seeSound)
-            S_StartSound(th->info->seeSound, th);
-
-        th->target = source; // Originator
-        an = angle >> ANGLETOFINESHIFT;
-        th->mom[MX] = th->info->speed * FIX2FLT(finecosine[an]);
-        th->mom[MY] = th->info->speed * FIX2FLT(finesine[an]);
-
-        dist = M_ApproxDistance(dest->origin[VX] - x, dest->origin[VY] - y);
-        dist /= th->info->speed;
-        if(dist < 1)
-            dist = 1;
-        th->mom[MZ] = (dest->origin[VZ] - z + 30) / dist;
 
         if(P_CheckMissileSpawn(th))
             return th;

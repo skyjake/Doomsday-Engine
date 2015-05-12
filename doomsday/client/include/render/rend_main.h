@@ -1,7 +1,7 @@
-/** @file render/rend_main.h Core of the rendering subsystem.
+/** @file rend_main.h Core of the rendering subsystem.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -26,21 +26,25 @@
 
 #include "dd_types.h"
 #include "def_main.h"
-#include "Sector"
 #include "MaterialVariantSpec"
 #include "WallEdge"
 #include <de/Vector>
 #include <de/Matrix>
 
+class Sector;
+class SectorCluster;
+struct VectorLightData;
+
 namespace de {
 class Map;
+class LightGrid;
 }
 
 // Multiplicative blending for dynamic lights?
 #define IS_MUL              (dynlightBlend != 1 && !usingFog)
 
 #define MTEX_DETAILS_ENABLED (r_detail && useMultiTexDetails && \
-                              defs.count.details.num > 0)
+                              defs.details.size() > 0)
 #define IS_MTEX_DETAILS     (MTEX_DETAILS_ENABLED && numTexUnits > 1)
 #define IS_MTEX_LIGHTS      (!IS_MTEX_DETAILS && !usingFog && useMultiTexLights \
                              && numTexUnits > 1 && envModAdd)
@@ -51,7 +55,7 @@ class Map;
 
 #define SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN (.05f)
 
-DENG_EXTERN_C de::Vector3d vOrigin;
+DENG_EXTERN_C de::Vector3d vOrigin; // Y/Z swizzled for drawing
 DENG_EXTERN_C float vang, vpitch, yfov;
 DENG_EXTERN_C float viewsidex, viewsidey;
 DENG_EXTERN_C float fogColor[4];
@@ -116,6 +120,7 @@ DENG_EXTERN_C dd_bool noHighResPatches;
 DENG_EXTERN_C dd_bool highResWithPWAD;
 DENG_EXTERN_C byte loadExtAlways;
 
+DENG_EXTERN_C int devNoCulling;
 DENG_EXTERN_C byte devRendSkyAlways;
 DENG_EXTERN_C byte rendInfoLums;
 DENG_EXTERN_C byte devDrawLums;
@@ -124,8 +129,6 @@ DENG_EXTERN_C byte freezeRLs;
 
 void Rend_Register();
 
-void Rend_Init();
-void Rend_Shutdown();
 void Rend_Reset();
 
 /// @return @c true iff multitexturing is currently enabled for lights.
@@ -139,11 +142,14 @@ void Rend_RenderMap(de::Map &map);
 float Rend_FieldOfView();
 
 /**
- * @param useAngles  @c true= Apply viewer angle rotation.
+ * @param inWorldSpace  Apply viewer angles and head position to produce a transformation
+ *                      from world space to view space.
  */
-void Rend_ModelViewMatrix(bool useAngles = true);
+void Rend_ModelViewMatrix(bool inWorldSpace = true);
 
-de::Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool useAngles = true);
+de::Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool inWorldSpace = true);
+
+de::Vector3d Rend_EyeOrigin();
 
 #define Rend_PointDist2D(c) (fabs((vOrigin.z-(c)[VY])*viewsidex - (vOrigin.x-(c)[VX])*viewsidey))
 
@@ -195,15 +201,19 @@ void Rend_UpdateLightModMatrix();
 void Rend_DrawLightModMatrix();
 
 /**
- * Sector light color may be affected by the sky light color.
+ * Draws the light grid debug visual.
  */
-de::Vector3f const &Rend_SectorLightColor(SectorCluster const &cluster);
+void Rend_LightGridVisual(de::LightGrid &lg);
 
 /**
- * @copydoc Rend_SectorLightColor()
- * @deprecated Caller should work at cluster level.
+ * Determines whether the sky light color tinting is enabled.
  */
-de::Vector3f const &Rend_SectorLightColor(Sector const &sector);
+bool Rend_SkyLightIsEnabled();
+
+/**
+ * Returns the effective sky light color.
+ */
+de::Vector3f Rend_SkyLightColor();
 
 /**
  * Blend the given light value with the luminous object's color, applying any
@@ -225,6 +235,20 @@ de::Vector3f Rend_LuminousColor(de::Vector3f const &color, float light);
 coord_t Rend_PlaneGlowHeight(float intensity);
 
 /**
+ * @param point         World space point to evaluate.
+ * @param ambientColor  Ambient color of the object being lit.
+ * @param subspace      Subspace in which @a origin resides.
+ * @param starkLight    @c true= World light has a more pronounced affect.
+ *
+ * @todo Does not belong here.
+ */
+de::duint Rend_CollectAffectingLights(de::Vector3d const &point,
+    de::Vector3f const &ambientColor = de::Vector3f(1, 1, 1), ConvexSubspace *subspace = nullptr,
+    bool starkLight = false);
+
+void Rend_DrawVectorLight(VectorLightData const &vlight, dfloat alpha);
+
+/**
  * Selects a Material for the given map @a surface considering the current map
  * renderer configuration.
  */
@@ -233,8 +257,9 @@ Material *Rend_ChooseMapSurfaceMaterial(Surface const &surface);
 de::MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec();
 de::MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec(int wrapS, int wrapT);
 
-TextureVariantSpec const &Rend_MapSurfaceShinyTextureSpec();
+TextureVariantSpec const &Rend_MapSurfaceLightmapTextureSpec();
 
+TextureVariantSpec const &Rend_MapSurfaceShinyTextureSpec();
 TextureVariantSpec const &Rend_MapSurfaceShinyMaskTextureSpec();
 
 void R_DivVerts(de::Vector3f *dst, de::Vector3f const *src,

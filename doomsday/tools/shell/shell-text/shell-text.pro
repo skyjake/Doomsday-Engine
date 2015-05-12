@@ -17,7 +17,7 @@ CONFIG -= app_bundle
 
 DEFINES += SHELL_VERSION=\\\"$$VERSION\\\"
 
-include(../../../dep_deng2.pri)
+include(../../../dep_core.pri)
 include(../../../dep_shell.pri)
 include(../../../dep_curses.pri)
 
@@ -48,16 +48,15 @@ SOURCES += \
 # Installation --------------------------------------------------------------
 
 macx {
-    linkBinaryToBundledLibdeng2($$TARGET)
-    linkBinaryToBundledLibdengShell($$TARGET)
+    linkBinaryToBundledLibcore($$TARGET)
+    linkBinaryToBundledLibshell($$TARGET)
 }
 else {
-    INSTALLS += target
-    target.path = $$DENG_BIN_DIR
-
     unix {
         INSTALLS += readme
         readme.files = ../../../doc/output/doomsday-shell-text.6
         readme.path  = $$PREFIX/share/man/man6
     }
 }
+
+deployTarget()

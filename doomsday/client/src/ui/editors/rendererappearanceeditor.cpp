@@ -24,7 +24,6 @@
 #include "ui/widgets/cvartogglewidget.h"
 #include "ui/clientwindow.h"
 #include "clientapp.h"
-#include "con_main.h"
 
 #include <de/ButtonWidget>
 #include <de/ScrollAreaWidget>
@@ -32,6 +31,7 @@
 #include <de/DialogContentStylist>
 #include <de/SequentialLayout>
 #include <de/SignalAction>
+#include <de/VariableSliderWidget>
 
 using namespace de;
 using namespace ui;
@@ -59,8 +59,8 @@ DENG2_OBSERVES(App, GameChange)
                 d->self.add(pop);
                 pop->setAnchorAndOpeningDirection(widget.rule(), ui::Left);
                 pop->items()
-                        << new ActionItem(tr("Fold All"),   new SignalAction(d->thisPublic, SLOT(foldAll())))
-                        << new ActionItem(tr("Unfold All"), new SignalAction(d->thisPublic, SLOT(unfoldAll())));
+                        << new ActionItem(tr("Fold All"),   new SignalAction(&d->self, SLOT(foldAll())))
+                        << new ActionItem(tr("Unfold All"), new SignalAction(&d->self, SLOT(unfoldAll())));
                 pop->open();
                 return true; }
 
@@ -172,7 +172,7 @@ DENG2_OBSERVES(App, GameChange)
 
         CVarSliderWidget *addSlider(char const *cvar)
         {
-            CVarSliderWidget *w = new CVarSliderWidget(cvar);
+            auto *w = new CVarSliderWidget(cvar);
             _group->add(w);
             _layout << *w;
             return w;
@@ -180,9 +180,18 @@ DENG2_OBSERVES(App, GameChange)
 
         CVarSliderWidget *addSlider(char const *cvar, Ranged const &range, double step, int precision)
         {
-            CVarSliderWidget *w = addSlider(cvar);
+            auto *w = addSlider(cvar);
             w->setRange(range, step);
             w->setPrecision(precision);
+            return w;
+        }
+
+        VariableSliderWidget *addSlider(Variable &var, Ranged const &range, double step, int precision)
+        {
+            auto *w = new VariableSliderWidget(var, range, step);
+            w->setPrecision(precision);
+            _group->add(w);
+            _layout << *w;
             return w;
         }
 
@@ -252,7 +261,7 @@ DENG2_OBSERVES(App, GameChange)
     Group *lightGroup;
     Group *volLightGroup;
     Group *glowGroup;
-    Group *haloGroup;
+    Group *lensGroup;
     Group *matGroup;
     Group *modelGroup;
     Group *spriteGroup;
@@ -260,9 +269,9 @@ DENG2_OBSERVES(App, GameChange)
     Group *partGroup;
 
     Instance(Public *i)
-        : Base(i),
-          settings(ClientApp::renderSystem().appearanceSettings()),
-          firstColumnWidth(new IndirectRule)
+        : Base(i)
+        , settings(ClientApp::renderSystem().appearanceSettings())
+        , firstColumnWidth(new IndirectRule)
     {
         // The editor will close automatically when going to Ring Zero.
         App::app().audienceForGameChange() += this;
@@ -277,7 +286,9 @@ DENG2_OBSERVES(App, GameChange)
         container->add(close   = new ButtonWidget);
         container->add(profile = new ProfilePickerWidget(settings, tr("appearance")));
 
-        close->setText(tr("Close"));
+        close->setImage(style().images().image("close.ringless"));
+        close->setImageColor(style().colors().colorf("altaccent"));
+        close->setOverrideImageSize(style().fonts().font("title").height().valuei());
         close->setAction(new SignalAction(thisPublic, SLOT(close())));
 
         // Sky settings.
@@ -387,60 +398,63 @@ DENG2_OBSERVES(App, GameChange)
         glowGroup->commit();
 
         // Camera lens settings.
-        haloGroup = new Group(this, "lens", tr("Camera Lens"));
+        lensGroup = new Group(this, "lens", tr("Camera Lens"));
 
-        haloGroup->addSpace();
-        haloGroup->addToggle("rend-bloom", tr("Bloom"));
+        lensGroup->addLabel(tr("Pixel Doubling:"));
+        lensGroup->addSlider(App::config("render.fx.resize.factor"), Ranged(1, 8), .1, 1);
+        
+        lensGroup->addSpace();
+        lensGroup->addToggle("rend-bloom", tr("Bloom"));
 
-        haloGroup->addLabel(tr("Bloom Threshold:"));
-        haloGroup->addSlider("rend-bloom-threshold");
+        lensGroup->addLabel(tr("Bloom Threshold:"));
+        lensGroup->addSlider("rend-bloom-threshold");
 
-        haloGroup->addLabel(tr("Bloom Intensity:"));
-        haloGroup->addSlider("rend-bloom-intensity");
+        lensGroup->addLabel(tr("Bloom Intensity:"));
+        lensGroup->addSlider("rend-bloom-intensity");
 
-        haloGroup->addLabel(tr("Bloom Dispersion:"));
-        haloGroup->addSlider("rend-bloom-dispersion");
+        lensGroup->addLabel(tr("Bloom Dispersion:"));
+        lensGroup->addSlider("rend-bloom-dispersion");
 
-        haloGroup->addSpace();
-        haloGroup->addToggle("rend-vignette", tr("Vignetting"));
+        lensGroup->addSpace();
+        lensGroup->addToggle("rend-vignette", tr("Vignetting"));
 
-        haloGroup->addLabel(tr("Vignette Darkness:"));
-        haloGroup->addSlider("rend-vignette-darkness", Ranged(0, 2), .01, 2);
+        lensGroup->addLabel(tr("Vignette Darkness:"));
+        lensGroup->addSlider("rend-vignette-darkness", Ranged(0, 2), .01, 2);
 
-        haloGroup->addLabel(tr("Vignette Width:"));
-        haloGroup->addSlider("rend-vignette-width");
+        lensGroup->addLabel(tr("Vignette Width:"));
+        lensGroup->addSlider("rend-vignette-width");
 
-        haloGroup->addSpace();
-        haloGroup->addToggle("rend-halo-realistic", tr("Realistic Halos"));
+        lensGroup->addSpace();
+        lensGroup->addToggle("rend-halo-realistic", tr("Realistic Halos"));
 
-        haloGroup->addLabel(tr("Flares per Halo:"));
-        haloGroup->addSlider("rend-halo")->setMinLabel(tr("None"));
+        lensGroup->addLabel(tr("Flares per Halo:"));
+        lensGroup->addSlider("rend-halo")->setMinLabel(tr("None"));
 
-        haloGroup->addLabel(tr("Halo Brightness:"));
-        haloGroup->addSlider("rend-halo-bright", Ranged(0, 100), 1, 0);
+        lensGroup->addLabel(tr("Halo Brightness:"));
+        lensGroup->addSlider("rend-halo-bright", Ranged(0, 100), 1, 0);
 
-        haloGroup->addLabel(tr("Halo Size Factor:"));
-        haloGroup->addSlider("rend-halo-size");
+        lensGroup->addLabel(tr("Halo Size Factor:"));
+        lensGroup->addSlider("rend-halo-size");
 
-        haloGroup->addLabel(tr("Occlusion Fading:"));
-        haloGroup->addSlider("rend-halo-occlusion", Ranged(1, 256), 1, 0);
+        lensGroup->addLabel(tr("Occlusion Fading:"));
+        lensGroup->addSlider("rend-halo-occlusion", Ranged(1, 256), 1, 0);
 
-        haloGroup->addLabel(tr("Min Halo Radius:"));
-        haloGroup->addSlider("rend-halo-radius-min", Ranged(1, 80), .1, 1);
+        lensGroup->addLabel(tr("Min Halo Radius:"));
+        lensGroup->addSlider("rend-halo-radius-min", Ranged(1, 80), .1, 1);
 
-        haloGroup->addLabel(tr("Min Halo Size:"));
-        haloGroup->addSlider("rend-halo-secondary-limit", Ranged(0, 10), .1, 1);
+        lensGroup->addLabel(tr("Min Halo Size:"));
+        lensGroup->addSlider("rend-halo-secondary-limit", Ranged(0, 10), .1, 1);
 
-        haloGroup->addLabel(tr("Halo Fading Start:"));
-        haloGroup->addSlider("rend-halo-dim-near", Ranged(0, 200), .1, 1);
+        lensGroup->addLabel(tr("Halo Fading Start:"));
+        lensGroup->addSlider("rend-halo-dim-near", Ranged(0, 200), .1, 1);
 
-        haloGroup->addLabel(tr("Halo Fading End:"));
-        haloGroup->addSlider("rend-halo-dim-far", Ranged(0, 200), .1, 1);
+        lensGroup->addLabel(tr("Halo Fading End:"));
+        lensGroup->addSlider("rend-halo-dim-far", Ranged(0, 200), .1, 1);
 
-        haloGroup->addLabel(tr("Z-Mag Divisor:"));
-        haloGroup->addSlider("rend-halo-zmag-div", Ranged(1, 100), .1, 1);
+        lensGroup->addLabel(tr("Z-Mag Divisor:"));
+        lensGroup->addSlider("rend-halo-zmag-div", Ranged(1, 100), .1, 1);
 
-        haloGroup->commit();
+        lensGroup->commit();
 
         // Material settings.
         matGroup = new Group(this, "material", tr("Materials"));
@@ -715,7 +729,7 @@ RendererAppearanceEditor::RendererAppearanceEditor()
             .setInput(Rule::Left, area.left());
     d->close->rule()
             .setInput(Rule::Right,  area.right())
-            .setInput(Rule::Top,    area.top());
+            .setInput(Rule::Bottom, title->rule().bottom());
 
     SequentialLayout layout(area.left(), title->rule().bottom(), Down);    
 
@@ -728,7 +742,7 @@ RendererAppearanceEditor::RendererAppearanceEditor()
            << d->volLightGroup->title() << *d->volLightGroup
            << d->glowGroup->title()     << *d->glowGroup
            << d->shadowGroup->title()   << *d->shadowGroup
-           << d->haloGroup->title()     << *d->haloGroup
+           << d->lensGroup->title()     << *d->lensGroup
            << d->matGroup->title()      << *d->matGroup
            << d->objectGroup->title()   << *d->objectGroup
            << d->modelGroup->title()    << *d->modelGroup

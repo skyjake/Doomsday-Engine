@@ -25,27 +25,26 @@
  */
 
 #include "clientapp.h"
-#include "render/rend_model.h"
-
-#include "render/rend_main.h"
-#include "render/vlight.h"
-
-#include "gl/gl_main.h"
-#include "gl/gl_texmanager.h"
-
-#include "network/net_main.h" // gametic
-
-#include "MaterialSnapshot"
-#include "MaterialVariantSpec"
-#include "Texture"
-
-#include "con_main.h"
 #include "dd_def.h"
 #include "dd_main.h" // App_WorldSystem()
 
+#include "world/p_players.h"
+#include "world/clientmobjthinkerdata.h"
+#include "render/rend_model.h"
+#include "render/rend_main.h"
+#include "render/vissprite.h"
+#include "render/modelrenderer.h"
+#include "gl/gl_main.h"
+#include "gl/gl_texmanager.h"
+#include "MaterialVariantSpec"
+#include "Texture"
+
+#include <doomsday/console/var.h>
 #include <de/Log>
+#include <de/ArrayValue>
 #include <de/binangle.h>
 #include <de/memory.h>
+#include <de/concurrency.h>
 #include <cstdlib>
 #include <cmath>
 #include <cstring>
@@ -106,6 +105,16 @@ static uint vertexBufferSize; ///< Current number of vertices supported by the r
 #ifdef DENG_DEBUG
 static bool announcedVertexBufferMaxBreach; ///< @c true if an attempt has been made to expand beyond our capability.
 #endif
+
+static inline RenderSystem &rendSys()
+{
+    return ClientApp::renderSystem();
+}
+
+static inline ResourceSystem &resSys()
+{
+    return ClientApp::resourceSystem();
+}
 
 /*static void modelAspectModChanged()
 {
@@ -279,7 +288,7 @@ static void selectTexUnits(int count)
  * Enable, set and optionally lock all enabled arrays.
  */
 static void configureArrays(void *vertices, void *colors, int numCoords = 0,
-    void **coords = 0, int lock = 0)
+    void **coords = 0)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -445,95 +454,86 @@ static void Mod_LerpVertices(float inter, int count, ModelFrame const &from,
     }
 }
 
-static void Mod_MirrorCoords(int count, Vector3f *coords, int axis)
+static void Mod_MirrorCoords(dint count, Vector3f *coords, dint axis)
 {
+    DENG2_ASSERT(coords);
     for(; count-- > 0; coords++)
     {
         (*coords)[axis] = -(*coords)[axis];
     }
 }
 
-struct lightmodelvertexworker_params_t
+/**
+ * Rotate a VectorLight direction vector from world space to model space.
+ *
+ * @param vlight  Light to process.
+ * @param yaw     Yaw rotation angle.
+ * @param pitch   Pitch rotation angle.
+ * @param invert  @c true= flip light normal (for use with inverted models).
+ *
+ * @todo Construct a rotation matrix once and use it for all lights.
+ */
+static Vector3f rotateLightVector(VectorLightData const &vlight, dfloat yaw, dfloat pitch,
+    bool invert = false)
 {
-    Vector3f color, extra;
-    float rotateYaw, rotatePitch;
-    Vector3f normal;
-    uint numProcessed, max;
-    bool invert;
-};
-
-static void lightModelVertex(VectorLight const &vlight, lightmodelvertexworker_params_t &parms)
-{
-    // We must transform the light vector to model space.
-    float vlightDirection[3] = { vlight.direction.x, vlight.direction.y, vlight.direction.z };
-    M_RotateVector(vlightDirection, parms.rotateYaw, parms.rotatePitch);
+    dfloat rotated[3]; vlight.direction.decompose(rotated);
+    M_RotateVector(rotated, yaw, pitch);
 
     // Quick hack: Flip light normal if model inverted.
-    if(parms.invert)
+    if(invert)
     {
-        vlightDirection[VX] = -vlightDirection[VX];
-        vlightDirection[VY] = -vlightDirection[VY];
+        rotated[0] = -rotated[0];
+        rotated[1] = -rotated[1];
     }
 
-    float strength = Vector3f(vlightDirection).dot(parms.normal)
-                   + vlight.offset; // Shift a bit towards the light.
-
-    // Ability to both light and shade.
-    if(strength > 0)
-    {
-        strength *= vlight.lightSide;
-    }
-    else
-    {
-        strength *= vlight.darkSide;
-    }
-
-    Vector3f &dest = vlight.affectedByAmbient? parms.color : parms.extra;
-    dest += vlight.color * de::clamp(-1.f, strength, 1.f);
-}
-
-static int lightModelVertexWorker(VectorLight const *vlight, void *context)
-{
-    lightmodelvertexworker_params_t &parms = *static_cast<lightmodelvertexworker_params_t *>(context);
-
-    lightModelVertex(*vlight, parms);
-    parms.numProcessed += 1;
-
-    // Time to stop?
-    return parms.max && parms.numProcessed == parms.max;
+    return Vector3f(rotated);
 }
 
 /**
  * Calculate vertex lighting.
- * @todo construct a rotation matrix once and use it for all vertices.
  */
-static void Mod_VertexColors(Vector4ub *out, int count, Vector3f const *normCoords,
-    uint vLightListIdx, uint maxLights, Vector4f const &ambient, bool invert,
-    float rotateYaw, float rotatePitch)
+static void Mod_VertexColors(Vector4ub *out, dint count, Vector3f const *normCoords,
+    duint lightListIdx, duint maxLights, Vector4f const &ambient, bool invert,
+    dfloat rotateYaw, dfloat rotatePitch)
 {
     Vector4f const saturated(1, 1, 1, 1);
-    lightmodelvertexworker_params_t parms;
 
-    for(int i = 0; i < count; ++i, out++, normCoords++)
+    for(dint i = 0; i < count; ++i, out++, normCoords++)
     {
         if(activeLod && !activeLod->hasVertex(i))
             continue;
 
-        // Begin with total darkness.
-        parms.color        = Vector3f();
-        parms.extra        = Vector3f();
-        parms.normal       = *normCoords;
-        parms.invert       = invert;
-        parms.rotateYaw    = rotateYaw;
-        parms.rotatePitch  = rotatePitch;
-        parms.max          = maxLights;
-        parms.numProcessed = 0;
+        Vector3f const &normal = *normCoords;
 
-        // Add light from each source.
-        VL_ListIterator(vLightListIdx, lightModelVertexWorker, &parms);
+        // Accumulate contributions from all affecting lights.
+        dint numProcessed = 0;
+        Vector3f accum[2];  // Begin with total darkness [color, extra].
+        rendSys().forAllVectorLights(lightListIdx, [&maxLights, &invert, &rotateYaw
+                                                      , &rotatePitch, &normal
+                                                      , &accum, &numProcessed] (VectorLightData const &vlight)
+        {
+            numProcessed += 1;
+
+            // We must transform the light vector to model space.
+            Vector3f const lightDirection
+                    = rotateLightVector(vlight, rotateYaw, rotatePitch, invert);
+
+            dfloat strength = lightDirection.dot(normal)
+                            + vlight.offset;  // Shift a bit towards the light.
+
+            // Ability to both light and shade.
+            if(strength > 0) strength *= vlight.lightSide;
+            else             strength *= vlight.darkSide;
+
+            accum[vlight.affectedByAmbient? 0 : 1]
+                += vlight.color * de::clamp(-1.f, strength, 1.f);
+
+            // Time to stop?
+            return (maxLights && numProcessed == maxLights);
+        });
 
         // Check for ambient and convert to ubyte.
-        Vector4f color(parms.color.max(ambient) + parms.extra, ambient[3]);
+        Vector4f color(accum[0].max(ambient) + accum[1], ambient[3]);
 
         *out = (color.min(saturated) * 255).toVector4ub();
     }
@@ -542,9 +542,9 @@ static void Mod_VertexColors(Vector4ub *out, int count, Vector3f const *normCoor
 /**
  * Set all the colors in the array to bright white.
  */
-static void Mod_FullBrightVertexColors(int count, Vector4ub *colorCoords, float alpha)
+static void Mod_FullBrightVertexColors(dint count, Vector4ub *colorCoords, dfloat alpha)
 {
-    DENG2_ASSERT(colorCoords != 0);
+    DENG2_ASSERT(colorCoords);
     for(; count-- > 0; colorCoords++)
     {
         *colorCoords = Vector4ub(255, 255, 255, 255 * alpha);
@@ -554,9 +554,9 @@ static void Mod_FullBrightVertexColors(int count, Vector4ub *colorCoords, float 
 /**
  * Set all the colors into the array to the same values.
  */
-static void Mod_FixedVertexColors(int count, Vector4ub *colorCoords, Vector4ub const &color)
+static void Mod_FixedVertexColors(dint count, Vector4ub *colorCoords, Vector4ub const &color)
 {
-    DENG2_ASSERT(colorCoords != 0);
+    DENG2_ASSERT(colorCoords);
     for(; count-- > 0; colorCoords++)
     {
         *colorCoords = color;
@@ -588,11 +588,12 @@ static void Mod_ShinyCoords(Vector2f *out, int count, Vector3f const *normCoords
 
 static int chooseSelSkin(ModelDef &mf, int submodel, int selector)
 {
-    if(mf.def->hasSub(submodel))
+    if(mf.def.hasSub(submodel))
     {
-        int i = (selector >> DDMOBJ_SELECTOR_SHIFT) &
-                mf.def->sub(submodel).selSkinBits[0]; // Selskin mask
-        int c = mf.def->sub(submodel).selSkinBits[1]; // Selskin shift
+        Record &subDef = mf.def.sub(submodel);
+
+        int i = (selector >> DDMOBJ_SELECTOR_SHIFT) & subDef.geti("selSkinMask");
+        int c = subDef.geti("selSkinShift");
 
         if(c > 0) i >>= c;
         else      i <<= -c;
@@ -600,7 +601,7 @@ static int chooseSelSkin(ModelDef &mf, int submodel, int selector)
         if(i > 7) i = 7; // Maximum number of skins for selskin.
         if(i < 0) i = 0; // Improbable (impossible?), but doesn't hurt.
 
-        return mf.def->sub(submodel).selSkins[i];
+        return subDef.geta("selSkins")[i].asInt();
     }
     return 0;
 }
@@ -654,9 +655,16 @@ static int chooseSkin(ModelDef &mf, int submodel, int id, int selector, int tmap
     return skin;
 }
 
-static void drawSubmodel(uint number, drawmodelparams_t const &parm)
+static inline MaterialVariantSpec const &modelSkinMaterialSpec()
 {
-    int const zSign = (parm.mirror? -1 : 1);
+    return resSys().materialSpec(ModelSkinContext, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
+                                 1, -2, -1, true, true, false, false);
+}
+
+static void drawSubmodel(uint number, vissprite_t const &spr)
+{
+    drawmodelparams_t const &parm = *VS_MODEL(&spr);
+    int const zSign = (spr.pose.mirrored? -1 : 1);
     ModelDef *mf = parm.mf, *mfNext = parm.nextMF;
     SubmodelDef const &smf = mf->subModelDef(number);
 
@@ -666,11 +674,14 @@ static void drawSubmodel(uint number, drawmodelparams_t const &parm)
     if(mf->scale == Vector3f(0, 0, 0))
         return;
 
-    float alpha = parm.ambientColor[CA];
+    float alpha = spr.light.ambientColor[CA];
+
     // Is the submodel-defined alpha multiplier in effect?
-    if(!(parm.flags & (DDMF_BRIGHTSHADOW|DDMF_SHADOW|DDMF_ALTSHADOW)))
+    // With df_brightshadow2, the alpha multiplier will be applied anyway.
+    if(smf.testFlag(MFF_BRIGHTSHADOW2) ||
+       !(parm.flags & (DDMF_BRIGHTSHADOW|DDMF_SHADOW|DDMF_ALTSHADOW)))
     {
-        alpha *= smf.alpha * reciprocal255;
+        alpha *= smf.alpha / 255.f;
     }
 
     // Would this be visible?
@@ -744,36 +755,36 @@ static void drawSubmodel(uint number, drawmodelparams_t const &parm)
     glPushMatrix();
 
     // Model space => World space
-    glTranslatef(parm.origin[VX] + parm.srvo[VX] +
+    glTranslatef(spr.pose.origin[VX] + spr.pose.srvo[VX] +
                    de::lerp(mf->offset.x, mfNext->offset.x, inter),
-                 parm.origin[VZ] + parm.srvo[VZ] +
+                 spr.pose.origin[VZ] + spr.pose.srvo[VZ] +
                    de::lerp(mf->offset.y, mfNext->offset.y, inter),
-                 parm.origin[VY] + parm.srvo[VY] + zSign *
+                 spr.pose.origin[VY] + spr.pose.srvo[VY] + zSign *
                    de::lerp(mf->offset.z, mfNext->offset.z, inter));
 
-    if(parm.extraYawAngle || parm.extraPitchAngle)
+    if(spr.pose.extraYawAngle || spr.pose.extraPitchAngle)
     {
         // Sky models have an extra rotation.
         glScalef(1, 200 / 240.0f, 1);
-        glRotatef(parm.extraYawAngle, 1, 0, 0);
-        glRotatef(parm.extraPitchAngle, 0, 0, 1);
+        glRotatef(spr.pose.extraYawAngle, 1, 0, 0);
+        glRotatef(spr.pose.extraPitchAngle, 0, 0, 1);
         glScalef(1, 240 / 200.0f, 1);
     }
 
     // Model rotation.
-    glRotatef(parm.viewAlign ? parm.yawAngleOffset : parm.yaw,
+    glRotatef(spr.pose.viewAligned? spr.pose.yawAngleOffset : spr.pose.yaw,
               0, 1, 0);
-    glRotatef(parm.viewAlign ? parm.pitchAngleOffset : parm.pitch,
+    glRotatef(spr.pose.viewAligned? spr.pose.pitchAngleOffset : spr.pose.pitch,
               0, 0, 1);
 
     // Scaling and model space offset.
     glScalef(de::lerp(mf->scale.x, mfNext->scale.x, inter),
              de::lerp(mf->scale.y, mfNext->scale.y, inter),
              de::lerp(mf->scale.z, mfNext->scale.z, inter));
-    if(parm.extraScale)
+    if(spr.pose.extraScale)
     {
         // Particle models have an extra scale.
-        glScalef(parm.extraScale, parm.extraScale, parm.extraScale);
+        glScalef(spr.pose.extraScale, spr.pose.extraScale, spr.pose.extraScale);
     }
     glTranslatef(smf.offset.x, smf.offset.y, smf.offset.z);
 
@@ -787,7 +798,7 @@ static void drawSubmodel(uint number, drawmodelparams_t const &parm)
         }
 
         // Determine the LOD we will be using.
-        activeLod = &mdl.lod(de::clamp<int>(0, lodFactor * parm.distance, mdl.lodCount() - 1));
+        activeLod = &mdl.lod(de::clamp<int>(0, lodFactor * spr.pose.distance, mdl.lodCount() - 1));
     }
     else
     {
@@ -805,8 +816,8 @@ static void drawSubmodel(uint number, drawmodelparams_t const &parm)
     }
 
     // Coordinates to the center of the model (game coords).
-    modelCenter = Vector3f(parm.origin[VX], parm.origin[VY], (parm.origin[VZ] + parm.gzt) * 2)
-            + Vector3d(parm.srvo) + Vector3f(mf->offset.x, mf->offset.z, mf->offset.y);
+    modelCenter = Vector3f(spr.pose.origin[VX], spr.pose.origin[VY], spr.pose.midZ())
+            + Vector3d(spr.pose.srvo) + Vector3f(mf->offset.x, mf->offset.z, mf->offset.y);
 
     // Calculate lighting.
     Vector4f ambient;
@@ -816,28 +827,28 @@ static void drawSubmodel(uint number, drawmodelparams_t const &parm)
         ambient = Vector4f(1, 1, 1, 1);
         Mod_FullBrightVertexColors(numVerts, modelColorCoords, alpha);
     }
-    else if(!parm.vLightListIdx)
+    else if(!spr.light.vLightListIdx)
     {
         // Lit uniformly.
-        ambient = Vector4f(parm.ambientColor, alpha);
+        ambient = Vector4f(spr.light.ambientColor, alpha);
         Mod_FixedVertexColors(numVerts, modelColorCoords,
                               (ambient * 255).toVector4ub());
     }
     else
     {
         // Lit normally.
-        ambient = Vector4f(parm.ambientColor, alpha);
+        ambient = Vector4f(spr.light.ambientColor, alpha);
 
         Mod_VertexColors(modelColorCoords, numVerts,
-                         modelNormCoords, parm.vLightListIdx, modelLight + 1,
-                         ambient, (mf->scale[VY] < 0), -parm.yaw, -parm.pitch);
+                         modelNormCoords, spr.light.vLightListIdx, modelLight + 1,
+                         ambient, (mf->scale[VY] < 0), -spr.pose.yaw, -spr.pose.pitch);
     }
 
     TextureVariant *shinyTexture = 0;
     float shininess = 0;
-    if(mf->def->hasSub(number))
+    if(mf->def.hasSub(number))
     {
-        shininess = de::clamp(0.f, mf->def->sub(number).shiny * modelShinyFactor, 1.f);
+        shininess = float(de::clamp(0.0, mf->def.sub(number).getd("shiny") * modelShinyFactor, 1.0));
         // Ensure we've prepared the shiny skin.
         if(shininess > 0)
         {
@@ -856,19 +867,19 @@ static void drawSubmodel(uint number, drawmodelparams_t const &parm)
     if(shininess > 0)
     {
         // Calculate shiny coordinates.
-        Vector3f shinyColor = mf->def->sub(number).shinyColor;
+        Vector3f shinyColor = mf->def.sub(number).get("shinyColor");
 
         // With psprites, add the view angle/pitch.
         float offset = parm.shineYawOffset;
 
         // Calculate normalized (0,1) model yaw and pitch.
-        float normYaw = M_CycleIntoRange(((parm.viewAlign ? parm.yawAngleOffset
-                                                           : parm.yaw) + offset) / 360, 1);
+        float normYaw = M_CycleIntoRange(((spr.pose.viewAligned? spr.pose.yawAngleOffset
+                                                               : spr.pose.yaw) + offset) / 360, 1);
 
         offset = parm.shinePitchOffset;
 
-        float normPitch = M_CycleIntoRange(((parm.viewAlign ? parm.pitchAngleOffset
-                                                             : parm.pitch) + offset) / 360, 1);
+        float normPitch = M_CycleIntoRange(((spr.pose.viewAligned? spr.pose.pitchAngleOffset
+                                                                 : spr.pose.pitch) + offset) / 360, 1);
 
         float shinyAng = 0;
         float shinyPnt = 0;
@@ -883,7 +894,7 @@ static void drawSubmodel(uint number, drawmodelparams_t const &parm)
 
             if(!parm.shineTranslateWithViewerPos)
             {
-                delta -= vOrigin.xzy();
+                delta -= Rend_EyeOrigin().xzy();
             }
 
             shinyAng = QATAN2(delta.z, M_ApproxDistancef(delta.x, delta.y)) / PI + 0.5f; // shinyAng is [0,1]
@@ -893,7 +904,7 @@ static void drawSubmodel(uint number, drawmodelparams_t const &parm)
 
         Mod_ShinyCoords(modelTexCoords, numVerts,
                         modelNormCoords, normYaw, normPitch, shinyAng, shinyPnt,
-                        mf->def->sub(number).shinyReact);
+                        mf->def.sub(number).getf("shinyReact"));
 
         // Shiny color.
         if(smf.testFlag(MFF_SHINY_LIT))
@@ -910,14 +921,13 @@ static void drawSubmodel(uint number, drawmodelparams_t const &parm)
     if(renderTextures == 2)
     {
         // For lighting debug, render all surfaces using the gray texture.
-        MaterialVariantSpec const &spec = ClientApp::resourceSystem()
-                .materialSpec(ModelSkinContext, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
-                              1, -2, -1, true, true, false, false);
+        MaterialAnimator &matAnimator = resSys().material(de::Uri("System", Path("gray")))
+                                                    .getAnimator(modelSkinMaterialSpec());
 
-        MaterialSnapshot const &ms = ClientApp::resourceSystem()
-                .material(de::Uri("System", Path("gray"))).prepare(spec);
+        // Ensure we've up to date info about the material.
+        matAnimator.prepare();
 
-        skinTexture = &ms.texture(MTU_PRIMARY);
+        skinTexture = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
     }
     else
     {
@@ -1051,18 +1061,10 @@ static void drawSubmodel(uint number, drawmodelparams_t const &parm)
     GL_BlendMode(BM_NORMAL);
 }
 
-static int drawLightVectorWorker(VectorLight const *vlight, void *context)
+void Rend_DrawModel(vissprite_t const &spr)
 {
-    coord_t distFromViewer = *static_cast<coord_t *>(context);
-    if(distFromViewer < 1600 - 8)
-    {
-        Rend_DrawVectorLight(vlight, 1 - distFromViewer / 1600);
-    }
-    return false; // Continue iteration.
-}
+    drawmodelparams_t const &parm = *VS_MODEL(&spr);
 
-void Rend_DrawModel(drawmodelparams_t const &parm)
-{
     DENG2_ASSERT(inited);
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -1082,7 +1084,7 @@ void Rend_DrawModel(drawmodelparams_t const &parm)
                 glDepthMask(GL_FALSE);
             }
 
-            drawSubmodel(i, parm);
+            drawSubmodel(i, spr);
 
             if(disableZ)
             {
@@ -1091,7 +1093,7 @@ void Rend_DrawModel(drawmodelparams_t const &parm)
         }
     }
 
-    if(devMobjVLights && parm.vLightListIdx)
+    if(devMobjVLights && spr.light.vLightListIdx)
     {
         // Draw the vlight vectors, for debug.
         glDisable(GL_DEPTH_TEST);
@@ -1100,10 +1102,17 @@ void Rend_DrawModel(drawmodelparams_t const &parm)
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
 
-        glTranslatef(parm.origin[VX], parm.origin[VZ], parm.origin[VY]);
+        glTranslatef(spr.pose.origin[0], spr.pose.origin[2], spr.pose.origin[1]);
 
-        coord_t distFromViewer = de::abs(parm.distance);
-        VL_ListIterator(parm.vLightListIdx, drawLightVectorWorker, &distFromViewer);
+        coord_t const distFromViewer = de::abs(spr.pose.distance);
+        rendSys().forAllVectorLights(spr.light.vLightListIdx, [&distFromViewer] (VectorLightData const &vlight)
+        {
+            if(distFromViewer < 1600 - 8)
+            {
+                Rend_DrawVectorLight(vlight, 1 - distFromViewer / 1600);
+            }
+            return LoopContinue;
+        });
 
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();
@@ -1115,14 +1124,57 @@ void Rend_DrawModel(drawmodelparams_t const &parm)
 
 TextureVariantSpec const &Rend_ModelDiffuseTextureSpec(bool noCompression)
 {
-    return ClientApp::resourceSystem().textureSpec(TC_MODELSKIN_DIFFUSE,
+    return resSys().textureSpec(TC_MODELSKIN_DIFFUSE,
         (noCompression? TSF_NO_COMPRESSION : 0), 0, 0, 0, GL_REPEAT, GL_REPEAT,
         1, -2, -1, true, true, false, false);
 }
 
 TextureVariantSpec const &Rend_ModelShinyTextureSpec()
 {
-    return ClientApp::resourceSystem().textureSpec(TC_MODELSKIN_REFLECTION,
+    return resSys().textureSpec(TC_MODELSKIN_REFLECTION,
         TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1, false,
         false, false, false);
+}
+
+//---------------------------------------------------------------------------------------
+// Work in progress:
+//      Here is the contact point between the old renderer and the new GL2 model renderer.
+//      In the future, vissprites should form a class hierarchy, and the entire drawing
+//      operation should be encapsulated within. This will allow drawing a model (or a
+//      sprite, etc.) by creating a VisSprite instance and telling it to draw itself.
+
+void Rend_DrawModel2(vissprite_t const &spr)
+{
+    ModelRenderer &rend = ClientApp::renderSystem().modelRenderer();
+    drawmodel2params_t const &p = spr.data.model2;
+
+    Matrix4f viewMat =
+            Viewer_Matrix() *
+            Matrix4f::translate((spr.pose.origin + spr.pose.srvo).xzy());
+
+    Matrix4f localMat =
+            Matrix4f::rotate(spr.pose.viewAligned? spr.pose.yawAngleOffset :
+                                                   spr.pose.yaw,
+                             Vector3f(0, 1, 0) /* vertical axis for yaw */);
+    if(p.object)
+    {
+        localMat = localMat * THINKER_DATA(p.object->thinker, ClientMobjThinkerData)
+                .modelTransformation();
+    }
+
+    // Set up a suitable matrix for the pose.
+    rend.setTransformation(Rend_EyeOrigin() - spr.pose.mid().xzy(), localMat, viewMat);
+
+    // Ambient color and lighting vectors.
+    rend.setAmbientLight(spr.light.ambientColor * .8f);
+    rend.clearLights();
+    rendSys().forAllVectorLights(spr.light.vLightListIdx, [&rend] (VectorLightData const &vlight)
+    {
+        // Use this when drawing the model.
+        rend.addLight(vlight.direction.xzy(), vlight.color);
+        return LoopContinue;
+    });
+
+    // Draw the model using the current animation state.
+    p.model->draw(p.animator);
 }

@@ -18,7 +18,7 @@
 
 #include "opendialog.h"
 #include "guishellapp.h"
-#include <de/libdeng2.h>
+#include <de/libcore.h>
 #include <QDialogButtonBox>
 #include <QPushButton>
 #include <QVBoxLayout>

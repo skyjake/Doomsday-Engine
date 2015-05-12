@@ -30,7 +30,9 @@
 #include <string.h>
 
 #ifdef WIN32
-#  pragma warning(disable:4244)
+#  ifdef MSVC
+#    pragma warning(disable:4244)
+#  endif
 #  define stricmp _stricmp
 #  define strnicmp _strnicmp
 #  define strlwr _strlwr
@@ -39,7 +41,7 @@
 
 #include <de/c_wrapper.h>
 #include <de/fixedpoint.h>
-#include <de/gui/ddkey.h>
+#include <de/input/ddkey.h>
 #include "doomsday.h"
 #include "version.h"
 #include "info.h"
@@ -77,10 +79,6 @@
 
 #define Set                 DD_SetInteger
 #define Get                 DD_GetInteger
-
-// Verbose messages.
-#define VERBOSE(code)       { if(verbose >= 1) { code; } }
-#define VERBOSE2(code)      { if(verbose >= 2) { code; } }
 
 DENG_EXTERN_C game_export_t gx;
 
@@ -149,6 +147,30 @@ typedef enum {
 } armortype_t;
 
 /**
+ * Player weapon types:
+ */
+typedef enum {
+    WT_FIRST,
+    WT_SECOND,
+    WT_THIRD,
+    WT_FOURTH,
+    NUM_WEAPON_TYPES,
+
+    WT_NOCHANGE  ///< No pending change.
+} weapontype_t;
+
+#define VALID_WEAPONTYPE(val)       ((val) >= WT_FIRST && (val) < WT_FIRST + NUM_WEAPON_TYPES)
+
+// Total number of weapon power levels.
+#define NUMWEAPLEVELS               ( 1 )
+
+// Total number of pieces for the fourth weapon.
+#define WEAPON_FOURTH_PIECE_COUNT   ( 3 )
+
+// All fourth-weapon pieces in bits.
+#define WEAPON_FOURTH_COMPLETE      ((WEAPON_FOURTH_PIECE_COUNT << 1) + 1)
+
+/**
  * Player Classes
  */
 typedef enum {
@@ -163,11 +185,12 @@ typedef enum {
 
 #define VALID_PLAYER_CLASS(c)       ((c) >= PCLASS_FIRST && (c) < NUM_PLAYER_CLASSES)
 
-#define PCLASS_INFO(c)              (&classInfo[c])
+#define PCLASS_INFO(plrClass)       (&classInfo[plrClass])
 
-typedef struct classinfo_s{
+typedef struct classinfo_s
+{
     playerclass_t plrClass;
-    const char* niceName;
+    char const *niceName;
     dd_bool     userSelectable;
     mobjtype_t  mobjType;
     int         normalState;
@@ -177,15 +200,20 @@ typedef struct classinfo_s{
     int         maxArmor;
     int         autoArmorSave;
     fixed_t     maxMove;
-    fixed_t     forwardMove[2]; // walk, run.
-    fixed_t     sideMove[2]; // walk, run.
-    int         moveMul; // multiplier for above.
-    int         turnSpeed[3]; // [normal, speed, initial].
-    int         jumpTics; // wait inbetween jumps.
-    int         failUseSound; // sound played when a use fails.
+    fixed_t     forwardMove[2];  ///< walk, run.
+    fixed_t     sideMove[2];     ///< walk, run.
+    int         moveMul;         ///< multiplier for above.
+    int         turnSpeed[3];    ///< [normal, speed, initial].
+    int         jumpTics;        ///< wait inbetween jumps.
+    int         failUseSound;    ///< sound played when a use fails.
     int         armorIncrement[NUMARMOR];
-    int         pieceX[3]; // temp.
     textenum_t  skillModeNames[NUM_SKILL_MODES];
+    struct weaponpiecedata_s
+    {
+        Point2Raw   offset;
+        char const *patchName;
+    } fourthWeaponPiece[WEAPON_FOURTH_PIECE_COUNT];
+    char const *fourthWeaponCompletePatchName;
 } classinfo_t;
 
 DENG_EXTERN_C classinfo_t classInfo[NUM_PLAYER_CLASSES];
@@ -224,30 +252,6 @@ typedef enum {
     KT_KEYB,
     NUM_KEY_TYPES
 } keytype_t;
-
-/**
- * Weapon ids.
- *
- * The defined weapons, including a marker indicating user has not changed
- * weapon.
- */
-typedef enum {
-    WT_FIRST,
-    WT_SECOND,
-    WT_THIRD,
-    WT_FOURTH,
-    NUM_WEAPON_TYPES,
-
-    WT_NOCHANGE // No pending weapon change.
-} weapontype_t;
-
-#define WPIECE1             1
-#define WPIECE2             2
-#define WPIECE3             4
-
-#define VALID_WEAPONTYPE(val) ((val) >= WT_FIRST && (val) < WT_FIRST + NUM_WEAPON_TYPES)
-
-#define NUMWEAPLEVELS       1 // Number of weapon power levels.
 
 /**
  * Ammunition types.

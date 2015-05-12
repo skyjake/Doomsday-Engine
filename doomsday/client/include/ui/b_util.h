@@ -1,7 +1,7 @@
-/** @file
+/** @file b_util.h  Input system, binding utilities.
  *
  * @authors Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,73 +17,67 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * b_util.h: Bindings
- */
+#ifndef CLIENT_INPUTSYSTEM_BINDING_UTILITIES_H
+#define CLIENT_INPUTSYSTEM_BINDING_UTILITIES_H
 
-#ifndef __DOOMSDAY_BIND_UTIL_H__
-#define __DOOMSDAY_BIND_UTIL_H__
-
+#include <de/Record>
 #include "dd_types.h"
+#include "ddevent.h"
+#include "Binding"
 
-// Event Binding Toggle State
-typedef enum ebstate_e {
-    EBTOG_UNDEFINED = 0,
-    EBTOG_DOWN,
-    EBTOG_REPEAT,
-    EBTOG_PRESS,
-    EBTOG_UP,
-    EBAXIS_WITHIN,
-    EBAXIS_BEYOND,
-    EBAXIS_BEYOND_POSITIVE,
-    EBAXIS_BEYOND_NEGATIVE
-} ebstate_t;
+class BindContext;
 
-typedef enum stateconditiontype_e {
-    SCT_STATE,                      ///< Related to the state of the engine.
-    SCT_TOGGLE_STATE,               ///< Toggle is in a specific state.
-    SCT_MODIFIER_STATE,             ///< Modifier is in a specific state.
-    SCT_AXIS_BEYOND,                ///< Axis is past a specific position.
-    SCT_ANGLE_AT                    ///< Angle is pointing to a specific direction.
-} stateconditiontype_t;
+bool B_ParseAxisPosition(Binding::ControlTest &test, float &pos, char const *desc);
 
-// Device state condition.
-typedef struct statecondition_s {
-    uint        device;             // Which device?
-    stateconditiontype_t type;
-    int         id;                 // Toggle/axis/angle identifier in the device.
-    ebstate_t   state;
-    float       pos;                // Axis position/angle condition.
-    struct {
-        uint    negate:1;           // Test the inverse (e.g., not in a specific state).
-        uint    multiplayer:1;      // Only for multiplayer.
-    } flags;
-} statecondition_t;
+bool B_ParseButtonState(Binding::ControlTest &test, char const *desc);
 
-dd_bool     B_ParseToggleState(const char* toggleName, ebstate_t* state);
-dd_bool     B_ParseAxisPosition(const char* desc, ebstate_t* state, float* pos);
-dd_bool     B_ParseKeyId(const char* desc, int* id);
-dd_bool     B_ParseMouseTypeAndId(const char* desc, ddeventtype_t* type, int* id);
-dd_bool     B_ParseJoystickTypeAndId(uint device, const char* desc, ddeventtype_t* type, int* id);
-dd_bool     B_ParseAnglePosition(const char* desc, float* pos);
-dd_bool     B_ParseStateCondition(statecondition_t* cond, const char* desc);
-dd_bool     B_CheckAxisPos(ebstate_t test, float testPos, float pos);
-dd_bool     B_CheckCondition(statecondition_t* cond, int localNum, struct bcontext_s* context);
-dd_bool     B_EqualConditions(const statecondition_t* a, const statecondition_t* b);
-void        B_AppendDeviceDescToString(uint device, ddeventtype_t type, int id, ddstring_t* str);
-void        B_AppendToggleStateToString(ebstate_t state, ddstring_t* str);
-void        B_AppendAxisPositionToString(ebstate_t state, float pos, ddstring_t* str);
-void        B_AppendAnglePositionToString(float pos, ddstring_t* str);
+bool B_ParseHatAngle(float &angle, char const *desc);
+
+bool B_ParseBindingCondition(de::Record &cond, char const *desc);
+
+// ---
+
+de::String B_AxisPositionToString(Binding::ControlTest test, float pos);
+
+de::String B_ButtonStateToString(Binding::ControlTest test);
+
+de::String B_HatAngleToString(float angle);
+
+de::String B_ConditionToString(de::Record const &cond);
+
+de::String B_EventToString(ddevent_t const &ev);
+
+// ---
+
+bool B_CheckAxisPosition(Binding::ControlTest test, float testPos, float pos);
 
 /**
- * Converts a state condition to text string format and appends it to a string.
- *
- * @param cond  State condition.
- * @param str  The condition in textual format is appended here.
+ * @param cond      State condition to check.
+ * @param localNum  Local player number.
+ * @param context   Relevant binding context, if any (may be @c nullptr).
  */
-void        B_AppendConditionToString(const statecondition_t* cond, ddstring_t* str);
+bool B_CheckCondition(de::Record const *cond, int localNum, BindContext *context);
 
-void        B_AppendEventToString(const ddevent_t* ev, ddstring_t* str);
+bool B_EqualConditions(de::Record const &a, de::Record const &b);
 
-#endif // __DOOMSDAY_BIND_UTIL_H__
+// ---------------------------------------------------------------------------------
+
+extern byte zeroControlUponConflict;
+
+bool B_ParseKeyId(int &id, char const *desc);
+
+bool B_ParseMouseTypeAndId(ddeventtype_t &type, int &id, char const *desc);
+
+bool B_ParseJoystickTypeAndId(ddeventtype_t &type, int &id, int deviceId, char const *desc);
+
+de::String B_ControlDescToString(int deviceId, ddeventtype_t type, int id);
+
+void B_EvaluateImpulseBindings(BindContext *context, int localNum, int impulseId,
+    float *pos, float *relativeOffset, bool allowTriggered);
+
+char const *B_ShortNameForKey(int ddKey, bool forceLowercase = true);
+
+int B_KeyForShortName(char const *key);
+
+#endif // CLIENT_INPUTSYSTEM_BINDING_UTILITIES_H
 

@@ -1,12 +1,12 @@
 # The Doomsday Engine Project
-# Copyright (c) 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
-# Copyright (c) 2011-2013 Daniel Swanson <danij@dengine.net>
+# Copyright (c) 2011-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2011-2014 Daniel Swanson <danij@dengine.net>
 
 TEMPLATE = app
 win32|macx: TARGET = Doomsday
       else: TARGET = doomsday
 
-# Build Configuration --------------------------------------------------------
+# Build Configuration ----------------------------------------------------------
 
 include(../config.pri)
 
@@ -21,24 +21,25 @@ echo(Doomsday Client $${DENG_VERSION}.)
         -Wno-missing-braces
 }
 
-# External Dependencies ------------------------------------------------------
+# External Dependencies --------------------------------------------------------
 
 CONFIG += deng_qtgui deng_qtopengl
 
-include(../dep_sdl.pri)
+include(../dep_sdl2.pri)
 include(../dep_opengl.pri)
 include(../dep_zlib.pri)
 include(../dep_lzss.pri)
 win32 {
     include(../dep_directx.pri)
 }
-include(../dep_deng2.pri)
-include(../dep_deng1.pri)
+include(../dep_core.pri)
+include(../dep_legacy.pri)
 include(../dep_shell.pri)
 include(../dep_gui.pri)
 include(../dep_appfw.pri)
+include(../dep_doomsday.pri)
 
-# Definitions ----------------------------------------------------------------
+# Definitions ------------------------------------------------------------------
 
 DEFINES += __DOOMSDAY__ __CLIENT__
 
@@ -49,13 +50,13 @@ DEFINES += __DOOMSDAY__ __CLIENT__
     !win32: echo(DENG_BUILD is not defined.)
 }
 
-# Linking --------------------------------------------------------------------
+# Linking ----------------------------------------------------------------------
 
 win32 {
     RC_FILE = res/windows/doomsday.rc
     OTHER_FILES += $$RC_FILE
 
-    QMAKE_LFLAGS += /NODEFAULTLIB:libcmt
+    deng_msvc: QMAKE_LFLAGS += /NODEFAULTLIB:libcmt
 
     LIBS += -lkernel32 -lgdi32 -lole32 -luser32 -lwsock32 -lopengl32
 }
@@ -68,7 +69,9 @@ else {
     !freebsd-*: LIBS += -ldl
 }
 
-# Source Files ---------------------------------------------------------------
+# Source Files -----------------------------------------------------------------
+
+!deng_mingw: PRECOMPILED_HEADER = include/precompiled.h
 
 DENG_API_HEADERS = \
     $$DENG_API_DIR/apis.h \
@@ -100,13 +103,13 @@ DENG_API_HEADERS = \
     $$DENG_API_DIR/api_svg.h \
     $$DENG_API_DIR/api_thinker.h \
     $$DENG_API_DIR/api_uri.h \
-    $$DENG_API_DIR/api_wad.h \
     $$DENG_API_DIR/dd_share.h \
     $$DENG_API_DIR/dd_types.h \
     $$DENG_API_DIR/dd_version.h \
     $$DENG_API_DIR/def_share.h \
     $$DENG_API_DIR/dengproject.h \
-    $$DENG_API_DIR/doomsday.h
+    $$DENG_API_DIR/doomsday.h \
+    $$DENG_API_DIR/xgclass.h
 
 # Convenience headers.
 DENG_CONVENIENCE_HEADERS += \
@@ -114,15 +117,18 @@ DENG_CONVENIENCE_HEADERS += \
     include/BiasDigest \
     include/BiasIllum \
     include/BiasSource \
-    include/BiasSurface \
     include/BiasTracker \
+    include/BindContext \
+    include/Binding \
     include/BitmapFont \
     include/BspLeaf \
     include/BspNode \
     include/CommandAction \
+    include/CommandBinding \
     include/CompositeBitmapFont \
     include/Contact \
     include/ContactSpreader \
+    include/ConvexSubspace \
     include/Decoration \
     include/DrawList \
     include/DrawLists \
@@ -139,18 +145,20 @@ DENG_CONVENIENCE_HEADERS += \
     include/HueCircle \
     include/HueCircleVisual \
     include/IHPlane \
+    include/ImpulseBinding \
     include/Interceptor \
     include/LightDecoration \
     include/Line \
     include/Lumobj \
+    include/MapDef \
     include/MapElement \
     include/MapObject \
     include/Material \
+    include/MaterialAnimator \
     include/MaterialArchive \
     include/MaterialContext \
     include/MaterialManifest \
     include/MaterialScheme \
-    include/MaterialSnapshot \
     include/MaterialVariantSpec \
     include/Mesh \
     include/Model \
@@ -158,7 +166,9 @@ DENG_CONVENIENCE_HEADERS += \
     include/Plane \
     include/Polyobj \
     include/Sector \
+    include/SectorCluster \
     include/SettingsRegister \
+    include/Shard \
     include/SkyFixEdge \
     include/Sprite \
     include/Surface \
@@ -170,8 +180,7 @@ DENG_CONVENIENCE_HEADERS += \
     include/TriangleStripBuilder \
     include/Vertex \
     include/WallEdge \
-    include/WallSpec \
-    include/WidgetActions
+    include/WallSpec
 
 # Private headers.
 DENG_HEADERS += \
@@ -182,11 +191,9 @@ DENG_HEADERS += \
     include/audio/m_mus2midi.h \
     include/audio/s_cache.h \
     include/audio/s_environ.h \
-    include/audio/s_logic.h \
     include/audio/s_main.h \
     include/audio/s_mus.h \
     include/audio/s_sfx.h \
-    include/audio/s_wav.h \
     include/audio/sys_audio.h \
     include/audio/sys_audiod_dummy.h \
     include/busymode.h \
@@ -197,16 +204,12 @@ DENG_HEADERS += \
     include/client/cl_player.h \
     include/client/cl_sound.h \
     include/client/cl_world.h \
-    include/client/clmobjhash.h \
     include/client/clplanemover.h \
     include/client/clpolymover.h \
     include/clientapp.h \
     include/color.h \
-    include/con_bar.h \
     include/con_config.h \
-    include/con_main.h \
     include/dd_def.h \
-    include/dd_help.h \
     include/dd_loop.h \
     include/dd_main.h \
     include/dd_pinit.h \
@@ -226,23 +229,10 @@ DENG_HEADERS += \
     include/de_resource.h \
     include/de_system.h \
     include/de_ui.h \
-    include/def_data.h \
     include/def_main.h \
-    include/dualstring.h \
     include/edit_bias.h \
     include/edit_map.h \
     include/face.h \
-    include/filehandle.h \
-    include/filesys/file.h \
-    include/filesys/filehandlebuilder.h \
-    include/filesys/fileinfo.h \
-    include/filesys/fs_main.h \
-    include/filesys/fs_util.h \
-    include/filesys/lumpindex.h \
-    include/filesys/manifest.h \
-    include/filesys/searchpath.h \
-    include/filesys/sys_direc.h \
-    include/filetype.h \
     include/game.h \
     include/games.h \
     include/gl/gl_defer.h \
@@ -275,10 +265,10 @@ DENG_HEADERS += \
     include/network/sys_network.h \
     include/partition.h \
     include/r_util.h \
+    include/render/angleclipper.h \
     include/render/biasdigest.h \
     include/render/biasillum.h \
     include/render/biassource.h \
-    include/render/biassurface.h \
     include/render/biastracker.h \
     include/render/billboard.h \
     include/render/blockmapvisual.h \
@@ -291,6 +281,7 @@ DENG_HEADERS += \
     include/render/fx/colorfilter.h \
     include/render/fx/lensflares.h \
     include/render/fx/postprocessing.h \
+    include/render/fx/resize.h \
     include/render/fx/vignette.h \
     include/render/huecirclevisual.h \
     include/render/ilightsource.h \
@@ -298,29 +289,29 @@ DENG_HEADERS += \
     include/render/lightgrid.h \
     include/render/lumobj.h \
     include/render/materialcontext.h \
-    include/render/projector.h \
+    include/render/mobjanimator.h \
+    include/render/modelrenderer.h \
+    include/render/projectedtexturedata.h \
     include/render/r_draw.h \
     include/render/r_main.h \
     include/render/r_things.h \
-    include/render/rend_clip.h \
-    include/render/rend_dynlight.h \
     include/render/rend_fakeradio.h \
     include/render/rend_font.h \
     include/render/rend_halo.h \
     include/render/rend_main.h \
     include/render/rend_model.h \
     include/render/rend_particle.h \
-    include/render/rend_shadow.h \
     include/render/rendpoly.h \
     include/render/rendersystem.h \
     include/render/shadowedge.h \
-    include/render/sky.h \
+    include/render/shard.h \
+    include/render/skydrawable.h \
     include/render/skyfixedge.h \
     include/render/surfacedecorator.h \
     include/render/trianglestripbuilder.h \
+    include/render/vectorlightdata.h \
     include/render/viewports.h \
     include/render/vissprite.h \
-    include/render/vlight.h \
     include/render/vr.h \
     include/render/walledge.h \
     include/render/wallspec.h \
@@ -334,12 +325,17 @@ DENG_HEADERS += \
     include/resource/fontscheme.h \
     include/resource/hq2x.h \
     include/resource/image.h \
-    include/resource/lumpcache.h \
+    include/resource/manifest.h \
+    include/resource/mapdef.h \
     include/resource/material.h \
+    include/resource/materialanimator.h \
     include/resource/materialarchive.h \
+    include/resource/materialdetaillayer.h \
+    include/resource/materiallightdecoration.h \
     include/resource/materialmanifest.h \
     include/resource/materialscheme.h \
-    include/resource/materialsnapshot.h \
+    include/resource/materialshinelayer.h \
+    include/resource/materialtexturelayer.h \
     include/resource/materialvariantspec.h \
     include/resource/model.h \
     include/resource/modeldef.h \
@@ -354,24 +350,20 @@ DENG_HEADERS += \
     include/resource/texturescheme.h \
     include/resource/texturevariantspec.h \
     include/resource/tga.h \
-    include/resource/wad.h \
-    include/resource/zip.h \
-    include/resourceclass.h \
     include/settingsregister.h \
     include/sys_system.h \
     include/tab_anorms.h \
-    include/ui/b_command.h \
-    include/ui/b_context.h \
-    include/ui/b_device.h \
     include/ui/b_main.h \
     include/ui/b_util.h \
+    include/ui/bindcontext.h \
+    include/ui/binding.h \
     include/ui/busyvisual.h \
     include/ui/clientrootwidget.h \
     include/ui/clientwindow.h \
     include/ui/clientwindowsystem.h \
     include/ui/commandaction.h \
-    include/ui/dd_input.h \
-    include/ui/dd_ui.h \
+    include/ui/commandbinding.h \
+    include/ui/ddevent.h \
     include/ui/dialogs/aboutdialog.h \
     include/ui/dialogs/alertdialog.h \
     include/ui/dialogs/audiosettingsdialog.h \
@@ -385,12 +377,25 @@ DENG_HEADERS += \
     include/ui/dialogs/videosettingsdialog.h \
     include/ui/dialogs/vrsettingsdialog.h \
     include/ui/editors/rendererappearanceeditor.h \
-    include/ui/widgetactions.h \
+    include/ui/impulsebinding.h \
+    include/ui/infine/finale.h \
+    include/ui/infine/finaleanimwidget.h \
+    include/ui/infine/finaleinterpreter.h \
+    include/ui/infine/finalepagewidget.h \
+    include/ui/infine/finaletextwidget.h \
+    include/ui/infine/finalewidget.h \
+    include/ui/infine/infinesystem.h \
+    include/ui/inputdevice.h \
+    include/ui/inputdeviceaxiscontrol.h \
+    include/ui/inputdevicebuttoncontrol.h \
+    include/ui/inputdevicehatcontrol.h \
+    include/ui/progress.h \
     include/ui/widgets/busywidget.h \
     include/ui/widgets/consolecommandwidget.h \
     include/ui/widgets/consolewidget.h \
     include/ui/widgets/cvarchoicewidget.h \
     include/ui/widgets/cvarlineeditwidget.h \
+    include/ui/widgets/cvarnativepathwidget.h \
     include/ui/widgets/cvarsliderwidget.h \
     include/ui/widgets/cvartogglewidget.h \
     include/ui/widgets/gamefilterwidget.h \
@@ -409,16 +414,12 @@ DENG_HEADERS += \
     include/ui/widgets/singleplayersessionmenuwidget.h \
     include/ui/widgets/taskbarwidget.h \
     include/ui/widgets/tutorialwidget.h \
-    include/ui/fi_main.h \
-    include/ui/finaleinterpreter.h \
     include/ui/inputsystem.h \
     include/ui/joystick.h \
     include/ui/mouse_qt.h \
     include/ui/nativeui.h \
-    include/ui/p_control.h \
     include/ui/styledlogsinkformatter.h \
     include/ui/sys_input.h \
-    include/ui/ui2_main.h \
     include/ui/ui_main.h \
     include/ui/zonedebug.h \
     include/updater.h \
@@ -427,21 +428,21 @@ DENG_HEADERS += \
     include/updater/updateavailabledialog.h \
     include/updater/updatersettings.h \
     include/updater/updatersettingsdialog.h \
-    include/uri.hh \
     include/versioninfo.h \
     include/world/blockmap.h \
-    include/world/bsp/bsptreenode.h \
-    include/world/bsp/convexsubspace.h \
+    include/world/bsp/convexsubspaceproxy.h \
     include/world/bsp/edgetip.h \
     include/world/bsp/hplane.h \
     include/world/bsp/linesegment.h \
-    include/world/bsp/partitioncost.h \
     include/world/bsp/partitioner.h \
+    include/world/bsp/partitionevaluator.h \
     include/world/bsp/superblockmap.h \
     include/world/bspleaf.h \
     include/world/bspnode.h \
+    include/world/clientmobjthinkerdata.h \
     include/world/contact.h \
     include/world/contactspreader.h \
+    include/world/convexsubspace.h \
     include/world/dmuargs.h \
     include/world/entitydatabase.h \
     include/world/entitydef.h \
@@ -449,6 +450,7 @@ DENG_HEADERS += \
     include/world/grabbable.h \
     include/world/hand.h \
     include/world/huecircle.h \
+    include/world/impulseaccumulator.h \
     include/world/interceptor.h \
     include/world/line.h \
     include/world/lineblockmap.h \
@@ -463,9 +465,12 @@ DENG_HEADERS += \
     include/world/p_ticker.h \
     include/world/plane.h \
     include/world/polyobj.h \
+    include/world/polyobjdata.h \
     include/world/propertyvalue.h \
     include/world/reject.h \
     include/world/sector.h \
+    include/world/sectorcluster.h \
+    include/world/sky.h \
     include/world/surface.h \
     include/world/thinkers.h \
     include/world/vertex.h \
@@ -476,6 +481,7 @@ INCLUDEPATH += \
     $$DENG_API_DIR
 
 HEADERS += \
+    include/precompiled.h \
     $$DENG_API_HEADERS \
     $$DENG_HEADERS
 
@@ -525,17 +531,17 @@ else:unix {
 # Platform-independent sources.
 SOURCES += \
     src/alertmask.cpp \
+    src/api_console.cpp \
+    src/api_filesys.cpp \
     src/api_uri.cpp \
     src/audio/audiodriver.cpp \
     src/audio/audiodriver_music.cpp \
     src/audio/m_mus2midi.cpp \
     src/audio/s_cache.cpp \
     src/audio/s_environ.cpp \
-    src/audio/s_logic.cpp \
     src/audio/s_main.cpp \
     src/audio/s_mus.cpp \
     src/audio/s_sfx.cpp \
-    src/audio/s_wav.cpp \
     src/audio/sys_audiod_dummy.cpp \
     src/busymode.cpp \
     src/client/cl_frame.cpp \
@@ -545,37 +551,18 @@ SOURCES += \
     src/client/cl_player.cpp \
     src/client/cl_sound.cpp \
     src/client/cl_world.cpp \
-    src/client/clmobjhash.cpp \
     src/client/clplanemover.cpp \
     src/client/clpolymover.cpp \
     src/clientapp.cpp \
     src/color.cpp \
-    src/con_bar.cpp \
     src/con_config.cpp \
-    src/con_data.cpp \
-    src/con_main.cpp \
-    src/dd_help.cpp \
     src/dd_loop.cpp \
     src/dd_main.cpp \
     src/dd_pinit.cpp \
     src/dd_plugin.cpp \
-    src/dd_wad.cpp \
-    src/def_data.cpp \
     src/def_main.cpp \
-    src/def_read.cpp \
-    src/dualstring.cpp \
     src/edit_bias.cpp \
     src/face.cpp \
-    src/filesys/file.cpp \
-    src/filesys/filehandle.cpp \
-    src/filesys/fileid.cpp \
-    src/filesys/fs_main.cpp \
-    src/filesys/fs_scheme.cpp \
-    src/filesys/fs_util.cpp \
-    src/filesys/lumpindex.cpp \
-    src/filesys/manifest.cpp \
-    src/filesys/searchpath.cpp \
-    src/filesys/sys_direc.cpp \
     src/game.cpp \
     src/games.cpp \
     src/gl/dgl_common.cpp \
@@ -608,11 +595,11 @@ SOURCES += \
     src/network/serverlink.cpp \
     src/network/sys_network.cpp \
     src/r_util.cpp \
+    src/render/angleclipper.cpp \
     src/render/api_render.cpp \
     src/render/biasdigest.cpp \
     src/render/biasillum.cpp \
     src/render/biassource.cpp \
-    src/render/biassurface.cpp \
     src/render/biastracker.cpp \
     src/render/billboard.cpp \
     src/render/blockmapvisual.cpp \
@@ -625,35 +612,34 @@ SOURCES += \
     src/render/fx/colorfilter.cpp \
     src/render/fx/lensflares.cpp \
     src/render/fx/postprocessing.cpp \
+    src/render/fx/resize.cpp \
     src/render/fx/vignette.cpp \
     src/render/huecirclevisual.cpp \
     src/render/lightdecoration.cpp \
     src/render/lightgrid.cpp \
     src/render/lumobj.cpp \
-    src/render/projector.cpp \
+    src/render/mobjanimator.cpp \
+    src/render/modelrenderer.cpp \
     src/render/r_draw.cpp \
     src/render/r_fakeradio.cpp \
     src/render/r_main.cpp \
     src/render/r_things.cpp \
-    src/render/rend_clip.cpp \
-    src/render/rend_dynlight.cpp \
     src/render/rend_fakeradio.cpp \
     src/render/rend_font.cpp \
     src/render/rend_halo.cpp \
     src/render/rend_main.cpp \
     src/render/rend_model.cpp \
     src/render/rend_particle.cpp \
-    src/render/rend_shadow.cpp \
     src/render/rendpoly.cpp \
     src/render/rendersystem.cpp \
     src/render/shadowedge.cpp \
-    src/render/sky.cpp \
+    src/render/shard.cpp \
+    src/render/skydrawable.cpp \
     src/render/skyfixedge.cpp \
     src/render/surfacedecorator.cpp \
     src/render/trianglestripbuilder.cpp \
     src/render/viewports.cpp \
     src/render/vissprite.cpp \
-    src/render/vlight.cpp \
     src/render/vr.cpp \
     src/render/walledge.cpp \
     src/render/wallspec.cpp \
@@ -669,13 +655,17 @@ SOURCES += \
     src/resource/fontscheme.cpp \
     src/resource/hq2x.cpp \
     src/resource/image.cpp \
+    src/resource/manifest.cpp \
+    src/resource/mapdef.cpp \
     src/resource/material.cpp \
-    src/resource/materialanimation.cpp \
+    src/resource/materialanimator.cpp \
     src/resource/materialarchive.cpp \
+    src/resource/materialdetaillayer.cpp \
+    src/resource/materiallightdecoration.cpp \
     src/resource/materialmanifest.cpp \
     src/resource/materialscheme.cpp \
-    src/resource/materialsnapshot.cpp \
-    src/resource/materialvariant.cpp \
+    src/resource/materialshinelayer.cpp \
+    src/resource/materialtexturelayer.cpp \
     src/resource/model.cpp \
     src/resource/patch.cpp \
     src/resource/patchname.cpp \
@@ -687,22 +677,20 @@ SOURCES += \
     src/resource/texturescheme.cpp \
     src/resource/texturevariant.cpp \
     src/resource/tga.cpp \
-    src/resource/wad.cpp \
-    src/resource/zip.cpp \
     src/settingsregister.cpp \
     src/sys_system.cpp \
     src/tab_tables.c \
-    src/ui/b_command.cpp \
-    src/ui/b_context.cpp \
-    src/ui/b_device.cpp \
     src/ui/b_main.cpp \
     src/ui/b_util.cpp \
+    src/ui/bindcontext.cpp \
+    src/ui/binding.cpp \
     src/ui/busyvisual.cpp \
     src/ui/clientrootwidget.cpp \
     src/ui/clientwindow.cpp \
     src/ui/clientwindowsystem.cpp \
     src/ui/commandaction.cpp \
-    src/ui/dd_input.cpp \
+    src/ui/commandbinding.cpp \
+    src/ui/impulsebinding.cpp \
     src/ui/dialogs/aboutdialog.cpp \
     src/ui/dialogs/alertdialog.cpp \
     src/ui/dialogs/audiosettingsdialog.cpp \
@@ -716,22 +704,31 @@ SOURCES += \
     src/ui/dialogs/vrsettingsdialog.cpp \
     src/ui/dialogs/renderersettingsdialog.cpp \
     src/ui/editors/rendererappearanceeditor.cpp \
-    src/ui/fi_main.cpp \
-    src/ui/finaleinterpreter.cpp \
+    src/ui/infine/finale.cpp \
+    src/ui/infine/finaleanimwidget.cpp \
+    src/ui/infine/finaleinterpreter.cpp \
+    src/ui/infine/finalepagewidget.cpp \
+    src/ui/infine/finaletextwidget.cpp \
+    src/ui/infine/finalewidget.cpp \
+    src/ui/infine/infinesystem.cpp \
+    src/ui/inputdebug.cpp \
+    src/ui/inputdevice.cpp \
+    src/ui/inputdeviceaxiscontrol.cpp \
+    src/ui/inputdevicebuttoncontrol.cpp \
+    src/ui/inputdevicehatcontrol.cpp \
     src/ui/inputsystem.cpp \
     src/ui/mouse_qt.cpp \
     src/ui/nativeui.cpp \
-    src/ui/p_control.cpp \
+    src/ui/progress.cpp \
     src/ui/styledlogsinkformatter.cpp \
     src/ui/sys_input.cpp \
-    src/ui/ui2_main.cpp \
     src/ui/ui_main.cpp \
-    src/ui/widgetactions.cpp \
     src/ui/widgets/busywidget.cpp \
     src/ui/widgets/consolecommandwidget.cpp \
     src/ui/widgets/consolewidget.cpp \
     src/ui/widgets/cvarchoicewidget.cpp \
     src/ui/widgets/cvarlineeditwidget.cpp \
+    src/ui/widgets/cvarnativepathwidget.cpp \
     src/ui/widgets/cvarsliderwidget.cpp \
     src/ui/widgets/cvartogglewidget.cpp \
     src/ui/widgets/gamefilterwidget.cpp \
@@ -756,19 +753,21 @@ SOURCES += \
     src/updater/updater.cpp \
     src/updater/updatersettings.cpp \
     src/updater/updatersettingsdialog.cpp \
-    src/uri.cpp \
     src/world/api_map.cpp \
     src/world/api_mapedit.cpp \
     src/world/blockmap.cpp \
-    src/world/bsp/convexsubspace.cpp \
+    src/world/bsp/convexsubspaceproxy.cpp \
     src/world/bsp/hplane.cpp \
     src/world/bsp/linesegment.cpp \
     src/world/bsp/partitioner.cpp \
+    src/world/bsp/partitionevaluator.cpp \
     src/world/bsp/superblockmap.cpp \
     src/world/bspleaf.cpp \
     src/world/bspnode.cpp \
+    src/world/clientmobjthinkerdata.cpp \
     src/world/contact.cpp \
     src/world/contactspreader.cpp \
+    src/world/convexsubspace.cpp \
     src/world/dmuargs.cpp \
     src/world/entitydatabase.cpp \
     src/world/entitydef.cpp \
@@ -776,6 +775,7 @@ SOURCES += \
     src/world/grabbable.cpp \
     src/world/hand.cpp \
     src/world/huecircle.cpp \
+    src/world/impulseaccumulator.cpp \
     src/world/interceptor.cpp \
     src/world/line.cpp \
     src/world/lineblockmap.cpp \
@@ -789,10 +789,12 @@ SOURCES += \
     src/world/p_ticker.cpp \
     src/world/plane.cpp \
     src/world/polyobj.cpp \
+    src/world/polyobjdata.cpp \
     src/world/propertyvalue.cpp \
     src/world/reject.cpp \
     src/world/sector.cpp \
     src/world/sectorcluster.cpp \
+    src/world/sky.cpp \
     src/world/surface.cpp \
     src/world/thinkers.cpp \
     src/world/vertex.cpp \
@@ -803,14 +805,7 @@ SOURCES += \
     SOURCES += src/audio/sys_audiod_sdlmixer.cpp
 }
 
-DOOMSDAY_SCRIPTS += \
-    modules/appconfig.de \
-    modules/bootstrap.de \
-    modules/Updater.de
-
 OTHER_FILES += \
-    $$DOOMSDAY_SCRIPTS \
-    data/cphelp.txt \
     include/template.h.template \
     src/template.c.template \
     client-mac.doxy \
@@ -818,14 +813,9 @@ OTHER_FILES += \
 
 # Resources ------------------------------------------------------------------
 
-data.files = $$OUT_PWD/../doomsday.pk3
+buildPackage(net.dengine.client, $$OUT_PWD/..)
 
-mod.files = \
-    $$DOOMSDAY_SCRIPTS \
-    $$DENG_MODULES_DIR/Config.de \
-    $$DENG_MODULES_DIR/Log.de \
-    $$DENG_MODULES_DIR/recutil.de \
-    $$DENG_MODULES_DIR/../../libgui/modules/gui.de
+data.files = $$OUT_PWD/../doomsday.pk3
 
 # These fonts may be needed during the initial startup busy mode.
 startupfonts.files = \
@@ -842,46 +832,49 @@ startupfonts.files = \
     data/fonts/normallight18.dfn \
     data/fonts/normallight24.dfn
 
-startupgfx.files = \
-    data/graphics/background.pcx \
-    data/graphics/loading1.png \
-    data/graphics/loading2.png \
-    data/graphics/logo.png
-
 macx {
+    xcodeFinalizeAppBuild()
+    xcodeDeployDengLibs(shell.1 gui.1 appfw.1 doomsday.1 legacy.1)
+    xcodeDeployDengPlugins(audio_fluidsynth audio_fmod \
+        idtech1converter savegameconverter dehread \
+        doom heretic hexen doom64)
+    macx-xcode {
+        QMAKE_BUNDLE_DATA += exectools
+        exectools.files = $$DESTDIR/savegametool $$DESTDIR/doomsday-server
+        exectools.path = Contents/Resources
+    }
+
     res.path = Contents/Resources
     res.files = \
         res/macx/English.lproj \
         res/macx/deng.icns
 
     data.path         = $${res.path}
-    mod.path          = $${res.path}/modules
     startupfonts.path = $${res.path}/data/fonts
-    startupgfx.path   = $${res.path}/data/graphics
 
-    QMAKE_BUNDLE_DATA += mod res data startupfonts startupgfx
+    QMAKE_BUNDLE_DATA += res data startupfonts
 
     QMAKE_INFO_PLIST = res/macx/Info.plist
 
     # Since qmake is unable to copy directories as bundle data, let's copy
     # the frameworks manually.
-    FW_DIR = \"$${OUT_PWD}/Doomsday.app/Contents/Frameworks/\"
+    FW_DIR = Doomsday.app/Contents/Frameworks/
     doPostLink("rm -rf $$FW_DIR")
     doPostLink("mkdir $$FW_DIR")
-    !deng_nosdl {
-        doPostLink("cp -fRp $${SDL_FRAMEWORK_DIR}/SDL.framework $$FW_DIR")
-        !deng_nosdlmixer: doPostLink("cp -fRp $${SDL_FRAMEWORK_DIR}/SDL_mixer.framework $$FW_DIR")
+    !deng_nosdl:!isEmpty(SDL2_FRAMEWORK_DIR) {
+        doPostLink("cp -fRp $${SDL2_FRAMEWORK_DIR}/SDL2.framework $$FW_DIR")
+        !deng_nosdlmixer: doPostLink("cp -fRp $${SDL2_FRAMEWORK_DIR}/SDL2_mixer.framework $$FW_DIR")
     }
     deng_fmod {
         # Bundle the FMOD shared library under Frameworks.
         doPostLink("cp -f \"$$FMOD_DIR/api/lib/libfmodex.dylib\" $$FW_DIR")
-        doPostLink("install_name_tool -id @executable_path/../Frameworks/libfmodex.dylib $${FW_DIR}libfmodex.dylib")
+        doPostLink("install_name_tool -id @rpath/libfmodex.dylib $${FW_DIR}libfmodex.dylib")
     }
 
     # Fix the dynamic linker paths so they point to ../Frameworks/ inside the bundle.
-    fixInstallName(Doomsday.app/Contents/MacOS/Doomsday, libdeng2.2.dylib, ..)
-    fixInstallName(Doomsday.app/Contents/MacOS/Doomsday, libdeng1.1.dylib, ..)
-    linkBinaryToBundledLibdengShell(Doomsday.app/Contents/MacOS/Doomsday)
+    fixInstallName(Doomsday.app/Contents/MacOS/Doomsday, libdeng_core.2.dylib, ..)
+    fixInstallName(Doomsday.app/Contents/MacOS/Doomsday, libdeng_legacy.1.dylib, ..)
+    linkBinaryToBundledLibshell(Doomsday.app/Contents/MacOS/Doomsday)
 
     # Clean up previous deployment.
     doPostLink("rm -rf Doomsday.app/Contents/PlugIns/")
@@ -896,15 +889,17 @@ macx {
 
 # Installation ---------------------------------------------------------------
 
+DENG_PACKAGES += net.dengine.client.pack
+
+deployPackages($$DENG_PACKAGES, $$OUT_PWD/..)
+deployTarget()
+
 !macx {
     # Common (non-Mac) parts of the installation.
-    INSTALLS += target data startupgfx startupfonts mod
+    INSTALLS += data startupfonts
 
-    target.path       = $$DENG_BIN_DIR
     data.path         = $$DENG_DATA_DIR
-    startupgfx.path   = $$DENG_DATA_DIR/graphics
     startupfonts.path = $$DENG_DATA_DIR/fonts
-    mod.path          = $$DENG_BASE_DIR/modules
 
     win32 {
         # Windows-specific installation.

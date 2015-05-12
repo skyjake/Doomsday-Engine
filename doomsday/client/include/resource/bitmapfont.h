@@ -21,7 +21,6 @@
 #define CLIENT_RESOURCE_BITMAPFONT_H
 
 #include "abstractfont.h"
-#include "gl/gl_main.h"
 #include <de/Rectangle>
 #include <de/String>
 #include <de/Vector>
@@ -41,7 +40,7 @@ public:
     void setFilePath(de::String resourcePath);
 
     /// @return  GL-texture name.
-    GLuint textureGLName() const;
+    uint textureGLName() const;
     de::Vector2i const &textureDimensions() const;
     de::Vector2ui const &textureMargin() const;
 

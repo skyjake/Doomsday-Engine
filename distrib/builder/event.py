@@ -38,23 +38,30 @@ class Event:
         # Where the build is located.
         self.buildDir = os.path.join(config.EVENT_DIR, self.name)
         
-        self.packages = ['doomsday', 'fmod']
+        self.packages = ['doomsday', 'doomsday_app', 'doomsday_shell_app', 'fmod']
         
-        self.packageName = {'doomsday': 'Doomsday',
-                            'fmod':     'FMOD Ex Audio Plugin'}
+        self.packageName = {'doomsday':           'Doomsday',
+                            'doomsday_apps':      'OS X Apps',
+                            'doomsday_app':       'Doomsday Engine.app',
+                            'doomsday_shell_app': 'Doomsday Shell.app',
+                            'fmod':               'FMOD Ex Audio Plugin'}
         
         if self.num >= 816: # Added Mac OS X 10.8.
-            # Platforms:  Name                            File ext       sys_id()
-            self.oses = [('Windows (x86)',                '.exe',        'win32-32bit'),
-                         ('Mac OS X 10.8+ (x86_64)',      '.dmg',        'macx8-64bit'),
-                         ('Mac OS X 10.6+ (x86_64/i386)', 'mac10_6.dmg', 'darwin-64bit'),
-                         ('Mac OS X 10.4+ (ppc/i386)',    '32bit.dmg',   'darwin-32bit'),
-                         ('Ubuntu (x86_64)',              'amd64.deb',   'linux2-64bit'),
-                         ('Ubuntu (x86)',                 'i386.deb',    'linux2-32bit'),
-                         ('Source',                       '.tar.gz',      'source')]
+            # Platforms:  Name                              File ext          sys_id()
+            self.oses = [('Windows (x86)',                 '.exe',           'win32-32bit'),
+                         ('OS X 10.8+ (x86_64)',           ('.dmg', 'macx8.dmg'), 'macx8-64bit'),
+                         ('OS X 10.6+ (x86_64/i386)',      ('mac10_6.dmg', 'macx6.dmg'), 'darwin-64bit'),
+                         ('OS X 10.4+ (ppc/i386)',         '32bit.dmg',      'darwin-32bit'),
+                         ('Ubuntu (x86_64)',               'amd64.deb',      'linux2-64bit'),
+                         ('Ubuntu (x86)',                  'i386.deb',       'linux2-32bit'),
+                         ('Source',                        '.tar.gz',        'source')]
 
-            if self.has_version() and utils.version_cmp(self.version_base(), '1.11') >= 0:
-                del self.oses[3] # no more OS X 10.4
+            # Remove obsolete OS X versions:
+            if self.has_version():
+                if utils.version_cmp(self.version_base(), '1.11') >= 0:
+                    del self.oses[3] # no more OS X 10.4
+                if self.num >= 1212 and utils.version_cmp(self.version_base(), '1.15') >= 0:
+                    del self.oses[2] # no more OS X 10.6
                 
         elif self.num >= 778: # Mac distribution naming was changed.
             # Platforms:  Name                            File ext     sys_id()
@@ -85,34 +92,53 @@ class Event:
         
     def package_type(self, name):
         pkg = self.package_from_filename(name)
-        if pkg == 'doomsday':
-            return 'distribution'
-        else:
+        if pkg == 'fmod':
             return 'plugin'
+        else:
+            return 'distribution'
 
     def package_from_filename(self, name):
+        if 'apps-macx' in name: return 'doomsday_apps'
+        if name.endswith('.zip'):
+            if 'doomsday_osx' in name:
+                return 'doomsday_app'
+            if 'doomsday_shell_osx' in name:
+                return 'doomsday_shell_app'
         if 'fmod' in name:
             return 'fmod'
         else:
             return 'doomsday'        
     
     def os_from_filename(self, name):
-        found = None
-        for n, ext, ident in self.oses:
-            if name.endswith(ext) or ident in name:
-                found = (n, ext, ident)
+        found = None        
+        for n, osExt, ident in self.oses:
+            if type(osExt) == 'tuple':
+                exts = osExt
+            else:
+                exts = [osExt]
+            for ext in exts:
+                if name.endswith(ext) or ident in name:
+                    found = (n, ext, ident)
+            if n.startswith('OS X 10.') and name.endswith('.zip'):
+                osx = '_osx' + n[8] + '_'
+                if osx in name:
+                    found = (n, ext, ident)
         return found
                 
     def version_from_filename(self, name):
-        ver = self.extract_version_from_filename(name)
-        if not ver and self.package_from_filename(name) == 'doomsday':
+        ver = self.extract_version_from_filename(name)        
+        if not ver and self.package_from_filename(name) != 'fmod':
             # Fall back to the event version, if it exists.
             ev = self.version()
             if ev: return ev
         return ver
 
     def extract_version_from_filename(self, name):
-        pos = name.find('_')
+        if '_osx' in name:
+            pos = name.find('_osx') + 4
+        else:
+            pos = 0
+        pos = name.find('_', pos)
         if pos < 0: return None
         dash = name.find('-', pos + 1)
         us = name.find('_', pos + 1)
@@ -165,6 +191,10 @@ class Event:
                 glob.glob(os.path.join(self.buildDir, '*.exe')) + \
                 glob.glob(os.path.join(self.buildDir, '*.deb')) + \
                 glob.glob(os.path.join(self.buildDir, '*.tar.gz'))
+            
+        if self.num > 1201:
+            # Zipped apps added.
+            files += glob.glob(os.path.join(self.buildDir, '*.zip'))
 
         return [os.path.basename(f) for f in files]
 
@@ -227,7 +257,7 @@ class Event:
                 
     def download_uri(self, fn):
         # Available on SourceForge?
-        if self.number() >= 350 and (fn.endswith('.exe') or fn.endswith('.deb') or fn.endswith('.dmg')):
+        if self.number() >= 350 and (fn.endswith('.exe') or fn.endswith('.deb') or fn.endswith('.dmg') or fn.endswith('.zip')):
             if self.release_type() == 'stable':
                 return "http://sourceforge.net/projects/deng/files/Doomsday%%20Engine/%s/%s/download" \
                     % (self.version_base(), fn)
@@ -271,9 +301,9 @@ class Event:
     def html_description(self, encoded=True):
         """Composes an HTML build report."""
 
-        name = self.name
+        name     = self.name
         buildDir = self.buildDir
-        oses = self.oses
+        oses     = self.oses
 
         msg = '<p>' + self.text_summary() + '</p>'
 

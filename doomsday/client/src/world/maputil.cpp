@@ -1,7 +1,7 @@
 /** @file maputil.cpp  World map utilities.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,7 +18,6 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
 #include "world/maputil.h"
 
 #include "Line"
@@ -26,16 +25,14 @@
 #include "Sector"
 
 #ifdef __CLIENT__
+#  include "Surface"
+#  include "world/lineowner.h"
 
-#include "BspLeaf"
-#include "Surface"
-#include "world/lineowner.h"
+#  include "MaterialVariantSpec"
 
-#include "MaterialSnapshot"
-#include "MaterialVariantSpec"
-
-#include "render/rend_main.h" // Rend_MapSurfacematerialSpec
-#include "WallEdge"
+#  include "render/rend_main.h" // Rend_MapSurfacematerialSpec
+#  include "MaterialAnimator"
+#  include "WallEdge"
 #endif
 
 using namespace de;
@@ -158,10 +155,12 @@ bool R_SideBackClosed(LineSide const &side, bool ignoreOpacity)
     // Perhaps a middle material completely covers the opening?
     if(side.middle().hasMaterial())
     {
-        // Ensure we have up to date info about the material.
-        MaterialSnapshot const &ms = side.middle().material().prepare(Rend_MapSurfaceMaterialSpec());
+        MaterialAnimator &matAnimator = side.middle().material().getAnimator(Rend_MapSurfaceMaterialSpec());
 
-        if(ignoreOpacity || (ms.isOpaque() && !side.middle().blendMode() && side.middle().opacity() >= 1))
+        // Ensure we have up to date info about the material.
+        matAnimator.prepare();
+
+        if(ignoreOpacity || (matAnimator.isOpaque() && !side.middle().blendMode() && side.middle().opacity() >= 1))
         {
             // Stretched middles always cover the opening.
             if(side.isFlagged(SDF_MIDDLE_STRETCH))
@@ -171,7 +170,7 @@ bool R_SideBackClosed(LineSide const &side, bool ignoreOpacity)
             {
                 coord_t openRange, openBottom, openTop;
                 openRange = visOpenRange(side, &openBottom, &openTop);
-                if(ms.height() >= openRange)
+                if(matAnimator.dimensions().y >= openRange)
                 {
                     // Possibly; check the placement.
                     WallEdge edge(WallSpec::fromMapSide(side, LineSide::Middle),
@@ -235,16 +234,18 @@ static bool middleMaterialCoversOpening(LineSide const &side)
     if(side.isFlagged(SDF_MIDDLE_STRETCH))
         return true;
 
-    // Ensure we have up to date info about the material.
-    MaterialSnapshot const &ms = side.middle().material().prepare(Rend_MapSurfaceMaterialSpec());
+    MaterialAnimator &matAnimator = side.middle().material().getAnimator(Rend_MapSurfaceMaterialSpec());
 
-    if(ms.isOpaque() && !side.middle().blendMode() && side.middle().opacity() >= 1)
+    // Ensure we have up to date info about the material.
+    matAnimator.prepare();
+
+    if(matAnimator.isOpaque() && !side.middle().blendMode() && side.middle().opacity() >= 1)
     {
         if(side.leftHEdge()) // possibility of degenerate BSP leaf
         {
             coord_t openRange, openBottom, openTop;
             openRange = visOpenRange(side, &openBottom, &openTop);
-            if(ms.height() >= openRange)
+            if(matAnimator.dimensions().y >= openRange)
             {
                 // Possibly; check the placement.
                 WallEdge edge(WallSpec::fromMapSide(side, LineSide::Middle),
@@ -263,6 +264,8 @@ static bool middleMaterialCoversOpening(LineSide const &side)
 Line *R_FindSolidLineNeighbor(Sector const *sector, Line const *line,
     LineOwner const *own, bool antiClockwise, binangle_t *diff)
 {
+    DENG_ASSERT(sector);
+
     LineOwner const *cown = antiClockwise? &own->prev() : &own->next();
     Line *other = &cown->line();
 

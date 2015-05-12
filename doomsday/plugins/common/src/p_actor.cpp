@@ -114,18 +114,6 @@ justDoIt:
     Mobj_Destroy(mo);
 }
 
-void P_RemoveAllPlayerMobjs()
-{
-    for(uint i = 0; i < MAXPLAYERS; ++i)
-    {
-        player_t *plr = players + i;
-        ddplayer_t *ddplr = plr->plr;
-        if(!ddplr->inGame) continue;
-
-        P_MobjRemove(ddplr->mo, true);
-    }
-}
-
 void P_MobjLink(struct mobj_s *mobj)
 {
     DENG_ASSERT(mobj != 0);
@@ -236,7 +224,7 @@ dd_bool Mobj_IsDroppedItem(mobj_t *mobj)
 #endif
 }
 
-terraintype_t const *P_MobjFloorTerrain(mobj_t *mobj)
+terraintype_t const *P_MobjFloorTerrain(mobj_t const *mobj)
 {
     return P_PlaneMaterialTerrainType(Mobj_Sector(mobj), PLN_FLOOR);
 }

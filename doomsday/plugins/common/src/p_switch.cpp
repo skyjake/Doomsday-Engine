@@ -186,12 +186,7 @@ void P_InitSwitchList()
  */
 void P_InitSwitchList()
 {
-    int i, index, episode;
-    lumpnum_t lumpNum = W_CheckLumpNumForName("SWITCHES");
-    switchlist_t *sList = switchInfo;
-    ddstring_t path;
-    Uri *uri;
-
+    int episode = 0;
 # if __JHERETIC__
     if(gameMode == heretic_shareware)
         episode = 1;
@@ -208,24 +203,29 @@ void P_InitSwitchList()
         episode = 1;
 # endif
 
+    switchlist_t *sList = switchInfo;
+
     // Has a custom SWITCHES lump been loaded?
-    if(lumpNum >= 0)
+    de::File1 *lump = 0;
+    if(CentralLumpIndex().contains("SWITCHES.lmp"))
     {
-        App_Log(DE2_RES_VERBOSE, "Processing lump %s::SWITCHES", F_PrettyPath(Str_Text(W_LumpSourceFile(lumpNum))));
-        sList = (switchlist_t*) W_CacheLump(lumpNum);
+        lump = &CentralLumpIndex()[CentralLumpIndex().findLast("SWITCHES.lmp")];
+        App_Log(DE2_RES_VERBOSE, "Processing lump %s::SWITCHES", F_PrettyPath(lump->container().composePath().toUtf8().constData()));
+        sList = (switchlist_t *) lump->cache();
     }
     else
     {
         App_Log(DE2_RES_VERBOSE, "Registering default switches...");
     }
 
-    uri = Uri_New();
+    Uri *uri = Uri_New();
     Uri_SetScheme(uri, "Textures");
 
-    Str_Init(&path);
-    for(index = 0, i = 0; ; ++i)
+    ddstring_t path; Str_Init(&path);
+    int index = 0;
+    for(int i = 0; ;++i)
     {
-        if(index+1 >= max_numswitches)
+        if(index + 1 >= max_numswitches)
         {
             switchlist = (Material **) M_Realloc(switchlist, sizeof(*switchlist) * (max_numswitches = max_numswitches ? max_numswitches*2 : 8));
         }
@@ -242,7 +242,7 @@ void P_InitSwitchList()
             Uri_SetPath(uri, Str_Text(&path));
             switchlist[index++] = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
 
-            App_Log(lumpNum >= 0? DE2_RES_VERBOSE : DE2_RES_XVERBOSE,
+            App_Log(lump? DE2_RES_VERBOSE : DE2_RES_XVERBOSE,
                     "  %d: Epi:%d A:\"%s\" B:\"%s\"", i, SHORT(sList[i].episode),
                     sList[i].name1, sList[i].name2);
         }
@@ -251,8 +251,10 @@ void P_InitSwitchList()
     Str_Free(&path);
     Uri_Delete(uri);
 
-    if(lumpNum >= 0)
-        W_UnlockLump(lumpNum);
+    if(lump)
+    {
+        lump->unlock();
+    }
 
     numswitches = index / 2;
     switchlist[index] = 0;

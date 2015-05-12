@@ -1,7 +1,7 @@
-/** @file render/shadowedge.cpp FakeRadio Shadow Edge Geometry
+/** @file shadowedge.cpp  FakeRadio Shadow Edge Geometry
  *
- * @authors Copyright &copy; 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,22 +18,22 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
 #include "render/shadowedge.h"
 
 #include "Face"
 #include "HEdge"
 
-#include "BspLeaf"
+#include "ConvexSubspace"
 #include "Plane"
 #include "Sector"
+#include "SectorCluster"
 #include "Surface"
 
 #include "world/lineowner.h"
 
 #include "render/rend_main.h"
+#include "MaterialAnimator"
 #include "WallEdge"
-#include "MaterialSnapshot"
 
 namespace de {
 
@@ -95,11 +95,13 @@ static bool middleMaterialCoversOpening(LineSide const &side)
     if(!side.hasSections()) return false;
     if(!side.middle().hasMaterial()) return false;
 
+    MaterialAnimator &matAnimator = side.middle().material().getAnimator(Rend_MapSurfaceMaterialSpec());
+
     // Ensure we have up to date info about the material.
-    MaterialSnapshot const &ms = side.middle().material().prepare(Rend_MapSurfaceMaterialSpec());
+    matAnimator.prepare();
 
     // Might the material cover the opening?
-    if(ms.isOpaque() && !side.middle().blendMode() && side.middle().opacity() >= 1)
+    if(matAnimator.isOpaque() && !side.middle().blendMode() && side.middle().opacity() >= 1)
     {
         // Stretched middles always cover the opening.
         if(side.isFlagged(SDF_MIDDLE_STRETCH))
@@ -129,7 +131,7 @@ static bool middleMaterialCoversOpening(LineSide const &side)
             openTop = frontSec.ceiling().heightSmoothed();
         }
 
-        if(ms.height() >= openTop - openBottom)
+        if(matAnimator.dimensions().y >= openTop - openBottom)
         {
             // Possibly; check the placement.
             if(side.leftHEdge()) // possibility of degenerate BSP leaf
@@ -149,7 +151,7 @@ void ShadowEdge::prepare(int planeIndex)
 {
     int const otherPlaneIndex = planeIndex == Sector::Floor? Sector::Ceiling : Sector::Floor;
     HEdge const &hedge = *d->leftMostHEdge;
-    SectorCluster const &cluster = hedge.face().mapElementAs<BspLeaf>().cluster();
+    SectorCluster const &cluster = hedge.face().mapElementAs<ConvexSubspace>().cluster();
     Plane const &plane = cluster.visPlane(planeIndex);
 
     LineSide const &lineSide = hedge.mapElementAs<LineSideSegment>().lineSide();
@@ -162,9 +164,9 @@ void ShadowEdge::prepare(int planeIndex)
     // in the polygon corner vertices (placement, opacity).
 
     if(hedge.twin().hasFace() &&
-       hedge.twin().face().mapElementAs<BspLeaf>().hasCluster())
+       hedge.twin().face().mapElementAs<ConvexSubspace>().hasCluster())
     {
-        SectorCluster const &backCluster = hedge.twin().face().mapElementAs<BspLeaf>().cluster();
+        SectorCluster const &backCluster = hedge.twin().face().mapElementAs<ConvexSubspace>().cluster();
         Plane const &backPlane = backCluster.visPlane(planeIndex);
         Surface const &wallEdgeSurface =
             lineSide.back().hasSector()? lineSide.surface(planeIndex == Sector::Ceiling? LineSide::Top : LineSide::Bottom)

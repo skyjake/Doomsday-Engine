@@ -1,7 +1,9 @@
-/** @file p_mapspec.h Crossed line special list utilities.
+/** @file p_mapspec.h  Crossed line special list utilities.
+ *
+ * Line Tag handling. Line and Sector groups. Specialized iterators, etc...
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -34,8 +36,13 @@ extern "C" {
 /// Recursively traverse adjacent sectors, sound blocking lines cut off traversal.
 void P_RecursiveSound(struct mobj_s *soundTarget, Sector *sec, int soundBlocks);
 
+dd_bool P_SectorTagIsBusy(int tag);
+
+void P_NotifySectorFinished(int tag);
+void P_NotifyPolyobjFinished(int tag);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif // LIBCOMMON_PLAYSIM_MAP_SPECIAL_H
+#endif  // LIBCOMMON_PLAYSIM_MAP_SPECIAL_H
