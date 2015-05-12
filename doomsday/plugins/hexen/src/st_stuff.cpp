@@ -192,17 +192,16 @@ static patchid_t pManaAIcons[2];
 static patchid_t pManaBIcons[2];
 static patchid_t pInventoryBar;
 static patchid_t pWeaponSlot[3]; // [Fighter, Cleric, Mage]
-static patchid_t pWeaponFull[3]; // [Fighter, Cleric, Mage]
 static patchid_t pLifeGem[3][8]; // [Fighter, Cleric, Mage][color]
-static patchid_t pWeaponPiece1[3]; // [Fighter, Cleric, Mage]
-static patchid_t pWeaponPiece2[3]; // [Fighter, Cleric, Mage]
-static patchid_t pWeaponPiece3[3]; // [Fighter, Cleric, Mage]
 static patchid_t pChain[3]; // [Fighter, Cleric, Mage]
 static patchid_t pInvItemFlash[5];
 static patchid_t pSpinFly[16];
 static patchid_t pSpinMinotaur[16];
 static patchid_t pSpinSpeed[16];
 static patchid_t pSpinDefense[16];
+
+static patchid_t pPiece[NUM_PLAYER_CLASSES][WEAPON_FOURTH_PIECE_COUNT];
+static patchid_t pComplete[NUM_PLAYER_CLASSES];
 
 static int headupDisplayMode(int /*player*/)
 {
@@ -459,82 +458,72 @@ void Servant_UpdateGeometry(uiwidget_t *wi)
 void WeaponPieces_Ticker(uiwidget_t *wi, timespan_t /*ticLength*/)
 {
     DENG2_ASSERT(wi);
-    guidata_weaponpieces_t *wpn = (guidata_weaponpieces_t *)wi->typedata;
+    auto &wpn = *(guidata_weaponpieces_t *)wi->typedata;
 
     if(Pause_IsPaused() || !DD_IsSharpTick()) return;
 
     player_t const *plr = &players[wi->player];
-    wpn->pieces = plr->pieces;
+    wpn.pieces = plr->pieces;
 }
 
 void SBarWeaponPieces_Drawer(uiwidget_t *wi, Point2Raw const *offset)
 {
-#define ORIGINX (-ST_WIDTH/2)
-#define ORIGINY (-ST_HEIGHT*hud->showBar)
-
     DENG2_ASSERT(wi);
-    guidata_weaponpieces_t *wpn = (guidata_weaponpieces_t *)wi->typedata;
-    hudstate_t const *hud = &hudStates[wi->player];
-    int const pClass      = cfg.playerClass[wi->player]; // Original player class (i.e. not pig).
-    int const fullscreen  = headupDisplayMode(wi->player);
-    float const iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.common.statusbarCounterAlpha);
+    auto const &wpn = *(guidata_weaponpieces_t *)wi->typedata;
 
-    if(Hu_InventoryIsOpen(wi->player) || ST_AutomapIsActive(wi->player)) return;
-    if(ST_AutomapIsActive(wi->player) && cfg.common.automapHudDisplay == 0) return;
-    if(P_MobjIsCamera(players[wi->player].plr->mo) && Get(DD_PLAYBACK)) return;
+    static Vector2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
+
+    dint const plrClass      = ::cfg.playerClass[wi->player];  // Original player class (i.e. not pig).
+    dint const activeHud     = headupDisplayMode(wi->player);
+    dfloat const yOffset     = ST_HEIGHT * (1 - hudStates[wi->player].showBar);
+    dfloat const iconOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
+
+    if(Hu_InventoryIsOpen(wi->player)) return;
+    if(ST_AutomapIsActive(wi->player)) return;
+    if(P_MobjIsCamera(::players[wi->player].plr->mo) && Get(DD_PLAYBACK)) return;
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
     if(offset) DGL_Translatef(offset->x, offset->y, 0);
-    DGL_Scalef(cfg.common.statusbarScale, cfg.common.statusbarScale, 1);
-    DGL_Enable(DGL_TEXTURE_2D);
+    DGL_Scalef(::cfg.common.statusbarScale, ::cfg.common.statusbarScale, 1);
+    DGL_Translatef(0, yOffset, 0);
 
-    if(wpn->pieces == 7)
+    DGL_Enable(DGL_TEXTURE_2D);
+    if(wpn.pieces == WEAPON_FOURTH_COMPLETE)
     {
-        DGL_Color4f(1, 1, 1, iconAlpha);
-        GL_DrawPatch(pWeaponFull[pClass], Vector2i(ORIGINX + 190, ORIGINY));
+        DGL_Color4f(1, 1, 1, iconOpacity);
+        GL_DrawPatch(::pComplete[plrClass], origin + Vector2i(190, 0));
     }
     else
     {
-        if(wpn->pieces & WPIECE1)
+        classinfo_t const &pcdata = *PCLASS_INFO(plrClass);
+        for(dint piece = 0; piece < WEAPON_FOURTH_PIECE_COUNT; ++piece)
         {
-            DGL_Color4f(1, 1, 1, iconAlpha);
-            GL_DrawPatch(pWeaponPiece1[pClass], Vector2i(ORIGINX + PCLASS_INFO(pClass)->pieceX[0], ORIGINY));
-        }
-
-        if(wpn->pieces & WPIECE2)
-        {
-            DGL_Color4f(1, 1, 1, iconAlpha);
-            GL_DrawPatch(pWeaponPiece2[pClass], Vector2i(ORIGINX + PCLASS_INFO(pClass)->pieceX[1], ORIGINY));
-        }
-
-        if(wpn->pieces & WPIECE3)
-        {
-            DGL_Color4f(1, 1, 1, iconAlpha);
-            GL_DrawPatch(pWeaponPiece3[pClass], Vector2i(ORIGINX + PCLASS_INFO(pClass)->pieceX[2], ORIGINY));
+            if(wpn.pieces & (1 << piece))
+            {
+                DGL_Color4f(1, 1, 1, iconOpacity);
+                GL_DrawPatch(::pPiece[plrClass][piece], origin + Vector2i(pcdata.fourthWeaponPiece[piece].offset.xy));
+            }
         }
     }
-
     DGL_Disable(DGL_TEXTURE_2D);
+
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
-
-#undef ORIGINX
-#undef ORIGINY
 }
 
 void SBarWeaponPieces_UpdateGeometry(uiwidget_t *wi)
 {
     DENG2_ASSERT(wi);
-    //guidata_weaponpieces_t *wpn = (guidata_weaponpieces_t *)wi->typedata;
 
     Rect_SetWidthHeight(wi->geometry, 0, 0);
 
-    if(Hu_InventoryIsOpen(wi->player) || ST_AutomapIsActive(wi->player)) return;
-    if(ST_AutomapIsActive(wi->player) && cfg.common.automapHudDisplay == 0) return;
-    if(P_MobjIsCamera(players[wi->player].plr->mo) && Get(DD_PLAYBACK)) return;
+    if(Hu_InventoryIsOpen(wi->player)) return;
+    if(ST_AutomapIsActive(wi->player)) return;
+    if(P_MobjIsCamera(::players[wi->player].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    Rect_SetWidthHeight(wi->geometry, 57 * cfg.common.statusbarScale, 30 * cfg.common.statusbarScale);
+    Rect_SetWidthHeight(wi->geometry, 57 * ::cfg.common.statusbarScale,
+                                      30 * ::cfg.common.statusbarScale);
 }
 
 void SBarChain_Ticker(uiwidget_t *wi, timespan_t /*ticLength*/)
@@ -2746,12 +2735,8 @@ void ST_loadGraphics()
     }
 
     // Fighter:
-    pWeaponPiece1[PCLASS_FIGHTER] = R_DeclarePatch("WPIECEF1");
-    pWeaponPiece2[PCLASS_FIGHTER] = R_DeclarePatch("WPIECEF2");
-    pWeaponPiece3[PCLASS_FIGHTER] = R_DeclarePatch("WPIECEF3");
     pChain[PCLASS_FIGHTER] = R_DeclarePatch("CHAIN");
     pWeaponSlot[PCLASS_FIGHTER] = R_DeclarePatch("WPSLOT0");
-    pWeaponFull[PCLASS_FIGHTER] = R_DeclarePatch("WPFULL0");
     pLifeGem[PCLASS_FIGHTER][0] = R_DeclarePatch("LIFEGEM");
     for(int i = 1; i < 8; ++i)
     {
@@ -2760,12 +2745,8 @@ void ST_loadGraphics()
     }
 
     // Cleric:
-    pWeaponPiece1[PCLASS_CLERIC] = R_DeclarePatch("WPIECEC1");
-    pWeaponPiece2[PCLASS_CLERIC] = R_DeclarePatch("WPIECEC2");
-    pWeaponPiece3[PCLASS_CLERIC] = R_DeclarePatch("WPIECEC3");
     pChain[PCLASS_CLERIC] = R_DeclarePatch("CHAIN2");
     pWeaponSlot[PCLASS_CLERIC] = R_DeclarePatch("WPSLOT1");
-    pWeaponFull[PCLASS_CLERIC] = R_DeclarePatch("WPFULL1");
     for(int i = 0; i < 8; ++i)
     {
         sprintf(namebuf, "LIFEGMC%d", i + 1);
@@ -2773,16 +2754,29 @@ void ST_loadGraphics()
     }
 
     // Mage:
-    pWeaponPiece1[PCLASS_MAGE] = R_DeclarePatch("WPIECEM1");
-    pWeaponPiece2[PCLASS_MAGE] = R_DeclarePatch("WPIECEM2");
-    pWeaponPiece3[PCLASS_MAGE] = R_DeclarePatch("WPIECEM3");
     pChain[PCLASS_MAGE] = R_DeclarePatch("CHAIN3");
     pWeaponSlot[PCLASS_MAGE] = R_DeclarePatch("WPSLOT2");
-    pWeaponFull[PCLASS_MAGE] = R_DeclarePatch("WPFULL2");
     for(int i = 0; i < 8; ++i)
     {
         sprintf(namebuf, "LIFEGMM%d", i + 1);
         pLifeGem[PCLASS_MAGE][i] = R_DeclarePatch(namebuf);
+    }
+
+    de::zap(::pComplete);
+    de::zap(::pPiece);
+
+    for(dint plrClass = 0; plrClass < NUM_PLAYER_CLASSES; ++plrClass)
+    {
+        classinfo_t const &pcdata = *PCLASS_INFO(plrClass);
+
+        // Only user-selectable player classes can collect fourth-weapon pieces.
+        if(!pcdata.userSelectable) continue;
+
+        ::pComplete[plrClass] = R_DeclarePatch(pcdata.fourthWeaponCompletePatchName);
+        for(dint piece = 0; piece < WEAPON_FOURTH_PIECE_COUNT; ++piece)
+        {
+            ::pPiece[plrClass][piece] = R_DeclarePatch(pcdata.fourthWeaponPiece[piece].patchName);
+        }
     }
 
     // Inventory item flash anim.

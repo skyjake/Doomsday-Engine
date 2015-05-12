@@ -1882,16 +1882,17 @@ void Player_UpdateStatusCVars(player_t const *player)
     };
     for(int i = 0; i < NUM_WEAPON_TYPES; ++i)
     {
-        String cvarName = String("player-weapon-%1").arg(weaponIds[i]);
-        Con_SetInteger2(cvarName.toUtf8().constData(), player->weapons[i].owned, SVF_WRITE_OVERRIDE);
+        Block cvarName = String("player-weapon-%1").arg(weaponIds[i]).toUtf8();
+        Con_SetInteger2(cvarName.constData(), player->weapons[i].owned, SVF_WRITE_OVERRIDE);
     }
 
 #if __JHEXEN__
-    // Weapon pieces.
-    Con_SetInteger2("player-weapon-piece1",    (player->pieces & WPIECE1)? 1 : 0, SVF_WRITE_OVERRIDE);
-    Con_SetInteger2("player-weapon-piece2",    (player->pieces & WPIECE2)? 1 : 0, SVF_WRITE_OVERRIDE);
-    Con_SetInteger2("player-weapon-piece3",    (player->pieces & WPIECE3)? 1 : 0, SVF_WRITE_OVERRIDE);
-    Con_SetInteger2("player-weapon-allpieces", (player->pieces == 7)? 1 : 0,      SVF_WRITE_OVERRIDE);
+    for(int i = 0; i < WEAPON_FOURTH_PIECE_COUNT; ++i)
+    {
+        Block cvarName = String("player-weapon-piece%1").arg(i + 1).toUtf8();
+        Con_SetInteger2(cvarName.constData(),  (player->pieces & (1 << i))? 1 : 0, SVF_WRITE_OVERRIDE);
+    }
+    Con_SetInteger2("player-weapon-allpieces", (player->pieces == WEAPON_FOURTH_COMPLETE)? 1 : 0, SVF_WRITE_OVERRIDE);
 #endif
 
     // Current ammo amounts.
@@ -1915,8 +1916,8 @@ void Player_UpdateStatusCVars(player_t const *player)
     };
     for(int i = 0; i < NUM_AMMO_TYPES; ++i)
     {
-        String cvarName = String("player-ammo-%1").arg(ammoIds[i]);
-        Con_SetInteger2(cvarName.toUtf8().constData(), player->ammo[i].owned, SVF_WRITE_OVERRIDE);
+        Block cvarName = String("player-ammo-%1").arg(ammoIds[i]).toUtf8();
+        Con_SetInteger2(cvarName.constData(), player->ammo[i].owned, SVF_WRITE_OVERRIDE);
     }
 
 #if __JHERETIC__ || __JHEXEN__ || __JDOOM64__

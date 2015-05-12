@@ -2810,7 +2810,7 @@ int gsvInvItems[NUM_INVENTORYITEM_TYPES];
 #endif
 
 #if __JHEXEN__
-int gsvWPieces[4];
+int gsvWPieces[WEAPON_FOURTH_PIECE_COUNT + 1];
 #endif
 }
 
@@ -2920,11 +2920,6 @@ static void registerGameStatusCVars()
         {"player-weapon-second", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SECOND], 0, 0, 0},
         {"player-weapon-third", READONLYCVAR, CVT_INT, &gsvWeapons[WT_THIRD], 0, 0, 0},
         {"player-weapon-fourth", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FOURTH], 0, 0, 0},
-        // Weapon Pieces
-        {"player-weapon-piece1", READONLYCVAR, CVT_INT, &gsvWPieces[0], 0, 0, 0},
-        {"player-weapon-piece2", READONLYCVAR, CVT_INT, &gsvWPieces[1], 0, 0, 0},
-        {"player-weapon-piece3", READONLYCVAR, CVT_INT, &gsvWPieces[2], 0, 0, 0},
-        {"player-weapon-allpieces", READONLYCVAR, CVT_INT, &gsvWPieces[3], 0, 0, 0},
         // Inventory items
         {"player-artifact-defender", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_INVULNERABILITY], 0, 0, 0},
         {"player-artifact-quartzflask", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_HEALTH], 0, 0, 0},
@@ -2962,6 +2957,16 @@ static void registerGameStatusCVars()
         {NULL, 0, CVT_NULL, 0, 0, 0, 0}
     };
     Con_AddVariableList(cvars);
+
+#if __JHEXEN__
+    // Fourth-weapon pieces:
+    for(int i = 0; i < WEAPON_FOURTH_PIECE_COUNT; ++i)
+    {
+        Block const cvarName = String("player-weapon-piece%1").arg(i + 1).toUtf8();
+        C_VAR_INT(cvarName.constData(), &gsvWPieces[i], READONLYCVAR, 0, 1);
+    }
+    C_VAR_INT("player-weapon-allpieces", &gsvWPieces[WEAPON_FOURTH_PIECE_COUNT], READONLYCVAR, 0, 1);
+#endif
 }
 
 void G_ConsoleRegister()
