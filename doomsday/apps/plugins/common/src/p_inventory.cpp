@@ -526,7 +526,8 @@ int P_InventoryUse(int player, inventoryitemtype_t type, int silent)
             if(type != NUM_INVENTORYITEM_TYPES && cfg.inventoryUseNext)
             {
 # if __JHEXEN__
-                if(lastUsed < IIT_FIRSTPUZZITEM)
+                // Puzzle items do not cause the current item to change.
+                if(type < IIT_FIRSTPUZZITEM)
 # endif
                 {
                     Hu_InventoryMove(player, -1, true /* allow wrap */, true);
