@@ -507,6 +507,9 @@ void GLTarget::glBind() const
     LIBGUI_ASSERT_GL_OK();
     DENG2_ASSERT(isReady());
     if(!isReady()) return;
+#ifdef LIBGUI_USE_GLENTRYPOINTS
+    if(!glBindFramebuffer) return;
+#endif
 
     if(d->proxy)
     {

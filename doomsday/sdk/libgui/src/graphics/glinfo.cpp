@@ -90,7 +90,8 @@ DENG2_PIMPL_NOREF(GLInfo)
 
 #ifdef WIN32
         // Prefer the wgl-specific extensions.
-        if(checkExtensionString(ext, (GLubyte const *) wglGetExtensionsStringARB(wglGetCurrentDC())))
+        if(wglGetExtensionsStringARB != nullptr && 
+           checkExtensionString(ext, (GLubyte const *)wglGetExtensionsStringARB(wglGetCurrentDC())))
             return true;
 #endif
 

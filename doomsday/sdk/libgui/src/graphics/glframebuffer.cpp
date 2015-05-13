@@ -297,6 +297,9 @@ GLFramebuffer::GLFramebuffer(Image::Format const &colorFormat, Size const &initi
 void GLFramebuffer::glInit()
 {
     if(isReady()) return;
+#ifdef LIBGUI_USE_GLENTRYPOINTS
+    if(!glBindFramebuffer) return;
+#endif
 
     LOG_AS("GLFramebuffer");
 

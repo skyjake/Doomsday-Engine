@@ -603,6 +603,9 @@ Rectangleui GLState::scissorRect() const
 void GLState::apply() const
 {
     LIBGUI_ASSERT_GL_OK();
+#ifdef LIBGUI_USE_GLENTRYPOINTS
+    if(!glBindFramebuffer) return;
+#endif
 
     bool forceViewportAndScissor = false;
 
