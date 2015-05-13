@@ -239,10 +239,10 @@ static void printConfiguration()
     LOG_GL_VERBOSE("  Texture NPOT: %b") << GL_state.features.texNonPowTwo;
 }
 
-dd_bool GL_EarlyInit()
+void GL_EarlyInit()
 {
-    if(novideo) return true;
-    if(initGLOk) return true; // Already initialized.
+    if(novideo) return;
+    if(initGLOk) return;  // Already initialized.
 
     LOG_GL_VERBOSE("Initializing Render subsystem...");
 
@@ -283,7 +283,6 @@ dd_bool GL_EarlyInit()
     GL_SetVSync(App::config().getb("window.main.vsync"));
 
     initGLOk = true;
-    return true;
 }
 
 void GL_Init()

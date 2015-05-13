@@ -1,7 +1,7 @@
-/** @file sys_system.cpp
+/** @file sys_system.cpp  Abstract interfaces for platform specific services.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -18,10 +18,6 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Abstract interfaces to platform-level services.
- */
-
 #ifdef WIN32
 #  define WIN32_LEAN_AND_MEAN
 #  include <windows.h>
@@ -29,7 +25,15 @@
 #endif
 
 #include <signal.h>
+#ifdef MACOSX
+#  include <QDir>
+#endif
+#ifdef WIN32
+#  include <QSettings>
+#endif
 
+#include <de/App>
+#include <de/Loop>
 #include "de_console.h"
 #include "de_system.h"
 #include "de_graphics.h"
@@ -47,9 +51,6 @@
 #include "network/net_main.h"
 #include "network/net_buf.h"
 #include "audio/s_main.h"
-
-#include <de/App>
-#include <de/Loop>
 
 #if defined(WIN32) && !defined(_DEBUG)
 #  define DENG_CATCH_SIGNALS
@@ -81,7 +82,7 @@ static void C_DECL handler(int s)
  * \note This must be called from the main thread due to issues with the devices
  * we use via the WINAPI, MCI (cdaudio, mixer etc) on the WIN32 platform.
  */
-void Sys_Init(void)
+void Sys_Init()
 {
     de::Time begunAt;
 
@@ -112,15 +113,15 @@ void Sys_Init(void)
     LOGDEV_VERBOSE("Sys_Init completed in %.2f seconds") << begunAt.since();
 }
 
-dd_bool Sys_IsShuttingDown(void)
+bool Sys_IsShuttingDown()
 {
-    return appShutdown;
+    return CPP_BOOL(appShutdown);
 }
 
 /**
  * Return to default system state.
  */
-void Sys_Shutdown(void)
+void Sys_Shutdown()
 {
     // We are now shutting down.
     appShutdown = true;
@@ -138,7 +139,7 @@ void Sys_Shutdown(void)
     ClientApp::inputSystem().clearEvents();
 #endif
 
-    DD_DestroyGames();
+    App_ClearGames();
 }
 
 static int showCriticalMessage(const char* msg)
@@ -246,27 +247,38 @@ void Sys_BlockUntilRealTime(uint realTimeMs)
     }
 }
 
-void Sys_ShowCursor(dd_bool show)
+void Sys_HideMouseCursor()
 {
 #ifdef WIN32
-    ShowCursor(show);
+    if(novideo) return;
+
+    ShowCursor(FALSE);
 #else
     // The cursor is controlled using Qt in Canvas.
     DENG2_UNUSED(show);
 #endif
 }
 
-void Sys_HideMouse(void)
+de::NativePath Sys_SteamBasePath()
 {
 #ifdef WIN32
-    if(novideo)
-        return;
+    // The path to Steam can be queried from the registry.
+    {
+    QSettings st("HKEY_CURRENT_USER\\Software\\Valve\\Steam\\", QSettings::NativeFormat);
+    de::String path = st.value("SteamPath").toString();
+    if(!path.isEmpty()) return path;
+    }
 
-    ShowCursor(FALSE);
+    {
+    QSettings st("HKEY_LOCAL_MACHINE\\Software\\Valve\\Steam\\", QSettings::NativeFormat);
+    de::String path = st.value("InstallPath").toString();
+    if(!path.isEmpty()) return path;
+    }
+#elif MACOSX
+    return de::NativePath(QDir::homePath()) / "Library/Application Support/Steam/";
 #endif
-#ifdef UNIX
-    Sys_ShowCursor(false);
-#endif
+    /// @todo Where are steam apps located on Ubuntu?
+    return "";
 }
 
 /**
