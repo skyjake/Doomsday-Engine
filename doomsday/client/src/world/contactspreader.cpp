@@ -225,7 +225,7 @@ private:
                 // Ensure we have up to date info about the material.
                 matAnimator.prepare();
 
-                if(matAnimator.dimensions().y >= openTop - openBottom)
+                if(matAnimator.isOpaque() && matAnimator.dimensions().y >= openTop - openBottom)
                 {
                     // Possibly; check the placement.
                     WallEdge edge(WallSpec::fromMapSide(facingLineSide, LineSide::Middle),
