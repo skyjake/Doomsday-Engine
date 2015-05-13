@@ -83,7 +83,7 @@ void GL_Register();
  * cannot yet be initialized, such as the texture management, so any rendering
  * occuring before GL_Init() must be done with manually prepared textures.
  */
-dd_bool GL_EarlyInit();
+void GL_EarlyInit();
 
 /**
  * Finishes GL initialization. This can be called once the virtual file
