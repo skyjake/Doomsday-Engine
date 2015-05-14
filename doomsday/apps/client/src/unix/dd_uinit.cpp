@@ -41,6 +41,7 @@
 #include "de_misc.h"
 
 #include <doomsday/filesys/fs_util.h>
+#include <doomsday/filesys/sys_direc.h>
 #include "dd_uinit.h"
 
 #include <de/App>
