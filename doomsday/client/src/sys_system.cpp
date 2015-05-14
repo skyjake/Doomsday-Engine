@@ -255,7 +255,6 @@ void Sys_HideMouseCursor()
     ShowCursor(FALSE);
 #else
     // The cursor is controlled using Qt in Canvas.
-    DENG2_UNUSED(show);
 #endif
 }
 
