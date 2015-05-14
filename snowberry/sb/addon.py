@@ -635,6 +635,11 @@ class WADAddon (Addon):
     def isPWAD(self):   
         """Determines if this addon is a PWAD addon."""
         return self.wadType == 'PWAD'
+        
+    def getCommandLine(self, profile):
+        if self.isPWAD():
+            return Addon.getCommandLine(self, profile)
+        return '-iwad ' + paths.quote(self.source)
 
     def readMetaData(self):
         """Generate metadata by making guesses based on the WAD file
