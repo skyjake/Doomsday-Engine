@@ -639,7 +639,7 @@ class WADAddon (Addon):
     def getCommandLine(self, profile):
         # The Deathkings WAD is a special case and will get always loaded
         # with the -iwad option.
-        if self.getId() == 'hexdd-wad' or not self.isPWAD():
+        if self.getId() == 'hexdd-wad':
             return '-iwad ' + paths.quote(self.source)
         return Addon.getCommandLine(self, profile)
 
