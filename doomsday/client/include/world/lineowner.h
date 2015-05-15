@@ -102,6 +102,9 @@ public:
     /// @copydoc next()
     inline LineOwner const &next() const { return navigate(de::Clockwise); }
 
+    inline LineOwner *prevPtr() { return _link[de::Anticlockwise]; }
+    inline LineOwner *nextPtr() { return _link[de::Clockwise]; }
+
     /**
      * Returns the line "owner".
      */

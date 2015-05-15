@@ -3466,14 +3466,14 @@ static LineOwner *mergeLineOwners(LineOwner *left, LineOwner *right,
             np->_link[Clockwise] = left;
             np = left;
 
-            left = &left->next();
+            left = left->nextPtr();
         }
         else
         {
             np->_link[Clockwise] = right;
             np = right;
 
-            right = &right->next();
+            right = right->nextPtr();
         }
     }
 
@@ -3491,7 +3491,7 @@ static LineOwner *mergeLineOwners(LineOwner *left, LineOwner *right,
     if(!tmp.hasNext())
         return nullptr;
 
-    return &tmp.next();
+    return tmp.nextPtr();
 }
 
 static LineOwner *splitLineOwners(LineOwner *list)
@@ -3505,11 +3505,11 @@ static LineOwner *splitLineOwners(LineOwner *list)
     do
     {
         listc = listb;
-        listb = &listb->next();
-        lista = &lista->next();
+        listb = listb->nextPtr();
+        lista = lista->nextPtr();
         if(lista)
         {
-            lista = &lista->next();
+            lista = lista->nextPtr();
         }
     } while(lista);
 
@@ -3523,7 +3523,7 @@ static LineOwner *splitLineOwners(LineOwner *list)
 static LineOwner *sortLineOwners(LineOwner *list,
     dint (*compare) (void const *a, void const *b))
 {
-    if(list && list->_link[Clockwise])
+    if(list && list->nextPtr())
     {
         LineOwner *p = splitLineOwners(list);
 
@@ -3627,7 +3627,7 @@ void buildVertexLineOwnerRings(QList<Vertex *> const &vertexs, QList<Line *> &ed
         // and circularly linked.
         binangle_t firstAngle = v->_lineOwners->angle();
         LineOwner *last = v->_lineOwners;
-        LineOwner *p = &last->next();
+        LineOwner *p = last->nextPtr();
         while(p)
         {
             p->_link[Anticlockwise] = last;
@@ -3636,7 +3636,7 @@ void buildVertexLineOwnerRings(QList<Vertex *> const &vertexs, QList<Line *> &ed
             last->_angle = last->angle() - p->angle();
 
             last = p;
-            p = &p->next();
+            p = p->nextPtr();
         }
         last->_link[Clockwise] = v->_lineOwners;
         v->_lineOwners->_link[Anticlockwise] = last;
