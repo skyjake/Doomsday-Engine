@@ -1,7 +1,7 @@
-/** @file sys_system.h
+/** @file sys_system.h  Abstract interfaces for platform specific services.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -18,34 +18,31 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * OS Specific Services Subsystem.
- */
+#ifndef DENG_CORE_SYSTEM_H
+#define DENG_CORE_SYSTEM_H
 
-#ifndef LIBDENG_FILESYS_SYSTEM_H
-#define LIBDENG_FILESYS_SYSTEM_H
-
+#include <de/libcore.h>
+#include <de/NativePath>
 #include "dd_types.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+extern de::dint novideo;
 
-extern int novideo;
+void Sys_Init();
+void Sys_Shutdown();
 
-void Sys_Init(void);
-void Sys_Shutdown(void);
+/**
+ * Returns @c true if shutdown is in progress.
+ */
+bool Sys_IsShuttingDown();
 
 #undef Sys_Quit
-void Sys_Quit(void);
+DENG_EXTERN_C void Sys_Quit();
 
-/// @return  @c true if shutdown is in progress.
-dd_bool Sys_IsShuttingDown(void);
+void Sys_HideMouseCursor();
 
-int Sys_CriticalMessage(const char* msg);
-int Sys_CriticalMessagef(const char* format, ...) PRINTF_F(1,2);
+de::NativePath Sys_SteamBasePath();
 
-void Sys_Sleep(int millisecs);
+void Sys_Sleep(de::dint millisecs);
 
 /**
  * Blocks the thread for a very short period of time. If attempting to wait
@@ -55,17 +52,9 @@ void Sys_Sleep(int millisecs);
  *
  * @note Longer waits should use Sys_Sleep() -- this is a busy wait.
  */
-void Sys_BlockUntilRealTime(uint realTimeMs);
+void Sys_BlockUntilRealTime(de::duint realTimeMs);
 
-void Sys_ShowCursor(dd_bool show);
-void Sys_HideMouse(void);
-#if 0
-void Sys_MessageBox(const char* msg, dd_bool iserror);
-void Sys_OpenTextEditor(const char* filename);
-#endif
+de::dint Sys_CriticalMessage(char const *msg);
+de::dint Sys_CriticalMessagef(char const *format, ...) PRINTF_F(1,2);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif /* LIBDENG_FILESYS_SYSTEM_H */
+#endif  // DENG_CORE_SYSTEM_H

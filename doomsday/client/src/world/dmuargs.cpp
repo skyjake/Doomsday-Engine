@@ -18,13 +18,48 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/Log>
-
-#include "de_base.h"
-
 #include "world/dmuargs.h"
 
+#include <de/Log>
+#include "dd_share.h"
+
 using namespace de;
+
+/**
+ * Convert propertyType enum constant into a string for error/debug messages.
+ */
+static char const *value_Str(dint val)
+{
+    static char valStr[40];
+    struct val_s {
+        dint val;
+        char const *str;
+    } valuetypes[] = {
+        { DDVT_BOOL,        "DDVT_BOOL" },
+        { DDVT_BYTE,        "DDVT_BYTE" },
+        { DDVT_SHORT,       "DDVT_SHORT" },
+        { DDVT_INT,         "DDVT_INT" },
+        { DDVT_UINT,        "DDVT_UINT" },
+        { DDVT_FIXED,       "DDVT_FIXED" },
+        { DDVT_ANGLE,       "DDVT_ANGLE" },
+        { DDVT_FLOAT,       "DDVT_FLOAT" },
+        { DDVT_DOUBLE,      "DDVT_DOUBLE" },
+        { DDVT_LONG,        "DDVT_LONG" },
+        { DDVT_ULONG,       "DDVT_ULONG" },
+        { DDVT_PTR,         "DDVT_PTR" },
+        { DDVT_BLENDMODE,   "DDVT_BLENDMODE" },
+        { 0, nullptr }
+    };
+
+    for(duint i = 0; valuetypes[i].str; ++i)
+    {
+        if(valuetypes[i].val == val)
+            return valuetypes[i].str;
+    }
+
+    sprintf(valStr, "(unnamed %i)", val);
+    return valStr;
+}
 
 DmuArgs::DmuArgs(int type, uint prop)
     : type     (type),

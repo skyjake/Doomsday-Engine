@@ -447,6 +447,9 @@ void Canvas::notifyReady()
 void Canvas::paintGL()
 {
     if(!d->parent || d->parent->isRecreationInProgress()) return;
+#ifdef LIBGUI_USE_GLENTRYPOINTS
+    if(!glBindFramebuffer) return;
+#endif
 
     DENG2_ASSERT(QGLContext::currentContext() != 0);
 
