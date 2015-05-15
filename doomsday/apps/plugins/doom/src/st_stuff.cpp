@@ -1017,9 +1017,28 @@ void ST_Shutdown()
 
 void HU_WakeWidgets(int localPlayer)
 {
+    if(localPlayer < 0)
+    {
+        for(uint i = 0; i < MAXPLAYERS; ++i)
+        {
+            HU_WakeWidgets(i);
+        }
+    }
+    else if(localPlayer < MAXPLAYERS) 
+    {
+        if(players[localPlayer].plr->inGame)
+        {
+            ST_Start(localPlayer);
+        }
+    }
+
+}
+
+void ST_CloseAll(int localPlayer, dd_bool fast)
+{
     NetSv_DismissHUDs(localPlayer, true);
-    
-    ST_AutomapOpen(localPlayer, false, true);
+
+    ST_AutomapOpen(localPlayer, false, fast);
 }
 
 /// @note May be called prior to HUD init / outside game session.
