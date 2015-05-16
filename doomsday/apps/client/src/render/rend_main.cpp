@@ -138,7 +138,7 @@ dint torchAdditive = true;
 dint useShinySurfaces = true;
 
 dint useDynLights = true;
-dfloat dynlightFactor = .5f;
+dfloat dynlightFactor = .7f;
 dfloat dynlightFogBright = .15f;
 
 dint useGlowOnWalls = true;

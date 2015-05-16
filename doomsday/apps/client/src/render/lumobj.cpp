@@ -31,8 +31,8 @@
 
 using namespace de;
 
-static dint radiusMax     = 256;    ///< Absolute maximum lumobj radius (cvar).
-static dfloat radiusScale = 4.24f;  ///< Radius scale factor (cvar).
+static dint radiusMax     = 320;    ///< Absolute maximum lumobj radius (cvar).
+static dfloat radiusScale = 5.2f;  ///< Radius scale factor (cvar).
 
 dfloat Lumobj::Source::occlusion(Vector3d const & /*eye*/) const
 {
