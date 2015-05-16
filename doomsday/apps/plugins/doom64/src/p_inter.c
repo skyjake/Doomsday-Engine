@@ -26,7 +26,6 @@
 
 #include "jdoom64.h"
 
-#include "am_map.h"
 #include "d_net.h"
 #include "d_netsv.h"
 #include "dmu_lib.h"
@@ -174,6 +173,8 @@ dd_bool P_GiveWeapon(player_t *player, weapontype_t weapon, dd_bool dropped)
 
 /**
  * Returns false if the body isn't needed at all
+ *
+ * XXX This is P_GiveHealth in doom/p_inter.c
  */
 dd_bool P_GiveBody(player_t *player, int num)
 {
@@ -256,7 +257,7 @@ void P_GiveBackpack(player_t* player)
         P_GiveAmmo(player, i, 1);
     }
 
-    P_SetMessage(player, 0, GOTBACKPACK);
+    P_SetMessage(player, GOTBACKPACK);
 }
 
 dd_bool P_GivePower(player_t* player, int power)
@@ -338,6 +339,21 @@ dd_bool P_TakePower(player_t* player, int power)
 
     player->powers[power] = 0;
     return true;
+}
+
+dd_bool P_TogglePower(player_t *player, powertype_t powerType)
+{
+    DENG_ASSERT(player != 0);
+    DENG_ASSERT(powerType >= PT_FIRST && powerType < NUM_POWER_TYPES);
+
+    if(!player->powers[powerType])
+    {
+        return P_GivePower(player, powerType);
+    }
+    else
+    {
+        return P_TakePower(player, powerType);
+    }
 }
 
 typedef enum {
@@ -459,7 +475,7 @@ static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
         if(!P_GiveArmor(plr, armorClass[0],
                         armorPoints[MINMAX_OF(0, armorClass[0] - 1, 1)]))
             return false;
-        P_SetMessage(plr, 0, GOTARMOR);
+        P_SetMessage(plr, GOTARMOR);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
@@ -467,7 +483,7 @@ static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
         if(!P_GiveArmor(plr, armorClass[1],
                         armorPoints[MINMAX_OF(0, armorClass[1] - 1, 1)]))
             return false;
-        P_SetMessage(plr, 0, GOTMEGA);
+        P_SetMessage(plr, GOTMEGA);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
@@ -477,7 +493,7 @@ static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
         if(plr->armorPoints < armorPoints[1])
             P_PlayerGiveArmorBonus(plr, 2);
 
-        P_SetMessage(plr, 0, GOTARMBONUS);
+        P_SetMessage(plr, GOTARMBONUS);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
 
         // Maybe unhide the HUD?
@@ -491,7 +507,7 @@ static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
             plr->health = healthLimit;
         plr->plr->mo->health = plr->health;
         plr->update |= PSF_HEALTH;
-        P_SetMessage(plr, 0, GOTHTHBONUS);
+        P_SetMessage(plr, GOTHTHBONUS);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
 
         // Maybe unhide the HUD?
@@ -504,7 +520,7 @@ static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
             plr->health = soulSphereLimit;
         plr->plr->mo->health = plr->health;
         plr->update |= PSF_HEALTH;
-        P_SetMessage(plr, 0, GOTSUPER);
+        P_SetMessage(plr, GOTSUPER);
         S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
 
         // Maybe unhide the HUD?
@@ -516,7 +532,7 @@ static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
         plr->plr->mo->health = plr->health;
         plr->update |= PSF_HEALTH;
         P_GiveArmor(plr, armorClass[1], armorPoints[MINMAX_OF(0, armorClass[1] - 1, 1)]);
-        P_SetMessage(plr, 0, GOTMSPHERE);
+        P_SetMessage(plr, GOTMSPHERE);
         S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
 
         // Maybe unhide the HUD?
@@ -525,7 +541,7 @@ static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
 
     case IT_KEY_BLUE:
         if(!plr->keys[KT_BLUECARD])
-            P_SetMessage(plr, 0, GOTBLUECARD);
+            P_SetMessage(plr, GOTBLUECARD);
         P_GiveKey(plr, KT_BLUECARD);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         if(IS_NETGAME)
@@ -534,7 +550,7 @@ static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
 
     case IT_KEY_YELLOW:
         if(!plr->keys[KT_YELLOWCARD])
-            P_SetMessage(plr, 0, GOTYELWCARD);
+            P_SetMessage(plr, GOTYELWCARD);
         P_GiveKey(plr, KT_YELLOWCARD);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         if(IS_NETGAME)
@@ -543,7 +559,7 @@ static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
 
     case IT_KEY_RED:
         if(!plr->keys[KT_REDCARD])
-            P_SetMessage(plr, 0, GOTREDCARD);
+            P_SetMessage(plr, GOTREDCARD);
         P_GiveKey(plr, KT_REDCARD);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         if(IS_NETGAME)
@@ -552,7 +568,7 @@ static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
 
     case IT_KEY_BLUESKULL:
         if(!plr->keys[KT_BLUESKULL])
-            P_SetMessage(plr, 0, GOTBLUESKUL);
+            P_SetMessage(plr, GOTBLUESKUL);
         P_GiveKey(plr, KT_BLUESKULL);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         if(IS_NETGAME)
@@ -561,7 +577,7 @@ static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
 
     case IT_KEY_YELLOWSKULL:
         if(!plr->keys[KT_YELLOWSKULL])
-            P_SetMessage(plr, 0, GOTYELWSKUL);
+            P_SetMessage(plr, GOTYELWSKUL);
         P_GiveKey(plr, KT_YELLOWSKULL);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         if(IS_NETGAME)
@@ -570,7 +586,7 @@ static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
 
     case IT_KEY_REDSKULL:
         if(!plr->keys[KT_REDSKULL])
-            P_SetMessage(plr, 0, GOTREDSKULL);
+            P_SetMessage(plr, GOTREDSKULL);
         P_GiveKey(plr, KT_REDSKULL);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         if(IS_NETGAME)
@@ -580,7 +596,7 @@ static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
     case IT_HEALTH_PACK:
         if(!P_GiveBody(plr, 10))
             return false;
-        P_SetMessage(plr, 0, GOTSTIM);
+        P_SetMessage(plr, GOTSTIM);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
@@ -597,21 +613,21 @@ static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
          */
         if(!P_GiveBody(plr, 25)) return false;
 
-        P_SetMessage(plr, 0, GET_TXT((oldHealth < 25)? TXT_GOTMEDINEED : TXT_GOTMEDIKIT));
+        P_SetMessage(plr, GET_TXT((oldHealth < 25)? TXT_GOTMEDINEED : TXT_GOTMEDIKIT));
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break; }
 
     case IT_INVUL:
         if(!P_GivePower(plr, PT_INVULNERABILITY))
             return false;
-        P_SetMessage(plr, 0, GOTINVUL);
+        P_SetMessage(plr, GOTINVUL);
         S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
         break;
 
     case IT_BESERK:
         if(!P_GivePower(plr, PT_STRENGTH))
             return false;
-        P_SetMessage(plr, 0, GOTBERSERK);
+        P_SetMessage(plr, GOTBERSERK);
         if(plr->readyWeapon != WT_FIRST && cfg.berserkAutoSwitch)
         {
             plr->pendingWeapon = WT_FIRST;
@@ -623,84 +639,84 @@ static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
     case IT_INVIS:
         if(!P_GivePower(plr, PT_INVISIBILITY))
             return false;
-        P_SetMessage(plr, 0, GOTINVIS);
+        P_SetMessage(plr, GOTINVIS);
         S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
         break;
 
     case IT_SUIT:
         if(!P_GivePower(plr, PT_IRONFEET))
             return false;
-        P_SetMessage(plr, 0, GOTSUIT);
+        P_SetMessage(plr, GOTSUIT);
         S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
         break;
 
     case IT_ALLMAP:
         if(!P_GivePower(plr, PT_ALLMAP))
             return false;
-        P_SetMessage(plr, 0, GOTMAP);
+        P_SetMessage(plr, GOTMAP);
         S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
         break;
 
     case IT_VISOR:
         if(!P_GivePower(plr, PT_INFRARED))
             return false;
-        P_SetMessage(plr, 0, GOTVISOR);
+        P_SetMessage(plr, GOTVISOR);
         S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
         break;
 
     case IT_AMMO_CLIP:
         if(!P_GiveAmmo(plr, AT_CLIP, dropped? 0 : 1))
             return false;
-        P_SetMessage(plr, 0, GOTCLIP);
+        P_SetMessage(plr, GOTCLIP);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_AMMO_CLIP_BOX:
         if(!P_GiveAmmo(plr, AT_CLIP, 5))
             return false;
-        P_SetMessage(plr, 0, GOTCLIPBOX);
+        P_SetMessage(plr, GOTCLIPBOX);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_AMMO_ROCKET:
         if(!P_GiveAmmo(plr, AT_MISSILE, 1))
             return false;
-        P_SetMessage(plr, 0, GOTROCKET);
+        P_SetMessage(plr, GOTROCKET);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_AMMO_ROCKET_BOX:
         if(!P_GiveAmmo(plr, AT_MISSILE, 5))
             return false;
-        P_SetMessage(plr, 0, GOTROCKBOX);
+        P_SetMessage(plr, GOTROCKBOX);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_AMMO_CELL:
         if(!P_GiveAmmo(plr, AT_CELL, 1))
             return false;
-        P_SetMessage(plr, 0, GOTCELL);
+        P_SetMessage(plr, GOTCELL);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_AMMO_CELL_BOX:
         if(!P_GiveAmmo(plr, AT_CELL, 5))
             return false;
-        P_SetMessage(plr, 0, GOTCELLBOX);
+        P_SetMessage(plr, GOTCELLBOX);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_AMMO_SHELL:
         if(!P_GiveAmmo(plr, AT_SHELL, 1))
             return false;
-        P_SetMessage(plr, 0, GOTSHELLS);
+        P_SetMessage(plr, GOTSHELLS);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_AMMO_SHELL_BOX:
         if(!P_GiveAmmo(plr, AT_SHELL, 5))
             return false;
-        P_SetMessage(plr, 0, GOTSHELLBOX);
+        P_SetMessage(plr, GOTSHELLBOX);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
@@ -712,49 +728,49 @@ static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
     case IT_WEAPON_BFG:
         if(!P_GiveWeapon(plr, WT_SEVENTH, dropped))
             return false;
-        P_SetMessage(plr, 0, GOTBFG9000);
+        P_SetMessage(plr, GOTBFG9000);
         S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
     case IT_WEAPON_CHAINGUN:
         if(!P_GiveWeapon(plr, WT_FOURTH, dropped))
             return false;
-        P_SetMessage(plr, 0, GOTCHAINGUN);
+        P_SetMessage(plr, GOTCHAINGUN);
         S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
     case IT_WEAPON_CHAINSAW:
         if(!P_GiveWeapon(plr, WT_EIGHTH, dropped))
             return false;
-        P_SetMessage(plr, 0, GOTCHAINSAW);
+        P_SetMessage(plr, GOTCHAINSAW);
         S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
     case IT_WEAPON_RLAUNCHER:
         if(!P_GiveWeapon(plr, WT_FIFTH, dropped))
             return false;
-        P_SetMessage(plr, 0, GOTLAUNCHER);
+        P_SetMessage(plr, GOTLAUNCHER);
         S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
     case IT_WEAPON_PLASMARIFLE:
         if(!P_GiveWeapon(plr, WT_SIXTH, dropped))
             return false;
-        P_SetMessage(plr, 0, GOTPLASMA);
+        P_SetMessage(plr, GOTPLASMA);
         S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
     case IT_WEAPON_SHOTGUN:
         if(!P_GiveWeapon(plr, WT_THIRD, dropped))
             return false;
-        P_SetMessage(plr, 0, GOTSHOTGUN);
+        P_SetMessage(plr, GOTSHOTGUN);
         S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
     case IT_WEAPON_SSHOTGUN:
         if(!P_GiveWeapon(plr, WT_NINETH, dropped))
             return false;
-        P_SetMessage(plr, 0, GOTSHOTGUN2);
+        P_SetMessage(plr, GOTSHOTGUN2);
         S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
@@ -762,7 +778,7 @@ static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
         if(!P_GiveWeapon(plr, WT_TENTH, dropped))
             return false;
 
-        P_SetMessage(plr, 0, GOTUNMAKER);
+        P_SetMessage(plr, GOTUNMAKER);
         S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
@@ -770,7 +786,7 @@ static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
         if(P_InventoryCount(plr - players, IIT_DEMONKEY1))
         {
             if(!(mapTime & 0x1f))
-                P_SetMessage(plr, 0, NGOTPOWERUP1);
+                P_SetMessage(plr, NGOTPOWERUP1);
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
 
             return false; //Don't destroy item, can be collected later by other players.
@@ -778,7 +794,7 @@ static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
         else
         {
             P_GiveItem(plr, IIT_DEMONKEY1);
-            P_SetMessage(plr, 0, GOTPOWERUP1);
+            P_SetMessage(plr, GOTPOWERUP1);
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         }
         break;
@@ -787,7 +803,7 @@ static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
         if(P_InventoryCount(plr - players, IIT_DEMONKEY2))
         {
             if(!(mapTime & 0x1f))
-                P_SetMessage(plr, 0, NGOTPOWERUP2);
+                P_SetMessage(plr, NGOTPOWERUP2);
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
 
             return false; //Don't destroy item, can be collected later by other players.
@@ -795,7 +811,7 @@ static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
         else
         {
             P_GiveItem(plr, IIT_DEMONKEY2);
-            P_SetMessage(plr, 0, GOTPOWERUP2);
+            P_SetMessage(plr, GOTPOWERUP2);
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         }
         break;
@@ -804,7 +820,7 @@ static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
         if(P_InventoryCount(plr - players, IIT_DEMONKEY3))
         {
             if(!(mapTime & 0x1f))
-                P_SetMessage(plr, 0, NGOTPOWERUP3);
+                P_SetMessage(plr, NGOTPOWERUP3);
 
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
             return false; //Don't destroy item, can be collected later by other players.
@@ -812,7 +828,7 @@ static dd_bool giveItem(player_t* plr, itemtype_t item, dd_bool dropped)
         else
         {
             P_GiveItem(plr, IIT_DEMONKEY3);
-            P_SetMessage(plr, 0, GOTPOWERUP3);
+            P_SetMessage(plr, GOTPOWERUP3);
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         }
         break;
@@ -861,6 +877,8 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
     }
 
     P_MobjRemove(special, false);
+
+    //XXX doom plugin checks value of mapSetup
     player->bonusCount += BONUSADD;
 }
 

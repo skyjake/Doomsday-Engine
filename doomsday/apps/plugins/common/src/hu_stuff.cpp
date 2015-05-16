@@ -24,25 +24,22 @@
 #include "common.h"
 #include "hu_stuff.h"
 
-#include "hu_chat.h"
-#include "hu_log.h"
-#include "hu_menu.h"
-#include "hu_msg.h"
-#include "hu_inventory.h"
-#include "g_common.h"
-#include "gamesession.h"
-#include "p_mapsetup.h"
-#include "p_tick.h"
-#include "am_map.h"
-#include "fi_lib.h"
-#include "r_common.h"
-
 #include <cstdlib>
 #include <cctype>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <map>
+#include "fi_lib.h"
+#include "g_common.h"
+#include "gamesession.h"
+#include "hu_inventory.h"
+#include "hu_menu.h"
+#include "hu_msg.h"
+#include "hud/automapstyle.h"
+#include "p_mapsetup.h"
+#include "p_tick.h"
+#include "r_common.h"
 
 using namespace de;
 using namespace common;
@@ -295,25 +292,6 @@ void Hu_LoadData()
 void Hu_UnloadData()
 {
     releaseFogTexture();
-}
-
-void HU_WakeWidgets(int player)
-{
-    if(player < 0)
-    {
-        // Wake the widgets of all players.
-        for(uint i = 0; i < MAXPLAYERS; ++i)
-        {
-            if(!players[i].plr->inGame) continue;
-            HU_WakeWidgets(i);
-        }
-        return;
-    }
-    if(player < MAXPLAYERS)
-    {
-        if(!players[player].plr->inGame) return;
-        ST_Start(player);
-    }
 }
 
 #if __JHERETIC__ || __JHEXEN__
@@ -1376,7 +1354,7 @@ dd_bool Hu_IsStatusBarVisible(int player)
 #else
     if(!ST_StatusBarIsActive(player)) return false;
 
-    if(ST_AutomapIsActive(player) && cfg.common.automapHudDisplay == 0)
+    if(ST_AutomapIsOpen(player) && cfg.common.automapHudDisplay == 0)
     {
         return false;
     }
@@ -1488,7 +1466,7 @@ dd_bool Hu_IsMapTitleVisible(void)
 {
     if(!cfg.common.mapTitle) return false;
 
-    return (actualMapTime < 6 * 35) || ST_AutomapIsActive(DISPLAYPLAYER);
+    return (actualMapTime < 6 * 35) || ST_AutomapIsOpen(DISPLAYPLAYER);
 }
 
 static dd_bool needToRespectStatusBarHeightWhenAutomapOpen(void)
@@ -1525,7 +1503,7 @@ void Hu_MapTitleDrawer(const RectRaw* portGeometry)
 
     // Should the title be positioned in the bottom of the view?
     if(cfg.common.automapTitleAtBottom &&
-            ST_AutomapIsActive(DISPLAYPLAYER) &&
+            ST_AutomapIsOpen(DISPLAYPLAYER) &&
             (actualMapTime > 6 * TICSPERSEC))
     {
         origin.y = portGeometry->size.height - 1.2f * Hu_MapTitleHeight() * scale;
@@ -1575,7 +1553,7 @@ void Hu_MapTitleDrawer(const RectRaw* portGeometry)
 
         Hu_DrawMapTitle(alpha, false /* show author */);
     }
-    else if(ST_AutomapIsActive(DISPLAYPLAYER) && (actualMapTime > 6 * TICSPERSEC))
+    else if(ST_AutomapIsOpen(DISPLAYPLAYER) && (actualMapTime > 6 * TICSPERSEC))
     {
         // When the automap is open, the title is displayed together with the
         // map identifier (URI).

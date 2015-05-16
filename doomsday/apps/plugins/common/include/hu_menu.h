@@ -20,10 +20,61 @@
 
 #ifndef LIBCOMMON_HU_MENU_H
 #define LIBCOMMON_HU_MENU_H
+
+typedef enum menucommand_e
+{
+    MCMD_OPEN,          ///< Open the menu.
+    MCMD_CLOSE,         ///< Close the menu.
+    MCMD_CLOSEFAST,     ///< Instantly close the menu.
+    MCMD_NAV_OUT,       ///< Navigate "out" of the current menu/widget (up a level).
+    MCMD_NAV_LEFT,
+    MCMD_NAV_RIGHT,
+    MCMD_NAV_DOWN,
+    MCMD_NAV_UP,
+    MCMD_NAV_PAGEDOWN,
+    MCMD_NAV_PAGEUP,
+    MCMD_SELECT,        ///< Execute whatever action is attaced to the current item.
+    MCMD_DELETE
+} menucommand_e;
+
+typedef enum mn_page_colorid_e
+{
+    MENU_COLOR1,
+    MENU_COLOR2,
+    MENU_COLOR3,
+    MENU_COLOR4,
+    MENU_COLOR5,
+    MENU_COLOR6,
+    MENU_COLOR7,
+    MENU_COLOR8,
+    MENU_COLOR9,
+    MENU_COLOR10,
+    MENU_COLOR_COUNT
+} mn_page_colorid_t;
+
+#define VALID_MNPAGE_COLORID(v)      ((v) >= MENU_COLOR1 && (v) < MENU_COLOR_COUNT)
+
+typedef enum mn_page_fontid_e
+{
+    MENU_FONT1,
+    MENU_FONT2,
+    MENU_FONT3,
+    MENU_FONT4,
+    MENU_FONT5,
+    MENU_FONT6,
+    MENU_FONT7,
+    MENU_FONT8,
+    MENU_FONT9,
+    MENU_FONT10,
+    MENU_FONT_COUNT
+} mn_page_fontid_t;
+
+#define VALID_MNPAGE_FONTID(v)      ((v) >= MENU_FONT1 && (v) < MENU_FONT_COUNT)
+
 #ifdef __cplusplus
 
 #include "dd_types.h"
-#include "hu_lib.h"
+//#include "hu_lib.h"
 #include "menu/widgets/widget.h"
 #include "menu/widgets/cvartogglewidget.h"
 
@@ -211,4 +262,4 @@ short Hu_MenuMergeEffectWithDrawTextFlags(short flags);
 } // namespace common
 
 #endif // __cplusplus
-#endif // LIBCOMMON_HU_MENU_H
+#endif  // LIBCOMMON_HU_MENU_H

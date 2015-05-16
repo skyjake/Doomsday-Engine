@@ -28,7 +28,6 @@
 #include <cstring>
 #include "acs/script.h"
 #include "acs/system.h"
-#include "am_map.h"
 #include "d_net.h"
 #include "d_netsv.h"
 #include "dmu_lib.h"
@@ -36,6 +35,7 @@
 #include "gamesession.h"
 #include "hu_pspr.h"
 #include "hu_stuff.h"
+#include "hud/widgets/automapwidget.h"
 #include "p_actor.h"
 #include "p_scroll.h"
 #include "p_start.h"
@@ -81,16 +81,20 @@ xline_t *P_GetXLine(int idx)
 void P_SetLineAutomapVisibility(int player, int lineIdx, dd_bool visible)
 {
     Line *line = (Line *)P_ToPtr(DMU_LINE, lineIdx);
-    xline_t *xline;
     if(!line || P_IsDummy(line)) return;
 
-    xline = P_ToXLine(line);
+    xline_t *xline = P_ToXLine(line);
+
     // Will we need to rebuild one or more display lists?
     if(xline->mapped[player] != visible)
     {
-        ST_RebuildAutomap(player);
+        xline->mapped[player] = visible;
+
+        if(auto *automap = ST_TryFindAutomapWidget(player))
+        {
+            automap->lineAutomapVisibilityChanged(*line);
+        }
     }
-    xline->mapped[player] = visible;
 }
 
 xsector_t *P_ToXSector(Sector *sector)

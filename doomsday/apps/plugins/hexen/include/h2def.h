@@ -207,7 +207,7 @@ typedef struct classinfo_s
     int         jumpTics;        ///< wait inbetween jumps.
     int         failUseSound;    ///< sound played when a use fails.
     int         armorIncrement[NUMARMOR];
-    textenum_t  skillModeNames[NUM_SKILL_MODES];
+    textenum_t  skillModeName[NUM_SKILL_MODES];
     struct weaponpiecedata_s
     {
         Point2Raw   offset;

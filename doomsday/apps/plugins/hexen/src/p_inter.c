@@ -25,7 +25,6 @@
 #include "jhexen.h"
 #include "p_inter.h"
 
-#include "am_map.h"
 #include "d_netsv.h"
 #include "g_common.h"
 #include "hu_inventory.h"
@@ -1273,7 +1272,7 @@ static dd_bool giveItem(player_t *plr, itemtype_t item)
                 break;
             }
 
-            P_SetMessage(plr, 0, GET_TXT(msg));
+            P_SetMessage(plr, GET_TXT(msg));
             // Play the build-sound full volume for all players.
             S_StartSound(SFX_WEAPON_BUILD, NULL);
             break;
@@ -1282,7 +1281,7 @@ static dd_bool giveItem(player_t *plr, itemtype_t item)
 
     default:
         S_StartSound(info->pickupSound, plr->plr->mo);
-        P_SetMessage(plr, 0, GET_TXT(info->pickupMsg));
+        P_SetMessage(plr, GET_TXT(info->pickupMsg));
         break;
     }
 

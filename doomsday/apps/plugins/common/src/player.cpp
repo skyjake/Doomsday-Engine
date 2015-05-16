@@ -21,13 +21,16 @@
 #include "common.h"
 #include "player.h"
 
+#include <cstdlib>
+#include <cstring>
+#include <cstdio>
+#include <de/memory.h>
 #include "d_net.h"
 #include "d_netcl.h"
 #include "d_netsv.h"
 #include "dmu_lib.h"
 #include "g_common.h"
 #include "gamesession.h"
-#include "hu_log.h"
 #if __JHERETIC__ || __JHEXEN__
 #  include "hu_inventory.h"
 #endif
@@ -36,10 +39,6 @@
 #include "p_map.h"
 #include "p_saveg.h"
 #include "p_start.h"
-#include <de/memory.h>
-#include <cstdlib>
-#include <cstring>
-#include <cstdio>
 
 using namespace de;
 
@@ -693,9 +692,9 @@ void P_PlayerChangeClass(player_t *player, playerclass_t newClass)
 }
 #endif
 
-void P_SetMessage(player_t *pl, int flags, char const *msg)
+void P_SetMessageWithFlags(player_t *pl, char const *msg, int flags)
 {
-    DENG_ASSERT(pl != 0);
+    DENG2_ASSERT(pl);
 
     if(!msg || !msg[0]) return;
 
@@ -710,8 +709,13 @@ void P_SetMessage(player_t *pl, int flags, char const *msg)
     NetSv_SendMessage(pl - players, msg);
 }
 
+void P_SetMessage(player_t *plr, char const *msg)
+{
+    P_SetMessageWithFlags(plr, msg, 0);
+}
+
 #if __JHEXEN__
-void P_SetYellowMessage(player_t *pl, int flags, char const *msg)
+void P_SetYellowMessageWithFlags(player_t *pl, char const *msg, int flags)
 {
 #define YELLOW_FMT      "{r=1;g=0.7;b=0.3;}"
 #define YELLOW_FMT_LEN  18
@@ -740,6 +744,11 @@ void P_SetYellowMessage(player_t *pl, int flags, char const *msg)
 
 #undef YELLOW_FMT_LEN
 #undef YELLOW_FMT
+}
+
+void P_SetYellowMessage(player_t *pl, char const *msg)
+{
+    P_SetYellowMessageWithFlags(pl, msg, 0);
 }
 #endif
 

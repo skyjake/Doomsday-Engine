@@ -10,7 +10,7 @@ include (../common/Common.cmake)
 add_definitions (-D__JHERETIC__)
 
 include_directories (include)
-file (GLOB SOURCES src/*.c src/*.cpp include/*.h)
+file (GLOB_RECURSE SOURCES src/*.c src/*.cpp include/*.h)
 
 deng_find_resources (libheretic.pk3)
 

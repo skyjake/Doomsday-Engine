@@ -45,8 +45,6 @@
 #include "player.h"
 #include "p_map.h"
 #include "g_common.h"
-#include "am_map.h"
-#include "hu_log.h"
 #include "hu_stuff.h"
 #include "r_common.h"
 
@@ -1339,24 +1337,24 @@ void P_PlayerThinkMap(player_t* player)
     playerbrain_t* brain = &player->brain;
 
     if(brain->mapToggle)
-        ST_AutomapOpen(playerIdx, !ST_AutomapIsActive(playerIdx), false);
+        ST_AutomapOpen(playerIdx, !ST_AutomapIsOpen(playerIdx), false);
 
     if(brain->mapFollow)
-        ST_ToggleAutomapPanMode(playerIdx);
+        ST_AutomapFollowMode(playerIdx);
 
     if(brain->mapRotate)
     {
         cfg.common.automapRotate = !cfg.common.automapRotate;
         ST_SetAutomapCameraRotation(playerIdx, cfg.common.automapRotate);
-        P_SetMessage(player, LMF_NO_HIDE, (cfg.common.automapRotate ? AMSTR_ROTATEON : AMSTR_ROTATEOFF));
+        P_SetMessageWithFlags(player, (cfg.common.automapRotate ? AMSTR_ROTATEON : AMSTR_ROTATEOFF), LMF_NO_HIDE);
     }
 
     if(brain->mapZoomMax)
-        ST_ToggleAutomapMaxZoom(playerIdx);
+        ST_AutomapZoomMode(playerIdx);
 
     if(brain->mapMarkAdd)
     {
-        mobj_t* pmo = player->plr->mo;
+        mobj_t *pmo = player->plr->mo;
         ST_AutomapAddPoint(playerIdx, pmo->origin[VX], pmo->origin[VY], pmo->origin[VZ]);
     }
 
@@ -1388,11 +1386,9 @@ void P_PlayerThinkPowers(player_t* player)
     }
 #endif
 
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__ || __JHEXEN__
     // Infrared/Torch times out eventually.
     if(player->powers[PT_INFRARED])
         player->powers[PT_INFRARED]--;
-#endif
 
     if(player->damageCount)
         player->damageCount--;

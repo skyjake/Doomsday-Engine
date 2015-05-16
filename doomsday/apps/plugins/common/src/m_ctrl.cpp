@@ -26,6 +26,7 @@
 #include <cstdio>
 
 #include "hu_menu.h"
+#include "hu_stuff.h"
 #include "menu/page.h"
 #include "menu/widgets/inputbindingwidget.h"
 #include "menu/widgets/labelwidget.h"

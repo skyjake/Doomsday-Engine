@@ -22,6 +22,7 @@
 #include "menu/page.h"
 
 #include "hu_menu.h"
+#include "hu_stuff.h"
 
 /// @todo Page should not need knowledge of Widget specializations - remove all.
 #include "menu/widgets/buttonwidget.h"

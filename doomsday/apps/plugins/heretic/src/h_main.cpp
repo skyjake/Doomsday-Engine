@@ -24,12 +24,12 @@
 
 #include <cstring>
 #include <de/App>
-#include "am_map.h"
 #include "d_netsv.h"
 #include "g_defs.h"
 #include "gamesession.h"
 #include "hereticv13mapstatereader.h"
 #include "hu_menu.h"
+#include "hud/widgets/automapwidget.h"
 #include "m_argv.h"
 #include "p_inventory.h"
 #include "p_map.h"
@@ -261,7 +261,7 @@ void H_PreInit()
     cfg.common.automapZoomSpeed = .1f;
     cfg.common.automapPanSpeed = .5f;
     cfg.common.automapPanResetOnOpen = true;
-    cfg.common.automapOpenSeconds = AUTOMAP_OPEN_SECONDS;
+    cfg.common.automapOpenSeconds = AUTOMAPWIDGET_OPEN_SECONDS;
 
     cfg.common.hudCheatCounterScale = .7f;
     cfg.common.hudCheatCounterShowWithAutomap = true;

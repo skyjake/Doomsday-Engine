@@ -31,6 +31,18 @@ HEADERS += \
     include/dstrings.h \
     include/g_game.h \
     include/h2def.h \
+    include/hud/widgets/armoriconswidget.h \
+    include/hud/widgets/bluemanaiconwidget.h \
+    include/hud/widgets/bluemanavialwidget.h \
+    include/hud/widgets/bluemanawidget.h \
+    include/hud/widgets/bootswidget.h \
+    include/hud/widgets/defensewidget.h \
+    include/hud/widgets/greenmanaiconwidget.h \
+    include/hud/widgets/greenmanavialwidget.h \
+    include/hud/widgets/greenmanawidget.h \
+    include/hud/widgets/servantwidget.h \
+    include/hud/widgets/weaponpieceswidget.h \
+    include/hud/widgets/worldtimewidget.h \
     include/intermission.h \
     include/info.h \
     include/jhexen.h \
@@ -74,6 +86,18 @@ SOURCES += \
     src/h2_main.cpp \
     src/hconsole.cpp \
     src/hrefresh.cpp \
+    src/hud/widgets/armoriconswidget.cpp \
+    src/hud/widgets/bluemanaiconwidget.cpp \
+    src/hud/widgets/bluemanavialwidget.cpp \
+    src/hud/widgets/bluemanawidget.cpp \
+    src/hud/widgets/bootswidget.cpp \
+    src/hud/widgets/defensewidget.cpp \
+    src/hud/widgets/greenmanaiconwidget.cpp \
+    src/hud/widgets/greenmanavialwidget.cpp \
+    src/hud/widgets/greenmanawidget.cpp \
+    src/hud/widgets/servantwidget.cpp \
+    src/hud/widgets/weaponpieceswidget.cpp \
+    src/hud/widgets/worldtimewidget.cpp \
     src/intermission.cpp \
     src/lightninganimator.cpp \
     src/m_cheat.cpp \

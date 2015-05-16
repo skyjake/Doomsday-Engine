@@ -21,23 +21,20 @@
 #include "jheretic.h"
 #include "h_refresh.h"
 
+#include <cstring>
 #include "dmu_lib.h"
-#include "hu_stuff.h"
+#include "d_net.h"
+#include "g_common.h"
+#include "g_controls.h"
+#include "gamesession.h"
 #include "hu_menu.h"
 #include "hu_msg.h"
 #include "hu_pspr.h"
-#include "hu_log.h"
-#include "am_map.h"
-#include "g_common.h"
-#include "gamesession.h"
+#include "hu_stuff.h"
 #include "r_common.h"
-#include "d_net.h"
-#include "x_hair.h"
-#include "g_controls.h"
 #include "p_mapsetup.h"
 #include "p_tick.h"
-#include "hu_automap.h"
-#include <cstring>
+#include "x_hair.h"
 
 float quitDarkenOpacity = 0;
 

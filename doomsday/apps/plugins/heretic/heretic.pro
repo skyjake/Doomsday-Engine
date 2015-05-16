@@ -43,6 +43,7 @@ HEADERS += \
     include/h_think.h \
     include/h_type.h \
     include/hereticv13mapstatereader.h \
+    include/hud/widgets/tomeofpowerwidget.h \
     include/info.h \
     include/intermission.h \
     include/jheretic.h \
@@ -73,6 +74,7 @@ SOURCES += \
     src/h_main.cpp \
     src/h_refresh.cpp \
     src/hereticv13mapstatereader.cpp \
+    src/hud/widgets/tomeofpowerwidget.cpp \
     src/intermission.cpp \
     src/m_cheat.cpp \
     src/m_random.c \

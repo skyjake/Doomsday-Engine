@@ -34,7 +34,6 @@
 #include "jdoom.h"
 #include "p_inter.h"
 
-#include "am_map.h"
 #include "d_net.h"
 #include "d_netsv.h"
 #include "dmu_lib.h"
@@ -305,7 +304,7 @@ void P_GiveBackpack(player_t *plr)
         P_GiveAmmo(plr, i, 1);
     }
 
-    P_SetMessage(plr, 0, GOTBACKPACK);
+    P_SetMessage(plr, GOTBACKPACK);
 }
 
 dd_bool P_GivePower(player_t *player, powertype_t powerType)
@@ -544,7 +543,7 @@ static dd_bool pickupWeapon(player_t *plr, weapontype_t weaponType,
     if(pickedWeapon)
     {
         // Notify the user.
-        P_SetMessage(plr, 0, pickupMessage);
+        P_SetMessage(plr, pickupMessage);
 
         if(!mapSetup) // Pickup sounds are not played during map setup.
         {
@@ -580,7 +579,7 @@ static dd_bool pickupItem(player_t *plr, itemtype_t item, dd_bool dropped)
                         armorPoints[MINMAX_OF(0, armorClass[0] - 1, 1)]))
             return false;
 
-        P_SetMessage(plr, 0, GOTARMOR);
+        P_SetMessage(plr, GOTARMOR);
         if(!mapSetup)
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
@@ -589,7 +588,7 @@ static dd_bool pickupItem(player_t *plr, itemtype_t item, dd_bool dropped)
         if(!P_GiveArmor(plr, armorClass[1],
                         armorPoints[MINMAX_OF(0, armorClass[1] - 1, 1)]))
             return false;
-        P_SetMessage(plr, 0, GOTMEGA);
+        P_SetMessage(plr, GOTMEGA);
         if(!mapSetup)
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
@@ -600,7 +599,7 @@ static dd_bool pickupItem(player_t *plr, itemtype_t item, dd_bool dropped)
         if(plr->armorPoints < armorPoints[1])
             P_PlayerGiveArmorBonus(plr, 1);
 
-        P_SetMessage(plr, 0, GOTARMBONUS);
+        P_SetMessage(plr, GOTARMBONUS);
         if(!mapSetup)
         {
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
@@ -612,7 +611,7 @@ static dd_bool pickupItem(player_t *plr, itemtype_t item, dd_bool dropped)
     case IT_HEALTH_PACK:
         if(!P_GiveHealth(plr, 10))
             return false;
-        P_SetMessage(plr, 0, GOTSTIM);
+        P_SetMessage(plr, GOTSTIM);
         if(!mapSetup)
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
@@ -631,7 +630,7 @@ static dd_bool pickupItem(player_t *plr, itemtype_t item, dd_bool dropped)
 
         if(!P_GiveHealth(plr, 25)) return false;
 
-        P_SetMessage(plr, 0, GET_TXT((oldHealth < 25)? TXT_GOTMEDINEED : TXT_GOTMEDIKIT));
+        P_SetMessage(plr, GET_TXT((oldHealth < 25)? TXT_GOTMEDINEED : TXT_GOTMEDIKIT));
         if(!mapSetup)
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break; }
@@ -642,7 +641,7 @@ static dd_bool pickupItem(player_t *plr, itemtype_t item, dd_bool dropped)
             plr->health = healthLimit;
         plr->plr->mo->health = plr->health;
         plr->update |= PSF_HEALTH;
-        P_SetMessage(plr, 0, GOTHTHBONUS);
+        P_SetMessage(plr, GOTHTHBONUS);
         if(!mapSetup)
         {
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
@@ -657,7 +656,7 @@ static dd_bool pickupItem(player_t *plr, itemtype_t item, dd_bool dropped)
             plr->health = soulSphereLimit;
         plr->plr->mo->health = plr->health;
         plr->update |= PSF_HEALTH;
-        P_SetMessage(plr, 0, GOTSUPER);
+        P_SetMessage(plr, GOTSUPER);
         if(!mapSetup)
         {
             S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
@@ -670,7 +669,7 @@ static dd_bool pickupItem(player_t *plr, itemtype_t item, dd_bool dropped)
         if(!plr->keys[KT_BLUECARD])
         {
             P_GiveKey(plr, KT_BLUECARD);
-            P_SetMessage(plr, 0, GOTBLUECARD);
+            P_SetMessage(plr, GOTBLUECARD);
             if(!mapSetup)
                 S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         }
@@ -682,7 +681,7 @@ static dd_bool pickupItem(player_t *plr, itemtype_t item, dd_bool dropped)
         if(!plr->keys[KT_YELLOWCARD])
         {
             P_GiveKey(plr, KT_YELLOWCARD);
-            P_SetMessage(plr, 0, GOTYELWCARD);
+            P_SetMessage(plr, GOTYELWCARD);
             if(!mapSetup)
                 S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         }
@@ -694,7 +693,7 @@ static dd_bool pickupItem(player_t *plr, itemtype_t item, dd_bool dropped)
         if(!plr->keys[KT_REDCARD])
         {
             P_GiveKey(plr, KT_REDCARD);
-            P_SetMessage(plr, 0, GOTREDCARD);
+            P_SetMessage(plr, GOTREDCARD);
             if(!mapSetup)
                 S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         }
@@ -706,7 +705,7 @@ static dd_bool pickupItem(player_t *plr, itemtype_t item, dd_bool dropped)
         if(!plr->keys[KT_BLUESKULL])
         {
             P_GiveKey(plr, KT_BLUESKULL);
-            P_SetMessage(plr, 0, GOTBLUESKUL);
+            P_SetMessage(plr, GOTBLUESKUL);
             if(!mapSetup)
                 S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         }
@@ -718,7 +717,7 @@ static dd_bool pickupItem(player_t *plr, itemtype_t item, dd_bool dropped)
         if(!plr->keys[KT_YELLOWSKULL])
         {
             P_GiveKey(plr, KT_YELLOWSKULL);
-            P_SetMessage(plr, 0,  GOTYELWSKUL);
+            P_SetMessage(plr, GOTYELWSKUL);
             if(!mapSetup)
                 S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         }
@@ -730,7 +729,7 @@ static dd_bool pickupItem(player_t *plr, itemtype_t item, dd_bool dropped)
         if(!plr->keys[KT_REDSKULL])
         {
             P_GiveKey(plr, KT_REDSKULL);
-            P_SetMessage(plr, 0, GOTREDSKULL);
+            P_SetMessage(plr, GOTREDSKULL);
             if(!mapSetup)
                 S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         }
@@ -746,7 +745,7 @@ static dd_bool pickupItem(player_t *plr, itemtype_t item, dd_bool dropped)
         plr->update |= PSF_HEALTH;
         P_GiveArmor(plr, armorClass[1],
                     armorPoints[MINMAX_OF(0, armorClass[1] - 1, 1)]);
-        P_SetMessage(plr, 0, GOTMSPHERE);
+        P_SetMessage(plr, GOTMSPHERE);
         if(!mapSetup)
         {
             S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
@@ -759,7 +758,7 @@ static dd_bool pickupItem(player_t *plr, itemtype_t item, dd_bool dropped)
         if(!P_GivePower(plr, PT_INVULNERABILITY))
             return false;
 
-        P_SetMessage(plr, 0, GOTINVUL);
+        P_SetMessage(plr, GOTINVUL);
         if(!mapSetup)
             S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
         break;
@@ -768,7 +767,7 @@ static dd_bool pickupItem(player_t *plr, itemtype_t item, dd_bool dropped)
         if(!P_GivePower(plr, PT_STRENGTH))
             return false;
 
-        P_SetMessage(plr, 0, GOTBERSERK);
+        P_SetMessage(plr, GOTBERSERK);
         if(plr->readyWeapon != WT_FIRST && cfg.berserkAutoSwitch)
         {
             plr->pendingWeapon = WT_FIRST;
@@ -782,7 +781,7 @@ static dd_bool pickupItem(player_t *plr, itemtype_t item, dd_bool dropped)
         if(!P_GivePower(plr, PT_INVISIBILITY))
             return false;
 
-        P_SetMessage(plr, 0, GOTINVIS);
+        P_SetMessage(plr, GOTINVIS);
         if(!mapSetup)
             S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
         break;
@@ -791,7 +790,7 @@ static dd_bool pickupItem(player_t *plr, itemtype_t item, dd_bool dropped)
         if(!P_GivePower(plr, PT_IRONFEET))
             return false;
 
-        P_SetMessage(plr, 0, GOTSUIT);
+        P_SetMessage(plr, GOTSUIT);
         if(!mapSetup)
             S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
         break;
@@ -800,7 +799,7 @@ static dd_bool pickupItem(player_t *plr, itemtype_t item, dd_bool dropped)
         if(!P_GivePower(plr, PT_ALLMAP))
             return false;
 
-        P_SetMessage(plr, 0, GOTMAP);
+        P_SetMessage(plr, GOTMAP);
         if(!mapSetup)
             S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
         break;
@@ -809,7 +808,7 @@ static dd_bool pickupItem(player_t *plr, itemtype_t item, dd_bool dropped)
         if(!P_GivePower(plr, PT_INFRARED))
             return false;
 
-        P_SetMessage(plr, 0, GOTVISOR);
+        P_SetMessage(plr, GOTVISOR);
         if(!mapSetup)
             S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
         break;
@@ -824,7 +823,7 @@ static dd_bool pickupItem(player_t *plr, itemtype_t item, dd_bool dropped)
         if(!P_GiveAmmo(plr, AT_CLIP, dropped? 0 /*half a clip*/ : 1))
             return false;
 
-        P_SetMessage(plr, 0, GOTCLIP);
+        P_SetMessage(plr, GOTCLIP);
         if(!mapSetup)
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
@@ -833,7 +832,7 @@ static dd_bool pickupItem(player_t *plr, itemtype_t item, dd_bool dropped)
         if(!P_GiveAmmo(plr, AT_CLIP, 5))
             return false;
 
-        P_SetMessage(plr, 0, GOTCLIPBOX);
+        P_SetMessage(plr, GOTCLIPBOX);
         if(!mapSetup)
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
@@ -842,7 +841,7 @@ static dd_bool pickupItem(player_t *plr, itemtype_t item, dd_bool dropped)
         if(!P_GiveAmmo(plr, AT_MISSILE, 1))
             return false;
 
-        P_SetMessage(plr, 0, GOTROCKET);
+        P_SetMessage(plr, GOTROCKET);
         if(!mapSetup)
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
@@ -851,7 +850,7 @@ static dd_bool pickupItem(player_t *plr, itemtype_t item, dd_bool dropped)
         if(!P_GiveAmmo(plr, AT_MISSILE, 5))
             return false;
 
-        P_SetMessage(plr, 0, GOTROCKBOX);
+        P_SetMessage(plr, GOTROCKBOX);
         if(!mapSetup)
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
@@ -860,7 +859,7 @@ static dd_bool pickupItem(player_t *plr, itemtype_t item, dd_bool dropped)
         if(!P_GiveAmmo(plr, AT_CELL, 1))
             return false;
 
-        P_SetMessage(plr, 0, GOTCELL);
+        P_SetMessage(plr, GOTCELL);
         if(!mapSetup)
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
@@ -869,7 +868,7 @@ static dd_bool pickupItem(player_t *plr, itemtype_t item, dd_bool dropped)
         if(!P_GiveAmmo(plr, AT_CELL, 5))
             return false;
 
-        P_SetMessage(plr, 0, GOTCELLBOX);
+        P_SetMessage(plr, GOTCELLBOX);
         if(!mapSetup)
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
@@ -878,7 +877,7 @@ static dd_bool pickupItem(player_t *plr, itemtype_t item, dd_bool dropped)
         if(!P_GiveAmmo(plr, AT_SHELL, 1))
             return false;
 
-        P_SetMessage(plr, 0, GOTSHELLS);
+        P_SetMessage(plr, GOTSHELLS);
         if(!mapSetup)
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
@@ -887,7 +886,7 @@ static dd_bool pickupItem(player_t *plr, itemtype_t item, dd_bool dropped)
         if(!P_GiveAmmo(plr, AT_SHELL, 5))
             return false;
 
-        P_SetMessage(plr, 0, GOTSHELLBOX);
+        P_SetMessage(plr, GOTSHELLBOX);
         if(!mapSetup)
             S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;

@@ -24,7 +24,6 @@
 
 #include <cerrno>
 #include <cstdlib>
-#include "am_map.h"
 #include "d_net.h"
 #include "d_netcl.h"
 #include "d_netsv.h"
@@ -83,7 +82,7 @@ CHEAT_FUNC(InvItem)
     DENG2_UNUSED2(args, numArgs);
     DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
 
-    P_SetMessage(&players[player], LMF_NO_HIDE, TXT_CHEATINVITEMS1);
+    P_SetMessageWithFlags(&players[player], TXT_CHEATINVITEMS1, LMF_NO_HIDE);
     S_LocalSound(SFX_DORCLS, NULL);
 
     return true;
@@ -94,7 +93,7 @@ CHEAT_FUNC(InvItem2)
     DENG2_UNUSED2(args, numArgs);
     DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
 
-    P_SetMessage(&players[player], LMF_NO_HIDE, TXT_CHEATINVITEMS2);
+    P_SetMessageWithFlags(&players[player], TXT_CHEATINVITEMS2, LMF_NO_HIDE);
     S_LocalSound(SFX_DORCLS, NULL);
 
     return true;
@@ -125,11 +124,11 @@ CHEAT_FUNC(InvItem3)
 
     if(!didGive)
     {
-        P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATITEMSFAIL);
+        P_SetMessageWithFlags(plr, TXT_CHEATITEMSFAIL, LMF_NO_HIDE);
         return false;
     }
 
-    P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATINVITEMS3);
+    P_SetMessageWithFlags(plr, TXT_CHEATINVITEMS3, LMF_NO_HIDE);
     S_LocalSound(SFX_DORCLS, NULL);
     return true;
 }
@@ -155,7 +154,7 @@ CHEAT_FUNC(IDKFA)
     //plr->pendingWeapon = WT_FIRST;
     P_MaybeChangeWeapon(plr, WT_FIRST, AT_NOAMMO, true /*force*/);
 
-    P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATIDKFA);
+    P_SetMessageWithFlags(plr, TXT_CHEATIDKFA, LMF_NO_HIDE);
     S_LocalSound(SFX_DORCLS, NULL);
 
     return true;
@@ -174,7 +173,7 @@ CHEAT_FUNC(IDDQD)
 
     P_DamageMobj(plr->plr->mo, NULL, plr->plr->mo, 10000, false);
 
-    P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATIDDQD);
+    P_SetMessageWithFlags(plr, TXT_CHEATIDDQD, LMF_NO_HIDE);
     S_LocalSound(SFX_DORCLS, NULL);
 
     return true;
@@ -191,7 +190,7 @@ CHEAT_FUNC(Reveal)
     // Dead players can't cheat.
     if(plr->health <= 0) return false;
 
-    if(ST_AutomapIsActive(player))
+    if(ST_AutomapIsOpen(player))
     {
         ST_CycleAutomapCheatLevel(player);
     }
@@ -253,7 +252,7 @@ D_CMD(CheatGod)
             plr->cheats ^= CF_GODMODE;
             plr->update |= PSF_STATE;
 
-            P_SetMessage(plr, LMF_NO_HIDE, ((P_GetPlayerCheats(plr) & CF_GODMODE) ? TXT_CHEATGODON : TXT_CHEATGODOFF));
+            P_SetMessageWithFlags(plr, ((P_GetPlayerCheats(plr) & CF_GODMODE) ? TXT_CHEATGODON : TXT_CHEATGODOFF), LMF_NO_HIDE);
             S_LocalSound(SFX_DORCLS, NULL);
         }
     }
@@ -294,7 +293,7 @@ D_CMD(CheatNoClip)
             plr->cheats ^= CF_NOCLIP;
             plr->update |= PSF_STATE;
 
-            P_SetMessage(plr, LMF_NO_HIDE, ((P_GetPlayerCheats(plr) & CF_NOCLIP) ? TXT_CHEATNOCLIPON : TXT_CHEATNOCLIPOFF));
+            P_SetMessageWithFlags(plr, ((P_GetPlayerCheats(plr) & CF_NOCLIP) ? TXT_CHEATNOCLIPON : TXT_CHEATNOCLIPOFF), LMF_NO_HIDE);
             S_LocalSound(SFX_DORCLS, NULL);
         }
     }
@@ -520,7 +519,7 @@ D_CMD(CheatGive)
 
         case 'h':
             P_GiveHealth(plr, -1 /*maximum amount*/);
-            P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATHEALTH);
+            P_SetMessageWithFlags(plr, TXT_CHEATHEALTH, LMF_NO_HIDE);
             S_LocalSound(SFX_DORCLS, NULL);
             break;
 
@@ -549,7 +548,7 @@ D_CMD(CheatGive)
 
             // Give all keys.
             P_GiveKey(plr, NUM_KEY_TYPES /*all types*/);
-            P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATKEYS);
+            P_SetMessageWithFlags(plr, TXT_CHEATKEYS, LMF_NO_HIDE);
             S_LocalSound(SFX_DORCLS, NULL);
             break;
 
@@ -587,13 +586,13 @@ D_CMD(CheatGive)
             if(plr->powers[PT_WEAPONLEVEL2])
             {
                 P_TakePower(plr, PT_WEAPONLEVEL2);
-                P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATPOWEROFF);
+                P_SetMessageWithFlags(plr, TXT_CHEATPOWEROFF, LMF_NO_HIDE);
             }
             else
             {
                 P_InventoryGive(player, IIT_TOMBOFPOWER, true /*silent*/);
                 P_InventoryUse(player, IIT_TOMBOFPOWER, true /*silent*/);
-                P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATPOWERON);
+                P_SetMessageWithFlags(plr, TXT_CHEATPOWERON, LMF_NO_HIDE);
             }
             S_LocalSound(SFX_DORCLS, NULL);
             break;
@@ -636,7 +635,7 @@ D_CMD(CheatGive)
     /// @todo fixme: Somewhat of kludge...
     if(!strcmp(buf, "wpar2"))
     {
-        P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATWEAPONS);
+        P_SetMessageWithFlags(plr, TXT_CHEATWEAPONS, LMF_NO_HIDE);
         S_LocalSound(SFX_DORCLS, NULL);
     }
 
@@ -660,7 +659,7 @@ D_CMD(CheatMassacre)
         else
         {
             P_Massacre();
-            P_SetMessage(&players[CONSOLEPLAYER], LMF_NO_HIDE, TXT_CHEATMASSACRE);
+            P_SetMessageWithFlags(&players[CONSOLEPLAYER], TXT_CHEATMASSACRE, LMF_NO_HIDE);
             S_LocalSound(SFX_DORCLS, NULL);
         }
     }
@@ -686,7 +685,7 @@ D_CMD(CheatWhere)
     sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
                         COMMON_GAMESESSION->mapUri().path().toUtf8().constData(),
                         plrMo->origin[VX], plrMo->origin[VY], plrMo->origin[VZ]);
-    P_SetMessage(plr, LMF_NO_HIDE, textBuffer);
+    P_SetMessageWithFlags(plr, textBuffer, LMF_NO_HIDE);
 
     // Also print some information to the console.
     App_Log(DE2_MAP_NOTE, "%s", textBuffer);
@@ -744,12 +743,12 @@ D_CMD(CheatMorph)
             {
                 if(P_UndoPlayerMorph(plr))
                 {
-                    P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATCHICKENOFF);
+                    P_SetMessageWithFlags(plr, TXT_CHEATCHICKENOFF, LMF_NO_HIDE);
                 }
             }
             else if(P_MorphPlayer(plr))
             {
-                P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATCHICKENON);
+                P_SetMessageWithFlags(plr, TXT_CHEATCHICKENON, LMF_NO_HIDE);
             }
             S_LocalSound(SFX_DORCLS, NULL);
         }

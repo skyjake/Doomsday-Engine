@@ -29,7 +29,6 @@
 #include "hu_stuff.h"
 #include "hu_menu.h"
 #include "g_common.h"
-#include "am_map.h"
 
 #define TEXTSPEED               (3)
 #define TEXTWAIT                (140)

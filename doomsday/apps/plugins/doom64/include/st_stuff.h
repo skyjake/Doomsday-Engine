@@ -1,32 +1,22 @@
-/**\file st_stuff.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file st_stuff.h  Doom 64 specific HUD.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1993-1996 by id Software, Inc.
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1993-1996 by id Software, Inc.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
-/**
- * Statusbar code jDoom64 - specific.
- *
- * Does palette indicators as well (red pain/berserk, bright pickup)
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBDOOM64_STUFF_H
@@ -36,133 +26,153 @@
 #  error "Using jDoom64 headers without __JDOOM64__"
 #endif
 
-#include "hu_lib.h"
 #include "d_config.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#define ST_HEIGHT                   0   // there is no status bar
 
 // Palette indices.
 // For damage/bonus red-/gold-shifts
-#define STARTREDPALS                (1)
-#define STARTBONUSPALS              (9)
-#define NUMREDPALS                  (8)
-#define NUMBONUSPALS                (4)
+extern const int STARTREDPALS;
+extern const int NUMREDPALS;
 
-#define HUDBORDERX                  (14)
-#define HUDBORDERY                  (18)
+extern const int STARTBONUSPALS;
+extern const int NUMBONUSPALS;
 
-#define ST_AUTOMAP_OBSCURE_TOLERANCE (.9999f)
+// Statusbar width/height -- these are here to make the widget library behave
+extern const int ST_WIDTH;
+extern const int ST_HEIGHT;
 
-/// Register the console commands, variables, etc..., of this module.
-void ST_Register(void);
+#ifdef __cplusplus
+#  include "hu_lib.h"
 
-void ST_Init(void);
-void ST_Shutdown(void);
+class AutomapWidget;
+class ChatWidget;
+class PlayerLogWidget;
 
-int ST_Responder(event_t* ev);
-void ST_Ticker(timespan_t ticLength);
-void ST_Drawer(int player);
+AutomapWidget*      ST_TryFindAutomapWidget(int);
+ChatWidget*         ST_TryFindChatWidget(int);
+PlayerLogWidget*    ST_TryFindLogWidget(int);
 
-void ST_Start(int player);
-void ST_Stop(int player);
+extern "C" {
+#endif
 
-void ST_CloseAll(int player, dd_bool fast);
+/*
+ * HUD Lifecycle
+ */
 
-uiwidget_t* ST_UIChatForPlayer(int player);
-uiwidget_t* ST_UILogForPlayer(int player);
-uiwidget_t* ST_UIAutomapForPlayer(int player);
+void    ST_Register(void);
+void    ST_Init(void);
+void    ST_Shutdown(void);
 
-dd_bool ST_ChatIsActive(int player);
+/*
+ * HUD Runtime Callbacks
+ */
+
+int     ST_Responder(event_t*);
+void    ST_Ticker(timespan_t);
+void    ST_Drawer(int);
+
+/*
+ * HUD Control
+ */
+
+/**
+ * Returns the unique identifier of the active HUD configuration.
+ *
+ * (Each independent HUD configuration is attributed a unique identifier. The
+ * statusbar and fullscreen-HUD are examples of HUD configurations).
+ *
+ * @param localPlayer  Player to lookup the active HUD for.
+ */
+int     ST_ActiveHud(int);
+void    ST_Start(int);
+void    ST_Stop(int);
+void    ST_CloseAll(int, dd_bool);
+void    HU_WakeWidgets(int);
+
+// XXX libcommon expects to link against things we implement (?????????????????????????????????????????????????????)
+dd_bool ST_StatusBarIsActive(int);
+float   ST_StatusBarShown(int); 
+
+/*
+ * Chat
+ */
+
+dd_bool ST_ChatIsActive(int);
+dd_bool ST_StatusBarIsActive(int);
+
+/*
+ * Log
+ */
 
 /**
  * Post a message to the specified player's log.
  *
- * @param player  Player (local) number whose log to post to.
- * @param flags  @ref logMessageFlags
- * @param text  Message Text to be posted. Messages may use the same
- *      paramater control blocks as with the engine's Text rendering API.
+ * @param localPlayer  Player number whose log to post to.
+ * @param flags        @ref logMessageFlags
+ * @param text         Message Text to be posted. Messages may use the same
+ * parameter control blocks as with the engine's Text rendering API.
  */
-void ST_LogPost(int player, byte flags, const char* text);
+void    ST_LogPost(int, byte, char const *);
 
 /**
  * Rewind the message log of the specified player, making the last few messages
  * visible once again.
  *
- * @param player  Local player number whose message log to refresh.
+ * @param localPlayer  Player number whose message log to refresh.
  */
-void ST_LogRefresh(int player);
+void    ST_LogRefresh(int);
 
 /**
  * Empty the message log of the specified player.
  *
- * @param player  Local player number whose message log to empty.
+ * @param localPlayer  Player number whose message log to empty.
  */
-void ST_LogEmpty(int player);
+void    ST_LogEmpty(int);
 
-/// To be called to initialize this module for use by local @a player
-void ST_LogStart(int player);
+void    ST_LogUpdateAlignment(void);
 
-void ST_LogUpdateAlignment(void);
-void ST_LogPostVisibilityChangeNotification(void);
+/*
+ * HUD Map
+ */
 
 /**
  * Start the automap.
  */
-void ST_AutomapOpen(int player, dd_bool yes, dd_bool fast);
-
-dd_bool ST_AutomapIsActive(int player);
-
-void ST_ToggleAutomapPanMode(int player);
-
-void ST_ToggleAutomapMaxZoom(int player);
-
-float ST_AutomapOpacity(int player);
+void    ST_AutomapOpen(int, dd_bool, dd_bool);
+dd_bool ST_AutomapIsOpen(int);
+void    ST_AutomapFollowMode(int);
+void    ST_AutomapZoomMode(int);
+float   ST_AutomapOpacity(int);
 
 /**
  * Does the player's automap obscure this region completely?
  * @pre Window dimensions use the fixed coordinate space {x} 0 - 320, {y} 0 - 200.
  *
- * @param player  Local player number whose automap to check.
- * @param region  Window region.
+ * @param localPlayer  Player number whose automap to check.
+ * @param region       Window region.
  *
  * @return  @true= there is no point even partially visible.
  */
-dd_bool ST_AutomapObscures2(int player, const RectRaw* region);
-dd_bool ST_AutomapObscures(int player, int x, int y, int width, int height);
-
-int ST_AutomapAddPoint(int player, coord_t x, coord_t y, coord_t z);
-void ST_AutomapClearPoints(int player);
-dd_bool ST_AutomapPointOrigin(int player, int point, coord_t* x, coord_t* y, coord_t* z);
-
-void ST_SetAutomapCameraRotation(int player, dd_bool on);
-
-int ST_AutomapCheatLevel(int player);
-void ST_SetAutomapCheatLevel(int player, int level);
-void ST_CycleAutomapCheatLevel(int player);
-
-void ST_RevealAutomap(int player, dd_bool on);
-dd_bool ST_AutomapHasReveal(int player);
-
-void ST_RebuildAutomap(int player);
+dd_bool ST_AutomapObscures(int, int, int, int, int);
+dd_bool ST_AutomapObscures2(int, RectRaw const *);
+int     ST_AutomapAddPoint(int, coord_t, coord_t, coord_t);
+void    ST_AutomapClearPoints(int);
+void    ST_SetAutomapCameraRotation(int, dd_bool);
+void    ST_SetAutomapCheatLevel(int, int);
+int     ST_AutomapCheatLevel(int);
+void    ST_CycleAutomapCheatLevel(int);
+void    ST_RevealAutomap(int, dd_bool);
+dd_bool ST_AutomapIsRevealed(int);
 
 /**
  * Unhides the current HUD display if hidden.
  *
- * @param player  Player whoose HUD to (maybe) unhide.
- * @param event  Event type trigger.
+ * @param localPlayer  Player whoose HUD to (maybe) unhide.
+ * @param event        Event type trigger.
  */
- void ST_HUDUnHide(int player, hueevent_t event);
-
-D_CMD(ChatOpen);
-D_CMD(ChatAction);
-D_CMD(ChatSendMacro);
+void    ST_HUDUnHide(int, hueevent_t);
 
 #ifdef __cplusplus
-} // extern "C"
+}  // extern "C"
 #endif
 
-#endif /* LIBDOOM64_STUFF_H */
+#endif  // LIBDOOM64_STUFF_H
