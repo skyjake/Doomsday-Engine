@@ -635,6 +635,13 @@ class WADAddon (Addon):
     def isPWAD(self):   
         """Determines if this addon is a PWAD addon."""
         return self.wadType == 'PWAD'
+        
+    def getCommandLine(self, profile):
+        # The Deathkings WAD is a special case and will get always loaded
+        # with the -iwad option.
+        if self.getId() == 'hexdd-wad':
+            return '-iwad ' + paths.quote(self.source)
+        return Addon.getCommandLine(self, profile)
 
     def readMetaData(self):
         """Generate metadata by making guesses based on the WAD file
