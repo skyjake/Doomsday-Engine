@@ -138,7 +138,7 @@ dd_bool P_CheckMeleeRange(mobj_t* actor, dd_bool midrange)
             return false;
     }
 
-    range = MELEERANGE - 20 + pl->info->radius;
+    range = MELEERANGE - 20 + (pl->info? pl->info->radius : 0); // When is `info` null? -jk
     if(midrange)
     {
         if(dist >= range * 2 || dist < range)
