@@ -190,11 +190,14 @@ void G_RendPlayerView(int player)
     // Check for the sector special 200: use sky2.
     // I wonder where this is used?
     dd_bool special200 = false;
-    if(P_ToXSector(Mobj_Sector(plr->plr->mo))->special == 200)
+    if(auto *xsec = P_ToXSector(Mobj_Sector(plr->plr->mo)))
     {
-        special200 = true;
-        R_SkyParams(0, DD_DISABLE, NULL);
-        R_SkyParams(1, DD_ENABLE, NULL);
+        if(xsec->special == 200)
+        {
+            special200 = true;
+            R_SkyParams(0, DD_DISABLE, NULL);
+            R_SkyParams(1, DD_ENABLE, NULL);
+        }
     }
 
     float pspriteOffsetY = HU_PSpriteYOffset(plr);
