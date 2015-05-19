@@ -52,7 +52,7 @@
 // Presented to the user in dialogs, messages etc.
 #define PLUGIN_NICENAME     "libdoom64"
 #define PLUGIN_NICEAUTHOR   DENGPROJECT_NICEAUTHOR
-#define PLUGIN_DETAILS      "libdoom64 is based on jDoom 1.15."
+#define PLUGIN_DETAILS      "libdoom64 is based on jDoom"
 
 #define PLUGIN_HOMEURL      DOOMSDAY_HOMEURL
 #define PLUGIN_DOCSURL      DOOMSDAY_DOCSURL
