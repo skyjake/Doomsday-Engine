@@ -1,9 +1,8 @@
 /**
  * @file wadtool.c
- * WAD creation tool. This is ANSI C but unfortunately only compiles on
- * Windows (uses Win32 file finding).
+ * WAD creation tool. Uses liblegacy for Win32 style file finding.
  *
- * @author Copyright © 2005-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright © 2005-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,42 +19,19 @@
  * 02110-1301 USA</small>
  */
 
-// HEADER FILES ------------------------------------------------------------
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
-#include <io.h> 
+#include <de/findfile.h>
 #include "wadtool.h"
-
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 fname_t root;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
-//===========================================================================
-// NewFile
-//===========================================================================
 void NewFile(const char *path, int size)
 {
 	fname_t *fn = malloc(sizeof(fname_t));
-
+    
 	memset(fn, 0, sizeof(*fn));
 	strncpy(fn->path, path, 255);
 	// Link it in just previous of root.
@@ -66,17 +42,11 @@ void NewFile(const char *path, int size)
 	fn->size = size;
 }
 
-//===========================================================================
-// InitList
-//===========================================================================
 void InitList(void)
 {
 	root.next = root.prev = &root;
 }
 
-//===========================================================================
-// DestroyList
-//===========================================================================
 void DestroyList(void)
 {
 	fname_t *it = root.next, *next;
@@ -88,27 +58,23 @@ void DestroyList(void)
 	InitList();
 }
 
-//===========================================================================
-// CollectFiles
-//===========================================================================
 void CollectFiles(const char *basepath)
 {
-	long hFile;
-    struct _finddata_t fd;
+    FindData fd;
 	char findspec[256], path[256];
-
-	sprintf(findspec, "%s*.*", basepath);
-	if((hFile = _findfirst(findspec, &fd)) != -1L)
+    
+	sprintf(findspec, "%s*", basepath);
+	if(!FindFile_FindFirst(&fd, findspec))
 	{
 		// The first file found!
 		do 
 		{
-			if(!strcmp(fd.name, ".") || !strcmp(fd.name, ".."))
+			if(!Str_Compare(&fd.name, ".") || !Str_Compare(&fd.name, ".."))
 				continue;
-			sprintf(path, "%s%s", basepath, fd.name);
-			if(fd.attrib & _A_SUBDIR)
+            
+			sprintf(path, "%s%s", basepath, Str_Text(&fd.name));
+			if(fd.attrib & A_SUBDIR)
 			{
-				strcat(path, "\\");
 				CollectFiles(path);
 			}
 			else
@@ -116,13 +82,11 @@ void CollectFiles(const char *basepath)
 				NewFile(path, fd.size);
 			}
 		} 
-		while(!_findnext(hFile, &fd));
+		while(!FindFile_FindNext(&fd));
 	}
+    FindFile_Finish(&fd);
 }
 
-//===========================================================================
-// CountList
-//===========================================================================
 int CountList(void)
 {
 	int count = 0;
@@ -132,10 +96,6 @@ int CountList(void)
 	return count;
 }
 
-//===========================================================================
-// CopyToStream
-//	Returns true if succesful.
-//===========================================================================
 int CopyToStream(FILE *file, fname_t *fn)
 {
 	FILE *in = fopen(fn->path, "rb");
@@ -150,25 +110,18 @@ int CopyToStream(FILE *file, fname_t *fn)
 	return 1;
 }
 
-//===========================================================================
-// PrintBanner
-//===========================================================================
 void PrintBanner(void)
 {
-	printf("### The WAD Tool v"VERSION_STR" by Jaakko Ker\x084nen ###\n");
+	printf("### The WAD Tool v"VERSION_STR" by <jaakko.keranen@iki.fi> ###\n");
 }
 
-//===========================================================================
-// PrintUsage
-//===========================================================================
 void PrintUsage(void)
 {
 	printf("Usage: wadtool newfile.wad [dir-prefix]\n");
+    printf("All files in the working directory and below are added to the WAD file.\n");
+    printf("'dir-prefix' is added in the DD_DIREC lump to the mapped paths.\n");
 }
 
-//===========================================================================
-// main
-//===========================================================================
 int main(int argc, char **argv)
 {
 	char *wadfile;
@@ -196,7 +149,7 @@ int main(int argc, char **argv)
 
 	// First compile the list of all file names.
 	InitList();
-	printf("Collecting file names...\n");
+	printf("Collecting files...\n");
 	CollectFiles("");	
 	printf("Creating WAD file %s...\n", wadfile);
 	if((file = fopen(wadfile, "wb")) == NULL)

@@ -1,0 +1,10 @@
+if (NOT WIN32)
+    find_package (ZLIB REQUIRED)
+else ()
+    # There is a prebuilt zlib DLL in the external/zlib directory.
+    set (zlibDir "${DENG_EXTERNAL_SOURCE_DIR}/zlib")
+    set (ZLIB_INCLUDE_DIR "${zlibDir}/portable/include")
+    set (ZLIB_LIBRARIES   "${zlibDir}/win32/zdll.lib")
+    set (ZLIB_FOUND YES)
+    deng_install_library ("${zlibDir}/win32/zlib1.dll")
+endif ()

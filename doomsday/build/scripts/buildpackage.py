@@ -62,7 +62,7 @@ class Package:
             pack.write(full, internal)
             
         # Write it out.
-        print "Wrote %s (contains %i files)." % (outputName, len(pack.namelist()))
+        print "Wrote %s (contains %i files)." % (outputName.replace("\\", "/"), len(pack.namelist()))
         pack.close()
 
 if __name__ == "__main__":

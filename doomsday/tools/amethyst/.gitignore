@@ -1,3 +1,10 @@
+CMakeCache.txt
+CMakeFiles
+amethyst
+amethyst_automoc.cpp
+cmake_install.cmake
+install_manifest.txt
 *.pro.user
 *.user.*
 inst
+

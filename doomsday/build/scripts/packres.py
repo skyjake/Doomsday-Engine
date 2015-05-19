@@ -16,7 +16,7 @@ if '--quiet' in sys.argv:
     sys.argv.remove('--quiet')
     quietMode = True
 
-deng_dir = os.path.join('..', '..')
+deng_dir = os.path.join('..', '..', 'apps')
 target_dir = os.path.abspath(sys.argv[1])
 
 class Pack:
