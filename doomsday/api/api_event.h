@@ -32,7 +32,7 @@ typedef enum {
     EV_JOY_SLIDER,      ///< Joystick sliders.
     EV_JOY_BUTTON,
     EV_POV,
-    EV_SYMBOLIC,        ///< Symbol text pointed to by data1+data2.
+    EV_SYMBOLIC,        ///< Symbol text pointed to by data_u64 (data1+data2).
     EV_FOCUS,           ///< Change in game window focus (data1=gained, data2=windowID).
     NUM_EVENT_TYPES
 } evtype_t;
@@ -49,8 +49,13 @@ typedef enum {
 typedef struct event_s {
     evtype_t        type;
     evstate_t       state; ///< Only used with digital controls.
-    int             data1; ///< Keys/mouse/joystick buttons.
-    int             data2; ///< Mouse/joystick x move.
+    union {
+        struct {
+            int     data1; ///< Keys/mouse/joystick buttons.
+            int     data2; ///< Mouse/joystick x move.
+        };
+        uint64_t    data_u64;
+    };
     int             data3; ///< Mouse/joystick y move.
     int             data4;
     int             data5;

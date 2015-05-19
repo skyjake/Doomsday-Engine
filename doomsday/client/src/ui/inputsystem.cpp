@@ -221,7 +221,7 @@ static char const *allocEventString(char const *str)
     DENG2_ASSERT(eventStringRover >= 0 && eventStringRover < MAXEVENTS);
     M_Free(eventStrings[eventStringRover]);
     char const *returnValue = eventStrings[eventStringRover] = strdup(str);
-
+    
     if(++eventStringRover >= MAXEVENTS)
     {
         eventStringRover = 0;
@@ -1181,8 +1181,7 @@ bool InputSystem::convertEvent(ddevent_t const &from, event_t &to) // static
         to.type = EV_SYMBOLIC;
 #ifdef __64BIT__
         ASSERT_64BIT(from.symbolic.name);
-        to.data1 = (int)(((uint64_t) from.symbolic.name) & 0xffffffff); // low dword
-        to.data2 = (int)(((uint64_t) from.symbolic.name) >> 32);        // high dword
+        to.data_u64 = (duint64) from.symbolic.name;
 #else
         ASSERT_NOT_64BIT(from.symbolic.name);
         to.data1 = (int) from.symbolic.name;
