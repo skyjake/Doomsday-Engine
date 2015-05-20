@@ -150,12 +150,12 @@ DENG2_PIMPL(SectorCluster)
 
     ~Instance()
     {
-        observePlane(&self.sector().floor(), false);
-        observePlane(&self.sector().ceiling(), false);
+        observePlane(&sector().floor(), false);
+        observePlane(&sector().ceiling(), false);
 
 #ifdef __CLIENT__
-        self.sector().audienceForLightLevelChange -= this;
-        self.sector().audienceForLightColorChange -= this;
+        sector().audienceForLightLevelChange -= this;
+        sector().audienceForLightColorChange -= this;
 
         DENG2_FOR_EACH(GeometryGroups, geomGroup, geomGroups)
         {
@@ -168,6 +168,12 @@ DENG2_PIMPL(SectorCluster)
         clearMapping(Sector::Ceiling);
 
         DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->sectorClusterBeingDeleted(self);
+    }
+
+    inline Sector &sector()
+    {
+        DENG2_ASSERT(!subspaces.isEmpty());
+        return *subspaces.first()->bspLeaf().sectorPtr();
     }
 
     inline bool floorIsMapped()
@@ -189,7 +195,7 @@ DENG2_PIMPL(SectorCluster)
     {
         if(planeIdx == Sector::Floor)   return &mappedVisFloor;
         if(planeIdx == Sector::Ceiling) return &mappedVisCeiling;
-        return 0;
+        return nullptr;
     }
 
     inline Plane *mappedPlane(int planeIdx)
@@ -199,7 +205,7 @@ DENG2_PIMPL(SectorCluster)
         {
             return &(*clusterAdr)->plane(planeIdx);
         }
-        return 0;
+        return nullptr;
     }
 
     void observeCluster(SectorCluster *cluster, bool yes = true)
@@ -356,13 +362,13 @@ DENG2_PIMPL(SectorCluster)
                     }
 
                     SectorCluster const &backCluster = backSubspace.cluster();
-                    if(backCluster.floor().height() < self.sector().floor().height() &&
+                    if(backCluster.floor().height() < sector().floor().height() &&
                        backSide.bottom().hasDrawableNonFixMaterial())
                     {
                         flags &= ~AllMissingBottom;
                     }
 
-                    if(backCluster.ceiling().height() > self.sector().ceiling().height() &&
+                    if(backCluster.ceiling().height() > sector().ceiling().height() &&
                        backSide.top().hasDrawableNonFixMaterial())
                     {
                         flags &= ~AllMissingTop;
@@ -465,8 +471,6 @@ DENG2_PIMPL(SectorCluster)
 
     void remapVisPlanes()
     {
-        Sector &sector = self.sector();
-
         // By default both planes are mapped to the parent sector.
         if(!floorIsMapped())   map(Sector::Floor,   thisPublic);
         if(!ceilingIsMapped()) map(Sector::Ceiling, thisPublic);
@@ -534,12 +538,12 @@ DENG2_PIMPL(SectorCluster)
         if(classification() & AllSelfRef)
             return;
 
-        /*
-         * Dynamic mapping may be needed for one or more planes.
-         */
+        //
+        // Dynamic mapping may be needed for one or more planes.
+        //
 
         // The sector must have open space.
-        if(sector.ceiling().height() <= sector.floor().height())
+        if(sector().ceiling().height() <= sector().floor().height())
             return;
 
         bool doFloor   =   !floorIsMapped() && classification().testFlag(AllMissingBottom);
@@ -559,7 +563,7 @@ DENG2_PIMPL(SectorCluster)
             {
                 Plane &extVisPlane = extCluster.visFloor();
                 if(!extVisPlane.surface().hasSkyMaskedMaterial() &&
-                   extVisPlane.height() > sector.floor().height())
+                   extVisPlane.height() > sector().floor().height())
                 {
                     map(Sector::Floor, &extCluster);
                     if(!doCeiling) break;
@@ -570,7 +574,7 @@ DENG2_PIMPL(SectorCluster)
             {
                 Plane &extVisPlane = extCluster.visCeiling();
                 if(!extVisPlane.surface().hasSkyMaskedMaterial() &&
-                   extCluster.visCeiling().height() < sector.ceiling().height())
+                   extCluster.visCeiling().height() < sector().ceiling().height())
                 {
                     map(Sector::Ceiling, &extCluster);
                     if(!doFloor) break;
@@ -592,13 +596,13 @@ DENG2_PIMPL(SectorCluster)
                 continue;
 
             if(doFloor && floorIsMapped() &&
-               extCluster.visFloor().height() >= sector.floor().height())
+               extCluster.visFloor().height() >= sector().floor().height())
             {
                 extCluster.d->clearMapping(Sector::Floor);
             }
 
             if(doCeiling && ceilingIsMapped() &&
-               extCluster.visCeiling().height() <= sector.ceiling().height())
+               extCluster.visCeiling().height() <= sector().ceiling().height())
             {
                 extCluster.d->clearMapping(Sector::Ceiling);
             }
@@ -790,7 +794,7 @@ DENG2_PIMPL(SectorCluster)
             }
         }
 
-        if(!canAlloc) return 0;
+        if(!canAlloc) return nullptr;
 
         if(foundGroup == geomGroups.end())
         {
@@ -811,7 +815,7 @@ DENG2_PIMPL(SectorCluster)
             if(found != shardGeomMap.end())
                 return *found;
         }
-        return 0;
+        return nullptr;
     }
 
     void addReverbSubspace(ConvexSubspace *subspace)
@@ -832,7 +836,7 @@ DENG2_PIMPL(SectorCluster)
      */
     void findReverbSubspaces()
     {
-        Map const &map = self.sector().map();
+        Map const &map = sector().map();
 
         AABoxd box = self.aaBox();
         box.minX -= 128;
@@ -957,22 +961,24 @@ DENG2_PIMPL(SectorCluster)
     }
 
     /// Observes Sector LightLevelChange.
-    void sectorLightLevelChanged(Sector &sector)
+    void sectorLightLevelChanged(Sector &changed)
     {
-        DENG2_ASSERT(&sector == &self.sector());
-        if(sector.map().hasLightGrid())
+        DENG2_ASSERT(&changed == &sector());
+        DENG2_UNUSED(changed);
+        if(sector().map().hasLightGrid())
         {
-            sector.map().lightGrid().blockLightSourceChanged(thisPublic);
+            sector().map().lightGrid().blockLightSourceChanged(thisPublic);
         }
     }
 
     /// Observes Sector LightColorChange.
-    void sectorLightColorChanged(Sector &sector)
+    void sectorLightColorChanged(Sector &changed)
     {
-        DENG2_ASSERT(&sector == &self.sector());
-        if(sector.map().hasLightGrid())
+        DENG2_ASSERT(&changed == &sector());
+        DENG2_UNUSED(changed);
+        if(sector().map().hasLightGrid())
         {
-            sector.map().lightGrid().blockLightSourceChanged(thisPublic);
+            sector().map().lightGrid().blockLightSourceChanged(thisPublic);
         }
     }
 #endif // __CLIENT__
@@ -1014,14 +1020,14 @@ bool SectorCluster::isInternalEdge(HEdge *hedge) // static
     return frontCluster == hedge->twin().face().mapElementAs<ConvexSubspace>().clusterPtr();
 }
 
-Sector const &SectorCluster::sector() const
-{
-    return *const_cast<ConvexSubspace const *>(d->subspaces.first())->bspLeaf().sectorPtr();
-}
-
 Sector &SectorCluster::sector()
 {
-    return *d->subspaces.first()->bspLeaf().sectorPtr();
+    return d->sector();
+}
+
+Sector const &SectorCluster::sector() const
+{
+    return const_cast<SectorCluster *>(this)->sector();
 }
 
 Plane const &SectorCluster::plane(int planeIndex) const
@@ -1240,7 +1246,7 @@ Shard *SectorCluster::findShard(MapElement &mapElement, int geomId)
     {
         return gdata->shard.data();
     }
-    return 0;
+    return nullptr;
 }
 
 /**
@@ -1345,9 +1351,9 @@ uint SectorCluster::biasLastChangeOnFrame() const
 
 SectorCluster *SectorClusterCirculator::getCluster(HEdge const &hedge) // static
 {
-    if(!hedge.hasFace()) return 0;
-    if(!hedge.face().hasMapElement()) return 0;
-    if(hedge.face().mapElement().type() != DMU_SUBSPACE) return 0;
+    if(!hedge.hasFace()) return nullptr;
+    if(!hedge.face().hasMapElement()) return nullptr;
+    if(hedge.face().mapElement().type() != DMU_SUBSPACE) return nullptr;
     return hedge.face().mapElementAs<ConvexSubspace>().clusterPtr();
 }
 
