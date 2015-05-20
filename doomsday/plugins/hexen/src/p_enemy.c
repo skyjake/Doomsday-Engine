@@ -2343,21 +2343,15 @@ static void dragonSeek(mobj_t* actor, angle_t thresh, angle_t turnMax)
     actor->mom[MX] = actor->info->speed * FIX2FLT(finecosine[an]);
     actor->mom[MY] = actor->info->speed * FIX2FLT(finesine[an]);
 
+    dist = M_ApproxDistance(target->origin[VX] - actor->origin[VX],
+                            target->origin[VY] - actor->origin[VY])
+         / actor->info->speed;
+
     if(actor->origin[VZ] + actor->height < target->origin[VZ] ||
        target->origin[VZ] + target->height < actor->origin[VZ])
     {
-        dist = M_ApproxDistance(target->origin[VX] - actor->origin[VX],
-                                target->origin[VY] - actor->origin[VY]);
-        dist /= actor->info->speed;
-        if(dist < FIX2FLT(1))
-            dist = FIX2FLT(1);
+        if(dist < 1) dist = 1;
         actor->mom[MZ] = (target->origin[VZ] - actor->origin[VZ]) / dist;
-    }
-    else
-    {
-        dist = M_ApproxDistance(target->origin[VX] - actor->origin[VX],
-                                target->origin[VY] - actor->origin[VY]);
-        dist /= actor->info->speed;
     }
 
     if((target->flags & MF_SHOOTABLE) && P_Random() < 64)
@@ -2365,7 +2359,7 @@ static void dragonSeek(mobj_t* actor, angle_t thresh, angle_t turnMax)
         // Attack the destination mobj if it's attackable.
         mobj_t* oldTarget;
 
-        if(abs(actor->angle - M_PointToAngle2(actor->origin, target->origin)) < ANGLE_45 / 2)
+        if(abs((int32_t)(actor->angle - M_PointToAngle2(actor->origin, target->origin))) < ANGLE_45 / 2)
         {
             oldTarget = actor->target;
             actor->target = target;
@@ -2385,10 +2379,11 @@ static void dragonSeek(mobj_t* actor, angle_t thresh, angle_t turnMax)
         }
     }
 
-    if(dist < FIX2FLT(4))
+    // Have we reached the target? (or it's dead)
+    if(dist < 4 || target->health <= 0)
     {
         // Hit the target thing.
-        if(actor->target && P_Random() < 200)
+        if(dist < 4 && actor->target && P_Random() < 200)
         {
             bestArg = -1;
             bestAngle = ANGLE_MAX;
@@ -2402,9 +2397,9 @@ static void dragonSeek(mobj_t* actor, angle_t thresh, angle_t turnMax)
                 mo = P_FindMobjFromTID(target->args[i], &search);
                 angleToSpot = M_PointToAngle2(actor->origin, mo->origin);
 
-                if(abs(angleToSpot - angleToTarget) < (int) bestAngle)
+                if(abs((int32_t)(angleToSpot - angleToTarget)) < (int32_t) bestAngle)
                 {
-                    bestAngle = abs(angleToSpot - angleToTarget);
+                    bestAngle = abs((int32_t)(angleToSpot - angleToTarget));
                     bestArg = i;
                 }
             }
@@ -2417,14 +2412,13 @@ static void dragonSeek(mobj_t* actor, angle_t thresh, angle_t turnMax)
         }
         else
         {
-            do
-            {
+            // Find another flight destination.
+            do {
                 i = (P_Random() >> 2) % 5;
             } while(!target->args[i]);
 
             search = -1;
-            actor->tracer =
-                P_FindMobjFromTID(target->args[i], &search);
+            actor->tracer = P_FindMobjFromTID(target->args[i], &search);
         }
     }
 }
@@ -2463,13 +2457,13 @@ void C_DECL A_DragonFlight(mobj_t* actor)
 
         angle = M_PointToAngle2(actor->origin, actor->target->origin);
 
-        if(abs(actor->angle - angle) < ANGLE_45 / 2 &&
+        if(abs((int32_t)(actor->angle - angle)) < ANGLE_45 / 2 &&
            P_CheckMeleeRange(actor, false))
         {
             P_DamageMobj(actor->target, actor, actor, HITDICE(8), false);
             S_StartSound(SFX_DRAGON_ATTACK, actor);
         }
-        else if(abs(actor->angle - angle) <= ANGLE_1 * 20)
+        else if(abs((int32_t)(actor->angle - angle)) <= ANGLE_1 * 20)
         {
             P_MobjChangeState(actor, P_GetState(actor->type, SN_MISSILE));
             S_StartSound(SFX_DRAGON_ATTACK, actor);
