@@ -16,7 +16,7 @@ if (NOT TARGET assimp)
         )
     else ()
         # Try to find assimp manually.
-        find_library (LIBASSIMP assimp
+        find_library (LIBASSIMP NAMES assimp assimpd
             PATHS 
 				${DENG_EXTERNAL_SOURCE_DIR}/assimp
 				${ASSIMP_DIR}
@@ -59,7 +59,8 @@ if (NOT TARGET assimp)
         deng_install_library (${LIBASSIMP})
     else ()
         # Locate the DLL.
-        find_file (LIBASSIMP_DLL assimp.dll PATHS ${_assimpBase}/..
+        find_file (LIBASSIMP_DLL NAMES assimp.dll assimpd.dll 
+            PATHS ${_assimpBase}/..
             PATH_SUFFIXES ../bin/Release ../bin/Debug
         )
         mark_as_advanced (LIBASSIMP_DLL)
