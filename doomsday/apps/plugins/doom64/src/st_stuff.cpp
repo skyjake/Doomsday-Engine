@@ -379,11 +379,11 @@ static void initAutomapForCurrentMap(AutomapWidget& map)
     map.reveal(false);
 
     // Add initially visible lines (i.e. those immediately present when player has spawned
-    for (int lineNumber = 0; lineNumber < numlines; ++lineNumber)
+    for(int lineNumber = 0; lineNumber < numlines; ++lineNumber)
     {
-        xline_t* xline = &xline[lineNumber];
+        xline_t *xline = &xlines[lineNumber];
 
-        if (xline->flags & ML_MAPPED)
+        if(xline->flags & ML_MAPPED)
         {
             P_SetLineAutomapVisibility(map.player(), lineNumber, true);
         }
