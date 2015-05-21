@@ -8134,7 +8134,7 @@ Thing {
   Height = 10;
   Mass = 100;
   Damage = 6;
-  Flags = "mf_noblockmap mf_missile mf_brightexplode mf_dropoff mf_nogravity";
+  Flags = "mf_noblockmap mf_missile mf_brightexplode mf_dropoff mf_nogravity mf_brightshadow";
   Flags2 = "mf2_noteleport mf2_firedamage";
 }
 
