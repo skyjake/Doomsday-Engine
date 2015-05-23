@@ -606,10 +606,10 @@ function (deng_install_deployqt target)
         string (REPLACE "/" "\\" qtPath ${QT_PREFIX_DIR})
         file (WRITE ${script} "
             set PATH=${qtPath}\\bin
-            windeployqt --no-translations \"%1/bin/${_outName}.exe\"
+            windeployqt --no-translations %1
         ")
         install (CODE "message (STATUS \"Running windeployqt on ${_outName}.exe...\")
-            execute_process (COMMAND ${script} \"\${CMAKE_INSTALL_PREFIX}\"
+            execute_process (COMMAND ${script} \"\${CMAKE_INSTALL_PREFIX}\\\\bin\\\\${_outName}.exe\"
                 OUTPUT_QUIET ERROR_QUIET)")
     endif ()
 endfunction (deng_install_deployqt)
