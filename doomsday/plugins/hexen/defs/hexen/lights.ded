@@ -116,6 +116,16 @@ Light {
 # (based on Isegrim's definitions)
 
 Decoration {
+  Material = "textures:MONK18";
+  Light {
+    Color { .8 0 1 }
+    Offset { 64 30 }
+    Halo radius = .04;
+    Radius = .07;
+  };
+}
+
+Decoration {
   Material = "textures:MONK22";
   Light {
     Color { 1 0 0 }
