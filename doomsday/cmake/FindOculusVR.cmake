@@ -62,8 +62,8 @@ if (LIBOVR_OVR_H AND DENG_ENABLE_OCULUS)
             link_framework (LibOVR INTERFACE IOKit)
         elseif (MSVC12)
             target_link_libraries (LibOVR INTERFACE
-                debug     "${ovrDir}/Lib/Win32/VS2013/libovrd.lib"
-                optimized "${ovrDir}/Lib/Win32/VS2013/libovr.lib"
+                debug     "${ovrDir}/Lib/Windows/Win32/Debug/VS2013/libovr.lib"
+                optimized "${ovrDir}/Lib/Windows/Win32/Release/VS2013/libovr.lib"
                 general   winmm shell32 ws2_32
             )
         endif ()
