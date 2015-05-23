@@ -18,7 +18,6 @@ project (Amethyst)
 
 set (CMAKE_INCLUDE_CURRENT_DIR ON)
 set (CMAKE_AUTOMOC ON)
-set (DENG_QT5_OPTIONAL ON)
 
 # In a standalone source package, the cmake modules are in a subdirectory.
 # Otherwise, use Doomsday's CMake modules.
