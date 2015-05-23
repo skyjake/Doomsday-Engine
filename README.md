@@ -18,9 +18,13 @@ For [compilation instructions](http://dengine.net/dew/index.php?title=Compilatio
 
 ## External Dependencies
 
+### CMake
+
+Doomsday is compiled using [CMake](http://cmake.org/). Version 3.1 or later is required.
+
 ### Qt
 
-Using Qt 5 is recommended. The minimum required version of Qt is 4.8. See [Supported platforms](http://dengine.net/dew/index.php?title=Supported_platforms) in the wiki for details about which version is being used on which platform.
+Using the latest version of Qt 5 is recommended. The minimum required version is Qt 4.8. See [Supported platforms](http://dengine.net/dew/index.php?title=Supported_platforms) in the wiki for details about which version is being used on which platform.
 
 ### Open Asset Import Library
 
@@ -46,5 +50,5 @@ The following branches are currently active in the repository.
 
 - **master**: Main code base. This is where releases are made from on a biweekly basis. Bug fixing is done in this branch, while larger development efforts occur in separate work branches.
 - **stable**: Latest stable release. Patch releases can be made from this branch when necessary.
-- **stable-x.y.z**: Stable release x.y.z.
+- **stable-x.y**: Stable release x.y.
 - **legacy**: Old stable code base. Currently at the 1.8.6 release.
