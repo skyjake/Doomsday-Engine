@@ -13,11 +13,10 @@ import build_number
 import builder.utils
 
 # Configuration.
-LAUNCH_DIR    = os.path.abspath(os.getcwd())
-DOOMSDAY_DIR  = os.path.abspath(os.path.join(os.getcwd(), '..', 'doomsday'))
-SNOWBERRY_DIR = os.path.abspath(os.path.join(LAUNCH_DIR, '..', 'snowberry'))
+LAUNCH_DIR    = os.path.abspath(os.path.dirname(__file__))
+DOOMSDAY_DIR  = os.path.abspath(os.path.join(LAUNCH_DIR, '..', 'doomsday'))
 WORK_DIR      = os.path.join(LAUNCH_DIR, 'work')
-OUTPUT_DIR    = os.path.abspath(os.path.join(os.getcwd(), 'releases'))
+OUTPUT_DIR    = os.path.join(LAUNCH_DIR, 'releases')
 DOOMSDAY_VERSION_FULL       = "0.0.0-Name"
 DOOMSDAY_VERSION_FULL_PLAIN = "0.0.0"
 DOOMSDAY_VERSION_MAJOR      = 0
@@ -119,264 +118,57 @@ def output_filename(ext='', extra=''):
         return 'doomsday_' + extra + DOOMSDAY_VERSION_FULL + ext
     else:
         return 'doomsday_' + extra + DOOMSDAY_VERSION_FULL + "_" + DOOMSDAY_BUILD + ext
-
-
-def mac_able_to_package_snowberry():
-    return mac_os_version() == '10.5'
+        
+        
+def cmake_options():
+    """Reads the contents of the CMake options file that determines which flags are used
+    when building a release."""
+    opts = '-DCMAKE_BUILD_TYPE=Release -DDENG_BUILD=%s ' % (DOOMSDAY_BUILD_NUMBER)
+    try:
+        opts += ' ' + open(os.path.join(LAUNCH_DIR, 'cmake.rsp'), 'rt').read().replace('\n', ' ')
+    except:
+        print("No additional options provided for CMake (cmake.rsp missing)")
+    return opts
     
-
-def mac_package_snowberry():
-    os.chdir(SNOWBERRY_DIR)
-    remkdir('dist')
-    remkdir('build')
-
-    print 'Copying resources...'
-    remkdir('build/addons')
-    remkdir('build/conf')
-    remkdir('build/graphics')
-    remkdir('build/lang')
-    remkdir('build/profiles')
-    remkdir('build/plugins')
-
-    for f in ['/conf/osx-appearance.conf',
-              '/conf/osx-components.conf',
-              '/conf/osx-doomsday.conf',
-              '/conf/snowberry.conf',
-              '/conf/Zcommon-doomsday.conf']:
-        shutil.copy(SNOWBERRY_DIR + f, 'build/conf')
-
-    for f in (glob.glob(SNOWBERRY_DIR + '/graphics/*.jpg') +
-              glob.glob(SNOWBERRY_DIR + '/graphics/*.png') +
-              glob.glob(SNOWBERRY_DIR + '/graphics/*.bmp') +
-              glob.glob(SNOWBERRY_DIR + '/graphics/*.ico')):
-        shutil.copy(f, 'build/graphics')
-
-    for f in glob.glob(SNOWBERRY_DIR + '/lang/*.lang'):
-        shutil.copy(f, 'build/lang')
-
-    for f in glob.glob(SNOWBERRY_DIR + '/profiles/*.prof'):
-        shutil.copy(f, 'build/profiles')
-
-    for f in glob.glob(SNOWBERRY_DIR + '/plugins/tab*.py'):
-        shutil.copy(f, 'build/plugins')
-
-    for f in ['tab30.plugin', 'about.py', 'help.py', 'launcher.py',
-              'preferences.py', 'profilelist.py', 'wizard.py']:
-        src = SNOWBERRY_DIR + '/plugins/' + f
-        if os.path.isdir(src):
-            copytree(src, 'build/plugins/' + f)
-        else:
-            shutil.copy(src, 'build/plugins')
-
-    f = file('VERSION', 'wt')
-    f.write(DOOMSDAY_VERSION_FULL)
-    f.close()
-    builder.utils.run_python2('buildapp.py py2app')
     
-    # Share it.
-    duptree('dist/Doomsday Engine.app', 'shared/')
+def cmake_release(makeOptions, outputGlobs):
+    """Runs cmake in the work directory and copies the output files to OUTPUT_DIR."""
+    remkdir(WORK_DIR)
+    os.chdir(WORK_DIR)
+            
+    if os.system('cmake %s ../../doomsday' % cmake_options()):
+        raise Exception("Failed to configure the build.")
+    if os.system('cmake --build . --config Release' + (' -- %s' % makeOptions if makeOptions else '')):
+        raise Exception("Build failed!")
 
+    # Use CPack to create the package.
+    if os.system('cmake --build . --config Release --target package'):
+        raise Exception("Failed to package the binaries.") 
+    for outputGlob in outputGlobs:
+        for fn in glob.glob(outputGlob):
+            shutil.copy(fn, OUTPUT_DIR)    
+        
 
 def mac_release():
-    """The Mac OS X release procedure."""
-    
-    # Package Snowberry or acquire the shared package.
-    if mac_able_to_package_snowberry():
-        # Check Python dependencies.
-        try:
-            import wx
-        except ImportError:
-            raise Exception("Python: wx not found!")
-        try:
-            import py2app
-        except ImportError:
-            raise Exception("Python: py2app not found!")
-
-        mac_package_snowberry()
-        sbLoc = '/dist/Doomsday Engine.app'
-    else:
-        # Wait until the updated packaged SB has been shared.
-        try:
-            print 'This system seems unable to package Snowberry. Waiting a while'
-            print 'for an updated shared Doomsday Engine.app bundle...'
-            print '(press Ctrl-C to skip)'
-            time.sleep(5 * 60)
-        except KeyboardInterrupt:
-            pass
-        sbLoc = '/shared/Doomsday Engine.app'
-
-    # First we need to make a release build.
-    print "Building the release..."
-    # Must work in the deng root for qmake (resource bundling apparently
-    # fails otherwise).
-    MAC_WORK_DIR = os.path.abspath(os.path.join(DOOMSDAY_DIR, '../macx_release_build'))
-    remkdir(MAC_WORK_DIR)
-    os.chdir(MAC_WORK_DIR)
-        
-    if os.system('PATH=`qmake-qt5 -query QT_INSTALL_BINS`:$PATH qmake -r CONFIG+=release DENG_BUILD=%s ' % (DOOMSDAY_BUILD_NUMBER) +
-                 '../doomsday/doomsday.pro && PATH=`qmake-qt5 -query QT_INSTALL_BINS`:$PATH make -j2 -w'):
-        raise Exception("Failed to build from source.")
-
-    # Now we can proceed to packaging.
-    target = os.path.join(OUTPUT_DIR, output_filename(mac_target_ext()))
-    try:
-        os.remove(target)
-        print 'Removed existing target file', target
-    except:
-        print 'Target:', target
-
-    # Back to the normal work dir.
-    os.chdir(WORK_DIR)
-    copytree(SNOWBERRY_DIR + sbLoc, 'Doomsday Engine.app')
-
-    print 'Copying release binaries into the launcher bundle.'
-    duptree(os.path.join(MAC_WORK_DIR, 'client/Doomsday.app'), 'Doomsday Engine.app/Contents/Doomsday.app')
-    # Remove plugins unsuitable for general distribution.
-    for omit in ['doom64', 'example']:
-        builder.utils.deltree('Doomsday Engine.app/Contents/Doomsday.app/Contents/DengPlugins/%s.bundle' % omit)
-    duptree(os.path.join(MAC_WORK_DIR, 'tools/shell/shell-gui/Doomsday Shell.app'), 'Doomsday Shell.app')
-
-    print 'Correcting permissions...'
-    os.system('chmod -R o-w "Doomsday Engine.app"')
-    os.system('chmod -R o-w "Doomsday Shell.app"')
-
-    if mac_os_version() != '10.6':
-        print 'Packaging apps onto a disk image (unsigned)...'
-        templateFile = 'appdisk.sparseimage'
-        os.system('bunzip2 -k -c %s > %s' % (os.path.join(SNOWBERRY_DIR, 'template-image/template.sparseimage.bz2'),
-                                             templateFile))
-        remkdir('imaging')
-        os.system('hdiutil attach %s -noautoopen -quiet -mountpoint imaging' % templateFile)
-    
-        remove('imaging/Doomsday.pkg') # included in bzipped image
-        duptree('Doomsday Engine.app', 'imaging/Doomsday Engine.app')
-        duptree('Doomsday Shell.app',  'imaging/Doomsday Shell.app')
-        shutil.copy(os.path.join(DOOMSDAY_DIR, "doc/output/Read Me.rtf"), 'imaging/Read Me.rtf')
-
-        volumeName = "Doomsday Engine " + DOOMSDAY_VERSION_FULL
-        os.system('/usr/sbin/diskutil rename ' + os.path.abspath('imaging') + ' "' + volumeName + '"')
-    
-        os.system('hdiutil detach -quiet imaging')
-        os.system('hdiutil convert %s -format UDZO -imagekey zlib-level=9 -o "../releases/%s"' % (
-                templateFile, output_filename('_apps-' + mac_osx_suffix() + '.dmg')))
-        remove(templateFile)
-
-    def codesign(fn, opts=''):
-        os.system('codesign --verbose -s "Developer ID Application: Jaakko Keranen" %s "%s"' % (opts, fn))
-        
-    def fw_codesign(app):
-        print 'Signing libraries in %s...' % app
-        for f in glob.glob(app + '/Contents/Frameworks/*.dylib'):
-            codesign(f)
-
-        print 'Signing Qt frameworks in %s...' % app
-        for f in glob.glob(app + '/Contents/Frameworks/Qt*.framework'):
-            name = f[f.find('/Qt'):-10]
-            codesign(f + name)
-    
-        print 'Signing Qt plugins in %s...' % app
-        for f in glob.glob(app + '/Contents/PlugIns/*/*.dylib'):
-            codesign(f)
-    
-    fw_codesign('Doomsday Engine.app/Contents/Doomsday.app')
-    fw_codesign('Doomsday Shell.app')
-
-    print 'Signing Doomsday.app...'
-    codesign('Doomsday Engine.app/Contents/Doomsday.app/Contents/Frameworks/SDL2.framework/SDL2')
-    codesign("Doomsday Engine.app/Contents/Doomsday.app")
-
-    print 'Signing Doomsday Engine.app...'
-    os.system('ln -fs Versions/2.5/Python "Doomsday Engine.app/Contents/Frameworks/Python.framework/Python"')
-    codesign("Doomsday Engine.app/Contents/Frameworks/Python.framework")
-    codesign("Doomsday Engine.app/Contents/Frameworks/libwx_macud-2.8.0.dylib")
-    codesign("Doomsday Engine.app/Contents/MacOS/python")
-    codesign("Doomsday Engine.app", opts='--resource-rules ../macx/ResourceRules-OmitCompiledPython.plist')
-
-    print 'Signing Doomsday Shell.app...'
-    codesign("Doomsday Shell.app")
-    
-    # Package the apps and create an installer package.
-    os.system('mkdir package')
-    duptree('Doomsday Engine.app', 'package/Doomsday Engine.app')
-    os.system('pkgbuild --identifier net.dengine.doomsday.frontend.pkg --version %s ' % DOOMSDAY_VERSION_FULL + \
-        '--install-location /Applications --root package Frontend.pkg')
-    os.system('rm -rf package')
-
-    os.system('mkdir package')
-    duptree('Doomsday Shell.app', 'package/Doomsday Shell.app')
-    os.system('pkgbuild --identifier net.dengine.doomsday.shell.pkg --version %s ' % DOOMSDAY_VERSION_FULL + \
-        '--install-location /Applications --root package Shell.pkg')
-    os.system('rm -rf package')
-    
-    os.system("sed 's/${Version}/%s/' < ../macx/Distribution.xml.in > Distribution.xml" % DOOMSDAY_VERSION_FULL)
-    os.system('mkdir res')
-    shutil.copy(os.path.join(DOOMSDAY_DIR, "doc/output/Read Me.rtf"), 'res/Read Me.rtf')
-    shutil.copy('../macx/background.png', 'res/background.png')
-    os.system('productbuild --distribution Distribution.xml --package-path . --resources res --sign "Developer ID Installer: Jaakko Keranen" Doomsday.pkg')
-        
-    print 'Creating disk:', target
-        
-    # Compress a disk image containing the installer package.
-    masterPkg = target
-    volumeName = "Doomsday Engine " + DOOMSDAY_VERSION_FULL
-    templateFile = os.path.join(SNOWBERRY_DIR, 'template-image/template.sparseimage')
-    if not os.path.exists(templateFile):
-        print 'Template .sparseimage not found, trying to extract from compressed archive...'
-        os.system('bunzip2 -k "%s.bz2"' % templateFile)
-    shutil.copy(templateFile, 'imaging.sparseimage')
-    remkdir('imaging')
-    os.system('hdiutil attach imaging.sparseimage -noautoopen -quiet -mountpoint imaging')
-    try:
-        shutil.copy('Doomsday.pkg', 'imaging/Doomsday.pkg')
-    except Exception, ex:
-        print 'No installer available:', ex
-    shutil.copy(os.path.join(DOOMSDAY_DIR, "doc/output/Read Me.rtf"), 'imaging/Read Me.rtf')
-
-    volumeName = "Doomsday Engine " + DOOMSDAY_VERSION_FULL
-    os.system('/usr/sbin/diskutil rename ' + os.path.abspath('imaging') + ' "' + volumeName + '"')
-
-    os.system('hdiutil detach -quiet imaging; rmdir imaging')
-    os.system('hdiutil convert imaging.sparseimage -format UDZO -imagekey zlib-level=9 -o "' + target + '"')
-    remove('imaging.sparseimage')
+    cmake_release('-j4', ['*.dmg'])
 
 
 def win_release():
-    """The Windows release procedure."""
+    cmake_release(None, ['*.msi'])
     
-    PROD_DIR = os.path.join(LAUNCH_DIR, 'products')
-    if not os.path.exists(PROD_DIR):
-        print "Creating the products directory."
-        os.mkdir(PROD_DIR)
-
-    PROD_DATA_DIR = os.path.join(PROD_DIR, 'data')
-    if not os.path.exists(PROD_DATA_DIR):
-        print "Creating the products/data directory."
-        os.mkdir(PROD_DATA_DIR)
-
-    PROD_DOC_DIR = os.path.join(PROD_DIR, 'doc')
-    if not os.path.exists(PROD_DOC_DIR):
-        print "Creating the products/doc directory."
-        os.mkdir(PROD_DOC_DIR)
-
-    # Generate the Inno Setup configuration file.
-    script = file('win32\setup.iss.template', 'rt').read()
-    file('win32\setup.iss', 'wt').write(script
-        .replace('${YEAR}', time.strftime('%Y'))
-        .replace('${BUILD}', DOOMSDAY_BUILD)
-        .replace('${VERSION}', DOOMSDAY_VERSION_FULL)
-        .replace('${VERSION_PLAIN}', DOOMSDAY_VERSION_FULL_PLAIN)
-        .replace('${OUTPUT_FILENAME}', output_filename()))
-
-    # Execute the win32 release script.
-    os.chdir('win32')
-    if os.system('dorel.bat ' + DOOMSDAY_BUILD_NUMBER):
-        raise Exception("Failure in the Windows release script.")
-
 
 def linux_release():
-    """The Linux release procedure."""
+    cmake_release('-j4', ['*.deb', '*.rpm'])
+    
+
+def linux_release_dpkg():
+    """Use `dpkg-buildpackage` to build a binary Debian package."""
     
     os.chdir(LAUNCH_DIR)
+
+    # Check that the changelog exists.
+    if not os.path.exists('debian/changelog'):
+        os.system('dch --check-dirname-level=0 --create --package doomsday -v %s-%s "Initial release."' % (DOOMSDAY_VERSION_FULL_PLAIN, DOOMSDAY_BUILD))
 
     def clean_products():
         # Remove previously built deb packages.
@@ -385,10 +177,6 @@ def linux_release():
         #os.system('rm -f dsfmod/fmod-*.txt')
 
     clean_products()
-
-    # Check that the changelog exists.
-    if not os.path.exists('debian/changelog'):
-        os.system('dch --check-dirname-level=0 --create --package doomsday -v %s-%s "Initial release."' % (DOOMSDAY_VERSION_FULL_PLAIN, DOOMSDAY_BUILD))
 
     if os.system('linux/gencontrol.sh && dpkg-buildpackage -b'):
         raise Exception("Failure to build from source.")
