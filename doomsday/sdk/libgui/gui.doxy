@@ -1,10 +1,10 @@
 # Public API documentation for libgui
-@INCLUDE = ../doomsday.doxy
+@INCLUDE = ../../doomsday.doxy
 
 PROJECT_NAME            = "libgui"
 PROJECT_NUMBER          = 2.0.0
 PROJECT_BRIEF           = "Graphics, Audio and Input Library"
-OUTPUT_DIRECTORY        = ../apidoc/gui/
+OUTPUT_DIRECTORY        = ../../apidoc/gui/
 
 INPUT                   = include src
 FILE_PATTERNS           = *

@@ -1,10 +1,10 @@
 # Public API documentation for libshell
-@INCLUDE = ../doomsday.doxy
+@INCLUDE = ../../doomsday.doxy
 
 PROJECT_NAME            = "libshell"
 PROJECT_NUMBER          = 0.1.0
 PROJECT_BRIEF           = "Tool Library for Shell Connections and UI"
-OUTPUT_DIRECTORY        = ../apidoc/shell/
+OUTPUT_DIRECTORY        = ../../apidoc/shell/
 
 INPUT                   = include src
 FILE_PATTERNS           = *
