@@ -155,7 +155,7 @@ def update_changes(debChanges=False):
         # Also update the doomsday-fmod changelog (just version number).
         os.chdir(os.path.join(builder.config.DISTRIB_DIR, 'dsfmod'))
         
-        fmodVer = build_version.parse_header_for_version('../../doomsday/plugins/fmod/include/version.h')
+        fmodVer = build_version.parse_cmake_for_version('../../doomsday/cmake/Version.cmake')
         debVer = "%s.%s.%s-%s" % (fmodVer[0], fmodVer[1], fmodVer[2], todays_build_tag())
         print "Marking new FMOD version:", debVer
         msg = 'New release: Doomsday Engine build %i.' % builder.Event().number()

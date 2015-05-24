@@ -4,7 +4,7 @@ builddir:
 	mkdir -p builddir
 
 builddir/Makefile: builddir
-	cd builddir && qmake-qt4 PREFIX=/usr CONFIG+=release DENG_BUILD=`../../build_number.py --print` ../../../doomsday/plugins/fmod/fmod.pro
+	cd builddir && cmake -DCMAKE_BUILD_TYPE=Release -DDENG_BUILD=`../../build_number.py --print` ../../../doomsday/apps/plugins/fmod
 
 build: build-stamp
 
@@ -28,7 +28,7 @@ install: build
 	dh_installdirs
 
         # Add here commands to install the package into debian/your_appname
-	cd builddir && $(MAKE) INSTALL_ROOT=$(CURDIR)/debian/$(APPNAME) install
+	cd builddir && $(MAKE) DESTDIR=$(CURDIR)/debian/$(APPNAME) install
 
 # Build architecture-independent files here.
 binary-indep: build install
