@@ -32,6 +32,10 @@ find_package (Ccache)
 include (Options)
 include (Packaging)
 
+if (UNIX AND NOT APPLE)
+    include (GNUInstallDirs)
+endif()
+
 # Install directories.
 set (DENG_INSTALL_DATA_DIR "share/doomsday")
 set (DENG_INSTALL_DOC_DIR "share/doc")

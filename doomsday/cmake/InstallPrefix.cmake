@@ -1,7 +1,3 @@
-if (UNIX AND NOT APPLE)
-    include (GNUInstallDirs)
-endif()
-
 set (_oldPrefix ${CMAKE_INSTALL_PREFIX})
 
 # Install destination. PREFIX can be used to set the location manually.
