@@ -18,16 +18,16 @@ if (NOT TARGET assimp)
         # Try to find assimp manually.
         find_library (LIBASSIMP NAMES assimp assimpd
             PATHS 
-				${DENG_EXTERNAL_SOURCE_DIR}/assimp
-				${ASSIMP_DIR}
+                ${DENG_EXTERNAL_SOURCE_DIR}/assimp
+                ${ASSIMP_DIR}
             PATH_SUFFIXES lib/Release lib/Debug lib
-			NO_DEFAULT_PATH
+            NO_DEFAULT_PATH
         )        
     endif ()
     mark_as_advanced (LIBASSIMP)
     
     if (NOT LIBASSIMP)
-        message (FATAL_ERROR "Open Asset Import Library not found. Go to doomsday/external/assimp, compile, and install. You can also set the ASSIMP_DIR variable to specify the location.")
+        message (FATAL_ERROR "Open Asset Import Library not found. Go to ${DENG_EXTERNAL_SOURCE_DIR}/assimp and compile. If you install it somewhere, set the ASSIMP_DIR variable to specify the location.")
     endif ()
 
     add_library (assimp INTERFACE)

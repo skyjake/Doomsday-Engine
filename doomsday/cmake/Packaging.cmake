@@ -16,7 +16,7 @@ else ()
 endif ()
 
 if (DENG_BUILD AND NOT DENG_STABLE)
-    set (CPACK_PACKAGE_FILE_NAME doomsday_${DENG_VERSION}-build${DENG_BULD}_${DENG_ARCH})
+    set (CPACK_PACKAGE_FILE_NAME doomsday_${DENG_VERSION}-build${DENG_BUILD}_${DENG_ARCH})
 else ()
     set (CPACK_PACKAGE_FILE_NAME doomsday_${DENG_VERSION}_${DENG_ARCH})
 endif ()

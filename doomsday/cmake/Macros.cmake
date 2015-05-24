@@ -124,7 +124,7 @@ macro (deng_target_rpath target)
     elseif (UNIX)
         set_property (TARGET ${target} 
             PROPERTY INSTALL_RPATH                 
-                "${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_PLUGIN_DIR};${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_LIB_DIR}"
+                "${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_PLUGIN_DIR};${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_LIB_DIR};$ORIGIN/../${DENG_INSTALL_PLUGIN_DIR};$ORIGIN/../${DENG_INSTALL_LIB_DIR}"
         )
     endif ()        
 endmacro (deng_target_rpath)
