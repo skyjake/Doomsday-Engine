@@ -6,3 +6,5 @@ srcwork
 plugins
 build*.txt
 products
+cmake.rsp
+
