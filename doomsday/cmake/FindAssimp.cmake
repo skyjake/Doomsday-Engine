@@ -3,7 +3,7 @@ find_package (PkgConfig QUIET)
 set (_oldPath ${LIBASSIMP})
 
 if (NOT TARGET assimp)
-    if (PKG_CONFIG_FOUND)
+    if (PKG_CONFIG_FOUND AND NOT DEFINED ASSIMP_DIR)
         # Try to find assimp using pkg-config.
         pkg_check_modules (ASSIMP QUIET assimp)
         if (NOT ASSIMP_LIBRARIES)
@@ -27,7 +27,7 @@ if (NOT TARGET assimp)
     mark_as_advanced (LIBASSIMP)
     
     if (NOT LIBASSIMP)
-        message (FATAL_ERROR "Open Asset Import Library not found. Go to ${DENG_EXTERNAL_SOURCE_DIR}/assimp and compile. If you install it somewhere, set the ASSIMP_DIR variable to specify the location.")
+        message (FATAL_ERROR "Open Asset Import Library not found. Go to ${DENG_EXTERNAL_SOURCE_DIR}/assimp and compile. If you install it somewhere, set the ASSIMP_DIR variable to specify the location. If pkg-config is available, it is used to find libassimp.")
     endif ()
 
     add_library (assimp INTERFACE)

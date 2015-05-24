@@ -8,10 +8,10 @@ builddir:
 
 builddir/Makefile: builddir
 	cd $(ASSIMP_DIR) && cmake -G "Unix Makefiles" && make -j2
-	cd builddir && qmake-qt4 PREFIX=/usr CONFIG+=deng_fluidsynth \
-		CONFIG+=deng_extassimp CONFIG+=release \
-		DENG_BUILD=`../build_number.py --print` \
-		../../doomsday/$(APPNAME).pro
+	cd builddir && cmake -DCMAKE_BUILD_TYPE=Release \
+		-DDENG_BUILD=`../build_number.py --print` \
+		-DASSIMP_DIR=$(ASSIMP_DIR) \
+		../../doomsday
 
 build: build-arch build-indep
 build-arch: build-stamp
@@ -36,8 +36,8 @@ install: build
 	dh_prep
 	dh_installdirs
 
-        # Add here commands to install the package into debian/your_appname
-	cd builddir && $(MAKE) INSTALL_ROOT=$(CURDIR)/debian/$(APPNAME) install
+    # Add here commands to install the package into debian/your_appname
+	cd builddir && $(MAKE) DESTDIR=$(CURDIR)/debian/$(APPNAME) install
 
 # Build architecture-independent files here.
 binary-indep: build install
