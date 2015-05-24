@@ -1392,7 +1392,11 @@ int C_DECL XSTrav_MovePlane(Sector *sector, dd_bool ceiling, void *context,
 
     xgplanemover_t *mover = XS_GetPlaneMover(sector, ceiling);
     if(P_IsDummy(line))
-        Con_Error("XSTrav_MovePlane: Attempted to use dummy Line as XGPlaneMover origin.");
+    {
+        LOG_MAP_ERROR("Attempted to use a dummy line as XGPlaneMover origin. "
+                      "Plane in sector %i will not be moved.") << P_ToIndex(sector);
+        return true; // Keep looking.
+    }
     mover->origin = line;
 
     // Setup the thinker and add it to the list.
@@ -1530,7 +1534,11 @@ dd_bool XS_DoBuild(Sector* sector, dd_bool ceiling, Line* origin,
     // Create a new mover for the plane.
     mover = XS_GetPlaneMover(sector, ceiling);
     if(P_IsDummy(origin))
-        Con_Error("XS_DoBuild: Attempted to use dummy Line as XGPlaneMover origin.");
+    {
+        LOG_MAP_ERROR("Attempted to use a dummy line as XGPlaneMover origin while "
+                      "building stairs in sector %i.") << P_ToIndex(sector);
+        return false;
+    }
     mover->origin = origin;
 
     // Setup the mover.
