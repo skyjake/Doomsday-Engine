@@ -1,10 +1,10 @@
 # Public API documentation for libcore
-@INCLUDE = ../doomsday.doxy
+@INCLUDE = ../../doomsday.doxy
 
 PROJECT_NAME            = "libcore"
 PROJECT_NUMBER          = 2.0.0-Dev
 PROJECT_BRIEF           = "Public API"
-OUTPUT_DIRECTORY        = ../apidoc/api2/
+OUTPUT_DIRECTORY        = ../../apidoc/api2/
 
 INPUT                   = include src
 FILE_PATTERNS           = *

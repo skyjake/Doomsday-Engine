@@ -1,10 +1,10 @@
 # Public API documentation for libappfw
-@INCLUDE = ../doomsday.doxy
+@INCLUDE = ../../doomsday.doxy
 
 PROJECT_NAME            = "libappfw"
 PROJECT_NUMBER          = 2.0.0
 PROJECT_BRIEF           = "Application Framework"
-OUTPUT_DIRECTORY        = ../apidoc/appfw/
+OUTPUT_DIRECTORY        = ../../apidoc/appfw/
 
 INPUT                   = include src
 FILE_PATTERNS           = *
