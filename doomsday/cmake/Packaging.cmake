@@ -1,20 +1,27 @@
+# Basic package metadata.
 set (CPACK_PACKAGE_DESCRIPTION_SUMMARY "Doomsday Engine")
 set (CPACK_PACKAGE_VENDOR "Jaakko Keränen (skyjake)")
 set (CPACK_PACKAGE_VERSION_MAJOR ${DENG_VERSION_MAJOR})
 set (CPACK_PACKAGE_VERSION_MINOR ${DENG_VERSION_MINOR})
-if (DENG_BUILD AND NOT DENG_STABLE)
-    if (NOT WIN32)
-        set (CPACK_PACKAGE_VERSION_PATCH "${DENG_VERSION_PATCH}-build${DENG_BUILD}")
-    else ()
+if (DENG_BUILD)
+    # Whenever the build number is specified, include it in the package version.
+    # This ensures newer builds of the same version will have a greater number.
+    if (DENG_STABLE OR WIN32)
         set (CPACK_PACKAGE_VERSION_PATCH "${DENG_VERSION_PATCH}.${DENG_BUILD}")
+    else ()
+        set (CPACK_PACKAGE_VERSION_PATCH "${DENG_VERSION_PATCH}-build${DENG_BUILD}")
     endif ()
 else ()
     set (CPACK_PACKAGE_VERSION_PATCH ${DENG_VERSION_PATCH})
 endif ()
-set (CPACK_PACKAGE_INSTALL_DIRECTORY "Doomsday ${DENG_VERSION}")
 
-set (CPACK_PACKAGE_EXECUTABLES "client;Doomsday ${DENG_VERSION};shell;Doomsday Shell ${DENG_VERSION}")
+if (DENG_BUILD AND NOT DENG_STABLE)
+    set (CPACK_PACKAGE_FILE_NAME doomsday_${DENG_VERSION}-build${DENG_BULD}_${DENG_ARCH})
+else ()
+    set (CPACK_PACKAGE_FILE_NAME doomsday_${DENG_VERSION}_${DENG_ARCH})
+endif ()
 
+# File formats.
 if (APPLE)
     set (CPACK_GENERATOR DragNDrop)
     set (CPACK_DMG_FORMAT UDZO)
@@ -25,11 +32,13 @@ else ()
     set (CPACK_PROJECT_CONFIG_FILE ${CMAKE_CURRENT_LIST_DIR}/WIX.cmake)
 endif ()
 
-# Install types.
-
 # Source packaging.
-set (CPACK_SOURCE_GENERATOR TXZ;ZIP)
+set (CPACK_SOURCE_GENERATOR TGZ)
 set (CPACK_SOURCE_IGNORE_FILES "\\\\.DS_Store$;\\\\.user$;\\\\.user\\\\.")
+
+# Targets and components.
+set (CPACK_PACKAGE_EXECUTABLES "client;Doomsday ${DENG_VERSION};shell;Doomsday Shell ${DENG_VERSION}")
+set (CPACK_PACKAGE_INSTALL_DIRECTORY "Doomsday ${DENG_VERSION}")
 
 if (NOT CPack_CMake_INCLUDED)
     include (CPack)
