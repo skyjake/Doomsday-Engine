@@ -1,8 +1,22 @@
 # Basic package metadata.
+set (CPACK_PACKAGE_NAME doomsday)
 set (CPACK_PACKAGE_DESCRIPTION_SUMMARY "Doomsday Engine")
 set (CPACK_PACKAGE_VENDOR "Jaakko Keränen (skyjake)")
 set (CPACK_PACKAGE_VERSION_MAJOR ${DENG_VERSION_MAJOR})
 set (CPACK_PACKAGE_VERSION_MINOR ${DENG_VERSION_MINOR})
+
+set (CPACK_PACKAGE_DESCRIPTION_SUMMARY "Doom/Heretic/Hexen port with enhanced graphics")
+set (CPACK_PACKAGE_DESCRIPTION_FILE ${DENG_SOURCE_DIR}/../distrib/description.txt)
+
+set (CPACK_DEBIAN_PACKAGE_MAINTAINER "Jaakko Keränen (skyjake) <jaakko.keranen@iki.fi>")
+set (CPACK_DEBIAN_PACKAGE_SECTION universe/games)
+
+set (CPACK_RPM_PACKAGE_SUMMARY ${summary})
+set (CPACK_RPM_PACKAGE_LICENSE "GPL3, LGPL3")
+set (CPACK_RPM_PACKAGE_GROUP Amusements/Games)
+set (CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION /usr/share/man /usr/share/man/man6)
+set (CPACK_RPM_PACKAGE_REQUIRES "qt5-qtx11extras >= 5.2")
+
 if (DENG_BUILD)
     # Whenever the build number is specified, include it in the package version.
     # This ensures newer builds of the same version will have a greater number.
@@ -16,9 +30,9 @@ else ()
 endif ()
 
 if (DENG_BUILD AND NOT DENG_STABLE)
-    set (CPACK_PACKAGE_FILE_NAME doomsday_${DENG_VERSION}-build${DENG_BUILD}_${DENG_ARCH})
+    set (CPACK_PACKAGE_FILE_NAME ${CPACK_PACKAGE_NAME}_${DENG_VERSION}-build${DENG_BUILD}_${DENG_ARCH})
 else ()
-    set (CPACK_PACKAGE_FILE_NAME doomsday_${DENG_VERSION}_${DENG_ARCH})
+    set (CPACK_PACKAGE_FILE_NAME ${CPACK_PACKAGE_NAME}_${DENG_VERSION}_${DENG_ARCH})
 endif ()
 
 # File formats.
@@ -26,7 +40,8 @@ if (APPLE)
     set (CPACK_GENERATOR DragNDrop)
     set (CPACK_DMG_FORMAT UDZO)
 elseif (UNIX)
-    set (CPACK_GENERATOR TGZ)
+    set (CPACK_GENERATOR RPM;DEB)
+    set (CPACK_PROJECT_CONFIG_FILE ${CMAKE_CURRENT_LIST_DIR}/PackagingUnix.cmake)
 else ()
     set (CPACK_GENERATOR WIX)
     set (CPACK_PROJECT_CONFIG_FILE ${CMAKE_CURRENT_LIST_DIR}/WIX.cmake)

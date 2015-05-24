@@ -659,6 +659,7 @@ macro (deng_install_library library)
         file (GLOB _links ${library}.* ${versioned})
         install (FILES ${library} ${_links}
             DESTINATION ${DENG_INSTALL_PLUGIN_DIR}
+            PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
         )
     elseif (MSVC)
         message (STATUS "Library will be installed: ${library}")
