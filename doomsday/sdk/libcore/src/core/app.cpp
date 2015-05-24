@@ -480,6 +480,12 @@ NativePath App::nativePluginBinaryPath()
 {
     if(!d->cachedPluginBinaryPath.isEmpty()) return d->cachedPluginBinaryPath;
 
+    if(auto const opt = d->cmdLine.check("-libdir", 1))
+    {
+        d->cmdLine.makeAbsolutePath(opt.pos + 1);
+        return (d->cachedPluginBinaryPath = d->cmdLine.at(opt.pos + 1));
+    }
+    
     NativePath path;
 #ifdef WIN32
     path = d->appPath.fileNamePath() / "plugins";
@@ -488,6 +494,11 @@ NativePath App::nativePluginBinaryPath()
     path = d->appPath.fileNamePath() / "../PlugIns/Doomsday";
 # else
     path = DENG_LIBRARY_DIR;
+    if(!path.exists())
+    {
+        // Try a fallback relative to the executable.
+        path = d->appPath.fileNamePath() / "../lib/doomsday";
+    }
 # endif
     // Also check the system config files.
     d->unixInfo->path("libdir", path);
@@ -499,11 +510,10 @@ NativePath App::nativeHomePath()
 {
     if(!d->cachedHomePath.isEmpty()) return d->cachedHomePath;
 
-    int i;
-    if((i = d->cmdLine.check("-userdir", 1)))
+    if(auto const opt = d->cmdLine.check("-userdir", 1))
     {
-        d->cmdLine.makeAbsolutePath(i + 1);
-        return (d->cachedHomePath = d->cmdLine.at(i + 1));
+        d->cmdLine.makeAbsolutePath(opt.pos + 1);
+        return (d->cachedHomePath = d->cmdLine.at(opt.pos + 1));
     }
 
 #ifdef MACOSX
