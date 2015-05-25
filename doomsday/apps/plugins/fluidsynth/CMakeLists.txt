@@ -123,7 +123,7 @@ if (DENG_FLUIDSYNTH_EMBEDDED)
     endif ()
     if (CMAKE_C_COMPILER_ID MATCHES ".*Clang")
         target_compile_options (${tgt} PRIVATE 
-            -fomit-frame-pointer -finline-functions -fdiagnostics-show-option
+            -fomit-frame-pointer -fdiagnostics-show-option
             -Wno-deprecated-declarations -Wno-parentheses -Wno-unused-value
         )
     endif ()
