@@ -580,7 +580,7 @@ DENG2_PIMPL(ModelDrawable)
                 try
                 {
                     setTexture(materialId, map, imageLoader->loadImage(sourcePath.fileNamePath() /
-                                                                       String(texPath.C_Str())));
+                                                                       NativePath(texPath.C_Str())));
                     break;
                 }
                 catch(Error const &er)
