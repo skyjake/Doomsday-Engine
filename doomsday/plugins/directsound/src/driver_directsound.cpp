@@ -191,7 +191,7 @@ int DS_Init(void)
 
     typedef struct eaxproperty_s {
         DSPROPERTY_EAX_LISTENERPROPERTY prop;
-        char*           name;
+        char const *name;
     } eaxproperty_t;
 
     static const eaxproperty_t eaxProps[] = {
@@ -418,7 +418,7 @@ int DS_Init(void)
 
     if(eaxAvailable)
     {
-        App_Log(DE2_LOG_AUDIO, "  EAX Listner Environment:");
+        App_Log(DE2_LOG_AUDIO, "  EAX Listener Environment:");
         for(size_t i = 0; eaxProps[i].prop != DSPROPERTY_EAXLISTENER_NONE; ++i)
         {
             const eaxproperty_t* p = &eaxProps[i];
