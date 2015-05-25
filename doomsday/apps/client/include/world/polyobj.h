@@ -246,6 +246,16 @@ public:
      */
     void setIndexInMap(int newIndex);
 
+private:
+    /**
+    * @param pob   Poly-object in collision.
+    * @param mob   Map-object that @a line of the poly-object is in collision with.
+    * @param line  Poly-object line that @a mob is in collision with.
+    */
+    static void NotifyCollision(struct polyobj_s &pob, struct mobj_s *mob, Line *line);
+
+    bool blocked() const;
+    
 } Polyobj;
 
 #endif // DENG_WORLD_POLYOBJ_H

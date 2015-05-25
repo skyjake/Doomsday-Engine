@@ -22,7 +22,13 @@
 #include "world/polyobj.h"
 #include "world/polyobjdata.h"
 
-#include "world/worldsystem.h" // validCount
+#include <QSet>
+#include <QVector>
+#include <de/vector1.h>
+
+#include "dd_main.h"
+#include "world/worldsystem.h"  // validCount
+#include "world/blockmap.h"
 #include "world/map.h"
 #include "world/p_object.h"
 #include "BspLeaf"
@@ -33,25 +39,26 @@
 #endif
 
 #ifdef __CLIENT__
-#  include "render/rend_main.h" // useBias
+#  include "render/rend_main.h"  // useBias
 #endif
-
-#include <de/vector1.h>
-#include <QSet>
-#include <QVector>
 
 using namespace de;
 
 // Function to be called when the polyobj collides with some map element.
 static void (*collisionCallback) (mobj_t *mobj, void *line, void *polyobj);
 
-static void notifyGeometryChanged(Polyobj &po)
+static inline bool mobCanBlockMovement(mobj_t const &mob)
+{
+    return (mob.ddFlags & DDMF_SOLID) || (mob.dPlayer && !(mob.dPlayer->flags & DDPF_CAMERA));
+}
+
+static void notifyGeometryChanged(Polyobj &pob)
 {
 #ifdef __CLIENT__
     if(!ddMapSetup && useBias)
     {
         // Shadow bias must be informed when surfaces move/deform.
-        foreach(HEdge *hedge, po.mesh().hedges())
+        for(HEdge *hedge : pob.mesh().hedges())
         {
             // Is this on the back of a one-sided line?
             if(!hedge->hasMapElement())
@@ -59,35 +66,77 @@ static void notifyGeometryChanged(Polyobj &po)
 
             /// @note If polyobjs are allowed to move between sector clusters
             /// then we'll need to revise the bias illumination storage specially.
-            if(Shard *shard = po.bspLeaf().subspace().cluster().findShard(hedge->mapElement(), LineSide::Middle))
+            if(Shard *shard = pob.bspLeaf().subspace().cluster().findShard(hedge->mapElement(), LineSide::Middle))
             {
                 shard->updateBiasAfterMove();
             }
         }
     }
 #else // !__CLIENT__
-    DENG2_UNUSED(po);
+    DENG2_UNUSED(pob);
 #endif
 }
 
-/**
- * @param po    Polyobj instance.
- * @param mobj  Mobj that @a line of the polyobj is in collision with.
- * @param line  Polyobj line that @a mobj is in collision with.
- */
-static void notifyCollision(Polyobj &po, mobj_t *mobj, Line *line)
+void Polyobj::NotifyCollision(Polyobj &pob, mobj_t *mob, Line *line)  // static
 {
     if(collisionCallback)
     {
-        collisionCallback(mobj, line, &po);
+        collisionCallback(mob, line, &pob);
     }
 }
 
-polyobj_s::polyobj_s(de::Vector2d const &origin_)
+bool Polyobj::blocked() const
+{
+    for(Line const *line : lines())
+    {
+        dint const localValidCount = ++::validCount;
+
+        bool collision = false;
+        map().mobjBlockmap().forAllInBox(AABoxd(line->aaBox().minX - DDMOBJ_RADIUS_MAX,
+                                                line->aaBox().minY - DDMOBJ_RADIUS_MAX,
+                                                line->aaBox().maxX + DDMOBJ_RADIUS_MAX,
+                                                line->aaBox().maxY + DDMOBJ_RADIUS_MAX)
+                            , [this, &line, &collision, &localValidCount](void *object)
+        {
+            auto &mob = *(mobj_t *)object;
+
+            // Already processed?
+            if(mob.validCount == localValidCount) return LoopContinue;
+            mob.validCount = localValidCount;  // now processed.
+
+            if(mobCanBlockMovement(mob))
+            {
+                // Out of range?
+                AABoxd moAABox = Mobj_AABox(mob);
+                if(moAABox.maxX <= line->aaBox().minX ||
+                   moAABox.minX >= line->aaBox().maxX ||
+                   moAABox.maxY <= line->aaBox().minY ||
+                   moAABox.minY >= line->aaBox().maxY)
+                   return LoopContinue;
+
+                if(!line->boxOnSide(moAABox))
+                {
+                    // This map-object blocks our path!
+                    NotifyCollision(*const_cast<Polyobj *>(this), &mob, const_cast<Line *>(line));
+                    collision = true;
+                }
+            }
+
+            // Process all map-objects...
+            return LoopContinue;
+        });
+
+        if(collision) return true;
+    }
+
+    return false;  // All clear.
+}
+
+polyobj_s::polyobj_s(Vector2d const &origin_)
     : thinker(thinker_s::InitializeToZero)
 {
-    origin[VX] = origin_.x;
-    origin[VY] = origin_.y;
+    origin[0] = origin_.x;
+    origin[1] = origin_.y;
     tag = 0;
     validCount = 0;
     dest[0] = dest[1] = 0;
@@ -118,7 +167,7 @@ PolyobjData const &polyobj_s::data() const
     return THINKER_DATA(thinker, PolyobjData);
 }
 
-void Polyobj::setCollisionCallback(void (*func) (mobj_t *mobj, void *line, void *polyobj)) // static
+void Polyobj::setCollisionCallback(void (*func) (mobj_t *mob, void *line, void *polyob))  // static
 {
     collisionCallback = func;
 }
@@ -136,7 +185,7 @@ Mesh &Polyobj::mesh() const
 
 bool Polyobj::isLinked()
 {
-    return _bspLeaf != 0;
+    return hasBspLeaf();
 }
 
 void Polyobj::unlink()
@@ -147,7 +196,7 @@ void Polyobj::unlink()
         {
             _bspLeaf->subspace().unlink(*this);
         }
-        _bspLeaf = 0;
+        _bspLeaf = nullptr;
 
         map().unlink(*this);
     }
@@ -161,7 +210,7 @@ void Polyobj::link()
 
         // Find the center point of the polyobj.
         Vector2d avg;
-        foreach(Line *line, lines())
+        for(Line *line : lines())
         {
             avg += line->fromOrigin();
         }
@@ -178,15 +227,12 @@ void Polyobj::link()
 
 bool Polyobj::hasBspLeaf() const
 {
-    return _bspLeaf != 0;
+    return _bspLeaf != nullptr;
 }
 
 BspLeaf &Polyobj::bspLeaf() const
 {
-    if(_bspLeaf)
-    {
-        return *_bspLeaf;
-    }
+    if(hasBspLeaf()) return *_bspLeaf;
     /// @throw Polyobj::NotLinkedError Attempted while the polyobj is not linked to the BSP.
     throw Polyobj::NotLinkedError("Polyobj::bspLeaf", "Polyobj is not presently linked in the BSP");
 }
@@ -203,7 +249,7 @@ Sector &Polyobj::sector() const
 
 Sector *Polyobj::sectorPtr() const
 {
-    return hasBspLeaf()? bspLeaf().sectorPtr() : 0;
+    return hasBspLeaf()? bspLeaf().sectorPtr() : nullptr;
 }
 
 SoundEmitter &Polyobj::soundEmitter()
@@ -229,7 +275,7 @@ Polyobj::Vertexes const &Polyobj::uniqueVertexes() const
 void Polyobj::buildUniqueVertexes()
 {
     QSet<Vertex *> vertexSet;
-    foreach(Line *line, lines())
+    for(Line *line : lines())
     {
         vertexSet.insert(&line->from());
         vertexSet.insert(&line->to());
@@ -246,7 +292,7 @@ void Polyobj::buildUniqueVertexes()
 void Polyobj::updateOriginalVertexCoords()
 {
     PolyobjData::VertexCoords::iterator origCoordsIt = data().originalPts.begin();
-    foreach(Vertex *vertex, uniqueVertexes())
+    for(Vertex *vertex : uniqueVertexes())
     {
         // The original coordinates are relative to the polyobj origin.
         (*origCoordsIt) = vertex->origin() - Vector2d(origin);
@@ -274,78 +320,11 @@ void Polyobj::updateAABox()
 
 void Polyobj::updateSurfaceTangents()
 {
-    foreach(Line *line, lines())
+    for(Line *line : lines())
     {
         line->front().updateSurfaceNormals();
         line->back().updateSurfaceNormals();
     }
-}
-
-struct ptrmobjblockingparams_t
-{
-    Polyobj *polyobj;
-    Line *line; // Line of the polyobj which suffered collision.
-    bool isBlocked;
-};
-
-static inline bool mobjCanBlockMovement(mobj_t *mo)
-{
-    DENG2_ASSERT(mo != 0);
-    return (mo->ddFlags & DDMF_SOLID) || (mo->dPlayer && !(mo->dPlayer->flags & DDPF_CAMERA));
-}
-
-static int PTR_CheckMobjBlocking(mobj_t *mo, void *context)
-{
-    ptrmobjblockingparams_t *parms = (ptrmobjblockingparams_t *) context;
-
-    if(!mobjCanBlockMovement(mo))
-        return false;
-
-    // Out of range?
-    AABoxd moAABox = Mobj_AABox(*mo);
-    if(moAABox.maxX <= parms->line->aaBox().minX ||
-       moAABox.minX >= parms->line->aaBox().maxX ||
-       moAABox.maxY <= parms->line->aaBox().minY ||
-       moAABox.minY >= parms->line->aaBox().maxY)
-        return false;
-
-    if(parms->line->boxOnSide(moAABox))
-        return false;
-
-    // This mobj blocks our path!
-    notifyCollision(*parms->polyobj, mo, parms->line);
-    parms->isBlocked = true;
-
-    // Process all blocking mobjs...
-    return false;
-}
-
-static bool checkMobjBlocking(Polyobj &po, Line &line)
-{
-    ptrmobjblockingparams_t parms;
-    parms.polyobj   = &po;
-    parms.line      = &line;
-    parms.isBlocked = false;
-
-    AABoxd interceptRange(line.aaBox().minX - DDMOBJ_RADIUS_MAX,
-                          line.aaBox().minY - DDMOBJ_RADIUS_MAX,
-                          line.aaBox().maxX + DDMOBJ_RADIUS_MAX,
-                          line.aaBox().maxY + DDMOBJ_RADIUS_MAX);
-
-    validCount++;
-    Mobj_BoxIterator(&interceptRange, PTR_CheckMobjBlocking, &parms);
-
-    return parms.isBlocked;
-}
-
-static bool mobjIsBlockingPolyobj(Polyobj &po)
-{
-    foreach(Line *line, po.lines())
-    {
-        if(checkMobjBlocking(po, *line))
-            return true;
-    }
-    return false; // All clear.
 }
 
 bool Polyobj::move(Vector2d const &delta)
@@ -356,7 +335,7 @@ bool Polyobj::move(Vector2d const &delta)
     unlink();
     {
         PolyobjData::VertexCoords::iterator prevCoordsIt = data().prevPts.begin();
-        foreach(Vertex *vertex, uniqueVertexes())
+        for(Vertex *vertex : uniqueVertexes())
         {
             // Remember the previous coords in case we need to undo.
             (*prevCoordsIt) = vertex->origin();
@@ -367,7 +346,7 @@ bool Polyobj::move(Vector2d const &delta)
             prevCoordsIt++;
         }
 
-        foreach(Line *line, lines())
+        for(Line *line : lines())
         {
             line->updateAABox();
         }
@@ -380,20 +359,20 @@ bool Polyobj::move(Vector2d const &delta)
     link();
 
     // With translation applied now determine if we collided with anything.
-    if(mobjIsBlockingPolyobj(*this))
+    if(blocked())
     {
-        //LOG_DEBUG("Blocked by mobj, undoing...");
+        //LOG_DEBUG("Blocked by some map object? Undoing...");
 
         unlink();
         {
             PolyobjData::VertexCoords::const_iterator prevCoordsIt = data().prevPts.constBegin();
-            foreach(Vertex *vertex, uniqueVertexes())
+            for(Vertex *vertex : uniqueVertexes())
             {
                 vertex->setOrigin(*prevCoordsIt);
                 prevCoordsIt++;
             }
 
-            foreach(Line *line, lines())
+            for(Line *line : lines())
             {
                 line->updateAABox();
             }
@@ -419,7 +398,7 @@ bool Polyobj::move(Vector2d const &delta)
  * @param about      Origin to rotate @a point relative to.
  * @param fineAngle  Angle to rotate (theta).
  */
-static void rotatePoint2d(Vector2d &point, Vector2d const &about, uint fineAngle)
+static void rotatePoint2d(Vector2d &point, Vector2d const &about, duint fineAngle)
 {
     coord_t const c = FIX2DBL(fineCosine[fineAngle]);
     coord_t const s = FIX2DBL(finesine[fineAngle]);
@@ -438,11 +417,11 @@ bool Polyobj::rotate(angle_t delta)
 
     unlink();
     {
-        uint fineAngle = (angle + delta) >> ANGLETOFINESHIFT;
+        duint fineAngle = (angle + delta) >> ANGLETOFINESHIFT;
 
         PolyobjData::VertexCoords::const_iterator origCoordsIt = data().originalPts.constBegin();
         PolyobjData::VertexCoords::iterator prevCoordsIt = data().prevPts.begin();
-        foreach(Vertex *vertex, uniqueVertexes())
+        for(Vertex *vertex : uniqueVertexes())
         {
             // Remember the previous coords in case we need to undo.
             (*prevCoordsIt) = vertex->origin();
@@ -456,7 +435,7 @@ bool Polyobj::rotate(angle_t delta)
             prevCoordsIt++;
         }
 
-        foreach(Line *line, lines())
+        for(Line *line : lines())
         {
             line->updateAABox();
             line->updateSlopeType();
@@ -467,20 +446,20 @@ bool Polyobj::rotate(angle_t delta)
     link();
 
     // With rotation applied now determine if we collided with anything.
-    if(mobjIsBlockingPolyobj(*this))
+    if(blocked())
     {
-        //LOG_DEBUG("Blocked by mobj, undoing...");
+        //LOG_DEBUG("Blocked by some map object? Undoing...");
 
         unlink();
         {
             PolyobjData::VertexCoords::const_iterator prevCoordsIt = data().prevPts.constBegin();
-            foreach(Vertex *vertex, uniqueVertexes())
+            for(Vertex *vertex : uniqueVertexes())
             {
                 vertex->setOrigin(*prevCoordsIt);
                 prevCoordsIt++;
             }
 
-            foreach(Line *line, lines())
+            for(Line *line : lines())
             {
                 line->updateAABox();
                 line->updateSlopeType();
@@ -501,22 +480,22 @@ bool Polyobj::rotate(angle_t delta)
     return true;
 }
 
-void Polyobj::setTag(int newTag)
+void Polyobj::setTag(dint newTag)
 {
     tag = newTag;
 }
 
-void Polyobj::setSequenceType(int newType)
+void Polyobj::setSequenceType(dint newType)
 {
     seqType = newType;
 }
 
-int Polyobj::indexInMap() const
+dint Polyobj::indexInMap() const
 {
     return data().indexInMap;
 }
 
-void Polyobj::setIndexInMap(int newIndex)
+void Polyobj::setIndexInMap(dint newIndex)
 {
     data().indexInMap = newIndex;
 }
