@@ -287,6 +287,26 @@ DENG2_PIMPL(ModelDrawable)
     {
         LOG_RES_MSG("Loading model from %s") << file.description();
 
+        /*
+         * MD5: Multiple animation sequences are supported via multiple .md5anim files.
+         * Autodetect if these exist and make a list of their names.
+         */
+        String anims;
+        if(file.name().fileNameExtension() == ".md5mesh")
+        {
+            String const baseName = file.name().fileNameWithoutExtension() + "_";
+            for(auto const i : file.parent()->contents())
+            {
+                if(i.first.startsWith(baseName) &&
+                   i.first.fileNameExtension() == ".md5anim")
+                {
+                    if(!anims.isEmpty()) anims += ";";
+                    anims += i.first.substr(baseName.size()).fileNameWithoutExtension();
+                }
+            }
+        }
+        importer.SetPropertyString(AI_CONFIG_IMPORT_MD5_ANIM_SEQUENCE_NAMES, anims.toStdString());
+        
         scene = 0;
         sourcePath = file.path();
 
