@@ -22,29 +22,24 @@
 #include "de_base.h"
 #include "render/rend_main.h"
 
-#include "de_console.h"
-#include "de_render.h"
-#include "de_resource.h"
-#include "de_graphics.h"
-#include "de_ui.h"
-
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <QtAlgorithms>
 #include <QBitArray>
-//#include <de/libcore.h>
 #include <de/concurrency.h>
 #include <de/timer.h>
 #include <de/vector1.h>
 #include <de/GLState>
+#include <doomsday/console/cmd.h>
+#include <doomsday/console/var.h>
 
 #include "clientapp.h"
 #include "sys_system.h"
 #include "api_fontrender.h"
 
 #include "edit_bias.h"         /// @todo remove me
-//#include "network/net_main.h"  /// @todo remove me
+#include "r_util.h"
 
 #include "MaterialVariantSpec"
 #include "Texture"
@@ -74,21 +69,29 @@
 #include "TriangleStripBuilder"
 #include "WallEdge"
 
+#include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
 #include "gl/sys_opengl.h"
 
 #include "render/fx/bloom.h"
 #include "render/fx/vignette.h"
 #include "render/fx/lensflares.h"
-#include "render/rend_particle.h"
 #include "render/angleclipper.h"
 #include "render/blockmapvisual.h"
 #include "render/billboard.h"
-#include "render/vissprite.h"
+#include "render/cameralensfx.h"
+#include "render/r_main.h"
+#include "render/r_things.h"
+#include "render/rend_fakeradio.h"
+#include "render/rend_halo.h"
+#include "render/rend_particle.h"
 #include "render/skydrawable.h"
+#include "render/viewports.h"
+#include "render/vissprite.h"
 #include "render/vr.h"
 
 #include "ui/editors/rendererappearanceeditor.h"
+#include "ui/ui_main.h"
 
 using namespace de;
 
@@ -290,173 +293,6 @@ static inline WorldSystem &worldSys()
     return ClientApp::worldSystem();
 }
 
-static void scheduleFullLightGridUpdate()
-{
-    if(App_WorldSystem().hasMap())
-    {
-        Map &map = App_WorldSystem().map();
-        if(map.hasLightGrid())
-            map.lightGrid().scheduleFullUpdate();
-    }
-}
-
-static void unlinkMobjLumobjs()
-{
-    if(!worldSys().hasMap()) return;
-
-    worldSys().map().thinkers()
-            .forAll(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1, [] (thinker_t *th)
-    {
-        Mobj_UnlinkLumobjs(reinterpret_cast<mobj_t *>(th));
-        return LoopContinue;
-    });
-}
-
-/*
-static void fieldOfViewChanged()
-{
-    if(vrCfg().mode() == VRConfig::OculusRift)
-    {
-        if(Con_GetFloat("rend-vr-rift-fovx") != fieldOfView)
-            Con_SetFloat("rend-vr-rift-fovx", fieldOfView);
-    }
-    else
-    {
-        if(Con_GetFloat("rend-vr-nonrift-fovx") != fieldOfView)
-            Con_SetFloat("rend-vr-nonrift-fovx", fieldOfView);
-    }
-}*/
-
-static void detailFactorChanged()
-{
-    App_ResourceSystem().releaseGLTexturesByScheme("Details");
-}
-
-static void loadExtAlwaysChanged()
-{
-    GL_TexReset();
-}
-
-static void useSmartFilterChanged()
-{
-    GL_TexReset();
-}
-
-static void texGammaChanged()
-{
-    R_BuildTexGammaLut();
-    GL_TexReset();
-    LOG_GL_MSG("Texture gamma correction set to %f") << texGamma;
-}
-
-static void mipmappingChanged()
-{
-    GL_TexReset();
-}
-
-static void texQualityChanged()
-{
-    GL_TexReset();
-}
-
-void Rend_Register()
-{
-    C_VAR_INT   ("rend-bias",                       &useBias,                       0, 0, 1);
-    C_VAR_FLOAT ("rend-camera-fov",                 &fieldOfView,                   0, 1, 179);
-
-    C_VAR_FLOAT ("rend-glow",                       &glowFactor,                    0, 0, 2);
-    C_VAR_INT   ("rend-glow-height",                &glowHeightMax,                 0, 0, 1024);
-    C_VAR_FLOAT ("rend-glow-scale",                 &glowHeightFactor,              0, 0.1f, 10);
-    C_VAR_INT   ("rend-glow-wall",                  &useGlowOnWalls,                0, 0, 1);
-
-    C_VAR_BYTE  ("rend-info-lums",                  &rendInfoLums,                  0, 0, 1);
-
-    C_VAR_INT2  ("rend-light",                      &useDynLights,                  0, 0, 1, unlinkMobjLumobjs);
-    C_VAR_INT2  ("rend-light-ambient",              &ambientLight,                  0, 0, 255, Rend_UpdateLightModMatrix);
-    C_VAR_FLOAT ("rend-light-attenuation",          &rendLightDistanceAttenuation,  CVF_NO_MAX, 0, 0);
-    C_VAR_INT   ("rend-light-blend",                &dynlightBlend,                 0, 0, 2);
-    C_VAR_FLOAT ("rend-light-bright",               &dynlightFactor,                0, 0, 1);
-    C_VAR_FLOAT2("rend-light-compression",          &lightRangeCompression,         0, -1, 1, Rend_UpdateLightModMatrix);
-    C_VAR_BYTE  ("rend-light-decor",                &useLightDecorations,           0, 0, 1);
-    C_VAR_FLOAT ("rend-light-fog-bright",           &dynlightFogBright,             0, 0, 1);
-    C_VAR_INT   ("rend-light-multitex",             &useMultiTexLights,             0, 0, 1);
-    C_VAR_INT   ("rend-light-num",                  &rendMaxLumobjs,                CVF_NO_MAX, 0, 0);
-    C_VAR_FLOAT2("rend-light-sky",                  &rendSkyLight,                  0, 0, 1, scheduleFullLightGridUpdate);
-    C_VAR_BYTE2 ("rend-light-sky-auto",             &rendSkyLightAuto,              0, 0, 1, scheduleFullLightGridUpdate);
-    C_VAR_FLOAT ("rend-light-wall-angle",           &rendLightWallAngle,            CVF_NO_MAX, 0, 0);
-    C_VAR_BYTE  ("rend-light-wall-angle-smooth",    &rendLightWallAngleSmooth,      0, 0, 1);
-
-    C_VAR_BYTE  ("rend-map-material-precache",      &precacheMapMaterials,          0, 0, 1);
-
-    C_VAR_INT   ("rend-shadow",                     &useShadows,                    0, 0, 1);
-    C_VAR_FLOAT ("rend-shadow-darkness",            &shadowFactor,                  0, 0, 2);
-    C_VAR_INT   ("rend-shadow-far",                 &shadowMaxDistance,             CVF_NO_MAX, 0, 0);
-    C_VAR_INT   ("rend-shadow-radius-max",          &shadowMaxRadius,               CVF_NO_MAX, 0, 0);
-
-    C_VAR_INT   ("rend-tex",                        &renderTextures,                CVF_NO_ARCHIVE, 0, 2);
-    C_VAR_BYTE  ("rend-tex-anim-smooth",            &smoothTexAnim,                 0, 0, 1);
-    C_VAR_INT   ("rend-tex-detail",                 &r_detail,                      0, 0, 1);
-    C_VAR_INT   ("rend-tex-detail-multitex",        &useMultiTexDetails,            0, 0, 1);
-    C_VAR_FLOAT ("rend-tex-detail-scale",           &detailScale,                   CVF_NO_MIN | CVF_NO_MAX, 0, 0);
-    C_VAR_FLOAT2("rend-tex-detail-strength",        &detailFactor,                  0, 0, 5, detailFactorChanged);
-    C_VAR_BYTE2 ("rend-tex-external-always",        &loadExtAlways,                 0, 0, 1, loadExtAlwaysChanged);
-    C_VAR_INT   ("rend-tex-filter-anisotropic",     &texAniso,                      0, -1, 4);
-    C_VAR_INT   ("rend-tex-filter-mag",             &texMagMode,                    0, 0, 1);
-    C_VAR_INT2  ("rend-tex-filter-smart",           &useSmartFilter,                0, 0, 1, useSmartFilterChanged);
-    C_VAR_INT   ("rend-tex-filter-sprite",          &filterSprites,                 0, 0, 1);
-    C_VAR_INT   ("rend-tex-filter-ui",              &filterUI,                      0, 0, 1);
-    C_VAR_FLOAT2("rend-tex-gamma",                  &texGamma,                      0, 0, 1, texGammaChanged);
-    C_VAR_INT2  ("rend-tex-mipmap",                 &mipmapping,                    CVF_PROTECTED, 0, 5, mipmappingChanged);
-    C_VAR_INT2  ("rend-tex-quality",                &texQuality,                    0, 0, 8, texQualityChanged);
-    C_VAR_INT   ("rend-tex-shiny",                  &useShinySurfaces,              0, 0, 1);
-
-    C_VAR_BYTE  ("rend-bias-grid-debug",            &devLightGrid,                  CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_FLOAT ("rend-bias-grid-debug-size",       &devLightGridSize,              0,              .1f, 100);
-    C_VAR_BYTE  ("rend-dev-blockmap-debug",         &bmapShowDebug,                 CVF_NO_ARCHIVE, 0, 4);
-    C_VAR_FLOAT ("rend-dev-blockmap-debug-size",    &bmapDebugSize,                 CVF_NO_ARCHIVE, .1f, 100);
-    C_VAR_INT   ("rend-dev-cull-leafs",             &devNoCulling,                  CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE  ("rend-dev-freeze",                 &freezeRLs,                     CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE  ("rend-dev-generator-show-indices", &devDrawGenerators,             CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE  ("rend-dev-light-mod",              &devLightModRange,              CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE  ("rend-dev-lums",                   &devDrawLums,                   CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_INT   ("rend-dev-mobj-bbox",              &devMobjBBox,                   CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE  ("rend-dev-mobj-show-vlights",      &devMobjVLights,                CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_INT   ("rend-dev-polyobj-bbox",           &devPolyobjBBox,                CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE  ("rend-dev-sector-show-indices",    &devSectorIndices,              CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_INT   ("rend-dev-sky",                    &devRendSkyMode,                CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE  ("rend-dev-sky-always",             &devRendSkyAlways,              CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE  ("rend-dev-soundorigins",           &devSoundEmitters,              CVF_NO_ARCHIVE, 0, 7);
-    C_VAR_BYTE  ("rend-dev-surface-show-vectors",   &devSurfaceVectors,             CVF_NO_ARCHIVE, 0, 7);
-    C_VAR_BYTE  ("rend-dev-thinker-ids",            &devThinkerIds,                 CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE  ("rend-dev-tex-showfix",            &devNoTexFix,                   CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE  ("rend-dev-vertex-show-bars",       &devVertexBars,                 CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE  ("rend-dev-vertex-show-indices",    &devVertexIndices,              CVF_NO_ARCHIVE, 0, 1);
-
-    C_CMD       ("rendedit",    "",     OpenRendererAppearanceEditor);
-
-    C_CMD_FLAGS ("lowres",      "",     LowRes, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS ("mipmap",      "i",    MipMap, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS ("texreset",    "",     TexReset, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS ("texreset",    "s",    TexReset, CMDF_NO_DEDICATED);
-
-    BiasIllum::consoleRegister();
-    LightDecoration::consoleRegister();
-    LightGrid::consoleRegister();
-    Lumobj::consoleRegister();
-    SkyDrawable::consoleRegister();
-    Rend_ModelRegister();
-    Rend_ParticleRegister();
-    Generator::consoleRegister();
-    Rend_RadioRegister();
-    Rend_SpriteRegister();
-    LensFx_Register();
-    fx::Bloom::consoleRegister();
-    fx::Vignette::consoleRegister();
-    fx::LensFlares::consoleRegister();
-    Shard::consoleRegister();
-    VR_ConsoleRegister();
-}
-
 static void reportWallSectionDrawn(Line &line)
 {
     // Already been here?
@@ -471,6 +307,17 @@ static void reportWallSectionDrawn(Line &line)
     {
         gx.HandleMapObjectStatusReport(DMUSC_LINE_FIRSTRENDERED, line.indexInMap(),
                                        DMU_LINE, &playerNum);
+    }
+}
+
+static void scheduleFullLightGridUpdate()
+{
+    if(!worldSys().hasMap()) return;
+
+    // Schedule a LightGrid update.
+    if(worldSys().map().hasLightGrid())
+    {
+        worldSys().map().lightGrid().scheduleFullUpdate();
     }
 }
 
@@ -1026,264 +873,130 @@ static void flatShinyTexCoords(Vector2f *tc, Vector3f const &point)
     tc->y = shinyVertical(Rend_EyeOrigin().y - point.z, distToEye);
 }
 
-/// Paramaters for drawProjectedLights (POD).
-struct drawprojectedlights_parameters_t
+/**
+ * POD structure used to transport vertex data refs as a logical unit.
+ * @note The geometric data itself is not owned!
+ */
+struct Geometry
 {
-    duint lastIdx;
-    Vector3f const *rvertices;
-    duint numVertices, realNumVertices;
-    Vector3d const *topLeft;
-    Vector3d const *bottomRight;
-    bool isWall;
-    struct {
-        WallEdge const *leftEdge;
-        WallEdge const *rightEdge;
-    } wall;
+    Vector3f *pos;
+    Vector4f *color;
+    Vector2f *tex;
 };
 
-/**
- * Render all dynlights in projection list @a listIdx according to @a paramaters
- * writing them to the renderering lists for the current frame.
- *
- * @note If multi-texturing is being used for the first light; it is skipped.
- *
- * @return  Number of lights rendered.
- */
-static duint drawProjectedLights(duint listIdx, drawprojectedlights_parameters_t &parm)
+static void makeFlatLightGeometry(Geometry &geom, Vector3d const &topLeft, Vector3d const &bottomRight,
+    Vector3f const *rvertices, duint numVertices,
+    ProjectedTextureData const &tp)
 {
-    duint numDrawn = parm.lastIdx;
-
-    // Generate a new primitive for each light projection.
-    rendSys().forAllSurfaceProjections(listIdx, [&parm] (ProjectedTextureData const &tp)
+    for(duint i = 0; i < numVertices; ++i)
     {
-        // If multitexturing is in use we skip the first.
-        if(!(Rend_IsMTexLights() && parm.lastIdx == 0))
-        {
-            // Allocate enough for the divisions too.
-            Vector3f *verts       = R_AllocRendVertices(parm.realNumVertices);
-            Vector2f *texCoords   = R_AllocRendTexCoords(parm.realNumVertices);
-            Vector4f *colorCoords = R_AllocRendColors(parm.realNumVertices);
-            bool const mustSubdivide = (parm.isWall && (parm.wall.leftEdge->divisionCount() || parm.wall.rightEdge->divisionCount() ));
+        geom.color[i] = tp.color;
+    }
 
-            for(duint i = 0; i < parm.numVertices; ++i)
-            {
-                colorCoords[i] = tp.color;
-            }
+    dfloat const width  = bottomRight.x - topLeft.x;
+    dfloat const height = bottomRight.y - topLeft.y;
+    for(duint i = 0; i < numVertices; ++i)
+    {
+        geom.tex[i].x = ((bottomRight.x - rvertices[i].x) / width * tp.topLeft.x) +
+            ((rvertices[i].x - topLeft.x) / width * tp.bottomRight.x);
 
-            if(parm.isWall)
-            {
-                WallEdge const &leftEdge  = *parm.wall.leftEdge;
-                WallEdge const &rightEdge = *parm.wall.rightEdge;
+        geom.tex[i].y = ((bottomRight.y - rvertices[i].y) / height * tp.topLeft.y) +
+            ((rvertices[i].y - topLeft.y) / height * tp.bottomRight.y);
+    }
 
-                texCoords[1].x = texCoords[0].x = tp.topLeft.x;
-                texCoords[1].y = texCoords[3].y = tp.topLeft.y;
-                texCoords[3].x = texCoords[2].x = tp.bottomRight.x;
-                texCoords[2].y = texCoords[0].y = tp.bottomRight.y;
-
-                if(mustSubdivide)
-                {
-                    // Need to swap indices around into fans set the position
-                    // of the division vertices, interpolate texcoords and color.
-
-                    Vector3f origVerts[4]; std::memcpy(origVerts, parm.rvertices, sizeof(Vector3f) * 4);
-                    Vector2f origTexCoords[4]; std::memcpy(origTexCoords, texCoords, sizeof(Vector2f) * 4);
-                    Vector4f origColors[4]; std::memcpy(origColors, colorCoords, sizeof(Vector4f) * 4);
-
-                    R_DivVerts(verts, origVerts, leftEdge, rightEdge);
-                    R_DivTexCoords(texCoords, origTexCoords, leftEdge, rightEdge);
-                    R_DivVertColors(colorCoords, origColors, leftEdge, rightEdge);
-                }
-                else
-                {
-                    std::memcpy(verts, parm.rvertices, sizeof(Vector3f) * parm.numVertices);
-                }
-            }
-            else
-            {
-                // It's a flat.
-                dfloat const width  = parm.bottomRight->x - parm.topLeft->x;
-                dfloat const height = parm.bottomRight->y - parm.topLeft->y;
-
-                for(duint i = 0; i < parm.numVertices; ++i)
-                {
-                    texCoords[i].x = ((parm.bottomRight->x - parm.rvertices[i].x) / width * tp.topLeft.x) +
-                        ((parm.rvertices[i].x - parm.topLeft->x) / width * tp.bottomRight.x);
-
-                    texCoords[i].y = ((parm.bottomRight->y - parm.rvertices[i].y) / height * tp.topLeft.y) +
-                        ((parm.rvertices[i].y - parm.topLeft->y) / height * tp.bottomRight.y);
-                }
-
-                std::memcpy(verts, parm.rvertices, sizeof(Vector3f) * parm.numVertices);
-            }
-
-            DrawListSpec listSpec;
-            listSpec.group = LightGeom;
-            listSpec.texunits[TU_PRIMARY] = GLTextureUnit(tp.texture, gl::ClampToEdge, gl::ClampToEdge);
-
-            DrawList &lightList = rendSys().drawLists().find(listSpec);
-
-            if(mustSubdivide)
-            {
-                WallEdge const &leftEdge  = *parm.wall.leftEdge;
-                WallEdge const &rightEdge = *parm.wall.rightEdge;
-
-                lightList.write(gl::TriangleFan,
-                                BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
-                                Vector2f(1, 1), Vector2f(0, 0),
-                                0, 3 + rightEdge.divisionCount(),
-                                verts       + 3 + leftEdge.divisionCount(),
-                                colorCoords + 3 + leftEdge.divisionCount(),
-                                texCoords   + 3 + leftEdge.divisionCount())
-                         .write(gl::TriangleFan,
-                                BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
-                                Vector2f(1, 1), Vector2f(0, 0),
-                                0, 3 + leftEdge.divisionCount(),
-                                verts, colorCoords, texCoords);
-            }
-            else
-            {
-                lightList.write(parm.isWall? gl::TriangleStrip : gl::TriangleFan,
-                                BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
-                                Vector2f(1, 1), Vector2f(0, 0),
-                                0, parm.numVertices,
-                                verts, colorCoords, texCoords);
-            }
-
-            R_FreeRendVertices(verts);
-            R_FreeRendTexCoords(texCoords);
-            R_FreeRendColors(colorCoords);
-        }
-        parm.lastIdx++;
-        return LoopContinue;
-    });
-
-    numDrawn = parm.lastIdx - numDrawn;
-    if(Rend_IsMTexLights())
-        numDrawn -= 1;
-
-    return numDrawn;
+    std::memcpy(geom.pos, rvertices, sizeof(Vector3f) * numVertices);
 }
 
-/// Parameters for drawProjectedShadows (POD).
-struct drawprojectedshadows_parameters_t
+static void makeFlatShadowGeometry(Geometry &verts, Vector3d const &topLeft, Vector3d const &bottomRight,
+    Vector3f const *rvertices, duint numVertices,
+    ProjectedTextureData const &tp)
 {
-    duint lastIdx;
-    Vector3f const *rvertices;
-    duint numVertices, realNumVertices;
-    Vector3d const *topLeft;
-    Vector3d const *bottomRight;
-    bool isWall;
-    struct {
-        WallEdge const *leftEdge;
-        WallEdge const *rightEdge;
-    } wall;
-};
-
-/**
- * Draw all shadows in projection list @a listIdx according to @a parameters
- * writing them to the renderering lists for the current frame.
- */
-static void drawProjectedShadows(duint listIdx, drawprojectedshadows_parameters_t &parm)
-{
-    DrawListSpec listSpec;
-    listSpec.group = ShadowGeom;
-    listSpec.texunits[TU_PRIMARY] = GLTextureUnit(GL_PrepareLSTexture(LST_DYNAMIC),
-                                                  gl::ClampToEdge, gl::ClampToEdge);
-
-    // Write shadows to the draw lists.
-    DrawList &shadowList = rendSys().drawLists().find(listSpec);
-    rendSys().forAllSurfaceProjections(listIdx, [&shadowList, &parm] (ProjectedTextureData const &tp)
+    for(duint i = 0; i < numVertices; ++i)
     {
-        // Allocate enough for the divisions too.
-        Vector3f *verts       = R_AllocRendVertices(parm.realNumVertices);
-        Vector2f *texCoords   = R_AllocRendTexCoords(parm.realNumVertices);
-        Vector4f *colorCoords = R_AllocRendColors(parm.realNumVertices);
-        bool const mustSubdivide = (parm.isWall && (parm.wall.leftEdge->divisionCount() || parm.wall.rightEdge->divisionCount() ));
+        verts.color[i] = tp.color;
+    }
 
-        for(duint i = 0; i < parm.numVertices; ++i)
-        {
-            colorCoords[i] = tp.color;
-        }
+    dfloat const width  = bottomRight.x - topLeft.x;
+    dfloat const height = bottomRight.y - topLeft.y;
 
-        if(parm.isWall)
-        {
-            WallEdge const &leftEdge  = *parm.wall.leftEdge;
-            WallEdge const &rightEdge = *parm.wall.rightEdge;
+    for(duint i = 0; i < numVertices; ++i)
+    {
+        verts.tex[i].x = ((bottomRight.x - rvertices[i].x) / width * tp.topLeft.x) +
+            ((rvertices[i].x - topLeft.x) / width * tp.bottomRight.x);
 
-            texCoords[1].x = texCoords[0].x = tp.topLeft.x;
-            texCoords[1].y = texCoords[3].y = tp.topLeft.y;
-            texCoords[3].x = texCoords[2].x = tp.bottomRight.x;
-            texCoords[2].y = texCoords[0].y = tp.bottomRight.y;
+        verts.tex[i].y = ((bottomRight.y - rvertices[i].y) / height * tp.topLeft.y) +
+            ((rvertices[i].y - topLeft.y) / height * tp.bottomRight.y);
+    }
 
-            if(mustSubdivide)
-            {
-                // Need to swap indices around into fans set the position of the
-                // division vertices, interpolate texcoords and color.
+    std::memcpy(verts.pos, rvertices, sizeof(Vector3f) * numVertices);
+}
 
-                Vector3f origVerts[4]; std::memcpy(origVerts, parm.rvertices, sizeof(Vector3f) * 4);
-                Vector2f origTexCoords[4]; std::memcpy(origTexCoords, texCoords, sizeof(Vector2f) * 4);
-                Vector4f origColors[4]; std::memcpy(origColors, colorCoords, sizeof(Vector4f) * 4);
+static void makeWallLightGeometry(Geometry &geom, Vector3d const &topLeft, Vector3d const &bottomRight,
+    Vector3f const *rvertices, duint numVertices, WallEdge const &leftEdge, WallEdge const &rightEdge,
+    ProjectedTextureData const &tp)
+{
+    for(duint i = 0; i < numVertices; ++i)
+    {
+        geom.color[i] = tp.color;
+    }
 
-                R_DivVerts(verts, origVerts, leftEdge, rightEdge);
-                R_DivTexCoords(texCoords, origTexCoords, leftEdge, rightEdge);
-                R_DivVertColors(colorCoords, origColors, leftEdge, rightEdge);
-            }
-            else
-            {
-                std::memcpy(verts, parm.rvertices, sizeof(Vector3f) * parm.numVertices);
-            }
-        }
-        else
-        {
-            // It's a flat.
-            dfloat const width  = parm.bottomRight->x - parm.topLeft->x;
-            dfloat const height = parm.bottomRight->y - parm.topLeft->y;
+    geom.tex[1].x = geom.tex[0].x = tp.topLeft.x;
+    geom.tex[1].y = geom.tex[3].y = tp.topLeft.y;
+    geom.tex[3].x = geom.tex[2].x = tp.bottomRight.x;
+    geom.tex[2].y = geom.tex[0].y = tp.bottomRight.y;
 
-            for(duint i = 0; i < parm.numVertices; ++i)
-            {
-                texCoords[i].x = ((parm.bottomRight->x - parm.rvertices[i].x) / width * tp.topLeft.x) +
-                    ((parm.rvertices[i].x - parm.topLeft->x) / width * tp.bottomRight.x);
+    // If either edge has divisions - make two trifans.
+    if(leftEdge.divisionCount() || rightEdge.divisionCount())
+    {
+        // Need to swap indices around into fans set the position
+        // of the division vertices, interpolate texcoords and color.
 
-                texCoords[i].y = ((parm.bottomRight->y - parm.rvertices[i].y) / height * tp.topLeft.y) +
-                    ((parm.rvertices[i].y - parm.topLeft->y) / height * tp.bottomRight.y);
-            }
+        Vector3f origPosCoords[4]; std::memcpy(origPosCoords, rvertices,  sizeof(Vector3f) * 4);
+        Vector2f origTexCoords[4]; std::memcpy(origTexCoords, geom.tex,   sizeof(Vector2f) * 4);
+        Vector4f origColors[4];    std::memcpy(origColors,    geom.color, sizeof(Vector4f) * 4);
 
-            std::memcpy(verts, parm.rvertices, sizeof(Vector3f) * parm.numVertices);
-        }
+        R_DivVerts    (geom.pos, origPosCoords, leftEdge, rightEdge);
+        R_DivTexCoords(geom.tex, origTexCoords, leftEdge, rightEdge);
+        R_DivVertColors(geom.color, origColors, leftEdge, rightEdge);
+    }
+    else
+    {
+        std::memcpy(geom.pos, rvertices, sizeof(Vector3f) * numVertices);
+    }
+}
 
-        if(mustSubdivide)
-        {
-            WallEdge const &leftEdge  = *parm.wall.leftEdge;
-            WallEdge const &rightEdge = *parm.wall.rightEdge;
+static void makeWallShadowGeometry(Geometry &verts, Vector3d const &topLeft, Vector3d const &bottomRight,
+    Vector3f const *rvertices, duint numVertices, WallEdge const &leftEdge, WallEdge const &rightEdge,
+    ProjectedTextureData const &tp)
+{
+    for(duint i = 0; i < numVertices; ++i)
+    {
+        verts.color[i] = tp.color;
+    }
 
-            shadowList.write(gl::TriangleFan,
-                             BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
-                             Vector2f(1, 1), Vector2f(0, 0),
-                             0, 3 + rightEdge.divisionCount(),
-                             verts       + 3 + leftEdge.divisionCount(),
-                             colorCoords + 3 + leftEdge.divisionCount(),
-                             texCoords   + 3 + leftEdge.divisionCount())
-                      .write(gl::TriangleFan,
-                             BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
-                             Vector2f(1, 1), Vector2f(0, 0),
-                             0, 3 + leftEdge.divisionCount(),
-                             verts, colorCoords, texCoords);
-        }
-        else
-        {
-            shadowList.write(parm.isWall? gl::TriangleStrip : gl::TriangleFan,
-                             BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
-                             Vector2f(1, 1), Vector2f(0, 0),
-                             0, parm.numVertices,
-                             verts, colorCoords, texCoords);
-        }
+    verts.tex[1].x = verts.tex[0].x = tp.topLeft.x;
+    verts.tex[1].y = verts.tex[3].y = tp.topLeft.y;
+    verts.tex[3].x = verts.tex[2].x = tp.bottomRight.x;
+    verts.tex[2].y = verts.tex[0].y = tp.bottomRight.y;
 
-        R_FreeRendVertices(verts);
-        R_FreeRendTexCoords(texCoords);
-        R_FreeRendColors(colorCoords);
+    // If either edge has divisions - make two trifans.
+    if(leftEdge.divisionCount() || rightEdge.divisionCount())
+    {
+        // Need to swap indices around into fans set the position of the
+        // division vertices, interpolate texcoords and color.
 
-        return LoopContinue;
-    });
+        Vector3f origposCoords[4]; std::memcpy(origposCoords, rvertices,   sizeof(Vector3f) * 4);
+        Vector2f origTexCoords[4]; std::memcpy(origTexCoords, verts.tex,   sizeof(Vector2f) * 4);
+        Vector4f origColors[4];    std::memcpy(origColors,    verts.color, sizeof(Vector4f) * 4);
+
+        R_DivVerts     (verts.pos,   origposCoords, leftEdge, rightEdge);
+        R_DivTexCoords (verts.tex,   origTexCoords, leftEdge, rightEdge);
+        R_DivVertColors(verts.color, origColors,    leftEdge, rightEdge);
+    }
+    else
+    {
+        std::memcpy(verts.pos, rvertices, sizeof(Vector3f) * numVertices);
+    }
 }
 
 struct rendworldpoly_params_t
@@ -1327,8 +1040,8 @@ static bool renderWorldPoly(Vector3f *posCoords, duint numVertices,
     // Ensure we've up to date info about the material.
     matAnimator.prepare();
 
-    duint const realNumVertices  = (p.isWall? 3 + p.wall.leftEdge->divisionCount() + 3 + p.wall.rightEdge->divisionCount() : numVertices);
-    bool const mustSubdivide     = (p.isWall && (p.wall.leftEdge->divisionCount() || p.wall.rightEdge->divisionCount()));
+    duint const realNumVertices = (p.isWall ? 3 + p.wall.leftEdge->divisionCount() + 3 + p.wall.rightEdge->divisionCount() : numVertices);
+    bool const mustSubdivide    = (p.isWall && (p.wall.leftEdge->divisionCount() || p.wall.rightEdge->divisionCount()));
 
     bool const skyMaskedMaterial = (p.skyMasked || (matAnimator.material().isSkyMasked()));
     bool const drawAsVisSprite   = (!p.forceOpaque && !p.skyMasked && (!matAnimator.isOpaque() || p.alpha < 1 || p.blendMode > 0));
@@ -1632,45 +1345,157 @@ static bool renderWorldPoly(Vector3f *posCoords, duint numVertices,
 
     if(useLights)
     {
-        // Render all lights projected onto this surface.
-        drawprojectedlights_parameters_t parm; de::zap(parm);
-        parm.rvertices       = posCoords;
-        parm.numVertices     = numVertices;
-        parm.realNumVertices = realNumVertices;
-        parm.lastIdx         = 0;
-        parm.topLeft         = p.topLeft;
-        parm.bottomRight     = p.bottomRight;
-        parm.isWall          = p.isWall;
-        if(parm.isWall)
-        {
-            parm.wall.leftEdge  = p.wall.leftEdge;
-            parm.wall.rightEdge = p.wall.rightEdge;
-        }
+        // Write projected lights.
+        // Multitexturing can be used for the first light.
+        bool const skipFirst = Rend_IsMTexLights();
 
-        hasDynlights = (0 != drawProjectedLights(p.lightListIdx, parm));
+        duint numWritten = 0;
+        rendSys().forAllSurfaceProjections(p.lightListIdx,
+                                           [&p, &posCoords, &numVertices, &skipFirst, &numWritten]
+                                           (ProjectedTextureData const &tp)
+        {
+            if(!(skipFirst && numWritten == 0))
+            {
+                // Light texture determines the list to write to.
+                DrawListSpec listSpec;
+                listSpec.group = LightGeom;
+                listSpec.texunits[TU_PRIMARY] = GLTextureUnit(tp.texture, gl::ClampToEdge, gl::ClampToEdge);
+
+                // Make geometry.
+                Geometry verts;
+                duint const numVerts = p.isWall ? 3 + p.wall.leftEdge->divisionCount() + 3 + p.wall.rightEdge->divisionCount()
+                                                : numVertices;
+                // Allocate verts from the pools.
+                verts.pos   = R_AllocRendVertices (numVerts);
+                verts.color = R_AllocRendColors   (numVerts);
+                verts.tex   = R_AllocRendTexCoords(numVerts);
+                if(p.isWall)
+                {
+                    makeWallLightGeometry(verts, *p.topLeft, *p.bottomRight,
+                                          posCoords, numVertices, *p.wall.leftEdge, *p.wall.rightEdge, tp);
+                }
+                else
+                {
+                    makeFlatLightGeometry(verts, *p.topLeft, *p.bottomRight,
+                                          posCoords, numVertices, tp);
+                }
+
+                // Write geometry.
+                // Walls with edge divisions mean two trifans.
+                if(p.isWall && (p.wall.leftEdge->divisionCount() || p.wall.rightEdge->divisionCount()))
+                {
+                    duint const numLeftVerts  = 3 + p.wall.leftEdge->divisionCount();
+                    duint const numRightVerts = 3 + p.wall.rightEdge->divisionCount();
+
+                    rendSys().drawLists().find(listSpec)
+                                 .write(gl::TriangleFan, BM_NORMAL,
+                                        Vector2f(1, 1), Vector2f(0, 0),
+                                        Vector2f(1, 1), Vector2f(0, 0), false /*not lit*/,
+                                        numRightVerts,
+                                        verts.pos   + numLeftVerts,
+                                        verts.color + numLeftVerts,
+                                        verts.tex   + numLeftVerts)
+                                 .write(gl::TriangleFan, BM_NORMAL,
+                                        Vector2f(1, 1), Vector2f(0, 0),
+                                        Vector2f(1, 1), Vector2f(0, 0), false /*not lit*/,
+                                        numLeftVerts,
+                                        verts.pos, verts.color, verts.tex);
+                }
+                else
+                {
+                    rendSys().drawLists().find(listSpec)
+                                 .write(p.isWall ? gl::TriangleStrip : gl::TriangleFan, BM_NORMAL,
+                                        Vector2f(1, 1), Vector2f(0, 0),
+                                        Vector2f(1, 1), Vector2f(0, 0), false /*not lit*/,
+                                        numVertices,
+                                        verts.pos, verts.color, verts.tex);
+                }
+
+                // We're done with the geometry.
+                R_FreeRendVertices (verts.pos);
+                R_FreeRendColors   (verts.color);
+                R_FreeRendTexCoords(verts.tex);
+
+                numWritten += 1;
+            }
+            return LoopContinue;
+        });
+
+        hasDynlights = numWritten > 1;
     }
 
     if(useShadows)
     {
-        // Render all shadows projected onto this surface.
-        drawprojectedshadows_parameters_t parm; de::zap(parm);
-        parm.rvertices       = posCoords;
-        parm.numVertices     = numVertices;
-        parm.realNumVertices = realNumVertices;
-        parm.topLeft         = p.topLeft;
-        parm.bottomRight     = p.bottomRight;
-        parm.isWall          = p.isWall;
-        if(parm.isWall)
-        {
-            parm.wall.leftEdge  = p.wall.leftEdge;
-            parm.wall.rightEdge = p.wall.rightEdge;
-        }
+        // Write projected shadows.
+        // All shadows use the same texture (so use the same list).
+        DrawListSpec listSpec;
+        listSpec.group = ShadowGeom;
+        listSpec.texunits[TU_PRIMARY] = GLTextureUnit(GL_PrepareLSTexture(LST_DYNAMIC), gl::ClampToEdge, gl::ClampToEdge);
+        DrawList &shadowList = rendSys().drawLists().find(listSpec);
 
-        drawProjectedShadows(p.shadowListIdx, parm);
+        rendSys().forAllSurfaceProjections(p.shadowListIdx,
+                                           [&p, &posCoords, &numVertices, &shadowList]
+                                           (ProjectedTextureData const &tp)
+        {
+            // Make geometry.
+            Geometry verts;
+            duint const numVerts = p.isWall ? 3 + p.wall.leftEdge->divisionCount() + 3 + p.wall.rightEdge->divisionCount()
+                                            : numVertices;
+            // Allocate verts from the pools.
+            verts.pos   = R_AllocRendVertices (numVerts);
+            verts.color = R_AllocRendColors   (numVerts);
+            verts.tex   = R_AllocRendTexCoords(numVerts);
+            if(p.isWall)
+            {
+                makeWallShadowGeometry(verts, *p.topLeft, *p.bottomRight,
+                                       posCoords, numVertices, *p.wall.leftEdge, *p.wall.rightEdge, tp);
+            }
+            else
+            {
+                makeFlatShadowGeometry(verts, *p.topLeft, *p.bottomRight,
+                                       posCoords, numVertices, tp);
+            }
+
+            // Write geometry.
+            // Walls with edge divisions mean two trifans.
+            if(p.isWall && (p.wall.leftEdge->divisionCount() || p.wall.rightEdge->divisionCount()))
+            {
+                duint const numLeftVerts  = 3 + p.wall.leftEdge->divisionCount();
+                duint const numRightVerts = 3 + p.wall.rightEdge->divisionCount();
+
+                shadowList.write(gl::TriangleFan, BM_NORMAL,
+                                 Vector2f(1, 1), Vector2f(0, 0),
+                                 Vector2f(1, 1), Vector2f(0, 0), false /*not lit*/,
+                                 numRightVerts,
+                                 verts.pos   + numLeftVerts,
+                                 verts.color + numLeftVerts,
+                                 verts.tex   + numLeftVerts)
+                          .write(gl::TriangleFan, BM_NORMAL,
+                                 Vector2f(1, 1), Vector2f(0, 0),
+                                 Vector2f(1, 1), Vector2f(0, 0), false /*not lit*/,
+                                 numLeftVerts,
+                                 verts.pos, verts.color, verts.tex);
+            }
+            else
+            {
+                shadowList.write(p.isWall ? gl::TriangleStrip : gl::TriangleFan, BM_NORMAL,
+                                 Vector2f(1, 1), Vector2f(0, 0),
+                                 Vector2f(1, 1), Vector2f(0, 0), false /*not lit*/,
+                                 numVerts,
+                                 verts.pos, verts.color, verts.tex);
+            }
+
+            // We're done with the geometry.
+            R_FreeRendVertices (verts.pos);
+            R_FreeRendColors   (verts.color);
+            R_FreeRendTexCoords(verts.tex);
+
+            return LoopContinue;
+        });
     }
 
     // Write multiple polys depending on rend params.
-    if(mustSubdivide)
+    if(p.isWall && mustSubdivide)
     {
         WallEdge const &leftEdge  = *p.wall.leftEdge;
         WallEdge const &rightEdge = *p.wall.rightEdge;
@@ -1728,8 +1553,7 @@ static bool renderWorldPoly(Vector3f *posCoords, duint numVertices,
 
         if(p.skyMasked)
         {
-            ClientApp::renderSystem().drawLists()
-                      .find(DrawListSpec(SkyMaskGeom))
+            rendSys().drawLists().find(DrawListSpec(SkyMaskGeom))
                           .write(gl::TriangleFan,
                                  BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
                                  Vector2f(1, 1), Vector2f(0, 0),
@@ -1791,8 +1615,7 @@ static bool renderWorldPoly(Vector3f *posCoords, duint numVertices,
                 }
             }
 
-            ClientApp::renderSystem().drawLists()
-                      .find(listSpec)
+            rendSys().drawLists().find(listSpec)
                           .write(gl::TriangleFan, BM_NORMAL,
                                  listSpec.unit(TU_PRIMARY       ).scale,
                                  listSpec.unit(TU_PRIMARY       ).offset,
@@ -1833,8 +1656,7 @@ static bool renderWorldPoly(Vector3f *posCoords, duint numVertices,
                     }
                 }
 
-                ClientApp::renderSystem().drawLists()
-                          .find(listSpec)
+                rendSys().drawLists().find(listSpec)
                               .write(gl::TriangleFan, matAnimator.shineBlendMode(),
                                      listSpec.unit(TU_INTER).scale,
                                      listSpec.unit(TU_INTER).offset,
@@ -1858,8 +1680,7 @@ static bool renderWorldPoly(Vector3f *posCoords, duint numVertices,
     {
         if(p.skyMasked)
         {
-            ClientApp::renderSystem().drawLists()
-                      .find(DrawListSpec(SkyMaskGeom))
+            rendSys().drawLists().find(DrawListSpec(SkyMaskGeom))
                           .write(p.isWall? gl::TriangleStrip : gl::TriangleFan,
                                  BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
                                  Vector2f(1, 1), Vector2f(0, 0),
@@ -1916,8 +1737,7 @@ static bool renderWorldPoly(Vector3f *posCoords, duint numVertices,
                 }
             }
 
-            ClientApp::renderSystem().drawLists()
-                      .find(listSpec)
+            rendSys().drawLists().find(listSpec)
                           .write(p.isWall? gl::TriangleStrip : gl::TriangleFan,
                                  BM_NORMAL,
                                  listSpec.unit(TU_PRIMARY       ).scale,
@@ -1948,8 +1768,7 @@ static bool renderWorldPoly(Vector3f *posCoords, duint numVertices,
                     }
                 }
 
-                ClientApp::renderSystem().drawLists()
-                          .find(listSpec)
+                rendSys().drawLists().find(listSpec)
                               .write(p.isWall? gl::TriangleStrip : gl::TriangleFan,
                                      matAnimator.shineBlendMode(),
                                      listSpec.unit(TU_INTER         ).scale,
@@ -3597,8 +3416,7 @@ static void makeCurrent(ConvexSubspace &subspace)
 static void traverseBspTreeAndDrawSubspaces(Map::BspTree const *bspTree)
 {
     DENG2_ASSERT(bspTree);
-
-    AngleClipper &clipper = rendSys().angleClipper();
+    AngleClipper const &clipper = rendSys().angleClipper();
 
     while(!bspTree->isLeaf())
     {
@@ -3622,7 +3440,7 @@ static void traverseBspTreeAndDrawSubspaces(Map::BspTree const *bspTree)
     }
     // We've arrived at a leaf.
 
-    // Only leafs with a convex subspace geometry have drawable geometries.
+    // Only leafs with a convex subspace geometry contain surfaces to draw.
     if(ConvexSubspace *subspace = bspTree->userData()->as<BspLeaf>().subspacePtr())
     {
         DENG2_ASSERT(subspace->hasCluster());
@@ -5772,7 +5590,7 @@ static String labelForCluster(SectorCluster const &cluster)
  */
 static void drawSectors(Map &map)
 {
-#define MAX_LABEL_DIST 1280
+    static coord_t const MAX_LABEL_DIST = 1280;
 
     if(!devSectorIndices) return;
 
@@ -5789,8 +5607,6 @@ static void drawSectors(Map &map)
         }
         return LoopContinue;
     });
-
-#undef MAX_LABEL_DIST
 }
 
 static String labelForThinker(thinker_t *thinker)
@@ -5953,6 +5769,22 @@ D_CMD(LowRes)
     return true;
 }
 
+D_CMD(MipMap)
+{
+    DENG2_UNUSED2(src, argc);
+
+    dint newMipMode = String(argv[1]).toInt();
+    if(newMipMode < 0 || newMipMode > 5)
+    {
+        LOG_SCR_ERROR("Invalid mipmapping mode %i; the valid range is 0...5") << newMipMode;
+        return false;
+    }
+
+    mipmapping = newMipMode;
+    //GL_SetAllTexturesMinFilter(glmode[mipmapping]);
+    return true;
+}
+
 D_CMD(TexReset)
 {
     DENG2_UNUSED(src);
@@ -5970,18 +5802,165 @@ D_CMD(TexReset)
     return true;
 }
 
-D_CMD(MipMap)
+static void detailFactorChanged()
 {
-    DENG2_UNUSED2(src, argc);
+    App_ResourceSystem().releaseGLTexturesByScheme("Details");
+}
 
-    dint newMipMode = String(argv[1]).toInt();
-    if(newMipMode < 0 || newMipMode > 5)
+/*
+static void fieldOfViewChanged()
+{
+    if(vrCfg().mode() == VRConfig::OculusRift)
     {
-        LOG_SCR_ERROR("Invalid mipmapping mode %i; the valid range is 0...5") << newMipMode;
-        return false;
+        if(Con_GetFloat("rend-vr-rift-fovx") != fieldOfView)
+            Con_SetFloat("rend-vr-rift-fovx", fieldOfView);
     }
+    else
+    {
+        if(Con_GetFloat("rend-vr-nonrift-fovx") != fieldOfView)
+            Con_SetFloat("rend-vr-nonrift-fovx", fieldOfView);
+    }
+}*/
 
-    mipmapping = newMipMode;
-    //GL_SetAllTexturesMinFilter(glmode[mipmapping]);
-    return true;
+static void loadExtAlwaysChanged()
+{
+    GL_TexReset();
+}
+
+static void mipmappingChanged()
+{
+    GL_TexReset();
+}
+
+static void texGammaChanged()
+{
+    R_BuildTexGammaLut();
+    GL_TexReset();
+    LOG_GL_MSG("Texture gamma correction set to %f") << texGamma;
+}
+
+static void texQualityChanged()
+{
+    GL_TexReset();
+}
+
+static void useDynlightsChanged()
+{
+    if(!worldSys().hasMap()) return;
+
+    // Unlink luminous objects.
+    worldSys().map().thinkers()
+        .forAll(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1, [](thinker_t *th)
+    {
+        Mobj_UnlinkLumobjs(reinterpret_cast<mobj_t *>(th));
+        return LoopContinue;
+    });
+}
+
+static void useSkylightChanged()
+{
+    scheduleFullLightGridUpdate();
+}
+
+static void useSmartFilterChanged()
+{
+    GL_TexReset();
+}
+
+void Rend_Register()
+{
+    C_VAR_INT("rend-bias", &useBias, 0, 0, 1);
+    C_VAR_FLOAT("rend-camera-fov", &fieldOfView, 0, 1, 179);
+
+    C_VAR_FLOAT("rend-glow", &glowFactor, 0, 0, 2);
+    C_VAR_INT("rend-glow-height", &glowHeightMax, 0, 0, 1024);
+    C_VAR_FLOAT("rend-glow-scale", &glowHeightFactor, 0, 0.1f, 10);
+    C_VAR_INT("rend-glow-wall", &useGlowOnWalls, 0, 0, 1);
+
+    C_VAR_BYTE("rend-info-lums", &rendInfoLums, 0, 0, 1);
+
+    C_VAR_INT2("rend-light", &useDynLights, 0, 0, 1, useDynlightsChanged);
+    C_VAR_INT2("rend-light-ambient", &ambientLight, 0, 0, 255, Rend_UpdateLightModMatrix);
+    C_VAR_FLOAT("rend-light-attenuation", &rendLightDistanceAttenuation, CVF_NO_MAX, 0, 0);
+    C_VAR_INT("rend-light-blend", &dynlightBlend, 0, 0, 2);
+    C_VAR_FLOAT("rend-light-bright", &dynlightFactor, 0, 0, 1);
+    C_VAR_FLOAT2("rend-light-compression", &lightRangeCompression, 0, -1, 1, Rend_UpdateLightModMatrix);
+    C_VAR_BYTE("rend-light-decor", &useLightDecorations, 0, 0, 1);
+    C_VAR_FLOAT("rend-light-fog-bright", &dynlightFogBright, 0, 0, 1);
+    C_VAR_INT("rend-light-multitex", &useMultiTexLights, 0, 0, 1);
+    C_VAR_INT("rend-light-num", &rendMaxLumobjs, CVF_NO_MAX, 0, 0);
+    C_VAR_FLOAT2("rend-light-sky", &rendSkyLight, 0, 0, 1, useSkylightChanged);
+    C_VAR_BYTE2("rend-light-sky-auto", &rendSkyLightAuto, 0, 0, 1, useSkylightChanged);
+    C_VAR_FLOAT("rend-light-wall-angle", &rendLightWallAngle, CVF_NO_MAX, 0, 0);
+    C_VAR_BYTE("rend-light-wall-angle-smooth", &rendLightWallAngleSmooth, 0, 0, 1);
+
+    C_VAR_BYTE("rend-map-material-precache", &precacheMapMaterials, 0, 0, 1);
+
+    C_VAR_INT("rend-shadow", &useShadows, 0, 0, 1);
+    C_VAR_FLOAT("rend-shadow-darkness", &shadowFactor, 0, 0, 2);
+    C_VAR_INT("rend-shadow-far", &shadowMaxDistance, CVF_NO_MAX, 0, 0);
+    C_VAR_INT("rend-shadow-radius-max", &shadowMaxRadius, CVF_NO_MAX, 0, 0);
+
+    C_VAR_INT("rend-tex", &renderTextures, CVF_NO_ARCHIVE, 0, 2);
+    C_VAR_BYTE("rend-tex-anim-smooth", &smoothTexAnim, 0, 0, 1);
+    C_VAR_INT("rend-tex-detail", &r_detail, 0, 0, 1);
+    C_VAR_INT("rend-tex-detail-multitex", &useMultiTexDetails, 0, 0, 1);
+    C_VAR_FLOAT("rend-tex-detail-scale", &detailScale, CVF_NO_MIN | CVF_NO_MAX, 0, 0);
+    C_VAR_FLOAT2("rend-tex-detail-strength", &detailFactor, 0, 0, 5, detailFactorChanged);
+    C_VAR_BYTE2("rend-tex-external-always", &loadExtAlways, 0, 0, 1, loadExtAlwaysChanged);
+    C_VAR_INT("rend-tex-filter-anisotropic", &texAniso, 0, -1, 4);
+    C_VAR_INT("rend-tex-filter-mag", &texMagMode, 0, 0, 1);
+    C_VAR_INT2("rend-tex-filter-smart", &useSmartFilter, 0, 0, 1, useSmartFilterChanged);
+    C_VAR_INT("rend-tex-filter-sprite", &filterSprites, 0, 0, 1);
+    C_VAR_INT("rend-tex-filter-ui", &filterUI, 0, 0, 1);
+    C_VAR_FLOAT2("rend-tex-gamma", &texGamma, 0, 0, 1, texGammaChanged);
+    C_VAR_INT2("rend-tex-mipmap", &mipmapping, CVF_PROTECTED, 0, 5, mipmappingChanged);
+    C_VAR_INT2("rend-tex-quality", &texQuality, 0, 0, 8, texQualityChanged);
+    C_VAR_INT("rend-tex-shiny", &useShinySurfaces, 0, 0, 1);
+
+    C_VAR_BYTE("rend-bias-grid-debug", &devLightGrid, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_FLOAT("rend-bias-grid-debug-size", &devLightGridSize, 0, .1f, 100);
+    C_VAR_BYTE("rend-dev-blockmap-debug", &bmapShowDebug, CVF_NO_ARCHIVE, 0, 4);
+    C_VAR_FLOAT("rend-dev-blockmap-debug-size", &bmapDebugSize, CVF_NO_ARCHIVE, .1f, 100);
+    C_VAR_INT("rend-dev-cull-leafs", &devNoCulling, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE("rend-dev-freeze", &freezeRLs, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE("rend-dev-generator-show-indices", &devDrawGenerators, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE("rend-dev-light-mod", &devLightModRange, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE("rend-dev-lums", &devDrawLums, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_INT("rend-dev-mobj-bbox", &devMobjBBox, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE("rend-dev-mobj-show-vlights", &devMobjVLights, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_INT("rend-dev-polyobj-bbox", &devPolyobjBBox, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE("rend-dev-sector-show-indices", &devSectorIndices, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_INT("rend-dev-sky", &devRendSkyMode, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE("rend-dev-sky-always", &devRendSkyAlways, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE("rend-dev-soundorigins", &devSoundEmitters, CVF_NO_ARCHIVE, 0, 7);
+    C_VAR_BYTE("rend-dev-surface-show-vectors", &devSurfaceVectors, CVF_NO_ARCHIVE, 0, 7);
+    C_VAR_BYTE("rend-dev-thinker-ids", &devThinkerIds, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE("rend-dev-tex-showfix", &devNoTexFix, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE("rend-dev-vertex-show-bars", &devVertexBars, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE("rend-dev-vertex-show-indices", &devVertexIndices, CVF_NO_ARCHIVE, 0, 1);
+
+    C_CMD("rendedit", "", OpenRendererAppearanceEditor);
+
+    C_CMD_FLAGS("lowres", "", LowRes, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("mipmap", "i", MipMap, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("texreset", "", TexReset, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("texreset", "s", TexReset, CMDF_NO_DEDICATED);
+
+    BiasIllum::consoleRegister();
+    LightDecoration::consoleRegister();
+    LightGrid::consoleRegister();
+    Lumobj::consoleRegister();
+    SkyDrawable::consoleRegister();
+    Rend_ModelRegister();
+    Rend_ParticleRegister();
+    Generator::consoleRegister();
+    Rend_RadioRegister();
+    Rend_SpriteRegister();
+    LensFx_Register();
+    fx::Bloom::consoleRegister();
+    fx::Vignette::consoleRegister();
+    fx::LensFlares::consoleRegister();
+    Shard::consoleRegister();
+    VR_ConsoleRegister();
 }
