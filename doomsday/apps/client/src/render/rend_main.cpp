@@ -2432,20 +2432,7 @@ static void writeWallSection(HEdge &hedge, dint section,
         curSectorLightLevel = side.sector().lightLevel();
     }
 
-    // Allocate position coordinates.
-    Vector3f *posCoords;
-    if(leftEdge.divisionCount() || rightEdge.divisionCount())
-    {
-        // Two fans plus edge divisions.
-        posCoords = R_AllocRendVertices(3 + leftEdge.divisionCount() +
-                                        3 + rightEdge.divisionCount());
-    }
-    else
-    {
-        // One quad.
-        posCoords = R_AllocRendVertices(4);
-    }
-
+    Vector3f posCoords[4];
     posCoords[0] =  leftEdge.bottom().origin();
     posCoords[1] =     leftEdge.top().origin();
     posCoords[2] = rightEdge.bottom().origin();
@@ -2477,8 +2464,6 @@ static void writeWallSection(HEdge &hedge, dint section,
         curSectorLightColor = color.toVector3f();
         curSectorLightLevel = color.w;
     }
-
-    R_FreeRendVertices(posCoords);
 
     if(retWroteOpaque) *retWroteOpaque = wroteOpaque && !didNearFade;
     if(retBottomZ)     *retBottomZ     = leftEdge.bottom().z();
