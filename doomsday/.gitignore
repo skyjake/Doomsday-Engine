@@ -1,5 +1,4 @@
 BUILD.*
-versions.pri
 Makefile
 Doomsday.tmproj
 mybuild
@@ -7,6 +6,5 @@ myrelease
 .kdev4
 doomsday.kdev4
 *.user
-config_user.pri
 apidoc-qch
 
