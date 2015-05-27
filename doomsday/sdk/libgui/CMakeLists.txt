@@ -4,6 +4,9 @@ cmake_minimum_required (VERSION 3.1)
 project (DENG_LIBGUI)
 include (../../cmake/Config.cmake)
 
+set (ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL "Build assimp tools")
+add_subdirectory (../../external/assimp assimp)
+
 if (APPLE)
     # Don't change display modes on OS X. We'll instead resize the 
     # framebuffer  and scale up.
@@ -45,7 +48,7 @@ deng_add_library (libgui ${SOURCES} ${HEADERS})
 
 target_link_libraries (libgui 
     PUBLIC Deng::libcore
-    PRIVATE opengl assimp 
+    PRIVATE opengl libassimp 
 )
 deng_target_link_qt (libgui PUBLIC Gui OpenGL)
 

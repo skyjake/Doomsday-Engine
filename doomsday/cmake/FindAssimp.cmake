@@ -2,38 +2,52 @@ find_package (PkgConfig QUIET)
 
 set (_oldPath ${LIBASSIMP})
 
-if (NOT TARGET assimp)
-    if (PKG_CONFIG_FOUND AND NOT DEFINED ASSIMP_DIR)
+if (NOT TARGET libassimp)
+    add_library (libassimp INTERFACE)
+
+	if (TARGET assimp)
+		# Assimp is built as a subdir.
+		# Use the built target location from the "assimp" target.
+		set (ASSIMP_INCLUDE_DIRS ${DENG_EXTERNAL_SOURCE_DIR}/assimp/include)
+		set (LIBASSIMP $<TARGET_SONAME_FILE:assimp>)
+		if (APPLE)
+			# The assimp library will be bundled into Doomsday.app. This will 
+			# inform the installer to include the real library in addition to 
+			# version symlinks (CMake bug?). 
+			# (see: deng_install_bundle_deps() in Macros.cmake)
+			target_link_libraries (libassimp INTERFACE $<TARGET_FILE:assimp>;$<TARGET_LINKER_FILE:assimp>)
+		endif ()
+	else ()	
         # Try to find assimp using pkg-config.
-        pkg_check_modules (ASSIMP QUIET assimp)
-        if (NOT ASSIMP_LIBRARIES)
-            set (ASSIMP_LIBRARIES assimp)
-        endif ()
-        find_library (LIBASSIMP ${ASSIMP_LIBRARIES} 
-            PATHS
-                ${ASSIMP_LIBRARY_DIRS}
-                /usr/local/lib
-        )
-    else ()
-        # Try to find assimp manually.
-        find_library (LIBASSIMP NAMES assimp assimpd
-            PATHS 
-                ${DENG_EXTERNAL_SOURCE_DIR}/assimp
-                ${ASSIMP_DIR}
-            PATH_SUFFIXES lib/Release lib/Debug lib
-            NO_DEFAULT_PATH
-        )        
-    endif ()
+	    if (PKG_CONFIG_FOUND AND NOT DEFINED ASSIMP_DIR)
+	        pkg_check_modules (ASSIMP QUIET assimp)
+	        if (NOT ASSIMP_LIBRARIES)
+	            set (ASSIMP_LIBRARIES assimp)
+	        endif ()
+	        find_library (LIBASSIMP ${ASSIMP_LIBRARIES} 
+	            PATHS
+	                ${ASSIMP_LIBRARY_DIRS}
+	                /usr/local/lib
+	        )
+	    else ()
+	        # Try to find assimp manually.
+	        find_library (LIBASSIMP NAMES assimp assimpd
+	            PATHS 
+	                ${DENG_EXTERNAL_SOURCE_DIR}/assimp
+	                ${ASSIMP_DIR}
+	            PATH_SUFFIXES lib/Release lib/Debug lib
+	            NO_DEFAULT_PATH
+	        )        
+	    endif ()
+	endif ()
     mark_as_advanced (LIBASSIMP)
     
     if (NOT LIBASSIMP)
         message (FATAL_ERROR "Open Asset Import Library not found. Go to ${DENG_EXTERNAL_SOURCE_DIR}/assimp and compile. If you install it somewhere, set the ASSIMP_DIR variable to specify the location. If pkg-config is available, it is used to find libassimp.")
     endif ()
-
-    add_library (assimp INTERFACE)
     
     if (ASSIMP_INCLUDE_DIRS)
-        target_include_directories (assimp INTERFACE ${ASSIMP_INCLUDE_DIRS})
+        target_include_directories (libassimp INTERFACE ${ASSIMP_INCLUDE_DIRS})
     else ()
         # Try to deduce include dir from the library location.
         get_filename_component (_assimpBase ${LIBASSIMP} DIRECTORY)
@@ -50,10 +64,10 @@ if (NOT TARGET assimp)
         endif ()
         get_filename_component (_incDir ${LIBASSIMP_IMPORTER_HPP} DIRECTORY)
         get_filename_component (_incDir ${_incDir} DIRECTORY)
-        target_include_directories (assimp INTERFACE ${_incDir})
+        target_include_directories (libassimp INTERFACE ${_incDir})
     endif ()
     
-    target_link_libraries (assimp INTERFACE ${LIBASSIMP})
+    target_link_libraries (libassimp INTERFACE ${LIBASSIMP})
 
     if (NOT WIN32)
         deng_install_library (${LIBASSIMP})
@@ -69,7 +83,7 @@ if (NOT TARGET assimp)
     endif ()
 endif ()
 
-if (NOT _oldPath STREQUAL ${LIBASSIMP})
+if (NOT _oldPath STREQUAL LIBASSIMP)
     message (STATUS "Found Open Asset Import Library: ${LIBASSIMP}")
 endif ()
 

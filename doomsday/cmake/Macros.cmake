@@ -560,24 +560,40 @@ fix_bundled_install_names (\"${CMAKE_CURRENT_BINARY_DIR}/\${INT_DIR}/${target}.b
 endfunction (deng_bundle_install_names)
 
 # OS X: Install the libraries of a dependency target into the application bundle.
-macro (deng_install_bundle_deps target)
+function (deng_install_bundle_deps target)
     if (APPLE)
         sublist (_deps 1 -1 ${ARGV})
         get_property (_outName TARGET ${target} PROPERTY OUTPUT_NAME)
         set (_fwDir "${_outName}.app/Contents/Frameworks")
         foreach (_dep ${_deps})
             if (TARGET ${_dep})
-                if (_dep MATCHES "Deng::(.*)")
-                    install (FILES $<TARGET_FILE:${_dep}> DESTINATION ${_fwDir})
-                else ()
-                    install (FILES $<TARGET_PROPERTY:${_dep},INTERFACE_LINK_LIBRARIES>
-                        DESTINATION ${_fwDir}
-                    )
-                endif ()
+				# get_property (bundleLibs TARGET ${_dep} PROPERTY MACOSX_BUNDLED_LIBRARIES)
+				# if (bundleLibs)
+				# 	foreach (_lib ${bundleLibs})
+				# 		message ("bundle this: ${_lib}")
+				# 	endforeach (_lib)
+				# else ()
+					if (_dep MATCHES "Deng::(.*)")
+	                    install (FILES $<TARGET_FILE:${_dep}> DESTINATION ${_fwDir})
+	                else ()
+						get_property (libs TARGET ${_dep} PROPERTY INTERFACE_LINK_LIBRARIES)
+						foreach (_tlib ${libs})
+							if (IS_DIRECTORY ${_tlib})
+								install (DIRECTORY ${_tlib} DESTINATION ${_fwDir})
+							else ()
+								install (FILES ${_tlib} DESTINATION ${_fwDir})
+							endif ()
+						endforeach (_tlib)
+						# Cannot use this (CMake bug?); instead use the foreach above.
+	                    # install (FILES $<TARGET_PROPERTY:${_dep},INTERFACE_LINK_LIBRARIES>
+	                    #     DESTINATION ${_fwDir}
+	                    # )
+	                endif ()
+				#endif ()
             endif ()
         endforeach (_dep)
     endif ()
-endmacro (deng_install_bundle_deps)
+endfunction (deng_install_bundle_deps)
 
 # Run the Qt deploy utility on the target, resolving any local system 
 # dependencies.

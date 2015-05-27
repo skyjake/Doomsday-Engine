@@ -105,7 +105,7 @@ if (APPLE)
         Deng::libcore Deng::libshell
         Deng::libgui Deng::libappfw
         Deng::liblegacy Deng::libdoomsday
-        SDL2 SDL2_mixer
+		libassimp SDL2 SDL2_mixer
     )
     
     set_target_properties (client PROPERTIES
