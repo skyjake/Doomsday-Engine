@@ -5,14 +5,22 @@ set (_oldPath ${LIBASSIMP})
 if (NOT TARGET libassimp)
     add_library (libassimp INTERFACE)
 
+    # It is a bit unorthodox to access the build products of an external project via
+    # the CMake target object. The current setup exists because the "libassimp" 
+    # interface target can either represent an Assimp installation somewhere in the 
+    # file system, or the build products of the Assimp that gets built as part of
+    # Doomsday.
+    
 	if (TARGET assimp)
 		# Assimp is built as a subdir.
 		# Use the built target location from the "assimp" target.
 		set (ASSIMP_INCLUDE_DIRS ${DENG_EXTERNAL_SOURCE_DIR}/assimp/include)
-		if (UNIX)
+		if (APPLE)
 			set (LIBASSIMP $<TARGET_SONAME_FILE:assimp>)
 		elseif (WIN32)
 			set (LIBASSIMP ${CMAKE_CURRENT_BINARY_DIR}/$<TARGET_LINKER_FILE:assimp>)
+		else ()
+		    set (LIBASSIMP $<TARGET_LINKER_FILE:assimp>)
 		endif ()
 		if (APPLE)
 			# The assimp library will be bundled into Doomsday.app. This will 
