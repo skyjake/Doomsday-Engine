@@ -9,7 +9,11 @@ if (NOT TARGET libassimp)
 		# Assimp is built as a subdir.
 		# Use the built target location from the "assimp" target.
 		set (ASSIMP_INCLUDE_DIRS ${DENG_EXTERNAL_SOURCE_DIR}/assimp/include)
-		set (LIBASSIMP $<TARGET_SONAME_FILE:assimp>)
+		if (UNIX)
+			set (LIBASSIMP $<TARGET_SONAME_FILE:assimp>)
+		elseif (WIN32)
+			set (LIBASSIMP ${CMAKE_CURRENT_BINARY_DIR}/$<TARGET_LINKER_FILE:assimp>)
+		endif ()
 		if (APPLE)
 			# The assimp library will be bundled into Doomsday.app. This will 
 			# inform the installer to include the real library in addition to 
@@ -72,14 +76,19 @@ if (NOT TARGET libassimp)
     if (NOT WIN32)
         deng_install_library (${LIBASSIMP})
     else ()
-        # Locate the DLL.
-        find_file (LIBASSIMP_DLL NAMES assimp.dll assimpd.dll 
-            PATHS ${_assimpBase}/..
-            PATH_SUFFIXES ../bin/Release ../bin/Debug
-        )
-        mark_as_advanced (LIBASSIMP_DLL)
-        get_filename_component (LIBASSIMP_DLL ${LIBASSIMP_DLL} REALPATH)
-        deng_install_library (${LIBASSIMP_DLL})
+		if (TARGET assimp)
+			# Assimp is part of the build, so we know where the DLL is.
+			deng_install_library ($<TARGET_FILE:assimp>)
+		else ()
+			# Locate the DLL.
+			find_file (LIBASSIMP_DLL NAMES assimp.dll assimpd.dll 
+				PATHS ${_assimpBase}/..
+				PATH_SUFFIXES ../bin/Release ../bin/Debug
+			)
+			mark_as_advanced (LIBASSIMP_DLL)
+			get_filename_component (LIBASSIMP_DLL ${LIBASSIMP_DLL} REALPATH)
+			deng_install_library (${LIBASSIMP_DLL})
+		endif ()
     endif ()
 endif ()
 
