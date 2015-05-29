@@ -95,6 +95,29 @@
 
 using namespace de;
 
+/**
+ * POD structure used to transport vertex data refs as a logical unit.
+ * @note The geometric data itself is not owned!
+ */
+struct Geometry
+{
+    Vector3f *pos;
+    Vector4f *color;
+    Vector2f *tex;
+    Vector2f *tex2;
+};
+
+/**
+ * POD structure used to describe texture modulation data.
+ */
+struct TexModulationData
+{
+    DGLuint texture = 0;
+    Vector3f color;
+    Vector2f topLeft;
+    Vector2f bottomRight;
+};
+
 // Surface (tangent-space) Vector Flags.
 #define SVF_TANGENT             0x01
 #define SVF_BITANGENT           0x02
@@ -642,34 +665,6 @@ Material *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
     return nullptr;
 }
 
-static void lightVertex(Vector4f &color, Vector3f const &vtx, dfloat lightLevel,
-                        Vector3f const &ambientColor)
-{
-    dfloat const dist = Rend_PointDist2D(vtx);
-
-    // Apply distance attenuation.
-    lightLevel = Rend_AttenuateLightLevel(dist, lightLevel);
-
-    // Add extra light.
-    lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
-
-    Rend_ApplyLightAdaptation(lightLevel);
-
-    for(dint i = 0; i < 3; ++i)
-    {
-        color[i] = lightLevel * ambientColor[i];
-    }
-}
-
-static void lightVertices(duint num, Vector4f *colors, Vector3f const *verts,
-                          dfloat lightLevel, Vector3f const &ambientColor)
-{
-    for(duint i = 0; i < num; ++i)
-    {
-        lightVertex(colors[i], verts[i], lightLevel, ambientColor);
-    }
-}
-
 /**
  * This doesn't create a rendering primitive but a vissprite! The vissprite
  * represents the masked poly and will be rendered during the rendering
@@ -774,9 +769,9 @@ void Rend_AddMaskedPoly(Vector3f const *rvertices, Vector4f const *rcolors,
     }
 }
 
-static void quadTexCoords(Vector2f *tc, Vector3f const *rverts,
-    coord_t wallLength, Vector3d const &topLeft)
+static void quadTexCoords(Vector2f *tc, Vector3f const *rverts, coord_t wallLength, Vector3d const &topLeft)
 {
+    DENG2_ASSERT(tc && rverts);
     tc[0].x = tc[1].x = rverts[0].x - topLeft.x;
     tc[3].y = tc[1].y = rverts[0].y - topLeft.y;
     tc[3].x = tc[2].x = tc[0].x + wallLength;
@@ -784,47 +779,298 @@ static void quadTexCoords(Vector2f *tc, Vector3f const *rverts,
     tc[0].y = tc[3].y + (rverts[3].z - rverts[2].z);
 }
 
-static void quadLightCoords(Vector2f *tc, Vector2f const &topLeft, Vector2f const &bottomRight)
+static void lightVertex(Vector4f &color, Vector3f const &vtx, dfloat lightLevel, Vector3f const &ambientColor)
 {
-    tc[1].x = tc[0].x = topLeft.x;
-    tc[1].y = tc[3].y = topLeft.y;
-    tc[3].x = tc[2].x = bottomRight.x;
-    tc[2].y = tc[0].y = bottomRight.y;
+    dfloat const dist = Rend_PointDist2D(vtx);
+
+    // Apply distance attenuation.
+    lightLevel = Rend_AttenuateLightLevel(dist, lightLevel);
+
+    // Add extra light.
+    lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
+
+    Rend_ApplyLightAdaptation(lightLevel);
+
+    for(dint i = 0; i < 3; ++i)
+    {
+        color[i] = lightLevel * ambientColor[i];
+    }
 }
 
-static dfloat shinyVertical(dfloat dy, dfloat dx)
+/**
+ * Apply map-space lighting to the given geometry. All vertex lighting contributions affecting
+ * map-space geometry are applied here.
+ *
+ * @param verts             Geometry to be illuminated.
+ *
+ * Surface geometry: 
+ * @param numVertices       Total number of map-space surface geometry vertices.
+ * @param posCoords         Position coordinates for the map-space surface geometry.
+ * @param mapElement        Source MapElement for the map-space surface geometry.
+ * @param geomGroup         Source MapElement geometry-group selector, for the map-space surface geometry.
+ * @param surfaceTangents   Tangent-space vectors for the map-space surface geometry.
+ *
+ * Surface lighting characteristics:
+ * @param color             Tint color.
+ * @param color2            Secondary tint color, for walls (if any).
+ * @param glowing           Self-luminosity factor (normalized [0..1]).
+ * @param luminosityDeltas  Edge luminosity deltas (for walls [left edge, right edge]).
+ */
+static void lightWallOrFlatGeometry(Geometry &verts, duint numVertices, Vector3f const *posCoords,
+    MapElement &mapElement, dint geomGroup, Matrix3f const &surfaceTangents,
+    Vector3f const &color, Vector3f const *color2, dfloat glowing, dfloat const luminosityDeltas[2])
+{
+    bool const haveWall    = mapElement.is<LineSideSegment>();
+    SectorCluster &cluster = ::curSubspace->cluster();
+
+    if(::levelFullBright || !(glowing < 1))
+    {
+        // Uniform color.
+        dfloat const lum = de::clamp(0.f, ::curSectorLightLevel + (::levelFullBright? 1 : glowing), 1.f);
+        Vector4f const uniformColor(lum, lum, lum, 0);
+        for(duint i = 0; i < numVertices; ++i)
+        {
+            verts.color[i] = uniformColor;
+        }
+    }
+    else
+    {
+        // Non-uniform color.
+        if(::useBias)
+        {
+            Map &map     = cluster.sector().map();
+            Shard &shard = cluster.shard(mapElement, geomGroup);
+
+            // Apply the ambient light term from the grid (if available).
+            if(map.hasLightGrid())
+            {
+                for(duint i = 0; i < numVertices; ++i)
+                {
+                    verts.color[i] = map.lightGrid().evaluate(posCoords[i]);
+                }
+            }
+
+            // Apply bias light source contributions.
+            shard.lightWithBiasSources(posCoords, verts.color, surfaceTangents, map.biasCurrentTime());
+
+            // Apply surface glow.
+            if(glowing > 0)
+            {
+                Vector4f const glow(glowing, glowing, glowing, 0);
+                for(duint i = 0; i < numVertices; ++i)
+                {
+                    verts.color[i] += glow;
+                }
+            }
+
+            // Apply light range compression and clamp.
+            for(duint i = 0; i < numVertices; ++i)
+            {
+                Vector4f &color = verts.color[i];
+                for(dint k = 0; k < 3; ++k)
+                {
+                    color[k] = de::clamp(0.f, color[k] + Rend_LightAdaptationDelta(color[k]), 1.f);
+                }
+            }
+        }
+        else
+        {
+            dfloat const lumLeft  = de::clamp(0.f, ::curSectorLightLevel + luminosityDeltas[0] + glowing, 1.f);
+            dfloat const lumRight = de::clamp(0.f, ::curSectorLightLevel + luminosityDeltas[1] + glowing, 1.f);
+
+            // Must we blend in a surface color tint?
+            if(color.x < 1 || color.y < 1 || color.z < 1)
+            {
+                // Blend a surface color tint with the sector light color.
+                Vector3f const colorBlended = color * ::curSectorLightColor;
+
+                if(haveWall && lumLeft != lumRight)
+                {
+                    lightVertex(verts.color[0], posCoords[0], lumLeft,  colorBlended);
+                    lightVertex(verts.color[1], posCoords[1], lumLeft,  colorBlended);
+                    lightVertex(verts.color[2], posCoords[2], lumRight, colorBlended);
+                    lightVertex(verts.color[3], posCoords[3], lumRight, colorBlended);
+                }
+                else
+                {
+                    for(duint i = 0; i < numVertices; ++i)
+                    {
+                        lightVertex(verts.color[i], posCoords[i], lumLeft, colorBlended);
+                    }
+                }
+            }
+            else
+            {
+                // Only a sector light color.
+                if(haveWall && lumLeft != lumRight)
+                {
+                    lightVertex(verts.color[0], posCoords[0], lumLeft,  ::curSectorLightColor);
+                    lightVertex(verts.color[1], posCoords[1], lumLeft,  ::curSectorLightColor);
+                    lightVertex(verts.color[2], posCoords[2], lumRight, ::curSectorLightColor);
+                    lightVertex(verts.color[3], posCoords[3], lumRight, ::curSectorLightColor);
+                }
+                else
+                {
+                    for(duint i = 0; i < numVertices; ++i)
+                    {
+                        lightVertex(verts.color[i], posCoords[i], lumLeft, ::curSectorLightColor);
+                    }
+                }
+            }
+
+            // Secondary color?
+            if(haveWall && color2)
+            {
+                // Blend the secondary surface color tint with the sector light color.
+                Vector3f const colorBlended = (*color2) * ::curSectorLightColor;
+                lightVertex(verts.color[0], posCoords[0], lumLeft,  colorBlended);
+                lightVertex(verts.color[2], posCoords[2], lumRight, colorBlended);
+            }
+        }
+
+        // Apply torch light?
+        DENG2_ASSERT(::viewPlayer);
+        if(::viewPlayer->shared.fixedColorMap)
+        {
+            for(duint i = 0; i < numVertices; ++i)
+            {
+                Rend_ApplyTorchLight(verts.color[i], Rend_PointDist2D(posCoords[i]));
+            }
+        }
+    }
+}
+
+static void makeFlatGeometry(Geometry &verts, duint numVertices, Vector3f const *posCoords,
+    Vector3d const &topLeft, Vector3d const & /*bottomRight*/, MapElement &mapElement, dint geomGroup,
+    Matrix3f const &surfaceTangents, dfloat uniformOpacity, Vector3f const &color, Vector3f const *color2,
+    dfloat glowing, dfloat const luminosityDeltas[2], bool useVertexLighting = true)
+{
+    DENG2_ASSERT(posCoords);
+
+    for(duint i = 0; i < numVertices; ++i)
+    {
+        verts.pos[i] = posCoords[i];
+
+        Vector3f const delta(posCoords[i] - topLeft);
+        if(verts.tex)  // Primary.
+        {
+            verts.tex[i] = Vector2f(delta.x, -delta.y);
+        }
+        if(verts.tex2)  // Inter.
+        {
+            verts.tex2[i] = Vector2f(delta.x, -delta.y);
+        }
+    }
+
+    // Light the geometry?
+    if(useVertexLighting)
+    {
+        lightWallOrFlatGeometry(verts, numVertices, posCoords, mapElement, geomGroup, surfaceTangents,
+                                color, color2, glowing, luminosityDeltas);
+
+        // Apply uniform opacity (overwritting luminance factors).
+        for(duint i = 0; i < numVertices; ++i)
+        {
+            verts.color[i].w = uniformOpacity;
+        }
+    }
+}
+
+static void makeWallGeometry(Geometry &verts, duint numVertices, Vector3f const *posCoords,
+    Vector3d const &topLeft, Vector3d const & /*bottomRight*/, coord_t sectionWidth,
+    MapElement &mapElement, dint geomGroup, Matrix3f const &surfaceTangents, dfloat uniformOpacity,
+    Vector3f const &color, Vector3f const *color2, dfloat glowing, dfloat const luminosityDeltas[2],
+    bool useVertexLighting = true)
+{
+    DENG2_ASSERT(posCoords);
+
+    for(duint i = 0; i < numVertices; ++i)
+    {
+        verts.pos[i] = posCoords[i];
+    }
+    if(verts.tex)  // Primary.
+    {
+        quadTexCoords(verts.tex, posCoords, sectionWidth, topLeft);
+    }
+    if(verts.tex2)  // Inter.
+    {
+        quadTexCoords(verts.tex2, posCoords, sectionWidth, topLeft);
+    }
+
+    // Light the geometry?
+    if(useVertexLighting)
+    {
+        lightWallOrFlatGeometry(verts, numVertices, posCoords, mapElement, geomGroup, surfaceTangents,
+                                color, color2, glowing, luminosityDeltas);
+
+        // Apply uniform opacity (overwritting luminance factors).
+        for(duint i = 0; i < numVertices; ++i)
+        {
+            verts.color[i].w = uniformOpacity;
+        }
+    }
+}
+
+static inline dfloat shineVertical(dfloat dy, dfloat dx)
 {
     return ((std::atan(dy/dx) / (PI/2)) + 1) / 2;
 }
 
-static void quadShinyTexCoords(Vector2f *tc, Vector3f const *topLeft,
-    Vector3f const *bottomRight, coord_t wallLength)
+static void makeFlatShineGeometry(Geometry &verts, duint numVertices, Vector3f const *posCoords,
+    Geometry const &mainVerts, Vector3f const &shineColor, dfloat shineOpacity)
 {
-    // Quad surface vector.
-    vec2f_t surface; V2f_Set(surface, (bottomRight->x - topLeft->x) / wallLength,
-                                      (bottomRight->y - topLeft->y) / wallLength);
+    for(duint i = 0; i < numVertices; ++i)
+    {
+        Vector3f const eye = Rend_EyeOrigin();
 
-    vec2f_t normal; V2f_Set(normal, surface[1], -surface[0]);
+        // Determine distance to viewer.
+        dfloat distToEye = (eye.xz() - Vector2f(posCoords[i])).normalize().length();
+        // Short distances produce an ugly 'crunch' below and above the viewpoint.
+        if(distToEye < 10) distToEye = 10;
+
+        // Offset from the normal view plane.
+        dfloat offset = ((eye.y - posCoords[i].y) * sin(.4f)/*viewFrontVec[0]*/ -
+                         (eye.x - posCoords[i].x) * cos(.4f)/*viewFrontVec[2]*/);
+
+        verts.tex[i] = Vector2f(((shineVertical(offset, distToEye) - .5f) * 2) + .5f,
+                                shineVertical(eye.y - posCoords[i].z, distToEye));
+    }
+
+    for(duint i = 0; i < numVertices; ++i)
+    {
+        verts.color[i] = Vector4f(Vector3f(mainVerts.color[i]).max(shineColor), shineOpacity);
+    }
+}
+
+static void makeWallShineGeometry(Geometry &verts, duint numVertices, Vector3f const *posCoords,
+    Geometry const &mainVerts, coord_t sectionWidth, Vector3f const &shineColor, dfloat shineOpactiy)
+{
+    Vector3f const &topLeft     = posCoords[1];
+    Vector3f const &bottomRight = posCoords[2];
+
+    // Quad surface vector.
+    Vector2f const normal = Vector2f( (bottomRight.y - topLeft.y) / sectionWidth,
+                                     -(bottomRight.x - topLeft.x) / sectionWidth);
 
     // Calculate coordinates based on viewpoint and surface normal.
+    Vector3f const eye = Rend_EyeOrigin();
     dfloat prevAngle = 0;
     for(duint i = 0; i < 2; ++i)
     {
-        // View vector.
-        vec2f_t view; V2f_Set(view, Rend_EyeOrigin().x - (i == 0? topLeft->x : bottomRight->x),
-                                    Rend_EyeOrigin().z - (i == 0? topLeft->y : bottomRight->y));
+        Vector2f const eyeToVert = eye.xz() - (i == 0? Vector2f(topLeft) : Vector2f(bottomRight));
+        dfloat const distToEye   = eyeToVert.length();
+        Vector2f const view      = eyeToVert.normalize();
 
-        dfloat distance = V2f_Normalize(view);
+        Vector2f projected;
+        dfloat const div = normal.lengthSquared();
+        if(div != 0)
+        {
+            projected = normal * view.dot(normal) / div;
+        }
 
-        vec2f_t projected; V2f_Project(projected, view, normal);
-
-        vec2f_t s; V2f_Subtract(s, projected, view);
-        V2f_Scale(s, 2);
-
-        vec2f_t reflected; V2f_Sum(reflected, view, s);
-
-        dfloat angle = std::acos(reflected[1]) / PI;
-        if(reflected[0] < 0)
+        Vector2f const reflected = view + (projected - view) * 2;
+        dfloat angle = std::acos(reflected.y) / PI;
+        if(reflected.x < 0)
         {
             angle = 1 - angle;
         }
@@ -833,90 +1079,24 @@ static void quadShinyTexCoords(Vector2f *tc, Vector3f const *topLeft,
         {
             prevAngle = angle;
         }
-        else
+        else if(angle > prevAngle)
         {
-            if(angle > prevAngle)
-                angle -= 1;
+            angle -= 1;
         }
 
         // Horizontal coordinates.
-        tc[ (i == 0 ? 1 : 2) ].x =
-            tc[ (i == 0 ? 0 : 3) ].x = angle + .3f; /*std::acos(-dot)/PI*/
+        verts.tex[ (i == 0 ? 1 : 2) ].x = angle + .3f /*std::acos(-dot)/PI*/;
+        verts.tex[ (i == 0 ? 0 : 3) ].x = angle + .3f /*std::acos(-dot)/PI*/;
 
         // Vertical coordinates.
-        tc[ (i == 0 ? 0 : 2) ].y = shinyVertical(Rend_EyeOrigin().y - bottomRight->z, distance);
-        tc[ (i == 0 ? 1 : 3) ].y = shinyVertical(Rend_EyeOrigin().y - topLeft->z, distance);
-    }
-}
-
-static void flatShinyTexCoords(Vector2f *tc, Vector3f const &point)
-{
-    DENG2_ASSERT(tc);
-
-    // Determine distance to viewer.
-    dfloat distToEye = Vector2f(Rend_EyeOrigin().x - point.x, Rend_EyeOrigin().z - point.y)
-                           .normalize().length();
-    if(distToEye < 10)
-    {
-        // Too small distances cause an ugly 'crunch' below and above
-        // the viewpoint.
-        distToEye = 10;
+        verts.tex[ (i == 0 ? 0 : 2) ].y = shineVertical(eye.y - bottomRight.z, distToEye);
+        verts.tex[ (i == 0 ? 1 : 3) ].y = shineVertical(eye.y - topLeft.z,     distToEye);
     }
 
-    // Offset from the normal view plane.
-    Vector2f start(Rend_EyeOrigin().x, Rend_EyeOrigin().z);
-
-    dfloat offset = ((start.y - point.y) * sin(.4f)/*viewFrontVec[0]*/ -
-                     (start.x - point.x) * cos(.4f)/*viewFrontVec[2]*/);
-
-    tc->x = ((shinyVertical(offset, distToEye) - .5f) * 2) + .5f;
-    tc->y = shinyVertical(Rend_EyeOrigin().y - point.z, distToEye);
-}
-
-/**
- * POD structure used to transport vertex data refs as a logical unit.
- * @note The geometric data itself is not owned!
- */
-struct Geometry
-{
-    Vector3f *pos;
-    Vector4f *color;
-    Vector2f *tex;
-    Vector2f *tex2;
-};
-
-/**
- * POD structure used to describe texture modulation data.
- */
-struct TexModulationData
-{
-    DGLuint texture;
-    Vector3f color;
-    Vector2f topLeft;
-    Vector2f bottomRight;
-};
-
-static void makeFlatLightGeometry(Geometry &verts, Vector3d const &topLeft, Vector3d const &bottomRight,
-    Vector3f const *rvertices, duint numVertices,
-    ProjectedTextureData const &tp)
-{
     for(duint i = 0; i < numVertices; ++i)
     {
-        verts.color[i] = tp.color;
+        verts.color[i] = Vector4f(Vector3f(mainVerts.color[i]).max(shineColor), shineOpactiy);
     }
-
-    dfloat const width  = bottomRight.x - topLeft.x;
-    dfloat const height = bottomRight.y - topLeft.y;
-    for(duint i = 0; i < numVertices; ++i)
-    {
-        verts.tex[i].x = ((bottomRight.x - rvertices[i].x) / width * tp.topLeft.x) +
-            ((rvertices[i].x - topLeft.x) / width * tp.bottomRight.x);
-
-        verts.tex[i].y = ((bottomRight.y - rvertices[i].y) / height * tp.topLeft.y) +
-            ((rvertices[i].y - topLeft.y) / height * tp.bottomRight.y);
-    }
-
-    std::memcpy(verts.pos, rvertices, sizeof(Vector3f) * numVertices);
 }
 
 static void makeFlatShadowGeometry(Geometry &verts, Vector3d const &topLeft, Vector3d const &bottomRight,
@@ -931,6 +1111,63 @@ static void makeFlatShadowGeometry(Geometry &verts, Vector3d const &topLeft, Vec
     dfloat const width  = bottomRight.x - topLeft.x;
     dfloat const height = bottomRight.y - topLeft.y;
 
+    for(duint i = 0; i < numVertices; ++i)
+    {
+        verts.tex[i].x = ((bottomRight.x - rvertices[i].x) / width * tp.topLeft.x) +
+            ((rvertices[i].x - topLeft.x) / width * tp.bottomRight.x);
+
+        verts.tex[i].y = ((bottomRight.y - rvertices[i].y) / height * tp.topLeft.y) +
+            ((rvertices[i].y - topLeft.y) / height * tp.bottomRight.y);
+    }
+
+    std::memcpy(verts.pos, rvertices, sizeof(Vector3f) * numVertices);
+}
+
+static void makeWallShadowGeometry(Geometry &verts, Vector3d const &topLeft, Vector3d const &bottomRight,
+    Vector3f const *rvertices, duint numVertices, WallEdge const &leftEdge, WallEdge const &rightEdge,
+    ProjectedTextureData const &tp)
+{
+    for(duint i = 0; i < numVertices; ++i)
+    {
+        verts.color[i] = tp.color;
+    }
+
+    verts.tex[1].x = verts.tex[0].x = tp.topLeft.x;
+    verts.tex[1].y = verts.tex[3].y = tp.topLeft.y;
+    verts.tex[3].x = verts.tex[2].x = tp.bottomRight.x;
+    verts.tex[2].y = verts.tex[0].y = tp.bottomRight.y;
+
+    // If either edge has divisions - make two trifans.
+    if(leftEdge.divisionCount() || rightEdge.divisionCount())
+    {
+        // Need to swap indices around into fans set the position of the
+        // division vertices, interpolate texcoords and color.
+
+        Vector3f origposCoords[4]; std::memcpy(origposCoords, rvertices,   sizeof(Vector3f) * 4);
+        Vector2f origTexCoords[4]; std::memcpy(origTexCoords, verts.tex,   sizeof(Vector2f) * 4);
+        Vector4f origColors[4];    std::memcpy(origColors,    verts.color, sizeof(Vector4f) * 4);
+
+        R_DivVerts     (verts.pos,   origposCoords, leftEdge, rightEdge);
+        R_DivTexCoords (verts.tex,   origTexCoords, leftEdge, rightEdge);
+        R_DivVertColors(verts.color, origColors,    leftEdge, rightEdge);
+    }
+    else
+    {
+        std::memcpy(verts.pos, rvertices, sizeof(Vector3f) * numVertices);
+    }
+}
+
+static void makeFlatLightGeometry(Geometry &verts, Vector3d const &topLeft, Vector3d const &bottomRight,
+    Vector3f const *rvertices, duint numVertices,
+    ProjectedTextureData const &tp)
+{
+    for(duint i = 0; i < numVertices; ++i)
+    {
+        verts.color[i] = tp.color;
+    }
+
+    dfloat const width  = bottomRight.x - topLeft.x;
+    dfloat const height = bottomRight.y - topLeft.y;
     for(duint i = 0; i < numVertices; ++i)
     {
         verts.tex[i].x = ((bottomRight.x - rvertices[i].x) / width * tp.topLeft.x) +
@@ -977,38 +1214,16 @@ static void makeWallLightGeometry(Geometry &verts, Vector3d const &topLeft, Vect
     }
 }
 
-static void makeWallShadowGeometry(Geometry &verts, Vector3d const &topLeft, Vector3d const &bottomRight,
-    Vector3f const *rvertices, duint numVertices, WallEdge const &leftEdge, WallEdge const &rightEdge,
-    ProjectedTextureData const &tp)
+static dfloat averageLuminosity(Vector4f const *rgbaValues, duint count)
 {
-    for(duint i = 0; i < numVertices; ++i)
+    DENG2_ASSERT(rgbaValues);
+    dfloat avg = 0;
+    for(duint i = 0; i < count; ++i)
     {
-        verts.color[i] = tp.color;
+        Vector4f const &color = rgbaValues[i];
+        avg += color.x + color.y + color.z;
     }
-
-    verts.tex[1].x = verts.tex[0].x = tp.topLeft.x;
-    verts.tex[1].y = verts.tex[3].y = tp.topLeft.y;
-    verts.tex[3].x = verts.tex[2].x = tp.bottomRight.x;
-    verts.tex[2].y = verts.tex[0].y = tp.bottomRight.y;
-
-    // If either edge has divisions - make two trifans.
-    if(leftEdge.divisionCount() || rightEdge.divisionCount())
-    {
-        // Need to swap indices around into fans set the position of the
-        // division vertices, interpolate texcoords and color.
-
-        Vector3f origposCoords[4]; std::memcpy(origposCoords, rvertices,   sizeof(Vector3f) * 4);
-        Vector2f origTexCoords[4]; std::memcpy(origTexCoords, verts.tex,   sizeof(Vector2f) * 4);
-        Vector4f origColors[4];    std::memcpy(origColors,    verts.color, sizeof(Vector4f) * 4);
-
-        R_DivVerts     (verts.pos,   origposCoords, leftEdge, rightEdge);
-        R_DivTexCoords (verts.tex,   origTexCoords, leftEdge, rightEdge);
-        R_DivVertColors(verts.color, origColors,    leftEdge, rightEdge);
-    }
-    else
-    {
-        std::memcpy(verts.pos, rvertices, sizeof(Vector3f) * numVertices);
-    }
+    return avg / (count * 3);
 }
 
 struct rendworldpoly_params_t
@@ -1020,8 +1235,7 @@ struct rendworldpoly_params_t
     Vector2f const *materialOrigin;
     Vector2f const *materialScale;
     dfloat          alpha;
-    dfloat          surfaceLightLevelDL;
-    dfloat          surfaceLightLevelDR;
+    dfloat          surfaceLuminosityDeltas[2];
     Vector3f const *surfaceColor;
     Matrix3f const *surfaceTangentMatrix;
 
@@ -1058,38 +1272,28 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
     bool useLights = false, useShadows = false, hasDynlights = false;
 
     // Map RTU configuration.
+    GLTextureUnit const *layer0RTU      = (!p.skyMasked)? &matAnimator.texUnit(MaterialAnimator::TU_LAYER0) : nullptr;
+    GLTextureUnit const *layer0InterRTU = (!p.skyMasked && !drawAsVisSprite && matAnimator.texUnit(MaterialAnimator::TU_LAYER0_INTER).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_LAYER0_INTER) : nullptr;
     GLTextureUnit const *detailRTU      = (r_detail && !p.skyMasked && matAnimator.texUnit(MaterialAnimator::TU_DETAIL).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_DETAIL) : nullptr;
     GLTextureUnit const *detailInterRTU = (r_detail && !p.skyMasked && matAnimator.texUnit(MaterialAnimator::TU_DETAIL_INTER).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_DETAIL_INTER) : nullptr;
-    GLTextureUnit const *layer0RTU      = (!p.skyMasked)? &matAnimator.texUnit(MaterialAnimator::TU_LAYER0) : nullptr;
-    GLTextureUnit const *layer0InterRTU = (!p.skyMasked && matAnimator.texUnit(MaterialAnimator::TU_LAYER0_INTER).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_LAYER0_INTER) : nullptr;
-    GLTextureUnit const *shineRTU       = (useShinySurfaces && !p.skyMasked && matAnimator.texUnit(MaterialAnimator::TU_SHINE).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_SHINE) : nullptr;
-    GLTextureUnit const *shineMaskRTU   = (useShinySurfaces && !p.skyMasked && matAnimator.texUnit(MaterialAnimator::TU_SHINE).hasTexture() && matAnimator.texUnit(MaterialAnimator::TU_SHINE_MASK).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_SHINE_MASK) : nullptr;
+
+    GLTextureUnit const *shineRTU       = (::useShinySurfaces && !skyMaskedMaterial && !drawAsVisSprite && matAnimator.texUnit(MaterialAnimator::TU_SHINE).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_SHINE) : nullptr;
+    GLTextureUnit const *shineMaskRTU   = (::useShinySurfaces && !skyMaskedMaterial && !drawAsVisSprite && matAnimator.texUnit(MaterialAnimator::TU_SHINE).hasTexture() && matAnimator.texUnit(MaterialAnimator::TU_SHINE_MASK).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_SHINE_MASK) : nullptr;
 
     // Surface geometry (position, primary texture, inter texture and color coords).
     Geometry verts;
     duint const numVerts = (p.isWall ? 3 + p.wall.leftEdge->divisionCount() + 3 + p.wall.rightEdge->divisionCount() : numVertices);
     // Allocate vertices from the pools.
     verts.pos   = R_AllocRendVertices(numVerts);
-    verts.color = !skyMaskedMaterial? R_AllocRendColors(numVerts) : nullptr;
-    verts.tex   = R_AllocRendTexCoords(numVerts);
-    verts.tex2  = layer0InterRTU? R_AllocRendTexCoords(numVerts) : nullptr;
-
-    // Surface shine geometry (primary texture and color coords).
-    // Use the surface geometry for position coords.
-    // Use the surface texture coords with the mask.
-    Geometry shineVerts = Geometry();
-    if(!skyMaskedMaterial && shineRTU && !drawAsVisSprite)
-    {
-        // Allocate vertices from the pools.
-        shineVerts.color = R_AllocRendColors(numVerts);
-        shineVerts.tex   = R_AllocRendTexCoords(numVerts);
-    }
+    verts.color = !skyMaskedMaterial? R_AllocRendColors   (numVerts) : nullptr;
+    verts.tex   = layer0RTU         ? R_AllocRendTexCoords(numVerts) : nullptr;
+    verts.tex2  = layer0InterRTU    ? R_AllocRendTexCoords(numVerts) : nullptr;
 
     // If multitexturing is enabled and there is at least one dynlight affecting the surface,
     // locate the projection data and use it for modulation.
-    TexModulationData mod = TexModulationData();
+    TexModulationData mod;
     Vector2f *modTexCoords = nullptr;
-    if(!skyMaskedMaterial && p.glowing < 1)
+    if(!skyMaskedMaterial && !drawAsVisSprite && p.glowing < 1)
     {
         useLights  = (p.lightListIdx ? true : false);
         useShadows = (p.shadowListIdx? true : false);
@@ -1108,218 +1312,45 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
             if(mod.texture)
             {
                 modTexCoords = R_AllocRendTexCoords(numVerts);
-            }
-        }
-    }
-
-    if(p.isWall)
-    {
-        for(duint i = 0; i < 4; ++i)
-        {
-            verts.pos[i] = rvertices[i];  // Quad-strip { bl,tl,br,tr }
-        }
-
-        // Primary texture coordinates.
-        quadTexCoords(verts.tex, rvertices, p.wall.sectionWidth, *p.topLeft);
-
-        // Blend texture coordinates.
-        if(layer0InterRTU && !drawAsVisSprite)
-            quadTexCoords(verts.tex2, rvertices, p.wall.sectionWidth, *p.topLeft);
-
-        // Shiny texture coordinates.
-        if(shineRTU && !drawAsVisSprite)
-            quadShinyTexCoords(shineVerts.tex, &rvertices[1], &rvertices[2], p.wall.sectionWidth);
-
-        // First light texture coordinates.
-        if(mod.texture && Rend_IsMTexLights())
-            quadLightCoords(modTexCoords, mod.topLeft, mod.bottomRight);
-    }
-    else
-    {
-        for(duint i = 0; i < numVertices; ++i)
-        {
-            verts.pos[i] = rvertices[i];
-
-            Vector3f const delta(rvertices[i] - *p.topLeft);
-            if(layer0RTU)  // Primary.
-            {
-                verts.tex[i] = Vector2f(delta.x, -delta.y);
-            }
-            if(layer0InterRTU)  // Inter.
-            {
-                verts.tex2[i] = Vector2f(delta.x, -delta.y);
-            }
-
-            // Shine vertex texture coordinates.
-            if(shineRTU)
-            {
-                flatShinyTexCoords(&shineVerts.tex[i], rvertices[i]);
-            }
-
-            // Modulation texture coordinates.
-            if(mod.texture && Rend_IsMTexLights())
-            {
-                dfloat const width  = p.bottomRight->x - p.topLeft->x;
-                dfloat const height = p.bottomRight->y - p.topLeft->y;
-
-                modTexCoords[i] = Vector2f(((p.bottomRight->x - rvertices[i].x) / width  * mod.topLeft.x) + (delta.x / width  * mod.bottomRight.x),
-                                           ((p.bottomRight->y - rvertices[i].y) / height * mod.topLeft.y) + (delta.y / height * mod.bottomRight.y));
-            }
-        }
-    }
-
-    // Light this polygon.
-    if(!skyMaskedMaterial)
-    {
-        if(levelFullBright || !(p.glowing < 1))
-        {
-            // Uniform color. Apply to all vertices.
-            dfloat const ll = de::clamp(0.f, curSectorLightLevel + (levelFullBright? 1 : p.glowing), 1.f);
-            Vector4f const color(ll, ll, ll, 0);
-            for(duint i = 0; i < numVertices; ++i)
-            {
-                verts.color[i] = color;
-            }
-        }
-        else
-        {
-            // Non-uniform color.
-            if(useBias)
-            {
-                Map &map     = cluster.sector().map();
-                Shard &shard = cluster.shard(*p.mapElement, p.geomGroup);
-
-                // Apply the ambient light term from the grid (if available).
-                if(map.hasLightGrid())
+                
+                // Modulation texture coordinates.
+                if(p.isWall)
                 {
-                    for(duint i = 0; i < numVertices; ++i)
-                    {
-                        verts.color[i] = map.lightGrid().evaluate(rvertices[i]);
-                    }
-                }
-
-                // Apply bias light source contributions.
-                shard.lightWithBiasSources(rvertices, verts.color, *p.surfaceTangentMatrix,
-                                           map.biasCurrentTime());
-
-                // Apply surface glow.
-                if(p.glowing > 0)
-                {
-                    Vector4f const glow(p.glowing, p.glowing, p.glowing, 0);
-                    for(duint i = 0; i < numVertices; ++i)
-                    {
-                        verts.color[i] += glow;
-                    }
-                }
-
-                // Apply light range compression and clamp.
-                for(duint i = 0; i < numVertices; ++i)
-                {
-                    Vector4f &color = verts.color[i];
-                    for(dint k = 0; k < 3; ++k)
-                    {
-                        color[k] = de::clamp(0.f, color[k] + Rend_LightAdaptationDelta(color[k]), 1.f);
-                    }
-                }
-            }
-            else
-            {
-                dfloat llL = de::clamp(0.f, curSectorLightLevel + p.surfaceLightLevelDL + p.glowing, 1.f);
-                dfloat llR = de::clamp(0.f, curSectorLightLevel + p.surfaceLightLevelDR + p.glowing, 1.f);
-
-                // Calculate the color for each vertex, blended with plane color?
-                if(p.surfaceColor->x < 1 || p.surfaceColor->y < 1 || p.surfaceColor->z < 1)
-                {
-                    // Blend sector light+color+surfacecolor
-                    Vector3f vColor = (*p.surfaceColor) * curSectorLightColor;
-
-                    if(p.isWall && llL != llR)
-                    {
-                        lightVertex(verts.color[0], rvertices[0], llL, vColor);
-                        lightVertex(verts.color[1], rvertices[1], llL, vColor);
-                        lightVertex(verts.color[2], rvertices[2], llR, vColor);
-                        lightVertex(verts.color[3], rvertices[3], llR, vColor);
-                    }
-                    else
-                    {
-                        lightVertices(numVertices, verts.color, rvertices, llL, vColor);
-                    }
+                    modTexCoords[0] = Vector2f(mod.topLeft.x, mod.bottomRight.y);
+                    modTexCoords[1] = mod.topLeft;
+                    modTexCoords[2] = mod.bottomRight;
+                    modTexCoords[3] = Vector2f(mod.bottomRight.x, mod.topLeft.y);
                 }
                 else
                 {
-                    // Use sector light+color only.
-                    if(p.isWall && llL != llR)
+                    for(duint i = 0; i < numVertices; ++i)
                     {
-                        lightVertex(verts.color[0], rvertices[0], llL, curSectorLightColor);
-                        lightVertex(verts.color[1], rvertices[1], llL, curSectorLightColor);
-                        lightVertex(verts.color[2], rvertices[2], llR, curSectorLightColor);
-                        lightVertex(verts.color[3], rvertices[3], llR, curSectorLightColor);
-                    }
-                    else
-                    {
-                        lightVertices(numVertices, verts.color, rvertices, llL, curSectorLightColor);
+                        Vector3f const delta(rvertices[i] - *p.topLeft);
+                        dfloat const width  = p.bottomRight->x - p.topLeft->x;
+                        dfloat const height = p.bottomRight->y - p.topLeft->y;
+
+                        modTexCoords[i] = Vector2f(((p.bottomRight->x - rvertices[i].x) / width  * mod.topLeft.x) + (delta.x / width  * mod.bottomRight.x),
+                                                   ((p.bottomRight->y - rvertices[i].y) / height * mod.topLeft.y) + (delta.y / height * mod.bottomRight.y));
                     }
                 }
-
-                // Bottom color (if different from top)?
-                if(p.isWall && p.wall.surfaceColor2)
-                {
-                    // Blend sector light+color+surfacecolor
-                    Vector3f vColor = (*p.wall.surfaceColor2) * curSectorLightColor;
-
-                    lightVertex(verts.color[0], rvertices[0], llL, vColor);
-                    lightVertex(verts.color[2], rvertices[2], llR, vColor);
-                }
             }
-
-            // Apply torch light?
-            if(viewPlayer->shared.fixedColorMap)
-            {
-                for(duint i = 0; i < numVertices; ++i)
-                {
-                    Rend_ApplyTorchLight(verts.color[i], Rend_PointDist2D(rvertices[i]));
-                }
-            }
-        }
-
-        if(shineRTU && !drawAsVisSprite)
-        {
-            // Strength of the shine.
-            Vector3f const &minColor = matAnimator.shineMinColor();
-            for(duint i = 0; i < numVertices; ++i)
-            {
-                shineVerts.color[i] = Vector4f(Vector3f(verts.color[i]).max(minColor), shineRTU->opacity);
-            }
-        }
-
-        // Apply uniform alpha (overwritting luminance factors).
-        for(duint i = 0; i < numVertices; ++i)
-        {
-            verts.color[i].w = p.alpha;
         }
     }
 
-    if(useLights || useShadows)
+    // Make geometry.
+    if(p.isWall)
     {
-        // Surfaces lit by dynamic lights may need to be rendered differently
-        // than non-lit surfaces. Determine the average light level of this rend
-        // poly, if too bright; do not bother with lights.
-        dfloat avgLightlevel = 0;
-        for(duint i = 0; i < numVertices; ++i)
-        {
-            Vector4f const &color = verts.color[i];
-            avgLightlevel += color.x + color.y + color.z;
-        }
-        avgLightlevel /= numVertices * 3;
-
-        if(avgLightlevel > 0.98f)
-        {
-            useLights = false;
-        }
-        if(avgLightlevel < 0.02f)
-        {
-            useShadows = false;
-        }
+        makeWallGeometry(verts, numVertices, rvertices, *p.topLeft, *p.bottomRight, p.wall.sectionWidth,
+                         *p.mapElement, p.geomGroup, *p.surfaceTangentMatrix,
+                         p.alpha, *p.surfaceColor, p.wall.surfaceColor2, p.glowing, p.surfaceLuminosityDeltas,
+                         !skyMaskedMaterial);
+    }
+    else
+    {
+        makeFlatGeometry(verts, numVertices, rvertices, *p.topLeft, *p.bottomRight,
+                         *p.mapElement, p.geomGroup, *p.surfaceTangentMatrix,
+                         p.alpha, *p.surfaceColor, p.wall.surfaceColor2, p.glowing, p.surfaceLuminosityDeltas,
+                         !skyMaskedMaterial);
     }
 
     if(drawAsVisSprite)
@@ -1332,17 +1363,25 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
         Rend_AddMaskedPoly(verts.pos, verts.color, p.wall.sectionWidth, &matAnimator,
                            *p.materialOrigin, p.blendMode, p.lightListIdx, p.glowing);
 
-        R_FreeRendTexCoords(modTexCoords);
-
         R_FreeRendVertices (verts.pos);
         R_FreeRendColors   (verts.color);
         R_FreeRendTexCoords(verts.tex);
         R_FreeRendTexCoords(verts.tex2);
 
-        R_FreeRendColors   (shineVerts.color);
-        R_FreeRendTexCoords(shineVerts.tex);
-
         return false;  // We HAD to use a vissprite, so it MUST not be opaque.
+    }
+
+    if(useLights || useShadows)
+    {
+        dfloat const avg = averageLuminosity(verts.color, numVertices);
+        if(avg > 0.98f)  // Fully bright.
+        {
+            useLights = false;  // Skip lights.
+        }
+        if(avg < 0.02f)  // Fully dark.
+        {
+            useShadows = false;  // Skip shadows.
+        }
     }
 
     if(useLights)
@@ -1351,12 +1390,12 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
         // Multitexturing can be used for the first light.
         bool const skipFirst = Rend_IsMTexLights();
 
-        duint numWritten = 0;
+        duint numProcessed = 0;
         rendSys().forAllSurfaceProjections(p.lightListIdx,
-                                           [&p, &rvertices, &numVertices, &skipFirst, &numWritten]
+                                           [&p, &rvertices, &numVertices, &skipFirst, &numProcessed]
                                            (ProjectedTextureData const &tp)
         {
-            if(!(skipFirst && numWritten == 0))
+            if(!(skipFirst && numProcessed == 0))
             {
                 // Light texture determines the list to write to.
                 DrawListSpec listSpec;
@@ -1417,13 +1456,12 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                 R_FreeRendVertices (verts.pos);
                 R_FreeRendColors   (verts.color);
                 R_FreeRendTexCoords(verts.tex);
-
-                numWritten += 1;
             }
+            numProcessed += 1;
             return LoopContinue;
         });
 
-        hasDynlights = numWritten > 1;
+        hasDynlights = (numProcessed > duint(skipFirst? 1 : 0));
     }
 
     if(useShadows)
@@ -1496,6 +1534,32 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
         });
     }
 
+    // Make shine geometry.
+    // Surface shine geometry (primary texture and color coords).
+    // Use the surface geometry for position coords.
+    // Use the surface texture coords with the mask.
+    Geometry shineVerts = Geometry();
+    if(shineRTU)
+    {
+        Vector3f const &shineColor = matAnimator.shineMinColor();  // Shine strength.
+        dfloat const shineOpacity  = shineRTU->opacity;
+
+        // Allocate vertices from the pools.
+        shineVerts.color = R_AllocRendColors(numVerts);
+        shineVerts.tex   = R_AllocRendTexCoords(numVerts);
+
+        if(p.isWall)
+        {
+            makeWallShineGeometry(shineVerts, numVertices, rvertices, verts, p.wall.sectionWidth,
+                                  shineColor, shineOpacity);
+        }
+        else
+        {
+            makeFlatShineGeometry(shineVerts, numVertices, rvertices, verts,
+                                  shineColor, shineOpacity);
+        }
+    }
+
     // Write geometry.
     // Walls with edge divisions mean two trifans.
     if(p.isWall && (p.wall.leftEdge->divisionCount() || p.wall.rightEdge->divisionCount()))
@@ -1507,22 +1571,19 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
         // vertices, interpolate texcoords and color.
 
         Vector3f origPos[4]; std::memcpy(origPos, verts.pos, sizeof(origPos));
-        Vector2f origTex[4]; std::memcpy(origTex, verts.tex, sizeof(origTex));
-
-        Vector4f origColor[4];
-        if(verts.color || shineVerts.color)
-        {
-            std::memcpy(origColor, verts.color, sizeof(origColor));
-        }
-
-        R_DivVerts    (verts.pos, origPos, leftEdge, rightEdge);
-        R_DivTexCoords(verts.tex, origTex, leftEdge, rightEdge);
+        R_DivVerts(verts.pos, origPos, leftEdge, rightEdge);
 
         if(verts.color)
         {
-            R_DivVertColors(verts.color, origColor, leftEdge, rightEdge);
+            Vector4f orig[4]; std::memcpy(orig, verts.color, sizeof(orig));
+            R_DivVertColors(verts.color, orig, leftEdge, rightEdge);
         }
 
+        if(verts.tex)
+        {
+            Vector2f orig[4]; std::memcpy(orig, verts.tex, sizeof(orig));
+            R_DivTexCoords(verts.tex, orig, leftEdge, rightEdge);
+        }
         if(verts.tex2)
         {
             Vector2f orig[4]; std::memcpy(orig, verts.tex2, sizeof(orig));
@@ -1533,18 +1594,6 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
         {
             Vector2f orig[4]; std::memcpy(orig, modTexCoords, sizeof(orig));
             R_DivTexCoords(modTexCoords, orig, leftEdge, rightEdge);
-        }
-
-        if(shineVerts.tex)
-        {
-            Vector2f orig[4]; std::memcpy(orig, shineVerts.tex, sizeof(orig));
-            R_DivTexCoords(shineVerts.tex, orig, leftEdge, rightEdge);
-        }
-
-        if(shineVerts.color)
-        {
-            Vector4f orig[4]; std::memcpy(orig, shineVerts.color, sizeof(orig));
-            R_DivVertColors(shineVerts.color, orig, leftEdge, rightEdge);
         }
 
         if(p.skyMasked)
@@ -1620,8 +1669,8 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                                  3 + rightEdge.divisionCount(),
                                  verts.pos + 3 + leftEdge.divisionCount(),
                                  verts.color? verts.color + 3 + leftEdge.divisionCount() : 0,
-                                 verts.tex + 3 + leftEdge.divisionCount(),
-                                 verts.tex2? verts.tex2 + 3 + leftEdge.divisionCount() : 0,
+                                 verts.tex  ? verts.tex   + 3 + leftEdge.divisionCount() : 0,
+                                 verts.tex2 ? verts.tex2  + 3 + leftEdge.divisionCount() : 0,
                                  mod.texture, &mod.color, modTexCoords? modTexCoords + 3 + leftEdge.divisionCount() : 0)
                           .write(gl::TriangleFan, BM_NORMAL,
                                  listSpec.unit(TU_PRIMARY       ).scale,
@@ -1631,45 +1680,6 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                                  3 + leftEdge.divisionCount(),
                                  verts.pos, verts.color, verts.tex,
                                  verts.tex2, mod.texture, &mod.color, modTexCoords);
-
-            if(shineRTU)
-            {
-                DrawListSpec listSpec(ShineGeom);
-
-                listSpec.texunits[TU_PRIMARY] = *shineRTU;
-
-                if(shineMaskRTU)
-                {
-                    listSpec.texunits[TU_INTER] = *shineMaskRTU;
-                    if(p.materialOrigin)
-                    {
-                        listSpec.texunits[TU_INTER].offset += *p.materialOrigin;
-                    }
-                    if(p.materialScale)
-                    {
-                        listSpec.texunits[TU_INTER].scale  *= *p.materialScale;
-                        listSpec.texunits[TU_INTER].offset *= *p.materialScale;
-                    }
-                }
-
-                rendSys().drawLists().find(listSpec)
-                              .write(gl::TriangleFan, matAnimator.shineBlendMode(),
-                                     listSpec.unit(TU_INTER).scale,
-                                     listSpec.unit(TU_INTER).offset,
-                                     Vector2f(1, 1), Vector2f(0, 0), false /*not lit*/,
-                                     3 + rightEdge.divisionCount(),
-                                     verts.pos + 3 + leftEdge.divisionCount(),
-                                     shineVerts.color + 3 + leftEdge.divisionCount(),
-                                     shineVerts.tex ? shineVerts.tex + 3 + leftEdge.divisionCount() : 0,
-                                     shineMaskRTU? verts.tex + 3 + leftEdge.divisionCount() : 0)
-                              .write(gl::TriangleFan, matAnimator.shineBlendMode(),
-                                     listSpec.unit(TU_INTER).scale,
-                                     listSpec.unit(TU_INTER).offset,
-                                     Vector2f(1, 1), Vector2f(0, 0), false /*not lit*/,
-                                     3 + leftEdge.divisionCount(),
-                                     verts.pos, shineVerts.color, shineVerts.tex,
-                                     shineMaskRTU? verts.tex : 0);
-            }
         }
     }
     else
@@ -1740,36 +1750,74 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                                  listSpec.unit(TU_PRIMARY_DETAIL).offset, hasDynlights,
                                  numVertices, verts.pos, verts.color, verts.tex, verts.tex2,
                                  mod.texture, &mod.color, modTexCoords);
+        }
+    }
 
-            if(shineRTU)
+    if(shineRTU)
+    {
+        // Write shine geometry.
+        DrawListSpec listSpec(ShineGeom);
+        listSpec.texunits[TU_PRIMARY] = *shineRTU;
+        if(shineMaskRTU)
+        {
+            listSpec.texunits[TU_INTER] = *shineMaskRTU;
+            if(p.materialOrigin)
             {
-                DrawListSpec listSpec(ShineGeom);
-
-                listSpec.texunits[TU_PRIMARY] = *shineRTU;
-
-                if(shineMaskRTU)
-                {
-                    listSpec.texunits[TU_INTER] = *shineMaskRTU;
-                    if(p.materialOrigin)
-                    {
-                        listSpec.texunits[TU_INTER].offset += *p.materialOrigin;
-                    }
-                    if(p.materialScale)
-                    {
-                        listSpec.texunits[TU_INTER].scale  *= *p.materialScale;
-                        listSpec.texunits[TU_INTER].offset *= *p.materialScale;
-                    }
-                }
-
-                rendSys().drawLists().find(listSpec)
-                              .write(p.isWall? gl::TriangleStrip : gl::TriangleFan, matAnimator.shineBlendMode(),
-                                     listSpec.unit(TU_INTER         ).scale,
-                                     listSpec.unit(TU_INTER         ).offset,
-                                     listSpec.unit(TU_PRIMARY_DETAIL).scale,
-                                     listSpec.unit(TU_PRIMARY_DETAIL).offset, false /*not lit*/,
-                                     numVertices, verts.pos, shineVerts.color, shineVerts.tex,
-                                     shineMaskRTU? verts.tex : 0);
+                listSpec.texunits[TU_INTER].offset += *p.materialOrigin;
             }
+            if(p.materialScale)
+            {
+                listSpec.texunits[TU_INTER].scale  *= *p.materialScale;
+                listSpec.texunits[TU_INTER].offset *= *p.materialScale;
+            }
+        }
+
+        // Walls with edge divisions mean two trifans.
+        if(p.isWall && (p.wall.leftEdge->divisionCount() || p.wall.rightEdge->divisionCount()))
+        {
+            WallEdge const &leftEdge  = *p.wall.leftEdge;
+            WallEdge const &rightEdge = *p.wall.rightEdge;
+
+            if(shineVerts.tex)
+            {
+                Vector2f orig[4]; std::memcpy(orig, shineVerts.tex, sizeof(orig));
+                R_DivTexCoords(shineVerts.tex, orig, leftEdge, rightEdge);
+            }
+
+            if(shineVerts.color)
+            {
+                Vector4f orig[4]; std::memcpy(orig, shineVerts.color, sizeof(orig));
+                R_DivVertColors(shineVerts.color, orig, leftEdge, rightEdge);
+            }
+
+            rendSys().drawLists().find(listSpec)
+                            .write(gl::TriangleFan, matAnimator.shineBlendMode(),
+                                   listSpec.unit(TU_INTER).scale,
+                                   listSpec.unit(TU_INTER).offset,
+                                   Vector2f(1, 1), Vector2f(0, 0), false /*not lit*/,
+                                   3 + rightEdge.divisionCount(),
+                                   verts.pos + 3 + leftEdge.divisionCount(),
+                                   shineVerts.color + 3 + leftEdge.divisionCount(),
+                                   shineVerts.tex ? shineVerts.tex + 3 + leftEdge.divisionCount() : 0,
+                                   shineMaskRTU? verts.tex + 3 + leftEdge.divisionCount() : 0)
+                            .write(gl::TriangleFan, matAnimator.shineBlendMode(),
+                                   listSpec.unit(TU_INTER).scale,
+                                   listSpec.unit(TU_INTER).offset,
+                                   Vector2f(1, 1), Vector2f(0, 0), false /*not lit*/,
+                                   3 + leftEdge.divisionCount(),
+                                   verts.pos, shineVerts.color, shineVerts.tex,
+                                   shineMaskRTU? verts.tex : 0);
+        }
+        else
+        {
+            rendSys().drawLists().find(listSpec)
+                            .write(p.isWall? gl::TriangleStrip : gl::TriangleFan, matAnimator.shineBlendMode(),
+                                   listSpec.unit(TU_INTER).scale,
+                                   listSpec.unit(TU_INTER).offset,
+                                   Vector2f(1, 1), Vector2f(0, 0), false /*not lit*/,
+                                   numVertices,
+                                   verts.pos, shineVerts.color, shineVerts.tex,
+                                   shineMaskRTU? verts.tex : 0);
         }
     }
 
@@ -2279,8 +2327,11 @@ static dfloat calcLightLevelDelta(Vector3f const &normal)
 }
 
 static void wallSectionLightLevelDeltas(WallEdge const &leftEdge, WallEdge const &rightEdge,
-    dfloat &leftDelta, dfloat &rightDelta)
+    dfloat surfaceLuminosityDeltas[2])
 {
+    dfloat &leftDelta  = surfaceLuminosityDeltas[0];
+    dfloat &rightDelta = surfaceLuminosityDeltas[1];
+
     leftDelta = calcLightLevelDelta(leftEdge.normal());
 
     if(leftEdge.normal() == rightEdge.normal())
@@ -2372,8 +2423,7 @@ static void writeWallSection(HEdge &hedge, dint section,
     // Calculate the light level deltas for this wall section?
     if(!wallSpec.flags.testFlag(WallSpec::NoLightDeltas))
     {
-        wallSectionLightLevelDeltas(leftEdge, rightEdge,
-                                    parm.surfaceLightLevelDL, parm.surfaceLightLevelDR);
+        wallSectionLightLevelDeltas(leftEdge, rightEdge, parm.surfaceLuminosityDeltas);
     }
 
     parm.blendMode           = BM_NORMAL;
@@ -2574,7 +2624,6 @@ static void writeSubspacePlane(Plane &plane)
     parm.bottomRight          = &bottomRight;
     parm.materialOrigin       = &materialOrigin;
     parm.materialScale        = &materialScale;
-    parm.surfaceLightLevelDL  = parm.surfaceLightLevelDR = 0;
     parm.surfaceColor         = &surface.tintColor();
     parm.surfaceTangentMatrix = &surface.tangentMatrix();
 
