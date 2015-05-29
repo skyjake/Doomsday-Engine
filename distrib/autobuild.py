@@ -428,13 +428,6 @@ def generate_apidoc():
     system_command('wc -l ../../../doxyissues-hexen.txt')
 
 
-def generate_readme():
-    """Run Amethyst to generate readme documentation."""
-    git_pull()
-    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/doc/output'))
-    system_command('make clean all')
-    
-    
 def generate_wiki():
     """Automatically generate wiki pages."""
     git_pull()
@@ -541,7 +534,6 @@ commands = {
     'purge': purge_obsolete,
     'cleanup': dir_cleanup,
     'apidoc': generate_apidoc,
-    'readme': generate_readme,
     'wiki': generate_wiki,
     'web_init': web_init,
     'web_update': web_update,
