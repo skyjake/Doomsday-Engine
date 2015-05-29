@@ -746,22 +746,19 @@ void Rend_AddMaskedPoly(Vector3f const *rvertices, Vector4f const *rcolors,
     {
         // The dynlights will have already been sorted so that the brightest
         // and largest of them is first in the list. So grab that one.
-        ProjectedTextureData const *dyn = nullptr;
-        rendSys().forAllSurfaceProjections(lightListIdx, [&dyn] (ProjectedTextureData const &tp)
+        rendSys().forAllSurfaceProjections(lightListIdx, [&vis] (ProjectedTextureData const &tp)
         {
-            dyn = &tp;
+            VS_WALL(vis)->modTex = tp.texture;
+            VS_WALL(vis)->modTexCoord[0][0] = tp.topLeft.x;
+            VS_WALL(vis)->modTexCoord[0][1] = tp.topLeft.y;
+            VS_WALL(vis)->modTexCoord[1][0] = tp.bottomRight.x;
+            VS_WALL(vis)->modTexCoord[1][1] = tp.bottomRight.y;
+            for(dint c = 0; c < 4; ++c)
+            {
+                VS_WALL(vis)->modColor[c] = tp.color[c];
+            }
             return LoopAbort;
         });
-
-        VS_WALL(vis)->modTex = dyn->texture;
-        VS_WALL(vis)->modTexCoord[0][0] = dyn->topLeft.x;
-        VS_WALL(vis)->modTexCoord[0][1] = dyn->topLeft.y;
-        VS_WALL(vis)->modTexCoord[1][0] = dyn->bottomRight.x;
-        VS_WALL(vis)->modTexCoord[1][1] = dyn->bottomRight.y;
-        for(dint c = 0; c < 4; ++c)
-        {
-            VS_WALL(vis)->modColor[c] = dyn->color[c];
-        }
     }
     else
     {
@@ -823,119 +820,94 @@ static void lightWallOrFlatGeometry(Geometry &verts, duint numVertices, Vector3f
     bool const haveWall    = mapElement.is<LineSideSegment>();
     SectorCluster &cluster = ::curSubspace->cluster();
 
+    // Uniform color?
     if(::levelFullBright || !(glowing < 1))
     {
-        // Uniform color.
         dfloat const lum = de::clamp(0.f, ::curSectorLightLevel + (::levelFullBright? 1 : glowing), 1.f);
         Vector4f const uniformColor(lum, lum, lum, 0);
         for(duint i = 0; i < numVertices; ++i)
         {
             verts.color[i] = uniformColor;
         }
+        return;
     }
-    else
+
+    if(::useBias)  // Bias lighting model.
     {
-        // Non-uniform color.
-        if(::useBias)
+        Map &map     = cluster.sector().map();
+        Shard &shard = cluster.shard(mapElement, geomGroup);
+
+        // Apply the ambient light term from the grid (if available).
+        if(map.hasLightGrid())
         {
-            Map &map     = cluster.sector().map();
-            Shard &shard = cluster.shard(mapElement, geomGroup);
-
-            // Apply the ambient light term from the grid (if available).
-            if(map.hasLightGrid())
-            {
-                for(duint i = 0; i < numVertices; ++i)
-                {
-                    verts.color[i] = map.lightGrid().evaluate(posCoords[i]);
-                }
-            }
-
-            // Apply bias light source contributions.
-            shard.lightWithBiasSources(posCoords, verts.color, surfaceTangents, map.biasCurrentTime());
-
-            // Apply surface glow.
-            if(glowing > 0)
-            {
-                Vector4f const glow(glowing, glowing, glowing, 0);
-                for(duint i = 0; i < numVertices; ++i)
-                {
-                    verts.color[i] += glow;
-                }
-            }
-
-            // Apply light range compression and clamp.
             for(duint i = 0; i < numVertices; ++i)
             {
-                Vector4f &color = verts.color[i];
-                for(dint k = 0; k < 3; ++k)
-                {
-                    color[k] = de::clamp(0.f, color[k] + Rend_LightAdaptationDelta(color[k]), 1.f);
-                }
+                verts.color[i] = map.lightGrid().evaluate(posCoords[i]);
             }
+        }
+
+        // Apply bias light source contributions.
+        shard.lightWithBiasSources(posCoords, verts.color, surfaceTangents, map.biasCurrentTime());
+
+        // Apply surface glow.
+        if(glowing > 0)
+        {
+            Vector4f const glow(glowing, glowing, glowing, 0);
+            for(duint i = 0; i < numVertices; ++i)
+            {
+                verts.color[i] += glow;
+            }
+        }
+
+        // Apply light range compression and clamp.
+        for(duint i = 0; i < numVertices; ++i)
+        {
+            Vector4f &color = verts.color[i];
+            for(dint k = 0; k < 3; ++k)
+            {
+                color[k] = de::clamp(0.f, color[k] + Rend_LightAdaptationDelta(color[k]), 1.f);
+            }
+        }
+    }
+    else  // Doom lighting model.
+    {
+        // Blend sector light color with the surface color tint.
+        Vector3f const colorBlended = ::curSectorLightColor * color;
+        dfloat const lumLeft  = de::clamp(0.f, ::curSectorLightLevel + luminosityDeltas[0] + glowing, 1.f);
+        dfloat const lumRight = de::clamp(0.f, ::curSectorLightLevel + luminosityDeltas[1] + glowing, 1.f);
+
+        if(haveWall && !de::fequal(lumLeft, lumRight))
+        {
+            lightVertex(verts.color[0], posCoords[0], lumLeft,  colorBlended);
+            lightVertex(verts.color[1], posCoords[1], lumLeft,  colorBlended);
+            lightVertex(verts.color[2], posCoords[2], lumRight, colorBlended);
+            lightVertex(verts.color[3], posCoords[3], lumRight, colorBlended);
         }
         else
         {
-            dfloat const lumLeft  = de::clamp(0.f, ::curSectorLightLevel + luminosityDeltas[0] + glowing, 1.f);
-            dfloat const lumRight = de::clamp(0.f, ::curSectorLightLevel + luminosityDeltas[1] + glowing, 1.f);
-
-            // Must we blend in a surface color tint?
-            if(color.x < 1 || color.y < 1 || color.z < 1)
+            for(duint i = 0; i < numVertices; ++i)
             {
-                // Blend a surface color tint with the sector light color.
-                Vector3f const colorBlended = color * ::curSectorLightColor;
-
-                if(haveWall && lumLeft != lumRight)
-                {
-                    lightVertex(verts.color[0], posCoords[0], lumLeft,  colorBlended);
-                    lightVertex(verts.color[1], posCoords[1], lumLeft,  colorBlended);
-                    lightVertex(verts.color[2], posCoords[2], lumRight, colorBlended);
-                    lightVertex(verts.color[3], posCoords[3], lumRight, colorBlended);
-                }
-                else
-                {
-                    for(duint i = 0; i < numVertices; ++i)
-                    {
-                        lightVertex(verts.color[i], posCoords[i], lumLeft, colorBlended);
-                    }
-                }
-            }
-            else
-            {
-                // Only a sector light color.
-                if(haveWall && lumLeft != lumRight)
-                {
-                    lightVertex(verts.color[0], posCoords[0], lumLeft,  ::curSectorLightColor);
-                    lightVertex(verts.color[1], posCoords[1], lumLeft,  ::curSectorLightColor);
-                    lightVertex(verts.color[2], posCoords[2], lumRight, ::curSectorLightColor);
-                    lightVertex(verts.color[3], posCoords[3], lumRight, ::curSectorLightColor);
-                }
-                else
-                {
-                    for(duint i = 0; i < numVertices; ++i)
-                    {
-                        lightVertex(verts.color[i], posCoords[i], lumLeft, ::curSectorLightColor);
-                    }
-                }
-            }
-
-            // Secondary color?
-            if(haveWall && color2)
-            {
-                // Blend the secondary surface color tint with the sector light color.
-                Vector3f const colorBlended = (*color2) * ::curSectorLightColor;
-                lightVertex(verts.color[0], posCoords[0], lumLeft,  colorBlended);
-                lightVertex(verts.color[2], posCoords[2], lumRight, colorBlended);
+                lightVertex(verts.color[i], posCoords[i], lumLeft, colorBlended);
             }
         }
 
-        // Apply torch light?
-        DENG2_ASSERT(::viewPlayer);
-        if(::viewPlayer->shared.fixedColorMap)
+        // Secondary color?
+        if(haveWall && color2)
         {
-            for(duint i = 0; i < numVertices; ++i)
-            {
-                Rend_ApplyTorchLight(verts.color[i], Rend_PointDist2D(posCoords[i]));
-            }
+            // Blend the secondary surface color tint with the sector light color.
+            Vector3f const color2Blended = ::curSectorLightColor * (*color2);
+            lightVertex(verts.color[0], posCoords[0], lumLeft,  color2Blended);
+            lightVertex(verts.color[2], posCoords[2], lumRight, color2Blended);
+        }
+    }
+
+    // Apply torch light?
+    DENG2_ASSERT(::viewPlayer);
+    if(::viewPlayer->shared.fixedColorMap)
+    {
+        for(duint i = 0; i < numVertices; ++i)
+        {
+            Rend_ApplyTorchLight(verts.color[i], Rend_PointDist2D(posCoords[i]));
         }
     }
 }
@@ -1266,10 +1238,8 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
     // Ensure we've up to date info about the material.
     matAnimator.prepare();
 
-    bool const skyMaskedMaterial = (p.skyMasked || (matAnimator.material().isSkyMasked()));
-    bool const drawAsVisSprite   = (!p.forceOpaque && !p.skyMasked && (!matAnimator.isOpaque() || p.alpha < 1 || p.blendMode > 0));
-
-    bool useLights = false, useShadows = false, hasDynlights = false;
+    bool const skyMaskedMaterial        = (p.skyMasked || (matAnimator.material().isSkyMasked()));
+    bool const drawAsVisSprite          = (!p.forceOpaque && !p.skyMasked && (!matAnimator.isOpaque() || p.alpha < 1 || p.blendMode > 0));
 
     // Map RTU configuration.
     GLTextureUnit const *layer0RTU      = (!p.skyMasked)? &matAnimator.texUnit(MaterialAnimator::TU_LAYER0) : nullptr;
@@ -1280,7 +1250,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
     GLTextureUnit const *shineRTU       = (::useShinySurfaces && !skyMaskedMaterial && !drawAsVisSprite && matAnimator.texUnit(MaterialAnimator::TU_SHINE).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_SHINE) : nullptr;
     GLTextureUnit const *shineMaskRTU   = (::useShinySurfaces && !skyMaskedMaterial && !drawAsVisSprite && matAnimator.texUnit(MaterialAnimator::TU_SHINE).hasTexture() && matAnimator.texUnit(MaterialAnimator::TU_SHINE_MASK).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_SHINE_MASK) : nullptr;
 
-    // Surface geometry (position, primary texture, inter texture and color coords).
+    // Make surface geometry (position, primary texture, inter texture and color coords).
     Geometry verts;
     duint const numVerts = (p.isWall ? 3 + p.wall.leftEdge->divisionCount() + 3 + p.wall.rightEdge->divisionCount() : numVertices);
     // Allocate vertices from the pools.
@@ -1288,56 +1258,6 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
     verts.color = !skyMaskedMaterial? R_AllocRendColors   (numVerts) : nullptr;
     verts.tex   = layer0RTU         ? R_AllocRendTexCoords(numVerts) : nullptr;
     verts.tex2  = layer0InterRTU    ? R_AllocRendTexCoords(numVerts) : nullptr;
-
-    // If multitexturing is enabled and there is at least one dynlight affecting the surface,
-    // locate the projection data and use it for modulation.
-    TexModulationData mod;
-    Vector2f *modTexCoords = nullptr;
-    if(!skyMaskedMaterial && !drawAsVisSprite && p.glowing < 1)
-    {
-        useLights  = (p.lightListIdx ? true : false);
-        useShadows = (p.shadowListIdx? true : false);
-
-        if(useLights && Rend_IsMTexLights())
-        {
-            rendSys().forAllSurfaceProjections(p.lightListIdx, [&mod] (ProjectedTextureData const &dyn)
-            {
-                mod.texture     = dyn.texture;
-                mod.color       = dyn.color;
-                mod.topLeft     = dyn.topLeft;
-                mod.bottomRight = dyn.bottomRight;
-                return LoopAbort;
-            });
-
-            if(mod.texture)
-            {
-                modTexCoords = R_AllocRendTexCoords(numVerts);
-                
-                // Modulation texture coordinates.
-                if(p.isWall)
-                {
-                    modTexCoords[0] = Vector2f(mod.topLeft.x, mod.bottomRight.y);
-                    modTexCoords[1] = mod.topLeft;
-                    modTexCoords[2] = mod.bottomRight;
-                    modTexCoords[3] = Vector2f(mod.bottomRight.x, mod.topLeft.y);
-                }
-                else
-                {
-                    for(duint i = 0; i < numVertices; ++i)
-                    {
-                        Vector3f const delta(rvertices[i] - *p.topLeft);
-                        dfloat const width  = p.bottomRight->x - p.topLeft->x;
-                        dfloat const height = p.bottomRight->y - p.topLeft->y;
-
-                        modTexCoords[i] = Vector2f(((p.bottomRight->x - rvertices[i].x) / width  * mod.topLeft.x) + (delta.x / width  * mod.bottomRight.x),
-                                                   ((p.bottomRight->y - rvertices[i].y) / height * mod.topLeft.y) + (delta.y / height * mod.bottomRight.y));
-                    }
-                }
-            }
-        }
-    }
-
-    // Make geometry.
     if(p.isWall)
     {
         makeWallGeometry(verts, numVertices, rvertices, *p.topLeft, *p.bottomRight, p.wall.sectionWidth,
@@ -1371,6 +1291,9 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
         return false;  // We HAD to use a vissprite, so it MUST not be opaque.
     }
 
+    // Skip drawing dynamic light/shadow on surfaces too bright/dark to benefit.
+    bool useLights  = (p.lightListIdx  && !skyMaskedMaterial && !drawAsVisSprite && p.glowing < 1? true : false);
+    bool useShadows = (p.shadowListIdx && !skyMaskedMaterial && !drawAsVisSprite && p.glowing < 1? true : false);
     if(useLights || useShadows)
     {
         dfloat const avg = averageLuminosity(verts.color, numVertices);
@@ -1384,6 +1307,45 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
         }
     }
 
+    // If multitexturing is enabled and there is at least one dynlight affecting the surface,
+    // locate the projection data and use it for modulation.
+    TexModulationData mod;
+    Vector2f *modTexCoords = nullptr;
+    if(useLights && Rend_IsMTexLights())
+    {
+        rendSys().forAllSurfaceProjections(p.lightListIdx, [&mod] (ProjectedTextureData const &dyn)
+        {
+            mod.texture     = dyn.texture;
+            mod.color       = dyn.color;
+            mod.topLeft     = dyn.topLeft;
+            mod.bottomRight = dyn.bottomRight;
+            return LoopAbort;
+        });
+
+        if(mod.texture)
+        {
+            modTexCoords = R_AllocRendTexCoords(numVerts);
+                
+            // Modulation texture coordinates.
+            if(p.isWall)
+            {
+                modTexCoords[0] = Vector2f(mod.topLeft.x, mod.bottomRight.y);
+                modTexCoords[1] = mod.topLeft;
+                modTexCoords[2] = mod.bottomRight;
+                modTexCoords[3] = Vector2f(mod.bottomRight.x, mod.topLeft.y);
+            }
+            else
+            {
+                for(duint i = 0; i < numVertices; ++i)
+                {
+                    modTexCoords[i] = (( Vector2f(*p.bottomRight) - Vector2f(rvertices[i]) ) / ( Vector2f(*p.bottomRight) - Vector2f(*p.topLeft) ) * mod.topLeft    )
+                                    + (( Vector2f(rvertices[i]  ) - Vector2f(*p.topLeft  ) ) / ( Vector2f(*p.bottomRight) - Vector2f(*p.topLeft) ) * mod.bottomRight);
+                }
+            }
+        }
+    }
+
+    bool hasDynlights = false;
     if(useLights)
     {
         // Write projected lights.
@@ -1613,7 +1575,6 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
         else
         {
             DrawListSpec listSpec((mod.texture || hasDynlights)? LitGeom : UnlitGeom);
-
             if(layer0RTU)
             {
                 listSpec.texunits[TU_PRIMARY] = *layer0RTU;
@@ -1627,16 +1588,6 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                     listSpec.texunits[TU_PRIMARY].offset *= *p.materialScale;
                 }
             }
-
-            if(detailRTU)
-            {
-                listSpec.texunits[TU_PRIMARY_DETAIL] = *detailRTU;
-                if(p.materialOrigin)
-                {
-                    listSpec.texunits[TU_PRIMARY_DETAIL].offset += *p.materialOrigin;
-                }
-            }
-
             if(layer0InterRTU)
             {
                 listSpec.texunits[TU_INTER] = *layer0InterRTU;
@@ -1650,7 +1601,14 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                     listSpec.texunits[TU_INTER].offset *= *p.materialScale;
                 }
             }
-
+            if(detailRTU)
+            {
+                listSpec.texunits[TU_PRIMARY_DETAIL] = *detailRTU;
+                if(p.materialOrigin)
+                {
+                    listSpec.texunits[TU_PRIMARY_DETAIL].offset += *p.materialOrigin;
+                }
+            }
             if(detailInterRTU)
             {
                 listSpec.texunits[TU_INTER_DETAIL] = *detailInterRTU;
@@ -1695,7 +1653,6 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
         else
         {
             DrawListSpec listSpec((mod.texture || hasDynlights)? LitGeom : UnlitGeom);
-
             if(layer0RTU)
             {
                 listSpec.texunits[TU_PRIMARY] = *layer0RTU;
@@ -1709,16 +1666,6 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                     listSpec.texunits[TU_PRIMARY].offset *= *p.materialScale;
                 }
             }
-
-            if(detailRTU)
-            {
-                listSpec.texunits[TU_PRIMARY_DETAIL] = *detailRTU;
-                if(p.materialOrigin)
-                {
-                    listSpec.texunits[TU_PRIMARY_DETAIL].offset += *p.materialOrigin;
-                }
-            }
-
             if(layer0InterRTU)
             {
                 listSpec.texunits[TU_INTER] = *layer0InterRTU;
@@ -1732,7 +1679,14 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                     listSpec.texunits[TU_INTER].offset *= *p.materialScale;
                 }
             }
-
+            if(detailRTU)
+            {
+                listSpec.texunits[TU_PRIMARY_DETAIL] = *detailRTU;
+                if(p.materialOrigin)
+                {
+                    listSpec.texunits[TU_PRIMARY_DETAIL].offset += *p.materialOrigin;
+                }
+            }
             if(detailInterRTU)
             {
                 listSpec.texunits[TU_INTER_DETAIL] = *detailInterRTU;
@@ -1783,7 +1737,6 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                 Vector2f orig[4]; std::memcpy(orig, shineVerts.tex, sizeof(orig));
                 R_DivTexCoords(shineVerts.tex, orig, leftEdge, rightEdge);
             }
-
             if(shineVerts.color)
             {
                 Vector4f orig[4]; std::memcpy(orig, shineVerts.color, sizeof(orig));
