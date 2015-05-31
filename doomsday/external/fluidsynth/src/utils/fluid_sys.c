@@ -573,11 +573,11 @@ void fluid_profiling_print(void)
 
 /* Rather than inline this one, we just declare it as a function, to prevent
  * GCC warning about inline failure. */
-fluid_cond_t *
-new_fluid_cond (void)
+void
+fluid_cond_init (fluid_cond_t *cond)
 {
   if (!g_thread_supported ()) g_thread_init (NULL);
-  return g_cond_new ();
+  g_cond_init (cond);
 }
 
 static gpointer
