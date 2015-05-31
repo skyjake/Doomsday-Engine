@@ -139,14 +139,14 @@ typedef GStaticMutex fluid_mutex_t;
 } G_STMT_END;
 
 /* Recursive lock capable mutex */
-typedef GStaticRecMutex fluid_rec_mutex_t;
-#define fluid_rec_mutex_destroy(_m)   g_static_rec_mutex_free(&(_m))
-#define fluid_rec_mutex_lock(_m)      g_static_rec_mutex_lock(&(_m))
-#define fluid_rec_mutex_unlock(_m)    g_static_rec_mutex_unlock(&(_m))
+typedef GRecMutex fluid_rec_mutex_t;
+#define fluid_rec_mutex_destroy(_m)   g_rec_mutex_clear(&(_m))
+#define fluid_rec_mutex_lock(_m)      g_rec_mutex_lock(&(_m))
+#define fluid_rec_mutex_unlock(_m)    g_rec_mutex_unlock(&(_m))
 
 #define fluid_rec_mutex_init(_m)      G_STMT_START { \
   if (!g_thread_supported ()) g_thread_init (NULL); \
-  g_static_rec_mutex_init (&(_m)); \
+  g_rec_mutex_init (&(_m)); \
 } G_STMT_END;
 
 /* Dynamically allocated mutex suitable for fluid_cond_t use */
