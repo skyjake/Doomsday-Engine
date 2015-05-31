@@ -166,8 +166,8 @@ new_fluid_cond_mutex (void)
 /* Thread condition signaling */
 
 typedef GCond fluid_cond_t;
-fluid_cond_t *new_fluid_cond (void);
-#define delete_fluid_cond(cond)         g_cond_free(cond)
+void fluid_cond_init (fluid_cond_t *cond);
+#define delete_fluid_cond(cond)         g_cond_clear(cond)
 #define fluid_cond_signal(cond)         g_cond_signal(cond)
 #define fluid_cond_broadcast(cond)      g_cond_broadcast(cond)
 #define fluid_cond_wait(cond, mutex)    g_cond_wait(cond, mutex)
