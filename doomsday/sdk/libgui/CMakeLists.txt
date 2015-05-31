@@ -83,4 +83,9 @@ endif ()
 
 deng_deploy_library (libgui DengGui)
 
+# If Assimp is part of the build, ensure that it gets compiled before libgui.
+if (TARGET assimp)
+    add_dependencies (libgui assimp)
+endif ()
+
 deng_cotire (libgui src/precompiled.h)
