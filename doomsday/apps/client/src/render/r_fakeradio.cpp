@@ -46,35 +46,6 @@ LineSideRadioData &Rend_RadioDataForLineSide(LineSide &side)
     return lineSideRadioData[side.line().indexInMap() * 2 + (side.isBack()? 1 : 0)];
 }
 
-bool Rend_RadioLineCastsShadow(Line const &line)
-{
-    if(line.definesPolyobj()) return false;
-    if(line.isSelfReferencing()) return false;
-
-    // Lines with no other neighbor do not qualify for shadowing.
-    if(&line.v1Owner()->next().line() == &line || &line.v2Owner()->next().line() == &line)
-       return false;
-
-    return true;
-}
-
-bool Rend_RadioPlaneCastsShadow(Plane const &plane)
-{
-    if(plane.surface().hasMaterial())
-    {
-        MaterialAnimator &matAnimator = plane.surface().material().getAnimator(Rend_MapSurfaceMaterialSpec());
-
-        // Ensure we have up to date info about the material.
-        matAnimator.prepare();
-
-        if(!matAnimator.material().isDrawable()) return false;
-        if(matAnimator.material().isSkyMasked()) return false;
-
-        if(matAnimator.glowStrength() > 0) return false;
-    }
-    return true;
-}
-
 void Rend_RadioInitForMap(Map &map)
 {
     Time begunAt;
@@ -99,7 +70,7 @@ void Rend_RadioInitForMap(Map &map)
     ///    of the subspace's edges (not parallel), link the line to the ConvexSubspace.
     map.forAllLines([] (Line &line)
     {
-        if(Rend_RadioLineCastsShadow(line))
+        if(line.castsShadow())
         {
             // For each side of the line.
             for(dint i = 0; i < 2; ++i)

@@ -39,6 +39,7 @@
 
 #ifdef __CLIENT__
 #  include "world/map.h"
+#  include "world/lineowner.h"
 #  include "resource/materialdetaillayer.h"
 #  include "resource/materialshinelayer.h"
 #endif
@@ -113,14 +114,14 @@ DENG2_PIMPL_NOREF(Line::Side)
 , DENG2_OBSERVES(Line, FlagsChange)
 #endif
 {
-    int flags = 0;                  ///< @ref sdefFlags
+    dint flags = 0;                 ///< @ref sdefFlags
     Sector *sector = nullptr;       ///< Attributed sector (not owned).
 
     typedef QList<Segment *> Segments;
     Segments segments;              ///< On "this" side, sorted.
     bool needSortSegments = false;  ///< set to @c true when the list needs sorting.
 
-    int shadowVisCount = 0;         ///< Framecount of last time shadows were drawn.
+    dint shadowVisCount = 0;        ///< Framecount of last time shadows were drawn.
 
     /**
      * Line side section of which there are three (middle, bottom and top).
@@ -130,8 +131,7 @@ DENG2_PIMPL_NOREF(Line::Side)
         Surface surface;
         ThinkerT<SoundEmitter> soundEmitter;
 
-        Section(Line::Side &side) : surface(side)
-        {}
+        Section(Line::Side &side) : surface(side) {}
     };
 
     struct Sections
@@ -140,8 +140,7 @@ DENG2_PIMPL_NOREF(Line::Side)
         Section bottom;
         Section top;
 
-        Sections(Side &side) : middle(side), bottom(side), top(side)
-        {}
+        Sections(Side &side) : middle(side), bottom(side), top(side) {}
     };
     std::unique_ptr<Sections> sections;
 
@@ -150,7 +149,7 @@ DENG2_PIMPL_NOREF(Line::Side)
     /**
      * Retrieve the Section associated with @a sectionId.
      */
-    Section &sectionById(int sectionId)
+    Section &sectionById(dint sectionId)
     {
         if(sections)
         {
@@ -162,7 +161,7 @@ DENG2_PIMPL_NOREF(Line::Side)
             }
         }
         /// @throw Line::InvalidSectionIdError The given section identifier is not valid.
-        throw Line::InvalidSectionIdError("Line::Side::section", QString("Invalid section id %1").arg(sectionId));
+        throw Line::InvalidSectionIdError("Line::Side::section", "Invalid section id " + String::number(sectionId));
     }
 
     void sortSegments(Vector2d lineSideOrigin)
@@ -183,7 +182,7 @@ DENG2_PIMPL_NOREF(Line::Side)
 
 #ifdef __CLIENT__
     /// Observes Line FlagsChange
-    void lineFlagsChanged(Line &line, int oldFlags)
+    void lineFlagsChanged(Line &line, dint oldFlags)
     {
         if(sections)
         {
@@ -247,10 +246,7 @@ bool Line::Side::hasSector() const
 
 Sector &Line::Side::sector() const
 {
-    if(d->sector)
-    {
-        return *d->sector;
-    }
+    if(d->sector) return *d->sector;
     /// @throw Line::MissingSectorError Attempted with no sector attributed.
     throw Line::MissingSectorError("Line::Side::sector", "No sector is attributed");
 }
@@ -268,22 +264,22 @@ void Line::Side::addSections()
     d->sections.reset(new Instance::Sections(*this));
 }
 
-Surface &Line::Side::surface(int sectionId)
+Surface &Line::Side::surface(dint sectionId)
 {
     return d->sectionById(sectionId).surface;
 }
 
-Surface const &Line::Side::surface(int sectionId) const
+Surface const &Line::Side::surface(dint sectionId) const
 {
     return const_cast<Side *>(this)->surface(sectionId);
 }
 
-SoundEmitter &Line::Side::soundEmitter(int sectionId)
+SoundEmitter &Line::Side::soundEmitter(dint sectionId)
 {
     return d->sectionById(sectionId).soundEmitter;
 }
 
-SoundEmitter const &Line::Side::soundEmitter(int sectionId) const
+SoundEmitter const &Line::Side::soundEmitter(dint sectionId) const
 {
     return const_cast<Side *>(this)->soundEmitter(sectionId);
 }
@@ -291,10 +287,10 @@ SoundEmitter const &Line::Side::soundEmitter(int sectionId) const
 void Line::Side::clearSegments()
 {
     d->segments.clear();
-    d->needSortSegments = false; // An empty list is sorted.
+    d->needSortSegments = false;  // An empty list is sorted.
 }
 
-Line::Side::Segment *Line::Side::addSegment(de::HEdge &hedge)
+Line::Side::Segment *Line::Side::addSegment(HEdge &hedge)
 {
     // Have we an exiting segment for this half-edge?
     for(Segment *seg : d->segments)
@@ -306,7 +302,7 @@ Line::Side::Segment *Line::Side::addSegment(de::HEdge &hedge)
     // No, insert a new one.
     Segment *newSeg = new Segment(*this, hedge);
     d->segments.append(newSeg);
-    d->needSortSegments = true; // We'll need to (re)sort.
+    d->needSortSegments = true;  // We'll need to (re)sort.
 
     // Attribute the segment to half-edge.
     hedge.setMapElement(newSeg);
@@ -334,7 +330,7 @@ HEdge *Line::Side::rightHEdge() const
     return &d->segments.last()->hedge();
 }
 
-void Line::Side::updateSoundEmitterOrigin(int sectionId)
+void Line::Side::updateSoundEmitterOrigin(dint sectionId)
 {
     LOG_AS("Line::Side::updateSoundEmitterOrigin");
 
@@ -343,8 +339,8 @@ void Line::Side::updateSoundEmitterOrigin(int sectionId)
     SoundEmitter &emitter = d->sectionById(sectionId).soundEmitter;
 
     Vector2d lineCenter = line().center();
-    emitter.origin[VX] = lineCenter.x;
-    emitter.origin[VY] = lineCenter.y;
+    emitter.origin[0] = lineCenter.x;
+    emitter.origin[1] = lineCenter.y;
 
     DENG2_ASSERT(d->sector);
     coord_t const ffloor = d->sector->floor().height();
@@ -356,12 +352,12 @@ void Line::Side::updateSoundEmitterOrigin(int sectionId)
     case Middle:
         if(!back().hasSections() || line().isSelfReferencing())
         {
-            emitter.origin[VZ] = (ffloor + fceil) / 2;
+            emitter.origin[2] = (ffloor + fceil) / 2;
         }
         else
         {
-            emitter.origin[VZ] = (de::max(ffloor, back().sector().floor().height()) +
-                                  de::min(fceil,  back().sector().ceiling().height())) / 2;
+            emitter.origin[2] = (de::max(ffloor, back().sector().floor().height()) +
+                                 de::min(fceil,  back().sector().ceiling().height())) / 2;
         }
         break;
 
@@ -369,11 +365,11 @@ void Line::Side::updateSoundEmitterOrigin(int sectionId)
         if(!back().hasSections() || line().isSelfReferencing() ||
            back().sector().floor().height() <= ffloor)
         {
-            emitter.origin[VZ] = ffloor;
+            emitter.origin[2] = ffloor;
         }
         else
         {
-            emitter.origin[VZ] = (de::min(back().sector().floor().height(), fceil) + ffloor) / 2;
+            emitter.origin[2] = (de::min(back().sector().floor().height(), fceil) + ffloor) / 2;
         }
         break;
 
@@ -381,11 +377,11 @@ void Line::Side::updateSoundEmitterOrigin(int sectionId)
         if(!back().hasSections() || line().isSelfReferencing() ||
            back().sector().ceiling().height() >= fceil)
         {
-            emitter.origin[VZ] = fceil;
+            emitter.origin[2] = fceil;
         }
         else
         {
-            emitter.origin[VZ] = (de::max(back().sector().ceiling().height(), ffloor) + fceil) / 2;
+            emitter.origin[2] = (de::max(back().sector().ceiling().height(), ffloor) + fceil) / 2;
         }
         break;
     }
@@ -414,17 +410,17 @@ void Line::Side::updateSurfaceNormals()
     top   ().setNormal(normal);
 }
 
-int Line::Side::flags() const
+dint Line::Side::flags() const
 {
     return d->flags;
 }
 
-void Line::Side::setFlags(int flagsToChange, FlagOp operation)
+void Line::Side::setFlags(dint flagsToChange, FlagOp operation)
 {
     applyFlagOperation(d->flags, flagsToChange, operation);
 }
 
-void Line::Side::chooseSurfaceTintColors(int sectionId, Vector3f const **topColor,
+void Line::Side::chooseSurfaceTintColors(dint sectionId, Vector3f const **topColor,
     Vector3f const **bottomColor) const
 {
     if(hasSections())
@@ -477,15 +473,15 @@ void Line::Side::chooseSurfaceTintColors(int sectionId, Vector3f const **topColo
         }
     }
     /// @throw Line::InvalidSectionIdError The given section identifier is not valid.
-    throw Line::InvalidSectionIdError("Line::Side::chooseSurfaceTintColors", QString("Invalid section id %1").arg(sectionId));
+    throw Line::InvalidSectionIdError("Line::Side::chooseSurfaceTintColors", "Invalid section id " + String::number(sectionId));
 }
 
-int Line::Side::shadowVisCount() const
+dint Line::Side::shadowVisCount() const
 {
     return d->shadowVisCount;
 }
 
-void Line::Side::setShadowVisCount(int newCount)
+void Line::Side::setShadowVisCount(dint newCount)
 {
     d->shadowVisCount = newCount;
 }
@@ -494,7 +490,7 @@ void Line::Side::setShadowVisCount(int newCount)
 
 static bool materialHasAnimatedTextureLayers(Material const &mat)
 {
-    for(int i = 0; i < mat.layerCount(); ++i)
+    for(dint i = 0; i < mat.layerCount(); ++i)
     {
         MaterialLayer const &layer = mat.layer(i);
         if(!layer.is<MaterialDetailLayer>() && !layer.is<MaterialShineLayer>())
@@ -506,15 +502,13 @@ static bool materialHasAnimatedTextureLayers(Material const &mat)
 }
 
 /**
- * Given a side section, look at the neighbouring surfaces and pick the
- * best choice of material used on those surfaces to be applied to "this"
- * surface.
+ * Given a side section, look at the neighbouring surfaces and pick the best choice of material
+ * used on those surfaces to be applied to "this" surface.
  *
- * Material on back neighbour plane has priority.
- * Non-animated materials are preferred.
- * Sky materials are ignored.
+ * Material on back neighbour plane has priority. Non-animated materials are preferred. Sky
+ * materials are ignored.
  */
-static Material *chooseFixMaterial(LineSide &side, int section)
+static Material *chooseFixMaterial(LineSide &side, dint section)
 {
     Material *choice1 = nullptr, *choice2 = nullptr;
 
@@ -608,7 +602,7 @@ static Material *chooseFixMaterial(LineSide &side, int section)
     return &App_ResourceSystem().material(de::Uri("System", Path("missing")));
 }
 
-static void addMissingMaterial(LineSide &side, int section)
+static void addMissingMaterial(LineSide &side, dint section)
 {
     // Sides without sections need no fixing.
     if(!side.hasSections()) return;
@@ -698,7 +692,7 @@ void Line::Side::fixMissingMaterials()
 
 #endif // __CLIENT__
 
-int Line::Side::property(DmuArgs &args) const
+dint Line::Side::property(DmuArgs &args) const
 {
     switch(args.prop)
     {
@@ -718,7 +712,7 @@ int Line::Side::property(DmuArgs &args) const
     return false; // Continue iteration.
 }
 
-int Line::Side::setProperty(DmuArgs const &args)
+dint Line::Side::setProperty(DmuArgs const &args)
 {
     switch(args.prop)
     {
@@ -730,12 +724,12 @@ int Line::Side::setProperty(DmuArgs const &args)
         else
         {
             /// @throw WritePropertyError Sector is not writable for non-dummy sides.
-            throw WritePropertyError("Line::Side::setProperty", QString("Property %1 is only writable for dummy Line::Sides").arg(DMU_Str(args.prop)));
+            throw WritePropertyError("Line::Side::setProperty", "Property " + String(DMU_Str(args.prop)) + " is only writable for dummy Line::Sides");
         }
         break; }
 
     case DMU_FLAGS: {
-        int newFlags;
+        dint newFlags;
         args.value(DMT_SIDE_FLAGS, &newFlags, 0);
         setFlags(newFlags, de::ReplaceFlags);
         break; }
@@ -748,7 +742,7 @@ int Line::Side::setProperty(DmuArgs const &args)
 
 DENG2_PIMPL(Line)
 {
-    int flags;              ///< Public DDLF_* flags.
+    dint flags;             ///< Public DDLF_* flags.
     Vertex *from;           ///< Start vertex (not owned).
     Vertex *to;             ///< End vertex (not owned).
     Vector2d direction;     ///< From start to end vertex.
@@ -764,19 +758,19 @@ DENG2_PIMPL(Line)
     Side back;
 
     Polyobj *polyobj = nullptr;  ///< Polyobj "this" line defines a section of, if any.
-    int validCount = 0;          ///< Used by legacy algorithms to prevent repeated processing.
+    dint validCount = 0;         ///< Used by legacy algorithms to prevent repeated processing.
 
     /// Whether the line has been mapped by each player yet.
     bool mapped[DDMAXPLAYERS];
 
-    Instance(Public *i, Vertex &from, Vertex &to, int flags, Sector *frontSector,
+    Instance(Public *i, Vertex &from, Vertex &to, dint flags, Sector *frontSector,
              Sector *backSector)
         : Base(i)
         , flags    (flags)
         , from     (&from)
         , to       (&to)
         , direction(to.origin() - from.origin())
-        , angle    (bamsAtan2(int( direction.y ), int( direction.x )))
+        , angle    (bamsAtan2(dint( direction.y ), dint( direction.x )))
         , slopeType(M_SlopeTypeXY(direction.x, direction.y))
         , length   (direction.length())
         , front    (*i, frontSector)
@@ -785,33 +779,33 @@ DENG2_PIMPL(Line)
         de::zap(mapped);
     }
 
-    void notifyFlagsChanged(int oldFlags)
+    void notifyFlagsChanged(dint oldFlags)
     {
         DENG2_FOR_PUBLIC_AUDIENCE(FlagsChange, i) i->lineFlagsChanged(self, oldFlags);
     }
 };
 
-Line::Line(Vertex &from, Vertex &to, int flags, Sector *frontSector, Sector *backSector)
+Line::Line(Vertex &from, Vertex &to, dint flags, Sector *frontSector, Sector *backSector)
     : MapElement(DMU_LINE)
     , d(new Instance(this, from, to, flags, frontSector, backSector))
 {
     updateAABox();
 }
 
-int Line::flags() const
+dint Line::flags() const
 {
     return d->flags;
 }
 
-void Line::setFlags(int flagsToChange, FlagOp operation)
+void Line::setFlags(dint flagsToChange, FlagOp operation)
 {
-    int newFlags = d->flags;
+    dint newFlags = d->flags;
 
     applyFlagOperation(newFlags, flagsToChange, operation);
 
     if(d->flags != newFlags)
     {
-        int oldFlags = d->flags;
+        dint oldFlags = d->flags;
         d->flags = newFlags;
 
         // Notify interested parties of the change.
@@ -831,10 +825,7 @@ bool Line::definesPolyobj() const
 
 Polyobj &Line::polyobj() const
 {
-    if(d->polyobj)
-    {
-        return *d->polyobj;
-    }
+    if(d->polyobj) return *d->polyobj;
     /// @throw Line::MissingPolyobjError Attempted with no polyobj attributed.
     throw Line::MissingPolyobjError("Line::polyobj", "No polyobj is attributed");
 }
@@ -844,23 +835,23 @@ void Line::setPolyobj(Polyobj *newPolyobj)
     d->polyobj = newPolyobj;
 }
 
-Line::Side &Line::side(int back)
+Line::Side &Line::side(dint back)
 {
     return (back? d->back : d->front);
 }
 
-Line::Side const &Line::side(int back) const
+Line::Side const &Line::side(dint back) const
 {
     return (back? d->back : d->front);
 }
 
-Vertex &Line::vertex(int to) const
+Vertex &Line::vertex(dint to) const
 {
     DENG2_ASSERT((to? d->to : d->from) != nullptr);
     return (to? *d->to : *d->from);
 }
 
-void Line::replaceVertex(int to, Vertex &newVertex)
+void Line::replaceVertex(dint to, Vertex &newVertex)
 {
     if(to) d->to   = &newVertex;
     else   d->from = &newVertex;
@@ -895,7 +886,7 @@ slopetype_t Line::slopeType() const
 void Line::updateSlopeType()
 {
     d->direction = d->to->origin() - d->from->origin();
-    d->angle     = bamsAtan2(int( d->direction.y ), int( d->direction.x ));
+    d->angle     = bamsAtan2(dint( d->direction.y ), dint( d->direction.x ));
     d->slopeType = M_SlopeTypeXY(d->direction.x, d->direction.y);
 }
 
@@ -904,7 +895,7 @@ binangle_t Line::angle() const
     return d->angle;
 }
 
-int Line::boxOnSide(AABoxd const &box) const
+dint Line::boxOnSide(AABoxd const &box) const
 {
     coord_t fromOriginV1[2] = { fromOrigin().x, fromOrigin().y };
     coord_t directionV1[2]  = { direction().x, direction().y };
@@ -913,14 +904,12 @@ int Line::boxOnSide(AABoxd const &box) const
 
 int Line::boxOnSide_FixedPrecision(AABoxd const &box) const
 {
-    /*
-     * Apply an offset to both the box and the line to bring everything into
-     * the 16.16 fixed-point range. We'll use the midpoint of the line as the
-     * origin, as typically this test is called when a bounding box is
-     * somewhere in the vicinity of the line. The offset is floored to integers
-     * so we won't change the discretization of the fractional part into 16-bit
-     * precision.
-     */
+    /// Apply an offset to both the box and the line to bring everything into
+    /// the 16.16 fixed-point range. We'll use the midpoint of the line as the
+    /// origin, as typically this test is called when a bounding box is
+    /// somewhere in the vicinity of the line. The offset is floored to integers
+    /// so we won't change the discretization of the fractional part into 16-bit
+    /// precision.
     coord_t offset[2] = { std::floor(d->from->origin().x + d->direction.x/2.0),
                           std::floor(d->from->origin().y + d->direction.y/2.0) };
 
@@ -965,29 +954,49 @@ coord_t Line::pointOnSide(Vector2d const &point) const
     return delta.y * d->direction.x - delta.x * d->direction.y;
 }
 
-bool Line::isMappedByPlayer(int playerNum) const
+bool Line::isMappedByPlayer(dint playerNum) const
 {
     DENG2_ASSERT(playerNum >= 0 && playerNum < DDMAXPLAYERS);
     return d->mapped[playerNum];
 }
 
-void Line::markMappedByPlayer(int playerNum, bool yes)
+void Line::markMappedByPlayer(dint playerNum, bool yes)
 {
     DENG2_ASSERT(playerNum >= 0 && playerNum < DDMAXPLAYERS);
     d->mapped[playerNum] = yes;
 }
 
-int Line::validCount() const
+dint Line::validCount() const
 {
     return d->validCount;
 }
 
-void Line::setValidCount(int newValidCount)
+void Line::setValidCount(dint newValidCount)
 {
     d->validCount = newValidCount;
 }
 
-int Line::property(DmuArgs &args) const
+#ifdef __CLIENT__
+bool Line::castsShadow() const
+{
+    if(definesPolyobj()) return false;
+    if(isSelfReferencing()) return false;
+
+    // Lines with no other neighbor do not qualify for shadowing.
+    if(&v1Owner()->next().line() == this || &v2Owner()->next().line() == this)
+       return false;
+
+    return true;
+}
+#endif
+
+LineOwner *Line::vertexOwner(dint to) const
+{
+    DENG2_ASSERT((to? _vo2 : _vo1) != nullptr);
+    return (to? _vo2 : _vo1);
+}
+
+dint Line::property(DmuArgs &args) const
 {
     switch(args.prop)
     {
@@ -1022,12 +1031,12 @@ int Line::property(DmuArgs &args) const
         break;
     case DMU_FRONT: {
         /// @todo Update the games so that sides without sections can be returned.
-        Line::Side const *frontAdr = hasFrontSections()? &d->front : 0;
+        Line::Side const *frontAdr = hasFrontSections()? &d->front : nullptr;
         args.setValue(DDVT_PTR, &frontAdr, 0);
         break; }
     case DMU_BACK: {
         /// @todo Update the games so that sides without sections can be returned.
-        Line::Side const *backAdr = hasBackSections()? &d->back : 0;
+        Line::Side const *backAdr = hasBackSections()? &d->back : nullptr;
         args.setValue(DDVT_PTR, &backAdr, 0);
         break; }
     case DMU_BOUNDING_BOX:
@@ -1054,7 +1063,7 @@ int Line::property(DmuArgs &args) const
     return false; // Continue iteration.
 }
 
-int Line::setProperty(DmuArgs const &args)
+dint Line::setProperty(DmuArgs const &args)
 {
     switch(args.prop)
     {
@@ -1062,7 +1071,7 @@ int Line::setProperty(DmuArgs const &args)
         args.value(DMT_LINE_VALIDCOUNT, &d->validCount, 0);
         break;
     case DMU_FLAGS: {
-        int newFlags;
+        dint newFlags;
         args.value(DMT_LINE_FLAGS, &newFlags, 0);
         setFlags(newFlags, de::ReplaceFlags);
         break; }
@@ -1072,10 +1081,4 @@ int Line::setProperty(DmuArgs const &args)
     }
 
     return false; // Continue iteration.
-}
-
-LineOwner *Line::vertexOwner(int to) const
-{
-    DENG2_ASSERT((to? _vo2 : _vo1) != nullptr);
-    return (to? _vo2 : _vo1);
 }

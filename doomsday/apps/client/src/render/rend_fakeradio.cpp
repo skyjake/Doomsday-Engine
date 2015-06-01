@@ -1105,8 +1105,8 @@ void Rend_RadioWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge,
         backCluster = hedge->twin().face().mapElementAs<ConvexSubspace>().clusterPtr();
     }
 
-    bool const haveBottomShadower = Rend_RadioPlaneCastsShadow(cluster->visFloor());
-    bool const haveTopShadower    = Rend_RadioPlaneCastsShadow(cluster->visCeiling());
+    bool const haveBottomShadower = cluster->visFloor().castsShadow();
+    bool const haveTopShadower    = cluster->visCeiling().castsShadow();
 
     // Walls unaffected by floor and ceiling shadow casters receive no
     // side shadows either. We could do better here...

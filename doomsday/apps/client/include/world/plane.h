@@ -228,6 +228,11 @@ public:
     void addMover(ClPlaneMover &mover);
     void removeMover(ClPlaneMover &mover);
 
+    /**
+     * Returns @c true if the plane qualifies for FakeRadio shadow casting (on walls).
+     */
+    bool castsShadow() const;
+
 #endif // __CLIENT__
 
 protected:

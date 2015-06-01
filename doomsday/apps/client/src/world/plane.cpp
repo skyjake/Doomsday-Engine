@@ -28,6 +28,11 @@
 #include "Surface"
 #include "Sector"
 
+#if __CLIENT__
+#  include "MaterialAnimator"
+#  include "render/rend_main.h"
+#endif
+
 using namespace de;
 
 DENG2_PIMPL(Plane)
@@ -381,6 +386,23 @@ void Plane::removeMover(ClPlaneMover &mover)
     {
         d->mover = nullptr;
     }
+}
+
+bool Plane::castsShadow() const
+{
+    if(surface().hasMaterial())
+    {
+        MaterialAnimator &matAnimator = surface().material().getAnimator(Rend_MapSurfaceMaterialSpec());
+
+        // Ensure we have up to date info about the material.
+        matAnimator.prepare();
+
+        if(!matAnimator.material().isDrawable()) return false;
+        if(matAnimator.material().isSkyMasked()) return false;
+
+        if(matAnimator.glowStrength() > 0) return false;
+    }
+    return true;
 }
 
 #endif // __CLIENT__

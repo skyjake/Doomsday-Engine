@@ -835,6 +835,13 @@ public:
     inline void replaceFrom(Vertex &newVertex) { replaceVertex(From, newVertex); }
     inline void replaceTo(Vertex &newVertex)   { replaceVertex(To, newVertex); }
 
+#ifdef __CLIENT__
+    /**
+     * Returns @c true if the line qualifies for FakeRadio shadow casting (on planes).
+     */
+    bool castsShadow() const;
+#endif
+
 protected:
     int property(DmuArgs &args) const;
     int setProperty(DmuArgs const &args);

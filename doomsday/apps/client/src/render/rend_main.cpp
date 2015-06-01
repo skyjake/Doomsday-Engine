@@ -1324,9 +1324,8 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
 
         if(mod.texture)
         {
+            // Prepare modulation texture coordinates.
             modTexCoords = R_AllocRendTexCoords(numVerts);
-                
-            // Modulation texture coordinates.
             if(p.isWall)
             {
                 modTexCoords[0] = Vector2f(mod.topLeft.x, mod.bottomRight.y);

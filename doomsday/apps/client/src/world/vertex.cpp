@@ -25,7 +25,7 @@
 #include "Line"
 #include "world/lineowner.h"  /// @todo remove me
 #include "Sector"
-#if __CLIENT__
+#ifdef __CLIENT__
 #  include "partition.h"
 #endif
 
@@ -108,7 +108,7 @@ LineOwner *Vertex::firstLineOwner() const
     return _lineOwners;
 }
 
-#if __CLIENT__
+#ifdef __CLIENT__
 
 /**
  * Given two lines "connected" by shared origin coordinates (0, 0) at a "corner"

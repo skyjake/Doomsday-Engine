@@ -94,16 +94,6 @@ void Rend_RadioRegister();
 void Rend_RadioInitForMap(de::Map &map);
 
 /**
- * Returns @c true iff @a line qualifies for (edge) shadow casting.
- */
-bool Rend_RadioLineCastsShadow(Line const &line);
-
-/**
- * Returns @c true iff @a plane qualifies for (wall) shadow casting.
- */
-bool Rend_RadioPlaneCastsShadow(Plane const &plane);
-
-/**
  * Returns the FakeRadio data for the specified line @a side.
  */
 LineSideRadioData &Rend_RadioDataForLineSide(LineSide &side);

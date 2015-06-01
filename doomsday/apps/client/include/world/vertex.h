@@ -92,7 +92,7 @@ public:
      */
     inline void setOrigin(float x, float y) { return setOrigin(de::Vector2d(x, y)); }
 
-#if __CLIENT__
+#ifdef __CLIENT__
     /**
      * Update all FakeRadio shadow offset coordinates for the vertex.
      *
