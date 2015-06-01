@@ -560,8 +560,8 @@ new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, fluid_real_t sample_rate
 #ifdef ENABLE_MIXER_THREADS
   fluid_cond_init(&mixer->thread_ready);
   fluid_cond_init(&mixer->wakeup_threads);
-  fluid_cond_mutex_init(&mixer->thread_ready_m);
-  fluid_cond_mutex_init(&mixer->wakeup_threads_m);
+  fluid_cond_mutex_init(mixer->thread_ready_m);
+  fluid_cond_mutex_init(mixer->wakeup_threads_m);
   if (!mixer->thread_ready.p || !mixer->wakeup_threads.p ||
       !mixer->wakeup_threads_m.p || !mixer->wakeup_threads_m.p) {
     delete_fluid_rvoice_mixer(mixer);
@@ -628,9 +628,9 @@ void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t* mixer)
   if (mixer->wakeup_threads.p)
     delete_fluid_cond(&mixer->wakeup_threads);
   if (mixer->thread_ready_m.p)
-    delete_fluid_cond_mutex(&mixer->thread_ready_m);
+    delete_fluid_cond_mutex(mixer->thread_ready_m);
   if (mixer->wakeup_threads_m.p)
-    delete_fluid_cond_mutex(&mixer->wakeup_threads_m);
+    delete_fluid_cond_mutex(mixer->wakeup_threads_m);
 #endif
   fluid_mixer_buffers_free(&mixer->buffers);
   if (mixer->fx.reverb)

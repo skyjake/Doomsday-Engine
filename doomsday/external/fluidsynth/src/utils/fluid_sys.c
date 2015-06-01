@@ -576,7 +576,6 @@ void fluid_profiling_print(void)
 void
 fluid_cond_init (fluid_cond_t *cond)
 {
-  if (!g_thread_supported ()) g_thread_init (NULL);
   g_cond_init (cond);
 }
 
@@ -607,14 +606,10 @@ new_fluid_thread (fluid_thread_func_t func, void *data, int prio_level, int deta
 {
   GThread *thread;
   fluid_thread_info_t *info;
-  GError *err = NULL;
 
   g_return_val_if_fail (func != NULL, NULL);
 
-  /* Make sure g_thread_init has been called.
-   * FIXME - Probably not a good idea in a shared library,
-   * but what can we do *and* remain backwards compatible? */
-  if (!g_thread_supported ()) g_thread_init (NULL);
+  (void)detach; // unused
 
   if (prio_level > 0)
   {
@@ -629,15 +624,13 @@ new_fluid_thread (fluid_thread_func_t func, void *data, int prio_level, int deta
     info->func = func;
     info->data = data;
     info->prio_level = prio_level;
-    thread = g_thread_create (fluid_thread_high_prio, info, detach == FALSE, &err);
+    thread = g_thread_new ("fluidsynth", fluid_thread_high_prio, info);
   }
-  else thread = g_thread_create ((GThreadFunc)func, data, detach == FALSE, &err);
+  else thread = g_thread_new ("fluidsynth", (GThreadFunc)func, data);
 
   if (!thread)
   {
-    FLUID_LOG(FLUID_ERR, "Failed to create the thread: %s",
-              fluid_gerror_message (err));
-    g_clear_error (&err);
+    FLUID_LOG(FLUID_ERR, "Failed to create a thread");
   }
 
   return thread;
