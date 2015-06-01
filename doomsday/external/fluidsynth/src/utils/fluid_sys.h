@@ -127,15 +127,14 @@ int fluid_timer_stop(fluid_timer_t* timer);
 /* Muteces */
 
 /* Regular mutex */
-typedef GStaticMutex fluid_mutex_t;
+typedef GMutex fluid_mutex_t;
 #define FLUID_MUTEX_INIT          G_STATIC_MUTEX_INIT
-#define fluid_mutex_destroy(_m)   g_static_mutex_free(&(_m))
-#define fluid_mutex_lock(_m)      g_static_mutex_lock(&(_m))
-#define fluid_mutex_unlock(_m)    g_static_mutex_unlock(&(_m))
+#define fluid_mutex_destroy(_m)   g_mutex_clear(&(_m))
+#define fluid_mutex_lock(_m)      g_mutex_lock(&(_m))
+#define fluid_mutex_unlock(_m)    g_mutex_unlock(&(_m))
 
 #define fluid_mutex_init(_m)      G_STMT_START { \
-  if (!g_thread_supported ()) g_thread_init (NULL); \
-  g_static_mutex_init (&(_m)); \
+  g_mutex_init (&(_m)); \
 } G_STMT_END;
 
 /* Recursive lock capable mutex */
@@ -145,23 +144,15 @@ typedef GRecMutex fluid_rec_mutex_t;
 #define fluid_rec_mutex_unlock(_m)    g_rec_mutex_unlock(&(_m))
 
 #define fluid_rec_mutex_init(_m)      G_STMT_START { \
-  if (!g_thread_supported ()) g_thread_init (NULL); \
   g_rec_mutex_init (&(_m)); \
 } G_STMT_END;
 
 /* Dynamically allocated mutex suitable for fluid_cond_t use */
 typedef GMutex    fluid_cond_mutex_t;
-#define delete_fluid_cond_mutex(m)      g_mutex_clear(m)
+#define fluid_cond_mutex_init(m)        g_mutex_init(&(m))
+#define delete_fluid_cond_mutex(m)      g_mutex_clear(&(m))
 #define fluid_cond_mutex_lock(m)        g_mutex_lock(&(m))
 #define fluid_cond_mutex_unlock(m)      g_mutex_unlock(&(m))
-
-static FLUID_INLINE void
-fluid_cond_mutex_init (fluid_cond_mutex_t *m)
-{
-  if (!g_thread_supported ()) g_thread_init (NULL);
-  return g_mutex_init (m);
-}
-
 
 /* Thread condition signaling */
 
@@ -183,7 +174,7 @@ void fluid_cond_init (fluid_cond_t *cond);
 #define fluid_atomic_int_compare_and_exchange(_pi, _old, _new) \
   g_atomic_int_compare_and_exchange(_pi, _old, _new)
 #define fluid_atomic_int_exchange_and_add(_pi, _add) \
-  g_atomic_int_exchange_and_add(_pi, _add)
+  g_atomic_int_add(_pi, _add)
 
 #define fluid_atomic_pointer_get(_pp)           g_atomic_pointer_get(_pp)
 #define fluid_atomic_pointer_set(_pp, val)      g_atomic_pointer_set(_pp, val)
@@ -211,14 +202,13 @@ fluid_atomic_float_get(volatile float *fptr)
 
 /* Thread private data */
 
-typedef GStaticPrivate fluid_private_t;
-#define fluid_private_get(_priv)                   g_static_private_get(&(_priv))
-#define fluid_private_set(_priv, _data, _notify)   g_static_private_set(&(_priv), _data, _notify)
-#define fluid_private_free(_priv)                  g_static_private_free(&(_priv))
+typedef GPrivate fluid_private_t;
+#define fluid_private_get(_priv)                   g_private_get(&(_priv))
+#define fluid_private_set(_priv, _data, _notify)   (_notify? g_private_replace(&(_priv), _data) : g_private_set(&(_priv), _data))
+#define fluid_private_free(_priv)                  g_private_set(&(_priv), NULL)
 
 #define fluid_private_init(_priv)                  G_STMT_START { \
-  if (!g_thread_supported ()) g_thread_init (NULL); \
-  g_static_private_init (&(_priv)); \
+  memset(&(_priv), 0, sizeof(fluid_private_t)); \
 } G_STMT_END;
 
 /* Threads */
