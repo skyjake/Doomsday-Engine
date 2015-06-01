@@ -151,15 +151,15 @@ typedef GRecMutex fluid_rec_mutex_t;
 
 /* Dynamically allocated mutex suitable for fluid_cond_t use */
 typedef GMutex    fluid_cond_mutex_t;
-#define delete_fluid_cond_mutex(m)      g_mutex_free(m)
-#define fluid_cond_mutex_lock(m)        g_mutex_lock(m)
-#define fluid_cond_mutex_unlock(m)      g_mutex_unlock(m)
+#define delete_fluid_cond_mutex(m)      g_mutex_clear(m)
+#define fluid_cond_mutex_lock(m)        g_mutex_lock(&(m))
+#define fluid_cond_mutex_unlock(m)      g_mutex_unlock(&(m))
 
-static FLUID_INLINE fluid_cond_mutex_t *
-new_fluid_cond_mutex (void)
+static FLUID_INLINE void
+fluid_cond_mutex_init (fluid_cond_mutex_t *m)
 {
   if (!g_thread_supported ()) g_thread_init (NULL);
-  return g_mutex_new ();
+  return g_mutex_init (m);
 }
 
 
@@ -170,7 +170,7 @@ void fluid_cond_init (fluid_cond_t *cond);
 #define delete_fluid_cond(cond)         g_cond_clear(cond)
 #define fluid_cond_signal(cond)         g_cond_signal(cond)
 #define fluid_cond_broadcast(cond)      g_cond_broadcast(cond)
-#define fluid_cond_wait(cond, mutex)    g_cond_wait(cond, mutex)
+#define fluid_cond_wait(cond, mutex)    g_cond_wait(cond, &(mutex))
 
 
 /* Atomic operations */

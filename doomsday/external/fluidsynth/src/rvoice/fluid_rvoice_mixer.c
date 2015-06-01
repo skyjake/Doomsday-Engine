@@ -91,9 +91,9 @@ struct _fluid_rvoice_mixer_t {
   int threads_should_terminate; /**< Atomic: Set to TRUE when threads should terminate */
   int current_rvoice;           /**< Atomic: for the threads to know next voice to  */
   fluid_cond_t wakeup_threads; /**< Signalled when the threads should wake up */
-  fluid_cond_mutex_t* wakeup_threads_m; /**< wakeup_threads mutex companion */
+  fluid_cond_mutex_t wakeup_threads_m; /**< wakeup_threads mutex companion */
   fluid_cond_t thread_ready; /**< Signalled from thread, when the thread has a buffer ready for mixing */
-  fluid_cond_mutex_t* thread_ready_m; /**< thread_ready mutex companion */
+  fluid_cond_mutex_t thread_ready_m; /**< thread_ready mutex companion */
 
   int thread_count;            /**< Number of extra mixer threads for multi-core rendering */
   fluid_mixer_buffers_t* threads;    /**< Array of mixer threads (thread_count in length) */
@@ -560,10 +560,10 @@ new_fluid_rvoice_mixer(int buf_count, int fx_buf_count, fluid_real_t sample_rate
 #ifdef ENABLE_MIXER_THREADS
   fluid_cond_init(&mixer->thread_ready);
   fluid_cond_init(&mixer->wakeup_threads);
-  mixer->thread_ready_m = new_fluid_cond_mutex();
-  mixer->wakeup_threads_m = new_fluid_cond_mutex();
+  fluid_cond_mutex_init(&mixer->thread_ready_m);
+  fluid_cond_mutex_init(&mixer->wakeup_threads_m);
   if (!mixer->thread_ready.p || !mixer->wakeup_threads.p ||
-      !mixer->wakeup_threads_m || !mixer->wakeup_threads_m) {
+      !mixer->wakeup_threads_m.p || !mixer->wakeup_threads_m.p) {
     delete_fluid_rvoice_mixer(mixer);
     return NULL;
   }
@@ -627,10 +627,10 @@ void delete_fluid_rvoice_mixer(fluid_rvoice_mixer_t* mixer)
     delete_fluid_cond(&mixer->thread_ready);
   if (mixer->wakeup_threads.p)
     delete_fluid_cond(&mixer->wakeup_threads);
-  if (mixer->thread_ready_m)
-    delete_fluid_cond_mutex(mixer->thread_ready_m);
-  if (mixer->wakeup_threads_m)
-    delete_fluid_cond_mutex(mixer->wakeup_threads_m);
+  if (mixer->thread_ready_m.p)
+    delete_fluid_cond_mutex(&mixer->thread_ready_m);
+  if (mixer->wakeup_threads_m.p)
+    delete_fluid_cond_mutex(&mixer->wakeup_threads_m);
 #endif
   fluid_mixer_buffers_free(&mixer->buffers);
   if (mixer->fx.reverb)
