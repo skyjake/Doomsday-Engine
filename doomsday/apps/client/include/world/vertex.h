@@ -1,7 +1,7 @@
 /** @file vertex.h  World map vertex.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -51,12 +51,12 @@ public: /// @todo Move to the map loader:
     /// Head of the LineOwner rings (an array of [numLineOwners] size). The
     /// owner ring is a doubly, circularly linked list. The head is the owner
     /// with the lowest angle and the next-most being that with greater angle.
-    LineOwner *_lineOwners;
-    uint _numLineOwners; ///< Total number of line owners.
+    LineOwner *_lineOwners = nullptr;
+    uint _numLineOwners = 0;  ///< Total number of line owners.
 
     // Total numbers of line owners.
-    uint _onesOwnerCount;
-    uint _twosOwnerCount;
+    uint _onesOwnerCount = 0;
+    uint _twosOwnerCount = 0;
 
 public:
     Vertex(de::Mesh &mesh, de::Vector2d const &origin = de::Vector2d());
@@ -92,7 +92,16 @@ public:
      */
     inline void setOrigin(float x, float y) { return setOrigin(de::Vector2d(x, y)); }
 
-public: // Deprecated ----------------------------------------------------------
+#if __CLIENT__
+    /**
+     * Update all FakeRadio shadow offset coordinates for the vertex.
+     *
+     * @pre Lineowner rings must be set up.
+     */
+    void updateShadowOffsets();
+#endif
+
+public:  // Deprecated ---------------------------------------------------------------------
 
     /**
      * Returns the total number of Line owners for the vertex.
@@ -130,7 +139,7 @@ protected:
     int property(DmuArgs &args) const;
 
 private:
-    DENG2_PRIVATE(d)
+    de::Vector2d _origin;  ///< Map-space coordinates.
 };
 
-#endif // DENG_WORLD_VERTEX_H
+#endif  // DENG_WORLD_VERTEX_H

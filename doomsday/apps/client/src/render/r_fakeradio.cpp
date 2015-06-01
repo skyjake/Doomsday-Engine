@@ -1,7 +1,7 @@
 /** @file r_fakeradio.cpp  Faked Radiosity Lighting.
  *
  * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,30 +18,33 @@
  * 02110-1301 USA</small>
  */
 
-//#include <de/memoryzone.h>
-#include <de/vector1.h> /// @todo remove me
-#include <de/Vector>
-
-#include <de/Error>
-#include <de/Log>
-
 #include "de_base.h"
-#include "de_render.h"
+#include "render/rend_fakeradio.h"
 
+#include <de/memoryzone.h>  /// @todo remove me
+#include <de/vector1.h>     /// @todo remove me
+#include <de/Log>
+#include <de/Vector>
 #include "world/blockmap.h"
 #include "world/lineowner.h"
 #include "world/map.h"
 #include "ConvexSubspace"
 #include "Face"
+#include "MaterialAnimator"
 #include "SectorCluster"
 #include "Surface"
 #include "Vertex"
 
-#include "render/rend_fakeradio.h"
+#include "render/rend_main.h"
 
 using namespace de;
 
 static LineSideRadioData *lineSideRadioData;
+
+LineSideRadioData &Rend_RadioDataForLineSide(LineSide &side)
+{
+    return lineSideRadioData[side.line().indexInMap() * 2 + (side.isBack()? 1 : 0)];
+}
 
 bool Rend_RadioLineCastsShadow(Line const &line)
 {
@@ -49,8 +52,8 @@ bool Rend_RadioLineCastsShadow(Line const &line)
     if(line.isSelfReferencing()) return false;
 
     // Lines with no other neighbor do not qualify for shadowing.
-    if(&line.v1Owner()->next().line() == &line ||
-       &line.v2Owner()->next().line() == &line) return false;
+    if(&line.v1Owner()->next().line() == &line || &line.v2Owner()->next().line() == &line)
+       return false;
 
     return true;
 }
@@ -72,134 +75,6 @@ bool Rend_RadioPlaneCastsShadow(Plane const &plane)
     return true;
 }
 
-LineSideRadioData &Rend_RadioDataForLineSide(LineSide &side)
-{
-    return lineSideRadioData[side.line().indexInMap() * 2 + (side.isBack()? 1 : 0)];
-}
-
-/**
- * Given two lines "connected" by shared origin coordinates (0, 0) at a "corner"
- * vertex, calculate the point which lies @a distA away from @a lineA and also
- * @a distB from @a lineB. The point should also be the nearest point to the
- * origin (in case of parallel lines).
- *
- * @param lineADirection  Direction vector for the "left" line.
- * @param dist1  Distance from @a lineA to offset the corner point.
- * @param lineBDirection  Direction vector for the "right" line.
- * @param dist2  Distance from @a lineB to offset the corner point.
- *
- * Return values:
- * @param point  Coordinates for the corner point are written here. Can be @c 0.
- * @param lp     Coordinates for the "extended" point are written here. Can be @c 0.
- */
-static void cornerNormalPoint(Vector2d const &lineADirection, double dist1,
-                              Vector2d const &lineBDirection, double dist2,
-                              Vector2d *point, Vector2d *lp)
-{
-    // Any work to be done?
-    if(!point && !lp) return;
-
-    // Length of both lines.
-    double len1 = lineADirection.length();
-    double len2 = lineBDirection.length();
-
-    // Calculate normals for both lines.
-    Vector2d norm1(-lineADirection.y / len1 * dist1,  lineADirection.x / len1 * dist1);
-    Vector2d norm2( lineBDirection.y / len2 * dist2, -lineBDirection.x / len2 * dist2);
-
-    // Do we need to calculate the extended points, too?  Check that
-    // the extension does not bleed too badly outside the legal shadow
-    // area.
-    if(lp)
-    {
-        *lp = lineBDirection / len2 * dist2;
-    }
-
-    // Do we need to determine the intercept point?
-    if(!point) return;
-
-    // Normal shift to produce the lines we need to find the intersection.
-    Partition lineA(lineADirection, norm1);
-    Partition lineB(lineBDirection, norm2);
-
-    if(!lineA.isParallelTo(lineB))
-    {
-        *point = lineA.intercept(lineB);
-        return;
-    }
-
-    // Special case: parallel
-    // There will be no intersection at any point therefore it will not be
-    // possible to determine our corner point (so just use a normal as the
-    // point instead).
-    *point = norm1;
-}
-
-/**
- * @return  The width (world units) of the shadow edge. It is scaled depending on
- *          the length of @a edge.
- */
-static double shadowEdgeWidth(Vector2d const &edge)
-{
-    double const normalWidth = 20; //16;
-    double const maxWidth    = 60;
-
-    // A long edge?
-    double length = edge.length();
-    if(length > 600)
-    {
-        double w = length - 600;
-        if(w > 1000)
-            w = 1000;
-        return normalWidth + w / 1000 * maxWidth;
-    }
-
-    return normalWidth;
-}
-
-void Rend_RadioUpdateVertexShadowOffsets(Vertex &vtx)
-{
-    if(!vtx.lineOwnerCount()) return;
-
-    Vector2d leftDir, rightDir;
-
-    LineOwner *base = vtx.firstLineOwner();
-    LineOwner *own = base;
-    do
-    {
-        Line const &lineB = own->line();
-        Line const &lineA = own->next().line();
-
-        if(&lineB.from() == &vtx)
-        {
-            rightDir = lineB.direction();
-        }
-        else
-        {
-            rightDir = -lineB.direction();
-        }
-
-        if(&lineA.from() == &vtx)
-        {
-            leftDir = -lineA.direction();
-        }
-        else
-        {
-            leftDir = lineA.direction();
-        }
-
-        // The left side is always flipped.
-        leftDir *= -1;
-
-        cornerNormalPoint(leftDir,  shadowEdgeWidth(leftDir),
-                          rightDir, shadowEdgeWidth(rightDir),
-                          &own->_shadowOffsets.inner,
-                          &own->_shadowOffsets.extended);
-
-        own = &own->next();
-    } while(own != base);
-}
-
 void Rend_RadioInitForMap(Map &map)
 {
     Time begunAt;
@@ -211,28 +86,23 @@ void Rend_RadioInitForMap(Map &map)
 
     map.forAllVertexs([] (Vertex &vertex)
     {
-        Rend_RadioUpdateVertexShadowOffsets(vertex);
+        vertex.updateShadowOffsets();
         return LoopContinue;
     });
 
-    /**
-     * The algorithm:
-     *
-     * 1. Use the BSP leaf blockmap to look for all the blocks that are
-     *    within the line's shadow bounding box.
-     *
-     * 2. Check the ConvexSubspaces whose sector is the same as the line.
-     *
-     * 3. If any of the shadow points are in the subspace, or any of the
-     *    shadow edges cross one of the subspace's edges (not parallel),
-     *    link the line to the ConvexSubspace.
-     */
+    /// The algorithm:
+    ///
+    /// 1. Use the BSP leaf blockmap to look for all the blocks that are within the line's shadow
+    ///    bounding box.
+    /// 2. Check the ConvexSubspaces whose sector is the same as the line.
+    /// 3. If any of the shadow points are in the subspace, or any of the shadow edges cross one
+    ///    of the subspace's edges (not parallel), link the line to the ConvexSubspace.
     map.forAllLines([] (Line &line)
     {
         if(Rend_RadioLineCastsShadow(line))
         {
             // For each side of the line.
-            for(int i = 0; i < 2; ++i)
+            for(dint i = 0; i < 2; ++i)
             {
                 LineSide &side = line.side(i);
 
@@ -259,8 +129,8 @@ void Rend_RadioInitForMap(Map &map)
                 int const localValidCount = validCount;
                 line.map().subspaceBlockmap().forAllInBox(box, [&box, &side, &localValidCount] (void *object)
                 {
-                    ConvexSubspace &sub = *(ConvexSubspace *)object;
-                    if(sub.validCount() != localValidCount) // not yet processed
+                    auto &sub = *(ConvexSubspace *)object;
+                    if(sub.validCount() != localValidCount)  // not yet processed
                     {
                         sub.setValidCount(localValidCount);
                         if(&sub.sector() == side.sectorPtr())

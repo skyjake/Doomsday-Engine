@@ -114,15 +114,6 @@ LineSideRadioData &Rend_RadioDataForLineSide(LineSide &side);
 void Rend_RadioUpdateForLineSide(LineSide &side);
 
 /**
- * Updates all the shadow offsets for the given vertex.
- *
- * @pre Lineowner rings must be set up.
- *
- * @param vtx  Vertex to be updated.
- */
-void Rend_RadioUpdateVertexShadowOffsets(Vertex &vtx);
-
-/**
  * Returns the global shadow darkness factor, derived from values in Config.
  * Assumes that light level adaptation has @em NOT yet been applied (it will be).
  */
