@@ -21,16 +21,16 @@ if (DEFINED DENG_BUILD)
     add_definitions (-DLIBDENG2_BUILD_TEXT="${DENG_BUILD}")
 endif ()
 if (GIT_FOUND)
-	execute_process (
-		COMMAND ${GIT_EXECUTABLE} describe --long 
-		OUTPUT_VARIABLE DENG_GIT_DESCRIPTION 
-		ERROR_QUIET
-		OUTPUT_STRIP_TRAILING_WHITESPACE
-	)
-	if (DENG_GIT_DESCRIPTION)
-		message (STATUS "Revision: ${DENG_GIT_DESCRIPTION}")
-		add_definitions (-DLIBDENG2_GIT_DESCRIPTION="${DENG_GIT_DESCRIPTION}")
-	endif ()
+    execute_process (
+        COMMAND ${GIT_EXECUTABLE} describe --long 
+        OUTPUT_VARIABLE DENG_GIT_DESCRIPTION 
+        ERROR_QUIET
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    if (DENG_GIT_DESCRIPTION)
+        message (STATUS "Revision: ${DENG_GIT_DESCRIPTION}")
+        add_definitions (-DLIBDENG2_GIT_DESCRIPTION="${DENG_GIT_DESCRIPTION}")
+    endif ()
 endif ()
 
 # Source and header files.

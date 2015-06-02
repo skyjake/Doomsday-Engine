@@ -48,7 +48,7 @@ public:
     int patch;
     int build;
     String label;           ///< Informative label, only intended for humans.
-	String gitDescription;  ///< Output from "git describe".
+    String gitDescription;  ///< Output from "git describe".
 
     /**
      * Version information about this build.
