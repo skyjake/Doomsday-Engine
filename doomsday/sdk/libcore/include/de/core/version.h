@@ -47,7 +47,8 @@ public:
     int minor;
     int patch;
     int build;
-    String label; ///< Informative label, only intended for humans.
+    String label;           ///< Informative label, only intended for humans.
+	String gitDescription;  ///< Output from "git describe".
 
     /**
      * Version information about this build.

@@ -154,6 +154,7 @@ DENG2_PIMPL(ScriptSystem)
             mod.addText   ("OS",       Version::operatingSystem()).setReadOnly();
             mod.addNumber ("CPU_BITS", Version::cpuBits()        ).setReadOnly();
             mod.addBoolean("DEBUG",    Version::isDebugBuild()   ).setReadOnly();
+            mod.addText   ("GIT",      ver.gitDescription        ).setReadOnly();
 #ifdef DENG_STABLE
             mod.addBoolean("STABLE",   true).setReadOnly();
 #else

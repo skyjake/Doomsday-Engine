@@ -75,7 +75,7 @@ AboutDialog::AboutDialog() : DialogWidget("about"), d(new Instance(this))
     title->setSizePolicy(ui::Fixed, ui::Expand);
 
     LabelWidget *info = new LabelWidget;
-    String txt = String(_E(b) "%4 %5 #%6" _E(.) "\n%7\n\n%1 (%2-%8)%3")
+    String txt = String(_E(b) "%4 %5 #%6" _E(.) "\n%7%9\n\n%1 (%2-%8)%3")
             .arg(ver2.operatingSystem() == "windows"? tr("Windows") :
                  ver2.operatingSystem() == "macx"? tr("Mac OS X") : tr("Unix"))
             .arg(ver2.cpuBits())
@@ -85,7 +85,8 @@ AboutDialog::AboutDialog() : DialogWidget("about"), d(new Instance(this))
             .arg(ver2.build)
             .arg(Time::fromText(__DATE__ " " __TIME__, Time::CompilerDateTime)
                  .asDateTime().toString(Qt::SystemLocaleShortDate))
-            .arg(tr("bit"));
+            .arg(tr("bit"))
+            .arg(ver2.gitDescription.isEmpty()? "" : ("\n" _E(s)_E(F) + ver2.gitDescription + _E(.)_E(.)));
     info->setText(txt);
     info->setSizePolicy(ui::Fixed, ui::Expand);
 

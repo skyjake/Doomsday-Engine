@@ -35,6 +35,10 @@ Version::Version() : build(Time().asBuildNumber())
 #endif
 
     label = LIBDENG2_RELEASE_LABEL;
+	
+#ifdef LIBDENG2_GIT_DESCRIPTION
+	gitDescription = LIBDENG2_GIT_DESCRIPTION;
+#endif
 }
 
 Version::Version(String const &version, int buildNumber) : build(buildNumber)
