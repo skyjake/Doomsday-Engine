@@ -3,7 +3,7 @@ project (DENG_TEST_GLSANDBOX)
 include (../TestConfig.cmake)
 
 find_package (Qt5 COMPONENTS Gui OpenGL Widgets)
-find_package (DengAppfw QUIET)
+find_package (DengAppfw)
 include (OpenGL)
 
 deng_add_package (net.dengine.test.glsandbox)

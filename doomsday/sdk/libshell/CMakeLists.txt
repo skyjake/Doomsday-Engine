@@ -5,7 +5,7 @@ project (DENG_LIBSHELL)
 include (../../cmake/Config.cmake)
 
 # Dependencies.
-find_package (DengCore QUIET)
+find_package (DengCore)
 
 # Definitions.
 add_definitions (-D__LIBSHELL__)

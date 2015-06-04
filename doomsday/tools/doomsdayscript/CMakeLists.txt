@@ -5,7 +5,7 @@ project (DENG_DSCRIPT)
 include (../../cmake/Config.cmake)
 
 # Dependencies.
-find_package (DengCore QUIET)
+find_package (DengCore)
 
 add_executable (doomsdayscript main.cpp)
 set_property (TARGET doomsdayscript PROPERTY FOLDER Tools)

@@ -5,9 +5,9 @@ project (DENG_LIBDOOMSDAY)
 include (../../cmake/Config.cmake)
 
 # Dependencies.
-find_package (DengCore QUIET)
-find_package (DengLegacy QUIET)
-find_package (DengShell QUIET)
+find_package (DengCore)
+find_package (DengLegacy)
+find_package (DengShell)
 include (ZLIB)
 
 # Definitions.

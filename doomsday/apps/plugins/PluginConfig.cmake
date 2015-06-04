@@ -5,7 +5,7 @@ cmake_minimum_required (VERSION 3.0)
 project (DENG_PLUGINS)
 include (${CMAKE_CURRENT_LIST_DIR}/../../cmake/Config.cmake)
 
-find_package (DengDoomsday QUIET)
+find_package (DengDoomsday)
 
 macro (deng_add_plugin target)
     sublist (_src 1 -1 ${ARGV})

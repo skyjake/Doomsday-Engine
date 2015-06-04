@@ -12,8 +12,8 @@ include (../../cmake/Config.cmake)
 set (CURSES_NEED_NCURSES TRUE)
 
 # Dependencies.
-find_package (DengCore QUIET)
-find_package (DengShell QUIET)
+find_package (DengCore)
+find_package (DengShell)
 find_package (Curses REQUIRED)
 mark_as_advanced (CURSES_FORM_LIBRARY)
 find_package (Amethyst QUIET)

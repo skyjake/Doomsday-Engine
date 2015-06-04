@@ -10,8 +10,8 @@ project (DENG_SHELL)
 include (../../cmake/Config.cmake)
 
 # Dependencies.
-find_package (DengCore QUIET)
-find_package (DengShell QUIET)
+find_package (DengCore)
+find_package (DengShell)
 
 add_definitions (
     -DSHELL_VERSION="${DENG_VERSION}"

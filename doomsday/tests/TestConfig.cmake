@@ -4,7 +4,7 @@
 cmake_minimum_required (VERSION 3.0)
 include (${CMAKE_CURRENT_LIST_DIR}/../cmake/Config.cmake)
 
-find_package (DengCore QUIET)
+find_package (DengCore)
 
 macro (deng_test target)
     sublist (_src 1 -1 ${ARGV})

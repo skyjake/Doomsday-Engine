@@ -8,8 +8,8 @@ set (DENG_ENABLE_PK3S ON)
 include (../../cmake/Config.cmake)
 
 # Dependencies.
-find_package (DengAppfw QUIET)
-find_package (DengDoomsday QUIET)
+find_package (DengAppfw)
+find_package (DengDoomsday)
 find_package (Amethyst QUIET)
 find_package (SDL2)
 find_package (LZSS)

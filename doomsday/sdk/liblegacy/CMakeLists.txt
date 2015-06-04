@@ -5,7 +5,7 @@ project (DENG_LIBLEGACY)
 include (../../cmake/Config.cmake)
 
 # Dependencies.
-find_package (DengCore QUIET)
+find_package (DengCore)
 
 # Options.
 option (DENG_LIBLEGACY_WRITER_TYPE_CHECK 

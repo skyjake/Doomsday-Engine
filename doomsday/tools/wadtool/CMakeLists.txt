@@ -6,7 +6,7 @@ cmake_minimum_required (VERSION 3.1)
 project (DENG_WADTOOL)
 include (../../cmake/Config.cmake)
 
-find_package (DengLegacy QUIET)
+find_package (DengLegacy)
 
 add_executable (wadtool wadtool.c wadtool.h)
 set_property (TARGET wadtool PROPERTY FOLDER Tools)

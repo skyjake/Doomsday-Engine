@@ -22,7 +22,7 @@ option (DENG_ENABLE_DISPLAYMODE "Enable/disable changing the display mode"
 )
 
 # Dependencies.
-find_package (DengCore QUIET)
+find_package (DengCore)
 find_package (Assimp REQUIRED)
 include (OpenGL)
 

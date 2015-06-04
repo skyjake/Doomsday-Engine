@@ -7,10 +7,10 @@ project (DENG_SERVER)
 include (../../cmake/Config.cmake)
 
 # Dependencies.
-find_package (DengCore QUIET)
-find_package (DengLegacy QUIET)
-find_package (DengShell QUIET)
-find_package (DengDoomsday QUIET)
+find_package (DengCore)
+find_package (DengLegacy)
+find_package (DengShell)
+find_package (DengDoomsday)
 find_package (LZSS)
 find_package (Amethyst QUIET)
 

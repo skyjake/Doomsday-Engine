@@ -5,9 +5,9 @@ project (DENG_LIBAPPFW)
 include (../../cmake/Config.cmake)
 
 # Dependencies.
-find_package (DengCore QUIET)
-find_package (DengGui QUIET)
-find_package (DengShell QUIET)
+find_package (DengCore)
+find_package (DengGui)
+find_package (DengShell)
 find_package (OculusVR QUIET)
 include (OpenGL)
 

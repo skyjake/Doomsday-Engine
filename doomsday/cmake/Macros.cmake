@@ -118,7 +118,7 @@ macro (deng_target_rpath target)
         if (${target} MATCHES "test_.*")
             # These won't be deployed, so we can use the full path.
             set_property (TARGET ${target} APPEND PROPERTY
-                INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_LIB_DIR}"
+                INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_LIB_DIR};${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_PLUGIN_DIR}"
             )
         endif ()        
     elseif (UNIX)
@@ -150,21 +150,21 @@ function (deng_target_link_qt target linkType)
     sublist (comps 2 -1 ${ARGV})
     if (QT_MODULE STREQUAL Qt4)
         list (REMOVE_ITEM comps X11Extras)
-	list (FIND comps Widgets idx)
-	if (idx GREATER -1)
-	    list (REMOVE_AT comps ${idx})
-	    list (APPEND comps Gui)
-	endif ()
+    list (FIND comps Widgets idx)
+    if (idx GREATER -1)
+        list (REMOVE_AT comps ${idx})
+        list (APPEND comps Gui)
+    endif ()
     endif ()
     list (REMOVE_DUPLICATES comps)
     if (QT_MODULE STREQUAL Qt5)
-	find_package (${QT_MODULE} COMPONENTS ${comps} REQUIRED)
-	set (_prefix)
+    find_package (${QT_MODULE} COMPONENTS ${comps} REQUIRED)
+    set (_prefix)
     else ()
-	set (_prefix Qt)
+    set (_prefix Qt)
     endif ()
     foreach (comp ${comps})
-	target_link_libraries (${target} ${linkType} ${QT_MODULE}::${_prefix}${comp})
+    target_link_libraries (${target} ${linkType} ${QT_MODULE}::${_prefix}${comp})
     endforeach (comp)
 endfunction (deng_target_link_qt)
 
@@ -275,7 +275,7 @@ function (deng_bundle_resources)
     foreach (pair ${_deng_resource_spec})
         string (REGEX REPLACE "(.*),.*" "\\1" fn ${pair})
         string (REGEX REPLACE ".*,(.*)" "\\1" dest ${pair})
-        #message (STATUS "Bundling: ${fn} -> ${dest}")
+        message (STATUS "Bundling: ${fn} -> ${dest}")
         set_source_files_properties (${fn} PROPERTIES MACOSX_PACKAGE_LOCATION ${dest})        
     endforeach (pair)
 endfunction (deng_bundle_resources)
@@ -302,11 +302,16 @@ function (deng_add_package packName)
         FOLDER Packages
     )
     if (NOT APPLE)
-        install (FILES ${outDir}/${outName}
-            DESTINATION ${DENG_INSTALL_DATA_DIR}
-            COMPONENT packs
-        )
+        set (packComponent packs)
+    else ()
+        # On the Mac, packages are bundled with the apps, however if the SDK is installed,
+        # the packages need to be made available separately.
+        set (packComponent sdk)
     endif ()
+    install (FILES ${outDir}/${outName}
+        DESTINATION ${DENG_INSTALL_DATA_DIR}
+        COMPONENT ${packComponent}
+    )
     set (DENG_REQUIRED_PACKAGES ${DENG_REQUIRED_PACKAGES} ${packName} PARENT_SCOPE)
 endfunction (deng_add_package)
 
@@ -377,8 +382,9 @@ macro (deng_deploy_library target name)
             LIBRARY DESTINATION ${DENG_INSTALL_LIB_DIR} COMPONENT libs
             ARCHIVE DESTINATION lib COMPONENT sdk
         )
-        install (EXPORT ${name} DESTINATION lib/cmake/${name} NAMESPACE Deng:: COMPONENT sdk)
-        install (FILES ${name}Config.cmake DESTINATION lib/cmake/${name} COMPONENT sdk)
+        install (EXPORT ${name} DESTINATION ${DENG_INSTALL_LIB_DIR}/cmake/${name} NAMESPACE Deng:: COMPONENT sdk)
+        install (FILES ${DENG_CMAKE_DIR}/config/${name}Config.cmake 
+            DESTINATION ${DENG_INSTALL_LIB_DIR}/cmake/${name} COMPONENT sdk)
         if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/include/de)
             install (DIRECTORY include/de DESTINATION include COMPONENT sdk)
         endif ()
@@ -452,7 +458,7 @@ function (deng_add_application target)
         if (APPLE)
             # Tests should be runnable from distrib/products.
             set_property (TARGET ${target} APPEND PROPERTY 
-                INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_LIB_DIR}"
+                INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_LIB_DIR};${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_PLUGIN_DIR}"
             )
         endif ()        
     endif ()
@@ -567,29 +573,29 @@ function (deng_install_bundle_deps target)
         set (_fwDir "${_outName}.app/Contents/Frameworks")
         foreach (_dep ${_deps})
             if (TARGET ${_dep})
-				# get_property (bundleLibs TARGET ${_dep} PROPERTY MACOSX_BUNDLED_LIBRARIES)
-				# if (bundleLibs)
-				# 	foreach (_lib ${bundleLibs})
-				# 		message ("bundle this: ${_lib}")
-				# 	endforeach (_lib)
-				# else ()
-					if (_dep MATCHES "Deng::(.*)")
-	                    install (FILES $<TARGET_FILE:${_dep}> DESTINATION ${_fwDir})
-	                else ()
-						get_property (libs TARGET ${_dep} PROPERTY INTERFACE_LINK_LIBRARIES)
-						foreach (_tlib ${libs})
-							if (IS_DIRECTORY ${_tlib})
-								install (DIRECTORY ${_tlib} DESTINATION ${_fwDir})
-							else ()
-								install (FILES ${_tlib} DESTINATION ${_fwDir})
-							endif ()
-						endforeach (_tlib)
-						# Cannot use this (CMake bug?); instead use the foreach above.
-	                    # install (FILES $<TARGET_PROPERTY:${_dep},INTERFACE_LINK_LIBRARIES>
-	                    #     DESTINATION ${_fwDir}
-	                    # )
-	                endif ()
-				#endif ()
+                # get_property (bundleLibs TARGET ${_dep} PROPERTY MACOSX_BUNDLED_LIBRARIES)
+                # if (bundleLibs)
+                #   foreach (_lib ${bundleLibs})
+                #       message ("bundle this: ${_lib}")
+                #   endforeach (_lib)
+                # else ()
+                    if (_dep MATCHES "Deng::(.*)")
+                        install (FILES $<TARGET_FILE:${_dep}> DESTINATION ${_fwDir})
+                    else ()
+                        get_property (libs TARGET ${_dep} PROPERTY INTERFACE_LINK_LIBRARIES)
+                        foreach (_tlib ${libs})
+                            if (IS_DIRECTORY ${_tlib})
+                                install (DIRECTORY ${_tlib} DESTINATION ${_fwDir})
+                            else ()
+                                install (FILES ${_tlib} DESTINATION ${_fwDir})
+                            endif ()
+                        endforeach (_tlib)
+                        # Cannot use this (CMake bug?); instead use the foreach above.
+                        # install (FILES $<TARGET_PROPERTY:${_dep},INTERFACE_LINK_LIBRARIES>
+                        #     DESTINATION ${_fwDir}
+                        # )
+                    endif ()
+                #endif ()
             endif ()
         endforeach (_dep)
     endif ()

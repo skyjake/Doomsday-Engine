@@ -13,6 +13,7 @@ endmacro (set_path)
 # Project Options & Paths ----------------------------------------------------
 
 set_path (DENG_SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/..")
+set (DENG_CMAKE_DIR "${CMAKE_CURRENT_LIST_DIR}")
 if (APPLE OR WIN32)
     set_path (DENG_DISTRIB_DIR "${DENG_SOURCE_DIR}/../distrib/products")
 else ()
@@ -20,8 +21,8 @@ else ()
 endif ()
 set (DENG_EXTERNAL_SOURCE_DIR "${DENG_SOURCE_DIR}/external")
 set (DENG_API_DIR "${DENG_SOURCE_DIR}/apps/api")
-set (CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
-set (CMAKE_PREFIX_PATH "${DENG_DISTRIB_DIR}")
+set (CMAKE_MODULE_PATH "${DENG_CMAKE_DIR}")
+set (DENG_SDK_DIR "" CACHE PATH "Location of the Doomsday SDK to use for compiling")
 
 include (Macros)
 include (Arch)
@@ -50,6 +51,13 @@ set (DENG_INSTALL_PLUGIN_DIR "${DENG_INSTALL_LIB_DIR}/doomsday")
 set (DENG_BUILD_STAGING_DIR "${CMAKE_BINARY_DIR}/bundle-staging")
 
 set (CMAKE_INSTALL_DEFAULT_COMPONENT_NAME "client")
+
+# Prefix path is used for finding CMake config packages.
+if (NOT DENG_SDK_DIR STREQUAL "")
+    set (CMAKE_PREFIX_PATH "${DENG_SDK_DIR}/${DENG_INSTALL_LIB_DIR}")
+else ()
+    set (CMAKE_PREFIX_PATH "${DENG_CMAKE_DIR}/config")
+endif ()
 
 # Qt Configuration -----------------------------------------------------------
 
