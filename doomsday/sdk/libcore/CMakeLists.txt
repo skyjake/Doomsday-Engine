@@ -22,7 +22,7 @@ if (DEFINED DENG_BUILD)
 endif ()
 if (GIT_FOUND)
     execute_process (
-        COMMAND ${GIT_EXECUTABLE} describe --always --long 
+        COMMAND ${GIT_EXECUTABLE} describe --tags --always --long 
         OUTPUT_VARIABLE DENG_GIT_DESCRIPTION 
         ERROR_QUIET
         OUTPUT_STRIP_TRAILING_WHITESPACE
