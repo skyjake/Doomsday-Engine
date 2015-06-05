@@ -120,14 +120,19 @@ def output_filename(ext='', extra=''):
         return 'doomsday_' + extra + DOOMSDAY_VERSION_FULL + "_" + DOOMSDAY_BUILD + ext
         
         
+def cmake_options_path():
+    import pilot    
+    return 'cmake.%s.rsp' % pilot.currentBranch()
+        
+        
 def cmake_options():
     """Reads the contents of the CMake options file that determines which flags are used
     when building a release."""
     opts = '-DCMAKE_BUILD_TYPE=Release -DDENG_BUILD=%s ' % (DOOMSDAY_BUILD_NUMBER)
     try:
-        opts += ' ' + open(os.path.join(LAUNCH_DIR, 'cmake.rsp'), 'rt').read().replace('\n', ' ')
+        opts += ' ' + open(os.path.join(LAUNCH_DIR, cmake_options_path()), 'rt').read().replace('\n', ' ')
     except:
-        print("No additional options provided for CMake (cmake.rsp missing)")
+        print("No additional options provided for CMake (%s missing)" % cmake_options_path())
     return opts
     
     

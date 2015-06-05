@@ -48,7 +48,8 @@ try:
     sys.path.append(homeDir())
     import pilotcfg
 except ImportError:
-    print """Configuration needed: pilotcfg.py must be created in ~/.pilot/
+    if __name__ == '__main__':
+        print """Configuration needed: pilotcfg.py must be created in ~/.pilot/
 
 pilotcfg.py contains information such as (global variables):
 - HOST: pilot server address (for clients)
@@ -61,7 +62,7 @@ pilotcfg.py contains information such as (global variables):
 
 The function 'postTaskHook(task)' can be defined for actions to be carried out 
 after a successful execution of a task."""
-    sys.exit(1)
+        sys.exit(1)
 
 APP_NAME = 'Doomsday Build Pilot'
 
