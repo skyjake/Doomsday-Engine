@@ -28,13 +28,7 @@ Using the latest version of Qt 5 is recommended. The minimum required version is
 
 ### Open Asset Import Library
 
-libgui requires the [Open Asset Import Library](http://assimp.sourceforge.net/lib_html/index.html) for reading 3D model and animation files.
-
-1. Clone https://github.com/skyjake/assimp.
-2. Check out the "deng-patches" branch.
-3. Run [cmake](http://cmake.org) to generate appropriate project files (e.g., Visual Studio on Windows).
-4. Compile the generated project.
-5. Add `ASSIMP_DIR` to your *config_user.pri*.
+libgui requires the [Open Asset Import Library](http://assimp.sourceforge.net/lib_html/index.html) for reading 3D model and animation files. It is compiled automatically as part of the build and is expected to be present as a Git submodule in _doomsday/external/assimp_. Source tarballs come with the Assimp sources included.
 
 ### SDL 2
 
