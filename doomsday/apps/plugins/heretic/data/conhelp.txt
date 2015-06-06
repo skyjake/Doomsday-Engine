@@ -38,6 +38,10 @@ desc = Show the Help screens.
 [kill]
 desc = Kill all the monsters on the map.
 
+[leavemap]
+desc = Leave the current map and load the next according to the map progression of the current episode.
+inf = USAGE:\nleavemap [(exit)]\nIf (exit) is specified, an exit by this name will be searched for in the defined map progression for the current episode, rather than the default exit; "next".
+
 [loadgame]
 desc = Load a game-save or open the load menu.
 inf = Params: loadgame (game-save-name|<keyword>|save-slot-num) (confirm)\nKeywords: last, quick\nExamples:\nOpen load menu: 'loadgame'\nLoading named game: 'loadgame "running low on ammo"'\nLoading current "quick" slot, confirmed: 'loadgame quick confirm'\nLoading slot #0: 'loadgame 0'
@@ -162,9 +166,6 @@ inf = Params: cheat (cheat)\nFor example, 'cheat rambo'.
 
 [chicken]
 desc = Turn yourself into a chicken. Go ahead.
-
-[exitmap]
-desc = Exit the current map.
 
 [give]
 desc = Cheat command to give you various kinds of things.
@@ -649,11 +650,14 @@ desc = 1=Allow cheating in multiplayer games (god, noclip, give).
 [server-game-deathmatch]
 desc = 1=Start multiplayer games as deathmatch.
 
+[server-game-episode]
+desc = Identifier of the episode to be played in a multiplayer game.
+
 [server-game-jump]
 desc = 1=Allow jumping in multiplayer games.
 
 [server-game-map]
-desc = Map to use in multiplayer games.
+desc = Identifier of the map to be played in a multiplayer game.
 
 [server-game-mapcycle-noexit]
 desc = 1=Disable exit buttons during map rotation.
@@ -697,8 +701,26 @@ desc = Rotation angle for the crosshair [0..1] (1=360 degrees).
 [view-cross-b]
 desc = Crosshair color blue component.
 
+[view-cross-dead-b]
+desc = Crosshair color blue component at no health (dead).
+
+[view-cross-dead-g]
+desc = Crosshair color green component at no health (dead).
+
+[view-cross-dead-r]
+desc = Crosshair color red component at no health (dead).
+
 [view-cross-g]
 desc = Crosshair color green component.
+
+[view-cross-live-b]
+desc = Crosshair color blue component at full health.
+
+[view-cross-live-g]
+desc = Crosshair color green component at full health.
+
+[view-cross-live-r]
+desc = Crosshair color red component at full health.
 
 [view-cross-r]
 desc = Crosshair color red component.
@@ -711,6 +733,9 @@ desc = The current crosshair.
 
 [view-cross-vitality]
 desc = Color the crosshair according to how near you are to death.
+
+[view-cross-weight]
+desc = Crosshair line weight
 
 [view-filter-strength]
 desc = Strength of view filter.
