@@ -117,6 +117,18 @@ typedef struct libcommon_config_s {
     float           xhairSize;
     byte            xhairVitality;
     float           xhairColor[4];
+    float           xhairWeight;
+
+    /// Reference hue value for the crosshair at 0% health
+    float           xhairLiveRed;
+    float           xhairLiveGreen;
+    float           xhairLiveBlue;
+
+    /// Reference hue value for the crosshair at 100% health
+    float           xhairDeadRed;
+    float           xhairDeadGreen;
+    float           xhairDeadBlue;
+
 
     // Automap:
     float           automapMobj[3];

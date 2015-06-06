@@ -30,16 +30,77 @@
 #include "r_common.h"
 #include "x_hair.h"
 
+
 void X_Register(void)
 {
-    C_VAR_FLOAT("view-cross-angle", &cfg.common.xhairAngle, 0, 0, 1);
-    C_VAR_FLOAT("view-cross-size", &cfg.common.xhairSize, 0, 0, 1);
-    C_VAR_INT  ("view-cross-type", &cfg.common.xhair, 0, 0, NUM_XHAIRS);
-    C_VAR_BYTE ("view-cross-vitality", &cfg.common.xhairVitality, 0, 0, 1);
-    C_VAR_FLOAT("view-cross-r", &cfg.common.xhairColor[0], 0, 0, 1);
-    C_VAR_FLOAT("view-cross-g", &cfg.common.xhairColor[1], 0, 0, 1);
-    C_VAR_FLOAT("view-cross-b", &cfg.common.xhairColor[2], 0, 0, 1);
-    C_VAR_FLOAT("view-cross-a", &cfg.common.xhairColor[3], 0, 0, 1);
+    C_VAR_FLOAT("view-cross-angle",     &cfg.common.xhairAngle,        0, 0, 1);
+    C_VAR_FLOAT("view-cross-size",      &cfg.common.xhairSize,         0, 0, 1);
+    C_VAR_INT  ("view-cross-type",      &cfg.common.xhair,             0, 0, NUM_XHAIRS);
+    C_VAR_BYTE ("view-cross-vitality",  &cfg.common.xhairVitality,     0, 0, 1);
+    C_VAR_FLOAT("view-cross-r",         &cfg.common.xhairColor[0],     0, 0, 1);
+    C_VAR_FLOAT("view-cross-g",         &cfg.common.xhairColor[1],     0, 0, 1);
+    C_VAR_FLOAT("view-cross-b",         &cfg.common.xhairColor[2],     0, 0, 1);
+    C_VAR_FLOAT("view-cross-a",         &cfg.common.xhairColor[3],     0, 0, 1);
+    C_VAR_FLOAT("view-cross-width",     &cfg.common.xhairWeight,       0, 0, 5);
+    C_VAR_FLOAT("view-cross-live-r",    &cfg.common.xhairLiveRed,      0, 0, 1);
+    C_VAR_FLOAT("view-cross-live-g",    &cfg.common.xhairLiveGreen,    0, 0, 1);
+    C_VAR_FLOAT("view-cross-live-b",    &cfg.common.xhairLiveBlue,     0, 0, 1); 
+    C_VAR_FLOAT("view-cross-dead-r",    &cfg.common.xhairDeadRed,      0, 0, 1);
+    C_VAR_FLOAT("view-cross-dead-g",    &cfg.common.xhairDeadGreen,    0, 0, 1);
+    C_VAR_FLOAT("view-cross-dead-b",    &cfg.common.xhairDeadBlue,     0, 0, 1);
+}
+
+static inline float Max3F(float x, float y, float z)
+{
+    return (x > y) 
+            ? (x > z)
+                ? x
+                : z
+            : (y > z)
+                ? y
+                : z;
+}
+
+static inline float Min3F(float x, float y, float z)
+{
+    return (x < y)
+            ? (x < z)
+                ? x
+                : z
+            : (y < z)
+                ? y
+                : z;
+}
+
+static inline float const RGBtoHue(float const red, float const green, float const blue)
+{
+    float const rgbMax  = Max3F(red, green, blue);
+    float const rgbMin  = Min3F(red, green, blue);
+    float const chroma  = rgbMax - rgbMin;
+
+    float hue = 0;
+
+    if(chroma != 0)
+    {
+        float const deltaRed   = (((rgbMax - red)   / 6.0F) + (chroma / 2.0F)) / chroma;
+        float const deltaGreen = (((rgbMax - green) / 6.0F) + (chroma / 2.0F)) / chroma;
+        float const deltaBlue  = (((rgbMax - blue)  / 6.0F) + (chroma / 2.0F)) / chroma;
+
+        if(rgbMax == red)
+        {
+            hue = deltaBlue - deltaGreen;
+        } 
+        else if(rgbMax == green) 
+        {
+            hue = (1.0F / 3.0F) + deltaRed - deltaBlue;
+        }
+        else if(rgbMax == blue)
+        {
+            hue = (2.0F / 3.0F) + deltaGreen - deltaRed;
+        }
+    }
+
+    return hue;
 }
 
 static dd_bool currentColor(player_t* player, float color[3])
@@ -48,17 +109,15 @@ static dd_bool currentColor(player_t* player, float color[3])
 
     if(cfg.common.xhairVitality)
     {
-        // Color the crosshair according to how close the player is to death.
-        /// @todo These colors should be cvars.
-#define HUE_DEAD            0.f
-#define HUE_LIVE            .3f
+        float const liveHue = RGBtoHue(cfg.common.xhairLiveRed, 
+                                       cfg.common.xhairLiveGreen,
+                                       cfg.common.xhairLiveBlue);
+        float const deadHue = RGBtoHue(cfg.common.xhairDeadRed,
+                                       cfg.common.xhairDeadGreen,
+                                       cfg.common.xhairDeadBlue);
 
-        M_HSVToRGB(color, HUE_DEAD +
-            (HUE_LIVE - HUE_DEAD) * MINMAX_OF(0,
-                (float) player->plr->mo->health / maxHealth, 1), 1, 1);
-
-#undef HUE_DEAD
-#undef HUE_LIVE
+        M_HSVToRGB(color, deadHue + (liveHue - deadHue) 
+                          * MINMAX_OF(0, (float) player->plr->mo->health / maxHealth, 1), 1, 1);
     }
     else
     {
@@ -90,8 +149,6 @@ static float currentOpacity(player_t* player)
 
 void X_Drawer(int pnum)
 {
-#define XHAIR_LINE_WIDTH    1.f
-
     player_t* player = players + pnum;
     int xhair = MINMAX_OF(0, cfg.common.xhair, NUM_XHAIRS);
     float scale, oldLineWidth, color[4];
@@ -112,7 +169,7 @@ void X_Drawer(int pnum)
     scale = .125f + MINMAX_OF(0, cfg.common.xhairSize, 1) * .125f * win.size.height * ((float)80/SCREENHEIGHT);
 
     oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
-    DGL_SetFloat(DGL_LINE_WIDTH, XHAIR_LINE_WIDTH);
+    DGL_SetFloat(DGL_LINE_WIDTH, cfg.common.xhairWeight);
 
     currentColor(player, color);
     DGL_Color4fv(color);
@@ -121,6 +178,4 @@ void X_Drawer(int pnum)
 
     // Restore the previous state.
     DGL_SetFloat(DGL_LINE_WIDTH, oldLineWidth);
-
-#undef XHAIR_LINE_WIDTH
 }

@@ -1273,6 +1273,12 @@ void Hu_MenuInitHUDOptionsPage()
     page->addWidget(new CVarSliderWidget("view-cross-size"))
             .setGroup(3);
 
+    page->addWidget(new LabelWidget("Thickness"))
+            .setGroup(3);
+
+    page->addWidget(new CVarSliderWidget("view-cross-weight"))
+            .setGroup(3);
+
     page->addWidget(new LabelWidget("Angle"))
             .setGroup(3);
 
@@ -1290,6 +1296,22 @@ void Hu_MenuInitHUDOptionsPage()
 
     page->addWidget(new CVarToggleWidget("view-cross-vitality"))
             .setGroup(3);
+
+    page->addWidget(new LabelWidget("Vitality Colour (Dead)"))
+            .setGroup(3);
+
+    page->addWidget(new CVarColorEditWidget("view-cross-dead-r", "view-cross-dead-g", "view-cross-dead-b"))
+            .setGroup(3)
+            .setAction(Widget::Deactivated,     CVarColorEditWidget_UpdateCVar)
+            .setAction(Widget::Activated,       Hu_MenuActivateColorWidget);
+
+    page->addWidget(new LabelWidget("Vitality Colour (Full Health)"))
+            .setGroup(3);
+
+    page->addWidget(new CVarColorEditWidget("view-cross-live-r", "view-cross-live-g", "view-cross-live-b"))
+            .setGroup(3)
+            .setAction(Widget::Deactivated,     CVarColorEditWidget_UpdateCVar)
+            .setAction(Widget::Activated,       Hu_MenuActivateColorWidget);
 
     page->addWidget(new LabelWidget("Color"))
             .setGroup(3);
