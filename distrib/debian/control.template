@@ -2,7 +2,7 @@ Source: ${Package}
 Section: universe/games
 Priority: optional
 Maintainer: Jaakko Keränen <jaakko.keranen@iki.fi>
-Build-Depends: debhelper (>= 8.0.0), python, libsdl2-dev, libsdl2-mixer-dev, libxrandr-dev, libxxf86vm-dev, qt5-qmake, qtbase5-dev, libqt5opengl5-dev, libqt5x11extras5-dev, zlib1g-dev, libfluidsynth-dev, libncurses5-dev, cmake (>= 3.1)
+Build-Depends: debhelper (>= 8.0.0), python, libsdl2-dev, libsdl2-mixer-dev, libxrandr-dev, libxxf86vm-dev, qtchooser, qt5-qmake, qtbase5-dev, libqt5opengl5-dev, libqt5x11extras5-dev, zlib1g-dev, libfluidsynth-dev, libncurses5-dev, cmake (>= 3.1)
 Standards-Version: 3.9.3
 Homepage: http://dengine.net/
 Vcs-Git: https://github.com/skyjake/Doomsday-Engine.git

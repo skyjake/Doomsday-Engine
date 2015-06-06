@@ -1,16 +1,14 @@
 #!/usr/bin/make -f
 APPNAME := doomsday
-ASSIMP_DIR := $(shell if [ -e ../doomsday/external/assimp ]; then echo ../doomsday/external/assimp; \
-                else echo doomsday/external/assimp; fi)
 
 builddir:
 	mkdir -p builddir
 
 builddir/Makefile: builddir
-	cd $(ASSIMP_DIR) && cmake -G "Unix Makefiles" && make -j2
-	cd builddir && cmake -DCMAKE_BUILD_TYPE=Release \
+	cd builddir && QTCHOOSER_RUNTOOL=qmake QT_SELECT=5 cmake \
+		-DQMAKE=qtchooser \
+		-DCMAKE_BUILD_TYPE=Release \
 		-DDENG_BUILD=`../build_number.py --print` \
-		-DASSIMP_DIR=$(ASSIMP_DIR) \
 		../../doomsday
 
 build: build-arch build-indep
