@@ -50,7 +50,7 @@ void X_Register(void)
     C_VAR_FLOAT("view-cross-dead-b",    &cfg.common.xhairDeadBlue,     0, 0, 1);
 }
 
-static inline float Max3F(float x, float y, float z)
+static float Max3F(float x, float y, float z)
 {
     return (x > y) 
             ? (x > z)
@@ -61,7 +61,7 @@ static inline float Max3F(float x, float y, float z)
                 : z;
 }
 
-static inline float Min3F(float x, float y, float z)
+static float Min3F(float x, float y, float z)
 {
     return (x < y)
             ? (x < z)
@@ -72,7 +72,7 @@ static inline float Min3F(float x, float y, float z)
                 : z;
 }
 
-static inline float const RGBtoHue(float const red, float const green, float const blue)
+static float const RGBtoHue(float const red, float const green, float const blue)
 {
     float const rgbMax  = Max3F(red, green, blue);
     float const rgbMin  = Min3F(red, green, blue);
