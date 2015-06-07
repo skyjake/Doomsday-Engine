@@ -9,6 +9,7 @@ set (ASSIMP_LIB_INSTALL_DIR ${DENG_INSTALL_PLUGIN_DIR}
     CACHE PATH "libassimp install directory" FORCE
 )
 add_subdirectory (../../external/assimp assimp)
+set_property (TARGET assimp PROPERTY FOLDER Libraries)
 
 if (APPLE)
     # Don't change display modes on OS X. We'll instead resize the 
