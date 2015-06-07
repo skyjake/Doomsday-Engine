@@ -1,25 +1,20 @@
 <?php
-/**
- * @file version.class.php
+/** @file version.class.php  Compound version number utility class.
  *
- * @section License
+ * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the Free
- * Software Foundation; either version 2 of the License, or (at your option)
- * any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- *
- * @author Copyright &copy; 2013 Daniel Swanson <danij@dengine.net>
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small>
  */
 
 includeGuard('Version');
@@ -44,18 +39,18 @@ class Version
      */
     public function __construct($major = 0, $minor = 0, $patch = 0, $revision = 0)
     {
-        $this->major = (int)$major;
-        $this->minor = (int)$minor;
-        $this->patch = (int)$patch;
+        $this->major    = (int)$major;
+        $this->minor    = (int)$minor;
+        $this->patch    = (int)$patch;
         $this->revision = (int)$revision;
     }
 
     /**
      * Construct a new Version by parsing the given string.
      *
-     * @param string:$string    Textual version string, expected to be in the
-     *                          format: (major).(minor).(patch).(revision).
-     *                          Components can be omitted if not used.
+     * @param string:$string  Textual version string, expected to be in the format:
+     *                        (major).(minor).(patch).(revision).
+     *                        Components may be omitted if not used.
      */
     static public function fromString($str, $sep = '.')
     {
@@ -105,7 +100,7 @@ class Version
      *
      * (major)(sep)(minor)(sep)(patch)(sep)(revision)
      *
-     * @param string:$sep       Separator to delimit the components with.
+     * @param string:$sep              Separator to delimit the components with.
      * @param bool:$omitTrailingZeros
      */
     public function asText($sep = '.', $omitTrailingZeros = false)
@@ -143,8 +138,8 @@ class Version
     }
 
     /**
-     * Assume the caller's intent is to output a string representation
-     * in some human-facing context.
+     * Assume the caller's intent is to output a string representation in some
+     * human-facing context.
      */
     public function __toString()
     {
@@ -152,8 +147,8 @@ class Version
     }
 
     /**
-     * Returns an associative array representation of the version, with
-     * each property value associated with a key according to name.
+     * Returns an associative array representation of the version, with each property value
+     * associated with a key according to name.
      */
     public function toAssocArray()
     {
