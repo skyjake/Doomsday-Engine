@@ -373,6 +373,7 @@ def doTask(task):
         
     elif task.startswith('check_'):
         if pilotcfg.ID == 'master':
+            oldBranch = currentBranch()
             branch = task[6:]
             msg("CHECK BRANCH: " + branch)
             autobuild('pull')
@@ -380,6 +381,9 @@ def doTask(task):
                 autobuild('pull')
             if checkBranchHeadForChanges():
                 newTask('buildfrom_' + branch, allClients=True)
+            else:
+                switchToBranch(oldBranch)
+                autobuild('pull')
         return True
 
     elif task == 'tag_build':
