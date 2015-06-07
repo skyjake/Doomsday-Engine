@@ -2,7 +2,7 @@
 # coding=utf-8
 #
 # The Doomsday Build Pilot
-# (c) 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+# (c) 2011-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,6 +36,7 @@ import struct
 import time
 import SocketServer
 import builder.utils
+import builder.git
 
 def homeDir():
     """Determines the path of the pilot home directory."""
@@ -100,6 +101,10 @@ def checkHome():
 
 def branchFileName():
     return os.path.join(homeDir(), 'branch')
+    
+    
+def headsFileName():
+    return os.path.join(homeDir(), 'heads')
 
 
 def currentBranch():
@@ -109,9 +114,59 @@ def currentBranch():
 
 
 def switchToBranch(branch):
+    """Changes the current branch that the Plot operates on.
+    
+    Returns:
+        True, if the branch was changed; otherwise False.
+    """
+    oldBranch = currentBranch()
     f = file(branchFileName(), 'wt')
     print >> f, branch
     f.close()
+    return branch != oldBranch
+    
+    
+def readBranchHeads():
+    heads = {}
+    if os.path.exists(headsFileName()): 
+        for line in file(headsFileName(), 'rt').readlines():
+            name, commit = line.split(':')
+            heads[name] = commit
+    return heads
+    
+    
+def markedBranchHead(branch):
+    """Checks the ~/.pilot/heads to see which Git commit has been marked
+    as the current (old) head. Returns None if there is no marked head."""
+    heads = readBranchHeads()
+    return heads[branch] if branch in heads else None
+    
+    
+def markBranchHead(branch, commit):
+    heads = readBranchHeads()
+    heads[branch] = commit
+    f = file(headsFileName(), 'wt')
+    for name in heads:
+        print >> f, "%s:%s" % (name, heads[name])
+    f.close()    
+    
+
+def checkBranchHeadForChanges():
+    """Checks if the current branch has moved since the previous check.
+    The current Git head is marked in ~/.pilot/heads.
+    
+    Returns:
+        True, if the branch head has moved.
+    """
+    branch = currentBranch()
+    currentHead = builder.git.git_head()
+    markedHead = markedBranchHead(branch)
+    print 'Current head:', currentHead
+    print 'Marked head:', markedHead
+    if currentHead == markedHead:
+        return False
+    markBranchHead(branch, currentHead)
+    return True
 
 
 def checkMasterActions():
@@ -303,16 +358,29 @@ def doTask(task):
         return True
 
     if task.startswith('branch_'):
-        msg("SWITCH TO BRANCH: " + task[7:])
+        branch = task[7:]
+        msg("SWITCH TO BRANCH: " + branch)
         autobuild('pull')
-        switchToBranch(task[7:])
-        return autobuild('pull')
+        if switchToBranch(branch):
+            autobuild('pull')
 
     elif task.startswith('buildfrom_'):
-        msg("SWITCH TO BRANCH FOR BUILD: " + task[10:])
+        branch = task[10:]
+        msg("SWITCH TO BRANCH FOR BUILD: " + branch)
         autobuild('pull')
-        switchToBranch(task[10:])
+        switchToBranch(branch)
         return autobuild('pull')
+        
+    elif task.startswith('check_'):
+        if pilotcfg.ID == 'master':
+            branch = task[6:]
+            msg("CHECK BRANCH: " + branch)
+            autobuild('pull')
+            if switchToBranch(branch):
+                autobuild('pull')
+            if checkBranchHeadForChanges():
+                newTask('buildfrom_' + branch, allClients=True)
+        return True
 
     elif task == 'tag_build':
         msg("TAG MASTER BRANCH")

@@ -30,3 +30,8 @@ def git_tag(tag):
     os.chdir(builder.config.DISTRIB_DIR)
     run_git("git tag %s" % tag, ignoreResult=True)
     run_git("git push --tags")
+
+
+def git_head():
+    """Returns the current HEAD commit hash."""
+    return subprocess.check_output('git rev-parse HEAD', shell=True).strip()
