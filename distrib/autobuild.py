@@ -93,7 +93,7 @@ def sign_packages():
     ev = builder.Event(latestAvailable=True)
     print "Signing build %i." % ev.number()    
     for fn in os.listdir(ev.path()):
-        if fn.endswith('.exe') or fn.endswith('.dmg') or fn.endswith('.deb'):
+        if fn.endswith('.msi') or fn.endswith('.exe') or fn.endswith('.dmg') or fn.endswith('.deb'):
             # Make a signature for this.
             os.system("gpg --output %s -ba %s" % (ev.file_path(fn) + '.sig', ev.file_path(fn)))
 
