@@ -16,4 +16,6 @@ set_property (TARGET savegametool PROPERTY FOLDER Tools)
 target_link_libraries (savegametool Deng::libcore Deng::liblegacy lzss)
 deng_target_defaults (savegametool)
 
-deng_install_tool (savegametool)
+# The client expects savegametool to be available, so install in the
+# "client" component.
+deng_install_tool (savegametool client)

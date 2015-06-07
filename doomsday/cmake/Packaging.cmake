@@ -57,15 +57,31 @@ set (CPACK_PACKAGE_EXECUTABLES "client;Doomsday ${DENG_VERSION};shell;Doomsday S
 set (CPACK_PACKAGE_INSTALL_DIRECTORY "Doomsday ${DENG_VERSION}")
 
 if (NOT CPack_CMake_INCLUDED)
-    include (CPack)
-
+    # We have to define the components manually because otherwise Assimp's
+    # components would get automatically included.
+    set (CPACK_COMPONENTS_ALL packs libs)
+    if (DENG_ENABLE_GUI)
+        list (APPEND CPACK_COMPONENTS_ALL client)
+    endif ()
+    if (DENG_ENABLE_SDK)
+        list (APPEND CPACK_COMPONENTS_ALL sdk)
+    endif ()
+    if (DENG_ENABLE_TOOLS)
+        list (APPEND CPACK_COMPONENTS_ALL tools)
+    endif ()
+    if (DENG_ENABLE_TESTS)
+        list (APPEND CPACK_COMPONENTS_ALL tests)
+    endif ()    
+    
+    include (CPack)   
+    
     cpack_add_component (packs
         DISPLAY_NAME "Required Resources"
         HIDDEN        
     )
     cpack_add_component (libs
         DISPLAY_NAME "Runtime Libraries"
-        REQUIRED
+        HIDDEN REQUIRED
         INSTALL_TYPES gui
     )
     cpack_add_component (client
@@ -86,6 +102,12 @@ if (NOT CPack_CMake_INCLUDED)
         DEPENDS libs packs
         INSTALL_TYPES sdk
     )
+    cpack_add_component (tools
+        DISPLAY_NAME "Tools"
+        DESCRIPTION "Command line tools."
+        DEPENDS libs
+        INSTALL_TYPES gui sdk
+    )
     # Don't package tests.
     cpack_add_component (test
         DISPLAY_NAME "Tests"
@@ -95,5 +117,5 @@ if (NOT CPack_CMake_INCLUDED)
     )
     
     cpack_add_install_type (gui DISPLAY_NAME "Standard")
-    cpack_add_install_type (sdk DISPLAY_NAME "Developer")
+    cpack_add_install_type (sdk DISPLAY_NAME "Developer")    
 endif ()

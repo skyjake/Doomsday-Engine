@@ -1,6 +1,6 @@
 option (DENG_ENABLE_GUI "Enable/disable the client and all GUI related functionality" ON)
-
 option (DENG_ENABLE_SDK "Enable/disable installation of the Doomsday 2 SDK" ON)
+option (DENG_ENABLE_TOOLS "Compile the Doomsday tools" ON)
 
 if (CCACHE_FOUND)
     set (DENG_ENABLE_COTIRE_DEFAULT OFF) # just use the cache

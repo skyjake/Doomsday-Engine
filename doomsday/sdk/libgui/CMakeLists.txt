@@ -12,7 +12,7 @@ add_subdirectory (../../external/assimp assimp)
 
 if (APPLE)
     # Don't change display modes on OS X. We'll instead resize the 
-    # framebuffer  and scale up.
+    # frame buffer and scale up.
     set (DENG_ENABLE_DISPLAYMODE_DEFAULT OFF)
 else ()
     set (DENG_ENABLE_DISPLAYMODE_DEFAULT ON)

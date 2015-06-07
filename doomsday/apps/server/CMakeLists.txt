@@ -284,6 +284,8 @@ target_link_libraries (server
     lzss
 )
 
-deng_install_tool (server)
+# Server is installed as part of the "client" component instead of the 
+# default "tools".
+deng_install_tool (server client)
 
 deng_cotire (server include/precompiled.h)
