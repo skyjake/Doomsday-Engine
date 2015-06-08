@@ -373,6 +373,7 @@ def doTask(task):
         
     elif task.startswith('check_'):
         if pilotcfg.ID == 'master':
+            os.chdir(os.path.abspath(os.path.dirname(__file__)))
             oldBranch = currentBranch()
             branch = task[6:]
             msg("CHECK BRANCH: " + branch)
