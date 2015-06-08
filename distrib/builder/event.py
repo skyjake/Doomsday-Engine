@@ -48,7 +48,7 @@ class Event:
         
         if self.num >= 816: # Added Mac OS X 10.8.
             # Platforms:  Name                              File ext          sys_id()
-            self.oses = [('Windows (x86)',                 '.exe',           'win32-32bit'),
+            self.oses = [('Windows (x86)',                 ('.exe', '.msi'),  'win32-32bit'),
                          ('OS X 10.8+ (x86_64)',           ('.dmg', 'macx8.dmg'), 'macx8-64bit'),
                          ('OS X 10.6+ (x86_64/i386)',      ('mac10_6.dmg', 'macx6.dmg'), 'darwin-64bit'),
                          ('OS X 10.4+ (ppc/i386)',         '32bit.dmg',      'darwin-32bit'),
@@ -188,6 +188,7 @@ class Event:
         
     def list_package_files(self):
         files = glob.glob(os.path.join(self.buildDir, '*.dmg')) + \
+                glob.glob(os.path.join(self.buildDir, '*.msi')) + \
                 glob.glob(os.path.join(self.buildDir, '*.exe')) + \
                 glob.glob(os.path.join(self.buildDir, '*.deb')) + \
                 glob.glob(os.path.join(self.buildDir, '*.tar.gz'))
@@ -257,7 +258,8 @@ class Event:
                 
     def download_uri(self, fn):
         # Available on SourceForge?
-        if self.number() >= 350 and (fn.endswith('.exe') or fn.endswith('.deb') or fn.endswith('.dmg') or fn.endswith('.zip')):
+        if self.number() >= 350 and (fn.endswith('.msi') or fn.endswith('.exe') or fn.endswith('.deb') or
+                                     fn.endswith('.dmg') or fn.endswith('.zip')):
             if self.release_type() == 'stable':
                 return "http://sourceforge.net/projects/deng/files/Doomsday%%20Engine/%s/%s/download" \
                     % (self.version_base(), fn)
