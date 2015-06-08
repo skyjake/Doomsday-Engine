@@ -534,6 +534,13 @@ ul, ol {
     padding-left:2.4em;
 }
 
+#cp-menu #navigation ul {
+    /* Improves User Control Panel sidebar layout in the forums. */
+    margin-bottom:0;
+    margin-top:0;
+    padding-left:0;    
+}
+
 div.game-sprite {
     float: right;
     width: auto;
