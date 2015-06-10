@@ -14,7 +14,7 @@
  * shadow effect.
  *
  * @authors Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -31,16 +31,14 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RENDER_FAKERADIO
-#define DENG_RENDER_FAKERADIO
+#ifndef CLIENT_RENDER_FAKERADIO
+#define CLIENT_RENDER_FAKERADIO
 
 #include "Line"
 #include "Sector"
 #include "Vertex"
 
 #include "WallEdge"
-
-#include "render/rendpoly.h" // r_vertex_t
 
 class ConvexSubspace;
 
@@ -72,8 +70,7 @@ struct edgespan_t
  */
 struct LineSideRadioData
 {
-    /// Frame number of last update
-    int updateCount;
+    int updateCount;  ///< Frame number of last update
 
     shadowcorner_t topCorners[2];
     shadowcorner_t bottomCorners[2];
@@ -137,4 +134,4 @@ void Rend_RadioSubspaceEdges(ConvexSubspace const &subspace);
 void Rend_DrawShadowOffsetVerts();
 #endif
 
-#endif // DENG_RENDER_FAKERADIO
+#endif  // CLIENT_RENDER_FAKERADIO

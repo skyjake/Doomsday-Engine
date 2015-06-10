@@ -1,7 +1,7 @@
 /** @file drawlist.cpp  Drawable primitive list.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,14 +18,14 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
+#include "de_base.h"
 #include "render/drawlist.h"
 
-#include "gl/gl_main.h"
-#include "render/rend_main.h"
-#include "clientapp.h"
 #include <de/concurrency.h>
 #include <de/memoryzone.h>
+#include "clientapp.h"
+#include "gl/gl_main.h"
+#include "render/rend_main.h"
 
 using namespace de;
 
@@ -68,7 +68,14 @@ DENG2_PIMPL(DrawList)
      */
     struct Element {
         // Must be an offset since the list is sometimes reallocated.
-        uint size; ///< Size of this element (zero = n/a).
+        duint size;  ///< Size of this element (zero = n/a).
+
+        Element *next() {
+            if(!size) return nullptr;
+            auto *elem = (Element *) ((duint8 *) (this) + size);
+            if(!elem->size) return nullptr;
+            return elem;
+        }
 
         struct Data {
             Store *buffer;
@@ -77,8 +84,8 @@ DENG2_PIMPL(DrawList)
             // Element indices into the global backing store for the geometry.
             // These are always contiguous and all are used (some are shared):
             //   indices[0] is the base, and indices[1...n] > indices[0].
-            uint numIndices;
-            uint *indices;
+            duint numIndices;
+            duint *indices;
 
             bool oneLight;
             bool manyLights;
@@ -104,7 +111,7 @@ DENG2_PIMPL(DrawList)
                     GL_BindTextureUnmanaged(!renderTextures? 0 : modTexture,
                                             gl::ClampToEdge, gl::ClampToEdge);
 
-                    float modColorV[4] = { modColor.x, modColor.y, modColor.z, 0 };
+                    dfloat modColorV[4] = { modColor.x, modColor.y, modColor.z, 0 };
                     glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, modColorV);
                 }
 
@@ -163,16 +170,25 @@ DENG2_PIMPL(DrawList)
                 }
 
                 glBegin(type == gl::TriangleStrip? GL_TRIANGLE_STRIP : GL_TRIANGLE_FAN);
-                for(uint i = 0; i < numIndices; ++i)
+                for(duint i = 0; i < numIndices; ++i)
                 {
-                    uint const index = indices[i];
+                    duint const index = indices[i];
 
-                    for(int j = 0; j < numTexUnits; ++j)
+                    for(dint k = 0; k < numTexUnits; ++k)
                     {
-                        if(texUnitMap[j])
+                        Vector2f const *tc = nullptr;  // No mapping.
+                        switch(texUnitMap[k])
                         {
-                            Vector2f const &tc = buffer->texCoords[texUnitMap[j] - 1][index];
-                            glMultiTexCoord2f(GL_TEXTURE0 + j, tc.x, tc.y);
+                        case AttributeSpec::TexCoord0:   tc = buffer->texCoords[0]; break;
+                        case AttributeSpec::TexCoord1:   tc = buffer->texCoords[1]; break;
+                        case AttributeSpec::ModTexCoord: tc = buffer->modCoords;    break;
+
+                        default: break;
+                        }
+
+                        if(tc)
+                        {
+                            glMultiTexCoord2f(GL_TEXTURE0 + k, tc[index].x, tc[index].y);
                         }
                     }
 
@@ -221,75 +237,56 @@ DENG2_PIMPL(DrawList)
                 }
             }
         } data;
-
-        Element *next() {
-            if(!size) return 0;
-            Element *elem = (Element *) ((byte *) (this) + size);
-            if(!elem->size) return 0;
-            return elem;
-        }
     };
 
-    Spec spec;        ///< List specification.
-    size_t dataSize;  ///< Number of bytes allocated for the data.
-    byte *data;       ///< Data for a number of polygons (The List).
-    byte *cursor;     ///< Data pointer for reading/writing.
-    Element *last;    ///< Last element (if any).
+    Spec spec;                 ///< List specification.
+    dsize dataSize = 0;        ///< Number of bytes allocated for the data.
+    duint8 *data   = nullptr;  ///< Data for a number of polygons (The List).
+    duint8 *cursor = nullptr;  ///< Data pointer for reading/writing.
+    Element *last  = nullptr;  ///< Last element (if any).
 
-    Instance(Public *i, Spec const &spec)
-        : Base(i)
-        , spec(spec)
-        , dataSize(0)
-        , data(0)
-        , cursor(0)
-        , last(0)
-    {}
-
-    ~Instance()
-    {
-        clearAllData();
-    }
+    Instance(Public *i, Spec const &spec) : Base(i), spec(spec) {}
+    ~Instance() { clearAllData(); }
 
     void clearAllData()
     {
         if(data)
         {
             // All the list data will be destroyed.
-            Z_Free(data); data = 0;
+            Z_Free(data); data = nullptr;
 #ifdef DENG_DEBUG
             Z_CheckHeap();
 #endif
         }
 
-        cursor   = 0;
-        last     = 0;
+        cursor   = nullptr;
+        last     = nullptr;
         dataSize = 0;
     }
 
     /**
      * @return  Start of the allocated data.
      */
-    void *allocateData(uint bytes)
+    void *allocateData(dsize bytes)
     {
         // Number of extra bytes to keep allocated in the end of each list.
-        int const PADDING = 16;
+        dint const PADDING = 16;
 
-        if(!bytes) return 0;
+        if(!bytes) return nullptr;
 
-        // We require the extra bytes because we want that the end of the list
-        // data is always safe for writing-in-advance. This is needed when the
-        // 'end of data' marker is written.
-        int const startOffset = cursor - data;
-        size_t const required = startOffset + bytes + PADDING;
+        // We require the extra bytes because we want that the end of the list data is
+        // always safe for writing-in-advance. This is needed when the 'end of data'
+        // marker is written.
+        dint const startOffset = cursor - data;
+        dsize const required   = startOffset + bytes + PADDING;
 
         // First check that the data buffer of the list is large enough.
         if(required > dataSize)
         {
             // Offsets must be preserved.
-            byte *oldData = data;
-
-            int const cursorOffset = (cursor? cursor - oldData : -1);
-            int const lastOffset   = (last? (byte *) last - oldData : -1);
+            duint8 const *oldData   = data;
+            dint const cursorOffset = (cursor? cursor - oldData : -1);
+            dint const lastOffset   = (last? (duint8 *) last - oldData : -1);
 
             // Allocate more memory for the data buffer.
             if(dataSize == 0)
@@ -300,23 +297,22 @@ DENG2_PIMPL(DrawList)
             {
                 dataSize *= 2;
             }
-
-            data = (byte *) Z_Realloc(data, dataSize, PU_APPSTATIC);
+            data = (duint8 *) Z_Realloc(data, dataSize, PU_APPSTATIC);
 
             // Restore main pointers.
             cursor = (cursorOffset >= 0? data + cursorOffset : data);
             last   = (lastOffset >= 0? (Element *) (data + lastOffset) : 0);
 
             // Restore in-list pointers.
-            // When the list is resized, pointers in the primitives need to be
-            // restored so that they point to the new list data.
+            // When the list is resized, pointers in the primitives need to be restored
+            // so that they point to the new list data.
             if(oldData)
             {
                 for(Element *elem = first(); elem && elem <= last; elem = elem->next())
                 {
                     if(elem->data.indices)
                     {
-                        elem->data.indices = (uint *) (data + ((byte *) elem->data.indices - oldData));
+                        elem->data.indices = (duint *) (data + ((duint8 *) elem->data.indices - oldData));
                     }
                 }
             }
@@ -328,57 +324,16 @@ DENG2_PIMPL(DrawList)
         return data + startOffset;
     }
 
-    void allocateIndices(uint numIndices, uint base)
-    {
-        // Note that last may be reallocated during allocateData.
-        last->data.numIndices = numIndices;
-        // Temporary variable to avoid segfault on Ubuntu linux CMB
-        uint * lti = (uint *) allocateData(sizeof(uint) * numIndices);
-        last->data.indices = lti;
-
-        for(uint i = 0; i < numIndices; ++i)
-        {
-            last->data.indices[i] = base + i;
-        }
-    }
-
-    Element *newElement(Store &buffer, gl::Primitive primitive)
-    {
-        // This becomes the new last element.
-        last = (Element *) allocateData(sizeof(Element));
-        last->size = 0;
-
-        last->data.buffer     = &buffer;
-        last->data.type       = primitive;
-        last->data.indices    = 0;
-        last->data.numIndices = 0;
-        last->data.oneLight   = last->data.manyLights = false;
-
-        return last;
-    }
-
-    void endWrite()
-    {
-        // The element has been written, update the size in the header.
-        last->size = cursor - (byte *) last;
-
-        // Write the end marker (will be overwritten by the next write). The
-        // idea is that this zero is interpreted as the size of the following
-        // Element.
-        *(int *) cursor = 0;
-    }
-
-    /// Returns a pointer to the first element in the list; otherwise @c 0.
+    /// Returns a pointer to the first element in the list; otherwise @c nullptr.
     Element *first() const
     {
-        Element *elem = (Element *)data;
-        if(!elem->size) return 0;
+        auto *elem = (Element *)data;
+        if(!elem->size) return nullptr;
         return elem;
     }
 
     /**
      * Configure GL state for drawing in this @a mode.
-     *
      * @return  The conditions to select primitives.
      */
     DrawConditions pushGLState(DrawMode mode)
@@ -391,7 +346,7 @@ DENG2_PIMPL(DrawList)
             // Render all primitives on the list without discrimination.
             return NoColor;
 
-        case DM_ALL: // All surfaces.
+        case DM_ALL:  // All surfaces.
             DENG2_ASSERT(spec.group == UnlitGeom || spec.group == LitGeom);
 
             // Should we do blending?
@@ -402,10 +357,10 @@ DENG2_PIMPL(DrawList)
                 GL_SelectTexUnits(2);
 
                 GL_BindTo(spec.unit(TU_PRIMARY), 0);
-                GL_BindTo(spec.unit(TU_INTER), 1);
+                GL_BindTo(spec.unit(TU_INTER  ), 1);
                 GL_ModulateTexture(2);
 
-                float color[4] = { 0, 0, 0, spec.unit(TU_INTER).opacity };
+                dfloat color[4] = { 0, 0, 0, spec.unit(TU_INTER).opacity };
                 glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
             }
             else if(!spec.unit(TU_PRIMARY).hasTexture())
@@ -459,10 +414,10 @@ DENG2_PIMPL(DrawList)
             DENG2_ASSERT(numTexUnits >= 2);
             GL_SelectTexUnits(2);
             GL_BindTo(spec.unit(TU_PRIMARY), 0);
-            GL_BindTo(spec.unit(TU_INTER), 1);
+            GL_BindTo(spec.unit(TU_INTER  ), 1);
             GL_ModulateTexture(2);
 
-            float color[4] = { 0, 0, 0, spec.unit(TU_INTER).opacity };
+            dfloat color[4] = { 0, 0, 0, spec.unit(TU_INTER).opacity };
             glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
             return SetMatrixTexture0 | SetMatrixTexture1; }
 
@@ -513,10 +468,10 @@ DENG2_PIMPL(DrawList)
                 DENG2_ASSERT(numTexUnits >= 2);
                 GL_SelectTexUnits(2);
                 GL_BindTo(spec.unit(TU_PRIMARY), 0);
-                GL_BindTo(spec.unit(TU_INTER), 1);
+                GL_BindTo(spec.unit(TU_INTER  ), 1);
                 GL_ModulateTexture(3);
 
-                float color[4] = { 0, 0, 0, spec.unit(TU_INTER).opacity };
+                dfloat color[4] = { 0, 0, 0, spec.unit(TU_INTER).opacity };
                 glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
                 // Render all geometry.
                 return SetMatrixTexture0 | SetMatrixTexture1;
@@ -544,7 +499,7 @@ DENG2_PIMPL(DrawList)
             {
                 GL_SelectTexUnits(2);
                 GL_ModulateTexture(9); // Tex+Detail, no color.
-                GL_BindTo(spec.unit(TU_PRIMARY), 0);
+                GL_BindTo(spec.unit(TU_PRIMARY       ), 0);
                 GL_BindTo(spec.unit(TU_PRIMARY_DETAIL), 1);
                 return SetMatrixTexture0 | SetMatrixDTexture1;
             }
@@ -580,7 +535,7 @@ DENG2_PIMPL(DrawList)
             {
                 GL_SelectTexUnits(2);
                 GL_ModulateTexture(8);
-                GL_BindTo(spec.unit(TU_PRIMARY), 0);
+                GL_BindTo(spec.unit(TU_PRIMARY       ), 0);
                 GL_BindTo(spec.unit(TU_PRIMARY_DETAIL), 1);
                 return SetMatrixTexture0 | SetMatrixDTexture1;
             }
@@ -604,15 +559,15 @@ DENG2_PIMPL(DrawList)
             }
 
             if(!spec.unit(TU_PRIMARY_DETAIL).hasTexture() ||
-               !spec.unit(TU_INTER_DETAIL).hasTexture())
+               !spec.unit(TU_INTER_DETAIL  ).hasTexture())
             {
                 break;
             }
 
             GL_BindTo(spec.unit(TU_PRIMARY_DETAIL), 0);
-            GL_BindTo(spec.unit(TU_INTER_DETAIL), 1);
+            GL_BindTo(spec.unit(TU_INTER_DETAIL  ), 1);
 
-            float color[4] = { 0, 0, 0, spec.unit(TU_INTER_DETAIL).opacity };
+            dfloat color[4] = { 0, 0, 0, spec.unit(TU_INTER_DETAIL).opacity };
             glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
             return SetMatrixDTexture0 | SetMatrixDTexture1; }
 
@@ -649,7 +604,7 @@ DENG2_PIMPL(DrawList)
                 GL_SelectTexUnits(2);
                 // The intertex holds the info for the mask texture.
                 GL_BindTo(spec.unit(TU_INTER), 1);
-                float color[4] = { 0, 0, 0, 1 };
+                dfloat color[4] = { 0, 0, 0, 1 };
                 glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
             }
 
@@ -773,108 +728,55 @@ DrawList::DrawList(Spec const &spec) : d(new Instance(this, spec))
 
 bool DrawList::isEmpty() const
 {
-    return d->last == 0;
+    return d->last == nullptr;
 }
 
-DrawList &DrawList::write(gl::Primitive primitive, blendmode_t blendMode,
+DrawList &DrawList::write(gl::Primitive primitive, DrawList::Indices const &indices,
+    blendmode_t blendMode, bool oneLight, bool manyLights,
     Vector2f const &texScale, Vector2f const &texOffset,
-    Vector2f const &detailTexScale, Vector2f const &detailTexOffset, bool isLit, uint vertCount,
-    Vector3f const *posCoords, Vector4f const *colorCoords, Vector2f const *texCoords,
-    Vector2f const *interTexCoords, GLuint modTexture, Vector3f const *modColor,
-    Vector2f const *modTexCoords)
+    Vector2f const &detailTexScale, Vector2f const &detailTexOffset,
+    GLuint modTexture, Vector3f const &modColor)
 {
-    DENG2_ASSERT(vertCount >= 3);
+    // Sanity check usage.
+    DENG2_ASSERT(!(spec().group == LightGeom  && (oneLight || manyLights || modTexture)));
+    DENG2_ASSERT(!(spec().group == LitGeom    && !Rend_IsMTexLights() && (oneLight || modTexture)));
+    DENG2_ASSERT(!(spec().group == ShadowGeom && (oneLight || manyLights || modTexture)));
 
-    // Rationalize write arguments.
-    if(d->spec.group == SkyMaskGeom || d->spec.group == LightGeom || d->spec.group == ShadowGeom)
+    if(indices.isEmpty()) return *this;  // Huh?
+
+    // This becomes the new last element.
+    d->last = (Instance::Element *) d->allocateData(sizeof(Instance::Element));
+    d->last->size = 0;
+
+    // Vertex buffer element indices for the primitive are stored in the list.
+    /// @note That 'last' may be reallocated during allocateData() - use a temporary variable.
+    d->last->data.buffer     = &ClientApp::renderSystem().buffer();
+    d->last->data.type       = primitive;
+    d->last->data.numIndices = indices.count();
+    auto *lti = (duint *) d->allocateData(sizeof(duint) * d->last->data.numIndices);
+    d->last->data.indices = lti;
+    for(duint i = 0; i < d->last->data.numIndices; ++i)
     {
-        isLit      = false;
-        modTexture = 0;
-        modColor   = 0;
+        d->last->data.indices[i] = indices[i];
     }
+    // The element has been written, update the size in the header.
+    d->last->size = d->cursor - (duint8 *) d->last;
 
-    Instance::Element *elem =
-        d->newElement(ClientApp::renderSystem().buffer(), primitive);
+    // Write the end marker (will be overwritten by the next write). The idea is that this
+    // zero is interpreted as the size of the following element.
+    *(duint *) d->cursor = 0;
 
-    // Is the geometry lit?
-    if(modTexture && !isLit)
-    {
-        elem->data.oneLight = true; // Using modulation.
-    }
-    else if(modTexture || isLit)
-    {
-        elem->data.manyLights = true;
-    }
-
-    // Configure the GL state to be applied when this geometry is drawn later.
-    elem->data.blendMode  = blendMode;
-    elem->data.modTexture = modTexture;
-    elem->data.modColor   = modColor? *modColor : Vector3f();
-
-    elem->data.texScale   = texScale;
-    elem->data.texOffset  = texOffset;
-
-    elem->data.dtexScale  = detailTexScale;
-    elem->data.dtexOffset = detailTexOffset;
-
-    // Allocate geometry from the backing store.
-    uint base = elem->data.buffer->allocateVertices(vertCount);
-
-    // Setup the indices.
-    d->allocateIndices(vertCount, base);
-
-    for(uint i = 0; i < vertCount; ++i)
-    {
-        elem->data.buffer->posCoords[base + i] = posCoords[i];
-
-        // Sky masked polys need nothing more.
-        if(d->spec.group == SkyMaskGeom) continue;
-
-        // Primary texture coordinates.
-        if(d->spec.unit(TU_PRIMARY).hasTexture())
-        {
-            DENG2_ASSERT(texCoords != 0);
-            elem->data.buffer->texCoords[Store::TCA_MAIN][base + i] = texCoords[i];
-        }
-
-        // Secondary texture coordinates.
-        if(d->spec.unit(TU_INTER).hasTexture())
-        {
-            DENG2_ASSERT(interTexCoords != 0);
-            elem->data.buffer->texCoords[Store::TCA_BLEND][base + i] = interTexCoords[i];
-        }
-
-        // First light texture coordinates.
-        if((elem->data.oneLight || elem->data.manyLights) && IS_MTEX_LIGHTS)
-        {
-            DENG2_ASSERT(modTexCoords != 0);
-            elem->data.buffer->texCoords[Store::TCA_LIGHT][base + i] = modTexCoords[i];
-        }
-
-        // Color.
-        Vector4ub &color = elem->data.buffer->colorCoords[base + i];
-        if(colorCoords)
-        {
-            Vector4f const &srcColor = colorCoords[i];
-
-            // We should not be relying on clamping at this late stage...
-            DENG2_ASSERT(INRANGE_OF(srcColor.x, 0.f, 1.f));
-            DENG2_ASSERT(INRANGE_OF(srcColor.y, 0.f, 1.f));
-            DENG2_ASSERT(INRANGE_OF(srcColor.z, 0.f, 1.f));
-            DENG2_ASSERT(INRANGE_OF(srcColor.w, 0.f, 1.f));
-
-            color = Vector4ub(dbyte(255 * de::clamp(0.f, srcColor.x, 1.f)),
-                              dbyte(255 * de::clamp(0.f, srcColor.y, 1.f)),
-                              dbyte(255 * de::clamp(0.f, srcColor.z, 1.f)),
-                              dbyte(255 * de::clamp(0.f, srcColor.w, 1.f)));
-        }
-        else
-        {
-            color = Vector4ub(255, 255, 255, 255);
-        }
-    }
-
-    d->endWrite();
+    // Configure the GL state to be applied when this primitive is drawn later.
+    Instance::Element &elem = *d->last;
+    elem.data.blendMode  = blendMode;
+    elem.data.modTexture = modTexture;
+    elem.data.modColor   = modColor;
+    elem.data.texScale   = texScale;
+    elem.data.texOffset  = texOffset;
+    elem.data.dtexScale  = detailTexScale;
+    elem.data.dtexOffset = detailTexOffset;
+    elem.data.oneLight   = oneLight;
+    elem.data.manyLights = manyLights;
 
     return *this;
 }
@@ -966,5 +868,5 @@ void DrawList::clear()
 void DrawList::rewind()
 {
     d->cursor = d->data;
-    d->last = 0;
+    d->last   = nullptr;
 }

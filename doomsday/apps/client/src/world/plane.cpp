@@ -28,7 +28,7 @@
 #include "Surface"
 #include "Sector"
 
-#if __CLIENT__
+#ifdef __CLIENT__
 #  include "MaterialAnimator"
 #  include "render/rend_main.h"
 #endif

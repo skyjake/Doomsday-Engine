@@ -1,7 +1,7 @@
 /** @file drawlist.h  Drawable primitive list.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,11 +21,14 @@
 #ifndef DENG_CLIENT_RENDER_DRAWLIST_H
 #define DENG_CLIENT_RENDER_DRAWLIST_H
 
-#include "gl/gltextureunit.h"
-#include "api_gl.h" // blendmode_e
+#include <array>
+#include <QFlags>
 #include <de/GLBuffer>
 #include <de/Vector>
-#include <QFlags>
+#include "api_gl.h" // blendmode_e
+#include "gl/gltextureunit.h"
+
+struct Store;
 
 /// Semantic geometry group identifiers.
 enum GeomGroup
@@ -74,7 +77,18 @@ enum texunitid_t
     NUM_TEXTURE_UNITS
 };
 
-typedef uint TexUnitMap[MAX_TEX_UNITS];
+struct AttributeSpec
+{
+    enum Semantic
+    {
+        TexCoord0,
+        TexCoord1,
+        ModTexCoord,
+
+        NUM_SEMANTICS
+    };
+};
+typedef std::array<de::dint, MAX_TEX_UNITS> TexUnitMap;
 
 /**
  * A buffered list of drawable GL primitives and/or GL commands.
@@ -101,6 +115,8 @@ public:
         }
     };
 
+    typedef QVector<de::duint> Indices;
+
 public:
     /**
      * Construct a new draw list.
@@ -110,27 +126,25 @@ public:
     DrawList(Spec const &spec);
 
     /**
-     * Write the given geometry primitive to the list.
+     * Write indices for a geometry primitive to the list.
      *
-     * @param primitive       Type identifier for the GL primitive being written.
-     * @param isLit           @todo Retrieve from list specification?
-     * @param vertCount       Number of vertices being written.
-     * @param posCoods        Map space position coordinates for each vertex.
-     * @param colorCoords     Color coordinates for each vertex (if any).
-     * @param texCoords       @em Primary texture coordinates for each vertex (if any).
-     * @param interTexCoords  @em Inter texture coordinates for each vertex (if any).
-     * @param modTexture      GL name of the modulation texture (if any).
-     * @param modColor        Modulation color (if any).
-     * @param modTexCoords    Modulation texture coordinates for each vertex (if any).
+     * @param primitive        Type identifier for the GL primitive being written.
+     * @param indices          Indices for the vertex elements in the backing store.
+     * @param blendMode
+     * @param oneLight
+     * @param manyLights
+     * @param texScale
+     * @param texOffset
+     * @param detailTexScale
+     * @param detailTexOffset
+     * @param modTexture       GL-name of the modulation texture; otherwise @c 0.
+     * @param modColor         Modulation color.
      */
-    DrawList &write(de::gl::Primitive primitive, blendmode_e blendMode,
-        de::Vector2f const &texScale, de::Vector2f const &texOffset,
+    DrawList &write(de::gl::Primitive primitive, Indices const &indices,
+        blendmode_t blendMode, bool oneLight, bool manyLights,
+        de::Vector2f const &texScale,       de::Vector2f const &texOffset,
         de::Vector2f const &detailTexScale, de::Vector2f const &detailTexOffset,
-        bool isLit, uint vertCount,
-        de::Vector3f const *posCoords, de::Vector4f const *colorCoords = 0,
-        de::Vector2f const *texCoords = 0, de::Vector2f const *interTexCoords = 0,
-        GLuint modTexture = 0, de::Vector3f const *modColor = 0,
-        de::Vector2f const *modTexCoords = 0);
+        GLuint modTexture = 0, de::Vector3f const &modColor = de::Vector3f());
 
     void draw(DrawMode mode, TexUnitMap const &texUnitMap) const;
 

@@ -63,7 +63,7 @@ void Rend_RadioInitForMap(Map &map)
 
     /// The algorithm:
     ///
-    /// 1. Use the BSP leaf blockmap to look for all the blocks that are within the line's shadow
+    /// 1. Use the subspace blockmap to look for all the blocks that are within the line's shadow
     ///    bounding box.
     /// 2. Check the ConvexSubspaces whose sector is the same as the line.
     /// 3. If any of the shadow points are in the subspace, or any of the shadow edges cross one
@@ -85,20 +85,20 @@ void Rend_RadioInitForMap(Map &map)
                 LineOwner const &vo0 = line.vertexOwner(i)->next();
                 LineOwner const &vo1 = line.vertexOwner(i ^ 1)->prev();
 
-                AABoxd box = line.aaBox();
+                AABoxd bounds = line.aaBox();
 
                 // Use the extended points, they are wider than inoffsets.
-                Vector2d point = vtx0.origin() + vo0.extendedShadowOffset();
-                V2d_AddToBoxXY(box.arvec2, point.x, point.y);
+                Vector2d const sv0 = vtx0.origin() + vo0.extendedShadowOffset();
+                V2d_AddToBoxXY(bounds.arvec2, sv0.x, sv0.y);
 
-                point = vtx1.origin() + vo1.extendedShadowOffset();
-                V2d_AddToBoxXY(box.arvec2, point.x, point.y);
+                Vector2d const sv1 = vtx1.origin() + vo1.extendedShadowOffset();
+                V2d_AddToBoxXY(bounds.arvec2, sv1.x, sv1.y);
 
-                // Link the shadowing line to all the subspaces whose axis-aligned
-                // bounding box intersects 'bounds'.
+                // Link the shadowing line to all the subspaces whose axis-aligned bounding box
+                // intersects 'bounds'.
                 validCount++;
-                int const localValidCount = validCount;
-                line.map().subspaceBlockmap().forAllInBox(box, [&box, &side, &localValidCount] (void *object)
+                dint const localValidCount = validCount;
+                line.map().subspaceBlockmap().forAllInBox(bounds, [&bounds, &side, &localValidCount] (void *object)
                 {
                     auto &sub = *(ConvexSubspace *)object;
                     if(sub.validCount() != localValidCount)  // not yet processed
@@ -108,10 +108,10 @@ void Rend_RadioInitForMap(Map &map)
                         {
                             // Check the bounds.
                             AABoxd const &polyBox = sub.poly().aaBox();
-                            if(!(polyBox.maxX < box.minX ||
-                                 polyBox.minX > box.maxX ||
-                                 polyBox.minY > box.maxY ||
-                                 polyBox.maxY < box.minY))
+                            if(!(polyBox.maxX < bounds.minX ||
+                                 polyBox.minX > bounds.maxX ||
+                                 polyBox.minY > bounds.maxY ||
+                                 polyBox.maxY < bounds.minY))
                             {
                                 sub.addShadowLine(side);
                             }

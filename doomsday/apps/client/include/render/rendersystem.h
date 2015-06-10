@@ -39,18 +39,10 @@ class SkyDrawable;
  */
 struct Store
 {
-    /// Texture coordinate array indices.
-    enum
-    {
-        TCA_MAIN, // Main texture.
-        TCA_BLEND, // Blendtarget texture.
-        TCA_LIGHT, // Dynlight texture.
-        NUM_TEXCOORD_ARRAYS
-    };
-
-    de::Vector3f *posCoords;
-    de::Vector2f *texCoords[NUM_TEXCOORD_ARRAYS];
-    de::Vector4ub *colorCoords;
+    de::Vector3f *posCoords    = nullptr;
+    de::Vector4ub *colorCoords = nullptr;
+    de::Vector2f *texCoords[2];
+    de::Vector2f *modCoords    = nullptr;
 
     Store();
     ~Store();
@@ -59,10 +51,11 @@ struct Store
 
     void clear();
 
-    uint allocateVertices(uint count);
+    de::duint allocateVertices(de::duint count);
 
 private:
-    uint vertCount, vertMax;
+    de::duint _vertCount = 0;
+    de::duint _vertMax   = 0;
 };
 
 /// @todo make private to RenderSystem

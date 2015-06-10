@@ -85,6 +85,7 @@
 #include "render/rend_fakeradio.h"
 #include "render/rend_halo.h"
 #include "render/rend_particle.h"
+#include "render/rendpoly.h"
 #include "render/skydrawable.h"
 #include "render/viewports.h"
 #include "render/vissprite.h"
@@ -991,6 +992,8 @@ static inline dfloat shineVertical(dfloat dy, dfloat dx)
 static void makeFlatShineGeometry(Geometry &verts, duint numVertices, Vector3f const *posCoords,
     Geometry const &mainVerts, Vector3f const &shineColor, dfloat shineOpacity)
 {
+    DENG2_ASSERT(posCoords);
+
     for(duint i = 0; i < numVertices; ++i)
     {
         Vector3f const eye = Rend_EyeOrigin();
@@ -1017,6 +1020,8 @@ static void makeFlatShineGeometry(Geometry &verts, duint numVertices, Vector3f c
 static void makeWallShineGeometry(Geometry &verts, duint numVertices, Vector3f const *posCoords,
     Geometry const &mainVerts, coord_t sectionWidth, Vector3f const &shineColor, dfloat shineOpactiy)
 {
+    DENG2_ASSERT(posCoords);
+
     Vector3f const &topLeft     = posCoords[1];
     Vector3f const &bottomRight = posCoords[2];
 
@@ -1072,12 +1077,15 @@ static void makeWallShineGeometry(Geometry &verts, duint numVertices, Vector3f c
 }
 
 static void makeFlatShadowGeometry(Geometry &verts, Vector3d const &topLeft, Vector3d const &bottomRight,
-    Vector3f const *rvertices, duint numVertices,
+    duint numVertices, Vector3f const *posCoords,
     ProjectedTextureData const &tp)
 {
+    DENG2_ASSERT(posCoords);
+
+    Vector4f const colorClamped = tp.color.min(Vector4f(1, 1, 1, 1)).max(Vector4f(0, 0, 0, 0));
     for(duint i = 0; i < numVertices; ++i)
     {
-        verts.color[i] = tp.color;
+        verts.color[i] = colorClamped;
     }
 
     dfloat const width  = bottomRight.x - topLeft.x;
@@ -1085,23 +1093,26 @@ static void makeFlatShadowGeometry(Geometry &verts, Vector3d const &topLeft, Vec
 
     for(duint i = 0; i < numVertices; ++i)
     {
-        verts.tex[i].x = ((bottomRight.x - rvertices[i].x) / width * tp.topLeft.x) +
-            ((rvertices[i].x - topLeft.x) / width * tp.bottomRight.x);
+        verts.tex[i].x = ((bottomRight.x - posCoords[i].x) / width * tp.topLeft.x) +
+            ((posCoords[i].x - topLeft.x) / width * tp.bottomRight.x);
 
-        verts.tex[i].y = ((bottomRight.y - rvertices[i].y) / height * tp.topLeft.y) +
-            ((rvertices[i].y - topLeft.y) / height * tp.bottomRight.y);
+        verts.tex[i].y = ((bottomRight.y - posCoords[i].y) / height * tp.topLeft.y) +
+            ((posCoords[i].y - topLeft.y) / height * tp.bottomRight.y);
     }
 
-    std::memcpy(verts.pos, rvertices, sizeof(Vector3f) * numVertices);
+    std::memcpy(verts.pos, posCoords, sizeof(Vector3f) * numVertices);
 }
 
 static void makeWallShadowGeometry(Geometry &verts, Vector3d const &topLeft, Vector3d const &bottomRight,
-    Vector3f const *rvertices, duint numVertices, WallEdge const &leftEdge, WallEdge const &rightEdge,
+    duint numVertices, Vector3f const *posCoords, WallEdge const &leftEdge, WallEdge const &rightEdge,
     ProjectedTextureData const &tp)
 {
+    DENG2_ASSERT(posCoords);
+
+    Vector4f const colorClamped = tp.color.min(Vector4f(1, 1, 1, 1)).max(Vector4f(0, 0, 0, 0));
     for(duint i = 0; i < numVertices; ++i)
     {
-        verts.color[i] = tp.color;
+        verts.color[i] = colorClamped;
     }
 
     verts.tex[1].x = verts.tex[0].x = tp.topLeft.x;
@@ -1115,50 +1126,56 @@ static void makeWallShadowGeometry(Geometry &verts, Vector3d const &topLeft, Vec
         // Need to swap indices around into fans set the position of the
         // division vertices, interpolate texcoords and color.
 
-        Vector3f origposCoords[4]; std::memcpy(origposCoords, rvertices,   sizeof(Vector3f) * 4);
+        Vector3f origPosCoords[4]; std::memcpy(origPosCoords, posCoords,   sizeof(Vector3f) * 4);
         Vector2f origTexCoords[4]; std::memcpy(origTexCoords, verts.tex,   sizeof(Vector2f) * 4);
         Vector4f origColors[4];    std::memcpy(origColors,    verts.color, sizeof(Vector4f) * 4);
 
-        R_DivVerts     (verts.pos,   origposCoords, leftEdge, rightEdge);
+        R_DivVerts     (verts.pos,   origPosCoords, leftEdge, rightEdge);
         R_DivTexCoords (verts.tex,   origTexCoords, leftEdge, rightEdge);
         R_DivVertColors(verts.color, origColors,    leftEdge, rightEdge);
     }
     else
     {
-        std::memcpy(verts.pos, rvertices, sizeof(Vector3f) * numVertices);
+        std::memcpy(verts.pos, posCoords, sizeof(Vector3f) * numVertices);
     }
 }
 
 static void makeFlatLightGeometry(Geometry &verts, Vector3d const &topLeft, Vector3d const &bottomRight,
-    Vector3f const *rvertices, duint numVertices,
+    duint numVertices, Vector3f const *posCoords,
     ProjectedTextureData const &tp)
 {
+    DENG2_ASSERT(posCoords);
+
+    Vector4f const colorClamped = tp.color.min(Vector4f(1, 1, 1, 1)).max(Vector4f(0, 0, 0, 0));
     for(duint i = 0; i < numVertices; ++i)
     {
-        verts.color[i] = tp.color;
+        verts.color[i] = colorClamped;
     }
 
     dfloat const width  = bottomRight.x - topLeft.x;
     dfloat const height = bottomRight.y - topLeft.y;
     for(duint i = 0; i < numVertices; ++i)
     {
-        verts.tex[i].x = ((bottomRight.x - rvertices[i].x) / width * tp.topLeft.x) +
-            ((rvertices[i].x - topLeft.x) / width * tp.bottomRight.x);
+        verts.tex[i].x = ((bottomRight.x - posCoords[i].x) / width * tp.topLeft.x) +
+            ((posCoords[i].x - topLeft.x) / width * tp.bottomRight.x);
 
-        verts.tex[i].y = ((bottomRight.y - rvertices[i].y) / height * tp.topLeft.y) +
-            ((rvertices[i].y - topLeft.y) / height * tp.bottomRight.y);
+        verts.tex[i].y = ((bottomRight.y - posCoords[i].y) / height * tp.topLeft.y) +
+            ((posCoords[i].y - topLeft.y) / height * tp.bottomRight.y);
     }
 
-    std::memcpy(verts.pos, rvertices, sizeof(Vector3f) * numVertices);
+    std::memcpy(verts.pos, posCoords, sizeof(Vector3f) * numVertices);
 }
 
 static void makeWallLightGeometry(Geometry &verts, Vector3d const &topLeft, Vector3d const &bottomRight,
-    Vector3f const *rvertices, duint numVertices, WallEdge const &leftEdge, WallEdge const &rightEdge,
+    duint numVertices, Vector3f const *posCoords, WallEdge const &leftEdge, WallEdge const &rightEdge,
     ProjectedTextureData const &tp)
 {
+    DENG2_ASSERT(posCoords);
+
+    Vector4f const colorClamped = tp.color.min(Vector4f(1, 1, 1, 1)).max(Vector4f(0, 0, 0, 0));
     for(duint i = 0; i < numVertices; ++i)
     {
-        verts.color[i] = tp.color;
+        verts.color[i] = colorClamped;
     }
 
     verts.tex[1].x = verts.tex[0].x = tp.topLeft.x;
@@ -1172,7 +1189,7 @@ static void makeWallLightGeometry(Geometry &verts, Vector3d const &topLeft, Vect
         // Need to swap indices around into fans set the position
         // of the division vertices, interpolate texcoords and color.
 
-        Vector3f origPosCoords[4]; std::memcpy(origPosCoords, rvertices,   sizeof(Vector3f) * 4);
+        Vector3f origPosCoords[4]; std::memcpy(origPosCoords, posCoords,   sizeof(Vector3f) * 4);
         Vector2f origTexCoords[4]; std::memcpy(origTexCoords, verts.tex,   sizeof(Vector2f) * 4);
         Vector4f origColors[4];    std::memcpy(origColors,    verts.color, sizeof(Vector4f) * 4);
 
@@ -1182,7 +1199,7 @@ static void makeWallLightGeometry(Geometry &verts, Vector3d const &topLeft, Vect
     }
     else
     {
-        std::memcpy(verts.pos, rvertices, sizeof(Vector3f) * numVertices);
+        std::memcpy(verts.pos, posCoords, sizeof(Vector3f) * numVertices);
     }
 }
 
@@ -1238,7 +1255,10 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
     // Ensure we've up to date info about the material.
     matAnimator.prepare();
 
+    // Sky-masked polys (flats and walls)
     bool const skyMaskedMaterial        = (p.skyMasked || (matAnimator.material().isSkyMasked()));
+
+    // Masked polys (walls) get a special treatment (=> vissprite).
     bool const drawAsVisSprite          = (!p.forceOpaque && !p.skyMasked && (!matAnimator.isOpaque() || p.alpha < 1 || p.blendMode > 0));
 
     // Map RTU configuration.
@@ -1252,7 +1272,10 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
 
     // Make surface geometry (position, primary texture, inter texture and color coords).
     Geometry verts;
-    duint const numVerts = (p.isWall ? 3 + p.wall.leftEdge->divisionCount() + 3 + p.wall.rightEdge->divisionCount() : numVertices);
+    bool const mustSubdivide = (p.isWall && (p.wall.leftEdge->divisionCount() || p.wall.rightEdge->divisionCount()));
+    duint const numVerts     = (mustSubdivide && !drawAsVisSprite?   3 + p.wall.leftEdge ->divisionCount()
+                                                                   + 3 + p.wall.rightEdge->divisionCount()
+                                                                 : numVertices);
     // Allocate vertices from the pools.
     verts.pos   = R_AllocRendVertices(numVerts);
     verts.color = !skyMaskedMaterial? R_AllocRendColors   (numVerts) : nullptr;
@@ -1277,9 +1300,8 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
     {
         DENG2_ASSERT(p.isWall);
 
-        // Masked polys (walls) get a special treatment (=> vissprite). This is
-        // needed because all masked polys must be sorted (sprites are masked
-        // polys). Otherwise there will be artifacts.
+        // This is needed because all masked polys must be sorted (sprites are masked polys).
+        // Otherwise there will be artifacts.
         Rend_AddMaskedPoly(verts.pos, verts.color, p.wall.sectionWidth, &matAnimator,
                            *p.materialOrigin, p.blendMode, p.lightListIdx, p.glowing);
 
@@ -1353,8 +1375,8 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
 
         duint numProcessed = 0;
         rendSys().forAllSurfaceProjections(p.lightListIdx,
-                                           [&p, &rvertices, &numVertices, &skipFirst, &numProcessed]
-                                           (ProjectedTextureData const &tp)
+                                           [&p, &mustSubdivide, &rvertices, &numVertices
+                                           , &skipFirst, &numProcessed] (ProjectedTextureData const &tp)
         {
             if(!(skipFirst && numProcessed == 0))
             {
@@ -1362,11 +1384,13 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                 DrawListSpec listSpec;
                 listSpec.group = LightGeom;
                 listSpec.texunits[TU_PRIMARY] = GLTextureUnit(tp.texture, gl::ClampToEdge, gl::ClampToEdge);
+                DrawList &lightList = rendSys().drawLists().find(listSpec);
 
                 // Make geometry.
                 Geometry verts;
-                duint const numVerts = p.isWall ? 3 + p.wall.leftEdge->divisionCount() + 3 + p.wall.rightEdge->divisionCount()
-                                                : numVertices;
+                duint const numVerts = mustSubdivide ?   3 + p.wall.leftEdge ->divisionCount()
+                                                       + 3 + p.wall.rightEdge->divisionCount()
+                                                     : numVertices;
                 // Allocate verts from the pools.
                 verts.pos   = R_AllocRendVertices (numVerts);
                 verts.color = R_AllocRendColors   (numVerts);
@@ -1374,43 +1398,67 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                 if(p.isWall)
                 {
                     makeWallLightGeometry(verts, *p.topLeft, *p.bottomRight,
-                                          rvertices, numVertices, *p.wall.leftEdge, *p.wall.rightEdge, tp);
+                                          numVertices, rvertices, *p.wall.leftEdge, *p.wall.rightEdge, tp);
                 }
                 else
                 {
                     makeFlatLightGeometry(verts, *p.topLeft, *p.bottomRight,
-                                          rvertices, numVertices, tp);
+                                          numVertices, rvertices, tp);
                 }
 
                 // Write geometry.
                 // Walls with edge divisions mean two trifans.
-                if(p.isWall && (p.wall.leftEdge->divisionCount() || p.wall.rightEdge->divisionCount()))
+                if(mustSubdivide)
                 {
-                    duint const numLeftVerts  = 3 + p.wall.leftEdge->divisionCount();
+                    DENG2_ASSERT(p.isWall);
+                    duint const numLeftVerts  = 3 + p.wall.leftEdge ->divisionCount();
                     duint const numRightVerts = 3 + p.wall.rightEdge->divisionCount();
 
-                    rendSys().drawLists().find(listSpec)
-                                 .write(gl::TriangleFan, BM_NORMAL,
-                                        Vector2f(1, 1), Vector2f(0, 0),
-                                        Vector2f(1, 1), Vector2f(0, 0), false /*not lit*/,
-                                        numRightVerts,
-                                        verts.pos   + numLeftVerts,
-                                        verts.color + numLeftVerts,
-                                        verts.tex   + numLeftVerts)
-                                 .write(gl::TriangleFan, BM_NORMAL,
-                                        Vector2f(1, 1), Vector2f(0, 0),
-                                        Vector2f(1, 1), Vector2f(0, 0), false /*not lit*/,
-                                        numLeftVerts,
-                                        verts.pos, verts.color, verts.tex);
+                    Store &buffer = rendSys().buffer();
+                    {
+                        duint base = buffer.allocateVertices(numRightVerts);
+                        DrawList::Indices indices;
+                        indices.resize(numRightVerts);
+                        for(duint i = 0; i < numRightVerts; ++i)
+                        {
+                            indices[i] = base + i;
+                            buffer.posCoords   [indices[i]] = verts.pos[numLeftVerts + i];
+                            buffer.colorCoords [indices[i]] = (verts.color[numLeftVerts + i] * 255).toVector4ub();
+                            buffer.texCoords[0][indices[i]] = verts.tex[numLeftVerts + i];
+                        }
+                        lightList.write(gl::TriangleFan, indices, BM_NORMAL, false /*not lit*/, false /*not lit*/,
+                                        Vector2f(1, 1), Vector2f(0, 0), Vector2f(1, 1), Vector2f(0, 0));
+                    }
+                    {
+                        duint base = buffer.allocateVertices(numLeftVerts);
+                        DrawList::Indices indices;
+                        indices.resize(numLeftVerts);
+                        for(duint i = 0; i < numLeftVerts; ++i)
+                        {
+                            indices[i] = base + i;
+                            buffer.posCoords   [indices[i]] = verts.pos[i];
+                            buffer.colorCoords [indices[i]] = (verts.color[i] * 255).toVector4ub();
+                            buffer.texCoords[0][indices[i]] = verts.tex[i];
+                        }
+                        lightList.write(gl::TriangleFan, indices, BM_NORMAL, false /*not lit*/, false /*not lit*/,
+                                        Vector2f(1, 1), Vector2f(0, 0), Vector2f(1, 1), Vector2f(0, 0));
+                    }
                 }
                 else
                 {
-                    rendSys().drawLists().find(listSpec)
-                                 .write(p.isWall ? gl::TriangleStrip : gl::TriangleFan, BM_NORMAL,
-                                        Vector2f(1, 1), Vector2f(0, 0),
-                                        Vector2f(1, 1), Vector2f(0, 0), false /*not lit*/,
-                                        numVertices,
-                                        verts.pos, verts.color, verts.tex);
+                    Store &buffer = rendSys().buffer();
+                    duint base = buffer.allocateVertices(numVertices);
+                    DrawList::Indices indices;
+                    indices.resize(numVertices);
+                    for(duint i = 0; i < numVertices; ++i)
+                    {
+                        indices[i] = base + i;
+                        buffer.posCoords   [indices[i]] = verts.pos[i];
+                        buffer.colorCoords [indices[i]] = (verts.color[i] * 255).toVector4ub();
+                        buffer.texCoords[0][indices[i]] = verts.tex[i];
+                    }
+                    lightList.write(p.isWall ? gl::TriangleStrip : gl::TriangleFan, indices, BM_NORMAL, false /*not lit*/, false /*not lit*/,
+                                    Vector2f(1, 1), Vector2f(0, 0), Vector2f(1, 1), Vector2f(0, 0));
                 }
 
                 // We're done with the geometry.
@@ -1435,13 +1483,14 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
         DrawList &shadowList = rendSys().drawLists().find(listSpec);
 
         rendSys().forAllSurfaceProjections(p.shadowListIdx,
-                                           [&p, &rvertices, &numVertices, &shadowList]
+                                           [&p, &mustSubdivide, &rvertices, &numVertices, &shadowList]
                                            (ProjectedTextureData const &tp)
         {
             // Make geometry.
             Geometry verts;
-            duint const numVerts = p.isWall ? 3 + p.wall.leftEdge->divisionCount() + 3 + p.wall.rightEdge->divisionCount()
-                                            : numVertices;
+            duint const numVerts = mustSubdivide ?   3 + p.wall.leftEdge ->divisionCount()
+                                                   + 3 + p.wall.rightEdge->divisionCount()
+                                                 : numVertices;
             // Allocate verts from the pools.
             verts.pos   = R_AllocRendVertices (numVerts);
             verts.color = R_AllocRendColors   (numVerts);
@@ -1449,41 +1498,67 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
             if(p.isWall)
             {
                 makeWallShadowGeometry(verts, *p.topLeft, *p.bottomRight,
-                                       rvertices, numVertices, *p.wall.leftEdge, *p.wall.rightEdge, tp);
+                                       numVertices, rvertices, *p.wall.leftEdge, *p.wall.rightEdge, tp);
             }
             else
             {
                 makeFlatShadowGeometry(verts, *p.topLeft, *p.bottomRight,
-                                       rvertices, numVertices, tp);
+                                       numVertices, rvertices, tp);
             }
 
             // Write geometry.
             // Walls with edge divisions mean two trifans.
-            if(p.isWall && (p.wall.leftEdge->divisionCount() || p.wall.rightEdge->divisionCount()))
+            if(mustSubdivide)
             {
-                duint const numLeftVerts  = 3 + p.wall.leftEdge->divisionCount();
+                DENG2_ASSERT(p.isWall);
+                duint const numLeftVerts  = 3 + p.wall.leftEdge ->divisionCount();
                 duint const numRightVerts = 3 + p.wall.rightEdge->divisionCount();
 
-                shadowList.write(gl::TriangleFan, BM_NORMAL,
-                                 Vector2f(1, 1), Vector2f(0, 0),
-                                 Vector2f(1, 1), Vector2f(0, 0), false /*not lit*/,
-                                 numRightVerts,
-                                 verts.pos   + numLeftVerts,
-                                 verts.color + numLeftVerts,
-                                 verts.tex   + numLeftVerts)
-                          .write(gl::TriangleFan, BM_NORMAL,
-                                 Vector2f(1, 1), Vector2f(0, 0),
-                                 Vector2f(1, 1), Vector2f(0, 0), false /*not lit*/,
-                                 numLeftVerts,
-                                 verts.pos, verts.color, verts.tex);
+                Store &buffer = rendSys().buffer();
+                {
+                    duint base = buffer.allocateVertices(numRightVerts);
+                    DrawList::Indices indices;
+                    indices.resize(numRightVerts);
+                    for(duint i = 0; i < numRightVerts; ++i)
+                    {
+                        indices[i] = base + i;
+                        buffer.posCoords   [indices[i]] = verts.pos[numLeftVerts + i];
+                        buffer.colorCoords [indices[i]] = (verts.color[numLeftVerts + i] * 255).toVector4ub();
+                        buffer.texCoords[0][indices[i]] = verts.tex[numLeftVerts + i];
+                    }
+                    shadowList.write(gl::TriangleFan, indices, BM_NORMAL, false /*not lit*/, false /*not lit*/,
+                                     Vector2f(1, 1), Vector2f(0, 0), Vector2f(1, 1), Vector2f(0, 0));
+                }
+                {
+                    duint base = buffer.allocateVertices(numLeftVerts);
+                    DrawList::Indices indices;
+                    indices.resize(numLeftVerts);
+                    for(duint i = 0; i < numLeftVerts; ++i)
+                    {
+                        indices[i] = base + i;
+                        buffer.posCoords   [indices[i]] = verts.pos[i];
+                        buffer.colorCoords [indices[i]] = (verts.color[i] * 255).toVector4ub();
+                        buffer.texCoords[0][indices[i]] = verts.tex[i];
+                    }
+                    shadowList.write(gl::TriangleFan, indices, BM_NORMAL, false /*not lit*/, false /*not lit*/,
+                                     Vector2f(1, 1), Vector2f(0, 0), Vector2f(1, 1), Vector2f(0, 0));
+                }
             }
             else
             {
-                shadowList.write(p.isWall ? gl::TriangleStrip : gl::TriangleFan, BM_NORMAL,
-                                 Vector2f(1, 1), Vector2f(0, 0),
-                                 Vector2f(1, 1), Vector2f(0, 0), false /*not lit*/,
-                                 numVerts,
-                                 verts.pos, verts.color, verts.tex);
+                Store &buffer = rendSys().buffer();
+                duint base = buffer.allocateVertices(numVerts);
+                DrawList::Indices indices;
+                indices.resize(numVerts);
+                for(duint i = 0; i < numVerts; ++i)
+                {
+                    indices[i] = base + i;
+                    buffer.posCoords   [indices[i]] = verts.pos[i];
+                    buffer.colorCoords [indices[i]] = (verts.color[i] * 255).toVector4ub();
+                    buffer.texCoords[0][indices[i]] = verts.tex[i];
+                }
+                shadowList.write(p.isWall ? gl::TriangleStrip : gl::TriangleFan, indices, BM_NORMAL, false /*not lit*/, false /*not lit*/,
+                                 Vector2f(1, 1), Vector2f(0, 0), Vector2f(1, 1), Vector2f(0, 0));
             }
 
             // We're done with the geometry.
@@ -1495,81 +1570,70 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
         });
     }
 
-    // Make shine geometry.
-    // Surface shine geometry (primary texture and color coords).
-    // Use the surface geometry for position coords.
-    // Use the surface texture coords with the mask.
-    Geometry shineVerts = Geometry();
-    if(shineRTU)
-    {
-        Vector3f const &shineColor = matAnimator.shineMinColor();  // Shine strength.
-        dfloat const shineOpacity  = shineRTU->opacity;
-
-        // Allocate vertices from the pools.
-        shineVerts.color = R_AllocRendColors(numVerts);
-        shineVerts.tex   = R_AllocRendTexCoords(numVerts);
-
-        if(p.isWall)
-        {
-            makeWallShineGeometry(shineVerts, numVertices, rvertices, verts, p.wall.sectionWidth,
-                                  shineColor, shineOpacity);
-        }
-        else
-        {
-            makeFlatShineGeometry(shineVerts, numVertices, rvertices, verts,
-                                  shineColor, shineOpacity);
-        }
-    }
-
     // Write geometry.
     // Walls with edge divisions mean two trifans.
-    if(p.isWall && (p.wall.leftEdge->divisionCount() || p.wall.rightEdge->divisionCount()))
+    if(mustSubdivide)
     {
-        WallEdge const &leftEdge  = *p.wall.leftEdge;
-        WallEdge const &rightEdge = *p.wall.rightEdge;
+        DENG2_ASSERT(p.isWall);
+        duint const numLeftVerts  = 3 + p.wall.leftEdge ->divisionCount();
+        duint const numRightVerts = 3 + p.wall.rightEdge->divisionCount();
 
         // Need to swap indices around into fans set the position of the division
         // vertices, interpolate texcoords and color.
 
         Vector3f origPos[4]; std::memcpy(origPos, verts.pos, sizeof(origPos));
-        R_DivVerts(verts.pos, origPos, leftEdge, rightEdge);
+        R_DivVerts(verts.pos, origPos, *p.wall.leftEdge, *p.wall.rightEdge);
 
         if(verts.color)
         {
             Vector4f orig[4]; std::memcpy(orig, verts.color, sizeof(orig));
-            R_DivVertColors(verts.color, orig, leftEdge, rightEdge);
+            R_DivVertColors(verts.color, orig, *p.wall.leftEdge, *p.wall.rightEdge);
         }
-
         if(verts.tex)
         {
             Vector2f orig[4]; std::memcpy(orig, verts.tex, sizeof(orig));
-            R_DivTexCoords(verts.tex, orig, leftEdge, rightEdge);
+            R_DivTexCoords(verts.tex, orig, *p.wall.leftEdge, *p.wall.rightEdge);
         }
         if(verts.tex2)
         {
             Vector2f orig[4]; std::memcpy(orig, verts.tex2, sizeof(orig));
-            R_DivTexCoords(verts.tex2, orig, leftEdge, rightEdge);
+            R_DivTexCoords(verts.tex2, orig, *p.wall.leftEdge, *p.wall.rightEdge);
         }
-
         if(modTexCoords)
         {
             Vector2f orig[4]; std::memcpy(orig, modTexCoords, sizeof(orig));
-            R_DivTexCoords(modTexCoords, orig, leftEdge, rightEdge);
+            R_DivTexCoords(modTexCoords, orig, *p.wall.leftEdge, *p.wall.rightEdge);
         }
 
         if(p.skyMasked)
         {
-            rendSys().drawLists().find(DrawListSpec(SkyMaskGeom))
-                          .write(gl::TriangleFan, BM_NORMAL,
-                                 Vector2f(1, 1), Vector2f(0, 0),
-                                 Vector2f(1, 1), Vector2f(0, 0), false /*not lit*/,
-                                 3 + rightEdge.divisionCount(),
-                                 verts.pos + 3 + leftEdge.divisionCount())
-                          .write(gl::TriangleFan, BM_NORMAL,
-                                 Vector2f(1, 1), Vector2f(0, 0),
-                                 Vector2f(1, 1), Vector2f(0, 0), false /*not lit*/,
-                                 3 + leftEdge.divisionCount(),
-                                 verts.pos);
+            DrawList &skyMaskList = rendSys().drawLists().find(DrawListSpec(SkyMaskGeom));
+
+            Store &buffer = rendSys().buffer();
+            {
+                duint base = buffer.allocateVertices(numRightVerts);
+                DrawList::Indices indices;
+                indices.resize(numRightVerts);
+                for(duint i = 0; i < numRightVerts; ++i)
+                {
+                    indices[i] = base + i;
+                    buffer.posCoords[indices[i]] = verts.pos[numLeftVerts + i];
+                }
+                skyMaskList.write(gl::TriangleFan, indices, BM_NORMAL, false /*not lit*/, false /*not lit*/,
+                                  Vector2f(1, 1), Vector2f(0, 0), Vector2f(1, 1), Vector2f(0, 0));
+            }
+            {
+                duint base = buffer.allocateVertices(numLeftVerts);
+                DrawList::Indices indices;
+                indices.resize(numLeftVerts);
+                for(duint i = 0; i < numLeftVerts; ++i)
+                {
+                    indices[i] = base + i;
+                    buffer.posCoords[indices[i]] = verts.pos[i];
+                }
+                skyMaskList.write(gl::TriangleFan, indices, BM_NORMAL, false /*not lit*/, false /*not lit*/,
+                                  Vector2f(1, 1), Vector2f(0, 0), Vector2f(1, 1), Vector2f(0, 0));
+            }
         }
         else
         {
@@ -1616,38 +1680,114 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                     listSpec.texunits[TU_INTER_DETAIL].offset += *p.materialOrigin;
                 }
             }
+            DrawList &drawList = rendSys().drawLists().find(listSpec);
+            // Is the geometry lit?
+            bool oneLight   = false;
+            bool manyLights = false;
+            if(mod.texture && !hasDynlights)
+            {
+                oneLight = true;  // Using modulation.
+            }
+            else if(mod.texture || hasDynlights)
+            {
+                manyLights = true;
+            }
 
-            rendSys().drawLists().find(listSpec)
-                          .write(gl::TriangleFan, BM_NORMAL,
-                                 listSpec.unit(TU_PRIMARY       ).scale,
-                                 listSpec.unit(TU_PRIMARY       ).offset,
-                                 listSpec.unit(TU_PRIMARY_DETAIL).scale,
-                                 listSpec.unit(TU_PRIMARY_DETAIL).offset, hasDynlights,
-                                 3 + rightEdge.divisionCount(),
-                                 verts.pos + 3 + leftEdge.divisionCount(),
-                                 verts.color? verts.color + 3 + leftEdge.divisionCount() : 0,
-                                 verts.tex  ? verts.tex   + 3 + leftEdge.divisionCount() : 0,
-                                 verts.tex2 ? verts.tex2  + 3 + leftEdge.divisionCount() : 0,
-                                 mod.texture, &mod.color, modTexCoords? modTexCoords + 3 + leftEdge.divisionCount() : 0)
-                          .write(gl::TriangleFan, BM_NORMAL,
-                                 listSpec.unit(TU_PRIMARY       ).scale,
-                                 listSpec.unit(TU_PRIMARY       ).offset,
-                                 listSpec.unit(TU_PRIMARY_DETAIL).scale,
-                                 listSpec.unit(TU_PRIMARY_DETAIL).offset, hasDynlights,
-                                 3 + leftEdge.divisionCount(),
-                                 verts.pos, verts.color, verts.tex,
-                                 verts.tex2, mod.texture, &mod.color, modTexCoords);
+            Store &buffer = rendSys().buffer();
+            {
+                duint base = buffer.allocateVertices(numRightVerts);
+                DrawList::Indices indices;
+                indices.resize(numRightVerts);
+                Vector4ub const white(255, 255, 255, 255);
+                for(duint i = 0; i < numRightVerts; ++i)
+                {
+                    indices[i] = base + i;
+                    buffer.posCoords[indices[i]] = verts.pos[numLeftVerts + i];
+                    if(verts.color)
+                    {
+                        buffer.colorCoords[indices[i]] = (verts.color[numLeftVerts + i] * 255).toVector4ub();
+                    }
+                    else
+                    {
+                        buffer.colorCoords[indices[i]] = white;
+                    }
+                    if(verts.tex)
+                    {
+                        buffer.texCoords[0][indices[i]] = verts.tex[numLeftVerts + i];
+                    }
+                    if(verts.tex2)
+                    {
+                        buffer.texCoords[1][indices[i]] = verts.tex2[numLeftVerts + i];
+                    }
+                    if((oneLight || manyLights) && Rend_IsMTexLights())
+                    {
+                        DENG2_ASSERT(modTexCoords);
+                        buffer.modCoords[indices[i]] = modTexCoords[numLeftVerts + i];
+                    }
+                }
+                drawList.write(gl::TriangleFan, indices, BM_NORMAL, oneLight, manyLights,
+                               listSpec.unit(TU_PRIMARY       ).scale,
+                               listSpec.unit(TU_PRIMARY       ).offset,
+                               listSpec.unit(TU_PRIMARY_DETAIL).scale,
+                               listSpec.unit(TU_PRIMARY_DETAIL).offset,
+                               mod.texture, mod.color);
+            }
+            {
+                duint base = buffer.allocateVertices(numLeftVerts);
+                DrawList::Indices indices;
+                indices.resize(numLeftVerts);
+                Vector4ub const white(255, 255, 255, 255);
+                for(duint i = 0; i < numLeftVerts; ++i)
+                {
+                    indices[i] = base + i;
+                    buffer.posCoords[indices[i]] = verts.pos[i];
+                    if(verts.color)
+                    {
+                        buffer.colorCoords[indices[i]] = (verts.color[i] * 255).toVector4ub();
+                    }
+                    else
+                    {
+                        buffer.colorCoords[indices[i]] = white;
+                    }
+                    if(verts.tex)
+                    {
+                        buffer.texCoords[0][indices[i]] = verts.tex[i];
+                    }
+                    if(verts.tex2)
+                    {
+                        buffer.texCoords[1][indices[i]] = verts.tex2[i];
+                    }
+                    if((oneLight || manyLights) && Rend_IsMTexLights())
+                    {
+                        DENG2_ASSERT(modTexCoords);
+                        buffer.modCoords[indices[i]] = modTexCoords[i];
+                    }
+                }
+                drawList.write(gl::TriangleFan, indices, BM_NORMAL, oneLight, manyLights,
+                               listSpec.unit(TU_PRIMARY       ).scale,
+                               listSpec.unit(TU_PRIMARY       ).offset,
+                               listSpec.unit(TU_PRIMARY_DETAIL).scale,
+                               listSpec.unit(TU_PRIMARY_DETAIL).offset,
+                               mod.texture, mod.color);
+            }
         }
     }
     else
     {
         if(p.skyMasked)
         {
+            Store &buffer = rendSys().buffer();
+            duint base = buffer.allocateVertices(numVerts);
+            DrawList::Indices indices;
+            indices.resize(numVerts);
+            for(duint i = 0; i < numVerts; ++i)
+            {
+                indices[i] = base + i;
+                buffer.posCoords[indices[i]] = verts.pos[i];
+            }
             rendSys().drawLists().find(DrawListSpec(SkyMaskGeom))
-                          .write(p.isWall? gl::TriangleStrip : gl::TriangleFan, BM_NORMAL,
-                                 Vector2f(1, 1), Vector2f(0, 0),
-                                 Vector2f(1, 1), Vector2f(0, 0), false /*not lit*/,
-                                 numVertices, verts.pos);
+                          .write(p.isWall? gl::TriangleStrip : gl::TriangleFan, indices, BM_NORMAL, false /*not lit*/, false /*not lit*/,
+                                 Vector2f(1, 1), Vector2f(0, 0), Vector2f(1, 1), Vector2f(0, 0));
         }
         else
         {
@@ -1695,19 +1835,86 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                 }
             }
 
+            // Is the geometry lit?
+            bool oneLight   = false;
+            bool manyLights = false;
+            if(mod.texture && !hasDynlights)
+            {
+                oneLight = true;  // Using modulation.
+            }
+            else if(mod.texture || hasDynlights)
+            {
+                manyLights = true;
+            }
+
+            Store &buffer = rendSys().buffer();
+            duint base = buffer.allocateVertices(numVertices);
+            DrawList::Indices indices;
+            indices.resize(numVertices);
+            Vector4ub const white(255, 255, 255, 255);
+            for(duint i = 0; i < numVertices; ++i)
+            {
+                indices[i] = base + i;
+                buffer.posCoords[indices[i]] = verts.pos[i];
+                if(verts.color)
+                {
+                    buffer.colorCoords[indices[i]] = (verts.color[i] * 255).toVector4ub();
+                }
+                else
+                {
+                    buffer.colorCoords[indices[i]] = white;
+                }
+                if(verts.tex)
+                {
+                    buffer.texCoords[0][indices[i]] = verts.tex[i];
+                }
+                if(verts.tex2)
+                {
+                    buffer.texCoords[1][indices[i]] = verts.tex2[i];
+                }
+                if((oneLight || manyLights) && Rend_IsMTexLights())
+                {
+                    DENG2_ASSERT(modTexCoords);
+                    buffer.modCoords[indices[i]] = modTexCoords[i];
+                }
+            }
             rendSys().drawLists().find(listSpec)
-                          .write(p.isWall? gl::TriangleStrip : gl::TriangleFan, BM_NORMAL,
+                          .write(p.isWall? gl::TriangleStrip : gl::TriangleFan, indices, BM_NORMAL, oneLight, manyLights,
                                  listSpec.unit(TU_PRIMARY       ).scale,
                                  listSpec.unit(TU_PRIMARY       ).offset,
                                  listSpec.unit(TU_PRIMARY_DETAIL).scale,
-                                 listSpec.unit(TU_PRIMARY_DETAIL).offset, hasDynlights,
-                                 numVertices, verts.pos, verts.color, verts.tex, verts.tex2,
-                                 mod.texture, &mod.color, modTexCoords);
+                                 listSpec.unit(TU_PRIMARY_DETAIL).offset,
+                                 mod.texture, mod.color);
         }
     }
 
     if(shineRTU)
     {
+        // Make shine geometry.
+        // Surface shine geometry (primary texture and color coords).
+        // Use the surface geometry for position coords.
+        // Use the surface texture coords with the mask.
+        Geometry shineVerts = Geometry();
+        {
+            Vector3f const &shineColor = matAnimator.shineMinColor();  // Shine strength.
+            dfloat const shineOpacity  = shineRTU->opacity;
+
+            // Allocate vertices from the pools.
+            shineVerts.color = R_AllocRendColors(numVerts);
+            shineVerts.tex   = R_AllocRendTexCoords(numVerts);
+
+            if(p.isWall)
+            {
+                makeWallShineGeometry(shineVerts, numVertices, rvertices, verts, p.wall.sectionWidth,
+                                      shineColor, shineOpacity);
+            }
+            else
+            {
+                makeFlatShineGeometry(shineVerts, numVertices, rvertices, verts,
+                                      shineColor, shineOpacity);
+            }
+        }
+
         // Write shine geometry.
         DrawListSpec listSpec(ShineGeom);
         listSpec.texunits[TU_PRIMARY] = *shineRTU;
@@ -1724,53 +1931,89 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                 listSpec.texunits[TU_INTER].offset *= *p.materialScale;
             }
         }
+        DrawList &shineList = rendSys().drawLists().find(listSpec);
 
         // Walls with edge divisions mean two trifans.
-        if(p.isWall && (p.wall.leftEdge->divisionCount() || p.wall.rightEdge->divisionCount()))
+        if(mustSubdivide)
         {
-            WallEdge const &leftEdge  = *p.wall.leftEdge;
-            WallEdge const &rightEdge = *p.wall.rightEdge;
+            DENG2_ASSERT(p.isWall);
+            duint const numLeftVerts  = 3 + p.wall.leftEdge ->divisionCount();
+            duint const numRightVerts = 3 + p.wall.rightEdge->divisionCount();
 
-            if(shineVerts.tex)
             {
                 Vector2f orig[4]; std::memcpy(orig, shineVerts.tex, sizeof(orig));
-                R_DivTexCoords(shineVerts.tex, orig, leftEdge, rightEdge);
+                R_DivTexCoords(shineVerts.tex, orig, *p.wall.leftEdge, *p.wall.rightEdge);
             }
-            if(shineVerts.color)
             {
                 Vector4f orig[4]; std::memcpy(orig, shineVerts.color, sizeof(orig));
-                R_DivVertColors(shineVerts.color, orig, leftEdge, rightEdge);
+                R_DivVertColors(shineVerts.color, orig, *p.wall.leftEdge, *p.wall.rightEdge);
             }
 
-            rendSys().drawLists().find(listSpec)
-                            .write(gl::TriangleFan, matAnimator.shineBlendMode(),
-                                   listSpec.unit(TU_INTER).scale,
-                                   listSpec.unit(TU_INTER).offset,
-                                   Vector2f(1, 1), Vector2f(0, 0), false /*not lit*/,
-                                   3 + rightEdge.divisionCount(),
-                                   verts.pos + 3 + leftEdge.divisionCount(),
-                                   shineVerts.color + 3 + leftEdge.divisionCount(),
-                                   shineVerts.tex ? shineVerts.tex + 3 + leftEdge.divisionCount() : 0,
-                                   shineMaskRTU? verts.tex + 3 + leftEdge.divisionCount() : 0)
-                            .write(gl::TriangleFan, matAnimator.shineBlendMode(),
-                                   listSpec.unit(TU_INTER).scale,
-                                   listSpec.unit(TU_INTER).offset,
-                                   Vector2f(1, 1), Vector2f(0, 0), false /*not lit*/,
-                                   3 + leftEdge.divisionCount(),
-                                   verts.pos, shineVerts.color, shineVerts.tex,
-                                   shineMaskRTU? verts.tex : 0);
+            Store &buffer = rendSys().buffer();
+            {
+                duint base = buffer.allocateVertices(numRightVerts);
+                DrawList::Indices indices;
+                indices.resize(numRightVerts);
+                for(duint i = 0; i < numRightVerts; ++i)
+                {
+                    indices[i] = base + i;
+                    buffer.posCoords   [indices[i]] = verts.pos[numLeftVerts + i];
+                    buffer.colorCoords [indices[i]] = (shineVerts.color[numLeftVerts + i] * 255).toVector4ub();
+                    buffer.texCoords[0][indices[i]] = shineVerts.tex[numLeftVerts + i];
+                    if(shineMaskRTU)
+                    {
+                        buffer.texCoords[1][indices[i]] = verts.tex[numLeftVerts + i];
+                    }
+                }
+                shineList.write(gl::TriangleFan, indices, matAnimator.shineBlendMode(), false /*not lit*/, false /*not lit*/,
+                                listSpec.unit(TU_INTER).scale, listSpec.unit(TU_INTER).offset,
+                                Vector2f(1, 1), Vector2f(0, 0));
+            }
+            {
+                duint base = buffer.allocateVertices(numLeftVerts);
+                DrawList::Indices indices;
+                indices.resize(numLeftVerts);
+                for(duint i = 0; i < numLeftVerts; ++i)
+                {
+                    indices[i] = base + i;
+                    buffer.posCoords   [indices[i]] = verts.pos[i];
+                    buffer.colorCoords [indices[i]] = (shineVerts.color[i] * 255).toVector4ub();
+                    buffer.texCoords[0][indices[i]] = shineVerts.tex[i];
+                    if(shineMaskRTU)
+                    {
+                        buffer.texCoords[1][indices[i]] = verts.tex[i];
+                    }
+                }
+                shineList.write(gl::TriangleFan, indices, matAnimator.shineBlendMode(), false /*not lit*/, false /*not lit*/,
+                                listSpec.unit(TU_INTER).scale, listSpec.unit(TU_INTER).offset,
+                                Vector2f(1, 1), Vector2f(0, 0));
+            }
         }
         else
         {
-            rendSys().drawLists().find(listSpec)
-                            .write(p.isWall? gl::TriangleStrip : gl::TriangleFan, matAnimator.shineBlendMode(),
-                                   listSpec.unit(TU_INTER).scale,
-                                   listSpec.unit(TU_INTER).offset,
-                                   Vector2f(1, 1), Vector2f(0, 0), false /*not lit*/,
-                                   numVertices,
-                                   verts.pos, shineVerts.color, shineVerts.tex,
-                                   shineMaskRTU? verts.tex : 0);
+            Store &buffer = rendSys().buffer();
+            duint base = buffer.allocateVertices(numVertices);
+            DrawList::Indices indices;
+            indices.resize(numVertices);
+            for(duint i = 0; i < numVertices; ++i)
+            {
+                indices[i] = base + i;
+                buffer.posCoords   [indices[i]] = verts.pos[i];
+                buffer.colorCoords [indices[i]] = (shineVerts.color[i] * 255).toVector4ub();
+                buffer.texCoords[0][indices[i]] = shineVerts.tex[i];
+                if(shineMaskRTU)
+                {
+                    buffer.texCoords[1][indices[i]] = verts.tex[i];
+                }
+            }
+            shineList.write(p.isWall? gl::TriangleStrip : gl::TriangleFan, indices, matAnimator.shineBlendMode(), false /*not lit*/, false /*not lit*/,
+                            listSpec.unit(TU_INTER).scale, listSpec.unit(TU_INTER).offset,
+                            Vector2f(1, 1), Vector2f(0, 0));
         }
+
+        // We're done with the shine geometry.
+        R_FreeRendColors   (shineVerts.color);
+        R_FreeRendTexCoords(shineVerts.tex);
     }
 
     // We're done with the geometry.
@@ -1780,9 +2023,6 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
     R_FreeRendColors   (verts.color);
     R_FreeRendTexCoords(verts.tex);
     R_FreeRendTexCoords(verts.tex2);
-
-    R_FreeRendColors   (shineVerts.color);
-    R_FreeRendTexCoords(shineVerts.tex);
 
     return (p.forceOpaque || skyMaskedMaterial ||
             !(p.alpha < 1 || !matAnimator.isOpaque() || p.blendMode > 0));
@@ -2665,20 +2905,25 @@ static void writeSubspacePlane(Plane &plane)
     R_FreeRendVertices(posCoords);
 }
 
-static void writeSkyMaskStrip(dint vertCount, Vector3f const *posCoords,
-    Vector2f const *texCoords, Material *material)
+static void writeSkyMaskStrip(dint vertCount, Vector3f const *posCoords, Vector2f const *texCoords,
+    Material *material)
 {
     DENG2_ASSERT(posCoords);
 
     if(!devRendSkyMode)
     {
-        ClientApp::renderSystem().drawLists()
-                  .find(DrawListSpec(SkyMaskGeom))
-                      .write(gl::TriangleStrip,
-                             BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
-                             Vector2f(1, 1), Vector2f(0, 0),
-                             0, vertCount,
-                             posCoords);
+        Store &buffer = rendSys().buffer();
+        duint base = buffer.allocateVertices(vertCount);
+        DrawList::Indices indices;
+        indices.resize(vertCount);
+        for(dint i = 0; i < vertCount; ++i)
+        {
+            indices[i] = base + i;
+            buffer.posCoords[indices[i]] = posCoords[i];
+        }
+        rendSys().drawLists().find(DrawListSpec(SkyMaskGeom))
+                      .write(gl::TriangleStrip, indices, BM_NORMAL, false /*not lit*/, false /*not lit*/,
+                             Vector2f(1, 1), Vector2f(0, 0), Vector2f(1, 1), Vector2f(0, 0));
     }
     else
     {
@@ -2701,15 +2946,24 @@ static void writeSkyMaskStrip(dint vertCount, Vector3f const *posCoords,
             listSpec.texunits[TU_INTER_DETAIL]   = matAnimator.texUnit(MaterialAnimator::TU_DETAIL_INTER);
         }
 
-        ClientApp::renderSystem().drawLists()
-                  .find(listSpec)
-                      .write(gl::TriangleStrip, BM_NORMAL,
+        Store &buffer = rendSys().buffer();
+        duint base = buffer.allocateVertices(vertCount);
+        DrawList::Indices indices;
+        indices.resize(vertCount);
+        for(dint i = 0; i < vertCount; ++i)
+        {
+            indices[i] = base + i;
+            buffer.posCoords   [indices[i]] = posCoords[i];
+            buffer.texCoords[0][indices[i]] = texCoords[i];
+            buffer.colorCoords [indices[i]] = Vector4ub(255, 255, 255, 255);
+        }
+
+        rendSys().drawLists().find(listSpec)
+                      .write(gl::TriangleStrip, indices, BM_NORMAL, false /*not lit*/, false /*not lit*/,
                              listSpec.unit(TU_PRIMARY       ).scale,
                              listSpec.unit(TU_PRIMARY       ).offset,
                              listSpec.unit(TU_PRIMARY_DETAIL).scale,
-                             listSpec.unit(TU_PRIMARY_DETAIL).offset,
-                             0, vertCount,
-                             posCoords, 0, texCoords);
+                             listSpec.unit(TU_PRIMARY_DETAIL).offset);
     }
 }
 
@@ -2874,12 +3128,19 @@ static void writeSubspaceSkyMaskCap(dint skyCap)
     duint vertCount = buildSubspacePlaneGeometry((skyCap & SKYCAP_UPPER)? Anticlockwise : Clockwise,
                                                  skyPlaneZ(skyCap), &posCoords);
 
-    ClientApp::renderSystem().drawLists()
-              .find(DrawListSpec(SkyMaskGeom))
-                  .write(gl::TriangleFan,
-                         BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
-                         Vector2f(1, 1), Vector2f(0, 0), 0,
-                         vertCount, posCoords);
+    Store &buffer = rendSys().buffer();
+    duint base = buffer.allocateVertices(vertCount);
+    DrawList::Indices indices;
+    indices.resize(vertCount);
+    for(duint i = 0; i < vertCount; ++i)
+    {
+        indices[i] = base + i;
+        buffer.posCoords[indices[i]] = posCoords[i];
+    }
+
+    rendSys().drawLists().find(DrawListSpec(SkyMaskGeom))
+                 .write(gl::TriangleFan, indices, BM_NORMAL, false /*not lit*/, false /*not lit*/,
+                        Vector2f(1, 1), Vector2f(0, 0), Vector2f(1, 1), Vector2f(0, 0));
 
     R_FreeRendVertices(posCoords);
 }
@@ -3468,7 +3729,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
 {
     static dfloat const black[] = { 0, 0, 0, 0 };
 
-    de::zap(texUnitMap);
+    texUnitMap.fill(-1);
 
     switch(mode)
     {
@@ -3487,8 +3748,8 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
 
     case DM_ALL:
         // The first texture unit is used for the main texture.
-        texUnitMap[0] = Store::TCA_MAIN + 1;
-        texUnitMap[1] = Store::TCA_BLEND + 1;
+        texUnitMap[0] = AttributeSpec::TexCoord0;
+        texUnitMap[1] = AttributeSpec::TexCoord1;
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_TRUE);
         glEnable(GL_DEPTH_TEST);
@@ -3509,14 +3770,14 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         GL_SelectTexUnits(2);
         if(mode == DM_LIGHT_MOD_TEXTURE)
         {
-            texUnitMap[0] = Store::TCA_LIGHT + 1;
-            texUnitMap[1] = Store::TCA_MAIN + 1;
+            texUnitMap[0] = AttributeSpec::ModTexCoord;
+            texUnitMap[1] = AttributeSpec::TexCoord0;
             GL_ModulateTexture(4);  // Light * texture.
         }
         else
         {
-            texUnitMap[0] = Store::TCA_MAIN + 1;
-            texUnitMap[1] = Store::TCA_LIGHT + 1;
+            texUnitMap[0] = AttributeSpec::TexCoord0;
+            texUnitMap[1] = AttributeSpec::ModTexCoord;
             GL_ModulateTexture(5);  // Texture + light.
         }
         glDisable(GL_ALPHA_TEST);
@@ -3536,7 +3797,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
     case DM_FIRST_LIGHT:
         // One light, no texture.
         GL_SelectTexUnits(1);
-        texUnitMap[0] = Store::TCA_LIGHT + 1;
+        texUnitMap[0] = AttributeSpec::ModTexCoord;
         GL_ModulateTexture(6);
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_TRUE);
@@ -3549,7 +3810,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
     case DM_BLENDED_FIRST_LIGHT:
         // One additive light, no texture.
         GL_SelectTexUnits(1);
-        texUnitMap[0] = Store::TCA_LIGHT + 1;
+        texUnitMap[0] = AttributeSpec::ModTexCoord;
         GL_ModulateTexture(7);  // Add light, no color.
         glEnable(GL_ALPHA_TEST);
         glAlphaFunc(GL_GREATER, 1 / 255.0f);
@@ -3574,7 +3835,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
 
     case DM_LIGHTS:
         GL_SelectTexUnits(1);
-        texUnitMap[0] = Store::TCA_MAIN + 1;
+        texUnitMap[0] = AttributeSpec::TexCoord0;
         GL_ModulateTexture(1);
         glEnable(GL_ALPHA_TEST);
         glAlphaFunc(GL_GREATER, 1 / 255.0f);
@@ -3596,8 +3857,8 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
     case DM_MOD_TEXTURE_MANY_LIGHTS:
     case DM_BLENDED_MOD_TEXTURE:
         // The first texture unit is used for the main texture.
-        texUnitMap[0] = Store::TCA_MAIN + 1;
-        texUnitMap[1] = Store::TCA_BLEND + 1;
+        texUnitMap[0] = AttributeSpec::TexCoord0;
+        texUnitMap[1] = AttributeSpec::TexCoord1;
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_FALSE);
         glEnable(GL_DEPTH_TEST);
@@ -3609,8 +3870,8 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         break;
 
     case DM_UNBLENDED_TEXTURE_AND_DETAIL:
-        texUnitMap[0] = Store::TCA_MAIN + 1;
-        texUnitMap[1] = Store::TCA_MAIN + 1;
+        texUnitMap[0] = AttributeSpec::TexCoord0;
+        texUnitMap[1] = AttributeSpec::TexCoord0;
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_TRUE);
         glEnable(GL_DEPTH_TEST);
@@ -3626,8 +3887,8 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         break;
 
     case DM_UNBLENDED_MOD_TEXTURE_AND_DETAIL:
-        texUnitMap[0] = Store::TCA_MAIN + 1;
-        texUnitMap[1] = Store::TCA_MAIN + 1;
+        texUnitMap[0] = AttributeSpec::TexCoord0;
+        texUnitMap[1] = AttributeSpec::TexCoord0;
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_FALSE);
         glEnable(GL_DEPTH_TEST);
@@ -3640,7 +3901,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
 
     case DM_ALL_DETAILS:
         GL_SelectTexUnits(1);
-        texUnitMap[0] = Store::TCA_MAIN + 1;
+        texUnitMap[0] = AttributeSpec::TexCoord0;
         GL_ModulateTexture(0);
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_FALSE);
@@ -3661,8 +3922,8 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
 
     case DM_BLENDED_DETAILS:
         GL_SelectTexUnits(2);
-        texUnitMap[0] = Store::TCA_MAIN + 1;
-        texUnitMap[1] = Store::TCA_BLEND + 1;
+        texUnitMap[0] = AttributeSpec::TexCoord0;
+        texUnitMap[1] = AttributeSpec::TexCoord1;
         GL_ModulateTexture(3);
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_FALSE);
@@ -3684,7 +3945,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
     case DM_SHADOW:
         // A bit like 'negative lights'.
         GL_SelectTexUnits(1);
-        texUnitMap[0] = Store::TCA_MAIN + 1;
+        texUnitMap[0] = AttributeSpec::TexCoord0;
         GL_ModulateTexture(1);
         glEnable(GL_ALPHA_TEST);
         glAlphaFunc(GL_GREATER, 1 / 255.0f);
@@ -3703,7 +3964,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
 
     case DM_SHINY:
         GL_SelectTexUnits(1);
-        texUnitMap[0] = Store::TCA_MAIN + 1;
+        texUnitMap[0] = AttributeSpec::TexCoord0;
         GL_ModulateTexture(1);  // 8 for multitexture
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_FALSE);
@@ -3722,8 +3983,8 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
 
     case DM_MASKED_SHINY:
         GL_SelectTexUnits(2);
-        texUnitMap[0] = Store::TCA_MAIN + 1;
-        texUnitMap[1] = Store::TCA_BLEND + 1;  // the mask
+        texUnitMap[0] = AttributeSpec::TexCoord0;
+        texUnitMap[1] = AttributeSpec::TexCoord1;  // the mask
         GL_ModulateTexture(8);  // same as with details
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_FALSE);

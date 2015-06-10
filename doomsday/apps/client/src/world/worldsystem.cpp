@@ -69,6 +69,7 @@
 #  include "render/viewports.h" // R_ResetViewer
 #  include "render/rend_fakeradio.h"
 #  include "render/rend_main.h"
+#  include "render/rendpoly.h"
 #  include "render/skydrawable.h"
 #endif
 

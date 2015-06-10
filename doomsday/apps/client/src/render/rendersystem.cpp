@@ -42,9 +42,9 @@
 
 using namespace de;
 
-Store::Store() : posCoords(0), colorCoords(0), vertCount(0), vertMax(0)
+Store::Store()
 {
-    zap(texCoords);
+    de::zap(texCoords);
 }
 
 Store::~Store()
@@ -54,45 +54,46 @@ Store::~Store()
 
 void Store::rewind()
 {
-    vertCount = 0;
+    _vertCount = 0;
 }
 
 void Store::clear()
 {
-    vertCount = vertMax = 0;
+    _vertCount = _vertMax = 0;
 
-    M_Free(posCoords); posCoords = 0;
-    M_Free(colorCoords); colorCoords = 0;
-
-    for(dint i = 0; i < NUM_TEXCOORD_ARRAYS; ++i)
+    M_Free(posCoords); posCoords = nullptr;
+    M_Free(colorCoords); colorCoords = nullptr;
+    for(dint i = 0; i < 2; ++i)
     {
-        M_Free(texCoords[i]); texCoords[i] = 0;
+        M_Free(texCoords[i]); texCoords[i] = nullptr;
     }
+    M_Free(modCoords); modCoords = nullptr;
 }
 
 duint Store::allocateVertices(duint count)
 {
-    duint const base = vertCount;
+    duint const base = _vertCount;
 
     // Do we need to allocate more memory?
-    vertCount += count;
-    while(vertCount > vertMax)
+    _vertCount += count;
+    while(_vertCount > _vertMax)
     {
-        if(vertMax == 0)
+        if(_vertMax == 0)
         {
-            vertMax = 16;
+            _vertMax = 16;
         }
         else
         {
-            vertMax *= 2;
+            _vertMax *= 2;
         }
 
-        posCoords = (Vector4f *) M_Realloc(posCoords, sizeof(*posCoords) * vertMax);
-        colorCoords = (Vector4ub *) M_Realloc(colorCoords, sizeof(*colorCoords) * vertMax);
-        for(dint i = 0; i < NUM_TEXCOORD_ARRAYS; ++i)
+        posCoords   = (Vector3f *)  M_Realloc(posCoords,   sizeof(*posCoords) * _vertMax);
+        colorCoords = (Vector4ub *) M_Realloc(colorCoords, sizeof(*colorCoords) * _vertMax);
+        for(dint i = 0; i < 2; ++i)
         {
-            texCoords[i] = (Vector2f *) M_Realloc(texCoords[i], sizeof(Vector2f) * vertMax);
+            texCoords[i] = (Vector2f *) M_Realloc(texCoords[i], sizeof(Vector2f) * _vertMax);
         }
+        modCoords   = (Vector2f *) M_Realloc(modCoords,  sizeof(*modCoords) * _vertMax);
     }
 
     return base;
