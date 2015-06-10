@@ -114,7 +114,7 @@ void C_DECL A_PotteryCheck(mobj_t* actor)
     {
         pmo = players[CONSOLEPLAYER].plr->mo;
         if(P_CheckSight(actor, pmo) &&
-           (abs(M_PointToAngle2(pmo->origin, actor->origin) - pmo->angle) <= ANGLE_45))
+           (abs((int32_t)(M_PointToAngle2(pmo->origin, actor->origin) - pmo->angle)) <= ANGLE_45))
         {
             // Previous state (pottery bit waiting state).
             P_MobjChangeState(actor, actor->state - &STATES[0] - 1);
@@ -131,7 +131,7 @@ void C_DECL A_PotteryCheck(mobj_t* actor)
 
             pmo = players[i].plr->mo;
             if(P_CheckSight(actor, pmo) &&
-               (abs(M_PointToAngle2(pmo->origin, actor->origin) - pmo->angle) <= ANGLE_45))
+               (abs((int32_t)(M_PointToAngle2(pmo->origin, actor->origin) - pmo->angle)) <= ANGLE_45))
             {
                 // Previous state (pottery bit waiting state).
                 P_MobjChangeState(actor, actor->state - &STATES[0] - 1);

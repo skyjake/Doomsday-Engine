@@ -43,8 +43,8 @@ DENG2_PIMPL_NOREF(HudWidget)
 HudWidget::HudWidget(void (*updateGeometry) (HudWidget *wi),
                      void (*drawer) (HudWidget *wi, Point2Raw const *offset),
                      dint playerNum, uiwidgetid_t id)
-    : d(new Instance)
-    , updateGeometry(updateGeometry)
+    : updateGeometry(updateGeometry)
+    , d(new Instance)
     , drawer(drawer)
 {
     setId(id);

@@ -32,6 +32,10 @@ macro (deng_add_plugin target)
     set_target_properties (${target} PROPERTIES FOLDER Plugins)
 
     if (APPLE)
+        # The plugins have some messy code.
+        set_property (TARGET ${target} 
+            APPEND PROPERTY COMPILE_OPTIONS -Wno-missing-braces
+        )
         set_target_properties (${target} PROPERTIES 
             BUNDLE ON
             MACOSX_BUNDLE_INFO_PLIST ${DENG_SOURCE_DIR}/cmake/MacOSXPluginBundleInfo.plist.in

@@ -529,7 +529,7 @@ static void Mod_VertexColors(Vector4ub *out, dint count, Vector3f const *normCoo
                 += vlight.color * de::clamp(-1.f, strength, 1.f);
 
             // Time to stop?
-            return (maxLights && numProcessed == maxLights);
+            return (maxLights && duint(numProcessed) == maxLights);
         });
 
         // Check for ambient and convert to ubyte.
