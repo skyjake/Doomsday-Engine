@@ -130,7 +130,7 @@ def readBranchHeads():
     heads = {}
     if os.path.exists(headsFileName()): 
         for line in file(headsFileName(), 'rt').readlines():
-            name, commit = line.split(':')
+            name, commit = line.strip().split(':')
             heads[name] = commit
     return heads
     
