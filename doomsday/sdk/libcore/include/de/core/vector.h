@@ -312,6 +312,9 @@ public:
     operator Vector3<ddouble> () const {
         return Vector3<ddouble>(Vector2<Type>::x, Vector2<Type>::y, z);
     }
+    Vector3<dbyte> toVector3ub() const {
+        return Vector3<dbyte>(dbyte(Vector2<Type>::x), dbyte(Vector2<Type>::y), dbyte(z));
+    }
     Vector3<dfloat> toVector3f() const {
         return Vector3<dfloat>(dfloat(Vector2<Type>::x), dfloat(Vector2<Type>::y), dfloat(z));
     }

@@ -1103,7 +1103,7 @@ static void makeFlatShadowGeometry(Geometry &verts, Vector3d const &topLeft, Vec
     std::memcpy(verts.pos, posCoords, sizeof(Vector3f) * numVertices);
 }
 
-static void makeWallShadowGeometry(Geometry &verts, Vector3d const &topLeft, Vector3d const &bottomRight,
+static void makeWallShadowGeometry(Geometry &verts, Vector3d const &/*topLeft*/, Vector3d const &/*bottomRight*/,
     duint numVertices, Vector3f const *posCoords, WallEdge const &leftEdge, WallEdge const &rightEdge,
     ProjectedTextureData const &tp)
 {
@@ -1166,7 +1166,7 @@ static void makeFlatLightGeometry(Geometry &verts, Vector3d const &topLeft, Vect
     std::memcpy(verts.pos, posCoords, sizeof(Vector3f) * numVertices);
 }
 
-static void makeWallLightGeometry(Geometry &verts, Vector3d const &topLeft, Vector3d const &bottomRight,
+static void makeWallLightGeometry(Geometry &verts, Vector3d const &/*topLeft*/, Vector3d const &/*bottomRight*/,
     duint numVertices, Vector3f const *posCoords, WallEdge const &leftEdge, WallEdge const &rightEdge,
     ProjectedTextureData const &tp)
 {
@@ -1249,8 +1249,6 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
     rendworldpoly_params_t const &p, MaterialAnimator &matAnimator)
 {
     DENG2_ASSERT(rvertices);
-
-    SectorCluster &cluster = curSubspace->cluster();
 
     // Ensure we've up to date info about the material.
     matAnimator.prepare();

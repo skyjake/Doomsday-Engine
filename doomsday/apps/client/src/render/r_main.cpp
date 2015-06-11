@@ -53,11 +53,6 @@ dfloat weaponFOVShift    = 45;
 dfloat weaponOffsetScale = 0.3183f;  // 1/Pi
 dbyte weaponScaleMode    = SCALEMODE_SMART_STRETCH;
 
-static inline RenderSystem &rendSys()
-{
-    return ClientApp::renderSystem();
-}
-
 static inline ResourceSystem &resSys()
 {
     return ClientApp::resourceSystem();

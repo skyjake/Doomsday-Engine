@@ -250,46 +250,52 @@ static void applyUniformColor(dint count, dgl_color_t *colors, dfloat const *rgb
 /**
  * Calculate vertex lighting.
  */
-static void Spr_VertexColors(dint count, dgl_color_t *out, dgl_vertex_t *normalIt,
-    duint lightListIdx, duint maxLights, dfloat const *ambient)
+static void Spr_VertexColors(dint count, dgl_color_t *out, dgl_vertex_t *normals,
+    duint lightListIdx, dint maxLights, dfloat const *_ambient)
 {
-    DENG2_ASSERT(out && normalIt);
+    DENG2_ASSERT(out && normals && _ambient);
 
+    dbyte const opacity = 255 * _ambient[3];
+    Vector3f const ambient(_ambient);
     Vector3f const saturated(1, 1, 1);
 
-    for(dint i = 0; i < count; ++i, out++, normalIt++)
+    Vector3ub colorClamped;
+    for(dint i = 0; i < count; ++i)
     {
-        Vector3f const normal(normalIt->xyz);
-
-        // Accumulate contributions from all affecting lights.
-        Vector3f accum[2];  // Begin with total darkness [color, extra].
-        dint numProcessed = 0;
-        rendSys().forAllVectorLights(lightListIdx, [&maxLights, &normal
-                                                      , &accum, &numProcessed] (VectorLightData const &vlight)
+        if(maxLights > 0)
         {
-            numProcessed += 1;
+            // Accumulate contributions from all affecting lights.
+            Vector3f const normal(normals[i].xyz);
+            Vector3f accum[2];  // Begin with total darkness [color, extra].
+            dint numProcessed = 0;
+            rendSys().forAllVectorLights(lightListIdx, [&maxLights, &normal
+                                         , &accum, &numProcessed](VectorLightData const &vlight)
+            {
+                numProcessed += 1;
 
-            dfloat strength = vlight.direction.dot(normal)
-                            + vlight.offset;  // Shift toward the light a little.
+                dfloat strength = vlight.direction.dot(normal) + vlight.offset;  // Shift toward the light a little.
+                // Ability to both light and shade.
+                if(strength > 0) strength *= vlight.lightSide;
+                else             strength *= vlight.darkSide;
 
-            // Ability to both light and shade.
-            if(strength > 0) strength *= vlight.lightSide;
-            else             strength *= vlight.darkSide;
+                accum[vlight.affectedByAmbient ? 0 : 1]
+                    += vlight.color * de::clamp(-1.f, strength, 1.f);
 
-            accum[vlight.affectedByAmbient? 0 : 1]
-                += vlight.color * de::clamp(-1.f, strength, 1.f);
+                // Time to stop?
+                return (maxLights && numProcessed == maxLights);
+            });
 
-            // Time to stop?
-            return (maxLights && numProcessed == maxLights);
-        });
+            colorClamped = ((accum[0].max(ambient) + accum[1]).min(saturated) * 255).toVector3ub();
+        }
+        else if(i == 0)
+        {
+            colorClamped = (ambient.min(saturated) * 255).toVector3ub();
+        }
 
-        // Check for ambient and convert to ubyte.
-        Vector3f color = (accum[0].max(ambient) + accum[1]).min(saturated);
-
-        out->rgba[0] = dbyte( 255 * color.x );
-        out->rgba[1] = dbyte( 255 * color.y );
-        out->rgba[2] = dbyte( 255 * color.z );
-        out->rgba[3] = dbyte( 255 * ambient[3] );
+        out[i].rgba[0] = colorClamped.x;
+        out[i].rgba[1] = colorClamped.y;
+        out[i].rgba[2] = colorClamped.z;
+        out[i].rgba[3] = opacity;
     }
 }
 

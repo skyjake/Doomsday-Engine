@@ -1307,7 +1307,7 @@ void Rend_RadioSubspaceEdges(ConvexSubspace const &subspace)
     // Any need to continue?
     if(shadowDark < .0001f) return;
 
-    Vector3f const eyeToSurface = Rend_EyeOrigin().xz() - subspace.poly().center();
+    Vector3f const eyeToSurface = Vector3d(Rend_EyeOrigin().xz(), 0) - subspace.poly().center();
 
     // We need to check all the shadow lines linked to this subspace for
     // the purpose of fakeradio shadowing.

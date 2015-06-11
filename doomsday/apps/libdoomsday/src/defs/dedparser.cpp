@@ -2920,10 +2920,10 @@ DENG2_PIMPL(DEDParser)
                         {
                             xgclassparm_t const& iParm = xgClassLinks[l->lineClass].iparm[i];
 
-                            if(!iParm.name || !iParm.name[0]) continue;
+                            if(!iParm.name[0]) continue;
                             if(!ISLABEL(iParm.name)) continue;
 
-                            if(iParm.flagPrefix && iParm.flagPrefix[0])
+                            if(iParm.flagPrefix[0])
                             {
                                 READFLAGS(l->iparm[i], iParm.flagPrefix)
                             }
@@ -2933,7 +2933,6 @@ DENG2_PIMPL(DEDParser)
                             }
                             break;
                         }
-
                         // Not a known label?
                         if(i == 20) RV_END
 
