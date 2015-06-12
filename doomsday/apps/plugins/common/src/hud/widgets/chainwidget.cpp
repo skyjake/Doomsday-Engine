@@ -99,6 +99,7 @@ void guidata_chain_t::tick(timespan_t /*elapsed*/)
 #undef MAX_DELTA
 }
 
+#ifdef __JHERETIC__
 static void drawShadows(dint x, dint y, dfloat alpha)
 {
     DGL_Begin(DGL_QUADS);
@@ -118,6 +119,7 @@ static void drawShadows(dint x, dint y, dfloat alpha)
         DGL_Vertex2f(x+ST_WIDTH-27, y+ST_HEIGHT);
     DGL_End();
 }
+#endif
 
 void guidata_chain_t::draw(Vector2i const &offset) const
 {

@@ -255,10 +255,12 @@ dd_bool P_SeekerMissile(mobj_t* actor, angle_t thresh, angle_t turnMax)
     return true;
 }
 
+/*
 static __inline dd_bool isInWalkState(player_t* pl)
 {
     return pl->plr->mo->state - STATES - PCLASS_INFO(pl->class_)->runState < 4;
 }
+*/
 
 void P_MobjMoveXY(mobj_t* mo)
 {

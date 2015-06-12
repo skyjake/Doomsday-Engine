@@ -256,6 +256,7 @@ void PlayerLogWidget::draw(Vector2i const &offset)
         // ================================================================================================
         {
             dint firstEntryVisibleToPlayer  = firstEntry;
+            DENG_UNUSED(firstEntryVisibleToPlayer);
             
             dint lastEntry = firstEntry + pvisEntryCount - 1;
             if(lastEntry > LOG_MAX_ENTRIES - 1)

@@ -26,7 +26,9 @@
 #endif
 #include "player.h"
 
+#if __JHERETIC__ || __JHEXEN__
 static patchid_t pKeys[NUM_KEY_TYPES];
+#endif
 
 using namespace de;
 

@@ -74,10 +74,12 @@ void P_FloorBounceMissile(mobj_t *mo)
     P_MobjChangeState(mo, P_GetState(mo->type, SN_DEATH));
 }
 
+/*
 static __inline dd_bool isInWalkState(player_t *pl)
 {
     return pl->plr->mo->state - STATES - PCLASS_INFO(pl->class_)->runState < 4;
 }
+*/
 
 void P_MobjMoveXY(mobj_t *mo)
 {

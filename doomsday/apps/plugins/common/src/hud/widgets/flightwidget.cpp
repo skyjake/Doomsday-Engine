@@ -44,7 +44,9 @@ guidata_flight_t::guidata_flight_t(de::dint player)
                 player)
 {}
 
+#if __JHERETIC__ || __JHEXEN__
 static patchid_t pIcon[16];
+#endif
 
 guidata_flight_t::~guidata_flight_t()
 {}

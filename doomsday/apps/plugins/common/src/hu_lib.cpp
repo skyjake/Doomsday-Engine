@@ -121,6 +121,7 @@ void GUI_UpdateWidgetGeometry(HudWidget *wi)
         Rect_SetY(&wi->geometry(), Rect_Y(&wi->geometry()) - Rect_Height(&wi->geometry()) / 2);
 }
 
+#if defined(UI_DEBUG)
 static void drawWidgetGeometry(HudWidget *wi)
 {
     DENG2_ASSERT(wi);
@@ -147,6 +148,7 @@ static void drawWidgetAvailableSpace(HudWidget *wi)
     DGL_Color4f(0, .4f, 0, .1f);
     DGL_DrawRectf2(Rect_X(&wi->geometry()), Rect_Y(&wi->geometry()), wi->maximumSize().width, wi->maximumSize().height);
 }
+#endif
 
 static void drawWidget2(HudWidget *wi, Point2Raw const *offset = nullptr)
 {

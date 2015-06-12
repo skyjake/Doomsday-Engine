@@ -44,8 +44,8 @@ HudWidget::HudWidget(void (*updateGeometry) (HudWidget *wi),
                      void (*drawer) (HudWidget *wi, Point2Raw const *offset),
                      dint playerNum, uiwidgetid_t id)
     : updateGeometry(updateGeometry)
-    , d(new Instance)
     , drawer(drawer)
+    , d(new Instance)
 {
     setId(id);
     setPlayer(playerNum);
