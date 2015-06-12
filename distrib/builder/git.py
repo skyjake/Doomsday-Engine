@@ -17,11 +17,12 @@ def git_checkout(ident):
 
 
 def git_pull():
-    """Updates the source with a git pull."""
+    """Updates the source with a git pull and submodule update."""
     print 'Updating source from branch %s...' % builder.config.BRANCH
     os.chdir(builder.config.DISTRIB_DIR)
     run_git("git checkout " + builder.config.BRANCH)
-    run_git("git pull")
+    run_git("git pull --recurse-submodules")
+    run_git("git submodule update")
     
     
 def git_tag(tag):
