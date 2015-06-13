@@ -238,7 +238,8 @@ void D_PreInit()
     }
     cfg.common.hudScale = .6f;
 
-    memcpy(cfg.common.hudColor, defFontRGB2, sizeof(cfg.common.hudColor));
+    memcpy(cfg.common.hudColor, defFontRGB2, MIN_OF(sizeof(defFontRGB2),
+                                                    sizeof(cfg.common.hudColor)));
     cfg.common.hudColor[CA] = 1;
 
     cfg.common.hudFog = 1;
