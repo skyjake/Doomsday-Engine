@@ -108,10 +108,6 @@ if (APPLE)
 		libassimp SDL2 SDL2_mixer
     )
     
-    set_target_properties (client PROPERTIES
-        INSTALL_RPATH "@executable_path/../Frameworks"
-    )
-    
     # Plugins are bundled inside the client app. We'll run macdeployqt on the 
     # installed app before the plugins are there so it won't do unnecessary 
     # work on them -- plugins are already self-contained.
