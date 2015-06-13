@@ -17,6 +17,9 @@ set (CPACK_RPM_PACKAGE_GROUP Amusements/Games)
 set (CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION /usr/share/man /usr/share/man/man6)
 set (CPACK_RPM_PACKAGE_REQUIRES "qt5-qtx11extras >= 5.2")
 
+set (CPACK_WIX_LICENSE_RTF ${DENG_SOURCE_DIR}/../distrib/win32/license.rtf)
+set (CPACK_WIX_PRODUCT_ICON ${DENG_SOURCE_DIR}/apps/client/res/windows/doomsday.ico)
+
 if (DENG_BUILD)
     # Whenever the build number is specified, include it in the package version.
     # This ensures newer builds of the same version will have a greater number.
@@ -44,8 +47,9 @@ elseif (UNIX)
     # Set CPACK_GENERATOR manually.	    
     set (CPACK_PROJECT_CONFIG_FILE ${CMAKE_CURRENT_LIST_DIR}/PackagingUnix.cmake)
 else ()
+	set (CPACK_PACKAGE_NAME "Doomsday ${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
     set (CPACK_GENERATOR WIX)
-    set (CPACK_PROJECT_CONFIG_FILE ${CMAKE_CURRENT_LIST_DIR}/WIX.cmake)
+	set (CPACK_PROJECT_CONFIG_FILE ${CMAKE_CURRENT_LIST_DIR}/WIX.cmake)
 endif ()
 
 # Source packaging.
