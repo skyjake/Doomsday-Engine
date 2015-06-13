@@ -26,6 +26,8 @@ add_definitions (
     -DDENG_BASE_DIR="${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_DATA_DIR}"
 )
 
+append_unique (CMAKE_CXX_FLAGS "-Wno-inconsistent-missing-override") # too many warnings from Qt
+
 set (DENG_FIXED_ASM_DEFAULT OFF)
 
 macro (link_framework target linkType fw)
