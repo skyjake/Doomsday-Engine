@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_RENDER_DRAWLIST_H
-#define DENG_CLIENT_RENDER_DRAWLIST_H
+#ifndef CLIENT_RENDER_DRAWLIST_H
+#define CLIENT_RENDER_DRAWLIST_H
 
 #include <array>
 #include <QFlags>
@@ -91,7 +91,14 @@ struct AttributeSpec
 typedef std::array<de::dint, MAX_TEX_UNITS> TexUnitMap;
 
 /**
- * A buffered list of drawable GL primitives and/or GL commands.
+ * A list of drawable GL geometry primitives (buffered) and optional GL attribute/state commands.
+ *
+ * Each list is expected to contain a batch (set) of one or more geometry primitives which have been
+ * pre-prepared for uploading to GL from their backing store (buffer). Primitives should be batched
+ * together in order to minimize the number of GL state changes when drawing geometry.
+ *
+ * Presently @ref DrawLists (class) is responsible for managing the lists and assigning list(s) for
+ * a given primitive (according to the current logic for geometry batching).
  */
 class DrawList
 {
@@ -128,12 +135,15 @@ public:
     /**
      * Write indices for a (buffered) geometry primitive to the list.
      *
+     * Primitive geometry:
      * @param buffer           Geometry buffer containing the primitive to write. It is the caller's
      *                         responsibility to ensure this data remains accessible and valid while
      *                         this DrawList is used (i.e., until a @ref clear(), rewind() or the
      *                         list itself is destroyed).
      * @param primitive        Type identifier for the GL primitive being written.
      * @param indices          Indices for the vertex elements in @a buffer.
+     *
+     * Primitive-specific GL attribute/state to apply when drawing:
      * @param blendMode
      * @param oneLight
      * @param manyLights
@@ -192,4 +202,4 @@ private:
 
 typedef DrawList::Spec DrawListSpec;
 
-#endif // DENG_CLIENT_RENDER_DRAWLIST_H
+#endif  // CLIENT_RENDER_DRAWLIST_H
