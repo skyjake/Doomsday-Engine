@@ -1981,7 +1981,7 @@ int Def_Get(int type, char const *id, void *out)
         return defs.getSoundNumForName(id);
 
     case DD_DEF_SOUND_LUMPNAME: {
-        int i = *((long *) id);
+        int32_t i = *((int32_t *) id);
         if(i < 0 || i >= runtimeDefs.sounds.size())
             return false;
         qstrcpy((char *)out, runtimeDefs.sounds[i].lumpName);
@@ -2002,7 +2002,7 @@ int Def_Get(int type, char const *id, void *out)
         return idx; }
 
     case DD_DEF_VALUE_BY_INDEX: {
-        int idx = *((long *) id);
+        int32_t idx = *((int32_t *) id);
         if(idx >= 0 && idx < defs.values.size())
         {
             if(out) *(char **) out = defs.values[idx].text;

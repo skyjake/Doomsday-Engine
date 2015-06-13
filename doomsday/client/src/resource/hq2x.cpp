@@ -152,7 +152,7 @@
 #define PIXEL11_90       Interp9(pOut+BpL+4, w[5], w[6], w[8]);
 #define PIXEL11_100     Interp10(pOut+BpL+4, w[5], w[6], w[8]);
 
-static uint32_t lutBGR888toYUV888[32*64*32-1];
+static uint32_t lutBGR888toYUV888[32*64*32];
 static uint32_t YUV1, YUV2;
 
 void LerpColor(uint8_t* pc, uint32_t c1, uint32_t c2, uint32_t c3, uint32_t f1,
