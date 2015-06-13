@@ -22,7 +22,9 @@ def git_pull():
     os.chdir(builder.config.DISTRIB_DIR)
     run_git("git checkout " + builder.config.BRANCH)
     run_git("git pull --recurse-submodules")
+    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '..')) # Appease Git 1.7.
     run_git("git submodule update")
+    os.chdir(builder.config.DISTRIB_DIR)
     
     
 def git_tag(tag):
