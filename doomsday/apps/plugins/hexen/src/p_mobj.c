@@ -1713,6 +1713,9 @@ mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest)
     angle_t angle;
     float aim;
 
+    // Destination is required for the missile; if missing, can't spawn.
+    if(!dest) return NULL;
+    
     switch(type)
     {
     case MT_MNTRFX1: // Minotaur swing attack missile
