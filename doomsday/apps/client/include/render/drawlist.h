@@ -126,10 +126,14 @@ public:
     DrawList(Spec const &spec);
 
     /**
-     * Write indices for a geometry primitive to the list.
+     * Write indices for a (buffered) geometry primitive to the list.
      *
+     * @param buffer           Geometry buffer containing the primitive to write. It is the caller's
+     *                         responsibility to ensure this data remains accessible and valid while
+     *                         this DrawList is used (i.e., until a @ref clear(), rewind() or the
+     *                         list itself is destroyed).
      * @param primitive        Type identifier for the GL primitive being written.
-     * @param indices          Indices for the vertex elements in the backing store.
+     * @param indices          Indices for the vertex elements in @a buffer.
      * @param blendMode
      * @param oneLight
      * @param manyLights
@@ -140,11 +144,16 @@ public:
      * @param modTexture       GL-name of the modulation texture; otherwise @c 0.
      * @param modColor         Modulation color.
      */
-    DrawList &write(de::gl::Primitive primitive, Indices const &indices,
-        blendmode_t blendMode, bool oneLight, bool manyLights,
-        de::Vector2f const &texScale,       de::Vector2f const &texOffset,
-        de::Vector2f const &detailTexScale, de::Vector2f const &detailTexOffset,
-        GLuint modTexture = 0, de::Vector3f const &modColor = de::Vector3f());
+    DrawList &write(Store const &buffer, de::gl::Primitive primitive, Indices const &indices,
+        blendmode_t blendMode               = BM_NORMAL,
+        bool oneLight                       = false,
+        bool manyLights                     = false,
+        de::Vector2f const &texScale        = de::Vector2f(1, 1),
+        de::Vector2f const &texOffset       = de::Vector2f(0, 0),
+        de::Vector2f const &detailTexScale  = de::Vector2f(1, 1),
+        de::Vector2f const &detailTexOffset = de::Vector2f(0, 0),
+        GLuint modTexture                   = 0,
+        de::Vector3f const &modColor        = de::Vector3f());
 
     void draw(DrawMode mode, TexUnitMap const &texUnitMap) const;
 
@@ -154,23 +163,21 @@ public:
     bool isEmpty() const;
 
     /**
-     * Clear the list of all buffered GL commands, returning it to the default,
-     * empty state.
+     * Clear the list of all buffered GL commands, returning it to the default, empty state.
      */
     void clear();
 
     /**
-     * Return the read/write cursor to the beginning of the list, retaining all
-     * allocated storage for buffered GL commands so that it can be reused.
+     * Return the read/write cursor to the beginning of the list, retaining all allocated storage for
+     * buffered GL commands so that it can be reused.
      *
-     * To be called at the beginning of a new render frame before any geometry
-     * is written to the list.
+     * To be called at the beginning of a new render frame before any geometry is written to the list.
      */
     void rewind();
 
     /**
-     * Provides mutable access to the list's specification. Note that any changes
-     * to this configuration will affect @em all geometry in the list.
+     * Provides mutable access to the list's specification. Note that any changes to this configuration
+     * will affect @em all geometry in the list.
      */
     Spec &spec();
 

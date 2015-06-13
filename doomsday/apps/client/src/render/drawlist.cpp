@@ -78,7 +78,7 @@ DENG2_PIMPL(DrawList)
         }
 
         struct Data {
-            Store *buffer;
+            Store const *buffer;
             gl::Primitive type;
 
             // Element indices into the global backing store for the geometry.
@@ -104,6 +104,8 @@ DENG2_PIMPL(DrawList)
              */
             void draw(DrawConditions const &conditions, TexUnitMap const &texUnitMap)
             {
+                DENG2_ASSERT(buffer);
+
                 if(conditions & SetLightEnv)
                 {
                     // Use the correct texture and color for the light.
@@ -731,7 +733,7 @@ bool DrawList::isEmpty() const
     return d->last == nullptr;
 }
 
-DrawList &DrawList::write(gl::Primitive primitive, DrawList::Indices const &indices,
+DrawList &DrawList::write(Store const &buffer, gl::Primitive primitive, DrawList::Indices const &indices,
     blendmode_t blendMode, bool oneLight, bool manyLights,
     Vector2f const &texScale, Vector2f const &texOffset,
     Vector2f const &detailTexScale, Vector2f const &detailTexOffset,
@@ -750,7 +752,7 @@ DrawList &DrawList::write(gl::Primitive primitive, DrawList::Indices const &indi
 
     // Vertex buffer element indices for the primitive are stored in the list.
     /// @note That 'last' may be reallocated during allocateData() - use a temporary variable.
-    d->last->data.buffer     = &ClientApp::renderSystem().buffer();
+    d->last->data.buffer     = &buffer;
     d->last->data.type       = primitive;
     d->last->data.numIndices = indices.count();
     auto *lti = (duint *) d->allocateData(sizeof(duint) * d->last->data.numIndices);

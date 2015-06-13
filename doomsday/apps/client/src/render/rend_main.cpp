@@ -1424,8 +1424,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                             buffer.colorCoords [indices[i]] = (verts.color[numLeftVerts + i] * 255).toVector4ub();
                             buffer.texCoords[0][indices[i]] = verts.tex[numLeftVerts + i];
                         }
-                        lightList.write(gl::TriangleFan, indices, BM_NORMAL, false /*not lit*/, false /*not lit*/,
-                                        Vector2f(1, 1), Vector2f(0, 0), Vector2f(1, 1), Vector2f(0, 0));
+                        lightList.write(buffer, gl::TriangleFan, indices);
                     }
                     {
                         duint base = buffer.allocateVertices(numLeftVerts);
@@ -1438,8 +1437,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                             buffer.colorCoords [indices[i]] = (verts.color[i] * 255).toVector4ub();
                             buffer.texCoords[0][indices[i]] = verts.tex[i];
                         }
-                        lightList.write(gl::TriangleFan, indices, BM_NORMAL, false /*not lit*/, false /*not lit*/,
-                                        Vector2f(1, 1), Vector2f(0, 0), Vector2f(1, 1), Vector2f(0, 0));
+                        lightList.write(buffer, gl::TriangleFan, indices);
                     }
                 }
                 else
@@ -1455,8 +1453,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                         buffer.colorCoords [indices[i]] = (verts.color[i] * 255).toVector4ub();
                         buffer.texCoords[0][indices[i]] = verts.tex[i];
                     }
-                    lightList.write(p.isWall ? gl::TriangleStrip : gl::TriangleFan, indices, BM_NORMAL, false /*not lit*/, false /*not lit*/,
-                                    Vector2f(1, 1), Vector2f(0, 0), Vector2f(1, 1), Vector2f(0, 0));
+                    lightList.write(buffer, p.isWall ? gl::TriangleStrip : gl::TriangleFan, indices);
                 }
 
                 // We're done with the geometry.
@@ -1524,8 +1521,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                         buffer.colorCoords [indices[i]] = (verts.color[numLeftVerts + i] * 255).toVector4ub();
                         buffer.texCoords[0][indices[i]] = verts.tex[numLeftVerts + i];
                     }
-                    shadowList.write(gl::TriangleFan, indices, BM_NORMAL, false /*not lit*/, false /*not lit*/,
-                                     Vector2f(1, 1), Vector2f(0, 0), Vector2f(1, 1), Vector2f(0, 0));
+                    shadowList.write(buffer, gl::TriangleFan, indices);
                 }
                 {
                     duint base = buffer.allocateVertices(numLeftVerts);
@@ -1538,8 +1534,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                         buffer.colorCoords [indices[i]] = (verts.color[i] * 255).toVector4ub();
                         buffer.texCoords[0][indices[i]] = verts.tex[i];
                     }
-                    shadowList.write(gl::TriangleFan, indices, BM_NORMAL, false /*not lit*/, false /*not lit*/,
-                                     Vector2f(1, 1), Vector2f(0, 0), Vector2f(1, 1), Vector2f(0, 0));
+                    shadowList.write(buffer, gl::TriangleFan, indices);
                 }
             }
             else
@@ -1555,8 +1550,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                     buffer.colorCoords [indices[i]] = (verts.color[i] * 255).toVector4ub();
                     buffer.texCoords[0][indices[i]] = verts.tex[i];
                 }
-                shadowList.write(p.isWall ? gl::TriangleStrip : gl::TriangleFan, indices, BM_NORMAL, false /*not lit*/, false /*not lit*/,
-                                 Vector2f(1, 1), Vector2f(0, 0), Vector2f(1, 1), Vector2f(0, 0));
+                shadowList.write(buffer, p.isWall ? gl::TriangleStrip : gl::TriangleFan, indices);
             }
 
             // We're done with the geometry.
@@ -1617,8 +1611,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                     indices[i] = base + i;
                     buffer.posCoords[indices[i]] = verts.pos[numLeftVerts + i];
                 }
-                skyMaskList.write(gl::TriangleFan, indices, BM_NORMAL, false /*not lit*/, false /*not lit*/,
-                                  Vector2f(1, 1), Vector2f(0, 0), Vector2f(1, 1), Vector2f(0, 0));
+                skyMaskList.write(buffer, gl::TriangleFan, indices);
             }
             {
                 duint base = buffer.allocateVertices(numLeftVerts);
@@ -1629,8 +1622,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                     indices[i] = base + i;
                     buffer.posCoords[indices[i]] = verts.pos[i];
                 }
-                skyMaskList.write(gl::TriangleFan, indices, BM_NORMAL, false /*not lit*/, false /*not lit*/,
-                                  Vector2f(1, 1), Vector2f(0, 0), Vector2f(1, 1), Vector2f(0, 0));
+                skyMaskList.write(buffer, gl::TriangleFan, indices);
             }
         }
         else
@@ -1723,7 +1715,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                         buffer.modCoords[indices[i]] = modTexCoords[numLeftVerts + i];
                     }
                 }
-                drawList.write(gl::TriangleFan, indices, BM_NORMAL, oneLight, manyLights,
+                drawList.write(buffer, gl::TriangleFan, indices, BM_NORMAL, oneLight, manyLights,
                                listSpec.unit(TU_PRIMARY       ).scale,
                                listSpec.unit(TU_PRIMARY       ).offset,
                                listSpec.unit(TU_PRIMARY_DETAIL).scale,
@@ -1761,7 +1753,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                         buffer.modCoords[indices[i]] = modTexCoords[i];
                     }
                 }
-                drawList.write(gl::TriangleFan, indices, BM_NORMAL, oneLight, manyLights,
+                drawList.write(buffer, gl::TriangleFan, indices, BM_NORMAL, oneLight, manyLights,
                                listSpec.unit(TU_PRIMARY       ).scale,
                                listSpec.unit(TU_PRIMARY       ).offset,
                                listSpec.unit(TU_PRIMARY_DETAIL).scale,
@@ -1784,8 +1776,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                 buffer.posCoords[indices[i]] = verts.pos[i];
             }
             rendSys().drawLists().find(DrawListSpec(SkyMaskGeom))
-                          .write(p.isWall? gl::TriangleStrip : gl::TriangleFan, indices, BM_NORMAL, false /*not lit*/, false /*not lit*/,
-                                 Vector2f(1, 1), Vector2f(0, 0), Vector2f(1, 1), Vector2f(0, 0));
+                          .write(buffer, p.isWall? gl::TriangleStrip : gl::TriangleFan, indices);
         }
         else
         {
@@ -1877,7 +1868,8 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                 }
             }
             rendSys().drawLists().find(listSpec)
-                          .write(p.isWall? gl::TriangleStrip : gl::TriangleFan, indices, BM_NORMAL, oneLight, manyLights,
+                          .write(buffer, p.isWall? gl::TriangleStrip : gl::TriangleFan, indices,
+                                 BM_NORMAL, oneLight, manyLights,
                                  listSpec.unit(TU_PRIMARY       ).scale,
                                  listSpec.unit(TU_PRIMARY       ).offset,
                                  listSpec.unit(TU_PRIMARY_DETAIL).scale,
@@ -1963,7 +1955,8 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                         buffer.texCoords[1][indices[i]] = verts.tex[numLeftVerts + i];
                     }
                 }
-                shineList.write(gl::TriangleFan, indices, matAnimator.shineBlendMode(), false /*not lit*/, false /*not lit*/,
+                shineList.write(buffer, gl::TriangleFan, indices,
+                                matAnimator.shineBlendMode(), false /*not lit*/, false /*not lit*/,
                                 listSpec.unit(TU_INTER).scale, listSpec.unit(TU_INTER).offset,
                                 Vector2f(1, 1), Vector2f(0, 0));
             }
@@ -1982,7 +1975,8 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                         buffer.texCoords[1][indices[i]] = verts.tex[i];
                     }
                 }
-                shineList.write(gl::TriangleFan, indices, matAnimator.shineBlendMode(), false /*not lit*/, false /*not lit*/,
+                shineList.write(buffer, gl::TriangleFan, indices,
+                                matAnimator.shineBlendMode(), false /*not lit*/, false /*not lit*/,
                                 listSpec.unit(TU_INTER).scale, listSpec.unit(TU_INTER).offset,
                                 Vector2f(1, 1), Vector2f(0, 0));
             }
@@ -2004,7 +1998,8 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
                     buffer.texCoords[1][indices[i]] = verts.tex[i];
                 }
             }
-            shineList.write(p.isWall? gl::TriangleStrip : gl::TriangleFan, indices, matAnimator.shineBlendMode(), false /*not lit*/, false /*not lit*/,
+            shineList.write(buffer, p.isWall? gl::TriangleStrip : gl::TriangleFan, indices,
+                            matAnimator.shineBlendMode(), false /*not lit*/, false /*not lit*/,
                             listSpec.unit(TU_INTER).scale, listSpec.unit(TU_INTER).offset,
                             Vector2f(1, 1), Vector2f(0, 0));
         }
@@ -2920,8 +2915,7 @@ static void writeSkyMaskStrip(dint vertCount, Vector3f const *posCoords, Vector2
             buffer.posCoords[indices[i]] = posCoords[i];
         }
         rendSys().drawLists().find(DrawListSpec(SkyMaskGeom))
-                      .write(gl::TriangleStrip, indices, BM_NORMAL, false /*not lit*/, false /*not lit*/,
-                             Vector2f(1, 1), Vector2f(0, 0), Vector2f(1, 1), Vector2f(0, 0));
+                      .write(buffer, gl::TriangleStrip, indices);
     }
     else
     {
@@ -2957,7 +2951,8 @@ static void writeSkyMaskStrip(dint vertCount, Vector3f const *posCoords, Vector2
         }
 
         rendSys().drawLists().find(listSpec)
-                      .write(gl::TriangleStrip, indices, BM_NORMAL, false /*not lit*/, false /*not lit*/,
+                      .write(buffer, gl::TriangleStrip, indices,
+                             BM_NORMAL, false /*not lit*/, false /*not lit*/,
                              listSpec.unit(TU_PRIMARY       ).scale,
                              listSpec.unit(TU_PRIMARY       ).offset,
                              listSpec.unit(TU_PRIMARY_DETAIL).scale,
@@ -3137,8 +3132,7 @@ static void writeSubspaceSkyMaskCap(dint skyCap)
     }
 
     rendSys().drawLists().find(DrawListSpec(SkyMaskGeom))
-                 .write(gl::TriangleFan, indices, BM_NORMAL, false /*not lit*/, false /*not lit*/,
-                        Vector2f(1, 1), Vector2f(0, 0), Vector2f(1, 1), Vector2f(0, 0));
+                 .write(buffer, gl::TriangleFan, indices);
 
     R_FreeRendVertices(posCoords);
 }
@@ -3214,15 +3208,14 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
         xbottom += middle.materialOriginSmoothed().y;
         xtop    += middle.materialOriginSmoothed().y;
 
-        middleCoversOpening = (middleTopZ >= xtop &&
-                               middleBottomZ <= xbottom);
+        middleCoversOpening = (middleTopZ >= xtop && middleBottomZ <= xbottom);
     }
 
     if(wroteOpaqueMiddle && middleCoversOpening)
         return true;
 
     if(   (bceil <= ffloor &&
-               (front.top().hasMaterial()    || front.middle().hasMaterial()))
+               (front.top   ().hasMaterial() || front.middle().hasMaterial()))
        || (bfloor >= fceil &&
                (front.bottom().hasMaterial() || front.middle().hasMaterial())))
     {

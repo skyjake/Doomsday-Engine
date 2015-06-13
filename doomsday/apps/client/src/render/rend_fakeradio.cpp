@@ -1032,8 +1032,7 @@ static void drawWallSectionShadow(Vector3f const *posCoords, WallEdge const &lef
                     buffer.colorCoords [indices[i]] = (colors  [numLeftVerts + i] * 255).toVector4ub();
                     buffer.texCoords[0][indices[i]] = texCoords[numLeftVerts + i];
                 }
-                shadowList.write(gl::TriangleFan, indices, BM_NORMAL, false /*not lit*/, false /*not lit*/,
-                                 Vector2f(1, 1), Vector2f(0, 0), Vector2f(1, 1), Vector2f(0, 0));
+                shadowList.write(buffer, gl::TriangleFan, indices);
             }
             {
                 duint base = buffer.allocateVertices(numLeftVerts);
@@ -1046,8 +1045,7 @@ static void drawWallSectionShadow(Vector3f const *posCoords, WallEdge const &lef
                     buffer.colorCoords [indices[i]] = (colors  [i] * 255).toVector4ub();
                     buffer.texCoords[0][indices[i]] = texCoords[i];
                 }
-                shadowList.write(gl::TriangleFan, indices, BM_NORMAL, false /*not lit*/, false /*not lit*/,
-                                 Vector2f(1, 1), Vector2f(0, 0), Vector2f(1, 1), Vector2f(0, 0));
+                shadowList.write(buffer, gl::TriangleFan, indices);
             }
 
             R_FreeRendVertices(rvertices);
@@ -1065,8 +1063,7 @@ static void drawWallSectionShadow(Vector3f const *posCoords, WallEdge const &lef
                 buffer.colorCoords [indices[i]] = (colors  [i] * 255).toVector4ub();
                 buffer.texCoords[0][indices[i]] = texCoords[i];
             }
-            shadowList.write(gl::TriangleStrip, indices, BM_NORMAL, false /*not lit*/, false /*not lit*/,
-                             Vector2f(1, 1), Vector2f(0, 0), Vector2f(1, 1), Vector2f(0, 0));
+            shadowList.write(buffer, gl::TriangleStrip, indices);
         }
     }
 
@@ -1234,8 +1231,7 @@ static void writeShadowSection2(ShadowEdge const &leftEdge, ShadowEdge const &ri
         buffer.colorCoords[indices[i]] = (rcolors[i] * 255).toVector4ub();
     }
     rendSys().drawLists().find(DrawListSpec(renderWireframe? UnlitGeom : ShadowGeom))
-                  .write(gl::TriangleFan, indices, BM_NORMAL, false /*not lit*/, false /*not lit*/,
-                         Vector2f(1, 1), Vector2f(0, 0), Vector2f(1, 1), Vector2f(0, 0));
+                  .write(buffer, gl::TriangleFan, indices);
 }
 
 static void writeShadowSection(dint planeIndex, LineSide const &side, dfloat shadowDark)
