@@ -9,6 +9,7 @@ builddir/Makefile: builddir
 		-DQMAKE=qtchooser \
 		-DCMAKE_BUILD_TYPE=Release \
 		-DDENG_BUILD=`../build_number.py --print` \
+		-DCMAKE_CXX_FLAGS=-std=c++11 \
 		../../doomsday
 
 build: build-arch build-indep
