@@ -1881,8 +1881,11 @@ void AutomapWidget::setCameraFollowMode(bool yes)
     if(d->follow != yes)
     {
         d->follow = yes;
-        DD_Executef(true, "%sactivatebcontext map-freepan", d->follow? "de" : "");
-        P_SetMessageWithFlags(&players[player()], (d->follow ? AMSTR_FOLLOWON : AMSTR_FOLLOWOFF), LMF_NO_HIDE);
+        if(d->open)
+        {
+            DD_Executef(true, "%sactivatebcontext map-freepan", d->follow? "de" : "");
+            P_SetMessageWithFlags(&players[player()], (d->follow ? AMSTR_FOLLOWON : AMSTR_FOLLOWOFF), LMF_NO_HIDE);
+        }
     }
 }
 
