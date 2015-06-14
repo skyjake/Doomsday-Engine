@@ -517,10 +517,12 @@ else:unix {
 macx {
     # Mac OS X only.
     HEADERS += \
-        $$DENG_MAC_INCLUDE_DIR/MusicPlayer.h
+        $$DENG_MAC_INCLUDE_DIR/MusicPlayer.h \
+        $$DENG_MAC_INCLUDE_DIR/cursor_macx.h
 
     OBJECTIVE_SOURCES += \
-        src/macx/MusicPlayer.mm
+        src/macx/MusicPlayer.mm \
+        src/macx/cursor_macx.mm
 
     INCLUDEPATH += $$DENG_MAC_INCLUDE_DIR
 }

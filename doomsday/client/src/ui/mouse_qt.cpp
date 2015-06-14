@@ -34,6 +34,10 @@
 #include <QCursor>
 #include <de/Canvas>
 
+#ifdef MACOSX
+#  include "cursor_macx.h"
+#endif
+
 typedef struct clicker_s {
     int down;                   // Count for down events.
     int up;                     // Count for up events.
@@ -120,7 +124,9 @@ static void Mouse_Qt_GetState(mousestate_t *state)
 
 static void Mouse_Qt_ShowCursor(bool yes)
 {
+#ifndef MACOSX
     de::Canvas &canvas = ClientWindowSystem::main().canvas();
+#endif
 
     LOG_INPUT_VERBOSE("%s cursor (presently visible? %b)")
             << (yes? "showing" : "hiding") << !cursorHidden;
@@ -128,14 +134,22 @@ static void Mouse_Qt_ShowCursor(bool yes)
     if(!yes && !cursorHidden)
     {
         cursorHidden = true;
+#ifdef MACOSX
+        Cursor_Show(false);
+#else
         canvas.setCursor(QCursor(Qt::BlankCursor));
         qApp->setOverrideCursor(QCursor(Qt::BlankCursor));
+#endif
     }
     else if(yes && cursorHidden)
     {
         cursorHidden = false;
+#ifdef MACOSX
+        Cursor_Show(true);
+#else
         qApp->restoreOverrideCursor();
         canvas.setCursor(QCursor(Qt::ArrowCursor)); // Default cursor.
+#endif
     }
 }
 
