@@ -285,13 +285,14 @@ dbyte devDrawLums;               ///< @c 1= Draw lumobjs origins.
 dbyte devLightGrid;              ///< @c 1= Draw lightgrid debug visual.
 dfloat devLightGridSize = 1.5f;  ///< Lightgrid debug visual size factor.
 
-static void drawMobjBoundingBoxes(Map &map);
-static void drawSoundEmitters(Map &map);
-static void drawGenerators(Map &map);
-static void drawAllSurfaceTangentVectors(Map &map);
 static void drawBiasEditingVisuals(Map &map);
+//static void drawFakeRadioShadowPoints(Map &map);
+static void drawGenerators(Map &map);
 static void drawLumobjs(Map &map);
+static void drawMobjBoundingBoxes(Map &map);
 static void drawSectors(Map &map);
+static void drawSoundEmitters(Map &map);
+static void drawSurfaceTangentVectors(Map &map);
 static void drawThinkers(Map &map);
 static void drawVertexes(Map &map);
 
@@ -4582,7 +4583,8 @@ void Rend_RenderMap(Map &map)
     drawAllLists(map);
 
     // Draw various debugging displays:
-    drawAllSurfaceTangentVectors(map);
+    //drawFakeRadioShadowPoints(map);
+    drawSurfaceTangentVectors(map);
     drawLumobjs(map);
     drawMobjBoundingBoxes(map);
     drawSectors(map);
@@ -5188,32 +5190,79 @@ static void drawMobjBoundingBoxes(Map &map)
     glEnable(GL_DEPTH_TEST);
 }
 
-static void drawVector(Vector3f const &vector, dfloat scalar, dfloat const color[3])
+static void drawPoint(Vector3d const &origin, Vector4f const &color = Vector4f(1, 1, 1, 1))
+{
+    glBegin(GL_POINTS);
+        glColor4f(color.x, color.y, color.z, color.w);
+        glVertex3f(origin.x, origin.z, origin.y);
+    glEnd();
+}
+
+static void drawVector(Vector3f const &vector, dfloat scalar, Vector4f const &color = Vector4f(1, 1, 1, 1))
 {
     static dfloat const black[] = { 0, 0, 0, 0 };
 
     glBegin(GL_LINES);
         glColor4fv(black);
         glVertex3f(scalar * vector.x, scalar * vector.z, scalar * vector.y);
-        glColor3fv(color);
+        glColor4f(color.x, color.y, color.z, color.w);
         glVertex3f(0, 0, 0);
     glEnd();
 }
 
+#if 0
+static void drawFakeRadioShadowPoints(Map &map)
+{
+    static Vector4f const red   ( 1.f, .2f, .2f, 1.f );
+    static Vector4f const yellow( .7f, .7f, .2f, 1.f );
+
+    glEnable(GL_POINT_SMOOTH);
+    dfloat const oldPointSize = DGL_GetFloat(DGL_POINT_SIZE);
+    DGL_SetFloat(DGL_POINT_SIZE, 6);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
+
+    /// @todo fixme: Should use the visual plane heights of sector clusters.
+    map.forAllLines([] (Line &line)
+    {
+        return line.forAllVertexs([] (Vertex &vtx)
+        {
+            LineOwner const *base = vtx.firstLineOwner();
+            LineOwner const *own  = base;
+            do
+            {
+                coord_t const z = own->line().frontSector().floor().heightSmoothed();
+
+                drawPoint(Vector3d(vtx.origin() + own->extendedShadowOffset(), z), yellow);
+                drawPoint(Vector3d(vtx.origin() + own->innerShadowOffset   (), z), red);
+
+                own = &own->next();
+            } while(own != base);
+            return LoopContinue;
+        });
+    });
+
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
+    DGL_SetFloat(DGL_POINT_SIZE, oldPointSize);
+    glDisable(GL_POINT_SMOOTH);
+}
+#endif
+
 static void drawTangentVectorsForSurface(Surface const &suf, Vector3d const &origin)
 {
     static dint const VISUAL_LENGTH = 20;
-    static dfloat const red  [] = { 1, 0, 0 };
-    static dfloat const green[] = { 0, 1, 0 };
-    static dfloat const blue [] = { 0, 0, 1 };
+    static Vector4f const red  ( 1, 0, 0, 1);
+    static Vector4f const green( 0, 1, 0, 1);
+    static Vector4f const blue ( 0, 0, 1, 1);
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glTranslatef(origin.x, origin.z, origin.y);
 
-    if(devSurfaceVectors & SVF_TANGENT)   drawVector(suf.tangent(),   VISUAL_LENGTH, red);
-    if(devSurfaceVectors & SVF_BITANGENT) drawVector(suf.bitangent(), VISUAL_LENGTH, green);
-    if(devSurfaceVectors & SVF_NORMAL)    drawVector(suf.normal(),    VISUAL_LENGTH, blue);
+    if(::devSurfaceVectors & SVF_TANGENT)   drawVector(suf.tangent(),   VISUAL_LENGTH, red);
+    if(::devSurfaceVectors & SVF_BITANGENT) drawVector(suf.bitangent(), VISUAL_LENGTH, green);
+    if(::devSurfaceVectors & SVF_NORMAL)    drawVector(suf.normal(),    VISUAL_LENGTH, blue);
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
@@ -5342,9 +5391,9 @@ static void drawSurfaceTangentVectors(SectorCluster &cluster)
 /**
  * Draw the surface tangent space vectors, primarily for debug.
  */
-static void drawAllSurfaceTangentVectors(Map &map)
+static void drawSurfaceTangentVectors(Map &map)
 {
-    if(!devSurfaceVectors) return;
+    if(!::devSurfaceVectors) return;
 
     glDisable(GL_CULL_FACE);
 
@@ -5537,14 +5586,6 @@ static void drawGenerators(Map &map)
     });
 }
 
-static void drawPoint(Vector3d const &origin, dfloat opacity)
-{
-    glBegin(GL_POINTS);
-        glColor4f(.7f, .7f, .2f, opacity * 2);
-        glVertex3f(origin.x, origin.z, origin.y);
-    glEnd();
-}
-
 static void drawBar(Vector3d const &origin, coord_t height, dfloat opacity)
 {
     static dint const EXTEND_DIST = 64;
@@ -5610,7 +5651,7 @@ static void drawVertexVisual(Vertex const &vertex, ddouble minHeight, ddouble ma
     }
     if(parms.drawOrigin)
     {
-        drawPoint(origin, opacity * 2);
+        drawPoint(origin, Vector4f(.7f, .7f, .2f, opacity * 4));
     }
     if(parms.drawLabel)
     {

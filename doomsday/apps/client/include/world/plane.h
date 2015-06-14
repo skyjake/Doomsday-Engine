@@ -70,7 +70,7 @@ public:
 #endif
 
     /// Maximum speed for a smoothed plane.
-    static int const MAX_SMOOTH_MOVE = 64;
+    static de::dint const MAX_SMOOTH_MOVE = 64;
 
 public:
     /**
@@ -93,14 +93,14 @@ public:
     /**
      * Returns the index of the plane within the owning sector.
      */
-    int indexInSector() const;
+    de::dint indexInSector() const;
 
     /**
      * Change the index of the plane within the owning sector.
      *
      * @param newIndex  New index to attribute the plane.
      */
-    void setIndexInSector(int newIndex);
+    void setIndexInSector(de::dint newIndex);
 
     /**
      * Returns @c true iff this is the floor plane of the owning sector.
@@ -234,18 +234,18 @@ public:
     bool castsShadow() const;
 
     /**
-     * Determines whether the given @a plane may receive FakeRadio shadowing (by flats).
+     * Determines whether the plane qualifies as a FakeRadio shadow receiver (from walls).
      */
     bool receivesShadow() const;
 
-#endif // __CLIENT__
+#endif  // __CLIENT__
 
 protected:
-    int property(DmuArgs &args) const;
-    int setProperty(DmuArgs const &args);
+    de::dint property(DmuArgs &args) const;
+    de::dint setProperty(DmuArgs const &args);
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_WORLD_PLANE_H
+#endif  // DENG_WORLD_PLANE_H

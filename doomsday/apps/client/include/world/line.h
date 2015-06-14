@@ -21,6 +21,7 @@
 #ifndef DENG_WORLD_LINE_H
 #define DENG_WORLD_LINE_H
 
+#include <functional>
 #include <QFlags>
 #include <de/binangle.h>
 #include <de/Error>
@@ -596,11 +597,10 @@ public:
     inline Sector *backSectorPtr() const  { return sectorPtr(Back); }
 
     /**
-     * Returns @c true iff the line is considered @em self-referencing.
-     * In this context, self-referencing (a term whose origins stem from the
-     * DOOM modding community) means a two-sided line (which is to say that
-     * a Sector is attributed to both logical sides of the line) where the
-     * attributed sectors for each logical side are the same.
+     * Returns @c true iff the line is considered @em self-referencing. In this context,
+     * self-referencing (a term whose origins stem from the DOOM modding community) means
+     * a two-sided line (which is to say that a Sector is attributed to both logical sides
+     * of the line) where the attributed sectors for each logical side are the same.
      */
     inline bool isSelfReferencing() const {
         return hasFrontSector() && frontSectorPtr() == backSectorPtr();
@@ -611,15 +611,22 @@ public:
      *
      * @param to  If not @c 0 return the To vertex; otherwise the From vertex.
      */
-    Vertex &vertex(int to) const;
+    Vertex &vertex(de::dint to) const;
 
     /**
-     * Convenient accessor method for returning the origin of the specified
-     * edge vertex for the line.
+     * Iterate through the edge Vertexs for the line.
+     *
+     * @param func  Callback to make for each Vertex.
+     */
+    de::LoopResult forAllVertexs(std::function<de::LoopResult(Vertex &)> func) const;
+
+    /**
+     * Convenient accessor method for returning the origin of the specified edge vertex
+     * for the line.
      *
      * @see vertex()
      */
-    inline de::Vector2d const &vertexOrigin(int to) const {
+    inline de::Vector2d const &vertexOrigin(de::dint to) const {
         return vertex(to).origin();
     }
 
@@ -634,30 +641,27 @@ public:
     inline Vertex &to() const   { return vertex(To); }
 
     /**
-     * Convenient accessor method for returning the origin of the From/Start
-     * vertex for the line.
+     * Convenient accessor method for returning the origin of the From/Start vertex for
+     * the line.
      *
      * @see from()
      */
     inline de::Vector2d const &fromOrigin() const { return from().origin(); }
 
     /**
-     * Convenient accessor method for returning the origin of the To/End
-     * vertex for the line.
+     * Convenient accessor method for returning the origin of the To/End vertex for the line.
      *
      * @see to()
      */
     inline de::Vector2d const &toOrigin() const   { return to().origin(); }
 
     /**
-     * Returns the point on the line which lies at the exact center of the
-     * two vertexes.
+     * Returns the point on the line which lies at the exact center of the two vertexes.
      */
     inline de::Vector2d center() const { return fromOrigin() + direction() / 2; }
 
     /**
-     * Returns the binary angle of the line (which, is derived from the
-     * direction vector).
+     * Returns the binary angle of the line (which, is derived from the direction vector).
      *
      * @see direction()
      */
@@ -669,8 +673,8 @@ public:
     de::Vector2d const &direction() const;
 
     /**
-     * Returns the logical @em slopetype for the line (which, is determined
-     * according to the global direction of the line).
+     * Returns the logical @em slopetype for the line (which, is determined according to
+     * the global direction of the line).
      *
      * @see direction()
      * @see M_SlopeType()
@@ -678,8 +682,8 @@ public:
     slopetype_t slopeType() const;
 
     /**
-     * Update the line's logical slopetype and direction according to the
-     * points defined by the origins of it's vertexes.
+     * Update the line's logical slopetype and direction according to the points defined by
+     * the origins of it's vertexes.
      */
     void updateSlopeType();
 
@@ -694,14 +698,14 @@ public:
     inline bool hasZeroLength() const { return de::abs(length()) < 1.0 / 128.0; }
 
     /**
-     * Returns the axis-aligned bounding box which encompases both vertex
-     * origin points, in map coordinate space units.
+     * Returns the axis-aligned bounding box which encompases both vertex origin points,
+     * in map coordinate space units.
      */
     AABoxd const &aaBox() const;
 
     /**
-     * Update the line's map space axis-aligned bounding box to encompass
-     * the points defined by it's vertexes.
+     * Update the line's map space axis-aligned bounding box to encompass the points defined
+     * by it's vertexes.
      */
     void updateAABox();
 
@@ -715,14 +719,13 @@ public:
      * - Zero: @a box intersects the line.
      * - Positive: @a box is entirely on the right side.
      */
-    int boxOnSide(AABoxd const &box) const;
+    de::dint boxOnSide(AABoxd const &box) const;
 
     /**
-     * On which side of the line does the specified box lie? The test is
-     * carried out using fixed-point math for behavior compatible with
-     * vanilla DOOM. Note that this means there is a maximum size for both
-     * the bounding box and the line: neither can exceed the fixed-point
-     * 16.16 range (about 65k units).
+     * On which side of the line does the specified box lie? The test is carried out using
+     * fixed-point math for behavior compatible with vanilla DOOM. Note that this means
+     * there is a maximum size for both the bounding box and the line: neither can exceed
+     * the fixed-point 16.16 range (about 65k units).
      *
      * @param box  Bounding box to test.
      *
@@ -731,7 +734,7 @@ public:
      * - Zero: @a box intersects the line.
      * - Positive: @a box is entirely on the right side.
      */
-    int boxOnSide_FixedPrecision(AABoxd const &box) const;
+    de::dint boxOnSide_FixedPrecision(AABoxd const &box) const;
 
     /**
      * @param offset  Returns the position of the nearest point along the line [0..1].
@@ -739,8 +742,8 @@ public:
     coord_t pointDistance(de::Vector2d const &point, coord_t *offset = nullptr) const;
 
     /**
-     * Where does the given @a point lie relative to the line? Note that the
-     * line is considered to extend to infinity for this test.
+     * Where does the given @a point lie relative to the line? Note that the line is considered
+     * to extend to infinity for this test.
      *
      * @param point  The point to test.
      *
@@ -765,75 +768,76 @@ public:
     /**
      * Change the polyobj attributed to the line.
      *
-     * @param newPolyobj New polyobj to attribute the line to. Can be @c 0,
-     *                   to clear the attribution. (Note that the polyobj may
-     *                   also represent this relationship, so the relevant
-     *                   method(s) of Polyobj will also need to be called to
-     *                   complete the job of clearing this relationship.)
+     * @param newPolyobj  New polyobj to attribute the line to. Can be @c nullptr, to clear
+     *                    the attribution. (Note that the polyobj may also represent this
+     *                    relationship, so the relevant method(s) of Polyobj will also need
+     *                    to be called to complete the job of clearing this relationship.)
      */
     void setPolyobj(Polyobj *newPolyobj);
 
     /**
-     * Returns @c true iff the line resulted in the creation of a BSP window
-     * effect when partitioning the map.
+     * Returns @c true iff the line resulted in the creation of a BSP window effect when
+     * partitioning the map.
      *
-     * @todo Refactor away. The prescence of a BSP window effect can now be
-     *       trivially determined through inspection of the tree elements.
+     * @todo Refactor away. The prescence of a BSP window effect can now be trivially determined
+     *       through inspection of the tree elements.
      */
     bool isBspWindow() const;
 
     /**
      * Returns the public DDLF_* flags for the line.
      */
-    int flags() const;
+    de::dint flags() const;
 
     /**
-     * Change the line's flags. The FlagsChange audience is notified whenever
-     * the flags are changed.
+     * Change the line's flags. The FlagsChange audience is notified whenever the flags
+     * are changed.
      *
      * @param flagsToChange  Flags to change the value of.
      * @param operation      Logical operation to perform on the flags.
      */
-    void setFlags(int flagsToChange, de::FlagOp operation = de::SetFlags);
+    void setFlags(de::dint flagsToChange, de::FlagOp operation = de::SetFlags);
 
     /**
      * Returns @c true iff the line is flagged @a flagsToTest.
      */
-    inline bool isFlagged(int flagsToTest) const { return (flags() & flagsToTest) != 0; }
+    inline bool isFlagged(de::dint flagsToTest) const {
+        return (flags() & flagsToTest) != 0;
+    }
 
     /**
      * Returns @c true if the line is marked as @em mapped for @a playerNum.
      */
-    bool isMappedByPlayer(int playerNum) const;
+    bool isMappedByPlayer(de::dint playerNum) const;
 
     /**
      * Change the @em mapped by player state of the line.
      */
-    void markMappedByPlayer(int playerNum, bool yes = true);
+    void markMappedByPlayer(de::dint playerNum, bool yes = true);
 
     /**
-     * Returns the @em validCount of the line. Used by some legacy iteration
-     * algorithms for marking lines as processed/visited.
+     * Returns the @em validCount of the line. Used by some legacy iteration algorithms
+     * for marking lines as processed/visited.
      *
      * @todo Refactor away.
      */
-    int validCount() const;
+    de::dint validCount() const;
 
     /// @todo Refactor away.
-    void setValidCount(int newValidCount);
+    void setValidCount(de::dint newValidCount);
 
     /**
      * Replace the specified edge vertex of the line.
      *
      * @attention Should only be called in map edit mode.
      *
-     * @param to  If not @c 0 replace the To vertex; otherwise the From vertex.
+     * @param to         If not @c 0 replace the To vertex; otherwise the From vertex.
      * @param newVertex  The replacement vertex.
      */
-    void replaceVertex(int to, Vertex &newVertex);
+    void replaceVertex(de::dint to, Vertex &newVertex);
 
     inline void replaceFrom(Vertex &newVertex) { replaceVertex(From, newVertex); }
-    inline void replaceTo(Vertex &newVertex)   { replaceVertex(To, newVertex); }
+    inline void replaceTo  (Vertex &newVertex) { replaceVertex(To  , newVertex); }
 
 #ifdef __CLIENT__
     /**
@@ -843,30 +847,27 @@ public:
 #endif
 
 protected:
-    int property(DmuArgs &args) const;
-    int setProperty(DmuArgs const &args);
+    de::dint property(DmuArgs &args) const;
+    de::dint setProperty(DmuArgs const &args);
 
 public:
     /**
-     * Returns a pointer to the line owner node for the specified edge vertex
-     * of the line.
+     * Returns a pointer to the line owner node for the specified edge vertex of the line.
      *
-     * @param to  If not @c 0 return the owner for the To vertex; otherwise the
-     *            From vertex.
+     * @param to  If not @c 0 return the owner for the To vertex; otherwise the From vertex.
      *
      * @deprecated Will be replaced with half-edge ring iterator/rover. -ds
      */
-    LineOwner *vertexOwner(int to) const;
+    LineOwner *vertexOwner(de::dint to) const;
 
     /**
-     * Returns a pointer to the line owner for the specified edge @a vertex
-     * of the line. If the vertex is not an edge vertex for the line then
-     * @c 0 will be returned.
+     * Returns a pointer to the line owner for the specified edge @a vertex of the line.
+     * If the vertex is not an edge vertex for the line then @c nullptr will be returned.
      */
     inline LineOwner *vertexOwner(Vertex const &vertex) const {
         if(&vertex == &from()) return v1Owner();
         if(&vertex == &to())   return v2Owner();
-        return 0;
+        return nullptr;
     }
 
     /**
@@ -892,4 +893,4 @@ typedef Line::Side::Segment LineSideSegment;
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Line::Side::SectionFlags)
 
-#endif // DENG_WORLD_LINE_H
+#endif  // DENG_WORLD_LINE_H

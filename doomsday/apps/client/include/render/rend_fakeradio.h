@@ -48,10 +48,10 @@ class ConvexSubspace;
  */
 struct shadowcorner_t
 {
-    float corner;
+    de::dfloat corner;
     Sector *proximity;
-    float pOffset;
-    float pHeight;
+    de::dfloat pOffset;
+    de::dfloat pHeight;
 };
 
 /**
@@ -60,8 +60,8 @@ struct shadowcorner_t
  */
 struct edgespan_t
 {
-    float length;
-    float shift;
+    de::dfloat length;
+    de::dfloat shift;
 };
 
 /**
@@ -70,7 +70,7 @@ struct edgespan_t
  */
 struct LineSideRadioData
 {
-    int updateCount;  ///< Frame number of last update
+    de::dint updateCount;  ///< Frame number of last update
 
     shadowcorner_t topCorners[2];
     shadowcorner_t bottomCorners[2];
@@ -104,7 +104,7 @@ void Rend_RadioUpdateForLineSide(LineSide &side);
  * Returns the global shadow darkness factor, derived from values in Config.
  * Assumes that light level adaptation has @em NOT yet been applied (it will be).
  */
-float Rend_RadioCalcShadowDarkness(float lightLevel);
+de::dfloat Rend_RadioCalcShadowDarkness(de::dfloat lightLevel);
 
 /**
  * Render FakeRadio for the specified wall section. Generates and then draws all
@@ -119,19 +119,12 @@ float Rend_RadioCalcShadowDarkness(float lightLevel);
  * @param shadowSize  Shadow size scale factor.
  */
 void Rend_RadioWallSection(de::WallEdge const &leftEdge, de::WallEdge const &rightEdge,
-    float shadowDark, float shadowSize);
+    de::dfloat shadowDark, de::dfloat shadowSize);
 
 /**
  * Render FakeRadio for the given subspace. Draws all shadow geometry linked to
  * the ConvexSubspace, that has not already been rendered.
  */
 void Rend_RadioSubspaceEdges(ConvexSubspace const &subspace);
-
-/**
- * Render the shadow poly vertices, for debug.
- */
-#ifdef DENG_DEBUG
-void Rend_DrawShadowOffsetVerts();
-#endif
 
 #endif  // CLIENT_RENDER_FAKERADIO

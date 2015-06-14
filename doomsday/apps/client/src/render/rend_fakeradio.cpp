@@ -1,7 +1,7 @@
 /** @file rend_fakeradio.cpp  Faked Radiosity Lighting.
  *
  * @authors Copyright © 2004-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,16 +21,13 @@
 #include "de_base.h"
 #include "render/rend_fakeradio.h"
 
-#include <cstring>
 #include <QBitArray>
-#include <de/concurrency.h>
 #include <de/Vector>
 #include <doomsday/console/var.h>
 #include "clientapp.h"
 
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
-#include "gl/sys_opengl.h"
 
 #include "MaterialAnimator"
 #include "MaterialVariantSpec"
@@ -69,33 +66,13 @@ struct edge_t
     binangle_t diff;
 };
 
-dint rendFakeRadio = true;              ///< cvar
-dfloat rendFakeRadioDarkness = 1.2f;    ///< cvar
-static byte devFakeRadioUpdate = true;  ///< cvar
+static dint rendFakeRadio       = true;  ///< cvar
+static dfloat fakeRadioDarkness = 1.2f;  ///< cvar
+static byte devFakeRadioUpdate  = true;  ///< cvar
 
 static inline RenderSystem &rendSys()
 {
     return ClientApp::renderSystem();
-}
-
-dfloat Rend_RadioCalcShadowDarkness(dfloat lightLevel)
-{
-    lightLevel += Rend_LightAdaptationDelta(lightLevel);
-    return (0.6f - lightLevel * 0.4f) * 0.65f * ::rendFakeRadioDarkness;
-}
-
-/**
- * Set the vertex colors in the rendpoly.
- */
-static void setRendpolyColor(Vector4f *colorCoords, duint num, dfloat darkness)
-{
-    DENG2_ASSERT(colorCoords);
-    // Shadows are black.
-    Vector4f const shadowColor(0, 0, 0, de::clamp(0.f, darkness, 1.f));
-    for(duint i = 0; i < num; ++i)
-    {
-        colorCoords[i] = shadowColor;
-    }
 }
 
 /**
@@ -104,32 +81,6 @@ static void setRendpolyColor(Vector4f *colorCoords, duint num, dfloat darkness)
 static inline bool isSectorOpen(Sector const *sector)
 {
     return (sector && sector->ceiling().height() > sector->floor().height());
-}
-
-/**
- * Set the rendpoly's X offset and texture size.
- *
- * @param lineLength  If negative; implies that the texture is flipped horizontally.
- * @param segOffset   Offset to the start of the segment.
- */
-static inline dfloat calcTexCoordX(dfloat lineLength, dfloat segOffset)
-{
-    if(lineLength > 0) return segOffset;
-    return lineLength + segOffset;
-}
-
-/**
- * Set the rendpoly's Y offset and texture size.
- *
- * @param z          Z height of the vertex.
- * @param bottom     Z height of the bottom of the wall section.
- * @param top        Z height of the top of the wall section.
- * @param texHeight  If negative; implies that the texture is flipped vertically.
- */
-static inline dfloat calcTexCoordY(dfloat z, dfloat bottom, dfloat top, dfloat texHeight)
-{
-    if(texHeight > 0) return top - z;
-    return bottom - z;
 }
 
 /// @todo fixme: Should be rewritten to work at half-edge level.
@@ -518,6 +469,36 @@ void Rend_RadioUpdateForLineSide(LineSide &side)
     frData.updateCount = R_FrameCount();  // Mark as done.
 }
 
+//
+// Geometry generation -------------------------------------------------------------------
+//
+
+/**
+ * Determine the horizontal offset for a FakeRadio wall, shadow geometry.
+ *
+ * @param lineLength  If negative; implies that the texture is flipped horizontally.
+ * @param segOffset   Offset to the start of the segment.
+ */
+static inline dfloat calcTexCoordX(dfloat lineLength, dfloat segOffset)
+{
+    if(lineLength > 0) return segOffset;
+    return lineLength + segOffset;
+}
+
+/**
+ * Determine the vertical offset for a FakeRadio wall, shadow geometry.
+ *
+ * @param z          Z height of the vertex.
+ * @param bottom     Z height of the bottom of the wall section.
+ * @param top        Z height of the top of the wall section.
+ * @param texHeight  If negative; implies that the texture is flipped vertically.
+ */
+static inline dfloat calcTexCoordY(dfloat z, dfloat bottom, dfloat top, dfloat texHeight)
+{
+    if(texHeight > 0) return top - z;
+    return bottom - z;
+}
+
 struct rendershadowseg_params_t
 {
     lightingtexid_t texture;
@@ -882,7 +863,6 @@ static void setSideShadowParams(rendershadowseg_params_t *p, dfloat shadowSize, 
 
     if(hasBackSector)
     {
-        // There is a back sector.
         if(bFloor > fFloor && bCeil < fCeil)
         {
             if(haveBottomShadower && haveTopShadower)
@@ -954,29 +934,32 @@ static void setSideShadowParams(rendershadowseg_params_t *p, dfloat shadowSize, 
     }
 }
 
-static void quadTexCoords(Vector2f *tc, Vector3f const *rverts, dfloat wallLength,
+static void quadTexCoords(Vector2f *tc, Vector3f const *posCoords, dfloat wallLength,
     Vector3f const &texTopLeft, Vector3f const &texBottomRight,
     Vector2f const &texOrigin, Vector2f const &texDimensions, bool horizontal)
 {
+    DENG2_ASSERT(tc && posCoords);
     if(horizontal)
     {
-        // Special horizontal coordinates for wall shadows.
-        tc[0].x = tc[2].x = rverts[0].x - texTopLeft.x + texOrigin.y / texDimensions.y;
-        tc[0].y = tc[1].y = rverts[0].y - texTopLeft.y + texOrigin.x / texDimensions.x;
+        // Horizontal coordinates (for wall shadows).
+        tc[0].x = tc[2].x = posCoords[0].x - texTopLeft.x + texOrigin.y / texDimensions.y;
+        tc[0].y = tc[1].y = posCoords[0].y - texTopLeft.y + texOrigin.x / texDimensions.x;
 
-        tc[1].x = tc[0].x + (rverts[1].z - texBottomRight.z) / texDimensions.y;
-        tc[3].x = tc[0].x + (rverts[3].z - texBottomRight.z) / texDimensions.y;
+        tc[1].x = tc[0].x + (posCoords[1].z - texBottomRight.z) / texDimensions.y;
+        tc[3].x = tc[0].x + (posCoords[3].z - texBottomRight.z) / texDimensions.y;
         tc[3].y = tc[0].y + wallLength / texDimensions.x;
         tc[2].y = tc[0].y + wallLength / texDimensions.x;
-        return;
     }
+    else
+    {
+        // Vertical coordinates.
+        tc[0].x = tc[1].x = posCoords[0].x - texTopLeft.x + texOrigin.x / texDimensions.x;
+        tc[3].y = tc[1].y = posCoords[0].y - texTopLeft.y + texOrigin.y / texDimensions.y;
 
-    tc[0].x = tc[1].x = rverts[0].x - texTopLeft.x + texOrigin.x / texDimensions.x;
-    tc[3].y = tc[1].y = rverts[0].y - texTopLeft.y + texOrigin.y / texDimensions.y;
-
-    tc[3].x = tc[2].x = tc[0].x + wallLength / texDimensions.x;
-    tc[2].y = tc[3].y + (rverts[1].z - rverts[0].z) / texDimensions.y;
-    tc[0].y = tc[3].y + (rverts[3].z - rverts[2].z) / texDimensions.y;
+        tc[3].x = tc[2].x = tc[0].x + wallLength / texDimensions.x;
+        tc[2].y = tc[3].y + (posCoords[1].z - posCoords[0].z) / texDimensions.y;
+        tc[0].y = tc[3].y + (posCoords[3].z - posCoords[2].z) / texDimensions.y;
+    }
 }
 
 static void drawWallSectionShadow(Vector3f const *posCoords, WallEdge const &leftEdge, WallEdge const &rightEdge,
@@ -994,9 +977,14 @@ static void drawWallSectionShadow(Vector3f const *posCoords, WallEdge const &lef
                   leftEdge.top().origin(), rightEdge.bottom().origin(),
                   wsParms.texOrigin, wsParms.texDimensions, wsParms.horizontal);
 
-    setRendpolyColor(colors, 4, wsParms.shadowDark * wsParms.shadowMul);
+    // Set uniform color (shadows are black).
+    Vector4f const shadowColor(0, 0, 0, de::clamp(0.f, wsParms.shadowDark * wsParms.shadowMul, 1.f));
+    for(duint i = 0; i < 4; ++i)
+    {
+        colors[i] = shadowColor;
+    }
 
-    if(rendFakeRadio != 2)
+    if(::rendFakeRadio != 2)
     {
         // Write multiple polys depending on rend params.
         DrawListSpec listSpec;
@@ -1172,6 +1160,13 @@ void Rend_RadioWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge,
     }
 }
 
+#if 0
+static inline dfloat flatShadowSize(dfloat sectorLight)
+{
+    return 2 * (8 + 16 - sectorlight * 16); /// @todo Make cvars out of constants.
+}
+#endif
+
 /**
  * Determines whether FakeRadio flat, shadow geometry should be drawn between the vertices of
  * the given half-edges @a hEdges and prepares the ShadowEdges @a edges accordingly.
@@ -1205,18 +1200,11 @@ static bool prepareFlatShadowEdges(ShadowEdge edges[2], HEdge const *hEdges[2], 
     return (edges[0].shadowStrength(shadowDark) >= .0001 && edges[1].shadowStrength(shadowDark) >= .0001);
 }
 
-#if 0
-static inline dfloat flatShadowSize(dfloat sectorLight)
-{
-    return 2 * (8 + 16 - sectorlight * 16); /// @todo Make cvars out of constants.
-}
-#endif
-
 static DrawList::Indices makeFlatShadowGeometry(Store &verts, gl::Primitive &primitive,
     ShadowEdge const edges[2], dfloat shadowDark, bool haveFloor)
 {
-    static duint const floorIndices[][4] = { { 0, 1, 2, 3 }, { 1, 2, 3, 0 } };
-    static duint const ceilIndices [][4] = { { 0, 3, 2, 1 }, { 1, 0, 3, 2 } };
+    static duint const floorOrder[][4] = { { 0, 1, 2, 3 }, { 1, 2, 3, 0 } };
+    static duint const ceilOrder [][4] = { { 0, 3, 2, 1 }, { 1, 0, 3, 2 } };
 
     static Vector4ub const white(255, 255, 255, 0);
     static Vector4ub const black(  0,   0,   0, 0);
@@ -1224,7 +1212,7 @@ static DrawList::Indices makeFlatShadowGeometry(Store &verts, gl::Primitive &pri
     // What vertex winding order (0 = left, 1 = right)? (For best results, the cross edge
     // should always be the shortest.)
     duint const winding = (edges[1].length() > edges[0].length()? 1 : 0);
-    duint const *idx    = (haveFloor ? floorIndices[winding] : ceilIndices[winding]);
+    duint const *order  = (haveFloor ? floorOrder[winding] : ceilOrder[winding]);
 
     // Assign indices.
     duint base = verts.allocateVertices(4);
@@ -1239,10 +1227,10 @@ static DrawList::Indices makeFlatShadowGeometry(Store &verts, gl::Primitive &pri
     // Build the geometry.
     //
     primitive = gl::TriangleFan;
-    verts.posCoords[indices[idx[0]]] = edges[0].outer();
-    verts.posCoords[indices[idx[1]]] = edges[1].outer();
-    verts.posCoords[indices[idx[2]]] = edges[1].inner();
-    verts.posCoords[indices[idx[3]]] = edges[0].inner();
+    verts.posCoords[indices[order[0]]] = edges[0].outer();
+    verts.posCoords[indices[order[1]]] = edges[1].outer();
+    verts.posCoords[indices[order[2]]] = edges[1].inner();
+    verts.posCoords[indices[order[3]]] = edges[0].inner();
     // Set uniform color.
     Vector4ub const &uniformColor = (::renderWireframe? white : black);  // White to assist visual debugging.
     for(duint i = 0; i < 4; ++i)
@@ -1252,7 +1240,7 @@ static DrawList::Indices makeFlatShadowGeometry(Store &verts, gl::Primitive &pri
     // Set outer edge opacity:
     for(duint i = 0; i < 2; ++i)
     {
-        verts.colorCoords[indices[idx[i]]].w = dbyte( edges[i].shadowStrength(shadowDark) * 255 );
+        verts.colorCoords[indices[order[i]]].w = dbyte( edges[i].shadowStrength(shadowDark) * 255 );
     }
 
     return indices;
@@ -1294,7 +1282,7 @@ void Rend_RadioSubspaceEdges(ConvexSubspace const &subspace)
             {
                 Plane const &plane = cluster.visPlane(pln);
 
-                // Some Planes should not receive FakeRadio shadowing.
+                // Skip Planes which should not receive FakeRadio shadowing.
                 if(!plane.receivesShadow()) continue;
 
                 // Skip Planes facing away from the viewer.
@@ -1326,100 +1314,16 @@ void Rend_RadioSubspaceEdges(ConvexSubspace const &subspace)
     });
 }
 
-#ifdef DENG_DEBUG
-static void drawPoint(Vector3d const &point, dint radius, dfloat const color[4])
+dfloat Rend_RadioCalcShadowDarkness(dfloat lightLevel)
 {
-    viewdata_t const *viewData  = R_ViewData(::viewPlayer - ::ddPlayers);
-    Vector3d const leftOff      = viewData->upVec + viewData->sideVec;
-    Vector3d const rightOff     = viewData->upVec - viewData->sideVec;
-
-    //Vector3d const viewToCenter = point - Rend_EyeOrigin();
-    //dfloat scale = dfloat(viewToCenter.dot(viewData->frontVec)) /
-    //                viewData->frontVec.dot(viewData->frontVec);
-
-    Vector3d finalPos( point.x, point.z, point.y );
-
-    // The final radius.
-    dfloat radX = radius * 1;
-    dfloat radY = radX / 1.2f;
-
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    glColor4fv(color);
-
-    glBegin(GL_QUADS);
-        glTexCoord2f(0, 0);
-        glVertex3d(finalPos.x + radX * leftOff.x,
-                   finalPos.y + radY * leftOff.y,
-                   finalPos.z + radX * leftOff.z);
-        glTexCoord2f(1, 0);
-        glVertex3d(finalPos.x + radX * rightOff.x,
-                   finalPos.y + radY * rightOff.y,
-                   finalPos.z + radX * rightOff.z);
-        glTexCoord2f(1, 1);
-        glVertex3d(finalPos.x - radX * leftOff.x,
-                   finalPos.y - radY * leftOff.y,
-                   finalPos.z - radX * leftOff.z);
-        glTexCoord2f(0, 1);
-        glVertex3d(finalPos.x - radX * rightOff.x,
-                   finalPos.y - radY * rightOff.y,
-                   finalPos.z - radX * rightOff.z);
-    glEnd();
+    lightLevel += Rend_LightAdaptationDelta(lightLevel);
+    return (0.6f - lightLevel * 0.4f) * 0.65f * ::fakeRadioDarkness;
 }
-
-void Rend_DrawShadowOffsetVerts()
-{
-    static dfloat const red[4]    = { 1.f, .2f, .2f, 1.f };
-    static dfloat const yellow[4] = { .7f, .7f, .2f, 1.f };
-
-    if(!App_WorldSystem().hasMap()) return;
-    Map &map = App_WorldSystem().map();
-
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    glDepthMask(GL_FALSE);
-    glDisable(GL_DEPTH_TEST);
-
-    GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC),
-                            gl::ClampToEdge, gl::ClampToEdge);
-    glEnable(GL_TEXTURE_2D);
-
-    /// @todo fixme: Should use the visual plane heights of sector clusters.
-    map.forAllLines([] (Line &line)
-    {
-        for(dint i = 0; i < 2; ++i)
-        {
-            Vertex &vtx = line.vertex(i);
-
-            LineOwner const *base = vtx.firstLineOwner();
-            LineOwner const *own  = base;
-            do
-            {
-                Vector2d xy = vtx.origin() + own->extendedShadowOffset();
-                coord_t z   = own->line().frontSector().floor().heightSmoothed();
-                drawPoint(Vector3d(xy.x, xy.y, z), 1, yellow);
-
-                xy = vtx.origin() + own->innerShadowOffset();
-                drawPoint(Vector3d(xy.x, xy.y, z), 1, red);
-
-                own = &own->next();
-            } while(own != base);
-        }
-        return LoopContinue;
-    });
-
-    glDisable(GL_TEXTURE_2D);
-    glDepthMask(GL_TRUE);
-    glEnable(GL_DEPTH_TEST);
-}
-#endif
 
 void Rend_RadioRegister()
 {
-    C_VAR_INT  ("rend-fakeradio",               &rendFakeRadio,         0, 0, 2);
-    C_VAR_FLOAT("rend-fakeradio-darkness",      &rendFakeRadioDarkness, 0, 0, 2);
+    C_VAR_INT  ("rend-fakeradio",               &::rendFakeRadio,       0, 0, 2);
+    C_VAR_FLOAT("rend-fakeradio-darkness",      &::fakeRadioDarkness,   0, 0, 2);
 
-    C_VAR_BYTE ("rend-dev-fakeradio-update",    &devFakeRadioUpdate,    CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE ("rend-dev-fakeradio-update",    &::devFakeRadioUpdate,  CVF_NO_ARCHIVE, 0, 1);
 }

@@ -857,6 +857,15 @@ void Line::replaceVertex(dint to, Vertex &newVertex)
     else   d->from = &newVertex;
 }
 
+LoopResult Line::forAllVertexs(std::function<LoopResult(Vertex &)> func) const
+{
+    for(dint i = 0; i < 2; ++i)
+    {
+        if(auto result = func(vertex(i))) return result;
+    }
+    return LoopContinue;
+}
+
 AABoxd const &Line::aaBox() const
 {
     return d->aaBox;
