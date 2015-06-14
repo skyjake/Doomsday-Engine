@@ -10,6 +10,7 @@ builddir/Makefile: builddir
 		-DCMAKE_BUILD_TYPE=Release \
 		-DDENG_BUILD=`../build_number.py --print` \
 		-DCMAKE_CXX_FLAGS=-std=c++11 \
+		-DDENG_ENABLE_COTIRE=OFF \
 		../../doomsday
 
 build: build-arch build-indep
