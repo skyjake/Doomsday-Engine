@@ -46,11 +46,17 @@ struct VersionInfo
 
     void parseVersionString(de::String const &version)
     {
-        QStringList parts = version.split('.');
-        major = parts[0].toInt();
-        minor = parts[1].toInt();
-        revision = 0;
-        patch = 0;
+        major = minor = revision = patch = 0;
+        
+        QStringList const parts = version.split('.');
+        if(parts.size() > 0)
+        {
+            major = parts[0].toInt();
+        }
+        if(parts.size() > 1)
+        {
+            minor = parts[1].toInt();
+        }
         if(parts.size() > 2)
         {
             if(parts[2].contains('-'))
