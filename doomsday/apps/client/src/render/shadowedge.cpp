@@ -1,7 +1,7 @@
 /** @file shadowedge.cpp  FakeRadio Shadow Edge Geometry
  *
  * @authors Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -40,18 +40,18 @@ namespace de {
 DENG2_PIMPL_NOREF(ShadowEdge)
 {
     HEdge const *leftMostHEdge;
-    int edge;
+    dint edge;
 
     Vector3d inner;
     Vector3d outer;
-    float sectorOpenness;
-    float openness;
+    dfloat sectorOpenness;
+    dfloat openness;
 };
 
 ShadowEdge::ShadowEdge() : d(new Instance)
 {}
 
-void ShadowEdge::init(HEdge const &leftMostHEdge, int edge)
+void ShadowEdge::init(HEdge const &leftMostHEdge, dint edge)
 {
     d->leftMostHEdge = &leftMostHEdge;
     d->edge          = edge;
@@ -63,16 +63,16 @@ void ShadowEdge::init(HEdge const &leftMostHEdge, int edge)
 /**
  * Returns a value in the range of 0..2, representing how 'open' the edge is.
  *
- * @c =0 Completely closed, it is facing a wall or is relatively distant from
- *       the edge on the other side.
+ * @c =0 Completely closed, it is facing a wall or is relatively distant from the edge on
+ *       the other side.
  * @c >0 && <1 How near the 'other' edge is.
  * @c =1 At the same height as "this" one.
  * @c >1 The 'other' edge is past our height (clearly 'open').
  */
-static float opennessFactor(float fz, float bz, float bhz)
+static dfloat opennessFactor(dfloat fz, dfloat bz, dfloat bhz)
 {
     if(fz <= bz - SHADOWEDGE_OPEN_THRESHOLD || fz >= bhz)
-        return 0; // Fully closed.
+        return 0;  // Fully closed.
 
     if(fz >= bhz - SHADOWEDGE_OPEN_THRESHOLD)
         return (bhz - fz) / SHADOWEDGE_OPEN_THRESHOLD;
@@ -83,14 +83,13 @@ static float opennessFactor(float fz, float bz, float bhz)
     if(fz <= bz + SHADOWEDGE_OPEN_THRESHOLD)
         return 1 + (fz - bz) / SHADOWEDGE_OPEN_THRESHOLD;
 
-    // Fully open!
-    return 2;
+    return 2;  // Fully open!
 }
 
 /// @todo fixme: Should use the visual plane heights of sector clusters.
 static bool middleMaterialCoversOpening(LineSide const &side)
 {
-    if(!side.hasSector()) return false; // Never.
+    if(!side.hasSector()) return false;  // Never.
 
     if(!side.hasSections()) return false;
     if(!side.middle().hasMaterial()) return false;
@@ -147,17 +146,16 @@ static bool middleMaterialCoversOpening(LineSide const &side)
     return false;
 }
 
-void ShadowEdge::prepare(int planeIndex)
+void ShadowEdge::prepare(dint planeIndex)
 {
-    int const otherPlaneIndex = planeIndex == Sector::Floor? Sector::Ceiling : Sector::Floor;
+    dint const otherPlaneIndex = planeIndex == Sector::Floor? Sector::Ceiling : Sector::Floor;
     HEdge const &hedge = *d->leftMostHEdge;
     SectorCluster const &cluster = hedge.face().mapElementAs<ConvexSubspace>().cluster();
     Plane const &plane = cluster.visPlane(planeIndex);
 
     LineSide const &lineSide = hedge.mapElementAs<LineSideSegment>().lineSide();
 
-    d->sectorOpenness = 0; // Default is fully closed.
-    d->openness = 0; // Default is fully closed.
+    d->sectorOpenness = d->openness = 0; // Default is fully closed.
 
     // Determine the 'openness' of the wall edge sector. If the sector is open,
     // there won't be a shadow at all. Open neighbor sectors cause some changes
@@ -192,7 +190,7 @@ void ShadowEdge::prepare(int planeIndex)
         }
         // Is the back sector a closed yet sky-masked surface?
         else if(cluster.visFloor().heightSmoothed() >= backCluster.visCeiling().heightSmoothed() &&
-                cluster.visPlane(otherPlaneIndex).surface().hasSkyMaskedMaterial() &&
+                    cluster.visPlane(otherPlaneIndex).surface().hasSkyMaskedMaterial() &&
                 backCluster.visPlane(otherPlaneIndex).surface().hasSkyMaskedMaterial())
         {
             d->sectorOpenness = 2; // Consider it fully open.
@@ -216,7 +214,7 @@ void ShadowEdge::prepare(int planeIndex)
     // 'openness' of it's plane heights vs those of "this" wall section.
     /// @todo fixme: Should use the visual plane heights of sector clusters.
 
-    int const edge = lineSide.sideId() ^ d->edge;
+    dint const edge = lineSide.sideId() ^ d->edge;
     LineOwner const *vo = &lineSide.line().vertexOwner(edge)->navigate(ClockDirection(d->edge ^ 1));
     Line const &neighborLine = vo->line();
 
@@ -248,8 +246,8 @@ void ShadowEdge::prepare(int planeIndex)
             // Its a normal neighbor.
             Sector const *backSec  = neighborLineSide.back().sectorPtr();
             if(backSec != &cluster.sector() &&
-               !((plane.isSectorFloor() && backSec->ceiling().heightSmoothed() <= plane.heightSmoothed()) ||
-                 (plane.isSectorCeiling() && backSec->floor().height() >= plane.heightSmoothed())))
+               !((plane.isSectorFloor  () && backSec->ceiling().heightSmoothed() <= plane.heightSmoothed()) ||
+                 (plane.isSectorCeiling() && backSec->floor  ().heightSmoothed() >= plane.heightSmoothed())))
             {
                 // Figure out the relative plane heights.
                 coord_t fz = plane.heightSmoothed();
@@ -296,14 +294,26 @@ Vector3d const &ShadowEdge::outer() const
     return d->outer;
 }
 
-float ShadowEdge::openness() const
+dfloat ShadowEdge::openness() const
 {
     return d->openness;
 }
 
-float ShadowEdge::sectorOpenness() const
+dfloat ShadowEdge::sectorOpenness() const
 {
     return d->sectorOpenness;
 }
 
-} // namespace de
+/// @todo Cache this result?
+dfloat ShadowEdge::shadowStrength(dfloat darkness) const
+{
+    if(d->sectorOpenness < 1)
+    {
+        dfloat strength = de::min(darkness * (1 - d->sectorOpenness), 1.f);
+        if(d->openness < 1) strength *= 1 - d->openness;
+        return strength;
+    }
+    return 0;
+}
+
+}  // namespace de

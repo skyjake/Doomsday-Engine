@@ -400,9 +400,14 @@ bool Plane::castsShadow() const
         if(!matAnimator.material().isDrawable()) return false;
         if(matAnimator.material().isSkyMasked()) return false;
 
-        if(matAnimator.glowStrength() > 0) return false;
+        return de::fequal(matAnimator.glowStrength(), 0);
     }
-    return true;
+    return false;
+}
+
+bool Plane::receivesShadow() const
+{
+    return castsShadow();  // Qualification is the same as with casting.
 }
 
 #endif // __CLIENT__

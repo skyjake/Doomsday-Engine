@@ -229,9 +229,14 @@ public:
     void removeMover(ClPlaneMover &mover);
 
     /**
-     * Returns @c true if the plane qualifies for FakeRadio shadow casting (on walls).
+     * Determines whether the plane qualifies as a FakeRadio shadow caster (onto walls).
      */
     bool castsShadow() const;
+
+    /**
+     * Determines whether the given @a plane may receive FakeRadio shadowing (by flats).
+     */
+    bool receivesShadow() const;
 
 #endif // __CLIENT__
 

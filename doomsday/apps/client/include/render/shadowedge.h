@@ -61,6 +61,13 @@ public:
     float sectorOpenness() const;
 
     /**
+     * Determines strength of the shadow to be cast at this edge.
+     *
+     * @param darkness  Normalized blending factor (0..1).
+     */
+    float shadowStrength(dfloat darkness) const;
+
+    /**
      * Returns the origin of the @em outer vertex (that which is incident with
      * a map vertex from some line of the sector boundary).
      *

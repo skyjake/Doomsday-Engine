@@ -1173,113 +1173,88 @@ void Rend_RadioWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge,
 }
 
 /**
- * Construct and write a new shadow polygon to the rendering lists.
+ * Determines whether FakeRadio flat, shadow geometry should be drawn between the vertices of
+ * the given half-edges @a hEdges and prepares the ShadowEdges @a edges accordingly.
+ *
+ * @param edges             ShadowEdge descriptors for both edges { left, right }.
+ * @param hEdges            Half-edge accessors for both edges { left, right }.
+ * @param sectorPlaneIndex  Logical index of the sector plane to consider a shadow for.
+ * @param shadowDark        Shadow darkness factor.
+ *
+ * @return  @c true if one or both edges are partially in shadow.
  */
-static void writeShadowSection2(ShadowEdge const &leftEdge, ShadowEdge const &rightEdge,
-    bool isFloor, dfloat shadowDark)
+static bool prepareFlatShadowEdges(ShadowEdge edges[2], HEdge const *hEdges[2], dint sectorPlaneIndex,
+    dfloat shadowDark)
 {
-    static duint const floorIndices[][4] = {{0, 1, 2, 3}, {1, 2, 3, 0}};
-    static duint const ceilIndices[][4]  = {{0, 3, 2, 1}, {1, 0, 3, 2}};
+    DENG2_ASSERT(edges && hEdges && hEdges[0] && hEdges[1]);
 
-    dfloat const outerLeftAlpha  = de::min(shadowDark * (1 - leftEdge .sectorOpenness()), 1.f);
-    dfloat const outerRightAlpha = de::min(shadowDark * (1 - rightEdge.sectorOpenness()), 1.f);
+    // If the sector containing the shadowing line section is fully closed (i.e., volume is
+    // not positive) then skip shadow drawing entirely.
+    /// @todo Encapsulate this logic in ShadowEdge -ds
+    if(!hEdges[0]->hasFace() || !hEdges[0]->face().hasMapElement())
+        return false;
 
-    if(!(outerLeftAlpha > .0001 && outerRightAlpha > .0001)) return;
+    if(!hEdges[0]->face().mapElementAs<ConvexSubspace>().cluster().hasWorldVolume())
+        return false;
+
+    for(dint i = 0; i < 2; ++i)
+    {
+        edges[i].init(*hEdges[i], i);
+        edges[i].prepare(sectorPlaneIndex);
+    }
+    return (edges[0].shadowStrength(shadowDark) >= .0001 && edges[1].shadowStrength(shadowDark) >= .0001);
+}
+
+#if 0
+static inline dfloat flatShadowSize(dfloat sectorLight)
+{
+    return 2 * (8 + 16 - sectorlight * 16); /// @todo Make cvars out of constants.
+}
+#endif
+
+static DrawList::Indices makeFlatShadowGeometry(Store &buffer, ShadowEdge const edges[2], bool isFloor,
+    dfloat shadowDark)
+{
+    static duint const floorIndices[][4] = { { 0, 1, 2, 3 }, { 1, 2, 3, 0 } };
+    static duint const ceilIndices [][4] = { { 0, 3, 2, 1 }, { 1, 0, 3, 2 } };
+
+    static Vector4ub const white(255, 255, 255, 0);
+    static Vector4ub const black(  0,   0,   0, 0);
 
     // What vertex winding order (0 = left, 1 = right)? (For best results, the cross edge
     // should always be the shortest.)
-    duint winding    = (rightEdge.length() > leftEdge.length()? 1 : 0);
-    duint const *idx = (isFloor ? floorIndices[winding] : ceilIndices[winding]);
+    duint const winding = (edges[1].length() > edges[0].length()? 1 : 0);
+    duint const *idx    = (isFloor ? floorIndices[winding] : ceilIndices[winding]);
 
-    Vector3f rvertices[4];
-    rvertices[idx[0]] = leftEdge .outer();
-    rvertices[idx[1]] = rightEdge.outer();
-    rvertices[idx[2]] = rightEdge.inner();
-    rvertices[idx[3]] = leftEdge .inner();
-
-    Vector4f rcolors[4];
-    if(renderWireframe)
-    {
-        // Draw shadow geometry white to assist visual debugging.
-        static const Vector4f white(1, 1, 1, 1);
-        for(duint i = 0; i < 4; ++i)
-        {
-            rcolors[idx[i]] = white;
-        }
-    }
-
-    // Left outer.
-    rcolors[idx[0]].w = outerLeftAlpha;
-    if(leftEdge.openness() < 1)
-        rcolors[idx[0]].w *= 1 - leftEdge.openness();
-
-    // Right outer.
-    rcolors[idx[1]].w = outerRightAlpha;
-    if(rightEdge.openness() < 1)
-        rcolors[idx[1]].w *= 1 - rightEdge.openness();
-
-    if(rendFakeRadio == 2) return;
-
-    Store &buffer = rendSys().buffer();
+    // Assign indices.
     duint base = buffer.allocateVertices(4);
     DrawList::Indices indices;
     indices.resize(4);
     for(duint i = 0; i < 4; ++i)
     {
         indices[i] = base + i;
-        buffer.posCoords  [indices[i]] = rvertices[i];
-        buffer.colorCoords[indices[i]] = (rcolors[i] * 255).toVector4ub();
     }
-    rendSys().drawLists().find(DrawListSpec(renderWireframe? UnlitGeom : ShadowGeom))
-                  .write(buffer, gl::TriangleFan, indices);
-}
 
-static void writeShadowSection(dint planeIndex, LineSide const &side, dfloat shadowDark)
-{
-    DENG2_ASSERT(side.hasSections() && !side.line().definesPolyobj());
+    //
+    // Write the geometry.
+    //
+    buffer.posCoords[indices[idx[0]]] = edges[0].outer();
+    buffer.posCoords[indices[idx[1]]] = edges[1].outer();
+    buffer.posCoords[indices[idx[2]]] = edges[1].inner();
+    buffer.posCoords[indices[idx[3]]] = edges[0].inner();
+    // Set uniform color.
+    Vector4ub const &uniformColor = (renderWireframe? white : black);  // White to assist visual debugging.
+    for(duint i = 0; i < 4; ++i)
+    {
+        buffer.colorCoords[indices[i]] = uniformColor;
+    }
+    // Set outer edge opacity:
+    for(duint i = 0; i < 2; ++i)
+    {
+        buffer.colorCoords[indices[idx[i]]].w = dbyte( edges[i].shadowStrength(shadowDark) * 255 );
+    }
 
-    if(!(shadowDark > .0001)) return;
-    if(!side.leftHEdge()) return;
-
-    HEdge const *leftHEdge = side.leftHEdge();
-    Plane const &plane     = side.sector().plane(planeIndex);
-    Surface const *suf     = &plane.surface();
-
-    // Surfaces with a missing material don't shadow.
-    if(!suf->hasMaterial()) return;
-
-    // Surfaces with a sky-masked material don't shadow.
-    if(suf->material().isSkyMasked()) return;
-
-    // Ensure we have up to date info about the material.
-    MaterialAnimator &matAnimator = suf->material().getAnimator(Rend_MapSurfaceMaterialSpec());
-    matAnimator.prepare();
-
-    // Surfaces with a glowing material don't shadow.
-    if(matAnimator.glowStrength() > 0)
-        return;
-
-    // If the sector containing the shadowing line section is fully closed (i.e., volume
-    // is not positive) then skip shadow drawing entirely.
-    /// @todo Encapsulate this logic in ShadowEdge -ds
-    if(!leftHEdge->hasFace() || !leftHEdge->face().hasMapElement())
-        return;
-
-    if(!leftHEdge->face().mapElementAs<ConvexSubspace>().cluster().hasWorldVolume())
-        return;
-
-    static ShadowEdge leftEdge;  // This function is called often; keep these around.
-    static ShadowEdge rightEdge;
-
-    leftEdge .init(*leftHEdge, Line::From);
-    rightEdge.init(*leftHEdge, Line::To);
-
-    leftEdge.prepare(planeIndex);
-    rightEdge.prepare(planeIndex);
-
-    if(leftEdge.sectorOpenness() >= 1 && rightEdge.sectorOpenness() >= 1) return;
-
-    writeShadowSection2(leftEdge, rightEdge, suf->normal()[VZ] > 0, shadowDark);
+    return indices;
 }
 
 /**
@@ -1296,32 +1271,52 @@ void Rend_RadioSubspaceEdges(ConvexSubspace const &subspace)
     SectorCluster &cluster = subspace.cluster();
 
     // Determine the shadow properties.
-    dfloat sectorlight     = cluster.lightSourceIntensity();
-    //dfloat shadowWallSize  = 2 * (8 + 16 - sectorlight * 16); /// @todo Make cvars out of constants.
-    dfloat shadowDark      = Rend_RadioCalcShadowDarkness(sectorlight);
-
+    dfloat const shadowDark = Rend_RadioCalcShadowDarkness(cluster.lightSourceIntensity());
     // Any need to continue?
     if(shadowDark < .0001f) return;
 
-    Vector3f const eyeToSurface = Vector3d(Rend_EyeOrigin().xz(), 0) - subspace.poly().center();
+    auto const eyeToSurface = Vector3f(Rend_EyeOrigin().xz() - subspace.poly().center(), 0);
 
-    // We need to check all the shadow lines linked to this subspace for
-    // the purpose of fakeradio shadowing.
+    // We need to check all the shadow lines linked to this subspace for the purpose
+    // of fakeradio shadowing.
+    static ShadowEdge shadowEdges[2/*left, right*/];  // Keep these around (needed often).
+
     subspace.forAllShadowLines([&cluster, &shadowDark, &eyeToSurface] (LineSide &side)
     {
-        // Already rendered during the current frame? We only want to
-        // render each shadow once per frame.
+        DENG2_ASSERT(side.hasSections() && !side.line().definesPolyobj() && side.leftHEdge());
+
+        // Process sides only once per frame (we only want to draw each shadow set once).
         if(side.shadowVisCount() != R_FrameCount())
         {
-            side.setShadowVisCount(R_FrameCount());
+            side.setShadowVisCount(R_FrameCount());  // Mark processed.
 
             for(dint pln = 0; pln < cluster.visPlaneCount(); ++pln)
             {
                 Plane const &plane = cluster.visPlane(pln);
+
+                // Some Planes should not receive FakeRadio shadowing.
+                if(!plane.receivesShadow()) continue;
+
+                // Skip Planes facing away from the viewer.
                 if(Vector3f(eyeToSurface, Rend_EyeOrigin().y - plane.heightSmoothed())
                         .dot(plane.surface().normal()) >= 0)
                 {
-                    writeShadowSection(pln, side, shadowDark);
+                    HEdge const *hEdges[2/*left, right*/] = { side.leftHEdge(), side.leftHEdge() };
+
+                    if(prepareFlatShadowEdges(shadowEdges, hEdges, pln, shadowDark))
+                    {
+                        // Make geometry.
+                        Store &buffer = rendSys().buffer();
+                        DrawList::Indices indices =
+                            makeFlatShadowGeometry(buffer, shadowEdges, plane.surface().normal()[2] > 0, shadowDark);
+
+                        // Skip drawing entirely?
+                        if(::rendFakeRadio == 2) continue;
+
+                        // Write geometry.
+                        rendSys().drawLists().find(DrawListSpec(::renderWireframe? UnlitGeom : ShadowGeom))
+                                     .write(buffer, gl::TriangleFan, indices);
+                    }
                 }
             }
         }

@@ -141,7 +141,7 @@ public:
      *                         this DrawList is used (i.e., until a @ref clear(), rewind() or the
      *                         list itself is destroyed).
      * @param primitive        Type identifier for the GL primitive being written.
-     * @param indices          Indices for the vertex elements in @a buffer.
+     * @param indices          Indices for the vertex elements in @a buffer. A copy is made.
      *
      * Primitive-specific GL attribute/state to apply when drawing:
      * @param blendMode
