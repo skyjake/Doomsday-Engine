@@ -26,7 +26,17 @@ add_definitions (
     -DDENG_BASE_DIR="${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_DATA_DIR}"
 )
 
-append_unique (CMAKE_CXX_FLAGS "-Wno-inconsistent-missing-override") # too many warnings from Qt
+# Check compiler version.
+if (NOT DEFINED CLANG_VERSION_STRING AND ${CMAKE_CXX_COMPILER_ID} MATCHES ".*Clang.*")
+    execute_process (COMMAND ${CMAKE_CXX_COMPILER} --version OUTPUT_VARIABLE CLANG_VERSION_FULL)
+    string (REGEX REPLACE ".*version ([0-9]+\\.[0-9]+).*" "\\1" CLANG_VERSION_STRING ${CLANG_VERSION_FULL})
+    set (CLANG_VERSION_STRING "${CLANG_VERSION_STRING}" CACHE INTERNAL "Clang version number")
+endif ()
+
+if (${CLANG_VERSION_STRING} VERSION_EQUAL 7.0 OR
+    ${CLANG_VERSION_STRING} VERSION_GREATER 7.0)
+    append_unique (CMAKE_CXX_FLAGS "-Wno-inconsistent-missing-override") # too many warnings from Qt
+endif ()
 
 set (DENG_FIXED_ASM_DEFAULT OFF)
 
