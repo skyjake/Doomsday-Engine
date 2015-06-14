@@ -55,8 +55,8 @@ using namespace de;
 
 #define MIN_OPEN                (.1f)
 
-#define MINDIFF                 (8) // min plane height difference (world units)
-#define INDIFF                  (8) // max plane height for indifference offset
+#define MINDIFF                 (8)  ///< Min plane height difference (world units).
+#define INDIFF                  (8)  ///< Max plane height for indifference offset.
 
 #define BOTTOM                  (0)
 #define TOP                     (1)
@@ -1212,8 +1212,8 @@ static inline dfloat flatShadowSize(dfloat sectorLight)
 }
 #endif
 
-static DrawList::Indices makeFlatShadowGeometry(Store &buffer, ShadowEdge const edges[2], bool isFloor,
-    dfloat shadowDark)
+static DrawList::Indices makeFlatShadowGeometry(Store &verts, gl::Primitive &primitive,
+    ShadowEdge const edges[2], dfloat shadowDark, bool haveFloor)
 {
     static duint const floorIndices[][4] = { { 0, 1, 2, 3 }, { 1, 2, 3, 0 } };
     static duint const ceilIndices [][4] = { { 0, 3, 2, 1 }, { 1, 0, 3, 2 } };
@@ -1224,10 +1224,10 @@ static DrawList::Indices makeFlatShadowGeometry(Store &buffer, ShadowEdge const 
     // What vertex winding order (0 = left, 1 = right)? (For best results, the cross edge
     // should always be the shortest.)
     duint const winding = (edges[1].length() > edges[0].length()? 1 : 0);
-    duint const *idx    = (isFloor ? floorIndices[winding] : ceilIndices[winding]);
+    duint const *idx    = (haveFloor ? floorIndices[winding] : ceilIndices[winding]);
 
     // Assign indices.
-    duint base = buffer.allocateVertices(4);
+    duint base = verts.allocateVertices(4);
     DrawList::Indices indices;
     indices.resize(4);
     for(duint i = 0; i < 4; ++i)
@@ -1236,31 +1236,28 @@ static DrawList::Indices makeFlatShadowGeometry(Store &buffer, ShadowEdge const 
     }
 
     //
-    // Write the geometry.
+    // Build the geometry.
     //
-    buffer.posCoords[indices[idx[0]]] = edges[0].outer();
-    buffer.posCoords[indices[idx[1]]] = edges[1].outer();
-    buffer.posCoords[indices[idx[2]]] = edges[1].inner();
-    buffer.posCoords[indices[idx[3]]] = edges[0].inner();
+    primitive = gl::TriangleFan;
+    verts.posCoords[indices[idx[0]]] = edges[0].outer();
+    verts.posCoords[indices[idx[1]]] = edges[1].outer();
+    verts.posCoords[indices[idx[2]]] = edges[1].inner();
+    verts.posCoords[indices[idx[3]]] = edges[0].inner();
     // Set uniform color.
-    Vector4ub const &uniformColor = (renderWireframe? white : black);  // White to assist visual debugging.
+    Vector4ub const &uniformColor = (::renderWireframe? white : black);  // White to assist visual debugging.
     for(duint i = 0; i < 4; ++i)
     {
-        buffer.colorCoords[indices[i]] = uniformColor;
+        verts.colorCoords[indices[i]] = uniformColor;
     }
     // Set outer edge opacity:
     for(duint i = 0; i < 2; ++i)
     {
-        buffer.colorCoords[indices[idx[i]]].w = dbyte( edges[i].shadowStrength(shadowDark) * 255 );
+        verts.colorCoords[indices[idx[i]]].w = dbyte( edges[i].shadowStrength(shadowDark) * 255 );
     }
 
     return indices;
 }
 
-/**
- * @attention Do not use the global radio state in here, as @a subspace can be part of
- * any Sector, not the one chosen for wall rendering.
- */
 void Rend_RadioSubspaceEdges(ConvexSubspace const &subspace)
 {
     if(!::rendFakeRadio) return;
@@ -1275,17 +1272,20 @@ void Rend_RadioSubspaceEdges(ConvexSubspace const &subspace)
     // Any need to continue?
     if(shadowDark < .0001f) return;
 
-    auto const eyeToSurface = Vector3f(Rend_EyeOrigin().xz() - subspace.poly().center(), 0);
-
-    // We need to check all the shadow lines linked to this subspace for the purpose
-    // of fakeradio shadowing.
     static ShadowEdge shadowEdges[2/*left, right*/];  // Keep these around (needed often).
 
-    subspace.forAllShadowLines([&cluster, &shadowDark, &eyeToSurface] (LineSide &side)
+    // Can skip drawing for Planes that do not face the viewer - find the 2D vector to subspace center.
+    auto const eyeToSubspace = Vector2f(Rend_EyeOrigin().xz() - subspace.poly().center());
+
+    // All shadow geometry uses the same texture (i.e., none) - use the same list.
+    DrawList &shadowList     = rendSys().drawLists().find(DrawListSpec(::renderWireframe? UnlitGeom : ShadowGeom));
+
+    // Process all LineSides linked to this subspace as potential shadow casters.
+    subspace.forAllShadowLines([&cluster, &shadowDark, &eyeToSubspace, &shadowList] (LineSide &side)
     {
         DENG2_ASSERT(side.hasSections() && !side.line().definesPolyobj() && side.leftHEdge());
 
-        // Process sides only once per frame (we only want to draw each shadow set once).
+        // Process each only once per frame (we only want to draw a shadow set once).
         if(side.shadowVisCount() != R_FrameCount())
         {
             side.setShadowVisCount(R_FrameCount());  // Mark processed.
@@ -1298,24 +1298,26 @@ void Rend_RadioSubspaceEdges(ConvexSubspace const &subspace)
                 if(!plane.receivesShadow()) continue;
 
                 // Skip Planes facing away from the viewer.
-                if(Vector3f(eyeToSurface, Rend_EyeOrigin().y - plane.heightSmoothed())
+                if(Vector3f(eyeToSubspace, Rend_EyeOrigin().y - plane.heightSmoothed())
                         .dot(plane.surface().normal()) >= 0)
                 {
                     HEdge const *hEdges[2/*left, right*/] = { side.leftHEdge(), side.leftHEdge() };
 
                     if(prepareFlatShadowEdges(shadowEdges, hEdges, pln, shadowDark))
                     {
+                        bool const haveFloor = plane.surface().normal()[2] > 0;
+
                         // Make geometry.
                         Store &buffer = rendSys().buffer();
+                        gl::Primitive primitive;
                         DrawList::Indices indices =
-                            makeFlatShadowGeometry(buffer, shadowEdges, plane.surface().normal()[2] > 0, shadowDark);
+                            makeFlatShadowGeometry(buffer, primitive, shadowEdges, shadowDark, haveFloor);
 
                         // Skip drawing entirely?
                         if(::rendFakeRadio == 2) continue;
 
                         // Write geometry.
-                        rendSys().drawLists().find(DrawListSpec(::renderWireframe? UnlitGeom : ShadowGeom))
-                                     .write(buffer, gl::TriangleFan, indices);
+                        shadowList.write(buffer, primitive, indices);
                     }
                 }
             }
