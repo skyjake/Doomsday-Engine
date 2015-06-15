@@ -1,12 +1,12 @@
-/** @file template.h.template Brief description of the header file.
+/** @file template.h.template  Brief description of the header file.
  * @ingroup group
  *
  * Long summary of the functionality.
  *
  * @todo Update the fields above as appropriate.
  *
- * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2015 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -22,7 +22,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_ _H
-#define LIBDENG_ _H
+#ifndef COMPONENT_MODULE_H
+#define COMPONENT_MODULE_H
 
-#endif // LIBDENG_ _H
+#endif // COMPONENT_MODULE_H

@@ -1,10 +1,10 @@
-/** @file template.c.template Brief description of the source file.
+/** @file template.cpp.template  Brief description of the source file.
  * @ingroup group
  *
  * @todo Update the fields above as appropriate.
  *
- * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2015 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
