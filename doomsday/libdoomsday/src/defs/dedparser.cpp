@@ -1783,9 +1783,14 @@ DENG2_PIMPL(DEDParser)
                     }
                     else
                     {
-                        LOG_RES_WARNING("Ignoring unknown Music \"%s\" in %s on line #%i")
-                                << otherMusicId << (source? source->fileName : "?")
-                                << (source? source->lineNumber : 0);
+                        // Don't print a warning about the translated MAPINFO definitions
+                        // (see issue #2083).
+                        if(!source || source->fileName != "[TranslatedMapInfos]")
+                        {
+                            LOG_RES_WARNING("Ignoring unknown Music \"%s\" in %s on line #%i")
+                                    << otherMusicId << (source? source->fileName : "?")
+                                    << (source? source->lineNumber : 0);
+                        }
 
                         // We'll read into a dummy definition.
                         defn::Music(dummyMusic).resetToDefaults();
