@@ -450,6 +450,7 @@ String ScriptedInfo::absolutePathInContext(Record const &context, String const &
     if(context.has(VAR_SOURCE))
     {
         String src = context[VAR_SOURCE].value<TextValue>();
+        // Exclude the possible line number following a colon.
         int pos = src.lastIndexOf(':');
         if(pos < 0) return src / relativePath;
         src.truncate(pos);

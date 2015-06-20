@@ -30,6 +30,9 @@
  * The model renderer prepares available model assets for drawing (using ModelDrawable),
  * and keeps the set of needed ModelDrawable instances in memory.
  *
+ * ModelRenderer also owns the shaders for rendering models, and maintains the set of GL
+ * uniforms for rendering models, including transformation and lighting data.
+ *
  * @todo Consider renaming the class: the term "renderer" has the connotation of actually
  * performing rendering, while in practice the ModelDrawables will be drawing themselves.
  * This is the top-level class responsible for model assets and all their associated
