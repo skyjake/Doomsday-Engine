@@ -41,7 +41,8 @@ if (NOT TARGET libassimp)
 	                ${ASSIMP_LIBRARY_DIRS}
 	                /usr/local/lib
 	        )
-	    else ()
+        endif ()
+        if (NOT LIBASSIMP)
 	        # Try to find assimp manually.
 	        find_library (LIBASSIMP NAMES assimp assimpd
 	            PATHS 
