@@ -42,6 +42,8 @@
 #  include "world/lineowner.h"
 #  include "resource/materialdetaillayer.h"
 #  include "resource/materialshinelayer.h"
+
+#  include "render/rend_fakeradio.h"
 #endif
 
 #ifdef WIN32
@@ -107,7 +109,7 @@ void Line::Side::Segment::setFrontFacing(bool yes)
     d->frontFacing = yes;
 }
 
-#endif // __CLIENT__
+#endif  // __CLIENT__
 
 DENG2_PIMPL_NOREF(Line::Side)
 #ifdef __CLIENT__
@@ -143,6 +145,28 @@ DENG2_PIMPL_NOREF(Line::Side)
         Sections(Side &side) : middle(side), bottom(side), top(side) {}
     };
     std::unique_ptr<Sections> sections;
+
+#ifdef __CLIENT__
+    /**
+     * Stores data for FakeRadio.
+     */
+    struct RadioData
+    {
+        de::dint updateFrame = 0;
+        edgespan_t spans[2];              ///< { bottom, top }
+        shadowcorner_t topCorners[2];     ///< { left, right }
+        shadowcorner_t bottomCorners[2];  ///< { left, right }
+        shadowcorner_t sideCorners[2];    ///< { left, right }
+
+        RadioData()
+        {
+            de::zap(spans);
+            de::zap(topCorners);
+            de::zap(bottomCorners);
+            de::zap(sideCorners);
+        }
+    } radioData;
+#endif
 
     ~Instance() { qDeleteAll(segments); }
 
@@ -181,6 +205,24 @@ DENG2_PIMPL_NOREF(Line::Side)
     }
 
 #ifdef __CLIENT__
+    void updateRadioCorner(shadowcorner_t &sc, dfloat openness, Plane *proximityPlane = nullptr, bool top = false)
+    {
+        DENG2_ASSERT(sector);
+        sc.corner    = openness;
+        sc.proximity = proximityPlane;
+        if(sc.proximity)
+        {
+            // Determine relative height offsets (affects shadow map selection).
+            sc.pHeight = sc.proximity->heightSmoothed();
+            sc.pOffset = sc.pHeight - sector->plane(top? Sector::Ceiling : Sector::Floor).heightSmoothed();
+        }
+        else
+        {
+            sc.pOffset = 0;
+            sc.pHeight = 0;
+        }
+    }
+
     /// Observes Line FlagsChange
     void lineFlagsChanged(Line &line, dint oldFlags)
     {
@@ -690,7 +732,62 @@ void Line::Side::fixMissingMaterials()
     }
 }
 
-#endif // __CLIENT__
+shadowcorner_t const &Line::Side::radioCornerTop(bool right) const
+{
+    return d->radioData.topCorners[dint(right)];
+}
+
+shadowcorner_t const &Line::Side::radioCornerBottom(bool right) const
+{
+    return d->radioData.bottomCorners[dint(right)];
+}
+
+shadowcorner_t const &Line::Side::radioCornerSide(bool right) const
+{
+    return d->radioData.sideCorners[dint(right)];
+}
+
+void Line::Side::setRadioCornerTop(bool right, dfloat openness, Plane *proximityPlane)
+{
+    d->updateRadioCorner(d->radioData.topCorners[dint(right)], openness, proximityPlane, true/*top*/);
+}
+
+void Line::Side::setRadioCornerBottom(bool right, dfloat openness, Plane *proximityPlane)
+{
+    d->updateRadioCorner(d->radioData.topCorners[dint(right)], openness, proximityPlane, false/*bottom*/);
+}
+
+void Line::Side::setRadioCornerSide(bool right, dfloat openness)
+{
+    d->updateRadioCorner(d->radioData.sideCorners[dint(right)], openness);
+}
+
+edgespan_t const &Line::Side::radioEdgeSpan(bool top) const
+{
+    return d->radioData.spans[dint(top)];
+}
+
+void Line::Side::setRadioEdgeSpan(bool top, bool right, ddouble length)
+{
+    edgespan_t &span = d->radioData.spans[dint(top)];
+    span.length = line().length() + length;
+    if(!right)
+    {
+        span.shift = span.length;
+    }
+}
+
+de::dint Line::Side::radioUpdateFrame() const
+{
+    return d->radioData.updateFrame;
+}
+
+void Line::Side::setRadioUpdateFrame(de::dint newFrame)
+{
+    d->radioData.updateFrame = newFrame;
+}
+
+#endif  // __CLIENT__
 
 dint Line::Side::property(DmuArgs &args) const
 {

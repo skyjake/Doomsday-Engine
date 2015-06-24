@@ -1,7 +1,7 @@
-/** @file render/shadowedge.h FakeRadio Shadow Edge Geometry
+/** @file shadowedge.h  FakeRadio Shadow Edge Geometry
  *
- * @authors Copyright &copy; 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,15 +18,15 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RENDER_FAKERADIO_SHADOWEDGE_H
-#define DENG_RENDER_FAKERADIO_SHADOWEDGE_H
+#ifndef CLIENT_RENDER_SHADOWEDGE_H
+#define CLIENT_RENDER_SHADOWEDGE_H
 
 #include <de/types.h>
 #include <de/Vector>
 
 namespace de {
 
-static coord_t const SHADOWEDGE_OPEN_THRESHOLD = 8; // world units (Z axis)
+static coord_t const SHADOWEDGE_OPEN_THRESHOLD = 8;  ///< World units (Z axis).
 
 class HEdge;
 
@@ -38,9 +38,9 @@ class ShadowEdge
 public:
     ShadowEdge();
 
-    void init(HEdge const &leftMostHEdge, int edge);
+    void init(HEdge const &leftMostHEdge, dint edge);
 
-    void prepare(int planeIndex);
+    void prepare(dint planeIndex);
 
     /**
      * Returns the "side openness" factor for the shadow edge. This factor is
@@ -49,7 +49,7 @@ public:
      *
      * @see sectorOpenness()
      */
-    float openness() const;
+    dfloat openness() const;
 
     /**
      * Returns the "sector openness" factor for the shadow edge. This factor is
@@ -58,14 +58,14 @@ public:
      *
      * @see openness()
      */
-    float sectorOpenness() const;
+    dfloat sectorOpenness() const;
 
     /**
      * Determines strength of the shadow to be cast at this edge.
      *
      * @param darkness  Normalized blending factor (0..1).
      */
-    float shadowStrength(dfloat darkness) const;
+    dfloat shadowStrength(dfloat darkness) const;
 
     /**
      * Returns the origin of the @em outer vertex (that which is incident with
@@ -97,6 +97,6 @@ private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace de
+}  // namespace de
 
-#endif // DENG_RENDER_FAKERADIO_SHADOWEDGE_H
+#endif  // CLIENT_RENDER_SHADOWEDGE_H

@@ -1,7 +1,7 @@
 /** @file line.h  World map line.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_LINE_H
-#define DENG_WORLD_LINE_H
+#ifndef WORLD_LINE_H
+#define WORLD_LINE_H
 
 #include <functional>
 #include <QFlags>
@@ -33,11 +33,14 @@
 #include "Vertex"
 
 class LineOwner;
+class Plane;
 class Sector;
 class Surface;
 
 #ifdef __CLIENT__
 class BiasDigest;
+struct edgespan_t;
+struct shadowcorner_t;
 #endif
 
 /**
@@ -181,7 +184,7 @@ public:
              */
             void setFrontFacing(bool yes = true);
 
-#endif // __CLIENT__
+#endif  // __CLIENT__
 
         private:
             DENG2_PRIVATE(d)
@@ -476,7 +479,35 @@ public:
          */
         void fixMissingMaterials();
 
-#endif // __CLIENT__
+        /**
+         * Provides access to the FakeRadio shadowcorner_t data.
+         */
+        shadowcorner_t const &radioCornerTop   (bool right) const;
+        shadowcorner_t const &radioCornerBottom(bool right) const;
+        shadowcorner_t const &radioCornerSide  (bool right) const;
+
+        /**
+         * Change the FakeRadio side corner properties.
+         */
+        void setRadioCornerTop   (bool right, dfloat openness, Plane *proximityPlane = nullptr);
+        void setRadioCornerBottom(bool right, dfloat openness, Plane *proximityPlane = nullptr);
+        void setRadioCornerSide  (bool right, dfloat openness);
+
+        /**
+         * Provides access to the FakeRadio edgespan_t data.
+         */
+        edgespan_t const &radioEdgeSpan(bool top) const;
+
+        /**
+         * Change the FakeRadio "edge span" metrics.
+         * @todo replace shadow edge enumeration with a shadow corner enumeration.
+         */
+        void setRadioEdgeSpan(bool top, bool right, de::ddouble length);
+
+        de::dint radioUpdateFrame() const;
+        void setRadioUpdateFrame(de::dint newFrame);
+
+#endif  // __CLIENT__
 
     protected:
         int property(DmuArgs &args) const;

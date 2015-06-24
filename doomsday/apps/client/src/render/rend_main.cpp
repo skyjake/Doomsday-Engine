@@ -2668,28 +2668,21 @@ static void writeWallSection(HEdge &hedge, dint section,
         curSectorLightLevel = side.sector().lightLevel();
     }
 
-    Vector3f posCoords[4];
-    posCoords[0] =  leftEdge.bottom().origin();
-    posCoords[1] =     leftEdge.top().origin();
-    posCoords[2] = rightEdge.bottom().origin();
-    posCoords[3] =    rightEdge.top().origin();
+    Vector3f const posCoords[] = {
+        leftEdge .bottom().origin(),
+        leftEdge .top   ().origin(),
+        rightEdge.bottom().origin(),
+        rightEdge.top   ().origin()
+    };
 
     // Draw this section.
     bool wroteOpaque = renderWorldPoly(posCoords, 4, parm, matAnimator);
     if(wroteOpaque)
     {
         // Render FakeRadio for this section?
-        if(!wallSpec.flags.testFlag(WallSpec::NoFakeRadio) && !skyMasked &&
-           !(parm.glowing > 0) && curSectorLightLevel > 0)
+        if(!wallSpec.flags.testFlag(WallSpec::NoFakeRadio) && !skyMasked && !(parm.glowing > 0))
         {
-            Rend_RadioUpdateForLineSide(side);
-
-            // Determine the shadow properties.
-            /// @todo Make cvars out of constants.
-            dfloat shadowSize = 2 * (8 + 16 - curSectorLightLevel * 16);
-            dfloat shadowDark = Rend_RadioCalcShadowDarkness(curSectorLightLevel);
-
-            Rend_RadioWallSection(leftEdge, rightEdge, shadowDark, shadowSize);
+            Rend_RadioWallSection(leftEdge, rightEdge, ::curSectorLightLevel);
         }
     }
 

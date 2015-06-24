@@ -39,21 +39,11 @@
 
 using namespace de;
 
-static LineSideRadioData *lineSideRadioData;
-
-LineSideRadioData &Rend_RadioDataForLineSide(LineSide &side)
-{
-    return lineSideRadioData[side.line().indexInMap() * 2 + (side.isBack()? 1 : 0)];
-}
-
 void Rend_RadioInitForMap(Map &map)
 {
     Time begunAt;
 
     LOG_AS("Rend_RadioInitForMap");
-
-    lineSideRadioData = reinterpret_cast<LineSideRadioData *>(
-        Z_Calloc(sizeof(*lineSideRadioData) * map.sideCount(), PU_MAP, 0));
 
     map.forAllVertexs([] (Vertex &vertex)
     {
