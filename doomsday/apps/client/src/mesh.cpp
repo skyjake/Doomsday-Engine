@@ -1,6 +1,6 @@
 /** @file mesh.cpp  Mesh Geometry Data Structure.
  *
- * @authors Copyright © 2008-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2008-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -61,9 +61,9 @@ MapElement const &Mesh::Element::mapElement() const
     return const_cast<Mesh::Element *>(this)->mapElement();
 }
 
-void Mesh::Element::setMapElement(MapElement const *newMapElement)
+void Mesh::Element::setMapElement(MapElement *newMapElement)
 {
-    d->mapElement = const_cast<MapElement *>(newMapElement);
+    d->mapElement = newMapElement;
 }
 
 DENG2_PIMPL_NOREF(Mesh)
@@ -90,28 +90,28 @@ void Mesh::clear()
 
 Vertex *Mesh::newVertex(Vector2d const &origin)
 {
-    Vertex *vtx = new Vertex(*this, origin);
+    auto *vtx = new Vertex(*this, origin);
     d->vertexs.append(vtx);
     return vtx;
 }
 
 HEdge *Mesh::newHEdge(Vertex &vertex)
 {
-    HEdge *hedge = new HEdge(*this, vertex);
+    auto *hedge = new HEdge(*this, &vertex);
     d->hedges.append(hedge);
     return hedge;
 }
 
 Face *Mesh::newFace()
 {
-    Face *face = new Face(*this);
+    auto *face = new Face(*this);
     d->faces.append(face);
     return face;
 }
 
 void Mesh::removeVertex(Vertex &vertex)
 {
-    int sizeBefore = d->vertexs.size();
+    dint sizeBefore = d->vertexs.size();
     d->vertexs.removeOne(&vertex);
     if(sizeBefore != d->vertexs.size())
     {
@@ -121,7 +121,7 @@ void Mesh::removeVertex(Vertex &vertex)
 
 void Mesh::removeHEdge(HEdge &hedge)
 {
-    int sizeBefore = d->hedges.size();
+    dint sizeBefore = d->hedges.size();
     d->hedges.removeOne(&hedge);
     if(sizeBefore != d->hedges.size())
     {
@@ -131,7 +131,7 @@ void Mesh::removeHEdge(HEdge &hedge)
 
 void Mesh::removeFace(Face &face)
 {
-    int sizeBefore = d->faces.size();
+    dint sizeBefore = d->faces.size();
     d->faces.removeOne(&face);
     if(sizeBefore != d->faces.size())
     {
@@ -154,4 +154,4 @@ Mesh::HEdges const &Mesh::hedges() const
     return d->hedges;
 }
 
-} // namespace de
+}  // namespace de

@@ -2965,22 +2965,21 @@ static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
 {
     // Determine strip generation behavior.
     ClockDirection const direction   = Clockwise;
-    bool const buildTexCoords        = CPP_BOOL(devRendSkyMode);
-    bool const splitOnMaterialChange = (devRendSkyMode && renderTextures != 2);
-
-    // Configure the strip builder wrt vertex attributes.
-    TriangleStripBuilder stripBuilder(buildTexCoords);
-
-    // Configure the strip build state (we'll most likely need to break
-    // edge loop into multiple strips).
-    HEdge *startNode           = nullptr;
-    coord_t startZBottom       = 0;
-    coord_t startZTop          = 0;
-    Material *startMaterial    = nullptr;
-    dfloat startMaterialOffset = 0;
+    bool const splitOnMaterialChange = (::devRendSkyMode && ::renderTextures != 2);
 
     // Determine the relative sky plane (for monitoring material changes).
-    dint relPlane = fixType == SkyFixEdge::Upper? Sector::Ceiling : Sector::Floor;
+    dint const relPlane = (fixType == SkyFixEdge::Upper ? Sector::Ceiling : Sector::Floor);
+
+    // Configure the strip builder wrt vertex attributes.
+    TriangleStripBuilder stripBuilder(CPP_BOOL(::devRendSkyMode));
+
+    // Configure the strip build state (we'll most likely need to break edge loop
+    // into multiple strips).
+    Material *scanMaterial    = nullptr;
+    dfloat scanMaterialOffset = 0;
+    HEdge *scanNode           = nullptr;
+    coord_t scanZBottom       = 0;
+    coord_t scanZTop          = 0;
 
     // Begin generating geometry.
     HEdge *base  = curSubspace->poly().hedge();
@@ -2996,13 +2995,13 @@ static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
         }
 
         // Add a first (left) edge to the current strip?
-        if(!startNode && hedge->hasMapElement())
+        if(!scanNode && hedge->hasMapElement())
         {
-            startMaterialOffset = hedge->mapElementAs<LineSideSegment>().lineSideOffset();
+            scanMaterialOffset = hedge->mapElementAs<LineSideSegment>().lineSideOffset();
 
             // Prepare the edge geometry
-            SkyFixEdge skyEdge(*hedge, fixType, (direction == Anticlockwise)? Line::To : Line::From,
-                               startMaterialOffset);
+            SkyFixEdge skyEdge(*hedge, fixType, (direction == Anticlockwise ? Line::To : Line::From),
+                               scanMaterialOffset);
 
             if(skyEdge.isValid() && skyEdge.bottom().z() < skyEdge.top().z())
             {
@@ -3011,41 +3010,41 @@ static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
                 stripBuilder << skyEdge;
 
                 // Update the strip build state.
-                startNode     = hedge;
-                startZBottom  = skyEdge.bottom().z();
-                startZTop     = skyEdge.top().z();
-                startMaterial = skyMaterial;
+                scanNode     = hedge;
+                scanZBottom  = skyEdge.bottom().z();
+                scanZTop     = skyEdge.top   ().z();
+                scanMaterial = skyMaterial;
             }
         }
 
         bool beginNewStrip = false;
 
         // Add the i'th (right) edge to the current strip?
-        if(startNode)
+        if(scanNode)
         {
             // Stop if we've reached a "null" edge.
             bool endStrip = false;
             if(hedge->hasMapElement())
             {
-                startMaterialOffset += hedge->mapElementAs<LineSideSegment>().length()
-                                     * (direction == Anticlockwise? -1 : 1);
+                scanMaterialOffset += hedge->mapElementAs<LineSideSegment>().length()
+                                    * (direction == Anticlockwise? -1 : 1);
 
                 // Prepare the edge geometry
                 SkyFixEdge skyEdge(*hedge, fixType, (direction == Anticlockwise)? Line::From : Line::To,
-                                   startMaterialOffset);
+                                   scanMaterialOffset);
 
                 if(!(skyEdge.isValid() && skyEdge.bottom().z() < skyEdge.top().z()))
                 {
                     endStrip = true;
                 }
                 // Must we split the strip here?
-                else if(hedge != startNode &&
-                        (!de::fequal(skyEdge.bottom().z(), startZBottom) ||
-                         !de::fequal(skyEdge.top().z(), startZTop) ||
-                         (splitOnMaterialChange && skyMaterial != startMaterial)))
+                else if(hedge != scanNode &&
+                        (   !de::fequal(skyEdge.bottom().z(), scanZBottom)
+                         || !de::fequal(skyEdge.top   ().z(), scanZTop)
+                         || (splitOnMaterialChange && skyMaterial != scanMaterial)))
                 {
-                    endStrip = true;
-                    beginNewStrip = true; // We'll continue from here.
+                    endStrip      = true;
+                    beginNewStrip = true;  // We'll continue from here.
                 }
                 else
                 {
@@ -3061,17 +3060,17 @@ static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
             if(endStrip || &hedge->neighbor(direction) == base)
             {
                 // End the current strip.
-                startNode = nullptr;
+                scanNode = nullptr;
 
                 // Take ownership of the built geometry.
                 PositionBuffer *positions = nullptr;
                 TexCoordBuffer *texcoords = nullptr;
-                dint numVerts = stripBuilder.take(&positions, &texcoords);
+                dint const numVerts = stripBuilder.take(&positions, &texcoords);
 
                 // Write the strip geometry to the render lists.
                 writeSkyMaskStrip(numVerts, positions->constData(),
-                                  texcoords? texcoords->constData() : nullptr,
-                                  startMaterial);
+                                  (texcoords ? texcoords->constData() : nullptr),
+                                  scanMaterial);
 
                 delete positions;
                 delete texcoords;
@@ -3111,65 +3110,92 @@ static coord_t skyPlaneZ(dint skyCap)
     return cluster.visPlane(relPlane).heightSmoothed();
 }
 
-/// @param skyCap  @ref skyCapFlags.
-static void writeSubspaceSkyMaskCap(dint skyCap)
+static DrawList::Indices makeFlatSkyMaskGeometry(Store &verts, gl::Primitive &primitive,
+    ConvexSubspace const &subspace, coord_t worldZPosition = 0, ClockDirection direction = Clockwise)
 {
-    // Caps are unnecessary in sky debug mode (will be drawn as regular planes).
-    if(devRendSkyMode) return;
-    if(!skyCap) return;
+    Face const &poly = subspace.poly();
+    HEdge *fanBase   = subspace.fanBase();
 
-    Vector3f *posCoords;
-    duint vertCount = buildSubspacePlaneGeometry((skyCap & SKYCAP_UPPER)? Anticlockwise : Clockwise,
-                                                 skyPlaneZ(skyCap), &posCoords);
-
-    Store &buffer = rendSys().buffer();
-    duint base = buffer.allocateVertices(vertCount);
+    // Assign indices.
+    duint const vertCount = poly.hedgeCount() + (!fanBase? 2 : 0);
+    duint const base      = verts.allocateVertices(vertCount);
     DrawList::Indices indices;
     indices.resize(vertCount);
     for(duint i = 0; i < vertCount; ++i)
     {
         indices[i] = base + i;
-        buffer.posCoords[indices[i]] = posCoords[i];
     }
 
-    rendSys().drawLists().find(DrawListSpec(SkyMaskGeom))
-                 .write(buffer, gl::TriangleFan, indices);
+    //
+    // Build geometry.
+    //
+    primitive = gl::TriangleFan;
+    duint n = 0;
+    if(!fanBase)
+    {
+        verts.posCoords[indices[n++]] = Vector3f(poly.center(), worldZPosition);
+    }
+    HEdge *baseNode = fanBase? fanBase : poly.hedge();
+    HEdge *node = baseNode;
+    do
+    {
+        verts.posCoords[indices[n++]] = Vector3f(node->origin(), worldZPosition);
+    } while((node = &node->neighbor(direction)) != baseNode);
+    if(!fanBase)
+    {
+        verts.posCoords[indices[n  ]] = Vector3f(node->origin(), worldZPosition);
+    }
 
-    R_FreeRendVertices(posCoords);
+    return indices;
 }
 
 /// @param skyCap  @ref skyCapFlags
 static void writeSubspaceSkyMask(dint skyCap = SKYCAP_LOWER | SKYCAP_UPPER)
 {
-    SectorCluster &cluster = curSubspace->cluster();
+    DENG2_ASSERT(curSubspace);
 
-    // Any work to do?
-    // Sky caps are only necessary in sectors with sky-masked planes.
-    if((skyCap & SKYCAP_LOWER) &&
-       !cluster.visFloor().surface().hasSkyMaskedMaterial())
-    {
-        skyCap &= ~SKYCAP_LOWER;
-    }
-    if((skyCap & SKYCAP_UPPER) &&
-       !cluster.visCeiling().surface().hasSkyMaskedMaterial())
-    {
-        skyCap &= ~SKYCAP_UPPER;
-    }
-
+    // No work to do?
     if(!skyCap) return;
 
+    SectorCluster &cluster = curSubspace->cluster();
+    DrawList &skyMaskList  = rendSys().drawLists().find(DrawListSpec(SkyMaskGeom));
+
     // Lower?
-    if(skyCap & SKYCAP_LOWER)
+    if((skyCap & SKYCAP_LOWER) && cluster.visFloor().surface().hasSkyMaskedMaterial())
     {
         writeSubspaceSkyMaskStrips(SkyFixEdge::Lower);
-        writeSubspaceSkyMaskCap(SKYCAP_LOWER);
+
+        // Draw a cap? (handled as a regular plane in sky-debug mode).
+        if(!::devRendSkyMode)
+        {
+            // Make geometry.
+            Store &verts = rendSys().buffer();
+            gl::Primitive primitive;
+            DrawList::Indices indices =
+                makeFlatSkyMaskGeometry(verts, primitive, *curSubspace, skyPlaneZ(skyCap), Clockwise);
+
+            // Write geometry.
+            skyMaskList.write(verts, primitive, indices);
+        }
     }
 
     // Upper?
-    if(skyCap & SKYCAP_UPPER)
+    if((skyCap & SKYCAP_UPPER) && cluster.visCeiling().surface().hasSkyMaskedMaterial())
     {
         writeSubspaceSkyMaskStrips(SkyFixEdge::Upper);
-        writeSubspaceSkyMaskCap(SKYCAP_UPPER);
+
+        // Draw a cap? (handled as a regular plane in sky-debug mode).
+        if(!::devRendSkyMode)
+        {
+            // Make geometry.
+            Store &verts = rendSys().buffer();
+            gl::Primitive primitive;
+            DrawList::Indices indices =
+                makeFlatSkyMaskGeometry(verts, primitive, *curSubspace, skyPlaneZ(skyCap), Anticlockwise);
+
+            // Write geometry.
+            skyMaskList.write(verts, primitive, indices);
+        }
     }
 }
 

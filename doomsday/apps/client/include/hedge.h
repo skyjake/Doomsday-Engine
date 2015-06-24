@@ -1,6 +1,6 @@
-/** @file hedge.h Mesh Geometry Half-Edge.
+/** @file hedge.h  Mesh Geometry Half-Edge.
  *
- * @authors Copyright © 2011-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2011-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,8 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_DATA_MESH_HEDGE_H
-#define DENG_DATA_MESH_HEDGE_H
+#ifndef DATA_MESH_HEDGE_H
+#define DATA_MESH_HEDGE_H
 
 #include <de/Error>
 #include <de/Vector>
@@ -36,6 +36,9 @@ namespace de {
 class HEdge : public MeshElement
 {
 public:
+    /// Required vertex is missing. @ingroup errors
+    DENG2_ERROR(MissingVertexError);
+
     /// Required twin half-edge is missing. @ingroup errors
     DENG2_ERROR(MissingTwinError);
 
@@ -46,7 +49,12 @@ public:
     DENG2_ERROR(MissingNeighborError);
 
 public:
-    HEdge(Mesh &mesh, Vertex &vertex);
+    HEdge(Mesh &mesh, Vertex *vertex = nullptr);
+
+    /**
+     * Returns @c true iff a vertex is linked to the half-edge.
+     */
+    bool hasVertex() const;
 
     /**
      * Returns the vertex of the half-edge.
@@ -54,8 +62,17 @@ public:
     Vertex &vertex() const;
 
     /**
-     * Convenient accessor returning the origin coordinates for the vertex of
-     * the half-edge.
+     * Change the linked Vertex of the half-edge.
+     *
+     * @param newVertex  Vertex to attribute as the @em half-edge. Ownership is unaffected.
+     *                   Use @c nullptr (to clear the attribution).
+     *
+     * @see hasVertex(), vertex()
+     */
+    void setVertex(Vertex *newVertex);
+
+    /**
+     * Convenient accessor returning the origin coordinates for the vertex of the half-edge.
      *
      * @see vertex()
      */
@@ -74,16 +91,15 @@ public:
     /**
      * Change the linked @em twin half-edge.
      *
-     * @param newTwin  New half-edge to attribute as the @em twin half-edge.
-     *                 Ownership is unaffected. Can be @c 0 (to clear the
-     *                 attribution).
+     * @param newTwin  HEdge to attribute as the @em twin half-edge. Ownership is unaffected.
+     *                 Use @c nullptr (to clear the attribution).
      *
      * @see hasTwin(), twin()
      */
-    void setTwin(HEdge const *newTwin);
+    void setTwin(HEdge *newTwin);
 
     /**
-     * Returns @c true iff the half-edge is part of some Face geometry.
+     * Returns @c true if the half-edge is part of some Face geometry.
      */
     bool hasFace() const;
 
@@ -97,88 +113,78 @@ public:
     /**
      * Change the Face to which the half-edge is attributed.
      *
-     * @param newFace  New Face to attribute to the half-edge. Ownership is
-     *                 unaffected. Can be @c 0 (to clear the attribution).
+     * @param newFace  New Face to attribute to the half-edge. Ownership is unaffected. Use
+     *                 @c nullptr (to clear the attribution).
      *
      * @see hasFace(), face()
      */
-    void setFace(Face const *newFace);
+    void setFace(Face *newFace);
 
     /**
-     * Returns @c true iff the half-edge has a neighbor in the specifed direction
-     * around the face of the polyon.
+     * Returns @c true if the half-edge has a neighbor in the specifed direction.
      */
     bool hasNeighbor(ClockDirection direction) const;
 
     /**
-     * Returns the neighbor half-edge in the specified @a direction around the
-     * face of the polygon.
+     * Returns the neighbor half-edge in the specified @a direction.
      *
-     * @param direction  Relative direction for desired neighbor half-edge.
+     * @param direction  Relative direction of the desired neighbor half-edge.
      */
     HEdge &neighbor(ClockDirection direction) const;
 
     /**
-     * Change the neighbor half-edge in the specified @a direction around the
-     * face of the polygon.
+     * Change the neighbor half-edge in the specified @a direction.
      *
      * @param direction    Relative direction for the new neighbor half-edge.
-     * @param newNeighbor  Half-edge to attribute as the new neighbor.
-     *                     Ownership is unaffected.
+     * @param newNeighbor  Half-edge to attribute as the new neighbor. Ownership is unaffected.
      *
      * @see hasNeighbor(), neighbor()
      */
-    void setNeighbor(ClockDirection direction, HEdge const *newNeighbor);
+    void setNeighbor(ClockDirection direction, HEdge *newNeighbor);
 
     /**
-     * Returns @c true iff the half-edge has a next (clockwise) neighbor around
-     * the face of the polygon.
+     * Returns @c true if the half-edge has a next (clockwise) neighbor.
      *
      * @see hasNeighbor()
      */
     inline bool hasNext() const { return hasNeighbor(Clockwise); }
 
     /**
-     * Returns the @em clockwise neighbor half-edge around the face of the
-     * polygon.
+     * Returns the @em clockwise neighbor half-edge.
      *
      * @see neighbor(), hasNext()
      */
     inline HEdge &next() const { return neighbor(Clockwise); }
 
     /**
-     * Change the HEdge attributed as the next (clockwise) neighbor of "this"
-     * half-edge.
+     * Change the HEdge attributed as the next (clockwise) neighbor.
      *
-     * @param newNext  Half-edge to attribute as the new next (clockwise)
-     *                 neighbor. Ownership is unaffected.
+     * @param newNext  Half-edge to attribute as the next (clockwise) neighbor. Ownership is
+     *                 unaffected.
      *
      * @see setNeighbor(), next()
      */
     inline void setNext(HEdge *newNext) { setNeighbor(Clockwise, newNext); }
 
     /**
-     * Returns @c true iff the half-edge has a previous (anticlockwise) neighbor
-     * around the face of the polygon.
+     * Returns @c true iff the half-edge has a previous (anticlockwise) neighbor.
      *
      * @see hasNeighbor()
      */
     inline bool hasPrev() const { return hasNeighbor(Anticlockwise); }
 
     /**
-     * Returns the @em anticlockwise neighbor half-edge around the face of the
-     * polygon.
+     * Returns the @em anticlockwise neighbor half-edge.
      *
      * @see neighbor(), hasPrev()
      */
     inline HEdge &prev() const { return neighbor(Anticlockwise); }
 
     /**
-     * Change the HEdge attributed as the next (clockwise) neighbor of "this"
-     * half-edge.
+     * Change the HEdge attributed as the next (clockwise) neighbor.
      *
-     * @param newPrev  Half-edge to attribute as the new previous (anticlockwise)
-     *                 neighbor. Ownership is unaffected.
+     * @param newPrev  Half-edge to attribute as the previous (anticlockwise) neighbor.
+     *                 Ownership is unaffected.
      *
      * @see setNeighbor(), prev()
      */
@@ -188,6 +194,6 @@ private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace de
+}  // namespace de
 
-#endif // DENG_DATA_MESH_HEDGE_H
+#endif  // DATA_MESH_HEDGE_H

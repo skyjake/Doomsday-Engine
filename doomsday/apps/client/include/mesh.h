@@ -1,6 +1,6 @@
 /** @file mesh.h  Mesh Geometry Data Structure.
  *
- * @authors Copyright © 2008-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2008-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,8 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_DATA_MESH_H
-#define DENG_DATA_MESH_H
+#ifndef DATA_MESH_H
+#define DATA_MESH_H
 
 #include <QList>
 
@@ -35,8 +35,8 @@ class Face;
 class HEdge;
 
 /**
- * Two dimensioned mesh geometry data structure employing the half-edge model
- * (more formally known as "Doubly connected edge list" (DECL)).
+ * Two dimensioned mesh geometry data structure employing the half-edge model (more formally
+ * known as "Doubly connected edge list" (DECL)).
  *
  * @see http://en.wikipedia.org/wiki/Doubly_connected_edge_list
  *
@@ -99,13 +99,12 @@ public:
         /**
          * Change the map element to which the mesh element is attributed.
          *
-         * @param newMapElement  MapElement to attribute to the mesh element.
-         *                       Ownership is unaffected. Can be @c 0 (to
-         *                       clear the attribution).
+         * @param newMapElement  MapElement to attribute to the mesh element. Ownership is
+         *                       unaffected. Use @c nullptr (to clear the attribution).
          *
          * @see mapElement()
          */
-        void setMapElement(MapElement const *newMapElement);
+        void setMapElement(MapElement *newMapElement);
 
     private:
         DENG2_PRIVATE(d)
@@ -136,20 +135,20 @@ public:
     Face *newFace();
 
     /**
-     * Remove the specified @a vertex from the mesh, destroying the vertex.
-     * If @a vertex is not owned by the mesh then nothing will happen.
+     * Remove the specified @a vertex from the mesh, destroying the vertex. If @a vertex is
+     * not owned by the mesh then nothing will happen.
      */
     void removeVertex(Vertex &vertex);
 
     /**
-     * Remove the specified @a hedge from the mesh, destroying the half-edge.
-     * If @a hedge is not owned by the mesh then nothing will happen.
+     * Remove the specified @a hedge from the mesh, destroying the half-edge. If @a hedge is
+     * not owned by the mesh then nothing will happen.
      */
     void removeHEdge(HEdge &hedge);
 
     /**
-     * Remove the specified @a face from the mesh, destroying the face.
-     * If @a face is not owned by the mesh then nothing will happen.
+     * Remove the specified @a face from the mesh, destroying the face. If @a face is not owned
+     * by the mesh then nothing will happen.
      */
     void removeFace(Face &face);
 
@@ -204,6 +203,6 @@ private:
 
 typedef Mesh::Element MeshElement;
 
-} // namespace de
+}  // namespace de
 
-#endif // DENG_DATA_MESH_H
+#endif  // DATA_MESH_H
