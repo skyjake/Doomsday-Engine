@@ -147,7 +147,8 @@ void VisSprite_SetupModel(vissprite_t *spr, VisEntityPose const &pose, VisEntity
 enum vispspritetype_t
 {
     VPSPR_SPRITE,
-    VPSPR_MODEL
+    VPSPR_MODEL,
+    VPSPR_MODEL2
 };
 
 /// @ingroup render
