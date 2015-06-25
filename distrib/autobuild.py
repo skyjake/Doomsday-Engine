@@ -376,6 +376,11 @@ def generate_apidoc():
     """Run Doxygen to generate all API documentation."""
     git_pull()
 
+    print >> sys.stderr, "\nSDK docs..."
+    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday'))    
+    system_command('doxygen sdk.doxy >/dev/null 2>doxyissues-sdk.txt')
+    system_command('wc -l doxyissues-sdk.txt')
+
     print >> sys.stderr, "\nSDK docs for Qt Creator..."
     os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday'))    
     system_command('doxygen sdk-qch.doxy >/dev/null 2>doxyissues-qch.txt')
