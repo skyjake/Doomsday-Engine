@@ -64,12 +64,12 @@ static TimeDelta OPEN_CLOSE_SPAN = 0.2;
 enum MenuItemPositions
 {
     // DE menu:
-    POS_GAMES             = 0,
-    POS_UNLOAD            = 1,
-    POS_IWAD_FOLDER       = 2,
+    POS_GAMES             = 1,
+    POS_UNLOAD            = 2,
     POS_GAMES_SEPARATOR   = 3,
     POS_MULTIPLAYER       = 4,
     POS_CONNECT           = 5,
+    POS_IWAD_FOLDER       = 8,
 
     // Config menu:
     POS_RENDERER_SETTINGS = 0,
@@ -270,8 +270,8 @@ DENG_GUI_PIMPL(TaskBarWidget)
 
         itemWidget(mainMenu, POS_GAMES)            .show(!game.isNull());
         itemWidget(mainMenu, POS_UNLOAD)           .show(!game.isNull());
+        itemWidget(mainMenu, POS_GAMES_SEPARATOR)  .show(!game.isNull());
         itemWidget(mainMenu, POS_IWAD_FOLDER)      .show(game.isNull());
-        //itemWidget(mainMenu, POS_GAMES_SEPARATOR)  .show(!game.isNull());
         itemWidget(mainMenu, POS_MULTIPLAYER)      .show(!game.isNull());
         itemWidget(mainMenu, POS_CONNECT)          .show(game.isNull());
 
@@ -416,8 +416,8 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     d->mainMenu->setAnchorAndOpeningDirection(d->logo->rule(), ui::Up);
 
     // Game unloading confirmation submenu.
-    ui::SubmenuItem *unloadMenu = new ui::SubmenuItem(style().images().image("close.ring"),
-                                                      tr("Unload Game"), ui::Left);
+    auto *unloadMenu = new ui::SubmenuItem(style().images().image("close.ring"),
+                                           tr("Unload Game"), ui::Left);
     unloadMenu->items()
             << new ui::Item(ui::Item::Separator, tr("Really unload the game?"))
             << new ui::ActionItem(tr("Unload") + " " _E(b) + tr("(discard progress)"), new SignalAction(this, SLOT(unloadGame())))
@@ -437,22 +437,25 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << new ui::SubwidgetItem(style().images().image("network"),  tr("Network"),  ui::Left, makePopup<NetworkSettingsDialog>)
             << new ui::SubwidgetItem(style().images().image("updater"),  tr("Updater"),  ui::Left, makeUpdaterSettings);
 
+    auto *helpMenu = new ui::SubmenuItem(tr("Help"), ui::Left);
+    helpMenu->items()
+            << new ui::ActionItem(tr("Show Tutorial"), new SignalAction(this, SLOT(showTutorial())))
+            << new ui::VariableToggleItem(tr("Menu Annotations"), App::config("ui.showAnnotations"))
+            << new ui::Item(ui::Item::Annotation, tr("Annotations briefly describe menu functions."));
+    
     d->mainMenu->items()
+            << new ui::Item(ui::Item::Separator, tr("Games"))
             << new ui::ActionItem(tr("Switch Game..."), new SignalAction(this, SLOT(switchGame())))
             << unloadMenu                           // hidden with null-game
-            << new ui::ActionItem(tr("IWAD Folder..."), new SignalAction(this, SLOT(chooseIWADFolder())))
             << new ui::Item(ui::Item::Separator)
             << new ui::ActionItem(tr("Multiplayer Games..."), new SignalAction(this, SLOT(showMultiplayer())))
             << new ui::ActionItem(tr("Connect to Server..."), new SignalAction(this, SLOT(connectToServerManually())))
             << new ui::Item(ui::Item::Separator)
-            //<< new ui::Item(ui::Item::Separator, tr("Help"))
-            << new ui::ActionItem(tr("Show Tutorial"), new SignalAction(this, SLOT(showTutorial())))
-            << new ui::VariableToggleItem(tr("Menu Annotations"), App::config("ui.showAnnotations"))
-            << new ui::Item(ui::Item::Annotation, tr("Annotations briefly describe menu functions."))
-            << new ui::Item(ui::Item::Separator)
             << new ui::Item(ui::Item::Separator, tr("Application"))
+            << new ui::ActionItem(tr("IWAD Folder..."), new SignalAction(this, SLOT(chooseIWADFolder())))
             << new ui::ActionItem(tr("Check for Updates..."), new CommandAction("updateandnotify"))
             << new ui::ActionItem(tr("About Doomsday"), new SignalAction(this, SLOT(showAbout())))
+            << helpMenu
             << new ui::Item(ui::Item::Separator)
             << new ui::ActionItem(tr("Quit Doomsday"), new CommandAction("quit"));
 
