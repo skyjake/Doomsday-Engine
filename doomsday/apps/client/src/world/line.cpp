@@ -754,7 +754,7 @@ void Line::Side::setRadioCornerTop(bool right, dfloat openness, Plane *proximity
 
 void Line::Side::setRadioCornerBottom(bool right, dfloat openness, Plane *proximityPlane)
 {
-    d->updateRadioCorner(d->radioData.topCorners[dint(right)], openness, proximityPlane, false/*bottom*/);
+    d->updateRadioCorner(d->radioData.bottomCorners[dint(right)], openness, proximityPlane, false/*bottom*/);
 }
 
 void Line::Side::setRadioCornerSide(bool right, dfloat openness)
