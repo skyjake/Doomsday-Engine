@@ -34,7 +34,6 @@
 #ifndef CLIENT_RENDER_FAKERADIO
 #define CLIENT_RENDER_FAKERADIO
 
-#include "world/map.h"
 #include "Line"
 #include "WallEdge"
 
@@ -62,11 +61,6 @@ struct edgespan_t
     de::dfloat length;
     de::dfloat shift;
 };
-
-/**
- * To be called after map load to perform necessary initialization within this module.
- */
-void Rend_RadioInitForMap(de::Map &map);
 
 /**
  * To be called to update the shadow properties for the specified line @a side.

@@ -1942,6 +1942,81 @@ void Map::buildMaterialLists()
     }
 }
 
+void Map::initRadio()
+{
+    LOG_AS("Map::initRadio");
+
+    Time begunAt;
+
+    for(Vertex *vtx : d->mesh.vertexs())
+    {
+        vtx->updateShadowOffsets();
+    }
+
+    /// The algorithm:
+    ///
+    /// 1. Use the subspace blockmap to look for all the blocks that are within the line's shadow
+    ///    bounding box.
+    /// 2. Check the ConvexSubspaces whose sector is the same as the line.
+    /// 3. If any of the shadow points are in the subspace, or any of the shadow edges cross one
+    ///    of the subspace's edges (not parallel), link the line to the ConvexSubspace.
+    for(Line *line : d->lines)
+    {
+        if(!line->castsShadow()) continue;
+
+        // For each side of the line.
+        for(dint i = 0; i < 2; ++i)
+        {
+            LineSide &side = line->side(i);
+
+            if(!side.hasSector()) continue;
+            if(!side.hasSections()) continue;
+
+            Vertex const &vtx0   = line->vertex(i);
+            Vertex const &vtx1   = line->vertex(i ^ 1);
+            LineOwner const &vo0 = line->vertexOwner(i)->next();
+            LineOwner const &vo1 = line->vertexOwner(i ^ 1)->prev();
+
+            AABoxd bounds = line->aaBox();
+
+            // Use the extended points, they are wider than inoffsets.
+            Vector2d const sv0 = vtx0.origin() + vo0.extendedShadowOffset();
+            V2d_AddToBoxXY(bounds.arvec2, sv0.x, sv0.y);
+
+            Vector2d const sv1 = vtx1.origin() + vo1.extendedShadowOffset();
+            V2d_AddToBoxXY(bounds.arvec2, sv1.x, sv1.y);
+
+            // Link the shadowing line to all the subspaces whose axis-aligned bounding box
+            // intersects 'bounds'.
+            ::validCount++;
+            dint const localValidCount = ::validCount;
+            subspaceBlockmap().forAllInBox(bounds, [&bounds, &side, &localValidCount] (void *object)
+            {
+                auto &sub = *(ConvexSubspace *)object;
+                if(sub.validCount() != localValidCount)  // not yet processed
+                {
+                    sub.setValidCount(localValidCount);
+                    if(&sub.sector() == side.sectorPtr())
+                    {
+                        // Check the bounds.
+                        AABoxd const &polyBox = sub.poly().aaBox();
+                        if(!(polyBox.maxX < bounds.minX ||
+                             polyBox.minX > bounds.maxX ||
+                             polyBox.minY > bounds.maxY ||
+                             polyBox.maxY < bounds.minY))
+                        {
+                            sub.addShadowLine(side);
+                        }
+                    }
+                }
+                return LoopContinue;
+            });
+        }
+    }
+
+    LOGDEV_GL_MSG("Completed in %.2f seconds") << begunAt.since();
+}
+
 void Map::initContactBlockmaps()
 {
     d->initContactBlockmaps();

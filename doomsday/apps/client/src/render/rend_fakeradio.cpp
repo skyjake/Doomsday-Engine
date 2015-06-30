@@ -828,8 +828,8 @@ static void setBottomShadowParams(WallEdge const &leftEdge, WallEdge const &righ
     }
 }
 
-static void setSideShadowParams(WallEdge const &leftEdge, WallEdge const &rightEdge, bool rightSide, ddouble shadowSize,
-    ProjectedShadowData &projected)
+static void setSideShadowParams(WallEdge const &leftEdge, WallEdge const &rightEdge, bool rightSide,
+    ddouble shadowSize, ProjectedShadowData &projected)
 {
     LineSide /*const*/ &side      = leftEdge.mapLineSide();
     HEdge const *hedge            = side.leftHEdge();

@@ -862,6 +862,11 @@ public: /// @todo Most of the following should be private:
     void initContactBlockmaps();
 
     /**
+     * Initialize data and structures needed for FakeRadio.
+     */
+    void initRadio();
+
+    /**
      * Spawn all generators for the map which should be initialized automatically
      * during map setup.
      */

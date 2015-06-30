@@ -605,8 +605,7 @@ DENG2_PIMPL(WorldSystem)
         R_InitRendPolyPools();
         Rend_UpdateLightModMatrix();
 
-        Rend_RadioInitForMap(*map);
-
+        map->initRadio();
         map->initContactBlockmaps();
         R_InitContactLists(*map);
         rendSys().worldSystemMapChanged(*map);
