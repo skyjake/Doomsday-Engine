@@ -1,4 +1,4 @@
-/** @file rend_fakeradio.cpp  Faked Radiosity Lighting.
+/** @file rend_fakeradio.cpp  Geometry generation for faked, radiosity lighting.
  *
  * @authors Copyright © 2004-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
@@ -18,7 +18,6 @@
  * 02110-1301 USA</small>
  */
 
-//#include "de_base.h"
 #include "render/rend_fakeradio.h"
 
 #include <de/Vector>
@@ -30,309 +29,36 @@
 #include "MaterialAnimator"
 #include "MaterialVariantSpec"
 
+#include "world/map.h"
 #include "ConvexSubspace"
 #include "Face"
+#include "HEdge"
+#include "Line"
 #include "SectorCluster"
 #include "Surface"
 #include "WallEdge"
-#include "world/lineowner.h"
-#include "world/map.h"
-#include "world/maputil.h"
 
-#include "render/r_main.h"  // levelFullBright
 #include "render/rend_main.h"
+#include "render/r_main.h"  // levelFullBright
 #include "render/shadowedge.h"
 #include "render/viewports.h"  // R_FrameCount()
 
 using namespace de;
 
 static dfloat const MIN_OPEN            = 0.1f;
-
-static coord_t const MINDIFF            = 8;       ///< Min plane height difference (world units).
-static coord_t const INDIFF             = 8;       ///< Max plane height for indifference offset.
-
+static ddouble const MINDIFF            = 8;       ///< Min plane height difference (world units).
+static ddouble const INDIFF             = 8;       ///< Max plane height for indifference offset.
 static dfloat const MIN_SHADOW_DARKNESS = .0001f;  ///< Minimum to qualify.
 static ddouble const MIN_SHADOW_SIZE    = 1;       ///< In map units.
 
-static dint rendFakeRadio       = true;  ///< cvar
+dint rendFakeRadio              = true;  ///< cvar
 static dfloat fakeRadioDarkness = 1.2f;  ///< cvar
-static byte devFakeRadioUpdate  = true;  ///< cvar
+byte devFakeRadioUpdate         = true;  ///< cvar
 
 static inline RenderSystem &rendSys()
 {
     return ClientApp::renderSystem();
 }
-
-/**
- * Convert a corner @a angle to a "FakeRadio corner openness" factor.
- */
-static dfloat radioCornerOpenness(binangle_t angle)
-{
-    // Facing outwards?
-    if(angle > BANG_180) return -1;
-
-    // Precisely collinear?
-    if(angle == BANG_180) return 0;
-
-    // If the difference is too small consider it collinear (there won't be a shadow).
-    if(angle < BANG_45 / 5) return 0;
-
-    // 90 degrees is the largest effective difference.
-    return (angle > BANG_90)? dfloat( BANG_90 ) / angle : dfloat( angle ) / BANG_90;
-}
-
-static inline binangle_t lineNeighborAngle(LineSide const &side, Line const *other, binangle_t diff)
-{
-    return (other && other != &side.line())? diff : 0 /*Consider it coaligned*/;
-}
-
-static binangle_t findSolidLineNeighborAngle(LineSide const &side, bool rightNeighbor)
-{
-    binangle_t diff = 0;
-    Line const *other = R_FindSolidLineNeighbor(side.sectorPtr(), &side.line(),
-                                                side.line().vertexOwner(dint(rightNeighbor) ^ side.sideId()),
-                                                rightNeighbor, &diff);
-    return lineNeighborAngle(side, other, diff);
-}
-
-/**
- * Returns @c true if there is open space in the sector.
- */
-static inline bool sectorOpen(Sector const *sector)
-{
-    return (sector && sector->ceiling().height() > sector->floor().height());
-}
-
-struct edge_t
-{
-    Line *line;
-    Sector *sector;
-    dfloat length;
-    binangle_t diff;
-};
-
-/// @todo fixme: Should be rewritten to work at half-edge level.
-/// @todo fixme: Should use the visual plane heights of sector clusters.
-static void scanNeighbor(LineSide const &side, bool top, bool right, edge_t &edge)
-{
-    static dint const SEP = 10;
-
-    de::zap(edge);
-
-    ClockDirection const direction = (right? Anticlockwise : Clockwise);
-    Sector const *startSector = side.sectorPtr();
-    coord_t const fFloor      = side.sector().floor  ().heightSmoothed();
-    coord_t const fCeil       = side.sector().ceiling().heightSmoothed();
-
-    coord_t gap    = 0;
-    LineOwner *own = side.line().vertexOwner(side.vertex(dint(right)));
-    forever
-    {
-        // Select the next line.
-        binangle_t diff  = (direction == Clockwise ? own->angle() : own->prev().angle());
-        Line const *iter = &own->navigate(direction).line();
-        dint scanSecSide = (iter->hasFrontSector() && iter->frontSectorPtr() == startSector ? Line::Back : Line::Front);
-        // Step selfreferencing lines.
-        while((!iter->hasFrontSector() && !iter->hasBackSector()) || iter->isSelfReferencing())
-        {
-            own         = &own->navigate(direction);
-            diff       += (direction == Clockwise? own->angle() : own->prev().angle());
-            iter        = &own->navigate(direction).line();
-            scanSecSide = (iter->frontSectorPtr() == startSector);
-        }
-
-        // Determine the relative backsector.
-        LineSide const &scanSide = iter->side(scanSecSide);
-        Sector const *scanSector = scanSide.sectorPtr();
-
-        // Select plane heights for relative offset comparison.
-        coord_t const iFFloor = iter->frontSector().floor  ().heightSmoothed();
-        coord_t const iFCeil  = iter->frontSector().ceiling().heightSmoothed();
-        Sector const *bsec    = iter->backSectorPtr();
-        coord_t const iBFloor = (bsec ? bsec->floor  ().heightSmoothed() : 0);
-        coord_t const iBCeil  = (bsec ? bsec->ceiling().heightSmoothed() : 0);
-
-        // Determine whether the relative back sector is closed.
-        bool closed = false;
-        if(side.isFront() && iter->hasBackSector())
-        {
-            closed = top? (iBFloor >= fCeil) : (iBCeil <= fFloor);  // Compared to "this" sector anyway.
-        }
-
-        // This line will attribute to this segment's shadow edge - remember it.
-        edge.line   = const_cast<Line *>(iter);
-        edge.diff   = diff;
-        edge.sector = scanSide.sectorPtr();
-
-        // Does this line's length contribute to the alignment of the texture on the
-        // segment shadow edge being rendered?
-        coord_t lengthDelta = 0;
-        if(top)
-        {
-            if(iter->hasBackSector()
-                && (   (side.isFront() && iter->backSectorPtr() == side.line().frontSectorPtr() && iFCeil >= fCeil)
-                    || (side.isBack () && iter->backSectorPtr() == side.line().backSectorPtr () && iFCeil >= fCeil)
-                    || (side.isFront() && closed == false && iter->backSectorPtr() != side.line().frontSectorPtr()
-                        && iBCeil >= fCeil && sectorOpen(iter->backSectorPtr()))))
-            {
-                gap += iter->length();  // Should we just mark it done instead?
-            }
-            else
-            {
-                edge.length += iter->length() + gap;
-                gap = 0;
-            }
-        }
-        else
-        {
-            if(iter->hasBackSector()
-                && (   (side.isFront() && iter->backSectorPtr() == side.line().frontSectorPtr() && iFFloor <= fFloor)
-                    || (side.isBack () && iter->backSectorPtr() == side.line().backSectorPtr () && iFFloor <= fFloor)
-                    || (side.isFront() && closed == false && iter->backSectorPtr() != side.line().frontSectorPtr()
-                        && iBFloor <= fFloor && sectorOpen(iter->backSectorPtr()))))
-            {
-                gap += iter->length();  // Should we just mark it done instead?
-            }
-            else
-            {
-                lengthDelta = iter->length() + gap;
-                gap = 0;
-            }
-        }
-
-        // Time to stop?
-        if(iter == &side.line())
-            break;
-        // Not coalignable?
-        if(!(diff >= BANG_180 - SEP && diff <= BANG_180 + SEP))
-            break;  // No.
-        // Perhaps a closed edge?
-        if(scanSector)
-        {
-            if(!sectorOpen(scanSector))
-                break;
-
-            // A height difference from the start sector?
-            if(top)
-            {
-                if(scanSector->ceiling().heightSmoothed() != fCeil
-                   && scanSector->floor().heightSmoothed() < startSector->ceiling().heightSmoothed())
-                {
-                    break;
-                }
-            }
-            else
-            {
-                if(scanSector->floor().heightSmoothed() != fFloor
-                   && scanSector->ceiling().heightSmoothed() > startSector->floor().heightSmoothed())
-                {
-                    break;
-                }
-            }
-        }
-
-        // Swap to the iter line's owner node (i.e., around the corner)?
-        if(&own->navigate(direction) == iter->v2Owner())
-        {
-            own = iter->v1Owner();
-        }
-        else if(&own->navigate(direction) == iter->v1Owner())
-        {
-            own = iter->v2Owner();
-        }
-
-        // Skip into the back neighbor sector of the iter line if heights are within
-        // the accepted range.
-        if(scanSector && side.back().hasSector() && scanSector != side.back().sectorPtr()
-            && (   ( top && scanSector->ceiling().heightSmoothed() == startSector->ceiling().heightSmoothed())
-                || (!top && scanSector->floor  ().heightSmoothed() == startSector->floor  ().heightSmoothed())))
-        {
-            // If the map is formed correctly, we should find a back neighbor attached
-            // to this line. However, if this is not the case and a line which *should*
-            // be two sided isn't, we need to check whether there is a valid neighbor.
-            Line *backNeighbor = R_FindLineNeighbor(startSector, iter, own, right);
-
-            if(backNeighbor && backNeighbor != iter)
-            {
-                // Into the back neighbor sector.
-                own = &own->navigate(direction);
-                startSector = scanSector;
-            }
-        }
-
-        // The last line was co-alignable so apply any length delta.
-        edge.length += lengthDelta;
-    }
-
-    // Now we've found the furthest coalignable neighbor, select the back neighbor if
-    // present for "edge open-ness" comparison.
-    if(edge.sector)  // The back sector of the coalignable neighbor.
-    {
-        // Since we have the details of the backsector already, simply get the next
-        // neighbor (it *is* the backneighbor).
-        edge.line = R_FindLineNeighbor(edge.sector, edge.line,
-                                       edge.line->vertexOwner(dint(edge.line->hasBackSector() && edge.line->backSectorPtr() == edge.sector) ^ dint(right)),
-                                       right, &edge.diff);
-    }
-}
-
-/**
- * To determine the dimensions of a shadow, we'll need to scan edges. Edges are composed
- * of aligned lines. It's important to note that the scanning is done separately for the
- * top/bottom edges (both in the left and right direction) and the left/right edges.
- *
- * The length of the top/bottom edges are returned in the array 'spans'.
- *
- * This may look like a complicated operation (performed for all line sides) but in most
- * cases this won't take long. Aligned neighbours are relatively rare.
- *
- * @todo fixme: Should use the visual plane heights of sector clusters.
- */
-void Rend_RadioUpdateForLineSide(LineSide &side)
-{
-    // Disabled completely?
-    if(!::rendFakeRadio || ::levelFullBright) return;
-
-    // Updates are disabled?
-    if(!::devFakeRadioUpdate) return;
-
-    // Sides without sectors don't need updating. $degenleaf
-    if(!side.hasSector()) return;
-
-    // Sides of self-referencing lines do not receive shadows. (Not worth it?).
-    if(side.line().isSelfReferencing()) return;
-
-    // Have already determined the shadow properties on this side?
-    if(side.radioUpdateFrame() == R_FrameCount()) return;
-    side.setRadioUpdateFrame(R_FrameCount());  // Mark as done.
-
-    // Process the side corners first.
-    side.setRadioCornerSide(false/*left*/, radioCornerOpenness(findSolidLineNeighborAngle(side, false/*left*/)));
-    side.setRadioCornerSide(true/*right*/, radioCornerOpenness(findSolidLineNeighborAngle(side, true/*right*/)));
-
-    // Top and bottom corners are a somewhat more complex as we must traverse neighbors
-    // to find the extent of the coalignable surfaces for texture selection/mapping.
-    for(dint i = 0; i < 2; ++i)
-    {
-        bool const rightEdge = i != 0;
-
-        edge_t bottom; scanNeighbor(side, false/*bottom*/, rightEdge, bottom);
-        edge_t top;    scanNeighbor(side, true/*top*/    , rightEdge, top   );
-
-        side.setRadioEdgeSpan(false/*left*/, rightEdge, bottom.length);
-        side.setRadioEdgeSpan(true/*right*/, rightEdge, top   .length);
-
-        side.setRadioCornerBottom(rightEdge, radioCornerOpenness(lineNeighborAngle(side, bottom.line, bottom.diff)),
-                                  bottom.sector? &bottom.sector->floor  () : nullptr);
-
-        side.setRadioCornerTop   (rightEdge, radioCornerOpenness(lineNeighborAngle(side, top   .line, top   .diff)),
-                                  top.sector   ? &top   .sector->ceiling() : nullptr);
-    }
-}
-
-//
-// Geometry generation -------------------------------------------------------------------
-//
 
 enum WallShadow
 {
@@ -1154,7 +880,7 @@ void Rend_RadioWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge, 
         return;
 
     // Ensure we have up-to-date information for generating shadow geometry.
-    Rend_RadioUpdateForLineSide(leftEdge.mapLineSide());
+    leftEdge.mapLineSide().updateRadioForFrame(R_FrameCount());
 
     Vector3f const posCoords[] = {
         leftEdge .bottom().origin(),
@@ -1271,7 +997,7 @@ static DrawList::Indices makeFlatShadowGeometry(Store &verts, gl::Primitive &pri
     return indices;
 }
 
-void Rend_RadioSubspaceEdges(ConvexSubspace const &subspace)
+void Rend_DrawFlatRadio(ConvexSubspace const &subspace)
 {
     // Disabled?
     if(!::rendFakeRadio || ::levelFullBright) return;

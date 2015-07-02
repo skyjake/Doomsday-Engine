@@ -78,7 +78,7 @@ public:
     DENG2_ERROR(InvalidSectionIdError);
 
     /// Notified whenever the flags change.
-    DENG2_DEFINE_AUDIENCE(FlagsChange, void lineFlagsChanged(Line &line, int oldFlags))
+    DENG2_DEFINE_AUDIENCE(FlagsChange, void lineFlagsChanged(Line &line, de::dint oldFlags))
 
     // Logical edge identifiers:
     enum { From, To };
@@ -195,10 +195,11 @@ public:
          * Construct a new line side.
          *
          * @param line    Line parent which will own the side.
-         * @param sector  Sector on "this" side of the line. Can be @c 0. Note
-         *                once attributed the sector cannot normally be changed.
+         * @param sector  Sector on "this" side of the line. Can be @c nullptr.
+         *                Note that once attributed, the sector cannot normally
+         *                be changed.
          */
-        Side(Line &line, Sector *sector = 0);
+        Side(Line &line, Sector *sector = nullptr);
 
         /**
          * Returns the Line owner of the side.
@@ -209,7 +210,7 @@ public:
         /**
          * Returns the logical identifier for the side (Front or Back).
          */
-        int sideId() const;
+        de::dint sideId() const;
 
         /**
          * Returns @c true iff this is the front side of the owning line.
@@ -230,9 +231,7 @@ public:
          *
          * @see lineSideId(), line(), Line::side(),
          */
-        inline Side &back() { return line().side(sideId() ^ 1); }
-
-        /// @copydoc back()
+        inline Side       &back()       { return line().side(sideId() ^ 1); }
         inline Side const &back() const { return line().side(sideId() ^ 1); }
 
         /**
@@ -249,7 +248,7 @@ public:
          *
          * @see lineSideId(), line(), Line::vertex(),
          */
-        inline Vertex &vertex(int to) const { return line().vertex(sideId() ^ to); }
+        inline Vertex &vertex(de::dint to) const { return line().vertex(sideId() ^ to); }
 
         /**
          * Returns the relative From Vertex for the side, from the Line owner.
@@ -284,8 +283,8 @@ public:
          *
          * @param sectionId  Identifier of the surface to return.
          */
-        Surface       &surface(int sectionId);
-        Surface const &surface(int sectionId) const;
+        Surface       &surface(de::dint sectionId);
+        Surface const &surface(de::dint sectionId) const;
 
         /**
          * Returns the middle surface of the side.
@@ -350,7 +349,7 @@ public:
          * point is determined according to the center point of the owning line and
          * the current @em sharp heights of the sector on "this" side of the line.
          */
-        void updateSoundEmitterOrigin(int sectionId);
+        void updateSoundEmitterOrigin(de::dint sectionId);
 
         /**
          * Update the @em middle sound emitter origin for the side.
@@ -391,11 +390,11 @@ public:
         Sector &sector() const;
 
         /**
-         * Returns a pointer to the Sector attributed to the side; otherwise @c 0.
+         * Returns a pointer to the Sector attributed to the side; otherwise @c nullptr.
          *
          * @see hasSector()
          */
-        inline Sector *sectorPtr() const { return hasSector()? &sector() : 0; }
+        inline Sector *sectorPtr() const { return hasSector()? &sector() : nullptr; }
 
         /**
          * Clears (destroys) all segments for the side.
@@ -421,13 +420,13 @@ public:
 
         /**
          * Convenient method of returning the half-edge of the left-most segment
-         * on this side of the line; otherwise @c 0 (no segments exist).
+         * on this side of the line; otherwise @c nullptr (no segments exist).
          */
         de::HEdge *leftHEdge() const;
 
         /**
          * Convenient method of returning the half-edge of the right-most segment
-         * on this side of the line; otherwise @c 0 (no segments exist).
+         * on this side of the line; otherwise @c nullptr (no segments exist).
          */
         de::HEdge *rightHEdge() const;
 
@@ -441,7 +440,7 @@ public:
         /**
          * Returns the @ref sdefFlags for the side.
          */
-        int flags() const;
+        de::dint flags() const;
 
         /**
          * Change the side's flags.
@@ -449,27 +448,27 @@ public:
          * @param flagsToChange  Flags to change the value of.
          * @param operation      Logical operation to perform on the flags.
          */
-        void setFlags(int flagsToChange, de::FlagOp operation = de::SetFlags);
+        void setFlags(de::dint flagsToChange, de::FlagOp operation = de::SetFlags);
 
         /**
          * Returns @c true iff the side is flagged @a flagsToTest.
          */
-        inline bool isFlagged(int flagsToTest) const { return (flags() & flagsToTest) != 0; }
+        inline bool isFlagged(de::dint flagsToTest) const { return (flags() & flagsToTest) != 0; }
 
-        void chooseSurfaceTintColors(int sectionId, de::Vector3f const **topColor,
+        void chooseSurfaceTintColors(de::dint sectionId, de::Vector3f const **topColor,
                                      de::Vector3f const **bottomColor) const;
 
         /**
          * Returns the frame number of the last time shadows were drawn for the side.
          */
-        int shadowVisCount() const;
+        de::dint shadowVisCount() const;
 
         /**
          * Change the frame number of the last time shadows were drawn for the side.
          *
          * @param newCount  New shadow vis count.
          */
-        void setShadowVisCount(int newCount);
+        void setShadowVisCount(de::dint newCount);
 
 #ifdef __CLIENT__
 
@@ -480,6 +479,13 @@ public:
         void fixMissingMaterials();
 
         /**
+         * To be called to update the shadow properties for the line side.
+         *
+         * @todo Handle this internally -ds.
+         */
+        void updateRadioForFrame(de::dint frameNumber);
+
+        /**
          * Provides access to the FakeRadio shadowcorner_t data.
          */
         shadowcorner_t const &radioCornerTop   (bool right) const;
@@ -487,31 +493,15 @@ public:
         shadowcorner_t const &radioCornerSide  (bool right) const;
 
         /**
-         * Change the FakeRadio side corner properties.
-         */
-        void setRadioCornerTop   (bool right, dfloat openness, Plane *proximityPlane = nullptr);
-        void setRadioCornerBottom(bool right, dfloat openness, Plane *proximityPlane = nullptr);
-        void setRadioCornerSide  (bool right, dfloat openness);
-
-        /**
          * Provides access to the FakeRadio edgespan_t data.
          */
         edgespan_t const &radioEdgeSpan(bool top) const;
 
-        /**
-         * Change the FakeRadio "edge span" metrics.
-         * @todo replace shadow edge enumeration with a shadow corner enumeration.
-         */
-        void setRadioEdgeSpan(bool top, bool right, de::ddouble length);
-
-        de::dint radioUpdateFrame() const;
-        void setRadioUpdateFrame(de::dint newFrame);
-
 #endif  // __CLIENT__
 
     protected:
-        int property(DmuArgs &args) const;
-        int setProperty(DmuArgs const &args);
+        de::dint property(DmuArgs &args) const;
+        de::dint setProperty(DmuArgs const &args);
 
     private:
         DENG2_PRIVATE(d)
@@ -528,7 +518,7 @@ public: /// @todo make private:
 
 public:
     Line(Vertex &from, Vertex &to,
-         int flags           = 0,
+         de::dint flags      = 0,
          Sector *frontSector = nullptr,
          Sector *backSector  = nullptr);
 
@@ -537,8 +527,8 @@ public:
      *
      * @param back  If not @c 0 return the Back side; otherwise the Front side.
      */
-    Side       &side(int back);
-    Side const &side(int back) const;
+    Side       &side(de::dint back);
+    Side const &side(de::dint back) const;
 
     /**
      * Returns the logical Front side of the line.
@@ -558,7 +548,7 @@ public:
      *
      * @param back  If not @c 0 test the Back side; otherwise the Front side.
      */
-    inline bool hasSections(int back) const { return side(back).hasSections(); }
+    inline bool hasSections(de::dint back) const { return side(back).hasSections(); }
 
     /**
      * Returns @c true iff Side::Sections are defined for the Front side of the line.
@@ -575,7 +565,7 @@ public:
      *
      * @param back  If not @c 0 test the Back side; otherwise the Front side.
      */
-    inline bool hasSector(int back) const { return side(back).hasSector(); }
+    inline bool hasSector(de::dint back) const { return side(back).hasSector(); }
 
     /**
      * Returns @c true iff a sector is attributed to the Front side of the line.
@@ -594,7 +584,7 @@ public:
      * @param back  If not @c 0 return the sector for the Back side; otherwise
      *              the sector of the Front side.
      */
-    inline Sector &sector(int back) const { return side(back).sector(); }
+    inline Sector &sector(de::dint back) const { return side(back).sector(); }
 
     /**
      * Convenient accessor method for returning a pointer to the sector attributed
@@ -603,7 +593,7 @@ public:
      * @param back  If not @c 0 return the sector for the Back side; otherwise
      *              the sector of the Front side.
      */
-    inline Sector *sectorPtr(int back) const { return side(back).sectorPtr(); }
+    inline Sector *sectorPtr(de::dint back) const { return side(back).sectorPtr(); }
 
     /**
      * Returns the sector attributed to the Front side of the line.
@@ -924,4 +914,4 @@ typedef Line::Side::Segment LineSideSegment;
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Line::Side::SectionFlags)
 
-#endif  // DENG_WORLD_LINE_H
+#endif  // WORLD_LINE_H

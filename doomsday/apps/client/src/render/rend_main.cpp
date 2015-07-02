@@ -2682,7 +2682,7 @@ static void writeWallSection(HEdge &hedge, dint section,
         // Render FakeRadio for this section?
         if(!wallSpec.flags.testFlag(WallSpec::NoFakeRadio) && !skyMasked && !(parm.glowing > 0))
         {
-            Rend_RadioWallSection(leftEdge, rightEdge, ::curSectorLightLevel);
+            Rend_DrawWallRadio(leftEdge, rightEdge, ::curSectorLightLevel);
         }
     }
 
