@@ -297,7 +297,7 @@ String Line::Side::description() const
     String flagsString;
     if(!flagNames.isEmpty())
     {
-        String flagsAsText = flagNames.join("|");
+        String const flagsAsText = flagNames.join("|");
         flagsString = String(_E(l) " Flags: " _E(.)_E(i) "%1" _E(.)).arg(flagsAsText);
     }
 
@@ -309,19 +309,15 @@ String Line::Side::description() const
                     .arg(hasSector() ? String::number(sector().indexInMap()) : "None")
                     .arg(DENG2_BOOL_YESNO(considerOneSided()))
                     .arg(flagsString);
-
-    if(hasSections())
+    forAllSurfaces([this, &text] (Surface &suf)
     {
-        forAllSurfaces([this, &text] (Surface &suf)
-        {
-            String const name =   &suf == &top   () ? "Top"
-                                : &suf == &middle() ? "Middle"
-                                                    : "Bottom";
-            text += String("\n" _E(D) "%1:\n" _E(.)).arg(name)
-                    + suf.description();
-            return LoopContinue;
-        });
-    }
+        String const name =   &suf == &top   () ? "Top"
+                            : &suf == &middle() ? "Middle"
+                                                : "Bottom";
+        text += String("\n" _E(D) "%1:\n" _E(.)).arg(name)
+                + suf.description();
+        return LoopContinue;
+    });
 
     return text;
 }
@@ -1554,7 +1550,7 @@ D_CMD(InspectLine)
     String flagsString;
     if(!flagNames.isEmpty())
     {
-        String flagsAsText = flagNames.join("|");
+        String const flagsAsText = flagNames.join("|");
         flagsString = String(_E(l) " Flags: " _E(.)_E(i) "%1" _E(.)).arg(flagsAsText);
     }
 
