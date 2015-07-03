@@ -1030,7 +1030,7 @@ void Line::Side::updateRadioForFrame(dint frameNumber)
     d->setRadioCornerSide(false/*left*/, radioCornerOpenness(findSolidLineNeighborAngle(*this, false/*left*/)));
     d->setRadioCornerSide(true/*right*/, radioCornerOpenness(findSolidLineNeighborAngle(*this, true/*right*/)));
 
-    // Top and bottom corners are a somewhat more complex as we must traverse neighbors
+    // Top and bottom corners are somewhat more complex as we must traverse neighbors
     // to find the extent of the coalignable surfaces for texture mapping/selection.
     for(dint i = 0; i < 2; ++i)
     {
