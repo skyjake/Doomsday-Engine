@@ -26,6 +26,7 @@
 #include <de/binangle.h>
 #include <de/Error>
 #include <de/Observers>
+#include <de/String>
 #include <de/Vector>
 #include "HEdge"
 #include "MapElement"
@@ -202,6 +203,11 @@ public:
         Side(Line &line, Sector *sector = nullptr);
 
         /**
+         * Composes a human-friendly, styled, textual description of the side.
+         */
+        de::String description() const;
+
+        /**
          * Returns the Line owner of the side.
          */
         inline Line       &line()       { return parent().as<Line>(); }
@@ -309,6 +315,14 @@ public:
          */
         inline Surface       &top()       { return surface(Top); }
         inline Surface const &top() const { return surface(Top); }
+
+        /**
+         * Iterate through the Surfaces of the side. If no sections are present
+         * then nothing happens.
+         *
+         * @param func  Callback to make for each Surface.
+         */
+        de::LoopResult forAllSurfaces(std::function<de::LoopResult(Surface &)> func) const;
 
         /**
          * Returns the specified sound emitter of the side.
@@ -541,6 +555,13 @@ public:
      */
     inline Side       &back()        { return side(Back); }
     inline Side const &back() const  { return side(Back); }
+
+    /**
+     * Iterate through the Sides of the line.
+     *
+     * @param func  Callback to make for each Side (front then back).
+     */
+    de::LoopResult forAllSides(std::function<de::LoopResult (Side &)> func) const;
 
     /**
      * Returns @c true iff Side::Sections are defined for the specified side
@@ -904,6 +925,12 @@ public:
      * @deprecated Will be replaced with half-edge ring iterator/rover. -ds
      */
     inline LineOwner *v2Owner() const { return vertexOwner(To); }
+
+public:
+    /**
+     * Register the console commands and/or variables of this module.
+     */
+    static void consoleRegister();
 
 private:
     DENG2_PRIVATE(d)

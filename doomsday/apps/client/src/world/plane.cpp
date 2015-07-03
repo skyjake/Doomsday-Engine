@@ -173,7 +173,7 @@ String Plane::description() const
     String const name =   isSectorFloor()   ? "Floor"
                         : isSectorCeiling() ? "Ceiling"
                         : "Plane #" + String::number(indexInSector());
-    return String(_E(D)_E(b) "%1:\n" _E(.)_E(.)
+    return String(_E(D) "%1:\n" _E(.)
                   _E(l) "Height: " _E(.)_E(i) "%2" _E(.))
                .arg(name)
                .arg(height())

@@ -1,7 +1,7 @@
 /** @file line.cpp  World map line.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -23,13 +23,15 @@
 #include <QList>
 #include <QMap>
 #include <QtAlgorithms>
+#include <doomsday/console/cmd.h>
 
-#include "dd_main.h" // App_Materials(), verbose
+#include "dd_main.h"  // App_Materials(), verbose
 #include "m_misc.h"
 
 #include "Face"
 #include "HEdge"
 
+#include "world/map.h"
 #include "ConvexSubspace"
 #include "Sector"
 #include "SectorCluster"
@@ -38,7 +40,6 @@
 #include "world/maputil.h"
 
 #ifdef __CLIENT__
-#  include "world/map.h"
 #  include "world/lineowner.h"
 #  include "resource/materialdetaillayer.h"
 #  include "resource/materialshinelayer.h"
@@ -282,7 +283,50 @@ Line::Side::Side(Line &line, Sector *sector)
 #endif
 }
 
-int Line::Side::sideId() const
+String Line::Side::description() const
+{
+    String const name = (isFront() ? "Front" : "Back");
+
+    QStringList flagNames;
+    if(flags() & SDF_BLENDTOPTOMID)    flagNames << "blendtoptomiddle";
+    if(flags() & SDF_BLENDMIDTOTOP)    flagNames << "blendmiddletotop";
+    if(flags() & SDF_BLENDMIDTOBOTTOM) flagNames << "blendmiddletobottom";
+    if(flags() & SDF_BLENDBOTTOMTOMID) flagNames << "blendbottomtomiddle";
+    if(flags() & SDF_MIDDLE_STRETCH)   flagNames << "middlestretch";
+
+    String flagsString;
+    if(!flagNames.isEmpty())
+    {
+        String flagsAsText = flagNames.join("|");
+        flagsString = String(_E(l) " Flags: " _E(.)_E(i) "%1" _E(.)).arg(flagsAsText);
+    }
+
+    auto text = String(_E(D)_E(b) "%1:\n"  _E(.)_E(.)
+                       _E(l)  "Sector: "    _E(.)_E(i) "%2" _E(.)
+                       _E(l) " One Sided: " _E(.)_E(i) "%3" _E(.)
+                       "%4")
+                    .arg(name)
+                    .arg(hasSector() ? String::number(sector().indexInMap()) : "None")
+                    .arg(DENG2_BOOL_YESNO(considerOneSided()))
+                    .arg(flagsString);
+
+    if(hasSections())
+    {
+        forAllSurfaces([this, &text] (Surface &suf)
+        {
+            String const name =   &suf == &top   () ? "Top"
+                                : &suf == &middle() ? "Middle"
+                                                    : "Bottom";
+            text += String("\n" _E(D) "%1:\n" _E(.)).arg(name)
+                    + suf.description();
+            return LoopContinue;
+        });
+    }
+
+    return text;
+}
+
+dint Line::Side::sideId() const
 {
     return &line().front() == this? Line::Front : Line::Back;
 }
@@ -345,6 +389,19 @@ Surface &Line::Side::surface(dint sectionId)
 Surface const &Line::Side::surface(dint sectionId) const
 {
     return const_cast<Side *>(this)->surface(sectionId);
+}
+
+LoopResult Line::Side::forAllSurfaces(std::function<LoopResult(Surface &)> func) const
+{
+    if(hasSections())
+    {
+        for(dint i = Middle; i <= Top; ++i)
+        {
+            if(auto result = func(const_cast<Side *>(this)->surface(i)))
+                return result;
+        }
+    }
+    return LoopContinue;
 }
 
 SoundEmitter &Line::Side::soundEmitter(dint sectionId)
@@ -1205,6 +1262,16 @@ Line::Side const &Line::side(dint back) const
     return (back? d->back : d->front);
 }
 
+LoopResult Line::forAllSides(std::function<LoopResult(Side &)> func) const
+{
+    for(dint i = 0; i < 2; ++i)
+    {
+        if(auto result = func(const_cast<Line *>(this)->side(i)))
+            return result;
+    }
+    return LoopContinue;
+}
+
 Vertex &Line::vertex(dint to) const
 {
     DENG2_ASSERT((to? d->to : d->from) != nullptr);
@@ -1450,4 +1517,65 @@ dint Line::setProperty(DmuArgs const &args)
     }
 
     return false; // Continue iteration.
+}
+
+D_CMD(InspectLine)
+{
+    DENG2_UNUSED(src);
+
+    LOG_AS("inspectline (Cmd)");
+
+    if(argc != 2)
+    {
+        LOG_SCR_NOTE("Usage: %s (line-id)") << argv[0];
+        return true;
+    }
+
+    if(!App_WorldSystem().hasMap())
+    {
+        LOG_SCR_ERROR("No map is currently loaded");
+        return false;
+    }
+
+    // Find the line.
+    dint const index = String(argv[1]).toInt();
+    Line const *line = App_WorldSystem().map().linePtr(index);
+    if(!line)
+    {
+        LOG_SCR_ERROR("Line #%i not found") << index;
+        return false;
+    }
+
+    QStringList flagNames;
+    if(line->flags() & DDLF_BLOCKING)      flagNames << "blocking";
+    if(line->flags() & DDLF_DONTPEGTOP)    flagNames << "nopegtop";
+    if(line->flags() & DDLF_DONTPEGBOTTOM) flagNames << "nopegbottom";
+
+    String flagsString;
+    if(!flagNames.isEmpty())
+    {
+        String flagsAsText = flagNames.join("|");
+        flagsString = String(_E(l) " Flags: " _E(.)_E(i) "%1" _E(.)).arg(flagsAsText);
+    }
+
+    LOG_SCR_MSG(_E(b) "Line %i" _E(.) " [%p]")
+            << line->indexInMap() << line;
+    LOG_SCR_MSG(_E(l)  "From: " _E(.)_E(i) "%s" _E(.)
+                _E(l) " To: "   _E(.)_E(i) "%s" _E(.)
+                "%s")
+            << line->from().origin().asText()
+            << line->to  ().origin().asText()
+            << flagsString;
+    line->forAllSides([](Line::Side &side)
+    {
+        LOG_SCR_MSG("") << side.description();
+        return LoopContinue;
+    });
+
+    return true;
+}
+
+void Line::consoleRegister()  // static
+{
+    C_CMD("inspectline", "i", InspectLine);
 }

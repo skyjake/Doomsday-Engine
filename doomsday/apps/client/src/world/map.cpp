@@ -3472,6 +3472,7 @@ D_CMD(InspectMap)
 
 void Map::consoleRegister() // static
 {
+    Line::consoleRegister();
     Mobj_ConsoleRegister();
     Sector::consoleRegister();
 
