@@ -3608,7 +3608,7 @@ static void drawCurrentSubspace()
     // Perform contact spreading for this map region.
     sector.map().spreadAllContacts(curSubspace->poly().aaBox());
 
-    Rend_RadioSubspaceEdges(*curSubspace);
+    Rend_DrawFlatRadio(*curSubspace);
 
     // Before clip testing lumobjs (for halos), range-occlude the back facing edges.
     // After testing, range-occlude the front facing edges. Done before drawing wall

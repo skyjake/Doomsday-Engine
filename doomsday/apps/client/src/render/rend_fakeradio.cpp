@@ -45,6 +45,14 @@
 
 using namespace de;
 
+enum WallShadow
+{
+    TopShadow,
+    BottomShadow,
+    LeftShadow,
+    RightShadow
+};
+
 static dfloat const MIN_OPEN            = 0.1f;
 static ddouble const MINDIFF            = 8;       ///< Min plane height difference (world units).
 static ddouble const INDIFF             = 8;       ///< Max plane height for indifference offset.
@@ -59,14 +67,6 @@ static inline RenderSystem &rendSys()
 {
     return ClientApp::renderSystem();
 }
-
-enum WallShadow
-{
-    TopShadow,
-    BottomShadow,
-    LeftShadow,
-    RightShadow
-};
 
 /**
  * Returns the "shadow darkness" (factor) for the given @a ambientLight (level), derived
@@ -863,7 +863,7 @@ static void drawWallShadow(Vector3f const *posCoords, WallEdge const &leftEdge, 
     }
 }
 
-void Rend_RadioWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge, dfloat ambientLight)
+void Rend_DrawWallRadio(WallEdge const &leftEdge, WallEdge const &rightEdge, dfloat ambientLight)
 {
     // Disabled?
     if(!::rendFakeRadio || ::levelFullBright)
