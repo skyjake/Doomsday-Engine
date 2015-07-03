@@ -98,14 +98,14 @@ lineopening_s &lineopening_s::operator = (lineopening_s const &other)
  * @param side      Line side to find the open range for.
  *
  * Return values:
- * @param bottom    Bottom Z height is written here. Can be @c 0.
- * @param top       Top Z height is written here. Can be @c 0.
+ * @param bottom    Bottom Z height is written here. Can be @c nullptr.
+ * @param top       Top Z height is written here. Can be @c nullptr.
  *
  * @return Height of the open range.
  *
  * @todo fixme: Should use the visual plane heights of sector clusters.
  */
-static coord_t visOpenRange(LineSide const &side, coord_t *retBottom = 0, coord_t *retTop = 0)
+static coord_t visOpenRange(LineSide const &side, coord_t *retBottom = nullptr, coord_t *retTop = nullptr)
 {
     Sector const *frontSec = side.sectorPtr();
     Sector const *backSec  = side.back().sectorPtr();
@@ -186,20 +186,23 @@ bool R_SideBackClosed(LineSide const &side, bool ignoreOpacity)
     return false;
 }
 
-Line *R_FindLineNeighbor(Sector const *sector, Line const *line,
-    LineOwner const *own, bool antiClockwise, binangle_t *diff)
+Line *R_FindLineNeighbor(Line const &line, LineOwner const &own, ClockDirection direction,
+    Sector const *sector, binangle_t *diff)
 {
-    LineOwner const *cown = antiClockwise? &own->prev() : &own->next();
+    LineOwner const *cown = (direction == Anticlockwise ? &own.prev() : &own.next());
     Line *other = &cown->line();
 
-    if(other == line)
-        return 0;
+    if(other == &line)
+        return nullptr;
 
-    if(diff) *diff += (antiClockwise? cown->angle() : own->angle());
+    if(diff)
+    {
+        *diff += (direction == Anticlockwise ? cown->angle() : own.angle());
+    }
 
     if(!other->hasBackSector() || !other->isSelfReferencing())
     {
-        if(sector) // Must one of the sectors match?
+        if(sector)  // Must one of the sectors match?
         {
             if(other->frontSectorPtr() == sector ||
                (other->hasBackSector() && other->backSectorPtr() == sector))
@@ -212,7 +215,8 @@ Line *R_FindLineNeighbor(Sector const *sector, Line const *line,
     }
 
     // Not suitable, try the next.
-    return R_FindLineNeighbor(sector, line, cown, antiClockwise, diff);
+    DENG2_ASSERT(cown);
+    return R_FindLineNeighbor(line, *cown, direction, sector, diff);
 }
 
 /**
@@ -241,18 +245,19 @@ static bool middleMaterialCoversOpening(LineSide const &side)
 
     if(matAnimator.isOpaque() && !side.middle().blendMode() && side.middle().opacity() >= 1)
     {
-        if(side.leftHEdge()) // possibility of degenerate BSP leaf
+        if(side.leftHEdge())  // possibility of degenerate BSP leaf.
         {
             coord_t openRange, openBottom, openTop;
             openRange = visOpenRange(side, &openBottom, &openTop);
             if(matAnimator.dimensions().y >= openRange)
             {
                 // Possibly; check the placement.
-                WallEdge edge(WallSpec::fromMapSide(side, LineSide::Middle),
-                              *side.leftHEdge(), Line::From);
+                WallEdge edge(WallSpec::fromMapSide(side, LineSide::Middle), *side.leftHEdge(), Line::From);
 
-                return (edge.isValid() && edge.top().z() > edge.bottom().z()
-                        && edge.top().z() >= openTop && edge.bottom().z() <= openBottom);
+                return (edge.isValid()
+                        && edge.top   ().z() > edge.bottom().z()
+                        && edge.top   ().z() >= openTop
+                        && edge.bottom().z() <= openBottom);
             }
         }
     }
@@ -261,42 +266,46 @@ static bool middleMaterialCoversOpening(LineSide const &side)
 }
 
 /// @todo fixme: Should use the visual plane heights of sector clusters.
-Line *R_FindSolidLineNeighbor(Sector const *sector, Line const *line,
-    LineOwner const *own, bool antiClockwise, binangle_t *diff)
+Line *R_FindSolidLineNeighbor(Line const &line, LineOwner const &own, ClockDirection direction,
+    Sector const *sector, binangle_t *diff)
 {
-    DENG_ASSERT(sector);
+    DENG2_ASSERT(sector);
 
-    LineOwner const *cown = antiClockwise? &own->prev() : &own->next();
+    LineOwner const *cown = (direction == Anticlockwise ? &own.prev() : &own.next());
     Line *other = &cown->line();
 
-    if(other == line) return 0;
+    if(other == &line) return nullptr;
 
-    if(diff) *diff += (antiClockwise? cown->angle() : own->angle());
-
-    if(!((other->isBspWindow()) && other->frontSectorPtr() != sector) &&
-       !other->isSelfReferencing())
+    if(diff) 
     {
-        if(!other->hasFrontSector()) return other;
-        if(!other->hasBackSector()) return other;
+        *diff += (direction == Anticlockwise ? cown->angle() : own.angle());
+    }
 
-        if(other->frontSector().floor().heightSmoothed() >= sector->ceiling().heightSmoothed() ||
-           other->frontSector().ceiling().heightSmoothed() <= sector->floor().heightSmoothed() ||
-           other->backSector().floor().heightSmoothed() >= sector->ceiling().heightSmoothed() ||
-           other->backSector().ceiling().heightSmoothed() <= sector->floor().heightSmoothed() ||
-           other->backSector().ceiling().heightSmoothed() <= other->backSector().floor().heightSmoothed())
+    if(!((other->isBspWindow()) && other->frontSectorPtr() != sector)
+       && !other->isSelfReferencing())
+    {
+        if(!other->hasFrontSector() || !other->hasBackSector())
+            return other;
+
+        if(   other->frontSector().floor  ().heightSmoothed() >= sector->ceiling().heightSmoothed()
+           || other->frontSector().ceiling().heightSmoothed() <= sector->floor  ().heightSmoothed()
+           || other->backSector ().floor  ().heightSmoothed() >= sector->ceiling().heightSmoothed()
+           || other->backSector ().ceiling().heightSmoothed() <= sector->floor  ().heightSmoothed()
+           || other->backSector ().ceiling().heightSmoothed() <= other->backSector().floor().heightSmoothed())
             return other;
 
         // Both front and back MUST be open by this point.
 
         // Perhaps a middle material completely covers the opening?
         // We should not give away the location of false walls (secrets).
-        LineSide &otherSide = other->side(other->frontSectorPtr() == sector? Line::Front : Line::Back);
+        LineSide &otherSide = other->side(other->frontSectorPtr() == sector ? Line::Front : Line::Back);
         if(middleMaterialCoversOpening(otherSide))
             return other;
     }
 
     // Not suitable, try the next.
-    return R_FindSolidLineNeighbor(sector, line, cown, antiClockwise, diff);
+    DENG2_ASSERT(cown);
+    return R_FindSolidLineNeighbor(line, *cown, direction, sector, diff);
 }
 
-#endif // __CLIENT__
+#endif  // __CLIENT__

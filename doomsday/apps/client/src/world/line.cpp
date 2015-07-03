@@ -617,13 +617,13 @@ static Material *chooseFixMaterial(LineSide &side, dint section)
     {
         // Our first choice is a material on an adjacent wall section.
         // Try the left neighbor first.
-        Line *other = R_FindLineNeighbor(frontSec, &side.line(), side.line().vertexOwner(side.sideId()),
-                                         false /*next clockwise*/);
+        Line *other = R_FindLineNeighbor(side.line(), *side.line().vertexOwner(side.sideId()),
+                                         Clockwise, frontSec);
         if(!other)
         {
             // Try the right neighbor.
-            other = R_FindLineNeighbor(frontSec, &side.line(), side.line().vertexOwner(side.sideId()^1),
-                                       true /*next anti-clockwise*/);
+            other = R_FindLineNeighbor(side.line(), *side.line().vertexOwner(side.sideId()^1),
+                                       Anticlockwise, frontSec);
         }
 
         if(other)
@@ -806,12 +806,12 @@ static inline binangle_t lineNeighborAngle(LineSide const &side, Line const *oth
     return (other && other != &side.line())? diff : 0 /*Consider it coaligned*/;
 }
 
-static binangle_t findSolidLineNeighborAngle(LineSide const &side, bool rightNeighbor)
+static binangle_t findSolidLineNeighborAngle(LineSide const &side, bool right)
 {
     binangle_t diff = 0;
-    Line const *other = R_FindSolidLineNeighbor(side.sectorPtr(), &side.line(),
-                                                side.line().vertexOwner(dint(rightNeighbor) ^ side.sideId()),
-                                                rightNeighbor, &diff);
+    Line const *other = R_FindSolidLineNeighbor(side.line(),
+                                                *side.line().vertexOwner(dint(right) ^ side.sideId()),
+                                                right ? Anticlockwise : Clockwise, side.sectorPtr(), &diff);
     return lineNeighborAngle(side, other, diff);
 }
 
@@ -839,7 +839,7 @@ static void scanNeighbor(LineSide const &side, bool top, bool right, edge_t &edg
 
     de::zap(edge);
 
-    ClockDirection const direction = (right? Anticlockwise : Clockwise);
+    ClockDirection const direction = (right ? Anticlockwise : Clockwise);
     Sector const *startSector = side.sectorPtr();
     coord_t const fFloor      = side.sector().floor  ().heightSmoothed();
     coord_t const fCeil       = side.sector().ceiling().heightSmoothed();
@@ -856,7 +856,7 @@ static void scanNeighbor(LineSide const &side, bool top, bool right, edge_t &edg
         while((!iter->hasFrontSector() && !iter->hasBackSector()) || iter->isSelfReferencing())
         {
             own         = &own->navigate(direction);
-            diff       += (direction == Clockwise? own->angle() : own->prev().angle());
+            diff       += (direction == Clockwise ? own->angle() : own->prev().angle());
             iter        = &own->navigate(direction).line();
             scanSecSide = (iter->frontSectorPtr() == startSector);
         }
@@ -970,7 +970,7 @@ static void scanNeighbor(LineSide const &side, bool top, bool right, edge_t &edg
             // If the map is formed correctly, we should find a back neighbor attached
             // to this line. However, if this is not the case and a line which *should*
             // be two sided isn't, we need to check whether there is a valid neighbor.
-            Line *backNeighbor = R_FindLineNeighbor(startSector, iter, own, right);
+            Line *backNeighbor = R_FindLineNeighbor(*iter, *own, direction, startSector);
 
             if(backNeighbor && backNeighbor != iter)
             {
@@ -989,10 +989,11 @@ static void scanNeighbor(LineSide const &side, bool top, bool right, edge_t &edg
     if(edge.sector)  // The back sector of the coalignable neighbor.
     {
         // Since we have the details of the backsector already, simply get the next
-        // neighbor (it *is* the backneighbor).
-        edge.line = R_FindLineNeighbor(edge.sector, edge.line,
-                                       edge.line->vertexOwner(dint(edge.line->hasBackSector() && edge.line->backSectorPtr() == edge.sector) ^ dint(right)),
-                                       right, &edge.diff);
+        // neighbor (it *is* the back neighbor).
+        DENG2_ASSERT(edge.line);
+        edge.line = R_FindLineNeighbor(*edge.line,
+                                       *edge.line->vertexOwner(dint(edge.line->hasBackSector() && edge.line->backSectorPtr() == edge.sector) ^ dint(right)),
+                                       direction, edge.sector, &edge.diff);
     }
 }
 

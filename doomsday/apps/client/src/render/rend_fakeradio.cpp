@@ -148,7 +148,7 @@ static Vector2d wallDimensions(WallEdge const &leftEdge, WallEdge const &rightEd
  */
 static ddouble wallOffset(WallEdge const &leftEdge, WallEdge const &/*rightEdge*/)
 {
-    return leftEdge.mapLineSideOffset();
+    return leftEdge.lineSideOffset();
 }
 
 /**
@@ -161,7 +161,7 @@ static ddouble wallOffset(WallEdge const &leftEdge, WallEdge const &/*rightEdge*
  */
 static dfloat wallSideOpenness(WallEdge const &leftEdge, WallEdge const &/*rightEdge*/, bool rightSide)
 {
-    return leftEdge.mapLineSide().radioCornerSide(rightSide).corner;
+    return leftEdge.lineSide().radioCornerSide(rightSide).corner;
 }
 
 /**
@@ -178,7 +178,7 @@ static bool wallReceivesShadow(WallEdge const &leftEdge, WallEdge const &rightEd
 {
     if(shadowSize <= 0) return false;
 
-    LineSide const &side         = leftEdge.mapLineSide();
+    LineSide const &side         = leftEdge.lineSide();
     DENG2_ASSERT(side.leftHEdge());
     SectorCluster const &cluster = side.leftHEdge()->face().mapElementAs<ConvexSubspace>().cluster();
     Plane const &visFloor        = cluster.visFloor  ();
@@ -199,12 +199,12 @@ static bool wallReceivesShadow(WallEdge const &leftEdge, WallEdge const &rightEd
     case LeftShadow:
         return (visFloor.castsShadow() || visCeiling.castsShadow())
                && wallSideOpenness(leftEdge, rightEdge, false/*left side*/) > 0
-               && leftEdge.mapLineSideOffset() < shadowSize;
+               && leftEdge.lineSideOffset() < shadowSize;
 
     case RightShadow:
         return (visFloor.castsShadow() || visCeiling.castsShadow())
                && wallSideOpenness(leftEdge, rightEdge, true/*right side*/) > 0
-               && leftEdge.mapLineSideOffset() + wallWidth(leftEdge, rightEdge) > side.line().length() - shadowSize;
+               && leftEdge.lineSideOffset() + wallWidth(leftEdge, rightEdge) > side.line().length() - shadowSize;
     }
     DENG2_ASSERT(!"Unknown WallShadow");
     return false;
@@ -245,7 +245,7 @@ struct ProjectedShadowData
 static void setTopShadowParams(WallEdge const &leftEdge, WallEdge const &rightEdge, ddouble shadowSize,
     ProjectedShadowData &projected)
 {
-    LineSide /*const*/ &side = leftEdge.mapLineSide();
+    LineSide /*const*/ &side = leftEdge.lineSide();
     DENG2_ASSERT(side.leftHEdge());
     SectorCluster const &cluster = side.leftHEdge()->face().mapElementAs<ConvexSubspace>().cluster();
     Plane const &visFloor        = cluster.visFloor  ();
@@ -401,7 +401,7 @@ static void setTopShadowParams(WallEdge const &leftEdge, WallEdge const &rightEd
 static void setBottomShadowParams(WallEdge const &leftEdge, WallEdge const &rightEdge, ddouble shadowSize,
     ProjectedShadowData &projected)
 {
-    LineSide /*const*/ &side     = leftEdge.mapLineSide();
+    LineSide /*const*/ &side     = leftEdge.lineSide();
     DENG2_ASSERT(side.leftHEdge());
     SectorCluster const &cluster = side.leftHEdge()->face().mapElementAs<ConvexSubspace>().cluster();
     Plane const &visFloor        = cluster.visFloor  ();
@@ -557,7 +557,7 @@ static void setBottomShadowParams(WallEdge const &leftEdge, WallEdge const &righ
 static void setSideShadowParams(WallEdge const &leftEdge, WallEdge const &rightEdge, bool rightSide,
     ddouble shadowSize, ProjectedShadowData &projected)
 {
-    LineSide /*const*/ &side      = leftEdge.mapLineSide();
+    LineSide /*const*/ &side      = leftEdge.lineSide();
     HEdge const *hedge            = side.leftHEdge();
     DENG2_ASSERT(hedge);
     SectorCluster const &cluster  = hedge->face().mapElementAs<ConvexSubspace>().cluster();
@@ -866,7 +866,7 @@ static void drawWallShadow(Vector3f const *posCoords, WallEdge const &leftEdge, 
 void Rend_DrawWallRadio(WallEdge const &leftEdge, WallEdge const &rightEdge, dfloat ambientLight)
 {
     // Disabled?
-    if(!::rendFakeRadio || ::levelFullBright)
+    if(!::rendFakeRadio || ::levelFullBright || leftEdge.spec().flags.testFlag(WallSpec::NoFakeRadio))
         return;
 
     // Skip if the surface is not lit with ambient light.
@@ -880,7 +880,7 @@ void Rend_DrawWallRadio(WallEdge const &leftEdge, WallEdge const &rightEdge, dfl
         return;
 
     // Ensure we have up-to-date information for generating shadow geometry.
-    leftEdge.mapLineSide().updateRadioForFrame(R_FrameCount());
+    leftEdge.lineSide().updateRadioForFrame(R_FrameCount());
 
     Vector3f const posCoords[] = {
         leftEdge .bottom().origin(),
