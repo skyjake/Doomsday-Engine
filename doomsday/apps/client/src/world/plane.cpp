@@ -21,10 +21,12 @@
 #include "world/plane.h"
 
 #include <de/Log>
-#include "dd_loop.h" // frameTimePos
+#include "dd_loop.h"  // frameTimePos
+#include "dd_main.h"  // App_ResourceSystem()
+
 #include "world/map.h"
 #include "world/thinkers.h"
-#include "world/worldsystem.h" /// ddMapSetup
+#include "world/worldsystem.h"  // ddMapSetup
 #include "Surface"
 #include "Sector"
 
@@ -164,6 +166,18 @@ Plane::Plane(Sector &sector, Vector3f const &normal, coord_t height)
 {
     d->setHeight(height);
     setNormal(normal);
+}
+
+String Plane::description() const
+{
+    String const name =   isSectorFloor()   ? "Floor"
+                        : isSectorCeiling() ? "Ceiling"
+                        : "Plane #" + String::number(indexInSector());
+    return String(_E(D)_E(b) "%1:\n" _E(.)_E(.)
+                  _E(l) "Height: " _E(.)_E(i) "%2" _E(.))
+               .arg(name)
+               .arg(height())
+           + " " + surface().description();
 }
 
 Sector &Plane::sector()
