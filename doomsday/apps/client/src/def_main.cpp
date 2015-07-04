@@ -35,6 +35,7 @@
 #include <doomsday/defs/dedparser.h>
 #include <doomsday/defs/material.h>
 #include <doomsday/defs/sky.h>
+#include <doomsday/defs/state.h>
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/filesys/fs_util.h>
 #include <doomsday/filesys/sys_direc.h>
@@ -1300,33 +1301,33 @@ void Def_Read()
     runtimeDefs.states.append(defs.states.size());
     for(int i = 0; i < runtimeDefs.states.size(); ++i)
     {
-        ded_state_t *dst = &defs.states[i];
+        Record &dst = defs.states[i];
+
         // Make sure duplicate IDs overwrite the earliest.
-        int stateNum = Def_GetStateNum(dst->id);
+        int stateNum = defs.getStateNum(dst.gets("id"));
 
         if(stateNum == -1) continue;
 
-        ded_state_t *dstNew = &defs.states[stateNum];
+        Record &dstNew = defs.states[stateNum];
         state_t *st = &runtimeDefs.states[stateNum];
 
-        st->sprite    = Def_GetSpriteNum(dst->sprite.id);
-        st->flags     = dst->flags;
-        st->frame     = dst->frame;
-        st->tics      = dst->tics;
-        st->action    = Def_GetActionPtr(dst->action);
-        st->nextState = Def_GetStateNum(dst->nextState);
+        st->sprite    = Def_GetSpriteNum(dst.gets("sprite"));
+        st->flags     = dst.geti("flags");
+        st->frame     = dst.geti("frame");
+        st->tics      = dst.geti("tics");
+        st->action    = Def_GetActionPtr(dst.gets("action").toLatin1());
+        st->nextState = defs.getStateNum(dst.gets("nextState"));
 
+        auto const &misc = dst.geta("misc");
         for(int k = 0; k < NUM_STATE_MISC; ++k)
         {
-            st->misc[k] = dst->misc[k];
+            st->misc[k] = misc[k].asInt();
         }
 
         // Replace the older execute string.
-        if(dst != dstNew)
+        if(&dst != &dstNew)
         {
-            M_Free(dstNew->execute);
-            dstNew->execute = dst->execute;
-            dst->execute = nullptr;
+            dstNew.set("execute", dst.gets("execute"));
         }
     }
 
@@ -1768,13 +1769,11 @@ dd_bool Def_SameStateSequence(state_t *snew, state_t *sold)
     return false;
 }
 
-char const *Def_GetStateName(state_t *state)
+String Def_GetStateName(state_t *state)
 {
-    int idx = runtimeDefs.states.indexOf(state);
+    int const idx = runtimeDefs.states.indexOf(state);
     if(!state) return "(nullptr)";
-    //if(idx < 0) return "(<0)";
-    //if(idx >= defs.states.size()) return "(>states)";
-    return defs.states[idx].id;
+    return defs.states[idx].gets("id");
 }
 
 static int Friendly(int num)
@@ -2042,13 +2041,12 @@ int Def_Set(int type, int index, int value, void const *ptr)
     switch(type)
     {
     case DD_DEF_STATE: {
-        ded_state_t *stateDef;
         if(index < 0 || index >= defs.states.size())
         {
             DENG2_ASSERT(!"Def_Set: State index is invalid");
             return false;
         }
-        stateDef = &defs.states[index];
+        defn::State state = defs.states[index];
         switch(value)
         {
         case DD_SPRITE: {
@@ -2060,11 +2058,11 @@ int Def_Set(int type, int index, int value, void const *ptr)
                 break;
             }
 
-            qstrcpy((char *) stateDef->sprite.id, defs.sprites[value].id);
+            state.def().set("sprite", defs.sprites[value].id);
             break; }
 
         case DD_FRAME:
-            stateDef->frame = *(int *)ptr;
+            state.def().set("frame", *(int *)ptr);
             break;
 
         default: break;
@@ -2123,7 +2121,7 @@ StringArray *Def_ListStateIDs()
     StringArray *array = StringArray_New();
     for(int i = 0; i < defs.states.size(); ++i)
     {
-        StringArray_Append(array, defs.states[i].id);
+        StringArray_Append(array, defs.states[i].gets("id").toUtf8());
     }
     return array;
 }

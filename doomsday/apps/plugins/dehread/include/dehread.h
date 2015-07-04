@@ -45,7 +45,7 @@ extern ded_t *ded; // @todo Remove me.
 int const NUMSPRITES = 138;
 int const NUMSTATES  = 968;
 extern ded_sprid_t  origSpriteNames[NUMSPRITES];
-extern ded_funcid_t origActionNames[NUMSTATES];
+extern de::String origActionNames[NUMSTATES];
 
 DENG_USING_API(Base);
 DENG_USING_API(Con);

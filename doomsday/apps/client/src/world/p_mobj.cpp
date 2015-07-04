@@ -181,8 +181,11 @@ DENG_EXTERN_C void Mobj_SetState(mobj_t *mobj, int statenum)
 
     if(!(mobj->ddFlags & DDMF_REMOTE))
     {
-        if(defs.states[statenum].execute)
-            Con_Execute(CMDS_SCRIPT, defs.states[statenum].execute, true, false);
+        String const exec = defs.states[statenum].gets("execute");
+        if(!exec.isEmpty())
+        {
+            Con_Execute(CMDS_SCRIPT, exec.toUtf8(), true, false);
+        }
     }
 
     // Notify private data about the changed state.

@@ -162,7 +162,6 @@ char const *Def_GetMobjName(int num);
 
 state_t *Def_GetState(int num);
 int Def_GetStateNum(char const *id);
-char const *Def_GetStateName(state_t *state);
 
 int Def_GetActionNum(char const *id);
 
@@ -183,6 +182,8 @@ ded_light_t *Def_GetLightDef(int spr, int frame);
 #ifdef __cplusplus
 } // extern "C"
 #endif
+
+de::String Def_GetStateName(state_t *state);
 
 spritenum_t Def_GetSpriteNum(de::String const &name);
 

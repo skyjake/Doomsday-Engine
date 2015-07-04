@@ -30,6 +30,7 @@
 
 #include "doomsday/defs/decoration.h"
 #include "doomsday/defs/episode.h"
+#include "doomsday/defs/state.h"
 #include "doomsday/defs/finale.h"
 #include "doomsday/defs/mapinfo.h"
 #include "doomsday/defs/material.h"
@@ -56,6 +57,7 @@ float ded_ptcstage_t::particleRadius(int ptcIDX) const
 ded_s::ded_s()
     : flags      (names.addRecord("flags"))
     , episodes   (names.addRecord("episodes"))
+    , states     (names.addRecord("states"))
     , materials  (names.addRecord("materials"))
     , models     (names.addRecord("models"))
     , skies      (names.addRecord("skies"))
@@ -66,6 +68,7 @@ ded_s::ded_s()
 {
     decorations.addLookupKey("texture");
     episodes.addLookupKey("id");
+    states.addLookupKey("id");
     finales.addLookupKey("id");
     finales.addLookupKey("before");
     finales.addLookupKey("after");
@@ -102,6 +105,14 @@ int ded_s::addEpisode()
 {
     Record &def = episodes.append();
     defn::Episode(def).resetToDefaults();
+    return def.geti("__order__");
+}
+
+int ded_s::addState(String const &id)
+{
+    Record &def = states.append();
+    defn::State(def).resetToDefaults();
+    def.set("id", id);
     return def.geti("__order__");
 }
 
@@ -189,12 +200,14 @@ int DED_AddMobj(ded_t* ded, char const* idstr)
     return ded->mobjs.indexOf(mo);
 }
 
+/*
 int DED_AddState(ded_t* ded, char const* id)
 {
     ded_state_t *st = ded->states.append();
     strcpy(st->id, id);
     return ded->states.indexOf(st);
 }
+ */
 
 int DED_AddSprite(ded_t* ded, char const* name)
 {
@@ -369,21 +382,16 @@ char const *ded_s::getMobjName(int num) const
 
 int ded_s::getStateNum(String const &id) const
 {
-    return getStateNum(id.toLatin1().constData());
+    if(Record const *def = states.tryFind("id", id))
+    {
+        return def->geti("__order__");
+    }
+    return -1;
 }
 
 int ded_s::getStateNum(char const *id) const
 {
-    int idx = -1;
-    if(id && id[0] && states.size())
-    {
-        int i = 0;
-        do {
-            if(!qstricmp(states[i].id, id))
-                idx = i;
-        } while(idx == -1 && ++i < states.size());
-    }
-    return idx;
+    return getStateNum(String(id));
 }
 
 int ded_s::evalFlags2(char const *ptr) const

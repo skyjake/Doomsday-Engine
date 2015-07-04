@@ -62,7 +62,7 @@ struct LIBDOOMSDAY_PUBLIC ded_s
     DEDArray<ded_mobj_t> mobjs;
 
     // States.
-    DEDArray<ded_state_t> states;
+    DEDRegister states;
 
     // Sprites.
     DEDArray<ded_sprid_t> sprites;
@@ -135,6 +135,8 @@ public:
     int addFlag(de::String const &id, int value);
 
     int addEpisode();
+    
+    int addState(de::String const &id);    
 
     int addDecoration();
 
@@ -211,7 +213,6 @@ extern "C" {
 // Routines for managing DED files:
 
 int             DED_AddMobj(ded_t* ded, char const* idStr);
-int             DED_AddState(ded_t* ded, char const* id);
 int             DED_AddSprite(ded_t* ded, char const* name);
 int             DED_AddLight(ded_t* ded, char const* stateID);
 int             DED_AddSound(ded_t* ded, char const* id);

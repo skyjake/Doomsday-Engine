@@ -32,7 +32,9 @@
 
 #include <de/memory.h>
 #include <doomsday/filesys/lumpindex.h>
+#include <doomsday/defs/state.h>
 #include <de/App>
+#include <de/ArrayValue>
 #include <de/Block>
 #include <de/Error>
 #include <de/Log>
@@ -298,8 +300,8 @@ public:
                     }
                     else if(line.beginsWith("Frame", Qt::CaseInsensitive))
                     {
-                        ded_state_t *state;
-                        Dummy<ded_state_t> dummyState;
+                        Record *state;
+                        Record dummyState;
 
                         String const arg   = line.substr(5).leftStrip();
                         int const stateNum = parseStateNum(arg);
@@ -315,12 +317,12 @@ public:
                         }
 
                         skipToNextLine();
-                        parseFrame(state, state == &dummyState);
+                        parseFrame(*state, state == &dummyState);
                     }
                     else if(line.beginsWith("Pointer", Qt::CaseInsensitive))
                     {
-                        ded_state_t *state;
-                        Dummy<ded_state_t> dummyState;
+                        Record *state;
+                        Record dummyState;
 
                         String const arg   = line.substr(7).leftStrip();
                         int const stateNum = parseStateNumFromActionOffset(arg);
@@ -336,7 +338,7 @@ public:
                         }
 
                         skipToNextLine();
-                        parsePointer(state, state == &dummyState);
+                        parsePointer(*state, state == &dummyState);
                     }
                     else if(line.beginsWith("Sprite", Qt::CaseInsensitive))
                     {
@@ -824,10 +826,11 @@ public:
                         else
                         {
                             int const stateIdx = value;
-                            ded_state_t const &state = ded->states[stateIdx];
+                            Record const &state = ded->states[stateIdx];
 
                             DENG2_ASSERT(mapping->id >= 0 && mapping->id < STATENAMES_COUNT);
-                            qstrncpy(mobj->states[mapping->id], state.id, DED_STRINGID_LEN + 1);
+                            qstrncpy(mobj->states[mapping->id], state.gets("id").toLatin1(),
+                                     DED_STRINGID_LEN + 1);
 
                             LOG_DEBUG("Type #%i \"%s\" state:%s => \"%s\" (#%i)")
                                     << thingNum << mobj->id << mapping->name
@@ -1041,10 +1044,10 @@ public:
         }
     }
 
-    void parseFrame(ded_state_t *state, bool ignore = false)
+    void parseFrame(defn::State state, bool ignore = false)
     {
         LOG_AS("parseFrame");
-        int const stateNum = ded->states.indexOf(state);
+        int const stateNum = state.geti("__order__");
 
         for(; lineInCurrentSection(); skipToNextLine())
         {
@@ -1056,8 +1059,9 @@ public:
                 int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
-                    state->tics = value;
-                    LOG_DEBUG("State #%i \"%s\" tics => %i") << stateNum << state->id << state->tics;
+                    state.def().set("tics", value);
+                    LOG_DEBUG("State #%i \"%s\" tics => %i")
+                        << stateNum << state.gets("id") << state.geti("tics");
                 }
             }
             else if(!var.compareWithoutCase("Next frame"))
@@ -1072,9 +1076,10 @@ public:
                     else
                     {
                         int const nextStateIdx = value;
-                        qstrncpy(state->nextState, ded->states[nextStateIdx].id, DED_STRINGID_LEN + 1);
+                        state.def().set("nextState", ded->states[nextStateIdx].gets("id"));
                         LOG_DEBUG("State #%i \"%s\" nextState => \"%s\" (#%i)")
-                                << stateNum << state->id << state->nextState << nextStateIdx;
+                                << stateNum << state.gets("id") << state.gets("nextState")
+                                << nextStateIdx;
                     }
                 }
             }
@@ -1096,9 +1101,10 @@ public:
                     {
                         int const spriteIdx = value;
                         ded_sprid_t const &sprite = ded->sprites[spriteIdx];
-                        qstrncpy(state->sprite.id, sprite.id, DED_SPRITEID_LEN + 1);
+                        state.def().set("sprite", sprite.id);
                         LOG_DEBUG("State #%i \"%s\" sprite => \"%s\" (#%i)")
-                                << stateNum << state->id << state->sprite.id << spriteIdx;
+                                << stateNum << state.gets("id") << state.gets("sprite")
+                                << spriteIdx;
                     }
                 }
             }
@@ -1110,11 +1116,14 @@ public:
                     int const FF_FULLBRIGHT = 0x8000;
 
                     // Translate the old fullbright bit.
-                    if(value & FF_FULLBRIGHT)   state->flags |=  STF_FULLBRIGHT;
-                    else                        state->flags &= ~STF_FULLBRIGHT;
-                    state->frame = value & ~FF_FULLBRIGHT;
+                    int stateFlags = state.geti("flags");
+                    if(value & FF_FULLBRIGHT) stateFlags |=  STF_FULLBRIGHT;
+                    else                      stateFlags &= ~STF_FULLBRIGHT;
+                    state.def().set("flags", stateFlags);
+                    state.def().set("frame", value & ~FF_FULLBRIGHT); // frame, not flags
 
-                    LOG_DEBUG("State #%i \"%s\" frame => %i") << stateNum << state->id << state->frame;
+                    LOG_DEBUG("State #%i \"%s\" frame => %i")
+                        << stateNum << state.gets("id") << state.geti("frame");
                 }
             }
             else if(var.startsWith("Unknown ", Qt::CaseInsensitive))
@@ -1130,9 +1139,9 @@ public:
                     }
                     else
                     {
-                        state->misc[miscIdx] = value;
+                        state.def()["misc"].value<ArrayValue>().setElement(miscIdx, value);
                         LOG_DEBUG("State #%i \"%s\" misc:%i => %i")
-                                << stateNum << state->id << miscIdx << value;
+                                << stateNum << state.gets("id") << miscIdx << value;
                     }
                 }
             }
@@ -1346,9 +1355,9 @@ public:
                         {
                             DENG2_ASSERT(weapon->id >= 0 && weapon->id < ded->states.size());
 
-                            ded_state_t const &state = ded->states[value];
+                            Record const &state = ded->states[value];
                             createValueDef(String("Weapon Info|%1|%2").arg(weapNum).arg(weapon->name),
-                                           QString::fromUtf8(state.id));
+                                           state.gets("id"));
                         }
                     }
                 }
@@ -1382,10 +1391,10 @@ public:
         }
     }
 
-    void parsePointer(ded_state_t *state, bool ignore)
+    void parsePointer(defn::State state, bool ignore)
     {
         LOG_AS("parsePointer");
-        int const stateNum = ded->states.indexOf(state);
+        int const stateNum = state.geti("__order__");
 
         for(; lineInCurrentSection(); skipToNextLine())
         {
@@ -1403,10 +1412,9 @@ public:
                     }
                     else
                     {
-                        ded_funcid_t const &newAction = origActionNames[actionIdx];
-                        qstrncpy(state->action, newAction, DED_STRINGID_LEN + 1);
+                        state.def().set("action", origActionNames[actionIdx]);
                         LOG_DEBUG("State #%i \"%s\" action => \"%s\"")
-                                << stateNum << state->id << state->action;
+                                << stateNum << state.gets("id") << state.gets("action");
                     }
                 }
             }
@@ -1612,7 +1620,7 @@ public:
                 }
                 else
                 {
-                    ded_state_t &state = ded->states[stateNum];
+                    Record &state = ded->states[stateNum];
 
                     // Compose the action name.
                     String action = expr.rightStrip();
@@ -1623,18 +1631,17 @@ public:
                     // Is this a known action?
                     if(!action.compareWithoutCase("A_NULL"))
                     {
-                        qstrncpy(state.action, "NULL", DED_STRINGID_LEN+1);
+                        state.set("action", "NULL");
                         LOG_DEBUG("State #%i \"%s\" action => \"NULL\"")
-                                << stateNum << state.id;
+                                << stateNum << state.gets("id");
                     }
                     else
                     {
-                        Block actionUtf8 = action.toUtf8();
-                        if(Def_Get(DD_DEF_ACTION, actionUtf8.constData(), 0) >= 0)
+                        if(Def_Get(DD_DEF_ACTION, action.toUtf8(), 0) >= 0)
                         {
-                            qstrncpy(state.action, actionUtf8.constData(), DED_STRINGID_LEN + 1);
+                            state.set("action", action);
                             LOG_DEBUG("State #%i \"%s\" action => \"%s\"")
-                                    << stateNum << state.id << state.action;
+                                    << stateNum << state.gets("id") << state.gets("action");
                         }
                         else
                         {

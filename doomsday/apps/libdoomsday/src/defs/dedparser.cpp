@@ -128,6 +128,12 @@ using namespace de;
 #define RV_IVEC(lab, X, N)  if(ISLABEL(lab)) { int b; FINDBEGIN; \
                         for(b=0; b<N; ++b) {READINT(X[b])} ReadToken(); } else
 #define RV_NBVEC(lab, X, N) if(ISLABEL(lab)) { READNBYTEVEC(X,N); } else
+#define RV_INT_ELEM(lab, ARRAY, ELEM) if(ISLABEL(lab)) { \
+    int _value; READINT(_value); \
+    (ARRAY).value<ArrayValue>().setElement(ELEM, _value); } else
+#define RV_FLT_ELEM(lab, ARRAY, ELEM) if(ISLABEL(lab)) { \
+    float _value; READFLT(_value); \
+    (ARRAY).value<ArrayValue>().setElement(ELEM, _value); } else
 #define RV_STR(lab, X)  if(ISLABEL(lab)) { READSTR(X); } else
 #define RV_STR_INT(lab, S, I)   if(ISLABEL(lab)) { if(!ReadString(S,sizeof(S))) \
                                 I = strtol(token,0,0); } else
@@ -1252,14 +1258,14 @@ DENG2_PIMPL(DEDParser)
             if(ISTOKEN("State"))
             {
                 dd_bool bModify = false;
-                ded_state_t* st;
-                Dummy<ded_state_t> dummyState;
+                Record *st;
+                Record dummyState;
 
                 ReadToken();
                 if(!ISTOKEN("Mods"))
                 {
                     // A new state.
-                    idx = DED_AddState(ded, "");
+                    idx = ded->addState("");
                     st = &ded->states[idx];
                 }
                 else if(!bCopyNext)
@@ -1296,7 +1302,7 @@ DENG2_PIMPL(DEDParser)
                 if(prevStateDefIdx >= 0 && bCopyNext)
                 {
                     // Should we copy the previous definition?
-                    ded->states.copyTo(st, prevStateDefIdx);
+                    ded->states.copy(prevStateDefIdx, *st);
                 }
 
                 FINDBEGIN;
@@ -1306,7 +1312,7 @@ DENG2_PIMPL(DEDParser)
                     // ID cannot be changed when modifying
                     if(!bModify && ISLABEL("ID"))
                     {
-                        READSTR(st->id);
+                        READSTR((*st)["id"]);
                     }
                     else if(ISLABEL("Frame"))
                     {
@@ -1314,25 +1320,27 @@ DENG2_PIMPL(DEDParser)
     #define FF_FULLBRIGHT               0x8000
     #define FF_FRAMEMASK                0x7fff
 
-                        READINT(st->frame);
-                        if(st->frame & FF_FULLBRIGHT)
+                        int frame = 0;
+                        READINT(frame);
+                        if(frame & FF_FULLBRIGHT)
                         {
-                            st->frame &= FF_FRAMEMASK;
-                            st->flags |= STF_FULLBRIGHT;
+                            frame &= FF_FRAMEMASK;
+                            st->set("flags", st->geti("flags") | STF_FULLBRIGHT);
                         }
+                        st->set("frame", frame);
 
     #undef FF_FRAMEMASK
     #undef FF_FULLBRIGHT
                     }
-                    else RV_FLAGS("Flags", st->flags, "statef_")
-                    RV_STR("Sprite", st->sprite.id)
-                    RV_INT("Tics", st->tics)
-                    RV_STR("Action", st->action)
-                    RV_STR("Next state", st->nextState)
-                    RV_INT("Misc1", st->misc[0])
-                    RV_INT("Misc2", st->misc[1])
-                    RV_INT("Misc3", st->misc[2])
-                    RV_ANYSTR("Execute", st->execute)
+                    else RV_FLAGS("Flags", (*st)["flags"], "statef_")
+                    RV_STR("Sprite",     (*st)["sprite"])
+                    RV_INT("Tics",       (*st)["tics"])
+                    RV_STR("Action",     (*st)["action"])
+                    RV_STR("Next state", (*st)["nextState"])
+                    RV_INT_ELEM("Misc1", (*st)["misc"], 0)
+                    RV_INT_ELEM("Misc2", (*st)["misc"], 1)
+                    RV_INT_ELEM("Misc3", (*st)["misc"], 2)
+                    RV_STR("Execute",    (*st)["execute"])
                     RV_END
                     CHECKSC;
                 }
@@ -1470,7 +1478,7 @@ DENG2_PIMPL(DEDParser)
 
                 defn::Material mainDef(*mat);
                 int decor = 0;
-                int layer      = 0;
+                int layer = 0;
                 FINDBEGIN;
                 forever
                 {
@@ -1482,17 +1490,9 @@ DENG2_PIMPL(DEDParser)
                     }
                     else
                     RV_FLAGS("Flags", (*mat)["flags"], "matf_")
-                    if(ISLABEL("Width"))
-                    {
-                        int width; READINT(width);
-                        (*mat)["dimensions"].value<ArrayValue>().setElement(0, width);
-                    }
-                    else if(ISLABEL("Height"))
-                    {
-                        int height; READINT(height);
-                        (*mat)["dimensions"].value<ArrayValue>().setElement(1, height);
-                    }
-                    else if(ISLABEL("Layer"))
+                    RV_INT_ELEM("Width", (*mat)["dimensions"], 0)
+                    RV_INT_ELEM("Height", (*mat)["dimensions"], 1)
+                    if(ISLABEL("Layer"))
                     {
                         if(layer >= DED_MAX_MATERIAL_LAYERS)
                         {
@@ -1665,12 +1665,7 @@ DENG2_PIMPL(DEDParser)
                     }
                     else
                     RV_VEC_VAR("Scale XYZ", mdl["scale"], 3)
-                    if(ISLABEL("Offset"))
-                    {
-                        float offy; READFLT(offy);
-                        mdl["offset"].value<ArrayValue>().setElement(1, offy);
-                    }
-                    else
+                    RV_FLT_ELEM("Offset", mdl["offset"], 1)
                     RV_VEC_VAR("Offset XYZ", mdl["offset"], 3)
                     RV_VEC_VAR("Interpolate", mdl["interRange"], 2)
                     RV_FLT("Shadow radius", mdl["shadowRadius"])
@@ -2054,22 +2049,9 @@ DENG2_PIMPL(DEDParser)
                     RV_FLAGS("Flags", (*mi)["flags"], "mif_")
                     RV_STR("Music", (*mi)["music"])
                     RV_FLT("Par time", (*mi)["parTime"])
-                    if(ISLABEL("Fog color R"))
-                    {
-                        float red; READFLT(red);
-                        (*mi)["fogColor"].value<ArrayValue>().setElement(0, red);
-                    }
-                    else if(ISLABEL("Fog color G"))
-                    {
-                        float green; READFLT(green);
-                        (*mi)["fogColor"].value<ArrayValue>().setElement(1, green);
-                    }
-                    else if(ISLABEL("Fog color B"))
-                    {
-                        float blue; READFLT(blue);
-                        (*mi)["fogColor"].value<ArrayValue>().setElement(2, blue);
-                    }
-                    else
+                    RV_FLT_ELEM("Fog color R", (*mi)["fogColor"], 0)
+                    RV_FLT_ELEM("Fog color G", (*mi)["fogColor"], 1)
+                    RV_FLT_ELEM("Fog color B", (*mi)["fogColor"], 2)
                     RV_FLT("Fog start", (*mi)["fogStart"])
                     RV_FLT("Fog end", (*mi)["fogEnd"])
                     RV_FLT("Fog density", (*mi)["fogDensity"])
