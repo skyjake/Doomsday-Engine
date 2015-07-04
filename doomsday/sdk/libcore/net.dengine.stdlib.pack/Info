@@ -3,4 +3,4 @@ version: 2.0.0
 license: GPL 3+
 tags: core script
 
-importPath <modules>
+importPath </home/modules, modules>
