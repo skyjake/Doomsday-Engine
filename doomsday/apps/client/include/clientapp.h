@@ -21,6 +21,7 @@
 #define CLIENTAPP_H
 
 #include <de/BaseGuiApp>
+#include <doomsday/doomsdayapp.h>
 
 #include "settingsregister.h"
 #include "network/serverlink.h"
@@ -36,7 +37,7 @@
 /**
  * The client application.
  */
-class ClientApp : public de::BaseGuiApp
+class ClientApp : public de::BaseGuiApp, public DoomsdayApp
 {
     Q_OBJECT
 

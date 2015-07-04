@@ -21,6 +21,7 @@
 #define SERVERAPP_H
 
 #include <de/TextApp>
+#include <doomsday/doomsdayapp.h>
 #include "serversystem.h"
 #include "ui/infine/infinesystem.h"
 #include "resource/resourcesystem.h"
@@ -30,7 +31,7 @@
 /**
  * The server application.
  */
-class ServerApp : public de::TextApp
+class ServerApp : public de::TextApp, public DoomsdayApp
 {
 public:
     ServerApp(int &argc, char **argv);
