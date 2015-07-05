@@ -1265,12 +1265,12 @@ void Def_Read()
 #ifdef __CLIENT__
         clearFontDefinitionLinks();
 #endif
-
-        Def_Destroy();
+        defsInited = false;
     }
 
     // Now we can clear all existing definitions and re-init.
     defs.clear();
+    runtimeDefs.clear();
 
     // Generate definitions.
     generateMaterialDefs();
