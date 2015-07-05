@@ -117,7 +117,7 @@ public:
      *                    Evaluator takes ownership of this value.
      */
     void push(Expression const *expression, Value *scope = 0);
-
+    
     /**
      * Push a value onto the result stack.
      *
