@@ -130,15 +130,19 @@ using namespace de;
 #define RV_NBVEC(lab, X, N) if(ISLABEL(lab)) { READNBYTEVEC(X,N); } else
 #define RV_INT_ELEM(lab, ARRAY, ELEM) if(ISLABEL(lab)) { \
     int _value; READINT(_value); \
-    (ARRAY).value<ArrayValue>().setElement(ELEM, _value); } else
+    (ARRAY).array().setElement(ELEM, _value); } else
 #define RV_FLT_ELEM(lab, ARRAY, ELEM) if(ISLABEL(lab)) { \
     float _value; READFLT(_value); \
-    (ARRAY).value<ArrayValue>().setElement(ELEM, _value); } else
+    (ARRAY).array().setElement(ELEM, _value); } else
+#define RV_STR_ELEM(lab, ARRAY, ELEM) if(ISLABEL(lab)) { \
+    String _value; if(!ReadString(_value)) { FAILURE } \
+    (ARRAY).array().setElement(ELEM, _value); } else
 #define RV_STR(lab, X)  if(ISLABEL(lab)) { READSTR(X); } else
 #define RV_STR_INT(lab, S, I)   if(ISLABEL(lab)) { if(!ReadString(S,sizeof(S))) \
                                 I = strtol(token,0,0); } else
 #define RV_URI(lab, X, RN)  if(ISLABEL(lab)) { READURI(X, RN); } else
 #define RV_FLAGS(lab, X, P) if(ISLABEL(lab)) { READFLAGS(X, P); } else
+#define RV_FLAGS_ELEM(lab, X, ELEM, P) if(ISLABEL(lab)) { if(!ReadFlags(&X, P, ELEM)) { FAILURE } } else
 #define RV_BLENDMODE(lab, X) if(ISLABEL(lab)) { READBLENDMODE(X); } else
 #define RV_ANYSTR(lab, X)   if(ISLABEL(lab)) { if(!ReadAnyString(&X)) { FAILURE } } else
 #define RV_END          { setError("Unknown label '" + String(label) + "'."); retVal = false; goto ded_end_read; }
@@ -507,7 +511,7 @@ DENG2_PIMPL(DEDParser)
             ReadToken();
             if(ISTOKEN("}"))
                 return true;
-            var.value<ArrayValue>().setElement(i, strtoul(token, 0, 0));
+            var.array().setElement(i, strtoul(token, 0, 0));
         }
         FINDEND;
         return true;
@@ -590,7 +594,7 @@ DENG2_PIMPL(DEDParser)
         {
             float value = 0;
             if(!ReadFloat(&value)) return false;
-            var.value<ArrayValue>().setElement(b, value);
+            var.array().setElement(b, value);
         }
         ReadToken();
         return true;
@@ -665,12 +669,20 @@ DENG2_PIMPL(DEDParser)
         return true;
     }
 
-    int ReadFlags(Variable *dest, char const *prefix)
+    int ReadFlags(Variable *dest, char const *prefix, int elementIndex = -1)
     {
         int value = 0;
         if(ReadFlags(&value, prefix))
         {
-            dest->set(NumberValue(value, NumberValue::Hex));
+            std::unique_ptr<NumberValue> flagsValue(new NumberValue(value, NumberValue::Hex));
+            if(elementIndex < 0)
+            {
+                dest->set(flagsValue.release());
+            }
+            else
+            {
+                dest->array().setElement(NumberValue(elementIndex), flagsValue.release());
+            }
             return true;
         }
         return false;
@@ -1045,7 +1057,7 @@ DENG2_PIMPL(DEDParser)
                                 {
                                     QScopedPointer<Record> map(new Record);
                                     defn::MapGraphNode(*map).resetToDefaults();
-                                    (*hubRec)["map"].value<ArrayValue>()
+                                    (*hubRec)["map"].array()
                                             .add(new RecordValue(map.take(), RecordValue::OwnsRecord));
                                 }
                                 DENG_ASSERT(map < int(hubRec->geta("map").size()));
@@ -1100,7 +1112,7 @@ DENG2_PIMPL(DEDParser)
                         {
                             QScopedPointer<Record> map(new Record);
                             defn::MapGraphNode(*map).resetToDefaults();
-                            (*epsd)["map"].value<ArrayValue>()
+                            (*epsd)["map"].array()
                                     .add(new RecordValue(map.take(), RecordValue::OwnsRecord));
                         }
                         DENG_ASSERT(notHubMap < int(epsd->geta("map").size()));
@@ -1157,20 +1169,19 @@ DENG2_PIMPL(DEDParser)
             if(ISTOKEN("Mobj") || ISTOKEN("Thing"))
             {
                 dd_bool bModify = false;
-                ded_mobj_t* mo;
-                Dummy<ded_mobj_t> dummyMo;
+                Record* mo;
+                Record dummyMo;
 
                 ReadToken();
                 if(!ISTOKEN("Mods"))
                 {
                     // A new mobj type.
-                    idx = DED_AddMobj(ded, "");
-                    mo = &ded->mobjs[idx];
+                    idx = ded->addThing("");
+                    mo = &ded->things[idx];
                 }
                 else if(!bCopyNext)
                 {
-                    ded_mobjid_t otherMobjId;
-
+                    String otherMobjId;
                     READSTR(otherMobjId);
                     ReadToken();
 
@@ -1187,7 +1198,7 @@ DENG2_PIMPL(DEDParser)
                     }
                     else
                     {
-                        mo = &ded->mobjs[idx];
+                        mo = &ded->things[idx];
                         bModify = true;
                     }
                 }
@@ -1201,7 +1212,7 @@ DENG2_PIMPL(DEDParser)
                 if(prevMobjDefIdx >= 0 && bCopyNext)
                 {
                     // Should we copy the previous definition?
-                    ded->mobjs.copyTo(mo, prevMobjDefIdx);
+                    ded->things.copy(prevMobjDefIdx, *mo);
                 }
 
                 FINDBEGIN;
@@ -1211,39 +1222,42 @@ DENG2_PIMPL(DEDParser)
                     // ID cannot be changed when modifying
                     if(!bModify && ISLABEL("ID"))
                     {
-                        READSTR(mo->id);
+                        READSTR((*mo)["id"]);
                     }
-                    else RV_INT("DoomEd number", mo->doomEdNum)
-                    RV_STR("Name", mo->name)
-                    RV_STR("Spawn state", mo->states[SN_SPAWN])
-                    RV_STR("See state", mo->states[SN_SEE])
-                    RV_STR("Pain state", mo->states[SN_PAIN])
-                    RV_STR("Melee state", mo->states[SN_MELEE])
-                    RV_STR("Missile state", mo->states[SN_MISSILE])
-                    RV_STR("Crash state", mo->states[SN_CRASH])
-                    RV_STR("Death state", mo->states[SN_DEATH])
-                    RV_STR("Xdeath state", mo->states[SN_XDEATH])
-                    RV_STR("Raise state", mo->states[SN_RAISE])
-                    RV_STR("See sound", mo->seeSound)
-                    RV_STR("Attack sound", mo->attackSound)
-                    RV_STR("Pain sound", mo->painSound)
-                    RV_STR("Death sound", mo->deathSound)
-                    RV_STR("Active sound", mo->activeSound)
-                    RV_INT("Reaction time", mo->reactionTime)
-                    RV_INT("Pain chance", mo->painChance)
-                    RV_INT("Spawn health", mo->spawnHealth)
-                    RV_FLT("Speed", mo->speed)
-                    RV_FLT("Radius", mo->radius)
-                    RV_FLT("Height", mo->height)
-                    RV_INT("Mass", mo->mass)
-                    RV_INT("Damage", mo->damage)
-                    RV_FLAGS("Flags", mo->flags[0], "mf_")
-                    RV_FLAGS("Flags2", mo->flags[1], "mf2_")
-                    RV_FLAGS("Flags3", mo->flags[2], "mf3_")
-                    RV_INT("Misc1", mo->misc[0])
-                    RV_INT("Misc2", mo->misc[1])
-                    RV_INT("Misc3", mo->misc[2])
-                    RV_INT("Misc4", mo->misc[3])
+                    else RV_INT("DoomEd number", (*mo)["doomEdNum"])
+                    RV_STR("Name", (*mo)["name"])
+                        
+                    RV_STR_ELEM("Spawn state",   (*mo)["states"], SN_SPAWN)
+                    RV_STR_ELEM("See state",     (*mo)["states"], SN_SEE)
+                    RV_STR_ELEM("Pain state",    (*mo)["states"], SN_PAIN)
+                    RV_STR_ELEM("Melee state",   (*mo)["states"], SN_MELEE)
+                    RV_STR_ELEM("Missile state", (*mo)["states"], SN_MISSILE)
+                    RV_STR_ELEM("Crash state",   (*mo)["states"], SN_CRASH)
+                    RV_STR_ELEM("Death state",   (*mo)["states"], SN_DEATH)
+                    RV_STR_ELEM("Xdeath state",  (*mo)["states"], SN_XDEATH)
+                    RV_STR_ELEM("Raise state",   (*mo)["states"], SN_RAISE)
+                        
+                    RV_STR_ELEM("See sound",    (*mo)["sounds"], SDN_SEE)
+                    RV_STR_ELEM("Attack sound", (*mo)["sounds"], SDN_ACTIVE)
+                    RV_STR_ELEM("Pain sound",   (*mo)["sounds"], SDN_PAIN)
+                    RV_STR_ELEM("Death sound",  (*mo)["sounds"], SDN_DEATH)
+                    RV_STR_ELEM("Active sound", (*mo)["sounds"], SDN_ACTIVE)
+                        
+                    RV_INT("Reaction time", (*mo)["reactionTime"])
+                    RV_INT("Pain chance", (*mo)["painChance"])
+                    RV_INT("Spawn health", (*mo)["spawnHealth"])
+                    RV_FLT("Speed", (*mo)["speed"])
+                    RV_FLT("Radius", (*mo)["radius"])
+                    RV_FLT("Height", (*mo)["height"])
+                    RV_INT("Mass", (*mo)["mass"])
+                    RV_INT("Damage", (*mo)["damage"])
+                    RV_FLAGS_ELEM("Flags", (*mo)["flags"], 0, "mf_")
+                    RV_FLAGS_ELEM("Flags2", (*mo)["flags"], 1, "mf2_")
+                    RV_FLAGS_ELEM("Flags3", (*mo)["flags"], 2, "mf3_")
+                    RV_INT_ELEM("Misc1", (*mo)["misc"], 0)
+                    RV_INT_ELEM("Misc2", (*mo)["misc"], 1)
+                    RV_INT_ELEM("Misc3", (*mo)["misc"], 2)
+                    RV_INT_ELEM("Misc4", (*mo)["misc"], 3)
                     RV_END
                     CHECKSC;
                 }

@@ -2383,7 +2383,7 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
 #endif
     {&isDedicated, 0},
     {&novideo, 0},
-    {&defs.mobjs.count.num, 0},
+    {0, 0}, // &defs.mobjs.count.num
     {&gotFrame, 0},
 #ifdef __CLIENT__
     {&playback, 0},
@@ -2441,6 +2441,9 @@ dint DD_GetInteger(dint ddvalue)
     case DD_USING_HEAD_TRACKING:
         return vrCfg().mode() == VRConfig::OculusRift && vrCfg().oculusRift().isReady();
 #endif
+            
+    case DD_NUMMOBJTYPES:
+        return defs.things.size();
 
     case DD_MAP_MUSIC:
         if(App_WorldSystem().hasMap())

@@ -32,6 +32,7 @@
 
 #include <de/memory.h>
 #include <doomsday/filesys/lumpindex.h>
+#include <doomsday/defs/thing.h>
 #include <doomsday/defs/state.h>
 #include <de/App>
 #include <de/ArrayValue>
@@ -279,14 +280,14 @@ public:
                     }
                     else if(line.beginsWith("Thing", Qt::CaseInsensitive))
                     {
-                        ded_mobj_t *mobj;
-                        Dummy<ded_mobj_t> dummyMobj;
+                        Record *mobj;
+                        Record dummyMobj;
 
                         String const arg  = line.substr(5).leftStrip();
                         int const mobjNum = parseMobjNum(arg);
                         if(mobjNum >= 0)
                         {
-                            mobj = &ded->mobjs[mobjNum];
+                            mobj = &ded->things[mobjNum];
                         }
                         else
                         {
@@ -296,7 +297,7 @@ public:
                         }
 
                         skipToNextLine();
-                        parseThing(mobj, mobj == &dummyMobj);
+                        parseThing(*mobj, mobj == &dummyMobj);
                     }
                     else if(line.beginsWith("Frame", Qt::CaseInsensitive))
                     {
@@ -551,7 +552,7 @@ public:
     int parseMobjNum(String const &str)
     {
         int const num = str.toInt(0, 0, String::AllowSuffix) - 1; // Patch indices are 1-based.
-        if(num < 0 || num >= ded->mobjs.size()) return -1;
+        if(num < 0 || num >= ded->things.size()) return -1;
         return num;
     }
 
@@ -791,11 +792,11 @@ public:
         return changedGroups;
     }
 
-    void parseThing(ded_mobj_t *mobj, bool ignore = false)
+    void parseThing(defn::Thing mobj, bool ignore = false)
     {
         LOG_AS("parseThing");
 
-        int const thingNum = ded->mobjs.indexOf(mobj);
+        int const thingNum = mobj.geti("__order__");
         bool hadHeight     = false, checkHeight = false;
 
         for(; lineInCurrentSection(); skipToNextLine())
@@ -829,12 +830,14 @@ public:
                             Record const &state = ded->states[stateIdx];
 
                             DENG2_ASSERT(mapping->id >= 0 && mapping->id < STATENAMES_COUNT);
-                            qstrncpy(mobj->states[mapping->id], state.gets("id").toLatin1(),
-                                     DED_STRINGID_LEN + 1);
+                            /*qstrncpy(mobj->states[mapping->id], state.gets("id").toLatin1(),
+                                     DED_STRINGID_LEN + 1);*/
+                            mobj.def()["states"].array().setElement(mapping->id, state.gets("id"));
 
                             LOG_DEBUG("Type #%i \"%s\" state:%s => \"%s\" (#%i)")
-                                    << thingNum << mobj->id << mapping->name
-                                    << mobj->states[mapping->id] << stateIdx;
+                                    << thingNum << mobj.gets("id") << mapping->name
+                                    << mobj.geta("states")[mapping->id].asText()
+                                    << stateIdx;
                         }
                     }
                 }
@@ -861,25 +864,18 @@ public:
                         }
                         else
                         {
-                            int const soundsIdx = value;
-                            void *soundAdr;
-                            switch(mapping->id)
+                            if(mapping->id < SOUNDNAMES_FIRST || mapping->id >= SOUNDNAMES_COUNT)
                             {
-                            case SDN_PAIN:      soundAdr = &mobj->painSound;   break;
-                            case SDN_DEATH:     soundAdr = &mobj->deathSound;  break;
-                            case SDN_ACTIVE:    soundAdr = &mobj->activeSound; break;
-                            case SDN_ATTACK:    soundAdr = &mobj->attackSound; break;
-                            case SDN_SEE:       soundAdr = &mobj->seeSound;    break;
-                            default:
                                 throw Error("DehReader", String("Thing Sound %i unknown").arg(mapping->id));
                             }
 
+                            int const soundsIdx = value;
                             ded_sound_t const &sound = ded->sounds[soundsIdx];
-                            qstrncpy((char *)soundAdr, sound.id, DED_STRINGID_LEN + 1);
+                            mobj.setSound(mapping->id, sound.id);
 
                             LOG_DEBUG("Type #%i \"%s\" sound:%s => \"%s\" (#%i)")
-                                    << thingNum << mobj->id << mapping->name
-                                    << (char *)soundAdr << soundsIdx;
+                                    << thingNum << mobj.gets("id") << mapping->name
+                                    << mobj.sound(mapping->id) << soundsIdx;
                         }
                     }
                 }
@@ -895,16 +891,16 @@ public:
                     {
                         if(!(changedFlagGroups & (1 << k))) continue;
 
-                        mobj->flags[k] = flags[k];
+                        mobj.setFlags(k, flags[k]);
                         LOG_DEBUG("Type #%i \"%s\" flags:%i => %X (%i)")
-                                << thingNum << mobj->id << k
-                                << mobj->flags[k] << mobj->flags[k];
+                                << thingNum << mobj.gets("id") << k
+                                << mobj.flags(k) << mobj.flags(k);
                     }
 
                     // Any special translation necessary?
                     if(changedFlagGroups & 0x1)
                     {
-                        if(mobj->flags[0] & 0x100/*mf_spawnceiling*/)
+                        if(mobj.flags(0) & 0x100 /*mf_spawnceiling*/)
                             checkHeight = true;
 
                         // Bit flags are no longer used to specify translucency.
@@ -945,8 +941,8 @@ public:
                 int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
-                    mobj->doomEdNum = value;
-                    LOG_DEBUG("Type #%i \"%s\" doomEdNum => %i") << thingNum << mobj->id << mobj->doomEdNum;
+                    mobj.def().set("doomEdNum", value);
+                    LOG_DEBUG("Type #%i \"%s\" doomEdNum => %i") << thingNum << mobj.gets("id") << mobj.geti("doomEdNum");
                 }
             }
             else if(!var.compareWithoutCase("Height"))
@@ -954,9 +950,9 @@ public:
                 int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
-                    mobj->height = value / float(0x10000);
+                    mobj.def().set("height", value / float(0x10000));
                     hadHeight = true;
-                    LOG_DEBUG("Type #%i \"%s\" height => %f") << thingNum << mobj->id << mobj->height;
+                    LOG_DEBUG("Type #%i \"%s\" height => %f") << thingNum << mobj.gets("id") << mobj.getf("height");
                 }
             }
             else if(!var.compareWithoutCase("Hit points"))
@@ -964,8 +960,8 @@ public:
                 int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
-                    mobj->spawnHealth = value;
-                    LOG_DEBUG("Type #%i \"%s\" spawnHealth => %i") << thingNum << mobj->id << mobj->spawnHealth;
+                    mobj.def().set("spawnHealth", value);
+                    LOG_DEBUG("Type #%i \"%s\" spawnHealth => %i") << thingNum << mobj.gets("id") << mobj.geti("spawnHealth");
                 }
             }
             else if(!var.compareWithoutCase("Mass"))
@@ -973,8 +969,8 @@ public:
                 int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
-                    mobj->mass = value;
-                    LOG_DEBUG("Type #%i \"%s\" mass => %i") << thingNum << mobj->id << mobj->mass;
+                    mobj.def().set("mass", value);
+                    LOG_DEBUG("Type #%i \"%s\" mass => %i") << thingNum << mobj.gets("id") << mobj.geti("mass");
                 }
             }
             else if(!var.compareWithoutCase("Missile damage"))
@@ -982,8 +978,8 @@ public:
                 int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
-                    mobj->damage = value;
-                    LOG_DEBUG("Type #%i \"%s\" damage => %i") << thingNum << mobj->id << mobj->damage;
+                    mobj.def().set("damage", value);
+                    LOG_DEBUG("Type #%i \"%s\" damage => %i") << thingNum << mobj.gets("id") << mobj.geti("damage");
                 }
             }
             else if(!var.compareWithoutCase("Pain chance"))
@@ -991,8 +987,8 @@ public:
                 int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
-                    mobj->painChance = value;
-                    LOG_DEBUG("Type #%i \"%s\" painChance => %i") << thingNum << mobj->id << mobj->painChance;
+                    mobj.def().set("painChance", value);
+                    LOG_DEBUG("Type #%i \"%s\" painChance => %i") << thingNum << mobj.gets("id") << mobj.geti("painChance");
                 }
             }
             else if(!var.compareWithoutCase("Reaction time"))
@@ -1000,8 +996,8 @@ public:
                 int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
-                    mobj->reactionTime = value;
-                    LOG_DEBUG("Type #%i \"%s\" reactionTime => %i") << thingNum << mobj->id << mobj->reactionTime;
+                    mobj.def().set("reactionTime", value);
+                    LOG_DEBUG("Type #%i \"%s\" reactionTime => %i") << thingNum << mobj.gets("id") << mobj.geti("reactionTime");
                 }
             }
             else if(!var.compareWithoutCase("Speed"))
@@ -1010,8 +1006,8 @@ public:
                 if(!ignore)
                 {
                     /// @todo Is this right??
-                    mobj->speed = (abs(value) < 256 ? float(value) : FIX2FLT(value));
-                    LOG_DEBUG("Type #%i \"%s\" speed => %f") << thingNum << mobj->id << mobj->speed;
+                    mobj.def().set("speed", (abs(value) < 256 ? float(value) : FIX2FLT(value)));
+                    LOG_DEBUG("Type #%i \"%s\" speed => %f") << thingNum << mobj.gets("id") << mobj.getf("speed");
                 }
             }
             else if(!var.compareWithoutCase("Translucency")) // Eternity
@@ -1026,8 +1022,8 @@ public:
                 int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
-                    mobj->radius = value / float(0x10000);
-                    LOG_DEBUG("Type #%i \"%s\" radius => %f") << thingNum << mobj->id << mobj->radius;
+                    mobj.def().set("radius", value / float(0x10000));
+                    LOG_DEBUG("Type #%i \"%s\" radius => %f") << thingNum << mobj.gets("id") << mobj.getf("radius");
                 }
             }
             else
@@ -1040,7 +1036,7 @@ public:
         /// @todo Does this still make sense given DED can change the values?
         if(checkHeight && !hadHeight)
         {
-            mobj->height = originalHeightForMobjType(thingNum);
+            mobj.def().set("height", originalHeightForMobjType(thingNum));
         }
     }
 
@@ -1139,7 +1135,7 @@ public:
                     }
                     else
                     {
-                        state.def()["misc"].value<ArrayValue>().setElement(miscIdx, value);
+                        state.setMisc(miscIdx, value);
                         LOG_DEBUG("State #%i \"%s\" misc:%i => %i")
                                 << stateNum << state.gets("id") << miscIdx << value;
                     }

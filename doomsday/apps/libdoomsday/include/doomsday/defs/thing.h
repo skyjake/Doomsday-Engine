@@ -1,4 +1,4 @@
-/** @file state.cpp  Mobj state definition.
+/** @file thing.h  Thing definition.
  *
  * @authors Copyright (c) 2015 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,40 +16,33 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "doomsday/defs/state.h"
-#include "doomsday/defs/ded.h"
+#ifndef LIBDOOMSDAY_DEFS_THING_H
+#define LIBDOOMSDAY_DEFS_THING_H
 
-#include <de/Record>
-#include <de/RecordValue>
-
-using namespace de;
+#include "definition.h"
 
 namespace defn {
     
-void State::resetToDefaults()
+/**
+ * Thing definition.
+ */
+class LIBDOOMSDAY_PUBLIC Thing : public Definition
 {
-    Definition::resetToDefaults();
-
-    // Add all expected fields with their default values.
-    def().addText  ("id", "");
-    def().addText  ("sprite", "");
-    def().addNumber("flags", 0);
-    def().addNumber("frame", 0);
-    def().addNumber("tics", 0);
-    def().addText  ("action", "");
-    def().addText  ("nextState", "");
-    def().addText  ("execute", "");
-    def().addArray ("misc").array().addMany(NUM_STATE_MISC, 0);
-}
-
-dint32 State::misc(dint index) const
-{
-    return def().geta("misc")[index].asInt();
-}
-
-void State::setMisc(dint index, dint32 value)
-{
-    def()["misc"].array().setElement(index, value);
-}
-
+public:
+    Thing()                    : Definition() {}
+    Thing(Thing const &other)  : Definition(other) {}
+    Thing(de::Record &d)       : Definition(d) {}
+    Thing(de::Record const &d) : Definition(d) {}
+    
+    void resetToDefaults();
+    
+    void setSound(int soundId, de::String const &sound);
+    de::String sound(int soundId) const;
+    
+    int flags(de::dint index) const;
+    void setFlags(de::dint index, int flags);
+};
+    
 } // namespace defn
+
+#endif // LIBDOOMSDAY_DEFS_THING_H

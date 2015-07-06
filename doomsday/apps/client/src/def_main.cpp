@@ -178,7 +178,7 @@ int Def_GetMobjNumForName(char const *name)
     return defs.getMobjNumForName(name);
 }
 
-char const *Def_GetMobjName(int num)
+String Def_GetMobjName(int num)
 {
     return defs.getMobjName(num);
 }
@@ -192,7 +192,7 @@ state_t *Def_GetState(int num)
     return nullptr;  // Not found.
 }
 
-int Def_GetStateNum(char const *id)
+int Def_GetStateNum(String const &id)
 {
     return defs.getStateNum(id);
 }
@@ -448,7 +448,7 @@ static void Def_ReadLumpDefs()
 /**
  * Uses gettingFor. Initializes the state-owners information.
  */
-int Def_StateForMobj(char const *state)
+int Def_StateForMobj(String const &state)
 {
     int num = Def_GetStateNum(state);
     if(num < 0) num = 0;
@@ -460,7 +460,8 @@ int Def_StateForMobj(char const *state)
         // Scan forward at most 'count' states, or until we hit a state with
         // an owner, or the NULL state.
         int st, count = 16;
-        for(st = runtimeDefs.states[num].nextState; st > 0 && count-- && !runtimeDefs.stateInfo[st].owner;
+        for(st = runtimeDefs.states[num].nextState;
+            st > 0 && count-- && !runtimeDefs.stateInfo[st].owner;
             st = runtimeDefs.states[st].nextState)
         {
             runtimeDefs.stateInfo[st].owner = gettingFor;
@@ -1334,38 +1335,45 @@ void Def_Read()
     runtimeDefs.stateInfo.append(defs.states.size());
 
     // Mobj info.
-    runtimeDefs.mobjInfo.append(defs.mobjs.size());
+    runtimeDefs.mobjInfo.append(defs.things.size());
     for(int i = 0; i < runtimeDefs.mobjInfo.size(); ++i)
     {
-        ded_mobj_t *dmo = &defs.mobjs[i];
+        Record *dmo = &defs.things[i];
+        
         // Make sure duplicate defs overwrite the earliest.
-        mobjinfo_t *mo = &runtimeDefs.mobjInfo[Def_GetMobjNum(dmo->id)];
+        mobjinfo_t *mo = &runtimeDefs.mobjInfo[defs.getMobjNum(dmo->gets("id"))];
 
         gettingFor       = mo;
-        mo->doomEdNum    = dmo->doomEdNum;
-        mo->spawnHealth  = dmo->spawnHealth;
-        mo->reactionTime = dmo->reactionTime;
-        mo->painChance   = dmo->painChance;
-        mo->speed        = dmo->speed;
-        mo->radius       = dmo->radius;
-        mo->height       = dmo->height;
-        mo->mass         = dmo->mass;
-        mo->damage       = dmo->damage;
-        mo->flags        = dmo->flags[0];
-        mo->flags2       = dmo->flags[1];
-        mo->flags3       = dmo->flags[2];
+        mo->doomEdNum    = dmo->geti("doomEdNum");
+        mo->spawnHealth  = dmo->geti("spawnHealth");
+        mo->reactionTime = dmo->geti("reactionTime");
+        mo->painChance   = dmo->geti("painChance");
+        mo->speed        = dmo->getf("speed");
+        mo->radius       = dmo->getf("radius");
+        mo->height       = dmo->getf("height");
+        mo->mass         = dmo->geti("mass");
+        mo->damage       = dmo->geti("damage");
+        mo->flags        = dmo->geta("flags")[0].asInt();
+        mo->flags2       = dmo->geta("flags")[1].asInt();
+        mo->flags3       = dmo->geta("flags")[2].asInt();
+
+        auto const &states = dmo->geta("states");
+        auto const &sounds = dmo->geta("sounds");
+        
         for(int k = 0; k < STATENAMES_COUNT; ++k)
         {
-            mo->states[k] = Def_StateForMobj(dmo->states[k]);
+            mo->states[k] = Def_StateForMobj(states[k].asText());
         }
-        mo->seeSound     = Def_GetSoundNum(dmo->seeSound);
-        mo->attackSound  = Def_GetSoundNum(dmo->attackSound);
-        mo->painSound    = Def_GetSoundNum(dmo->painSound);
-        mo->deathSound   = Def_GetSoundNum(dmo->deathSound);
-        mo->activeSound  = Def_GetSoundNum(dmo->activeSound);
+        
+        mo->seeSound     = defs.getSoundNum(sounds[SDN_SEE].asText());
+        mo->attackSound  = defs.getSoundNum(sounds[SDN_ATTACK].asText());
+        mo->painSound    = defs.getSoundNum(sounds[SDN_PAIN].asText());
+        mo->deathSound   = defs.getSoundNum(sounds[SDN_DEATH].asText());
+        mo->activeSound  = defs.getSoundNum(sounds[SDN_ACTIVE].asText());
+        
         for(int k = 0; k < NUM_MOBJ_MISC; ++k)
         {
-            mo->misc[k] = dmo->misc[k];
+            mo->misc[k] = dmo->geta("misc")[k].asInt();
         }
     }
 
@@ -2109,9 +2117,9 @@ int Def_Set(int type, int index, int value, void const *ptr)
 StringArray *Def_ListMobjTypeIDs()
 {
     StringArray *array = StringArray_New();
-    for(int i = 0; i < defs.mobjs.size(); ++i)
+    for(int i = 0; i < defs.things.size(); ++i)
     {
-        StringArray_Append(array, defs.mobjs[i].id);
+        StringArray_Append(array, defs.things[i].gets("id").toUtf8());
     }
     return array;
 }
@@ -2148,19 +2156,20 @@ D_CMD(ListMobjs)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    if(defs.mobjs.size() <= 0)
+    if(defs.things.size() <= 0)
     {
         LOG_RES_MSG("No mobjtypes defined/loaded");
         return true;
     }
 
     LOG_RES_MSG(_E(b) "Registered Mobjs (ID | Name):");
-    for(int i = 0; i < defs.mobjs.size(); ++i)
+    for(int i = 0; i < defs.things.size(); ++i)
     {
-        if(defs.mobjs[i].name[0])
-            LOG_RES_MSG(" %s | %s") << defs.mobjs[i].id << defs.mobjs[i].name;
+        auto const &name = defs.things[i].gets("name");
+        if(!name.isEmpty())
+            LOG_RES_MSG(" %s | %s") << defs.things[i].gets("id") << name;
         else
-            LOG_RES_MSG(" %s | " _E(l) "(Unnamed)") << defs.mobjs[i].id;
+            LOG_RES_MSG(" %s | " _E(l) "(Unnamed)") << defs.things[i].gets("id");
     }
 
     return true;

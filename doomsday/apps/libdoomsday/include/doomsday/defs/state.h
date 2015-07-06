@@ -1,4 +1,4 @@
-/** @file state.h
+/** @file state.h  Mobj state definition.
  *
  * @authors Copyright (c) 2015 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -20,7 +20,6 @@
 #define LIBDOOMSDAY_DEFN_STATE_H
 
 #include "definition.h"
-#include <de/RecordAccessor>
 
 namespace defn {
     
@@ -36,6 +35,9 @@ public:
     State(de::Record const &d) : Definition(d) {}
     
     void resetToDefaults();
+    
+    de::dint32 misc(de::dint index) const;
+    void setMisc(de::dint index, de::dint32 value);
 };
     
 } // namespace defn

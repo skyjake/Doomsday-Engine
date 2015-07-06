@@ -64,7 +64,7 @@ DENG_EXTERN_C void Rend_CacheForMobjType(int num)
 
     if(novideo) return;
     if(!((useModels && precacheSkins) || precacheSprites)) return;
-    if(num < 0 || num >= defs.mobjs.size()) return;
+    if(num < 0 || num >= runtimeDefs.mobjInfo.size()) return;
 
     de::MaterialVariantSpec const &spec = Rend_SpriteMaterialSpec();
 

@@ -30,6 +30,7 @@
 
 #include "doomsday/defs/decoration.h"
 #include "doomsday/defs/episode.h"
+#include "doomsday/defs/thing.h"
 #include "doomsday/defs/state.h"
 #include "doomsday/defs/finale.h"
 #include "doomsday/defs/mapinfo.h"
@@ -48,8 +49,7 @@ float ded_ptcstage_t::particleRadius(int ptcIDX) const
             .5625f, .0625f, 1, .6875f, .625f, .4375f, .8125f, .1875f,
             .9375f, .25f
         };
-        return (rnd[ptcIDX & 0xf] * radiusVariance +
-                (1 - radiusVariance)) * radius;
+        return (rnd[ptcIDX & 0xf] * radiusVariance + (1 - radiusVariance)) * radius;
     }
     return radius;
 }
@@ -57,6 +57,7 @@ float ded_ptcstage_t::particleRadius(int ptcIDX) const
 ded_s::ded_s()
     : flags      (names.addRecord("flags"))
     , episodes   (names.addRecord("episodes"))
+    , things     (names.addRecord("things"))
     , states     (names.addRecord("states"))
     , materials  (names.addRecord("materials"))
     , models     (names.addRecord("models"))
@@ -68,7 +69,9 @@ ded_s::ded_s()
 {
     decorations.addLookupKey("texture");
     episodes.addLookupKey("id");
-    states.addLookupKey("id");
+    things.addLookupKey("id", DEDRegister::OnlyFirst);
+    things.addLookupKey("name");
+    states.addLookupKey("id", DEDRegister::OnlyFirst);
     finales.addLookupKey("id");
     finales.addLookupKey("before");
     finales.addLookupKey("after");
@@ -105,6 +108,14 @@ int ded_s::addEpisode()
 {
     Record &def = episodes.append();
     defn::Episode(def).resetToDefaults();
+    return def.geti("__order__");
+}
+
+int ded_s::addThing(String const &id)
+{
+    Record &def = things.append();
+    defn::Thing(def).resetToDefaults();
+    def.set("id", id);
     return def.geti("__order__");
 }
 
@@ -169,7 +180,7 @@ void ded_s::release()
 {
     flags.clear();
     episodes.clear();
-    mobjs.clear();
+    things.clear();
     states.clear();
     sprites.clear();
     lights.clear();
@@ -193,12 +204,14 @@ void ded_s::release()
     finales.clear();
 }
 
+/*
 int DED_AddMobj(ded_t* ded, char const* idstr)
 {
     ded_mobj_t *mo = ded->mobjs.append();
     strcpy(mo->id, idstr);
     return ded->mobjs.indexOf(mo);
 }
+ */
 
 /*
 int DED_AddState(ded_t* ded, char const* id)
@@ -345,39 +358,42 @@ int DED_AddLineType(ded_t* ded, int id)
     return ded->lineTypes.indexOf(li);
 }
 
-int ded_s::getMobjNum(char const *id) const
+int ded_s::getMobjNum(String const &id) const
 {
-    int i;
-
-    if(!id || !id[0])
-        return -1;
-
+    if(Record const *def = things.tryFind("id", id))
+    {
+        return def->geti("__order__");
+    }
+    /*
     for(i = 0; i < mobjs.size(); ++i)
         if(!qstricmp(mobjs[i].id, id))
-            return i;
+            return i;*/
 
     return -1;
 }
 
 int ded_s::getMobjNumForName(const char *name) const
 {
-    int                 i;
-
     if(!name || !name[0])
         return -1;
 
-    for(i = mobjs.size() - 1; i >= 0; --i)
+    /*
+    for(int i = mobjs.size() - 1; i >= 0; --i)
         if(!qstricmp(mobjs[i].name, name))
-            return i;
+            return i;*/
+    if(Record const *def = things.tryFind("name", name))
+    {
+        return def->geti("__order__");
+    }
 
     return -1;
 }
 
-char const *ded_s::getMobjName(int num) const
+String ded_s::getMobjName(int num) const
 {
     if(num < 0) return "(<0)";
-    if(num >= mobjs.size()) return "(>mobjtypes)";
-    return mobjs[num].id;
+    if(num >= things.size()) return "(>mobjtypes)";
+    return things[num].gets("id");
 }
 
 int ded_s::getStateNum(String const &id) const
@@ -502,6 +518,11 @@ int ded_s::getSkyNum(char const *id) const
             return i;
     }
     return -1;*/
+}
+
+int ded_s::getSoundNum(String const &id) const
+{
+    return getSoundNum(id.toUtf8());
 }
 
 int ded_s::getSoundNum(const char *id) const

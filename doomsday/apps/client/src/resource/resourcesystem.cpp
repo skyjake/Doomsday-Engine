@@ -3964,7 +3964,7 @@ void ResourceSystem::cacheForCurrentMap()
                                                      0x1/*public*/, [&sprite] (thinker_t *th)
             {
                 auto const &mob = *reinterpret_cast<mobj_t *>(th);
-                if(mob.type >= 0 && mob.type < defs.mobjs.size())
+                if(mob.type >= 0 && mob.type < runtimeDefs.mobjInfo.size())
                 {
                     /// @todo optimize: traverses the entire state list!
                     for(dint k = 0; k < defs.states.size(); ++k)
@@ -4003,7 +4003,7 @@ void ResourceSystem::cacheForCurrentMap()
                 ModelDef &modef = modelDef(i);
 
                 if(!modef.state) continue;
-                if(mob.type < 0 || mob.type >= defs.mobjs.size()) continue; // Hmm?
+                if(mob.type < 0 || mob.type >= runtimeDefs.mobjInfo.size()) continue; // Hmm?
                 if(runtimeDefs.stateInfo[runtimeDefs.states.indexOf(modef.state)].owner != &runtimeDefs.mobjInfo[mob.type]) continue;
 
                 cache(&modef);

@@ -59,7 +59,7 @@ struct LIBDOOMSDAY_PUBLIC ded_s
     DEDRegister episodes;
 
     // Map object information.
-    DEDArray<ded_mobj_t> mobjs;
+    DEDRegister things; // DEDArray<ded_mobj_t> mobjs;
 
     // States.
     DEDRegister states;
@@ -136,6 +136,8 @@ public:
 
     int addEpisode();
     
+    int addThing(de::String const &id);
+    
     int addState(de::String const &id);    
 
     int addDecoration();
@@ -156,11 +158,11 @@ public:
 
     int evalFlags2(char const *ptr) const;
 
-    int getMobjNum(char const *id) const;
+    int getMobjNum(de::String const &id) const;
 
     int getMobjNumForName(char const *name) const;
 
-    char const *getMobjName(int num) const;
+    de::String getMobjName(int num) const;
 
     int getStateNum(de::String const &id) const;
 
@@ -179,6 +181,8 @@ public:
     int getSkyNum(char const *id) const;
 
     int getSoundNum(char const *id) const;
+
+    int getSoundNum(de::String const &id) const;
 
     /**
      * Looks up a sound using @a name key.
@@ -212,7 +216,6 @@ extern "C" {
 
 // Routines for managing DED files:
 
-int             DED_AddMobj(ded_t* ded, char const* idStr);
 int             DED_AddSprite(ded_t* ded, char const* name);
 int             DED_AddLight(ded_t* ded, char const* stateID);
 int             DED_AddSound(ded_t* ded, char const* id);
