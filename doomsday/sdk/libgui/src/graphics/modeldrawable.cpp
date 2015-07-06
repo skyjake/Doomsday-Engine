@@ -715,6 +715,8 @@ DENG2_PIMPL(ModelDrawable)
                 return;
             }
         }
+        LOG_GL_WARNING("\"%s\": too many weights for vertex %i (only 4 supported), bone index: %i")
+            << sourcePath << vertexIndex << boneIndex;
         DENG2_ASSERT(!"Too many bone weights for a vertex");
     }
 
