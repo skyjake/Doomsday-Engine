@@ -115,60 +115,6 @@ typedef struct {
     char            str[DED_STRINGID_LEN + 1];
 } ded_str_t;
 
-typedef struct {
-    ded_stringid_t  id;
-    int             value;
-
-    void release() {}
-} ded_flag_t;
-
-typedef struct LIBDOOMSDAY_PUBLIC ded_mobj_s {
-    ded_mobjid_t    id;
-    int             doomEdNum;
-    ded_string_t    name;
-
-    ded_stateid_t   states[STATENAMES_COUNT];
-
-    ded_soundid_t   seeSound;
-    ded_soundid_t   attackSound;
-    ded_soundid_t   painSound;
-    ded_soundid_t   deathSound;
-    ded_soundid_t   activeSound;
-
-    int             reactionTime;
-    int             painChance;
-    int             spawnHealth;
-    float           speed;
-    float           radius;
-    float           height;
-    int             mass;
-    int             damage;
-    ded_flags_t     flags[NUM_MOBJ_FLAGS];
-    int             misc[NUM_MOBJ_MISC];
-
-    void release() {}
-    void reallocate() {}
-} ded_mobj_t;
-
-typedef struct LIBDOOMSDAY_PUBLIC ded_state_s {
-    ded_stateid_t   id; // ID of this state.
-    ded_sprid_t     sprite;
-    ded_flags_t     flags;
-    int             frame;
-    int             tics;
-    ded_funcid_t    action;
-    ded_stateid_t   nextState;
-    int             misc[NUM_STATE_MISC];
-    ded_anystring_t execute; // Console command.
-
-    void release() {
-        M_Free(execute);
-    }
-    void reallocate() {
-        if(execute) execute = M_StrDup(execute);
-    }
-} ded_state_t;
-
 typedef struct LIBDOOMSDAY_PUBLIC ded_light_s {
     ded_stateid_t   state;
     char            uniqueMapID[64];
