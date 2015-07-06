@@ -423,9 +423,12 @@ public:
         return frame(target - eyePos, up) * translate(-eyePos);
     }
     static Matrix4 frame(Vec3 const &front, Vec3 const &up) {
+        return unnormalizedFrame(front.normalize(), up.normalize());
+    }
+    static Matrix4 unnormalizedFrame(Vec3 const &front, Vec3 const &up) {
         Matrix4 m(Zero);
-        Vec3 f = front.normalize();
-        Vec3 s = f.cross(up.normalize());
+        Vec3 f = front;
+        Vec3 s = f.cross(up);
         Vec3 u = s.cross(f);
         m[0]  =  s.x;
         m[1]  =  u.x;

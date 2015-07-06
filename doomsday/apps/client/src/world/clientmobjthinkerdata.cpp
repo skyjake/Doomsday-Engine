@@ -107,7 +107,7 @@ DENG2_PIMPL(ClientMobjThinkerData)
 
             // Scale to thing height.
             // TODO: This should be optional (but the default behavior).
-            modelMatrix = Matrix4f::scale(self.mobj()->height / dims.y) * modelMatrix;
+            modelMatrix = Matrix4f::scale(self.mobj()->height / dims.y * 1.2f /*aspect correct*/) * modelMatrix;
         }
     }
 

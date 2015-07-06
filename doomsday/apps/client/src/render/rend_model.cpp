@@ -1150,6 +1150,7 @@ void Rend_DrawModel2(vissprite_t const &spr)
 
     Matrix4f viewMat =
             Viewer_Matrix() *
+            Matrix4f::scale(Vector3f(1.0f, 1.0f/1.2f, 1.0f)) * // Inverse aspect correction.
             Matrix4f::translate((spr.pose.origin + spr.pose.srvo).xzy());
 
     Matrix4f localMat =
