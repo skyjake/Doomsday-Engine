@@ -136,6 +136,23 @@ void Def_Init()
 
     // Make the definitions visible in the global namespace.
     App::app().scriptSystem().addNativeModule("Defs", defs.names);
+    
+    // Constants for definitions.
+    DENG2_ADD_NUMBER_CONSTANT(defs.names, SN_SPAWN);
+    DENG2_ADD_NUMBER_CONSTANT(defs.names, SN_SEE);
+    DENG2_ADD_NUMBER_CONSTANT(defs.names, SN_PAIN);
+    DENG2_ADD_NUMBER_CONSTANT(defs.names, SN_MELEE);
+    DENG2_ADD_NUMBER_CONSTANT(defs.names, SN_MISSILE);
+    DENG2_ADD_NUMBER_CONSTANT(defs.names, SN_CRASH);
+    DENG2_ADD_NUMBER_CONSTANT(defs.names, SN_DEATH);
+    DENG2_ADD_NUMBER_CONSTANT(defs.names, SN_XDEATH);
+    DENG2_ADD_NUMBER_CONSTANT(defs.names, SN_RAISE);
+
+    DENG2_ADD_NUMBER_CONSTANT(defs.names, SDN_ACTIVE);
+    DENG2_ADD_NUMBER_CONSTANT(defs.names, SDN_ATTACK);
+    DENG2_ADD_NUMBER_CONSTANT(defs.names, SDN_DEATH);
+    DENG2_ADD_NUMBER_CONSTANT(defs.names, SDN_PAIN);
+    DENG2_ADD_NUMBER_CONSTANT(defs.names, SDN_SEE);
 }
 
 void Def_Destroy()
