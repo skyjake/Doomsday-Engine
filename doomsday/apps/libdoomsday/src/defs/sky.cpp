@@ -56,8 +56,7 @@ Record &Sky::addLayer()
     layer->addNumber("offsetSpeed", 0);
     layer->addNumber("colorLimit", DEFAULT_SKY_SPHERE_FADEOUT_LIMIT);
 
-    def()["layer"].value<ArrayValue>()
-            .add(new RecordValue(layer, RecordValue::OwnsRecord));
+    def()["layer"].array().add(new RecordValue(layer, RecordValue::OwnsRecord));
 
     return *layer;
 }
@@ -98,8 +97,7 @@ Record &Sky::addModel()
     model->addText  ("execute", "");
     model->addArray ("color", new ArrayValue(Vector4f(1, 1, 1, 1)));
 
-    def()["model"].value<ArrayValue>()
-            .add(new RecordValue(model, RecordValue::OwnsRecord));
+    def()["model"].array().add(new RecordValue(model, RecordValue::OwnsRecord));
 
     return *model;
 }

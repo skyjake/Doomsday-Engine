@@ -45,8 +45,7 @@ Record &MapGraphNode::addExit()
     exit->addText("id", "");
     exit->addText("targetMap", "");
 
-    def()["exit"].value<ArrayValue>()
-            .add(new RecordValue(exit, RecordValue::OwnsRecord));
+    def()["exit"].array().add(new RecordValue(exit, RecordValue::OwnsRecord));
 
     return *exit;
 }

@@ -180,7 +180,7 @@ void ImpulseBinding::configure(char const *ctrlDesc, int impulseId, int localPla
     }
 
     // Any conditions?
-    def()["condition"].value<ArrayValue>().clear();
+    def()["condition"].array().clear();
     while(ctrlDesc)
     {
         // A new condition.

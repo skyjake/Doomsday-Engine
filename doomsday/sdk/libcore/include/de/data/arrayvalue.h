@@ -80,6 +80,10 @@ public:
      * param text Text to add to the array.
      */
     void add(String const &text);
+    
+    void addMany(duint count, Number value);
+    
+    void addMany(duint count, String const &value);
 
     /**
      * Pops the last element and gives its ownership to the caller.
@@ -191,6 +195,13 @@ public:
      * @param value  Value to set.
      */
     void setElement(dint index, Number value);
+
+    /**
+     * Convenient element setter for native code.
+     * @param index  Index to set.
+     * @param value  Value to set.
+     */
+    void setElement(dint index, String const &value);
 
     Value const &element(dint index) const;
     Value const &operator [] (dint index) const;

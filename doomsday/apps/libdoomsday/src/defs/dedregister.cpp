@@ -65,7 +65,7 @@ DENG2_PIMPL(DEDRegister)
     {
         // As a side-effect, the lookups will be cleared, too, as the members of
         // each definition record are deleted.
-        (*names)["order"].value<ArrayValue>().clear();
+        (*names)["order"].array().clear();
 
 #ifdef DENG2_DEBUG
         DENG2_ASSERT(parents.isEmpty());
@@ -84,12 +84,12 @@ DENG2_PIMPL(DEDRegister)
 
     ArrayValue &order()
     {
-        return (*names)["order"].value<ArrayValue>();
+        return (*names)["order"].array();
     }
 
     ArrayValue const &order() const
     {
-        return (*names)["order"].value<ArrayValue>();
+        return (*names)["order"].array();
     }
 
     DictionaryValue &lookup(String const &keyName)

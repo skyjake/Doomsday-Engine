@@ -649,7 +649,7 @@ void Record::addSuperRecord(Value *superValue)
     {
         addArray(SUPER_NAME);
     }
-    (*this)[SUPER_NAME].value<ArrayValue>().add(superValue);
+    (*this)[SUPER_NAME].array().add(superValue);
 }
 
 void Record::operator >> (Writer &to) const

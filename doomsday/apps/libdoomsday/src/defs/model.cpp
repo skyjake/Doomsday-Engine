@@ -78,8 +78,7 @@ Record &Model::addSub()
     sub->addNumber("shinyReact", 1);
     sub->addNumber("blendMode", BM_NORMAL);
 
-    def()["sub"].value<ArrayValue>()
-            .add(new RecordValue(sub, RecordValue::OwnsRecord));
+    def()["sub"].array().add(new RecordValue(sub, RecordValue::OwnsRecord));
 
     return *sub;
 }

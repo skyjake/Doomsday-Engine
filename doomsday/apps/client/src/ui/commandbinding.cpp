@@ -246,7 +246,7 @@ void CommandBinding::configure(char const *eventDesc, char const *command, bool 
     }
 
     // Any conditions?
-    def()["condition"].value<ArrayValue>().clear();
+    def()["condition"].array().clear();
     while(eventDesc)
     {
         // A new condition.
