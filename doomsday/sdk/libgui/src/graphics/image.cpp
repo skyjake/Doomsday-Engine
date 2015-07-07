@@ -234,8 +234,7 @@ static bool recognize(Block const &data)
         Reader(data) >> header;
         return (header.imageType == Header::RGB || header.imageType == Header::RleRGB) &&
                header.colorMapType == Header::ColorMapNone &&
-               (header.depth == 24 || header.depth == 32) &&
-               !header.flags.testFlag(Header::ScreenOriginUpper);
+               (header.depth == 24 || header.depth == 32);
     }
     catch(...)
     {
