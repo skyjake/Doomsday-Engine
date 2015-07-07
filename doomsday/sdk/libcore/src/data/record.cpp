@@ -571,7 +571,7 @@ String Record::asText(String const &prefix, List *lines) const
     // If this is a module, don't print out the entire contents.
     if(!gets("__file__", "").isEmpty())
     {
-        return QString("Record imported from \"%1\"").arg(gets("__file__"));
+        return QString("(Record imported from \"%1\")").arg(gets("__file__"));
     }
     
     // Recursive calls to collect all variables in the record.
