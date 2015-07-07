@@ -100,6 +100,7 @@ struct sfxinfo_t
 };
 
 extern ded_t defs;  ///< Main definitions database (internal).
+extern Array<sprname_t> sprNames;  ///< Sprite name list.
 
 struct stateinfo_t
 {
@@ -114,7 +115,6 @@ struct stateinfo_t
  */
 struct RuntimeDefs
 {
-    Array<sprname_t>   sprNames;   ///< Sprite name list.
     Array<mobjinfo_t>  mobjInfo;   ///< Map object info database.
     Array<state_t>     states;     ///< State list.
     Array<stateinfo_t> stateInfo;
@@ -182,7 +182,7 @@ ded_compositefont_t *Def_GetCompositeFont(char const *uri);
 ded_light_t *Def_GetLightDef(int spr, int frame);
 
 #ifdef __cplusplus
-} // extern "C"
+}  // extern "C"
 #endif
 
 de::String Def_GetMobjName(int num);

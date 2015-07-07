@@ -3755,7 +3755,7 @@ void ResourceSystem::initSprites()
         {
             // Format or generate an id for the sprite.
             spritenum_t spriteId = Def_GetSpriteNum(def.name.toUtf8().constData());
-            if(spriteId == -1) spriteId = (runtimeDefs.sprNames.size() + customIdx++);
+            if(spriteId == -1) spriteId = (sprNames.size() + customIdx++);
 
             // Append another frame set to the relevant sprite.
             d->newSpriteFrameSet(spriteId).append(buildSpritesFromDefinition(def));

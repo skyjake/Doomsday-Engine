@@ -63,7 +63,6 @@ DENG_DECLARE_API(InternalData) =
     { DE_API_INTERNAL_DATA },
     runtimeDefs.mobjInfo.elementsPtr(),
     runtimeDefs.states  .elementsPtr(),
-    runtimeDefs.sprNames.elementsPtr(),
     runtimeDefs.texts   .elementsPtr(),
     &validCount
 };

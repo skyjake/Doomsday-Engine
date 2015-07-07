@@ -74,7 +74,8 @@ struct actionlink_t
     void (*func)();  ///< Pointer to the function.
 };
 
-ded_t defs; // The main definitions database.
+ded_t defs;  ///< The main definitions database.
+Array<sprname_t> sprNames;  ///< Sprite name list.
 
 RuntimeDefs runtimeDefs;
 
@@ -102,7 +103,6 @@ void RuntimeDefs::clear()
     }
     sounds.clear();
 
-    sprNames.clear();
     mobjInfo.clear();
     states.clear();
     texts.clear();
@@ -133,6 +133,7 @@ int Def_GetGameClasses()
 void Def_Init()
 {
     runtimeDefs.clear();
+    sprNames.clear();
     defs.clear();
 
     // Make the definitions visible in the global namespace.
@@ -164,6 +165,7 @@ void Def_Destroy()
 
     // Destroy the databases.
     runtimeDefs.clear();
+    sprNames.clear();
 
     defsInited = false;
 }
@@ -177,9 +179,9 @@ spritenum_t Def_GetSpriteNum(char const *name)
 {
     if(name && name[0])
     {
-        for(int i = 0; i < runtimeDefs.sprNames.size(); ++i)
+        for(int i = 0; i < sprNames.size(); ++i)
         {
-            if(!qstricmp(runtimeDefs.sprNames[i].name, name))
+            if(!qstricmp(sprNames[i].name, name))
                 return i;
         }
     }
@@ -1290,6 +1292,7 @@ void Def_Read()
     // Now we can clear all existing definitions and re-init.
     defs.clear();
     runtimeDefs.clear();
+    sprNames.clear();
 
     // Generate definitions.
     generateMaterialDefs();
@@ -1310,10 +1313,10 @@ void Def_Read()
 #endif
 
     // Sprite names.
-    runtimeDefs.sprNames.append(defs.sprites.size());
-    for(int i = 0; i < runtimeDefs.sprNames.size(); ++i)
+    sprNames.append(defs.sprites.size());
+    for(int i = 0; i < sprNames.size(); ++i)
     {
-        qstrcpy(runtimeDefs.sprNames[i].name, defs.sprites[i].id);
+        qstrcpy(sprNames[i].name, defs.sprites[i].id);
     }
 
     // States.
@@ -1650,7 +1653,7 @@ void Def_Read()
     os << defCountMsg(defs.sectorTypes.size(),      "sector types");
     os << defCountMsg(defs.musics.size(),           "songs");
     os << defCountMsg(runtimeDefs.sounds.size(),    "sound effects");
-    os << defCountMsg(runtimeDefs.sprNames.size(),  "sprite names");
+    os << defCountMsg(sprNames.size(),              "sprite names");
     os << defCountMsg(runtimeDefs.states.size(),    "states");
     os << defCountMsg(defs.decorations.size(),      "surface decorations");
     os << defCountMsg(defs.reflections.size(),      "surface reflections");

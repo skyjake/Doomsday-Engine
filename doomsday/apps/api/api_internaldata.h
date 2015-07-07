@@ -1,8 +1,8 @@
-/** @file api_internaldata.h Public API for accessing the engine's internal data.
+/** @file api_internaldata.h  Public API for accessing the engine's internal data.
  * @ingroup base
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -34,13 +34,12 @@ DENG_API_TYPEDEF(InternalData)
     de_api_t api;
 
     // Data arrays.
-    mobjinfo_t **   mobjInfo;
-    state_t **      states;
-    sprname_t **    sprNames;
-    ddtext_t **     text;
+    mobjinfo_t    **mobjInfo;
+    state_t       **states;
+    ddtext_t      **text;
 
     // General information.
-    int *           validCount;
+    int            *validCount;
 }
 DENG_API_T(InternalData);
 
@@ -48,4 +47,4 @@ DENG_API_T(InternalData);
 DENG_USING_API(InternalData);
 #endif
 
-#endif // DOOMSDAY_API_INTERNALDATA_H
+#endif  // DOOMSDAY_API_INTERNALDATA_H
