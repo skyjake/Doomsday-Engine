@@ -134,9 +134,13 @@ void Sys_Shutdown()
     // Let's shut down sound first, so Windows' HD-hogging doesn't jam
     // the MUS player (would produce horrible bursts of notes).
     S_Shutdown();
+    
 #ifdef __CLIENT__
     GL_Shutdown();
-    ClientApp::inputSystem().clearEvents();
+    if(ClientApp::hasInputSystem())
+    {
+        ClientApp::inputSystem().clearEvents();
+    }
 #endif
 
     App_ClearGames();

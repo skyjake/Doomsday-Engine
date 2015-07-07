@@ -504,6 +504,11 @@ InputSystem &ClientApp::inputSystem()
     return *a.d->inputSys;
 }
 
+bool ClientApp::hasInputSystem()
+{
+    return ClientApp::app().d->inputSys != nullptr;
+}
+
 RenderSystem &ClientApp::renderSystem()
 {
     ClientApp &a = ClientApp::app();
@@ -513,7 +518,7 @@ RenderSystem &ClientApp::renderSystem()
 
 bool ClientApp::hasRenderSystem()
 {
-    return ClientApp::app().d->rendSys != 0;
+    return ClientApp::app().d->rendSys != nullptr;
 }
 
 ResourceSystem &ClientApp::resourceSystem()
