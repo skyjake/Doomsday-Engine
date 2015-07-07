@@ -30,6 +30,7 @@
 #include <de/App>
 #include <de/NativePath>
 #include <de/RecordValue>
+#include <doomsday/console/cmd.h>
 #include <doomsday/defs/decoration.h>
 #include <doomsday/defs/dedfile.h>
 #include <doomsday/defs/dedparser.h>
@@ -2131,26 +2132,6 @@ int Def_Set(int type, int index, int value, void const *ptr)
     return true;
 }
 
-StringArray *Def_ListMobjTypeIDs()
-{
-    StringArray *array = StringArray_New();
-    for(int i = 0; i < defs.things.size(); ++i)
-    {
-        StringArray_Append(array, defs.things[i].gets("id").toUtf8());
-    }
-    return array;
-}
-
-StringArray *Def_ListStateIDs()
-{
-    StringArray *array = StringArray_New();
-    for(int i = 0; i < defs.states.size(); ++i)
-    {
-        StringArray_Append(array, defs.states[i].gets("id").toUtf8());
-    }
-    return array;
-}
-
 bool Def_IsAllowedReflection(ded_reflection_t const *def, /*bool hasExternal,*/ bool isCustom)
 {
     //if(hasExternal) return (def->flags & REFF_EXTERNAL) != 0;
@@ -2190,6 +2171,11 @@ D_CMD(ListMobjs)
     }
 
     return true;
+}
+
+void Def_ConsoleRegister()
+{
+    C_CMD("listmobjtypes", "", ListMobjs);
 }
 
 DENG_DECLARE_API(Def) =

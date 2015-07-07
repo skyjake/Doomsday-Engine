@@ -20,13 +20,12 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_DEFINITIONS_MAIN_H
-#define LIBDENG_DEFINITIONS_MAIN_H
+#ifndef DEFINITIONS_MAIN_H
+#define DEFINITIONS_MAIN_H
 
 #include <vector>
 #include <doomsday/defs/ded.h>
 #include <doomsday/defs/dedtypes.h>
-#include <de/stringarray.h>
 #include "Material"
 
 template <typename PODType>
@@ -133,6 +132,11 @@ extern RuntimeDefs runtimeDefs;
 void Def_Init(void);
 
 /**
+ * Register the console commands and/or variables of this module.
+ */
+void Def_ConsoleRegister(void);
+
+/**
  * Retrieves the XG Class list from the Game.
  * XGFunc links are provided by the Game, who owns the actual
  * XG classes and their functions.
@@ -173,7 +177,7 @@ int Def_GetModelNum(char const *id);
 int Def_GetMusicNum(char const *id);
 int Def_GetSoundNum(char const *id);
 ded_value_t *Def_GetValueById(char const *id);
-ded_value_t *Def_GetValueByUri(Uri const *uri);
+ded_value_t *Def_GetValueByUri(uri_s const *uri);
 ded_compositefont_t *Def_GetCompositeFont(char const *uri);
 ded_light_t *Def_GetLightDef(int spr, int frame);
 
@@ -187,7 +191,7 @@ int Def_GetStateNum(de::String const &id);
 
 spritenum_t Def_GetSpriteNum(de::String const &name);
 
-ded_ptcgen_t *Def_GetGenerator(Uri const *uri);
+ded_ptcgen_t *Def_GetGenerator(uri_s const *uri);
 ded_ptcgen_t *Def_GetGenerator(de::Uri const &uri);
 
 #ifdef __cplusplus
@@ -216,22 +220,6 @@ int Def_Set(int type, int index, int value, void const *ptr);
 dd_bool Def_SameStateSequence(state_t *snew, state_t *sold);
 
 /**
- * Compiles a list of all the defined mobj types. Indices in this list
- * match those in the @c mobjInfo array.
- *
- * @return StringArray instance. Caller gets ownership.
- */
-StringArray *Def_ListMobjTypeIDs(void);
-
-/**
- * Compiles a list of all the defined mobj states. Indices in this list
- * match those in the @c states array.
- *
- * @return StringArray instance. Caller gets ownership.
- */
-StringArray *Def_ListStateIDs(void);
-
-/**
  * Returns @c true iff @a def is compatible with the specified context.
  */
 bool Def_IsAllowedReflection(ded_reflection_t const *def, /*bool hasExternal,*/ bool isCustom);
@@ -241,10 +229,8 @@ bool Def_IsAllowedReflection(ded_reflection_t const *def, /*bool hasExternal,*/ 
  */
 bool Def_IsAllowedDetailTex(ded_detailtexture_t const *def, /*bool hasExternal,*/ bool isCustom);
 
-D_CMD(ListMobjs);
-
 #ifdef __cplusplus
-} // extern "C"
+}  // extern "C"
 #endif
 
-#endif  // LIBDENG_DEFINITIONS_MAIN_H
+#endif  // DEFINITIONS_MAIN_H

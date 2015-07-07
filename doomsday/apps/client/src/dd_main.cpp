@@ -3184,7 +3184,6 @@ static void consoleRegister()
     C_CMD("reset",          "",     Reset);
     C_CMD("reload",         "",     ReloadGame);
     C_CMD("unload",         "*",    Unload);
-    C_CMD("listmobjtypes",  "",     ListMobjs);
     C_CMD("write",          "s",    WriteConsole);
 
 #ifdef DENG2_DEBUG
@@ -3192,6 +3191,7 @@ static void consoleRegister()
 #endif
 
     DD_RegisterLoop();
+    Def_ConsoleRegister();
     FS1::consoleRegister();
     Con_Register();
     Games::consoleRegister();
