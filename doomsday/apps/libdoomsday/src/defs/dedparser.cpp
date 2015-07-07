@@ -1182,7 +1182,7 @@ DENG2_PIMPL(DEDParser)
                 else if(!bCopyNext)
                 {
                     String otherMobjId;
-                    READSTR(otherMobjId);
+                    if(!ReadString(otherMobjId)) { FAILURE }
                     ReadToken();
 
                     idx = ded->getMobjNum(otherMobjId);
