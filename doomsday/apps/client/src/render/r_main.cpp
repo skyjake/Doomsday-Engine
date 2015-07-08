@@ -23,7 +23,8 @@
 
 #include <de/vector1.h>
 #include <de/GLState>
-#include "dd_def.h" // finesine
+#include <doomsday/defs/sprite.h>
+#include "dd_def.h"  // finesine
 #include "clientapp.h"
 
 #include "render/billboard.h"
@@ -58,64 +59,71 @@ static inline ResourceSystem &resSys()
     return ClientApp::resourceSystem();
 }
 
+static inline WorldSystem &worldSys()
+{
+    return ClientApp::worldSystem();
+}
+
 static MaterialVariantSpec const &pspriteMaterialSpec()
 {
     return resSys().materialSpec(PSpriteContext, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                  0, -2, 0, false, true, true, false);
 }
 
-static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
+static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs)
 {
     static dint const WEAPONTOP = 32;  /// @todo Currently hardcoded here and in the plugins.
 
-    ddpsprite_t *psp       = spr->psp;
-    dfloat const offScaleY = weaponOffsetScaleY / 1000.0f;
-    dint const spriteIdx   = psp->statePtr->sprite;
-    dint const frameIdx    = psp->statePtr->frame;
-    Sprite const &sprite   = resSys().sprite(spriteIdx, frameIdx);
+    dfloat const offScaleY = ::weaponOffsetScaleY / 1000.0f;
 
-    SpriteViewAngle const &sprViewAngle = sprite.viewAngle(0);
-    MaterialAnimator &matAnimator       = sprViewAngle.material->getAnimator(pspriteMaterialSpec());
+    DENG2_ASSERT(vs.psp);
+    ddpsprite_t const &psp = *vs.psp;
+    DENG2_ASSERT(psp.statePtr);
+    state_t const &state = *psp.statePtr;
 
-    // Ensure we've up to date info about the material.
+    Record const &spriteView = defn::Sprite(resSys().sprite(state.sprite, state.frame)).view(0);
+
+    // Lookup the Material for this Sprite and prepare the animator.
+    MaterialAnimator &matAnimator = resSys().material(de::Uri(spriteView.gets("material"), RC_NULL))
+                                                .getAnimator(pspriteMaterialSpec());
     matAnimator.prepare();
 
-    Vector2i const &matDimensions         = matAnimator.dimensions();
     TextureVariant const &tex             = *matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
     Vector2i const &texOrigin             = tex.base().origin();
     variantspecification_t const &texSpec = tex.spec().variant;
 
+    parm.pos[0] = psp.pos[0] + texOrigin.x + pspOffset[0] - texSpec.border;
+    parm.pos[1] = WEAPONTOP + offScaleY * (psp.pos[1] - WEAPONTOP) + texOrigin.y
+                + pspOffset[1] - texSpec.border;
 
-    params->pos[0] = psp->pos[0] + texOrigin.x + pspOffset[0] - texSpec.border;
-    params->pos[1] = WEAPONTOP + offScaleY * (psp->pos[1] - WEAPONTOP) + texOrigin.y +
-                      pspOffset[1] - texSpec.border;
+    Vector2i const dimensions = matAnimator.dimensions() + Vector2i(texSpec.border, texSpec.border) * 2;
+    parm.width  = dimensions.x;
+    parm.height = dimensions.y;
 
-    params->width  = matDimensions.x + texSpec.border * 2;
-    params->height = matDimensions.y + texSpec.border * 2;
+    tex.glCoords(&parm.texOffset[0], &parm.texOffset[1]);
 
-    tex.glCoords(&params->texOffset[0], &params->texOffset[1]);
+    parm.texFlip[0] = spriteView.getb("mirrorX");
+    parm.texFlip[1] = false;
+    parm.mat        = &matAnimator.material();
 
-    params->texFlip[0] = sprViewAngle.mirrorX;
-    params->texFlip[1] = false;
+    parm.ambientColor[3] = vs.data.sprite.alpha;
 
-    params->mat = &matAnimator.material();
-    params->ambientColor[3] = spr->data.sprite.alpha;
-
-    if(spr->data.sprite.isFullBright)
+    if(vs.data.sprite.isFullBright)
     {
-        params->ambientColor[0] =
-            params->ambientColor[1] =
-                params->ambientColor[2] = 1;
-        params->vLightListIdx = 0;
+        parm.ambientColor[0] =
+            parm.ambientColor[1] =
+                parm.ambientColor[2] = 1;
+        parm.vLightListIdx = 0;
     }
     else
     {
-        Map &map = ClientApp::worldSystem().map();
+        DENG2_ASSERT(vs.data.sprite.bspLeaf);
+        Map const &map = worldSys().map();
 
         if(useBias && map.hasLightGrid())
         {
             // Evaluate the position in the light grid.
-            Vector4f color = map.lightGrid().evaluate(spr->origin);
+            Vector4f color = map.lightGrid().evaluate(vs.origin);
 
             // Apply light range compression.
             for(dint i = 0; i < 3; ++i)
@@ -123,11 +131,11 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
                 color[i] += Rend_LightAdaptationDelta(color[i]);
             }
 
-            V3f_Set(params->ambientColor, color.x, color.y, color.z);
+            V3f_Set(parm.ambientColor, color.x, color.y, color.z);
         }
         else
         {
-            Vector4f const color = spr->data.sprite.bspLeaf->subspace().cluster().lightSourceColorfIntensity();
+            Vector4f const color = vs.data.sprite.bspLeaf->subspace().cluster().lightSourceColorfIntensity();
 
             // No need for distance attentuation.
             dfloat lightLevel = color.w;
@@ -143,47 +151,52 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
             // Determine the final ambientColor.
             for(dint i = 0; i < 3; ++i)
             {
-                params->ambientColor[i] = lightLevel * color[i];
+                parm.ambientColor[i] = lightLevel * color[i];
             }
         }
-        Rend_ApplyTorchLight(params->ambientColor, 0);
+        Rend_ApplyTorchLight(parm.ambientColor, 0);
 
-        params->vLightListIdx =
-                Rend_CollectAffectingLights(spr->origin, Vector3f(params->ambientColor),
-                                            spr->data.sprite.bspLeaf->subspacePtr());
+        parm.vLightListIdx =
+                Rend_CollectAffectingLights(vs.origin, Vector3f(parm.ambientColor),
+                                            vs.data.sprite.bspLeaf->subspacePtr());
     }
 }
 
 void Rend_Draw2DPlayerSprites()
 {
-    ddplayer_t *ddpl = &viewPlayer->shared;
+    if(!viewPlayer) return;
+
+    ddplayer_t const &ddpl = viewPlayer->shared;
 
     // Cameramen have no HUD sprites.
-    if(ddpl->flags & DDPF_CAMERA) return;
-    if(ddpl->flags & DDPF_CHASECAM) return;
+    if(ddpl.flags & DDPF_CAMERA  ) return;
+    if(ddpl.flags & DDPF_CHASECAM) return;
 
     if(usingFog)
     {
         glEnable(GL_FOG);
     }
 
-    // Check for fullbright.
-    int i;
-    ddpsprite_t *psp;
-    for(i = 0, psp = ddpl->pSprites; i < DDMAXPSPRITES; ++i, psp++)
+    // Draw HUD vissprites.
+    for(vispsprite_t const &vs : visPSprites)
     {
-        vispsprite_t *spr = &visPSprites[i];
+        // We are only interested in sprites (models are handled elsewhere).
+        if(vs.type != VPSPR_SPRITE) continue;  // No...
 
-        // Should this psprite be drawn?
-        if(spr->type != VPSPR_SPRITE) continue; // No...
+        // We require PSprite and State info.
+        if(!vs.psp || !vs.psp->statePtr) continue;
 
-        // Draw as separate sprites.
-        if(spr->psp && spr->psp->statePtr)
+        try
         {
-            rendpspriteparams_t params;
-
-            setupPSpriteParams(&params, spr);
-            Rend_DrawPSprite(params);
+            rendpspriteparams_t parm; setupPSpriteParams(parm, vs);
+            Rend_DrawPSprite(parm);
+        }
+        catch(ResourceSystem::MissingManifestError const &er)
+        {
+            // Log but otherwise ignore this error.
+            state_t const &state = *vs.psp->statePtr;
+            LOG_GL_WARNING("Drawing psprite '%i' frame '%i': %s")
+                    << state.sprite << state.frame << er.asText();
         }
     }
 
@@ -193,40 +206,40 @@ void Rend_Draw2DPlayerSprites()
     }
 }
 
-static void setupModelParamsForVisPSprite(vissprite_t &vis, vispsprite_t const *spr)
+static void setupModelParamsForVisPSprite(vissprite_t &vis, vispsprite_t const &spr)
 {
     drawmodelparams_t *params = VS_MODEL(&vis);
 
-    params->mf = spr->data.model.mf;
-    params->nextMF = spr->data.model.nextMF;
-    params->inter = spr->data.model.inter;
+    params->mf = spr.data.model.mf;
+    params->nextMF = spr.data.model.nextMF;
+    params->inter = spr.data.model.inter;
     params->alwaysInterpolate = false;
-    params->id = spr->data.model.id;
-    params->selector = spr->data.model.selector;
-    params->flags = spr->data.model.flags;
-    vis.pose.origin = spr->origin;
-    vis.pose.srvo[0] = spr->data.model.visOff[0];
-    vis.pose.srvo[1] = spr->data.model.visOff[1];
-    vis.pose.srvo[2] = spr->data.model.visOff[2] - spr->data.model.floorClip;
-    vis.pose.topZ = spr->data.model.topZ;
+    params->id = spr.data.model.id;
+    params->selector = spr.data.model.selector;
+    params->flags = spr.data.model.flags;
+    vis.pose.origin = spr.origin;
+    vis.pose.srvo[0] = spr.data.model.visOff[0];
+    vis.pose.srvo[1] = spr.data.model.visOff[1];
+    vis.pose.srvo[2] = spr.data.model.visOff[2] - spr.data.model.floorClip;
+    vis.pose.topZ = spr.data.model.topZ;
     vis.pose.distance = -10;
-    vis.pose.yaw = spr->data.model.yaw;
+    vis.pose.yaw = spr.data.model.yaw;
     vis.pose.extraYawAngle = 0;
-    vis.pose.yawAngleOffset = spr->data.model.yawAngleOffset;
-    vis.pose.pitch = spr->data.model.pitch;
+    vis.pose.yawAngleOffset = spr.data.model.yawAngleOffset;
+    vis.pose.pitch = spr.data.model.pitch;
     vis.pose.extraPitchAngle = 0;
-    vis.pose.pitchAngleOffset = spr->data.model.pitchAngleOffset;
+    vis.pose.pitchAngleOffset = spr.data.model.pitchAngleOffset;
     vis.pose.extraScale = 0;
-    vis.pose.viewAligned = spr->data.model.viewAligned;
+    vis.pose.viewAligned = spr.data.model.viewAligned;
     vis.pose.mirrored = (mirrorHudModels? true : false);
     params->shineYawOffset = -vang;
     params->shinePitchOffset = vpitch + 90;
     params->shineTranslateWithViewerPos = false;
     params->shinepspriteCoordSpace = true;
-    vis.light.ambientColor[3] = spr->data.model.alpha;
+    vis.light.ambientColor[3] = spr.data.model.alpha;
 
-    if((levelFullBright || spr->data.model.stateFullBright) &&
-       !spr->data.model.mf->testSubFlag(0, MFF_DIM))
+    if((levelFullBright || spr.data.model.stateFullBright) &&
+       !spr.data.model.mf->testSubFlag(0, MFF_DIM))
     {
         vis.light.ambientColor[0] = vis.light.ambientColor[1] = vis.light.ambientColor[2] = 1;
         vis.light.vLightListIdx = 0;
@@ -249,7 +262,7 @@ static void setupModelParamsForVisPSprite(vissprite_t &vis, vispsprite_t const *
         }
         else
         {
-            Vector4f const color = spr->data.model.bspLeaf->subspace().cluster().lightSourceColorfIntensity();
+            Vector4f const color = spr.data.model.bspLeaf->subspace().cluster().lightSourceColorfIntensity();
 
             // No need for distance attentuation.
             dfloat lightLevel = color.w;
@@ -270,8 +283,8 @@ static void setupModelParamsForVisPSprite(vissprite_t &vis, vispsprite_t const *
         Rend_ApplyTorchLight(vis.light.ambientColor, vis.pose.distance);
 
         vis.light.vLightListIdx =
-                Rend_CollectAffectingLights(spr->origin, vis.light.ambientColor,
-                                            spr->data.model.bspLeaf->subspacePtr(),
+                Rend_CollectAffectingLights(spr.origin, vis.light.ambientColor,
+                                            spr.data.model.bspLeaf->subspacePtr(),
                                             true /*stark world light*/);
     }
 }
@@ -281,15 +294,15 @@ void Rend_Draw3DPlayerSprites()
     // Setup the modelview matrix.
     Rend_ModelViewMatrix(false /* don't apply view angle rotation */);
 
-    static GLTexture localDepth; // note: static!
+    static GLTexture localDepth;  // note: static!
     GLTarget::AlternativeBuffer altDepth(GLState::current().target(), localDepth,
                                          GLTarget::DepthStencil);
 
-    for(dint i = 0; i < DDMAXPSPRITES; ++i)
+    // Draw HUD vissprites.
+    for(vispsprite_t const &spr : visPSprites)
     {
-        vispsprite_t *spr = &visPSprites[i];
-
-        if(spr->type != VPSPR_MODEL) continue; // Not used.
+        // We are only interested in models (sprites are handled elsewhere).
+        if(spr.type != VPSPR_MODEL) continue;
 
         if(altDepth.init())
         {
@@ -297,9 +310,8 @@ void Rend_Draw3DPlayerSprites()
             altDepth.target().clear(GLTarget::DepthStencil);
         }
 
-        //drawmodelparams_t parms; zap(parms);
-        vissprite_t temp; de::zap(temp);
-        setupModelParamsForVisPSprite(temp, spr);
-        Rend_DrawModel(temp);
+        vissprite_t vs; de::zap(vs);
+        setupModelParamsForVisPSprite(vs, spr);
+        Rend_DrawModel(vs);
     }
 }

@@ -721,18 +721,19 @@ public:  // Data structures ----------------------------------------------------
 #ifdef __CLIENT__
 
     /**
-     * Returns @c true iff a LightGrid has been initialized for the map.
+     * Returns @c true if a LightGrid has been initialized for the map.
      *
      * @see lightGrid()
      */
-    bool hasLightGrid();
+    bool hasLightGrid() const;
 
     /**
      * Provides access to the light grid for the map.
      *
      * @see hasLightGrid()
      */
-    LightGrid &lightGrid();
+    LightGrid       &lightGrid();
+    LightGrid const &lightGrid() const;
 
     /**
      * (Re)-initialize the light grid used for smoothed sector lighting.

@@ -24,6 +24,11 @@
 #include "de_base.h"
 #include "world/p_object.h"
 
+#include <cmath>
+#include <de/Error>
+#include <doomsday/defs/sprite.h>
+#include <doomsday/world/mobjthinkerdata.h>
+
 #include "de_console.h"
 #include "de_system.h"
 #include "de_network.h"
@@ -51,10 +56,6 @@
 #  include "gl/gl_tex.h"
 #endif
 
-#include <de/Error>
-#include <doomsday/world/mobjthinkerdata.h>
-#include <cmath>
-
 using namespace de;
 
 static mobj_t *unusedMobjs;
@@ -68,6 +69,11 @@ int useSRVOAngle           = 1;
 #ifdef __CLIENT__
 static byte mobjAutoLights = true;
 #endif
+
+static inline ResourceSystem &resSys()
+{
+    return App_ResourceSystem();
+}
 
 /**
  * Called during map loading.
@@ -452,22 +458,19 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
     // this means it is outside the playable map (and no light should be emitted).
     /// @todo Optimize: Mobj_Link() should do this and flag the mobj accordingly.
     if(!Mobj_BspLeafAtOrigin(*mo).subspace().contains(mo->origin))
-    {
         return;
-    }
 
-    Sprite *sprite = Mobj_Sprite(*mo);
-    if(!sprite) return;
+    // Always use the front view of the Sprite when determining light properties.
+    Record *spriteRec = Mobj_SpritePtr(*mo);
+    if(!spriteRec) return;
+    defn::Sprite sprite(*spriteRec);
+    if(!sprite.hasView(0)) return;
 
-    // Always use the front rotation when determining light properties.
-    if(!sprite->hasViewAngle(0)) return;
-    SpriteViewAngle const &sprViewAngle = sprite->viewAngle(0);
-
-    DENG2_ASSERT(sprViewAngle.material);
-    MaterialAnimator &matAnimator = sprViewAngle.material->getAnimator(Rend_SpriteMaterialSpec());
-
-    // Ensure we've up to date info about the material.
-    matAnimator.prepare();
+    // Lookup the Material for the Sprite and prepare the animator.
+    Material *mat = resSys().materialPtr(de::Uri(sprite.view(0).gets("material"), RC_NULL));
+    if(!mat) return;
+    MaterialAnimator &matAnimator = mat->getAnimator(Rend_SpriteMaterialSpec());
+    matAnimator.prepare();  // Ensure we have up-to-date info.
 
     TextureVariant *tex = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
     if(!tex) return;  // Unloadable texture?
@@ -482,8 +485,8 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
         return;
 
     // Attempt to generate luminous object from the sprite.
-    QScopedPointer<Lumobj> lum(sprite->generateLumobj());
-    if(lum.isNull()) return;
+    std::unique_ptr<Lumobj> lum(Rend_MakeLumobj(sprite.def()));
+    if(bool(lum)) return;
 
     // A light definition may override the (auto-calculated) defaults.
     if(ded_light_t *def = lightDefByMobjState(mo->state))
@@ -577,26 +580,23 @@ void Mobj_AnimateHaloOcclussion(mobj_t &mob)
 
 dfloat Mobj_ShadowStrength(mobj_t const &mob)
 {
-    dfloat const minSpriteAlphaLimit = .1f;
-    dfloat ambientLightLevel, strength = .65f; ///< Default strength factor.
+    static dfloat const minSpriteAlphaLimit = .1f;
 
-    // Is this mobj in a valid state for shadow casting?
-    if(!mob.state) return 0;
+    // A shadow is not if the map-object is - not linked in the map.
     if(!Mobj_HasSubspace(mob)) return 0;
+    // ...or the current state is invalid or a full-bright.
+    if(!mob.state || (mob.state->flags & STF_FULLBRIGHT)) return 0;
+    // ...or it won't be drawn at all.
+    if(mob.ddFlags & DDMF_DONTDRAW) return 0;
+    // ...or is "always lit" (?).
+    if(mob.ddFlags & DDMF_ALWAYSLIT) return 0;
 
-    // Should this mobj even have a shadow?
-    if((mob.state->flags & STF_FULLBRIGHT) ||
-       (mob.ddFlags & DDMF_DONTDRAW) || (mob.ddFlags & DDMF_ALWAYSLIT))
-        return 0;
-
-    SectorCluster &cluster = Mobj_Cluster(mob);
-
-    // Sample the ambient light level at the mobj's position.
-    Map &map = cluster.sector().map();
-    if(useBias && map.hasLightGrid())
+    // Evaluate the ambient light level at our map origin.
+    SectorCluster const &cluster = Mobj_Cluster(mob);
+    dfloat ambientLightLevel;
+    if(::useBias && cluster.sector().map().hasLightGrid())
     {
-        // Evaluate in the light grid.
-        ambientLightLevel = map.lightGrid().evaluateIntensity(mob.origin);
+        ambientLightLevel = cluster.sector().map().lightGrid().evaluateIntensity(mob.origin);
     }
     else
     {
@@ -605,36 +605,35 @@ dfloat Mobj_ShadowStrength(mobj_t const &mob)
     Rend_ApplyLightAdaptation(ambientLightLevel);
 
     // Sprites have their own shadow strength factor.
-    if(!useModels || !Mobj_ModelDef(mob))
+    dfloat strength = .65f;  ///< Default.
+    if(!::useModels || !Mobj_ModelDef(mob))
     {
-        if(Sprite *sprite = Mobj_Sprite(mob))
+        if(Record *spriteRec = Mobj_SpritePtr(mob))
         {
-            if(sprite->hasViewAngle(0))
+            defn::Sprite sprite(*spriteRec);
+            if(sprite.hasView(0))  // Always use the front view for lighting.
             {
-                SpriteViewAngle const &sprViewAngle = sprite->viewAngle(0);
-                DENG2_ASSERT(sprViewAngle.material);
-                MaterialAnimator &matAnimator = sprViewAngle.material->getAnimator(Rend_SpriteMaterialSpec());
-
-                // Ensure we've up to date info about the material.
-                matAnimator.prepare();
-
-                TextureVariant const *texture = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
-                DENG2_ASSERT(texture);
-                if(texture)
+                if(Material *mat = resSys().materialPtr(de::Uri(sprite.view(0).gets("material"), RC_NULL)))
                 {
-                    auto const *aa = (averagealpha_analysis_t const *)texture->base().analysisDataPointer(Texture::AverageAlphaAnalysis);
-                    DENG2_ASSERT(aa);
+                    MaterialAnimator &matAnimator = mat->getAnimator(Rend_SpriteMaterialSpec());
+                    matAnimator.prepare();  // Ensure we have up-to-date info.
 
-                    // We use an average which factors in the coverage ratio
-                    // of alpha:non-alpha pixels.
-                    /// @todo Constant weights could stand some tweaking...
-                    float weightedSpriteAlpha = aa->alpha * (0.4f + (1 - aa->coverage) * 0.6f);
+                    if(TextureVariant const *texture = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture)
+                    {
+                        auto const *aa = (averagealpha_analysis_t const *)texture->base().analysisDataPointer(Texture::AverageAlphaAnalysis);
+                        DENG2_ASSERT(aa);
 
-                    // Almost entirely translucent sprite? => no shadow.
-                    if(weightedSpriteAlpha < minSpriteAlphaLimit) return 0;
+                        // We use an average which factors in the coverage ratio of
+                        // alpha:non-alpha pixels.
+                        /// @todo Constant weights could stand some tweaking...
+                        dfloat weightedSpriteAlpha = aa->alpha * (0.4f + (1 - aa->coverage) * 0.6f);
 
-                    // Apply this factor.
-                    strength *= de::min(1.f, .2f + weightedSpriteAlpha);
+                        // Almost entirely translucent sprite? => no shadow.
+                        if(weightedSpriteAlpha < minSpriteAlphaLimit) return 0;
+
+                        // Apply this factor.
+                        strength *= de::min(1.f, .2f + weightedSpriteAlpha);
+                    }
                 }
             }
         }
@@ -647,15 +646,13 @@ dfloat Mobj_ShadowStrength(mobj_t const &mob)
     return (0.6f - ambientLightLevel * 0.4f) * strength;
 }
 
-Sprite *Mobj_Sprite(mobj_t const &mo)
+Record *Mobj_SpritePtr(mobj_t const &mob)
 {
-    return App_ResourceSystem().spritePtr(mo.sprite, mo.frame);
+    return resSys().spritePtr(mob.sprite, mob.frame);
 }
 
 ModelDef *Mobj_ModelDef(mobj_t const &mo, ModelDef **retNextModef, float *retInter)
 {
-    ResourceSystem &resSys = App_ResourceSystem();
-
     // By default there are no models.
     if(retNextModef) *retNextModef = 0;
     if(retInter)     *retInter = -1;
@@ -664,7 +661,7 @@ ModelDef *Mobj_ModelDef(mobj_t const &mo, ModelDef **retNextModef, float *retInt
     if(!mo.state) return 0;
 
     state_t &st = *mo.state;
-    ModelDef *modef = resSys.modelDefForState(runtimeDefs.states.indexOf(&st), mo.selector);
+    ModelDef *modef = resSys().modelDefForState(runtimeDefs.states.indexOf(&st), mo.selector);
     if(!modef) return 0; // No model available.
 
     float interp = -1;
@@ -724,7 +721,7 @@ ModelDef *Mobj_ModelDef(mobj_t const &mo, ModelDef **retNextModef, float *retInt
         }
         else if(worldTime)
         {
-            *retNextModef = resSys.modelDefForState(runtimeDefs.states.indexOf(&st), mo.selector);
+            *retNextModef = resSys().modelDefForState(runtimeDefs.states.indexOf(&st), mo.selector);
         }
         else if(st.nextState > 0) // Check next state.
         {
@@ -740,8 +737,8 @@ ModelDef *Mobj_ModelDef(mobj_t const &mo, ModelDef **retNextModef, float *retInt
                 int max = 20; // Let's not be here forever...
                 while(!stopScan)
                 {
-                    if(!((!resSys.modelDefForState(runtimeDefs.states.indexOf(it)) ||
-                          resSys.modelDefForState(runtimeDefs.states.indexOf(it), mo.selector)->interRange[0] > 0) &&
+                    if(!((!resSys().modelDefForState(runtimeDefs.states.indexOf(it)) ||
+                          resSys().modelDefForState(runtimeDefs.states.indexOf(it), mo.selector)->interRange[0] > 0) &&
                          it->nextState > 0))
                     {
                         stopScan = true;
@@ -749,7 +746,7 @@ ModelDef *Mobj_ModelDef(mobj_t const &mo, ModelDef **retNextModef, float *retInt
                     else
                     {
                         // Scan interlinks, then go to the next state.
-                        ModelDef *mdit = resSys.modelDefForState(runtimeDefs.states.indexOf(it), mo.selector);
+                        ModelDef *mdit = resSys().modelDefForState(runtimeDefs.states.indexOf(it), mo.selector);
                         if(mdit && mdit->interNext)
                         {
                             forever
@@ -789,7 +786,7 @@ ModelDef *Mobj_ModelDef(mobj_t const &mo, ModelDef **retNextModef, float *retInt
 
             if(!foundNext)
             {
-                *retNextModef = resSys.modelDefForState(runtimeDefs.states.indexOf(it), mo.selector);
+                *retNextModef = resSys().modelDefForState(runtimeDefs.states.indexOf(it), mo.selector);
             }
         }
     }
@@ -892,27 +889,27 @@ coord_t Mobj_ShadowRadius(mobj_t const &mobj)
 }
 #endif
 
-coord_t Mobj_VisualRadius(mobj_t const &mobj)
+coord_t Mobj_VisualRadius(mobj_t const &mob)
 {
 #ifdef __CLIENT__
     // Is a model in effect?
     if(useModels)
     {
-        if(ModelDef *modef = Mobj_ModelDef(mobj))
+        if(ModelDef *modef = Mobj_ModelDef(mob))
         {
             return modef->visualRadius;
         }
     }
 
     // Is a sprite in effect?
-    if(Sprite *sprite = Mobj_Sprite(mobj))
+    if(Record *sprite = Mobj_SpritePtr(mob))
     {
-        return sprite->visualRadius();
+        return Rend_VisualRadius(*sprite);
     }
 #endif
 
     // Use the physical radius.
-    return Mobj_Radius(mobj);
+    return Mobj_Radius(mob);
 }
 
 AABoxd Mobj_AABox(mobj_t const &mobj)

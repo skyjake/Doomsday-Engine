@@ -1581,17 +1581,21 @@ Map::BspTree const &Map::bspTree() const
 
 #ifdef __CLIENT__
 
-bool Map::hasLightGrid()
+bool Map::hasLightGrid() const
 {
     return bool(d->lightGrid);
 }
 
 LightGrid &Map::lightGrid()
 {
-    if(bool(d->lightGrid))
-    {
-        return *d->lightGrid;
-    }
+    if(bool(d->lightGrid)) return *d->lightGrid;
+    /// @throw MissingLightGrid Attempted with no LightGrid initialized.
+    throw MissingLightGridError("Map::lightGrid", "No light grid is initialized");
+}
+
+LightGrid const &Map::lightGrid() const
+{
+    if(bool(d->lightGrid)) return *d->lightGrid;
     /// @throw MissingLightGrid Attempted with no LightGrid initialized.
     throw MissingLightGridError("Map::lightGrid", "No light grid is initialized");
 }

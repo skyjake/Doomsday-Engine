@@ -1,7 +1,7 @@
 /** @file lightgrid.cpp  Light Grid (Large-Scale FakeRadio).
  *
  * @authors Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -28,11 +28,11 @@
 #include <de/Log>
 #include <doomsday/console/var.h>
 
-// Cvars:
-static int lgEnabled   = false;
-static int lgBlockSize = 31;
-
 namespace de {
+
+// Cvars:
+static dint lgEnabled   = false;
+static dint lgBlockSize = 31;
 
 namespace internal
 {
@@ -49,9 +49,10 @@ namespace internal
      * Determines if the bit in @a bitfield (assumed 32-bit) is set for the given
      * grid reference @a gref.
      */
-    static bool hasIndexBit(LightGrid::Ref const &gref, int gridWidth, uint *bitfield)
+    static bool hasIndexBit(LightGrid::Ref const &gref, dint gridWidth, duint *bitfield)
     {
-        uint const index = gref.x + gref.y * gridWidth;
+        DENG2_ASSERT(bitfield);
+        duint const index = gref.x + gref.y * gridWidth;
         return (bitfield[index >> 5] & (1 << (index & 0x1f))) != 0;
     }
 
@@ -59,9 +60,9 @@ namespace internal
      * Sets the bit in a bitfield (assumed 32-bit) for the given grid reference @a gref.
      * @param count  If set, will be incremented when a zero bit is changed to one.
      */
-    static void addIndexBit(LightGrid::Ref const &gref, int gridWidth, uint *bitfield, int *count)
+    static void addIndexBit(LightGrid::Ref const &gref, dint gridWidth, duint *bitfield, dint *count)
     {
-        uint const index = gref.x + gref.y * gridWidth;
+        duint const index = gref.x + gref.y * gridWidth;
         // Are we counting when bits are set?
         if(count && !hasIndexBit(LightGrid::Ref(index, 0), gridWidth, bitfield))
         {
@@ -79,22 +80,21 @@ static Vector4f const black;
 
 DENG2_PIMPL(LightGrid)
 {
-    Vector2d origin;     ///< Grid origin in map space.
-    int blockSize;       ///< In map coordinate space units.
-    Vector2i dimensions; ///< Grid dimensions in blocks.
+    Vector2d origin;      ///< Grid origin in map space.
+    dint blockSize = 0;   ///< In map coordinate space units.
+    Vector2i dimensions;  ///< Grid dimensions in blocks.
 
     /**
      * Grid coverage data for a light source.
      */
     struct LightCoverage
     {
-        int primaryBlockCount;
+        dint primaryBlockCount = 0;
         QVector<Index> blocks;
-        LightCoverage() : primaryBlockCount(0) {}
     };
     typedef QMap<IBlockLightSource *, LightCoverage> Coverages;
     Coverages coverage;
-    bool needUpdateCoverage;
+    bool needUpdateCoverage = false;
 
     /**
      * Grid illumination point.
@@ -110,20 +110,21 @@ DENG2_PIMPL(LightGrid)
      */
     struct LightBlock
     {
-        LightBlockFlags flags;     ///< Internal state flags.
-        char bias;                 ///< If positive the source is shining up from floor.
-        IBlockLightSource *source; ///< Primary illumination source (if any).
-        Vector3f color;            ///< Accumulated light color (from all sources).
-        Vector3f oldColor;         ///< Used if the color has changed and an update is pending.
+        LightBlockFlags flags;      ///< Internal state flags.
+        char bias = 0;              ///< If positive the source is shining up from floor.
+        IBlockLightSource *source;  ///< Primary illumination source (if any).
+        Vector3f color;             ///< Accumulated light color (from all sources).
+        Vector3f oldColor;          ///< Used if the color has changed and an update is pending.
 
         /**
          * Construct a new light block using the source specified as the @em primary
          * illumination source for the block.
          *
-         * @param primarySource  Primary illumination. Use @c 0 to create a "null-block".
+         * @param primarySource  Primary illumination. Use @c nullptr to create a
+         *                       "null-block".
          */
-        LightBlock(IBlockLightSource *primarySource = 0)
-            : bias(0), source(primarySource)
+        LightBlock(IBlockLightSource *primarySource = nullptr)
+            : source(primarySource)
         {}
 
         /**
@@ -223,12 +224,12 @@ DENG2_PIMPL(LightGrid)
         /**
          * Apply an illumination to the block.
          */
-        void applyLightingChanges(Vector4f const &contrib, int sourceBias, float factor)
+        void applyLightingChanges(Vector4f const &contrib, dint sourceBias, dfloat factor)
         {
             if(!source) return;
 
             // Apply a bias to the light level.
-            float level = contrib.w;
+            dfloat level = contrib.w;
             level -= (0.95f - level);
             if(level < 0)
                 level = 0;
@@ -238,9 +239,9 @@ DENG2_PIMPL(LightGrid)
             if(level <= 0)
                 return;
 
-            for(int i = 0; i < 3; ++i)
+            for(dint i = 0; i < 3; ++i)
             {
-                float c = de::clamp(0.f, contrib[i] * level, 1.f);
+                dfloat c = de::clamp(0.f, contrib[i] * level, 1.f);
 
                 if(color[i] + c > 1)
                 {
@@ -253,7 +254,7 @@ DENG2_PIMPL(LightGrid)
             }
 
             // Influenced by the source bias.
-            bias = de::clamp(-0x80, int(bias * (1 - factor) + sourceBias * factor), 0x7f);
+            bias = de::clamp(-0x80, dint(bias * (1 - factor) + sourceBias * factor), 0x7f);
         }
     };
 
@@ -263,29 +264,19 @@ DENG2_PIMPL(LightGrid)
     /// The grid of LightBlocks. All unused point at @var nullBlock.
     typedef QVector<LightBlock *> Blocks;
     Blocks blocks;
-    bool needUpdate;
+    bool needUpdate = false;
 
-    int numBlocks; ///< Total number of non-null blocks.
+    dint numBlocks = 0;  ///< Total number of non-null blocks.
 
-    Instance(Public *i)
-        : Base(i)
-        , blockSize(0)
-        , needUpdateCoverage(false)
-        , needUpdate(false)
-        , numBlocks(0)
-    {}
-
-    ~Instance()
-    {
-        clearBlocks();
-    }
+    Instance(Public *i) : Base(i) {}
+    ~Instance() { clearBlocks(); }
 
     inline LightBlock &block(Index index)     { return *blocks[index]; }
     inline LightBlock &block(Ref const &gref) { return block(self.toIndex(gref)); }
 
     void clearBlocks()
     {
-        for(int i = 0; i < blocks.count(); ++i)
+        for(dint i = 0; i < blocks.count(); ++i)
         {
             if(blocks[i] != &nullBlock)
             {
@@ -313,9 +304,9 @@ DENG2_PIMPL(LightGrid)
         needUpdateCoverage = false;
 
         // Bitfields for marking affected blocks. Make sure each bit is in a word.
-        size_t const bitfieldSize = 4 * (31 + dimensions.x * dimensions.y) / 32;
-        uint *primaryBitfield     = (uint *) M_Calloc(bitfieldSize);
-        uint *contribBitfield     = (uint *) M_Calloc(bitfieldSize);
+        dsize const bitfieldSize = 4 * (31 + dimensions.x * dimensions.y) / 32;
+        duint *primaryBitfield   = (duint *) M_Calloc(bitfieldSize);
+        duint *contribBitfield   = (duint *) M_Calloc(bitfieldSize);
 
         // Reset the coverage data for all primary light sources.
         coverage.clear();
@@ -333,11 +324,11 @@ DENG2_PIMPL(LightGrid)
             LightCoverage &covered    = it.value();
 
             // Determine blocks for which this is the primary source.
-            int primaryCount = 0;
+            dint primaryCount = 0;
             std::memset(primaryBitfield, 0, bitfieldSize);
 
-            for(int y = 0; y < dimensions.y; ++y)
-            for(int x = 0; x < dimensions.x; ++x)
+            for(dint y = 0; y < dimensions.y; ++y)
+            for(dint x = 0; x < dimensions.x; ++x)
             {
                 // Does this block have a different primary source?
                 if(source != block(Ref(x, y)).source)
@@ -347,12 +338,12 @@ DENG2_PIMPL(LightGrid)
 
                 /// Primary sources affect near neighbors due to smoothing.
                 /// @todo Determine min/max a/b before going into the loop.
-                for(int b = -2; b <= 2; ++b)
+                for(dint b = -2; b <= 2; ++b)
                 {
                     if(y + b < 0 || y + b >= dimensions.y)
                         continue;
 
-                    for(int a = -2; a <= 2; ++a)
+                    for(dint a = -2; a <= 2; ++a)
                     {
                         if(x + a < 0 || x + a >= dimensions.x)
                             continue;
@@ -363,22 +354,22 @@ DENG2_PIMPL(LightGrid)
             }
 
             // Determine blocks for which this is the secondary contributor.
-            int contribCount = 0;
+            dint contribCount = 0;
             std::memset(contribBitfield, 0, bitfieldSize);
 
-            for(int y = 0; y < dimensions.y; ++y)
-            for(int x = 0; x < dimensions.x; ++x)
+            for(dint y = 0; y < dimensions.y; ++y)
+            for(dint x = 0; x < dimensions.x; ++x)
             {
                 if(!hasIndexBit(Ref(x, y), dimensions.x, primaryBitfield))
                     continue;
 
                 // Add the contributor blocks.
-                for(int b = -2; b <= 2; ++b)
+                for(dint b = -2; b <= 2; ++b)
                 {
                     if(y + b < 0 || y + b >= dimensions.y)
                         continue;
 
-                    for(int a = -2; a <= 2; ++a)
+                    for(dint a = -2; a <= 2; ++a)
                     {
                         if(x + a < 0 || x + a >= dimensions.x)
                             continue;
@@ -392,14 +383,14 @@ DENG2_PIMPL(LightGrid)
             }
 
             // Remember grid coverage for this illumination source.
-            int const blockCount = primaryCount + contribCount;
+            dint const blockCount = primaryCount + contribCount;
             covered.primaryBlockCount = primaryCount;
             covered.blocks.resize(blockCount);
 
             if(blockCount > 0)
             {
-                int a = 0, b = primaryCount;
-                for(int x = 0; x < dimensions.x * dimensions.y; ++x)
+                dint a = 0, b = primaryCount;
+                for(dint x = 0; x < dimensions.x * dimensions.y; ++x)
                 {
                     if(hasIndexBit(Ref(x, 0), dimensions.x, primaryBitfield))
                     {
@@ -438,11 +429,11 @@ void LightGrid::resizeAndClear(Vector2d const &newOrigin, Vector2d const &newDim
     Vector2d const blockDimensions = newDimensions / d->blockSize;
 
     // (Re)-initialize an empty light grid.
-    d->resizeAndClearBlocks(Vector2i(de::round<int>(blockDimensions.x) + 1,
-                                     de::round<int>(blockDimensions.y) + 1));
+    d->resizeAndClearBlocks(Vector2i(de::round<dint>(blockDimensions.x) + 1,
+                                     de::round<dint>(blockDimensions.y) + 1));
 }
 
-Vector4f LightGrid::evaluate(Vector3d const &point)
+Vector4f LightGrid::evaluate(Vector3d const &point) const
 {
     // If not enabled there is no lighting to evaluate; return black.
     if(!lgEnabled) return black;
@@ -484,8 +475,8 @@ void LightGrid::updateIfNeeded()
         .1f,  .2f, .25f, .2f, .1f
     };
 
-    for(int y = 0; y < d->dimensions.y; ++y)
-    for(int x = 0; x < d->dimensions.x; ++x)
+    for(dint y = 0; y < d->dimensions.y; ++y)
+    for(dint x = 0; x < d->dimensions.x; ++x)
     {
         Instance::LightBlock &blockAtRef = d->block(Ref(x, y));
 
@@ -495,12 +486,12 @@ void LightGrid::updateIfNeeded()
 
         // Determine the ambient light properties of this block.
         IBlockLightSource &source = *blockAtRef.source;
-        Vector4f const color      = Vector4f(source.lightSourceColorf(), source.lightSourceIntensity(Vector3d(0, 0, 0)));
-        int const bias            = source.blockLightSourceZBias();
+        Vector4f const color      = Vector4f(source.lightSourceColorf(), source.lightSourceIntensity(Vector3d()));
+        dint const bias           = source.blockLightSourceZBias();
 
         /// @todo Calculate min/max for a and b.
-        for(int a = -2; a <= 2; ++a)
-        for(int b = -2; b <= 2; ++b)
+        for(dint a = -2; a <= 2; ++a)
+        for(dint b = -2; b <= 2; ++b)
         {
             if(x + a < 0 || y + b < 0 ||
                x + a > d->dimensions.x - 1 || y + b > d->dimensions.y - 1)
@@ -568,14 +559,14 @@ void LightGrid::blockLightSourceChanged(IBlockLightSource *changed)
     if(covered->blocks.count())
     {
         // Mark primary and contributed blocks.
-        for(int i = 0; i < covered->primaryBlockCount; ++i)
+        for(dint i = 0; i < covered->primaryBlockCount; ++i)
         {
             if(d->block(covered->blocks[i]).markChanged())
             {
                 d->needUpdate = true;
             }
         }
-        for(int i = 0; i < covered->blocks.count(); ++i)
+        for(dint i = 0; i < covered->blocks.count(); ++i)
         {
             if(d->block(covered->blocks[i]).markChanged(true /*is contributor*/))
             {
@@ -585,16 +576,16 @@ void LightGrid::blockLightSourceChanged(IBlockLightSource *changed)
     }
 }
 
-LightGrid::Ref LightGrid::toRef(Vector3d const &point)
+LightGrid::Ref LightGrid::toRef(Vector3d const &point) const
 {
-    int x = de::round<int>((point.x - d->origin.x) / d->blockSize);
-    int y = de::round<int>((point.y - d->origin.y) / d->blockSize);
+    dint const x = de::round<dint>((point.x - d->origin.x) / d->blockSize);
+    dint const y = de::round<dint>((point.y - d->origin.y) / d->blockSize);
 
     return Ref(de::clamp(1, x, dimensions().x - 2),
                de::clamp(1, y, dimensions().y - 2));
 }
 
-int LightGrid::blockSize() const
+dint LightGrid::blockSize() const
 {
     return d->blockSize;
 }
@@ -609,12 +600,12 @@ Vector2i const &LightGrid::dimensions() const
     return d->dimensions;
 }
 
-int LightGrid::numBlocks() const
+dint LightGrid::numBlocks() const
 {
     return d->numBlocks;
 }
 
-size_t LightGrid::blockStorageSize() const
+dsize LightGrid::blockStorageSize() const
 {
     return sizeof(Instance::LightBlock) * d->numBlocks;
 }
@@ -624,10 +615,10 @@ Vector3f const &LightGrid::rawColorRef(Index index) const
     return d->block(index).color;
 }
 
-void LightGrid::consoleRegister() // static
+void LightGrid::consoleRegister()  // static
 {
     C_VAR_INT("rend-bias-grid",             &lgEnabled,     0,  0, 1);
     C_VAR_INT("rend-bias-grid-blocksize",   &lgBlockSize,   0,  8, 1024);
 }
 
-} // namespace de
+}  // namespace de

@@ -33,6 +33,7 @@
 #include <de/GLState>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
+#include <doomsday/defs/sprite.h>
 
 #include "clientapp.h"
 #include "sys_system.h"
@@ -43,6 +44,7 @@
 
 #include "MaterialVariantSpec"
 #include "Texture"
+#include "TextureManifest"
 
 #include "Face"
 #include "world/map.h"
@@ -70,6 +72,7 @@
 #include "WallEdge"
 
 #include "gl/gl_main.h"
+#include "gl/gl_tex.h"  // pointlight_analysis_t
 #include "gl/gl_texmanager.h"
 #include "gl/sys_opengl.h"
 
@@ -2160,18 +2163,17 @@ static bool projectShadow(Vector3d const &topLeft, Vector3d const &bottomRight,
     {
         distanceFromViewer = Rend_PointDist2D(mobOrigin);
         if(distanceFromViewer > shadowMaxDistance)
-            return LoopContinue;
+            return false;
     }
 
-    // Should this mobj even have a shadow?
     dfloat shadowStrength = Mobj_ShadowStrength(mob) * ::shadowFactor;
     if(::usingFog) shadowStrength /= 2;
-    if(shadowStrength <= 0) return LoopContinue;
+    if(shadowStrength <= 0) return false;
 
     coord_t shadowRadius = Mobj_ShadowRadius(mob);
     if(shadowRadius > ::shadowMaxRadius)
         shadowRadius = ::shadowMaxRadius;
-    if(shadowRadius <= 0) return LoopContinue;
+    if(shadowRadius <= 0) return false;
 
     mobOrigin[2] -= mob.floorClip;
     if(mob.ddFlags & DDMF_BOB)
@@ -3553,26 +3555,29 @@ static void projectSubspaceSprites()
 
             R_ProjectSprite(mob);
 
-            // Hack: Sprites have a tendency to extend into the ceiling in
-            // sky sectors. Here we will raise the skyfix dynamically, to make sure
-            // that no sprites get clipped by the sky.
-
+            // Kludge: Map-objects have a tendency to extend into the ceiling in
+            // sky sectors. Here we will raise the skyfix dynamically, to make
+            // sure they don't get clipped by the sky.
             if(cluster.visCeiling().surface().hasSkyMaskedMaterial())
             {
-                if(Sprite *sprite = Mobj_Sprite(mob))
+                /// @todo fixme: Consider 3D models, also. -ds
+                if(Record *spriteRec = Mobj_SpritePtr(mob))
                 {
-                    if(sprite->hasViewAngle(0))
+                    defn::Sprite sprite(*spriteRec);
+                    if(sprite.hasView(0))
                     {
-                        Material *material = sprite->viewAngle(0).material;
-                        if(!(mob.dPlayer && (mob.dPlayer->flags & DDPF_CAMERA))
-                           && mob.origin[2] <= cluster.visCeiling().heightSmoothed()
-                           && mob.origin[2] >= cluster.visFloor  ().heightSmoothed())
+                        if(Material *material = resSys().materialPtr(de::Uri(sprite.view(0).gets("material"), RC_NULL)))
                         {
-                            coord_t visibleTop = mob.origin[2] + material->height();
-                            if(visibleTop > cluster.sector().map().skyFixCeiling())
+                            if(!(mob.dPlayer && (mob.dPlayer->flags & DDPF_CAMERA))
+                               && mob.origin[2] <= cluster.visCeiling().heightSmoothed()
+                               && mob.origin[2] >= cluster.visFloor  ().heightSmoothed())
                             {
-                                // Raise skyfix ceiling.
-                                cluster.sector().map().setSkyFixCeiling(visibleTop + 16/*leeway*/);
+                                coord_t visibleTop = mob.origin[2] + material->height();
+                                if(visibleTop > cluster.sector().map().skyFixCeiling())
+                                {
+                                    // Raise the skyfix ceiling.
+                                    cluster.sector().map().setSkyFixCeiling(visibleTop + 16/*leeway*/);
+                                }
                             }
                         }
                     }
@@ -3724,6 +3729,53 @@ static void generateDecorationFlares(Map &map)
         /// @todo mark these light sources visible for LensFx
         return LoopContinue;
     });
+}
+
+ddouble Rend_VisualRadius(Record const &spriteRec)
+{
+    defn::Sprite sprite(spriteRec);
+    if(sprite.hasView(0))
+    {
+        if(Material *mat = resSys().materialPtr(de::Uri(sprite.view(0).gets("material"), RC_NULL)))
+        {
+            MaterialAnimator &matAnimator = mat->getAnimator(Rend_SpriteMaterialSpec());
+            matAnimator.prepare();  // Ensure we've up to date info.
+            return matAnimator.dimensions().x / 2;
+        }
+    }
+    return 0;
+}
+
+Lumobj *Rend_MakeLumobj(Record const &spriteRec)
+{
+    LOG_AS("Rend_MakeLumobj");
+
+    defn::Sprite sprite(spriteRec);
+
+    // Always use the front view.
+    /// @todo We could do better here...
+    if(!sprite.hasView(0)) return nullptr;
+
+    Material *mat = resSys().materialPtr(de::Uri(sprite.view(0).gets("material"), RC_NULL));
+    if(!mat) return nullptr;
+
+    MaterialAnimator &matAnimator = mat->getAnimator(Rend_SpriteMaterialSpec());
+    matAnimator.prepare();  // Ensure we have up-to-date info.
+
+    TextureVariant *texture = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
+    if(!texture) return nullptr;  // Unloadable texture?
+
+    auto const *pl = (pointlight_analysis_t const *)texture->base().analysisDataPointer(Texture::BrightPointAnalysis);
+    if(!pl)
+    {
+        LOGDEV_RES_WARNING("Texture \"%s\" has no BrightPointAnalysis")
+                << texture->base().manifest().composeUri();
+        return nullptr;
+    }
+
+    // Apply the auto-calculated color.
+    return &(new Lumobj(Vector3d(), pl->brightMul, pl->color.rgb))
+                    ->setZOffset(-texture->base().origin().y - pl->originY * matAnimator.dimensions().y);
 }
 
 /**

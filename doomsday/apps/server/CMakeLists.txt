@@ -88,7 +88,6 @@ set (SHARED_WITH_CLIENT
     ${src}/include/resource/patchname.h
     ${src}/include/resource/rawtexture.h
     ${src}/include/resource/resourcesystem.h
-    ${src}/include/resource/sprite.h
     ${src}/include/resource/texture.h
     ${src}/include/resource/texturemanifest.h
     ${src}/include/resource/texturescheme.h
@@ -188,7 +187,6 @@ set (SHARED_WITH_CLIENT
     ${src}/src/resource/patchname.cpp
     ${src}/src/resource/pcx.cpp
     ${src}/src/resource/resourcesystem.cpp
-    ${src}/src/resource/sprite.cpp
     ${src}/src/resource/texture.cpp
     ${src}/src/resource/texturemanifest.cpp
     ${src}/src/resource/texturescheme.cpp

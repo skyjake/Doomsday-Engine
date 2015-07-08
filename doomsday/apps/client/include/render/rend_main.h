@@ -1,7 +1,7 @@
-/** @file rend_main.h Core of the rendering subsystem.
+/** @file rend_main.h  Core of the rendering subsystem.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -25,12 +25,15 @@
 #endif
 
 #include "dd_types.h"
+#include <de/Matrix>
+#include <de/Record>
+#include <de/Vector>
+
 #include "def_main.h"
 #include "MaterialVariantSpec"
 #include "WallEdge"
-#include <de/Vector>
-#include <de/Matrix>
 
+class Lumobj;
 class Sector;
 class SectorCluster;
 struct VectorLightData;
@@ -224,7 +227,7 @@ de::Vector3f Rend_SkyLightColor();
  *
  * @return  Calculated result.
  */
-de::Vector3f Rend_LuminousColor(de::Vector3f const &color, float light);
+de::Vector3f Rend_LuminousColor(de::Vector3f const &color, de::dfloat light);
 
 /**
  * Given an @a intensity determine the height of the plane glow, applying any
@@ -232,7 +235,7 @@ de::Vector3f Rend_LuminousColor(de::Vector3f const &color, float light);
  *
  * @return Calculated result.
  */
-coord_t Rend_PlaneGlowHeight(float intensity);
+coord_t Rend_PlaneGlowHeight(de::dfloat intensity);
 
 /**
  * @param point         World space point to evaluate.
@@ -247,6 +250,23 @@ de::duint Rend_CollectAffectingLights(de::Vector3d const &point,
     bool starkLight = false);
 
 void Rend_DrawVectorLight(VectorLightData const &vlight, dfloat alpha);
+
+/**
+ * Returns the radius of the given @a sprite, as it would visually appear to be.
+ *
+ * @note Presently considers rotation 0 only!
+ */
+de::ddouble Rend_VisualRadius(de::Record const &sprite);
+
+/**
+ * Produce a luminous object from the given @a sprite configuration. The properties of
+ * any resultant lumobj are configured in "sprite-local" space. This means that it will
+ * be positioned relative to the center of the sprite and must be further configured
+ * before adding to the map (i.e., translated to the origin in map space).
+ *
+ * @return  Newly generated Lumobj otherwise @c nullptr.
+ */
+Lumobj *Rend_MakeLumobj(de::Record const &sprite);
 
 /**
  * Selects a Material for the given map @a surface considering the current map
