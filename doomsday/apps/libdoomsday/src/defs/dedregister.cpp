@@ -27,7 +27,7 @@
 
 using namespace de;
 
-static QString const VAR_ORDER = "order";
+static String const VAR_ORDER = "order";
 
 DENG2_PIMPL(DEDRegister)
 , DENG2_OBSERVES(Record, Deletion)
