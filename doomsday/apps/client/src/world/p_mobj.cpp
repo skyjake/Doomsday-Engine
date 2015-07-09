@@ -486,7 +486,7 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
 
     // Attempt to generate luminous object from the sprite.
     std::unique_ptr<Lumobj> lum(Rend_MakeLumobj(sprite.def()));
-    if(bool(lum)) return;
+    if(!lum) return;
 
     // A light definition may override the (auto-calculated) defaults.
     if(ded_light_t *def = lightDefByMobjState(mo->state))
