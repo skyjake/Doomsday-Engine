@@ -1,4 +1,4 @@
-/** @file sprite.h  Logical sprite with multiple view(-angle)s in 3D.
+/** @file sprite.h  Sprite definition accessor.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
@@ -66,18 +66,16 @@ public:
     de::dint viewCount() const;
 
     /**
-     * Returns @c true iff a view is defined for the specified @a angle.
+     * Returns @c true if a View is defined for the specified @a angle.
      *
-     * @param angle  View angle/rotation index/identifier to lookup the material for.
+     * @param angle  View angle/rotation index/identifier to lookup.
      */
     bool hasView(de::dint angle) const;
 
     /**
      * Returns the View associated with the specified @a angle.
      *
-     * @param angle  View angle/rotation index/identifier to lookup the material for.
-     *
-     * @return  View associated with the specified @a angle.
+     * @param angle  View angle/rotation index/identifier to lookup.
      */
     de::Record &view(de::dint angle);
 

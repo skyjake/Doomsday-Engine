@@ -582,9 +582,9 @@ dfloat Mobj_ShadowStrength(mobj_t const &mob)
 {
     static dfloat const minSpriteAlphaLimit = .1f;
 
-    // A shadow is not if the map-object is - not linked in the map.
+    // A shadow is not cast if the map-object is not linked in the map.
     if(!Mobj_HasSubspace(mob)) return 0;
-    // ...or the current state is invalid or a full-bright.
+    // ...or the current state is invalid or full-bright.
     if(!mob.state || (mob.state->flags & STF_FULLBRIGHT)) return 0;
     // ...or it won't be drawn at all.
     if(mob.ddFlags & DDMF_DONTDRAW) return 0;
