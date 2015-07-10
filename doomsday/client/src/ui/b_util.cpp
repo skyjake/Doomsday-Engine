@@ -507,6 +507,8 @@ void B_EvaluateImpulseBindings(BindContext *context, int localNum, int impulseId
 
     *pos = 0;
     *relativeOffset = 0;
+    
+    if(localNum < 0 || localNum >= DDMAXPLAYERS) return; // No local player specified.
 
     uint const nowTime = Timer_RealMilliseconds();
     bool conflicted[NUM_IBD_TYPES]; de::zap(conflicted);
