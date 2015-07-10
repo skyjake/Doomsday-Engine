@@ -3695,7 +3695,7 @@ void ResourceSystem::initSprites()
     /// @todo It should no longer be necessary to split this into two phases -ds
     dint customIdx = 0;
     SpriteDefs spriteDefs = buildSpriteFramesFromTextures(App_ResourceSystem().textureScheme("Sprites").index());
-    for(auto &it = spriteDefs.constBegin(); it != spriteDefs.constEnd(); ++it)
+    for(auto it = spriteDefs.constBegin(); it != spriteDefs.constEnd(); ++it)
     {
         // Lookup the id for the named sprite.
         spritenum_t id = Def_GetSpriteNum(it.key());
