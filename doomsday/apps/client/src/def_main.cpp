@@ -75,7 +75,6 @@ struct actionlink_t
 };
 
 ded_t defs;  ///< The main definitions database.
-Array<sprname_t> sprNames;  ///< Sprite name list.
 
 RuntimeDefs runtimeDefs;
 
@@ -133,7 +132,6 @@ dint Def_GetGameClasses()
 void Def_Init()
 {
     ::runtimeDefs.clear();
-    ::sprNames.clear();
     ::defs.clear();
 
     // Make the definitions visible in the global namespace.
@@ -165,27 +163,8 @@ void Def_Destroy()
 
     // Destroy the databases.
     ::runtimeDefs.clear();
-    ::sprNames.clear();
 
     ::defsInited = false;
-}
-
-spritenum_t Def_GetSpriteNum(String const &name)
-{
-    return Def_GetSpriteNum(name.toLatin1());
-}
-
-spritenum_t Def_GetSpriteNum(char const *name)
-{
-    if(name && name[0])
-    {
-        for(dint i = 0; i < ::sprNames.size(); ++i)
-        {
-            if(!qstricmp(::sprNames[i].name, name))
-                return i;
-        }
-    }
-    return -1;  // Not found.
 }
 
 dint Def_GetMobjNum(char const *id)
@@ -1279,7 +1258,6 @@ void Def_Read()
     // Now we can clear all existing definitions and re-init.
     defs.clear();
     runtimeDefs.clear();
-    sprNames.clear();
 
     // Generate definitions.
     generateMaterialDefs();
@@ -1299,13 +1277,6 @@ void Def_Read()
     }
 #endif
 
-    // Sprite names.
-    ::sprNames.append(::defs.sprites.size());
-    for(dint i = 0; i < ::sprNames.size(); ++i)
-    {
-        qstrcpy(::sprNames[i].name, ::defs.sprites[i].id);
-    }
-
     // States.
     ::runtimeDefs.states.append(::defs.states.size());
     for(dint i = 0; i < ::runtimeDefs.states.size(); ++i)
@@ -1319,7 +1290,7 @@ void Def_Read()
         Record &dstNew = ::defs.states[stateNum];
         state_t *st = &::runtimeDefs.states[stateNum];
 
-        st->sprite    = Def_GetSpriteNum(dst.gets("sprite"));
+        st->sprite    = ::defs.getSpriteNum(dst.gets("sprite"));
         st->flags     = dst.geti("flags");
         st->frame     = dst.geti("frame");
         st->tics      = dst.geti("tics");
@@ -1632,7 +1603,7 @@ void Def_Read()
     os << defCountMsg(::defs.sectorTypes.size(),      "sector types");
     os << defCountMsg(::defs.musics.size(),           "songs");
     os << defCountMsg(::runtimeDefs.sounds.size(),    "sound effects");
-    os << defCountMsg(::sprNames.size(),              "sprite names");
+    os << defCountMsg(::defs.sprites.size(),          "sprite names");
     os << defCountMsg(::runtimeDefs.states.size(),    "states");
     os << defCountMsg(::defs.decorations.size(),      "surface decorations");
     os << defCountMsg(::defs.reflections.size(),      "surface reflections");
@@ -1974,7 +1945,7 @@ dint Def_Get(dint type, char const *id, void *out)
         return Def_GetActionNum(id);
 
     case DD_DEF_SPRITE:
-        return Def_GetSpriteNum(id);
+        return ::defs.getSpriteNum(id);
 
     case DD_DEF_SOUND:
         return Def_GetSoundNum(id);

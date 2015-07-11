@@ -100,7 +100,6 @@ struct sfxinfo_t
 };
 
 extern ded_t defs;  ///< Main definitions database (internal).
-extern Array<sprname_t> sprNames;  ///< Sprite name list.
 
 struct stateinfo_t
 {
@@ -167,12 +166,6 @@ state_t *Def_GetState(int num);
 
 int Def_GetActionNum(char const *id);
 
-/**
- * Returns the unique sprite number associated with the specified sprite @a name;
- * otherwise @c -1 if not found.
- */
-spritenum_t Def_GetSpriteNum(char const *name);
-
 int Def_GetModelNum(char const *id);
 int Def_GetMusicNum(char const *id);
 int Def_GetSoundNum(char const *id);
@@ -188,8 +181,6 @@ ded_light_t *Def_GetLightDef(int spr, int frame);
 de::String Def_GetMobjName(int num);
 de::String Def_GetStateName(state_t *state);
 int Def_GetStateNum(de::String const &id);
-
-spritenum_t Def_GetSpriteNum(de::String const &name);
 
 ded_ptcgen_t *Def_GetGenerator(uri_s const *uri);
 ded_ptcgen_t *Def_GetGenerator(de::Uri const &uri);

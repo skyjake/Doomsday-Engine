@@ -1965,7 +1965,7 @@ DENG2_PIMPL(ResourceSystem)
         }
         else if(modef->state && modef->testSubFlag(0, MFF_AUTOSCALE))
         {
-            spritenum_t sprNum = Def_GetSpriteNum(def.gets("sprite"));
+            spritenum_t sprNum = ::defs.getSpriteNum(def.gets("sprite"));
             int sprFrame       = def.geti("spriteFrame");
 
             if(sprNum < 0)
@@ -3669,11 +3669,11 @@ void ResourceSystem::initSprites()
     for(auto it = spriteDefs.constBegin(); it != spriteDefs.constEnd(); ++it)
     {
         // Lookup the id for the named sprite.
-        spritenum_t id = Def_GetSpriteNum(it.key());
+        spritenum_t id = ::defs.getSpriteNum(it.key());
         if(id == -1)
         {
             // Assign a new id from the end of the range.
-            id = (::sprNames.size() + customIdx++);
+            id = (::defs.sprites.size() + customIdx++);
         }
 
         // Build a Sprite (frame) set from these definitions.

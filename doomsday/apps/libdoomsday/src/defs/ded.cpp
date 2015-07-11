@@ -550,6 +550,24 @@ int ded_s::getSoundNumForName(const char *name) const
     return 0;
 }
 
+int ded_s::getSpriteNum(String const &id) const
+{
+    return getSpriteNum(id.toLatin1());
+}
+
+int ded_s::getSpriteNum(char const *id) const
+{
+    if(id && id[0])
+    {
+        for(dint i = 0; i < sprites.size(); ++i)
+        {
+            if(!qstricmp(sprites[i].id, id))
+                return i;
+        }
+    }
+    return -1;  // Not found.
+}
+
 int ded_s::getMusicNum(const char* id) const
 {
     if(Record const *def = musics.tryFind("id", id))
