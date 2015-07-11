@@ -1512,10 +1512,10 @@ DENG2_PIMPL(ResourceSystem)
         }
     }
 
-    Model *modelForId(modelid_t modelId)
+    Model *modelForId(modelid_t id)
     {
         DENG2_ASSERT(modelRepository);
-        return reinterpret_cast<Model *>(modelRepository->userPointer(modelId));
+        return reinterpret_cast<Model *>(modelRepository->userPointer(id));
     }
 
     inline String const &findModelPath(modelid_t id)
@@ -1545,22 +1545,22 @@ DENG2_PIMPL(ResourceSystem)
      * Create a new modeldef or find an existing one. There can be only one model
      * definition associated with a state/intermark pair.
      */
-    ModelDef *getModelDef(int state, float interMark, int select)
+    ModelDef *getModelDef(dint state, dfloat interMark, dint select)
     {
         // Is this a valid state?
         if(state < 0 || state >= runtimeDefs.states.size())
         {
-            return 0;
+            return nullptr;
         }
 
         // First try to find an existing modef.
-        foreach(ModelDef const &modef, modefs)
+        for(ModelDef const &modef : modefs)
         {
             if(modef.state == &runtimeDefs.states[state] &&
                fequal(modef.interMark, interMark) && modef.select == select)
             {
                 // Models are loaded in reverse order; this one already has a model.
-                return 0;
+                return nullptr;
             }
         }
 
@@ -1589,7 +1589,7 @@ DENG2_PIMPL(ResourceSystem)
                                           RLF_DEFAULT, self.resClass(RC_GRAPHIC));
             }
             catch(FS1::NotFoundError const &)
-            {} // Ignore this error.
+            {}  // Ignore this error.
         }
 
         /// @throws FS1::NotFoundError if no resource was found.
@@ -1605,7 +1605,7 @@ DENG2_PIMPL(ResourceSystem)
         if(Texture *tex = self.defineTexture("ModelSkins", de::Uri(skinPath)))
         {
             // A duplicate? (return existing skin number)
-            for(int i = 0; i < mdl.skinCount(); ++i)
+            for(dint i = 0; i < mdl.skinCount(); ++i)
             {
                 if(mdl.skin(i).texture == tex)
                     return i;
@@ -1623,8 +1623,8 @@ DENG2_PIMPL(ResourceSystem)
     {
         String const &modelFilePath = findModelPath(mdl.modelId());
 
-        int numFoundSkins = 0;
-        for(int i = 0; i < mdl.skinCount(); ++i)
+        dint numFoundSkins = 0;
+        for(dint i = 0; i < mdl.skinCount(); ++i)
         {
             ModelSkin &skin = mdl.skin(i);
             try
@@ -1662,8 +1662,8 @@ DENG2_PIMPL(ResourceSystem)
                     << NativePath(foundPath).pretty()
                     << NativePath(modelFilePath).pretty();
             }
-            catch(FS1::NotFoundError const&)
-            {} // Ignore this error.
+            catch(FS1::NotFoundError const &)
+            {}  // Ignore this error.
         }
 
         if(!numFoundSkins)
@@ -1674,7 +1674,7 @@ DENG2_PIMPL(ResourceSystem)
 
 #ifdef DENG2_DEBUG
         LOGDEV_RES_XVERBOSE("Model \"%s\" skins:") << NativePath(modelFilePath).pretty();
-        int skinIdx = 0;
+        dint skinIdx = 0;
         for(ModelSkin const &skin : mdl.skins())
         {
             TextureManifest const *texManifest = skin.texture? &skin.texture->manifest() : 0;
@@ -1690,7 +1690,7 @@ DENG2_PIMPL(ResourceSystem)
      * Scales the given model so that it'll be 'destHeight' units tall. Measurements
      * are based on submodel zero. Scale is applied uniformly.
      */
-    void scaleModel(ModelDef &mf, float destHeight, float offset)
+    void scaleModel(ModelDef &mf, dfloat destHeight, dfloat offset)
     {
         if(!mf.subCount()) return;
 
@@ -1700,11 +1700,11 @@ DENG2_PIMPL(ResourceSystem)
         if(!smf.modelId) return;
 
         // Find the top and bottom heights.
-        float top, bottom;
-        float height = self.model(smf.modelId).frame(smf.frame).horizontalRange(&top, &bottom);
+        dfloat top, bottom;
+        dfloat height = self.model(smf.modelId).frame(smf.frame).horizontalRange(&top, &bottom);
         if(!height) height = 1;
 
-        float scale = destHeight / height;
+        dfloat scale = destHeight / height;
 
         mf.scale    = Vector3f(scale, scale, scale);
         mf.offset.y = -bottom * scale + offset;
@@ -1767,8 +1767,8 @@ DENG2_PIMPL(ResourceSystem)
     {
         LOG_AS("setupModel");
 
-        int const modelScopeFlags = def.geti("flags") | defs.modelFlags;
-        int const statenum = defs.getStateNum(def.gets("state"));
+        dint const modelScopeFlags = def.geti("flags") | defs.modelFlags;
+        dint const statenum = defs.getStateNum(def.gets("state"));
 
         // Is this an ID'd model?
         ModelDef *modef = getModelDefWithId(def.gets("id"));
@@ -1791,14 +1791,14 @@ DENG2_PIMPL(ResourceSystem)
         modef->scale.y  *= defs.modelScale;  // Common Y axis scaling.
         modef->resize    = def.getf("resize");
         modef->skinTics  = de::max(def.geti("skinTics"), 1);
-        for(int i = 0; i < 2; ++i)
+        for(dint i = 0; i < 2; ++i)
         {
             modef->interRange[i] = float(def.geta("interRange")[i].asNumber());
         }
 
         // Submodels.
         modef->clearSubs();
-        for(int i = 0; i < def.subCount(); ++i)
+        for(dint i = 0; i < def.subCount(); ++i)
         {
             Record const &subdef = def.sub(i);
             SubmodelDef *sub = modef->addSub();
@@ -2396,11 +2396,11 @@ void ResourceSystem::initSystemTextures()
 
     LOG_RES_VERBOSE("Initializing System textures...");
 
-    for(uint i = 0; !texDefs[i].graphicName.isEmpty(); ++i)
+    for(duint i = 0; !texDefs[i].graphicName.isEmpty(); ++i)
     {
         struct TexDef const &def = texDefs[i];
 
-        int uniqueId = i + 1/*1-based index*/;
+        dint uniqueId = i + 1/*1-based index*/;
         de::Uri resourceUri("Graphics", Path(def.graphicName));
 
         declareTexture(de::Uri("System", Path(def.path)), Texture::Custom,
@@ -2438,7 +2438,7 @@ Texture *ResourceSystem::defineTexture(String schemeName, de::Uri const &resourc
 {
     LOG_AS("ResourceSystem::defineTexture");
 
-    if(resourceUri.isEmpty()) return 0;
+    if(resourceUri.isEmpty()) return nullptr;
 
     // Have we already created one for this?
     TextureScheme &scheme = textureScheme(schemeName);
@@ -2447,16 +2447,16 @@ Texture *ResourceSystem::defineTexture(String schemeName, de::Uri const &resourc
         return &scheme.findByResourceUri(resourceUri).texture();
     }
     catch(TextureManifest::MissingTextureError const &)
-    {} // Ignore this error.
+    {}  // Ignore this error.
     catch(TextureScheme::NotFoundError const &)
-    {} // Ignore this error.
+    {}  // Ignore this error.
 
-    int uniqueId = scheme.count() + 1; // 1-based index.
+    dint uniqueId = scheme.count() + 1; // 1-based index.
     if(M_NumDigits(uniqueId) > 8)
     {
         LOG_RES_WARNING("Failed declaring texture manifest in scheme %s (max:%i)")
             << schemeName << DDMAXINT;
-        return 0;
+        return nullptr;
     }
 
     de::Uri uri(scheme.name(), Path(String("%1").arg(uniqueId, 8, 10, QChar('0'))));
@@ -2472,7 +2472,7 @@ Texture *ResourceSystem::defineTexture(String schemeName, de::Uri const &resourc
     {
         LOG_RES_WARNING("Failed declaring texture \"%s\": %s") << uri << er.asText();
     }
-    return 0;
+    return nullptr;
 }
 
 patchid_t ResourceSystem::declarePatch(String encodedName)
@@ -2492,7 +2492,7 @@ patchid_t ResourceSystem::declarePatch(String encodedName)
         return patchid_t( manifest.uniqueId() );
     }
     catch(MissingManifestError const &)
-    {} // Ignore this error.
+    {}  // Ignore this error.
 
     Path lumpPath = uri.path() + ".lmp";
     if(!d->fileSys().nameIndex().contains(lumpPath))
@@ -2532,7 +2532,7 @@ patchid_t ResourceSystem::declarePatch(String encodedName)
     }
     file.unlock();
 
-    int uniqueId        = textureScheme("Patches").count() + 1; // 1-based index.
+    dint uniqueId       = textureScheme("Patches").count() + 1;  // 1-based index.
     de::Uri resourceUri = composeLumpIndexResourceUrn(lumpNum);
 
     try
@@ -2559,15 +2559,11 @@ rawtex_t *ResourceSystem::rawTexture(lumpnum_t lumpNum)
     {
         LOGDEV_RES_WARNING("LumpNum #%i out of bounds (%i), returning 0")
                 << lumpNum << App_FileSystem().lumpCount();
-        return 0;
+        return nullptr;
     }
 
-    Instance::RawTextureHash::iterator found = d->rawTexHash.find(lumpNum);
-    if(found != d->rawTexHash.end())
-    {
-        return found.value();
-    }
-    return 0;
+    auto found = d->rawTexHash.find(lumpNum);
+    return (found != d->rawTexHash.end() ? found.value() : nullptr);
 }
 
 rawtex_t *ResourceSystem::declareRawTexture(lumpnum_t lumpNum)
@@ -2577,7 +2573,7 @@ rawtex_t *ResourceSystem::declareRawTexture(lumpnum_t lumpNum)
     {
         LOGDEV_RES_WARNING("LumpNum #%i out of range %s, returning 0")
             << lumpNum << Rangeui(0, App_FileSystem().lumpCount()).asText();
-        return 0;
+        return nullptr;
     }
 
     // Has this raw texture already been declared?
@@ -2585,8 +2581,7 @@ rawtex_t *ResourceSystem::declareRawTexture(lumpnum_t lumpNum)
     if(!raw)
     {
         // An entirely new raw texture.
-        String const &name = App_FileSystem().lump(lumpNum).name();
-        raw = new rawtex_t(name, lumpNum);
+        raw = new rawtex_t(App_FileSystem().lump(lumpNum).name(), lumpNum);
         d->rawTexHash.insert(lumpNum, raw);
     }
 
@@ -2663,7 +2658,7 @@ bool ResourceSystem::hasMaterialManifest(de::Uri const &path) const
         return true;
     }
     catch(MissingManifestError const &)
-    {} // Ignore this error.
+    {}  // Ignore this error.
     return false;
 }
 
@@ -2696,7 +2691,7 @@ MaterialManifest &ResourceSystem::materialManifest(de::Uri const &uri) const
     throw MissingManifestError("ResourceSystem::materialManifest", "Failed to locate a manifest matching \"" + uri.asText() + "\"");
 }
 
-int ResourceSystem::materialCount() const
+dint ResourceSystem::materialCount() const
 {
     return d->materials.count();
 }
@@ -2717,7 +2712,7 @@ ResourceSystem::MaterialManifestGroup &ResourceSystem::newMaterialGroup()
     return *d->materialGroups.back();
 }
 
-ResourceSystem::MaterialManifestGroup &ResourceSystem::materialGroup(int groupIdx) const
+ResourceSystem::MaterialManifestGroup &ResourceSystem::materialGroup(dint groupIdx) const
 {
     groupIdx -= 1; // 1-based index.
     if(groupIdx >= 0 && groupIdx < d->materialGroups.count())
@@ -2745,10 +2740,7 @@ TextureScheme &ResourceSystem::textureScheme(String name) const
     if(!name.isEmpty())
     {
         TextureSchemes::iterator found = d->textureSchemes.find(name.toLower());
-        if(found != d->textureSchemes.end())
-        {
-            return **found;
-        }
+        if(found != d->textureSchemes.end()) return **found;
     }
     /// @throw UnknownSchemeError An unknown scheme was referenced.
     throw UnknownSchemeError("ResourceSystem::textureScheme", "No scheme found matching '" + name + "'");
@@ -2776,7 +2768,7 @@ bool ResourceSystem::hasTextureManifest(de::Uri const &path) const
         return true;
     }
     catch(MissingManifestError const &)
-    {} // Ignore this error.
+    {}  // Ignore this error.
     return false;
 }
 
@@ -2789,18 +2781,18 @@ TextureManifest &ResourceSystem::textureManifest(de::Uri const &uri) const
     if(!uri.scheme().compareWithoutCase("urn"))
     {
         String const &pathStr = uri.path().toStringRef();
-        int uIdPos = pathStr.indexOf(':');
+        dint uIdPos = pathStr.indexOf(':');
         if(uIdPos > 0)
         {
             String schemeName = pathStr.left(uIdPos);
-            int uniqueId      = pathStr.mid(uIdPos + 1 /*skip delimiter*/).toInt();
+            dint uniqueId     = pathStr.mid(uIdPos + 1 /*skip delimiter*/).toInt();
 
             try
             {
                 return textureScheme(schemeName).findByUniqueId(uniqueId);
             }
             catch(TextureScheme::NotFoundError const &)
-            {} // Ignore, we'll throw our own...
+            {}  // Ignore, we'll throw our own...
         }
     }
     else
@@ -2816,12 +2808,12 @@ TextureManifest &ResourceSystem::textureManifest(de::Uri const &uri) const
                 return textureScheme(uri.scheme()).find(path);
             }
             catch(TextureScheme::NotFoundError const &)
-            {} // Ignore, we'll throw our own...
+            {}  // Ignore, we'll throw our own...
         }
         else
         {
             // No, check each scheme in priority order.
-            foreach(TextureScheme *scheme, d->textureSchemeCreationOrder)
+            for(TextureScheme *scheme : d->textureSchemeCreationOrder)
             {
                 try
                 {
@@ -2846,7 +2838,7 @@ ResourceSystem::AllTextures const &ResourceSystem::allTextures() const
 
 void ResourceSystem::releaseAllSystemGLTextures()
 {
-    if(novideo) return;
+    if(::novideo) return;
 
     LOG_AS("ResourceSystem");
     LOG_RES_VERBOSE("Releasing system textures...");
@@ -2867,7 +2859,7 @@ void ResourceSystem::releaseAllSystemGLTextures()
 
 void ResourceSystem::releaseAllRuntimeGLTextures()
 {
-    if(novideo) return;
+    if(::novideo) return;
 
     LOG_AS("ResourceSystem");
     LOG_RES_VERBOSE("Releasing runtime textures...");
@@ -2926,7 +2918,7 @@ void ResourceSystem::pruneUnusedTextureSpecs()
 {
     if(Sys_IsShuttingDown()) return;
 
-    int numPruned = 0;
+    dint numPruned = 0;
     numPruned += d->pruneUnusedTextureSpecs(TST_GENERAL);
     numPruned += d->pruneUnusedTextureSpecs(TST_DETAIL);
 
@@ -2935,8 +2927,8 @@ void ResourceSystem::pruneUnusedTextureSpecs()
 }
 
 TextureVariantSpec const &ResourceSystem::textureSpec(texturevariantusagecontext_t tc,
-    int flags, byte border, int tClass, int tMap, int wrapS, int wrapT, int minFilter,
-    int magFilter, int anisoFilter, dd_bool mipmapped, dd_bool gammaCorrection,
+    dint flags, byte border, dint tClass, dint tMap, dint wrapS, dint wrapT, dint minFilter,
+    dint magFilter, dint anisoFilter, dd_bool mipmapped, dd_bool gammaCorrection,
     dd_bool noStretch, dd_bool toAlpha)
 {
     TextureVariantSpec *tvs =
@@ -2956,7 +2948,7 @@ TextureVariantSpec const &ResourceSystem::textureSpec(texturevariantusagecontext
     return *tvs;
 }
 
-TextureVariantSpec &ResourceSystem::detailTextureSpec(float contrast)
+TextureVariantSpec &ResourceSystem::detailTextureSpec(dfloat contrast)
 {
     return *d->detailTextureSpec(contrast);
 }
@@ -2967,10 +2959,7 @@ FontScheme &ResourceSystem::fontScheme(String name) const
     if(!name.isEmpty())
     {
         FontSchemes::iterator found = d->fontSchemes.find(name.toLower());
-        if(found != d->fontSchemes.end())
-        {
-            return **found;
-        }
+        if(found != d->fontSchemes.end()) return **found;
     }
     /// @throw UnknownSchemeError An unknown scheme was referenced.
     throw UnknownSchemeError("ResourceSystem::fontScheme", "No scheme found matching '" + name + "'");
@@ -2998,7 +2987,7 @@ bool ResourceSystem::hasFont(de::Uri const &path) const
         return true;
     }
     catch(MissingManifestError const &)
-    {} // Ignore this error.
+    {}  // Ignore this error.
     return false;
 }
 
@@ -3011,18 +3000,18 @@ FontManifest &ResourceSystem::fontManifest(de::Uri const &uri) const
     if(!uri.scheme().compareWithoutCase("urn"))
     {
         String const &pathStr = uri.path().toStringRef();
-        int uIdPos = pathStr.indexOf(':');
+        dint uIdPos = pathStr.indexOf(':');
         if(uIdPos > 0)
         {
             String schemeName = pathStr.left(uIdPos);
-            int uniqueId      = pathStr.mid(uIdPos + 1 /*skip delimiter*/).toInt();
+            dint uniqueId     = pathStr.mid(uIdPos + 1 /*skip delimiter*/).toInt();
 
             try
             {
                 return fontScheme(schemeName).findByUniqueId(uniqueId);
             }
             catch(FontScheme::NotFoundError const &)
-            {} // Ignore, we'll throw our own...
+            {}  // Ignore, we'll throw our own...
         }
     }
     else
@@ -3038,19 +3027,19 @@ FontManifest &ResourceSystem::fontManifest(de::Uri const &uri) const
                 return fontScheme(uri.scheme()).find(path);
             }
             catch(FontScheme::NotFoundError const &)
-            {} // Ignore, we'll throw our own...
+            {}  // Ignore, we'll throw our own...
         }
         else
         {
             // No, check each scheme in priority order.
-            foreach(FontScheme *scheme, d->fontSchemeCreationOrder)
+            for(FontScheme *scheme : d->fontSchemeCreationOrder)
             {
                 try
                 {
                     return scheme->find(path);
                 }
                 catch(FontScheme::NotFoundError const &)
-                {} // Ignore, we'll throw our own...
+                {}  // Ignore, we'll throw our own...
             }
         }
     }
@@ -3063,14 +3052,12 @@ FontManifest &ResourceSystem::toFontManifest(fontid_t id) const
 {
     if(id > 0 && id <= d->fontManifestCount)
     {
-        duint32 idx = id - 1; // 1-based index.
+        duint32 idx = id - 1;  // 1-based index.
         if(d->fontManifestIdMap[idx])
         {
             return *d->fontManifestIdMap[idx];
         }
-
-        // Internal bookeeping error.
-        DENG2_ASSERT(false);
+        DENG2_ASSERT(!"Bookeeping error");
     }
 
     /// @throw UnknownIdError The specified manifest id is invalid.
@@ -3086,17 +3073,16 @@ AbstractFont *ResourceSystem::newFontFromDef(ded_compositefont_t const &def)
 {
     LOG_AS("ResourceSystem::newFontFromDef");
 
-    if(!def.uri) return 0;
+    if(!def.uri) return nullptr;
     de::Uri const &uri = *def.uri;
 
     try
     {
         // Create/retrieve a manifest for the would-be font.
         FontManifest &manifest = declareFont(uri);
-
         if(manifest.hasResource())
         {
-            if(CompositeBitmapFont *compFont = manifest.resource().maybeAs<CompositeBitmapFont>())
+            if(auto *compFont = manifest.resource().maybeAs<CompositeBitmapFont>())
             {
                 /// @todo Do not update fonts here (not enough knowledge). We should
                 /// instead return an invalid reference/signal and force the caller
@@ -3135,7 +3121,7 @@ AbstractFont *ResourceSystem::newFontFromDef(ded_compositefont_t const &def)
             << NativePath(uri.asText()).pretty() << er.asText();
     }
 
-    return 0;
+    return nullptr;
 }
 
 AbstractFont *ResourceSystem::newFontFromFile(de::Uri const &uri, String filePath)
@@ -3145,7 +3131,7 @@ AbstractFont *ResourceSystem::newFontFromFile(de::Uri const &uri, String filePat
     if(!d->fileSys().accessFile(de::Uri::fromNativePath(filePath)))
     {
         LOGDEV_RES_WARNING("Ignoring invalid filePath: ") << filePath;
-        return 0;
+        return nullptr;
     }
 
     try
@@ -3155,7 +3141,7 @@ AbstractFont *ResourceSystem::newFontFromFile(de::Uri const &uri, String filePat
 
         if(manifest.hasResource())
         {
-            if(BitmapFont *bmapFont = manifest.resource().maybeAs<BitmapFont>())
+            if(auto *bmapFont = manifest.resource().maybeAs<BitmapFont>())
             {
                 /// @todo Do not update fonts here (not enough knowledge). We should
                 /// instead return an invalid reference/signal and force the caller
@@ -3194,7 +3180,7 @@ AbstractFont *ResourceSystem::newFontFromFile(de::Uri const &uri, String filePat
             << NativePath(uri.asText()).pretty() << er.asText();
     }
 
-    return 0;
+    return nullptr;
 }
 
 void ResourceSystem::releaseFontGLTexturesByScheme(String schemeName)
@@ -3214,19 +3200,16 @@ void ResourceSystem::releaseFontGLTexturesByScheme(String schemeName)
 
 Model &ResourceSystem::model(modelid_t id)
 {
-    if(Model *model = d->modelForId(id))
-    {
-        return *model;
-    }
+    if(Model *model = d->modelForId(id)) return *model;
     /// @throw MissingResourceError An unknown/invalid id was specified.
     throw MissingResourceError("ResourceSystem::model", "Invalid id " + String::number(id));
 }
 
-bool ResourceSystem::hasModelDef(de::String id) const
+bool ResourceSystem::hasModelDef(String id) const
 {
     if(!id.isEmpty())
     {
-        foreach(ModelDef const &modef, d->modefs)
+        for(ModelDef const &modef : d->modefs)
         {
             if(!id.compareWithoutCase(modef.id))
             {
@@ -3237,12 +3220,9 @@ bool ResourceSystem::hasModelDef(de::String id) const
     return false;
 }
 
-ModelDef &ResourceSystem::modelDef(int index)
+ModelDef &ResourceSystem::modelDef(dint index)
 {
-    if(index >= 0 && index < modelDefCount())
-    {
-        return d->modefs[index];
-    }
+    if(index >= 0 && index < modelDefCount()) return d->modefs[index];
     /// @throw MissingModelDefError An unknown model definition was referenced.
     throw MissingModelDefError("ResourceSystem::modelDef", "Invalid index #" + String::number(index) + ", valid range " + Rangeui(0, modelDefCount()).asText());
 }
@@ -3251,7 +3231,7 @@ ModelDef &ResourceSystem::modelDef(String id)
 {
     if(!id.isEmpty())
     {
-        foreach(ModelDef const &modef, d->modefs)
+        for(ModelDef const &modef : d->modefs)
         {
             if(!id.compareWithoutCase(modef.id))
             {
@@ -3263,20 +3243,14 @@ ModelDef &ResourceSystem::modelDef(String id)
     throw MissingModelDefError("ResourceSystem::modelDef", "Invalid id '" + id + "'");
 }
 
-ModelDef *ResourceSystem::modelDefForState(int stateIndex, int select)
+ModelDef *ResourceSystem::modelDefForState(dint stateIndex, dint select)
 {
     if(stateIndex < 0 || stateIndex >= defs.states.size())
-    {
-        return 0;
-    }
+        return nullptr;
     if(stateIndex < 0 || stateIndex >= d->stateModefs.count())
-    {
-        return 0;
-    }
+        return nullptr;
     if(d->stateModefs[stateIndex] < 0)
-    {
-        return 0;
-    }
+        return nullptr;
 
     DENG2_ASSERT(d->stateModefs[stateIndex] >= 0);
     DENG2_ASSERT(d->stateModefs[stateIndex] < d->modefs.count());
@@ -3285,7 +3259,7 @@ ModelDef *ResourceSystem::modelDefForState(int stateIndex, int select)
     if(select)
     {
         // Choose the correct selector, or selector zero if the given one not available.
-        int const mosel = select & DDMOBJ_SELECTOR_MASK;
+        dint const mosel = (select & DDMOBJ_SELECTOR_MASK);
         for(ModelDef *it = def; it; it = it->selectNext)
         {
             if(it->select == mosel)
@@ -3298,7 +3272,7 @@ ModelDef *ResourceSystem::modelDefForState(int stateIndex, int select)
     return def;
 }
 
-int ResourceSystem::modelDefCount() const
+dint ResourceSystem::modelDefCount() const
 {
     return d->modefs.count();
 }
@@ -3327,14 +3301,14 @@ void ResourceSystem::initModels()
 
     // Clear the stateid => modeldef LUT.
     d->stateModefs.resize(runtimeDefs.states.size());
-    for(int i = 0; i < runtimeDefs.states.size(); ++i)
+    for(dint i = 0; i < runtimeDefs.states.size(); ++i)
     {
         d->stateModefs[i] = -1;
     }
 
     // Read in the model files and their data.
     // Use the latest definition available for each sprite ID.
-    for(int i = int(defs.models.size()) - 1; i >= 0; --i)
+    for(dint i = dint(defs.models.size()) - 1; i >= 0; --i)
     {
         if(!(i % 100))
         {
@@ -3349,14 +3323,14 @@ void ResourceSystem::initModels()
     // is important. We want to allow "patch" definitions, right?
 
     // For each modeldef we will find the "next" def.
-    for(int i = d->modefs.count() - 1; i >= 0; --i)
+    for(dint i = d->modefs.count() - 1; i >= 0; --i)
     {
         ModelDef *me = &d->modefs[i];
 
-        float minmark = 2; // max = 1, so this is "out of bounds".
+        dfloat minmark = 2; // max = 1, so this is "out of bounds".
 
         ModelDef *closest = 0;
-        for(int k = d->modefs.count() - 1; k >= 0; --k)
+        for(dint k = d->modefs.count() - 1; k >= 0; --k)
         {
             ModelDef *other = &d->modefs[k];
 
@@ -3377,16 +3351,16 @@ void ResourceSystem::initModels()
     }
 
     // Create selectlinks.
-    for(int i = d->modefs.count() - 1; i >= 0; --i)
+    for(dint i = d->modefs.count() - 1; i >= 0; --i)
     {
         ModelDef *me = &d->modefs[i];
 
-        int minsel = DDMAXINT;
+        dint minsel = DDMAXINT;
 
         ModelDef *closest = 0;
 
         // Start scanning from the next definition.
-        for(int k = d->modefs.count() - 1; k >= 0; --k)
+        for(dint k = d->modefs.count() - 1; k >= 0; --k)
         {
             ModelDef *other = &d->modefs[k];
 
@@ -3407,19 +3381,15 @@ void ResourceSystem::initModels()
     LOG_RES_MSG("Model init completed in %.2f seconds") << begunAt.since();
 }
 
-int ResourceSystem::indexOf(ModelDef const *modelDef)
+dint ResourceSystem::indexOf(ModelDef const *modelDef)
 {
-    int index = int(modelDef - &d->modefs[0]);
-    if(index >= 0 && index < d->modefs.count())
-    {
-        return index;
-    }
-    return -1;
+    dint index = dint(modelDef - &d->modefs[0]);
+    return (index >= 0 && index < d->modefs.count() ? index : -1);
 }
 
-void ResourceSystem::setModelDefFrame(ModelDef &modef, int frame)
+void ResourceSystem::setModelDefFrame(ModelDef &modef, dint frame)
 {
-    for(uint i = 0; i < modef.subCount(); ++i)
+    for(duint i = 0; i < modef.subCount(); ++i)
     {
         SubmodelDef &subdef = modef.subModelDef(i);
         if(subdef.modelId == NOMODELID) continue;
@@ -3448,6 +3418,7 @@ void ResourceSystem::initMapDefs()
         {
             File1 *sourceFile  = recognizer->sourceFile();
             String const mapId = recognizer->id();
+
             MapDef &mapDef = d->mapDefs.insert(mapId);
             mapDef.set("id", mapId);
             mapDef.setSourceFile(sourceFile)
@@ -3492,7 +3463,7 @@ dint ResourceSystem::animGroupCount()
 AnimGroup &ResourceSystem::newAnimGroup(dint flags)
 {
     LOG_AS("ResourceSystem");
-    int const uniqueId = d->animGroups.count() + 1; // 1-based.
+    dint const uniqueId = d->animGroups.count() + 1; // 1-based.
     // Allocating one by one is inefficient but it doesn't really matter.
     d->animGroups.append(new AnimGroup(uniqueId, flags));
     return *d->animGroups.last();
@@ -3684,10 +3655,10 @@ static QMap<dint, Record> buildSprites(QMultiMap<dint, SpriteFrameDef> const &fr
 
 void ResourceSystem::initSprites()
 {
-    Time begunAt;
-
     LOG_AS("ResourceSystem");
     LOG_RES_VERBOSE("Building sprites...");
+
+    Time begunAt;
 
     d->sprites.clear();
 
@@ -3724,7 +3695,7 @@ void ResourceSystem::clearAllColorPalettes()
     d->defaultColorPalette = 0;
 }
 
-int ResourceSystem::colorPaletteCount() const
+dint ResourceSystem::colorPaletteCount() const
 {
     return d->colorPalettes.count();
 }
@@ -3737,18 +3708,15 @@ ColorPalette &ResourceSystem::colorPalette(colorpaletteid_t id) const
         id = d->defaultColorPalette;
     }
 
-    Instance::ColorPalettes::const_iterator found = d->colorPalettes.find(id);
-    if(found != d->colorPalettes.end())
-    {
-        return *found.value();
-    }
+    auto found = d->colorPalettes.find(id);
+    if(found != d->colorPalettes.end()) return *found.value();
     /// @throw MissingResourceError An unknown/invalid id was specified.
     throw MissingResourceError("ResourceSystem::colorPalette", "Invalid id " + String::number(id));
 }
 
 String ResourceSystem::colorPaletteName(ColorPalette &palette) const
 {
-    QList<String> names = d->colorPaletteNames.keys(&palette);
+    QList<String> const names = d->colorPaletteNames.keys(&palette);
     if(!names.isEmpty())
     {
         return names.first();
@@ -3763,11 +3731,8 @@ bool ResourceSystem::hasColorPalette(String name) const
 
 ColorPalette &ResourceSystem::colorPalette(String name) const
 {
-    Instance::ColorPaletteNames::const_iterator found = d->colorPaletteNames.find(name);
-    if(found != d->colorPaletteNames.end())
-    {
-        return *found.value();
-    }
+    auto found = d->colorPaletteNames.find(name);
+    if(found != d->colorPaletteNames.end()) return *found.value();
     /// @throw MissingResourceError An unknown name was specified.
     throw MissingResourceError("ResourceSystem::colorPalette", "Unknown name '" + name + "'");
 }
@@ -3775,11 +3740,8 @@ ColorPalette &ResourceSystem::colorPalette(String name) const
 void ResourceSystem::addColorPalette(ColorPalette &newPalette, String const &name)
 {
     // Do we already own this palette?
-    Instance::ColorPalettes::const_iterator found = d->colorPalettes.find(newPalette.id());
-    if(found != d->colorPalettes.end())
-    {
+    if(d->colorPalettes.contains(newPalette.id()))
         return;
-    }
 
     d->colorPalettes.insert(newPalette.id(), &newPalette);
 
@@ -3807,7 +3769,7 @@ colorpaletteid_t ResourceSystem::defaultColorPalette() const
 
 void ResourceSystem::setDefaultColorPalette(ColorPalette *newDefaultPalette)
 {
-    d->defaultColorPalette = newDefaultPalette? newDefaultPalette->id().asUInt32() : 0;
+    d->defaultColorPalette = newDefaultPalette ? newDefaultPalette->id().asUInt32() : 0;
 }
 
 #ifdef __CLIENT__
@@ -3841,8 +3803,8 @@ void ResourceSystem::cache(ModelDef *modelDef)
 }
 
 MaterialVariantSpec const &ResourceSystem::materialSpec(MaterialContextId contextId,
-    int flags, byte border, int tClass, int tMap, int wrapS, int wrapT,
-    int minFilter, int magFilter, int anisoFilter,
+    dint flags, byte border, dint tClass, dint tMap, dint wrapS, dint wrapT,
+    dint minFilter, dint magFilter, dint anisoFilter,
     bool mipmapped, bool gammaCorrection, bool noStretch, bool toAlpha)
 {
     return d->getMaterialSpecForContext(contextId, flags, border, tClass, tMap,
@@ -3863,7 +3825,7 @@ void ResourceSystem::cacheForCurrentMap()
 
         map.forAllLines([this, &spec] (Line &line)
         {
-            for(int i = 0; i < 2; ++i)
+            for(dint i = 0; i < 2; ++i)
             {
                 LineSide &side = line.side(i);
                 if(!side.hasSections()) continue;
