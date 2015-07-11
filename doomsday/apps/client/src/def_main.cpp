@@ -1970,9 +1970,6 @@ dint Def_Get(dint type, char const *id, void *out)
     case DD_DEF_MOBJ_BY_NAME:
         return Def_GetMobjNumForName(id);
 
-    case DD_DEF_STATE:
-        return Def_GetStateNum(id);
-
     case DD_DEF_ACTION:
         return Def_GetActionNum(id);
 
@@ -2046,35 +2043,6 @@ dint Def_Set(dint type, dint index, dint value, void const *ptr)
 
     switch(type)
     {
-    case DD_DEF_STATE: {
-        if(index < 0 || index >= ::defs.states.size())
-        {
-            DENG2_ASSERT(!"Def_Set: State index is invalid");
-            return false;
-        }
-        defn::State state = ::defs.states[index];
-        switch(value)
-        {
-        case DD_SPRITE: {
-            dint sprite = *(dint *) ptr;
-
-            if(sprite < 0 || sprite >= defs.sprites.size())
-            {
-                LOGDEV_RES_WARNING("Unknown sprite index %i") << sprite;
-                break;
-            }
-
-            state.def().set("sprite", defs.sprites[value].id);
-            break; }
-
-        case DD_FRAME:
-            state.def().set("frame", *(dint *)ptr);
-            break;
-
-        default: break;
-        }
-        break; }
-
     case DD_DEF_SOUND:
         if(index < 0 || index >= ::runtimeDefs.sounds.size())
         {

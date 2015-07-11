@@ -186,7 +186,7 @@ enum {
     DD_OLD_GAME_ID,
     DD_DEF_MOBJ,
     DD_DEF_MOBJ_BY_NAME,
-    DD_DEF_STATE,
+    DD_UNUSED29, // DD_DEF_STATE
     DD_DEF_SPRITE,
     DD_DEF_SOUND,
     DD_UNUSED14, // DD_DEF_MUSIC
@@ -208,8 +208,8 @@ enum {
     DD_UNUSED16, // DD_ID
     DD_LUMP,
     DD_UNUSED17, // DD_CD_TRACK
-    DD_SPRITE,
-    DD_FRAME,
+    DD_UNUSED30, // DD_SPRITE
+    DD_UNUSED31, // DD_FRAME
     DD_GAME_CONFIG, ///< String: dm/co-op, jumping, etc.
     DD_PLUGIN_NAME, ///< (e.g., jdoom, jheretic etc..., suitable for use with filepaths)
     DD_PLUGIN_NICENAME, ///< (e.g., jDoom, MyGame:Episode2 etc..., fancy name)

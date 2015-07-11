@@ -54,7 +54,7 @@ void GetDefState(char const *def, int *val)
         return;
 
     // Get the state number.
-    *val = Def_Get(DD_DEF_STATE, data, 0);
+    *val = Defs().getStateNum(data);
     if(*val < 0) *val = 0;
 }
 

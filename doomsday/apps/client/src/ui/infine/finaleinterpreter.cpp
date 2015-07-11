@@ -1794,7 +1794,7 @@ DEFFC(StateAnim)
     DENG2_UNUSED(anim);
 #endif
 
-    int stateId = Def_Get(DD_DEF_STATE, OP_CSTRING(1), 0);
+    int stateId = Def_GetStateNum(OP_CSTRING(1));
     int count   = OP_INT(2);
 
     // Animate N states starting from the given one.

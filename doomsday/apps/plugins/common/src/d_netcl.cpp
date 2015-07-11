@@ -933,7 +933,7 @@ void NetCl_LocalMobjState(reader_s *msg)
     ddstring_t* stateName = Str_New();
 
     Str_Read(stateName, msg);
-    newState = Def_Get(DD_DEF_STATE, Str_Text(stateName), 0);
+    newState = Defs().getStateNum(Str_Text(stateName));
     Str_Delete(stateName);
 
     special1 = Reader_ReadInt32(msg);
