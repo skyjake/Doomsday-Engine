@@ -1,55 +1,28 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file d_items.cpp  Weapons, ammos, healthpacks etc, etc...
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-/**
- * d_items.c:
- */
-
-// HEADER FILES ------------------------------------------------------------
-
-#include <string.h>
-#include <stdio.h>
 
 #include "jdoom64.h"
 
 #include "g_defs.h"
 #include "player.h"
-
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 /**
  * Default weapon definitions.
@@ -168,19 +141,14 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
    }
 };
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
+static char const *ammoTypeNames[NUM_AMMO_TYPES] = {
+    "clip", "shell", "cell", "misl"
+};
 
-static const char* ammoTypeNames[NUM_AMMO_TYPES] =
-    {"clip", "shell", "cell", "misl"};
-
-// CODE --------------------------------------------------------------------
-
-void P_InitAmmoInfo(void)
+void P_InitAmmoInfo()
 {
-    uint                i;
-    char                buf[40];
-
-    for(i = 0; i < NUM_AMMO_TYPES; ++i)
+    char buf[40];
+    for(int i = 0; i < NUM_AMMO_TYPES; ++i)
     {
         // Max ammo.
         sprintf(buf, "Player|Max ammo|%s", ammoTypeNames[i]);
@@ -194,29 +162,24 @@ void P_InitAmmoInfo(void)
 
 void P_InitWeaponInfo(void)
 {
-#define WPINF               "Weapon Info|"
+#define WPINF  "Weapon Info|"
 
-    int                 i;
-    int                 pclass = PCLASS_PLAYER;
-    char                buf[80];
-    char*               data;
+    static int const pclass = PCLASS_PLAYER;
 
-    for(i = 0; i < NUM_WEAPON_TYPES; ++i)
+    char buf[80];
+    char *data;
+    for(int i = 0; i < NUM_WEAPON_TYPES; ++i)
     {
-        //// \todo Only allows for one type of ammo per weapon.
+        /// @todo Only allows for one type of ammo per weapon.
         sprintf(buf, WPINF "%i|Type", i);
         if(Def_Get(DD_DEF_VALUE, buf, &data) >= 0)
         {
-            memset(weaponInfo[i][pclass].mode[0].ammoType, 0,
-                   sizeof(int) * NUM_AMMO_TYPES);
-            memset(weaponInfo[i][pclass].mode[0].perShot, 0,
-                   sizeof(int) * NUM_AMMO_TYPES);
+            std::memset(weaponInfo[i][pclass].mode[0].ammoType, 0, sizeof(int) * NUM_AMMO_TYPES);
+            std::memset(weaponInfo[i][pclass].mode[0].perShot,  0, sizeof(int) * NUM_AMMO_TYPES);
 
             if(stricmp(data, "noammo"))
             {
-                ammotype_t          k;
-
-                for(k = 0; k < NUM_AMMO_TYPES; ++k)
+                for(int k = 0; k < NUM_AMMO_TYPES; ++k)
                 {
                     if(!stricmp(data, ammoTypeNames[k]))
                     {
@@ -245,7 +208,7 @@ void P_InitWeaponInfo(void)
         weaponInfo[i][pclass].mode[0].staticSwitch = GetDefInt(buf, 0);
     }
 
-    /// \todo Get this info from values.
+    /// @todo Get this info from values.
     P_InitWeaponSlots();
 
     P_SetWeaponSlot(WT_FIRST, 1);
@@ -258,25 +221,26 @@ void P_InitWeaponInfo(void)
     P_SetWeaponSlot(WT_SIXTH, 6);
     P_SetWeaponSlot(WT_SEVENTH, 7);
     P_SetWeaponSlot(WT_TENTH, 8);
+
 #undef WPINF
 }
 
 void P_InitPlayerValues(player_t *p)
 {
-    int                 i;
-    char                buf[40];
+    DENG2_ASSERT(p);
 
     GetDefInt("Player|Health", &p->health);
     GetDefInt("Player|Weapon", (int *) &p->readyWeapon);
     p->pendingWeapon = p->readyWeapon;
 
-    for(i = 0; i < NUM_WEAPON_TYPES; ++i)
+    char buf[40];
+    for(int i = 0; i < NUM_WEAPON_TYPES; ++i)
     {
         sprintf(buf, "Weapon Info|%i|Owned", i);
         GetDefInt(buf, (int *) &p->weapons[i].owned);
     }
 
-    for(i = 0; i < NUM_AMMO_TYPES; ++i)
+    for(int i = 0; i < NUM_AMMO_TYPES; ++i)
     {
         sprintf(buf, "Player|Init ammo|%s", ammoTypeNames[i]);
         GetDefInt(buf, &p->ammo[i].owned);
