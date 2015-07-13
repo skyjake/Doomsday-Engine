@@ -4,7 +4,7 @@
  * @todo Convert to C++, rename.
  *
  * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2009-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2009-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -27,7 +27,6 @@
 
 #include "api_plugin.h"
 #include "de_console.h"
-#include "de_defs.h"
 #include "dd_main.h"
 #include "dd_pinit.h"
 #include "library.h"

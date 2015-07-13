@@ -25,7 +25,6 @@
 #include "world/map.h"
 
 #include "de_console.h"  // Con_GetInteger
-#include "de_defs.h"
 #ifdef __CLIENT__
 #  include "clientapp.h"
 #endif

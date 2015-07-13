@@ -1,7 +1,7 @@
 /** @file surface.cpp  World map surface.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -26,7 +26,6 @@
 #include <QtAlgorithms>
 #include <de/vector1.h>
 #include <de/Log>
-//#include "de_defs.h" // Def_GetGenerator
 #include "dd_loop.h" // frameTimePos
 #include "r_util.h"  // R_NameForBlendMode()
 

@@ -1,5 +1,4 @@
 /** @file sv_main.cpp  Network server.
- * @ingroup server
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
@@ -18,26 +17,26 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <cmath>
-
 #define DENG_NO_API_MACROS_SERVER
-#include "api_server.h"
 
 #include "de_base.h"
+
+#include <cmath>
+#include <de/stringarray.h>
+#include <de/ArrayValue>
+#include <de/NumberValue>
+#include <de/Log>
+
 #include "de_console.h"
 #include "de_system.h"
 #include "de_filesys.h"
 #include "de_network.h"
 #include "de_play.h"
 #include "de_misc.h"
-#include "de_defs.h"
+#include "def_main.h"
 
 #include "api_materialarchive.h"
-
-#include <de/stringarray.h>
-#include <de/ArrayValue>
-#include <de/NumberValue>
-#include <de/Log>
+#include "api_server.h"
 
 using namespace de;
 
@@ -767,9 +766,9 @@ void Sv_PlayerLeaves(unsigned int nodeID)
 static StringArray *listThingTypeIDs()
 {
     StringArray *array = StringArray_New();
-    for(dint i = 0; i < defs.things.size(); ++i)
+    for(dint i = 0; i < ::defs.things.size(); ++i)
     {
-        StringArray_Append(array, defs.things[i].gets("id").toUtf8());
+        StringArray_Append(array, ::defs.things[i].gets("id").toUtf8());
     }
     return array;
 }
@@ -783,9 +782,9 @@ static StringArray *listThingTypeIDs()
 static StringArray *listStateIDs()
 {
     StringArray *array = StringArray_New();
-    for(dint i = 0; i < defs.states.size(); ++i)
+    for(dint i = 0; i < ::defs.states.size(); ++i)
     {
-        StringArray_Append(array, defs.states[i].gets("id").toUtf8());
+        StringArray_Append(array, ::defs.states[i].gets("id").toUtf8());
     }
     return array;
 }

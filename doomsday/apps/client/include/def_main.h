@@ -23,6 +23,10 @@
 #ifndef DEFINITIONS_MAIN_H
 #define DEFINITIONS_MAIN_H
 
+#ifndef __cplusplus
+#  error "def_main.h requires C++"
+#endif
+
 #include <vector>
 #include <doomsday/defs/ded.h>
 #include <doomsday/defs/dedtypes.h>
@@ -74,12 +78,8 @@ private:
     PODType *_elements;
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-// the actual classes are game-side
-struct xgclass_s;
+extern ded_t defs;  ///< Main definitions database (internal).
+struct xgclass_s;   ///< @note The actual classes are on game side.
 
 struct sfxinfo_t
 {
@@ -98,8 +98,6 @@ struct sfxinfo_t
     int group;
     ddstring_t external;  ///< Path to external file.
 };
-
-extern ded_t defs;  ///< Main definitions database (internal).
 
 struct stateinfo_t
 {
@@ -174,20 +172,12 @@ ded_value_t *Def_GetValueByUri(uri_s const *uri);
 ded_compositefont_t *Def_GetCompositeFont(char const *uri);
 ded_light_t *Def_GetLightDef(int spr, int frame);
 
-#ifdef __cplusplus
-}  // extern "C"
-#endif
-
 de::String Def_GetMobjName(int num);
 de::String Def_GetStateName(state_t *state);
 int Def_GetStateNum(de::String const &id);
 
 ded_ptcgen_t *Def_GetGenerator(uri_s const *uri);
 ded_ptcgen_t *Def_GetGenerator(de::Uri const &uri);
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 ded_ptcgen_t *Def_GetDamageGenerator(int mobjType);
 
@@ -219,9 +209,5 @@ bool Def_IsAllowedReflection(ded_reflection_t const *def, /*bool hasExternal,*/ 
  * Returns @c true iff @a def is compatible with the specified context.
  */
 bool Def_IsAllowedDetailTex(ded_detailtexture_t const *def, /*bool hasExternal,*/ bool isCustom);
-
-#ifdef __cplusplus
-}  // extern "C"
-#endif
 
 #endif  // DEFINITIONS_MAIN_H

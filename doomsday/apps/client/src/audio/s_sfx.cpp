@@ -1,7 +1,7 @@
 /** @file s_sfx.cpp  Sound Effects.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -22,7 +22,6 @@
 #include "de_console.h"
 #include "de_system.h"
 #include "de_play.h"
-#include "de_defs.h"
 #include "de_graphics.h"
 #include "de_audio.h"
 #include "de_misc.h"

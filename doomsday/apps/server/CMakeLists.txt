@@ -1,6 +1,6 @@
 # The Doomsday Engine Project -- Server
 # Copyright (c) 2012-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
-# Copyright (c) 2012-2014 Daniel Swanson <danij@dengine.net>
+# Copyright (c) 2012-2015 Daniel Swanson <danij@dengine.net>
 
 cmake_minimum_required (VERSION 3.1)
 project (DENG_SERVER)
@@ -39,7 +39,6 @@ set (SHARED_WITH_CLIENT
     ${src}/include/de_audio.h
     ${src}/include/de_base.h
     ${src}/include/de_console.h
-    ${src}/include/de_defs.h
     ${src}/include/de_edit.h
     ${src}/include/de_filesys.h
     ${src}/include/de_graphics.h

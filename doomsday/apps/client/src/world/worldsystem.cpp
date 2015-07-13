@@ -32,8 +32,8 @@
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/exec.h>
 #include <doomsday/console/var.h>
+#include <doomsday/defs/mapinfo.h>
 
-#include "de_defs.h"
 #include "de_play.h"
 #include "de_filesys.h"
 #include "dd_main.h"
