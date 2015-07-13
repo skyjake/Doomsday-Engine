@@ -209,9 +209,10 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj,
     }
 }
 
-dd_bool Cl_IsClientMobj(mobj_t const *mo)
+dd_bool Cl_IsClientMobj(mobj_t const *mob)
 {
-    if(ClientMobjThinkerData *data = THINKER_DATA_MAYBE(mo->thinker, ClientMobjThinkerData))
+    DENG2_ASSERT(mob);
+    if(ClientMobjThinkerData *data = THINKER_DATA_MAYBE(mob->thinker, ClientMobjThinkerData))
     {
         return data->hasRemoteSync();
     }
@@ -219,17 +220,17 @@ dd_bool Cl_IsClientMobj(mobj_t const *mo)
 }
 
 #undef ClMobj_IsValid
-dd_bool ClMobj_IsValid(mobj_t *mo)
+dd_bool ClMobj_IsValid(mobj_t *mob)
 {
-    if(!Cl_IsClientMobj(mo)) return true;
+    if(!Cl_IsClientMobj(mob)) return true;
 
-    ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(mo);
+    ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(mob);
     if(info->flags & (CLMF_HIDDEN | CLMF_UNPREDICTABLE))
     {
         // Should not use this for playsim.
         return false;
     }
-    if(!mo->info)
+    if(!mob->info)
     {
         // We haven't yet received info about the mobj's type?
         return false;
@@ -237,29 +238,29 @@ dd_bool ClMobj_IsValid(mobj_t *mo)
     return true;
 }
 
-ClientMobjThinkerData::RemoteSync *ClMobj_GetInfo(mobj_t *mo)
+ClientMobjThinkerData::RemoteSync *ClMobj_GetInfo(mobj_t *mob)
 {
-    if(!mo) return 0;
+    if(!mob) return nullptr;
 
-    if(ClientMobjThinkerData *data = THINKER_DATA_MAYBE(mo->thinker, ClientMobjThinkerData))
+    if(ClientMobjThinkerData *data = THINKER_DATA_MAYBE(mob->thinker, ClientMobjThinkerData))
     {
-        if(!data->hasRemoteSync()) return 0;
+        if(!data->hasRemoteSync()) return nullptr;
         return &data->remoteSync();
     }
 
-    return 0;
+    return nullptr;
 }
 
-dd_bool ClMobj_Reveal(mobj_t *mo)
+dd_bool ClMobj_Reveal(mobj_t *mob)
 {
     LOG_AS("ClMobj_Reveal");
 
-    ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(mo);
+    ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(mob);
 
-    CL_ASSERT_CLMOBJ(mo);
+    CL_ASSERT_CLMOBJ(mob);
 
     // Check that we know enough about the clmobj.
-    if(mo->dPlayer != &ddPlayers[consolePlayer].shared &&
+    if(mob->dPlayer != &::ddPlayers[consolePlayer].shared &&
        (!(info->flags & CLMF_KNOWN_X) ||
         !(info->flags & CLMF_KNOWN_Y) ||
         //!(info->flags & CLMF_KNOWN_Z) ||
@@ -269,7 +270,7 @@ dd_bool ClMobj_Reveal(mobj_t *mo)
         return false;
     }
 
-    LOG_MAP_XVERBOSE("clmobj %i 'Hidden' status lifted (z=%f)") << mo->thinker.id << mo->origin[VZ];
+    LOG_MAP_XVERBOSE("clmobj %i 'Hidden' status lifted (z=%f)") << mob->thinker.id << mob->origin[VZ];
 
     info->flags &= ~CLMF_HIDDEN;
 
@@ -279,13 +280,13 @@ dd_bool ClMobj_Reveal(mobj_t *mo)
     if(info->flags & CLMF_SOUND)
     {
         info->flags &= ~CLMF_SOUND;
-        S_StartSoundAtVolume(info->sound, mo, info->volume);
+        S_StartSoundAtVolume(info->sound, mob, info->volume);
     }
 
     LOGDEV_MAP_XVERBOSE("Revealing id %i, state %p (%i)")
-            << mo->thinker.id
-            << mo->state
-            << runtimeDefs.states.indexOf(mo->state);
+            << mob->thinker.id
+            << mob->state
+            << ::runtimeDefs.states.indexOf(mob->state);
 
     return true;
 }

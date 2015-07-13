@@ -1430,7 +1430,7 @@ DENG2_PIMPL(Map)
 
             // A state generator?
             if(gen->source && def->state[0] &&
-               runtimeDefs.states.indexOf(gen->source->state) == Def_GetStateNum(def->state))
+               ::runtimeDefs.states.indexOf(gen->source->state) == ::defs.getStateNum(def->state))
             {
                 return i + 1;  // 1-based index.
             }
@@ -3301,37 +3301,37 @@ void Map::worldSystemFrameBegins(bool resetNextViewer)
 }
 
 /// @return  @c false= Continue iteration.
-static dint expireClMobjsWorker(mobj_t *mo, void *context)
+static dint expireClMobjsWorker(mobj_t *mob, void *context)
 {
     duint const nowTime = *static_cast<duint *>(context);
 
     // Already deleted?
-    if(mo->thinker.function == (thinkfunc_t)-1)
+    if(mob->thinker.function == (thinkfunc_t)-1)
         return 0;
 
     // Don't expire player mobjs.
-    if(mo->dPlayer) return 0;
+    if(mob->dPlayer) return 0;
 
-    ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(mo);
+    ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(mob);
     DENG2_ASSERT(info);
 
-    if((info->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN | CLMF_NULLED)) || !mo->info)
+    if((info->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN | CLMF_NULLED)) || !mob->info)
     {
         // Has this mobj timed out?
         if(nowTime - info->time > CLMOBJ_TIMEOUT)
         {
             LOGDEV_MAP_MSG("Mobj %i has expired (%i << %i), in state %s [%c%c%c]")
-                    << mo->thinker.id
+                    << mob->thinker.id
                     << info->time << nowTime
-                    << Def_GetStateName(mo->state)
+                    << Def_GetStateName(mob->state)
                     << (info->flags & CLMF_UNPREDICTABLE? 'U' : '_')
                     << (info->flags & CLMF_HIDDEN?        'H' : '_')
                     << (info->flags & CLMF_NULLED?        '0' : '_');
 
-            // Too long. The server will probably never send anything
-            // for this mobj, so get rid of it. (Both unpredictable
-            // and hidden mobjs are not visible or bl/seclinked.)
-            Mobj_Destroy(mo);
+            // Too long. The server will probably never send anything for this map-object,
+            // so get rid of it. (Both unpredictable and hidden mobjs are not visible or
+            // bl/seclinked.)
+            Mobj_Destroy(mob);
         }
     }
 

@@ -442,21 +442,21 @@ D_CMD(PlayMusic)
         break;
 
     case 2: {
-        int musIdx = Def_GetMusicNum(argv[1]);
+        dint musIdx = ::defs.getMusicNum(argv[1]);
         if(musIdx < 0)
         {
             LOG_RES_WARNING("Music '%s' not defined") << argv[1];
             return false;
         }
 
-        Mus_Start(&defs.musics[musIdx], true);
-        break;
-      }
+        Mus_Start(&::defs.musics[musIdx], true);
+        break; }
+
     case 3:
         if(!stricmp(argv[1], "lump"))
         {
             lumpnum_t lump = App_FileSystem().lumpNumForName(argv[2]);
-            if(lump < 0) return false; // No such lump.
+            if(lump < 0) return false;  // No such lump.
 
             Mus_Stop();
             return AudioDriver_Music_PlayLump(lump, true);
@@ -467,7 +467,8 @@ D_CMD(PlayMusic)
             return AudioDriver_Music_PlayFile(argv[2], true);
         }
         else
-        {   // Perhaps a CD track?
+        {   
+            // Perhaps a CD track?
             if(!stricmp(argv[1], "cd"))
             {
                 if(!AudioDriver_CD())

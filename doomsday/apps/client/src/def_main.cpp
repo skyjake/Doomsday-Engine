@@ -108,7 +108,7 @@ void RuntimeDefs::clear()
     stateInfo.clear();
 }
 
-dint Def_GetGameClasses()
+void Def_GetGameClasses()
 {
     ::xgClassLinks = nullptr;
 
@@ -125,8 +125,6 @@ dint Def_GetGameClasses()
 
     // Let the parser know of the XG classes.
     DED_SetXGClassLinks(::xgClassLinks);
-
-    return true;
 }
 
 void Def_Init()
@@ -167,21 +165,6 @@ void Def_Destroy()
     ::defsInited = false;
 }
 
-dint Def_GetMobjNum(char const *id)
-{
-    return ::defs.getMobjNum(id);
-}
-
-dint Def_GetMobjNumForName(char const *name)
-{
-    return ::defs.getMobjNumForName(name);
-}
-
-String Def_GetMobjName(dint num)
-{
-    return ::defs.getMobjName(num);
-}
-
 state_t *Def_GetState(dint num)
 {
     if(num >= 0 && num < ::defs.states.size())
@@ -189,26 +172,6 @@ state_t *Def_GetState(dint num)
         return &::runtimeDefs.states[num];
     }
     return nullptr;  // Not found.
-}
-
-dint Def_GetStateNum(String const &id)
-{
-    return ::defs.getStateNum(id);
-}
-
-dint Def_GetModelNum(char const *id)
-{
-    return ::defs.getModelNum(id);
-}
-
-dint Def_GetSoundNum(char const *id)
-{
-    return ::defs.getSoundNum(id);
-}
-
-dint Def_GetMusicNum(char const *id)
-{
-    return ::defs.getMusicNum(id);
 }
 
 acfnptr_t Def_GetActionPtr(char const *name)
@@ -243,17 +206,6 @@ dint Def_GetActionNum(char const *name)
     return -1;  // Not found.
 }
 
-ded_value_t *Def_GetValueById(char const *id)
-{
-    return ::defs.getValueById(id);
-}
-
-ded_value_t *Def_GetValueByUri(struct uri_s const *_uri)
-{
-    if(!_uri) return nullptr;
-    return ::defs.getValueByUri(*reinterpret_cast<de::Uri const *>(_uri));
-}
-
 ded_compositefont_t *Def_GetCompositeFont(char const *uri)
 {
     return ::defs.getCompositeFont(uri);
@@ -264,13 +216,25 @@ static ded_reflection_t *tryFindReflection(de::Uri const &uri, /* bool hasExtern
 {
     for(dint i = ::defs.reflections.size() - 1; i >= 0; i--)
     {
-        ded_reflection_t *def = &::defs.reflections[i];
-        if(def->material && *def->material ==  uri)
+        ded_reflection_t &def = ::defs.reflections[i];
+        if(!def.material || *def.material !=  uri) continue;
+
+        /*
+        if(hasExternal)
         {
-            // Is this suitable?
-            if(Def_IsAllowedReflection(def, /*hasExternal,*/ isCustom))
-                return def;
+            if(!(def.flags & REFF_EXTERNAL)) continue;
         }
+        else */
+        if(!isCustom)
+        {
+            if(def.flags & REFF_NO_IWAD) continue;
+        }
+        else
+        {
+            if(!(def.flags & REFF_PWAD)) continue;
+        }
+
+        return &def;
     }
     return nullptr;  // Not found.
 }
@@ -280,20 +244,27 @@ static ded_detailtexture_t *tryFindDetailTexture(de::Uri const &uri, /*bool hasE
 {
     for(dint i = ::defs.details.size() - 1; i >= 0; i--)
     {
-        ded_detailtexture_t *def = &::defs.details[i];
-
-        if(def->material1 && *def->material1 == uri)
+        ded_detailtexture_t &def = ::defs.details[i];
+        for(dint k = 0; k < 2; ++k)
         {
-            // Is this suitable?
-            if(Def_IsAllowedDetailTex(def, /*hasExternal,*/ isCustom))
-                return def;
-        }
+            de::Uri const *matUri = (k == 0 ? def.material1 : def.material2);
+            if(!matUri || *matUri != uri) continue;
 
-        if(def->material2 && *def->material2 == uri)
-        {
-            // Is this suitable?
-            if(Def_IsAllowedDetailTex(def, /*hasExternal,*/ isCustom))
-                return def;
+            /*if(hasExternal)
+            {
+                if(!(def.flags & DTLF_EXTERNAL)) continue;
+            }
+            else*/
+            if(!isCustom)
+            {
+                if(def.flags & DTLF_NO_IWAD) continue;
+            }
+            else
+            {
+                if(!(def.flags & DTLF_PWAD)) continue;
+            }
+
+            return &def;
         }
     }
     return nullptr;  // Not found.
@@ -349,12 +320,6 @@ ded_ptcgen_t *Def_GetDamageGenerator(int mobjType)
             return def;
     }
     return nullptr;
-}
-
-#undef Def_EvalFlags
-dint Def_EvalFlags(char const *ptr)
-{
-    return ::defs.evalFlags2(ptr);
 }
 
 /**
@@ -447,7 +412,7 @@ static void Def_ReadLumpDefs()
  */
 dint Def_StateForMobj(String const &state)
 {
-    dint num = Def_GetStateNum(state);
+    dint num = ::defs.getStateNum(state);
     if(num < 0) num = 0;
 
     // State zero is the NULL state.
@@ -466,21 +431,6 @@ dint Def_StateForMobj(String const &state)
     }
 
     return num;
-}
-
-dint Def_GetIntValue(char *val, dint *returned_val)
-{
-    // First look for a DED Value
-    char *data;
-    if(Def_Get(DD_DEF_VALUE, val, &data) >= 0)
-    {
-        if(returned_val) *returned_val = strtol(data, 0, 0);
-        return true;
-    }
-
-    // Convert the literal string
-    if(returned_val) *returned_val = strtol(val, 0, 0);
-    return false;
 }
 
 static void readDefinitionFile(String path)
@@ -1417,7 +1367,7 @@ void Def_Read()
     // Dynamic lights. Update the sprite numbers.
     for(dint i = 0; i < ::defs.lights.size(); ++i)
     {
-        dint const stateIdx = Def_GetStateNum(defs.lights[i].state);
+        dint const stateIdx = ::defs.getStateNum(defs.lights[i].state);
         if(stateIdx < 0)
         {
             // It's probably a bias light definition, then?
@@ -1436,14 +1386,14 @@ void Def_Read()
     {
         ded_sound_t *snd = &::defs.sounds[i];
         // Make sure duplicate defs overwrite the earliest.
-        sfxinfo_t *si    = &::runtimeDefs.sounds[Def_GetSoundNum(snd->id)];
+        sfxinfo_t *si    = &::runtimeDefs.sounds[::defs.getSoundNum(snd->id)];
 
         qstrcpy(si->id, snd->id);
         qstrcpy(si->lumpName, snd->lumpName);
         si->lumpNum     = (qstrlen(snd->lumpName) > 0? fileSys().lumpNumForName(snd->lumpName) : -1);
         qstrcpy(si->name, snd->name);
 
-        dint const soundIdx = Def_GetSoundNum(snd->link);
+        dint const soundIdx = ::defs.getSoundNum(snd->link);
         si->link        = (soundIdx >= 0 ? &::runtimeDefs.sounds[soundIdx] : 0);
 
         si->linkPitch   = snd->linkPitch;
@@ -1465,7 +1415,7 @@ void Def_Read()
     {
         Record *mus = &::defs.musics[i];
         // Make sure duplicate defs overwrite the earliest.
-        Record *earliest = &::defs.musics[Def_GetMusicNum(mus->gets("id").toUtf8().constData())];
+        Record *earliest = &::defs.musics[::defs.getMusicNum(mus->gets("id").toUtf8().constData())];
 
         if(earliest == mus) continue;
 
@@ -1512,27 +1462,25 @@ void Def_Read()
     for(dint i = 0; i < ::defs.ptcGens.size(); ++i)
     {
         ded_ptcgen_t *pg = &::defs.ptcGens[i];
-        dint st = Def_GetStateNum(pg->state);
+        dint st = ::defs.getStateNum(pg->state);
 
         if(!qstrcmp(pg->type, "*"))
             pg->typeNum = DED_PTCGEN_ANY_MOBJ_TYPE;
         else
-            pg->typeNum = Def_GetMobjNum(pg->type);
-        pg->type2Num  = Def_GetMobjNum(pg->type2);
-        pg->damageNum = Def_GetMobjNum(pg->damage);
+            pg->typeNum = ::defs.getMobjNum(pg->type);
+        pg->type2Num  = ::defs.getMobjNum(pg->type2);
+        pg->damageNum = ::defs.getMobjNum(pg->damage);
 
         // Figure out embedded sound ID numbers.
         for(dint k = 0; k < pg->stages.size(); ++k)
         {
             if(pg->stages[k].sound.name[0])
             {
-                pg->stages[k].sound.id =
-                    Def_GetSoundNum(pg->stages[k].sound.name);
+                pg->stages[k].sound.id = ::defs.getSoundNum(pg->stages[k].sound.name);
             }
             if(pg->stages[k].hitSound.name[0])
             {
-                pg->stages[k].hitSound.id =
-                    Def_GetSoundNum(pg->stages[k].hitSound.name);
+                pg->stages[k].hitSound.id = ::defs.getSoundNum(pg->stages[k].hitSound.name);
             }
         }
 
@@ -1727,22 +1675,22 @@ void Def_PostInit()
     }
 }
 
-dd_bool Def_SameStateSequence(state_t *snew, state_t *sold)
+bool Def_SameStateSequence(state_t *snew, state_t *sold)
 {
     if(!snew || !sold) return false;
     if(snew == sold) return true;  // Trivial.
 
-    dint const target = runtimeDefs.states.indexOf(snew);
-    dint const start  = runtimeDefs.states.indexOf(sold);
+    dint const target = ::runtimeDefs.states.indexOf(snew);
+    dint const start  = ::runtimeDefs.states.indexOf(sold);
 
     dint count = 0;
     for(dint it = sold->nextState; it >= 0 && it != start && count < 16;
-        it = runtimeDefs.states[it].nextState, ++count)
+        it = ::runtimeDefs.states[it].nextState, ++count)
     {
         if(it == target)
             return true;
 
-        if(it == runtimeDefs.states[it].nextState)
+        if(it == ::runtimeDefs.states[it].nextState)
             break;
     }
     return false;
@@ -1750,9 +1698,10 @@ dd_bool Def_SameStateSequence(state_t *snew, state_t *sold)
 
 String Def_GetStateName(state_t *state)
 {
-    dint const idx = runtimeDefs.states.indexOf(state);
     if(!state) return "(nullptr)";
-    return defs.states[idx].gets("id");
+    dint const idx = ::runtimeDefs.states.indexOf(state);
+    DENG2_ASSERT(idx >= 0);
+    return ::defs.states[idx].gets("id");
 }
 
 static inline dint Friendly(dint num)
@@ -1781,7 +1730,7 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
     for(dint i = 0; i < 10; ++i)
     {
         if(i == 9)
-            l->aparm[i] = Def_GetMobjNum(def->aparm9);
+            l->aparm[i] = ::defs.getMobjNum(def->aparm9);
         else
             l->aparm[i] = def->aparm[i];
     }
@@ -1789,8 +1738,8 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
     l->tickerStart      = def->tickerStart;
     l->tickerEnd        = def->tickerEnd;
     l->tickerInterval   = def->tickerInterval;
-    l->actSound         = Friendly(Def_GetSoundNum(def->actSound));
-    l->deactSound       = Friendly(Def_GetSoundNum(def->deactSound));
+    l->actSound         = Friendly(::defs.getSoundNum(def->actSound));
+    l->deactSound       = Friendly(::defs.getSoundNum(def->deactSound));
     l->evChain          = def->evChain;
     l->actChain         = def->actChain;
     l->deactChain       = def->deactChain;
@@ -1837,7 +1786,7 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
 
         if(a & MAP_SND)
         {
-            l->iparm[k] = Friendly(Def_GetSoundNum(def->iparmStr[k]));
+            l->iparm[k] = Friendly(::defs.getSoundNum(def->iparmStr[k]));
         }
         else if(a & MAP_MATERIAL)
         {
@@ -1860,22 +1809,22 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
         }
         else if(a & MAP_MUS)
         {
-            dint temp = Friendly(Def_GetMusicNum(def->iparmStr[k]));
+            dint temp = Friendly(::defs.getMusicNum(def->iparmStr[k]));
 
             if(temp == 0)
             {
-                temp = Def_EvalFlags(def->iparmStr[k]);
+                temp = ::defs.evalFlags(def->iparmStr[k]);
                 if(temp)
                     l->iparm[k] = temp;
             }
             else
             {
-                l->iparm[k] = Friendly(Def_GetMusicNum(def->iparmStr[k]));
+                l->iparm[k] = Friendly(::defs.getMusicNum(def->iparmStr[k]));
             }
         }
         else
         {
-            dint temp = Def_EvalFlags(def->iparmStr[k]);
+            dint temp = ::defs.evalFlags(def->iparmStr[k]);
             if(temp)
                 l->iparm[k] = temp;
         }
@@ -1902,7 +1851,7 @@ void Def_CopySectorType(sectortype_t *s, ded_sectortype_t *def)
         LOOPk(2) s->interval[i][k] = def->interval[i][k];
         s->count[i]      = def->count[i];
     }
-    s->ambientSound = Friendly(Def_GetSoundNum(def->ambientSound));
+    s->ambientSound = Friendly(::defs.getSoundNum(def->ambientSound));
     LOOPi(2)
     {
         s->soundInterval[i]     = def->soundInterval[i];
@@ -1935,23 +1884,8 @@ dint Def_Get(dint type, char const *id, void *out)
 {
     switch(type)
     {
-    case DD_DEF_MOBJ:
-        return Def_GetMobjNum(id);
-
-    case DD_DEF_MOBJ_BY_NAME:
-        return Def_GetMobjNumForName(id);
-
     case DD_DEF_ACTION:
         return Def_GetActionNum(id);
-
-    case DD_DEF_SPRITE:
-        return ::defs.getSpriteNum(id);
-
-    case DD_DEF_SOUND:
-        return Def_GetSoundNum(id);
-
-    case DD_DEF_SOUND_BY_NAME:
-        return ::defs.getSoundNumForName(id);
 
     case DD_DEF_SOUND_LUMPNAME: {
         dint32 i = *((dint32 *) id);
@@ -2051,20 +1985,6 @@ dint Def_Set(dint type, dint index, dint value, void const *ptr)
     return true;
 }
 
-bool Def_IsAllowedReflection(ded_reflection_t const *def, /*bool hasExternal,*/ bool isCustom)
-{
-    //if(hasExternal) return (def->flags & REFF_EXTERNAL) != 0;
-    if(!isCustom)   return (def->flags & REFF_NO_IWAD) == 0;
-    return (def->flags & REFF_PWAD) != 0;
-}
-
-bool Def_IsAllowedDetailTex(ded_detailtexture_t const *def, /*bool hasExternal,*/ bool isCustom)
-{
-    //if(hasExternal) return (def->flags & DTLF_EXTERNAL) != 0;
-    if(!isCustom)   return (def->flags & DTLF_NO_IWAD) == 0;
-    return (def->flags & DTLF_PWAD) != 0;
-}
-
 /**
  * Prints a list of all the registered mobjs to the console.
  * @todo Does this belong here?
@@ -2102,6 +2022,5 @@ DENG_DECLARE_API(Def) =
     { DE_API_DEFINITIONS },
 
     Def_Get,
-    Def_Set,
-    Def_EvalFlags
+    Def_Set
 };

@@ -173,10 +173,10 @@ static int patchReplacementValueIndex(patchid_t patchId, bool canCreate = true)
 
     // No. Look it up.
     int valueIndex = -1;
-    AutoStr* patchPath = R_ComposePatchPath(patchId);
+    AutoStr *patchPath = R_ComposePatchPath(patchId);
     if(!Str_IsEmpty(patchPath))
     {
-        AutoStr* valueStr = Str_Appendf(AutoStr_New(), "Patch Replacement|%s", Str_Text(patchPath));
+        AutoStr *valueStr = Str_Appendf(AutoStr_New(), "Patch Replacement|%s", Str_Text(patchPath));
         valueIndex = Def_Get(DD_DEF_VALUE, Str_Text(valueStr), 0);
     }
 
@@ -1048,14 +1048,16 @@ void M_DrawTextFragmentShadowed(const char* string, int x, int y, int alignFlags
     FR_DrawTextXY3(string, x, y, alignFlags, textFlags);
 }
 
-static const char* patchReplacement(patchid_t patchId)
+static char const *patchReplacement(patchid_t patchId)
 {
-    char* replacement = 0; // Not found.
+    char *replacement = 0; // Not found.
     int valueIndex = patchReplacementValueIndex(patchId);
     if(valueIndex >= 0)
     {
-        if(Def_Get(DD_DEF_VALUE_BY_INDEX, (char*)&valueIndex, (void*)&replacement) < 0)
+        if(Def_Get(DD_DEF_VALUE_BY_INDEX, (char *)&valueIndex, (void *)&replacement) < 0)
+        {
             Con_Error("Hu_FindPatchReplacementString: Failed retrieving text value #%i.", valueIndex);
+        }
     }
     return replacement;
 }
@@ -1063,19 +1065,19 @@ static const char* patchReplacement(patchid_t patchId)
 char const *Hu_FindPatchReplacementString(patchid_t patchId, int flags)
 {
     char const *replacement = patchReplacement(patchId);
-    if(flags & (PRF_NO_IWAD|PRF_NO_PWAD))
+    if(flags & (PRF_NO_IWAD | PRF_NO_PWAD))
     {
         patchinfo_t info;
         R_GetPatchInfo(patchId, &info);
         if(!info.flags.isCustom)
         {
             if(flags & PRF_NO_IWAD)
-                return NULL;
+                return nullptr;
         }
         else
         {
             if(flags & PRF_NO_PWAD)
-                return NULL;
+                return nullptr;
         }
     }
     return replacement;

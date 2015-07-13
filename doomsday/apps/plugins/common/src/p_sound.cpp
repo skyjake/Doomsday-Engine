@@ -71,7 +71,7 @@ void S_PlaneSound(Plane *pln, int id)
 
 int S_GetSoundID(char const *name)
 {
-    return Def_Get(DD_DEF_SOUND_BY_NAME, name, 0);
+    return Defs().getSoundNumForName(name);
 }
 
 void SndInfoParser(ddstring_s const *path)
@@ -127,7 +127,7 @@ void SndInfoParser(ddstring_s const *path)
 
             // string(sound-id) string(lump-name | '?')
             // A sound definition.
-            int const soundIndex       = Def_Get(DD_DEF_SOUND_BY_NAME, Str_Text(lexer.readString()), 0);
+            int const soundIndex       = Defs().getSoundNumForName(Str_Text(lexer.readString()));
             ddstring_t const *lumpName = lexer.readString();
 
             if(soundIndex)
@@ -155,7 +155,7 @@ void SndInfoParser(ddstring_s const *path)
     {
         // The WAD contains two lumps with the name CHAIN, one a sample and the
         // other a graphics lump.
-        int soundId = Def_Get(DD_DEF_SOUND_BY_NAME, "AMBIENT12", 0);
+        int soundId = Defs().getSoundNumForName("AMBIENT12");
         Def_Get(DD_DEF_SOUND_LUMPNAME, (char *) &soundId, buf);
         if(!strcasecmp(buf, "chain"))
         {

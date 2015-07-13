@@ -28,9 +28,10 @@
 #endif
 
 #include <vector>
-#include <doomsday/defs/ded.h>
+#include <de/String>
+#include <doomsday/defs/ded.h>  // ded_t
 #include <doomsday/defs/dedtypes.h>
-#include "Material"
+#include <doomsday/uri.h>
 
 template <typename PODType>
 struct Array : public std::vector<PODType>
@@ -124,64 +125,56 @@ struct RuntimeDefs
 extern RuntimeDefs runtimeDefs;
 
 /**
- * Initializes the definition databases.
- */
-void Def_Init(void);
-
-/**
  * Register the console commands and/or variables of this module.
  */
-void Def_ConsoleRegister(void);
+void Def_ConsoleRegister();
+
+/**
+ * Initializes the definition databases.
+ */
+void Def_Init();
+
+/**
+ * Destroy databases.
+ */
+void Def_Destroy();
 
 /**
  * Retrieves the XG Class list from the Game.
  * XGFunc links are provided by the Game, who owns the actual
  * XG classes and their functions.
  */
-int Def_GetGameClasses(void);
+void Def_GetGameClasses();
 
 /**
  * Finish definition database initialization. Initialization is split into two
  * phases either side of the texture manager, this being the post-phase.
  */
-void Def_PostInit(void);
-
-/**
- * Destroy databases.
- */
-void Def_Destroy(void);
+void Def_PostInit();
 
 /**
  * Reads the specified definition files, and creates the sprite name,
  * state, mobjinfo, sound, music, text and mapinfo databases accordingly.
  */
-void Def_Read(void);
-
-int Def_GetMobjNum(char const *id);
-int Def_GetMobjNumForName(char const *name);
-
-state_t *Def_GetState(int num);
+void Def_Read();
 
 int Def_GetActionNum(char const *id);
 
-int Def_GetModelNum(char const *id);
-int Def_GetMusicNum(char const *id);
-int Def_GetSoundNum(char const *id);
-ded_value_t *Def_GetValueById(char const *id);
-ded_value_t *Def_GetValueByUri(uri_s const *uri);
+de::String Def_GetStateName(state_t *state);
+
+/**
+ * Can we reach 'snew' if we start searching from 'sold'?
+ * Take a maximum of 16 steps.
+ */
+bool Def_SameStateSequence(state_t *snew, state_t *sold);
+
 ded_compositefont_t *Def_GetCompositeFont(char const *uri);
+ded_ptcgen_t *Def_GetGenerator(struct uri_s const *uri);
+ded_ptcgen_t *Def_GetGenerator(de::Uri const &uri);
+ded_ptcgen_t *Def_GetDamageGenerator(int mobjType);
 ded_light_t *Def_GetLightDef(int spr, int frame);
 
-de::String Def_GetMobjName(int num);
-de::String Def_GetStateName(state_t *state);
-int Def_GetStateNum(de::String const &id);
-
-ded_ptcgen_t *Def_GetGenerator(uri_s const *uri);
-ded_ptcgen_t *Def_GetGenerator(de::Uri const &uri);
-
-ded_ptcgen_t *Def_GetDamageGenerator(int mobjType);
-
-int Def_EvalFlags(char const *string);
+state_t *Def_GetState(int num);
 
 /**
  * @return  @c true= the definition was found.
@@ -193,21 +186,5 @@ int Def_Get(int type, char const *id, void *out);
  * modify definitions (unless they want to do it manually with dedfile.h).
  */
 int Def_Set(int type, int index, int value, void const *ptr);
-
-/**
- * Can we reach 'snew' if we start searching from 'sold'?
- * Take a maximum of 16 steps.
- */
-dd_bool Def_SameStateSequence(state_t *snew, state_t *sold);
-
-/**
- * Returns @c true iff @a def is compatible with the specified context.
- */
-bool Def_IsAllowedReflection(ded_reflection_t const *def, /*bool hasExternal,*/ bool isCustom);
-
-/**
- * Returns @c true iff @a def is compatible with the specified context.
- */
-bool Def_IsAllowedDetailTex(ded_detailtexture_t const *def, /*bool hasExternal,*/ bool isCustom);
 
 #endif  // DEFINITIONS_MAIN_H

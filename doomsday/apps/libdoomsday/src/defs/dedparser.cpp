@@ -631,7 +631,7 @@ DENG2_PIMPL(DEDParser)
 
             if(!flag.isEmpty())
             {
-                *dest = ded->evalFlags2(flag.toUtf8().constData());
+                *dest = ded->evalFlags(flag.toUtf8().constData());
             }
             return true;
         }
@@ -653,7 +653,7 @@ DENG2_PIMPL(DEDParser)
 
             if(!flag.isEmpty())
             {
-                *dest |= ded->evalFlags2(flag.toUtf8().constData());
+                *dest |= ded->evalFlags(flag.toUtf8().constData());
             }
 
             if(!ReadToken())
@@ -702,7 +702,7 @@ DENG2_PIMPL(DEDParser)
             // The old format.
             if(!ReadString(flag)) return false;
 
-            bm = blendmode_t(ded->evalFlags2(flag.toUtf8().constData()));
+            bm = blendmode_t(ded->evalFlags(flag.toUtf8().constData()));
         }
         else
         {
@@ -711,7 +711,7 @@ DENG2_PIMPL(DEDParser)
 
             flag = String("bm_") + String(token);
 
-            bm = blendmode_t(ded->evalFlags2(flag.toUtf8().constData()));
+            bm = blendmode_t(ded->evalFlags(flag.toUtf8().constData()));
         }
 
         if(bm != BM_NORMAL)

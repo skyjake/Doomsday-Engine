@@ -154,9 +154,7 @@ public:
 
     int addSky();
 
-    //ded_flag_t *getFlag(char const *flag) const;
-
-    int evalFlags2(char const *ptr) const;
+    int evalFlags(char const *ptr) const;
     
     int getEpisodeNum(de::String const &id) const;
 

@@ -410,17 +410,17 @@ int ded_s::getStateNum(char const *id) const
     return getStateNum(String(id));
 }
 
-int ded_s::evalFlags2(char const *ptr) const
+dint ded_s::evalFlags(char const *ptr) const
 {
-    LOG_AS("Def_EvalFlags");
+    LOG_AS("Defs::evalFlags");
 
-    int value = 0;
+    dint value = 0;
 
     while(*ptr)
     {
         ptr = M_SkipWhite(const_cast<char *>(ptr));
 
-        int flagNameLength = M_FindWhite(const_cast<char *>(ptr)) - ptr;
+        dint flagNameLength = M_FindWhite(const_cast<char *>(ptr)) - ptr;
         String flagName(ptr, flagNameLength);
         ptr += flagNameLength;
 
@@ -568,7 +568,7 @@ int ded_s::getSpriteNum(char const *id) const
     return -1;  // Not found.
 }
 
-int ded_s::getMusicNum(const char* id) const
+int ded_s::getMusicNum(char const *id) const
 {
     if(Record const *def = musics.tryFind("id", id))
     {
@@ -587,39 +587,44 @@ int ded_s::getMusicNum(const char* id) const
     return idx;*/
 }
 
-ded_value_t* ded_s::getValueById(char const* id) const
+ded_value_t *ded_s::getValueById(char const *id) const
 {
-    if(!id || !id[0]) return NULL;
+    if(!id || !id[0]) return nullptr;
 
     // Read backwards to allow patching.
-    for(int i = values.size() - 1; i >= 0; i--)
+    for(dint i = values.size() - 1; i >= 0; i--)
     {
         if(!qstricmp(values[i].id, id))
             return &values[i];
     }
-    return 0;
+    return nullptr;
 }
 
-ded_value_t* ded_s::getValueByUri(de::Uri const &uri) const
+ded_value_t *ded_s::getValueByUri(de::Uri const &uri) const
 {
-    if(uri.scheme().compareWithoutCase("Values")) return 0;
-    return getValueById(uri.pathCStr());
-}
-
-ded_compositefont_t* ded_s::findCompositeFontDef(de::Uri const& uri) const
-{
-    for(int i = compositeFonts.size() - 1; i >= 0; i--)
+    if(!uri.scheme().compareWithoutCase("Values"))
     {
-        ded_compositefont_t* def = &compositeFonts[i];
-        if(!def->uri || uri != *def->uri) continue;
-        return def;
+        return getValueById(uri.pathCStr());
     }
-    return 0;
+    return nullptr;
 }
 
-ded_compositefont_t* ded_s::getCompositeFont(char const* uriCString) const
+ded_compositefont_t *ded_s::findCompositeFontDef(de::Uri const &uri) const
 {
-    ded_compositefont_t* def = NULL;
+    for(dint i = compositeFonts.size() - 1; i >= 0; i--)
+    {
+        ded_compositefont_t *def = &compositeFonts[i];
+        if(def->uri && uri == *def->uri)
+        {
+            return def;
+        }
+    }
+    return nullptr;
+}
+
+ded_compositefont_t *ded_s::getCompositeFont(char const *uriCString) const
+{
+    ded_compositefont_t *def = nullptr;
     if(uriCString && uriCString[0])
     {
         de::Uri uri(uriCString, RC_NULL);

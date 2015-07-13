@@ -1157,10 +1157,10 @@ D_CMD(SpawnMobj)
 
     // First try to find the thing by ID.
     mobjtype_t type;
-    if((type = mobjtype_t(Def_Get(DD_DEF_MOBJ, argv[1], 0))) < 0)
+    if((type = mobjtype_t(Defs().getMobjNum(argv[1]))) < 0)
     {
         // Try to find it by name instead.
-        if((type = mobjtype_t(Def_Get(DD_DEF_MOBJ_BY_NAME, argv[1], 0))) < 0)
+        if((type = mobjtype_t(Defs().getMobjNumForName(argv[1]))) < 0)
         {
             App_Log(DE2_LOG_RES | DE2_LOG_ERROR, "Undefined thing type %s", argv[1]);
             return false;

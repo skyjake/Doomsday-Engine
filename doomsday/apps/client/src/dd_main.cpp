@@ -2443,12 +2443,13 @@ dint DD_GetInteger(dint ddvalue)
 #endif
             
     case DD_NUMMOBJTYPES:
-        return defs.things.size();
+        return ::defs.things.size();
 
     case DD_MAP_MUSIC:
         if(App_WorldSystem().hasMap())
         {
-            return Def_GetMusicNum(App_WorldSystem().map().mapInfo().gets("music").toUtf8().constData());
+            Record const &mapInfo = App_WorldSystem().map().mapInfo();
+            return ::defs.getMusicNum(mapInfo.gets("music").toUtf8().constData());
         }
         return -1;
 

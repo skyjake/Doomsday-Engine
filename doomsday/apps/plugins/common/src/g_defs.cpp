@@ -37,7 +37,7 @@ int GetDefInt(char const *def, int *returnVal)
     // Get the value.
     char *data;
     if(Def_Get(DD_DEF_VALUE, def, &data) < 0)
-        return 0; // No such value...
+        return 0;  // No such value...
 
     // Convert to integer.
     int val = strtol(data, 0, 0);

@@ -89,7 +89,8 @@ enum {
 
     DE_API_DEFINITIONS_v1       = 500,     // 1.10
     DE_API_DEFINITIONS_v2       = 501,     // 1.15
-    DE_API_DEFINITIONS          = DE_API_DEFINITIONS_v2,
+    DE_API_DEFINITIONS_v3       = 502,     // 2.0
+    DE_API_DEFINITIONS          = DE_API_DEFINITIONS_v3,
 
     DE_API_FILE_SYSTEM_v1       = 600,     // 1.10
     DE_API_FILE_SYSTEM_v2       = 601,     // 1.14

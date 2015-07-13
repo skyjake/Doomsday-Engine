@@ -931,51 +931,50 @@ D_CMD(InspectMobj)
     }
 
     // Get the ID.
-    thid_t id = strtol(argv[1], NULL, 10);
-
-    // Find the mobj.
-    mobj_t *mo = App_WorldSystem().map().thinkers().mobjById(id);
-    if(!mo)
+    auto const id = thid_t( String(argv[1]).toInt() );
+    // Find the map-object.
+    mobj_t *mob   = App_WorldSystem().map().thinkers().mobjById(id);
+    if(!mob)
     {
         LOG_MAP_ERROR("Mobj with id %i not found") << id;
         return false;
     }
 
-    char const *moType = "Mobj";
+    char const *mobType = "Mobj";
 #ifdef __CLIENT__
-    ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(mo);
-    if(info) moType = "CLMOBJ";
+    ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(mob);
+    if(info) mobType = "CLMOBJ";
 #endif
 
     LOG_MAP_MSG("%s %i [%p] State:%s (%i)")
-            << moType << id << mo << Def_GetStateName(mo->state) << runtimeDefs.states.indexOf(mo->state);
+            << mobType << id << mob << Def_GetStateName(mob->state) << ::runtimeDefs.states.indexOf(mob->state);
     LOG_MAP_MSG("Type:%s (%i) Info:[%p] %s")
-            << Def_GetMobjName(mo->type) << mo->type << mo->info
-            << (mo->info? QString(" (%1)").arg(runtimeDefs.mobjInfo.indexOf(mo->info)) : "");
-    LOG_MAP_MSG("Tics:%i ddFlags:%08x") << mo->tics << mo->ddFlags;
+            << ::defs.getMobjName(mob->type) << mob->type << mob->info
+            << (mob->info ? QString(" (%1)").arg(::runtimeDefs.mobjInfo.indexOf(mob->info)) : "");
+    LOG_MAP_MSG("Tics:%i ddFlags:%08x") << mob->tics << mob->ddFlags;
 #ifdef __CLIENT__
     if(info)
     {
         LOG_MAP_MSG("Cltime:%i (now:%i) Flags:%04x") << info->time << Timer_RealMilliseconds() << info->flags;
     }
 #endif
-    LOG_MAP_MSG("Flags:%08x Flags2:%08x Flags3:%08x") << mo->flags << mo->flags2 << mo->flags3;
-    LOG_MAP_MSG("Height:%f Radius:%f") << mo->height << mo->radius;
+    LOG_MAP_MSG("Flags:%08x Flags2:%08x Flags3:%08x") << mob->flags << mob->flags2 << mob->flags3;
+    LOG_MAP_MSG("Height:%f Radius:%f") << mob->height << mob->radius;
     LOG_MAP_MSG("Angle:%x Pos:%s Mom:%s")
-            << mo->angle
-            << Vector3d(mo->origin).asText()
-            << Vector3d(mo->mom).asText();
-    LOG_MAP_MSG("FloorZ:%f CeilingZ:%f") << mo->floorZ << mo->ceilingZ;
-    if(SectorCluster *cluster = Mobj_ClusterPtr(*mo))
+            << mob->angle
+            << Vector3d(mob->origin).asText()
+            << Vector3d(mob->mom).asText();
+    LOG_MAP_MSG("FloorZ:%f CeilingZ:%f") << mob->floorZ << mob->ceilingZ;
+    if(SectorCluster *cluster = Mobj_ClusterPtr(*mob))
     {
         LOG_MAP_MSG("Sector:%i (FloorZ:%f CeilingZ:%f)")
                 << cluster->sector().indexInMap()
                 << cluster->floor().height()
                 << cluster->ceiling().height();
     }
-    if(mo->onMobj)
+    if(mob->onMobj)
     {
-        LOG_MAP_MSG("onMobj:%i") << mo->onMobj->thinker.id;
+        LOG_MAP_MSG("onMobj:%i") << mob->onMobj->thinker.id;
     }
 
     return true;
