@@ -177,12 +177,6 @@ public:
     int getSoundNum(char const *id) const;
     int getSoundNum(de::String const &id) const;
 
-    int getSpriteNum(char const *id) const;
-    int getSpriteNum(de::String const &id) const;
-
-    int getStateNum(char const *id) const;
-    int getStateNum(de::String const &id) const;
-
     /**
      * Looks up a sound using @a name key.
      * @param name  Sound name.
@@ -190,9 +184,19 @@ public:
      */
     int getSoundNumForName(char const *name) const;
 
+    int getSpriteNum(char const *id) const;
+    int getSpriteNum(de::String const &id) const;
+
+    int getStateNum(char const *id) const;
+    int getStateNum(de::String const &id) const;
+
     int getTextNum(char const *id) const;
 
+    int getValueNum(char const *id) const;
+    int getValueNum(de::String const &id) const;
+
     ded_value_t *getValueById(char const *id) const;
+    ded_value_t *getValueById(de::String const &id) const;
 
     ded_value_t *getValueByUri(de::Uri const &uri) const;
 

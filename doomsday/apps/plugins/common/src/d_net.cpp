@@ -26,6 +26,7 @@
 #include "d_netsv.h"
 #include "fi_lib.h"
 #include "g_common.h"
+#include "g_defs.h"
 #include "gamesession.h"
 #include "hu_menu.h"
 #include "p_mapsetup.h"

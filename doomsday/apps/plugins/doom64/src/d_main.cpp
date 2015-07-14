@@ -325,7 +325,11 @@ void D_PostInit()
     P_InitWeaponInfo();
 
     // Game parameters.
-    ::monsterInfight = GetDefInt("AI|Infight", 0);
+    ::monsterInfight = 0;
+    if(ded_value_t const *infight = Defs().getValueById("AI|Infight"))
+    {
+        ::monsterInfight = String(infight->text).toInt();
+    }
 
     // Get skill / episode / map from parms.
     ::defaultGameRules.skill = /*startSkill =*/ SM_MEDIUM;

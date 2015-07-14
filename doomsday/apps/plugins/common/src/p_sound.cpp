@@ -1,7 +1,7 @@
 /** @file p_sound.cpp  id Tech 1 sound playback functionality.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 1999 Activision
  * @authors Copyright © 1993-1996 id Software, Inc.
  *
@@ -25,6 +25,7 @@
 
 #include <de/Log>
 #include "dmu_lib.h"
+#include "g_defs.h"
 #ifdef __JHEXEN__
 #  include "g_common.h"
 #  include "hexlex.h"

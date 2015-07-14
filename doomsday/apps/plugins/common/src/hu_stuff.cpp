@@ -1,10 +1,8 @@
-/**
- * @file hu_stuff.cpp
- * Miscellaneous routines for heads-up displays and UI.
+/** @file hu_stuff.cpp  Miscellaneous routines for heads-up displays and UI.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright &copy; 1993-1996 by id Software, Inc.
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1993-1996 by id Software, Inc.
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -30,8 +28,10 @@
 #include <cstdio>
 #include <cstring>
 #include <map>
+#include <de/String>
 #include "fi_lib.h"
 #include "g_common.h"
+#include "g_defs.h"
 #include "gamesession.h"
 #include "hu_inventory.h"
 #include "hu_menu.h"
@@ -172,17 +172,16 @@ static int patchReplacementValueIndex(patchid_t patchId, bool canCreate = true)
     if(found != patchReplacements.end()) return found->second;
 
     // No. Look it up.
-    int valueIndex = -1;
-    AutoStr *patchPath = R_ComposePatchPath(patchId);
-    if(!Str_IsEmpty(patchPath))
+    dint valueIndex = -1;
+    auto const patchPath = String(Str_Text(R_ComposePatchPath(patchId)));
+    if(!patchPath.isEmpty())
     {
-        AutoStr *valueStr = Str_Appendf(AutoStr_New(), "Patch Replacement|%s", Str_Text(patchPath));
-        valueIndex = Def_Get(DD_DEF_VALUE, Str_Text(valueStr), 0);
+        valueIndex = Defs().getValueNum("Patch Replacement|" + patchPath);
     }
 
     if(canCreate)
     {
-        patchReplacements.insert(std::pair<patchid_t, int>(patchId, valueIndex));
+        patchReplacements.insert(std::pair<patchid_t, dint>(patchId, valueIndex));
     }
 
     return valueIndex;
@@ -1050,16 +1049,9 @@ void M_DrawTextFragmentShadowed(const char* string, int x, int y, int alignFlags
 
 static char const *patchReplacement(patchid_t patchId)
 {
-    char *replacement = 0; // Not found.
-    int valueIndex = patchReplacementValueIndex(patchId);
-    if(valueIndex >= 0)
-    {
-        if(Def_Get(DD_DEF_VALUE_BY_INDEX, (char *)&valueIndex, (void *)&replacement) < 0)
-        {
-            Con_Error("Hu_FindPatchReplacementString: Failed retrieving text value #%i.", valueIndex);
-        }
-    }
-    return replacement;
+    dint idx = patchReplacementValueIndex(patchId);
+    if(idx >= 0 && idx < Defs().values.size()) return Defs().values[idx].text;
+    throw Error("Hu_FindPatchReplacementString", "Failed retrieving text value #" + String::number(idx));
 }
 
 char const *Hu_FindPatchReplacementString(patchid_t patchId, int flags)

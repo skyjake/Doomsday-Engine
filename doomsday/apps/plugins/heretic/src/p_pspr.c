@@ -31,7 +31,6 @@
 #include <string.h>
 #include "d_net.h"
 #include "d_netcl.h"
-#include "g_defs.h"
 #include "p_inventory.h"
 #include "p_map.h"
 #include "p_terraintype.h"

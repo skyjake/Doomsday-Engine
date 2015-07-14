@@ -1894,30 +1894,6 @@ dint Def_Get(dint type, char const *id, void *out)
         qstrcpy((char *)out, ::runtimeDefs.sounds[i].lumpName);
         return true; }
 
-    case DD_DEF_VALUE: {
-        dint idx = -1; // Not found.
-        if(id && id[0])
-        {
-            // Read backwards to allow patching.
-            for(idx = ::defs.values.size() - 1; idx >= 0; idx--)
-            {
-                if(!qstricmp(::defs.values[idx].id, id))
-                    break;
-            }
-        }
-        if(out) *(char **) out = (idx >= 0 ? ::defs.values[idx].text : 0);
-        return idx; }
-
-    case DD_DEF_VALUE_BY_INDEX: {
-        dint32 idx = *((dint32 *) id);
-        if(idx >= 0 && idx < ::defs.values.size())
-        {
-            if(out) *(char **) out = ::defs.values[idx].text;
-            return true;
-        }
-        if(out) *(char **) out = nullptr;
-        return false; }
-
     case DD_DEF_LINE_TYPE: {
         dint typeId = strtol(id, (char **)nullptr, 10);
         for(dint i = ::defs.lineTypes.size() - 1; i >= 0; i--)

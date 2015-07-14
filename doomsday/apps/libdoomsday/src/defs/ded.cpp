@@ -587,6 +587,25 @@ int ded_s::getMusicNum(char const *id) const
     return idx;*/
 }
 
+int ded_s::getValueNum(char const *id) const
+{
+    if(id && id[0])
+    {
+        // Read backwards to allow patching.
+        for(dint i = values.size() - 1; i >= 0; i--)
+        {
+            if(!qstricmp(values[i].id, id))
+                return i;
+        }
+    }
+    return -1;  // Not found.
+}
+
+int ded_s::getValueNum(String const &id) const
+{
+    return getValueNum(id.toLatin1());
+}
+
 ded_value_t *ded_s::getValueById(char const *id) const
 {
     if(!id || !id[0]) return nullptr;
@@ -598,6 +617,10 @@ ded_value_t *ded_s::getValueById(char const *id) const
             return &values[i];
     }
     return nullptr;
+}
+ded_value_t *ded_s::getValueById(String const &id) const
+{
+    return getValueById(id.toLatin1());
 }
 
 ded_value_t *ded_s::getValueByUri(de::Uri const &uri) const

@@ -22,13 +22,15 @@
 #include "jhexen.h"
 #include "s_sequence.h"
 
+#include <cstdio>
+#include <cstring>
+
 #include "dmu_lib.h"
 #include "g_common.h"
+#include "g_defs.h"
 #include "hexlex.h"
 #include "p_saveio.h"
 #include "polyobjs.h"
-#include <cstdio>
-#include <cstring>
 
 #define SS_MAX_SCRIPTS          64
 #define SS_TEMPBUFFER_SIZE      1024

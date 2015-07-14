@@ -21,8 +21,11 @@
 
 #include "jdoom64.h"
 
+#include <de/String>
 #include "g_defs.h"
 #include "player.h"
+
+using namespace de;
 
 /**
  * Default weapon definitions.
@@ -37,7 +40,8 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      true,         // autofire when raised if fire held
      { S_PUNCHUP, S_PUNCHDOWN, S_PUNCH, S_PUNCH1, S_NULL },
      0,            // raise sound id
-     0             // ready sound
+     0,            // ready sound
+     0             // static switch
     }
    },
    {
@@ -48,7 +52,8 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      true,         // autofire when raised if fire held
      { S_PISTOLUP, S_PISTOLDOWN, S_PISTOL, S_PISTOL1, S_PISTOLFLASH },
      0,            // raise sound id
-     0             // ready sound
+     0,            // ready sound
+     0             // static switch
     }
    },
    {
@@ -59,7 +64,8 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      true,         // autofire when raised if fire held
      { S_SGUNUP, S_SGUNDOWN, S_SGUN, S_SGUN1, S_SGUNFLASH1 },
      0,            // raise sound id
-     0             // ready sound
+     0,            // ready sound
+     0             // static switch
     }
    },
    {
@@ -70,7 +76,8 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      true,         // autofire when raised if fire held
      { S_CHAINUP, S_CHAINDOWN, S_CHAIN, S_CHAIN1, S_CHAINFLASH1 },
      0,            // raise sound id
-     0             // ready sound
+     0,            // ready sound
+     0             // static switch
     }
    },
    {
@@ -81,7 +88,8 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      false,        // autofire when raised if fire held
      { S_MISSILEUP, S_MISSILEDOWN, S_MISSILE, S_MISSILE1, S_MISSILEFLASH1 },
      0,            // raise sound id
-     0             // ready sound
+     0,            // ready sound
+     0             // static switch
     }
    },
    {
@@ -92,7 +100,8 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      true,         // autofire when raised if fire held
      { S_PLASMAUP, S_PLASMADOWN, S_PLASMA, S_PLASMA1, S_PLASMASHOCK1 },
      0,            // raise sound id
-     0             // ready sound
+     0,            // ready sound
+     0             // static switch
     }
    },
    {
@@ -103,7 +112,8 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      false,         // autofire when raised if fire held
      { S_BFGUP, S_BFGDOWN, S_BFG, S_BFG1, S_BFGFLASH1 },
      0,            // raise sound id
-     0             // ready sound
+     0,            // ready sound
+     0             // static switch
     }
    },
    {
@@ -114,7 +124,8 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      true,         // autofire when raised if fire held
      { S_SAWUP, S_SAWDOWN, S_SAW, S_SAW1, S_NULL },
      SFX_SAWUP,    // raise sound id
-     SFX_SAWIDL    // ready sound
+     SFX_SAWIDL,   // ready sound
+     0             // static switch
     }
    },
    {
@@ -125,7 +136,8 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      true,         // autofire when raised if fire held
      { S_DSGUNUP, S_DSGUNDOWN, S_DSGUN, S_DSGUN1, S_DSGUNFLASH1 },
      0,            // raise sound id
-     0             // ready sound
+     0,            // ready sound
+     0             // static switch
     }
    },
    {
@@ -136,57 +148,83 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
      true,         // autofire when raised if fire held
      { S_UNKFUP, S_UNKFDOWN, S_UNKF, S_UNKF1, S_UNKFLASH1 },
      0,            // raise sound id
-     0             // ready sound
+     0,            // ready sound
+     0             // static switch
     }
    }
 };
 
-static char const *ammoTypeNames[NUM_AMMO_TYPES] = {
-    "clip", "shell", "cell", "misl"
-};
+static String ammoTypeName(int ammoType)
+{
+    static String names[NUM_AMMO_TYPES] = {
+        /*AT_CLIP*/     "clip",
+        /*AT_SHELL*/    "shell",
+        /*AT_CELL*/     "cell",
+        /*AT_MISSILE*/  "misl"
+    };
+    if(ammoType >= AT_FIRST && ammoType < NUM_AMMO_TYPES)
+        return names[ammoType - AT_FIRST];
+    throw Error("ammoTypeName", "Unknown ammo type " + String::number(ammoType));
+}
+
+static String weaponStateName(int weaponState)
+{
+    static String names[NUM_WEAPON_STATE_NAMES] = {
+        /*WSN_UP*/      "Up",
+        /*WSN_DOWN*/    "Down",
+        /*WSN_READY*/   "Ready",
+        /*WSN_ATTACK*/  "Atk",
+        /*WSN_FLASH*/   "Flash"
+    };
+    if(weaponState >= WSN_UP && weaponState < NUM_WEAPON_STATE_NAMES)
+        return names[weaponState - WSN_UP];
+    throw Error("weaponStateName", "Unknown weapon state " + String::number(weaponState));
+}
 
 void P_InitAmmoInfo()
 {
-    char buf[40];
-    for(int i = 0; i < NUM_AMMO_TYPES; ++i)
+    for(auto i = int( AT_FIRST ); i < NUM_AMMO_TYPES; ++i)
     {
-        // Max ammo.
-        sprintf(buf, "Player|Max ammo|%s", ammoTypeNames[i]);
-        GetDefInt(buf, &maxAmmo[i]);
+        String const name = ammoTypeName(i);
 
-        // Clip ammo.
-        sprintf(buf, "Player|Clip ammo|%s", ammoTypeNames[i]);
-        GetDefInt(buf, &clipAmmo[i]);
+        if(ded_value_t const *maxAmmo = Defs().getValueById("Player|Max ammo|" + name))
+        {
+            ::maxAmmo[i] = String(maxAmmo->text).toInt();
+        }
+
+        if(ded_value_t const *clipAmmo = Defs().getValueById("Player|Clip ammo|" + name))
+        {
+            ::clipAmmo[i] = String(clipAmmo->text).toInt();
+        }
     }
 }
 
-void P_InitWeaponInfo(void)
+void P_InitWeaponInfo()
 {
-#define WPINF  "Weapon Info|"
-
-    static int const pclass = PCLASS_PLAYER;
-
-    char buf[80];
-    char *data;
-    for(int i = 0; i < NUM_WEAPON_TYPES; ++i)
+    for(auto i = int( WT_FIRST ); i < NUM_WEAPON_TYPES; ++i)
     {
+        auto const id = String::number(i);
+
+        weaponmodeinfo_t *wminfo = WEAPON_INFO(i, PCLASS_PLAYER, 0);
+        DENG2_ASSERT(wminfo);
+
         /// @todo Only allows for one type of ammo per weapon.
-        sprintf(buf, WPINF "%i|Type", i);
-        if(Def_Get(DD_DEF_VALUE, buf, &data) >= 0)
+        if(ded_value_t const *ammo = Defs().getValueById("Weapon Info|" + id + "|Type"))
         {
-            std::memset(weaponInfo[i][pclass].mode[0].ammoType, 0, sizeof(int) * NUM_AMMO_TYPES);
-            std::memset(weaponInfo[i][pclass].mode[0].perShot,  0, sizeof(int) * NUM_AMMO_TYPES);
+            de::zap(wminfo->ammoType);
+            de::zap(wminfo->perShot);
 
-            if(stricmp(data, "noammo"))
+            if(String(ammo->text).compareWithoutCase("noammo"))
             {
-                for(int k = 0; k < NUM_AMMO_TYPES; ++k)
+                for(auto k = int( AT_FIRST ); k < NUM_AMMO_TYPES; ++k)
                 {
-                    if(!stricmp(data, ammoTypeNames[k]))
+                    if(!ammoTypeName(k).compareWithoutCase(ammo->text))
                     {
-                        weaponInfo[i][pclass].mode[0].ammoType[k] = true;
-
-                        sprintf(buf, WPINF "%i|Per shot", i);
-                        GetDefInt(buf, &weaponInfo[i][pclass].mode[0].perShot[k]);
+                        wminfo->ammoType[k] = true;
+                        if(ded_value_t const *perShot = Defs().getValueById("Weapon Info|" + id + "|Per shot"))
+                        {
+                            wminfo->perShot[k] = String(perShot->text).toInt();
+                        }
                         break;
                     }
                 }
@@ -194,18 +232,18 @@ void P_InitWeaponInfo(void)
         }
         // end todo
 
-        sprintf(buf, WPINF "%i|Up", i);
-        GetDefState(buf, &weaponInfo[i][pclass].mode[0].states[WSN_UP]);
-        sprintf(buf, WPINF "%i|Down", i);
-        GetDefState(buf, &weaponInfo[i][pclass].mode[0].states[WSN_DOWN]);
-        sprintf(buf, WPINF "%i|Ready", i);
-        GetDefState(buf, &weaponInfo[i][pclass].mode[0].states[WSN_READY]);
-        sprintf(buf, WPINF "%i|Atk", i);
-        GetDefState(buf, &weaponInfo[i][pclass].mode[0].states[WSN_ATTACK]);
-        sprintf(buf, WPINF "%i|Flash", i);
-        GetDefState(buf, &weaponInfo[i][pclass].mode[0].states[WSN_FLASH]);
-        sprintf(buf, WPINF "%i|Static", i);
-        weaponInfo[i][pclass].mode[0].staticSwitch = GetDefInt(buf, 0);
+        for(auto k = int( WSN_UP ); k < NUM_WEAPON_STATE_NAMES; ++k)
+        {
+            if(ded_value_t const *state = Defs().getValueById("Weapon Info|" + id + "|" + weaponStateName(k)))
+            {
+                wminfo->states[k] = de::max<int>(S_NULL, Defs().getStateNum(state->text));
+            }
+        }
+
+        if(ded_value_t const *staticSwitch = Defs().getValueById("Weapon Info|" + id + "|Static"))
+        {
+            wminfo->staticSwitch = String(staticSwitch->text).toInt();
+        }
     }
 
     /// @todo Get this info from values.
@@ -221,28 +259,36 @@ void P_InitWeaponInfo(void)
     P_SetWeaponSlot(WT_SIXTH, 6);
     P_SetWeaponSlot(WT_SEVENTH, 7);
     P_SetWeaponSlot(WT_TENTH, 8);
-
-#undef WPINF
 }
 
-void P_InitPlayerValues(player_t *p)
+void P_InitPlayerValues(player_t *plr)
 {
-    DENG2_ASSERT(p);
+    DENG2_ASSERT(plr);
 
-    GetDefInt("Player|Health", &p->health);
-    GetDefInt("Player|Weapon", (int *) &p->readyWeapon);
-    p->pendingWeapon = p->readyWeapon;
-
-    char buf[40];
-    for(int i = 0; i < NUM_WEAPON_TYPES; ++i)
+    if(ded_value_t const *health = Defs().getValueById("Player|Health"))
     {
-        sprintf(buf, "Weapon Info|%i|Owned", i);
-        GetDefInt(buf, (int *) &p->weapons[i].owned);
+        plr->health = String(health->text).toInt();
     }
 
-    for(int i = 0; i < NUM_AMMO_TYPES; ++i)
+    if(ded_value_t const *weapon = Defs().getValueById("Player|Weapon"))
     {
-        sprintf(buf, "Player|Init ammo|%s", ammoTypeNames[i]);
-        GetDefInt(buf, &p->ammo[i].owned);
+        plr->readyWeapon = weapontype_t( String(weapon->text).toInt() );
+    }
+    plr->pendingWeapon = plr->readyWeapon;
+
+    for(auto i = int( WT_FIRST ); i < NUM_WEAPON_TYPES; ++i)
+    {
+        if(ded_value_t const *owned = Defs().getValueById("Weapon Info|" + String::number(i) + "|Owned"))
+        {
+            plr->weapons[i].owned = String(owned->text).toInt();
+        }
+    }
+
+    for(auto i = int( AT_FIRST ); i < NUM_AMMO_TYPES; ++i)
+    {
+        if(ded_value_t const *owned = Defs().getValueById("Player|Init ammo|" + ammoTypeName(i)))
+        {
+            plr->ammo[i].owned = String(owned->text).toInt();
+        }
     }
 }

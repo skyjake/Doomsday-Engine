@@ -1,7 +1,7 @@
 /** @file player.cpp  Common playsim routines relating to players.
  *
  * @authors Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -30,6 +30,7 @@
 #include "d_netsv.h"
 #include "dmu_lib.h"
 #include "g_common.h"
+#include "g_defs.h"
 #include "gamesession.h"
 #if __JHERETIC__ || __JHEXEN__
 #  include "hu_inventory.h"

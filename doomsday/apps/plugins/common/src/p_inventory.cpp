@@ -1,6 +1,6 @@
 /** @file p_inventory.cpp  Common code for player inventory.
  *
- * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2009-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -27,6 +27,7 @@
 #include "d_net.h"
 #include "d_netcl.h"
 #include "g_common.h"
+#include "g_defs.h"
 #include "gamesession.h"
 #include "hu_inventory.h"
 #include "player.h"

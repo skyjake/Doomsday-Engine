@@ -1,7 +1,7 @@
-/** @file g_defs.h Game definition lookup utilities.
+/** @file g_defs.h  Game definition lookup utilities.
  *
  * @authors Copyright © 1999-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,7 +21,11 @@
 #ifndef LIBCOMMON_DEFINITION_UTILS_H
 #define LIBCOMMON_DEFINITION_UTILS_H
 
-#ifdef __cplusplus
+#ifndef __cplusplus
+#  error "g_defs.h requires C++"
+#endif
+
+#include <de/String>
 #include <doomsday/defs/ded.h>
 #include <doomsday/uri.h>
 
@@ -58,18 +62,4 @@ de::String FirstPlayableEpisodeId();
  */
 de::Uri TranslateMapWarpNumber(de::String const &episodeId, int warpNumber);
 
-extern "C" {
-#endif
-
-/**
- * @return  The default for a value (retrieved from Doomsday).
- */
-int GetDefInt(char const *def, int *returnVal);
-
-void GetDefState(char const *def, int *returnVal);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif // LIBCOMMON_DEFINITION_UTILS_H
+#endif  // LIBCOMMON_DEFINITION_UTILS_H

@@ -43,6 +43,7 @@
 #include "dmu_lib.h"
 #include "fi_lib.h"
 #include "g_controls.h"
+#include "g_defs.h"
 #include "g_eventsequence.h"
 #include "g_update.h"
 #include "gamesession.h"
