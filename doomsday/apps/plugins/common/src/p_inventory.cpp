@@ -277,28 +277,15 @@ def_invitem_t const *P_GetInvItemDef(inventoryitemtype_t type)
     return itemDefForType(type);
 }
 
-static acfnptr_t getActionPtr(char const *name)
-{
-    if(name && name[0])
-    {
-        for(actionlink_t *link = actionlinks; link->name; link++)
-        {
-            if(!strcmp(name, link->name))
-                return link->func;
-        }
-    }
-    return 0;
-}
-
 void P_InitInventory()
 {
     de::zap(invItems);
 
     for(int i = 0; i < NUM_INVENTORYITEM_TYPES - 1; ++i)
     {
+        invitem_t *data          = &invItems[i];
         inventoryitemtype_t type = inventoryitemtype_t(IIT_FIRST + i);
         def_invitem_t const *def = P_GetInvItemDef(type);
-        invitem_t *data          = &invItems[i];
 
         // Skip items unavailable for the current game mode.
         if(!(def->gameModeBits & gameModeBits))
@@ -306,7 +293,7 @@ void P_InitInventory()
 
         data->type     = type;
         data->niceName = textenum_t(Defs().getTextNum(def->niceName));
-        data->action   = getActionPtr(def->action);
+        Def_Get(DD_DEF_ACTION, def->action, &data->action);
         data->useSnd   = sfxenum_t(Defs().getSoundNum(def->useSnd));
         data->patchId  = R_DeclarePatch(def->patch);
     }

@@ -158,8 +158,6 @@ void Def_PostInit();
  */
 void Def_Read();
 
-int Def_GetActionNum(char const *id);
-
 de::String Def_GetStateName(state_t *state);
 
 /**

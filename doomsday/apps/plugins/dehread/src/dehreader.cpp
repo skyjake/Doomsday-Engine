@@ -1633,7 +1633,7 @@ public:
                     }
                     else
                     {
-                        if(Def_Get(DD_DEF_ACTION, action.toUtf8(), 0) >= 0)
+                        if(Def_Get(DD_DEF_ACTION, action.toUtf8().constData(), nullptr))
                         {
                             state.set("action", action);
                             LOG_DEBUG("State #%i \"%s\" action => \"%s\"")

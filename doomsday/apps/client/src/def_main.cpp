@@ -25,6 +25,7 @@
 
 #include <cctype>
 #include <cstring>
+#include <QMap>
 #include <QTextStream>
 #include <de/findfile.h>
 #include <de/App>
@@ -81,6 +82,9 @@ RuntimeDefs runtimeDefs;
 static bool defsInited;
 static mobjinfo_t *gettingFor;
 
+typedef QMap<String, acfnptr_t> ActionMap;  ///< name => native function pointer.
+static ActionMap actions;
+
 static xgclass_t nullXgClassLinks;  ///< Used when none defined.
 static xgclass_t *xgClassLinks;
 
@@ -110,21 +114,29 @@ void RuntimeDefs::clear()
 
 void Def_GetGameClasses()
 {
+    // XG ckass links are provided by the game (which defines the class specific parameter names).
     ::xgClassLinks = nullptr;
-
     if(gx.GetVariable)
     {
         ::xgClassLinks = (xgclass_t *) gx.GetVariable(DD_XGFUNC_LINK);
     }
-
     if(!::xgClassLinks)
     {
-        de::zap(::nullXgClassLinks);
         ::xgClassLinks = &::nullXgClassLinks;
     }
-
     // Let the parser know of the XG classes.
     DED_SetXGClassLinks(::xgClassLinks);
+
+    // Action links are provided by the game (which owns the actual action functions).
+    ::actions.clear();
+    if(gx.GetVariable)
+    {
+        auto const *links = (actionlink_t const *) gx.GetVariable(DD_ACTION_LINK);
+        for(actionlink_t const *link = links; link && link->name; link++)
+        {
+            ::actions.insert(String(link->name).toLower(), link->func);
+        }
+    }
 }
 
 void Def_Init()
@@ -165,6 +177,16 @@ void Def_Destroy()
     ::defsInited = false;
 }
 
+acfnptr_t Def_GetActionPtr(String const &name)
+{
+    if(!name.isEmpty())
+    {
+        auto found = actions.find(name.toLower());
+        if(found != actions.end()) return found.value();
+    }
+    return nullptr;  // Not found.
+}
+
 state_t *Def_GetState(dint num)
 {
     if(num >= 0 && num < ::defs.states.size())
@@ -172,38 +194,6 @@ state_t *Def_GetState(dint num)
         return &::runtimeDefs.states[num];
     }
     return nullptr;  // Not found.
-}
-
-acfnptr_t Def_GetActionPtr(char const *name)
-{
-    if(!name || !name[0]) return nullptr;
-    if(!App_GameLoaded()) return nullptr;
-
-    // Action links are provided by the game, who owns the actual action functions.
-    auto *links = (actionlink_t *) gx.GetVariable(DD_ACTION_LINK);
-    for(actionlink_t *linkIt = links; linkIt && linkIt->name; linkIt++)
-    {
-        actionlink_t *link = linkIt;
-        if(!qstricmp(name, link->name))
-            return link->func;
-    }
-    return nullptr;
-}
-
-dint Def_GetActionNum(char const *name)
-{
-    if(name && name[0] && App_GameLoaded())
-    {
-        // Action links are provided by the game, who owns the actual action functions.
-        auto *links = (actionlink_t *) gx.GetVariable(DD_ACTION_LINK);
-        for(actionlink_t *linkIt = links; linkIt && linkIt->name; linkIt++)
-        {
-            actionlink_t *link = linkIt;
-            if(!qstricmp(name, link->name))
-                return linkIt - links;
-        }
-    }
-    return -1;  // Not found.
 }
 
 ded_compositefont_t *Def_GetCompositeFont(char const *uri)
@@ -1244,7 +1234,7 @@ void Def_Read()
         st->flags     = dst.geti("flags");
         st->frame     = dst.geti("frame");
         st->tics      = dst.geti("tics");
-        st->action    = Def_GetActionPtr(dst.gets("action").toLatin1());
+        st->action    = Def_GetActionPtr(dst.gets("action"));
         st->nextState = defs.getStateNum(dst.gets("nextState"));
 
         auto const &misc = dst.geta("misc");
@@ -1885,7 +1875,12 @@ dint Def_Get(dint type, char const *id, void *out)
     switch(type)
     {
     case DD_DEF_ACTION:
-        return Def_GetActionNum(id);
+        if(acfnptr_t action = Def_GetActionPtr(id))
+        {
+            if(out) *(acfnptr_t *)out = action;
+            return true;
+        }
+        return false;
 
     case DD_DEF_SOUND_LUMPNAME: {
         dint32 i = *((dint32 *) id);
