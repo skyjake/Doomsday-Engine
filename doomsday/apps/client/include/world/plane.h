@@ -1,7 +1,7 @@
 /** @file plane.h  World map plane.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,18 +18,19 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_PLANE_H
-#define DENG_WORLD_PLANE_H
+#ifndef WORLD_PLANE_H
+#define WORLD_PLANE_H
 
 #ifdef __CLIENT__
 #  include <de/Error>
 #endif
 #include <de/Observers>
+#include <de/String>
 #include <de/Vector>
 
-#include "dd_share.h" // SoundEmitter
+#include "dd_share.h"  // SoundEmitter
 #ifdef __CLIENT__
-#  include "def_main.h" // ded_ptcgen_t
+#  include "def_main.h"  // ded_ptcgen_t
 #endif
 #include "MapElement"
 
@@ -83,6 +84,11 @@ public:
     Plane(Sector &sector,
           de::Vector3f const &normal = de::Vector3f(0, 0, 1),
           coord_t height             = 0);
+
+    /**
+     * Composes a human-friendly, styled, textual description of the plane.
+     */
+    de::String description() const;
 
     /**
      * Returns the owning Sector of the plane.
@@ -248,4 +254,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-#endif  // DENG_WORLD_PLANE_H
+#endif  // WORLD_PLANE_H

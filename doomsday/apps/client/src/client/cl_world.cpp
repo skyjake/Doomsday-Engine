@@ -1,7 +1,7 @@
 /** @file cl_world.cpp  Clientside world management.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,19 +21,20 @@
 #include "de_base.h"
 #include "client/cl_world.h"
 
+#include <QVector>
+#include <de/stringarray.h>
+
 #include "client/cl_player.h"
 
 #include "api_map.h"
-#include "api_materialarchive.h"
-
-#include "network/net_msg.h"
-#include "network/protocol.h"
-
 #include "world/map.h"
 #include "Sector"
 #include "Surface"
 
-#include <QVector>
+#include "network/net_msg.h"
+#include "network/protocol.h"
+
+#include "api_materialarchive.h"
 
 using namespace de;
 
@@ -87,9 +88,9 @@ void Cl_ReadServerMobjTypeIDs()
     xlatMobjType.resize(StringArray_Size(ar));
 
     // Translate the type IDs to local.
-    for(int i = 0; i < StringArray_Size(ar); ++i)
+    for(dint i = 0; i < StringArray_Size(ar); ++i)
     {
-        xlatMobjType[i] = Def_GetMobjNum(StringArray_At(ar, i));
+        xlatMobjType[i] = ::defs.getMobjNum(StringArray_At(ar, i));
         if(xlatMobjType[i] < 0)
         {
             LOG_NET_WARNING("Could not find '%s' in local thing definitions")
@@ -112,9 +113,9 @@ void Cl_ReadServerMobjStateIDs()
     xlatMobjState.resize(StringArray_Size(ar));
 
     // Translate the type IDs to local.
-    for(int i = 0; i < StringArray_Size(ar); ++i)
+    for(dint i = 0; i < StringArray_Size(ar); ++i)
     {
-        xlatMobjState[i] = Def_GetStateNum(StringArray_At(ar, i));
+        xlatMobjState[i] = ::defs.getStateNum(StringArray_At(ar, i));
         if(xlatMobjState[i] < 0)
         {
             LOG_NET_WARNING("Could not find '%s' in local state definitions")

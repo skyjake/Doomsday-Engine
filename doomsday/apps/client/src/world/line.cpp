@@ -1,7 +1,7 @@
 /** @file line.cpp  World map line.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -23,13 +23,15 @@
 #include <QList>
 #include <QMap>
 #include <QtAlgorithms>
+#include <doomsday/console/cmd.h>
 
-#include "dd_main.h" // App_Materials(), verbose
+#include "dd_main.h"  // App_Materials(), verbose
 #include "m_misc.h"
 
 #include "Face"
 #include "HEdge"
 
+#include "world/map.h"
 #include "ConvexSubspace"
 #include "Sector"
 #include "SectorCluster"
@@ -38,10 +40,12 @@
 #include "world/maputil.h"
 
 #ifdef __CLIENT__
-#  include "world/map.h"
 #  include "world/lineowner.h"
 #  include "resource/materialdetaillayer.h"
 #  include "resource/materialshinelayer.h"
+
+#  include "render/r_main.h"  // levelFullBright
+#  include "render/rend_fakeradio.h"
 #endif
 
 #ifdef WIN32
@@ -107,7 +111,7 @@ void Line::Side::Segment::setFrontFacing(bool yes)
     d->frontFacing = yes;
 }
 
-#endif // __CLIENT__
+#endif  // __CLIENT__
 
 DENG2_PIMPL_NOREF(Line::Side)
 #ifdef __CLIENT__
@@ -143,6 +147,28 @@ DENG2_PIMPL_NOREF(Line::Side)
         Sections(Side &side) : middle(side), bottom(side), top(side) {}
     };
     std::unique_ptr<Sections> sections;
+
+#ifdef __CLIENT__
+    /**
+     * Stores data for FakeRadio.
+     */
+    struct RadioData
+    {
+        de::dint updateFrame = 0;
+        edgespan_t spans[2];              ///< { bottom, top }
+        shadowcorner_t topCorners[2];     ///< { left, right }
+        shadowcorner_t bottomCorners[2];  ///< { left, right }
+        shadowcorner_t sideCorners[2];    ///< { left, right }
+
+        RadioData()
+        {
+            de::zap(spans);
+            de::zap(topCorners);
+            de::zap(bottomCorners);
+            de::zap(sideCorners);
+        }
+    } radioData;
+#endif
 
     ~Instance() { qDeleteAll(segments); }
 
@@ -181,6 +207,54 @@ DENG2_PIMPL_NOREF(Line::Side)
     }
 
 #ifdef __CLIENT__
+    void updateRadioCorner(shadowcorner_t &sc, dfloat openness, Plane *proximityPlane = nullptr, bool top = false)
+    {
+        DENG2_ASSERT(sector);
+        sc.corner    = openness;
+        sc.proximity = proximityPlane;
+        if(sc.proximity)
+        {
+            // Determine relative height offsets (affects shadow map selection).
+            sc.pHeight = sc.proximity->heightSmoothed();
+            sc.pOffset = sc.pHeight - sector->plane(top? Sector::Ceiling : Sector::Floor).heightSmoothed();
+        }
+        else
+        {
+            sc.pOffset = 0;
+            sc.pHeight = 0;
+        }
+    }
+
+    /**
+     * Change the FakeRadio side corner properties.
+     */
+    inline void setRadioCornerTop(bool right, dfloat openness, Plane *proximityPlane = nullptr)
+    {
+        updateRadioCorner(radioData.topCorners[dint(right)], openness, proximityPlane, true/*top*/);
+    }
+    inline void setRadioCornerBottom(bool right, dfloat openness, Plane *proximityPlane = nullptr)
+    {
+        updateRadioCorner(radioData.bottomCorners[dint(right)], openness, proximityPlane, false/*bottom*/);
+    }
+    inline void setRadioCornerSide(bool right, dfloat openness)
+    {
+        updateRadioCorner(radioData.sideCorners[dint(right)], openness);
+    }
+
+    /**
+     * Change the FakeRadio "edge span" metrics.
+     * @todo replace shadow edge enumeration with a shadow corner enumeration.
+     */
+    void setRadioEdgeSpan(bool top, bool right, ddouble length)
+    {
+        edgespan_t &span = radioData.spans[dint(top)];
+        span.length = length;
+        if(!right)
+        {
+            span.shift = span.length;
+        }
+    }
+
     /// Observes Line FlagsChange
     void lineFlagsChanged(Line &line, dint oldFlags)
     {
@@ -209,7 +283,46 @@ Line::Side::Side(Line &line, Sector *sector)
 #endif
 }
 
-int Line::Side::sideId() const
+String Line::Side::description() const
+{
+    String const name = (isFront() ? "Front" : "Back");
+
+    QStringList flagNames;
+    if(flags() & SDF_BLENDTOPTOMID)    flagNames << "blendtoptomiddle";
+    if(flags() & SDF_BLENDMIDTOTOP)    flagNames << "blendmiddletotop";
+    if(flags() & SDF_BLENDMIDTOBOTTOM) flagNames << "blendmiddletobottom";
+    if(flags() & SDF_BLENDBOTTOMTOMID) flagNames << "blendbottomtomiddle";
+    if(flags() & SDF_MIDDLE_STRETCH)   flagNames << "middlestretch";
+
+    String flagsString;
+    if(!flagNames.isEmpty())
+    {
+        String const flagsAsText = flagNames.join("|");
+        flagsString = String(_E(l) " Flags: " _E(.)_E(i) "%1" _E(.)).arg(flagsAsText);
+    }
+
+    auto text = String(_E(D)_E(b) "%1:\n"  _E(.)_E(.)
+                       _E(l)  "Sector: "    _E(.)_E(i) "%2" _E(.)
+                       _E(l) " One Sided: " _E(.)_E(i) "%3" _E(.)
+                       "%4")
+                    .arg(name)
+                    .arg(hasSector() ? String::number(sector().indexInMap()) : "None")
+                    .arg(DENG2_BOOL_YESNO(considerOneSided()))
+                    .arg(flagsString);
+    forAllSurfaces([this, &text] (Surface &suf)
+    {
+        String const name =   &suf == &top   () ? "Top"
+                            : &suf == &middle() ? "Middle"
+                                                : "Bottom";
+        text += String("\n" _E(D) "%1:\n" _E(.)).arg(name)
+                + suf.description();
+        return LoopContinue;
+    });
+
+    return text;
+}
+
+dint Line::Side::sideId() const
 {
     return &line().front() == this? Line::Front : Line::Back;
 }
@@ -272,6 +385,19 @@ Surface &Line::Side::surface(dint sectionId)
 Surface const &Line::Side::surface(dint sectionId) const
 {
     return const_cast<Side *>(this)->surface(sectionId);
+}
+
+LoopResult Line::Side::forAllSurfaces(std::function<LoopResult(Surface &)> func) const
+{
+    if(hasSections())
+    {
+        for(dint i = Middle; i <= Top; ++i)
+        {
+            if(auto result = func(const_cast<Side *>(this)->surface(i)))
+                return result;
+        }
+    }
+    return LoopContinue;
 }
 
 SoundEmitter &Line::Side::soundEmitter(dint sectionId)
@@ -544,13 +670,13 @@ static Material *chooseFixMaterial(LineSide &side, dint section)
     {
         // Our first choice is a material on an adjacent wall section.
         // Try the left neighbor first.
-        Line *other = R_FindLineNeighbor(frontSec, &side.line(), side.line().vertexOwner(side.sideId()),
-                                         false /*next clockwise*/);
+        Line *other = R_FindLineNeighbor(side.line(), *side.line().vertexOwner(side.sideId()),
+                                         Clockwise, frontSec);
         if(!other)
         {
             // Try the right neighbor.
-            other = R_FindLineNeighbor(frontSec, &side.line(), side.line().vertexOwner(side.sideId()^1),
-                                       true /*next anti-clockwise*/);
+            other = R_FindLineNeighbor(side.line(), *side.line().vertexOwner(side.sideId()^1),
+                                       Anticlockwise, frontSec);
         }
 
         if(other)
@@ -690,7 +816,294 @@ void Line::Side::fixMissingMaterials()
     }
 }
 
-#endif // __CLIENT__
+shadowcorner_t const &Line::Side::radioCornerTop(bool right) const
+{
+    return d->radioData.topCorners[dint(right)];
+}
+
+shadowcorner_t const &Line::Side::radioCornerBottom(bool right) const
+{
+    return d->radioData.bottomCorners[dint(right)];
+}
+
+shadowcorner_t const &Line::Side::radioCornerSide(bool right) const
+{
+    return d->radioData.sideCorners[dint(right)];
+}
+
+edgespan_t const &Line::Side::radioEdgeSpan(bool top) const
+{
+    return d->radioData.spans[dint(top)];
+}
+
+/**
+ * Convert a corner @a angle to a "FakeRadio corner openness" factor.
+ */
+static dfloat radioCornerOpenness(binangle_t angle)
+{
+    // Facing outwards?
+    if(angle > BANG_180) return -1;
+
+    // Precisely collinear?
+    if(angle == BANG_180) return 0;
+
+    // If the difference is too small consider it collinear (there won't be a shadow).
+    if(angle < BANG_45 / 5) return 0;
+
+    // 90 degrees is the largest effective difference.
+    return (angle > BANG_90)? dfloat( BANG_90 ) / angle : dfloat( angle ) / BANG_90;
+}
+
+static inline binangle_t lineNeighborAngle(LineSide const &side, Line const *other, binangle_t diff)
+{
+    return (other && other != &side.line())? diff : 0 /*Consider it coaligned*/;
+}
+
+static binangle_t findSolidLineNeighborAngle(LineSide const &side, bool right)
+{
+    binangle_t diff = 0;
+    Line const *other = R_FindSolidLineNeighbor(side.line(),
+                                                *side.line().vertexOwner(dint(right) ^ side.sideId()),
+                                                right ? Anticlockwise : Clockwise, side.sectorPtr(), &diff);
+    return lineNeighborAngle(side, other, diff);
+}
+
+/**
+ * Returns @c true if there is open space in the sector.
+ */
+static inline bool sectorOpen(Sector const *sector)
+{
+    return (sector && sector->ceiling().height() > sector->floor().height());
+}
+
+struct edge_t
+{
+    Line *line;
+    Sector *sector;
+    dfloat length;
+    binangle_t diff;
+};
+
+/// @todo fixme: Should be rewritten to work at half-edge level.
+/// @todo fixme: Should use the visual plane heights of sector clusters.
+static void scanNeighbor(LineSide const &side, bool top, bool right, edge_t &edge)
+{
+    static dint const SEP = 10;
+
+    de::zap(edge);
+
+    ClockDirection const direction = (right ? Anticlockwise : Clockwise);
+    Sector const *startSector = side.sectorPtr();
+    coord_t const fFloor      = side.sector().floor  ().heightSmoothed();
+    coord_t const fCeil       = side.sector().ceiling().heightSmoothed();
+
+    coord_t gap    = 0;
+    LineOwner *own = side.line().vertexOwner(side.vertex(dint(right)));
+    forever
+    {
+        // Select the next line.
+        binangle_t diff  = (direction == Clockwise ? own->angle() : own->prev().angle());
+        Line const *iter = &own->navigate(direction).line();
+        dint scanSecSide = (iter->hasFrontSector() && iter->frontSectorPtr() == startSector ? Line::Back : Line::Front);
+        // Step selfreferencing lines.
+        while((!iter->hasFrontSector() && !iter->hasBackSector()) || iter->isSelfReferencing())
+        {
+            own         = &own->navigate(direction);
+            diff       += (direction == Clockwise ? own->angle() : own->prev().angle());
+            iter        = &own->navigate(direction).line();
+            scanSecSide = (iter->frontSectorPtr() == startSector);
+        }
+
+        // Determine the relative backsector.
+        LineSide const &scanSide = iter->side(scanSecSide);
+        Sector const *scanSector = scanSide.sectorPtr();
+
+        // Select plane heights for relative offset comparison.
+        coord_t const iFFloor = iter->frontSector().floor  ().heightSmoothed();
+        coord_t const iFCeil  = iter->frontSector().ceiling().heightSmoothed();
+        Sector const *bsec    = iter->backSectorPtr();
+        coord_t const iBFloor = (bsec ? bsec->floor  ().heightSmoothed() : 0);
+        coord_t const iBCeil  = (bsec ? bsec->ceiling().heightSmoothed() : 0);
+
+        // Determine whether the relative back sector is closed.
+        bool closed = false;
+        if(side.isFront() && iter->hasBackSector())
+        {
+            closed = top? (iBFloor >= fCeil) : (iBCeil <= fFloor);  // Compared to "this" sector anyway.
+        }
+
+        // This line will attribute to this segment's shadow edge - remember it.
+        edge.line   = const_cast<Line *>(iter);
+        edge.diff   = diff;
+        edge.sector = scanSide.sectorPtr();
+
+        // Does this line's length contribute to the alignment of the texture on the
+        // segment shadow edge being rendered?
+        coord_t lengthDelta = 0;
+        if(top)
+        {
+            if(iter->hasBackSector()
+                && (   (side.isFront() && iter->backSectorPtr() == side.line().frontSectorPtr() && iFCeil >= fCeil)
+                    || (side.isBack () && iter->backSectorPtr() == side.line().backSectorPtr () && iFCeil >= fCeil)
+                    || (side.isFront() && closed == false && iter->backSectorPtr() != side.line().frontSectorPtr()
+                        && iBCeil >= fCeil && sectorOpen(iter->backSectorPtr()))))
+            {
+                gap += iter->length();  // Should we just mark it done instead?
+            }
+            else
+            {
+                edge.length += iter->length() + gap;
+                gap = 0;
+            }
+        }
+        else
+        {
+            if(iter->hasBackSector()
+                && (   (side.isFront() && iter->backSectorPtr() == side.line().frontSectorPtr() && iFFloor <= fFloor)
+                    || (side.isBack () && iter->backSectorPtr() == side.line().backSectorPtr () && iFFloor <= fFloor)
+                    || (side.isFront() && closed == false && iter->backSectorPtr() != side.line().frontSectorPtr()
+                        && iBFloor <= fFloor && sectorOpen(iter->backSectorPtr()))))
+            {
+                gap += iter->length();  // Should we just mark it done instead?
+            }
+            else
+            {
+                lengthDelta = iter->length() + gap;
+                gap = 0;
+            }
+        }
+
+        // Time to stop?
+        if(iter == &side.line())
+            break;
+        // Not coalignable?
+        if(!(diff >= BANG_180 - SEP && diff <= BANG_180 + SEP))
+            break;  // No.
+        // Perhaps a closed edge?
+        if(scanSector)
+        {
+            if(!sectorOpen(scanSector))
+                break;
+
+            // A height difference from the start sector?
+            if(top)
+            {
+                if(scanSector->ceiling().heightSmoothed() != fCeil
+                   && scanSector->floor().heightSmoothed() < startSector->ceiling().heightSmoothed())
+                {
+                    break;
+                }
+            }
+            else
+            {
+                if(scanSector->floor().heightSmoothed() != fFloor
+                   && scanSector->ceiling().heightSmoothed() > startSector->floor().heightSmoothed())
+                {
+                    break;
+                }
+            }
+        }
+
+        // Swap to the iter line's owner node (i.e., around the corner)?
+        if(&own->navigate(direction) == iter->v2Owner())
+        {
+            own = iter->v1Owner();
+        }
+        else if(&own->navigate(direction) == iter->v1Owner())
+        {
+            own = iter->v2Owner();
+        }
+
+        // Skip into the back neighbor sector of the iter line if heights are within
+        // the accepted range.
+        if(scanSector && side.back().hasSector() && scanSector != side.back().sectorPtr()
+            && (   ( top && scanSector->ceiling().heightSmoothed() == startSector->ceiling().heightSmoothed())
+                || (!top && scanSector->floor  ().heightSmoothed() == startSector->floor  ().heightSmoothed())))
+        {
+            // If the map is formed correctly, we should find a back neighbor attached
+            // to this line. However, if this is not the case and a line which *should*
+            // be two sided isn't, we need to check whether there is a valid neighbor.
+            Line *backNeighbor = R_FindLineNeighbor(*iter, *own, direction, startSector);
+
+            if(backNeighbor && backNeighbor != iter)
+            {
+                // Into the back neighbor sector.
+                own = &own->navigate(direction);
+                startSector = scanSector;
+            }
+        }
+
+        // The last line was co-alignable so apply any length delta.
+        edge.length += lengthDelta;
+    }
+
+    // Now we've found the furthest coalignable neighbor, select the back neighbor if
+    // present for "edge open-ness" comparison.
+    if(edge.sector)  // The back sector of the coalignable neighbor.
+    {
+        // Since we have the details of the backsector already, simply get the next
+        // neighbor (it *is* the back neighbor).
+        DENG2_ASSERT(edge.line);
+        edge.line = R_FindLineNeighbor(*edge.line,
+                                       *edge.line->vertexOwner(dint(edge.line->hasBackSector() && edge.line->backSectorPtr() == edge.sector) ^ dint(right)),
+                                       direction, edge.sector, &edge.diff);
+    }
+}
+
+/**
+ * To determine the dimensions of a shadow, we'll need to scan edges. Edges are composed
+ * of aligned lines. It's important to note that the scanning is done separately for the
+ * top/bottom edges (both in the left and right direction) and the left/right edges.
+ *
+ * The length of the top/bottom edges are returned in the array 'spans'.
+ *
+ * This may look like a complicated operation (performed for all line sides) but in most
+ * cases this won't take long. Aligned neighbours are relatively rare.
+ *
+ * @todo fixme: Should use the visual plane heights of sector clusters.
+ */
+void Line::Side::updateRadioForFrame(dint frameNumber)
+{
+    // Disabled completely?
+    if(!::rendFakeRadio || ::levelFullBright) return;
+
+    // Updates are disabled?
+    if(!::devFakeRadioUpdate) return;
+
+    // Sides without sectors don't need updating.
+    if(!hasSector()) return;
+
+    // Sides of self-referencing lines do not receive shadows. (Not worth it?).
+    if(line().isSelfReferencing()) return;
+
+    // Have already determined the shadow properties?
+    if(d->radioData.updateFrame == frameNumber) return;
+    d->radioData.updateFrame = frameNumber;  // Mark as done.
+
+    // Process the side corners first.
+    d->setRadioCornerSide(false/*left*/, radioCornerOpenness(findSolidLineNeighborAngle(*this, false/*left*/)));
+    d->setRadioCornerSide(true/*right*/, radioCornerOpenness(findSolidLineNeighborAngle(*this, true/*right*/)));
+
+    // Top and bottom corners are somewhat more complex as we must traverse neighbors
+    // to find the extent of the coalignable surfaces for texture mapping/selection.
+    for(dint i = 0; i < 2; ++i)
+    {
+        bool const rightEdge = i != 0;
+
+        edge_t bottom; scanNeighbor(*this, false/*bottom*/, rightEdge, bottom);
+        edge_t top;    scanNeighbor(*this, true/*top*/    , rightEdge, top   );
+
+        d->setRadioEdgeSpan(false/*left*/, rightEdge, line().length() + bottom.length);
+        d->setRadioEdgeSpan(true/*right*/, rightEdge, line().length() + top   .length);
+
+        d->setRadioCornerBottom(rightEdge, radioCornerOpenness(lineNeighborAngle(*this, bottom.line, bottom.diff)),
+                                bottom.sector? &bottom.sector->floor  () : nullptr);
+
+        d->setRadioCornerTop   (rightEdge, radioCornerOpenness(lineNeighborAngle(*this, top   .line, top   .diff)),
+                                top.sector   ? &top   .sector->ceiling() : nullptr);
+    }
+}
+#endif  // __CLIENT__
 
 dint Line::Side::property(DmuArgs &args) const
 {
@@ -843,6 +1256,16 @@ Line::Side &Line::side(dint back)
 Line::Side const &Line::side(dint back) const
 {
     return (back? d->back : d->front);
+}
+
+LoopResult Line::forAllSides(std::function<LoopResult(Side &)> func) const
+{
+    for(dint i = 0; i < 2; ++i)
+    {
+        if(auto result = func(const_cast<Line *>(this)->side(i)))
+            return result;
+    }
+    return LoopContinue;
 }
 
 Vertex &Line::vertex(dint to) const
@@ -1090,4 +1513,65 @@ dint Line::setProperty(DmuArgs const &args)
     }
 
     return false; // Continue iteration.
+}
+
+D_CMD(InspectLine)
+{
+    DENG2_UNUSED(src);
+
+    LOG_AS("inspectline (Cmd)");
+
+    if(argc != 2)
+    {
+        LOG_SCR_NOTE("Usage: %s (line-id)") << argv[0];
+        return true;
+    }
+
+    if(!App_WorldSystem().hasMap())
+    {
+        LOG_SCR_ERROR("No map is currently loaded");
+        return false;
+    }
+
+    // Find the line.
+    dint const index = String(argv[1]).toInt();
+    Line const *line = App_WorldSystem().map().linePtr(index);
+    if(!line)
+    {
+        LOG_SCR_ERROR("Line #%i not found") << index;
+        return false;
+    }
+
+    QStringList flagNames;
+    if(line->flags() & DDLF_BLOCKING)      flagNames << "blocking";
+    if(line->flags() & DDLF_DONTPEGTOP)    flagNames << "nopegtop";
+    if(line->flags() & DDLF_DONTPEGBOTTOM) flagNames << "nopegbottom";
+
+    String flagsString;
+    if(!flagNames.isEmpty())
+    {
+        String const flagsAsText = flagNames.join("|");
+        flagsString = String(_E(l) " Flags: " _E(.)_E(i) "%1" _E(.)).arg(flagsAsText);
+    }
+
+    LOG_SCR_MSG(_E(b) "Line %i" _E(.) " [%p]")
+            << line->indexInMap() << line;
+    LOG_SCR_MSG(_E(l)  "From: " _E(.)_E(i) "%s" _E(.)
+                _E(l) " To: "   _E(.)_E(i) "%s" _E(.)
+                "%s")
+            << line->from().origin().asText()
+            << line->to  ().origin().asText()
+            << flagsString;
+    line->forAllSides([](Line::Side &side)
+    {
+        LOG_SCR_MSG("") << side.description();
+        return LoopContinue;
+    });
+
+    return true;
+}
+
+void Line::consoleRegister()  // static
+{
+    C_CMD("inspectline", "i", InspectLine);
 }

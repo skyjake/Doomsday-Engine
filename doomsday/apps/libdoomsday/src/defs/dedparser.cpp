@@ -128,11 +128,21 @@ using namespace de;
 #define RV_IVEC(lab, X, N)  if(ISLABEL(lab)) { int b; FINDBEGIN; \
                         for(b=0; b<N; ++b) {READINT(X[b])} ReadToken(); } else
 #define RV_NBVEC(lab, X, N) if(ISLABEL(lab)) { READNBYTEVEC(X,N); } else
+#define RV_INT_ELEM(lab, ARRAY, ELEM) if(ISLABEL(lab)) { \
+    int _value; READINT(_value); \
+    (ARRAY).array().setElement(ELEM, _value); } else
+#define RV_FLT_ELEM(lab, ARRAY, ELEM) if(ISLABEL(lab)) { \
+    float _value; READFLT(_value); \
+    (ARRAY).array().setElement(ELEM, _value); } else
+#define RV_STR_ELEM(lab, ARRAY, ELEM) if(ISLABEL(lab)) { \
+    String _value; if(!ReadString(_value)) { FAILURE } \
+    (ARRAY).array().setElement(ELEM, _value); } else
 #define RV_STR(lab, X)  if(ISLABEL(lab)) { READSTR(X); } else
 #define RV_STR_INT(lab, S, I)   if(ISLABEL(lab)) { if(!ReadString(S,sizeof(S))) \
                                 I = strtol(token,0,0); } else
 #define RV_URI(lab, X, RN)  if(ISLABEL(lab)) { READURI(X, RN); } else
 #define RV_FLAGS(lab, X, P) if(ISLABEL(lab)) { READFLAGS(X, P); } else
+#define RV_FLAGS_ELEM(lab, X, ELEM, P) if(ISLABEL(lab)) { if(!ReadFlags(&X, P, ELEM)) { FAILURE } } else
 #define RV_BLENDMODE(lab, X) if(ISLABEL(lab)) { READBLENDMODE(X); } else
 #define RV_ANYSTR(lab, X)   if(ISLABEL(lab)) { if(!ReadAnyString(&X)) { FAILURE } } else
 #define RV_END          { setError("Unknown label '" + String(label) + "'."); retVal = false; goto ded_end_read; }
@@ -501,7 +511,7 @@ DENG2_PIMPL(DEDParser)
             ReadToken();
             if(ISTOKEN("}"))
                 return true;
-            var.value<ArrayValue>().setElement(i, strtoul(token, 0, 0));
+            var.array().setElement(i, strtoul(token, 0, 0));
         }
         FINDEND;
         return true;
@@ -584,7 +594,7 @@ DENG2_PIMPL(DEDParser)
         {
             float value = 0;
             if(!ReadFloat(&value)) return false;
-            var.value<ArrayValue>().setElement(b, value);
+            var.array().setElement(b, value);
         }
         ReadToken();
         return true;
@@ -621,7 +631,7 @@ DENG2_PIMPL(DEDParser)
 
             if(!flag.isEmpty())
             {
-                *dest = ded->evalFlags2(flag.toUtf8().constData());
+                *dest = ded->evalFlags(flag.toUtf8().constData());
             }
             return true;
         }
@@ -643,7 +653,7 @@ DENG2_PIMPL(DEDParser)
 
             if(!flag.isEmpty())
             {
-                *dest |= ded->evalFlags2(flag.toUtf8().constData());
+                *dest |= ded->evalFlags(flag.toUtf8().constData());
             }
 
             if(!ReadToken())
@@ -659,12 +669,20 @@ DENG2_PIMPL(DEDParser)
         return true;
     }
 
-    int ReadFlags(Variable *dest, char const *prefix)
+    int ReadFlags(Variable *dest, char const *prefix, int elementIndex = -1)
     {
         int value = 0;
         if(ReadFlags(&value, prefix))
         {
-            dest->set(NumberValue(value, NumberValue::Hex));
+            std::unique_ptr<NumberValue> flagsValue(new NumberValue(value, NumberValue::Hex));
+            if(elementIndex < 0)
+            {
+                dest->set(flagsValue.release());
+            }
+            else
+            {
+                dest->array().setElement(NumberValue(elementIndex), flagsValue.release());
+            }
             return true;
         }
         return false;
@@ -684,7 +702,7 @@ DENG2_PIMPL(DEDParser)
             // The old format.
             if(!ReadString(flag)) return false;
 
-            bm = blendmode_t(ded->evalFlags2(flag.toUtf8().constData()));
+            bm = blendmode_t(ded->evalFlags(flag.toUtf8().constData()));
         }
         else
         {
@@ -693,7 +711,7 @@ DENG2_PIMPL(DEDParser)
 
             flag = String("bm_") + String(token);
 
-            bm = blendmode_t(ded->evalFlags2(flag.toUtf8().constData()));
+            bm = blendmode_t(ded->evalFlags(flag.toUtf8().constData()));
         }
 
         if(bm != BM_NORMAL)
@@ -1039,7 +1057,7 @@ DENG2_PIMPL(DEDParser)
                                 {
                                     QScopedPointer<Record> map(new Record);
                                     defn::MapGraphNode(*map).resetToDefaults();
-                                    (*hubRec)["map"].value<ArrayValue>()
+                                    (*hubRec)["map"].array()
                                             .add(new RecordValue(map.take(), RecordValue::OwnsRecord));
                                 }
                                 DENG_ASSERT(map < int(hubRec->geta("map").size()));
@@ -1094,7 +1112,7 @@ DENG2_PIMPL(DEDParser)
                         {
                             QScopedPointer<Record> map(new Record);
                             defn::MapGraphNode(*map).resetToDefaults();
-                            (*epsd)["map"].value<ArrayValue>()
+                            (*epsd)["map"].array()
                                     .add(new RecordValue(map.take(), RecordValue::OwnsRecord));
                         }
                         DENG_ASSERT(notHubMap < int(epsd->geta("map").size()));
@@ -1151,21 +1169,20 @@ DENG2_PIMPL(DEDParser)
             if(ISTOKEN("Mobj") || ISTOKEN("Thing"))
             {
                 dd_bool bModify = false;
-                ded_mobj_t* mo;
-                Dummy<ded_mobj_t> dummyMo;
+                Record* mo;
+                Record dummyMo;
 
                 ReadToken();
                 if(!ISTOKEN("Mods"))
                 {
                     // A new mobj type.
-                    idx = DED_AddMobj(ded, "");
-                    mo = &ded->mobjs[idx];
+                    idx = ded->addThing("");
+                    mo = &ded->things[idx];
                 }
                 else if(!bCopyNext)
                 {
-                    ded_mobjid_t otherMobjId;
-
-                    READSTR(otherMobjId);
+                    String otherMobjId;
+                    if(!ReadString(otherMobjId)) { FAILURE }
                     ReadToken();
 
                     idx = ded->getMobjNum(otherMobjId);
@@ -1181,7 +1198,7 @@ DENG2_PIMPL(DEDParser)
                     }
                     else
                     {
-                        mo = &ded->mobjs[idx];
+                        mo = &ded->things[idx];
                         bModify = true;
                     }
                 }
@@ -1195,7 +1212,7 @@ DENG2_PIMPL(DEDParser)
                 if(prevMobjDefIdx >= 0 && bCopyNext)
                 {
                     // Should we copy the previous definition?
-                    ded->mobjs.copyTo(mo, prevMobjDefIdx);
+                    ded->things.copy(prevMobjDefIdx, *mo);
                 }
 
                 FINDBEGIN;
@@ -1205,39 +1222,42 @@ DENG2_PIMPL(DEDParser)
                     // ID cannot be changed when modifying
                     if(!bModify && ISLABEL("ID"))
                     {
-                        READSTR(mo->id);
+                        READSTR((*mo)["id"]);
                     }
-                    else RV_INT("DoomEd number", mo->doomEdNum)
-                    RV_STR("Name", mo->name)
-                    RV_STR("Spawn state", mo->states[SN_SPAWN])
-                    RV_STR("See state", mo->states[SN_SEE])
-                    RV_STR("Pain state", mo->states[SN_PAIN])
-                    RV_STR("Melee state", mo->states[SN_MELEE])
-                    RV_STR("Missile state", mo->states[SN_MISSILE])
-                    RV_STR("Crash state", mo->states[SN_CRASH])
-                    RV_STR("Death state", mo->states[SN_DEATH])
-                    RV_STR("Xdeath state", mo->states[SN_XDEATH])
-                    RV_STR("Raise state", mo->states[SN_RAISE])
-                    RV_STR("See sound", mo->seeSound)
-                    RV_STR("Attack sound", mo->attackSound)
-                    RV_STR("Pain sound", mo->painSound)
-                    RV_STR("Death sound", mo->deathSound)
-                    RV_STR("Active sound", mo->activeSound)
-                    RV_INT("Reaction time", mo->reactionTime)
-                    RV_INT("Pain chance", mo->painChance)
-                    RV_INT("Spawn health", mo->spawnHealth)
-                    RV_FLT("Speed", mo->speed)
-                    RV_FLT("Radius", mo->radius)
-                    RV_FLT("Height", mo->height)
-                    RV_INT("Mass", mo->mass)
-                    RV_INT("Damage", mo->damage)
-                    RV_FLAGS("Flags", mo->flags[0], "mf_")
-                    RV_FLAGS("Flags2", mo->flags[1], "mf2_")
-                    RV_FLAGS("Flags3", mo->flags[2], "mf3_")
-                    RV_INT("Misc1", mo->misc[0])
-                    RV_INT("Misc2", mo->misc[1])
-                    RV_INT("Misc3", mo->misc[2])
-                    RV_INT("Misc4", mo->misc[3])
+                    else RV_INT("DoomEd number", (*mo)["doomEdNum"])
+                    RV_STR("Name", (*mo)["name"])
+                        
+                    RV_STR_ELEM("Spawn state",   (*mo)["states"], SN_SPAWN)
+                    RV_STR_ELEM("See state",     (*mo)["states"], SN_SEE)
+                    RV_STR_ELEM("Pain state",    (*mo)["states"], SN_PAIN)
+                    RV_STR_ELEM("Melee state",   (*mo)["states"], SN_MELEE)
+                    RV_STR_ELEM("Missile state", (*mo)["states"], SN_MISSILE)
+                    RV_STR_ELEM("Crash state",   (*mo)["states"], SN_CRASH)
+                    RV_STR_ELEM("Death state",   (*mo)["states"], SN_DEATH)
+                    RV_STR_ELEM("Xdeath state",  (*mo)["states"], SN_XDEATH)
+                    RV_STR_ELEM("Raise state",   (*mo)["states"], SN_RAISE)
+                        
+                    RV_STR_ELEM("See sound",    (*mo)["sounds"], SDN_SEE)
+                    RV_STR_ELEM("Attack sound", (*mo)["sounds"], SDN_ACTIVE)
+                    RV_STR_ELEM("Pain sound",   (*mo)["sounds"], SDN_PAIN)
+                    RV_STR_ELEM("Death sound",  (*mo)["sounds"], SDN_DEATH)
+                    RV_STR_ELEM("Active sound", (*mo)["sounds"], SDN_ACTIVE)
+                        
+                    RV_INT("Reaction time", (*mo)["reactionTime"])
+                    RV_INT("Pain chance", (*mo)["painChance"])
+                    RV_INT("Spawn health", (*mo)["spawnHealth"])
+                    RV_FLT("Speed", (*mo)["speed"])
+                    RV_FLT("Radius", (*mo)["radius"])
+                    RV_FLT("Height", (*mo)["height"])
+                    RV_INT("Mass", (*mo)["mass"])
+                    RV_INT("Damage", (*mo)["damage"])
+                    RV_FLAGS_ELEM("Flags", (*mo)["flags"], 0, "mf_")
+                    RV_FLAGS_ELEM("Flags2", (*mo)["flags"], 1, "mf2_")
+                    RV_FLAGS_ELEM("Flags3", (*mo)["flags"], 2, "mf3_")
+                    RV_INT_ELEM("Misc1", (*mo)["misc"], 0)
+                    RV_INT_ELEM("Misc2", (*mo)["misc"], 1)
+                    RV_INT_ELEM("Misc3", (*mo)["misc"], 2)
+                    RV_INT_ELEM("Misc4", (*mo)["misc"], 3)
                     RV_END
                     CHECKSC;
                 }
@@ -1252,14 +1272,14 @@ DENG2_PIMPL(DEDParser)
             if(ISTOKEN("State"))
             {
                 dd_bool bModify = false;
-                ded_state_t* st;
-                Dummy<ded_state_t> dummyState;
+                Record *st;
+                Record dummyState;
 
                 ReadToken();
                 if(!ISTOKEN("Mods"))
                 {
                     // A new state.
-                    idx = DED_AddState(ded, "");
+                    idx = ded->addState("");
                     st = &ded->states[idx];
                 }
                 else if(!bCopyNext)
@@ -1296,7 +1316,7 @@ DENG2_PIMPL(DEDParser)
                 if(prevStateDefIdx >= 0 && bCopyNext)
                 {
                     // Should we copy the previous definition?
-                    ded->states.copyTo(st, prevStateDefIdx);
+                    ded->states.copy(prevStateDefIdx, *st);
                 }
 
                 FINDBEGIN;
@@ -1306,7 +1326,7 @@ DENG2_PIMPL(DEDParser)
                     // ID cannot be changed when modifying
                     if(!bModify && ISLABEL("ID"))
                     {
-                        READSTR(st->id);
+                        READSTR((*st)["id"]);
                     }
                     else if(ISLABEL("Frame"))
                     {
@@ -1314,25 +1334,27 @@ DENG2_PIMPL(DEDParser)
     #define FF_FULLBRIGHT               0x8000
     #define FF_FRAMEMASK                0x7fff
 
-                        READINT(st->frame);
-                        if(st->frame & FF_FULLBRIGHT)
+                        int frame = 0;
+                        READINT(frame);
+                        if(frame & FF_FULLBRIGHT)
                         {
-                            st->frame &= FF_FRAMEMASK;
-                            st->flags |= STF_FULLBRIGHT;
+                            frame &= FF_FRAMEMASK;
+                            st->set("flags", st->geti("flags") | STF_FULLBRIGHT);
                         }
+                        st->set("frame", frame);
 
     #undef FF_FRAMEMASK
     #undef FF_FULLBRIGHT
                     }
-                    else RV_FLAGS("Flags", st->flags, "statef_")
-                    RV_STR("Sprite", st->sprite.id)
-                    RV_INT("Tics", st->tics)
-                    RV_STR("Action", st->action)
-                    RV_STR("Next state", st->nextState)
-                    RV_INT("Misc1", st->misc[0])
-                    RV_INT("Misc2", st->misc[1])
-                    RV_INT("Misc3", st->misc[2])
-                    RV_ANYSTR("Execute", st->execute)
+                    else RV_FLAGS("Flags", (*st)["flags"], "statef_")
+                    RV_STR("Sprite",     (*st)["sprite"])
+                    RV_INT("Tics",       (*st)["tics"])
+                    RV_STR("Action",     (*st)["action"])
+                    RV_STR("Next state", (*st)["nextState"])
+                    RV_INT_ELEM("Misc1", (*st)["misc"], 0)
+                    RV_INT_ELEM("Misc2", (*st)["misc"], 1)
+                    RV_INT_ELEM("Misc3", (*st)["misc"], 2)
+                    RV_STR("Execute",    (*st)["execute"])
                     RV_END
                     CHECKSC;
                 }
@@ -1470,7 +1492,7 @@ DENG2_PIMPL(DEDParser)
 
                 defn::Material mainDef(*mat);
                 int decor = 0;
-                int layer      = 0;
+                int layer = 0;
                 FINDBEGIN;
                 forever
                 {
@@ -1482,17 +1504,9 @@ DENG2_PIMPL(DEDParser)
                     }
                     else
                     RV_FLAGS("Flags", (*mat)["flags"], "matf_")
-                    if(ISLABEL("Width"))
-                    {
-                        int width; READINT(width);
-                        (*mat)["dimensions"].value<ArrayValue>().setElement(0, width);
-                    }
-                    else if(ISLABEL("Height"))
-                    {
-                        int height; READINT(height);
-                        (*mat)["dimensions"].value<ArrayValue>().setElement(1, height);
-                    }
-                    else if(ISLABEL("Layer"))
+                    RV_INT_ELEM("Width", (*mat)["dimensions"], 0)
+                    RV_INT_ELEM("Height", (*mat)["dimensions"], 1)
+                    if(ISLABEL("Layer"))
                     {
                         if(layer >= DED_MAX_MATERIAL_LAYERS)
                         {
@@ -1665,12 +1679,7 @@ DENG2_PIMPL(DEDParser)
                     }
                     else
                     RV_VEC_VAR("Scale XYZ", mdl["scale"], 3)
-                    if(ISLABEL("Offset"))
-                    {
-                        float offy; READFLT(offy);
-                        mdl["offset"].value<ArrayValue>().setElement(1, offy);
-                    }
-                    else
+                    RV_FLT_ELEM("Offset", mdl["offset"], 1)
                     RV_VEC_VAR("Offset XYZ", mdl["offset"], 3)
                     RV_VEC_VAR("Interpolate", mdl["interRange"], 2)
                     RV_FLT("Shadow radius", mdl["shadowRadius"])
@@ -2054,22 +2063,9 @@ DENG2_PIMPL(DEDParser)
                     RV_FLAGS("Flags", (*mi)["flags"], "mif_")
                     RV_STR("Music", (*mi)["music"])
                     RV_FLT("Par time", (*mi)["parTime"])
-                    if(ISLABEL("Fog color R"))
-                    {
-                        float red; READFLT(red);
-                        (*mi)["fogColor"].value<ArrayValue>().setElement(0, red);
-                    }
-                    else if(ISLABEL("Fog color G"))
-                    {
-                        float green; READFLT(green);
-                        (*mi)["fogColor"].value<ArrayValue>().setElement(1, green);
-                    }
-                    else if(ISLABEL("Fog color B"))
-                    {
-                        float blue; READFLT(blue);
-                        (*mi)["fogColor"].value<ArrayValue>().setElement(2, blue);
-                    }
-                    else
+                    RV_FLT_ELEM("Fog color R", (*mi)["fogColor"], 0)
+                    RV_FLT_ELEM("Fog color G", (*mi)["fogColor"], 1)
+                    RV_FLT_ELEM("Fog color B", (*mi)["fogColor"], 2)
                     RV_FLT("Fog start", (*mi)["fogStart"])
                     RV_FLT("Fog end", (*mi)["fogEnd"])
                     RV_FLT("Fog density", (*mi)["fogDensity"])

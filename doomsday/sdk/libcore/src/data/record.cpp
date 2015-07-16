@@ -37,6 +37,11 @@
 
 namespace de {
 
+/// When converting records to a human-readable text representation, this is the
+/// maximum number of lines that a subrecord can have before it is shown as a short
+/// excerpt.
+int const SUBRECORD_CONTENT_EXCERPT_THRESHOLD = 100; // lines
+    
 String const Record::SUPER_NAME = "__super__";
 
 /**
@@ -563,6 +568,12 @@ Record::Subrecords Record::subrecords(std::function<bool (Record const &)> filte
 
 String Record::asText(String const &prefix, List *lines) const
 {
+    // If this is a module, don't print out the entire contents.
+    if(!gets("__file__", "").isEmpty())
+    {
+        return QString("(Record imported from \"%1\")").arg(gets("__file__"));
+    }
+    
     // Recursive calls to collect all variables in the record.
     if(lines)
     {
@@ -570,8 +581,16 @@ String Record::asText(String const &prefix, List *lines) const
         for(Members::const_iterator i = d->members.begin(); i != d->members.end(); ++i)
         {
             String separator = (d->isSubrecord(*i.value())? "." : ":");
+            String subContent = i.value()->value().asText();
+            
+            // If the content is very long, shorten it.
+            int numberOfLines = subContent.count(QChar('\n'));
+            if(numberOfLines > SUBRECORD_CONTENT_EXCERPT_THRESHOLD)
+            {
+                subContent = QString("(%1 lines)").arg(numberOfLines);
+            }
 
-            KeyValue kv(prefix + i.key() + separator, i.value()->value().asText());
+            KeyValue kv(prefix + i.key() + separator, subContent);
             lines->push_back(kv);
         }
         return "";
@@ -630,7 +649,7 @@ void Record::addSuperRecord(Value *superValue)
     {
         addArray(SUPER_NAME);
     }
-    (*this)[SUPER_NAME].value<ArrayValue>().add(superValue);
+    (*this)[SUPER_NAME].array().add(superValue);
 }
 
 void Record::operator >> (Writer &to) const

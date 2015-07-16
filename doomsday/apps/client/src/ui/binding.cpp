@@ -59,8 +59,7 @@ Record &Binding::addCondition()
     cond->addBoolean("negate", false);
     cond->addBoolean("multiplayer", false);
 
-    def()["condition"].value<ArrayValue>()
-            .add(new RecordValue(cond, RecordValue::OwnsRecord));
+    def()["condition"].array().add(new RecordValue(cond, RecordValue::OwnsRecord));
 
     return *cond;
 }
@@ -88,7 +87,7 @@ Record const &Binding::condition(int index) const
 bool Binding::equalConditions(Binding const &other) const
 {
     // Quick test (assumes there are no duplicated conditions).
-    if(def()["condition"].value<ArrayValue>().elements().count() != other.geta("condition").elements().count())
+    if(def()["condition"].array().elements().count() != other.geta("condition").elements().count())
     {
         return false;
     }

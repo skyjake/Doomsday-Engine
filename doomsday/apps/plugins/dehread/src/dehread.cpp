@@ -37,7 +37,7 @@ ded_t *ded;
 
 // This is the original data before it gets replaced by any patches.
 ded_sprid_t  origSpriteNames[NUMSPRITES];
-ded_funcid_t origActionNames[NUMSTATES];
+String origActionNames[NUMSTATES];
 
 static void backupData()
 {
@@ -48,7 +48,7 @@ static void backupData()
 
     for(int i = 0; i < NUMSTATES && i < ded->states.size(); i++)
     {
-        qstrncpy(origActionNames[i], ded->states[i].action, DED_STRINGID_LEN + 1);
+        origActionNames[i] = ded->states[i].gets("action");
     }
 }
 

@@ -25,7 +25,6 @@
 #include "world/map.h"
 
 #include "de_console.h"  // Con_GetInteger
-#include "de_defs.h"
 #ifdef __CLIENT__
 #  include "clientapp.h"
 #endif
@@ -1431,7 +1430,7 @@ DENG2_PIMPL(Map)
 
             // A state generator?
             if(gen->source && def->state[0] &&
-               runtimeDefs.states.indexOf(gen->source->state) == Def_GetStateNum(def->state))
+               ::runtimeDefs.states.indexOf(gen->source->state) == ::defs.getStateNum(def->state))
             {
                 return i + 1;  // 1-based index.
             }
@@ -1581,17 +1580,21 @@ Map::BspTree const &Map::bspTree() const
 
 #ifdef __CLIENT__
 
-bool Map::hasLightGrid()
+bool Map::hasLightGrid() const
 {
     return bool(d->lightGrid);
 }
 
 LightGrid &Map::lightGrid()
 {
-    if(bool(d->lightGrid))
-    {
-        return *d->lightGrid;
-    }
+    if(bool(d->lightGrid)) return *d->lightGrid;
+    /// @throw MissingLightGrid Attempted with no LightGrid initialized.
+    throw MissingLightGridError("Map::lightGrid", "No light grid is initialized");
+}
+
+LightGrid const &Map::lightGrid() const
+{
+    if(bool(d->lightGrid)) return *d->lightGrid;
     /// @throw MissingLightGrid Attempted with no LightGrid initialized.
     throw MissingLightGridError("Map::lightGrid", "No light grid is initialized");
 }
@@ -1940,6 +1943,81 @@ void Map::buildMaterialLists()
             return LoopContinue;
         });
     }
+}
+
+void Map::initRadio()
+{
+    LOG_AS("Map::initRadio");
+
+    Time begunAt;
+
+    for(Vertex *vtx : d->mesh.vertexs())
+    {
+        vtx->updateShadowOffsets();
+    }
+
+    /// The algorithm:
+    ///
+    /// 1. Use the subspace blockmap to look for all the blocks that are within the line's shadow
+    ///    bounding box.
+    /// 2. Check the ConvexSubspaces whose sector is the same as the line.
+    /// 3. If any of the shadow points are in the subspace, or any of the shadow edges cross one
+    ///    of the subspace's edges (not parallel), link the line to the ConvexSubspace.
+    for(Line *line : d->lines)
+    {
+        if(!line->castsShadow()) continue;
+
+        // For each side of the line.
+        for(dint i = 0; i < 2; ++i)
+        {
+            LineSide &side = line->side(i);
+
+            if(!side.hasSector()) continue;
+            if(!side.hasSections()) continue;
+
+            Vertex const &vtx0   = line->vertex(i);
+            Vertex const &vtx1   = line->vertex(i ^ 1);
+            LineOwner const &vo0 = line->vertexOwner(i)->next();
+            LineOwner const &vo1 = line->vertexOwner(i ^ 1)->prev();
+
+            AABoxd bounds = line->aaBox();
+
+            // Use the extended points, they are wider than inoffsets.
+            Vector2d const sv0 = vtx0.origin() + vo0.extendedShadowOffset();
+            V2d_AddToBoxXY(bounds.arvec2, sv0.x, sv0.y);
+
+            Vector2d const sv1 = vtx1.origin() + vo1.extendedShadowOffset();
+            V2d_AddToBoxXY(bounds.arvec2, sv1.x, sv1.y);
+
+            // Link the shadowing line to all the subspaces whose axis-aligned bounding box
+            // intersects 'bounds'.
+            ::validCount++;
+            dint const localValidCount = ::validCount;
+            subspaceBlockmap().forAllInBox(bounds, [&bounds, &side, &localValidCount] (void *object)
+            {
+                auto &sub = *(ConvexSubspace *)object;
+                if(sub.validCount() != localValidCount)  // not yet processed
+                {
+                    sub.setValidCount(localValidCount);
+                    if(&sub.sector() == side.sectorPtr())
+                    {
+                        // Check the bounds.
+                        AABoxd const &polyBox = sub.poly().aaBox();
+                        if(!(polyBox.maxX < bounds.minX ||
+                             polyBox.minX > bounds.maxX ||
+                             polyBox.minY > bounds.maxY ||
+                             polyBox.maxY < bounds.minY))
+                        {
+                            sub.addShadowLine(side);
+                        }
+                    }
+                }
+                return LoopContinue;
+            });
+        }
+    }
+
+    LOGDEV_GL_MSG("Completed in %.2f seconds") << begunAt.since();
 }
 
 void Map::initContactBlockmaps()
@@ -3223,37 +3301,37 @@ void Map::worldSystemFrameBegins(bool resetNextViewer)
 }
 
 /// @return  @c false= Continue iteration.
-static dint expireClMobjsWorker(mobj_t *mo, void *context)
+static dint expireClMobjsWorker(mobj_t *mob, void *context)
 {
     duint const nowTime = *static_cast<duint *>(context);
 
     // Already deleted?
-    if(mo->thinker.function == (thinkfunc_t)-1)
+    if(mob->thinker.function == (thinkfunc_t)-1)
         return 0;
 
     // Don't expire player mobjs.
-    if(mo->dPlayer) return 0;
+    if(mob->dPlayer) return 0;
 
-    ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(mo);
+    ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(mob);
     DENG2_ASSERT(info);
 
-    if((info->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN | CLMF_NULLED)) || !mo->info)
+    if((info->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN | CLMF_NULLED)) || !mob->info)
     {
         // Has this mobj timed out?
         if(nowTime - info->time > CLMOBJ_TIMEOUT)
         {
             LOGDEV_MAP_MSG("Mobj %i has expired (%i << %i), in state %s [%c%c%c]")
-                    << mo->thinker.id
+                    << mob->thinker.id
                     << info->time << nowTime
-                    << Def_GetStateName(mo->state)
+                    << Def_GetStateName(mob->state)
                     << (info->flags & CLMF_UNPREDICTABLE? 'U' : '_')
                     << (info->flags & CLMF_HIDDEN?        'H' : '_')
                     << (info->flags & CLMF_NULLED?        '0' : '_');
 
-            // Too long. The server will probably never send anything
-            // for this mobj, so get rid of it. (Both unpredictable
-            // and hidden mobjs are not visible or bl/seclinked.)
-            Mobj_Destroy(mo);
+            // Too long. The server will probably never send anything for this map-object,
+            // so get rid of it. (Both unpredictable and hidden mobjs are not visible or
+            // bl/seclinked.)
+            Mobj_Destroy(mob);
         }
     }
 
@@ -3397,7 +3475,9 @@ D_CMD(InspectMap)
 
 void Map::consoleRegister() // static
 {
+    Line::consoleRegister();
     Mobj_ConsoleRegister();
+    Sector::consoleRegister();
 
     C_VAR_INT("bsp-factor",                 &bspSplitFactor, CVF_NO_MAX, 0, 0);
 #ifdef __CLIENT__

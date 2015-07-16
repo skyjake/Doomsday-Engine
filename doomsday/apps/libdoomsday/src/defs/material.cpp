@@ -56,8 +56,7 @@ Record &MaterialDecoration::addStage()
     stage->addText  ("haloTexture", "");                          // Uri. None.
     stage->addNumber("haloTextureIndex", 0);                      // Overrides haloTexture
 
-    def()["stage"].value<ArrayValue>()
-            .add(new RecordValue(stage, RecordValue::OwnsRecord));
+    def()["stage"].array().add(new RecordValue(stage, RecordValue::OwnsRecord));
 
     return *stage;
 }
@@ -103,8 +102,7 @@ Record &MaterialLayer::addStage()
     stage->addNumber("glowStrengthVariance", 0);
     stage->addArray ("texOrigin", new ArrayValue(Vector2f()));
 
-    def()["stage"].value<ArrayValue>()
-            .add(new RecordValue(stage, RecordValue::OwnsRecord));
+    def()["stage"].array().add(new RecordValue(stage, RecordValue::OwnsRecord));
 
     return *stage;
 }
@@ -148,7 +146,7 @@ Record &Material::addDecoration()
 {
     auto *decor = new Record;
     MaterialDecoration(*decor).resetToDefaults();
-    def()["decoration"].value<ArrayValue>().add(new RecordValue(decor, RecordValue::OwnsRecord));
+    def()["decoration"].array().add(new RecordValue(decor, RecordValue::OwnsRecord));
     return *decor;
 }
 
@@ -176,7 +174,7 @@ Record &Material::addLayer()
 {
     auto *layer = new Record;
     MaterialLayer(*layer).resetToDefaults();
-    def()["layer"].value<ArrayValue>().add(new RecordValue(layer, RecordValue::OwnsRecord));
+    def()["layer"].array().add(new RecordValue(layer, RecordValue::OwnsRecord));
     return *layer;
 }
 

@@ -34,7 +34,6 @@
 
 #include "MaterialVariantSpec"
 #include "Texture"
-#include "resource/sprite.h"
 
 #include "world/p_players.h"  // viewPlayer, ddPlayers
 

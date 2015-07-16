@@ -1,8 +1,7 @@
-/** @file api_gameexport.h
- * Data structures for the engine/plugin interfaces.
+/** @file api_gameexport.h  Data structures for the engine/plugin interfaces.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -49,19 +48,19 @@ typedef struct {
     int           (*NetServerStop) (int before);
     int           (*NetConnect) (int before);
     int           (*NetDisconnect) (int before);
-    long int      (*NetPlayerEvent) (int playernum, int type, void* data);
-    int           (*NetWorldEvent) (int type, int parm, void* data);
-    void          (*HandlePacket) (int fromplayer, int type, void* data,
+    long int      (*NetPlayerEvent) (int playernum, int type, void *data);
+    int           (*NetWorldEvent) (int type, int parm, void *data);
+    void          (*HandlePacket) (int fromplayer, int type, void *data,
                                    size_t length);
 
     // Tickers.
     void          (*Ticker) (timespan_t ticLength);
 
     // Responders.
-    int           (*FinaleResponder) (const void* ddev);
-    int           (*PrivilegedResponder) (event_t* ev);
-    int           (*Responder) (event_t* ev);
-    int           (*FallbackResponder) (event_t* ev);
+    int           (*FinaleResponder) (void const *ddev);
+    int           (*PrivilegedResponder) (event_t *ev);
+    int           (*Responder) (event_t *ev);
+    int           (*FallbackResponder) (event_t *ev);
 
     // Refresh.
     void          (*BeginFrame) (void);
@@ -109,8 +108,8 @@ typedef struct {
      *      - 1: Displays to be drawn on top of view window (after bordering),
      *        such as the player HUD.
      */
-    void          (*DrawViewPort) (int port, const RectRaw* portGeometry,
-                        const RectRaw* windowGeometry, int player, int layer);
+    void          (*DrawViewPort) (int port, RectRaw const *portGeometry,
+                                   RectRaw const *windowGeometry, int player, int layer);
 
     /**
      * Draw over-viewport displays covering the whole game window. Typically
@@ -118,18 +117,18 @@ typedef struct {
      *
      * @param windowSize  Dimensions of the game window in real screen pixels.
      */
-    void          (*DrawWindow) (const Size2Raw* windowSize);
+    void          (*DrawWindow) (Size2Raw const *windowSize);
 
     // Miscellaneous.
     void          (*MobjThinker) (void *mobj);
-    coord_t       (*MobjFriction) (struct mobj_s const *mobj); // Returns a friction factor.
-    dd_bool       (*MobjCheckPositionXYZ) (struct mobj_s* mobj, coord_t x, coord_t y, coord_t z);
-    dd_bool       (*MobjTryMoveXYZ) (struct mobj_s* mobj, coord_t x, coord_t y, coord_t z);
-    void          (*SectorHeightChangeNotification)(int sectorIdx); // Applies necessary checks on objects.
+    coord_t       (*MobjFriction) (struct mobj_s const *mobj);  // Returns a friction factor.
+    dd_bool       (*MobjCheckPositionXYZ) (struct mobj_s *mobj, coord_t x, coord_t y, coord_t z);
+    dd_bool       (*MobjTryMoveXYZ) (struct mobj_s *mobj, coord_t x, coord_t y, coord_t z);
+    void          (*SectorHeightChangeNotification)(int sectorIdx);  // Applies necessary checks on objects.
 
     // Main structure sizes.
-    size_t          mobjSize; // sizeof(mobj_t)
-    size_t          polyobjSize; // sizeof(Polyobj)
+    size_t          mobjSize;     ///< sizeof(mobj_t)
+    size_t          polyobjSize;  ///< sizeof(Polyobj)
 
     // Map setup
 
@@ -149,21 +148,21 @@ typedef struct {
      * @return The action code returned by the game depends on the context.
      */
     int           (*HandleMapDataPropertyValue) (uint id, int dtype, int prop,
-                                                 valuetype_t type, void* data);
+                                                 valuetype_t type, void *data);
     // Post map setup
     /**
      * The engine calls this to inform the game of any changes it is
      * making to map data object to which the game might want to
      * take further action.
      */
-    int           (*HandleMapObjectStatusReport) (int code, uint id, int dtype, void* data);
+    int           (*HandleMapObjectStatusReport) (int code, uint id, int dtype, void *data);
 } game_export_t;
 
 /// Function pointer for @c GetGameAPI() (exported by game plugin). @ingroup game
-typedef game_export_t* (*GETGAMEAPI) (void);
+typedef game_export_t *(*GETGAMEAPI) (void);
 
 #ifdef __cplusplus
-} // extern "C"
+}  // extern "C"
 #endif
 
-#endif /* DOOMSDAY_GAME_EXPORT_API_H */
+#endif  // DOOMSDAY_GAME_EXPORT_API_H

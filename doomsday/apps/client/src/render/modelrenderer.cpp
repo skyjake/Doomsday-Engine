@@ -200,7 +200,7 @@ DENG2_PIMPL(ModelRenderer)
         {
             up = Vector3f(asset.geta(DEF_UP_VECTOR));
         }
-        aux->transformation = Matrix4f::frame(front, up);
+        aux->transformation = Matrix4f::unnormalizedFrame(front, up);
 
         // Custom texture maps.
         if(asset.has(DEF_MATERIAL))

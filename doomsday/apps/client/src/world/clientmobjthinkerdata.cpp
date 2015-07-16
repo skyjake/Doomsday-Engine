@@ -1,6 +1,7 @@
 /** @file clientmobjthinkerdata.cpp  Private client-side data for mobjs.
  *
- * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -16,14 +17,15 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#include "de_base.h"
 #include "world/clientmobjthinkerdata.h"
+
+#include <QFlags>
+#include "clientapp.h"
+#include "dd_loop.h"
 #include "render/modelrenderer.h"
 #include "render/mobjanimator.h"
 #include "world/generator.h"
-#include "clientapp.h"
-#include "dd_loop.h"
-#include "def_main.h"
-#include <QFlags>
 
 using namespace de;
 
@@ -59,7 +61,7 @@ DENG2_PIMPL(ClientMobjThinkerData)
 
     String thingName() const
     {
-        return Def_GetMobjName(self.mobj()->type);
+        return ::defs.getMobjName(self.mobj()->type);
     }
 
     String stateName() const
@@ -107,7 +109,7 @@ DENG2_PIMPL(ClientMobjThinkerData)
 
             // Scale to thing height.
             // TODO: This should be optional (but the default behavior).
-            modelMatrix = Matrix4f::scale(self.mobj()->height / dims.y) * modelMatrix;
+            modelMatrix = Matrix4f::scale(self.mobj()->height / dims.y * 1.2f /*aspect correct*/) * modelMatrix;
         }
     }
 

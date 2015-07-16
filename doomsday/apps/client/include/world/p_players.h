@@ -58,6 +58,11 @@ int P_LocalToConsole(int localPlayer);
 /**
  * Determine the local player number used by a particular console. Local
  * players are numbered starting from zero.
+ *
+ * @param playerNum  Console number.
+ *
+ * @return Local player number. Returns -1 if @a playerNum does not correspond
+ * to any local player.
  */
 int P_ConsoleToLocal(int playerNum);
 

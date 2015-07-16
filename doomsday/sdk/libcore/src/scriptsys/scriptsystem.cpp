@@ -178,6 +178,21 @@ DENG2_PIMPL(ScriptSystem)
             i.value()->audienceForDeletion() -= this;
         }
     }
+    
+    static Value *Function_ImportPath(Context &, Function::ArgumentValues const &)
+    {
+        DENG2_ASSERT(_scriptSystem != nullptr);
+        
+        StringList importPaths;
+        _scriptSystem->d->listImportPaths(importPaths);
+        
+        auto *array = new ArrayValue;
+        for(auto const &path : importPaths)
+        {
+            *array << TextValue(path);
+        }
+        return array;
+    }
 
     void initCoreModule()
     {
@@ -191,8 +206,8 @@ DENG2_PIMPL(ScriptSystem)
 
         // String
         {
-            Record &dict = coreModule.addRecord("String");
-            binder.init(dict)
+            Record &str = coreModule.addRecord("String");
+            binder.init(str)
                     << DENG2_FUNC_NOARG(String_Upper, "upper")
                     << DENG2_FUNC_NOARG(String_Lower, "lower")
                     << DENG2_FUNC_NOARG(String_FileNamePath, "fileNamePath")
@@ -203,13 +218,17 @@ DENG2_PIMPL(ScriptSystem)
 
         // File
         {
-            Record &dict = coreModule.addRecord("File");
-            binder.init(dict)
+            Record &file = coreModule.addRecord("File");
+            binder.init(file)
                     << DENG2_FUNC      (File_Locate, "locate", "relativePath")
                     << DENG2_FUNC_NOARG(File_Read, "read")
                     << DENG2_FUNC_NOARG(File_ReadUtf8, "readUtf8");
         }
 
+        // General functions.
+        binder.init(coreModule)
+                << DENG2_FUNC_NOARG(ImportPath, "importPath");
+        
         addNativeModule("Core", coreModule);
     }
 
@@ -237,6 +256,31 @@ DENG2_PIMPL(ScriptSystem)
             {
                 iter.remove();
             }
+        }
+    }
+
+    void listImportPaths(StringList &importPaths)
+    {
+        std::unique_ptr<ArrayValue> defaultImportPath(new ArrayValue);
+        defaultImportPath->add("");
+        defaultImportPath->add("*"); // Newest module with a matching name.
+        ArrayValue const *importPath = defaultImportPath.get();
+        try
+        {
+            importPath = &App::config().geta("importPath");
+        }
+        catch(Record::NotFoundError const &)
+        {}
+        
+        // Compile a list of all possible import locations.
+        importPaths.clear();
+        DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, importPath->elements())
+        {
+            importPaths << (*i)->asText();
+        }
+        foreach(Path const &path, additionalImportPaths)
+        {
+            importPaths << path;
         }
     }
 };
@@ -292,28 +336,9 @@ namespace internal {
 
 File const *ScriptSystem::tryFindModuleSource(String const &name, String const &localPath)
 {
-    // Fall back on the default if the config hasn't been imported yet.
-    std::auto_ptr<ArrayValue> defaultImportPath(new ArrayValue);
-    defaultImportPath->add("");
-    defaultImportPath->add("*"); // Newest module with a matching name.
-    ArrayValue const *importPath = defaultImportPath.get();
-    try
-    {
-        importPath = &App::config().geta("importPath");
-    }
-    catch(Record::NotFoundError const &)
-    {}
-
     // Compile a list of all possible import locations.
     StringList importPaths;
-    DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, importPath->elements())
-    {
-        importPaths << (*i)->asText();
-    }
-    foreach(Path const &path, d->additionalImportPaths)
-    {
-        importPaths << path;
-    }
+    d->listImportPaths(importPaths);
 
     // Search all import locations.
     foreach(String dir, importPaths)

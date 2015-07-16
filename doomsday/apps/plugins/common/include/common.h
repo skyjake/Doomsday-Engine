@@ -50,7 +50,6 @@
 #  include <doomsday/filesys/lumpindex.h>
 #endif
 #include "gamerules.h"
-#include "g_defs.h"
 #include "pause.h"
 #include "p_mapsetup.h"
 

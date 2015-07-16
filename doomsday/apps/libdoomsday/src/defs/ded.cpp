@@ -30,6 +30,8 @@
 
 #include "doomsday/defs/decoration.h"
 #include "doomsday/defs/episode.h"
+#include "doomsday/defs/thing.h"
+#include "doomsday/defs/state.h"
 #include "doomsday/defs/finale.h"
 #include "doomsday/defs/mapinfo.h"
 #include "doomsday/defs/material.h"
@@ -47,8 +49,7 @@ float ded_ptcstage_t::particleRadius(int ptcIDX) const
             .5625f, .0625f, 1, .6875f, .625f, .4375f, .8125f, .1875f,
             .9375f, .25f
         };
-        return (rnd[ptcIDX & 0xf] * radiusVariance +
-                (1 - radiusVariance)) * radius;
+        return (rnd[ptcIDX & 0xf] * radiusVariance + (1 - radiusVariance)) * radius;
     }
     return radius;
 }
@@ -56,6 +57,8 @@ float ded_ptcstage_t::particleRadius(int ptcIDX) const
 ded_s::ded_s()
     : flags      (names.addRecord("flags"))
     , episodes   (names.addRecord("episodes"))
+    , things     (names.addRecord("things"))
+    , states     (names.addRecord("states"))
     , materials  (names.addRecord("materials"))
     , models     (names.addRecord("models"))
     , skies      (names.addRecord("skies"))
@@ -66,6 +69,9 @@ ded_s::ded_s()
 {
     decorations.addLookupKey("texture");
     episodes.addLookupKey("id");
+    things.addLookupKey("id", DEDRegister::OnlyFirst);
+    things.addLookupKey("name");
+    states.addLookupKey("id", DEDRegister::OnlyFirst);
     finales.addLookupKey("id");
     finales.addLookupKey("before");
     finales.addLookupKey("after");
@@ -102,6 +108,22 @@ int ded_s::addEpisode()
 {
     Record &def = episodes.append();
     defn::Episode(def).resetToDefaults();
+    return def.geti("__order__");
+}
+
+int ded_s::addThing(String const &id)
+{
+    Record &def = things.append();
+    defn::Thing(def).resetToDefaults();
+    def.set("id", id);
+    return def.geti("__order__");
+}
+
+int ded_s::addState(String const &id)
+{
+    Record &def = states.append();
+    defn::State(def).resetToDefaults();
+    def.set("id", id);
     return def.geti("__order__");
 }
 
@@ -158,7 +180,7 @@ void ded_s::release()
 {
     flags.clear();
     episodes.clear();
-    mobjs.clear();
+    things.clear();
     states.clear();
     sprites.clear();
     lights.clear();
@@ -182,19 +204,23 @@ void ded_s::release()
     finales.clear();
 }
 
+/*
 int DED_AddMobj(ded_t* ded, char const* idstr)
 {
     ded_mobj_t *mo = ded->mobjs.append();
     strcpy(mo->id, idstr);
     return ded->mobjs.indexOf(mo);
 }
+ */
 
+/*
 int DED_AddState(ded_t* ded, char const* id)
 {
     ded_state_t *st = ded->states.append();
     strcpy(st->id, id);
     return ded->states.indexOf(st);
 }
+ */
 
 int DED_AddSprite(ded_t* ded, char const* name)
 {
@@ -332,71 +358,69 @@ int DED_AddLineType(ded_t* ded, int id)
     return ded->lineTypes.indexOf(li);
 }
 
-int ded_s::getMobjNum(char const *id) const
+int ded_s::getMobjNum(String const &id) const
 {
-    int i;
-
-    if(!id || !id[0])
-        return -1;
-
+    if(Record const *def = things.tryFind("id", id))
+    {
+        return def->geti("__order__");
+    }
+    /*
     for(i = 0; i < mobjs.size(); ++i)
         if(!qstricmp(mobjs[i].id, id))
-            return i;
+            return i;*/
 
     return -1;
 }
 
 int ded_s::getMobjNumForName(const char *name) const
 {
-    int                 i;
-
     if(!name || !name[0])
         return -1;
 
-    for(i = mobjs.size() - 1; i >= 0; --i)
+    /*
+    for(int i = mobjs.size() - 1; i >= 0; --i)
         if(!qstricmp(mobjs[i].name, name))
-            return i;
+            return i;*/
+    if(Record const *def = things.tryFind("name", name))
+    {
+        return def->geti("__order__");
+    }
 
     return -1;
 }
 
-char const *ded_s::getMobjName(int num) const
+String ded_s::getMobjName(int num) const
 {
     if(num < 0) return "(<0)";
-    if(num >= mobjs.size()) return "(>mobjtypes)";
-    return mobjs[num].id;
+    if(num >= things.size()) return "(>mobjtypes)";
+    return things[num].gets("id");
 }
 
 int ded_s::getStateNum(String const &id) const
 {
-    return getStateNum(id.toLatin1().constData());
+    if(Record const *def = states.tryFind("id", id))
+    {
+        return def->geti("__order__");
+    }
+    return -1;
 }
 
 int ded_s::getStateNum(char const *id) const
 {
-    int idx = -1;
-    if(id && id[0] && states.size())
-    {
-        int i = 0;
-        do {
-            if(!qstricmp(states[i].id, id))
-                idx = i;
-        } while(idx == -1 && ++i < states.size());
-    }
-    return idx;
+    return getStateNum(String(id));
 }
 
-int ded_s::evalFlags2(char const *ptr) const
+dint ded_s::evalFlags(char const *ptr) const
 {
-    LOG_AS("Def_EvalFlags");
+    LOG_AS("Defs::evalFlags");
 
-    int value = 0;
+    dint value = 0;
 
     while(*ptr)
     {
         ptr = M_SkipWhite(const_cast<char *>(ptr));
 
-        int flagNameLength = M_FindWhite(const_cast<char *>(ptr)) - ptr;
+        dint flagNameLength = M_FindWhite(const_cast<char *>(ptr)) - ptr;
         String flagName(ptr, flagNameLength);
         ptr += flagNameLength;
 
@@ -496,6 +520,11 @@ int ded_s::getSkyNum(char const *id) const
     return -1;*/
 }
 
+int ded_s::getSoundNum(String const &id) const
+{
+    return getSoundNum(id.toUtf8());
+}
+
 int ded_s::getSoundNum(const char *id) const
 {
     int idx = -1;
@@ -521,7 +550,25 @@ int ded_s::getSoundNumForName(const char *name) const
     return 0;
 }
 
-int ded_s::getMusicNum(const char* id) const
+int ded_s::getSpriteNum(String const &id) const
+{
+    return getSpriteNum(id.toLatin1());
+}
+
+int ded_s::getSpriteNum(char const *id) const
+{
+    if(id && id[0])
+    {
+        for(dint i = 0; i < sprites.size(); ++i)
+        {
+            if(!qstricmp(sprites[i].id, id))
+                return i;
+        }
+    }
+    return -1;  // Not found.
+}
+
+int ded_s::getMusicNum(char const *id) const
 {
     if(Record const *def = musics.tryFind("id", id))
     {
@@ -540,39 +587,67 @@ int ded_s::getMusicNum(const char* id) const
     return idx;*/
 }
 
-ded_value_t* ded_s::getValueById(char const* id) const
+int ded_s::getValueNum(char const *id) const
 {
-    if(!id || !id[0]) return NULL;
+    if(id && id[0])
+    {
+        // Read backwards to allow patching.
+        for(dint i = values.size() - 1; i >= 0; i--)
+        {
+            if(!qstricmp(values[i].id, id))
+                return i;
+        }
+    }
+    return -1;  // Not found.
+}
+
+int ded_s::getValueNum(String const &id) const
+{
+    return getValueNum(id.toLatin1());
+}
+
+ded_value_t *ded_s::getValueById(char const *id) const
+{
+    if(!id || !id[0]) return nullptr;
 
     // Read backwards to allow patching.
-    for(int i = values.size() - 1; i >= 0; i--)
+    for(dint i = values.size() - 1; i >= 0; i--)
     {
         if(!qstricmp(values[i].id, id))
             return &values[i];
     }
-    return 0;
+    return nullptr;
+}
+ded_value_t *ded_s::getValueById(String const &id) const
+{
+    return getValueById(id.toLatin1());
 }
 
-ded_value_t* ded_s::getValueByUri(de::Uri const &uri) const
+ded_value_t *ded_s::getValueByUri(de::Uri const &uri) const
 {
-    if(uri.scheme().compareWithoutCase("Values")) return 0;
-    return getValueById(uri.pathCStr());
-}
-
-ded_compositefont_t* ded_s::findCompositeFontDef(de::Uri const& uri) const
-{
-    for(int i = compositeFonts.size() - 1; i >= 0; i--)
+    if(!uri.scheme().compareWithoutCase("Values"))
     {
-        ded_compositefont_t* def = &compositeFonts[i];
-        if(!def->uri || uri != *def->uri) continue;
-        return def;
+        return getValueById(uri.pathCStr());
     }
-    return 0;
+    return nullptr;
 }
 
-ded_compositefont_t* ded_s::getCompositeFont(char const* uriCString) const
+ded_compositefont_t *ded_s::findCompositeFontDef(de::Uri const &uri) const
 {
-    ded_compositefont_t* def = NULL;
+    for(dint i = compositeFonts.size() - 1; i >= 0; i--)
+    {
+        ded_compositefont_t *def = &compositeFonts[i];
+        if(def->uri && uri == *def->uri)
+        {
+            return def;
+        }
+    }
+    return nullptr;
+}
+
+ded_compositefont_t *ded_s::getCompositeFont(char const *uriCString) const
+{
+    ded_compositefont_t *def = nullptr;
     if(uriCString && uriCString[0])
     {
         de::Uri uri(uriCString, RC_NULL);

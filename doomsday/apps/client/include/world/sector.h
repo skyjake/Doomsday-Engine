@@ -1,7 +1,7 @@
 /** @file sector.h  World map sector.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_SECTOR_H
-#define DENG_WORLD_SECTOR_H
+#ifndef WORLD_SECTOR_H
+#define WORLD_SECTOR_H
 
 #include <functional>
 #ifdef __CLIENT__
@@ -66,7 +66,7 @@ public:
      * @param lightLevel  Ambient light level.
      * @param lightColor  Ambient light color.
      */
-    Sector(float lightLevel               = 1,
+    Sector(de::dfloat lightLevel          = 1,
            de::Vector3f const &lightColor = de::Vector3f(1, 1, 1));
 
     /**
@@ -79,13 +79,13 @@ public:
     /**
      * Returns the total number of planes in/owned by the sector.
      */
-    int planeCount() const;
+    de::dint planeCount() const;
 
     /**
      * Lookup a Plane by it's sector-unique @a planeIndex.
      */
-    Plane       &plane(int planeIndex);
-    Plane const &plane(int planeIndex) const;
+    Plane       &plane(de::dint planeIndex);
+    Plane const &plane(de::dint planeIndex) const;
 
     /**
      * Returns the @em floor Plane of the sector.
@@ -118,8 +118,8 @@ public:
      * Convenient accessor method for returning the surface of the specified
      * plane of the sector.
      */
-    inline Surface       &planeSurface(int planeIndex)       { return plane(planeIndex).surface(); }
-    inline Surface const &planeSurface(int planeIndex) const { return plane(planeIndex).surface(); }
+    inline Surface       &planeSurface(de::dint planeIndex)       { return plane(planeIndex).surface(); }
+    inline Surface const &planeSurface(de::dint planeIndex) const { return plane(planeIndex).surface(); }
 
     /**
      * Convenient accessor method for returning the surface of the floor plane
@@ -138,7 +138,7 @@ public:
     /**
      * Returns the total number of Line::Sides which reference the sector.
      */
-    int sideCount() const;
+    de::dint sideCount() const;
 
     /**
      * Iterate through the Line::Sides of the sector.
@@ -185,7 +185,7 @@ public:
      *
      * @see setLightLevel()
      */
-    float lightLevel() const;
+    de::dfloat lightLevel() const;
 
     /**
      * Change the ambient light level in the sector. The LightLevelChange
@@ -195,7 +195,7 @@ public:
      *
      * @see lightLevel()
      */
-    void setLightLevel(float newLightLevel);
+    void setLightLevel(de::dfloat newLightLevel);
 
     /**
      * Returns the ambient light color in the sector. The LightColorChange
@@ -243,10 +243,10 @@ public:
      *
      * @todo Refactor away.
      */
-    int validCount() const;
+    de::dint validCount() const;
 
     /// @todo Refactor away.
-    void setValidCount(int newValidCount);
+    void setValidCount(de::dint newValidCount);
 
 #ifdef __CLIENT__
 
@@ -270,12 +270,18 @@ public:
 
 #endif // __CLIENT__
 
+public:
+    /**
+     * Register the console commands and/or variables of this module.
+     */
+    static void consoleRegister();
+
 protected:
-    int property(DmuArgs &args) const;
-    int setProperty(DmuArgs const &args);
+    de::dint property(DmuArgs &args) const;
+    de::dint setProperty(DmuArgs const &args);
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif  // DENG_WORLD_SECTOR_H
+#endif  // WORLD_SECTOR_H

@@ -1,8 +1,7 @@
-/** @file sv_main.cpp Network server.
- * @ingroup server
+/** @file sv_main.cpp  Network server.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,25 +17,26 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <math.h>
-
 #define DENG_NO_API_MACROS_SERVER
-#include "api_server.h"
 
 #include "de_base.h"
+
+#include <cmath>
+#include <de/stringarray.h>
+#include <de/ArrayValue>
+#include <de/NumberValue>
+#include <de/Log>
+
 #include "de_console.h"
 #include "de_system.h"
 #include "de_filesys.h"
 #include "de_network.h"
 #include "de_play.h"
 #include "de_misc.h"
-#include "de_defs.h"
+#include "def_main.h"
 
 #include "api_materialarchive.h"
-
-#include <de/ArrayValue>
-#include <de/NumberValue>
-#include <de/Log>
+#include "api_server.h"
 
 using namespace de;
 
@@ -758,20 +758,51 @@ void Sv_PlayerLeaves(unsigned int nodeID)
 }
 
 /**
+ * Compiles a list of all the defined thing types. Indices in this list match those
+ * in the @c mobjInfo array.
+ *
+ * @return  StringArray instance. Caller gets ownership.
+ */
+static StringArray *listThingTypeIDs()
+{
+    StringArray *array = StringArray_New();
+    for(dint i = 0; i < ::defs.things.size(); ++i)
+    {
+        StringArray_Append(array, ::defs.things[i].gets("id").toUtf8());
+    }
+    return array;
+}
+
+/**
+ * Compiles a list of all the defined mobj states. Indices in this list match those
+ * in the @c states array.
+ *
+ * @return  StringArray instance. Caller gets ownership.
+ */
+static StringArray *listStateIDs()
+{
+    StringArray *array = StringArray_New();
+    for(dint i = 0; i < ::defs.states.size(); ++i)
+    {
+        StringArray_Append(array, ::defs.states[i].gets("id").toUtf8());
+    }
+    return array;
+}
+
+/**
  * The player will be sent the introductory handshake packets.
  */
-void Sv_Handshake(int plrNum, dd_bool newPlayer)
+void Sv_Handshake(dint plrNum, dd_bool newPlayer)
 {
-    StringArray* ar;
-    int i;
-    uint playersInGame = 0;
-
     LOG_AS("Sv_Handshake");
     LOG_NET_VERBOSE("Shaking hands with player %i (newPlayer:%b)") << plrNum << newPlayer;
 
-    for(i = 0; i < DDMAXPLAYERS; ++i)
+    duint playersInGame = 0;
+    for(dint i = 0; i < DDMAXPLAYERS; ++i)
+    {
         if(clients[i].connected)
             playersInGame |= 1 << i;
+    }
 
     Msg_Begin(PSV_HANDSHAKE);
     Writer_WriteByte(msgWriter, SV_VERSION);
@@ -788,20 +819,24 @@ void Sv_Handshake(int plrNum, dd_bool newPlayer)
     Net_SendBuffer(plrNum, 0);
 
     // Include the list of thing Ids.
-    ar = Def_ListMobjTypeIDs();
-    Msg_Begin(PSV_MOBJ_TYPE_ID_LIST);
-    StringArray_Write(ar, msgWriter);
-    Msg_End();
-    Net_SendBuffer(plrNum, 0);
-    StringArray_Delete(ar);
+    {
+        StringArray *ar = listThingTypeIDs();
+        Msg_Begin(PSV_MOBJ_TYPE_ID_LIST);
+        StringArray_Write(ar, msgWriter);
+        Msg_End();
+        Net_SendBuffer(plrNum, 0);
+        StringArray_Delete(ar);
+    }
 
     // Include the list of state Ids.
-    ar = Def_ListStateIDs();
-    Msg_Begin(PSV_MOBJ_STATE_ID_LIST);
-    StringArray_Write(ar, msgWriter);
-    Msg_End();
-    Net_SendBuffer(plrNum, 0);
-    StringArray_Delete(ar);
+    {
+        StringArray *ar = listStateIDs();
+        Msg_Begin(PSV_MOBJ_STATE_ID_LIST);
+        StringArray_Write(ar, msgWriter);
+        Msg_End();
+        Net_SendBuffer(plrNum, 0);
+        StringArray_Delete(ar);
+    }
 
     if(newPlayer)
     {
@@ -813,7 +848,7 @@ void Sv_Handshake(int plrNum, dd_bool newPlayer)
     gx.NetWorldEvent(DDWE_HANDSHAKE, plrNum, (void *) &newPlayer);
 
     // Propagate client information.
-    for(i = 0; i < DDMAXPLAYERS; ++i)
+    for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
         if(clients[i].connected)
         {

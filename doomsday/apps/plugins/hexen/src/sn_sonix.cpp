@@ -22,13 +22,15 @@
 #include "jhexen.h"
 #include "s_sequence.h"
 
+#include <cstdio>
+#include <cstring>
+
 #include "dmu_lib.h"
 #include "g_common.h"
+#include "g_defs.h"
 #include "hexlex.h"
 #include "p_saveio.h"
 #include "polyobjs.h"
-#include <cstdio>
-#include <cstring>
 
 #define SS_MAX_SCRIPTS          64
 #define SS_TEMPBUFFER_SIZE      1024
@@ -192,7 +194,7 @@ void SndSeqParser(Str const *path)
             verifySequencePtr(tempDataStart, tempDataPtr);
 
             *tempDataPtr++ = SS_CMD_PLAYREPEAT;
-            *tempDataPtr++ = Def_Get(DD_DEF_SOUND_BY_NAME, Str_Text(lexer.readString()), 0);
+            *tempDataPtr++ = Defs().getSoundNumForName(Str_Text(lexer.readString()));
             continue;
         }
         if(!Str_CompareIgnoreCase(lexer.token(), "playtime"))
@@ -200,7 +202,7 @@ void SndSeqParser(Str const *path)
             verifySequencePtr(tempDataStart, tempDataPtr);
 
             *tempDataPtr++ = SS_CMD_PLAY;
-            *tempDataPtr++ = Def_Get(DD_DEF_SOUND_BY_NAME, Str_Text(lexer.readString()), 0);
+            *tempDataPtr++ = Defs().getSoundNumForName(Str_Text(lexer.readString()));
             *tempDataPtr++ = SS_CMD_DELAY;
             *tempDataPtr++ = (int)lexer.readNumber();
             continue;
@@ -210,7 +212,7 @@ void SndSeqParser(Str const *path)
             verifySequencePtr(tempDataStart, tempDataPtr);
 
             *tempDataPtr++ = SS_CMD_PLAY;
-            *tempDataPtr++ = Def_Get(DD_DEF_SOUND_BY_NAME, Str_Text(lexer.readString()), 0);
+            *tempDataPtr++ = Defs().getSoundNumForName(Str_Text(lexer.readString()));
             *tempDataPtr++ = SS_CMD_WAITUNTILDONE;
             continue;
         }
@@ -219,7 +221,7 @@ void SndSeqParser(Str const *path)
             verifySequencePtr(tempDataStart, tempDataPtr);
 
             *tempDataPtr++ = SS_CMD_PLAY;
-            *tempDataPtr++ = Def_Get(DD_DEF_SOUND_BY_NAME, Str_Text(lexer.readString()), 0);
+            *tempDataPtr++ = Defs().getSoundNumForName(Str_Text(lexer.readString()));
             continue;
         }
         if(!Str_CompareIgnoreCase(lexer.token(), "delayrand"))
@@ -249,8 +251,7 @@ void SndSeqParser(Str const *path)
         }
         if(!Str_CompareIgnoreCase(lexer.token(), "stopsound"))
         {
-            SequenceTranslate[seqCommmandIndex].stopSound =
-                    Def_Get(DD_DEF_SOUND_BY_NAME, Str_Text(lexer.readString()), 0);
+            SequenceTranslate[seqCommmandIndex].stopSound = Defs().getSoundNumForName(Str_Text(lexer.readString()));
             *tempDataPtr++ = SS_CMD_STOPSOUND;
             continue;
         }

@@ -60,7 +60,8 @@ enum Operator {
     SLICE,
     PARENTHESIS,
     AND,
-    OR
+    OR,
+    RESULT_TRUE ///< Pop a result, check if it is True.
 };
 
 String operatorToText(Operator op);

@@ -1,6 +1,6 @@
 # The Doomsday Engine Project -- Server
 # Copyright (c) 2012-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
-# Copyright (c) 2012-2014 Daniel Swanson <danij@dengine.net>
+# Copyright (c) 2012-2015 Daniel Swanson <danij@dengine.net>
 
 cmake_minimum_required (VERSION 3.1)
 project (DENG_SERVER)
@@ -39,7 +39,6 @@ set (SHARED_WITH_CLIENT
     ${src}/include/de_audio.h
     ${src}/include/de_base.h
     ${src}/include/de_console.h
-    ${src}/include/de_defs.h
     ${src}/include/de_edit.h
     ${src}/include/de_filesys.h
     ${src}/include/de_graphics.h
@@ -88,7 +87,6 @@ set (SHARED_WITH_CLIENT
     ${src}/include/resource/patchname.h
     ${src}/include/resource/rawtexture.h
     ${src}/include/resource/resourcesystem.h
-    ${src}/include/resource/sprite.h
     ${src}/include/resource/texture.h
     ${src}/include/resource/texturemanifest.h
     ${src}/include/resource/texturescheme.h
@@ -188,7 +186,6 @@ set (SHARED_WITH_CLIENT
     ${src}/src/resource/patchname.cpp
     ${src}/src/resource/pcx.cpp
     ${src}/src/resource/resourcesystem.cpp
-    ${src}/src/resource/sprite.cpp
     ${src}/src/resource/texture.cpp
     ${src}/src/resource/texturemanifest.cpp
     ${src}/src/resource/texturescheme.cpp

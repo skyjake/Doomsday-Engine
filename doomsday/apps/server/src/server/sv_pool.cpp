@@ -563,7 +563,7 @@ dd_bool Sv_RegisterCompareMobj(cregister_t *reg, mobj_t const *s, mobjdelta_t *d
     {
         df |= MDF_STATE;
 
-        if(s->state == NULL)
+        if(s->state == nullptr)
         {
             // No valid comparison can be generated because the mobj is gone.
             return false;

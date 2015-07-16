@@ -234,8 +234,7 @@ static bool recognize(Block const &data)
         Reader(data) >> header;
         return (header.imageType == Header::RGB || header.imageType == Header::RleRGB) &&
                header.colorMapType == Header::ColorMapNone &&
-               (header.depth == 24 || header.depth == 32) &&
-               !header.flags.testFlag(Header::ScreenOriginUpper);
+               (header.depth == 24 || header.depth == 32);
     }
     catch(...)
     {
@@ -256,13 +255,16 @@ static QImage load(Block const &data)
 
     bool const isUpperOrigin = header.flags.testFlag(Header::ScreenOriginUpper);
 
+//    qDebug() << "[TARGA] pixelSize:" << pixelSize << "imageType:" << header.imageType
+//        << img.bytesPerLine() << header.size.x * pixelSize;
+    
     // RGB can be read line by line.
     if(header.imageType == Header::RGB)
     {
         for(int y = 0; y < header.size.y; y++)
         {
             int inY = (isUpperOrigin? y : (header.size.y - y - 1));
-            ByteRefArray line(base + (inY * header.size.x * pixelSize), header.size.x * pixelSize);
+            ByteRefArray line(base + (inY * img.bytesPerLine()), header.size.x * pixelSize);
             input.readPresetSize(line);
         }
     }

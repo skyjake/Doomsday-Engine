@@ -177,6 +177,16 @@ Record const &Variable::valueAsRecord() const
     return value<RecordValue>().dereference();
 }
 
+ArrayValue const &Variable::array() const
+{
+    return value<ArrayValue>();
+}
+
+ArrayValue &Variable::array()
+{
+    return value<ArrayValue>();
+}
+    
 Variable::operator Record & ()
 {
     return valueAsRecord();

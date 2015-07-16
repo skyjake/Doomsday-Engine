@@ -31,8 +31,8 @@
 #include "api_gl.h"
 #include "d_netsv.h"
 #include "g_common.h"
+#include "g_defs.h"
 #include "g_game.h"
-#include "r_common.h"
 #include "hu_menu.h"
 #include "hu_inventory.h"
 #include "mapstatewriter.h"
@@ -44,6 +44,7 @@
 #include "p_saveio.h"
 #include "p_sound.h"
 #include "p_tick.h"
+#include "r_common.h"
 #if __JDOOM__
 #  include "doomv9mapstatereader.h"
 #endif

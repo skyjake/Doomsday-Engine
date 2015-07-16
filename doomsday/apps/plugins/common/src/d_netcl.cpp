@@ -1,7 +1,7 @@
 /** @file d_netcl.cpp  Common code related to netgames (client-side).
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -25,6 +25,7 @@
 #include <cstring>
 #include "d_netsv.h"       ///< @todo remove me
 #include "g_common.h"
+#include "g_defs.h"
 #include "gamesession.h"
 #include "hu_inventory.h"
 #include "p_actor.h"
@@ -933,7 +934,7 @@ void NetCl_LocalMobjState(reader_s *msg)
     ddstring_t* stateName = Str_New();
 
     Str_Read(stateName, msg);
-    newState = Def_Get(DD_DEF_STATE, Str_Text(stateName), 0);
+    newState = Defs().getStateNum(Str_Text(stateName));
     Str_Delete(stateName);
 
     special1 = Reader_ReadInt32(msg);

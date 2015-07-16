@@ -25,6 +25,7 @@
 
 #include <de/vector1.h>
 #include <de/ModelDrawable>
+#include <doomsday/defs/sprite.h>
 
 #include "clientapp.h"
 #include "de_render.h"
@@ -54,6 +55,11 @@ using namespace de;
 static inline RenderSystem &rendSys()
 {
     return ClientApp::renderSystem();
+}
+
+static inline ResourceSystem &resSys()
+{
+    return ClientApp::resourceSystem();
 }
 
 static void evaluateLighting(Vector3d const &origin, ConvexSubspace &subspaceAtOrigin,
@@ -162,8 +168,8 @@ void R_ProjectSprite(mobj_t &mob)
     // ...in an invalid state?
     if(!mob.state || !runtimeDefs.states.indexOf(mob.state)) return;
     // ...no sprite frame is defined?
-    Sprite *sprite = Mobj_Sprite(mob);
-    if(!sprite) return;
+    Record *spriteRec = Mobj_SpritePtr(mob);
+    if(!spriteRec) return;
     // ...fully transparent?
     dfloat const alpha = Mobj_Alpha(mob);
     if(alpha <= 0) return;
@@ -212,15 +218,14 @@ void R_ProjectSprite(mobj_t &mob)
     bool matFlipS = false;
     bool matFlipT = false;
 
+    defn::Sprite sprite(*spriteRec);
     try
     {
-        SpriteViewAngle const &sprViewAngle =
-            sprite->closestViewAngle(mob.angle, R_ViewPointToAngle(mob.origin), !!mf);
-
-        mat      = sprViewAngle.material;
-        matFlipS = sprViewAngle.mirrorX;
+        Record const &spriteView = sprite.nearestView(mob.angle, R_ViewPointToAngle(mob.origin), !!mf);
+        mat      = resSys().materialPtr(de::Uri(spriteView.gets("material"), RC_NULL));
+        matFlipS = spriteView.getb("mirrorX");
     }
-    catch(Sprite::MissingViewAngleError const &er)
+    catch(defn::Sprite::MissingViewError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_GL_WARNING("Projecting sprite '%i' frame '%i': %s")
@@ -474,13 +479,11 @@ void R_ProjectSprite(mobj_t &mob)
         /// @todo mark this light source visible for LensFx
         try
         {
-            SpriteViewAngle const &sprViewAngle =
-                sprite->closestViewAngle(mob.angle, R_ViewPointToAngle(mob.origin));
+            Record const &spriteView = sprite.nearestView(mob.angle, R_ViewPointToAngle(mob.origin));
 
-            DENG2_ASSERT(sprViewAngle.material);
-            MaterialAnimator &matAnimator = sprViewAngle.material->getAnimator(Rend_SpriteMaterialSpec(mob.tclass, mob.tmap));
-
-            // Ensure we've up to date info about the material.
+            // Lookup the Material for this Sprite and prepare the animator.
+            MaterialAnimator &matAnimator = resSys().material(de::Uri(spriteView.gets("material"), RC_NULL))
+                                                        .getAnimator(Rend_SpriteMaterialSpec(mob.tclass, mob.tmap));
             matAnimator.prepare();
 
             Vector2i const &matDimensions = matAnimator.dimensions();
@@ -543,7 +546,13 @@ void R_ProjectSprite(mobj_t &mob)
                 }
             }
         }
-        catch(Sprite::MissingViewAngleError const &er)
+        catch(defn::Sprite::MissingViewError const &er)
+        {
+            // Log but otherwise ignore this error.
+            LOG_GL_WARNING("Projecting flare source for sprite '%i' frame '%i': %s")
+                    << mob.sprite << mob.frame << er.asText();
+        }
+        catch(ResourceSystem::MissingManifestError const &er)
         {
             // Log but otherwise ignore this error.
             LOG_GL_WARNING("Projecting flare source for sprite '%i' frame '%i': %s")

@@ -1,6 +1,6 @@
-/** @file render/walledge.h Wall Edge Geometry.
+/** @file walledge.h  Wall Edge Geometry.
  *
- * @authors Copyright © 2011-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2011-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,8 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RENDER_WALLEDGE
-#define DENG_RENDER_WALLEDGE
+#ifndef RENDER_WALLEDGE
+#define RENDER_WALLEDGE
 
 #include <QList>
 
@@ -41,8 +41,8 @@ namespace de {
 class HEdge;
 
 /**
- * Helper/utility class intended to simplify the process of generating
- * sections of wall geometry from a map Line segment.
+ * Helper/utility class intended to simplify the process of generating sections of wall
+ * geometry from a map Line segment.
  *
  * @ingroup world
  */
@@ -58,11 +58,11 @@ public:
     class Event : public WorldEdge::Event, public IHPlane::IIntercept
     {
     public:
-        Event(WallEdge &owner, double distance = 0);
+        Event(WallEdge &owner, ddouble distance = 0);
 
         bool operator < (Event const &other) const;
 
-        double distance() const;
+        ddouble distance() const;
 
         Vector3d origin() const;
 
@@ -78,7 +78,7 @@ public:
      *
      * @param hedge  Assumed to have a mapped LineSideSegment with sections.
      */
-    WallEdge(WallSpec const &spec, HEdge &hedge, int edge);
+    WallEdge(WallSpec const &spec, HEdge &hedge, dint edge);
 
     inline Event const &operator [] (EventIndex index) const {
         return at(index);
@@ -93,9 +93,13 @@ public:
 
     WallSpec const &spec() const;
 
-    LineSide &mapLineSide() const;
+    inline LineSide &lineSide() const {
+        return lineSideSegment().lineSide();
+    }
 
-    coord_t mapLineSideOffset() const;
+    coord_t lineSideOffset() const;
+
+    LineSideSegment &lineSideSegment() const;
 
     /// Implement IEdge.
     bool isValid() const;
@@ -106,14 +110,14 @@ public:
     /// Implement IEdge.
     Event const &last() const;
 
-    int divisionCount() const;
+    dint divisionCount() const;
 
     EventIndex firstDivision() const;
 
     EventIndex lastDivision() const;
 
     inline Event const &bottom() const { return first(); }
-    inline Event const &top() const { return last(); }
+    inline Event const &top   () const { return last();  }
 
     Events const &events() const;
 
@@ -123,6 +127,6 @@ private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace de
+}  // namespace de
 
-#endif // DENG_RENDER_WALLEDGE
+#endif  // RENDER_WALLEDGE

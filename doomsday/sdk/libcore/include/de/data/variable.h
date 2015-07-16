@@ -29,6 +29,7 @@
 namespace de {
 
 class Value;
+class ArrayValue;
 class Record;
     
 /**
@@ -199,7 +200,14 @@ public:
     Record const &valueAsRecord() const;
 
     Record &valueAsRecord();
-
+    
+    /**
+     * Returns the value of the variable as an ArrayValue.
+     */
+    ArrayValue const &array() const;
+    
+    ArrayValue &array();
+    
     operator Record & ();
 
     operator Record const & () const;

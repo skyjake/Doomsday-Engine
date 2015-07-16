@@ -1,8 +1,8 @@
-/** @file de_resource.h Resource Subsystem.
+/** @file de_resource.h  Resource Subsystem.
  * @ingroup resource
  *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,15 +18,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_RESOURCE_SUBSYSTEM_H
-#define DENG_RESOURCE_SUBSYSTEM_H
+#ifndef RESOURCE_SUBSYSTEM_H
+#define RESOURCE_SUBSYSTEM_H
 
 #include <doomsday/resource/resourceclass.h>
 
 #include "resource/abstractfont.h"
 #include "resource/compositetexture.h"
 #include "resource/rawtexture.h"
-#include "resource/sprite.h"
 
 #ifdef __CLIENT__
 #  include "resource/materialvariantspec.h"
@@ -41,4 +40,4 @@
 
 #include "api_resource.h"
 
-#endif // DENG_RESOURCE_SUBSYSTEM_H
+#endif  // RESOURCE_SUBSYSTEM_H

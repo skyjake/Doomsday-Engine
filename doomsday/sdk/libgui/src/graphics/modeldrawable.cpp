@@ -155,7 +155,14 @@ struct DefaultImageLoader : public ModelDrawable::IImageLoader
     {
         File const &texFile = App::rootFolder().locate<File>(path);
         qDebug() << "loading image from" << texFile.description().toLatin1();
-        return Image::fromData(texFile, texFile.name().fileNameExtension());
+        Image img = Image::fromData(texFile, texFile.name().fileNameExtension());
+        if(img.depth() == 24)
+        {
+            // Model texture atlases need to have an alpha channel.
+            DENG2_ASSERT(img.canConvertToQImage());
+            return Image(img.toQImage().convertToFormat(QImage::Format_ARGB32));
+        }
+        return img;
     }
 };
 
@@ -715,6 +722,8 @@ DENG2_PIMPL(ModelDrawable)
                 return;
             }
         }
+        LOG_GL_WARNING("\"%s\": too many weights for vertex %i (only 4 supported), bone index: %i")
+            << sourcePath << vertexIndex << boneIndex;
         DENG2_ASSERT(!"Too many bone weights for a vertex");
     }
 

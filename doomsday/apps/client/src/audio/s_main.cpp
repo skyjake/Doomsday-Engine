@@ -487,10 +487,10 @@ int S_StartMusicNum(int id, dd_bool looped)
 #endif
 }
 
-int S_StartMusic(char const *musicID, dd_bool looped)
+dint S_StartMusic(char const *musicID, dd_bool looped)
 {
     LOG_AS("S_StartMusic");
-    int idx = Def_GetMusicNum(musicID);
+    dint idx = ::defs.getMusicNum(musicID);
     if(idx < 0)
     {
         if(musicID && qstrlen(musicID))
@@ -555,13 +555,13 @@ D_CMD(PlaySound)
         LOG_SCR_MSG("The sound is always played locally.");
         return true;
     }
-    int p = 0;
+    dint p = 0;
 
     // The sound ID is always first.
-    int const id = Def_GetSoundNum(argv[1]);
+    dint const id = ::defs.getSoundNum(argv[1]);
 
     // The second argument may be a volume.
-    float volume = 1;
+    dfloat volume = 1;
     if(argc >= 3 && String(argv[2]).compareWithoutCase("at"))
     {
         volume = String(argv[2]).toFloat();

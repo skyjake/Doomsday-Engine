@@ -1,4 +1,4 @@
-/** @file rend_fakeradio.h Faked Radiosity Lighting.
+/** @file rend_fakeradio.h  Geometry generation for faked, radiosity lighting.
  *
  * Perhaps the most distinctive characteristic of radiosity lighting is that
  * the corners of a room are slightly dimmer than the rest of the surfaces.
@@ -34,13 +34,10 @@
 #ifndef CLIENT_RENDER_FAKERADIO
 #define CLIENT_RENDER_FAKERADIO
 
-#include "Line"
-#include "Sector"
-#include "Vertex"
-
 #include "WallEdge"
 
 class ConvexSubspace;
+class Plane;
 
 /**
  * FakeRadio shadow data.
@@ -49,7 +46,7 @@ class ConvexSubspace;
 struct shadowcorner_t
 {
     de::dfloat corner;
-    Sector *proximity;
+    Plane *proximity;
     de::dfloat pOffset;
     de::dfloat pHeight;
 };
@@ -64,67 +61,31 @@ struct edgespan_t
     de::dfloat shift;
 };
 
+DENG2_EXTERN_C de::dint rendFakeRadio;
+DENG2_EXTERN_C byte devFakeRadioUpdate;
+
 /**
- * Stores the FakeRadio properties of a LineSide.
- * @ingroup render
+ * Render FakeRadio for the specified wall section. Generates and then draws all shadow geometry
+ * for the wall section.
+ *
+ * Note that unlike Rend_DrawFlatRadio() there is no guard to ensure shadow geometry is rendered
+ * only once per frame.
+ *
+ * @param leftEdge      Geometry for the left edge of the wall section.
+ * @param rightEdge     Geometry for the right edge of the wall section.
+ * @param ambientLight  Ambient light level/luminosity.
  */
-struct LineSideRadioData
-{
-    de::dint updateCount;  ///< Frame number of last update
+void Rend_DrawWallRadio(de::WallEdge const &leftEdge, de::WallEdge const &rightEdge, de::dfloat ambientLight);
 
-    shadowcorner_t topCorners[2];
-    shadowcorner_t bottomCorners[2];
-    shadowcorner_t sideCorners[2];
-
-    /// [bottom, top]
-    edgespan_t spans[2];
-};
+/**
+ * Render FakeRadio for the given subspace. Draws all shadow geometry linked to the ConvexSubspace,
+ * that has not already been rendered.
+ */
+void Rend_DrawFlatRadio(ConvexSubspace const &subspace);
 
 /**
  * Register the console commands, variables, etc..., of this module.
  */
 void Rend_RadioRegister();
-
-/**
- * To be called after map load to perform necessary initialization within this module.
- */
-void Rend_RadioInitForMap(de::Map &map);
-
-/**
- * Returns the FakeRadio data for the specified line @a side.
- */
-LineSideRadioData &Rend_RadioDataForLineSide(LineSide &side);
-
-/**
- * To be called to update the shadow properties for the specified line @a side.
- */
-void Rend_RadioUpdateForLineSide(LineSide &side);
-
-/**
- * Returns the global shadow darkness factor, derived from values in Config.
- * Assumes that light level adaptation has @em NOT yet been applied (it will be).
- */
-de::dfloat Rend_RadioCalcShadowDarkness(de::dfloat lightLevel);
-
-/**
- * Render FakeRadio for the specified wall section. Generates and then draws all
- * shadow geometry for the wall section.
- *
- * Note that unlike Rend_RadioBspLeafEdges() there is no guard to ensure shadow
- * geometry is rendered only once per frame.
- *
- * @param leftEdge    Geometry for the left edge of the wall section.
- * @param rightEdge   Geometry for the right edge of the wall section.
- * @param shadowDark  Shadow darkness scale factor.
- * @param shadowSize  Shadow size scale factor.
- */
-void Rend_RadioWallSection(de::WallEdge const &leftEdge, de::WallEdge const &rightEdge,
-    de::dfloat shadowDark, de::dfloat shadowSize);
-
-/**
- * Render FakeRadio for the given subspace. Draws all shadow geometry linked to
- * the ConvexSubspace, that has not already been rendered.
- */
-void Rend_RadioSubspaceEdges(ConvexSubspace const &subspace);
 
 #endif  // CLIENT_RENDER_FAKERADIO

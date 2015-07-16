@@ -1,7 +1,7 @@
 /** @file surface.cpp  World map surface.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -26,21 +26,22 @@
 #include <QtAlgorithms>
 #include <de/vector1.h>
 #include <de/Log>
-#include "de_defs.h" // Def_GetGenerator
 #include "dd_loop.h" // frameTimePos
+#include "r_util.h"  // R_NameForBlendMode()
+
+#ifdef __CLIENT__
+#  include "gl/gl_tex.h"
+#endif
 
 #include "MaterialManifest"
 #include "TextureManifest"
 
+#include "world/worldsystem.h" // ddMapSetup
 #include "world/map.h"
 #include "Plane"
-#include "world/worldsystem.h" // ddMapSetup
 
 #ifdef __CLIENT__
-#  include "gl/gl_tex.h"
-
 #  include "Decoration"
-
 #  include "render/rend_main.h"
 #endif
 
@@ -48,7 +49,7 @@ using namespace de;
 
 DENG2_PIMPL(Surface)
 {
-    int flags = 0;                              ///< @ref sufFlags
+    dint flags = 0;                             ///< @ref sufFlags
 
     Matrix3f tangentMatrix { Matrix3f::Zero };  ///< Tangent space vectors.
     bool needUpdateTangentMatrix = false;       ///< @c true= marked for update.
@@ -58,7 +59,7 @@ DENG2_PIMPL(Surface)
     Vector2f materialOrigin;                    ///< @em sharp surface space material origin.
 
     Vector3f tintColor;
-    float opacity = 0;
+    dfloat opacity = 0;
     blendmode_t blendMode { BM_NORMAL };
 
 #ifdef __CLIENT__
@@ -156,12 +157,28 @@ DENG2_AUDIENCE_METHOD(Surface, NormalChange)
 DENG2_AUDIENCE_METHOD(Surface, OpacityChange)
 DENG2_AUDIENCE_METHOD(Surface, TintColorChange)
 
-Surface::Surface(MapElement &owner, float opacity, Vector3f const &tintColor)
+Surface::Surface(MapElement &owner, dfloat opacity, Vector3f const &tintColor)
     : MapElement(DMU_SURFACE, &owner)
     , d(new Instance(this))
 {
     d->opacity   = opacity;
     d->tintColor = tintColor;
+}
+
+String Surface::description() const
+{
+    return String(_E(l)  "Material: "        _E(.)_E(i) "%1" _E(.)
+                  _E(l) " Material Origin: " _E(.)_E(i) "%2" _E(.)
+                  _E(l) " Normal: "          _E(.)_E(i) "%3" _E(.)
+                  _E(l) " Opacity: "         _E(.)_E(i) "%4" _E(.)
+                  _E(l) " Blend Mode: "      _E(.)_E(i) "%5" _E(.)
+                  _E(l) " Tint Color: "      _E(.)_E(i) "%6" _E(.))
+               .arg(hasMaterial()? material().manifest().composeUri().asText() : "None")
+               .arg(materialOrigin().asText())
+               .arg(normal().asText())
+               .arg(opacity())
+               .arg(String(R_NameForBlendMode(blendMode())))
+               .arg(tintColor().asText());
 }
 
 Matrix3f const &Surface::tangentMatrix() const
@@ -180,7 +197,7 @@ Surface &Surface::setNormal(Vector3f const &newNormal)
     Vector3f const newNormalNormalized = newNormal.normalize();
     if(oldNormal != newNormalNormalized)
     {
-        for(int i = 0; i < 3; ++i)
+        for(dint i = 0; i < 3; ++i)
         {
             d->tangentMatrix.at(i, 2) = newNormalNormalized[i];
         }
@@ -366,16 +383,16 @@ void Surface::updateMaterialOriginTracking()
     }
 }
 
-#endif // __CLIENT__
+#endif  // __CLIENT__
 
-float Surface::opacity() const
+dfloat Surface::opacity() const
 {
     return d->opacity;
 }
 
-Surface &Surface::setOpacity(float newOpacity)
+Surface &Surface::setOpacity(dfloat newOpacity)
 {
-    DENG2_ASSERT(d->isSideMiddle() || d->isSectorExtraPlane()); // sanity check
+    DENG2_ASSERT(d->isSideMiddle() || d->isSectorExtraPlane());  // sanity check
 
     newOpacity = de::clamp(0.f, newOpacity, 1.f);
     if(!de::fequal(d->opacity, newOpacity))
@@ -417,7 +434,7 @@ Surface &Surface::setBlendMode(blendmode_t newBlendMode)
 }
 
 #ifdef __CLIENT__
-float Surface::glow(Vector3f &color) const
+dfloat Surface::glow(Vector3f &color) const
 {
     if(!d->material || d->material->isSkyMasked())
     {
@@ -461,7 +478,7 @@ LoopResult Surface::forAllDecorations(std::function<LoopResult (Decoration &)> f
     return LoopContinue;
 }
 
-int Surface::decorationCount() const
+dint Surface::decorationCount() const
 {
     return d->decorations.count();
 }
@@ -477,9 +494,9 @@ bool Surface::needsDecorationUpdate() const
     return d->needDecorationUpdate;
 }
 
-#endif // __CLIENT__
+#endif  // __CLIENT__
 
-int Surface::property(DmuArgs &args) const
+dint Surface::property(DmuArgs &args) const
 {
     switch(args.prop)
     {
@@ -590,10 +607,10 @@ int Surface::property(DmuArgs &args) const
         return MapElement::property(args);
     }
 
-    return false; // Continue iteration.
+    return false;  // Continue iteration.
 }
 
-int Surface::setProperty(DmuArgs const &args)
+dint Surface::setProperty(DmuArgs const &args)
 {
     switch(args.prop)
     {
@@ -634,7 +651,7 @@ int Surface::setProperty(DmuArgs const &args)
         break; }
 
     case DMU_ALPHA: {
-        float newOpacity;
+        dfloat newOpacity;
         args.value(DMT_SURFACE_RGBA, &newOpacity, 0);
         setOpacity(newOpacity);
         break; }
@@ -668,5 +685,5 @@ int Surface::setProperty(DmuArgs const &args)
         return MapElement::setProperty(args);
     }
 
-    return false; // Continue iteration.
+    return false;  // Continue iteration.
 }

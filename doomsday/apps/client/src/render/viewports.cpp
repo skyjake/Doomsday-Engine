@@ -742,10 +742,14 @@ void R_RenderBlankView()
 
 static void setupPlayerSprites()
 {
-    psp3d = false;
+    DENG2_ASSERT(viewPlayer);
+
+    // There are no 3D psprites.
+    ::psp3d = false;
+
+    ddplayer_t *ddpl = &viewPlayer->shared;
 
     // Cameramen have no psprites.
-    ddplayer_t *ddpl = &viewPlayer->shared;
     if((ddpl->flags & DDPF_CAMERA) || (ddpl->flags & DDPF_CHASECAM))
         return;
 
@@ -756,34 +760,32 @@ static void setupPlayerSprites()
     SectorCluster &cluster = Mobj_Cluster(*mob);
 
     // Determine if we should be drawing all the psprites full bright?
-    dd_bool isFullBright = (levelFullBright != 0);
-    if(!isFullBright)
+    bool fullBright = CPP_BOOL(::levelFullBright);
+    if(!fullBright)
     {
-        ddpsprite_t *psp = ddpl->pSprites;
-        for(dint i = 0; i < DDMAXPSPRITES; ++i, psp++)
+        for(ddpsprite_t const &psp : ddpl->pSprites)
         {
-            if(!psp->statePtr) continue;
+            if(!psp.statePtr) continue;
 
             // If one of the psprites is fullbright, both are.
-            if(psp->statePtr->flags & STF_FULLBRIGHT)
-                isFullBright = true;
+            if(psp.statePtr->flags & STF_FULLBRIGHT)
+            {
+                fullBright = true;
+            }
         }
     }
 
     viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
-
-    ddpsprite_t *psp = ddpl->pSprites;
-    for(dint i = 0; i < DDMAXPSPRITES; ++i, psp++)
+    for(dint i = 0; i < DDMAXPSPRITES; ++i)
     {
         vispsprite_t *spr = &visPSprites[i];
 
         spr->type = VPSPR_SPRITE;
-        spr->psp  = psp;
+        spr->psp  = &ddpl->pSprites[i];
 
-        if(!psp->statePtr) continue;
+        if(!spr->psp->statePtr) continue;
 
         // First, determine whether this is a model or a sprite.
-        bool isModel = false;
         ModelDef *mf = nullptr, *nextmf = nullptr;
         dfloat inter = 0;
         if(useModels)
@@ -792,18 +794,17 @@ static void setupPlayerSprites()
             MobjThinker dummy;
 
             // Setup a dummy for the call to R_CheckModelFor.
-            dummy->state = psp->statePtr;
-            dummy->tics = psp->tics;
+            dummy->state = spr->psp->statePtr;
+            dummy->tics  = spr->psp->tics;
 
             mf = Mobj_ModelDef(dummy, &nextmf, &inter);
-            if(mf) isModel = true;
         }
 
-        if(isModel)
+        // Use a 3D model?
+        if(mf)
         {
-            // Yes, draw a 3D model (in Rend_Draw3DPlayerSprites).
             // There are 3D psprites.
-            psp3d = true;
+            ::psp3d = true;
 
             spr->type   = VPSPR_MODEL;
             spr->origin = viewData->current.origin;
@@ -823,9 +824,9 @@ static void setupPlayerSprites()
             spr->data.model.viewAligned = true;
 
             // Offsets to rotation angles.
-            spr->data.model.yawAngleOffset   = psp->pos[0] * weaponOffsetScale - 90;
+            spr->data.model.yawAngleOffset   = spr->psp->pos[0] * weaponOffsetScale - 90;
             spr->data.model.pitchAngleOffset =
-                (32 - psp->pos[1]) * weaponOffsetScale * weaponOffsetScaleY / 1000.0f;
+                (32 - spr->psp->pos[1]) * weaponOffsetScale * weaponOffsetScaleY / 1000.0f;
             // Is the FOV shift in effect?
             if(weaponFOVShift > 0 && Rend_FieldOfView() > 90)
                 spr->data.model.pitchAngleOffset -= weaponFOVShift * (Rend_FieldOfView() - 90) / 90;
@@ -835,8 +836,8 @@ static void setupPlayerSprites()
             spr->data.model.pitch = viewData->current.pitch * 85 / 110 + spr->data.model.yawAngleOffset;
             std::memset(spr->data.model.visOff, 0, sizeof(spr->data.model.visOff));
 
-            spr->data.model.alpha = psp->alpha;
-            spr->data.model.stateFullBright = (psp->flags & DDPSPF_FULLBRIGHT)!=0;
+            spr->data.model.alpha = spr->psp->alpha;
+            spr->data.model.stateFullBright = (spr->psp->flags & DDPSPF_FULLBRIGHT) != 0;
         }
         else
         {
@@ -847,8 +848,8 @@ static void setupPlayerSprites()
             spr->origin = viewData->current.origin;
 
             spr->data.sprite.bspLeaf      = &Mobj_BspLeafAtOrigin(*mob);
-            spr->data.sprite.alpha        = psp->alpha;
-            spr->data.sprite.isFullBright = (psp->flags & DDPSPF_FULLBRIGHT) != 0;
+            spr->data.sprite.alpha        = spr->psp->alpha;
+            spr->data.sprite.isFullBright = (spr->psp->flags & DDPSPF_FULLBRIGHT) != 0;
         }
     }
 }

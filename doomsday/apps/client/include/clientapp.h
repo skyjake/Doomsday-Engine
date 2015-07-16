@@ -77,6 +77,7 @@ public:
     static de::Games &games();
     static de::WorldSystem &worldSystem();
 
+    static bool hasInputSystem();
     static bool hasRenderSystem();
 
 public slots:

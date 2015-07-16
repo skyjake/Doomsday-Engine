@@ -2,6 +2,7 @@
  * @ingroup base
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2014-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -88,7 +89,8 @@ enum {
 
     DE_API_DEFINITIONS_v1       = 500,     // 1.10
     DE_API_DEFINITIONS_v2       = 501,     // 1.15
-    DE_API_DEFINITIONS          = DE_API_DEFINITIONS_v2,
+    DE_API_DEFINITIONS_v3       = 502,     // 2.0
+    DE_API_DEFINITIONS          = DE_API_DEFINITIONS_v3,
 
     DE_API_FILE_SYSTEM_v1       = 600,     // 1.10
     DE_API_FILE_SYSTEM_v2       = 601,     // 1.14
@@ -107,7 +109,8 @@ enum {
     DE_API_INFINE               = DE_API_INFINE_v1,
 
     DE_API_INTERNAL_DATA_v1     = 1000,    // 1.10
-    DE_API_INTERNAL_DATA        = DE_API_INTERNAL_DATA_v1,
+    DE_API_INTERNAL_DATA_v2     = 1001,    // 2.0 (removed sprNames)
+    DE_API_INTERNAL_DATA        = DE_API_INTERNAL_DATA_v2,
 
     DE_API_MAP_v1               = 1100,    // 1.10
     DE_API_MAP_v2               = 1101,    // 1.11
@@ -165,7 +168,7 @@ enum {
  * Base structure for API structs.
  */
 typedef struct de_api_s {
-    int id; ///< API identification (including version) number.
+    int id;  ///< API identification (including version) number.
 } de_api_t;
 
 #define DENG_API_TYPEDEF(Name)  typedef struct de_api_##Name##_s
@@ -183,4 +186,4 @@ typedef struct de_api_s {
         DENG_ASSERT(_api_##Name.api.id == Ident); \
         break;
 
-#endif // DOOMSDAY_APIS_H
+#endif  // DOOMSDAY_APIS_H
