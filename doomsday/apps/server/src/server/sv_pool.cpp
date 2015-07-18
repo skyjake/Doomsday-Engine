@@ -1,12 +1,11 @@
-/** @file sv_pool.cpp Delta Pools
- * @ingroup server
+/** @file sv_pool.cpp  Delta Pools.
  *
  * Delta Pools use PU_MAP, which means all the memory allocated for them
  * is deallocated when the map changes. Sv_InitPools() is called in
  * R_SetupMap() to clear out all the old data.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -22,71 +21,67 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <math.h>
-#include <de/mathutil.h>
-#include <de/vector1.h>
-
 #include "de_base.h"
+#include "server/sv_pool.h"
+
+#include <cmath>
+#include <de/mathutil.h>
+#include <de/timer.h>
+#include <de/vector1.h>
 #include "de_console.h"
-#include "de_network.h"
 #include "de_play.h"
 
 #include "audio/s_main.h"
-#include "world/thinkers.h"
-#include "server/sv_pool.h"
 
-#include <de/timer.h>
+#include "network/net_main.h"
+
+#include "world/p_object.h"
+#include "world/thinkers.h"
 
 using namespace de;
 
-#define DEFAULT_DELTA_BASE_SCORE    10000
+#define DEFAULT_DELTA_BASE_SCORE    ( 10000 )
 
-#define REG_MOBJ_HASH_SIZE          1024
-#define REG_MOBJ_HASH_FUNCTION_MASK 0x3ff
+#define REG_MOBJ_HASH_SIZE          ( 1024 )
+#define REG_MOBJ_HASH_FUNCTION_MASK ( 0x3ff )
 
-// Maximum difference in plane height where the absolute height doesn't
-// need to be sent.
+// Maximum difference in plane height where the absolute height doesn't need to be sent.
+#define PLANE_SKIP_LIMIT            ( 40 )
 
-#define PLANE_SKIP_LIMIT            (40)
+struct reg_mobj_t
+{
+    reg_mobj_t *next;  ///< In the register hash.
+    reg_mobj_t *prev;  ///< In the register hash.
+    dt_mobj_t mo;      ///< The state of the mobj.
+};
 
-typedef struct reg_mobj_s {
-    // Links to next and prev mobj in the register hash.
-    struct reg_mobj_s*  next, *prev;
-
-    // The tic when the mobj state was last sent.
-    dt_mobj_t           mo; // The state of the mobj.
-} reg_mobj_t;
-
-typedef struct mobjhash_s {
-    reg_mobj_t*         first, *last;
-} mobjhash_t;
+struct mobjhash_t
+{
+    reg_mobj_t *first, *last;
+};
 
 /**
  * One cregister_t holds the state of the entire world.
  */
-typedef struct cregister_s {
-    // The time the register was last updated.
-    int                 gametic;
-
-    // True if this register contains a read-only copy of the initial state
-    // of the world.
-    dd_bool             isInitial;
+struct cregister_t
+{
+    dint gametic;       ///< The time the register was last updated.
+    dd_bool isInitial;  ///< @c true if *this* register contains a read-only copy of the initial state of the world.
 
     // The mobjs are stored in a hash for efficiency (ID is the key).
-    mobjhash_t          mobjs[REG_MOBJ_HASH_SIZE];
+    mobjhash_t mobjs[REG_MOBJ_HASH_SIZE];
 
-    dt_player_t         ddPlayers[DDMAXPLAYERS];
-    dt_sector_t*        sectors;
-    dt_side_t*          sides;
-    dt_poly_t*          polyObjs;
-} cregister_t;
+    dt_player_t ddPlayers[DDMAXPLAYERS];
+    dt_sector_t *sectors;
+    dt_side_t *sides;
+    dt_poly_t *polyObjs;
+};
 
-void            Sv_RegisterWorld(cregister_t* reg, dd_bool isInitial);
-void            Sv_NewDelta(void* deltaPtr, deltatype_t type, uint id);
-dd_bool         Sv_IsVoidDelta(const void* delta);
-void            Sv_PoolQueueClear(pool_t* pool);
-void            Sv_GenerateNewDeltas(cregister_t* reg, int clientNumber,
-                                     dd_bool doUpdate);
+void Sv_RegisterWorld(cregister_t *reg, dd_bool isInitial);
+void Sv_NewDelta(void *deltaPtr, deltatype_t type, duint id);
+dd_bool Sv_IsVoidDelta(void const *delta);
+void Sv_PoolQueueClear(pool_t *pool);
+void Sv_GenerateNewDeltas(cregister_t *reg, dint clientNumber, dd_bool doUpdate);
 
 // The register contains the previous state of the world.
 cregister_t worldRegister;
@@ -97,7 +92,7 @@ cregister_t initialRegister;
 // Each client has its own pool for deltas.
 pool_t pools[DDMAXPLAYERS];
 
-static float deltaBaseScores[NUM_DELTA_TYPES];
+static dfloat deltaBaseScores[NUM_DELTA_TYPES];
 
 // Keep this zeroed out. Used if the register doesn't have data for
 // the mobj being compared.
@@ -112,55 +107,55 @@ static inline WorldSystem &worldSys()
  * Called once for each map, from R_SetupMap(). Initialize the world
  * register and drain all pools.
  */
-void Sv_InitPools(void)
+void Sv_InitPools()
 {
-    de::Time startedAt;
-    uint i;
+    Time startedAt;
 
     // Clients don't register anything.
-    if(isClient) return;
+    if(::isClient) return;
 
     LOG_AS("Sv_InitPools");
 
     // Set base priority scores for all the delta types.
-    for(i = 0; i < NUM_DELTA_TYPES; ++i)
+    for(dint i = 0; i < NUM_DELTA_TYPES; ++i)
     {
-        deltaBaseScores[i] = DEFAULT_DELTA_BASE_SCORE;
+        ::deltaBaseScores[i] = DEFAULT_DELTA_BASE_SCORE;
     }
 
     // Priorities for all deltas that will be sent out by the server.
     // No priorities need to be declared for obsolete delta types.
-    deltaBaseScores[DT_MOBJ] = 1000;
-    deltaBaseScores[DT_PLAYER] = 1000;
-    deltaBaseScores[DT_SECTOR] = 2000;
-    deltaBaseScores[DT_SIDE] = 800;
-    deltaBaseScores[DT_POLY] = 2000;
-    deltaBaseScores[DT_LUMP] = 0;
-    deltaBaseScores[DT_SOUND] = 2000;
-    deltaBaseScores[DT_MOBJ_SOUND] = 3000;
-    deltaBaseScores[DT_SECTOR_SOUND] = 5000;
-    deltaBaseScores[DT_SIDE_SOUND] = 5500;
-    deltaBaseScores[DT_POLY_SOUND] = 5000;
+    ::deltaBaseScores[DT_MOBJ        ] = 1000;
+    ::deltaBaseScores[DT_PLAYER      ] = 1000;
+    ::deltaBaseScores[DT_SECTOR      ] = 2000;
+    ::deltaBaseScores[DT_SIDE        ] = 800;
+    ::deltaBaseScores[DT_POLY        ] = 2000;
+    ::deltaBaseScores[DT_LUMP        ] = 0;
+    ::deltaBaseScores[DT_SOUND       ] = 2000;
+    ::deltaBaseScores[DT_MOBJ_SOUND  ] = 3000;
+    ::deltaBaseScores[DT_SECTOR_SOUND] = 5000;
+    ::deltaBaseScores[DT_SIDE_SOUND  ] = 5500;
+    ::deltaBaseScores[DT_POLY_SOUND  ] = 5000;
 
     // Since the map has changed, PU_MAP memory has been freed.
     // Reset all pools (set numbers are kept, though).
-    for(i = 0; i < DDMAXPLAYERS; ++i)
+    for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        pools[i].owner = i;
-        pools[i].resendDealer = 1;
-        de::zap(pools[i].hash);
-        de::zap(pools[i].misHash);
-        pools[i].queueSize = 0;
-        pools[i].allocatedSize = 0;
-        pools[i].queue = NULL;
+        pool_t &pool = pools[i];
+        
+        pool.owner         = i;
+        pool.resendDealer  = 1;
+        de::zap(pool.hash);
+        de::zap(pool.misHash);
+        pool.queueSize     = 0;
+        pool.allocatedSize = 0;
+        pool.queue         = nullptr;
 
-        // This will be set to false when a frame is sent.
-        pools[i].isFirst = true;
+        pool.isFirst       = true;  // Set to @c false when a frame is sent.
     }
 
     // Store the current state of the world into both the registers.
-    Sv_RegisterWorld(&worldRegister, false);
-    Sv_RegisterWorld(&initialRegister, true);
+    Sv_RegisterWorld(&::worldRegister, false);
+    Sv_RegisterWorld(&::initialRegister, true);
 
     // How much time did we spend?
     LOG_MAP_VERBOSE("World registered in %.2f seconds") << startedAt.since();
@@ -169,7 +164,7 @@ void Sv_InitPools(void)
 /**
  * Called during server shutdown (when shutting down the engine).
  */
-void Sv_ShutdownPools(void)
+void Sv_ShutdownPools()
 {
     // Nothing to do.
 }
@@ -177,8 +172,10 @@ void Sv_ShutdownPools(void)
 /**
  * Called when a client joins the game.
  */
-void Sv_InitPoolForClient(uint clientNumber)
+void Sv_InitPoolForClient(duint clientNumber)
 {
+    DENG2_ASSERT(clientNumber >= 0 && clientNumber < DDMAXPLAYERS);
+
     // Free everything that might exist in the pool.
     Sv_DrainPool(clientNumber);
 
@@ -193,70 +190,65 @@ void Sv_InitPoolForClient(uint clientNumber)
 }
 
 /**
- * @return              Pointer to the console's delta pool.
+ * Returns a pointer to the delta pool associated with the given console number.
  */
-pool_t* Sv_GetPool(uint consoleNumber)
+pool_t *Sv_GetPool(duint consoleNumber)
 {
+    DENG2_ASSERT(consoleNumber >= 0 && consoleNumber < DDMAXPLAYERS);
     return &pools[consoleNumber];
 }
 
 /**
  * The hash function for the register mobj hash.
  */
-uint Sv_RegisterHashFunction(thid_t id)
+duint Sv_RegisterHashFunction(thid_t id)
 {
-    return (uint) id & REG_MOBJ_HASH_FUNCTION_MASK;
+    return (duint) id & REG_MOBJ_HASH_FUNCTION_MASK;
 }
 
 /**
- * @return  Pointer to the register-mobj, if it already exists.
+ * Returns a pointer to the register map-object, if it already exists.
  */
-reg_mobj_t* Sv_RegisterFindMobj(cregister_t* reg, thid_t id)
+reg_mobj_t *Sv_RegisterFindMobj(cregister_t *reg, thid_t id)
 {
-    mobjhash_t*         hash = &reg->mobjs[Sv_RegisterHashFunction(id)];
-    reg_mobj_t*         iter;
+    DENG2_ASSERT(reg);
 
     // See if there already is a register-mobj for this id.
-    for(iter = hash->first; iter; iter = iter->next)
+    mobjhash_t const &hash = reg->mobjs[Sv_RegisterHashFunction(id)];
+    for(reg_mobj_t *it = hash.first; it; it = it->next)
     {
-        // Is this the one?
-        if(iter->mo.thinker.id == id)
-        {
-            return iter;
-        }
+        if(it->mo.thinker.id == id) return it;
     }
 
-    return NULL;
+    return nullptr;  // Not found.
 }
 
 /**
  * Adds a new reg_mobj_t to the register's mobj hash.
  */
-reg_mobj_t* Sv_RegisterAddMobj(cregister_t* reg, thid_t id)
+reg_mobj_t *Sv_RegisterAddMobj(cregister_t *reg, thid_t id)
 {
-    mobjhash_t*         hash = &reg->mobjs[Sv_RegisterHashFunction(id)];
-    reg_mobj_t*         newRegMo;
+    DENG2_ASSERT(reg);
+    mobjhash_t &hash = reg->mobjs[Sv_RegisterHashFunction(id)];
 
     // Try to find an existing register-mobj.
-    if((newRegMo = Sv_RegisterFindMobj(reg, id)) != NULL)
-    {
+    if(reg_mobj_t *newRegMo = Sv_RegisterFindMobj(reg, id))
         return newRegMo;
-    }
 
     // Allocate the new register-mobj.
-    newRegMo = (reg_mobj_t *) Z_Calloc(sizeof(reg_mobj_t), PU_MAP, 0);
+    auto *newRegMo = (reg_mobj_t *) Z_Calloc(sizeof(reg_mobj_t), PU_MAP, 0);
 
     // Link it to the end of the hash list.
-    if(hash->last)
+    if(hash.last)
     {
-        hash->last->next = newRegMo;
-        newRegMo->prev = hash->last;
+        hash.last->next = newRegMo;
+        newRegMo->prev = hash.last;
     }
-    hash->last = newRegMo;
+    hash.last = newRegMo;
 
-    if(!hash->first)
+    if(!hash.first)
     {
-        hash->first = newRegMo;
+        hash.first = newRegMo;
     }
 
     return newRegMo;
@@ -265,19 +257,19 @@ reg_mobj_t* Sv_RegisterAddMobj(cregister_t* reg, thid_t id)
 /**
  * Removes a reg_mobj_t from the register's mobj hash.
  */
-void Sv_RegisterRemoveMobj(cregister_t* reg, reg_mobj_t* regMo)
+void Sv_RegisterRemoveMobj(cregister_t *reg, reg_mobj_t *regMo)
 {
-    mobjhash_t*         hash =
-        &reg->mobjs[Sv_RegisterHashFunction(regMo->mo.thinker.id)];
+    DENG2_ASSERT(regMo);
+    mobjhash_t &hash = reg->mobjs[Sv_RegisterHashFunction(regMo->mo.thinker.id)];
 
     // Update the first and last links.
-    if(hash->last == regMo)
+    if(hash.last == regMo)
     {
-        hash->last = regMo->prev;
+        hash.last = regMo->prev;
     }
-    if(hash->first == regMo)
+    if(hash.first == regMo)
     {
-        hash->first = regMo->next;
+        hash.first = regMo->next;
     }
 
     // Link out of the list.
@@ -295,121 +287,123 @@ void Sv_RegisterRemoveMobj(cregister_t* reg, reg_mobj_t* regMo)
 }
 
 /**
- * @return              If the mobj is on the floor; @c MININT.
- *                      If the mobj is touching the ceiling; @c MAXINT.
- *                      Otherwise returns the Z coordinate.
+ * @return @c DDMINFLOAT= @a mob is on the floor.
+ *         @c DDMAXFLOAT= @a mob is touching the ceiling.
+ *         Otherwise returns the actual world Z coordinate.
  */
-float Sv_GetMaxedMobjZ(const mobj_t* mo)
+dfloat Sv_GetMaxedMobjZ(mobj_t const *mob)
 {
     // No maxing for now.
-    /*
-    if(mo->origin[VZ] == mo->floorZ)
+    /*if(mob->origin[VZ] == mob->floorZ)
     {
         return DDMINFLOAT;
     }
-    if(mo->origin[VZ] + mo->height == mo->ceilingZ)
+    if(mob->origin[VZ] + mob->height == mob->ceilingZ)
     {
         return DDMAXFLOAT;
-    }
-    */
-    return mo->origin[VZ];
+    }*/
+    return mob->origin[VZ];
 }
 
 /**
- * Store the state of the mobj into the register-mobj.
+ * Store the state of the mobj into the register map-object.
  * Called at register init and after each delta generation cycle.
  */
-void Sv_RegisterMobj(dt_mobj_t *reg, mobj_t const *mo)
+void Sv_RegisterMobj(dt_mobj_t *reg, mobj_t const *mob)
 {
-    // (dt_mobj_t <=> mobj_t)
+    DENG2_ASSERT(reg && mob);
     // Just copy the data we need.
-    reg->thinker.id   = mo->thinker.id;
-    reg->type         = mo->type;
-    reg->dPlayer      = mo->dPlayer;
-    reg->_bspLeaf     = mo->_bspLeaf;
-    reg->origin[VX]   = mo->origin[VX];
-    reg->origin[VY]   = mo->origin[VY];
-    reg->origin[VZ]   = Sv_GetMaxedMobjZ(mo);
-    reg->floorZ       = mo->floorZ;
-    reg->ceilingZ     = mo->ceilingZ;
-    reg->mom[MX]      = mo->mom[MX];
-    reg->mom[MY]      = mo->mom[MY];
-    reg->mom[MZ]      = mo->mom[MZ];
-    reg->angle        = mo->angle;
-    reg->selector     = mo->selector;
-    reg->state        = mo->state;
-    reg->radius       = mo->radius;
-    reg->height       = mo->height;
-    reg->ddFlags      = mo->ddFlags;
-    reg->flags        = mo->flags;
-    reg->flags2       = mo->flags2;
-    reg->flags3       = mo->flags3;
-    reg->health       = mo->health;
-    reg->floorClip    = mo->floorClip;
-    reg->translucency = mo->translucency;
-    reg->visTarget    = mo->visTarget;
+    reg->thinker.id   = mob->thinker.id;
+    reg->type         = mob->type;
+    reg->dPlayer      = mob->dPlayer;
+    reg->_bspLeaf     = mob->_bspLeaf;
+    reg->origin[0]    = mob->origin[0];
+    reg->origin[1]    = mob->origin[1];
+    reg->origin[2]    = Sv_GetMaxedMobjZ(mob);
+    reg->floorZ       = mob->floorZ;
+    reg->ceilingZ     = mob->ceilingZ;
+    reg->mom[0]       = mob->mom[0];
+    reg->mom[1]       = mob->mom[1];
+    reg->mom[2]       = mob->mom[2];
+    reg->angle        = mob->angle;
+    reg->selector     = mob->selector;
+    reg->state        = mob->state;
+    reg->radius       = mob->radius;
+    reg->height       = mob->height;
+    reg->ddFlags      = mob->ddFlags;
+    reg->flags        = mob->flags;
+    reg->flags2       = mob->flags2;
+    reg->flags3       = mob->flags3;
+    reg->health       = mob->health;
+    reg->floorClip    = mob->floorClip;
+    reg->translucency = mob->translucency;
+    reg->visTarget    = mob->visTarget;
 }
 
 /**
  * Reset the data of the registered mobj to reasonable defaults.
  * In effect, forces a resend of the zeroed entries as deltas.
  */
-void Sv_RegisterResetMobj(dt_mobj_t* reg)
+void Sv_RegisterResetMobj(dt_mobj_t *reg)
 {
-    reg->origin[VX] = DDMINFLOAT;
-    reg->origin[VY] = DDMINFLOAT;
-    reg->origin[VZ] = -1000000;
-    reg->angle = 0;
-    reg->type = -1;
-    reg->selector = 0;
-    reg->state = 0;
-    reg->radius = -1;
-    reg->height = -1;
-    reg->ddFlags = 0;
-    reg->flags = 0;
-    reg->flags2 = 0;
-    reg->flags3 = 0;
-    reg->health = 0;
-    reg->floorClip = 0;
+    DENG2_ASSERT(reg);
+
+    reg->origin[0]    = DDMINFLOAT;
+    reg->origin[1]    = DDMINFLOAT;
+    reg->origin[2]    = -1000000;
+    reg->angle        = 0;
+    reg->type         = -1;
+    reg->selector     = 0;
+    reg->state        = 0;
+    reg->radius       = -1;
+    reg->height       = -1;
+    reg->ddFlags      = 0;
+    reg->flags        = 0;
+    reg->flags2       = 0;
+    reg->flags3       = 0;
+    reg->health       = 0;
+    reg->floorClip    = 0;
     reg->translucency = 0;
-    reg->visTarget = 0;
+    reg->visTarget    = 0;
 }
 
 /**
  * Store the state of the player into the register-player.
  * Called at register init and after each delta generation cycle.
  */
-void Sv_RegisterPlayer(dt_player_t* reg, uint number)
+void Sv_RegisterPlayer(dt_player_t *reg, duint number)
 {
-#define FMAKERGBA(r,g,b,a) ( (byte)(0xff*r) + ((byte)(0xff*g)<<8) + ((byte)(0xff*b)<<16) + ((byte)(0xff*a)<<24) )
+#define FMAKERGBA(r, g, b, a) \
+    ( byte( 0xff * r ) + ( byte( 0xff * g ) << 8 ) + ( byte( 0xff * b ) << 16 ) + ( byte (0xff * a ) << 24 ) )
 
-    player_t*           plr = &ddPlayers[number];
-    ddplayer_t*         ddpl = &plr->shared;
-    //client_t*           c = &clients[number];
+    DENG2_ASSERT(reg);
+    DENG2_ASSERT(number >= 0 && number < DDMAXPLAYERS);
+    player_t *plr    = &::ddPlayers[number];
+    ddplayer_t *ddpl = &plr->shared;
+    //client_t *c      = &::clients[number];
 
-    reg->mobj = (ddpl->mo ? ddpl->mo->thinker.id : 0);
-    reg->forwardMove = 0;
-    reg->sideMove = 0;
-    reg->angle = (ddpl->mo ? ddpl->mo->angle : 0);
-    reg->turnDelta = (ddpl->mo ? ddpl->mo->angle - ddpl->lastAngle : 0);
-    reg->friction = ddpl->mo &&
-        (gx.MobjFriction ? gx.MobjFriction(ddpl->mo) : DEFAULT_FRICTION);
-    reg->extraLight = ddpl->extraLight;
+    reg->mobj          = (ddpl->mo ? ddpl->mo->thinker.id : 0);
+    reg->forwardMove   = 0;
+    reg->sideMove      = 0;
+    reg->angle         = (ddpl->mo ? ddpl->mo->angle : 0);
+    reg->turnDelta     = (ddpl->mo ? ddpl->mo->angle - ddpl->lastAngle : 0);
+    reg->friction      = ddpl->mo && (gx.MobjFriction ? gx.MobjFriction(ddpl->mo) : DEFAULT_FRICTION);
+    reg->extraLight    = ddpl->extraLight;
     reg->fixedColorMap = ddpl->fixedColorMap;
     if(ddpl->flags & DDPF_VIEW_FILTER)
     {
-        reg->filter = FMAKERGBA(ddpl->filterColor[CR],
-                                ddpl->filterColor[CG],
-                                ddpl->filterColor[CB],
-                                ddpl->filterColor[CA]);
+        reg->filter = FMAKERGBA(ddpl->filterColor[0],
+                                ddpl->filterColor[1],
+                                ddpl->filterColor[2],
+                                ddpl->filterColor[3]);
     }
     else
     {
         reg->filter = 0;
     }
-    reg->clYaw = (ddpl->mo ? ddpl->mo->angle : 0);
+    reg->clYaw   = (ddpl->mo ? ddpl->mo->angle : 0);
     reg->clPitch = ddpl->lookDir;
-    memcpy(reg->psp, ddpl->pSprites, sizeof(ddpsprite_t) * 2);
+    std::memcpy(reg->psp, ddpl->pSprites, sizeof(ddpsprite_t) * 2);
 
 #undef FMAKERGBA
 }
@@ -421,19 +415,19 @@ void Sv_RegisterPlayer(dt_player_t* reg, uint number)
  * @param reg     The sector register to be initialized.
  * @param number  The world sector number to be registered.
  */
-void Sv_RegisterSector(dt_sector_t *reg, int number)
+void Sv_RegisterSector(dt_sector_t *reg, dint number)
 {
     DENG2_ASSERT(reg);
     Sector &sector = worldSys().map().sector(number);
 
     reg->lightLevel = sector.lightLevel();
-    for(int i = 0; i < 3; ++i)
+    for(dint i = 0; i < 3; ++i)
     {
         reg->rgb[i] = sector.lightColor()[i];
     }
 
     // @todo $nplanes
-    for(int i = 0; i < 2; ++i) // number of planes in sector.
+    for(dint i = 0; i < 2; ++i) // number of planes in sector.
     {
         Plane const &plane = sector.plane(i);
 
@@ -446,12 +440,11 @@ void Sv_RegisterSector(dt_sector_t *reg, int number)
         Surface const &surface = plane.surface();
 
         Vector3f const &tintColor = surface.tintColor();
-        for(int c = 0; c < 3; ++c)
+        for(dint c = 0; c < 3; ++c)
         {
             reg->planes[i].surface.rgba[c] = tintColor[c];
         }
         reg->planes[i].surface.rgba[CA] = surface.opacity();
-
         reg->planes[i].surface.material = surface.materialPtr();
     }
 }
@@ -460,63 +453,62 @@ void Sv_RegisterSector(dt_sector_t *reg, int number)
  * Store the state of the side into the register-side.
  * Called at register init and after each delta generation.
  */
-void Sv_RegisterSide(dt_side_t *reg, int number)
+void Sv_RegisterSide(dt_side_t *reg, dint number)
 {
-    DENG2_ASSERT(reg != 0);
+    DENG2_ASSERT(reg);
 
     LineSide *side = worldSys().map().sidePtr(number);
 
     if(side->hasSections())
     {
-        reg->top.material    = side->top().materialPtr();
+        reg->top   .material = side->top   ().materialPtr();
         reg->middle.material = side->middle().materialPtr();
         reg->bottom.material = side->bottom().materialPtr();
 
-        for(int c = 0; c < 3; ++c)
+        for(dint c = 0; c < 3; ++c)
         {
             reg->middle.rgba[c] = side->middle().tintColor()[c];
             reg->bottom.rgba[c] = side->bottom().tintColor()[c];
-            reg->top.rgba[c]    = side->top().tintColor()[c];
+            reg->top   .rgba[c] = side->top   ().tintColor()[c];
         }
 
         // Only middle sections support blending.
-        reg->middle.rgba[CA]  = side->middle().opacity();
+        reg->middle.rgba[3]   = side->middle().opacity();
         reg->middle.blendMode = side->middle().blendMode();
     }
 
     reg->lineFlags = side->line().flags() & 0xff;
-    reg->flags = side->flags() & 0xff;
+    reg->flags     = side->flags() & 0xff;
 }
 
 /**
  * Store the state of the polyobj into the register-poly.
  * Called at register init and after each delta generation.
  */
-void Sv_RegisterPoly(dt_poly_t *reg, uint number)
+void Sv_RegisterPoly(dt_poly_t *reg, duint number)
 {
     DENG_ASSERT(reg);
     Polyobj const &pob = worldSys().map().polyobj(number);
 
-    reg->dest[VX]   = pob.dest[VX];
-    reg->dest[VY]   = pob.dest[VY];
+    reg->dest[0]    = pob.dest[0];
+    reg->dest[1]    = pob.dest[1];
     reg->speed      = pob.speed;
     reg->destAngle  = pob.destAngle;
     reg->angleSpeed = pob.angleSpeed;
 }
 
 /**
- * @return  @c true if the result is not void.
+ * Returns @c true if the result is not void.
  */
 dd_bool Sv_RegisterCompareMobj(cregister_t *reg, mobj_t const *s, mobjdelta_t *d)
 {
-    int df;
-    reg_mobj_t *regMo = 0;
-    dt_mobj_t const *r = dummyZeroMobj;
-
-    if((regMo = Sv_RegisterFindMobj(reg, s->thinker.id)) != NULL)
+    dint df;
+    dt_mobj_t const *r = ::dummyZeroMobj;
+    reg_mobj_t *regMo  = Sv_RegisterFindMobj(reg, s->thinker.id);
+    if(regMo)
     {
         // Use the registered data.
-        r = &regMo->mo;
+        r  = &regMo->mo;
         df = 0;
     }
     else
@@ -525,14 +517,14 @@ dd_bool Sv_RegisterCompareMobj(cregister_t *reg, mobj_t const *s, mobjdelta_t *d
         df = MDFC_CREATE | MDF_EVERYTHING | MDFC_TYPE;
     }
 
-    if(r->origin[VX] != s->origin[VX])
+    if(r->origin[0] != s->origin[0])
         df |= MDF_ORIGIN_X;
-    if(r->origin[VY] != s->origin[VY])
+    if(r->origin[1] != s->origin[1])
         df |= MDF_ORIGIN_Y;
-    if(r->origin[VZ] != Sv_GetMaxedMobjZ(s) || r->floorZ != s->floorZ || r->ceilingZ != s->ceilingZ)
+    if(r->origin[2] != Sv_GetMaxedMobjZ(s) || r->floorZ != s->floorZ || r->ceilingZ != s->ceilingZ)
     {
         df |= MDF_ORIGIN_Z;
-        if(!(df & MDFC_CREATE) && s->origin[VZ] <= s->floorZ)
+        if(!(df & MDFC_CREATE) && s->origin[2] <= s->floorZ)
         {
             // It is currently on the floor. The client will place it on its
             // clientside floor and disregard the Z coordinate.
@@ -540,11 +532,11 @@ dd_bool Sv_RegisterCompareMobj(cregister_t *reg, mobj_t const *s, mobjdelta_t *d
         }
     }
 
-    if(r->mom[MX] != s->mom[MX])
+    if(r->mom[0] != s->mom[0])
         df |= MDF_MOM_X;
-    if(r->mom[MY] != s->mom[MY])
+    if(r->mom[1] != s->mom[1])
         df |= MDF_MOM_Y;
-    if(r->mom[MZ] != s->mom[MZ])
+    if(r->mom[2] != s->mom[2])
         df |= MDF_MOM_Z;
 
     if(r->angle != s->angle)
@@ -597,14 +589,14 @@ dd_bool Sv_RegisterCompareMobj(cregister_t *reg, mobj_t const *s, mobjdelta_t *d
 }
 
 /**
- * @return              @c true, if the result is not void.
+ * Returns @c true if the result is not void.
  */
-dd_bool Sv_RegisterComparePlayer(cregister_t* reg, uint number,
-                                 playerdelta_t* d)
+dd_bool Sv_RegisterComparePlayer(cregister_t *reg, duint number, playerdelta_t *d)
 {
-    const dt_player_t*  r = &reg->ddPlayers[number];
-    dt_player_t*        s = &d->player;
-    int                 df = 0;
+    DENG2_ASSERT(number >= 0 && number < DDMAXPLAYERS);
+    dt_player_t const *r = &reg->ddPlayers[number];
+    dt_player_t *s       = &d->player;
+    dint df = 0;
 
     // Init the delta with current data.
     Sv_NewDelta(d, DT_PLAYER, number);
@@ -633,12 +625,12 @@ dd_bool Sv_RegisterComparePlayer(cregister_t* reg, uint number,
 /**
  * @return  @c true if the result is not void.
  */
-dd_bool Sv_RegisterCompareSector(cregister_t *reg, int number, sectordelta_t *d, byte doUpdate)
+dd_bool Sv_RegisterCompareSector(cregister_t *reg, dint number, sectordelta_t *d, byte doUpdate)
 {
     DENG2_ASSERT(reg && d);
     dt_sector_t *r  = &reg->sectors[number];
     Sector const &s = worldSys().map().sector(number);
-    int df = 0;
+    dint df = 0;
 
     // Determine which data is different.
     if(s.floorSurface().materialPtr() != r->planes[PLN_FLOOR].surface.material)
@@ -675,9 +667,9 @@ dd_bool Sv_RegisterCompareSector(cregister_t *reg, int number, sectordelta_t *d,
     //    The clientside height should be fixed.
 
     // Should we make an immediate change in floor height?
-    if(FEQUAL(r->planes[PLN_FLOOR].speed, 0) && FEQUAL(s.floor().speed(), 0))
+    if(fequal(r->planes[PLN_FLOOR].speed, 0) && fequal(s.floor().speed(), 0))
     {
-        if(!FEQUAL(r->planes[PLN_FLOOR].height, s.floor().height()))
+        if(!fequal(r->planes[PLN_FLOOR].height, s.floor().height()))
             df |= SDF_FLOOR_HEIGHT;
     }
     else
@@ -687,9 +679,9 @@ dd_bool Sv_RegisterCompareSector(cregister_t *reg, int number, sectordelta_t *d,
     }
 
     // How about the ceiling?
-    if(FEQUAL(r->planes[PLN_CEILING].speed, 0) && FEQUAL(s.ceiling().speed(), 0))
+    if(fequal(r->planes[PLN_CEILING].speed, 0) && fequal(s.ceiling().speed(), 0))
     {
-        if(!FEQUAL(r->planes[PLN_CEILING].height, s.ceiling().height()))
+        if(!fequal(r->planes[PLN_CEILING].height, s.ceiling().height()))
             df |= SDF_CEILING_HEIGHT;
     }
     else
@@ -699,32 +691,32 @@ dd_bool Sv_RegisterCompareSector(cregister_t *reg, int number, sectordelta_t *d,
     }
 
     // Check planes, too.
-    if(!FEQUAL(r->planes[PLN_FLOOR].target, s.floor().targetHeight()))
+    if(!fequal(r->planes[PLN_FLOOR].target, s.floor().targetHeight()))
     {
         // Target and speed are always sent together.
         df |= SDF_FLOOR_TARGET | SDF_FLOOR_SPEED;
     }
-    if(!FEQUAL(r->planes[PLN_FLOOR].speed, s.floor().speed()))
+    if(!fequal(r->planes[PLN_FLOOR].speed, s.floor().speed()))
     {
         // Target and speed are always sent together.
         df |= SDF_FLOOR_SPEED | SDF_FLOOR_TARGET;
     }
-    if(!FEQUAL(r->planes[PLN_CEILING].target, s.ceiling().targetHeight()))
+    if(!fequal(r->planes[PLN_CEILING].target, s.ceiling().targetHeight()))
     {
         // Target and speed are always sent together.
         df |= SDF_CEILING_TARGET | SDF_CEILING_SPEED;
     }
-    if(!FEQUAL(r->planes[PLN_CEILING].speed, s.ceiling().speed()))
+    if(!fequal(r->planes[PLN_CEILING].speed, s.ceiling().speed()))
     {
         // Target and speed are always sent together.
         df |= SDF_CEILING_SPEED | SDF_CEILING_TARGET;
     }
 
-#ifdef _DEBUG
+#ifdef DENG2_DEBUG
     if(df & (SDF_CEILING_HEIGHT | SDF_CEILING_SPEED | SDF_CEILING_TARGET))
     {
         LOGDEV_NET_XVERBOSE("Sector %i: ceiling state change noted (target = %f)")
-                << number << s.ceiling().targetHeight();
+            << number << s.ceiling().targetHeight();
     }
 #endif
 
@@ -745,7 +737,7 @@ dd_bool Sv_RegisterCompareSector(cregister_t *reg, int number, sectordelta_t *d,
     {
         // The plane heights should be tracked regardless of the
         // change flags.
-        r->planes[PLN_FLOOR].height = s.floor().height();
+        r->planes[PLN_FLOOR  ].height = s.floor().height();
         r->planes[PLN_CEILING].height = s.ceiling().height();
     }
 
@@ -754,16 +746,17 @@ dd_bool Sv_RegisterCompareSector(cregister_t *reg, int number, sectordelta_t *d,
 }
 
 /**
- * @return @c true= the result is not void.
+ * @return  @c true= the result is not void.
  */
-dd_bool Sv_RegisterCompareSide(cregister_t *reg, uint number,
-    sidedelta_t *d, byte doUpdate)
+dd_bool Sv_RegisterCompareSide(cregister_t *reg, duint number, sidedelta_t *d, byte doUpdate)
 {
+    DENG2_ASSERT(reg/* && d*/);
     LineSide const *side = worldSys().map().sidePtr(number);
-    dt_side_t *r = &reg->sides[number];
+    dt_side_t *r         = &reg->sides[number];
+
     byte lineFlags = side->line().flags() & 0xff;
     byte sideFlags = side->flags() & 0xff;
-    int df = 0;
+    dint df = 0;
 
     if(side->hasSections())
     {
@@ -894,14 +887,14 @@ dd_bool Sv_RegisterCompareSide(cregister_t *reg, uint number,
 }
 
 /**
- * @return              @c true, if the result is not void.
+ * @return  @c true if the result is not void.
  */
-dd_bool Sv_RegisterComparePoly(cregister_t* reg, int number,
-                               polydelta_t *d)
+dd_bool Sv_RegisterComparePoly(cregister_t *reg, dint number, polydelta_t *d)
 {
-    const dt_poly_t*    r = &reg->polyObjs[number];
-    dt_poly_t*          s = &d->po;
-    int                 df = 0;
+    DENG2_ASSERT(reg/* && d*/);
+    dt_poly_t const *r = &reg->polyObjs[number];
+    dt_poly_t *s       = &d->po;
+    dint df = 0;
 
     // Init the delta with current data.
     Sv_NewDelta(d, DT_POLY, number);
@@ -936,21 +929,22 @@ dd_bool Sv_IsMobjIgnored(mobj_t const &mob)
  */
 dd_bool Sv_IsPlayerIgnored(dint plrNum)
 {
-    return !ddPlayers[plrNum].shared.inGame;
+    DENG2_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
+    return !::ddPlayers[plrNum].shared.inGame;
 }
 
 /**
  * Initialize the register with the current state of the world.
+ *
  * The arrays are allocated and the data is copied, nothing else is done.
  *
- * An initial register doesn't contain any mobjs. When new clients enter,
- * they know nothing about any mobjs. If the mobjs were included in the
- * initial register, clients wouldn't receive much info from mobjs that
- * haven't moved since the beginning.
+ * An initial register doesn't contain any mobjs. When new clients enter, they know
+ * nothing about any mobjs. If the mobjs were included in the initial register, clients
+ * wouldn't receive much info from mobjs that haven't moved since the beginning.
  */
 void Sv_RegisterWorld(cregister_t *reg, dd_bool isInitial)
 {
-    DENG_ASSERT(reg != 0);
+    DENG2_ASSERT(reg);
 
     Map &map = worldSys().map();
 
@@ -962,31 +956,31 @@ void Sv_RegisterWorld(cregister_t *reg, dd_bool isInitial)
 
     // Init sectors.
     reg->sectors = (dt_sector_t *) Z_Calloc(sizeof(*reg->sectors) * map.sectorCount(), PU_MAP, 0);
-    for(int i = 0; i < map.sectorCount(); ++i)
+    for(dint i = 0; i < map.sectorCount(); ++i)
     {
         Sv_RegisterSector(&reg->sectors[i], i);
     }
 
     // Init sides.
     reg->sides = (dt_side_t *) Z_Calloc(sizeof(*reg->sides) * map.sideCount(), PU_MAP, 0);
-    for(int i = 0; i < map.sideCount(); ++i)
+    for(dint i = 0; i < map.sideCount(); ++i)
     {
         Sv_RegisterSide(&reg->sides[i], i);
     }
 
     // Init polyobjs.
-    int numPolyobjs = map.polyobjCount();
+    dint numPolyobjs = map.polyobjCount();
     if(numPolyobjs)
     {
         reg->polyObjs = (dt_poly_t *) Z_Calloc(sizeof(*reg->polyObjs) * map.polyobjCount(), PU_MAP, 0);
-        for(int i = 0; i < numPolyobjs; ++i)
+        for(dint i = 0; i < numPolyobjs; ++i)
         {
             Sv_RegisterPoly(&reg->polyObjs[i], i);
         }
     }
     else
     {
-        reg->polyObjs = NULL;
+        reg->polyObjs = nullptr;
     }
 }
 
@@ -995,7 +989,8 @@ void Sv_RegisterWorld(cregister_t *reg, dd_bool isInitial)
  */
 void Sv_UpdateOwnerInfo(pool_t *pool)
 {
-    player_t *plr = &ddPlayers[pool->owner];
+    DENG2_ASSERT(pool);
+    player_t *plr     = &::ddPlayers[pool->owner];
     ownerinfo_t *info = &pool->ownerInfo;
 
     de::zapPtr(info);
@@ -1005,16 +1000,16 @@ void Sv_UpdateOwnerInfo(pool_t *pool)
 
     if(plr->shared.mo)
     {
-        mobj_t *mo = plr->shared.mo;
+        mobj_t *mob = plr->shared.mo;
 
-        V3d_Copy(info->origin, mo->origin);
-        info->angle = mo->angle;
-        info->speed = M_ApproxDistance(mo->mom[MX], mo->mom[MY]);
+        V3d_Copy(info->origin, mob->origin);
+        info->angle = mob->angle;
+        info->speed = M_ApproxDistance(mob->mom[0], mob->mom[1]);
     }
 
-    // The acknowledgement threshold is a multiple of the average
-    // ack time of the client. If an unacked delta is not acked within
-    // the threshold, it'll be re-included in the ratings.
+    // The acknowledgement threshold is a multiple of the average ack time of the
+    // client. If an unacked delta is not acked within the threshold, it'll be
+    // re-included in the ratings.
     info->ackThreshold = 0; //Net_GetAckThreshold(pool->owner);
 }
 
@@ -2390,18 +2385,19 @@ void Sv_NewSoundDelta(int soundId, mobj_t *emitter, Sector *sourceSector,
 }
 
 /**
- * @return              @c true, if the client should receive frames.
+ * Returns @c true if the client should receive frames.
  */
-dd_bool Sv_IsFrameTarget(uint plrNum)
+dd_bool Sv_IsFrameTarget(duint plrNum)
 {
-    player_t*           plr = &ddPlayers[plrNum];
-    ddplayer_t*         ddpl = &plr->shared;
+    DENG2_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
+    player_t const &plr    = ::ddPlayers[plrNum];
+    ddplayer_t const &ddpl = plr.shared;
 
     // Local players receive frames only when they're recording a demo.
     // Clients must tell us they are ready before we can begin sending.
-    return (ddpl->inGame && !(ddpl->flags & DDPF_LOCAL) &&
-            clients[plrNum].ready) ||
-           ((ddpl->flags & DDPF_LOCAL) && clients[plrNum].recording);
+    return (ddpl.inGame && !(ddpl.flags & DDPF_LOCAL) &&
+            ::clients[plrNum].ready) ||
+           ((ddpl.flags & DDPF_LOCAL) && ::clients[plrNum].recording);
 }
 
 /**

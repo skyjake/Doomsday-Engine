@@ -1,4 +1,5 @@
-/** @file sv_frame.h F rame Generation and Transmission.
+/** @file sv_frame.h  Frame Generation and Transmission.
+ *
  * @ingroup server
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>

@@ -1,8 +1,7 @@
-/** @file sv_sound.cpp Serverside Sound Management.
- * @ingroup server
+/** @file sv_sound.cpp  Serverside Sound Management.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,16 +19,20 @@
  */
 
 #include "de_base.h"
-#include "de_console.h"
-#include "de_network.h"
-#include "de_play.h"
-#include "de_audio.h"
+#include "server/sv_sound.h"
 
 #include <de/Log>
+#include "de_audio.h"
+#include "de_console.h"
+#include "de_play.h"
+
+#include "network/net_main.h"
+
+#include "server/sv_pool.h"
 
 using namespace de;
 
-static inline dd_bool isRealMobj(const mobj_t* base)
+static inline dd_bool isRealMobj(mobj_t const *base)
 {
     return base && base->thinker.id != 0;
 }
@@ -40,37 +43,37 @@ static inline dd_bool isRealMobj(const mobj_t* base)
 static void identifySoundEmitter(mobj_t **base, Sector **sector, Polyobj **poly,
                                  Plane **plane, Surface **surface)
 {
-    *sector  = 0;
-    *poly    = 0;
-    *plane   = 0;
-    *surface = 0;
+    *sector  = nullptr;
+    *poly    = nullptr;
+    *plane   = nullptr;
+    *surface = nullptr;
 
     if(!*base || isRealMobj(*base)) return;
 
     /// @todo fixme: Do not assume the current map.
-    App_WorldSystem().map().identifySoundEmitter(*reinterpret_cast<SoundEmitter*>(*base),
-                                           sector, poly, plane, surface);
+    App_WorldSystem().map().identifySoundEmitter(*reinterpret_cast<SoundEmitter *>(*base),
+                                                 sector, poly, plane, surface);
 
-#ifdef DENG_DEBUG
+#ifdef DENG2_DEBUG
     if(!*sector && !*poly && !*plane && !*surface)
     {
-        throw de::Error("Sv_IdentifySoundBase", "Bad sound base.");
+        throw Error("Sv_IdentifySoundBase", "Bad sound base");
     }
 #endif
 
-    *base = 0;
+    *base = nullptr;
 }
 
-void Sv_Sound(int soundId, mobj_t* origin, int toPlr)
+void Sv_Sound(dint soundId, mobj_t *origin, dint toPlr)
 {
     Sv_SoundAtVolume(soundId, origin, 1, toPlr);
 }
 
-void Sv_SoundAtVolume(int soundIDAndFlags, mobj_t *origin, float volume, int toPlr)
+void Sv_SoundAtVolume(dint soundIDAndFlags, mobj_t *origin, dfloat volume, dint toPlr)
 {
-    if(isClient) return;
+    if(::isClient) return;
 
-    int soundID = (soundIDAndFlags & ~DDSF_FLAG_MASK);
+    dint soundID = (soundIDAndFlags & ~DDSF_FLAG_MASK);
     if(!soundID) return;
 
     Sector *sector;
@@ -79,7 +82,7 @@ void Sv_SoundAtVolume(int soundIDAndFlags, mobj_t *origin, float volume, int toP
     Surface *surface;
     identifySoundEmitter(&origin, &sector, &poly, &plane, &surface);
 
-    int targetPlayers = 0;
+    dint targetPlayers = 0;
     if(toPlr & SVSF_TO_ALL)
     {
         targetPlayers = -1;
@@ -105,9 +108,9 @@ void Sv_SoundAtVolume(int soundIDAndFlags, mobj_t *origin, float volume, int toP
                      (soundIDAndFlags & DDSF_REPEAT) != 0, targetPlayers);
 }
 
-void Sv_StopSound(int soundId, mobj_t *origin)
+void Sv_StopSound(dint soundId, mobj_t *origin)
 {
-    if(isClient) return;
+    if(::isClient) return;
 
     Sector *sector;
     Polyobj *poly;
