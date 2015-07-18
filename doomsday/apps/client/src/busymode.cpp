@@ -1,8 +1,7 @@
-/** @file busymode.cpp Busy Mode 
- * @ingroup base
+/** @file busymode.cpp  Busy Mode.
  *
  * @authors Copyright © 2007-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -15,53 +14,56 @@
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA</small>
+ * General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small>
  */
 
 #define DENG_NO_API_MACROS_BUSY
 
 #include "de_base.h"
-#include "de_platform.h"
-#include "de_console.h"
-#include "de_graphics.h"
-#include "de_network.h"
+#include "busymode.h"
 
-#include "audio/s_main.h"
-#include "ui/busyvisual.h"
-
+#include <QEventLoop>
 #include <de/c_wrapper.h>
 #include <de/concurrency.h>
-#include <de/Log>
-#include <QEventLoop>
 #include <de/timer.h>
+#include <de/Log>
 
+#include "de_console.h"
+#include "de_graphics.h"
 #ifdef __CLIENT__
-#include "sys_system.h"
 #include "clientapp.h"
+#include "sys_system.h"
+#endif
+
+//#include "audio/s_main.h"
+
+#include "ui/busyvisual.h"
+#ifdef __CLIENT__
 #include "ui/clientwindowsystem.h"
 #include "ui/widgets/busywidget.h"
+#endif
 
-static void BusyMode_Exit(void);
+#ifdef __CLIENT__
+static void BusyMode_Exit();
 
-static QEventLoop* eventLoop;
+static QEventLoop *eventLoop;
 static volatile dd_bool busyDoneCopy;
 static timespan_t busyTime;
 static dd_bool busyWillAnimateTransition;
 static dd_bool busyWasIgnoringInput;
 
-#endif // __CLIENT__
+#endif  // __CLIENT__
 
-static dd_bool busyModeAllowed = true; ///< Can we enter busy mode?
+static dd_bool busyModeAllowed = true;  ///< Can we enter busy mode?
 static dd_bool busyInited;
 static volatile dd_bool busyDone;
 
-static mutex_t busy_Mutex; // To prevent Data races in the busy thread.
+static mutex_t busy_Mutex;  // To prevent Data races in the busy thread.
 
-static BusyTask* busyTask; // Current task.
+static BusyTask *busyTask;  // Current task.
 static thread_t busyThread;
-static timespan_t accumulatedBusyTime; // Never cleared.
+static timespan_t accumulatedBusyTime;  // Never cleared.
 static dd_bool busyTaskEndedWithError;
 static char busyError[256];
 

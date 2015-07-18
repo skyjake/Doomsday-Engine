@@ -4,7 +4,7 @@
  * the server present.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,249 +20,145 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <stdlib.h>             // for atoi()
+#include "de_base.h"
+#include "network/net_main.h"
 
-#include "de_platform.h"
+#include <de/charsymbols.h>
+#include <de/Value>
+#include <de/Version>
+#include <doomsday/console/exec.h>
 #include "de_console.h"
-#include "de_system.h"
-#include "de_network.h"
 #include "de_graphics.h"
 #include "de_misc.h"
+#include "de_system.h"
 #include "de_ui.h"
+#include "dd_def.h"
+#include "dd_loop.h"
+#include "dd_main.h"
 
-#ifdef _DEBUG
-#  include "ui/zonedebug.h"
+#ifdef __CLIENT__
+#  include "client/cl_def.h"
 #endif
+#ifdef __SERVER__
+#  include "serversystem.h"
+#  include "server/sv_def.h"
+#  include "server/sv_frame.h"
+#  include "server/sv_pool.h"
+#endif
+
+#include "network/net_buf.h"
+#ifdef __CLIENT__
+#  include "network/net_demo.h"
+#endif
+#include "network/net_event.h"
 
 #ifdef __CLIENT__
 #  include "api_fontrender.h"
-//#  include "render/rend_console.h"
 #  include "render/rend_main.h"
 #  include "render/lightgrid.h"
 #  include "render/blockmapvisual.h"
+
 #  include "edit_bias.h"
 #  include "ui/inputdebug.h"
 #  include "ui/widgets/taskbarwidget.h"
 #endif
-
-#ifdef __SERVER__
-#  include "serversystem.h"
+#ifdef DENG2_DEBUG
+#  include "ui/zonedebug.h"
 #endif
 
-#include "dd_def.h"
-#include "dd_main.h"
-#include "dd_loop.h"
 #include "world/p_players.h"
 
-#include <de/Value>
-#include <de/Version>
-#include <de/charsymbols.h>
+using namespace de;
 
-// MACROS ------------------------------------------------------------------
+#define ACK_THRESHOLD_MUL       1.5f  ///< The threshold is the average ack time * mul.
+#define ACK_MINIMUM_THRESHOLD   50    ///< Never wait a too short time for acks.
 
-#define OBSOLETE                CVF_NO_ARCHIVE|CVF_HIDE // Old ccmds.
+char *serverName = (char *) "Doomsday";
+char *serverInfo = (char *) "Multiplayer Host";
+char *playerName = (char *) "Player";
 
-// The threshold is the average ack time * mul.
-#define ACK_THRESHOLD_MUL       1.5f
+dint serverData[3];  ///< Some parameters passed to master server.
 
-// Never wait a too short time for acks.
-#define ACK_MINIMUM_THRESHOLD   50
+client_t clients[DDMAXPLAYERS];  ///< All network data for the players.
 
-// TYPES -------------------------------------------------------------------
+dint netGame;   ///< @c true if a networked game is in progress.
+dint isServer;  ///< @c true if this computer is an open server.
+dint isClient;  ///< @c true if this computer is a client.
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-#ifdef __CLIENT__
-D_CMD(Login); // in cl_main.c
-#endif
-
-#ifdef __SERVER__
-D_CMD(Logout); // in sv_main.c
-#endif
-
-D_CMD(Ping); // in net_ping.c
-
-int     Sv_GetRegisteredMobj(struct pool_s *, thid_t, struct mobjdelta_s *);
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-D_CMD(Chat);
-D_CMD(MakeCamera);
-D_CMD(Net);
-D_CMD(SetTicks);
-
-#ifdef __CLIENT__
-D_CMD(Connect);
-D_CMD(SetConsole);
-D_CMD(SetName);
-#endif
-
-#ifdef __SERVER__
-D_CMD(Kick);
-#endif
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-char   *serverName = (char *) "Doomsday";
-char   *serverInfo = (char *) "Multiplayer Host";
-char   *playerName = (char *) "Player";
-int     serverData[3];          // Some parameters passed to master server.
-
-client_t clients[DDMAXPLAYERS];   // All network data for the players.
-
-int     netGame; // true if a netGame is in progress
-int     isServer; // true if this computer is an open server.
-int     isClient; // true if this computer is a client
-
-// Gotframe is true if a frame packet has been received.
-int     gotFrame = false;
+dint gotFrame;  ///< @c true if a frame packet has been received.
 
 dd_bool firstNetUpdate = true;
 
-byte    monitorMsgQueue = false;
-byte    netShowLatencies = false;
-byte    netDev = false;
-float   netConnectTime;
-//int     netCoordTime = 17;
-float   netConnectTimeout = 10;
-float   netSimulatedLatencySeconds = 0;
+byte monitorMsgQueue;
+byte netShowLatencies;
+byte netDev;
+dfloat netConnectTime;
+//dint netCoordTime = 17;
+dfloat netConnectTimeout = 10;
+dfloat netSimulatedLatencySeconds;
 
 // Local packets are stored into this buffer.
 dd_bool reboundPacket;
 netbuffer_t reboundStore;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 #ifdef __CLIENT__
-static int coordTimer = 0;
+static dint coordTimer;
 #endif
 
-// CODE --------------------------------------------------------------------
-
-void Net_Register(void)
+void Net_Init()
 {
-    // Cvars
-    C_VAR_BYTE("net-queue-show", &monitorMsgQueue, 0, 0, 1);
-    C_VAR_BYTE("net-dev", &netDev, 0, 0, 1);
-#ifdef _DEBUG
-    C_VAR_FLOAT("net-dev-latency", &netSimulatedLatencySeconds, CVF_NO_MAX, 0, 0);
-#endif
-    //C_VAR_BYTE("net-nosleep", &netDontSleep, 0, 0, 1);
-    //C_VAR_CHARPTR("net-master-address", &masterAddress, 0, 0, 0);
-    //C_VAR_INT("net-master-port", &masterPort, 0, 0, 65535);
-    //C_VAR_CHARPTR("net-master-path", &masterPath, 0, 0, 0);
-    C_VAR_CHARPTR("net-name", &playerName, 0, 0, 0);
-
-#ifdef __CLIENT__
-    // Cvars (client)
-    C_VAR_FLOAT("client-connect-timeout", &netConnectTimeout, CVF_NO_MAX, 0, 0);
-#endif
-
-#ifdef __SERVER__
-    // Cvars (server)
-    C_VAR_CHARPTR("server-name", &serverName, 0, 0, 0);
-    C_VAR_CHARPTR("server-info", &serverInfo, 0, 0, 0);
-    C_VAR_INT("server-public", &masterAware, 0, 0, 1);
-    C_VAR_CHARPTR("server-password", &netPassword, 0, 0, 0);
-    C_VAR_BYTE("server-latencies", &netShowLatencies, 0, 0, 1);
-    C_VAR_INT("server-frame-interval", &frameInterval, CVF_NO_MAX, 0, 0);
-    C_VAR_INT("server-player-limit", &svMaxPlayers, 0, 0, DDMAXPLAYERS);
-#endif
-
-    // Ccmds
-    C_CMD_FLAGS("chat", NULL, Chat, CMDF_NO_NULLGAME);
-    C_CMD_FLAGS("chatnum", NULL, Chat, CMDF_NO_NULLGAME);
-    C_CMD_FLAGS("chatto", NULL, Chat, CMDF_NO_NULLGAME);
-    C_CMD_FLAGS("conlocp", "i", MakeCamera, CMDF_NO_NULLGAME);
-#ifdef __CLIENT__
-    C_CMD_FLAGS("connect", NULL, Connect, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
-    /// @todo Must reimplement using libshell. -jk
-    //C_CMD_FLAGS("login", NULL, Login, CMDF_NO_NULLGAME);
-#endif
-#ifdef __SERVER__
-    //C_CMD_FLAGS("logout", "", Logout, CMDF_NO_NULLGAME);
-    C_CMD_FLAGS("kick", "i", Kick, CMDF_NO_NULLGAME);
-#endif
-    C_CMD_FLAGS("net", NULL, Net, CMDF_NO_NULLGAME);
-    C_CMD_FLAGS("ping", NULL, Ping, CMDF_NO_NULLGAME);
-    C_CMD_FLAGS("say", NULL, Chat, CMDF_NO_NULLGAME);
-    C_CMD_FLAGS("saynum", NULL, Chat, CMDF_NO_NULLGAME);
-    C_CMD_FLAGS("sayto", NULL, Chat, CMDF_NO_NULLGAME);
-#ifdef __CLIENT__
-    C_CMD("setname", "s", SetName);
-    C_CMD("setcon", "i", SetConsole);
-#endif
-    C_CMD("settics", "i", SetTicks);
-
-#ifdef __CLIENT__
-    N_Register();
-#endif
-#ifdef __SERVER__
-    Server_Register();
-#endif
-}
-
-void Net_Init(void)
-{
-    int i;
-
-    for(i = 0; i < DDMAXPLAYERS; ++i)
+    for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        memset(clients + i, 0, sizeof(clients[i]));
-        clients[i].viewConsole = -1;
+        std::memset(&::clients[i], 0, sizeof(::clients[i]));
+        ::clients[i].viewConsole = -1;
         Net_AllocClientBuffers(i);
     }
 
-    memset(&netBuffer, 0, sizeof(netBuffer));
-    netBuffer.headerLength = netBuffer.msg.data - (byte *) &netBuffer.msg;
+    std::memset(&::netBuffer, 0, sizeof(::netBuffer));
+    ::netBuffer.headerLength = ::netBuffer.msg.data - (byte *) &::netBuffer.msg;
     // The game is always started in single-player mode.
-    netGame = false;
+    ::netGame = false;
 }
 
-void Net_Shutdown(void)
+void Net_Shutdown()
 {
-    netGame = false;
+    ::netGame = false;
     N_Shutdown();
     Net_DestroyArrays();
 }
 
 #undef Net_GetPlayerName
-DENG_EXTERN_C const char* Net_GetPlayerName(int player)
+DENG_EXTERN_C char const *Net_GetPlayerName(dint player)
 {
-    return clients[player].name;
+    return ::clients[player].name;
 }
 
 #undef Net_GetPlayerID
-DENG_EXTERN_C ident_t Net_GetPlayerID(int player)
+DENG_EXTERN_C ident_t Net_GetPlayerID(dint player)
 {
-    if(!clients[player].connected)
+    if(!::clients[player].connected)
         return 0;
 
-    return clients[player].id;
+    return ::clients[player].id;
 }
 
 /**
  * Sends the contents of the netBuffer.
  */
-void Net_SendBuffer(int toPlayer, int spFlags)
+void Net_SendBuffer(dint toPlayer, dint spFlags)
 {
 #ifdef __CLIENT__
     // Don't send anything during demo playback.
-    if(playback)
-        return;
+    if(::playback) return;
 #endif
 
-    netBuffer.player = toPlayer;
+    ::netBuffer.player = toPlayer;
 
     // A rebound packet?
     if(spFlags & SPF_REBOUND)
     {
-        reboundStore = netBuffer;
-        reboundPacket = true;
+        ::reboundStore  = ::netBuffer;
+        ::reboundPacket = true;
         return;
     }
 
@@ -281,26 +177,28 @@ void Net_SendBuffer(int toPlayer, int spFlags)
 /**
  * @return @c false, if there are no packets waiting.
  */
-dd_bool Net_GetPacket(void)
+dd_bool Net_GetPacket()
 {
-    if(reboundPacket) // Local packets rebound.
+    if(reboundPacket)  // Local packets rebound.
     {
-        netBuffer = reboundStore;
-        netBuffer.player = consolePlayer;
-        //netBuffer.cursor = netBuffer.msg.data;
-        reboundPacket = false;
+        ::netBuffer = ::reboundStore;
+        ::netBuffer.player = ::consolePlayer;
+        //::netBuffer.cursor = ::netBuffer.msg.data;
+        ::reboundPacket = false;
         return true;
     }
 
 #ifdef __CLIENT__
-    if(playback)
-    {   // We're playing a demo. This overrides all other packets.
+    if(::playback)
+    {
+        // We're playing a demo. This overrides all other packets.
         return Demo_ReadPacket();
     }
 #endif
 
-    if(!netGame)
-    {   // Packets cannot be received.
+    if(!::netGame)
+    {
+        // Packets cannot be received.
         return false;
     }
 
@@ -309,9 +207,10 @@ dd_bool Net_GetPacket(void)
 
 #ifdef __CLIENT__
     // Are we recording a demo?
-    if(isClient && clients[consolePlayer].recording)
+    DENG2_ASSERT(consolePlayer >= 0 && consolePlayer < DDMAXPLAYERS);
+    if(::isClient && ::clients[::consolePlayer].recording)
     {
-        Demo_WritePacket(consolePlayer);
+        Demo_WritePacket(::consolePlayer);
     }
 #endif
 
@@ -319,29 +218,27 @@ dd_bool Net_GetPacket(void)
 }
 
 #undef Net_PlayerSmoother
-DENG_EXTERN_C Smoother* Net_PlayerSmoother(int player)
+DENG_EXTERN_C Smoother* Net_PlayerSmoother(dint player)
 {
     if(player < 0 || player >= DDMAXPLAYERS)
         return 0;
 
-    return clients[player].smoother;
+    return ::clients[player].smoother;
 }
 
-void Net_SendPlayerInfo(int srcPlrNum, int destPlrNum)
+void Net_SendPlayerInfo(dint srcPlrNum, dint destPlrNum)
 {
-    size_t nameLen;
-
-    DENG_ASSERT(srcPlrNum >= 0 && srcPlrNum < DDMAXPLAYERS);
-    nameLen = strlen(clients[srcPlrNum].name);
+    DENG2_ASSERT(srcPlrNum >= 0 && srcPlrNum < DDMAXPLAYERS);
+    dsize const nameLen = strlen(clients[srcPlrNum].name);
 
     LOG_AS("Net_SendPlayerInfo");
     LOGDEV_NET_VERBOSE("src=%i dest=%i name=%s")
-            << srcPlrNum << destPlrNum << clients[srcPlrNum].name;
+        << srcPlrNum << destPlrNum << ::clients[srcPlrNum].name;
 
     Msg_Begin(PKT_PLAYER_INFO);
-    Writer_WriteByte(msgWriter, srcPlrNum);
-    Writer_WriteUInt16(msgWriter, nameLen);
-    Writer_Write(msgWriter, clients[srcPlrNum].name, nameLen);
+    Writer_WriteByte(::msgWriter, srcPlrNum);
+    Writer_WriteUInt16(::msgWriter, nameLen);
+    Writer_Write(::msgWriter, ::clients[srcPlrNum].name, nameLen);
     Msg_End();
     Net_SendBuffer(destPlrNum, 0);
 }
@@ -350,141 +247,134 @@ void Net_SendPlayerInfo(int srcPlrNum, int destPlrNum)
  * This is the public interface of the message sender.
  */
 #undef Net_SendPacket
-DENG_EXTERN_C void Net_SendPacket(int to_player, int type, const void* data, size_t length)
+DENG_EXTERN_C void Net_SendPacket(dint to_player, dint type, void const *data, dsize length)
 {
-    unsigned int flags = 0;
+    duint flags = 0;
 
 #ifndef DENG_WRITER_TYPECHECK
     Msg_Begin(type);
-    if(data) Writer_Write(msgWriter, data, length);
+    if(data) Writer_Write(::msgWriter, data, length);
     Msg_End();
 #else
-    assert(length <= NETBUFFER_MAXSIZE);
-    netBuffer.msg.type = type;
-    netBuffer.length = length;
-    if(data) memcpy(netBuffer.msg.data, data, length);
+    DENG2_ASSERT(length <= NETBUFFER_MAXSIZE);
+    ::netBuffer.msg.type = type;
+    ::netBuffer.length = length;
+    if(data) std::memcpy(::netBuffer.msg.data, data, length);
 #endif
 
-    if(isClient)
-    {   // As a client we can only send messages to the server.
+    if(::isClient)
+    {
+        // As a client we can only send messages to the server.
         Net_SendBuffer(0, flags);
     }
     else
     {   // The server can send packets to any player.
         // Only allow sending to the sixteen possible players.
-        Net_SendBuffer(to_player & DDSP_ALL_PLAYERS ? NSP_BROADCAST
-                       : (to_player & 0xf), flags);
+        Net_SendBuffer((to_player & DDSP_ALL_PLAYERS) ? NSP_BROADCAST
+                                                      : (to_player & 0xf),
+                       flags);
     }
 }
 
 /**
  * Prints the message in the console.
  */
-void Net_ShowChatMessage(int plrNum, const char* message)
+void Net_ShowChatMessage(dint plrNum, char const *message)
 {
-    const char* fromName = (plrNum > 0? clients[plrNum].name : "[sysop]");
-    const char* sep      = (plrNum > 0? ":"                  : "");
+    DENG2_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
+    char const *fromName = (plrNum > 0 ? ::clients[plrNum].name : "[sysop]");
+    char const *sep      = (plrNum > 0 ? ":"                    : "");
     LOG_NOTE("%s%s%s %s")
-            << (!plrNum? _E(1) : _E(D))
-            << fromName << sep << message;
+        << (!plrNum? _E(1) : _E(D))
+        << fromName << sep << message;
 }
 
 /**
- * After a long period with no updates (map setup), calling this will reset
- * the tictimer so that no time seems to have passed.
+ * After a long period with no updates (map setup), calling this will reset the tictimer
+ * so that no time seems to have passed.
  */
-void Net_ResetTimer(void)
+void Net_ResetTimer()
 {
-    int i;
+    ::firstNetUpdate = true;
 
-    firstNetUpdate = true;
-
-    for(i = 0; i < DDMAXPLAYERS; ++i)
+    for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(/*!clients[i].connected ||*/ !clients[i].smoother) continue;
-        Smoother_Clear(clients[i].smoother);
+        if(/*!::clients[i].connected ||*/ !::clients[i].smoother) continue;
+        Smoother_Clear(::clients[i].smoother);
     }
 }
 
 /**
- * @return @c true, if the specified player is a real, local player.
+ * @return @c true if the specified player is a real, local player.
  */
-dd_bool Net_IsLocalPlayer(int plrNum)
+dd_bool Net_IsLocalPlayer(dint plrNum)
 {
-    player_t *plr = &ddPlayers[plrNum];
-
-    return plr->shared.inGame && (plr->shared.flags & DDPF_LOCAL);
+    DENG2_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
+    player_t const &plr = ::ddPlayers[plrNum];
+    return plr.shared.inGame && (plr.shared.flags & DDPF_LOCAL);
 }
 
 /**
  * Send the local player(s) ticcmds to the server.
  */
-void Net_SendCommands(void)
+void Net_SendCommands()
+{}
+
+static void Net_DoUpdate()
 {
-}
+    static dint lastTime = 0;
 
-static void Net_DoUpdate(void)
-{
-    static int          lastTime = 0;
-
-    int                 nowTime, newTics;
-
-    /**
-     * This timing is only used by the client when it determines if it is
-     * time to send ticcmds or coordinates to the server.
-     */
+    // This timing is only used by the client when it determines if it is time to
+    // send ticcmds or coordinates to the server.
 
     // Check time.
-    nowTime = Timer_Ticks();
+    dint const nowTime = Timer_Ticks();
 
     // Clock reset?
-    if(firstNetUpdate)
+    if(::firstNetUpdate)
     {
-        firstNetUpdate = false;
+        ::firstNetUpdate = false;
         lastTime = nowTime;
     }
-    newTics = nowTime - lastTime;
-    if(newTics <= 0)
-        return; // Nothing new to update.
+
+    dint const newTics = nowTime - lastTime;
+    if(newTics <= 0) return;  // Nothing new to update.
 
     lastTime = nowTime;
 
     // This is as far as dedicated servers go.
 #ifdef __CLIENT__
 
-    /**
-     * Clients will periodically send their coordinates to the server so
-     * any prediction errors can be fixed. Client movement is almost
-     * entirely local.
-     */
+    // Clients will periodically send their coordinates to the server so any prediction
+    // errors can be fixed. Client movement is almost entirely local.
+    DENG2_ASSERT(::consolePlayer >= 0 && ::consolePlayer < DDMAXPLAYERS);
 
-    coordTimer -= newTics;
-    if(isClient && coordTimer <= 0 &&
-       ddPlayers[consolePlayer].shared.mo)
+    ::coordTimer -= newTics;
+    if(::isClient && ::coordTimer <= 0 && ::ddPlayers[::consolePlayer].shared.mo)
     {
-        mobj_t *mo = ddPlayers[consolePlayer].shared.mo;
+        mobj_t *mob = ::ddPlayers[::consolePlayer].shared.mo;
 
-        coordTimer = 1; //netCoordTime; // 35/2
+        ::coordTimer = 1; //netCoordTime; // 35/2
 
         Msg_Begin(PKT_COORDS);
-        Writer_WriteFloat(msgWriter, gameTime);
-        Writer_WriteFloat(msgWriter, mo->origin[VX]);
-        Writer_WriteFloat(msgWriter, mo->origin[VY]);
-        if(mo->origin[VZ] == mo->floorZ)
+        Writer_WriteFloat(::msgWriter, ::gameTime);
+        Writer_WriteFloat(::msgWriter, mob->origin[VX]);
+        Writer_WriteFloat(::msgWriter, mob->origin[VY]);
+        if(mob->origin[VZ] == mob->floorZ)
         {
             // This'll keep us on the floor even in fast moving sectors.
-            Writer_WriteInt32(msgWriter, DDMININT);
+            Writer_WriteInt32(::msgWriter, DDMININT);
         }
         else
         {
-            Writer_WriteInt32(msgWriter, FLT2FIX(mo->origin[VZ]));
+            Writer_WriteInt32(::msgWriter, FLT2FIX(mob->origin[VZ]));
         }
         // Also include angles.
-        Writer_WriteUInt16(msgWriter, mo->angle >> 16);
-        Writer_WriteInt16(msgWriter, P_LookDirToShort(ddPlayers[consolePlayer].shared.lookDir));
+        Writer_WriteUInt16(::msgWriter, mob->angle >> 16);
+        Writer_WriteInt16(::msgWriter, P_LookDirToShort(::ddPlayers[::consolePlayer].shared.lookDir));
         // Control state.
-        Writer_WriteChar(msgWriter, FLT2FIX(ddPlayers[consolePlayer].shared.forwardMove) >> 13);
-        Writer_WriteChar(msgWriter, FLT2FIX(ddPlayers[consolePlayer].shared.sideMove) >> 13);
+        Writer_WriteChar(::msgWriter, FLT2FIX(::ddPlayers[::consolePlayer].shared.forwardMove) >> 13);
+        Writer_WriteChar(::msgWriter, FLT2FIX(::ddPlayers[::consolePlayer].shared.sideMove) >> 13);
         Msg_End();
 
         Net_SendBuffer(0, 0);
@@ -493,10 +383,9 @@ static void Net_DoUpdate(void)
 }
 
 /**
- * Handle incoming packets, clients send ticcmds and coordinates to
- * the server.
+ * Handle incoming packets, clients send ticcmds and coordinates to the server.
  */
-void Net_Update(void)
+void Net_Update()
 {
     Net_DoUpdate();
 
@@ -506,59 +395,57 @@ void Net_Update(void)
 #endif
 }
 
-void Net_AllocClientBuffers(int clientId)
+void Net_AllocClientBuffers(dint clientId)
 {
     if(clientId < 0 || clientId >= DDMAXPLAYERS) return;
 
-    assert(!clients[clientId].smoother);
+    DENG2_ASSERT(!::clients[clientId].smoother);
 
     // Movement smoother.
-    clients[clientId].smoother = Smoother_New();
+    ::clients[clientId].smoother = Smoother_New();
 }
 
-void Net_DestroyArrays(void)
+void Net_DestroyArrays()
 {
-    int i;
-
-    for(i = 0; i < DDMAXPLAYERS; ++i)
+    for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(clients[i].smoother)
+        if(::clients[i].smoother)
         {
-            Smoother_Delete(clients[i].smoother);
+            Smoother_Delete(::clients[i].smoother);
         }
     }
 
-    memset(clients, 0, sizeof(clients));
+    std::memset(::clients, 0, sizeof(::clients));
 }
 
 /**
  * This is the network one-time initialization (into single-player mode).
  */
-void Net_InitGame(void)
+void Net_InitGame()
 {
 #ifdef __CLIENT__
     Cl_InitID();
 #endif
 
     // In single-player mode there is only player number zero.
-    consolePlayer = displayPlayer = 0;
+    ::consolePlayer = ::displayPlayer = 0;
 
     // We're in server mode if we aren't a client.
-    isServer = true;
+    ::isServer = true;
 
     // Netgame is true when we're aware of the network (i.e. other players).
-    netGame = false;
+    ::netGame = false;
 
-    ddPlayers[0].shared.inGame = true;
-    ddPlayers[0].shared.flags |= DDPF_LOCAL;
+    ::ddPlayers[0].shared.inGame = true;
+    ::ddPlayers[0].shared.flags |= DDPF_LOCAL;
 
 #ifdef __CLIENT__
-    clients[0].id = clientID;
+    ::clients[0].id           = ::clientID;
 #endif
-    clients[0].ready = true;
-    clients[0].connected = true;
-    clients[0].viewConsole = 0;
-    clients[0].lastTransmit = -1;
+    ::clients[0].ready        = true;
+    ::clients[0].connected    = true;
+    ::clients[0].viewConsole  = 0;
+    ::clients[0].lastTransmit = -1;
 }
 
 void Net_StopGame()
@@ -586,70 +473,75 @@ void Net_StopGame()
     Net_SendBuffer(0, 0);
 
     // Must stop recording, we're disconnecting.
-    Demo_StopRecording(consolePlayer);
+    Demo_StopRecording(::consolePlayer);
     Cl_CleanUp();
-    isClient = false;
-    netLoggedIn = false;
+    ::isClient    = false;
+    ::netLoggedIn = false;
 #endif
 
     // Netgame has ended.
-    netGame = false;
-    isServer = true;
-    allowSending = false;
+    ::netGame      = false;
+    ::isServer     = true;
+    ::allowSending = false;
 
 #ifdef __SERVER__
     // No more remote users.
-    netRemoteUser = 0;
+    ::netRemoteUser = 0;
 #endif
 
     // All remote players are forgotten.
-    for(int i = 0; i < DDMAXPLAYERS; ++i)
+    for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        player_t *plr = &ddPlayers[i];
-        client_t *cl = &clients[i];
+        player_t &plr = ddPlayers[i];
+        client_t &cl  = clients[i];
 
-        plr->shared.inGame = false;
-        cl->ready = cl->connected = false;
-        cl->id = 0;
-        cl->nodeID = 0;
-        cl->viewConsole = -1;
-        plr->shared.flags &= ~(DDPF_CAMERA | DDPF_CHASECAM | DDPF_LOCAL);
+        cl.ready       = false;
+        cl.connected   = false;
+        cl.id          = 0;
+        cl.nodeID      = 0;
+        cl.viewConsole = -1;
+
+        plr.shared.inGame = false;
+        plr.shared.flags &= ~(DDPF_CAMERA | DDPF_CHASECAM | DDPF_LOCAL);
     }
 
-    // We're about to become player zero, so update it's view angles to
-    // match our current ones.
-    if(ddPlayers[0].shared.mo)
+    // We're about to become player zero, so update it's view angles to match
+    // our current ones.
+    if(::ddPlayers[0].shared.mo)
     {
         /* $unifiedangles */
-        ddPlayers[0].shared.mo->angle =
-            ddPlayers[consolePlayer].shared.mo->angle;
-        ddPlayers[0].shared.lookDir =
-            ddPlayers[consolePlayer].shared.lookDir;
+        DENG2_ASSERT(::consolePlayer >= 0 && ::consolePlayer < DDMAXPLAYERS);
+        ::ddPlayers[0].shared.mo->angle = ::ddPlayers[::consolePlayer].shared.mo->angle;
+        ::ddPlayers[0].shared.lookDir   = ::ddPlayers[::consolePlayer].shared.lookDir;
     }
 
     LOGDEV_NET_NOTE("Reseting console and view players to zero");
 
-    consolePlayer = displayPlayer = 0;
-    ddPlayers[0].shared.inGame = true;
-    clients[0].ready = true;
-    clients[0].connected = true;
-    clients[0].viewConsole = 0;
-    ddPlayers[0].shared.flags |= DDPF_LOCAL;
+    ::consolePlayer = ::displayPlayer = 0;
+
+    ::clients[0].ready       = true;
+    ::clients[0].connected   = true;
+    ::clients[0].viewConsole = 0;
+
+    ::ddPlayers[0].shared.inGame = true;
+    ::ddPlayers[0].shared.flags |= DDPF_LOCAL;
 }
 
 /**
- * @return              Delta based on 'now' (- future, + past).
+ * Returns a delta based on 'now' (- future, + past).
  */
-int Net_TimeDelta(byte now, byte then)
+dint Net_TimeDelta(byte now, byte then)
 {
-    int                 delta;
+    dint delta;
 
     if(now >= then)
-    {   // Simple case.
+    {
+        // Simple case.
         delta = now - then;
     }
     else
-    {   // There's a wraparound.
+    {
+        // There's a wraparound.
         delta = 256 - then + now;
     }
 
@@ -661,13 +553,14 @@ int Net_TimeDelta(byte now, byte then)
 }
 
 #ifdef __CLIENT__
-/// @return  @c true iff a demo is currently being recorded.
-static dd_bool recordingDemo(void)
+/**
+ * Returns @c true if a demo is currently being recorded.
+ */
+static dd_bool recordingDemo()
 {
-    int i;
-    for(i = 0; i < DDMAXPLAYERS; ++i)
+    for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(ddPlayers[i].shared.inGame && clients[i].recording)
+        if(::ddPlayers[i].shared.inGame && ::clients[i].recording)
             return true;
     }
     return false;
@@ -676,28 +569,31 @@ static dd_bool recordingDemo(void)
 
 #ifdef __CLIENT__
 
-void Net_DrawDemoOverlay(void)
+void Net_DrawDemoOverlay()
 {
-    char buf[160], tmp[40];
-    int x = DENG_GAMEVIEW_WIDTH - 10, y = 10;
+    dint const x = DENG_GAMEVIEW_WIDTH - 10;
+    dint const y = 10;
 
-    if(!recordingDemo() || !(SECONDS_TO_TICKS(gameTime) & 8))
+    if(!recordingDemo() || !(SECONDS_TO_TICKS(::gameTime) & 8))
         return;
 
+    char buf[160];
     strcpy(buf, "[");
-    { int i, c;
-    for(i = c = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(!(!ddPlayers[i].shared.inGame || !clients[i].recording))
+        dint count = 0;
+        for(dint i = 0; i < DDMAXPLAYERS; ++i)
         {
-            // This is a "real" player (or camera).
-            if(c++)
-                strcat(buf, ",");
+            if(!(!::ddPlayers[i].shared.inGame || !::clients[i].recording))
+            {
+                // This is a "real" player (or camera).
+                if(count++)
+                    strcat(buf, ",");
 
-            sprintf(tmp, "%i:%s", i, clients[i].recordPaused ? "-P-" : "REC");
-            strcat(buf, tmp);
+                char tmp[40]; sprintf(tmp, "%i:%s", i, ::clients[i].recordPaused ? "-P-" : "REC");
+                strcat(buf, tmp);
+            }
         }
-    }}
+    }
     strcat(buf, "]");
 
     DENG_ASSERT_IN_MAIN_THREAD();
@@ -711,7 +607,7 @@ void Net_DrawDemoOverlay(void)
 
     glEnable(GL_TEXTURE_2D);
 
-    FR_SetFont(fontFixed);
+    FR_SetFont(::fontFixed);
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(1, 1, 1, 1);
     FR_DrawTextXY3(buf, x, y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
@@ -723,7 +619,7 @@ void Net_DrawDemoOverlay(void)
     glPopMatrix();
 }
 
-#endif // __CLIENT__
+#endif  // __CLIENT__
 
 void Net_Drawer()
 {
@@ -745,35 +641,32 @@ void Net_Drawer()
 # ifdef DENG2_DEBUG
     Z_DebugDrawer();
 # endif
-#endif // __CLIENT__
+#endif  // __CLIENT__
 }
 
 void Net_Ticker(timespan_t time)
 {
-    int         i;
-    client_t   *cl;
-
     // Network event ticker.
     N_NETicker(time);
 
 #ifdef __SERVER__
     if(netDev)
     {
-        static int printTimer = 0;
+        static dint printTimer = 0;
 
         if(printTimer++ > TICSPERSEC)
         {
             printTimer = 0;
-            for(i = 0; i < DDMAXPLAYERS; ++i)
+            for(dint i = 0; i < DDMAXPLAYERS; ++i)
             {
                 if(Sv_IsFrameTarget(i))
                 {
                     LOGDEV_NET_MSG("%i(rdy%i): avg=%05ims thres=%05ims "
                                    "bwr=%05i maxfs=%05ib unakd=%05i")
-                            << i << clients[i].ready << 0 << 0
-                            << clients[i].bandwidthRating
-                            << Sv_GetMaxFrameSize(i)
-                            << Sv_CountUnackedDeltas(i);
+                        << i << ::clients[i].ready << 0 << 0
+                        << ::clients[i].bandwidthRating
+                        << Sv_GetMaxFrameSize(i)
+                        << Sv_CountUnackedDeltas(i);
                 }
             }
         }
@@ -781,21 +674,22 @@ void Net_Ticker(timespan_t time)
 #endif // __SERVER__
 
     // The following stuff is only for netgames.
-    if(!netGame)
-        return;
+    if(!netGame) return;
 
     // Check the pingers.
-    for(i = 0, cl = clients; i < DDMAXPLAYERS; ++i, cl++)
+    for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
+        client_t &cl = ::clients[i];
+
         // Clients can only ping the server.
-        if(!(isClient && i) && i != consolePlayer)
+        if(!(::isClient && i) && i != ::consolePlayer)
         {
-            if(cl->ping.sent)
+            if(cl.ping.sent)
             {
                 // The pinger is active.
-                if(Timer_RealMilliseconds() - cl->ping.sent > PING_TIMEOUT)    // Timed out?
+                if(Timer_RealMilliseconds() - cl.ping.sent > PING_TIMEOUT)  // Timed out?
                 {
-                    cl->ping.times[cl->ping.current] = -1;
+                    cl.ping.times[cl.ping.current] = -1;
                     Net_SendPing(i, 0);
                 }
             }
@@ -806,27 +700,29 @@ void Net_Ticker(timespan_t time)
 de::String ServerInfo_AsStyledText(serverinfo_t const *sv)
 {
 #define TABBED(A, B) _E(Ta)_E(l) "  " A _E(.) " " _E(\t) B "\n"
-    return de::String(_E(b) "%1" _E(.) "\n%2\n" _E(T`)
-                      TABBED("Joinable:", "%5")
-                      TABBED("Players:", "%3 / %4%12")
-                      TABBED("Game:", "%8\n%9\n%11 %10")
-                      TABBED("PWADs:", "%13")
-                      TABBED("Address:", "%6:%7")
-                      /*TABBED("Ping:", "%8 ms (approx)")*/)
-            .arg(sv->name)
-            .arg(sv->description)
-            .arg(sv->numPlayers)
-            .arg(sv->maxPlayers)
-            .arg(sv->canJoin? "Yes" : "No") // 5
-            .arg(sv->address)
-            .arg(sv->port)
-            //.arg(sv->ping)
-            .arg(sv->plugin)
-            .arg(sv->gameIdentityKey) // 10
-            .arg(sv->gameConfig)
-            .arg(sv->map)
-            .arg(!de::String(sv->clientNames).isEmpty()? de::String(_E(2) " (%1)" _E(.)).arg(sv->clientNames) : "")
-            .arg(de::String(sv->pwads).isEmpty()? de::String(DENG2_CHAR_MDASH) : de::String(sv->pwads)); // 14
+
+    return String(_E(b) "%1" _E(.) "\n%2\n" _E(T`)
+                  TABBED("Joinable:", "%5")
+                  TABBED("Players:", "%3 / %4%12")
+                  TABBED("Game:", "%8\n%9\n%11 %10")
+                  TABBED("PWADs:", "%13")
+                  TABBED("Address:", "%6:%7")
+                  /*TABBED("Ping:", "%8 ms (approx)")*/)
+             .arg(sv->name)
+             .arg(sv->description)
+             .arg(sv->numPlayers)
+             .arg(sv->maxPlayers)
+             .arg(sv->canJoin? "Yes" : "No") // 5
+             .arg(sv->address)
+             .arg(sv->port)
+             //.arg(sv->ping)
+             .arg(sv->plugin)
+             .arg(sv->gameIdentityKey) // 10
+             .arg(sv->gameConfig)
+             .arg(sv->map)
+             .arg(!String(sv->clientNames).isEmpty()? String(_E(2) " (%1)" _E(.)).arg(sv->clientNames) : "")
+             .arg(String(sv->pwads).isEmpty() ? String(DENG2_CHAR_MDASH) : String(sv->pwads));  // 14
+
 #undef TABBED
 }
 
@@ -834,7 +730,7 @@ de::String ServerInfo_AsStyledText(serverinfo_t const *sv)
  * Prints server/host information into the console. The header line is
  * printed if 'info' is NULL.
  */
-void ServerInfo_Print(serverinfo_t const *info, int index)
+void ServerInfo_Print(serverinfo_t const *info, dint index)
 {
     /// @todo Update table for de::Log. -jk
     ///
@@ -845,9 +741,9 @@ void ServerInfo_Print(serverinfo_t const *info, int index)
     else
     {
         LOG_NET_MSG(_E(m)"%-2i: %-20s %i/%-2i %c %-5i %-16s %s:%i")
-                << index << info->name << info->numPlayers << info->maxPlayers
-                << (info->canJoin? ' ' : '*') << info->version << info->plugin
-                << info->address << info->port;
+            << index << info->name << info->numPlayers << info->maxPlayers
+            << (info->canJoin? ' ' : '*') << info->version << info->plugin
+            << info->address << info->port;
         LOG_NET_MSG("    %s p:%ims %-40s") << info->map << info->ping << info->description;
         LOG_NET_MSG("    %s (CRC:%x) %s") << info->gameIdentityKey << info->loadedFilesCRC << info->gameConfig;
 
@@ -862,492 +758,35 @@ void ServerInfo_Print(serverinfo_t const *info, int index)
         // Optional: data values.
         if(info->data[0] || info->data[1] || info->data[2])
         {
-            LOG_NET_MSG("    Data: (%08x, %08x, %08x)") << info->data[0]
-                    << info->data[1] << info->data[2];
+            LOG_NET_MSG("    Data: (%08x, %08x, %08x)")
+                << info->data[0] << info->data[1] << info->data[2];
         }
     }
 }
 
 /**
- * Composes a PKT_CHAT network message.
+ * Extracts the label and value from a string.
+ *
+ * @param max  Maximum allowed length of a token, including terminating \0.
  */
-void Net_WriteChatMessage(int from, int toMask, const char* message)
+static dd_bool tokenize(char const *line, char *label, char *value, dint max)
 {
-    size_t len = strlen(message);
-    len = MIN_OF(len, 0xffff);
-
-    Msg_Begin(PKT_CHAT);
-    Writer_WriteByte(msgWriter, from);
-    Writer_WriteUInt32(msgWriter, toMask);
-    Writer_WriteUInt16(msgWriter, len);
-    Writer_Write(msgWriter, message, len);
-    Msg_End();
-}
-
-/**
- * All arguments are sent out as a chat message.
- */
-D_CMD(Chat)
-{
-    DENG2_UNUSED(src);
-
-    char    buffer[100];
-    int     i, mode = !stricmp(argv[0], "chat") ||
-        !stricmp(argv[0], "say") ? 0 : !stricmp(argv[0], "chatNum") ||
-        !stricmp(argv[0], "sayNum") ? 1 : 2;
-    unsigned short mask = 0;
-
-    if(argc == 1)
-    {
-        LOG_SCR_NOTE("Usage: %s %s(text)") << argv[0]
-                << (!mode ? "" : mode == 1 ? "(plr#) " : "(name) ");
-        LOG_SCR_MSG("Chat messages are max 80 characters long. Use quotes to get around "
-                    "arg processing.");
-        return true;
-    }
-
-    LOG_AS("chat (Cmd)");
-
-    // Chatting is only possible when connected.
-    if(!netGame)
-        return false;
-
-    // Too few arguments?
-    if(mode && argc < 3)
-        return false;
-
-    // Assemble the chat message.
-    strcpy(buffer, argv[!mode ? 1 : 2]);
-    for(i = (!mode ? 2 : 3); i < argc; ++i)
-    {
-        strcat(buffer, " ");
-        strncat(buffer, argv[i], 80 - (strlen(buffer) + strlen(argv[i]) + 1));
-    }
-    buffer[80] = 0;
-
-    // Send the message.
-    switch(mode)
-    {
-    case 0: // chat
-        mask = ~0;
-        break;
-
-    case 1: // chatNum
-        mask = 1 << atoi(argv[1]);
-        break;
-
-    case 2: // chatTo
-        {
-        dd_bool     found = false;
-
-        for(i = 0; i < DDMAXPLAYERS && !found; ++i)
-        {
-            if(!stricmp(clients[i].name, argv[1]))
-            {
-                mask = 1 << i;
-                found = true;
-            }
-        }
-        break;
-        }
-
-    default:
-        LOG_SCR_ERROR("Invalid value, mode = %i") << mode;
-        break;
-    }
-
-    Net_WriteChatMessage(consolePlayer, mask, buffer);
-
-    if(!isClient)
-    {
-        if(mask == (unsigned short) ~0)
-        {
-            Net_SendBuffer(NSP_BROADCAST, 0);
-        }
-        else
-        {
-            for(i = 1; i < DDMAXPLAYERS; ++i)
-                if(ddPlayers[i].shared.inGame && (mask & (1 << i)))
-                    Net_SendBuffer(i, 0);
-        }
-    }
-    else
-    {
-        Net_SendBuffer(0, 0);
-    }
-
-    // Show the message locally.
-    Net_ShowChatMessage(consolePlayer, buffer);
-
-    // Inform the game, too.
-    gx.NetPlayerEvent(consolePlayer, DDPE_CHAT_MESSAGE, buffer);
-    return true;
-}
-
-#ifdef __SERVER__
-D_CMD(Kick)
-{
-    DENG2_UNUSED2(src, argc);
-
-    int     num;
-
-    LOG_AS("kick (Cmd)")
-
-    if(!netGame)
-    {
-        LOG_SCR_ERROR("This is not a network game");
-        return false;
-    }
-
-    if(!isServer)
-    {
-        LOG_SCR_ERROR("Only allowed on the server");
-        return false;
-    }
-
-    num = atoi(argv[1]);
-    if(num < 1 || num >= DDMAXPLAYERS)
-    {
-        LOG_NET_ERROR("Invalid client number");
-        return false;
-    }
-
-    if(netRemoteUser == num)
-    {
-        LOG_NET_ERROR("Can't kick the client who's logged in");
-        return false;
-    }
-
-    Sv_Kick(num);
-    return true;
-}
-#endif // __SERVER__
-
-#ifdef __CLIENT__
-D_CMD(SetName)
-{
-    DENG2_UNUSED2(src, argc);
-
-    Con_SetString("net-name", argv[1]);
-
-    if(!netGame)
-        return true;
-
-    // The server does not have a name.
-    if(!isClient) return false;
-
-    memset(clients[consolePlayer].name, 0, sizeof(clients[consolePlayer].name));
-    strncpy(clients[consolePlayer].name, argv[1], PLAYERNAMELEN - 1);
-
-    Net_SendPlayerInfo(consolePlayer, 0);
-    return true;
-}
-#endif
-
-D_CMD(SetTicks)
-{
-    DENG2_UNUSED2(src, argc);
-
-//  extern double lastSharpFrameTime;
-
-    firstNetUpdate = true;
-    Timer_SetTicksPerSecond(strtod(argv[1], 0));
-//  lastSharpFrameTime = Sys_GetTimef();
-    return true;
-}
-
-D_CMD(MakeCamera)
-{
-    DENG2_UNUSED2(src, argc);
-
-    /*  int cp;
-       mobj_t *mo;
-       ddplayer_t *conp = players + consolePlayer;
-
-       if(argc < 2) return true;
-       cp = atoi(argv[1]);
-       clients[cp].connected = true;
-       clients[cp].ready = true;
-       clients[cp].updateCount = UPDATECOUNT;
-       ddPlayers[cp].flags |= DDPF_CAMERA;
-       ddPlayers[cp].inGame = true; // !!!
-       Sv_InitPoolForClient(cp);
-       mo = Z_Malloc(sizeof(mobj_t), PU_MAP, 0);
-       memset(mo, 0, sizeof(*mo));
-       mo->origin[VX] = conp->mo->origin[VX];
-       mo->origin[VY] = conp->mo->origin[VY];
-       mo->origin[VZ] = conp->mo->origin[VZ];
-       mo->bspLeaf = conp->mo->bspLeaf;
-       ddPlayers[cp].mo = mo;
-       displayPlayer = cp; */
-
-    // Create a new local player.
-    int cp;
-
-    LOG_AS("makecam (Cmd)");
-
-    cp = atoi(argv[1]);
-    if(cp < 0 || cp >= DDMAXPLAYERS)
-        return false;
-
-    if(clients[cp].connected)
-    {
-        LOG_ERROR("Client %i already connected") << cp;
-        return false;
-    }
-
-    clients[cp].connected = true;
-    clients[cp].ready = true;
-    clients[cp].viewConsole = cp;
-    ddPlayers[cp].shared.flags |= DDPF_LOCAL;
-    Smoother_Clear(clients[cp].smoother);
-
-#ifdef __SERVER__
-    Sv_InitPoolForClient(cp);
-#endif
-
-#ifdef __CLIENT__
-    R_SetupDefaultViewWindow(cp);
-
-    // Update the viewports.
-    R_SetViewGrid(0, 0);
-#endif
-
-    return true;
-}
-
-#ifdef __CLIENT__
-
-D_CMD(SetConsole)
-{
-    DENG2_UNUSED2(src, argc);
-
-    int cp = atoi(argv[1]);
-    if(ddPlayers[cp].shared.inGame)
-    {
-        consolePlayer = displayPlayer = cp;
-    }
-
-    // Update the viewports.
-    R_SetViewGrid(0, 0);
-    return true;
-}
-
-int Net_StartConnection(const char* address, int port)
-{
-    LOG_AS("Net_StartConnection");
-    LOG_NET_MSG("Connecting to %s (port %i)...") << address << port;
-
-    // Start searching at the specified location.
-    Net_ServerLink().connectDomain(de::String("%1:%2").arg(address).arg(port), 7 /*timeout*/);
-    return true;
-}
-
-/**
- * Intelligently connect to a server. Just provide an IP address and the
- * rest is automatic.
- */
-D_CMD(Connect)
-{
-    DENG2_UNUSED(src);
-
-    char *ptr;
-    int port = 0;
-
-    if(argc < 2 || argc > 3)
-    {
-        LOG_SCR_NOTE("Usage: %s (ip-address) [port]") << argv[0];
-        LOG_SCR_MSG("A TCP/IP connection is created to the given server. If a port is not "
-                    "specified port zero will be used.");
-        return true;
-    }
-
-    if(netGame)
-    {
-        LOG_NET_ERROR("Already connected");
-        return false;
-    }
-
-    // If there is a port specified in the address, use it.
-    port = 0;
-    if((ptr = strrchr(argv[1], ':')))
-    {
-        port = strtol(ptr + 1, 0, 0);
-        *ptr = 0;
-    }
-    if(argc == 3)
-    {
-        port = strtol(argv[2], 0, 0);
-    }
-
-    return Net_StartConnection(argv[1], port);
-}
-
-#endif // __CLIENT__
-
-/**
- * The 'net' console command.
- */
-D_CMD(Net)
-{
-    DENG2_UNUSED(src);
-
-    dd_bool success = true;
-
-    if(argc == 1) // No args?
-    {
-        LOG_SCR_NOTE("Usage: %s (cmd/args)") << argv[0];
-        LOG_SCR_MSG("Commands:");
-        LOG_SCR_MSG("  init");
-        LOG_SCR_MSG("  shutdown");
-        LOG_SCR_MSG("  info");
-        LOG_SCR_MSG("  request");
-#ifdef __CLIENT__
-        LOG_SCR_MSG("  setup client");
-        LOG_SCR_MSG("  search (address) [port]   (local or targeted query)");
-        LOG_SCR_MSG("  servers   (asks the master server)");
-        LOG_SCR_MSG("  connect (idx)");
-        LOG_SCR_MSG("  mconnect (m-idx)");
-        LOG_SCR_MSG("  disconnect");
-#endif
-#ifdef __SERVER__
-        LOG_SCR_MSG("  announce");
-#endif
-        return true;
-    }
-
-    if(argc == 2) // One argument?
-    {
-        if(!stricmp(argv[1], "announce"))
-        {
-            N_MasterAnnounceServer(true);
-        }
-        else if(!stricmp(argv[1], "request"))
-        {
-            N_MasterRequestList();
-        }
-        else if(!stricmp(argv[1], "servers"))
-        {
-            N_MAPost(MAC_REQUEST);
-            N_MAPost(MAC_WAIT);
-            N_MAPost(MAC_LIST);
-        }
-        else if(!stricmp(argv[1], "info"))
-        {
-            N_PrintNetworkStatus();
-            LOG_NET_MSG("Network game: %b") << netGame;
-            LOG_NET_MSG("This is console %i (local player %i)") << consolePlayer << P_ConsoleToLocal(consolePlayer);
-        }
-#ifdef __CLIENT__
-        else if(!stricmp(argv[1], "disconnect"))
-        {
-            if(!netGame)
-            {
-                LOG_NET_ERROR("This client is not connected to a server");
-                return false;
-            }
-
-            if(!isClient)
-            {
-                LOG_NET_ERROR("This is not a client");
-                return false;
-            }
-
-            Net_ServerLink().disconnect();
-
-            LOG_NET_NOTE("Disconnected");
-        }
-#endif
-        else
-        {
-            LOG_SCR_ERROR("Invalid arguments");
-            return false; // Bad args.
-        }
-    }
-
-    if(argc == 3) // Two arguments?
-    {
-#ifdef __CLIENT__
-        if(!stricmp(argv[1], "search"))
-        {
-            Net_ServerLink().discover(argv[2]);
-        }
-        else if(!stricmp(argv[1], "connect"))
-        {
-            if(netGame)
-            {
-                LOG_NET_ERROR("Already connected");
-                return false;
-            }
-
-            int index = strtoul(argv[2], 0, 10);
-            serverinfo_t info;
-            if(Net_ServerLink().foundServerInfo(index, &info))
-            {
-                ServerInfo_Print(&info, index);
-                Net_ServerLink().connectDomain(de::String("%1:%2").arg(info.address).arg(info.port), 5);
-            }
-        }
-        else if(!stricmp(argv[1], "mconnect"))
-        {
-            serverinfo_t    info;
-
-            if(N_MasterGet(strtol(argv[2], 0, 0), &info))
-            {
-                // Connect using TCP/IP.
-                return Con_Executef(CMDS_CONSOLE, false, "connect %s %i",
-                                    info.address, info.port);
-            }
-            else
-                return false;
-        }
-        else if(!stricmp(argv[1], "setup"))
-        {
-            // Start network setup.
-            if(!stricmp(argv[2], "client"))
-            {
-                ClientWindow::main().taskBar().close();
-                ClientWindow::main().taskBar().showMultiplayer();
-            }
-            else return false;
-        }
-#endif
-    }
-
-#ifdef __CLIENT__
-    if(argc == 4)
-    {
-        if(!stricmp(argv[1], "search"))
-        {
-            //success = N_LookForHosts(argv[2], strtol(argv[3], 0, 0), 0);
-            Net_ServerLink().discover(de::String(argv[2]) + ":" + argv[3]);
-        }
-    }
-#endif
-
-    return success;
-}
-
-/**
- * Extracts the label and value from a string.  'max' is the maximum
- * allowed length of a token, including terminating \0.
- */
-static dd_bool tokenize(char const *line, char *label, char *value, int max)
-{
-    const char *src = line;
-    const char *colon = strchr(src, ':');
+    char const *src   = line;
+    char const *colon = strchr(src, ':');
 
     // The colon must exist near the beginning.
     if(!colon || colon - src >= SVINFO_VALID_LABEL_LEN)
         return false;
 
+    DENG2_ASSERT(label && value);
+
     // Copy the label.
-    memset(label, 0, max);
-    strncpy(label, src, MIN_OF(colon - src, max - 1));
+    std::memset(label, 0, max);
+    qstrncpy(label, src, de::min(colon - src, max - 1));
 
     // Copy the value.
-    memset(value, 0, max);
-    strncpy(value, colon + 1, MIN_OF(strlen(line) - (colon - src + 1), (unsigned) max - 1));
+    std::memset(value, 0, max);
+    qstrncpy(value, colon + 1, de::min(qstrlen(line) - (colon - src + 1), (unsigned) max - 1));
 
     // Everything is OK.
     return true;
@@ -1355,17 +794,18 @@ static dd_bool tokenize(char const *line, char *label, char *value, int max)
 
 void ServerInfo_FromRecord(serverinfo_t *info, de::Record const &rec)
 {
+    DENG2_ASSERT(info);
     de::zapPtr(info);
 
-    info->port           = (int)  rec["port"].value().asNumber();
-    info->version        = (int)  rec["ver" ].value().asNumber();
-    info->loadedFilesCRC = (uint) rec["wcrc"].value().asNumber();
-    info->numPlayers     = (int)  rec["nump"].value().asNumber();
-    info->maxPlayers     = (int)  rec["maxp"].value().asNumber();
-    info->canJoin        =        rec["open"].value().isTrue();
+    info->port           = (dint)  rec["port"].value().asNumber();
+    info->version        = (dint)  rec["ver" ].value().asNumber();
+    info->loadedFilesCRC = (duint) rec["wcrc"].value().asNumber();
+    info->numPlayers     = (dint)  rec["nump"].value().asNumber();
+    info->maxPlayers     = (dint)  rec["maxp"].value().asNumber();
+    info->canJoin        =         rec["open"].value().isTrue();
 
 #define COPY_STR(Member, VarName) \
-    strncpy(Member, rec[VarName].value().asText().toUtf8(), sizeof(Member) - 1);
+    qstrncpy(Member, rec[VarName].value().asText().toUtf8(), sizeof(Member) - 1);
 
     COPY_STR(info->name,            "name" );
     COPY_STR(info->description,     "info" );
@@ -1391,6 +831,8 @@ dd_bool ServerInfo_FromString(serverinfo_t *info, char const *valuePair)
         // Badly formed lines are ignored.
         return false;
     }
+
+    DENG2_ASSERT(info);
 
     if(!strcmp(label, "at"))
     {
@@ -1476,8 +918,506 @@ dd_bool ServerInfo_FromString(serverinfo_t *info, char const *valuePair)
     return true;
 }
 
-de::String Net_UserAgent()
+String Net_UserAgent()
 {
-    return QString(DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT) +
-           " (" + de::Version().operatingSystem() + ")";
+    return String(DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT)
+           + " (" + de::Version().operatingSystem() + ")";
+}
+
+/**
+ * Composes a PKT_CHAT network message.
+ */
+void Net_WriteChatMessage(dint from, dint toMask, char const *message)
+{
+    auto const len = de::min<dsize>(qstrlen(message), 0xffff);
+
+    Msg_Begin(PKT_CHAT);
+    Writer_WriteByte(::msgWriter, from);
+    Writer_WriteUInt32(::msgWriter, toMask);
+    Writer_WriteUInt16(::msgWriter, len);
+    Writer_Write(::msgWriter, message, len);
+    Msg_End();
+}
+
+/**
+ * All arguments are sent out as a chat message.
+ */
+D_CMD(Chat)
+{
+    DENG2_UNUSED(src);
+
+    dint mode = !stricmp(argv[0], "chat") ||
+                !stricmp(argv[0], "say") ? 0 : !stricmp(argv[0], "chatNum") ||
+                !stricmp(argv[0], "sayNum") ? 1 : 2;
+
+    if(argc == 1)
+    {
+        LOG_SCR_NOTE("Usage: %s %s(text)") << argv[0]
+                << (!mode ? "" : mode == 1 ? "(plr#) " : "(name) ");
+        LOG_SCR_MSG("Chat messages are max 80 characters long. Use quotes to get around "
+                    "arg processing.");
+        return true;
+    }
+
+    LOG_AS("chat (Cmd)");
+
+    // Chatting is only possible when connected.
+    if(!::netGame) return false;
+
+    // Too few arguments?
+    if(mode && argc < 3) return false;
+
+    // Assemble the chat message.
+    char buffer[100];
+    strcpy(buffer, argv[!mode ? 1 : 2]);
+    for(dint i = (!mode ? 2 : 3); i < argc; ++i)
+    {
+        strcat(buffer, " ");
+        strncat(buffer, argv[i], 80 - (strlen(buffer) + strlen(argv[i]) + 1));
+    }
+    buffer[80] = 0;
+
+    // Send the message.
+    dushort mask = 0;
+    switch(mode)
+    {
+    case 0: // chat
+        mask = ~0;
+        break;
+
+    case 1: // chatNum
+        mask = 1 << String(argv[1]).toInt();
+        break;
+
+    case 2: // chatTo
+        for(dint i = 0; i < DDMAXPLAYERS; ++i)
+        {
+            if(!stricmp(::clients[i].name, argv[1]))
+            {
+                mask = 1 << i;
+                break;
+            }
+        }
+        break;
+
+    default: LOG_SCR_ERROR("Invalid value, mode = %i") << mode; break;
+    }
+
+    Net_WriteChatMessage(::consolePlayer, mask, buffer);
+
+    if(!::isClient)
+    {
+        if(mask == (dushort) ~0)
+        {
+            Net_SendBuffer(NSP_BROADCAST, 0);
+        }
+        else
+        {
+            for(dint i = 1; i < DDMAXPLAYERS; ++i)
+            {
+                if(::ddPlayers[i].shared.inGame && (mask & (1 << i)))
+                    Net_SendBuffer(i, 0);
+            }
+        }
+    }
+    else
+    {
+        Net_SendBuffer(0, 0);
+    }
+
+    // Show the message locally.
+    Net_ShowChatMessage(::consolePlayer, buffer);
+
+    // Inform the game, too.
+    gx.NetPlayerEvent(::consolePlayer, DDPE_CHAT_MESSAGE, buffer);
+
+    return true;
+}
+
+#ifdef __SERVER__
+D_CMD(Kick)
+{
+    DENG2_UNUSED2(src, argc);
+
+    LOG_AS("kick (Cmd)")
+
+    if(!::netGame)
+    {
+        LOG_SCR_ERROR("This is not a network game");
+        return false;
+    }
+
+    if(!::isServer)
+    {
+        LOG_SCR_ERROR("Only allowed on the server");
+        return false;
+    }
+
+    dint num = String(argv[1]).toInt();
+    if(num < 1 || num >= DDMAXPLAYERS)
+    {
+        LOG_NET_ERROR("Invalid client number");
+        return false;
+    }
+
+    if(::netRemoteUser == num)
+    {
+        LOG_NET_ERROR("Can't kick the client who's logged in");
+        return false;
+    }
+
+    Sv_Kick(num);
+    return true;
+}
+#endif // __SERVER__
+
+#ifdef __CLIENT__
+D_CMD(SetName)
+{
+    DENG2_UNUSED2(src, argc);
+
+    Con_SetString("net-name", argv[1]);
+
+    if(!::netGame) return true;
+
+    // The server does not have a name.
+    if(!::isClient) return false;
+
+    std::memset(::clients[::consolePlayer].name, 0, sizeof(::clients[::consolePlayer].name));
+    strncpy(::clients[::consolePlayer].name, argv[1], PLAYERNAMELEN - 1);
+
+    Net_SendPlayerInfo(::consolePlayer, 0);
+    return true;
+}
+#endif
+
+D_CMD(SetTicks)
+{
+    DENG2_UNUSED2(src, argc);
+
+//  extern double lastSharpFrameTime;
+
+    ::firstNetUpdate = true;
+    Timer_SetTicksPerSecond(String(argv[1]).toDouble());
+//  ::lastSharpFrameTime = Sys_GetTimef();
+    return true;
+}
+
+// Create a new local player.
+D_CMD(MakeCamera)
+{
+    DENG2_UNUSED2(src, argc);
+
+    LOG_AS("makecam (Cmd)");
+
+    dint cp = String(argv[1]).toInt();
+    if(cp < 0 || cp >= DDMAXPLAYERS)
+        return false;
+
+    if(::clients[cp].connected)
+    {
+        LOG_ERROR("Client %i already connected") << cp;
+        return false;
+    }
+
+    ::clients[cp].connected   = true;
+    ::clients[cp].ready       = true;
+    ::clients[cp].viewConsole = cp;
+
+    ::ddPlayers[cp].shared.flags |= DDPF_LOCAL;
+    Smoother_Clear(::clients[cp].smoother);
+
+#ifdef __SERVER__
+    Sv_InitPoolForClient(cp);
+#endif
+
+#ifdef __CLIENT__
+    R_SetupDefaultViewWindow(cp);
+
+    // Update the viewports.
+    R_SetViewGrid(0, 0);
+#endif
+
+    return true;
+}
+
+#ifdef __CLIENT__
+
+D_CMD(SetConsole)
+{
+    DENG2_UNUSED2(src, argc);
+
+    dint cp = String(argv[1]).toInt();
+    if(cp < 0 || cp >= DDMAXPLAYERS)
+    {
+        LOG_SCR_ERROR("Invalid player #%i") << cp;
+        return false;
+    }
+
+    if(::ddPlayers[cp].shared.inGame)
+    {
+        ::consolePlayer = ::displayPlayer = cp;
+    }
+
+    // Update the viewports.
+    R_SetViewGrid(0, 0);
+    return true;
+}
+
+dint Net_StartConnection(char const *address, dint port)
+{
+    LOG_AS("Net_StartConnection");
+    LOG_NET_MSG("Connecting to %s (port %i)...") << address << port;
+
+    // Start searching at the specified location.
+    Net_ServerLink().connectDomain(String("%1:%2").arg(address).arg(port), 7 /*timeout*/);
+    return true;
+}
+
+/**
+ * Intelligently connect to a server. Just provide an IP address and the rest is automatic.
+ */
+D_CMD(Connect)
+{
+    DENG2_UNUSED(src);
+
+    if(argc < 2 || argc > 3)
+    {
+        LOG_SCR_NOTE("Usage: %s (ip-address) [port]") << argv[0];
+        LOG_SCR_MSG("A TCP/IP connection is created to the given server. If a port is not "
+                    "specified port zero will be used");
+        return true;
+    }
+
+    if(::netGame)
+    {
+        LOG_NET_ERROR("Already connected");
+        return false;
+    }
+
+    // If there is a port specified in the address, use it.
+    dint port = 0;
+    char *ptr;
+    if((ptr = strrchr(argv[1], ':')))
+    {
+        port = strtol(ptr + 1, 0, 0);
+        *ptr = 0;
+    }
+    if(argc == 3)
+    {
+        port = strtol(argv[2], 0, 0);
+    }
+
+    return Net_StartConnection(argv[1], port);
+}
+
+#endif // __CLIENT__
+
+/**
+ * The 'net' console command.
+ */
+D_CMD(Net)
+{
+    DENG2_UNUSED(src);
+
+    bool success = true;
+
+    if(argc == 1) // No args?
+    {
+        LOG_SCR_NOTE("Usage: %s (cmd/args)") << argv[0];
+        LOG_SCR_MSG("Commands:");
+        LOG_SCR_MSG("  init");
+        LOG_SCR_MSG("  shutdown");
+        LOG_SCR_MSG("  info");
+        LOG_SCR_MSG("  request");
+#ifdef __CLIENT__
+        LOG_SCR_MSG("  setup client");
+        LOG_SCR_MSG("  search (address) [port]   (local or targeted query)");
+        LOG_SCR_MSG("  servers   (asks the master server)");
+        LOG_SCR_MSG("  connect (idx)");
+        LOG_SCR_MSG("  mconnect (m-idx)");
+        LOG_SCR_MSG("  disconnect");
+#endif
+#ifdef __SERVER__
+        LOG_SCR_MSG("  announce");
+#endif
+        return true;
+    }
+
+    if(argc == 2) // One argument?
+    {
+        if(!stricmp(argv[1], "announce"))
+        {
+            N_MasterAnnounceServer(true);
+        }
+        else if(!stricmp(argv[1], "request"))
+        {
+            N_MasterRequestList();
+        }
+        else if(!stricmp(argv[1], "servers"))
+        {
+            N_MAPost(MAC_REQUEST);
+            N_MAPost(MAC_WAIT);
+            N_MAPost(MAC_LIST);
+        }
+        else if(!stricmp(argv[1], "info"))
+        {
+            N_PrintNetworkStatus();
+            LOG_NET_MSG("Network game: %b") << ::netGame;
+            LOG_NET_MSG("This is console %i (local player %i)")
+                << ::consolePlayer << P_ConsoleToLocal(::consolePlayer);
+        }
+#ifdef __CLIENT__
+        else if(!stricmp(argv[1], "disconnect"))
+        {
+            if(!::netGame)
+            {
+                LOG_NET_ERROR("This client is not connected to a server");
+                return false;
+            }
+
+            if(!::isClient)
+            {
+                LOG_NET_ERROR("This is not a client");
+                return false;
+            }
+
+            Net_ServerLink().disconnect();
+
+            LOG_NET_NOTE("Disconnected");
+        }
+#endif
+        else
+        {
+            LOG_SCR_ERROR("Invalid arguments");
+            return false; // Bad args.
+        }
+    }
+
+    if(argc == 3) // Two arguments?
+    {
+#ifdef __CLIENT__
+        if(!stricmp(argv[1], "search"))
+        {
+            Net_ServerLink().discover(argv[2]);
+        }
+        else if(!stricmp(argv[1], "connect"))
+        {
+            if(::netGame)
+            {
+                LOG_NET_ERROR("Already connected");
+                return false;
+            }
+
+            dint index = strtoul(argv[2], 0, 10);
+            serverinfo_t info;
+            if(Net_ServerLink().foundServerInfo(index, &info))
+            {
+                ServerInfo_Print(&info, index);
+                Net_ServerLink().connectDomain(String("%1:%2").arg(info.address).arg(info.port), 5);
+            }
+        }
+        else if(!stricmp(argv[1], "mconnect"))
+        {
+            serverinfo_t info;
+            if(N_MasterGet(strtol(argv[2], 0, 0), &info))
+            {
+                // Connect using TCP/IP.
+                return Con_Executef(CMDS_CONSOLE, false, "connect %s %i",
+                                    info.address, info.port);
+            }
+            else return false;
+        }
+        else if(!stricmp(argv[1], "setup"))
+        {
+            // Start network setup.
+            if(!stricmp(argv[2], "client"))
+            {
+                ClientWindow::main().taskBar().close();
+                ClientWindow::main().taskBar().showMultiplayer();
+            }
+            else return false;
+        }
+#endif
+    }
+
+#ifdef __CLIENT__
+    if(argc == 4)
+    {
+        if(!stricmp(argv[1], "search"))
+        {
+            //success = N_LookForHosts(argv[2], strtol(argv[3], 0, 0), 0);
+            Net_ServerLink().discover(String(argv[2]) + ":" + argv[3]);
+        }
+    }
+#endif
+
+    return success;
+}
+
+D_CMD(Ping);  // net_ping.cpp
+#ifdef __CLIENT__
+D_CMD(Login);  // cl_main.cpp
+#endif
+#ifdef __SERVER__
+D_CMD(Logout);  // sv_main.cpp
+#endif
+
+void Net_Register()
+{
+    C_VAR_BYTE      ("net-queue-show",          &::monitorMsgQueue, 0, 0, 1);
+    C_VAR_BYTE      ("net-dev",                 &::netDev, 0, 0, 1);
+#ifdef DENG2_DEBUG
+    C_VAR_FLOAT     ("net-dev-latency",         &::netSimulatedLatencySeconds, CVF_NO_MAX, 0, 0);
+#endif
+    //C_VAR_BYTE      ("net-nosleep",             &::netDontSleep, 0, 0, 1);
+    //C_VAR_CHARPTR   ("net-master-address",      &::masterAddress, 0, 0, 0);
+    //C_VAR_INT       ("net-master-port",         &::masterPort, 0, 0, 65535);
+    //C_VAR_CHARPTR   ("net-master-path",         &::masterPath, 0, 0, 0);
+    C_VAR_CHARPTR   ("net-name",                &::playerName, 0, 0, 0);
+
+#ifdef __CLIENT__
+    C_VAR_FLOAT     ("client-connect-timeout",  &::netConnectTimeout, CVF_NO_MAX, 0, 0);
+#endif
+
+#ifdef __SERVER__
+    C_VAR_CHARPTR   ("server-name",             &::serverName, 0, 0, 0);
+    C_VAR_CHARPTR   ("server-info",             &::serverInfo, 0, 0, 0);
+    C_VAR_INT       ("server-public",           &::masterAware, 0, 0, 1);
+    C_VAR_CHARPTR   ("server-password",         &::netPassword, 0, 0, 0);
+    C_VAR_BYTE      ("server-latencies",        &::netShowLatencies, 0, 0, 1);
+    C_VAR_INT       ("server-frame-interval",   &::frameInterval, CVF_NO_MAX, 0, 0);
+    C_VAR_INT       ("server-player-limit",     &::svMaxPlayers, 0, 0, DDMAXPLAYERS);
+#endif
+
+    C_CMD_FLAGS ("chat",    nullptr,    Chat, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS ("chatnum", nullptr,    Chat, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS ("chatto",  nullptr,    Chat, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS ("conlocp", "i",        MakeCamera, CMDF_NO_NULLGAME);
+#ifdef __CLIENT__
+    C_CMD_FLAGS ("connect", nullptr,    Connect, CMDF_NO_NULLGAME | CMDF_NO_DEDICATED);
+    /// @todo Must reimplement using libshell. -jk
+    //C_CMD_FLAGS ("login",   nullptr,    Login, CMDF_NO_NULLGAME);
+#endif
+#ifdef __SERVER__
+    //C_CMD_FLAGS ("logout",   "",         Logout, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS ("kick",    "i",        Kick, CMDF_NO_NULLGAME);
+#endif
+    C_CMD_FLAGS ("net",     nullptr,    Net,  CMDF_NO_NULLGAME);
+    C_CMD_FLAGS ("ping",    nullptr,    Ping, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS ("say",     nullptr,    Chat, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS ("saynum",  nullptr,    Chat, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS ("sayto",   nullptr,    Chat, CMDF_NO_NULLGAME);
+#ifdef __CLIENT__
+    C_CMD       ("setname", "s",        SetName);
+    C_CMD       ("setcon",  "i",        SetConsole);
+#endif
+    C_CMD       ("settics", "i",        SetTicks);
+
+#ifdef __CLIENT__
+    N_Register();
+#endif
+#ifdef __SERVER__
+    Server_Register();
+#endif
 }

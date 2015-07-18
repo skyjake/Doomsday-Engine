@@ -1,8 +1,8 @@
-/** @file sv_frame.h Frame Generation and Transmission.
+/** @file sv_frame.h F rame Generation and Transmission.
  * @ingroup server
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2009-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,18 +18,16 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef __DOOMSDAY_SERVER_FRAME_H__
-#define __DOOMSDAY_SERVER_FRAME_H__
+#ifndef SERVER_FRAME_H
+#define SERVER_FRAME_H
 
-#ifdef __cplusplus
-extern "C" {
+#include <de/libcore.h>
+
+#ifndef __cplusplus
+#  error "server/sv_frame.h requires C++"
 #endif
 
-void            Sv_TransmitFrame(void);
-size_t          Sv_GetMaxFrameSize(int playerNumber);
+void Sv_TransmitFrame();
+de::dsize Sv_GetMaxFrameSize(de::dint playerNumber);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif
+#endif  // SERVER_FRAME_H

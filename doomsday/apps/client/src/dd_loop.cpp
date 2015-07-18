@@ -1,8 +1,7 @@
-/** @file dd_loop.cpp Main loop and the core timer.
- * @ingroup base
+/** @file dd_loop.cpp  Main loop and the core timer.
  *
- * @authors Copyright Â© 2003-2013 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- * @authors Copyright Â© 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -14,16 +13,19 @@
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA</small>
+ * General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small>
  */
 
-#include "de_platform.h"
 #include "de_base.h"
+#include "dd_loop.h"
+
+#include <de/App>
+#ifdef __SERVER__
+#  include <de/TextApp>
+#endif
 #include "de_console.h"
 #include "de_system.h"
-#include "de_network.h"
 #include "de_render.h"
 #include "de_play.h"
 #include "de_graphics.h"
@@ -31,17 +33,25 @@
 #include "de_ui.h"
 #include "de_misc.h"
 
-#include <de/App>
-
+#ifdef __CLIENT__
+#  include "clientapp.h"
+#  include "client/cl_def.h"
+#endif
 #ifdef __SERVER__
-#  include <de/TextApp>
+#  include "server/sv_def.h"
 #endif
 
 #ifdef __CLIENT__
-#  include "clientapp.h"
+#  include "network/net_demo.h"
+#endif
+#include "network/net_event.h"
+
+#ifdef __CLIENT__
 #  include "ui/busyvisual.h"
 #  include "ui/clientwindow.h"
 #endif
+
+using namespace de;
 
 /// Development utility: on sharp tics, print player 0 movement state.
 //#define LIBDENG_PLAYER0_MOVEMENT_ANALYSIS
@@ -64,52 +74,44 @@
  */
 #define MAX_ELAPSED_TIME 5
 
-float frameTimePos; // 0...1: fractional part for sharp game tics.
+dfloat frameTimePos;  ///< 0...1: fractional part for sharp game tics.
 
-int maxFrameRate = 120; // Zero means 'unlimited'.
+dint maxFrameRate = 120;  ///< Zero means 'unlimited'.
 // Refresh frame count (independant of the viewport-specific frameCount).
-int rFrameCount = 0;
-byte devShowFrameTimeDeltas = false;
+dint rFrameCount;
+byte devShowFrameTimeDeltas;
 byte processSharpEventsAfterTickers = true;
 
 timespan_t sysTime, gameTime, demoTime;
 //timespan_t frameStartTime;
 
-//dd_bool stopTime = false; // If true the time counters won't be incremented
-//dd_bool tickUI = false; // If true the UI will be tick'd
-dd_bool tickFrame = true; // If false frame tickers won't be tick'd (unless netGame)
+//dd_bool stopTime;          ///< @c true if the time counters won't be incremented
+//dd_bool tickUI;            ///< @c true if the UI will be tick'd
+dd_bool tickFrame = true;  ///< @c false if frame tickers won't be tick'd (unless netGame)
 
-static int gameLoopExitCode = 0;
+static dint gameLoopExitCode;
 
-static double lastRunTicsTime;
+static ddouble lastRunTicsTime;
 static dd_bool firstTic = true;
-static dd_bool tickIsSharp = false;
+static dd_bool tickIsSharp;
 
 #define NUM_FRAMETIME_DELTAS    200
-static int timeDeltas[NUM_FRAMETIME_DELTAS];
-static int timeDeltasIndex = 0;
+static dint timeDeltas[NUM_FRAMETIME_DELTAS];
+static dint timeDeltasIndex;
 
-static float realFrameTimePos = 0;
+static dfloat realFrameTimePos;
 
-void DD_RegisterLoop(void)
+void DD_SetGameLoopExitCode(dint code)
 {
-    C_VAR_BYTE("input-sharp-lateprocessing", &processSharpEventsAfterTickers, 0, 0, 1);
-    C_VAR_INT ("refresh-rate-maximum",       &maxFrameRate, 0, 35, 1000);
-    C_VAR_INT ("rend-dev-framecount",        &rFrameCount, CVF_NO_ARCHIVE | CVF_PROTECTED, 0, 0);
-    C_VAR_BYTE("rend-info-deltas-frametime", &devShowFrameTimeDeltas, CVF_NO_ARCHIVE, 0, 1);
+    ::gameLoopExitCode = code;
 }
 
-void DD_SetGameLoopExitCode(int code)
+dint DD_GameLoopExitCode()
 {
-    gameLoopExitCode = code;
+    return ::gameLoopExitCode;
 }
 
-int DD_GameLoopExitCode(void)
-{
-    return gameLoopExitCode;
-}
-
-float DD_GetFrameRate()
+dfloat DD_GetFrameRate()
 {
 #ifdef __CLIENT__
     return ClientWindow::main().frameRate();
@@ -119,42 +121,39 @@ float DD_GetFrameRate()
 }
 
 #undef DD_IsSharpTick
-DENG_EXTERN_C dd_bool DD_IsSharpTick(void)
+DENG_EXTERN_C dd_bool DD_IsSharpTick()
 {
-    return tickIsSharp;
+    return ::tickIsSharp;
 }
 
-dd_bool DD_IsFrameTimeAdvancing(void)
+dd_bool DD_IsFrameTimeAdvancing()
 {
     if(BusyMode_Active()) return false;
-    return tickFrame || netGame;
+    return ::tickFrame || ::netGame;
 }
 
 void DD_CheckSharpTick(timespan_t time)
 {
     // Sharp ticks are the ones that occur 35 per second. The rest are
     // interpolated (smoothed) somewhere in between.
-    tickIsSharp = false;
+    ::tickIsSharp = false;
 
     if(DD_IsFrameTimeAdvancing())
     {
-        /**
-         * realFrameTimePos will be reduced when new sharp world positions are
-         * calculated, so that frametime always stays within the range 0..1.
-         */
-        realFrameTimePos += time * TICSPERSEC;
+        /// @var realFrameTimePos will be reduced when new sharp world positions are
+        /// calculated, so that @var frameTime always stays within the range 0..1.
+        ::realFrameTimePos += time * TICSPERSEC;
 
         // When one full tick has passed, it is time to do a sharp tick.
-        if(realFrameTimePos >= 1)
+        if(::realFrameTimePos >= 1)
         {
-            tickIsSharp = true;
+            ::tickIsSharp = true;
         }
     }
 }
 
 /**
- * This is the main ticker of the engine. We'll call all the other tickers
- * from here.
+ * This is the main ticker of the engine. We'll call all the other tickers from here.
  *
  * @param time  Duration of the tick. This will never be longer than 1.0/TICSPERSEC.
  */
@@ -182,7 +181,7 @@ static void baseTicker(timespan_t time)
 
 #ifdef __CLIENT__
         // Windowing system ticks.
-        for(int i = 0; i < DDMAXPLAYERS; ++i)
+        for(dint i = 0; i < DDMAXPLAYERS; ++i)
         {
             R_ViewWindowTicker(i, time);
         }
@@ -198,7 +197,7 @@ static void baseTicker(timespan_t time)
         if(DD_IsSharpTick())
         {
             // Set frametime back by one tick (to stay in the 0..1 range).
-            realFrameTimePos -= 1;
+            ::realFrameTimePos -= 1;
 
 #ifdef __CLIENT__
             // Camera smoothing: now that the world tic has occurred, the next sharp
@@ -207,23 +206,25 @@ static void baseTicker(timespan_t time)
 #endif
 
 #ifdef LIBDENG_PLAYER0_MOVEMENT_ANALYSIS
-            if(ddPlayers[0].shared.inGame && ddPlayers[0].shared.mo)
+            if(::ddPlayers[0].shared.inGame && ::ddPlayers[0].shared.mo)
             {
-                mobj_t* mo = ddPlayers[0].shared.mo;
                 static coord_t prevPos[3] = { 0, 0, 0 };
                 static coord_t prevSpeed = 0;
-                coord_t speed = V2d_Length(mo->mom);
-                coord_t actualMom[2] = { mo->origin[0] - prevPos[0], mo->origin[1] - prevPos[1] };
-                coord_t actualSpeed = V2d_Length(actualMom);
+
+                mobj_t *mob = ::ddPlayers[0].shared.mo;
+
+                coord_t speed        = V2d_Length(mob->mom);
+                coord_t actualMom[2] = { mob->origin[0] - prevPos[0], mob->origin[1] - prevPos[1] };
+                coord_t actualSpeed  = V2d_Length(actualMom);
 
                 LOG_NOTE("%i,%f,%f,%f,%f")
-                        << SECONDS_TO_TICKS(sysTime + time)
-                        << ddPlayers[0].shared.forwardMove
-                        << speed
-                        << actualSpeed
-                        << speed - prevSpeed;
+                    << SECONDS_TO_TICKS(sysTime + time)
+                    << ::ddPlayers[0].shared.forwardMove
+                    << speed
+                    << actualSpeed
+                    << speed - prevSpeed;
 
-                V3d_Copy(prevPos, mo->origin);
+                V3d_Copy(prevPos, mob->origin);
                 prevSpeed = speed;
             }
 #endif
@@ -231,16 +232,16 @@ static void baseTicker(timespan_t time)
 
 #ifdef __CLIENT__
         // While paused, don't modify frametime so things keep still.
-        if(!clientPaused)
+        if(!::clientPaused)
 #endif
         {
-            frameTimePos = realFrameTimePos;
+            ::frameTimePos = ::realFrameTimePos;
         }
     }
 
     // Console is always ticking.
     Con_Ticker(time);
-    if(tickFrame)
+    if(::tickFrame)
     {
         Con_TransitionTicker(time);
     }
@@ -257,29 +258,27 @@ static void baseTicker(timespan_t time)
  */
 static void advanceTime(timespan_t delta)
 {
-    int oldGameTic = 0;
+    ::sysTime += delta;
 
-    sysTime += delta;
-
-    oldGameTic = SECONDS_TO_TICKS(gameTime);
+    dint const oldGameTic = SECONDS_TO_TICKS(::gameTime);
 
     // The difference between gametic and demotic is that demotic
     // is not altered at any point. Gametic changes at handshakes.
-    gameTime += delta;
-    demoTime += delta;
+    ::gameTime += delta;
+    ::demoTime += delta;
 
     if(DD_IsSharpTick())
     {
         // When a new sharp tick begins, we want that the 35 Hz tick
         // calculated from gameTime also changes. If this is not the
         // case, we will adjust gameTime slightly so that it syncs again.
-        if(oldGameTic == SECONDS_TO_TICKS(gameTime))
+        if(oldGameTic == SECONDS_TO_TICKS(::gameTime))
         {
             LOGDEV_XVERBOSE("Syncing gameTime with sharp ticks (tic=%i pos=%f)")
-                    << oldGameTic << frameTimePos;
+                << oldGameTic << ::frameTimePos;
 
             // Realign.
-            gameTime = (SECONDS_TO_TICKS(gameTime) + 1) / 35.f;
+            ::gameTime = (SECONDS_TO_TICKS(::gameTime) + 1) / 35.f;
         }
     }
 
@@ -287,71 +286,69 @@ static void advanceTime(timespan_t delta)
     App_WorldSystem().advanceTime(delta);
 }
 
-void DD_ResetTimer(void)
+void DD_ResetTimer()
 {
-    firstTic = true;
+    ::firstTic = true;
     Net_ResetTimer();
 }
 
-static void timeDeltaStatistics(int deltaMs)
+static void timeDeltaStatistics(dint deltaMs)
 {
-    timeDeltas[timeDeltasIndex++] = deltaMs;
-    if(timeDeltasIndex == NUM_FRAMETIME_DELTAS)
+    ::timeDeltas[::timeDeltasIndex++] = deltaMs;
+    if(::timeDeltasIndex == NUM_FRAMETIME_DELTAS)
     {
-        timeDeltasIndex = 0;
+        ::timeDeltasIndex = 0;
 
-        if(devShowFrameTimeDeltas)
+        if(::devShowFrameTimeDeltas)
         {
-            int maxDelta = timeDeltas[0], minDelta = timeDeltas[0];
-            float average = 0, variance = 0;
-            int lateCount = 0;
-            int i;
-            for(i = 0; i < NUM_FRAMETIME_DELTAS; ++i)
+            dint maxDelta = timeDeltas[0], minDelta = timeDeltas[0];
+            dfloat average = 0, variance = 0;
+            dint lateCount = 0;
+            for(dint i = 0; i < NUM_FRAMETIME_DELTAS; ++i)
             {
-                maxDelta = MAX_OF(timeDeltas[i], maxDelta);
-                minDelta = MIN_OF(timeDeltas[i], minDelta);
+                maxDelta = de::max(timeDeltas[i], maxDelta);
+                minDelta = de::min(timeDeltas[i], minDelta);
                 average += timeDeltas[i];
                 variance += timeDeltas[i] * timeDeltas[i];
                 if(timeDeltas[i] > 0) lateCount++;
             }
-            average /= NUM_FRAMETIME_DELTAS;
+            average  /= NUM_FRAMETIME_DELTAS;
             variance /= NUM_FRAMETIME_DELTAS;
+
             LOGDEV_MSG("Time deltas [%i frames]: min=%-6i max=%-6i avg=%-11.7f late=%5.1f%% var=%12.10f")
-                    << NUM_FRAMETIME_DELTAS << minDelta << maxDelta << average
-                    << lateCount/(float)NUM_FRAMETIME_DELTAS*100 << variance;
+                << NUM_FRAMETIME_DELTAS << minDelta << maxDelta << average
+                << lateCount / dfloat( NUM_FRAMETIME_DELTAS * 100 ) << variance;
         }
     }
 }
 
-void DD_WaitForOptimalUpdateTime(void)
+/// @note All times are in milliseconds.
+void DD_WaitForOptimalUpdateTime()
 {
-    // All times are in milliseconds.
-    static uint prevUpdateTime = 0;
-    uint nowTime, elapsed = 0;
-    uint targetUpdateTime;
+    static duint prevUpdateTime = 0;
 
-    // optimalDelta is integer on purpose: we're measuring time at a 1 ms
-    // accuracy, so we can't use fractions of a millisecond.
-    const uint optimalDelta = (maxFrameRate > 0? 1000/maxFrameRate : 1);
+    /// @var optimalDelta is integer on purpose: we're measuring time at a 1 ms accuracy,
+    /// so we can't use fractions of a millisecond.
+    duint const optimalDelta = (::maxFrameRate > 0 ? 1000 / ::maxFrameRate : 1);
 
     if(Sys_IsShuttingDown()) return; // No need for finesse.
 
     // This is when we would ideally like to make the update.
-    targetUpdateTime = prevUpdateTime + optimalDelta;
+    duint const targetUpdateTime = prevUpdateTime + optimalDelta;
 
     // Check the current time.
-    nowTime = Timer_RealMilliseconds();
-    elapsed = nowTime - prevUpdateTime;
+    duint nowTime = Timer_RealMilliseconds();
+    duint elapsed = nowTime - prevUpdateTime;
 
     if(elapsed < optimalDelta)
     {
-        uint needSleepMs = optimalDelta - elapsed;
+        duint const needSleepMs = optimalDelta - elapsed;
 
         // We need to wait until the optimal time has passed.
         if(needSleepMs > 5)
         {
             // Longer sleep, yield to other threads.
-            Sys_Sleep(needSleepMs - 3); // Leave some room for inaccuracies.
+            Sys_Sleep(needSleepMs - 3);  // Leave some room for inaccuracies.
         }
 
         // Attempt to make sure we really wait until the optimal time.
@@ -364,42 +361,41 @@ void DD_WaitForOptimalUpdateTime(void)
     // The time for this update.
     prevUpdateTime = nowTime;
 
-    timeDeltaStatistics((int)elapsed - (int)optimalDelta);
+    timeDeltaStatistics(dint( elapsed ) - dint( optimalDelta ));
 }
 
-timespan_t DD_LatestRunTicsStartTime(void)
+timespan_t DD_LatestRunTicsStartTime()
 {
     if(BusyMode_Active()) return Timer_Seconds();
     return lastRunTicsTime;
 }
 
-static double ticLength;
+static ddouble ticLength;
 
 timespan_t DD_CurrentTickDuration()
 {
-    return ticLength;
+    return ::ticLength;
 }
 
-void Loop_RunTics(void)
+void Loop_RunTics()
 {
-    double elapsedTime, nowTime;
-
     // Do a network update first.
     N_Update();
     Net_Update();
 
     // Check the clock.
-    if(firstTic)
+    if(::firstTic)
     {
         // On the first tic, no time actually passes.
-        firstTic = false;
-        lastRunTicsTime = Timer_Seconds();
+        ::firstTic = false;
+        ::lastRunTicsTime = Timer_Seconds();
         return;
     }
 
     // Let's see how much time has passed. This is affected by "settics".
-    nowTime = Timer_Seconds();
-    elapsedTime = nowTime - lastRunTicsTime;
+    ddouble const nowTime = Timer_Seconds();
+
+    ddouble elapsedTime = nowTime - ::lastRunTicsTime;
     if(elapsedTime > MAX_ELAPSED_TIME)
     {
         // It was too long ago, no point in running individual ticks. Just do one.
@@ -407,39 +403,47 @@ void Loop_RunTics(void)
     }
 
     // Remember when this frame started.
-    lastRunTicsTime = nowTime;
+    ::lastRunTicsTime = nowTime;
 
     // Tic until all the elapsed time has been processed.
     while(elapsedTime > 0)
     {
-        ticLength = MIN_OF(MAX_FRAME_TIME, elapsedTime);
-        elapsedTime -= ticLength;
+        ::ticLength = de::min(MAX_FRAME_TIME, elapsedTime);
+        elapsedTime -= ::ticLength;
 
         // Will this be a sharp tick?
-        DD_CheckSharpTick(ticLength);
+        DD_CheckSharpTick(::ticLength);
 
 #ifdef __CLIENT__
         // Process input events.
-        ClientApp::inputSystem().processEvents(ticLength);
-        if(!processSharpEventsAfterTickers)
+        ClientApp::inputSystem().processEvents(::ticLength);
+        if(!::processSharpEventsAfterTickers)
         {
             // We are allowed to process sharp events before tickers.
-            ClientApp::inputSystem().processSharpEvents(ticLength);
+            ClientApp::inputSystem().processSharpEvents(::ticLength);
         }
 #endif
 
         // Call all the tickers.
-        baseTicker(ticLength);
+        baseTicker(::ticLength);
 
 #ifdef __CLIENT__
-        if(processSharpEventsAfterTickers)
+        if(::processSharpEventsAfterTickers)
         {
             // This is done after tickers for compatibility with ye olde game logic.
-            ClientApp::inputSystem().processSharpEvents(ticLength);
+            ClientApp::inputSystem().processSharpEvents(::ticLength);
         }
 #endif
 
         // Various global variables are used for counting time.
-        advanceTime(ticLength);
+        advanceTime(::ticLength);
     }
+}
+
+void DD_RegisterLoop()
+{
+    C_VAR_BYTE("input-sharp-lateprocessing", &::processSharpEventsAfterTickers, 0, 0, 1);
+    C_VAR_INT ("refresh-rate-maximum",       &::maxFrameRate, 0, 35, 1000);
+    C_VAR_INT ("rend-dev-framecount",        &::rFrameCount, CVF_NO_ARCHIVE | CVF_PROTECTED, 0, 0);
+    C_VAR_BYTE("rend-info-deltas-frametime", &::devShowFrameTimeDeltas, CVF_NO_ARCHIVE, 0, 1);
 }

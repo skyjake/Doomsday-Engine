@@ -1,5 +1,4 @@
-/** @file protocol.cpp Implementation of the network protocol. 
- * @ingroup network
+/** @file protocol.cpp  Implementation of the network protocol. 
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -25,13 +24,12 @@
 #include "de_platform.h"
 #include "de_console.h"
 #include "de_misc.h"
-#include "de_network.h"
 
 boolean Protocol_Receive(nodeid_t from)
 {
     int size = 0;
     int sock = N_GetNodeSocket(from);
-    byte* packet = 0;
+    byte *packet = 0;
 
     packet = LegacyNetwork_Receive(sock, &size);
     if(!packet)
@@ -45,8 +43,8 @@ boolean Protocol_Receive(nodeid_t from)
         netmessage_t *msg = (netmessage_t *) M_Calloc(sizeof(netmessage_t));
 
         msg->sender = from;
-        msg->data = packet;
-        msg->size = size;
+        msg->data   = packet;
+        msg->size   = size;
         msg->handle = packet; // needs to be freed
 
         // The message queue will handle the message from now on.
@@ -80,4 +78,5 @@ void Protocol_Send(void *data, size_t size, nodeid_t destination)
 
     LegacyNetwork_Send(N_GetNodeSocket(destination), data, size);
 }
-#endif // 0
+
+#endif  // 0

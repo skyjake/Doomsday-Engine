@@ -31,28 +31,35 @@
 
 #include "de_console.h"
 #include "de_system.h"
-#include "de_network.h"
 #include "de_play.h"
 #include "de_misc.h"
 #include "de_audio.h"
-
 #include "def_main.h"
+
+#ifdef __CLIENT__
+#  include "client/cl_mobj.h"
+
+#  include "gl/gl_tex.h"
+#endif
+
+#include "network/net_main.h"
+#ifdef __CLIENT__
+#  include "network/net_demo.h"
+
+#  include "render/viewports.h"
+#  include "render/rend_main.h"
+#  include "render/rend_model.h"
+#  include "render/rend_halo.h"
+#  include "render/billboard.h"
+#endif
 
 #include "world/worldsystem.h" // validCount
 #include "world/thinkers.h"
 #include "BspLeaf"
 #include "ConvexSubspace"
 #include "SectorCluster"
-
 #ifdef __CLIENT__
 #  include "Lumobj"
-#  include "render/viewports.h"
-#  include "render/rend_main.h"
-#  include "render/rend_model.h"
-#  include "render/rend_halo.h"
-#  include "render/billboard.h"
-
-#  include "gl/gl_tex.h"
 #endif
 
 using namespace de;
@@ -62,8 +69,8 @@ static mobj_t *unusedMobjs;
 /*
  * Console variables:
  */
-int useSRVO                = 2; ///< @c 1= models only, @c 2= sprites + models
-int useSRVOAngle           = 1;
+dint useSRVO      = 2;  ///< @c 1= models only, @c 2= sprites + models
+dint useSRVOAngle = 1;
 
 #ifdef __CLIENT__
 static byte mobjAutoLights = true;
@@ -80,20 +87,20 @@ static inline ResourceSystem &resSys()
 void P_InitUnusedMobjList()
 {
     // Any zone memory allocated for the mobjs will have already been purged.
-    unusedMobjs = 0;
+    ::unusedMobjs = nullptr;
 }
 
 /**
  * All mobjs must be allocated through this routine. Part of the public API.
  */
 mobj_t *P_MobjCreate(thinkfunc_t function, Vector3d const &origin, angle_t angle,
-                     coord_t radius, coord_t height, int ddflags)
+    coord_t radius, coord_t height, dint ddflags)
 {
     if(!function)
         App_Error("P_MobjCreate: Think function invalid, cannot create mobj.");
 
-#ifdef _DEBUG
-    if(isClient)
+#ifdef DENG2_DEBUG
+    if(::isClient)
     {
         LOG_VERBOSE("P_MobjCreate: Client creating mobj at %s")
             << origin.asText();
@@ -101,29 +108,29 @@ mobj_t *P_MobjCreate(thinkfunc_t function, Vector3d const &origin, angle_t angle
 #endif
 
     // Do we have any unused mobjs we can reuse?
-    mobj_t *mo;
-    if(unusedMobjs)
+    mobj_t *mob;
+    if(::unusedMobjs)
     {
-        mo = unusedMobjs;
-        unusedMobjs = unusedMobjs->sNext;
+        mob = ::unusedMobjs;
+        ::unusedMobjs = ::unusedMobjs->sNext;
     }
     else
     {
         // No, we need to allocate another.
-        mo = MobjThinker(Thinker::AllocateMemoryZone).take();
+        mob = MobjThinker(Thinker::AllocateMemoryZone).take();
     }
 
-    V3d_Set(mo->origin, origin.x, origin.y, origin.z);
-    mo->angle = angle;
-    mo->visAngle = mo->angle >> 16; // "angle-servo"; smooth actor turning.
-    mo->radius = radius;
-    mo->height = height;
-    mo->ddFlags = ddflags;
-    mo->lumIdx = -1;
-    mo->thinker.function = function;
-    Mobj_Map(*mo).thinkers().add(mo->thinker);
+    V3d_Set(mob->origin, origin.x, origin.y, origin.z);
+    mob->angle    = angle;
+    mob->visAngle = mob->angle >> 16; // "angle-servo"; smooth actor turning.
+    mob->radius   = radius;
+    mob->height   = height;
+    mob->ddFlags  = ddflags;
+    mob->lumIdx   = -1;
+    mob->thinker.function = function;
+    Mobj_Map(*mob).thinkers().add(mob->thinker);
 
-    return mo;
+    return mob;
 }
 
 /**
@@ -798,39 +805,39 @@ ModelDef *Mobj_ModelDef(mobj_t const &mo, ModelDef **retNextModef, float *retInt
 #endif // __CLIENT__
 
 #undef Mobj_AngleSmoothed
-DENG_EXTERN_C angle_t Mobj_AngleSmoothed(mobj_t* mo)
+DENG_EXTERN_C angle_t Mobj_AngleSmoothed(mobj_t *mob)
 {
-    if(!mo) return 0;
+    if(!mob) return 0;
 
 #ifdef __CLIENT__
-    if(mo->dPlayer)
+    if(mob->dPlayer)
     {
         /// @todo What about splitscreen? We have smoothed angles for all local players.
-        if(P_GetDDPlayerIdx(mo->dPlayer) == consolePlayer &&
+        if(P_GetDDPlayerIdx(mob->dPlayer) == ::consolePlayer &&
            // $voodoodolls: Must be a real player to use the smoothed angle.
-           mo->dPlayer->mo == mo)
+           mob->dPlayer->mo == mob)
         {
-            const viewdata_t* vd = R_ViewData(consolePlayer);
+            viewdata_t const *vd = R_ViewData(::consolePlayer);
             return vd->current.angle();
         }
     }
 
     // Apply a Short Range Visual Offset?
-    if(useSRVOAngle && !netGame && !playback)
+    if(::useSRVOAngle && !::netGame && !::playback)
     {
-        return mo->visAngle << 16;
+        return mob->visAngle << 16;
     }
 #endif
 
-    return mo->angle;
+    return mob->angle;
 }
 
-coord_t Mobj_ApproxPointDistance(mobj_t* mo, coord_t const* point)
+coord_t Mobj_ApproxPointDistance(mobj_t *mob, coord_t const *point)
 {
-    if(!mo || !point) return 0;
-    return M_ApproxDistance(point[VZ] - mo->origin[VZ],
-                            M_ApproxDistance(point[VX] - mo->origin[VX],
-                                             point[VY] - mo->origin[VY]));
+    if(!mob || !point) return 0;
+    return M_ApproxDistance(point[VZ] - mob->origin[VZ],
+                            M_ApproxDistance(point[VX] - mob->origin[VX],
+                                             point[VY] - mob->origin[VY]));
 }
 
 coord_t Mobj_BobOffset(mobj_t const &mob)
