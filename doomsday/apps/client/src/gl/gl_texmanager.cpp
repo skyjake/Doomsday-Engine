@@ -1,9 +1,7 @@
 /** @file gl_texmanager.cpp  GL-Texture management.
  *
- * @todo This file needs to be split into smaller portions.
- *
  * @authors Copyright © 1999-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2002 Graham Jackson <no contact email published>
  *
  * @par License
@@ -21,30 +19,35 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
+#include "de_base.h"
 #include "gl/gl_texmanager.h"
 
-#include "de_filesys.h"
-#include "de_resource.h"
-#include "clientapp.h"
-#include "dd_main.h" // App_ResourceSystem()
-#include "def_main.h"
-#include "sys_system.h"
-#include "ui/progress.h"
-#include "gl/gl_main.h" // DENG_ASSERT_GL_CONTEXT_ACTIVE
-#include "gl/texturecontent.h"
-#include "render/r_main.h" // R_BuildTexGammaLut
-#include "render/rend_halo.h" // haloRealistic
-#include "render/rend_main.h" // misc global vars
-#include "render/rend_particle.h" // Rend_ParticleLoadSystemTextures()
-#include "resource/hq2x.h"
-
-#include <de/memory.h>
-#include <de/memoryzone.h>
-#include <de/concurrency.h>
+#include <cstring>
 #include <QList>
 #include <QMutableListIterator>
-#include <cstring>
+#include <de/concurrency.h>
+#include <de/memory.h>
+#include <de/memoryzone.h>
+
+#include "de_filesys.h"
+
+#include "clientapp.h"
+#include "dd_main.h"  // App_ResourceSystem()
+#include "def_main.h"
+
+#include "sys_system.h"
+
+#include "gl/gl_main.h"  // DENG_ASSERT_GL_CONTEXT_ACTIVE
+#include "gl/texturecontent.h"
+
+#include "render/r_main.h"  // R_BuildTexGammaLut
+#include "render/rend_halo.h"  // haloRealistic
+#include "render/rend_main.h"  // misc global vars
+#include "render/rend_particle.h"  // Rend_ParticleLoadSystemTextures()
+
+#include "resource/hq2x.h"
+
+#include "ui/progress.h"
 
 using namespace de;
 

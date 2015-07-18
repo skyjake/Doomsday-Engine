@@ -1,8 +1,7 @@
-/** @file dgl_common.cpp Misc Drawing Routines
- * @ingroup gl
+/** @file dgl_common.cpp  Misc Drawing Routines
  *
- * @authors Copyright &copy; 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -14,30 +13,32 @@
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA</small>
+ * General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small>
  */
 
 #define DENG_NO_API_MACROS_GL
 
-#include <de/GLState>
-#include <de/GLInfo>
-
 #include "de_base.h"
+#include "gl/gl_main.h"
+
+#include <cmath>
+#include <cstdlib>
+#include <de/concurrency.h>
+#include <de/GLInfo>
+#include <de/GLState>
+
 #include "de_console.h"
 #include "de_graphics.h"
 #include "de_misc.h"
 #include "de_filesys.h"
-#include "de_resource.h"
-#include "render/r_draw.h"
-#include "gl/sys_opengl.h"
+
 #include "api_gl.h"
+
+#include "gl/sys_opengl.h"
 #include "gl/gl_texmanager.h"
 
-#include <cstdlib>
-#include <cmath>
-#include <de/concurrency.h>
+#include "render/r_draw.h"
 
 using namespace de;
 
