@@ -31,6 +31,8 @@
 #include "ui/busyvisual.h"
 #include "ui/widgets/busywidget.h"
 
+#include <doomsday/doomsdayapp.h>
+
 static void releaseScreenshotTexture()
 {
     ClientWindow::main().busy().releaseTransitionFrame();
@@ -38,7 +40,7 @@ static void releaseScreenshotTexture()
 
 void BusyVisual_PrepareResources(void)
 {
-    BusyTask* task = BusyMode_CurrentTask();
+    BusyTask* task = DoomsdayApp::app().busyMode().currentTask();
     if(!task) return;
 
     if(task->mode & BUSYF_STARTUP)

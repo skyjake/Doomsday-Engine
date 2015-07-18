@@ -29,6 +29,7 @@
 #include <de/Error>
 #include <de/Log>
 #include <de/Time>
+#include <doomsday/doomsdayapp.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/exec.h>
 #include <doomsday/console/var.h>
@@ -742,7 +743,6 @@ DENG2_PIMPL(WorldSystem)
     {
         changemapworker_params_t &p = *static_cast<changemapworker_params_t *>(context);
         int result = p.inst->changeMap(p.mapDef);
-        BusyMode_WorkerEnd();
         return result;
     }
 
@@ -807,7 +807,7 @@ bool WorldSystem::changeMap(de::Uri const &mapUri)
     }
 
     // Switch to busy mode (if we haven't already) except when simply unloading.
-    if(!mapUri.path().isEmpty() && !BusyMode_Active())
+    if(!mapUri.path().isEmpty() && !DoomsdayApp::app().busyMode().isActive())
     {
         Instance::changemapworker_params_t parm;
         parm.inst   = d;

@@ -69,7 +69,7 @@
 #  include "serverapp.h"
 #endif
 #include "dd_loop.h"
-#include "busymode.h"
+#include "busyrunner.h"
 #include "con_config.h"
 #include "library.h"
 #include "sys_system.h"
@@ -489,10 +489,12 @@ void App_Error(char const *error, ...)
         dd_vsnprintf(buff, sizeof(buff), error, argptr);
         va_end(argptr);
 
-        if(!BusyMode_InWorkerThread())
+#ifdef __CLIENT__
+        if(!ClientApp::busyRunner().inWorkerThread())
         {
             Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, buff, 0);
         }
+#endif
 
         // Exit immediately, lest we go into an infinite loop.
         exit(1);
@@ -517,12 +519,16 @@ void App_Error(char const *error, ...)
 
     if(BusyMode_Active())
     {
-        BusyMode_WorkerError(buff);
-        if(BusyMode_InWorkerThread())
+        DoomsdayApp::app().busyMode().abort(buff);
+
+#ifdef __CLIENT__
+        if(ClientApp::busyRunner().inWorkerThread())
         {
             // We should not continue to execute the worker any more.
+            // The thread will be terminated imminently.
             forever Thread_Sleep(10000);
         }
+#endif
     }
     else
     {
@@ -532,8 +538,10 @@ void App_Error(char const *error, ...)
 
 void App_AbnormalShutdown(char const *message)
 {
+#ifdef __CLIENT__
     // This is a crash landing, better be safe than sorry.
-    BusyMode_SetAllowed(false);
+    DoomsdayApp::app().busyMode().setTaskRunner(nullptr);
+#endif
 
     Sys_Shutdown();
 
@@ -820,7 +828,6 @@ static dint DD_BeginGameChangeWorker(void *context)
     if(parms.initiatedBusyMode)
     {
         Con_SetProgress(200);
-        BusyMode_WorkerEnd();
     }
 
     return 0;
@@ -879,7 +886,6 @@ static dint DD_LoadGameStartupResourcesWorker(void *context)
     if(parms.initiatedBusyMode)
     {
         Con_SetProgress(200);
-        BusyMode_WorkerEnd();
     }
 
     return 0;
@@ -1114,7 +1120,6 @@ static dint DD_LoadAddonResourcesWorker(void *context)
     if(parms.initiatedBusyMode)
     {
         Con_SetProgress(200);
-        BusyMode_WorkerEnd();
     }
 
     return 0;
@@ -1234,7 +1239,6 @@ static dint DD_ActivateGameWorker(void *context)
     if(parms.initiatedBusyMode)
     {
         Con_SetProgress(200);
-        BusyMode_WorkerEnd();
     }
 
     return 0;
@@ -1588,16 +1592,16 @@ bool App_ChangeGame(Game &game, bool allowReload)
         ddgamechange_params_t p;
         BusyTask gameChangeTasks[] = {
             // Phase 1: Initialization.
-            { DD_BeginGameChangeWorker,          &p, busyMode, "Loading game...",   200, 0.0f, 0.1f, 0 },
+            { DD_BeginGameChangeWorker,          &p, busyMode, "Loading game...",   200, 0.0f, 0.1f },
 
             // Phase 2: Loading "startup" resources.
-            { DD_LoadGameStartupResourcesWorker, &p, busyMode, nullptr,                200, 0.1f, 0.3f, 0 },
+            { DD_LoadGameStartupResourcesWorker, &p, busyMode, nullptr,             200, 0.1f, 0.3f },
 
             // Phase 3: Loading "add-on" resources.
-            { DD_LoadAddonResourcesWorker,       &p, busyMode, "Loading add-ons...", 200, 0.3f, 0.7f, 0 },
+            { DD_LoadAddonResourcesWorker,       &p, busyMode, "Loading add-ons...", 200, 0.3f, 0.7f },
 
             // Phase 4: Game activation.
-            { DD_ActivateGameWorker,             &p, busyMode, "Starting game...",  200, 0.7f, 1.0f, 0 }
+            { DD_ActivateGameWorker,             &p, busyMode, "Starting game...",  200, 0.7f, 1.0f }
         };
 
         p.initiatedBusyMode = !BusyMode_Active();
@@ -2169,7 +2173,6 @@ static dint DD_StartupWorker(void * /*context*/)
     CoUninitialize();
 #endif
 
-    BusyMode_WorkerEnd();
     return 0;
 }
 
@@ -2180,7 +2183,6 @@ static dint DD_StartupWorker(void * /*context*/)
 static dint DD_DummyWorker(void * /*context*/)
 {
     Con_SetProgress(200);
-    BusyMode_WorkerEnd();
     return 0;
 }
 
@@ -2257,7 +2259,6 @@ static dint DD_UpdateEngineStateWorker(void *context)
     if(initiatedBusyMode)
     {
         Con_SetProgress(200);
-        BusyMode_WorkerEnd();
     }
     return 0;
 }
@@ -2266,12 +2267,11 @@ void DD_UpdateEngineState()
 {
     LOG_MSG("Updating engine state...");
 
-    BusyMode_FreezeGameForBusyMode();
-
     // Stop playing sounds and music.
     S_Reset();
 
 #ifdef __CLIENT__
+    BusyMode_FreezeGameForBusyMode();
     GL_SetFilter(false);
     Demo_StopPlayback();
 #endif

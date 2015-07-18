@@ -31,6 +31,7 @@
 #include "render/rendersystem.h"
 #include "resource/resourcesystem.h"
 #include "updater.h"
+#include "busyrunner.h"
 #include "Games"
 #include "world/worldsystem.h"
 
@@ -64,6 +65,7 @@ public:
 
 public:
     static ClientApp &app();
+    static BusyRunner &busyRunner();
     static Updater &updater();
     static SettingsRegister &logSettings();
     static SettingsRegister &networkSettings();

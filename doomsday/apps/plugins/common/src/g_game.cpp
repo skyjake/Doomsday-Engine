@@ -33,6 +33,7 @@
 #include <de/RecordValue>
 #include <doomsday/defs/episode.h>
 #include <doomsday/defs/mapinfo.h>
+#include <doomsday/busymode.h>
 #include <doomsday/uri.h>
 
 #include "acs/system.h"
@@ -1269,7 +1270,6 @@ static int prepareIntermission(void * /*context*/)
     IN_Begin(::wmInfo);
     G_ChangeGameState(GS_INTERMISSION);
 
-    BusyMode_WorkerEnd();
     return 0;
 }
 

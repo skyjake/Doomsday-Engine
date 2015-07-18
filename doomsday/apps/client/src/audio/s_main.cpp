@@ -27,6 +27,7 @@
 #ifdef __CLIENT__
 #  include <de/concurrency.h>
 #endif
+#include <doomsday/doomsdayapp.h>
 #include <doomsday/audio/logical.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
@@ -244,7 +245,7 @@ int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t *origin, coord_t *point
 {
 #ifdef __CLIENT__
     // A dedicated server never starts any local sounds (only logical sounds in the LSM).
-    if(isDedicated || BusyMode_Active())
+    if(isDedicated || DoomsdayApp::app().busyMode().isActive())
         return false;
 
     int soundId = (soundIdAndFlags & ~DDSF_FLAG_MASK);

@@ -21,6 +21,15 @@
 #include "ui/nativeui.h"
 #include "Texture"
 
+void BusyMode_FreezeGameForBusyMode()
+{}
+
+DENG_DECLARE_API(Busy) =
+{
+    { DE_API_BUSY },
+    BusyMode_FreezeGameForBusyMode
+};
+
 void Con_TransitionTicker(timespan_t t)
 {
     DENG_UNUSED(t);

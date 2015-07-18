@@ -930,7 +930,7 @@ void GL_SetRawImage(lumpnum_t lumpNum, gl::Wrapping wrapS, gl::Wrapping wrapT)
 
 void GL_BindTexture(TextureVariant *vtexture)
 {
-    if(BusyMode_InWorkerThread()) return;
+    if(ClientApp::busyRunner().inWorkerThread()) return;
 
     // Ensure we have a prepared texture.
     duint glTexName = vtexture? vtexture->prepare() : 0;
@@ -965,7 +965,7 @@ void GL_BindTexture(TextureVariant *vtexture)
 void GL_BindTextureUnmanaged(GLuint glName, gl::Wrapping wrapS, gl::Wrapping wrapT,
     gl::Filter filter)
 {
-    if(BusyMode_InWorkerThread()) return;
+    if(ClientApp::busyRunner().inWorkerThread()) return;
 
     if(glName == 0)
     {
@@ -1021,7 +1021,7 @@ void GL_BindTo(GLTextureUnit const &glTU, dint unit)
 
 void GL_SetNoTexture()
 {
-    if(BusyMode_InWorkerThread()) return;
+    if(ClientApp::busyRunner().inWorkerThread()) return;
 
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();

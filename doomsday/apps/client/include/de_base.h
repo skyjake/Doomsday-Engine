@@ -40,7 +40,7 @@
 #include "dd_main.h"
 #include "dd_loop.h"
 #include "library.h"
-#include "busymode.h"
+#include "busyrunner.h"
 #include "ui/ddevent.h"
 #include "ui/nativeui.h"
 #include "ui/zonedebug.h"

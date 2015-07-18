@@ -107,6 +107,7 @@ DENG2_PIMPL(ClientApp)
 {    
     Binder binder;
     QScopedPointer<Updater> updater;
+    BusyRunner busyRunner;
     SettingsRegister audioSettings;
     SettingsRegister networkSettings;
     SettingsRegister logSettings;
@@ -460,6 +461,11 @@ ClientApp &ClientApp::app()
 {
     DENG2_ASSERT(clientAppSingleton != 0);
     return *clientAppSingleton;
+}
+
+BusyRunner &ClientApp::busyRunner()
+{
+    return app().d->busyRunner;
 }
 
 Updater &ClientApp::updater()

@@ -34,6 +34,7 @@
 
 #include <de/App>
 #include <de/Loop>
+#include <doomsday/doomsdayapp.h>
 #include "de_console.h"
 #include "de_system.h"
 #include "de_graphics.h"
@@ -289,7 +290,7 @@ de::NativePath Sys_SteamBasePath()
  */
 DENG_EXTERN_C void Sys_Quit(void)
 {
-    if(BusyMode_Active())
+    if(DoomsdayApp::app().busyMode().isActive())
     {
         // The busy worker is running; we cannot just stop it abruptly.
         Sys_MessageBox2(MBT_WARNING, DOOMSDAY_NICENAME, "Cannot quit while in busy mode.",

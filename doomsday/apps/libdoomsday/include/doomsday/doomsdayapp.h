@@ -20,6 +20,7 @@
 #define LIBDOOMSDAY_DOOMSDAYAPP_H
 
 #include "libdoomsday.h"
+#include "busymode.h"
 
 /**
  * Common application-level state and components.
@@ -31,6 +32,14 @@ class LIBDOOMSDAY_PUBLIC DoomsdayApp
 {
 public:
     DoomsdayApp();
+
+    BusyMode &busyMode();
+
+public:
+    static DoomsdayApp &app();
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 #endif // LIBDOOMSDAY_DOOMSDAYAPP_H

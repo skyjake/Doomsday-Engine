@@ -27,6 +27,8 @@
 #include <cstdio>
 #include <cstring>
 #include <de/NativePath>
+#include <doomsday/busymode.h>
+
 #include "d_net.h"
 #include "d_netsv.h"
 #include "dmu_lib.h"

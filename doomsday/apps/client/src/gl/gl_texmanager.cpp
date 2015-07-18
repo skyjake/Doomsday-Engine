@@ -97,7 +97,6 @@ static int reloadTextures(void *context)
     if(usingBusyMode)
     {
         Con_SetProgress(200);
-        BusyMode_WorkerEnd();
     }
     return 0;
 }

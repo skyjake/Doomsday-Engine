@@ -1,6 +1,5 @@
 /**
- * @file busymode.h
- * Busy Mode @ingroup core
+ * @file busyrunner.h  Runs busy tasks in a background thread. @ingroup core
  *
  * The Busy Mode is intended for long-running tasks that would otherwise block
  * the main engine (UI) thread. During busy mode, a progress screen is shown by
@@ -14,8 +13,8 @@
  * regular application event loop. During busy mode, the game loop callback
  * should not be called.
  *
- * @authors Copyright &copy; 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2009-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2009-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2009-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -32,29 +31,50 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_CORE_BUSYMODE_H
-#define LIBDENG_CORE_BUSYMODE_H
+#ifndef CLIENT_BUSYRUNNER_H
+#define CLIENT_BUSYRUNNER_H
 
-#include "dd_share.h"
-#include "api_busy.h"
+#include <doomsday/busymode.h>
 
-/// Enables or disables busy mode; if disabled, work is done synchronously
-/// in the main thread.
-void BusyMode_SetAllowed(dd_bool allow);
+/**
+ * Runs busy tasks in a background thread.
+ */
+class BusyRunner : public BusyMode::ITaskRunner
+{
+public:
+    BusyRunner();
 
-/// @return  @c true if specified thread is the current busy task worker.
-dd_bool BusyMode_IsWorkerThread(uint threadId);
+    /**
+     * Enables or disables the busy mode background thread; if disabled, work is done
+     * synchronously in the main thread.
+     */
+    void setAllowed(bool allow);
 
-/// @return  @c true if the current thread is the busy task worker.
-dd_bool BusyMode_InWorkerThread(void);
+    bool isTransitionAnimated() const;
+    bool isWorkerThread(uint threadId) const;
+    bool inWorkerThread() const;
 
-#ifdef __CLIENT__
-dd_bool BusyMode_IsTransitionAnimated(void);
-#endif
+    /**
+     * Runs an event loop in the main thread during busy mode. This keeps the UI
+     * responsive while the background task runs the busy task.
+     */
+    Result runTask(BusyTask *task) override;
 
-/// @return  Current busy task, else @c NULL.
-BusyTask* BusyMode_CurrentTask(void);
+    void loop();
 
-void BusyMode_Loop(void);
+    /**
+     * Called when the background thread has exited.
+     */
+    void finishTask();
 
-#endif // LIBDENG_CORE_BUSYMODE_H
+private:
+    DENG2_PRIVATE(d)
+};
+
+/**
+ * The busy loop callback function. Called periodically in the main (UI) thread
+ * while the busy worker is running.
+ */
+void BusyMode_Loop();
+
+#endif // CLIENT_BUSYRUNNER_H

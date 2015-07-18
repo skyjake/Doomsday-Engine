@@ -259,7 +259,6 @@ static int locateAllResourcesWorker(void *context)
         LOG_RES_MSG(" " DENG2_CHAR_RIGHT_DOUBLEARROW " ") << game->statusAsText();
         ++n;
     }
-    BusyMode_WorkerEnd();
     return 0;
 }
 

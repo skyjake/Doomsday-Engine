@@ -18,6 +18,31 @@
 
 #include "doomsday/doomsdayapp.h"
 
-DoomsdayApp::DoomsdayApp()
-{}
+static DoomsdayApp *theDoomsdayApp = nullptr;
 
+DENG2_PIMPL_NOREF(DoomsdayApp)
+{
+    BusyMode busyMode;
+
+    ~Instance()
+    {
+        theDoomsdayApp = nullptr;
+    }
+};
+
+DoomsdayApp::DoomsdayApp() : d(new Instance)
+{
+    DENG2_ASSERT(!theDoomsdayApp);
+    theDoomsdayApp = this;
+}
+
+BusyMode &DoomsdayApp::busyMode()
+{
+    return d->busyMode;
+}
+
+DoomsdayApp &DoomsdayApp::app()
+{
+    DENG2_ASSERT(theDoomsdayApp);
+    return *theDoomsdayApp;
+}
