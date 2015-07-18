@@ -1050,6 +1050,7 @@ void M_DrawTextFragmentShadowed(const char* string, int x, int y, int alignFlags
 static char const *patchReplacement(patchid_t patchId)
 {
     dint idx = patchReplacementValueIndex(patchId);
+    if(idx == -1) return nullptr;
     if(idx >= 0 && idx < Defs().values.size()) return Defs().values[idx].text;
     throw Error("Hu_FindPatchReplacementString", "Failed retrieving text value #" + String::number(idx));
 }
