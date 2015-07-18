@@ -44,12 +44,6 @@ class BusyRunner : public BusyMode::ITaskRunner
 public:
     BusyRunner();
 
-    /**
-     * Enables or disables the busy mode background thread; if disabled, work is done
-     * synchronously in the main thread.
-     */
-    void setAllowed(bool allow);
-
     bool isTransitionAnimated() const;
     bool isWorkerThread(uint threadId) const;
     bool inWorkerThread() const;
