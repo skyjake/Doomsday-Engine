@@ -53,6 +53,7 @@ static BusyMode &busy()
 DENG2_PIMPL_NOREF(BusyRunner)
 , DENG2_OBSERVES(BusyMode, Beginning)
 , DENG2_OBSERVES(BusyMode, End)
+, DENG2_OBSERVES(BusyMode, TaskWillStart)
 {
     QEventLoop *eventLoop = nullptr;
 
@@ -64,14 +65,16 @@ DENG2_PIMPL_NOREF(BusyRunner)
 
     Instance()
     {
-        busy().audienceForBeginning() += this;
-        busy().audienceForEnd()       += this;
+        busy().audienceForBeginning()     += this;
+        busy().audienceForEnd()           += this;
+        busy().audienceForTaskWillStart() += this;
     }
 
     ~Instance()
     {
-        busy().audienceForBeginning() -= this;
-        busy().audienceForEnd()       -= this;
+        busy().audienceForBeginning()     -= this;
+        busy().audienceForEnd()           -= this;
+        busy().audienceForTaskWillStart() -= this;
 
         busy().setTaskRunner(nullptr);
     }
@@ -106,6 +109,15 @@ DENG2_PIMPL_NOREF(BusyRunner)
 
         // Switch the window to normal UI.
         ClientWindowSystem::main().setMode(ClientWindow::Normal);
+    }
+
+    void busyTaskWillStart(BusyTask &task)
+    {
+        // Is the worker updating its progress?
+        if(task.maxProgress > 0)
+        {
+            Con_InitProgress2(task.maxProgress, task.progressStart, task.progressEnd);
+        }
     }
 
     /**
@@ -177,6 +189,7 @@ BusyRunner::Result BusyRunner::runTask(BusyTask *task)
     // Run a local event loop since the primary event loop is blocked while
     // we're busy. This event loop is able to handle window and input events
     // just like the primary loop.
+    d->busyDone = false;
     d->eventLoop = new QEventLoop;
     Result result(true, d->eventLoop->exec());
     delete d->eventLoop;

@@ -247,13 +247,6 @@ int BusyMode::runTasks(BusyTask *tasks, int numTasks)
             i->busyTaskWillStart(*task);
         }
 
-        /*
-#ifdef __CLIENT__
-        // Is the worker updating its progress?
-        if(task->maxProgress > 0)
-            Con_InitProgress2(task->maxProgress, task->progressStart, task->progressEnd);
-#endif*/
-
         // Invoke the worker in a new thread.
         /// @todo Kludge: Presently a temporary local task is needed so that we can modify
         ///       the task name and mode flags.
