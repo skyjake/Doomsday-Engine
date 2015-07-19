@@ -59,6 +59,7 @@
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/filesys/fs_util.h>
 #include <doomsday/filesys/sys_direc.h>
+#include <doomsday/resource/manifest.h>
 #include <doomsday/help.h>
 #include <doomsday/paths.h>
 
@@ -77,8 +78,6 @@
 #include "gl/svg.h"
 
 #include "audio/s_main.h"
-
-#include "resource/manifest.h"
 
 #include "world/worldsystem.h"
 #include "world/entitydef.h"
@@ -575,6 +574,11 @@ void App_AbnormalShutdown(char const *message)
     exit(1);
 }
 
+ResourceSystem &App_ResourceSystem()
+{
+    return static_cast<ResourceSystem &>(res::System::get());
+}
+
 InFineSystem &App_InFineSystem()
 {
     if(App::appExists())
@@ -587,30 +591,6 @@ InFineSystem &App_InFineSystem()
 #endif
     }
     throw Error("App_InFineSystem", "App not yet initialized");
-}
-
-ResourceSystem &App_ResourceSystem()
-{
-    if(App::appExists())
-    {
-#ifdef __CLIENT__
-        return ClientApp::resourceSystem();
-#endif
-#ifdef __SERVER__
-        return ServerApp::resourceSystem();
-#endif
-    }
-    throw Error("App_ResourceSystem", "App not yet initialized");
-}
-
-ResourceClass &App_ResourceClass(String className)
-{
-    return App_ResourceSystem().resClass(className);
-}
-
-ResourceClass &App_ResourceClass(resourceclassid_t classId)
-{
-    return App_ResourceSystem().resClass(classId);
 }
 
 WorldSystem &App_WorldSystem()

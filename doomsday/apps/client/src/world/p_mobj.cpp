@@ -68,12 +68,12 @@ int useSRVOAngle           = 1;
 
 #ifdef __CLIENT__
 static byte mobjAutoLights = true;
-#endif
 
 static inline ResourceSystem &resSys()
 {
     return App_ResourceSystem();
 }
+#endif
 
 /**
  * Called during map loading.

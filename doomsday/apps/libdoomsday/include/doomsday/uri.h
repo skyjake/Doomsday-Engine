@@ -25,7 +25,7 @@
 #ifdef __cplusplus
 
 #include "libdoomsday.h"
-#include "api_resourceclass.h"
+#include "resource/resourceclass.h"
 
 /// Schemes must be at least this many characters.
 #define DENG2_URI_MIN_SCHEME_LENGTH     2

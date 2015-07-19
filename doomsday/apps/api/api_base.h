@@ -22,9 +22,9 @@
 #define DOOMSDAY_API_BASE_H
 
 #include <de/str.h>
+#include <doomsday/resource/resourceclass.h>
 #include "apis.h"
 #include "api_uri.h"
-#include "api_resourceclass.h"
 
 /// @addtogroup game
 /// @{

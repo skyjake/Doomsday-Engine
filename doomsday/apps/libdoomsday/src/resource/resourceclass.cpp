@@ -17,6 +17,7 @@
  */
 
 #include "doomsday/resource/resourceclass.h"
+#include "doomsday/filesys/filetype.h"
 
 using namespace de;
 

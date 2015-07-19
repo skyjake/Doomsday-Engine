@@ -41,6 +41,7 @@
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/filesys/fs_util.h>
 #include <doomsday/filesys/sys_direc.h>
+#include <doomsday/resource/manifest.h>
 
 #include "dd_main.h"
 #include "dd_def.h"
@@ -56,7 +57,6 @@
 #  include "render/rend_particle.h"
 #endif
 
-#include "resource/manifest.h"
 #include "resource/materialdetaillayer.h"
 #include "resource/materialshinelayer.h"
 #include "resource/materialtexturelayer.h"

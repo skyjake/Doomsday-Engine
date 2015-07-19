@@ -24,13 +24,37 @@
 #ifndef LIBDOOMSDAY_RESOURCECLASS_H
 #define LIBDOOMSDAY_RESOURCECLASS_H
 
-#include "api_resourceclass.h"
+#include "../libdoomsday.h"
+
+/**
+ * Resource Class Identifier.
+ *
+ * @ingroup base
+ *
+ * @todo Refactor away. These identifiers are no longer needed.
+ */
+typedef enum resourceclassid_e {
+    RC_NULL = -2,           ///< Not a real class.
+    RC_UNKNOWN = -1,        ///< Attempt to guess the class through evaluation of the path.
+    RESOURCECLASS_FIRST = 0,
+    RC_PACKAGE = RESOURCECLASS_FIRST,
+    RC_DEFINITION,
+    RC_GRAPHIC,
+    RC_MODEL,
+    RC_SOUND,
+    RC_MUSIC,
+    RC_FONT,
+    RESOURCECLASS_COUNT
+} resourceclassid_t;
+
+#define VALID_RESOURCECLASSID(n)   ((n) >= RESOURCECLASS_FIRST && (n) < RESOURCECLASS_COUNT)
 
 #ifdef __cplusplus
 
-#include "../filesys/filetype.h"
 #include <de/String>
 #include <QList>
+
+namespace de { class FileType; }
 
 /**
  * ResourceClass encapsulates the properties and logics belonging to a logical

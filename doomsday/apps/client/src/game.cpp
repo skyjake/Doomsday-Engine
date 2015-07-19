@@ -22,7 +22,7 @@
 #include "game.h"
 
 #include <doomsday/console/cmd.h>
-#include "resource/manifest.h"
+#include <doomsday/resource/manifest.h>
 
 #include <de/App>
 #include <de/Error>

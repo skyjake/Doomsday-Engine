@@ -432,10 +432,6 @@ DENG2_PIMPL(ResourceSystem)
 , DENG2_OBSERVES(ColorPalette,     ColorTableChange)
 #endif
 {
-    typedef QList<ResourceClass *> ResourceClasses;
-    ResourceClasses resClasses;
-    NullResourceClass nullResourceClass;
-
     typedef QList<AnimGroup *> AnimGroups;
     AnimGroups animGroups;
 
@@ -553,13 +549,6 @@ DENG2_PIMPL(ResourceSystem)
         de::Uri::setResolverFunc(ResourceSystem::resolveSymbol);
 
         LOG_AS("ResourceSystem");
-        resClasses.append(new ResourceClass("RC_PACKAGE",    "Packages"));
-        resClasses.append(new ResourceClass("RC_DEFINITION", "Defs"));
-        resClasses.append(new ResourceClass("RC_GRAPHIC",    "Graphics"));
-        resClasses.append(new ResourceClass("RC_MODEL",      "Models"));
-        resClasses.append(new ResourceClass("RC_SOUND",      "Sfx"));
-        resClasses.append(new ResourceClass("RC_MUSIC",      "Music"));
-        resClasses.append(new ResourceClass("RC_FONT",       "Fonts"));
 
         /// @note Order here defines the ambigious-URI search order.
         createTextureScheme("Sprites");
@@ -623,7 +612,6 @@ DENG2_PIMPL(ResourceSystem)
 
         App_Games().audienceForAddition() -= this;
 
-        qDeleteAll(resClasses);
         self.clearAllAnimGroups();
 #ifdef __CLIENT__
         self.clearAllFontSchemes();
@@ -2277,49 +2265,6 @@ DENG2_PIMPL(ResourceSystem)
 
 ResourceSystem::ResourceSystem() : d(new Instance(this))
 {}
-
-void ResourceSystem::timeChanged(Clock const &)
-{
-    // Nothing to do.
-}
-
-ResourceClass &ResourceSystem::resClass(String name)
-{
-    if(!name.isEmpty())
-    {
-        foreach(ResourceClass *resClass, d->resClasses)
-        {
-            if(!resClass->name().compareWithoutCase(name))
-                return *resClass;
-        }
-    }
-    return d->nullResourceClass; // Not found.
-}
-
-ResourceClass &ResourceSystem::resClass(resourceclassid_t id)
-{
-    if(id == RC_NULL) return d->nullResourceClass;
-    if(VALID_RESOURCECLASSID(id))
-    {
-        return *d->resClasses.at(uint(id));
-    }
-    /// @throw UnknownResourceClass Attempted with an unknown id.
-    throw UnknownResourceClassError("ResourceSystem::toClass", QString("Invalid id '%1'").arg(int(id)));
-}
-
-void ResourceSystem::updateOverrideIWADPathFromConfig()
-{
-    String path = App::config().gets("resource.iwadFolder", "");
-    if(!path.isEmpty())
-    {
-        LOG_RES_NOTE("Using user-selected primary IWAD folder: \"%s\"") << path;
-
-        FS1::Scheme &ps = App_FileSystem().scheme(App_ResourceClass("RC_PACKAGE").defaultScheme());
-        ps.clearSearchPathGroup(FS1::OverridePaths);
-        ps.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path, RC_PACKAGE),
-                                    SearchPath::NoDescend), FS1::OverridePaths);
-    }
-}
 
 void ResourceSystem::clearAllResources()
 {

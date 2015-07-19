@@ -26,8 +26,7 @@
 #include "ui/progress.h"
 
 #include <doomsday/filesys/fs_main.h>
-//#include <doomsday/filesys/zip.h>
-#include "resource/manifest.h"
+#include <doomsday/resource/manifest.h>
 
 #include <de/App>
 #include <de/ArrayValue>

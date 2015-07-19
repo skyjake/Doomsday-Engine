@@ -30,7 +30,7 @@
 #include <doomsday/filesys/wad.h>
 #include <doomsday/filesys/zip.h>
 #include <doomsday/uri.h>
-#include <doomsday/resource/resourceclass.h>
+#include <doomsday/resource/system.h>
 
 #include "resource/animgroup.h"
 #include "resource/colorpalette.h"
@@ -83,12 +83,9 @@
  *
  * @ingroup resource
  */
-class ResourceSystem : public de::System
+class ResourceSystem : public res::System
 {
 public:
-    /// An unknown resource class identifier was specified. @ingroup errors
-    DENG2_ERROR(UnknownResourceClassError);
-
     /// An unknown resource scheme was referenced. @ingroup errors
     DENG2_ERROR(UnknownSchemeError);
 
@@ -133,26 +130,6 @@ public:
      * the associated resource collection schemes.
      */
     ResourceSystem();
-
-    // System.
-    void timeChanged(de::Clock const &);
-
-    /**
-     * Lookup a ResourceClass by symbolic @a name.
-     */
-    ResourceClass &resClass(de::String name);
-
-    /**
-     * Lookup a ResourceClass by @a id.
-     * @todo Refactor away.
-     */
-    ResourceClass &resClass(resourceclassid_t id);
-
-    /**
-     * Gets the path from "Config.resource.iwadFolder" and makes it the sole override
-     * path for the Packages scheme.
-     */
-    void updateOverrideIWADPathFromConfig();
 
     void clearAllResources();
     void clearAllRuntimeResources();

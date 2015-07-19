@@ -30,11 +30,11 @@
 
 struct manifest_s;
 struct gamedef_s;
+class ResourceManifest;
 
 namespace de {
 
 class File1;
-class ResourceManifest;
 
 /**
  * Records top-level game configurations registered by the loaded game plugin(s).

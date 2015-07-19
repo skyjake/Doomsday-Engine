@@ -64,6 +64,8 @@ void App_Error(char const *error, ...);
 
 void App_AbnormalShutdown(char const *error);
 
+ResourceSystem &App_ResourceSystem();
+
 /// Returns the application's global InFineSystem.
 InFineSystem &App_InFineSystem();
 
@@ -80,22 +82,6 @@ void Con_Open(de::dint yes);
 
 void DD_CheckTimeDemo();
 void DD_UpdateEngineState();
-
-//
-// Resources (logical) ------------------------------------------------------------
-//
-
-/// Returns the application's global ResourceSystem.
-ResourceSystem &App_ResourceSystem();
-
-/**
- * Convenient method of returning a resource class from the application's global
- * resource system.
- */
-ResourceClass &App_ResourceClass(de::String className);
-
-/// @overload
-ResourceClass &App_ResourceClass(resourceclassid_t classId);
 
 //
 // Game modules -------------------------------------------------------------------
@@ -140,7 +126,6 @@ void Plug_LoadAll();
  * Unloads all plugins.
  */
 void Plug_UnloadAll();
-
 
 /**
  * @return Unique identifier of the currently active plugin. The currently

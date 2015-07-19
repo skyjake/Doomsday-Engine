@@ -18,13 +18,12 @@
  * 02110-1301 USA</small>
  */
 
-#include "resource/manifest.h"
-#include "dd_main.h"
-
-#include <doomsday/filesys/fs_main.h>
-#include <doomsday/filesys/lumpindex.h>
-#include <doomsday/filesys/wad.h>
-#include <doomsday/filesys/zip.h>
+#include "doomsday/resource/manifest.h"
+#include "doomsday/resource/system.h"
+#include "doomsday/filesys/fs_main.h"
+#include "doomsday/filesys/lumpindex.h"
+#include "doomsday/filesys/wad.h"
+#include "doomsday/filesys/zip.h"
 
 #include <de/App>
 #include <de/NativeFile>

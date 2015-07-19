@@ -1,7 +1,7 @@
 /** @file manifest.h  Manifest for a logical resource.
  *
  * @authors Copyright © 2010-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright © 2010-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2010-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,14 +18,12 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RESOURCE_MANIFEST_H
-#define DENG_RESOURCE_MANIFEST_H
+#ifndef LIBDOOMSDAY_RESOURCE_MANIFEST_H
+#define LIBDOOMSDAY_RESOURCE_MANIFEST_H
 
-#include "api_uri.h"
 #include <de/String>
 #include <QStringList>
-
-namespace de {
+#include "resourceclass.h"
 
 /**
  * Stores high-level metadata for and arbitrates/facilitates access to the
@@ -41,7 +39,7 @@ public:
      * @param fFlags    @ref fileFlags
      * @param name      An expected name for the associated file.
      */
-    ResourceManifest(resourceclassid_t rClass, int fFlags, String *name = 0);
+    ResourceManifest(resourceclassid_t rClass, int fFlags, de::String *name = 0);
 
     /// @return Class of the associated resource.
     resourceclassid_t resourceClass() const;
@@ -59,7 +57,7 @@ public:
      *
      * @param newIdentityKey  New identity key (e.g., a lump/file name).
      */
-    void addIdentityKey(String newIdentityKey);
+    void addIdentityKey(de::String newIdentityKey);
 
     /**
      * Returns a list of known-names for the associated resource.
@@ -71,7 +69,7 @@ public:
      *
      * @param newName  New name for this file. Newer names have precedence.
      */
-    void addName(String newName);
+    void addName(de::String newName);
 
     /**
      * Attempt to locate this file by systematically resolving and then
@@ -93,12 +91,10 @@ public:
      *
      * @see locateFile()
      */
-    String const &resolvedPath(bool tryLocate = true);
+    de::String const &resolvedPath(bool tryLocate = true);
 
 private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace de
-
-#endif // DENG_RESOURCE_MANIFEST_H
+#endif // LIBDOOMSDAY_RESOURCE_MANIFEST_H

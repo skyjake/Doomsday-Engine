@@ -26,7 +26,7 @@
 #include "dd_types.h"
 
 #include <doomsday/resource/resourceclass.h>
-#include "resource/manifest.h"
+#include <doomsday/resource/manifest.h>
 
 #include <doomsday/filesys/filehandle.h>
 #include <doomsday/filesys/filetype.h>
