@@ -30,7 +30,6 @@
 #include "ui/busyvisual.h"
 #include "ui/widgets/busywidget.h"
 #include "ui/clientwindow.h"
-#include "ui/clientwindowsystem.h"
 #include "ui/progress.h"
 
 #include <doomsday/doomsdayapp.h>
@@ -94,7 +93,7 @@ DENG2_PIMPL_NOREF(BusyRunner)
         ClientApp::app().loop().setRate(60);
 
         // Switch the window to busy mode UI.
-        ClientWindowSystem::main().setMode(ClientWindow::Busy);
+        ClientWindow::main().setMode(ClientWindow::Busy);
     }
 
     void busyModeEnded()
@@ -108,7 +107,7 @@ DENG2_PIMPL_NOREF(BusyRunner)
         ClientApp::app().loop().setRate(0);
 
         // Switch the window to normal UI.
-        ClientWindowSystem::main().setMode(ClientWindow::Normal);
+        ClientWindow::main().setMode(ClientWindow::Normal);
     }
 
     void busyTaskWillStart(BusyTask &task)
@@ -228,7 +227,7 @@ void BusyRunner::loop()
 
     if(canUpload)
     {
-        ClientWindowSystem::main().glActivate();
+        ClientWindow::main().glActivate();
 
         // Any deferred content needs to get uploaded.
         GL_ProcessDeferredTasks(15);
