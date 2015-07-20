@@ -144,11 +144,11 @@ private:
     DENG2_PRIVATE(d)
 };
 
-LIBDOOMSDAY_PUBLIC LIBDOOMSDAY_EXTERN_C bool BusyMode_Active();
-LIBDOOMSDAY_PUBLIC LIBDOOMSDAY_EXTERN_C int  BusyMode_RunTask(BusyTask *task);
-LIBDOOMSDAY_PUBLIC LIBDOOMSDAY_EXTERN_C int  BusyMode_RunTasks(BusyTask *task, int numTasks);
-LIBDOOMSDAY_PUBLIC LIBDOOMSDAY_EXTERN_C int  BusyMode_RunNewTask(int flags, busyworkerfunc_t worker, void *workerData);
-LIBDOOMSDAY_PUBLIC LIBDOOMSDAY_EXTERN_C int  BusyMode_RunNewTaskWithName(int flags, busyworkerfunc_t worker, void *workerData, char const *taskName);
+LIBDOOMSDAY_EXTERN_C LIBDOOMSDAY_PUBLIC bool BusyMode_Active();
+LIBDOOMSDAY_EXTERN_C LIBDOOMSDAY_PUBLIC int  BusyMode_RunTask(BusyTask *task);
+LIBDOOMSDAY_EXTERN_C LIBDOOMSDAY_PUBLIC int  BusyMode_RunTasks(BusyTask *task, int numTasks);
+LIBDOOMSDAY_EXTERN_C LIBDOOMSDAY_PUBLIC int  BusyMode_RunNewTask(int flags, busyworkerfunc_t worker, void *workerData);
+LIBDOOMSDAY_EXTERN_C LIBDOOMSDAY_PUBLIC int  BusyMode_RunNewTaskWithName(int flags, busyworkerfunc_t worker, void *workerData, char const *taskName);
 
 #endif // LIBDOOMSDAY_BUSYMODE_H
 

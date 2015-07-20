@@ -38,6 +38,10 @@ public:
 
     bool isUsingUserDir() const;
 
+#ifdef WIN32
+    void *moduleHandle() const;
+#endif
+
 public:
     static DoomsdayApp &app();
     static Plugins &plugins();

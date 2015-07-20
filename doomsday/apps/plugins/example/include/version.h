@@ -22,6 +22,7 @@
 #define EXAMPLE_PLUGIN_VERSION_H
 
 #include <doomsday/plugins.h>
+#include "dd_version.h"
 
 #ifndef EXAMPLE_PLUGIN_VER_ID
 #  ifdef _DEBUG

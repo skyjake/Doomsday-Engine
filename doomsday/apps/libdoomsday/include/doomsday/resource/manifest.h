@@ -31,7 +31,7 @@
  *
  * @ingroup core
  */
-class ResourceManifest
+class LIBDOOMSDAY_PUBLIC ResourceManifest
 {
 public:
     /**

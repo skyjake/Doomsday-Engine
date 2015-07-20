@@ -24,6 +24,8 @@
 #include <de/App>
 #include <de/strutil.h>
 
+#include <QDir>
+
 #ifdef WIN32
 #  define WIN32_LEAN_AND_MEAN
 #  include <windows.h>
@@ -51,6 +53,13 @@ DENG2_PIMPL_NOREF(DoomsdayApp)
 #ifdef WIN32
     HINSTANCE hInstance = NULL;
 #endif
+
+    Instance()
+    {
+#ifdef WIN32
+        hInstance = GetModuleHandle(NULL);
+#endif
+    }
 
     ~Instance()
     {
@@ -120,6 +129,37 @@ DENG2_PIMPL_NOREF(DoomsdayApp)
         DD_SetBasePath(DENG2_APP->nativeBasePath().toUtf8());
     }
 #endif // UNIX
+
+#ifdef WIN32
+    void determineGlobalPaths()
+    {
+        // Change to a custom working directory?
+        if(CommandLine_CheckWith("-userdir", 1))
+        {
+            if(NativePath::setWorkPath(CommandLine_NextAsPath()))
+            {
+                LOG_VERBOSE("Changed current directory to \"%s\"") << NativePath::workPath();
+                usingUserDir = true;
+            }
+        }
+
+        // The runtime directory is the current working directory.
+        DD_SetRuntimePath((NativePath::workPath().withSeparators('/') + '/').toUtf8().constData());
+
+        // Use a custom base directory?
+        if(CommandLine_CheckWith("-basedir", 1))
+        {
+            DD_SetBasePath(CommandLine_Next());
+        }
+        else
+        {
+            // The default base directory is one level up from the bin dir.
+            String binDir = App::executablePath().fileNamePath().withSeparators('/');
+            String baseDir = String(QDir::cleanPath(binDir / String(".."))) + '/';
+            DD_SetBasePath(baseDir.toUtf8().constData());
+        }
+    }
+#endif // WIN32
 };
 
 DoomsdayApp::DoomsdayApp() : d(new Instance)
@@ -153,3 +193,10 @@ bool DoomsdayApp::isUsingUserDir() const
 {
     return d->usingUserDir;
 }
+
+#ifdef WIN32
+void *DoomsdayApp::moduleHandle() const
+{
+    return d->hInstance;
+}
+#endif

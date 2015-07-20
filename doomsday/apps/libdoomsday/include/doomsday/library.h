@@ -35,6 +35,8 @@
 #ifndef LIBDOOMSDAY_LIBRARY_H
 #define LIBDOOMSDAY_LIBRARY_H
 
+#include "libdoomsday.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -45,24 +47,24 @@ typedef struct library_s Library;
 /**
  * Initializes the library loader.
  */
-void Library_Init(void);
+LIBDOOMSDAY_PUBLIC void Library_Init(void);
 
 /**
  * Release all resources associated with dynamic libraries. Must be called
  * when shutting down the engine.
  */
-void Library_Shutdown(void);
+LIBDOOMSDAY_PUBLIC void Library_Shutdown(void);
 
 /**
  * Returns the latest error message.
  */
-const char* Library_LastError(void);
+LIBDOOMSDAY_PUBLIC const char* Library_LastError(void);
 
 /**
  * Closes the library handles of all game plugins. The library will be
  * reopened automatically when needed.
  */
-void Library_ReleaseGames(void);
+LIBDOOMSDAY_PUBLIC void Library_ReleaseGames(void);
 
 /**
  * Looks for dynamic libraries and calls @a func for each one.
@@ -77,6 +79,7 @@ void Library_ReleaseGames(void);
  * returns a non-zero value to indicate aborting the iteration at some point,
  * that value is returned instead.
  */
+LIBDOOMSDAY_PUBLIC
 int Library_IterateAvailableLibraries(int (*func)(void *libraryFile, const char* fileName,
                                                   const char* absPath, void* data), void* data);
 
@@ -85,9 +88,9 @@ int Library_IterateAvailableLibraries(int (*func)(void *libraryFile, const char*
  *
  * @param filePath  Absolute path of the library to open.
  */
-Library* Library_New(const char* filePath);
+LIBDOOMSDAY_PUBLIC Library* Library_New(const char* filePath);
 
-void Library_Delete(Library* lib);
+LIBDOOMSDAY_PUBLIC void Library_Delete(Library* lib);
 
 /**
  * Returns the type identifier of the library.
@@ -97,7 +100,7 @@ void Library_Delete(Library* lib);
  *
  * @return Type identifier string, e.g., "deng-plugin/game".
  */
-const char* Library_Type(const Library* lib);
+LIBDOOMSDAY_PUBLIC const char* Library_Type(const Library* lib);
 
 /**
  * Looks up a symbol from the library.
@@ -108,7 +111,7 @@ const char* Library_Type(const Library* lib);
  * @return @c NULL if the symbol is not defined. Otherwise the address of
  * the symbol.
  */
-void* Library_Symbol(Library* lib, const char* symbolName);
+LIBDOOMSDAY_PUBLIC void* Library_Symbol(Library* lib, const char* symbolName);
 
 #ifdef __cplusplus
 } // extern "C"
@@ -116,7 +119,7 @@ void* Library_Symbol(Library* lib, const char* symbolName);
 
 #ifdef __cplusplus
 #include <de/LibraryFile>
-de::LibraryFile& Library_File(Library* lib);
+LIBDOOMSDAY_PUBLIC de::LibraryFile& Library_File(Library* lib);
 #endif
 
 #endif /* LIBDOOMSDAY_LIBRARY_H */
