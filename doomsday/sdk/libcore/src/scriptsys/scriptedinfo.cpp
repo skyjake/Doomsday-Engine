@@ -458,6 +458,22 @@ String ScriptedInfo::absolutePathInContext(Record const &context, String const &
     return relativePath;
 }
 
+bool ScriptedInfo::isFalse(Value const &value) // static
+{
+    if(TextValue const *textValue = value.maybeAs<TextValue>())
+    {
+        // Text values are interpreted a bit more loosely.
+        String const value = textValue->asText();
+        if(!value.compareWithoutCase("false") ||
+           !value.compareWithoutCase("no") ||
+           !value.compareWithoutCase("off"))
+        {
+            return true;
+        }
+    }
+    return !value.isTrue();
+}
+
 ScriptedInfo::Paths ScriptedInfo::allBlocksOfType(String const &blockType, Record const &root) // static
 {
     Paths found;
