@@ -103,13 +103,16 @@ DENG2_PIMPL(ClientMobjThinkerData)
             animator.reset(new MobjAnimator(modelId(), model));
 
             // The basic transformation of the model.
-            modelMatrix = loaded.second->as<ModelRenderer::AuxiliaryData>().transformation;
+            auto const &aux = loaded.second->as<ModelRenderer::AuxiliaryData>();
+            modelMatrix = aux.transformation;
 
             Vector3f dims = modelMatrix * model.dimensions();
 
             // Scale to thing height.
-            // TODO: This should be optional (but the default behavior).
-            modelMatrix = Matrix4f::scale(self.mobj()->height / dims.y * 1.2f /*aspect correct*/) * modelMatrix;
+            if(aux.autoscaleToThingHeight)
+            {
+                modelMatrix = Matrix4f::scale(self.mobj()->height / dims.y * 1.2f /*aspect correct*/) * modelMatrix;
+            }
         }
     }
 

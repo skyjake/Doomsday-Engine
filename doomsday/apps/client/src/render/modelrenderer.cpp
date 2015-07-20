@@ -33,6 +33,7 @@ static String const DEF_ANIMATION   ("animation");
 static String const DEF_MATERIAL    ("material");
 static String const DEF_UP_VECTOR   ("up");
 static String const DEF_FRONT_VECTOR("front");
+static String const DEF_AUTOSCALE   ("autoscale");
 
 DENG2_PIMPL(ModelRenderer)
 , DENG2_OBSERVES(filesys::AssetObserver, Availability)
@@ -201,6 +202,10 @@ DENG2_PIMPL(ModelRenderer)
             up = Vector3f(asset.geta(DEF_UP_VECTOR));
         }
         aux->transformation = Matrix4f::unnormalizedFrame(front, up);
+        if(asset.has(DEF_AUTOSCALE))
+        {
+            aux->autoscaleToThingHeight = !ScriptedInfo::isFalse(asset.get(DEF_AUTOSCALE));
+        }
 
         // Custom texture maps.
         if(asset.has(DEF_MATERIAL))

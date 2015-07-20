@@ -53,6 +53,7 @@ public:
     {
         StateAnims animations;
         de::Matrix4f transformation;
+        bool autoscaleToThingHeight = true;
     };
 
 public:
