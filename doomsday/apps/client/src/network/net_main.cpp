@@ -782,11 +782,17 @@ static dd_bool tokenize(char const *line, char *label, char *value, dint max)
 
     // Copy the label.
     std::memset(label, 0, max);
-    qstrncpy(label, src, de::min(colon - src, max - 1));
+    if(max > 0)
+    {
+        qstrncpy(label, src, de::min<duint>(colon - src, max - 1));
+    }
 
     // Copy the value.
     std::memset(value, 0, max);
-    qstrncpy(value, colon + 1, de::min(qstrlen(line) - (colon - src + 1), (unsigned) max - 1));
+    if(max > 0)
+    {
+        qstrncpy(value, colon + 1, de::min<duint>(qstrlen(line) - (colon - src + 1), max - 1));
+    }
 
     // Everything is OK.
     return true;
