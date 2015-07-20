@@ -276,7 +276,7 @@ function (deng_bundle_resources)
         string (REGEX REPLACE "(.*),.*" "\\1" fn ${pair})
         string (REGEX REPLACE ".*,(.*)" "\\1" dest ${pair})
         #message (STATUS "Bundling: ${fn} -> ${dest}")
-        set_source_files_properties (${fn} PROPERTIES MACOSX_PACKAGE_LOCATION ${dest})        
+        set_source_files_properties (${fn} PROPERTIES MACOSX_PACKAGE_LOCATION ${dest})
     endforeach (pair)
 endfunction (deng_bundle_resources)
 
@@ -530,11 +530,13 @@ function (fix_bundled_install_names binaryFile)
         string (REGEX MATCH "([^\n]+/${base}) \\(compatibility version" matched ${deps})
         if (CMAKE_MATCH_1)
             string (STRIP ${CMAKE_MATCH_1} depPath)
-            message (STATUS "Changing install name: ${depPath}")
-            execute_process (COMMAND ${CMAKE_INSTALL_NAME_TOOL}
-                -change "${depPath}" "${ref}/${base}"
-                "${binaryFile}"
-            )
+            if (NOT depPath MATCHES "@rpath/")
+                message (STATUS "Changing install name: ${depPath}")
+                execute_process (COMMAND ${CMAKE_INSTALL_NAME_TOOL}
+                    -change "${depPath}" "${ref}/${base}"
+                    "${binaryFile}"
+                )
+            endif ()
         endif ()
     endforeach (fn)    
 endfunction (fix_bundled_install_names)

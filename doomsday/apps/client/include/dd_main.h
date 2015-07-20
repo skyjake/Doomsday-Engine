@@ -25,9 +25,8 @@
 #include <de/LibraryFile>
 #include <de/String>
 #include <doomsday/resource/resourceclass.h>
-
-#include "api_plugin.h"
-#include "api_gameexport.h"
+#include <doomsday/gameexport.h>
+#include <doomsday/plugins.h>
 #include "Games"
 
 #include "resource/resourcesystem.h"
@@ -111,50 +110,6 @@ de::Game &App_CurrentGame();
  * Frees the info structures for all registered games.
  */
 void App_ClearGames();
-
-//
-// Plugins ------------------------------------------------------------------------
-//
-
-/**
- * Loads all the plugins from the library directory. Note that audio plugins
- * are not loaded here, they are managed by AudioDriver.
- */
-void Plug_LoadAll();
-
-/**
- * Unloads all plugins.
- */
-void Plug_UnloadAll();
-
-/**
- * @return Unique identifier of the currently active plugin. The currently
- * active plugin is tracked separately for each thread.
- */
-pluginid_t DD_ActivePluginId();
-
-/**
- * Sets the ID of the currently active plugin in the current thread.
- *
- * @param id  Plugin id.
- */
-void DD_SetActivePluginId(pluginid_t id);
-
-/**
- * Executes all the hooks of the given type. Bit zero of the return value
- * is set if a hook was executed successfully (returned true). Bit one is
- * set if all the hooks that were executed returned true.
- */
-de::dint DD_CallHooks(de::dint hook_type, de::dint parm, void *context);
-
-de::LibraryFile const &Plug_FileForPlugin(pluginid_t id);
-
-bool DD_ExchangeGamePluginEntryPoints(pluginid_t pluginId);
-
-/**
- * Locate the address of the named, exported procedure in the plugin.
- */
-void *DD_FindEntryPoint(pluginid_t pluginId, char const *fn);
 
 //
 // Misc/utils ---------------------------------------------------------------------

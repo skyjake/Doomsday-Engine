@@ -32,6 +32,7 @@
 #include "de_misc.h"
 
 #include <de/App>
+#include <doomsday/doomsdayapp.h>
 
 #ifdef __SERVER__
 #  include <de/TextApp>
@@ -246,7 +247,7 @@ static void baseTicker(timespan_t time)
     }
 
     // Plugins tick always.
-    DD_CallHooks(HOOK_TICKER, 0, &time);
+    DoomsdayApp::plugins().callHooks(HOOK_TICKER, 0, &time);
 
     // The netcode gets to tick, too.
     Net_Ticker(time);

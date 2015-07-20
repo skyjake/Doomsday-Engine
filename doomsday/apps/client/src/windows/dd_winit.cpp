@@ -43,8 +43,6 @@
 
 using namespace de;
 
-application_t app;
-
 /**
  * @note GetLastError() should only be called when we *know* an error was thrown.
  * The result of calling this any other time is undefined.

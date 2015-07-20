@@ -58,6 +58,7 @@
 #include "ui/dialogs/alertdialog.h"
 #include "ui/styledlogsinkformatter.h"
 #include "updater.h"
+#include "updater/downloaddialog.h"
 
 #if WIN32
 #  include "dd_winit.h"
@@ -92,7 +93,8 @@ static Value *Function_App_GamePlugin(Context &, Function::ArgumentValues const 
         // The null game has no plugin.
         return 0;
     }
-    String name = Plug_FileForPlugin(App_CurrentGame().pluginId()).name().fileNameWithoutExtension();
+    String name = DoomsdayApp::plugins().fileForPlugin(App_CurrentGame().pluginId())
+            .name().fileNameWithoutExtension();
     if(name.startsWith("lib")) name.remove(0, 3);
     return new TextValue(name);
 }
@@ -104,6 +106,8 @@ static Value *Function_App_Quit(Context &, Function::ArgumentValues const &)
 }
 
 DENG2_PIMPL(ClientApp)
+, DENG2_OBSERVES(Plugins, PublishAPI)
+, DENG2_OBSERVES(Plugins, Notification)
 {    
     Binder binder;
     QScopedPointer<Updater> updater;
@@ -198,6 +202,8 @@ DENG2_PIMPL(ClientApp)
         clientAppSingleton = thisPublic;
 
         LogBuffer::get().addSink(logAlarm);
+        DoomsdayApp::plugins().audienceForPublishAPI() += this;
+        DoomsdayApp::plugins().audienceForNotification() += this;
     }
 
     ~Instance()
@@ -219,6 +225,29 @@ DENG2_PIMPL(ClientApp)
         delete inputSys;
         delete menuBar;
         clientAppSingleton = 0;
+    }
+
+    void publishAPIToPlugin(::Library *plugin)
+    {
+        DD_PublishAPIs(plugin);
+    }
+
+    void pluginSentNotification(int notification, void *)
+    {
+        LOG_AS("ClientApp::pluginSentNotification");
+
+        switch(notification)
+        {
+        case DD_NOTIFY_GAME_SAVED:
+            // If an update has been downloaded and is ready to go, we should
+            // re-show the dialog now that the user has saved the game as prompted.
+            LOG_DEBUG("Game saved");
+            DownloadDialog::showCompletedDownload();
+            break;
+
+        default:
+            break;
+        }
     }
 
     /**
@@ -386,7 +415,7 @@ void ClientApp::initialize()
     d->resourceSys = new ResourceSystem;
     addSystem(*d->resourceSys);
 
-    Plug_LoadAll();
+    plugins().loadAll();
 
     // Create the main window.
     d->winSys->createWindow()->setWindowTitle(DD_ComposeMainWindowTitle());

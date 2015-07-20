@@ -55,7 +55,6 @@ set (SHARED_WITH_CLIENT
     ${src}/include/face.h
     ${src}/include/game.h
     ${src}/include/hedge.h
-    ${src}/include/library.h
     ${src}/include/m_decomp64.h
     ${src}/include/m_misc.h
     ${src}/include/m_nodepile.h
@@ -145,12 +144,10 @@ set (SHARED_WITH_CLIENT
     ${src}/src/dd_loop.cpp
     ${src}/src/dd_main.cpp
     ${src}/src/dd_pinit.cpp
-    ${src}/src/dd_plugin.cpp
     ${src}/src/def_main.cpp
     ${src}/src/face.cpp
     ${src}/src/game.cpp
     ${src}/src/hedge.cpp
-    ${src}/src/library.cpp
     ${src}/src/m_decomp64.cpp
     ${src}/src/m_misc.cpp
     ${src}/src/m_nodepile.cpp

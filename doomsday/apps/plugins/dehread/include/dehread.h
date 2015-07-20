@@ -23,15 +23,10 @@
 #ifndef LIBDEHREAD_DEHREAD_H
 #define LIBDEHREAD_DEHREAD_H
 
-/**
- * @attention @todo This plugin requires access to the internal definition arrays.
- * This dependency should be removed entirely, by making this plugin modify the
- * definitions via a public API provided by the engine.
- */
 #include <doomsday/defs/ded.h>
 struct font_s;
 
-#define DENG_INTERNAL_DATA_ACCESS
+//#define DENG_INTERNAL_DATA_ACCESS
 #include <doomsday.h>
 
 #include <de/libcore.h>
@@ -51,6 +46,5 @@ DENG_USING_API(Base);
 DENG_USING_API(Con);
 DENG_USING_API(Def);
 DENG_USING_API(F);
-DENG_USING_API(Plug);
 
 #endif // LIBDEHREAD_DEHREAD_H

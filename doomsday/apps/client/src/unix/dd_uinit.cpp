@@ -24,13 +24,13 @@
 #include <limits.h>
 #include <locale.h>
 
+#include <doomsday/doomsdayapp.h>
+#include <doomsday/filesys/fs_util.h>
+#include <doomsday/filesys/sys_direc.h>
 #include <doomsday/paths.h>
+#include <doomsday/library.h>
 #include <de/c_wrapper.h>
 #include <de/App>
-
-#ifdef UNIX
-#  include "library.h"
-#endif
 
 #include "de_base.h"
 #include "de_graphics.h"
@@ -40,17 +40,11 @@
 #include "de_network.h"
 #include "de_misc.h"
 
-#include <doomsday/filesys/fs_util.h>
-#include <doomsday/filesys/sys_direc.h>
 #include "dd_uinit.h"
-
-#include <de/App>
 
 #ifdef __CLIENT__
 #  include <de/DisplayMode>
 #endif
-
-application_t app;
 
 #ifdef __CLIENT__
 static int initDGL(void)
@@ -59,75 +53,9 @@ static int initDGL(void)
 }
 #endif
 
-static void determineGlobalPaths(application_t* app)
-{
-    assert(app);
-
-    // By default, make sure the working path is the home folder.
-    de::App::setCurrentWorkPath(de::App::app().nativeHomePath());
-
-#ifndef MACOSX
-    if(getenv("HOME"))
-    {
-        filename_t homePath;
-        directory_t* temp;
-        dd_snprintf(homePath, FILENAME_T_MAXLEN, "%s/%s/runtime/", getenv("HOME"),
-                    DENG2_APP->unixHomeFolderName().toLatin1().constData());
-        temp = Dir_New(homePath);
-        Dir_mkpath(Dir_Path(temp));
-        app->usingHomeDir = Dir_SetCurrent(Dir_Path(temp));
-        if(app->usingHomeDir)
-        {
-            DD_SetRuntimePath(Dir_Path(temp));
-        }
-        Dir_Delete(temp);
-    }
-#endif
-
-    // The -userdir option sets the working directory.
-    if(CommandLine_CheckWith("-userdir", 1))
-    {
-        filename_t runtimePath;
-        directory_t* temp;
-
-        strncpy(runtimePath, CommandLine_NextAsPath(), FILENAME_T_MAXLEN);
-        Dir_CleanPath(runtimePath, FILENAME_T_MAXLEN);
-        // Ensure the path is closed with a directory separator.
-        F_AppendMissingSlashCString(runtimePath, FILENAME_T_MAXLEN);
-
-        temp = Dir_New(runtimePath);
-        app->usingUserDir = Dir_SetCurrent(Dir_Path(temp));
-        if(app->usingUserDir)
-        {
-            DD_SetRuntimePath(Dir_Path(temp));
-#ifndef MACOSX
-            app->usingHomeDir = false;
-#endif
-        }
-        Dir_Delete(temp);
-    }
-
-#ifndef MACOSX
-    if(!app->usingHomeDir && !app->usingUserDir)
-#else
-    if(!app->usingUserDir)
-#endif
-    {
-        // The current working directory is the runtime dir.
-        directory_t* temp = Dir_NewFromCWD();
-        DD_SetRuntimePath(Dir_Path(temp));
-        Dir_Delete(temp);
-    }
-
-    // libcore has determined the native base path, so let FS1 know about it.
-    DD_SetBasePath(DENG2_APP->nativeBasePath().toUtf8());
-}
-
 dd_bool DD_Unix_Init(void)
 {
     dd_bool failed = true;
-
-    memset(&app, 0, sizeof(app));
 
     // We wish to use U.S. English formatting for time and numbers.
     setlocale(LC_ALL, "en_US.UTF-8");
@@ -137,7 +65,7 @@ dd_bool DD_Unix_Init(void)
     Library_Init();
 
     // Determine our basedir and other global paths.
-    determineGlobalPaths(&app);
+    DoomsdayApp::app().determineGlobalPaths();
 
     if(!DD_EarlyInit())
     {
@@ -166,7 +94,7 @@ void DD_Shutdown(void)
     // Shutdown all subsystems.
     DD_ShutdownAll();
 
-    Plug_UnloadAll();
+    DoomsdayApp::plugins().unloadAll();
     Library_Shutdown();
 #ifdef __CLIENT__
     DisplayMode_Shutdown();

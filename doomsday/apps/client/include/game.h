@@ -21,7 +21,8 @@
 #ifndef DENG_GAME_H
 #define DENG_GAME_H
 
-#include "api_plugin.h"
+#include "api_base.h"
+#include <doomsday/plugins.h>
 #include <de/Error>
 #include <de/Path>
 #include <de/String>

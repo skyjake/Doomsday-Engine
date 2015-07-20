@@ -32,8 +32,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_SYSTEM_UTILS_DYNAMIC_LIBRARY_H
-#define LIBDENG_SYSTEM_UTILS_DYNAMIC_LIBRARY_H
+#ifndef LIBDOOMSDAY_LIBRARY_H
+#define LIBDOOMSDAY_LIBRARY_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -57,13 +57,6 @@ void Library_Shutdown(void);
  * Returns the latest error message.
  */
 const char* Library_LastError(void);
-
-/**
- * Provides the library with the engine's public APIs.
- *
- * @param lib  Library instance.
- */
-void Library_PublishAPIs(Library *lib);
 
 /**
  * Closes the library handles of all game plugins. The library will be
@@ -126,4 +119,4 @@ void* Library_Symbol(Library* lib, const char* symbolName);
 de::LibraryFile& Library_File(Library* lib);
 #endif
 
-#endif /* LIBDENG_SYSTEM_UTILS_DYNAMIC_LIBRARY_H */
+#endif /* LIBDOOMSDAY_LIBRARY_H */

@@ -21,7 +21,7 @@
 #ifndef EXAMPLE_PLUGIN_VERSION_H
 #define EXAMPLE_PLUGIN_VERSION_H
 
-#include "api_plugin.h"
+#include <doomsday/plugins.h>
 
 #ifndef EXAMPLE_PLUGIN_VER_ID
 #  ifdef _DEBUG

@@ -21,15 +21,20 @@
 #ifndef DOOMSDAY_GAME_EXPORT_API_H
 #define DOOMSDAY_GAME_EXPORT_API_H
 
-#include "dd_share.h"
-#include "api_mapedit.h"
+#include <de/types.h>
+#include <de/rect.h>
+#include "world/valuetype.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+struct event_s;
+
 /**
  * The routines/data exported from the game plugin. @ingroup game
+ *
+ * @todo Get rid of this struct in favor of individually queried export points.
  */
 typedef struct {
     size_t apiSize; ///< sizeof(game_export_t)
@@ -58,9 +63,9 @@ typedef struct {
 
     // Responders.
     int           (*FinaleResponder) (void const *ddev);
-    int           (*PrivilegedResponder) (event_t *ev);
-    int           (*Responder) (event_t *ev);
-    int           (*FallbackResponder) (event_t *ev);
+    int           (*PrivilegedResponder) (struct event_s *ev);
+    int           (*Responder) (struct event_s *ev);
+    int           (*FallbackResponder) (struct event_s *ev);
 
     // Refresh.
     void          (*BeginFrame) (void);
@@ -136,7 +141,7 @@ typedef struct {
      * Called once a map change (i.e., P_MapChange()) has completed to allow the
      * game to do any post change finalization it needs to do at this time.
      */
-    void          (*FinalizeMapChange) (Uri const *uri);
+    void          (*FinalizeMapChange) (void const *uri);
 
     /**
      * Called when trying to assign a value read from the map data (to a

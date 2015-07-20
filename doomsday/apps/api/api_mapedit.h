@@ -23,29 +23,12 @@
 
 #include <de/str.h>
 #include <de/types.h>
+#include <doomsday/world/valuetype.h>
 #include "api_base.h"
 
 /// @defgroup mapEdit Map Editor
 /// @ingroup world
 ///@{
-
-/// Value types.
-typedef enum {
-    DDVT_NONE = -1, ///< Not a read/writeable value type.
-    DDVT_BOOL,
-    DDVT_BYTE,
-    DDVT_SHORT,
-    DDVT_INT,       ///< 32 or 64 bit
-    DDVT_UINT,
-    DDVT_FIXED,
-    DDVT_ANGLE,
-    DDVT_FLOAT,
-    DDVT_DOUBLE,
-    DDVT_LONG,
-    DDVT_ULONG,
-    DDVT_PTR,
-    DDVT_BLENDMODE
-} valuetype_t;
 
 DENG_API_TYPEDEF(MPE)
 {

@@ -19,34 +19,16 @@
  * 02110-1301 USA</small>
  */
 
+#include "doomsday/library.h"
+#include "doomsday/doomsdayapp.h"
+
 #include <de/App>
 #include <de/NativeFile>
 #include <de/LibraryFile>
 #include <de/Library>
+#include <de/str.h>
 
-#include "de_base.h"
-#include "Sector"
-#include "m_misc.h"
-
-#include "api_def.h"
-#include "api_console.h"
-#include "api_filesys.h"
-#include "api_internaldata.h"
-#include "api_material.h"
-#include "api_materialarchive.h"
-#include "api_map.h"
-#include "api_mapedit.h"
-#include "api_resource.h"
-#include "api_sound.h"
-#include "api_fontrender.h"
-#include "api_svg.h"
-#ifdef __CLIENT__
-#  include "api_client.h"
-#  include "api_render.h"
-#endif
-#ifdef __SERVER__
-#  include "api_server.h"
-#endif
+#include <QList>
 
 struct library_s { // typedef Library
     Str* path;              ///< de::FS path of the library (e.g., "/bin/doom.dll").
@@ -93,7 +75,7 @@ void Library_ReleaseGames(void)
 }
 
 #ifdef UNIX
-static void reopenLibraryIfNeeded(Library* lib)
+static void reopenLibraryIfNeeded(Library *lib)
 {
     DENG_ASSERT(lib);
 
@@ -106,12 +88,12 @@ static void reopenLibraryIfNeeded(Library* lib)
 
         DENG_ASSERT(lib->file->loaded());
 
-        Library_PublishAPIs(lib);
+        DoomsdayApp::plugins().publishAPIs(lib);
     }
 }
 #endif
 
-Library* Library_New(const char* filePath)
+Library* Library_New(char const *filePath)
 {
     try
     {
@@ -141,7 +123,7 @@ Library* Library_New(const char* filePath)
             lib->isGamePlugin = true;
         }
 
-        Library_PublishAPIs(lib);
+        DoomsdayApp::plugins().publishAPIs(lib);
 
         return lib;
     }
@@ -175,50 +157,6 @@ de::LibraryFile& Library_File(Library* lib)
 {
     DENG_ASSERT(lib);
     return *lib->file;
-}
-
-void Library_PublishAPIs(Library *lib)
-{
-    de::Library &library = lib->file->library();
-    if(library.hasSymbol("deng_API"))
-    {
-        de::Library::deng_API setAPI = library.DENG2_SYMBOL(deng_API);
-
-#define PUBLISH(X) setAPI(X.api.id, &X)
-
-        PUBLISH(_api_Base);
-        PUBLISH(_api_Busy);
-        PUBLISH(_api_Con);
-        PUBLISH(_api_Def);
-        PUBLISH(_api_F);
-        PUBLISH(_api_Infine);
-        PUBLISH(_api_InternalData);
-        PUBLISH(_api_Map);
-        PUBLISH(_api_MPE);
-        PUBLISH(_api_Material);
-        PUBLISH(_api_MaterialArchive);
-        PUBLISH(_api_Player);
-        PUBLISH(_api_Plug);
-        PUBLISH(_api_R);
-        PUBLISH(_api_S);
-        PUBLISH(_api_Thinker);
-        PUBLISH(_api_Uri);
-
-#ifdef __CLIENT__
-        // Client-only APIs.
-        PUBLISH(_api_B);
-        PUBLISH(_api_Client);
-        PUBLISH(_api_FR);
-        PUBLISH(_api_GL);
-        PUBLISH(_api_Rend);
-        PUBLISH(_api_Svg);
-#endif
-
-#ifdef __SERVER__
-        // Server-only APIs.
-        PUBLISH(_api_Server);
-#endif
-    }
 }
 
 void* Library_Symbol(Library* lib, const char* symbolName)

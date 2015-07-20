@@ -134,7 +134,7 @@ enum {
     DE_API_PLAYER               = DE_API_PLAYER_v2,
 
     DE_API_PLUGIN_v1            = 1600,    // 1.10
-    DE_API_PLUGIN               = DE_API_PLUGIN_v1,
+    DE_API_PLUGIN_REMOVED       = 1601,    // 2.0 (API removed)
 
     DE_API_RENDER_v1            = 1700,    // 1.10
     DE_API_RENDER               = DE_API_RENDER_v1,

@@ -1,7 +1,7 @@
-/** @file dd_winit.h  Win32 Initialization.
+/** @file world/valuetype.h
  *
- * @authors Copyright © 2003-2014 Jaakko Kernen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright (c) 2013-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,25 +17,26 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_WINIT_H
-#define LIBDENG_WINIT_H
+#ifndef LIBDOOMSDAY_WORLD_VALUETYPE_H
+#define LIBDOOMSDAY_WORLD_VALUETYPE_H
 
-#define WIN32_LEAN_AND_MEAN
+/// Value types.
+typedef enum {
+    DDVT_NONE = -1, ///< Not a read/writeable value type.
+    DDVT_BOOL,
+    DDVT_BYTE,
+    DDVT_SHORT,
+    DDVT_INT,       ///< 32 or 64 bit
+    DDVT_UINT,
+    DDVT_FIXED,
+    DDVT_ANGLE,
+    DDVT_FLOAT,
+    DDVT_DOUBLE,
+    DDVT_LONG,
+    DDVT_ULONG,
+    DDVT_PTR,
+    DDVT_BLENDMODE
+} valuetype_t;
 
-#include "dd_pinit.h"
-#include <windows.h>
+#endif // LIBDOOMSDAY_WORLD_VALUETYPE_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-dd_bool DD_Win32_Init(void);
-void DD_Shutdown(void);
-
-char const *DD_Win32_GetLastErrorMessage(void);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif /* LIBDENG_WINIT_H */

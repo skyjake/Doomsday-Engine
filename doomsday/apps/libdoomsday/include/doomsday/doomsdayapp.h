@@ -19,8 +19,9 @@
 #ifndef LIBDOOMSDAY_DOOMSDAYAPP_H
 #define LIBDOOMSDAY_DOOMSDAYAPP_H
 
-#include "libdoomsday.h"
+#include "plugins.h"
 #include "busymode.h"
+#include "gameexport.h"
 
 /**
  * Common application-level state and components.
@@ -33,10 +34,14 @@ class LIBDOOMSDAY_PUBLIC DoomsdayApp
 public:
     DoomsdayApp();
 
-    BusyMode &busyMode();
+    void determineGlobalPaths();
+
+    bool isUsingUserDir() const;
 
 public:
     static DoomsdayApp &app();
+    static Plugins &plugins();
+    static BusyMode &busyMode();
 
 private:
     DENG2_PRIVATE(d)

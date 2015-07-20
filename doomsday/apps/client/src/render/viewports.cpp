@@ -350,7 +350,7 @@ void R_UpdateViewPortGeometry(viewport_t *port, dint col, dint row)
         p.geometry.size.width  = port->geometry.width();
         p.geometry.size.height = port->geometry.height();
 
-        DD_CallHooks(HOOK_VIEWPORT_RESHAPE, port->console, (void *)&p);
+        DoomsdayApp::plugins().callHooks(HOOK_VIEWPORT_RESHAPE, port->console, (void *)&p);
     }
 }
 

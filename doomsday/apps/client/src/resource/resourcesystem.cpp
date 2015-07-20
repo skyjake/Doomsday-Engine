@@ -46,6 +46,7 @@
 #  include <de/RecordValue>
 #  include <de/StringPool>
 #endif
+#include <doomsday/doomsdayapp.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/defs/sprite.h>
 #include <doomsday/filesys/fs_main.h>
@@ -2205,7 +2206,7 @@ DENG2_PIMPL(ResourceSystem)
 
         void runTask()
         {
-            DD_CallHooks(HOOK_SAVEGAME_CONVERT, 0, &parm);
+            DoomsdayApp::plugins().callHooks(HOOK_SAVEGAME_CONVERT, 0, &parm);
         }
     };
     TaskPool convertSavegameTasks;

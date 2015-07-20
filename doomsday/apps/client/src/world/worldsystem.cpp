@@ -367,7 +367,8 @@ DENG2_PIMPL(WorldSystem)
         // Ask each converter in turn whether the map format is recognizable
         // and if so to interpret and transfer it to us via the runtime map
         // editing interface.
-        if(!DD_CallHooks(HOOK_MAP_CONVERT, 0, const_cast<Id1MapRecognizer *>(&mapDef.recognizer())))
+        if(!DoomsdayApp::plugins().callHooks(HOOK_MAP_CONVERT, 0,
+                                             const_cast<Id1MapRecognizer *>(&mapDef.recognizer())))
             return 0;
 
         // A converter signalled success.

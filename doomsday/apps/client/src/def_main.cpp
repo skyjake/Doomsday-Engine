@@ -31,6 +31,7 @@
 #include <de/App>
 #include <de/NativePath>
 #include <de/RecordValue>
+#include <doomsday/doomsdayapp.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/defs/decoration.h>
 #include <doomsday/defs/dedfile.h>
@@ -47,7 +48,6 @@
 #include "dd_def.h"
 
 #include "api_def.h"
-#include "api_plugin.h"
 #include "api_sound.h"
 
 #include "xgclass.h"
@@ -522,7 +522,7 @@ static void translateMapInfos(QStringList const &mapInfoUrns, String &xlat, Stri
     try
     {
         Str_Set(&parm.paths, delimitedPaths.toUtf8().constData());
-        if(DD_CallHooks(HOOK_MAPINFO_CONVERT, 0, &parm))
+        if(DoomsdayApp::plugins().callHooks(HOOK_MAPINFO_CONVERT, 0, &parm))
         {
             xlat       = Str_Text(&parm.translated);
             xlatCustom = Str_Text(&parm.translatedCustom);
@@ -1207,7 +1207,7 @@ void Def_Read()
     readAllDefinitions();
 
     // Any definition hooks?
-    DD_CallHooks(HOOK_DEFS, 0, &defs);
+    DoomsdayApp::plugins().callHooks(HOOK_DEFS, 0, &defs);
 
 #ifdef __CLIENT__
     // Composite fonts.

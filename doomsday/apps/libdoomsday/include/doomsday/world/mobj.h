@@ -20,7 +20,7 @@
 #ifndef LIBDOOMSDAY_MOBJ_H
 #define LIBDOOMSDAY_MOBJ_H
 
-#include "dd_share.h"
+#include "dd_share.h" /// @todo dd_share.h is not part of libdoomsday.
 
 // This macro can be used to calculate a mobj-specific 'random' number.
 #define MOBJ_TO_ID(mo)          ( (long)(mo)->thinker.id * 48 + ((unsigned long)(mo)/1000) )

@@ -35,6 +35,8 @@
 #include "render/rend_main.h"
 #include "world/p_players.h"
 
+#include <doomsday/doomsdayapp.h>
+
 // MACROS ------------------------------------------------------------------
 
 #define DEMOTIC SECONDS_TO_TICKS(demoTime)
@@ -409,7 +411,7 @@ dd_bool Demo_ReadPacket(void)
     {
         Demo_StopPlayback();
         // Any interested parties?
-        DD_CallHooks(HOOK_DEMO_STOP, false, 0);
+        DoomsdayApp::plugins().callHooks(HOOK_DEMO_STOP, false, 0);
         return false;
     }
 
@@ -718,7 +720,7 @@ D_CMD(StopDemo)
     {   // Aborted.
         Demo_StopPlayback();
         // Any interested parties?
-        DD_CallHooks(HOOK_DEMO_STOP, true, 0);
+        DoomsdayApp::plugins().callHooks(HOOK_DEMO_STOP, true, 0);
     }
     else
         Demo_StopRecording(plnum);

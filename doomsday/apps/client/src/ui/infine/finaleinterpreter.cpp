@@ -21,6 +21,7 @@
 #include <QList>
 #include <de/memory.h>
 #include <de/timer.h>
+#include <doomsday/doomsdayapp.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/exec.h>
 
@@ -487,7 +488,7 @@ DENG2_PIMPL(FinaleInterpreter)
 #endif
 
         // Any hooks?
-        DD_CallHooks(HOOK_FINALE_SCRIPT_STOP, id, 0);
+        DoomsdayApp::plugins().callHooks(HOOK_FINALE_SCRIPT_STOP, id, 0);
     }
 
     bool atEnd() const
@@ -935,7 +936,7 @@ end_read:
     }
 
     // Any hooks?
-    DD_CallHooks(HOOK_FINALE_SCRIPT_BEGIN, d->id, 0);
+    DoomsdayApp::plugins().callHooks(HOOK_FINALE_SCRIPT_BEGIN, d->id, 0);
 }
 
 void FinaleInterpreter::resume()
@@ -1013,7 +1014,7 @@ static bool runOneTick(FinaleInterpreter &fi)
     de::zap(parm);
     parm.runTick = true;
     parm.canSkip = fi.canSkip();
-    DD_CallHooks(HOOK_FINALE_SCRIPT_TICKER, fi.id(), &parm);
+    DoomsdayApp::plugins().callHooks(HOOK_FINALE_SCRIPT_TICKER, fi.id(), &parm);
     return parm.runTick;
 }
 
@@ -1534,7 +1535,7 @@ DEFFC(If)
         ddhook_finale_script_evalif_paramaters_t p; de::zap(p);
         p.token     = token;
         p.returnVal = 0;
-        if(DD_CallHooks(HOOK_FINALE_EVAL_IF, fi.id(), (void *) &p))
+        if(DoomsdayApp::plugins().callHooks(HOOK_FINALE_EVAL_IF, fi.id(), (void *) &p))
         {
             val = p.returnVal;
             LOG_SCR_XVERBOSE("HOOK_FINALE_EVAL_IF: %s => %i") << token << val;

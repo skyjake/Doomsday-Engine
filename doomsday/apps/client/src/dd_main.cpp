@@ -62,6 +62,7 @@
 #include <doomsday/resource/manifest.h>
 #include <doomsday/help.h>
 #include <doomsday/paths.h>
+#include <doomsday/library.h>
 
 #ifdef __CLIENT__
 #  include "clientapp.h"
@@ -72,7 +73,6 @@
 #include "dd_loop.h"
 #include "busyrunner.h"
 #include "con_config.h"
-#include "library.h"
 #include "sys_system.h"
 #include "edit_bias.h"
 #include "gl/svg.h"
@@ -749,29 +749,6 @@ static dint loadFilesFromDataGameAuto()
     return numLoaded;
 }
 
-bool DD_ExchangeGamePluginEntryPoints(pluginid_t pluginId)
-{
-    if(pluginId != 0)
-    {
-        // Do the API transfer.
-        GETGAMEAPI fptAdr;
-        if(!(fptAdr = (GETGAMEAPI) DD_FindEntryPoint(pluginId, "GetGameAPI")))
-        {
-            return false;
-        }
-        app.GetGameAPI = fptAdr;
-        DD_InitAPI();
-        Def_GetGameClasses();
-    }
-    else
-    {
-        app.GetGameAPI = 0;
-        DD_InitAPI();
-        Def_GetGameClasses();
-    }
-    return true;
-}
-
 static void loadResource(ResourceManifest &manifest)
 {
     DENG2_ASSERT(manifest.resourceClass() == RC_PACKAGE);
@@ -1109,6 +1086,7 @@ static dint DD_ActivateGameWorker(void *context)
 {
     ddgamechange_params_t &parms = *static_cast<ddgamechange_params_t *>(context);
 
+    auto &plugins = DoomsdayApp::plugins();
     ResourceSystem &resSys = App_ResourceSystem();
 
     // Some resources types are located prior to initializing the game.
@@ -1126,15 +1104,15 @@ static dint DD_ActivateGameWorker(void *context)
     if(App_GameLoaded())
     {
         // Any game initialization hooks?
-        DD_CallHooks(HOOK_GAME_INIT, 0, 0);
+        plugins.callHooks(HOOK_GAME_INIT, 0, 0);
 
         if(gx.PreInit)
         {
             DENG2_ASSERT(App_CurrentGame().pluginId() != 0);
 
-            DD_SetActivePluginId(App_CurrentGame().pluginId());
+            plugins.setActivePluginId(App_CurrentGame().pluginId());
             gx.PreInit(App_Games().id(App_CurrentGame()));
-            DD_SetActivePluginId(0);
+            plugins.setActivePluginId(0);
         }
     }
 
@@ -1211,9 +1189,9 @@ static dint DD_ActivateGameWorker(void *context)
 
     if(gx.PostInit)
     {
-        DD_SetActivePluginId(App_CurrentGame().pluginId());
+        plugins.setActivePluginId(App_CurrentGame().pluginId());
         gx.PostInit();
-        DD_SetActivePluginId(0);
+        plugins.setActivePluginId(0);
     }
 
     if(parms.initiatedBusyMode)
@@ -1331,7 +1309,7 @@ gameid_t DD_DefineGame(GameDef const *def)
     if(!game) return 0; // Invalid def.
 
     // Add this game to our records.
-    game->setPluginId(DD_ActivePluginId());
+    game->setPluginId(DoomsdayApp::plugins().activePluginId());
     App_Games().add(*game);
     return App_Games().id(*game);
 }
@@ -1468,11 +1446,12 @@ bool App_ChangeGame(Game &game, bool allowReload)
         Con_ClearDatabases();
 
         { // Tell the plugin it is being unloaded.
-            void *unloader = DD_FindEntryPoint(App_CurrentGame().pluginId(), "DP_Unload");
+            auto &plugins = DoomsdayApp::plugins();
+            void *unloader = plugins.findEntryPoint(App_CurrentGame().pluginId(), "DP_Unload");
             LOGDEV_MSG("Calling DP_Unload %p") << unloader;
-            DD_SetActivePluginId(App_CurrentGame().pluginId());
+            plugins.setActivePluginId(App_CurrentGame().pluginId());
             if(unloader) ((pluginfunc_t)unloader)();
-            DD_SetActivePluginId(0);
+            plugins.setActivePluginId(0);
         }
 
         // We do not want to load session resources specified on the command line again.
@@ -1535,13 +1514,14 @@ bool App_ChangeGame(Game &game, bool allowReload)
     if(!DD_IsShuttingDown())
     {
         // Re-initialize subsystems needed even when in ringzero.
-        if(!DD_ExchangeGamePluginEntryPoints(game.pluginId()))
+        if(!DoomsdayApp::plugins().exchangeGameEntryPoints(game.pluginId()))
         {
             LOG_WARNING("Game plugin for '%s' is invalid") << game.id();
             LOGDEV_WARNING("Failed exchanging entrypoints with plugin %i")
                     << dint(game.pluginId());
             return false;
         }
+        Def_GetGameClasses();
     }
 
     // This is now the current game.
@@ -1590,11 +1570,12 @@ bool App_ChangeGame(Game &game, bool allowReload)
         {
             // Tell the plugin it is being loaded.
             /// @todo Must this be done in the main thread?
-            void *loader = DD_FindEntryPoint(App_CurrentGame().pluginId(), "DP_Load");
+            auto &plugins = DoomsdayApp::plugins();
+            void *loader = plugins.findEntryPoint(App_CurrentGame().pluginId(), "DP_Load");
             LOGDEV_MSG("Calling DP_Load %p") << loader;
-            DD_SetActivePluginId(App_CurrentGame().pluginId());
+            plugins.setActivePluginId(App_CurrentGame().pluginId());
             if(loader) ((pluginfunc_t)loader)();
-            DD_SetActivePluginId(0);
+            plugins.setActivePluginId(0);
         }
 
         /// @todo Kludge: Use more appropriate task names when unloading a game.
@@ -1623,7 +1604,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
         }*/
     }
 
-    DENG_ASSERT(DD_ActivePluginId() == 0);
+    DENG_ASSERT(DoomsdayApp::plugins().activePluginId() == 0);
 
 #ifdef __CLIENT__
     if(!Sys_IsShuttingDown())
@@ -2061,11 +2042,11 @@ static dint DD_StartupWorker(void * /*context*/)
     Con_SetProgress(10);
 
     // Any startup hooks?
-    DD_CallHooks(HOOK_STARTUP, 0, 0);
+    DoomsdayApp::plugins().callHooks(HOOK_STARTUP, 0, 0);
     Con_SetProgress(20);
 
     // Was the change to userdir OK?
-    if(CommandLine_CheckWith("-userdir", 1) && !app.usingUserDir)
+    if(CommandLine_CheckWith("-userdir", 1) && !DoomsdayApp::app().isUsingUserDir())
     {
         LOG_WARNING("User directory not found (check -userdir)");
     }
@@ -2145,7 +2126,7 @@ static dint DD_StartupWorker(void * /*context*/)
     }
     Con_SetProgress(199);
 
-    DD_CallHooks(HOOK_INIT, 0, 0);  // Any initialization hooks?
+    DoomsdayApp::plugins().callHooks(HOOK_INIT, 0, 0);  // Any initialization hooks?
     Con_SetProgress(200);
 
 #ifdef WIN32

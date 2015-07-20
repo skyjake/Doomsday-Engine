@@ -23,8 +23,9 @@
 #ifndef LIBDENG_PORTABLE_INIT_H
 #define LIBDENG_PORTABLE_INIT_H
 
-#include "api_gameexport.h"
 #include "api_internaldata.h"
+#include <doomsday/gameexport.h>
+#include <doomsday/library.h>
 #include <de/c_wrapper.h>
 
 #ifdef __CLIENT__
@@ -43,9 +44,6 @@ extern "C" {
 
 extern uint mainWindowIdx;
 
-/// Maximum allowed number of plugins.
-#define MAX_PLUGS   32
-
 /**
  * Shuts down all subsystems. This is called from DD_Shutdown().
  */
@@ -57,7 +55,12 @@ void DD_ShutdownAll(void);
  */
 void DD_ConsoleInit(void);
 
-void DD_InitAPI(void);
+/**
+ * Provides the library with the engine's public APIs.
+ *
+ * @param lib  Library instance.
+ */
+void DD_PublishAPIs(Library *lib);
 
 /**
  * Define abbreviations and aliases for command line options.

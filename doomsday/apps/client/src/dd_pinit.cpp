@@ -48,9 +48,29 @@
 #  include "updater.h"
 #endif
 
+#include "api_def.h"
+#include "api_console.h"
+#include "api_filesys.h"
 #include "api_internaldata.h"
+#include "api_material.h"
+#include "api_materialarchive.h"
+#include "api_map.h"
+#include "api_mapedit.h"
+#include "api_resource.h"
+#include "api_sound.h"
+#include "api_fontrender.h"
+#include "api_svg.h"
+#ifdef __CLIENT__
+#  include "api_client.h"
+#  include "api_render.h"
+#endif
+#ifdef __SERVER__
+#  include "api_server.h"
+#endif
 
+#include <doomsday/doomsdayapp.h>
 #include <de/String>
+#include <de/Library>
 #include <cstdarg>
 
 using namespace de;
@@ -66,7 +86,6 @@ DENG_DECLARE_API(InternalData) =
     runtimeDefs.texts   .elementsPtr(),
     &validCount
 };
-game_export_t __gx;
 
 #ifdef __CLIENT__
 de::String DD_ComposeMainWindowTitle()
@@ -82,14 +101,47 @@ de::String DD_ComposeMainWindowTitle()
 }
 #endif
 
-void DD_InitAPI()
+void DD_PublishAPIs(::Library *lib)
 {
-    GETGAMEAPI GetGameAPI = app.GetGameAPI;
-    zap(__gx);
-    if(GetGameAPI)
+    de::Library &library = Library_File(lib).library();
+
+    if(library.hasSymbol("deng_API"))
     {
-        game_export_t *gameExPtr = GetGameAPI();
-        std::memcpy(&__gx, gameExPtr, MIN_OF(sizeof(__gx), gameExPtr->apiSize));
+        de::Library::deng_API setAPI = library.DENG2_SYMBOL(deng_API);
+
+#define PUBLISH(X) setAPI(X.api.id, &X)
+
+        PUBLISH(_api_Base);
+        PUBLISH(_api_Busy);
+        PUBLISH(_api_Con);
+        PUBLISH(_api_Def);
+        PUBLISH(_api_F);
+        PUBLISH(_api_Infine);
+        PUBLISH(_api_InternalData);
+        PUBLISH(_api_Map);
+        PUBLISH(_api_MPE);
+        PUBLISH(_api_Material);
+        PUBLISH(_api_MaterialArchive);
+        PUBLISH(_api_Player);
+        PUBLISH(_api_R);
+        PUBLISH(_api_S);
+        PUBLISH(_api_Thinker);
+        PUBLISH(_api_Uri);
+
+#ifdef __CLIENT__
+        // Client-only APIs.
+        PUBLISH(_api_B);
+        PUBLISH(_api_Client);
+        PUBLISH(_api_FR);
+        PUBLISH(_api_GL);
+        PUBLISH(_api_Rend);
+        PUBLISH(_api_Svg);
+#endif
+
+#ifdef __SERVER__
+        // Server-only APIs.
+        PUBLISH(_api_Server);
+#endif
     }
 }
 

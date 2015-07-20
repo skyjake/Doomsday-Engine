@@ -51,6 +51,7 @@ static void handleAppTerminate(char const *msg)
 }
 
 DENG2_PIMPL(ServerApp)
+, DENG2_OBSERVES(Plugins, PublishAPI)
 {
     QScopedPointer<ServerSystem> serverSystem;
     Games games;
@@ -62,12 +63,19 @@ DENG2_PIMPL(ServerApp)
         : Base(i)
     {
         serverAppSingleton = thisPublic;
+
+        DoomsdayApp::plugins().audienceForPublishAPI() += this;
     }
 
     ~Instance()
     {
         Sys_Shutdown();
         DD_Shutdown();
+    }
+
+    void publishAPIToPlugin(::Library *plugin)
+    {
+        DD_PublishAPIs(plugin);
     }
 
 #ifdef UNIX
@@ -173,7 +181,7 @@ void ServerApp::initialize()
     }
 #endif
 
-    Plug_LoadAll();
+    plugins().loadAll();
 
     DD_FinishInitializationAfterWindowReady();
 }
