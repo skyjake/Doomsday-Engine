@@ -83,6 +83,7 @@
 #include "render/blockmapvisual.h"
 #include "render/billboard.h"
 #include "render/cameralensfx.h"
+#include "render/modelrenderer.h"
 #include "render/r_main.h"
 #include "render/r_things.h"
 #include "render/rend_fakeradio.h"
@@ -4354,7 +4355,7 @@ static void drawMasked()
                 break;
 
             case VSPR_MODEL_GL2:
-                Rend_DrawModel2(*spr);
+                ClientApp::renderSystem().modelRenderer().render(*spr);
                 break;
 
             case VSPR_FLARE:

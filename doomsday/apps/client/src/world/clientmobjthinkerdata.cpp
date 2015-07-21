@@ -47,6 +47,7 @@ DENG2_PIMPL(ClientMobjThinkerData)
     std::unique_ptr<RemoteSync> sync;
     std::unique_ptr<MobjAnimator> animator;
     Matrix4f modelMatrix;
+    gl::Cull modelCull = gl::Back;
 
     Instance(Public *i) : Base(i)
     {}
@@ -104,6 +105,7 @@ DENG2_PIMPL(ClientMobjThinkerData)
 
             // The basic transformation of the model.
             auto const &aux = loaded.second->as<ModelRenderer::AuxiliaryData>();
+            modelCull = aux.cull;
             modelMatrix = aux.transformation;
 
             Vector3f dims = modelMatrix * model.dimensions();
@@ -218,6 +220,11 @@ ModelDrawable::Animator const *ClientMobjThinkerData::animator() const
 Matrix4f const &ClientMobjThinkerData::modelTransformation() const
 {
     return d->modelMatrix;
+}
+
+gl::Cull ClientMobjThinkerData::modelCullFace() const
+{
+    return d->modelCull;
 }
 
 void ClientMobjThinkerData::stateChanged(state_t const *previousState)
