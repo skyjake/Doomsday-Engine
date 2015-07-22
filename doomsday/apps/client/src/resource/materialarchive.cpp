@@ -1,4 +1,4 @@
-/** @file materialarchive.cpp Material Archive.
+/** @file materialarchive.cpp  Material Archive.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
@@ -19,11 +19,10 @@
  */
 
 #include "de_base.h"
-#include "de_console.h"
+#include "resource/materialarchive.h"
+
 #include <doomsday/uri.h>
 #include <de/StringPool>
-
-#include "resource/materialarchive.h"
 
 /// For identifying the archived format version. Written to disk.
 #define MATERIALARCHIVE_VERSION     4

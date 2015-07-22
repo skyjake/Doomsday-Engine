@@ -26,7 +26,6 @@
 #endif
 
 #include "de_base.h"
-#include "de_console.h"
 #include "de_system.h"
 
 #define CONVCONST       ((IJOY_AXISMAX - IJOY_AXISMIN) / 65535.0)

@@ -28,7 +28,6 @@
 #include <de/GLInfo>
 #include <de/GLState>
 
-#include "de_console.h"
 #include "de_filesys.h"
 
 #include "api_gl.h"

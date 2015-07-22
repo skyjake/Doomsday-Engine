@@ -29,7 +29,6 @@
 #include <de/timer.h>
 #include <de/Log>
 
-#include "de_console.h"
 #ifdef __CLIENT__
 #  include "clientapp.h"
 #  include "sys_system.h"
@@ -41,6 +40,7 @@
 #ifdef __CLIENT__
 #  include "ui/clientwindow.h"
 #  include "ui/clientwindowsystem.h"
+#  include "ui/progress.h"
 #  include "ui/widgets/busywidget.h"
 #endif
 

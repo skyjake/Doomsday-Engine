@@ -4,7 +4,7 @@
  * but not actually play anything.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,7 +21,8 @@
  */
 
 #include "de_base.h"
-#include "de_console.h"
+#include "audio/audiodriver.h"
+
 #include "de_system.h"
 
 #include "api_audiod.h"

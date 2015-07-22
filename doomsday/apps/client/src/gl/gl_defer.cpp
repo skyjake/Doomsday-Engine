@@ -23,7 +23,6 @@
 #include "de_platform.h"
 #include "gl/gl_defer.h"
 
-#include "de_console.h"
 #include "de_system.h"
 #include "dd_main.h"
 #include "m_misc.h"

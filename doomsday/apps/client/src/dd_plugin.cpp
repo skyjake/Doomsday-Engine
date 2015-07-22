@@ -1,5 +1,4 @@
 /** @file dd_plugin.cpp  Plugin subsystem.
- * @ingroup base
  *
  * @todo Convert to C++, rename.
  *
@@ -24,20 +23,17 @@
 #define DENG_NO_API_MACROS_PLUGIN
 
 #include "de_platform.h"
-
 #include "api_plugin.h"
-#include "de_console.h"
+
+#include <QThreadStorage>
+#include <de/findfile.h>
+#include <de/strutil.h>
 #include "dd_main.h"
 #include "dd_pinit.h"
 #include "library.h"
-
 #ifdef __CLIENT__
 #  include "updater/downloaddialog.h"
 #endif
-
-#include <de/findfile.h>
-#include <de/strutil.h>
-#include <QThreadStorage>
 
 #define HOOKMASK(x)         ((x) & 0xffffff)
 

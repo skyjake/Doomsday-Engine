@@ -26,7 +26,6 @@
 #include <de/memoryzone.h>
 #include <de/vector1.h>
 #include <de/Vector>
-#include "de_console.h"
 
 namespace de {
 

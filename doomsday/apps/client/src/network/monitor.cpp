@@ -1,7 +1,7 @@
-/** @file monitor.cpp Implementation of network traffic monitoring. 
- * @ingroup network
+/** @file monitor.cpp  Implementation of network traffic monitoring. 
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,7 +19,6 @@
  */
 
 #include "de_platform.h"
-#include "de_console.h"
 
 #if _DEBUG
 

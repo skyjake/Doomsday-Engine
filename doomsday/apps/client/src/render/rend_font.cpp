@@ -26,7 +26,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <de/GLState>
-#include "de_console.h"
 #include "de_system.h"
 #include "de_ui.h"
 #include "m_misc.h"

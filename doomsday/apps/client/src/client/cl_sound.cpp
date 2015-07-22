@@ -20,7 +20,6 @@
 #include "de_base.h"
 #include "client/cl_sound.h"
 
-#include "de_console.h"
 #include "de_audio.h"
 
 #include "api_client.h"

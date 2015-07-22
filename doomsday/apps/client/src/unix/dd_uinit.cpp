@@ -33,7 +33,6 @@
 #endif
 
 #include "de_base.h"
-#include "de_console.h"
 #include "de_system.h"
 
 #include <doomsday/filesys/fs_util.h>

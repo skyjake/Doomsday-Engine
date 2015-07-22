@@ -27,10 +27,12 @@
 #include <cmath>
 #include <de/vector1.h>
 #include <de/Error>
+#include <doomsday/console/cmd.h>
+#include <doomsday/console/exec.h>
+#include <doomsday/console/var.h>
 #include <doomsday/defs/sprite.h>
 #include <doomsday/world/mobjthinkerdata.h>
 
-#include "de_console.h"
 #include "de_system.h"
 #include "de_audio.h"
 #include "def_main.h"

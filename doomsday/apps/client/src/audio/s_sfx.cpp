@@ -24,7 +24,6 @@
 #include <de/vector1.h>
 #include <de/Log>
 #include "de_audio.h"
-#include "de_console.h"
 #include "de_system.h"
 
 #include "audio/sys_audio.h"

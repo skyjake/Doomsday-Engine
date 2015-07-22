@@ -27,7 +27,6 @@
 #include "network/net_msg.h"
 
 #include <QList>
-#include "de_console.h"
 #include "network/net_buf.h"
 
 using namespace de;

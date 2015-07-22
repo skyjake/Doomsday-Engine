@@ -22,7 +22,7 @@
 #include "de_base.h"
 #include "network/net_demo.h"
 
-#include "de_console.h"
+#include <doomsday/console/cmd.h>
 #include "de_filesys.h"
 #include "de_system.h"
 

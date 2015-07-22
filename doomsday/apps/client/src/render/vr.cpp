@@ -1,7 +1,8 @@
-/** @file render/vr.cpp  Stereoscopic rendering and Oculus Rift support.
+/** @file vr.cpp  Stereoscopic rendering and Oculus Rift support.
  *
- * @authors Copyright (c) 2013-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright (c) 2013 Christopher Bruns <cmbruns@rotatingpenguin.com>
+ * @authors Copyright © 2013-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013 Christopher Bruns <cmbruns@rotatingpenguin.com>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,12 +18,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de_console.h"
+#include "de_base.h"
 #include "render/vr.h"
-#include "ui/clientwindow.h"
 
-#include <de/BaseGuiApp>
 #include <de/timer.h>
+#include <de/BaseGuiApp>
+#include <doomsday/console/cmd.h>
+#include <doomsday/console/var.h>
+#include "ui/clientwindow.h"
 
 using namespace de;
 

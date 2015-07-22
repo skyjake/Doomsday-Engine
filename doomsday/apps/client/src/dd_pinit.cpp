@@ -29,7 +29,8 @@
 
 #include <cstdarg>
 #include <de/String>
-#include "de_console.h"
+#include <doomsday/console/exec.h>
+#include <doomsday/console/knownword.h>
 #include "de_filesys.h"
 #include "de_system.h"
 #include "de_ui.h"

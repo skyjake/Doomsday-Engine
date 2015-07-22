@@ -27,8 +27,8 @@
 #include <de/ArrayValue>
 #include <de/NumberValue>
 #include <de/Log>
+#include <doomsday/console/exec.h>
 
-#include "de_console.h"
 #include "de_system.h"
 #include "de_filesys.h"
 #include "def_main.h"

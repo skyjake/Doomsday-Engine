@@ -29,7 +29,6 @@
 #undef main
 
 #include <de/Log>
-#include "de_console.h"
 #include "de_system.h"
 
 #include "api_audiod.h"

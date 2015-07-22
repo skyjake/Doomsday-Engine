@@ -23,7 +23,7 @@
 #include "ui/busyvisual.h"
 
 #include <cmath>
-#include "de_console.h"
+#include <doomsday/console/var.h>
 #include "de_system.h"
 #include "de_ui.h"
 #include "gl/gl_main.h"

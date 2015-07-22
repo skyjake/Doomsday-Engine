@@ -26,7 +26,7 @@
 #include <de/GLState>
 #include <de/Vector>
 #include <de/concurrency.h>
-#include "de_console.h"
+#include <doomsday/console/exec.h>
 
 #include "gl/gl_main.h"
 #include "gl/sys_opengl.h"

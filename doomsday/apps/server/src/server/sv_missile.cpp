@@ -20,7 +20,6 @@
 #include "de_base.h"
 #include "server/sv_missile.h"
 
-#include "de_console.h"
 #include "server/sv_pool.h"
 
 /**

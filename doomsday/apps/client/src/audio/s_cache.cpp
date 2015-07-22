@@ -22,7 +22,6 @@
 
 #include <cstring>
 #include "de_audio.h"
-#include "de_console.h"
 #include "de_filesys.h"
 #include "de_system.h"
 

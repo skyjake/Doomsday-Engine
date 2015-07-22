@@ -24,7 +24,6 @@
 #include <de/Library>
 #include <de/LibraryFile>
 #include "de_audio.h"
-#include "de_console.h"
 #include "audio/sys_audio.h"
 
 typedef struct driver_s {

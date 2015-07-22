@@ -27,7 +27,6 @@
 #include <de/concurrency.h>
 #include <de/GLInfo>
 #include <de/GLState>
-#include "de_console.h"
 #include "sys_system.h"
 #include "gl/gl_main.h"
 

@@ -29,7 +29,6 @@
 #endif
 
 #include "de_platform.h"
-#include "de_console.h"
 #include "de_system.h"
 
 #include "ui/mouse_qt.h"  // portable

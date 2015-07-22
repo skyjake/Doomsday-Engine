@@ -18,14 +18,14 @@
  * 02110-1301 USA</small>
  */
 
+#include "de_base.h"
 #include "directinput.h"
 
 #ifndef __CLIENT__
 #  error "joystick_win32.cpp is only the client"
 #endif
 
-#include "de_base.h"
-#include "de_console.h"
+#include <doomsday/console/var.h>
 #include "de_system.h"
 #include "dd_winit.h"
 

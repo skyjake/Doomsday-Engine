@@ -25,7 +25,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <de/concurrency.h>
-#include "de_console.h"
 #include "sys_system.h"
 #include "gl/gl_draw.h"
 #include "gl/sys_opengl.h"

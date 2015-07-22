@@ -23,7 +23,6 @@
 
 #include <de/Log>
 #include "de_audio.h"
-#include "de_console.h"
 
 #include "network/net_main.h"
 

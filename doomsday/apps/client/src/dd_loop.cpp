@@ -24,7 +24,9 @@
 #ifdef __SERVER__
 #  include <de/TextApp>
 #endif
-#include "de_console.h"
+#include <doomsday/console/exec.h>
+#include <doomsday/console/var.h>
+
 #include "de_system.h"
 #include "de_audio.h"
 #include "de_ui.h"

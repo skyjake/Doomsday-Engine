@@ -21,7 +21,6 @@
 #include "de_base.h"
 #include "gl/svg.h"
 
-#include "de_console.h"
 #include "de_system.h"
 
 #include "gl/gl_main.h"
