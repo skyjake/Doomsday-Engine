@@ -21,10 +21,14 @@
 #include "r_util.h"
 
 #include <cmath>
+#include <de/binangle.h>
 #include <de/vector1.h>
 #include "de_console.h"
-#include "de_play.h"
+
 #ifdef __CLIENT__
+#  include "world/p_players.h"
+
+#  include "api_render.h"
 #  include "render/viewports.h"
 #endif
 

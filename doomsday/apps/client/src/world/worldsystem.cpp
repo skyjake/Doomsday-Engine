@@ -34,47 +34,53 @@
 #include <doomsday/console/var.h>
 #include <doomsday/defs/mapinfo.h>
 
-#include "de_play.h"
 #include "de_filesys.h"
 #include "dd_main.h"
 #include "dd_def.h"
 #include "dd_loop.h"
 
-#include "audio/s_main.h"
-#include "network/net_main.h"
-
-#include "edit_map.h"
-#include "Plane"
-#include "Sector"
-#include "SectorCluster"
-#include "world/p_ticker.h"
-#include "world/sky.h"
-#include "world/thinkers.h"
-
-#include "ui/progress.h"
+#include "api_player.h"
 
 #ifdef __CLIENT__
 #  include "clientapp.h"
 #  include "client/cl_def.h"
 #  include "client/cl_frame.h"
 #  include "client/cl_player.h"
-#  include "edit_bias.h"
-#  include "Hand"
-#  include "HueCircle"
 
 #  include "gl/gl_main.h"
+#endif
 
+#ifdef __SERVER__
+#  include "server/sv_pool.h"
+#endif
+
+#include "audio/s_main.h"
+#include "network/net_main.h"
+
+#include "world/p_players.h"
+#include "world/p_ticker.h"
+#include "world/sky.h"
+#include "world/thinkers.h"
+#include "edit_map.h"
+#include "Plane"
+#include "Sector"
+#include "SectorCluster"
+#include "Surface"
+#ifdef __CLIENT__
+#  include "world/contact.h"
+#  include "Hand"
+#  include "HueCircle"
 #  include "Lumobj"
-#  include "MaterialAnimator"
+
 #  include "render/viewports.h" // R_ResetViewer
 #  include "render/rend_fakeradio.h"
 #  include "render/rend_main.h"
 #  include "render/rendpoly.h"
 #  include "render/skydrawable.h"
-#endif
+#  include "MaterialAnimator"
 
-#ifdef __SERVER__
-#  include "server/sv_pool.h"
+#  include "edit_bias.h"
+#  include "ui/progress.h"
 #endif
 
 using namespace de;

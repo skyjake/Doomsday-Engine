@@ -25,11 +25,11 @@
 #include <de/Log>
 #include "de_audio.h"
 #include "de_console.h"
-#include "de_play.h"
 #include "de_system.h"
 
 #include "audio/sys_audio.h"
 
+#include "world/thinkers.h"
 #include "Sector"
 #include "SectorCluster"
 

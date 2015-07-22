@@ -31,7 +31,6 @@
 #include "de_console.h"
 #include "de_system.h"
 #include "de_filesys.h"
-#include "de_play.h"
 #include "def_main.h"
 
 #include "api_materialarchive.h"
@@ -39,6 +38,8 @@
 #include "network/net_main.h"
 #include "network/net_buf.h"
 #include "network/net_event.h"
+
+#include "world/p_players.h"
 
 #include "api_server.h"
 #include "server/sv_pool.h"

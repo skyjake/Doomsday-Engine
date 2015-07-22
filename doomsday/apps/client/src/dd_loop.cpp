@@ -26,7 +26,6 @@
 #endif
 #include "de_console.h"
 #include "de_system.h"
-#include "de_play.h"
 #include "de_audio.h"
 #include "de_ui.h"
 
@@ -42,6 +41,8 @@
 #  include "network/net_demo.h"
 #endif
 #include "network/net_event.h"
+
+#include "world/p_ticker.h"
 
 #ifdef __CLIENT__
 #  include "render/rend_font.h"

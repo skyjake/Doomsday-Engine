@@ -27,10 +27,11 @@
 #include <de/Vector>
 #include <de/concurrency.h>
 #include "de_console.h"
-#include "de_play.h"
 
 #include "gl/gl_main.h"
 #include "gl/sys_opengl.h"
+
+#include "world/p_players.h"  ///< @todo remove me
 
 #include "api_render.h"
 #include "render/viewports.h"

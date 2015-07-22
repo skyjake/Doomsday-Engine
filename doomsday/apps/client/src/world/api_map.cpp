@@ -23,29 +23,27 @@
 
 #define DENG_NO_API_MACROS_MAP
 
-#include <cstring>
-
-#include <de/memoryzone.h>
-#include <doomsday/filesys/fs_main.h>
-
 #include "de_base.h"
-#include "de_play.h"
-#include "de_audio.h"
-
 #include "api_map.h"
 
-#include "network/net_main.h"
+#include <cstring>
+#include <de/memoryzone.h>
+#include <doomsday/filesys/fs_main.h>
+#include "de_audio.h"
 
-#include "Face"
+#include "network/net_main.h"
 
 #include "world/blockmap.h"
 #include "world/dmuargs.h"
 #include "world/entitydatabase.h"
+#include "world/linesighttest.h"
 #include "world/maputil.h"
 #include "world/worldsystem.h"
 #include "BspLeaf"
 #include "ConvexSubspace"
+#include "Face"
 #include "Interceptor"
+#include "Surface"
 
 #ifdef __CLIENT__
 #  include "render/lightgrid.h"

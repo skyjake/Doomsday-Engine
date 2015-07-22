@@ -35,7 +35,6 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
-#include "de_play.h"
 
 #include <doomsday/filesys/fs_util.h>
 #include <doomsday/filesys/sys_direc.h>

@@ -21,7 +21,6 @@
 #include "server/sv_missile.h"
 
 #include "de_console.h"
-#include "de_play.h"
 #include "server/sv_pool.h"
 
 /**

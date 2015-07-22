@@ -32,7 +32,6 @@
 
 #include "de_console.h"
 #include "de_system.h"
-#include "de_play.h"
 #include "de_audio.h"
 #include "def_main.h"
 
@@ -54,6 +53,7 @@
 #endif
 
 #include "world/worldsystem.h" // validCount
+#include "world/p_players.h"
 #include "world/thinkers.h"
 #include "BspLeaf"
 #include "ConvexSubspace"
