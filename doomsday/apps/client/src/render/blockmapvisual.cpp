@@ -1,8 +1,7 @@
 /** @file blockmapvisual.cpp  Graphical Blockmap Visual.
- * @ingroup world
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -26,7 +25,6 @@
 
 #include "de_base.h"
 #include "de_graphics.h"
-#include "de_render.h"
 #include "de_ui.h"
 
 #include "api_fontrender.h"
@@ -44,6 +42,7 @@
 #include "ConvexSubspace"
 
 #include "render/blockmapvisual.h"
+#include "render/rend_font.h"
 
 using namespace de;
 

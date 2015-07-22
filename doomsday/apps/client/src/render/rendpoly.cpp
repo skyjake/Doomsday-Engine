@@ -1,8 +1,7 @@
-/** @file rendpoly.cpp RendPoly data buffers
- * @ingroup render
+/** @file rendpoly.cpp  RendPoly data buffers.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,13 +19,12 @@
  */
 
 #include "de_base.h"
+#include "render/rendpoly.h"
+
 #include "de_console.h"
-#include "de_render.h"
 
 #include "color.h"
 #include "WallEdge"
-
-#include "render/rendpoly.h"
 
 using namespace de;
 

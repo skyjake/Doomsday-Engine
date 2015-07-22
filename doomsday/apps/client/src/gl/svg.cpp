@@ -1,8 +1,7 @@
-/** @file svg.cpp Scalable Vector Graphic (SVG) implementation. 
- * @ingroup gl
+/** @file svg.cpp  Scalable Vector Graphic (SVG) implementation. 
  *
- * @authors Copyright &copy; 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,16 +18,14 @@
  * 02110-1301 USA</small>
  */
 
-#include <assert.h>
-
 #include "de_base.h"
-#include "de_console.h"
-#include "de_render.h"
-#include "de_system.h"
-#include "gl/sys_opengl.h"
-#include "gl/gl_main.h"
-
 #include "gl/svg.h"
+
+#include "de_console.h"
+#include "de_system.h"
+
+#include "gl/gl_main.h"
+#include "gl/sys_opengl.h"
 
 typedef struct svglinepoint_s {
     /// Next and previous points on this line.

@@ -1,7 +1,7 @@
 /** @file rend_font.cpp  Font Renderer.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,20 +17,19 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <cctype>
-#include <cstdio>
-#include <cstdlib>
-
 #define DENG_NO_API_MACROS_FONT_RENDER
 
 #include "de_base.h"
+#include "render/rend_font.h"
+
+#include <cctype>
+#include <cstdio>
+#include <cstdlib>
+#include <de/GLState>
 #include "de_console.h"
 #include "de_graphics.h"
-#include "de_render.h"
 #include "de_system.h"
 #include "de_ui.h"
-
-#include "api_fontrender.h"
 #include "m_misc.h"
 
 #include "BitmapFont"
@@ -38,7 +37,8 @@
 
 #include "gl/gl_texmanager.h"
 
-#include <de/GLState>
+#include "api_fontrender.h"
+#include "render/rend_main.h"
 
 using namespace de;
 
