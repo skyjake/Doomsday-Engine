@@ -39,7 +39,6 @@ set (SHARED_WITH_CLIENT
     ${src}/include/de_audio.h
     ${src}/include/de_base.h
     ${src}/include/de_console.h
-    ${src}/include/de_edit.h
     ${src}/include/de_filesys.h
     ${src}/include/de_platform.h
     ${src}/include/de_system.h
