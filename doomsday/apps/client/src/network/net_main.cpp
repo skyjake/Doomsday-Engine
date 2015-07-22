@@ -29,7 +29,6 @@
 #include <doomsday/console/exec.h>
 #include "de_console.h"
 #include "de_graphics.h"
-#include "de_misc.h"
 #include "de_system.h"
 #include "de_ui.h"
 #include "dd_def.h"

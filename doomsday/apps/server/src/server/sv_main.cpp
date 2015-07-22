@@ -32,7 +32,6 @@
 #include "de_system.h"
 #include "de_filesys.h"
 #include "de_play.h"
-#include "de_misc.h"
 #include "def_main.h"
 
 #include "api_materialarchive.h"

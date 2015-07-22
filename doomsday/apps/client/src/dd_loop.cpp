@@ -30,7 +30,6 @@
 #include "de_graphics.h"
 #include "de_audio.h"
 #include "de_ui.h"
-#include "de_misc.h"
 
 #ifdef __CLIENT__
 #  include "clientapp.h"

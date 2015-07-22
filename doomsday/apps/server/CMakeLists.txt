@@ -43,7 +43,6 @@ set (SHARED_WITH_CLIENT
     ${src}/include/de_filesys.h
     ${src}/include/de_graphics.h
     ${src}/include/de_infine.h
-    ${src}/include/de_misc.h
     ${src}/include/de_platform.h
     ${src}/include/de_play.h
     ${src}/include/de_system.h

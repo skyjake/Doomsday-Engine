@@ -48,10 +48,7 @@ void BusyVisual_PrepareResources(void)
     }
 }
 
-/**
- * Transition effect:
- */
-#include "de_misc.h"
+// Transition effect -----------------------------------------------------------
 
 using namespace de;
 

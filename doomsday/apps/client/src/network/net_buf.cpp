@@ -25,7 +25,6 @@
 #include <de/memory.h>
 #include <de/ByteRefArray>
 #include "de_console.h"
-#include "de_misc.h"
 #include "de_system.h"
 
 #include "network/net_event.h"

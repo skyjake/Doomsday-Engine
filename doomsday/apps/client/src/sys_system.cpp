@@ -37,7 +37,6 @@
 #include "de_console.h"
 #include "de_system.h"
 #include "de_graphics.h"
-#include "de_misc.h"
 #ifdef __CLIENT__
 #  include "clientapp.h"
 #endif

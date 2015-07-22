@@ -1,8 +1,7 @@
-/** @file sys_input.cpp Keyboard and mouse input pre-processing. 
- * @ingroup input
+/** @file sys_input.cpp  Keyboard and mouse input pre-processing. 
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  * @authors Copyright © 2005 Zachary Keene <zjkeene@bellsouth.net>
  *
@@ -21,7 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <de/c_wrapper.h>
 
 #ifdef WIN32
@@ -32,16 +31,15 @@
 #include "de_platform.h"
 #include "de_console.h"
 #include "de_system.h"
-#include "de_misc.h"
 
-#include "ui/mouse_qt.h" // portable
+#include "ui/mouse_qt.h"  // portable
 
 #define EVBUFSIZE       64
 #define KEYBUFSIZE      32
 
 static dd_bool initOk;
-static byte useMouse; // Input enabled from mouse?
-static mouseinterface_t* iMouse; ///< Current mouse interface.
+static byte useMouse;  ///< Input enabled from mouse?
+static mouseinterface_t *iMouse; ///< Current mouse interface.
 
 static keyevent_t keyEvents[EVBUFSIZE];
 static int evHead, evTail;

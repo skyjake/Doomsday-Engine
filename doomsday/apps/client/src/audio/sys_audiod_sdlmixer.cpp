@@ -1,7 +1,7 @@
-/**\file sys_audiod_sdlmixer.cpp
+/** @file sys_audiod_sdlmixer.cpp  SDL_mixer, for SFX, Ext and Mus interfaces.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,43 +17,26 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * SDL_mixer, for SFX, Ext and Mus interfaces.
- */
-
 #ifndef DENG_DISABLE_SDLMIXER
 
-// HEADER FILES ------------------------------------------------------------
+#include "de_base.h"
+#include "audio/sys_audiod_sdlmixer.h"
 
-#include <stdlib.h>
-#include <string.h>
-
+#include <cstdlib>
+#include <cstring>
 #include <SDL.h>
 #include <SDL_mixer.h>
 #undef main
 
-#include "de_base.h"
+#include <de/Log>
 #include "de_console.h"
 #include "de_system.h"
-#include "de_misc.h"
 
 #include "api_audiod.h"
 #include "api_audiod_sfx.h"
 #include "api_audiod_mus.h"
 
-#include "audio/sys_audiod_sdlmixer.h"
-
-#include <de/Log>
-
-// MACROS ------------------------------------------------------------------
-
 #define DEFAULT_MIDI_COMMAND    "" //"timidity"
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 int         DS_SDLMixerInit(void);
 void        DS_SDLMixerShutdown(void);
@@ -80,12 +63,6 @@ int         DS_SDLMixer_Music_Get(int prop, void* value);
 void        DS_SDLMixer_Music_Pause(int pause);
 void        DS_SDLMixer_Music_Stop(void);
 int         DS_SDLMixer_Music_PlayFile(const char* fileName, int looped);
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 dd_bool sdlInitOk = false;
 
