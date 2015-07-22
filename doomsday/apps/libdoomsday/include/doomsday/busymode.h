@@ -24,6 +24,8 @@
 #include "libdoomsday.h"
 #include <de/Observers>
 #include <de/Time>
+#include <de/String>
+#include <functional>
 
 /// Busy mode worker function.
 typedef int (*busyworkerfunc_t) (void *parm);
@@ -31,7 +33,7 @@ typedef int (*busyworkerfunc_t) (void *parm);
 /// POD structure for defining a task processable in busy mode.
 struct LIBDOOMSDAY_PUBLIC BusyTask
 {
-    busyworkerfunc_t worker; ///< Worker thread that does processing while in busy mode.
+    std::function<int (void *)> worker; ///< Worker thread that does processing while in busy mode.
     void *workerData; ///< Data context for the worker thread.
 
     int mode; ///< Busy mode flags @ref busyModeFlags
@@ -122,6 +124,17 @@ public:
      * @return  Return value of the worker.
      */
     int runNewTaskWithName(int mode, busyworkerfunc_t worker, void *workerData, de::String const &taskName);
+
+    /**
+     * Run a single task with a std::function callback.
+     *
+     * @param mode      Busy mode flags.
+     * @param worker    Worker callback.
+     * @param taskName  Task name (drawn next to the progress bar).
+     *
+     * @return  Return value from the worker.
+     */
+    int runNewTaskWithName(int mode, de::String const &taskName, std::function<int (void *)> worker);
 
     /**
      * Abnormally aborts the currently running task. Call this when the task encounters
