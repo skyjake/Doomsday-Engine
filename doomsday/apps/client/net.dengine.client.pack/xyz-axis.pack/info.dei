@@ -1,0 +1,11 @@
+title: Test Model: XYZ Axis
+version: 1.0
+license: GPL 3+
+tags: dev xyz
+
+asset model.thing.possessed {
+    front <0, 0, 1>
+    up <1, 0, 0>
+    path = "axis.fbx"
+    material.@0.diffuseMap = "axis.png"
+}
