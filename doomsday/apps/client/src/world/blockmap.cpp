@@ -21,6 +21,9 @@
 
 #include "de_base.h"
 #include "world/blockmap.h"
+#ifdef __CLIENT__
+#  include "gl/sys_opengl.h"
+#endif
 
 #include <cmath>
 #include <de/memoryzone.h>

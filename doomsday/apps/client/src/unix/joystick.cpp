@@ -28,6 +28,8 @@
 #include "de_base.h"
 #include "de_system.h"
 
+#include <doomsday/console/var.h>
+
 #define CONVCONST       ((IJOY_AXISMAX - IJOY_AXISMIN) / 65535.0)
 
 int     joydevice = 0;          // Joystick index to use (cvar)

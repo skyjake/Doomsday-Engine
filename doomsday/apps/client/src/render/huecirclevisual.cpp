@@ -19,6 +19,7 @@
 
 #include "de_base.h"
 #include "render/huecirclevisual.h"
+#include "gl/sys_opengl.h"
 
 #include <de/mathutil.h>  // M_HSVToRGB(), remove me (use QColor)
 #include "HueCircle"

@@ -29,6 +29,7 @@
 
 #include <cstdarg>
 #include <de/String>
+#include <de/Library>
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/console/exec.h>
 #include <doomsday/console/knownword.h>
@@ -44,6 +45,16 @@
 #include "def_main.h"
 
 #include "api_internaldata.h"
+#include "api_client.h"
+#include "api_console.h"
+#include "api_def.h"
+#include "api_fontrender.h"
+#include "api_material.h"
+#include "api_materialarchive.h"
+#include "api_render.h"
+#include "api_resource.h"
+#include "api_sound.h"
+#include "api_server.h"
 
 #include "gl/svg.h"
 

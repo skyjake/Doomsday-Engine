@@ -20,6 +20,8 @@
 
 #define LIBDENG_DISABLE_DEFERRED_GL_API // using regular GL API calls
 
+#include <doomsday/doomsdayapp.h>
+
 #include "de_platform.h"
 #include "gl/gl_defer.h"
 
@@ -440,7 +442,7 @@ gl::UploadMethod GL_ChooseUploadMethod(struct texturecontent_s const *content)
     DENG2_ASSERT(content != 0);
 
     // Must the operation be carried out immediately?
-    if((content->flags & TXCF_NEVER_DEFER) || !BusyMode_Active())
+    if((content->flags & TXCF_NEVER_DEFER) || !DoomsdayApp::busyMode().isActive())
     {
         return gl::Immediate;
     }
