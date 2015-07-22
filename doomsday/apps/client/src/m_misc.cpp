@@ -46,7 +46,6 @@
 #include "de_console.h"
 #include "de_system.h"
 #include "de_filesys.h"
-#include "de_graphics.h"
 #include "de_play.h"
 
 #include "lzss.h"

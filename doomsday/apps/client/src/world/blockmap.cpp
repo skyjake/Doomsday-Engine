@@ -19,16 +19,14 @@
  * 02110-1301 USA</small>
  */
 
+#include "de_base.h"
 #include "world/blockmap.h"
 
 #include <cmath>
 #include <de/memoryzone.h>
 #include <de/vector1.h>
 #include <de/Vector>
-
-#include "de_base.h"
 #include "de_console.h"
-#include "de_graphics.h"  // For debug visual.
 
 namespace de {
 

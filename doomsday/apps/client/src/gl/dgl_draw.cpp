@@ -22,12 +22,12 @@
 #include "de_base.h"
 #include "gl/gl_main.h"
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <de/concurrency.h>
 #include "de_console.h"
-#include "de_graphics.h"
 #include "sys_system.h"
+#include "gl/gl_draw.h"
 #include "gl/sys_opengl.h"
 
 using namespace de;

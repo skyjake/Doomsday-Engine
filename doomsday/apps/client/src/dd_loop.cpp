@@ -27,7 +27,6 @@
 #include "de_console.h"
 #include "de_system.h"
 #include "de_play.h"
-#include "de_graphics.h"
 #include "de_audio.h"
 #include "de_ui.h"
 
@@ -46,6 +45,7 @@
 
 #ifdef __CLIENT__
 #  include "render/rend_font.h"
+#  include "render/viewports.h"
 
 #  include "ui/busyvisual.h"
 #  include "ui/clientwindow.h"

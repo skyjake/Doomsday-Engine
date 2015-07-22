@@ -1,11 +1,11 @@
-/** @file zonedebug.cpp Memory zone debug visualization. 
- * @ingroup memzone
+/** @file zonedebug.cpp  Memory zone debug visualization. 
  *
  * Shows the contents of the memory zone as on-screen visualization. This is
  * only available in debug builds and provides a view to the layout of the
  * allocated memory inside the zone.
  *
- * @authors Copyright (c) 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -23,18 +23,21 @@
  */
 
 #include "de_base.h"
-#include "de_graphics.h"
 
 #ifdef DENG_DEBUG
 
+#include <cmath>
+#include <de/concurrency.h>
 #include <de/Rectangle>
 #include <de/Vector>
-#include <de/concurrency.h>
-#include <math.h>
 
 /// @todo Find a better way to access the private data of the zone
 /// (e.g., move this into the library and use an abstract graphics interface).
 #include "../../../sdk/liblegacy/src/memoryzone_private.h"
+
+#include "gl/gl_main.h"
+#include "gl/gl_draw.h"
+#include "ui/clientwindow.h"
 
 using namespace de;
 

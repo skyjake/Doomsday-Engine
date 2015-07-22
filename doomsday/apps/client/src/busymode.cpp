@@ -30,18 +30,18 @@
 #include <de/Log>
 
 #include "de_console.h"
-#include "de_graphics.h"
 #ifdef __CLIENT__
-#include "clientapp.h"
-#include "sys_system.h"
-#endif
+#  include "clientapp.h"
+#  include "sys_system.h"
 
-//#include "audio/s_main.h"
+#  include "gl/gl_defer.h"
+#endif
 
 #include "ui/busyvisual.h"
 #ifdef __CLIENT__
-#include "ui/clientwindowsystem.h"
-#include "ui/widgets/busywidget.h"
+#  include "ui/clientwindow.h"
+#  include "ui/clientwindowsystem.h"
+#  include "ui/widgets/busywidget.h"
 #endif
 
 #ifdef __CLIENT__

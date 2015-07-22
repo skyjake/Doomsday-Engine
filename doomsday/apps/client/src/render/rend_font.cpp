@@ -27,7 +27,6 @@
 #include <cstdlib>
 #include <de/GLState>
 #include "de_console.h"
-#include "de_graphics.h"
 #include "de_system.h"
 #include "de_ui.h"
 #include "m_misc.h"
@@ -35,6 +34,8 @@
 #include "BitmapFont"
 #include "CompositeBitmapFont"
 
+#include "gl/gl_main.h"
+#include "gl/gl_draw.h"
 #include "gl/gl_texmanager.h"
 
 #include "api_fontrender.h"

@@ -25,7 +25,6 @@
 #include <de/Log>
 #include "de_audio.h"
 #include "de_console.h"
-#include "de_graphics.h"
 #include "de_play.h"
 #include "de_system.h"
 
@@ -35,6 +34,8 @@
 #include "SectorCluster"
 
 #ifdef __CLIENT__
+#  include "gl/gl_main.h"
+
 #  include "api_fontrender.h"
 #  include "render/rend_font.h"
 

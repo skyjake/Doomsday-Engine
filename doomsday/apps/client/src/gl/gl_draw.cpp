@@ -27,11 +27,13 @@
 #include <de/Vector>
 #include <de/concurrency.h>
 #include "de_console.h"
-#include "de_graphics.h"
 #include "de_play.h"
 
-#include "api_render.h"
+#include "gl/gl_main.h"
 #include "gl/sys_opengl.h"
+
+#include "api_render.h"
+#include "render/viewports.h"
 
 using namespace de;
 

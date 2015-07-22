@@ -29,12 +29,11 @@
 #include <de/GLState>
 
 #include "de_console.h"
-#include "de_graphics.h"
 #include "de_filesys.h"
 
 #include "api_gl.h"
-
-#include "gl/sys_opengl.h"
+#include "gl/gl_defer.h"
+#include "gl/gl_draw.h"
 #include "gl/gl_texmanager.h"
 
 #include "render/r_draw.h"

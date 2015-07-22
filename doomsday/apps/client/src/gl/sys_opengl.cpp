@@ -28,8 +28,8 @@
 #include <de/GLInfo>
 #include <de/GLState>
 #include "de_console.h"
-#include "de_graphics.h"
 #include "sys_system.h"
+#include "gl/gl_main.h"
 
 #ifdef WIN32
 #   define GETPROC(Type, x)   x = de::function_cast<Type>(wglGetProcAddress(#x))

@@ -24,13 +24,15 @@
 
 #include "de_console.h"
 #include "de_filesys.h"
-#include "de_graphics.h"
 #include "de_system.h"
 #include "de_ui.h"
 #include "clientapp.h"
 
+#include "gl/gl_main.h"
 #include "gl/texturecontent.h"
+
 #include "resource/image.h"
+
 #include "api_fontrender.h"
 #include "render/rend_main.h"
 #include "render/rend_font.h"

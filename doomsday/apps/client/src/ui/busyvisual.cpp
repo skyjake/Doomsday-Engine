@@ -1,8 +1,7 @@
-/** @file busyvisual.cpp Busy Mode visualizer. 
- * @ingroup render
+/** @file busyvisual.cpp  Busy Mode visualizer. 
  *
  * @authors Copyright © 2007-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -20,15 +19,14 @@
  * 02110-1301 USA</small>
  */
 
-#include <math.h>
-
 #include "de_base.h"
+#include "ui/busyvisual.h"
+
+#include <cmath>
 #include "de_console.h"
 #include "de_system.h"
-#include "de_graphics.h"
 #include "de_ui.h"
-
-#include "ui/busyvisual.h"
+#include "gl/gl_main.h"
 #include "ui/widgets/busywidget.h"
 
 static void releaseScreenshotTexture()
