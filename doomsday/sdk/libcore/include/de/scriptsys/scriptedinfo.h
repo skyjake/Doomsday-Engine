@@ -197,6 +197,8 @@ public:
      */
     static bool isFalse(Value const &value);
 
+    static bool isTrue(Value const &value);
+
 public:
     static Paths allBlocksOfType(String const &blockType, Record const &root);
 

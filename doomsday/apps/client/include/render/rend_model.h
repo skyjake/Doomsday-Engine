@@ -130,11 +130,4 @@ TextureVariantSpec const &Rend_ModelShinyTextureSpec();
  */
 void Rend_DrawModel(vissprite_t const &spr);
 
-/**
- * Render a GL2 model.
- *
- * @param parms  Parameters for the draw operation.
- */
-void Rend_DrawModel2(vissprite_t const &spr);
-
 #endif  // CLIENT_RENDER_MODEL_H

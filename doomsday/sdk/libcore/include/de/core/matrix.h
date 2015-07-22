@@ -422,14 +422,15 @@ public:
     static Matrix4 lookAt(Vec3 const &target, Vec3 const &eyePos, Vec3 const &up) {
         return frame(target - eyePos, up) * translate(-eyePos);
     }
-    static Matrix4 frame(Vec3 const &front, Vec3 const &up) {
-        return unnormalizedFrame(front.normalize(), up.normalize());
+    static Matrix4 frame(Vec3 const &front, Vec3 const &up, bool mirrored = false) {
+        return unnormalizedFrame(front.normalize(), up.normalize(), mirrored);
     }
-    static Matrix4 unnormalizedFrame(Vec3 const &front, Vec3 const &up) {
+    static Matrix4 unnormalizedFrame(Vec3 const &front, Vec3 const &up, bool mirrored = false) {
         Matrix4 m(Zero);
         Vec3 f = front;
         Vec3 s = f.cross(up);
         Vec3 u = s.cross(f);
+        if(mirrored) s = -s;
         m[0]  =  s.x;
         m[1]  =  u.x;
         m[2]  = -f.x;

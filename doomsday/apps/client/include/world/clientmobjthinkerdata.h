@@ -22,6 +22,7 @@
 #include <doomsday/world/mobjthinkerdata.h>
 #include <de/timer.h>
 #include <de/ModelDrawable>
+#include <de/GLState>
 
 /**
  * @defgroup clMobjFlags Client Mobj Flags
@@ -104,6 +105,11 @@ public:
     de::ModelDrawable::Animator const *animator() const;
 
     de::Matrix4f const &modelTransformation() const;
+
+    /**
+     * Returns the cull mode that should be used when drawing the model.
+     */
+    de::gl::Cull modelCullFace() const;
 
 private:
     DENG2_PRIVATE(d)

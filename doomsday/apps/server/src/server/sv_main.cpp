@@ -20,6 +20,7 @@
 #define DENG_NO_API_MACROS_SERVER
 
 #include "de_base.h"
+#include "server/sv_def.h"
 
 #include <cmath>
 #include <de/stringarray.h>
@@ -30,13 +31,18 @@
 #include "de_console.h"
 #include "de_system.h"
 #include "de_filesys.h"
-#include "de_network.h"
 #include "de_play.h"
 #include "de_misc.h"
 #include "def_main.h"
 
 #include "api_materialarchive.h"
+
+#include "network/net_main.h"
+#include "network/net_buf.h"
+#include "network/net_event.h"
+
 #include "api_server.h"
+#include "server/sv_pool.h"
 
 using namespace de;
 
@@ -49,13 +55,13 @@ using namespace de;
 // which is assumed to be correct.
 #define WARP_LIMIT              300
 
-void    Sv_ClientCoords(int playerNum);
+void Sv_ClientCoords(dint playerNum);
 
-int     netRemoteUser = 0; // The client who is currently logged in.
-char   *netPassword = (char *) ""; // Remote login password.
+dint netRemoteUser;  ///< The client who is currently logged in.
+char *netPassword = (char *) "";  ///< Remote login password.
 
 // This is the limit when accepting new clients.
-int     svMaxPlayers = DDMAXPLAYERS;
+dint svMaxPlayers = DDMAXPLAYERS;
 
 static MaterialArchive *materialDict;
 
@@ -64,9 +70,9 @@ static MaterialArchive *materialDict;
  * @ingroup flags
  */
 ///@{
-#define PTSF_QUOTED                     0x1 ///< Add double quotes around the path.
-#define PTSF_TRANSFORM_EXCLUDE_PATH     0x2 ///< Exclude the path; e.g., c:/doom/myaddon.wad => myaddon.wad
-#define PTSF_TRANSFORM_EXCLUDE_EXT      0x4 ///< Exclude the extension; e.g., c:/doom/myaddon.wad => c:/doom/myaddon
+#define PTSF_QUOTED                     0x1  ///< Add double quotes around the path.
+#define PTSF_TRANSFORM_EXCLUDE_PATH     0x2  ///< Exclude the path; e.g., c:/doom/myaddon.wad => myaddon.wad
+#define PTSF_TRANSFORM_EXCLUDE_EXT      0x4  ///< Exclude the extension; e.g., c:/doom/myaddon.wad => c:/doom/myaddon
 ///@}
 
 #define DEFAULT_PATHTOSTRINGFLAGS       (PTSF_QUOTED)
@@ -74,14 +80,14 @@ static MaterialArchive *materialDict;
 /**
  * @param files      List of files from which to compose the path string.
  * @param flags      @ref pathToStringFlags
- * @param delimiter  If not @c NULL, path fragments in the resultant string
- *                   will be delimited by this.
+ * @param delimiter  If not @c nullptr, path fragments in the resultant string
+ * will be delimited by this.
  *
- * @return  New string containing a concatenated, possibly delimited set of
- *          all file paths in the list.
+ * @return  New string containing a concatenated, possibly delimited set of all
+ * file paths in the list.
  */
-static String composeFilePathString(FS1::FileList &files, int flags = DEFAULT_PATHTOSTRINGFLAGS,
-                                    String const &delimiter = ";")
+static String composeFilePathString(FS1::FileList &files, dint flags = DEFAULT_PATHTOSTRINGFLAGS,
+    String const &delimiter = ";")
 {
     String result;
     DENG2_FOR_EACH_CONST(FS1::FileList, i, files)
@@ -129,10 +135,10 @@ static bool findCustomFilesPredicate(File1 &file, void * /*parameters*/)
 /**
  * Compiles a list of file names, separated by @a delimiter.
  */
-static void composePWADFileList(char *outBuf, size_t outBufSize, char const *delimiter)
+static void composePWADFileList(char *outBuf, dsize outBufSize, char const *delimiter)
 {
     if(!outBuf || 0 == outBufSize) return;
-    memset(outBuf, 0, outBufSize);
+    std::memset(outBuf, 0, outBufSize);
 
     FS1::FileList foundFiles;
     if(!App_FileSystem().findAll<de::Wad>(findCustomFilesPredicate, 0/*no params*/, foundFiles)) return;
@@ -147,7 +153,7 @@ static void composePWADFileList(char *outBuf, size_t outBufSize, char const *del
  */
 void Sv_GetInfo(serverinfo_t *info)
 {
-    DENG_ASSERT(info != 0);
+    DENG2_ASSERT(info);
 
     de::zapPtr(info);
 
@@ -157,36 +163,37 @@ void Sv_GetInfo(serverinfo_t *info)
     info->version = DOOMSDAY_VERSION;
     dd_snprintf(info->plugin, sizeof(info->plugin) - 1, "%s %s", (char *) gx.GetVariable(DD_PLUGIN_NAME), (char *) gx.GetVariable(DD_PLUGIN_VERSION_SHORT));
     strncpy(info->gameIdentityKey, App_CurrentGame().identityKey().toUtf8().constData(), sizeof(info->gameIdentityKey) - 1);
-    strncpy(info->gameConfig, (char const *) gx.GetVariable(DD_GAME_CONFIG), sizeof(info->gameConfig) - 1);
-    strncpy(info->name, serverName, sizeof(info->name) - 1);
-    strncpy(info->description, serverInfo, sizeof(info->description) - 1);
+    strncpy(info->gameConfig,      (char const *) gx.GetVariable(DD_GAME_CONFIG), sizeof(info->gameConfig) - 1);
+    strncpy(info->name,            serverName, sizeof(info->name) - 1);
+    strncpy(info->description,     serverInfo, sizeof(info->description) - 1);
     info->numPlayers = Sv_GetNumPlayers();
 
     // The server player is there, it's just hidden.
-    info->maxPlayers = DDMAXPLAYERS - (isDedicated ? 1 : 0);
+    info->maxPlayers = DDMAXPLAYERS - (::isDedicated ? 1 : 0);
 
     // Don't go over the limit.
-    if(info->maxPlayers > svMaxPlayers)
-        info->maxPlayers = svMaxPlayers;
+    if(info->maxPlayers > ::svMaxPlayers)
+        info->maxPlayers = ::svMaxPlayers;
 
-    info->canJoin = (isServer != 0 && Sv_GetNumPlayers() < svMaxPlayers);
+    info->canJoin = (::isServer != 0 && Sv_GetNumPlayers() < ::svMaxPlayers);
 
     // Identifier of the current map.
-    String mapPath = (map.def()? map.def()->composeUri().path() : "(unknown map)");
+    String mapPath = (map.def() ? map.def()->composeUri().path() : "(unknown map)");
     qstrncpy(info->map, mapPath.toUtf8().constData(), sizeof(info->map) - 1);
 
-    // These are largely unused at the moment... Mainly intended for
-    // the game's custom values.
-    std::memcpy(info->data, serverData, sizeof(info->data));
+    // These are largely unused at the moment... Mainly intended for the game's custom values.
+    std::memcpy(info->data, ::serverData, sizeof(info->data));
 
     // Also include the port we're using.
-    info->port = nptIPPort;
+    info->port = ::nptIPPort;
 
     // Let's compile a list of client names.
-    for(int i = 0; i < DDMAXPLAYERS; ++i)
+    for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(clients[i].connected)
-            M_LimitedStrCat(info->clientNames, clients[i].name, 15, ';', sizeof(info->clientNames));
+        if(::clients[i].connected)
+        {
+            M_LimitedStrCat(info->clientNames, ::clients[i].name, 15, ';', sizeof(info->clientNames));
+        }
     }
 
     // Some WAD names.
@@ -196,9 +203,11 @@ void Sv_GetInfo(serverinfo_t *info)
     info->loadedFilesCRC = App_FileSystem().loadedFilesCRC();;
 }
 
-de::Record *Sv_InfoToRecord(serverinfo_t *info)
+Record *Sv_InfoToRecord(serverinfo_t *info)
 {
-    de::Record *rec = new de::Record;
+    DENG2_ASSERT(info);
+
+    auto *rec = new Record;
 
     rec->addNumber ("port",  info->port);
     rec->addText   ("name",  info->name);
@@ -216,10 +225,10 @@ de::Record *Sv_InfoToRecord(serverinfo_t *info)
     rec->addBoolean("open",  info->canJoin);
     rec->addText   ("plrn",  info->clientNames);
 
-    de::ArrayValue &data = rec->addArray("data").value<de::ArrayValue>();
-    for(uint i = 0; i < sizeof(info->data) / sizeof(info->data[0]); ++i)
+    ArrayValue &data = rec->addArray("data").value<ArrayValue>();
+    for(duint i = 0; i < sizeof(info->data) / sizeof(info->data[0]); ++i)
     {
-        data << de::NumberValue(info->data[i]);
+        data << NumberValue(info->data[i]);
     }
 
     return rec;
@@ -228,26 +237,26 @@ de::Record *Sv_InfoToRecord(serverinfo_t *info)
 /**
  * @return  Length of the string.
  */
-size_t Sv_InfoToString(serverinfo_t* info, ddstring_t* msg)
+dsize Sv_InfoToString(serverinfo_t *info, ddstring_t *msg)
 {
-    unsigned int i;
+    DENG2_ASSERT(info && msg);
 
-    Str_Appendf(msg, "port:%i\n", info->port);
-    Str_Appendf(msg, "name:%s\n", info->name);
-    Str_Appendf(msg, "info:%s\n", info->description);
-    Str_Appendf(msg, "ver:%i\n", info->version);
-    Str_Appendf(msg, "game:%s\n", info->plugin);
-    Str_Appendf(msg, "mode:%s\n", info->gameIdentityKey);
+    Str_Appendf(msg, "port:%i\n",  info->port);
+    Str_Appendf(msg, "name:%s\n",  info->name);
+    Str_Appendf(msg, "info:%s\n",  info->description);
+    Str_Appendf(msg, "ver:%i\n",   info->version);
+    Str_Appendf(msg, "game:%s\n",  info->plugin);
+    Str_Appendf(msg, "mode:%s\n",  info->gameIdentityKey);
     Str_Appendf(msg, "setup:%s\n", info->gameConfig);
-    Str_Appendf(msg, "iwad:%s\n", info->iwad);
-    Str_Appendf(msg, "wcrc:%i\n", info->loadedFilesCRC);
+    Str_Appendf(msg, "iwad:%s\n",  info->iwad);
+    Str_Appendf(msg, "wcrc:%i\n",  info->loadedFilesCRC);
     Str_Appendf(msg, "pwads:%s\n", info->pwads);
-    Str_Appendf(msg, "map:%s\n", info->map);
-    Str_Appendf(msg, "nump:%i\n", info->numPlayers);
-    Str_Appendf(msg, "maxp:%i\n", info->maxPlayers);
-    Str_Appendf(msg, "open:%i\n", info->canJoin);
-    Str_Appendf(msg, "plrn:%s\n", info->clientNames);
-    for(i = 0; i < sizeof(info->data) / sizeof(info->data[0]); ++i)
+    Str_Appendf(msg, "map:%s\n",   info->map);
+    Str_Appendf(msg, "nump:%i\n",  info->numPlayers);
+    Str_Appendf(msg, "maxp:%i\n",  info->maxPlayers);
+    Str_Appendf(msg, "open:%i\n",  info->canJoin);
+    Str_Appendf(msg, "plrn:%s\n",  info->clientNames);
+    for(duint i = 0; i < sizeof(info->data) / sizeof(info->data[0]); ++i)
     {
         Str_Appendf(msg, "data%i:%x\n", i, info->data[i]);
     }
@@ -255,66 +264,64 @@ size_t Sv_InfoToString(serverinfo_t* info, ddstring_t* msg)
 }
 
 /**
- * @return              gametic - cmdtime.
+ * @return  gametic - cmdtime.
  */
-int Sv_Latency(byte cmdtime)
+dint Sv_Latency(byte cmdtime)
 {
     return Net_TimeDelta(SECONDS_TO_TICKS(gameTime), cmdtime);
 }
 
 /**
  * For local players.
+ * $unifiedangles
  */
-/* $unifiedangles */
 /*
-void Sv_FixLocalAngles(dd_bool clearFixAnglesFlag)
+void Sv_FixLocalAngles(bool clearFixAnglesFlag)
 {
-    ddplayer_t *pl;
-    int         i;
-
-    for(i = 0; i < DDMAXPLAYERS; ++i)
+    for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        pl = players + i;
-        if(!pl->inGame || !(pl->flags & DDPF_LOCAL))
+        ddplayer_t &pl = players[i];
+
+        if(!pl.inGame || !(pl.flags & DDPF_LOCAL))
             continue;
 
         // This is not for clients.
-        if(isDedicated && i == 0)
+        if(::isDedicated && i == 0)
             continue;
 
-        if(pl->flags & DDPF_FIXANGLES)
+        if(pl.flags & DDPF_FIXANGLES)
         {
             if(clearFixAnglesFlag)
             {
-                pl->flags &= ~DDPF_FIXANGLES;
+                pl.flags &= ~DDPF_FIXANGLES;
             }
             else
             {
-                pl->clAngle = pl->mo->angle;
-                pl->clLookDir = pl->lookDir;
+                DENG2_ASSERT(pl.mo);
+                pl.clAngle   = pl.mo->angle;
+                pl.clLookDir = pl.lookDir;
             }
         }
     }
 }
 */
 
-void Sv_HandlePlayerInfoFromClient(client_t* sender)
+void Sv_HandlePlayerInfoFromClient(client_t *sender)
 {
-    int console = Reader_ReadByte(msgReader); // ignored
-    char oldName[PLAYERNAMELEN];
-    size_t len;
+    DENG2_ASSERT(sender);
 
     LOG_AS("Sv_HandlePlayerInfoFromClient");
+    DENG2_ASSERT(::netBuffer.player == (sender - clients));
 
-    DENG_ASSERT(netBuffer.player == (sender - clients));
-    LOG_NET_VERBOSE("from=%i, console=%i") << netBuffer.player << console;
-    console = netBuffer.player;
+    dint console = Reader_ReadByte(::msgReader); // ignored
+    LOG_NET_VERBOSE("from=%i, console=%i") << ::netBuffer.player << console;
+    console = ::netBuffer.player;
 
-    strcpy(oldName, sender->name);
+    char oldName[PLAYERNAMELEN]; strcpy(oldName, sender->name);
 
-    len = Reader_ReadUInt16(msgReader);
-    len = MIN_OF(PLAYERNAMELEN - 1, len); // there is a maximum size
-    Reader_Read(msgReader, sender->name, len);
+    dsize len = Reader_ReadUInt16(msgReader);
+    len = de::min(dsize( PLAYERNAMELEN - 1), len);  // There is a maximum size.
+    Reader_Read(::msgReader, sender->name, len);
     sender->name[len] = 0;
 
     LOG_NET_NOTE("Player %s renamed to %s") << oldName << sender->name;
@@ -327,35 +334,32 @@ void Sv_HandlePlayerInfoFromClient(client_t* sender)
  * Handles a server-specific network message. Assumes that Msg_BeginRead()
  * has already been called to begin reading the message.
  */
-void Sv_HandlePacket(void)
+void Sv_HandlePacket()
 {
-    ident_t             id;
-    int                 i, mask, from = netBuffer.player;
-    player_t           *plr = &ddPlayers[from];
-    ddplayer_t         *ddpl = &plr->shared;
-    client_t           *sender = &clients[from];
-    int                 msgfrom;
-    char               *msg;
-    char                buf[17];
-    size_t              len;
-
     LOG_AS("Sv_HandlePacket");
+
+    dint const from  = ::netBuffer.player;
+    DENG2_ASSERT(from >= 0 && from < DDMAXPLAYERS);
+    player_t *plr    = &ddPlayers[from];
+    ddplayer_t *ddpl = &plr->shared;
+    client_t *sender = &clients[from];
 
     switch(netBuffer.msg.type)
     {
     case PCL_HELLO:
-    case PCL_HELLO2:
+    case PCL_HELLO2: {
         // Get the ID of the client.
-        id = Reader_ReadUInt32(msgReader);
+        ident_t id = Reader_ReadUInt32(::msgReader);
         LOG_NET_XVERBOSE("Hello from client %i (%08X)") << from << id;
 
         // Check for duplicate IDs.
         if(!ddpl->inGame && !sender->handshake)
         {
             // Console 0 is always reserved for the server itself (not a player).
-            for(i = 1; i < DDMAXPLAYERS; ++i)
+            dint i = 1;
+            for( ; i < DDMAXPLAYERS; ++i)
             {
-                if(clients[i].connected && clients[i].id == id)
+                if(::clients[i].connected && clients[i].id == id)
                 {
                     // Send a message to everybody.
                     LOG_NET_WARNING("New client connection refused: duplicate ID (%08x)") << id;
@@ -364,9 +368,7 @@ void Sv_HandlePacket(void)
                     break;
                 }
             }
-
-            if(i < DDMAXPLAYERS)
-                break; // Can't continue, refused!
+            if(i < DDMAXPLAYERS) break;  // Can't continue, refused!
         }
 
         // This is OK.
@@ -375,7 +377,7 @@ void Sv_HandlePacket(void)
         if(netBuffer.msg.type == PCL_HELLO2)
         {
             // Check the game mode (max 16 chars).
-            Reader_Read(msgReader, buf, 16);
+            char buf[17]; Reader_Read(::msgReader, buf, 16);
             if(strnicmp(buf, App_CurrentGame().identityKey().toUtf8().constData(), 16))
             {
                 LOG_NET_ERROR("Client's game ID is incompatible: %-.16s") << buf;
@@ -391,7 +393,7 @@ void Sv_HandlePacket(void)
             sender->handshake = true;
 
             // The player is now in the game.
-            ddPlayers[from].shared.inGame = true;
+            ::ddPlayers[from].shared.inGame = true;
 
             // Tell the game about this.
             gx.NetPlayerEvent(from, DDPE_ARRIVAL, 0);
@@ -408,7 +410,7 @@ void Sv_HandlePacket(void)
             // handshake. Perhaps it's starting to record a demo.
             Sv_Handshake(from, false);
         }
-        break;
+        break; }
 
     case PKT_OK:
         // The client says it's ready to receive frames.
@@ -421,7 +423,7 @@ void Sv_HandlePacket(void)
             sender->handshake = false;
             // Send a clock sync message.
             Msg_Begin(PSV_SYNC);
-            Writer_WriteFloat(msgWriter, gameTime);
+            Writer_WriteFloat(::msgWriter, ::gameTime);
             Msg_End();
             Net_SendBuffer(from, 0);
             // Send welcome string.
@@ -429,16 +431,18 @@ void Sv_HandlePacket(void)
         }
         break;
 
-    case PKT_CHAT:
+    case PKT_CHAT: {
         // The first byte contains the sender.
-        msgfrom = Reader_ReadByte(msgReader);
+        dint const msgfrom = Reader_ReadByte(::msgReader);
         // Is the message for us?
-        mask = Reader_ReadUInt32(msgReader);
+        dint const mask    = Reader_ReadUInt32(::msgReader);
+
         // Copy the message into a buffer.
-        len = Reader_ReadUInt16(msgReader);
-        msg = (char *) M_Malloc(len + 1);
-        Reader_Read(msgReader, msg, len);
+        dsize len = Reader_ReadUInt16(::msgReader);
+        auto *msg = (char *) M_Malloc(len + 1);
+        Reader_Read(::msgReader, msg, len);
         msg[len] = 0;
+
         // Message for us? Show it locally.
         if(mask & 1)
         {
@@ -448,17 +452,19 @@ void Sv_HandlePacket(void)
 
         // Servers relay chat messages to all the recipients.
         Net_WriteChatMessage(msgfrom, mask, msg);
-        for(i = 1; i < DDMAXPLAYERS; ++i)
-            if(ddPlayers[i].shared.inGame && (mask & (1 << i)) && i != from)
+        for(dint i = 1; i < DDMAXPLAYERS; ++i)
+        {
+            if(::ddPlayers[i].shared.inGame && (mask & (1 << i)) && i != from)
             {
                 Net_SendBuffer(i, 0);
             }
+        }
         M_Free(msg);
-        break;
+        break; }
 
     case PCL_FINALE_REQUEST: {
-        finaleid_t fid = Reader_ReadUInt32(msgReader);
-        uint16_t params = Reader_ReadUInt16(msgReader);
+        finaleid_t const fid = Reader_ReadUInt32(::msgReader);
+        duint16 const params = Reader_ReadUInt16(::msgReader);
         LOGDEV_NET_MSG("PCL_FINALE_REQUEST: fid=%i params=%i") << fid << params;
         if(params == 1)
         {
@@ -472,7 +478,7 @@ void Sv_HandlePacket(void)
         break;
 
     default:
-        LOGDEV_NET_ERROR("Invalid value: netBuffer.msg.type = %i") << netBuffer.msg.type;
+        LOGDEV_NET_ERROR("Invalid value: netBuffer.msg.type = %i") << ::netBuffer.msg.type;
         break;
     }
 }
@@ -731,11 +737,12 @@ void Sv_PlayerLeaves(unsigned int nodeID)
 
     wasInGame = plr->shared.inGame;
     plr->shared.inGame = false;
-    cl->connected = false;
-    cl->ready = false;
-    //cl->updateCount = 0;
-    cl->handshake = false;
-    cl->nodeID = 0;
+
+    cl->connected       = false;
+    cl->ready           = false;
+    //cl->updateCount     = 0;
+    cl->handshake       = false;
+    cl->nodeID          = 0;
     cl->bandwidthRating = BWR_DEFAULT;
 
     // Remove the player's data from the register.

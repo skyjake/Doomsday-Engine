@@ -1,10 +1,9 @@
-/** @file dd_pinit.cpp Platform independent routines for initializing the engine.
- * @ingroup base
+/** @file dd_pinit.cpp  Platform independent routines for initializing the engine.
  *
  * @todo Move these to dd_init.cpp.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -16,9 +15,8 @@
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA</small>
+ * General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifdef WIN32
@@ -27,51 +25,37 @@
 #endif
 
 #include "de_base.h"
+#include "dd_pinit.h"
+
+#include <cstdarg>
+#include <de/String>
+#include <doomsday/doomsdayapp.h>
 #include "de_console.h"
 #include "de_system.h"
 #include "de_play.h"
-#include "de_network.h"
 #include "de_ui.h"
 #include "de_filesys.h"
-
 #ifdef __CLIENT__
 #  include "clientapp.h"
 #endif
+#ifdef __SERVER__
+#  include "server/sv_def.h"
+#endif
+
+#include "api_internaldata.h"
 
 #include "def_main.h"
 #include "gl/svg.h"
 
 #ifdef __CLIENT__
+#  include "network/net_demo.h"
+
 #  include "render/r_draw.h"
 #  include "render/r_main.h"
 #  include "render/rend_main.h"
+
 #  include "updater.h"
 #endif
-
-#include "api_def.h"
-#include "api_console.h"
-#include "api_filesys.h"
-#include "api_internaldata.h"
-#include "api_material.h"
-#include "api_materialarchive.h"
-#include "api_map.h"
-#include "api_mapedit.h"
-#include "api_resource.h"
-#include "api_sound.h"
-#include "api_fontrender.h"
-#include "api_svg.h"
-#ifdef __CLIENT__
-#  include "api_client.h"
-#  include "api_render.h"
-#endif
-#ifdef __SERVER__
-#  include "api_server.h"
-#endif
-
-#include <doomsday/doomsdayapp.h>
-#include <de/String>
-#include <de/Library>
-#include <cstdarg>
 
 using namespace de;
 
@@ -212,7 +196,7 @@ void DD_ShutdownAll()
 
 #ifdef __CLIENT__
     // Stop all demo recording.
-    for(int i = 0; i < DDMAXPLAYERS; ++i)
+    for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
         Demo_StopRecording(i);
     }

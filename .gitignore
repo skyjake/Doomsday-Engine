@@ -30,3 +30,5 @@ vc100.pdb
 *.pyc
 *~
 precompiled.h.cpp
+*.h.orig
+*.cpp.orig

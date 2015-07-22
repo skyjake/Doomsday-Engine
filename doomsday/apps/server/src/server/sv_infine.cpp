@@ -1,8 +1,7 @@
-/** @file sv_infine.cpp Server-side InFine.
- * @ingroup server
+/** @file sv_infine.cpp  Server-side InFine.
  *
  * @authors Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,32 +17,37 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de_network.h"
+#include "server/sv_infine.h"
+
+#include "network/net_main.h"
+#include "network/net_msg.h"
+
 #include "ui/infine/finale.h"
 
-void Sv_Finale(finaleid_t id, int flags, char const *script)
-{
-    size_t scriptLen = 0;
+using namespace de;
 
-    if(isClient) return;
+void Sv_Finale(finaleid_t id, dint flags, char const *script)
+{
+    if(::isClient) return;
 
     // How much memory do we need?
+    dsize scriptLen = 0;
     if(script)
     {
         flags |= FINF_SCRIPT;
-        scriptLen = strlen(script);
+        scriptLen = qstrlen(script);
     }
 
     // First the flags.
     Msg_Begin(PSV_FINALE);
-    Writer_WriteByte(msgWriter, flags);
-    Writer_WriteUInt32(msgWriter, id); // serverside Id
+    Writer_WriteByte(::msgWriter, flags);
+    Writer_WriteUInt32(::msgWriter, id); // serverside Id
 
     if(script)
     {
         // Then the script itself.
-        Writer_WriteUInt32(msgWriter, scriptLen);
-        Writer_Write(msgWriter, script, scriptLen);
+        Writer_WriteUInt32(::msgWriter, scriptLen);
+        Writer_Write(::msgWriter, script, scriptLen);
     }
 
     Msg_End();
