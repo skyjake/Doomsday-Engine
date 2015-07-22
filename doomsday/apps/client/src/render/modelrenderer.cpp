@@ -351,8 +351,8 @@ void ModelRenderer::render(vissprite_t const &spr)
             Matrix4f::translate((spr.pose.origin + spr.pose.srvo).xzy());
 
     Matrix4f localMat =
-            Matrix4f::rotate(spr.pose.viewAligned? spr.pose.yawAngleOffset :
-                                                   spr.pose.yaw,
+            Matrix4f::rotate(-90 + (spr.pose.viewAligned? spr.pose.yawAngleOffset :
+                                                         spr.pose.yaw),
                              Vector3f(0, 1, 0) /* vertical axis for yaw */);
 
     gl::Cull culling = gl::Back;
