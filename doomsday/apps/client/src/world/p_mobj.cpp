@@ -25,14 +25,15 @@
 #include "world/p_object.h"
 
 #include <cmath>
+#include <de/vector1.h>
 #include <de/Error>
+#include <doomsday/console/cmd.h>
+#include <doomsday/console/exec.h>
+#include <doomsday/console/var.h>
 #include <doomsday/defs/sprite.h>
 #include <doomsday/world/mobjthinkerdata.h>
 
-#include "de_console.h"
 #include "de_system.h"
-#include "de_play.h"
-#include "de_misc.h"
 #include "de_audio.h"
 #include "def_main.h"
 
@@ -54,6 +55,7 @@
 #endif
 
 #include "world/worldsystem.h" // validCount
+#include "world/p_players.h"
 #include "world/thinkers.h"
 #include "BspLeaf"
 #include "ConvexSubspace"

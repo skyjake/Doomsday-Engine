@@ -22,7 +22,6 @@
 #include "de_base.h"
 #include "network/net_main.h"
 
-#include "de_console.h"
 #include "de_system.h"
 
 #include "network/net_buf.h"

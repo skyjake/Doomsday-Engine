@@ -30,22 +30,24 @@
 #include <cstdarg>
 #include <de/String>
 #include <doomsday/doomsdayapp.h>
-#include "de_console.h"
-#include "de_system.h"
-#include "de_play.h"
-#include "de_ui.h"
+#include <doomsday/console/exec.h>
+#include <doomsday/console/knownword.h>
 #include "de_filesys.h"
+#include "de_system.h"
+#include "de_ui.h"
 #ifdef __CLIENT__
 #  include "clientapp.h"
 #endif
 #ifdef __SERVER__
 #  include "server/sv_def.h"
 #endif
+#include "def_main.h"
 
 #include "api_internaldata.h"
 
-#include "def_main.h"
 #include "gl/svg.h"
+
+#include "world/p_players.h"
 
 #ifdef __CLIENT__
 #  include "network/net_demo.h"

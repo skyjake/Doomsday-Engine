@@ -1,9 +1,8 @@
-/** @file hq2x.cpp High-Quality 2x Graphics Resizing. 
- * @ingroup resource
+/** @file hq2x.cpp  High-Quality 2x Graphics Resizing. 
  *
  * @authors Copyright © 2003 Maxim Stepin <maxst@hiend3d.com>
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2009-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,16 +18,15 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <stdlib.h>
-#include <de/memory.h>
-
 #include "de_platform.h"
+#include "resource/hq2x.h"
+
+#include <cstdlib>
+#include <de/memory.h>
 #include "dd_main.h"
 #include "dd_types.h"
 #include "dd_share.h"
-#include "de_console.h"
 #include "resource/image.h"
-#include "resource/hq2x.h"
 
 /*
  * RGB color space.

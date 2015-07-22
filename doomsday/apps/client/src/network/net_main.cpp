@@ -26,15 +26,16 @@
 #include <de/charsymbols.h>
 #include <de/Value>
 #include <de/Version>
+#include <doomsday/console/cmd.h>
 #include <doomsday/console/exec.h>
-#include "de_console.h"
-#include "de_graphics.h"
-#include "de_misc.h"
+#include <doomsday/console/var.h>
 #include "de_system.h"
 #include "de_ui.h"
 #include "dd_def.h"
 #include "dd_loop.h"
 #include "dd_main.h"
+
+#include "api_console.h"
 
 #ifdef __CLIENT__
 #  include "client/cl_def.h"
@@ -53,10 +54,13 @@
 #include "network/net_event.h"
 
 #ifdef __CLIENT__
+#  include "gl/gl_main.h"
+
 #  include "api_fontrender.h"
 #  include "render/rend_main.h"
-#  include "render/lightgrid.h"
 #  include "render/blockmapvisual.h"
+#  include "render/lightgrid.h"
+#  include "render/viewports.h"
 
 #  include "edit_bias.h"
 #  include "ui/inputdebug.h"

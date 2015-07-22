@@ -24,14 +24,12 @@
 #ifdef __SERVER__
 #  include <de/TextApp>
 #endif
-#include "de_console.h"
+#include <doomsday/console/exec.h>
+#include <doomsday/console/var.h>
+
 #include "de_system.h"
-#include "de_render.h"
-#include "de_play.h"
-#include "de_graphics.h"
 #include "de_audio.h"
 #include "de_ui.h"
-#include "de_misc.h"
 
 #include <de/App>
 #include <doomsday/doomsdayapp.h>
@@ -49,7 +47,12 @@
 #endif
 #include "network/net_event.h"
 
+#include "world/p_ticker.h"
+
 #ifdef __CLIENT__
+#  include "render/rend_font.h"
+#  include "render/viewports.h"
+
 #  include "ui/busyvisual.h"
 #  include "ui/clientwindow.h"
 #endif

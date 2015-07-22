@@ -1,7 +1,7 @@
 /** @file r_things.cpp  Map Object => Vissprite Projection.
  *
  * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  * @authors Copyright © 1993-1996 by id Software, Inc.
  *
@@ -28,18 +28,21 @@
 #include <doomsday/defs/sprite.h>
 
 #include "clientapp.h"
-#include "de_render.h"
-#include "dd_main.h" // App_WorldSystem()
-#include "dd_loop.h" // frameTimePos
-#include "def_main.h" // states
+#include "dd_main.h"  // App_WorldSystem()
+#include "dd_loop.h"  // frameTimePos
+#include "def_main.h"  // states
+#include "r_util.h"
 
+#include "gl/gl_main.h"
 #include "gl/gl_tex.h"
-#include "gl/gl_texmanager.h" // GL_PrepareFlaremap
+#include "gl/gl_texmanager.h"  // GL_PrepareFlaremap
 
-#include "network/net_main.h" // clients[]
+#include "network/net_main.h"  // clients[]
 
+#include "render/r_main.h"
 #include "render/angleclipper.h"
 #include "render/mobjanimator.h"
+#include "render/rend_halo.h"
 #include "render/vissprite.h"
 
 #include "world/map.h"

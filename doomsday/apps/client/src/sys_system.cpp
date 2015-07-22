@@ -35,23 +35,22 @@
 #include <de/App>
 #include <de/Loop>
 #include <doomsday/doomsdayapp.h>
-#include "de_console.h"
+#include <doomsday/console/exec.h>
+
 #include "de_system.h"
-#include "de_graphics.h"
-#include "de_misc.h"
 #ifdef __CLIENT__
 #  include "clientapp.h"
 #endif
-
 #include "dd_main.h"
 #include "dd_loop.h"
+
+#include "audio/s_main.h"
 #ifdef __CLIENT__
 #  include "gl/gl_main.h"
 #endif
-#include "ui/nativeui.h"
 #include "network/net_main.h"
 #include "network/net_buf.h"
-#include "audio/s_main.h"
+#include "ui/nativeui.h"
 
 #if defined(WIN32) && !defined(_DEBUG)
 #  define DENG_CATCH_SIGNALS

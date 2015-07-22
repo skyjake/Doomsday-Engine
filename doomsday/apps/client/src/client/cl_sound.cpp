@@ -20,13 +20,15 @@
 #include "de_base.h"
 #include "client/cl_sound.h"
 
-#include "de_console.h"
-#include "de_play.h"
 #include "de_audio.h"
 
 #include "api_client.h"
 #include "client/cl_player.h"
 #include "network/net_msg.h"
+
+#include "world/map.h"
+#include "world/p_players.h"
+#include "Sector"
 
 using namespace de;
 

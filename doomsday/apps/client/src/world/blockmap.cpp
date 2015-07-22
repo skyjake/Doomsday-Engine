@@ -1,7 +1,7 @@
 /** @file blockmap.cpp  World map element blockmap.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 1993-1996 by id Software, Inc.
  *
  * @par License
@@ -19,17 +19,13 @@
  * 02110-1301 USA</small>
  */
 
+#include "de_base.h"
 #include "world/blockmap.h"
 
 #include <cmath>
 #include <de/memoryzone.h>
 #include <de/vector1.h>
 #include <de/Vector>
-
-#include "de_base.h"
-#include "de_console.h"
-#include "de_graphics.h" // For debug visual.
-#include "de_render.h" // For debug visual.
 
 namespace de {
 

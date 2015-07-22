@@ -1,7 +1,7 @@
-/** @file huecirclevisual.cpp HueCircle visualizer.
+/** @file huecirclevisual.cpp  HueCircle visualizer.
  *
  * @authors Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,14 +17,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <de/mathutil.h> // M_HSVToRGB(), remove me (use QColor)
-
 #include "de_base.h"
-#include "de_graphics.h"
-
-#include "HueCircle"
-
 #include "render/huecirclevisual.h"
+
+#include <de/mathutil.h>  // M_HSVToRGB(), remove me (use QColor)
+#include "HueCircle"
 
 using namespace de;
 

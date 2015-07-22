@@ -1,7 +1,7 @@
-/**\file r_util.cpp
+/** @file r_util.cpp  Refresh Utility Routines.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,22 +17,19 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Refresh Utility Routines.
- */
+#include "de_base.h"
+#include "r_util.h"
 
 #include <cmath>
-
-#include "de_base.h"
-#include "de_console.h"
-#include "de_play.h"
-#include "de_misc.h"
+#include <de/binangle.h>
+#include <de/vector1.h>
 
 #ifdef __CLIENT__
+#  include "world/p_players.h"
+
+#  include "api_render.h"
 #  include "render/viewports.h"
 #endif
-
-#include "r_util.h"
 
 using namespace de;
 

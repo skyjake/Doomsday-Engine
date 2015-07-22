@@ -1,6 +1,6 @@
-/** @file api_mapedit.cpp Internal runtime map editing interface.
+/** @file api_mapedit.cpp  Internal runtime map editing interface.
  *
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,12 +19,12 @@
 
 #define DENG_NO_API_MACROS_MAP_EDIT
 
+#include "de_platform.h"
+#include "api_mapedit.h"
+
 #include <de/Error>
 #include <de/Log>
 #include <de/StringPool>
-
-#include "de_platform.h"
-#include "de_console.h"
 #include "dd_main.h"
 
 #include "world/entitydatabase.h"
@@ -35,7 +35,6 @@
 #include "Surface"
 
 #include "edit_map.h"
-#include "api_mapedit.h"
 
 using namespace de;
 

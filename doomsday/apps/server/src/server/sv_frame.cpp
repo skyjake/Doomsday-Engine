@@ -21,9 +21,6 @@
 #include "server/sv_frame.h"
 
 #include <cmath>
-#include "de_console.h"
-#include "de_misc.h"
-#include "de_play.h"
 #include "de_system.h"
 #include "def_main.h"
 

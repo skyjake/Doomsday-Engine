@@ -1,8 +1,7 @@
 /** @file blockmapvisual.cpp  Graphical Blockmap Visual.
- * @ingroup world
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,21 +18,15 @@
  * 02110-1301 USA</small>
  */
 
+#include "de_base.h"
+#include "render/blockmapvisual.h"
+
 #include <de/aabox.h>
 #include <de/concurrency.h>
-
 #include <de/Vector>
-
-#include "de_base.h"
-#include "de_graphics.h"
-#include "de_render.h"
 #include "de_ui.h"
 
-#include "api_fontrender.h"
-
-#include "Face"
-#include "HEdge"
-
+#include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
 
 #include "world/blockmap.h"
@@ -42,8 +35,11 @@
 #include "world/p_object.h"
 #include "world/p_players.h"
 #include "ConvexSubspace"
+#include "Face"
+#include "HEdge"
 
-#include "render/blockmapvisual.h"
+#include "api_fontrender.h"
+#include "render/rend_font.h"
 
 using namespace de;
 

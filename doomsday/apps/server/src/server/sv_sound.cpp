@@ -23,10 +23,10 @@
 
 #include <de/Log>
 #include "de_audio.h"
-#include "de_console.h"
-#include "de_play.h"
 
 #include "network/net_main.h"
+
+#include "world/p_players.h"
 
 #include "server/sv_pool.h"
 

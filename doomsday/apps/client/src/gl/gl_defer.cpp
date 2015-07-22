@@ -1,8 +1,7 @@
-/** @file gl_defer.cpp Implementation of deferred GL tasks. 
- * @ingroup gl
+/** @file gl_defer.cpp  Implementation of deferred GL tasks. 
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,17 +20,15 @@
 
 #define LIBDENG_DISABLE_DEFERRED_GL_API // using regular GL API calls
 
-#ifdef UNIX
-#   include "de_platform.h"
-#endif
+#include "de_platform.h"
+#include "gl/gl_defer.h"
 
-#include "de_base.h"
-#include "de_console.h"
 #include "de_system.h"
-#include "de_graphics.h"
+#include "dd_main.h"
 #include "m_misc.h"
-#include "gl/gl_texmanager.h"
 
+#include "gl/gl_main.h"
+#include "gl/gl_texmanager.h"
 #include "gl/texturecontent.h"
 
 using namespace de;

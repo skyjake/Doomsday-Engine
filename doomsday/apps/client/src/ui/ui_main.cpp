@@ -1,7 +1,7 @@
-/** @file ui_main.cpp Graphical User Interface
+/** @file ui_main.cpp  Graphical User Interface.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,25 +17,26 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <cmath>
-
 #include "de_base.h"
-#include "de_console.h"
+#include "ui/ui_main.h"
+
+#include <cmath>
+#include <doomsday/console/cmd.h>
 #include "de_filesys.h"
 #include "de_system.h"
-#include "de_graphics.h"
 #include "de_ui.h"
-#include "de_misc.h"
 #include "clientapp.h"
 
 #include "api_fontrender.h"
-#include "resource/image.h"
+
+#include "gl/gl_main.h"
 #include "gl/texturecontent.h"
+
+#include "resource/image.h"
+
 #include "render/rend_main.h"
 #include "render/rend_font.h"
 #include "MaterialAnimator"
-
-#include "ui/ui_main.h"
 
 using namespace de;
 

@@ -86,7 +86,7 @@ Record &Sprite::view(dint angle)
             return view;
     }
     /// @throw MissingViewError  Invalid angle specified.
-    throw MissingViewError("Sprite::view", "Unknown view " + String::number(angle));
+    throw MissingViewError("Sprite::view", "Unknown view:" + String::number(angle));
 }
 
 Record &Sprite::nearestView(angle_t mobjAngle, angle_t angleToEye, bool noRotation)

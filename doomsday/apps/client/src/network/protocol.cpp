@@ -22,8 +22,6 @@
 #include <de/c_wrapper.h>
 
 #include "de_platform.h"
-#include "de_console.h"
-#include "de_misc.h"
 
 boolean Protocol_Receive(nodeid_t from)
 {

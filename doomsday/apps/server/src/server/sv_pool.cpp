@@ -28,15 +28,15 @@
 #include <de/mathutil.h>
 #include <de/timer.h>
 #include <de/vector1.h>
-#include "de_console.h"
-#include "de_play.h"
 
 #include "audio/s_main.h"
 
 #include "network/net_main.h"
 
 #include "world/p_object.h"
+#include "world/p_players.h"
 #include "world/thinkers.h"
+#include "Sector"
 
 using namespace de;
 

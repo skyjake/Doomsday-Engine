@@ -1,7 +1,7 @@
-/** @file entitydef.cpp World playsim data structures.
+/** @file entitydef.cpp  World playsim data structures.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,23 +18,20 @@
  * 02110-1301 USA</small>
  */
 
+#include "de_base.h"
+#include "world/entitydef.h"
+
 #include <cmath>
 #include <map>
-
 #include <de/memory.h>
-
 #include <de/Error>
 #include <de/Log>
 #include <de/String>
 #include <de/StringPool>
 
-#include "de_base.h"
-#include "de_play.h"
-
-#include "EntityDatabase"
-
 #include "world/map.h"
 #include "world/propertyvalue.h"
+#include "EntityDatabase"
 
 using namespace de;
 

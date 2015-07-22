@@ -1,7 +1,7 @@
-/**\file sys_opengl.cpp
+/** @file sys_opengl.cpp
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * @par License
@@ -18,21 +18,17 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de_platform.h"
 #include "de_base.h"
-#include "de_console.h"
-#include "de_graphics.h"
-#include "de_misc.h"
-
-#include "sys_system.h"
 #include "gl/sys_opengl.h"
 
+#include <QSet>
+#include <QStringList>
 #include <de/libcore.h>
 #include <de/concurrency.h>
 #include <de/GLInfo>
 #include <de/GLState>
-#include <QSet>
-#include <QStringList>
+#include "sys_system.h"
+#include "gl/gl_main.h"
 
 #ifdef WIN32
 #   define GETPROC(Type, x)   x = de::function_cast<Type>(wglGetProcAddress(#x))

@@ -24,23 +24,28 @@
 #include "de_base.h"
 #include "world/map.h"
 
-#include "de_console.h"  // Con_GetInteger
+#include <array>
+#include <QBitArray>
+#include <QMultiMap>
+#include <QVarLengthArray>
+
+#include <de/aabox.h>
+#include <de/vector1.h>
+#include <de/timer.h>
+#include <de/Rectangle>
+#include <doomsday/defs/mapinfo.h>
+#include <doomsday/defs/sky.h>
+
 #ifdef __CLIENT__
 #  include "clientapp.h"
+#  include "client/cl_mobj.h"
 #endif
 #include "m_nodepile.h"
 
-#include "Face"
-
-#include "BspLeaf"
-#include "BspNode"
-#include "ConvexSubspace"
-#include "Line"
-#include "Polyobj"
-#include "Sector"
-#include "SectorCluster"
-#include "Surface"
-#include "Vertex"
+#include "api_console.h"
+#ifdef __CLIENT__
+#  include "api_sound.h"
+#endif
 
 #include "world/bsp/partitioner.h"
 #include "world/worldsystem.h"  // ddMapSetup, validCount
@@ -52,14 +57,19 @@
 #include "world/polyobjdata.h"
 #include "world/sky.h"
 #include "world/thinkers.h"
+#include "BspLeaf"
+#include "BspNode"
+#include "ConvexSubspace"
+#include "Face"
+#include "Line"
+#include "Polyobj"
+#include "Sector"
+#include "SectorCluster"
+#include "Surface"
+#include "Vertex"
 #ifdef __CLIENT__
 #  include "Contact"
 #  include "ContactSpreader"
-#  include "client/cl_mobj.h"
-#endif
-
-#ifdef __CLIENT__
-#  include "api_sound.h"
 #endif
 
 #ifdef __CLIENT__
@@ -73,17 +83,6 @@
 #  include "render/rend_particle.h"
 #  include "render/skydrawable.h"
 #endif
-
-#include <de/Rectangle>
-#include <de/aabox.h>
-#include <de/vector1.h>
-#include <de/timer.h>
-#include <doomsday/defs/mapinfo.h>
-#include <doomsday/defs/sky.h>
-#include <QBitArray>
-#include <QMultiMap>
-#include <QVarLengthArray>
-#include <array>
 
 static int bspSplitFactor = 7;  ///< cvar
 
