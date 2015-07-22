@@ -173,10 +173,6 @@ static dint DD_StartupWorker(void *context);
 static dint DD_DummyWorker(void *context);
 static void DD_AutoLoad();
 
-#ifndef WIN32
-extern GETGAMEAPI GetGameAPI;
-#endif
-
 dint isDedicated;
 dint verbose;                      ///< For debug messages (-verbose).
 dint gameDataFormat;               ///< Game-specific data format identifier/selector.

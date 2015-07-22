@@ -37,10 +37,6 @@ namespace de {
 class File1;
 }
 
-#ifndef WIN32
-extern GETGAMEAPI GetGameAPI;
-#endif
-
 extern de::dint verbose;
 extern de::dint isDedicated;
 extern de::dint gameDataFormat;
