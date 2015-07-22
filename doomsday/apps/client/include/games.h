@@ -66,6 +66,9 @@ public:
     /// Notified after game resources have been located.
     DENG2_DEFINE_AUDIENCE2(Readiness, void gameReadinessUpdated())
 
+    /// Notified when a worker task is progressing.
+    DENG2_DEFINE_AUDIENCE2(Progress, void gameWorkerProgress(int progress))
+
 public:
     Games();
 
@@ -119,6 +122,8 @@ public:
      * Returns a list of all the Game instances in the collection.
      */
     All const &all() const;
+
+    de::LoopResult forAll(std::function<de::LoopResult (Game &)> callback) const;
 
     /**
      * Try to locate all startup resources for all registered games.

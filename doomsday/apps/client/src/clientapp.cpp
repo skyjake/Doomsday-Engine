@@ -54,6 +54,7 @@
 #include "ui/sys_input.h"
 #include "ui/clientwindowsystem.h"
 #include "ui/clientwindow.h"
+#include "ui/progress.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/dialogs/alertdialog.h"
 #include "ui/styledlogsinkformatter.h"
@@ -108,6 +109,7 @@ static Value *Function_App_Quit(Context &, Function::ArgumentValues const &)
 DENG2_PIMPL(ClientApp)
 , DENG2_OBSERVES(Plugins, PublishAPI)
 , DENG2_OBSERVES(Plugins, Notification)
+, DENG2_OBSERVES(Games, Progress)
 {    
     Binder binder;
     QScopedPointer<Updater> updater;
@@ -204,6 +206,7 @@ DENG2_PIMPL(ClientApp)
         LogBuffer::get().addSink(logAlarm);
         DoomsdayApp::plugins().audienceForPublishAPI() += this;
         DoomsdayApp::plugins().audienceForNotification() += this;
+        games.audienceForProgress() += this;
     }
 
     ~Instance()
@@ -248,6 +251,11 @@ DENG2_PIMPL(ClientApp)
         default:
             break;
         }
+    }
+
+    void gameWorkerProgress(int progress)
+    {
+        Con_SetProgress(progress);
     }
 
     /**

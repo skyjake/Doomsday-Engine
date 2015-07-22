@@ -23,7 +23,6 @@
 
 #include "dd_main.h"
 #include "def_main.h"
-#include "ui/progress.h"
 
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/console/cmd.h>
@@ -95,10 +94,12 @@ DENG2_PIMPL(Games)
 
     DENG2_PIMPL_AUDIENCE(Addition)
     DENG2_PIMPL_AUDIENCE(Readiness)
+    DENG2_PIMPL_AUDIENCE(Progress)
 };
 
 DENG2_AUDIENCE_METHOD(Games, Addition)
 DENG2_AUDIENCE_METHOD(Games, Readiness)
+DENG2_AUDIENCE_METHOD(Games, Progress)
 
 Games::Games() : d(new Instance(this))
 {}
@@ -244,31 +245,47 @@ void Games::locateStartupResources(Game &game)
     }
 }
 
-static int locateAllResourcesWorker(void *context)
+LoopResult Games::forAll(std::function<LoopResult (Game &)> callback) const
 {
-    Games *games = (Games *) context;
-    int n = 0;
-    foreach(Game *game, games->all())
+    foreach(Game *game, all())
     {
-        LOG_RES_MSG("Locating " _E(b) "\"%s\"" _E(.) "...") << game->title();
-
-        games->locateStartupResources(*game);
-        Con_SetProgress((n + 1) * 200 / games->count() - 1);
-
-        LOG_RES_VERBOSE(_E(l) "  Game: " _E(.)_E(>) "%s - %s") << game->title() << game->author();
-        LOG_RES_VERBOSE(_E(l) "  IdentityKey: " _E(.)_E(>)) << game->identityKey();
-        Game::printFiles(*game, FF_STARTUP);
-
-        LOG_RES_MSG(" " DENG2_CHAR_RIGHT_DOUBLEARROW " ") << game->statusAsText();
-        ++n;
+        if(auto result = callback(*game))
+        {
+            return result;
+        }
     }
-    return 0;
+    return LoopContinue;
 }
 
 void Games::locateAllResources()
 {
-    BusyMode_RunNewTaskWithName(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                locateAllResourcesWorker, (void *)this, "Locating game resources...");
+    int n = 1;
+    DoomsdayApp::busyMode().runNewTaskWithName(
+                BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                "Locating game resources...", [this, &n] (void *)
+    {
+        forAll([this, &n] (Game &game)
+        {
+            LOG_RES_MSG("Locating " _E(b) "\"%s\"" _E(.) "...") << game.title();
+
+            locateStartupResources(game);
+
+            DENG2_FOR_AUDIENCE2(Progress, i)
+            {
+                i->gameWorkerProgress(n * 200 / count() - 1);
+            }
+
+            LOG_RES_VERBOSE(_E(l) "  Game: " _E(.)_E(>) "%s - %s") << game.title() << game.author();
+            LOG_RES_VERBOSE(_E(l) "  IdentityKey: " _E(.)_E(>)) << game.identityKey();
+            Game::printFiles(game, FF_STARTUP);
+
+            LOG_RES_MSG(" " DENG2_CHAR_RIGHT_DOUBLEARROW " ") << game.statusAsText();
+            ++n;
+
+            return 0;
+        });
+        return LoopContinue;
+    });
 
     DENG2_FOR_AUDIENCE2(Readiness, i)
     {
