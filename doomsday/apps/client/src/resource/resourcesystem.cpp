@@ -529,8 +529,6 @@ DENG2_PIMPL(ResourceSystem)
 
     QMap<spritenum_t, SpriteSet> sprites;
 
-    NativePath nativeSavePath;
-
     Binder binder;
     Record savedSessionModule; // SavedSession: manipulation, conversion, etc... (based on native class SavedSession)
 
@@ -545,7 +543,6 @@ DENG2_PIMPL(ResourceSystem)
         , fontManifestIdMap        (0)
         , modelRepository          (0)
 #endif
-        , nativeSavePath           (App::app().nativeHomePath() / "savegames") // default
     {
         de::Uri::setResolverFunc(ResourceSystem::resolveSymbol);
 
@@ -583,15 +580,6 @@ DENG2_PIMPL(ResourceSystem)
                 << DENG2_FUNC(SavedSession_Convert,    "convert",    "gameId" << "savegamePath")
                 << DENG2_FUNC(SavedSession_ConvertAll, "convertAll", "gameId");
         App::scriptSystem().addNativeModule("SavedSession", savedSessionModule);
-
-        // Determine the root directory of the saved session repository.
-        if(int arg = App::commandLine().check("-savedir", 1))
-        {
-            // Using a custom root save directory.
-            App::commandLine().makeAbsolutePath(arg + 1);
-            nativeSavePath = App::commandLine().at(arg + 1);
-        }
-        // Else use the default.
 #endif
 
         App_Games().audienceForAddition() += this;
@@ -3869,11 +3857,6 @@ void ResourceSystem::cacheForCurrentMap()
 }
 
 #endif // __CLIENT__
-
-NativePath ResourceSystem::nativeSavePath()
-{
-    return d->nativeSavePath;
-}
 
 bool ResourceSystem::convertLegacySavegames(String const &gameId, String const &sourcePath)
 {

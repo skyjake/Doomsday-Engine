@@ -858,11 +858,6 @@ public:
 #endif // __CLIENT__
 
     /**
-     * Returns the native path of the root of the saved session repository
-     */
-    de::NativePath nativeSavePath();
-
-    /**
      * Utility for scheduling legacy savegame conversion(s) (delegated to background Tasks).
      *
      * @param gameId      Identity key of the game and corresponding subfolder name within
