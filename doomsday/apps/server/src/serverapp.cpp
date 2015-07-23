@@ -54,7 +54,6 @@ DENG2_PIMPL(ServerApp)
 , DENG2_OBSERVES(Plugins, PublishAPI)
 {
     QScopedPointer<ServerSystem> serverSystem;
-    Games games;
     QScopedPointer<ResourceSystem> resourceSys;
     WorldSystem worldSys;
     InFineSystem infineSys;
@@ -127,7 +126,7 @@ ServerApp::ServerApp(int &argc, char **argv)
     //addSystem(d->infineSys);
 
     // We must presently set the current game manually (the collection is global).
-    setGame(d->games.nullGame());
+    setGame(games().nullGame());
 }
 
 ServerApp::~ServerApp()
@@ -205,11 +204,6 @@ InFineSystem &ServerApp::infineSystem()
 ResourceSystem &ServerApp::resourceSystem()
 {
     return *app().d->resourceSys;
-}
-
-Games &ServerApp::games()
-{
-    return app().d->games;
 }
 
 WorldSystem &ServerApp::worldSystem()

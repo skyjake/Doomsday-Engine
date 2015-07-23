@@ -124,7 +124,6 @@ DENG2_PIMPL(ClientApp)
     ClientWindowSystem *winSys;
     InFineSystem infineSys; // instantiated at construction time
     ServerLink *svLink;
-    Games games;
     WorldSystem *worldSys;
 
     /**
@@ -206,7 +205,7 @@ DENG2_PIMPL(ClientApp)
         LogBuffer::get().addSink(logAlarm);
         DoomsdayApp::plugins().audienceForPublishAPI() += this;
         DoomsdayApp::plugins().audienceForNotification() += this;
-        games.audienceForProgress() += this;
+        self.games().audienceForProgress() += this;
     }
 
     ~Instance()
@@ -347,7 +346,7 @@ ClientApp::ClientApp(int &argc, char **argv)
     setTerminateFunc(handleLegacyCoreTerminate);
 
     // We must presently set the current game manually (the collection is global).
-    setGame(d->games.nullGame());
+    setGame(games().nullGame());
 
     d->binder.init(scriptSystem().nativeModule("App"))
             << DENG2_FUNC_NOARG (App_GamePlugin, "gamePlugin")
@@ -576,11 +575,6 @@ ClientWindowSystem &ClientApp::windowSystem()
     ClientApp &a = ClientApp::app();
     DENG2_ASSERT(a.d->winSys != 0);
     return *a.d->winSys;
-}
-
-Games &ClientApp::games()
-{
-    return app().d->games;
 }
 
 WorldSystem &ClientApp::worldSystem()

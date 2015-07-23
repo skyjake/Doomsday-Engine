@@ -23,6 +23,8 @@
 #include "dd_version.h"
 #include "dd_main.h"
 
+#include <doomsday/doomsdayapp.h>
+
 #include <de/MessageDialog>
 #include <de/SignalAction>
 #include <de/Untrapper>

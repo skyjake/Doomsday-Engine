@@ -22,10 +22,10 @@
 
 #include <de/TextApp>
 #include <doomsday/doomsdayapp.h>
+#include <doomsday/Games>
 #include "serversystem.h"
 #include "ui/infine/infinesystem.h"
 #include "resource/resourcesystem.h"
-#include "Games"
 #include "world/worldsystem.h"
 
 /**
@@ -48,7 +48,6 @@ public:
     static ServerSystem &serverSystem();
     static InFineSystem &infineSystem();
     static ResourceSystem &resourceSystem();
-    static de::Games &games();
     static de::WorldSystem &worldSystem();
 
 private:

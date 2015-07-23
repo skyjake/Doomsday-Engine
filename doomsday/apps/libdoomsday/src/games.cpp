@@ -18,10 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
-#include "games.h"
-
-#include "dd_main.h"
+#include "doomsday/games.h"
 
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/console/cmd.h>
@@ -37,7 +34,6 @@
 
 namespace de {
 
-/// @todo Belongs in App
 DENG2_PIMPL(Games)
 {
     /// The actual collection.
@@ -211,7 +207,8 @@ void Games::add(Game &game)
 
 void Games::locateStartupResources(Game &game)
 {
-    Game *oldCurrentGame = &App_CurrentGame();
+    Game *oldCurrentGame = &DoomsdayApp::currentGame();
+
     if(oldCurrentGame != &game)
     {
         /// @attention Kludge: Temporarily switch Game.
@@ -258,7 +255,7 @@ void Games::locateAllResources()
 {
     int n = 1;
     DoomsdayApp::busyMode().runNewTaskWithName(
-                BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                BUSYF_STARTUP | BUSYF_PROGRESS_BAR,
                 "Locating game resources...", [this, &n] (void *)
     {
         forAll([this, &n] (Game &game)
@@ -308,7 +305,7 @@ D_CMD(ListGames)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    Games &games = App_Games();
+    Games &games = DoomsdayApp::games();
     if(!games.count())
     {
         LOG_MSG("No games are currently registered.");
@@ -332,7 +329,7 @@ D_CMD(ListGames)
     DENG2_FOR_EACH_CONST(Games::GameList, i, found)
     {
         Game *game = i->game;
-        bool isCurrent = (&App_CurrentGame() == game);
+        bool isCurrent = (&DoomsdayApp::currentGame() == game);
 
         if(!list.isEmpty()) list += "\n";
 

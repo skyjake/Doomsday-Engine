@@ -18,11 +18,12 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
-#include "game.h"
-
-#include <doomsday/console/cmd.h>
-#include <doomsday/resource/manifest.h>
+#include "doomsday/game.h"
+#include "doomsday/console/cmd.h"
+#include "doomsday/filesys/file.h"
+#include "doomsday/resource/manifest.h"
+#include "doomsday/resource/system.h"
+#include "doomsday/doomsdayapp.h"
 
 #include <de/App>
 #include <de/Error>
@@ -103,7 +104,7 @@ bool Game::allStartupFilesFound() const
 
 Game::Status Game::status() const
 {
-    if(App_GameLoaded() && &App_CurrentGame() == this)
+    if(App_GameLoaded() && &DoomsdayApp::currentGame() == this)
     {
         return Loaded;
     }
@@ -185,7 +186,7 @@ String Game::legacySavegameNameExp() const
 
 String Game::legacySavegamePath() const
 {
-    NativePath nativeSavePath = App_ResourceSystem().nativeSavePath();
+    NativePath nativeSavePath = res::System::get().nativeSavePath();
 
     if(nativeSavePath.isEmpty()) return "";
     if(isNull()) return "";
@@ -344,14 +345,14 @@ D_CMD(InspectGame)
             LOG_WARNING("No game is currently loaded.\nPlease specify the identity-key of the game to inspect.");
             return false;
         }
-        game = &App_CurrentGame();
+        game = &DoomsdayApp::currentGame();
     }
     else
     {
         String idKey = argv[1];
         try
         {
-            game = &App_Games().byIdentityKey(idKey);
+            game = &DoomsdayApp::games().byIdentityKey(idKey);
         }
         catch(Games::NotFoundError const &)
         {

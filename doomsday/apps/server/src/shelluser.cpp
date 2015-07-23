@@ -26,12 +26,11 @@
 #include <de/LogSink>
 #include <doomsday/console/exec.h>
 #include <doomsday/console/knownword.h>
+#include <doomsday/games.h>
 
 #include "api_console.h"
 
 #include "dd_main.h"
-#include "games.h"
-#include "Game"
 #include "network/net_main.h"
 #include "world/map.h"
 #include "world/p_object.h"

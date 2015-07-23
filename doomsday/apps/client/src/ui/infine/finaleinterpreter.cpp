@@ -24,6 +24,7 @@
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/exec.h>
+#include <doomsday/Game>
 
 #include "de_base.h"
 #include "ui/infine/finaleinterpreter.h"
@@ -33,7 +34,6 @@
 
 #include "dd_main.h"
 #include "dd_def.h"
-#include "Game"
 
 #include "api_material.h"
 #include "api_render.h"

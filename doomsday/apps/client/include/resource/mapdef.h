@@ -22,10 +22,10 @@
 
 #include <doomsday/filesys/file.h>
 #include <doomsday/filesys/lumpindex.h>
+#include <doomsday/Game>
 #include <de/PathTree>
 #include <de/Record>
 #include <de/String>
-#include "Game"
 
 /**
  * Definition/manifeset for a map asset/resource.

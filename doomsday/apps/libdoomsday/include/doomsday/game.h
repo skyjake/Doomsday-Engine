@@ -18,19 +18,52 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_GAME_H
-#define DENG_GAME_H
+#ifndef LIBDOOMSDAY_GAME_H
+#define LIBDOOMSDAY_GAME_H
 
-#include "api_base.h"
+/**
+ * Defines the high-level properties of a logical game component. Note that this
+ * is POD; no construction or destruction is needed.
+ * @see DD_DefineGame() @ingroup game
+ */
+typedef struct gamedef_s {
+   /*
+    * Unique game mode key/identifier, 16 chars max (e.g., "doom1-ultimate").
+    * - Used during resource location for mode-specific assets.
+    * - Sent out in netgames (a client can't connect unless mode strings match).
+    */
+    char const *identityKey;
+
+    /// Name of the config directory.
+    char const *configDir;
+
+    /// Default title. May be overridden later.
+    char const *defaultTitle;
+
+    /// Default author. May be overridden later.
+    /// Used for (e.g.) the map author name if not specified in a Map Info definition.
+    char const *defaultAuthor;
+
+    /*
+     * Used when converting legacy savegames:
+     */
+    char const *legacySavegameNameExp;
+    char const *legacySavegameSubfolder;
+
+    /// Primary MAPINFO definition dat, if any (translated during game init).
+    char const *mainMapInfo;
+} GameDef;
+
+#ifdef __cplusplus
+
 #include <doomsday/plugins.h>
+#include <doomsday/resource/resourceclass.h>
 #include <de/Error>
 #include <de/Path>
 #include <de/String>
 #include <de/game/Game>
 #include <QMultiMap>
 
-struct manifest_s;
-struct gamedef_s;
 class ResourceManifest;
 
 namespace de {
@@ -159,7 +192,7 @@ public:
      *
      * @param manifest  Manifest to add.
      */
-    void addManifest(ResourceManifest &manifest);
+    virtual void addManifest(ResourceManifest &manifest);
 
     bool allStartupFilesFound() const;
 
@@ -232,27 +265,13 @@ public:
 public:
     NullGame();
 
-    void addManifest(struct manifest_s & /*record*/) {
+    void addManifest(ResourceManifest &) override {
         throw NullObjectError("NullGame::addResource", "Invalid action on null-object");
-    }
-
-    bool isRequiredResource(char const * /*absolutePath*/) {
-        return false; // Never.
-    }
-
-    bool allStartupFilesFound() const {
-        return true; // Always.
-    }
-
-    struct manifest_s *const *manifests(resourceclassid_t /*classId*/, int * /*count*/) const {
-        return 0;
-    }
-
-    static Game *fromDef(GameDef const & /*def*/) {
-        throw NullObjectError("NullGame::fromDef", "Not valid for null-object");
     }
 };
 
 } // namespace de
 
-#endif /* DENG_GAME_H */
+#endif // __cplusplus
+
+#endif /* LIBDOOMSDAY_GAME_H */

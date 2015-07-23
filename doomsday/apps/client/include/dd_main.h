@@ -27,7 +27,7 @@
 #include <doomsday/resource/resourceclass.h>
 #include <doomsday/gameapi.h>
 #include <doomsday/plugins.h>
-#include "Games"
+#include <doomsday/Games>
 
 #include "resource/resourcesystem.h"
 #include "world/worldsystem.h"
@@ -86,11 +86,6 @@ void DD_UpdateEngineState();
  * Switch to/activate the specified game.
  */
 bool App_ChangeGame(de::Game &game, bool allowReload = false);
-
-/**
- * Returns @c true if a game module is presently loaded.
- */
-dd_bool App_GameLoaded();
 
 /**
  * Returns the application's global Games (collection).

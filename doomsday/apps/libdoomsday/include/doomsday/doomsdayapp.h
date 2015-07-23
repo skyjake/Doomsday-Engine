@@ -20,6 +20,7 @@
 #define LIBDOOMSDAY_DOOMSDAYAPP_H
 
 #include "plugins.h"
+#include "games.h"
 #include "busymode.h"
 #include "gameapi.h"
 
@@ -45,10 +46,17 @@ public:
 public:
     static DoomsdayApp &app();
     static Plugins &plugins();
+    static de::Games &games();
+    static de::Game &currentGame();
     static BusyMode &busyMode();
 
 private:
     DENG2_PRIVATE(d)
 };
+
+/**
+ * Returns @c true if a game module is presently loaded.
+ */
+LIBDOOMSDAY_PUBLIC bool App_GameLoaded();
 
 #endif // LIBDOOMSDAY_DOOMSDAYAPP_H

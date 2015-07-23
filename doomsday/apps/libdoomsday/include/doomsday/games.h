@@ -18,11 +18,10 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_GAMES_H
-#define LIBDENG_GAMES_H
+#ifndef LIBDOOMSDAY_GAMES_H
+#define LIBDOOMSDAY_GAMES_H
 
 #include "game.h"
-#include "dd_share.h"
 #include <de/types.h>
 #include <de/str.h>
 #include <de/Observers>
@@ -164,4 +163,4 @@ private:
 
 } // namespace de
 
-#endif // LIBDENG_GAMES_H
+#endif // LIBDOOMSDAY_GAMES_H

@@ -38,6 +38,7 @@ static DoomsdayApp *theDoomsdayApp = nullptr;
 DENG2_PIMPL_NOREF(DoomsdayApp)
 {
     Plugins plugins;
+    Games games;
     BusyMode busyMode;
 
     /// @c true = We are using a custom user dir specified on the command line.
@@ -184,6 +185,16 @@ Plugins &DoomsdayApp::plugins()
     return DoomsdayApp::app().d->plugins;
 }
 
+Games &DoomsdayApp::games()
+{
+    return DoomsdayApp::app().d->games;
+}
+
+Game &DoomsdayApp::currentGame()
+{
+    return App::game().as<de::Game>();
+}
+
 BusyMode &DoomsdayApp::busyMode()
 {
     return DoomsdayApp::app().d->busyMode;
@@ -200,3 +211,8 @@ void *DoomsdayApp::moduleHandle() const
     return d->hInstance;
 }
 #endif
+
+bool App_GameLoaded()
+{
+    return App::appExists() && !DoomsdayApp::currentGame().isNull();
+}

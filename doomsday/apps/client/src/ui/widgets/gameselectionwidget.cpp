@@ -25,9 +25,9 @@
 #include "ui/widgets/savedsessionmenuwidget.h"
 #include "CommandAction"
 #include "clientapp.h"
-#include "games.h"
 #include "dd_main.h"
 
+#include <doomsday/games.h>
 #include <de/MenuWidget>
 #include <de/SequentialLayout>
 #include <de/FoldPanelWidget>

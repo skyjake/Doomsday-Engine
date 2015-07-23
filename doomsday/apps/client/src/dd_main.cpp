@@ -1212,13 +1212,6 @@ de::Games &App_Games()
     throw Error("App_Games", "App not yet initialized");
 }
 
-dd_bool App_GameLoaded()
-{
-    if(!App::appExists()) return false;
-
-    return !App_CurrentGame().isNull();
-}
-
 void App_ClearGames()
 {
     App_Games().clear();
@@ -1327,7 +1320,7 @@ gameid_t DD_GameIdForKey(char const *identityKey)
 
 de::Game &App_CurrentGame()
 {
-    return App::game().as<de::Game>();
+    return DoomsdayApp::currentGame();
 }
 
 bool App_ChangeGame(Game &game, bool allowReload)
