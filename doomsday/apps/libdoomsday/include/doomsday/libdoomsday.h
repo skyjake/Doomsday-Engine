@@ -44,4 +44,15 @@
 #  define LIBDOOMSDAY_EXTERN_C extern
 #endif
 
+#ifndef C_DECL
+#  if defined(WIN32)
+/// Defines the calling convention for compare functions. Only used on Windows.
+#    define C_DECL __cdecl
+#  elif defined(UNIX)
+#    define C_DECL
+#  else
+#    define C_DECL
+#  endif
+#endif
+
 #endif // LIBDOOMSDAY_MAIN_H

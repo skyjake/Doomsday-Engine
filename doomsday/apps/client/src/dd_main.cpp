@@ -1517,7 +1517,6 @@ bool App_ChangeGame(Game &game, bool allowReload)
                     << dint(game.pluginId());
             return false;
         }
-        Def_GetGameClasses();
     }
 
     // This is now the current game.

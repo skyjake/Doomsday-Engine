@@ -21,7 +21,7 @@
 
 #include "plugins.h"
 #include "busymode.h"
-#include "gameexport.h"
+#include "gameapi.h"
 
 /**
  * Common application-level state and components.

@@ -43,14 +43,13 @@
 #include <doomsday/filesys/fs_util.h>
 #include <doomsday/filesys/sys_direc.h>
 #include <doomsday/resource/manifest.h>
+#include <doomsday/world/xg.h>
 
 #include "dd_main.h"
 #include "dd_def.h"
 
 #include "api_def.h"
 #include "api_sound.h"
-
-#include "xgclass.h"
 
 #include "Generator"
 #ifdef __CLIENT__
@@ -69,24 +68,12 @@ using namespace de;
 #define LOOPi(n)    for(i = 0; i < (n); ++i)
 #define LOOPk(n)    for(k = 0; k < (n); ++k)
 
-struct actionlink_t
-{
-    char *name;      ///< Name of the routine.
-    void (*func)();  ///< Pointer to the function.
-};
-
 ded_t defs;  ///< The main definitions database.
 
 RuntimeDefs runtimeDefs;
 
 static bool defsInited;
 static mobjinfo_t *gettingFor;
-
-typedef QMap<String, acfnptr_t> ActionMap;  ///< name => native function pointer.
-static ActionMap actions;
-
-static xgclass_t nullXgClassLinks;  ///< Used when none defined.
-static xgclass_t *xgClassLinks;
 
 static inline FS1 &fileSys()
 {
@@ -110,33 +97,6 @@ void RuntimeDefs::clear()
     states.clear();
     texts.clear();
     stateInfo.clear();
-}
-
-void Def_GetGameClasses()
-{
-    // XG ckass links are provided by the game (which defines the class specific parameter names).
-    ::xgClassLinks = nullptr;
-    if(gx.GetVariable)
-    {
-        ::xgClassLinks = (xgclass_t *) gx.GetVariable(DD_XGFUNC_LINK);
-    }
-    if(!::xgClassLinks)
-    {
-        ::xgClassLinks = &::nullXgClassLinks;
-    }
-    // Let the parser know of the XG classes.
-    DED_SetXGClassLinks(::xgClassLinks);
-
-    // Action links are provided by the game (which owns the actual action functions).
-    ::actions.clear();
-    if(gx.GetVariable)
-    {
-        auto const *links = (actionlink_t const *) gx.GetVariable(DD_ACTION_LINK);
-        for(actionlink_t const *link = links; link && link->name; link++)
-        {
-            ::actions.insert(String(link->name).toLower(), link->func);
-        }
-    }
 }
 
 void Def_Init()
@@ -175,16 +135,6 @@ void Def_Destroy()
     ::runtimeDefs.clear();
 
     ::defsInited = false;
-}
-
-acfnptr_t Def_GetActionPtr(String const &name)
-{
-    if(!name.isEmpty())
-    {
-        auto found = actions.find(name.toLower());
-        if(found != actions.end()) return found.value();
-    }
-    return nullptr;  // Not found.
 }
 
 state_t *Def_GetState(dint num)
@@ -1234,7 +1184,7 @@ void Def_Read()
         st->flags     = dst.geti("flags");
         st->frame     = dst.geti("frame");
         st->tics      = dst.geti("tics");
-        st->action    = Def_GetActionPtr(dst.gets("action"));
+        st->action    = P_GetAction(dst.gets("action"));
         st->nextState = defs.getStateNum(dst.gets("nextState"));
 
         auto const &misc = dst.geta("misc");
@@ -1771,7 +1721,7 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
     // Find the right mapping table.
     for(dint k = 0; k < 20; ++k)
     {
-        dint const a = ::xgClassLinks[l->lineClass].iparm[k].map;
+        dint const a = XG_Class(l->lineClass)->iparm[k].map;
         if(a < 0) continue;
 
         if(a & MAP_SND)
@@ -1875,7 +1825,7 @@ dint Def_Get(dint type, char const *id, void *out)
     switch(type)
     {
     case DD_DEF_ACTION:
-        if(acfnptr_t action = Def_GetActionPtr(id))
+        if(acfnptr_t action = P_GetAction(id))
         {
             if(out) *(acfnptr_t *)out = action;
             return true;

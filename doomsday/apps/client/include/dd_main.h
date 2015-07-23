@@ -25,7 +25,7 @@
 #include <de/LibraryFile>
 #include <de/String>
 #include <doomsday/resource/resourceclass.h>
-#include <doomsday/gameexport.h>
+#include <doomsday/gameapi.h>
 #include <doomsday/plugins.h>
 #include "Games"
 

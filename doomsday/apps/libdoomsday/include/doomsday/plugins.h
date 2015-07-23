@@ -99,7 +99,7 @@ typedef struct {
 #include <de/Observers>
 #include "libdoomsday.h"
 #include "library.h"
-#include "gameexport.h"
+#include "gameapi.h"
 
 /**
  * Plugin loader.

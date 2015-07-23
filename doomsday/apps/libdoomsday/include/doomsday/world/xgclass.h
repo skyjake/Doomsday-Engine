@@ -17,11 +17,15 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DOOMSDAY_XG_LINE_CLASSES_H
-#define DOOMSDAY_XG_LINE_CLASSES_H
+#ifndef LIBDOOMSDAY_XG_CLASSES_H
+#define LIBDOOMSDAY_XG_CLASSES_H
 
 // When the common playsim is in place - Doomsday will call the
 // the XG Class Funcs which are owned by the game.
+
+#ifndef __DOOMSDAY__
+typedef struct line_s Line;
+#endif
 
 // iparm string mapping identifiers
 #define MAP_SND             0x01000000
@@ -58,7 +62,7 @@ typedef enum {
 #  endif
 #endif
 
-typedef struct xgclass_s{
+typedef struct xgclass_s {
     // Do function (called during ref iteration)
     int             (C_DECL *doFunc)();
 
@@ -78,4 +82,4 @@ typedef struct xgclass_s{
     xgclassparm_t   iparm[20]; // iparms
 } xgclass_t;
 
-#endif
+#endif // LIBDOOMSDAY_XG_CLASSES_H

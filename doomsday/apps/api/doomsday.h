@@ -69,7 +69,7 @@
 #include "api_svg.h"
 #include "api_uri.h"
 
-#include <doomsday/gameexport.h>
+#include <doomsday/gameapi.h>
 #include <doomsday/plugins.h>
 
 #include <de/memoryzone.h>

@@ -24,7 +24,7 @@
 #define LIBDENG_PORTABLE_INIT_H
 
 #include "api_internaldata.h"
-#include <doomsday/gameexport.h>
+#include <doomsday/gameapi.h>
 #include <doomsday/library.h>
 #include <de/c_wrapper.h>
 

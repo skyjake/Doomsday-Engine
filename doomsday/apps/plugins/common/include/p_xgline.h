@@ -31,7 +31,7 @@
 #define __XG_LINETYPE_H__
 
 #include "doomsday.h"
-#include "xgclass.h"
+#include <doomsday/world/xgclass.h>
 
 #ifdef __cplusplus
 class MapStateReader;

@@ -22,7 +22,6 @@
 #include "games.h"
 
 #include "dd_main.h"
-#include "def_main.h"
 
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/console/cmd.h>
@@ -218,7 +217,6 @@ void Games::locateStartupResources(Game &game)
         /// @attention Kludge: Temporarily switch Game.
         App::app().setGame(game);
         DoomsdayApp::plugins().exchangeGameEntryPoints(game.pluginId());
-        Def_GetGameClasses();
 
         // Re-init the filesystem subspace schemes using the search paths of this Game.
         App_FileSystem().resetAllSchemes();
@@ -238,7 +236,6 @@ void Games::locateStartupResources(Game &game)
         // Kludge end - Restore the old Game.
         App::app().setGame(*oldCurrentGame);
         DoomsdayApp::plugins().exchangeGameEntryPoints(oldCurrentGame->pluginId());
-        Def_GetGameClasses();
 
         // Re-init the filesystem subspace schemes using the search paths of this Game.
         App_FileSystem().resetAllSchemes();
