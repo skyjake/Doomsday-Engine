@@ -3571,12 +3571,12 @@ static QMap<dint, Record> buildSprites(QMultiMap<dint, SpriteFrameDef> const &fr
 
         for(dint angle = 0; angle < MAX_ANGLES / 2; ++angle)
         {
-            if(!sprite.hasView(angle * 2 + 1))
+            if(!sprite.hasView(angle * 2 + 1) && sprite.hasView(angle * 2))
             {
                 auto const &src = sprite.view(angle * 2);
                 sprite.addView(src.gets("material"), angle * 2 + 2, src.getb("mirrorX"));
             }
-            if(!sprite.hasView(angle * 2))
+            if(!sprite.hasView(angle * 2) && sprite.hasView(angle * 2 + 1))
             {
                 auto const &src = sprite.view(angle * 2 + 1);
                 sprite.addView(src.gets("material"), angle * 2 + 1, src.getb("mirrorX"));
