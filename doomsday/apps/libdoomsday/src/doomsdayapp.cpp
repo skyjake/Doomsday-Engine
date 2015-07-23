@@ -192,7 +192,7 @@ Games &DoomsdayApp::games()
 
 Game &DoomsdayApp::currentGame()
 {
-    return App::game().as<de::Game>();
+    return App::game().as<Game>();
 }
 
 BusyMode &DoomsdayApp::busyMode()

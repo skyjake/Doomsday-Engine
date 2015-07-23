@@ -65,10 +65,7 @@ typedef struct gamedef_s {
 #include <QMultiMap>
 
 class ResourceManifest;
-
-namespace de {
-
-class File1;
+namespace de { class File1; }
 
 /**
  * Records top-level game configurations registered by the loaded game plugin(s).
@@ -97,12 +94,12 @@ public:
      * @param legacySavegameSubfoler  Game-specific subdirectory of /home for legacy savegames.
      * @param mapMapInfo  Base relative path to the main MAPINFO definition data.
      */
-    Game(String const &identityKey, Path const &configDir,
-         String const &title                   = "Unnamed",
-         String const &author                  = "Unknown",
-         String const &legacySavegameNameExp   = "",
-         String const &legacySavegameSubfolder = "",
-         String const &mainMapInfo             = "");
+    Game(de::String const &identityKey, de::Path const &configDir,
+         de::String const &title                   = "Unnamed",
+         de::String const &author                  = "Unknown",
+         de::String const &legacySavegameNameExp   = "",
+         de::String const &legacySavegameSubfolder = "",
+         de::String const &mainMapInfo             = "");
 
     virtual ~Game();
 
@@ -118,13 +115,13 @@ public:
      *
      * @see status()
      */
-    String const &statusAsText() const;
+    de::String const &statusAsText() const;
 
     /**
      * Returns information about the game as styled text. Printed by "inspectgame",
      * for instance.
      */
-    String description() const;
+    de::String description() const;
 
     /**
      * Returns the unique identifier of the plugin which registered the game.
@@ -175,7 +172,7 @@ public:
     /**
      * Returns the regular expression used for locating legacy savegame files.
      */
-    String legacySavegameNameExp() const;
+    de::String legacySavegameNameExp() const;
 
     /**
      * Determine the absolute path to the legacy savegame folder for the game. If there is
@@ -183,7 +180,7 @@ public:
      * the introduction of the modern, package-based .save format) then a zero length string
      * is returned.
      */
-    String legacySavegamePath() const;
+    de::String legacySavegamePath() const;
 
     /**
      * Add a new manifest to the list of manifests.
@@ -213,7 +210,7 @@ public:
      *
      * @return  @c true iff @a file is required by this game.
      */
-    bool isRequiredFile(File1 &file);
+    bool isRequiredFile(de::File1 &file);
 
 public:
     /**
@@ -239,7 +236,7 @@ public:
      * @param withStatus  @c true to  include the current availability/load status
      *                    of each file.
      */
-    String filesAsText(int rflags, bool withStatus = true) const;
+    de::String filesAsText(int rflags, bool withStatus = true) const;
 
     static void printFiles(Game const &game, int rflags, bool printStatus = true);
 
@@ -269,8 +266,6 @@ public:
         throw NullObjectError("NullGame::addResource", "Invalid action on null-object");
     }
 };
-
-} // namespace de
 
 #endif // __cplusplus
 

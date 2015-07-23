@@ -495,7 +495,7 @@ static void readAllDefinitions()
 
     if(App_GameLoaded())
     {
-        de::Game &game = App_CurrentGame();
+        Game &game = App_CurrentGame();
 
         // Some games use definitions that are translated to DED.
         QStringList mapInfoUrns = allMapInfoUrns();

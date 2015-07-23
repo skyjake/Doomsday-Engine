@@ -1198,7 +1198,7 @@ static dint DD_ActivateGameWorker(void *context)
     return 0;
 }
 
-de::Games &App_Games()
+Games &App_Games()
 {
     if(App::appExists())
     {
@@ -1218,7 +1218,7 @@ void App_ClearGames()
     App::app().setGame(App_Games().nullGame());
 }
 
-static void populateGameInfo(GameInfo &info, de::Game &game)
+static void populateGameInfo(GameInfo &info, Game &game)
 {
     info.identityKey = AutoStr_FromTextStd(game.identityKey().toUtf8().constData());
     info.title       = AutoStr_FromTextStd(game.title().toUtf8().constData());
@@ -1318,7 +1318,7 @@ gameid_t DD_GameIdForKey(char const *identityKey)
     return 0; // Invalid id.
 }
 
-de::Game &App_CurrentGame()
+Game &App_CurrentGame()
 {
     return DoomsdayApp::currentGame();
 }
@@ -1811,7 +1811,7 @@ static void initialize()
     // Attempt automatic game selection.
     if(!CommandLine_Exists("-noautoselect") || isDedicated)
     {
-        if(de::Game *game = DD_AutoselectGame())
+        if(Game *game = DD_AutoselectGame())
         {
             // An implicit game session profile has been defined.
             // Add all resources specified using -file options on the command line

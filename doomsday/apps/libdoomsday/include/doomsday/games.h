@@ -27,10 +27,8 @@
 #include <de/Observers>
 #include <QList>
 
-namespace de {
-
 /**
- * Encapsulates a collection of de::Game instances and the logical operations
+ * Encapsulates a collection of Game instances and the logical operations
  * which are performed upon it (such as searches and various index printing
  * algorithms).
  *
@@ -91,7 +89,7 @@ public:
      *
      * @throws NotFoundError if no game is associated with @a identityKey.
      */
-    Game &byIdentityKey(String identityKey) const;
+    Game &byIdentityKey(de::String identityKey) const;
 
     /**
      * @return  Game associated with @a gameId.
@@ -160,7 +158,5 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
-
-} // namespace de
 
 #endif // LIBDOOMSDAY_GAMES_H

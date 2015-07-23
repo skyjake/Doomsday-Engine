@@ -32,7 +32,7 @@
 #include <de/charsymbols.h>
 #include <QtAlgorithms>
 
-namespace de {
+using namespace de;
 
 DENG2_PIMPL(Games)
 {
@@ -364,5 +364,3 @@ void Games::consoleRegister() //static
 
     Game::consoleRegister();
 }
-
-} // namespace de

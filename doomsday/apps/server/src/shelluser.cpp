@@ -96,7 +96,7 @@ void ShellUser::sendInitialUpdate()
 
 void ShellUser::sendGameState()
 {
-    de::Game &game = App_CurrentGame();
+    Game &game = App_CurrentGame();
     String mode = (App_GameLoaded()? game.identityKey() : "");
 
     /**

@@ -24,6 +24,8 @@
 #include "busymode.h"
 #include "gameapi.h"
 
+class Players;
+
 /**
  * Common application-level state and components.
  *
@@ -46,8 +48,9 @@ public:
 public:
     static DoomsdayApp &app();
     static Plugins &plugins();
-    static de::Games &games();
-    static de::Game &currentGame();
+    static Games &games();
+    static Players &players();
+    static Game &currentGame();
     static BusyMode &busyMode();
 
 private:

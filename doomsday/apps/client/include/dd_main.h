@@ -85,17 +85,17 @@ void DD_UpdateEngineState();
 /**
  * Switch to/activate the specified game.
  */
-bool App_ChangeGame(de::Game &game, bool allowReload = false);
+bool App_ChangeGame(Game &game, bool allowReload = false);
 
 /**
  * Returns the application's global Games (collection).
  */
-de::Games &App_Games();
+Games &App_Games();
 
 /**
  * Returns the current game from the application's global collection.
  */
-de::Game &App_CurrentGame();
+Game &App_CurrentGame();
 
 /**
  * Frees the info structures for all registered games.

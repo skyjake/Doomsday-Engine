@@ -52,7 +52,7 @@ public:
     /**
      * Returns the id used to uniquely reference the map in some (old) definitions.
      */
-    de::String composeUniqueId(de::Game const &currentGame) const;
+    de::String composeUniqueId(Game const &currentGame) const;
 
     MapDef &setSourceFile(de::File1 *newSourceFile);
 
