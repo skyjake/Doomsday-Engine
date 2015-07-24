@@ -19,7 +19,16 @@
 #ifndef LIBDOOMSDAY_PLAYERS_H
 #define LIBDOOMSDAY_PLAYERS_H
 
+/// Maximum number of players supported by the engine.
+#define DDMAXPLAYERS        16
+
+#ifdef __cplusplus
+
 #include "libdoomsday.h"
+#include <functional>
+
+class Player;
+struct ddplayer_s;
 
 /**
  * Base class for player state: common functionality shared by both the server
@@ -28,11 +37,43 @@
 class LIBDOOMSDAY_PUBLIC Players
 {
 public:
-    Players();
+    typedef std::function<Player *()> Constructor;
+
+public:
+    /**
+     * Constructs a new Players array, and populates it with DDMAXPLAYERS players.
+     *
+     * @param playerConstructor  Function for creating new player instances.
+     */
+    Players(Constructor playerConstructor);
+
+    Player &at(int index) const;
+
+    de::LoopResult forAll(std::function<de::LoopResult (Player &)> func) const;
+
+    /**
+     * Finds the index number of a player.
+     *
+     * @param player  Player.
+     *
+     * @return Index of the player, or -1 if not found.
+     */
+    int indexOf(Player const *player) const;
+
+    /**
+     * Finds the index number of a player based on the public data.
+     *
+     * @param player  Player's public data.
+     *
+     * @return Index of the player, or -1 if not found.
+     */
+    int indexOf(ddplayer_s const *publicData) const;
 
 private:
     DENG2_PRIVATE(d)
 };
+
+#endif // __cplusplus
 
 #endif // LIBDOOMSDAY_PLAYERS_H
 

@@ -39,6 +39,7 @@
 #include <de/Garbage>
 
 #include "clientapp.h"
+#include "clientplayer.h"
 #include "alertmask.h"
 #include "dd_main.h"
 #include "dd_def.h"
@@ -332,7 +333,9 @@ DENG2_PIMPL(ClientApp)
 };
 
 ClientApp::ClientApp(int &argc, char **argv)
-    : BaseGuiApp(argc, argv), d(new Instance(this))
+    : BaseGuiApp(argc, argv)
+    , DoomsdayApp([] () -> Player * { return new ClientPlayer; })
+    , d(new Instance(this))
 {
     novideo = false;
 

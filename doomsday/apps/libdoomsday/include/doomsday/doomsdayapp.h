@@ -23,8 +23,7 @@
 #include "games.h"
 #include "busymode.h"
 #include "gameapi.h"
-
-class Players;
+#include "players.h"
 
 /**
  * Common application-level state and components.
@@ -35,7 +34,7 @@ class Players;
 class LIBDOOMSDAY_PUBLIC DoomsdayApp
 {
 public:
-    DoomsdayApp();
+    DoomsdayApp(Players::Constructor playerConstructor);
 
     void determineGlobalPaths();
 

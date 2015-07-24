@@ -18,10 +18,47 @@
 
 #include "doomsday/player.h"
 
+using namespace de;
+
 DENG2_PIMPL_NOREF(Player)
 {
+    ddplayer_t publicData;
+    Record info;
 
+    Instance()
+    {
+        zap(publicData);
+    }
 };
 
 Player::Player() : d(new Instance)
 {}
+
+ddplayer_t &Player::publicData()
+{
+    return d->publicData;
+}
+
+Record const &Player::info() const
+{
+    return d->info;
+}
+
+Record &Player::info()
+{
+    return d->info;
+}
+
+short P_LookDirToShort(float lookDir)
+{
+    int dir = int( lookDir/110.f * DDMAXSHORT );
+
+    if(dir < DDMINSHORT) return DDMINSHORT;
+    if(dir > DDMAXSHORT) return DDMAXSHORT;
+    return (short) dir;
+}
+
+float P_ShortToLookDir(short s)
+{
+    return s / float( DDMAXSHORT ) * 110.f;
+}

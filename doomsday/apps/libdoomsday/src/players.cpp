@@ -17,13 +17,68 @@
  */
 
 #include "doomsday/players.h"
+#include "doomsday/player.h"
 
 using namespace de;
 
 DENG2_PIMPL_NOREF(Players)
 {
+    Player *players[DDMAXPLAYERS];
 
+    Instance()
+    {
+        zap(players);
+    }
 };
 
-Players::Players() : d(new Instance)
-{}
+Players::Players(Constructor playerConstructor) : d(new Instance)
+{
+    for(auto &plr : d->players)
+    {
+        plr = playerConstructor();
+        DENG2_ASSERT(plr->is<Player>());
+    }
+}
+
+Player &Players::at(int index) const
+{
+    DENG2_ASSERT(index >= 0);
+    DENG2_ASSERT(index < DDMAXPLAYERS);
+    return *d->players[index];
+}
+
+LoopResult Players::forAll(std::function<LoopResult (Player &)> func) const
+{
+    for(auto &plr : d->players)
+    {
+        if(auto result = func(*plr))
+        {
+            return result;
+        }
+    }
+    return LoopContinue;
+}
+
+int Players::indexOf(Player const *player) const
+{
+    for(int i = 0; i < DDMAXPLAYERS; ++i)
+    {
+        if(d->players[i] == player)
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int Players::indexOf(ddplayer_s const *publicData) const
+{
+    for(int i = 0; i < DDMAXPLAYERS; ++i)
+    {
+        if(&d->players[i]->publicData() == publicData)
+        {
+            return i;
+        }
+    }
+    return -1;
+}

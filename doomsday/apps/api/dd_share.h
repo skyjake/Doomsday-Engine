@@ -40,6 +40,8 @@
 #include <string.h>
 #include <stdarg.h>
 #include <de/aabox.h>
+#include <doomsday/players.h>
+#include <doomsday/player.h>
 #include "dengproject.h"
 #include "dd_version.h"
 #include "dd_types.h"
@@ -63,9 +65,6 @@ extern "C" {
 //------------------------------------------------------------------------
 
 /// @defgroup apiFlags Flags
-
-/// Maximum number of players supported by the engine.
-#define DDMAXPLAYERS        16
 
 // The case-independent strcmps have different names.
 #if WIN32

@@ -35,6 +35,8 @@
 #include "sys_system.h"
 #include "def_main.h"
 
+#include "serverplayer.h"
+
 #if WIN32
 #  include "dd_winit.h"
 #elif UNIX
@@ -100,7 +102,9 @@ DENG2_PIMPL(ServerApp)
 };
 
 ServerApp::ServerApp(int &argc, char **argv)
-    : TextApp(argc, argv), d(new Instance(this))
+    : TextApp(argc, argv)
+    , DoomsdayApp([] () -> Player * { return new ServerPlayer; })
+    , d(new Instance(this))
 {   
     novideo = true;
 

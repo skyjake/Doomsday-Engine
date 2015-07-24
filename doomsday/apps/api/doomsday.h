@@ -71,6 +71,8 @@
 
 #include <doomsday/gameapi.h>
 #include <doomsday/plugins.h>
+#include <doomsday/players.h>
+#include <doomsday/player.h>
 
 #include <de/memoryzone.h>
 #include <de/point.h>

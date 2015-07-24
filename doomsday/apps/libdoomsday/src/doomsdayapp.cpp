@@ -40,6 +40,7 @@ DENG2_PIMPL_NOREF(DoomsdayApp)
     Plugins plugins;
     Games games;
     BusyMode busyMode;
+    Players players;
 
     /// @c true = We are using a custom user dir specified on the command line.
     bool usingUserDir = false;
@@ -55,7 +56,8 @@ DENG2_PIMPL_NOREF(DoomsdayApp)
     HINSTANCE hInstance = NULL;
 #endif
 
-    Instance()
+    Instance(Players::Constructor playerConstructor)
+        : players(playerConstructor)
     {
 #ifdef WIN32
         hInstance = GetModuleHandle(NULL);
@@ -163,7 +165,8 @@ DENG2_PIMPL_NOREF(DoomsdayApp)
 #endif // WIN32
 };
 
-DoomsdayApp::DoomsdayApp() : d(new Instance)
+DoomsdayApp::DoomsdayApp(Players::Constructor playerConstructor)
+    : d(new Instance(playerConstructor))
 {
     DENG2_ASSERT(!theDoomsdayApp);
     theDoomsdayApp = this;
@@ -188,6 +191,11 @@ Plugins &DoomsdayApp::plugins()
 Games &DoomsdayApp::games()
 {
     return DoomsdayApp::app().d->games;
+}
+
+Players &DoomsdayApp::players()
+{
+    return DoomsdayApp::app().d->players;
 }
 
 Game &DoomsdayApp::currentGame()
