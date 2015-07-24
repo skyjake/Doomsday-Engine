@@ -343,9 +343,9 @@ class Event:
                     msg += osName
                     isFirst = False
                 msg += '<td>'
-                msg += '<a href="%s">%s</a>' % (self.download_uri(binary), binary)
+                msg += '<a href="%s">%s</a>' % (self.download_fallback_uri(binary), binary)
                 if self.download_fallback_uri(binary) != self.download_uri(binary):
-                    msg += ' (<a href="%s">alt</a>)' % (self.download_fallback_uri(binary))
+                    msg += ' (<a href="%s">SF.net</a>)' % (self.download_uri(binary))
 
                 # Status of the log.
                 logName = self.compressed_log_filename(binary)
