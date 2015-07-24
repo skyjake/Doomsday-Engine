@@ -247,15 +247,7 @@ set_target_properties (server PROPERTIES
 )
 
 # There's some old code here so relax the warnings a bit.
-if (CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
-    set_property (TARGET server 
-        APPEND PROPERTY COMPILE_OPTIONS
-            -Wno-missing-field-initializers 
-            -Wno-missing-braces
-            -Wno-nested-anon-types
-            -Wno-gnu-anonymous-struct
-    )
-endif ()
+relaxed_warnings (server)
 
 target_link_libraries (server
     Deng::libcore
