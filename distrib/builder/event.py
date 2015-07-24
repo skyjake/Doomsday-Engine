@@ -2,6 +2,7 @@ import os, glob, shutil, time
 import build_number
 import config
 import utils
+import xml.etree.ElementTree as ElementTree
 
 def log_filename(package, osIdent, ext='txt.gz'):
     return 'buildlog-%s-%s.%s' % (package, osIdent, ext)
@@ -217,24 +218,37 @@ class Event:
     def text_summary(self):
         """Composes a textual summary of the event."""
         
-        msg = "The build event was started on %s." % self.text_timestamp()
-
-        msg += ' It'
+        msg = "The autobuilder started build %i on %s" % (self.number(), self.text_timestamp())
 
         pkgCount = len(self.list_package_files())
-
-        changesName = self.file_path('changes.html')
-        commitCount = 0
-        if os.path.exists(changesName):
-            commitCount = utils.count_word('<li>', file(changesName).read())
-        if commitCount:
-            moreThan = ''
-            if commitCount == 100: moreThan = 'more than '
-            msg += " contains %s%i commits and" % (moreThan, commitCount)
-
-        msg += " produced %i package%s." % \
-            (pkgCount, 's' if (pkgCount != 1) else '')
-
+        msg += " and produced %i package%s." % \
+            (pkgCount, 's' if pkgCount != 1 else '')
+        
+        # Parse the description of the changes.
+        changesFn = self.file_path('changes.xml')
+        if os.path.exists(changesFn):
+            src = file(changesFn, 'rt')
+            root = ElementTree.fromstring('<changes>' + src.read() + '</changes>')
+            commitCount = int(root.find('commitCount').text)
+            tagCount = {}
+            for tag in root.iter('tag'):
+                if tag.text in tagCount:
+                    tagCount[tag.text] += 1
+                else:
+                    tagCount[tag.text] = 1
+            tags = sorted([(tagCount[t], t) for t in tagCount.keys()])
+            tags.reverse()  
+            tags = tags[:5] # up to 5 most used tags
+            
+            msg += ' The build contains %i commit%s' % (commitCount, 's' if commitCount != 1 else '')
+            if len(tags):
+                msg += ', and the most used tag%s: ' % ('s are' if len(tags) != 1 else ' is')
+                if len(tags) > 1:
+                    msg += ', '.join([t for _, t in tags[:-1]]) + ' and ' + tags[-1][1]
+                else:
+                    msg += tags[0][1]
+            msg += '.'
+            
         return msg
         
     def compress_logs(self):
@@ -313,6 +327,7 @@ class Event:
         files = self.list_package_files()
 
         # Print out the matrix.
+        msg += '<h2>Packages</h2>\n'
         msg += '<p><table cellspacing="4" border="0">'
         msg += '<tr style="text-align:left;"><th>OS<th>Binary<th>Logs<th>Issues</tr>'
 
