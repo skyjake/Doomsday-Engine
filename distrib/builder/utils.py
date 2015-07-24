@@ -147,9 +147,13 @@ def count_log_word(fn, word):
             pos = txt.find(unicode(word))
             if pos < 0: continue 
             endPos = pos + len(word)
-            # Ignore some unnecessary gcc messages.
+            # Ignore some unnecessary messages.
             if 'should be explicitly initialized in the copy constructor' in txt: continue
             if 'deprecated' in txt: continue
+            if 'doomsday\\external\\assimp\\code' in txt: continue
+            if 'doomsday\\external\\assimp\\contrib' in txt: continue
+            if ' warning generated.' in txt: continue
+            if ' warnings generated.' in txt: continue
             try:
                 if txt[pos-1] not in '/\\_'+string.ascii_letters and \
                     txt[endPos] not in string.ascii_letters+'.(' and \
