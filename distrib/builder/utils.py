@@ -152,6 +152,8 @@ def count_log_word(fn, word):
             if 'deprecated' in txt: continue
             if 'doomsday\\external\\assimp\\code' in txt: continue
             if 'doomsday\\external\\assimp\\contrib' in txt: continue
+            if 'doomsday/external/assimp/code' in txt: continue
+            if 'doomsday/external/assimp/contrib' in txt: continue
             if ' warning generated.' in txt: continue
             if ' warnings generated.' in txt: continue
             try:
