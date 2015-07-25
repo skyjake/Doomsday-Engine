@@ -340,8 +340,8 @@ void Sv_HandlePacket()
 
     dint const from  = ::netBuffer.player;
     DENG2_ASSERT(from >= 0 && from < DDMAXPLAYERS);
-    player_t *plr    = &ddPlayers[from];
-    ddplayer_t *ddpl = &plr->shared;
+    player_t *plr    = DD_Player(from);
+    ddplayer_t *ddpl = &plr->publicData();
     client_t *sender = &clients[from];
 
     switch(netBuffer.msg.type)
@@ -393,7 +393,7 @@ void Sv_HandlePacket()
             sender->handshake = true;
 
             // The player is now in the game.
-            ::ddPlayers[from].shared.inGame = true;
+            DD_Player(from)->publicData().inGame = true;
 
             // Tell the game about this.
             gx.NetPlayerEvent(from, DDPE_ARRIVAL, 0);
@@ -454,7 +454,7 @@ void Sv_HandlePacket()
         Net_WriteChatMessage(msgfrom, mask, msg);
         for(dint i = 1; i < DDMAXPLAYERS; ++i)
         {
-            if(::ddPlayers[i].shared.inGame && (mask & (1 << i)) && i != from)
+            if(DD_Player(i)->publicData().inGame && (mask & (1 << i)) && i != from)
             {
                 Net_SendBuffer(i, 0);
             }
@@ -611,8 +611,8 @@ void Sv_GetPackets(void)
             break;
 
         case PCL_ACK_PLAYER_FIX: {
-            player_t* plr = &ddPlayers[netBuffer.player];
-            ddplayer_t* ddpl = &plr->shared;
+            player_t* plr = DD_Player(netBuffer.player);
+            ddplayer_t* ddpl = &plr->publicData();
             fixcounters_t* acked = &ddpl->fixAcked;
 
             acked->angles = Reader_ReadInt32(msgReader);
@@ -676,8 +676,8 @@ dd_bool Sv_PlayerArrives(unsigned int nodeID, char const *name)
 
         if(!cl->connected)
         {
-            player_t   *plr  = &ddPlayers[i];
-            ddplayer_t *ddpl = &plr->shared;
+            player_t   *plr  = DD_Player(i);
+            ddplayer_t *ddpl = &plr->publicData();
 
             // This'll do.
             cl->connected = true;
@@ -730,13 +730,13 @@ void Sv_PlayerLeaves(unsigned int nodeID)
         netRemoteUser = 0;
 
     cl = &clients[plrNum];
-    plr = &ddPlayers[plrNum];
+    plr = DD_Player(plrNum);
 
     LOG_NET_NOTE("'%s' (console %i) has left, was connected for %.1f seconds")
             << cl->name << plrNum << (Timer_RealSeconds() - cl->enterTime);
 
-    wasInGame = plr->shared.inGame;
-    plr->shared.inGame = false;
+    wasInGame = plr->publicData().inGame;
+    plr->publicData().inGame = false;
 
     cl->connected       = false;
     cl->ready           = false;
@@ -877,7 +877,7 @@ void Sv_Handshake(dint plrNum, dd_bool newPlayer)
         Sv_InitPoolForClient(plrNum);
     }
 
-    ddPlayers[plrNum].shared.flags |= DDPF_FIXANGLES | DDPF_FIXORIGIN | DDPF_FIXMOM;
+    DD_Player(plrNum)->publicData().flags |= DDPF_FIXANGLES | DDPF_FIXORIGIN | DDPF_FIXMOM;
 }
 
 void Sv_StartNetGame(void)
@@ -888,8 +888,8 @@ void Sv_StartNetGame(void)
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
         client_t           *client = &clients[i];
-        player_t           *plr = &ddPlayers[i];
-        ddplayer_t         *ddpl = &plr->shared;
+        player_t           *plr = DD_Player(i);
+        ddplayer_t         *ddpl = &plr->publicData();
 
         ddpl->inGame = false;
         ddpl->flags &= ~DDPF_CAMERA;
@@ -924,8 +924,8 @@ void Sv_StartNetGame(void)
 
     if(!isDedicated)
     {
-        player_t           *plr = &ddPlayers[consolePlayer];
-        ddplayer_t         *ddpl = &plr->shared;
+        player_t           *plr = DD_Player(consolePlayer);
+        ddplayer_t         *ddpl = &plr->publicData();
         client_t           *cl = &clients[consolePlayer];
 
         ddpl->inGame = true;
@@ -985,8 +985,8 @@ void Sv_Kick(int who)
 void Sv_SendPlayerFixes(int plrNum)
 {
     int                 fixes = 0;
-    player_t           *plr = &ddPlayers[plrNum];
-    ddplayer_t         *ddpl = &plr->shared;
+    player_t           *plr = DD_Player(plrNum);
+    ddplayer_t         *ddpl = &plr->publicData();
 
     if(!(ddpl->flags & (DDPF_FIXANGLES | DDPF_FIXORIGIN | DDPF_FIXMOM)))
     {
@@ -1070,9 +1070,9 @@ void Sv_Ticker(timespan_t ticLength)
     // Note last angles for all players.
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        player_t *plr = &ddPlayers[i];
+        player_t *plr = DD_Player(i);
 
-        if(!plr->shared.inGame || !plr->shared.mo)
+        if(!plr->publicData().inGame || !plr->publicData().mo)
             continue;
 
         // Update the smoother?
@@ -1083,7 +1083,7 @@ void Sv_Ticker(timespan_t ticLength)
 
         if(DD_IsSharpTick())
         {
-            plr->shared.lastAngle = plr->shared.mo->angle;
+            plr->publicData().lastAngle = plr->publicData().mo->angle;
         }
 
         /*
@@ -1111,9 +1111,9 @@ int Sv_GetNumPlayers(void)
 
     for(i = count = 0; i < DDMAXPLAYERS; ++i)
     {
-        player_t           *plr = &ddPlayers[i];
+        player_t           *plr = DD_Player(i);
 
-        if(plr->shared.inGame && plr->shared.mo)
+        if(plr->publicData().inGame && plr->publicData().mo)
             count++;
     }
 
@@ -1196,8 +1196,8 @@ dd_bool Sv_CheckBandwidth(int /*playerNumber*/)
  */
 void Sv_ClientCoords(int plrNum)
 {
-    player_t           *plr = &ddPlayers[plrNum];
-    ddplayer_t         *ddpl = &plr->shared;
+    player_t           *plr = DD_Player(plrNum);
+    ddplayer_t         *ddpl = &plr->publicData();
     mobj_t             *mo = ddpl->mo;
     int                 clz;
     float               clientGameTime;
@@ -1260,8 +1260,8 @@ void Sv_ClientCoords(int plrNum)
 
 dd_bool Sv_CanTrustClientPos(int plrNum)
 {
-    player_t* plr = &ddPlayers[plrNum];
-    ddplayer_t* ddpl = &plr->shared;
+    player_t* plr = DD_Player(plrNum);
+    ddplayer_t* ddpl = &plr->publicData();
 
     if(ddpl->fixCounter.origin == ddpl->fixAcked.origin && !(ddpl->flags & DDPF_FIXORIGIN))
     {

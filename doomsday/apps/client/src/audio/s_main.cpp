@@ -196,7 +196,7 @@ void S_EndFrame()
 
 mobj_t *S_GetListenerMobj()
 {
-    return ddPlayers[displayPlayer].shared.mo;
+    return DD_Player(displayPlayer)->publicData().mo;
 }
 
 sfxinfo_t *S_GetSoundInfo(int soundID, float *freq, float *volume)

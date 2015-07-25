@@ -161,15 +161,15 @@ void ShellUser::sendPlayerInfo()
 
     for(uint i = 1; i < DDMAXPLAYERS; ++i)
     {
-        if(!ddPlayers[i].shared.inGame || !ddPlayers[i].shared.mo)
+        if(!DD_Player(i)->publicData().inGame || !DD_Player(i)->publicData().mo)
             continue;
 
         shell::PlayerInfoPacket::Player info;
 
         info.number   = i;
         info.name     = clients[i].name;
-        info.position = de::Vector2i(ddPlayers[i].shared.mo->origin[VX],
-                                     ddPlayers[i].shared.mo->origin[VY]);
+        info.position = de::Vector2i(DD_Player(i)->publicData().mo->origin[VX],
+                                     DD_Player(i)->publicData().mo->origin[VY]);
 
         /**
          * @todo Player color is presently game-side data. Therefore, this

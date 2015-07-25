@@ -106,9 +106,18 @@ typedef struct ddplayer_s {
 class LIBDOOMSDAY_PUBLIC Player
 {
 public:
+    byte extraLightCounter; ///< Num tics to go till extraLight is disabled.
+    int extraLight;
+    int targetExtraLight;
+
+public:
     Player();
 
+    virtual ~Player();
+
     ddplayer_t &publicData();
+
+    ddplayer_t const &publicData() const;
 
     /**
      * Returns the player's namespace.

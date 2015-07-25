@@ -325,7 +325,7 @@ static inline WorldSystem &worldSys()
 static void reportWallDrawn(Line &line)
 {
     // Already been here?
-    dint playerNum = viewPlayer - ddPlayers;
+    dint playerNum = DoomsdayApp::players().indexOf(viewPlayer);
     if(line.isMappedByPlayer(playerNum)) return;
 
     // Mark as drawn.
@@ -482,7 +482,7 @@ void Rend_ModelViewMatrix(bool inWorldSpace)
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glMatrixMode(GL_MODELVIEW);
-    glLoadMatrixf(Rend_GetModelViewMatrix(viewPlayer - ddPlayers, inWorldSpace).values());
+    glLoadMatrixf(Rend_GetModelViewMatrix(DoomsdayApp::players().indexOf(viewPlayer), inWorldSpace).values());
 }
 
 static inline ddouble viewFacingDot(Vector2d const &v1, Vector2d const &v2)
@@ -498,7 +498,7 @@ dfloat Rend_ExtraLightDelta()
 
 void Rend_ApplyTorchLight(Vector4f &color, dfloat distance)
 {
-    ddplayer_t *ddpl = &viewPlayer->shared;
+    ddplayer_t *ddpl = &viewPlayer->publicData();
 
     // Disabled?
     if(!ddpl->fixedColorMap) return;
@@ -909,7 +909,7 @@ static void lightWallOrFlatGeometry(Geometry &verts, duint numVertices, Vector3f
 
     // Apply torch light?
     DENG2_ASSERT(::viewPlayer);
-    if(::viewPlayer->shared.fixedColorMap)
+    if(::viewPlayer->publicData().fixedColorMap)
     {
         for(duint i = 0; i < numVertices; ++i)
         {
@@ -2479,7 +2479,7 @@ static bool applyNearFadeOpacity(WallEdge const &leftEdge, WallEdge const &right
     if(Rend_EyeOrigin().y < leftEdge.bottom().z() || Rend_EyeOrigin().y > rightEdge.top().z())
         return false;
 
-    mobj_t const *mo         = viewPlayer->shared.mo;
+    mobj_t const *mo         = viewPlayer->publicData().mo;
     Line const &line         = leftEdge.lineSide().line();
 
     coord_t linePoint[2]     = { line.fromOrigin().x, line.fromOrigin().y };
@@ -4616,7 +4616,7 @@ void Rend_RenderMap(Map &map)
         // Make vissprites of all the visible decorations.
         generateDecorationFlares(map);
 
-        viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+        viewdata_t const *viewData = R_ViewData(DoomsdayApp::players().indexOf(viewPlayer));
         eyeOrigin = viewData->current.origin;
 
         // Add the backside clipping range (if vpitch allows).
@@ -4791,7 +4791,7 @@ static void drawBiasEditingVisuals(Map &map)
 
     if(HueCircle *hueCircle = SBE_HueCircle())
     {
-        viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+        viewdata_t const *viewData = R_ViewData(DoomsdayApp::players().indexOf(viewPlayer));
 
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_CULL_FACE);
@@ -5143,7 +5143,7 @@ static void drawMobjBBox(mobj_t &mob)
     static dfloat const yellow[] = { 0.7f, 0.7f, 0.2f };  // missiles
 
     // We don't want the console player.
-    if(&mob == ddPlayers[consolePlayer].shared.mo)
+    if(&mob == DD_Player(consolePlayer)->publicData().mo)
         return;
 
     // Is it vissible?
@@ -5999,7 +5999,7 @@ void Rend_LightGridVisual(LightGrid &lg)
     if(viewPlayer)
     {
         blink++;
-        viewerGridIndex = lg.toIndex(lg.toRef(viewPlayer->shared.mo->origin));
+        viewerGridIndex = lg.toIndex(lg.toRef(viewPlayer->publicData().mo->origin));
     }
 
     // Go into screen projection mode.

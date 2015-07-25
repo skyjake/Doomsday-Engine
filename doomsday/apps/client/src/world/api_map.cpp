@@ -1518,7 +1518,7 @@ DENG_EXTERN_C dd_bool P_MapChange(char const *uriCString)
         // ready to begin receiving frames.
         for(uint i = 0; i < DDMAXPLAYERS; ++i)
         {
-            //player_t *plr = &ddPlayers[i];
+            //player_t *plr = DD_Player(i);
             if(/*!(plr->shared.flags & DDPF_LOCAL) &&*/ clients[i].connected)
             {
                 LOG_DEBUG("Client %i marked as 'not ready' to receive frames.") << i;

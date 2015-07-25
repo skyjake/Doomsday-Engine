@@ -108,7 +108,7 @@ void SBE_SetHueCircle(bool activate = true)
 
     if(activate)
     {
-        viewdata_t const &viewer = *R_ViewData(viewPlayer - ddPlayers);
+        viewdata_t const &viewer = *R_ViewData(DoomsdayApp::players().indexOf(viewPlayer));
         hueCircle->setOrientation(viewer.frontVec, viewer.sideVec, viewer.upVec);
     }
 }

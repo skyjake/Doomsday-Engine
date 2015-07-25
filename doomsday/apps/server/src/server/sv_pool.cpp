@@ -378,8 +378,8 @@ void Sv_RegisterPlayer(dt_player_t *reg, duint number)
 
     DENG2_ASSERT(reg);
     DENG2_ASSERT(number >= 0 && number < DDMAXPLAYERS);
-    player_t *plr    = &::ddPlayers[number];
-    ddplayer_t *ddpl = &plr->shared;
+    player_t *plr    = DD_Player(number);
+    ddplayer_t *ddpl = &plr->publicData();
     //client_t *c      = &::clients[number];
 
     reg->mobj          = (ddpl->mo ? ddpl->mo->thinker.id : 0);
@@ -930,7 +930,7 @@ dd_bool Sv_IsMobjIgnored(mobj_t const &mob)
 dd_bool Sv_IsPlayerIgnored(dint plrNum)
 {
     DENG2_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
-    return !::ddPlayers[plrNum].shared.inGame;
+    return !DD_Player(plrNum)->publicData().inGame;
 }
 
 /**
@@ -990,7 +990,7 @@ void Sv_RegisterWorld(cregister_t *reg, dd_bool isInitial)
 void Sv_UpdateOwnerInfo(pool_t *pool)
 {
     DENG2_ASSERT(pool);
-    player_t *plr     = &::ddPlayers[pool->owner];
+    player_t *plr     = DD_Player(pool->owner);
     ownerinfo_t *info = &pool->ownerInfo;
 
     de::zapPtr(info);
@@ -998,9 +998,9 @@ void Sv_UpdateOwnerInfo(pool_t *pool)
     // Pointer to the owner's pool.
     info->pool = pool;
 
-    if(plr->shared.mo)
+    if(plr->publicData().mo)
     {
-        mobj_t *mob = plr->shared.mo;
+        mobj_t *mob = plr->publicData().mo;
 
         V3d_Copy(info->origin, mob->origin);
         info->angle = mob->angle;
@@ -1569,7 +1569,7 @@ coord_t Sv_DeltaDistance(void const *deltaPtr, ownerinfo_t const *info)
     if(delta->type == DT_PLAYER)
     {
         // Use the player's actual position.
-        mobj_t const *mo = ddPlayers[delta->id].shared.mo;
+        mobj_t const *mo = DD_Player(delta->id)->publicData().mo;
         if(mo)
         {
             return Sv_MobjDistance(mo, info, true);
@@ -1740,8 +1740,8 @@ float Sv_GetMaxSoundDistance(const sounddelta_t* delta)
 int Sv_ExcludeDelta(pool_t* pool, const void* deltaPtr)
 {
     const delta_t*      delta = (delta_t const *) deltaPtr;
-    player_t*           plr = &ddPlayers[pool->owner];
-    mobj_t*             poolViewer = plr->shared.mo;
+    player_t*           plr = DD_Player(pool->owner);
+    mobj_t*             poolViewer = plr->publicData().mo;
     int                 flags = delta->flags;
 
     // Can we exclude information from the delta? (for this player only)
@@ -2168,7 +2168,7 @@ void Sv_NewPlayerDeltas(cregister_t* reg, dd_bool doUpdate, pool_t** targets)
         if(Sv_IsPoolTargeted(&pools[i], targets))
         {
 #if 0
-            if(ddPlayers[i].flags & DDPF_FIXANGLES)
+            if(DD_Player(i).flags & DDPF_FIXANGLES)
             {
                 Sv_NewDelta(&player, DT_PLAYER, i);
                 Sv_RegisterPlayer(&player.player, i);
@@ -2178,22 +2178,22 @@ void Sv_NewPlayerDeltas(cregister_t* reg, dd_bool doUpdate, pool_t** targets)
                 Sv_AddDelta(&pools[i], &player);
 
                 // Doing this once is enough.
-                ddPlayers[i].flags &= ~DDPF_FIXANGLES;
+                DD_Player(i).flags &= ~DDPF_FIXANGLES;
             }
 
             // Generate a FIXPOS/FIXMOM mobj delta, too?
-            if(ddPlayers[i].mo && (ddPlayers[i].flags & (DDPF_FIXORIGIN | DDPF_FIXMOM)))
+            if(DD_Player(i).mo && (DD_Player(i).flags & (DDPF_FIXORIGIN | DDPF_FIXMOM)))
             {
-                const mobj_t *mo = ddPlayers[i].mo;
+                const mobj_t *mo = DD_Player(i).mo;
                 mobjdelta_t mobj;
 
                 Sv_NewDelta(&mobj, DT_MOBJ, mo->thinker.id);
                 Sv_RegisterMobj(&mobj.mo, mo);
-                if(ddPlayers[i].flags & DDPF_FIXORIGIN)
+                if(DD_Player(i).flags & DDPF_FIXORIGIN)
                 {
                     mobj.delta.flags |= MDF_ORIGIN;
                 }
-                if(ddPlayers[i].flags & DDPF_FIXMOM)
+                if(DD_Player(i).flags & DDPF_FIXMOM)
                 {
                     mobj.delta.flags |= MDF_MOM;
                 }
@@ -2201,7 +2201,7 @@ void Sv_NewPlayerDeltas(cregister_t* reg, dd_bool doUpdate, pool_t** targets)
                 Sv_AddDelta(&pools[i], &mobj);
 
                 // Doing this once is enough.
-                ddPlayers[i].flags &= ~(DDPF_FIXORIGIN | DDPF_FIXMOM);
+                DD_Player(i).flags &= ~(DDPF_FIXORIGIN | DDPF_FIXMOM);
             }
 #endif
         }
@@ -2390,8 +2390,8 @@ void Sv_NewSoundDelta(int soundId, mobj_t *emitter, Sector *sourceSector,
 dd_bool Sv_IsFrameTarget(duint plrNum)
 {
     DENG2_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
-    player_t const &plr    = ::ddPlayers[plrNum];
-    ddplayer_t const &ddpl = plr.shared;
+    player_t const &plr    = *DD_Player(plrNum);
+    ddplayer_t const &ddpl = plr.publicData();
 
     // Local players receive frames only when they're recording a demo.
     // Clients must tell us they are ready before we can begin sending.
@@ -2760,14 +2760,14 @@ dd_bool Sv_RateDelta(void* deltaPtr, ownerinfo_t* info)
 void Sv_RatePool(pool_t* pool)
 {
 #ifdef _DEBUG
-    player_t*           plr = &ddPlayers[pool->owner];
+    player_t*           plr = DD_Player(pool->owner);
     //client_t*           client = &clients[pool->owner];
 #endif
     delta_t*            delta;
     int                 i;
 
 #ifdef _DEBUG
-    if(!plr->shared.mo)
+    if(!plr->publicData().mo)
     {
         App_Error("Sv_RatePool: Player %i has no mobj.\n", pool->owner);
     }

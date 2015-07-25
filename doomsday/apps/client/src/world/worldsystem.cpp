@@ -541,8 +541,8 @@ DENG2_PIMPL(WorldSystem)
         // Init player values.
         for(uint i = 0; i < DDMAXPLAYERS; ++i)
         {
-            player_t *plr = &ddPlayers[i];
-            ddplayer_t &ddpl = ddPlayers[i].shared;
+            player_t *plr = DD_Player(i);
+            ddplayer_t &ddpl = DD_Player(i)->publicData();
 
             plr->extraLight = plr->targetExtraLight = 0;
             plr->extraLightCounter = 0;
@@ -758,7 +758,7 @@ DENG2_PIMPL(WorldSystem)
     {
         DENG2_ASSERT(hand != 0 && map != 0);
 
-        viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+        viewdata_t const *viewData = R_ViewData(DoomsdayApp::players().indexOf(viewPlayer));
         hand->setOrigin(viewData->current.origin + viewData->frontVec.xzy() * handDistance);
     }
 #endif
@@ -839,8 +839,8 @@ void WorldSystem::reset()
 {
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        player_t *plr    = &ddPlayers[i];
-        ddplayer_t *ddpl = &plr->shared;
+        player_t *plr    = DD_Player(i);
+        ddplayer_t *ddpl = &plr->publicData();
 
         // Mobjs go down with the map.
         ddpl->mo = 0;
@@ -870,8 +870,8 @@ void WorldSystem::update()
 {
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        player_t *plr    = &ddPlayers[i];
-        ddplayer_t *ddpl = &plr->shared;
+        player_t *plr    = DD_Player(i);
+        ddplayer_t *ddpl = &plr->publicData();
 
         // States have changed, the state pointers are unknown.
         ddpl->pSprites[0].statePtr = ddpl->pSprites[1].statePtr = 0;
@@ -971,7 +971,7 @@ void WorldSystem::endFrame()
         // If the HueCircle is active update the current edit color.
         if(HueCircle *hueCircle = SBE_HueCircle())
         {
-            viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+            viewdata_t const *viewData = R_ViewData(DoomsdayApp::players().indexOf(viewPlayer));
             d->hand->setEditColor(hueCircle->colorAt(viewData->frontVec));
         }
     }

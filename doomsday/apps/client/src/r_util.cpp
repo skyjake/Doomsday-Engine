@@ -60,14 +60,14 @@ float R_MovementXYZPitch(float momx, float momy, float momz)
 
 angle_t R_ViewPointToAngle(Vector2d point)
 {
-    viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+    viewdata_t const *viewData = R_ViewData(DoomsdayApp::players().indexOf(viewPlayer));
     point -= Vector2d(viewData->current.origin);
     return M_PointXYToAngle(point.x, point.y);
 }
 
 coord_t R_ViewPointDistance(coord_t x, coord_t y)
 {
-    Vector3d const &viewOrigin = R_ViewData(viewPlayer - ddPlayers)->current.origin;
+    Vector3d const &viewOrigin = R_ViewData(DoomsdayApp::players().indexOf(viewPlayer))->current.origin;
     coord_t viewOriginv1[2] = { viewOrigin.x, viewOrigin.y };
     coord_t pointv1[2] = { x, y };
     return M_PointDistance(viewOriginv1, pointv1);
@@ -90,7 +90,7 @@ Vector3d R_ClosestPointOnPlane(Vector3f const &planeNormal_,
 void R_ProjectViewRelativeLine2D(coord_t const center[2], dd_bool alignToViewPlane,
     coord_t width, coord_t offset, coord_t start[2], coord_t end[2])
 {
-    viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+    viewdata_t const *viewData = R_ViewData(DoomsdayApp::players().indexOf(viewPlayer));
     float sinrv, cosrv;
 
     if(alignToViewPlane)
@@ -121,7 +121,7 @@ void R_ProjectViewRelativeLine2D(coord_t const center[2], dd_bool alignToViewPla
 void R_ProjectViewRelativeLine2D(Vector2d const center, bool alignToViewPlane,
     coord_t width, coord_t offset, Vector2d &start, Vector2d &end)
 {
-    viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+    viewdata_t const *viewData = R_ViewData(DoomsdayApp::players().indexOf(viewPlayer));
     float sinrv, cosrv;
 
     if(alignToViewPlane)

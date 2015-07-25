@@ -1177,7 +1177,7 @@ static dint DD_ActivateGameWorker(void *context)
     // Invalidate old cmds and init player values.
     for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        player_t *plr = &ddPlayers[i];
+        player_t *plr = DD_Player(i);
 
         plr->extraLight = plr->targetExtraLight = 0;
         plr->extraLightCounter = 0;

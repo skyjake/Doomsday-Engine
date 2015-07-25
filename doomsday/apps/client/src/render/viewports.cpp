@@ -450,11 +450,11 @@ void R_CheckViewerLimits(viewer_t *src, viewer_t *dst)
  */
 viewer_t R_SharpViewer(player_t &player)
 {
-    DENG2_ASSERT(player.shared.mo);
+    DENG2_ASSERT(player.publicData().mo);
 
-    ddplayer_t const &ddpl = player.shared;
+    ddplayer_t const &ddpl = player.publicData();
 
-    viewer_t view(viewDataOfConsole[&player - ddPlayers].latest);
+    viewer_t view(viewDataOfConsole[DoomsdayApp::players().indexOf(&player)].latest);
 
     if((ddpl.flags & DDPF_CHASECAM) && !(ddpl.flags & DDPF_CAMERA))
     {
@@ -500,10 +500,10 @@ void R_NewSharpWorld()
     for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
         viewdata_t *vd = &viewDataOfConsole[i];
-        player_t *plr  = &ddPlayers[i];
+        player_t *plr  = DD_Player(i);
 
         if(/*(plr->shared.flags & DDPF_LOCAL) &&*/
-           (!plr->shared.inGame || !plr->shared.mo))
+           (!plr->publicData().inGame || !plr->publicData().mo))
         {
             continue;
         }
@@ -538,10 +538,10 @@ void R_UpdateViewer(dint consoleNum)
     dint const VIEWPOS_MAX_SMOOTHDISTANCE = 172;
 
     viewdata_t *vd   = viewDataOfConsole + consoleNum;
-    player_t *player = ddPlayers + consoleNum;
+    player_t *player = DD_Player(consoleNum);
 
-    if(!player->shared.inGame) return;
-    if(!player->shared.mo) return;
+    if(!player->publicData().inGame) return;
+    if(!player->publicData().mo) return;
 
     viewer_t sharpView = R_SharpViewer(*player);
 
@@ -589,7 +589,7 @@ void R_UpdateViewer(dint consoleNum)
             };
 
             static OldAngle oldAngle[DDMAXPLAYERS];
-            OldAngle *old = &oldAngle[viewPlayer - ddPlayers];
+            OldAngle *old = &oldAngle[DoomsdayApp::players().indexOf(viewPlayer)];
             dfloat yaw    = (ddouble)smoothView.angle() / ANGLE_MAX * 360;
 
             LOGDEV_MSG("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f "
@@ -616,7 +616,7 @@ void R_UpdateViewer(dint consoleNum)
             };
 
             static OldPos oldPos[DDMAXPLAYERS];
-            OldPos *old = &oldPos[viewPlayer - ddPlayers];
+            OldPos *old = &oldPos[DoomsdayApp::players().indexOf(viewPlayer)];
 
             LOGDEV_MSG("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f dz=%-10.3f dx/dt=%-10.3f dy/dt=%-10.3f")
                     << SECONDS_TO_TICKS(gameTime)
@@ -679,9 +679,9 @@ void R_SetupFrame(player_t *player)
     // Handle extralight (used to light up the world momentarily (used for
     // e.g. gun flashes). We want to avoid flickering, so when ever it is
     // enabled; make it last for a few frames.
-    if(player->targetExtraLight != player->shared.extraLight)
+    if(player->targetExtraLight != player->publicData().extraLight)
     {
-        player->targetExtraLight = player->shared.extraLight;
+        player->targetExtraLight = player->publicData().extraLight;
         player->extraLightCounter = MINEXTRALIGHTFRAMES;
     }
 
@@ -747,7 +747,7 @@ static void setupPlayerSprites()
     // There are no 3D psprites.
     ::psp3d = false;
 
-    ddplayer_t *ddpl = &viewPlayer->shared;
+    ddplayer_t *ddpl = &viewPlayer->publicData();
 
     // Cameramen have no psprites.
     if((ddpl->flags & DDPF_CAMERA) || (ddpl->flags & DDPF_CHASECAM))
@@ -775,7 +775,7 @@ static void setupPlayerSprites()
         }
     }
 
-    viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+    viewdata_t const *viewData = R_ViewData(DoomsdayApp::players().indexOf(viewPlayer));
     for(dint i = 0; i < DDMAXPSPRITES; ++i)
     {
         vispsprite_t *spr = &visPSprites[i];
@@ -860,7 +860,7 @@ static void setupViewMatrix()
 {
     // This will be the view matrix for the current frame.
     frameViewMatrix = GL_GetProjectionMatrix() *
-                      Rend_GetModelViewMatrix(viewPlayer - ddPlayers);
+                      Rend_GetModelViewMatrix(DoomsdayApp::players().indexOf(viewPlayer));
 }
 
 Matrix4f const &Viewer_Matrix()
@@ -872,10 +872,10 @@ Matrix4f const &Viewer_Matrix()
 DENG_EXTERN_C void R_RenderPlayerView(dint num)
 {
     if(num < 0 || num >= DDMAXPLAYERS) return; // Huh?
-    player_t *player = &ddPlayers[num];
+    player_t *player = DD_Player(num);
 
-    if(!player->shared.inGame) return;
-    if(!player->shared.mo) return;
+    if(!player->publicData().inGame) return;
+    if(!player->publicData().mo) return;
 
     if(firstFrameAfterLoad)
     {
@@ -908,10 +908,10 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
 
     // Hide the viewPlayer's mobj?
     dint oldFlags = 0;
-    if(!(player->shared.flags & DDPF_CHASECAM))
+    if(!(player->publicData().flags & DDPF_CHASECAM))
     {
-        oldFlags = player->shared.mo->ddFlags;
-        player->shared.mo->ddFlags |= DDMF_DONTDRAW;
+        oldFlags = player->publicData().mo->ddFlags;
+        player->publicData().mo->ddFlags |= DDMF_DONTDRAW;
     }
 
     // Go to wireframe mode?
@@ -961,9 +961,9 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
     }
 
     // Now we can show the viewPlayer's mobj again.
-    if(!(player->shared.flags & DDPF_CHASECAM))
+    if(!(player->publicData().flags & DDPF_CHASECAM))
     {
-        player->shared.mo->ddFlags = oldFlags;
+        player->publicData().mo->ddFlags = oldFlags;
     }
 
     R_PrintRendPoolInfo();
@@ -1032,9 +1032,9 @@ static void clearViewPorts()
     {
         for(dint i = 0; i < DDMAXPLAYERS; ++i)
         {
-            player_t *plr = &ddPlayers[i];
+            player_t *plr = DD_Player(i);
 
-            if(!plr->shared.inGame || !(plr->shared.flags & DDPF_LOCAL))
+            if(!plr->publicData().inGame || !(plr->publicData().flags & DDPF_LOCAL))
                 continue;
 
             if(P_IsInVoid(plr) || !worldSys().hasMap())
@@ -1071,7 +1071,7 @@ void R_RenderViewPorts(ViewPortLayer layer)
         displayPlayer = vp->console;
         R_UseViewPort(vp);
 
-        if(displayPlayer < 0 || (ddPlayers[displayPlayer].shared.flags & DDPF_UNDEFINED_ORIGIN))
+        if(displayPlayer < 0 || (DD_Player(displayPlayer)->publicData().flags & DDPF_UNDEFINED_ORIGIN))
         {
             if(layer == Player3DViewLayer)
             {
@@ -1271,7 +1271,7 @@ void R_BeginFrame()
     luminousOrder   =    (duint *) M_Realloc(luminousOrder,   sizeof(*luminousOrder)   * maxLuminous);
 
     // Update viewer => lumobj distances ready for linking and sorting.
-    viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+    viewdata_t const *viewData = R_ViewData(DoomsdayApp::players().indexOf(viewPlayer));
     map.forAllLumobjs([&viewData] (Lumobj &lob)
     {
         // Approximate the distance in 3D.
@@ -1326,7 +1326,7 @@ void R_ViewerClipLumobj(Lumobj *lum)
     /// @todo Determine the exact centerpoint of the light in addLuminous!
     Vector3d const origin(lum->x(), lum->y(), lum->z() + lum->zOffset());
 
-    if(!(devNoCulling || P_IsInVoid(&ddPlayers[displayPlayer])))
+    if(!(devNoCulling || P_IsInVoid(DD_Player(displayPlayer))))
     {
         if(!rendSys().angleClipper().isPointVisible(origin))
         {

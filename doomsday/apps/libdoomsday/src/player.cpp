@@ -31,10 +31,22 @@ DENG2_PIMPL_NOREF(Player)
     }
 };
 
-Player::Player() : d(new Instance)
+Player::Player()
+    : extraLightCounter(0)
+    , extraLight(0)
+    , targetExtraLight(0)
+    , d(new Instance)
+{}
+
+Player::~Player()
 {}
 
 ddplayer_t &Player::publicData()
+{
+    return d->publicData;
+}
+
+ddplayer_t const &Player::publicData() const
 {
     return d->publicData;
 }

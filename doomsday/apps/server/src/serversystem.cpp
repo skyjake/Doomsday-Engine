@@ -189,7 +189,7 @@ DENG2_PIMPL(ServerSystem)
         for(int i = 1; i < DDMAXPLAYERS; ++i)
         {
             client_t *cl = &clients[i];
-            player_t *plr = &ddPlayers[i];
+            player_t *plr = DD_Player(i);
             if(cl->nodeID)
             {
                 DENG2_ASSERT(users.contains(cl->nodeID));
@@ -206,7 +206,7 @@ DENG2_PIMPL(ServerSystem)
                         << (user->isJoined()? '*' : ' ')
                         << (cl->handshake? '*' : ' ')
                         << (cl->ready? '*' : ' ')
-                        << (plr->shared.inGame? '*' : ' ')
+                        << (plr->publicData().inGame? '*' : ' ')
                         << (Timer_RealSeconds() - cl->enterTime);
             }
         }
@@ -292,7 +292,7 @@ void ServerSystem::timeChanged(Clock const &clock)
     int count = 0;
     for(int i = 1; i < DDMAXPLAYERS; ++i)
     {
-        if(ddPlayers[i].shared.inGame) count++;
+        if(DD_Player(i)->publicData().inGame) count++;
     }
 
     DENG2_TEXT_APP->loop().setRate(count? 35 : 3);

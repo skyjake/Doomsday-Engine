@@ -558,8 +558,10 @@ void Rend_BlockmapDebug()
 
     // If possible we'll tailor what we draw relative to the viewPlayer.
     mobj_t *followMobj = 0;
-    if(viewPlayer && viewPlayer->shared.mo)
-        followMobj = viewPlayer->shared.mo;
+    if(viewPlayer && viewPlayer->publicData().mo)
+    {
+        followMobj = viewPlayer->publicData().mo;
+    }
 
     // Draw!
     drawBlockmap(*blockmap, followMobj, cellDrawer);

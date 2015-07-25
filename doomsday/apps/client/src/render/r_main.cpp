@@ -166,7 +166,7 @@ void Rend_Draw2DPlayerSprites()
 {
     if(!viewPlayer) return;
 
-    ddplayer_t const &ddpl = viewPlayer->shared;
+    ddplayer_t const &ddpl = viewPlayer->publicData();
 
     // Cameramen have no HUD sprites.
     if(ddpl.flags & DDPF_CAMERA  ) return;

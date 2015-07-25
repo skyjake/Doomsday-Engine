@@ -152,7 +152,7 @@ D_CMD(Ping)
 
     // Check that the given parameters are valid.
     if(count <= 0 || count > MAX_PINGS || dest < 0 || dest >= DDMAXPLAYERS ||
-       dest == ::consolePlayer || (dest && !::ddPlayers[dest].shared.inGame))
+       dest == ::consolePlayer || (dest && !DD_Player(dest)->publicData().inGame))
         return false;
 
     Net_SendPing(dest, count);

@@ -273,7 +273,7 @@ void R_ProjectSprite(mobj_t &mob)
 
         // If the model is close to the viewpoint we should still to draw it,
         // otherwise large models are likely to disappear too early.
-        viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+        viewdata_t const *viewData = R_ViewData(DoomsdayApp::players().indexOf(viewPlayer));
         Vector2d delta(distFromEye, moPos.z + (mob.height / 2) - viewData->current.origin.z);
         if(M_ApproxDistance(delta.x, delta.y) > MAX_OBJECT_RADIUS)
             return;
@@ -323,7 +323,7 @@ void R_ProjectSprite(mobj_t &mob)
         if(mf->testSubFlag(0, MFF_ALIGN_YAW))
         {
             // Transform the origin point.
-            viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+            viewdata_t const *viewData = R_ViewData(DoomsdayApp::players().indexOf(viewPlayer));
             Vector2d delta(moPos.y - viewData->current.origin.y,
                            moPos.x - viewData->current.origin.x);
 
@@ -350,7 +350,7 @@ void R_ProjectSprite(mobj_t &mob)
 
         if(mf->testSubFlag(0, MFF_ALIGN_PITCH))
         {
-            viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+            viewdata_t const *viewData = R_ViewData(DoomsdayApp::players().indexOf(viewPlayer));
             Vector2d delta(vis->pose.midZ() - viewData->current.origin.z, distFromEye);
 
             pitch = -BANG2DEG(bamsAtan2(delta.x * 10, delta.y * 10));
@@ -535,7 +535,7 @@ void R_ProjectSprite(mobj_t &mob)
             // Color is taken from the associated lumobj.
             V3f_Set(vis->data.flare.color, lob.color().x, lob.color().y, lob.color().z);
 
-            vis->data.flare.factor = mob.haloFactors[viewPlayer - ddPlayers];
+            vis->data.flare.factor = mob.haloFactors[DoomsdayApp::players().indexOf(viewPlayer)];
             vis->data.flare.xOff = xOffset;
             vis->data.flare.mul = 1;
             vis->data.flare.tex = 0;

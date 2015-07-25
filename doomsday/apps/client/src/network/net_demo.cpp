@@ -99,7 +99,7 @@ dd_bool Demo_BeginRecording(char const * /*fileName*/, dint /*plrNum*/)
 
 #if 0
     client_t *cl  = &::clients[plrNum];
-    player_t *plr = &::ddPlayers[plrNum];
+    player_t *plr = &DD_Player(plrNum);
 
     // Is a demo already being recorded for this client?
     if(cl->recording || ::playback || (::isDedicated && !plrNum) || !plr->shared.inGame)
@@ -403,8 +403,8 @@ dd_bool Demo_ReadPacket()
 void Demo_WriteLocalCamera(dint plrNum)
 {
     DENG2_ASSERT(plrNum >= 0 && plrNum <= DDMAXPLAYERS);
-    player_t *plr    = &::ddPlayers[plrNum];
-    ddplayer_t *ddpl = &plr->shared;
+    player_t *plr    = DD_Player(plrNum);
+    ddplayer_t *ddpl = &plr->publicData();
     mobj_t *mob      = ddpl->mo;
 
     if(!mob) return;
@@ -452,7 +452,7 @@ void Demo_WriteLocalCamera(dint plrNum)
 void Demo_ReadLocalCamera()
 {
     DENG2_ASSERT(::consolePlayer >= 0 && consolePlayer < DDMAXPLAYERS);
-    ddplayer_t *pl = &::ddPlayers[::consolePlayer].shared;
+    ddplayer_t *pl = &DD_Player(::consolePlayer)->publicData();
     mobj_t *mob    = pl->mo;
 
     if(!mob) return;
@@ -543,8 +543,8 @@ void Demo_Ticker(timespan_t /*time*/)
     if(::playback)
     {
         DENG2_ASSERT(::consolePlayer >= 0 && ::consolePlayer < DDMAXPLAYERS);
-        player_t   *plr  = &::ddPlayers[::consolePlayer];
-        ddplayer_t *ddpl = &plr->shared;
+        player_t   *plr  = DD_Player(::consolePlayer);
+        ddplayer_t *ddpl = &plr->publicData();
 
         ddpl->mo->angle += ::viewangleDelta;
         ddpl->lookDir += ::lookdirDelta;
@@ -558,8 +558,8 @@ void Demo_Ticker(timespan_t /*time*/)
     {
         for(dint i = 0; i < DDMAXPLAYERS; ++i)
         {
-            player_t   &plr  = ::ddPlayers[i];
-            ddplayer_t &ddpl = plr.shared;
+            player_t   &plr  = *DD_Player(i);
+            ddplayer_t &ddpl = plr.publicData();
             client_t   &cl   = ::clients[i];
 
             if(ddpl.inGame && cl.recording && !cl.recordPaused &&

@@ -519,7 +519,7 @@ void LensFlares::draw()
 
     DENG2_ASSERT(console() == displayPlayer);
     //DENG2_ASSERT(viewPlayer - ddPlayers == displayPlayer);
-    if(viewPlayer - ddPlayers != displayPlayer)
+    if(DoomsdayApp::players().indexOf(viewPlayer) != displayPlayer)
     {
         qDebug() << "LensFrames::draw: viewPlayer != displayPlayer";
         return;

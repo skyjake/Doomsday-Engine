@@ -314,8 +314,8 @@ void Net_ResetTimer()
 dd_bool Net_IsLocalPlayer(dint plrNum)
 {
     DENG2_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
-    player_t const &plr = ::ddPlayers[plrNum];
-    return plr.shared.inGame && (plr.shared.flags & DDPF_LOCAL);
+    auto const &pd = DD_Player(plrNum)->publicData();
+    return pd.inGame && (pd.flags & DDPF_LOCAL);
 }
 
 /**
@@ -354,9 +354,9 @@ static void Net_DoUpdate()
     DENG2_ASSERT(::consolePlayer >= 0 && ::consolePlayer < DDMAXPLAYERS);
 
     ::coordTimer -= newTics;
-    if(::isClient && ::coordTimer <= 0 && ::ddPlayers[::consolePlayer].shared.mo)
+    if(::isClient && ::coordTimer <= 0 && DD_Player(::consolePlayer)->publicData().mo)
     {
-        mobj_t *mob = ::ddPlayers[::consolePlayer].shared.mo;
+        mobj_t *mob = DD_Player(::consolePlayer)->publicData().mo;
 
         ::coordTimer = 1; //netCoordTime; // 35/2
 
@@ -375,10 +375,10 @@ static void Net_DoUpdate()
         }
         // Also include angles.
         Writer_WriteUInt16(::msgWriter, mob->angle >> 16);
-        Writer_WriteInt16(::msgWriter, P_LookDirToShort(::ddPlayers[::consolePlayer].shared.lookDir));
+        Writer_WriteInt16(::msgWriter, P_LookDirToShort(DD_Player(::consolePlayer)->publicData().lookDir));
         // Control state.
-        Writer_WriteChar(::msgWriter, FLT2FIX(::ddPlayers[::consolePlayer].shared.forwardMove) >> 13);
-        Writer_WriteChar(::msgWriter, FLT2FIX(::ddPlayers[::consolePlayer].shared.sideMove) >> 13);
+        Writer_WriteChar(::msgWriter, FLT2FIX(DD_Player(::consolePlayer)->publicData().forwardMove) >> 13);
+        Writer_WriteChar(::msgWriter, FLT2FIX(DD_Player(::consolePlayer)->publicData().sideMove) >> 13);
         Msg_End();
 
         Net_SendBuffer(0, 0);
@@ -440,8 +440,8 @@ void Net_InitGame()
     // Netgame is true when we're aware of the network (i.e. other players).
     ::netGame = false;
 
-    ::ddPlayers[0].shared.inGame = true;
-    ::ddPlayers[0].shared.flags |= DDPF_LOCAL;
+    DD_Player(0)->publicData().inGame = true;
+    DD_Player(0)->publicData().flags |= DDPF_LOCAL;
 
 #ifdef __CLIENT__
     ::clients[0].id           = ::clientID;
@@ -496,7 +496,7 @@ void Net_StopGame()
     // All remote players are forgotten.
     for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        player_t &plr = ddPlayers[i];
+        player_t &plr = *DD_Player(i);
         client_t &cl  = clients[i];
 
         cl.ready       = false;
@@ -505,18 +505,18 @@ void Net_StopGame()
         cl.nodeID      = 0;
         cl.viewConsole = -1;
 
-        plr.shared.inGame = false;
-        plr.shared.flags &= ~(DDPF_CAMERA | DDPF_CHASECAM | DDPF_LOCAL);
+        plr.publicData().inGame = false;
+        plr.publicData().flags &= ~(DDPF_CAMERA | DDPF_CHASECAM | DDPF_LOCAL);
     }
 
     // We're about to become player zero, so update it's view angles to match
     // our current ones.
-    if(::ddPlayers[0].shared.mo)
+    if(DD_Player(0)->publicData().mo)
     {
         /* $unifiedangles */
         DENG2_ASSERT(::consolePlayer >= 0 && ::consolePlayer < DDMAXPLAYERS);
-        ::ddPlayers[0].shared.mo->angle = ::ddPlayers[::consolePlayer].shared.mo->angle;
-        ::ddPlayers[0].shared.lookDir   = ::ddPlayers[::consolePlayer].shared.lookDir;
+        DD_Player(0)->publicData().mo->angle = DD_Player(::consolePlayer)->publicData().mo->angle;
+        DD_Player(0)->publicData().lookDir   = DD_Player(::consolePlayer)->publicData().lookDir;
     }
 
     LOGDEV_NET_NOTE("Reseting console and view players to zero");
@@ -527,8 +527,8 @@ void Net_StopGame()
     ::clients[0].connected   = true;
     ::clients[0].viewConsole = 0;
 
-    ::ddPlayers[0].shared.inGame = true;
-    ::ddPlayers[0].shared.flags |= DDPF_LOCAL;
+    DD_Player(0)->publicData().inGame = true;
+    DD_Player(0)->publicData().flags |= DDPF_LOCAL;
 }
 
 /**
@@ -564,7 +564,7 @@ static dd_bool recordingDemo()
 {
     for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(::ddPlayers[i].shared.inGame && ::clients[i].recording)
+        if(DD_Player(i)->publicData().inGame && ::clients[i].recording)
             return true;
     }
     return false;
@@ -587,7 +587,7 @@ void Net_DrawDemoOverlay()
         dint count = 0;
         for(dint i = 0; i < DDMAXPLAYERS; ++i)
         {
-            if(!(!::ddPlayers[i].shared.inGame || !::clients[i].recording))
+            if(!(!DD_Player(i)->publicData().inGame || !::clients[i].recording))
             {
                 // This is a "real" player (or camera).
                 if(count++)
@@ -1025,7 +1025,7 @@ D_CMD(Chat)
         {
             for(dint i = 1; i < DDMAXPLAYERS; ++i)
             {
-                if(::ddPlayers[i].shared.inGame && (mask & (1 << i)))
+                if(DD_Player(i)->publicData().inGame && (mask & (1 << i)))
                     Net_SendBuffer(i, 0);
             }
         }
@@ -1134,7 +1134,7 @@ D_CMD(MakeCamera)
     ::clients[cp].ready       = true;
     ::clients[cp].viewConsole = cp;
 
-    ::ddPlayers[cp].shared.flags |= DDPF_LOCAL;
+    DD_Player(cp)->publicData().flags |= DDPF_LOCAL;
     Smoother_Clear(::clients[cp].smoother);
 
 #ifdef __SERVER__
@@ -1164,7 +1164,7 @@ D_CMD(SetConsole)
         return false;
     }
 
-    if(::ddPlayers[cp].shared.inGame)
+    if(DD_Player(cp)->publicData().inGame)
     {
         ::consolePlayer = ::displayPlayer = cp;
     }

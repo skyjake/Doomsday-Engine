@@ -29,6 +29,7 @@
 #include <de/concurrency.h>
 #include <doomsday/console/var.h>
 #include <doomsday/console/cmd.h>
+#include <doomsday/doomsdayapp.h>
 #include <cmath>
 
 #define NUM_FLARES          5
@@ -145,7 +146,7 @@ bool H_RenderHalo(Vector3d const &origin, float size, DGLuint tex,
     occlusionFactor = (1 + occlusionFactor) / 2;
 
     // viewSideVec is to the left.
-    viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+    viewdata_t const *viewData = R_ViewData(DoomsdayApp::players().indexOf(viewPlayer));
     Vector3f const leftOff  = viewData->upVec + viewData->sideVec;
     Vector3f const rightOff = viewData->upVec - viewData->sideVec;
 

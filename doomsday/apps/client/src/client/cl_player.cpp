@@ -75,14 +75,14 @@ void ClPlayer_UpdateOrigin(int plrNum)
 {
     DENG2_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
 
-    player_t *plr = &ddPlayers[plrNum];
+    player_t *plr = DD_Player(plrNum);
     clplayerstate_t *s = ClPlayer_State(plrNum);
 
-    if(!s->clMobjId || !plr->shared.mo)
+    if(!s->clMobjId || !plr->publicData().mo)
         return;                 // Must have a mobj!
 
     mobj_t *remoteClientMobj = ClMobj_Find(s->clMobjId);
-    mobj_t *localMobj = plr->shared.mo;
+    mobj_t *localMobj = plr->publicData().mo;
 
     // The client mobj is never solid.
     remoteClientMobj->ddFlags &= ~DDMF_SOLID;
@@ -105,9 +105,9 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
     LOG_AS("ClPlayer_ApplyPendingFixes");
 
     clplayerstate_t *state = ClPlayer_State(plrNum);
-    player_t *plr = &ddPlayers[plrNum];
+    player_t *plr = DD_Player(plrNum);
     mobj_t *clmo = ClPlayer_ClMobj(plrNum);
-    ddplayer_t *ddpl = &plr->shared;
+    ddplayer_t *ddpl = &plr->publicData();
     mobj_t *mo = ddpl->mo;
     bool sendAck = false;
 
@@ -186,8 +186,8 @@ void ClPlayer_HandleFix()
 
     // Target player.
     int plrNum = Reader_ReadByte(msgReader);
-    player_t *plr = &ddPlayers[plrNum];
-    ddplayer_t *ddpl = &plr->shared;
+    player_t *plr = DD_Player(plrNum);
+    ddplayer_t *ddpl = &plr->publicData();
     clplayerstate_t *state = ClPlayer_State(plrNum);
 
     // What to fix?
@@ -237,8 +237,8 @@ void ClPlayer_HandleFix()
 
 void ClPlayer_MoveLocal(coord_t dx, coord_t dy, coord_t z, bool onground)
 {
-    player_t *plr = &ddPlayers[consolePlayer];
-    ddplayer_t *ddpl = &plr->shared;
+    player_t *plr = DD_Player(consolePlayer);
+    ddplayer_t *ddpl = &plr->publicData();
     mobj_t *mo = ddpl->mo;
     if(!mo) return;
 
@@ -298,7 +298,7 @@ void ClPlayer_ReadDelta()
     num &= 0xf; // Clear the upper bits of the number.
 
     clplayerstate_t *s = &clPlayerStates[num];
-    ddplayer_t *ddpl = &ddPlayers[num].shared;
+    ddplayer_t *ddpl = &DD_Player(num)->publicData();
 
     if(df & PDF_MOBJ)
     {
@@ -472,7 +472,7 @@ void ClPlayer_ReadDelta()
 
 mobj_t *ClPlayer_LocalGameMobj(int plrNum)
 {
-    return ddPlayers[plrNum].shared.mo;
+    return DD_Player(plrNum)->publicData().mo;
 }
 
 bool ClPlayer_IsFreeToMove(int plrNum)
