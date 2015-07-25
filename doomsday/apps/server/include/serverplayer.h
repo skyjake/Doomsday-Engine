@@ -20,6 +20,7 @@
 #define SERVER_SERVERPLAYER_H
 
 #include <doomsday/player.h>
+#include "server/sv_pool.h"
 
 /**
  * Server-side player state: delta pool, client bookkeeping information.
@@ -30,6 +31,8 @@ class ServerPlayer : public Player
 {
 public:
     ServerPlayer();
+
+    pool_t &deltaPool();
     
 private:
     DENG2_PRIVATE(d)

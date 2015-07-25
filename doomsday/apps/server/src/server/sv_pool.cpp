@@ -89,9 +89,6 @@ cregister_t worldRegister;
 // The initial register is used when generating deltas for a new client.
 cregister_t initialRegister;
 
-// Each client has its own pool for deltas.
-pool_t pools[DDMAXPLAYERS];
-
 static dfloat deltaBaseScores[NUM_DELTA_TYPES];
 
 // Keep this zeroed out. Used if the register doesn't have data for
@@ -140,7 +137,7 @@ void Sv_InitPools()
     // Reset all pools (set numbers are kept, though).
     for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        pool_t &pool = pools[i];
+        pool_t &pool = *Sv_GetPool(i);
         
         pool.owner         = i;
         pool.resendDealer  = 1;
@@ -186,7 +183,7 @@ void Sv_InitPoolForClient(duint clientNumber)
     // No frames have yet been sent for this client.
     // The first frame is processed a bit more thoroughly than the others
     // (e.g. *all* sides are compared, not just a portion).
-    pools[clientNumber].isFirst = true;
+    Sv_GetPool(clientNumber)->isFirst = true;
 }
 
 /**
@@ -194,8 +191,7 @@ void Sv_InitPoolForClient(duint clientNumber)
  */
 pool_t *Sv_GetPool(duint consoleNumber)
 {
-    DENG2_ASSERT(consoleNumber >= 0 && consoleNumber < DDMAXPLAYERS);
-    return &pools[consoleNumber];
+    return &DD_Player(consoleNumber)->deltaPool();
 }
 
 /**
@@ -1669,7 +1665,7 @@ void Sv_RemoveDelta(pool_t* pool, void* deltaPtr)
  */
 void Sv_DrainPool(uint clientNumber)
 {
-    pool_t*             pool = &pools[clientNumber];
+    pool_t*             pool = Sv_GetPool(clientNumber);
     delta_t*            delta;
     misrecord_t*        mis;
     void*               next = NULL;
@@ -1983,7 +1979,7 @@ void Sv_MobjRemoved(thid_t id)
         {
             if(clients[i].connected)
             {
-                Sv_PoolMobjRemoved(&pools[i], id);
+                Sv_PoolMobjRemoved(Sv_GetPool(i), id);
             }
         }
     }
@@ -2027,7 +2023,7 @@ int Sv_GetTargetPools(pool_t** targets, int clientsMask)
     {
         if(clientsMask & (1 << i) && clients[i].connected)
         {
-            targets[numTargets++] = &pools[i];
+            targets[numTargets++] = Sv_GetPool(i);
         }
     }
 /*
@@ -2165,7 +2161,7 @@ void Sv_NewPlayerDeltas(cregister_t* reg, dd_bool doUpdate, pool_t** targets)
         }
 
         // What about forced deltas?
-        if(Sv_IsPoolTargeted(&pools[i], targets))
+        if(Sv_IsPoolTargeted(Sv_GetPool(i), targets))
         {
 #if 0
             if(DD_Player(i).flags & DDPF_FIXANGLES)
@@ -2822,13 +2818,11 @@ void Sv_AckDelta(pool_t* pool, delta_t* delta)
  */
 void Sv_AckDeltaSet(uint clientNumber, int set, byte resent)
 {
-    int                 i;
-    pool_t*             pool = &pools[clientNumber];
-    delta_t*            delta, *next = NULL;
-    //dd_bool             ackTimeRegistered = false;
+    pool_t  *pool = Sv_GetPool(clientNumber);
+    delta_t *delta, *next = NULL;
 
     // Iterate through the entire hash table.
-    for(i = 0; i < POOL_HASH_SIZE; ++i)
+    for(int i = 0; i < POOL_HASH_SIZE; ++i)
     {
         for(delta = pool->hash[i].first; delta; delta = next)
         {
@@ -2837,15 +2831,6 @@ void Sv_AckDeltaSet(uint clientNumber, int set, byte resent)
                ((!resent && delta->set == set) ||
                 (resent && delta->resend == resent)))
             {
-                /*
-                // Register the ack time only for the first acked delta.
-                if(!ackTimeRegistered)
-                {
-                    Net_SetAckTime(clientNumber, Sv_DeltaAge(delta));
-                    ackTimeRegistered = true;
-                }
-                */
-
                 // There may be something that we need to do now that the
                 // delta has been acknowledged.
                 Sv_AckDelta(pool, delta);

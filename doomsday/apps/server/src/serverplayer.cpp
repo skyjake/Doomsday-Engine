@@ -18,12 +18,23 @@
 
 #include "serverplayer.h"
 
+using namespace de;
+
 DENG2_PIMPL_NOREF(ServerPlayer)
 {
-    
+    /// Each client has their own pool for deltas.
+    pool_t deltaPool;
+
+    Instance()
+    {
+        zap(deltaPool);
+    }
 };
 
 ServerPlayer::ServerPlayer() : d(new Instance)
+{}
+
+pool_t &ServerPlayer::deltaPool()
 {
-    
+    return d->deltaPool;
 }
