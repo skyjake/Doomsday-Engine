@@ -758,7 +758,7 @@ DENG2_PIMPL(WorldSystem)
     {
         DENG2_ASSERT(hand != 0 && map != 0);
 
-        viewdata_t const *viewData = R_ViewData(DoomsdayApp::players().indexOf(viewPlayer));
+        viewdata_t const *viewData = &viewPlayer->viewport();
         hand->setOrigin(viewData->current.origin + viewData->frontVec.xzy() * handDistance);
     }
 #endif
@@ -971,7 +971,7 @@ void WorldSystem::endFrame()
         // If the HueCircle is active update the current edit color.
         if(HueCircle *hueCircle = SBE_HueCircle())
         {
-            viewdata_t const *viewData = R_ViewData(DoomsdayApp::players().indexOf(viewPlayer));
+            viewdata_t const *viewData = &viewPlayer->viewport();
             d->hand->setEditColor(hueCircle->colorAt(viewData->frontVec));
         }
     }

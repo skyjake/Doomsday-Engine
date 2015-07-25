@@ -89,8 +89,6 @@ static QBitArray subspacesVisible;
 
 static QBitArray generatorsVisible(Map::MAX_GENERATORS);
 
-static viewdata_t viewDataOfConsole[DDMAXPLAYERS];  ///< Indexed by console number.
-
 static dint frameCount;
 
 static dint gridCols, gridRows;
@@ -122,26 +120,26 @@ void R_ResetFrameCount()
 DENG_EXTERN_C void R_SetViewOrigin(dint consoleNum, coord_t const origin[3])
 {
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
-    viewDataOfConsole[consoleNum].latest.origin = Vector3d(origin);
+    DD_Player(consoleNum)->viewport().latest.origin = Vector3d(origin);
 }
 
 #undef R_SetViewAngle
 DENG_EXTERN_C void R_SetViewAngle(dint consoleNum, angle_t angle)
 {
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
-    viewDataOfConsole[consoleNum].latest.setAngle(angle);
+    DD_Player(consoleNum)->viewport().latest.setAngle(angle);
 }
 
 #undef R_SetViewPitch
 DENG_EXTERN_C void R_SetViewPitch(dint consoleNum, dfloat pitch)
 {
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
-    viewDataOfConsole[consoleNum].latest.pitch = pitch;
+    DD_Player(consoleNum)->viewport().latest.pitch = pitch;
 }
 
 void R_SetupDefaultViewWindow(dint consoleNum)
 {
-    viewdata_t *vd = &viewDataOfConsole[consoleNum];
+    viewdata_t *vd = &DD_Player(consoleNum)->viewport();
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
 
     vd->window =
@@ -152,7 +150,7 @@ void R_SetupDefaultViewWindow(dint consoleNum)
 
 void R_ViewWindowTicker(dint consoleNum, timespan_t ticLength)
 {
-    viewdata_t *vd = &viewDataOfConsole[consoleNum];
+    viewdata_t *vd = &DD_Player(consoleNum)->viewport();
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS)
     {
         return;
@@ -178,7 +176,7 @@ DENG_EXTERN_C dint R_ViewWindowGeometry(dint player, RectRaw *geometry)
     if(!geometry) return false;
     if(player < 0 || player >= DDMAXPLAYERS) return false;
 
-    viewdata_t const &vd = viewDataOfConsole[player];
+    viewdata_t const &vd = DD_Player(player)->viewport();
     geometry->origin.x    = vd.window.topLeft.x;
     geometry->origin.y    = vd.window.topLeft.y;
     geometry->size.width  = vd.window.width();
@@ -192,7 +190,7 @@ DENG_EXTERN_C dint R_ViewWindowOrigin(dint player, Point2Raw *origin)
     if(!origin) return false;
     if(player < 0 || player >= DDMAXPLAYERS) return false;
 
-    viewdata_t const &vd = viewDataOfConsole[player];
+    viewdata_t const &vd = DD_Player(player)->viewport();
     origin->x = vd.window.topLeft.x;
     origin->y = vd.window.topLeft.y;
     return true;
@@ -204,7 +202,7 @@ DENG_EXTERN_C dint R_ViewWindowSize(dint player, Size2Raw *size)
     if(!size) return false;
     if(player < 0 || player >= DDMAXPLAYERS) return false;
 
-    viewdata_t const &vd = viewDataOfConsole[player];
+    viewdata_t const &vd = DD_Player(player)->viewport();
     size->width  = vd.window.width();
     size->height = vd.window.height();
     return true;
@@ -222,7 +220,7 @@ DENG_EXTERN_C void R_SetViewWindowGeometry(dint player, RectRaw const *geometry,
     if(p < 0) return;
 
     viewport_t const *vp = &viewportOfLocalPlayer[p];
-    viewdata_t *vd = &viewDataOfConsole[player];
+    viewdata_t *vd = &DD_Player(player)->viewport();
 
     Rectanglei newGeom = Rectanglei::fromSize(Vector2i(de::clamp<dint>(0, geometry->origin.x, vp->geometry.width()),
                                                        de::clamp<dint>(0, geometry->origin.y, vp->geometry.height())),
@@ -414,12 +412,6 @@ dint R_NextViewer()
     return resetNextViewer;
 }
 
-viewdata_t const *R_ViewData(dint consoleNum)
-{
-    DENG2_ASSERT(consoleNum >= 0 && consoleNum < DDMAXPLAYERS);
-    return &viewDataOfConsole[consoleNum];
-}
-
 /**
  * The components whose difference is too large for interpolation will be
  * snapped to the sharp values.
@@ -448,13 +440,13 @@ void R_CheckViewerLimits(viewer_t *src, viewer_t *dst)
 /**
  * Retrieve the current sharp camera position.
  */
-viewer_t R_SharpViewer(player_t &player)
+viewer_t R_SharpViewer(ClientPlayer &player)
 {
     DENG2_ASSERT(player.publicData().mo);
 
     ddplayer_t const &ddpl = player.publicData();
 
-    viewer_t view(viewDataOfConsole[DoomsdayApp::players().indexOf(&player)].latest);
+    viewer_t view(player.viewport().latest);
 
     if((ddpl.flags & DDPF_CHASECAM) && !(ddpl.flags & DDPF_CAMERA))
     {
@@ -499,8 +491,8 @@ void R_NewSharpWorld()
 
     for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        viewdata_t *vd = &viewDataOfConsole[i];
         player_t *plr  = DD_Player(i);
+        viewdata_t *vd = &plr->viewport();
 
         if(/*(plr->shared.flags & DDPF_LOCAL) &&*/
            (!plr->publicData().inGame || !plr->publicData().mo))
@@ -537,8 +529,8 @@ void R_UpdateViewer(dint consoleNum)
 
     dint const VIEWPOS_MAX_SMOOTHDISTANCE = 172;
 
-    viewdata_t *vd   = viewDataOfConsole + consoleNum;
     player_t *player = DD_Player(consoleNum);
+    viewdata_t *vd   = &player->viewport();
 
     if(!player->publicData().inGame) return;
     if(!player->publicData().mo) return;
@@ -775,7 +767,7 @@ static void setupPlayerSprites()
         }
     }
 
-    viewdata_t const *viewData = R_ViewData(DoomsdayApp::players().indexOf(viewPlayer));
+    viewdata_t const *viewData = &viewPlayer->viewport();
     for(dint i = 0; i < DDMAXPSPRITES; ++i)
     {
         vispsprite_t *spr = &visPSprites[i];
@@ -887,7 +879,7 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
     }
 
     // Too early? Game has not configured the view window?
-    viewdata_t *vd = &viewDataOfConsole[num];
+    viewdata_t *vd = &player->viewport();
     if(vd->window.isNull()) return;
 
     // Setup for rendering the frame.
@@ -1087,7 +1079,7 @@ void R_RenderViewPorts(ViewPortLayer layer)
         // Use an orthographic projection in real pixel dimensions.
         glOrtho(0, vp->geometry.width(), vp->geometry.height(), 0, -1, 1);
 
-        viewdata_t const *vd = &viewDataOfConsole[vp->console];
+        viewdata_t const *vd = &DD_Player(vp->console)->viewport();
         RectRaw vpGeometry(vp->geometry.topLeft.x, vp->geometry.topLeft.y,
                            vp->geometry.width(), vp->geometry.height());
 
@@ -1271,7 +1263,7 @@ void R_BeginFrame()
     luminousOrder   =    (duint *) M_Realloc(luminousOrder,   sizeof(*luminousOrder)   * maxLuminous);
 
     // Update viewer => lumobj distances ready for linking and sorting.
-    viewdata_t const *viewData = R_ViewData(DoomsdayApp::players().indexOf(viewPlayer));
+    viewdata_t const *viewData = &viewPlayer->viewport();
     map.forAllLumobjs([&viewData] (Lumobj &lob)
     {
         // Approximate the distance in 3D.

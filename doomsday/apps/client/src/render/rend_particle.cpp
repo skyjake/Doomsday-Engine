@@ -82,7 +82,7 @@ static dfloat particleDiffuse = 4;
 
 static dfloat pointDist(fixed_t const c[3])
 {
-    viewdata_t const *viewData = R_ViewData(DoomsdayApp::players().indexOf(viewPlayer));
+    viewdata_t const *viewData = &viewPlayer->viewport();
     dfloat dist = ((viewData->current.origin.y - FIX2FLT(c[1])) * -viewData->viewSin)
                 - ((viewData->current.origin.x - FIX2FLT(c[0])) * viewData->viewCos);
 
@@ -491,7 +491,7 @@ static void drawParticles(dint rtype, bool withBlend)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    viewdata_t const *viewData = R_ViewData(DoomsdayApp::players().indexOf(viewPlayer));
+    viewdata_t const *viewData = &viewPlayer->viewport();
     Vector3f const leftoff     = viewData->upVec + viewData->sideVec;
     Vector3f const rightoff    = viewData->upVec - viewData->sideVec;
 

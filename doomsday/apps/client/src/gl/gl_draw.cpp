@@ -331,8 +331,7 @@ DENG_EXTERN_C void GL_SetFilterColor(float r, float g, float b, float a)
  */
 void GL_DrawFilter(void)
 {
-    const viewdata_t* vd = R_ViewData(displayPlayer);
-    assert(NULL != vd);
+    viewdata_t const *vd = &DD_Player(displayPlayer)->viewport();
 
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();

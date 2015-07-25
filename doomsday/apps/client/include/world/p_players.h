@@ -44,9 +44,11 @@ struct PlayerImpulse
     de::String bindContextName;     ///< Symbolic name of the associated binding context.
 };
 
-typedef Player player_t; // to aid legacy code
+typedef AppPlayer player_t; // to aid legacy code
 
-extern Player *viewPlayer;
+#ifdef __CLIENT__
+extern ClientPlayer *viewPlayer;
+#endif
 extern int consolePlayer;
 extern int displayPlayer;
 

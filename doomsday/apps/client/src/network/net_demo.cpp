@@ -429,7 +429,7 @@ void Demo_WriteLocalCamera(dint plrNum)
     Writer_WriteInt16(::msgWriter, y >> 16);
     Writer_WriteByte(::msgWriter, y >> 8);
 
-    fixed_t z = FLT2FIX(mob->origin[VZ] + R_ViewData(plrNum)->current.origin.z);
+    fixed_t z = FLT2FIX(mob->origin[VZ] + DD_Player(plrNum)->viewport().current.origin.z);
     Writer_WriteInt16(::msgWriter, z >> 16);
     Writer_WriteByte(::msgWriter, z >> 8);
 

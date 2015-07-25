@@ -258,7 +258,7 @@ DENG_EXTERN_C void Mobj_OriginSmoothed(mobj_t *mo, coord_t origin[3])
            // $voodoodolls: Must be a real player to use the smoothed origin.
            mo->dPlayer->mo == mo)
         {
-            viewdata_t const *vd = R_ViewData(consolePlayer);
+            viewdata_t const *vd = &DD_Player(consolePlayer)->viewport();
             V3d_Set(origin, vd->current.origin.x, vd->current.origin.y, vd->current.origin.z);
         }
         // The client may have a Smoother for this object.
@@ -819,7 +819,7 @@ DENG_EXTERN_C angle_t Mobj_AngleSmoothed(mobj_t *mob)
            // $voodoodolls: Must be a real player to use the smoothed angle.
            mob->dPlayer->mo == mob)
         {
-            viewdata_t const *vd = R_ViewData(::consolePlayer);
+            viewdata_t const *vd = &DD_Player(::consolePlayer)->viewport();
             return vd->current.angle();
         }
     }

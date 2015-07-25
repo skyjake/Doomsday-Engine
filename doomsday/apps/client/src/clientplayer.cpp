@@ -18,12 +18,27 @@
 
 #include "clientplayer.h"
 
+using namespace de;
+
 DENG2_PIMPL_NOREF(ClientPlayer)
 {
-    
+    viewdata_t viewport;
+
+    Instance()
+    {
+        zap(viewport);
+    }
 };
 
 ClientPlayer::ClientPlayer() : d(new Instance)
+{}
+
+viewdata_t &ClientPlayer::viewport()
 {
-    
+    return d->viewport;
+}
+
+viewdata_t const &ClientPlayer::viewport() const
+{
+    return d->viewport;
 }

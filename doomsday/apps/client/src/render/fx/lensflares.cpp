@@ -505,7 +505,7 @@ void LensFlares::draw()
 
     if(!viewPlayer) return; /// @todo How'd we get here? -ds
 
-    viewdata_t const *viewData = R_ViewData(console());
+    viewdata_t const *viewData = &DD_Player(console())->viewport();
     d->eyeFront = Vector3f(viewData->frontVec);
 
     Rectanglef const rect = viewRect();

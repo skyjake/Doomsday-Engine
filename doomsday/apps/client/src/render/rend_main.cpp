@@ -409,7 +409,7 @@ Vector3d Rend_EyeOrigin()
 
 Matrix4f Rend_GetModelViewMatrix(dint consoleNum, bool inWorldSpace)
 {
-    viewdata_t const *viewData = R_ViewData(consoleNum);
+    viewdata_t const *viewData = &DD_Player(consoleNum)->viewport();
 
     dfloat bodyAngle = viewData->current.angleWithoutHeadTracking() / (dfloat) ANGLE_MAX * 360 - 90;
 
@@ -4616,7 +4616,7 @@ void Rend_RenderMap(Map &map)
         // Make vissprites of all the visible decorations.
         generateDecorationFlares(map);
 
-        viewdata_t const *viewData = R_ViewData(DoomsdayApp::players().indexOf(viewPlayer));
+        viewdata_t const *viewData = &viewPlayer->viewport();
         eyeOrigin = viewData->current.origin;
 
         // Add the backside clipping range (if vpitch allows).
@@ -4791,7 +4791,7 @@ static void drawBiasEditingVisuals(Map &map)
 
     if(HueCircle *hueCircle = SBE_HueCircle())
     {
-        viewdata_t const *viewData = R_ViewData(DoomsdayApp::players().indexOf(viewPlayer));
+        viewdata_t const *viewData = &viewPlayer->viewport();
 
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_CULL_FACE);

@@ -146,7 +146,7 @@ bool H_RenderHalo(Vector3d const &origin, float size, DGLuint tex,
     occlusionFactor = (1 + occlusionFactor) / 2;
 
     // viewSideVec is to the left.
-    viewdata_t const *viewData = R_ViewData(DoomsdayApp::players().indexOf(viewPlayer));
+    viewdata_t const *viewData = &viewPlayer->viewport();
     Vector3f const leftOff  = viewData->upVec + viewData->sideVec;
     Vector3f const rightOff = viewData->upVec - viewData->sideVec;
 

@@ -20,6 +20,7 @@
 #define CLIENT_CLIENTPLAYER_H
 
 #include <doomsday/player.h>
+#include "render/viewports.h"
 
 /**
  * Client-side player state.
@@ -28,6 +29,9 @@ class ClientPlayer : public Player
 {
 public:
     ClientPlayer();
+
+    viewdata_t &viewport();
+    viewdata_t const &viewport() const;
     
 private:
     DENG2_PRIVATE(d)

@@ -338,7 +338,7 @@ void Rend_DrawPSprite(rendpspriteparams_t const &parms)
 
     // All psprite vertices are co-plannar, so just copy the view front vector.
     // @todo: Can we do something better here?
-    Vector3f const &frontVec = R_ViewData(DoomsdayApp::players().indexOf(viewPlayer))->frontVec;
+    Vector3f const &frontVec = viewPlayer->viewport().frontVec;
     dgl_vertex_t quadNormals[4];
     for(dint i = 0; i < 4; ++i)
     {

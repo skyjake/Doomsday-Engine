@@ -44,8 +44,9 @@
 
 using namespace de;
 
-Player *viewPlayer;
-//player_t DD_Player(DDMAXPLAYERS);
+#ifdef __CLIENT__
+ClientPlayer *viewPlayer;
+#endif
 int consolePlayer;
 int displayPlayer;
 
