@@ -28,7 +28,7 @@
 #include <functional>
 
 class Player;
-struct ddplayer_s;
+struct ddplayer_s; // shared with plugins
 
 /**
  * Base class for player state: common functionality shared by both the server

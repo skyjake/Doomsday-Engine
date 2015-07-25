@@ -37,6 +37,9 @@ static DoomsdayApp *theDoomsdayApp = nullptr;
 
 DENG2_PIMPL_NOREF(DoomsdayApp)
 {
+    std::string ddBasePath; // Doomsday root directory is at...?
+    std::string ddRuntimePath;
+
     Plugins plugins;
     Games games;
     BusyMode busyMode;
@@ -211,6 +214,37 @@ BusyMode &DoomsdayApp::busyMode()
 bool DoomsdayApp::isUsingUserDir() const
 {
     return d->usingUserDir;
+}
+
+std::string const &DoomsdayApp::doomsdayBasePath() const
+{
+    return d->ddBasePath;
+}
+
+void DoomsdayApp::setDoomsdayBasePath(de::NativePath const &path)
+{
+    /// @todo Unfortunately Dir/fs_util assumes fixed-size strings, so we
+    /// can't take advantage of std::string. -jk
+    filename_t temp;
+    strncpy(temp, path.toUtf8(), FILENAME_T_MAXLEN);
+
+    Dir_CleanPath(temp, FILENAME_T_MAXLEN);
+    Dir_MakeAbsolutePath(temp, FILENAME_T_MAXLEN);
+
+    // Ensure it ends with a directory separator.
+    F_AppendMissingSlashCString(temp, FILENAME_T_MAXLEN);
+
+    d->ddBasePath = temp;
+}
+
+std::string const &DoomsdayApp::doomsdayRuntimePath() const
+{
+    return d->ddRuntimePath;
+}
+
+void DoomsdayApp::setDoomsdayRuntimePath(de::NativePath const &path)
+{
+    d->ddRuntimePath = path.toUtf8().constData();
 }
 
 #ifdef WIN32

@@ -25,6 +25,9 @@
 #include "gameapi.h"
 #include "players.h"
 
+#include <de/NativePath>
+#include <string>
+
 /**
  * Common application-level state and components.
  *
@@ -43,6 +46,11 @@ public:
 #ifdef WIN32
     void *moduleHandle() const;
 #endif
+
+    void setDoomsdayBasePath(de::NativePath const &path);
+    void setDoomsdayRuntimePath(de::NativePath const &path);
+    std::string const &doomsdayBasePath() const;
+    std::string const &doomsdayRuntimePath() const;
 
 public:
     static DoomsdayApp &app();
