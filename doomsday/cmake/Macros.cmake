@@ -120,28 +120,41 @@ macro (deng_target_rpath target)
             set_property (TARGET ${target} APPEND PROPERTY
                 INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_LIB_DIR};${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_PLUGIN_DIR}"
             )
-        endif ()        
+        endif ()
     elseif (UNIX)
-        set_property (TARGET ${target} 
-            PROPERTY INSTALL_RPATH                 
+        set_property (TARGET ${target}
+            PROPERTY INSTALL_RPATH
                 "${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_PLUGIN_DIR};${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_LIB_DIR};$ORIGIN/../${DENG_INSTALL_PLUGIN_DIR};$ORIGIN/../${DENG_INSTALL_LIB_DIR}"
         )
-    endif ()        
+    endif ()
 endmacro (deng_target_rpath)
 
 macro (deng_target_defaults target)
-    if (APPLE)        
+    if (APPLE)
         deng_xcode_attribs (${target})
         # OS X version numbers come from the Info.plist, we don't need version symlinks.
-    else () 
-        set_target_properties (${target} PROPERTIES 
+    else ()
+        set_target_properties (${target} PROPERTIES
             VERSION   ${DENG_VERSION}
             SOVERSION ${DENG_COMPAT_VERSION}
         )
     endif ()
+    if (MSVC)
+        set_target_properties (${target} PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY_DEBUG "${DENG_VS_STAGING_DIR}/Debug/bin"
+            RUNTIME_OUTPUT_DIRECTORY_RELEASE "${DENG_VS_STAGING_DIR}/Release/bin"
+            RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${DENG_VS_STAGING_DIR}/MinSizeRel/bin"
+            RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${DENG_VS_STAGING_DIR}/RelWithDebInfo/bin"
+
+            LIBRARY_OUTPUT_DIRECTORY_DEBUG "${DENG_VS_STAGING_DIR}/Debug/bin"
+            LIBRARY_OUTPUT_DIRECTORY_RELEASE "${DENG_VS_STAGING_DIR}/Release/bin"
+            LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL "${DENG_VS_STAGING_DIR}/MinSizeRel/bin"
+            LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO "${DENG_VS_STAGING_DIR}/RelWithDebInfo/bin"
+        )
+    endif ()
     deng_target_rpath (${target})
     enable_cxx11 (${target})
-    strict_warnings (${target})    
+    strict_warnings (${target})
     #cotire (${target})
 endmacro (deng_target_defaults)
 
@@ -246,7 +259,7 @@ function (deng_find_resources)
             #list (APPEND src ${origFn})
             # Do a glob to find all the files.
             file (GLOB_RECURSE _all ${fn}/*)
-            # Determine length of the base path since it will be omitted 
+            # Determine length of the base path since it will be omitted
             # from destination.
             get_filename_component (baseDir ${fn} DIRECTORY)
             string (LENGTH ${baseDir} baseLen)
@@ -288,7 +301,7 @@ function (deng_add_package packName)
         message (FATAL_ERROR "deng_package: \"${outName}\" not found")
     endif ()
     set (outDir ${CMAKE_CURRENT_BINARY_DIR})
-    execute_process (COMMAND ${PYTHON_EXECUTABLE} 
+    execute_process (COMMAND ${PYTHON_EXECUTABLE}
         "${DENG_SOURCE_DIR}/build/scripts/buildpackage.py"
         ${fullPath} ${outDir}
         OUTPUT_VARIABLE msg
@@ -312,6 +325,14 @@ function (deng_add_package packName)
         DESTINATION ${DENG_INSTALL_DATA_DIR}
         COMPONENT ${packComponent}
     )
+    if (MSVC)
+        # In addition to installing, copy the packages to the build products
+        # directories so that executables can be run in them.
+        foreach (cfg ${CMAKE_CONFIGURATION_TYPES})
+            file (MAKE_DIRECTORY ${DENG_VS_STAGING_DIR}/${cfg}/data)
+            file (COPY ${outDir}/${outName} DESTINATION ${DENG_VS_STAGING_DIR}/${cfg}/data)
+        endforeach (cfg)
+    endif ()
     set (DENG_REQUIRED_PACKAGES ${DENG_REQUIRED_PACKAGES} ${packName} PARENT_SCOPE)
 endfunction (deng_add_package)
 
@@ -324,7 +345,7 @@ function (deng_find_packages fullPaths)
     list (REMOVE_DUPLICATES names)
     foreach (name ${names})
         if (TARGET ${name})
-            get_property (loc TARGET ${name} PROPERTY DENG_LOCATION)            
+            get_property (loc TARGET ${name} PROPERTY DENG_LOCATION)
             list (APPEND result ${loc})
         else ()
             # Check the installed packages.
@@ -350,7 +371,7 @@ macro (deng_add_library target)
     add_library (Deng::${target} ALIAS ${target})
     # Libraries use the "deng_" prefix.
     string (REGEX REPLACE "lib(.*)" "deng_\\1" _outName ${target})
-    set_target_properties (${target} PROPERTIES 
+    set_target_properties (${target} PROPERTIES
         OUTPUT_NAME ${_outName}
         FOLDER Libraries
     )
@@ -359,7 +380,7 @@ macro (deng_add_library target)
     deng_target_defaults (${target})
     if (APPLE)
         set_property (TARGET ${target} PROPERTY BUILD_WITH_INSTALL_RPATH ON)
-        add_custom_command (TARGET ${target} POST_BUILD 
+        add_custom_command (TARGET ${target} POST_BUILD
             COMMAND ${CMAKE_COMMAND}
                 "-DDENG_SOURCE_DIR=${DENG_SOURCE_DIR}"
                 "-DCMAKE_INSTALL_NAME_TOOL=${CMAKE_INSTALL_NAME_TOOL}"
@@ -371,7 +392,7 @@ macro (deng_add_library target)
     target_include_directories (${target} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
         $<INSTALL_INTERFACE:include/>
-    )    
+    )
     #cotire (${target})
 endmacro (deng_add_library)
 
@@ -383,7 +404,7 @@ macro (deng_deploy_library target name)
             ARCHIVE DESTINATION lib COMPONENT sdk
         )
         install (EXPORT ${name} DESTINATION ${DENG_INSTALL_LIB_DIR}/cmake/${name} NAMESPACE Deng:: COMPONENT sdk)
-        install (FILES ${DENG_CMAKE_DIR}/config/${name}Config.cmake 
+        install (FILES ${DENG_CMAKE_DIR}/config/${name}Config.cmake
             DESTINATION ${DENG_INSTALL_LIB_DIR}/cmake/${name} COMPONENT sdk)
         if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/include/de)
             install (DIRECTORY include/de DESTINATION include COMPONENT sdk)
@@ -402,7 +423,7 @@ macro (deng_codesign target)
     if (APPLE AND DENG_CODESIGN_APP_CERT)
         get_property (_outName TARGET ${target} PROPERTY OUTPUT_NAME)
         install (CODE "
-            file (GLOB fw 
+            file (GLOB fw
                 \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/PlugIns/Doomsday/*.bundle/Contents/MacOS/*\"
                 \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/PlugIns/Doomsday/*.bundle/Contents/Frameworks/*.dylib\"
                 \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/PlugIns/Doomsday/*.bundle\"
@@ -421,7 +442,7 @@ macro (deng_codesign target)
                 -s \"${DENG_CODESIGN_APP_CERT}\"
                 \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app\"
             )")
-    endif ()    
+    endif ()
 endmacro ()
 
 # Defines a new GUI application target that includes all the required Doomsday
@@ -457,10 +478,10 @@ function (deng_add_application target)
     if (target MATCHES "test_.*")
         if (APPLE)
             # Tests should be runnable from distrib/products.
-            set_property (TARGET ${target} APPEND PROPERTY 
+            set_property (TARGET ${target} APPEND PROPERTY
                 INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_LIB_DIR};${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_PLUGIN_DIR}"
             )
-        endif ()        
+        endif ()
     endif ()
 endfunction (deng_add_application)
 
@@ -470,7 +491,7 @@ function (add_pkgconfig_interface_library target)
     if (NOT first STREQUAL "OPTIONAL")
         set (checkMode REQUIRED)
     else ()
-        list (REMOVE_AT pkgNames 0)        
+        list (REMOVE_AT pkgNames 0)
     endif ()
     foreach (pkg ${pkgNames})
         set (prefix "PKG_${pkg}")
@@ -509,7 +530,7 @@ function (fix_bundled_install_names binaryFile)
     list (GET libs 0 first)
     if (first STREQUAL "LD_PATH")
         list (GET libs 1 ref)
-        list (REMOVE_AT libs 1 0)        
+        list (REMOVE_AT libs 1 0)
     endif ()
     list (GET libs -1 last)
     if (last STREQUAL "VERBATIM")
@@ -517,7 +538,7 @@ function (fix_bundled_install_names binaryFile)
         list (REMOVE_AT libs -1)
     endif ()
     find_program (OTOOL_EXECUTABLE otool)
-    execute_process (COMMAND ${OTOOL_EXECUTABLE} 
+    execute_process (COMMAND ${OTOOL_EXECUTABLE}
         -L ${binaryFile}
         OUTPUT_VARIABLE deps
     )
@@ -538,7 +559,7 @@ function (fix_bundled_install_names binaryFile)
                 )
             endif ()
         endif ()
-    endforeach (fn)    
+    endforeach (fn)
 endfunction (fix_bundled_install_names)
 
 # Fixes the install names of the listed libraries that have been bundled into
@@ -603,7 +624,7 @@ function (deng_install_bundle_deps target)
     endif ()
 endfunction (deng_install_bundle_deps)
 
-# Run the Qt deploy utility on the target, resolving any local system 
+# Run the Qt deploy utility on the target, resolving any local system
 # dependencies.
 function (deng_install_deployqt target)
     if (UNIX AND NOT APPLE)
@@ -692,20 +713,27 @@ macro (deng_install_library library)
     elseif (MSVC)
         message (STATUS "Library will be installed: ${library}")
         install (PROGRAMS ${library} DESTINATION ${DENG_INSTALL_LIB_DIR})
-    endif ()        
+
+        # In addition to installing, copy the libraries straight to the
+        # build products directories so we can run executables in them.
+        foreach (cfg ${CMAKE_CONFIGURATION_TYPES})
+            file (MAKE_DIRECTORY ${DENG_VS_STAGING_DIR}/${cfg}/bin)
+            file (COPY ${library} DESTINATION ${DENG_VS_STAGING_DIR}/${cfg}/bin)
+        endforeach (cfg)
+    endif ()
 endmacro (deng_install_library)
 
 # Defines a command for generating a source file from an Amethyst document project.
-# `ameSourceDir` is expected to contain a number of .ame files, with `mainSrc` 
+# `ameSourceDir` is expected to contain a number of .ame files, with `mainSrc`
 # being the name of the main one. The contents of `ameSourceDir` are used (only)
 # as dependencies to know when the output file needs regenerating. `type` is the
 # amestd output generator def (e.g., TXT or RTF).
 function (deng_add_amedoc type file ameSourceDir mainSrc)
-    if (AMETHYST_FOUND)     
+    if (AMETHYST_FOUND)
         set (pfm ${DENG_AMETHYST_PLATFORM})
         set (opts)
         if (type STREQUAL MAN)
-            set (descText "manual page")   
+            set (descText "manual page")
             set (pfm UNIX) # man pages are always for Unix
         elseif (type STREQUAL RTF)
             set (descText "rich text document")

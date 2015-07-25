@@ -45,10 +45,11 @@ if (DEFINED CMAKE_INSTALL_LIBDIR)
     set (DENG_INSTALL_LIB_DIR ${CMAKE_INSTALL_LIBDIR})
 else ()
     set (DENG_INSTALL_LIB_DIR "lib")
-endif () 
+endif ()
 set (DENG_INSTALL_PLUGIN_DIR "${DENG_INSTALL_LIB_DIR}/doomsday")
 
 set (DENG_BUILD_STAGING_DIR "${CMAKE_BINARY_DIR}/bundle-staging")
+set (DENG_VS_STAGING_DIR "${CMAKE_BINARY_DIR}/products") # for Visual Studio
 
 set (CMAKE_INSTALL_DEFAULT_COMPONENT_NAME "client")
 
@@ -83,7 +84,7 @@ endif ()
 if (APPLE)
     include (PlatformMacx)
 elseif (WIN32)
-    include (PlatformWindows)    
+    include (PlatformWindows)
 else ()
     include (PlatformUnix)
 endif ()
