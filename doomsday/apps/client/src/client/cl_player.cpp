@@ -39,11 +39,7 @@ using namespace de;
 
 float pspMoveSpeed = 6;
 float cplrThrustMul = 1;
-clplayerstate_t clPlayerStates[DDMAXPLAYERS];
 
-//static int fixSpeed = 15;
-//static float fixPos[3];
-//static int fixTics;
 static float pspY;
 
 // Console player demo momentum (used to smooth out abrupt momentum changes).
@@ -51,24 +47,25 @@ static float cpMom[3][LOCALCAM_WRITE_TICS];
 
 void Cl_InitPlayers()
 {
-    //fixTics = 0;
+    DoomsdayApp::players().forAll([] (Player &plr) {
+        zap(plr.as<ClientPlayer>().clPlayerState());
+        return LoopContinue;
+    });
+
     pspY = 0;
-    de::zap(clPlayerStates);
-    //de::zap(fixPos);
     de::zap(cpMom);
 }
 
 clplayerstate_t *ClPlayer_State(int plrNum)
 {
-    DENG2_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
-    return &clPlayerStates[plrNum];
+    return &DD_Player(plrNum)->clPlayerState();
 }
 
 #undef ClPlayer_ClMobj
 DENG_EXTERN_C struct mobj_s *ClPlayer_ClMobj(int plrNum)
 {
-    DENG2_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
-    return ClMobj_Find(clPlayerStates[plrNum].clMobjId);
+    if(plrNum < 0 || plrNum >= DDMAXPLAYERS) return 0;
+    return ClMobj_Find(ClPlayer_State(plrNum)->clMobjId);
 }
 
 void ClPlayer_UpdateOrigin(int plrNum)
@@ -297,7 +294,7 @@ void ClPlayer_ReadDelta()
     df |= Reader_ReadByte(msgReader); // Second byte is just flags.
     num &= 0xf; // Clear the upper bits of the number.
 
-    clplayerstate_t *s = &clPlayerStates[num];
+    clplayerstate_t *s = ClPlayer_State(num);
     ddplayer_t *ddpl = &DD_Player(num)->publicData();
 
     if(df & PDF_MOBJ)

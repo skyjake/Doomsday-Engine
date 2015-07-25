@@ -22,6 +22,28 @@
 #include <doomsday/player.h>
 #include "render/viewports.h"
 
+struct ConsoleEffectStack;
+
+/**
+ * Information about a client player.
+ *
+ * @todo This is probably partially obsolete? Rename/revamp. -jk
+ */
+typedef struct clplayerstate_s {
+    thid_t clMobjId;
+    float forwardMove;
+    float sideMove;
+    int angle;
+    angle_t turnDelta;
+    int friction;
+    int pendingFixes;
+    thid_t pendingFixTargetClMobjId;
+    angle_t pendingAngleFix;
+    float pendingLookDirFix;
+    coord_t pendingOriginFix[3];
+    coord_t pendingMomFix[3];
+} clplayerstate_t;
+
 /**
  * Client-side player state.
  */
@@ -32,6 +54,12 @@ public:
 
     viewdata_t &viewport();
     viewdata_t const &viewport() const;
+
+    clplayerstate_t &clPlayerState();
+    clplayerstate_t const &clPlayerState() const;
+
+    ConsoleEffectStack &fxStack();
+    ConsoleEffectStack const &fxStack() const;
     
 private:
     DENG2_PRIVATE(d)

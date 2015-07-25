@@ -17,16 +17,20 @@
  */
 
 #include "clientplayer.h"
+#include "render/consoleeffect.h"
 
 using namespace de;
 
 DENG2_PIMPL_NOREF(ClientPlayer)
 {
-    viewdata_t viewport;
+    viewdata_t         viewport;
+    clplayerstate_t    clPlayerState;
+    ConsoleEffectStack effects;
 
     Instance()
     {
         zap(viewport);
+        zap(clPlayerState);
     }
 };
 
@@ -41,4 +45,24 @@ viewdata_t &ClientPlayer::viewport()
 viewdata_t const &ClientPlayer::viewport() const
 {
     return d->viewport;
+}
+
+clplayerstate_t &ClientPlayer::clPlayerState()
+{
+    return d->clPlayerState;
+}
+
+clplayerstate_t const &ClientPlayer::clPlayerState() const
+{
+    return d->clPlayerState;
+}
+
+ConsoleEffectStack &ClientPlayer::fxStack()
+{
+    return d->effects;
+}
+
+ConsoleEffectStack const &ClientPlayer::fxStack() const
+{
+    return d->effects;
 }
