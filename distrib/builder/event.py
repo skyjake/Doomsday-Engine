@@ -231,7 +231,7 @@ class Event:
             root = ElementTree.fromstring('<changes>' + src.read() + '</changes>')
             commitCount = int(root.find('commitCount').text)
             tagCount = {}
-            for tag in root.iter('tag'):
+            for tag in root.getiterator('tag'):
                 if tag.text in tagCount:
                     tagCount[tag.text] += 1
                 else:
