@@ -114,8 +114,7 @@ void Net_Init()
     for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
         std::memset(&::clients[i], 0, sizeof(::clients[i]));
-        ::clients[i].viewConsole = -1;
-        Net_AllocClientBuffers(i);
+        DD_Player(i)->viewConsole = -1;
     }
 
     std::memset(&::netBuffer, 0, sizeof(::netBuffer));
@@ -134,7 +133,7 @@ void Net_Shutdown()
 #undef Net_GetPlayerName
 DENG_EXTERN_C char const *Net_GetPlayerName(dint player)
 {
-    return ::clients[player].name;
+    return DD_Player(player)->name;
 }
 
 #undef Net_GetPlayerID
@@ -227,22 +226,22 @@ DENG_EXTERN_C Smoother* Net_PlayerSmoother(dint player)
     if(player < 0 || player >= DDMAXPLAYERS)
         return 0;
 
-    return ::clients[player].smoother;
+    return DD_Player(player)->smoother();
 }
 
 void Net_SendPlayerInfo(dint srcPlrNum, dint destPlrNum)
 {
     DENG2_ASSERT(srcPlrNum >= 0 && srcPlrNum < DDMAXPLAYERS);
-    dsize const nameLen = strlen(clients[srcPlrNum].name);
+    dsize const nameLen = strlen(DD_Player(srcPlrNum)->name);
 
     LOG_AS("Net_SendPlayerInfo");
     LOGDEV_NET_VERBOSE("src=%i dest=%i name=%s")
-        << srcPlrNum << destPlrNum << ::clients[srcPlrNum].name;
+        << srcPlrNum << destPlrNum << DD_Player(srcPlrNum)->name;
 
     Msg_Begin(PKT_PLAYER_INFO);
     Writer_WriteByte(::msgWriter, srcPlrNum);
     Writer_WriteUInt16(::msgWriter, nameLen);
-    Writer_Write(::msgWriter, ::clients[srcPlrNum].name, nameLen);
+    Writer_Write(::msgWriter, DD_Player(srcPlrNum)->name, nameLen);
     Msg_End();
     Net_SendBuffer(destPlrNum, 0);
 }
@@ -286,7 +285,7 @@ DENG_EXTERN_C void Net_SendPacket(dint to_player, dint type, void const *data, d
 void Net_ShowChatMessage(dint plrNum, char const *message)
 {
     DENG2_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
-    char const *fromName = (plrNum > 0 ? ::clients[plrNum].name : "[sysop]");
+    char const *fromName = (plrNum > 0 ? DD_Player(plrNum)->name : "[sysop]");
     char const *sep      = (plrNum > 0 ? ":"                    : "");
     LOG_NOTE("%s%s%s %s")
         << (!plrNum? _E(1) : _E(D))
@@ -303,8 +302,7 @@ void Net_ResetTimer()
 
     for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(/*!::clients[i].connected ||*/ !::clients[i].smoother) continue;
-        Smoother_Clear(::clients[i].smoother);
+        Smoother_Clear(DD_Player(i)->smoother());
     }
 }
 
@@ -399,26 +397,8 @@ void Net_Update()
 #endif
 }
 
-void Net_AllocClientBuffers(dint clientId)
-{
-    if(clientId < 0 || clientId >= DDMAXPLAYERS) return;
-
-    DENG2_ASSERT(!::clients[clientId].smoother);
-
-    // Movement smoother.
-    ::clients[clientId].smoother = Smoother_New();
-}
-
 void Net_DestroyArrays()
 {
-    for(dint i = 0; i < DDMAXPLAYERS; ++i)
-    {
-        if(::clients[i].smoother)
-        {
-            Smoother_Delete(::clients[i].smoother);
-        }
-    }
-
     std::memset(::clients, 0, sizeof(::clients));
 }
 
@@ -448,8 +428,8 @@ void Net_InitGame()
 #endif
     ::clients[0].ready        = true;
     ::clients[0].connected    = true;
-    ::clients[0].viewConsole  = 0;
     ::clients[0].lastTransmit = -1;
+    DD_Player(0)->viewConsole = 0;
 }
 
 void Net_StopGame()
@@ -503,7 +483,7 @@ void Net_StopGame()
         cl.connected   = false;
         cl.id          = 0;
         cl.nodeID      = 0;
-        cl.viewConsole = -1;
+        plr.viewConsole = -1;
 
         plr.publicData().inGame = false;
         plr.publicData().flags &= ~(DDPF_CAMERA | DDPF_CHASECAM | DDPF_LOCAL);
@@ -525,7 +505,7 @@ void Net_StopGame()
 
     ::clients[0].ready       = true;
     ::clients[0].connected   = true;
-    ::clients[0].viewConsole = 0;
+    DD_Player(0)->viewConsole = 0;
 
     DD_Player(0)->publicData().inGame = true;
     DD_Player(0)->publicData().flags |= DDPF_LOCAL;
@@ -683,17 +663,17 @@ void Net_Ticker(timespan_t time)
     // Check the pingers.
     for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        client_t &cl = ::clients[i];
+        auto &cl = *DD_Player(i);
 
         // Clients can only ping the server.
         if(!(::isClient && i) && i != ::consolePlayer)
         {
-            if(cl.ping.sent)
+            if(cl.pinger().sent)
             {
                 // The pinger is active.
-                if(Timer_RealMilliseconds() - cl.ping.sent > PING_TIMEOUT)  // Timed out?
+                if(Timer_RealMilliseconds() - cl.pinger().sent > PING_TIMEOUT)  // Timed out?
                 {
-                    cl.ping.times[cl.ping.current] = -1;
+                    cl.pinger().times[cl.pinger().current] = -1;
                     Net_SendPing(i, 0);
                 }
             }
@@ -1002,7 +982,7 @@ D_CMD(Chat)
     case 2: // chatTo
         for(dint i = 0; i < DDMAXPLAYERS; ++i)
         {
-            if(!stricmp(::clients[i].name, argv[1]))
+            if(!stricmp(DD_Player(i)->name, argv[1]))
             {
                 mask = 1 << i;
                 break;
@@ -1093,8 +1073,9 @@ D_CMD(SetName)
     // The server does not have a name.
     if(!::isClient) return false;
 
-    std::memset(::clients[::consolePlayer].name, 0, sizeof(::clients[::consolePlayer].name));
-    strncpy(::clients[::consolePlayer].name, argv[1], PLAYERNAMELEN - 1);
+    auto &cl = *DD_Player(::consolePlayer);
+    std::memset(cl.name, 0, sizeof(cl.name));
+    strncpy(cl.name, argv[1], PLAYERNAMELEN - 1);
 
     Net_SendPlayerInfo(::consolePlayer, 0);
     return true;
@@ -1132,10 +1113,10 @@ D_CMD(MakeCamera)
 
     ::clients[cp].connected   = true;
     ::clients[cp].ready       = true;
-    ::clients[cp].viewConsole = cp;
+    DD_Player(cp)->viewConsole = cp;
 
     DD_Player(cp)->publicData().flags |= DDPF_LOCAL;
-    Smoother_Clear(::clients[cp].smoother);
+    Smoother_Clear(DD_Player(cp)->smoother());
 
 #ifdef __SERVER__
     Sv_InitPoolForClient(cp);

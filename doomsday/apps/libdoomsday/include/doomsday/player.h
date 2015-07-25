@@ -20,7 +20,9 @@
 #define LIBDOOMSDAY_PLAYER_H
 
 #include "libdoomsday.h"
+#include "network/pinger.h"
 #include <de/types.h>
+#include <de/smoother.h>
 
 /// Maximum length of a player name.
 #define PLAYERNAMELEN       81
@@ -106,9 +108,15 @@ typedef struct ddplayer_s {
 class LIBDOOMSDAY_PUBLIC Player
 {
 public:
+    // The name of the player.
+    char name[PLAYERNAMELEN];
+
     byte extraLightCounter; ///< Num tics to go till extraLight is disabled.
     int extraLight;
     int targetExtraLight;
+
+    // View console. Which player this client is viewing?
+    int viewConsole;
 
 public:
     Player();
@@ -116,8 +124,12 @@ public:
     virtual ~Player();
 
     ddplayer_t &publicData();
-
     ddplayer_t const &publicData() const;
+
+    /**
+     * Determines if the player is in the game and has a mobj.
+     */
+    bool isInGame() const;
 
     /**
      * Returns the player's namespace.
@@ -129,6 +141,11 @@ public:
      */
     de::Record &info();
     
+    Smoother *smoother();
+
+    Pinger &pinger();
+    Pinger const &pinger() const;
+
     DENG2_AS_IS_METHODS()
 
 private:

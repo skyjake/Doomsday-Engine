@@ -388,7 +388,7 @@ bool R_SetViewGrid(dint numCols, dint numRows)
         dint const console = P_LocalToConsole(p);
         if(console != -1)
         {
-            vp->console = clients[console].viewConsole;
+            vp->console = DD_Player(console)->viewConsole;
         }
         else
         {
@@ -494,8 +494,7 @@ void R_NewSharpWorld()
         player_t *plr  = DD_Player(i);
         viewdata_t *vd = &plr->viewport();
 
-        if(/*(plr->shared.flags & DDPF_LOCAL) &&*/
-           (!plr->publicData().inGame || !plr->publicData().mo))
+        if(!plr->isInGame())
         {
             continue;
         }
@@ -532,8 +531,7 @@ void R_UpdateViewer(dint consoleNum)
     player_t *player = DD_Player(consoleNum);
     viewdata_t *vd   = &player->viewport();
 
-    if(!player->publicData().inGame) return;
-    if(!player->publicData().mo) return;
+    if(!player->isInGame()) return;
 
     viewer_t sharpView = R_SharpViewer(*player);
 

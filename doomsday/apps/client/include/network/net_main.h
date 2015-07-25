@@ -43,9 +43,6 @@ extern "C" {
 // Change with server version?
 #define SV_CONSOLE_PRINT_FLAGS    (CPF_WHITE|CPF_LIGHT|CPF_GREEN)
 
-#define PING_TIMEOUT        1000   // Ping timeout (ms).
-#define MAX_PINGS           10
-
 // The default bandwidth rating for new clients.
 #define BWR_DEFAULT         40
 
@@ -142,18 +139,6 @@ enum {
 #define SVINFO_TOKEN_LEN        128
 #define SVINFO_VALID_LABEL_LEN  16
 
-typedef struct {
-    // High tics when ping was sent (0 if pinger not used).
-    int             sent;
-
-    // A record of the pings (negative time: no response).
-    float           times[MAX_PINGS];
-
-    // Total number of pings and the current one.
-    int             total;
-    int             current;
-} pinger_t;
-
 // Network information for a player. Corresponds the players array.
 typedef struct {
     // ID number. Each client has a unique ID number.
@@ -188,28 +173,16 @@ typedef struct {
     // to the client.
     int             ready;
 
-    // The name of the player.
-    char            name[PLAYERNAMELEN];
-
     // Field of view. Used in determining visible mobjs (default: 90).
     float           fov;
 
     // The DirectPlay player that represents this client.
     unsigned int    nodeID;        // DP player ID.
 
-    // Ping tracker for this client.
-    pinger_t        ping;
-
     // Demo recording file (being recorded if not NULL).
     LZFILE         *demo;
     dd_bool         recording;
     dd_bool         recordPaused;
-
-    // Movement smoother.
-    Smoother*       smoother;
-
-    // View console. Which player this client is viewing?
-    int             viewConsole;
 } client_t;
 
 extern char    *serverName, *serverInfo, *playerName;
@@ -233,7 +206,6 @@ void            Net_Register(void);
 void            Net_Init(void);
 void            Net_Shutdown(void);
 void            Net_DestroyArrays(void);
-void            Net_AllocClientBuffers(int clientId);
 dd_bool         Net_GetPacket(void);
 void            Net_SendBuffer(int to_player, int sp_flags);
 void            Net_SendPlayerInfo(int srcPlrNum, int destPlrNum);

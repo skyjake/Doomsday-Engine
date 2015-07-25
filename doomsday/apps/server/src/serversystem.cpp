@@ -202,7 +202,7 @@ DENG2_PIMPL(ServerSystem)
                 }
 
                 LOG_MSG(_E(m) "%2i %-10s %2i %c  %c  %c  %c  %f sec")
-                        << i << cl->name << cl->nodeID
+                        << i << plr->name << cl->nodeID
                         << (user->isJoined()? '*' : ' ')
                         << (cl->handshake? '*' : ' ')
                         << (cl->ready? '*' : ' ')

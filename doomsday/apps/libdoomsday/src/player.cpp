@@ -24,10 +24,18 @@ DENG2_PIMPL_NOREF(Player)
 {
     ddplayer_t publicData;
     Record info;
+    Smoother *smoother = Smoother_New();
+    Pinger pinger;
 
     Instance()
     {
         zap(publicData);
+        zap(pinger);
+    }
+
+    ~Instance()
+    {
+        Smoother_Delete(smoother);
     }
 };
 
@@ -35,8 +43,11 @@ Player::Player()
     : extraLightCounter(0)
     , extraLight(0)
     , targetExtraLight(0)
+    , viewConsole(0)
     , d(new Instance)
-{}
+{
+    zap(name);
+}
 
 Player::~Player()
 {}
@@ -51,6 +62,11 @@ ddplayer_t const &Player::publicData() const
     return d->publicData;
 }
 
+bool Player::isInGame() const
+{
+    return d->publicData.inGame && d->publicData.mo != nullptr;
+}
+
 Record const &Player::info() const
 {
     return d->info;
@@ -59,6 +75,21 @@ Record const &Player::info() const
 Record &Player::info()
 {
     return d->info;
+}
+
+Smoother *Player::smoother()
+{
+    return d->smoother;
+}
+
+Pinger &Player::pinger()
+{
+    return d->pinger;
+}
+
+Pinger const &Player::pinger() const
+{
+    return d->pinger;
 }
 
 short P_LookDirToShort(float lookDir)

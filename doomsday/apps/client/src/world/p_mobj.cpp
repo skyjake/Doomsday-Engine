@@ -264,7 +264,7 @@ DENG_EXTERN_C void Mobj_OriginSmoothed(mobj_t *mo, coord_t origin[3])
         // The client may have a Smoother for this object.
         else if(isClient)
         {
-            Smoother_Evaluate(clients[P_GetDDPlayerIdx(mo->dPlayer)].smoother, origin);
+            Smoother_Evaluate(DD_Player(P_GetDDPlayerIdx(mo->dPlayer))->smoother(), origin);
         }
     }
 #endif

@@ -102,11 +102,9 @@ static dd_bool Smoother_IsValid(Smoother const *sm)
 
 void Smoother_Clear(Smoother *sm)
 {
-    float maxDelta;
+    if(!sm) return;
 
-    DENG_ASSERT(sm);
-
-    maxDelta = sm->maxDeltaBetweenPastAndNow;
+    float maxDelta = sm->maxDeltaBetweenPastAndNow;
     memset(sm, 0, sizeof(*sm));
     sm->maxDeltaBetweenPastAndNow = maxDelta;
 }

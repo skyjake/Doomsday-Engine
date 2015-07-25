@@ -24,8 +24,8 @@ using namespace de;
 DENG2_PIMPL_NOREF(ClientPlayer)
 {
     viewdata_t         viewport;
-    clplayerstate_t    clPlayerState;
     ConsoleEffectStack effects;
+    clplayerstate_t    clPlayerState;
 
     Instance()
     {

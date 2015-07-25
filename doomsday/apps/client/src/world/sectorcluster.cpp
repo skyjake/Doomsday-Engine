@@ -718,7 +718,7 @@ DENG2_PIMPL(SectorCluster)
                 player_t *plr = DD_Player(i);
                 ddplayer_t *ddpl = &plr->publicData();
 
-                if(!ddpl->inGame || !ddpl->mo)
+                if(!plr->isInGame())
                     continue;
                 if(Mobj_ClusterPtr(*ddpl->mo) != thisPublic)
                     continue;

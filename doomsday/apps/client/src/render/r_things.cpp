@@ -126,7 +126,7 @@ static Vector3d mobjOriginSmoothed(mobj_t *mob)
     // The client may have a Smoother for this object.
     if(isClient && mob->dPlayer && P_GetDDPlayerIdx(mob->dPlayer) != consolePlayer)
     {
-        Smoother_Evaluate(clients[P_GetDDPlayerIdx(mob->dPlayer)].smoother, origin);
+        Smoother_Evaluate(DD_Player(P_GetDDPlayerIdx(mob->dPlayer))->smoother(), origin);
     }
 
     return origin;

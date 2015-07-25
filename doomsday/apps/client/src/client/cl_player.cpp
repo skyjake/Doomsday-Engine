@@ -145,7 +145,7 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
         // The position is now known.
         ddpl->flags &= ~DDPF_UNDEFINED_ORIGIN;
 
-        Smoother_Clear(clients[plrNum].smoother);
+        Smoother_Clear(DD_Player(plrNum)->smoother());
         ClPlayer_UpdateOrigin(plrNum);
     }
 

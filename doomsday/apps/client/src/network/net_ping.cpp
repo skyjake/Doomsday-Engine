@@ -33,8 +33,8 @@ using namespace de;
 void Net_ShowPingSummary(dint player)
 {
     DENG2_ASSERT(player >= 0 && player < DDMAXPLAYERS);
-    client_t const &cl   = ::clients[player];
-    pinger_t const &ping = cl.ping;
+    auto const &cl = *DD_Player(player);
+    Pinger const &ping = cl.pinger();
 
     if(player < 0 && ping.total > 0)
         return;
@@ -58,7 +58,7 @@ void Net_ShowPingSummary(dint player)
 void Net_SendPing(dint player, dint count)
 {
     DENG2_ASSERT(player >= 0 && player < DDMAXPLAYERS);
-    pinger_t &ping = ::clients[player].ping;
+    Pinger &ping = DD_Player(player)->pinger();
 
     // Valid destination?
     if(player == ::consolePlayer || (::isClient && player))
@@ -102,7 +102,7 @@ void Net_PingResponse()
 {
     dint const player = ::netBuffer.player;
     DENG2_ASSERT(player >= 0 && player < DDMAXPLAYERS);
-    pinger_t &ping = ::clients[player].ping;
+    Pinger &ping = DD_Player(player)->pinger();
 
     // Is this a response to our ping?
     dint const time = Reader_ReadUInt32(msgReader);

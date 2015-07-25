@@ -168,13 +168,16 @@ void Cl_AnswerHandshake()
 
         DD_Player(i)->publicData().inGame = (playersInGame & (1 << i)) != 0;
     }
+
+    // Change the active player.
     consolePlayer = displayPlayer = myConsole;
-    clients[consolePlayer].viewConsole = consolePlayer;
+
+    DD_Player(consolePlayer)->viewConsole = consolePlayer;
 
     // Mark us as the only local player.
     DD_Player(consolePlayer)->publicData().flags |= DDPF_LOCAL;
 
-    Smoother_Clear(clients[consolePlayer].smoother);
+    Smoother_Clear(DD_Player(consolePlayer)->smoother());
     DD_Player(consolePlayer)->publicData().flags &= ~DDPF_USE_VIEW_FILTER;
 
     isClient = true;
@@ -231,14 +234,14 @@ void Cl_HandlePlayerInfo()
     bool present = plr->publicData().inGame;
     plr->publicData().inGame = true;
 
-    strcpy(clients[console].name, name);
+    strcpy(plr->name, name);
 
     if(!present)
     {
         // This is a new player! Let the game know about this.
         gx.NetPlayerEvent(console, DDPE_ARRIVAL, 0);
 
-        Smoother_Clear(clients[console].smoother);
+        Smoother_Clear(plr->smoother());
     }
 }
 
@@ -448,7 +451,8 @@ void Cl_Ticker(timespan_t ticLength)
         {
             if(DD_Player(i)->publicData().mo)
             {
-                Smoother_AddPos(clients[i].smoother, Cl_FrameGameTime(),
+                Smoother_AddPos(DD_Player(i)->smoother(),
+                                Cl_FrameGameTime(),
                                 DD_Player(i)->publicData().mo->origin[VX],
                                 DD_Player(i)->publicData().mo->origin[VY],
                                 DD_Player(i)->publicData().mo->origin[VZ],
@@ -456,7 +460,7 @@ void Cl_Ticker(timespan_t ticLength)
             }
 
             // Update the smoother.
-            Smoother_Advance(clients[i].smoother, ticLength);
+            Smoother_Advance(DD_Player(i)->smoother(), ticLength);
         }
 
         ClPlayer_ApplyPendingFixes(i);
