@@ -470,6 +470,7 @@ bool ScriptedInfo::isTrue(Value const &value) // static
         {
             return true;
         }
+        return false;
     }
     return value.isTrue();
 }
@@ -486,6 +487,7 @@ bool ScriptedInfo::isFalse(Value const &value) // static
         {
             return true;
         }
+        return false;
     }
     return !value.isTrue();
 }
