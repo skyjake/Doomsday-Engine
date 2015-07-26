@@ -83,8 +83,6 @@ char *playerName = (char *) "Player";
 
 dint serverData[3];  ///< Some parameters passed to master server.
 
-client_t clients[DDMAXPLAYERS];  ///< All network data for the players.
-
 dint netGame;   ///< @c true if a networked game is in progress.
 dint isServer;  ///< @c true if this computer is an open server.
 dint isClient;  ///< @c true if this computer is a client.
@@ -113,7 +111,6 @@ void Net_Init()
 {
     for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        std::memset(&::clients[i], 0, sizeof(::clients[i]));
         DD_Player(i)->viewConsole = -1;
     }
 
@@ -127,7 +124,6 @@ void Net_Shutdown()
 {
     ::netGame = false;
     N_Shutdown();
-    Net_DestroyArrays();
 }
 
 #undef Net_GetPlayerName
@@ -401,11 +397,6 @@ void Net_Update()
 #endif
 }
 
-void Net_DestroyArrays()
-{
-    std::memset(::clients, 0, sizeof(::clients));
-}
-
 /**
  * This is the network one-time initialization (into single-player mode).
  */
@@ -430,8 +421,6 @@ void Net_InitGame()
 #ifdef __CLIENT__
     DD_Player(0)->id          = ::clientID;
 #endif
-    ::clients[0].ready        = true;
-    ::clients[0].lastTransmit = -1;
     DD_Player(0)->viewConsole = 0;
 }
 
@@ -480,10 +469,9 @@ void Net_StopGame()
     for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
         player_t &plr = *DD_Player(i);
-        client_t &cl  = clients[i];
 
-        cl.ready       = false;
 #ifdef __SERVER__
+        plr.ready = false;
         plr.remoteUserId = 0;
 #endif
         plr.id         = 0;
@@ -507,8 +495,6 @@ void Net_StopGame()
 
     ::consolePlayer = ::displayPlayer = 0;
 
-    ::clients[0].ready       = true;
-    //::clients[0].connected   = true;
     DD_Player(0)->viewConsole = 0;
 
     DD_Player(0)->publicData().inGame = true;
@@ -650,9 +636,9 @@ void Net_Ticker(timespan_t time)
             {
                 if(Sv_IsFrameTarget(i))
                 {
-                    LOGDEV_NET_MSG("%i(rdy%i): avg=%05ims thres=%05ims "
+                    LOGDEV_NET_MSG("%i(rdy:%b): avg=%05ims thres=%05ims "
                                    "maxfs=%05ib unakd=%05i")
-                        << i << ::clients[i].ready << 0 << 0
+                        << i << DD_Player(i)->ready << 0 << 0
                         << Sv_GetMaxFrameSize(i)
                         << Sv_CountUnackedDeltas(i);
                 }
@@ -1117,7 +1103,7 @@ D_CMD(MakeCamera)
     }
 
     ::clients[cp].connected   = true;*/
-    ::clients[cp].ready       = true;
+    //DD_Player(cp)->ready       = true;
     DD_Player(cp)->viewConsole = cp;
 
     DD_Player(cp)->publicData().flags |= DDPF_LOCAL;

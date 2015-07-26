@@ -171,7 +171,7 @@ void Sv_ShutdownPools()
  */
 void Sv_InitPoolForClient(duint clientNumber)
 {
-    DENG2_ASSERT(clientNumber >= 0 && clientNumber < DDMAXPLAYERS);
+    DENG2_ASSERT(clientNumber < DDMAXPLAYERS);
 
     // Free everything that might exist in the pool.
     Sv_DrainPool(clientNumber);
@@ -373,10 +373,9 @@ void Sv_RegisterPlayer(dt_player_t *reg, duint number)
     ( byte( 0xff * r ) + ( byte( 0xff * g ) << 8 ) + ( byte( 0xff * b ) << 16 ) + ( byte (0xff * a ) << 24 ) )
 
     DENG2_ASSERT(reg);
-    DENG2_ASSERT(number >= 0 && number < DDMAXPLAYERS);
+    DENG2_ASSERT(number < DDMAXPLAYERS);
     player_t *plr    = DD_Player(number);
     ddplayer_t *ddpl = &plr->publicData();
-    //client_t *c      = &::clients[number];
 
     reg->mobj          = (ddpl->mo ? ddpl->mo->thinker.id : 0);
     reg->forwardMove   = 0;
@@ -589,7 +588,7 @@ dd_bool Sv_RegisterCompareMobj(cregister_t *reg, mobj_t const *s, mobjdelta_t *d
  */
 dd_bool Sv_RegisterComparePlayer(cregister_t *reg, duint number, playerdelta_t *d)
 {
-    DENG2_ASSERT(number >= 0 && number < DDMAXPLAYERS);
+    DENG2_ASSERT(number < DDMAXPLAYERS);
     dt_player_t const *r = &reg->ddPlayers[number];
     dt_player_t *s       = &d->player;
     dint df = 0;
@@ -2385,12 +2384,12 @@ void Sv_NewSoundDelta(int soundId, mobj_t *emitter, Sector *sourceSector,
  */
 dd_bool Sv_IsFrameTarget(duint plrNum)
 {
-    DENG2_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
+    DENG2_ASSERT(plrNum < DDMAXPLAYERS);
 
     player_t const &plr = *DD_Player(plrNum);
 
     // Clients must tell us they are ready before we can begin sending.
-    return (plr.publicData().inGame && ::clients[plrNum].ready);
+    return (plr.publicData().inGame && plr.ready);
 }
 
 /**
@@ -2754,7 +2753,6 @@ void Sv_RatePool(pool_t* pool)
 {
 #ifdef _DEBUG
     player_t*           plr = DD_Player(pool->owner);
-    //client_t*           client = &clients[pool->owner];
 #endif
     delta_t*            delta;
     int                 i;

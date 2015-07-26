@@ -135,33 +135,6 @@ enum {
 #define SVINFO_TOKEN_LEN        128
 #define SVINFO_VALID_LABEL_LEN  16
 
-// Network information for a player. Corresponds the players array.
-typedef struct {
-    int             lastTransmit;
-
-    // Seconds when the client entered the game (Sys_GetRealSeconds()).
-    double          enterTime;
-
-    // Clients use this to determine how long ago they received the
-    // last update of this client.
-    int             age;
-
-    // Clients are pinged by the server when they join the game.
-    // This is the ping in milliseconds for this client. For the server.
-    unsigned int    shakePing;
-
-    // If true, the server will send the player a handshake. The client must
-    // acknowledge it before this flag is turned off.
-    int             handshake;
-
-    // Server uses this to determine whether it's OK to send game packets
-    // to the client.
-    int             ready;
-
-    // Field of view. Used in determining visible mobjs (default: 90).
-    float           fov;
-} client_t;
-
 extern char    *serverName, *serverInfo, *playerName;
 extern int      serverData[];
 
@@ -176,13 +149,11 @@ extern int      realTics, availableTics;
 extern int      isServer, isClient;
 extern dd_bool  allowNetTraffic; // Should net traffic be allowed?
 extern float    netSimulatedLatencySeconds;
-extern client_t clients[DDMAXPLAYERS];
 extern int      gotFrame;
 
 void            Net_Register(void);
 void            Net_Init(void);
 void            Net_Shutdown(void);
-void            Net_DestroyArrays(void);
 dd_bool         Net_GetPacket(void);
 void            Net_SendBuffer(int to_player, int sp_flags);
 void            Net_SendPlayerInfo(int srcPlrNum, int destPlrNum);

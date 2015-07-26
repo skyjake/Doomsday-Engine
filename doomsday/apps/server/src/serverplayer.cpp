@@ -33,6 +33,12 @@ DENG2_PIMPL_NOREF(ServerPlayer)
 
 ServerPlayer::ServerPlayer()
     : remoteUserId(0)
+    , enterTime(0)
+    , shakePing(0)
+    , handshake(false)
+    , lastTransmit(0)
+    , fov(90)
+    , ready(false)
     , d(new Instance)
 {}
 

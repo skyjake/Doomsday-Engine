@@ -1521,7 +1521,7 @@ DENG_EXTERN_C dd_bool P_MapChange(char const *uriCString)
         if(DD_Player(i)->isConnected())
         {
             LOG_DEBUG("Client %i marked as 'not ready' to receive frames.") << i;
-            clients[i].ready = false;
+            DD_Player(i)->ready = false;
         }
     }
 #endif

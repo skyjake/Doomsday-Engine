@@ -306,27 +306,25 @@ void Sv_FixLocalAngles(bool clearFixAnglesFlag)
 }
 */
 
-void Sv_HandlePlayerInfoFromClient(client_t *sender)
+void Sv_HandlePlayerInfoFromClient(ServerPlayer *sender)
 {
     DENG2_ASSERT(sender);
 
     LOG_AS("Sv_HandlePlayerInfoFromClient");
-    DENG2_ASSERT(::netBuffer.player == (sender - clients));
+    DENG2_ASSERT(::netBuffer.player == DoomsdayApp::players().indexOf(sender));
 
     dint console = Reader_ReadByte(::msgReader); // ignored
     LOG_NET_VERBOSE("from=%i, console=%i") << ::netBuffer.player << console;
     console = ::netBuffer.player;
 
-    auto *clientName = DD_Player(sender - clients)->name;
-
-    char oldName[PLAYERNAMELEN]; strcpy(oldName, clientName);
+    char oldName[PLAYERNAMELEN]; strcpy(oldName, sender->name);
 
     dsize len = Reader_ReadUInt16(msgReader);
     len = de::min(dsize( PLAYERNAMELEN - 1), len);  // There is a maximum size.
-    Reader_Read(::msgReader, clientName, len);
-    clientName[len] = 0;
+    Reader_Read(::msgReader, sender->name, len);
+    sender->name[len] = 0;
 
-    LOG_NET_NOTE("Player %s renamed to %s") << oldName << clientName;
+    LOG_NET_NOTE("Player %s renamed to %s") << oldName << sender->name;
 
     // Relay to others.
     Net_SendPlayerInfo(console, DDSP_ALL_PLAYERS);
@@ -342,9 +340,8 @@ void Sv_HandlePacket()
 
     dint const from  = ::netBuffer.player;
     DENG2_ASSERT(from >= 0 && from < DDMAXPLAYERS);
-    player_t *plr    = DD_Player(from);
-    ddplayer_t *ddpl = &plr->publicData();
-    client_t *sender = &clients[from];
+    player_t *sender = DD_Player(from);
+    ddplayer_t *ddpl = &sender->publicData();
 
     switch(netBuffer.msg.type)
     {
@@ -361,7 +358,7 @@ void Sv_HandlePacket()
             dint i = 1;
             for( ; i < DDMAXPLAYERS; ++i)
             {
-                if(plr->isConnected() && plr->id == id)
+                if(sender->isConnected() && sender->id == id)
                 {
                     // Send a message to everybody.
                     LOG_NET_WARNING("New client connection refused: duplicate ID (%08x)") << id;
@@ -374,7 +371,7 @@ void Sv_HandlePacket()
         }
 
         // This is OK.
-        plr->id = id;
+        sender->id = id;
 
         if(netBuffer.msg.type == PCL_HELLO2)
         {
@@ -395,7 +392,7 @@ void Sv_HandlePacket()
             sender->handshake = true;
 
             // The player is now in the game.
-            DD_Player(from)->publicData().inGame = true;
+            sender->publicData().inGame = true;
 
             // Tell the game about this.
             gx.NetPlayerEvent(from, DDPE_ARRIVAL, 0);
@@ -417,7 +414,7 @@ void Sv_HandlePacket()
     case PKT_OK:
         // The client says it's ready to receive frames.
         sender->ready = true;
-        LOG_NET_VERBOSE("OK (\"ready!\") from client %i (%08X)") << from << plr->id;
+        LOG_NET_VERBOSE("OK (\"ready!\") from client %i (%08X)") << from << sender->id;
         if(sender->handshake)
         {
             // The handshake is complete. The client has acknowledged it
@@ -582,8 +579,7 @@ void Sv_ExecuteCommand(void)
  */
 void Sv_GetPackets(void)
 {
-    int         netconsole;
-    client_t   *sender;
+    int netconsole;
 
     while(Net_GetPacket())
     {
@@ -605,7 +601,7 @@ void Sv_GetPackets(void)
             netconsole = netBuffer.player;
             if(netconsole >= 0 && netconsole < DDMAXPLAYERS)
             {
-                sender = &clients[netconsole];
+                ServerPlayer *sender = DD_Player(netconsole);
                 sender->shakePing = Timer_RealMilliseconds() - sender->shakePing;
                 LOG_NET_MSG("Client %i ping at handshake: %i ms")
                         << netconsole << sender->shakePing;
@@ -674,8 +670,7 @@ dd_bool Sv_PlayerArrives(unsigned int nodeID, char const *name)
     // We need to find the new player a client entry.
     for(int i = 1; i < DDMAXPLAYERS; ++i)
     {
-        player_t *plr  = DD_Player(i);
-        client_t *cl = &clients[i];
+        player_t *plr = DD_Player(i);
 
         if(!plr->isConnected())
         {
@@ -683,9 +678,9 @@ dd_bool Sv_PlayerArrives(unsigned int nodeID, char const *name)
 
             // This'll do.
             plr->remoteUserId = nodeID;
-            cl->ready = false;
+            plr->lastTransmit = -1;
+            plr->ready = false;
             plr->viewConsole = i;
-            cl->lastTransmit = -1;
             strncpy(plr->name, name, PLAYERNAMELEN);
 
             ddpl->fixAcked.angles =
@@ -704,7 +699,7 @@ dd_bool Sv_PlayerArrives(unsigned int nodeID, char const *name)
             // In order to get in the game, the client must first
             // shake hands. It'll request this by sending a Hello packet.
             // We'll be waiting...
-            cl->handshake = false;
+            plr->handshake = false;
             return true;
         }
     }
@@ -720,7 +715,6 @@ void Sv_PlayerLeaves(unsigned int nodeID)
     int                 plrNum = N_IdentifyPlayer(nodeID);
     dd_bool             wasInGame;
     player_t           *plr;
-    client_t           *cl;
 
     if(plrNum == -1) return; // Bogus?
 
@@ -730,19 +724,17 @@ void Sv_PlayerLeaves(unsigned int nodeID)
     if(netRemoteUser == plrNum)
         netRemoteUser = 0;
 
-    cl = &clients[plrNum];
     plr = DD_Player(plrNum);
 
     LOG_NET_NOTE("'%s' (console %i) has left, was connected for %.1f seconds")
-            << plr->name << plrNum << (Timer_RealSeconds() - cl->enterTime);
+            << plr->name << plrNum << (Timer_RealSeconds() - plr->enterTime);
 
     wasInGame = plr->publicData().inGame;
     plr->publicData().inGame = false;
 
-    plr->remoteUserId   = 0;
-    cl->ready           = false;
-    //cl->updateCount     = 0;
-    cl->handshake       = false;
+    plr->remoteUserId = 0;
+    plr->ready        = false;
+    plr->handshake    = false;
 
     // Remove the player's data from the register.
     Sv_PlayerRemoved(plrNum);
@@ -847,7 +839,7 @@ void Sv_Handshake(dint plrNum, dd_bool newPlayer)
     if(newPlayer)
     {
         // Note the time when the handshake was sent.
-        clients[plrNum].shakePing = Timer_RealMilliseconds();
+        DD_Player(plrNum)->shakePing = Timer_RealMilliseconds();
     }
 
     // The game DLL wants to shake hands as well?
@@ -886,7 +878,6 @@ void Sv_StartNetGame(void)
     // Reset all the counters and other data.
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        client_t   *client = &clients[i];
         player_t   *plr = DD_Player(i);
         ddplayer_t *ddpl = &plr->publicData();
 
@@ -894,10 +885,10 @@ void Sv_StartNetGame(void)
         ddpl->flags &= ~DDPF_CAMERA;
 
         plr->remoteUserId = 0;
-        client->ready = false;
-        client->enterTime = 0;
-        client->lastTransmit = -1;
-        client->fov = 90;
+        plr->lastTransmit = -1;
+        plr->ready = false;
+        plr->enterTime = 0;
+        plr->fov = 90;
         plr->viewConsole = -1;
         de::zap(plr->name);
         Smoother_Clear(plr->smoother());

@@ -19,14 +19,14 @@
 
 #include "de_base.h"
 #include "server/sv_frame.h"
+#include "server/sv_pool.h"
+#include "world/p_players.h"
 
 #include <cmath>
 #include "de_system.h"
 #include "def_main.h"
 
 #include "network/net_main.h"
-
-#include "server/sv_pool.h"
 
 using namespace de;
 
@@ -103,6 +103,8 @@ void Sv_TransmitFrame()
     dint pCount = 0;
     for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
+        auto &plr = *DD_Player(i);
+
         if(!Sv_IsFrameTarget(i))
         {
             // This player is not a valid target for frames.
@@ -117,14 +119,14 @@ void Sv_TransmitFrame()
         {
             cTime += (pCount * ::frameInterval) / numInGame;
         }
-        if(cTime <= ::clients[i].lastTransmit + ::frameInterval)
+        if(cTime <= plr.lastTransmit + ::frameInterval)
         {
             // Still too early to send.
             continue;
         }
-        ::clients[i].lastTransmit = cTime;
+        plr.lastTransmit = cTime;
 
-        if(::clients[i].ready) // && ::clients[i].updateCount > 0)
+        if(plr.ready)
         {
             // A frame will be sent to this client. If the client
             // doesn't send ticcmds, the updatecount will eventually
@@ -136,7 +138,7 @@ void Sv_TransmitFrame()
         else
         {
             LOG_NET_XVERBOSE("NOT sending at tic %i to plr %i (ready:%b)")
-                << ::lastTransmitTic << i << ::clients[i].ready;
+                << ::lastTransmitTic << i << plr.ready;
         }
     }
 }
@@ -813,7 +815,7 @@ void Sv_SendFrame(dint plrNum)
 
     // Keep writing until the maximum size is reached.
     delta_t *delta;
-    dint lastStart;
+    size_t lastStart;
     while((delta = Sv_PoolQueueExtract(pool)) != nullptr &&
           (lastStart = Writer_Size(::msgWriter)) < maxFrameSize)
     {

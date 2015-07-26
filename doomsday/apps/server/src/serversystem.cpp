@@ -188,7 +188,6 @@ DENG2_PIMPL(ServerSystem)
         int first = true;
         for(int i = 1; i < DDMAXPLAYERS; ++i)
         {
-            client_t *cl = &clients[i];
             player_t *plr = DD_Player(i);
             if(plr->remoteUserId)
             {
@@ -204,10 +203,10 @@ DENG2_PIMPL(ServerSystem)
                 LOG_MSG(_E(m) "%2i %-10s %2i %c  %c  %c  %c  %f sec")
                         << i << plr->name << plr->remoteUserId
                         << (user->isJoined()? '*' : ' ')
-                        << (cl->handshake? '*' : ' ')
-                        << (cl->ready? '*' : ' ')
+                        << (plr->handshake? '*' : ' ')
+                        << (plr->ready? '*' : ' ')
                         << (plr->publicData().inGame? '*' : ' ')
-                        << (Timer_RealSeconds() - cl->enterTime);
+                        << (Timer_RealSeconds() - plr->enterTime);
             }
         }
         if(first)

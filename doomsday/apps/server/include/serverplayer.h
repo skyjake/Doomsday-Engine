@@ -31,8 +31,28 @@
 class ServerPlayer : public Player
 {
 public:
-    // Identifier of the RemoteUser instance of this client.
+    /// Identifier of the RemoteUser instance of this client.
     de::Id::Type remoteUserId;
+
+    /// Seconds when the client entered the game (Sys_GetRealSeconds()).
+    double enterTime;
+
+    /// Clients are pinged by the server when they join the game.
+    /// This is the ping in milliseconds for this client.
+    unsigned int shakePing;
+
+    /// If true, the server will send the player a handshake. The client must
+    /// acknowledge it before this flag is turned off.
+    bool handshake;
+
+    int lastTransmit;
+
+    /// Field of view. Used in determining visible mobjs (default: 90).
+    float fov;
+
+    /// Server uses this to determine whether it's OK to send game packets
+    /// to the client.
+    bool ready;
 
 public:
     ServerPlayer();

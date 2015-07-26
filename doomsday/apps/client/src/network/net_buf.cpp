@@ -255,10 +255,9 @@ void N_SendPacket(dint flags)
     {
         if(::netBuffer.player >= 0 && ::netBuffer.player < DDMAXPLAYERS)
         {
-            if(/*(ddpl->flags & DDPF_LOCAL) ||*/
-               DD_Player(::netBuffer.player)->isConnected())
+            if(!DD_Player(::netBuffer.player)->isConnected())
             {
-                // Do not send anything to local or disconnected players.
+                // Do not send anything to disconnected players.
                 return;
             }
 
