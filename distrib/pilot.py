@@ -319,18 +319,22 @@ def listen():
 
 def query(q):
     """Sends a query to the server and returns the result."""
-    
     import socket
+    attempts = 3
     response = None
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    try:
-        sock.connect((pilotcfg.HOST, pilotcfg.PORT))
-        sock.send(packs(pickle.dumps(q, 2)))
-        bytes = struct.unpack('!i', sock.recv(4))[0]
-        response = pickle.loads(sock.recv(bytes))
-    finally:
-        sock.close()
-    return response
+    while attempts > 0:
+        try:
+            sock.connect((pilotcfg.HOST, pilotcfg.PORT))
+            sock.send(packs(pickle.dumps(q, 2)))
+            bytes = struct.unpack('!i', sock.recv(4))[0]
+            response = pickle.loads(sock.recv(bytes))
+            sock.close()
+            return response
+        except socket.gaierror:
+            attempts -= 1
+            time.sleep(5)
+    raise Exception("Query failed to contact host")
 
     
 def checkForTasks():
