@@ -743,30 +743,23 @@ void ServerInfo_Print(serverinfo_t const *info, dint index)
  *
  * @param max  Maximum allowed length of a token, including terminating \0.
  */
-static dd_bool tokenize(char const *line, char *label, char *value, dint max)
+static dd_bool tokenize(char const *line, char *label, char *value, int valueSize)
 {
     char const *src   = line;
     char const *colon = strchr(src, ':');
 
     // The colon must exist near the beginning.
-    if(!colon || colon - src >= SVINFO_VALID_LABEL_LEN)
+    if(!colon || colon - src >= SVINFO_VALID_LABEL_LEN || valueSize <= 0)
         return false;
 
     DENG2_ASSERT(label && value);
 
     // Copy the label.
-    std::memset(label, 0, max);
-    if(max > 0)
-    {
-        qstrncpy(label, src, de::min<duint>(colon - src, max - 1));
-    }
+    qstrncpy(label, src, de::min(colon - src + 1, valueSize));
 
     // Copy the value.
-    std::memset(value, 0, max);
-    if(max > 0)
-    {
-        qstrncpy(value, colon + 1, de::min<duint>(qstrlen(line) - (colon - src + 1), max - 1));
-    }
+    char const *end = line + qstrlen(line);
+    qstrncpy(value, colon + 1, de::min(end - colon, valueSize));
 
     // Everything is OK.
     return true;
