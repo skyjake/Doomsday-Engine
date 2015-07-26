@@ -190,7 +190,7 @@ void Sv_GetInfo(serverinfo_t *info)
     // Let's compile a list of client names.
     for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(::clients[i].connected)
+        if(DD_Player(i)->isConnected())
         {
             M_LimitedStrCat(info->clientNames, DD_Player(i)->name, 15, ';', sizeof(info->clientNames));
         }
@@ -361,7 +361,7 @@ void Sv_HandlePacket()
             dint i = 1;
             for( ; i < DDMAXPLAYERS; ++i)
             {
-                if(::clients[i].connected && clients[i].id == id)
+                if(plr->isConnected() && plr->id == id)
                 {
                     // Send a message to everybody.
                     LOG_NET_WARNING("New client connection refused: duplicate ID (%08x)") << id;
@@ -374,7 +374,7 @@ void Sv_HandlePacket()
         }
 
         // This is OK.
-        sender->id = id;
+        plr->id = id;
 
         if(netBuffer.msg.type == PCL_HELLO2)
         {
@@ -417,7 +417,7 @@ void Sv_HandlePacket()
     case PKT_OK:
         // The client says it's ready to receive frames.
         sender->ready = true;
-        LOG_NET_VERBOSE("OK (\"ready!\") from client %i (%08X)") << from << sender->id;
+        LOG_NET_VERBOSE("OK (\"ready!\") from client %i (%08X)") << from << plr->id;
         if(sender->handshake)
         {
             // The handshake is complete. The client has acknowledged it
@@ -674,17 +674,16 @@ dd_bool Sv_PlayerArrives(unsigned int nodeID, char const *name)
     // We need to find the new player a client entry.
     for(int i = 1; i < DDMAXPLAYERS; ++i)
     {
+        player_t *plr  = DD_Player(i);
         client_t *cl = &clients[i];
 
-        if(!cl->connected)
+        if(!plr->isConnected())
         {
-            player_t   *plr  = DD_Player(i);
             ddplayer_t *ddpl = &plr->publicData();
 
             // This'll do.
-            cl->connected = true;
+            plr->remoteUserId = nodeID;
             cl->ready = false;
-            cl->nodeID = nodeID;
             plr->viewConsole = i;
             cl->lastTransmit = -1;
             strncpy(plr->name, name, PLAYERNAMELEN);
@@ -740,12 +739,10 @@ void Sv_PlayerLeaves(unsigned int nodeID)
     wasInGame = plr->publicData().inGame;
     plr->publicData().inGame = false;
 
-    cl->connected       = false;
+    plr->remoteUserId   = 0;
     cl->ready           = false;
     //cl->updateCount     = 0;
     cl->handshake       = false;
-    cl->nodeID          = 0;
-    cl->bandwidthRating = BWR_DEFAULT;
 
     // Remove the player's data from the register.
     Sv_PlayerRemoved(plrNum);
@@ -763,7 +760,7 @@ void Sv_PlayerLeaves(unsigned int nodeID)
     }
 
     // This client no longer has an ID number.
-    cl->id = 0;
+    plr->id = 0;
 }
 
 /**
@@ -809,7 +806,7 @@ void Sv_Handshake(dint plrNum, dd_bool newPlayer)
     duint playersInGame = 0;
     for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(clients[i].connected)
+        if(DD_Player(i)->isConnected())
             playersInGame |= 1 << i;
     }
 
@@ -859,13 +856,13 @@ void Sv_Handshake(dint plrNum, dd_bool newPlayer)
     // Propagate client information.
     for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(clients[i].connected)
+        if(DD_Player(i)->isConnected())
         {
             Net_SendPlayerInfo(i, plrNum);
         }
 
         // Send the new player's info to other players.
-        if(newPlayer && i != 0 && i != plrNum && clients[i].connected)
+        if(newPlayer && i != 0 && i != plrNum && DD_Player(i)->isConnected())
         {
             Net_SendPlayerInfo(plrNum, i);
         }
@@ -896,15 +893,13 @@ void Sv_StartNetGame(void)
         ddpl->inGame = false;
         ddpl->flags &= ~DDPF_CAMERA;
 
-        client->connected = false;
+        plr->remoteUserId = 0;
         client->ready = false;
-        client->nodeID = 0;
         client->enterTime = 0;
         client->lastTransmit = -1;
         client->fov = 90;
         plr->viewConsole = -1;
         de::zap(plr->name);
-        client->bandwidthRating = BWR_DEFAULT;
         Smoother_Clear(plr->smoother());
     }
     gameTime = 0;
@@ -923,19 +918,6 @@ void Sv_StartNetGame(void)
 
     LOGDEV_NET_XVERBOSE("Prepared material dictionary with %i materials")
             << MaterialArchive_Count(materialDict);
-
-    if(!isDedicated)
-    {
-        player_t           *plr = DD_Player(consolePlayer);
-        ddplayer_t         *ddpl = &plr->publicData();
-        client_t           *cl = &clients[consolePlayer];
-
-        ddpl->inGame = true;
-        cl->connected = true;
-        cl->ready = true;
-        plr->viewConsole = 0;
-        strcpy(plr->name, playerName);
-    }
 }
 
 void Sv_StopNetGame(void)
@@ -971,7 +953,7 @@ void Sv_SendText(int to, int con_flags, const char* text)
  */
 void Sv_Kick(int who)
 {
-    if(!clients[who].connected)
+    if(!DD_Player(who)->isConnected())
         return;
 
     Sv_SendText(who, SV_CONSOLE_PRINT_FLAGS, "You were kicked out!\n");
@@ -1122,7 +1104,7 @@ int Sv_GetNumConnected(void)
         return 1;
 
     for(i = isDedicated ? 1 : 0; i < DDMAXPLAYERS; ++i)
-        if(clients[i].connected)
+        if(DD_Player(i)->isConnected())
             count++;
 
     return count;

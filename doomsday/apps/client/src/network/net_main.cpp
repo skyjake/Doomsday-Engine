@@ -139,10 +139,14 @@ DENG_EXTERN_C char const *Net_GetPlayerName(dint player)
 #undef Net_GetPlayerID
 DENG_EXTERN_C ident_t Net_GetPlayerID(dint player)
 {
-    if(!::clients[player].connected)
-        return 0;
-
-    return ::clients[player].id;
+#ifdef __SERVER__
+    auto &cl = *DD_Player(player);
+    if(cl.isConnected())
+        return cl.id;
+#else
+    DENG_UNUSED(player);
+#endif
+    return 0;
 }
 
 /**
@@ -211,7 +215,7 @@ dd_bool Net_GetPacket()
 #ifdef __CLIENT__
     // Are we recording a demo?
     DENG2_ASSERT(consolePlayer >= 0 && consolePlayer < DDMAXPLAYERS);
-    if(::isClient && ::clients[::consolePlayer].recording)
+    if(::isClient && DD_Player(::consolePlayer)->recording)
     {
         Demo_WritePacket(::consolePlayer);
     }
@@ -424,10 +428,9 @@ void Net_InitGame()
     DD_Player(0)->publicData().flags |= DDPF_LOCAL;
 
 #ifdef __CLIENT__
-    ::clients[0].id           = ::clientID;
+    DD_Player(0)->id          = ::clientID;
 #endif
     ::clients[0].ready        = true;
-    ::clients[0].connected    = true;
     ::clients[0].lastTransmit = -1;
     DD_Player(0)->viewConsole = 0;
 }
@@ -480,9 +483,10 @@ void Net_StopGame()
         client_t &cl  = clients[i];
 
         cl.ready       = false;
-        cl.connected   = false;
-        cl.id          = 0;
-        cl.nodeID      = 0;
+#ifdef __SERVER__
+        plr.remoteUserId = 0;
+#endif
+        plr.id         = 0;
         plr.viewConsole = -1;
 
         plr.publicData().inGame = false;
@@ -504,7 +508,7 @@ void Net_StopGame()
     ::consolePlayer = ::displayPlayer = 0;
 
     ::clients[0].ready       = true;
-    ::clients[0].connected   = true;
+    //::clients[0].connected   = true;
     DD_Player(0)->viewConsole = 0;
 
     DD_Player(0)->publicData().inGame = true;
@@ -544,7 +548,7 @@ static dd_bool recordingDemo()
 {
     for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(DD_Player(i)->publicData().inGame && ::clients[i].recording)
+        if(DD_Player(i)->publicData().inGame && DD_Player(i)->recording)
             return true;
     }
     return false;
@@ -567,13 +571,14 @@ void Net_DrawDemoOverlay()
         dint count = 0;
         for(dint i = 0; i < DDMAXPLAYERS; ++i)
         {
-            if(!(!DD_Player(i)->publicData().inGame || !::clients[i].recording))
+            auto *plr = DD_Player(i);
+            if(plr->publicData().inGame && plr->recording)
             {
                 // This is a "real" player (or camera).
                 if(count++)
                     strcat(buf, ",");
 
-                char tmp[40]; sprintf(tmp, "%i:%s", i, ::clients[i].recordPaused ? "-P-" : "REC");
+                char tmp[40]; sprintf(tmp, "%i:%s", i, plr->recordPaused ? "-P-" : "REC");
                 strcat(buf, tmp);
             }
         }
@@ -646,9 +651,8 @@ void Net_Ticker(timespan_t time)
                 if(Sv_IsFrameTarget(i))
                 {
                     LOGDEV_NET_MSG("%i(rdy%i): avg=%05ims thres=%05ims "
-                                   "bwr=%05i maxfs=%05ib unakd=%05i")
+                                   "maxfs=%05ib unakd=%05i")
                         << i << ::clients[i].ready << 0 << 0
-                        << ::clients[i].bandwidthRating
                         << Sv_GetMaxFrameSize(i)
                         << Sv_CountUnackedDeltas(i);
                 }
@@ -1105,13 +1109,14 @@ D_CMD(MakeCamera)
     if(cp < 0 || cp >= DDMAXPLAYERS)
         return false;
 
-    if(::clients[cp].connected)
+    /// @todo Should make a LocalPlayer; 'connected' is server-side.
+/*    if(::clients[cp].connected)
     {
         LOG_ERROR("Client %i already connected") << cp;
         return false;
     }
 
-    ::clients[cp].connected   = true;
+    ::clients[cp].connected   = true;*/
     ::clients[cp].ready       = true;
     DD_Player(cp)->viewConsole = cp;
 

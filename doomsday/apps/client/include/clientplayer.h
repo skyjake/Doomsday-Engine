@@ -21,6 +21,7 @@
 
 #include <doomsday/player.h>
 #include "render/viewports.h"
+#include "lzss.h" // legacy demo code
 
 struct ConsoleEffectStack;
 
@@ -44,11 +45,27 @@ typedef struct clplayerstate_s {
     coord_t pendingMomFix[3];
 } clplayerstate_t;
 
+struct DemoTimer
+{
+    bool first;
+    de::dint begintime;
+    bool canwrite;  ///< @c false until Handshake packet.
+    de::dint cameratimer;
+    de::dint pausetime;
+    de::dfloat fov;
+};
+
 /**
  * Client-side player state.
  */
 class ClientPlayer : public Player
 {
+public:
+    // Demo recording file (being recorded if not NULL).
+    LZFILE *demo;
+    bool    recording;
+    bool    recordPaused;
+
 public:
     ClientPlayer();
 
@@ -60,6 +77,8 @@ public:
 
     ConsoleEffectStack &fxStack();
     ConsoleEffectStack const &fxStack() const;
+
+    DemoTimer &demoTimer();
     
 private:
     DENG2_PRIVATE(d)

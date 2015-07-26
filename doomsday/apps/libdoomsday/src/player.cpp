@@ -40,7 +40,8 @@ DENG2_PIMPL_NOREF(Player)
 };
 
 Player::Player()
-    : extraLightCounter(0)
+    : id(0)
+    , extraLightCounter(0)
     , extraLight(0)
     , targetExtraLight(0)
     , viewConsole(0)

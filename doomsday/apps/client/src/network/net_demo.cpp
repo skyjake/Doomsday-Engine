@@ -54,16 +54,6 @@ struct demopacket_header_t
 };
 #pragma pack()
 
-struct demotimer_t
-{
-    dd_bool first;
-    dint begintime;
-    dd_bool canwrite;  ///< @c false until Handshake packet.
-    dint cameratimer;
-    dint pausetime;
-    dfloat fov;
-};
-
 extern dfloat netConnectTime;
 
 filename_t demoPath = "demo/";
@@ -76,8 +66,7 @@ dfloat posDelta[3];
 dfloat demoFrameZ, demoZ;
 dd_bool demoOnGround;
 
-static demotimer_t writeInfo[DDMAXPLAYERS];
-static demotimer_t readInfo;
+static DemoTimer readInfo;
 static dfloat startFOV;
 static dint demoStartTic;
 
@@ -152,14 +141,14 @@ dd_bool Demo_BeginRecording(char const * /*fileName*/, dint /*plrNum*/)
 void Demo_PauseRecording(dint playerNum)
 {
     DENG2_ASSERT(playerNum >= 0 && playerNum < DDMAXPLAYERS);
-    client_t &cl = ::clients[playerNum];
+    auto &cl = *DD_Player(playerNum);
 
     // A demo is not being recorded?
     if(!cl.recording || cl.recordPaused)
         return;
 
     // All packets will be written for the same tic.
-    ::writeInfo[playerNum].pausetime = SECONDS_TO_TICKS(demoTime);
+    cl.demoTimer().pausetime = SECONDS_TO_TICKS(demoTime);
     cl.recordPaused = true;
 }
 
@@ -169,7 +158,7 @@ void Demo_PauseRecording(dint playerNum)
 void Demo_ResumeRecording(dint playerNum)
 {
     DENG2_ASSERT(playerNum >= 0 && playerNum < DDMAXPLAYERS);
-    client_t &cl = ::clients[playerNum];
+    auto &cl = *DD_Player(playerNum);
 
     // Not recording or not paused?
     if(!cl.recording || !cl.recordPaused)
@@ -180,7 +169,7 @@ void Demo_ResumeRecording(dint playerNum)
     // When the demo is read there can't be a jump in the timings, so we
     // have to make it appear the pause never happened; begintime is
     // moved forwards.
-    ::writeInfo[playerNum].begintime += DEMOTIC - ::writeInfo[playerNum].pausetime;
+    cl.demoTimer().begintime += DEMOTIC - cl.demoTimer().pausetime;
 }
 
 /**
@@ -189,7 +178,7 @@ void Demo_ResumeRecording(dint playerNum)
 void Demo_StopRecording(dint playerNum)
 {
     DENG2_ASSERT(playerNum >= 0 && playerNum < DDMAXPLAYERS);
-    client_t &cl = ::clients[playerNum];
+    auto &cl = *DD_Player(playerNum);
 
     // A demo is not being recorded?
     if(!cl.recording) return;
@@ -208,10 +197,11 @@ void Demo_WritePacket(dint playerNum)
     }
 
     DENG2_ASSERT(playerNum >= 0 && playerNum < DDMAXPLAYERS);
-    demotimer_t &inf = ::writeInfo[playerNum];
+    auto &cl = *DD_Player(playerNum);
+    DemoTimer &inf = cl.demoTimer();
 
     // Is this client recording?
-    if(!::clients[playerNum].recording)
+    if(!cl.recording)
         return;
 
     if(!inf.canwrite)
@@ -223,7 +213,7 @@ void Demo_WritePacket(dint playerNum)
         inf.canwrite = true;
     }
 
-    if(::clients[playerNum].recordPaused)
+    if(cl.recordPaused)
     {
         // Some types of packet are not written in record-paused mode.
         if(::netBuffer.msg.type == PSV_SOUND ||
@@ -234,13 +224,13 @@ void Demo_WritePacket(dint playerNum)
     // This counts as an update. (We know the client is alive.)
     //::clients[playerNum].updateCount = UPDATECOUNT;
 
-    LZFILE *file = ::clients[playerNum].demo;
+    LZFILE *file = cl.demo;
     if(!file) App_Error("Demo_WritePacket: No demo file!\n");
 
     byte ptime;
     if(!inf.first)
     {
-        ptime = (::clients[playerNum].recordPaused ? inf.pausetime : DEMOTIC)
+        ptime = (cl.recordPaused ? inf.pausetime : DEMOTIC)
               - inf.begintime;
     }
     else
@@ -282,7 +272,7 @@ dd_bool Demo_BeginPlayback(char const *fileName)
     // Check that we aren't recording anything.
     for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(::clients[i].recording)
+        if(DD_Player(i)->recording)
             return false;
     }
 
@@ -409,7 +399,7 @@ void Demo_WriteLocalCamera(dint plrNum)
 
     if(!mob) return;
 
-    Msg_Begin(::clients[plrNum].recordPaused ? PKT_DEMOCAM_RESUME : PKT_DEMOCAM);
+    Msg_Begin(plr->recordPaused ? PKT_DEMOCAM_RESUME : PKT_DEMOCAM);
 
     // Flags.
     byte flags = (mob->origin[VZ] <= mob->floorZ ? LCAMF_ONGROUND : 0)  // On ground?
@@ -429,7 +419,7 @@ void Demo_WriteLocalCamera(dint plrNum)
     Writer_WriteInt16(::msgWriter, y >> 16);
     Writer_WriteByte(::msgWriter, y >> 8);
 
-    fixed_t z = FLT2FIX(mob->origin[VZ] + DD_Player(plrNum)->viewport().current.origin.z);
+    fixed_t z = FLT2FIX(mob->origin[VZ] + plr->viewport().current.origin.z);
     Writer_WriteInt16(::msgWriter, z >> 16);
     Writer_WriteByte(::msgWriter, z >> 8);
 
@@ -560,13 +550,12 @@ void Demo_Ticker(timespan_t /*time*/)
         {
             player_t   &plr  = *DD_Player(i);
             ddplayer_t &ddpl = plr.publicData();
-            client_t   &cl   = ::clients[i];
 
-            if(ddpl.inGame && cl.recording && !cl.recordPaused &&
-               ++::writeInfo[i].cameratimer >= LOCALCAM_WRITE_TICS)
+            if(ddpl.inGame && plr.recording && !plr.recordPaused &&
+               ++plr.demoTimer().cameratimer >= LOCALCAM_WRITE_TICS)
             {
                 // It's time to write local view angles and coords.
-                ::writeInfo[i].cameratimer = 0;
+                plr.demoTimer().cameratimer = 0;
                 Demo_WriteLocalCamera(i);
             }
         }
@@ -629,12 +618,12 @@ D_CMD(PauseDemo)
         LOG_SCR_ERROR("Invalid player #%i") << plnum;
         return false;
     }
-    if(!::clients[plnum].recording)
+    if(!DD_Player(plnum)->recording)
     {
         LOG_SCR_ERROR("Not recording for player %i") << plnum;
         return false;
     }
-    if(::clients[plnum].recordPaused)
+    if(DD_Player(plnum)->recordPaused)
     {
         Demo_ResumeRecording(plnum);
         LOG_SCR_MSG("Demo recording of player %i resumed") << plnum;
@@ -669,11 +658,11 @@ D_CMD(StopDemo)
         return false;
     }
 
-    if(!::playback && !::clients[plnum].recording)
+    if(!::playback && !DD_Player(plnum)->recording)
         return true;
 
     LOG_SCR_MSG("Demo %s of player %i stopped")
-        << (::clients[plnum].recording ? "recording" : "playback") << plnum;
+        << (DD_Player(plnum)->recording ? "recording" : "playback") << plnum;
 
     if(::playback)
     {   

@@ -104,10 +104,18 @@ typedef struct ddplayer_s {
 /**
  * Base class for player state: common functionality shared by both the server
  * and the client.
+ *
+ * @todo Revise: this entire class is public as part of libdoomday, and therefore
+ * can be accessed by plugins, too. Previously only ddplayer_t has been made
+ * public. Some members could be moved into an internal, engine-only private class,
+ * if necessary. -jk
  */
 class LIBDOOMSDAY_PUBLIC Player
 {
 public:
+    // ID number. Each client has a unique ID number.
+    ident_t id;
+
     // The name of the player.
     char name[PLAYERNAMELEN];
 

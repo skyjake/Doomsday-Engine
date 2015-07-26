@@ -749,7 +749,7 @@ writeDeltaLength:
 dsize Sv_GetMaxFrameSize(dint playerNumber)
 {
     DENG2_ASSERT(playerNumber >= 0 && playerNumber < DDMAXPLAYERS);
-    dsize size = MINIMUM_FRAME_SIZE + FRAME_SIZE_FACTOR * ::clients[playerNumber].bandwidthRating;
+    dsize size = MINIMUM_FRAME_SIZE + FRAME_SIZE_FACTOR * 40 /* BWR_DEFAULT */;
 
     // What about the communications medium?
     if(size > PROTOCOL_MAX_DATAGRAM_SIZE)

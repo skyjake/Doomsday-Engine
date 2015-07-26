@@ -19,6 +19,7 @@
 #ifndef SERVER_SERVERPLAYER_H
 #define SERVER_SERVERPLAYER_H
 
+#include <de/Id>
 #include <doomsday/player.h>
 #include "server/sv_pool.h"
 
@@ -30,7 +31,14 @@
 class ServerPlayer : public Player
 {
 public:
+    // Identifier of the RemoteUser instance of this client.
+    de::Id::Type remoteUserId;
+
+public:
     ServerPlayer();
+
+    /// Is this client connected? (Might not be in the game yet.)
+    bool isConnected() const;
 
     pool_t &deltaPool();
     

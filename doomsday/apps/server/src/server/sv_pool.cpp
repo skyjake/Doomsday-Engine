@@ -1977,7 +1977,7 @@ void Sv_MobjRemoved(thid_t id)
 
         for(i = 0; i < DDMAXPLAYERS; ++i)
         {
-            if(clients[i].connected)
+            if(DD_Player(i)->isConnected())
             {
                 Sv_PoolMobjRemoved(Sv_GetPool(i), id);
             }
@@ -2017,11 +2017,11 @@ dd_bool Sv_IsPoolTargeted(pool_t* pool, pool_t** targets)
  */
 int Sv_GetTargetPools(pool_t** targets, int clientsMask)
 {
-    int                 i, numTargets = 0;
+    int i, numTargets = 0;
 
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(clientsMask & (1 << i) && clients[i].connected)
+        if(clientsMask & (1 << i) && DD_Player(i)->isConnected())
         {
             targets[numTargets++] = Sv_GetPool(i);
         }
@@ -2386,14 +2386,11 @@ void Sv_NewSoundDelta(int soundId, mobj_t *emitter, Sector *sourceSector,
 dd_bool Sv_IsFrameTarget(duint plrNum)
 {
     DENG2_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
-    player_t const &plr    = *DD_Player(plrNum);
-    ddplayer_t const &ddpl = plr.publicData();
 
-    // Local players receive frames only when they're recording a demo.
+    player_t const &plr = *DD_Player(plrNum);
+
     // Clients must tell us they are ready before we can begin sending.
-    return (ddpl.inGame && !(ddpl.flags & DDPF_LOCAL) &&
-            ::clients[plrNum].ready) ||
-           ((ddpl.flags & DDPF_LOCAL) && ::clients[plrNum].recording);
+    return (plr.publicData().inGame && ::clients[plrNum].ready);
 }
 
 /**

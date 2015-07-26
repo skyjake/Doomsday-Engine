@@ -31,8 +31,15 @@ DENG2_PIMPL_NOREF(ServerPlayer)
     }
 };
 
-ServerPlayer::ServerPlayer() : d(new Instance)
+ServerPlayer::ServerPlayer()
+    : remoteUserId(0)
+    , d(new Instance)
 {}
+
+bool ServerPlayer::isConnected() const
+{
+    return remoteUserId != 0;
+}
 
 pool_t &ServerPlayer::deltaPool()
 {
