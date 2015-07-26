@@ -32,7 +32,7 @@
 
 #include "dd_types.h"
 #include <doomsday/doomsdayapp.h>
-#include <doomsday/gameexport.h>
+#include <doomsday/gameapi.h>
 #include "api_internaldata.h"
 
 #ifdef __cplusplus

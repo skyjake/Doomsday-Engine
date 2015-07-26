@@ -140,13 +140,6 @@ void Def_Init();
 void Def_Destroy();
 
 /**
- * Retrieves the XG Class list from the Game.
- * XGFunc links are provided by the Game, who owns the actual
- * XG classes and their functions.
- */
-void Def_GetGameClasses();
-
-/**
  * Finish definition database initialization. Initialization is split into two
  * phases either side of the texture manager, this being the post-phase.
  */

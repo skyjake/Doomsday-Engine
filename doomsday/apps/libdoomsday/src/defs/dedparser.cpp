@@ -65,7 +65,7 @@
 #include "doomsday/filesys/fs_util.h"
 #include "doomsday/filesys/sys_direc.h"
 #include "doomsday/uri.h"
-#include "xgclass.h"
+#include "doomsday/world/xgclass.h"
 
 #ifdef WIN32
 #  define stricmp _stricmp

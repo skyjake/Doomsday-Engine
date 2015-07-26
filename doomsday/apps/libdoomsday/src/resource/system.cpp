@@ -33,7 +33,11 @@ DENG2_PIMPL(System)
     ResourceClasses resClasses;
     NullResourceClass nullResourceClass;
 
-    Instance(Public *i) : Base(i)
+    NativePath nativeSavePath;
+
+    Instance(Public *i)
+        : Base(i)
+        , nativeSavePath(App::app().nativeHomePath() / "savegames") // default
     {
         theResSystem = thisPublic;
 
@@ -44,6 +48,14 @@ DENG2_PIMPL(System)
         resClasses.append(new ResourceClass("RC_SOUND",      "Sfx"));
         resClasses.append(new ResourceClass("RC_MUSIC",      "Music"));
         resClasses.append(new ResourceClass("RC_FONT",       "Fonts"));
+
+        // Determine the root directory of the saved session repository.
+        if(auto arg = App::commandLine().check("-savedir", 1))
+        {
+            // Using a custom root save directory.
+            App::commandLine().makeAbsolutePath(arg.pos + 1);
+            nativeSavePath = App::commandLine().at(arg.pos + 1);
+        }
     }
 
     ~Instance()
@@ -106,6 +118,11 @@ void System::updateOverrideIWADPathFromConfig()
     }
 }
 
+NativePath System::nativeSavePath() const
+{
+    return d->nativeSavePath;
+}
+
 } // namespace res
 
 ResourceClass &App_ResourceClass(String className)
@@ -117,3 +134,4 @@ ResourceClass &App_ResourceClass(resourceclassid_t classId)
 {
     return res::System::get().resClass(classId);
 }
+

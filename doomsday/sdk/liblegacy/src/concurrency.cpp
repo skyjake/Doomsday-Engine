@@ -134,6 +134,11 @@ thread_t Sys_StartThread(systhreadfunc_t startpos, void *parm)
     return t;
 }
 
+thread_t Sys_StartThread(int (*startpos)(void *), void *parm)
+{
+    return Sys_StartThread(systhreadfunc_t(startpos), parm);
+}
+
 void Thread_KillAbnormally(thread_t handle)
 {
     QThread *t = reinterpret_cast<QThread *>(handle);

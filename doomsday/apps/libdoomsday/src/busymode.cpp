@@ -149,7 +149,7 @@ void BusyMode::abort(String const &message)
  * @param workerData    Data context for the worker thread.
  * @param taskName      Optional task name (drawn with the progress bar).
  */
-static BusyTask *newTask(int mode, busyworkerfunc_t worker, void* workerData,
+static BusyTask *newTask(int mode, std::function<int (void *)> worker, void* workerData,
                          String const &taskName)
 {
     BusyTask *task = new BusyTask;
@@ -174,6 +174,14 @@ static void deleteTask(BusyTask *task)
     DENG_ASSERT(task);
     if(task->name) M_Free((void *)task->name);
     delete task;
+}
+
+int BusyMode::runNewTaskWithName(int mode, String const &taskName, std::function<int (void *)> worker)
+{
+    BusyTask *task = newTask(mode, worker, nullptr, taskName);
+    int result = runTask(task);
+    deleteTask(task);
+    return result;
 }
 
 int BusyMode::runNewTaskWithName(int mode, busyworkerfunc_t worker, void *workerData,

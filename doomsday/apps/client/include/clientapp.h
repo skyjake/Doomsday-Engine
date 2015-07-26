@@ -32,7 +32,6 @@
 #include "resource/resourcesystem.h"
 #include "updater.h"
 #include "busyrunner.h"
-#include "Games"
 #include "world/worldsystem.h"
 
 /**
@@ -76,7 +75,6 @@ public:
     static ClientWindowSystem &windowSystem();
     static RenderSystem &renderSystem();
     static ResourceSystem &resourceSystem();
-    static de::Games &games();
     static de::WorldSystem &worldSystem();
 
     static bool hasInputSystem();

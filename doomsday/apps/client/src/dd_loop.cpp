@@ -212,12 +212,12 @@ static void baseTicker(timespan_t time)
 #endif
 
 #ifdef LIBDENG_PLAYER0_MOVEMENT_ANALYSIS
-            if(::ddPlayers[0].shared.inGame && ::ddPlayers[0].shared.mo)
+            if(DD_Player(0)->publicData().inGame && DD_Player(0)->publicData().mo)
             {
                 static coord_t prevPos[3] = { 0, 0, 0 };
                 static coord_t prevSpeed = 0;
 
-                mobj_t *mob = ::ddPlayers[0].shared.mo;
+                mobj_t *mob = DD_Player(0)->publicData().mo;
 
                 coord_t speed        = V2d_Length(mob->mom);
                 coord_t actualMom[2] = { mob->origin[0] - prevPos[0], mob->origin[1] - prevPos[1] };
@@ -225,7 +225,7 @@ static void baseTicker(timespan_t time)
 
                 LOG_NOTE("%i,%f,%f,%f,%f")
                         << SECONDS_TO_TICKS(sysTime + time)
-                    << ::ddPlayers[0].shared.forwardMove
+                    << DD_Player(0)->publicData().forwardMove
                         << speed
                         << actualSpeed
                         << speed - prevSpeed;

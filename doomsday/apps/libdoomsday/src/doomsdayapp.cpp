@@ -37,8 +37,13 @@ static DoomsdayApp *theDoomsdayApp = nullptr;
 
 DENG2_PIMPL_NOREF(DoomsdayApp)
 {
+    std::string ddBasePath; // Doomsday root directory is at...?
+    std::string ddRuntimePath;
+
     Plugins plugins;
+    Games games;
     BusyMode busyMode;
+    Players players;
 
     /// @c true = We are using a custom user dir specified on the command line.
     bool usingUserDir = false;
@@ -54,7 +59,8 @@ DENG2_PIMPL_NOREF(DoomsdayApp)
     HINSTANCE hInstance = NULL;
 #endif
 
-    Instance()
+    Instance(Players::Constructor playerConstructor)
+        : players(playerConstructor)
     {
 #ifdef WIN32
         hInstance = GetModuleHandle(NULL);
@@ -162,7 +168,8 @@ DENG2_PIMPL_NOREF(DoomsdayApp)
 #endif // WIN32
 };
 
-DoomsdayApp::DoomsdayApp() : d(new Instance)
+DoomsdayApp::DoomsdayApp(Players::Constructor playerConstructor)
+    : d(new Instance(playerConstructor))
 {
     DENG2_ASSERT(!theDoomsdayApp);
     theDoomsdayApp = this;
@@ -184,6 +191,21 @@ Plugins &DoomsdayApp::plugins()
     return DoomsdayApp::app().d->plugins;
 }
 
+Games &DoomsdayApp::games()
+{
+    return DoomsdayApp::app().d->games;
+}
+
+Players &DoomsdayApp::players()
+{
+    return DoomsdayApp::app().d->players;
+}
+
+Game &DoomsdayApp::currentGame()
+{
+    return App::game().as<Game>();
+}
+
 BusyMode &DoomsdayApp::busyMode()
 {
     return DoomsdayApp::app().d->busyMode;
@@ -194,9 +216,45 @@ bool DoomsdayApp::isUsingUserDir() const
     return d->usingUserDir;
 }
 
+std::string const &DoomsdayApp::doomsdayBasePath() const
+{
+    return d->ddBasePath;
+}
+
+void DoomsdayApp::setDoomsdayBasePath(de::NativePath const &path)
+{
+    /// @todo Unfortunately Dir/fs_util assumes fixed-size strings, so we
+    /// can't take advantage of std::string. -jk
+    filename_t temp;
+    strncpy(temp, path.toUtf8(), FILENAME_T_MAXLEN);
+
+    Dir_CleanPath(temp, FILENAME_T_MAXLEN);
+    Dir_MakeAbsolutePath(temp, FILENAME_T_MAXLEN);
+
+    // Ensure it ends with a directory separator.
+    F_AppendMissingSlashCString(temp, FILENAME_T_MAXLEN);
+
+    d->ddBasePath = temp;
+}
+
+std::string const &DoomsdayApp::doomsdayRuntimePath() const
+{
+    return d->ddRuntimePath;
+}
+
+void DoomsdayApp::setDoomsdayRuntimePath(de::NativePath const &path)
+{
+    d->ddRuntimePath = path.toUtf8().constData();
+}
+
 #ifdef WIN32
 void *DoomsdayApp::moduleHandle() const
 {
     return d->hInstance;
 }
 #endif
+
+bool App_GameLoaded()
+{
+    return App::appExists() && !DoomsdayApp::currentGame().isNull();
+}

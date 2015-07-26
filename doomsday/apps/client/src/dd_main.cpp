@@ -173,10 +173,6 @@ static dint DD_StartupWorker(void *context);
 static dint DD_DummyWorker(void *context);
 static void DD_AutoLoad();
 
-#ifndef WIN32
-extern GETGAMEAPI GetGameAPI;
-#endif
-
 dint isDedicated;
 dint verbose;                      ///< For debug messages (-verbose).
 dint gameDataFormat;               ///< Game-specific data format identifier/selector.
@@ -1181,7 +1177,7 @@ static dint DD_ActivateGameWorker(void *context)
     // Invalidate old cmds and init player values.
     for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        player_t *plr = &ddPlayers[i];
+        player_t *plr = DD_Player(i);
 
         plr->extraLight = plr->targetExtraLight = 0;
         plr->extraLightCounter = 0;
@@ -1202,7 +1198,7 @@ static dint DD_ActivateGameWorker(void *context)
     return 0;
 }
 
-de::Games &App_Games()
+Games &App_Games()
 {
     if(App::appExists())
     {
@@ -1216,20 +1212,13 @@ de::Games &App_Games()
     throw Error("App_Games", "App not yet initialized");
 }
 
-dd_bool App_GameLoaded()
-{
-    if(!App::appExists()) return false;
-
-    return !App_CurrentGame().isNull();
-}
-
 void App_ClearGames()
 {
     App_Games().clear();
     App::app().setGame(App_Games().nullGame());
 }
 
-static void populateGameInfo(GameInfo &info, de::Game &game)
+static void populateGameInfo(GameInfo &info, Game &game)
 {
     info.identityKey = AutoStr_FromTextStd(game.identityKey().toUtf8().constData());
     info.title       = AutoStr_FromTextStd(game.title().toUtf8().constData());
@@ -1329,9 +1318,9 @@ gameid_t DD_GameIdForKey(char const *identityKey)
     return 0; // Invalid id.
 }
 
-de::Game &App_CurrentGame()
+Game &App_CurrentGame()
 {
-    return App::game().as<de::Game>();
+    return DoomsdayApp::currentGame();
 }
 
 bool App_ChangeGame(Game &game, bool allowReload)
@@ -1521,7 +1510,6 @@ bool App_ChangeGame(Game &game, bool allowReload)
                     << dint(game.pluginId());
             return false;
         }
-        Def_GetGameClasses();
     }
 
     // This is now the current game.
@@ -1823,7 +1811,7 @@ static void initialize()
     // Attempt automatic game selection.
     if(!CommandLine_Exists("-noautoselect") || isDedicated)
     {
-        if(de::Game *game = DD_AutoselectGame())
+        if(Game *game = DD_AutoselectGame())
         {
             // An implicit game session profile has been defined.
             // Add all resources specified using -file options on the command line

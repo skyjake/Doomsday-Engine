@@ -505,7 +505,7 @@ void LensFlares::draw()
 
     if(!viewPlayer) return; /// @todo How'd we get here? -ds
 
-    viewdata_t const *viewData = R_ViewData(console());
+    viewdata_t const *viewData = &DD_Player(console())->viewport();
     d->eyeFront = Vector3f(viewData->frontVec);
 
     Rectanglef const rect = viewRect();
@@ -519,7 +519,7 @@ void LensFlares::draw()
 
     DENG2_ASSERT(console() == displayPlayer);
     //DENG2_ASSERT(viewPlayer - ddPlayers == displayPlayer);
-    if(viewPlayer - ddPlayers != displayPlayer)
+    if(DoomsdayApp::players().indexOf(viewPlayer) != displayPlayer)
     {
         qDebug() << "LensFrames::draw: viewPlayer != displayPlayer";
         return;

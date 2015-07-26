@@ -1,8 +1,6 @@
-/** @file basepath.h  Application base path.
+/** @file basepath.h  Application base path (C wrapper).
  *
- * @deprecated Should use de::App instead.
- *
- * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2014-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -22,7 +20,6 @@
 #define LIBDOOMSDAY_BASEPATH_H
 
 #include "libdoomsday.h"
-#include "dd_types.h"
 
 #ifdef __cplusplus
 extern "C" {

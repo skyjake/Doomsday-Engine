@@ -24,6 +24,7 @@
 #define LIBDENG_SHARED_GAME_DEFINITIONS_H
 
 #include "dd_types.h"
+#include <doomsday/world/actions.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -39,8 +40,6 @@ extern "C" {
 typedef struct {
     char            name[5];
 } sprname_t;
-
-typedef void    (C_DECL * acfnptr_t) ();
 
 typedef struct state_s {
     spritenum_t     sprite;

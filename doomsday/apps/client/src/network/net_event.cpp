@@ -21,6 +21,7 @@
 
 #include "de_base.h"
 #include "network/net_event.h"
+#include "world/p_players.h"
 
 #include "de_system.h"
 
@@ -248,13 +249,13 @@ void N_TerminateClient(dint console)
 {
 #ifdef __SERVER__
     DENG2_ASSERT(console >= 0 && console < DDMAXPLAYERS);
-    if(!::clients[console].connected)
+    if(!DD_Player(console)->isConnected())
         return;
 
     LOG_NET_NOTE("Terminating connection to console %i (player '%s')")
-        << console << ::clients[console].name;
+        << console << DD_Player(console)->name;
 
-    App_ServerSystem().terminateNode(::clients[console].nodeID);
+    App_ServerSystem().terminateNode(DD_Player(console)->remoteUserId);
 
     // Update the master.
     ::masterHeartbeat = MASTER_UPDATETIME;

@@ -20,8 +20,13 @@
 #define LIBDOOMSDAY_DOOMSDAYAPP_H
 
 #include "plugins.h"
+#include "games.h"
 #include "busymode.h"
-#include "gameexport.h"
+#include "gameapi.h"
+#include "players.h"
+
+#include <de/NativePath>
+#include <string>
 
 /**
  * Common application-level state and components.
@@ -32,7 +37,7 @@
 class LIBDOOMSDAY_PUBLIC DoomsdayApp
 {
 public:
-    DoomsdayApp();
+    DoomsdayApp(Players::Constructor playerConstructor);
 
     void determineGlobalPaths();
 
@@ -42,13 +47,26 @@ public:
     void *moduleHandle() const;
 #endif
 
+    void setDoomsdayBasePath(de::NativePath const &path);
+    void setDoomsdayRuntimePath(de::NativePath const &path);
+    std::string const &doomsdayBasePath() const;
+    std::string const &doomsdayRuntimePath() const;
+
 public:
     static DoomsdayApp &app();
     static Plugins &plugins();
+    static Games &games();
+    static Players &players();
+    static Game &currentGame();
     static BusyMode &busyMode();
 
 private:
     DENG2_PRIVATE(d)
 };
+
+/**
+ * Returns @c true if a game module is presently loaded.
+ */
+LIBDOOMSDAY_PUBLIC bool App_GameLoaded();
 
 #endif // LIBDOOMSDAY_DOOMSDAYAPP_H

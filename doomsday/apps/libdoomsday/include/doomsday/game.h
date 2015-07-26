@@ -18,24 +18,54 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_GAME_H
-#define DENG_GAME_H
+#ifndef LIBDOOMSDAY_GAME_H
+#define LIBDOOMSDAY_GAME_H
 
-#include "api_base.h"
+/**
+ * Defines the high-level properties of a logical game component. Note that this
+ * is POD; no construction or destruction is needed.
+ * @see DD_DefineGame() @ingroup game
+ */
+typedef struct gamedef_s {
+   /*
+    * Unique game mode key/identifier, 16 chars max (e.g., "doom1-ultimate").
+    * - Used during resource location for mode-specific assets.
+    * - Sent out in netgames (a client can't connect unless mode strings match).
+    */
+    char const *identityKey;
+
+    /// Name of the config directory.
+    char const *configDir;
+
+    /// Default title. May be overridden later.
+    char const *defaultTitle;
+
+    /// Default author. May be overridden later.
+    /// Used for (e.g.) the map author name if not specified in a Map Info definition.
+    char const *defaultAuthor;
+
+    /*
+     * Used when converting legacy savegames:
+     */
+    char const *legacySavegameNameExp;
+    char const *legacySavegameSubfolder;
+
+    /// Primary MAPINFO definition dat, if any (translated during game init).
+    char const *mainMapInfo;
+} GameDef;
+
+#ifdef __cplusplus
+
 #include <doomsday/plugins.h>
+#include <doomsday/resource/resourceclass.h>
 #include <de/Error>
 #include <de/Path>
 #include <de/String>
 #include <de/game/Game>
 #include <QMultiMap>
 
-struct manifest_s;
-struct gamedef_s;
 class ResourceManifest;
-
-namespace de {
-
-class File1;
+namespace de { class File1; }
 
 /**
  * Records top-level game configurations registered by the loaded game plugin(s).
@@ -64,12 +94,12 @@ public:
      * @param legacySavegameSubfoler  Game-specific subdirectory of /home for legacy savegames.
      * @param mapMapInfo  Base relative path to the main MAPINFO definition data.
      */
-    Game(String const &identityKey, Path const &configDir,
-         String const &title                   = "Unnamed",
-         String const &author                  = "Unknown",
-         String const &legacySavegameNameExp   = "",
-         String const &legacySavegameSubfolder = "",
-         String const &mainMapInfo             = "");
+    Game(de::String const &identityKey, de::Path const &configDir,
+         de::String const &title                   = "Unnamed",
+         de::String const &author                  = "Unknown",
+         de::String const &legacySavegameNameExp   = "",
+         de::String const &legacySavegameSubfolder = "",
+         de::String const &mainMapInfo             = "");
 
     virtual ~Game();
 
@@ -85,13 +115,13 @@ public:
      *
      * @see status()
      */
-    String const &statusAsText() const;
+    de::String const &statusAsText() const;
 
     /**
      * Returns information about the game as styled text. Printed by "inspectgame",
      * for instance.
      */
-    String description() const;
+    de::String description() const;
 
     /**
      * Returns the unique identifier of the plugin which registered the game.
@@ -142,7 +172,7 @@ public:
     /**
      * Returns the regular expression used for locating legacy savegame files.
      */
-    String legacySavegameNameExp() const;
+    de::String legacySavegameNameExp() const;
 
     /**
      * Determine the absolute path to the legacy savegame folder for the game. If there is
@@ -150,7 +180,7 @@ public:
      * the introduction of the modern, package-based .save format) then a zero length string
      * is returned.
      */
-    String legacySavegamePath() const;
+    de::String legacySavegamePath() const;
 
     /**
      * Add a new manifest to the list of manifests.
@@ -159,7 +189,7 @@ public:
      *
      * @param manifest  Manifest to add.
      */
-    void addManifest(ResourceManifest &manifest);
+    virtual void addManifest(ResourceManifest &manifest);
 
     bool allStartupFilesFound() const;
 
@@ -180,7 +210,7 @@ public:
      *
      * @return  @c true iff @a file is required by this game.
      */
-    bool isRequiredFile(File1 &file);
+    bool isRequiredFile(de::File1 &file);
 
 public:
     /**
@@ -206,7 +236,7 @@ public:
      * @param withStatus  @c true to  include the current availability/load status
      *                    of each file.
      */
-    String filesAsText(int rflags, bool withStatus = true) const;
+    de::String filesAsText(int rflags, bool withStatus = true) const;
 
     static void printFiles(Game const &game, int rflags, bool printStatus = true);
 
@@ -232,27 +262,11 @@ public:
 public:
     NullGame();
 
-    void addManifest(struct manifest_s & /*record*/) {
+    void addManifest(ResourceManifest &) override {
         throw NullObjectError("NullGame::addResource", "Invalid action on null-object");
-    }
-
-    bool isRequiredResource(char const * /*absolutePath*/) {
-        return false; // Never.
-    }
-
-    bool allStartupFilesFound() const {
-        return true; // Always.
-    }
-
-    struct manifest_s *const *manifests(resourceclassid_t /*classId*/, int * /*count*/) const {
-        return 0;
-    }
-
-    static Game *fromDef(GameDef const & /*def*/) {
-        throw NullObjectError("NullGame::fromDef", "Not valid for null-object");
     }
 };
 
-} // namespace de
+#endif // __cplusplus
 
-#endif /* DENG_GAME_H */
+#endif /* LIBDOOMSDAY_GAME_H */

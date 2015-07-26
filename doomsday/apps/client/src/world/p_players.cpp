@@ -44,8 +44,9 @@
 
 using namespace de;
 
-player_t *viewPlayer;
-player_t ddPlayers[DDMAXPLAYERS];
+#ifdef __CLIENT__
+ClientPlayer *viewPlayer;
+#endif
 int consolePlayer;
 int displayPlayer;
 
@@ -93,14 +94,20 @@ static ImpulseAccumulator *accumulator(int impulseId, int playerNum)
     return accumulators[playerNum][impulseId];
 }
 
+AppPlayer *DD_Player(int number)
+{
+    // This is either ServerPlayer or ClientPlayer.
+    return &DoomsdayApp::players().at(number).as<AppPlayer>();
+}
+
 int P_LocalToConsole(int localPlayer)
 {
     int count = 0;
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
         int console      = (i + consolePlayer) % DDMAXPLAYERS;
-        player_t *plr    = &ddPlayers[console];
-        ddplayer_t *ddpl = &plr->shared;
+        player_t *plr    = DD_Player(console);
+        ddplayer_t *ddpl = &plr->publicData();
 
         if(ddpl->flags & DDPF_LOCAL)
         {
@@ -116,7 +123,7 @@ int P_LocalToConsole(int localPlayer)
 int P_ConsoleToLocal(int playerNum)
 {
     int i, count = 0;
-    player_t *plr = &ddPlayers[playerNum];
+    player_t *plr = DD_Player(playerNum);
 
     if(playerNum < 0 || playerNum >= DDMAXPLAYERS)
     {
@@ -128,20 +135,20 @@ int P_ConsoleToLocal(int playerNum)
         return 0;
     }
 
-    if(!(plr->shared.flags & DDPF_LOCAL))
+    if(!(plr->publicData().flags & DDPF_LOCAL))
         return -1; // Not local at all.
 
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
         int console = (i + consolePlayer) % DDMAXPLAYERS;
-        player_t *plr = &ddPlayers[console];
+        player_t *plr = DD_Player(console);
 
         if(console == playerNum)
         {
             return count;
         }
 
-        if(plr->shared.flags & DDPF_LOCAL)
+        if(plr->publicData().flags & DDPF_LOCAL)
             count++;
     }
     return -1;
@@ -149,20 +156,13 @@ int P_ConsoleToLocal(int playerNum)
 
 int P_GetDDPlayerIdx(ddplayer_t *ddpl)
 {
-    if(ddpl)
-    for(uint i = 0; i < DDMAXPLAYERS; ++i)
-    {
-        if(&ddPlayers[i].shared == ddpl)
-            return i;
-    }
-
-    return -1;
+    return DoomsdayApp::players().indexOf(ddpl);
 }
 
 bool P_IsInVoid(player_t *player)
 {
     if(!player) return false;
-    ddplayer_t *ddpl = &player->shared;
+    ddplayer_t *ddpl = &player->publicData();
 
     // Cameras are allowed to move completely freely (so check z height
     // above/below ceiling/floor).
@@ -208,20 +208,6 @@ bool P_IsInVoid(player_t *player)
     }
 
     return false;
-}
-
-short P_LookDirToShort(float lookDir)
-{
-    int dir = int( lookDir/110.f * DDMAXSHORT );
-
-    if(dir < DDMINSHORT) return DDMINSHORT;
-    if(dir > DDMAXSHORT) return DDMAXSHORT;
-    return (short) dir;
-}
-
-float P_ShortToLookDir(short s)
-{
-    return s / float( DDMAXSHORT ) * 110.f;
 }
 
 void P_ClearPlayerImpulses()
@@ -351,7 +337,7 @@ void P_ConsoleRegister()
 
 DENG_EXTERN_C ddplayer_t *DD_GetPlayer(int number)
 {
-    return &ddPlayers[number].shared;
+    return &DD_Player(number)->publicData();
 }
 
 // net_main.c

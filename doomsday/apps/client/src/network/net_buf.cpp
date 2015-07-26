@@ -20,6 +20,7 @@
 
 #include "de_base.h"
 #include "network/net_buf.h"
+#include "world/p_players.h"
 
 #include <de/c_wrapper.h>
 #include <de/memory.h>
@@ -254,14 +255,13 @@ void N_SendPacket(dint flags)
     {
         if(::netBuffer.player >= 0 && ::netBuffer.player < DDMAXPLAYERS)
         {
-            if(/*(ddpl->flags & DDPF_LOCAL) ||*/
-               !::clients[::netBuffer.player].connected)
+            if(!DD_Player(::netBuffer.player)->isConnected())
             {
-                // Do not send anything to local or disconnected players.
+                // Do not send anything to disconnected players.
                 return;
             }
 
-            dest = ::clients[::netBuffer.player].nodeID;
+            dest = DD_Player(::netBuffer.player)->remoteUserId;
         }
         else
         {
@@ -313,7 +313,7 @@ dint N_IdentifyPlayer(nodeid_t id)
     // a list of all the IDs.
     for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(::clients[i].nodeID == id)
+        if(DD_Player(i)->remoteUserId == id)
             return i;
     }
     return -1;

@@ -17,13 +17,63 @@
  */
 
 #include "clientplayer.h"
+#include "render/consoleeffect.h"
+
+using namespace de;
 
 DENG2_PIMPL_NOREF(ClientPlayer)
 {
-    
+    viewdata_t         viewport;
+    ConsoleEffectStack effects;
+    clplayerstate_t    clPlayerState;
+    DemoTimer          demoTimer;
+
+    Instance()
+    {
+        zap(viewport);
+        zap(clPlayerState);
+        zap(demoTimer);
+    }
 };
 
-ClientPlayer::ClientPlayer() : d(new Instance)
+ClientPlayer::ClientPlayer()
+    : demo(nullptr)
+    , recording(false)
+    , recordPaused(false)
+    , d(new Instance)
+{}
+
+viewdata_t &ClientPlayer::viewport()
 {
-    
+    return d->viewport;
+}
+
+viewdata_t const &ClientPlayer::viewport() const
+{
+    return d->viewport;
+}
+
+clplayerstate_t &ClientPlayer::clPlayerState()
+{
+    return d->clPlayerState;
+}
+
+clplayerstate_t const &ClientPlayer::clPlayerState() const
+{
+    return d->clPlayerState;
+}
+
+ConsoleEffectStack &ClientPlayer::fxStack()
+{
+    return d->effects;
+}
+
+ConsoleEffectStack const &ClientPlayer::fxStack() const
+{
+    return d->effects;
+}
+
+DemoTimer &ClientPlayer::demoTimer()
+{
+    return d->demoTimer;
 }

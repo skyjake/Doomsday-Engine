@@ -20,6 +20,7 @@
 #define LIBDOOMSDAY_RESOURCE_SYSTEM_H
 
 #include <de/System>
+#include <de/NativePath>
 #include "resourceclass.h"
 
 namespace res {
@@ -59,6 +60,11 @@ public:
      * path for the Packages scheme.
      */
     void updateOverrideIWADPathFromConfig();
+
+    /**
+     * Returns the native path of the root of the saved session repository.
+     */
+    de::NativePath nativeSavePath() const;
 
 private:
     DENG2_PRIVATE(d)

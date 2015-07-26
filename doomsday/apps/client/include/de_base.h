@@ -34,16 +34,17 @@
 
 #include "dd_def.h"
 #include "dd_share.h"
-#include "games.h"
 #include "dd_main.h"
 #include "dd_loop.h"
 #include "busyrunner.h"
 #include "ui/ddevent.h"
 #include "ui/nativeui.h"
 #include "ui/zonedebug.h"
+
 #include <doomsday/library.h>
-#include <doomsday/gameexport.h>
+#include <doomsday/gameapi.h>
 #include <doomsday/plugins.h>
+#include <doomsday/games.h>
 #include <doomsday/uri.h>
 #include <doomsday/help.h>
 

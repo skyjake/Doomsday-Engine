@@ -215,7 +215,7 @@ void R_DrawViewBorder()
     DENG2_ASSERT(inited);
 
     viewport_t const *port = R_CurrentViewPort();
-    viewdata_t const *vd = R_ViewData(displayPlayer);
+    viewdata_t const *vd = &DD_Player(displayPlayer)->viewport();
     DENG2_ASSERT(port != 0 && vd != 0);
 
     if(vd->window.isNull()) return;

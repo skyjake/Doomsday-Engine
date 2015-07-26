@@ -18,12 +18,36 @@
 
 #include "serverplayer.h"
 
+using namespace de;
+
 DENG2_PIMPL_NOREF(ServerPlayer)
 {
-    
+    /// Each client has their own pool for deltas.
+    pool_t deltaPool;
+
+    Instance()
+    {
+        zap(deltaPool);
+    }
 };
 
-ServerPlayer::ServerPlayer() : d(new Instance)
+ServerPlayer::ServerPlayer()
+    : remoteUserId(0)
+    , enterTime(0)
+    , shakePing(0)
+    , handshake(false)
+    , lastTransmit(0)
+    , fov(90)
+    , ready(false)
+    , d(new Instance)
+{}
+
+bool ServerPlayer::isConnected() const
 {
-    
+    return remoteUserId != 0;
+}
+
+pool_t &ServerPlayer::deltaPool()
+{
+    return d->deltaPool;
 }

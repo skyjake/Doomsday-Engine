@@ -31,7 +31,6 @@ set (SHARED_WITH_CLIENT
     ${src}/include/color.h
     ${src}/include/con_config.h
     ${src}/include/dd_def.h
-    ${src}/include/games.h
     ${src}/include/dd_loop.h
     ${src}/include/dd_main.h
     ${src}/include/dd_pinit.h
@@ -44,7 +43,6 @@ set (SHARED_WITH_CLIENT
     ${src}/include/def_main.h
     ${src}/include/edit_map.h
     ${src}/include/face.h
-    ${src}/include/game.h
     ${src}/include/hedge.h
     ${src}/include/m_decomp64.h
     ${src}/include/m_misc.h
@@ -131,13 +129,11 @@ set (SHARED_WITH_CLIENT
     ${src}/src/audio/s_main.cpp
     ${src}/src/color.cpp
     ${src}/src/con_config.cpp
-    ${src}/src/games.cpp
     ${src}/src/dd_loop.cpp
     ${src}/src/dd_main.cpp
     ${src}/src/dd_pinit.cpp
     ${src}/src/def_main.cpp
     ${src}/src/face.cpp
-    ${src}/src/game.cpp
     ${src}/src/hedge.cpp
     ${src}/src/m_decomp64.cpp
     ${src}/src/m_misc.cpp

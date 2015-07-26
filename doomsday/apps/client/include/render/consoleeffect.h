@@ -82,4 +82,20 @@ private:
     DENG2_PRIVATE(d)
 };
 
+/// Dynamic stack of effects. (Used currently as a fixed array, though.)
+struct ConsoleEffectStack
+{
+    typedef QList<ConsoleEffect *> EffectList;
+    EffectList effects;
+
+    ~ConsoleEffectStack() {
+        clear();
+    }
+
+    void clear() {
+        qDeleteAll(effects);
+        effects.clear();
+    }
+};
+
 #endif // DENG_CLIENT_CONSOLEEFFECT_H

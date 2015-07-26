@@ -190,9 +190,9 @@ void Sv_GetInfo(serverinfo_t *info)
     // Let's compile a list of client names.
     for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(::clients[i].connected)
+        if(DD_Player(i)->isConnected())
         {
-            M_LimitedStrCat(info->clientNames, ::clients[i].name, 15, ';', sizeof(info->clientNames));
+            M_LimitedStrCat(info->clientNames, DD_Player(i)->name, 15, ';', sizeof(info->clientNames));
         }
     }
 
@@ -306,12 +306,12 @@ void Sv_FixLocalAngles(bool clearFixAnglesFlag)
 }
 */
 
-void Sv_HandlePlayerInfoFromClient(client_t *sender)
+void Sv_HandlePlayerInfoFromClient(ServerPlayer *sender)
 {
     DENG2_ASSERT(sender);
 
     LOG_AS("Sv_HandlePlayerInfoFromClient");
-    DENG2_ASSERT(::netBuffer.player == (sender - clients));
+    DENG2_ASSERT(::netBuffer.player == DoomsdayApp::players().indexOf(sender));
 
     dint console = Reader_ReadByte(::msgReader); // ignored
     LOG_NET_VERBOSE("from=%i, console=%i") << ::netBuffer.player << console;
@@ -340,9 +340,8 @@ void Sv_HandlePacket()
 
     dint const from  = ::netBuffer.player;
     DENG2_ASSERT(from >= 0 && from < DDMAXPLAYERS);
-    player_t *plr    = &ddPlayers[from];
-    ddplayer_t *ddpl = &plr->shared;
-    client_t *sender = &clients[from];
+    player_t *sender = DD_Player(from);
+    ddplayer_t *ddpl = &sender->publicData();
 
     switch(netBuffer.msg.type)
     {
@@ -359,7 +358,7 @@ void Sv_HandlePacket()
             dint i = 1;
             for( ; i < DDMAXPLAYERS; ++i)
             {
-                if(::clients[i].connected && clients[i].id == id)
+                if(sender->isConnected() && sender->id == id)
                 {
                     // Send a message to everybody.
                     LOG_NET_WARNING("New client connection refused: duplicate ID (%08x)") << id;
@@ -393,7 +392,7 @@ void Sv_HandlePacket()
             sender->handshake = true;
 
             // The player is now in the game.
-            ::ddPlayers[from].shared.inGame = true;
+            sender->publicData().inGame = true;
 
             // Tell the game about this.
             gx.NetPlayerEvent(from, DDPE_ARRIVAL, 0);
@@ -454,7 +453,7 @@ void Sv_HandlePacket()
         Net_WriteChatMessage(msgfrom, mask, msg);
         for(dint i = 1; i < DDMAXPLAYERS; ++i)
         {
-            if(::ddPlayers[i].shared.inGame && (mask & (1 << i)) && i != from)
+            if(DD_Player(i)->publicData().inGame && (mask & (1 << i)) && i != from)
             {
                 Net_SendBuffer(i, 0);
             }
@@ -514,7 +513,7 @@ void Sv_Login(void)
 
     // OK!
     netRemoteUser = netBuffer.player;
-    LOG_NET_NOTE("%s (client %i) logged in" ) << clients[netRemoteUser].name << netRemoteUser;
+    LOG_NET_NOTE("%s (client %i) logged in" ) << DD_Player(netRemoteUser)->name << netRemoteUser;
     // Send a confirmation packet to the client.
     Msg_Begin(PKT_LOGIN);
     Writer_WriteByte(msgWriter, true);        // Yes, you're logged in.
@@ -580,8 +579,7 @@ void Sv_ExecuteCommand(void)
  */
 void Sv_GetPackets(void)
 {
-    int         netconsole;
-    client_t   *sender;
+    int netconsole;
 
     while(Net_GetPacket())
     {
@@ -603,7 +601,7 @@ void Sv_GetPackets(void)
             netconsole = netBuffer.player;
             if(netconsole >= 0 && netconsole < DDMAXPLAYERS)
             {
-                sender = &clients[netconsole];
+                ServerPlayer *sender = DD_Player(netconsole);
                 sender->shakePing = Timer_RealMilliseconds() - sender->shakePing;
                 LOG_NET_MSG("Client %i ping at handshake: %i ms")
                         << netconsole << sender->shakePing;
@@ -611,8 +609,8 @@ void Sv_GetPackets(void)
             break;
 
         case PCL_ACK_PLAYER_FIX: {
-            player_t* plr = &ddPlayers[netBuffer.player];
-            ddplayer_t* ddpl = &plr->shared;
+            player_t* plr = DD_Player(netBuffer.player);
+            ddplayer_t* ddpl = &plr->publicData();
             fixcounters_t* acked = &ddpl->fixAcked;
 
             acked->angles = Reader_ReadInt32(msgReader);
@@ -672,20 +670,18 @@ dd_bool Sv_PlayerArrives(unsigned int nodeID, char const *name)
     // We need to find the new player a client entry.
     for(int i = 1; i < DDMAXPLAYERS; ++i)
     {
-        client_t *cl = &clients[i];
+        player_t *plr = DD_Player(i);
 
-        if(!cl->connected)
+        if(!plr->isConnected())
         {
-            player_t   *plr  = &ddPlayers[i];
-            ddplayer_t *ddpl = &plr->shared;
+            ddplayer_t *ddpl = &plr->publicData();
 
             // This'll do.
-            cl->connected = true;
-            cl->ready = false;
-            cl->nodeID = nodeID;
-            cl->viewConsole = i;
-            cl->lastTransmit = -1;
-            strncpy(cl->name, name, PLAYERNAMELEN);
+            plr->remoteUserId = nodeID;
+            plr->lastTransmit = -1;
+            plr->ready = false;
+            plr->viewConsole = i;
+            strncpy(plr->name, name, PLAYERNAMELEN);
 
             ddpl->fixAcked.angles =
                 ddpl->fixAcked.origin =
@@ -696,14 +692,14 @@ dd_bool Sv_PlayerArrives(unsigned int nodeID, char const *name)
             ddpl->flags &= ~DDPF_VIEW_FILTER;
 
             Sv_InitPoolForClient(i);
-            Smoother_Clear(cl->smoother);
+            Smoother_Clear(plr->smoother());
 
-            LOG_NET_MSG("'%s' assigned to console %i (node:%u)") << cl->name << i << nodeID;
+            LOG_NET_MSG("'%s' assigned to console %i (node:%u)") << plr->name << i << nodeID;
 
             // In order to get in the game, the client must first
             // shake hands. It'll request this by sending a Hello packet.
             // We'll be waiting...
-            cl->handshake = false;
+            plr->handshake = false;
             return true;
         }
     }
@@ -719,7 +715,6 @@ void Sv_PlayerLeaves(unsigned int nodeID)
     int                 plrNum = N_IdentifyPlayer(nodeID);
     dd_bool             wasInGame;
     player_t           *plr;
-    client_t           *cl;
 
     if(plrNum == -1) return; // Bogus?
 
@@ -729,21 +724,17 @@ void Sv_PlayerLeaves(unsigned int nodeID)
     if(netRemoteUser == plrNum)
         netRemoteUser = 0;
 
-    cl = &clients[plrNum];
-    plr = &ddPlayers[plrNum];
+    plr = DD_Player(plrNum);
 
     LOG_NET_NOTE("'%s' (console %i) has left, was connected for %.1f seconds")
-            << cl->name << plrNum << (Timer_RealSeconds() - cl->enterTime);
+            << plr->name << plrNum << (Timer_RealSeconds() - plr->enterTime);
 
-    wasInGame = plr->shared.inGame;
-    plr->shared.inGame = false;
+    wasInGame = plr->publicData().inGame;
+    plr->publicData().inGame = false;
 
-    cl->connected       = false;
-    cl->ready           = false;
-    //cl->updateCount     = 0;
-    cl->handshake       = false;
-    cl->nodeID          = 0;
-    cl->bandwidthRating = BWR_DEFAULT;
+    plr->remoteUserId = 0;
+    plr->ready        = false;
+    plr->handshake    = false;
 
     // Remove the player's data from the register.
     Sv_PlayerRemoved(plrNum);
@@ -761,7 +752,7 @@ void Sv_PlayerLeaves(unsigned int nodeID)
     }
 
     // This client no longer has an ID number.
-    cl->id = 0;
+    plr->id = 0;
 }
 
 /**
@@ -807,7 +798,7 @@ void Sv_Handshake(dint plrNum, dd_bool newPlayer)
     duint playersInGame = 0;
     for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(clients[i].connected)
+        if(DD_Player(i)->isConnected())
             playersInGame |= 1 << i;
     }
 
@@ -848,7 +839,7 @@ void Sv_Handshake(dint plrNum, dd_bool newPlayer)
     if(newPlayer)
     {
         // Note the time when the handshake was sent.
-        clients[plrNum].shakePing = Timer_RealMilliseconds();
+        DD_Player(plrNum)->shakePing = Timer_RealMilliseconds();
     }
 
     // The game DLL wants to shake hands as well?
@@ -857,13 +848,13 @@ void Sv_Handshake(dint plrNum, dd_bool newPlayer)
     // Propagate client information.
     for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(clients[i].connected)
+        if(DD_Player(i)->isConnected())
         {
             Net_SendPlayerInfo(i, plrNum);
         }
 
         // Send the new player's info to other players.
-        if(newPlayer && i != 0 && i != plrNum && clients[i].connected)
+        if(newPlayer && i != 0 && i != plrNum && DD_Player(i)->isConnected())
         {
             Net_SendPlayerInfo(plrNum, i);
         }
@@ -877,7 +868,7 @@ void Sv_Handshake(dint plrNum, dd_bool newPlayer)
         Sv_InitPoolForClient(plrNum);
     }
 
-    ddPlayers[plrNum].shared.flags |= DDPF_FIXANGLES | DDPF_FIXORIGIN | DDPF_FIXMOM;
+    DD_Player(plrNum)->publicData().flags |= DDPF_FIXANGLES | DDPF_FIXORIGIN | DDPF_FIXMOM;
 }
 
 void Sv_StartNetGame(void)
@@ -887,23 +878,20 @@ void Sv_StartNetGame(void)
     // Reset all the counters and other data.
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        client_t           *client = &clients[i];
-        player_t           *plr = &ddPlayers[i];
-        ddplayer_t         *ddpl = &plr->shared;
+        player_t   *plr = DD_Player(i);
+        ddplayer_t *ddpl = &plr->publicData();
 
         ddpl->inGame = false;
         ddpl->flags &= ~DDPF_CAMERA;
 
-        client->connected = false;
-        client->ready = false;
-        client->nodeID = 0;
-        client->enterTime = 0;
-        client->lastTransmit = -1;
-        client->fov = 90;
-        client->viewConsole = -1;
-        de::zap(client->name);
-        client->bandwidthRating = BWR_DEFAULT;
-        Smoother_Clear(client->smoother);
+        plr->remoteUserId = 0;
+        plr->lastTransmit = -1;
+        plr->ready = false;
+        plr->enterTime = 0;
+        plr->fov = 90;
+        plr->viewConsole = -1;
+        de::zap(plr->name);
+        Smoother_Clear(plr->smoother());
     }
     gameTime = 0;
     firstNetUpdate = true;
@@ -921,19 +909,6 @@ void Sv_StartNetGame(void)
 
     LOGDEV_NET_XVERBOSE("Prepared material dictionary with %i materials")
             << MaterialArchive_Count(materialDict);
-
-    if(!isDedicated)
-    {
-        player_t           *plr = &ddPlayers[consolePlayer];
-        ddplayer_t         *ddpl = &plr->shared;
-        client_t           *cl = &clients[consolePlayer];
-
-        ddpl->inGame = true;
-        cl->connected = true;
-        cl->ready = true;
-        cl->viewConsole = 0;
-        strcpy(cl->name, playerName);
-    }
 }
 
 void Sv_StopNetGame(void)
@@ -969,7 +944,7 @@ void Sv_SendText(int to, int con_flags, const char* text)
  */
 void Sv_Kick(int who)
 {
-    if(!clients[who].connected)
+    if(!DD_Player(who)->isConnected())
         return;
 
     Sv_SendText(who, SV_CONSOLE_PRINT_FLAGS, "You were kicked out!\n");
@@ -985,8 +960,8 @@ void Sv_Kick(int who)
 void Sv_SendPlayerFixes(int plrNum)
 {
     int                 fixes = 0;
-    player_t           *plr = &ddPlayers[plrNum];
-    ddplayer_t         *ddpl = &plr->shared;
+    player_t           *plr = DD_Player(plrNum);
+    ddplayer_t         *ddpl = &plr->publicData();
 
     if(!(ddpl->flags & (DDPF_FIXANGLES | DDPF_FIXORIGIN | DDPF_FIXMOM)))
     {
@@ -1055,10 +1030,7 @@ void Sv_SendPlayerFixes(int plrNum)
     LOGDEV_NET_VERBOSE("Cleared FIX flags of player %i") << plrNum;
 
     // Clear the smoother for this client.
-    if(clients[plrNum].smoother)
-    {
-        Smoother_Clear(clients[plrNum].smoother);
-    }
+    Smoother_Clear(DD_Player(plrNum)->smoother());
 }
 
 void Sv_Ticker(timespan_t ticLength)
@@ -1070,28 +1042,21 @@ void Sv_Ticker(timespan_t ticLength)
     // Note last angles for all players.
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        player_t *plr = &ddPlayers[i];
+        player_t *plr = DD_Player(i);
 
-        if(!plr->shared.inGame || !plr->shared.mo)
+        if(!plr->publicData().inGame || !plr->publicData().mo)
             continue;
 
         // Update the smoother?
-        if(clients[i].smoother)
+        if(plr->smoother())
         {
-            Smoother_Advance(clients[i].smoother, ticLength);
+            Smoother_Advance(plr->smoother(), ticLength);
         }
 
         if(DD_IsSharpTick())
         {
-            plr->shared.lastAngle = plr->shared.mo->angle;
+            plr->publicData().lastAngle = plr->publicData().mo->angle;
         }
-
-        /*
-        if(clients[i].bwrAdjustTime > 0)
-        {
-            // BWR adjust time tics away.
-            clients[i].bwrAdjustTime--;
-        }*/
 
         // Increment counter, send new data.
         Sv_SendPlayerFixes(i);
@@ -1103,7 +1068,7 @@ void Sv_Ticker(timespan_t ticLength)
  */
 int Sv_GetNumPlayers(void)
 {
-    int                 i, count;
+    int i, count;
 
     // Clients can't count.
     if(isClient)
@@ -1111,9 +1076,7 @@ int Sv_GetNumPlayers(void)
 
     for(i = count = 0; i < DDMAXPLAYERS; ++i)
     {
-        player_t           *plr = &ddPlayers[i];
-
-        if(plr->shared.inGame && plr->shared.mo)
+        if(DD_Player(i)->isInGame())
             count++;
     }
 
@@ -1132,7 +1095,7 @@ int Sv_GetNumConnected(void)
         return 1;
 
     for(i = isDedicated ? 1 : 0; i < DDMAXPLAYERS; ++i)
-        if(clients[i].connected)
+        if(DD_Player(i)->isConnected())
             count++;
 
     return count;
@@ -1196,8 +1159,8 @@ dd_bool Sv_CheckBandwidth(int /*playerNumber*/)
  */
 void Sv_ClientCoords(int plrNum)
 {
-    player_t           *plr = &ddPlayers[plrNum];
-    ddplayer_t         *ddpl = &plr->shared;
+    player_t           *plr = DD_Player(plrNum);
+    ddplayer_t         *ddpl = &plr->publicData();
     mobj_t             *mo = ddpl->mo;
     int                 clz;
     float               clientGameTime;
@@ -1207,7 +1170,7 @@ void Sv_ClientCoords(int plrNum)
     dd_bool             onFloor = false;
 
     // If mobj or player is invalid, the message is discarded.
-    if(!mo || !ddpl->inGame || (ddpl->flags & DDPF_DEAD))
+    if(!plr->isInGame() || (ddpl->flags & DDPF_DEAD))
         return;
 
     clientGameTime = Reader_ReadFloat(msgReader);
@@ -1253,15 +1216,15 @@ void Sv_ClientCoords(int plrNum)
         LOGDEV_NET_XVERBOSE_DEBUGONLY("Sv_ClientCoords: Setting coords for player %i: %f, %f, %f",
                                      plrNum << clientPos[VX] << clientPos[VY] << clientPos[VZ]);
 
-        Smoother_AddPos(clients[plrNum].smoother, clientGameTime,
+        Smoother_AddPos(DD_Player(plrNum)->smoother(), clientGameTime,
                         clientPos[VX], clientPos[VY], clientPos[VZ], onFloor);
     }
 }
 
 dd_bool Sv_CanTrustClientPos(int plrNum)
 {
-    player_t* plr = &ddPlayers[plrNum];
-    ddplayer_t* ddpl = &plr->shared;
+    player_t* plr = DD_Player(plrNum);
+    ddplayer_t* ddpl = &plr->publicData();
 
     if(ddpl->fixCounter.origin == ddpl->fixAcked.origin && !(ddpl->flags & DDPF_FIXORIGIN))
     {

@@ -21,24 +21,7 @@
 #define DENG_CLIENT_PLAYER_H
 
 #include "cl_mobj.h"
-
-/**
- * Information about a client player.
- */
-typedef struct clplayerstate_s {
-    thid_t clMobjId;
-    float forwardMove;
-    float sideMove;
-    int angle;
-    angle_t turnDelta;
-    int friction;
-    int pendingFixes;
-    thid_t pendingFixTargetClMobjId;
-    angle_t pendingAngleFix;
-    float pendingLookDirFix;
-    coord_t pendingOriginFix[3];
-    coord_t pendingMomFix[3];
-} clplayerstate_t;
+#include "clientplayer.h"
 
 DENG_EXTERN_C float pspMoveSpeed;
 DENG_EXTERN_C float cplrThrustMul;

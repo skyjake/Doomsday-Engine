@@ -18,6 +18,8 @@
  */
 
 #include "doomsday/plugins.h"
+#include "doomsday/world/xg.h"
+#include "doomsday/world/actions.h"
 #include "doomsday/doomsdayapp.h"
 
 #include <de/findfile.h>
@@ -230,6 +232,8 @@ bool Plugins::exchangeGameEntryPoints(pluginid_t pluginId)
     {
         d->getGameAPI = nullptr;
     }
+    P_GetGameActions();
+    XG_GetGameClasses();
     return true;
 }
 

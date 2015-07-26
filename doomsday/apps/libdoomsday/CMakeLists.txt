@@ -13,7 +13,6 @@ include (ZLIB)
 # Definitions.
 add_definitions (
     -D__DENG__
-    -D__DOOMSDAY__
     -D__LIBDOOMSDAY__
 )
 

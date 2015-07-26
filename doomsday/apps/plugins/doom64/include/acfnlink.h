@@ -37,11 +37,6 @@
 
 #include "dd_share.h"
 
-typedef struct {
-    char           *name; // Name of the routine.
-    void   (C_DECL *func)(); // Pointer to the function.
-} actionlink_t;
-
 DENG_EXTERN_C actionlink_t actionlinks[];
 
 void C_DECL A_BabyMetal();

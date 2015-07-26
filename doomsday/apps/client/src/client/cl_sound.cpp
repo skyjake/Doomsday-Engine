@@ -195,7 +195,7 @@ void Cl_ReadSoundDelta(deltatype_t type)
         // from the real player mobj.
         if(cmo && cmo->thinker.id == ClPlayer_State(consolePlayer)->clMobjId)
         {
-            emitter = ddPlayers[consolePlayer].shared.mo;
+            emitter = DD_Player(consolePlayer)->publicData().mo;
         }
 
         // First stop any sounds originating from the same emitter.
@@ -290,7 +290,7 @@ void Cl_Sound()
     {
         dint const player = (flags & 0xf0) >> 4;
         DENG2_ASSERT(player >= 0 && player < DDMAXPLAYERS);
-        S_LocalSoundAtVolume(sound, ::ddPlayers[player].shared.mo, volume / 127.0f);
+        S_LocalSoundAtVolume(sound, DD_Player(player)->publicData().mo, volume / 127.0f);
     }
     else
     {

@@ -27,8 +27,6 @@
 #include <de/liblegacy.h>
 
 typedef void *thread_t;
-typedef int (*systhreadfunc_t) (void *parm);
-
 typedef void *mutex_t;
 typedef void *sem_t;
 
@@ -39,6 +37,9 @@ typedef enum systhreadexitstatus_e {
 } systhreadexitstatus_t;
 
 #ifdef __cplusplus
+
+#include <functional>
+typedef std::function<int (void *)> systhreadfunc_t;
 
 #ifdef __DENG__ // libdeng internal
 #include <QThread>
@@ -69,7 +70,10 @@ private:
     systhreadexitstatus_t _exitStatus;
     void (*_terminationFunc)(systhreadexitstatus_t);
 };
+
 #endif // __DENG__
+
+DENG_PUBLIC thread_t Sys_StartThread(systhreadfunc_t startpos, void *parm);
 
 extern "C" {
 #endif // __cplusplus
@@ -93,7 +97,7 @@ extern "C" {
  *
  * @return Thread handle.
  */
-DENG_PUBLIC thread_t Sys_StartThread(systhreadfunc_t startpos, void *parm);
+DENG_PUBLIC thread_t Sys_StartThread(int (*startpos)(void *), void *parm);
 
 DENG_PUBLIC void Thread_Sleep(int milliseconds);
 

@@ -260,7 +260,7 @@ dd_bool ClMobj_Reveal(mobj_t *mob)
     CL_ASSERT_CLMOBJ(mob);
 
     // Check that we know enough about the clmobj.
-    if(mob->dPlayer != &::ddPlayers[consolePlayer].shared &&
+    if(mob->dPlayer != &DD_Player(consolePlayer)->publicData() &&
        (!(info->flags & CLMF_KNOWN_X) ||
         !(info->flags & CLMF_KNOWN_Y) ||
         //!(info->flags & CLMF_KNOWN_Z) ||
@@ -304,10 +304,10 @@ static dd_bool ClMobj_IsStuckInsideLocalPlayer(mobj_t *mo)
 
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(!ddPlayers[i].shared.inGame) continue;
+        if(!DD_Player(i)->publicData().inGame) continue;
         if(P_ConsoleToLocal(i) < 0) continue; // Not a local player.
 
-        mobj_t *plmo = ddPlayers[i].shared.mo;
+        mobj_t *plmo = DD_Player(i)->publicData().mo;
         if(!plmo) continue;
 
         float blockRadius = Mobj_Radius(*mo) + Mobj_Radius(*plmo);
@@ -380,7 +380,7 @@ void ClMobj_ReadDelta()
 
     mobj_t *d = mo;
 
-    /*if(d->dPlayer && d->dPlayer == &ddPlayers[consolePlayer])
+    /*if(d->dPlayer && d->dPlayer == DD_Player(consolePlayer))
     {
         // Mark the local player known.
         cmo->flags |= CLMF_KNOWN;

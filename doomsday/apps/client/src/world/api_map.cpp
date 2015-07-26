@@ -38,6 +38,7 @@
 #include "world/entitydatabase.h"
 #include "world/linesighttest.h"
 #include "world/maputil.h"
+#include "world/p_players.h"
 #include "world/worldsystem.h"
 #include "BspLeaf"
 #include "ConvexSubspace"
@@ -1512,20 +1513,18 @@ DENG_EXTERN_C dd_bool P_MapChange(char const *uriCString)
     App_ResourceSystem().purgeCacheQueue();
 #endif
 
-    if(isServer)
+#ifdef __SERVER__
+    // Whenever the map changes, remote players must tell us when they're
+    // ready to begin receiving frames.
+    for(uint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        // Whenever the map changes, remote players must tell us when they're
-        // ready to begin receiving frames.
-        for(uint i = 0; i < DDMAXPLAYERS; ++i)
+        if(DD_Player(i)->isConnected())
         {
-            //player_t *plr = &ddPlayers[i];
-            if(/*!(plr->shared.flags & DDPF_LOCAL) &&*/ clients[i].connected)
-            {
-                LOG_DEBUG("Client %i marked as 'not ready' to receive frames.") << i;
-                clients[i].ready = false;
-            }
+            LOG_DEBUG("Client %i marked as 'not ready' to receive frames.") << i;
+            DD_Player(i)->ready = false;
         }
     }
+#endif
 
     return (dd_bool) App_WorldSystem().changeMap(de::Uri(uriCString, RC_NULL));
 }

@@ -715,10 +715,10 @@ DENG2_PIMPL(SectorCluster)
             // is now above the ceiling/below the floor they are now in the void.
             for(int i = 0; i < DDMAXPLAYERS; ++i)
             {
-                player_t *plr = &ddPlayers[i];
-                ddplayer_t *ddpl = &plr->shared;
+                player_t *plr = DD_Player(i);
+                ddplayer_t *ddpl = &plr->publicData();
 
-                if(!ddpl->inGame || !ddpl->mo)
+                if(!plr->isInGame())
                     continue;
                 if(Mobj_ClusterPtr(*ddpl->mo) != thisPublic)
                     continue;

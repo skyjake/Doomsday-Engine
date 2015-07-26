@@ -65,7 +65,7 @@ WallSpec WallSpec::fromMapSide(LineSide const &side, int section) // static
 
     if(isTwoSidedMiddle)
     {
-        if(viewPlayer && ((viewPlayer->shared.flags & (DDPF_NOCLIP|DDPF_CAMERA)) ||
+        if(viewPlayer && ((viewPlayer->publicData().flags & (DDPF_NOCLIP|DDPF_CAMERA)) ||
                           !side.line().isFlagged(DDLF_BLOCKING)))
             spec.flags |= WallSpec::NearFade;
 

@@ -25,9 +25,9 @@
 #include <de/LibraryFile>
 #include <de/String>
 #include <doomsday/resource/resourceclass.h>
-#include <doomsday/gameexport.h>
+#include <doomsday/gameapi.h>
 #include <doomsday/plugins.h>
-#include "Games"
+#include <doomsday/Games>
 
 #include "resource/resourcesystem.h"
 #include "world/worldsystem.h"
@@ -36,10 +36,6 @@
 namespace de {
 class File1;
 }
-
-#ifndef WIN32
-extern GETGAMEAPI GetGameAPI;
-#endif
 
 extern de::dint verbose;
 extern de::dint isDedicated;
@@ -89,22 +85,17 @@ void DD_UpdateEngineState();
 /**
  * Switch to/activate the specified game.
  */
-bool App_ChangeGame(de::Game &game, bool allowReload = false);
-
-/**
- * Returns @c true if a game module is presently loaded.
- */
-dd_bool App_GameLoaded();
+bool App_ChangeGame(Game &game, bool allowReload = false);
 
 /**
  * Returns the application's global Games (collection).
  */
-de::Games &App_Games();
+Games &App_Games();
 
 /**
  * Returns the current game from the application's global collection.
  */
-de::Game &App_CurrentGame();
+Game &App_CurrentGame();
 
 /**
  * Frees the info structures for all registered games.

@@ -18,20 +18,17 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_GAMES_H
-#define LIBDENG_GAMES_H
+#ifndef LIBDOOMSDAY_GAMES_H
+#define LIBDOOMSDAY_GAMES_H
 
 #include "game.h"
-#include "dd_share.h"
 #include <de/types.h>
 #include <de/str.h>
 #include <de/Observers>
 #include <QList>
 
-namespace de {
-
 /**
- * Encapsulates a collection of de::Game instances and the logical operations
+ * Encapsulates a collection of Game instances and the logical operations
  * which are performed upon it (such as searches and various index printing
  * algorithms).
  *
@@ -66,6 +63,9 @@ public:
     /// Notified after game resources have been located.
     DENG2_DEFINE_AUDIENCE2(Readiness, void gameReadinessUpdated())
 
+    /// Notified when a worker task is progressing.
+    DENG2_DEFINE_AUDIENCE2(Progress, void gameWorkerProgress(int progress))
+
 public:
     Games();
 
@@ -89,7 +89,7 @@ public:
      *
      * @throws NotFoundError if no game is associated with @a identityKey.
      */
-    Game &byIdentityKey(String identityKey) const;
+    Game &byIdentityKey(de::String identityKey) const;
 
     /**
      * @return  Game associated with @a gameId.
@@ -119,6 +119,8 @@ public:
      * Returns a list of all the Game instances in the collection.
      */
     All const &all() const;
+
+    de::LoopResult forAll(std::function<de::LoopResult (Game &)> callback) const;
 
     /**
      * Try to locate all startup resources for all registered games.
@@ -157,6 +159,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace de
-
-#endif // LIBDENG_GAMES_H
+#endif // LIBDOOMSDAY_GAMES_H

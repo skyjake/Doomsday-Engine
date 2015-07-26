@@ -22,10 +22,10 @@
 
 #include <doomsday/filesys/file.h>
 #include <doomsday/filesys/lumpindex.h>
+#include <doomsday/Game>
 #include <de/PathTree>
 #include <de/Record>
 #include <de/String>
-#include "Game"
 
 /**
  * Definition/manifeset for a map asset/resource.
@@ -52,7 +52,7 @@ public:
     /**
      * Returns the id used to uniquely reference the map in some (old) definitions.
      */
-    de::String composeUniqueId(de::Game const &currentGame) const;
+    de::String composeUniqueId(Game const &currentGame) const;
 
     MapDef &setSourceFile(de::File1 *newSourceFile);
 

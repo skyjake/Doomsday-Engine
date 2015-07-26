@@ -26,12 +26,11 @@
 #include <de/LogSink>
 #include <doomsday/console/exec.h>
 #include <doomsday/console/knownword.h>
+#include <doomsday/games.h>
 
 #include "api_console.h"
 
 #include "dd_main.h"
-#include "games.h"
-#include "Game"
 #include "network/net_main.h"
 #include "world/map.h"
 #include "world/p_object.h"
@@ -97,7 +96,7 @@ void ShellUser::sendInitialUpdate()
 
 void ShellUser::sendGameState()
 {
-    de::Game &game = App_CurrentGame();
+    Game &game = App_CurrentGame();
     String mode = (App_GameLoaded()? game.identityKey() : "");
 
     /**
@@ -162,15 +161,17 @@ void ShellUser::sendPlayerInfo()
 
     for(uint i = 1; i < DDMAXPLAYERS; ++i)
     {
-        if(!ddPlayers[i].shared.inGame || !ddPlayers[i].shared.mo)
+        ServerPlayer *plr = DD_Player(i);
+
+        if(!plr->isInGame())
             continue;
 
         shell::PlayerInfoPacket::Player info;
 
         info.number   = i;
-        info.name     = clients[i].name;
-        info.position = de::Vector2i(ddPlayers[i].shared.mo->origin[VX],
-                                     ddPlayers[i].shared.mo->origin[VY]);
+        info.name     = plr->name;
+        info.position = de::Vector2i(plr->publicData().mo->origin[VX],
+                                     plr->publicData().mo->origin[VY]);
 
         /**
          * @todo Player color is presently game-side data. Therefore, this

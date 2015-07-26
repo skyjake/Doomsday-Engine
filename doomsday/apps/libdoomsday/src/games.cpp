@@ -18,12 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
-#include "games.h"
-
-#include "dd_main.h"
-#include "def_main.h"
-#include "ui/progress.h"
+#include "doomsday/games.h"
 
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/console/cmd.h>
@@ -37,9 +32,8 @@
 #include <de/charsymbols.h>
 #include <QtAlgorithms>
 
-namespace de {
+using namespace de;
 
-/// @todo Belongs in App
 DENG2_PIMPL(Games)
 {
     /// The actual collection.
@@ -95,10 +89,12 @@ DENG2_PIMPL(Games)
 
     DENG2_PIMPL_AUDIENCE(Addition)
     DENG2_PIMPL_AUDIENCE(Readiness)
+    DENG2_PIMPL_AUDIENCE(Progress)
 };
 
 DENG2_AUDIENCE_METHOD(Games, Addition)
 DENG2_AUDIENCE_METHOD(Games, Readiness)
+DENG2_AUDIENCE_METHOD(Games, Progress)
 
 Games::Games() : d(new Instance(this))
 {}
@@ -211,13 +207,13 @@ void Games::add(Game &game)
 
 void Games::locateStartupResources(Game &game)
 {
-    Game *oldCurrentGame = &App_CurrentGame();
+    Game *oldCurrentGame = &DoomsdayApp::currentGame();
+
     if(oldCurrentGame != &game)
     {
         /// @attention Kludge: Temporarily switch Game.
         App::app().setGame(game);
         DoomsdayApp::plugins().exchangeGameEntryPoints(game.pluginId());
-        Def_GetGameClasses();
 
         // Re-init the filesystem subspace schemes using the search paths of this Game.
         App_FileSystem().resetAllSchemes();
@@ -237,38 +233,53 @@ void Games::locateStartupResources(Game &game)
         // Kludge end - Restore the old Game.
         App::app().setGame(*oldCurrentGame);
         DoomsdayApp::plugins().exchangeGameEntryPoints(oldCurrentGame->pluginId());
-        Def_GetGameClasses();
 
         // Re-init the filesystem subspace schemes using the search paths of this Game.
         App_FileSystem().resetAllSchemes();
     }
 }
 
-static int locateAllResourcesWorker(void *context)
+LoopResult Games::forAll(std::function<LoopResult (Game &)> callback) const
 {
-    Games *games = (Games *) context;
-    int n = 0;
-    foreach(Game *game, games->all())
+    foreach(Game *game, all())
     {
-        LOG_RES_MSG("Locating " _E(b) "\"%s\"" _E(.) "...") << game->title();
-
-        games->locateStartupResources(*game);
-        Con_SetProgress((n + 1) * 200 / games->count() - 1);
-
-        LOG_RES_VERBOSE(_E(l) "  Game: " _E(.)_E(>) "%s - %s") << game->title() << game->author();
-        LOG_RES_VERBOSE(_E(l) "  IdentityKey: " _E(.)_E(>)) << game->identityKey();
-        Game::printFiles(*game, FF_STARTUP);
-
-        LOG_RES_MSG(" " DENG2_CHAR_RIGHT_DOUBLEARROW " ") << game->statusAsText();
-        ++n;
+        if(auto result = callback(*game))
+        {
+            return result;
+        }
     }
-    return 0;
+    return LoopContinue;
 }
 
 void Games::locateAllResources()
 {
-    BusyMode_RunNewTaskWithName(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                locateAllResourcesWorker, (void *)this, "Locating game resources...");
+    int n = 1;
+    DoomsdayApp::busyMode().runNewTaskWithName(
+                BUSYF_STARTUP | BUSYF_PROGRESS_BAR,
+                "Locating game resources...", [this, &n] (void *)
+    {
+        forAll([this, &n] (Game &game)
+        {
+            LOG_RES_MSG("Locating " _E(b) "\"%s\"" _E(.) "...") << game.title();
+
+            locateStartupResources(game);
+
+            DENG2_FOR_AUDIENCE2(Progress, i)
+            {
+                i->gameWorkerProgress(n * 200 / count() - 1);
+            }
+
+            LOG_RES_VERBOSE(_E(l) "  Game: " _E(.)_E(>) "%s - %s") << game.title() << game.author();
+            LOG_RES_VERBOSE(_E(l) "  IdentityKey: " _E(.)_E(>)) << game.identityKey();
+            Game::printFiles(game, FF_STARTUP);
+
+            LOG_RES_MSG(" " DENG2_CHAR_RIGHT_DOUBLEARROW " ") << game.statusAsText();
+            ++n;
+
+            return 0;
+        });
+        return LoopContinue;
+    });
 
     DENG2_FOR_AUDIENCE2(Readiness, i)
     {
@@ -294,7 +305,7 @@ D_CMD(ListGames)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    Games &games = App_Games();
+    Games &games = DoomsdayApp::games();
     if(!games.count())
     {
         LOG_MSG("No games are currently registered.");
@@ -318,7 +329,7 @@ D_CMD(ListGames)
     DENG2_FOR_EACH_CONST(Games::GameList, i, found)
     {
         Game *game = i->game;
-        bool isCurrent = (&App_CurrentGame() == game);
+        bool isCurrent = (&DoomsdayApp::currentGame() == game);
 
         if(!list.isEmpty()) list += "\n";
 
@@ -353,5 +364,3 @@ void Games::consoleRegister() //static
 
     Game::consoleRegister();
 }
-
-} // namespace de
