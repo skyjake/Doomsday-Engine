@@ -755,11 +755,11 @@ static dd_bool tokenize(char const *line, char *label, char *value, int valueSiz
     DENG2_ASSERT(label && value);
 
     // Copy the label.
-    qstrncpy(label, src, de::min(colon - src + 1, valueSize));
+    qstrncpy(label, src, de::min(int(colon - src + 1), valueSize));
 
     // Copy the value.
     char const *end = line + qstrlen(line);
-    qstrncpy(value, colon + 1, de::min(end - colon, valueSize));
+    qstrncpy(value, colon + 1, de::min(int(end - colon), valueSize));
 
     // Everything is OK.
     return true;
