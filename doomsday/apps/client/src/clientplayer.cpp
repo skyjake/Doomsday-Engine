@@ -18,15 +18,17 @@
 
 #include "clientplayer.h"
 #include "render/consoleeffect.h"
+#include "render/playerweaponanimator.h"
 
 using namespace de;
 
 DENG2_PIMPL_NOREF(ClientPlayer)
 {
-    viewdata_t         viewport;
-    ConsoleEffectStack effects;
-    clplayerstate_t    clPlayerState;
-    DemoTimer          demoTimer;
+    viewdata_t           viewport;
+    ConsoleEffectStack   effects;
+    PlayerWeaponAnimator playerWeaponAnimator;
+    clplayerstate_t      clPlayerState;
+    DemoTimer            demoTimer;
 
     Instance()
     {
@@ -71,6 +73,11 @@ ConsoleEffectStack &ClientPlayer::fxStack()
 ConsoleEffectStack const &ClientPlayer::fxStack() const
 {
     return d->effects;
+}
+
+PlayerWeaponAnimator &ClientPlayer::playerWeaponAnimator()
+{
+    return d->playerWeaponAnimator;
 }
 
 DemoTimer &ClientPlayer::demoTimer()

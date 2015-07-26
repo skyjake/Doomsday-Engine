@@ -24,6 +24,7 @@
 #include "lzss.h" // legacy demo code
 
 struct ConsoleEffectStack;
+class PlayerWeaponAnimator;
 
 /**
  * Information about a client player.
@@ -77,6 +78,8 @@ public:
 
     ConsoleEffectStack &fxStack();
     ConsoleEffectStack const &fxStack() const;
+
+    PlayerWeaponAnimator &playerWeaponAnimator();
 
     DemoTimer &demoTimer();
     
