@@ -149,7 +149,21 @@ print True and False
 print True or True
 print True or False
 print False or False
-print "'and' has higher preference than 'or':", True and False or True
+print "'and' has higher precedence than 'or':", True and False or True
+
+print 'and/or have early termination:'
+def returnValue(a)
+    print '- called with', a
+    return a
+end
+print 'True and True:'
+if returnValue(True) and returnValue(True): pass
+print 'False and True:'
+if returnValue(False) and returnValue(True): pass
+print 'False or True:'
+if returnValue(False) or returnValue(True): pass
+print 'True or True:'
+if returnValue(True) or returnValue(True): pass
 
 sections.subsection('Operators: comparisons.')
 print 'Numbers:', 1 > 3, 1 < 3, 2 >= 2, 4 >= 2, 2 <= 2, 4 <= 2

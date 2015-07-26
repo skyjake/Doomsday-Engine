@@ -33,6 +33,7 @@
 #include <de/GLState>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
+#include <doomsday/defs/sprite.h>
 
 #include "clientapp.h"
 #include "sys_system.h"
@@ -43,6 +44,7 @@
 
 #include "MaterialVariantSpec"
 #include "Texture"
+#include "TextureManifest"
 
 #include "Face"
 #include "world/map.h"
@@ -70,6 +72,7 @@
 #include "WallEdge"
 
 #include "gl/gl_main.h"
+#include "gl/gl_tex.h"  // pointlight_analysis_t
 #include "gl/gl_texmanager.h"
 #include "gl/sys_opengl.h"
 
@@ -80,6 +83,7 @@
 #include "render/blockmapvisual.h"
 #include "render/billboard.h"
 #include "render/cameralensfx.h"
+#include "render/modelrenderer.h"
 #include "render/r_main.h"
 #include "render/r_things.h"
 #include "render/rend_fakeradio.h"
@@ -318,10 +322,10 @@ static inline WorldSystem &worldSys()
     return ClientApp::worldSystem();
 }
 
-static void reportWallSectionDrawn(Line &line)
+static void reportWallDrawn(Line &line)
 {
     // Already been here?
-    dint playerNum = viewPlayer - ddPlayers;
+    dint playerNum = DoomsdayApp::players().indexOf(viewPlayer);
     if(line.isMappedByPlayer(playerNum)) return;
 
     // Mark as drawn.
@@ -405,7 +409,7 @@ Vector3d Rend_EyeOrigin()
 
 Matrix4f Rend_GetModelViewMatrix(dint consoleNum, bool inWorldSpace)
 {
-    viewdata_t const *viewData = R_ViewData(consoleNum);
+    viewdata_t const *viewData = &DD_Player(consoleNum)->viewport();
 
     dfloat bodyAngle = viewData->current.angleWithoutHeadTracking() / (dfloat) ANGLE_MAX * 360 - 90;
 
@@ -478,7 +482,7 @@ void Rend_ModelViewMatrix(bool inWorldSpace)
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glMatrixMode(GL_MODELVIEW);
-    glLoadMatrixf(Rend_GetModelViewMatrix(viewPlayer - ddPlayers, inWorldSpace).values());
+    glLoadMatrixf(Rend_GetModelViewMatrix(DoomsdayApp::players().indexOf(viewPlayer), inWorldSpace).values());
 }
 
 static inline ddouble viewFacingDot(Vector2d const &v1, Vector2d const &v2)
@@ -494,7 +498,7 @@ dfloat Rend_ExtraLightDelta()
 
 void Rend_ApplyTorchLight(Vector4f &color, dfloat distance)
 {
-    ddplayer_t *ddpl = &viewPlayer->shared;
+    ddplayer_t *ddpl = &viewPlayer->publicData();
 
     // Disabled?
     if(!ddpl->fixedColorMap) return;
@@ -905,7 +909,7 @@ static void lightWallOrFlatGeometry(Geometry &verts, duint numVertices, Vector3f
 
     // Apply torch light?
     DENG2_ASSERT(::viewPlayer);
-    if(::viewPlayer->shared.fixedColorMap)
+    if(::viewPlayer->publicData().fixedColorMap)
     {
         for(duint i = 0; i < numVertices; ++i)
         {
@@ -1239,7 +1243,7 @@ struct rendworldpoly_params_t
     bool            isWall;
 // Wall only:
     struct {
-        coord_t sectionWidth;
+        coord_t width;
         Vector3f const *surfaceColor2;  ///< Secondary color.
         WallEdge const *leftEdge;
         WallEdge const *rightEdge;
@@ -1282,7 +1286,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
     verts.tex2  = layer0InterRTU    ? R_AllocRendTexCoords(numVerts) : nullptr;
     if(p.isWall)
     {
-        makeWallGeometry(verts, numVertices, rvertices, *p.topLeft, *p.bottomRight, p.wall.sectionWidth,
+        makeWallGeometry(verts, numVertices, rvertices, *p.topLeft, *p.bottomRight, p.wall.width,
                          *p.mapElement, p.geomGroup, *p.surfaceTangentMatrix,
                          p.alpha, *p.surfaceColor, p.wall.surfaceColor2, p.glowing, p.surfaceLuminosityDeltas,
                          !skyMaskedMaterial);
@@ -1301,7 +1305,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
 
         // This is needed because all masked polys must be sorted (sprites are masked polys).
         // Otherwise there will be artifacts.
-        Rend_AddMaskedPoly(verts.pos, verts.color, p.wall.sectionWidth, &matAnimator,
+        Rend_AddMaskedPoly(verts.pos, verts.color, p.wall.width, &matAnimator,
                            *p.materialOrigin, p.blendMode, p.lightListIdx, p.glowing);
 
         R_FreeRendVertices (verts.pos);
@@ -1896,7 +1900,7 @@ static bool renderWorldPoly(Vector3f const *rvertices, duint numVertices,
 
             if(p.isWall)
             {
-                makeWallShineGeometry(shineVerts, numVertices, rvertices, verts, p.wall.sectionWidth,
+                makeWallShineGeometry(shineVerts, numVertices, rvertices, verts, p.wall.width,
                                       shineColor, shineOpacity);
             }
             else
@@ -2160,18 +2164,17 @@ static bool projectShadow(Vector3d const &topLeft, Vector3d const &bottomRight,
     {
         distanceFromViewer = Rend_PointDist2D(mobOrigin);
         if(distanceFromViewer > shadowMaxDistance)
-            return LoopContinue;
+            return false;
     }
 
-    // Should this mobj even have a shadow?
     dfloat shadowStrength = Mobj_ShadowStrength(mob) * ::shadowFactor;
     if(::usingFog) shadowStrength /= 2;
-    if(shadowStrength <= 0) return LoopContinue;
+    if(shadowStrength <= 0) return false;
 
     coord_t shadowRadius = Mobj_ShadowRadius(mob);
     if(shadowRadius > ::shadowMaxRadius)
         shadowRadius = ::shadowMaxRadius;
-    if(shadowRadius <= 0) return LoopContinue;
+    if(shadowRadius <= 0) return false;
 
     mobOrigin[2] -= mob.floorClip;
     if(mob.ddFlags & DDMF_BOB)
@@ -2264,7 +2267,7 @@ static void projectDynamics(Surface const &surface, dfloat glowStrength,
                                    projected))
                 {
                     rendSys().findSurfaceProjectionList(&lightListIdx, sortLights)
-                                << projected;  // a copy is made
+                                << projected;  // a copy is made.
                 }
                 return LoopContinue;
             });
@@ -2467,14 +2470,17 @@ duint Rend_CollectAffectingLights(Vector3d const &point, Vector3f const &ambient
  *
  * @return  @c true= fading was applied (see above note), otherwise @c false.
  */
-static bool nearFadeOpacity(WallEdge const &leftEdge, WallEdge const &rightEdge,
-                            dfloat &opacity)
+static bool applyNearFadeOpacity(WallEdge const &leftEdge, WallEdge const &rightEdge,
+    dfloat &opacity)
 {
+    if(!leftEdge.spec().flags.testFlag(WallSpec::NearFade))
+        return false;
+
     if(Rend_EyeOrigin().y < leftEdge.bottom().z() || Rend_EyeOrigin().y > rightEdge.top().z())
         return false;
 
-    mobj_t const *mo         = viewPlayer->shared.mo;
-    Line const &line         = leftEdge.mapLineSide().line();
+    mobj_t const *mo         = viewPlayer->publicData().mo;
+    Line const &line         = leftEdge.lineSide().line();
 
     coord_t linePoint[2]     = { line.fromOrigin().x, line.fromOrigin().y };
     coord_t lineDirection[2] = {  line.direction().x,  line.direction().y };
@@ -2507,18 +2513,24 @@ static bool nearFadeOpacity(WallEdge const &leftEdge, WallEdge const &rightEdge,
  *
  * @todo WallEdge should encapsulate.
  */
-static dfloat calcLightLevelDelta(Vector3f const &normal)
+static dfloat wallLuminosityDeltaFromNormal(Vector3f const &normal)
 {
     return (1.0f / 255) * (normal.x * 18) * ::rendLightWallAngle;
 }
 
-static void wallSectionLightLevelDeltas(WallEdge const &leftEdge, WallEdge const &rightEdge,
-    dfloat surfaceLuminosityDeltas[2])
+static void wallLuminosityDeltas(WallEdge const &leftEdge, WallEdge const &rightEdge,
+    dfloat luminosityDeltas[2])
 {
-    dfloat &leftDelta  = surfaceLuminosityDeltas[0];
-    dfloat &rightDelta = surfaceLuminosityDeltas[1];
+    dfloat &leftDelta  = luminosityDeltas[0];
+    dfloat &rightDelta = luminosityDeltas[1];
 
-    leftDelta = calcLightLevelDelta(leftEdge.normal());
+    if(leftEdge.spec().flags.testFlag(WallSpec::NoLightDeltas))
+    {
+        leftDelta = rightDelta = 0;
+        return;
+    }
+
+    leftDelta = wallLuminosityDeltaFromNormal(leftEdge.normal());
 
     if(leftEdge.normal() == rightEdge.normal())
     {
@@ -2526,12 +2538,12 @@ static void wallSectionLightLevelDeltas(WallEdge const &leftEdge, WallEdge const
     }
     else
     {
-        rightDelta = calcLightLevelDelta(rightEdge.normal());
+        rightDelta = wallLuminosityDeltaFromNormal(rightEdge.normal());
 
         // Linearly interpolate to find the light level delta values for the
         // vertical edges of this wall section.
-        coord_t const lineLength    = leftEdge.mapLineSide().line().length();
-        coord_t const sectionOffset = leftEdge.mapLineSideOffset();
+        coord_t const lineLength    = leftEdge.lineSide().line().length();
+        coord_t const sectionOffset = leftEdge.lineSideOffset();
         coord_t const sectionWidth  = de::abs(Vector2d(rightEdge.origin() - leftEdge.origin()).length());
 
         dfloat deltaDiff = rightDelta - leftDelta;
@@ -2540,87 +2552,65 @@ static void wallSectionLightLevelDeltas(WallEdge const &leftEdge, WallEdge const
     }
 }
 
-static void writeWallSection(HEdge &hedge, dint section,
+static void writeWall(WallEdge const &leftEdge, WallEdge const &rightEdge,
     bool *retWroteOpaque = nullptr, coord_t *retBottomZ = nullptr, coord_t *retTopZ = nullptr)
 {
-    SectorCluster &cluster = curSubspace->cluster();
-
-    auto &segment = hedge.mapElementAs<LineSideSegment>();
-    DENG2_ASSERT(segment.isFrontFacing() && segment.lineSide().hasSections());
+    DENG2_ASSERT(leftEdge.lineSideSegment().isFrontFacing() && leftEdge.lineSide().hasSections());
 
     if(retWroteOpaque) *retWroteOpaque = false;
     if(retBottomZ)     *retBottomZ     = 0;
     if(retTopZ)        *retTopZ        = 0;
 
-    LineSide &side    = segment.lineSide();
-    Surface &surface  = side.surface(section);
+    SectorCluster &cluster = curSubspace->cluster();
+    Surface &surface       = leftEdge.lineSide().surface(leftEdge.spec().section);
 
     // Skip nearly transparent surfaces.
     dfloat opacity = surface.opacity();
     if(opacity < .001f)
         return;
 
-    // Determine which Material to use.
+    // Determine which Material to use (a drawable material is required).
     Material *material = Rend_ChooseMapSurfaceMaterial(surface);
-
-    // A drawable material is required.
     if(!material || !material->isDrawable())
         return;
-
-    // Generate edge geometries.
-    auto const wallSpec = WallSpec::fromMapSide(side, section);
-
-    WallEdge leftEdge(wallSpec, hedge, Line::From);
-    WallEdge rightEdge(wallSpec, hedge, Line::To);
 
     // Do the edge geometries describe a valid polygon?
     if(!leftEdge.isValid() || !rightEdge.isValid() ||
        de::fequal(leftEdge.bottom().z(), rightEdge.top().z()))
         return;
 
-    // Apply a fade out when the viewer is near to this geometry?
-    bool didNearFade = false;
-    if(wallSpec.flags.testFlag(WallSpec::NearFade))
-    {
-        didNearFade = nearFadeOpacity(leftEdge, rightEdge, opacity);
-    }
-
-    bool const skyMasked       = material->isSkyMasked() && !devRendSkyMode;
-    bool const twoSidedMiddle  = (wallSpec.section == LineSide::Middle && !side.considerOneSided());
+    WallSpec const &wallSpec      = leftEdge.spec();
+    bool const didNearFade        = applyNearFadeOpacity(leftEdge, rightEdge, opacity);
+    bool const skyMasked          = material->isSkyMasked() && !::devRendSkyMode;
+    bool const twoSidedMiddle     = (wallSpec.section == LineSide::Middle && !leftEdge.lineSide().considerOneSided());
 
     MaterialAnimator &matAnimator = material->getAnimator(Rend_MapSurfaceMaterialSpec());
     Vector2f const materialScale  = surface.materialScale();
+    Vector3f const materialOrigin = leftEdge.materialOrigin();
+    Vector3d const topLeft        = leftEdge .top   ().origin();
+    Vector3d const bottomRight    = rightEdge.bottom().origin();
 
-    rendworldpoly_params_t parm; zap(parm);
-
-    Vector3f materialOrigin   = leftEdge.materialOrigin();
-    Vector3d topLeft          = leftEdge.top().origin();
-    Vector3d bottomRight      = rightEdge.bottom().origin();
-
+    rendworldpoly_params_t parm; de::zap(parm);
     parm.skyMasked            = skyMasked;
-    parm.mapElement           = &segment;
+    parm.mapElement           = &leftEdge.lineSideSegment();
     parm.geomGroup            = wallSpec.section;
     parm.topLeft              = &topLeft;
     parm.bottomRight          = &bottomRight;
     parm.forceOpaque          = wallSpec.flags.testFlag(WallSpec::ForceOpaque);
     parm.alpha                = parm.forceOpaque? 1 : opacity;
     parm.surfaceTangentMatrix = &surface.tangentMatrix();
+    parm.blendMode            = BM_NORMAL;
+    parm.materialOrigin       = &materialOrigin;
+    parm.materialScale        = &materialScale;
 
-    // Calculate the light level deltas for this wall section?
-    if(!wallSpec.flags.testFlag(WallSpec::NoLightDeltas))
-    {
-        wallSectionLightLevelDeltas(leftEdge, rightEdge, parm.surfaceLuminosityDeltas);
-    }
+    parm.isWall               = true;
+    parm.wall.width           = de::abs(Vector2d(rightEdge.origin() - leftEdge.origin()).length());
+    parm.wall.leftEdge        = &leftEdge;
+    parm.wall.rightEdge       = &rightEdge;
+    // Calculate the angle-based luminosity deltas.
+    wallLuminosityDeltas(leftEdge, rightEdge, parm.surfaceLuminosityDeltas);
 
-    parm.blendMode           = BM_NORMAL;
-    parm.materialOrigin      = &materialOrigin;
-    parm.materialScale       = &materialScale;
-
-    parm.isWall              = true;
-    parm.wall.sectionWidth   = de::abs(Vector2d(rightEdge.origin() - leftEdge.origin()).length());
-    parm.wall.leftEdge       = &leftEdge;
-    parm.wall.rightEdge      = &rightEdge;
-
+    LineSide &side = leftEdge.lineSide();
     if(!parm.skyMasked)
     {
         if(glowFactor > .0001f)
@@ -2668,29 +2658,20 @@ static void writeWallSection(HEdge &hedge, dint section,
         curSectorLightLevel = side.sector().lightLevel();
     }
 
-    Vector3f posCoords[4];
-    posCoords[0] =  leftEdge.bottom().origin();
-    posCoords[1] =     leftEdge.top().origin();
-    posCoords[2] = rightEdge.bottom().origin();
-    posCoords[3] =    rightEdge.top().origin();
+    Vector3f const posCoords[] = {
+        leftEdge .bottom().origin(),
+        leftEdge .top   ().origin(),
+        rightEdge.bottom().origin(),
+        rightEdge.top   ().origin()
+    };
 
-    // Draw this section.
-    bool wroteOpaque = renderWorldPoly(posCoords, 4, parm, matAnimator);
-    if(wroteOpaque)
+    // Draw this wall.
+    bool const wroteOpaque = renderWorldPoly(posCoords, 4, parm, matAnimator);
+
+    // Draw FakeRadio for this wall?
+    if(wroteOpaque && !skyMasked && !(parm.glowing > 0))
     {
-        // Render FakeRadio for this section?
-        if(!wallSpec.flags.testFlag(WallSpec::NoFakeRadio) && !skyMasked &&
-           !(parm.glowing > 0) && curSectorLightLevel > 0)
-        {
-            Rend_RadioUpdateForLineSide(side);
-
-            // Determine the shadow properties.
-            /// @todo Make cvars out of constants.
-            dfloat shadowSize = 2 * (8 + 16 - curSectorLightLevel * 16);
-            dfloat shadowDark = Rend_RadioCalcShadowDarkness(curSectorLightLevel);
-
-            Rend_RadioWallSection(leftEdge, rightEdge, shadowDark, shadowSize);
-        }
+        Rend_DrawWallRadio(leftEdge, rightEdge, ::curSectorLightLevel);
     }
 
     if(twoSidedMiddle && side.sectorPtr() != &cluster.sector())
@@ -2702,8 +2683,8 @@ static void writeWallSection(HEdge &hedge, dint section,
     }
 
     if(retWroteOpaque) *retWroteOpaque = wroteOpaque && !didNearFade;
-    if(retBottomZ)     *retBottomZ     = leftEdge.bottom().z();
-    if(retTopZ)        *retTopZ        = rightEdge.top().z();
+    if(retBottomZ)     *retBottomZ     = leftEdge .bottom().z();
+    if(retTopZ)        *retTopZ        = rightEdge.top   ().z();
 }
 
 /**
@@ -2764,21 +2745,14 @@ static void writeSubspacePlane(Plane &plane)
     dfloat const opacity = surface.opacity();
     if(opacity < .001f) return;
 
-    // Determine which Material to use.
+    // Determine which Material to use (a drawable material is required).
     Material *material = Rend_ChooseMapSurfaceMaterial(surface);
+    if(!material || !material->isDrawable())
+        return;
 
-    // A drawable material is required.
-    if(!material) return;
-    if(!material->isDrawable()) return;
-
-    // Skip planes with a sky-masked material?
-    if(!devRendSkyMode)
-    {
-        if(surface.hasSkyMaskedMaterial() && plane.indexInSector() <= Sector::Ceiling)
-        {
-            return; // Not handled here (drawn with the mask geometry).
-        }
-    }
+    // Skip planes with a sky-masked material (drawn with the mask geometry)?
+    if(!::devRendSkyMode && surface.hasSkyMaskedMaterial() && plane.indexInSector() <= Sector::Ceiling)
+        return;
 
     MaterialAnimator &matAnimator = material->getAnimator(Rend_MapSurfaceMaterialSpec());
 
@@ -3241,14 +3215,12 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
     if(wroteOpaqueMiddle && middleCoversOpening)
         return true;
 
-    if(   (bceil <= ffloor &&
-               (front.top   ().hasMaterial() || front.middle().hasMaterial()))
-       || (bfloor >= fceil &&
-               (front.bottom().hasMaterial() || front.middle().hasMaterial())))
+    if(   (bceil  <= ffloor && (front.top   ().hasMaterial() || front.middle().hasMaterial()))
+       || (bfloor >= fceil  && (front.bottom().hasMaterial() || front.middle().hasMaterial())))
     {
-        Surface const &ffloorSurface = cluster.visFloor().surface();
+        Surface const &ffloorSurface = cluster.visFloor  ().surface();
         Surface const &fceilSurface  = cluster.visCeiling().surface();
-        Surface const &bfloorSurface = backCluster.visFloor().surface();
+        Surface const &bfloorSurface = backCluster.visFloor  ().surface();
         Surface const &bceilSurface  = backCluster.visCeiling().surface();
 
         // A closed gap?
@@ -3281,69 +3253,75 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
     return false;
 }
 
-static void writeAllWallSections(HEdge *hedge)
+static void writeAllWalls(HEdge &hedge)
 {
     // Edges without a map line segment implicitly have no surfaces.
-    if(!hedge || !hedge->hasMapElement())
+    if(!hedge.hasMapElement())
         return;
 
     // We are only interested in front facing segments with sections.
-    LineSideSegment &seg = hedge->mapElementAs<LineSideSegment>();
+    auto &seg = hedge.mapElementAs<LineSideSegment>();
     if(!seg.isFrontFacing() || !seg.lineSide().hasSections())
         return;
 
     // Done here because of the logic of doom.exe wrt the automap.
-    reportWallSectionDrawn(seg.line());
+    reportWallDrawn(seg.line());
 
     bool wroteOpaqueMiddle = false;
-    coord_t middleBottomZ = 0, middleTopZ = 0;
+    coord_t middleBottomZ  = 0;
+    coord_t middleTopZ     = 0;
 
-    writeWallSection(*hedge, LineSide::Bottom);
-    writeWallSection(*hedge, LineSide::Top);
-    writeWallSection(*hedge, LineSide::Middle,
-                     &wroteOpaqueMiddle, &middleBottomZ, &middleTopZ);
+    writeWall(WallEdge(WallSpec::fromMapSide(seg.lineSide(), LineSide::Bottom), hedge, Line::From),
+              WallEdge(WallSpec::fromMapSide(seg.lineSide(), LineSide::Bottom), hedge, Line::To  ));
+    writeWall(WallEdge(WallSpec::fromMapSide(seg.lineSide(), LineSide::Top),    hedge, Line::From),
+              WallEdge(WallSpec::fromMapSide(seg.lineSide(), LineSide::Top),    hedge, Line::To  ));
+    writeWall(WallEdge(WallSpec::fromMapSide(seg.lineSide(), LineSide::Middle), hedge, Line::From),
+              WallEdge(WallSpec::fromMapSide(seg.lineSide(), LineSide::Middle), hedge, Line::To  ),
+              &wroteOpaqueMiddle, &middleBottomZ, &middleTopZ);
 
     // We can occlude the angle range defined by the X|Y origins of the
     // line segment if the open range has been covered (when the viewer
     // is not in the void).
-    if(!P_IsInVoid(viewPlayer) &&
-       coveredOpenRange(*hedge, middleBottomZ, middleTopZ, wroteOpaqueMiddle))
+    if(!P_IsInVoid(viewPlayer) && coveredOpenRange(hedge, middleBottomZ, middleTopZ, wroteOpaqueMiddle))
     {
-        rendSys().angleClipper().addRangeFromViewRelPoints(hedge->origin(), hedge->twin().origin());
+        rendSys().angleClipper().addRangeFromViewRelPoints(hedge.origin(), hedge.twin().origin());
     }
 }
 
-static void writeSubspaceWallSections()
+static void writeSubspaceWalls()
 {
-    HEdge *base  = curSubspace->poly().hedge();
+    DENG2_ASSERT(::curSubspace);
+    HEdge *base  = ::curSubspace->poly().hedge();
+    DENG2_ASSERT(base);
     HEdge *hedge = base;
     do
     {
-        writeAllWallSections(hedge);
+        writeAllWalls(*hedge);
     } while((hedge = &hedge->next()) != base);
 
-    curSubspace->forAllExtraMeshes([] (Mesh &mesh)
+    ::curSubspace->forAllExtraMeshes([] (Mesh &mesh)
     {
         for(HEdge *hedge : mesh.hedges())
         {
-            writeAllWallSections(hedge);
+            writeAllWalls(*hedge);
         }
         return LoopContinue;
     });
 
-    curSubspace->forAllPolyobjs([] (Polyobj &pob)
+    ::curSubspace->forAllPolyobjs([] (Polyobj &pob)
     {
         for(HEdge *hedge : pob.mesh().hedges())
         {
-            writeAllWallSections(hedge);
+            writeAllWalls(*hedge);
         }
         return LoopContinue;
     });
 }
 
-static void writeSubspacePlanes()
+static void writeSubspaceFlats()
 {
-    SectorCluster &cluster = curSubspace->cluster();
+    DENG2_ASSERT(::curSubspace);
+    SectorCluster &cluster = ::curSubspace->cluster();
 
     for(dint i = 0; i < cluster.visPlaneCount(); ++i)
     {
@@ -3358,37 +3336,40 @@ static void writeSubspacePlanes()
     }
 }
 
-static void markFrontFacingWalls(HEdge *hedge)
+static void markFrontFacingWalls(HEdge &hedge)
 {
-    if(!hedge || !hedge->hasMapElement()) return;
-    auto &seg = hedge->mapElementAs<LineSideSegment>();
+    if(!hedge.hasMapElement()) return;
     // Which way is the line segment facing?
-    seg.setFrontFacing(viewFacingDot(hedge->origin(), hedge->twin().origin()) >= 0);
+    hedge.mapElementAs<LineSideSegment>()
+              .setFrontFacing(viewFacingDot(hedge.origin(), hedge.twin().origin()) >= 0);
 }
 
 static void markSubspaceFrontFacingWalls()
 {
-    HEdge *base = curSubspace->poly().hedge();
+    DENG2_ASSERT(::curSubspace);
+
+    HEdge *base  = ::curSubspace->poly().hedge();
+    DENG2_ASSERT(base);
     HEdge *hedge = base;
     do
     {
-        markFrontFacingWalls(hedge);
+        markFrontFacingWalls(*hedge);
     } while((hedge = &hedge->next()) != base);
 
-    curSubspace->forAllExtraMeshes([] (Mesh &mesh)
+    ::curSubspace->forAllExtraMeshes([] (Mesh &mesh)
     {
         for(HEdge *hedge : mesh.hedges())
         {
-            markFrontFacingWalls(hedge);
+            markFrontFacingWalls(*hedge);
         }
         return LoopContinue;
     });
 
-    curSubspace->forAllPolyobjs([] (Polyobj &pob)
+    ::curSubspace->forAllPolyobjs([] (Polyobj &pob)
     {
         for(HEdge *hedge : pob.mesh().hedges())
         {
-            markFrontFacingWalls(hedge);
+            markFrontFacingWalls(*hedge);
         }
         return LoopContinue;
     });
@@ -3399,7 +3380,7 @@ static inline bool canOccludeEdgeBetweenPlanes(Plane &frontPlane, Plane const &b
     // Do not create an occlusion between two sky-masked planes.
     // Only because the open range does not account for the sky plane height? -ds
     return !(frontPlane.surface().hasSkyMaskedMaterial() &&
-              backPlane.surface().hasSkyMaskedMaterial());
+             backPlane .surface().hasSkyMaskedMaterial());
 }
 
 /**
@@ -3411,10 +3392,10 @@ static void occludeSubspace(bool frontFacing)
     if(P_IsInVoid(viewPlayer)) return;
 
     AngleClipper &clipper  = rendSys().angleClipper();
+    SectorCluster &cluster = ::curSubspace->cluster();
 
-    SectorCluster &cluster = curSubspace->cluster();
-
-    HEdge *base  = curSubspace->poly().hedge();
+    HEdge *base  = ::curSubspace->poly().hedge();
+    DENG2_ASSERT(base);
     HEdge *hedge = base;
     do
     {
@@ -3483,8 +3464,8 @@ static void occludeSubspace(bool frontFacing)
 
 static void clipSubspaceLumobjs()
 {
-    DENG2_ASSERT(curSubspace);
-    curSubspace->forAllLumobjs([] (Lumobj &lob)
+    DENG2_ASSERT(::curSubspace);
+    ::curSubspace->forAllLumobjs([] (Lumobj &lob)
     {
         R_ViewerClipLumobj(&lob);
         return LoopContinue;
@@ -3498,27 +3479,29 @@ static void clipSubspaceLumobjs()
  */
 static void clipSubspaceLumobjsBySight()
 {
-    // Any work to do?
-    DENG2_ASSERT(curSubspace);
-    if(!curSubspace->polyobjCount()) return;
+    DENG2_ASSERT(::curSubspace);
 
-    curSubspace->forAllLumobjs([] (Lumobj &lob)
+    // Any work to do?
+    if(!::curSubspace->polyobjCount())
+        return;
+
+    ::curSubspace->forAllLumobjs([] (Lumobj &lob)
     {
-        R_ViewerClipLumobjBySight(&lob, curSubspace);
+        R_ViewerClipLumobjBySight(&lob, ::curSubspace);
         return LoopContinue;
     });
 }
 
 /// If not front facing this is no-op.
-static void clipFrontFacingWalls(HEdge *hedge)
+static void clipFrontFacingWalls(HEdge &hedge)
 {
-    if(!hedge || !hedge->hasMapElement())
+    if(!hedge.hasMapElement())
         return;
 
-    LineSideSegment &seg = hedge->mapElementAs<LineSideSegment>();
+    auto &seg = hedge.mapElementAs<LineSideSegment>();
     if(seg.isFrontFacing())
     {
-        if(!rendSys().angleClipper().checkRangeFromViewRelPoints(hedge->origin(), hedge->twin().origin()))
+        if(!rendSys().angleClipper().checkRangeFromViewRelPoints(hedge.origin(), hedge.twin().origin()))
         {
             seg.setFrontFacing(false);
         }
@@ -3527,27 +3510,30 @@ static void clipFrontFacingWalls(HEdge *hedge)
 
 static void clipSubspaceFrontFacingWalls()
 {
-    HEdge *base = curSubspace->poly().hedge();
+    DENG2_ASSERT(::curSubspace);
+
+    HEdge *base  = ::curSubspace->poly().hedge();
+    DENG2_ASSERT(base);
     HEdge *hedge = base;
     do
     {
-        clipFrontFacingWalls(hedge);
+        clipFrontFacingWalls(*hedge);
     } while((hedge = &hedge->next()) != base);
 
-    curSubspace->forAllExtraMeshes([] (Mesh &mesh)
+    ::curSubspace->forAllExtraMeshes([] (Mesh &mesh)
     {
         for(HEdge *hedge : mesh.hedges())
         {
-            clipFrontFacingWalls(hedge);
+            clipFrontFacingWalls(*hedge);
         }
         return LoopContinue;
     });
 
-    curSubspace->forAllPolyobjs([] (Polyobj &pob)
+    ::curSubspace->forAllPolyobjs([] (Polyobj &pob)
     {
         for(HEdge *hedge : pob.mesh().hedges())
         {
-            clipFrontFacingWalls(hedge);
+            clipFrontFacingWalls(*hedge);
         }
         return LoopContinue;
     });
@@ -3555,39 +3541,44 @@ static void clipSubspaceFrontFacingWalls()
 
 static void projectSubspaceSprites()
 {
+    DENG2_ASSERT(::curSubspace);
+
     // Do not use validCount because other parts of the renderer may change it.
-    if(curSubspace->lastSpriteProjectFrame() == R_FrameCount())
+    if(::curSubspace->lastSpriteProjectFrame() == R_FrameCount())
         return;  // Already added.
 
-    R_ForAllSubspaceMobContacts(*curSubspace, [] (mobj_t &mob)
+    R_ForAllSubspaceMobContacts(*::curSubspace, [] (mobj_t &mob)
     {
-        SectorCluster &cluster = curSubspace->cluster();
+        SectorCluster &cluster = ::curSubspace->cluster();
         if(mob.addFrameCount != R_FrameCount())
         {
             mob.addFrameCount = R_FrameCount();
 
             R_ProjectSprite(mob);
 
-            // Hack: Sprites have a tendency to extend into the ceiling in
-            // sky sectors. Here we will raise the skyfix dynamically, to make sure
-            // that no sprites get clipped by the sky.
-
+            // Kludge: Map-objects have a tendency to extend into the ceiling in
+            // sky sectors. Here we will raise the skyfix dynamically, to make
+            // sure they don't get clipped by the sky.
             if(cluster.visCeiling().surface().hasSkyMaskedMaterial())
             {
-                if(Sprite *sprite = Mobj_Sprite(mob))
+                /// @todo fixme: Consider 3D models, also. -ds
+                if(Record *spriteRec = Mobj_SpritePtr(mob))
                 {
-                    if(sprite->hasViewAngle(0))
+                    defn::Sprite sprite(*spriteRec);
+                    if(sprite.hasView(0))
                     {
-                        Material *material = sprite->viewAngle(0).material;
-                        if(!(mob.dPlayer && (mob.dPlayer->flags & DDPF_CAMERA))
-                           && mob.origin[2] <= cluster.visCeiling().heightSmoothed()
-                           && mob.origin[2] >= cluster.visFloor().heightSmoothed())
+                        if(Material *material = resSys().materialPtr(de::Uri(sprite.view(0).gets("material"), RC_NULL)))
                         {
-                            coord_t visibleTop = mob.origin[2] + material->height();
-                            if(visibleTop > cluster.sector().map().skyFixCeiling())
+                            if(!(mob.dPlayer && (mob.dPlayer->flags & DDPF_CAMERA))
+                               && mob.origin[2] <= cluster.visCeiling().heightSmoothed()
+                               && mob.origin[2] >= cluster.visFloor  ().heightSmoothed())
                             {
-                                // Raise skyfix ceiling.
-                                cluster.sector().map().setSkyFixCeiling(visibleTop + 16/*leeway*/);
+                                coord_t visibleTop = mob.origin[2] + material->height();
+                                if(visibleTop > cluster.sector().map().skyFixCeiling())
+                                {
+                                    // Raise the skyfix ceiling.
+                                    cluster.sector().map().setSkyFixCeiling(visibleTop + 16/*leeway*/);
+                                }
                             }
                         }
                     }
@@ -3597,7 +3588,7 @@ static void projectSubspaceSprites()
         return LoopContinue;
     });
 
-    curSubspace->setLastSpriteProjectFrame(R_FrameCount());
+    ::curSubspace->setLastSpriteProjectFrame(R_FrameCount());
 }
 
 /**
@@ -3605,17 +3596,19 @@ static void projectSubspaceSprites()
  */
 static void drawCurrentSubspace()
 {
-    Sector &sector = curSubspace->sector();
+    DENG2_ASSERT(curSubspace);
+
+    Sector &sector = ::curSubspace->sector();
 
     // Mark the leaf as visible for this frame.
-    R_ViewerSubspaceMarkVisible(*curSubspace);
+    R_ViewerSubspaceMarkVisible(*::curSubspace);
 
     markSubspaceFrontFacingWalls();
 
     // Perform contact spreading for this map region.
-    sector.map().spreadAllContacts(curSubspace->poly().aaBox());
+    sector.map().spreadAllContacts(::curSubspace->poly().aaBox());
 
-    Rend_RadioSubspaceEdges(*curSubspace);
+    Rend_DrawFlatRadio(*::curSubspace);
 
     // Before clip testing lumobjs (for halos), range-occlude the back facing edges.
     // After testing, range-occlude the front facing edges. Done before drawing wall
@@ -3629,7 +3622,7 @@ static void drawCurrentSubspace()
     clipSubspaceLumobjsBySight();
 
     // Mark generators in the sector visible.
-    if(useParticles)
+    if(::useParticles)
     {
         sector.map().forAllGeneratorsInSector(sector, [] (Generator &gen)
         {
@@ -3649,8 +3642,8 @@ static void drawCurrentSubspace()
     projectSubspaceSprites();
 
     writeSubspaceSkyMask();
-    writeSubspaceWallSections();
-    writeSubspacePlanes();
+    writeSubspaceWalls();
+    writeSubspaceFlats();
 }
 
 /**
@@ -3661,16 +3654,16 @@ static void drawCurrentSubspace()
  */
 static void makeCurrent(ConvexSubspace &subspace)
 {
-    bool clusterChanged = (!curSubspace || curSubspace->clusterPtr() != subspace.clusterPtr());
+    bool const clusterChanged = (!::curSubspace || ::curSubspace->clusterPtr() != subspace.clusterPtr());
 
-    curSubspace = &subspace;
+    ::curSubspace = &subspace;
 
     // Update draw state.
     if(clusterChanged)
     {
         Vector4f const color = subspace.cluster().lightSourceColorfIntensity();
-        curSectorLightColor = color.toVector3f();
-        curSectorLightLevel = color.w;
+        ::curSectorLightColor = color.toVector3f();
+        ::curSectorLightLevel = color.w;
     }
 }
 
@@ -3682,10 +3675,9 @@ static void traverseBspTreeAndDrawSubspaces(Map::BspTree const *bspTree)
     while(!bspTree->isLeaf())
     {
         // Descend deeper into the nodes.
-        BspNode &bspNode = bspTree->userData()->as<BspNode>();
-
+        auto const &bspNode = bspTree->userData()->as<BspNode>();
         // Decide which side the view point is on.
-        dint eyeSide = bspNode.partition().pointOnSide(eyeOrigin) < 0;
+        dint const eyeSide  = bspNode.partition().pointOnSide(eyeOrigin) < 0;
 
         // Recursively divide front space.
         traverseBspTreeAndDrawSubspaces(bspTree->childPtr(Map::BspTree::ChildId(eyeSide)));
@@ -3693,7 +3685,7 @@ static void traverseBspTreeAndDrawSubspaces(Map::BspTree const *bspTree)
         // If the clipper is full we're pretty much done. This means no geometry
         // will be visible in the distance because every direction has already
         // been fully covered by geometry.
-        if(!firstSubspace && clipper.isFull())
+        if(!::firstSubspace && clipper.isFull())
             return;
 
         // ...and back space.
@@ -3712,7 +3704,7 @@ static void traverseBspTreeAndDrawSubspaces(Map::BspTree const *bspTree)
             return;
 
         // Is this subspace visible?
-        if(!firstSubspace && !clipper.isPolyVisible(subspace->poly()))
+        if(!::firstSubspace && !clipper.isPolyVisible(subspace->poly()))
             return;
 
         // This is now the current subspace.
@@ -3721,7 +3713,7 @@ static void traverseBspTreeAndDrawSubspaces(Map::BspTree const *bspTree)
         drawCurrentSubspace();
 
         // This is no longer the first subspace.
-        firstSubspace = false;
+        ::firstSubspace = false;
     }
 }
 
@@ -3738,6 +3730,53 @@ static void generateDecorationFlares(Map &map)
         /// @todo mark these light sources visible for LensFx
         return LoopContinue;
     });
+}
+
+ddouble Rend_VisualRadius(Record const &spriteRec)
+{
+    defn::Sprite sprite(spriteRec);
+    if(sprite.hasView(0))
+    {
+        if(Material *mat = resSys().materialPtr(de::Uri(sprite.view(0).gets("material"), RC_NULL)))
+        {
+            MaterialAnimator &matAnimator = mat->getAnimator(Rend_SpriteMaterialSpec());
+            matAnimator.prepare();  // Ensure we've up to date info.
+            return matAnimator.dimensions().x / 2;
+        }
+    }
+    return 0;
+}
+
+Lumobj *Rend_MakeLumobj(Record const &spriteRec)
+{
+    LOG_AS("Rend_MakeLumobj");
+
+    defn::Sprite sprite(spriteRec);
+
+    // Always use the front view.
+    /// @todo We could do better here...
+    if(!sprite.hasView(0)) return nullptr;
+
+    Material *mat = resSys().materialPtr(de::Uri(sprite.view(0).gets("material"), RC_NULL));
+    if(!mat) return nullptr;
+
+    MaterialAnimator &matAnimator = mat->getAnimator(Rend_SpriteMaterialSpec());
+    matAnimator.prepare();  // Ensure we have up-to-date info.
+
+    TextureVariant *texture = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
+    if(!texture) return nullptr;  // Unloadable texture?
+
+    auto const *pl = (pointlight_analysis_t const *)texture->base().analysisDataPointer(Texture::BrightPointAnalysis);
+    if(!pl)
+    {
+        LOGDEV_RES_WARNING("Texture \"%s\" has no BrightPointAnalysis")
+                << texture->base().manifest().composeUri();
+        return nullptr;
+    }
+
+    // Apply the auto-calculated color.
+    return &(new Lumobj(Vector3d(), pl->brightMul, pl->color.rgb))
+                    ->setZOffset(-texture->base().origin().y - pl->originY * matAnimator.dimensions().y);
 }
 
 /**
@@ -4243,13 +4282,14 @@ static void drawSky()
 
 static bool generateHaloForVisSprite(vissprite_t const *spr, bool primary = false)
 {
-    dfloat occlusionFactor;
+    DENG2_ASSERT(spr);
 
     if(primary && (spr->data.flare.flags & RFF_NO_PRIMARY))
     {
         return false;
     }
 
+    dfloat occlusionFactor;
     if(spr->data.flare.isDecoration)
     {
         // Surface decorations do not yet persist over frames, so we do
@@ -4284,17 +4324,17 @@ static bool generateHaloForVisSprite(vissprite_t const *spr, bool primary = fals
  */
 static void drawMasked()
 {
-    if(devNoSprites) return;
+    if(::devNoSprites) return;
 
     R_SortVisSprites();
 
-    if(visSpriteP && visSpriteP > visSprites)
+    if(::visSpriteP && ::visSpriteP > ::visSprites)
     {
         bool primaryHaloDrawn = false;
 
         // Draw all vissprites back to front.
         // Sprites look better with Z buffer writes turned off.
-        for(vissprite_t *spr = visSprSortedHead.next; spr != &visSprSortedHead; spr = spr->next)
+        for(vissprite_t *spr = ::visSprSortedHead.next; spr != &::visSprSortedHead; spr = spr->next)
         {
             switch(spr->type)
             {
@@ -4315,7 +4355,7 @@ static void drawMasked()
                 break;
 
             case VSPR_MODEL_GL2:
-                Rend_DrawModel2(*spr);
+                ClientApp::renderSystem().modelRenderer().render(*spr);
                 break;
 
             case VSPR_FLARE:
@@ -4328,12 +4368,12 @@ static void drawMasked()
         }
 
         // Draw secondary halos?
-        if(primaryHaloDrawn && haloMode > 1)
+        if(primaryHaloDrawn && ::haloMode > 1)
         {
             // Now we can setup the state only once.
             H_SetupState(true);
 
-            for(vissprite_t *spr = visSprSortedHead.next; spr != &visSprSortedHead; spr = spr->next)
+            for(vissprite_t *spr = ::visSprSortedHead.next; spr != &::visSprSortedHead; spr = spr->next)
             {
                 if(spr->type == VSPR_FLARE)
                 {
@@ -4576,7 +4616,7 @@ void Rend_RenderMap(Map &map)
         // Make vissprites of all the visible decorations.
         generateDecorationFlares(map);
 
-        viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+        viewdata_t const *viewData = &viewPlayer->viewport();
         eyeOrigin = viewData->current.origin;
 
         // Add the backside clipping range (if vpitch allows).
@@ -4751,7 +4791,7 @@ static void drawBiasEditingVisuals(Map &map)
 
     if(HueCircle *hueCircle = SBE_HueCircle())
     {
-        viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+        viewdata_t const *viewData = &viewPlayer->viewport();
 
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_CULL_FACE);
@@ -5103,7 +5143,7 @@ static void drawMobjBBox(mobj_t &mob)
     static dfloat const yellow[] = { 0.7f, 0.7f, 0.2f };  // missiles
 
     // We don't want the console player.
-    if(&mob == ddPlayers[consolePlayer].shared.mo)
+    if(&mob == DD_Player(consolePlayer)->publicData().mo)
         return;
 
     // Is it vissible?
@@ -5297,7 +5337,7 @@ static void drawTangentVectorsForSurface(Surface const &suf, Vector3d const &ori
 /**
  * @todo Determine Z-axis origin from a WallEdge.
  */
-static void drawTangentVectorsForWallSections(HEdge const *hedge)
+static void drawTangentVectorsForWalls(HEdge const *hedge)
 {
     if(!hedge || !hedge->hasMapElement())
         return;
@@ -5362,7 +5402,7 @@ static void drawTangentVectorsForWallSections(HEdge const *hedge)
 }
 
 /**
- * @todo Use drawTangentVectorsForWallSections() for polyobjs too.
+ * @todo Use drawTangentVectorsForWalls() for polyobjs too.
  */
 static void drawSurfaceTangentVectors(SectorCluster &cluster)
 {
@@ -5372,14 +5412,14 @@ static void drawSurfaceTangentVectors(SectorCluster &cluster)
         HEdge const *hedge = base;
         do
         {
-            drawTangentVectorsForWallSections(hedge);
+            drawTangentVectorsForWalls(hedge);
         } while((hedge = &hedge->next()) != base);
 
         subspace->forAllExtraMeshes([] (Mesh &mesh)
         {
             for(HEdge *hedge : mesh.hedges())
             {
-                drawTangentVectorsForWallSections(hedge);
+                drawTangentVectorsForWalls(hedge);
             }
             return LoopContinue;
         });
@@ -5388,7 +5428,7 @@ static void drawSurfaceTangentVectors(SectorCluster &cluster)
         {
             for(HEdge *hedge : pob.mesh().hedges())
             {
-                drawTangentVectorsForWallSections(hedge);
+                drawTangentVectorsForWalls(hedge);
             }
             return LoopContinue;
         });
@@ -5959,7 +5999,7 @@ void Rend_LightGridVisual(LightGrid &lg)
     if(viewPlayer)
     {
         blink++;
-        viewerGridIndex = lg.toIndex(lg.toRef(viewPlayer->shared.mo->origin));
+        viewerGridIndex = lg.toIndex(lg.toRef(viewPlayer->publicData().mo->origin));
     }
 
     // Go into screen projection mode.

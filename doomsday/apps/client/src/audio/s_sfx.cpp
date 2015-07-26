@@ -1,7 +1,7 @@
 /** @file s_sfx.cpp  Sound Effects.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -19,28 +19,27 @@
  */
 
 #include "de_base.h"
-#include "de_console.h"
-#include "de_system.h"
-#include "de_play.h"
-#include "de_defs.h"
-#include "de_graphics.h"
-#include "de_audio.h"
-#include "de_misc.h"
-#include "de_render.h"
+#include "audio/s_sfx.h"
 
+#include <de/vector1.h>
+#include <de/Log>
+#include "de_audio.h"
+#include "de_system.h"
+
+#include "audio/sys_audio.h"
+
+#include "world/thinkers.h"
 #include "Sector"
 #include "SectorCluster"
 
-#include "audio/sys_audio.h"
-#include "api_fontrender.h"
-
-#include "audio/s_sfx.h"
-
 #ifdef __CLIENT__
+#  include "gl/gl_main.h"
+
+#  include "api_fontrender.h"
+#  include "render/rend_font.h"
+
 #  include "ui/ui_main.h"
 #endif
-
-#include <de/Log>
 
 #define SFX_MAX_CHANNELS        (256)
 #define SFX_LOWEST_PRIORITY     (-1000)

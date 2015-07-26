@@ -21,8 +21,10 @@
 #include <QList>
 #include <de/memory.h>
 #include <de/timer.h>
+#include <doomsday/doomsdayapp.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/exec.h>
+#include <doomsday/Game>
 
 #include "de_base.h"
 #include "ui/infine/finaleinterpreter.h"
@@ -32,7 +34,6 @@
 
 #include "dd_main.h"
 #include "dd_def.h"
-#include "Game"
 
 #include "api_material.h"
 #include "api_render.h"
@@ -487,7 +488,7 @@ DENG2_PIMPL(FinaleInterpreter)
 #endif
 
         // Any hooks?
-        DD_CallHooks(HOOK_FINALE_SCRIPT_STOP, id, 0);
+        DoomsdayApp::plugins().callHooks(HOOK_FINALE_SCRIPT_STOP, id, 0);
     }
 
     bool atEnd() const
@@ -935,7 +936,7 @@ end_read:
     }
 
     // Any hooks?
-    DD_CallHooks(HOOK_FINALE_SCRIPT_BEGIN, d->id, 0);
+    DoomsdayApp::plugins().callHooks(HOOK_FINALE_SCRIPT_BEGIN, d->id, 0);
 }
 
 void FinaleInterpreter::resume()
@@ -1013,7 +1014,7 @@ static bool runOneTick(FinaleInterpreter &fi)
     de::zap(parm);
     parm.runTick = true;
     parm.canSkip = fi.canSkip();
-    DD_CallHooks(HOOK_FINALE_SCRIPT_TICKER, fi.id(), &parm);
+    DoomsdayApp::plugins().callHooks(HOOK_FINALE_SCRIPT_TICKER, fi.id(), &parm);
     return parm.runTick;
 }
 
@@ -1367,7 +1368,7 @@ DEFFC(BGMaterial)
     Material *material = nullptr;
     try
     {
-        if(ded_value_t *value = Def_GetValueByUri(OP_URI(0)))
+        if(ded_value_t *value = ::defs.getValueByUri(*reinterpret_cast<de::Uri const *>(OP_URI(0))))
         {
             material = &App_ResourceSystem().material(de::Uri(value->text, RC_NULL));
         }
@@ -1534,7 +1535,7 @@ DEFFC(If)
         ddhook_finale_script_evalif_paramaters_t p; de::zap(p);
         p.token     = token;
         p.returnVal = 0;
-        if(DD_CallHooks(HOOK_FINALE_EVAL_IF, fi.id(), (void *) &p))
+        if(DoomsdayApp::plugins().callHooks(HOOK_FINALE_EVAL_IF, fi.id(), (void *) &p))
         {
             val = p.returnVal;
             LOG_SCR_XVERBOSE("HOOK_FINALE_EVAL_IF: %s => %i") << token << val;
@@ -1794,11 +1795,9 @@ DEFFC(StateAnim)
     DENG2_UNUSED(anim);
 #endif
 
-    int stateId = Def_Get(DD_DEF_STATE, OP_CSTRING(1), 0);
-    int count   = OP_INT(2);
-
     // Animate N states starting from the given one.
-    for(; count > 0 && stateId > 0; count--)
+    dint stateId = ::defs.getStateNum(OP_CSTRING(1));
+    for(dint count = OP_INT(2); count > 0 && stateId > 0; count--)
     {
         state_t *st = &runtimeDefs.states[stateId];
 #ifdef __CLIENT__
@@ -1816,7 +1815,7 @@ DEFFC(PicSound)
 {
     DENG2_UNUSED(cmd);
     FinaleAnimWidget &anim = fi.findOrCreateWidget(FI_ANIM, OP_CSTRING(0)).as<FinaleAnimWidget>();
-    int const sound        = Def_Get(DD_DEF_SOUND, OP_CSTRING(1), 0);
+    int const sound        = ::defs.getSoundNum(OP_CSTRING(1));
 
     if(!anim.frameCount())
     {
@@ -2038,33 +2037,35 @@ DEFFC(OffsetY)
 DEFFC(Sound)
 {
     DENG2_UNUSED2(cmd, fi);
-    S_LocalSound(Def_Get(DD_DEF_SOUND, OP_CSTRING(0), nullptr), nullptr);
+    S_LocalSound(::defs.getSoundNum(OP_CSTRING(0)), nullptr);
 }
 
 DEFFC(SoundAt)
 {
     DENG2_UNUSED2(cmd, fi);
-    int const soundId = Def_Get(DD_DEF_SOUND, OP_CSTRING(0), nullptr);
-    float vol = de::min(OP_FLOAT(1), 1.f);
+    dint const soundId = ::defs.getSoundNum(OP_CSTRING(0));
+    dfloat const vol   = de::min(OP_FLOAT(1), 1.f);
     S_LocalSoundAtVolume(soundId, nullptr, vol);
 }
 
 DEFFC(SeeSound)
 {
     DENG2_UNUSED2(cmd, fi);
-    int num = Def_Get(DD_DEF_MOBJ, OP_CSTRING(0), nullptr);
-    if(num < 0 || runtimeDefs.mobjInfo[num].seeSound <= 0)
-        return;
-    S_LocalSound(runtimeDefs.mobjInfo[num].seeSound, nullptr);
+    dint num = ::defs.getMobjNum(OP_CSTRING(0));
+    if(num >= 0 && ::runtimeDefs.mobjInfo[num].seeSound > 0)
+    {
+        S_LocalSound(runtimeDefs.mobjInfo[num].seeSound, nullptr);
+    }
 }
 
 DEFFC(DieSound)
 {
     DENG2_UNUSED2(cmd, fi);
-    int num = Def_Get(DD_DEF_MOBJ, OP_CSTRING(0), nullptr);
-    if(num < 0 || runtimeDefs.mobjInfo[num].deathSound <= 0)
-        return;
-    S_LocalSound(runtimeDefs.mobjInfo[num].deathSound, nullptr);
+    dint num = ::defs.getMobjNum(OP_CSTRING(0));
+    if(num >= 0 && ::runtimeDefs.mobjInfo[num].deathSound > 0)
+    {
+        S_LocalSound(runtimeDefs.mobjInfo[num].deathSound, nullptr);
+    }
 }
 
 DEFFC(Music)

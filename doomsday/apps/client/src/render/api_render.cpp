@@ -22,34 +22,41 @@
 #include "de_platform.h"
 #include "api_render.h"
 
-#include "dd_main.h" // App_ResourceSystem
+#include <de/Log>
+#include <doomsday/console/exec.h>
+#include <doomsday/defs/sprite.h>
+
+#include "dd_main.h"  // App_ResourceSystem
 #include "def_main.h"
-#include "sys_system.h" // novideo
+#include "sys_system.h"  // novideo
 #include "gl/sys_opengl.h"
 
 #include "render/r_main.h"
-#include "render/billboard.h" // Rend_SpriteMaterialSpec
+#include "render/billboard.h"  // Rend_SpriteMaterialSpec
 #include "render/rend_model.h"
 
 #include "resource/resourcesystem.h"
 #ifdef __CLIENT__
 #  include "MaterialVariantSpec"
 #endif
-#include <de/Log>
-#include <doomsday/console/exec.h>
 
 using namespace de;
 
+static inline ResourceSystem &resSys()
+{
+    return App_ResourceSystem();
+}
+
 // m_misc.c
-DENG_EXTERN_C int M_ScreenShot(const char* name, int bits);
+DENG_EXTERN_C dint M_ScreenShot(char const *name, dint bits);
 
 #undef Models_CacheForState
-DENG_EXTERN_C void Models_CacheForState(int stateIndex)
+DENG_EXTERN_C void Models_CacheForState(dint stateIndex)
 {
 #ifdef __CLIENT__
     if(ModelDef *modelDef = App_ResourceSystem().modelDefForState(stateIndex))
     {
-        App_ResourceSystem().cache(modelDef);
+        resSys().cache(modelDef);
     }
 #endif
 }
@@ -58,62 +65,62 @@ DENG_EXTERN_C void Models_CacheForState(int stateIndex)
 DENG_EXTERN_C void R_SetBorderGfx(struct uri_s const *const *paths);
 
 #undef Rend_CacheForMobjType
-DENG_EXTERN_C void Rend_CacheForMobjType(int num)
+DENG_EXTERN_C void Rend_CacheForMobjType(dint num)
 {
     LOG_AS("Rend.CacheForMobjType");
 
-    if(novideo) return;
-    if(!((useModels && precacheSkins) || precacheSprites)) return;
-    if(num < 0 || num >= defs.mobjs.size()) return;
+    if(::novideo) return;
+    if(!((::useModels && ::precacheSkins) || ::precacheSprites)) return;
+    if(num < 0 || num >= ::runtimeDefs.mobjInfo.size()) return;
 
     de::MaterialVariantSpec const &spec = Rend_SpriteMaterialSpec();
 
     /// @todo Optimize: Traverses the entire state list!
-    for(int i = 0; i < defs.states.size(); ++i)
+    for(dint i = 0; i < ::defs.states.size(); ++i)
     {
-        if(runtimeDefs.stateInfo[i].owner != &runtimeDefs.mobjInfo[num]) continue;
+        if(::runtimeDefs.stateInfo[i].owner != &::runtimeDefs.mobjInfo[num])
+            continue;
 
         Models_CacheForState(i);
 
-        if(precacheSprites)
+        if(::precacheSprites)
         {
-            state_t *state = Def_GetState(i);
-            DENG2_ASSERT(state != 0);
-
-            App_ResourceSystem().cache(state->sprite, spec);
+            if(state_t *state = Def_GetState(i))
+            {
+                resSys().cache(state->sprite, spec);
+            }
         }
         /// @todo What about sounds?
     }
 }
 
 // r_main.cpp
-DENG_EXTERN_C void R_RenderPlayerView(int num);
-DENG_EXTERN_C void R_SetViewOrigin(int consoleNum, coord_t const origin[3]);
-DENG_EXTERN_C void R_SetViewAngle(int consoleNum, angle_t angle);
-DENG_EXTERN_C void R_SetViewPitch(int consoleNum, float pitch);
-DENG_EXTERN_C int R_ViewWindowGeometry(int consoleNum, RectRaw *geometry);
-DENG_EXTERN_C int R_ViewWindowOrigin(int consoleNum, Point2Raw *origin);
-DENG_EXTERN_C int R_ViewWindowSize(int consoleNum, Size2Raw *size);
-DENG_EXTERN_C void R_SetViewWindowGeometry(int consoleNum, RectRaw const *geometry, dd_bool interpolate);
-DENG_EXTERN_C int R_ViewPortGeometry(int consoleNum, RectRaw *geometry);
-DENG_EXTERN_C int R_ViewPortOrigin(int consoleNum, Point2Raw *origin);
-DENG_EXTERN_C int R_ViewPortSize(int consoleNum, Size2Raw *size);
-DENG_EXTERN_C void R_SetViewPortPlayer(int consoleNum, int viewPlayer);
+DENG_EXTERN_C void R_RenderPlayerView(dint num);
+DENG_EXTERN_C void R_SetViewOrigin(dint consoleNum, coord_t const origin[3]);
+DENG_EXTERN_C void R_SetViewAngle(dint consoleNum, angle_t angle);
+DENG_EXTERN_C void R_SetViewPitch(dint consoleNum, dfloat pitch);
+DENG_EXTERN_C dint R_ViewWindowGeometry(dint consoleNum, RectRaw *geometry);
+DENG_EXTERN_C dint R_ViewWindowOrigin(dint consoleNum, Point2Raw *origin);
+DENG_EXTERN_C dint R_ViewWindowSize(dint consoleNum, Size2Raw *size);
+DENG_EXTERN_C void R_SetViewWindowGeometry(dint consoleNum, RectRaw const *geometry, dd_bool interpolate);
+DENG_EXTERN_C dint R_ViewPortGeometry(dint consoleNum, RectRaw *geometry);
+DENG_EXTERN_C dint R_ViewPortOrigin(dint consoleNum, Point2Raw *origin);
+DENG_EXTERN_C dint R_ViewPortSize(dint consoleNum, Size2Raw *size);
+DENG_EXTERN_C void R_SetViewPortPlayer(dint consoleNum, dint viewPlayer);
 
 // sky.cpp
-DENG_EXTERN_C void R_SkyParams(int layer, int param, void *data);
+DENG_EXTERN_C void R_SkyParams(dint layer, dint param, void *data);
 
 #ifdef __CLIENT__
 static inline MaterialVariantSpec const &pspriteMaterialSpec()
 {
-    return App_ResourceSystem().materialSpec(PSpriteContext, 0, 1, 0, 0,
-                                             GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                             0, 1, -1, false, true, true, false);
+    return resSys().materialSpec(PSpriteContext, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                 0, 1, -1, false, true, true, false);
 }
 #endif
 
 #undef R_GetSpriteInfo
-DENG_EXTERN_C dd_bool R_GetSpriteInfo(int spriteId, int frame, spriteinfo_t *info)
+DENG_EXTERN_C dd_bool R_GetSpriteInfo(dint id, dint frame, spriteinfo_t *info)
 {
     LOG_AS("Rend.GetSpriteInfo");
 
@@ -121,35 +128,36 @@ DENG_EXTERN_C dd_bool R_GetSpriteInfo(int spriteId, int frame, spriteinfo_t *inf
 
     de::zapPtr(info);
 
-    if(!App_ResourceSystem().hasSprite(spriteId, frame))
+    if(!resSys().hasSprite(id, frame))
     {
-        LOG_RES_WARNING("Invalid sprite id (%i) and/or frame index (%i)")
-            << spriteId << frame;
+        LOG_RES_WARNING("Invalid sprite id:%i and/or frame:%i")
+            << id << frame;
         return false;
     }
 
-    SpriteViewAngle const &sprViewAngle =
-        App_ResourceSystem().sprite(spriteId, frame).viewAngle(0);
-    info->material = sprViewAngle.material;
-    info->flip     = sprViewAngle.mirrorX;
-
-    if(novideo)
+    defn::Sprite sprite(resSys().sprite(id, frame));
+    if(!sprite.hasView(0))
     {
-        // We can't prepare the material.
-        return true;
+        LOG_RES_WARNING("Sprite id:%i frame:%i has no front view")
+            << id << frame;
+        return false;
     }
+
+    Record const &spriteView = sprite.view(0);
+    info->material = resSys().materialPtr(de::Uri(spriteView.gets("material"), RC_NULL));
+    info->flip     = spriteView.getb("mirrorX");
+
+    if(::novideo) return true;  // We can't prepare the material.
 
 #ifdef __CLIENT__
     /// @todo fixme: We should not be using the PSprite spec here. -ds
     MaterialAnimator &matAnimator = info->material->getAnimator(pspriteMaterialSpec());
-
-    // Ensure we have up to date info about the material.
-    matAnimator.prepare();
+    matAnimator.prepare();  // Ensure we have up-to-date info.
 
     Vector2i const &matDimensions = matAnimator.dimensions();
     TextureVariant *tex           = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
     Vector2i const &texDimensions = tex->base().origin();
-    int const texBorder           = tex->spec().variant.border;
+    dint const texBorder          = tex->spec().variant.border;
 
     info->geometry.origin.x    = -texDimensions.x + -texBorder;
     info->geometry.origin.y    = -texDimensions.y +  texBorder;
@@ -170,13 +178,14 @@ DENG_EXTERN_C dd_bool R_GetSpriteInfo(int spriteId, int frame, spriteinfo_t *inf
 }
 
 // r_util.c
-DENG_EXTERN_C dd_bool R_ChooseAlignModeAndScaleFactor(float* scale, int width, int height, int availWidth, int availHeight, scalemode_t scaleMode);
-DENG_EXTERN_C scalemode_t R_ChooseScaleMode2(int width, int height, int availWidth, int availHeight, scalemode_t overrideMode, float stretchEpsilon);
-DENG_EXTERN_C scalemode_t R_ChooseScaleMode(int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);
+DENG_EXTERN_C dd_bool R_ChooseAlignModeAndScaleFactor(dfloat *scale, dint width, dint height, dint availWidth, dint availHeight, scalemode_t scaleMode);
+DENG_EXTERN_C scalemode_t R_ChooseScaleMode2(dint width, dint height, dint availWidth, dint availHeight, scalemode_t overrideMode, dfloat stretchEpsilon);
+DENG_EXTERN_C scalemode_t R_ChooseScaleMode(dint width, dint height, dint availWidth, dint availHeight, scalemode_t overrideMode);
 
 #undef R_SetupFog
-DENG_EXTERN_C void R_SetupFog(float start, float end, float density, float *rgb)
+DENG_EXTERN_C void R_SetupFog(dfloat start, dfloat end, dfloat density, dfloat *rgb)
 {
+    DENG2_ASSERT(rgb);
     Con_Execute(CMDS_DDAY, "fog on", true, false);
     Con_Executef(CMDS_DDAY, true, "fog start %f", start);
     Con_Executef(CMDS_DDAY, true, "fog end %f", end);

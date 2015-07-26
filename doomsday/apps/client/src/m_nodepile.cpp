@@ -1,7 +1,7 @@
-/** @file
+/** @file m_nodepile.c  Specialized Node Allocation (from Zone as PU_MAP).
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,39 +17,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * m_nodepile.c: Specialized Node Allocation
- *
- * The 'piles' are allocated as PU_MAP.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
-#include "de_platform.h"
-#include "de_misc.h"
-#include "dd_main.h"
+#include "de_base.h"
+#include "m_nodepile.h"
 
 #include <de/memoryzone.h>
+#include "dd_main.h"
 
-// MACROS ------------------------------------------------------------------
-
-#define NP_MAX_NODES    65535   // Indices are shorts.
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
+#define NP_MAX_NODES    65535  ///< Indices are shorts.
 
 /**
  * Initialize (alloc) the nodepile with n nodes.

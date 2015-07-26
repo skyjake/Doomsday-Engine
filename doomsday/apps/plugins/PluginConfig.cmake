@@ -66,12 +66,26 @@ macro (deng_add_plugin target)
         deng_xcode_attribs (${target})
         deng_bundle_resources ()
     else ()
-        set_target_properties (${target} PROPERTIES 
+        set_target_properties (${target} PROPERTIES
             VERSION ${DENG_VERSION}
         )
         deng_target_rpath (${target})
     endif ()
-    
+
+    if (MSVC)
+        set_target_properties (${target} PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY_DEBUG "${DENG_VS_STAGING_DIR}/Debug/${DENG_INSTALL_PLUGIN_DIR}"
+            RUNTIME_OUTPUT_DIRECTORY_RELEASE "${DENG_VS_STAGING_DIR}/Release/${DENG_INSTALL_PLUGIN_DIR}"
+            RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${DENG_VS_STAGING_DIR}/MinSizeRel/${DENG_INSTALL_PLUGIN_DIR}"
+            RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${DENG_VS_STAGING_DIR}/RelWithDebInfo/${DENG_INSTALL_PLUGIN_DIR}"
+
+            LIBRARY_OUTPUT_DIRECTORY_DEBUG "${DENG_VS_STAGING_DIR}/Debug/${DENG_INSTALL_PLUGIN_DIR}"
+            LIBRARY_OUTPUT_DIRECTORY_RELEASE "${DENG_VS_STAGING_DIR}/Release/${DENG_INSTALL_PLUGIN_DIR}"
+            LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL "${DENG_VS_STAGING_DIR}/MinSizeRel/${DENG_INSTALL_PLUGIN_DIR}"
+            LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO "${DENG_VS_STAGING_DIR}/RelWithDebInfo/${DENG_INSTALL_PLUGIN_DIR}"
+        )
+    endif ()
+
     if (NOT APPLE)
         install (TARGETS ${target} LIBRARY DESTINATION ${DENG_INSTALL_PLUGIN_DIR})
     endif ()

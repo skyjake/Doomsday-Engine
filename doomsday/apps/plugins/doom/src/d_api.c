@@ -268,7 +268,7 @@ game_export_t* GetGameAPI(void)
     gx.mobjSize = sizeof(mobj_t);
     gx.polyobjSize = sizeof(Polyobj);
 
-    gx.FinalizeMapChange = P_FinalizeMapChange;
+    gx.FinalizeMapChange = (void (*)(void const *)) P_FinalizeMapChange;
 
     // These really need better names. Ideas?
     gx.HandleMapDataPropertyValue = P_HandleMapDataPropertyValue;
@@ -311,7 +311,6 @@ DENG_DECLARE_API(MaterialArchive);
 DENG_DECLARE_API(Map);
 DENG_DECLARE_API(MPE);
 DENG_DECLARE_API(Player);
-DENG_DECLARE_API(Plug);
 DENG_DECLARE_API(R);
 DENG_DECLARE_API(Rend);
 DENG_DECLARE_API(S);
@@ -337,7 +336,6 @@ DENG_API_EXCHANGE(
     DENG_GET_API(DE_API_MAP, Map);
     DENG_GET_API(DE_API_MAP_EDIT, MPE);
     DENG_GET_API(DE_API_PLAYER, Player);
-    DENG_GET_API(DE_API_PLUGIN, Plug);
     DENG_GET_API(DE_API_RESOURCE, R);
     DENG_GET_API(DE_API_RENDER, Rend);
     DENG_GET_API(DE_API_SOUND, S);

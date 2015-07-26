@@ -1,8 +1,7 @@
 /** @file audiodriver.cpp  Audio driver loading and interface management.
- * @ingroup audio
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,13 +19,12 @@
  */
 
 #include "de_base.h"
-#include "de_console.h"
-#include "de_misc.h"
-#include "de_audio.h"
-#include "audio/sys_audio.h"
+#include "audio/audiodriver.h"
 
 #include <de/Library>
 #include <de/LibraryFile>
+#include "de_audio.h"
+#include "audio/sys_audio.h"
 
 typedef struct driver_s {
     Library* library;

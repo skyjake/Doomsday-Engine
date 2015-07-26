@@ -37,7 +37,7 @@ ded_t *ded;
 
 // This is the original data before it gets replaced by any patches.
 ded_sprid_t  origSpriteNames[NUMSPRITES];
-ded_funcid_t origActionNames[NUMSTATES];
+String origActionNames[NUMSTATES];
 
 static void backupData()
 {
@@ -48,7 +48,7 @@ static void backupData()
 
     for(int i = 0; i < NUMSTATES && i < ded->states.size(); i++)
     {
-        qstrncpy(origActionNames[i], ded->states[i].action, DED_STRINGID_LEN + 1);
+        origActionNames[i] = ded->states[i].gets("action");
     }
 }
 
@@ -178,12 +178,10 @@ DENG_DECLARE_API(Base);
 DENG_DECLARE_API(Con);
 DENG_DECLARE_API(Def);
 DENG_DECLARE_API(F);
-DENG_DECLARE_API(Plug);
 
 DENG_API_EXCHANGE(
     DENG_GET_API(DE_API_BASE, Base);
     DENG_GET_API(DE_API_CONSOLE, Con);
     DENG_GET_API(DE_API_DEFINITIONS, Def);
     DENG_GET_API(DE_API_FILE_SYSTEM, F);
-    DENG_GET_API(DE_API_PLUGIN, Plug);
 )

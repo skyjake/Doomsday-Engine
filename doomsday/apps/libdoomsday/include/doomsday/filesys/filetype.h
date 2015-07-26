@@ -25,6 +25,7 @@
 #define LIBDENG_FILETYPE_H
 
 #include "../libdoomsday.h"
+#include "../resource/resourceclass.h"
 
 #ifdef __cplusplus
 #ifndef DENG2_C_API_ONLY
@@ -35,7 +36,6 @@
 #include <de/NativePath>
 #include <de/String>
 #include "filehandle.h"
-#include "api_resourceclass.h"
 
 namespace de
 {

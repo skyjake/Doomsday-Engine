@@ -1,6 +1,6 @@
-/** @file basepath.cpp
+/** @file basepath.cpp  Application base path (C wrapper).
  *
- * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2014-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,42 +17,24 @@
  */
 
 #include "doomsday/paths.h"
-#include "doomsday/filesys/sys_direc.h"
-#include "doomsday/filesys/fs_util.h"
-#include <string>
-
-using namespace de;
-
-static std::string ddBasePath; // Doomsday root directory is at...?
-static std::string ddRuntimePath;
+#include "doomsday/doomsdayapp.h"
 
 char const *DD_BasePath()
 {
-    return ddBasePath.c_str();
-}
-
-void DD_SetBasePath(char const *path)
-{
-    /// @todo Unfortunately Dir/fs_util assumes fixed-size strings, so we
-    /// can't take advantage of std::string. -jk
-    filename_t temp;
-    strncpy(temp, path, FILENAME_T_MAXLEN);
-
-    Dir_CleanPath(temp, FILENAME_T_MAXLEN);
-    Dir_MakeAbsolutePath(temp, FILENAME_T_MAXLEN);
-
-    // Ensure it ends with a directory separator.
-    F_AppendMissingSlashCString(temp, FILENAME_T_MAXLEN);
-
-    ddBasePath = temp;
+    return DoomsdayApp::app().doomsdayBasePath().c_str();
 }
 
 char const *DD_RuntimePath()
 {
-    return ddRuntimePath.c_str();
+    return DoomsdayApp::app().doomsdayRuntimePath().c_str();
+}
+
+void DD_SetBasePath(char const *path)
+{
+    DoomsdayApp::app().setDoomsdayBasePath(path);
 }
 
 void DD_SetRuntimePath(char const *path)
 {
-    ddRuntimePath = path;
+    DoomsdayApp::app().setDoomsdayRuntimePath(path);
 }

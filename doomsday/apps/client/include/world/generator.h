@@ -1,7 +1,7 @@
 /** @file generator.h  World map (particle) generator.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,11 +18,12 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_WORLD_GENERATOR_H
-#define DENG_CLIENT_WORLD_GENERATOR_H
+#ifndef CLIENT_WORLD_GENERATOR_H
+#define CLIENT_WORLD_GENERATOR_H
 
-#include "map.h"
 #include <de/Vector>
+#include <doomsday/defs/dedtypes.h>
+#include "map.h"
 
 class BspLeaf;
 class Line;
@@ -256,4 +257,4 @@ typedef Generator::ParticleStage GeneratorParticleStage;
 void Generator_Delete(Generator *gen);
 void Generator_Thinker(Generator *gen);
 
-#endif // DENG_CLIENT_WORLD_GENERATOR_H
+#endif  // CLIENT_WORLD_GENERATOR_H

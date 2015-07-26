@@ -24,6 +24,7 @@
 #include "directinput.h"
 #include "dd_winit.h"
 #include <de/Log>
+#include <doomsday/doomsdayapp.h>
 
 static LPDIRECTINPUT8 dInput;
 static LPDIRECTINPUT dInput3;
@@ -47,7 +48,7 @@ int DirectInput_Init(void)
     // Create the DirectInput interface instance. Try version 8 first.
     if(FAILED(hr = CoCreateInstance(CLSID_DirectInput8, NULL, CLSCTX_INPROC_SERVER,
                                     IID_IDirectInput8, (LPVOID*)&dInput)) ||
-       FAILED(hr = dInput->Initialize(app.hInstance, DIRECTINPUT_VERSION)))
+       FAILED(hr = dInput->Initialize((HINSTANCE) DoomsdayApp::app().moduleHandle(), DIRECTINPUT_VERSION)))
     {
         LOGDEV_INPUT_ERROR("DirectInput 8 init failed (0x%x)") << hr;
 
@@ -55,7 +56,7 @@ int DirectInput_Init(void)
         // I'm not sure if this works correctly.
         if(FAILED(hr = CoCreateInstance(CLSID_DirectInput, NULL, CLSCTX_INPROC_SERVER,
                                         IID_IDirectInput2W, (LPVOID*)&dInput3)) ||
-           FAILED(hr = dInput3->Initialize(app.hInstance, 0x0300)))
+           FAILED(hr = dInput3->Initialize((HINSTANCE) DoomsdayApp::app().moduleHandle(), 0x0300)))
         {
             LOGDEV_INPUT_ERROR("Failed to create DirectInput 3 object (0x%x)") << hr;
             return false;

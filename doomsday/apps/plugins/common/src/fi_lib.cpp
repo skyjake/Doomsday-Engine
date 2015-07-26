@@ -1,7 +1,7 @@
 /** @file fi_lib.cpp  InFine Helper routines and LIFO "script stack".
  *
  * @authors Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -24,8 +24,9 @@
 #include <cstring>
 #include <doomsday/defs/episode.h>
 #include "d_net.h"
-#include "gamesession.h"
 #include "g_common.h"
+#include "g_defs.h"
+#include "gamesession.h"
 #include "hu_stuff.h"
 #include "p_sound.h"
 #include "p_tick.h"

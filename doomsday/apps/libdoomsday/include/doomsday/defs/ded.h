@@ -59,10 +59,10 @@ struct LIBDOOMSDAY_PUBLIC ded_s
     DEDRegister episodes;
 
     // Map object information.
-    DEDArray<ded_mobj_t> mobjs;
+    DEDRegister things; // DEDArray<ded_mobj_t> mobjs;
 
     // States.
-    DEDArray<ded_state_t> states;
+    DEDRegister states;
 
     // Sprites.
     DEDArray<ded_sprid_t> sprites;
@@ -135,6 +135,10 @@ public:
     int addFlag(de::String const &id, int value);
 
     int addEpisode();
+    
+    int addThing(de::String const &id);
+    
+    int addState(de::String const &id);    
 
     int addDecoration();
 
@@ -150,25 +154,19 @@ public:
 
     int addSky();
 
-    //ded_flag_t *getFlag(char const *flag) const;
-
-    int evalFlags2(char const *ptr) const;
-
-    int getMobjNum(char const *id) const;
-
-    int getMobjNumForName(char const *name) const;
-
-    char const *getMobjName(int num) const;
-
-    int getStateNum(de::String const &id) const;
-
-    int getStateNum(char const *id) const;
-
+    int evalFlags(char const *ptr) const;
+    
     int getEpisodeNum(de::String const &id) const;
 
     int getMapInfoNum(de::Uri const &uri) const;
 
     int getMaterialNum(de::Uri const &uri) const;
+
+    int getMobjNum(de::String const &id) const;
+
+    int getMobjNumForName(char const *name) const;
+
+    de::String getMobjName(int num) const;
 
     int getModelNum(char const *id) const;
 
@@ -177,6 +175,7 @@ public:
     int getSkyNum(char const *id) const;
 
     int getSoundNum(char const *id) const;
+    int getSoundNum(de::String const &id) const;
 
     /**
      * Looks up a sound using @a name key.
@@ -185,9 +184,19 @@ public:
      */
     int getSoundNumForName(char const *name) const;
 
+    int getSpriteNum(char const *id) const;
+    int getSpriteNum(de::String const &id) const;
+
+    int getStateNum(char const *id) const;
+    int getStateNum(de::String const &id) const;
+
     int getTextNum(char const *id) const;
 
+    int getValueNum(char const *id) const;
+    int getValueNum(de::String const &id) const;
+
     ded_value_t *getValueById(char const *id) const;
+    ded_value_t *getValueById(de::String const &id) const;
 
     ded_value_t *getValueByUri(de::Uri const &uri) const;
 
@@ -210,8 +219,6 @@ extern "C" {
 
 // Routines for managing DED files:
 
-int             DED_AddMobj(ded_t* ded, char const* idStr);
-int             DED_AddState(ded_t* ded, char const* id);
 int             DED_AddSprite(ded_t* ded, char const* name);
 int             DED_AddLight(ded_t* ded, char const* stateID);
 int             DED_AddSound(ded_t* ded, char const* id);

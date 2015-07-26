@@ -29,52 +29,59 @@
 #include <de/Error>
 #include <de/Log>
 #include <de/Time>
+#include <doomsday/doomsdayapp.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/exec.h>
 #include <doomsday/console/var.h>
+#include <doomsday/defs/mapinfo.h>
 
-#include "de_defs.h"
-#include "de_play.h"
 #include "de_filesys.h"
 #include "dd_main.h"
 #include "dd_def.h"
 #include "dd_loop.h"
 
-#include "audio/s_main.h"
-#include "network/net_main.h"
-
-#include "edit_map.h"
-#include "Plane"
-#include "Sector"
-#include "SectorCluster"
-#include "world/p_ticker.h"
-#include "world/sky.h"
-#include "world/thinkers.h"
-
-#include "ui/progress.h"
+#include "api_player.h"
 
 #ifdef __CLIENT__
 #  include "clientapp.h"
 #  include "client/cl_def.h"
 #  include "client/cl_frame.h"
 #  include "client/cl_player.h"
-#  include "edit_bias.h"
-#  include "Hand"
-#  include "HueCircle"
 
 #  include "gl/gl_main.h"
+#endif
 
+#ifdef __SERVER__
+#  include "server/sv_pool.h"
+#endif
+
+#include "audio/s_main.h"
+#include "network/net_main.h"
+
+#include "world/p_players.h"
+#include "world/p_ticker.h"
+#include "world/sky.h"
+#include "world/thinkers.h"
+#include "edit_map.h"
+#include "Plane"
+#include "Sector"
+#include "SectorCluster"
+#include "Surface"
+#ifdef __CLIENT__
+#  include "world/contact.h"
+#  include "Hand"
+#  include "HueCircle"
 #  include "Lumobj"
-#  include "MaterialAnimator"
+
 #  include "render/viewports.h" // R_ResetViewer
 #  include "render/rend_fakeradio.h"
 #  include "render/rend_main.h"
 #  include "render/rendpoly.h"
 #  include "render/skydrawable.h"
-#endif
+#  include "MaterialAnimator"
 
-#ifdef __SERVER__
-#  include "server/sv_pool.h"
+#  include "edit_bias.h"
+#  include "ui/progress.h"
 #endif
 
 using namespace de;
@@ -366,7 +373,8 @@ DENG2_PIMPL(WorldSystem)
         // Ask each converter in turn whether the map format is recognizable
         // and if so to interpret and transfer it to us via the runtime map
         // editing interface.
-        if(!DD_CallHooks(HOOK_MAP_CONVERT, 0, const_cast<Id1MapRecognizer *>(&mapDef.recognizer())))
+        if(!DoomsdayApp::plugins().callHooks(HOOK_MAP_CONVERT, 0,
+                                             const_cast<Id1MapRecognizer *>(&mapDef.recognizer())))
             return 0;
 
         // A converter signalled success.
@@ -533,8 +541,8 @@ DENG2_PIMPL(WorldSystem)
         // Init player values.
         for(uint i = 0; i < DDMAXPLAYERS; ++i)
         {
-            player_t *plr = &ddPlayers[i];
-            ddplayer_t &ddpl = ddPlayers[i].shared;
+            player_t *plr = DD_Player(i);
+            ddplayer_t &ddpl = DD_Player(i)->publicData();
 
             plr->extraLight = plr->targetExtraLight = 0;
             plr->extraLightCounter = 0;
@@ -605,8 +613,7 @@ DENG2_PIMPL(WorldSystem)
         R_InitRendPolyPools();
         Rend_UpdateLightModMatrix();
 
-        Rend_RadioInitForMap(*map);
-
+        map->initRadio();
         map->initContactBlockmaps();
         R_InitContactLists(*map);
         rendSys().worldSystemMapChanged(*map);
@@ -743,7 +750,6 @@ DENG2_PIMPL(WorldSystem)
     {
         changemapworker_params_t &p = *static_cast<changemapworker_params_t *>(context);
         int result = p.inst->changeMap(p.mapDef);
-        BusyMode_WorkerEnd();
         return result;
     }
 
@@ -752,7 +758,7 @@ DENG2_PIMPL(WorldSystem)
     {
         DENG2_ASSERT(hand != 0 && map != 0);
 
-        viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+        viewdata_t const *viewData = &viewPlayer->viewport();
         hand->setOrigin(viewData->current.origin + viewData->frontVec.xzy() * handDistance);
     }
 #endif
@@ -808,7 +814,7 @@ bool WorldSystem::changeMap(de::Uri const &mapUri)
     }
 
     // Switch to busy mode (if we haven't already) except when simply unloading.
-    if(!mapUri.path().isEmpty() && !BusyMode_Active())
+    if(!mapUri.path().isEmpty() && !DoomsdayApp::app().busyMode().isActive())
     {
         Instance::changemapworker_params_t parm;
         parm.inst   = d;
@@ -833,8 +839,8 @@ void WorldSystem::reset()
 {
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        player_t *plr    = &ddPlayers[i];
-        ddplayer_t *ddpl = &plr->shared;
+        player_t *plr    = DD_Player(i);
+        ddplayer_t *ddpl = &plr->publicData();
 
         // Mobjs go down with the map.
         ddpl->mo = 0;
@@ -864,8 +870,8 @@ void WorldSystem::update()
 {
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        player_t *plr    = &ddPlayers[i];
-        ddplayer_t *ddpl = &plr->shared;
+        player_t *plr    = DD_Player(i);
+        ddplayer_t *ddpl = &plr->publicData();
 
         // States have changed, the state pointers are unknown.
         ddpl->pSprites[0].statePtr = ddpl->pSprites[1].statePtr = 0;
@@ -965,7 +971,7 @@ void WorldSystem::endFrame()
         // If the HueCircle is active update the current edit color.
         if(HueCircle *hueCircle = SBE_HueCircle())
         {
-            viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+            viewdata_t const *viewData = &viewPlayer->viewport();
             d->hand->setEditColor(hueCircle->colorAt(viewData->frontVec));
         }
     }

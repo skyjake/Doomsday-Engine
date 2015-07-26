@@ -184,6 +184,21 @@ public:
      */
     static String absolutePathInContext(Record const &context, String const &relativePath);
 
+    /**
+     * Determines if a value should be considered False. Use this when interpreting
+     * contents of Info documents where boolean values are expected.
+     *
+     * This is different from `!Value::isTrue()` in that it allows for more relaxed
+     * interpretation of the value.
+     *
+     * @param value  Value to check.
+     *
+     * @return @c true, if the value should be considered False. Otherwise, @c false.
+     */
+    static bool isFalse(Value const &value);
+
+    static bool isTrue(Value const &value);
+
 public:
     static Paths allBlocksOfType(String const &blockType, Record const &root);
 

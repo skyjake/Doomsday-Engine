@@ -188,13 +188,12 @@ DENG2_PIMPL(ServerSystem)
         int first = true;
         for(int i = 1; i < DDMAXPLAYERS; ++i)
         {
-            client_t *cl = &clients[i];
-            player_t *plr = &ddPlayers[i];
-            if(cl->nodeID)
+            player_t *plr = DD_Player(i);
+            if(plr->remoteUserId)
             {
-                DENG2_ASSERT(users.contains(cl->nodeID));
+                DENG2_ASSERT(users.contains(plr->remoteUserId));
 
-                RemoteUser *user = users[cl->nodeID];
+                RemoteUser *user = users[plr->remoteUserId];
                 if(first)
                 {
                     LOG_MSG(_E(m) "P# Name:      Nd Jo Hs Rd Gm Age:");
@@ -202,12 +201,12 @@ DENG2_PIMPL(ServerSystem)
                 }
 
                 LOG_MSG(_E(m) "%2i %-10s %2i %c  %c  %c  %c  %f sec")
-                        << i << cl->name << cl->nodeID
+                        << i << plr->name << plr->remoteUserId
                         << (user->isJoined()? '*' : ' ')
-                        << (cl->handshake? '*' : ' ')
-                        << (cl->ready? '*' : ' ')
-                        << (plr->shared.inGame? '*' : ' ')
-                        << (Timer_RealSeconds() - cl->enterTime);
+                        << (plr->handshake? '*' : ' ')
+                        << (plr->ready? '*' : ' ')
+                        << (plr->publicData().inGame? '*' : ' ')
+                        << (Timer_RealSeconds() - plr->enterTime);
             }
         }
         if(first)
@@ -292,7 +291,7 @@ void ServerSystem::timeChanged(Clock const &clock)
     int count = 0;
     for(int i = 1; i < DDMAXPLAYERS; ++i)
     {
-        if(ddPlayers[i].shared.inGame) count++;
+        if(DD_Player(i)->publicData().inGame) count++;
     }
 
     DENG2_TEXT_APP->loop().setRate(count? 35 : 3);

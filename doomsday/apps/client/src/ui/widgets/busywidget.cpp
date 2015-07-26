@@ -17,13 +17,13 @@
  */
 
 #include "de_platform.h"
+#include "busyrunner.h"
 #include "ui/widgets/busywidget.h"
 #include "ui/busyvisual.h"
 #include "ui/ui_main.h"
 #include "ui/clientwindow.h"
 #include "gl/gl_main.h"
 #include "render/r_main.h"
-#include "busymode.h"
 #include "sys_system.h"
 
 #include <de/concurrency.h>

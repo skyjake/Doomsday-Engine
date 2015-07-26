@@ -1,7 +1,7 @@
 /** @file hu_menu.cpp  Menu widget stuff, episode selection and such.
  *
  * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -32,6 +32,7 @@
 #include <de/RecordValue>
 #include "g_common.h"
 #include "g_controls.h"
+#include "g_defs.h"
 #include "gamesession.h"
 #include "hu_msg.h"
 #include "hu_stuff.h"

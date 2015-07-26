@@ -1,10 +1,9 @@
-/** @file dd_pinit.cpp Platform independent routines for initializing the engine.
- * @ingroup base
+/** @file dd_pinit.cpp  Platform independent routines for initializing the engine.
  *
  * @todo Move these to dd_init.cpp.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -16,9 +15,8 @@
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA</small>
+ * General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifdef WIN32
@@ -27,31 +25,50 @@
 #endif
 
 #include "de_base.h"
-#include "de_console.h"
-#include "de_system.h"
-#include "de_play.h"
-#include "de_network.h"
-#include "de_ui.h"
-#include "de_filesys.h"
+#include "dd_pinit.h"
 
+#include <cstdarg>
+#include <de/String>
+#include <de/Library>
+#include <doomsday/doomsdayapp.h>
+#include <doomsday/console/exec.h>
+#include <doomsday/console/knownword.h>
+#include "de_filesys.h"
+#include "de_system.h"
+#include "de_ui.h"
 #ifdef __CLIENT__
 #  include "clientapp.h"
 #endif
-
+#ifdef __SERVER__
+#  include "server/sv_def.h"
+#endif
 #include "def_main.h"
+
+#include "api_internaldata.h"
+#include "api_client.h"
+#include "api_console.h"
+#include "api_def.h"
+#include "api_fontrender.h"
+#include "api_material.h"
+#include "api_materialarchive.h"
+#include "api_render.h"
+#include "api_resource.h"
+#include "api_sound.h"
+#include "api_server.h"
+
 #include "gl/svg.h"
 
+#include "world/p_players.h"
+
 #ifdef __CLIENT__
+#  include "network/net_demo.h"
+
 #  include "render/r_draw.h"
 #  include "render/r_main.h"
 #  include "render/rend_main.h"
+
 #  include "updater.h"
 #endif
-
-#include "api_internaldata.h"
-
-#include <de/String>
-#include <cstdarg>
 
 using namespace de;
 
@@ -63,11 +80,9 @@ DENG_DECLARE_API(InternalData) =
     { DE_API_INTERNAL_DATA },
     runtimeDefs.mobjInfo.elementsPtr(),
     runtimeDefs.states  .elementsPtr(),
-    runtimeDefs.sprNames.elementsPtr(),
     runtimeDefs.texts   .elementsPtr(),
     &validCount
 };
-game_export_t __gx;
 
 #ifdef __CLIENT__
 de::String DD_ComposeMainWindowTitle()
@@ -83,14 +98,47 @@ de::String DD_ComposeMainWindowTitle()
 }
 #endif
 
-void DD_InitAPI()
+void DD_PublishAPIs(::Library *lib)
 {
-    GETGAMEAPI GetGameAPI = app.GetGameAPI;
-    zap(__gx);
-    if(GetGameAPI)
+    de::Library &library = Library_File(lib).library();
+
+    if(library.hasSymbol("deng_API"))
     {
-        game_export_t *gameExPtr = GetGameAPI();
-        std::memcpy(&__gx, gameExPtr, MIN_OF(sizeof(__gx), gameExPtr->apiSize));
+        de::Library::deng_API setAPI = library.DENG2_SYMBOL(deng_API);
+
+#define PUBLISH(X) setAPI(X.api.id, &X)
+
+        PUBLISH(_api_Base);
+        PUBLISH(_api_Busy);
+        PUBLISH(_api_Con);
+        PUBLISH(_api_Def);
+        PUBLISH(_api_F);
+        PUBLISH(_api_Infine);
+        PUBLISH(_api_InternalData);
+        PUBLISH(_api_Map);
+        PUBLISH(_api_MPE);
+        PUBLISH(_api_Material);
+        PUBLISH(_api_MaterialArchive);
+        PUBLISH(_api_Player);
+        PUBLISH(_api_R);
+        PUBLISH(_api_S);
+        PUBLISH(_api_Thinker);
+        PUBLISH(_api_Uri);
+
+#ifdef __CLIENT__
+        // Client-only APIs.
+        PUBLISH(_api_B);
+        PUBLISH(_api_Client);
+        PUBLISH(_api_FR);
+        PUBLISH(_api_GL);
+        PUBLISH(_api_Rend);
+        PUBLISH(_api_Svg);
+#endif
+
+#ifdef __SERVER__
+        // Server-only APIs.
+        PUBLISH(_api_Server);
+#endif
     }
 }
 
@@ -161,7 +209,7 @@ void DD_ShutdownAll()
 
 #ifdef __CLIENT__
     // Stop all demo recording.
-    for(int i = 0; i < DDMAXPLAYERS; ++i)
+    for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
         Demo_StopRecording(i);
     }

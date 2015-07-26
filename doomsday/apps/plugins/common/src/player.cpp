@@ -1,7 +1,7 @@
 /** @file player.cpp  Common playsim routines relating to players.
  *
  * @authors Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -30,6 +30,7 @@
 #include "d_netsv.h"
 #include "dmu_lib.h"
 #include "g_common.h"
+#include "g_defs.h"
 #include "gamesession.h"
 #if __JHERETIC__ || __JHEXEN__
 #  include "hu_inventory.h"
@@ -1157,10 +1158,10 @@ D_CMD(SpawnMobj)
 
     // First try to find the thing by ID.
     mobjtype_t type;
-    if((type = mobjtype_t(Def_Get(DD_DEF_MOBJ, argv[1], 0))) < 0)
+    if((type = mobjtype_t(Defs().getMobjNum(argv[1]))) < 0)
     {
         // Try to find it by name instead.
-        if((type = mobjtype_t(Def_Get(DD_DEF_MOBJ_BY_NAME, argv[1], 0))) < 0)
+        if((type = mobjtype_t(Defs().getMobjNumForName(argv[1]))) < 0)
         {
             App_Log(DE2_LOG_RES | DE2_LOG_ERROR, "Undefined thing type %s", argv[1]);
             return false;

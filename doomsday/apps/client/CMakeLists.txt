@@ -141,5 +141,20 @@ if (VC_REDIST_LIBS)
     )
 endif ()
 
+if (MSVC)
+    # Bless the build products folder for running the executables.
+    # We have to write a batch file that adds the correct Qt to the path,
+    # or otherwise windeployqt cannot find the correct libraries to deploy.
+    get_filename_component (QT_BINS ${WINDEPLOYQT_COMMAND} DIRECTORY)
+    file (TO_NATIVE_PATH ${QT_BINS} qtBins)
+    file (TO_NATIVE_PATH ${WINDEPLOYQT_COMMAND} winDepCmd)
+    set (fn ${CMAKE_BINARY_DIR}/deployqt.bat)
+    file (WRITE ${fn}
+        "set PATH=\"${qtBins}\";%PATH%
+        \"${winDepCmd}\" -opengl --no-translations \"${DENG_VS_STAGING_DIR}/%1/bin\""
+    )
+    add_custom_command (TARGET client POST_BUILD COMMAND ${fn} ${CMAKE_CFG_INTDIR})
+endif ()
+
 deng_codesign (client)
 deng_cotire (client include/precompiled.h)

@@ -23,6 +23,14 @@
 #include "api_player.h"
 #include <de/String>
 
+#ifdef __CLIENT__
+#  include "clientplayer.h"
+typedef ClientPlayer AppPlayer;
+#else
+#  include "serverplayer.h"
+typedef ServerPlayer AppPlayer;
+#endif
+
 /**
  * Describes a player interaction impulse.
  *
@@ -36,18 +44,15 @@ struct PlayerImpulse
     de::String bindContextName;     ///< Symbolic name of the associated binding context.
 };
 
-struct player_t
-{
-    byte extraLightCounter; // Num tics to go till extraLight is disabled.
-    int extraLight;
-    int targetExtraLight;
-    ddplayer_t shared; // The public player data.
-};
+typedef AppPlayer player_t; // to aid legacy code
 
-extern player_t *viewPlayer;
-extern player_t ddPlayers[DDMAXPLAYERS];
+#ifdef __CLIENT__
+extern ClientPlayer *viewPlayer;
+#endif
 extern int consolePlayer;
 extern int displayPlayer;
+
+AppPlayer *DD_Player(int number);
 
 /**
  * Determine which console is used by the given local player. Local players
@@ -58,6 +63,11 @@ int P_LocalToConsole(int localPlayer);
 /**
  * Determine the local player number used by a particular console. Local
  * players are numbered starting from zero.
+ *
+ * @param playerNum  Console number.
+ *
+ * @return Local player number. Returns -1 if @a playerNum does not correspond
+ * to any local player.
  */
 int P_ConsoleToLocal(int playerNum);
 

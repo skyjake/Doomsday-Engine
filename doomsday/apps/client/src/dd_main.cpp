@@ -59,8 +59,10 @@
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/filesys/fs_util.h>
 #include <doomsday/filesys/sys_direc.h>
+#include <doomsday/resource/manifest.h>
 #include <doomsday/help.h>
 #include <doomsday/paths.h>
+#include <doomsday/library.h>
 
 #ifdef __CLIENT__
 #  include "clientapp.h"
@@ -69,16 +71,13 @@
 #  include "serverapp.h"
 #endif
 #include "dd_loop.h"
-#include "busymode.h"
+#include "busyrunner.h"
 #include "con_config.h"
-#include "library.h"
 #include "sys_system.h"
 #include "edit_bias.h"
 #include "gl/svg.h"
 
 #include "audio/s_main.h"
-
-#include "resource/manifest.h"
 
 #include "world/worldsystem.h"
 #include "world/entitydef.h"
@@ -173,10 +172,6 @@ static void initPathMappings();
 static dint DD_StartupWorker(void *context);
 static dint DD_DummyWorker(void *context);
 static void DD_AutoLoad();
-
-#ifndef WIN32
-extern GETGAMEAPI GetGameAPI;
-#endif
 
 dint isDedicated;
 dint verbose;                      ///< For debug messages (-verbose).
@@ -489,10 +484,12 @@ void App_Error(char const *error, ...)
         dd_vsnprintf(buff, sizeof(buff), error, argptr);
         va_end(argptr);
 
-        if(!BusyMode_InWorkerThread())
+#ifdef __CLIENT__
+        if(!ClientApp::busyRunner().inWorkerThread())
         {
             Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, buff, 0);
         }
+#endif
 
         // Exit immediately, lest we go into an infinite loop.
         exit(1);
@@ -517,12 +514,16 @@ void App_Error(char const *error, ...)
 
     if(BusyMode_Active())
     {
-        BusyMode_WorkerError(buff);
-        if(BusyMode_InWorkerThread())
+        DoomsdayApp::app().busyMode().abort(buff);
+
+#ifdef __CLIENT__
+        if(ClientApp::busyRunner().inWorkerThread())
         {
             // We should not continue to execute the worker any more.
+            // The thread will be terminated imminently.
             forever Thread_Sleep(10000);
         }
+#endif
     }
     else
     {
@@ -532,8 +533,10 @@ void App_Error(char const *error, ...)
 
 void App_AbnormalShutdown(char const *message)
 {
+#ifdef __CLIENT__
     // This is a crash landing, better be safe than sorry.
-    BusyMode_SetAllowed(false);
+    DoomsdayApp::app().busyMode().setTaskRunner(nullptr);
+#endif
 
     Sys_Shutdown();
 
@@ -567,6 +570,11 @@ void App_AbnormalShutdown(char const *message)
     exit(1);
 }
 
+ResourceSystem &App_ResourceSystem()
+{
+    return static_cast<ResourceSystem &>(res::System::get());
+}
+
 InFineSystem &App_InFineSystem()
 {
     if(App::appExists())
@@ -579,30 +587,6 @@ InFineSystem &App_InFineSystem()
 #endif
     }
     throw Error("App_InFineSystem", "App not yet initialized");
-}
-
-ResourceSystem &App_ResourceSystem()
-{
-    if(App::appExists())
-    {
-#ifdef __CLIENT__
-        return ClientApp::resourceSystem();
-#endif
-#ifdef __SERVER__
-        return ServerApp::resourceSystem();
-#endif
-    }
-    throw Error("App_ResourceSystem", "App not yet initialized");
-}
-
-ResourceClass &App_ResourceClass(String className)
-{
-    return App_ResourceSystem().resClass(className);
-}
-
-ResourceClass &App_ResourceClass(resourceclassid_t classId)
-{
-    return App_ResourceSystem().resClass(classId);
 }
 
 WorldSystem &App_WorldSystem()
@@ -761,29 +745,6 @@ static dint loadFilesFromDataGameAuto()
     return numLoaded;
 }
 
-bool DD_ExchangeGamePluginEntryPoints(pluginid_t pluginId)
-{
-    if(pluginId != 0)
-    {
-        // Do the API transfer.
-        GETGAMEAPI fptAdr;
-        if(!(fptAdr = (GETGAMEAPI) DD_FindEntryPoint(pluginId, "GetGameAPI")))
-        {
-            return false;
-        }
-        app.GetGameAPI = fptAdr;
-        DD_InitAPI();
-        Def_GetGameClasses();
-    }
-    else
-    {
-        app.GetGameAPI = 0;
-        DD_InitAPI();
-        Def_GetGameClasses();
-    }
-    return true;
-}
-
 static void loadResource(ResourceManifest &manifest)
 {
     DENG2_ASSERT(manifest.resourceClass() == RC_PACKAGE);
@@ -820,7 +781,6 @@ static dint DD_BeginGameChangeWorker(void *context)
     if(parms.initiatedBusyMode)
     {
         Con_SetProgress(200);
-        BusyMode_WorkerEnd();
     }
 
     return 0;
@@ -879,7 +839,6 @@ static dint DD_LoadGameStartupResourcesWorker(void *context)
     if(parms.initiatedBusyMode)
     {
         Con_SetProgress(200);
-        BusyMode_WorkerEnd();
     }
 
     return 0;
@@ -1114,7 +1073,6 @@ static dint DD_LoadAddonResourcesWorker(void *context)
     if(parms.initiatedBusyMode)
     {
         Con_SetProgress(200);
-        BusyMode_WorkerEnd();
     }
 
     return 0;
@@ -1124,6 +1082,7 @@ static dint DD_ActivateGameWorker(void *context)
 {
     ddgamechange_params_t &parms = *static_cast<ddgamechange_params_t *>(context);
 
+    auto &plugins = DoomsdayApp::plugins();
     ResourceSystem &resSys = App_ResourceSystem();
 
     // Some resources types are located prior to initializing the game.
@@ -1141,15 +1100,15 @@ static dint DD_ActivateGameWorker(void *context)
     if(App_GameLoaded())
     {
         // Any game initialization hooks?
-        DD_CallHooks(HOOK_GAME_INIT, 0, 0);
+        plugins.callHooks(HOOK_GAME_INIT, 0, 0);
 
         if(gx.PreInit)
         {
             DENG2_ASSERT(App_CurrentGame().pluginId() != 0);
 
-            DD_SetActivePluginId(App_CurrentGame().pluginId());
+            plugins.setActivePluginId(App_CurrentGame().pluginId());
             gx.PreInit(App_Games().id(App_CurrentGame()));
-            DD_SetActivePluginId(0);
+            plugins.setActivePluginId(0);
         }
     }
 
@@ -1218,7 +1177,7 @@ static dint DD_ActivateGameWorker(void *context)
     // Invalidate old cmds and init player values.
     for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        player_t *plr = &ddPlayers[i];
+        player_t *plr = DD_Player(i);
 
         plr->extraLight = plr->targetExtraLight = 0;
         plr->extraLightCounter = 0;
@@ -1226,21 +1185,20 @@ static dint DD_ActivateGameWorker(void *context)
 
     if(gx.PostInit)
     {
-        DD_SetActivePluginId(App_CurrentGame().pluginId());
+        plugins.setActivePluginId(App_CurrentGame().pluginId());
         gx.PostInit();
-        DD_SetActivePluginId(0);
+        plugins.setActivePluginId(0);
     }
 
     if(parms.initiatedBusyMode)
     {
         Con_SetProgress(200);
-        BusyMode_WorkerEnd();
     }
 
     return 0;
 }
 
-de::Games &App_Games()
+Games &App_Games()
 {
     if(App::appExists())
     {
@@ -1254,20 +1212,13 @@ de::Games &App_Games()
     throw Error("App_Games", "App not yet initialized");
 }
 
-dd_bool App_GameLoaded()
-{
-    if(!App::appExists()) return false;
-
-    return !App_CurrentGame().isNull();
-}
-
 void App_ClearGames()
 {
     App_Games().clear();
     App::app().setGame(App_Games().nullGame());
 }
 
-static void populateGameInfo(GameInfo &info, de::Game &game)
+static void populateGameInfo(GameInfo &info, Game &game)
 {
     info.identityKey = AutoStr_FromTextStd(game.identityKey().toUtf8().constData());
     info.title       = AutoStr_FromTextStd(game.title().toUtf8().constData());
@@ -1347,7 +1298,7 @@ gameid_t DD_DefineGame(GameDef const *def)
     if(!game) return 0; // Invalid def.
 
     // Add this game to our records.
-    game->setPluginId(DD_ActivePluginId());
+    game->setPluginId(DoomsdayApp::plugins().activePluginId());
     App_Games().add(*game);
     return App_Games().id(*game);
 }
@@ -1367,9 +1318,9 @@ gameid_t DD_GameIdForKey(char const *identityKey)
     return 0; // Invalid id.
 }
 
-de::Game &App_CurrentGame()
+Game &App_CurrentGame()
 {
-    return App::game().as<de::Game>();
+    return DoomsdayApp::currentGame();
 }
 
 bool App_ChangeGame(Game &game, bool allowReload)
@@ -1484,11 +1435,12 @@ bool App_ChangeGame(Game &game, bool allowReload)
         Con_ClearDatabases();
 
         { // Tell the plugin it is being unloaded.
-            void *unloader = DD_FindEntryPoint(App_CurrentGame().pluginId(), "DP_Unload");
+            auto &plugins = DoomsdayApp::plugins();
+            void *unloader = plugins.findEntryPoint(App_CurrentGame().pluginId(), "DP_Unload");
             LOGDEV_MSG("Calling DP_Unload %p") << unloader;
-            DD_SetActivePluginId(App_CurrentGame().pluginId());
+            plugins.setActivePluginId(App_CurrentGame().pluginId());
             if(unloader) ((pluginfunc_t)unloader)();
-            DD_SetActivePluginId(0);
+            plugins.setActivePluginId(0);
         }
 
         // We do not want to load session resources specified on the command line again.
@@ -1551,7 +1503,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
     if(!DD_IsShuttingDown())
     {
         // Re-initialize subsystems needed even when in ringzero.
-        if(!DD_ExchangeGamePluginEntryPoints(game.pluginId()))
+        if(!DoomsdayApp::plugins().exchangeGameEntryPoints(game.pluginId()))
         {
             LOG_WARNING("Game plugin for '%s' is invalid") << game.id();
             LOGDEV_WARNING("Failed exchanging entrypoints with plugin %i")
@@ -1588,16 +1540,16 @@ bool App_ChangeGame(Game &game, bool allowReload)
         ddgamechange_params_t p;
         BusyTask gameChangeTasks[] = {
             // Phase 1: Initialization.
-            { DD_BeginGameChangeWorker,          &p, busyMode, "Loading game...",   200, 0.0f, 0.1f, 0 },
+            { DD_BeginGameChangeWorker,          &p, busyMode, "Loading game...",   200, 0.0f, 0.1f },
 
             // Phase 2: Loading "startup" resources.
-            { DD_LoadGameStartupResourcesWorker, &p, busyMode, nullptr,                200, 0.1f, 0.3f, 0 },
+            { DD_LoadGameStartupResourcesWorker, &p, busyMode, nullptr,             200, 0.1f, 0.3f },
 
             // Phase 3: Loading "add-on" resources.
-            { DD_LoadAddonResourcesWorker,       &p, busyMode, "Loading add-ons...", 200, 0.3f, 0.7f, 0 },
+            { DD_LoadAddonResourcesWorker,       &p, busyMode, "Loading add-ons...", 200, 0.3f, 0.7f },
 
             // Phase 4: Game activation.
-            { DD_ActivateGameWorker,             &p, busyMode, "Starting game...",  200, 0.7f, 1.0f, 0 }
+            { DD_ActivateGameWorker,             &p, busyMode, "Starting game...",  200, 0.7f, 1.0f }
         };
 
         p.initiatedBusyMode = !BusyMode_Active();
@@ -1606,11 +1558,12 @@ bool App_ChangeGame(Game &game, bool allowReload)
         {
             // Tell the plugin it is being loaded.
             /// @todo Must this be done in the main thread?
-            void *loader = DD_FindEntryPoint(App_CurrentGame().pluginId(), "DP_Load");
+            auto &plugins = DoomsdayApp::plugins();
+            void *loader = plugins.findEntryPoint(App_CurrentGame().pluginId(), "DP_Load");
             LOGDEV_MSG("Calling DP_Load %p") << loader;
-            DD_SetActivePluginId(App_CurrentGame().pluginId());
+            plugins.setActivePluginId(App_CurrentGame().pluginId());
             if(loader) ((pluginfunc_t)loader)();
-            DD_SetActivePluginId(0);
+            plugins.setActivePluginId(0);
         }
 
         /// @todo Kludge: Use more appropriate task names when unloading a game.
@@ -1639,7 +1592,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
         }*/
     }
 
-    DENG_ASSERT(DD_ActivePluginId() == 0);
+    DENG_ASSERT(DoomsdayApp::plugins().activePluginId() == 0);
 
 #ifdef __CLIENT__
     if(!Sys_IsShuttingDown())
@@ -1858,7 +1811,7 @@ static void initialize()
     // Attempt automatic game selection.
     if(!CommandLine_Exists("-noautoselect") || isDedicated)
     {
-        if(de::Game *game = DD_AutoselectGame())
+        if(Game *game = DD_AutoselectGame())
         {
             // An implicit game session profile has been defined.
             // Add all resources specified using -file options on the command line
@@ -2077,11 +2030,11 @@ static dint DD_StartupWorker(void * /*context*/)
     Con_SetProgress(10);
 
     // Any startup hooks?
-    DD_CallHooks(HOOK_STARTUP, 0, 0);
+    DoomsdayApp::plugins().callHooks(HOOK_STARTUP, 0, 0);
     Con_SetProgress(20);
 
     // Was the change to userdir OK?
-    if(CommandLine_CheckWith("-userdir", 1) && !app.usingUserDir)
+    if(CommandLine_CheckWith("-userdir", 1) && !DoomsdayApp::app().isUsingUserDir())
     {
         LOG_WARNING("User directory not found (check -userdir)");
     }
@@ -2161,7 +2114,7 @@ static dint DD_StartupWorker(void * /*context*/)
     }
     Con_SetProgress(199);
 
-    DD_CallHooks(HOOK_INIT, 0, 0);  // Any initialization hooks?
+    DoomsdayApp::plugins().callHooks(HOOK_INIT, 0, 0);  // Any initialization hooks?
     Con_SetProgress(200);
 
 #ifdef WIN32
@@ -2169,7 +2122,6 @@ static dint DD_StartupWorker(void * /*context*/)
     CoUninitialize();
 #endif
 
-    BusyMode_WorkerEnd();
     return 0;
 }
 
@@ -2180,7 +2132,6 @@ static dint DD_StartupWorker(void * /*context*/)
 static dint DD_DummyWorker(void * /*context*/)
 {
     Con_SetProgress(200);
-    BusyMode_WorkerEnd();
     return 0;
 }
 
@@ -2257,7 +2208,6 @@ static dint DD_UpdateEngineStateWorker(void *context)
     if(initiatedBusyMode)
     {
         Con_SetProgress(200);
-        BusyMode_WorkerEnd();
     }
     return 0;
 }
@@ -2266,12 +2216,11 @@ void DD_UpdateEngineState()
 {
     LOG_MSG("Updating engine state...");
 
-    BusyMode_FreezeGameForBusyMode();
-
     // Stop playing sounds and music.
     S_Reset();
 
 #ifdef __CLIENT__
+    BusyMode_FreezeGameForBusyMode();
     GL_SetFilter(false);
     Demo_StopPlayback();
 #endif
@@ -2383,7 +2332,7 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
 #endif
     {&isDedicated, 0},
     {&novideo, 0},
-    {&defs.mobjs.count.num, 0},
+    {0, 0}, // &defs.mobjs.count.num
     {&gotFrame, 0},
 #ifdef __CLIENT__
     {&playback, 0},
@@ -2441,11 +2390,15 @@ dint DD_GetInteger(dint ddvalue)
     case DD_USING_HEAD_TRACKING:
         return vrCfg().mode() == VRConfig::OculusRift && vrCfg().oculusRift().isReady();
 #endif
+            
+    case DD_NUMMOBJTYPES:
+        return ::defs.things.size();
 
     case DD_MAP_MUSIC:
         if(App_WorldSystem().hasMap())
         {
-            return Def_GetMusicNum(App_WorldSystem().map().mapInfo().gets("music").toUtf8().constData());
+            Record const &mapInfo = App_WorldSystem().map().mapInfo();
+            return ::defs.getMusicNum(mapInfo.gets("music").toUtf8().constData());
         }
         return -1;
 
@@ -3181,7 +3134,6 @@ static void consoleRegister()
     C_CMD("reset",          "",     Reset);
     C_CMD("reload",         "",     ReloadGame);
     C_CMD("unload",         "*",    Unload);
-    C_CMD("listmobjtypes",  "",     ListMobjs);
     C_CMD("write",          "s",    WriteConsole);
 
 #ifdef DENG2_DEBUG
@@ -3189,6 +3141,7 @@ static void consoleRegister()
 #endif
 
     DD_RegisterLoop();
+    Def_ConsoleRegister();
     FS1::consoleRegister();
     Con_Register();
     Games::consoleRegister();

@@ -4,10 +4,12 @@ cmake_minimum_required (VERSION 3.1)
 project (DENG_LIBGUI)
 include (../../cmake/Config.cmake)
 
-set (ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL "Build assimp tools")
+set (ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL "Assimp: Build tools" FORCE)
+set (ASSIMP_BUILD_TESTS OFF CACHE BOOL "Assimp: Build tests" FORCE)
 set (ASSIMP_LIB_INSTALL_DIR ${DENG_INSTALL_PLUGIN_DIR}
     CACHE PATH "libassimp install directory" FORCE
 )
+set (BUILD_SHARED_LIBS OFF CACHE BOOL "Assimp: Shared library" FORCE)
 add_subdirectory (../../external/assimp assimp)
 set_property (TARGET assimp PROPERTY FOLDER Libraries)
 

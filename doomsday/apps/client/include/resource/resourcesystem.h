@@ -16,11 +16,22 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef DENG_RESOURCESYSTEM_H
-#define DENG_RESOURCESYSTEM_H
+#ifndef RESOURCESYSTEM_H
+#define RESOURCESYSTEM_H
 
+#include <QList>
+#include <QMap>
+#include <QSet>
+#include <de/Error>
+#include <de/Record>
+#include <de/String>
+#include <de/System>
 #include <doomsday/defs/ded.h>
-#include <doomsday/resource/resourceclass.h>
+#include <doomsday/filesys/wad.h>
+#include <doomsday/filesys/zip.h>
+#include <doomsday/uri.h>
+#include <doomsday/resource/system.h>
+
 #include "resource/animgroup.h"
 #include "resource/colorpalette.h"
 #include "MapDef"
@@ -33,21 +44,12 @@
 #  include "Model"
 #  include "ModelDef"
 #endif
+
 #include "Material"
 #include "MaterialScheme"
-#include "Sprite"
 #include "Texture"
 #include "TextureScheme"
 #include "resource/rawtexture.h"
-#include <doomsday/filesys/wad.h>
-#include <doomsday/filesys/zip.h>
-#include <doomsday/uri.h>
-#include <de/Error>
-#include <de/String>
-#include <de/System>
-#include <QList>
-#include <QMap>
-#include <QSet>
 
 /**
  * Logical resources; materials, packages, textures, etc...
@@ -81,12 +83,9 @@
  *
  * @ingroup resource
  */
-class ResourceSystem : public de::System
+class ResourceSystem : public res::System
 {
 public:
-    /// An unknown resource class identifier was specified. @ingroup errors
-    DENG2_ERROR(UnknownResourceClassError);
-
     /// An unknown resource scheme was referenced. @ingroup errors
     DENG2_ERROR(UnknownSchemeError);
 
@@ -122,7 +121,7 @@ public:
     typedef QList<AbstractFont *> AllFonts;
 #endif
 
-    typedef QList<Sprite *> SpriteSet;
+    typedef QMap<de::dint, de::Record> SpriteSet;  ///< frame => Sprite
     typedef de::PathTreeT<MapDef> MapDefs;
 
 public:
@@ -132,66 +131,40 @@ public:
      */
     ResourceSystem();
 
-    // System.
-    void timeChanged(de::Clock const &);
-
-    /**
-     * Lookup a ResourceClass by symbolic @a name.
-     */
-    ResourceClass &resClass(de::String name);
-
-    /**
-     * Lookup a ResourceClass by @a id.
-     * @todo Refactor away.
-     */
-    ResourceClass &resClass(resourceclassid_t id);
-
-    /**
-     * Gets the path from "Config.resource.iwadFolder" and makes it the sole override
-     * path for the Packages scheme.
-     */
-    void updateOverrideIWADPathFromConfig();
-
     void clearAllResources();
     void clearAllRuntimeResources();
     void clearAllSystemResources();
 
     /**
-     * Returns @c true iff a sprite exists for the specified @a spriteId and @a frame;
-     *
-     * @param spriteId  Unique identifier of the sprite set.
-     * @param frame     Frame number from the set to lookup.
+     * Returns @c true if a Sprite exists with given unique @a id and @a frame number.
      */
-    bool hasSprite(spritenum_t spriteId, int frame);
+    bool hasSprite(spritenum_t id, de::dint frame);
 
     /**
-     * Lookup a sprite by unique identifier & frame number.
+     * Lookup a Sprite by it's unique @a id and @a frame number.
      *
      * @see hasSprite(), spritePtr()
      */
-    Sprite &sprite(spritenum_t spriteId, int frame);
+    de::Record &sprite(spritenum_t id, de::dint frame);
 
     /**
      * Returns a pointer to the identified Sprite.
      *
      * @see hasSprite()
      */
-    inline Sprite *spritePtr(spritenum_t spriteId, int frame) {
-        return hasSprite(spriteId, frame)? &sprite(spriteId, frame) : 0;
+    inline de::Record *spritePtr(spritenum_t id, de::dint frame) {
+        return hasSprite(id, frame) ? &sprite(id, frame) : nullptr;
     }
 
     /**
-     * Lookup the sprite set for the specified @a spriteId.
-     *
-     * @param spriteId  Unique identifier of the sprite set.
-     * @return  The identified SpriteSet.
+     * Returns the SpriteSet associated with the given unique @a id.
      */
-    SpriteSet const &spriteSet(spritenum_t spriteId);
+    SpriteSet const &spriteSet(spritenum_t id);
 
     /**
-     * Returns the total number of sprite @em sets.
+     * Returns the total number of SpriteSets.
      */
-    int spriteCount();
+    de::dint spriteCount();
 
     /**
      * Determines if a material exists for a @a path.
@@ -223,7 +196,7 @@ public:
      */
     inline Material *materialPtr(de::Uri const &path) {
         if(hasMaterialManifest(path)) return materialManifest(path).materialPtr();
-        return 0;
+        return nullptr;
     }
 
     /**
@@ -254,7 +227,7 @@ public:
     /**
      * Returns the total number of unique materials in the collection.
      */
-    int materialCount() const;
+    de::dint materialCount() const;
 
     /**
      * Returns @c true iff a MaterialScheme exists with the symbolic @a name.
@@ -276,7 +249,7 @@ public:
     /**
      * Returns the total number of material manifest schemes in the collection.
      */
-    int materialSchemeCount() const;
+    de::dint materialSchemeCount() const;
 
     /**
      * Iterate through all the material resource schemes of the resource system.
@@ -301,7 +274,7 @@ public:
     /**
      * Lookup a material manifest group by unique @a number.
      */
-    MaterialManifestGroup &materialGroup(int number) const;
+    MaterialManifestGroup &materialGroup(de::dint number) const;
 
     /**
      * Create a new (empty) material manifest group.
@@ -321,7 +294,7 @@ public:
     /**
      * Returns the total number of material manifest groups in the collection.
      */
-    inline int materialGroupCount() const { return allMaterialGroups().count(); }
+    inline de::dint materialGroupCount() const { return allMaterialGroups().count(); }
 
     /**
      * Declare a material in the collection, producing a manifest for a logical
@@ -425,7 +398,7 @@ public:
     /**
      * Returns the total number of manifest schemes in the collection.
      */
-    inline int textureSchemeCount() const {
+    inline de::dint textureSchemeCount() const {
         return allTextureSchemes().count();
     }
 
@@ -468,7 +441,7 @@ public:
      */
     inline de::TextureManifest &declareTexture(de::Uri const &uri,
         de::Texture::Flags flags, de::Vector2i const &dimensions,
-        de::Vector2i const &origin, int uniqueId, de::Uri const *resourceUri = 0)
+        de::Vector2i const &origin, de::dint uniqueId, de::Uri const *resourceUri = nullptr)
     {
         return textureScheme(uri.scheme())
                    .declare(uri.path(), flags, dimensions, origin, uniqueId,
@@ -519,7 +492,7 @@ public:
     /**
      * Returns the total number of resource manifests in the collection.
      */
-    uint fontCount() const { return allFonts().count(); }
+    de::duint fontCount() const { return allFonts().count(); }
 
     /**
      * Find a resource manifest.
@@ -562,7 +535,7 @@ public:
     /**
      * Returns the total number of manifest schemes in the collection.
      */
-    inline int fontSchemeCount() const { return allFontSchemes().count(); }
+    inline de::dint fontSchemeCount() const { return allFontSchemes().count(); }
 
     /**
      * Clear all resources in all schemes.
@@ -599,7 +572,7 @@ public:
      *
      * @return  Index of the definition; otherwise @c -1 if @a modelDef is unknown.
      */
-    int indexOf(ModelDef const *modelDef);
+    de::dint indexOf(ModelDef const *modelDef);
 
     /**
      * Convenient method of looking up a concrete model resource in the collection
@@ -625,7 +598,7 @@ public:
      *
      * @see modelDefCount()
      */
-    ModelDef &modelDef(int index);
+    ModelDef &modelDef(de::dint index);
 
     /**
      * Lookup a model definition by it's unique @a id. O(n)
@@ -644,19 +617,19 @@ public:
      *                    for a given mobj state. The selector determines which
      *                    is used according to some external selection criteria.
      *
-     * @return  Found model definition; otherwise @c 0.
+     * @return  Found model definition; otherwise @c nullptr.
      */
-    ModelDef *modelDefForState(int stateIndex, int select = 0);
+    ModelDef *modelDefForState(de::dint stateIndex, de::dint select = 0);
 
     /**
      * Returns the total number of model definitions in the system.
      *
      * @see modelDef()
      */
-    int modelDefCount() const;
+    de::dint modelDefCount() const;
 
     /// @todo Refactor away. Used for animating particle/sky models.
-    void setModelDefFrame(ModelDef &modelDef, int frame);
+    void setModelDefFrame(ModelDef &modelDef, de::dint frame);
 
     /**
      * Release all GL-textures in all schemes.
@@ -703,8 +676,8 @@ public:
      * @return  The interned copy of the rationalized specification.
      */
     de::MaterialVariantSpec const &materialSpec(MaterialContextId contextId,
-        int flags, byte border, int tClass, int tMap, int wrapS, int wrapT,
-        int minFilter, int magFilter, int anisoFilter, bool mipmapped,
+        de::dint flags, byte border, de::dint tClass, de::dint tMap, de::dint wrapS, de::dint wrapT,
+        de::dint minFilter, de::dint magFilter, de::dint anisoFilter, bool mipmapped,
         bool gammaCorrection, bool noStretch, bool toAlpha);
 
     /**
@@ -720,9 +693,9 @@ public:
      * @return  The interned copy of the rationalized specification.
      */
     TextureVariantSpec const &textureSpec(texturevariantusagecontext_t tc,
-        int flags, byte border, int tClass, int tMap, int wrapS, int wrapT, int minFilter,
-        int magFilter, int anisoFilter, dd_bool mipmapped, dd_bool gammaCorrection,
-        dd_bool noStretch, dd_bool toAlpha);
+        de::dint flags, byte border, de::dint tClass, de::dint tMap, de::dint wrapS, de::dint wrapT,
+        de::dint minFilter, de::dint magFilter, de::dint anisoFilter,
+        dd_bool mipmapped, dd_bool gammaCorrection, dd_bool noStretch, dd_bool toAlpha);
 
     /**
      * Prepare a TextureVariantSpecification according to usage context. If the
@@ -730,7 +703,7 @@ public:
      *
      * @return  A rationalized and valid TextureVariantSpecification.
      */
-    TextureVariantSpec &detailTextureSpec(float contrast);
+    TextureVariantSpec &detailTextureSpec(de::dfloat contrast);
 
     AbstractFont *newFontFromDef(ded_compositefont_t const &def);
     AbstractFont *newFontFromFile(de::Uri const &uri, de::String filePath);
@@ -763,12 +736,12 @@ public:
     /**
      * Returns the total number of MapDefs in the system.
      */
-    inline int mapDefCount() const { return allMapDefs().size(); }
+    inline de::dint mapDefCount() const { return allMapDefs().size(); }
 
     /**
      * Returns the total number of animation/precache groups.
      */
-    int animGroupCount();
+    de::dint animGroupCount();
 
     /**
      * Destroys all the animation groups.
@@ -780,19 +753,19 @@ public:
      *
      * @param flags  @ref animationGroupFlags
      */
-    de::AnimGroup &newAnimGroup(int flags);
+    de::AnimGroup &newAnimGroup(de::dint flags);
 
     /**
      * Returns the AnimGroup associated with @a uniqueId (1-based); otherwise @c 0.
      */
-    de::AnimGroup *animGroup(int uniqueId);
+    de::AnimGroup *animGroup(de::dint uniqueId);
 
     de::AnimGroup *animGroupForTexture(de::TextureManifest const &textureManifest);
 
     /**
      * Returns the total number of color palettes.
      */
-    int colorPaletteCount() const;
+    de::dint colorPaletteCount() const;
 
     /**
      * Destroys all the color palettes.
@@ -885,11 +858,6 @@ public:
 #endif // __CLIENT__
 
     /**
-     * Returns the native path of the root of the saved session repository
-     */
-    de::NativePath nativeSavePath();
-
-    /**
      * Utility for scheduling legacy savegame conversion(s) (delegated to background Tasks).
      *
      * @param gameId      Identity key of the game and corresponding subfolder name within
@@ -936,4 +904,4 @@ DENG_EXTERN_C byte texGammaLut[256];
 
 void R_BuildTexGammaLut();
 
-#endif // DENG_RESOURCESYSTEM_H
+#endif  // RESOURCESYSTEM_H

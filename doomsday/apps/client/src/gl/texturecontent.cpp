@@ -1,7 +1,7 @@
 /** @file texturecontent.cpp  GL-texture content.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,20 +21,18 @@
 #include "de_platform.h"
 #include "gl/texturecontent.h"
 
-#include "de_console.h"
-#include "dd_def.h" // texGamma
-#include "dd_main.h" // App_ResourceSystem()
+#include <cstring>
+#include <de/concurrency.h>
+#include <de/memory.h>
+#include <de/GLInfo>
+#include "dd_def.h"  // texGamma
+#include "dd_main.h"  // App_ResourceSystem()
 #include "sys_system.h"
 
 #include "gl/gl_main.h"
 #include "gl/gl_tex.h"
 
-#include "render/rend_main.h" // misc global vars awaiting new home
-
-#include <de/GLInfo>
-#include <de/memory.h>
-#include <de/concurrency.h>
-#include <cstring>
+#include "render/rend_main.h"  // misc global vars awaiting new home
 
 using namespace de;
 

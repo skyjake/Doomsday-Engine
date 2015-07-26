@@ -1,6 +1,6 @@
 /** @file p_inventory.cpp  Common code for player inventory.
  *
- * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2009-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -27,6 +27,7 @@
 #include "d_net.h"
 #include "d_netcl.h"
 #include "g_common.h"
+#include "g_defs.h"
 #include "gamesession.h"
 #include "hu_inventory.h"
 #include "player.h"
@@ -276,28 +277,15 @@ def_invitem_t const *P_GetInvItemDef(inventoryitemtype_t type)
     return itemDefForType(type);
 }
 
-static acfnptr_t getActionPtr(char const *name)
-{
-    if(name && name[0])
-    {
-        for(actionlink_t *link = actionlinks; link->name; link++)
-        {
-            if(!strcmp(name, link->name))
-                return link->func;
-        }
-    }
-    return 0;
-}
-
 void P_InitInventory()
 {
     de::zap(invItems);
 
     for(int i = 0; i < NUM_INVENTORYITEM_TYPES - 1; ++i)
     {
+        invitem_t *data          = &invItems[i];
         inventoryitemtype_t type = inventoryitemtype_t(IIT_FIRST + i);
         def_invitem_t const *def = P_GetInvItemDef(type);
-        invitem_t *data          = &invItems[i];
 
         // Skip items unavailable for the current game mode.
         if(!(def->gameModeBits & gameModeBits))
@@ -305,7 +293,7 @@ void P_InitInventory()
 
         data->type     = type;
         data->niceName = textenum_t(Defs().getTextNum(def->niceName));
-        data->action   = getActionPtr(def->action);
+        Def_Get(DD_DEF_ACTION, def->action, &data->action);
         data->useSnd   = sfxenum_t(Defs().getSoundNum(def->useSnd));
         data->patchId  = R_DeclarePatch(def->patch);
     }

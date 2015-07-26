@@ -1,7 +1,7 @@
 /** @file image.cpp  Image objects and related routines.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,7 +21,6 @@
 #include "de_platform.h"
 
 #include "resource/image.h"
-#include "de_console.h"
 #include "de_filesys.h"
 #include "dd_main.h"
 #include "m_misc.h"

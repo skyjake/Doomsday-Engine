@@ -130,8 +130,6 @@ viewport_t const *R_CurrentViewPort();
  */
 void R_UseViewPort(viewport_t const *vp);
 
-viewdata_t const *R_ViewData(int consoleNum);
-
 void R_UpdateViewer(int consoleNum);
 
 void R_ResetViewer();

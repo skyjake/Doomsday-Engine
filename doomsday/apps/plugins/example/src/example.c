@@ -31,7 +31,6 @@
  * (see the bottom of this source file).
  */
 DENG_USING_API(Con);
-DENG_USING_API(Plug);
 
 /**
  * This function will be called ASAP after Doomsday has completed startup.
@@ -79,7 +78,6 @@ DENG_EXTERN_C void DP_Initialize(void)
  * public APIs.
  */
 DENG_DECLARE_API(Con);
-DENG_DECLARE_API(Plug);
 
 /*
  * The API exchange will guarantee that we get the correct version of each API.
@@ -91,5 +89,4 @@ DENG_DECLARE_API(Plug);
  */
 DENG_API_EXCHANGE(
     DENG_GET_API(DE_API_CONSOLE, Con);
-    DENG_GET_API(DE_API_PLUGIN, Plug);
 )

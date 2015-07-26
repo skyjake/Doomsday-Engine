@@ -23,15 +23,10 @@
 #ifndef LIBDEHREAD_DEHREAD_H
 #define LIBDEHREAD_DEHREAD_H
 
-/**
- * @attention @todo This plugin requires access to the internal definition arrays.
- * This dependency should be removed entirely, by making this plugin modify the
- * definitions via a public API provided by the engine.
- */
 #include <doomsday/defs/ded.h>
 struct font_s;
 
-#define DENG_INTERNAL_DATA_ACCESS
+//#define DENG_INTERNAL_DATA_ACCESS
 #include <doomsday.h>
 
 #include <de/libcore.h>
@@ -45,12 +40,11 @@ extern ded_t *ded; // @todo Remove me.
 int const NUMSPRITES = 138;
 int const NUMSTATES  = 968;
 extern ded_sprid_t  origSpriteNames[NUMSPRITES];
-extern ded_funcid_t origActionNames[NUMSTATES];
+extern de::String origActionNames[NUMSTATES];
 
 DENG_USING_API(Base);
 DENG_USING_API(Con);
 DENG_USING_API(Def);
 DENG_USING_API(F);
-DENG_USING_API(Plug);
 
 #endif // LIBDEHREAD_DEHREAD_H

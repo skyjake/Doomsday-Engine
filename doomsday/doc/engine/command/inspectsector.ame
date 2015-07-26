@@ -1,0 +1,6 @@
+@summary{
+    Print detailed information about a Sector to the console.
+}
+@description{
+    Params: inspectsector (index) @cbr For example, 'inspectsector 29'.
+}

@@ -20,14 +20,18 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_DEFINITIONS_MAIN_H
-#define LIBDENG_DEFINITIONS_MAIN_H
+#ifndef DEFINITIONS_MAIN_H
+#define DEFINITIONS_MAIN_H
+
+#ifndef __cplusplus
+#  error "def_main.h requires C++"
+#endif
 
 #include <vector>
-#include <doomsday/defs/ded.h>
+#include <de/String>
+#include <doomsday/defs/ded.h>  // ded_t
 #include <doomsday/defs/dedtypes.h>
-#include <de/stringarray.h>
-#include "Material"
+#include <doomsday/uri.h>
 
 template <typename PODType>
 struct Array : public std::vector<PODType>
@@ -75,12 +79,8 @@ private:
     PODType *_elements;
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-// the actual classes are game-side
-struct xgclass_s;
+extern ded_t defs;  ///< Main definitions database (internal).
+struct xgclass_s;   ///< @note The actual classes are on game side.
 
 struct sfxinfo_t
 {
@@ -100,8 +100,6 @@ struct sfxinfo_t
     ddstring_t external;  ///< Path to external file.
 };
 
-extern ded_t defs;  ///< Main definitions database (internal).
-
 struct stateinfo_t
 {
     mobjinfo_t *owner;
@@ -115,7 +113,6 @@ struct stateinfo_t
  */
 struct RuntimeDefs
 {
-    Array<sprname_t>   sprNames;   ///< Sprite name list.
     Array<mobjinfo_t>  mobjInfo;   ///< Map object info database.
     Array<state_t>     states;     ///< State list.
     Array<stateinfo_t> stateInfo;
@@ -128,74 +125,47 @@ struct RuntimeDefs
 extern RuntimeDefs runtimeDefs;
 
 /**
- * Initializes the definition databases.
+ * Register the console commands and/or variables of this module.
  */
-void Def_Init(void);
+void Def_ConsoleRegister();
 
 /**
- * Retrieves the XG Class list from the Game.
- * XGFunc links are provided by the Game, who owns the actual
- * XG classes and their functions.
+ * Initializes the definition databases.
  */
-int Def_GetGameClasses(void);
+void Def_Init();
+
+/**
+ * Destroy databases.
+ */
+void Def_Destroy();
 
 /**
  * Finish definition database initialization. Initialization is split into two
  * phases either side of the texture manager, this being the post-phase.
  */
-void Def_PostInit(void);
-
-/**
- * Destroy databases.
- */
-void Def_Destroy(void);
+void Def_PostInit();
 
 /**
  * Reads the specified definition files, and creates the sprite name,
  * state, mobjinfo, sound, music, text and mapinfo databases accordingly.
  */
-void Def_Read(void);
+void Def_Read();
 
-int Def_GetMobjNum(char const *id);
-int Def_GetMobjNumForName(char const *name);
-char const *Def_GetMobjName(int num);
-
-state_t *Def_GetState(int num);
-int Def_GetStateNum(char const *id);
-char const *Def_GetStateName(state_t *state);
-
-int Def_GetActionNum(char const *id);
+de::String Def_GetStateName(state_t *state);
 
 /**
- * Returns the unique sprite number associated with the specified sprite @a name;
- * otherwise @c -1 if not found.
+ * Can we reach 'snew' if we start searching from 'sold'?
+ * Take a maximum of 16 steps.
  */
-spritenum_t Def_GetSpriteNum(char const *name);
+bool Def_SameStateSequence(state_t *snew, state_t *sold);
 
-int Def_GetModelNum(char const *id);
-int Def_GetMusicNum(char const *id);
-int Def_GetSoundNum(char const *id);
-ded_value_t *Def_GetValueById(char const *id);
-ded_value_t *Def_GetValueByUri(Uri const *uri);
 ded_compositefont_t *Def_GetCompositeFont(char const *uri);
+ded_ptcgen_t *Def_GetGenerator(struct uri_s const *uri);
+ded_ptcgen_t *Def_GetGenerator(de::Uri const &uri);
+ded_ptcgen_t *Def_GetDamageGenerator(int mobjType);
 ded_light_t *Def_GetLightDef(int spr, int frame);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-spritenum_t Def_GetSpriteNum(de::String const &name);
-
-ded_ptcgen_t *Def_GetGenerator(Uri const *uri);
-ded_ptcgen_t *Def_GetGenerator(de::Uri const &uri);
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-ded_ptcgen_t *Def_GetDamageGenerator(int mobjType);
-
-int Def_EvalFlags(char const *string);
+state_t *Def_GetState(int num);
 
 /**
  * @return  @c true= the definition was found.
@@ -208,42 +178,4 @@ int Def_Get(int type, char const *id, void *out);
  */
 int Def_Set(int type, int index, int value, void const *ptr);
 
-/**
- * Can we reach 'snew' if we start searching from 'sold'?
- * Take a maximum of 16 steps.
- */
-dd_bool Def_SameStateSequence(state_t *snew, state_t *sold);
-
-/**
- * Compiles a list of all the defined mobj types. Indices in this list
- * match those in the @c mobjInfo array.
- *
- * @return StringArray instance. Caller gets ownership.
- */
-StringArray *Def_ListMobjTypeIDs(void);
-
-/**
- * Compiles a list of all the defined mobj states. Indices in this list
- * match those in the @c states array.
- *
- * @return StringArray instance. Caller gets ownership.
- */
-StringArray *Def_ListStateIDs(void);
-
-/**
- * Returns @c true iff @a def is compatible with the specified context.
- */
-bool Def_IsAllowedReflection(ded_reflection_t const *def, /*bool hasExternal,*/ bool isCustom);
-
-/**
- * Returns @c true iff @a def is compatible with the specified context.
- */
-bool Def_IsAllowedDetailTex(ded_detailtexture_t const *def, /*bool hasExternal,*/ bool isCustom);
-
-D_CMD(ListMobjs);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif  // LIBDENG_DEFINITIONS_MAIN_H
+#endif  // DEFINITIONS_MAIN_H

@@ -22,6 +22,11 @@
 #include "common.h"
 #include "d_netsv.h"
 
+#include <cctype>
+#include <cstdio>
+#include <cstring>
+#include <de/mathutil.h>
+
 #include "d_net.h"
 #include "gamesession.h"
 #include "player.h"
@@ -30,6 +35,7 @@
 #include "mobj.h"
 #include "p_actor.h"
 #include "g_common.h"
+#include "g_defs.h"
 #include "p_tick.h"
 #include "p_start.h"
 #include "p_inventory.h"
@@ -37,11 +43,6 @@
 #ifdef __JHEXEN__
 #  include "s_sequence.h"
 #endif
-
-#include <de/mathutil.h>
-#include <cctype>
-#include <cstdio>
-#include <cstring>
 
 using namespace de;
 using namespace common;

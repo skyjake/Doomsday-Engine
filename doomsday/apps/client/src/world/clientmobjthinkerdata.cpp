@@ -1,6 +1,7 @@
 /** @file clientmobjthinkerdata.cpp  Private client-side data for mobjs.
  *
- * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -16,14 +17,15 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#include "de_base.h"
 #include "world/clientmobjthinkerdata.h"
+
+#include <QFlags>
+#include "clientapp.h"
+#include "dd_loop.h"
 #include "render/modelrenderer.h"
 #include "render/mobjanimator.h"
 #include "world/generator.h"
-#include "clientapp.h"
-#include "dd_loop.h"
-#include "def_main.h"
-#include <QFlags>
 
 using namespace de;
 
@@ -45,6 +47,7 @@ DENG2_PIMPL(ClientMobjThinkerData)
     std::unique_ptr<RemoteSync> sync;
     std::unique_ptr<MobjAnimator> animator;
     Matrix4f modelMatrix;
+    gl::Cull modelCull = gl::Back;
 
     Instance(Public *i) : Base(i)
     {}
@@ -59,7 +62,7 @@ DENG2_PIMPL(ClientMobjThinkerData)
 
     String thingName() const
     {
-        return Def_GetMobjName(self.mobj()->type);
+        return ::defs.getMobjName(self.mobj()->type);
     }
 
     String stateName() const
@@ -101,13 +104,17 @@ DENG2_PIMPL(ClientMobjThinkerData)
             animator.reset(new MobjAnimator(modelId(), model));
 
             // The basic transformation of the model.
-            modelMatrix = loaded.second->as<ModelRenderer::AuxiliaryData>().transformation;
+            auto const &aux = loaded.second->as<ModelRenderer::AuxiliaryData>();
+            modelCull = aux.cull;
+            modelMatrix = aux.transformation;
 
             Vector3f dims = modelMatrix * model.dimensions();
 
             // Scale to thing height.
-            // TODO: This should be optional (but the default behavior).
-            modelMatrix = Matrix4f::scale(self.mobj()->height / dims.y) * modelMatrix;
+            if(aux.autoscaleToThingHeight)
+            {
+                modelMatrix = Matrix4f::scale(self.mobj()->height / dims.y * 1.2f /*aspect correct*/) * modelMatrix;
+            }
         }
     }
 
@@ -213,6 +220,11 @@ ModelDrawable::Animator const *ClientMobjThinkerData::animator() const
 Matrix4f const &ClientMobjThinkerData::modelTransformation() const
 {
     return d->modelMatrix;
+}
+
+gl::Cull ClientMobjThinkerData::modelCullFace() const
+{
+    return d->modelCull;
 }
 
 void ClientMobjThinkerData::stateChanged(state_t const *previousState)

@@ -27,6 +27,8 @@
 
 using namespace de;
 
+static String const VAR_ORDER = "order";
+
 DENG2_PIMPL(DEDRegister)
 , DENG2_OBSERVES(Record, Deletion)
 , DENG2_OBSERVES(Record, Addition)
@@ -34,6 +36,7 @@ DENG2_PIMPL(DEDRegister)
 , DENG2_OBSERVES(Variable, ChangeFrom)
 {
     Record *names;
+    ArrayValue *orderArray;
     struct Key {
         LookupFlags flags;
         Key(LookupFlags const &f = DefaultLookup) : flags(f) {}
@@ -47,7 +50,7 @@ DENG2_PIMPL(DEDRegister)
         names->audienceForDeletion() += this;
 
         // The definitions will be stored here in the original order.
-        names->addArray("order");
+        orderArray = &names->addArray(VAR_ORDER).array();
     }
 
     ~Instance()
@@ -58,14 +61,15 @@ DENG2_PIMPL(DEDRegister)
     void recordBeingDeleted(Record &DENG2_DEBUG_ONLY(record))
     {
         DENG2_ASSERT(names == &record);
-        names = 0;
+        names = nullptr;
+        orderArray = nullptr;
     }
 
     void clear()
     {
         // As a side-effect, the lookups will be cleared, too, as the members of
         // each definition record are deleted.
-        (*names)["order"].value<ArrayValue>().clear();
+        order().clear();
 
 #ifdef DENG2_DEBUG
         DENG2_ASSERT(parents.isEmpty());
@@ -84,12 +88,14 @@ DENG2_PIMPL(DEDRegister)
 
     ArrayValue &order()
     {
-        return (*names)["order"].value<ArrayValue>();
+        DENG2_ASSERT(orderArray != nullptr);
+        return *orderArray;
     }
 
     ArrayValue const &order() const
     {
-        return (*names)["order"].value<ArrayValue>();
+        DENG2_ASSERT(orderArray != nullptr);
+        return *orderArray;
     }
 
     DictionaryValue &lookup(String const &keyName)

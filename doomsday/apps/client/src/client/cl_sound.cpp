@@ -1,7 +1,7 @@
 ﻿/** @file cl_sound.cpp  Clientside sounds.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,10 +20,15 @@
 #include "de_base.h"
 #include "client/cl_sound.h"
 
-#include "de_console.h"
-#include "de_network.h"
-#include "de_play.h"
 #include "de_audio.h"
+
+#include "api_client.h"
+#include "client/cl_player.h"
+#include "network/net_msg.h"
+
+#include "world/map.h"
+#include "world/p_players.h"
+#include "Sector"
 
 using namespace de;
 
@@ -34,7 +39,7 @@ void Cl_ReadSoundDelta(deltatype_t type)
     /// @todo Do not assume the CURRENT map.
     Map &map = App_WorldSystem().map();
 
-    int sound = 0, soundFlags = 0;
+    dint sound = 0, soundFlags = 0;
     mobj_t *cmo = 0;
     thid_t mobjId = 0;
     Sector *sector = 0;
@@ -42,8 +47,8 @@ void Cl_ReadSoundDelta(deltatype_t type)
     LineSide *side = 0;
     mobj_t *emitter = 0;
 
-    uint16_t const deltaId = Reader_ReadUInt16(msgReader);
-    byte const flags       = Reader_ReadByte(msgReader);
+    duint16 const deltaId = Reader_ReadUInt16(::msgReader);
+    byte const flags      = Reader_ReadByte(::msgReader);
 
     bool skip = false;
     if(type == DT_SOUND)
@@ -54,14 +59,14 @@ void Cl_ReadSoundDelta(deltatype_t type)
     else if(type == DT_MOBJ_SOUND) // Mobj as emitter
     {
         mobjId = deltaId;
-        if((cmo = ClMobj_Find(mobjId)) != NULL)
+        if((cmo = ClMobj_Find(mobjId)) != nullptr)
         {
-            ClientMobjThinkerData::RemoteSync* info = ClMobj_GetInfo(cmo);
+            ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(cmo);
             if(info->flags & CLMF_HIDDEN)
             {
                 // We can't play sounds from hidden mobjs, because we
                 // aren't sure exactly where they are located.
-                cmo = NULL;
+                cmo = nullptr;
                 LOG_NET_VERBOSE("Can't find sound emitter ") << mobjId;
             }
             else
@@ -72,7 +77,7 @@ void Cl_ReadSoundDelta(deltatype_t type)
     }
     else if(type == DT_SECTOR_SOUND) // Plane as emitter
     {        
-        int index = deltaId;
+        dint index = deltaId;
         if(!(sector = map.sectorPtr(index)))
         {
             LOG_NET_WARNING("Received sound delta has invalid sector index %i") << index;
@@ -81,7 +86,7 @@ void Cl_ReadSoundDelta(deltatype_t type)
     }
     else if(type == DT_SIDE_SOUND) // Side section as emitter
     {
-        int index = deltaId;
+        dint index = deltaId;
         if(!(side = map.sidePtr(index)))
         {
             LOG_NET_WARNING("Received sound delta has invalid side index %i") << index;
@@ -90,7 +95,7 @@ void Cl_ReadSoundDelta(deltatype_t type)
     }
     else // DT_POLY_SOUND
     {
-        int index = deltaId;
+        dint index = deltaId;
 
         LOG_NET_XVERBOSE("DT_POLY_SOUND: poly=%d") << index;
 
@@ -104,7 +109,7 @@ void Cl_ReadSoundDelta(deltatype_t type)
     if(type != DT_SOUND)
     {
         // The sound ID.
-        sound = Reader_ReadUInt16(msgReader);
+        sound = Reader_ReadUInt16(::msgReader);
     }
 
     if(type == DT_SECTOR_SOUND)
@@ -135,10 +140,10 @@ void Cl_ReadSoundDelta(deltatype_t type)
             emitter = (mobj_t *) &side->bottomSoundEmitter();
     }
 
-    float volume = 1;
+    dfloat volume = 1;
     if(flags & SNDDF_VOLUME)
     {
-        byte b = Reader_ReadByte(msgReader);
+        byte b = Reader_ReadByte(::msgReader);
 
         if(b == 255)
         {
@@ -157,8 +162,7 @@ void Cl_ReadSoundDelta(deltatype_t type)
     }
 
     // The delta has been read. Are we skipping?
-    if(skip)
-        return;
+    if(skip) return;
 
     // Now the entire delta has been read.
     // Should we start or stop a sound?
@@ -167,14 +171,14 @@ void Cl_ReadSoundDelta(deltatype_t type)
         // Do we need to queue this sound?
         if(type == DT_MOBJ_SOUND && !cmo)
         {
-            ClientMobjThinkerData::RemoteSync *info = 0;
-
             // Create a new Hidden clmobj.
             cmo = map.clMobjFor(mobjId, true/*create*/);
-            info = ClMobj_GetInfo(cmo);
+
+            ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(cmo);
             info->flags |= CLMF_HIDDEN | CLMF_SOUND;
-            info->sound = sound;
+            info->sound  = sound;
             info->volume = volume;
+
             // The sound will be started when the clmobj is unhidden.
             return;
         }
@@ -191,7 +195,7 @@ void Cl_ReadSoundDelta(deltatype_t type)
         // from the real player mobj.
         if(cmo && cmo->thinker.id == ClPlayer_State(consolePlayer)->clMobjId)
         {
-            emitter = ddPlayers[consolePlayer].shared.mo;
+            emitter = DD_Player(consolePlayer)->publicData().mo;
         }
 
         // First stop any sounds originating from the same emitter.
@@ -221,21 +225,21 @@ void Cl_Sound()
     /// @todo Do not assume the CURRENT map.
     Map &map = App_WorldSystem().map();
 
-    byte const flags = Reader_ReadByte(msgReader);
+    byte const flags = Reader_ReadByte(::msgReader);
 
     // Sound ID.
-    int sound;
+    dint sound;
     if(flags & SNDF_SHORT_SOUND_ID)
     {
-        sound = Reader_ReadUInt16(msgReader);
+        sound = Reader_ReadUInt16(::msgReader);
     }
     else
     {
-        sound = Reader_ReadByte(msgReader);
+        sound = Reader_ReadByte(::msgReader);
     }
 
     // Is the ID valid?
-    if(sound < 1 || sound >= defs.sounds.size())
+    if(sound < 1 || sound >= ::defs.sounds.size())
     {
         LOGDEV_NET_WARNING("Invalid sound ID %i") << sound;
         return;
@@ -243,10 +247,10 @@ void Cl_Sound()
 
     LOGDEV_NET_XVERBOSE("id %i") << sound;
 
-    int volume = 127;
+    dint volume = 127;
     if(flags & SNDF_VOLUME)
     {
-        volume = Reader_ReadByte(msgReader);
+        volume = Reader_ReadByte(::msgReader);
         if(volume > 127)
         {
             volume = 127;
@@ -256,43 +260,43 @@ void Cl_Sound()
 
     if(flags & SNDF_ID)
     {
-        thid_t  sourceId = Reader_ReadUInt16(msgReader);
-        mobj_t *cmo = ClMobj_Find(sourceId);
-        if(cmo)
+        thid_t sourceId = Reader_ReadUInt16(::msgReader);
+        if(mobj_t *cmob = ClMobj_Find(sourceId))
         {
-            S_LocalSoundAtVolume(sound, cmo, volume / 127.0f);
+            S_LocalSoundAtVolume(sound, cmob, volume / 127.0f);
         }
     }
     else if(flags & SNDF_SECTOR)
     {
-        int num = int(Reader_ReadPackedUInt16(msgReader));
+        auto num = dint( Reader_ReadPackedUInt16(::msgReader) );
         if(num >= map.sectorCount())
         {
             LOG_NET_WARNING("Invalid sector number %i") << num;
             return;
         }
-        mobj_t *mo = (mobj_t *) &map.sector(num).soundEmitter();
-        //S_StopSound(0, mo);
-        S_LocalSoundAtVolume(sound, mo, volume / 127.0f);
+        auto *mob = (mobj_t *) &map.sector(num).soundEmitter();
+        //S_StopSound(0, mob);
+        S_LocalSoundAtVolume(sound, mob, volume / 127.0f);
     }
     else if(flags & SNDF_ORIGIN)
     {
         coord_t pos[3];
-        pos[VX] = Reader_ReadInt16(msgReader);
-        pos[VY] = Reader_ReadInt16(msgReader);
-        pos[VZ] = Reader_ReadInt16(msgReader);
-        S_LocalSoundAtVolumeFrom(sound, NULL, pos, volume / 127.0f);
+        pos[0] = Reader_ReadInt16(::msgReader);
+        pos[1] = Reader_ReadInt16(::msgReader);
+        pos[2] = Reader_ReadInt16(::msgReader);
+        S_LocalSoundAtVolumeFrom(sound, nullptr, pos, volume / 127.0f);
     }
     else if(flags & SNDF_PLAYER)
     {
-        S_LocalSoundAtVolume(sound, ddPlayers[(flags & 0xf0) >> 4].shared.mo,
-                             volume / 127.0f);
+        dint const player = (flags & 0xf0) >> 4;
+        DENG2_ASSERT(player >= 0 && player < DDMAXPLAYERS);
+        S_LocalSoundAtVolume(sound, DD_Player(player)->publicData().mo, volume / 127.0f);
     }
     else
     {
         // Play it from "somewhere".
         LOGDEV_NET_VERBOSE("Unspecified origin for sound %i") << sound;
 
-        S_LocalSoundAtVolume(sound, NULL, volume / 127.0f);
+        S_LocalSoundAtVolume(sound, nullptr, volume / 127.0f);
     }
 }

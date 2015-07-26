@@ -1,10 +1,9 @@
-/** @file sys_network.cpp Low-level network socket routines (deprecated).
- * @ingroup network
+/** @file sys_network.cpp  Low-level network socket routines (deprecated).
  *
  * @todo Remove this source file entirely once dependent code is revised.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -22,7 +21,11 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_console.h"
+#include "de_base.h"
+#include "network/sys_network.h"
+
+#include <doomsday/console/cmd.h>
+#include <doomsday/console/var.h>
 #include "clientapp.h"
 #include "network/net_buf.h"
 

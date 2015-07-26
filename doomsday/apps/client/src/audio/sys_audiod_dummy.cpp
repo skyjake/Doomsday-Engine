@@ -1,7 +1,10 @@
-/** @file
+/** @file sys_audiod_dummy.c  Dummy Audio Driver.
+ *
+ * Used in dedicated server mode, when it's necessary to simulate sound playing
+ * but not actually play anything.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,30 +20,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * sys_audiod_dummy.c: Dummy Audio Driver.
- *
- * Used in dedicated server mode, when it's necessary to simulate
- * sound playing but not actually play anything.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "de_base.h"
-#include "de_console.h"
+#include "audio/audiodriver.h"
+
 #include "de_system.h"
-#include "de_misc.h"
 
 #include "api_audiod.h"
 #include "api_audiod_sfx.h"
-
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 int         DS_DummyInit(void);
 void        DS_DummyShutdown(void);
@@ -59,12 +45,6 @@ void        DS_Dummy_SFX_Setv(sfxbuffer_t* buf, int prop, float* values);
 void        DS_Dummy_SFX_Listener(int prop, float value);
 void        DS_Dummy_SFX_Listenerv(int prop, float* values);
 int         DS_Dummy_SFX_Getv(int prop, void* values);
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 DENG_EXTERN_C audiodriver_t        audiod_dummy;
 DENG_EXTERN_C audiointerface_sfx_t audiod_dummy_sfx;
@@ -92,11 +72,7 @@ audiointerface_sfx_t audiod_dummy_sfx = { {
     DS_Dummy_SFX_Getv
 } };
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static dd_bool inited;
-
-// CODE --------------------------------------------------------------------
 
 /**
  * Initialization of the sound driver.

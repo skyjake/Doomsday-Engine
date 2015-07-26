@@ -35,6 +35,8 @@
 #include "sys_system.h"
 #include "def_main.h"
 
+#include "serverplayer.h"
+
 #if WIN32
 #  include "dd_winit.h"
 #elif UNIX
@@ -51,9 +53,9 @@ static void handleAppTerminate(char const *msg)
 }
 
 DENG2_PIMPL(ServerApp)
+, DENG2_OBSERVES(Plugins, PublishAPI)
 {
     QScopedPointer<ServerSystem> serverSystem;
-    Games games;
     QScopedPointer<ResourceSystem> resourceSys;
     WorldSystem worldSys;
     InFineSystem infineSys;
@@ -62,12 +64,19 @@ DENG2_PIMPL(ServerApp)
         : Base(i)
     {
         serverAppSingleton = thisPublic;
+
+        DoomsdayApp::plugins().audienceForPublishAPI() += this;
     }
 
     ~Instance()
     {
         Sys_Shutdown();
         DD_Shutdown();
+    }
+
+    void publishAPIToPlugin(::Library *plugin)
+    {
+        DD_PublishAPIs(plugin);
     }
 
 #ifdef UNIX
@@ -93,7 +102,9 @@ DENG2_PIMPL(ServerApp)
 };
 
 ServerApp::ServerApp(int &argc, char **argv)
-    : TextApp(argc, argv), d(new Instance(this))
+    : TextApp(argc, argv)
+    , DoomsdayApp([] () -> Player * { return new ServerPlayer; })
+    , d(new Instance(this))
 {   
     novideo = true;
 
@@ -119,7 +130,7 @@ ServerApp::ServerApp(int &argc, char **argv)
     //addSystem(d->infineSys);
 
     // We must presently set the current game manually (the collection is global).
-    setGame(d->games.nullGame());
+    setGame(games().nullGame());
 }
 
 ServerApp::~ServerApp()
@@ -173,7 +184,7 @@ void ServerApp::initialize()
     }
 #endif
 
-    Plug_LoadAll();
+    plugins().loadAll();
 
     DD_FinishInitializationAfterWindowReady();
 }
@@ -197,11 +208,6 @@ InFineSystem &ServerApp::infineSystem()
 ResourceSystem &ServerApp::resourceSystem()
 {
     return *app().d->resourceSys;
-}
-
-Games &ServerApp::games()
-{
-    return app().d->games;
 }
 
 WorldSystem &ServerApp::worldSystem()

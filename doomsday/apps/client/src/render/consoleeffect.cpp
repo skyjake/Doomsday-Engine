@@ -18,6 +18,7 @@
 
 #include "render/consoleeffect.h"
 #include "render/viewports.h"
+#include "world/p_players.h"
 #include "clientapp.h"
 
 using namespace de;
@@ -46,8 +47,7 @@ int ConsoleEffect::console() const
 
 Rectanglei const &ConsoleEffect::viewRect() const
 {
-    viewdata_t const *vd = R_ViewData(d->console);
-    return vd->window;
+    return DD_Player(d->console)->viewport().window;
 }
 
 bool ConsoleEffect::isInited() const

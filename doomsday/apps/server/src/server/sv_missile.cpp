@@ -1,8 +1,7 @@
-/** @file sv_missile.cpp Delta Pool Missile Record.
- * @ingroup server
+/** @file sv_missile.cpp  Delta Pool Missile Record.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,30 +18,12 @@
  */
 
 #include "de_base.h"
-#include "de_console.h"
-#include "de_network.h"
-#include "de_play.h"
+#include "server/sv_missile.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
+#include "server/sv_pool.h"
 
 /**
- * @return              Pointer to the hash chain.
+ * Returns a pointer to the referenced hash chain.
  */
 mislink_t *Sv_MRHash(pool_t *pool, thid_t id)
 {
@@ -50,8 +31,7 @@ mislink_t *Sv_MRHash(pool_t *pool, thid_t id)
 }
 
 /**
- * @return              Pointer to the missile record for the specified ID,
- *                      else if no record exits; NULL.
+ * Returns a pointer to the missile record for the specified ID; otherwise @c nullptr.
  */
 misrecord_t *Sv_MRFind(pool_t *pool, thid_t id)
 {

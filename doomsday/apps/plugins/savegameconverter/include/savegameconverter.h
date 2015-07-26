@@ -35,6 +35,5 @@
 DENG_EXTERN_C void DP_Initialize(void);
 
 DENG_USING_API(Base);
-DENG_USING_API(Plug);
 
 #endif // LIBSAVEGAMECONVERTER_MAIN_H

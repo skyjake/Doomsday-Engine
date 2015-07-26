@@ -39,11 +39,7 @@ using namespace de;
 
 float pspMoveSpeed = 6;
 float cplrThrustMul = 1;
-clplayerstate_t clPlayerStates[DDMAXPLAYERS];
 
-//static int fixSpeed = 15;
-//static float fixPos[3];
-//static int fixTics;
 static float pspY;
 
 // Console player demo momentum (used to smooth out abrupt momentum changes).
@@ -51,38 +47,39 @@ static float cpMom[3][LOCALCAM_WRITE_TICS];
 
 void Cl_InitPlayers()
 {
-    //fixTics = 0;
+    DoomsdayApp::players().forAll([] (Player &plr) {
+        zap(plr.as<ClientPlayer>().clPlayerState());
+        return LoopContinue;
+    });
+
     pspY = 0;
-    de::zap(clPlayerStates);
-    //de::zap(fixPos);
     de::zap(cpMom);
 }
 
 clplayerstate_t *ClPlayer_State(int plrNum)
 {
-    DENG2_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
-    return &clPlayerStates[plrNum];
+    return &DD_Player(plrNum)->clPlayerState();
 }
 
 #undef ClPlayer_ClMobj
 DENG_EXTERN_C struct mobj_s *ClPlayer_ClMobj(int plrNum)
 {
-    DENG2_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
-    return ClMobj_Find(clPlayerStates[plrNum].clMobjId);
+    if(plrNum < 0 || plrNum >= DDMAXPLAYERS) return 0;
+    return ClMobj_Find(ClPlayer_State(plrNum)->clMobjId);
 }
 
 void ClPlayer_UpdateOrigin(int plrNum)
 {
     DENG2_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
 
-    player_t *plr = &ddPlayers[plrNum];
+    player_t *plr = DD_Player(plrNum);
     clplayerstate_t *s = ClPlayer_State(plrNum);
 
-    if(!s->clMobjId || !plr->shared.mo)
+    if(!s->clMobjId || !plr->publicData().mo)
         return;                 // Must have a mobj!
 
     mobj_t *remoteClientMobj = ClMobj_Find(s->clMobjId);
-    mobj_t *localMobj = plr->shared.mo;
+    mobj_t *localMobj = plr->publicData().mo;
 
     // The client mobj is never solid.
     remoteClientMobj->ddFlags &= ~DDMF_SOLID;
@@ -105,9 +102,9 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
     LOG_AS("ClPlayer_ApplyPendingFixes");
 
     clplayerstate_t *state = ClPlayer_State(plrNum);
-    player_t *plr = &ddPlayers[plrNum];
+    player_t *plr = DD_Player(plrNum);
     mobj_t *clmo = ClPlayer_ClMobj(plrNum);
-    ddplayer_t *ddpl = &plr->shared;
+    ddplayer_t *ddpl = &plr->publicData();
     mobj_t *mo = ddpl->mo;
     bool sendAck = false;
 
@@ -148,7 +145,7 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
         // The position is now known.
         ddpl->flags &= ~DDPF_UNDEFINED_ORIGIN;
 
-        Smoother_Clear(clients[plrNum].smoother);
+        Smoother_Clear(DD_Player(plrNum)->smoother());
         ClPlayer_UpdateOrigin(plrNum);
     }
 
@@ -186,8 +183,8 @@ void ClPlayer_HandleFix()
 
     // Target player.
     int plrNum = Reader_ReadByte(msgReader);
-    player_t *plr = &ddPlayers[plrNum];
-    ddplayer_t *ddpl = &plr->shared;
+    player_t *plr = DD_Player(plrNum);
+    ddplayer_t *ddpl = &plr->publicData();
     clplayerstate_t *state = ClPlayer_State(plrNum);
 
     // What to fix?
@@ -237,8 +234,8 @@ void ClPlayer_HandleFix()
 
 void ClPlayer_MoveLocal(coord_t dx, coord_t dy, coord_t z, bool onground)
 {
-    player_t *plr = &ddPlayers[consolePlayer];
-    ddplayer_t *ddpl = &plr->shared;
+    player_t *plr = DD_Player(consolePlayer);
+    ddplayer_t *ddpl = &plr->publicData();
     mobj_t *mo = ddpl->mo;
     if(!mo) return;
 
@@ -297,8 +294,8 @@ void ClPlayer_ReadDelta()
     df |= Reader_ReadByte(msgReader); // Second byte is just flags.
     num &= 0xf; // Clear the upper bits of the number.
 
-    clplayerstate_t *s = &clPlayerStates[num];
-    ddplayer_t *ddpl = &ddPlayers[num].shared;
+    clplayerstate_t *s = ClPlayer_State(num);
+    ddplayer_t *ddpl = &DD_Player(num)->publicData();
 
     if(df & PDF_MOBJ)
     {
@@ -472,7 +469,7 @@ void ClPlayer_ReadDelta()
 
 mobj_t *ClPlayer_LocalGameMobj(int plrNum)
 {
-    return ddPlayers[plrNum].shared.mo;
+    return DD_Player(plrNum)->publicData().mo;
 }
 
 bool ClPlayer_IsFreeToMove(int plrNum)

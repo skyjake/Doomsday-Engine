@@ -1,7 +1,7 @@
 /** @file m_misc.cpp  Miscellanous utility routines.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,7 +20,7 @@
 #define DENG_NO_API_MACROS_FILESYS
 
 #include "de_platform.h"
-#include "de_console.h"
+#include "m_misc.h"
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -45,13 +45,11 @@
 #include "de_base.h"
 #include "de_system.h"
 #include "de_filesys.h"
-#include "de_graphics.h"
-#include "de_misc.h"
-#include "de_play.h"
 
 #include "lzss.h"
 
 #include <de/str.h>
+#include <de/vector1.h>
 #include <cstdlib>
 #include <cctype>
 #include <cmath>

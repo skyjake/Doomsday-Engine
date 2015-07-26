@@ -39,6 +39,7 @@
 #include <de/Garbage>
 
 #include "clientapp.h"
+#include "clientplayer.h"
 #include "alertmask.h"
 #include "dd_main.h"
 #include "dd_def.h"
@@ -54,10 +55,12 @@
 #include "ui/sys_input.h"
 #include "ui/clientwindowsystem.h"
 #include "ui/clientwindow.h"
+#include "ui/progress.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/dialogs/alertdialog.h"
 #include "ui/styledlogsinkformatter.h"
 #include "updater.h"
+#include "updater/downloaddialog.h"
 
 #if WIN32
 #  include "dd_winit.h"
@@ -92,7 +95,8 @@ static Value *Function_App_GamePlugin(Context &, Function::ArgumentValues const 
         // The null game has no plugin.
         return 0;
     }
-    String name = Plug_FileForPlugin(App_CurrentGame().pluginId()).name().fileNameWithoutExtension();
+    String name = DoomsdayApp::plugins().fileForPlugin(App_CurrentGame().pluginId())
+            .name().fileNameWithoutExtension();
     if(name.startsWith("lib")) name.remove(0, 3);
     return new TextValue(name);
 }
@@ -104,9 +108,13 @@ static Value *Function_App_Quit(Context &, Function::ArgumentValues const &)
 }
 
 DENG2_PIMPL(ClientApp)
+, DENG2_OBSERVES(Plugins, PublishAPI)
+, DENG2_OBSERVES(Plugins, Notification)
+, DENG2_OBSERVES(Games, Progress)
 {    
     Binder binder;
     QScopedPointer<Updater> updater;
+    BusyRunner busyRunner;
     SettingsRegister audioSettings;
     SettingsRegister networkSettings;
     SettingsRegister logSettings;
@@ -117,7 +125,6 @@ DENG2_PIMPL(ClientApp)
     ClientWindowSystem *winSys;
     InFineSystem infineSys; // instantiated at construction time
     ServerLink *svLink;
-    Games games;
     WorldSystem *worldSys;
 
     /**
@@ -197,6 +204,9 @@ DENG2_PIMPL(ClientApp)
         clientAppSingleton = thisPublic;
 
         LogBuffer::get().addSink(logAlarm);
+        DoomsdayApp::plugins().audienceForPublishAPI() += this;
+        DoomsdayApp::plugins().audienceForNotification() += this;
+        self.games().audienceForProgress() += this;
     }
 
     ~Instance()
@@ -218,6 +228,34 @@ DENG2_PIMPL(ClientApp)
         delete inputSys;
         delete menuBar;
         clientAppSingleton = 0;
+    }
+
+    void publishAPIToPlugin(::Library *plugin)
+    {
+        DD_PublishAPIs(plugin);
+    }
+
+    void pluginSentNotification(int notification, void *)
+    {
+        LOG_AS("ClientApp::pluginSentNotification");
+
+        switch(notification)
+        {
+        case DD_NOTIFY_GAME_SAVED:
+            // If an update has been downloaded and is ready to go, we should
+            // re-show the dialog now that the user has saved the game as prompted.
+            LOG_DEBUG("Game saved");
+            DownloadDialog::showCompletedDownload();
+            break;
+
+        default:
+            break;
+        }
+    }
+
+    void gameWorkerProgress(int progress)
+    {
+        Con_SetProgress(progress);
     }
 
     /**
@@ -295,7 +333,9 @@ DENG2_PIMPL(ClientApp)
 };
 
 ClientApp::ClientApp(int &argc, char **argv)
-    : BaseGuiApp(argc, argv), d(new Instance(this))
+    : BaseGuiApp(argc, argv)
+    , DoomsdayApp([] () -> Player * { return new ClientPlayer; })
+    , d(new Instance(this))
 {
     novideo = false;
 
@@ -309,7 +349,7 @@ ClientApp::ClientApp(int &argc, char **argv)
     setTerminateFunc(handleLegacyCoreTerminate);
 
     // We must presently set the current game manually (the collection is global).
-    setGame(d->games.nullGame());
+    setGame(games().nullGame());
 
     d->binder.init(scriptSystem().nativeModule("App"))
             << DENG2_FUNC_NOARG (App_GamePlugin, "gamePlugin")
@@ -385,7 +425,7 @@ void ClientApp::initialize()
     d->resourceSys = new ResourceSystem;
     addSystem(*d->resourceSys);
 
-    Plug_LoadAll();
+    plugins().loadAll();
 
     // Create the main window.
     d->winSys->createWindow()->setWindowTitle(DD_ComposeMainWindowTitle());
@@ -462,6 +502,11 @@ ClientApp &ClientApp::app()
     return *clientAppSingleton;
 }
 
+BusyRunner &ClientApp::busyRunner()
+{
+    return app().d->busyRunner;
+}
+
 Updater &ClientApp::updater()
 {
     DENG2_ASSERT(!app().d->updater.isNull());
@@ -504,6 +549,11 @@ InputSystem &ClientApp::inputSystem()
     return *a.d->inputSys;
 }
 
+bool ClientApp::hasInputSystem()
+{
+    return ClientApp::app().d->inputSys != nullptr;
+}
+
 RenderSystem &ClientApp::renderSystem()
 {
     ClientApp &a = ClientApp::app();
@@ -513,7 +563,7 @@ RenderSystem &ClientApp::renderSystem()
 
 bool ClientApp::hasRenderSystem()
 {
-    return ClientApp::app().d->rendSys != 0;
+    return ClientApp::app().d->rendSys != nullptr;
 }
 
 ResourceSystem &ClientApp::resourceSystem()
@@ -528,11 +578,6 @@ ClientWindowSystem &ClientApp::windowSystem()
     ClientApp &a = ClientApp::app();
     DENG2_ASSERT(a.d->winSys != 0);
     return *a.d->winSys;
-}
-
-Games &ClientApp::games()
-{
-    return app().d->games;
 }
 
 WorldSystem &ClientApp::worldSystem()

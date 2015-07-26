@@ -1,7 +1,7 @@
 /** @file maputil.h  World map utilities.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,9 +18,10 @@
  */
 
 #ifdef __CLIENT__
-#ifndef DENG_WORLD_MAPUTIL_H
-#define DENG_WORLD_MAPUTIL_H
+#ifndef WORLD_MAPUTIL_H
+#define WORLD_MAPUTIL_H
 
+#include <de/libcore.h>
 #include <de/binangle.h>
 #include "Line"
 
@@ -28,24 +29,23 @@ class Sector;
 class LineOwner;
 
 /**
- * @param side  LineSide instance.
- * @param ignoreOpacity  @c true= do not consider Material opacity.
+ * Returns @c true if this side is considered "closed" (i.e., there is no opening through
+ * which the relative back Sector can be seen). Tests consider all Planes which interface
+ * with this and the "middle" Material used on the "this" side.
  *
- * @return  @c true if this side is considered "closed" (i.e., there is no opening
- * through which the relative back Sector can be seen). Tests consider all Planes
- * which interface with this and the "middle" Material used on the "this" side.
+ * @param side           LineSide instance.
+ * @param ignoreOpacity  @c true= do not consider Material opacity.
  */
 bool R_SideBackClosed(LineSide const &side, bool ignoreOpacity = true);
 
 /**
- * A neighbour is a line that shares a vertex with 'line', and faces the
- * specified sector.
+ * A neighbor is a Line that shares a vertex with @a line and faces the given @a sector.
  */
-Line *R_FindLineNeighbor(Sector const *sector, Line const *line,
-    LineOwner const *own, bool antiClockwise, binangle_t *diff = 0);
+Line *R_FindLineNeighbor(Line const &line, LineOwner const &own, de::ClockDirection direction,
+    Sector const *sector, binangle_t *diff = nullptr);
 
-Line *R_FindSolidLineNeighbor(Sector const *sector, Line const *line,
-    LineOwner const *own, bool antiClockwise, binangle_t *diff = 0);
+Line *R_FindSolidLineNeighbor(Line const &line, LineOwner const &own, de::ClockDirection direction,
+    Sector const *sector, binangle_t *diff = nullptr);
 
-#endif // DENG_WORLD_MAPUTIL_H
-#endif // __CLIENT__
+#endif  // WORLD_MAPUTIL_H
+#endif  // __CLIENT__

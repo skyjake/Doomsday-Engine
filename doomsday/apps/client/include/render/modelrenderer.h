@@ -21,10 +21,13 @@
 
 #include <de/ModelDrawable>
 #include <de/ModelBank>
+#include <de/GLState>
 
 #include <QList>
 #include <QMap>
 #include <functional>
+
+#include "vissprite.h"
 
 /**
  * The model renderer prepares available model assets for drawing (using ModelDrawable),
@@ -56,6 +59,8 @@ public:
     {
         StateAnims animations;
         de::Matrix4f transformation;
+        de::gl::Cull cull = de::gl::Back;
+        bool autoscaleToThingHeight = true;
     };
 
 public:
@@ -89,6 +94,13 @@ public:
     void clearLights();
 
     void addLight(de::Vector3f const &direction, de::Vector3f const &intensity);
+
+    /**
+     * Render a GL2 model.
+     *
+     * @param spr  Parameters for the draw operation (as a vissprite).
+     */
+    void render(vissprite_t const &spr);
 
 public:
     static int identifierFromText(de::String const &text,

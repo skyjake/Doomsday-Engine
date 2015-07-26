@@ -50,8 +50,7 @@ Record &Episode::addHub()
     hub->addText ("id", "");
     hub->addArray("map", new ArrayValue);
 
-    def()["hub"].value<ArrayValue>()
-            .add(new RecordValue(hub, RecordValue::OwnsRecord));
+    def()["hub"].array().add(new RecordValue(hub, RecordValue::OwnsRecord));
 
     return *hub;
 }

@@ -31,7 +31,8 @@
 #include <string.h>
 
 #include "dd_types.h"
-#include "api_gameexport.h"
+#include <doomsday/doomsdayapp.h>
+#include <doomsday/gameapi.h>
 #include "api_internaldata.h"
 
 #ifdef __cplusplus
@@ -117,8 +118,6 @@ extern fixed_t *fineCosine;
 } // extern "C"
 #endif
 
-// dd_pinit.c
-DENG_EXTERN_C game_export_t __gx;
-#define gx __gx
+#define gx (DoomsdayApp::plugins().gameExports())
 
 #endif

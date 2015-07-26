@@ -27,6 +27,7 @@
 #ifdef __CLIENT__
 #  include <de/concurrency.h>
 #endif
+#include <doomsday/doomsdayapp.h>
 #include <doomsday/audio/logical.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
@@ -195,7 +196,7 @@ void S_EndFrame()
 
 mobj_t *S_GetListenerMobj()
 {
-    return ddPlayers[displayPlayer].shared.mo;
+    return DD_Player(displayPlayer)->publicData().mo;
 }
 
 sfxinfo_t *S_GetSoundInfo(int soundID, float *freq, float *volume)
@@ -244,7 +245,7 @@ int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t *origin, coord_t *point
 {
 #ifdef __CLIENT__
     // A dedicated server never starts any local sounds (only logical sounds in the LSM).
-    if(isDedicated || BusyMode_Active())
+    if(isDedicated || DoomsdayApp::app().busyMode().isActive())
         return false;
 
     int soundId = (soundIdAndFlags & ~DDSF_FLAG_MASK);
@@ -487,10 +488,10 @@ int S_StartMusicNum(int id, dd_bool looped)
 #endif
 }
 
-int S_StartMusic(char const *musicID, dd_bool looped)
+dint S_StartMusic(char const *musicID, dd_bool looped)
 {
     LOG_AS("S_StartMusic");
-    int idx = Def_GetMusicNum(musicID);
+    dint idx = ::defs.getMusicNum(musicID);
     if(idx < 0)
     {
         if(musicID && qstrlen(musicID))
@@ -555,13 +556,13 @@ D_CMD(PlaySound)
         LOG_SCR_MSG("The sound is always played locally.");
         return true;
     }
-    int p = 0;
+    dint p = 0;
 
     // The sound ID is always first.
-    int const id = Def_GetSoundNum(argv[1]);
+    dint const id = ::defs.getSoundNum(argv[1]);
 
     // The second argument may be a volume.
-    float volume = 1;
+    dfloat volume = 1;
     if(argc >= 3 && String(argv[2]).compareWithoutCase("at"))
     {
         volume = String(argv[2]).toFloat();

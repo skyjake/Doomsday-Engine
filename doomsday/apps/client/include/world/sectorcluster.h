@@ -1,6 +1,6 @@
 /** @file sectorcluster.h  World map sector cluster.
  *
- * @authors Copyright © 2013-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,8 +17,13 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_SECTORCLUSTER_H
-#define DENG_WORLD_SECTORCLUSTER_H
+#ifndef WORLD_SECTORCLUSTER_H
+#define WORLD_SECTORCLUSTER_H
+
+#include <de/Observers>
+#include <de/Vector>
+#include <de/aabox.h>
+#include <QList>
 
 #include "dd_share.h" // AudioEnvironmentFactors
 
@@ -32,11 +37,6 @@
 #ifdef __CLIENT__
 #  include "render/lightgrid.h"
 #endif
-
-#include <de/Observers>
-#include <de/Vector>
-#include <de/aabox.h>
-#include <QList>
 
 class ConvexSubspace;
 #ifdef __CLIENT__
@@ -87,7 +87,7 @@ public:
     static bool isInternalEdge(de::HEdge *hedge);
 
     /**
-     * Returns the parent sector of the cluster.
+     * Returns the parent Sector of the cluster.
      */
     Sector       &sector();
     Sector const &sector() const;
@@ -99,8 +99,8 @@ public:
      *
      * @param planeIndex  Index of the plane to return.
      */
-    Plane       &plane(int planeIndex);
-    Plane const &plane(int planeIndex) const;
+    Plane       &plane(de::dint planeIndex);
+    Plane const &plane(de::dint planeIndex) const;
 
     /**
      * Returns the sector plane which defines the @em physical floor of the
@@ -125,8 +125,8 @@ public:
      *
      * @param planeIndex  Index of the plane to return.
      */
-    Plane       &visPlane(int planeIndex);
-    Plane const &visPlane(int planeIndex) const;
+    Plane       &visPlane(de::dint planeIndex);
+    Plane const &visPlane(de::dint planeIndex) const;
 
     /**
      * Returns the sector plane which defines the @em visual floor of the
@@ -147,7 +147,7 @@ public:
     /**
      * Returns the total number of @em visual planes in the cluster.
      */
-    inline int visPlaneCount() const { return sector().planeCount(); }
+    inline de::dint visPlaneCount() const { return sector().planeCount(); }
 
     /**
      * To be called to force re-evaluation of mapped visual planes. This is only
@@ -173,7 +173,7 @@ public:
     /**
      * Returns the total number of subspaces in the cluster.
      */
-    inline int subspaceCount() const { return subspaces().count(); }
+    inline de::dint subspaceCount() const { return subspaces().count(); }
 
     /**
      * Returns the axis-aligned bounding box of the cluster.
@@ -250,19 +250,19 @@ public:
     /**
      * Returns the Z-axis bias scale factor for the light grid, block light source.
      */
-    int blockLightSourceZBias();
+    de::dint blockLightSourceZBias();
 
     /**
      * Returns the geometry Shard for the specified @a mapElement and geometry
      * group identifier @a geomId; otherwise @c 0.
      */
-    Shard *findShard(de::MapElement &mapElement, int geomId);
+    Shard *findShard(de::MapElement &mapElement, de::dint geomId);
 
     /**
      * Generate/locate the geometry Shard for the specified @a mapElement and
      * geometry group identifier @a geomId.
      */
-    Shard &shard(de::MapElement &mapElement, int geomId);
+    Shard &shard(de::MapElement &mapElement, de::dint geomId);
 
     /**
      * Shards owned by the SectorCluster should call this periodically to update
@@ -287,9 +287,9 @@ public:
      *
      * @see Map::biasLastChangeOnFrame()
      */
-    uint biasLastChangeOnFrame() const;
+    de::duint biasLastChangeOnFrame() const;
 
-#endif // __CLIENT__
+#endif  // __CLIENT__
 
 private:
     DENG2_PRIVATE(d)
@@ -321,10 +321,10 @@ public:
      * @param hedge  Half-edge to circulate. It is assumed the half-edge lies on
      * the @em boundary of the cluster and is not an "internal" edge.
      */
-    SectorClusterCirculator(de::HEdge *hedge = 0)
+    SectorClusterCirculator(de::HEdge *hedge = nullptr)
         : _hedge(hedge)
         , _current(hedge)
-        , _cluster(hedge? getCluster(*hedge) : 0)
+        , _cluster(hedge? getCluster(*hedge) : nullptr)
     {}
 
     /**
@@ -351,7 +351,7 @@ public:
     }
 
     /// Returns the next half-edge (clockwise) and advances the circulator.
-    inline de::HEdge &next() { return neighbor(de::Clockwise); }
+    inline de::HEdge &next()     { return neighbor(de::Clockwise); }
 
     /// Returns the previous half-edge (anticlockwise) and advances the circulator.
     inline de::HEdge &previous() { return neighbor(de::Anticlockwise); }
@@ -375,11 +375,11 @@ public:
     }
 
     /// Returns @c true iff the range of the circulator [c, c) is not empty.
-    inline operator bool () const { return _hedge != 0; }
+    inline operator bool () const { return _hedge != nullptr; }
 
     /// Makes the circulator operate on @a hedge.
     SectorClusterCirculator &operator = (de::HEdge &hedge) {
-        _hedge = _current = &hedge;
+        _hedge   = _current = &hedge;
         _cluster = getCluster(hedge);
         return *this;
     }
@@ -402,11 +402,11 @@ private:
     static SectorCluster *getCluster(de::HEdge const &hedge);
 
     static de::HEdge &getNeighbor(de::HEdge const &hedge, de::ClockDirection direction,
-                                  SectorCluster const *cluster = 0);
+                                  SectorCluster const *cluster = nullptr);
 
     de::HEdge *_hedge;
     de::HEdge *_current;
     SectorCluster *_cluster;
 };
 
-#endif // DENG_WORLD_SECTORCLUSTER_H
+#endif  // WORLD_SECTORCLUSTER_H

@@ -1,6 +1,6 @@
-/** @file walledge.cpp Wall Edge Geometry.
+/** @file walledge.cpp  Wall Edge Geometry.
  *
- * @authors Copyright © 2011-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2011-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,9 +17,10 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
+#include "de_base.h"
 #include "render/walledge.h"
 
+#include <QtAlgorithms>
 #include "BspLeaf"
 #include "ConvexSubspace"
 #include "Sector"
@@ -32,8 +33,7 @@
 #include "world/maputil.h"
 #include "SectorCluster"
 
-#include "render/rend_main.h" // devRendSkyMode, remove me
-#include <QtAlgorithms>
+#include "render/rend_main.h"  /// devRendSkyMode @todo remove me
 
 using namespace de;
 
@@ -62,10 +62,10 @@ DENG2_PIMPL_NOREF(WallEdge::Event)
     Instance(WallEdge &owner) : owner(owner) {}
 };
 
-WallEdge::Event::Event(WallEdge &owner, double distance)
-    : WorldEdge::Event(),
-      IHPlane::IIntercept(distance),
-      d(new Instance(owner))
+WallEdge::Event::Event(WallEdge &owner, ddouble distance)
+    : WorldEdge::Event()
+    , IHPlane::IIntercept(distance)
+    , d(new Instance(owner))
 {}
 
 bool WallEdge::Event::operator < (Event const &other) const
@@ -73,7 +73,7 @@ bool WallEdge::Event::operator < (Event const &other) const
     return distance() < other.distance();
 }
 
-double WallEdge::Event::distance() const
+ddouble WallEdge::Event::distance() const
 {
     return IHPlane::IIntercept::distance();
 }
@@ -88,7 +88,7 @@ static bool eventSorter(WorldEdge::Event *a, WorldEdge::Event *b)
     return *a < *b;
 }
 
-static inline coord_t lineSideOffset(LineSideSegment &seg, int edge)
+static inline coord_t lineSideOffset(LineSideSegment &seg, dint edge)
 {
     return seg.lineSideOffset() + (edge? seg.length() : 0);
 }
@@ -96,9 +96,9 @@ static inline coord_t lineSideOffset(LineSideSegment &seg, int edge)
 DENG2_PIMPL(WallEdge), public IHPlane
 {
     WallSpec spec;
-    int edge;
+    dint edge = 0;
 
-    HEdge *wallHEdge;
+    HEdge *wallHEdge = nullptr;
 
     /// The half-plane which partitions the surface coordinate space.
     Partition hplane;
@@ -106,33 +106,28 @@ DENG2_PIMPL(WallEdge), public IHPlane
     Vector3d pOrigin;
     Vector3d pDirection;
 
-    coord_t lo, hi;
+    coord_t lo = 0, hi = 0;
 
     /// Events for the special termination points are allocated with "this".
     Event bottom;
     Event top;
 
     /// All events along the partition line.
-    Events *events;
-    bool needSortEvents;
+    Events *events = nullptr;
+    bool needSortEvents = false;
 
     Vector2f materialOrigin;
 
     Vector3f normal;
-    bool needUpdateNormal;
+    bool needUpdateNormal = true;
 
-    Instance(Public *i, WallSpec const &spec, HEdge &hedge, int edge)
-        : Base(i),
-          spec(spec),
-          edge(edge),
-          wallHEdge(&hedge),
-          lo(0),
-          hi(0),
-          bottom(*i, 0),
-          top(*i, 1),
-          events(0),
-          needSortEvents(false),
-          needUpdateNormal(true)
+    Instance(Public *i, WallSpec const &spec, HEdge &hedge, dint edge)
+        : Base(i)
+        , spec(spec)
+        , edge(edge)
+        , wallHEdge(&hedge)
+        , bottom(*i, 0)
+        , top   (*i, 1)
     {
         // Determine the map space Z coordinates of the wall section.
         LineSideSegment &seg   = lineSideSegment();
@@ -336,7 +331,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
                 break; }
             }
         }
-        materialOrigin += Vector2f(lineSideOffset(seg, edge), 0);
+        materialOrigin += Vector2f(::lineSideOffset(seg, edge), 0);
 
         pOrigin    = Vector3d(self.origin(), lo);
         pDirection = Vector3d(0, 0, hi - lo);
@@ -361,7 +356,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
         }
     }
 
-    EventIndex toEventIndex(double distance)
+    EventIndex toEventIndex(ddouble distance)
     {
         DENG_ASSERT(events != 0);
 
@@ -374,12 +369,12 @@ DENG2_PIMPL(WallEdge), public IHPlane
         return InvalidIndex;
     }
 
-    inline bool haveEvent(double distance)
+    inline bool haveEvent(ddouble distance)
     {
         return toEventIndex(distance) != InvalidIndex;
     }
 
-    Event &createEvent(double distance)
+    Event &createEvent(ddouble distance)
     {
         return *intercept(distance);
     }
@@ -397,9 +392,9 @@ DENG2_PIMPL(WallEdge), public IHPlane
     }
 
     // Implements IHPlane
-    Event *intercept(double distance)
+    Event *intercept(ddouble distance)
     {
-        DENG_ASSERT(events != 0);
+        DENG2_ASSERT(events);
 
         Event *newEvent = new Event(self, distance);
         events->append(newEvent);
@@ -413,7 +408,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
     // Implements IHPlane
     void sortAndMergeIntercepts()
     {
-        DENG_ASSERT(events != 0);
+        DENG2_ASSERT(events);
 
         // Any work to do?
         if(!needSortEvents) return;
@@ -434,7 +429,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
                     delete event;
             }
 
-            delete events; events = 0;
+            delete events; events = nullptr;
         }
 
         // An empty event list is logically sorted.
@@ -444,29 +439,29 @@ DENG2_PIMPL(WallEdge), public IHPlane
     // Implements IHPlane
     Event const &at(EventIndex index) const
     {
-        DENG_ASSERT(events != 0);
+        DENG2_ASSERT(events);
 
         if(index >= 0 && index < interceptCount())
         {
             return *(*events)[index];
         }
         /// @throw UnknownInterceptError The specified intercept index is not valid.
-        throw UnknownInterceptError("WallEdge::at", QString("Index '%1' does not map to a known intercept (count: %2)")
+        throw UnknownInterceptError("WallEdge::at", String("Index '%1' does not map to a known intercept (count: %2)")
                                                         .arg(index).arg(interceptCount()));
     }
 
     // Implements IHPlane
-    int interceptCount() const
+    dint interceptCount() const
     {
-        DENG_ASSERT(events != 0);
+        DENG2_ASSERT(events);
 
         return events->count();
     }
 
-#ifdef DENG_DEBUG
+#ifdef DENG2_DEBUG
     void printIntercepts() const
     {
-        DENG_ASSERT(events != 0);
+        DENG2_ASSERT(events);
 
         EventIndex index = 0;
         foreach(Event const *icpt, *events)
@@ -479,10 +474,10 @@ DENG2_PIMPL(WallEdge), public IHPlane
     /**
      * Ensure all intercepts do not exceed the specified closed range.
      */
-    void assertInterceptsInRange(double low, double hi) const
+    void assertInterceptsInRange(ddouble low, ddouble hi) const
     {
-#ifdef DENG_DEBUG
-        DENG_ASSERT(events != 0);
+#ifdef DENG2_DEBUG
+        DENG2_ASSERT(events);
         foreach(Event const *icpt, *events)
         {
             DENG2_ASSERT(icpt->distance() >= low && icpt->distance() <= hi);
@@ -492,7 +487,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
 #endif
     }
 
-    inline double distanceTo(coord_t worldHeight) const
+    inline ddouble distanceTo(coord_t worldHeight) const
     {
         return (worldHeight - lo) / (hi - lo);
     }
@@ -505,14 +500,14 @@ DENG2_PIMPL(WallEdge), public IHPlane
         while((hedge = &SectorClusterCirculator::findBackNeighbor(*hedge, direction)) != wallHEdge)
         {
             // Stop if there is no back subspace.
-            ConvexSubspace const *backSubspace = hedge->hasFace()? &hedge->face().mapElementAs<ConvexSubspace>() : 0;
+            auto const *backSubspace = hedge->hasFace()? &hedge->face().mapElementAs<ConvexSubspace>() : nullptr;
             if(!backSubspace)
                 break;
 
             SectorCluster const &cluster = backSubspace->cluster();
             if(cluster.hasWorldVolume())
             {
-                for(int i = 0; i < cluster.visPlaneCount(); ++i)
+                for(dint i = 0; i < cluster.visPlaneCount(); ++i)
                 {
                     Plane const &plane = cluster.visPlane(i);
 
@@ -587,7 +582,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
 
     void prepareEvents()
     {
-        DENG_ASSERT(self.isValid());
+        DENG2_ASSERT(self.isValid());
 
         clearIntercepts();
 
@@ -631,29 +626,30 @@ DENG2_PIMPL(WallEdge), public IHPlane
 
         // Are we not blending?
         if(spec.flags.testFlag(WallSpec::NoEdgeNormalSmoothing))
-            return 0;
+            return nullptr;
 
         LineSide const &lineSide = lineSideSegment().lineSide();
 
         // Polyobj lines have no owner rings.
         if(lineSide.line().definesPolyobj())
-            return 0;
+            return nullptr;
 
-        LineOwner const *farVertOwner = lineSide.line().vertexOwner(lineSide.sideId() ^ edge);
+        ClockDirection const direction = (edge? Anticlockwise : Clockwise);
+        LineOwner const &farVertOwner  = *lineSide.line().vertexOwner(lineSide.sideId() ^ edge);
         Line *neighbor;
         if(R_SideBackClosed(lineSide))
         {
-            neighbor = R_FindSolidLineNeighbor(lineSide.sectorPtr(), &lineSide.line(),
-                                               farVertOwner, edge, &diff);
+            neighbor = R_FindSolidLineNeighbor(lineSide.line(), farVertOwner, direction,
+                                               lineSide.sectorPtr(), &diff);
         }
         else
         {
-            neighbor = R_FindLineNeighbor(lineSide.sectorPtr(), &lineSide.line(),
-                                          farVertOwner, edge, &diff);
+            neighbor = R_FindLineNeighbor(lineSide.line(), farVertOwner, direction,
+                                          lineSide.sectorPtr(), &diff);
         }
 
         // No suitable line neighbor?
-        if(!neighbor) return 0;
+        if(!neighbor) return nullptr;
 
         // Choose the correct side of the neighbor (determined by which vertex is shared).
         LineSide *otherSide;
@@ -663,7 +659,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
             otherSide = &neighbor->back();
 
         // We can only blend if the neighbor has a surface.
-        if(!otherSide->hasSections()) return 0;
+        if(!otherSide->hasSections()) return nullptr;
 
         /// @todo Do not assume the neighbor is the middle section of @var otherSide.
         return &otherSide->middle();
@@ -695,9 +691,9 @@ DENG2_PIMPL(WallEdge), public IHPlane
     }
 };
 
-WallEdge::WallEdge(WallSpec const &spec, HEdge &hedge, int edge)
-    : WorldEdge((edge? hedge.twin() : hedge).origin()),
-      d(new Instance(this, spec, hedge, edge))
+WallEdge::WallEdge(WallSpec const &spec, HEdge &hedge, dint edge)
+    : WorldEdge((edge? hedge.twin() : hedge).origin())
+    , d(new Instance(this, spec, hedge, edge))
 {}
 
 Vector3d const &WallEdge::pOrigin() const
@@ -729,17 +725,17 @@ WallSpec const &WallEdge::spec() const
     return d->spec;
 }
 
-LineSide &WallEdge::mapLineSide() const
+LineSideSegment &WallEdge::lineSideSegment() const
 {
-    return d->lineSideSegment().lineSide();
+    return d->lineSideSegment();
 }
 
-coord_t WallEdge::mapLineSideOffset() const
+coord_t WallEdge::lineSideOffset() const
 {
-    return lineSideOffset(d->lineSideSegment(), d->edge);
+    return ::lineSideOffset(d->lineSideSegment(), d->edge);
 }
 
-int WallEdge::divisionCount() const
+dint WallEdge::divisionCount() const
 {
     if(!isValid()) return 0;
     if(!d->events)

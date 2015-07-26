@@ -41,7 +41,7 @@ Record &Decoration::addLight()
 {
     auto *decor = new Record;
     MaterialDecoration(*decor).resetToDefaults();
-    def()["light"].value<ArrayValue>().add(new RecordValue(decor, RecordValue::OwnsRecord));
+    def()["light"].array().add(new RecordValue(decor, RecordValue::OwnsRecord));
     return *decor;
 }
 

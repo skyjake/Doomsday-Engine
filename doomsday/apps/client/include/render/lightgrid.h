@@ -1,7 +1,7 @@
 /** @file lightgrid.h  Light Grid (Smoothed ambient sector lighting).
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_LIGHTGRID_H
-#define DENG_CLIENT_LIGHTGRID_H
+#ifndef CLIENT_RENDER_LIGHTGRID_H
+#define CLIENT_RENDER_LIGHTGRID_H
 
 #include <de/libcore.h>
 #include <de/Error>
@@ -41,7 +41,7 @@ public:
     /**
      * Linear reference to a block in the grid (X + Y * Grid Width).
      */
-    typedef int Index;
+    typedef dint Index;
 
     /**
      * Two dimensioned reference to a block in the grid [X, Y].
@@ -93,7 +93,7 @@ public:
      * - [x, y, z] = RGB color with premultiplied light intensity factor
      * - [w]       = light intensity factor (i.e., light level)
      */
-    Vector4f evaluate(Vector3d const &point);
+    Vector4f evaluate(Vector3d const &point) const;
 
     /**
      * Convenient method of determining the smoothed ambient lighting properties
@@ -106,7 +106,7 @@ public:
      *
      * @see evaluate
      */
-    inline float evaluateIntensity(Vector3d const &point) {
+    inline dfloat evaluateIntensity(Vector3d const &point) const {
         return evaluate(point).w;
     }
 
@@ -147,19 +147,19 @@ public:
      */
     static void consoleRegister();
 
-public: // Utilities -----------------------------------------------------------
+public:  // Utilities -----------------------------------------------------------
 
     /// Returns the linear grid index for the given two-dimensioned grid reference.
-    inline Index toIndex(int x, int y)    { return y * dimensions().x + x; }
+    inline Index toIndex(dint x, dint y) const  { return y * dimensions().x + x; }
 
     /// @copydoc toIndex()
-    inline Index toIndex(Ref const &gref) { return toIndex(gref.x, gref.y); }
+    inline Index toIndex(Ref const &gref) const { return toIndex(gref.x, gref.y); }
 
     /// Returns the two-dimensioned grid reference for the given map space @a point.
-    Ref toRef(Vector3d const &point);
+    Ref toRef(Vector3d const &point) const;
 
     /// Returns the size of a grid block in map space units.
-    int blockSize() const;
+    dint blockSize() const;
 
     /// Returns the origin of the grid in map space.
     Vector2d const &origin() const;
@@ -168,10 +168,10 @@ public: // Utilities -----------------------------------------------------------
     Vector2i const &dimensions() const;
 
     /// Returns the total number of non-null blocks in the grid.
-    int numBlocks() const;
+    dint numBlocks() const;
 
     /// Returns the total number of bytes used for non-null blocks in the grid.
-    size_t blockStorageSize() const;
+    dsize blockStorageSize() const;
 
     /// Returns the "raw" color for the specified @a block. For debug.
     Vector3f const &rawColorRef(Index block) const;
@@ -180,6 +180,6 @@ private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace de
+}  // namespace de
 
-#endif // DENG_CLIENT_LIGHTGRID_H
+#endif // CLIENT_RENDER_LIGHTGRID_H

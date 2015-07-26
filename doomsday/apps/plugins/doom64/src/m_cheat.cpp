@@ -241,7 +241,7 @@ D_CMD(CheatReveal)
 static void giveWeapon(player_t *plr, weapontype_t weaponType)
 {
     P_GiveWeapon(plr, weaponType, false /* not collecting a drop */);
-    if(weaponType = WT_EIGHTH)
+    if(weaponType == WT_EIGHTH)
     {
         P_SetMessageWithFlags(plr, STSTR_CHOPPERS, LMF_NO_HIDE);
     }

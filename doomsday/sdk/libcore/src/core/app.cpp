@@ -112,7 +112,7 @@ DENG2_PIMPL(App)
             ArrayValue args;
             args << DictionaryValue() << TextValue(newGame.id());
             App::scriptSystem().nativeModule("App")["audienceForGameChange"]
-                    .value<ArrayValue>().callElements(args);
+                    .array().callElements(args);
         }
     };
 

@@ -164,18 +164,21 @@ void Cl_AnswerHandshake()
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
         /// @todo With multiple local players, must clear only the appropriate flags.
-        ddPlayers[i].shared.flags &= ~DDPF_LOCAL;
+        DD_Player(i)->publicData().flags &= ~DDPF_LOCAL;
 
-        ddPlayers[i].shared.inGame = (playersInGame & (1 << i)) != 0;
+        DD_Player(i)->publicData().inGame = (playersInGame & (1 << i)) != 0;
     }
+
+    // Change the active player.
     consolePlayer = displayPlayer = myConsole;
-    clients[consolePlayer].viewConsole = consolePlayer;
+
+    DD_Player(consolePlayer)->viewConsole = consolePlayer;
 
     // Mark us as the only local player.
-    ddPlayers[consolePlayer].shared.flags |= DDPF_LOCAL;
+    DD_Player(consolePlayer)->publicData().flags |= DDPF_LOCAL;
 
-    Smoother_Clear(clients[consolePlayer].smoother);
-    ddPlayers[consolePlayer].shared.flags &= ~DDPF_USE_VIEW_FILTER;
+    Smoother_Clear(DD_Player(consolePlayer)->smoother());
+    DD_Player(consolePlayer)->publicData().flags &= ~DDPF_USE_VIEW_FILTER;
 
     isClient = true;
     isServer = false;
@@ -227,25 +230,25 @@ void Cl_HandlePlayerInfo()
     if(console >= DDMAXPLAYERS)
         return;
 
-    player_t *plr = &ddPlayers[console];
-    bool present = plr->shared.inGame;
-    plr->shared.inGame = true;
+    player_t *plr = DD_Player(console);
+    bool present = plr->publicData().inGame;
+    plr->publicData().inGame = true;
 
-    strcpy(clients[console].name, name);
+    strcpy(plr->name, name);
 
     if(!present)
     {
         // This is a new player! Let the game know about this.
         gx.NetPlayerEvent(console, DDPE_ARRIVAL, 0);
 
-        Smoother_Clear(clients[console].smoother);
+        Smoother_Clear(plr->smoother());
     }
 }
 
 void Cl_PlayerLeaves(int plrNum)
 {
     LOG_NET_NOTE("Player %i has left the game") << plrNum;
-    ddPlayers[plrNum].shared.inGame = false;
+    DD_Player(plrNum)->publicData().inGame = false;
     gx.NetPlayerEvent(plrNum, DDPE_EXIT, 0);
 }
 
@@ -397,11 +400,11 @@ static void assertPlayerIsValid(int plrNum)
     if(!isClient || !Cl_GameReady() || clientPaused) return;
     if(plrNum < 0 || plrNum >= DDMAXPLAYERS) return;
 
-    player_t *plr = &ddPlayers[plrNum];
+    player_t *plr = DD_Player(plrNum);
     clplayerstate_t *s = ClPlayer_State(plrNum);
 
     // Must have a mobj!
-    if(!s->clMobjId || !plr->shared.mo)
+    if(!s->clMobjId || !plr->publicData().mo)
         return;
 
     mobj_t *clmo = ClMobj_Find(s->clMobjId);
@@ -410,7 +413,7 @@ static void assertPlayerIsValid(int plrNum)
         LOGDEV_NET_NOTE("Player %i does not have a clmobj yet [%i]") << plrNum << s->clMobjId;
         return;
     }
-    mobj_t *mo = plr->shared.mo;
+    mobj_t *mo = plr->publicData().mo;
 
     /*
     ("Assert: client %i, clmo %i (flags 0x%x)", plrNum, clmo->thinker.id, clmo->ddFlags);
@@ -442,21 +445,22 @@ void Cl_Ticker(timespan_t ticLength)
     // player's clmobj to its updated state.
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(!ddPlayers[i].shared.inGame) continue;
+        if(!DD_Player(i)->publicData().inGame) continue;
 
         if(i != consolePlayer)
         {
-            if(ddPlayers[i].shared.mo)
+            if(DD_Player(i)->publicData().mo)
             {
-                Smoother_AddPos(clients[i].smoother, Cl_FrameGameTime(),
-                                ddPlayers[i].shared.mo->origin[VX],
-                                ddPlayers[i].shared.mo->origin[VY],
-                                ddPlayers[i].shared.mo->origin[VZ],
+                Smoother_AddPos(DD_Player(i)->smoother(),
+                                Cl_FrameGameTime(),
+                                DD_Player(i)->publicData().mo->origin[VX],
+                                DD_Player(i)->publicData().mo->origin[VY],
+                                DD_Player(i)->publicData().mo->origin[VZ],
                                 false);
             }
 
             // Update the smoother.
-            Smoother_Advance(clients[i].smoother, ticLength);
+            Smoother_Advance(DD_Player(i)->smoother(), ticLength);
         }
 
         ClPlayer_ApplyPendingFixes(i);

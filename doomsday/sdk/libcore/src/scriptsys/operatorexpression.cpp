@@ -32,6 +32,9 @@
 
 namespace de {
 
+/// Used for popping a result and checking if it's True.
+static OperatorExpression isResultTrue(RESULT_TRUE, nullptr);
+    
 OperatorExpression::OperatorExpression() : _op(NONE), _leftOperand(0), _rightOperand(0)
 {}
 
@@ -72,6 +75,17 @@ void OperatorExpression::push(Evaluator &evaluator, Value *scope) const
         // scope defined by the result of the left side.
         _leftOperand->push(evaluator, scope);
     }
+    else if(_op == AND || _op == OR)
+    {
+        // Early termination: AND/OR only push the left operand, and skip evaluation
+        // of the right operand if False/True is encountered.
+        _leftOperand->push(evaluator, scope);
+    }
+    else if(_op == RESULT_TRUE)
+    {
+        // This is not a normal operator: it pops a result and checks if it is True.
+        // We have no operands to push.
+    }
     else
     {
         _rightOperand->push(evaluator);
@@ -103,14 +117,14 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
     //qDebug() << "OperatorExpression:" << operatorToText(_op);
 
     // Get the operands.
-    Value *rightValue = (_op == MEMBER? 0 : evaluator.popResult());
+    Value *rightValue = (_op == MEMBER || _op == AND || _op == OR? 0 : evaluator.popResult());
     Value *leftScopePtr = 0;
     Value *leftValue = (_leftOperand? evaluator.popResult(&leftScopePtr) : 0);
     Value *result = (leftValue? leftValue : rightValue);
 
     QScopedPointer<Value> leftScope(leftScopePtr); // will be deleted if not needed
 
-    DENG2_ASSERT(_op == MEMBER ||
+    DENG2_ASSERT(_op == MEMBER || _op == AND || _op == OR ||
                  (!isUnary(_op) && leftValue && rightValue) ||
                  ( isUnary(_op) && rightValue));
 
@@ -181,13 +195,37 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
         case NOT:
             result = newBooleanValue(rightValue->isFalse());
             break;
+                
+        case RESULT_TRUE:
+            result = newBooleanValue(rightValue->isTrue());
+            break;
 
         case AND:
-            result = newBooleanValue(leftValue->isTrue() && rightValue->isTrue());
+            if(!leftValue->isTrue())
+            {
+                // Early termination.
+                result = newBooleanValue(false);
+            }
+            else
+            {
+                isResultTrue.push(evaluator);
+                _rightOperand->push(evaluator);
+                return nullptr;
+            }
             break;
 
         case OR:
-            result = newBooleanValue(leftValue->isTrue() || rightValue->isTrue());
+            if(leftValue->isTrue())
+            {
+                // Early termination.
+                result = newBooleanValue(true);
+            }
+            else
+            {
+                isResultTrue.push(evaluator);
+                _rightOperand->push(evaluator);
+                return nullptr;
+            }
             break;
 
         case EQUAL:
@@ -270,7 +308,7 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
 
             // The MEMBER operator does not evaluate to any result. 
             // Whatever is on the right side will be the result.
-            return NULL;
+            return nullptr;
         }
 
         default:

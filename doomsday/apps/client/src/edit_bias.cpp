@@ -1,7 +1,7 @@
 /** @file edit_bias.cpp  Shadow Bias editor UI.
  *
  * @authors Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -20,21 +20,23 @@
 
 #ifdef __CLIENT__
 #include "de_base.h"
-#include "de_console.h"
+#include "edit_bias.h"
+
+#include <de/concurrency.h>
+#include <de/Log>
+#include <doomsday/console/cmd.h>
+#include <doomsday/console/var.h>
 #include "de_filesys.h"
 #include "de_ui.h"
 
 #include "world/map.h"
-#include "world/p_players.h" // viewPlayer
+#include "world/p_players.h"  // viewPlayer
 #include "ConvexSubspace"
 #include "Hand"
 #include "HueCircle"
-#include "render/viewports.h"
-#include "render/rend_main.h" // gameDrawHUD/vOrigin, remove me
-#include "edit_bias.h"
 
-#include <de/Log>
-#include <de/concurrency.h>
+#include "render/viewports.h"
+#include "render/rend_main.h"  // gameDrawHUD/vOrigin, remove me
 
 using namespace de;
 
@@ -106,7 +108,7 @@ void SBE_SetHueCircle(bool activate = true)
 
     if(activate)
     {
-        viewdata_t const &viewer = *R_ViewData(viewPlayer - ddPlayers);
+        viewdata_t const &viewer = viewPlayer->viewport();
         hueCircle->setOrientation(viewer.frontVec, viewer.sideVec, viewer.upVec);
     }
 }

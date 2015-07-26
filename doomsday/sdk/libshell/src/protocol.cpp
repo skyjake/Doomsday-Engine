@@ -334,7 +334,7 @@ RecordPacket *Protocol::newConsoleLexicon(Lexicon const &lexicon)
 {
     RecordPacket *lex = new RecordPacket(PT_LEXICON);
     lex->record().addText("extraChars", lexicon.additionalWordChars());
-    ArrayValue &arr = lex->record().addArray("terms").value<ArrayValue>();
+    ArrayValue &arr = lex->record().addArray("terms").array();
     foreach(String const &term, lexicon.terms())
     {
         arr << TextValue(term);
@@ -346,7 +346,7 @@ Lexicon Protocol::lexicon(Packet const &consoleLexiconPacket)
 {
     RecordPacket const &rec = asRecordPacket(consoleLexiconPacket, ConsoleLexicon);
     Lexicon lexicon;
-    DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, rec["terms"].value<ArrayValue>().elements())
+    DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, rec["terms"].array().elements())
     {
         lexicon.addTerm((*i)->asText());
     }

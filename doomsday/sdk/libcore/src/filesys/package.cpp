@@ -85,8 +85,13 @@ DENG2_PIMPL(Package)
             ArrayValue const &imp = self.info().geta(PACKAGE_IMPORT_PATH);
             DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, imp.elements())
             {
-                // The import paths are relative to the package root, and must exist.
-                paths << self.root().locate<File const>((*i)->asText()).path();
+                Path importPath = (*i)->asText();
+                if(!importPath.isAbsolute())
+                {
+                    // Relative to the package root, and must exist.
+                    importPath = self.root().locate<File const >(importPath).path();
+                }
+                paths << importPath;
             }
         }
         return paths;

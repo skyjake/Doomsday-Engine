@@ -1,6 +1,6 @@
 # The Doomsday Engine Project -- Server
 # Copyright (c) 2012-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
-# Copyright (c) 2012-2014 Daniel Swanson <danij@dengine.net>
+# Copyright (c) 2012-2015 Daniel Swanson <danij@dengine.net>
 
 cmake_minimum_required (VERSION 3.1)
 project (DENG_SERVER)
@@ -28,36 +28,22 @@ set (SHARED_WITH_CLIENT
     ${src}/include/audio/s_cache.h
     ${src}/include/audio/s_environ.h
     ${src}/include/audio/s_main.h
-    ${src}/include/busymode.h
     ${src}/include/color.h
     ${src}/include/con_config.h
     ${src}/include/dd_def.h
-    ${src}/include/games.h
     ${src}/include/dd_loop.h
     ${src}/include/dd_main.h
     ${src}/include/dd_pinit.h
     ${src}/include/de_audio.h
     ${src}/include/de_base.h
-    ${src}/include/de_console.h
-    ${src}/include/de_defs.h
-    ${src}/include/de_edit.h
     ${src}/include/de_filesys.h
-    ${src}/include/de_graphics.h
-    ${src}/include/de_infine.h
-    ${src}/include/de_misc.h
-    ${src}/include/de_network.h
     ${src}/include/de_platform.h
-    ${src}/include/de_play.h
-    ${src}/include/de_resource.h
-    ${src}/include/de_render.h
     ${src}/include/de_system.h
     ${src}/include/de_ui.h
     ${src}/include/def_main.h
     ${src}/include/edit_map.h
     ${src}/include/face.h
-    ${src}/include/game.h
     ${src}/include/hedge.h
-    ${src}/include/library.h
     ${src}/include/m_decomp64.h
     ${src}/include/m_misc.h
     ${src}/include/m_nodepile.h
@@ -75,7 +61,6 @@ set (SHARED_WITH_CLIENT
     ${src}/include/resource/colorpalette.h
     ${src}/include/resource/compositetexture.h
     ${src}/include/resource/image.h
-    ${src}/include/resource/manifest.h
     ${src}/include/resource/mapdef.h
     ${src}/include/resource/material.h
     ${src}/include/resource/materialarchive.h
@@ -88,7 +73,6 @@ set (SHARED_WITH_CLIENT
     ${src}/include/resource/patchname.h
     ${src}/include/resource/rawtexture.h
     ${src}/include/resource/resourcesystem.h
-    ${src}/include/resource/sprite.h
     ${src}/include/resource/texture.h
     ${src}/include/resource/texturemanifest.h
     ${src}/include/resource/texturescheme.h
@@ -143,19 +127,14 @@ set (SHARED_WITH_CLIENT
     ${src}/src/api_uri.cpp
     ${src}/src/audio/s_cache.cpp
     ${src}/src/audio/s_main.cpp
-    ${src}/src/busymode.cpp
     ${src}/src/color.cpp
     ${src}/src/con_config.cpp
-    ${src}/src/games.cpp
     ${src}/src/dd_loop.cpp
     ${src}/src/dd_main.cpp
     ${src}/src/dd_pinit.cpp
-    ${src}/src/dd_plugin.cpp
     ${src}/src/def_main.cpp
     ${src}/src/face.cpp
-    ${src}/src/game.cpp
     ${src}/src/hedge.cpp
-    ${src}/src/library.cpp
     ${src}/src/m_decomp64.cpp
     ${src}/src/m_misc.cpp
     ${src}/src/m_nodepile.cpp
@@ -175,7 +154,6 @@ set (SHARED_WITH_CLIENT
     ${src}/src/resource/compositetexture.cpp
     ${src}/src/resource/hq2x.cpp
     ${src}/src/resource/image.cpp
-    ${src}/src/resource/manifest.cpp
     ${src}/src/resource/mapdef.cpp
     ${src}/src/resource/material.cpp
     ${src}/src/resource/materialarchive.cpp
@@ -188,7 +166,6 @@ set (SHARED_WITH_CLIENT
     ${src}/src/resource/patchname.cpp
     ${src}/src/resource/pcx.cpp
     ${src}/src/resource/resourcesystem.cpp
-    ${src}/src/resource/sprite.cpp
     ${src}/src/resource/texture.cpp
     ${src}/src/resource/texturemanifest.cpp
     ${src}/src/resource/texturescheme.cpp
@@ -266,15 +243,7 @@ set_target_properties (server PROPERTIES
 )
 
 # There's some old code here so relax the warnings a bit.
-if (CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
-    set_property (TARGET server 
-        APPEND PROPERTY COMPILE_OPTIONS
-            -Wno-missing-field-initializers 
-            -Wno-missing-braces
-            -Wno-nested-anon-types
-            -Wno-gnu-anonymous-struct
-    )
-endif ()
+relaxed_warnings (server)
 
 target_link_libraries (server
     Deng::libcore

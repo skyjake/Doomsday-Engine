@@ -29,17 +29,6 @@
 extern "C" {
 #endif
 
-typedef struct {
-    HINSTANCE hInstance;
-
-    /// @c true = We are using a custom user dir specified on the command line.
-    BOOL usingUserDir;
-
-    GETGAMEAPI GetGameAPI;
-} application_t;
-
-extern application_t app;
-
 dd_bool DD_Win32_Init(void);
 void DD_Shutdown(void);
 

@@ -1,7 +1,7 @@
 /** @file sector.h  World map sector.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -24,6 +24,8 @@
 #include <QtAlgorithms>
 #include <de/vector1.h>
 #include <de/Log>
+#include <doomsday/console/cmd.h>
+#include "dd_main.h"  // App_WorldSystem()
 
 #include "world/map.h"
 #include "world/p_object.h"
@@ -50,10 +52,10 @@ DENG2_PIMPL(Sector)
 
     mobj_t *mobjList = nullptr;       ///< All mobjs "in" the sector (not owned).
 
-    float lightLevel = 0;             ///< Ambient light level.
+    dfloat lightLevel = 0;            ///< Ambient light level.
     Vector3f lightColor;              ///< Ambient light color.
 
-    int validCount = 0;
+    dint validCount = 0;
 
 #ifdef __CLIENT__
     coord_t roughArea = 0;            ///< Approximated. @c <0 means an update is needed.
@@ -166,12 +168,12 @@ Sector::Sector(float lightLevel, Vector3f const &lightColor)
     d->lightColor = lightColor.min(Vector3f(1, 1, 1)).max(Vector3f(0, 0, 0));
 }
 
-float Sector::lightLevel() const
+dfloat Sector::lightLevel() const
 {
     return d->lightLevel;
 }
 
-void Sector::setLightLevel(float newLightLevel)
+void Sector::setLightLevel(dfloat newLightLevel)
 {
     newLightLevel = de::clamp(0.f, newLightLevel, 1.f);
 
@@ -266,12 +268,12 @@ SoundEmitter const &Sector::soundEmitter() const
     return const_cast<SoundEmitter const &>(const_cast<Sector &>(*this).soundEmitter());
 }
 
-int Sector::validCount() const
+dint Sector::validCount() const
 {
     return d->validCount;
 }
 
-void Sector::setValidCount(int newValidCount)
+void Sector::setValidCount(dint newValidCount)
 {
     d->validCount = newValidCount;
 }
@@ -286,12 +288,12 @@ bool Sector::hasSkyMaskedPlane() const
     return false;
 }
 
-int Sector::planeCount() const
+dint Sector::planeCount() const
 {
     return d->planes.count();
 }
 
-Plane &Sector::plane(int planeIndex)
+Plane &Sector::plane(dint planeIndex)
 {
     if(planeIndex >= 0 && planeIndex < d->planes.count())
     {
@@ -301,14 +303,14 @@ Plane &Sector::plane(int planeIndex)
     throw MissingPlaneError("Sector::plane", QString("Missing plane %1").arg(planeIndex));
 }
 
-Plane const &Sector::plane(int planeIndex) const
+Plane const &Sector::plane(dint planeIndex) const
 {
     return const_cast<Sector *>(this)->plane(planeIndex);
 }
 
 Plane *Sector::addPlane(Vector3f const &normal, coord_t height)
 {
-    Plane *plane = new Plane(*this, normal, height);
+    auto *plane = new Plane(*this, normal, height);
 
     plane->setIndexInSector(d->planes.count());
     d->planes.append(plane);
@@ -340,7 +342,7 @@ LoopResult Sector::forAllPlanes(std::function<LoopResult (Plane &)> func) const
     return LoopContinue;
 }
 
-int Sector::sideCount() const
+dint Sector::sideCount() const
 {
     return d->sides.count();
 }
@@ -359,7 +361,7 @@ void Sector::buildSides()
     d->sides.clear();
 
 #ifdef DENG2_QT_4_7_OR_NEWER
-    int count = 0;
+    dint count = 0;
     map().forAllLines([this, &count] (Line &line)
     {
         if(line.frontSectorPtr() == this || line.backSectorPtr()  == this)
@@ -448,7 +450,7 @@ coord_t Sector::roughArea() const
 
 #endif // __CLIENT__
 
-int Sector::property(DmuArgs &args) const
+dint Sector::property(DmuArgs &args) const
 {
     switch(args.prop)
     {
@@ -491,10 +493,10 @@ int Sector::property(DmuArgs &args) const
         return MapElement::property(args);
     }
 
-    return false; // Continue iteration.
+    return false;  // Continue iteration.
 }
 
-int Sector::setProperty(DmuArgs const &args)
+dint Sector::setProperty(DmuArgs const &args)
 {
     switch(args.prop)
     {
@@ -521,7 +523,7 @@ int Sector::setProperty(DmuArgs const &args)
         setLightColor(newColor);
         break; }
     case DMU_LIGHT_LEVEL: {
-        float newLightLevel;
+        dfloat newLightLevel;
         args.value(DMT_SECTOR_LIGHTLEVEL, &newLightLevel, 0);
         setLightLevel(newLightLevel);
         break; }
@@ -532,5 +534,52 @@ int Sector::setProperty(DmuArgs const &args)
         return MapElement::setProperty(args);
     }
 
-    return false; // Continue iteration.
+    return false;  // Continue iteration.
+}
+
+D_CMD(InspectSector)
+{
+    DENG2_UNUSED(src);
+
+    LOG_AS("inspectsector (Cmd)");
+
+    if(argc != 2)
+    {
+        LOG_SCR_NOTE("Usage: %s (sector-id)") << argv[0];
+        return true;
+    }
+
+    if(!App_WorldSystem().hasMap())
+    {
+        LOG_SCR_ERROR("No map is currently loaded");
+        return false;
+    }
+
+    // Find the sector.
+    dint const index  = String(argv[1]).toInt();
+    Sector const *sec = App_WorldSystem().map().sectorPtr(index);
+    if(!sec)
+    {
+        LOG_SCR_ERROR("Sector #%i not found") << index;
+        return false;
+    }
+
+    LOG_SCR_MSG(_E(b) "Sector %i" _E(.) " [%p]")
+            << sec->indexInMap() << sec;
+    LOG_SCR_MSG(_E(l)  "Light Level: " _E(.)_E(i) "%f" _E(.)
+                _E(l) " Light Color: " _E(.)_E(i) "%s")
+            << sec->lightLevel()
+            << sec->lightColor().asText();
+    sec->forAllPlanes([](Plane &plane)
+    {
+        LOG_SCR_MSG("") << plane.description();
+        return LoopContinue;
+    });
+
+    return true;
+}
+
+void Sector::consoleRegister()  // static
+{
+    C_CMD("inspectsector", "i", InspectSector);
 }

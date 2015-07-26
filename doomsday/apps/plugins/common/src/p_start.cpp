@@ -27,6 +27,8 @@
 #include <cstdio>
 #include <cstring>
 #include <de/NativePath>
+#include <doomsday/busymode.h>
+
 #include "d_net.h"
 #include "d_netsv.h"
 #include "dmu_lib.h"
@@ -193,44 +195,92 @@ void P_Update()
     P_InitSwitchList();
     P_InitTerrainTypes();
 
-    maxHealth = 100;
-    GetDefInt("Player|Max Health", &maxHealth);
+    ::maxHealth = 100;
+    if(ded_value_t const *maxHealth = Defs().getValueById("Player|Max Health"))
+    {
+        ::maxHealth = String(maxHealth->text).toInt();
+    }
 
 #if __JDOOM__ || __JDOOM64__
-    healthLimit      = 200;
-    godModeHealth    = 100;
-    megaSphereHealth = 200;
-    soulSphereHealth = 100;
-    soulSphereLimit  = 200;
-
-    armorPoints[0] = 100;
-    armorPoints[1] = armorPoints[2] = armorPoints[3] = 200;
-    armorClass[0]  = 1;
-    armorClass[1]  = armorClass[2] = armorClass[3] = 2;
-
-    GetDefInt("Player|Health Limit", &healthLimit);
+    ::healthLimit = 200;
+    if(ded_value_t const *healthLimit = Defs().getValueById("Player|Health Limit"))
+    {
+        ::healthLimit = String(healthLimit->text).toInt();
+    }
 
     // Previous versions did not feature a separate value for God Health,
     // so if its not found, default to the value of Max Health.
-    if(!GetDefInt("Player|God Health", &godModeHealth))
+    ::godModeHealth = ::maxHealth;
+    if(ded_value_t const *godHealth = Defs().getValueById("Player|God Health"))
     {
-        godModeHealth = maxHealth;
+        ::godModeHealth = String(godHealth->text).toInt();
     }
 
-    GetDefInt("Player|Green Armor", &armorPoints[0]);
-    GetDefInt("Player|Blue Armor", &armorPoints[1]);
-    GetDefInt("Player|IDFA Armor", &armorPoints[2]);
-    GetDefInt("Player|IDKFA Armor", &armorPoints[3]);
+    ::armorPoints[0] = 100;
+    if(ded_value_t const *armor = Defs().getValueById("Player|Green Armor"))
+    {
+        ::armorPoints[0] = String(armor->text).toInt();
+    }
 
-    GetDefInt("Player|Green Armor Class", &armorClass[0]);
-    GetDefInt("Player|Blue Armor Class", &armorClass[1]);
-    GetDefInt("Player|IDFA Armor Class", &armorClass[2]);
-    GetDefInt("Player|IDKFA Armor Class", &armorClass[3]);
+    ::armorPoints[1] = 200;
+    if(ded_value_t const *armor = Defs().getValueById("Player|Blue Armor"))
+    {
+        ::armorPoints[1] = String(armor->text).toInt();
+    }
 
-    GetDefInt("MegaSphere|Give|Health", &megaSphereHealth);
+    ::armorPoints[2] = 200;
+    if(ded_value_t const *armor = Defs().getValueById("Player|IDFA Armor"))
+    {
+        ::armorPoints[2] = String(armor->text).toInt();
+    }
 
-    GetDefInt("SoulSphere|Give|Health", &soulSphereHealth);
-    GetDefInt("SoulSphere|Give|Health Limit", &soulSphereLimit);
+    ::armorPoints[3] = 200;
+    if(ded_value_t const *armor = Defs().getValueById("Player|IDKFA Armor"))
+    {
+        ::armorPoints[3] = String(armor->text).toInt();
+    }
+
+    ::armorClass[0] = 1;
+    if(ded_value_t const *aclass = Defs().getValueById("Player|Green Armor Class"))
+    {
+        ::armorClass[0] = String(aclass->text).toInt();
+    }
+
+    ::armorClass[1] = 2;
+    if(ded_value_t const *aclass = Defs().getValueById("Player|Blue Armor Class"))
+    {
+        ::armorClass[1] = String(aclass->text).toInt();
+    }
+
+    ::armorClass[2] = 2;
+    if(ded_value_t const *aclass = Defs().getValueById("Player|IDFA Armor Class"))
+    {
+        ::armorClass[2] = String(aclass->text).toInt();
+    }
+
+    ::armorClass[3] = 2;
+    if(ded_value_t const *aclass = Defs().getValueById("Player|IDKFA Armor Class"))
+    {
+        ::armorClass[3] = String(aclass->text).toInt();
+    }
+
+    ::megaSphereHealth = 200;
+    if(ded_value_t const *health = Defs().getValueById("MegaSphere|Give|Health"))
+    {
+        ::megaSphereHealth = String(health->text).toInt();
+    }
+
+    ::soulSphereHealth = 100;
+    if(ded_value_t const *health = Defs().getValueById("SoulSphere|Give|Health"))
+    {
+        ::soulSphereHealth = String(health->text).toInt();
+    }
+
+    ::soulSphereLimit = 200;
+    if(ded_value_t const *healthLimit = Defs().getValueById("SoulSphere|Give|Health Limit"))
+    {
+        ::soulSphereLimit = String(healthLimit->text).toInt();
+    }
 #endif
 }
 
@@ -623,6 +673,19 @@ void P_SpawnClient(int plrNum)
     p->pSprites[0].pos[VY] = WEAPONBOTTOM;
 }
 
+#if __JHEXEN__
+static String const &ammoTypeName(int ammoType)
+{
+    static String const names[NUM_AMMO_TYPES] = {
+        /*AT_BLUEMANA*/  "Blue mana",
+        /*AT_GREENMANA*/ "Green mana"
+    };
+    if(ammoType >= AT_FIRST && ammoType < NUM_AMMO_TYPES)
+        return names[ammoType - AT_FIRST];
+    throw Error("ammoTypeName", "Unknown ammo type " + String::number(ammoType));
+}
+#endif  // __JHEXEN__
+
 void P_RebornPlayerInMultiplayer(int plrNum)
 {
     if(plrNum < 0 || plrNum >= MAXPLAYERS)
@@ -811,8 +874,13 @@ void P_RebornPlayerInMultiplayer(int plrNum)
         }
     }
 
-    GetDefInt("Multiplayer|Reborn|Blue mana",  &p->ammo[AT_BLUEMANA].owned);
-    GetDefInt("Multiplayer|Reborn|Green mana", &p->ammo[AT_GREENMANA].owned);
+    for(auto i = int( AT_FIRST ); i < NUM_AMMO_TYPES; ++i)
+    {
+        if(ded_value_t const *ammo = Defs().getValueById("Multiplayer|Reborn|" + ammoTypeName(i)))
+        {
+            p->ammo[i].owned = String(ammo->text).toInt();
+        }
+    }
 
     App_Log(DE2_MAP_VERBOSE, "Player %i reborn in multiplayer: giving mana (b:%i g:%i); "
             "also old weapons, with best weapon %i", plrNum, p->ammo[AT_BLUEMANA].owned,

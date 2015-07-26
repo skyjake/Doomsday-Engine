@@ -43,8 +43,6 @@
 
 using namespace de;
 
-application_t app;
-
 /**
  * @note GetLastError() should only be called when we *know* an error was thrown.
  * The result of calling this any other time is undefined.
@@ -86,9 +84,6 @@ char const *DD_Win32_GetLastErrorMessage()
 
 dd_bool DD_Win32_Init()
 {
-    zap(app);
-    app.hInstance = GetModuleHandle(NULL);
-
     // Initialize COM.
     CoInitialize(NULL);
 
@@ -97,31 +92,7 @@ dd_bool DD_Win32_Init()
 
     Library_Init();
 
-    // Change to a custom working directory?
-    if(CommandLine_CheckWith("-userdir", 1))
-    {
-        if(NativePath::setWorkPath(CommandLine_NextAsPath()))
-        {
-            LOG_VERBOSE("Changed current directory to \"%s\"") << NativePath::workPath();
-            app.usingUserDir = true;
-        }
-    }
-
-    // The runtime directory is the current working directory.
-    DD_SetRuntimePath((NativePath::workPath().withSeparators('/') + '/').toUtf8().constData());
-
-    // Use a custom base directory?
-    if(CommandLine_CheckWith("-basedir", 1))
-    {
-        DD_SetBasePath(CommandLine_Next());
-    }
-    else
-    {
-        // The default base directory is one level up from the bin dir.
-        String binDir  = App::executablePath().fileNamePath().withSeparators('/');
-        String baseDir = String(QDir::cleanPath(binDir / String(".."))) + '/';
-        DD_SetBasePath(baseDir.toUtf8().constData());
-    }
+    DoomsdayApp::app().determineGlobalPaths();
 
     // Perform early initialization of subsystems that require it.
     BOOL failed = TRUE;
@@ -160,7 +131,7 @@ dd_bool DD_Win32_Init()
 void DD_Shutdown()
 {
     DD_ShutdownAll(); // Stop all engine subsystems.
-    Plug_UnloadAll();
+    DoomsdayApp::plugins().unloadAll();
     Library_Shutdown();
 
     // No more use of COM beyond, this point.

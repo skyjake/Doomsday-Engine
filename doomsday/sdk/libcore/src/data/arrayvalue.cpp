@@ -197,6 +197,22 @@ void ArrayValue::add(Value *value)
     _elements.push_back(value);
 }
 
+void ArrayValue::addMany(duint count, Value::Number value)
+{
+    while(count--)
+    {
+        add(new NumberValue(value));
+    }
+}
+
+void ArrayValue::addMany(duint count, String const &value)
+{
+    while(count--)
+    {
+        add(new TextValue(value));
+    }
+}
+
 void ArrayValue::add(String const &text)
 {
     add(new TextValue(text));
@@ -347,6 +363,11 @@ void ArrayValue::callElements(ArrayValue const &args)
 void ArrayValue::setElement(dint index, Number value)
 {
     setElement(NumberValue(index), new NumberValue(value));
+}
+
+void ArrayValue::setElement(dint index, String const &value)
+{
+    setElement(NumberValue(index), new TextValue(value));
 }
 
 Value const &ArrayValue::element(dint index) const

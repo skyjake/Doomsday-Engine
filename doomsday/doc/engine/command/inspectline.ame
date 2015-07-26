@@ -1,0 +1,6 @@
+@summary{
+    Print detailed information about a Line to the console.
+}
+@description{
+    Params: inspectline (index) @cbr For example, 'inspectline 12'.
+}

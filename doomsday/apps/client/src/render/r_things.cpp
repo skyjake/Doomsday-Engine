@@ -1,7 +1,7 @@
 /** @file r_things.cpp  Map Object => Vissprite Projection.
  *
  * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  * @authors Copyright © 1993-1996 by id Software, Inc.
  *
@@ -25,20 +25,24 @@
 
 #include <de/vector1.h>
 #include <de/ModelDrawable>
+#include <doomsday/defs/sprite.h>
 
 #include "clientapp.h"
-#include "de_render.h"
-#include "dd_main.h" // App_WorldSystem()
-#include "dd_loop.h" // frameTimePos
-#include "def_main.h" // states
+#include "dd_main.h"  // App_WorldSystem()
+#include "dd_loop.h"  // frameTimePos
+#include "def_main.h"  // states
+#include "r_util.h"
 
+#include "gl/gl_main.h"
 #include "gl/gl_tex.h"
-#include "gl/gl_texmanager.h" // GL_PrepareFlaremap
+#include "gl/gl_texmanager.h"  // GL_PrepareFlaremap
 
-#include "network/net_main.h" // clients[]
+#include "network/net_main.h"  // clients[]
 
+#include "render/r_main.h"
 #include "render/angleclipper.h"
 #include "render/mobjanimator.h"
+#include "render/rend_halo.h"
 #include "render/vissprite.h"
 
 #include "world/map.h"
@@ -54,6 +58,11 @@ using namespace de;
 static inline RenderSystem &rendSys()
 {
     return ClientApp::renderSystem();
+}
+
+static inline ResourceSystem &resSys()
+{
+    return ClientApp::resourceSystem();
 }
 
 static void evaluateLighting(Vector3d const &origin, ConvexSubspace &subspaceAtOrigin,
@@ -117,7 +126,7 @@ static Vector3d mobjOriginSmoothed(mobj_t *mob)
     // The client may have a Smoother for this object.
     if(isClient && mob->dPlayer && P_GetDDPlayerIdx(mob->dPlayer) != consolePlayer)
     {
-        Smoother_Evaluate(clients[P_GetDDPlayerIdx(mob->dPlayer)].smoother, origin);
+        Smoother_Evaluate(DD_Player(P_GetDDPlayerIdx(mob->dPlayer))->smoother(), origin);
     }
 
     return origin;
@@ -162,8 +171,8 @@ void R_ProjectSprite(mobj_t &mob)
     // ...in an invalid state?
     if(!mob.state || !runtimeDefs.states.indexOf(mob.state)) return;
     // ...no sprite frame is defined?
-    Sprite *sprite = Mobj_Sprite(mob);
-    if(!sprite) return;
+    Record *spriteRec = Mobj_SpritePtr(mob);
+    if(!spriteRec) return;
     // ...fully transparent?
     dfloat const alpha = Mobj_Alpha(mob);
     if(alpha <= 0) return;
@@ -212,15 +221,14 @@ void R_ProjectSprite(mobj_t &mob)
     bool matFlipS = false;
     bool matFlipT = false;
 
+    defn::Sprite sprite(*spriteRec);
     try
     {
-        SpriteViewAngle const &sprViewAngle =
-            sprite->closestViewAngle(mob.angle, R_ViewPointToAngle(mob.origin), !!mf);
-
-        mat      = sprViewAngle.material;
-        matFlipS = sprViewAngle.mirrorX;
+        Record const &spriteView = sprite.nearestView(mob.angle, R_ViewPointToAngle(mob.origin), !!mf);
+        mat      = resSys().materialPtr(de::Uri(spriteView.gets("material"), RC_NULL));
+        matFlipS = spriteView.getb("mirrorX");
     }
-    catch(Sprite::MissingViewAngleError const &er)
+    catch(defn::Sprite::MissingViewError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_GL_WARNING("Projecting sprite '%i' frame '%i': %s")
@@ -265,7 +273,7 @@ void R_ProjectSprite(mobj_t &mob)
 
         // If the model is close to the viewpoint we should still to draw it,
         // otherwise large models are likely to disappear too early.
-        viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+        viewdata_t const *viewData = &viewPlayer->viewport();
         Vector2d delta(distFromEye, moPos.z + (mob.height / 2) - viewData->current.origin.z);
         if(M_ApproxDistance(delta.x, delta.y) > MAX_OBJECT_RADIUS)
             return;
@@ -315,7 +323,7 @@ void R_ProjectSprite(mobj_t &mob)
         if(mf->testSubFlag(0, MFF_ALIGN_YAW))
         {
             // Transform the origin point.
-            viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+            viewdata_t const *viewData = &viewPlayer->viewport();
             Vector2d delta(moPos.y - viewData->current.origin.y,
                            moPos.x - viewData->current.origin.x);
 
@@ -342,7 +350,7 @@ void R_ProjectSprite(mobj_t &mob)
 
         if(mf->testSubFlag(0, MFF_ALIGN_PITCH))
         {
-            viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+            viewdata_t const *viewData = &viewPlayer->viewport();
             Vector2d delta(vis->pose.midZ() - viewData->current.origin.z, distFromEye);
 
             pitch = -BANG2DEG(bamsAtan2(delta.x * 10, delta.y * 10));
@@ -474,13 +482,11 @@ void R_ProjectSprite(mobj_t &mob)
         /// @todo mark this light source visible for LensFx
         try
         {
-            SpriteViewAngle const &sprViewAngle =
-                sprite->closestViewAngle(mob.angle, R_ViewPointToAngle(mob.origin));
+            Record const &spriteView = sprite.nearestView(mob.angle, R_ViewPointToAngle(mob.origin));
 
-            DENG2_ASSERT(sprViewAngle.material);
-            MaterialAnimator &matAnimator = sprViewAngle.material->getAnimator(Rend_SpriteMaterialSpec(mob.tclass, mob.tmap));
-
-            // Ensure we've up to date info about the material.
+            // Lookup the Material for this Sprite and prepare the animator.
+            MaterialAnimator &matAnimator = resSys().material(de::Uri(spriteView.gets("material"), RC_NULL))
+                                                        .getAnimator(Rend_SpriteMaterialSpec(mob.tclass, mob.tmap));
             matAnimator.prepare();
 
             Vector2i const &matDimensions = matAnimator.dimensions();
@@ -529,7 +535,7 @@ void R_ProjectSprite(mobj_t &mob)
             // Color is taken from the associated lumobj.
             V3f_Set(vis->data.flare.color, lob.color().x, lob.color().y, lob.color().z);
 
-            vis->data.flare.factor = mob.haloFactors[viewPlayer - ddPlayers];
+            vis->data.flare.factor = mob.haloFactors[DoomsdayApp::players().indexOf(viewPlayer)];
             vis->data.flare.xOff = xOffset;
             vis->data.flare.mul = 1;
             vis->data.flare.tex = 0;
@@ -543,7 +549,13 @@ void R_ProjectSprite(mobj_t &mob)
                 }
             }
         }
-        catch(Sprite::MissingViewAngleError const &er)
+        catch(defn::Sprite::MissingViewError const &er)
+        {
+            // Log but otherwise ignore this error.
+            LOG_GL_WARNING("Projecting flare source for sprite '%i' frame '%i': %s")
+                    << mob.sprite << mob.frame << er.asText();
+        }
+        catch(ResourceSystem::MissingManifestError const &er)
         {
             // Log but otherwise ignore this error.
             LOG_GL_WARNING("Projecting flare source for sprite '%i' frame '%i': %s")

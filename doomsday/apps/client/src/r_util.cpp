@@ -1,7 +1,7 @@
-/**\file r_util.cpp
+/** @file r_util.cpp  Refresh Utility Routines.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,22 +17,19 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Refresh Utility Routines.
- */
+#include "de_base.h"
+#include "r_util.h"
 
 #include <cmath>
-
-#include "de_base.h"
-#include "de_console.h"
-#include "de_play.h"
-#include "de_misc.h"
+#include <de/binangle.h>
+#include <de/vector1.h>
 
 #ifdef __CLIENT__
+#  include "world/p_players.h"
+
+#  include "api_render.h"
 #  include "render/viewports.h"
 #endif
-
-#include "r_util.h"
 
 using namespace de;
 
@@ -63,14 +60,14 @@ float R_MovementXYZPitch(float momx, float momy, float momz)
 
 angle_t R_ViewPointToAngle(Vector2d point)
 {
-    viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+    viewdata_t const *viewData = &viewPlayer->viewport();
     point -= Vector2d(viewData->current.origin);
     return M_PointXYToAngle(point.x, point.y);
 }
 
 coord_t R_ViewPointDistance(coord_t x, coord_t y)
 {
-    Vector3d const &viewOrigin = R_ViewData(viewPlayer - ddPlayers)->current.origin;
+    Vector3d const &viewOrigin = viewPlayer->viewport().current.origin;
     coord_t viewOriginv1[2] = { viewOrigin.x, viewOrigin.y };
     coord_t pointv1[2] = { x, y };
     return M_PointDistance(viewOriginv1, pointv1);
@@ -93,7 +90,7 @@ Vector3d R_ClosestPointOnPlane(Vector3f const &planeNormal_,
 void R_ProjectViewRelativeLine2D(coord_t const center[2], dd_bool alignToViewPlane,
     coord_t width, coord_t offset, coord_t start[2], coord_t end[2])
 {
-    viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+    viewdata_t const *viewData = &viewPlayer->viewport();
     float sinrv, cosrv;
 
     if(alignToViewPlane)
@@ -124,7 +121,7 @@ void R_ProjectViewRelativeLine2D(coord_t const center[2], dd_bool alignToViewPla
 void R_ProjectViewRelativeLine2D(Vector2d const center, bool alignToViewPlane,
     coord_t width, coord_t offset, Vector2d &start, Vector2d &end)
 {
-    viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+    viewdata_t const *viewData = &viewPlayer->viewport();
     float sinrv, cosrv;
 
     if(alignToViewPlane)

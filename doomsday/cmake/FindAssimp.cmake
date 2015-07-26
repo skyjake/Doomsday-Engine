@@ -16,7 +16,7 @@ if (NOT TARGET libassimp)
 		# Use the built target location from the "assimp" target.
 		set (ASSIMP_INCLUDE_DIRS ${DENG_EXTERNAL_SOURCE_DIR}/assimp/include)
 		if (APPLE)
-			set (LIBASSIMP $<TARGET_SONAME_FILE:assimp>)
+		    set (LIBASSIMP $<TARGET_LINKER_FILE:assimp>)
 		elseif (WIN32)
 			set (LIBASSIMP ${CMAKE_CURRENT_BINARY_DIR}/$<TARGET_LINKER_FILE:assimp>)
 		else ()
@@ -81,24 +81,6 @@ if (NOT TARGET libassimp)
     endif ()
     
     target_link_libraries (libassimp INTERFACE ${LIBASSIMP})
-
-    if (NOT WIN32)
-        deng_install_library (${LIBASSIMP})
-    else ()
-		if (TARGET assimp)
-			# Assimp is part of the build, so we know where the DLL is.
-			deng_install_library ($<TARGET_FILE:assimp>)
-		else ()
-			# Locate the DLL.
-			find_file (LIBASSIMP_DLL NAMES assimp.dll assimpd.dll 
-				PATHS ${_assimpBase}/..
-				PATH_SUFFIXES ../bin/Release ../bin/Debug
-			)
-			mark_as_advanced (LIBASSIMP_DLL)
-			get_filename_component (LIBASSIMP_DLL ${LIBASSIMP_DLL} REALPATH)
-			deng_install_library (${LIBASSIMP_DLL})
-		endif ()
-    endif ()
 endif ()
 
 if (NOT _oldPath STREQUAL LIBASSIMP)

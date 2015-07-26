@@ -21,16 +21,17 @@
 #define SERVERAPP_H
 
 #include <de/TextApp>
+#include <doomsday/doomsdayapp.h>
+#include <doomsday/Games>
 #include "serversystem.h"
 #include "ui/infine/infinesystem.h"
 #include "resource/resourcesystem.h"
-#include "Games"
 #include "world/worldsystem.h"
 
 /**
  * The server application.
  */
-class ServerApp : public de::TextApp
+class ServerApp : public de::TextApp, public DoomsdayApp
 {
 public:
     ServerApp(int &argc, char **argv);
@@ -47,7 +48,6 @@ public:
     static ServerSystem &serverSystem();
     static InFineSystem &infineSystem();
     static ResourceSystem &resourceSystem();
-    static de::Games &games();
     static de::WorldSystem &worldSystem();
 
 private:

@@ -239,7 +239,7 @@ void Evaluator::push(Expression const *expression, Value *scope)
 {
     d->stack.push_back(Instance::ScopedExpression(expression, scope));
 }
-
+    
 void Evaluator::pushResult(Value *value)
 {
     d->pushResult(value);

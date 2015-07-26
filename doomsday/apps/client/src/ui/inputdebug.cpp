@@ -1,6 +1,6 @@
 /** @file inputdebug.cpp  Input debug visualizer.
  *
- * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -24,17 +24,24 @@
 
 #include <de/concurrency.h>
 #include <de/ddstring.h>
+#include <de/point.h>
 #include <de/timer.h> // SECONDSPERTIC
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
 #include <de/KeyEvent>
 #include "clientapp.h"
-
 #include "dd_def.h"
 #include "dd_main.h"
 #include "sys_system.h" // novideo
 
+#include "gl/gl_main.h"
+#include "gl/gl_draw.h"
+
+#include "api_fontrender.h"
+
 #include "ui/b_main.h"
+#include "ui/b_util.h"
+#include "ui/clientwindow.h"
 #include "ui/joystick.h"
 #include "ui/infine/finale.h"
 #include "ui/inputdevice.h"
@@ -43,11 +50,6 @@
 #include "ui/inputdevicehatcontrol.h"
 #include "ui/sys_input.h"
 #include "ui/ui_main.h"
-#include "ui/b_util.h"
-
-#include <de/point.h>
-#include "de_graphics.h"
-#include "api_fontrender.h"
 
 using namespace de;
 

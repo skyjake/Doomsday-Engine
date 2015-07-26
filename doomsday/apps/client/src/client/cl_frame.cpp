@@ -1,7 +1,7 @@
-/** @file
+/** @file cl_frame.c  Frame Reception.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,16 +17,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * cl_frame.c: Frame Reception
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "de_base.h"
-#include "de_console.h"
-
 #include "client/cl_frame.h"
+
 #include "client/cl_mobj.h"
 #include "client/cl_player.h"
 #include "client/cl_sound.h"
@@ -35,26 +28,12 @@
 #include "network/net_buf.h"
 #include "network/net_msg.h"
 
-// MACROS ------------------------------------------------------------------
-
 #if 0
 #define SET_HISTORY_SIZE    50
 #define RESEND_HISTORY_SIZE 50
 #endif
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
 extern int gotFrame;
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // Set to true when the PSV_FIRST_FRAME2 packet is received.
 // Until then, all PSV_FRAME2 packets are ignored (they must be
@@ -62,8 +41,6 @@ extern int gotFrame;
 dd_bool gotFirstFrame;
 
 //int     predicted_tics;
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // gameTime of the current frame.
 static float frameGameTime = 0;
@@ -90,8 +67,6 @@ static int      historyIdx;
 static byte     resendHistory[RESEND_HISTORY_SIZE];
 static int      resendHistoryIdx;
 #endif
-
-// CODE --------------------------------------------------------------------
 
 /**
  * Clear the history of received set numbers.

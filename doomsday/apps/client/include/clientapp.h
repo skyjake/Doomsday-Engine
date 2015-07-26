@@ -21,6 +21,7 @@
 #define CLIENTAPP_H
 
 #include <de/BaseGuiApp>
+#include <doomsday/doomsdayapp.h>
 
 #include "settingsregister.h"
 #include "network/serverlink.h"
@@ -30,13 +31,13 @@
 #include "render/rendersystem.h"
 #include "resource/resourcesystem.h"
 #include "updater.h"
-#include "Games"
+#include "busyrunner.h"
 #include "world/worldsystem.h"
 
 /**
  * The client application.
  */
-class ClientApp : public de::BaseGuiApp
+class ClientApp : public de::BaseGuiApp, public DoomsdayApp
 {
     Q_OBJECT
 
@@ -63,6 +64,7 @@ public:
 
 public:
     static ClientApp &app();
+    static BusyRunner &busyRunner();
     static Updater &updater();
     static SettingsRegister &logSettings();
     static SettingsRegister &networkSettings();
@@ -73,9 +75,9 @@ public:
     static ClientWindowSystem &windowSystem();
     static RenderSystem &renderSystem();
     static ResourceSystem &resourceSystem();
-    static de::Games &games();
     static de::WorldSystem &worldSystem();
 
+    static bool hasInputSystem();
     static bool hasRenderSystem();
 
 public slots:

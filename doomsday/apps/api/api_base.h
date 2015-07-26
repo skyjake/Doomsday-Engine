@@ -22,45 +22,13 @@
 #define DOOMSDAY_API_BASE_H
 
 #include <de/str.h>
+#include <doomsday/resource/resourceclass.h>
+#include <doomsday/game.h>
 #include "apis.h"
 #include "api_uri.h"
-#include "api_resourceclass.h"
 
 /// @addtogroup game
 /// @{
-
-/**
- * Defines the high-level properties of a logical game component. Note that this
- * is POD; no construction or destruction is needed.
- * @see DD_DefineGame() @ingroup game
- */
-typedef struct gamedef_s {
-   /*
-    * Unique game mode key/identifier, 16 chars max (e.g., "doom1-ultimate").
-    * - Used during resource location for mode-specific assets.
-    * - Sent out in netgames (a client can't connect unless mode strings match).
-    */
-    char const *identityKey;
-
-    /// Name of the config directory.
-    char const *configDir;
-
-    /// Default title. May be overridden later.
-    char const *defaultTitle;
-
-    /// Default author. May be overridden later.
-    /// Used for (e.g.) the map author name if not specified in a Map Info definition.
-    char const *defaultAuthor;
-
-    /*
-     * Used when converting legacy savegames:
-     */
-    char const *legacySavegameNameExp;
-    char const *legacySavegameSubfolder;
-
-    /// Primary MAPINFO definition dat, if any (translated during game init).
-    char const *mainMapInfo;
-} GameDef;
 
 /**
  * Extended info about a registered game component.

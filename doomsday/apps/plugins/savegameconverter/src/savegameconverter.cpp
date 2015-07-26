@@ -106,9 +106,7 @@ extern "C" char const *deng_LibraryType()
 }
 
 DENG_DECLARE_API(Base);
-DENG_DECLARE_API(Plug);
 
 DENG_API_EXCHANGE(
     DENG_GET_API(DE_API_BASE, Base);
-    DENG_GET_API(DE_API_PLUGIN, Plug);
 )

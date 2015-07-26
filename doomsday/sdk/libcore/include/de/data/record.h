@@ -39,6 +39,9 @@ class ArrayValue;
 class Function;
 class NativeFunctionSpec;
 
+#define DENG2_ADD_NUMBER_CONSTANT(record, constant) \
+    (record).addNumber(#constant, constant).setReadOnly()
+    
 /**
  * A set of variables. A record may have any number of subrecords. Note
  * that the members of a record do not have an order.

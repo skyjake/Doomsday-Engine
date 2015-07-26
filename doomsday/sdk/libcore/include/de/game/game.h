@@ -35,7 +35,7 @@ namespace game {
  * <pre>load doom2</pre>
  *
  * @todo The 'game' namespace can be removed once the client/server apps don't
- * declare their own de::Game classes any more.
+ * declare their own Game classes any more.
  */
 class DENG2_PUBLIC Game
 {

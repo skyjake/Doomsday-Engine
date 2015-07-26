@@ -34,23 +34,23 @@
 
 #include <de/App>
 #include <de/Loop>
-#include "de_console.h"
+#include <doomsday/doomsdayapp.h>
+#include <doomsday/console/exec.h>
+
 #include "de_system.h"
-#include "de_graphics.h"
-#include "de_misc.h"
 #ifdef __CLIENT__
 #  include "clientapp.h"
 #endif
-
 #include "dd_main.h"
 #include "dd_loop.h"
+
+#include "audio/s_main.h"
 #ifdef __CLIENT__
 #  include "gl/gl_main.h"
 #endif
-#include "ui/nativeui.h"
 #include "network/net_main.h"
 #include "network/net_buf.h"
-#include "audio/s_main.h"
+#include "ui/nativeui.h"
 
 #if defined(WIN32) && !defined(_DEBUG)
 #  define DENG_CATCH_SIGNALS
@@ -134,9 +134,13 @@ void Sys_Shutdown()
     // Let's shut down sound first, so Windows' HD-hogging doesn't jam
     // the MUS player (would produce horrible bursts of notes).
     S_Shutdown();
+    
 #ifdef __CLIENT__
     GL_Shutdown();
-    ClientApp::inputSystem().clearEvents();
+    if(ClientApp::hasInputSystem())
+    {
+        ClientApp::inputSystem().clearEvents();
+    }
 #endif
 
     App_ClearGames();
@@ -285,7 +289,7 @@ de::NativePath Sys_SteamBasePath()
  */
 DENG_EXTERN_C void Sys_Quit(void)
 {
-    if(BusyMode_Active())
+    if(DoomsdayApp::app().busyMode().isActive())
     {
         // The busy worker is running; we cannot just stop it abruptly.
         Sys_MessageBox2(MBT_WARNING, DOOMSDAY_NICENAME, "Cannot quit while in busy mode.",

@@ -1,10 +1,7 @@
-/** @file joystick.cpp Joystick input pre-processing for Unix.
- * @ingroup input
- *
- * Uses SDL.
+/** @file joystick.cpp  SDL Joystick input pre-processing for Unix.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  * @authors Copyright © 2005 Zachary Keene <zjkeene@bellsouth.net>
  *
@@ -29,9 +26,9 @@
 #endif
 
 #include "de_base.h"
-#include "de_console.h"
 #include "de_system.h"
-#include "de_misc.h"
+
+#include <doomsday/console/var.h>
 
 #define CONVCONST       ((IJOY_AXISMAX - IJOY_AXISMIN) / 65535.0)
 

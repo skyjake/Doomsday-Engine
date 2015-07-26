@@ -57,19 +57,22 @@
 #include "api_event.h"
 #include "api_filesys.h"
 #include "api_fontrender.h"
-#include "api_gameexport.h"
 #include "api_internaldata.h"
 #include "api_map.h"
 #include "api_mapedit.h"
 #include "api_material.h"
 #include "api_materialarchive.h"
-#include "api_plugin.h"
 #include "api_render.h"
 #include "api_resource.h"
 #include "api_server.h"
 #include "api_sound.h"
 #include "api_svg.h"
 #include "api_uri.h"
+
+#include <doomsday/gameapi.h>
+#include <doomsday/plugins.h>
+#include <doomsday/players.h>
+#include <doomsday/player.h>
 
 #include <de/memoryzone.h>
 #include <de/point.h>

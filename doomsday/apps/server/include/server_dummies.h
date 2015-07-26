@@ -40,6 +40,9 @@
 DENG_EXTERN_C void Con_TransitionTicker(timespan_t t);
 DENG_EXTERN_C void Con_SetProgress(int progress);
 
+#undef BusyMode_FreezeGameForBusyMode
+DENG_EXTERN_C void BusyMode_FreezeGameForBusyMode();
+
 DENG_EXTERN_C void GL_Shutdown();
 
 DENG_EXTERN_C void R_RenderPlayerView(int num);

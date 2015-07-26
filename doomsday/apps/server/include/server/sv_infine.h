@@ -1,7 +1,7 @@
-/** @file sv_infine.h Server-side inFine.
+/** @file sv_infine.h  Server-side inFine.
  * @ingroup server
  *
- * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2009-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,10 +17,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_SERVER_INFINE
-#define LIBDENG_SERVER_INFINE
+#ifndef SERVER_INFINE
+#define SERVER_INFINE
 
-#include "de_infine.h"
+#include "api_infine.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,7 +32,7 @@ extern "C" {
 void Sv_Finale(finaleid_t id, int flags, char const *script);
 
 #ifdef __cplusplus
-} // extern "C"
+}  // extern "C"
 #endif
 
-#endif /* LIBDENG_SERVER_INFINE */
+#endif  // SERVER_INFINE

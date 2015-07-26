@@ -29,12 +29,11 @@
 #include <doomsday/console/knownword.h>
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/filesys/fs_util.h>
+#include <doomsday/Games>
 
 #include "dd_main.h"
 #include "dd_def.h"
 #include "m_misc.h"
-
-#include "Games"
 
 #ifdef __CLIENT__
 #  include "clientapp.h"

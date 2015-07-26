@@ -27,6 +27,7 @@
 #include <de/Log>
 #include <de/mathutil.h> // M_CeilPow2()
 #include <de/memory.h>
+#include <doomsday/busymode.h>
 #include <doomsday/filesys/fs_main.h>
 
 using namespace de;

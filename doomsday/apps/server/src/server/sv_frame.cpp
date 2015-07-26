@@ -1,8 +1,7 @@
-/** @file sv_frame.cpp Frame Generation and Transmission
- * @ingroup server
+/** @file sv_frame.cpp  Frame Generation and Transmission.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,18 +17,18 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <math.h>
-
 #include "de_base.h"
-#include "de_console.h"
-#include "de_network.h"
-#include "de_system.h"
-#include "de_misc.h"
-#include "de_play.h"
+#include "server/sv_frame.h"
+#include "server/sv_pool.h"
+#include "world/p_players.h"
 
+#include <cmath>
+#include "de_system.h"
 #include "def_main.h"
 
-// MACROS ------------------------------------------------------------------
+#include "network/net_main.h"
+
+using namespace de;
 
 // Hitting the maximum packet size allows checks for raising BWR.
 #define BWR_ADJUST_TICS     (TICSPERSEC / 2)
@@ -51,68 +50,47 @@
 // If movement is faster than this, we'll adjust the place of the point.
 #define MOM_FAST_LIMIT      (127)
 
-// TYPES -------------------------------------------------------------------
+void Sv_SendFrame(dint playerNumber);
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+dint allowFrames;
+dint frameInterval = 1;  ///< Skip every second frame by default (17.5fps)
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-void            Sv_SendFrame(int playerNumber);
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-int allowFrames = false;
-int frameInterval = 1; // Skip every second frame by default (17.5fps)
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-#ifdef _DEBUG
-static int byteCounts[256];
-static int totalFrameCount;
+#ifdef DENG2_DEBUG
+static dint byteCounts[256];
+static dint totalFrameCount;
 #endif
 
-static int lastTransmitTic = 0;
-
-// CODE --------------------------------------------------------------------
+static dint lastTransmitTic;
 
 /**
  * Send all the relevant information to each client.
  */
-void Sv_TransmitFrame(void)
+void Sv_TransmitFrame()
 {
-    int                 i, cTime, numInGame, pCount;
-
     // Obviously clients don't transmit anything.
-    if(!allowFrames || isClient || Sys_IsShuttingDown())
+    if(!::allowFrames || ::isClient || Sys_IsShuttingDown())
     {
         return;
     }
 
-    if(!netGame)
+    if(!::netGame)
     {
-        // When not running a netGame, only generate deltas when somebody
-        // is recording a demo.
-        for(i = 0; i < DDMAXPLAYERS; ++i)
+        // Only generate deltas when somebody is recording a demo.
+        dint i = 0;
+        for(; i < DDMAXPLAYERS; ++i)
+        {
             if(Sv_IsFrameTarget(i))
                 break;
-
-        if(i == DDMAXPLAYERS)
-        {
-            // Nobody is a frame target.
-            return;
         }
+        if(i == DDMAXPLAYERS) return;  // Nobody is a frame target.
     }
 
-    if(SECONDS_TO_TICKS(gameTime) == lastTransmitTic)
+    if(SECONDS_TO_TICKS(::gameTime) == ::lastTransmitTic)
     {
         // We were just here!
         return;
     }
-    lastTransmitTic = SECONDS_TO_TICKS(gameTime);
+    ::lastTransmitTic = SECONDS_TO_TICKS(::gameTime);
 
     LOG_AS("Sv_TransmitFrame");
 
@@ -120,10 +98,13 @@ void Sv_TransmitFrame(void)
     Sv_GenerateFrameDeltas();
 
     // How many players currently in the game?
-    numInGame = Sv_GetNumPlayers();
+    dint const numInGame = Sv_GetNumPlayers();
 
-    for(i = 0, pCount = 0; i < DDMAXPLAYERS; ++i)
+    dint pCount = 0;
+    for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
+        auto &plr = *DD_Player(i);
+
         if(!Sv_IsFrameTarget(i))
         {
             // This player is not a valid target for frames.
@@ -133,31 +114,31 @@ void Sv_TransmitFrame(void)
         // When the interval is greater than zero, this causes the frames
         // to be sent at different times for each player.
         pCount++;
-        cTime = SECONDS_TO_TICKS(gameTime);
-        if(frameInterval > 0 && numInGame > 1)
+        dint cTime = SECONDS_TO_TICKS(::gameTime);
+        if(::frameInterval > 0 && numInGame > 1)
         {
-            cTime += (pCount * frameInterval) / numInGame;
+            cTime += (pCount * ::frameInterval) / numInGame;
         }
-        if(cTime <= clients[i].lastTransmit + frameInterval)
+        if(cTime <= plr.lastTransmit + ::frameInterval)
         {
             // Still too early to send.
             continue;
         }
-        clients[i].lastTransmit = cTime;
+        plr.lastTransmit = cTime;
 
-        if(clients[i].ready) // && clients[i].updateCount > 0)
+        if(plr.ready)
         {
             // A frame will be sent to this client. If the client
             // doesn't send ticcmds, the updatecount will eventually
             // decrease back to zero.
-            //clients[i].updateCount--;
+            //::clients[i].updateCount--;
 
             Sv_SendFrame(i);
         }
         else
         {
             LOG_NET_XVERBOSE("NOT sending at tic %i to plr %i (ready:%b)")
-                    << lastTransmitTic << i << clients[i].ready;
+                << ::lastTransmitTic << i << plr.ready;
         }
     }
 }
@@ -165,19 +146,18 @@ void Sv_TransmitFrame(void)
 /**
  * Shutdown routine for the server.
  */
-void Sv_Shutdown(void)
+void Sv_Shutdown()
 {
-#ifdef _DEBUG
-if(totalFrameCount > 0)
-{
-    uint                i;
-
-    // Byte probabilities.
-    for(i = 0; i < 256; ++i)
+#ifdef DENG2_DEBUG
+    if(::totalFrameCount > 0)
     {
-        LOGDEV_NET_NOTE("Byte %02x: %f") << i << (byteCounts[i] / (float) totalFrameCount);
+        // Byte probabilities.
+        for(dint i = 0; i < 256; ++i)
+        {
+            LOGDEV_NET_NOTE("Byte %02x: %f")
+                << i << (byteCounts[i] / dfloat( totalFrameCount ));
+        }
     }
-}
 #endif
 
     Sv_ShutdownPools();
@@ -188,10 +168,11 @@ if(totalFrameCount > 0)
  */
 void Sv_WriteMobjDelta(const void* deltaPtr)
 {
-    const mobjdelta_t*  delta = reinterpret_cast<mobjdelta_t const *>(deltaPtr);
-    const dt_mobj_t*    d = &delta->mo;
-    int                 df = delta->delta.flags;
-    byte                moreFlags = 0;
+    auto const *delta  = reinterpret_cast<mobjdelta_t const *>(deltaPtr);
+    dt_mobj_t const *d = &delta->mo;
+    dint df            = delta->delta.flags;
+
+    byte moreFlags = 0;
 
     // Do we have fast momentum?
     if(fabs(d->mom[MX]) >= MOM_FAST_LIMIT ||
@@ -253,17 +234,17 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
     }
     */
 
-    DENG_ASSERT(!(df & MDFC_NULL));     // don't write NULL deltas
-    DENG_ASSERT((df & 0xffff) != 0);    // don't write empty deltas
+    DENG2_ASSERT(!(df & MDFC_NULL));     // don't write NULL deltas
+    DENG2_ASSERT((df & 0xffff) != 0);    // don't write empty deltas
 
     // First the mobj ID number and flags.
-    Writer_WriteUInt16(msgWriter, delta->delta.id);
-    Writer_WriteUInt16(msgWriter, df & 0xffff);
+    Writer_WriteUInt16(::msgWriter, delta->delta.id);
+    Writer_WriteUInt16(::msgWriter, df & 0xffff);
 
     // More flags?
     if(df & MDF_MORE_FLAGS)
     {
-        Writer_WriteByte(msgWriter, moreFlags);
+        Writer_WriteByte(::msgWriter, moreFlags);
     }
 
     // Coordinates with three bytes.
@@ -271,174 +252,161 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
     {
         fixed_t vx = FLT2FIX(d->origin[VX]);
 
-        Writer_WriteInt16(msgWriter, vx >> FRACBITS);
-        Writer_WriteByte(msgWriter, vx >> 8);
+        Writer_WriteInt16(::msgWriter, vx >> FRACBITS);
+        Writer_WriteByte(::msgWriter, vx >> 8);
     }
     if(df & MDF_ORIGIN_Y)
     {
         fixed_t vy = FLT2FIX(d->origin[VY]);
 
-        Writer_WriteInt16(msgWriter, vy >> FRACBITS);
-        Writer_WriteByte(msgWriter, vy >> 8);
+        Writer_WriteInt16(::msgWriter, vy >> FRACBITS);
+        Writer_WriteByte(::msgWriter, vy >> 8);
     }
 
     if(df & MDF_ORIGIN_Z)
     {
         fixed_t vz = FLT2FIX(d->origin[VZ]);
-        Writer_WriteInt16(msgWriter, vz >> FRACBITS);
-        Writer_WriteByte(msgWriter, vz >> 8);
+        Writer_WriteInt16(::msgWriter, vz >> FRACBITS);
+        Writer_WriteByte(::msgWriter, vz >> 8);
 
-        Writer_WriteFloat(msgWriter, d->floorZ);
-        Writer_WriteFloat(msgWriter, d->ceilingZ);
+        Writer_WriteFloat(::msgWriter, d->floorZ);
+        Writer_WriteFloat(::msgWriter, d->ceilingZ);
     }
 
     // Momentum using 8.8 fixed point.
     if(df & MDF_MOM_X)
     {
         fixed_t mx = FLT2FIX(d->mom[MX]);
-        Writer_WriteInt16(msgWriter, moreFlags & MDFE_FAST_MOM ? FIXED10_6(mx) : FIXED8_8(mx));
+        Writer_WriteInt16(::msgWriter, moreFlags & MDFE_FAST_MOM ? FIXED10_6(mx) : FIXED8_8(mx));
     }
 
     if(df & MDF_MOM_Y)
     {
         fixed_t my = FLT2FIX(d->mom[MY]);
-        Writer_WriteInt16(msgWriter, moreFlags & MDFE_FAST_MOM ? FIXED10_6(my) : FIXED8_8(my));
+        Writer_WriteInt16(::msgWriter, moreFlags & MDFE_FAST_MOM ? FIXED10_6(my) : FIXED8_8(my));
     }
 
     if(df & MDF_MOM_Z)
     {
         fixed_t mz = FLT2FIX(d->mom[MZ]);
-        Writer_WriteInt16(msgWriter, moreFlags & MDFE_FAST_MOM ? FIXED10_6(mz) : FIXED8_8(mz));
+        Writer_WriteInt16(::msgWriter, moreFlags & MDFE_FAST_MOM ? FIXED10_6(mz) : FIXED8_8(mz));
     }
 
     // Angles with 16-bit accuracy.
     if(df & MDF_ANGLE)
-        Writer_WriteInt16(msgWriter, d->angle >> 16);
+        Writer_WriteInt16(::msgWriter, d->angle >> 16);
 
     if(df & MDF_SELECTOR)
-        Writer_WritePackedUInt16(msgWriter, d->selector);
+        Writer_WritePackedUInt16(::msgWriter, d->selector);
     if(df & MDF_SELSPEC)
-        Writer_WriteByte(msgWriter, d->selector >> 24);
+        Writer_WriteByte(::msgWriter, d->selector >> 24);
 
     if(df & MDF_STATE)
     {
-        assert(d->state != 0);
-        Writer_WritePackedUInt16(msgWriter, runtimeDefs.states.indexOf(d->state));
+        DENG2_ASSERT(d->state != 0);
+        Writer_WritePackedUInt16(::msgWriter, ::runtimeDefs.states.indexOf(d->state));
     }
 
     if(df & MDF_FLAGS)
     {
-        Writer_WriteUInt32(msgWriter, d->ddFlags & DDMF_PACK_MASK);
-        Writer_WriteUInt32(msgWriter, d->flags);
-        Writer_WriteUInt32(msgWriter, d->flags2);
-        Writer_WriteUInt32(msgWriter, d->flags3);
+        Writer_WriteUInt32(::msgWriter, d->ddFlags & DDMF_PACK_MASK);
+        Writer_WriteUInt32(::msgWriter, d->flags);
+        Writer_WriteUInt32(::msgWriter, d->flags2);
+        Writer_WriteUInt32(::msgWriter, d->flags3);
     }
 
     if(df & MDF_HEALTH)
-        Writer_WriteInt32(msgWriter, d->health);
+        Writer_WriteInt32(::msgWriter, d->health);
 
     if(df & MDF_RADIUS)
-        Writer_WriteFloat(msgWriter, d->radius);
+        Writer_WriteFloat(::msgWriter, d->radius);
 
     if(df & MDF_HEIGHT)
-        Writer_WriteFloat(msgWriter, d->height);
+        Writer_WriteFloat(::msgWriter, d->height);
 
     if(df & MDF_FLOORCLIP)
-        Writer_WriteFloat(msgWriter, d->floorClip);
+        Writer_WriteFloat(::msgWriter, d->floorClip);
 
     if(df & MDFC_TRANSLUCENCY)
-        Writer_WriteByte(msgWriter, d->translucency);
+        Writer_WriteByte(::msgWriter, d->translucency);
 
     if(df & MDFC_FADETARGET)
-        Writer_WriteByte(msgWriter, (byte)(d->visTarget +1));
+        Writer_WriteByte(::msgWriter, byte( d->visTarget + 1 ));
 
     if(df & MDFC_TYPE)
-        Writer_WriteInt32(msgWriter, d->type);
+        Writer_WriteInt32(::msgWriter, d->type);
 }
 
 /**
  * The delta is written to the message buffer.
  */
-void Sv_WritePlayerDelta(const void* deltaPtr)
+void Sv_WritePlayerDelta(void const *deltaPtr)
 {
-    const playerdelta_t* delta = reinterpret_cast<playerdelta_t const *>(deltaPtr);
-    const dt_player_t*  d = &delta->player;
-    const ddpsprite_t*  psp;
-    int                 df = delta->delta.flags;
-    int                 psdf, i, k;
+    auto const *delta    = reinterpret_cast<playerdelta_t const *>(deltaPtr);
+    dt_player_t const *d = &delta->player;
+    dint df              = delta->delta.flags;
 
     // First the player number. Upper three bits contain flags.
-    Writer_WriteByte(msgWriter, delta->delta.id | (df >> 8));
+    Writer_WriteByte(::msgWriter, delta->delta.id | (df >> 8));
 
     // Flags. What elements are included in the delta?
-    Writer_WriteByte(msgWriter, df & 0xff);
+    Writer_WriteByte(::msgWriter, df & 0xff);
 
     if(df & PDF_MOBJ)
-        Writer_WriteUInt16(msgWriter, d->mobj);
+        Writer_WriteUInt16(::msgWriter, d->mobj);
     if(df & PDF_FORWARDMOVE)
-        Writer_WriteByte(msgWriter, d->forwardMove);
+        Writer_WriteByte(::msgWriter, d->forwardMove);
     if(df & PDF_SIDEMOVE)
-        Writer_WriteByte(msgWriter, d->sideMove);
+        Writer_WriteByte(::msgWriter, d->sideMove);
     /*if(df & PDF_ANGLE)
-        Writer_WriteByte(msgWriter, d->angle >> 24);*/
+        Writer_WriteByte(::msgWriter, d->angle >> 24);*/
     if(df & PDF_TURNDELTA)
-        Writer_WriteByte(msgWriter, (d->turnDelta * 16) >> 24);
+        Writer_WriteByte(::msgWriter, (d->turnDelta * 16) >> 24);
     if(df & PDF_FRICTION)
-        Writer_WriteByte(msgWriter, FLT2FIX(d->friction) >> 8);
+        Writer_WriteByte(::msgWriter, FLT2FIX(d->friction) >> 8);
     if(df & PDF_EXTRALIGHT)
     {
         // Three bits is enough for fixedcolormap.
-        i = d->fixedColorMap;
-        if(i < 0)
-            i = 0;
-        if(i > 7)
-            i = 7;
+        dint const cmap = de::clamp(0, d->fixedColorMap, 7);
         // Write the five upper bytes of extraLight.
-        Writer_WriteByte(msgWriter, i | (d->extraLight & 0xf8));
+        Writer_WriteByte(::msgWriter, cmap | (d->extraLight & 0xf8));
     }
     if(df & PDF_FILTER)
     {
-        Writer_WriteUInt32(msgWriter, d->filter);
+        Writer_WriteUInt32(::msgWriter, d->filter);
         LOGDEV_NET_XVERBOSE_DEBUGONLY("Sv_WritePlayerDelta: Plr %i, filter %08x", delta->delta.id << d->filter);
     }
     if(df & PDF_PSPRITES)       // Only set if there's something to write.
     {
-        for(i = 0; i < 2; ++i)
+        for(dint i = 0; i < 2; ++i)
         {
-            psdf = df >> (16 + i * 8);
-            psp = d->psp + i;
+            ddpsprite_t const &psp = d->psp[i];
+            dint const flags       = df >> (16 + i * 8);
+
             // First the flags.
-            Writer_WriteByte(msgWriter, psdf);
-            if(psdf & PSDF_STATEPTR)
+            Writer_WriteByte(::msgWriter, flags);
+            if(flags & PSDF_STATEPTR)
             {
-                Writer_WritePackedUInt16(msgWriter, psp->statePtr? (runtimeDefs.states.indexOf(psp->statePtr) + 1) : 0);
+                Writer_WritePackedUInt16(::msgWriter, psp.statePtr ? (::runtimeDefs.states.indexOf(psp.statePtr) + 1) : 0);
             }
-            /*if(psdf & PSDF_LIGHT)
+            /*if(flags & PSDF_LIGHT)
             {
-                k = psp->light * 255;
-                if(k < 0)
-                    k = 0;
-                if(k > 255)
-                    k = 255;
-                Writer_WriteByte(msgWriter, k);
+                dint const light = de::clamp(0, psp.light * 255, 255);
+                Writer_WriteByte(::msgWriter, light);
             }*/
-            if(psdf & PSDF_ALPHA)
+            if(flags & PSDF_ALPHA)
             {
-                k = psp->alpha * 255;
-                if(k < 0)
-                    k = 0;
-                if(k > 255)
-                    k = 255;
-                Writer_WriteByte(msgWriter, k);
+                dint const alpha = de::clamp(0.f, psp.alpha * 255, 255.f);
+                Writer_WriteByte(::msgWriter, alpha);
             }
-            if(psdf & PSDF_STATE)
+            if(flags & PSDF_STATE)
             {
-                Writer_WriteByte(msgWriter, psp->state);
+                Writer_WriteByte(::msgWriter, psp.state);
             }
-            if(psdf & PSDF_OFFSET)
+            if(flags & PSDF_OFFSET)
             {
-                Writer_WriteByte(msgWriter, CLAMPED_CHAR(psp->offset[VX] / 2));
-                Writer_WriteByte(msgWriter, CLAMPED_CHAR(psp->offset[VY] / 2));
+                Writer_WriteByte(::msgWriter, CLAMPED_CHAR(psp.offset[VX] / 2));
+                Writer_WriteByte(::msgWriter, CLAMPED_CHAR(psp.offset[VY] / 2));
             }
         }
     }
@@ -447,158 +415,159 @@ void Sv_WritePlayerDelta(const void* deltaPtr)
 /**
  * The delta is written to the message buffer.
  */
-void Sv_WriteSectorDelta(const void* deltaPtr)
+void Sv_WriteSectorDelta(void const *deltaPtr)
 {
-    const sectordelta_t* delta = reinterpret_cast<sectordelta_t const *>(deltaPtr);
-    const dt_sector_t*  d = &delta->sector;
-    int                 df = delta->delta.flags, spd;
-    byte                floorspd = 0, ceilspd = 0;
+    auto const *delta    = reinterpret_cast<sectordelta_t const *>(deltaPtr);
+    dt_sector_t const *d = &delta->sector;
+    dint              df = delta->delta.flags;
 
     // Is there need to use 4.4 fixed-point speeds?
     // (7.1 is too inaccurate for very slow movement)
+    byte floorSpd = 0;
     if(df & SDF_FLOOR_SPEED)
     {
-        spd = FLT2FIX(fabs(d->planes[PLN_FLOOR].speed));
-        floorspd = spd >> 15;
-        if(!floorspd)
+        dint const spd = FLT2FIX(fabs(d->planes[PLN_FLOOR].speed));
+        floorSpd = spd >> 15;
+        if(!floorSpd)
         {
             df |= SDF_FLOOR_SPEED_44;
-            floorspd = spd >> 12;
+            floorSpd = spd >> 12;
         }
     }
+    byte ceilSpd = 0;
     if(df & SDF_CEILING_SPEED)
     {
-        spd = FLT2FIX(fabs(d->planes[PLN_CEILING].speed));
-        ceilspd = spd >> 15;
-        if(!ceilspd)
+        dint const spd = FLT2FIX(fabs(d->planes[PLN_CEILING].speed));
+        ceilSpd = spd >> 15;
+        if(!ceilSpd)
         {
             df |= SDF_CEILING_SPEED_44;
-            ceilspd = spd >> 12;
+            ceilSpd = spd >> 12;
         }
     }
 
     // Sector number first.
-    Writer_WriteUInt16(msgWriter, delta->delta.id);
+    Writer_WriteUInt16(::msgWriter, delta->delta.id);
 
     // Flags.
-    Writer_WritePackedUInt32(msgWriter, df);
+    Writer_WritePackedUInt32(::msgWriter, df);
 
     if(df & SDF_FLOOR_MATERIAL)
-        Writer_WritePackedUInt16(msgWriter, Sv_IdForMaterial(d->planes[PLN_FLOOR].surface.material));
+        Writer_WritePackedUInt16(::msgWriter, Sv_IdForMaterial(d->planes[PLN_FLOOR].surface.material));
     if(df & SDF_CEILING_MATERIAL)
-        Writer_WritePackedUInt16(msgWriter, Sv_IdForMaterial(d->planes[PLN_CEILING].surface.material));
+        Writer_WritePackedUInt16(::msgWriter, Sv_IdForMaterial(d->planes[PLN_CEILING].surface.material));
     if(df & SDF_LIGHT)
     {
         // Must fit into a byte.
-        int lightlevel = (int) (255.0f * d->lightLevel);
+        auto lightlevel = dint( 255.0f * d->lightLevel );
         lightlevel = (lightlevel < 0 ? 0 : lightlevel > 255 ? 255 : lightlevel);
 
-        Writer_WriteByte(msgWriter, (byte) lightlevel);
+        Writer_WriteByte(::msgWriter, byte( lightlevel ));
     }
     if(df & SDF_FLOOR_HEIGHT)
     {
-        Writer_WriteInt16(msgWriter, FLT2FIX(d->planes[PLN_FLOOR].height) >> 16);
+        Writer_WriteInt16(::msgWriter, FLT2FIX(d->planes[PLN_FLOOR].height) >> 16);
     }
     if(df & SDF_CEILING_HEIGHT)
     {
         LOGDEV_NET_XVERBOSE_DEBUGONLY("Sv_WriteSectorDelta: (%i) Absolute ceiling height=%f",
                                      delta->delta.id << d->planes[PLN_CEILING].height);
 
-        Writer_WriteInt16(msgWriter, FLT2FIX(d->planes[PLN_CEILING].height) >> 16);
+        Writer_WriteInt16(::msgWriter, FLT2FIX(d->planes[PLN_CEILING].height) >> 16);
     }
     if(df & SDF_FLOOR_TARGET)
-        Writer_WriteInt16(msgWriter, FLT2FIX(d->planes[PLN_FLOOR].target) >> 16);
+        Writer_WriteInt16(::msgWriter, FLT2FIX(d->planes[PLN_FLOOR].target) >> 16);
     if(df & SDF_FLOOR_SPEED)    // 7.1/4.4 fixed-point
-        Writer_WriteByte(msgWriter, floorspd);
+        Writer_WriteByte(::msgWriter, floorSpd);
     if(df & SDF_CEILING_TARGET)
-        Writer_WriteInt16(msgWriter, FLT2FIX(d->planes[PLN_CEILING].target) >> 16);
+        Writer_WriteInt16(::msgWriter, FLT2FIX(d->planes[PLN_CEILING].target) >> 16);
     if(df & SDF_CEILING_SPEED)  // 7.1/4.4 fixed-point
-        Writer_WriteByte(msgWriter, ceilspd);
+        Writer_WriteByte(::msgWriter, ceilSpd);
     if(df & SDF_COLOR_RED)
-        Writer_WriteByte(msgWriter, (byte) (255 * d->rgb[0]));
+        Writer_WriteByte(::msgWriter, byte( 255 * d->rgb[0] ));
     if(df & SDF_COLOR_GREEN)
-        Writer_WriteByte(msgWriter, (byte) (255 * d->rgb[1]));
+        Writer_WriteByte(::msgWriter, byte( 255 * d->rgb[1] ));
     if(df & SDF_COLOR_BLUE)
-        Writer_WriteByte(msgWriter, (byte) (255 * d->rgb[2]));
+        Writer_WriteByte(::msgWriter, byte( 255 * d->rgb[2] ));
 
     if(df & SDF_FLOOR_COLOR_RED)
-        Writer_WriteByte(msgWriter, (byte) (255 * d->planes[PLN_FLOOR].surface.rgba[0]));
+        Writer_WriteByte(::msgWriter, byte( 255 * d->planes[PLN_FLOOR].surface.rgba[0] ));
     if(df & SDF_FLOOR_COLOR_GREEN)
-        Writer_WriteByte(msgWriter, (byte) (255 * d->planes[PLN_FLOOR].surface.rgba[1]));
+        Writer_WriteByte(::msgWriter, byte( 255 * d->planes[PLN_FLOOR].surface.rgba[1] ));
     if(df & SDF_FLOOR_COLOR_BLUE)
-        Writer_WriteByte(msgWriter, (byte) (255 * d->planes[PLN_FLOOR].surface.rgba[2]));
+        Writer_WriteByte(::msgWriter, byte( 255 * d->planes[PLN_FLOOR].surface.rgba[2] ));
 
     if(df & SDF_CEIL_COLOR_RED)
-        Writer_WriteByte(msgWriter, (byte) (255 * d->planes[PLN_CEILING].surface.rgba[0]));
+        Writer_WriteByte(::msgWriter, byte( 255 * d->planes[PLN_CEILING].surface.rgba[0] ));
     if(df & SDF_CEIL_COLOR_GREEN)
-        Writer_WriteByte(msgWriter, (byte) (255 * d->planes[PLN_CEILING].surface.rgba[1]));
+        Writer_WriteByte(::msgWriter, byte( 255 * d->planes[PLN_CEILING].surface.rgba[1] ));
     if(df & SDF_CEIL_COLOR_BLUE)
-        Writer_WriteByte(msgWriter, (byte) (255 * d->planes[PLN_CEILING].surface.rgba[2]));
+        Writer_WriteByte(::msgWriter, byte( 255 * d->planes[PLN_CEILING].surface.rgba[2] ));
 }
 
 /**
  * The delta is written to the message buffer.
  */
-void Sv_WriteSideDelta(const void* deltaPtr)
+void Sv_WriteSideDelta(void const *deltaPtr)
 {
-    const sidedelta_t*  delta = (sidedelta_t const *) deltaPtr;
-    const dt_side_t*    d = &delta->side;
-    int                 df = delta->delta.flags;
+    auto const *delta  = (sidedelta_t const *) deltaPtr;
+    dt_side_t const *d = &delta->side;
+    dint            df = delta->delta.flags;
 
     // Side number first.
-    Writer_WriteUInt16(msgWriter, delta->delta.id);
+    Writer_WriteUInt16(::msgWriter, delta->delta.id);
 
     // Flags.
-    Writer_WritePackedUInt32(msgWriter, df);
+    Writer_WritePackedUInt32(::msgWriter, df);
 
     if(df & SIDF_TOP_MATERIAL)
-        Writer_WritePackedUInt16(msgWriter, Sv_IdForMaterial(d->top.material));
+        Writer_WritePackedUInt16(::msgWriter, Sv_IdForMaterial(d->top.material));
     if(df & SIDF_MID_MATERIAL)
-        Writer_WritePackedUInt16(msgWriter, Sv_IdForMaterial(d->middle.material));
+        Writer_WritePackedUInt16(::msgWriter, Sv_IdForMaterial(d->middle.material));
     if(df & SIDF_BOTTOM_MATERIAL)
-        Writer_WritePackedUInt16(msgWriter, Sv_IdForMaterial(d->bottom.material));
+        Writer_WritePackedUInt16(::msgWriter, Sv_IdForMaterial(d->bottom.material));
 
     if(df & SIDF_LINE_FLAGS)
-        Writer_WriteByte(msgWriter, d->lineFlags);
+        Writer_WriteByte(::msgWriter, d->lineFlags);
 
     if(df & SIDF_TOP_COLOR_RED)
-        Writer_WriteByte(msgWriter, (byte) (255 * d->top.rgba[0]));
+        Writer_WriteByte(::msgWriter, byte( 255 * d->top.rgba[0] ));
     if(df & SIDF_TOP_COLOR_GREEN)
-        Writer_WriteByte(msgWriter, (byte) (255 * d->top.rgba[1]));
+        Writer_WriteByte(::msgWriter, byte( 255 * d->top.rgba[1] ));
     if(df & SIDF_TOP_COLOR_BLUE)
-        Writer_WriteByte(msgWriter, (byte) (255 * d->top.rgba[2]));
+        Writer_WriteByte(::msgWriter, byte( 255 * d->top.rgba[2] ));
 
     if(df & SIDF_MID_COLOR_RED)
-        Writer_WriteByte(msgWriter, (byte) (255 * d->middle.rgba[0]));
+        Writer_WriteByte(::msgWriter, byte( 255 * d->middle.rgba[0] ));
     if(df & SIDF_MID_COLOR_GREEN)
-        Writer_WriteByte(msgWriter, (byte) (255 * d->middle.rgba[1]));
+        Writer_WriteByte(::msgWriter, byte( 255 * d->middle.rgba[1] ));
     if(df & SIDF_MID_COLOR_BLUE)
-        Writer_WriteByte(msgWriter, (byte) (255 * d->middle.rgba[2]));
+        Writer_WriteByte(::msgWriter, byte( 255 * d->middle.rgba[2] ));
     if(df & SIDF_MID_COLOR_ALPHA)
-        Writer_WriteByte(msgWriter, (byte) (255 * d->middle.rgba[3]));
+        Writer_WriteByte(::msgWriter, byte( 255 * d->middle.rgba[3] ));
 
     if(df & SIDF_BOTTOM_COLOR_RED)
-        Writer_WriteByte(msgWriter, (byte) (255 * d->bottom.rgba[0]));
+        Writer_WriteByte(::msgWriter, byte( 255 * d->bottom.rgba[0] ));
     if(df & SIDF_BOTTOM_COLOR_GREEN)
-        Writer_WriteByte(msgWriter, (byte) (255 * d->bottom.rgba[1]));
+        Writer_WriteByte(::msgWriter, byte( 255 * d->bottom.rgba[1] ));
     if(df & SIDF_BOTTOM_COLOR_BLUE)
-        Writer_WriteByte(msgWriter, (byte) (255 * d->bottom.rgba[2]));
+        Writer_WriteByte(::msgWriter, byte( 255 * d->bottom.rgba[2] ));
 
     if(df & SIDF_MID_BLENDMODE)
-        Writer_WriteInt32(msgWriter, d->middle.blendMode);
+        Writer_WriteInt32(::msgWriter, d->middle.blendMode);
 
     if(df & SIDF_FLAGS)
-        Writer_WriteByte(msgWriter, d->flags);
+        Writer_WriteByte(::msgWriter, d->flags);
 }
 
 /**
  * The delta is written to the message buffer.
  */
-void Sv_WritePolyDelta(const void* deltaPtr)
+void Sv_WritePolyDelta(void const *deltaPtr)
 {
-    const polydelta_t*  delta = (polydelta_t const *) deltaPtr;
-    const dt_poly_t*    d = &delta->po;
-    int                 df = delta->delta.flags;
+    auto const  *delta = (polydelta_t const *) deltaPtr;
+    dt_poly_t const *d = &delta->po;
+    dint            df = delta->delta.flags;
 
     if(d->destAngle == (unsigned) -1)
     {
@@ -608,36 +577,36 @@ void Sv_WritePolyDelta(const void* deltaPtr)
     }
 
     // Poly number first.
-    Writer_WritePackedUInt16(msgWriter, delta->delta.id);
+    Writer_WritePackedUInt16(::msgWriter, delta->delta.id);
 
     // Flags.
-    Writer_WriteByte(msgWriter, df & 0xff);
+    Writer_WriteByte(::msgWriter, df & 0xff);
 
     if(df & PODF_DEST_X)
-        Writer_WriteFloat(msgWriter, d->dest[VX]);
+        Writer_WriteFloat(::msgWriter, d->dest[VX]);
     if(df & PODF_DEST_Y)
-        Writer_WriteFloat(msgWriter, d->dest[VY]);
+        Writer_WriteFloat(::msgWriter, d->dest[VY]);
     if(df & PODF_SPEED)
-        Writer_WriteFloat(msgWriter, d->speed);
+        Writer_WriteFloat(::msgWriter, d->speed);
     if(df & PODF_DEST_ANGLE)
-        Writer_WriteInt16(msgWriter, d->destAngle >> 16);
+        Writer_WriteInt16(::msgWriter, d->destAngle >> 16);
     if(df & PODF_ANGSPEED)
-        Writer_WriteInt16(msgWriter, d->angleSpeed >> 16);
+        Writer_WriteInt16(::msgWriter, d->angleSpeed >> 16);
 }
 
 /**
  * The delta is written to the message buffer.
  */
-void Sv_WriteSoundDelta(const void* deltaPtr)
+void Sv_WriteSoundDelta(void const *deltaPtr)
 {
-    const sounddelta_t* delta = (sounddelta_t const *) deltaPtr;
-    int                 df = delta->delta.flags;
+    auto const *delta = (sounddelta_t const *) deltaPtr;
+    dint           df = delta->delta.flags;
 
     // This is either the sound ID, emitter ID or sector index.
-    Writer_WriteUInt16(msgWriter, delta->delta.id);
+    Writer_WriteUInt16(::msgWriter, delta->delta.id);
 
     // First the flags byte.
-    Writer_WriteByte(msgWriter, df & 0xff);
+    Writer_WriteByte(::msgWriter, df & 0xff);
 
     switch(delta->delta.type)
     {
@@ -646,11 +615,10 @@ void Sv_WriteSoundDelta(const void* deltaPtr)
     case DT_SIDE_SOUND:
     case DT_POLY_SOUND:
         // The sound ID.
-        Writer_WriteUInt16(msgWriter, delta->sound);
+        Writer_WriteUInt16(::msgWriter, delta->sound);
         break;
 
-    default:
-        break;
+    default: break;
     }
 
     // The common parts.
@@ -659,16 +627,16 @@ void Sv_WriteSoundDelta(const void* deltaPtr)
         if(delta->volume > 1)
         {
             // Very loud indeed.
-            Writer_WriteByte(msgWriter, 255);
+            Writer_WriteByte(::msgWriter, 255);
         }
         else if(delta->volume <= 0)
         {
             // Silence.
-            Writer_WriteByte(msgWriter, 0);
+            Writer_WriteByte(::msgWriter, 0);
         }
         else
         {
-            Writer_WriteByte(msgWriter, delta->volume * 127 + 0.5f);
+            Writer_WriteByte(::msgWriter, delta->volume * 127 + 0.5f);
         }
     }
 }
@@ -676,28 +644,26 @@ void Sv_WriteSoundDelta(const void* deltaPtr)
 /**
  * Write the type and possibly the set number (for Unacked deltas).
  */
-void Sv_WriteDeltaHeader(byte type, const delta_t* delta)
+void Sv_WriteDeltaHeader(byte type, delta_t const *delta)
 {
-#ifdef _DEBUG
-if(type >= NUM_DELTA_TYPES)
-{
-    App_Error("Sv_WriteDeltaHeader: Invalid delta type %i.\n", type);
-}
+#ifdef DENG2_DEBUG
+    if(type >= NUM_DELTA_TYPES)
+    {
+        App_Error("Sv_WriteDeltaHeader: Invalid delta type %i.\n", type);
+    }
 #endif
 
-#ifdef _DEBUG
     // Once sent, the deltas can be discarded and there is no need for resending.
-    assert(delta->state != DELTA_UNACKED);
-#endif
+    DENG2_ASSERT(delta->state != DELTA_UNACKED);
 
     if(delta->state == DELTA_UNACKED)
     {
-        assert(false);
+        DENG2_ASSERT(!"Unacked");
         // Flag this as Resent.
         type |= DT_RESENT;
     }
 
-    Writer_WriteByte(msgWriter, type);
+    Writer_WriteByte(::msgWriter, type);
 
     // Include the set number?
     if(type & DT_RESENT)
@@ -706,40 +672,36 @@ if(type >= NUM_DELTA_TYPES)
         // received the set this delta belongs to, it means the delta has
         // already been received. This is needed in the situation where the
         // ack is lost or delayed.
-        Writer_WriteByte(msgWriter, delta->set);
+        Writer_WriteByte(::msgWriter, delta->set);
 
         // Also send the unique ID of this delta. If the client has already
         // received a delta with this ID, the delta is discarded. This is
         // needed in the situation where the set is lost.
-        Writer_WriteByte(msgWriter, delta->resend);
+        Writer_WriteByte(::msgWriter, delta->resend);
     }
 }
 
 /**
  * The delta is written to the message buffer.
  */
-void Sv_WriteDelta(const delta_t* delta)
+void Sv_WriteDelta(delta_t const *delta)
 {
-    byte                type = delta->type;
-#ifdef _NETDEBUG
-    int                 lengthOffset;
-    int                 endOffset;
-#endif
+    DENG2_ASSERT(delta);
 
 #ifdef _NETDEBUG
     // Extra length field in debug builds.
-    lengthOffset = Msg_Offset();
+    dint const lengthOffset = Msg_Offset();
     Msg_WriteLong(0);
 #endif
 
     // Null mobj deltas are special.
-    if(type == DT_MOBJ)
+    if(delta->type == DT_MOBJ)
     {
         if(delta->flags & MDFC_NULL)
         {
             // This'll be the entire delta. No more data is needed.
             Sv_WriteDeltaHeader(DT_NULL_MOBJ, delta);
-            Writer_WriteUInt16(msgWriter, delta->id);
+            Writer_WriteUInt16(::msgWriter, delta->id);
 #ifdef _NETDEBUG
             goto writeDeltaLength;
 #else
@@ -749,29 +711,17 @@ void Sv_WriteDelta(const delta_t* delta)
     }
 
     // First the type of the delta.
-    Sv_WriteDeltaHeader(type, delta);
+    Sv_WriteDeltaHeader(delta->type, delta);
 
     switch(delta->type)
     {
-    case DT_MOBJ:
-        Sv_WriteMobjDelta(delta);
-        break;
+    //case DT_LUMP:   Sv_WriteLumpDelta(delta);   break;
 
-    case DT_PLAYER:
-        Sv_WritePlayerDelta(delta);
-        break;
-
-    case DT_SECTOR:
-        Sv_WriteSectorDelta(delta);
-        break;
-
-    case DT_SIDE:
-        Sv_WriteSideDelta(delta);
-        break;
-
-    case DT_POLY:
-        Sv_WritePolyDelta(delta);
-        break;
+    case DT_MOBJ:   Sv_WriteMobjDelta(delta);   break;
+    case DT_PLAYER: Sv_WritePlayerDelta(delta); break;
+    case DT_SECTOR: Sv_WriteSectorDelta(delta); break;
+    case DT_SIDE:   Sv_WriteSideDelta(delta);   break;
+    case DT_POLY:   Sv_WritePolyDelta(delta);   break;
 
     case DT_SOUND:
     case DT_MOBJ_SOUND:
@@ -781,18 +731,13 @@ void Sv_WriteDelta(const delta_t* delta)
         Sv_WriteSoundDelta(delta);
         break;
 
-        /*case DT_LUMP:
-           Sv_WriteLumpDelta(delta);
-           break; */
-
-    default:
-        App_Error("Sv_WriteDelta: Unknown delta type %i.\n", delta->type);
+    default: App_Error("Sv_WriteDelta: Unknown delta type %i.\n", delta->type);
     }
 
 #ifdef _NETDEBUG
 writeDeltaLength:
     // Update the length of the delta.
-    endOffset = Msg_Offset();
+    dint endOffset = Msg_Offset();
     Msg_SetOffset(lengthOffset);
     Msg_WriteLong(endOffset - lengthOffset);
     Msg_SetOffset(endOffset);
@@ -800,13 +745,13 @@ writeDeltaLength:
 }
 
 /**
- * @return              An estimate for the maximum frame size appropriate
- *                      for the client. The bandwidth rating is updated
- *                      whenever a frame is sent.
+ * Returns an estimate for the maximum frame size appropriate for the client.
+ * The bandwidth rating is updated whenever a frame is sent.
  */
-size_t Sv_GetMaxFrameSize(int playerNumber)
+dsize Sv_GetMaxFrameSize(dint playerNumber)
 {
-    size_t              size = MINIMUM_FRAME_SIZE + FRAME_SIZE_FACTOR * clients[playerNumber].bandwidthRating;
+    DENG2_ASSERT(playerNumber >= 0 && playerNumber < DDMAXPLAYERS);
+    dsize size = MINIMUM_FRAME_SIZE + FRAME_SIZE_FACTOR * 40 /* BWR_DEFAULT */;
 
     // What about the communications medium?
     if(size > PROTOCOL_MAX_DATAGRAM_SIZE)
@@ -818,13 +763,13 @@ size_t Sv_GetMaxFrameSize(int playerNumber)
 /**
  * @return A unique resend ID. Never returns zero.
  */
-byte Sv_GetNewResendID(pool_t* pool)
+byte Sv_GetNewResendID(pool_t *pool)
 {
-    byte id = pool->resendDealer;
+    DENG2_ASSERT(pool);
 
+    byte id = pool->resendDealer;
     // Advance to next ID, skipping zero.
     while(!++pool->resendDealer) {}
-
     return id;
 }
 
@@ -832,16 +777,9 @@ byte Sv_GetNewResendID(pool_t* pool)
  * Send a sv_frame packet to the specified player. The amount of data sent
  * depends on the player's bandwidth rating.
  */
-void Sv_SendFrame(int plrNum)
+void Sv_SendFrame(dint plrNum)
 {
-    pool_t*             pool = Sv_GetPool(plrNum);
-    byte                oldResend;
-    delta_t*            delta;
-    int                 deltaCount = 0;
-    size_t              lastStart, maxFrameSize; //, deltaCountOffset = 0;
-/*#if _NETDEBUG
-    int                 endOffset = 0;
-#endif*/
+    pool_t *pool = Sv_GetPool(plrNum);
 
     // Does the send queue allow us to send this packet?
     // Bandwidth rating is updated during the check.
@@ -857,27 +795,31 @@ void Sv_SendFrame(int plrNum)
     Sv_RatePool(pool);
 
     // This will be a new set.
+    DENG2_ASSERT(pool);
     pool->setDealer++;
 
     // Determine the maximum size of the frame packet.
-    maxFrameSize = Sv_GetMaxFrameSize(plrNum);
-
-    // Allow more info for the first frame.
+    dsize maxFrameSize = Sv_GetMaxFrameSize(plrNum);
     if(pool->isFirst)
+    {
+        // Allow more info for the first frame.
         maxFrameSize = MAX_FIRST_FRAME_SIZE;
+    }
 
     // If this is the first frame after a map change, use the special
     // first frame packet type.
     Msg_Begin(pool->isFirst ? PSV_FIRST_FRAME2 : PSV_FRAME2);
 
     // First send the gameTime of this frame.
-    Writer_WriteFloat(msgWriter, gameTime);
+    Writer_WriteFloat(::msgWriter, ::gameTime);
 
     // Keep writing until the maximum size is reached.
-    while((delta = Sv_PoolQueueExtract(pool)) != NULL &&
-          (lastStart = Writer_Size(msgWriter)) < maxFrameSize)
+    delta_t *delta;
+    size_t lastStart;
+    while((delta = Sv_PoolQueueExtract(pool)) != nullptr &&
+          (lastStart = Writer_Size(::msgWriter)) < maxFrameSize)
     {
-        oldResend = pool->resendDealer;
+        byte const oldResend = pool->resendDealer;
 
         // Is this going to be a resent?
         if(delta->state == DELTA_UNACKED && !delta->resend)
@@ -890,18 +832,18 @@ void Sv_SendFrame(int plrNum)
         Sv_WriteDelta(delta);
 
         // Did we go over the limit?
-        if(Writer_Size(msgWriter) > maxFrameSize)
+        if(Writer_Size(::msgWriter) > maxFrameSize)
         {
             /*
             // Time to see if BWR needs to be adjusted.
-            if(clients[plrNum].bwrAdjustTime <= 0)
+            if(::clients[plrNum].bwrAdjustTime <= 0)
             {
-                clients[plrNum].bwrAdjustTime = BWR_ADJUST_TICS;
+                ::clients[plrNum].bwrAdjustTime = BWR_ADJUST_TICS;
             }
             */
 
             // Cancel the last delta.
-            Writer_SetPos(msgWriter, lastStart);
+            Writer_SetPos(::msgWriter, lastStart);
 
             // Restore the resend dealer.
             if(oldResend)
@@ -909,29 +851,17 @@ void Sv_SendFrame(int plrNum)
             break;
         }
 
-        // Successfully written, increment counter.
-        deltaCount++;
-
+        // Successfully written.
         // Update the sent delta's state.
         if(delta->state == DELTA_NEW)
         {
             // New deltas are assigned to this set. Unacked deltas will
             // remain in the set they were initially sent in.
-            delta->set = pool->setDealer;
+            delta->set       = pool->setDealer;
             delta->timeStamp = Sv_GetTimeStamp();
-            delta->state = DELTA_UNACKED;
+            delta->state     = DELTA_UNACKED;
         }
     }
-
-    // Update the number of deltas included in the packet.
-/*
-#ifdef _NETDEBUG
-    endOffset = Msg_Offset();
-    Msg_SetOffset(deltaCountOffset);
-    Msg_WriteLong(deltaCount);
-    Msg_SetOffset(endOffset);
-#endif
-*/
 
     Msg_End();
 

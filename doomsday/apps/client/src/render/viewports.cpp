@@ -89,8 +89,6 @@ static QBitArray subspacesVisible;
 
 static QBitArray generatorsVisible(Map::MAX_GENERATORS);
 
-static viewdata_t viewDataOfConsole[DDMAXPLAYERS];  ///< Indexed by console number.
-
 static dint frameCount;
 
 static dint gridCols, gridRows;
@@ -122,26 +120,26 @@ void R_ResetFrameCount()
 DENG_EXTERN_C void R_SetViewOrigin(dint consoleNum, coord_t const origin[3])
 {
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
-    viewDataOfConsole[consoleNum].latest.origin = Vector3d(origin);
+    DD_Player(consoleNum)->viewport().latest.origin = Vector3d(origin);
 }
 
 #undef R_SetViewAngle
 DENG_EXTERN_C void R_SetViewAngle(dint consoleNum, angle_t angle)
 {
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
-    viewDataOfConsole[consoleNum].latest.setAngle(angle);
+    DD_Player(consoleNum)->viewport().latest.setAngle(angle);
 }
 
 #undef R_SetViewPitch
 DENG_EXTERN_C void R_SetViewPitch(dint consoleNum, dfloat pitch)
 {
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
-    viewDataOfConsole[consoleNum].latest.pitch = pitch;
+    DD_Player(consoleNum)->viewport().latest.pitch = pitch;
 }
 
 void R_SetupDefaultViewWindow(dint consoleNum)
 {
-    viewdata_t *vd = &viewDataOfConsole[consoleNum];
+    viewdata_t *vd = &DD_Player(consoleNum)->viewport();
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
 
     vd->window =
@@ -152,7 +150,7 @@ void R_SetupDefaultViewWindow(dint consoleNum)
 
 void R_ViewWindowTicker(dint consoleNum, timespan_t ticLength)
 {
-    viewdata_t *vd = &viewDataOfConsole[consoleNum];
+    viewdata_t *vd = &DD_Player(consoleNum)->viewport();
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS)
     {
         return;
@@ -178,7 +176,7 @@ DENG_EXTERN_C dint R_ViewWindowGeometry(dint player, RectRaw *geometry)
     if(!geometry) return false;
     if(player < 0 || player >= DDMAXPLAYERS) return false;
 
-    viewdata_t const &vd = viewDataOfConsole[player];
+    viewdata_t const &vd = DD_Player(player)->viewport();
     geometry->origin.x    = vd.window.topLeft.x;
     geometry->origin.y    = vd.window.topLeft.y;
     geometry->size.width  = vd.window.width();
@@ -192,7 +190,7 @@ DENG_EXTERN_C dint R_ViewWindowOrigin(dint player, Point2Raw *origin)
     if(!origin) return false;
     if(player < 0 || player >= DDMAXPLAYERS) return false;
 
-    viewdata_t const &vd = viewDataOfConsole[player];
+    viewdata_t const &vd = DD_Player(player)->viewport();
     origin->x = vd.window.topLeft.x;
     origin->y = vd.window.topLeft.y;
     return true;
@@ -204,7 +202,7 @@ DENG_EXTERN_C dint R_ViewWindowSize(dint player, Size2Raw *size)
     if(!size) return false;
     if(player < 0 || player >= DDMAXPLAYERS) return false;
 
-    viewdata_t const &vd = viewDataOfConsole[player];
+    viewdata_t const &vd = DD_Player(player)->viewport();
     size->width  = vd.window.width();
     size->height = vd.window.height();
     return true;
@@ -222,7 +220,7 @@ DENG_EXTERN_C void R_SetViewWindowGeometry(dint player, RectRaw const *geometry,
     if(p < 0) return;
 
     viewport_t const *vp = &viewportOfLocalPlayer[p];
-    viewdata_t *vd = &viewDataOfConsole[player];
+    viewdata_t *vd = &DD_Player(player)->viewport();
 
     Rectanglei newGeom = Rectanglei::fromSize(Vector2i(de::clamp<dint>(0, geometry->origin.x, vp->geometry.width()),
                                                        de::clamp<dint>(0, geometry->origin.y, vp->geometry.height())),
@@ -350,7 +348,7 @@ void R_UpdateViewPortGeometry(viewport_t *port, dint col, dint row)
         p.geometry.size.width  = port->geometry.width();
         p.geometry.size.height = port->geometry.height();
 
-        DD_CallHooks(HOOK_VIEWPORT_RESHAPE, port->console, (void *)&p);
+        DoomsdayApp::plugins().callHooks(HOOK_VIEWPORT_RESHAPE, port->console, (void *)&p);
     }
 }
 
@@ -390,7 +388,7 @@ bool R_SetViewGrid(dint numCols, dint numRows)
         dint const console = P_LocalToConsole(p);
         if(console != -1)
         {
-            vp->console = clients[console].viewConsole;
+            vp->console = DD_Player(console)->viewConsole;
         }
         else
         {
@@ -412,12 +410,6 @@ void R_ResetViewer()
 dint R_NextViewer()
 {
     return resetNextViewer;
-}
-
-viewdata_t const *R_ViewData(dint consoleNum)
-{
-    DENG2_ASSERT(consoleNum >= 0 && consoleNum < DDMAXPLAYERS);
-    return &viewDataOfConsole[consoleNum];
 }
 
 /**
@@ -448,13 +440,13 @@ void R_CheckViewerLimits(viewer_t *src, viewer_t *dst)
 /**
  * Retrieve the current sharp camera position.
  */
-viewer_t R_SharpViewer(player_t &player)
+viewer_t R_SharpViewer(ClientPlayer &player)
 {
-    DENG2_ASSERT(player.shared.mo);
+    DENG2_ASSERT(player.publicData().mo);
 
-    ddplayer_t const &ddpl = player.shared;
+    ddplayer_t const &ddpl = player.publicData();
 
-    viewer_t view(viewDataOfConsole[&player - ddPlayers].latest);
+    viewer_t view(player.viewport().latest);
 
     if((ddpl.flags & DDPF_CHASECAM) && !(ddpl.flags & DDPF_CAMERA))
     {
@@ -499,11 +491,10 @@ void R_NewSharpWorld()
 
     for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        viewdata_t *vd = &viewDataOfConsole[i];
-        player_t *plr  = &ddPlayers[i];
+        player_t *plr  = DD_Player(i);
+        viewdata_t *vd = &plr->viewport();
 
-        if(/*(plr->shared.flags & DDPF_LOCAL) &&*/
-           (!plr->shared.inGame || !plr->shared.mo))
+        if(!plr->isInGame())
         {
             continue;
         }
@@ -537,11 +528,10 @@ void R_UpdateViewer(dint consoleNum)
 
     dint const VIEWPOS_MAX_SMOOTHDISTANCE = 172;
 
-    viewdata_t *vd   = viewDataOfConsole + consoleNum;
-    player_t *player = ddPlayers + consoleNum;
+    player_t *player = DD_Player(consoleNum);
+    viewdata_t *vd   = &player->viewport();
 
-    if(!player->shared.inGame) return;
-    if(!player->shared.mo) return;
+    if(!player->isInGame()) return;
 
     viewer_t sharpView = R_SharpViewer(*player);
 
@@ -589,7 +579,7 @@ void R_UpdateViewer(dint consoleNum)
             };
 
             static OldAngle oldAngle[DDMAXPLAYERS];
-            OldAngle *old = &oldAngle[viewPlayer - ddPlayers];
+            OldAngle *old = &oldAngle[DoomsdayApp::players().indexOf(viewPlayer)];
             dfloat yaw    = (ddouble)smoothView.angle() / ANGLE_MAX * 360;
 
             LOGDEV_MSG("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f "
@@ -616,7 +606,7 @@ void R_UpdateViewer(dint consoleNum)
             };
 
             static OldPos oldPos[DDMAXPLAYERS];
-            OldPos *old = &oldPos[viewPlayer - ddPlayers];
+            OldPos *old = &oldPos[DoomsdayApp::players().indexOf(viewPlayer)];
 
             LOGDEV_MSG("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f dz=%-10.3f dx/dt=%-10.3f dy/dt=%-10.3f")
                     << SECONDS_TO_TICKS(gameTime)
@@ -679,9 +669,9 @@ void R_SetupFrame(player_t *player)
     // Handle extralight (used to light up the world momentarily (used for
     // e.g. gun flashes). We want to avoid flickering, so when ever it is
     // enabled; make it last for a few frames.
-    if(player->targetExtraLight != player->shared.extraLight)
+    if(player->targetExtraLight != player->publicData().extraLight)
     {
-        player->targetExtraLight = player->shared.extraLight;
+        player->targetExtraLight = player->publicData().extraLight;
         player->extraLightCounter = MINEXTRALIGHTFRAMES;
     }
 
@@ -742,10 +732,14 @@ void R_RenderBlankView()
 
 static void setupPlayerSprites()
 {
-    psp3d = false;
+    DENG2_ASSERT(viewPlayer);
+
+    // There are no 3D psprites.
+    ::psp3d = false;
+
+    ddplayer_t *ddpl = &viewPlayer->publicData();
 
     // Cameramen have no psprites.
-    ddplayer_t *ddpl = &viewPlayer->shared;
     if((ddpl->flags & DDPF_CAMERA) || (ddpl->flags & DDPF_CHASECAM))
         return;
 
@@ -756,34 +750,32 @@ static void setupPlayerSprites()
     SectorCluster &cluster = Mobj_Cluster(*mob);
 
     // Determine if we should be drawing all the psprites full bright?
-    dd_bool isFullBright = (levelFullBright != 0);
-    if(!isFullBright)
+    bool fullBright = CPP_BOOL(::levelFullBright);
+    if(!fullBright)
     {
-        ddpsprite_t *psp = ddpl->pSprites;
-        for(dint i = 0; i < DDMAXPSPRITES; ++i, psp++)
+        for(ddpsprite_t const &psp : ddpl->pSprites)
         {
-            if(!psp->statePtr) continue;
+            if(!psp.statePtr) continue;
 
             // If one of the psprites is fullbright, both are.
-            if(psp->statePtr->flags & STF_FULLBRIGHT)
-                isFullBright = true;
+            if(psp.statePtr->flags & STF_FULLBRIGHT)
+            {
+                fullBright = true;
+            }
         }
     }
 
-    viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
-
-    ddpsprite_t *psp = ddpl->pSprites;
-    for(dint i = 0; i < DDMAXPSPRITES; ++i, psp++)
+    viewdata_t const *viewData = &viewPlayer->viewport();
+    for(dint i = 0; i < DDMAXPSPRITES; ++i)
     {
         vispsprite_t *spr = &visPSprites[i];
 
         spr->type = VPSPR_SPRITE;
-        spr->psp  = psp;
+        spr->psp  = &ddpl->pSprites[i];
 
-        if(!psp->statePtr) continue;
+        if(!spr->psp->statePtr) continue;
 
         // First, determine whether this is a model or a sprite.
-        bool isModel = false;
         ModelDef *mf = nullptr, *nextmf = nullptr;
         dfloat inter = 0;
         if(useModels)
@@ -792,18 +784,17 @@ static void setupPlayerSprites()
             MobjThinker dummy;
 
             // Setup a dummy for the call to R_CheckModelFor.
-            dummy->state = psp->statePtr;
-            dummy->tics = psp->tics;
+            dummy->state = spr->psp->statePtr;
+            dummy->tics  = spr->psp->tics;
 
             mf = Mobj_ModelDef(dummy, &nextmf, &inter);
-            if(mf) isModel = true;
         }
 
-        if(isModel)
+        // Use a 3D model?
+        if(mf)
         {
-            // Yes, draw a 3D model (in Rend_Draw3DPlayerSprites).
             // There are 3D psprites.
-            psp3d = true;
+            ::psp3d = true;
 
             spr->type   = VPSPR_MODEL;
             spr->origin = viewData->current.origin;
@@ -823,9 +814,9 @@ static void setupPlayerSprites()
             spr->data.model.viewAligned = true;
 
             // Offsets to rotation angles.
-            spr->data.model.yawAngleOffset   = psp->pos[0] * weaponOffsetScale - 90;
+            spr->data.model.yawAngleOffset   = spr->psp->pos[0] * weaponOffsetScale - 90;
             spr->data.model.pitchAngleOffset =
-                (32 - psp->pos[1]) * weaponOffsetScale * weaponOffsetScaleY / 1000.0f;
+                (32 - spr->psp->pos[1]) * weaponOffsetScale * weaponOffsetScaleY / 1000.0f;
             // Is the FOV shift in effect?
             if(weaponFOVShift > 0 && Rend_FieldOfView() > 90)
                 spr->data.model.pitchAngleOffset -= weaponFOVShift * (Rend_FieldOfView() - 90) / 90;
@@ -835,8 +826,8 @@ static void setupPlayerSprites()
             spr->data.model.pitch = viewData->current.pitch * 85 / 110 + spr->data.model.yawAngleOffset;
             std::memset(spr->data.model.visOff, 0, sizeof(spr->data.model.visOff));
 
-            spr->data.model.alpha = psp->alpha;
-            spr->data.model.stateFullBright = (psp->flags & DDPSPF_FULLBRIGHT)!=0;
+            spr->data.model.alpha = spr->psp->alpha;
+            spr->data.model.stateFullBright = (spr->psp->flags & DDPSPF_FULLBRIGHT) != 0;
         }
         else
         {
@@ -847,8 +838,8 @@ static void setupPlayerSprites()
             spr->origin = viewData->current.origin;
 
             spr->data.sprite.bspLeaf      = &Mobj_BspLeafAtOrigin(*mob);
-            spr->data.sprite.alpha        = psp->alpha;
-            spr->data.sprite.isFullBright = (psp->flags & DDPSPF_FULLBRIGHT) != 0;
+            spr->data.sprite.alpha        = spr->psp->alpha;
+            spr->data.sprite.isFullBright = (spr->psp->flags & DDPSPF_FULLBRIGHT) != 0;
         }
     }
 }
@@ -859,7 +850,7 @@ static void setupViewMatrix()
 {
     // This will be the view matrix for the current frame.
     frameViewMatrix = GL_GetProjectionMatrix() *
-                      Rend_GetModelViewMatrix(viewPlayer - ddPlayers);
+                      Rend_GetModelViewMatrix(DoomsdayApp::players().indexOf(viewPlayer));
 }
 
 Matrix4f const &Viewer_Matrix()
@@ -871,10 +862,10 @@ Matrix4f const &Viewer_Matrix()
 DENG_EXTERN_C void R_RenderPlayerView(dint num)
 {
     if(num < 0 || num >= DDMAXPLAYERS) return; // Huh?
-    player_t *player = &ddPlayers[num];
+    player_t *player = DD_Player(num);
 
-    if(!player->shared.inGame) return;
-    if(!player->shared.mo) return;
+    if(!player->publicData().inGame) return;
+    if(!player->publicData().mo) return;
 
     if(firstFrameAfterLoad)
     {
@@ -886,7 +877,7 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
     }
 
     // Too early? Game has not configured the view window?
-    viewdata_t *vd = &viewDataOfConsole[num];
+    viewdata_t *vd = &player->viewport();
     if(vd->window.isNull()) return;
 
     // Setup for rendering the frame.
@@ -907,10 +898,10 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
 
     // Hide the viewPlayer's mobj?
     dint oldFlags = 0;
-    if(!(player->shared.flags & DDPF_CHASECAM))
+    if(!(player->publicData().flags & DDPF_CHASECAM))
     {
-        oldFlags = player->shared.mo->ddFlags;
-        player->shared.mo->ddFlags |= DDMF_DONTDRAW;
+        oldFlags = player->publicData().mo->ddFlags;
+        player->publicData().mo->ddFlags |= DDMF_DONTDRAW;
     }
 
     // Go to wireframe mode?
@@ -960,9 +951,9 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
     }
 
     // Now we can show the viewPlayer's mobj again.
-    if(!(player->shared.flags & DDPF_CHASECAM))
+    if(!(player->publicData().flags & DDPF_CHASECAM))
     {
-        player->shared.mo->ddFlags = oldFlags;
+        player->publicData().mo->ddFlags = oldFlags;
     }
 
     R_PrintRendPoolInfo();
@@ -1031,9 +1022,9 @@ static void clearViewPorts()
     {
         for(dint i = 0; i < DDMAXPLAYERS; ++i)
         {
-            player_t *plr = &ddPlayers[i];
+            player_t *plr = DD_Player(i);
 
-            if(!plr->shared.inGame || !(plr->shared.flags & DDPF_LOCAL))
+            if(!plr->publicData().inGame || !(plr->publicData().flags & DDPF_LOCAL))
                 continue;
 
             if(P_IsInVoid(plr) || !worldSys().hasMap())
@@ -1070,7 +1061,7 @@ void R_RenderViewPorts(ViewPortLayer layer)
         displayPlayer = vp->console;
         R_UseViewPort(vp);
 
-        if(displayPlayer < 0 || (ddPlayers[displayPlayer].shared.flags & DDPF_UNDEFINED_ORIGIN))
+        if(displayPlayer < 0 || (DD_Player(displayPlayer)->publicData().flags & DDPF_UNDEFINED_ORIGIN))
         {
             if(layer == Player3DViewLayer)
             {
@@ -1086,7 +1077,7 @@ void R_RenderViewPorts(ViewPortLayer layer)
         // Use an orthographic projection in real pixel dimensions.
         glOrtho(0, vp->geometry.width(), vp->geometry.height(), 0, -1, 1);
 
-        viewdata_t const *vd = &viewDataOfConsole[vp->console];
+        viewdata_t const *vd = &DD_Player(vp->console)->viewport();
         RectRaw vpGeometry(vp->geometry.topLeft.x, vp->geometry.topLeft.y,
                            vp->geometry.width(), vp->geometry.height());
 
@@ -1270,7 +1261,7 @@ void R_BeginFrame()
     luminousOrder   =    (duint *) M_Realloc(luminousOrder,   sizeof(*luminousOrder)   * maxLuminous);
 
     // Update viewer => lumobj distances ready for linking and sorting.
-    viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+    viewdata_t const *viewData = &viewPlayer->viewport();
     map.forAllLumobjs([&viewData] (Lumobj &lob)
     {
         // Approximate the distance in 3D.
@@ -1325,7 +1316,7 @@ void R_ViewerClipLumobj(Lumobj *lum)
     /// @todo Determine the exact centerpoint of the light in addLuminous!
     Vector3d const origin(lum->x(), lum->y(), lum->z() + lum->zOffset());
 
-    if(!(devNoCulling || P_IsInVoid(&ddPlayers[displayPlayer])))
+    if(!(devNoCulling || P_IsInVoid(DD_Player(displayPlayer))))
     {
         if(!rendSys().angleClipper().isPointVisible(origin))
         {

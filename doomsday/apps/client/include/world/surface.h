@@ -1,7 +1,7 @@
 /** @file surface.h  World map surface.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,13 +18,14 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_SURFACE_H
-#define DENG_WORLD_SURFACE_H
+#ifndef WORLD_SURFACE_H
+#define WORLD_SURFACE_H
 
 #include <functional>
 #include <de/Error>
 #include <de/Matrix>
 #include <de/Observers>
+#include <de/String>
 #include <de/Vector>
 #include <doomsday/uri.h>
 #include "MapElement"
@@ -73,8 +74,13 @@ public:
      * @param tintColor  Default tint color.
      */
     Surface(de::MapElement &owner,
-            float opacity                 = 1,
+            de::dfloat opacity            = 1,
             de::Vector3f const &tintColor = de::Vector3f(1, 1, 1));
+
+    /**
+     * Composes a human-friendly, styled, textual description of the surface.
+     */
+    de::String description() const;
 
     /**
      * Returns the normalized tangent space matrix for the surface.
@@ -101,8 +107,8 @@ public:
      *
      * @see setOpacity()
      */
-    float opacity() const;
-    Surface &setOpacity(float newOpacity);
+    de::dfloat opacity() const;
+    Surface &setOpacity(de::dfloat newOpacity);
 
     /**
      * Returns the tint color of the surface. The TintColorChange audience is
@@ -128,9 +134,9 @@ public:
      *
      * @return  Glow strength/intensity or @c 0 if not presently glowing.
      */
-    float glow(de::Vector3f &color) const;
+    de::dfloat glow(de::Vector3f &color) const;
 
-public: // Decorations ------------------------------------------------------------
+public:  // Decorations -----------------------------------------------------------
 
     /**
      * Clear all surface decorations.
@@ -140,7 +146,7 @@ public: // Decorations ---------------------------------------------------------
     /**
      * Returns the total number of surface decorations.
      */
-    int decorationCount() const;
+    de::dint decorationCount() const;
 
     /**
      * Add the specified decoration to the surface.
@@ -163,9 +169,9 @@ public: // Decorations ---------------------------------------------------------
      * Returns @c true if the surface is marked for decoration update.
      */
     bool needsDecorationUpdate() const;
-#endif // __CLIENT__
+#endif  // __CLIENT__
 
-public: // Material ---------------------------------------------------------------
+public:  // Material --------------------------------------------------------------
 
     /**
      * Returns @c true iff a material is bound to the surface.
@@ -251,7 +257,7 @@ public: // Material ------------------------------------------------------------
     de::Uri composeMaterialUri() const;
 
 #ifdef __CLIENT__
-public: // Material origin animation/smoothing ------------------------------------
+public:  // Material origin animation/smoothing -----------------------------------
 
     /**
      * Returns the current smoothed (interpolated) material origin for the
@@ -291,11 +297,11 @@ public: // Material origin animation/smoothing ---------------------------------
 #endif // __CLIENT__
 
 protected:
-    int property(DmuArgs &args) const;
-    int setProperty(DmuArgs const &args);
+    de::dint property(DmuArgs &args) const;
+    de::dint setProperty(DmuArgs const &args);
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_WORLD_SURFACE_H
+#endif  // WORLD_SURFACE_H

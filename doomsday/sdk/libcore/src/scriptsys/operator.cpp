@@ -80,6 +80,8 @@ String operatorToText(Operator op)
         return "INDEX";
     case SLICE:
         return "SLICE";
+    case RESULT_TRUE:
+        return "RESULT_TRUE";
     default:
         return "UNKNOWN";
     }        
@@ -103,7 +105,7 @@ bool leftOperandByReference(Operator op)
 
 bool isUnary(Operator op)
 {
-    return (op == PLUS || op == MINUS || op == NOT);
+    return (op == PLUS || op == MINUS || op == NOT || op == RESULT_TRUE);
 }
 
 bool isBinary(Operator op)

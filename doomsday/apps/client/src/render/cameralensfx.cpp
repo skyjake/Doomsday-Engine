@@ -47,6 +47,7 @@
 #include "render/fx/postprocessing.h"
 #include "render/fx/resize.h"
 #include "render/fx/vignette.h"
+#include "world/p_players.h"
 
 #include "ui/clientwindow.h"
 
@@ -60,24 +61,6 @@
 using namespace de;
 
 static int fxFramePlayerNum; ///< Player view currently being drawn.
-
-struct ConsoleEffectStack
-{
-    /// Dynamic stack of effects. Used currently as a fixed array, though.
-    typedef QList<ConsoleEffect *> EffectList;
-    EffectList effects;
-
-    ~ConsoleEffectStack() {
-        clear();
-    }
-
-    void clear() {
-        qDeleteAll(effects);
-        effects.clear();
-    }
-};
-
-static ConsoleEffectStack fxConsole[DDMAXPLAYERS];
 
 #define IDX_LENS_FLARES         3
 #define IDX_POST_PROCESSING     5
@@ -97,7 +80,7 @@ D_CMD(PostFx)
     }
 
     fx::PostProcessing *post =
-            static_cast<fx::PostProcessing *>(fxConsole[console].effects[IDX_POST_PROCESSING]);
+            static_cast<fx::PostProcessing *>(DD_Player(console)->fxStack().effects[IDX_POST_PROCESSING]);
 
     // Special case to clear out the current shader.
     if(shader == "none")
@@ -125,7 +108,7 @@ void LensFx_Init()
 {
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        ConsoleEffectStack &stack = fxConsole[i];
+        ConsoleEffectStack &stack = DD_Player(i)->fxStack();
         stack.effects
                 << new fx::Resize(i)
                 << new fx::Bloom(i)
@@ -142,7 +125,7 @@ void LensFx_Shutdown()
 
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        fxConsole[i].clear();
+        DD_Player(i)->fxStack().clear();
     }
 }
 
@@ -150,7 +133,7 @@ void LensFx_GLRelease()
 {
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        foreach(ConsoleEffect *effect, fxConsole[i].effects)
+        foreach(ConsoleEffect *effect, DD_Player(i)->fxStack().effects)
         {
             if(effect->isInited())
             {
@@ -164,7 +147,7 @@ void LensFx_BeginFrame(int playerNum)
 {
     fxFramePlayerNum = playerNum;
 
-    ConsoleEffectStack::EffectList const &effects = fxConsole[fxFramePlayerNum].effects;
+    auto const &effects = DD_Player(fxFramePlayerNum)->fxStack().effects;
 
     // Initialize these effects if they currently are not.
     foreach(ConsoleEffect *effect, effects)
@@ -183,7 +166,7 @@ void LensFx_BeginFrame(int playerNum)
 
 void LensFx_EndFrame()
 {
-    ConsoleEffectStack::EffectList const &effects = fxConsole[fxFramePlayerNum].effects;
+    auto const &effects = DD_Player(fxFramePlayerNum)->fxStack().effects;
 
     foreach(ConsoleEffect *effect, effects)
     {
@@ -198,7 +181,7 @@ void LensFx_EndFrame()
 
 void LensFx_MarkLightVisibleInFrame(IPointLightSource const &lightSource)
 {
-    ConsoleEffectStack::EffectList const &effects = fxConsole[fxFramePlayerNum].effects;
+    auto const &effects = DD_Player(fxFramePlayerNum)->fxStack().effects;
 
     static_cast<fx::LensFlares *>(effects.at(IDX_LENS_FLARES))->
             markLightPotentiallyVisibleForCurrentFrame(&lightSource);
