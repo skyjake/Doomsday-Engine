@@ -34,7 +34,7 @@
  *
  * @ingroup core
  */
-class Games
+class LIBDOOMSDAY_PUBLIC Games
 {
 public:
     /// The requested game does not exist in the collection. @ingroup errors
