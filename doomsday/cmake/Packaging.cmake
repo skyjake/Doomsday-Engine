@@ -63,7 +63,7 @@ set (CPACK_PACKAGE_INSTALL_DIRECTORY "Doomsday ${DENG_VERSION}")
 if (NOT CPack_CMake_INCLUDED)
     # We have to define the components manually because otherwise Assimp's
     # components would get automatically included.
-    set (CPACK_COMPONENTS_ALL packs libs)
+    set (CPACK_COMPONENTS_ALL packs libs fmod)
     if (DENG_ENABLE_GUI)
         list (APPEND CPACK_COMPONENTS_ALL client)
     endif ()
