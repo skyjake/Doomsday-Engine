@@ -33,7 +33,6 @@
 #include <de/App>
 
 #include "de_base.h"
-#include "de_system.h"
 
 #include "dd_uinit.h"
 

@@ -19,14 +19,13 @@
 
 #include "de_base.h"
 #include "server/sv_frame.h"
-#include "server/sv_pool.h"
-#include "world/p_players.h"
 
 #include <cmath>
-#include "de_system.h"
 #include "def_main.h"
-
+#include "sys_system.h"
 #include "network/net_main.h"
+#include "server/sv_pool.h"
+#include "world/p_players.h"
 
 using namespace de;
 

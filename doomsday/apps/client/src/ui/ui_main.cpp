@@ -23,7 +23,6 @@
 #include <cmath>
 #include <doomsday/console/cmd.h>
 #include <doomsday/filesys/fs_util.h>
-#include "de_system.h"
 #include "clientapp.h"
 
 #include "api_fontrender.h"

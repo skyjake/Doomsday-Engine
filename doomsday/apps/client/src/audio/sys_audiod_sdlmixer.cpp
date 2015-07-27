@@ -28,8 +28,8 @@
 #include <SDL_mixer.h>
 #undef main
 
+#include <de/timer.h>
 #include <de/Log>
-#include "de_system.h"
 
 #include "api_audiod.h"
 #include "api_audiod_sfx.h"

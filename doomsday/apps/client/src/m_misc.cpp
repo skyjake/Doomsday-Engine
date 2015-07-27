@@ -43,10 +43,12 @@
 #endif
 
 #include "de_base.h"
-#include "de_system.h"
 
 #include "lzss.h"
 
+#ifdef __CLIENT__
+#  include "ui/clientwindow.h"
+#endif
 #include <doomsday/filesys/fs_main.h>
 #include <de/str.h>
 #include <de/vector1.h>

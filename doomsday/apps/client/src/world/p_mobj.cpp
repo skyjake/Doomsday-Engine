@@ -33,7 +33,6 @@
 #include <doomsday/defs/sprite.h>
 #include <doomsday/world/mobjthinkerdata.h>
 
-#include "de_system.h"
 #include "def_main.h"
 
 #include "api_sound.h"

@@ -21,10 +21,15 @@
 #include "de_base.h"
 #include "audio/s_sfx.h"
 
+#include <de/concurrency.h>
+#include <de/timer.h>
 #include <de/vector1.h>
 #include <de/Log>
-#include "de_system.h"
 #include "dd_share.h"  // SF_* flags
+
+#ifdef __CLIENT__
+#  include "sys_system.h"  // Sys_Sleep()
+#endif
 
 #include "audio/sys_audio.h"
 #include "audio/audiodriver.h"

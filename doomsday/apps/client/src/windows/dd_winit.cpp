@@ -1,7 +1,7 @@
 /** @file dd_winit.cpp  Engine Initialization (Windows).
  *
  * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,26 +20,26 @@
 #define WIN32_LEAN_AND_MEAN
 #define _WIN32_DCOM
 //#define STRICT
-
-#ifdef __CLIENT__
-#  include <de/DisplayMode>
-#endif
-
 #include <windows.h>
 #include <windowsx.h>
-#include <objbase.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <tchar.h>
 
 #include "de_base.h"
-#include "de_system.h"
 #include "dd_winit.h"
+
+#include <objbase.h>
+#include <cstring>
+#include <cstdio>
+#include <cstdlib>
+#include <tchar.h>
 
 #include <QDir>
 #include <doomsday/paths.h>
 #include <de/App>
+#ifdef __CLIENT__
+#  include <de/DisplayMode>
+#  include "gl/sys_opengl.h"
+#endif
+#include "sys_system.h"
 
 using namespace de;
 

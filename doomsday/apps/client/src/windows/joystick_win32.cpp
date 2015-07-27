@@ -19,15 +19,16 @@
  */
 
 #include "de_base.h"
-#include "directinput.h"
+#include "ui/joystick.h"
 
 #ifndef __CLIENT__
 #  error "joystick_win32.cpp is only the client"
 #endif
 
 #include <doomsday/console/var.h>
-#include "de_system.h"
+#include "directinput.h"
 #include "dd_winit.h"
+#include "ui/clientwindow.h"
 
 extern int novideo;
 

@@ -32,17 +32,20 @@
 #  include <QSettings>
 #endif
 
+#include <de/concurrency.h>
+#include <de/timer.h>
 #include <de/App>
 #include <de/Loop>
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/console/exec.h>
 
-#include "de_system.h"
 #ifdef __CLIENT__
 #  include "clientapp.h"
 #endif
 #include "dd_main.h"
 #include "dd_loop.h"
+
+#include "api_base.h"
 
 #include "audio/s_main.h"
 #ifdef __CLIENT__
@@ -287,6 +290,7 @@ de::NativePath Sys_SteamBasePath()
 /**
  * Called when Doomsday should quit (will be deferred until convenient).
  */
+#undef Sys_Quit
 DENG_EXTERN_C void Sys_Quit(void)
 {
     if(DoomsdayApp::app().busyMode().isActive())

@@ -36,7 +36,6 @@ set (SHARED_WITH_CLIENT
     ${src}/include/dd_pinit.h
     ${src}/include/de_base.h
     ${src}/include/de_platform.h
-    ${src}/include/de_system.h
     ${src}/include/def_main.h
     ${src}/include/edit_map.h
     ${src}/include/face.h

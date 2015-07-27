@@ -21,9 +21,9 @@
 #include "audio/s_cache.h"
 
 #include <cstring>
+#include <de/timer.h>
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/resource/wav.h>
-#include "de_system.h"
 #include "dd_main.h"
 
 #ifdef __CLIENT__

@@ -34,7 +34,6 @@
 #include <doomsday/console/exec.h>
 #include <doomsday/console/knownword.h>
 #include <doomsday/filesys/fs_main.h>
-#include "de_system.h"
 #ifdef __CLIENT__
 #  include "clientapp.h"
 #endif

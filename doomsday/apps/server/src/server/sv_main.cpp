@@ -24,13 +24,13 @@
 
 #include <cmath>
 #include <de/stringarray.h>
+#include <de/timer.h>
 #include <de/ArrayValue>
 #include <de/NumberValue>
 #include <de/Log>
 #include <doomsday/console/exec.h>
 #include <doomsday/filesys/fs_main.h>
 
-#include "de_system.h"
 #include "dd_main.h"
 #include "def_main.h"
 
@@ -44,6 +44,7 @@
 #include "world/p_players.h"
 
 #include "api_server.h"
+#include "serversystem.h"
 #include "server/sv_def.h"
 #include "server/sv_pool.h"
 

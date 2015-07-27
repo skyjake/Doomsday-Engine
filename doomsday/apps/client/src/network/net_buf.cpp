@@ -20,14 +20,27 @@
 
 #include "de_base.h"
 #include "network/net_buf.h"
-#include "world/p_players.h"
 
 #include <de/c_wrapper.h>
+#include <de/concurrency.h>
 #include <de/memory.h>
+#include <de/timer.h>
 #include <de/ByteRefArray>
-#include "de_system.h"
 
+#ifdef __CLIENT__
+#  include "network/sys_network.h"
+#endif
+#include "network/masterserver.h"
 #include "network/net_event.h"
+#ifdef __CLIENT__
+#  include "network/serverlink.h"
+#endif
+
+#ifdef __SERVER__
+#  include "serversystem.h"
+#endif
+
+#include "world/p_players.h"
 
 using namespace de;
 

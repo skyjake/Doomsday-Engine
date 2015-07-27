@@ -1,4 +1,4 @@
-/** @file sys_audiod_dummy.c  Dummy Audio Driver.
+/** @file sys_audiod_dummy.cpp  Dummy Audio Driver.
  *
  * Used in dedicated server mode, when it's necessary to simulate sound playing
  * but not actually play anything.
@@ -23,8 +23,7 @@
 #include "de_base.h"
 #include "audio/audiodriver.h"
 
-#include "de_system.h"
-
+#include <de/timer.h>
 #include "api_audiod.h"
 #include "api_audiod_sfx.h"
 

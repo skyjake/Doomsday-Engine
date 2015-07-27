@@ -27,12 +27,13 @@
 #include <doomsday/filesys/fs_util.h>
 #include <doomsday/filesys/sys_direc.h>
 
-#include "de_system.h"
-
 #include "client/cl_player.h"
 
 #include "api_filesys.h"
 #include "api_player.h"
+
+#include "network/net_main.h"
+#include "network/net_buf.h"
 
 #include "render/rend_main.h"
 #include "render/viewports.h"
