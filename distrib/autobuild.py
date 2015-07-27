@@ -263,12 +263,14 @@ def rebuild_apt_repository():
 def write_index_html(tag):
     ev = builder.Event(tag)
     f = file(ev.file_path('index.html'), 'wt')
-    print >> f, "<html>"
-    print >> f, "<head><title>Build %i</title></head>" % ev.number()
-    print >> f, "<body>"
+    print >> f, "<html><head>"
+    print >> f, "<title>Build %i</title>" % ev.number()
+    print >> f, "<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,300,700' rel='stylesheet' type='text/css'>"
+    print >> f, "<link href='../../build.css' rel='stylesheet' type='text/css'>"
+    print >> f, "</head><body><div id='content-outer'><div id='content-inner'>"
     print >> f, "<h1>Build %i</h1>" % ev.number()
     print >> f, ev.html_description(False)
-    print >> f, "</body>"
+    print >> f, "</div></div></body>"
     print >> f, "</html>"
 
 
