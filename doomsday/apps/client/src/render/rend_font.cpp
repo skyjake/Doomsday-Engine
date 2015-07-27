@@ -27,7 +27,6 @@
 #include <cstdlib>
 #include <de/GLState>
 #include "de_system.h"
-#include "de_ui.h"
 #include "m_misc.h"
 
 #include "BitmapFont"

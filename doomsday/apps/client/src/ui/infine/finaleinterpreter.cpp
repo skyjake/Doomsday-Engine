@@ -1,7 +1,7 @@
 /** @file finaleinterpreter.cpp  InFine animation system Finale script interpreter.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,6 +18,9 @@
  * 02110-1301 USA</small>
  */
 
+#include "de_base.h"
+#include "ui/infine/finaleinterpreter.h"
+
 #include <QList>
 #include <de/memory.h>
 #include <de/timer.h>
@@ -26,12 +29,7 @@
 #include <doomsday/console/exec.h>
 #include <doomsday/Game>
 
-#include "de_base.h"
-#include "ui/infine/finaleinterpreter.h"
-
 #include "de_filesys.h"
-#include "de_ui.h"
-
 #include "dd_main.h"
 #include "dd_def.h"
 

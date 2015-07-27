@@ -30,7 +30,6 @@
 #include <doomsday/console/exec.h>
 #include <doomsday/console/var.h>
 #include "de_system.h"
-#include "de_ui.h"
 #include "dd_def.h"
 #include "dd_loop.h"
 #include "dd_main.h"
@@ -56,18 +55,19 @@
 #ifdef __CLIENT__
 #  include "gl/gl_main.h"
 
-#  include "api_fontrender.h"
 #  include "render/rend_main.h"
 #  include "render/blockmapvisual.h"
 #  include "render/lightgrid.h"
 #  include "render/viewports.h"
 
+#  include "api_fontrender.h"
 #  include "edit_bias.h"
+#  include "ui/ui_main.h"
 #  include "ui/inputdebug.h"
 #  include "ui/widgets/taskbarwidget.h"
-#endif
-#ifdef DENG2_DEBUG
-#  include "ui/zonedebug.h"
+#  ifdef DENG2_DEBUG
+#    include "ui/zonedebug.h"
+#  endif
 #endif
 
 #include "world/p_players.h"

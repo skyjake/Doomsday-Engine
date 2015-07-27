@@ -25,7 +25,6 @@
 #include <cmath>
 #include <doomsday/console/var.h>
 #include "de_system.h"
-#include "de_ui.h"
 #include "gl/gl_main.h"
 #include "ui/widgets/busywidget.h"
 

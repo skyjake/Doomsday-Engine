@@ -27,7 +27,6 @@
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
 #include "de_filesys.h"
-#include "de_ui.h"
 
 #include "world/map.h"
 #include "world/p_players.h"  // viewPlayer
@@ -37,6 +36,9 @@
 
 #include "render/viewports.h"
 #include "render/rend_main.h"  // gameDrawHUD/vOrigin, remove me
+
+#include "ui/ui_main.h"
+#include "ui/clientwindow.h"
 
 using namespace de;
 

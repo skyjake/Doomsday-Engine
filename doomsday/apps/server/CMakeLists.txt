@@ -39,7 +39,6 @@ set (SHARED_WITH_CLIENT
     ${src}/include/de_filesys.h
     ${src}/include/de_platform.h
     ${src}/include/de_system.h
-    ${src}/include/de_ui.h
     ${src}/include/def_main.h
     ${src}/include/edit_map.h
     ${src}/include/face.h
