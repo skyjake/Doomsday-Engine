@@ -20,16 +20,23 @@
 #define CLIENT_RENDER_PLAYERWEAPONANIMATOR_H
 
 #include <de/ModelDrawable>
+#include "mobjanimator.h"
+
+class ClientPlayer;
 
 /**
  * Animates the player weapon model.
  *
  * @ingroup render
  */
-class PlayerWeaponAnimator : public de::ModelDrawable::Animator
+class PlayerWeaponAnimator
 {
 public:
-    PlayerWeaponAnimator();
+    PlayerWeaponAnimator(ClientPlayer *plr);
+
+    MobjAnimator &animator();
+
+    void advanceTime(de::TimeDelta const &elapsed);
 
 private:
     DENG2_PRIVATE(d)

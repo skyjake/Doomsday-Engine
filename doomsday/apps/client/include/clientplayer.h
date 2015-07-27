@@ -82,7 +82,17 @@ public:
     PlayerWeaponAnimator &playerWeaponAnimator();
 
     DemoTimer &demoTimer();
-    
+
+    void tick(timespan_t elapsed);
+        
+    /**
+     * Sets the id of the currently active weapon of this player. This is used for
+     * looking up assets related to the weapon (e.g., "model.weapon.(id)").
+     *
+     * @param id  Weapon id, as defined by the game.
+     */
+    void setWeaponAssetId(de::String const &id);
+
 private:
     DENG2_PRIVATE(d)
 };

@@ -235,7 +235,7 @@ DENG2_PIMPL(ClientApp)
         DD_PublishAPIs(plugin);
     }
 
-    void pluginSentNotification(int notification, void *)
+    void pluginSentNotification(int notification, void *data)
     {
         LOG_AS("ClientApp::pluginSentNotification");
 
@@ -246,6 +246,16 @@ DENG2_PIMPL(ClientApp)
             // re-show the dialog now that the user has saved the game as prompted.
             LOG_DEBUG("Game saved");
             DownloadDialog::showCompletedDownload();
+            break;
+
+        case DD_NOTIFY_PLAYER_WEAPON_CHANGED:
+            if(data)
+            {
+                auto const *args = (ddnotify_player_weapon_changed_t *) data;
+                self.players().at(args->player)
+                        .as<ClientPlayer>()
+                        .setWeaponAssetId(args->weaponId);
+            }
             break;
 
         default:

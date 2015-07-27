@@ -22,7 +22,7 @@
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(ClientPlayer)
+DENG2_PIMPL(ClientPlayer)
 {
     viewdata_t           viewport;
     ConsoleEffectStack   effects;
@@ -30,11 +30,21 @@ DENG2_PIMPL_NOREF(ClientPlayer)
     clplayerstate_t      clPlayerState;
     DemoTimer            demoTimer;
 
-    Instance()
+    String weaponAssetId;
+
+    Instance(Public *i)
+        : Base(i)
+        , playerWeaponAnimator(i)
     {
         zap(viewport);
         zap(clPlayerState);
         zap(demoTimer);
+    }
+
+    void prepareAssets()
+    {
+        // Is there a model for the weapon?
+        qDebug() << "-=- looking for" << "model.weapon." + weaponAssetId;
     }
 };
 
@@ -42,7 +52,7 @@ ClientPlayer::ClientPlayer()
     : demo(nullptr)
     , recording(false)
     , recordPaused(false)
-    , d(new Instance)
+    , d(new Instance(this))
 {}
 
 viewdata_t &ClientPlayer::viewport()
@@ -83,4 +93,20 @@ PlayerWeaponAnimator &ClientPlayer::playerWeaponAnimator()
 DemoTimer &ClientPlayer::demoTimer()
 {
     return d->demoTimer;
+}
+
+void ClientPlayer::tick(timespan_t elapsed)
+{
+    if(!isInGame()) return;
+
+    d->playerWeaponAnimator.advanceTime(elapsed);
+}
+
+void ClientPlayer::setWeaponAssetId(String const &id)
+{
+    if(id != d->weaponAssetId)
+    {
+        d->weaponAssetId = id;
+        d->prepareAssets();
+    }
 }

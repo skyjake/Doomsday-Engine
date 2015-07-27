@@ -17,16 +17,35 @@
  */
 
 #include "render/playerweaponanimator.h"
+#include "render/mobjanimator.h"
+#include "clientplayer.h"
 
 using namespace de;
 
 DENG2_PIMPL_NOREF(PlayerWeaponAnimator)
 {
-    Instance()
-    {
+    ClientPlayer *player;
+    std::unique_ptr<MobjAnimator> animator;
 
-    }
+    Instance(ClientPlayer *plr)
+        : player(plr)
+    {}
 };
 
-PlayerWeaponAnimator::PlayerWeaponAnimator() : d(new Instance)
+PlayerWeaponAnimator::PlayerWeaponAnimator(ClientPlayer *plr)
+    : d(new Instance(plr))
 {}
+
+MobjAnimator &PlayerWeaponAnimator::animator()
+{
+    DENG2_ASSERT(bool(d->animator));
+    return *d->animator;
+}
+
+void PlayerWeaponAnimator::advanceTime(const TimeDelta &elapsed)
+{
+    if(d->animator)
+    {
+        d->animator->advanceTime(elapsed);
+    }
+}
