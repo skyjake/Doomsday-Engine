@@ -44,7 +44,7 @@ if (APPLE)
     set (CPACK_DMG_FORMAT UDZO)
 elseif (UNIX)
     #set (CPACK_GENERATOR RPM;DEB)
-    # Set CPACK_GENERATOR manually.	    
+    # Set CPACK_GENERATOR manually.
     set (CPACK_PROJECT_CONFIG_FILE ${CMAKE_CURRENT_LIST_DIR}/PackagingUnix.cmake)
 else ()
 	set (CPACK_PACKAGE_NAME "Doomsday ${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
@@ -75,13 +75,13 @@ if (NOT CPack_CMake_INCLUDED)
     endif ()
     if (DENG_ENABLE_TESTS)
         list (APPEND CPACK_COMPONENTS_ALL tests)
-    endif ()    
-    
-    include (CPack)   
-    
+    endif ()
+
+    include (CPack)
+
     cpack_add_component (packs
         DISPLAY_NAME "Required Resources"
-        HIDDEN        
+        HIDDEN
     )
     cpack_add_component (libs
         DISPLAY_NAME "Runtime Libraries"
@@ -92,17 +92,18 @@ if (NOT CPack_CMake_INCLUDED)
         DISPLAY_NAME "Engine and Plugins"
         DESCRIPTION "The client and server executables plus game, audio, and other plugins."
         DEPENDS packs libs
-        INSTALL_TYPES gui        
+        INSTALL_TYPES gui
     )
     cpack_add_component (fmod
         DISPLAY_NAME "FMOD Ex Audio Plugin"
         DESCRIPTION "Audio plugin supporting 3D effects and SF2 soundfonts (non-GPL)."
         DEPENDS client
-        INSTALL_TYPES gui        
+        INSTALL_TYPES gui
     )
     cpack_add_component (sdk
         DISPLAY_NAME "SDK"
         DESCRIPTION "C++ headers and build configuration files for Doomsday 2."
+        DISABLED
         DEPENDS libs packs
         INSTALL_TYPES sdk
     )
@@ -119,7 +120,7 @@ if (NOT CPack_CMake_INCLUDED)
         DEPENDS libs packs
         INSTALL_TYPES sdk
     )
-    
+
     cpack_add_install_type (gui DISPLAY_NAME "Standard")
-    cpack_add_install_type (sdk DISPLAY_NAME "Developer")    
+    cpack_add_install_type (sdk DISPLAY_NAME "Developer")
 endif ()
