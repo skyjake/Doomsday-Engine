@@ -1,10 +1,9 @@
-/** @file s_environ.cpp Environmental audio effects.
- * @ingroup audio
+/** @file s_environ.cpp  Environmental audio effects.
  *
  * Calculation of the aural properties of sectors.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -22,51 +21,49 @@
  */
 
 #include "de_base.h"
-#include "de_audio.h"
+#include "audio/s_environ.h"
 
 #include "Sector"
-
-#include "audio/s_environ.h"
 
 using namespace de;
 
 static AudioEnvironment envInfo[1 + NUM_AUDIO_ENVIRONMENTS] = {
-    {"",          0,       0,      0},
-    {"Metal",     255,     255,    25},
-    {"Rock",      200,     160,    100},
-    {"Wood",      80,      50,     200},
-    {"Cloth",     5,       5,      255}
+    { "",          0,       0,      0   },
+    { "Metal",     255,     255,    25  },
+    { "Rock",      200,     160,    100 },
+    { "Wood",      80,      50,     200 },
+    { "Cloth",     5,       5,      255 }
 };
 
 char const *S_AudioEnvironmentName(AudioEnvironmentId id)
 {
-    DENG_ASSERT(id >= AE_NONE && id < NUM_AUDIO_ENVIRONMENTS);
-    return envInfo[1 + int(id)].name;
+    DENG2_ASSERT(id >= AE_NONE && id < NUM_AUDIO_ENVIRONMENTS);
+    return ::envInfo[1 + dint( id )].name;
 }
 
 AudioEnvironment const &S_AudioEnvironment(AudioEnvironmentId id)
 {
-    DENG_ASSERT(id >= AE_NONE && id < NUM_AUDIO_ENVIRONMENTS);
-    return envInfo[1 + int(id)];
+    DENG2_ASSERT(id >= AE_NONE && id < NUM_AUDIO_ENVIRONMENTS);
+    return ::envInfo[1 + dint( id )];
 }
 
 AudioEnvironmentId S_AudioEnvironmentId(de::Uri const *uri)
 {
     if(uri)
     {
-        for(int i = 0; i < defs.textureEnv.size(); ++i)
+        for(dint i = 0; i < ::defs.textureEnv.size(); ++i)
         {
-            ded_tenviron_t const *env = &defs.textureEnv[i];
-            for(int k = 0; k < env->materials.size(); ++k)
+            ded_tenviron_t const *env = &::defs.textureEnv[i];
+            for(dint k = 0; k < env->materials.size(); ++k)
             {
                 de::Uri *ref = env->materials[k].uri;
                 if(!ref || *ref != *uri) continue;
 
                 // Is this a known environment?
-                for(int m = 0; m < NUM_AUDIO_ENVIRONMENTS; ++m)
+                for(dint m = 0; m < NUM_AUDIO_ENVIRONMENTS; ++m)
                 {
                     AudioEnvironment const &envInfo = S_AudioEnvironment(AudioEnvironmentId(m));
-                    if(!stricmp(env->id, envInfo.name))
+                    if(!qstricmp(env->id, envInfo.name))
                         return AudioEnvironmentId(m);
                 }
                 return AE_NONE;

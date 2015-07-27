@@ -22,12 +22,8 @@
 #include "server/sv_sound.h"
 
 #include <de/Log>
-#include "de_audio.h"
-
 #include "network/net_main.h"
-
 #include "world/p_players.h"
-
 #include "server/sv_pool.h"
 
 using namespace de;

@@ -23,20 +23,21 @@
 
 #include <de/Library>
 #include <de/LibraryFile>
-#include "de_audio.h"
 #include "audio/sys_audio.h"
+#include "audio/audiodriver_music.h"
 
-typedef struct driver_s {
-    Library* library;
+struct driver_t
+{
+    Library *library;
     audiodriver_t interface;
     audiointerface_sfx_t sfx;
     audiointerface_music_t music;
     audiointerface_cd_t cd;
-} driver_t;
+} ;
 
 static driver_t drivers[AUDIODRIVER_COUNT];
 
-static const char* driverIdentifier[AUDIODRIVER_COUNT] = {
+static char const *driverIdentifier[AUDIODRIVER_COUNT] = {
     "dummy",
     "sdlmixer",
     "openal",
@@ -46,20 +47,22 @@ static const char* driverIdentifier[AUDIODRIVER_COUNT] = {
     "winmm"
 };
 
-// The active/loaded interfaces.
-typedef struct audiointerface_s {
+/**
+ * The active/loaded interfaces.
+ *
+ * @todo The audio interface could also declare which audio formats it is
+ * capable of playing (e.g., MIDI only, CD tracks only).
+ */
+struct audiointerface_t
+{
     audiointerfacetype_t type;
     union {
-        void*                   any;
-        audiointerface_sfx_t*   sfx;
-        audiointerface_music_t* music;
-        audiointerface_cd_t*    cd;
+        void                   *any;
+        audiointerface_sfx_t   *sfx;
+        audiointerface_music_t *music;
+        audiointerface_cd_t    *cd;
     } i;
-    /**
-     * @todo The audio interface could also declare which audio formats it is
-     * capable of playing (e.g., MIDI only, CD tracks only).
-     */
-} audiointerface_t;
+};
 
 static audiointerface_t activeInterfaces[MAX_AUDIO_INTERFACES];
 
@@ -68,9 +71,10 @@ static audiointerface_t activeInterfaces[MAX_AUDIO_INTERFACES];
 DENG_EXTERN_C audiointerface_music_t audiodQuickTimeMusic;
 #endif
 
-static void importInterfaces(driver_t* d)
+static void importInterfaces(driver_t *d)
 {
-    de::Library& lib = Library_File(d->library).library();
+    DENG2_ASSERT(d);
+    de::Library &lib = Library_File(d->library).library();
 
     lib.setSymbolPtr( d->interface.Init,        "DS_Init");
     lib.setSymbolPtr( d->interface.Shutdown,    "DS_Shutdown");

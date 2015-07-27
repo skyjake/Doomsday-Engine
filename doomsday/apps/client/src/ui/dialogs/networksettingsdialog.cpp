@@ -1,6 +1,7 @@
 /** @file networksettingsdialog.cpp  Dialog for network settings.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -22,7 +23,6 @@
 #include "ui/widgets/cvarchoicewidget.h"
 
 #include "clientapp.h"
-#include "de_audio.h"
 
 #include <de/SignalAction>
 #include <de/GridPopupWidget>

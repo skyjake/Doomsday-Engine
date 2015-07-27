@@ -23,10 +23,13 @@
 
 #include <de/vector1.h>
 #include <de/Log>
-#include "de_audio.h"
 #include "de_system.h"
+#include "dd_share.h"  // SF_* flags
 
 #include "audio/sys_audio.h"
+#include "audio/audiodriver.h"
+#include "audio/s_main.h"
+#include "audio/s_cache.h"
 
 #include "world/thinkers.h"
 #include "Sector"
@@ -37,7 +40,6 @@
 
 #  include "api_fontrender.h"
 #  include "render/rend_font.h"
-
 #  include "ui/ui_main.h"
 #endif
 
