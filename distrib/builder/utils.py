@@ -156,6 +156,7 @@ def count_log_word(fn, word):
             if 'doomsday/external/assimp/contrib' in txt: continue
             if ' warning generated.' in txt: continue
             if ' warnings generated.' in txt: continue
+            if 'vcinstalldir is not set' in txt: continue
             try:
                 if txt[pos-1] not in '/\\_'+string.ascii_letters and \
                     txt[endPos] not in string.ascii_letters+'.(' and \
