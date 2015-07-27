@@ -1,16 +1,7 @@
 /** @file worldsystem.h  World subsystem.
  *
- * Ideas for improvement:
- *
- * "background loading" - it would be very cool if map loading happened in
- * another thread. This way we could be keeping busy while players watch the
- * intermission animations.
- *
- * "seamless world" - multiple concurrent maps with no perceivable delay when
- * players move between them.
- *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -27,14 +18,14 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLDSYSTEM_H
-#define DENG_WORLDSYSTEM_H
+#ifndef WORLDSYSTEM_H
+#define WORLDSYSTEM_H
 
 #include <de/liblegacy.h>
 #include <de/Error>
 #include <de/Observers>
 #include <de/Vector>
-#include <de/System>
+#include <doomsday/world/system.h>
 #include <doomsday/uri.h>
 
 #ifdef __CLIENT__
@@ -45,21 +36,25 @@
 class Hand;
 #endif
 
-namespace de {
-
-class Map;
+namespace de { class Map; }
 
 /**
+ * Ideas for improvement:
+ *
+ * "background loading" - it would be very cool if map loading happened in
+ * another thread. This way we could be keeping busy while players watch the
+ * intermission animations.
+ *
+ * "seamless world" - multiple concurrent maps with no perceivable delay when
+ * players move between them.
+ *
  * @ingroup world
  */
-class WorldSystem : public de::System
+class WorldSystem : public world::System
 {
 public:
     /// No map is currently loaded. @ingroup errors
     DENG2_ERROR(MapError);
-
-    /// Notified whenever the "current" map changes.
-    DENG2_DEFINE_AUDIENCE2(MapChange, void worldSystemMapChanged())
 
 #ifdef __CLIENT__
     /// Notified when a new frame begins.
@@ -74,10 +69,6 @@ public:
      * Construct a new world system (no map is loaded by default).
      */
     WorldSystem();
-
-    // System.
-    void timeChanged(de::Clock const &);
-
 
     /**
      * To be called to reset the world back to the initial state. Any currently
@@ -102,12 +93,12 @@ public:
      *
      * @see hasMap()
      */
-    Map &map() const;
+    de::Map &map() const;
 
     /**
      * Returns a pointer to the currently loaded map, if any.
      */
-    inline Map *mapPtr() const { return hasMap()? &map() : nullptr; }
+    inline de::Map *mapPtr() const { return hasMap()? &map() : nullptr; }
 
     /**
      * @param uri  Universal resource identifier (URI) for the map to change to.
@@ -115,14 +106,14 @@ public:
      *
      * @return  @c true= the map change completed successfully.
      */
-    bool changeMap(Uri const &uri);
+    bool changeMap(de::Uri const &uri);
 
     /**
      * Unload the currently loaded map (if any).
      *
      * @see changeMap()
      */
-    inline void unloadMap() { changeMap(Uri()); }
+    inline void unloadMap() { changeMap(de::Uri()); }
 
     /**
      * Returns the effective map-info definition Record associated with the given
@@ -130,7 +121,7 @@ public:
      *
      * @param mapUri  Unique identifier for the map to lookup map-info data for.
      */
-    Record const &mapInfoForMapUri(Uri const &mapUri) const;
+    de::Record const &mapInfoForMapUri(de::Uri const &mapUri) const;
 
     /**
      * Advance time in the world.
@@ -166,7 +157,7 @@ public:
      * for the purposes of runtime map editing.
      *
      * @param distance  The current distance of the hand from the viewer will be
-     *                  written here if not @c 0.
+     *                  written here if not @c nullptr.
      */
     Hand &hand(coord_t *distance = nullptr) const;
 
@@ -179,7 +170,7 @@ public:
      */
     bool isPointInVoid(de::Vector3d const &pos) const;
 
-#endif // __CLIENT__
+#endif  // __CLIENT__
 
 public:
     /**
@@ -191,9 +182,7 @@ private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace de
-
 DENG_EXTERN_C dd_bool ddMapSetup;
 DENG_EXTERN_C int validCount;
 
-#endif // DENG_WORLD_H
+#endif  // WORLDSYSTEM_H

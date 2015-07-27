@@ -1,6 +1,6 @@
 /** @file hand.h  Hand (metaphor) for the manipulation of "grabbables".
  *
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -46,7 +46,7 @@ namespace internal {
  *
  * @ingroup world
  */
-class Hand : DENG2_OBSERVES(de::WorldSystem, FrameEnd)
+class Hand : DENG2_OBSERVES(WorldSystem, FrameEnd)
 {
     DENG2_NO_COPY  (Hand)
     DENG2_NO_ASSIGN(Hand)

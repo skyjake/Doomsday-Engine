@@ -18,13 +18,14 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_MAP_H
-#define DENG_WORLD_MAP_H
+#ifndef WORLD_MAP_H
+#define WORLD_MAP_H
 
 #include <functional>
 #include <QList>
 #include <QHash>
 #include <QSet>
+#include <doomsday/world/map.h>
 #include <doomsday/uri.h>
 #include <de/BinaryTree>
 #include <de/Observers>
@@ -78,9 +79,9 @@ class Thinkers;
  *
  * @ingroup world
  */
-class Map
+class Map : public world::Map
 #ifdef __CLIENT__
-: DENG2_OBSERVES(WorldSystem, FrameBegin)
+, DENG2_OBSERVES(WorldSystem, FrameBegin)
 #endif
 {
     DENG2_NO_COPY  (Map)
@@ -113,9 +114,6 @@ public:
     DENG2_ERROR(FullError);
 #endif
 
-    /// Notified when the map is about to be deleted.
-    DENG2_DEFINE_AUDIENCE(Deletion, void mapBeingDeleted(Map const &map))
-
     /// Notified when a one-way window construct is first found.
     DENG2_DEFINE_AUDIENCE(OneWayWindowFound, void oneWayWindowFound(Line &line, Sector &backFacingSector))
 
@@ -140,7 +138,7 @@ public:
     typedef QHash<thid_t, struct mobj_s *> ClMobjHash;
 #endif
 
-public: /// @todo make private:
+public:  /// @todo make private:
     coord_t _globalGravity    = 0;  ///< The defined gravity for this map.
     coord_t _effectiveGravity = 0;  ///< The effective gravity for this map.
     dint _ambientLightLevel   = 0;  ///< Ambient lightlevel for the current map.
@@ -321,7 +319,8 @@ public:  // Light sources ------------------------------------------------------
      * @param func  Callback to make for each Lumobj.
      */
     LoopResult forAllLumobjs(std::function<LoopResult (Lumobj &)> func) const;
-#endif // __CLIENT__
+
+#endif  // __CLIENT__
 
 public:  // Lines & Line-Sides ----------------------------------------------------
 
@@ -469,7 +468,7 @@ public:  // Particle generators ------------------------------------------------
 
 #endif // __CLIENT__
 
-public:  // Poly objects ----------------------------------------------------------
+public:  // Poly-objects ----------------------------------------------------------
 
     /**
      * Returns the total number of Polyobjs in the map.
@@ -795,7 +794,7 @@ public:  // Data structures ----------------------------------------------------
      */
     void spreadAllContacts(AABoxd const &region);
 
-#endif // __CLIENT__
+#endif  // __CLIENT__
 
 public:
 
@@ -822,7 +821,7 @@ public:
      */
     static void initDummies();
 
-public: /// @todo Most of the following should be private:
+public:  /// @todo Most of the following should be private:
 
     /**
      * Initialize the node piles and link rings. To be called after map load.
@@ -929,7 +928,7 @@ protected:
     /// Observes WorldSystem FrameBegin
     void worldSystemFrameBegins(bool resetNextViewer);
 
-#endif // __CLIENT__
+#endif  // __CLIENT__
 
 public:  // Editing ---------------------------------------------------------------
 
@@ -1000,4 +999,4 @@ private:
 
 }  // namespace de
 
-#endif  // DENG_WORLD_MAP_H
+#endif  // WORLD_MAP_H

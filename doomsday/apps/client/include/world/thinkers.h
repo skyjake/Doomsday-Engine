@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_WORLD_THINKERS_H
-#define DENG_WORLD_THINKERS_H
+#ifndef WORLD_THINKERS_H
+#define WORLD_THINKERS_H
 
 #include <functional>
 #include <de/Error>
@@ -114,7 +114,7 @@ private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace de
+}  // namespace de
 
 dd_bool Thinker_IsMobjFunc(thinkfunc_t func);
 de::Map &Thinker_Map(thinker_t const &th);
@@ -130,4 +130,4 @@ de::Map &Thinker_Map(thinker_t const &th);
  */
 void Thinker_InitPrivateData(thinker_t *th);
 
-#endif  // DENG_WORLD_THINKERS_H
+#endif  // WORLD_THINKERS_H

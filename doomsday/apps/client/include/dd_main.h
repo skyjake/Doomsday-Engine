@@ -65,7 +65,7 @@ ResourceSystem &App_ResourceSystem();
 InFineSystem &App_InFineSystem();
 
 /// Returns the application's global WorldSystem.
-de::WorldSystem &App_WorldSystem();
+WorldSystem &App_WorldSystem();
 
 #undef Con_Open
 

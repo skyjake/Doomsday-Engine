@@ -1,7 +1,7 @@
 /** @file serverapp.h  The server application.
  *
- * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -48,10 +48,10 @@ public:
     static ServerSystem &serverSystem();
     static InFineSystem &infineSystem();
     static ResourceSystem &resourceSystem();
-    static de::WorldSystem &worldSystem();
+    static WorldSystem &worldSystem();
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // SERVERAPP_H
+#endif  // SERVERAPP_H

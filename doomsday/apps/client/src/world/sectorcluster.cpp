@@ -1,7 +1,7 @@
 /** @file sectorcluster.cpp  World map sector cluster.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -713,23 +713,18 @@ DENG2_PIMPL(SectorCluster)
         {
             // Check if there are any camera players in this sector. If their height
             // is now above the ceiling/below the floor they are now in the void.
-            for(int i = 0; i < DDMAXPLAYERS; ++i)
+            DoomsdayApp::players().forAll([this] (Player &plr)
             {
-                player_t *plr = DD_Player(i);
-                ddplayer_t *ddpl = &plr->publicData();
-
-                if(!plr->isInGame())
-                    continue;
-                if(Mobj_ClusterPtr(*ddpl->mo) != thisPublic)
-                    continue;
-
-                if((ddpl->flags & DDPF_CAMERA) &&
-                   (ddpl->mo->origin[VZ] > self.visCeiling().height() - 4 ||
-                    ddpl->mo->origin[VZ] < self.visFloor().height()))
+                ddplayer_t &ddpl = plr.publicData();
+                if(plr.isInGame() && (ddpl.flags & DDPF_CAMERA)
+                   && Mobj_ClusterPtr(*ddpl.mo) == thisPublic
+                   && (   ddpl.mo->origin[2] > self.visCeiling().height() - 4
+                       || ddpl.mo->origin[2] < self.visFloor  ().height()))
                 {
-                    ddpl->inVoid = true;
+                    ddpl.inVoid = true;
                 }
-            }
+                return LoopContinue;
+            });
 
 #ifdef __CLIENT__
             // We'll need to recalculate environmental audio characteristics.

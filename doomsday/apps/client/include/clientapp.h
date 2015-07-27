@@ -1,7 +1,7 @@
 /** @file clientapp.h  The client application.
  *
- * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -75,7 +75,7 @@ public:
     static ClientWindowSystem &windowSystem();
     static RenderSystem &renderSystem();
     static ResourceSystem &resourceSystem();
-    static de::WorldSystem &worldSystem();
+    static WorldSystem &worldSystem();
 
     static bool hasInputSystem();
     static bool hasRenderSystem();
@@ -103,4 +103,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-#endif // CLIENTAPP_H
+#endif  // CLIENTAPP_H

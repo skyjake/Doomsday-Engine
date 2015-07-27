@@ -575,6 +575,11 @@ ResourceSystem &App_ResourceSystem()
     return static_cast<ResourceSystem &>(res::System::get());
 }
 
+WorldSystem &App_WorldSystem()
+{
+    return static_cast<WorldSystem &>(world::System::get());
+}
+
 InFineSystem &App_InFineSystem()
 {
     if(App::appExists())
@@ -587,20 +592,6 @@ InFineSystem &App_InFineSystem()
 #endif
     }
     throw Error("App_InFineSystem", "App not yet initialized");
-}
-
-WorldSystem &App_WorldSystem()
-{
-    if(App::appExists())
-    {
-#ifdef __CLIENT__
-        return ClientApp::worldSystem();
-#endif
-#ifdef __SERVER__
-        return ServerApp::worldSystem();
-#endif
-    }
-    throw Error("App_WorldSystem", "App not yet initialized");
 }
 
 static File1 *tryLoadFile(de::Uri const &path, size_t baseOffset = 0);
@@ -1174,14 +1165,14 @@ static dint DD_ActivateGameWorker(void *context)
     R_ResetViewer();
 #endif
 
-    // Invalidate old cmds and init player values.
-    for(dint i = 0; i < DDMAXPLAYERS; ++i)
+    // Init player values.
+    DoomsdayApp::players().forAll([] (Player &plr)
     {
-        player_t *plr = DD_Player(i);
-
-        plr->extraLight = plr->targetExtraLight = 0;
-        plr->extraLightCounter = 0;
-    }
+        plr.extraLight        = 0;
+        plr.targetExtraLight  = 0;
+        plr.extraLightCounter = 0;
+        return LoopContinue;
+    });
 
     if(gx.PostInit)
     {

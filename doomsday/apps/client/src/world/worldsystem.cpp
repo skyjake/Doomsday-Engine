@@ -72,7 +72,7 @@
 #  include "HueCircle"
 #  include "Lumobj"
 
-#  include "render/viewports.h" // R_ResetViewer
+#  include "render/viewports.h"  // R_ResetViewer
 #  include "render/rend_fakeradio.h"
 #  include "render/rend_main.h"
 #  include "render/rendpoly.h"
@@ -85,10 +85,10 @@
 
 using namespace de;
 
-int validCount = 1; // Increment every time a check is made.
+dint validCount = 1;  // Increment every time a check is made.
 
 #ifdef __CLIENT__
-static float handDistance = 300; //cvar
+static dfloat handDistance = 300;  //cvar
 #endif
 
 static inline ResourceSystem &resSys()
@@ -113,26 +113,26 @@ static inline RenderSystem &rendSys()
 class MapConversionReporter
 : DENG2_OBSERVES(Map, UnclosedSectorFound)
 , DENG2_OBSERVES(Map, OneWayWindowFound)
-, DENG2_OBSERVES(Map, Deletion)
+, DENG2_OBSERVES(world::Map, Deletion)
 {
     /// Record "unclosed sectors".
     /// Sector index => world point relatively near to the problem area.
-    typedef std::map<int, Vector2i> UnclosedSectorMap;
+    typedef std::map<dint, Vector2i> UnclosedSectorMap;
 
     /// Record "one-way window lines".
     /// Line index => Sector index the back side faces.
-    typedef std::map<int, int> OneWayWindowMap;
+    typedef std::map<dint, dint> OneWayWindowMap;
 
     /// Maximum number of warnings to output (of each type) about any problems
     /// encountered during the build process.
-    static int const maxWarningsPerType;
+    static dint const maxWarningsPerType;
 
 public:
     /**
      * Construct a new conversion reporter.
      * @param map
      */
-    MapConversionReporter(Map *map = 0) : _map(0)
+    MapConversionReporter(Map *map = nullptr)
     {
         setMap(map);
     }
@@ -163,8 +163,8 @@ public:
         clearReport();
     }
 
-    /// Same as @code setMap(0); @endcode
-    inline void clearMap() { setMap(0); }
+    /// Same as @code setMap(nullptr); @endcode
+    inline void clearMap() { setMap(nullptr); }
 
     /**
      * Clear any existing conversion report data.
@@ -180,12 +180,12 @@ public:
      */
     void writeLog()
     {
-        if(int numToLog = maxWarnings(unclosedSectorCount()))
+        if(dint numToLog = maxWarnings(unclosedSectorCount()))
         {
             String str;
 
             UnclosedSectorMap::const_iterator it = _unclosedSectors.begin();
-            for(int i = 0; i < numToLog; ++i, ++it)
+            for(dint i = 0; i < numToLog; ++i, ++it)
             {
                 if(i != 0) str += "\n";
                 str += String("Sector #%1 is unclosed near %2")
@@ -198,12 +198,12 @@ public:
             LOG_MAP_WARNING("%s") << str;
         }
 
-        if(int numToLog = maxWarnings(oneWayWindowCount()))
+        if(dint numToLog = maxWarnings(oneWayWindowCount()))
         {
             String str;
 
             OneWayWindowMap::const_iterator it = _oneWayWindows.begin();
-            for(int i = 0; i < numToLog; ++i, ++it)
+            for(dint i = 0; i < numToLog; ++i, ++it)
             {
                 if(i != 0) str += "\n";
                 str += String("Line #%1 seems to be a One-Way Window (back faces sector #%2).")
@@ -231,20 +231,20 @@ protected:
     }
 
     /// Observes Map Deletion.
-    void mapBeingDeleted(Map const &map)
+    void mapBeingDeleted(world::Map const &map)
     {
-        DENG2_ASSERT(&map == _map); // sanity check.
+        DENG2_ASSERT(&map == _map);  // sanity check.
         DENG2_UNUSED(map);
-        _map = 0;
+        _map = nullptr;
     }
 
 private:
-    inline int unclosedSectorCount() const { return int( _unclosedSectors.size() ); }
-    inline int oneWayWindowCount() const   { return int( _oneWayWindows.size() ); }
+    inline dint unclosedSectorCount() const { return dint( _unclosedSectors.size() ); }
+    inline dint oneWayWindowCount() const   { return dint( _oneWayWindows.size() ); }
 
-    static inline int maxWarnings(int issueCount)
+    static inline dint maxWarnings(dint issueCount)
     {
-#ifdef DENG_DEBUG
+#ifdef DENG2_DEBUG
         return issueCount; // No limit.
 #else
         return de::min(issueCount, maxWarningsPerType);
@@ -257,13 +257,13 @@ private:
 
         if(yes)
         {
-            _map->audienceForDeletion            += this;
+            _map->audienceForDeletion()          += this;
             _map->audienceForOneWayWindowFound   += this;
             _map->audienceForUnclosedSectorFound += this;
         }
         else
         {
-            _map->audienceForDeletion            -= this;
+            _map->audienceForDeletion()          -= this;
             _map->audienceForOneWayWindowFound   -= this;
             _map->audienceForUnclosedSectorFound -= this;
         }
@@ -274,7 +274,7 @@ private:
     OneWayWindowMap   _oneWayWindows;
 };
 
-int const MapConversionReporter::maxWarningsPerType = 10;
+dint const MapConversionReporter::maxWarningsPerType = 10;
 
 dd_bool ddMapSetup;
 
@@ -288,16 +288,14 @@ static String cacheIdForMap(String const &sourcePath)
 {
     DENG2_ASSERT(!sourcePath.isEmpty());
 
-    ushort id = 0;
-    for(int i = 0; i < sourcePath.size(); ++i)
+    dushort id = 0;
+    for(dint i = 0; i < sourcePath.size(); ++i)
     {
         id ^= sourcePath.at(i).unicode() << ((i * 3) % 11);
     }
 
     return String("%1").arg(id, 4, 16);
 }
-
-namespace de {
 
 DENG2_PIMPL(WorldSystem)
 {
@@ -345,18 +343,18 @@ DENG2_PIMPL(WorldSystem)
      *
      * @return  The newly converted map (if any).
      */
-    Map *convertMap(MapDef const &mapDef, MapConversionReporter *reporter = 0)
+    Map *convertMap(MapDef const &mapDef, MapConversionReporter *reporter = nullptr)
     {
         // We require a map converter for this.
         if(!Plug_CheckForHook(HOOK_MAP_CONVERT))
-            return 0;
+            return nullptr;
 
         LOG_DEBUG("Attempting \"%s\"...") << mapDef.composeUri().path();
 
-        if(!mapDef.sourceFile()) return 0;
+        if(!mapDef.sourceFile()) return nullptr;
 
         // Initiate the conversion process.
-        MPE_Begin(0/*dummy*/);
+        MPE_Begin(nullptr/*dummy*/);
 
         Map *newMap = MPE_Map();
 
@@ -374,7 +372,7 @@ DENG2_PIMPL(WorldSystem)
         // editing interface.
         if(!DoomsdayApp::plugins().callHooks(HOOK_MAP_CONVERT, 0,
                                              const_cast<Id1MapRecognizer *>(&mapDef.recognizer())))
-            return 0;
+            return nullptr;
 
         // A converter signalled success.
 
@@ -401,7 +399,7 @@ DENG2_PIMPL(WorldSystem)
      *
      * @see isCachedDataAvailable()
      *
-     * @return @c true if loading completed successfully.
+     * @return  @c true if loading completed successfully.
      */
     Map *loadMapFromCache(MapDef &mapDef)
     {
@@ -421,12 +419,12 @@ DENG2_PIMPL(WorldSystem)
      *
      * @return  The loaded map if successful. Ownership given to the caller.
      */
-    Map *loadMap(MapDef &mapDef, MapConversionReporter *reporter = 0)
+    Map *loadMap(MapDef &mapDef, MapConversionReporter *reporter = nullptr)
     {
         LOG_AS("WorldSystem::loadMap");
 
         /*if(mapDef.lastLoadAttemptFailed && !forceRetry)
-            return 0;
+            return nullptr;
 
         // Load from cache?
         if(haveCachedMap(mapDef))
@@ -489,7 +487,7 @@ DENG2_PIMPL(WorldSystem)
 #ifdef __CLIENT__
         // Reconfigure the sky.
         defn::Sky skyDef;
-        if(Record const *def = defs.skies.tryFind("id", mapInfo.gets("skyId")))
+        if(Record const *def = ::defs.skies.tryFind("id", mapInfo.gets("skyId")))
         {
             skyDef = *def;
         }
@@ -515,7 +513,7 @@ DENG2_PIMPL(WorldSystem)
 #ifdef __CLIENT__
         // Prepare the client-side data.
         Cl_ResetFrame();
-        Cl_InitPlayers(); // Player data, too.
+        Cl_InitPlayers();  // Player data, too.
 
         /// @todo Defer initial generator spawn until after finalization.
         map->initGenerators();
@@ -523,7 +521,7 @@ DENG2_PIMPL(WorldSystem)
 
         // The game may need to perform it's own finalization now that the
         // "current" map has changed.
-        de::Uri const mapUri = (map->def()? map->def()->composeUri() : de::Uri("Maps:", RC_NULL));
+        de::Uri const mapUri = (map->def() ? map->def()->composeUri() : de::Uri("Maps:", RC_NULL));
         if(gx.FinalizeMapChange)
         {
             gx.FinalizeMapChange(reinterpret_cast<uri_s const *>(&mapUri));
@@ -538,34 +536,35 @@ DENG2_PIMPL(WorldSystem)
         }
 
         // Init player values.
-        for(uint i = 0; i < DDMAXPLAYERS; ++i)
+        DoomsdayApp::players().forAll([] (Player &plr)
         {
-            player_t *plr = DD_Player(i);
-            ddplayer_t &ddpl = DD_Player(i)->publicData();
+            ddplayer_t &ddpl = plr.publicData();
 
-            plr->extraLight = plr->targetExtraLight = 0;
-            plr->extraLightCounter = 0;
+            plr.extraLight        = 0;
+            plr.targetExtraLight  = 0;
+            plr.extraLightCounter = 0;
 
             // Determine the "invoid" status.
             ddpl.inVoid = true;
-
             if(mobj_t *mo = ddpl.mo)
             {
                 if(SectorCluster *cluster = Mobj_ClusterPtr(*mo))
                 {
 #ifdef __CLIENT__
-                    if(mo->origin[VZ] >= cluster->visFloor().heightSmoothed() &&
-                       mo->origin[VZ] <  cluster->visCeiling().heightSmoothed() - 4)
+                    if(mo->origin[2] >= cluster->visFloor  ().heightSmoothed() &&
+                       mo->origin[2] <  cluster->visCeiling().heightSmoothed() - 4)
 #else
-                    if(mo->origin[VZ] >= cluster->floor().height() &&
-                       mo->origin[VZ] <  cluster->ceiling().height() - 4)
+                    if(mo->origin[2] >= cluster->floor  ().height() &&
+                       mo->origin[2] <  cluster->ceiling().height() - 4)
 #endif
                     {
                         ddpl.inVoid = false;
                     }
                 }
             }
-        }
+
+            return LoopContinue;
+        });
 
 #ifdef __CLIENT__
         /// @todo Refactor away:
@@ -584,7 +583,7 @@ DENG2_PIMPL(WorldSystem)
         S_SetupForChangedMap();
 
 #ifdef __SERVER__
-        if(isServer)
+        if(::isServer)
         {
             // Init server data.
             Sv_InitPools();
@@ -616,7 +615,7 @@ DENG2_PIMPL(WorldSystem)
         map->initContactBlockmaps();
         R_InitContactLists(*map);
         rendSys().worldSystemMapChanged(*map);
-        map->initBias();      // Shadow bias sources and surfaces.
+        map->initBias();  // Shadow bias sources and surfaces.
 
         // Rewind/restart material animators.
         /// @todo Only rewind animators responsible for map-surface contexts.
@@ -673,11 +672,11 @@ DENG2_PIMPL(WorldSystem)
         Z_PrintStatus();
 
         // Inform interested parties that the "current" map has changed.
-        notifyMapChange();
+        self.notifyMapChange();
     }
 
     /// @todo Split this into subtasks (load, make current, cache assets).
-    bool changeMap(MapDef *mapDef = 0)
+    bool changeMap(MapDef *mapDef = nullptr)
     {
 #ifdef __CLIENT__
         if(map)
@@ -697,7 +696,7 @@ DENG2_PIMPL(WorldSystem)
 #ifdef __CLIENT__
         R_DestroyContactLists();
 #endif
-        delete map; map = 0;
+        delete map; map = nullptr;
         Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
 
         // Are we just unloading the current map?
@@ -706,7 +705,7 @@ DENG2_PIMPL(WorldSystem)
         LOG_MSG("Loading map \"%s\"...") << mapDef->composeUri().path();
 
         // A new map is about to be set up.
-        ddMapSetup = true;
+        ::ddMapSetup = true;
 
         // Attempt to load in the new map.
         MapConversionReporter reporter;
@@ -714,16 +713,15 @@ DENG2_PIMPL(WorldSystem)
         if(newMap)
         {
             // The map may still be in an editable state -- switch to playable.
-            bool mapIsPlayable = newMap->endEditing();
+            bool const mapIsPlayable = newMap->endEditing();
 
             // Cancel further reports about the map.
-            reporter.setMap(0);
+            reporter.setMap(nullptr);
 
             if(!mapIsPlayable)
             {
                 // Darn. Discard the useless data.
-                delete newMap;
-                newMap = 0;
+                delete newMap; newMap = nullptr;
             }
         }
 
@@ -731,81 +729,53 @@ DENG2_PIMPL(WorldSystem)
         makeCurrent(newMap);
 
         // We've finished setting up the map.
-        ddMapSetup = false;
+        ::ddMapSetup = false;
 
         // Output a human-readable report of any issues encountered during conversion.
         reporter.writeLog();
 
-        return map != 0;
-    }
-
-    struct changemapworker_params_t
-    {
-        Instance *inst;
-        MapDef *mapDef;
-    };
-
-    static int changeMapWorker(void *context)
-    {
-        changemapworker_params_t &p = *static_cast<changemapworker_params_t *>(context);
-        int result = p.inst->changeMap(p.mapDef);
-        return result;
+        return map != nullptr;
     }
 
 #ifdef __CLIENT__
     void updateHandOrigin()
     {
-        DENG2_ASSERT(hand != 0 && map != 0);
+        DENG2_ASSERT(hand != nullptr && map != nullptr);
 
-        viewdata_t const *viewData = &viewPlayer->viewport();
+        viewdata_t const *viewData = &::viewPlayer->viewport();
         hand->setOrigin(viewData->current.origin + viewData->frontVec.xzy() * handDistance);
     }
-#endif
 
-    void notifyMapChange()
-    {
-        DENG2_FOR_PUBLIC_AUDIENCE2(MapChange, i) i->worldSystemMapChanged();
-    }
-
-    DENG2_PIMPL_AUDIENCE(MapChange)
-#ifdef __CLIENT__
     DENG2_PIMPL_AUDIENCE(FrameBegin)
     DENG2_PIMPL_AUDIENCE(FrameEnd)
 #endif
 };
 
-DENG2_AUDIENCE_METHOD(WorldSystem, MapChange)
 #ifdef __CLIENT__
 DENG2_AUDIENCE_METHOD(WorldSystem, FrameBegin)
 DENG2_AUDIENCE_METHOD(WorldSystem, FrameEnd)
 #endif
 
-WorldSystem::WorldSystem() : d(new Instance(this))
+WorldSystem::WorldSystem()
+    : world::System()
+    , d(new Instance(this))
 {}
-
-void WorldSystem::timeChanged(Clock const &)
-{
-    // Nothing to do.
-}
 
 bool WorldSystem::hasMap() const
 {
-    return d->map != 0;
+    return d->map != nullptr;
 }
 
 Map &WorldSystem::map() const
 {
-    if(d->map)
-    {
-        return *d->map;
-    }
+    if(d->map) return *d->map;
     /// @throw MapError Attempted with no map loaded.
     throw MapError("WorldSystem::map", "No map is currently loaded");
 }
 
 bool WorldSystem::changeMap(de::Uri const &mapUri)
 {
-    MapDef *mapDef = 0;
+    MapDef *mapDef = nullptr;
 
     if(!mapUri.path().isEmpty())
     {
@@ -815,18 +785,13 @@ bool WorldSystem::changeMap(de::Uri const &mapUri)
     // Switch to busy mode (if we haven't already) except when simply unloading.
     if(!mapUri.path().isEmpty() && !DoomsdayApp::app().busyMode().isActive())
     {
-        Instance::changemapworker_params_t parm;
-        parm.inst   = d;
-        parm.mapDef = mapDef;
-
-        BusyTask task; zap(task);
         /// @todo Use progress bar mode and update progress during the setup.
-        task.mode       = BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0);
-        task.name       = "Loading map...";
-        task.worker     = Instance::changeMapWorker;
-        task.workerData = &parm;
-
-        return CPP_BOOL(BusyMode_RunTask(&task));
+        return DoomsdayApp::app().busyMode().runNewTaskWithName(
+                    BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (::verbose ? BUSYF_CONSOLE_OUTPUT : 0),
+                    "Loading map...", [this, &mapDef] (void *)
+        {
+            return d->changeMap(mapDef);
+        });
     }
     else
     {
@@ -836,22 +801,25 @@ bool WorldSystem::changeMap(de::Uri const &mapUri)
 
 void WorldSystem::reset()
 {
-    for(int i = 0; i < DDMAXPLAYERS; ++i)
+    DoomsdayApp::players().forAll([] (Player &plr)
     {
-        player_t *plr    = DD_Player(i);
-        ddplayer_t *ddpl = &plr->publicData();
+        ddplayer_t &ddpl = plr.publicData();
 
         // Mobjs go down with the map.
-        ddpl->mo = 0;
+        ddpl.mo            = nullptr;
+        ddpl.extraLight    = 0;
+        ddpl.fixedColorMap = 0;
+        //ddpl.inGame        = false;
+        ddpl.flags         &= ~DDPF_CAMERA;
+
         // States have changed, the state pointers are unknown.
-        ddpl->pSprites[0].statePtr = ddpl->pSprites[1].statePtr = 0;
+        for(ddpsprite_t &pspr : ddpl.pSprites)
+        {
+            pspr.statePtr = nullptr;
+        }
 
-        //ddpl->inGame = false;
-        ddpl->flags &= ~DDPF_CAMERA;
-
-        ddpl->fixedColorMap = 0;
-        ddpl->extraLight = 0;
-    }
+        return LoopContinue;
+    });
 
 #ifdef __CLIENT__
     if(isClient)
@@ -867,16 +835,17 @@ void WorldSystem::reset()
 
 void WorldSystem::update()
 {
-    for(int i = 0; i < DDMAXPLAYERS; ++i)
+    DoomsdayApp::players().forAll([] (Player &plr)
     {
-        player_t *plr    = DD_Player(i);
-        ddplayer_t *ddpl = &plr->publicData();
-
         // States have changed, the state pointers are unknown.
-        ddpl->pSprites[0].statePtr = ddpl->pSprites[1].statePtr = 0;
-    }
+        for(ddpsprite_t &pspr : plr.publicData().pSprites)
+        {
+            pspr.statePtr = nullptr;
+        }
+        return LoopContinue;
+    });
 
-    // Update the current map too.
+    // Update the current map, also.
     if(d->map)
     {
         d->map->update();
@@ -886,12 +855,12 @@ void WorldSystem::update()
 Record const &WorldSystem::mapInfoForMapUri(de::Uri const &mapUri) const
 {
     // Is there a MapInfo definition for the given URI?
-    if(Record const *def = defs.mapInfos.tryFind("id", mapUri.compose()))
+    if(Record const *def = ::defs.mapInfos.tryFind("id", mapUri.compose()))
     {
         return *def;
     }
     // Is there is a default definition (for all maps)?
-    if(Record const *def = defs.mapInfos.tryFind("id", de::Uri("Maps", Path("*")).compose()))
+    if(Record const *def = ::defs.mapInfos.tryFind("id", de::Uri("Maps", Path("*")).compose()))
     {
         return *def;
     }
@@ -902,7 +871,7 @@ Record const &WorldSystem::mapInfoForMapUri(de::Uri const &mapUri) const
 void WorldSystem::advanceTime(timespan_t delta)
 {
 #ifdef __CLIENT__
-    if(clientPaused) return;
+    if(::clientPaused) return;
 #endif
     d->time += delta;
 }
@@ -1010,12 +979,12 @@ bool WorldSystem::isPointInVoid(Vector3d const &pos) const
         return true;
     }
 
-    return false; // Not in the void.
+    return false;  // Not in the void.
 }
 
-#endif // __CLIENT__
+#endif  // __CLIENT__
 
-void WorldSystem::consoleRegister() // static
+void WorldSystem::consoleRegister()  // static
 {
     //C_VAR_BYTE ("map-cache", &mapCache, 0, 0, 1);
 #ifdef __CLIENT__
@@ -1023,5 +992,3 @@ void WorldSystem::consoleRegister() // static
 #endif
     Map::consoleRegister();
 }
-
-} // namespace de

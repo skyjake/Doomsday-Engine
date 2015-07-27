@@ -97,7 +97,7 @@ static int lgMXSample  = 1;  ///< 5 samples per block. Cvar.
 
 namespace internal
 {
-    static inline de::WorldSystem &worldSys()
+    static inline WorldSystem &worldSys()
     {
         return App_WorldSystem();
     }
@@ -326,8 +326,6 @@ DENG2_PIMPL(Map)
 
     ~Instance()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->mapBeingDeleted(self);
-
 #ifdef __CLIENT__
         self.removeAllLumobjs();
         self.removeAllBiasSources();
@@ -1534,10 +1532,13 @@ DENG2_PIMPL(Map)
     {
         clMobjHash.remove(th.id);
     }
+
 #endif  // __CLIENT__
 };
 
-Map::Map(MapDef *mapDefinition) : d(new Instance(this))
+Map::Map(MapDef *mapDefinition)
+    : world::Map()
+    , d(new Instance(this))
 {
     setDef(mapDefinition);
 }
@@ -2079,23 +2080,23 @@ mobj_t *Map::clMobjFor(thid_t id, bool canCreate) const
     // Create a new client mobj. This is a regular mobj that has network state
     // associated with it.
 
-    MobjThinker mo(Thinker::AllocateMemoryZone);
-    mo.id = id;
-    mo.function = reinterpret_cast<thinkfunc_t>(gx.MobjThinker);
+    MobjThinker mob(Thinker::AllocateMemoryZone);
+    mob.id       = id;
+    mob.function = reinterpret_cast<thinkfunc_t>(gx.MobjThinker);
 
     auto *data = new ClientMobjThinkerData;
     data->remoteSync().flags = DDMF_REMOTE;
-    mo.setData(data);
+    mob.setData(data);
 
-    d->clMobjHash.insert(id, mo);
+    d->clMobjHash.insert(id, mob);
     data->audienceForDeletion() += d;  // for removing from the hash
 
     d->thinkers->setMobjId(id);  // Mark this ID as used.
 
     // Client mobjs are full-fludged game mobjs as well.
-    d->thinkers->add(*(thinker_t *)mo);
+    d->thinkers->add(*(thinker_t *)mob);
 
-    return mo.take();
+    return mob.take();
 }
 
 dint Map::clMobjIterator(dint (*callback)(mobj_t *, void *), void *context)
@@ -2145,10 +2146,7 @@ void Map::setGravity(coord_t newGravity)
 
 Thinkers &Map::thinkers() const
 {
-    if(bool(d->thinkers))
-    {
-        return *d->thinkers;
-    }
+    if(bool( d->thinkers )) return *d->thinkers;
     /// @throw MissingThinkersError  The thinker lists are not yet initialized.
     throw MissingThinkersError("Map::thinkers", "Thinkers not initialized");
 }

@@ -2,6 +2,7 @@
  * @ingroup server
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -22,14 +23,14 @@
 
 #include <QObject>
 #include <QSet>
+#include <doomsday/world/system.h>
 #include "shelluser.h"
-#include "world/worldsystem.h"
 
 /**
  * All remote shell users.
  */
 class ShellUsers : public QObject
-, DENG2_OBSERVES(de::WorldSystem, MapChange)
+, DENG2_OBSERVES(world::System, MapChange)
 {
     Q_OBJECT
 
@@ -49,7 +50,7 @@ public:
 
     int count() const;
 
-    /// Observes WorldSystem MapChange.
+    /// Observes world::System MapChange.
     void worldSystemMapChanged();
 
 public slots:
@@ -62,4 +63,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-#endif // SERVER_SHELLUSERS_H
+#endif  // SERVER_SHELLUSERS_H
