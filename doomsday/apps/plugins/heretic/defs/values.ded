@@ -1,0 +1,52 @@
+# Heretic: Values
+# 
+# The strings from all Values definition blocks are merged together.
+# This means you don't have to add all your values here; they can be
+# in a Values block in another file.
+
+Header { Version = 5; }
+
+Values {
+  # Weapon Info|*|Static
+  #     Defaults to "0". "1" = prevent the lowering of the HUD weapon when doing a switch.
+
+  Weapon Info {
+    0 {
+      Id = "staff";
+      Static = "0";
+    };
+    1 {
+      Id = "goldwand";
+      Static = "0";
+    };
+    2 {
+      Id = "crossbow";
+      Static = "0";
+    };
+    3 {
+      Id = "blaster";
+      Static = "0";
+    };
+    4 {
+      Id = "skullrod";
+      Static = "0";
+    };
+    5 {
+      Id = "phoenix";
+      Static = "0";
+    };
+    6 {
+      Id = "mace";
+      Static = "0";
+    };
+    7 {
+      Id = "gauntlet";
+      Static = "0";
+    };
+    
+    # As a Chicken, there is only the Beak weapon available.
+    Beak {
+      Id = "beak";
+    };
+  };
+};

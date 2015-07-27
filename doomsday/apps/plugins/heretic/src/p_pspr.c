@@ -363,6 +363,7 @@ void C_DECL A_Lower(player_t *player, pspdef_t *psp)
     }
 
     player->readyWeapon = player->pendingWeapon;
+    player->update |= PSF_READY_WEAPON;
 
     // Should we suddenly lower the weapon?
     if(cfg.bobWeaponLower &&

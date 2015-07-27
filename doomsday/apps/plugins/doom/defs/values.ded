@@ -106,6 +106,7 @@ Values {
 
   Weapon Info {
     0 {
+      Id = "punch";
       Type = "noammo";
       Up = "PUNCHUP";
       Down = "PUNCHDOWN";
@@ -116,6 +117,7 @@ Values {
       Static = "0";
     };
     1 {
+      Id = "pistol";
       Type = "clip";
       Per shot = "1";
       Up = "PISTOLUP";
@@ -127,6 +129,7 @@ Values {
       Static = "0";
     };
     2 {
+      Id = "sgun";
       Type = "shell";
       Per shot = "1";
       Up = "SGUNUP";
@@ -138,6 +141,7 @@ Values {
       Static = "0";
     };
     3 {
+      Id = "chain";
       Type = "clip";
       Per shot = "1";
       Up = "CHAINUP";
@@ -149,6 +153,7 @@ Values {
       Static = "0";
     };
     4 {
+      Id = "missile";
       Type = "misl";
       Per shot = "1";
       Up = "MISSILEUP";
@@ -160,6 +165,7 @@ Values {
       Static = "0";
     };
     5 {
+      Id = "plasma";
       Type = "cell";
       Per shot = "1";
       Up = "PLASMAUP";
@@ -171,6 +177,7 @@ Values {
       Static = "0";
     };
     6 {
+      Id = "bfg";
       Type = "cell";
       Per shot = "40";
       Up = "BFGUP";
@@ -182,6 +189,7 @@ Values {
       Static = "0";
     };
     7 {
+      Id = "saw";
       Type = "noammo";
       Up = "SAWUP";
       Down = "SAWDOWN";
@@ -192,6 +200,7 @@ Values {
       Static = "0";
     };
     8 {
+      Id = "dsgun";
       Type = "shell";
       Per shot = "2";
       Up = "DSGUNUP";

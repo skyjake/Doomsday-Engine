@@ -25,6 +25,7 @@
 #include <cstring>
 #include <cstdio>
 #include <de/memory.h>
+#include <doomsday/plugins.h>
 #include "d_net.h"
 #include "d_netcl.h"
 #include "d_netsv.h"
@@ -1791,6 +1792,61 @@ void player_s::read(reader_s *reader, playerheader_t &plrHdr)
     // Mark the player for fixpos and fixangles.
     dp->flags |= DDPF_FIXORIGIN | DDPF_FIXANGLES | DDPF_FIXMOM;
     update |= PSF_REBORN;
+}
+
+String Player_WeaponId(player_t const *plr)
+{
+    String value = "Weapon Info|";
+#ifdef __JHEXEN__
+    static char const *className[] = { "Fighter", "Cleric", "Mage", "Pig" };
+    value.append(className[plr->class_]);
+    value.append("|");
+#endif
+#ifdef __JHERETIC__
+    if(plr->class_ == PCLASS_CHICKEN)
+    {
+        value.append("Beak");
+    }
+    else
+    {
+        value.append(QString::number(plr->readyWeapon));
+    }
+#endif
+#if defined(__JDOOM__) || defined(__JDOOM64__) || defined(__JHEXEN__)
+    value.append(QString::number(plr->readyWeapon));
+#endif
+    value.append("|Id");
+
+    if(auto *def = Defs().getValueById(value))
+    {
+        return def->text;
+    }
+    return "";
+}
+
+void Player_PostTick(player_t *player)
+{
+    if(!player->plr->inGame) return;
+
+    int const console = player - players;
+
+    // Update the game status cvars for player data.
+    if(console == CONSOLEPLAYER)
+    {
+        Player_UpdateStatusCVars(player);
+    }
+
+    // Notify engine whenever the current weapon changes.
+    if(player->update & PSF_READY_WEAPON)
+    {
+        Block const id = Player_WeaponId(player).toUtf8();
+
+        ddnotify_player_weapon_changed_t args;
+        args.player = console;
+        args.weapon = player->readyWeapon;
+        args.weaponId = id.constData();
+        Plug_Notify(DD_NOTIFY_PLAYER_WEAPON_CHANGED, &args);
+    }
 }
 
 /**

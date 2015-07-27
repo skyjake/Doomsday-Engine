@@ -94,6 +94,13 @@ typedef struct {
     Str translatedCustom;
 } ddhook_mapinfo_convert_t;
 
+/// Parameters for DD_NOTIFY_PLAYER_WEAPON_CHANGED
+typedef struct {
+    int player;
+    int weapon;             ///< Number of the weapon.
+    char const *weaponId;   ///< Defined in Values (includes power-ups) (UTF-8).
+} ddnotify_player_weapon_changed_t;
+
 #ifdef __cplusplus
 
 #include <de/Observers>

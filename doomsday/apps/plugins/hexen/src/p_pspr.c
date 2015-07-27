@@ -581,7 +581,7 @@ void C_DECL A_Lower(player_t *plr, pspdef_t *psp)
     }
 
     plr->readyWeapon = plr->pendingWeapon;
-    plr->update |= PSF_WEAPONS;
+    plr->update |= PSF_WEAPONS | PSF_READY_WEAPON;
     P_BringUpWeapon(plr);
 }
 

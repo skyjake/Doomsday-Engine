@@ -105,7 +105,7 @@ enum {
     DD_XGFUNC_LINK, ///< XG line classes
     DD_SHARED_FIXED_TRIGGER_OBSOLETE, ///< obsolete
     DD_GAMETIC,
-    DD_UNUSED5, // DD_OPENRANGE
+    DD_NOTIFY_PLAYER_WEAPON_CHANGED, ///< a player's weapon changed (including powerups)
     DD_UNUSED6, // DD_OPENTOP
     DD_UNUSED7, // DD_OPENBOTTOM
     DD_UNUSED8, // DD_LOWFLOOR

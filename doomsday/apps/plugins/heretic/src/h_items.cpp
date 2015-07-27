@@ -470,7 +470,7 @@ AmmoDef const *P_AmmoDef(ammotype_t type)
 }
 
 /**
- *Initialize weapon info, maxammo and clipammo.
+ * Initialize weapon info, maxammo and clipammo.
  */
 void P_InitWeaponInfo()
 {
