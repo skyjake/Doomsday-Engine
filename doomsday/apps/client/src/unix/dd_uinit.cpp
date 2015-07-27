@@ -38,6 +38,7 @@
 
 #ifdef __CLIENT__
 #  include <de/DisplayMode>
+#  include "gl/sys_opengl.h"
 #endif
 
 #ifdef __CLIENT__

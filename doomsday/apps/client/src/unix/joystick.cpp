@@ -26,6 +26,7 @@
 #endif
 
 #include "de_base.h"
+#include "ui/joystick.h"
 
 #include <doomsday/console/var.h>
 
