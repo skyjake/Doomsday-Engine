@@ -22,12 +22,16 @@
 #include "de_base.h"
 #include "network/net_demo.h"
 
+#include <doomsday/doomsdayapp.h>
 #include <doomsday/console/cmd.h>
-#include "de_filesys.h"
+#include <doomsday/filesys/fs_util.h>
+#include <doomsday/filesys/sys_direc.h>
+
 #include "de_system.h"
 
 #include "client/cl_player.h"
 
+#include "api_filesys.h"
 #include "api_player.h"
 
 #include "render/rend_main.h"
@@ -35,8 +39,6 @@
 
 #include "world/p_object.h"
 #include "world/p_players.h"
-
-#include <doomsday/doomsdayapp.h>
 
 using namespace de;
 

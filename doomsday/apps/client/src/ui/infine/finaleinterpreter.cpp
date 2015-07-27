@@ -27,10 +27,9 @@
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/exec.h>
+#include <doomsday/filesys/fs_main.h>
 #include <doomsday/Game>
 
-#include "de_filesys.h"
-#include "dd_main.h"
 #include "dd_def.h"
 
 #include "api_material.h"

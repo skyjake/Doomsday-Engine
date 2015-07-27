@@ -26,7 +26,7 @@
 #include <de/Log>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
-#include "de_filesys.h"
+#include <doomsday/filesys/fs_util.h>
 
 #include "world/map.h"
 #include "world/p_players.h"  // viewPlayer

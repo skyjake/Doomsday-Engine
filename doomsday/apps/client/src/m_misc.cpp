@@ -44,10 +44,10 @@
 
 #include "de_base.h"
 #include "de_system.h"
-#include "de_filesys.h"
 
 #include "lzss.h"
 
+#include <doomsday/filesys/fs_main.h>
 #include <de/str.h>
 #include <de/vector1.h>
 #include <cstdlib>

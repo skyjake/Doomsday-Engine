@@ -28,8 +28,6 @@
 #include <de/GLInfo>
 #include <de/GLState>
 
-#include "de_filesys.h"
-
 #include "api_gl.h"
 #include "gl/gl_defer.h"
 #include "gl/gl_draw.h"

@@ -28,9 +28,10 @@
 #include <de/NumberValue>
 #include <de/Log>
 #include <doomsday/console/exec.h>
+#include <doomsday/filesys/fs_main.h>
 
 #include "de_system.h"
-#include "de_filesys.h"
+#include "dd_main.h"
 #include "def_main.h"
 
 #include "api_materialarchive.h"
@@ -39,9 +40,11 @@
 #include "network/net_buf.h"
 #include "network/net_event.h"
 
+#include "world/map.h"
 #include "world/p_players.h"
 
 #include "api_server.h"
+#include "server/sv_def.h"
 #include "server/sv_pool.h"
 
 using namespace de;

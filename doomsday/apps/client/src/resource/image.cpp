@@ -19,9 +19,17 @@
  */
 
 #include "de_platform.h"
-
 #include "resource/image.h"
-#include "de_filesys.h"
+
+#include <de/memory.h>
+#include <de/Log>
+#ifdef __CLIENT__
+#  include <QByteArray>
+#  include <QImage>
+#  include <de/NativePath>
+#  include <doomsday/filesys/fs_main.h>
+#endif
+
 #include "dd_main.h"
 #include "m_misc.h"
 
@@ -30,15 +38,11 @@
 #  include "resource/patch.h"
 #  include "resource/pcx.h"
 #  include "resource/tga.h"
-#  include "gl/gl_tex.h"
-#  include "render/rend_main.h" // misc global vars awaiting new home
-#  include <de/NativePath>
-#  include <QByteArray>
-#  include <QImage>
-#endif
 
-#include <de/Log>
-#include <de/memory.h>
+#  include "gl/gl_tex.h"
+
+#  include "render/rend_main.h" // misc global vars awaiting new home
+#endif
 
 #ifndef DENG2_QT_4_7_OR_NEWER // older than 4.7?
 #  define constBits bits
