@@ -264,6 +264,7 @@ def write_index_html(tag):
     ev = builder.Event(tag)
     f = file(ev.file_path('index.html'), 'wt')
     print >> f, "<html><head>"
+    print >> f, '<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">'
     print >> f, "<title>Build %i</title>" % ev.number()
     print >> f, "<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,300,700' rel='stylesheet' type='text/css'>"
     print >> f, "<link href='../../build.css' rel='stylesheet' type='text/css'>"
