@@ -1,7 +1,7 @@
-/** @file
+/** @file sys_audio.h  OS Specific Audio Drivers.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -18,13 +18,6 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * sys_audio.h: OS Specific Audio Drivers
- *
- * Not included in de_system.h because this is only needed by the
- * Sfx/Mus modules.
- */
-
 #ifndef __DOOMSDAY_SYSTEM_AUDIO_H__
 #define __DOOMSDAY_SYSTEM_AUDIO_H__
 
@@ -37,4 +30,5 @@
 #  include "sys_audiod_sdlmixer.h"
 #endif
 
-#endif
+#endif  // __DOOMSDAY_SYSTEM_AUDIO_H__
+

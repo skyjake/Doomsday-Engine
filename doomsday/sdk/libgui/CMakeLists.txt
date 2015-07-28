@@ -2,8 +2,12 @@
 
 cmake_minimum_required (VERSION 3.1)
 project (DENG_LIBGUI)
-include (../../cmake/Config.cmake)
 
+set (CMAKE_INSTALL_DEFAULT_COMPONENT_NAME)
+
+# Configure Assimp first as a static library. Doomsday's Config is not
+# included yet so that Assimp's build products are not included in
+# the client component.
 set (ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL "Assimp: Build tools" FORCE)
 set (ASSIMP_BUILD_TESTS OFF CACHE BOOL "Assimp: Build tests" FORCE)
 set (ASSIMP_LIB_INSTALL_DIR ${DENG_INSTALL_PLUGIN_DIR}
@@ -13,8 +17,10 @@ set (BUILD_SHARED_LIBS OFF CACHE BOOL "Assimp: Shared library" FORCE)
 add_subdirectory (../../external/assimp assimp)
 set_property (TARGET assimp PROPERTY FOLDER Libraries)
 
+include (../../cmake/Config.cmake)
+
 if (APPLE)
-    # Don't change display modes on OS X. We'll instead resize the 
+    # Don't change display modes on OS X. We'll instead resize the
     # frame buffer and scale up.
     set (DENG_ENABLE_DISPLAYMODE_DEFAULT OFF)
 else ()
@@ -52,9 +58,9 @@ endif ()
 
 deng_add_library (libgui ${SOURCES} ${HEADERS})
 
-target_link_libraries (libgui 
+target_link_libraries (libgui
     PUBLIC Deng::libcore
-    PRIVATE opengl libassimp 
+    PRIVATE opengl libassimp
 )
 deng_target_link_qt (libgui PUBLIC Gui OpenGL)
 
@@ -81,7 +87,7 @@ if (DENG_X11)
             ${X11_Xrandr_LIB}
             ${X11_Xxf86vm_LIB}
         )
-    endif ()    
+    endif ()
 endif ()
 
 deng_deploy_library (libgui DengGui)

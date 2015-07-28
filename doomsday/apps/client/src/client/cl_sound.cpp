@@ -20,10 +20,11 @@
 #include "de_base.h"
 #include "client/cl_sound.h"
 
-#include "de_audio.h"
-
 #include "api_client.h"
 #include "client/cl_player.h"
+
+#include "api_sound.h"
+
 #include "network/net_msg.h"
 
 #include "world/map.h"

@@ -21,9 +21,16 @@
 #include "audio/s_cache.h"
 
 #include <cstring>
-#include "de_audio.h"
-#include "de_filesys.h"
-#include "de_system.h"
+#include <de/timer.h>
+#include <doomsday/filesys/fs_main.h>
+#include <doomsday/resource/wav.h>
+#include "dd_main.h"
+
+#ifdef __CLIENT__
+#  include "audio/audiodriver.h"
+#endif
+#include "audio/s_main.h"
+#include "audio/s_sfx.h"
 
 using namespace de;
 

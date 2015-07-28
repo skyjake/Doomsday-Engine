@@ -28,8 +28,7 @@
 #include <de/concurrency.h>
 #include <de/memory.h>
 #include <de/memoryzone.h>
-
-#include "de_filesys.h"
+#include <doomsday/filesys/fs_main.h>
 
 #include "clientapp.h"
 #include "dd_main.h"  // App_ResourceSystem()

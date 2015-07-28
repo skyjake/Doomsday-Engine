@@ -20,18 +20,19 @@
  * 02110-1301 USA</small>
  */
 
+#include "de_platform.h"
+#include "ui/sys_input.h"
+
 #include <cstdlib>
 #include <de/c_wrapper.h>
 
+#include "sys_system.h"
+
+#include "ui/mouse_qt.h"  // portable
 #ifdef WIN32
 #  include "directinput.h"
 #  include "mouse_win32.h"
 #endif
-
-#include "de_platform.h"
-#include "de_system.h"
-
-#include "ui/mouse_qt.h"  // portable
 
 #define EVBUFSIZE       64
 #define KEYBUFSIZE      32

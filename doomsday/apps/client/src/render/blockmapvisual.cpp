@@ -24,7 +24,6 @@
 #include <de/aabox.h>
 #include <de/concurrency.h>
 #include <de/Vector>
-#include "de_ui.h"
 
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
@@ -40,6 +39,7 @@
 
 #include "api_fontrender.h"
 #include "render/rend_font.h"
+#include "ui/ui_main.h"
 
 using namespace de;
 

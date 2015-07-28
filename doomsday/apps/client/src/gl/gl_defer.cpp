@@ -20,14 +20,15 @@
 
 #define LIBDENG_DISABLE_DEFERRED_GL_API // using regular GL API calls
 
-#include <doomsday/doomsdayapp.h>
-
 #include "de_platform.h"
 #include "gl/gl_defer.h"
 
-#include "de_system.h"
+#include <de/concurrency.h>
+#include <de/timer.h>
+#include <doomsday/doomsdayapp.h>
 #include "dd_main.h"
 #include "m_misc.h"
+#include "sys_system.h"  // Sys_Sleep(), novideo
 
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"

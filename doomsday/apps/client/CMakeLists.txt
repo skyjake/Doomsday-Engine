@@ -41,7 +41,7 @@ if (UNIX)
 endif ()
 
 if (AMETHYST_FOUND)
-    if (APPLE)    
+    if (APPLE)
         set (readme "${CMAKE_CURRENT_BINARY_DIR}/Read Me.rtf")
         deng_add_amedoc (RTF ${readme} ${DENG_SOURCE_DIR}/doc/readme readme.ame)
         install (FILES ${readme} DESTINATION .)
@@ -65,7 +65,7 @@ deng_filter_platform_sources (src ${SOURCES} ${HEADERS} ${API_HEADERS})
 deng_add_package (net.dengine.client)
 
 # OS X: Packages and other resources to bundle with the application.
-set (MACX_RESOURCES 
+set (MACX_RESOURCES
     res/macx/deng.icns
     res/macx/English.lproj
     doomsday.pk3
@@ -103,20 +103,20 @@ else ()
 endif ()
 
 if (APPLE)
-    deng_install_bundle_deps (client 
+    deng_install_bundle_deps (client
         Deng::libcore Deng::libshell
         Deng::libgui Deng::libappfw
         Deng::liblegacy Deng::libdoomsday
 		libassimp SDL2 SDL2_mixer
     )
-    
-    # Plugins are bundled inside the client app. We'll run macdeployqt on the 
-    # installed app before the plugins are there so it won't do unnecessary 
+
+    # Plugins are bundled inside the client app. We'll run macdeployqt on the
+    # installed app before the plugins are there so it won't do unnecessary
     # work on them -- plugins are already self-contained.
     get_property (outName TARGET client PROPERTY OUTPUT_NAME)
     set (stageDir "${DENG_BUILD_STAGING_DIR}/DengPlugins")
     set (destDir "${outName}.app/Contents/PlugIns/Doomsday")
-    install (CODE "execute_process (COMMAND ${CMAKE_COMMAND} -E remove_directory 
+    install (CODE "execute_process (COMMAND ${CMAKE_COMMAND} -E remove_directory
         \"\${CMAKE_INSTALL_PREFIX}/${destDir}\")")
     deng_install_deployqt (client)
     install (CODE "execute_process (COMMAND ${CMAKE_COMMAND} -E copy_directory \"${stageDir}\"
@@ -151,7 +151,7 @@ if (MSVC)
     set (fn ${CMAKE_BINARY_DIR}/deployqt.bat)
     file (WRITE ${fn}
         "set PATH=\"${qtBins}\";%PATH%
-        \"${winDepCmd}\" -opengl --no-translations \"${DENG_VS_STAGING_DIR}/%1/bin\""
+        \"${winDepCmd}\" -opengl --no-compiler-runtime --no-translations \"${DENG_VS_STAGING_DIR}/%1/bin\""
     )
     add_custom_command (TARGET client POST_BUILD COMMAND ${fn} ${CMAKE_CFG_INTDIR})
 endif ()

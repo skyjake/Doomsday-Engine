@@ -21,14 +21,17 @@
 
 #include "de_base.h"
 #include "network/net_event.h"
-#include "world/p_players.h"
-
-#include "de_system.h"
 
 #ifdef __SERVER__
 #  include "dd_main.h"
-#  include "serversystem.h"
+#endif
 
+#include "network/masterserver.h"
+
+#include "world/p_players.h"
+
+#ifdef __SERVER__
+#  include "serversystem.h"
 #  include "server/sv_def.h"
 #endif
 

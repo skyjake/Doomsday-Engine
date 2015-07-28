@@ -33,9 +33,9 @@
 #include <doomsday/defs/sprite.h>
 #include <doomsday/world/mobjthinkerdata.h>
 
-#include "de_system.h"
-#include "de_audio.h"
 #include "def_main.h"
+
+#include "api_sound.h"
 
 #ifdef __CLIENT__
 #  include "client/cl_mobj.h"
@@ -55,12 +55,14 @@
 #endif
 
 #include "world/worldsystem.h" // validCount
+#include "world/p_object.h"
 #include "world/p_players.h"
 #include "world/thinkers.h"
 #include "BspLeaf"
 #include "ConvexSubspace"
 #include "SectorCluster"
 #ifdef __CLIENT__
+#  include "Generator"
 #  include "Lumobj"
 #endif
 
@@ -315,7 +317,7 @@ DENG_EXTERN_C Sector *Mobj_Sector(mobj_t const *mob)
 void Mobj_SpawnParticleGen(mobj_t *source, ded_ptcgen_t const *def)
 {
 #ifdef __CLIENT__
-    DENG2_ASSERT(def != 0 && source != 0);
+    DENG2_ASSERT(def && source);
 
     //if(!useParticles) return;
 

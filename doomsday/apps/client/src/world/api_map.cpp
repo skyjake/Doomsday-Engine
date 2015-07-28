@@ -29,7 +29,6 @@
 #include <cstring>
 #include <de/memoryzone.h>
 #include <doomsday/filesys/fs_main.h>
-#include "de_audio.h"
 
 #include "network/net_main.h"
 

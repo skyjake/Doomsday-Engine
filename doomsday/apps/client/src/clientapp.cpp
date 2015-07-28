@@ -1,6 +1,7 @@
 /** @file clientapp.cpp  The client application.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,39 +18,44 @@
  */
 
 #include "de_platform.h"
+#include "clientapp.h"
 
-#include <QMenuBar>
+#include <cstdlib>
 #include <QAction>
-#include <QNetworkProxyFactory>
+#include <QDebug>
 #include <QDesktopServices>
 #include <QFontDatabase>
-#include <QDebug>
-#include <stdlib.h>
+#include <QMenuBar>
+#include <QNetworkProxyFactory>
 
+#include <de/c_wrapper.h>
+#include <de/ArrayValue>
+#include <de/ByteArrayFile>
+#include <de/DictionaryValue>
+#include <de/DisplayMode>
+#include <de/Error>
+#include <de/Garbage>
 #include <de/Log>
 #include <de/LogSink>
-#include <de/DisplayMode>
 #include <de/NativeFont>
-#include <de/Error>
-#include <de/ByteArrayFile>
-#include <de/ArrayValue>
-#include <de/DictionaryValue>
 #include <de/VRConfig>
-#include <de/c_wrapper.h>
-#include <de/Garbage>
 
-#include "clientapp.h"
 #include "clientplayer.h"
 #include "alertmask.h"
 #include "dd_main.h"
 #include "dd_def.h"
 #include "dd_loop.h"
-#include "de_audio.h"
 #include "def_main.h"
 #include "sys_system.h"
+
 #include "audio/s_main.h"
+#include "audio/s_mus.h"
+
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
+
+#include "world/map.h"
+
 #include "ui/inputsystem.h"
 #include "ui/b_main.h"
 #include "ui/sys_input.h"
@@ -59,6 +65,7 @@
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/dialogs/alertdialog.h"
 #include "ui/styledlogsinkformatter.h"
+
 #include "updater.h"
 #include "updater/downloaddialog.h"
 

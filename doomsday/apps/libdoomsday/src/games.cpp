@@ -264,7 +264,8 @@ void Games::locateAllResources()
 
             locateStartupResources(game);
 
-            DENG2_FOR_AUDIENCE2(Progress, i)
+            Games &self = *this; // MSVC 2013 cannot figure it out inside the lambda...
+            DENG2_FOR_EACH_OBSERVER(ProgressAudience, i, self.audienceForProgress())
             {
                 i->gameWorkerProgress(n * 200 / count() - 1);
             }

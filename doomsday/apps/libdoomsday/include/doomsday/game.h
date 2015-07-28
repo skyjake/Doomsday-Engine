@@ -72,7 +72,7 @@ namespace de { class File1; }
  *
  * @ingroup core
  */
-class Game : public de::game::Game
+class LIBDOOMSDAY_PUBLIC Game : public de::game::Game
 {
 public:
     /// Logical game status:
@@ -253,7 +253,7 @@ typedef Game::Manifests GameManifests;
  * The special "null" Game object.
  * @todo Should employ the Singleton pattern.
  */
-class NullGame : public Game
+class LIBDOOMSDAY_PUBLIC NullGame : public Game
 {
 public:
     /// General exception for invalid action on a NULL object. @ingroup errors

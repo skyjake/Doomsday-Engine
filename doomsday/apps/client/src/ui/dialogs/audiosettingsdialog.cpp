@@ -1,6 +1,7 @@
-/** @file audiosettingsdialog.cpp Dialog for audio settings.
+/** @file audiosettingsdialog.cpp  Dialog for audio settings.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,13 +18,15 @@
  */
 
 #include "ui/dialogs/audiosettingsdialog.h"
+
 #include "ui/widgets/cvarsliderwidget.h"
 #include "ui/widgets/cvartogglewidget.h"
 #include "ui/widgets/cvarchoicewidget.h"
 #include "ui/widgets/cvarnativepathwidget.h"
 
+#include "audio/s_mus.h"
+
 #include "clientapp.h"
-#include "de_audio.h"
 
 #include <de/SignalAction>
 #include <de/GridPopupWidget>

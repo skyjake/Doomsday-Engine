@@ -33,12 +33,12 @@
 #include <de/App>
 
 #include "de_base.h"
-#include "de_system.h"
 
 #include "dd_uinit.h"
 
 #ifdef __CLIENT__
 #  include <de/DisplayMode>
+#  include "gl/sys_opengl.h"
 #endif
 
 #ifdef __CLIENT__

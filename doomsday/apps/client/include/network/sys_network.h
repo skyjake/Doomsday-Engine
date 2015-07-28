@@ -1,9 +1,8 @@
-/**
- * @file sys_network.h
- * Low-level network socket routines. @ingroup network
+/** @file sys_network.h  Low-level network socket routines.
+ * @ingroup network
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2009-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_SYSTEM_NETWORK_H
-#define LIBDENG_SYSTEM_NETWORK_H
+#ifndef CLIENT_SYSTEM_NETWORK_H
+#define CLIENT_SYSTEM_NETWORK_H
 
 #ifndef __CLIENT__
 #  error "sys_network.h requires __CLIENT__"
@@ -47,4 +46,4 @@ int     N_GetHostCount(void);
 dd_bool N_GetHostInfo(int index, struct serverinfo_s *info);
 void    N_PrintNetworkStatus(void);
 
-#endif /* LIBDENG_SYSTEM_NETWORK_H */
+#endif  // CLIENT_SYSTEM_NETWORK_H

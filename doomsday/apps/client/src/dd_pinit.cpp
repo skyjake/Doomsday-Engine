@@ -33,9 +33,7 @@
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/console/exec.h>
 #include <doomsday/console/knownword.h>
-#include "de_filesys.h"
-#include "de_system.h"
-#include "de_ui.h"
+#include <doomsday/filesys/fs_main.h>
 #ifdef __CLIENT__
 #  include "clientapp.h"
 #endif
@@ -48,6 +46,7 @@
 #include "api_client.h"
 #include "api_console.h"
 #include "api_def.h"
+#include "api_filesys.h"
 #include "api_fontrender.h"
 #include "api_material.h"
 #include "api_materialarchive.h"

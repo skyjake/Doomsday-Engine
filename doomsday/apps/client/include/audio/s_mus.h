@@ -1,7 +1,7 @@
 /** @file s_mus.h  Music Subsystem.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2009-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,8 +20,9 @@
 #ifndef LIBDENG_SOUND_MUSIC_H
 #define LIBDENG_SOUND_MUSIC_H
 
-#include "api_audiod_mus.h"
 #include <de/Record>
+#include "dd_types.h"
+#include "api_audiod_mus.h"
 
 // Music preference. If multiple resources are available, this setting
 // is used to determine which one to use (mus < ext < cd).

@@ -35,7 +35,6 @@
 #include <doomsday/console/var.h>
 #include <doomsday/defs/mapinfo.h>
 
-#include "de_filesys.h"
 #include "dd_main.h"
 #include "dd_def.h"
 #include "dd_loop.h"

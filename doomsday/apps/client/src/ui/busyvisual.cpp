@@ -23,22 +23,21 @@
 #include "ui/busyvisual.h"
 
 #include <cmath>
+#include <de/concurrency.h>
+#include <de/timer.h>
+#include <doomsday/doomsdayapp.h>
 #include <doomsday/console/var.h>
-#include "de_system.h"
-#include "de_ui.h"
 #include "gl/gl_main.h"
 #include "ui/widgets/busywidget.h"
-
-#include <doomsday/doomsdayapp.h>
 
 static void releaseScreenshotTexture()
 {
     ClientWindow::main().busy().releaseTransitionFrame();
 }
 
-void BusyVisual_PrepareResources(void)
+void BusyVisual_PrepareResources()
 {
-    BusyTask* task = DoomsdayApp::app().busyMode().currentTask();
+    BusyTask *task = DoomsdayApp::app().busyMode().currentTask();
     if(!task) return;
 
     if(task->mode & BUSYF_STARTUP)

@@ -89,9 +89,6 @@ int P_GetDDPlayerIdx(ddplayer_t *ddpl);
  */
 bool P_IsInVoid(player_t *player);
 
-short P_LookDirToShort(float lookDir);
-float P_ShortToLookDir(short s);
-
 /**
  * Remove all the player impulse definitions and destroy the associated accumulators
  * of all players.

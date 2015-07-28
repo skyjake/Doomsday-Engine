@@ -1,6 +1,6 @@
 /** @file dd_loop.cpp  Main loop and the core timer.
  *
- * @authors Copyright © 2003-2013 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -20,19 +20,16 @@
 #include "de_base.h"
 #include "dd_loop.h"
 
+#include <de/timer.h>
 #include <de/App>
 #ifdef __SERVER__
 #  include <de/TextApp>
 #endif
+#include <doomsday/doomsdayapp.h>
 #include <doomsday/console/exec.h>
 #include <doomsday/console/var.h>
 
-#include "de_system.h"
-#include "de_audio.h"
-#include "de_ui.h"
-
-#include <de/App>
-#include <doomsday/doomsdayapp.h>
+#include "sys_system.h"
 
 #ifdef __CLIENT__
 #  include "clientapp.h"

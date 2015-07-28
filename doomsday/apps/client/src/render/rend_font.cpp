@@ -25,9 +25,8 @@
 #include <cctype>
 #include <cstdio>
 #include <cstdlib>
+#include <de/concurrency.h>
 #include <de/GLState>
-#include "de_system.h"
-#include "de_ui.h"
 #include "m_misc.h"
 
 #include "BitmapFont"
