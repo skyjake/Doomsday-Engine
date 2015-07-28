@@ -1,0 +1,121 @@
+body {
+  font-family: "Open Sans";
+}
+#content-outer { }
+#content-inner { 
+  max-width: 45em; 
+  margin: 0 auto;
+}
+
+h1, h2 {
+  font-weight: 300;
+  text-align: center;
+}
+
+h1 { 
+  font-size: 275%; 
+  margin-top: 1em;
+}
+
+h2 { 
+  font-size: 200%; 
+  margin-top: 1.5em;
+}
+
+h3 { 
+  font-size: 150%; 
+  margin-top: 1.5em;
+}
+
+p { 
+  color: #666;
+  text-align: justify;
+  -webkit-hyphens: auto;
+  -moz-hyphens: auto;
+  -ms-hyphens: auto;
+  hyphens: auto;
+}
+ul {
+  color: #666;
+}
+blockquote {
+  font-size: 95%;
+  color: #aaa !important;
+  margin-left: 0em;
+  margin-top: 1ex;
+  padding-left: 1em;
+  border-left: 2px solid #ddd;
+}
+blockquote:hover {
+  border-left: 2px solid #2c2;
+  color: #666 !important;
+}
+
+a {
+  color: #191;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+table {
+  margin: auto;
+}
+th {
+  border-bottom: 1px solid #ccc;
+}
+td, th {
+  padding: 0.5ex;
+}
+
+/* Build List */
+
+.links {
+  text-align: center;
+}
+
+div.buildlist {
+  text-align: center;
+}
+
+div.build {
+  min-width: 5em;
+  display: inline-block;
+  border: 1px solid #bdb;
+  border-radius: 1ex;
+  margin: 0.5ex;
+  padding: 1ex;
+  text-align: center;
+}
+
+div.build.candidate {
+  border-color: #da8;
+  background: #fd8;
+}
+
+div.build.stable {
+  border-color: #371;
+  background: #6a3;
+}
+
+div.build.candidate a {
+  color: #850;
+}
+
+div.build.stable a {
+  color: white;
+}
+
+.buildnumber {
+  font-size: 150%;
+}
+
+.builddate, .buildversion {
+  font-size: 80%;
+}
+
+.buildversion {
+  font-weight: 300;
+}
