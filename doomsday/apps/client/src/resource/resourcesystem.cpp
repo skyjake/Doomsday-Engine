@@ -465,8 +465,6 @@ DENG2_PIMPL(ResourceSystem)
     uint materialManifestIdMapSize;
     MaterialManifest **materialManifestIdMap;  ///< Index with materialid_t-1
 
-    MapDefs mapDefs;
-
 #ifdef __CLIENT__
     /// System subspace schemes containing the manifests/resources.
     FontSchemes fontSchemes;
@@ -630,7 +628,6 @@ DENG2_PIMPL(ResourceSystem)
         clearModels();
 #endif
         self.clearAllColorPalettes();
-        self.clearAllMapDefs();
     }
 
     inline de::FS1 &fileSys()
@@ -2425,7 +2422,7 @@ patchid_t ResourceSystem::declarePatch(String encodedName)
         /// @todo We should instead define Materials from patches and return the material id.
         return patchid_t( manifest.uniqueId() );
     }
-    catch(MissingManifestError const &)
+    catch(MissingResourceManifestError const &)
     {}  // Ignore this error.
 
     Path lumpPath = uri.path() + ".lmp";
@@ -2591,7 +2588,7 @@ bool ResourceSystem::hasMaterialManifest(de::Uri const &path) const
         materialManifest(path);
         return true;
     }
-    catch(MissingManifestError const &)
+    catch(MissingResourceManifestError const &)
     {}  // Ignore this error.
     return false;
 }
@@ -2621,8 +2618,8 @@ MaterialManifest &ResourceSystem::materialManifest(de::Uri const &uri) const
         }
     }
 
-    /// @throw NotFoundError Failed to locate a matching manifest.
-    throw MissingManifestError("ResourceSystem::materialManifest", "Failed to locate a manifest matching \"" + uri.asText() + "\"");
+    /// @throw MissingResourceManifestError  Failed to locate a matching manifest.
+    throw MissingResourceManifestError("ResourceSystem::materialManifest", "Failed to locate a manifest matching \"" + uri.asText() + "\"");
 }
 
 dint ResourceSystem::materialCount() const
@@ -2701,7 +2698,7 @@ bool ResourceSystem::hasTextureManifest(de::Uri const &path) const
         textureManifest(path);
         return true;
     }
-    catch(MissingManifestError const &)
+    catch(MissingResourceManifestError const &)
     {}  // Ignore this error.
     return false;
 }
@@ -2759,8 +2756,8 @@ TextureManifest &ResourceSystem::textureManifest(de::Uri const &uri) const
         }
     }
 
-    /// @throw MissingManifestError Failed to locate a matching manifest.
-    throw MissingManifestError("ResourceSystem::findTexture", "Failed to locate a manifest matching \"" + uri.asText() + "\"");
+    /// @throw MissingResourceManifestError Failed to locate a matching manifest.
+    throw MissingResourceManifestError("ResourceSystem::findTexture", "Failed to locate a manifest matching \"" + uri.asText() + "\"");
 }
 
 ResourceSystem::AllTextures const &ResourceSystem::allTextures() const
@@ -2920,7 +2917,7 @@ bool ResourceSystem::hasFont(de::Uri const &path) const
         fontManifest(path);
         return true;
     }
-    catch(MissingManifestError const &)
+    catch(MissingResourceManifestError const &)
     {}  // Ignore this error.
     return false;
 }
@@ -2978,8 +2975,8 @@ FontManifest &ResourceSystem::fontManifest(de::Uri const &uri) const
         }
     }
 
-    /// @throw MissingManifestError Failed to locate a matching manifest.
-    throw MissingManifestError("ResourceSystem::findFont", "Failed to locate a manifest matching \"" + uri.asText() + "\"");
+    /// @throw MissingResourceManifestError  Failed to locate a matching manifest.
+    throw MissingResourceManifestError("ResourceSystem::findFont", "Failed to locate a manifest matching \"" + uri.asText() + "\"");
 }
 
 FontManifest &ResourceSystem::toFontManifest(fontid_t id) const
@@ -3334,54 +3331,6 @@ void ResourceSystem::setModelDefFrame(ModelDef &modef, dint frame)
 }
 
 #endif // __CLIENT__
-
-void ResourceSystem::initMapDefs()
-{
-    clearAllMapDefs();
-
-    // Locate all the maps using the central lump index:
-    /// @todo Locate new maps each time a package is loaded rather than rely on
-    /// the central lump index.
-    LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
-    lumpnum_t lastLump = -1;
-    while(lastLump < lumpIndex.size())
-    {
-        QScopedPointer<Id1MapRecognizer> recognizer(new Id1MapRecognizer(lumpIndex, lastLump));
-        lastLump = recognizer->lastLump();
-        if(recognizer->format() != Id1MapRecognizer::UnknownFormat)
-        {
-            File1 *sourceFile  = recognizer->sourceFile();
-            String const mapId = recognizer->id();
-
-            MapDef &mapDef = d->mapDefs.insert(mapId);
-            mapDef.set("id", mapId);
-            mapDef.setSourceFile(sourceFile)
-                  .setRecognizer(recognizer.take());
-        }
-    }
-}
-
-void ResourceSystem::clearAllMapDefs()
-{
-    d->mapDefs.clear();
-}
-
-MapDef *ResourceSystem::mapDef(de::Uri const &mapUri) const
-{
-    // Only one resource scheme is known for maps.
-    if(mapUri.scheme().compareWithoutCase("Maps")) return nullptr;
-    return d->mapDefs.tryFind(mapUri.path(), MapDefs::MatchFull | MapDefs::NoBranch);
-}
-
-ResourceSystem::MapDefs const &ResourceSystem::allMapDefs() const
-{
-    return d->mapDefs;
-}
-
-ResourceSystem::MapDefs &ResourceSystem::allMapDefs()
-{
-    return d->mapDefs;
-}
 
 void ResourceSystem::clearAllAnimGroups()
 {
@@ -3923,7 +3872,7 @@ void R_BuildTexGammaLut()
 template <typename ManifestType>
 static bool pathBeginsWithComparator(ManifestType const &manifest, void *context)
 {
-    Path const *path = reinterpret_cast<Path*>(context);
+    auto const *path = reinterpret_cast<Path *>(context);
     /// @todo Use PathTree::Node::compare()
     return manifest.path().toStringRef().beginsWith(*path, Qt::CaseInsensitive);
 }
@@ -3944,10 +3893,10 @@ static bool comparePathTreeNodePathsAscending(PathTreeNodeType const *a, PathTre
  * @param like             Map path search term.
  * @param composeUriFlags  Flags governing how URIs should be composed.
  */
-static int printMapsIndex2(Path const &like, de::Uri::ComposeAsTextFlags composeUriFlags)
+static dint printMapsIndex2(Path const &like, de::Uri::ComposeAsTextFlags composeUriFlags)
 {
-    ResourceSystem::MapDefs::FoundNodes found;
-    App_ResourceSystem().allMapDefs().findAll(found, pathBeginsWithComparator, const_cast<Path *>(&like));
+    res::System::MapManifests::FoundNodes found;
+    App_ResourceSystem().allMapManifests().findAll(found, pathBeginsWithComparator, const_cast<Path *>(&like));
     if(found.isEmpty()) return 0;
 
     //bool const printSchemeName = !(composeUriFlags & de::Uri::OmitScheme);
@@ -3961,14 +3910,14 @@ static int printMapsIndex2(Path const &like, de::Uri::ComposeAsTextFlags compose
     LOG_RES_MSG(_E(D) "%s:" _E(.)) << heading;
 
     // Print the result index.
-    qSort(found.begin(), found.end(), comparePathTreeNodePathsAscending<MapDef>);
-    int const numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
-    int idx = 0;
-    foreach(MapDef *mapDef, found)
+    qSort(found.begin(), found.end(), comparePathTreeNodePathsAscending<res::MapManifest>);
+    dint const numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
+    dint idx = 0;
+    for(res::MapManifest *mapManifest : found)
     {
         String info = String("%1: " _E(1) "%2" _E(.))
                         .arg(idx, numFoundDigits)
-                        .arg(mapDef->description(composeUriFlags));
+                        .arg(mapManifest->description(composeUriFlags));
 
         LOG_RES_MSG("  " _E(>)) << info;
         idx++;

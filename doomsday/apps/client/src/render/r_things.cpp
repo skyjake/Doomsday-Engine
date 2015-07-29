@@ -555,7 +555,7 @@ void R_ProjectSprite(mobj_t &mob)
             LOG_GL_WARNING("Projecting flare source for sprite '%i' frame '%i': %s")
                     << mob.sprite << mob.frame << er.asText();
         }
-        catch(ResourceSystem::MissingManifestError const &er)
+        catch(res::System::MissingResourceManifestError const &er)
         {
             // Log but otherwise ignore this error.
             LOG_GL_WARNING("Projecting flare source for sprite '%i' frame '%i': %s")

@@ -1,6 +1,6 @@
-/** @file mapdef.cpp  Map asset/resource definition/manifest.
+/** @file mapdef.cpp  Resource manifest for a map.
  *
- * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2014-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,18 +17,20 @@
  * 02110-1301 USA</small>
  */
 
-#include "resource/mapdef.h"
+#include "doomsday/resource/mapmanifest.h"
 #include <de/NativePath>
 
 using namespace de;
 
-MapDef::MapDef(PathTree::NodeArgs const &args) : Node(args), Record()
+namespace res {
+
+MapManifest::MapManifest(PathTree::NodeArgs const &args) : Node(args), Record()
 {}
 
-String MapDef::description(de::Uri::ComposeAsTextFlags uriCompositionFlags) const
+String MapManifest::description(de::Uri::ComposeAsTextFlags uriCompositionFlags) const
 {
     String info = String("%1").arg(composeUri().compose(uriCompositionFlags | de::Uri::DecodePath),
-                                           ( uriCompositionFlags.testFlag(de::Uri::OmitScheme)? -14 : -22 ) );
+                                   ( uriCompositionFlags.testFlag(de::Uri::OmitScheme)? -14 : -22 ) );
     if(_sourceFile)
     {
         info += String(" " _E(C) "\"%1\"" _E(.)).arg(NativePath(sourceFile()->composePath()).pretty());
@@ -36,7 +38,7 @@ String MapDef::description(de::Uri::ComposeAsTextFlags uriCompositionFlags) cons
     return info;
 }
 
-String MapDef::composeUniqueId(Game const &currentGame) const
+String MapManifest::composeUniqueId(Game const &currentGame) const
 {
     return String("%1|%2|%3|%4")
               .arg(gets("id").fileNameWithoutExtension())
@@ -46,25 +48,27 @@ String MapDef::composeUniqueId(Game const &currentGame) const
               .toLower();
 }
 
-MapDef &MapDef::setSourceFile(File1 *newSourceFile)
+MapManifest &MapManifest::setSourceFile(File1 *newSourceFile)
 {
     _sourceFile = newSourceFile;
     return *this;
 }
 
-File1 *MapDef::sourceFile() const
+File1 *MapManifest::sourceFile() const
 {
     return _sourceFile;
 }
 
-MapDef &MapDef::setRecognizer(Id1MapRecognizer *newRecognizer)
+MapManifest &MapManifest::setRecognizer(Id1MapRecognizer *newRecognizer)
 {
     _recognized.reset(newRecognizer);
     return *this;
 }
 
-Id1MapRecognizer const &MapDef::recognizer() const
+Id1MapRecognizer const &MapManifest::recognizer() const
 {
-    DENG2_ASSERT(!_recognized.isNull());
+    DENG2_ASSERT(bool(_recognized));
     return *_recognized;
 }
+
+}  // namespace res

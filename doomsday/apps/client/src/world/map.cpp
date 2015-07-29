@@ -138,7 +138,6 @@ DENG2_PIMPL(Map)
     bool editingEnabled = true;
     EditableElements editable;
 
-    MapDef *def = nullptr;      ///< Definition for the map (not owned, may be @c NULL).
     AABoxd bounds;              ///< Boundary points which encompass the entire map
 
     Mesh mesh;                  ///< All map geometries.
@@ -572,7 +571,7 @@ DENG2_PIMPL(Map)
         Time begunAt;
 
         LOGDEV_MAP_XVERBOSE("Building BSP for \"%s\" with split cost factor %d...")
-                << (def? def->composeUri() : "(unknown map)") << bspSplitFactor;
+                << (self.hasManifest() ? self.manifest().composeUri() : "(unknown map)") << bspSplitFactor;
 
         // First we'll scan for so-called "one-way window" constructs and mark
         // them so that the space partitioner can treat them specially.
@@ -1301,15 +1300,15 @@ DENG2_PIMPL(Map)
 
     void spawnMapParticleGens()
     {
-        if(!def) return;
+        if(!self.hasManifest()) return;
 
-        for(dint i = 0; i < defs.ptcGens.size(); ++i)
+        for(dint i = 0; i < ::defs.ptcGens.size(); ++i)
         {
-            ded_ptcgen_t *genDef = &defs.ptcGens[i];
+            ded_ptcgen_t *genDef = &::defs.ptcGens[i];
 
             if(!genDef->map) continue;
 
-            if(*genDef->map != def->composeUri())
+            if(*genDef->map != self.manifest().composeUri())
                 continue;
 
             // Are we still spawning using this generator?
@@ -1421,7 +1420,7 @@ DENG2_PIMPL(Map)
                 }
                 catch(MaterialManifest::MissingMaterialError const &)
                 {}  // Ignore this error.
-                catch(ResourceSystem::MissingManifestError const &)
+                catch(res::System::MissingResourceManifestError const &)
                 {}  // Ignore this error.
             }
 
@@ -1536,26 +1535,14 @@ DENG2_PIMPL(Map)
 #endif  // __CLIENT__
 };
 
-Map::Map(MapDef *mapDefinition)
-    : world::Map()
+Map::Map(res::MapManifest *manifest)
+    : world::Map(manifest)
     , d(new Instance(this))
-{
-    setDef(mapDefinition);
-}
-
-MapDef *Map::def() const
-{
-    return d->def;
-}
-
-void Map::setDef(MapDef *newMapDefinition)
-{
-    d->def = newMapDefinition;
-}
+{}
 
 Record const &Map::mapInfo() const
 {
-    return worldSys().mapInfoForMapUri(def()? def()->composeUri() : de::Uri("Maps:", RC_NULL));
+    return worldSys().mapInfoForMapUri(hasManifest() ? manifest().composeUri() : de::Uri("Maps:", RC_NULL));
 }
 
 Mesh const &Map::mesh() const
@@ -1837,9 +1824,9 @@ void Map::initBias()
     // Start with no sources whatsoever.
     d->bias.sources.clear();
 
-    if(d->def)
+    if(hasManifest())
     {
-        String const oldUniqueId = d->def->composeUniqueId(App_CurrentGame());
+        String const oldUniqueId = manifest().composeUniqueId(App_CurrentGame());
 
         // Load light sources from Light definitions.
         for(dint i = 0; i < defs.lights.size(); ++i)
@@ -2140,7 +2127,7 @@ void Map::setGravity(coord_t newGravity)
     {
         _effectiveGravity = newGravity;
         LOG_MAP_VERBOSE("Effective gravity for %s now %.1f")
-                << (d->def? d->def->gets("id") : "(unknown map)") << _effectiveGravity;
+                << (hasManifest() ? manifest().gets("id") : "(unknown map)") << _effectiveGravity;
     }
 }
 
@@ -3405,14 +3392,14 @@ D_CMD(InspectMap)
     LOG_SCR_MSG(    _E(l) "Uri: "    _E(.) _E(i) "%s" _E(.)
               /*" " _E(l) " OldUid: " _E(.) _E(i) "%s" _E(.)*/
                     _E(l) " Music: "  _E(.) _E(i) "%i")
-            << (map.def()? map.def()->composeUri().asText() : "(unknown map)")
+            << (map.hasManifest()? map.manifest().composeUri().asText() : "(unknown map)")
             /*<< map.oldUniqueId()*/
             << Con_GetInteger("map-music");
 
-    if(map.def() && map.def()->sourceFile()->hasCustom())
+    if(map.hasManifest() && map.manifest().sourceFile()->hasCustom())
     {
         LOG_SCR_MSG(_E(l) "Source: " _E(.) _E(i) "\"%s\"")
-                << NativePath(map.def()->sourceFile()->composePath()).pretty();
+                << NativePath(map.manifest().sourceFile()->composePath()).pretty();
     }
 
     LOG_SCR_MSG("\n");

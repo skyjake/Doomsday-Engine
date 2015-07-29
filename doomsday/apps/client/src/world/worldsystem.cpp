@@ -343,23 +343,23 @@ DENG2_PIMPL(WorldSystem)
      *
      * @return  The newly converted map (if any).
      */
-    Map *convertMap(MapDef const &mapDef, MapConversionReporter *reporter = nullptr)
+    Map *convertMap(res::MapManifest const &mapManifest, MapConversionReporter *reporter = nullptr)
     {
         // We require a map converter for this.
         if(!Plug_CheckForHook(HOOK_MAP_CONVERT))
             return nullptr;
 
-        LOG_DEBUG("Attempting \"%s\"...") << mapDef.composeUri().path();
+        LOG_DEBUG("Attempting \"%s\"...") << mapManifest.composeUri().path();
 
-        if(!mapDef.sourceFile()) return nullptr;
+        if(!mapManifest.sourceFile()) return nullptr;
 
         // Initiate the conversion process.
         MPE_Begin(nullptr/*dummy*/);
 
         Map *newMap = MPE_Map();
 
-        // Associate the map with its corresponding definition.
-        newMap->setDef(&const_cast<MapDef &>(mapDef));
+        // Associate the map with its corresponding manifest.
+        newMap->setManifest(&const_cast<res::MapManifest &>(mapManifest));
 
         if(reporter)
         {
@@ -371,7 +371,7 @@ DENG2_PIMPL(WorldSystem)
         // and if so to interpret and transfer it to us via the runtime map
         // editing interface.
         if(!DoomsdayApp::plugins().callHooks(HOOK_MAP_CONVERT, 0,
-                                             const_cast<Id1MapRecognizer *>(&mapDef.recognizer())))
+                                             const_cast<Id1MapRecognizer *>(&mapManifest.recognizer())))
             return nullptr;
 
         // A converter signalled success.
@@ -387,11 +387,11 @@ DENG2_PIMPL(WorldSystem)
     /**
      * Returns @c true iff data for the map is available in the cache.
      */
-    bool haveCachedMap(MapDef &mapDef)
+    bool haveCachedMap(res::MapManifest &mapManifest)
     {
         // Disabled?
         if(!mapCache) return false;
-        return DAM_MapIsValid(mapDef.cachePath, mapDef.id());
+        return DAM_MapIsValid(mapManifest.cachePath, mapManifest.id());
     }
 
     /**
@@ -401,10 +401,10 @@ DENG2_PIMPL(WorldSystem)
      *
      * @return  @c true if loading completed successfully.
      */
-    Map *loadMapFromCache(MapDef &mapDef)
+    Map *loadMapFromCache(MapManifest &mapManifest)
     {
-        Uri const mapUri = mapDef.composeUri();
-        Map *map = DAM_MapRead(mapDef.cachePath);
+        Uri const mapUri = mapManifest.composeUri();
+        Map *map = DAM_MapRead(mapManifest.cachePath);
         if(!map)
             /// Failed to load the map specified from the data cache.
             throw Error("loadMapFromCache", "Failed loading map \"" + mapUri.asText() + "\" from cache");
@@ -419,25 +419,25 @@ DENG2_PIMPL(WorldSystem)
      *
      * @return  The loaded map if successful. Ownership given to the caller.
      */
-    Map *loadMap(MapDef &mapDef, MapConversionReporter *reporter = nullptr)
+    Map *loadMap(res::MapManifest &mapManifest, MapConversionReporter *reporter = nullptr)
     {
         LOG_AS("WorldSystem::loadMap");
 
-        /*if(mapDef.lastLoadAttemptFailed && !forceRetry)
+        /*if(mapManifest.lastLoadAttemptFailed && !forceRetry)
             return nullptr;
 
         // Load from cache?
-        if(haveCachedMap(mapDef))
+        if(haveCachedMap(mapManifest))
         {
-            return loadMapFromCache(mapDef);
+            return loadMapFromCache(mapManifest);
         }*/
 
         // Try a JIT conversion with the help of a plugin.
-        Map *map = convertMap(mapDef, reporter);
+        Map *map = convertMap(mapManifest, reporter);
         if(!map)
         {
-            LOG_WARNING("Failed conversion of \"%s\".") << mapDef.composeUri().path();
-            //mapDef.lastLoadAttemptFailed = true;
+            LOG_WARNING("Failed conversion of \"%s\".") << mapManifest.composeUri().path();
+            //mapManifest.lastLoadAttemptFailed = true;
         }
         return map;
     }
@@ -521,7 +521,7 @@ DENG2_PIMPL(WorldSystem)
 
         // The game may need to perform it's own finalization now that the
         // "current" map has changed.
-        de::Uri const mapUri = (map->def() ? map->def()->composeUri() : de::Uri("Maps:", RC_NULL));
+        de::Uri const mapUri = (map->hasManifest() ? map->manifest().composeUri() : de::Uri("Maps:", RC_NULL));
         if(gx.FinalizeMapChange)
         {
             gx.FinalizeMapChange(reinterpret_cast<uri_s const *>(&mapUri));
@@ -676,7 +676,7 @@ DENG2_PIMPL(WorldSystem)
     }
 
     /// @todo Split this into subtasks (load, make current, cache assets).
-    bool changeMap(MapDef *mapDef = nullptr)
+    bool changeMap(res::MapManifest *mapManifest = nullptr)
     {
 #ifdef __CLIENT__
         if(map)
@@ -700,16 +700,16 @@ DENG2_PIMPL(WorldSystem)
         Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
 
         // Are we just unloading the current map?
-        if(!mapDef) return true;
+        if(!mapManifest) return true;
 
-        LOG_MSG("Loading map \"%s\"...") << mapDef->composeUri().path();
+        LOG_MSG("Loading map \"%s\"...") << mapManifest->composeUri().path();
 
         // A new map is about to be set up.
         ::ddMapSetup = true;
 
         // Attempt to load in the new map.
         MapConversionReporter reporter;
-        Map *newMap = loadMap(*mapDef, &reporter);
+        Map *newMap = loadMap(*mapManifest, &reporter);
         if(newMap)
         {
             // The map may still be in an editable state -- switch to playable.
@@ -775,11 +775,11 @@ Map &WorldSystem::map() const
 
 bool WorldSystem::changeMap(de::Uri const &mapUri)
 {
-    MapDef *mapDef = nullptr;
+    res::MapManifest *mapDef = nullptr;
 
     if(!mapUri.path().isEmpty())
     {
-        mapDef = resSys().mapDef(mapUri);
+        mapDef = resSys().tryFindMapManifest(mapUri);
     }
 
     // Switch to busy mode (if we haven't already) except when simply unloading.

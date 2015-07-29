@@ -785,7 +785,7 @@ static void redecorateMaterial(Material &material, Record const &def)
                     }
                 }
             }
-            catch(ResourceSystem::MissingManifestError const &)
+            catch(res::System::MissingResourceManifestError const &)
             {}  // Ignore this error
         }
 
@@ -978,7 +978,7 @@ static void configureMaterial(Material &mat, Record const &definition)
                             dstage0.variance = stage0.variance;
                         }
                     }
-                    catch(ResourceSystem::MissingManifestError const &)
+                    catch(res::System::MissingResourceManifestError const &)
                     {}  // Ignore this error.
                 }
             }
@@ -1016,7 +1016,7 @@ static void configureMaterial(Material &mat, Record const &definition)
                                 maskTexture = &resSys().textureScheme("Masks")
                                                    .findByResourceUri(*shineDef->stage.maskTexture);
                             }
-                            catch(ResourceSystem::MissingManifestError const &)
+                            catch(res::System::MissingResourceManifestError const &)
                             {}  // Ignore this error.
                         }
 
@@ -1036,7 +1036,7 @@ static void configureMaterial(Material &mat, Record const &definition)
                             sstage0.variance = stage0.variance;
                         }
                     }
-                    catch(ResourceSystem::MissingManifestError const &)
+                    catch(res::System::MissingResourceManifestError const &)
                     {}  // Ignore this error.
                 }
             }
@@ -1078,7 +1078,7 @@ static void interpretMaterialDef(Record const &definition)
                         manifest->setFlags(MaterialManifest::Custom);
                     }
                 }
-                catch(ResourceSystem::MissingManifestError const &er)
+                catch(res::System::MissingResourceManifestError const &er)
                 {
                     // Log but otherwise ignore this error.
                     LOG_RES_WARNING("Ignoring unknown texture \"%s\" in Material \"%s\" (layer 0 stage 0): %s")
@@ -1539,7 +1539,7 @@ static void initMaterialGroup(ded_group_t &def)
             }
 #endif
         }
-        catch(ResourceSystem::MissingManifestError const &er)
+        catch(res::System::MissingResourceManifestError const &er)
         {
             // Log but otherwise ignore this error.
             LOG_RES_WARNING("Unknown material \"%s\" in group def %i: %s")
@@ -1693,7 +1693,7 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
         {
             l->actMaterial = resSys().materialManifest(*def->actMaterial).id();
         }
-        catch(ResourceSystem::MissingManifestError const &)
+        catch(res::System::MissingResourceManifestError const &)
         {}  // Ignore this error.
     }
 
@@ -1703,7 +1703,7 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
         {
             l->deactMaterial = resSys().materialManifest(*def->deactMaterial).id();
         }
-        catch(ResourceSystem::MissingManifestError const &)
+        catch(res::System::MissingResourceManifestError const &)
         {}  // Ignore this error.
     }
 
@@ -1742,7 +1742,7 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
                     {
                         l->iparm[k] = resSys().materialManifest(de::Uri(def->iparmStr[k], RC_NULL)).id();
                     }
-                    catch(ResourceSystem::MissingManifestError const &)
+                    catch(res::System::MissingResourceManifestError const &)
                     {}  // Ignore this error.
                 }
             }

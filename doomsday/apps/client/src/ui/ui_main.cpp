@@ -140,7 +140,7 @@ static void loadFontIfNeeded(char const *uri, fontid_t *fid)
                 *fid = fontid_t(manifest.uniqueId());
             }
         }
-        catch(ResourceSystem::MissingManifestError const &)
+        catch(res::System::MissingResourceManifestError const &)
         {}
     }
 

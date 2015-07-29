@@ -1,6 +1,6 @@
-/** @file mapdef.h  Map asset/resource definition/manifest.
+/** @file mapmanifest.h  Manifest for a map resource.
  *
- * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2014-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,30 +17,34 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RESOURCE_MAPDEF_H
-#define LIBDENG_RESOURCE_MAPDEF_H
+#ifndef LIBDOOMSDAY_RESOURCE_MAPMANIFEST_H
+#define LIBDOOMSDAY_RESOURCE_MAPMANIFEST_H
 
-#include <doomsday/filesys/file.h>
-#include <doomsday/filesys/lumpindex.h>
-#include <doomsday/Game>
+#include "../filesys/file.h"
+#include "../filesys/lumpindex.h"
+#include "../Game"
+#include "../uri.h"
 #include <de/PathTree>
 #include <de/Record>
 #include <de/String>
+#include <memory.h>
+
+namespace res {
 
 /**
- * Definition/manifeset for a map asset/resource.
+ * Resource manifest for a map.
  *
  * @ingroup resource
  */
-class MapDef : public de::PathTree::Node, public de::Record
+class LIBDOOMSDAY_PUBLIC MapManifest : public de::PathTree::Node, public de::Record
 {
 public:
-    MapDef(de::PathTree::NodeArgs const &args);
+    MapManifest(de::PathTree::NodeArgs const &args);
 
     /**
-     * Returns a textual description of the map definition.
+     * Returns a textual description of the manifest.
      *
-     * @return Human-friendly description the map definition.
+     * @return Human-friendly description the manifest.
      */
     de::String description(de::Uri::ComposeAsTextFlags uriCompositionFlags = de::Uri::DefaultComposeAsTextFlags) const;
 
@@ -54,19 +58,19 @@ public:
      */
     de::String composeUniqueId(Game const &currentGame) const;
 
-    MapDef &setSourceFile(de::File1 *newSourceFile);
-
+    MapManifest &setSourceFile(de::File1 *newSourceFile);
     de::File1 *sourceFile() const;
 
-    MapDef &setRecognizer(de::Id1MapRecognizer *newRecognizer);
-
+    MapManifest &setRecognizer(de::Id1MapRecognizer *newRecognizer);
     de::Id1MapRecognizer const &recognizer() const;
 
 private:
-    //String cachePath;
+    //de::String cachePath;
     //bool lastLoadAttemptFailed;
     de::File1 *_sourceFile;
-    QScopedPointer<de::Id1MapRecognizer> _recognized;
+    std::unique_ptr<de::Id1MapRecognizer> _recognized;
 };
 
-#endif /* LIBDENG_RESOURCE_MAPDEF_H */
+}  // namespace res
+
+#endif  // LIBDOOMSDAY_RESOURCE_MAPMANIFEST_H

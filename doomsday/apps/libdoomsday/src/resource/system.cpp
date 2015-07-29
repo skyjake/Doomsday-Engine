@@ -35,6 +35,8 @@ DENG2_PIMPL(System)
 
     NativePath nativeSavePath;
 
+    MapManifests mapManifests;
+
     Instance(Public *i)
         : Base(i)
         , nativeSavePath(App::app().nativeHomePath() / "savegames") // default
@@ -60,6 +62,7 @@ DENG2_PIMPL(System)
 
     ~Instance()
     {
+        self.clearMapManifests();
         qDeleteAll(resClasses);
 
         theResSystem = nullptr;
@@ -121,6 +124,66 @@ void System::updateOverrideIWADPathFromConfig()
 NativePath System::nativeSavePath() const
 {
     return d->nativeSavePath;
+}
+
+MapManifest &System::findMapManifest(de::Uri const &mapUri) const
+{
+    // Only one resource scheme is known for maps.
+    if(!mapUri.scheme().compareWithoutCase("Maps"))
+    {
+       if(MapManifest *found = d->mapManifests.tryFind(mapUri.path(), PathTree::MatchFull | PathTree::NoBranch))
+           return *found;
+    }
+    /// @throw MissingResourceManifestError  An unknown map URI was specified.
+    throw MissingResourceManifestError("res::System::findMapManifest", "Failed to locate a manifest for \"" + mapUri.asText() + "\"");
+}
+
+MapManifest *System::tryFindMapManifest(de::Uri const &mapUri) const
+{
+    // Only one resource scheme is known for maps.
+    if(mapUri.scheme().compareWithoutCase("Maps")) return nullptr;
+    return d->mapManifests.tryFind(mapUri.path(), PathTree::MatchFull | PathTree::NoBranch);
+}
+
+dint System::mapManifestCount() const
+{
+    return d->mapManifests.count();
+}
+
+void System::initMapManifests()
+{
+    clearMapManifests();
+
+    // Locate all the maps using the central lump index:
+    /// @todo Locate new maps each time a package is loaded rather than rely on
+    /// the central lump index.
+    LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
+    lumpnum_t lastLump = -1;
+    while(lastLump < lumpIndex.size())
+    {
+        std::unique_ptr<Id1MapRecognizer> recognizer(new Id1MapRecognizer(lumpIndex, lastLump));
+        lastLump = recognizer->lastLump();
+        if(recognizer->format() != Id1MapRecognizer::UnknownFormat)
+        {
+            File1 *sourceFile  = recognizer->sourceFile();
+            String const mapId = recognizer->id();
+
+            MapManifest &manifest = d->mapManifests.insert(mapId);
+            manifest.set("id", mapId);
+            manifest.setSourceFile(sourceFile)
+                    .setRecognizer(recognizer.release());
+        }
+    }
+}
+
+void System::clearMapManifests()
+{
+    d->mapManifests.clear();
+}
+
+System::MapManifests const &System::allMapManifests() const
+{
+    return d->mapManifests;
 }
 
 } // namespace res

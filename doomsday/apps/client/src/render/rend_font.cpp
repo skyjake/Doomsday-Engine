@@ -1038,7 +1038,7 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state, int* numB
                         state->fontNum = App_ResourceSystem().fontManifest(de::Uri(buf, RC_NULL)).uniqueId();
                         continue;
                     }
-                    catch(ResourceSystem::MissingManifestError const &)
+                    catch(res::System::MissingResourceManifestError const &)
                     {}
                 }
 
@@ -1556,7 +1556,7 @@ DENG_EXTERN_C fontid_t Fonts_ResolveUri(uri_s const *uri)
     {
         return App_ResourceSystem().fontManifest(*reinterpret_cast<de::Uri const *>(uri)).uniqueId();
     }
-    catch(ResourceSystem::MissingManifestError const &)
+    catch(res::System::MissingResourceManifestError const &)
     {}
     return NOFONTID;
 }

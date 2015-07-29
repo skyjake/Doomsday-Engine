@@ -49,8 +49,6 @@
 #  include "Lumobj"
 #endif
 
-class MapDef;
-
 class BspLeaf;
 class ConvexSubspace;
 class LineBlockmap;
@@ -150,19 +148,9 @@ public:
      * constructed dynamically. When done editing @ref endEditing() should be
      * called to switch the map into a non-editable (i.e., playable) state.
      *
-     * @param mapDefinition  Definition for the map (Can be set later, @ref setDef).
+     * @param manifest  Resource manifest for the map, if any (Can be set later).
      */
-    explicit Map(MapDef *mapDefinition = nullptr);
-
-    /**
-     * Returns the definition for the map.
-     */
-    MapDef *def() const;
-
-    /**
-     * Change the definition associated with the map to @a newMapDefinition.
-     */
-    void setDef(MapDef *newMapDefinition);
+    explicit Map(res::MapManifest *manifest = nullptr);
 
     /**
      * Returns the effective map-info definition Record for the map.

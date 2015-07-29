@@ -1,6 +1,7 @@
 /** @file resource/system.h
  *
- * @authors Copyright (c) 2015 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,9 +20,12 @@
 #ifndef LIBDOOMSDAY_RESOURCE_SYSTEM_H
 #define LIBDOOMSDAY_RESOURCE_SYSTEM_H
 
-#include <de/System>
-#include <de/NativePath>
 #include "resourceclass.h"
+#include "mapmanifest.h"
+#include <de/NativePath>
+#include <de/PathTree>
+#include <de/System>
+#include <de/libcore.h>
 
 namespace res {
 
@@ -36,7 +40,12 @@ public:
     /// An unknown resource class identifier was specified. @ingroup errors
     DENG2_ERROR(UnknownResourceClassError);
 
+    /// The referenced manifest was not found. @ingroup errors
+    DENG2_ERROR(MissingResourceManifestError);
+
     static System &get();
+
+    typedef de::PathTreeT<MapManifest> MapManifests;
 
 public:
     System();
@@ -66,11 +75,40 @@ public:
      */
     de::NativePath nativeSavePath() const;
 
+public:  // Resource manifests: ------------------------------------------------------
+
+    /**
+     * Note that the existence of a manifest does not automatically mean the associated
+     * resource data is actually loadable.
+     */
+
+    /**
+     * Locate the map resource manifest associated with the given, unique @a mapUri.
+     */
+    MapManifest &findMapManifest(de::Uri const &mapUri) const;
+
+    /**
+     * Lookup the map resource manifest associated with the given, unique @a mapUri.
+     *
+     * @return  MapManifest associated with @a mapUri if found; otherwise @c nullptr.
+     */
+    MapManifest *tryFindMapManifest(de::Uri const &mapUri) const;
+
+    /**
+     * Returns the total number of map resource manifests in the system.
+     */
+    de::dint mapManifestCount() const;
+
+    /// @todo make private.
+    void initMapManifests();
+    void clearMapManifests();
+    MapManifests const &allMapManifests() const;
+
 private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace res
+}  // namespace res
 
 /**
  * Convenient method of returning a resource class from the application's global

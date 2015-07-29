@@ -1080,7 +1080,7 @@ static dint DD_ActivateGameWorker(void *context)
     resSys.initTextures();
     resSys.textureScheme("Lightmaps").clear();
     resSys.textureScheme("Flaremaps").clear();
-    resSys.initMapDefs();
+    resSys.initMapManifests();
 
     if(parms.initiatedBusyMode)
     {
@@ -1949,7 +1949,7 @@ static void initialize()
         App_ResourceSystem().initTextures();
         App_ResourceSystem().textureScheme("Lightmaps").clear();
         App_ResourceSystem().textureScheme("Flaremaps").clear();
-        App_ResourceSystem().initMapDefs();
+        App_ResourceSystem().initMapManifests();
 
         Def_Read();
 
@@ -2225,7 +2225,7 @@ void DD_UpdateEngineState()
     App_FileSystem().resetAllSchemes();
 
     App_ResourceSystem().initTextures();
-    App_ResourceSystem().initMapDefs();
+    App_ResourceSystem().initMapManifests();
 
     if(App_GameLoaded() && gx.UpdateState)
     {

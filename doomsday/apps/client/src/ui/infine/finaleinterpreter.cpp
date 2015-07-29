@@ -1376,7 +1376,7 @@ DEFFC(BGMaterial)
     }
     catch(MaterialManifest::MissingMaterialError const &)
     {} // Ignore this error.
-    catch(ResourceSystem::MissingManifestError const &)
+    catch(res::System::MissingResourceManifestError const &)
     {} // Ignore this error.
 
     changePageBackground(fi.page(FinaleInterpreter::Anims), material);

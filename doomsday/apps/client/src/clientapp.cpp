@@ -169,12 +169,10 @@ DENG2_PIMPL(ClientApp)
                 if((entry.metadata() & LogEntry::Map) &&
                    ClientApp::worldSystem().hasMap())
                 {
-                    if(MapDef *mapDef = ClientApp::worldSystem().map().def())
+                    Map const &map = ClientApp::worldSystem().map();
+                    if(map.hasManifest() && !map.manifest().sourceFile()->hasCustom())
                     {
-                        if(!mapDef->sourceFile()->hasCustom())
-                        {
-                            return *this;
-                        }
+                        return *this;
                     }
                 }
 

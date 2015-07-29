@@ -191,7 +191,7 @@ void Rend_Draw2DPlayerSprites()
             rendpspriteparams_t parm; setupPSpriteParams(parm, vs);
             Rend_DrawPSprite(parm);
         }
-        catch(ResourceSystem::MissingManifestError const &er)
+        catch(res::System::MissingResourceManifestError const &er)
         {
             // Log but otherwise ignore this error.
             state_t const &state = *vs.psp->statePtr;

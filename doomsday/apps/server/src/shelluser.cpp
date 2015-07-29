@@ -1,7 +1,7 @@
 /** @file shelluser.cpp  Remote user of a shell connection.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2013-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -124,7 +124,7 @@ void ShellUser::sendGameState()
     {
         Map &map = App_WorldSystem().map();
 
-        mapId = (map.def()? map.def()->composeUri().path() : "(unknown map)");
+        mapId = (map.hasManifest() ? map.manifest().composeUri().path() : "(unknown map)");
 
         /// @todo A cvar is not an appropriate place to ask for this --
         /// should be moved to the Map class.

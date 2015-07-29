@@ -57,7 +57,6 @@ set (SHARED_WITH_CLIENT
     ${src}/include/resource/colorpalette.h
     ${src}/include/resource/compositetexture.h
     ${src}/include/resource/image.h
-    ${src}/include/resource/mapdef.h
     ${src}/include/resource/material.h
     ${src}/include/resource/materialarchive.h
     ${src}/include/resource/materialdetaillayer.h
@@ -150,7 +149,6 @@ set (SHARED_WITH_CLIENT
     ${src}/src/resource/compositetexture.cpp
     ${src}/src/resource/hq2x.cpp
     ${src}/src/resource/image.cpp
-    ${src}/src/resource/mapdef.cpp
     ${src}/src/resource/material.cpp
     ${src}/src/resource/materialarchive.cpp
     ${src}/src/resource/materialdetaillayer.cpp

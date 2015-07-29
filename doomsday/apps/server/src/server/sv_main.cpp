@@ -182,7 +182,7 @@ void Sv_GetInfo(serverinfo_t *info)
     info->canJoin = (::isServer != 0 && Sv_GetNumPlayers() < ::svMaxPlayers);
 
     // Identifier of the current map.
-    String mapPath = (map.def() ? map.def()->composeUri().path() : "(unknown map)");
+    String mapPath = (map.hasManifest() ? map.manifest().composeUri().path() : "(unknown map)");
     qstrncpy(info->map, mapPath.toUtf8().constData(), sizeof(info->map) - 1);
 
     // These are largely unused at the moment... Mainly intended for the game's custom values.

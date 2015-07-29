@@ -1,6 +1,6 @@
 /** @file material.cpp  Logical material resource.
  *
- * @authors Copyright © 2009-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2009-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -240,7 +240,7 @@ DENG2_PIMPL(Material)
                 }
                 catch(TextureManifest::MissingTextureError &)
                 {}
-                catch(ResourceSystem::MissingManifestError &)
+                catch(res::System::MissingResourceManifestError &)
                 {}
             }
         }
@@ -597,7 +597,7 @@ D_CMD(InspectMaterial)
         }
         return true;
     }
-    catch(ResourceSystem::MissingManifestError const &er)
+    catch(res::System::MissingResourceManifestError const &er)
     {
         LOG_SCR_WARNING("%s") << er.asText();
     }

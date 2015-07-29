@@ -1,7 +1,7 @@
 /** @file api_resource.cpp  Public API of the resource subsystem.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -40,7 +40,7 @@ DENG_EXTERN_C int Textures_UniqueId2(uri_s const *_uri, dd_bool quiet)
     {
         return App_ResourceSystem().textureManifest(uri).uniqueId();
     }
-    catch(ResourceSystem::MissingManifestError const &)
+    catch(res::System::MissingResourceManifestError const &)
     {
         // Log but otherwise ignore this error.
         if(!quiet)
@@ -82,7 +82,7 @@ DENG_EXTERN_C void R_AddAnimGroupFrame(int groupId, uri_s const *textureUri_, in
             LOG_DEBUG("Unknown anim group #%i, ignoring.") << groupId;
         }
     }
-    catch(ResourceSystem::MissingManifestError const &er)
+    catch(res::System::MissingResourceManifestError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_RES_WARNING(er.asText() + ". Failed adding texture \"%s\" to group #%i, ignoring.")

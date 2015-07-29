@@ -158,7 +158,7 @@ static Material *findMaterialInDict(String const &materialUriStr)
         {
             material = &App_ResourceSystem().material(materialUri);
         }
-        catch(ResourceSystem::MissingManifestError const &)
+        catch(res::System::MissingResourceManifestError const &)
         {
             // Try any scheme.
             try
@@ -166,7 +166,7 @@ static Material *findMaterialInDict(String const &materialUriStr)
                 materialUri.setScheme("");
                 material = &App_ResourceSystem().material(materialUri);
             }
-            catch(ResourceSystem::MissingManifestError const &)
+            catch(res::System::MissingResourceManifestError const &)
             {}
         }
 

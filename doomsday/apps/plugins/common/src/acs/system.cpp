@@ -140,7 +140,7 @@ void System::loadModuleForMap(de::Uri const &mapUri)
 
     if(mapUri.isEmpty()) return;
 
-    /// @todo Should be using MapDef here...
+    /// @todo Should be using MapManifest here...
     lumpnum_t const markerLumpNum = CentralLumpIndex().findLast(mapUri.path() + ".lmp");
     lumpnum_t const moduleLumpNum = markerLumpNum + 11 /*ML_BEHAVIOR*/;
     if(!CentralLumpIndex().hasLump(moduleLumpNum)) return;
