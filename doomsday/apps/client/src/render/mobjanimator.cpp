@@ -39,6 +39,8 @@ void MobjAnimator::triggerByState(String const &stateName)
     auto found = _stateAnims->constFind(stateName);
     if(found == _stateAnims->constEnd()) return;
 
+    LOG_WIP("triggerByState: ") << stateName;
+
     foreach(ModelRenderer::AnimSequence const &seq, found.value())
     {
         // Test for the probability of this animation.
@@ -58,7 +60,8 @@ void MobjAnimator::triggerByState(String const &stateName)
 
         start(animId, node);
 
-        qDebug() << "starting" << seq.name;
+        LOG_WIP(" Starting anim: " _E(b)) << seq.name;
+        break;
     }
 }
 

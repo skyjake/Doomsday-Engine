@@ -30,6 +30,7 @@ DENG2_PIMPL(ClientPlayer)
     clplayerstate_t      clPlayerState;
     DemoTimer            demoTimer;
 
+    state_t const *lastPSpriteState = nullptr;
     String weaponAssetId;
 
     Instance(Public *i)
@@ -39,12 +40,6 @@ DENG2_PIMPL(ClientPlayer)
         zap(viewport);
         zap(clPlayerState);
         zap(demoTimer);
-    }
-
-    void prepareAssets()
-    {
-        // Is there a model for the weapon?
-        qDebug() << "-=- looking for" << "model.weapon." + weaponAssetId;
     }
 };
 
@@ -106,7 +101,18 @@ void ClientPlayer::setWeaponAssetId(String const &id)
 {
     if(id != d->weaponAssetId)
     {
+        LOG_WIP("weapon asset: %s") << id;
         d->weaponAssetId = id;
-        d->prepareAssets();
+        d->playerWeaponAnimator.setAsset("model.weapon." + id);
+        d->playerWeaponAnimator.stateChanged(d->lastPSpriteState);
+    }
+}
+
+void ClientPlayer::weaponStateChanged(state_t const *state)
+{
+    if(state != d->lastPSpriteState)
+    {
+        d->lastPSpriteState = state;
+        d->playerWeaponAnimator.stateChanged(state);
     }
 }

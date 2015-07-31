@@ -22,6 +22,7 @@
 #define CLIENT_RENDER_VISSPRITE_H
 
 #include <de/Vector>
+#include <de/GLState>
 
 #include "render/billboard.h"
 #include "rend_model.h"
@@ -188,6 +189,12 @@ struct vispsprite_t
             de::dfloat yawAngleOffset;
             de::dfloat inter;             ///< Frame interpolation, 0..1
         } model;
+        struct vispsprite_model2_s {
+            de::ModelDrawable const *drawable;
+            de::ModelDrawable::Animator const *animator;
+            float modelTransform[16];
+            de::gl::Cull cullFace;
+        } model2;
     } data;
 };
 

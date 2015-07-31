@@ -151,7 +151,7 @@ void Def_PostInit();
  */
 void Def_Read();
 
-de::String Def_GetStateName(state_t *state);
+de::String Def_GetStateName(state_t const *state);
 
 /**
  * Can we reach 'snew' if we start searching from 'sold'?

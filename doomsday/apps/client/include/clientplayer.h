@@ -93,6 +93,8 @@ public:
      */
     void setWeaponAssetId(de::String const &id);
 
+    void weaponStateChanged(struct state_s const *state);
+
 private:
     DENG2_PRIVATE(d)
 };

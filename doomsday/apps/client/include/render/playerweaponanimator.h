@@ -34,6 +34,10 @@ class PlayerWeaponAnimator
 public:
     PlayerWeaponAnimator(ClientPlayer *plr);
 
+    void setAsset(de::String const &identifier);
+
+    void stateChanged(state_t const *state);
+
     MobjAnimator &animator();
 
     void advanceTime(de::TimeDelta const &elapsed);

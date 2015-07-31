@@ -255,6 +255,16 @@ DENG2_PIMPL(ClientApp)
             DownloadDialog::showCompletedDownload();
             break;
 
+        case DD_NOTIFY_PSPRITE_STATE_CHANGED:
+            if(data)
+            {
+                auto const *args = (ddnotify_psprite_state_changed_t *) data;
+                self.players().at(args->player)
+                        .as<ClientPlayer>()
+                        .weaponStateChanged(args->state);
+            }
+            break;
+
         case DD_NOTIFY_PLAYER_WEAPON_CHANGED:
             if(data)
             {

@@ -1636,7 +1636,7 @@ bool Def_SameStateSequence(state_t *snew, state_t *sold)
     return false;
 }
 
-String Def_GetStateName(state_t *state)
+String Def_GetStateName(state_t const *state)
 {
     if(!state) return "(nullptr)";
     dint const idx = ::runtimeDefs.states.indexOf(state);
