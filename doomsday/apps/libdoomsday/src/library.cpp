@@ -1,8 +1,8 @@
-/** @file library.cpp Dynamic libraries. 
+/** @file library.cpp  Dynamic libraries. 
  * @ingroup base
  *
- * @authors Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2009-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -30,44 +30,43 @@
 
 #include <QList>
 
-struct library_s { // typedef Library
-    Str* path;              ///< de::FS path of the library (e.g., "/bin/doom.dll").
-    de::LibraryFile* file;  ///< File where the plugin has been loaded from.
-    bool isGamePlugin;      ///< Is this a game plugin? (only one should be in use at a time)
-    std::string typeId;     ///< Library type ID e.g., "deng-plugin/game".
-
-    library_s() : path(0), file(0), isGamePlugin(false) {}
+struct library_s  // typedef Library
+{
+    Str *path = nullptr;              ///< de::FS path of the library (e.g., "/bin/doom.dll").
+    de::LibraryFile *file = nullptr;  ///< File where the plugin has been loaded from.
+    bool isGamePlugin = false;        ///< Is this a game plugin? (only one should be in use at a time)
+    std::string typeId;               ///< Library type ID e.g., "deng-plugin/game".
 };
 
-static ddstring_t* lastError;
+static ddstring_t *lastError;
 
-typedef QList<Library*> LoadedLibs;
+typedef QList<Library *> LoadedLibs;
 static LoadedLibs loadedLibs;
 
-void Library_Init(void)
+void Library_Init()
 {
     lastError = Str_NewStd();
 }
 
-void Library_Shutdown(void)
+void Library_Shutdown()
 {
-    Str_Delete(lastError); lastError = 0;
+    Str_Delete(lastError); lastError = nullptr;
 
     /// @todo  Unload all remaining libraries?
 }
 
-void Library_ReleaseGames(void)
+void Library_ReleaseGames()
 {
 #ifdef UNIX
     LOG_AS("Library_ReleaseGames");
-    foreach(Library* lib, loadedLibs)
+    for(Library *lib : loadedLibs)
     {
         if(lib->isGamePlugin)
         {
             LOGDEV_RES_VERBOSE("Closing '%s'") << Str_Text(lib->path);
 
             // Close the Library.
-            DENG_ASSERT(lib->file);
+            DENG2_ASSERT(lib->file);
             lib->file->clear();
         }
     }
@@ -77,7 +76,7 @@ void Library_ReleaseGames(void)
 #ifdef UNIX
 static void reopenLibraryIfNeeded(Library *lib)
 {
-    DENG_ASSERT(lib);
+    DENG2_ASSERT(lib);
 
     if(!lib->file->loaded())
     {
@@ -86,33 +85,33 @@ static void reopenLibraryIfNeeded(Library *lib)
         // Make sure the Library gets opened again now.
         lib->file->library();
 
-        DENG_ASSERT(lib->file->loaded());
+        DENG2_ASSERT(lib->file->loaded());
 
         DoomsdayApp::plugins().publishAPIs(lib);
     }
 }
 #endif
 
-Library* Library_New(char const *filePath)
+Library *Library_New(char const *filePath)
 {
     try
     {
         Str_Clear(lastError);
 
-        de::LibraryFile &libFile = de::App::rootFolder().locate<de::LibraryFile>(filePath);
+        auto &libFile = de::App::rootFolder().locate<de::LibraryFile>(filePath);
         if(libFile.library().type() == de::Library::DEFAULT_TYPE)
         {
             // This is just a shared library, not a plugin.
             // We don't have to keep it loaded.
             libFile.clear();
             Str_Set(lastError, "not a Doomsday plugin");
-            return 0;
+            return nullptr;
         }
 
         // Create the Library instance.
-        Library* lib = new Library;
-        lib->file = &libFile;
-        lib->path = Str_Set(Str_NewStd(), filePath);
+        Library *lib = new Library;
+        lib->file   = &libFile;
+        lib->path   = Str_Set(Str_NewStd(), filePath);
         lib->typeId = libFile.library().type().toStdString();
         loadedLibs.append(lib);
 
@@ -124,20 +123,19 @@ Library* Library_New(char const *filePath)
         }
 
         DoomsdayApp::plugins().publishAPIs(lib);
-
         return lib;
     }
-    catch(const de::Error& er)
+    catch(de::Error const &er)
     {
         Str_Set(lastError, er.asText().toLatin1().constData());
         LOG_RES_WARNING("Library_New: Error opening \"%s\": ") << filePath << er.asText();
-        return 0;
     }
+    return nullptr;
 }
 
 void Library_Delete(Library *lib)
 {
-    DENG_ASSERT(lib);
+    DENG2_ASSERT(lib);
 
     // Unload the library from memory.
     lib->file->clear();
@@ -147,24 +145,24 @@ void Library_Delete(Library *lib)
     delete lib;
 }
 
-const char* Library_Type(const Library* lib)
+char const *Library_Type(Library const *lib)
 {
-    DENG_ASSERT(lib);
+    DENG2_ASSERT(lib);
     return &lib->typeId[0];
 }
 
-de::LibraryFile& Library_File(Library* lib)
+de::LibraryFile &Library_File(Library *lib)
 {
-    DENG_ASSERT(lib);
+    DENG2_ASSERT(lib);
     return *lib->file;
 }
 
-void* Library_Symbol(Library* lib, const char* symbolName)
+void *Library_Symbol(Library *lib, char const *symbolName)
 {
     try
     {
         LOG_AS("Library_Symbol");
-        DENG_ASSERT(lib);
+        DENG2_ASSERT(lib);
 #ifdef UNIX
         reopenLibraryIfNeeded(lib);
 #endif
@@ -173,11 +171,11 @@ void* Library_Symbol(Library* lib, const char* symbolName)
     catch(de::Library::SymbolMissingError const &er)
     {
         Str_Set(lastError, er.asText().toLatin1().constData());
-        return 0;
+        return nullptr;
     }
 }
 
-const char* Library_LastError(void)
+char const *Library_LastError()
 {
     return Str_Text(lastError);
 }
@@ -193,13 +191,13 @@ int Library_IterateAvailableLibraries(int (*func)(void *, const char *, const ch
 
     DENG2_FOR_EACH_CONST(FS::Index, i, libs)
     {
-        LibraryFile &lib = i->second->as<LibraryFile>();
-        NativeFile const *src = lib.source()->maybeAs<NativeFile>();
+        auto &lib       = i->second->as<LibraryFile>();
+        auto const *src = lib.source()->maybeAs<NativeFile>();
         if(src)
         {
-            int result = func(&lib, src->name().toUtf8().constData(),
-                              lib.path().toUtf8().constData(), data);
-            if(result) return result;
+            if(int result = func(&lib, src->name().toUtf8().constData(),
+                                 lib.path().toUtf8().constData(), data))
+                return result;
         }
     }
 

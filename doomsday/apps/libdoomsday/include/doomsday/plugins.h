@@ -1,7 +1,7 @@
 /** @file plugins.h  Plugin loader.
  *
  * @authors Copyright © 2003-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -23,9 +23,6 @@
 #include <de/str.h>
 #include <de/rect.h>
 
-#define MAX_HOOKS               16
-#define HOOKF_EXCLUSIVE         0x01000000
-
 /**
  * Unique identifier assigned to each plugin during initial startup.
  * Zero is not a valid ID.
@@ -40,7 +37,7 @@ typedef int (*hookfunc_t) (int type, int parm, void *data);
 #define MAX_PLUGS   32
 
 /// Hook types.
-enum {
+typedef enum {
     HOOK_STARTUP = 0,               ///< Called ASAP after startup.
     HOOK_INIT = 1,                  ///< Called after engine has been initialized.
     HOOK_DEFS = 2,                  ///< Called after DEDs have been loaded.
@@ -60,11 +57,11 @@ enum {
     HOOK_MAPINFO_CONVERT = 13,      ///< Called when map definition data needs converting.
 
     NUM_HOOK_TYPES
-};
+} HookType;
 
 /// Parameters for HOOK_FINALE_EVAL_IF
 typedef struct {
-    const char* token;
+    char const *token;
     dd_bool     returnVal;
 } ddhook_finale_script_evalif_paramaters_t;
 
@@ -76,8 +73,8 @@ typedef struct {
 
 /// Parameters for HOOK_VIEWPORT_RESHAPE
 typedef struct {
-    RectRaw geometry; // New/Current.
-    RectRaw oldGeometry; // Previous.
+    RectRaw geometry;     ///< New/Current.
+    RectRaw oldGeometry;  ///< Previous.
 } ddhook_viewport_reshape_t;
 
 /// Parameters for HOOK_SAVEGAME_CONVERT
@@ -89,7 +86,7 @@ typedef struct {
 
 /// Parameters for HOOK_MAPINFO_CONVERT
 typedef struct {
-    Str paths; // ';' delimited
+    Str paths;            ///< ';' delimited
     Str translated;
     Str translatedCustom;
 } ddhook_mapinfo_convert_t;
@@ -128,6 +125,28 @@ public:
      */
     void unloadAll();
 
+    /**
+     * Change the currently active plugin for the current thread to that attributed
+     * with the given @a id.
+     */
+    void setActivePluginId(pluginid_t id);
+
+    /**
+     * Returns the unique identifier of the currently active plugin. The currently
+     * active plugin is tracked separately for each thread.
+     */
+    pluginid_t activePluginId() const;
+
+    /**
+     * Locate the LibraryFile attributed with the given @a id.
+     */
+    de::LibraryFile const &fileForPlugin(pluginid_t id) const;
+
+    /**
+     * Locate the address of the named, exported procedure in the plugin.
+     */
+    void *findEntryPoint(pluginid_t pluginId, char const *fn) const;
+
     bool exchangeGameEntryPoints(pluginid_t pluginId);
 
     /**
@@ -135,88 +154,133 @@ public:
      */
     game_export_t &gameExports() const;
 
+public:  // Function hooks: ----------------------------------------------------------
+
     /**
-     * Sets the ID of the currently active plugin in the current thread.
+     * Describes a function hook.
+     */
+    struct Hook
+    {
+        /**
+         * Returns @c true if the hook matches @a other.
+         * Note that if the plugin Id of either is not valid then this attribute is
+         * considered @em wild and therefore plugin Ids are ignored when matching.
+         */
+        bool        operator == (Hook const &other) const;
+        inline bool operator != (Hook const &other) const { return !(*this == other); }
+
+        /**
+         * Execute the hook function and return the result.
+         *
+         * @param parm  Integer paramater to pass to the hook function.
+         * @param data  Pointer paramater to pass to the hook function.
+         *
+         * @return  Hook function return value.
+         */
+        int execute(int parm = 0, void *data = nullptr) const;
+
+        /**
+         * Returns the unique Id attributed to the plugin that registered the hook,
+         * or @c 0 (not valid plugin Id) if a plugin is not attributed.
+         */
+        pluginid_t pluginId() const;
+
+    private:
+        friend class Plugins;
+
+        HookType _type       = NUM_HOOK_TYPES/*invalid type*/;
+        hookfunc_t _function = nullptr;
+        pluginid_t _pluginId = 0/*invalid ID*/;
+    };
+
+    /**
+     * Returns @c true if one or more hooks of the given @a type is registered.
      *
-     * @param id  Plugin id.
+     * @see forAllHooks(), callAllHooks()
      */
-    void setActivePluginId(pluginid_t id);
+    bool hasHook(HookType type) const;
 
     /**
-     * @return Unique identifier of the currently active plugin. The currently
-     * active plugin is tracked separately for each thread.
+     * Add a new @a function hook of the given @a type.
      */
-    pluginid_t activePluginId() const;
-
-    de::LibraryFile const &fileForPlugin(pluginid_t id) const;
-
-    bool addHook(int hookType, hookfunc_t hook);
-
-    bool removeHook(int hookType, hookfunc_t hook);
-
-    bool checkForHook(int hookType) const;
+    void addHook(HookType type, hookfunc_t function);
 
     /**
-     * Executes all the hooks of the given type. Bit zero of the return value
-     * is set if a hook was executed successfully (returned true). Bit one is
-     * set if all the hooks that were executed returned true.
+     * Remove a @a function hook of the given @a type.
      */
-    int callHooks(int hookType, int parm, void *data);
+    bool removeHook(HookType type, hookfunc_t function);
 
     /**
-     * Locate the address of the named, exported procedure in the plugin.
+     * Iterate through the registered Hooks.
+     *
+     * @param func  Callback to make for each Hook.
+     *
+     * @see callAllHooks()
      */
-    void *findEntryPoint(pluginid_t pluginId, char const *fn) const;
+    de::LoopResult forAllHooks(HookType type, std::function<de::LoopResult (Hook const &)> func) const;
+
+    /**
+     * Convenient method of executing all hook functions of the given @a type in
+     * registration order, passing the same paramater values to each.
+     *
+     * @param type  Hook-type identifier.
+     * @param parm  Integer data paramater to pass to the hook function.
+     * @param data  Pointer data paramater to pass to the hook function.
+     *
+     * @return  Bit zero is set if one or more hooks completed successfully (returned
+     * non-zero). Bit one is set if @em all the hooks completed successfully.
+     *
+     * @see forAllHooks()
+     */
+    int callAllHooks(HookType type, int parm = 0, void *data = nullptr);
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // __cplusplus
+#endif  // __cplusplus
 
 /**
- * Registers a new hook function. A plugin can call this to add a hook
- * function to be executed at the time specified by @a hook_type.
+ * Registers a new hook function. A plugin can call this to add a hook function to be
+ * executed at the time specified by @a type.
  *
- * @param hook_type  Hook type.
- * @param hook       Pointer to hook function.
+ * @param type      Hook-type identifier.
+ * @param function  Function pointer to hook.
  *
- * @return  @c true, iff the hook was successfully registered.
+ * @return  @c true if successfully registered.
  */
 LIBDOOMSDAY_EXTERN_C LIBDOOMSDAY_PUBLIC
-int Plug_AddHook(int hook_type, hookfunc_t hook);
+int Plug_AddHook(HookType type, hookfunc_t function);
 
 /**
- * Removes @a hook from the registered hook functions.
+ * Removes a @a function hook from the register.
  *
- * @param hook_type  Hook type.
- * @param hook       Pointer to hook function.
+ * @param type      Hook-type identifier.
+ * @param function  Function pointer to hook.
  *
- * @return  @c true iff it was found.
+ * @return  @c true if found and removed.
  */
 LIBDOOMSDAY_EXTERN_C LIBDOOMSDAY_PUBLIC
-int Plug_RemoveHook(int hook_type, hookfunc_t hook);
+int Plug_RemoveHook(HookType type, hookfunc_t function);
 
 /**
- * Check if there are any hooks of type @a hookType registered.
+ * Check if there are any hooks of the given @a type registered.
  *
- * @param hookType      Type of hook to check for.
+ * @param type  Hook-type identifier to lookup.
  *
- * @return  @c true, if one or more hooks are available for type @a hookType.
+ * @return  @c true if one or more hooks are registered for given @a type.
  */
 LIBDOOMSDAY_EXTERN_C LIBDOOMSDAY_PUBLIC
-int Plug_CheckForHook(int hookType);
+int Plug_CheckForHook(HookType type);
 
 /**
- * Provides a way for plugins (e.g., games) to notify the engine of
- * important events.
+ * Provides a way for plugins (e.g., games) to notify the engine of important events.
  *
  * @param notification  One of the DD_NOTIFY_* enums.
- * @param param         Additional arguments about the notification,
- *                      depending on the notification type.
+ * @param param         Additional arguments about the notification, depending on the
+ *                      notification type.
  */
 LIBDOOMSDAY_EXTERN_C LIBDOOMSDAY_PUBLIC
 void Plug_Notify(int notification, void *data);
 
-#endif // LIBDOOMSDAY_PLUGINS_H
-
+#endif  // LIBDOOMSDAY_PLUGINS_H

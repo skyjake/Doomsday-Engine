@@ -1,6 +1,5 @@
-/**
- * @file library.h
- * Dynamic libraries. @ingroup base
+/** @file library.h  Dynamic libraries.
+ * @ingroup base
  *
  * These functions provide roughly the same functionality as the ltdl library.
  * Since the ltdl library appears to be broken on Mac OS X, these will be used
@@ -14,8 +13,8 @@
  *
  * @todo Implement and use this class for Windows.
  *
- * @authors Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2009-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -80,17 +79,17 @@ LIBDOOMSDAY_PUBLIC void Library_ReleaseGames(void);
  * that value is returned instead.
  */
 LIBDOOMSDAY_PUBLIC
-int Library_IterateAvailableLibraries(int (*func)(void *libraryFile, const char* fileName,
-                                                  const char* absPath, void* data), void* data);
+int Library_IterateAvailableLibraries(int (*func)(void *libraryFile, char const *fileName,
+                                                  char const *absPath, void *data), void *data);
 
 /**
  * Loads a dynamic library.
  *
  * @param filePath  Absolute path of the library to open.
  */
-LIBDOOMSDAY_PUBLIC Library* Library_New(const char* filePath);
+LIBDOOMSDAY_PUBLIC Library *Library_New(char const *filePath);
 
-LIBDOOMSDAY_PUBLIC void Library_Delete(Library* lib);
+LIBDOOMSDAY_PUBLIC void Library_Delete(Library *lib);
 
 /**
  * Returns the type identifier of the library.
@@ -100,7 +99,7 @@ LIBDOOMSDAY_PUBLIC void Library_Delete(Library* lib);
  *
  * @return Type identifier string, e.g., "deng-plugin/game".
  */
-LIBDOOMSDAY_PUBLIC const char* Library_Type(const Library* lib);
+LIBDOOMSDAY_PUBLIC char const *Library_Type(Library const *lib);
 
 /**
  * Looks up a symbol from the library.
@@ -111,15 +110,15 @@ LIBDOOMSDAY_PUBLIC const char* Library_Type(const Library* lib);
  * @return @c NULL if the symbol is not defined. Otherwise the address of
  * the symbol.
  */
-LIBDOOMSDAY_PUBLIC void* Library_Symbol(Library* lib, const char* symbolName);
+LIBDOOMSDAY_PUBLIC void *Library_Symbol(Library *lib, char const *symbolName);
 
 #ifdef __cplusplus
-} // extern "C"
+}  // extern "C"
 #endif
 
 #ifdef __cplusplus
 #include <de/LibraryFile>
-LIBDOOMSDAY_PUBLIC de::LibraryFile& Library_File(Library* lib);
+LIBDOOMSDAY_PUBLIC de::LibraryFile &Library_File(Library *lib);
 #endif
 
-#endif /* LIBDOOMSDAY_LIBRARY_H */
+#endif  // LIBDOOMSDAY_LIBRARY_H

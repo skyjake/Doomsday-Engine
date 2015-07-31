@@ -358,7 +358,7 @@ dd_bool Demo_ReadPacket()
     {
         Demo_StopPlayback();
         // Any interested parties?
-        DoomsdayApp::plugins().callHooks(HOOK_DEMO_STOP, false, 0);
+        DoomsdayApp::plugins().callAllHooks(HOOK_DEMO_STOP);
         return false;
     }
 
@@ -672,7 +672,7 @@ D_CMD(StopDemo)
         // Aborted.
         Demo_StopPlayback();
         // Any interested parties?
-        DoomsdayApp::plugins().callHooks(HOOK_DEMO_STOP, true, 0);
+        DoomsdayApp::plugins().callAllHooks(HOOK_DEMO_STOP, true);
     }
     else
     {

@@ -1091,7 +1091,7 @@ static dint DD_ActivateGameWorker(void *context)
     if(App_GameLoaded())
     {
         // Any game initialization hooks?
-        plugins.callHooks(HOOK_GAME_INIT, 0, 0);
+        plugins.callAllHooks(HOOK_GAME_INIT);
 
         if(gx.PreInit)
         {
@@ -2021,7 +2021,7 @@ static dint DD_StartupWorker(void * /*context*/)
     Con_SetProgress(10);
 
     // Any startup hooks?
-    DoomsdayApp::plugins().callHooks(HOOK_STARTUP, 0, 0);
+    DoomsdayApp::plugins().callAllHooks(HOOK_STARTUP);
     Con_SetProgress(20);
 
     // Was the change to userdir OK?
@@ -2105,7 +2105,8 @@ static dint DD_StartupWorker(void * /*context*/)
     }
     Con_SetProgress(199);
 
-    DoomsdayApp::plugins().callHooks(HOOK_INIT, 0, 0);  // Any initialization hooks?
+    // Any initialization hooks?
+    DoomsdayApp::plugins().callAllHooks(HOOK_INIT);
     Con_SetProgress(200);
 
 #ifdef WIN32

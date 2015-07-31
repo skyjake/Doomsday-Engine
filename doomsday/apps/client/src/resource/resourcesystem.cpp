@@ -2191,7 +2191,7 @@ DENG2_PIMPL(ResourceSystem)
 
         void runTask()
         {
-            DoomsdayApp::plugins().callHooks(HOOK_SAVEGAME_CONVERT, 0, &parm);
+            DoomsdayApp::plugins().callAllHooks(HOOK_SAVEGAME_CONVERT, 0, &parm);
         }
     };
     TaskPool convertSavegameTasks;

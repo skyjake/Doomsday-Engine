@@ -1,7 +1,7 @@
-/** @file plugins.cpp
+/** @file plugins.cpp  Plugin loader.
  *
  * @authors Copyright © 2003-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -24,9 +24,8 @@
 
 #include <de/findfile.h>
 #include <de/strutil.h>
+#include <QList>
 #include <QThreadStorage>
-
-#define HOOKMASK(x)         ((x) & 0xffffff)
 
 using namespace de;
 
@@ -46,29 +45,48 @@ void initLocalData() {
 QThreadStorage<ThreadState> pluginState; ///< Thread-local plugin state.
 #endif
 
+bool Plugins::Hook::operator == (Hook const &other) const
+{
+    if(!(_pluginId == 0 || other._pluginId == 0))
+    {
+        if(_pluginId != other._pluginId) return false;
+    }
+    return _type == other._type && _function == other._function;
+}
+
+int Plugins::Hook::execute(int parm, void *data) const
+{
+    Plugins &plugins           = DoomsdayApp::plugins();
+    pluginid_t const oldPlugin = plugins.activePluginId();
+
+    plugins.setActivePluginId(_pluginId);
+    int result = _function(_type, parm, data);
+    plugins.setActivePluginId(oldPlugin);
+
+    return result;
+}
+
+pluginid_t Plugins::Hook::pluginId() const
+{
+    return _pluginId;
+}
+
 DENG2_PIMPL_NOREF(Plugins)
 {
     GETGAMEAPI getGameAPI = nullptr;
     game_export_t gameExports;
 
-    struct hookreg_t {
-        int exclude;
-        struct {
-            hookfunc_t func;
-            pluginid_t pluginId;
-        } list[MAX_HOOKS]; /// @todo Remove arbitrary MAX_HOOKS.
-    };
-
     typedef ::Library *PluginHandle;
 
-    ::Library *hInstPlug[MAX_PLUGS]; /// @todo Remove arbitrary MAX_PLUGS.
-    hookreg_t hooks[NUM_HOOK_TYPES];
+    ::Library *hInstPlug[MAX_PLUGS];  ///< @todo Remove arbitrary MAX_PLUGS.
+
+    typedef QList<Hook> HookRegister;
+    HookRegister hooks[NUM_HOOK_TYPES];
 
     Instance()
     {
         zap(gameExports);
         zap(hInstPlug);
-        zap(hooks);
     }
 
     PluginHandle *findFirstUnusedPluginHandle()
@@ -80,16 +98,16 @@ DENG2_PIMPL_NOREF(Plugins)
                 return &hInstPlug[i];
             }
         }
-        return 0; // none available
+        return nullptr;  // none available.
     }
 
     static int loadPlugin(void * /*libraryFile*/, char const *fileName,
                           char const *pluginPath, void *dptr)
     {
-        Instance *d = (Instance *) dptr;
+        auto *d = (Instance *) dptr;
         typedef void (*PluginInitializer)(void);
 
-        DENG_UNUSED(fileName);
+        DENG2_UNUSED(fileName);
         DENG2_ASSERT(fileName != 0 && fileName[0]);
         DENG2_ASSERT(pluginPath != 0 && pluginPath[0]);
 
@@ -111,7 +129,7 @@ DENG2_PIMPL_NOREF(Plugins)
             }
 #endif
             LOG_RES_WARNING("Failed to load \"%s\": %s") << pluginPath << Library_LastError();
-            return 0; // Continue iteration.
+            return 0;  // Continue iteration.
         }
 
         if(!strcmp(Library_Type(plugin), "deng-plugin/audio"))
@@ -129,19 +147,19 @@ DENG2_PIMPL_NOREF(Plugins)
 
             // Clearly not a Doomsday plugin.
             Library_Delete(plugin);
-            return 0; // Continue iteration.
+            return 0;  // Continue iteration.
         }
 
         // Assign a handle and ID to the plugin.
-        PluginHandle *handle = d->findFirstUnusedPluginHandle();
-        pluginid_t plugId    = handle - d->hInstPlug + 1;
+        PluginHandle *handle    = d->findFirstUnusedPluginHandle();
+        pluginid_t const plugId = handle - d->hInstPlug + 1;
         if(!handle)
         {
             LOG_RES_WARNING("Cannot load \"%s\": too many plugins loaded already loaded")
                     << pluginPath;
 
             Library_Delete(plugin);
-            return 0; // Continue iteration.
+            return 0;  // Continue iteration.
         }
 
         // This seems to be a Doomsday plugin.
@@ -154,16 +172,16 @@ DENG2_PIMPL_NOREF(Plugins)
         initializer();
         d->setActivePluginId(0);
 
-        return 0; // Continue iteration.
+        return 0;  // Continue iteration.
     }
 
     bool unloadPlugin(PluginHandle *handle)
     {
-        DENG2_ASSERT(handle != 0);
+        DENG2_ASSERT(handle != nullptr);
         if(!*handle) return false;
 
         Library_Delete(*handle);
-        *handle = 0;
+        *handle = nullptr;
         return true;
     }
 
@@ -213,45 +231,6 @@ void Plugins::notify(int notification, void *data)
     }
 }
 
-bool Plugins::exchangeGameEntryPoints(pluginid_t pluginId)
-{
-    zap(d->gameExports);
-
-    if(pluginId != 0)
-    {
-        // Do the API transfer.
-        if(!(d->getGameAPI = (GETGAMEAPI) findEntryPoint(pluginId, "GetGameAPI")))
-        {
-            return false;
-        }
-
-        game_export_t *gameExPtr = d->getGameAPI();
-        std::memcpy(&d->gameExports, gameExPtr, MIN_OF(sizeof(d->gameExports), gameExPtr->apiSize));
-    }
-    else
-    {
-        d->getGameAPI = nullptr;
-    }
-    P_GetGameActions();
-    XG_GetGameClasses();
-    return true;
-}
-
-game_export_t &Plugins::gameExports() const
-{
-    return d->gameExports;
-}
-
-pluginid_t Plugins::activePluginId() const
-{
-    return d->activePluginId();
-}
-
-void Plugins::setActivePluginId(pluginid_t id)
-{
-    d->setActivePluginId(id);
-}
-
 void Plugins::loadAll()
 {
     LOG_RES_VERBOSE("Initializing plugins...");
@@ -267,115 +246,20 @@ void Plugins::unloadAll()
     }
 }
 
+pluginid_t Plugins::activePluginId() const
+{
+    return d->activePluginId();
+}
+
+void Plugins::setActivePluginId(pluginid_t id)
+{
+    d->setActivePluginId(id);
+}
+
 LibraryFile const &Plugins::fileForPlugin(pluginid_t id) const
 {
     DENG2_ASSERT(id > 0 && id <= MAX_PLUGS);
     return Library_File(d->hInstPlug[id - 1]);
-}
-
-bool Plugins::addHook(int hookType, hookfunc_t hook)
-{
-    int const type = HOOKMASK(hookType);
-
-    // The current plugin must be set before calling this. The engine has the
-    // responsibility to call DD_SetActivePluginId() whenever it passes control
-    // to a plugin, and then set it back to zero after it gets control back.
-    DENG2_ASSERT(d->activePluginId() != 0);
-
-    // The type must be good.
-    if(type < 0 || type >= NUM_HOOK_TYPES)
-        return false;
-
-    // Exclusive hooks.
-    if(hookType & HOOKF_EXCLUSIVE)
-    {
-        d->hooks[type].exclude = true;
-        std::memset(d->hooks[type].list, 0, sizeof(d->hooks[type].list));
-    }
-    else if(d->hooks[type].exclude)
-    {
-        // An exclusive hook has closed down this list.
-        return false;
-    }
-
-    int i;
-    for(i = 0; i < MAX_HOOKS && d->hooks[type].list[i].func; ++i) {}
-
-    if(i == MAX_HOOKS)
-        return false; // No more hooks allowed!
-
-    // Add the hook. If the plugin is unidentified the ID will be zero.
-    d->hooks[type].list[i].func     = hook;
-    d->hooks[type].list[i].pluginId = d->activePluginId();
-    return true;
-}
-
-bool Plugins::removeHook(int hookType, hookfunc_t hook)
-{
-    int const type = HOOKMASK(hookType);
-
-    // The type must be good.
-    if(type < 0 || type >= NUM_HOOK_TYPES)
-        return false;
-
-    for(int i = 0; i < MAX_HOOKS; ++i)
-    {
-        if(d->hooks[type].list[i].func != hook)
-            continue;
-
-        d->hooks[type].list[i].func     = 0;
-        d->hooks[type].list[i].pluginId = 0;
-        if(hookType & HOOKF_EXCLUSIVE)
-        {
-            // Exclusive hook removed; allow normal hooks.
-            d->hooks[type].exclude = false;
-        }
-        return true;
-    }
-    return false;
-}
-
-bool Plugins::checkForHook(int hookType) const
-{
-    for(int i = 0; i < MAX_HOOKS; ++i)
-    {
-        if(d->hooks[hookType].list[i].func)
-            return true;
-    }
-    return false;
-}
-
-int Plugins::callHooks(int hookType, int parm, void *data)
-{
-    int ret = 0;
-    bool allGood = true;
-    pluginid_t oldPlugin = activePluginId();
-
-    // Try all the hooks.
-    for(int i = 0; i < MAX_HOOKS; ++i)
-    {
-        if(!d->hooks[hookType].list[i].func)
-            continue;
-
-        setActivePluginId(d->hooks[hookType].list[i].pluginId);
-
-        if(d->hooks[hookType].list[i].func(hookType, parm, data))
-        {
-            // One hook executed; return nonzero from this routine.
-            ret = 1;
-        }
-        else
-        {
-            allGood = false;
-        }
-    }
-
-    setActivePluginId(oldPlugin);
-
-    if(ret && allGood)
-        ret |= 2;
-
-    return ret;
 }
 
 void *Plugins::findEntryPoint(pluginid_t pluginId, char const *fn) const
@@ -392,6 +276,107 @@ void *Plugins::findEntryPoint(pluginid_t pluginId, char const *fn) const
     return addr;
 }
 
+bool Plugins::exchangeGameEntryPoints(pluginid_t pluginId)
+{
+    zap(d->gameExports);
+
+    if(pluginId != 0)
+    {
+        // Do the API transfer.
+        if(!(d->getGameAPI = (GETGAMEAPI) findEntryPoint(pluginId, "GetGameAPI")))
+        {
+            return false;
+        }
+
+        game_export_t *gameExPtr = d->getGameAPI();
+        std::memcpy(&d->gameExports, gameExPtr, de::min(sizeof(d->gameExports), gameExPtr->apiSize));
+    }
+    else
+    {
+        d->getGameAPI = nullptr;
+    }
+    P_GetGameActions();
+    XG_GetGameClasses();
+    return true;
+}
+
+game_export_t &Plugins::gameExports() const
+{
+    return d->gameExports;
+}
+
+bool Plugins::hasHook(HookType type) const
+{
+    DENG2_ASSERT(type >= 0 && type < NUM_HOOK_TYPES);
+    return !d->hooks[type].isEmpty();
+}
+
+void Plugins::addHook(HookType type, hookfunc_t function)
+{
+    DENG2_ASSERT(type >= 0 && type < NUM_HOOK_TYPES);
+
+    // The current plugin must be set before calling this. The engine has the
+    // responsibility to call setActivePluginId() whenever it passes control
+    // to a plugin, and then set it back to zero after it gets control back.
+    DENG2_ASSERT(d->activePluginId() != 0);
+
+    if(function)
+    {
+        // Add the hook. If the plugin is unidentified the ID will be zero.
+        Hook temp;
+        temp._type     = type;
+        temp._function = function;
+        temp._pluginId = d->activePluginId();
+        if(!d->hooks[type].contains(temp))
+        {
+            d->hooks[type].append(temp);  // a copy is made.
+        }
+    }
+}
+
+bool Plugins::removeHook(HookType type, hookfunc_t function)
+{
+    DENG2_ASSERT(type >= 0 && type < NUM_HOOK_TYPES);
+    if(function)
+    {
+        Hook temp;
+        temp._type     = type;
+        temp._pluginId = 0/*invalid Id - i.e., match any*/;
+        temp._function = function;
+        return d->hooks[type].removeOne(temp);
+    }
+    return false;
+}
+
+LoopResult Plugins::forAllHooks(HookType type, std::function<de::LoopResult (Hook const &)> func) const
+{
+    for(Hook const &hook : d->hooks[type])
+    {
+        if(auto result = func(hook))
+            return result;
+    }
+    return LoopContinue;
+}
+
+int Plugins::callAllHooks(HookType type, int parm, void *data)
+{
+    // Try all the hooks.
+    int results = 2;  // Assume all good.
+    forAllHooks(type, [&parm, &data, &results] (Hook const &hook)
+    {
+        if(hook.execute(parm, data))
+        {
+            results |= 1;   // One success.
+        }
+        else
+        {
+            results &= ~2;  // One failure.
+        }
+        return LoopContinue;
+    });
+    return (results & 1) ? results : 0;
+}
+
 // C wrapper -----------------------------------------------------------------
 
 void Plug_Notify(int notification, void *data)
@@ -399,17 +384,18 @@ void Plug_Notify(int notification, void *data)
     DoomsdayApp::plugins().notify(notification, data);
 }
 
-int Plug_AddHook(int hookType, hookfunc_t hook)
+int Plug_AddHook(HookType type, hookfunc_t function)
 {
-    return DoomsdayApp::plugins().addHook(hookType, hook);
+    DoomsdayApp::plugins().addHook(type, function);
+    return true;
 }
 
-int Plug_RemoveHook(int hookType, hookfunc_t hook)
+int Plug_RemoveHook(HookType type, hookfunc_t function)
 {
-    return DoomsdayApp::plugins().removeHook(hookType, hook);
+    return DoomsdayApp::plugins().removeHook(type, function);
 }
 
-int Plug_CheckForHook(int hookType)
+int Plug_CheckForHook(HookType type)
 {
-    return DoomsdayApp::plugins().checkForHook(hookType);
+    return DoomsdayApp::plugins().hasHook(type);
 }

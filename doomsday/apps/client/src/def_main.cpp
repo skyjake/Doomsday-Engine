@@ -472,7 +472,7 @@ static void translateMapInfos(QStringList const &mapInfoUrns, String &xlat, Stri
     try
     {
         Str_Set(&parm.paths, delimitedPaths.toUtf8().constData());
-        if(DoomsdayApp::plugins().callHooks(HOOK_MAPINFO_CONVERT, 0, &parm))
+        if(DoomsdayApp::plugins().callAllHooks(HOOK_MAPINFO_CONVERT, 0, &parm))
         {
             xlat       = Str_Text(&parm.translated);
             xlatCustom = Str_Text(&parm.translatedCustom);
@@ -1157,7 +1157,7 @@ void Def_Read()
     readAllDefinitions();
 
     // Any definition hooks?
-    DoomsdayApp::plugins().callHooks(HOOK_DEFS, 0, &defs);
+    DoomsdayApp::plugins().callAllHooks(HOOK_DEFS, 0, &defs);
 
 #ifdef __CLIENT__
     // Composite fonts.

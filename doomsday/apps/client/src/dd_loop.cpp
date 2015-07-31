@@ -250,7 +250,7 @@ static void baseTicker(timespan_t time)
     }
 
     // Plugins tick always.
-    DoomsdayApp::plugins().callHooks(HOOK_TICKER, 0, &time);
+    DoomsdayApp::plugins().callAllHooks(HOOK_TICKER, 0, &time);
 
     // The netcode gets to tick, too.
     Net_Ticker(time);
