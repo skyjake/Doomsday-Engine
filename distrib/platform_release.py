@@ -163,7 +163,7 @@ def win_release():
     
 
 def linux_release():
-    cmake_release('-j4', ['*.deb', '*.rpm'])
+    cmake_release('-j`nproc`', ['*.deb', '*.rpm'])
     
 
 def linux_release_dpkg():
