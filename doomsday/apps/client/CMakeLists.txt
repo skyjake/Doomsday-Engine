@@ -151,7 +151,7 @@ if (MSVC)
     set (fn ${CMAKE_BINARY_DIR}/deployqt.bat)
     file (WRITE ${fn}
         "set PATH=\"${qtBins}\";%PATH%
-        \"${winDepCmd}\" -opengl --no-compiler-runtime --no-translations \"${DENG_VS_STAGING_DIR}/%1/bin\""
+        \"${winDepCmd}\" -opengl --no-compiler-runtime --no-translations \"${DENG_VS_STAGING_DIR}/%1/bin/doomsday.exe\""
     )
     add_custom_command (TARGET client POST_BUILD COMMAND ${fn} ${CMAKE_CFG_INTDIR})
 endif ()
