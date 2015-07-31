@@ -101,6 +101,12 @@ typedef struct {
     char const *weaponId;   ///< Defined in Values (includes power-ups) (UTF-8).
 } ddnotify_player_weapon_changed_t;
 
+/// Parameters for DD_NOTIFY_PSPRITE_STATE_CHANGED
+typedef struct {
+    int player;
+    struct state_s const *state;
+} ddnotify_psprite_state_changed_t;
+
 #ifdef __cplusplus
 
 #include <de/Observers>

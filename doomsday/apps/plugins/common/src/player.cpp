@@ -1849,6 +1849,17 @@ void Player_PostTick(player_t *player)
     }
 }
 
+void Player_NotifyPSpriteChange(player_t *player, int position)
+{
+    if(position == ps_weapon)
+    {
+        ddnotify_psprite_state_changed_t args;
+        args.player = player - players;
+        args.state  = player->pSprites[position].state;
+        Plug_Notify(DD_NOTIFY_PSPRITE_STATE_CHANGED, &args);
+    }
+}
+
 /**
  * Updates game status cvars for the specified player.
  */

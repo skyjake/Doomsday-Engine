@@ -106,7 +106,7 @@ enum {
     DD_SHARED_FIXED_TRIGGER_OBSOLETE, ///< obsolete
     DD_GAMETIC,
     DD_NOTIFY_PLAYER_WEAPON_CHANGED, ///< a player's weapon changed (including powerups)
-    DD_UNUSED6, // DD_OPENTOP
+    DD_NOTIFY_PSPRITE_STATE_CHANGED, ///< a player's psprite state has changed
     DD_UNUSED7, // DD_OPENBOTTOM
     DD_UNUSED8, // DD_LOWFLOOR
     DD_CPLAYER_THRUST_MUL_OBSOLETE, ///< obsolete
