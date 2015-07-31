@@ -51,6 +51,7 @@
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/widgets/consolewidget.h"
 #include "ui/widgets/gameselectionwidget.h"
+#include "ui/widgets/privilegedlogwidget.h"
 #include "ui/dialogs/coloradjustmentdialog.h"
 #include "ui/dialogs/alertdialog.h"
 #include "ui/inputdevice.h"
@@ -96,7 +97,8 @@ DENG2_PIMPL(ClientWindow)
     GuiWidget *iwadNotice = nullptr;
     GameSelectionWidget *gameSelMenu = nullptr;
     BusyWidget *busy = nullptr;
-    GuiWidget *sidebar = nullptr;
+    GuiWidget *sidebar = nullptr;    
+    PrivilegedLogWidget *privLog = nullptr;
     LabelWidget *cursor = nullptr;
     ConstantRule *cursorX;
     ConstantRule *cursorY;
@@ -286,6 +288,11 @@ DENG2_PIMPL(ClientWindow)
                 .setInput(Rule::AnchorY, gameSelMenu->filter().rule().height() + availHeight / 2)
                 .setInput(Rule::Height,  OperatorRule::minimum(availHeight,
                         gameSelMenu->contentRule().height() + gameSelMenu->margins().height()));
+
+        // Privileged work-in-progress log.
+        privLog = new PrivilegedLogWidget;
+        privLog->rule().setRect(root.viewRule());
+        container().add(privLog);
 
         // Color adjustment dialog.
         colorAdjust = new ColorAdjustmentDialog;
@@ -687,6 +694,7 @@ DENG2_PIMPL(ClientWindow)
         container().remove(*notifications);
         container().remove(*taskBarBlur);
         container().remove(*taskBar);
+        container().remove(*privLog);
         container().remove(*cursor);
 
         Widget::Children additional;
@@ -735,6 +743,7 @@ DENG2_PIMPL(ClientWindow)
         container().add(notifications);
         container().add(taskBarBlur);
         container().add(taskBar);
+        container().add(privLog);
 
         // Also the other widgets.
         foreach(Widget *w, additional)
