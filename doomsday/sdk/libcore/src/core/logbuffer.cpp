@@ -194,6 +194,7 @@ bool LogBuffer::isEnabled(duint32 entryMetadata) const
 {
     DENG2_ASSERT(d->entryFilter != 0);
     DENG2_ASSERT(entryMetadata & LogEntry::DomainMask); // must have a domain
+    if(entryMetadata & LogEntry::Privileged) return true; // always passes
     return d->entryFilter->isLogEntryAllowed(entryMetadata);
 }
 

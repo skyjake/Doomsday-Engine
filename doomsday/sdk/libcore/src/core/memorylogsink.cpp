@@ -20,7 +20,9 @@
 
 namespace de {
 
-MemoryLogSink::MemoryLogSink(LogEntry::Level minimumLevel) : _minLevel(minimumLevel)
+MemoryLogSink::MemoryLogSink(LogEntry::Level minimumLevel)
+    : _minLevel(minimumLevel)
+    , _privileged(false)
 {}
 
 MemoryLogSink::~MemoryLogSink()
@@ -28,6 +30,11 @@ MemoryLogSink::~MemoryLogSink()
     DENG2_GUARD(this);
 
     qDeleteAll(_entries);
+}
+
+void MemoryLogSink::setPrivileged(bool onlyPrivileged)
+{
+    _privileged = onlyPrivileged;
 }
 
 void MemoryLogSink::clear()
@@ -40,6 +47,13 @@ void MemoryLogSink::clear()
 
 LogSink &MemoryLogSink::operator << (LogEntry const &entry)
 {
+    if((!_privileged &&  (entry.context() & LogEntry::Privileged)) ||
+        (_privileged && !(entry.context() & LogEntry::Privileged)))
+    {
+        // Skip (non-)privileged entry.
+        return *this;
+    }
+
     if(entry.level() >= _minLevel)
     {
         DENG2_GUARD(this);

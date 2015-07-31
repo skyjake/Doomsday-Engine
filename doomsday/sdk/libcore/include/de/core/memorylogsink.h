@@ -36,6 +36,8 @@ public:
     MemoryLogSink(LogEntry::Level minimumLevel = LogEntry::XVerbose);
     ~MemoryLogSink();
 
+    void setPrivileged(bool onlyPrivileged);
+
     LogSink &operator << (LogEntry const &entry);
     LogSink &operator << (String const &plainText);
 
@@ -57,6 +59,7 @@ protected:
 private:
     QList<LogEntry *> _entries;
     LogEntry::Level _minLevel;
+    bool _privileged;
 };
 
 } // namespace de

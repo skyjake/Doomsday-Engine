@@ -804,6 +804,11 @@ void LogWidget::setLogFormatter(LogSink::IFormatter &formatter)
     d->formatter = &formatter;
 }
 
+void LogWidget::setPrivilegedEntries(bool onlyPrivileged)
+{
+    d->sink.setPrivileged(onlyPrivileged);
+}
+
 LogSink &LogWidget::logSink()
 {
     return d->sink;

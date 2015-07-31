@@ -80,6 +80,8 @@
 #define LOGDEV_WARNING(str)             LOGDEV_AT_LEVEL(de::LogEntry::Warning,  str)
 #define LOGDEV_ERROR(str)               LOGDEV_AT_LEVEL(de::LogEntry::Error,    str)
 
+#define LOG_WIP(str)                    LOG_AT_LEVEL(de::LogEntry::Privileged | de::LogEntry::Note, str)
+
 // Custom combination of audiences
 #define LOG_XVERBOSE_TO(audflags, str)  LOG_AT_LEVEL((audflags) | de::LogEntry::XVerbose, str)
 #define LOG_VERBOSE_TO(audflags, str)   LOG_AT_LEVEL((audflags) | de::LogEntry::Verbose,  str)
@@ -288,13 +290,17 @@ public:
         Network  = (1 << NetworkBit),   ///< Network domain: connections, packets, etc.
 
         // User groups
-        Dev      = 0x8000000,           /**< Native code developer (i.e., the programmer); can be
+        Dev         = 0x08000000,       /**< Native code developer (i.e., the programmer); can be
                                              combined with other flags to mark the entry for devs.
                                              If bit is not set, the entry is for the end-user. */
+        Privileged  = 0x04000000,       /**< Work in progress. Entries with this flag are shown
+                                             regardless of log filtering, in a separate overlay.
+                                             Use this for whatever you are currently working on
+                                             (so there is no need to rely on qDebug). */
 
-        AllDomains  = 0xff0000,
+        AllDomains  = 0x00ff0000,
         DomainMask  = AllDomains,
-        ContextMask = 0xfff0000
+        ContextMask = 0x0fff0000
     };
 
     static String contextToText(duint32 context)
