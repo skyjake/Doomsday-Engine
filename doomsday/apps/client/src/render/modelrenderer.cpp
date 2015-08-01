@@ -63,7 +63,7 @@ DENG2_PIMPL(ModelRenderer)
     Instance(Public *i) : Base(i)
     {
         observer.audienceForAvailability() += this;
-        bank.audienceForLoad() += this;        
+        bank.audienceForLoad() += this;
     }
 
     void init()
@@ -300,7 +300,7 @@ ModelRenderer::StateAnims const *ModelRenderer::animations(DotPath const &modelI
 void ModelRenderer::setTransformation(Vector3f const &relativeEyePos,
                                       Matrix4f const &modelToLocal,
                                       Matrix4f const &localToView)
-{   
+{
     d->uMvpMatrix   = localToView * modelToLocal;
     d->inverseLocal = modelToLocal.inverse();
     d->uEyePos      = d->inverseLocal * relativeEyePos;
@@ -384,6 +384,22 @@ void ModelRenderer::render(vissprite_t const &spr)
     // Draw the model using the current animation state.
     p.model->draw(p.animator);
 
+    GLState::pop();
+
+    /// @todo Something is interfering with the cull setting elsewhere (remove this).
+    GLState::current().setCull(gl::Back).apply();
+}
+
+void ModelRenderer::render(vispsprite_t const &pspr)
+{
+    auto const &p = pspr.data.model2;
+
+    Matrix4f modelToLocal = pspr.data.model2.modelTransform;
+    Matrix4f localToView = GL_GetProjectionMatrix();
+    setTransformation(Vector3f(), modelToLocal, localToView);
+
+    GLState::push().setCull(p.cullFace);
+    p.model->draw(p.animator);
     GLState::pop();
 
     /// @todo Something is interfering with the cull setting elsewhere (remove this).

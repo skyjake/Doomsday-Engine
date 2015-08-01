@@ -28,6 +28,7 @@
 #include "clientapp.h"
 
 #include "render/billboard.h"
+#include "render/modelrenderer.h"
 #include "render/rend_main.h"
 #include "render/rend_model.h"
 #include "render/vissprite.h"
@@ -302,7 +303,8 @@ void Rend_Draw3DPlayerSprites()
     for(vispsprite_t const &spr : visPSprites)
     {
         // We are only interested in models (sprites are handled elsewhere).
-        if(spr.type != VPSPR_MODEL) continue;
+        if(spr.type != VPSPR_MODEL &&
+           spr.type != VPSPR_MODEL2) continue;
 
         if(altDepth.init())
         {
@@ -310,8 +312,15 @@ void Rend_Draw3DPlayerSprites()
             altDepth.target().clear(GLTarget::DepthStencil);
         }
 
-        vissprite_t vs; de::zap(vs);
-        setupModelParamsForVisPSprite(vs, spr);
-        Rend_DrawModel(vs);
+        if(spr.type == VPSPR_MODEL)
+        {
+            vissprite_t vs; de::zap(vs);
+            setupModelParamsForVisPSprite(vs, spr);
+            Rend_DrawModel(vs);
+        }
+        else
+        {
+            ClientApp::renderSystem().modelRenderer().render(spr);
+        }
     }
 }

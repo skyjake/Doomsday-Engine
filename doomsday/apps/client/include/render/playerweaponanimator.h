@@ -38,7 +38,16 @@ public:
 
     void stateChanged(state_t const *state);
 
+    /**
+     * Determines if a 3D model has been found and is ready to be rendered.
+     */
+    bool hasModel() const;
+
+    de::ModelDrawable const *model() const;
+
     MobjAnimator &animator();
+
+    void setupVisPSprite(vispsprite_t &spr) const;
 
     void advanceTime(de::TimeDelta const &elapsed);
 

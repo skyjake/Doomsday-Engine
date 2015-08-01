@@ -80,8 +80,20 @@ void PlayerWeaponAnimator::stateChanged(state_t const *state)
 
 MobjAnimator &PlayerWeaponAnimator::animator()
 {
-    DENG2_ASSERT(bool(d->animator));
+    DENG2_ASSERT(hasModel());
     return *d->animator;
+}
+
+void PlayerWeaponAnimator::setupVisPSprite(vispsprite_t &spr) const
+{
+    DENG2_ASSERT(hasModel());
+
+    spr.type = VPSPR_MODEL2;
+    spr.data.model2.model = model();
+    spr.data.model2.animator = d->animator.get();
+    spr.data.model2.cullFace = d->cullFace;
+    ByteRefArray(spr.data.model2.modelTransform, sizeof(Matrix4f))
+            .set(0, (dbyte const *) d->transform.values(), sizeof(Matrix4f));
 }
 
 void PlayerWeaponAnimator::advanceTime(const TimeDelta &elapsed)
@@ -90,4 +102,15 @@ void PlayerWeaponAnimator::advanceTime(const TimeDelta &elapsed)
     {
         d->animator->advanceTime(elapsed);
     }
+}
+
+bool PlayerWeaponAnimator::hasModel() const
+{
+    return bool(d->animator);
+}
+
+ModelDrawable const *PlayerWeaponAnimator::model() const
+{
+    if(!hasModel()) return nullptr;
+    return &d->animator->model();
 }

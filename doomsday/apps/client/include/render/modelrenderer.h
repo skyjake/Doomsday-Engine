@@ -102,6 +102,13 @@ public:
      */
     void render(vissprite_t const &spr);
 
+    /**
+     * Render a GL2 model representing a psprite.
+     *
+     * @param pspr  Parameters for the draw operation (as a vispsprite).
+     */
+    void render(vispsprite_t const &pspr);
+
 public:
     static int identifierFromText(de::String const &text,
                            std::function<int (de::String const &)> resolver);

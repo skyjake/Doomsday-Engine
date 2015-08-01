@@ -41,6 +41,7 @@
 #include "render/fx/bloom.h"
 #include "render/angleclipper.h"
 #include "render/cameralensfx.h"
+#include "render/playerweaponanimator.h"
 #include "render/rendpoly.h"
 #include "render/skydrawable.h"
 #include "render/vissprite.h"
@@ -780,14 +781,22 @@ static void setupPlayerSprites()
         dfloat inter = 0;
         if(useModels)
         {
-            // Is there a model for this frame?
-            MobjThinker dummy;
+            if(viewPlayer->playerWeaponAnimator().hasModel())
+            {
+                viewPlayer->playerWeaponAnimator().setupVisPSprite(*spr);
+                continue;
+            }
+            else
+            {
+                // Is there a model for this frame?
+                MobjThinker dummy;
 
-            // Setup a dummy for the call to R_CheckModelFor.
-            dummy->state = spr->psp->statePtr;
-            dummy->tics  = spr->psp->tics;
+                // Setup a dummy for the call to R_CheckModelFor.
+                dummy->state = spr->psp->statePtr;
+                dummy->tics  = spr->psp->tics;
 
-            mf = Mobj_ModelDef(dummy, &nextmf, &inter);
+                mf = Mobj_ModelDef(dummy, &nextmf, &inter);
+            }
         }
 
         // Use a 3D model?
