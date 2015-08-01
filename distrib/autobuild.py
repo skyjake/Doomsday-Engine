@@ -40,6 +40,14 @@ def create_build_event():
     # Prepare the build directory.
     ev = builder.Event(todaysBuild)
     ev.clean()
+    
+    # Save the version number and release type.
+    import build_version
+    build_version.find_version(quiet=True)
+    print >> file(ev.file_path('version.txt'), 'wt'), \
+        build_version.DOOMSDAY_VERSION_FULL
+    print >> file(ev.file_path('releaseType.txt'), 'wt'), \
+        build_version.DOOMSDAY_RELEASE_TYPE        
 
     update_changes()
     
@@ -106,17 +114,40 @@ def publish_packages():
     
 
 def find_previous_tag(toTag, version):
-    builds = builder.events_by_time()
-    #print [(e[1].number(), e[1].timestamp()) for e in builds]
-    i = 0
-    while i < len(builds):
-        ev = builds[i][1]
-        print ev.tag(), ev.version(), ev.timestamp()
-        if ev.tag() != toTag and (ev.version() is None or version is None or
-                                  ev.version().startswith(version)):
-            # This is good.
+    """Finds the build tag preceding `toTag`.
+    
+    Arguments:
+        toTag:   Build tag ("buildNNNN").
+        version: The preceding build tag must be from this version, 
+                 comparing only major and minor version components.
+                 Set to None to omit comparisons based on version.                 
+    Returns:
+        Build tag ("buildNNNN"). 
+        None, if there is no applicable previous build. 
+    """
+    builds = builder.events_by_time() # descending by timestamp
+    
+    print "Finding previous build for %s (version:%s)" % (toTag, version)
+         
+    # Disregard builds later than `toTag`.
+    while len(builds) and builds[0][1].tag() != toTag:
+        del builds[0]
+    if len(builds): del builds[0] # == toTag        
+    if len(builds) == 0:
+        return None
+    
+    for timestamp, ev in builds:
+        print ev.tag(), ev.version(), time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(ev.timestamp()))
+        
+        if version is None:
+            # Anything goes.
             return ev.tag()
-        i += 1
+        else:
+            requiredVer = version_split(version)
+            eventVer = version_split(ev.version())
+            if requiredVer[:2] == eventVer[:2]:
+                return ev.tag()            
+        
     # Nothing suitable found. Fall back to a more lax search.
     return find_previous_tag(toTag, None)
 
@@ -128,10 +159,13 @@ def update_changes(debChanges=False):
     toTag = todays_build_tag()
 
     import build_version
-    build_version.find_version(quiet=True)
+
+    # Look up the relevant version.
+    event = builder.Event(toTag)
+    refVersion = event.version()
 
     # Let's find the previous event of this version.
-    fromTag = find_previous_tag(toTag, build_version.DOOMSDAY_VERSION_FULL_PLAIN)
+    fromTag = find_previous_tag(toTag, refVersion)
     
     if fromTag is None or toTag is None:
         # Range not defined.
@@ -156,12 +190,6 @@ def update_changes(debChanges=False):
         os.system('dch --release ""')
 
     else:
-        # Save version information.
-        print >> file(builder.Event(toTag).file_path('version.txt'), 'wt'), \
-            build_version.DOOMSDAY_VERSION_FULL        
-        print >> file(builder.Event(toTag).file_path('releaseType.txt'), 'wt'), \
-            build_version.DOOMSDAY_RELEASE_TYPE
-        
         changes.generate('html')
         changes.generate('xml')
            
