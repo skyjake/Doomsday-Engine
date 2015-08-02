@@ -118,7 +118,7 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs
     }
     else
     {
-        DENG2_ASSERT(vs.data.sprite.bspLeaf);
+        DENG2_ASSERT(vs.bspLeaf);
         Map const &map = worldSys().map();
 
         if(useBias && map.hasLightGrid())
@@ -136,7 +136,7 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs
         }
         else
         {
-            Vector4f const color = vs.data.sprite.bspLeaf->subspace().cluster().lightSourceColorfIntensity();
+            Vector4f const color = vs.bspLeaf->subspace().cluster().lightSourceColorfIntensity();
 
             // No need for distance attentuation.
             dfloat lightLevel = color.w;
@@ -159,7 +159,7 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs
 
         parm.vLightListIdx =
                 Rend_CollectAffectingLights(vs.origin, Vector3f(parm.ambientColor),
-                                            vs.data.sprite.bspLeaf->subspacePtr());
+                                            vs.bspLeaf->subspacePtr());
     }
 }
 
@@ -247,46 +247,7 @@ static void setupModelParamsForVisPSprite(vissprite_t &vis, vispsprite_t const &
     }
     else
     {
-        Map &map = ClientApp::worldSystem().map();
-
-        if(useBias && map.hasLightGrid())
-        {
-            Vector4f color = map.lightGrid().evaluate(vis.pose.origin);
-            // Apply light range compression.
-            for(dint i = 0; i < 3; ++i)
-            {
-                color[i] += Rend_LightAdaptationDelta(color[i]);
-            }
-            vis.light.ambientColor.x = color.x;
-            vis.light.ambientColor.y = color.y;
-            vis.light.ambientColor.z = color.z;
-        }
-        else
-        {
-            Vector4f const color = spr.data.model.bspLeaf->subspace().cluster().lightSourceColorfIntensity();
-
-            // No need for distance attentuation.
-            dfloat lightLevel = color.w;
-
-            // Add extra light.
-            lightLevel += Rend_ExtraLightDelta();
-
-            // The last step is to compress the resultant light value by
-            // the global lighting function.
-            Rend_ApplyLightAdaptation(lightLevel);
-
-            // Determine the final ambientColor.
-            for(dint i = 0; i < 3; ++i)
-            {
-                vis.light.ambientColor[i] = lightLevel * color[i];
-            }
-        }
-        Rend_ApplyTorchLight(vis.light.ambientColor, vis.pose.distance);
-
-        vis.light.vLightListIdx =
-                Rend_CollectAffectingLights(spr.origin, vis.light.ambientColor,
-                                            spr.data.model.bspLeaf->subspacePtr(),
-                                            true /*stark world light*/);
+        vis.light.setupLighting(vis.pose.origin, vis.pose.distance, *spr.bspLeaf);
     }
 }
 
@@ -320,7 +281,10 @@ void Rend_Draw3DPlayerSprites()
         }
         else
         {
-            ClientApp::renderSystem().modelRenderer().render(spr);
+            vispsprite_t lit = spr;
+            /// @todo Apply the origin offset here and when rendering.
+            lit.light.setupLighting(spr.origin + Vector3d(0, 0, -10), -10, *spr.bspLeaf);
+            ClientApp::renderSystem().modelRenderer().render(lit);
         }
     }
 }

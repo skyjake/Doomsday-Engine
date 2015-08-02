@@ -22,6 +22,11 @@
 
 #include "de_base.h"
 #include "render/vissprite.h"
+#include "render/lightgrid.h"
+#include "world/map.h"
+#include "world/bspleaf.h"
+#include "world/convexsubspace.h"
+#include "clientapp.h"
 
 using namespace de;
 
@@ -160,4 +165,51 @@ void R_SortVisSprites()
         visSprSortedHead.prev->next = best;
         visSprSortedHead.prev = best;
     }
+}
+
+void VisEntityLighting::setupLighting(de::Vector3d const &origin, coord_t distance,
+                                      BspLeaf const &bspLeaf)
+{
+    Map &map = ClientApp::worldSystem().map();
+
+    if(useBias && map.hasLightGrid())
+    {
+        Vector4f color = map.lightGrid().evaluate(origin);
+
+        // Apply light range compression.
+        for(dint i = 0; i < 3; ++i)
+        {
+            color[i] += Rend_LightAdaptationDelta(color[i]);
+        }
+
+        ambientColor.x = color.x;
+        ambientColor.y = color.y;
+        ambientColor.z = color.z;
+    }
+    else
+    {
+        Vector4f const color = bspLeaf.subspace().cluster().lightSourceColorfIntensity();
+
+        // No need for distance attentuation.
+        dfloat lightLevel = color.w;
+
+        // Add extra light.
+        lightLevel += Rend_ExtraLightDelta();
+
+        // The last step is to compress the resultant light value by
+        // the global lighting function.
+        Rend_ApplyLightAdaptation(lightLevel);
+
+        // Determine the final ambientColor.
+        for(dint i = 0; i < 3; ++i)
+        {
+            ambientColor[i] = lightLevel * color[i];
+        }
+    }
+
+    Rend_ApplyTorchLight(ambientColor, distance);
+
+    vLightListIdx =
+            Rend_CollectAffectingLights(origin, ambientColor, bspLeaf.subspacePtr(),
+                                        true /*stark world light*/);
 }

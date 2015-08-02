@@ -102,6 +102,8 @@ struct VisEntityLighting
         : ambientColor(ambientColor)
         , vLightListIdx(lightListIndex)
     {}
+
+    void setupLighting(de::Vector3d const &origin, coord_t distance, BspLeaf const &bspLeaf);
 };
 
 /**
@@ -158,15 +160,15 @@ struct vispsprite_t
     vispspritetype_t type;
     ddpsprite_t *psp;
     de::Vector3d origin;
+    BspLeaf const *bspLeaf;
+    VisEntityLighting light;
 
     union vispsprite_data_u {
         struct vispsprite_sprite_s {
-            BspLeaf *bspLeaf;
             de::dfloat alpha;
             dd_bool isFullBright;
         } sprite;
         struct vispsprite_model_s {
-            BspLeaf *bspLeaf;
             coord_t topZ;                 ///< global top for silhouette clipping
             de::dint flags;               ///< for color translation and shadow draw
             de::duint id;

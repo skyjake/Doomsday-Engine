@@ -265,6 +265,20 @@ DENG2_PIMPL(ModelRenderer)
             model.setTexturePath(matId, map, path);
         }
     }
+
+    void setupLighting(VisEntityLighting const &lighting)
+    {
+        // Ambient color and lighting vectors.
+        self.setAmbientLight(lighting.ambientColor * .8f);
+        self.clearLights();
+        ClientApp::renderSystem().forAllVectorLights(lighting.vLightListIdx,
+                                                     [this] (VectorLightData const &vlight)
+        {
+            // Use this when drawing the model.
+            self.addLight(vlight.direction.xzy(), vlight.color);
+            return LoopContinue;
+        });
+    }
 };
 
 ModelRenderer::ModelRenderer() : d(new Instance(this))
@@ -304,6 +318,15 @@ void ModelRenderer::setTransformation(Vector3f const &relativeEyePos,
     d->uMvpMatrix   = localToView * modelToLocal;
     d->inverseLocal = modelToLocal.inverse();
     d->uEyePos      = d->inverseLocal * relativeEyePos;
+}
+
+void ModelRenderer::setEyeSpaceTransformation(Matrix4f const &modelToLocal,
+                                              Matrix4f const &inverseLocal,
+                                              Matrix4f const &localToView)
+{
+    d->uMvpMatrix   = localToView * modelToLocal;
+    d->inverseLocal = inverseLocal;
+    d->uEyePos      = d->inverseLocal * Vector3f();
 }
 
 void ModelRenderer::setAmbientLight(Vector3f const &ambientIntensity)
@@ -371,15 +394,7 @@ void ModelRenderer::render(vissprite_t const &spr)
     setTransformation(Rend_EyeOrigin() - modelWorldOrigin, modelToLocal, localToView);
 
     // Ambient color and lighting vectors.
-    setAmbientLight(spr.light.ambientColor * .8f);
-    clearLights();
-    ClientApp::renderSystem().forAllVectorLights(spr.light.vLightListIdx,
-                                                 [this] (VectorLightData const &vlight)
-    {
-        // Use this when drawing the model.
-        addLight(vlight.direction.xzy(), vlight.color);
-        return LoopContinue;
-    });
+    d->setupLighting(spr.light);
 
     // Draw the model using the current animation state.
     p.model->draw(p.animator);
@@ -394,9 +409,18 @@ void ModelRenderer::render(vispsprite_t const &pspr)
 {
     auto const &p = pspr.data.model2;
 
-    Matrix4f modelToLocal = pspr.data.model2.modelTransform;
-    Matrix4f localToView = GL_GetProjectionMatrix();
-    setTransformation(Vector3f(), modelToLocal, localToView);
+    Matrix4f modelToLocal =
+            Matrix4f::rotate(180, Vector3f(0, 1, 0)) *
+            Matrix4f(pspr.data.model2.modelTransform);
+
+    Matrix4f localToView = GL_GetProjectionMatrix() * Matrix4f::translate(Vector3f(0, -10, 11));
+    setEyeSpaceTransformation(modelToLocal,
+                              modelToLocal.inverse() *
+                              Matrix4f::rotate(vpitch, Vector3f(1, 0, 0)) *
+                              Matrix4f::rotate(vang,   Vector3f(0, 1, 0)),
+                              localToView);
+
+    d->setupLighting(pspr.light);
 
     GLState::push().setCull(p.cullFace);
     p.model->draw(p.animator);

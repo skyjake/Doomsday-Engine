@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "clientplayer.h"
@@ -101,7 +101,7 @@ void ClientPlayer::setWeaponAssetId(String const &id)
 {
     if(id != d->weaponAssetId)
     {
-        LOG_WIP("weapon asset: %s") << id;
+        //LOG_WIP("weapon asset: %s") << id;
         d->weaponAssetId = id;
         d->playerWeaponAnimator.setAsset("model.weapon." + id);
         d->playerWeaponAnimator.stateChanged(d->lastPSpriteState);

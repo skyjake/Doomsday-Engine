@@ -39,7 +39,7 @@ void MobjAnimator::triggerByState(String const &stateName)
     auto found = _stateAnims->constFind(stateName);
     if(found == _stateAnims->constEnd()) return;
 
-    LOG_WIP("triggerByState: ") << stateName;
+    //LOG_WIP("triggerByState: ") << stateName;
 
     foreach(ModelRenderer::AnimSequence const &seq, found.value())
     {
@@ -60,7 +60,7 @@ void MobjAnimator::triggerByState(String const &stateName)
 
         start(animId, node);
 
-        LOG_WIP(" Starting anim: " _E(b)) << seq.name;
+        //LOG_WIP(" Starting anim: " _E(b)) << seq.name;
         break;
     }
 }

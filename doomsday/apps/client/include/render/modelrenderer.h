@@ -89,6 +89,10 @@ public:
                            de::Matrix4f const &modelToLocal,
                            de::Matrix4f const &localToView);
 
+    void setEyeSpaceTransformation(de::Matrix4f const &modelToLocal,
+                                   de::Matrix4f const &inverseLocal,
+                                   de::Matrix4f const &localToView);
+
     void setAmbientLight(de::Vector3f const &ambientIntensity);
 
     void clearLights();

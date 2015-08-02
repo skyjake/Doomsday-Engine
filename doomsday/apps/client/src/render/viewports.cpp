@@ -767,12 +767,15 @@ static void setupPlayerSprites()
     }
 
     viewdata_t const *viewData = &viewPlayer->viewport();
+
     for(dint i = 0; i < DDMAXPSPRITES; ++i)
     {
         vispsprite_t *spr = &visPSprites[i];
 
-        spr->type = VPSPR_SPRITE;
-        spr->psp  = &ddpl->pSprites[i];
+        spr->type    = VPSPR_SPRITE;
+        spr->psp     = &ddpl->pSprites[i];
+        spr->origin  = viewData->current.origin;
+        spr->bspLeaf = &Mobj_BspLeafAtOrigin(*mob);
 
         if(!spr->psp->statePtr) continue;
 
@@ -784,6 +787,9 @@ static void setupPlayerSprites()
             if(viewPlayer->playerWeaponAnimator().hasModel())
             {
                 viewPlayer->playerWeaponAnimator().setupVisPSprite(*spr);
+
+                // There are 3D psprites.
+                ::psp3d = true;
                 continue;
             }
             else
@@ -805,10 +811,8 @@ static void setupPlayerSprites()
             // There are 3D psprites.
             ::psp3d = true;
 
-            spr->type   = VPSPR_MODEL;
-            spr->origin = viewData->current.origin;
+            spr->type = VPSPR_MODEL;
 
-            spr->data.model.bspLeaf     = &Mobj_BspLeafAtOrigin(*mob);
             spr->data.model.flags       = 0;
             // 32 is the raised weapon height.
             spr->data.model.topZ        = viewData->current.origin.z;
@@ -843,10 +847,6 @@ static void setupPlayerSprites()
             // No, draw a 2D sprite (in Rend_DrawPlayerSprites).
             spr->type = VPSPR_SPRITE;
 
-            // Adjust the center slightly so an angle can be calculated.
-            spr->origin = viewData->current.origin;
-
-            spr->data.sprite.bspLeaf      = &Mobj_BspLeafAtOrigin(*mob);
             spr->data.sprite.alpha        = spr->psp->alpha;
             spr->data.sprite.isFullBright = (spr->psp->flags & DDPSPF_FULLBRIGHT) != 0;
         }
