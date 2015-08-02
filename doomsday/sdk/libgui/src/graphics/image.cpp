@@ -256,8 +256,6 @@ static QImage load(Block const &data)
 
     bool const isUpperOrigin = header.flags.testFlag(Header::ScreenOriginUpper);
 
-    //LOG_WIP("[TARGA] pixelSize:%i imageType:%i") << pixelSize << header.imageType; // << img.bytesPerLine() << header.size.x * pixelSize;
-
     // RGB can be read line by line.
     if(header.imageType == Header::RGB)
     {
