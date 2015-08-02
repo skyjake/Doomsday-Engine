@@ -256,6 +256,15 @@ angle_t Player_ViewYawAngle(int playerNum);
  */
 void Player_UpdateStatusCVars(player_t const *player);
 
+void Player_NotifyPSpriteChange(player_t *player, int position);
+
+/**
+ * Called in the end of G_Ticker. Wraps up the tick for a player.
+ *
+ * @param player  Player.
+ */
+void Player_PostTick(player_t *player);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

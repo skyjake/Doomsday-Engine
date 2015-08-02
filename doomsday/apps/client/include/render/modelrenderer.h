@@ -33,6 +33,9 @@
  * The model renderer prepares available model assets for drawing (using ModelDrawable),
  * and keeps the set of needed ModelDrawable instances in memory.
  *
+ * ModelRenderer also owns the shaders for rendering models, and maintains the set of GL
+ * uniforms for rendering models, including transformation and lighting data.
+ *
  * @todo Consider renaming the class: the term "renderer" has the connotation of actually
  * performing rendering, while in practice the ModelDrawables will be drawing themselves.
  * This is the top-level class responsible for model assets and all their associated
@@ -77,14 +80,18 @@ public:
     /**
      * Sets up the transformation matrices.
      *
-     * @param eyeDir        Direction of the eye in local space (relative to object).
-     * @param modelToLocal  Transformation from model space to the object's local space
-     *                      (object's local frame in world space).
-     * @param localToView   Transformation from local space to projected view space.
+     * @param relativeEyePos  Position of the eye in relation to object (in world space).
+     * @param modelToLocal    Transformation from model space to the object's local space
+     *                        (object's local frame in world space).
+     * @param localToView     Transformation from local space to projected view space.
      */
-    void setTransformation(de::Vector3f const &eyeDir,
+    void setTransformation(de::Vector3f const &relativeEyePos,
                            de::Matrix4f const &modelToLocal,
                            de::Matrix4f const &localToView);
+
+    void setEyeSpaceTransformation(de::Matrix4f const &modelToLocal,
+                                   de::Matrix4f const &inverseLocal,
+                                   de::Matrix4f const &localToView);
 
     void setAmbientLight(de::Vector3f const &ambientIntensity);
 
@@ -98,6 +105,13 @@ public:
      * @param spr  Parameters for the draw operation (as a vissprite).
      */
     void render(vissprite_t const &spr);
+
+    /**
+     * Render a GL2 model representing a psprite.
+     *
+     * @param pspr  Parameters for the draw operation (as a vispsprite).
+     */
+    void render(vispsprite_t const &pspr);
 
 public:
     static int identifierFromText(de::String const &text,

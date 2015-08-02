@@ -317,6 +317,8 @@ void P_SetPsprite(player_t *plr, int position, statenum_t stnum)
         psp->tics = state->tics; // could be 0
         P_SetPSpriteOffset(psp, plr, state);
 
+        Player_NotifyPSpriteChange(plr, position);
+
         if(state->action)
         {   // Call action routine.
             state->action(plr, psp);
@@ -351,7 +353,9 @@ void P_SetPspriteNF(player_t *plr, int position, statenum_t stnum)
         psp->state = state;
         psp->tics = state->tics; // could be 0
 
+        Player_NotifyPSpriteChange(plr, position);
         P_SetPSpriteOffset(psp, plr, state);
+
         stnum = psp->state->nextState;
     } while(!psp->tics); // An initial state of 0 could cycle through.
 }
@@ -581,7 +585,7 @@ void C_DECL A_Lower(player_t *plr, pspdef_t *psp)
     }
 
     plr->readyWeapon = plr->pendingWeapon;
-    plr->update |= PSF_WEAPONS;
+    plr->update |= PSF_WEAPONS | PSF_READY_WEAPON;
     P_BringUpWeapon(plr);
 }
 

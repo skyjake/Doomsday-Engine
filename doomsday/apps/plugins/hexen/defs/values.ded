@@ -1,4 +1,4 @@
-# libhexen: Values
+# Hexen: Values
 # 
 # The strings from all Values definition blocks are merged together.
 # This means you don't have to add all your values here; they can be
@@ -13,4 +13,63 @@ Values {
       Blue mana = "25";  
     };
   };
-};
+  
+  Weapon Info {
+    Fighter {
+      0 {
+        Id = "punch";
+      };
+      1 {
+        Id = "axe";
+      };
+      2 {
+        Id = "hammer";
+      };
+      3 {
+        Id = "sword";
+      };
+    };
+    Cleric {
+      0 {
+        Id = "mace";
+      };
+      1 {
+        Id = "serpent";
+      };
+      2 {
+        Id = "flame";
+      };
+      3 {
+        Id = "holy";
+      };
+    };
+    Mage {
+      0 {
+        Id = "wand";
+      };
+      1 {
+        Id = "frost";
+      };
+      2 {
+        Id = "lightning";
+      };
+      3 {
+        Id = "staff";
+      };
+    };
+    Pig {
+      0 {
+        Id = "snout";
+      };
+      1 {
+        Id = "snout";
+      };
+      2 {
+        Id = "snout";
+      };
+      3 {
+        Id = "snout";
+      };
+    };
+  };
+};  

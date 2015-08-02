@@ -13,22 +13,29 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "clientplayer.h"
 #include "render/consoleeffect.h"
+#include "render/playerweaponanimator.h"
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(ClientPlayer)
+DENG2_PIMPL(ClientPlayer)
 {
-    viewdata_t         viewport;
-    ConsoleEffectStack effects;
-    clplayerstate_t    clPlayerState;
-    DemoTimer          demoTimer;
+    viewdata_t           viewport;
+    ConsoleEffectStack   effects;
+    PlayerWeaponAnimator playerWeaponAnimator;
+    clplayerstate_t      clPlayerState;
+    DemoTimer            demoTimer;
 
-    Instance()
+    state_t const *lastPSpriteState = nullptr;
+    String weaponAssetId;
+
+    Instance(Public *i)
+        : Base(i)
+        , playerWeaponAnimator(i)
     {
         zap(viewport);
         zap(clPlayerState);
@@ -40,7 +47,7 @@ ClientPlayer::ClientPlayer()
     : demo(nullptr)
     , recording(false)
     , recordPaused(false)
-    , d(new Instance)
+    , d(new Instance(this))
 {}
 
 viewdata_t &ClientPlayer::viewport()
@@ -73,7 +80,39 @@ ConsoleEffectStack const &ClientPlayer::fxStack() const
     return d->effects;
 }
 
+PlayerWeaponAnimator &ClientPlayer::playerWeaponAnimator()
+{
+    return d->playerWeaponAnimator;
+}
+
 DemoTimer &ClientPlayer::demoTimer()
 {
     return d->demoTimer;
+}
+
+void ClientPlayer::tick(timespan_t elapsed)
+{
+    if(!isInGame()) return;
+
+    d->playerWeaponAnimator.advanceTime(elapsed);
+}
+
+void ClientPlayer::setWeaponAssetId(String const &id)
+{
+    if(id != d->weaponAssetId)
+    {
+        //LOG_WIP("weapon asset: %s") << id;
+        d->weaponAssetId = id;
+        d->playerWeaponAnimator.setAsset("model.weapon." + id);
+        d->playerWeaponAnimator.stateChanged(d->lastPSpriteState);
+    }
+}
+
+void ClientPlayer::weaponStateChanged(state_t const *state)
+{
+    if(state != d->lastPSpriteState)
+    {
+        d->lastPSpriteState = state;
+        d->playerWeaponAnimator.stateChanged(state);
+    }
 }

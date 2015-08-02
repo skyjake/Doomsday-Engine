@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Image"
@@ -24,6 +24,7 @@
 #include <de/FixedByteArray>
 #include <de/Vector>
 #include <de/Zeroed>
+#include <de/Log>
 
 #include <QDataStream>
 #include <QPainter>
@@ -255,9 +256,6 @@ static QImage load(Block const &data)
 
     bool const isUpperOrigin = header.flags.testFlag(Header::ScreenOriginUpper);
 
-//    qDebug() << "[TARGA] pixelSize:" << pixelSize << "imageType:" << header.imageType
-//        << img.bytesPerLine() << header.size.x * pixelSize;
-    
     // RGB can be read line by line.
     if(header.imageType == Header::RGB)
     {
@@ -317,6 +315,11 @@ static QImage load(Block const &data)
         }
     }
 
+    if(pixelSize == 3)
+    {
+        img = img.rgbSwapped();
+    }
+
     return img;
 }
 
@@ -354,7 +357,7 @@ DENG2_PIMPL(Image)
 
     Instance(Public *i, Size const &imgSize, Format imgFormat, ByteRefArray const &imgRefPixels)
         : Base(i), format(imgFormat), size(imgSize), refPixels(imgRefPixels)
-    {}   
+    {}
 };
 
 Image::Image() : d(new Instance(this))

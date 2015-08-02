@@ -154,6 +154,13 @@ public:
     Pinger &pinger();
     Pinger const &pinger() const;
 
+    /**
+     * Called once on every tick.
+     *
+     * @param elapsed  Amount of time elapsed since the previous call.
+     */
+    virtual void tick(timespan_t elapsed);
+
     DENG2_AS_IS_METHODS()
 
 private:

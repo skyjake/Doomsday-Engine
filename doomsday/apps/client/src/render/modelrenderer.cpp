@@ -50,7 +50,7 @@ DENG2_PIMPL(ModelRenderer)
     GLProgram program; /// @todo Specific models may want to use a custom program.
     GLUniform uMvpMatrix        { "uMvpMatrix",        GLUniform::Mat4 };
     GLUniform uTex              { "uTex",              GLUniform::Sampler2D };
-    GLUniform uEyeDir           { "uEyeDir",           GLUniform::Vec3 };
+    GLUniform uEyePos           { "uEyePos",           GLUniform::Vec3 };
     GLUniform uAmbientLight     { "uAmbientLight",     GLUniform::Vec4 };
     GLUniform uLightDirs        { "uLightDirs",        GLUniform::Vec3Array, MAX_LIGHTS };
     GLUniform uLightIntensities { "uLightIntensities", GLUniform::Vec4Array, MAX_LIGHTS };
@@ -63,7 +63,7 @@ DENG2_PIMPL(ModelRenderer)
     Instance(Public *i) : Base(i)
     {
         observer.audienceForAvailability() += this;
-        bank.audienceForLoad() += this;        
+        bank.audienceForLoad() += this;
     }
 
     void init()
@@ -71,7 +71,7 @@ DENG2_PIMPL(ModelRenderer)
         ClientApp::shaders().build(program, "model.skeletal.normal_specular_emission")
                 << uMvpMatrix
                 << uTex
-                << uEyeDir
+                << uEyePos
                 << uAmbientLight
                 << uLightDirs
                 << uLightIntensities;
@@ -265,6 +265,20 @@ DENG2_PIMPL(ModelRenderer)
             model.setTexturePath(matId, map, path);
         }
     }
+
+    void setupLighting(VisEntityLighting const &lighting)
+    {
+        // Ambient color and lighting vectors.
+        self.setAmbientLight(lighting.ambientColor * .8f);
+        self.clearLights();
+        ClientApp::renderSystem().forAllVectorLights(lighting.vLightListIdx,
+                                                     [this] (VectorLightData const &vlight)
+        {
+            // Use this when drawing the model.
+            self.addLight(vlight.direction.xzy(), vlight.color);
+            return LoopContinue;
+        });
+    }
 };
 
 ModelRenderer::ModelRenderer() : d(new Instance(this))
@@ -297,12 +311,22 @@ ModelRenderer::StateAnims const *ModelRenderer::animations(DotPath const &modelI
     return 0;
 }
 
-void ModelRenderer::setTransformation(Vector3f const &eyeDir, Matrix4f const &modelToLocal,
+void ModelRenderer::setTransformation(Vector3f const &relativeEyePos,
+                                      Matrix4f const &modelToLocal,
                                       Matrix4f const &localToView)
-{   
+{
     d->uMvpMatrix   = localToView * modelToLocal;
     d->inverseLocal = modelToLocal.inverse();
-    d->uEyeDir      = (d->inverseLocal * eyeDir).normalize();
+    d->uEyePos      = d->inverseLocal * relativeEyePos;
+}
+
+void ModelRenderer::setEyeSpaceTransformation(Matrix4f const &modelToLocal,
+                                              Matrix4f const &inverseLocal,
+                                              Matrix4f const &localToView)
+{
+    d->uMvpMatrix   = localToView * modelToLocal;
+    d->inverseLocal = inverseLocal;
+    d->uEyePos      = d->inverseLocal * Vector3f();
 }
 
 void ModelRenderer::setAmbientLight(Vector3f const &ambientIntensity)
@@ -344,44 +368,62 @@ void ModelRenderer::render(vissprite_t const &spr)
      */
 
     drawmodel2params_t const &p = spr.data.model2;
-
-    Matrix4f viewMat =
-            Viewer_Matrix() *
-            Matrix4f::scale(Vector3f(1.0f, 1.0f/1.2f, 1.0f)) * // Inverse aspect correction.
-            Matrix4f::translate((spr.pose.origin + spr.pose.srvo).xzy());
-
-    Matrix4f localMat =
-            Matrix4f::rotate(-90 + (spr.pose.viewAligned? spr.pose.yawAngleOffset :
-                                                         spr.pose.yaw),
-                             Vector3f(0, 1, 0) /* vertical axis for yaw */);
-
     gl::Cull culling = gl::Back;
+
+    Vector3d const modelWorldOrigin = (spr.pose.origin + spr.pose.srvo).xzy();
+
+    Matrix4f modelToLocal =
+            Matrix4f::rotate(-90 + (spr.pose.viewAligned? spr.pose.yawAngleOffset :
+                                                          spr.pose.yaw),
+                             Vector3f(0, 1, 0) /* vertical axis for yaw */);
+    Matrix4f localToView =
+            Viewer_Matrix() *
+            Matrix4f::translate(modelWorldOrigin) *
+            Matrix4f::scale(Vector3f(1.0f, 1.0f/1.2f, 1.0f)); // Inverse aspect correction.
+
     if(p.object)
     {
         auto const &mobjData = THINKER_DATA(p.object->thinker, ClientMobjThinkerData);
-        localMat = localMat * mobjData.modelTransformation();
+        modelToLocal = modelToLocal * mobjData.modelTransformation();
         culling = mobjData.modelCullFace();
     }
 
     GLState::push().setCull(culling);
 
     // Set up a suitable matrix for the pose.
-    setTransformation(Rend_EyeOrigin() - spr.pose.mid().xzy(), localMat, viewMat);
+    setTransformation(Rend_EyeOrigin() - modelWorldOrigin, modelToLocal, localToView);
 
     // Ambient color and lighting vectors.
-    setAmbientLight(spr.light.ambientColor * .8f);
-    clearLights();
-    ClientApp::renderSystem().forAllVectorLights(spr.light.vLightListIdx,
-                                                 [this] (VectorLightData const &vlight)
-    {
-        // Use this when drawing the model.
-        addLight(vlight.direction.xzy(), vlight.color);
-        return LoopContinue;
-    });
+    d->setupLighting(spr.light);
 
     // Draw the model using the current animation state.
     p.model->draw(p.animator);
 
+    GLState::pop();
+
+    /// @todo Something is interfering with the cull setting elsewhere (remove this).
+    GLState::current().setCull(gl::Back).apply();
+}
+
+void ModelRenderer::render(vispsprite_t const &pspr)
+{
+    auto const &p = pspr.data.model2;
+
+    Matrix4f modelToLocal =
+            Matrix4f::rotate(180, Vector3f(0, 1, 0)) *
+            Matrix4f(pspr.data.model2.modelTransform);
+
+    Matrix4f localToView = GL_GetProjectionMatrix() * Matrix4f::translate(Vector3f(0, -10, 11));
+    setEyeSpaceTransformation(modelToLocal,
+                              modelToLocal.inverse() *
+                              Matrix4f::rotate(vpitch, Vector3f(1, 0, 0)) *
+                              Matrix4f::rotate(vang,   Vector3f(0, 1, 0)),
+                              localToView);
+
+    d->setupLighting(pspr.light);
+
+    GLState::push().setCull(p.cullFace);
+    p.model->draw(p.animator);
     GLState::pop();
 
     /// @todo Something is interfering with the cull setting elsewhere (remove this).

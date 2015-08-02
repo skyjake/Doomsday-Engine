@@ -104,6 +104,8 @@ void P_SetPsprite(player_t* player, int position, statenum_t stnum)
         psp->state = state;
         psp->tics = state->tics; // Could be 0.
 
+        Player_NotifyPSpriteChange(player, position);
+
         if(state->misc[0])
         {
             // Coordinate set.

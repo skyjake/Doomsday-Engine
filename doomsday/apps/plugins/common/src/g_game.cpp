@@ -1640,8 +1640,11 @@ void G_Ticker(timespan_t ticLength)
             break;
         }
 
-        // Update the game status cvars for player data.
-        Player_UpdateStatusCVars(&players[CONSOLEPLAYER]);
+        // Players post-ticking.
+        for(int i = 0; i < MAXPLAYERS; ++i)
+        {
+            Player_PostTick(&players[i]);
+        }
 
         // Servers will have to update player information and do such stuff.
         if(!IS_CLIENT)

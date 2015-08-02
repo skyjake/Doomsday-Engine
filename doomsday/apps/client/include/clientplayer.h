@@ -24,6 +24,7 @@
 #include "lzss.h" // legacy demo code
 
 struct ConsoleEffectStack;
+class PlayerWeaponAnimator;
 
 /**
  * Information about a client player.
@@ -78,8 +79,22 @@ public:
     ConsoleEffectStack &fxStack();
     ConsoleEffectStack const &fxStack() const;
 
+    PlayerWeaponAnimator &playerWeaponAnimator();
+
     DemoTimer &demoTimer();
-    
+
+    void tick(timespan_t elapsed);
+        
+    /**
+     * Sets the id of the currently active weapon of this player. This is used for
+     * looking up assets related to the weapon (e.g., "model.weapon.(id)").
+     *
+     * @param id  Weapon id, as defined by the game.
+     */
+    void setWeaponAssetId(de::String const &id);
+
+    void weaponStateChanged(struct state_s const *state);
+
 private:
     DENG2_PRIVATE(d)
 };

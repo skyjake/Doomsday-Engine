@@ -50,6 +50,13 @@ public:
     void setLogFormatter(LogSink::IFormatter &formatter);
 
     /**
+     * Enables the showing of privileged messages.
+     *
+     * @param onlyPrivileged  Only show privileged entries.
+     */
+    void setPrivilegedEntries(bool onlyPrivileged);
+
+    /**
      * Returns the log sink that can be connected to a log buffer for receiving
      * log entries into the widget's buffer.
      */

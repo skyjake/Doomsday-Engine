@@ -93,6 +93,9 @@ Pinger const &Player::pinger() const
     return d->pinger;
 }
 
+void Player::tick(timespan_t /*elapsed*/)
+{}
+
 short P_LookDirToShort(float lookDir)
 {
     int dir = int( lookDir/110.f * DDMAXSHORT );

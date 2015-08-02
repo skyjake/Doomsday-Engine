@@ -154,7 +154,6 @@ struct DefaultImageLoader : public ModelDrawable::IImageLoader
     Image loadImage(String const &path)
     {
         File const &texFile = App::rootFolder().locate<File>(path);
-        qDebug() << "loading image from" << texFile.description().toLatin1();
         Image img = Image::fromData(texFile, texFile.name().fileNameExtension());
         if(img.depth() == 24)
         {
@@ -313,7 +312,7 @@ DENG2_PIMPL(ModelDrawable)
             }
         }
         importer.SetPropertyString(AI_CONFIG_IMPORT_MD5_ANIM_SEQUENCE_NAMES, anims.toStdString());
-        
+
         scene = 0;
         sourcePath = file.path();
 
@@ -538,7 +537,7 @@ DENG2_PIMPL(ModelDrawable)
         DENG2_ASSERT(atlas != 0);
 
         for(duint i = 0; i < scene->mNumMaterials; ++i)
-        {            
+        {
             qDebug() << "  material #" << i;
 
             auto &mat = materials[i];

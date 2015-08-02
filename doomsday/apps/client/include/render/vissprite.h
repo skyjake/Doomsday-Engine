@@ -22,6 +22,7 @@
 #define CLIENT_RENDER_VISSPRITE_H
 
 #include <de/Vector>
+#include <de/GLState>
 
 #include "render/billboard.h"
 #include "rend_model.h"
@@ -101,6 +102,8 @@ struct VisEntityLighting
         : ambientColor(ambientColor)
         , vLightListIdx(lightListIndex)
     {}
+
+    void setupLighting(de::Vector3d const &origin, coord_t distance, BspLeaf const &bspLeaf);
 };
 
 /**
@@ -147,7 +150,8 @@ void VisSprite_SetupModel(vissprite_t *spr, VisEntityPose const &pose, VisEntity
 enum vispspritetype_t
 {
     VPSPR_SPRITE,
-    VPSPR_MODEL
+    VPSPR_MODEL,
+    VPSPR_MODEL2
 };
 
 /// @ingroup render
@@ -156,15 +160,15 @@ struct vispsprite_t
     vispspritetype_t type;
     ddpsprite_t *psp;
     de::Vector3d origin;
+    BspLeaf const *bspLeaf;
+    VisEntityLighting light;
 
     union vispsprite_data_u {
         struct vispsprite_sprite_s {
-            BspLeaf *bspLeaf;
             de::dfloat alpha;
             dd_bool isFullBright;
         } sprite;
         struct vispsprite_model_s {
-            BspLeaf *bspLeaf;
             coord_t topZ;                 ///< global top for silhouette clipping
             de::dint flags;               ///< for color translation and shadow draw
             de::duint id;
@@ -187,6 +191,12 @@ struct vispsprite_t
             de::dfloat yawAngleOffset;
             de::dfloat inter;             ///< Frame interpolation, 0..1
         } model;
+        struct vispsprite_model2_s {
+            de::ModelDrawable const *model;
+            de::ModelDrawable::Animator const *animator;
+            float modelTransform[16];
+            de::gl::Cull cullFace;
+        } model2;
     } data;
 };
 

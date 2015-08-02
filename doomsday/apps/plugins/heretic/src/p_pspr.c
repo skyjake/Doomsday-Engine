@@ -76,6 +76,7 @@ void P_SetPsprite(player_t *player, int position, statenum_t stnum)
         state = &STATES[stnum];
         psp->state = state;
         psp->tics = state->tics; // Could be 0.
+        Player_NotifyPSpriteChange(player, position);
         if(state->misc[0])
         {   // Set coordinates.
             psp->pos[VX] = (float) state->misc[0];
@@ -363,6 +364,7 @@ void C_DECL A_Lower(player_t *player, pspdef_t *psp)
     }
 
     player->readyWeapon = player->pendingWeapon;
+    player->update |= PSF_READY_WEAPON;
 
     // Should we suddenly lower the weapon?
     if(cfg.bobWeaponLower &&

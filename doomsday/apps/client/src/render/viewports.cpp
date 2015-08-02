@@ -41,6 +41,7 @@
 #include "render/fx/bloom.h"
 #include "render/angleclipper.h"
 #include "render/cameralensfx.h"
+#include "render/playerweaponanimator.h"
 #include "render/rendpoly.h"
 #include "render/skydrawable.h"
 #include "render/vissprite.h"
@@ -766,12 +767,15 @@ static void setupPlayerSprites()
     }
 
     viewdata_t const *viewData = &viewPlayer->viewport();
+
     for(dint i = 0; i < DDMAXPSPRITES; ++i)
     {
         vispsprite_t *spr = &visPSprites[i];
 
-        spr->type = VPSPR_SPRITE;
-        spr->psp  = &ddpl->pSprites[i];
+        spr->type    = VPSPR_SPRITE;
+        spr->psp     = &ddpl->pSprites[i];
+        spr->origin  = viewData->current.origin;
+        spr->bspLeaf = &Mobj_BspLeafAtOrigin(*mob);
 
         if(!spr->psp->statePtr) continue;
 
@@ -780,14 +784,25 @@ static void setupPlayerSprites()
         dfloat inter = 0;
         if(useModels)
         {
-            // Is there a model for this frame?
-            MobjThinker dummy;
+            if(viewPlayer->playerWeaponAnimator().hasModel())
+            {
+                viewPlayer->playerWeaponAnimator().setupVisPSprite(*spr);
 
-            // Setup a dummy for the call to R_CheckModelFor.
-            dummy->state = spr->psp->statePtr;
-            dummy->tics  = spr->psp->tics;
+                // There are 3D psprites.
+                ::psp3d = true;
+                continue;
+            }
+            else
+            {
+                // Is there a model for this frame?
+                MobjThinker dummy;
 
-            mf = Mobj_ModelDef(dummy, &nextmf, &inter);
+                // Setup a dummy for the call to R_CheckModelFor.
+                dummy->state = spr->psp->statePtr;
+                dummy->tics  = spr->psp->tics;
+
+                mf = Mobj_ModelDef(dummy, &nextmf, &inter);
+            }
         }
 
         // Use a 3D model?
@@ -796,10 +811,8 @@ static void setupPlayerSprites()
             // There are 3D psprites.
             ::psp3d = true;
 
-            spr->type   = VPSPR_MODEL;
-            spr->origin = viewData->current.origin;
+            spr->type = VPSPR_MODEL;
 
-            spr->data.model.bspLeaf     = &Mobj_BspLeafAtOrigin(*mob);
             spr->data.model.flags       = 0;
             // 32 is the raised weapon height.
             spr->data.model.topZ        = viewData->current.origin.z;
@@ -834,10 +847,6 @@ static void setupPlayerSprites()
             // No, draw a 2D sprite (in Rend_DrawPlayerSprites).
             spr->type = VPSPR_SPRITE;
 
-            // Adjust the center slightly so an angle can be calculated.
-            spr->origin = viewData->current.origin;
-
-            spr->data.sprite.bspLeaf      = &Mobj_BspLeafAtOrigin(*mob);
             spr->data.sprite.alpha        = spr->psp->alpha;
             spr->data.sprite.isFullBright = (spr->psp->flags & DDPSPF_FULLBRIGHT) != 0;
         }

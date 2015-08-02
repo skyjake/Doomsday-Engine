@@ -8,7 +8,7 @@ group model {
             uniform highp mat4 uMvpMatrix;
             uniform highp mat4 uBoneMatrices[64];
             uniform highp vec3 uLightDirs[4];
-            uniform highp vec3 uEyeDir;
+            uniform highp vec3 uEyePos;
 
             attribute highp vec4 aVertex;
             attribute highp vec3 aNormal;
@@ -60,7 +60,7 @@ group model {
                 vLightDirs[3] = uLightDirs[3] * tangentSpace;
                 
                 // Eye direction in tangent space.
-                vEyeDir = uEyeDir * tangentSpace;
+                vEyeDir = (uEyePos - modelPos.xyz/modelPos.w) * tangentSpace;
                 
                 vUV         = aBounds.xy  + aUV * aBounds.zw;
                 vNormalUV   = aBounds2.xy + aUV * aBounds2.zw;
@@ -81,7 +81,7 @@ group model {
             
             highp vec3 normalVector() 
             {
-                return (texture2D(uTex, vNormalUV).xyz * 2.0) - 1.0;
+                return normalize((texture2D(uTex, vNormalUV).xyz * 2.0) - 1.0);
             }
 
             highp vec4 diffuseLight(int index, highp vec3 normal) 
@@ -100,15 +100,26 @@ group model {
                 {
                     return vec4(0.0); // too dim
                 }
+
+                // Is the surface facing the light direction?
+                highp float facing = smoothstep(0.0, 0.2, dot(vLightDirs[index], normal));
+                if(facing <= 0.0)
+                {
+                    return vec4(0.0); // wrong way
+                }
+                
                 highp vec3 reflected = reflect(-vLightDirs[index], normal);
                 
                 // Check the specular texture for parameters.
                 highp vec4 specular = texture2D(uTex, vSpecularUV);
                 highp float shininess = max(1.0, specular.a * 7.0);
                 
-                highp float d = dot(vEyeDir, reflected) * 
-                    shininess - max(0.0, shininess - 1.0);                
-                return max(d * uLightIntensities[index], vec4(0.0)) * 
+                highp float d =  
+                    facing * 
+                    dot(normalize(vEyeDir), reflected) * 
+                    shininess - max(0.0, shininess - 1.0);
+                return max(0.0, d) * 
+                    uLightIntensities[index] * 
                     vec4(specular.rgb * 2.0, 1.0);
             }
             
@@ -133,7 +144,7 @@ group model {
                 highp vec4 emission = texture2D(uTex, vEmissionUV);
                     
                 gl_FragColor.rgb += specular.rgb + (emission.rgb * emission.a);
-                gl_FragColor.a = diffuse.a + specular.a + emission.a;                
+                gl_FragColor.a = min(1.0, diffuse.a + specular.a + emission.a);
             }"
     }
 }
