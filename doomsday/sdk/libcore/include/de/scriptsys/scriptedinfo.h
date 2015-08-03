@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_SCRIPTEDINFO_H
@@ -197,7 +197,13 @@ public:
      */
     static bool isFalse(Value const &value);
 
+    static bool isFalse(RecordAccessor const &rec, String const &name,
+                        bool defaultValue = true /* assume false if missing */);
+
     static bool isTrue(Value const &value);
+
+    static bool isTrue(RecordAccessor const &rec, String const &name,
+                       bool defaultValue = false /* assume false if missing */);
 
 public:
     static Paths allBlocksOfType(String const &blockType, Record const &root);

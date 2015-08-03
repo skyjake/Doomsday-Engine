@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/ScriptedInfo"
@@ -127,7 +127,7 @@ DENG2_PIMPL(ScriptedInfo)
         String varName = variableName(block);
         if(!varName.isEmpty())
         {
-            Record &ns = process.globals();            
+            Record &ns = process.globals();
             String targetName = checkNamespaceForVariable(target);
             if(!ns.has(targetName))
             {
@@ -288,7 +288,7 @@ DENG2_PIMPL(ScriptedInfo)
                 else
                     varName = b->name().concatenateMember(varName);
             }
-        }        
+        }
         return checkNamespaceForVariable(varName);
     }
 
@@ -474,6 +474,24 @@ bool ScriptedInfo::isTrue(Value const &value) // static
         return false;
     }
     return value.isTrue();
+}
+
+bool ScriptedInfo::isTrue(RecordAccessor const &rec, String const &name, bool defaultValue)
+{
+    if(rec.has(name))
+    {
+        return isTrue(rec.get(name));
+    }
+    return defaultValue;
+}
+
+bool ScriptedInfo::isFalse(RecordAccessor const &rec, String const &name, bool defaultValue)
+{
+    if(rec.has(name))
+    {
+        return isFalse(rec.get(name));
+    }
+    return defaultValue;
 }
 
 bool ScriptedInfo::isFalse(Value const &value) // static
