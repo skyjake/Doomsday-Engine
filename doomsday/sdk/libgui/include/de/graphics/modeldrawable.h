@@ -122,6 +122,7 @@ public:
         bool isRunning(String const &animName, String const &rootNode = "") const;
         bool isRunning(int animId, String const &rootNode = "") const;
 
+        Animation *find(String const &rootNode = "") const;
         Animation *find(int animId, String const &rootNode = "") const;
 
         /**

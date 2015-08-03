@@ -1313,6 +1313,16 @@ DENG2_PIMPL_NOREF(ModelDrawable::Animator)
         }
     }
 
+    Animation const *findAny(String const &rootNode) const
+    {
+        foreach(Animation const &anim, anims)
+        {
+            if(anim.node == rootNode)
+                return &anim;
+        }
+        return nullptr;
+    }
+
     Animation const *find(int animId, String const &rootNode) const
     {
         foreach(Animation const &anim, anims)
@@ -1370,6 +1380,11 @@ bool ModelDrawable::Animator::isRunning(String const &animName, String const &ro
 bool ModelDrawable::Animator::isRunning(int animId, String const &rootNode) const
 {
     return d->isRunning(animId, rootNode);
+}
+
+ModelDrawable::Animator::Animation *ModelDrawable::Animator::find(String const &rootNode) const
+{
+    return const_cast<Animation *>(d->findAny(rootNode));
 }
 
 ModelDrawable::Animator::Animation *ModelDrawable::Animator::find(int animId, String const &rootNode) const
