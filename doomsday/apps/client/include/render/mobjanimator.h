@@ -41,9 +41,7 @@ public:
     struct Parameters;
 
 private:
-    ModelRenderer::StateAnims const *_stateAnims;
-
-    struct Private;
+    DENG2_PRIVATE(d)
 };
 
 #endif // DENG_CLIENT_RENDER_MOBJANIMATOR_H
