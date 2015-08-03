@@ -80,11 +80,17 @@ public:
     class LIBGUI_PUBLIC Animator
     {
     public:
-        struct Animation {
+        struct LIBGUI_PUBLIC Animation {
             int animId;         ///< Which animation to use.
             ddouble time;       ///< Animation time.
+            ddouble duration;   ///< Animation duration.
             String node;        ///< Target node.
             QVariant data;      ///< Additional data for derived classes.
+
+            /**
+             * Determines if the animation is at its duration or past it.
+             */
+            bool isAtEnd() const;
         };
 
         /// Referenced node or animation was not found in the model. @ingroup errors
@@ -115,6 +121,8 @@ public:
 
         bool isRunning(String const &animName, String const &rootNode = "") const;
         bool isRunning(int animId, String const &rootNode = "") const;
+
+        Animation *find(int animId, String const &rootNode = "") const;
 
         /**
          * Starts an animation sequence. A previous sequence running on this node will

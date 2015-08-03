@@ -215,6 +215,17 @@ static String const DUMMY_BONE_NAME = "__deng_dummy-bone__";
 
 static int const MAX_TEXTURES = 4;
 
+static ddouble secondsToTicks(ddouble seconds, aiAnimation const &anim)
+{
+    ddouble const ticksPerSec = anim.mTicksPerSecond? anim.mTicksPerSecond : 25.0;
+    return seconds * ticksPerSec;
+}
+
+static ddouble ticksToSeconds(ddouble ticks, aiAnimation const &anim)
+{
+    return ticks / secondsToTicks(1.0, anim);
+}
+
 DENG2_PIMPL(ModelDrawable)
 {
     typedef GLBufferT<ModelVertex> VBuf;
@@ -915,12 +926,9 @@ DENG2_PIMPL(ModelDrawable)
                                        aiAnimation const &anim,
                                        aiNode const &rootNode) const
     {
-        ddouble const ticksPerSec = anim.mTicksPerSecond? anim.mTicksPerSecond : 25.0;
-        ddouble const timeInTicks = time * ticksPerSec;
-
         AccumData data(boneCount());
         data.anim = &anim;
-        data.time = std::fmod(timeInTicks, anim.mDuration);
+        data.time = std::fmod(secondsToTicks(time, anim), anim.mDuration); // wrap animation
 
         accumulateTransforms(rootNode, data);
 
@@ -1305,14 +1313,19 @@ DENG2_PIMPL_NOREF(ModelDrawable::Animator)
         }
     }
 
-    bool isRunning(int animId, String const &rootNode) const
+    Animation const *find(int animId, String const &rootNode) const
     {
         foreach(Animation const &anim, anims)
         {
             if(anim.animId == animId && anim.node == rootNode)
-                return true;
+                return &anim;
         }
-        return false;
+        return nullptr;
+    }
+
+    bool isRunning(int animId, String const &rootNode) const
+    {
+        return find(animId, rootNode) != nullptr;
     }
 };
 
@@ -1359,16 +1372,15 @@ bool ModelDrawable::Animator::isRunning(int animId, String const &rootNode) cons
     return d->isRunning(animId, rootNode);
 }
 
+ModelDrawable::Animator::Animation *ModelDrawable::Animator::find(int animId, String const &rootNode) const
+{
+    return const_cast<Animation *>(d->find(animId, rootNode));
+}
+
 ModelDrawable::Animator::Animation &
 ModelDrawable::Animator::start(String const &animName, String const &rootNode)
 {
-    d->stopByNode(rootNode);
-
-    Animation anim;
-    anim.animId = model().animationIdForName(animName);
-    anim.node   = rootNode;
-    anim.time   = 0.0;
-    return d->add(anim);
+    return start(model().animationIdForName(animName), rootNode);
 }
 
 ModelDrawable::Animator::Animation &
@@ -1376,10 +1388,21 @@ ModelDrawable::Animator::start(int animId, String const &rootNode)
 {
     d->stopByNode(rootNode);
 
+    aiScene const &scene = *model().d->scene;
+
+    if(animId < 0 || animId >= int(scene.mNumAnimations))
+    {
+        throw InvalidError("ModelDrawable::Animator::start",
+                           QString("Invalid animation ID %i").arg(animId));
+    }
+
+    auto const &animData = *scene.mAnimations[animId];
+
     Animation anim;
     anim.animId = animId;
     anim.node   = rootNode;
     anim.time   = 0.0;
+    anim.duration = ticksToSeconds(animData.mDuration, animData);
     return d->add(anim);
 }
 
@@ -1401,6 +1424,11 @@ void ModelDrawable::Animator::advanceTime(TimeDelta const &)
 ddouble ModelDrawable::Animator::currentTime(int index) const
 {
     return at(index).time;
+}
+
+bool ModelDrawable::Animator::Animation::isAtEnd() const
+{
+    return time >= duration;
 }
 
 } // namespace de
