@@ -80,19 +80,53 @@ public:
     class LIBGUI_PUBLIC Animator
     {
     public:
-        struct Animation {
+        /**
+         * Specialized animators may derive from Animation to extend the amount of
+         * data associated with each running animation sequence.
+         */
+        class LIBGUI_PUBLIC Animation
+        {
+        public:
             int animId;         ///< Which animation to use.
             ddouble time;       ///< Animation time.
+            ddouble duration;   ///< Animation duration.
             String node;        ///< Target node.
-            QVariant data;      ///< Additional data for derived classes.
+
+        public:
+            virtual ~Animation() {}
+
+            /**
+             * Called after the basic parameters of the animation have been set for
+             * a newly constructed animation.
+             */
+            virtual void initialize();
+
+            DENG2_AS_IS_METHODS()
+
+            /**
+             * Determines if the animation is at its duration or past it.
+             */
+            bool isAtEnd() const;
+
+            /**
+             * Constructs an Animation instance. This is used by default if no other
+             * constructor is provided.
+             *
+             * @return  Animation instance, to be owned by ModelDrawable::Animator.
+             */
+            static Animation *make();
         };
+
+        typedef std::function<Animation * ()> Constructor;
 
         /// Referenced node or animation was not found in the model. @ingroup errors
         DENG2_ERROR(InvalidError);
 
     public:
-        Animator();
-        Animator(ModelDrawable const &model);
+        Animator(Constructor animationConstructor = Animation::make);
+        Animator(ModelDrawable const &model,
+                 Constructor animationConstructor = Animation::make);
+
         virtual ~Animator() {}
 
         void setModel(ModelDrawable const &model);
@@ -115,6 +149,9 @@ public:
 
         bool isRunning(String const &animName, String const &rootNode = "") const;
         bool isRunning(int animId, String const &rootNode = "") const;
+
+        Animation *find(String const &rootNode = "") const;
+        Animation *find(int animId, String const &rootNode = "") const;
 
         /**
          * Starts an animation sequence. A previous sequence running on this node will

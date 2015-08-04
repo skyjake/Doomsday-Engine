@@ -38,8 +38,10 @@ public:
 
     de::ddouble currentTime(int index) const;
 
+    struct Parameters;
+
 private:
-    ModelRenderer::StateAnims const *_stateAnims;
+    DENG2_PRIVATE(d)
 };
 
 #endif // DENG_CLIENT_RENDER_MOBJANIMATOR_H

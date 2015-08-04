@@ -203,15 +203,12 @@ DENG2_PIMPL(ModelRenderer)
         {
             up = Vector3f(asset.geta(DEF_UP_VECTOR));
         }
-        bool mirror = (asset.has(DEF_MIRROR)? ScriptedInfo::isTrue(asset.get(DEF_MIRROR)) : false);
+        bool mirror = ScriptedInfo::isTrue(asset, DEF_MIRROR);
         aux->cull = mirror? gl::Back : gl::Front;
         // Assimp's coordinate system uses different handedness than Doomsday,
         // so mirroring is needed.
         aux->transformation = Matrix4f::unnormalizedFrame(front, up, !mirror);
-        if(asset.has(DEF_AUTOSCALE))
-        {
-            aux->autoscaleToThingHeight = !ScriptedInfo::isFalse(asset.get(DEF_AUTOSCALE));
-        }
+        aux->autoscaleToThingHeight = !ScriptedInfo::isFalse(asset, DEF_AUTOSCALE, false);
 
         // Custom texture maps.
         if(asset.has(DEF_MATERIAL))
