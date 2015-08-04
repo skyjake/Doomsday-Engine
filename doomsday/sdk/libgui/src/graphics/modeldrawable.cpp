@@ -1274,40 +1274,50 @@ Vector3f ModelDrawable::midPoint() const
 
 DENG2_PIMPL_NOREF(ModelDrawable::Animator)
 {
+    Constructor constructor;
     ModelDrawable const *model;
-    typedef QList<Animation> Animations;
+    typedef QList<Animation *> Animations;
     Animations anims;
 
-    Instance(ModelDrawable const *mdl = 0) : model(mdl) {}
+    Instance(Constructor ctr, ModelDrawable const *mdl = 0)
+        : constructor(ctr)
+        , model(mdl) {}
 
-    Animation &add(Animation const &anim)
+    ~Instance()
     {
-        DENG2_ASSERT(model != 0);
+        qDeleteAll(anims);
+    }
+
+    Animation &add(Animation *anim)
+    {
+        DENG2_ASSERT(anim != nullptr);
+        DENG2_ASSERT(model != nullptr);
 
         // Verify first.
-        if(anim.animId < 0 || anim.animId >= model->animationCount())
+        if(anim->animId < 0 || anim->animId >= model->animationCount())
         {
             throw InvalidError("ModelDrawable::Animator::add",
                                "Specified animation does not exist");
         }
-        if(!model->nodeExists(anim.node))
+        if(!model->nodeExists(anim->node))
         {
             throw InvalidError("ModelDrawable::Animator::add",
-                               "Node '" + anim.node + "' does not exist");
+                               "Node '" + anim->node + "' does not exist");
         }
 
         anims.append(anim);
-        return anims.last();
+        return *anims.last();
     }
 
     void stopByNode(String const &node)
     {
-        QMutableListIterator<Animation> iter(anims);
+        QMutableListIterator<Animation *> iter(anims);
         while(iter.hasNext())
         {
             iter.next();
-            if(iter.value().node == node)
+            if(iter.value()->node == node)
             {
+                delete iter.value();
                 iter.remove();
             }
         }
@@ -1315,20 +1325,20 @@ DENG2_PIMPL_NOREF(ModelDrawable::Animator)
 
     Animation const *findAny(String const &rootNode) const
     {
-        foreach(Animation const &anim, anims)
+        foreach(Animation const *anim, anims)
         {
-            if(anim.node == rootNode)
-                return &anim;
+            if(anim->node == rootNode)
+                return anim;
         }
         return nullptr;
     }
 
     Animation const *find(int animId, String const &rootNode) const
     {
-        foreach(Animation const &anim, anims)
+        foreach(Animation const *anim, anims)
         {
-            if(anim.animId == animId && anim.node == rootNode)
-                return &anim;
+            if(anim->animId == animId && anim->node == rootNode)
+                return anim;
         }
         return nullptr;
     }
@@ -1339,11 +1349,12 @@ DENG2_PIMPL_NOREF(ModelDrawable::Animator)
     }
 };
 
-ModelDrawable::Animator::Animator() : d(new Instance)
+ModelDrawable::Animator::Animator(Constructor constructor)
+    : d(new Instance(constructor))
 {}
 
-ModelDrawable::Animator::Animator(ModelDrawable const &model)
-    : d(new Instance(&model))
+ModelDrawable::Animator::Animator(ModelDrawable const &model, Constructor constructor)
+    : d(new Instance(constructor, &model))
 {}
 
 void ModelDrawable::Animator::setModel(ModelDrawable const &model)
@@ -1364,12 +1375,12 @@ int ModelDrawable::Animator::count() const
 
 ModelDrawable::Animator::Animation const &ModelDrawable::Animator::at(int index) const
 {
-    return d->anims.at(index);
+    return *d->anims.at(index);
 }
 
 ModelDrawable::Animator::Animation &ModelDrawable::Animator::at(int index)
 {
-    return d->anims[index];
+    return *d->anims[index];
 }
 
 bool ModelDrawable::Animator::isRunning(String const &animName, String const &rootNode) const
@@ -1413,11 +1424,12 @@ ModelDrawable::Animator::start(int animId, String const &rootNode)
 
     auto const &animData = *scene.mAnimations[animId];
 
-    Animation anim;
-    anim.animId = animId;
-    anim.node   = rootNode;
-    anim.time   = 0.0;
-    anim.duration = ticksToSeconds(animData.mDuration, animData);
+    Animation *anim = d->constructor();
+    anim->animId = animId;
+    anim->node   = rootNode;
+    anim->time   = 0.0;
+    anim->duration = ticksToSeconds(animData.mDuration, animData);
+    anim->initialize();
     return d->add(anim);
 }
 
@@ -1441,9 +1453,18 @@ ddouble ModelDrawable::Animator::currentTime(int index) const
     return at(index).time;
 }
 
+void ModelDrawable::Animator::Animation::initialize()
+{}
+
 bool ModelDrawable::Animator::Animation::isAtEnd() const
 {
     return time >= duration;
+}
+
+ModelDrawable::Animator::Animation *
+ModelDrawable::Animator::Animation::make() // static
+{
+    return new Animation;
 }
 
 } // namespace de
