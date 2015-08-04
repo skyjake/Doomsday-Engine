@@ -32,36 +32,52 @@ static String const DEF_PRIORITY   ("priority");
 
 static int const ANIM_DEFAULT_PRIORITY = 1;
 
-struct MobjAnimator::Parameters
-{
-    enum LoopMode {
-        NotLooping = 0,
-        Looping = 1
-    };
-
-    LoopMode looping;
-    int priority;
-
-    Parameters(LoopMode loop = NotLooping,
-               int prio = ANIM_DEFAULT_PRIORITY)
-        : looping(loop)
-        , priority(prio)
-    {}
-};
-
-Q_DECLARE_METATYPE(MobjAnimator::Parameters)
-
 DENG2_PIMPL(MobjAnimator)
 {
-    ModelRenderer::StateAnims const *stateAnims;
-    struct Pending {
-        int animId;
-        Parameters params;
-        Pending() : animId(-1) {}
-        Pending(int id, Parameters const &p)
-            : animId(id), params(p) {}
+    /**
+     * Specialized animation sequence state for a running animation.
+     */
+    struct Animation : public ModelDrawable::Animator::Animation
+    {
+        enum LoopMode {
+            NotLooping = 0,
+            Looping = 1
+        };
+
+        LoopMode looping = NotLooping;
+        int priority = ANIM_DEFAULT_PRIORITY;
+
+        Animation() {}
+
+        Animation(int animationId, String const &rootNode, LoopMode looping, int priority)
+            : looping(looping)
+            , priority(priority)
+        {
+            animId = animationId;
+            node   = rootNode;
+        }
+
+        void apply(Animation const &other)
+        {
+            looping  = other.looping;
+            priority = other.priority;
+        }
+
+        bool isRunning() const
+        {
+            if(looping == Animation::Looping)
+            {
+                // Looping animations are always running.
+                return true;
+            }
+            return !isAtEnd();
+        }
+
+        static Animation *make() { return new Animation; }
     };
-    QHash<String, Pending> pendingAnimForNode;
+
+    ModelRenderer::StateAnims const *stateAnims;
+    QHash<String, Animation> pendingAnimForNode;
     String currentStateName;
 
     Instance(Public *i, DotPath const &id)
@@ -69,27 +85,23 @@ DENG2_PIMPL(MobjAnimator)
         , stateAnims(ClientApp::renderSystem().modelRenderer().animations(id))
     {}
 
-    static bool isRunning(Animation const &anim)
-    {
-        Parameters const &params = anim.data.value<Parameters>();
-        if(params.looping == Parameters::Looping)
-        {
-            // Looping animations are always running.
-            return true;
-        }
-        return !anim.isAtEnd();
-    }
-
     int animationId(String const &name) const
     {
         return ModelRenderer::identifierFromText(name, [this] (String const &name) {
             return self.model().animationIdForName(name);
         });
     }
+
+    Animation &start(Animation const &spec)
+    {
+        Animation &anim = self.start(spec.animId, spec.node).as<Animation>();
+        anim.apply(spec);
+        return anim;
+    }
 };
 
 MobjAnimator::MobjAnimator(DotPath const &id, ModelDrawable const &model)
-    : ModelDrawable::Animator(model)
+    : ModelDrawable::Animator(model, Instance::Animation::make)
     , d(new Instance(this, id))
 {}
 
@@ -106,6 +118,8 @@ void MobjAnimator::triggerByState(String const &stateName)
 
     foreach(ModelRenderer::AnimSequence const &seq, found.value())
     {
+        using Animation = Instance::Animation;
+
         try
         {
             // Test for the probability of this animation.
@@ -124,18 +138,19 @@ void MobjAnimator::triggerByState(String const &stateName)
             int const priority = seq.def->geti(DEF_PRIORITY, ANIM_DEFAULT_PRIORITY);
 
             // Parameters for the new sequence.
-            Parameters params(ScriptedInfo::isTrue(*seq.def, DEF_LOOPING)? Parameters::Looping :
-                                                                           Parameters::NotLooping,
-                              priority);
+            Animation anim(animId, node,
+                           ScriptedInfo::isTrue(*seq.def, DEF_LOOPING)? Animation::Looping :
+                                                                        Animation::NotLooping,
+                           priority);
 
             // Do not override higher-priority animations.
-            if(Animation *existing = find(node))
+            if(auto *existing = find(node)->maybeAs<Animation>())
             {
-                if(priority < existing->data.value<Parameters>().priority)
+                if(priority < existing->priority)
                 {
                     // This will be started once the higher-priority animation
                     // has finished.
-                    d->pendingAnimForNode[node] = Instance::Pending(animId, params);
+                    d->pendingAnimForNode[node] = anim;
                     continue;
                 }
             }
@@ -143,7 +158,7 @@ void MobjAnimator::triggerByState(String const &stateName)
             d->pendingAnimForNode.remove(node);
 
             // Start a new sequence.
-            start(animId, node).data.setValue(params);
+            d->start(anim);
         }
         catch(ModelDrawable::Animator::InvalidError const &er)
         {
@@ -165,32 +180,34 @@ void MobjAnimator::advanceTime(TimeDelta const &elapsed)
 
     for(int i = 0; i < count(); ++i)
     {
-        Animation &anim = at(i);
-        Parameters const &params = anim.data.value<Parameters>();
+        using Animation = Instance::Animation;
+
+        auto &anim = at(i).as<Animation>();
         ddouble factor = 1.0;
         // TODO: Determine actual time factor.
 
         // Advance the sequence.
         anim.time += factor * elapsed;
 
-        if(params.looping == Parameters::NotLooping)
+        if(anim.looping == Animation::NotLooping)
         {
             // Clamp at the end.
             anim.time = min(anim.time, anim.duration);
         }
 
-        if(params.looping == Parameters::Looping)
+        if(anim.looping == Animation::Looping)
         {
             // When a looping animation has completed a loop, it may still trigger
             // a variant.
             if(anim.isAtEnd())
             {
                 retrigger = true;
+                anim.time -= anim.duration; // Trigger only once per loop.
             }
         }
 
         // Stop finished animations.
-        if(!Instance::isRunning(anim))
+        if(!anim.isRunning())
         {
             String const node = anim.node;
 
@@ -201,8 +218,7 @@ void MobjAnimator::advanceTime(TimeDelta const &elapsed)
             if(pending.contains(node))
             {
                 LOG_WIP("Starting pending anim %i") << pending[node].animId;
-                start(pending[node].animId, node)
-                        .data.setValue(pending[node].params);
+                d->start(pending[node]);
                 pending.remove(node);
             }
         }
