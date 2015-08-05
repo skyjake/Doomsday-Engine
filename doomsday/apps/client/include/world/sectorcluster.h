@@ -188,6 +188,11 @@ public:
         return (de::Vector2d(aaBox().min) + de::Vector2d(aaBox().max)) / 2;
     }
 
+    /**
+     * Returns @c true if the given world Z @a height is outside the cluster.
+     */
+    bool isHeightInVoid(de::ddouble height) const;
+
 #ifdef __CLIENT__
 
     /**

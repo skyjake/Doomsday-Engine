@@ -81,7 +81,6 @@
 #  include "render/viewports.h"
 #  include "render/rend_main.h"
 #  include "render/rend_particle.h"
-#  include "render/skydrawable.h"
 #endif
 
 static int bspSplitFactor = 7;  ///< cvar
@@ -234,6 +233,8 @@ DENG2_PIMPL(Map)
 #ifdef __CLIENT__
     PlaneSet trackedPlanes;
     SurfaceSet scrollingSurfaces;
+
+    SkyDrawable::Animator skyAnimator;
 
     /**
      * All (particle) generators.
@@ -1567,6 +1568,11 @@ Map::BspTree const &Map::bspTree() const
 
 #ifdef __CLIENT__
 
+SkyDrawable::Animator &Map::skyAnimator() const
+{
+    return d->skyAnimator;
+}
+
 bool Map::hasLightGrid() const
 {
     return bool(d->lightGrid);
@@ -2231,6 +2237,15 @@ LoopResult Map::forAllSectors(std::function<LoopResult (Sector &)> func) const
         if(auto result = func(*sec)) return result;
     }
     return LoopContinue;
+}
+
+bool Map::isPointInVoid(de::Vector3d const &pos) const
+{
+    if(SectorCluster const *cluster = clusterAt(pos))
+    {
+        return cluster->isHeightInVoid(pos.z);
+    }
+    return true;  // In the void.
 }
 
 dint Map::subspaceCount() const

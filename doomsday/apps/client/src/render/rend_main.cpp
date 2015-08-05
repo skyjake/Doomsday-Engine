@@ -4269,7 +4269,7 @@ static void drawSky()
     glStencilFunc(GL_EQUAL, 1, 0xffffffff);
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
-    rendSys().sky().draw(&worldSys().skyAnimator());
+    rendSys().sky().draw(&worldSys().map().skyAnimator());
 
     if(!devRendSkyAlways)
     {

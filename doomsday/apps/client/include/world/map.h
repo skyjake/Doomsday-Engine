@@ -47,6 +47,7 @@
 
 #  include "BiasSource"
 #  include "Lumobj"
+#  include "render/skydrawable.h"
 #endif
 
 class BspLeaf;
@@ -581,6 +582,11 @@ public:  // Skies --------------------------------------------------------------
 public:  // Subspaces -------------------------------------------------------------
 
     /**
+     * Returns @c true if the given @a point is outside all map subspaces.
+     */
+    bool isPointInVoid(de::Vector3d const &pos) const;
+ 
+    /**
      * Returns the total number of subspaces in the map.
      */
     dint subspaceCount() const;
@@ -706,6 +712,8 @@ public:  // Data structures ----------------------------------------------------
         Polyobj **poly, Plane **plane, Surface **surface) const;
 
 #ifdef __CLIENT__
+
+    SkyDrawable::Animator &skyAnimator() const;
 
     /**
      * Returns @c true if a LightGrid has been initialized for the map.

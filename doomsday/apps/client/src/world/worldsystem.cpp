@@ -76,7 +76,6 @@
 #  include "render/rend_fakeradio.h"
 #  include "render/rend_main.h"
 #  include "render/rendpoly.h"
-#  include "render/skydrawable.h"
 #  include "MaterialAnimator"
 
 #  include "edit_bias.h"
@@ -305,7 +304,6 @@ DENG2_PIMPL(WorldSystem)
     timespan_t time = 0;         ///< World-wide time.
 #ifdef __CLIENT__
     std::unique_ptr<Hand> hand;  ///< For map editing/manipulation.
-    SkyDrawable::Animator skyAnimator;
 #endif
 
     Instance(Public *i) : Base(i)
@@ -498,7 +496,7 @@ DENG2_PIMPL(WorldSystem)
         map->sky().configure(&skyDef);
 
         // Set up the SkyDrawable to get its config from the map's Sky.
-        skyAnimator.setSky(&rendSys().sky().configure(&map->sky()));
+        map->skyAnimator().setSky(&rendSys().sky().configure(&map->sky()));
 #endif
 
         // Init the thinker lists (public and private).
@@ -884,15 +882,18 @@ timespan_t WorldSystem::time() const
 void WorldSystem::tick(timespan_t elapsed)
 {
 #ifdef __CLIENT__
-    d->skyAnimator.advanceTime(elapsed);
-
-    if(DD_IsSharpTick() && d->map)
+    if(d->map)
     {
-        d->map->thinkers().forAll(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1, [] (thinker_t *th)
+        d->map->skyAnimator().advanceTime(elapsed);
+
+        if(DD_IsSharpTick())
         {
-            Mobj_AnimateHaloOcclussion(*reinterpret_cast<mobj_t *>(th));
-            return LoopContinue;
-        });
+            d->map->thinkers().forAll(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1, [] (thinker_t *th)
+            {
+                Mobj_AnimateHaloOcclussion(*reinterpret_cast<mobj_t *>(th));
+                return LoopContinue;
+            });
+        }
     }
 #else
     DENG2_UNUSED(elapsed);
@@ -900,11 +901,6 @@ void WorldSystem::tick(timespan_t elapsed)
 }
 
 #ifdef __CLIENT__
-SkyDrawable::Animator &WorldSystem::skyAnimator() const
-{
-    return d->skyAnimator;
-}
-
 Hand &WorldSystem::hand(coord_t *distance) const
 {
     // Time to create the hand?
@@ -946,40 +942,6 @@ void WorldSystem::endFrame()
 
     // Notify interested parties that the current frame has ended.
     DENG2_FOR_AUDIENCE2(FrameEnd, i) i->worldSystemFrameEnds();
-}
-
-bool WorldSystem::isPointInVoid(Vector3d const &pos) const
-{
-    // Everything is void if there is no map.
-    if(!hasMap()) return true;
-
-    SectorCluster const *cluster = map().clusterAt(pos);
-    if(!cluster) return true;
-
-    // Check the planes of the cluster.
-    if(cluster->visCeiling().surface().hasSkyMaskedMaterial())
-    {
-        coord_t const skyCeil = cluster->sector().map().skyFixCeiling();
-        if(skyCeil < DDMAXFLOAT && pos.z > skyCeil)
-            return true;
-    }
-    else if(pos.z > cluster->visCeiling().heightSmoothed())
-    {
-        return true;
-    }
-
-    if(cluster->visFloor().surface().hasSkyMaskedMaterial())
-    {
-        coord_t const skyFloor = cluster->sector().map().skyFixFloor();
-        if(skyFloor > DDMINFLOAT && pos.z < skyFloor)
-            return true;
-    }
-    else if(pos.z < cluster->visFloor().heightSmoothed())
-    {
-        return true;
-    }
-
-    return false;  // Not in the void.
 }
 
 #endif  // __CLIENT__

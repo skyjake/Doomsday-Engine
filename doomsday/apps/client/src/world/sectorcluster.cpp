@@ -1098,6 +1098,42 @@ SectorCluster::Subspaces const &SectorCluster::subspaces() const
     return d->subspaces;
 }
 
+bool SectorCluster::isHeightInVoid(ddouble height) const
+{
+    // Check the planes of the cluster.
+#ifdef __CLIENT__
+    if(visCeiling().surface().hasSkyMaskedMaterial())
+    {
+        coord_t const skyCeil = sector().map().skyFixCeiling();
+        if(skyCeil < DDMAXFLOAT && height > skyCeil)
+            return true;
+    }
+    else if(height > visCeiling().heightSmoothed())
+#else
+    if(height > visCeiling().height())
+#endif
+    {
+        return true;
+    }
+
+#ifdef __CLIENT__
+    if(visFloor().surface().hasSkyMaskedMaterial())
+    {
+        coord_t const skyFloor = sector().map().skyFixFloor();
+        if(skyFloor > DDMINFLOAT && height < skyFloor)
+            return true;
+    }
+    else if(height < visFloor().heightSmoothed())
+#else
+    if(height < visFloor().height())
+#endif
+    {
+        return true;
+    }
+
+    return false;  // Not in the void.
+}
+
 #ifdef __CLIENT__
 
 bool SectorCluster::hasWorldVolume(bool useSmoothedHeights) const

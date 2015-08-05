@@ -29,10 +29,6 @@
 #include <doomsday/uri.h>
 
 #ifdef __CLIENT__
-#  include "render/skydrawable.h"
-#endif
-
-#ifdef __CLIENT__
 class Hand;
 #endif
 
@@ -150,8 +146,6 @@ public:
      */
     void endFrame();
 
-    SkyDrawable::Animator &skyAnimator() const;
-
     /**
      * Returns the hand of the "user" in the world. Used for manipulating elements
      * for the purposes of runtime map editing.
@@ -160,15 +154,6 @@ public:
      *                  written here if not @c nullptr.
      */
     Hand &hand(coord_t *distance = nullptr) const;
-
-    /**
-     * Determines if a point is in the void.
-     *
-     * @param pos  Point.
-     *
-     * @return @c true, if the point is outside any of the world's maps.
-     */
-    bool isPointInVoid(de::Vector3d const &pos) const;
 
 #endif  // __CLIENT__
 

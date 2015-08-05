@@ -898,7 +898,8 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
     setupPlayerSprites();
 
     if(ClientApp::vr().mode() == VRConfig::OculusRift &&
-       worldSys().isPointInVoid(Rend_EyeOrigin().xzy()))
+       worldSys().hasMap() &&
+       worldSys().map().isPointInVoid(Rend_EyeOrigin().xzy()))
     {
         // Putting one's head in the wall will cause a blank screen.
         GLState::current().target().clear(GLTarget::Color);
