@@ -21,13 +21,13 @@
 #include "de_base.h"
 #include "world/vertex.h"
 
+#ifdef __CLIENT__
+#  include <de/Partition>
+#endif
 #include <de/Vector>
 #include "Line"
 #include "world/lineowner.h"  /// @todo remove me
 #include "Sector"
-#ifdef __CLIENT__
-#  include "partition.h"
-#endif
 
 using namespace de;
 

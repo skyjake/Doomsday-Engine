@@ -1,7 +1,7 @@
-/** @file partition.h Infinite line of the form point + direction vector.
+/** @file partition.h  Infinite line of the form point + direction vector.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,12 +18,12 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_MATH_PARTITION
-#define DENG_MATH_PARTITION
+#ifndef LIBDENG2_PARTITION_H
+#define LIBDENG2_PARTITION_H
 
-#include <de/math.h>
-#include <de/String>
-#include <de/Vector>
+#include "../math.h"
+#include "../String"
+#include "../Vector"
 
 #include <QTextStream>
 
@@ -33,7 +33,7 @@ namespace de {
  * An infinite line of the form point + direction vector. The members are public
  * for convenient access.
  *
- * @ingroup math
+ * @ingroup types
  */
 class Partition
 {
@@ -91,7 +91,7 @@ public:
      *
      * @see intercept()
      */
-    double intersection(Partition const &other) const
+    ddouble intersection(Partition const &other) const
     {
         ddouble divsor = direction.x * other.direction.y -
                          direction.y * other.direction.x;
@@ -120,6 +120,6 @@ public:
     }
 };
 
-} // namespace de
+}  // namespace de
 
-#endif // DENG_MATH_PARTITION
+#endif  // LIBDENG2_PARTITION_H

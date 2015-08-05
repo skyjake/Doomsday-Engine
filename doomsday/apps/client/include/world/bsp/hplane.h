@@ -3,7 +3,7 @@
  * Originally based on glBSP 2.24 (in turn, based on BSP 2.3)
  * @see http://sourceforge.net/projects/glbsp/
  *
- * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  * @authors Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
  * @authors Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
@@ -27,9 +27,9 @@
 #define DENG_WORLD_BSP_HPLANE_H
 
 #include <QList>
+#include <de/Partition>
 #include <de/Vector>
 #include "world/bsp/linesegment.h"
-#include "partition.h"
 
 /// Two intercepts whose distance is inclusive of this bound will be merged.
 #define HPLANE_INTERCEPT_MERGE_DISTANCE_EPSILON     1.0 / 128

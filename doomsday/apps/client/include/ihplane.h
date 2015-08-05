@@ -1,6 +1,6 @@
-/** @file ihplane.h Interface for a geometric half-plane.
+/** @file ihplane.h  Interface for a geometric half-plane.
  *
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,9 +21,8 @@
 #define DENG_MATH_IHPLANE
 
 #include <de/Error>
+#include <de/Partition>
 #include <de/Vector>
-
-#include "partition.h"
 
 namespace de {
 
