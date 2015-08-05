@@ -94,13 +94,13 @@ static Material *findRecordMaterial(Records &records, SerialId id)
     // Time to lookup the material for the record's URI?
     if(!records.userValue(id))
     {
-        Material *material = 0;
+        Material *material = nullptr;
         try
         {
             material = &App_ResourceSystem().material(Uri(records.stringRef(id), RC_NULL));
         }
         catch(res::System::MissingResourceManifestError const &)
-        {} // Ignore this error.
+        {}  // Ignore this error.
 
         records.setUserPointer(id, material);
         records.setUserValue(id, true);
@@ -200,34 +200,28 @@ MaterialArchive::MaterialArchive(int useSegments, bool recordSymbolicMaterials)
     }
 }
 
-struct findUniqueSerialIdWorker_params {
-    Records *records;
-    Material *material;
-};
-
-static int findUniqueSerialIdWorker(SerialId id, void *parameters)
-{
-    findUniqueSerialIdWorker_params *parm = (findUniqueSerialIdWorker_params*) parameters;
-
-    // Is this the material we are looking for?
-    if(findRecordMaterial(*parm->records, id) == parm->material)
-        return id;
-
-    return 0; // Continue iteration.
-}
-
 materialarchive_serialid_t MaterialArchive::findUniqueSerialId(Material *material) const
 {
-    if(!material) return 0; // Invalid.
-
-    findUniqueSerialIdWorker_params parm;
-    parm.records  = &d->records;
-    parm.material = material;
-
-    SerialId found = d->records.iterate(findUniqueSerialIdWorker, &parm);
-    if(found) return found; // Yes. Return existing serial.
-
-    return d->records.size() + 1;
+    materialarchive_serialid_t serialId = 0;  // Invalid.
+    if(material)
+    {
+        // Is there already an Id for this Material?
+        LoopResult found = d->records.forAll([this, &material, &serialId] (SerialId id)
+        {
+            if(findRecordMaterial(d->records, id) == material)
+            {
+                serialId = id;
+                return LoopAbort;
+            }
+            return LoopContinue;
+        });
+        if(!found)
+        {
+            // Assign a new Id.
+            serialId = d->records.size() + 1;
+        }
+    }
+    return serialId;
 }
 
 Material *MaterialArchive::find(materialarchive_serialid_t serialId, int group) const

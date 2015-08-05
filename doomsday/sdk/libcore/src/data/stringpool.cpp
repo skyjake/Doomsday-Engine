@@ -1,8 +1,6 @@
-/**
- * @file stringpool.cpp
- * Pool of strings (case insensitive).
+/** @file stringpool.cpp  Pool of strings (case insensitive).
  *
- * @author Copyright © 2010-2013 Daniel Swanson <danij@dengine.net>
+ * @author Copyright © 2010-2015 Daniel Swanson <danij@dengine.net>
  * @author Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
@@ -27,8 +25,8 @@
 #include <list>
 #include <set>
 #include <algorithm>
-#ifdef _DEBUG
-#  include <stdio.h> /// @todo should use C++
+#ifdef DENG2_DEBUG
+#  include <stdio.h>  /// @todo should use C++
 #endif
 
 /// Macro used for converting internal ids to externally visible Ids.
@@ -429,16 +427,17 @@ bool StringPool::removeById(Id id)
     return true;
 }
 
-int StringPool::iterate(int (*callback)(Id, void *), void *data) const
+LoopResult StringPool::forAll(std::function<LoopResult (Id)> func) const
 {
-    if(!callback) return 0;
-    for(uint i = 0; i < d->idMap.size(); ++i)
+    for(duint i = 0; i < d->idMap.size(); ++i)
     {
-        if(!d->idMap[i]) continue;
-        int result = callback(EXPORT_ID(i), data);
-        if(result) return result;
+        if(d->idMap[i])
+        {
+            if(auto result = func(EXPORT_ID(i)))
+                return result;
+        }
     }
-    return 0;
+    return LoopContinue;
 }
 
 // Implements ISerializable.
@@ -488,34 +487,22 @@ void StringPool::operator << (Reader &from)
     d->assertCount();
 }
 
-#if _DEBUG
-typedef struct {
-    int padding; ///< Number of characters to left-pad output.
-    uint count; ///< Running total of the number of strings printed.
-    StringPool const *pool; ///< StringPool instance being printed.
-} printinternedstring_params_t;
-
-static int printInternedString(StringPool::Id internId, void *params)
-{
-    printinternedstring_params_t *p = (printinternedstring_params_t *)params;
-    QByteArray stringUtf8 = p->pool->string(internId).toUtf8();
-    fprintf(stderr, "%*u %5u %s\n", p->padding, p->count++, internId, stringUtf8.constData());
-    return 0; // Continue iteration.
-}
-
+#ifdef DENG2_DEBUG
 void StringPool::print() const
 {
-    int numDigits = 5;
-    printinternedstring_params_t p;
-    p.padding = 2 + numDigits;
-    p.pool = this;
-    p.count = 0;
+    static dint const padding = 2 + 5/*numDigits*/;
 
     fprintf(stderr, "StringPool [%p]\n    idx    id string\n", (void *)this);
-    iterate(printInternedString, &p);
-    fprintf(stderr, "  There is %u %s in the pool.\n", (duint) size(),
-            size() == 1? "string":"strings");
+    duint count = 0;
+    forAll([this, &count] (Id id)
+    {
+        QByteArray strUtf8 = string(id).toUtf8();
+        fprintf(stderr, "%*u %5u %s\n", padding, count++, id, strUtf8.constData());
+        return LoopContinue;
+    });
+    fprintf(stderr, "  There is %u %s in the pool.\n", duint( size() ),
+            size() == 1 ? "string" : "strings");
 }
 #endif
 
-} // namespace de
+}  // namespace de

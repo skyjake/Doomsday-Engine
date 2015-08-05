@@ -58,44 +58,6 @@ static bool editMapInited;
 static StringPool *materialDict;
 
 /**
- * Either print or count-the-number-of unresolved references in the
- * material dictionary.
- *
- * @param internId    Unique id associated with the reference.
- * @param context     If a uint pointer operate in "count" mode (total written
- *                    here). Else operate in "print" mode.
- * @return Always @c 0 (for use as an iterator).
- */
-static int printMissingMaterialWorker(StringPool::Id internId, void *context)
-{
-    int *count = (int *)context;
-
-    // A valid id?
-    if(materialDict->string(internId))
-    {
-        // Have we resolved this reference yet?
-        if(!materialDict->userPointer(internId))
-        {
-            // An unresolved reference.
-            if(count)
-            {
-                // Count mode.
-                *count += 1;
-            }
-            else
-            {
-                // Print mode.
-                int const refCount = materialDict->userValue(internId);
-                String const &materialUri = materialDict->string(internId);
-                LOG_RES_WARNING("Found %4i x unknown material \"%s\"") << refCount << materialUri;
-            }
-        }
-    }
-
-    return 0; // Continue iteration.
-}
-
-/**
  * Destroy the missing material dictionary.
  */
 static void clearMaterialDict()
@@ -112,10 +74,23 @@ static void clearMaterialDict()
  */
 static void printMissingMaterialsInDict()
 {
-    if(materialDict)
+    if(!::materialDict) return;
+
+    ::materialDict->forAll([] (StringPool::Id id)
     {
-        materialDict->iterate(printMissingMaterialWorker);
-    }
+        // A valid id?
+        if(::materialDict->string(id))
+        {
+            // An unresolved reference?
+            if(!::materialDict->userPointer(id))
+            {
+                LOG_RES_WARNING("Found %4i x unknown material \"%s\"")
+                    << ::materialDict->userValue(id)
+                    << ::materialDict->string(id);
+            }
+        }
+        return LoopContinue;
+    });
 }
 
 /**

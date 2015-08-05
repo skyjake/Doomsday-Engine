@@ -40,27 +40,26 @@ static StringPool *entityDefs;
 typedef std::map<int, StringPool::Id> EntityDefIdMap;
 static EntityDefIdMap entityDefIdMap;
 
-static int clearEntityDefsWorker(StringPool::Id id, void * /*parameters*/)
+static void clearEntityDefs()
 {
-    MapEntityDef *def = static_cast<MapEntityDef *>( entityDefs->userPointer(id) );
-    DENG2_ASSERT(def);
-    for(uint i = 0; i < def->numProps; ++i)
+    if(!::entityDefs) return;
+
+    ::entityDefs->forAll([] (StringPool::Id id)
     {
-        MapEntityPropertyDef *prop = def->props + i;
-        M_Free(prop->name);
-    }
-    M_Free(def->props);
-    delete def;
-    return false; // Continue iteration.
-}
+        auto *def = static_cast<MapEntityDef *>( ::entityDefs->userPointer(id) );
+        DENG2_ASSERT(def);
+        for(duint i = 0; i < def->numProps; ++i)
+        {
+            M_Free(def->props[i].name);
+        }
+        M_Free(def->props);
+        delete def;
 
-static void clearEntityDefs(void)
-{
-    if(!entityDefs) return;
+        return LoopContinue;
+    });
+    delete ::entityDefs; ::entityDefs = nullptr;
 
-    entityDefs->iterate(clearEntityDefsWorker, 0/*no parameters*/);
-    delete entityDefs; entityDefs = 0;
-    entityDefIdMap.clear();
+    ::entityDefIdMap.clear();
 }
 
 MapEntityDef *P_MapEntityDef(int id)
@@ -71,7 +70,7 @@ MapEntityDef *P_MapEntityDef(int id)
         StringPool::Id id = i->second;
         return static_cast<MapEntityDef *>( entityDefs->userPointer(id) );
     }
-    return 0; // Not found.
+    return nullptr;  // Not found.
 }
 
 MapEntityDef *P_MapEntityDefByName(char const *name)
@@ -81,26 +80,25 @@ MapEntityDef *P_MapEntityDefByName(char const *name)
         StringPool::Id id = entityDefs->isInterned(String(name));
         return static_cast<MapEntityDef *>( entityDefs->userPointer(id) );
     }
-    return 0; // Not found.
-}
-
-static int P_NameForMapEntityDefWorker(StringPool::Id id, void *parameters)
-{
-    MapEntityDef *def = static_cast<MapEntityDef *>( parameters );
-    if(entityDefs->userPointer(id) == def) return id;
-    return 0; // Continue iteration.
+    return nullptr;  // Not found.
 }
 
 AutoStr *P_NameForMapEntityDef(MapEntityDef *def)
 {
+    String name;  // Not found.
     if(def)
     {
-        StringPool::Id id = entityDefs->iterate(P_NameForMapEntityDefWorker, def);
-        String const& name = entityDefs->string(id);
-        QByteArray nameUtf8 = name.toUtf8();
-        return AutoStr_FromText(nameUtf8.constData());
+        ::entityDefs->forAll([&def, &name] (StringPool::Id id)
+        {
+            if(::entityDefs->userPointer(id) == def)
+            {
+                name = ::entityDefs->string(id);
+                return LoopAbort;
+            }
+            return LoopContinue;
+        });
     }
-    return AutoStr_NewStd();
+    return AutoStr_FromText(name.toUtf8().constData());
 }
 
 int MapEntityDef_Property(MapEntityDef *def, int propertyId,

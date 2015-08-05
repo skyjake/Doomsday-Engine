@@ -1996,22 +1996,19 @@ DENG2_PIMPL(ResourceSystem)
         modef->shadowRadius = def.getf("shadowRadius");
     }
 
-    static int destroyModelInRepository(StringPool::Id id, void *context)
-    {
-        ModelRepository &modelRepository = *static_cast<ModelRepository *>(context);
-        if(Model *model = reinterpret_cast<Model *>(modelRepository.userPointer(id)))
-        {
-            modelRepository.setUserPointer(id, 0);
-            delete model;
-        }
-        return 0;
-    }
-
     void clearModelList()
     {
         if(!modelRepository) return;
 
-        modelRepository->iterate(destroyModelInRepository, modelRepository);
+        modelRepository->forAll([this] (StringPool::Id id)
+        {
+            if(auto *model = reinterpret_cast<Model *>(modelRepository->userPointer(id)))
+            {
+                modelRepository->setUserPointer(id, nullptr);
+                delete model;
+            }
+            return LoopContinue;
+        });
     }
 #endif
 

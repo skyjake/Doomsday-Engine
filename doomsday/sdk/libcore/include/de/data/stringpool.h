@@ -1,8 +1,6 @@
-/**
- * @file stringpool.h
- * Pool of strings (case insensitive).
+/** @file stringpool.h  Pool of strings (case insensitive).
  *
- * @author Copyright © 2010-2013 Daniel Swanson <danij@dengine.net>
+ * @author Copyright © 2010-2015 Daniel Swanson <danij@dengine.net>
  * @author Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
@@ -25,6 +23,7 @@
 #include "../libcore.h"
 #include "../ISerializable"
 #include "../String"
+#include <functional>
 
 namespace de {
 
@@ -216,19 +215,15 @@ public:
      * Iterate over all strings in the pool making a callback for each. Iteration
      * ends when all strings have been processed or a callback returns non-zero.
      *
-     * @param callback  Callback to make for each iteration.
-     * @param data      User data to be passed to the callback.
-     *
-     * @return  @c 0 iff iteration completed wholly. Otherwise the non-zero value
-     *          returned by @a callback.
+     * @param func  Callback to make for each string.
      */
-    int iterate(int (*callback)(Id, void *), void *data = 0) const;
+    LoopResult forAll(std::function<LoopResult (Id)> func) const;
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;
     void operator << (Reader &from);
 
-#if _DEBUG
+#ifdef DENG2_DEBUG
     /**
      * Print contents of the pool. For debug.
      * @param pool  StringPool instance.
@@ -240,6 +235,6 @@ private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace de
+}  // namespace de
 
-#endif /* LIBDENG2_STRINGPOOL_H */
+#endif  // LIBDENG2_STRINGPOOL_H
