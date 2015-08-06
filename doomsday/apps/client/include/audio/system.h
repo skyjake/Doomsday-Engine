@@ -35,6 +35,11 @@ class System : public de::System
 public:
     static System &get();
 
+    /**
+     * Register the console commands and variables of this module.
+     */
+    static void consoleRegister();
+
 public:
     System();
 

@@ -3141,7 +3141,7 @@ static void consoleRegister()
     Con_Register();
     Games::consoleRegister();
     DH_Register();
-    S_Register();
+    ::audio::System::consoleRegister();
 
 #ifdef __CLIENT__
     C_CMD("clear",           "", Clear);
