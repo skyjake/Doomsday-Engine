@@ -145,14 +145,6 @@ void S_SetupForChangedMap()
 #endif
 }
 
-void S_Reset()
-{
-#ifdef __CLIENT__
-    Sfx_Reset();
-#endif
-    _api_S.StopMusic();
-}
-
 void S_StartFrame()
 {
 #ifdef DD_PROFILE

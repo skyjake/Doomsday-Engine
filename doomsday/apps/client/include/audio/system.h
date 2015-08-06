@@ -41,6 +41,11 @@ public:
     // Systems observe the passage of time.
     void timeChanged(de::Clock const &) override;
 
+    /**
+     * Stop all channels and music, delete the entire sample cache.
+     */
+    void reset();
+
 private:
     DENG2_PRIVATE(d)
 };

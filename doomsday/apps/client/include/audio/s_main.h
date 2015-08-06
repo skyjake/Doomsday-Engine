@@ -67,11 +67,6 @@ void S_Shutdown(void);
  */
 void S_SetupForChangedMap(void);
 
-/**
- * Stop all channels and music, delete the entire sample cache.
- */
-void S_Reset(void);
-
 void S_StartFrame(void);
 
 void S_EndFrame(void);

@@ -1364,8 +1364,6 @@ bool App_ChangeGame(Game &game, bool allowReload)
     }
 #endif
 
-    S_Reset();
-
 #ifdef __CLIENT__
     Demo_StopPlayback();
 
@@ -2214,7 +2212,7 @@ void DD_UpdateEngineState()
     LOG_MSG("Updating engine state...");
 
     // Stop playing sounds and music.
-    S_Reset();
+    App_AudioSystem().reset();
 
 #ifdef __CLIENT__
     BusyMode_FreezeGameForBusyMode();

@@ -16,8 +16,17 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#define DENG_NO_API_MACROS_SOUND
+
 #include "audio/system.h"
 
+#include "api_sound.h"
+
+#ifdef __CLIENT__
+#  include "audio/audiodriver.h"
+#endif
+#include "audio/s_mus.h"
+#include "audio/s_sfx.h"
 #include <de/App>
 
 using namespace de;
@@ -27,14 +36,24 @@ namespace audio {
 static audio::System *theAudioSystem = nullptr;
 
 DENG2_PIMPL(System)
+, DENG2_OBSERVES(App, GameUnload)
 {
     Instance(Public *i) : Base(i)
     {
         theAudioSystem = thisPublic;
+
+        App::app().audienceForGameUnload() += this;
     }
     ~Instance()
     {
+        App::app().audienceForGameUnload() -= this;
+
         theAudioSystem = nullptr;
+    }
+
+    void aboutToUnloadGame(game::Game const &)
+    {
+        self.reset();
     }
 };
 
@@ -50,6 +69,14 @@ audio::System &System::get()
 {
     DENG2_ASSERT(theAudioSystem);
     return *theAudioSystem;
+}
+
+void System::reset()
+{
+#ifdef __CLIENT__
+    Sfx_Reset();
+#endif
+    _api_S.StopMusic();
 }
 
 }  // namespace audio
