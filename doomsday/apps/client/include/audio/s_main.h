@@ -72,10 +72,6 @@ void S_MapChange(void);
  */
 void S_SetupForChangedMap(void);
 
-void S_StartFrame(void);
-
-void S_EndFrame(void);
-
 /**
  * Gets information about a defined sound. Linked sounds are resolved.
  *

@@ -51,6 +51,10 @@ public:
      */
     void reset();
 
+public:  /// @todo make private:
+    void startFrame();
+    void endFrame();
+
 private:
     DENG2_PRIVATE(d)
 };

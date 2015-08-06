@@ -1,6 +1,8 @@
 /** @file system.cpp  Audio subsystem module.
  *
- * @authors Copyright © 2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au> *
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -28,6 +30,7 @@
 #include "audio/s_main.h"
 #include "audio/s_mus.h"
 #include "audio/s_sfx.h"
+#include <doomsday/audio/logical.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
 #include <de/App>
@@ -80,6 +83,37 @@ void System::reset()
     Sfx_Reset();
 #endif
     _api_S.StopMusic();
+}
+
+/**
+ * @todo Do this in audio::System::timeChanged()
+ */
+void System::startFrame()
+{
+#ifdef __CLIENT__
+    static int oldMusVolume = -1;
+
+    if(musVolume != oldMusVolume)
+    {
+        oldMusVolume = musVolume;
+        Mus_SetVolume(musVolume / 255.0f);
+    }
+
+    // Update all channels (freq, 2D:pan,volume, 3D:position,velocity).
+    Sfx_StartFrame();
+    Mus_StartFrame();
+#endif
+
+    // Remove stopped sounds from the LSM.
+    Sfx_Logical_SetOneSoundPerEmitter(sfxOneSoundPerEmitter);
+    Sfx_PurgeLogical();
+}
+
+void System::endFrame()
+{
+#ifdef __CLIENT__
+    Sfx_EndFrame();
+#endif
 }
 
 /**

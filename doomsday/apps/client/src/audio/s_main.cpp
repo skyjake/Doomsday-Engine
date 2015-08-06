@@ -56,10 +56,6 @@
 
 using namespace de;
 
-BEGIN_PROF_TIMERS()
-  PROF_SOUND_STARTFRAME
-END_PROF_TIMERS()
-
 audiodriver_t *audioDriver;
 
 int showSoundInfo;
@@ -140,47 +136,6 @@ void S_SetupForChangedMap()
 #ifdef __CLIENT__
     // Update who is listening now.
     Sfx_SetListener(S_GetListenerMobj());
-#endif
-}
-
-void S_StartFrame()
-{
-#ifdef DD_PROFILE
-    static int i;
-    if(++i > 40)
-    {
-        i = 0;
-        PRINT_PROF( PROF_SOUND_STARTFRAME );
-    }
-#endif
-
-BEGIN_PROF( PROF_SOUND_STARTFRAME );
-
-#ifdef __CLIENT__
-    static int oldMusVolume = -1;
-
-    if(musVolume != oldMusVolume)
-    {
-        oldMusVolume = musVolume;
-        Mus_SetVolume(musVolume / 255.0f);
-    }
-
-    // Update all channels (freq, 2D:pan,volume, 3D:position,velocity).
-    Sfx_StartFrame();
-    Mus_StartFrame();
-#endif
-
-    // Remove stopped sounds from the LSM.
-    Sfx_Logical_SetOneSoundPerEmitter(sfxOneSoundPerEmitter);
-    Sfx_PurgeLogical();
-
-END_PROF( PROF_SOUND_STARTFRAME );
-}
-
-void S_EndFrame()
-{
-#ifdef __CLIENT__
-    Sfx_EndFrame();
 #endif
 }
 
