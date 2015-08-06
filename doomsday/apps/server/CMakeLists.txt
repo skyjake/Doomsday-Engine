@@ -28,6 +28,7 @@ set (SHARED_WITH_CLIENT
     ${src}/include/audio/s_cache.h
     ${src}/include/audio/s_environ.h
     ${src}/include/audio/s_main.h
+    ${src}/include/audio/system.h
     ${src}/include/color.h
     ${src}/include/con_config.h
     ${src}/include/dd_def.h
@@ -121,6 +122,7 @@ set (SHARED_WITH_CLIENT
     ${src}/src/api_uri.cpp
     ${src}/src/audio/s_cache.cpp
     ${src}/src/audio/s_main.cpp
+    ${src}/src/audio/system.cpp
     ${src}/src/color.cpp
     ${src}/src/con_config.cpp
     ${src}/src/dd_loop.cpp

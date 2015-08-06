@@ -570,6 +570,11 @@ void App_AbnormalShutdown(char const *message)
     exit(1);
 }
 
+::audio::System &App_AudioSystem()
+{
+    return ::audio::System::get();
+}
+
 ResourceSystem &App_ResourceSystem()
 {
     return static_cast<ResourceSystem &>(res::System::get());
