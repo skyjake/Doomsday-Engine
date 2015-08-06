@@ -20,35 +20,11 @@
 #ifndef DENG_AUDIO_S_MAIN_H
 #define DENG_AUDIO_S_MAIN_H
 
-#include "world/p_object.h"
-#include "def_main.h"
-#include "api_sound.h"
-#include "api_audiod.h"
-
-#ifdef __cplusplus
-extern "C" {
+#ifndef __cplusplus
+#  error "s_main.h requires C++"
 #endif
 
-/**
- * @defgroup soundPlayFlags Sound Start Flags
- * @ingroup flags
- * @{
- */
-#define SF_RANDOM_SHIFT     0x1   ///< Random frequency shift.
-#define SF_RANDOM_SHIFT2    0x2   ///< 2x bigger random frequency shift.
-#define SF_GLOBAL_EXCLUDE   0x4   ///< Exclude all emitters.
-#define SF_NO_ATTENUATION   0x8   ///< Very, very loud...
-#define SF_REPEAT           0x10  ///< Repeats until stopped.
-#define SF_DONT_STOP        0x20  ///< Sound can't be stopped while playing.
-/// @}
-
 extern int showSoundInfo;
-extern int soundMinDist, soundMaxDist;
-extern int sfxVolume, musVolume;
-extern int sfxBits, sfxRate;
-extern byte sfxOneSoundPerEmitter;
-
-void S_Register(void);
 
 /**
  * Main sound system initialization. Inits both the Sfx and Mus modules.
@@ -73,33 +49,8 @@ void S_MapChange(void);
 void S_SetupForChangedMap(void);
 
 /**
- * Gets information about a defined sound. Linked sounds are resolved.
- *
- * @param soundID  ID number of the sound.
- * @param freq     Defined frequency for the sound is returned here. May be @c NULL.
- * @param volume   Defined volume for the sound is returned here. May be @c NULL.
- *
- * @return  Sound info (from definitions).
- */
-sfxinfo_t *S_GetSoundInfo(int soundID, float *freq, float *volume);
-
-/**
- * @return  @c true if the specified ID is a repeating sound.
- */
-dd_bool S_IsRepeating(int idFlags);
-
-/**
- * Usually the display player.
- */
-mobj_t *S_GetListenerMobj(void);
-
-/**
  * Draws debug information on-screen.
  */
 void S_Drawer(void);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif // DENG_AUDIO_S_MAIN_H
