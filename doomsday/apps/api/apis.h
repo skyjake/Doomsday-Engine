@@ -147,7 +147,8 @@ enum {
     DE_API_SERVER               = DE_API_SERVER_v1,
 
     DE_API_SOUND_v1             = 2000,    // 1.10
-    DE_API_SOUND                = DE_API_SOUND_v1,
+    DE_API_SOUND_v2             = 2001,    // 2.0
+    DE_API_SOUND                = DE_API_SOUND_v2,
 
     DE_API_SVG_v1               = 2100,    // 1.10
     DE_API_SVG                  = DE_API_SVG_v1,

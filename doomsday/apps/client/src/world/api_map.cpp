@@ -31,6 +31,8 @@
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/resource/mapmanifest.h>
 
+#include "audio/s_main.h"
+
 #include "network/net_main.h"
 
 #include "world/blockmap.h"
@@ -1508,6 +1510,9 @@ DENG_EXTERN_C dd_bool P_MapChange(char const *uriCString)
     {
         App_FatalError("P_MapChange: Invalid Uri argument.");
     }
+
+    // Initialize the logical sound manager.
+    S_MapChange();
 
 #ifdef __CLIENT__
     App_ResourceSystem().purgeCacheQueue();

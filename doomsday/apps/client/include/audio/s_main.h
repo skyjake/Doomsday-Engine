@@ -63,6 +63,11 @@ dd_bool S_Init(void);
 void S_Shutdown(void);
 
 /**
+ * Must be called before the map is changed.
+ */
+void S_MapChange(void);
+
+/**
  * Must be called after the map has been changed.
  */
 void S_SetupForChangedMap(void);

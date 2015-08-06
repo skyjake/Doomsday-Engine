@@ -619,7 +619,7 @@ void S_Register()
 DENG_DECLARE_API(S) =
 {
     { DE_API_SOUND },
-    S_MapChange,
+    //S_MapChange,
     S_LocalSoundAtVolumeFrom,
     S_LocalSoundAtVolume,
     S_LocalSound,

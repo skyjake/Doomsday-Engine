@@ -691,9 +691,6 @@ void P_SetupMap(de::Uri const &mapUri)
 
     P_ResetWorldState();
 
-    // Initialize the logical sound manager.
-    S_MapChange();
-
     if(!P_MapChange(mapUri.compose().toUtf8().constData()))
     {
         Con_Error("P_SetupMap: Failed changing/loading map \"%s\".\n", mapUri.compose().toUtf8().constData());

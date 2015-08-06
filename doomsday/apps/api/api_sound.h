@@ -2,7 +2,7 @@
  * @ingroup audio
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -33,7 +33,7 @@ DENG_API_TYPEDEF(S)
     /**
      * Must be called before the map is changed.
      */
-    void (*MapChange)(void);
+    //void (*MapChange)(void);
 
     /**
      * Play a sound on the local system. A public interface.
@@ -157,7 +157,7 @@ DENG_API_TYPEDEF(S)
 DENG_API_T(S);
 
 #ifndef DENG_NO_API_MACROS_SOUND
-#define S_MapChange                 _api_S.MapChange
+//#define S_MapChange                 _api_S.MapChange
 #define S_LocalSoundAtVolumeFrom    _api_S.LocalSoundAtVolumeFrom
 #define S_LocalSoundAtVolume        _api_S.LocalSoundAtVolume
 #define S_LocalSound                _api_S.LocalSound
