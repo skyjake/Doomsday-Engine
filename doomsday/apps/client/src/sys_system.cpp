@@ -91,8 +91,7 @@ void Sys_Init()
 
     LOG_VERBOSE("Setting up platform state...");
 
-    LOG_AUDIO_VERBOSE("Initializing Audio subsystem...");
-    S_Init();
+    App_AudioSystem().initPlayback();
 
 #ifdef DENG_CATCH_SIGNALS
     // Register handler for abnormal situations (in release build).
@@ -134,9 +133,10 @@ void Sys_Shutdown()
         Con_Execute(CMDS_DDAY, "unload", true, false);
 
     Net_Shutdown();
+
     // Let's shut down sound first, so Windows' HD-hogging doesn't jam
     // the MUS player (would produce horrible bursts of notes).
-    S_Shutdown();
+    App_AudioSystem().deinitPlayback();
     
 #ifdef __CLIENT__
     GL_Shutdown();

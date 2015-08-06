@@ -578,7 +578,7 @@ DENG2_PIMPL(WorldSystem)
 #endif
 
         map->initPolyobjs();
-        S_SetupForChangedMap();
+        App_AudioSystem().worldMapChanged();
 
 #ifdef __SERVER__
         if(::isServer)

@@ -98,8 +98,8 @@ void Cl_CleanUp()
     clientPaused = false;
     handshakeReceived = false;
 
-    //S_Reset();
-    S_MapChange();
+    //App_AudioSystem().reset();
+    App_AudioSystem().aboutToUnloadMap();
 
     // Reset the local world state.
     App_WorldSystem().reset();

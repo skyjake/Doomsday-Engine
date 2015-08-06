@@ -148,6 +148,68 @@ void System::endFrame()
 #endif
 }
 
+bool System::initPlayback()
+{
+    Sfx_Logical_SetSampleLengthCallback(Sfx_GetSoundLength);
+
+    if(CommandLine_Exists("-nosound") || CommandLine_Exists("-noaudio"))
+        return true;
+
+    // Disable random pitch changes?
+    ::noRndPitch = CommandLine_Exists("-norndpitch");
+
+#ifdef __CLIENT__
+    LOG_AUDIO_VERBOSE("Initializing Audio System for playback...");
+
+    // Try to load the audio driver plugin(s).
+    if(!AudioDriver_Init())
+    {
+        LOG_AUDIO_NOTE("Music and sound effects are disabled");
+        return false;
+    }
+
+    bool sfxOK = Sfx_Init();
+    bool musOK = Mus_Init();
+
+    if(!sfxOK || !musOK)
+    {
+        LOG_AUDIO_NOTE("Errors during audio subsystem initialization");
+        return false;
+    }
+#endif
+
+    return true;
+}
+
+void System::deinitPlayback()
+{
+#ifdef __CLIENT__
+    Sfx_Shutdown();
+    Mus_Shutdown();
+
+    // Finally, close the audio driver.
+    AudioDriver_Shutdown();
+#endif
+}
+
+void System::aboutToUnloadMap()
+{
+    // Stop everything in the LSM.    
+    Sfx_InitLogical();
+
+#ifdef __CLIENT__
+    Sfx_MapChange();
+#endif
+}
+
+void System::worldMapChanged()
+{
+#ifdef __CLIENT__
+    // Update who is listening now.
+    Sfx_SetListener(S_GetListenerMobj());
+#endif
+}
+
 /**
  * Console command for playing a (local) sound effect.
  */

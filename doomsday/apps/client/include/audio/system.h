@@ -55,9 +55,23 @@ public:
      */
     void reset();
 
+    /**
+     * Perform playback intialization for Sound Effects and Music.
+     * @return  @c true if no error occurred.
+     */
+    bool initPlayback();
+
+    /**
+     * Perform playback deintialization for Sound Effects and Music.
+     */
+    void deinitPlayback();
+
 public:  /// @todo make private:
     void startFrame();
     void endFrame();
+
+    void aboutToUnloadMap();
+    void worldMapChanged();
 
 private:
     DENG2_PRIVATE(d)

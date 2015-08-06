@@ -1512,7 +1512,7 @@ DENG_EXTERN_C dd_bool P_MapChange(char const *uriCString)
     }
 
     // Initialize the logical sound manager.
-    S_MapChange();
+    App_AudioSystem().aboutToUnloadMap();
 
 #ifdef __CLIENT__
     App_ResourceSystem().purgeCacheQueue();
