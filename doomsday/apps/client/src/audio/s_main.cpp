@@ -56,8 +56,6 @@
 
 using namespace de;
 
-int showSoundInfo;
-
 dd_bool S_Init()
 {
 #ifdef __CLIENT__
@@ -120,26 +118,4 @@ void S_SetupForChangedMap()
     // Update who is listening now.
     Sfx_SetListener(S_GetListenerMobj());
 #endif
-}
-
-void S_Drawer()
-{
-#ifdef __CLIENT__
-    if(!::showSoundInfo) return;
-
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    // Go into screen projection mode.
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
-
-    Sfx_DebugInfo();
-
-    // Back to the original.
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-#endif  // __CLIENT__
 }

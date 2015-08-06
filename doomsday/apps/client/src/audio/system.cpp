@@ -219,13 +219,14 @@ void System::consoleRegister()  // static
 
 #ifdef __CLIENT__
     C_VAR_INT   ("sound-volume",        &sfxVolume,             0, 0, 255);
-    C_VAR_INT   ("sound-info",          &showSoundInfo,         0, 0, 1);
     C_VAR_INT   ("sound-rate",          &sfxSampleRate,         0, 11025, 44100);
     C_VAR_INT   ("sound-16bit",         &sfx16Bit,              0, 0, 1);
     C_VAR_INT   ("sound-3d",            &sfx3D,                 0, 0, 1);
     C_VAR_FLOAT2("sound-reverb-volume", &sfxReverbStrength,     0, 0, 1.5f, reverbVolumeChanged);
 
     C_CMD_FLAGS("playsound", nullptr, PlaySound, CMDF_NO_DEDICATED);
+
+    C_VAR_INT("sound-info", &showSoundInfo, 0, 0, 1);
 
     Mus_Register();
 #endif

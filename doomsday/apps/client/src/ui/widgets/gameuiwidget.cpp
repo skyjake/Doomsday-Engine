@@ -25,7 +25,7 @@
 #include "api_console.h"
 #include "edit_bias.h"
 
-#include "audio/s_main.h"
+#include "audio/s_sfx.h"
 #include "network/net_main.h"
 #include "gl/gl_main.h"
 
@@ -106,7 +106,7 @@ DENG2_PIMPL(GameUIWidget)
             Rend_LightGridVisual(App_WorldSystem().map().lightGrid());
         }
         Net_Drawer();
-        S_Drawer();
+        Sfx_ChannelDrawer();
 
         DGL_End();
     }

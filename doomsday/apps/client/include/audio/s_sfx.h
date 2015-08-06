@@ -1,4 +1,4 @@
-/** @file s_sfx.h Sound Effects
+/** @file s_sfx.h  Sound Effects
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
@@ -19,16 +19,16 @@
  */
 
 #ifdef __CLIENT__
-#ifndef DENG_CLIENT_SOUND_SFX_H
-#define DENG_CLIENT_SOUND_SFX_H
+#ifndef CLIENT_SOUND_SFX_H
+#define CLIENT_SOUND_SFX_H
+
+#ifndef __cplusplus
+#  error "s_sfx.h requires C++"
+#endif
 
 #include "api_audiod.h"
 #include "api_audiod_sfx.h"
 #include "world/map.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 // Begin and end macros for Critical Operations. They are operations
 // that can't be done while a refresh is being made. No refreshing
@@ -37,19 +37,27 @@ extern "C" {
 #define END_COP         Sfx_AllowRefresh(true)
 
 // Channel flags.
-#define SFXCF_NO_ORIGIN         (0x1) // Sound is coming from a mystical emitter.
-#define SFXCF_NO_ATTENUATION    (0x2) // Sound is very, very loud.
-#define SFXCF_NO_UPDATE         (0x4) // Channel update is skipped.
+#define SFXCF_NO_ORIGIN         (0x1)  ///< Sound is coming from a mystical emitter.
+#define SFXCF_NO_ATTENUATION    (0x2)  ///< Sound is very, very loud.
+#define SFXCF_NO_UPDATE         (0x4)  ///< Channel update is skipped.
 
-typedef struct sfxchannel_s {
+struct sfxchannel_t
+{
     int             flags;
     sfxbuffer_t    *buffer;
-    struct mobj_s  *emitter; // Mobj that is emitting the sound.
-    coord_t         origin[3]; // Emit from here (synced with emitter).
-    float           volume; // Sound volume: 1.0 is max.
-    float           frequency; // Frequency adjustment: 1.0 is normal.
-    int             startTime; // When was the channel last started?
-} sfxchannel_t;
+    struct mobj_s  *emitter;    ///< Mobj that is emitting the sound.
+    coord_t         origin[3];  ///< Emit from here (synced with emitter).
+    float           volume;     ///< Sound volume: 1.0 is max.
+    float           frequency;  ///< Frequency adjustment: 1.0 is normal.
+    int             startTime;  ///< When was the channel last started?
+};
+
+extern int showSoundInfo;
+
+/**
+ * Draws debug information on-screen.
+ */
+void Sfx_ChannelDrawer();
 
 extern dd_bool sfxAvail;
 extern float sfxReverbStrength;
@@ -61,17 +69,17 @@ extern int sfx3D, sfx16Bit, sfxSampleRate;
  * drivers and the channels, and initializing the sound cache. Returns
  * true if the module is operational after the init.
  */
-dd_bool Sfx_Init(void);
+bool Sfx_Init();
 
 /**
  * Shut down the whole Sfx module: drivers, channel buffers and the cache.
  */
-void Sfx_Shutdown(void);
+void Sfx_Shutdown();
 
 /**
  * Stop all channels, clear the cache.
  */
-void Sfx_Reset(void);
+void Sfx_Reset();
 
 /**
  * Enabling refresh is simple: the refresh thread is resumed. When
@@ -84,24 +92,24 @@ void Sfx_AllowRefresh(dd_bool allow);
 /**
  * Must be done before the map is changed.
  */
-void Sfx_MapChange(void);
+void Sfx_MapChange();
 
 void Sfx_SetListener(struct mobj_s *mobj);
 
 /**
  * Periodical routines: channel updates, cache purge, cvar checks.
  */
-void Sfx_StartFrame(void);
+void Sfx_StartFrame();
 
-void Sfx_EndFrame(void);
+void Sfx_EndFrame();
 
 /**
  * Called periodically by S_Ticker(). If the cache is too large, stopped
  * samples with the lowest hitcount will be uncached.
  */
-void Sfx_PurgeCache(void);
+void Sfx_PurgeCache();
 
-void Sfx_RefreshChannels(void);
+void Sfx_RefreshChannels();
 
 /**
  * Used by the high-level sound interface to play sounds on the local system.
@@ -158,13 +166,9 @@ void Sfx_UnloadSoundID(int id);
 /**
  * Requests listener reverb update at the end of the frame.
  */
-void Sfx_UpdateReverb(void);
+void Sfx_UpdateReverb();
 
-void Sfx_DebugInfo(void);
+void Sfx_DebugInfo();
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif // DENG_CLIENT_SOUND_SFX_H
-#endif // __CLIENT__
+#endif  // CLIENT_SOUND_SFX_H
+#endif  // __CLIENT__

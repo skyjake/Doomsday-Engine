@@ -17,14 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_AUDIO_S_MAIN_H
-#define DENG_AUDIO_S_MAIN_H
-
-#ifndef __cplusplus
-#  error "s_main.h requires C++"
-#endif
-
-extern int showSoundInfo;
+#ifndef AUDIO_S_MAIN_H
+#define AUDIO_S_MAIN_H
 
 /**
  * Main sound system initialization. Inits both the Sfx and Mus modules.
@@ -48,9 +42,4 @@ void S_MapChange(void);
  */
 void S_SetupForChangedMap(void);
 
-/**
- * Draws debug information on-screen.
- */
-void S_Drawer(void);
-
-#endif // DENG_AUDIO_S_MAIN_H
+#endif  // AUDIO_S_MAIN_H

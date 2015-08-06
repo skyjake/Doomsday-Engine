@@ -17,8 +17,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_SOUND_MUSIC_H
-#define LIBDENG_SOUND_MUSIC_H
+#ifndef AUDIO_MUSIC_H
+#define AUDIO_MUSIC_H
+
+#ifndef __cplusplus
+#  error "s_mus.h requires C++"
+#endif
 
 #include <de/Record>
 #include "dd_types.h"
@@ -77,4 +81,4 @@ int Mus_StartLump(lumpnum_t lump, bool looped, bool canPlayMUS);
 
 void Mus_Stop();
 
-#endif // LIBDENG_SOUND_MUSIC_H
+#endif  // AUDIO_MUSIC_H
