@@ -77,8 +77,6 @@
 #include "edit_bias.h"
 #include "gl/svg.h"
 
-#include "audio/s_main.h"
-
 #include "world/worldsystem.h"
 #include "world/entitydef.h"
 #include "world/map.h"
@@ -572,7 +570,16 @@ void App_AbnormalShutdown(char const *message)
 
 ::audio::System &App_AudioSystem()
 {
-    return ::audio::System::get();
+    if(App::appExists())
+    {
+#ifdef __CLIENT__
+        return ClientApp::audioSystem();
+#endif
+#ifdef __SERVER__
+        return ServerApp::audioSystem();
+#endif
+    }
+    throw Error("App_AudioSystem", "App not yet initialized");
 }
 
 ResourceSystem &App_ResourceSystem()

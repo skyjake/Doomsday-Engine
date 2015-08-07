@@ -43,7 +43,7 @@ static AutoStr *composeBufferedMusicFilename(int id, char const *ext)
 
 static void musicSet(audiointerface_music_t *iMusic, int property, void const *ptr)
 {
-    audiodriver_t *d = AudioDriver_Interface(iMusic);
+    audiodriver_t *d = App_AudioSystem().interface(iMusic);
     if(!d || !d->Set) return;
     d->Set(property, ptr);
 }
@@ -158,18 +158,17 @@ AutoStr *AudioDriver_Music_ComposeTempBufferFilename(char const *ext)
     return composeBufferedMusicFilename(currentBufFile, ext);
 }
 
-void AudioDriver_Music_Set(int property, void const *ptr)
+void AudioDriver_Music_Set(dint property, void const *ptr)
 {
-    void *ifs[MAX_AUDIO_INTERFACES];
-    int const count = AudioDriver_FindInterfaces(AUDIO_IMUSIC, ifs);
-    for(int i = 0; i < count; ++i)
+    App_AudioSystem().forAllInterfaces(AUDIO_IMUSIC, [&property, &ptr] (void *ifs)
     {
-        musicSet((audiointerface_music_t *) ifs[i], property, ptr);
-    }
+        musicSet((audiointerface_music_t *) ifs, property, ptr);
+        return LoopContinue;
+    });
 
     if(property == AUDIOP_SOUNDFONT_FILENAME)
     {
-        char const *fn = (char const *) ptr;
+        auto *fn = (char const *) ptr;
         if(!fn || !fn[0]) return; // No path.
 
         if(F_FileExists(fn))
@@ -183,62 +182,42 @@ void AudioDriver_Music_Set(int property, void const *ptr)
     }
 }
 
-int AudioDriver_Music_PlayNativeFile(char const *fileName, dd_bool looped)
+dint AudioDriver_Music_PlayNativeFile(char const *fileName, dd_bool looped)
 {
-    void *ifs[MAX_AUDIO_INTERFACES];
-    int const count = AudioDriver_FindInterfaces(AUDIO_IMUSIC, ifs);
-    for(int i = 0; i < count; ++i)
+    return App_AudioSystem().forAllInterfaces(AUDIO_IMUSIC, [&fileName, &looped] (void *ifs)
     {
-        if(musicPlayNativeFile((audiointerface_music_t *) ifs[i], fileName, looped))
-            return true;
-    }
-    return false;
+        return musicPlayNativeFile((audiointerface_music_t *) ifs, fileName, looped);
+    });
 }
 
-int AudioDriver_Music_PlayLump(lumpnum_t lump, dd_bool looped)
+dint AudioDriver_Music_PlayLump(lumpnum_t lump, dd_bool looped)
 {
-    void *ifs[MAX_AUDIO_INTERFACES];
-    int i, count = AudioDriver_FindInterfaces(AUDIO_IMUSIC, ifs);
-    for(i = 0; i < count; ++i)
+    return App_AudioSystem().forAllInterfaces(AUDIO_IMUSIC, [&lump, &looped] (void *ifs)
     {
-        if(musicPlayLump((audiointerface_music_t *) ifs[i], lump, looped))
-            return true;
-    }
-    return false;
+        return musicPlayLump((audiointerface_music_t *) ifs, lump, looped);
+    });
 }
 
 int AudioDriver_Music_PlayFile(char const *virtualOrNativePath, dd_bool looped)
 {
-    void *ifs[MAX_AUDIO_INTERFACES];
-    int const count = AudioDriver_FindInterfaces(AUDIO_IMUSIC, ifs);
-    for(int i = 0; i < count; ++i)
+    return App_AudioSystem().forAllInterfaces(AUDIO_IMUSIC, [&virtualOrNativePath, &looped] (void *ifs)
     {
-        if(musicPlayFile((audiointerface_music_t *) ifs[i], virtualOrNativePath, looped))
-            return true;
-    }
-    return false;
+        return musicPlayFile((audiointerface_music_t *) ifs, virtualOrNativePath, looped);
+    });
 }
 
-int AudioDriver_Music_PlayCDTrack(int track, dd_bool looped)
+dint AudioDriver_Music_PlayCDTrack(dint track, dd_bool looped)
 {
-    void *ifs[MAX_AUDIO_INTERFACES];
-    int const count = AudioDriver_FindInterfaces(AUDIO_ICD, ifs);
-    for(int i = 0; i < count; ++i)
+    return App_AudioSystem().forAllInterfaces(AUDIO_ICD, [&track, &looped] (void *ifs)
     {
-        if(musicPlayCDTrack((audiointerface_cd_t *) ifs[i], track, looped))
-            return true;
-    }
-    return false;
+        return musicPlayCDTrack((audiointerface_cd_t *) ifs, track, looped);
+    });
 }
 
 dd_bool AudioDriver_Music_IsPlaying()
 {
-    void *ifs[MAX_AUDIO_INTERFACES];
-    int const count = AudioDriver_FindInterfaces(AUDIO_IMUSIC_OR_ICD, ifs);
-    for(int i = 0; i < count; ++i)
+    return App_AudioSystem().forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [] (void *ifs)
     {
-        if(musicIsPlaying((audiointerface_music_t *) ifs[i]))
-            return true;
-    }
-    return false;
+        return musicIsPlaying((audiointerface_music_t *) ifs);
+    });
 }

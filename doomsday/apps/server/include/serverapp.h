@@ -25,6 +25,7 @@
 #include <doomsday/Games>
 #include "serversystem.h"
 #include "ui/infine/infinesystem.h"
+#include "audio/system.h"
 #include "resource/resourcesystem.h"
 #include "world/worldsystem.h"
 
@@ -47,6 +48,7 @@ public:
     static ServerApp &app();
     static ServerSystem &serverSystem();
     static InFineSystem &infineSystem();
+    static ::audio::System &audioSystem();
     static ResourceSystem &resourceSystem();
     static WorldSystem &worldSystem();
 

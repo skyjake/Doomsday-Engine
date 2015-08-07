@@ -21,6 +21,9 @@
 #define CLIENT_AUDIO_SYSTEM_H
 
 #include "api_sound.h"
+#ifdef __CLIENT__
+#  include "audio/audiodriver.h"
+#endif
 #include "def_main.h"        // sfxinfo_t
 #include "world/p_object.h"  // mobj_t
 #include <de/System>
@@ -58,13 +61,78 @@ public:
     /**
      * Perform playback intialization for Sound Effects and Music.
      * @return  @c true if no error occurred.
+     *
+     * @todo make __CLIENT__ only.
      */
     bool initPlayback();
 
     /**
      * Perform playback deintialization for Sound Effects and Music.
+     *
+     * @todo make __CLIENT__ only.
      */
     void deinitPlayback();
+
+#ifdef __CLIENT__
+public:  // Playback interfaces: -----------------------------------------------------
+
+    /**
+     * Determines if at least one music interface is available for music playback.
+     */
+    bool musicIsAvailable() const;
+
+    /**
+     * Returns the currently active, primary SFX interface. @c nullptr is returned if
+     * SFX playback is @em not available.
+     */
+    audiointerface_sfx_generic_t *sfx() const;
+    
+    /**
+     * Returns the currently active, primary CD playback interface. @c nullptr is returned
+     * if CD playback is @em not available.
+     *
+     * @note  The CD interface is considered to belong in the music aggregate interface
+     * (see audiodriver_music.h), and usually does not need to be individually manipulated.
+     */
+    audiointerface_cd_t *cd() const;
+
+    /**
+     * Iterate through the active interfaces of a given type, in descending priority
+     * order: the most important interface is visited first.
+     *
+     * @param type  Type of interface to process.
+     * @param func  Callback to make for each interface.
+     */
+    de::LoopResult forAllInterfaces(audiointerfacetype_t type, std::function<de::LoopResult (void *)> func) const;
+
+    /**
+     * Prints a list of the selected, active interfaces to the log.
+     */
+    void printAllInterfaces() const;
+
+    /**
+     * Returns a textual, human-friendly description of the selected, active interface
+     * configuration (suitable for logging, error messages, etc..).
+     */
+    de::String interfaceDescription() const;
+
+    /**
+     * Retrieves the Base interface of the audio driver to which @a anyAudioInterface
+     * belongs.
+     *
+     * @param anyAudioInterface  Pointer to a SFX, Music, or CD interface.
+     *                           See @ref sfx(), music(), cd().
+     *
+     * @return Audio driver interface, or @c nullptr if the none of the loaded drivers
+     * match.
+     */
+    audiodriver_t *interface(void *anyAudioInterface) const;
+
+    de::String interfaceName(void *anyAudioInterface) const;
+
+    audiointerfacetype_t interfaceType(void *anyAudioInterface) const;
+
+#endif  // __CLIENT__
 
 public:  /// @todo make private:
     void startFrame();
@@ -72,6 +140,14 @@ public:  /// @todo make private:
 
     void aboutToUnloadMap();
     void worldMapChanged();
+
+#ifdef __CLIENT__
+    /**
+     * Lookup the unique identifier associated with the given audio @a driver.
+     * @todo refactor away.
+     */
+    audiodriverid_t toDriverId(AudioDriver const *driver) const;
+#endif
 
 private:
     DENG2_PRIVATE(d)

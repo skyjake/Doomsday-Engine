@@ -1,9 +1,8 @@
-/**
- * @file audiodriver.h
- * Audio driver loading and interface management. @ingroup audio
+/** @file audiodriver.h  Logical Audio Driver Model.
+ * @ingroup audio
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,90 +19,141 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_AUDIO_DRIVER_H
-#define LIBDENG_AUDIO_DRIVER_H
+#ifndef AUDIO_AUDIODRIVER_H
+#define AUDIO_AUDIODRIVER_H
 
+#ifndef __cplusplus
+#  error "audiodriver.h requires C++"
+#endif
 #ifdef __SERVER__
 #  error "audio" is not available in a SERVER build
 #endif
 
-#include <de/str.h>
 #include "api_audiod.h"
-#include "api_audiod_sfx.h"
 #include "api_audiod_mus.h"
-
-#ifdef __cplusplus
-
+#include "api_audiod_sfx.h"
+#include <doomsday/library.h>
+#include <de/Error>
 #include <de/String>
 
-de::String AudioDriver_InterfaceDescription();
-
-extern "C" {
-#endif
-
-#define MAX_AUDIO_INTERFACES  16 // arbitrary
-
-dd_bool AudioDriver_Init(void);
-void AudioDriver_Shutdown(void);
-
 /**
- * Prints a list of the selected, active interfaces to the log.
- */
-void AudioDriver_PrintInterfaces(void);
-
-/**
- * Retrieves the main interface of the audio driver to which @a audioInterface
- * belongs.
+ * Models a logical audio driver, suitable for both built-in drivers and plugins.
  *
- * @param anyAudioInterface  Pointer to a SFX, Music, or CD interface. See
- * AudioDriver_SFX(), AudioDriver_Music() and AudioDriver_CD().
- *
- * @return Audio driver interface, or @c NULL if the none of the loaded drivers
- * match.
+ * @ingroup audio
  */
-audiodriver_t* AudioDriver_Interface(void* anyAudioInterface);
+class AudioDriver
+{
+public:
+    /// Base class for load related errors. @ingroup errors
+    DENG2_ERROR(LoadError);
 
-AutoStr* AudioDriver_InterfaceName(void* anyAudioInterface);
+    /**
+     * Logical driver status.
+     */
+    enum Status
+    {
+        Invalid,     ///< Invalid state (i.e., not yet loaded).
+        Loaded,      ///< Library is loaded but not yet in use.
+        Initialized  ///< Library is loaded and initialized ready for use.
+    };
 
-audiointerfacetype_t AudioDriver_InterfaceType(void* anyAudioInterface);
+    /**
+     * Construct a new AudioDriver (invalid until loaded).
+     */
+    AudioDriver();
 
-/**
- * Lists all active interfaces of a given type, in descending priority order:
- * the most important interface is listed first in the returned array.
- * Alternatively, counts the number of active interfaces of a given type.
- *
- * @param type              Type of interface to look for.
- * @param listOfInterfaces  Matching interfaces are written here. Points to an
- *                          array of pointers. If this is @c NULL,
- *                          just counts the number of matching interfaces.
- *
- * @return Number of matching interfaces.
- */
-int AudioDriver_FindInterfaces(audiointerfacetype_t type, void** listOfInterfaces);
+    /**
+     * Returns the human-friendly name of the audio driver if loaded; otherwise a
+     * zero-length string is returned.
+     */
+    de::String name() const;
 
-/**
- * Returns the current active primary SFX interface. @c NULL is returned is no
- * SFX playback is available.
- */
-audiointerface_sfx_generic_t* AudioDriver_SFX(void);
+    /**
+     * Returns the logical driver status.
+     */
+    Status status() const;
 
-/**
- * Determines if at least one music interface is available for music playback.
- */
-dd_bool AudioDriver_Music_Available(void);
+    /**
+     * Returns a human-friendly, textual description of the logical driver status.
+     */
+    de::String statusAsText() const;
 
-/**
- * Returns the currently active CD playback interface. @c NULL is returned if
- * CD playback is not available.
- *
- * @note  The CD interface is considered to belong in the music aggregate
- *        interface (see audiodriver_music.h), and usually does not need to
- *        be individually manipulated.
- */
-audiointerface_cd_t* AudioDriver_CD(void);
+    inline bool isInvalid    () const { return status() == Invalid;     }
+    inline bool isLoaded     () const { return status() >= Loaded;      }
+    inline bool isInitialized() const { return status() == Initialized; }
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
+    /**
+     * Load the audio driver library and import symbols.
+     *
+     * @note Once loaded the driver must be @ref initialized before use.
+     */
+    void load(de::String const &identifier);
 
-#endif // LIBDENG_AUDIO_DRIVER_H
+    /**
+     * Unload the audio driver
+     */
+    void unload();
+
+    /**
+     * Initialize the audio driver if necessary, ready for use.
+     */
+    void initialize();
+    
+    /**
+     * Deinitialize the audio driver if necessary, so that it may be unloaded.
+     */
+    void deinitialize();
+
+    /**
+     * Returns the plugin library for the loaded audio driver, if any (may return
+     * @c nullptr if not yet loaded, or this is a built-in driver).
+     */
+    ::Library *library() const;
+
+public:  // Interfaces: -----------------------------------------------------------
+
+    /**
+     * Returns the @em Base interface for the audio driver. The Base interface is
+     * used for high-level tasks such as (de)initializing the audio driver.
+     */
+    audiodriver_t /*const*/ &iBase() const;
+
+    /// Returns @c true if the audio driver provides @em Sfx playback.
+    bool hasSfx() const;
+
+    /// Returns @c true if the audio driver provides @em Music playback.
+    bool hasMusic() const;
+
+    /// Returns @c true if the audio driver provides @em CD playback.
+    bool hasCd() const;
+
+    /**
+     * Returns the @em Sfx interface for the audio driver. The Sfx interface is
+     * used for playback of sound effects.
+     */
+    audiointerface_sfx_t /*const*/ &iSfx() const;
+
+    /**
+     * Returns the @em Music interface for the audio driver. The Music interface is
+     * used for playback of music (i.e., complete songs).
+     */
+    audiointerface_music_t /*const*/ &iMusic() const;
+
+    /**
+     * Returns the @em CD interface for the audio driver. The CD interface is used
+     * for playback of music by streaming it from a compact disk.
+     */
+    audiointerface_cd_t /*const*/ &iCd() const;
+
+    /**
+     * Returns the human-friendly name for @a anyAudioInterface.
+     */
+    de::String interfaceName(void *anyAudioInterface) const;
+
+private:
+    DENG2_PRIVATE(d)
+};
+
+de::String AudioDriver_GetName(audiodriverid_t id);
+
+#endif  // AUDIO_AUDIODRIVER_H

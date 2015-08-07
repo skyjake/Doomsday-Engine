@@ -31,8 +31,6 @@
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/resource/mapmanifest.h>
 
-#include "audio/s_main.h"
-
 #include "network/net_main.h"
 
 #include "world/blockmap.h"

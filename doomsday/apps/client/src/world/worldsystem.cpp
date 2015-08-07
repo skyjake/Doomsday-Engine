@@ -54,7 +54,6 @@
 #  include "server/sv_pool.h"
 #endif
 
-#include "audio/s_main.h"
 #include "network/net_main.h"
 
 #include "world/p_players.h"

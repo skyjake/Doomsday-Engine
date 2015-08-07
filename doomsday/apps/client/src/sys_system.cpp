@@ -47,7 +47,6 @@
 
 #include "api_base.h"
 
-#include "audio/s_main.h"
 #ifdef __CLIENT__
 #  include "gl/gl_main.h"
 #endif

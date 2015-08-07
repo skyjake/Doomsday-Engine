@@ -22,6 +22,7 @@
 #include "doomsday/world/actions.h"
 #include "doomsday/doomsdayapp.h"
 
+#include <de/NativeFile>
 #include <de/findfile.h>
 #include <de/strutil.h>
 #include <QList>
@@ -101,34 +102,33 @@ DENG2_PIMPL_NOREF(Plugins)
         return nullptr;  // none available.
     }
 
-    static int loadPlugin(void * /*libraryFile*/, char const *fileName,
-                          char const *pluginPath, void *dptr)
+    int loadPlugin(LibraryFile &lib)
     {
-        auto *d = (Instance *) dptr;
         typedef void (*PluginInitializer)(void);
 
-        DENG2_UNUSED(fileName);
-        DENG2_ASSERT(fileName != 0 && fileName[0]);
-        DENG2_ASSERT(pluginPath != 0 && pluginPath[0]);
+        // We are only interested in native files.
+        if(!lib.source()->is<NativeFile>())
+            return 0;  // Continue iteration.
 
-        if(strcasestr("/bin/audio_", pluginPath))
+        DENG2_ASSERT(!lib.path().isEmpty());
+        if(strcasestr("/bin/audio_", lib.path().toUtf8().constData()))
         {
             // Do not touch audio plugins at this point.
             return true;
         }
 
-        ::Library *plugin = Library_New(pluginPath);
+        ::Library *plugin = Library_New(lib.path().toUtf8().constData());
         if(!plugin)
         {
 #ifdef UNIX
-            String const fn = Path(pluginPath).fileName();
+            String const fn = Path(lib.path()).fileName();
             if(fn.contains("libfmodex") || fn.contains("libassimp"))
             {
                 // No need to warn about these shared libs.
                 return 0;
             }
 #endif
-            LOG_RES_WARNING("Failed to load \"%s\": %s") << pluginPath << Library_LastError();
+            LOG_RES_WARNING("Failed to load \"%s\": %s") << lib.path() << Library_LastError();
             return 0;  // Continue iteration.
         }
 
@@ -143,7 +143,7 @@ DENG2_PIMPL_NOREF(Plugins)
         if(!initializer)
         {
             LOG_RES_WARNING("Cannot load plugin \"%s\": no entrypoint called 'DP_Initialize'")
-                    << pluginPath;
+                    << lib.path();
 
             // Clearly not a Doomsday plugin.
             Library_Delete(plugin);
@@ -151,12 +151,12 @@ DENG2_PIMPL_NOREF(Plugins)
         }
 
         // Assign a handle and ID to the plugin.
-        PluginHandle *handle    = d->findFirstUnusedPluginHandle();
-        pluginid_t const plugId = handle - d->hInstPlug + 1;
+        PluginHandle *handle    = findFirstUnusedPluginHandle();
+        pluginid_t const plugId = handle - hInstPlug + 1;
         if(!handle)
         {
             LOG_RES_WARNING("Cannot load \"%s\": too many plugins loaded already loaded")
-                    << pluginPath;
+                    << lib.path();
 
             Library_Delete(plugin);
             return 0;  // Continue iteration.
@@ -164,13 +164,13 @@ DENG2_PIMPL_NOREF(Plugins)
 
         // This seems to be a Doomsday plugin.
         LOGDEV_MSG("Plugin id:%i name:%s")
-                << plugId << String(pluginPath).fileNameWithoutExtension();
+                << plugId << lib.path().fileNameWithoutExtension();
 
         *handle = plugin;
 
-        d->setActivePluginId(plugId);
+        setActivePluginId(plugId);
         initializer();
-        d->setActivePluginId(0);
+        setActivePluginId(0);
 
         return 0;  // Continue iteration.
     }
@@ -235,7 +235,10 @@ void Plugins::loadAll()
 {
     LOG_RES_VERBOSE("Initializing plugins...");
 
-    Library_IterateAvailableLibraries(Instance::loadPlugin, d);
+    Library_forAll([this] (LibraryFile &lib)
+    {
+        return d->loadPlugin(lib);
+    });
 }
 
 void Plugins::unloadAll()

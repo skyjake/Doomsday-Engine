@@ -24,7 +24,6 @@
 
 #include <de/App>
 #include <de/NativeFile>
-#include <de/LibraryFile>
 #include <de/Library>
 #include <de/str.h>
 
@@ -135,7 +134,7 @@ Library *Library_New(char const *filePath)
 
 void Library_Delete(Library *lib)
 {
-    DENG2_ASSERT(lib);
+    if(!lib) return;
 
     // Unload the library from memory.
     lib->file->clear();
@@ -180,26 +179,13 @@ char const *Library_LastError()
     return Str_Text(lastError);
 }
 
-int Library_IterateAvailableLibraries(int (*func)(void *, const char *, const char *, void *), void *data)
+de::LoopResult Library_forAll(std::function<de::LoopResult (de::LibraryFile &)> func)
 {
-    using de::FS;
-    using de::App;
-    using de::LibraryFile;
-    using de::NativeFile;
-
-    FS::Index const &libs = App::fileSystem().indexFor(DENG2_TYPE_NAME(LibraryFile));
-
-    DENG2_FOR_EACH_CONST(FS::Index, i, libs)
+    de::FS::Index const &libs = de::App::fileSystem().indexFor(DENG2_TYPE_NAME(de::LibraryFile));
+    DENG2_FOR_EACH_CONST(de::FS::Index, i, libs)
     {
-        auto &lib       = i->second->as<LibraryFile>();
-        auto const *src = lib.source()->maybeAs<NativeFile>();
-        if(src)
-        {
-            if(int result = func(&lib, src->name().toUtf8().constData(),
-                                 lib.path().toUtf8().constData(), data))
-                return result;
-        }
+        if(auto result = func(i->second->as<de::LibraryFile>()))
+            return result;
     }
-
-    return 0;
+    return de::LoopContinue;
 }

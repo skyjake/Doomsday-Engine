@@ -31,9 +31,7 @@
 #  include "sys_system.h"  // Sys_Sleep()
 #endif
 
-#include "audio/sys_audio.h"
 #include "audio/audiodriver.h"
-#include "audio/s_main.h"
 #include "audio/s_cache.h"
 
 #include "world/thinkers.h"
@@ -133,7 +131,7 @@ int C_DECL Sfx_ChannelRefreshThread(void *parm)
                 if(!ch->buffer || !(ch->buffer->flags & SFXBF_PLAYING))
                     continue;
 
-                AudioDriver_SFX()->Refresh(ch->buffer);
+                App_AudioSystem().sfx()->Refresh(ch->buffer);
             }
 
             refreshing = false;
@@ -188,7 +186,7 @@ void Sfx_StopSoundGroup(int group, mobj_t *emitter)
             continue;
 
         // This channel must stop.
-        AudioDriver_SFX()->Stop(ch->buffer);
+        App_AudioSystem().sfx()->Stop(ch->buffer);
     }
 }
 
@@ -229,7 +227,7 @@ int Sfx_StopSoundWithLowerPriority(int id, mobj_t *emitter, int defPriority)
         }
 
         // This channel must be stopped!
-        AudioDriver_SFX()->Stop(ch->buffer);
+        App_AudioSystem().sfx()->Stop(ch->buffer);
         ++stopCount;
     }
 
@@ -278,7 +276,7 @@ void Sfx_UnloadSoundID(int id)
             continue;
 
         // Stop and unload.
-        AudioDriver_SFX()->Reset(ch->buffer);
+        App_AudioSystem().sfx()->Reset(ch->buffer);
     }
 
     END_COP;
@@ -392,27 +390,27 @@ void Sfx_ChannelUpdate(sfxchannel_t* ch)
     }
 
     // Frequency is common to both 2D and 3D sounds.
-    AudioDriver_SFX()->Set(buf, SFXBP_FREQUENCY, ch->frequency);
+    App_AudioSystem().sfx()->Set(buf, SFXBP_FREQUENCY, ch->frequency);
 
     if(buf->flags & SFXBF_3D)
     {
         // Volume is affected only by maxvol.
-        AudioDriver_SFX()->Set(buf, SFXBP_VOLUME, ch->volume * sfxVolume / 255.0f);
+        App_AudioSystem().sfx()->Set(buf, SFXBP_VOLUME, ch->volume * sfxVolume / 255.0f);
         if(ch->emitter && ch->emitter == listener)
         {
             // Emitted by the listener object. Go to relative position mode
             // and set the position to (0,0,0).
             vec[VX] = vec[VY] = vec[VZ] = 0;
-            AudioDriver_SFX()->Set(buf, SFXBP_RELATIVE_MODE, true);
-            AudioDriver_SFX()->Setv(buf, SFXBP_POSITION, vec);
+            App_AudioSystem().sfx()->Set(buf, SFXBP_RELATIVE_MODE, true);
+            App_AudioSystem().sfx()->Setv(buf, SFXBP_POSITION, vec);
         }
         else
         {
             // Use the channel's map space origin.
             float origin[3];
             V3f_Copyd(origin, ch->origin);
-            AudioDriver_SFX()->Set(buf, SFXBP_RELATIVE_MODE, false);
-            AudioDriver_SFX()->Setv(buf, SFXBP_POSITION, origin);
+            App_AudioSystem().sfx()->Set(buf, SFXBP_RELATIVE_MODE, false);
+            App_AudioSystem().sfx()->Setv(buf, SFXBP_POSITION, origin);
         }
 
         // If the sound is emitted by the listener, speed is zero.
@@ -422,13 +420,13 @@ void Sfx_ChannelUpdate(sfxchannel_t* ch)
             vec[VX] = ch->emitter->mom[MX] * TICSPERSEC;
             vec[VY] = ch->emitter->mom[MY] * TICSPERSEC;
             vec[VZ] = ch->emitter->mom[MZ] * TICSPERSEC;
-            AudioDriver_SFX()->Setv(buf, SFXBP_VELOCITY, vec);
+            App_AudioSystem().sfx()->Setv(buf, SFXBP_VELOCITY, vec);
         }
         else
         {
             // Not moving.
             vec[VX] = vec[VY] = vec[VZ] = 0;
-            AudioDriver_SFX()->Setv(buf, SFXBP_VELOCITY, vec);
+            App_AudioSystem().sfx()->Setv(buf, SFXBP_VELOCITY, vec);
         }
     }
     else
@@ -491,8 +489,8 @@ void Sfx_ChannelUpdate(sfxchannel_t* ch)
             }
         }
 
-        AudioDriver_SFX()->Set(buf, SFXBP_VOLUME, ch->volume * dist * sfxVolume / 255.0f);
-        AudioDriver_SFX()->Set(buf, SFXBP_PAN, pan);
+        App_AudioSystem().sfx()->Set(buf, SFXBP_VOLUME, ch->volume * dist * sfxVolume / 255.0f);
+        App_AudioSystem().sfx()->Set(buf, SFXBP_PAN, pan);
     }
 }
 
@@ -514,19 +512,19 @@ void Sfx_ListenerUpdate()
     {
         // Position. At eye-level.
         float vec[4]; Sfx_GetListenerXYZ(vec);
-        AudioDriver_SFX()->Listenerv(SFXLP_POSITION, vec);
+        App_AudioSystem().sfx()->Listenerv(SFXLP_POSITION, vec);
 
         // Orientation. (0,0) will produce front=(1,0,0) and up=(0,0,1).
         vec[VX] = listener->angle / (float) ANGLE_MAX *360;
 
         vec[VY] = (listener->dPlayer? LOOKDIR2DEG(listener->dPlayer->lookDir) : 0);
-        AudioDriver_SFX()->Listenerv(SFXLP_ORIENTATION, vec);
+        App_AudioSystem().sfx()->Listenerv(SFXLP_ORIENTATION, vec);
 
         // Velocity. The unit is world distance units per second.
         vec[VX] = listener->mom[MX] * TICSPERSEC;
         vec[VY] = listener->mom[MY] * TICSPERSEC;
         vec[VZ] = listener->mom[MZ] * TICSPERSEC;
-        AudioDriver_SFX()->Listenerv(SFXLP_VELOCITY, vec);
+        App_AudioSystem().sfx()->Listenerv(SFXLP_VELOCITY, vec);
 
         // Reverb effects. Has the current sector cluster changed?
         SectorCluster *newCluster = Mobj_ClusterPtr(*listener);
@@ -546,12 +544,12 @@ void Sfx_ListenerUpdate()
                 }
             }
 
-            AudioDriver_SFX()->Listenerv(SFXLP_REVERB, vec);
+            App_AudioSystem().sfx()->Listenerv(SFXLP_REVERB, vec);
         }
     }
 
     // Update all listener properties.
-    AudioDriver_SFX()->Listener(SFXLP_UPDATE, 0);
+    App_AudioSystem().sfx()->Listener(SFXLP_UPDATE, 0);
 }
 
 void Sfx_ListenerNoReverb(void)
@@ -562,8 +560,8 @@ void Sfx_ListenerNoReverb(void)
         return;
 
     listenerCluster = NULL;
-    AudioDriver_SFX()->Listenerv(SFXLP_REVERB, rev);
-    AudioDriver_SFX()->Listener(SFXLP_UPDATE, 0);
+    App_AudioSystem().sfx()->Listenerv(SFXLP_REVERB, rev);
+    App_AudioSystem().sfx()->Listener(SFXLP_UPDATE, 0);
 }
 
 /**
@@ -575,7 +573,7 @@ void Sfx_ChannelStop(sfxchannel_t* ch)
     if(!ch->buffer)
         return;
 
-    AudioDriver_SFX()->Stop(ch->buffer);
+    App_AudioSystem().sfx()->Stop(ch->buffer);
 }
 
 void Sfx_GetChannelPriorities(float* prios)
@@ -785,9 +783,9 @@ int Sfx_StartSound(sfxsample_t *sample, float volume, float freq, mobj_t *emitte
     if(selCh->buffer->rate != sample->rate ||
        selCh->buffer->bytes != sample->bytesPer)
     {
-        AudioDriver_SFX()->Destroy(selCh->buffer);
+        App_AudioSystem().sfx()->Destroy(selCh->buffer);
         // Create a new buffer with the correct format.
-        selCh->buffer = AudioDriver_SFX()->Create(play3D ? SFXBF_3D : 0, sample->bytesPer * 8, sample->rate);
+        selCh->buffer = App_AudioSystem().sfx()->Create(play3D ? SFXBF_3D : 0, sample->bytesPer * 8, sample->rate);
     }
 
     // Clear flags.
@@ -829,7 +827,7 @@ int Sfx_StartSound(sfxsample_t *sample, float volume, float freq, mobj_t *emitte
      */
     if(!selCh->buffer->sample || selCh->buffer->sample->id != sample->id)
     {
-        AudioDriver_SFX()->Load(selCh->buffer, sample);
+        App_AudioSystem().sfx()->Load(selCh->buffer, sample);
     }
 
     // Update channel properties.
@@ -840,20 +838,20 @@ int Sfx_StartSound(sfxsample_t *sample, float volume, float freq, mobj_t *emitte
     {
         // Init the buffer's min/max distances.
         // This is only done once, when the sound is started (i.e., here).
-        AudioDriver_SFX()->Set(selCh->buffer, SFXBP_MIN_DISTANCE,
+        App_AudioSystem().sfx()->Set(selCh->buffer, SFXBP_MIN_DISTANCE,
                                (selCh->flags & SFXCF_NO_ATTENUATION)? 10000 :
                                soundMinDist);
 
-        AudioDriver_SFX()->Set(selCh->buffer, SFXBP_MAX_DISTANCE,
+        App_AudioSystem().sfx()->Set(selCh->buffer, SFXBP_MAX_DISTANCE,
                                (selCh->flags & SFXCF_NO_ATTENUATION)? 20000 :
                                soundMaxDist);
     }
 
     // This'll commit all the deferred properties.
-    AudioDriver_SFX()->Listener(SFXLP_UPDATE, 0);
+    App_AudioSystem().sfx()->Listener(SFXLP_UPDATE, 0);
 
     // Start playing.
-    AudioDriver_SFX()->Play(selCh->buffer);
+    App_AudioSystem().sfx()->Play(selCh->buffer);
 
     END_COP;
 
@@ -867,21 +865,20 @@ int Sfx_StartSound(sfxsample_t *sample, float volume, float freq, mobj_t *emitte
 /**
  * Update channel and listener properties.
  */
-void Sfx_Update(void)
+void Sfx_Update()
 {
-    int                 i;
-    sfxchannel_t*       ch;
-
     // If the display player doesn't have a mobj, no positioning is done.
     listener = S_GetListenerMobj();
 
     // Update channels.
-    for(i = 0, ch = channels; i < numChannels; ++i, ch++)
+    for(int i = 0; i < numChannels; ++i)
     {
-        if(!ch->buffer || !(ch->buffer->flags & SFXBF_PLAYING))
+        sfxchannel_t &ch = channels[i];
+
+        if(!ch.buffer || !(ch.buffer->flags & SFXBF_PLAYING))
             continue; // Not playing sounds on this...
 
-        Sfx_ChannelUpdate(ch);
+        Sfx_ChannelUpdate(&ch);
     }
 
     // Update listener.
@@ -893,40 +890,38 @@ void Sfx_StartFrame()
     LOG_AS("Sfx_StartFrame");
 
     static int old16Bit = false;
-    static int oldRate = 11025;
+    static int oldRate  = 11025;
 
-    if(!sfxAvail)
-        return;
+    if(!::sfxAvail) return;
 
     // Tell the audio driver that the sound frame begins.
-    AudioDriver_Interface(AudioDriver_SFX())->Event(SFXEV_BEGIN);
+    App_AudioSystem().interface(App_AudioSystem().sfx())->Event(SFXEV_BEGIN);
 
     // Have there been changes to the cvar settings?
     Sfx_3DMode(sfx3D);
 
     // Check that the rate is valid.
-    if(sfxSampleRate != 11025 && sfxSampleRate != 22050 && sfxSampleRate != 44100)
+    if(::sfxSampleRate != 11025 && ::sfxSampleRate != 22050 && ::sfxSampleRate != 44100)
     {
-        LOG_AUDIO_WARNING("\"sound-rate\" corrected to 11025 from invalid value (%i)") << sfxSampleRate;
+        LOG_AUDIO_WARNING("\"sound-rate\" corrected to 11025 from invalid value (%i)") << ::sfxSampleRate;
         sfxSampleRate = 11025;
     }
 
     // Do we need to change the sample format?
-    if(old16Bit != sfx16Bit || oldRate != sfxSampleRate)
+    if(old16Bit != ::sfx16Bit || oldRate != ::sfxSampleRate)
     {
-        Sfx_SampleFormat(sfx16Bit ? 16 : 8, sfxSampleRate);
-        old16Bit = sfx16Bit;
-        oldRate = sfxSampleRate;
+        Sfx_SampleFormat(::sfx16Bit ? 16 : 8, ::sfxSampleRate);
+        old16Bit = ::sfx16Bit;
+        oldRate  = ::sfxSampleRate;
     }
 
     // Should we purge the cache (to conserve memory)?
     Sfx_PurgeCache();
 }
 
-void Sfx_EndFrame(void)
+void Sfx_EndFrame()
 {
-    if(!sfxAvail)
-        return;
+    if(!::sfxAvail) return;
 
     if(!BusyMode_Active())
     {
@@ -934,7 +929,7 @@ void Sfx_EndFrame(void)
     }
 
     // The sound frame ends.
-    AudioDriver_Interface(AudioDriver_SFX())->Event(SFXEV_END);
+    App_AudioSystem().interface(App_AudioSystem().sfx())->Event(SFXEV_END);
 }
 
 /**
@@ -950,13 +945,13 @@ static void createChannels(int num2D, int bits, int rate)
 
     // Change the primary buffer's format to match the channel format.
     float parm[2] = { float(bits), float(rate) };
-    AudioDriver_SFX()->Listenerv(SFXLP_PRIMARY_FORMAT, parm);
+    App_AudioSystem().sfx()->Listenerv(SFXLP_PRIMARY_FORMAT, parm);
 
     // Try to create a buffer for each channel.
     sfxchannel_t *ch = channels;
     for(int i = 0; i < numChannels; ++i, ch++)
     {
-        ch->buffer = AudioDriver_SFX()->Create(num2D-- > 0 ? 0 : SFXBF_3D, bits, rate);
+        ch->buffer = App_AudioSystem().sfx()->Create(num2D-- > 0 ? 0 : SFXBF_3D, bits, rate);
         if(!ch->buffer)
         {
             LOG_AUDIO_WARNING("Failed to create buffer for #%i") << i;
@@ -976,7 +971,7 @@ void Sfx_DestroyChannels()
         Sfx_ChannelStop(channels + i);
 
         if(channels[i].buffer)
-            AudioDriver_SFX()->Destroy(channels[i].buffer);
+            App_AudioSystem().sfx()->Destroy(channels[i].buffer);
         channels[i].buffer = 0;
     }
     END_COP;
@@ -1031,9 +1026,9 @@ void Sfx_StartRefresh()
     refreshing = false;
     allowRefresh = true;
 
-    if(!AudioDriver_SFX()) goto noRefresh; // Nothing to refresh.
+    if(!App_AudioSystem().sfx()) goto noRefresh; // Nothing to refresh.
 
-    if(AudioDriver_SFX()->Getv) AudioDriver_SFX()->Getv(SFXIP_DISABLE_CHANNEL_REFRESH, &disableRefresh);
+    if(App_AudioSystem().sfx()->Getv) App_AudioSystem().sfx()->Getv(SFXIP_DISABLE_CHANNEL_REFRESH, &disableRefresh);
     if(!disableRefresh)
     {
         // Start the refresh thread. It will run until the Sfx module is shut down.
@@ -1065,13 +1060,13 @@ bool Sfx_Init()
     LOG_AUDIO_VERBOSE("Initializing Sound Effects subsystem...");
 
     // No interface for SFX playback?
-    if(!AudioDriver_SFX()) return false;
+    if(!App_AudioSystem().sfx()) return false;
 
     // This is based on the scientific calculations that if the DOOM marine
     // is 56 units tall, 60 is about two meters.
     //// @todo Derive from the viewheight.
-    AudioDriver_SFX()->Listener(SFXLP_UNITS_PER_METER, 30);
-    AudioDriver_SFX()->Listener(SFXLP_DOPPLER, 1.5f);
+    App_AudioSystem().sfx()->Listener(SFXLP_UNITS_PER_METER, 30);
+    App_AudioSystem().sfx()->Listener(SFXLP_DOPPLER, 1.5f);
 
     // The audio driver is working, let's create the channels.
     Sfx_InitChannels();

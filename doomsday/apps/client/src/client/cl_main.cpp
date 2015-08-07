@@ -1,7 +1,7 @@
 /** @file cl_main.cpp  Network client.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -27,7 +27,6 @@
 #include "client/cl_sound.h"
 #include "client/cl_world.h"
 
-#include "audio/s_main.h"
 #include "network/net_main.h"
 #include "network/net_buf.h"
 #include "network/net_demo.h"

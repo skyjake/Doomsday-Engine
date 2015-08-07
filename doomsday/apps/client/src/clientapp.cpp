@@ -48,7 +48,6 @@
 #include "def_main.h"
 #include "sys_system.h"
 
-#include "audio/s_main.h"
 #include "audio/s_mus.h"
 
 #include "gl/gl_main.h"
@@ -127,6 +126,7 @@ DENG2_PIMPL(ClientApp)
     SettingsRegister logSettings;
     QMenuBar *menuBar;
     InputSystem *inputSys;
+    ::audio::System *audioSys;
     RenderSystem *rendSys;
     ResourceSystem *resourceSys;
     ClientWindowSystem *winSys;
@@ -199,7 +199,8 @@ DENG2_PIMPL(ClientApp)
         : Base(i)
         , menuBar    (0)
         , inputSys   (0)
-        , rendSys  (0)
+        , audioSys   (0)
+        , rendSys    (0)
         , resourceSys(0)
         , winSys     (0)
         //, infineSys  (0)
@@ -229,6 +230,7 @@ DENG2_PIMPL(ClientApp)
         delete winSys;
         delete svLink;
         delete rendSys;
+        delete audioSys;
         delete resourceSys;
         delete inputSys;
         delete menuBar;
@@ -437,6 +439,10 @@ void ClientApp::initialize()
     d->rendSys = new RenderSystem;
     addSystem(*d->rendSys);
 
+    // Create the audio system.
+    d->audioSys = new ::audio::System;
+    addSystem(*d->audioSys);
+
     // Create the window system.
     d->winSys = new ClientWindowSystem;
     WindowSystem::setAppWindowSystem(*d->winSys);
@@ -589,6 +595,18 @@ RenderSystem &ClientApp::renderSystem()
 bool ClientApp::hasRenderSystem()
 {
     return ClientApp::app().d->rendSys != nullptr;
+}
+
+::audio::System &ClientApp::audioSystem()
+{
+    ClientApp &a = ClientApp::app();
+    DENG2_ASSERT(hasAudioSystem());
+    return *a.d->audioSys;
+}
+
+bool ClientApp::hasAudioSystem()
+{
+    return ClientApp::app().d->audioSys != nullptr;
 }
 
 ResourceSystem &ClientApp::resourceSystem()

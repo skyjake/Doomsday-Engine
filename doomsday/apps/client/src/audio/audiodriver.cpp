@@ -18,607 +18,335 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
 #include "audio/audiodriver.h"
+
+#include "dd_main.h"
+#include "audio/sys_audiod_dummy.h"
+#ifndef DENG_DISABLE_SDLMIXER
+#  include "audio/sys_audiod_sdlmixer.h"
+#endif
 
 #include <de/Library>
 #include <de/LibraryFile>
-#include "audio/sys_audio.h"
-#include "audio/audiodriver_music.h"
+#include <de/NativeFile>
 
-struct driver_t
+using namespace de;
+
+DENG2_PIMPL(AudioDriver)
 {
-    Library *library;
-    audiodriver_t interface;
-    audiointerface_sfx_t sfx;
-    audiointerface_music_t music;
-    audiointerface_cd_t cd;
-} ;
+    bool initialized   = false;
+    ::Library *library = nullptr;
 
-static driver_t drivers[AUDIODRIVER_COUNT];
+    audiodriver_t          iBase;
+    audiointerface_sfx_t   iSfx;
+    audiointerface_music_t iMusic;
+    audiointerface_cd_t    iCd;
 
-static char const *driverIdentifier[AUDIODRIVER_COUNT] = {
-    "dummy",
-    "sdlmixer",
-    "openal",
-    "fmod",
-    "fluidsynth",
-    "dsound",
-    "winmm"
-};
+    Instance(Public *i) : Base(i)
+    {
+        zap(iBase);
+        zap(iSfx);
+        zap(iMusic);
+        zap(iCd);
+    }
 
-/**
- * The active/loaded interfaces.
- *
- * @todo The audio interface could also declare which audio formats it is
- * capable of playing (e.g., MIDI only, CD tracks only).
- */
-struct audiointerface_t
-{
-    audiointerfacetype_t type;
-    union {
-        void                   *any;
-        audiointerface_sfx_t   *sfx;
-        audiointerface_music_t *music;
-        audiointerface_cd_t    *cd;
-    } i;
-};
+    static LibraryFile *findAudioPlugin(String const &name)
+    {
+        if(!name.isEmpty())
+        {
+            LibraryFile *found = nullptr;
+            Library_forAll([&name, &found] (LibraryFile &lib)
+            {
+                // Plugins are native files.
+                if(lib.source()->is<NativeFile>())
+                {
+                    if(lib.hasUnderscoreName(name))
+                    {
+                        found = &lib;
+                        return LoopAbort;
+                    }
+                }
+                return LoopContinue;
+            });
+            return found;
+        }
+        return nullptr;
+    }
 
-static audiointerface_t activeInterfaces[MAX_AUDIO_INTERFACES];
+    void getDummyInterfaces()
+    {
+        DENG2_ASSERT(!initialized);
 
-#ifdef MACOSX
-/// Built-in QuickTime audio interface implemented by MusicPlayer.m
-DENG_EXTERN_C audiointerface_music_t audiodQuickTimeMusic;
+        library = nullptr;
+        std::memcpy(&iBase, &::audiod_dummy,     sizeof(iBase));
+        std::memcpy(&iSfx,  &::audiod_dummy_sfx, sizeof(iSfx));
+        zap(iMusic);
+        zap(iCd);
+    }
+
+#ifndef DENG_DISABLE_SDLMIXER
+    void getSdlMixerInterfaces()
+    {
+        DENG2_ASSERT(!initialized);
+
+        library = nullptr;
+        std::memcpy(&iBase,  &::audiod_sdlmixer,       sizeof(iBase));
+        std::memcpy(&iSfx,   &::audiod_sdlmixer_sfx,   sizeof(iSfx));
+        std::memcpy(&iMusic, &::audiod_sdlmixer_music, sizeof(iMusic));
+        zap(iCd);
+    }
 #endif
 
-static void importInterfaces(driver_t *d)
-{
-    DENG2_ASSERT(d);
-    de::Library &lib = Library_File(d->library).library();
-
-    lib.setSymbolPtr( d->interface.Init,        "DS_Init");
-    lib.setSymbolPtr( d->interface.Shutdown,    "DS_Shutdown");
-    lib.setSymbolPtr( d->interface.Event,       "DS_Event");
-    lib.setSymbolPtr( d->interface.Set,         "DS_Set", de::Library::OptionalSymbol);
-
-    if(lib.hasSymbol("DS_SFX_Init"))
+    void importInterfaces(LibraryFile &libFile)
     {
-        lib.setSymbolPtr( d->sfx.gen.Init,      "DS_SFX_Init");
-        lib.setSymbolPtr( d->sfx.gen.Create,    "DS_SFX_CreateBuffer");
-        lib.setSymbolPtr( d->sfx.gen.Destroy,   "DS_SFX_DestroyBuffer");
-        lib.setSymbolPtr( d->sfx.gen.Load,      "DS_SFX_Load");
-        lib.setSymbolPtr( d->sfx.gen.Reset,     "DS_SFX_Reset");
-        lib.setSymbolPtr( d->sfx.gen.Play,      "DS_SFX_Play");
-        lib.setSymbolPtr( d->sfx.gen.Stop,      "DS_SFX_Stop");
-        lib.setSymbolPtr( d->sfx.gen.Refresh,   "DS_SFX_Refresh");
-        lib.setSymbolPtr( d->sfx.gen.Set,       "DS_SFX_Set");
-        lib.setSymbolPtr( d->sfx.gen.Setv,      "DS_SFX_Setv");
-        lib.setSymbolPtr( d->sfx.gen.Listener,  "DS_SFX_Listener");
-        lib.setSymbolPtr( d->sfx.gen.Listenerv, "DS_SFX_Listenerv");
-        lib.setSymbolPtr( d->sfx.gen.Getv,      "DS_SFX_Getv", de::Library::OptionalSymbol);
-    }
+        DENG2_ASSERT(!initialized);
 
-    if(lib.hasSymbol("DM_Music_Init"))
-    {
-        lib.setSymbolPtr( d->music.gen.Init,    "DM_Music_Init");
-        lib.setSymbolPtr( d->music.gen.Update,  "DM_Music_Update");
-        lib.setSymbolPtr( d->music.gen.Get,     "DM_Music_Get");
-        lib.setSymbolPtr( d->music.gen.Set,     "DM_Music_Set");
-        lib.setSymbolPtr( d->music.gen.Pause,   "DM_Music_Pause");
-        lib.setSymbolPtr( d->music.gen.Stop,    "DM_Music_Stop");
-        lib.setSymbolPtr( d->music.SongBuffer,  "DM_Music_SongBuffer", de::Library::OptionalSymbol);
-        lib.setSymbolPtr( d->music.Play,        "DM_Music_Play", de::Library::OptionalSymbol);
-        lib.setSymbolPtr( d->music.PlayFile,    "DM_Music_PlayFile", de::Library::OptionalSymbol);
-    }
+        library = Library_New(libFile.path().toUtf8().constData());
+        zap(iBase);
+        zap(iSfx);
+        zap(iMusic);
+        zap(iCd);
 
-    if(lib.hasSymbol("DM_CDAudio_Init"))
-    {
-        lib.setSymbolPtr( d->cd.gen.Init,       "DM_CDAudio_Init");
-        lib.setSymbolPtr( d->cd.gen.Update,     "DM_CDAudio_Update");
-        lib.setSymbolPtr( d->cd.gen.Set,        "DM_CDAudio_Set");
-        lib.setSymbolPtr( d->cd.gen.Get,        "DM_CDAudio_Get");
-        lib.setSymbolPtr( d->cd.gen.Pause,      "DM_CDAudio_Pause");
-        lib.setSymbolPtr( d->cd.gen.Stop,       "DM_CDAudio_Stop");
-        lib.setSymbolPtr( d->cd.Play,           "DM_CDAudio_Play");
-    }
-}
+        if(!library) return;
+        de::Library &lib = libFile.library();
 
-static int audioPluginFinder(void* libFile, const char* fileName, const char* absPath, void* ptr)
-{
-    de::LibraryFile* lib = reinterpret_cast<de::LibraryFile*>(libFile);
-    Str* path = (Str*) ptr;
+        lib.setSymbolPtr( iBase.Init,        "DS_Init");
+        lib.setSymbolPtr( iBase.Shutdown,    "DS_Shutdown");
+        lib.setSymbolPtr( iBase.Event,       "DS_Event");
+        lib.setSymbolPtr( iBase.Set,         "DS_Set", de::Library::OptionalSymbol);
 
-    DENG2_UNUSED(fileName);
-
-    if(lib->hasUnderscoreName(Str_Text(path)))
-    {
-        Str_Set(path, absPath);
-        return true;
-    }
-
-    return false; // Keep looking...
-}
-
-static AutoStr* findAudioPluginPath(const char* name)
-{
-    AutoStr* path = AutoStr_FromText(name);
-    if(Library_IterateAvailableLibraries(audioPluginFinder, path))
-    {
-        // The full path of the library was returned in @a path.
-        return path;
-    }
-    return 0;
-}
-
-static dd_bool loadAudioDriver(driver_t* driver, const char* name)
-{
-    LOG_AS("loadAudioDriver");
-
-    dd_bool ok = false;
-
-    if(name && name[0])
-    {
-        AutoStr* libPath = findAudioPluginPath(name);
-
-        // Load the audio driver library and import symbols.
-        if(libPath && (driver->library = Library_New(Str_Text(libPath))) != 0)
+        if(lib.hasSymbol("DS_SFX_Init"))
         {
-            importInterfaces(driver);
-            ok = true;
+            lib.setSymbolPtr( iSfx.gen.Init,      "DS_SFX_Init");
+            lib.setSymbolPtr( iSfx.gen.Create,    "DS_SFX_CreateBuffer");
+            lib.setSymbolPtr( iSfx.gen.Destroy,   "DS_SFX_DestroyBuffer");
+            lib.setSymbolPtr( iSfx.gen.Load,      "DS_SFX_Load");
+            lib.setSymbolPtr( iSfx.gen.Reset,     "DS_SFX_Reset");
+            lib.setSymbolPtr( iSfx.gen.Play,      "DS_SFX_Play");
+            lib.setSymbolPtr( iSfx.gen.Stop,      "DS_SFX_Stop");
+            lib.setSymbolPtr( iSfx.gen.Refresh,   "DS_SFX_Refresh");
+            lib.setSymbolPtr( iSfx.gen.Set,       "DS_SFX_Set");
+            lib.setSymbolPtr( iSfx.gen.Setv,      "DS_SFX_Setv");
+            lib.setSymbolPtr( iSfx.gen.Listener,  "DS_SFX_Listener");
+            lib.setSymbolPtr( iSfx.gen.Listenerv, "DS_SFX_Listenerv");
+            lib.setSymbolPtr( iSfx.gen.Getv,      "DS_SFX_Getv", de::Library::OptionalSymbol);
+        }
+
+        if(lib.hasSymbol("DM_Music_Init"))
+        {
+            lib.setSymbolPtr( iMusic.gen.Init,    "DM_Music_Init");
+            lib.setSymbolPtr( iMusic.gen.Update,  "DM_Music_Update");
+            lib.setSymbolPtr( iMusic.gen.Get,     "DM_Music_Get");
+            lib.setSymbolPtr( iMusic.gen.Set,     "DM_Music_Set");
+            lib.setSymbolPtr( iMusic.gen.Pause,   "DM_Music_Pause");
+            lib.setSymbolPtr( iMusic.gen.Stop,    "DM_Music_Stop");
+            lib.setSymbolPtr( iMusic.SongBuffer,  "DM_Music_SongBuffer", de::Library::OptionalSymbol);
+            lib.setSymbolPtr( iMusic.Play,        "DM_Music_Play",       de::Library::OptionalSymbol);
+            lib.setSymbolPtr( iMusic.PlayFile,    "DM_Music_PlayFile",   de::Library::OptionalSymbol);
+        }
+
+        if(lib.hasSymbol("DM_CDAudio_Init"))
+        {
+            lib.setSymbolPtr( iCd.gen.Init,       "DM_CDAudio_Init");
+            lib.setSymbolPtr( iCd.gen.Update,     "DM_CDAudio_Update");
+            lib.setSymbolPtr( iCd.gen.Set,        "DM_CDAudio_Set");
+            lib.setSymbolPtr( iCd.gen.Get,        "DM_CDAudio_Get");
+            lib.setSymbolPtr( iCd.gen.Pause,      "DM_CDAudio_Pause");
+            lib.setSymbolPtr( iCd.gen.Stop,       "DM_CDAudio_Stop");
+            lib.setSymbolPtr( iCd.Play,           "DM_CDAudio_Play");
+        }
+    }
+};
+
+AudioDriver::AudioDriver() : d(new Instance(this))
+{}
+
+String AudioDriver::name() const
+{
+    if(!isLoaded()) return "(invalid)";
+    return AudioDriver_GetName(App_AudioSystem().toDriverId(this));
+}
+
+AudioDriver::Status AudioDriver::status() const
+{
+    if(d->initialized) return Initialized;
+    if(d->iBase.Init != nullptr) return Loaded;
+    return Invalid;
+}
+
+String AudioDriver::statusAsText() const
+{
+    switch(status())
+    {
+    case Invalid:     return "Invalid";
+    case Loaded:      return "Loaded";
+    case Initialized: return "Initialized";
+
+    default:
+        DENG2_ASSERT(!"AudioDriver::statusAsText: Unknown status");
+        return "Unknown";
+    }
+}
+
+void AudioDriver::load(String const &identifier)
+{
+    LOG_AS("AudioDriver");
+
+    if(isLoaded())
+    {
+        /// @throw LoadError  Attempted to load on top of an already loaded driver.
+        throw LoadError("AudioDriver::load", "Already initialized. Cannot load '" + identifier + "'");
+    }
+
+    // Perhaps a built-in audio driver?
+    if(!identifier.compareWithoutCase("dummy"))
+    {
+        d->getDummyInterfaces();
+        return;
+    }
+#ifndef DENG_DISABLE_SDLMIXER
+    if(!identifier.compareWithoutCase("sdlmixer"))
+    {
+        d->getSdlMixerInterfaces();
+        return;
+    }
+#endif
+
+    // Perhaps a plugin audio driver?
+    if(LibraryFile *plugin = Instance::findAudioPlugin(identifier))
+    {
+        d->importInterfaces(*plugin);
+        return;
+    }
+
+    /// @throw LoadError  Unknown driver specified.
+    throw LoadError("AudioDriver::load", "Unknown driver '" + identifier + "'");
+}
+
+void AudioDriver::unload()
+{
+    LOG_AS("AudioDriver");
+
+    if(isInitialized())
+    {
+        /// @throw LoadError  Cannot unload while initialized.
+        throw LoadError("AudioDriver::unload", "'" + name() + "' is still initialized, cannot unload");
+    }
+
+    if(isLoaded())
+    {
+        Library_Delete(d->library); d->library = nullptr;
+        zap(d->iBase);
+        zap(d->iSfx);
+        zap(d->iMusic);
+        zap(d->iCd);
+    }
+}
+
+void AudioDriver::initialize()
+{
+    LOG_AS("AudioDriver");
+
+    // Already been here?
+    if(d->initialized) return;
+
+    DENG2_ASSERT(d->iBase.Init != nullptr);
+    d->initialized = d->iBase.Init();
+}
+
+void AudioDriver::deinitialize()
+{
+    LOG_AS("AudioDriver");
+
+    // Already been here?
+    if(!d->initialized) return;
+
+    if(d->iBase.Shutdown)
+    {
+        d->iBase.Shutdown();
+    }
+    d->initialized = false;
+}
+
+::Library *AudioDriver::library() const
+{
+    return d->library;
+}
+
+audiodriver_t /*const*/ &AudioDriver::iBase() const
+{
+    return d->iBase;
+}
+
+bool AudioDriver::hasSfx() const
+{
+    return iSfx().gen.Init != nullptr;
+}
+
+bool AudioDriver::hasMusic() const
+{
+    return iMusic().gen.Init != nullptr;
+}
+
+bool AudioDriver::hasCd() const
+{
+    return iCd().gen.Init != nullptr;
+}
+
+audiointerface_sfx_t /*const*/ &AudioDriver::iSfx() const
+{
+    return d->iSfx;
+}
+
+audiointerface_music_t /*const*/ &AudioDriver::iMusic() const
+{
+    return d->iMusic;
+}
+
+audiointerface_cd_t /*const*/ &AudioDriver::iCd() const
+{
+    return d->iCd;
+}
+
+String AudioDriver::interfaceName(void *anyAudioInterface) const
+{
+    if((void *)&d->iSfx == anyAudioInterface)
+    {
+        /// @todo  SFX interfaces can't be named yet.
+        return name();
+    }
+
+    if((void *)&d->iMusic == anyAudioInterface || (void *)&d->iCd == anyAudioInterface)
+    {
+        char buf[256];  /// @todo  This could easily overflow...
+        auto *gen = (audiointerface_music_generic_t *) anyAudioInterface;
+        if(gen->Get(MUSIP_ID, buf))
+        {
+            return buf;
         }
         else
         {
-            LOG_AUDIO_WARNING("Loading of \"%s\" failed") << name;
+            return "[MUSIP_ID not defined]";
         }
     }
-    return ok;
+
+    return "";  // Not recognized.
 }
 
-static const char* getDriverName(audiodriverid_t id)
+String AudioDriver_GetName(audiodriverid_t id)
 {
-    static const char* audioDriverNames[AUDIODRIVER_COUNT] = {
-    /* AUDIOD_DUMMY */      "Dummy",
-    /* AUDIOD_SDL_MIXER */  "SDLMixer",
-    /* AUDIOD_OPENAL */     "OpenAL",
-    /* AUDIOD_FMOD */       "FMOD",
-    /* AUDIOD_FLUIDSYNTH */ "FluidSynth",
-    /* AUDIOD_DSOUND */     "DirectSound", // Win32 only
-    /* AUDIOD_WINMM */      "Windows Multimedia" // Win32 only
+    static String const audioDriverNames[AUDIODRIVER_COUNT] = {
+        /* AUDIOD_DUMMY */      "Dummy",
+        /* AUDIOD_SDL_MIXER */  "SDLMixer",
+        /* AUDIOD_OPENAL */     "OpenAL",
+        /* AUDIOD_FMOD */       "FMOD",
+        /* AUDIOD_FLUIDSYNTH */ "FluidSynth",
+        /* AUDIOD_DSOUND */     "DirectSound",        // Win32 only
+        /* AUDIOD_WINMM */      "Windows Multimedia"  // Win32 only
     };
     if(VALID_AUDIODRIVER_IDENTIFIER(id))
         return audioDriverNames[id];
 
     DENG2_ASSERT(!"S_GetDriverName: Unknown driver id");
-    return ""; // Unreachable.
-}
-
-static audiodriverid_t identifierToDriverId(const char* name)
-{
-    for(int i = 0; i < AUDIODRIVER_COUNT; ++i)
-    {
-        if(!stricmp(name, driverIdentifier[i])) return (audiodriverid_t) i;
-    }
-    LOG_AUDIO_ERROR("'%s' is not a valid audio driver name") << name;
-    return AUDIOD_INVALID;
-}
-
-static dd_bool isDriverInited(audiodriverid_t id)
-{
-    if(!VALID_AUDIODRIVER_IDENTIFIER(id)) return false;
-    return drivers[id].interface.Init != 0;
-}
-
-/**
- * Initializes the audio driver interfaces.
- *
- * @return  @c true iff successful.
- */
-static dd_bool initDriver(audiodriverid_t id)
-{
-    driver_t* d = &drivers[id];
-
-    DENG2_ASSERT(VALID_AUDIODRIVER_IDENTIFIER(id));
-
-    assert(!isDriverInited(id));
-    memset(d, 0, sizeof(*d));
-
-    switch(id)
-    {
-    case AUDIOD_DUMMY: // built-in
-        memcpy(&d->interface, &audiod_dummy, sizeof(d->interface));
-        memcpy(&d->sfx, &audiod_dummy_sfx, sizeof(d->sfx));
-        break;
-
-#ifndef DENG_DISABLE_SDLMIXER
-    case AUDIOD_SDL_MIXER: // built-in
-        memcpy(&d->interface, &audiod_sdlmixer, sizeof(d->interface));
-        memcpy(&d->sfx, &audiod_sdlmixer_sfx, sizeof(d->sfx));
-        memcpy(&d->music, &audiod_sdlmixer_music, sizeof(d->music));
-        break;
-#endif
-
-    case AUDIOD_OPENAL:
-        if(!loadAudioDriver(d, "openal"))
-            return false;
-        break;
-
-    case AUDIOD_FMOD:
-        if(!loadAudioDriver(d, "fmod"))
-            return false;
-        break;
-
-    case AUDIOD_FLUIDSYNTH:
-        if(!loadAudioDriver(d, "fluidsynth"))
-            return false;
-        break;
-
-#ifdef WIN32
-    case AUDIOD_DSOUND:
-        if(!loadAudioDriver(d, "directsound"))
-            return false;
-        break;
-
-    case AUDIOD_WINMM:
-        if(!loadAudioDriver(d, "winmm"))
-            return false;
-        break;
-#endif
-    default:
-        DENG2_ASSERT(!"initDriver: Unknown audio driver id");
-        return false;
-    }
-
-    // All loaded drivers are automatically initialized so they are ready for use.
-    assert(d->interface.Init != 0);
-    return d->interface.Init();
-}
-
-/**
- * Chooses the default audio driver based on configuration options.
- */
-static audiodriverid_t chooseAudioDriver(void)
-{
-    // No audio output?
-    if(isDedicated || CommandLine_Exists("-dummy"))
-        return AUDIOD_DUMMY;
-
-    if(CommandLine_Exists("-fmod"))
-        return AUDIOD_FMOD;
-
-    if(CommandLine_Exists("-oal") || CommandLine_Exists("-openal"))
-        return AUDIOD_OPENAL;
-
-#ifdef WIN32
-    // DirectSound with 3D sound support, EAX effects?
-    if(CommandLine_Exists("-dsound"))
-        return AUDIOD_DSOUND;
-
-    // Windows Multimedia?
-    if(CommandLine_Exists("-winmm"))
-        return AUDIOD_WINMM;
-#endif
-
-#ifndef DENG_DISABLE_SDLMIXER
-    if(CommandLine_Exists("-sdlmixer"))
-        return AUDIOD_SDL_MIXER;
-#endif
-
-    // The default audio driver.
-    return AUDIOD_FMOD;
-}
-
-static audiodriverid_t initDriverIfNeeded(const char* identifier)
-{
-    audiodriverid_t drvId = identifierToDriverId(identifier);
-    if(!isDriverInited(drvId))
-    {
-        initDriver(drvId);
-    }
-    DENG2_ASSERT(VALID_AUDIODRIVER_IDENTIFIER(drvId));
-    return drvId;
-}
-
-static void appendInterface(audiointerface_t** pos, audiointerfacetype_t type, void* ptr)
-{
-    (*pos)->type = type;
-    (*pos)->i.any = ptr;
-    (*pos)++;
-}
-
-/**
- * Choose the SFX, Music, and CD audio interfaces to use.
- *
- * @param defaultDriverId  Default audio driver to use unless overridden.
- */
-static void selectInterfaces(audiodriverid_t defaultDriverId)
-{
-    driver_t* defaultDriver = &drivers[defaultDriverId];
-    audiodriverid_t drvId;
-    audiointerface_t* pos = activeInterfaces;
-    int p;
-
-    // The default driver goes on the bottom of the stack.
-    if(defaultDriver->sfx.gen.Init) appendInterface(&pos, AUDIO_ISFX, &defaultDriver->sfx);
-    if(defaultDriver->music.gen.Init)
-    {
-        appendInterface(&pos, AUDIO_IMUSIC, &defaultDriver->music);
-    }
-#ifdef MACOSX
-    else if(defaultDriverId != AUDIOD_DUMMY)
-    {
-        // On the Mac, use the built-in QuickTime interface as the fallback for music.
-        appendInterface(&pos, AUDIO_IMUSIC, &audiodQuickTimeMusic);
-    }
-#endif
-
-#ifndef WIN32
-    // At the moment, dsFMOD supports streaming samples so we can
-    // automatically load dsFluidSynth for MIDI music.
-    if(defaultDriverId == AUDIOD_FMOD)
-    {
-        initDriverIfNeeded("fluidsynth");
-        if(isDriverInited(AUDIOD_FLUIDSYNTH))
-        {
-            appendInterface(&pos, AUDIO_IMUSIC, &drivers[AUDIOD_FLUIDSYNTH].music);
-        }
-    }
-#endif
-
-    if(defaultDriver->cd.gen.Init) appendInterface(&pos, AUDIO_ICD, &defaultDriver->cd);
-
-    for(p = 1; p < CommandLine_Count() - 1 && pos < activeInterfaces + MAX_AUDIO_INTERFACES; p++)
-    {
-        if(!CommandLine_IsOption(p)) continue;
-
-        // Check for SFX override.
-        if(CommandLine_IsMatchingAlias("-isfx", CommandLine_At(p)))
-        {
-            drvId = initDriverIfNeeded(CommandLine_At(++p));
-            if(!drivers[drvId].sfx.gen.Init)
-            {
-                throw de::Error("selectInterfaces", QString("Audio driver '%1' does not provide an SFX interface")
-                                .arg(getDriverName(drvId)));
-            }
-            appendInterface(&pos, AUDIO_ISFX, &drivers[drvId].sfx);
-            continue;
-        }
-
-        // Check for Music override.
-        if(CommandLine_IsMatchingAlias("-imusic", CommandLine_At(p)))
-        {
-            drvId = initDriverIfNeeded(CommandLine_At(++p));
-            if(!drivers[drvId].music.gen.Init)
-            {
-                throw de::Error("selectInterfaces", QString("Audio driver '%1' does not provide a Music interface")
-                                .arg(getDriverName(drvId)));
-            }
-            appendInterface(&pos, AUDIO_IMUSIC, &drivers[drvId].music);
-            continue;
-        }
-
-        // Check for CD override.
-        if(CommandLine_IsMatchingAlias("-icd", CommandLine_At(p)))
-        {
-            drvId = initDriverIfNeeded(CommandLine_At(++p));
-            if(!drivers[drvId].cd.gen.Init)
-            {
-                throw de::Error("selectInterfaces", QString("Audio driver '%1' does not provide a CD interface")
-                                .arg(getDriverName(drvId)));
-            }
-            appendInterface(&pos, AUDIO_ICD, &drivers[drvId].cd);
-            continue;
-        }
-    }
-
-    AudioDriver_PrintInterfaces();
-
-    // Let the music driver(s) know of the primary sfx interface, in case they
-    // want to play audio through it.
-    AudioDriver_Music_Set(AUDIOP_SFX_INTERFACE, AudioDriver_SFX());
-}
-
-de::String AudioDriver_InterfaceDescription()
-{
-    de::String str;
-    QTextStream os(&str);
-
-    os << _E(b) "Audio configuration:\n" _E(.);
-
-    for(int i = MAX_AUDIO_INTERFACES - 1; i >= 0; --i)
-    {
-        audiointerface_t* a = &activeInterfaces[i];
-        if(a->type == AUDIO_IMUSIC || a->type == AUDIO_ICD)
-        {
-            os << _E(Ta) _E(l) "  " << (a->type == AUDIO_IMUSIC? "Music" : "CD") << ": "
-               << _E(.) _E(Tb) << Str_Text(AudioDriver_InterfaceName(a->i.any)) << "\n";
-        }
-        else if(a->type == AUDIO_ISFX)
-        {
-            os << _E(Ta) _E(l) << "  SFX: " << _E(.) _E(Tb)
-               << Str_Text(AudioDriver_InterfaceName(a->i.sfx)) << "\n";
-        }
-    }
-    return str.rightStrip();
-}
-
-void AudioDriver_PrintInterfaces(void)
-{
-    LOG_AUDIO_MSG("%s") << AudioDriver_InterfaceDescription();
-}
-
-/*
-static dd_bool initInterface(audiointerface_base_t* interface)
-{
-    if(!interface) return true;
-    if(interface->Init)
-    {
-        return interface->Init();
-    }
-    return false;
-}
-*/
-
-dd_bool AudioDriver_Init(void)
-{
-    audiodriverid_t defaultDriverId;
-    dd_bool ok = false;
-
-    memset(activeInterfaces, 0, sizeof(activeInterfaces));
-
-    if(CommandLine_Exists("-nosound")) return false;
-
-    defaultDriverId = chooseAudioDriver();
-    ok = initDriver(defaultDriverId);
-    if(!ok)
-    {
-        LOG_AUDIO_WARNING("Failed initializing audio driver \"%s\"") << getDriverName(defaultDriverId);
-    }
-
-    // Fallback option for the default driver.
-#ifndef DENG_DISABLE_SDLMIXER
-    if(!ok)
-    {
-        defaultDriverId = AUDIOD_SDL_MIXER;
-        ok = initDriver(defaultDriverId);
-    }
-#endif
-
-    if(ok)
-    {
-        // Choose the interfaces to use.
-        selectInterfaces(defaultDriverId);
-    }
-    return ok;
-}
-
-void AudioDriver_Shutdown(void)
-{
-    int i;
-
-    // Shut down all the loaded drivers. (Note: reverse order)
-    for(i = AUDIODRIVER_COUNT - 1; i >= 0; --i)
-    {
-        driver_t* d = &drivers[i];
-        if(d->interface.Shutdown) d->interface.Shutdown();
-    }
-
-    // Unload the plugins after everything has been shut down.
-    for(i = 0; i < AUDIODRIVER_COUNT; ++i)
-    {
-        driver_t* d = &drivers[i];
-        if(d->library)
-        {
-            Library_Delete(d->library);
-        }
-        memset(d, 0, sizeof(*d));
-    }
-
-    // No more interfaces available.
-    memset(activeInterfaces, 0, sizeof(activeInterfaces));
-}
-
-audiodriver_t* AudioDriver_Interface(void* anyAudioInterface)
-{
-    int i;
-
-    for(i = 0; i < AUDIODRIVER_COUNT; ++i)
-    {
-        driver_t* d = &drivers[i];
-        if((void*)&d->sfx   == anyAudioInterface ||
-           (void*)&d->music == anyAudioInterface ||
-           (void*)&d->cd    == anyAudioInterface)
-        {
-            return &d->interface;
-        }
-    }
-    return 0;
-}
-
-int AudioDriver_FindInterfaces(audiointerfacetype_t type, void** listOfInterfaces)
-{
-    int i, count = 0;
-
-    // Least important interfaces are listed first in the stack.
-    for(i = MAX_AUDIO_INTERFACES - 1; i >= 0; --i)
-    {
-        if(activeInterfaces[i].type == type ||
-                (type == AUDIO_IMUSIC_OR_ICD && (activeInterfaces[i].type == AUDIO_IMUSIC ||
-                                                 activeInterfaces[i].type == AUDIO_ICD)))
-        {
-            if(listOfInterfaces)
-            {
-                *listOfInterfaces++ = activeInterfaces[i].i.any;
-            }
-            ++count;
-        }
-    }
-    return count;
-}
-
-audiointerface_sfx_generic_t* AudioDriver_SFX(void)
-{
-    void* ifs[MAX_AUDIO_INTERFACES];
-    if(!AudioDriver_FindInterfaces(AUDIO_ISFX, ifs)) return 0; // No such interface loaded.
-
-    // The primary interface is the first one returned.
-    return (audiointerface_sfx_generic_t*) ifs[0];
-}
-
-dd_bool AudioDriver_Music_Available(void)
-{
-    return AudioDriver_FindInterfaces(AUDIO_IMUSIC, NULL) > 0;
-}
-
-audiointerface_cd_t* AudioDriver_CD(void)
-{
-    void* ifs[MAX_AUDIO_INTERFACES];
-    if(!AudioDriver_FindInterfaces(AUDIO_ICD, ifs)) return 0; // No such interface loaded.
-
-    // The primary interface is the first one returned.
-    return (audiointerface_cd_t*) ifs[0];
-}
-
-audiointerfacetype_t AudioDriver_InterfaceType(void* anyAudioInterface)
-{
-    int i;
-    for(i = 0; i < AUDIODRIVER_COUNT; ++i)
-    {
-        driver_t* d = &drivers[i];
-        if((void*)&d->sfx   == anyAudioInterface) return AUDIO_ISFX;
-        if((void*)&d->music == anyAudioInterface) return AUDIO_IMUSIC;
-        if((void*)&d->cd    == anyAudioInterface) return AUDIO_ICD;
-    }
-    return AUDIO_INONE;
-}
-
-AutoStr* AudioDriver_InterfaceName(void* anyAudioInterface)
-{
-    int i;
-
-    for(i = 0; i < AUDIODRIVER_COUNT; ++i)
-    {
-        driver_t* d = &drivers[i];
-
-        if((void*)&d->sfx == anyAudioInterface)
-        {
-            /// @todo  SFX interfaces can't be named yet.
-            return AutoStr_FromText(getDriverName(audiodriverid_t(i)));
-        }
-
-        if((void*)&d->music == anyAudioInterface || (void*)&d->cd == anyAudioInterface)
-        {
-            char buf[256];  /// @todo  This could easily overflow...
-            audiointerface_music_generic_t* gen = (audiointerface_music_generic_t*) anyAudioInterface;
-            if(gen->Get(MUSIP_ID, buf))
-            {
-                return AutoStr_FromTextStd(buf);
-            }
-            else
-            {
-                return AutoStr_FromText("[MUSIP_ID not defined]");
-            }
-        }
-    }
-
-    return AutoStr_FromText("[invalid audio interface]");
+    return "";
 }

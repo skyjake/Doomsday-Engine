@@ -29,7 +29,6 @@
 #ifdef __CLIENT__
 #  include "audio/audiodriver.h"
 #endif
-#include "audio/s_main.h"
 #include "audio/s_sfx.h"
 
 using namespace de;
@@ -276,9 +275,9 @@ static bool sfxMustUpsampleToSfxRate()
 {
     int anySampleRateAccepted = 0;
 
-    if(AudioDriver_SFX()->Getv)
+    if(App_AudioSystem().sfx()->Getv)
     {
-        AudioDriver_SFX()->Getv(SFXIP_ANY_SAMPLE_RATE_ACCEPTED, &anySampleRateAccepted);
+        App_AudioSystem().sfx()->Getv(SFXIP_ANY_SAMPLE_RATE_ACCEPTED, &anySampleRateAccepted);
     }
     return (anySampleRateAccepted? false : true);
 }

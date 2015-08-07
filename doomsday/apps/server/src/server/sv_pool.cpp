@@ -29,8 +29,6 @@
 #include <de/timer.h>
 #include <de/vector1.h>
 
-#include "audio/s_main.h"
-
 #include "network/net_main.h"
 
 #include "world/p_object.h"

@@ -17,11 +17,13 @@
  */
 
 #include "ui/dialogs/aboutdialog.h"
+
 #include "gl/sys_opengl.h"
 #include "audio/audiodriver.h"
 #include "clientapp.h"
 #include "versioninfo.h"
 
+#include "dd_main.h"
 #include "dd_def.h"
 
 #include <de/Version>
@@ -47,7 +49,7 @@ DENG2_PIMPL(AboutDialog)
 
         // Popup with audio info.
         audioPopup = new DocumentPopupWidget;
-        audioPopup->document().setText(AudioDriver_InterfaceDescription());
+        audioPopup->document().setText(App_AudioSystem().interfaceDescription());
         self.add(audioPopup);
     }
 };

@@ -1,7 +1,7 @@
-/** @file s_mus.cpp Music subsystem. 
+/** @file s_mus.cpp  Music subsystem. 
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -24,8 +24,14 @@
 #endif
 
 #include "de_platform.h"
-#include "clientapp.h"
 #include "audio/s_mus.h"
+
+#include "clientapp.h"
+#include "dd_main.h"  // isDedicated
+
+#include "audio/audiodriver.h"
+#include "audio/audiodriver_music.h"
+#include "audio/m_mus2midi.h"
 
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
@@ -33,32 +39,20 @@
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/filesys/fs_util.h>
 
-#include "dd_main.h" // isDedicated
-#include "audio/audiodriver.h"
-#include "audio/audiodriver_music.h"
-#include "audio/m_mus2midi.h"
-#include "audio/sys_audio.h"
-#include "audio/s_main.h"
-
 using namespace de;
 
 D_CMD(PlayMusic);
 D_CMD(PauseMusic);
 D_CMD(StopMusic);
 
-static void Mus_UpdateSoundFont(void);
+static void Mus_UpdateSoundFont();
 
-static int     musPreference = MUSP_EXT;
-static char*   soundFontPath = (char*) "";
+static dint musPreference  = MUSP_EXT;
+static char *soundFontPath = (char *) "";
 
-static dd_bool musAvail = false;
-static dd_bool musicPaused = false;
+static dd_bool musAvail;
+static dd_bool musicPaused;
 static String currentSong;
-
-static int getInterfaces(audiointerface_music_generic_t** ifs)
-{
-    return AudioDriver_FindInterfaces(AUDIO_IMUSIC_OR_ICD, (void**) ifs);
-}
 
 void Mus_Register()
 {
@@ -68,17 +62,17 @@ void Mus_Register()
     C_VAR_CHARPTR2("music-soundfont", &soundFontPath, 0, 0, 0, Mus_UpdateSoundFont);
 
     // Commands:
-    C_CMD_FLAGS   ("playmusic",  NULL, PlayMusic,  CMDF_NO_DEDICATED);
-    C_CMD_FLAGS   ("pausemusic", NULL, PauseMusic, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS   ("stopmusic",  "",   StopMusic,  CMDF_NO_DEDICATED);
+    C_CMD_FLAGS   ("playmusic",  nullptr, PlayMusic,  CMDF_NO_DEDICATED);
+    C_CMD_FLAGS   ("pausemusic", nullptr, PauseMusic, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS   ("stopmusic",  "",      StopMusic,  CMDF_NO_DEDICATED);
 }
 
 bool Mus_Init()
 {
-    // Already initialized?
-    if(musAvail) return true;
+    // Already been here?
+    if(::musAvail) return true;
 
-    if(isDedicated || CommandLine_Exists("-nomusic"))
+    if(::isDedicated || CommandLine_Exists("-nomusic"))
     {
         LOG_AUDIO_NOTE("Music disabled");
         return true;
@@ -86,97 +80,99 @@ bool Mus_Init()
 
     LOG_AUDIO_VERBOSE("Initializing Music subsystem...");
 
-    // Let's see which interfaces are available for music playback.
-    audiointerface_music_generic_t *iMusic[MAX_AUDIO_INTERFACES];
-    int count = getInterfaces(iMusic);
-    currentSong = "";
+    ::currentSong = "";
 
-    // No interfaces for Music playback?
-    if(!count) return false;
-
-    // Initialize each interface.
-    for(int i = 0; i < count; ++i)
+    // Initialize the available interfaces for music playback.
+    dint initialized = 0;
+    App_AudioSystem().forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [&initialized] (void *ifs)
     {
-        if(!iMusic[i]->Init())
+        auto *iMusic = (audiointerface_music_generic_t *) ifs;
+        if(iMusic->Init())
         {
-            LOG_AUDIO_WARNING("Failed to initialize %s for music playback")
-                    << Str_Text(AudioDriver_InterfaceName(iMusic[i]));
+            initialized += 1;
         }
-    }
+        else
+        {
+            LOG_AUDIO_WARNING("Failed to initialize \"%s\" for music playback")
+                << App_AudioSystem().interfaceName(iMusic);
+        }
+        return LoopContinue;
+    });
+    if(!initialized) return false;
 
     // Tell the audio driver about our soundfont config.
     Mus_UpdateSoundFont();
 
-    musAvail = true;
+    ::musAvail = true;
     return true;
 }
 
 void Mus_Shutdown()
 {
-    if(!musAvail) return;
-    musAvail = false;
+    if(!::musAvail) return;
+    ::musAvail = false;
 
     // Shutdown interfaces.
-    audiointerface_music_generic_t *iMusic[MAX_AUDIO_INTERFACES];
-    int count = getInterfaces(iMusic);
-    for(int i = 0; i < count; ++i)
+    App_AudioSystem().forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [] (void *ifs)
     {
-        if(iMusic[i]->Shutdown) iMusic[i]->Shutdown();
-    }
+        auto *iMusic = (audiointerface_music_generic_t *) ifs;
+        if(iMusic->Shutdown) iMusic->Shutdown();
+        return LoopContinue;
+    });
 }
 
 void Mus_StartFrame()
 {
-    if(!musAvail) return;
+    if(!::musAvail) return;
 
     // Update all interfaces.
-    audiointerface_music_generic_t *iMusic[MAX_AUDIO_INTERFACES];
-    int count = getInterfaces(iMusic);
-    for(int i = 0; i < count; ++i)
+    App_AudioSystem().forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [] (void *ifs)
     {
-        iMusic[i]->Update();
-    }
+        auto *iMusic = (audiointerface_music_generic_t *) ifs;
+        iMusic->Update();
+        return LoopContinue;
+    });
 }
 
-void Mus_SetVolume(float vol)
+void Mus_SetVolume(dfloat vol)
 {
-    if(!musAvail) return;
+    if(!::musAvail) return;
 
     // Set volume of all available interfaces.
-    audiointerface_music_generic_t *iMusic[MAX_AUDIO_INTERFACES];
-    int count = getInterfaces(iMusic);
-    for(int i = 0; i < count; ++i)
+    App_AudioSystem().forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [&vol] (void *ifs)
     {
-        iMusic[i]->Set(MUSIP_VOLUME, vol);
-    }
+        auto *iMusic = (audiointerface_music_generic_t *) ifs;
+        iMusic->Set(MUSIP_VOLUME, vol);
+        return LoopContinue;
+    });
 }
 
 void Mus_Pause(bool doPause)
 {
-    if(!musAvail) return;
+    if(!::musAvail) return;
 
     // Pause all interfaces.
-    audiointerface_music_generic_t *iMusic[MAX_AUDIO_INTERFACES];
-    int count = getInterfaces(iMusic);
-    for(int i = 0; i < count; ++i)
+    App_AudioSystem().forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [&doPause] (void *ifs)
     {
-        iMusic[i]->Pause(doPause);
-    }
+        auto *iMusic = (audiointerface_music_generic_t *) ifs;
+        iMusic->Pause(doPause);
+        return LoopContinue;
+    });
 }
 
 void Mus_Stop()
 {
-    if(!musAvail) return;
+    if(!::musAvail) return;
 
     currentSong = "";
 
     // Stop all interfaces.
-    audiointerface_music_generic_t *iMusic[MAX_AUDIO_INTERFACES];
-    int count = getInterfaces(iMusic);
-    for(int i = 0; i < count; ++i)
+    App_AudioSystem().forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [] (void *ifs)
     {
-        iMusic[i]->Stop();
-    }
+        auto *iMusic = (audiointerface_music_generic_t *) ifs;
+        iMusic->Stop();
+        return LoopContinue;
+    });
 }
 
 /**
@@ -203,11 +199,12 @@ static bool Mus_IsMUSLump(lumpnum_t lumpNum)
  *
  * @return  Non-zero if an external file of that name exists.
  */
-static int Mus_GetExt(Record const *rec, ddstring_t *retPath)
+static dint Mus_GetExt(Record const *rec, ddstring_t *retPath)
 {
     LOG_AS("Mus_GetExt");
 
-    if(!musAvail || !AudioDriver_Music_Available() || !rec) return false;
+    if(!rec) return false;
+    if(!::musAvail || !App_AudioSystem().musicIsAvailable()) return false;
 
     defn::Music musicDef(*rec);
 
@@ -244,8 +241,8 @@ static int Mus_GetExt(Record const *rec, ddstring_t *retPath)
             }
             return true;
         }
-        catch(FS1::NotFoundError const&)
-        {} // Ignore this error.
+        catch(FS1::NotFoundError const &)
+        {}  // Ignore this error.
     }
     return false;
 }
@@ -255,7 +252,7 @@ static int Mus_GetExt(Record const *rec, ddstring_t *retPath)
  */
 static int Mus_GetCD(Record const *rec)
 {
-    if(!musAvail || !AudioDriver_CD() || !rec)
+    if(!musAvail || !App_AudioSystem().cd() || !rec)
         return 0;
 
     defn::Music musicDef(*rec);
@@ -276,7 +273,7 @@ static int Mus_GetCD(Record const *rec)
 
 int Mus_StartLump(lumpnum_t lumpNum, bool looped, bool canPlayMUS)
 {
-    if(!AudioDriver_Music_Available() || lumpNum < 0) return 0;
+    if(!App_AudioSystem().musicIsAvailable() || lumpNum < 0) return 0;
 
     if(Mus_IsMUSLump(lumpNum))
     {
@@ -385,7 +382,7 @@ int Mus_Start(Record const *rec, bool looped)
             // Note: Intentionally falls through to MUSP_MUS.
 
         case MUSP_MUS:
-            if(AudioDriver_Music_Available())
+            if(App_AudioSystem().musicIsAvailable())
             {
                 lumpnum_t const lumpNum = App_FileSystem().lumpNumForName(rec->gets("lumpName"));
                 if(Mus_StartLump(lumpNum, looped, canPlayMUS) == 1)
@@ -471,7 +468,7 @@ D_CMD(PlayMusic)
             // Perhaps a CD track?
             if(!stricmp(argv[1], "cd"))
             {
-                if(!AudioDriver_CD())
+                if(!App_AudioSystem().cd())
                 {
                     LOG_AUDIO_WARNING("No CD audio interface available");
                     return false;

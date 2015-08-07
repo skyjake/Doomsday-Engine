@@ -57,6 +57,7 @@ DENG2_PIMPL(ServerApp)
 {
     QScopedPointer<ServerSystem> serverSystem;
     QScopedPointer<ResourceSystem> resourceSys;
+    QScopedPointer<::audio::System> audioSys;
     WorldSystem worldSys;
     InFineSystem infineSys;
 
@@ -125,6 +126,9 @@ ServerApp::ServerApp(int &argc, char **argv)
 
     d->resourceSys.reset(new ResourceSystem);
     addSystem(*d->resourceSys);
+
+    d->audioSys.reset(new ::audio::System);
+    addSystem(*d->audioSys);
 
     addSystem(d->worldSys);
     //addSystem(d->infineSys);
@@ -203,6 +207,11 @@ ServerSystem &ServerApp::serverSystem()
 InFineSystem &ServerApp::infineSystem()
 {
     return app().d->infineSys;
+}
+
+::audio::System &ServerApp::audioSystem()
+{
+    return *app().d->audioSys;
 }
 
 ResourceSystem &ServerApp::resourceSystem()

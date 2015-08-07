@@ -25,6 +25,7 @@
 
 #include "settingsregister.h"
 #include "network/serverlink.h"
+#include "audio/system.h"
 #include "ui/inputsystem.h"
 #include "ui/clientwindowsystem.h"
 #include "ui/infine/infinesystem.h"
@@ -73,12 +74,14 @@ public:
     static InFineSystem &infineSystem();
     static InputSystem &inputSystem();
     static ClientWindowSystem &windowSystem();
+    static ::audio::System &audioSystem();
     static RenderSystem &renderSystem();
     static ResourceSystem &resourceSystem();
     static WorldSystem &worldSystem();
 
     static bool hasInputSystem();
     static bool hasRenderSystem();
+    static bool hasAudioSystem();
 
 public slots:
     void openHomepageInBrowser();

@@ -11,8 +11,6 @@
  * from memory after which the chosen game plugin is reloaded (see
  * Library_ReleaseGames()).
  *
- * @todo Implement and use this class for Windows.
- *
  * @authors Copyright © 2006-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2009-2015 Daniel Swanson <danij@dengine.net>
  *
@@ -66,23 +64,6 @@ LIBDOOMSDAY_PUBLIC const char* Library_LastError(void);
 LIBDOOMSDAY_PUBLIC void Library_ReleaseGames(void);
 
 /**
- * Looks for dynamic libraries and calls @a func for each one.
- *
- * Arguments passed to the callback function @a func:
- * - @a libraryFile is a pointer to a de::LibraryFile instance.
- * - @a fileName is the name of the library file, including extension.
- * - @a absPath is the absolute (non-native) path of the file.
- * - @a data is the @a data from the caller.
- *
- * @return If all available libraries were iterated, returns 0. If @a func
- * returns a non-zero value to indicate aborting the iteration at some point,
- * that value is returned instead.
- */
-LIBDOOMSDAY_PUBLIC
-int Library_IterateAvailableLibraries(int (*func)(void *libraryFile, char const *fileName,
-                                                  char const *absPath, void *data), void *data);
-
-/**
  * Loads a dynamic library.
  *
  * @param filePath  Absolute path of the library to open.
@@ -118,7 +99,11 @@ LIBDOOMSDAY_PUBLIC void *Library_Symbol(Library *lib, char const *symbolName);
 
 #ifdef __cplusplus
 #include <de/LibraryFile>
+#include <functional>
+
 LIBDOOMSDAY_PUBLIC de::LibraryFile &Library_File(Library *lib);
+
+LIBDOOMSDAY_PUBLIC de::LoopResult Library_forAll(std::function<de::LoopResult (de::LibraryFile &)> func);
 #endif
 
 #endif  // LIBDOOMSDAY_LIBRARY_H
