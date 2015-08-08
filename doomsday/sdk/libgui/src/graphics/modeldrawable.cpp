@@ -270,6 +270,7 @@ DENG2_PIMPL(ModelDrawable)
     QHash<String, duint16> boneNameToIndex;
     QHash<String, aiNode const *> nodeNameToPtr;
     QVector<BoneData> bones; // indexed by bone index
+    QVector<Rangeui> meshIndexRanges;
     AnimLookup animNameToIndex;
 
     TextureMap textureOrder[MAX_TEXTURES];
@@ -812,6 +813,8 @@ DENG2_PIMPL(ModelDrawable)
         aiVector3D const zero(0, 0, 0);
 
         int base = 0;
+        meshIndexRanges.clear();
+        meshIndexRanges.resize(scene->mNumMeshes);
 
         // All of the scene's meshes are combined into one GL buffer.
         for(duint m = 0; m < scene->mNumMeshes; ++m)
@@ -873,6 +876,8 @@ DENG2_PIMPL(ModelDrawable)
                 verts << v;
             }
 
+            duint firstFace = indx.size();
+
             // Get face indices.
             for(duint i = 0; i < mesh.mNumFaces; ++i)
             {
@@ -882,6 +887,8 @@ DENG2_PIMPL(ModelDrawable)
                      << face.mIndices[1] + base
                      << face.mIndices[2] + base;
             }
+
+            meshIndexRanges[m] = Rangeui::fromSize(firstFace, mesh.mNumFaces * 3);
 
             base += mesh.mNumVertices;
         }
@@ -1069,10 +1076,47 @@ DENG2_PIMPL(ModelDrawable)
         program->beginUse();
     }
 
-    void draw(Animator const *animation)
+    void initRanges(GLBuffer::DrawRanges &ranges, QBitArray const &meshes)
     {
+        Rangeui current;
+        for(int i = 0; i < meshIndexRanges.size(); ++i)
+        {
+            if(!meshes.at(i)) continue;
+            auto const &mesh = meshIndexRanges.at(i);
+            if(current.isEmpty())
+            {
+                current = mesh;
+            }
+            else if(current.end == mesh.start)
+            {
+                // Combine.
+                current.end = mesh.end;
+            }
+            else
+            {
+                // Need a new range.
+                ranges.append(current);
+                current = mesh;
+            }
+        }
+        // The final range.
+        if(!current.isEmpty())
+        {
+            ranges.append(current);
+        }
+    }
+
+    void draw(Animator const *animation, QBitArray const *meshSubset)
+    {
+        // Determine what to draw this time.
+        GLBuffer::DrawRanges ranges;
+        if(meshSubset)
+        {
+            initRanges(ranges, *meshSubset);
+        }
+
         preDraw(animation);
-        buffer->draw();
+        buffer->draw(meshSubset? &ranges : nullptr);
         postDraw();
     }
 
@@ -1159,6 +1203,12 @@ int ModelDrawable::animationCount() const
     return d->scene->mNumAnimations;
 }
 
+int ModelDrawable::meshCount() const
+{
+    if(!d->scene) return 0;
+    return d->scene->mNumMeshes;
+}
+
 bool ModelDrawable::nodeExists(String const &name) const
 {
     return d->nodeNameToPtr.contains(name);
@@ -1239,13 +1289,14 @@ void ModelDrawable::unsetProgram()
     d->program = 0;
 }
 
-void ModelDrawable::draw(Animator const *animation) const
+void ModelDrawable::draw(Animator const *animation,
+                         QBitArray const *meshSubset) const
 {
     const_cast<ModelDrawable *>(this)->glInit();
 
     if(isReady() && d->program && d->atlas)
     {
-        d->draw(animation);
+        d->draw(animation, meshSubset);
     }
 }
 

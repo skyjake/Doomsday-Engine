@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/GLBuffer"
@@ -125,6 +125,7 @@ DENG2_PIMPL(GLBuffer)
     GLuint idxName;
     dsize count;
     dsize idxCount;
+    DrawRanges defaultRange; ///< All vertices.
     Primitive prim;
     AttribSpecs specs;
 
@@ -288,6 +289,9 @@ void GLBuffer::setVertices(Primitive primitive, dsize count, void const *data, d
     d->prim  = primitive;
     d->count = count;
 
+    d->defaultRange.clear();
+    d->defaultRange.append(Rangeui(0, count));
+
     if(data)
     {
         d->alloc();
@@ -314,6 +318,9 @@ void GLBuffer::setIndices(Primitive primitive, dsize count, Index const *indices
     d->prim     = primitive;
     d->idxCount = count;
 
+    d->defaultRange.clear();
+    d->defaultRange.append(Rangeui(0, count));
+
     if(indices && count)
     {
         d->allocIndices();
@@ -333,7 +340,7 @@ void GLBuffer::setIndices(Primitive primitive, Indices const &indices, Usage usa
     setIndices(primitive, indices.size(), indices.constData(), usage);
 }
 
-void GLBuffer::draw(duint first, dint count) const
+void GLBuffer::draw(DrawRanges const *ranges) const
 {
     if(!isReady() || !GLProgram::programInUse()) return;
 
@@ -346,26 +353,23 @@ void GLBuffer::draw(duint first, dint count) const
 
     if(d->idxName)
     {
-        if(count < 0) count = d->idxCount;
-        if(first + count > d->idxCount) count = d->idxCount - first;
-
-        DENG2_ASSERT(count >= 0);
-
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, d->idxName);
-        glDrawElements(Instance::glPrimitive(d->prim), count, GL_UNSIGNED_SHORT,
-                       (void const *) dintptr(first * 2));
-        LIBGUI_ASSERT_GL_OK();
+        for(Rangeui const &range : (ranges? *ranges : d->defaultRange))
+        {
+            glDrawElements(Instance::glPrimitive(d->prim),
+                           range.size(), GL_UNSIGNED_SHORT,
+                           (void const *) dintptr(range.start * 2));
+            LIBGUI_ASSERT_GL_OK();
+        }
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
     else
     {
-        if(count < 0) count = d->count;
-        if(first + count > d->count) count = d->count - first;
-
-        DENG2_ASSERT(count >= 0);
-
-        glDrawArrays(Instance::glPrimitive(d->prim), first, count);
-        LIBGUI_ASSERT_GL_OK();
+        for(Rangeui const &range : (ranges? *ranges : d->defaultRange))
+        {
+            glDrawArrays(Instance::glPrimitive(d->prim), range.start, range.size());
+            LIBGUI_ASSERT_GL_OK();
+        }
     }
 
     d->enableArrays(false);

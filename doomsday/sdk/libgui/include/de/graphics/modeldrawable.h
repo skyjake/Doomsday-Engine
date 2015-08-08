@@ -266,6 +266,8 @@ public:
 
     int animationCount() const;
 
+    int meshCount() const;
+
     /**
      * Locates a material specified in the model by its name.
      *
@@ -347,10 +349,11 @@ public:
 
     void unsetProgram();
 
-    void draw(Animator const *animation = 0) const;
+    void draw(Animator const *animation = nullptr,
+              QBitArray const *meshSubset = nullptr) const;
 
     void drawInstanced(GLBuffer const &instanceAttribs,
-                       Animator const *animation = 0) const;
+                       Animator const *animation = nullptr) const;
 
     /**
      * Dimensions of the default pose, in model space.
