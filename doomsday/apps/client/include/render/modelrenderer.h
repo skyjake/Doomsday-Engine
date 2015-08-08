@@ -30,31 +30,40 @@
 #include "vissprite.h"
 
 /**
- * The model renderer prepares available model assets for drawing (using ModelDrawable),
- * and keeps the set of needed ModelDrawable instances in memory.
+ * The model renderer: draws 3D models representing map objects and psprites.
  *
- * ModelRenderer also owns the shaders for rendering models, and maintains the set of GL
- * uniforms for rendering models, including transformation and lighting data.
+ * ModelRenderer also does the following:
+ * - prepares available model assets for drawing (using ModelDrawable), and keeps the
+ *   set of needed ModelDrawable instances in memory
+ * - owns the shaders for rendering models
+ * - maintains the set of GL uniforms for rendering models, including transformation
+ *   and lighting data
+ * - orchestrates the rendering of individual models when it comes to rendering passes
+ *   and GL state changes
  *
- * @todo Consider renaming the class: the term "renderer" has the connotation of actually
- * performing rendering, while in practice the ModelDrawables will be drawing themselves.
- * This is the top-level class responsible for model assets and all their associated
- * data. Perhaps the class should be instead portrayed more as a specialized Bank. -jk
+ * ModelRenderer does not perform the low-level OpenGL drawing calls -- those are done by
+ * ModelDrawable.
  *
  * @ingroup render
  */
 class ModelRenderer
 {
 public:
+    /**
+     * Animation sequence definition.
+     */
     struct AnimSequence {
-        de::String name;
-        de::Record const *def;
+        de::String name;        ///< Name of the sequence.
+        de::Record const *def;  ///< Record describing the sequence (in asset metadata).
         AnimSequence(de::String const &n, de::Record const &d)
             : name(n), def(&d) {}
     };
     typedef QList<AnimSequence> AnimSequences;
     struct StateAnims : public QMap<de::String, AnimSequences> {};
 
+    /**
+     * Auxiliary data stored in the model bank.
+     */
     struct AuxiliaryData : public de::ModelBank::IUserData
     {
         StateAnims animations;
@@ -76,28 +85,6 @@ public:
     de::ModelBank &bank();
 
     StateAnims const *animations(de::DotPath const &modelId) const;
-
-    /**
-     * Sets up the transformation matrices.
-     *
-     * @param relativeEyePos  Position of the eye in relation to object (in world space).
-     * @param modelToLocal    Transformation from model space to the object's local space
-     *                        (object's local frame in world space).
-     * @param localToView     Transformation from local space to projected view space.
-     */
-    void setTransformation(de::Vector3f const &relativeEyePos,
-                           de::Matrix4f const &modelToLocal,
-                           de::Matrix4f const &localToView);
-
-    void setEyeSpaceTransformation(de::Matrix4f const &modelToLocal,
-                                   de::Matrix4f const &inverseLocal,
-                                   de::Matrix4f const &localToView);
-
-    void setAmbientLight(de::Vector3f const &ambientIntensity);
-
-    void clearLights();
-
-    void addLight(de::Vector3f const &direction, de::Vector3f const &intensity);
 
     /**
      * Render a GL2 model.
