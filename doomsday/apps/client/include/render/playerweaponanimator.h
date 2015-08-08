@@ -23,6 +23,7 @@
 #include "mobjanimator.h"
 
 class ClientPlayer;
+struct state_s;
 
 /**
  * Animates the player weapon model.
@@ -36,7 +37,7 @@ public:
 
     void setAsset(de::String const &identifier);
 
-    void stateChanged(state_t const *state);
+    void stateChanged(state_s const *state);
 
     /**
      * Determines if a 3D model has been found and is ready to be rendered.

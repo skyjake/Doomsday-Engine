@@ -25,9 +25,11 @@
 
 #include <QList>
 #include <QMap>
+#include <QBitArray>
 #include <functional>
 
-#include "vissprite.h"
+struct vissprite_t;
+struct vispsprite_t;
 
 /**
  * The model renderer: draws 3D models representing map objects and psprites.
@@ -62,14 +64,26 @@ public:
     struct StateAnims : public QMap<de::String, AnimSequences> {};
 
     /**
+     * Rendering pass. When no rendering passes are specified, all the meshes of the
+     * model are rendered in one pass with regular alpha blending.
+     */
+    struct Pass {
+        QBitArray meshes;   ///< One bit per model mesh.
+        de::gl::BlendFunc blendFunc { de::gl::SrcAlpha, de::gl::OneMinusSrcAlpha };
+        de::gl::BlendOp blendOp = de::gl::Add;
+    };
+    typedef QList<Pass> Passes;
+
+    /**
      * Auxiliary data stored in the model bank.
      */
     struct AuxiliaryData : public de::ModelBank::IUserData
     {
-        StateAnims animations;
+        bool autoscaleToThingHeight = true;
         de::Matrix4f transformation;
         de::gl::Cull cull = de::gl::Back;
-        bool autoscaleToThingHeight = true;
+        Passes passes;
+        StateAnims animations;
     };
 
 public:
@@ -102,10 +116,12 @@ public:
 
 public:
     static int identifierFromText(de::String const &text,
-                           std::function<int (de::String const &)> resolver);
+                                  std::function<int (de::String const &)> resolver);
 
 private:
     DENG2_PRIVATE(d)
 };
+
+typedef ModelRenderer::AuxiliaryData ModelAuxiliaryData;
 
 #endif // DENG_CLIENT_MODELRENDERER_H

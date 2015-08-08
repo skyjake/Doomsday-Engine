@@ -193,9 +193,8 @@ struct vispsprite_t
         } model;
         struct vispsprite_model2_s {
             de::ModelDrawable const *model;
+            ModelAuxiliaryData const *auxData;
             de::ModelDrawable::Animator const *animator;
-            float modelTransform[16];
-            de::gl::Cull cullFace;
         } model2;
     } data;
 };

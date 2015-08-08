@@ -19,6 +19,7 @@
 #include "render/modelrenderer.h"
 #include "gl/gl_main.h"
 #include "render/rend_main.h"
+#include "render/vissprite.h"
 #include "world/p_players.h"
 #include "world/clientmobjthinkerdata.h"
 #include "clientapp.h"
@@ -241,6 +242,15 @@ DENG2_PIMPL(ModelRenderer)
             // TODO: Check for a possible timeline and calculate time factors accordingly.
         }
 
+        // If no rendering passes were defined, specify one default pass.
+        if(aux->passes.isEmpty())
+        {
+            Pass pass;
+            pass.meshes.resize(model.meshCount());
+            pass.meshes.fill(true);
+            aux->passes.append(pass);
+        }
+
         // Store the additional information in the bank.
         bank.setUserData(path, aux.release());
     }
@@ -313,7 +323,7 @@ DENG2_PIMPL(ModelRenderer)
         uEyePos      = inverseLocal * Vector3f();
     }
 
-    void setAmbientLight(de::Vector3f const &ambientIntensity)
+    void setAmbientLight(Vector3f const &ambientIntensity)
     {
         uAmbientLight = Vector4f(ambientIntensity, 1.f);
     }
@@ -329,7 +339,7 @@ DENG2_PIMPL(ModelRenderer)
         }
     }
 
-    void addLight(de::Vector3f const &direction, de::Vector3f const &intensity)
+    void addLight(Vector3f const &direction, Vector3f const &intensity)
     {
         if(lightCount == MAX_LIGHTS) return;
 
@@ -338,6 +348,23 @@ DENG2_PIMPL(ModelRenderer)
         uLightIntensities.set(idx, Vector4f(intensity, intensity.max()));
 
         lightCount++;
+    }
+
+    void draw(ModelDrawable const &model,
+              ModelDrawable::Animator const &animator,
+              AuxiliaryData const &auxData)
+    {
+        for(Pass const &pass : auxData.passes)
+        {
+            GLState::push()
+                    .setBlendFunc(pass.blendFunc)
+                    .setBlendOp(pass.blendOp);
+
+            // Draw the model using the current animation state.
+            model.draw(&animator, &pass.meshes);
+
+            GLState::pop();
+        }
     }
 };
 
@@ -400,7 +427,7 @@ void ModelRenderer::render(vissprite_t const &spr)
     {
         auto const &mobjData = THINKER_DATA(p.object->thinker, ClientMobjThinkerData);
         modelToLocal = modelToLocal * mobjData.modelTransformation();
-        culling = mobjData.modelCullFace();
+        culling = mobjData.auxiliaryModelData().cull;
     }
 
     GLState::push().setCull(culling);
@@ -412,7 +439,7 @@ void ModelRenderer::render(vissprite_t const &spr)
     d->setupLighting(spr.light);
 
     // Draw the model using the current animation state.
-    p.model->draw(p.animator);
+    d->draw(*p.model, *p.animator, *p.auxData);
 
     GLState::pop();
 
@@ -426,7 +453,7 @@ void ModelRenderer::render(vispsprite_t const &pspr)
 
     Matrix4f modelToLocal =
             Matrix4f::rotate(180, Vector3f(0, 1, 0)) *
-            Matrix4f(pspr.data.model2.modelTransform);
+            p.auxData->transformation;
 
     Matrix4f localToView = GL_GetProjectionMatrix() * Matrix4f::translate(Vector3f(0, -10, 11));
     d->setEyeSpaceTransformation(modelToLocal,
@@ -437,8 +464,8 @@ void ModelRenderer::render(vispsprite_t const &pspr)
 
     d->setupLighting(pspr.light);
 
-    GLState::push().setCull(p.cullFace);
-    p.model->draw(p.animator);
+    GLState::push().setCull(p.auxData->cull);
+    d->draw(*p.model, *p.animator, *p.auxData);
     GLState::pop();
 
     /// @todo Something is interfering with the cull setting elsewhere (remove this).
