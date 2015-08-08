@@ -91,8 +91,8 @@ DENG2_PIMPL(ModelRenderer)
         img.fill(qRgba(0, 0, 0, 0));
         defaultEmission = atlas->alloc(img);
 
-        // Fallback specular map.
-        img.fill(qRgba(128, 128, 128, 180));
+        // Fallback specular map (no specular reflections).
+        img.fill(qRgba(0, 0, 0, 0));
         defaultSpecular = atlas->alloc(img);
 
         uTex = *atlas;
