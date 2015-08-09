@@ -1,6 +1,6 @@
 /** @file defs/music.h  Music definition accessor.
  *
- * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2014-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -36,6 +36,11 @@ public:
     Music(de::Record const &d) : Definition(d) {}
 
     void resetToDefaults();
+
+    /**
+     * Returns the associated CD track number if defined else @c 0.
+     */
+    int cdTrack() const;
 };
 
 } // namespace defn

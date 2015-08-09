@@ -24,7 +24,7 @@
 
 #ifdef __CLIENT__
 #  include "dd_main.h"  // isDedicated
-#  include "audio/audiodriver_music.h"
+#  include "api_filesys.h"
 #endif
 
 #ifdef __SERVER__
@@ -74,6 +74,8 @@ namespace audio {
 static audio::System *theAudioSystem = nullptr;
 
 #ifdef __CLIENT__
+static char *soundFontPath = (char *) "";
+
 static audiodriverid_t identifierToDriverId(String name)
 {
     static String const driverIdentifier[AUDIODRIVER_COUNT] = {
@@ -379,7 +381,7 @@ DENG2_PIMPL(System)
 
         // Let the music driver(s) know of the primary sfx interface, in case they
         // want to play audio through it.
-        AudioDriver_Music_Set(AUDIOP_SFX_INTERFACE, self.sfx());
+        setMusicProperty(AUDIOP_SFX_INTERFACE, self.sfx());
     }
 #endif  // __CLIENT__
 
@@ -395,6 +397,36 @@ DENG2_PIMPL(System)
 
         theAudioSystem = nullptr;
     }
+
+#ifdef __CLIENT__
+    void setMusicProperty(dint prop, void const *ptr)
+    {
+        self.forAllInterfaces(AUDIO_IMUSIC, [this, &prop, &ptr] (void *ifs)
+        {
+            auto *iMusic = (audiointerface_music_t *) ifs;
+            if(audiodriver_t *base = self.interface(iMusic))
+            {
+                if(base->Set) base->Set(prop, ptr);
+            }
+            return LoopContinue;
+        });
+
+        if(prop == AUDIOP_SOUNDFONT_FILENAME)
+        {
+            auto *fn = (char const *) ptr;
+            if(!fn || !fn[0]) return; // No path.
+
+            if(F_FileExists(fn))
+            {
+                LOG_AUDIO_MSG("Current soundfont set to: \"%s\"") << fn;
+            }
+            else
+            {
+                LOG_AUDIO_WARNING("Soundfont \"%s\" not found") << fn;
+            }
+        }
+    }
+#endif
 
     void aboutToUnloadGame(game::Game const &)
     {
@@ -500,6 +532,21 @@ void System::deinitPlayback()
 }
 
 #ifdef __CLIENT__
+void System::updateSoundFont()
+{
+    NativePath path(soundFontPath);
+
+#ifdef MACOSX
+    // On OS X we can try to use the basic DLS soundfont that's part of CoreAudio.
+    if(path.isEmpty())
+    {
+        path = "/System/Library/Components/CoreAudio.component/Contents/Resources/gs_instruments.dls";
+    }
+#endif
+
+    d->setMusicProperty(AUDIOP_SOUNDFONT_FILENAME, path.expand().toString().toLatin1().constData());
+}
+
 bool System::musicIsAvailable() const
 {
     // The primary interface is the first one.
@@ -718,6 +765,11 @@ static void reverbVolumeChanged()
 {
     Sfx_UpdateReverb();
 }
+
+static void soundFontChanged()
+{
+    App_AudioSystem().updateSoundFont();
+}
 #endif
 
 void System::consoleRegister()  // static
@@ -725,17 +777,21 @@ void System::consoleRegister()  // static
     C_VAR_BYTE  ("sound-overlap-stop",  &sfxOneSoundPerEmitter, 0, 0, 1);
 
 #ifdef __CLIENT__
-    C_VAR_INT   ("sound-volume",        &sfxVolume,             0, 0, 255);
-    C_VAR_INT   ("sound-rate",          &sfxSampleRate,         0, 11025, 44100);
-    C_VAR_INT   ("sound-16bit",         &sfx16Bit,              0, 0, 1);
-    C_VAR_INT   ("sound-3d",            &sfx3D,                 0, 0, 1);
-    C_VAR_FLOAT2("sound-reverb-volume", &sfxReverbStrength,     0, 0, 1.5f, reverbVolumeChanged);
+    // Sound effects:
+    C_VAR_INT     ("sound-volume",        &sfxVolume,             0, 0, 255);
+    C_VAR_INT     ("sound-rate",          &sfxSampleRate,         0, 11025, 44100);
+    C_VAR_INT     ("sound-16bit",         &sfx16Bit,              0, 0, 1);
+    C_VAR_INT     ("sound-3d",            &sfx3D,                 0, 0, 1);
+    C_VAR_FLOAT2  ("sound-reverb-volume", &sfxReverbStrength,     0, 0, 1.5f, reverbVolumeChanged);
 
     C_CMD_FLAGS("playsound", nullptr, PlaySound, CMDF_NO_DEDICATED);
 
     C_VAR_INT("sound-info", &showSoundInfo, 0, 0, 1);
 
-    Mus_Register();
+    // Music:
+    C_VAR_CHARPTR2("music-soundfont",     &soundFontPath,         0, 0, 0, soundFontChanged);
+
+    Mus_ConsoleRegister();
 #endif
 }
 
@@ -1021,9 +1077,9 @@ dint S_StartMusicNum(dint id, dd_bool looped)
     if(::isDedicated) return true;
 
     if(id < 0 || id >= ::defs.musics.size()) return false;
-    Record const *def = &::defs.musics[id];
 
-    LOG_AUDIO_MSG("Starting music '%s'") << def->gets("id");
+    Record const &def = ::defs.musics[id];
+    LOG_AUDIO_MSG("Starting music '%s'") << def.gets("id");
 
     return Mus_Start(def, looped);
 

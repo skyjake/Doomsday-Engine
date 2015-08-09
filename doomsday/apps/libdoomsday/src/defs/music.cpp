@@ -1,6 +1,6 @@
 /** @file defs/music.cpp  Music definition accessor.
  *
- * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2014-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -37,4 +37,20 @@ void Music::resetToDefaults()
     def().addNumber("cdTrack", 0);
 }
 
-} // namespace defn
+dint Music::cdTrack() const
+{
+    if(dint track = geti("cdTrack"))
+        return track;
+
+    String const path = gets("path");
+    if(!path.compareWithoutCase("cd"))
+    {
+        bool ok;
+        dint track = path.toInt(&ok);
+        if(ok) return track;
+    }
+
+    return 0;
+}
+
+}  // namespace defn

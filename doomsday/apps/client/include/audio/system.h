@@ -74,6 +74,8 @@ public:
     void deinitPlayback();
 
 #ifdef __CLIENT__
+    void updateSoundFont();
+
 public:  // Playback interfaces: -----------------------------------------------------
 
     /**
@@ -92,7 +94,7 @@ public:  // Playback interfaces: -----------------------------------------------
      * if CD playback is @em not available.
      *
      * @note  The CD interface is considered to belong in the music aggregate interface
-     * (see audiodriver_music.h), and usually does not need to be individually manipulated.
+     * and usually does not need to be individually manipulated.
      */
     audiointerface_cd_t *cd() const;
 

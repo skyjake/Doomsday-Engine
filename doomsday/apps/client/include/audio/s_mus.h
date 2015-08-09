@@ -1,7 +1,8 @@
 /** @file s_mus.h  Music Subsystem.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2009-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -28,9 +29,10 @@
 #include "dd_types.h"
 #include "api_audiod_mus.h"
 
-// Music preference. If multiple resources are available, this setting
-// is used to determine which one to use (mus < ext < cd).
-enum {
+// Music preference. If multiple resources are available, this setting is used to determine
+// which one to use (mus < ext < cd).
+enum
+{
     MUSP_MUS,
     MUSP_EXT,
     MUSP_CD
@@ -39,14 +41,16 @@ enum {
 /**
  * Register the console commands and variables of this module.
  */
-void Mus_Register();
+void Mus_ConsoleRegister();
 
 /**
- * Initialize the Mus module.
- * @return  @c true, if no errors occur.
+ * Initialize the Mus module and return @c true if no errors occur.
  */
 bool Mus_Init();
 
+/**
+ * Deinitialize the Mus module.
+ */
 void Mus_Shutdown();
 
 /**
@@ -55,30 +59,33 @@ void Mus_Shutdown();
 void Mus_SetVolume(float vol);
 
 /**
- * Pauses or resumes the music.
- */
-void Mus_Pause(bool doPause);
-
-/**
  * Called on each frame by S_StartFrame.
  */
 void Mus_StartFrame();
 
 /**
- * Start playing a song. The chosen interface depends on what's available
- * and what kind of resources have been associated with the song.
- * Any previously playing song is stopped.
+ * Determines if music is currently playing (on any of the Music or CD audio interfaces).
+ */
+bool Mus_IsPlaying();
+
+/**
+ * Stop the currently playing music, if any.
+ */
+void Mus_Stop();
+
+/**
+ * Pauses or resumes the music.
+ */
+void Mus_Pause(bool doPause);
+
+/**
+ * Start playing a song. The chosen interface depends on what's available and what kind
+ * of resources have been associated with the song. Any previously playing song is stopped.
+ *
+ * @param definition  Music definition describing which associated music file to play.
  *
  * @return  Non-zero if the song is successfully played.
  */
-int Mus_Start(de::Record const *def, bool looped);
-
-/**
- * @return 1, if music was started. 0, if attempted to start but failed.
- *        -1, if it was MUS data and @a canPlayMUS says we can't play it.
- */
-int Mus_StartLump(lumpnum_t lump, bool looped, bool canPlayMUS);
-
-void Mus_Stop();
+int Mus_Start(de::Record const &definition, bool looped = false);
 
 #endif  // AUDIO_MUSIC_H
