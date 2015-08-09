@@ -29,7 +29,6 @@
 #include "clientapp.h"
 #include "dd_main.h"  // isDedicated
 
-#include "audio/audiodriver.h"
 #include "audio/m_mus2midi.h"
 
 #include <doomsday/console/cmd.h>
@@ -61,12 +60,8 @@ static String composeBufferFilename(String const &ext = "")
         ::needBufFileSwitch = false;
     }
 
-    String name = BUFFERED_MUSIC_FILE + String::number(currentBufFile);
-    if(!ext.isEmpty())
-    {
-        return name + ext;
-    }
-    return name;
+    // Compose the name.
+    return BUFFERED_MUSIC_FILE + String::number(currentBufFile) + ext;
 }
 
 /**
