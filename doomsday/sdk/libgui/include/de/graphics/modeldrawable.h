@@ -282,6 +282,15 @@ public:
     int meshCount() const;
 
     /**
+     * Returns the number of the mesh with the given name.
+     *
+     * @param name  Mesh name.
+     *
+     * @return Mesh id, or -1 if no mesh with that name exists.
+     */
+    int meshId(String const &name) const;
+
+    /**
      * Locates a material specified in the model by its name.
      *
      * @param name  Name of the material
