@@ -1,6 +1,6 @@
 /** @file scriptedinfo.cpp  Info document tree with script context.
  *
- * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -49,6 +49,9 @@ DENG2_PIMPL(ScriptedInfo)
         // No limitation on duplicates for the special block types.
         info.setAllowDuplicateBlocksOfType(
                     QStringList() << BLOCK_GROUP << BLOCK_NAMESPACE);
+
+        // Single-token blocks are implicitly treated as "group" blocks.
+        info.setImplicitBlockType(BLOCK_GROUP);
     }
 
     void clear()
