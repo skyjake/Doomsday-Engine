@@ -128,11 +128,18 @@ DENG2_PIMPL(ScriptedInfo)
         if(!varName.isEmpty())
         {
             Record &ns = process.globals();
+            // Try a case-sensitive match in global namespace.
             String targetName = checkNamespaceForVariable(target);
             if(!ns.has(targetName))
             {
                 // Assume it's an identifier rather than a regular variable.
                 targetName = checkNamespaceForVariable(target.text.toLower());
+            }
+            if(!ns.has(targetName))
+            {
+                // Try a regular variable within the same block.
+                targetName = variableName(block.parent()? *block.parent() : block)
+                                    .concatenateMember(target);
             }
 
             ns.add(varName.concatenateMember("__inherit__")) =
