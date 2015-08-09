@@ -23,6 +23,8 @@
 #include "de/RecordValue"
 #include "de/App"
 
+#include <algorithm>
+
 namespace de {
 
 static String const BLOCK_GROUP     = "group";
@@ -530,6 +532,30 @@ Record::Subrecords ScriptedInfo::subrecordsOfType(String const &blockType, Recor
     return record.subrecords([&] (Record const &sub) {
         return sub.gets(VAR_BLOCK_TYPE, "") == blockType;
     });
+}
+
+StringList ScriptedInfo::sortRecordsBySource(Record::Subrecords const &subrecs)
+{
+    StringList keys = subrecs.keys();
+
+    std::sort(keys.begin(), keys.end(),
+              [&subrecs] (String const &a, String const &b) -> bool {
+        String src1 = subrecs[a]->gets(VAR_SOURCE, ":0");
+        String src2 = subrecs[b]->gets(VAR_SOURCE, ":0");
+        DENG2_ASSERT(src1.contains(':'));
+        DENG2_ASSERT(src2.contains(':'));
+        QStringList parts1 = src1.split(':');
+        QStringList parts2 = src2.split(':');
+        if(!String(parts1.at(0)).compareWithoutCase(parts2.at(0)))
+        {
+            // Path is the same, compare line numbers.
+            return parts1.at(1).toInt() < parts2.at(1).toInt();
+        }
+        // Just compare paths.
+        return String(parts1.at(0)).compareWithoutCase(parts2.at(0)) < 0;
+    });
+
+    return keys;
 }
 
 } // namespace de

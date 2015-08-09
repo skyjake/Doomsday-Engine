@@ -219,6 +219,15 @@ public:
      */
     static Record::Subrecords subrecordsOfType(String const &blockType, Record const &record);
 
+    /**
+     * Gives a set of subrecords, sorts them by source path and line number (ascending).
+     *
+     * @param subrecs  Subrecords to sort.
+     *
+     * @return  Names of the subrecords in the sorted order.
+     */
+    static StringList sortRecordsBySource(Record::Subrecords const &subrecs);
+
 private:
     DENG2_PRIVATE(d)
 };
