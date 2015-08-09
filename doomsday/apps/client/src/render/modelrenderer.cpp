@@ -37,6 +37,13 @@ static String const DEF_UP_VECTOR   ("up");
 static String const DEF_FRONT_VECTOR("front");
 static String const DEF_AUTOSCALE   ("autoscale");
 static String const DEF_MIRROR      ("mirror");
+static String const DEF_STATE       ("state");
+static String const DEF_SEQUENCE    ("sequence");
+static String const DEF_RENDER      ("render");
+static String const DEF_PASS        ("pass");
+static String const DEF_MESHES      ("meshes");
+static String const DEF_BLENDFUNC   ("blendFunc");
+static String const DEF_BLENDOP     ("blendOp");
 
 DENG2_PIMPL(ModelRenderer)
 , DENG2_OBSERVES(filesys::AssetObserver, Availability)
@@ -176,6 +183,40 @@ DENG2_PIMPL(ModelRenderer)
         setupModel(model);
     }
 
+    static gl::Blend textToBlendFunc(String const &text)
+    {
+        static struct { char const *txt; gl::Blend blend; } const bs[] = {
+            { "Zero",              gl::Zero },
+            { "One",               gl::One },
+            { "SrcColor",          gl::SrcColor },
+            { "OneMinusSrcColor",  gl::OneMinusSrcColor },
+            { "SrcAlpha",          gl::SrcAlpha },
+            { "OneMinusSrcAlpha",  gl::OneMinusSrcAlpha },
+            { "DestColor",         gl::DestColor },
+            { "OneMinusDestColor", gl::OneMinusDestColor },
+            { "DestAlpha",         gl::DestAlpha },
+            { "OneMinusDestAlpha", gl::OneMinusDestAlpha }
+        };
+        for(auto const &p : bs)
+        {
+            if(text == p.txt)
+            {
+                return p.blend;
+            }
+        }
+        throw DefinitionError("ModelRenderer::textToBlendFunc",
+                              QString("Invalid blending function \"%1\"").arg(text));
+    }
+
+    static gl::BlendOp textToBlendOp(String const &text)
+    {
+        if(text == "Add") return gl::Add;
+        if(text == "Subtract") return gl::Subtract;
+        if(text == "ReverseSubtract") return gl::ReverseSubtract;
+        throw DefinitionError("ModelRenderer::textToBlendOp",
+                              QString("Invalid blending operation \"%1\"").arg(text));
+    }
+
     /**
      * When model assets have been loaded, we can parse their metadata to see if there
      * are any animation sequences defined. If so, we'll set up a shared lookup table
@@ -228,27 +269,50 @@ DENG2_PIMPL(ModelRenderer)
         // Set up the animation sequences for states.
         if(asset.has(DEF_ANIMATION))
         {
-            auto states = ScriptedInfo::subrecordsOfType("state", asset.subrecord(DEF_ANIMATION));
+            auto states = ScriptedInfo::subrecordsOfType(DEF_STATE, asset.subrecord(DEF_ANIMATION));
             DENG2_FOR_EACH_CONST(Record::Subrecords, state, states)
             {
-                // Note that the sequences are added in alphabetical order.
-                auto seqs = ScriptedInfo::subrecordsOfType("sequence", *state.value());
-                DENG2_FOR_EACH_CONST(Record::Subrecords, seq, seqs)
+                // Sequences are added in source order.
+                auto seqs = ScriptedInfo::subrecordsOfType(DEF_SEQUENCE, *state.value());
+                for(String key : ScriptedInfo::sortRecordsBySource(seqs))
                 {
-                    aux->animations[state.key()] << AnimSequence(seq.key(), *seq.value());
+                    aux->animations[state.key()] << AnimSequence(key, *seqs[key]);
                 }
             }
 
             // TODO: Check for a possible timeline and calculate time factors accordingly.
         }
 
-        // If no rendering passes were defined, specify one default pass.
-        if(aux->passes.isEmpty())
+        // Rendering passes.
+        if(asset.has(DEF_RENDER))
         {
-            Pass pass;
-            pass.meshes.resize(model.meshCount());
-            pass.meshes.fill(true);
-            aux->passes.append(pass);
+            auto passes = ScriptedInfo::subrecordsOfType(DEF_PASS, asset.subrecord(DEF_RENDER));
+            for(String key : ScriptedInfo::sortRecordsBySource(passes))
+            {
+                try
+                {
+                    auto const &def = *passes[key];
+                    ModelDrawable::Pass pass;
+                    pass.meshes.resize(model.meshCount());
+                    for(Value const *value : def.geta(DEF_MESHES).elements())
+                    {
+                        pass.meshes.setBit(value->asInt(), true);
+                    }
+                    if(def.has(DEF_BLENDFUNC))
+                    {
+                        ArrayValue const &blendDef = def.geta(DEF_BLENDFUNC);
+                        pass.blendFunc.first  = textToBlendFunc(blendDef.at(0).asText());
+                        pass.blendFunc.second = textToBlendFunc(blendDef.at(1).asText());
+                    }
+                    pass.blendOp = textToBlendOp(def.gets(DEF_BLENDOP, "Add"));
+                    aux->passes.append(pass);
+                }
+                catch(DefinitionError const &er)
+                {
+                    LOG_RES_ERROR("Error in rendering pass definition of asset \"%s\": %s")
+                            << path << er.asText();
+                }
+            }
         }
 
         // Store the additional information in the bank.
@@ -349,23 +413,6 @@ DENG2_PIMPL(ModelRenderer)
 
         lightCount++;
     }
-
-    void draw(ModelDrawable const &model,
-              ModelDrawable::Animator const &animator,
-              AuxiliaryData const &auxData)
-    {
-        for(Pass const &pass : auxData.passes)
-        {
-            GLState::push()
-                    .setBlendFunc(pass.blendFunc)
-                    .setBlendOp(pass.blendOp);
-
-            // Draw the model using the current animation state.
-            model.draw(&animator, &pass.meshes);
-
-            GLState::pop();
-        }
-    }
 };
 
 ModelRenderer::ModelRenderer() : d(new Instance(this))
@@ -439,8 +486,8 @@ void ModelRenderer::render(vissprite_t const &spr)
     d->setupLighting(spr.light);
 
     // Draw the model using the current animation state.
-    d->draw(*p.model, *p.animator, *p.auxData);
-
+    p.model->draw(p.animator,
+                  !p.auxData->passes.isEmpty()? &p.auxData->passes : nullptr);
     GLState::pop();
 
     /// @todo Something is interfering with the cull setting elsewhere (remove this).
@@ -465,7 +512,8 @@ void ModelRenderer::render(vispsprite_t const &pspr)
     d->setupLighting(pspr.light);
 
     GLState::push().setCull(p.auxData->cull);
-    d->draw(*p.model, *p.animator, *p.auxData);
+    p.model->draw(p.animator,
+                  !p.auxData->passes.isEmpty()? &p.auxData->passes : nullptr);
     GLState::pop();
 
     /// @todo Something is interfering with the cull setting elsewhere (remove this).
