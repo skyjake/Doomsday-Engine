@@ -5,6 +5,12 @@ cmake_minimum_required (VERSION 3.1)
 project (DENG_FMOD)
 include (../PluginConfig.cmake)
 
+option (DENG_ENABLE_FMOD "Enable/disable the FMOD Ex audio plugin" ON)
+
+if (NOT DENG_ENABLE_FMOD)
+    return ()
+endif ()
+
 set (CMAKE_INSTALL_DEFAULT_COMPONENT_NAME "fmod")
 
 find_package (FMOD QUIET)
