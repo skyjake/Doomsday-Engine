@@ -1224,6 +1224,19 @@ int ModelDrawable::meshCount() const
     return d->scene->mNumMeshes;
 }
 
+int ModelDrawable::meshId(String const &name) const
+{
+    if(!d->scene) return -1;
+    for(int i = 0; i < d->scene->mNumMeshes; ++i)
+    {
+        if(name == d->scene->mMeshes[i]->mName.C_Str())
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
 bool ModelDrawable::nodeExists(String const &name) const
 {
     return d->nodeNameToPtr.contains(name);

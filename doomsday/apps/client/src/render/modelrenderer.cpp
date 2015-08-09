@@ -296,7 +296,10 @@ DENG2_PIMPL(ModelRenderer)
                     pass.meshes.resize(model.meshCount());
                     for(Value const *value : def.geta(DEF_MESHES).elements())
                     {
-                        pass.meshes.setBit(value->asInt(), true);
+                        int meshId = identifierFromText(value->asText(), [&model] (String const &text) {
+                            return model.meshId(text);
+                        });
+                        pass.meshes.setBit(meshId, true);
                     }
                     if(def.has(DEF_BLENDFUNC))
                     {
