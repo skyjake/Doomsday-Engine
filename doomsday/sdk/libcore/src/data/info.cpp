@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libcore
  *
- * Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2012-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Info"
@@ -50,6 +50,8 @@ DENG2_PIMPL(Info)
 
     QStringList scriptBlockTypes;
     QStringList allowDuplicateBlocksOfType;
+    String implicitBlockType;
+
     String sourcePath; ///< May be unknown (empty).
     String content;
     int currentLine;
@@ -342,7 +344,7 @@ DENG2_PIMPL(Info)
                 // No more strings to append.
                 return value;
             }
-        }        
+        }
 
         // Then it must be a single token.
         value = peekToken();
@@ -492,7 +494,7 @@ success:;
      * Parse a block element, identified by the given name.
      * @param blockType Identifier of the block.
      */
-    BlockElement *parseBlockElement(String const &blockType)
+    BlockElement *parseBlockElement(String blockType)
     {
         DENG2_ASSERT(blockType != "}");
         DENG2_ASSERT(blockType != ")");
@@ -501,6 +503,14 @@ success:;
         if(peekToken() != "(" && peekToken() != "{")
         {
             blockName = parseValue();
+        }
+
+        if(!implicitBlockType.isEmpty() && blockName.isEmpty() &&
+           blockType != implicitBlockType &&
+           !scriptBlockTypes.contains(blockType))
+        {
+            blockName = blockType;
+            blockType = implicitBlockType;
         }
 
         QScopedPointer<BlockElement> block(new BlockElement(blockType, blockName, self));
@@ -812,6 +822,11 @@ void Info::setScriptBlocks(QStringList const &blocksToParseAsScript)
 void Info::setAllowDuplicateBlocksOfType(QStringList const &duplicatesAllowed)
 {
     d->allowDuplicateBlocksOfType = duplicatesAllowed;
+}
+
+void Info::setImplicitBlockType(String const &implicitBlock)
+{
+    d->implicitBlockType = implicitBlock;
 }
 
 void Info::parse(String const &infoSource)

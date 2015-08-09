@@ -24,6 +24,8 @@
 #include <de/ModelDrawable>
 #include <de/GLState>
 
+#include "render/modelrenderer.h"
+
 /**
  * @defgroup clMobjFlags Client Mobj Flags
  * @ingroup flags
@@ -106,10 +108,7 @@ public:
 
     de::Matrix4f const &modelTransformation() const;
 
-    /**
-     * Returns the cull mode that should be used when drawing the model.
-     */
-    de::gl::Cull modelCullFace() const;
+    ModelRenderer::AuxiliaryData const &auxiliaryModelData() const;
 
 private:
     DENG2_PRIVATE(d)

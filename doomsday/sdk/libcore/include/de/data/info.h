@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libcore
  *
- * Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2012-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_INFO_H
@@ -313,6 +313,26 @@ public:
     void setScriptBlocks(QStringList const &blocksToParseAsScript);
 
     void setAllowDuplicateBlocksOfType(QStringList const &duplicatesAllowed);
+
+    /**
+     * Sets the block type used for single-token blocks. By default, this is not set,
+     * meaning that single-token blocks are treated as anonymous.
+     *
+     * <pre>group {
+     *   key: value
+     * }</pre>
+     *
+     * This could be interpreted as an anonymous block with type "group", or a untyped
+     * block named "group". Setting the implicit block type will treat this as a
+     * block of type @a implicitBlock named "group".
+     *
+     * However, this behavior only applies when the block type is not the same as @a
+     * implicitBlock. In this example, if @a implicitBlock is set to "group", the
+     * resulting block would still be anonymous and have type "group".
+     *
+     * @param implicitBlock  Block type for anonymous/untyped blocks.
+     */
+    void setImplicitBlockType(String const &implicitBlock);
 
     /**
      * Parses the Info contents from a text string.

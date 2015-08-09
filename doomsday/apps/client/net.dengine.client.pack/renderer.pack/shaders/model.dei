@@ -120,7 +120,7 @@ group model {
                     shininess - max(0.0, shininess - 1.0);
                 return max(0.0, d) * 
                     uLightIntensities[index] * 
-                    vec4(specular.rgb * 2.0, 1.0);
+                    vec4(specular.rgb * 2.0, max(max(specular.r, specular.g), specular.b));
             }
             
             void main(void) 

@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBGUI_GLBUFFER_H
@@ -284,15 +284,16 @@ public:
 
     void setIndices(gl::Primitive primitive, Indices const &indices, gl::Usage usage);
 
+    typedef QVector<Rangeui> DrawRanges;
+
     /**
      * Draws the buffer.
      *
      * Requires that a GLProgram is in use so that attribute locations can be determined.
      *
-     * @param first  First vertex to start drawing from.
-     * @param count  Number of vertices to draw.
+     * @param ranges  Range of vertices to draw. If nullptr, all vertices are drawn.
      */
-    void draw(duint first = 0, dint count = -1) const;
+    void draw(DrawRanges const *ranges = nullptr) const;
 
     /**
      * Draws the buffer with instancing. One instance of the buffer is drawn per

@@ -270,8 +270,10 @@ DENG2_PIMPL(ModelDrawable)
     QHash<String, duint16> boneNameToIndex;
     QHash<String, aiNode const *> nodeNameToPtr;
     QVector<BoneData> bones; // indexed by bone index
+    QVector<Rangeui> meshIndexRanges;
     AnimLookup animNameToIndex;
 
+    Passes defaultPasses;
     TextureMap textureOrder[MAX_TEXTURES];
     Id::Type defaultTexIds[MAX_TEXTURES];
     QVector<MaterialData> materials; // indexed by material index
@@ -386,6 +388,12 @@ DENG2_PIMPL(ModelDrawable)
         {
             materials << MaterialData();
         }
+
+        // Default rendering passes to use if none specified.
+        Pass pass;
+        pass.meshes.resize(scene->mNumMeshes);
+        pass.meshes.fill(true);
+        defaultPasses.append(pass);
     }
 
     void buildNodeLookup(aiNode const &node)
@@ -409,6 +417,7 @@ DENG2_PIMPL(ModelDrawable)
 
         sourcePath.clear();
         materials.clear();
+        defaultPasses.clear();
         importer.FreeScene();
         scene = 0;
     }
@@ -812,6 +821,8 @@ DENG2_PIMPL(ModelDrawable)
         aiVector3D const zero(0, 0, 0);
 
         int base = 0;
+        meshIndexRanges.clear();
+        meshIndexRanges.resize(scene->mNumMeshes);
 
         // All of the scene's meshes are combined into one GL buffer.
         for(duint m = 0; m < scene->mNumMeshes; ++m)
@@ -873,6 +884,8 @@ DENG2_PIMPL(ModelDrawable)
                 verts << v;
             }
 
+            duint firstFace = indx.size();
+
             // Get face indices.
             for(duint i = 0; i < mesh.mNumFaces; ++i)
             {
@@ -882,6 +895,8 @@ DENG2_PIMPL(ModelDrawable)
                      << face.mIndices[1] + base
                      << face.mIndices[2] + base;
             }
+
+            meshIndexRanges[m] = Rangeui::fromSize(firstFace, mesh.mNumFaces * 3);
 
             base += mesh.mNumVertices;
         }
@@ -1069,10 +1084,54 @@ DENG2_PIMPL(ModelDrawable)
         program->beginUse();
     }
 
-    void draw(Animator const *animation)
+    void initRanges(GLBuffer::DrawRanges &ranges, QBitArray const &meshes)
+    {
+        Rangeui current;
+        for(int i = 0; i < meshIndexRanges.size(); ++i)
+        {
+            if(!meshes.at(i)) continue;
+            auto const &mesh = meshIndexRanges.at(i);
+            if(current.isEmpty())
+            {
+                current = mesh;
+            }
+            else if(current.end == mesh.start)
+            {
+                // Combine.
+                current.end = mesh.end;
+            }
+            else
+            {
+                // Need a new range.
+                ranges.append(current);
+                current = mesh;
+            }
+        }
+        // The final range.
+        if(!current.isEmpty())
+        {
+            ranges.append(current);
+        }
+    }
+
+    void draw(Animator const *animation, Passes const &passes)
     {
         preDraw(animation);
-        buffer->draw();
+
+        GLBuffer::DrawRanges ranges;
+        for(Pass const &pass : passes)
+        {
+            ranges.clear();
+            initRanges(ranges, pass.meshes);
+
+            GLState::push()
+                    .setBlendFunc(pass.blendFunc)
+                    .setBlendOp(pass.blendOp)
+                    .apply();
+            buffer->draw(&ranges);
+            GLState::pop();
+        }
+
         postDraw();
     }
 
@@ -1159,6 +1218,12 @@ int ModelDrawable::animationCount() const
     return d->scene->mNumAnimations;
 }
 
+int ModelDrawable::meshCount() const
+{
+    if(!d->scene) return 0;
+    return d->scene->mNumMeshes;
+}
+
 bool ModelDrawable::nodeExists(String const &name) const
 {
     return d->nodeNameToPtr.contains(name);
@@ -1239,13 +1304,14 @@ void ModelDrawable::unsetProgram()
     d->program = 0;
 }
 
-void ModelDrawable::draw(Animator const *animation) const
+void ModelDrawable::draw(Animator const *animation,
+                         Passes const *passes) const
 {
     const_cast<ModelDrawable *>(this)->glInit();
 
     if(isReady() && d->program && d->atlas)
     {
-        d->draw(animation);
+        d->draw(animation, passes? *passes : d->defaultPasses);
     }
 }
 

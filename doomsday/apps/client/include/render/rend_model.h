@@ -23,7 +23,9 @@
 
 #include "ModelDef"
 #include "rend_main.h"
+#include "render/modelrenderer.h"
 #include <de/Vector>
+#include <de/ModelBank>
 #include <de/ModelDrawable>
 
 class TextureVariantSpec;
@@ -38,7 +40,7 @@ struct vissprite_t;
  */
 struct drawmodelparams_t
 {
-// Animation, frame interpolation:
+    // Animation, frame interpolation:
     ModelDef *mf;
     ModelDef *nextMF;
     de::dfloat inter;
@@ -46,7 +48,7 @@ struct drawmodelparams_t
     de::dint id;                ///< For a unique skin offset.
     de::dint selector;
 
-// Appearance:
+    // Appearance:
     de::dint flags;  ///< Mobj flags.
     de::dint tmap;
 
@@ -62,6 +64,7 @@ struct drawmodel2params_t
 {
     struct mobj_s const *object;
     de::ModelDrawable const *model;
+    ModelRenderer::AuxiliaryData const *auxData;
     de::ModelDrawable::Animator const *animator;
 };
 

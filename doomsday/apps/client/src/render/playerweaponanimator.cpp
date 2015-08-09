@@ -18,8 +18,10 @@
 
 #include "render/playerweaponanimator.h"
 #include "render/mobjanimator.h"
+#include "render/vissprite.h"
 #include "clientplayer.h"
 #include "clientapp.h"
+#include "def_main.h"
 
 using namespace de;
 
@@ -27,8 +29,7 @@ DENG2_PIMPL_NOREF(PlayerWeaponAnimator)
 {
     ClientPlayer *player;
     std::unique_ptr<MobjAnimator> animator;
-    Matrix4f transform;
-    gl::Cull cullFace;
+    ModelRenderer::AuxiliaryData const *modelAuxData = nullptr;
 
     Instance(ClientPlayer *plr)
         : player(plr)
@@ -45,13 +46,12 @@ DENG2_PIMPL_NOREF(PlayerWeaponAnimator)
             animator.reset(new MobjAnimator(identifier, model));
 
             // The basic transformation of the model.
-            auto const &aux = loaded.second->as<ModelRenderer::AuxiliaryData>();
-            cullFace  = aux.cull;
-            transform = aux.transformation;
+            modelAuxData = &loaded.second->as<ModelRenderer::AuxiliaryData>();
         }
         else
         {
             animator.reset();
+            modelAuxData = nullptr;
         }
     }
 
@@ -70,7 +70,7 @@ void PlayerWeaponAnimator::setAsset(String const &identifier)
     d->setupAsset(identifier);
 }
 
-void PlayerWeaponAnimator::stateChanged(state_t const *state)
+void PlayerWeaponAnimator::stateChanged(state_s const *state)
 {
     if(d->animator)
     {
@@ -90,10 +90,8 @@ void PlayerWeaponAnimator::setupVisPSprite(vispsprite_t &spr) const
 
     spr.type = VPSPR_MODEL2;
     spr.data.model2.model = model();
+    spr.data.model2.auxData = d->modelAuxData;
     spr.data.model2.animator = d->animator.get();
-    spr.data.model2.cullFace = d->cullFace;
-    ByteRefArray(spr.data.model2.modelTransform, sizeof(Matrix4f))
-            .set(0, (dbyte const *) d->transform.values(), sizeof(Matrix4f));
 }
 
 void PlayerWeaponAnimator::advanceTime(const TimeDelta &elapsed)

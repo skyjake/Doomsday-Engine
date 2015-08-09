@@ -19,6 +19,7 @@
 #include "render/modelrenderer.h"
 #include "gl/gl_main.h"
 #include "render/rend_main.h"
+#include "render/vissprite.h"
 #include "world/p_players.h"
 #include "world/clientmobjthinkerdata.h"
 #include "clientapp.h"
@@ -36,6 +37,13 @@ static String const DEF_UP_VECTOR   ("up");
 static String const DEF_FRONT_VECTOR("front");
 static String const DEF_AUTOSCALE   ("autoscale");
 static String const DEF_MIRROR      ("mirror");
+static String const DEF_STATE       ("state");
+static String const DEF_SEQUENCE    ("sequence");
+static String const DEF_RENDER      ("render");
+static String const DEF_PASS        ("pass");
+static String const DEF_MESHES      ("meshes");
+static String const DEF_BLENDFUNC   ("blendFunc");
+static String const DEF_BLENDOP     ("blendOp");
 
 DENG2_PIMPL(ModelRenderer)
 , DENG2_OBSERVES(filesys::AssetObserver, Availability)
@@ -91,8 +99,8 @@ DENG2_PIMPL(ModelRenderer)
         img.fill(qRgba(0, 0, 0, 0));
         defaultEmission = atlas->alloc(img);
 
-        // Fallback specular map.
-        img.fill(qRgba(128, 128, 128, 180));
+        // Fallback specular map (no specular reflections).
+        img.fill(qRgba(0, 0, 0, 0));
         defaultSpecular = atlas->alloc(img);
 
         uTex = *atlas;
@@ -175,6 +183,40 @@ DENG2_PIMPL(ModelRenderer)
         setupModel(model);
     }
 
+    static gl::Blend textToBlendFunc(String const &text)
+    {
+        static struct { char const *txt; gl::Blend blend; } const bs[] = {
+            { "Zero",              gl::Zero },
+            { "One",               gl::One },
+            { "SrcColor",          gl::SrcColor },
+            { "OneMinusSrcColor",  gl::OneMinusSrcColor },
+            { "SrcAlpha",          gl::SrcAlpha },
+            { "OneMinusSrcAlpha",  gl::OneMinusSrcAlpha },
+            { "DestColor",         gl::DestColor },
+            { "OneMinusDestColor", gl::OneMinusDestColor },
+            { "DestAlpha",         gl::DestAlpha },
+            { "OneMinusDestAlpha", gl::OneMinusDestAlpha }
+        };
+        for(auto const &p : bs)
+        {
+            if(text == p.txt)
+            {
+                return p.blend;
+            }
+        }
+        throw DefinitionError("ModelRenderer::textToBlendFunc",
+                              QString("Invalid blending function \"%1\"").arg(text));
+    }
+
+    static gl::BlendOp textToBlendOp(String const &text)
+    {
+        if(text == "Add") return gl::Add;
+        if(text == "Subtract") return gl::Subtract;
+        if(text == "ReverseSubtract") return gl::ReverseSubtract;
+        throw DefinitionError("ModelRenderer::textToBlendOp",
+                              QString("Invalid blending operation \"%1\"").arg(text));
+    }
+
     /**
      * When model assets have been loaded, we can parse their metadata to see if there
      * are any animation sequences defined. If so, we'll set up a shared lookup table
@@ -227,18 +269,50 @@ DENG2_PIMPL(ModelRenderer)
         // Set up the animation sequences for states.
         if(asset.has(DEF_ANIMATION))
         {
-            auto states = ScriptedInfo::subrecordsOfType("state", asset.subrecord(DEF_ANIMATION));
+            auto states = ScriptedInfo::subrecordsOfType(DEF_STATE, asset.subrecord(DEF_ANIMATION));
             DENG2_FOR_EACH_CONST(Record::Subrecords, state, states)
             {
-                // Note that the sequences are added in alphabetical order.
-                auto seqs = ScriptedInfo::subrecordsOfType("sequence", *state.value());
-                DENG2_FOR_EACH_CONST(Record::Subrecords, seq, seqs)
+                // Sequences are added in source order.
+                auto seqs = ScriptedInfo::subrecordsOfType(DEF_SEQUENCE, *state.value());
+                for(String key : ScriptedInfo::sortRecordsBySource(seqs))
                 {
-                    aux->animations[state.key()] << AnimSequence(seq.key(), *seq.value());
+                    aux->animations[state.key()] << AnimSequence(key, *seqs[key]);
                 }
             }
 
             // TODO: Check for a possible timeline and calculate time factors accordingly.
+        }
+
+        // Rendering passes.
+        if(asset.has(DEF_RENDER))
+        {
+            auto passes = ScriptedInfo::subrecordsOfType(DEF_PASS, asset.subrecord(DEF_RENDER));
+            for(String key : ScriptedInfo::sortRecordsBySource(passes))
+            {
+                try
+                {
+                    auto const &def = *passes[key];
+                    ModelDrawable::Pass pass;
+                    pass.meshes.resize(model.meshCount());
+                    for(Value const *value : def.geta(DEF_MESHES).elements())
+                    {
+                        pass.meshes.setBit(value->asInt(), true);
+                    }
+                    if(def.has(DEF_BLENDFUNC))
+                    {
+                        ArrayValue const &blendDef = def.geta(DEF_BLENDFUNC);
+                        pass.blendFunc.first  = textToBlendFunc(blendDef.at(0).asText());
+                        pass.blendFunc.second = textToBlendFunc(blendDef.at(1).asText());
+                    }
+                    pass.blendOp = textToBlendOp(def.gets(DEF_BLENDOP, "Add"));
+                    aux->passes.append(pass);
+                }
+                catch(DefinitionError const &er)
+                {
+                    LOG_RES_ERROR("Error in rendering pass definition of asset \"%s\": %s")
+                            << path << er.asText();
+                }
+            }
         }
 
         // Store the additional information in the bank.
@@ -266,15 +340,78 @@ DENG2_PIMPL(ModelRenderer)
     void setupLighting(VisEntityLighting const &lighting)
     {
         // Ambient color and lighting vectors.
-        self.setAmbientLight(lighting.ambientColor * .8f);
-        self.clearLights();
+        setAmbientLight(lighting.ambientColor * .8f);
+        clearLights();
         ClientApp::renderSystem().forAllVectorLights(lighting.vLightListIdx,
                                                      [this] (VectorLightData const &vlight)
         {
             // Use this when drawing the model.
-            self.addLight(vlight.direction.xzy(), vlight.color);
+            addLight(vlight.direction.xzy(), vlight.color);
             return LoopContinue;
         });
+    }
+
+    /**
+     * Sets up the transformation matrices.
+     *
+     * @param relativeEyePos  Position of the eye in relation to object (in world space).
+     * @param modelToLocal    Transformation from model space to the object's local space
+     *                        (object's local frame in world space).
+     * @param localToView     Transformation from local space to projected view space.
+     */
+    void setTransformation(Vector3f const &relativeEyePos,
+                           Matrix4f const &modelToLocal,
+                           Matrix4f const &localToView)
+    {
+        uMvpMatrix   = localToView * modelToLocal;
+        inverseLocal = modelToLocal.inverse();
+        uEyePos      = inverseLocal * relativeEyePos;
+    }
+
+    /**
+     * Sets up the transformation matrices for an eye-space view. The eye position is
+     * at (0, 0, 0).
+     *
+     * @param modelToLocal  Transformation from model space to the object's local space
+     *                      (object's local frame in world space).
+     * @param inverseLocal  Transformation from local space to model space, taking
+     *                      the object's rotation in world space into account.
+     * @param localToView   Transformation from local space to projected view space.
+     */
+    void setEyeSpaceTransformation(Matrix4f const &modelToLocal,
+                                   Matrix4f const &inverseLocalMat,
+                                   Matrix4f const &localToView)
+    {
+        uMvpMatrix   = localToView * modelToLocal;
+        inverseLocal = inverseLocalMat;
+        uEyePos      = inverseLocal * Vector3f();
+    }
+
+    void setAmbientLight(Vector3f const &ambientIntensity)
+    {
+        uAmbientLight = Vector4f(ambientIntensity, 1.f);
+    }
+
+    void clearLights()
+    {
+        lightCount = 0;
+
+        for(int i = 0; i < MAX_LIGHTS; ++i)
+        {
+            uLightDirs       .set(i, Vector3f());
+            uLightIntensities.set(i, Vector4f());
+        }
+    }
+
+    void addLight(Vector3f const &direction, Vector3f const &intensity)
+    {
+        if(lightCount == MAX_LIGHTS) return;
+
+        int idx = lightCount;
+        uLightDirs       .set(idx, (inverseLocal * direction).normalize());
+        uLightIntensities.set(idx, Vector4f(intensity, intensity.max()));
+
+        lightCount++;
     }
 };
 
@@ -308,51 +445,6 @@ ModelRenderer::StateAnims const *ModelRenderer::animations(DotPath const &modelI
     return 0;
 }
 
-void ModelRenderer::setTransformation(Vector3f const &relativeEyePos,
-                                      Matrix4f const &modelToLocal,
-                                      Matrix4f const &localToView)
-{
-    d->uMvpMatrix   = localToView * modelToLocal;
-    d->inverseLocal = modelToLocal.inverse();
-    d->uEyePos      = d->inverseLocal * relativeEyePos;
-}
-
-void ModelRenderer::setEyeSpaceTransformation(Matrix4f const &modelToLocal,
-                                              Matrix4f const &inverseLocal,
-                                              Matrix4f const &localToView)
-{
-    d->uMvpMatrix   = localToView * modelToLocal;
-    d->inverseLocal = inverseLocal;
-    d->uEyePos      = d->inverseLocal * Vector3f();
-}
-
-void ModelRenderer::setAmbientLight(Vector3f const &ambientIntensity)
-{
-    d->uAmbientLight = Vector4f(ambientIntensity, 1.f);
-}
-
-void ModelRenderer::clearLights()
-{
-    d->lightCount = 0;
-
-    for(int i = 0; i < MAX_LIGHTS; ++i)
-    {
-        d->uLightDirs       .set(i, Vector3f());
-        d->uLightIntensities.set(i, Vector4f());
-    }
-}
-
-void ModelRenderer::addLight(Vector3f const &direction, Vector3f const &intensity)
-{
-    if(d->lightCount == MAX_LIGHTS) return;
-
-    int idx = d->lightCount;
-    d->uLightDirs       .set(idx, (d->inverseLocal * direction).normalize());
-    d->uLightIntensities.set(idx, Vector4f(intensity, intensity.max()));
-
-    d->lightCount++;
-}
-
 void ModelRenderer::render(vissprite_t const &spr)
 {
     /*
@@ -382,20 +474,20 @@ void ModelRenderer::render(vissprite_t const &spr)
     {
         auto const &mobjData = THINKER_DATA(p.object->thinker, ClientMobjThinkerData);
         modelToLocal = modelToLocal * mobjData.modelTransformation();
-        culling = mobjData.modelCullFace();
+        culling = mobjData.auxiliaryModelData().cull;
     }
 
     GLState::push().setCull(culling);
 
     // Set up a suitable matrix for the pose.
-    setTransformation(Rend_EyeOrigin() - modelWorldOrigin, modelToLocal, localToView);
+    d->setTransformation(Rend_EyeOrigin() - modelWorldOrigin, modelToLocal, localToView);
 
     // Ambient color and lighting vectors.
     d->setupLighting(spr.light);
 
     // Draw the model using the current animation state.
-    p.model->draw(p.animator);
-
+    p.model->draw(p.animator,
+                  !p.auxData->passes.isEmpty()? &p.auxData->passes : nullptr);
     GLState::pop();
 
     /// @todo Something is interfering with the cull setting elsewhere (remove this).
@@ -408,19 +500,20 @@ void ModelRenderer::render(vispsprite_t const &pspr)
 
     Matrix4f modelToLocal =
             Matrix4f::rotate(180, Vector3f(0, 1, 0)) *
-            Matrix4f(pspr.data.model2.modelTransform);
+            p.auxData->transformation;
 
     Matrix4f localToView = GL_GetProjectionMatrix() * Matrix4f::translate(Vector3f(0, -10, 11));
-    setEyeSpaceTransformation(modelToLocal,
-                              modelToLocal.inverse() *
-                              Matrix4f::rotate(vpitch, Vector3f(1, 0, 0)) *
-                              Matrix4f::rotate(vang,   Vector3f(0, 1, 0)),
-                              localToView);
+    d->setEyeSpaceTransformation(modelToLocal,
+                                 modelToLocal.inverse() *
+                                 Matrix4f::rotate(vpitch, Vector3f(1, 0, 0)) *
+                                 Matrix4f::rotate(vang,   Vector3f(0, 1, 0)),
+                                 localToView);
 
     d->setupLighting(pspr.light);
 
-    GLState::push().setCull(p.cullFace);
-    p.model->draw(p.animator);
+    GLState::push().setCull(p.auxData->cull);
+    p.model->draw(p.animator,
+                  !p.auxData->passes.isEmpty()? &p.auxData->passes : nullptr);
     GLState::pop();
 
     /// @todo Something is interfering with the cull setting elsewhere (remove this).
