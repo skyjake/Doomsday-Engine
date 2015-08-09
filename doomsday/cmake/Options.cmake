@@ -2,7 +2,8 @@ option (DENG_ENABLE_GUI "Enable/disable the client and all GUI related functiona
 option (DENG_ENABLE_SDK "Enable/disable installation of the Doomsday 2 SDK" ON)
 option (DENG_ENABLE_TOOLS "Compile the Doomsday tools" ON)
 
-if (CCACHE_FOUND)
+if (CCACHE_FOUND OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # GCC seems to have trouble with cotire when using C++11.
     set (DENG_ENABLE_COTIRE_DEFAULT OFF) # just use the cache
 else ()
     set (DENG_ENABLE_COTIRE_DEFAULT ON)
