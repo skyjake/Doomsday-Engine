@@ -22,9 +22,11 @@
 #include <de/Asset>
 #include <de/File>
 #include <de/GLProgram>
+#include <de/GLState>
 #include <de/AtlasTexture>
 #include <de/Vector>
 
+#include <QBitArray>
 #include <QVariant>
 
 namespace de {
@@ -223,6 +225,17 @@ public:
         virtual Image loadImage(String const &path) = 0;
     };
 
+    /**
+     * Rendering pass. When no rendering passes are specified, all the meshes of the
+     * model are rendered in one pass with regular alpha blending.
+     */
+    struct LIBGUI_PUBLIC Pass {
+        QBitArray meshes;   ///< One bit per model mesh.
+        gl::BlendFunc blendFunc { gl::SrcAlpha, gl::OneMinusSrcAlpha };
+        gl::BlendOp blendOp = gl::Add;
+    };
+    typedef QList<Pass> Passes;
+
 public:
     ModelDrawable();
 
@@ -350,7 +363,7 @@ public:
     void unsetProgram();
 
     void draw(Animator const *animation = nullptr,
-              QBitArray const *meshSubset = nullptr) const;
+              Passes const *drawPasses = nullptr) const;
 
     void drawInstanced(GLBuffer const &instanceAttribs,
                        Animator const *animation = nullptr) const;

@@ -273,6 +273,7 @@ DENG2_PIMPL(ModelDrawable)
     QVector<Rangeui> meshIndexRanges;
     AnimLookup animNameToIndex;
 
+    Passes defaultPasses;
     TextureMap textureOrder[MAX_TEXTURES];
     Id::Type defaultTexIds[MAX_TEXTURES];
     QVector<MaterialData> materials; // indexed by material index
@@ -387,6 +388,12 @@ DENG2_PIMPL(ModelDrawable)
         {
             materials << MaterialData();
         }
+
+        // Default rendering passes to use if none specified.
+        Pass pass;
+        pass.meshes.resize(scene->mNumMeshes);
+        pass.meshes.fill(true);
+        defaultPasses.append(pass);
     }
 
     void buildNodeLookup(aiNode const &node)
@@ -410,6 +417,7 @@ DENG2_PIMPL(ModelDrawable)
 
         sourcePath.clear();
         materials.clear();
+        defaultPasses.clear();
         importer.FreeScene();
         scene = 0;
     }
@@ -1106,17 +1114,24 @@ DENG2_PIMPL(ModelDrawable)
         }
     }
 
-    void draw(Animator const *animation, QBitArray const *meshSubset)
+    void draw(Animator const *animation, Passes const &passes)
     {
-        // Determine what to draw this time.
+        preDraw(animation);
+
         GLBuffer::DrawRanges ranges;
-        if(meshSubset)
+        for(Pass const &pass : passes)
         {
-            initRanges(ranges, *meshSubset);
+            ranges.clear();
+            initRanges(ranges, pass.meshes);
+
+            GLState::push()
+                    .setBlendFunc(pass.blendFunc)
+                    .setBlendOp(pass.blendOp)
+                    .apply();
+            buffer->draw(&ranges);
+            GLState::pop();
         }
 
-        preDraw(animation);
-        buffer->draw(meshSubset? &ranges : nullptr);
         postDraw();
     }
 
@@ -1290,13 +1305,13 @@ void ModelDrawable::unsetProgram()
 }
 
 void ModelDrawable::draw(Animator const *animation,
-                         QBitArray const *meshSubset) const
+                         Passes const *passes) const
 {
     const_cast<ModelDrawable *>(this)->glInit();
 
     if(isReady() && d->program && d->atlas)
     {
-        d->draw(animation, meshSubset);
+        d->draw(animation, passes? *passes : d->defaultPasses);
     }
 }
 
