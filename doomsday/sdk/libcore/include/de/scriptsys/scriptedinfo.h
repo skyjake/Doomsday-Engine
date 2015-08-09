@@ -1,6 +1,6 @@
 /** @file scriptedinfo.h  Info document tree with script context.
  *
- * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -218,6 +218,15 @@ public:
      * @return Subrecords whose __type__ matches @a blockType.
      */
     static Record::Subrecords subrecordsOfType(String const &blockType, Record const &record);
+
+    /**
+     * Gives a set of subrecords, sorts them by source path and line number (ascending).
+     *
+     * @param subrecs  Subrecords to sort.
+     *
+     * @return  Names of the subrecords in the sorted order.
+     */
+    static StringList sortRecordsBySource(Record::Subrecords const &subrecs);
 
 private:
     DENG2_PRIVATE(d)

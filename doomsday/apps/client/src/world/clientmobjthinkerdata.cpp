@@ -47,7 +47,7 @@ DENG2_PIMPL(ClientMobjThinkerData)
     std::unique_ptr<RemoteSync> sync;
     std::unique_ptr<MobjAnimator> animator;
     Matrix4f modelMatrix;
-    gl::Cull modelCull = gl::Back;
+    ModelRenderer::AuxiliaryData const *modelAuxData = nullptr;
 
     Instance(Public *i) : Base(i)
     {}
@@ -103,16 +103,13 @@ DENG2_PIMPL(ClientMobjThinkerData)
             ModelDrawable &model = *loaded.first;
             animator.reset(new MobjAnimator(modelId(), model));
 
-            // The basic transformation of the model.
-            auto const &aux = loaded.second->as<ModelRenderer::AuxiliaryData>();
-            modelCull = aux.cull;
-            modelMatrix = aux.transformation;
+            modelAuxData = &loaded.second->as<ModelRenderer::AuxiliaryData>();
 
-            Vector3f dims = modelMatrix * model.dimensions();
-
-            // Scale to thing height.
-            if(aux.autoscaleToThingHeight)
+            // Apply possible scaling operations on the model.
+            modelMatrix = modelAuxData->transformation;
+            if(modelAuxData->autoscaleToThingHeight)
             {
+                Vector3f const dims = modelMatrix * model.dimensions();
                 modelMatrix = Matrix4f::scale(self.mobj()->height / dims.y * 1.2f /*aspect correct*/) * modelMatrix;
             }
         }
@@ -222,9 +219,9 @@ Matrix4f const &ClientMobjThinkerData::modelTransformation() const
     return d->modelMatrix;
 }
 
-gl::Cull ClientMobjThinkerData::modelCullFace() const
+ModelRenderer::AuxiliaryData const &ClientMobjThinkerData::auxiliaryModelData() const
 {
-    return d->modelCull;
+    return *d->modelAuxData;
 }
 
 void ClientMobjThinkerData::stateChanged(state_t const *previousState)

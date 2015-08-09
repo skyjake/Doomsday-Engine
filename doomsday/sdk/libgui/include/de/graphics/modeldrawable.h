@@ -22,9 +22,11 @@
 #include <de/Asset>
 #include <de/File>
 #include <de/GLProgram>
+#include <de/GLState>
 #include <de/AtlasTexture>
 #include <de/Vector>
 
+#include <QBitArray>
 #include <QVariant>
 
 namespace de {
@@ -223,6 +225,17 @@ public:
         virtual Image loadImage(String const &path) = 0;
     };
 
+    /**
+     * Rendering pass. When no rendering passes are specified, all the meshes of the
+     * model are rendered in one pass with regular alpha blending.
+     */
+    struct LIBGUI_PUBLIC Pass {
+        QBitArray meshes;   ///< One bit per model mesh.
+        gl::BlendFunc blendFunc { gl::SrcAlpha, gl::OneMinusSrcAlpha };
+        gl::BlendOp blendOp = gl::Add;
+    };
+    typedef QList<Pass> Passes;
+
 public:
     ModelDrawable();
 
@@ -265,6 +278,17 @@ public:
     int animationIdForName(String const &name) const;
 
     int animationCount() const;
+
+    int meshCount() const;
+
+    /**
+     * Returns the number of the mesh with the given name.
+     *
+     * @param name  Mesh name.
+     *
+     * @return Mesh id, or -1 if no mesh with that name exists.
+     */
+    int meshId(String const &name) const;
 
     /**
      * Locates a material specified in the model by its name.
@@ -347,10 +371,11 @@ public:
 
     void unsetProgram();
 
-    void draw(Animator const *animation = 0) const;
+    void draw(Animator const *animation = nullptr,
+              Passes const *drawPasses = nullptr) const;
 
     void drawInstanced(GLBuffer const &instanceAttribs,
-                       Animator const *animation = 0) const;
+                       Animator const *animation = nullptr) const;
 
     /**
      * Dimensions of the default pose, in model space.

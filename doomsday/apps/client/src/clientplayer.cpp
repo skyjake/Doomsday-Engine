@@ -19,6 +19,7 @@
 #include "clientplayer.h"
 #include "render/consoleeffect.h"
 #include "render/playerweaponanimator.h"
+#include "def_share.h"
 
 using namespace de;
 

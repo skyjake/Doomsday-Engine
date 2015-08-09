@@ -1,6 +1,6 @@
 /** @file scriptedinfo.cpp  Info document tree with script context.
  *
- * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -22,6 +22,8 @@
 #include "de/ArrayValue"
 #include "de/RecordValue"
 #include "de/App"
+
+#include <algorithm>
 
 namespace de {
 
@@ -47,6 +49,9 @@ DENG2_PIMPL(ScriptedInfo)
         // No limitation on duplicates for the special block types.
         info.setAllowDuplicateBlocksOfType(
                     QStringList() << BLOCK_GROUP << BLOCK_NAMESPACE);
+
+        // Single-token blocks are implicitly treated as "group" blocks.
+        info.setImplicitBlockType(BLOCK_GROUP);
     }
 
     void clear()
@@ -128,11 +133,18 @@ DENG2_PIMPL(ScriptedInfo)
         if(!varName.isEmpty())
         {
             Record &ns = process.globals();
+            // Try a case-sensitive match in global namespace.
             String targetName = checkNamespaceForVariable(target);
             if(!ns.has(targetName))
             {
                 // Assume it's an identifier rather than a regular variable.
                 targetName = checkNamespaceForVariable(target.text.toLower());
+            }
+            if(!ns.has(targetName))
+            {
+                // Try a regular variable within the same block.
+                targetName = variableName(block.parent()? *block.parent() : block)
+                                    .concatenateMember(target);
             }
 
             ns.add(varName.concatenateMember("__inherit__")) =
@@ -523,6 +535,30 @@ Record::Subrecords ScriptedInfo::subrecordsOfType(String const &blockType, Recor
     return record.subrecords([&] (Record const &sub) {
         return sub.gets(VAR_BLOCK_TYPE, "") == blockType;
     });
+}
+
+StringList ScriptedInfo::sortRecordsBySource(Record::Subrecords const &subrecs)
+{
+    StringList keys = subrecs.keys();
+
+    std::sort(keys.begin(), keys.end(),
+              [&subrecs] (String const &a, String const &b) -> bool {
+        String src1 = subrecs[a]->gets(VAR_SOURCE, ":0");
+        String src2 = subrecs[b]->gets(VAR_SOURCE, ":0");
+        DENG2_ASSERT(src1.contains(':'));
+        DENG2_ASSERT(src2.contains(':'));
+        QStringList parts1 = src1.split(':');
+        QStringList parts2 = src2.split(':');
+        if(!String(parts1.at(0)).compareWithoutCase(parts2.at(0)))
+        {
+            // Path is the same, compare line numbers.
+            return parts1.at(1).toInt() < parts2.at(1).toInt();
+        }
+        // Just compare paths.
+        return String(parts1.at(0)).compareWithoutCase(parts2.at(0)) < 0;
+    });
+
+    return keys;
 }
 
 } // namespace de

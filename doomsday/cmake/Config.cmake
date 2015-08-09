@@ -12,6 +12,10 @@ endmacro (set_path)
 
 # Project Options & Paths ----------------------------------------------------
 
+if (PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
+    message (FATAL_ERROR "In-source builds are not allowed. Please create a build directory and run CMake from there.")
+endif ()
+
 set_path (DENG_SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/..")
 set (DENG_CMAKE_DIR "${CMAKE_CURRENT_LIST_DIR}")
 if (APPLE OR WIN32)
