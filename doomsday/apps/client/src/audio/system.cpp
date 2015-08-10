@@ -452,8 +452,6 @@ DENG2_PIMPL(System)
             }
         }
 
-        self.printAllInterfaces();
-
         // Let the music driver(s) know of the primary sfx interface, in case they
         // want to play audio through it.
         setMusicProperty(AUDIOP_SFX_INTERFACE, self.sfx());
@@ -551,7 +549,7 @@ DENG2_PIMPL(System)
     dint playMusicFile(String const &virtualOrNativePath, bool looped = false)
     {
         DENG2_ASSERT(musAvail);
-        LOG_AS("AudioSystem");
+        LOG_AS("audio::System");
 
         if(virtualOrNativePath.isEmpty())
             return 0;
@@ -610,7 +608,7 @@ DENG2_PIMPL(System)
     dint playMusicLump(lumpnum_t lumpNum, bool looped = false, bool canPlayMUS = true)
     {
         DENG2_ASSERT(musAvail);
-        LOG_AS("AudioSystem");
+        LOG_AS("audio::System");
 
         if(!App_FileSystem().nameIndex().hasLump(lumpNum))
             return 0;
@@ -677,7 +675,7 @@ DENG2_PIMPL(System)
 
     dint playMusicCDTrack(dint track, bool looped)
     {
-        LOG_AS("AudioSystem");
+        LOG_AS("audio::System");
 
         // Assume track 0 is not valid.
         if(track == 0) return 0;
@@ -736,7 +734,7 @@ DENG2_PIMPL(System)
         if(musAvail)
         {
             // Tell audio drivers about our soundfont config.
-            self.updateSoundFont();
+            self.updateMusicSoundFont();
         }
     }
 
@@ -768,15 +766,52 @@ DENG2_PIMPL(System)
 System::System() : d(new Instance(this))
 {}
 
+audio::System &System::get()
+{
+    DENG2_ASSERT(theAudioSystem);
+    return *theAudioSystem;
+}
+
 void System::timeChanged(Clock const &)
 {
     // Nothing to do.
 }
 
-audio::System &System::get()
+String System::description() const
 {
-    DENG2_ASSERT(theAudioSystem);
-    return *theAudioSystem;
+#define TABBED(A, B)  _E(Ta) "  " _E(l) A _E(.) " " _E(Tb) << B << "\n"
+
+    String str;
+    QTextStream os(&str);
+
+    os << _E(b) "Audio configuration:\n" _E(.);
+
+    os << TABBED("Music volume:",  musVolume);
+#ifdef __CLIENT__
+    os << TABBED("Music sound font:", musSoundFontPath);
+    os << TABBED("Music source preference:", musicSourceAsText(musSourcePreference));
+
+    // Include an active playback interface itemization.
+    for(dint i = d->activeInterfaces.count(); i--> 0; )
+    {
+        Instance::AudioInterface const &ifs = d->activeInterfaces[i];
+
+        if(ifs.type == AUDIO_IMUSIC || ifs.type == AUDIO_ICD)
+        {
+            os << _E(Ta) _E(l) "  " << (ifs.type == AUDIO_IMUSIC ? "Music" : "CD") << ": "
+               << _E(.) _E(Tb) << interfaceName(ifs.i.any) << "\n";
+        }
+        else if(ifs.type == AUDIO_ISFX)
+        {
+            os << _E(Ta) _E(l) << "  SFX: " << _E(.) _E(Tb)
+               << interfaceName(ifs.i.sfx) << "\n";
+        }
+    }
+#endif
+
+    return str.rightStrip();
+
+#undef TABBED
 }
 
 void System::reset()
@@ -830,6 +865,8 @@ void System::endFrame()
 
 void System::initPlayback()
 {
+    LOG_AS("audio::System");
+
     Sfx_Logical_SetSampleLengthCallback(Sfx_GetSoundLength);
 
     CommandLine &cmdLine = App::commandLine();
@@ -840,21 +877,25 @@ void System::initPlayback()
     ::noRndPitch = cmdLine.has("-norndpitch");
 
 #ifdef __CLIENT__
-    LOG_AUDIO_VERBOSE("Initializing Audio System for playback...");
+    LOG_AUDIO_VERBOSE("Initializing for playback...");
 
     // Try to load the audio driver plugin(s).
-    if(!d->loadDrivers())
+    if(d->loadDrivers())
+    {
+        if(!Sfx_Init())
+        {
+            LOG_AUDIO_NOTE("Errors during audio subsystem initialization");
+        }
+
+        d->initMusic();
+    }
+    else
     {
         LOG_AUDIO_NOTE("Music and sound effects are disabled");
-        return;
     }
 
-    if(!Sfx_Init())
-    {
-        LOG_AUDIO_NOTE("Errors during audio subsystem initialization");
-    }
-
-    d->initMusic();
+    // Print a summary of the active configuration to the log.
+    LOG_AUDIO_MSG("%s") << description();
 #endif
 }
 
@@ -869,19 +910,16 @@ void System::deinitPlayback()
 }
 
 #ifdef __CLIENT__
-void System::updateSoundFont()
+String System::musicSourceAsText(MusicSource source)  // static 
 {
-    NativePath path(musSoundFontPath);
-
-#ifdef MACOSX
-    // On OS X we can try to use the basic DLS soundfont that's part of CoreAudio.
-    if(path.isEmpty())
-    {
-        path = "/System/Library/Components/CoreAudio.component/Contents/Resources/gs_instruments.dls";
-    }
-#endif
-
-    d->setMusicProperty(AUDIOP_SOUNDFONT_FILENAME, path.expand().toString().toLatin1().constData());
+    static char const *sourceNames[3] = {
+        /* MUSP_MUS */ "MUS lumps",
+        /* MUSP_EXT */ "External files",
+        /* MUSP_CD */  "CD",
+    };
+    if(source >= MUSP_MUS && source <= MUSP_CD)
+        return sourceNames[dint( source )];
+    return "(invalid)";
 }
 
 bool System::musicIsAvailable() const
@@ -1046,6 +1084,21 @@ dint System::playMusicCDTrack(dint cdTrack, bool looped)
     return d->playMusicCDTrack(cdTrack, looped);
 }
 
+void System::updateMusicSoundFont()
+{
+    NativePath path(musSoundFontPath);
+
+#ifdef MACOSX
+    // On OS X we can try to use the basic DLS soundfont that's part of CoreAudio.
+    if(path.isEmpty())
+    {
+        path = "/System/Library/Components/CoreAudio.component/Contents/Resources/gs_instruments.dls";
+    }
+#endif
+
+    d->setMusicProperty(AUDIOP_SOUNDFONT_FILENAME, path.expand().toString().toLatin1().constData());
+}
+
 audiointerface_sfx_generic_t *System::sfx() const
 {
     // The primary interface is the first one.
@@ -1068,36 +1121,6 @@ audiointerface_cd_t *System::cd() const
         return LoopAbort;
     });
     return found;
-}
-
-String System::interfaceDescription() const
-{
-    String str;
-    QTextStream os(&str);
-
-    os << _E(b) "Audio configuration:\n" _E(.);
-
-    for(dint i = d->activeInterfaces.count(); i--> 0; )
-    {
-        Instance::AudioInterface const &ifs = d->activeInterfaces[i];
-
-        if(ifs.type == AUDIO_IMUSIC || ifs.type == AUDIO_ICD)
-        {
-            os << _E(Ta) _E(l) "  " << (ifs.type == AUDIO_IMUSIC ? "Music" : "CD") << ": "
-               << _E(.) _E(Tb) << interfaceName(ifs.i.any) << "\n";
-        }
-        else if(ifs.type == AUDIO_ISFX)
-        {
-            os << _E(Ta) _E(l) << "  SFX: " << _E(.) _E(Tb)
-               << interfaceName(ifs.i.sfx) << "\n";
-        }
-    }
-    return str.rightStrip();
-}
-
-void System::printAllInterfaces() const
-{
-    LOG_AUDIO_MSG("%s") << interfaceDescription();
 }
 
 audiodriver_t *System::interface(void *anyAudioInterface) const
@@ -1311,9 +1334,9 @@ static void reverbVolumeChanged()
     Sfx_UpdateReverb();
 }
 
-static void soundFontChanged()
+static void musicSoundFontChanged()
 {
-    App_AudioSystem().updateSoundFont();
+    App_AudioSystem().updateMusicSoundFont();
 }
 #endif
 
@@ -1332,7 +1355,7 @@ void System::consoleRegister()  // static
     C_CMD_FLAGS("playsound",  nullptr, PlaySound,  CMDF_NO_DEDICATED);
 
     // Music:
-    C_VAR_CHARPTR2("music-soundfont",     &musSoundFontPath,      0, 0, 0, soundFontChanged);
+    C_VAR_CHARPTR2("music-soundfont",     &musSoundFontPath,      0, 0, 0, musicSoundFontChanged);
     C_VAR_INT     ("music-source",        &musSourcePreference,   0, 0, 2);
     C_VAR_INT     ("music-volume",        &musVolume,             0, 0, 255);
 

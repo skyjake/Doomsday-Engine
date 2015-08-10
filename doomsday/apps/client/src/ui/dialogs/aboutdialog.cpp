@@ -49,7 +49,7 @@ DENG2_PIMPL(AboutDialog)
 
         // Popup with audio info.
         audioPopup = new DocumentPopupWidget;
-        audioPopup->document().setText(App_AudioSystem().interfaceDescription());
+        audioPopup->document().setText(App_AudioSystem().description());
         self.add(audioPopup);
     }
 };

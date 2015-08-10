@@ -58,6 +58,13 @@ public:
     void timeChanged(de::Clock const &) override;
 
     /**
+     * Returns a textual, human-friendly description of the audio system configuration
+     * including an active playback interface itemization (suitable for logging, error
+     * messages, etc..).
+     */
+    de::String description() const;
+
+    /**
      * Stop all channels and music, delete the entire sample cache.
      */
     void reset();
@@ -88,6 +95,11 @@ public:  // Music playback: ----------------------------------------------------
         MUSP_EXT,  ///< "External" file.
         MUSP_CD    ///< CD track.
     };
+
+    /**
+     * Provides a human-friendly, textual representation of the given music @a source.
+     */
+    static de::String musicSourceAsText(MusicSource source);
 
     /**
      * Determines if one or more @em music playback interface is available.
@@ -134,7 +146,7 @@ public:  // Music playback: ----------------------------------------------------
     int playMusicFile(de::String const &filePath, bool looped = false);
     int playMusicCDTrack(int cdTrack, bool looped = false);
 
-    void updateSoundFont();
+    void updateMusicSoundFont();
 
 public:  // Low-level driver interfaces: ---------------------------------------------
 
@@ -152,17 +164,6 @@ public:  // Low-level driver interfaces: ---------------------------------------
      * and usually does not need to be individually manipulated.
      */
     audiointerface_cd_t *cd() const;
-
-    /**
-     * Prints a list of the selected, active interfaces to the log.
-     */
-    void printAllInterfaces() const;
-
-    /**
-     * Returns a textual, human-friendly description of the selected, active interface
-     * configuration (suitable for logging, error messages, etc..).
-     */
-    de::String interfaceDescription() const;
 
     /**
      * Retrieves the Base interface of the audio driver to which @a anyAudioInterface
