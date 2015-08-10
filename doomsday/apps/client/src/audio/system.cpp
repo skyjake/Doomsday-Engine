@@ -24,7 +24,6 @@
 
 #ifdef __CLIENT__
 #  include "dd_main.h"  // isDedicated
-#  include "api_filesys.h"
 #endif
 
 #ifdef __SERVER__
@@ -32,8 +31,10 @@
 #endif
 
 #include "audio/s_cache.h"
-#include "audio/s_mus.h"
 #include "audio/s_sfx.h"
+#ifdef __CLIENT__
+#  include "audio/m_mus2midi.h"
+#endif
 
 #include "api_map.h"
 #include "world/p_players.h"
@@ -42,7 +43,13 @@
 #include <doomsday/audio/logical.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
+#ifdef __CLIENT__
+#  include <doomsday/defs/music.h>
+#  include <doomsday/filesys/fs_main.h>
+#  include <doomsday/filesys/fs_util.h>
+#endif
 #include <de/App>
+#include <de/memory.h>
 
 using namespace de;
 
@@ -74,7 +81,15 @@ namespace audio {
 static audio::System *theAudioSystem = nullptr;
 
 #ifdef __CLIENT__
-static char *soundFontPath = (char *) "";
+static char const *BUFFERED_MUSIC_FILE = (char *)"dd-buffered-song";
+
+static char *musSoundFontPath = (char *) "";
+
+/**
+ * If multiple sources are available, this setting is used to determine which one to
+ * use (mus < ext < cd).
+ */
+static audio::System::MusicSource musSourcePreference = audio::System::MUSP_EXT;
 
 static audiodriverid_t identifierToDriverId(String name)
 {
@@ -97,6 +112,66 @@ static audiodriverid_t identifierToDriverId(String name)
 
     LOG_AUDIO_ERROR("'%s' is not a valid audio driver name") << name;
     return AUDIOD_INVALID;
+}
+
+/**
+ * Returns @c true if the given @a file appears to contain MUS format music.
+ */
+static bool recognizeMus(de::File1 &file)
+{
+    char buf[4];
+    file.read((uint8_t *)buf, 0, 4);
+
+    // ASCII "MUS" and CTRL-Z (hex 4d 55 53 1a)
+    return !qstrncmp(buf, "MUS\x01a", 4);
+}
+
+/**
+ * Attempt to locate a music file referenced in the given music @a definition. Songs can be
+ * either in external files or non-MUS lumps.
+ *
+ * @note Lump based music is presently handled separately!!
+ *
+ * @param definition  Music definition to find the music file for.
+ *
+ * @return  Absolute path to the music if found; otherwise a zero-length string.
+ *
+ * @todo Move to ResourceSystem.
+ */
+static String tryFindMusicFile(Record const &definition)
+{
+    LOG_AS("tryFindMusicFile");
+
+    defn::Music const music(definition);
+
+    de::Uri songUri(music.gets("path"), RC_NULL);
+    if(!songUri.path().isEmpty())
+    {
+        // All external music files are specified relative to the base path.
+        String fullPath = App_BasePath() / songUri.path();
+        if(F_Access(fullPath.toUtf8().constData()))
+        {
+            return fullPath;
+        }
+
+        LOG_AUDIO_WARNING("Music file \"%s\" not found (id '%s')")
+            << songUri << music.gets("id");
+    }
+
+    // Try the resource locator.
+    String const lumpName = music.gets("lumpName");
+    if(!lumpName.isEmpty())
+    {
+        try
+        {
+            String const foundPath = App_FileSystem().findPath(de::Uri(lumpName, RC_MUSIC), RLF_DEFAULT,
+                                                               App_ResourceClass(RC_MUSIC));
+            return App_BasePath() / foundPath;  // Ensure the path is absolute.
+        }
+        catch(FS1::NotFoundError const &)
+        {}  // Ignore this error.
+    }
+    return "";  // None found.
 }
 #endif
 
@@ -383,6 +458,12 @@ DENG2_PIMPL(System)
         // want to play audio through it.
         setMusicProperty(AUDIOP_SFX_INTERFACE, self.sfx());
     }
+
+    bool musAvail = false;              ///< @c true if at least one driver is initialized for music playback.
+    bool musNeedBufFileSwitch = false;  ///< @c true= choose a new file name for the buffered playback file when asked. */
+    String musCurrentSong;
+    bool musPaused = false;
+
 #endif  // __CLIENT__
 
     Instance(Public *i) : Base(i)
@@ -399,6 +480,20 @@ DENG2_PIMPL(System)
     }
 
 #ifdef __CLIENT__
+    String composeMusicBufferFilename(String const &ext = "")
+    {
+        // Switch the name of the buffered song file?
+        static dint currentBufFile = 0;
+        if(musNeedBufFileSwitch)
+        {
+            currentBufFile ^= 1;
+            musNeedBufFileSwitch = false;
+        }
+
+        // Compose the name.
+        return BUFFERED_MUSIC_FILE + String::number(currentBufFile) + ext;
+    }
+
     void setMusicProperty(dint prop, void const *ptr)
     {
         self.forAllInterfaces(AUDIO_IMUSIC, [this, &prop, &ptr] (void *ifs)
@@ -425,6 +520,213 @@ DENG2_PIMPL(System)
                 LOG_AUDIO_WARNING("Soundfont \"%s\" not found") << fn;
             }
         }
+    }
+
+    dint playMusicFile(String const &virtualOrNativePath, bool looped = false)
+    {
+        DENG2_ASSERT(musAvail);
+        LOG_AS("AudioSystem");
+
+        if(virtualOrNativePath.isEmpty())
+            return 0;
+
+        // Relative paths are relative to the native working directory.
+        String const path  = (NativePath::workPath() / NativePath(virtualOrNativePath).expand()).withSeparators('/');
+        LOG_AUDIO_VERBOSE("Attempting to play music file \"%s\"")
+            << NativePath(virtualOrNativePath).pretty();
+
+        try
+        {
+            std::unique_ptr<FileHandle> hndl(&App_FileSystem().openFile(path, "rb"));
+
+            auto didPlay = self.forAllInterfaces(AUDIO_IMUSIC, [this, &hndl, &looped] (void *ifs)
+            {
+                auto *iMusic = (audiointerface_music_t *) ifs;
+
+                // Does this interface offer buffered playback?
+                if(iMusic->Play && iMusic->SongBuffer)
+                {
+                    // Buffer the data using the driver's own facility.
+                    dsize const len = hndl->length();
+                    hndl->read((duint8 *) iMusic->SongBuffer(len), len);
+
+                    return iMusic->Play(looped);
+                }
+                // Does this interface offer playback from a native file?
+                else if(iMusic->PlayFile)
+                {
+                    // Write the data to disk and play from there.
+                    String const bufPath = composeMusicBufferFilename();
+
+                    dsize len = hndl->length();
+                    duint8 *buf = (duint8 *)M_Malloc(len);
+                    hndl->read(buf, len);
+                    F_Dump(buf, len, bufPath.toUtf8().constData());
+                    M_Free(buf); buf = nullptr;
+
+                    return iMusic->PlayFile(bufPath.toUtf8().constData(), looped);
+                }
+                return 0;  // Continue.
+            });
+
+            App_FileSystem().releaseFile(hndl->file());
+            return didPlay;
+        }
+        catch(FS1::NotFoundError const &)
+        {}  // Ignore this error.
+        return 0;  // Continue.
+    }
+
+    /**
+     * @return  @c  1= if music was started. 0, if attempted to start but failed.
+     *          @c -1= if it was MUS data and @a canPlayMUS says we can't play it.
+     */
+    dint playMusicLump(lumpnum_t lumpNum, bool looped = false, bool canPlayMUS = true)
+    {
+        DENG2_ASSERT(musAvail);
+
+        if(!App_FileSystem().nameIndex().hasLump(lumpNum))
+            return 0;
+
+        File1 &lump = App_FileSystem().lump(lumpNum);
+        if(recognizeMus(lump))
+        {
+            // Lump is in DOOM's MUS format. We must first convert it to MIDI.
+            if(!canPlayMUS) return -1;
+
+            String const srcFile = composeMusicBufferFilename(".mid");
+
+            // Read the lump, convert to MIDI and output to a temp file in the working directory.
+            // Use a filename with the .mid extension so that any player which relies on the it
+            // for format recognition works as expected.
+            duint8 *buf = (duint8 *) M_Malloc(lump.size());
+            lump.read(buf, 0, lump.size());
+            M_Mus2Midi((void *)buf, lump.size(), srcFile.toUtf8().constData());
+            M_Free(buf); buf = nullptr;
+
+            return self.forAllInterfaces(AUDIO_IMUSIC, [&srcFile, &looped] (void *ifs)
+            {
+                auto *iMusic = (audiointerface_music_t *) ifs;
+                if(iMusic->PlayFile)
+                {
+                    return iMusic->PlayFile(srcFile.toUtf8().constData(), looped);
+                }
+                return 0;  // Continue.
+            });
+        }
+
+        return self.forAllInterfaces(AUDIO_IMUSIC, [this, &lump, &looped] (void *ifs)
+        {
+            auto *iMusic = (audiointerface_music_t *) ifs;
+
+            // Does this interface offer buffered playback?
+            if(iMusic->Play && iMusic->SongBuffer)
+            {
+                // Buffer the data using the driver's own facility.
+                std::unique_ptr<FileHandle> hndl(&App_FileSystem().openLump(lump));
+                dsize const length  = hndl->length();
+                hndl->read((duint8 *) iMusic->SongBuffer(length), length);
+                App_FileSystem().releaseFile(hndl->file());
+
+                return iMusic->Play(looped);
+            }
+            // Does this interface offer playback from a native file?
+            else if(iMusic->PlayFile)
+            {
+                // Write the data to disk and play from there.
+                String const fileName = composeMusicBufferFilename();
+                if(!F_DumpFile(lump, fileName.toUtf8().constData()))
+                {
+                    // Failed to write the lump...
+                    return 0;
+                }
+
+                return iMusic->PlayFile(fileName.toUtf8().constData(), looped);
+            }
+
+            return 0;  // Continue.
+        });
+    }
+
+    dint playMusicCDTrack(dint track, bool looped)
+    {
+        // Assume track 0 not valid.
+        if(track == 0) return 0;
+
+        return self.forAllInterfaces(AUDIO_ICD, [&track, &looped] (void *ifs)
+        {
+            auto *iCD = (audiointerface_cd_t *) ifs;
+            if(iCD->Play)
+            {
+                return iCD->Play(track, looped);
+            }
+            return 0;  // Continue.
+        });
+    }
+
+    /**
+     * Perform initialization for music playback.
+     */
+    void initMusic()
+    {
+        // Already been here?
+        if(musAvail) return;
+
+        LOG_AUDIO_VERBOSE("Initializing Music subsystem...");
+
+        musAvail       = false;
+        musCurrentSong = "";
+        musPaused      = false;
+
+        CommandLine &cmdLine = App::commandLine();
+        if(::isDedicated || cmdLine.has("-nomusic"))
+        {
+            LOG_AUDIO_NOTE("Music disabled");
+            return;
+        }
+
+        // Initialize interfaces for music playback.
+        dint initialized = 0;
+        self.forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [this, &initialized] (void *ifs)
+        {
+            auto *iMusic = (audiointerface_music_generic_t *) ifs;
+            if(iMusic->Init())
+            {
+                initialized += 1;
+            }
+            else
+            {
+                LOG_AUDIO_WARNING("Failed to initialize \"%s\" for music playback")
+                    << self.interfaceName(iMusic);
+            }
+            return LoopContinue;
+        });
+
+        // Remember whether an interface for music playback initialized successfully.
+        musAvail = initialized >= 1;
+        if(musAvail)
+        {
+            // Tell audio drivers about our soundfont config.
+            self.updateSoundFont();
+        }
+    }
+
+    /**
+     * Perform deinitialize for music playback.
+     */
+    void deinitMusic()
+    {
+        // Already been here?
+        if(!musAvail) return;
+        musAvail = false;
+
+        // Shutdown interfaces.
+        self.forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [] (void *ifs)
+        {
+            auto *iMusic = (audiointerface_music_generic_t *) ifs;
+            if(iMusic->Shutdown) iMusic->Shutdown();
+            return LoopContinue;
+        });
     }
 #endif
 
@@ -467,12 +769,22 @@ void System::startFrame()
     if(::musVolume != oldMusVolume)
     {
         oldMusVolume = ::musVolume;
-        Mus_SetVolume(::musVolume / 255.0f);
+        setMusicVolume(::musVolume / 255.0f);
     }
 
     // Update all channels (freq, 2D:pan,volume, 3D:position,velocity).
     Sfx_StartFrame();
-    Mus_StartFrame();
+
+    if(d->musAvail)
+    {
+        // Update all interfaces.
+        forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [] (void *ifs)
+        {
+            auto *iMusic = (audiointerface_music_generic_t *) ifs;
+            iMusic->Update();
+            return LoopContinue;
+        });
+    }
 #endif
 
     // Remove stopped sounds from the LSM.
@@ -487,13 +799,13 @@ void System::endFrame()
 #endif
 }
 
-bool System::initPlayback()
+void System::initPlayback()
 {
     Sfx_Logical_SetSampleLengthCallback(Sfx_GetSoundLength);
 
     CommandLine &cmdLine = App::commandLine();
     if(cmdLine.has("-nosound") || cmdLine.has("-noaudio"))
-        return true;
+        return;
 
     // Disable random pitch changes?
     ::noRndPitch = cmdLine.has("-norndpitch");
@@ -505,27 +817,23 @@ bool System::initPlayback()
     if(!d->loadDrivers())
     {
         LOG_AUDIO_NOTE("Music and sound effects are disabled");
-        return false;
+        return;
     }
 
-    bool sfxOK = Sfx_Init();
-    bool musOK = Mus_Init();
-
-    if(!sfxOK || !musOK)
+    if(!Sfx_Init())
     {
         LOG_AUDIO_NOTE("Errors during audio subsystem initialization");
-        return false;
     }
-#endif
 
-    return true;
+    d->initMusic();
+#endif
 }
 
 void System::deinitPlayback()
 {
 #ifdef __CLIENT__
     Sfx_Shutdown();
-    Mus_Shutdown();
+    d->deinitMusic();
 
     d->unloadDrivers();
 #endif
@@ -534,7 +842,7 @@ void System::deinitPlayback()
 #ifdef __CLIENT__
 void System::updateSoundFont()
 {
-    NativePath path(soundFontPath);
+    NativePath path(musSoundFontPath);
 
 #ifdef MACOSX
     // On OS X we can try to use the basic DLS soundfont that's part of CoreAudio.
@@ -549,11 +857,164 @@ void System::updateSoundFont()
 
 bool System::musicIsAvailable() const
 {
-    // The primary interface is the first one.
-    return forAllInterfaces(AUDIO_IMUSIC, [] (void *)
+    return d->musAvail;
+}
+
+void System::setMusicVolume(dfloat newVolume)
+{
+    if(!d->musAvail) return;
+
+    // Set volume of all available interfaces.
+    forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [&newVolume] (void *ifs)
     {
-        return LoopAbort;
+        auto *iMusic = (audiointerface_music_generic_t *) ifs;
+        iMusic->Set(MUSIP_VOLUME, newVolume);
+        return LoopContinue;
     });
+}
+
+bool System::musicIsPlaying() const
+{
+    return forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [] (void *ifs)
+    {
+        auto *iMusic = (audiointerface_music_t *) ifs;
+        return iMusic->gen.Get(MUSIP_PLAYING, nullptr);
+    });
+}
+
+void System::stopMusic()
+{
+    if(!d->musAvail) return;
+
+    d->musCurrentSong = "";
+
+    // Stop all interfaces.
+    forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [] (void *ifs)
+    {
+        auto *iMusic = (audiointerface_music_generic_t *) ifs;
+        iMusic->Stop();
+        return LoopContinue;
+    });
+}
+
+void System::pauseMusic(bool doPause)
+{
+    if(!d->musAvail) return;
+
+    d->musPaused = !d->musPaused;
+
+    // Pause playback on all interfaces.
+    forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [&doPause] (void *ifs)
+    {
+        auto *iMusic = (audiointerface_music_generic_t *) ifs;
+        iMusic->Pause(doPause);
+        return LoopContinue;
+    });
+}
+
+bool System::musicIsPaused() const
+{
+    return d->musPaused;
+}
+
+dint System::playMusic(Record const &definition, bool looped)
+{
+    if(!d->musAvail) return false;
+
+    LOG_AS("audio::System::playMusic");
+    LOG_AUDIO_VERBOSE("Starting ID:%s looped:%b, currentSong ID:%s")
+        << definition.gets("id") << looped << d->musCurrentSong;
+
+    // We will not restart the currently playing song.
+    if(definition.gets("id") == d->musCurrentSong && musicIsPlaying())
+        return false;
+
+    // Stop the currently playing song.
+    stopMusic();
+
+    // Switch to an unused file buffer if asked.
+    d->musNeedBufFileSwitch = true;
+
+    // This is the song we're playing now.
+    d->musCurrentSong = definition.gets("id");
+
+    // Determine the music source, order preferences.
+    dint source[3];
+    source[0] = musSourcePreference;
+    switch(musSourcePreference)
+    {
+    case MUSP_CD:
+        source[1] = MUSP_EXT;
+        source[2] = MUSP_MUS;
+        break;
+
+    case MUSP_EXT:
+        source[1] = MUSP_MUS;
+        source[2] = MUSP_CD;
+        break;
+
+    default: // MUSP_MUS
+        source[1] = MUSP_EXT;
+        source[2] = MUSP_CD;
+        break;
+    }
+
+    // Try to start the song.
+    for(dint i = 0; i < 3; ++i)
+    {
+        bool canPlayMUS = true;
+
+        switch(source[i])
+        {
+        case MUSP_CD:
+            if(cd())
+            {
+                if(d->playMusicCDTrack(defn::Music(definition).cdTrack(), looped))
+                    return true;
+            }
+            break;
+
+        case MUSP_EXT:
+            if(d->playMusicFile(tryFindMusicFile(definition), looped))
+                return true;
+
+            // Next, try non-MUS lumps.
+            canPlayMUS = false;
+
+            // Note: Intentionally falls through to MUSP_MUS.
+
+        case MUSP_MUS:
+            if(d->playMusicLump(App_FileSystem().lumpNumForName(definition.gets("lumpName")),
+                                looped, canPlayMUS) == 1)
+            {
+                return true;
+            }
+            break;
+
+        default: DENG2_ASSERT(!"Mus_Start: Invalid value for order[i]"); break;
+        }
+    }
+
+    // No song was started.
+    return false;
+}
+
+dint System::playMusicLump(lumpnum_t lumpNum, bool looped)
+{
+    stopMusic();
+    return d->playMusicLump(lumpNum, looped);
+}
+
+dint System::playMusicFile(String const &filePath, bool looped)
+{
+    stopMusic();
+    return d->playMusicFile(filePath, looped);
+}
+
+dint System::playMusicCDTrack(dint cdTrack, bool looped)
+{
+    stopMusic();
+    return d->playMusicCDTrack(cdTrack, looped);
 }
 
 audiointerface_sfx_generic_t *System::sfx() const
@@ -761,6 +1222,81 @@ D_CMD(PlaySound)
 }
 
 #ifdef __CLIENT__
+
+/**
+ * CCmd: Play a music track.
+ */
+D_CMD(PlayMusic)
+{
+    DENG2_UNUSED(src);
+
+    LOG_AS("playmusic (Cmd)");
+
+    if(!App_AudioSystem().musicIsAvailable())
+    {
+        LOGDEV_SCR_ERROR("Music subsystem is not available");
+        return false;
+    }
+
+    bool const looped = true;
+
+    if(argc == 2)
+    {
+        // Play a file associated with the referenced music definition.
+        if(Record const *definition = ::defs.musics.tryFind("id", argv[1]))
+        {
+            return Mus_Start(*definition, looped);
+        }
+        LOG_RES_WARNING("Music '%s' not defined") << argv[1];
+        return false;
+    }
+
+    if(argc == 3)
+    {
+        // Play a file referenced directly.
+        if(!qstricmp(argv[1], "lump"))
+        {
+            return Mus_StartLump(App_FileSystem().lumpNumForName(argv[2]), looped);
+        }
+        else if(!qstricmp(argv[1], "file"))
+        {
+            return Mus_StartFile(argv[2], looped);
+        }
+        else if(!qstricmp(argv[1], "cd"))
+        {
+            if(!App_AudioSystem().cd())
+            {
+                LOG_AUDIO_WARNING("No CD audio interface available");
+                return false;
+            }
+            return Mus_StartCDTrack(String(argv[2]).toInt(), looped);
+        }
+        return false;
+    }
+
+    LOG_SCR_NOTE("Usage:\n  %s (music-def)") << argv[0];
+    LOG_SCR_MSG("  %s lump (lumpname)") << argv[0];
+    LOG_SCR_MSG("  %s file (filename)") << argv[0];
+    LOG_SCR_MSG("  %s cd (track)") << argv[0];
+    return true;
+}
+
+D_CMD(StopMusic)
+{
+    DENG2_UNUSED3(src, argc, argv);
+
+    App_AudioSystem().stopMusic();
+    return true;
+}
+
+D_CMD(PauseMusic)
+{
+    DENG2_UNUSED3(src, argc, argv);
+
+    App_AudioSystem().pauseMusic(!App_AudioSystem().musicIsPaused());
+    return true;
+}
+
 static void reverbVolumeChanged()
 {
     Sfx_UpdateReverb();
@@ -784,18 +1320,25 @@ void System::consoleRegister()  // static
     C_VAR_INT     ("sound-3d",            &sfx3D,                 0, 0, 1);
     C_VAR_FLOAT2  ("sound-reverb-volume", &sfxReverbStrength,     0, 0, 1.5f, reverbVolumeChanged);
 
-    C_CMD_FLAGS("playsound", nullptr, PlaySound, CMDF_NO_DEDICATED);
-
-    C_VAR_INT("sound-info", &showSoundInfo, 0, 0, 1);
+    C_CMD_FLAGS("playsound",  nullptr, PlaySound,  CMDF_NO_DEDICATED);
 
     // Music:
-    C_VAR_CHARPTR2("music-soundfont",     &soundFontPath,         0, 0, 0, soundFontChanged);
+    C_VAR_CHARPTR2("music-soundfont",     &musSoundFontPath,      0, 0, 0, soundFontChanged);
+    C_VAR_INT     ("music-source",        &musSourcePreference,   0, 0, 2);
+    C_VAR_INT     ("music-volume",        &musVolume,             0, 0, 255);
 
-    Mus_ConsoleRegister();
+    C_CMD_FLAGS("playmusic",  nullptr, PlayMusic,  CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("pausemusic", nullptr, PauseMusic, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("stopmusic",  "",      StopMusic,  CMDF_NO_DEDICATED);
+
+    // Debug:
+    C_VAR_INT     ("sound-info",          &showSoundInfo,         0, 0, 1);
 #endif
 }
 
 }  // namespace audio
+
+// Sound Effects: ---------------------------------------------------------------
 
 mobj_t *S_GetListenerMobj()
 {
@@ -1069,6 +1612,80 @@ dint S_IsPlaying(dint soundID, mobj_t *emitter)
     return Sfx_IsPlaying(soundID, emitter);
 }
 
+// Music: -----------------------------------------------------------------------
+
+void Mus_SetVolume(dfloat newVolume)
+{
+#ifdef __CLIENT__
+    App_AudioSystem().setMusicVolume(newVolume);
+#endif
+}
+
+bool Mus_IsPlaying()
+{
+#ifdef __CLIENT__
+    return App_AudioSystem().musicIsPlaying();
+#else
+    return false;
+#endif
+}
+
+void S_StopMusic()
+{
+#ifdef __CLIENT__
+    App_AudioSystem().stopMusic();
+#endif
+}
+
+void S_PauseMusic(dd_bool paused)
+{
+#ifdef __CLIENT__
+    App_AudioSystem().pauseMusic(paused);
+#else
+    DENG2_UNUSED(paused);
+#endif
+}
+
+dint Mus_Start(Record const &definition, bool looped)
+{
+#ifdef __CLIENT__
+    return App_AudioSystem().playMusic(definition, looped);
+#else
+    DENG2_UNUSED2(definition, looped);
+    return 0;
+#endif
+}
+
+dint Mus_StartLump(lumpnum_t lumpNum, bool looped)
+{
+#ifdef __CLIENT__
+    return App_AudioSystem().playMusicLump(lumpNum, looped);
+#else
+    DENG2_UNUSED2(lumpNum, looped);
+    return 0;
+#endif
+}
+
+dint Mus_StartFile(char const *filePath, bool looped)
+{
+#ifdef __CLIENT__
+    return App_AudioSystem().playMusicFile(filePath, looped);
+#else
+    DENG2_UNUSED2(filePath, looped);
+    return 0;
+#endif
+}
+
+dint Mus_StartCDTrack(dint cdTrack, bool looped)
+{
+#ifdef __CLIENT__
+    return App_AudioSystem().playMusicCDTrack(cdTrack, looped);
+#else
+    DENG2_UNUSED2(cdTrack, looped);
+    return 0;
+#endif
+}
+
 dint S_StartMusicNum(dint id, dd_bool looped)
 {
 #ifdef __CLIENT__
@@ -1102,22 +1719,6 @@ dint S_StartMusic(char const *musicID, dd_bool looped)
         return false;
     }
     return S_StartMusicNum(idx, looped);
-}
-
-void S_StopMusic()
-{
-#ifdef __CLIENT__
-    Mus_Stop();
-#endif
-}
-
-void S_PauseMusic(dd_bool paused)
-{
-#ifdef __CLIENT__
-    Mus_Pause(paused);
-#else
-    DENG2_UNUSED(paused);
-#endif
 }
 
 DENG_DECLARE_API(S) =

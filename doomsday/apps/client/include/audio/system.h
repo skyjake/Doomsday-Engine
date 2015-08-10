@@ -26,6 +26,10 @@
 #endif
 #include "def_main.h"        // sfxinfo_t
 #include "world/p_object.h"  // mobj_t
+#ifdef __CLIENT__
+#  include <de/Record>
+#  include <de/String>
+#endif
 #include <de/System>
 
 namespace audio {
@@ -60,11 +64,10 @@ public:
 
     /**
      * Perform playback intialization for Sound Effects and Music.
-     * @return  @c true if no error occurred.
      *
      * @todo make __CLIENT__ only.
      */
-    bool initPlayback();
+    void initPlayback();
 
     /**
      * Perform playback deintialization for Sound Effects and Music.
@@ -74,14 +77,66 @@ public:
     void deinitPlayback();
 
 #ifdef __CLIENT__
-    void updateSoundFont();
-
-public:  // Playback interfaces: -----------------------------------------------------
+public:  // Music playback: ----------------------------------------------------------
 
     /**
-     * Determines if at least one music interface is available for music playback.
+     * Music source preference.
+     */
+    enum MusicSource
+    {
+        MUSP_MUS,  ///< WAD lump/file.
+        MUSP_EXT,  ///< "External" file.
+        MUSP_CD    ///< CD track.
+    };
+
+    /**
+     * Determines if one or more @em music playback interface is available.
      */
     bool musicIsAvailable() const;
+
+    /**
+     * Change the @em music volume to @a newVolume (affects all music interfaces).
+     */
+    void setMusicVolume(float vol);
+
+    /**
+     * Determines if @em music is currently playing (on any music interface).
+     */
+    bool musicIsPlaying() const;
+
+    /**
+     * Stop all currently playing @em music, if any (affects all music interfaces).
+     */
+    void stopMusic();
+
+    /**
+     * Pauses or resumes the @em music.
+     */
+    void pauseMusic(bool doPause = true);
+
+    /**
+     * Returns @c true if the currently playing @em music is paused.
+     */
+    bool musicIsPaused() const;
+
+    /**
+     * Start playing a song. The chosen interface depends on what's available and what
+     * kind of resources have been associated with the song. Any previously playing song
+     * is stopped.
+     *
+     * @param definition  Music definition describing which associated music file to play.
+     *
+     * @return  Non-zero if the song is successfully played.
+     */
+    int playMusic(de::Record const &definition, bool looped = false);
+
+    int playMusicLump(lumpnum_t lumpNum, bool looped = false);
+    int playMusicFile(de::String const &filePath, bool looped = false);
+    int playMusicCDTrack(int cdTrack, bool looped = false);
+
+    void updateSoundFont();
+
+public:  // Low-level driver interfaces: ---------------------------------------------
 
     /**
      * Returns the currently active, primary SFX interface. @c nullptr is returned if
@@ -157,6 +212,8 @@ private:
 
 }  // namespace audio
 
+// Sound effects: --------------------------------------------------------------
+
 extern int soundMinDist, soundMaxDist;
 extern int sfxVolume, musVolume;
 extern int sfxBits, sfxRate;
@@ -196,5 +253,12 @@ dd_bool S_IsRepeating(int idFlags);
  * Usually the display player.
  */
 mobj_t *S_GetListenerMobj();
+
+// Music: ----------------------------------------------------------------------
+
+int Mus_Start(de::Record const &definition, bool looped);
+int Mus_StartLump(lumpnum_t lumpNum, bool looped);
+int Mus_StartFile(char const *filePath, bool looped);
+int Mus_StartCDTrack(int cdTrack, bool looped);
 
 #endif  // CLIENT_AUDIO_SYSTEM_H

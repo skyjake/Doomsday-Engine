@@ -24,7 +24,7 @@
 #include "ui/widgets/cvarchoicewidget.h"
 #include "ui/widgets/cvarnativepathwidget.h"
 
-#include "audio/s_mus.h"
+#include "audio/system.h"
 
 #include "clientapp.h"
 
@@ -116,9 +116,9 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
     auto *musSrcLabel = LabelWidget::newWithText(tr("Preferred Music:"), &area());
 
     d->musicSource->items()
-            << new ChoiceItem(tr("MUS lumps"), MUSP_MUS)
-            << new ChoiceItem(tr("External files"), MUSP_EXT)
-            << new ChoiceItem(tr("CD"), MUSP_CD);
+            << new ChoiceItem(tr("MUS lumps"),      ::audio::System::MUSP_MUS)
+            << new ChoiceItem(tr("External files"), ::audio::System::MUSP_EXT)
+            << new ChoiceItem(tr("CD"),             ::audio::System::MUSP_CD);
 
     auto *sfLabel = LabelWidget::newWithText(tr("MIDI Sound Font:"), &area());
 

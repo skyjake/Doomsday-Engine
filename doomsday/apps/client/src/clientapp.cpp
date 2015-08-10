@@ -48,7 +48,7 @@
 #include "def_main.h"
 #include "sys_system.h"
 
-#include "audio/s_mus.h"
+#include "audio/system.h"
 
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
@@ -330,7 +330,7 @@ DENG2_PIMPL(ClientApp)
                 .define(SReg::IntCVar,    "sound-16bit",         0)
                 .define(SReg::IntCVar,    "sound-3d",            0)
                 .define(SReg::IntCVar,    "sound-overlap-stop",  0)
-                .define(SReg::IntCVar,    "music-source",        MUSP_EXT)
+                .define(SReg::IntCVar,    "music-source",        ::audio::System::MUSP_EXT)
                 .define(SReg::StringCVar, "music-soundfont",     "");
     }
 
