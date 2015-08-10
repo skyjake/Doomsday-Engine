@@ -459,6 +459,32 @@ DENG2_PIMPL(System)
         setMusicProperty(AUDIOP_SFX_INTERFACE, self.sfx());
     }
 
+    /**
+     * Iterate through the active interfaces of a given type, in descending priority
+     * order: the most important interface is visited first.
+     *
+     * @param type  Type of interface to process.
+     * @param func  Callback to make for each interface.
+     */
+    LoopResult forAllInterfaces(audiointerfacetype_t type, std::function<LoopResult (void *)> func) const
+    {
+        if(type != AUDIO_INONE)
+        {
+            for(dint i = activeInterfaces.count(); i--> 0; )
+            {
+                AudioInterface const &ifs = activeInterfaces[i];
+                if(ifs.type == type ||
+                   (type == AUDIO_IMUSIC_OR_ICD && (ifs.type == AUDIO_IMUSIC ||
+                                                    ifs.type == AUDIO_ICD)))
+                {
+                    if(auto result = func(ifs.i.any))
+                        return result;
+                }
+            }
+        }
+        return LoopContinue;
+    }
+
     bool musAvail = false;              ///< @c true if at least one driver is initialized for music playback.
     bool musNeedBufFileSwitch = false;  ///< @c true= choose a new file name for the buffered playback file when asked. */
     String musCurrentSong;
@@ -496,7 +522,7 @@ DENG2_PIMPL(System)
 
     void setMusicProperty(dint prop, void const *ptr)
     {
-        self.forAllInterfaces(AUDIO_IMUSIC, [this, &prop, &ptr] (void *ifs)
+        forAllInterfaces(AUDIO_IMUSIC, [this, &prop, &ptr] (void *ifs)
         {
             auto *iMusic = (audiointerface_music_t *) ifs;
             if(audiodriver_t *base = self.interface(iMusic))
@@ -539,7 +565,7 @@ DENG2_PIMPL(System)
         {
             std::unique_ptr<FileHandle> hndl(&App_FileSystem().openFile(path, "rb"));
 
-            auto didPlay = self.forAllInterfaces(AUDIO_IMUSIC, [this, &hndl, &looped] (void *ifs)
+            auto didPlay = forAllInterfaces(AUDIO_IMUSIC, [this, &hndl, &looped] (void *ifs)
             {
                 auto *iMusic = (audiointerface_music_t *) ifs;
 
@@ -584,6 +610,7 @@ DENG2_PIMPL(System)
     dint playMusicLump(lumpnum_t lumpNum, bool looped = false, bool canPlayMUS = true)
     {
         DENG2_ASSERT(musAvail);
+        LOG_AS("AudioSystem");
 
         if(!App_FileSystem().nameIndex().hasLump(lumpNum))
             return 0;
@@ -604,7 +631,7 @@ DENG2_PIMPL(System)
             M_Mus2Midi((void *)buf, lump.size(), srcFile.toUtf8().constData());
             M_Free(buf); buf = nullptr;
 
-            return self.forAllInterfaces(AUDIO_IMUSIC, [&srcFile, &looped] (void *ifs)
+            return forAllInterfaces(AUDIO_IMUSIC, [&srcFile, &looped] (void *ifs)
             {
                 auto *iMusic = (audiointerface_music_t *) ifs;
                 if(iMusic->PlayFile)
@@ -615,7 +642,7 @@ DENG2_PIMPL(System)
             });
         }
 
-        return self.forAllInterfaces(AUDIO_IMUSIC, [this, &lump, &looped] (void *ifs)
+        return forAllInterfaces(AUDIO_IMUSIC, [this, &lump, &looped] (void *ifs)
         {
             auto *iMusic = (audiointerface_music_t *) ifs;
 
@@ -650,10 +677,12 @@ DENG2_PIMPL(System)
 
     dint playMusicCDTrack(dint track, bool looped)
     {
-        // Assume track 0 not valid.
+        LOG_AS("AudioSystem");
+
+        // Assume track 0 is not valid.
         if(track == 0) return 0;
 
-        return self.forAllInterfaces(AUDIO_ICD, [&track, &looped] (void *ifs)
+        return forAllInterfaces(AUDIO_ICD, [&track, &looped] (void *ifs)
         {
             auto *iCD = (audiointerface_cd_t *) ifs;
             if(iCD->Play)
@@ -687,7 +716,7 @@ DENG2_PIMPL(System)
 
         // Initialize interfaces for music playback.
         dint initialized = 0;
-        self.forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [this, &initialized] (void *ifs)
+        forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [this, &initialized] (void *ifs)
         {
             auto *iMusic = (audiointerface_music_generic_t *) ifs;
             if(iMusic->Init())
@@ -721,7 +750,7 @@ DENG2_PIMPL(System)
         musAvail = false;
 
         // Shutdown interfaces.
-        self.forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [] (void *ifs)
+        forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [] (void *ifs)
         {
             auto *iMusic = (audiointerface_music_generic_t *) ifs;
             if(iMusic->Shutdown) iMusic->Shutdown();
@@ -778,7 +807,7 @@ void System::startFrame()
     if(d->musAvail)
     {
         // Update all interfaces.
-        forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [] (void *ifs)
+        d->forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [] (void *ifs)
         {
             auto *iMusic = (audiointerface_music_generic_t *) ifs;
             iMusic->Update();
@@ -865,7 +894,7 @@ void System::setMusicVolume(dfloat newVolume)
     if(!d->musAvail) return;
 
     // Set volume of all available interfaces.
-    forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [&newVolume] (void *ifs)
+    d->forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [&newVolume] (void *ifs)
     {
         auto *iMusic = (audiointerface_music_generic_t *) ifs;
         iMusic->Set(MUSIP_VOLUME, newVolume);
@@ -875,7 +904,7 @@ void System::setMusicVolume(dfloat newVolume)
 
 bool System::musicIsPlaying() const
 {
-    return forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [] (void *ifs)
+    return d->forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [] (void *ifs)
     {
         auto *iMusic = (audiointerface_music_t *) ifs;
         return iMusic->gen.Get(MUSIP_PLAYING, nullptr);
@@ -889,7 +918,7 @@ void System::stopMusic()
     d->musCurrentSong = "";
 
     // Stop all interfaces.
-    forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [] (void *ifs)
+    d->forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [] (void *ifs)
     {
         auto *iMusic = (audiointerface_music_generic_t *) ifs;
         iMusic->Stop();
@@ -904,7 +933,7 @@ void System::pauseMusic(bool doPause)
     d->musPaused = !d->musPaused;
 
     // Pause playback on all interfaces.
-    forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [&doPause] (void *ifs)
+    d->forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [&doPause] (void *ifs)
     {
         auto *iMusic = (audiointerface_music_generic_t *) ifs;
         iMusic->Pause(doPause);
@@ -1021,7 +1050,7 @@ audiointerface_sfx_generic_t *System::sfx() const
 {
     // The primary interface is the first one.
     audiointerface_sfx_generic_t *found = nullptr;
-    forAllInterfaces(AUDIO_ISFX, [&found] (void *ifs)
+    d->forAllInterfaces(AUDIO_ISFX, [&found] (void *ifs)
     {
         found = (audiointerface_sfx_generic_t *)ifs;
         return LoopAbort;
@@ -1033,7 +1062,7 @@ audiointerface_cd_t *System::cd() const
 {
     // The primary interface is the first one.
     audiointerface_cd_t *found = nullptr;
-    forAllInterfaces(AUDIO_ICD, [&found] (void *ifs)
+    d->forAllInterfaces(AUDIO_ICD, [&found] (void *ifs)
     {
         found = (audiointerface_cd_t *)ifs;
         return LoopAbort;
@@ -1069,26 +1098,6 @@ String System::interfaceDescription() const
 void System::printAllInterfaces() const
 {
     LOG_AUDIO_MSG("%s") << interfaceDescription();
-}
-
-LoopResult System::forAllInterfaces(audiointerfacetype_t type, std::function<LoopResult (void *)> func) const
-{
-    if(type != AUDIO_INONE)
-    {
-        for(dint i = d->activeInterfaces.count(); i--> 0; )
-        {
-            Instance::AudioInterface const &ifs = d->activeInterfaces[i];
-
-            if(ifs.type == type ||
-               (type == AUDIO_IMUSIC_OR_ICD && (ifs.type == AUDIO_IMUSIC ||
-                                                ifs.type == AUDIO_ICD)))
-            {
-                if(auto result = func(ifs.i.any))
-                    return result;
-            }
-        }
-    }
-    return LoopContinue;
 }
 
 audiodriver_t *System::interface(void *anyAudioInterface) const

@@ -154,15 +154,6 @@ public:  // Low-level driver interfaces: ---------------------------------------
     audiointerface_cd_t *cd() const;
 
     /**
-     * Iterate through the active interfaces of a given type, in descending priority
-     * order: the most important interface is visited first.
-     *
-     * @param type  Type of interface to process.
-     * @param func  Callback to make for each interface.
-     */
-    de::LoopResult forAllInterfaces(audiointerfacetype_t type, std::function<de::LoopResult (void *)> func) const;
-
-    /**
      * Prints a list of the selected, active interfaces to the log.
      */
     void printAllInterfaces() const;
