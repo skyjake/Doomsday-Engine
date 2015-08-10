@@ -90,6 +90,11 @@ void Sfx_Reset();
 void Sfx_AllowRefresh(dd_bool allow);
 
 /**
+ * Update channel and listener properties.
+ */
+void Sfx_Update();
+
+/**
  * Must be done before the map is changed.
  */
 void Sfx_MapChange();
@@ -97,11 +102,16 @@ void Sfx_MapChange();
 void Sfx_SetListener(struct mobj_s *mobj);
 
 /**
- * Periodical routines: channel updates, cache purge, cvar checks.
+ * Swaps between 2D and 3D sound modes. Called automatically by
+ * Sfx_StartFrame when cvar changes.
  */
-void Sfx_StartFrame();
+void Sfx_3DMode(dd_bool activate);
 
-void Sfx_EndFrame();
+/**
+ * Reconfigures the sample bits and rate. Called automatically by
+ * Sfx_StartFrame when changes occur.
+ */
+void Sfx_SampleFormat(int newBits, int newRate);
 
 /**
  * Called periodically by S_Ticker(). If the cache is too large, stopped

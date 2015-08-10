@@ -49,9 +49,6 @@
 #define SFX_MAX_CHANNELS        (256)
 #define SFX_LOWEST_PRIORITY     (-1000)
 
-void Sfx_3DMode(dd_bool activate);
-void Sfx_SampleFormat(int newBits, int newRate);
-
 dd_bool sfxAvail = false;
 
 int sfxMaxChannels = 16;
@@ -862,9 +859,6 @@ int Sfx_StartSound(sfxsample_t *sample, float volume, float freq, mobj_t *emitte
     return true;
 }
 
-/**
- * Update channel and listener properties.
- */
 void Sfx_Update()
 {
     // If the display player doesn't have a mobj, no positioning is done.
@@ -883,53 +877,6 @@ void Sfx_Update()
 
     // Update listener.
     Sfx_ListenerUpdate();
-}
-
-void Sfx_StartFrame()
-{
-    LOG_AS("Sfx_StartFrame");
-
-    static int old16Bit = false;
-    static int oldRate  = 11025;
-
-    if(!::sfxAvail) return;
-
-    // Tell the audio driver that the sound frame begins.
-    App_AudioSystem().interface(App_AudioSystem().sfx())->Event(SFXEV_BEGIN);
-
-    // Have there been changes to the cvar settings?
-    Sfx_3DMode(sfx3D);
-
-    // Check that the rate is valid.
-    if(::sfxSampleRate != 11025 && ::sfxSampleRate != 22050 && ::sfxSampleRate != 44100)
-    {
-        LOG_AUDIO_WARNING("\"sound-rate\" corrected to 11025 from invalid value (%i)") << ::sfxSampleRate;
-        sfxSampleRate = 11025;
-    }
-
-    // Do we need to change the sample format?
-    if(old16Bit != ::sfx16Bit || oldRate != ::sfxSampleRate)
-    {
-        Sfx_SampleFormat(::sfx16Bit ? 16 : 8, ::sfxSampleRate);
-        old16Bit = ::sfx16Bit;
-        oldRate  = ::sfxSampleRate;
-    }
-
-    // Should we purge the cache (to conserve memory)?
-    Sfx_PurgeCache();
-}
-
-void Sfx_EndFrame()
-{
-    if(!::sfxAvail) return;
-
-    if(!BusyMode_Active())
-    {
-        Sfx_Update();
-    }
-
-    // The sound frame ends.
-    App_AudioSystem().interface(App_AudioSystem().sfx())->Event(SFXEV_END);
 }
 
 /**
@@ -1133,10 +1080,6 @@ void Sfx_RecreateChannels(void)
     createChannels(sfx3D ? sfxDedicated2D : numChannels, sfxBits, sfxRate);
 }
 
-/**
- * Swaps between 2D and 3D sound modes. Called automatically by
- * Sfx_StartFrame when cvar changes.
- */
 void Sfx_3DMode(dd_bool activate)
 {
     static int old3DMode = false;
@@ -1155,10 +1098,6 @@ void Sfx_3DMode(dd_bool activate)
     }
 }
 
-/**
- * Reconfigures the sample bits and rate. Called automatically by
- * Sfx_StartFrame when changes occur.
- */
 void Sfx_SampleFormat(int newBits, int newRate)
 {
     if(sfxBits == newBits && sfxRate == newRate)

@@ -483,6 +483,58 @@ DENG2_PIMPL(System)
         return LoopContinue;
     }
 
+    /**
+     * Find the Base interface of the audio driver to which @a anyAudioInterface
+     * belongs.
+     *
+     * @param anyAudioInterface  Pointer to a SFX, Music, or CD interface.
+     *
+     * @return Audio interface, or @c nullptr if the none of the loaded drivers match.
+     */
+    audiodriver_t &getBaseInterface(void *anyAudioInterface) const
+    {
+        if(anyAudioInterface)
+        {
+            for(AudioDriver const &driver : drivers)
+            {
+                if((void *)&driver.iSfx()   == anyAudioInterface ||
+                   (void *)&driver.iMusic() == anyAudioInterface ||
+                   (void *)&driver.iCd()    == anyAudioInterface)
+                {
+                    return driver.iBase();
+                }
+            }
+        }
+        throw Error("audio::System::getBaseInterface", "Unknown audio interface");
+    }
+
+    audiointerfacetype_t interfaceType(void *anyAudioInterface) const
+    {
+        if(anyAudioInterface)
+        {
+            for(AudioDriver const &driver : drivers)
+            {
+                if((void *)&driver.iSfx()   == anyAudioInterface) return AUDIO_ISFX;
+                if((void *)&driver.iMusic() == anyAudioInterface) return AUDIO_IMUSIC;
+                if((void *)&driver.iCd()    == anyAudioInterface) return AUDIO_ICD;
+            }
+        }
+        return AUDIO_INONE;
+    }
+
+    String interfaceName(void *anyAudioInterface) const
+    {
+        if(anyAudioInterface)
+        {
+            for(AudioDriver const &driver : drivers)
+            {
+                String const name = driver.interfaceName(anyAudioInterface);
+                if(!name.isEmpty()) return name;
+            }
+        }
+        return "(invalid)";
+    }
+
     bool musAvail = false;              ///< @c true if at least one driver is initialized for music playback.
     bool musNeedBufFileSwitch = false;  ///< @c true= choose a new file name for the buffered playback file when asked. */
     String musCurrentSong;
@@ -522,11 +574,8 @@ DENG2_PIMPL(System)
     {
         forAllInterfaces(AUDIO_IMUSIC, [this, &prop, &ptr] (void *ifs)
         {
-            auto *iMusic = (audiointerface_music_t *) ifs;
-            if(audiodriver_t *base = self.interface(iMusic))
-            {
-                if(base->Set) base->Set(prop, ptr);
-            }
+            audiodriver_t &iBase = getBaseInterface(ifs);
+            if(iBase.Set) iBase.Set(prop, ptr);
             return LoopContinue;
         });
 
@@ -724,7 +773,7 @@ DENG2_PIMPL(System)
             else
             {
                 LOG_AUDIO_WARNING("Failed to initialize \"%s\" for music playback")
-                    << self.interfaceName(iMusic);
+                    << interfaceName(iMusic);
             }
             return LoopContinue;
         });
@@ -799,12 +848,12 @@ String System::description() const
         if(ifs.type == AUDIO_IMUSIC || ifs.type == AUDIO_ICD)
         {
             os << _E(Ta) _E(l) "  " << (ifs.type == AUDIO_IMUSIC ? "Music" : "CD") << ": "
-               << _E(.) _E(Tb) << interfaceName(ifs.i.any) << "\n";
+               << _E(.) _E(Tb) << d->interfaceName(ifs.i.any) << "\n";
         }
         else if(ifs.type == AUDIO_ISFX)
         {
             os << _E(Ta) _E(l) << "  SFX: " << _E(.) _E(Tb)
-               << interfaceName(ifs.i.sfx) << "\n";
+               << d->interfaceName(ifs.i.sfx) << "\n";
         }
     }
 #endif
@@ -836,8 +885,37 @@ void System::startFrame()
         setMusicVolume(::musVolume / 255.0f);
     }
 
-    // Update all channels (freq, 2D:pan,volume, 3D:position,velocity).
-    Sfx_StartFrame();
+    if(::sfxAvail)
+    {
+        // Update all channels (freq, 2D:pan,volume, 3D:position,velocity).
+
+        // Update the active interface.
+        d->getBaseInterface(sfx()).Event(SFXEV_BEGIN);
+
+        static int old16Bit = false;
+        static int oldRate  = 11025;
+
+        // Have there been changes to the cvar settings?
+        Sfx_3DMode(sfx3D);
+
+        // Check that the rate is valid.
+        if(::sfxSampleRate != 11025 && ::sfxSampleRate != 22050 && ::sfxSampleRate != 44100)
+        {
+            LOG_AUDIO_WARNING("\"sound-rate\" corrected to 11025 from invalid value (%i)") << ::sfxSampleRate;
+            sfxSampleRate = 11025;
+        }
+
+        // Do we need to change the sample format?
+        if(old16Bit != ::sfx16Bit || oldRate != ::sfxSampleRate)
+        {
+            Sfx_SampleFormat(::sfx16Bit ? 16 : 8, ::sfxSampleRate);
+            old16Bit = ::sfx16Bit;
+            oldRate  = ::sfxSampleRate;
+        }
+
+        // Should we purge the cache (to conserve memory)?
+        Sfx_PurgeCache();
+    }
 
     if(d->musAvail)
     {
@@ -859,7 +937,16 @@ void System::startFrame()
 void System::endFrame()
 {
 #ifdef __CLIENT__
-    Sfx_EndFrame();
+    if(::sfxAvail)
+    {
+        if(!BusyMode_Active())
+        {
+            Sfx_Update();
+        }
+
+        // Update the active interface.
+        d->getBaseInterface(sfx()).Event(SFXEV_END);
+    }
 #endif
 }
 
@@ -1121,50 +1208,6 @@ audiointerface_cd_t *System::cd() const
         return LoopAbort;
     });
     return found;
-}
-
-audiodriver_t *System::interface(void *anyAudioInterface) const
-{
-    if(anyAudioInterface)
-    {
-        for(AudioDriver const &driver : d->drivers)
-        {
-            if((void *)&driver.iSfx()   == anyAudioInterface ||
-               (void *)&driver.iMusic() == anyAudioInterface ||
-               (void *)&driver.iCd()    == anyAudioInterface)
-            {
-                return &driver.iBase();
-            }
-        }
-    }
-    return nullptr;
-}
-
-audiointerfacetype_t System::interfaceType(void *anyAudioInterface) const
-{
-    if(anyAudioInterface)
-    {
-        for(AudioDriver const &driver : d->drivers)
-        {
-            if((void *)&driver.iSfx()   == anyAudioInterface) return AUDIO_ISFX;
-            if((void *)&driver.iMusic() == anyAudioInterface) return AUDIO_IMUSIC;
-            if((void *)&driver.iCd()    == anyAudioInterface) return AUDIO_ICD;
-        }
-    }
-    return AUDIO_INONE;
-}
-
-String System::interfaceName(void *anyAudioInterface) const
-{
-    if(anyAudioInterface)
-    {
-        for(AudioDriver const &driver : d->drivers)
-        {
-            String const name = driver.interfaceName(anyAudioInterface);
-            if(!name.isEmpty()) return name;
-        }
-    }
-    return "(invalid)";
 }
 
 audiodriverid_t System::toDriverId(AudioDriver const *driver) const

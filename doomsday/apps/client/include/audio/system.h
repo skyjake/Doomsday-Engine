@@ -165,22 +165,6 @@ public:  // Low-level driver interfaces: ---------------------------------------
      */
     audiointerface_cd_t *cd() const;
 
-    /**
-     * Retrieves the Base interface of the audio driver to which @a anyAudioInterface
-     * belongs.
-     *
-     * @param anyAudioInterface  Pointer to a SFX, Music, or CD interface.
-     *                           See @ref sfx(), music(), cd().
-     *
-     * @return Audio driver interface, or @c nullptr if the none of the loaded drivers
-     * match.
-     */
-    audiodriver_t *interface(void *anyAudioInterface) const;
-
-    de::String interfaceName(void *anyAudioInterface) const;
-
-    audiointerfacetype_t interfaceType(void *anyAudioInterface) const;
-
 #endif  // __CLIENT__
 
 public:  /// @todo make private:
