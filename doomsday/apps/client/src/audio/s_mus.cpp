@@ -90,8 +90,6 @@ static String tryFindMusicFile(Record const &definition)
 {
     LOG_AS("tryFindMusicFile");
 
-    if(!::musAvail || !App_AudioSystem().musicIsAvailable()) return "";
-
     defn::Music const music(definition);
 
     de::Uri songUri(music.gets("path"), RC_NULL);
@@ -124,15 +122,10 @@ static String tryFindMusicFile(Record const &definition)
     return "";  // None found.
 }
 
-static dint playFileWithInterface(audiointerface_music_t *iMusic, String const &fileName, bool looped)
+static dint playFile(String const &virtualOrNativePath, bool looped)
 {
-    DENG2_ASSERT(iMusic);
-    if(!iMusic->PlayFile) return 0;
-    return iMusic->PlayFile(fileName.toUtf8().constData(), looped);
-}
+    DENG2_ASSERT(::musAvail && App_AudioSystem().musicIsAvailable());
 
-static dint playFile(char const *virtualOrNativePath, bool looped)
-{
     return App_AudioSystem().forAllInterfaces(AUDIO_IMUSIC, [&virtualOrNativePath, &looped] (void *ifs)
     {
         try
@@ -144,13 +137,22 @@ static dint playFile(char const *virtualOrNativePath, bool looped)
             std::unique_ptr<FileHandle> hndl(&App_FileSystem().openFile(path, "rb"));
             dsize const len = hndl->length();
 
-            if(!iMusic->Play || !iMusic->SongBuffer)
+            // Does this interface offer buffered playback?
+            if(iMusic->Play && iMusic->SongBuffer)
             {
-                // Music interface does not offer buffer playback.
-                // Write to disk and play from there.
-                String fileName = composeBufferFilename();
-                duint8 *buf     = (duint8 *)M_Malloc(len);
+                // Buffer the data using the driver's own facility.
+                hndl->read((duint8 *) iMusic->SongBuffer(len), len);
+                App_FileSystem().releaseFile(hndl->file());
 
+                return iMusic->Play(looped);
+            }
+            // Does this interface offer playback from a native file?
+            else if(iMusic->PlayFile)
+            {
+                // Write the data to disk and play from there.
+                String const fileName = composeBufferFilename();
+
+                duint8 *buf = (duint8 *)M_Malloc(len);
                 hndl->read(buf, len);
                 F_Dump(buf, len, fileName.toUtf8().constData());
                 M_Free(buf); buf = nullptr;
@@ -158,14 +160,12 @@ static dint playFile(char const *virtualOrNativePath, bool looped)
                 App_FileSystem().releaseFile(hndl->file());
 
                 // Music maestro, if you please!
-                return playFileWithInterface(iMusic, fileName, looped);
+                return iMusic->PlayFile(fileName.toUtf8().constData(), looped);
             }
-
-            // Music interface offers buffered playback. Use it.
-            hndl->read((duint8 *) iMusic->SongBuffer(len), len);
-            App_FileSystem().releaseFile(hndl->file());
-
-            return iMusic->Play(looped);
+            else
+            {
+                App_FileSystem().releaseFile(hndl->file());
+            }
         }
         catch(FS1::NotFoundError const &)
         {}  // Ignore this error.
@@ -179,8 +179,7 @@ static dint playFile(char const *virtualOrNativePath, bool looped)
  */
 static dint playLump(lumpnum_t lumpNum, bool looped = false, bool canPlayMUS = true)
 {
-    if(!App_AudioSystem().musicIsAvailable())
-        return 0;
+    DENG2_ASSERT(::musAvail && App_AudioSystem().musicIsAvailable());
 
     if(!App_FileSystem().nameIndex().hasLump(lumpNum))
         return 0;
@@ -203,7 +202,12 @@ static dint playLump(lumpnum_t lumpNum, bool looped = false, bool canPlayMUS = t
 
         return App_AudioSystem().forAllInterfaces(AUDIO_IMUSIC, [&srcFile, &looped] (void *ifs)
         {
-            return playFileWithInterface((audiointerface_music_t *) ifs, srcFile, looped);
+            auto *iMusic = (audiointerface_music_t *) ifs;
+            if(iMusic->PlayFile)
+            {
+                return iMusic->PlayFile(srcFile.toUtf8().constData(), looped);
+            }
+            return 0;  // Continue.
         });
     }
 
@@ -218,22 +222,25 @@ static dint playLump(lumpnum_t lumpNum, bool looped = false, bool canPlayMUS = t
             std::unique_ptr<FileHandle> hndl(&App_FileSystem().openLump(lump));
             dsize const length  = hndl->length();
             hndl->read((duint8 *) iMusic->SongBuffer(length), length);
-
             App_FileSystem().releaseFile(hndl->file());
 
             return iMusic->Play(looped);
         }
-        else
+        // Does this interface offer playback from a native file?
+        else if(iMusic->PlayFile)
         {
-            // Write this lump to disk and play from there.
-            String musicFile = composeBufferFilename();
-            if(!F_DumpFile(lump, musicFile.toUtf8().constData()))
+            // Write the data to disk and play from there.
+            String const fileName = composeBufferFilename();
+            if(!F_DumpFile(lump, fileName.toUtf8().constData()))
             {
                 // Failed to write the lump...
                 return 0;
             }
-            return playFileWithInterface(iMusic, musicFile, looped);
+
+            return iMusic->PlayFile(fileName.toUtf8().constData(), looped);
         }
+
+        return 0;  // Continue.
     });
 }
 
@@ -242,7 +249,11 @@ static dint playCDTrack(dint track, bool looped)
     return App_AudioSystem().forAllInterfaces(AUDIO_ICD, [&track, &looped] (void *ifs)
     {
         auto *iCD = (audiointerface_cd_t *) ifs;
-        return iCD->Play(track, looped);
+        if(iCD->Play)
+        {
+            return iCD->Play(track, looped);
+        }
+        return 0;  // Continue.
     });
 }
 
@@ -376,23 +387,23 @@ dint Mus_Start(Record const &definition, bool looped)
     ::currentSong = definition.gets("id");
 
     // Determine the music source, order preferences.
-    dint order[3];
-    order[0] = musPreference;
-    switch(musPreference)
+    dint source[3];
+    source[0] = ::musPreference;
+    switch(::musPreference)
     {
     case MUSP_CD:
-        order[1] = MUSP_EXT;
-        order[2] = MUSP_MUS;
+        source[1] = MUSP_EXT;
+        source[2] = MUSP_MUS;
         break;
 
     case MUSP_EXT:
-        order[1] = MUSP_MUS;
-        order[2] = MUSP_CD;
+        source[1] = MUSP_MUS;
+        source[2] = MUSP_CD;
         break;
 
     default: // MUSP_MUS
-        order[1] = MUSP_EXT;
-        order[2] = MUSP_CD;
+        source[1] = MUSP_EXT;
+        source[2] = MUSP_CD;
         break;
     }
 
@@ -401,7 +412,7 @@ dint Mus_Start(Record const &definition, bool looped)
     {
         bool canPlayMUS = true;
 
-        switch(order[i])
+        switch(source[i])
         {
         case MUSP_CD:
             if(App_AudioSystem().cd())
@@ -422,7 +433,7 @@ dint Mus_Start(Record const &definition, bool looped)
                     << definition.gets("id") << NativePath(filePath).pretty();
 
                 // Its an external file.
-                if(playFile(filePath.toUtf8().constData(), looped))
+                if(playFile(filePath, looped))
                     return true;
             }
 
@@ -432,11 +443,10 @@ dint Mus_Start(Record const &definition, bool looped)
             }  // Note: Intentionally falls through to MUSP_MUS.
 
         case MUSP_MUS:
-            if(App_AudioSystem().musicIsAvailable())
+            if(playLump(App_FileSystem().lumpNumForName(definition.gets("lumpName")),
+                        looped, canPlayMUS) == 1)
             {
-                lumpnum_t const lumpNum = App_FileSystem().lumpNumForName(definition.gets("lumpName"));
-                if(playLump(lumpNum, looped, canPlayMUS) == 1)
-                    return true;
+                return true;
             }
             break;
 
@@ -466,7 +476,7 @@ D_CMD(PlayMusic)
 
     LOG_AS("playmusic (Cmd)");
 
-    if(!::musAvail)
+    if(!::musAvail || !App_AudioSystem().musicIsAvailable())
     {
         LOGDEV_SCR_ERROR("Music subsystem is not available");
         return false;
