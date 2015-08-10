@@ -122,27 +122,25 @@ static String tryFindMusicFile(Record const &definition)
     return "";  // None found.
 }
 
-static dint playFile(String const &virtualOrNativePath, bool looped)
+static dint playFile(String const &virtualOrNativePath, bool looped = false)
 {
     DENG2_ASSERT(::musAvail && App_AudioSystem().musicIsAvailable());
-
-    return App_AudioSystem().forAllInterfaces(AUDIO_IMUSIC, [&virtualOrNativePath, &looped] (void *ifs)
+    try
     {
-        try
+        // Relative paths are relative to the native working directory.
+        String const path  = (NativePath::workPath() / NativePath(virtualOrNativePath).expand()).withSeparators('/');
+        std::unique_ptr<FileHandle> hndl(&App_FileSystem().openFile(path, "rb"));
+
+        auto didPlay = App_AudioSystem().forAllInterfaces(AUDIO_IMUSIC, [&hndl, &looped] (void *ifs)
         {
             auto *iMusic = (audiointerface_music_t *) ifs;
-
-            // Relative paths are relative to the native working directory.
-            String path  = (NativePath::workPath() / NativePath(virtualOrNativePath).expand()).withSeparators('/');
-            std::unique_ptr<FileHandle> hndl(&App_FileSystem().openFile(path, "rb"));
-            dsize const len = hndl->length();
 
             // Does this interface offer buffered playback?
             if(iMusic->Play && iMusic->SongBuffer)
             {
                 // Buffer the data using the driver's own facility.
+                dsize const len = hndl->length();
                 hndl->read((duint8 *) iMusic->SongBuffer(len), len);
-                App_FileSystem().releaseFile(hndl->file());
 
                 return iMusic->Play(looped);
             }
@@ -150,27 +148,25 @@ static dint playFile(String const &virtualOrNativePath, bool looped)
             else if(iMusic->PlayFile)
             {
                 // Write the data to disk and play from there.
-                String const fileName = composeBufferFilename();
+                String const bufPath = composeBufferFilename();
 
+                dsize len = hndl->length();
                 duint8 *buf = (duint8 *)M_Malloc(len);
                 hndl->read(buf, len);
-                F_Dump(buf, len, fileName.toUtf8().constData());
+                F_Dump(buf, len, bufPath.toUtf8().constData());
                 M_Free(buf); buf = nullptr;
 
-                App_FileSystem().releaseFile(hndl->file());
+                return iMusic->PlayFile(bufPath.toUtf8().constData(), looped);
+            }
+            return 0;  // Continue.
+        });
 
-                // Music maestro, if you please!
-                return iMusic->PlayFile(fileName.toUtf8().constData(), looped);
-            }
-            else
-            {
-                App_FileSystem().releaseFile(hndl->file());
-            }
-        }
-        catch(FS1::NotFoundError const &)
-        {}  // Ignore this error.
-        return 0;  // Continue
-    });
+        App_FileSystem().releaseFile(hndl->file());
+        return didPlay;
+    }
+    catch(FS1::NotFoundError const &)
+    {}  // Ignore this error.
+    return 0;  // Continue.
 }
 
 /**
