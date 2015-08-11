@@ -46,6 +46,8 @@
 #  include "ui/ui_main.h"
 #endif
 
+using namespace de;
+
 #define SFX_MAX_CHANNELS        (256)
 #define SFX_LOWEST_PRIORITY     (-1000)
 
@@ -693,7 +695,7 @@ int Sfx_StartSound(sfxsample_t *sample, float volume, float freq, mobj_t *emitte
     }
 
     // Hit count tells how many times the cached sound has been used.
-    Sfx_CacheHit(sample->id);
+    App_AudioSystem().sfxSampleCache().hit(sample->id);
 
     /*
      * Pick a channel for the sound. We will do our best to play the sound,
@@ -862,15 +864,15 @@ int Sfx_StartSound(sfxsample_t *sample, float volume, float freq, mobj_t *emitte
 void Sfx_Update()
 {
     // If the display player doesn't have a mobj, no positioning is done.
-    listener = S_GetListenerMobj();
+    ::listener = S_GetListenerMobj();
 
     // Update channels.
-    for(int i = 0; i < numChannels; ++i)
+    for(dint i = 0; i < ::numChannels; ++i)
     {
-        sfxchannel_t &ch = channels[i];
+        sfxchannel_t &ch = ::channels[i];
 
         if(!ch.buffer || !(ch.buffer->flags & SFXBF_PLAYING))
-            continue; // Not playing sounds on this...
+            continue;  // Not playing sounds on this...
 
         Sfx_ChannelUpdate(&ch);
     }
@@ -882,24 +884,25 @@ void Sfx_Update()
 /**
  * Creates the buffers for the channels.
  *
- * @param num2D     Number of 2D the rest will be 3D.
- * @param bits      Bits per sample.
- * @param rate      Sample rate (Hz).
+ * @param num2D  Number of 2D the rest will be 3D.
+ * @param bits   Bits per sample.
+ * @param rate   Sample rate (Hz).
  */
-static void createChannels(int num2D, int bits, int rate)
+static void createChannels(dint num2D, dint bits, dint rate)
 {
     LOG_AS("Sfx_CreateChannels");
 
     // Change the primary buffer's format to match the channel format.
-    float parm[2] = { float(bits), float(rate) };
+    dfloat parm[2] = { dfloat(bits), dfloat(rate) };
     App_AudioSystem().sfx()->Listenerv(SFXLP_PRIMARY_FORMAT, parm);
 
     // Try to create a buffer for each channel.
-    sfxchannel_t *ch = channels;
-    for(int i = 0; i < numChannels; ++i, ch++)
+    for(dint i = 0; i < ::numChannels; ++i)
     {
-        ch->buffer = App_AudioSystem().sfx()->Create(num2D-- > 0 ? 0 : SFXBF_3D, bits, rate);
-        if(!ch->buffer)
+        sfxchannel_t &ch = ::channels[i];
+
+        ch.buffer = App_AudioSystem().sfx()->Create(num2D-- > 0 ? 0 : SFXBF_3D, bits, rate);
+        if(!ch.buffer)
         {
             LOG_AUDIO_WARNING("Failed to create buffer for #%i") << i;
             continue;
@@ -913,51 +916,47 @@ static void createChannels(int num2D, int bits, int rate)
 void Sfx_DestroyChannels()
 {
     BEGIN_COP;
-    for(int i = 0; i < numChannels; ++i)
+    for(dint i = 0; i < ::numChannels; ++i)
     {
-        Sfx_ChannelStop(channels + i);
+        sfxchannel_t &ch = ::channels[i];
 
-        if(channels[i].buffer)
-            App_AudioSystem().sfx()->Destroy(channels[i].buffer);
-        channels[i].buffer = 0;
+        Sfx_ChannelStop(&ch);
+        if(ch.buffer)
+        {
+            App_AudioSystem().sfx()->Destroy(ch.buffer);
+        }
+        ch.buffer = nullptr;
     }
     END_COP;
 }
 
 void Sfx_InitChannels()
 {
-    numChannels = sfxMaxChannels;
+    ::numChannels = ::sfxMaxChannels;
 
     // The -sfxchan option can be used to change the number of channels.
     if(CommandLine_CheckWith("-sfxchan", 1))
     {
-        numChannels = strtol(CommandLine_Next(), 0, 0);
-        if(numChannels < 1)
-            numChannels = 1;
-        if(numChannels > SFX_MAX_CHANNELS)
-            numChannels = SFX_MAX_CHANNELS;
-
-        LOG_AUDIO_NOTE("Initialized %i sound effect channels") << numChannels;
+        ::numChannels = de::clamp(1, String(CommandLine_Next()).toInt(), SFX_MAX_CHANNELS);
+        LOG_AUDIO_NOTE("Initialized %i sound effect channels") << ::numChannels;
     }
 
     // Allocate and init the channels.
-    channels = (sfxchannel_t *) Z_Calloc(sizeof(*channels) * numChannels, PU_APPSTATIC, 0);
+    ::channels = (sfxchannel_t *) Z_Calloc(sizeof(*::channels) * ::numChannels, PU_APPSTATIC, 0);
 
     // Create channels according to the current mode.
-    createChannels(sfx3D? sfxDedicated2D : numChannels, sfxBits, sfxRate);
+    createChannels(::sfx3D ? ::sfxDedicated2D : ::numChannels, ::sfxBits, ::sfxRate);
 }
 
 /**
  * Frees all memory allocated for the channels.
  */
-void Sfx_ShutdownChannels(void)
+void Sfx_ShutdownChannels()
 {
     Sfx_DestroyChannels();
 
-    if(channels)
-        Z_Free(channels);
-    channels = NULL;
-    numChannels = 0;
+    Z_Free(::channels); ::channels = nullptr;
+    ::numChannels = 0;
 }
 
 /**
@@ -968,21 +967,27 @@ void Sfx_StartRefresh()
 {
     LOG_AS("Sfx_StartRefresh");
 
-    int disableRefresh = false;
+    dint disableRefresh = false;
 
-    refreshing = false;
-    allowRefresh = true;
+    ::refreshing   = false;
+    ::allowRefresh = true;
 
-    if(!App_AudioSystem().sfx()) goto noRefresh; // Nothing to refresh.
+    // Nothing to refresh?
+    if(!App_AudioSystem().sfx())
+        goto noRefresh;
 
-    if(App_AudioSystem().sfx()->Getv) App_AudioSystem().sfx()->Getv(SFXIP_DISABLE_CHANNEL_REFRESH, &disableRefresh);
+    if(App_AudioSystem().sfx()->Getv)
+    {
+        App_AudioSystem().sfx()->Getv(SFXIP_DISABLE_CHANNEL_REFRESH, &disableRefresh);
+    }
+
     if(!disableRefresh)
     {
         // Start the refresh thread. It will run until the Sfx module is shut down.
-        refreshHandle = Sys_StartThread(Sfx_ChannelRefreshThread, NULL);
+        refreshHandle = Sys_StartThread(Sfx_ChannelRefreshThread, nullptr);
         if(!refreshHandle)
         {
-            throw de::Error("Sfx_StartRefresh", "Failed to start refresh thread.");
+            throw Error("Sfx_StartRefresh", "Failed to start refresh thread");
         }
     }
     else
@@ -995,7 +1000,7 @@ noRefresh:
 bool Sfx_Init()
 {
     // Already initialized?
-    if(sfxAvail) return true;
+    if(::sfxAvail) return true;
 
     // Check if sound has been disabled with a command line option.
     if(CommandLine_Exists("-nosfx"))
@@ -1018,11 +1023,11 @@ bool Sfx_Init()
     // The audio driver is working, let's create the channels.
     Sfx_InitChannels();
 
-    // Init the sample cache.
-    Sfx_InitCache();
+    // (Re)Init the sample cache.
+    App_AudioSystem().sfxSampleCache().clear();
 
     // The Sfx module is now available.
-    sfxAvail = true;
+    ::sfxAvail = true;
 
     // Initialize reverb effects to off.
     Sfx_ListenerNoReverb();
@@ -1032,113 +1037,108 @@ bool Sfx_Init()
     return true;
 }
 
-void Sfx_Shutdown(void)
+void Sfx_Shutdown()
 {
-    if(!sfxAvail)
-        return; // Not initialized.
+    // Not initialized?
+    if(!::sfxAvail) return;
 
     // These will stop further refreshing.
-    sfxAvail = false;
-    allowRefresh = false;
+    ::sfxAvail     = false;
+    ::allowRefresh = false;
 
     if(refreshHandle)
     {
         // Wait for the sfx refresh thread to stop.
-        Sys_WaitThread(refreshHandle, 2000, NULL);
-        refreshHandle = 0;
+        Sys_WaitThread(refreshHandle, 2000, nullptr);
+        refreshHandle = nullptr;
     }
 
-    // Destroy the sample cache.
-    Sfx_ShutdownCache();
+    // Clear the sample cache.
+    App_AudioSystem().sfxSampleCache().clear();
 
     // Destroy channels.
     Sfx_ShutdownChannels();
 }
 
-void Sfx_Reset(void)
+void Sfx_Reset()
 {
-    if(!sfxAvail) return;
+    if(!::sfxAvail) return;
 
-    listenerCluster = 0;
+    ::listenerCluster = nullptr;
 
     // Stop all channels.
-    for(int i = 0; i < numChannels; ++i)
+    for(dint i = 0; i < ::numChannels; ++i)
     {
-        Sfx_ChannelStop(&channels[i]);
+        Sfx_ChannelStop(&::channels[i]);
     }
 
-    // Free all samples.
-    Sfx_ShutdownCache();
+    // Clear the sample cache.
+    App_AudioSystem().sfxSampleCache().clear();
 }
 
 /**
  * Destroys all channels and creates them again.
  */
-void Sfx_RecreateChannels(void)
+void Sfx_RecreateChannels()
 {
     Sfx_DestroyChannels();
-    createChannels(sfx3D ? sfxDedicated2D : numChannels, sfxBits, sfxRate);
+    createChannels(::sfx3D ? ::sfxDedicated2D : ::numChannels, ::sfxBits, ::sfxRate);
 }
 
 void Sfx_3DMode(dd_bool activate)
 {
-    static int old3DMode = false;
+    static dint old3DMode = false;
 
     if(old3DMode == activate)
         return; // No change; do nothing.
 
-    sfx3D = old3DMode = activate;
+    ::sfx3D = old3DMode = activate;
     // To make the change effective, re-create all channels.
     Sfx_RecreateChannels();
 
     // If going to 2D, make sure the reverb is off.
-    if(!sfx3D)
+    if(!::sfx3D)
     {
         Sfx_ListenerNoReverb();
     }
 }
 
-void Sfx_SampleFormat(int newBits, int newRate)
+void Sfx_SampleFormat(dint newBits, dint newRate)
 {
-    if(sfxBits == newBits && sfxRate == newRate)
-        return; // No change; do nothing.
+    if(::sfxBits == newBits && ::sfxRate == newRate)
+        return;  // No change; do nothing.
 
     // Set the new buffer format.
-    sfxBits = newBits;
-    sfxRate = newRate;
+    ::sfxBits = newBits;
+    ::sfxRate = newRate;
     Sfx_RecreateChannels();
 
     // The cache just became useless, clear it.
-    Sfx_ShutdownCache();
+    App_AudioSystem().sfxSampleCache().clear();
 }
 
-void Sfx_MapChange(void)
+void Sfx_MapChange()
 {
-    sfxchannel_t *ch = channels;
-    for(int i = 0; i < numChannels; ++i, ch++)
+    for(dint i = 0; i < numChannels; ++i)
     {
-        if(ch->emitter)
+        sfxchannel_t &ch = channels[i];
+        if(ch.emitter)
         {
             // Mobjs are about to be destroyed.
-            ch->emitter = 0;
+            ch.emitter = nullptr;
 
             // Stop all channels with an origin.
-            Sfx_ChannelStop(ch);
+            Sfx_ChannelStop(&ch);
         }
     }
 
     // Sectors, too, for that matter.
-    listenerCluster = 0;
+    listenerCluster = nullptr;
 }
 
-void Sfx_DebugInfo(void)
+void Sfx_DebugInfo()
 {
 #ifdef __CLIENT__
-    int i, lh;
-    sfxchannel_t* ch;
-    char buf[200];
-    uint cachesize, ccnt;
-
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
@@ -1148,7 +1148,7 @@ void Sfx_DebugInfo(void)
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(1, 1, 0, 1);
 
-    lh = FR_SingleLineHeight("Q");
+    dint const lh = FR_SingleLineHeight("Q");
     if(!sfxAvail)
     {
         FR_DrawTextXY("Sfx disabled", 0, 0);
@@ -1159,16 +1159,22 @@ void Sfx_DebugInfo(void)
     if(refMonitor)
         FR_DrawTextXY("!", 0, 0);
 
+    char buf[200];
+
     // Sample cache information.
-    Sfx_GetCacheInfo(&cachesize, &ccnt);
+    duint cachesize, ccnt;
+    App_AudioSystem().sfxSampleCache().info(&cachesize, &ccnt);
     sprintf(buf, "Cached:%i (%i)", cachesize, ccnt);
+
     FR_SetColor(1, 1, 1);
     FR_DrawTextXY(buf, 10, 0);
 
     // Print a line of info about each channel.
-    for(i = 0, ch = channels; i < numChannels; ++i, ch++)
+    for(dint i = 0; i < numChannels; ++i)
     {
-        if(ch->buffer && (ch->buffer->flags & SFXBF_PLAYING))
+        sfxchannel_t &ch = channels[i];
+
+        if(ch.buffer && (ch.buffer->flags & SFXBF_PLAYING))
         {
             FR_SetColor(1, 1, 1);
         }
@@ -1178,26 +1184,27 @@ void Sfx_DebugInfo(void)
         }
 
         sprintf(buf, "%02i: %c%c%c v=%3.1f f=%3.3f st=%i et=%u mobj=%i", i,
-                !(ch->flags & SFXCF_NO_ORIGIN) ? 'O' : '.',
-                !(ch->flags & SFXCF_NO_ATTENUATION) ? 'A' : '.',
-                ch->emitter ? 'E' : '.', ch->volume, ch->frequency,
-                ch->startTime, ch->buffer ? ch->buffer->endTime : 0,
-                ch->emitter? ch->emitter->thinker.id : 0);
+                !(ch.flags & SFXCF_NO_ORIGIN) ? 'O' : '.',
+                !(ch.flags & SFXCF_NO_ATTENUATION) ? 'A' : '.',
+                ch.emitter ? 'E' : '.',
+                ch.volume, ch.frequency, ch.startTime,
+                ch.buffer  ? ch.buffer->endTime : 0,
+                ch.emitter ? ch.emitter->thinker.id : 0);
         FR_DrawTextXY(buf, 5, lh * (1 + i * 2));
 
-        if(!ch->buffer) continue;
+        if(!ch.buffer) continue;
 
         sprintf(buf,
                 "    %c%c%c%c id=%03i/%-8s ln=%05i b=%i rt=%2i bs=%05i "
-                "(C%05i/W%05i)", (ch->buffer->flags & SFXBF_3D) ? '3' : '.',
-                (ch->buffer->flags & SFXBF_PLAYING) ? 'P' : '.',
-                (ch->buffer->flags & SFXBF_REPEAT) ? 'R' : '.',
-                (ch->buffer->flags & SFXBF_RELOAD) ? 'L' : '.',
-                ch->buffer->sample ? ch->buffer->sample->id : 0,
-                ch->buffer->sample ? defs.sounds[ch->buffer->sample->id].
-                id : "", ch->buffer->sample ? ch->buffer->sample->size : 0,
-                ch->buffer->bytes, ch->buffer->rate / 1000, ch->buffer->length,
-                ch->buffer->cursor, ch->buffer->written);
+                "(C%05i/W%05i)", (ch.buffer->flags & SFXBF_3D) ? '3' : '.',
+                (ch.buffer->flags & SFXBF_PLAYING) ? 'P' : '.',
+                (ch.buffer->flags & SFXBF_REPEAT) ? 'R' : '.',
+                (ch.buffer->flags & SFXBF_RELOAD) ? 'L' : '.',
+                ch.buffer->sample ? ch.buffer->sample->id : 0,
+                ch.buffer->sample ? defs.sounds[ch.buffer->sample->id].
+                id : "", ch.buffer->sample ? ch.buffer->sample->size : 0,
+                ch.buffer->bytes, ch.buffer->rate / 1000, ch.buffer->length,
+                ch.buffer->cursor, ch.buffer->written);
         FR_DrawTextXY(buf, 5, lh * (2 + i * 2));
     }
 

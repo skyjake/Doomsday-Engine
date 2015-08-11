@@ -30,7 +30,6 @@
 #  include "server/sv_sound.h"
 #endif
 
-#include "audio/s_cache.h"
 #include "audio/s_sfx.h"
 #ifdef __CLIENT__
 #  include "audio/m_mus2midi.h"
@@ -177,6 +176,9 @@ static String tryFindMusicFile(Record const &definition)
 
 DENG2_PIMPL(System)
 , DENG2_OBSERVES(App, GameUnload)
+#ifdef __CLIENT__
+, DENG2_OBSERVES(SfxSampleCache, SampleRemove)
+#endif
 {
 #ifdef __CLIENT__
     AudioDriver drivers[AUDIODRIVER_COUNT];
@@ -542,14 +544,23 @@ DENG2_PIMPL(System)
 
 #endif  // __CLIENT__
 
+    SfxSampleCache sfxSampleCache;  ///< @todo should be __CLIENT__ only.
+
     Instance(Public *i) : Base(i)
     {
         theAudioSystem = thisPublic;
 
         App::app().audienceForGameUnload() += this;
+#ifdef __CLIENT__
+        sfxSampleCache.audienceForSampleRemove() += this;
+#endif
     }
+
     ~Instance()
     {
+#ifdef __CLIENT__
+        sfxSampleCache.audienceForSampleRemove() -= this;
+#endif
         App::app().audienceForGameUnload() -= this;
 
         theAudioSystem = nullptr;
@@ -804,6 +815,46 @@ DENG2_PIMPL(System)
             return LoopContinue;
         });
     }
+
+    void updateMusicVolumeIfChanged()
+    {
+        static dint oldMusVolume = -1;
+        if(::musVolume != oldMusVolume)
+        {
+            oldMusVolume = ::musVolume;
+            self.setMusicVolume(::musVolume / 255.0f);
+        }
+    }
+
+    void updateSfxSampleRateIfChanged()
+    {
+        static dint old16Bit = false;
+        static dint oldRate  = 11025;
+
+        // Ensure the rate is valid.
+        if(::sfxSampleRate != 11025 && ::sfxSampleRate != 22050 && ::sfxSampleRate != 44100)
+        {
+            LOG_AUDIO_WARNING("\"sound-rate\" corrected to 11025 from invalid value (%i)") << ::sfxSampleRate;
+            ::sfxSampleRate = 11025;
+        }
+
+        // Do we need to change the sample format?
+        if(old16Bit != ::sfx16Bit || oldRate != ::sfxSampleRate)
+        {
+            Sfx_SampleFormat(::sfx16Bit ? 16 : 8, ::sfxSampleRate);  // recreate channels; clear sample cache.
+            old16Bit = ::sfx16Bit;
+            oldRate  = ::sfxSampleRate;
+        }
+    }
+#endif
+
+#ifdef __CLIENT__
+    void sfxSampleCacheAboutToRemove(sfxsample_t const &sample)
+    {
+        // Reset all channels loaded with the sample data and stop all sounds using
+        // this sample (the sample data will be gone soon).
+        Sfx_UnloadSoundID(sample.id);
+    }
 #endif
 
     void aboutToUnloadGame(game::Game const &)
@@ -877,44 +928,21 @@ void System::reset()
 void System::startFrame()
 {
 #ifdef __CLIENT__
-    static dint oldMusVolume = -1;
+    d->updateMusicVolumeIfChanged();
 
-    if(::musVolume != oldMusVolume)
-    {
-        oldMusVolume = ::musVolume;
-        setMusicVolume(::musVolume / 255.0f);
-    }
-
-    if(::sfxAvail)
+    if(sfxIsAvailable())
     {
         // Update all channels (freq, 2D:pan,volume, 3D:position,velocity).
 
         // Update the active interface.
         d->getBaseInterface(sfx()).Event(SFXEV_BEGIN);
 
-        static int old16Bit = false;
-        static int oldRate  = 11025;
-
         // Have there been changes to the cvar settings?
         Sfx_3DMode(sfx3D);
-
-        // Check that the rate is valid.
-        if(::sfxSampleRate != 11025 && ::sfxSampleRate != 22050 && ::sfxSampleRate != 44100)
-        {
-            LOG_AUDIO_WARNING("\"sound-rate\" corrected to 11025 from invalid value (%i)") << ::sfxSampleRate;
-            sfxSampleRate = 11025;
-        }
-
-        // Do we need to change the sample format?
-        if(old16Bit != ::sfx16Bit || oldRate != ::sfxSampleRate)
-        {
-            Sfx_SampleFormat(::sfx16Bit ? 16 : 8, ::sfxSampleRate);
-            old16Bit = ::sfx16Bit;
-            oldRate  = ::sfxSampleRate;
-        }
+        d->updateSfxSampleRateIfChanged();
 
         // Should we purge the cache (to conserve memory)?
-        Sfx_PurgeCache();
+        d->sfxSampleCache.maybeRunPurge();
     }
 
     if(d->musAvail)
@@ -937,7 +965,7 @@ void System::startFrame()
 void System::endFrame()
 {
 #ifdef __CLIENT__
-    if(::sfxAvail)
+    if(sfxIsAvailable())
     {
         if(!BusyMode_Active())
         {
@@ -950,11 +978,33 @@ void System::endFrame()
 #endif
 }
 
+/**
+ * Cache the sound sample associated with @a id if necessary and return the length
+ * of the sound sample (in milliseconds). If the sample could not be cached then
+ * @c 0 is returned.
+ *
+ * @param id  Sound sample identifier.
+ * @return  Length of the associated sound sample if cached; otherwise @c 0.
+ */
+static duint maybeCacheSampleAndReturnLength(dint id)
+{
+    DENG2_ASSERT(theAudioSystem != nullptr);
+    if(sfxsample_t *sample = theAudioSystem->sfxSampleCache().cache(id & ~DDSF_FLAG_MASK))
+    {
+        return (1000 * sample->numSamples) / sample->rate;
+    }
+    return 0;
+}
+
 void System::initPlayback()
 {
     LOG_AS("audio::System");
 
-    Sfx_Logical_SetSampleLengthCallback(Sfx_GetSoundLength);
+    /// @todo Why does the Server cache sound samples and/or care to know the length
+    /// of the samples? It is entirely possible that the Client is using a different
+    /// set of samples so using this information on server side (for scheduling of
+    /// remote playback events?) is not logical. -ds
+    Sfx_Logical_SetSampleLengthCallback(maybeCacheSampleAndReturnLength);
 
     CommandLine &cmdLine = App::commandLine();
     if(cmdLine.has("-nosound") || cmdLine.has("-noaudio"))
@@ -1186,6 +1236,21 @@ void System::updateMusicSoundFont()
     d->setMusicProperty(AUDIOP_SOUNDFONT_FILENAME, path.expand().toString().toLatin1().constData());
 }
 
+bool System::mustUpsampleToSfxRate() const
+{
+    dint anyRateAccepted = 0;
+    if(sfx()->Getv)
+    {
+        sfx()->Getv(SFXIP_ANY_SAMPLE_RATE_ACCEPTED, &anyRateAccepted);
+    }
+    return (anyRateAccepted ? false : true);
+}
+
+bool System::sfxIsAvailable() const
+{
+    return sfxAvail;
+}
+
 audiointerface_sfx_generic_t *System::sfx() const
 {
     // The primary interface is the first one.
@@ -1219,6 +1284,11 @@ audiodriverid_t System::toDriverId(AudioDriver const *driver) const
     return AUDIOD_INVALID;
 }
 #endif
+
+SfxSampleCache &System::sfxSampleCache() const
+{
+    return d->sfxSampleCache;
+}
 
 void System::aboutToUnloadMap()
 {
@@ -1413,7 +1483,7 @@ void System::consoleRegister()  // static
 
 }  // namespace audio
 
-// Sound Effects: ---------------------------------------------------------------
+// Sound Effects: -------------------------------------------------------------------
 
 mobj_t *S_GetListenerMobj()
 {
@@ -1499,10 +1569,10 @@ dint S_LocalSoundAtVolumeFrom(dint soundIdAndFlags, mobj_t *origin, coord_t *poi
     }
 
     // Load the sample.
-    sfxsample_t *sample = Sfx_Cache(soundId);
+    sfxsample_t *sample = App_AudioSystem().sfxSampleCache().cache(soundId);
     if(!sample)
     {
-        if(sfxAvail)
+        if(App_AudioSystem().sfxIsAvailable())
         {
             LOG_AUDIO_VERBOSE("S_LocalSoundAtVolumeFrom: Caching of sound %i failed")
                     << soundId;
@@ -1687,7 +1757,7 @@ dint S_IsPlaying(dint soundID, mobj_t *emitter)
     return Sfx_IsPlaying(soundID, emitter);
 }
 
-// Music: -----------------------------------------------------------------------
+// Music: ---------------------------------------------------------------------------
 
 void Mus_SetVolume(dfloat newVolume)
 {

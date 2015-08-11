@@ -24,6 +24,7 @@
 #ifdef __CLIENT__
 #  include "audio/audiodriver.h"
 #endif
+#include "audio/s_cache.h"   // remove me
 #include "def_main.h"        // sfxinfo_t
 #include "world/p_object.h"  // mobj_t
 #ifdef __CLIENT__
@@ -102,7 +103,7 @@ public:  // Music playback: ----------------------------------------------------
     static de::String musicSourceAsText(MusicSource source);
 
     /**
-     * Determines if one or more @em music playback interface is available.
+     * Determines if a @em music playback interface is available.
      */
     bool musicIsAvailable() const;
 
@@ -148,6 +149,21 @@ public:  // Music playback: ----------------------------------------------------
 
     void updateMusicSoundFont();
 
+public:  // Sound effect playback: ---------------------------------------------------
+
+    /**
+     * Determines if a @em sfx playback interface is available.
+     */
+    bool sfxIsAvailable() const;
+
+    /**
+     * Determines whether the active @em SFX interface expects all samples to use the
+     * same sampler rate.
+     *
+     * @return  @c true if resampling is required; otherwise @c false.
+     */
+    bool mustUpsampleToSfxRate() const;
+
 public:  // Low-level driver interfaces: ---------------------------------------------
 
     /**
@@ -174,6 +190,11 @@ public:  /// @todo make private:
     void aboutToUnloadMap();
     void worldMapChanged();
 
+    /**
+     * Provides mutable access to the sound sample cache (waveforms).
+     */
+    SfxSampleCache &sfxSampleCache() const;
+
 #ifdef __CLIENT__
     /**
      * Lookup the unique identifier associated with the given audio @a driver.
@@ -188,7 +209,7 @@ private:
 
 }  // namespace audio
 
-// Sound effects: --------------------------------------------------------------
+// Sound effects: -------------------------------------------------------------------
 
 extern int soundMinDist, soundMaxDist;
 extern int sfxVolume, musVolume;
@@ -230,7 +251,7 @@ dd_bool S_IsRepeating(int idFlags);
  */
 mobj_t *S_GetListenerMobj();
 
-// Music: ----------------------------------------------------------------------
+// Music: ---------------------------------------------------------------------------
 
 int Mus_Start(de::Record const &definition, bool looped);
 int Mus_StartLump(lumpnum_t lumpNum, bool looped);

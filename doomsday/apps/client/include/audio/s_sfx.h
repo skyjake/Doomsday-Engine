@@ -1,7 +1,7 @@
 /** @file s_sfx.h  Sound Effects
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -113,12 +113,6 @@ void Sfx_3DMode(dd_bool activate);
  */
 void Sfx_SampleFormat(int newBits, int newRate);
 
-/**
- * Called periodically by S_Ticker(). If the cache is too large, stopped
- * samples with the lowest hitcount will be uncached.
- */
-void Sfx_PurgeCache();
-
 void Sfx_RefreshChannels();
 
 /**
@@ -163,9 +157,18 @@ int Sfx_StopSoundWithLowerPriority(int id, struct mobj_s *emitter, ddboolean_t b
 void Sfx_StopSoundGroup(int group, struct mobj_s *emitter);
 
 /**
- * @return  The number of channels the sound is playing on.
+ * Returns the total number of sound channels currently playing a/the sound sample
+ * associated with the given sound @a id.
  */
 int Sfx_CountPlaying(int id);
+
+/**
+ * Returns @a true if one or more sound channels is currently playing a/the sound
+ * sample associated with the given sound @a id.
+ */
+inline bool Sfx_IsPlaying(int id) {
+    return Sfx_CountPlaying(id) > 0;
+}
 
 /**
  * The specified sample will soon no longer exist. All channel buffers

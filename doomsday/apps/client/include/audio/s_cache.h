@@ -1,14 +1,8 @@
-/** @file s_cache.h Sound Sample Cache
+/** @file s_cache.h  Sound sample cache.
+ * @ingroup audio
  *
- * The data is stored using M_Malloc().
- *
- * To play a sound:
- *  1) Figure out the ID of the sound.
- *  2) Call Sfx_Cache() to get a sfxsample_t.
- *  3) Pass the sfxsample_t to Sfx_StartSound().
-
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -24,40 +18,101 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_SOUND_CACHE_H
-#define LIBDENG_SOUND_CACHE_H
+#ifndef AUDIO_SFXSAMPLECACHE_H
+#define AUDIO_SFXSAMPLECACHE_H
 
-#include "api_audiod_sfx.h"
+#include "dd_share.h"  // DDSF_FLAG_MASK remove me
+#include "api_audiod_sfx.h"  // sfxsample_t
+#include <de/Observers>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void Sfx_InitCache(void);
-
-void Sfx_ShutdownCache(void);
-
+namespace audio {
 
 /**
- * @return  Ptr to the cached copy of the sample (give this ptr to
- *          Sfx_StartSound(); otherwise @c 0 if invalid.
+ * Data cache for sfxsample_t.
+ *
+ * To play a sound:
+ *  1) Figure out the ID of the sound.
+ *  2) Call @ref cache() to get a sfxsample_t.
+ *  3) Pass the sfxsample_t to Sfx_StartSound().
+ *
+ * @todo Use de::WaveformBank instead. -ds
  */
-sfxsample_t *Sfx_Cache(int id);
+class SfxSampleCache
+{
+public:
+    /// Notified when a sound sample is about to be removed from the cache.
+    DENG2_DEFINE_AUDIENCE2(SampleRemove, void sfxSampleCacheAboutToRemove(sfxsample_t const &sample))
 
-void Sfx_CacheHit(int id);
+    struct CacheItem
+    {
+        CacheItem *next, *prev;
 
-/**
- * @return  The length of the sound (in milliseconds).
- */
-uint Sfx_GetSoundLength(int id);
+        int hits;            ///< Number of cache hits.
+        int lastUsed;        ///< Tic the sample was last hit.
+        sfxsample_t sample;  ///< The cached sample data.
 
-/**
- * @return  Number of bytes and samples cached.
- */
-void Sfx_GetCacheInfo(uint *cacheBytes, uint *sampleCount);
+        CacheItem();
+        ~CacheItem();
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
+        /**
+         * Register a cache hit and remember the current tic.
+         */
+        void hit();
 
-#endif /* LIBDENG_SOUND_CACHE_H */
+        /**
+         * Replace the cached sample data with a copy of @a newSample.
+         */
+        void replaceSample(sfxsample_t &newSample);
+    };
+
+public:
+    /**
+     * Construct a new (empty) sound sample cache.
+     */
+    SfxSampleCache();
+
+    /**
+     * Call this to clear all sound samples from the cache.
+     */
+    void clear();
+
+    /**
+     * Call this periodically to perform a cache purge. If the cache is too large,
+     * stopped samples with the lowest hitcount will be uncached.
+     */
+    void maybeRunPurge();
+
+    /**
+     * Lookup a cached copy of the sound sample associated with @a id. (Give this
+     * ptr to @ref Sfx_StartSound()).
+     *
+     * @param id  Sound sample identifier.
+     * @return  Associated sfxsample_t if found; otherwise @c nullptr.
+     */
+    sfxsample_t *cache(int id);
+
+    /**
+     * Register a cache hit on the sound sample associated with @a id.
+     *
+     * Hits keep count of how many times the cached sound has been played. The purger
+     * will remove samples with the lowest hitcount first.
+     *
+     * @param id  Sound sample identifier.
+     */
+    void hit(int id);
+
+    /**
+     * Returns cache usage info (for debug).
+     *
+     * @param cacheBytes   Total number of bytes used is written here.
+     * @param sampleCount  Total number of cached samples is written here.
+     */
+    void info(uint *cacheBytes, uint *sampleCount);
+
+private:
+    DENG2_PRIVATE(d)
+};
+
+}  // namespace audio
+
+#endif  // AUDIO_SFXSAMPLECACHE_H
