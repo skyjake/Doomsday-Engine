@@ -25,7 +25,7 @@
 #include "api_console.h"
 #include "edit_bias.h"
 
-#include "audio/s_sfx.h"
+#include "audio/sfxchannel.h"  // debug visual
 #include "network/net_main.h"
 #include "gl/gl_main.h"
 

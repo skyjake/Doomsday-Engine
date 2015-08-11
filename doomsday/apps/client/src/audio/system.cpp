@@ -33,6 +33,7 @@
 #include "audio/s_sfx.h"
 #ifdef __CLIENT__
 #  include "audio/m_mus2midi.h"
+#  include "audio/sfxchannel.h"
 #endif
 
 #include "api_map.h"
@@ -80,9 +81,12 @@ namespace audio {
 static audio::System *theAudioSystem = nullptr;
 
 #ifdef __CLIENT__
-static char const *BUFFERED_MUSIC_FILE = (char *)"dd-buffered-song";
+static dint const DEFAULT_CHANNEL_COUNT = 16;
+static dint const MAX_CHANNEL_COUNT     = 256;
+static dint const CHANNEL_2D_COUNT      = 4;
+static char const *BUFFERED_MUSIC_FILE  = (char *)"dd-buffered-song";
 
-static char *musSoundFontPath = (char *) "";
+static char *musSoundFontPath = (char *) "";  // cvar
 
 /**
  * If multiple sources are available, this setting is used to determine which one to
@@ -542,6 +546,7 @@ DENG2_PIMPL(System)
     String musCurrentSong;
     bool musPaused = false;
 
+    std::unique_ptr<SfxChannels> sfxChannels;
 #endif  // __CLIENT__
 
     SfxSampleCache sfxSampleCache;  ///< @todo should be __CLIENT__ only.
@@ -846,9 +851,86 @@ DENG2_PIMPL(System)
             oldRate  = ::sfxSampleRate;
         }
     }
-#endif
 
-#ifdef __CLIENT__
+    /**
+     * Stop all channels and destroy their buffers.
+     */
+    void destroySfxChannels()
+    {
+        BEGIN_COP;
+        sfxChannels->forAll([] (SfxChannel &ch)
+        {
+            ch.stop();
+            if(ch.hasBuffer())
+            {
+                App_AudioSystem().sfx()->Destroy(&ch.buffer());
+                ch.setBuffer(nullptr);
+            }
+            return LoopContinue;
+        });
+        END_COP;
+    }
+
+    void createSfxChannels()
+    {
+        if(!bool( sfxChannels )) return; // Huh?
+
+        dint num2D = ::sfx3D ? CHANNEL_2D_COUNT: sfxChannels->count();  // The rest will be 3D.
+        dint bits  = ::sfxBits;
+        dint rate  = ::sfxRate;
+
+        // Change the primary buffer format to match the channel format.
+        dfloat parm[2] = { dfloat(bits), dfloat(rate) };
+        self.sfx()->Listenerv(SFXLP_PRIMARY_FORMAT, parm);
+
+        // Create sample buffers for the channels.
+        dint idx = 0;
+        sfxChannels->forAll([&num2D, &bits, &rate, &idx] (SfxChannel &ch)
+        {
+            ch.setBuffer(App_AudioSystem().sfx()->Create(num2D-- > 0 ? 0 : SFXBF_3D, bits, rate));
+            if(!ch.hasBuffer())
+            {
+                LOG_AUDIO_WARNING("Failed to create sample buffer for #%i") << idx;
+            }
+            idx += 1;
+            return LoopContinue;
+        });
+    }
+
+    // Create channels according to the current mode.
+    void initSfxChannels()
+    {
+        dint numChannels = DEFAULT_CHANNEL_COUNT;
+        // The -sfxchan option can be used to change the number of channels.
+        if(CommandLine_CheckWith("-sfxchan", 1))
+        {
+            numChannels = de::clamp(1, String(CommandLine_Next()).toInt(), MAX_CHANNEL_COUNT);
+            LOG_AUDIO_NOTE("Initialized %i sound effect channels") << numChannels;
+        }
+
+        // Allocate and init the channels.
+        sfxChannels.reset(new SfxChannels(numChannels));
+        createSfxChannels();
+    }
+
+    /**
+     * Frees all memory allocated for the channels.
+     */
+    void shutdownSfxChannels()
+    {
+        destroySfxChannels();
+        sfxChannels.reset();
+    }
+
+    /**
+     * Destroys all channels and creates them again.
+     */
+    void recreateSfxChannels()
+    {
+        destroySfxChannels();
+        createSfxChannels();
+    }
+
     void sfxSampleCacheAboutToRemove(sfxsample_t const &sample)
     {
         // Reset all channels loaded with the sample data and stop all sounds using
@@ -1289,6 +1371,34 @@ SfxSampleCache &System::sfxSampleCache() const
 {
     return d->sfxSampleCache;
 }
+
+#ifdef __CLIENT__
+bool System::hasSfxChannels()
+{
+    return bool( d->sfxChannels );
+}
+
+SfxChannels &System::sfxChannels() const
+{
+    DENG2_ASSERT(d->sfxChannels.get() != nullptr);
+    return *d->sfxChannels;
+}
+
+void System::initSfxChannels()
+{
+    d->initSfxChannels();
+}
+
+void System::shutdownSfxChannels()
+{
+    d->shutdownSfxChannels();
+}
+
+void System::recreateSfxChannels()
+{
+    d->recreateSfxChannels();
+}
+#endif
 
 void System::aboutToUnloadMap()
 {

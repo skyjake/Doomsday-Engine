@@ -23,6 +23,7 @@
 #include "api_sound.h"
 #ifdef __CLIENT__
 #  include "audio/audiodriver.h"
+#  include "audio/sfxchannel.h"
 #endif
 #include "audio/s_cache.h"   // remove me
 #include "def_main.h"        // sfxinfo_t
@@ -196,6 +197,18 @@ public:  /// @todo make private:
     SfxSampleCache &sfxSampleCache() const;
 
 #ifdef __CLIENT__
+    /// @todo refactor away.
+    bool hasSfxChannels();
+
+    /**
+     * Provides mutable access to the sound channels.
+     */
+    SfxChannels &sfxChannels() const;
+
+    void initSfxChannels();
+    void shutdownSfxChannels();
+    void recreateSfxChannels();
+
     /**
      * Lookup the unique identifier associated with the given audio @a driver.
      * @todo refactor away.
