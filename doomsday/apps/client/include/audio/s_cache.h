@@ -21,7 +21,6 @@
 #ifndef AUDIO_SFXSAMPLECACHE_H
 #define AUDIO_SFXSAMPLECACHE_H
 
-#include "dd_share.h"  // DDSF_FLAG_MASK remove me
 #include "api_audiod_sfx.h"  // sfxsample_t
 #include <de/Observers>
 

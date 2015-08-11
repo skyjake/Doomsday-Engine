@@ -576,7 +576,7 @@ sfxsample_t *SfxSampleCache::cache(dint id)
 #ifdef __CLIENT__
     // If no interface for SFX playback is available there is no benefit to caching
     // sound samples that won't be heard.
-    /// @todo audio::System should this by restricting access to the cache. -ds
+    /// @todo audio::System should handle this by restricting access. -ds
     if(!App_AudioSystem().sfxIsAvailable()) return nullptr;
 
     // Zero is not a valid sound ID.

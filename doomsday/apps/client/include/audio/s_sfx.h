@@ -29,6 +29,8 @@
 #include "api_audiod.h"
 #include "api_audiod_sfx.h"
 #include "world/map.h"
+#include <de/Error>
+#include <functional>
 
 // Begin and end macros for Critical Operations. They are operations
 // that can't be done while a refresh is being made. No refreshing
@@ -37,19 +39,113 @@
 #define END_COP         Sfx_AllowRefresh(true)
 
 // Channel flags.
-#define SFXCF_NO_ORIGIN         (0x1)  ///< Sound is coming from a mystical emitter.
-#define SFXCF_NO_ATTENUATION    (0x2)  ///< Sound is very, very loud.
-#define SFXCF_NO_UPDATE         (0x4)  ///< Channel update is skipped.
+#define SFXCF_NO_ORIGIN         ( 0x1 )  ///< Sound is coming from a mystical emitter.
+#define SFXCF_NO_ATTENUATION    ( 0x2 )  ///< Sound is very, very loud.
+#define SFXCF_NO_UPDATE         ( 0x4 )  ///< Channel update is skipped.
 
-struct sfxchannel_t
+class SfxChannel
 {
-    int             flags;
-    sfxbuffer_t    *buffer;
-    struct mobj_s  *emitter;    ///< Mobj that is emitting the sound.
-    coord_t         origin[3];  ///< Emit from here (synced with emitter).
-    float           volume;     ///< Sound volume: 1.0 is max.
-    float           frequency;  ///< Frequency adjustment: 1.0 is normal.
-    int             startTime;  ///< When was the channel last started?
+public:
+    /// No sound buffer is assigned to the channel. @ingroup errors
+    DENG2_ERROR(MissingBufferError);
+
+public:
+    SfxChannel();
+    ~SfxChannel();
+
+    /**
+     * Determines whether a sound buffer is assigned to the channel.
+     */
+    bool hasBuffer() const;
+
+    /**
+     * Returns the sound buffer assigned to the channel.
+     */
+    sfxbuffer_t       &buffer();
+    sfxbuffer_t const &buffer() const;
+    void setBuffer(sfxbuffer_t *newBuffer);
+
+    /**
+     * Stop any sound currently playing on the channel.
+     * @note Just stopping a sound buffer doesn't affect refresh.
+     */
+    void stop();
+
+    int flags() const;
+    void setFlags(int newFlags);
+
+    /**
+     * Returns the current sound frequency adjustment: 1.0 is normal.
+     */
+    float frequency() const;
+    void setFrequency(float newFrequency);
+
+    /**
+     * Returns the current sound volume: 1.0 is max.
+     */
+    float volume() const;
+    void setVolume(float newVolume);
+
+    /**
+     * Returns the attributed sound emitter if any (may be @c nullptr).
+     */
+    struct mobj_s *emitter() const;
+    void setEmitter(struct mobj_s *newEmitter);
+
+    void setFixedOrigin(de::Vector3d const &newOrigin);
+
+    /**
+     * Calculate priority points for a sound playing on the channel. They are used to determine
+     * which sounds can be cancelled by new sounds. Zero is the lowest priority.
+     */
+    float priority() const;
+
+    /**
+     * Updates the channel properties based on 2D/3D position calculations.
+     * Listener may be @c nullptr. Sounds emitted from the listener object are considered to be
+     * inside the listener's head.
+     */
+    void updatePriority();
+
+    int startTime() const;
+    void setStartTime(int newStartTime);
+
+private:
+    DENG2_PRIVATE(d)
+};
+
+class SfxChannels
+{
+public:
+    /**
+     * Construct a new SfxChannels set (comprising @a count channels).
+     */
+    SfxChannels(int count);
+
+    /**
+     * Returns the total number of channels.
+     */
+    int count() const;
+
+    /**
+     * Attempt to find an unused SfxChannel suitable for playing a sound sample.
+     *
+     * @param use3D
+     * @param bytes
+     * @param rate
+     * @param sampleId
+     */
+    SfxChannel *tryFindVacant(bool use3D, int bytes, int rate, int sampleId) const;
+
+    /**
+     * Iterate through the channels making a callback for each.
+     *
+     * @param func  Callback to make for each SfxChannel.
+     */
+    de::LoopResult forAll(std::function<de::LoopResult (SfxChannel &)> func) const;
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 extern int showSoundInfo;
@@ -114,6 +210,11 @@ void Sfx_3DMode(dd_bool activate);
 void Sfx_SampleFormat(int newBits, int newRate);
 
 void Sfx_RefreshChannels();
+
+/**
+ * The priority of a sound is affected by distance, volume and age.
+ */
+float Sfx_Priority(mobj_t *emitter, coord_t const *point, float volume, int startTic);
 
 /**
  * Used by the high-level sound interface to play sounds on the local system.
