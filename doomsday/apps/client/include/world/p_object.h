@@ -215,7 +215,7 @@ coord_t Mobj_ShadowRadius(mobj_t const &mob);
 
 #endif // __CLIENT__
 
-coord_t Mobj_ApproxPointDistance(mobj_t *start, coord_t const *point);
+coord_t Mobj_ApproxPointDistance(mobj_t const *mob, coord_t const *point);
 
 dd_bool Mobj_IsSectorLinked(mobj_t *mob);
 

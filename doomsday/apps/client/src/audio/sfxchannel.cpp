@@ -20,13 +20,13 @@
 
 #include "audio/sfxchannel.h"
 
-#include "audio/s_sfx.h"
 #include "world/thinkers.h"
 #include "dd_main.h"     // remove me
 #include <de/Log>
 #include <de/timer.h>    // TICSPERSEC
 #include <de/vector1.h>  // remove me
 #include <QList>
+#include <QtAlgorithms>
 
 using namespace de;
 
@@ -175,7 +175,7 @@ void SfxChannel::updatePriority()
     {
         // Volume is affected only by maxvol.
         App_AudioSystem().sfx()->Set(sbuf, SFXBP_VOLUME, d->volume * ::sfxVolume / 255.0f);
-        if(d->emitter && d->emitter == Sfx_Listener())
+        if(d->emitter && d->emitter == App_AudioSystem().sfxListener())
         {
             // Emitted by the listener object. Go to relative position mode
             // and set the position to (0,0,0).
@@ -193,7 +193,7 @@ void SfxChannel::updatePriority()
         }
 
         // If the sound is emitted by the listener, speed is zero.
-        if(d->emitter && d->emitter != Sfx_Listener() &&
+        if(d->emitter && d->emitter != App_AudioSystem().sfxListener() &&
            Thinker_IsMobjFunc(d->emitter->thinker.function))
         {
             dfloat vec[3];
@@ -216,7 +216,7 @@ void SfxChannel::updatePriority()
 
         // This is a 2D buffer.
         if((d->flags & SFXCF_NO_ORIGIN) ||
-           (d->emitter && d->emitter == Sfx_Listener()))
+           (d->emitter && d->emitter == App_AudioSystem().sfxListener()))
         {
             dist = 1;
             pan = 0;
@@ -224,7 +224,7 @@ void SfxChannel::updatePriority()
         else
         {
             // Calculate roll-off attenuation. [.125/(.125+x), x=0..1]
-            dist = Mobj_ApproxPointDistance(Sfx_Listener(), d->origin);
+            dist = Mobj_ApproxPointDistance(App_AudioSystem().sfxListener(), d->origin);
             if(dist < ::soundMinDist || (d->flags & SFXCF_NO_ATTENUATION))
             {
                 // No distance attenuation.
@@ -245,7 +245,7 @@ void SfxChannel::updatePriority()
             }
 
             // And pan, too. Calculate angle from listener to emitter.
-            if(mobj_t *listener = Sfx_Listener())
+            if(mobj_t *listener = App_AudioSystem().sfxListener())
             {
                 dfloat angle = (M_PointToAngle2(listener->origin, d->origin) - listener->angle) / (dfloat) ANGLE_MAX * 360;
 
@@ -399,7 +399,7 @@ void Sfx_ChannelDrawer()
     FR_SetColorAndAlpha(1, 1, 0, 1);
 
     dint const lh = FR_SingleLineHeight("Q");
-    if(!::sfxAvail)
+    if(!App_AudioSystem().sfxIsAvailable())
     {
         FR_DrawTextXY("Sfx disabled", 0, 0);
         glDisable(GL_TEXTURE_2D);

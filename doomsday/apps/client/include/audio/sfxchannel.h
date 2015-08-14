@@ -27,7 +27,7 @@
 #endif
 
 #include "api_audiod_sfx.h"  // sfxbuffer_t
-#include "world/p_object.h"
+#include "world/p_object.h"  // mobj_t
 #include <de/Error>
 #include <de/Vector>
 #include <functional>
@@ -94,15 +94,16 @@ public:
     void setFixedOrigin(de::Vector3d const &newOrigin);
 
     /**
-     * Calculate priority points for a sound playing on the channel. They are used to determine
-     * which sounds can be cancelled by new sounds. Zero is the lowest priority.
+     * Calculate priority points for a sound playing on the channel. They are used
+     * to determine which sounds can be cancelled by new sounds. Zero is the lowest
+     * priority.
      */
     float priority() const;
 
     /**
-     * Updates the channel properties based on 2D/3D position calculations.
-     * Listener may be @c nullptr. Sounds emitted from the listener object are considered to be
-     * inside the listener's head.
+     * Updates the channel properties based on 2D/3D position calculations. Listener
+     * may be @c nullptr. Sounds emitted from the listener object are considered to
+     * be inside the listener's head.
      */
     void updatePriority();
 
@@ -120,7 +121,7 @@ class SfxChannels
 {
 public:
     /**
-     * Construct a new SfxChannels set (comprising @a count channels).
+     * Construct a new SfxChannel set (comprising @a count channels).
      */
     SfxChannels(int count);
 
@@ -161,6 +162,5 @@ extern byte refMonitor;
  * Draws debug information on-screen.
  */
 void Sfx_ChannelDrawer();
-void Sfx_DebugInfo();
 
 #endif  // CLIENT_AUDIO_SFXCHANNEL_H

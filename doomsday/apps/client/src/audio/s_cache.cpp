@@ -21,7 +21,7 @@
 #include "audio/s_cache.h"
 
 #include "dd_main.h"  // App_AudioSystem()
-#include "audio/s_sfx.h"  // Sfx_IsPlaying(), BEGIN/END_COP
+#include "audio/system.h"
 
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/resource/wav.h>
@@ -362,7 +362,9 @@ DENG2_PIMPL(SfxSampleCache)
 
     void removeCacheItem(CacheItem &item)
     {
-        BEGIN_COP;
+#ifdef __CLIENT__
+        App_AudioSystem().allowSfxRefresh(false);
+#endif
 
         notifyRemove(item);
 
@@ -379,7 +381,9 @@ DENG2_PIMPL(SfxSampleCache)
         if(item.prev)
             item.prev->next = item.next;
 
-        END_COP;
+#ifdef __CLIENT__
+        App_AudioSystem().allowSfxRefresh(true);
+#endif
 
         // Free all memory allocated for the item.
         delete &item;

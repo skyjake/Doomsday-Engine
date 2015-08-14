@@ -1703,13 +1703,12 @@ void Sv_DrainPool(uint clientNumber)
 }
 
 /**
- * @return              The maximum distance for the sound. If the origin
- *                      is any farther, the delta will not be sent to the
- *                      client in question.
+ * Returns the maximum distance for the sound. If the origin is any farther,
+ * the delta will not be sent to the client in question.
  */
-float Sv_GetMaxSoundDistance(const sounddelta_t* delta)
+dfloat Sv_GetMaxSoundDistance(sounddelta_t const *delta)
 {
-    float               volume = 1;
+    dfloat volume = 1;
 
     // Volume shortens the maximum distance (why send it if it's not
     // audible?).
@@ -1724,11 +1723,11 @@ float Sv_GetMaxSoundDistance(const sounddelta_t* delta)
         return DDMAXFLOAT;
     }
 
-    return volume * soundMaxDist;
+    return volume * ::soundMaxDist;
 }
 
 /**
- * @return              The flags that remain after exclusion.
+ * @return  The flags that remain after exclusion.
  */
 int Sv_ExcludeDelta(pool_t* pool, const void* deltaPtr)
 {
