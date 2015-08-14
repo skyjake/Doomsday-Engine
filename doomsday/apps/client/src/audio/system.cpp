@@ -963,7 +963,7 @@ DENG2_PIMPL(System)
         initSfxChannels();
 
         // (Re)Init the sample cache.
-        App_AudioSystem().sfxSampleCache().clear();
+        sfxSampleCache.clear();
 
         // The Sfx module is now available.
         sfxAvail = true;
@@ -1033,12 +1033,12 @@ DENG2_PIMPL(System)
     void destroySfxChannels()
     {
         self.allowSfxRefresh(false);
-        sfxChannels->forAll([] (SfxChannel &ch)
+        sfxChannels->forAll([this] (SfxChannel &ch)
         {
             ch.stop();
             if(ch.hasBuffer())
             {
-                App_AudioSystem().sfx()->Destroy(&ch.buffer());
+                self.sfx()->Destroy(&ch.buffer());
                 ch.setBuffer(nullptr);
             }
             return LoopContinue;
@@ -1060,9 +1060,9 @@ DENG2_PIMPL(System)
 
         // Create sample buffers for the channels.
         dint idx = 0;
-        sfxChannels->forAll([&num2D, &bits, &rate, &idx] (SfxChannel &ch)
+        sfxChannels->forAll([this, &num2D, &bits, &rate, &idx] (SfxChannel &ch)
         {
-            ch.setBuffer(App_AudioSystem().sfx()->Create(num2D-- > 0 ? 0 : SFXBF_3D, bits, rate));
+            ch.setBuffer(self.sfx()->Create(num2D-- > 0 ? 0 : SFXBF_3D, bits, rate));
             if(!ch.hasBuffer())
             {
                 LOG_AUDIO_WARNING("Failed to create sample buffer for #%i") << idx;
