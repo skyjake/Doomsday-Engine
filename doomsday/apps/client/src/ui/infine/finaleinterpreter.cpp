@@ -31,6 +31,7 @@
 #include <doomsday/Game>
 
 #include "dd_def.h"
+#include "def_main.h"  // ::defs
 
 #include "api_material.h"
 #include "api_render.h"

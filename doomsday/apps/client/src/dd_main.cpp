@@ -71,6 +71,7 @@
 #  include "serverapp.h"
 #endif
 #include "dd_loop.h"
+#include "def_main.h"
 #include "busyrunner.h"
 #include "con_config.h"
 #include "sys_system.h"
@@ -2218,10 +2219,10 @@ void DD_UpdateEngineState()
 {
     LOG_MSG("Updating engine state...");
 
+#ifdef __CLIENT__
     // Stop playing sounds and music.
     App_AudioSystem().reset();
 
-#ifdef __CLIENT__
     BusyMode_FreezeGameForBusyMode();
     GL_SetFilter(false);
     Demo_StopPlayback();
@@ -2341,7 +2342,7 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
 #else
     {0, 0},
 #endif
-    {&defs.sounds.count.num, 0},
+    {&::defs.sounds.count.num, 0},
     {0, 0},
     {0, 0},
 #ifdef __CLIENT__

@@ -131,6 +131,18 @@ public:
     int count() const;
 
     /**
+     * Returns the total number of sound channels currently playing a/the sound sample
+     * associated with the given sound @a id.
+     */
+    int countPlaying(int id);
+
+    /**
+     * Returns @a true if one or more sound channels is currently playing a/the sound sample
+     * associated with the given sound @a id.
+     */
+    inline bool isPlaying(int id) { return countPlaying(id) > 0; }
+
+    /**
      * Attempt to find an unused SfxChannel suitable for playing a sound sample.
      *
      * @param use3D

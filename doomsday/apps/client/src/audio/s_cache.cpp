@@ -21,6 +21,7 @@
 #include "audio/s_cache.h"
 
 #include "dd_main.h"  // App_AudioSystem()
+#include "def_main.h"  // Def_Get*()
 #include "audio/system.h"
 
 #include <doomsday/filesys/fs_main.h>
@@ -529,7 +530,7 @@ void SfxSampleCache::maybeRunPurge()
         {
 #ifdef __CLIENT__
             // If the sample is playing we won't remove it now.
-            if(Sfx_IsPlaying(it->sample.id))
+            if(App_AudioSystem().sfxChannels().isPlaying(it->sample.id))
                 continue;
 #endif
 
@@ -592,7 +593,7 @@ sfxsample_t *SfxSampleCache::cache(dint id)
         return &existing->sample;
 
     // Lookup info for this sound.
-    sfxinfo_t *info = S_GetSoundInfo(id, 0, 0);
+    sfxinfo_t *info = Def_GetSoundInfo(id, 0, 0);
     if(!info)
     {
         LOG_AUDIO_WARNING("Ignoring id:%i (missing sfxinfo_t)") << id;

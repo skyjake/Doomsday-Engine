@@ -133,11 +133,11 @@ void Sys_Shutdown()
 
     Net_Shutdown();
 
+#ifdef __CLIENT__
     // Let's shut down sound first, so Windows' HD-hogging doesn't jam
     // the MUS player (would produce horrible bursts of notes).
     App_AudioSystem().deinitPlayback();
-    
-#ifdef __CLIENT__
+
     GL_Shutdown();
     if(ClientApp::hasInputSystem())
     {
@@ -148,7 +148,7 @@ void Sys_Shutdown()
     App_ClearGames();
 }
 
-static int showCriticalMessage(const char* msg)
+static int showCriticalMessage(char const *msg)
 {
     // This is going to be the end, I'm afraid.
     de::Loop::get().stop();

@@ -146,6 +146,46 @@ state_t *Def_GetState(dint num)
     return nullptr;  // Not found.
 }
 
+sfxinfo_t *Def_GetSoundInfo(dint soundID, dfloat *freq, dfloat *volume)
+{
+    if(soundID <= 0 || soundID >= ::defs.sounds.size())
+        return nullptr;
+
+    dfloat dummy = 0;
+    if(!freq)   freq   = &dummy;
+    if(!volume) volume = &dummy;
+
+    // Traverse all links when getting the definition. (But only up to 10, which is
+    // certainly enough and prevents endless recursion.) Update the sound id at the
+    // same time. The links were checked in Def_Read() so there cannot be any bogus
+    // ones.
+    sfxinfo_t *info = &::runtimeDefs.sounds[soundID];
+
+    for(dint i = 0; info->link && i < 10;
+        info     = info->link,
+        *freq    = (info->linkPitch > 0    ? info->linkPitch  / 128.0f : *freq),
+        *volume += (info->linkVolume != -1 ? info->linkVolume / 127.0f : 0),
+        soundID  = ::runtimeDefs.sounds.indexOf(info),
+       ++i)
+    {}
+
+    DENG2_ASSERT(soundID < ::defs.sounds.size());
+
+    return info;
+}
+
+bool Def_SoundIsRepeating(dint idFlags)
+{
+    if(idFlags & DDSF_REPEAT)
+        return true;
+
+    if(sfxinfo_t *info = Def_GetSoundInfo(idFlags & ~DDSF_FLAG_MASK, nullptr, nullptr))
+    {
+        return (info->flags & SF_REPEAT) != 0;
+    }
+    return false;
+}
+
 ded_compositefont_t *Def_GetCompositeFont(char const *uri)
 {
     return ::defs.getCompositeFont(uri);

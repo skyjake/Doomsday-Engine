@@ -23,8 +23,9 @@
 #include "audio/system.h"
 
 #include "dd_share.h"  // SF_* flags
+#include "dd_main.h"   // ::isDedicated
+#include "def_main.h"  // ::defs
 #ifdef __CLIENT__
-#  include "dd_main.h"  // isDedicated
 #  include "sys_system.h"
 #endif
 
@@ -227,59 +228,11 @@ static bool recognizeMus(de::File1 &file)
     // ASCII "MUS" and CTRL-Z (hex 4d 55 53 1a)
     return !qstrncmp(buf, "MUS\x01a", 4);
 }
-
-/**
- * Attempt to locate a music file referenced in the given music @a definition. Songs can be
- * either in external files or non-MUS lumps.
- *
- * @note Lump based music is presently handled separately!!
- *
- * @param definition  Music definition to find the music file for.
- *
- * @return  Absolute path to the music if found; otherwise a zero-length string.
- *
- * @todo Move to ResourceSystem.
- */
-static String tryFindMusicFile(Record const &definition)
-{
-    LOG_AS("tryFindMusicFile");
-
-    defn::Music const music(definition);
-
-    de::Uri songUri(music.gets("path"), RC_NULL);
-    if(!songUri.path().isEmpty())
-    {
-        // All external music files are specified relative to the base path.
-        String fullPath = App_BasePath() / songUri.path();
-        if(F_Access(fullPath.toUtf8().constData()))
-        {
-            return fullPath;
-        }
-
-        LOG_AUDIO_WARNING("Music file \"%s\" not found (id '%s')")
-            << songUri << music.gets("id");
-    }
-
-    // Try the resource locator.
-    String const lumpName = music.gets("lumpName");
-    if(!lumpName.isEmpty())
-    {
-        try
-        {
-            String const foundPath = App_FileSystem().findPath(de::Uri(lumpName, RC_MUSIC), RLF_DEFAULT,
-                                                               App_ResourceClass(RC_MUSIC));
-            return App_BasePath() / foundPath;  // Ensure the path is absolute.
-        }
-        catch(FS1::NotFoundError const &)
-        {}  // Ignore this error.
-    }
-    return "";  // None found.
-}
 #endif
 
 DENG2_PIMPL(System)
-, DENG2_OBSERVES(App, GameUnload)
 #ifdef __CLIENT__
+, DENG2_OBSERVES(App, GameUnload)
 , DENG2_OBSERVES(SfxSampleCache, SampleRemove)
 #endif
 {
@@ -656,8 +609,8 @@ DENG2_PIMPL(System)
     {
         theAudioSystem = thisPublic;
 
-        App::app().audienceForGameUnload() += this;
 #ifdef __CLIENT__
+        App::app().audienceForGameUnload() += this;
         sfxSampleCache.audienceForSampleRemove() += this;
 #endif
     }
@@ -666,8 +619,8 @@ DENG2_PIMPL(System)
     {
 #ifdef __CLIENT__
         sfxSampleCache.audienceForSampleRemove() -= this;
-#endif
         App::app().audienceForGameUnload() -= this;
+#endif
 
         theAudioSystem = nullptr;
     }
@@ -1242,12 +1195,13 @@ DENG2_PIMPL(System)
         // this sample (the sample data will be gone soon).
         unloadSoundID(sample.id);
     }
-#endif
 
     void aboutToUnloadGame(game::Game const &)
     {
         self.reset();
     }
+
+#endif  // __CLIENT__
 };
 
 System::System() : d(new Instance(this))
@@ -1301,9 +1255,9 @@ String System::description() const
 #undef TABBED
 }
 
+#ifdef __CLIENT__
 void System::reset()
 {
-#ifdef __CLIENT__
     if(d->sfxAvail)
     {
         d->sfxListenerCluster = nullptr;
@@ -1318,10 +1272,10 @@ void System::reset()
         // Clear the sample cache.
         d->sfxSampleCache.clear();
     }
-#endif
 
-    _api_S.StopMusic();
+    stopMusic();
 }
+#endif
 
 /**
  * @todo Do this in audio::System::timeChanged()
@@ -1363,9 +1317,9 @@ void System::startFrame()
     Sfx_PurgeLogical();
 }
 
+#ifdef __CLIENT__
 void System::endFrame()
 {
-#ifdef __CLIENT__
     if(sfxIsAvailable())
     {
         if(!BusyMode_Active())
@@ -1392,8 +1346,8 @@ void System::endFrame()
         // Update the active interface.
         d->getBaseInterface(sfx()).Event(SFXEV_END);
     }
-#endif
 }
+#endif
 
 /**
  * Cache the sound sample associated with @a id if necessary and return the length
@@ -1453,17 +1407,16 @@ void System::initPlayback()
 #endif
 }
 
+#ifdef __CLIENT__
+
 void System::deinitPlayback()
 {
-#ifdef __CLIENT__
     d->deinitSfx();
     d->deinitMusic();
 
     d->unloadDrivers();
-#endif
 }
 
-#ifdef __CLIENT__
 String System::musicSourceAsText(MusicSource source)  // static 
 {
     static char const *sourceNames[3] = {
@@ -1596,7 +1549,7 @@ dint System::playMusic(Record const &definition, bool looped)
             break;
 
         case MUSP_EXT:
-            if(d->playMusicFile(tryFindMusicFile(definition), looped))
+            if(d->playMusicFile(App_ResourceSystem().tryFindMusicFile(definition), looped))
                 return true;
 
             // Next, try non-MUS lumps.
@@ -1676,6 +1629,143 @@ mobj_t *System::sfxListener()
 void System::setSfxListener(mobj_t *newListener)
 {
     d->sfxListener = newListener;
+}
+
+#endif  // __CLIENT__
+
+bool System::soundIsPlaying(dint soundId, mobj_t *emitter) const
+{
+    // The Logical Sound Manager (under Sfx) provides a routine for this.
+    return Sfx_IsPlaying(soundId, emitter);
+
+#if 0
+    if(!d->sfxAvail) return false;
+
+    return d->sfxChannels->forAll([&id, &emitter] (SfxChannel &ch)
+    {
+        if(ch.hasSample())
+        {
+            sfxbuffer_t &sbuf = ch.sample();
+
+            if(!(sbuf.flags & SFXBF_PLAYING) ||
+               ch.emitter() != emitter ||
+               id && sbuf.sample->id != id)
+            {
+                return LoopContinue;
+            }
+
+            // Once playing, repeating sounds don't stop.
+            if(sbuf.flags & SFXBF_REPEAT)
+                return LoopAbort;
+
+            // Check time. The flag is updated after a slight delay (only at refresh).
+            if(Sys_GetTime() - ch->startTime() < sbuf.sample->numsamples / (dfloat) sbuf.freq * TICSPERSEC)
+            {
+                return LoopAbort;
+            }
+        }
+        return LoopContinue;
+    });
+#endif
+}
+
+#ifdef __CLIENT__
+
+void System::stopSoundGroup(dint group, mobj_t *emitter)
+{
+    if(!d->sfxAvail) return;
+    d->sfxChannels->forAll([this, &group, &emitter] (SfxChannel &ch)
+    {
+        if(ch.hasBuffer())
+        {
+            sfxbuffer_t &sbuf = ch.buffer();
+            if((sbuf.flags & SFXBF_PLAYING) &&
+               (sbuf.sample->group == group && (!emitter || ch.emitter() == emitter)))
+            {
+                // This channel must stop.
+                sfx()->Stop(&sbuf);
+            }
+        }
+        return LoopContinue;
+    });
+}
+
+dint System::stopSoundWithLowerPriority(dint id, mobj_t *emitter, dint defPriority)
+{
+    if(!d->sfxAvail) return false;
+
+    dint stopCount = 0;
+    d->sfxChannels->forAll([this, &id, &emitter, &defPriority, &stopCount] (SfxChannel &ch)
+    {
+        if(!ch.hasBuffer()) return LoopContinue;
+        sfxbuffer_t &sbuf = ch.buffer();
+
+        if(!(sbuf.flags & SFXBF_PLAYING) || (id && sbuf.sample->id != id) ||
+           (emitter && ch.emitter() != emitter))
+        {
+            return LoopContinue;
+        }
+
+        // Can it be stopped?
+        if(sbuf.flags & SFXBF_DONT_STOP)
+        {
+            // The emitter might get destroyed...
+            ch.setEmitter(nullptr);
+            ch.setFlags(ch.flags() | (SFXCF_NO_UPDATE | SFXCF_NO_ORIGIN));
+            return LoopContinue;
+        }
+
+        // Check the priority.
+        if(defPriority >= 0)
+        {
+            dint oldPrio = ::defs.sounds[sbuf.sample->id].priority;
+            if(oldPrio < defPriority)  // Old is more important.
+            {
+                stopCount = -1;
+                return LoopAbort;
+            }
+        }
+
+        // This channel must be stopped!
+        /// @todo should observe. -ds
+        sfx()->Stop(&sbuf);
+        ++stopCount;
+        return LoopContinue;
+    });
+
+    return stopCount;
+}
+
+dint System::stopSound(dint id, mobj_t *emitter)
+{
+    return stopSoundWithLowerPriority(id, emitter, -1);
+}
+
+dfloat System::rateSoundPriority(mobj_t *emitter, coord_t const *point, dfloat volume,
+    dint startTic)
+{
+    // In five seconds all priority of a sound is gone.
+    dfloat const timeoff  = 1000 * (Timer_Ticks() - startTic) / (5.0f * TICSPERSEC);
+
+    if(!d->sfxListener || (!emitter && !point))
+    {
+        // The sound does not have an origin.
+        return 1000 * volume - timeoff;
+    }
+
+    // The sound has an origin, base the points on distance.
+    coord_t const *origin;
+    if(emitter)
+    {
+        origin = emitter->origin;
+    }
+    else
+    {
+        // No emitter mobj, use the fixed source position.
+        origin = point;
+    }
+
+    return 1000 * volume - Mobj_ApproxPointDistance(d->sfxListener, origin) / 2 - timeoff;
 }
 
 audiointerface_sfx_generic_t *System::sfx() const
@@ -1970,6 +2060,8 @@ void Mus_SetVolume(dfloat newVolume)
 {
 #ifdef __CLIENT__
     App_AudioSystem().setMusicVolume(newVolume);
+#else
+    DENG2_UNUSED(newVolume);
 #endif
 }
 
@@ -2041,17 +2133,15 @@ dint Mus_StartCDTrack(dint cdTrack, bool looped)
 dint S_StartMusicNum(dint id, dd_bool looped)
 {
 #ifdef __CLIENT__
-
-    // Don't play music if the volume is at zero.
     if(::isDedicated) return true;
 
-    if(id < 0 || id >= ::defs.musics.size()) return false;
-
-    Record const &def = ::defs.musics[id];
-    LOG_AUDIO_MSG("Starting music '%s'") << def.gets("id");
-
-    return Mus_Start(def, looped);
-
+    if(id >= 0 && id < ::defs.musics.size())
+    {
+        Record const &def = ::defs.musics[id];
+        LOG_AUDIO_MSG("Starting music '%s'") << def.gets("id");
+        return Mus_Start(def, looped);
+    }
+    return false;
 #else
     DENG2_UNUSED2(id, looped);
     return false;
@@ -2080,46 +2170,6 @@ mobj_t *S_GetListenerMobj()
     return DD_Player(::displayPlayer)->publicData().mo;
 }
 
-sfxinfo_t *S_GetSoundInfo(dint soundID, dfloat *freq, dfloat *volume)
-{
-    if(soundID <= 0 || soundID >= ::defs.sounds.size())
-        return nullptr;
-
-    dfloat dummy = 0;
-    if(!freq)   freq   = &dummy;
-    if(!volume) volume = &dummy;
-
-    // Traverse all links when getting the definition. (But only up to 10, which is
-    // certainly enough and prevents endless recursion.) Update the sound id at the
-    // same time. The links were checked in Def_Read() so there cannot be any bogus
-    // ones.
-    sfxinfo_t *info = &::runtimeDefs.sounds[soundID];
-
-    for(dint i = 0; info->link && i < 10;
-        info     = info->link,
-        *freq    = (info->linkPitch > 0    ? info->linkPitch  / 128.0f : *freq),
-        *volume += (info->linkVolume != -1 ? info->linkVolume / 127.0f : 0),
-        soundID  = ::runtimeDefs.sounds.indexOf(info),
-       ++i)
-    {}
-
-    DENG2_ASSERT(soundID < ::defs.sounds.size());
-
-    return info;
-}
-
-dd_bool S_IsRepeating(dint idFlags)
-{
-    if(idFlags & DDSF_REPEAT)
-        return true;
-
-    if(sfxinfo_t *info = S_GetSoundInfo(idFlags & ~DDSF_FLAG_MASK, nullptr, nullptr))
-    {
-        return (info->flags & SF_REPEAT) != 0;
-    }
-    return false;
-}
-
 dint S_LocalSoundAtVolumeFrom(dint soundIdAndFlags, mobj_t *origin, coord_t *point, dfloat volume)
 {
 #ifdef __CLIENT__
@@ -2143,10 +2193,10 @@ dint S_LocalSoundAtVolumeFrom(dint soundIdAndFlags, mobj_t *origin, coord_t *poi
 
     dfloat freq = 1;
     // This is the sound we're going to play.
-    sfxinfo_t *info = S_GetSoundInfo(soundId, &freq, &volume);
+    sfxinfo_t *info = Def_GetSoundInfo(soundId, &freq, &volume);
     if(!info) return false;  // Hmm? This ID is not defined.
 
-    bool const isRepeating = S_IsRepeating(soundIdAndFlags);
+    bool const isRepeating = Def_SoundIsRepeating(soundIdAndFlags);
 
     // Check the distance (if applicable).
     if(!(info->flags & SF_NO_ATTENUATION) && !(soundIdAndFlags & DDSF_NO_ATTENUATION))
@@ -2205,64 +2255,64 @@ dint S_LocalSoundAtVolumeFrom(dint soundIdAndFlags, mobj_t *origin, coord_t *poi
 #endif
 }
 
-dint S_LocalSoundAtVolume(dint soundID, mobj_t *origin, dfloat volume)
+dint S_LocalSoundAtVolume(dint soundId, mobj_t *origin, dfloat volume)
 {
-    return S_LocalSoundAtVolumeFrom(soundID, origin, nullptr, volume);
+    return S_LocalSoundAtVolumeFrom(soundId, origin, nullptr, volume);
 }
 
-dint S_LocalSound(dint soundID, mobj_t *origin)
+dint S_LocalSound(dint soundId, mobj_t *origin)
 {
     // Play local sound at max volume.
-    return S_LocalSoundAtVolumeFrom(soundID, origin, nullptr, 1);
+    return S_LocalSoundAtVolumeFrom(soundId, origin, nullptr, 1);
 }
 
-dint S_LocalSoundFrom(dint soundID, coord_t *fixedPos)
+dint S_LocalSoundFrom(dint soundId, coord_t *fixedPos)
 {
-    return S_LocalSoundAtVolumeFrom(soundID, nullptr, fixedPos, 1);
+    return S_LocalSoundAtVolumeFrom(soundId, nullptr, fixedPos, 1);
 }
 
-dint S_StartSound(dint soundID, mobj_t *origin)
+dint S_StartSound(dint soundId, mobj_t *origin)
 {
 #ifdef __SERVER__
     // The sound is audible to everybody.
-    Sv_Sound(soundID, origin, SVSF_TO_ALL);
+    Sv_Sound(soundId, origin, SVSF_TO_ALL);
 #endif
-    Sfx_StartLogical(soundID, origin, S_IsRepeating(soundID));
+    Sfx_StartLogical(soundId, origin, Def_SoundIsRepeating(soundId));
 
-    return S_LocalSound(soundID, origin);
+    return S_LocalSound(soundId, origin);
 }
 
-dint S_StartSoundEx(dint soundID, mobj_t *origin)
+dint S_StartSoundEx(dint soundId, mobj_t *origin)
 {
 #ifdef __SERVER__
-    Sv_Sound(soundID, origin, SVSF_TO_ALL | SVSF_EXCLUDE_ORIGIN);
+    Sv_Sound(soundId, origin, SVSF_TO_ALL | SVSF_EXCLUDE_ORIGIN);
 #endif
-    Sfx_StartLogical(soundID, origin, S_IsRepeating(soundID));
+    Sfx_StartLogical(soundId, origin, Def_SoundIsRepeating(soundId));
 
-    return S_LocalSound(soundID, origin);
+    return S_LocalSound(soundId, origin);
 }
 
-dint S_StartSoundAtVolume(dint soundID, mobj_t *origin, dfloat volume)
+dint S_StartSoundAtVolume(dint soundId, mobj_t *emitter, dfloat volume)
 {
 #ifdef __SERVER__
-    Sv_SoundAtVolume(soundID, origin, volume, SVSF_TO_ALL);
+    Sv_SoundAtVolume(soundId, emitter, volume, SVSF_TO_ALL);
 #endif
-    Sfx_StartLogical(soundID, origin, S_IsRepeating(soundID));
+    Sfx_StartLogical(soundId, emitter, Def_SoundIsRepeating(soundId));
 
     // The sound is audible to everybody.
-    return S_LocalSoundAtVolume(soundID, origin, volume);
+    return S_LocalSoundAtVolume(soundId, emitter, volume);
 }
 
-dint S_ConsoleSound(dint soundID, mobj_t *origin, dint targetConsole)
+dint S_ConsoleSound(dint soundId, mobj_t *emitter, dint targetConsole)
 {
 #ifdef __SERVER__
-    Sv_Sound(soundID, origin, targetConsole);
+    Sv_Sound(soundId, emitter, targetConsole);
 #endif
 
     // If it's for us, we can hear it.
     if(targetConsole == consolePlayer)
     {
-        S_LocalSound(soundID, origin);
+        S_LocalSound(soundId, emitter);
     }
 
     return true;
@@ -2270,18 +2320,18 @@ dint S_ConsoleSound(dint soundID, mobj_t *origin, dint targetConsole)
 
 /**
  * @param sectorEmitter  Sector in which to stop sounds.
- * @param soundID        Unique identifier of the sound to be stopped.
+ * @param soundId        Unique identifier of the sound to be stopped.
  *                       If @c 0, ID not checked.
  * @param flags          @ref soundStopFlags
  */
-static void stopSectorSounds(ddmobj_base_t *sectorEmitter, dint soundID, dint flags)
+static void stopSectorSounds(ddmobj_base_t *sectorEmitter, dint soundId, dint flags)
 {
     if(!sectorEmitter || !flags) return;
 
     // Are we stopping with this sector's emitter?
     if(flags & SSF_SECTOR)
     {
-        _api_S.StopSound(soundID, (mobj_t *)sectorEmitter);
+        _api_S.StopSound(soundId, (mobj_t *)sectorEmitter);
     }
 
     // Are we stopping with linked emitters?
@@ -2292,31 +2342,31 @@ static void stopSectorSounds(ddmobj_base_t *sectorEmitter, dint soundID, dint fl
     while((base = (ddmobj_base_t *)base->thinker.next))
     {
         // Stop sounds from this emitter.
-        _api_S.StopSound(soundID, (mobj_t *)base);
+        _api_S.StopSound(soundId, (mobj_t *)base);
     }
 }
 
-void S_StopSound(dint soundID, mobj_t *emitter)
+void S_StopSound(dint soundId, mobj_t *emitter)
 {
 #ifdef __CLIENT__
     // No special stop behavior.
     // Sfx provides a routine for this.
-    Sfx_StopSound(soundID, emitter);
+    Sfx_StopSound(soundId, emitter);
 #endif
 
     // Notify the LSM.
-    if(Sfx_StopLogical(soundID, emitter))
+    if(Sfx_StopLogical(soundId, emitter))
     {
 #ifdef __SERVER__
         // In netgames, the server is responsible for telling clients
         // when to stop sounds. The LSM will tell us if a sound was
         // stopped somewhere in the world.
-        Sv_StopSound(soundID, emitter);
+        Sv_StopSound(soundId, emitter);
 #endif
     }
 }
 
-void S_StopSound2(dint soundID, mobj_t *emitter, dint flags)
+void S_StopSound2(dint soundId, mobj_t *emitter, dint flags)
 {
     // Are we performing any special stop behaviors?
     if(emitter && flags)
@@ -2324,7 +2374,7 @@ void S_StopSound2(dint soundID, mobj_t *emitter, dint flags)
         if(emitter->thinker.id)
         {
             // Emitter is a real Mobj.
-            stopSectorSounds(&Mobj_Sector(emitter)->soundEmitter(), soundID, flags);
+            stopSectorSounds(&Mobj_Sector(emitter)->soundEmitter(), soundId, flags);
             return;
         }
 
@@ -2333,143 +2383,39 @@ void S_StopSound2(dint soundID, mobj_t *emitter, dint flags)
         {
             emitter = (mobj_t *)emitter->thinker.prev;
         }
-        stopSectorSounds((ddmobj_base_t *)emitter, soundID, flags);
+        stopSectorSounds((ddmobj_base_t *)emitter, soundId, flags);
         return;
     }
 
     // A regular stop.
-    S_StopSound(soundID, emitter);
+    S_StopSound(soundId, emitter);
 }
 
-dint S_IsPlaying(dint soundID, mobj_t *emitter)
+dint S_IsPlaying(dint soundId, mobj_t *emitter)
 {
-    // The Logical Sound Manager (under Sfx) provides a routine for this.
-    return Sfx_IsPlaying(soundID, emitter);
+    return (dint) App_AudioSystem().soundIsPlaying(soundId, emitter);
 }
 
 #ifdef __CLIENT__
 
 void Sfx_StopSoundGroup(dint group, mobj_t *emitter)
 {
-    if(!App_AudioSystem().sfxIsAvailable()) return;
-    App_AudioSystem().sfxChannels().forAll([&group, &emitter] (SfxChannel &ch)
-    {
-        if(ch.hasBuffer())
-        {
-            sfxbuffer_t &sbuf = ch.buffer();
-            if((sbuf.flags & SFXBF_PLAYING) &&
-               (sbuf.sample->group == group && (!emitter || ch.emitter() == emitter)))
-            {
-                // This channel must stop.
-                App_AudioSystem().sfx()->Stop(&sbuf);
-            }
-        }
-        return LoopContinue;
-    });
-}
-
-dint Sfx_StopSound(dint id, mobj_t *emitter)
-{
-    return Sfx_StopSoundWithLowerPriority(id, emitter, -1);
+    App_AudioSystem().stopSoundGroup(group, emitter);
 }
 
 dint Sfx_StopSoundWithLowerPriority(dint id, mobj_t *emitter, dint defPriority)
 {
-    if(!App_AudioSystem().sfxIsAvailable()) return false;
-
-    dint stopCount = 0;
-    App_AudioSystem().sfxChannels().forAll([&id, &emitter, &defPriority, &stopCount] (SfxChannel &ch)
-    {
-        if(!ch.hasBuffer()) return LoopContinue;
-        sfxbuffer_t &sbuf = ch.buffer();
-
-        if(!(sbuf.flags & SFXBF_PLAYING) || (id && sbuf.sample->id != id) ||
-           (emitter && ch.emitter() != emitter))
-        {
-            return LoopContinue;
-        }
-
-        // Can it be stopped?
-        if(sbuf.flags & SFXBF_DONT_STOP)
-        {
-            // The emitter might get destroyed...
-            ch.setEmitter(nullptr);
-            ch.setFlags(ch.flags() | (SFXCF_NO_UPDATE | SFXCF_NO_ORIGIN));
-            return LoopContinue;
-        }
-
-        // Check the priority.
-        if(defPriority >= 0)
-        {
-            dint oldPrio = ::defs.sounds[sbuf.sample->id].priority;
-            if(oldPrio < defPriority)  // Old is more important.
-            {
-                stopCount = -1;
-                return LoopAbort;
-            }
-        }
-
-        // This channel must be stopped!
-        /// @todo audio::System should observe. -ds
-        App_AudioSystem().sfx()->Stop(&sbuf);
-        ++stopCount;
-        return LoopContinue;
-    });
-
-    return stopCount;
+    return App_AudioSystem().stopSoundWithLowerPriority(id, emitter, defPriority);
 }
 
-#if 0 // Currently unused.
-dint Sfx_IsPlaying(dint id, mobj_t *emitter)
+dint Sfx_StopSound(dint id, mobj_t *emitter)
 {
-    if(!App_AudioSystem().sfxIsAvailable()) return false;
-
-    return App_AudioSystem().sfxChannels().forAll([&id, &emitter] (SfxChannel &ch)
-    {
-        if(ch.hasSample())
-        {
-            sfxbuffer_t &sbuf = ch.sample();
-
-            if(!(sbuf.flags & SFXBF_PLAYING) ||
-               ch.emitter() != emitter ||
-               id && sbuf.sample->id != id)
-            {
-                return LoopContinue;
-            }
-
-            // Once playing, repeating sounds don't stop.
-            if(sbuf.flags & SFXBF_REPEAT)
-                return LoopAbort;
-
-            // Check time. The flag is updated after a slight delay (only at refresh).
-            if(Sys_GetTime() - ch->startTime() < sbuf.sample->numsamples / (dfloat) sbuf.freq * TICSPERSEC)
-            {
-                return LoopAbort;
-            }
-        }
-        return LoopContinue;
-    });
+    return App_AudioSystem().stopSound(id, emitter);
 }
-#endif
 
-dint Sfx_CountPlaying(dint id)
+dfloat Sfx_Priority(mobj_t *emitter, coord_t const *point, dfloat volume, dint startTic)
 {
-    if(!App_AudioSystem().sfxIsAvailable()) return 0;
-
-    dint count = 0;
-    App_AudioSystem().sfxChannels().forAll([&id, &count] (SfxChannel &ch)
-    {
-        if(ch.hasBuffer())
-        {
-            sfxbuffer_t &sbuf = ch.buffer();
-            if((sbuf.flags & SFXBF_PLAYING) && sbuf.sample && sbuf.sample->id == id)
-            {
-                count += 1;
-            }
-        }
-        return LoopContinue;
-    });
-    return count;
+    return App_AudioSystem().rateSoundPriority(emitter, point, volume, startTic);
 }
 
 static void getSfxChannelPriorities(dfloat *prios)
@@ -2482,33 +2428,6 @@ static void getSfxChannelPriorities(dfloat *prios)
         prios[idx++] = ch.priority();
         return LoopContinue;
     });
-}
-
-dfloat Sfx_Priority(mobj_t *emitter, coord_t const *point, dfloat volume, dint startTic)
-{
-    mobj_t const *listener = App_AudioSystem().sfxListener();
-    // In five seconds all priority of a sound is gone.
-    dfloat const timeoff  = 1000 * (Timer_Ticks() - startTic) / (5.0f * TICSPERSEC);
-
-    if(!listener || (!emitter && !point))
-    {
-        // The sound does not have an origin.
-        return 1000 * volume - timeoff;
-    }
-
-    // The sound has an origin, base the points on distance.
-    coord_t const *origin;
-    if(emitter)
-    {
-        origin = emitter->origin;
-    }
-    else
-    {
-        // No emitter mobj, use the fixed source position.
-        origin = point;
-    }
-
-    return 1000 * volume - Mobj_ApproxPointDistance(listener, origin) / 2 - timeoff;
 }
 
 dint Sfx_StartSound(sfxsample_t *sample, dfloat volume, dfloat freq, mobj_t *emitter,
@@ -2554,7 +2473,7 @@ dint Sfx_StartSound(sfxsample_t *sample, dfloat volume, dfloat freq, mobj_t *emi
         getSfxChannelPriorities(channelPrios);
         haveChannelPrios = true;
 
-        dint count = Sfx_CountPlaying(sample->id);
+        dint count = App_AudioSystem().sfxChannels().countPlaying(sample->id);
         while(count >= info->channels)
         {
             // Stop the lowest priority sound of the playing instances, again

@@ -1,5 +1,4 @@
 /** @file def_main.h  Definition subsystem.
- *
  * @ingroup defs
  *
  * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -166,6 +165,22 @@ ded_ptcgen_t *Def_GetDamageGenerator(int mobjType);
 ded_light_t *Def_GetLightDef(int spr, int frame);
 
 state_t *Def_GetState(int num);
+
+/**
+ * Gets information about a defined sound. Linked sounds are resolved.
+ *
+ * @param soundID  ID number of the sound.
+ * @param freq     Defined frequency for the sound is returned here. May be @c nullptr.
+ * @param volume   Defined volume for the sound is returned here. May be @c nullptr.
+ *
+ * @return  Sound info (from definitions).
+ */
+sfxinfo_t *Def_GetSoundInfo(int soundID, float *freq, float *volume);
+
+/**
+ * Returns @c true if the specified ID is defined as a repeating sound.
+ */
+bool Def_SoundIsRepeating(int idFlags);
 
 /**
  * @return  @c true= the definition was found.

@@ -48,6 +48,7 @@
 #endif
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/console/cmd.h>
+#include <doomsday/defs/music.h>
 #include <doomsday/defs/sprite.h>
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/filesys/fs_util.h>
@@ -3846,6 +3847,42 @@ bool ResourceSystem::convertLegacySavegames(String const &gameId, String const &
     }
 
     return didSchedule;
+}
+
+String ResourceSystem::tryFindMusicFile(Record const &definition)
+{
+    LOG_AS("ResourceSystem::tryFindMusicFile");
+
+    defn::Music const music(definition);
+
+    de::Uri songUri(music.gets("path"), RC_NULL);
+    if(!songUri.path().isEmpty())
+    {
+        // All external music files are specified relative to the base path.
+        String fullPath = App_BasePath() / songUri.path();
+        if(F_Access(fullPath.toUtf8().constData()))
+        {
+            return fullPath;
+        }
+
+        LOG_AUDIO_WARNING("Music file \"%s\" not found (id '%s')")
+            << songUri << music.gets("id");
+    }
+
+    // Try the resource locator.
+    String const lumpName = music.gets("lumpName");
+    if(!lumpName.isEmpty())
+    {
+        try
+        {
+            String const foundPath = App_FileSystem().findPath(de::Uri(lumpName, RC_MUSIC), RLF_DEFAULT,
+                                                               App_ResourceClass(RC_MUSIC));
+            return App_BasePath() / foundPath;  // Ensure the path is absolute.
+        }
+        catch(FS1::NotFoundError const &)
+        {}  // Ignore this error.
+    }
+    return "";  // None found.
 }
 
 byte precacheMapMaterials = true;

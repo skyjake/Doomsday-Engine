@@ -26,13 +26,14 @@
 #  include "audio/sfxchannel.h"
 #endif
 #include "audio/s_cache.h"   // remove me
-#include "def_main.h"        // sfxinfo_t
-#include "world/p_object.h"  // mobj_t
+#include "dd_types.h"        // lumpnum_t
 #ifdef __CLIENT__
 #  include <de/Record>
 #  include <de/String>
 #endif
 #include <de/System>
+
+#define SFX_LOWEST_PRIORITY     ( -1000 )
 
 namespace audio {
 
@@ -67,25 +68,25 @@ public:
     de::String description() const;
 
     /**
-     * Stop all channels and music, delete the entire sample cache.
-     */
-    void reset();
-
-    /**
      * Perform playback intialization for Sound Effects and Music.
-     *
-     * @todo make __CLIENT__ only.
+     * @todo observe App?
      */
     void initPlayback();
 
+#ifdef __CLIENT__
+
     /**
      * Perform playback deintialization for Sound Effects and Music.
-     *
-     * @todo make __CLIENT__ only.
+     * @todo observe ClientApp?
      */
     void deinitPlayback();
 
-#ifdef __CLIENT__
+    /**
+     * Stop all channels and music, delete the entire sample cache.
+     * @todo observe ClientApp?
+     */
+    void reset();
+
 public:  // Music playback: ----------------------------------------------------------
 
     /**
@@ -165,8 +166,23 @@ public:  // Sound effect playback: ---------------------------------------------
      */
     bool mustUpsampleToSfxRate() const;
 
-    mobj_t *sfxListener();
-    void setSfxListener(mobj_t *newListener);
+    struct mobj_s *sfxListener();
+    void setSfxListener(struct mobj_s *newListener);
+
+#endif  // __CLIENT__
+
+    bool soundIsPlaying(int id, struct mobj_s *emitter) const;
+
+#ifdef __CLIENT__
+
+    void stopSoundGroup(int group, struct mobj_s *emitter);
+    int stopSoundWithLowerPriority(int id, struct mobj_s *emitter, int defPriority);
+    int stopSound(int id, struct mobj_s *emitter);
+
+    /**
+     * The priority of a sound is affected by distance, volume and age.
+     */
+    float rateSoundPriority(struct mobj_s *emitter, coord_t const *point, float volume, int startTic);
 
 public:  // Low-level driver interfaces: ---------------------------------------------
 
@@ -189,7 +205,9 @@ public:  // Low-level driver interfaces: ---------------------------------------
 
 public:  /// @todo make private:
     void startFrame();
+#ifdef __CLIENT__
     void endFrame();
+#endif
 
     void aboutToUnloadMap();
     void worldMapChanged();
@@ -216,7 +234,7 @@ public:  /// @todo make private:
      */
     void allowSfxRefresh(bool allow);
 
-    // Request a listener reverb update.
+    /// @todo refactor away.
     void requestSfxListenerUpdate();
 
     /**
@@ -251,42 +269,35 @@ extern int sfxVolume, musVolume;
 extern byte sfxOneSoundPerEmitter;
 extern bool noRndPitch;
 
-#endif 
-
-/**
- * Gets information about a defined sound. Linked sounds are resolved.
- *
- * @param soundID  ID number of the sound.
- * @param freq     Defined frequency for the sound is returned here. May be @c nullptr.
- * @param volume   Defined volume for the sound is returned here. May be @c nullptr.
- *
- * @return  Sound info (from definitions).
- */
-sfxinfo_t *S_GetSoundInfo(int soundID, float *freq, float *volume);
-
-#ifdef __CLIENT__
-
-/**
- * @return  @c true if the specified ID is a repeating sound.
- */
-dd_bool S_IsRepeating(int idFlags);
-
 /**
  * Usually the display player.
  */
 mobj_t *S_GetListenerMobj();
 
-#define SFX_LOWEST_PRIORITY     (-1000)
+/**
+ * Stop all sounds of the group. If an emitter is specified, only it's sounds are checked.
+ */
+void Sfx_StopSoundGroup(int group, struct mobj_s *emitter);
 
 /**
- * The priority of a sound is affected by distance, volume and age.
+ * Stops all channels that are playing the specified sound.
+ *
+ * @param id           @c 0 = all sounds are stopped.
+ * @param emitter      If not @c nullptr, then the channel's emitter mobj must match.
+ * @param defPriority  If >= 0, the currently playing sound must have a lower priority
+ *                     than this to be stopped. Returns -1 if the sound @a id has a lower
+ *                     priority than a currently playing sound.
+ *
+ * @return  The number of samples stopped.
  */
-float Sfx_Priority(mobj_t *emitter, coord_t const *point, float volume, int startTic);
+int Sfx_StopSoundWithLowerPriority(int id, struct mobj_s *emitter, ddboolean_t byPriority);
+
+int Sfx_StopSound(int id, struct mobj_s *emitter);
 
 #endif  // __CLIENT__
 
 /**
- * @defgroup soundPlayFlags Sound Start Flags
+ * @defgroup soundPlayFlags  Sound Start Flags
  * @ingroup flags
  * @{
  */
@@ -314,42 +325,10 @@ float Sfx_Priority(mobj_t *emitter, coord_t const *point, float volume, int star
  *
  * @return  @c true, if a sound is started.
  */
-int Sfx_StartSound(sfxsample_t *sample, float volume, float freq,
-                   struct mobj_s *emitter, coord_t *fixedpos, int flags);
+int Sfx_StartSound(sfxsample_t *sample, float volume, float freq, struct mobj_s *emitter,
+    coord_t *fixedpos, int flags);
 
-int Sfx_StopSound(int id, struct mobj_s *emitter);
-
-/**
- * Stops all channels that are playing the specified sound.
- *
- * @param id           @c 0 = all sounds are stopped.
- * @param emitter      If not @c nullptr, then the channel's emitter mobj must match.
- * @param defPriority  If >= 0, the currently playing sound must have a lower priority
- *                     than this to be stopped. Returns -1 if the sound @a id has a lower
- *                     priority than a currently playing sound.
- *
- * @return  The number of samples stopped.
- */
-int Sfx_StopSoundWithLowerPriority(int id, struct mobj_s *emitter, ddboolean_t byPriority);
-
-/**
- * Stop all sounds of the group. If an emitter is specified, only it's sounds are checked.
- */
-void Sfx_StopSoundGroup(int group, struct mobj_s *emitter);
-
-/**
- * Returns the total number of sound channels currently playing a/the sound sample
- * associated with the given sound @a id.
- */
-int Sfx_CountPlaying(int id);
-
-/**
- * Returns @a true if one or more sound channels is currently playing a/the sound sample
- * associated with the given sound @a id.
- */
-inline bool Sfx_IsPlaying(int id) {
-    return Sfx_CountPlaying(id) > 0;
-}
+float Sfx_Priority(struct mobj_s *emitter, coord_t const *point, float volume, int startTic);
 
 #endif  // __CLIENT__
 

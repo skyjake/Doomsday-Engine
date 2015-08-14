@@ -22,6 +22,7 @@
 
 #include "world/thinkers.h"
 #include "dd_main.h"     // remove me
+#include "def_main.h"    // ::defs
 #include <de/Log>
 #include <de/timer.h>    // TICSPERSEC
 #include <de/vector1.h>  // remove me
@@ -321,6 +322,26 @@ SfxChannels::SfxChannels(dint count) : d(new Instance(this))
 dint SfxChannels::count() const
 {
     return d->all.count();
+}
+
+dint SfxChannels::countPlaying(dint id)
+{
+    DENG2_ASSERT( App_AudioSystem().sfxIsAvailable() );  // sanity check
+
+    dint count = 0;
+    forAll([&id, &count] (SfxChannel &ch)
+    {
+        if(ch.hasBuffer())
+        {
+            sfxbuffer_t &sbuf = ch.buffer();
+            if((sbuf.flags & SFXBF_PLAYING) && sbuf.sample && sbuf.sample->id == id)
+            {
+                count += 1;
+            }
+        }
+        return LoopContinue;
+    });
+    return count;
 }
 
 SfxChannel *SfxChannels::tryFindVacant(bool use3D, dint bytes, dint rate, dint sampleId) const

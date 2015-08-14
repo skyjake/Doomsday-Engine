@@ -38,6 +38,7 @@
 #include "dd_main.h"
 #include "dd_def.h"
 #include "dd_loop.h"
+#include "def_main.h"  // ::defs
 
 #include "api_player.h"
 
