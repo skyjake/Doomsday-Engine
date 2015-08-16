@@ -84,42 +84,6 @@ DENG2_PIMPL(Scheduler)
     }
 };
 
-DENG2_PIMPL_NOREF(Scheduler::Clock)
-{
-    typedef Scheduler::Instance::Event  Event;
-    typedef Scheduler::Instance::Events Events; // Events not owned
-
-    Scheduler const *scheduler = nullptr;
-    TimeDelta at = 0.0;
-    Events events;
-
-    void rewind()
-    {
-        at = 0.0;
-
-        // Restore all events in the queue.
-        events = scheduler->d->events; // copied
-    }
-
-    void advanceTime(TimeDelta const &elapsed)
-    {
-        at += elapsed;
-
-        while(!events.empty())
-        {
-            Event const *ev = events.top();
-            if(ev->at > at) break;
-
-            events.pop();
-
-            // Execute the script in the specified context.
-            Process process(scheduler->d->context);
-            process.run(ev->script);
-            process.execute();
-        }
-    }
-};
-
 Scheduler::Scheduler()
     : d(new Instance(this))
 {}
@@ -147,7 +111,6 @@ void Scheduler::addFromInfo(Record const &timelineRecord)
     for(String key : ScriptedInfo::sortRecordsBySource(scripts))
     {
         auto const &def = *scripts[key];
-        qDebug() << def.asText();
         try
         {
             addScript(def.getd("at", 0.0),
@@ -163,10 +126,50 @@ void Scheduler::addFromInfo(Record const &timelineRecord)
     }
 }
 
-Scheduler::Clock::Clock(Scheduler const &schedule)
+//----------------------------------------------------------------------------
+
+DENG2_PIMPL_NOREF(Scheduler::Clock)
+{
+    typedef Scheduler::Instance::Event  Event;
+    typedef Scheduler::Instance::Events Events; // Events not owned
+
+    Record *context = nullptr;
+    Scheduler const *scheduler = nullptr;
+    TimeDelta at = 0.0;
+    Events events;
+
+    void rewind()
+    {
+        at = 0.0;
+
+        // Restore all events in the queue.
+        events = scheduler->d->events; // copied
+    }
+
+    void advanceTime(TimeDelta const &elapsed)
+    {
+        at += elapsed;
+
+        while(!events.empty())
+        {
+            Event const *ev = events.top();
+            if(ev->at > at) break;
+
+            events.pop();
+
+            // Execute the script in the specified context.
+            Process process(context? context : scheduler->d->context);
+            process.run(ev->script);
+            process.execute();
+        }
+    }
+};
+
+Scheduler::Clock::Clock(Scheduler const &schedule, Record *context)
     : d(new Instance)
 {
     d->scheduler = &schedule;
+    d->context   = context;
     d->rewind();
 }
 

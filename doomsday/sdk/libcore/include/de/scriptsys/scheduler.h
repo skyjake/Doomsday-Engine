@@ -68,7 +68,7 @@ public:
     class DENG2_PUBLIC Clock
     {
     public:
-        Clock(Scheduler const &schedule);
+        Clock(Scheduler const &schedule, Record *context = nullptr);
 
         /**
          * Returns the current time of the clock.
