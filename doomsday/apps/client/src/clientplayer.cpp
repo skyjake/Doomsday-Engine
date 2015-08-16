@@ -102,7 +102,7 @@ void ClientPlayer::setWeaponAssetId(String const &id)
 {
     if(id != d->weaponAssetId)
     {
-        //LOG_WIP("weapon asset: %s") << id;
+        LOG_RES_VERBOSE("Weapon asset: %s") << id;
         d->weaponAssetId = id;
         d->playerWeaponAnimator.setAsset("model.weapon." + id);
         d->playerWeaponAnimator.stateChanged(d->lastPSpriteState);
