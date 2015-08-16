@@ -38,8 +38,6 @@ public:
 
     de::ddouble currentTime(int index) const;
 
-    struct Parameters;
-
 private:
     DENG2_PRIVATE(d)
 };

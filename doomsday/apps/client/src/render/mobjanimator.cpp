@@ -46,21 +46,41 @@ DENG2_PIMPL(MobjAnimator)
 
         LoopMode looping = NotLooping;
         int priority = ANIM_DEFAULT_PRIORITY;
+        Scheduler const *timeline = nullptr; // owned by ModelRenderer::AnimSequence
+        std::unique_ptr<Scheduler::Clock> clock;
 
         Animation() {}
 
-        Animation(int animationId, String const &rootNode, LoopMode looping, int priority)
+        Animation(int animationId, String const &rootNode, LoopMode looping, int priority,
+                  Scheduler const *timeline = nullptr)
             : looping(looping)
             , priority(priority)
+            , timeline(timeline)
         {
             animId = animationId;
             node   = rootNode;
         }
 
+        Animation(Animation const &other) : ModelDrawable::Animator::Animation(other)
+        {
+            apply(other);
+        }
+
+        Animation &operator = (Animation const &other)
+        {
+            apply(other);
+            return *this;
+        }
+
         void apply(Animation const &other)
         {
+            animId   = other.animId;
+            node     = other.node;
             looping  = other.looping;
             priority = other.priority;
+            timeline = other.timeline;
+
+            clock.reset();
         }
 
         bool isRunning() const
@@ -76,13 +96,13 @@ DENG2_PIMPL(MobjAnimator)
         static Animation *make() { return new Animation; }
     };
 
-    ModelRenderer::StateAnims const *stateAnims;
+    ModelRenderer::AuxiliaryData const *auxData;
     QHash<String, Animation> pendingAnimForNode;
     String currentStateName;
 
     Instance(Public *i, DotPath const &id)
         : Base(i)
-        , stateAnims(ClientApp::renderSystem().modelRenderer().animations(id))
+        , auxData(ClientApp::renderSystem().modelRenderer().auxiliaryData(id))
     {}
 
     int animationId(String const &name) const
@@ -96,6 +116,10 @@ DENG2_PIMPL(MobjAnimator)
     {
         Animation &anim = self.start(spec.animId, spec.node).as<Animation>();
         anim.apply(spec);
+        if(anim.timeline)
+        {
+            anim.clock.reset(new Scheduler::Clock(*anim.timeline));
+        }
         return anim;
     }
 };
@@ -108,13 +132,14 @@ MobjAnimator::MobjAnimator(DotPath const &id, ModelDrawable const &model)
 void MobjAnimator::triggerByState(String const &stateName)
 {
     // No animations can be triggered if none are available.
-    if(!d->stateAnims) return;
+    auto const *stateAnims = (d->auxData? &d->auxData->animations : nullptr);
+    if(!stateAnims) return;
 
-    auto found = d->stateAnims->constFind(stateName);
-    if(found == d->stateAnims->constEnd()) return;
+    auto found = stateAnims->constFind(stateName);
+    if(found == stateAnims->constEnd()) return;
 
     LOG_AS("MobjAnimator");
-    LOG_GL_XVERBOSE("triggerByState: ") << stateName;
+    LOGDEV_GL_XVERBOSE("triggerByState: ") << stateName;
 
     d->currentStateName = stateName;
 
@@ -139,11 +164,23 @@ void MobjAnimator::triggerByState(String const &stateName)
 
             int const priority = seq.def->geti(DEF_PRIORITY, ANIM_DEFAULT_PRIORITY);
 
+            // Loop up the timeline.
+            Scheduler *timeline = seq.timeline;
+            if(!seq.sharedTimeline.isEmpty())
+            {
+                auto tl = d->auxData->timelines.constFind(seq.sharedTimeline);
+                if(tl != d->auxData->timelines.constEnd())
+                {
+                    timeline = tl.value();
+                }
+            }
+
             // Parameters for the new sequence.
             Animation anim(animId, node,
                            ScriptedInfo::isTrue(*seq.def, DEF_LOOPING)? Animation::Looping :
                                                                         Animation::NotLooping,
-                           priority);
+                           priority,
+                           timeline);
 
             // Do not override higher-priority animations.
             if(auto *existing = find(node)->maybeAs<Animation>())
@@ -169,7 +206,7 @@ void MobjAnimator::triggerByState(String const &stateName)
             continue;
         }
 
-        LOG_GL_VERBOSE("Starting anim: " _E(b)) << seq.name;
+        LOG_GL_VERBOSE("Starting animation: " _E(b)) << seq.name;
         break;
     }
 }
@@ -189,7 +226,8 @@ void MobjAnimator::advanceTime(TimeDelta const &elapsed)
         // TODO: Determine actual time factor.
 
         // Advance the sequence.
-        anim.time += factor * elapsed;
+        TimeDelta animElapsed = factor * elapsed;
+        anim.time += animElapsed;
 
         if(anim.looping == Animation::NotLooping)
         {
@@ -208,6 +246,12 @@ void MobjAnimator::advanceTime(TimeDelta const &elapsed)
             }
         }
 
+        // Scheduled events.
+        if(anim.clock)
+        {
+            anim.clock->advanceTime(animElapsed);
+        }
+
         // Stop finished animations.
         if(!anim.isRunning())
         {
@@ -219,7 +263,7 @@ void MobjAnimator::advanceTime(TimeDelta const &elapsed)
             auto &pending = d->pendingAnimForNode;
             if(pending.contains(node))
             {
-                LOG_GL_VERBOSE("Starting pending anim %i") << pending[node].animId;
+                LOG_GL_VERBOSE("Starting pending animation %i") << pending[node].animId;
                 d->start(pending[node]);
                 pending.remove(node);
             }
