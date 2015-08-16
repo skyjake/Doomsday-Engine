@@ -31,7 +31,9 @@ class Record;
 /**
  * Script scheduling utility.
  *
- * Scheduler owns the parsed scripts, and can be re-run if rewound.
+ * Scheduler owns the parsed scripts, but does not execute them. Use Scheduler::Clock
+ * to execute scripts. There can be any number of Scheduler::Clock instances operating
+ * on a single schedule.
  */
 class DENG2_PUBLIC Scheduler
 {
@@ -48,6 +50,8 @@ public:
      */
     void setContext(Record &context);
 
+    Record *context() const;
+
     /**
      * Adds a new script to the scheduler.
      *
@@ -59,23 +63,34 @@ public:
      */
     Script &addScript(TimeDelta at, String const &source, String const &sourcePath = "");
 
-    /**
-     * Returns the current time of the scheduler.
-     */
-    TimeDelta at() const;
+    void addFromInfo(Record const &timelineRecord);
 
-    /**
-     * Rewinds the current time of the Scheduler back to zero.
-     */
-    void rewind();
+    class DENG2_PUBLIC Clock
+    {
+    public:
+        Clock(Scheduler const &schedule);
 
-    /**
-     * Advances the current time of the Schduler and executes any scripts whose
-     * execution time has arrived.
-     *
-     * @param elapsed  Time elapsed since the previous call.
-     */
-    void advanceTime(TimeDelta const &elapsed);
+        /**
+         * Returns the current time of the clock.
+         */
+        TimeDelta at() const;
+
+        /**
+         * Rewinds the clock back to zero.
+         */
+        void rewind();
+
+        /**
+         * Advances the current time of the clock and executes any scripts whose
+         * execution time has arrived.
+         *
+         * @param elapsed  Time elapsed since the previous call.
+         */
+        void advanceTime(TimeDelta const &elapsed);
+
+    private:
+        DENG2_PRIVATE(d)
+    };
 
 private:
     DENG2_PRIVATE(d)

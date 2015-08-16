@@ -17,6 +17,7 @@
  */
 
 #include "de/Scheduler"
+#include "de/ScriptedInfo"
 #include "de/Record"
 #include "de/Script"
 #include "de/Process"
@@ -30,7 +31,6 @@ DENG2_PIMPL(Scheduler)
 , DENG2_OBSERVES(Record, Deletion)
 {
     Record *context = nullptr;
-    TimeDelta at = 0.0;
 
     struct Event {
         TimeDelta at;
@@ -47,8 +47,8 @@ DENG2_PIMPL(Scheduler)
             bool operator () (Event const *a, Event const *b) { return a->at > b->at; }
         };
     };
-    std::priority_queue<Event *, std::deque<Event *>, Event::Compare> events;
-    QList<Event *> done;
+    typedef std::priority_queue<Event *, std::deque<Event *>, Event::Compare> Events;
+    Events events;
 
     Instance(Public *i) : Base(i)
     {}
@@ -66,9 +66,6 @@ DENG2_PIMPL(Scheduler)
             delete events.top();
             events.pop();
         }
-        qDeleteAll(done);
-        done.clear();
-        rewind();
     }
 
     void setContext(Record *rec)
@@ -85,17 +82,23 @@ DENG2_PIMPL(Scheduler)
             context = nullptr;
         }
     }
+};
+
+DENG2_PIMPL_NOREF(Scheduler::Clock)
+{
+    typedef Scheduler::Instance::Event  Event;
+    typedef Scheduler::Instance::Events Events; // Events not owned
+
+    Scheduler const *scheduler = nullptr;
+    TimeDelta at = 0.0;
+    Events events;
 
     void rewind()
     {
         at = 0.0;
 
-        // Restore all the past events into the queue.
-        for(Event *ev : done)
-        {
-            events.push(ev);
-        }
-        done.clear();
+        // Restore all events in the queue.
+        events = scheduler->d->events; // copied
     }
 
     void advanceTime(TimeDelta const &elapsed)
@@ -104,14 +107,13 @@ DENG2_PIMPL(Scheduler)
 
         while(!events.empty())
         {
-            Event *ev = events.top();
+            Event const *ev = events.top();
             if(ev->at > at) break;
 
             events.pop();
-            done.append(ev);
 
             // Execute the script in the specified context.
-            Process process(context);
+            Process process(scheduler->d->context);
             process.run(ev->script);
             process.execute();
         }
@@ -139,17 +141,46 @@ Script &Scheduler::addScript(TimeDelta at, String const &source, String const &s
     return ev->script;
 }
 
-TimeDelta Scheduler::at() const
+void Scheduler::addFromInfo(Record const &timelineRecord)
+{
+    auto scripts = ScriptedInfo::subrecordsOfType(ScriptedInfo::SCRIPT, timelineRecord);
+    for(String key : ScriptedInfo::sortRecordsBySource(scripts))
+    {
+        auto const &def = *scripts[key];
+        qDebug() << def.asText();
+        try
+        {
+            addScript(def.getd("at", 0.0),
+                      def.gets(ScriptedInfo::SCRIPT),
+                      def.gets(ScriptedInfo::VAR_SOURCE, ""));
+        }
+        catch(Error const &er)
+        {
+            LOG_RES_ERROR("%s: Error in timeline script: %s")
+                    << def.gets(ScriptedInfo::VAR_SOURCE)
+                    << er.asText();
+        }
+    }
+}
+
+Scheduler::Clock::Clock(Scheduler const &schedule)
+    : d(new Instance)
+{
+    d->scheduler = &schedule;
+    d->rewind();
+}
+
+TimeDelta Scheduler::Clock::at() const
 {
     return d->at;
 }
 
-void Scheduler::rewind()
+void Scheduler::Clock::rewind()
 {
     d->rewind();
 }
 
-void Scheduler::advanceTime(TimeDelta const &elapsed)
+void Scheduler::Clock::advanceTime(TimeDelta const &elapsed)
 {
     d->advanceTime(elapsed);
 }
