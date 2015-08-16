@@ -195,7 +195,7 @@ public:
 
         int size() const { return _contents.size(); }
 
-        bool contains(String const &name) { return _contents.contains(name.toLower()); }
+        bool contains(String const &name) const { return _contents.contains(name.toLower()); }
 
         void setBlockType(String const &bType) { _blockType = bType.toLower(); }
 

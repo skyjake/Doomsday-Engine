@@ -29,9 +29,13 @@ namespace de {
 
 static String const BLOCK_GROUP     = "group";
 static String const BLOCK_NAMESPACE = "namespace";
-static String const KEY_INHERIT     = "inherits";
+static String const BLOCK_SCRIPT    = "script";
+static String const KEY_SCRIPT      = "script";
+static String const KEY_INHERITS    = "inherits";
+static String const KEY_CONDITION   = "condition";
 static String const VAR_BLOCK_TYPE  = "__type__";
 static String const VAR_SOURCE      = "__source__";
+static String const VAR_SCRIPT      = "__script%1__";
 
 DENG2_PIMPL(ScriptedInfo)
 {
@@ -49,6 +53,9 @@ DENG2_PIMPL(ScriptedInfo)
         // No limitation on duplicates for the special block types.
         info.setAllowDuplicateBlocksOfType(
                     QStringList() << BLOCK_GROUP << BLOCK_NAMESPACE);
+
+        // Blocks whose contents are parsed as scripts.
+        info.setScriptBlocks(QStringList() << BLOCK_SCRIPT);
 
         // Single-token blocks are implicitly treated as "group" blocks.
         info.setImplicitBlockType(BLOCK_GROUP);
@@ -176,10 +183,55 @@ DENG2_PIMPL(ScriptedInfo)
         // This only applies to groups.
         if(from->blockType() == BLOCK_GROUP)
         {
-            if(Info::KeyElement *key = from->findAs<Info::KeyElement>(KEY_INHERIT))
+            if(Info::KeyElement *key = from->findAs<Info::KeyElement>(KEY_INHERITS))
             {
                 inherit(block, key->value());
             }
+        }
+    }
+
+    /**
+     * Determines whether a script block is unqualified, meaning it is an anonymous
+     * script block that has no other keys than the script itself and possibly a
+     * "condition" key.
+     *
+     * @param block  Block.
+     *
+     * @return @c true, if an unqualified script block (that will be executed immediately
+     * during processing of the ScriptedInfo document), or otherwise @c false, in which
+     * case the script is assumed to be executed at a later point in time.
+     */
+    bool isUnqualifiedScriptBlock(Info::BlockElement const &block)
+    {
+        if(block.blockType() != BLOCK_SCRIPT) return false;
+        for(auto const *child : block.contentsInOrder())
+        {
+            if(!child->isKey()) return false;
+            Info::KeyElement const &key = child->as<Info::KeyElement>();
+            if(key.name() != KEY_SCRIPT && key.name() != KEY_CONDITION)
+            {
+                return false;
+            }
+        }
+        return block.contains(KEY_SCRIPT);
+    }
+
+    /**
+     * Chooses a new automatically generated (anonymous) script block name that is
+     * unique within @a where.
+     *
+     * @param where  Record where the script will be stored.
+     *
+     * @return Variable name.
+     */
+    static String chooseScriptName(Record const &where)
+    {
+        int counter = 0;
+        forever
+        {
+            String name = VAR_SCRIPT.arg(counter, 2 /*width*/, 10 /*base*/, QLatin1Char('0'));
+            if(!where.has(name)) return name;
+            counter++;
         }
     }
 
@@ -187,7 +239,7 @@ DENG2_PIMPL(ScriptedInfo)
     {
         Record &ns = process.globals();
 
-        if(Info::Element *condition = block.find("condition"))
+        if(Info::Element *condition = block.find(KEY_CONDITION))
         {
             // Any block will be ignored if its condition is false.
             QScopedPointer<Value> result(evaluate(condition->values().first(), 0));
@@ -201,7 +253,7 @@ DENG2_PIMPL(ScriptedInfo)
         inheritFromAncestors(block, block.parent());
 
         // Direct inheritance.
-        if(Info::KeyElement *key = block.findAs<Info::KeyElement>(KEY_INHERIT))
+        if(Info::KeyElement *key = block.findAs<Info::KeyElement>(KEY_INHERITS))
         {
             // Check for special attributes.
             if(key->flags().testFlag(Info::KeyElement::Attribute))
@@ -211,13 +263,13 @@ DENG2_PIMPL(ScriptedInfo)
             }
         }
 
-        // Script blocks are executed now.
-        if(block.blockType() == "script")
+        // Script blocks are executed now. This includes only the unqualified script
+        // blocks that have only a single "script" key in them.
+        if(isUnqualifiedScriptBlock(block))
         {
-            DENG2_ASSERT(block.find("script") != 0);
             DENG2_ASSERT(process.state() == Process::Stopped);
 
-            script.reset(new Script(block.find("script")->values().first()));
+            script.reset(new Script(block.keyValue(KEY_SCRIPT)));
             script->setPath(info.sourcePath()); // where the source comes from
             process.run(*script);
             executeWithContext(block.parent());
@@ -240,32 +292,48 @@ DENG2_PIMPL(ScriptedInfo)
                 }
                 LOG_SCR_XVERBOSE("Namespace set to '%s' on line %i") << currentNamespace << block.lineNumber();
             }
-            else if(!block.name().isEmpty())
+            else if(!block.name().isEmpty() || block.blockType() == BLOCK_SCRIPT)
             {
+                // Determine the full variable name of the record of this block.
+                String varName;
+                if(block.blockType() == BLOCK_SCRIPT)
+                {
+                    // Qualified scripts get automatically generated names.
+                    Record const &parentRecord = ns[variableName(*block.parent())];
+                    varName = varName.concatenateMember(chooseScriptName(parentRecord));
+                }
+                else
+                {
+                    // Use the parent block names to form the variable name.
+                    varName = variableName(block);
+                }
+
                 // Create the block record if it doesn't exist.
-                String varName = variableName(block);
                 if(!ns.has(varName))
                 {
                     ns.addRecord(varName);
                 }
                 Record &blockRecord = ns[varName];
 
-                // Block type placed into a special variable (only with named blocks, though).
+                // Block type placed into a special variable.
                 blockRecord.addText(VAR_BLOCK_TYPE, block.blockType());
 
                 // Also store source location in a special variable.
                 blockRecord.addText(VAR_SOURCE, block.sourceLocation());
 
-                DENG2_FOR_PUBLIC_AUDIENCE2(NamedBlock, i)
+                if(!block.name().isEmpty())
                 {
-                    i->parsedNamedBlock(varName, blockRecord);
+                    DENG2_FOR_PUBLIC_AUDIENCE2(NamedBlock, i)
+                    {
+                        i->parsedNamedBlock(varName, blockRecord);
+                    }
                 }
             }
 
             foreach(Info::Element const *sub, block.contentsInOrder())
             {
                 // Handle special elements.
-                if(sub->name() == "condition" || sub->name() == "inherits")
+                if(sub->name() == KEY_CONDITION || sub->name() == KEY_INHERITS)
                 {
                     // Already handled.
                     continue;

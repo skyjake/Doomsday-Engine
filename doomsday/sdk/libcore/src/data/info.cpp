@@ -31,6 +31,7 @@ static QString const WHITESPACE = " \t\r\n";
 static QString const WHITESPACE_OR_COMMENT = " \t\r\n#";
 static QString const TOKEN_BREAKING_CHARS = "#:=$(){}<>,\"" + WHITESPACE;
 static QString const INCLUDE_TOKEN = "@include";
+static QString const SCRIPT_TOKEN = "script";
 
 DENG2_PIMPL(Info)
 {
@@ -73,7 +74,7 @@ DENG2_PIMPL(Info)
         , rootBlock("", "", *i)
         , finder(&defaultFinder)
     {
-        scriptBlockTypes << "script";
+        scriptBlockTypes << SCRIPT_TOKEN;
     }
 
     /**
@@ -540,7 +541,7 @@ success:;
             if(scriptBlockTypes.contains(blockType))
             {
                 // Parse as Doomsday Script.
-                block->add(new KeyElement("script", parseScript()));
+                block->add(new KeyElement(SCRIPT_TOKEN, parseScript()));
             }
             else
             {
