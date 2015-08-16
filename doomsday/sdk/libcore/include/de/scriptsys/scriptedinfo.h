@@ -228,6 +228,13 @@ public:
      */
     static StringList sortRecordsBySource(Record::Subrecords const &subrecs);
 
+public:
+    static String const SCRIPT;
+    static String const BLOCK_GROUP;
+
+    /// Name of a special variable where the source location of a record is stored.
+    static String const VAR_SOURCE;
+
 private:
     DENG2_PRIVATE(d)
 };

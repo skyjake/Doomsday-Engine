@@ -27,14 +27,16 @@
 
 namespace de {
 
-static String const BLOCK_GROUP     = "group";
+String const ScriptedInfo::SCRIPT      = "script";
+String const ScriptedInfo::BLOCK_GROUP = "group";
+String const ScriptedInfo::VAR_SOURCE  = "__source__";
+
 static String const BLOCK_NAMESPACE = "namespace";
-static String const BLOCK_SCRIPT    = "script";
-static String const KEY_SCRIPT      = "script";
+static String const BLOCK_SCRIPT    = ScriptedInfo::SCRIPT;
+static String const KEY_SCRIPT      = ScriptedInfo::SCRIPT;
 static String const KEY_INHERITS    = "inherits";
 static String const KEY_CONDITION   = "condition";
 static String const VAR_BLOCK_TYPE  = "__type__";
-static String const VAR_SOURCE      = "__source__";
 static String const VAR_SCRIPT      = "__script%1__";
 
 DENG2_PIMPL(ScriptedInfo)
@@ -263,6 +265,8 @@ DENG2_PIMPL(ScriptedInfo)
             }
         }
 
+        bool const isScriptBlock = (block.blockType() == BLOCK_SCRIPT);
+
         // Script blocks are executed now. This includes only the unqualified script
         // blocks that have only a single "script" key in them.
         if(isUnqualifiedScriptBlock(block))
@@ -292,15 +296,16 @@ DENG2_PIMPL(ScriptedInfo)
                 }
                 LOG_SCR_XVERBOSE("Namespace set to '%s' on line %i") << currentNamespace << block.lineNumber();
             }
-            else if(!block.name().isEmpty() || block.blockType() == BLOCK_SCRIPT)
+            else if(!block.name().isEmpty() || isScriptBlock)
             {
-                // Determine the full variable name of the record of this block.
                 String varName;
-                if(block.blockType() == BLOCK_SCRIPT)
+
+                // Determine the full variable name of the record of this block.
+                if(isScriptBlock)
                 {
                     // Qualified scripts get automatically generated names.
-                    Record const &parentRecord = ns[variableName(*block.parent())];
-                    varName = varName.concatenateMember(chooseScriptName(parentRecord));
+                    String const parentVarName = variableName(*block.parent());
+                    varName = parentVarName.concatenateMember(chooseScriptName(ns[parentVarName]));
                 }
                 else
                 {
@@ -321,24 +326,47 @@ DENG2_PIMPL(ScriptedInfo)
                 // Also store source location in a special variable.
                 blockRecord.addText(VAR_SOURCE, block.sourceLocation());
 
-                if(!block.name().isEmpty())
+                if(!isScriptBlock)
                 {
                     DENG2_FOR_PUBLIC_AUDIENCE2(NamedBlock, i)
                     {
                         i->parsedNamedBlock(varName, blockRecord);
                     }
                 }
+                else
+                {
+                    // Add the extra attributes of script blocks.
+                    // These are not processed as regular subelements because the
+                    // path of the script record is not directly determined by the parent
+                    // blocks (see above; chooseScriptName()).
+                    for(auto const *elem : block.contents().values())
+                    {
+                        if(elem->isKey())
+                        {
+                            auto const &key = elem->as<Info::KeyElement>();
+                            if(key.name() != KEY_CONDITION)
+                            {
+                                blockRecord.addText(key.name(), key.value());
+                            }
+                        }
+                    }
+                }
             }
 
-            foreach(Info::Element const *sub, block.contentsInOrder())
+            // Continue processing elements contained in the block (unless this is
+            // script block).
+            if(!isScriptBlock)
             {
-                // Handle special elements.
-                if(sub->name() == KEY_CONDITION || sub->name() == KEY_INHERITS)
+                foreach(Info::Element const *sub, block.contentsInOrder())
                 {
-                    // Already handled.
-                    continue;
+                    // Handle special elements.
+                    if(sub->name() == KEY_CONDITION || sub->name() == KEY_INHERITS)
+                    {
+                        // Already handled.
+                        continue;
+                    }
+                    processElement(sub);
                 }
-                processElement(sub);
             }
 
             // Continue with the old namespace after the block.

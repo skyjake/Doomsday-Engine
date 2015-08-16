@@ -40,7 +40,7 @@ String Package::Asset::absolutePath(String const &name) const
     // For the context, we'll accept either the variable's own record or the package
     // metadata.
     Record const *context = &accessedRecord().parentRecordForMember(name);
-    if(!context->has("__source__"))
+    if(!context->has(ScriptedInfo::VAR_SOURCE))
     {
         context = &accessedRecord();
     }
@@ -349,5 +349,5 @@ Time Package::containerOfFileModifiedAt(File const &file)
     if(!c) return file.status().modifiedAt;
     return c->status().modifiedAt;
 }
-    
+
 } // namespace de

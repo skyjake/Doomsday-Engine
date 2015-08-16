@@ -395,7 +395,8 @@ success:;
 
         //qDebug() << "now at" << content.substr(endPos - 15, endPos) << "^" << content.substr(endPos);
 
-        return InfoValue(content.substr(startPos, lex.pos() - 1), InfoValue::Script);
+        // Whitespace is removed from beginning and end.
+        return InfoValue(content.substr(startPos, lex.pos() - 1).trimmed(), InfoValue::Script);
     }
 
     /**
@@ -501,9 +502,13 @@ success:;
         DENG2_ASSERT(blockType != ")");
 
         String blockName;
-        if(peekToken() != "(" && peekToken() != "{")
+
+        if(!scriptBlockTypes.contains(blockType)) // script blocks are never named
         {
-            blockName = parseValue();
+            if(peekToken() != "(" && peekToken() != "{")
+            {
+                blockName = parseValue();
+            }
         }
 
         if(!implicitBlockType.isEmpty() && blockName.isEmpty() &&
