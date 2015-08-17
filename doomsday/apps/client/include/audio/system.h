@@ -280,7 +280,7 @@ public:  /// @todo make private:
 #endif  // __CLIENT__
 
     /// @todo Should not be exposed to users of this class. -ds
-    void startLogical(int soundId, struct mobj_s *emitter);
+    void startLogical(int soundIdAndFlags, struct mobj_s *emitter);
 
 private:
     DENG2_PRIVATE(d)

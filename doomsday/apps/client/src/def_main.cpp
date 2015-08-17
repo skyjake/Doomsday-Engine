@@ -146,9 +146,9 @@ state_t *Def_GetState(dint num)
     return nullptr;  // Not found.
 }
 
-sfxinfo_t *Def_GetSoundInfo(dint soundID, dfloat *freq, dfloat *volume)
+sfxinfo_t *Def_GetSoundInfo(dint soundId, dfloat *freq, dfloat *volume)
 {
-    if(soundID <= 0 || soundID >= ::defs.sounds.size())
+    if(soundId <= 0 || soundId >= ::defs.sounds.size())
         return nullptr;
 
     dfloat dummy = 0;
@@ -159,27 +159,24 @@ sfxinfo_t *Def_GetSoundInfo(dint soundID, dfloat *freq, dfloat *volume)
     // certainly enough and prevents endless recursion.) Update the sound id at the
     // same time. The links were checked in Def_Read() so there cannot be any bogus
     // ones.
-    sfxinfo_t *info = &::runtimeDefs.sounds[soundID];
+    sfxinfo_t *info = &::runtimeDefs.sounds[soundId];
 
     for(dint i = 0; info->link && i < 10;
         info     = info->link,
         *freq    = (info->linkPitch > 0    ? info->linkPitch  / 128.0f : *freq),
         *volume += (info->linkVolume != -1 ? info->linkVolume / 127.0f : 0),
-        soundID  = ::runtimeDefs.sounds.indexOf(info),
+        soundId  = ::runtimeDefs.sounds.indexOf(info),
        ++i)
     {}
 
-    DENG2_ASSERT(soundID < ::defs.sounds.size());
+    DENG2_ASSERT(soundId < ::defs.sounds.size());
 
     return info;
 }
 
-bool Def_SoundIsRepeating(dint idFlags)
+bool Def_SoundIsRepeating(dint soundId)
 {
-    if(idFlags & DDSF_REPEAT)
-        return true;
-
-    if(sfxinfo_t *info = Def_GetSoundInfo(idFlags & ~DDSF_FLAG_MASK, nullptr, nullptr))
+    if(sfxinfo_t *info = Def_GetSoundInfo(soundId, nullptr, nullptr))
     {
         return (info->flags & SF_REPEAT) != 0;
     }

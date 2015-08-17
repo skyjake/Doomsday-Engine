@@ -169,18 +169,18 @@ state_t *Def_GetState(int num);
 /**
  * Gets information about a defined sound. Linked sounds are resolved.
  *
- * @param soundID  ID number of the sound.
+ * @param soundId  ID number of the sound.
  * @param freq     Defined frequency for the sound is returned here. May be @c nullptr.
  * @param volume   Defined volume for the sound is returned here. May be @c nullptr.
  *
  * @return  Sound info (from definitions).
  */
-sfxinfo_t *Def_GetSoundInfo(int soundID, float *freq, float *volume);
+sfxinfo_t *Def_GetSoundInfo(int soundId, float *freq, float *volume);
 
 /**
- * Returns @c true if the specified ID is defined as a repeating sound.
+ * Returns @c true if the given @a soundId is defined as a repeating sound.
  */
-bool Def_SoundIsRepeating(int idFlags);
+bool Def_SoundIsRepeating(int soundId);
 
 /**
  * @return  @c true= the definition was found.

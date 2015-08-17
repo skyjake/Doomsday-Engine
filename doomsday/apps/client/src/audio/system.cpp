@@ -1170,18 +1170,15 @@ DENG2_PIMPL(System)
      * a different set of samples so using this information on server side (for
      * scheduling of remote playback events?) is not logical. -ds
      */
-    void sfxStartLogical(dint soundId, mobj_t *emitter)
+    void sfxStartLogical(dint soundIdAndFlags, mobj_t *emitter)
     {
-        // Ignore invalid sound IDs.
-        if(soundId <= 0) return;
-
-        soundId &= ~DDSF_FLAG_MASK;
+        dint const soundId = (soundIdAndFlags & ~DDSF_FLAG_MASK);
 
         // Cache the sound sample associated with @a soundId (if necessary)
         // so that we can determine it's length.
         if(sfxsample_t *sample = sfxSampleCache.cache(soundId))
         {
-            bool const isRepeating = Def_SoundIsRepeating(soundId);
+            bool const isRepeating = (soundIdAndFlags & DDSF_REPEAT) || Def_SoundIsRepeating(soundId);
 
             duint length = (1000 * sample->numSamples) / sample->rate;
             if(isRepeating && length > 1)
@@ -2363,9 +2360,9 @@ void System::clearLogical()
     d->sfxClearLogical();
 }
 
-void System::startLogical(dint soundId, mobj_t *emitter)
+void System::startLogical(dint soundIdAndFlags, mobj_t *emitter)
 {
-    d->sfxStartLogical(soundId, emitter);
+    d->sfxStartLogical(soundIdAndFlags, emitter);
 }
 
 void System::aboutToUnloadMap()
@@ -2645,32 +2642,32 @@ dint Mus_StartCDTrack(dint cdTrack, bool looped)
 #endif
 }
 
-dint S_StartMusicNum(dint id, dd_bool looped)
+dint S_StartMusicNum(dint musicId, dd_bool looped)
 {
 #ifdef __CLIENT__
     if(::isDedicated) return true;
 
-    if(id >= 0 && id < ::defs.musics.size())
+    if(musicId >= 0 && musicId < ::defs.musics.size())
     {
-        Record const &def = ::defs.musics[id];
+        Record const &def = ::defs.musics[musicId];
         return Mus_Start(def, looped);
     }
     return false;
 #else
-    DENG2_UNUSED2(id, looped);
+    DENG2_UNUSED2(musicId, looped);
     return false;
 #endif
 }
 
-dint S_StartMusic(char const *musicID, dd_bool looped)
+dint S_StartMusic(char const *musicId, dd_bool looped)
 {
-    dint idx = ::defs.getMusicNum(musicID);
+    dint idx = ::defs.getMusicNum(musicId);
     if(idx < 0)
     {
-        if(musicID && !String(musicID).isEmpty())
+        if(musicId && !String(musicId).isEmpty())
         {
             LOG_AS("S_StartMusic");
-            LOG_AUDIO_WARNING("Song \"%s\" not defined, cannot start playback") << musicID;
+            LOG_AUDIO_WARNING("Music \"%s\" not defined, cannot start playback") << musicId;
         }
         return false;
     }
@@ -2714,7 +2711,7 @@ dint S_LocalSoundAtVolumeFrom(dint soundIdAndFlags, mobj_t *origin, coord_t *poi
     sfxinfo_t *info = Def_GetSoundInfo(soundId, &freq, &volume);
     if(!info) return false;  // Hmm? This ID is not defined.
 
-    bool const isRepeating = Def_SoundIsRepeating(soundIdAndFlags);
+    bool const isRepeating = (soundIdAndFlags & DDSF_REPEAT) || Def_SoundIsRepeating(soundId);
 
     // Check the distance (if applicable).
     if(!(info->flags & SF_NO_ATTENUATION) && !(soundIdAndFlags & DDSF_NO_ATTENUATION))
@@ -2772,52 +2769,52 @@ dint S_LocalSoundAtVolumeFrom(dint soundIdAndFlags, mobj_t *origin, coord_t *poi
 #endif
 }
 
-dint S_LocalSoundAtVolume(dint soundId, mobj_t *emitter, dfloat volume)
+dint S_LocalSoundAtVolume(dint soundIdAndFlags, mobj_t *emitter, dfloat volume)
 {
-    return S_LocalSoundAtVolumeFrom(soundId, emitter, nullptr, volume);
+    return S_LocalSoundAtVolumeFrom(soundIdAndFlags, emitter, nullptr, volume);
 }
 
-dint S_LocalSound(dint soundId, mobj_t *emitter)
+dint S_LocalSound(dint soundIdAndFlags, mobj_t *emitter)
 {
     // Play local sound at max volume.
-    return S_LocalSoundAtVolumeFrom(soundId, emitter, nullptr, 1);
+    return S_LocalSoundAtVolumeFrom(soundIdAndFlags, emitter, nullptr, 1);
 }
 
-dint S_LocalSoundFrom(dint soundId, coord_t *origin)
+dint S_LocalSoundFrom(dint soundIdAndFlags, coord_t *origin)
 {
-    return S_LocalSoundAtVolumeFrom(soundId, nullptr, origin, 1);
+    return S_LocalSoundAtVolumeFrom(soundIdAndFlags, nullptr, origin, 1);
 }
 
-dint S_StartSound(dint soundId, mobj_t *emitter)
+dint S_StartSound(dint soundIdAndFlags, mobj_t *emitter)
 {
 #ifdef __SERVER__
     // The sound is audible to everybody.
-    Sv_Sound(soundId, emitter, SVSF_TO_ALL);
+    Sv_Sound(soundIdAndFlags, emitter, SVSF_TO_ALL);
 #endif
-    App_AudioSystem().startLogical(soundId, emitter);
+    App_AudioSystem().startLogical(soundIdAndFlags, emitter);
 
-    return S_LocalSound(soundId, emitter);
+    return S_LocalSound(soundIdAndFlags, emitter);
 }
 
-dint S_StartSoundEx(dint soundId, mobj_t *emitter)
+dint S_StartSoundEx(dint soundIdAndFlags, mobj_t *emitter)
 {
 #ifdef __SERVER__
-    Sv_Sound(soundId, emitter, SVSF_TO_ALL | SVSF_EXCLUDE_ORIGIN);
+    Sv_Sound(soundIdAndFlags, emitter, SVSF_TO_ALL | SVSF_EXCLUDE_ORIGIN);
 #endif
-    App_AudioSystem().startLogical(soundId, emitter);
+    App_AudioSystem().startLogical(soundIdAndFlags, emitter);
 
-    return S_LocalSound(soundId, emitter);
+    return S_LocalSound(soundIdAndFlags, emitter);
 }
 
-dint S_StartSoundAtVolume(dint soundId, mobj_t *emitter, dfloat volume)
+dint S_StartSoundAtVolume(dint soundIdAndFlags, mobj_t *emitter, dfloat volume)
 {
 #ifdef __SERVER__
-    Sv_SoundAtVolume(soundId, emitter, volume, SVSF_TO_ALL);
+    Sv_SoundAtVolume(soundIdAndFlags, emitter, volume, SVSF_TO_ALL);
 #endif
-    App_AudioSystem().startLogical(soundId, emitter);
+    App_AudioSystem().startLogical(soundIdAndFlags, emitter);
 
     // The sound is audible to everybody.
-    return S_LocalSoundAtVolume(soundId, emitter, volume);
+    return S_LocalSoundAtVolume(soundIdAndFlags, emitter, volume);
 }
 
 dint S_ConsoleSound(dint soundId, mobj_t *emitter, dint targetConsole)
