@@ -589,6 +589,9 @@ success:;
             String content = finder->findIncludedInfoSource(includeName, self, &includePath);
 
             Info included;
+            included.setImplicitBlockType(implicitBlockType);
+            included.setScriptBlocks(scriptBlockTypes);
+            included.setAllowDuplicateBlocksOfType(allowDuplicateBlocksOfType);
             included.setFinder(*finder); // use ours
             included.setSourcePath(includePath);
             included.parse(content);
