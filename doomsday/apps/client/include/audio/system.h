@@ -168,6 +168,12 @@ public:  // Sound effect playback: ---------------------------------------------
 
 #endif  // __CLIENT__
 
+    /**
+     * Returns true if the sound is currently playing somewhere in the world. It doesn't
+     * matter if it's audible or not.
+     *
+     * @param soundId  @c 0= true if any sounds are playing using the specified @a emitter.
+     */
     bool soundIsPlaying(int soundId, struct mobj_s *emitter) const;
 
 #ifdef __CLIENT__
