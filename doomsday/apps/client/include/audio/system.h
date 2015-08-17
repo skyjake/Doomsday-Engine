@@ -277,12 +277,7 @@ public:  /// @todo make private:
 
 #endif  // __CLIENT__
 
-    /**
-     * The sound is entered into the list of playing sounds. Called when a 'world class'
-     * sound is started, regardless of whether it's actually started on the local system.
-     *
-     * @todo Should not be exposed to users of this class. -ds
-     */
+    /// @todo Should not be exposed to users of this class. -ds
     void startLogical(int soundId, struct mobj_s *emitter);
 
 private:

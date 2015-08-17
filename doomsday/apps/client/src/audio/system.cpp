@@ -603,6 +603,7 @@ DENG2_PIMPL(System)
 
     ~Instance()
     {
+        sfxClearLogical();
 #ifdef __CLIENT__
         sfxSampleCache.audienceForSampleRemove() -= this;
         App::app().audienceForGameUnload() -= this;
@@ -1098,7 +1099,7 @@ DENG2_PIMPL(System)
 
 #endif  // __CLIENT__
 
-    void clearLogical()
+    void sfxClearLogical()
     {
         qDeleteAll(sfxLogicHash);
         sfxLogicHash.clear();
@@ -1107,7 +1108,7 @@ DENG2_PIMPL(System)
     /**
      * Maybe remove stopped sounds from the LSM.
      */
-    void purgeLogical()
+    void sfxPurgeLogical()
     {
         // Too soon?
         duint const nowTime = Timer_RealMilliseconds();
@@ -1140,7 +1141,7 @@ DENG2_PIMPL(System)
      *
      * @return  Number of sounds stopped.
      */
-    dint stopLogical(dint soundId, mobj_t *emitter)
+    dint sfxStopLogical(dint soundId, mobj_t *emitter)
     {
         dint stopCount = 0;
         MutableLogicSoundHashIterator it(sfxLogicHash);
@@ -1163,6 +1164,52 @@ DENG2_PIMPL(System)
             stopCount++;
         }
         return stopCount;
+    }
+
+    /**
+     * The sound is entered into the list of playing sounds. Called when a
+     * 'world class' sound is started, regardless of whether it's actually
+     * started on the local system.
+     *
+     * @todo Why does the Server cache sound samples and/or care to know the
+     * length of the samples? It is entirely possible that the Client is using
+     * a different set of samples so using this information on server side (for
+     * scheduling of remote playback events?) is not logical. -ds
+     */
+    void sfxStartLogical(dint soundId, mobj_t *emitter)
+    {
+        soundId &= ~DDSF_FLAG_MASK;
+
+        // Cache the sound sample associated with @a soundId (if necessary)
+        // so that we can determine it's length.
+        if(sfxsample_t *sample = sfxSampleCache.cache(soundId))
+        {
+            bool const isRepeating = Def_SoundIsRepeating(soundId);
+
+            duint length = (1000 * sample->numSamples) / sample->rate;
+            if(isRepeating && length > 1)
+            {
+                length = 1;
+            }
+
+            // Ignore zero length sounds.
+            /// @todo Shouldn't we still stop others though? -ds
+            if(!length) return;
+
+            // Only one sound per emitter?
+            if(emitter && sfxLogicOneSoundPerEmitter)
+            {
+                // Stop all other sounds.
+                sfxStopLogical(0, emitter);
+            }
+
+            auto *ls = new Instance::LogicSound;
+            //ls->soundId     = soundId;
+            ls->emitter     = emitter;
+            ls->isRepeating = isRepeating;
+            ls->endTime     = Timer_RealMilliseconds() + length;
+            sfxLogicHash.insert(soundId, ls);
+        }
     }
 
     /**
@@ -1449,7 +1496,7 @@ void System::startFrame()
 #endif
 
     d->sfxLogicOneSoundPerEmitter = ::sfxOneSoundPerEmitter;
-    d->purgeLogical();
+    d->sfxPurgeLogical();
 }
 
 #ifdef __CLIENT__
@@ -1733,16 +1780,16 @@ void System::setSfxListener(mobj_t *newListener)
 
 bool System::soundIsPlaying(dint soundId, mobj_t *emitter) const
 {
-    // Use the logical sound managed to determine whether the referenced sound is
-    // being played currently. We don't care whether its audible or not.
+    // Use the logic sound hash to determine whether the referenced sound is being
+    // played currently. We don't care whether its audible or not.
     duint const nowTime = Timer_RealMilliseconds();
     if(soundId)
     {
         auto it = d->sfxLogicHash.constFind(soundId);
         while(it != d->sfxLogicHash.constEnd() && it.key() == soundId)
         {
-            Instance::LogicSound const *ls = it.value();
-            if(ls->emitter == emitter && ls->isPlaying(nowTime))
+            Instance::LogicSound const &lsound = *it.value();
+            if(lsound.emitter == emitter && lsound.isPlaying(nowTime))
                 return true;
 
             ++it;
@@ -1754,8 +1801,8 @@ bool System::soundIsPlaying(dint soundId, mobj_t *emitter) const
         auto it = d->sfxLogicHash.constBegin();
         while(it != d->sfxLogicHash.constEnd())
         {
-            Instance::LogicSound const *ls = it.value();
-            if(ls->emitter == emitter && ls->isPlaying(nowTime))
+            Instance::LogicSound const &lsound = *it.value();
+            if(lsound.emitter == emitter && lsound.isPlaying(nowTime))
                 return true;
 
             ++it;
@@ -1893,7 +1940,7 @@ void System::stopSound(dint soundId, mobj_t *emitter, dint flags)
 #endif
 
     // Notify the LSM.
-    if(d->stopLogical(soundId, emitter))
+    if(d->sfxStopLogical(soundId, emitter))
     {
 #ifdef __SERVER__
         // In netgames, the server is responsible for telling clients
@@ -2275,54 +2322,17 @@ void System::requestSfxListenerUpdate()
 
 void System::clearLogical()
 {
-    d->clearLogical();
+    d->sfxClearLogical();
 }
 
-/**
- * @todo Why does the Server cache sound samples and/or care to know the length
- * of the samples? It is entirely possible that the Client is using a different
- * set of samples so using this information on server side (for scheduling of
- * remote playback events?) is not logical. -ds
- */
 void System::startLogical(dint soundId, mobj_t *emitter)
 {
-    // Cache the sound sample associated with @a soundId (if necessary) so that
-    // we can determine it's length.
-    if(sfxsample_t *sample = d->sfxSampleCache.cache(soundId & ~DDSF_FLAG_MASK))
-    {
-        duint length = (1000 * sample->numSamples) / sample->rate;
-
-        bool const isRepeating = Def_SoundIsRepeating(soundId);
-        if(isRepeating && length > 1)
-        {
-            length = 1;
-        }
-
-        // Ignore zero length sounds.
-        /// @todo Shouldn't we still stop others though? -ds
-        if(!length) return;
-
-        // Only one sound per emitter?
-        if(emitter && d->sfxLogicOneSoundPerEmitter)
-        {
-            // Stop all other sounds.
-            d->stopLogical(0, emitter);
-        }
-
-        soundId &= ~DDSF_FLAG_MASK;
-
-        auto *ls = new Instance::LogicSound;
-        //ls->soundId     = soundId;
-        ls->emitter     = emitter;
-        ls->isRepeating = isRepeating;
-        ls->endTime     = Timer_RealMilliseconds() + length;
-        d->sfxLogicHash.insert(soundId, ls);
-    }
+    d->sfxStartLogical(soundId, emitter);
 }
 
 void System::aboutToUnloadMap()
 {
-    d->clearLogical();
+    d->sfxClearLogical();
 
 #ifdef __CLIENT__
     // Mobjs are about to be destroyed so stop all sound channels using one as an emitter.
