@@ -1323,7 +1323,7 @@ DENG2_PIMPL(System)
 
         if(old3DMode == sfx3D) return;  // No change.
 
-        LOG_AUDIO_VERBOSE("switching to %s mode...") << (old3DMode ? "2D" : "3D");
+        LOG_AUDIO_VERBOSE("Switching to %s mode...") << (old3DMode ? "2D" : "3D");
 
         // To make the change effective, re-create all channels.
         recreateSfxChannels();
@@ -1355,7 +1355,7 @@ DENG2_PIMPL(System)
             dint const newRate = sfxSampleRate;
             if(::sfxBits != newBits || ::sfxRate != newRate)
             {
-                LOG_AUDIO_VERBOSE("switching sound rate to %iHz (%b-bit)") << newRate << newBits;
+                LOG_AUDIO_VERBOSE("Switching sound rate to %iHz (%i-bit)..") << newRate << newBits;
 
                 // Set the new buffer format.
                 ::sfxBits = newBits;
