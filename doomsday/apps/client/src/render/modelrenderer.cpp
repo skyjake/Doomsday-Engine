@@ -155,6 +155,7 @@ DENG2_PIMPL(ModelRenderer)
         {
             model.setAtlas(*atlas);
 
+            model.setDefaultTexture(ModelDrawable::Diffuse,  defaultEmission); // blank
             model.setDefaultTexture(ModelDrawable::Normals,  defaultNormals);
             model.setDefaultTexture(ModelDrawable::Emissive, defaultEmission);
             model.setDefaultTexture(ModelDrawable::Specular, defaultSpecular);
