@@ -1,4 +1,4 @@
-/** @file api_sound.h  Public API for the audio subsystem.
+/** @file api_sound.h  Public API for the audio system.
  * @ingroup audio
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -36,14 +36,15 @@ DENG_API_TYPEDEF(S)
      * If @a origin and @a point are both @c NULL, the sound is played in 2D and
      * centered.
      *
-     * @param soundIdAndFlags ID of the sound to play. Flags can be included (DDSF_*).
-     * @param origin        Mobj where the sound originates. May be @c NULL.
-     * @param point         World coordinates where the sound originate. May be @c NULL.
-     * @param volume        Volume for the sound (0...1).
+     * @param soundIdAndFlags  ID of the sound to play. Flags can be included (DDSF_*).
+     * @param emitter          Mobj where the sound originates. May be @c nullptr.
+     * @param origin           World coordinates where the sound originate. May be @c nullptr.
+     * @param volume           Volume for the sound (0...1).
      *
      * @return  Non-zero if a sound was started.
      */
-    int (*LocalSoundAtVolumeFrom)(int sound_id, struct mobj_s *origin, coord_t *pos, float volume);
+    int (*LocalSoundAtVolumeFrom)(int soundIdAndFlags, struct mobj_s *emitter,
+        coord_t *origin, float volume);
 
     /**
      * Plays a sound on the local system at the given volume.
@@ -51,72 +52,72 @@ DENG_API_TYPEDEF(S)
      *
      * @return  Non-zero if a sound was started.
      */
-    int (*LocalSoundAtVolume)(int soundID, struct mobj_s *origin, float volume);
+    int (*LocalSoundAtVolume)(int soundId, struct mobj_s *emitter, float volume);
 
     /**
-     * Plays a sound on the local system from the given origin.
+     * Plays a sound on the local system from the given @a emitter.
      * This is a public sound interface.
      *
      * @return  Non-zero if a sound was started.
      */
-    int (*LocalSound)(int soundID, struct mobj_s *origin);
+    int (*LocalSound)(int soundId, struct mobj_s *emitter);
 
     /**
-     * Plays a sound on the local system at a give distance from listener.
+     * Plays a sound on the local system at the given fixed world @a origin.
      * This is a public sound interface.
      *
      * @return  Non-zero if a sound was started.
      */
-    int (*LocalSoundFrom)(int soundID, coord_t *fixedpos);
+    int (*LocalSoundFrom)(int soundId, coord_t *origin);
 
     /**
      * Play a world sound. All players in the game will hear it.
      *
      * @return  Non-zero if a sound was started.
      */
-    int (*StartSound)(int soundId, struct mobj_s *origin);
+    int (*StartSound)(int soundId, struct mobj_s *emitter);
 
     /**
      * Play a world sound. The sound is sent to all players except the one who
      * owns the origin mobj. The server assumes that the owner of the origin plays
      * the sound locally, which is done here, in the end of S_StartSoundEx().
      *
-     * @param soundID       Id of the sound.
-     * @param origin        Origin mobj for the sound.
+     * @param soundId  Id of the sound.
+     * @param emitter  Originator for the sound.
      *
      * @return  Non-zero if a sound was successfully started.
      */
-    int (*StartSoundEx)(int soundId, struct mobj_s *origin);
+    int (*StartSoundEx)(int soundId, struct mobj_s *emitter);
 
     /**
      * Play a world sound. All players in the game will hear it.
      *
      * @return  Non-zero if a sound was started.
      */
-    int (*StartSoundAtVolume)(int soundID, struct mobj_s *origin, float volume);
+    int (*StartSoundAtVolume)(int soundId, struct mobj_s *emitter, float volume);
 
     /**
      * Play a player sound. Only the specified player will hear it.
      *
      * @return  Non-zero if a sound was started (always).
      */
-    int (*ConsoleSound)(int soundID, struct mobj_s *origin, int targetConsole);
+    int (*ConsoleSound)(int soundId, struct mobj_s *emitter, int targetConsole);
 
     /**
      * Stop playing sound(s), either by their unique identifier or by their
-     * emitter(s).
+     * emitter.
      *
-     * @param soundId       @c 0: stops all sounds emitted from the targeted origin(s).
-     * @param origin        @c NULL: stops all sounds with the ID.
-     *                      Otherwise both ID and origin must match.
+     * @param soundId  @c 0: stops all sounds originating from the given @a emitter.
+     * @param emitter  @c nullptr: stops all sounds with the ID.
+     *                 Otherwise both ID and origin must match.
      */
-    void (*StopSound)(int soundID, struct mobj_s *origin/*, flags = 0*/);
+    void (*StopSound)(int soundId, struct mobj_s *emitter/*, flags = 0*/);
 
     /**
      * @copydoc StopSound()
-     * @param flags         @ref soundStopFlags
+     * @param flags  @ref soundStopFlags
      */
-    void (*StopSound2)(int soundID, struct mobj_s *origin, int flags);
+    void (*StopSound2)(int soundId, struct mobj_s *emitter, int flags);
 
     /**
      * Is an instance of the sound being played using the given emitter?
@@ -125,19 +126,19 @@ DENG_API_TYPEDEF(S)
      *
      * @return  Non-zero if a sound is playing.
      */
-    int (*IsPlaying)(int soundID, struct mobj_s *origin);
+    int (*IsPlaying)(int soundId, struct mobj_s *emitter);
 
     /**
      * @return  @c NULL, if the song is found.
      */
-    int (*StartMusic)(char const *musicID, dd_bool looped);
+    int (*StartMusic)(char const *musicId, dd_bool looped);
 
     /**
      * Start a song based on its number.
      *
-     * @return  @c NULL, if the ID exists.
+     * @return  @c NULL, if the given @a musicId exists.
      */
-    int (*StartMusicNum)(int id, dd_bool looped);
+    int (*StartMusicNum)(int musicId, dd_bool looped);
 
     /**
      * Stops playing a song.

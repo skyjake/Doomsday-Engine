@@ -146,7 +146,7 @@ public:  // Music playback: ----------------------------------------------------
     int playMusicFile(de::String const &filePath, bool looped = false);
     int playMusicCDTrack(int cdTrack, bool looped = false);
 
-    void updateMusicSoundFont();
+    void updateMusicMidiFont();
 
 public:  // Sound effect playback: ---------------------------------------------------
 
@@ -239,7 +239,9 @@ public:  /// @todo make private:
 #endif
 
     void aboutToUnloadMap();
+#ifdef __CLIENT__
     void worldMapChanged();
+#endif
 
     /// @todo refactor away.
     void clearLogical();
@@ -299,10 +301,7 @@ extern int soundMinDist, soundMaxDist;
 extern int sfxBits, sfxRate;
 
 #ifdef __CLIENT__
-
 extern int sfxVolume, musVolume;
-extern byte sfxOneSoundPerEmitter;
-extern bool noRndPitch;
 
 /**
  * Usually the display player.

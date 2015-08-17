@@ -220,7 +220,7 @@ void AudioDriver::load(String const &identifier)
     }
 
     /// @throw LoadError  Unknown driver specified.
-    throw LoadError("AudioDriver::load", "Unknown driver '" + identifier + "'");
+    throw LoadError("AudioDriver::load", "Unknown driver \"" + identifier + "\"");
 }
 
 void AudioDriver::unload()

@@ -22,11 +22,11 @@
 
 #include "audio/system.h"
 
-#include "dd_share.h"  // SF_* flags
-#include "dd_main.h"   // ::isDedicated
-#include "def_main.h"  // ::defs
+#include "dd_share.h"      // SF_* flags
+#include "dd_main.h"       // ::isDedicated
+#include "def_main.h"      // ::defs
 #ifdef __CLIENT__
-#  include "sys_system.h"
+#  include "sys_system.h"  // Sys_Sleep()
 #endif
 
 #ifdef __SERVER__
@@ -58,7 +58,7 @@
 #  include <de/concurrency.h>
 #  include <de/memory.h>
 #endif
-#include <QHash>
+#include <QMultiHash>
 #include <QtAlgorithms>
 
 using namespace de;
@@ -74,10 +74,6 @@ dint musVolume = 255 * 2/3;
 
 dint sfxBits = 8;
 dint sfxRate = 11025;
-
-byte sfxOneSoundPerEmitter;  // Traditional Doomsday behavior: allows sounds to overlap.
-
-bool noRndPitch;
 
 #ifdef __CLIENT__
 #  ifdef MACOSX
@@ -97,19 +93,23 @@ static dint const SOUND_CHANNEL_COUNT_MAX      = 256;
 static dint const SOUND_CHANNEL_2DCOUNT        = 4;
 static char const *MUSIC_BUFFEREDFILE          = (char *)"dd-buffered-song";
 
-static char *musSoundFontPath = (char *) "";  // cvar
-
-// When multiple sources are available this setting determines which to use (mus < ext < cd) (cvar).
-static audio::System::MusicSource musSourcePreference = audio::System::MUSP_EXT;
-
-// Console variables:
-static dint sfx3D;
-static dint sfx16Bit;
-static dint sfxSampleRate = 11025;
-static dfloat sfxReverbStrength = .5f;
-
 static thread_t refreshHandle;
 static volatile bool allowRefresh, refreshing;
+
+static bool sfxNoRndPitch;  ///< @todo should be a cvar.
+
+// Console variables:
+static dint sfx16Bit;
+static dint sfxSampleRate = 11025;
+static dint sfx3D;
+#endif  // __CLIENT__
+static byte sfxOneSoundPerEmitter;  //< @c false= Traditional Doomsday behavior: allow sounds to overlap.
+#ifdef __CLIENT__
+static dfloat sfxReverbStrength = 0.5f;
+
+static char *musMidiFontPath = (char *) "";
+// When multiple sources are available this setting determines which to use (mus < ext < cd).
+static audio::System::MusicSource musSourcePreference = audio::System::MUSP_EXT;
 
 /**
  * This is a high-priority thread that periodically checks if the channels need
@@ -243,13 +243,14 @@ DENG2_PIMPL(System)
      *
      * @return  @c true iff successful.
      */
-    bool initDriver(audiodriverid_t id)
+    bool initDriver(audiodriverid_t driverId)
     {
+        LOG_AS("audio::System");
         try
         {
-            AudioDriver &driver = driverById(id);
+            AudioDriver &driver = driverById(driverId);
 
-            switch(id)
+            switch(driverId)
             {
             case AUDIOD_DUMMY:      driver.load("dummy");       break;
 #ifndef DENG_DISABLE_SDLMIXER
@@ -272,7 +273,9 @@ DENG2_PIMPL(System)
         }
         catch(AudioDriver::LoadError const &er)
         {
-            LOG_AUDIO_WARNING("") << er.asText();
+            LOG_AUDIO_WARNING("Failed initializing driver \"%s\":\n")
+                << AudioDriver_GetName(driverId)
+                << er.asText();
         }
         return false;
     }
@@ -298,11 +301,6 @@ DENG2_PIMPL(System)
         audiodriverid_t defaultDriverId = chooseAudioDriver();
 
         bool ok = initDriver(defaultDriverId);
-        if(!ok)
-        {
-            LOG_AUDIO_WARNING("Failed initializing audio driver \"%s\"")
-                << AudioDriver_GetName(defaultDriverId);
-        }
 
         // Fallback option for the default driver.
 #ifndef DENG_DISABLE_SDLMIXER
@@ -548,21 +546,10 @@ DENG2_PIMPL(System)
         }
         return "(invalid)";
     }
-
-    bool musAvail = false;              ///< @c true if at least one driver is initialized for music playback.
-    bool musNeedBufFileSwitch = false;  ///< @c true= choose a new file name for the buffered playback file when asked. */
-    String musCurrentSong;
-    bool musPaused = false;
-
-    bool sfxAvail = false;              ///< @c true if a sound driver is initialized for sound effect playback.
-    mobj_t *sfxListener = nullptr;
-    SectorCluster *sfxListenerCluster = nullptr;
-    std::unique_ptr<SfxChannels> sfxChannels;
 #endif  // __CLIENT__
-    SfxSampleCache sfxSampleCache;      ///< @todo should be __CLIENT__ only.
 
     /**
-     * LogicalSounds are used to track currently playing sounds on a logical
+     * LogicSounds are used to track currently playing sounds on a logical
      * level (irrespective of whether playback is available, or if the sounds
      * are actually audible to anyone).
      *
@@ -585,8 +572,22 @@ DENG2_PIMPL(System)
             return (isRepeating || endTime > nowTime);
         }
     };
-    typedef QHash<dint /*key: soundId*/, LogicSound *> LogicSoundHash;
+    typedef QMultiHash<dint /*key: soundId*/, LogicSound *> LogicSoundHash;
     typedef QMutableHashIterator<dint /*key: soundId*/, LogicSound *> MutableLogicSoundHashIterator;
+
+#if __CLIENT__
+    bool musAvail = false;              ///< @c true if at least one driver is initialized for music playback.
+    bool musNeedBufFileSwitch = false;  ///< @c true= choose a new file name for the buffered playback file when asked. */
+    String musCurrentSong;
+    bool musPaused = false;
+
+    bool sfxAvail = false;              ///< @c true if a sound driver is initialized for sound effect playback.
+    mobj_t *sfxListener = nullptr;
+    SectorCluster *sfxListenerCluster = nullptr;
+    std::unique_ptr<SfxChannels> sfxChannels;
+#endif
+
+    SfxSampleCache sfxSampleCache;      ///< @todo should be __CLIENT__ only.
     LogicSoundHash sfxLogicHash;
     duint sfxLogicLastPurge = 0;
     bool sfxLogicOneSoundPerEmitter = false;  ///< set at the start of the frame
@@ -655,7 +656,6 @@ DENG2_PIMPL(System)
     dint playMusicFile(String const &virtualOrNativePath, bool looped = false)
     {
         DENG2_ASSERT(musAvail);
-        LOG_AS("audio::System");
 
         if(virtualOrNativePath.isEmpty())
             return 0;
@@ -714,7 +714,6 @@ DENG2_PIMPL(System)
     dint playMusicLump(lumpnum_t lumpNum, bool looped = false, bool canPlayMUS = true)
     {
         DENG2_ASSERT(musAvail);
-        LOG_AS("audio::System");
 
         if(!App_FileSystem().nameIndex().hasLump(lumpNum))
             return 0;
@@ -781,8 +780,6 @@ DENG2_PIMPL(System)
 
     dint playMusicCDTrack(dint track, bool looped)
     {
-        LOG_AS("audio::System");
-
         // Assume track 0 is not valid.
         if(track == 0) return 0;
 
@@ -840,7 +837,7 @@ DENG2_PIMPL(System)
         if(musAvail)
         {
             // Tell audio drivers about our soundfont config.
-            self.updateMusicSoundFont();
+            self.updateMusicMidiFont();
         }
     }
 
@@ -884,24 +881,22 @@ DENG2_PIMPL(System)
 
     /**
      * Perform initialization for sound effect playback.
-     * @return  @c true if subsequently operational.
      */
-    bool initSfx()
+    void initSfx()
     {
         // Already initialized?
-        if(sfxAvail) return true;
+        if(sfxAvail) return;
 
         // Check if sound has been disabled with a command line option.
         if(App::commandLine().has("-nosfx"))
         {
             LOG_AUDIO_NOTE("Sound effects disabled");
-            return true;
+            return;
         }
 
         LOG_AUDIO_VERBOSE("Initializing sound effect playback...");
-
-        // No interface for SFX playback?
-        if(!self.sfx()) return false;
+        // No available interface?
+        if(!self.sfx()) return;
 
         // This is based on the scientific calculations that if the DOOM marine
         // is 56 units tall, 60 is about two meters.
@@ -914,9 +909,6 @@ DENG2_PIMPL(System)
 
         // (Re)Init the sample cache.
         sfxSampleCache.clear();
-
-        // The Sfx module is now available.
-        sfxAvail = true;
 
         // Initialize reverb effects to off.
         sfxListenerNoReverb();
@@ -952,7 +944,8 @@ DENG2_PIMPL(System)
             LOGDEV_AUDIO_NOTE("Audio driver does not require a refresh thread");
         }
 
-        return true;
+        // The Sfx module is now available.
+        sfxAvail = true;
     }
 
     /**
@@ -1115,6 +1108,7 @@ DENG2_PIMPL(System)
         if(nowTime - sfxLogicLastPurge < SOUND_LOGICAL_PURGEINTERVAL) return;
 
         // Peform the purge now.
+        LOGDEV_AUDIO_XVERBOSE("purging logic sound hash...");
         sfxLogicLastPurge = nowTime;
 
         // Check all sounds in the hash.
@@ -1154,9 +1148,9 @@ DENG2_PIMPL(System)
             {
                 if(it.key() != soundId) continue;
             }
-            else
+            else if(emitter)
             {
-                if(emitter && lsound.emitter != emitter) continue;
+                if(lsound.emitter != emitter) continue;
             }
 
             delete &lsound;
@@ -1329,6 +1323,8 @@ DENG2_PIMPL(System)
 
         if(old3DMode == sfx3D) return;  // No change.
 
+        LOG_AUDIO_VERBOSE("switching to %s mode...") << (old3DMode ? "2D" : "3D");
+
         // To make the change effective, re-create all channels.
         recreateSfxChannels();
 
@@ -1359,6 +1355,8 @@ DENG2_PIMPL(System)
             dint const newRate = sfxSampleRate;
             if(::sfxBits != newBits || ::sfxRate != newRate)
             {
+                LOG_AUDIO_VERBOSE("switching sound rate to %iHz (%b-bit)") << newRate << newBits;
+
                 // Set the new buffer format.
                 ::sfxBits = newBits;
                 ::sfxRate = newRate;
@@ -1403,7 +1401,7 @@ void System::timeChanged(Clock const &)
 
 String System::description() const
 {
-#define TABBED(A, B)  _E(Ta) "  " _E(l) A _E(.) " " _E(Tb) << B << "\n"
+#define TABBED(A, B)  _E(Ta) "  " _E(l) A _E(.) " " _E(Tb) << (B) << "\n"
 
     String str;
     QTextStream os(&str);
@@ -1412,7 +1410,8 @@ String System::description() const
 
     os << TABBED("Music volume:",  musVolume);
 #ifdef __CLIENT__
-    os << TABBED("Music sound font:", musSoundFontPath);
+    String const midiFontPath(musMidiFontPath);
+    os << TABBED("Music sound font:", midiFontPath.isEmpty() ? "None" : midiFontPath);
     os << TABBED("Music source preference:", musicSourceAsText(musSourcePreference));
 
     // Include an active playback interface itemization.
@@ -1441,6 +1440,9 @@ String System::description() const
 #ifdef __CLIENT__
 void System::reset()
 {
+    LOG_AS("audio::System");
+    LOG_AUDIO_VERBOSE("Reseting...");
+
     if(d->sfxAvail)
     {
         d->sfxListenerCluster = nullptr;
@@ -1461,10 +1463,12 @@ void System::reset()
 #endif
 
 /**
- * @todo Do this in audio::System::timeChanged()
+ * @todo Do this in timeChanged()
  */
 void System::startFrame()
 {
+    LOG_AS("audio::System");
+
 #ifdef __CLIENT__
     d->updateMusicVolumeIfChanged();
 
@@ -1495,13 +1499,15 @@ void System::startFrame()
     }
 #endif
 
-    d->sfxLogicOneSoundPerEmitter = ::sfxOneSoundPerEmitter;
+    d->sfxLogicOneSoundPerEmitter = sfxOneSoundPerEmitter;
     d->sfxPurgeLogical();
 }
 
 #ifdef __CLIENT__
 void System::endFrame()
 {
+    LOG_AS("audio::System");
+
     if(sfxIsAvailable())
     {
         if(!BusyMode_Active())
@@ -1539,21 +1545,36 @@ void System::initPlayback()
     if(cmdLine.has("-nosound") || cmdLine.has("-noaudio"))
         return;
 
-    // Disable random pitch changes?
-    ::noRndPitch = cmdLine.has("-norndpitch");
-
 #ifdef __CLIENT__
     LOG_AUDIO_VERBOSE("Initializing for playback...");
+
+    // Disable random pitch changes?
+    sfxNoRndPitch = cmdLine.has("-norndpitch");
 
     // Try to load the audio driver plugin(s).
     if(d->loadDrivers())
     {
-        if(!d->initSfx())
+        // Init for sound effects.
+        try
         {
-            LOG_AUDIO_NOTE("Errors during audio subsystem initialization");
+            d->initSfx();
+        }
+        catch(Error const &er)
+        {
+            LOG_AUDIO_NOTE("Failed initializing playback for sound effects:\n")
+                << er.asText();
         }
 
-        d->initMusic();
+        // Init for music.
+        try
+        {
+            d->initMusic();
+        }
+        catch(Error const &er)
+        {
+            LOG_AUDIO_NOTE("Failed initializing playback for music:\n")
+                << er.asText();
+        }
     }
     else
     {
@@ -1569,6 +1590,8 @@ void System::initPlayback()
 
 void System::deinitPlayback()
 {
+    LOG_AS("audio::System");
+
     d->deinitSfx();
     d->deinitMusic();
 
@@ -1594,6 +1617,7 @@ bool System::musicIsAvailable() const
 
 bool System::musicIsPlaying() const
 {
+    //LOG_AS("audio::System");
     return d->forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [] (void *ifs)
     {
         auto *iMusic = (audiointerface_music_t *) ifs;
@@ -1605,6 +1629,7 @@ void System::stopMusic()
 {
     if(!d->musAvail) return;
 
+    LOG_AS("audio::System");
     d->musCurrentSong = "";
 
     // Stop all interfaces.
@@ -1620,6 +1645,7 @@ void System::pauseMusic(bool doPause)
 {
     if(!d->musAvail) return;
 
+    LOG_AS("audio::System");
     d->musPaused = !d->musPaused;
 
     // Pause playback on all interfaces.
@@ -1640,9 +1666,9 @@ dint System::playMusic(Record const &definition, bool looped)
 {
     if(!d->musAvail) return false;
 
-    LOG_AS("audio::System::playMusic");
-    LOG_AUDIO_VERBOSE("Starting ID:%s looped:%b, currentSong ID:%s")
-        << definition.gets("id") << looped << d->musCurrentSong;
+    LOG_AS("audio::System");
+    LOG_AUDIO_MSG("Starting music \"%s\"%s") << definition.gets("id") << (looped ? " looped" : "");
+    //LOG_AUDIO_VERBOSE("Current song '%s'") << d->musCurrentSong;
 
     // We will not restart the currently playing song.
     if(definition.gets("id") == d->musCurrentSong && musicIsPlaying())
@@ -1721,25 +1747,29 @@ dint System::playMusic(Record const &definition, bool looped)
 dint System::playMusicLump(lumpnum_t lumpNum, bool looped)
 {
     stopMusic();
+    LOG_AS("audio::System");
     return d->playMusicLump(lumpNum, looped);
 }
 
 dint System::playMusicFile(String const &filePath, bool looped)
 {
     stopMusic();
+    LOG_AS("audio::System");
     return d->playMusicFile(filePath, looped);
 }
 
 dint System::playMusicCDTrack(dint cdTrack, bool looped)
 {
     stopMusic();
+    LOG_AS("audio::System");
     return d->playMusicCDTrack(cdTrack, looped);
 }
 
-void System::updateMusicSoundFont()
+void System::updateMusicMidiFont()
 {
-    NativePath path(musSoundFontPath);
+    LOG_AS("audio::System");
 
+    NativePath path(musMidiFontPath);
 #ifdef MACOSX
     // On OS X we can try to use the basic DLS soundfont that's part of CoreAudio.
     if(path.isEmpty())
@@ -1780,6 +1810,8 @@ void System::setSfxListener(mobj_t *newListener)
 
 bool System::soundIsPlaying(dint soundId, mobj_t *emitter) const
 {
+    //LOG_AS("audio::System");
+
     // Use the logic sound hash to determine whether the referenced sound is being
     // played currently. We don't care whether its audible or not.
     duint const nowTime = Timer_RealMilliseconds();
@@ -1848,6 +1880,7 @@ bool System::soundIsPlaying(dint soundId, mobj_t *emitter) const
 void System::stopSoundGroup(dint group, mobj_t *emitter)
 {
     if(!d->sfxAvail) return;
+    LOG_AS("audio::System");
     d->sfxChannels->forAll([this, &group, &emitter] (SfxChannel &ch)
     {
         if(ch.hasBuffer())
@@ -1868,6 +1901,7 @@ dint System::stopSoundWithLowerPriority(dint id, mobj_t *emitter, dint defPriori
 {
     if(!d->sfxAvail) return false;
 
+    LOG_AS("audio::System");
     dint stopCount = 0;
     d->sfxChannels->forAll([this, &id, &emitter, &defPriority, &stopCount] (SfxChannel &ch)
     {
@@ -1914,6 +1948,8 @@ dint System::stopSoundWithLowerPriority(dint id, mobj_t *emitter, dint defPriori
 
 void System::stopSound(dint soundId, mobj_t *emitter, dint flags)
 {
+    LOG_AS("audio::System");
+
     // Are we performing any special stop behaviors?
     if(emitter && flags)
     {
@@ -1956,22 +1992,21 @@ dint System::playSound(sfxsample_t *sample, dfloat volume, dfloat freq, mobj_t *
     coord_t *fixedOrigin, dint flags)
 {
     DENG2_ASSERT(sample);
-    LOG_AS("audio::System");
+    if(!d->sfxAvail) return false;
 
     bool const play3D = sfx3D && (emitter || fixedOrigin);
 
-    if(!d->sfxAvail) return false;
-
+    LOG_AS("audio::System");
     if(sample->id < 1 || sample->id >= ::defs.sounds.size()) return false;
     if(volume <= 0 || !sample->size) return false;
 
-    if(emitter && ::sfxOneSoundPerEmitter)
+    if(emitter && sfxOneSoundPerEmitter)
     {
         // Stop any other sounds from the same emitter.
         if(stopSoundWithLowerPriority(0, emitter, ::defs.sounds[sample->id].priority) < 0)
         {
             // Something with a higher priority is playing, can't start now.
-            LOG_AUDIO_MSG("Not playing soundId:%i (prio%i) because overridden (emitter %i)")
+            LOG_AUDIO_MSG("Not playing soundId:%i (prio:%i) because overridden (emitter id:%i)")
                 << sample->id
                 << ::defs.sounds[sample->id].priority
                 << emitter->thinker.id;
@@ -2126,7 +2161,7 @@ dint System::playSound(sfxsample_t *sample, dfloat volume, dfloat freq, mobj_t *
     {
         // A suitable channel was not found.
         allowSfxRefresh(true);
-        LOG_AUDIO_XVERBOSE("Failed to find suitable channel for sample %i") << sample->id;
+        LOG_AUDIO_XVERBOSE("Failed to find suitable channel for sample id:%i") << sample->id;
         return false;
     }
 
@@ -2332,6 +2367,9 @@ void System::startLogical(dint soundId, mobj_t *emitter)
 
 void System::aboutToUnloadMap()
 {
+    LOG_AS("audio::System");
+    LOG_AUDIO_VERBOSE("Cleaning for map unload...");
+
     d->sfxClearLogical();
 
 #ifdef __CLIENT__
@@ -2351,13 +2389,13 @@ void System::aboutToUnloadMap()
 #endif
 }
 
+#ifdef __CLIENT__
 void System::worldMapChanged()
 {
-#ifdef __CLIENT__
     // Update who is listening now.
     setSfxListener(S_GetListenerMobj());
-#endif
 }
+#endif
 
 /**
  * Console command for playing a (local) sound effect.
@@ -2498,20 +2536,21 @@ static void sfxReverbStrengthChanged()
     App_AudioSystem().requestSfxListenerUpdate();
 }
 
-static void musicSoundFontChanged()
+static void musicMidiFontChanged()
 {
-    App_AudioSystem().updateMusicSoundFont();
+    App_AudioSystem().updateMusicMidiFont();
 }
 #endif
 
 void System::consoleRegister()  // static
 {
-    C_VAR_BYTE  ("sound-overlap-stop",  &sfxOneSoundPerEmitter, 0, 0, 1);
-
-#ifdef __CLIENT__
     // Sound effects:
+#ifdef __CLIENT__
     C_VAR_INT     ("sound-16bit",         &sfx16Bit,              0, 0, 1);
     C_VAR_INT     ("sound-3d",            &sfx3D,                 0, 0, 1);
+#endif
+    C_VAR_BYTE    ("sound-overlap-stop",  &sfxOneSoundPerEmitter, 0, 0, 1);
+#ifdef __CLIENT__
     C_VAR_INT     ("sound-rate",          &sfxSampleRate,         0, 11025, 44100);
     C_VAR_FLOAT2  ("sound-reverb-volume", &sfxReverbStrength,     0, 0, 1.5f, sfxReverbStrengthChanged);
     C_VAR_INT     ("sound-volume",        &sfxVolume,             0, 0, 255);
@@ -2519,7 +2558,7 @@ void System::consoleRegister()  // static
     C_CMD_FLAGS("playsound",  nullptr, PlaySound,  CMDF_NO_DEDICATED);
 
     // Music:
-    C_VAR_CHARPTR2("music-soundfont",     &musSoundFontPath,      0, 0, 0, musicSoundFontChanged);
+    C_VAR_CHARPTR2("music-soundfont",     &musMidiFontPath,       0, 0, 0, musicMidiFontChanged);
     C_VAR_INT     ("music-source",        &musSourcePreference,   0, 0, 2);
     C_VAR_INT     ("music-volume",        &musVolume,             0, 0, 255);
 
@@ -2611,10 +2650,6 @@ dint S_StartMusicNum(dint id, dd_bool looped)
     if(id >= 0 && id < ::defs.musics.size())
     {
         Record const &def = ::defs.musics[id];
-        {
-            LOG_AS("S_StartMusic");
-            LOG_AUDIO_MSG("Starting music '%s'") << def.gets("id");
-        }
         return Mus_Start(def, looped);
     }
     return false;
@@ -2652,14 +2687,17 @@ dint S_LocalSoundAtVolumeFrom(dint soundIdAndFlags, mobj_t *origin, coord_t *poi
     LOG_AS("S_LocalSoundAtVolumeFrom");
 
     // A dedicated server never starts any local sounds (only logical sounds in the LSM).
-    if(::isDedicated || DoomsdayApp::app().busyMode().isActive())
+    if(::isDedicated) return false;
+
+    // Sounds cannot be started while in busy mode...
+    if(DoomsdayApp::app().busyMode().isActive())
         return false;
 
-    dint soundId = (soundIdAndFlags & ~DDSF_FLAG_MASK);
+    dint const soundId = (soundIdAndFlags & ~DDSF_FLAG_MASK);
     if(soundId <= 0 || soundId >= ::defs.sounds.size())
         return false;
 
-    // Skip if the sounds won't be heard.
+    // Skip if sounds won't be heard.
     if(::sfxVolume <= 0 || volume <= 0)
         return false;
 
@@ -2698,7 +2736,7 @@ dint S_LocalSoundAtVolumeFrom(dint soundIdAndFlags, mobj_t *origin, coord_t *poi
 
     // Random frequency alteration? (Multipliers chosen to match original
     // sound code.)
-    if(!::noRndPitch)
+    if(!sfxNoRndPitch)
     {
         if(info->flags & SF_RANDOM_SHIFT)
         {
@@ -2731,20 +2769,20 @@ dint S_LocalSoundAtVolumeFrom(dint soundIdAndFlags, mobj_t *origin, coord_t *poi
 #endif
 }
 
-dint S_LocalSoundAtVolume(dint soundId, mobj_t *origin, dfloat volume)
+dint S_LocalSoundAtVolume(dint soundId, mobj_t *emitter, dfloat volume)
 {
-    return S_LocalSoundAtVolumeFrom(soundId, origin, nullptr, volume);
+    return S_LocalSoundAtVolumeFrom(soundId, emitter, nullptr, volume);
 }
 
-dint S_LocalSound(dint soundId, mobj_t *origin)
+dint S_LocalSound(dint soundId, mobj_t *emitter)
 {
     // Play local sound at max volume.
-    return S_LocalSoundAtVolumeFrom(soundId, origin, nullptr, 1);
+    return S_LocalSoundAtVolumeFrom(soundId, emitter, nullptr, 1);
 }
 
-dint S_LocalSoundFrom(dint soundId, coord_t *fixedPos)
+dint S_LocalSoundFrom(dint soundId, coord_t *origin)
 {
-    return S_LocalSoundAtVolumeFrom(soundId, nullptr, fixedPos, 1);
+    return S_LocalSoundAtVolumeFrom(soundId, nullptr, origin, 1);
 }
 
 dint S_StartSound(dint soundId, mobj_t *emitter)
