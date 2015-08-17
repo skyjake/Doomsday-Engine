@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_VALUE_H
@@ -53,7 +53,7 @@ public:
 
     // Types used by all values:
     typedef ddouble Number;     /**< Numbers are in double-precision. */
-    typedef String Text;        /**< Text strings. */
+    typedef String  Text;       /**< Text strings. */
 
 public:
     virtual ~Value();
@@ -102,7 +102,7 @@ public:
      * Convert the value to into a text string.  All values have
      * to implement this.
      */
-    virtual Text asText() const = 0;     
+    virtual Text asText() const = 0;
 
     template <typename ValueType>
     bool is() const {

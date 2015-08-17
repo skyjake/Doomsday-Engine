@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Function"
@@ -67,7 +67,7 @@ DENG2_PIMPL_NOREF(Function)
 Function::Function() : d(new Instance)
 {}
 
-Function::Function(Arguments const &args, Defaults const &defaults) 
+Function::Function(Arguments const &args, Defaults const &defaults)
     : d(new Instance(args, defaults))
 {}
 
@@ -167,20 +167,20 @@ void Function::mapArgumentValues(ArrayValue const &args, ArgumentValues &values)
         i != args.elements().end(); ++i)
     {
         values.push_back(*i);
-        
+
         if(k != d->arguments.end())
         {
             if(labeledArgs->contains(TextValue(*k)))
             {
                 /// @throw WrongArgumentsError An argument has been given more than one value.
                 throw WrongArgumentsError("Function::mapArgumentValues",
-                    "More than one value has been given for '" + 
+                    "More than one value has been given for '" +
                     *k + "' in function call");
             }
             ++k;
         }
     }
-    
+
     if(values.size() < d->arguments.size())
     {
         // Then apply the labeled arguments, falling back to default values.
@@ -189,7 +189,7 @@ void Function::mapArgumentValues(ArrayValue const &args, ArgumentValues &values)
         for(duint count = values.size(); count > 0; --count, ++i) {}
         for(; i != d->arguments.end(); ++i)
         {
-            try 
+            try
             {
                 values.push_back(&labeledArgs->element(TextValue(*i)));
             }
@@ -210,7 +210,7 @@ void Function::mapArgumentValues(ArrayValue const &args, ArgumentValues &values)
             }
         }
     }
-    
+
     // Check that the number of arguments matches what we expect.
     if(values.size() != d->arguments.size())
     {
@@ -219,14 +219,14 @@ void Function::mapArgumentValues(ArrayValue const &args, ArgumentValues &values)
                                   "Expected " + QString::number(d->arguments.size()) +
                                   " arguments, but got " + QString::number(values.size()) +
                                   " arguments in function call");
-    }    
+    }
 }
 
 void Function::setGlobals(Record *globals)
 {
     LOG_AS("Function::setGlobals");
     DENG2_ASSERT(globals != 0);
-    
+
     if(!d->globals)
     {
         d->globals = globals;
@@ -276,16 +276,16 @@ void Function::operator >> (Writer &to) const
     {
         to << *i;
     }
-    
+
     // Number of default values.
     to << duint16(d->defaults.size());
-    
+
     // Default values.
     DENG2_FOR_EACH_CONST(Defaults, i, d->defaults)
     {
         to << i.key() << *i.value();
     }
-    
+
     // The statements of the function.
     to << d->compound;
 
@@ -296,7 +296,7 @@ void Function::operator >> (Writer &to) const
 void Function::operator << (Reader &from)
 {
     duint16 count = 0;
-    
+
     // Argument names.
     from >> count;
     d->arguments.clear();
@@ -306,7 +306,7 @@ void Function::operator << (Reader &from)
         from >> argName;
         d->arguments.push_back(argName);
     }
-    
+
     // Default values.
     from >> count;
     d->defaults.clear();
@@ -316,7 +316,7 @@ void Function::operator << (Reader &from)
         from >> name;
         d->defaults[name] = Value::constructFrom(from);
     }
-    
+
     // The statements.
     from >> d->compound;
 
@@ -363,7 +363,7 @@ Function::NativeEntryPoint Function::nativeEntryPoint(String const &name)
 Function *NativeFunctionSpec::make() const
 {
     Function::registerNativeEntryPoint(_nativeName, _entryPoint);
-    return new Function(_nativeName, _argNames);
+    return new Function(_nativeName, _argNames, _argDefaults);
 }
 
 Binder::Binder(Record *module) : _module(module), _isOwned(false)
