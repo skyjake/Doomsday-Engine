@@ -1,7 +1,7 @@
 /** @file system.cpp  Audio subsystem module.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au> *
  *
  * @par License
@@ -45,7 +45,6 @@
 #include "Sector"
 #include "SectorCluster"
 
-#include <doomsday/audio/logical.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
 #ifdef __CLIENT__
@@ -54,10 +53,11 @@
 #  include <doomsday/filesys/fs_util.h>
 #endif
 #include <de/App>
+#include <de/memoryzone.h>
+#include <de/timer.h>
 #ifdef __CLIENT__
 #  include <de/concurrency.h>
 #  include <de/memory.h>
-#  include <de/timer.h>
 #endif
 
 using namespace de;
@@ -558,6 +558,259 @@ DENG2_PIMPL(System)
     std::unique_ptr<SfxChannels> sfxChannels;
 #endif  // __CLIENT__
     SfxSampleCache sfxSampleCache;      ///< @todo should be __CLIENT__ only.
+
+    /**
+     * The Logical Sound Manager. Tracks all currently playing sounds in the
+     * world, regardless of whether Sfx is available or if the sounds are actually
+     * audible to anyone.
+     *
+     * Uses PU_MAP, so this has to be inited for every map. (Done via S_MapChange()).
+     *
+     * @todo The premise behind this functionality is fundamentally flawed in
+     * that it assumes that the same samples are used by both the Client and
+     * the Server, and that the later schedules remote playback of the former
+     * (determined by examining sample lengths on Server side).
+     *
+     * Furthermore, the Server should not be dictating 'oneSoundPerEmitter'
+     * policy so that Clients can be configured independently.
+     */
+    struct LSM
+    {
+        static duint const PURGE_INTERVAL = 2000;  ///< 2 seconds
+        static dint const LOGIC_HASH_SIZE = 64;
+
+        struct LogicSound
+        {
+            LogicSound *next, *prev;
+
+            dint soundId;
+            mobj_t *emitter;
+            duint endTime;
+            bool isRepeating;
+        };
+        struct LogicHash
+        {
+            LogicSound *first, *last;
+        };
+        LogicHash logicHash[LOGIC_HASH_SIZE];  ///< key: soundId
+
+        duint lastPurge = 0;
+        bool oneSoundPerEmitter = false;  ///< set at the start of the frame
+        duint (*soundLengthCallback)(dint) = nullptr;
+
+        LSM::LSM() { zap(logicHash); }
+
+        /**
+         * Initialize the Logical Sound Manager for a new map.
+         */
+        void init()
+        {
+            // Memory in the hash table is PU_MAP, so this is acceptable.
+            zap(logicHash);
+        }
+
+        /**
+         * Remove stopped logical sounds from the hash.
+         */
+        void purge()
+        {
+            static duint lastTime = 0;
+
+            // Too soon for a purge?
+            duint const nowTime = Timer_RealMilliseconds();
+            if(nowTime - lastTime < PURGE_INTERVAL) return;
+
+            // Peform the purge now.
+            lastTime = nowTime;
+
+            // Check all sounds in the hash.
+            for(dint i = 0; i < LOGIC_HASH_SIZE; ++i)
+            {
+                LogicSound *it = logicHash[i].first;
+                while(it)
+                {
+                    LogicSound *next = it->next;
+                    if(!it->isRepeating && it->endTime < nowTime)
+                    {
+                        // This has stopped.
+                        destroyLogicSound(it);
+                    }
+                    it = next;
+                }
+            }
+        }
+
+        /**
+         * The sound is entered into the list of playing sounds. Called when a
+         * 'world class' sound is started, regardless of whether it's actually
+         * started on the local system.
+         */
+        void start(dint soundId, mobj_t *emitter)
+        {
+            bool const isRepeating = Def_SoundIsRepeating(soundId);
+
+            DENG2_ASSERT(soundLengthCallback != nullptr);
+            duint const length = (isRepeating ? 1 : soundLengthCallback(soundId));
+            if(!length)
+            {
+                // This is not a valid sound.
+                return;
+            }
+
+            // Only one sound per emitter?
+            if(emitter && oneSoundPerEmitter)
+            {
+                // Stop all other sounds.
+                stop(0, emitter);
+            }
+
+            soundId &= ~DDSF_FLAG_MASK;
+
+            LogicSound *node = newLogicSound(soundId);
+            node->emitter     = emitter;
+            node->isRepeating = isRepeating;
+            node->endTime     = Timer_RealMilliseconds() + length;
+        }
+
+        /**
+         * The sound is removed from the list of playing sounds. Called whenever
+         * a sound is stopped, regardless of whether it was actually playing on
+         * the local system.
+         *
+         * @note If @a soundId == 0 and @a emitter == nullptr then stop everything.
+         *
+         * @return  Number of sounds stopped.
+         */
+        dint stop(dint soundId, mobj_t *emitter)
+        {
+            dint stopCount = 0;
+
+            if(soundId)
+            {
+                LogicSound *it = getLogicHash(soundId).first;
+                while(it)
+                {
+                    LogicSound *next = it->next;
+                    if(it->soundId == soundId && it->emitter == emitter)
+                    {
+                        destroyLogicSound(it);
+                        stopCount++;
+                    }
+                    it = next;
+                }
+            }
+            else
+            {
+                // Browse through the entire hash.
+                for(dint i = 0; i < LOGIC_HASH_SIZE; ++i)
+                {
+                    LogicSound *it = logicHash[i].first;
+                    while(it)
+                    {
+                        LogicSound *next = it->next;
+                        if(!emitter || it->emitter == emitter)
+                        {
+                            destroyLogicSound(it);
+                            stopCount++;
+                        }
+                        it = next;
+                    }
+                }
+            }
+
+            return stopCount;
+        }
+
+        /**
+         * Returns true if the sound is currently playing somewhere in the world. It doesn't
+         * matter if it's audible or not.
+         *
+         * @param id  @c 0= true if any sounds are playing using the specified @a emitter.
+         */
+        bool isPlaying(dint soundId, mobj_t *emitter)
+        {
+            duint const nowTime = Timer_RealMilliseconds();
+
+            if(soundId)
+            {
+                for(LogicSound *it = getLogicHash(soundId).first; it; it = it->next)
+                {
+                    if(it->soundId == soundId && it->emitter == emitter &&
+                       (it->endTime > nowTime || it->isRepeating))
+                    {
+                        // This one is still playing.
+                        return true;
+                    }
+                }
+            }
+            else if(emitter)
+            {
+                // Check if the origin is playing any sound.
+                for(dint i = 0; i < LOGIC_HASH_SIZE; ++i)
+                for(LogicSound *it = logicHash[i].first; it; it = it->next)
+                {
+                    if(it->emitter == emitter && (it->endTime > nowTime || it->isRepeating))
+                    {
+                        // This one is playing.
+                        return true;
+                    }
+                }
+            }
+
+            // The sound was not found.
+            return false;
+        }
+
+        LogicHash &getLogicHash(dint soundId)
+        {
+            return logicHash[(duint) soundId % LOGIC_HASH_SIZE];
+        }
+
+        /**
+         * Create and link a new logical sound hash table node.
+         */
+        LogicSound *newLogicSound(dint soundId)
+        {
+            auto *node = (LogicSound *) Z_Calloc(sizeof(LogicSound), PU_MAP, nullptr);
+
+            LogicHash &hash = getLogicHash(soundId);
+            if(hash.last)
+            {
+                hash.last->next = node;
+                node->prev = hash.last;
+            }
+            hash.last = node;
+            if(!hash.first)
+                hash.first = node;
+
+            node->soundId = soundId;
+            return node;
+        }
+
+        /**
+         * Unlink and destroy a logical sound hash table node.
+         */
+        void destroyLogicSound(LogicSound *node)
+        {
+            if(!node) return;
+
+            LogicHash &hash = getLogicHash(node->soundId);
+            if(hash.first == node)
+                hash.first = node->next;
+            if(hash.last == node)
+                hash.last = node->prev;
+
+            if(node->next)
+                node->next->prev = node->prev;
+            if(node->prev)
+                node->prev->next = node->next;
+
+#ifdef DENG2_DEBUG
+            std::memset(node, 0xDD, sizeof(*node));
+#endif
+            Z_Free(node);
+        }
+    } lsm;
 
     Instance(Public *i) : Base(i)
     {
@@ -1350,8 +1603,8 @@ void System::startFrame()
 #endif
 
     // Remove stopped sounds from the LSM.
-    Sfx_Logical_SetOneSoundPerEmitter(::sfxOneSoundPerEmitter);
-    Sfx_PurgeLogical();
+    d->lsm.oneSoundPerEmitter = ::sfxOneSoundPerEmitter;
+    d->lsm.purge();
 }
 
 #ifdef __CLIENT__
@@ -1412,7 +1665,7 @@ void System::initPlayback()
     /// of the samples? It is entirely possible that the Client is using a different
     /// set of samples so using this information on server side (for scheduling of
     /// remote playback events?) is not logical. -ds
-    Sfx_Logical_SetSampleLengthCallback(maybeCacheSampleAndReturnLength);
+    d->lsm.soundLengthCallback = maybeCacheSampleAndReturnLength;
 
     CommandLine &cmdLine = App::commandLine();
     if(cmdLine.has("-nosound") || cmdLine.has("-noaudio"))
@@ -1659,8 +1912,7 @@ void System::setSfxListener(mobj_t *newListener)
 
 bool System::soundIsPlaying(dint soundId, mobj_t *emitter) const
 {
-    // The Logical Sound Manager (under Sfx) provides a routine for this.
-    return Sfx_IsPlaying(soundId, emitter);
+    return d->lsm.isPlaying(soundId, emitter);
 
 #if 0
     if(!d->sfxAvail) return false;
@@ -1790,7 +2042,7 @@ void System::stopSound(dint soundId, mobj_t *emitter, dint flags)
 #endif
 
     // Notify the LSM.
-    if(Sfx_StopLogical(soundId, emitter))
+    if(d->lsm.stop(soundId, emitter))
     {
 #ifdef __SERVER__
         // In netgames, the server is responsible for telling clients
@@ -2170,10 +2422,20 @@ void System::requestSfxListenerUpdate()
 
 #endif
 
+void System::clearLogical()
+{
+    d->lsm.init();
+}
+
+void System::startLogical(dint soundId, mobj_t *emitter)
+{
+    d->lsm.start(soundId, emitter);
+}
+
 void System::aboutToUnloadMap()
 {
     // Stop everything in the LSM.    
-    Sfx_InitLogical();
+    d->lsm.init();
 
 #ifdef __CLIENT__
     // Mobjs are about to be destroyed so stop all sound channels using one as an emitter.
@@ -2588,25 +2850,25 @@ dint S_LocalSoundFrom(dint soundId, coord_t *fixedPos)
     return S_LocalSoundAtVolumeFrom(soundId, nullptr, fixedPos, 1);
 }
 
-dint S_StartSound(dint soundId, mobj_t *origin)
+dint S_StartSound(dint soundId, mobj_t *emitter)
 {
 #ifdef __SERVER__
     // The sound is audible to everybody.
-    Sv_Sound(soundId, origin, SVSF_TO_ALL);
+    Sv_Sound(soundId, emitter, SVSF_TO_ALL);
 #endif
-    Sfx_StartLogical(soundId, origin, Def_SoundIsRepeating(soundId));
+    App_AudioSystem().startLogical(soundId, emitter);
 
-    return S_LocalSound(soundId, origin);
+    return S_LocalSound(soundId, emitter);
 }
 
-dint S_StartSoundEx(dint soundId, mobj_t *origin)
+dint S_StartSoundEx(dint soundId, mobj_t *emitter)
 {
 #ifdef __SERVER__
-    Sv_Sound(soundId, origin, SVSF_TO_ALL | SVSF_EXCLUDE_ORIGIN);
+    Sv_Sound(soundId, emitter, SVSF_TO_ALL | SVSF_EXCLUDE_ORIGIN);
 #endif
-    Sfx_StartLogical(soundId, origin, Def_SoundIsRepeating(soundId));
+    App_AudioSystem().startLogical(soundId, emitter);
 
-    return S_LocalSound(soundId, origin);
+    return S_LocalSound(soundId, emitter);
 }
 
 dint S_StartSoundAtVolume(dint soundId, mobj_t *emitter, dfloat volume)
@@ -2614,7 +2876,7 @@ dint S_StartSoundAtVolume(dint soundId, mobj_t *emitter, dfloat volume)
 #ifdef __SERVER__
     Sv_SoundAtVolume(soundId, emitter, volume, SVSF_TO_ALL);
 #endif
-    Sfx_StartLogical(soundId, emitter, Def_SoundIsRepeating(soundId));
+    App_AudioSystem().startLogical(soundId, emitter);
 
     // The sound is audible to everybody.
     return S_LocalSoundAtVolume(soundId, emitter, volume);

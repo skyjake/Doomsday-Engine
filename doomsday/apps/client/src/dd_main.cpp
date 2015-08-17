@@ -51,7 +51,6 @@
 #ifdef __CLIENT__
 #  include <de/DisplayMode>
 #endif
-#include <doomsday/audio/logical.h>
 #include <doomsday/console/alias.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/exec.h>
@@ -1432,7 +1431,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
         App_ResourceSystem().clearAllAnimGroups();
         App_ResourceSystem().clearAllColorPalettes();
 
-        Sfx_InitLogical();
+        App_AudioSystem().clearLogical();
 
         Con_ClearDatabases();
 

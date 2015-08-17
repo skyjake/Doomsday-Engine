@@ -235,6 +235,9 @@ public:  /// @todo make private:
     void aboutToUnloadMap();
     void worldMapChanged();
 
+    /// @todo refactor away.
+    void clearLogical();
+
     /**
      * Provides mutable access to the sound sample cache (waveforms).
      */
@@ -267,6 +270,14 @@ public:  /// @todo make private:
     audiodriverid_t toDriverId(AudioDriver const *driver) const;
 
 #endif  // __CLIENT__
+
+    /**
+     * The sound is entered into the list of playing sounds. Called when a 'world class'
+     * sound is started, regardless of whether it's actually started on the local system.
+     *
+     * @todo Should not be exposed to users of this class. -ds
+     */
+    void startLogical(int soundId, struct mobj_s *emitter);
 
 private:
     DENG2_PRIVATE(d)
