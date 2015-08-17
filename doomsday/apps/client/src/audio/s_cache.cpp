@@ -314,40 +314,40 @@ DENG2_PIMPL(SfxSampleCache)
     ~Instance() { removeAll(); }
 
     /**
-     * Find the appropriate hash for the given sound @a id.
+     * Find the appropriate hash for the given @a soundId.
      */
-    Hash &hashFor(dint id)
+    Hash &hashFor(dint soundId)
     {
-        return hash[duint( id ) % CACHE_HASH_SIZE];
+        return hash[duint( soundId ) % CACHE_HASH_SIZE];
     }
 
-    Hash const &hashFor(dint id) const
+    Hash const &hashFor(dint soundId) const
     {
-        return const_cast<Instance *>(this)->hashFor(id);
+        return const_cast<Instance *>(this)->hashFor(soundId);
     }
 
     /**
-     * Lookup a CacheItem with the given @a id.
+     * Lookup a CacheItem with the given @a soundId.
      */
-    CacheItem *tryFind(dint id) const
+    CacheItem *tryFind(dint soundId) const
     {
-        for(CacheItem *it = hashFor(id).first; it; it = it->next)
+        for(CacheItem *it = hashFor(soundId).first; it; it = it->next)
         {
-            if(it->sample.id == id)
+            if(it->sample.id == soundId)
                 return it;
         }
         return nullptr;  // Not found.
     }
 
     /**
-     * Add a new CacheItem with the given @a id to the hash and return it
-     * (ownership is retained).
+     * Add a new CacheItem with the given @a soundId to the hash and return
+     * it (ownership is retained).
      */
-    CacheItem &insertCacheItem(dint id)
+    CacheItem &insertCacheItem(dint soundId)
     {
         auto *item = new CacheItem;
 
-        Hash &hash = hashFor(id);
+        Hash &hash = hashFor(soundId);
         if(hash.last)
         {
             hash.last->next = item;
@@ -393,7 +393,7 @@ DENG2_PIMPL(SfxSampleCache)
      * Caches a copy of the given sample. If it's already in the cache and has the
      * same format, nothing is done.
      *
-     * @param id            Id number of the sound sample.
+     * @param soundId       Id number of the sound sample.
      * @param data          Actual sample data.
      * @param size          Size in bytes.
      * @param numSamples    Number of samples.
@@ -403,14 +403,14 @@ DENG2_PIMPL(SfxSampleCache)
      *
      * @returns             Ptr to the cached sample. Always valid.
      */
-    CacheItem &insert(dint id, void const *data, duint size, dint numSamples,
+    CacheItem &insert(dint soundId, void const *data, duint size, dint numSamples,
         dint bytesPer, dint rate, dint group)
     {
         sfxsample_t cached;
         configureSample(cached, data, size, numSamples, bytesPer, rate);
 
         // Have we already cached a comparable sample?
-        CacheItem *item = tryFind(id);
+        CacheItem *item = tryFind(soundId);
         if(item)
         {
             // A sample is already in the cache.
@@ -424,11 +424,11 @@ DENG2_PIMPL(SfxSampleCache)
         else
         {
             // Add a new CacheItem for the sample.
-            item = &insertCacheItem(id);
+            item = &insertCacheItem(soundId);
         }
 
         // Attribute the sample with tracking identifiers.
-        cached.id    = id;
+        cached.id    = soundId;
         cached.group = group;
 
         // Perform resampling if necessary.
@@ -566,15 +566,15 @@ void SfxSampleCache::info(duint *cacheBytes, duint *sampleCount)
     if(sampleCount) *sampleCount = count;
 }
 
-void SfxSampleCache::hit(dint id)
+void SfxSampleCache::hit(dint soundId)
 {
-    if(CacheItem *found = d->tryFind(id))
+    if(CacheItem *found = d->tryFind(soundId))
     {
         found->hit();
     }
 }
 
-sfxsample_t *SfxSampleCache::cache(dint id)
+sfxsample_t *SfxSampleCache::cache(dint soundId)
 {
     LOG_AS("SfxSampleCache");
 
@@ -583,25 +583,25 @@ sfxsample_t *SfxSampleCache::cache(dint id)
     // sound samples that won't be heard.
     /// @todo audio::System should handle this by restricting access. -ds
     if(!App_AudioSystem().sfxIsAvailable()) return nullptr;
-
-    // Zero is not a valid sound ID.
-    if(id == 0) return nullptr;
 #endif
 
+    // Ignore invalid sound IDs.
+    if(soundId <= 0) return nullptr;
+
     // Have we already cached this?
-    if(CacheItem *existing = d->tryFind(id))
+    if(CacheItem *existing = d->tryFind(soundId))
         return &existing->sample;
 
     // Lookup info for this sound.
-    sfxinfo_t *info = Def_GetSoundInfo(id, 0, 0);
+    sfxinfo_t *info = Def_GetSoundInfo(soundId, 0, 0);
     if(!info)
     {
-        LOG_AUDIO_WARNING("Ignoring id:%i (missing sfxinfo_t)") << id;
+        LOG_AUDIO_WARNING("Ignoring sound id:%i (missing sfxinfo_t)") << soundId;
         return nullptr;
     }
 
     // Attempt to cache this now.
-    LOG_AUDIO_VERBOSE("Caching sample '%s' (#%i)...") << info->id << id;
+    LOG_AUDIO_VERBOSE("Caching sample '%s' (id:%i)...") << info->id << soundId;
 
     dint bytesPer = 0;
     dint rate = 0;
@@ -663,7 +663,7 @@ sfxsample_t *SfxSampleCache::cache(dint id)
         // Try loading from the lump.
         if(info->lumpNum < 0)
         {
-            LOG_AUDIO_WARNING("Failed to locate lump resource '%s' for sound '%s'")
+            LOG_AUDIO_WARNING("Failed to locate lump resource '%s' for sample '%s'")
                 << info->lumpName << info->id;
             return nullptr;
         }
@@ -696,7 +696,7 @@ sfxsample_t *SfxSampleCache::cache(dint id)
     if(data)  // Loaded!
     {
         // Insert a copy of this into the cache.
-        CacheItem &item = d->insert(id, data, bytesPer * numSamples, numSamples,
+        CacheItem &item = d->insert(soundId, data, bytesPer * numSamples, numSamples,
                                     bytesPer, rate, info->group);
         Z_Free(data);
         return &item.sample;
@@ -723,7 +723,7 @@ sfxsample_t *SfxSampleCache::cache(dint id)
                 duint8 const *data = lump.cache() + 8;  // Skip the header.
 
                 // Insert a copy of this into the cache.
-                CacheItem &item = d->insert(id, data, bytesPer * numSamples, numSamples,
+                CacheItem &item = d->insert(soundId, data, bytesPer * numSamples, numSamples,
                                            bytesPer, rate, info->group);
 
                 lump.unlock();

@@ -85,10 +85,10 @@ public:
      * Lookup a cached copy of the sound sample associated with @a id. (Give this
      * ptr to @ref Sfx_StartSound()).
      *
-     * @param id  Sound sample identifier.
+     * @param soundId  Sound sample identifier.
      * @return  Associated sfxsample_t if found; otherwise @c nullptr.
      */
-    sfxsample_t *cache(int id);
+    sfxsample_t *cache(int soundId);
 
     /**
      * Register a cache hit on the sound sample associated with @a id.
@@ -96,9 +96,9 @@ public:
      * Hits keep count of how many times the cached sound has been played. The purger
      * will remove samples with the lowest hitcount first.
      *
-     * @param id  Sound sample identifier.
+     * @param soundId  Sound sample identifier.
      */
-    void hit(int id);
+    void hit(int soundId);
 
     /**
      * Returns cache usage info (for debug).
