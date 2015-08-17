@@ -1172,6 +1172,9 @@ DENG2_PIMPL(System)
      */
     void sfxStartLogical(dint soundId, mobj_t *emitter)
     {
+        // Ignore invalid sound IDs.
+        if(soundId <= 0) return;
+
         soundId &= ~DDSF_FLAG_MASK;
 
         // Cache the sound sample associated with @a soundId (if necessary)
