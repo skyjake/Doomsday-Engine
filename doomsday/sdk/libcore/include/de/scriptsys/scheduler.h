@@ -77,8 +77,10 @@ public:
 
         /**
          * Rewinds the clock back to zero.
+         *
+         * @param toTime  Rewind destination time.
          */
-        void rewind();
+        void rewind(TimeDelta const &toTime = 0.0);
 
         /**
          * Advances the current time of the clock and executes any scripts whose

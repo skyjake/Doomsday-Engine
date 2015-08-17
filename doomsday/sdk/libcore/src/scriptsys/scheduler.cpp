@@ -138,12 +138,20 @@ DENG2_PIMPL_NOREF(Scheduler::Clock)
     TimeDelta at = 0.0;
     Events events;
 
-    void rewind()
+    void rewind(TimeDelta const &toTime)
     {
-        at = 0.0;
+        at = toTime;
 
-        // Restore all events in the queue.
-        events = scheduler->d->events; // copied
+        // Restore events into the queue.
+        events = scheduler->d->events;
+        while(!events.empty())
+        {
+            if(events.top()->at < at)
+            {
+                events.pop();
+            }
+            else break;
+        }
     }
 
     void advanceTime(TimeDelta const &elapsed)
@@ -170,7 +178,7 @@ Scheduler::Clock::Clock(Scheduler const &schedule, Record *context)
 {
     d->scheduler = &schedule;
     d->context   = context;
-    d->rewind();
+    d->rewind(0.0);
 }
 
 TimeDelta Scheduler::Clock::at() const
@@ -178,9 +186,9 @@ TimeDelta Scheduler::Clock::at() const
     return d->at;
 }
 
-void Scheduler::Clock::rewind()
+void Scheduler::Clock::rewind(TimeDelta const &toTime)
 {
-    d->rewind();
+    d->rewind(toTime);
 }
 
 void Scheduler::Clock::advanceTime(TimeDelta const &elapsed)
