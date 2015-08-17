@@ -872,6 +872,15 @@ DENG2_PIMPL(ModelDrawable)
                         {
                             *texBounds[t] = atlas->imageRectf(material.texIds[map]).xywh();
                         }
+                        else if(defaultTexIds[map])
+                        {
+                            *texBounds[t] = atlas->imageRectf(defaultTexIds[map]).xywh();
+                        }
+                        else
+                        {
+                            // Not included in material.
+                            *texBounds[t] = Vector4f();
+                        }
                     }
                 }
 
