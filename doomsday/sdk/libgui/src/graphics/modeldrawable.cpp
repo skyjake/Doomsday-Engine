@@ -1227,7 +1227,7 @@ int ModelDrawable::meshCount() const
 int ModelDrawable::meshId(String const &name) const
 {
     if(!d->scene) return -1;
-    for(int i = 0; i < d->scene->mNumMeshes; ++i)
+    for(duint i = 0; i < d->scene->mNumMeshes; ++i)
     {
         if(name == d->scene->mMeshes[i]->mName.C_Str())
         {

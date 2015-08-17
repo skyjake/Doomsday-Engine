@@ -113,7 +113,9 @@ void MobjAnimator::triggerByState(String const &stateName)
     auto found = d->stateAnims->constFind(stateName);
     if(found == d->stateAnims->constEnd()) return;
 
-    //LOG_WIP("triggerByState: ") << stateName;
+    LOG_AS("MobjAnimator");
+    LOG_GL_XVERBOSE("triggerByState: ") << stateName;
+
     d->currentStateName = stateName;
 
     foreach(ModelRenderer::AnimSequence const &seq, found.value())
@@ -167,7 +169,7 @@ void MobjAnimator::triggerByState(String const &stateName)
             continue;
         }
 
-        LOG_WIP("Starting anim: " _E(b)) << seq.name;
+        LOG_GL_VERBOSE("Starting anim: " _E(b)) << seq.name;
         break;
     }
 }
@@ -217,7 +219,7 @@ void MobjAnimator::advanceTime(TimeDelta const &elapsed)
             auto &pending = d->pendingAnimForNode;
             if(pending.contains(node))
             {
-                LOG_WIP("Starting pending anim %i") << pending[node].animId;
+                LOG_GL_VERBOSE("Starting pending anim %i") << pending[node].animId;
                 d->start(pending[node]);
                 pending.remove(node);
             }
@@ -226,7 +228,6 @@ void MobjAnimator::advanceTime(TimeDelta const &elapsed)
 
     if(retrigger && !d->currentStateName.isEmpty())
     {
-        LOG_WIP("retrigger: " _E(C)) << d->currentStateName;
         triggerByState(d->currentStateName);
     }
 }

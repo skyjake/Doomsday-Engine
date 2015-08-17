@@ -332,23 +332,20 @@ DENG2_PIMPL(Info)
         }
 
         // Check if it is the beginning of a string literal.
+        // The value will be composed of any number of sub-strings.
         if(peekToken() == "\"")
         {
-            try
+            while(peekToken() == "\"")
             {
-               // The value will be composed of any number of sub-strings.
-               forever { value.text += parseString(); }
-            }
-            catch(de::Error const &)
-            {
-                // No more strings to append.
-                return value;
+                value.text += parseString();
             }
         }
-
-        // Then it must be a single token.
-        value = peekToken();
-        nextToken();
+        else
+        {
+            // Then it must be a single token.
+            value = peekToken();
+            nextToken();
+        }
         return value;
     }
 
