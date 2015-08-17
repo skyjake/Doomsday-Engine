@@ -191,7 +191,7 @@ void R_ProjectSprite(mobj_t &mob)
     ModelDef *mf = nullptr, *nextmf = nullptr;
     dfloat interp = 0;
 
-    ModelDrawable::Animator const *animator = nullptr; // GL2 model present?
+    MobjAnimator const *animator = nullptr; // GL2 model present?
 
     if(useModels)
     {

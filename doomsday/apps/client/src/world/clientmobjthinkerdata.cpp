@@ -204,12 +204,12 @@ ClientMobjThinkerData::RemoteSync &ClientMobjThinkerData::remoteSync()
     return *d->sync;
 }
 
-ModelDrawable::Animator *ClientMobjThinkerData::animator()
+MobjAnimator *ClientMobjThinkerData::animator()
 {
     return d->animator.get();
 }
 
-ModelDrawable::Animator const *ClientMobjThinkerData::animator() const
+MobjAnimator const *ClientMobjThinkerData::animator() const
 {
     return d->animator.get();
 }

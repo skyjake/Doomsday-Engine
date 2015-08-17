@@ -21,6 +21,7 @@
 
 #include "render/modelrenderer.h"
 #include <de/ModelDrawable>
+#include <de/GLProgram>
 
 /**
  * Mobj-specific model animator.
@@ -30,6 +31,9 @@
 class MobjAnimator : public de::ModelDrawable::Animator
 {
 public:
+    DENG2_ERROR(DefinitionError);
+
+public:
     MobjAnimator(de::DotPath const &id, de::ModelDrawable const &model);
 
     void triggerByState(de::String const &stateName);
@@ -37,6 +41,10 @@ public:
     void advanceTime(de::TimeDelta const &elapsed);
 
     de::ddouble currentTime(int index) const;
+
+    void bindUniforms(de::GLProgram &program) const;
+
+    void unbindUniforms(de::GLProgram &program) const;
 
 private:
     DENG2_PRIVATE(d)

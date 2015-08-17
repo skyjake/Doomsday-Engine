@@ -17,9 +17,10 @@
  */
 
 #include "render/modelrenderer.h"
-#include "gl/gl_main.h"
+#include "render/mobjanimator.h"
 #include "render/rend_main.h"
 #include "render/vissprite.h"
+#include "gl/gl_main.h"
 #include "world/p_players.h"
 #include "world/clientmobjthinkerdata.h"
 #include "clientapp.h"
@@ -424,6 +425,16 @@ DENG2_PIMPL(ModelRenderer)
 
         lightCount++;
     }
+
+    template <typename Params>
+    void draw(Params const &p)
+    {
+        p.animator->bindUniforms(program); /// @todo Constant buffers?
+        p.model->draw(p.animator,
+                      !p.auxData->passes.isEmpty()? &p.auxData->passes :
+                                                    nullptr);
+        p.animator->unbindUniforms(program);
+    }
 };
 
 ModelRenderer::ModelRenderer() : d(new Instance(this))
@@ -502,8 +513,7 @@ void ModelRenderer::render(vissprite_t const &spr)
     d->setupLighting(spr.light);
 
     // Draw the model using the current animation state.
-    p.model->draw(p.animator,
-                  !p.auxData->passes.isEmpty()? &p.auxData->passes : nullptr);
+    d->draw(p);
     GLState::pop();
 
     /// @todo Something is interfering with the cull setting elsewhere (remove this).
@@ -528,8 +538,7 @@ void ModelRenderer::render(vispsprite_t const &pspr)
     d->setupLighting(pspr.light);
 
     GLState::push().setCull(p.auxData->cull);
-    p.model->draw(p.animator,
-                  !p.auxData->passes.isEmpty()? &p.auxData->passes : nullptr);
+    d->draw(p);
     GLState::pop();
 
     /// @todo Something is interfering with the cull setting elsewhere (remove this).
