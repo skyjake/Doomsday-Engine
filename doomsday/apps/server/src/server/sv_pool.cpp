@@ -28,6 +28,7 @@
 #include <de/mathutil.h>
 #include <de/timer.h>
 #include <de/vector1.h>
+#include "def_main.h"  // Def_SameStateSequence
 
 #include "network/net_main.h"
 

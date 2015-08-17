@@ -1,4 +1,4 @@
-/** @file api_sound.h Public API for the audio subsystem.
+/** @file api_sound.h  Public API for the audio subsystem.
  * @ingroup audio
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -29,11 +29,6 @@ struct mobj_s;
 DENG_API_TYPEDEF(S)
 {
     de_api_t api;
-
-    /**
-     * Must be called before the map is changed.
-     */
-    //void (*MapChange)(void);
 
     /**
      * Play a sound on the local system. A public interface.
@@ -157,7 +152,6 @@ DENG_API_TYPEDEF(S)
 DENG_API_T(S);
 
 #ifndef DENG_NO_API_MACROS_SOUND
-//#define S_MapChange                 _api_S.MapChange
 #define S_LocalSoundAtVolumeFrom    _api_S.LocalSoundAtVolumeFrom
 #define S_LocalSoundAtVolume        _api_S.LocalSoundAtVolume
 #define S_LocalSound                _api_S.LocalSound
@@ -179,4 +173,4 @@ DENG_API_T(S);
 DENG_USING_API(S);
 #endif
 
-#endif // DOOMSDAY_API_SOUND_H
+#endif  // DOOMSDAY_API_SOUND_H

@@ -20,14 +20,16 @@
 #ifndef CLIENT_AUDIO_SYSTEM_H
 #define CLIENT_AUDIO_SYSTEM_H
 
+#include "dd_types.h"  // lumpnum_t
 #include "api_sound.h"
 #ifdef __CLIENT__
+#  include "api_audiod_sfx.h"  // sfxsample_t
+
 #  include "audio/audiodriver.h"
-#  include "audio/sfxchannel.h"
 #endif
-#include "audio/s_cache.h"   // remove me
-#include "dd_types.h"        // lumpnum_t
+#include "audio/s_cache.h"
 #ifdef __CLIENT__
+#  include "audio/sfxchannel.h"
 #  include <de/Record>
 #  include <de/String>
 #endif
@@ -110,11 +112,6 @@ public:  // Music playback: ----------------------------------------------------
     bool musicIsAvailable() const;
 
     /**
-     * Change the @em music volume to @a newVolume (affects all music interfaces).
-     */
-    void setMusicVolume(float vol);
-
-    /**
      * Determines if @em music is currently playing (on any music interface).
      */
     bool musicIsPlaying() const;
@@ -171,13 +168,39 @@ public:  // Sound effect playback: ---------------------------------------------
 
 #endif  // __CLIENT__
 
-    bool soundIsPlaying(int id, struct mobj_s *emitter) const;
+    bool soundIsPlaying(int soundId, struct mobj_s *emitter) const;
+
+#ifdef __CLIENT__
+    void stopSoundGroup(int group, struct mobj_s *emitter);
+    int stopSoundWithLowerPriority(int soundId, struct mobj_s *emitter, int defPriority);
+#endif
+
+    /**
+     * @param soundId  @c 0: stops all sounds originating from the given @a emitter.
+     * @param emitter  @c nullptr: stops all sounds with the ID. Otherwise both @a soundId
+     *                 and @a emitter must match.
+     * @param flags    @ref soundStopFlags.
+     */
+    void stopSound(int soundId, struct mobj_s *emitter, int flags = 0);
 
 #ifdef __CLIENT__
 
-    void stopSoundGroup(int group, struct mobj_s *emitter);
-    int stopSoundWithLowerPriority(int id, struct mobj_s *emitter, int defPriority);
-    int stopSound(int id, struct mobj_s *emitter);
+    /**
+     * Used by the high-level sound interface to play sounds on the local system.
+     *
+     * @param sample    Sample to play (must be stored persistently! No copy is made).
+     * @param volume    Volume at which the sample should be played.
+     * @param freq      Relative and modifies the sample's rate.
+     * @param emitter   If @c nullptr, @a fixedpos is checked for a position. If both
+     *                  @a emitter and @a fixedpos are @c nullptr, then the sound is played
+     *                  as centered 2D.
+     * @param fixedpos  Fixed position where the sound if emitted, or @c nullptr.
+     * @param flags     Additional flags (@ref soundPlayFlags).
+     *
+     * @return  @c true, if a sound is started.
+     */
+    int playSound(sfxsample_t *sample, float volume, float freq, struct mobj_s *emitter,
+                  coord_t *fixedOrigin, int flags);
 
     /**
      * The priority of a sound is affected by distance, volume and age.
@@ -215,7 +238,7 @@ public:  /// @todo make private:
     /**
      * Provides mutable access to the sound sample cache (waveforms).
      */
-    SfxSampleCache &sfxSampleCache() const;
+    SfxSampleCache /*const*/ &sfxSampleCache() const;
 
 #ifdef __CLIENT__
     /// @todo refactor away.
@@ -232,7 +255,7 @@ public:  /// @todo make private:
      * allowRefresh). We still have to see if a refresh is being made and wait
      * for it to stop. Then we can suspend the refresh thread.
      */
-    void allowSfxRefresh(bool allow);
+    void allowSfxRefresh(bool allow = true);
 
     /// @todo refactor away.
     void requestSfxListenerUpdate();
@@ -277,12 +300,12 @@ mobj_t *S_GetListenerMobj();
 /**
  * Stop all sounds of the group. If an emitter is specified, only it's sounds are checked.
  */
-void Sfx_StopSoundGroup(int group, struct mobj_s *emitter);
+void S_StopSoundGroup(int group, struct mobj_s *emitter);
 
 /**
  * Stops all channels that are playing the specified sound.
  *
- * @param id           @c 0 = all sounds are stopped.
+ * @param soundId      @c 0 = all sounds are stopped.
  * @param emitter      If not @c nullptr, then the channel's emitter mobj must match.
  * @param defPriority  If >= 0, the currently playing sound must have a lower priority
  *                     than this to be stopped. Returns -1 if the sound @a id has a lower
@@ -290,9 +313,7 @@ void Sfx_StopSoundGroup(int group, struct mobj_s *emitter);
  *
  * @return  The number of samples stopped.
  */
-int Sfx_StopSoundWithLowerPriority(int id, struct mobj_s *emitter, ddboolean_t byPriority);
-
-int Sfx_StopSound(int id, struct mobj_s *emitter);
+int S_StopSoundWithLowerPriority(int soundId, struct mobj_s *emitter, ddboolean_t byPriority);
 
 #endif  // __CLIENT__
 
@@ -308,28 +329,5 @@ int Sfx_StopSound(int id, struct mobj_s *emitter);
 #define SF_REPEAT           0x10  ///< Repeats until stopped.
 #define SF_DONT_STOP        0x20  ///< Sound can't be stopped while playing.
 /// @}
-
-#ifdef __CLIENT__
-
-/**
- * Used by the high-level sound interface to play sounds on the local system.
- *
- * @param sample    Sample to play (must be stored persistently! No copy is made).
- * @param volume    Volume at which the sample should be played.
- * @param freq      Relative and modifies the sample's rate.
- * @param emitter   If @c nullptr, @a fixedpos is checked for a position. If both
- *                  @a emitter and @a fixedpos are @c nullptr, then the sound is played
- *                  as centered 2D.
- * @param fixedpos  Fixed position where the sound if emitted, or @c nullptr.
- * @param flags     Additional flags (@ref soundPlayFlags).
- *
- * @return  @c true, if a sound is started.
- */
-int Sfx_StartSound(sfxsample_t *sample, float volume, float freq, struct mobj_s *emitter,
-    coord_t *fixedpos, int flags);
-
-float Sfx_Priority(struct mobj_s *emitter, coord_t const *point, float volume, int startTic);
-
-#endif  // __CLIENT__
 
 #endif  // CLIENT_AUDIO_SYSTEM_H

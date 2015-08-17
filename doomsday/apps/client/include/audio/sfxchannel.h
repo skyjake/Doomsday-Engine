@@ -152,6 +152,8 @@ public:
      */
     SfxChannel *tryFindVacant(bool use3D, int bytes, int rate, int sampleId) const;
 
+    void refreshAll();
+
     /**
      * Iterate through the channels making a callback for each.
      *

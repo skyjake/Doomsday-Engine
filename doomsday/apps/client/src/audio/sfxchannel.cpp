@@ -138,10 +138,10 @@ dfloat SfxChannel::priority() const
         return SFX_LOWEST_PRIORITY;
 
     if(d->flags & SFXCF_NO_ORIGIN)
-        return Sfx_Priority(0, 0, d->volume, d->startTime);
+        return App_AudioSystem().rateSoundPriority(0, 0, d->volume, d->startTime);
 
     // d->origin is set to emitter->xyz during updates.
-    return Sfx_Priority(0, d->origin, d->volume, d->startTime);
+    return App_AudioSystem().rateSoundPriority(0, d->origin, d->volume, d->startTime);
 }
 
 /// @todo audio::System should observe. -ds
@@ -377,6 +377,18 @@ SfxChannel *SfxChannels::tryFindVacant(bool use3D, dint bytes, dint rate, dint s
     return nullptr;  // None suitable.
 }
 
+void SfxChannels::refreshAll()
+{
+    forAll([] (SfxChannel &ch)
+    {
+        if(ch.hasBuffer() && (ch.buffer().flags & SFXBF_PLAYING))
+        {
+            App_AudioSystem().sfx()->Refresh(&ch.buffer());
+        }
+        return LoopContinue;
+    });
+}
+
 LoopResult SfxChannels::forAll(std::function<LoopResult (SfxChannel &)> func) const
 {
     for(SfxChannel *ch : d->all)
@@ -388,9 +400,12 @@ LoopResult SfxChannels::forAll(std::function<LoopResult (SfxChannel &)> func) co
 
 }  // namespace audio
 
+using namespace audio;
+
 // Debug visual: -----------------------------------------------------------------
 
 //#include "dd_main.h" // App_AudioSystem()
+#include "audio/s_cache.h"
 #include "gl/gl_main.h"
 #include "api_fontrender.h"
 #include "render/rend_font.h"
