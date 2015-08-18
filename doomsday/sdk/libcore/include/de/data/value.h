@@ -28,7 +28,6 @@ namespace de {
 
 class Process;
 class Record;
-class NumberValue;
 
 /**
  * The base class for all runtime values.  This is an abstract class.
@@ -164,6 +163,8 @@ public:
      */
     virtual Value const &element(Value const &index) const;
 
+    Value const &element(dint index) const;
+
     /**
      * Get a specific element of the value.  This is meaningful with
      * arrays and dictionaries.
@@ -173,6 +174,8 @@ public:
      * @return  Element value (modifiable).
      */
     virtual Value &element(Value const &index);
+
+    Value &element(dint index);
 
     /**
      * Duplicates an element of the value. This is necessary when the
@@ -322,6 +325,21 @@ protected:
         TIME
     };
 };
+
+/**
+ * Utility for converting a Value with two elements into a Range. This
+ * only works if the value contains a sufficient number of elements and they
+ * can be converted to numbers.
+ *
+ * @param value  Value with multiple elements.
+ *
+ * @return Vector.
+ */
+template <typename RangeType>
+RangeType rangeFromValue(Value const &value) {
+    return RangeType(value.element(0).asNumber(),
+                     value.element(1).asNumber());
+}
 
 } // namespace de
 
