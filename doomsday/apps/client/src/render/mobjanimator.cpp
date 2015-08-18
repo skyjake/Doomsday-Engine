@@ -33,6 +33,7 @@ static String const DEF_ROOT_NODE  ("node");
 static String const DEF_LOOPING    ("looping");
 static String const DEF_PRIORITY   ("priority");
 static String const DEF_VARIABLE   ("variable");
+static String const DEF_WRAP       ("wrap");
 
 static String const VAR_SELF ("self");
 static String const VAR_ASSET("__asset__");
@@ -114,7 +115,13 @@ DENG2_PIMPL(MobjAnimator)
      */
     struct RenderVar
     {
-        QList<de::Animation> values;
+        struct Value {
+            de::Animation anim;
+            Rangef wrap;
+
+            Value(de::Animation const &a) : anim(a) {}
+        };
+        QList<Value> values;
         GLUniform *uniform = nullptr;
 
         void init(float value)
@@ -138,6 +145,17 @@ DENG2_PIMPL(MobjAnimator)
             delete uniform;
         }
 
+        float currentValue(int index) const
+        {
+            auto const &val = values.at(index);
+            float v = val.anim.value();
+            if(val.wrap.isEmpty())
+            {
+                return v;
+            }
+            return val.wrap.wrap(v);
+        }
+
         /**
          * Copies the current values to the uniform.
          */
@@ -146,25 +164,25 @@ DENG2_PIMPL(MobjAnimator)
             switch(values.size())
             {
             case 1:
-                *uniform = values.at(0).value();
+                *uniform = currentValue(0);
                 break;
 
             case 2:
-                *uniform = Vector2f(values.at(0).value(),
-                                    values.at(1).value());
+                *uniform = Vector2f(currentValue(0),
+                                    currentValue(1));
                 break;
 
             case 3:
-                *uniform = Vector3f(values.at(0).value(),
-                                    values.at(1).value(),
-                                    values.at(2).value());
+                *uniform = Vector3f(currentValue(0),
+                                    currentValue(1),
+                                    currentValue(2));
                 break;
 
             case 4:
-                *uniform = Vector4f(values.at(0).value(),
-                                    values.at(1).value(),
-                                    values.at(2).value(),
-                                    values.at(3).value());
+                *uniform = Vector4f(currentValue(0),
+                                    currentValue(1),
+                                    currentValue(2),
+                                    currentValue(3));
                 break;
             }
         }
@@ -192,6 +210,8 @@ DENG2_PIMPL(MobjAnimator)
         auto const &def = names[VAR_SELF].valueAsRecord();
         if(def.has("render"))
         {
+            static char const *componentNames[] = { "x", "y", "z", "w" };
+
             // Look up the variable declarations.
             auto vars = ScriptedInfo::subrecordsOfType(DEF_VARIABLE, def.subrecord("render"));
             DENG2_FOR_EACH_CONST(Record::Subrecords, i, vars)
@@ -231,11 +251,10 @@ DENG2_PIMPL(MobjAnimator)
                     }
 
                     // Expose the components individually in the namespace for scripts.
-                    static char const *componentNames[] = { "x", "y", "z", "w" };
                     for(int k = 0; k < var->values.size(); ++k)
                     {
                         addBinding(String(i.key()).concatenateMember(componentNames[k]),
-                                   var->values[k]);
+                                   var->values[k].anim);
                     }
                 }
                 else
@@ -243,7 +262,24 @@ DENG2_PIMPL(MobjAnimator)
                     var->init(float(initialValue.asNumber()));
 
                     // Expose in the namespace for scripts.
-                    addBinding(i.key(), var->values[0]);
+                    addBinding(i.key(), var->values[0].anim);
+                }
+
+                // Optional range wrapping.
+                if(valueDef.hasSubrecord(DEF_WRAP))
+                {
+                    for(int k = 0; k < 4; ++k)
+                    {
+                        String const varName = QString("%s.%s").arg(DEF_WRAP).arg(componentNames[k]);
+                        if(valueDef.has(varName))
+                        {
+                            var->values[k].wrap = rangeFromValue<Rangef>(valueDef.geta(varName));
+                        }
+                    }
+                }
+                else if(valueDef.has(DEF_WRAP))
+                {
+                    var->values[0].wrap = rangeFromValue<Rangef>(valueDef.geta(DEF_WRAP));
                 }
 
                 // Uniform to be passed to the shader.
