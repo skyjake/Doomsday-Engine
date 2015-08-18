@@ -98,6 +98,11 @@ public:
      */
     void loadFromCommandLine();
 
+    /**
+     * Looks up all the packages in the file system index.
+     */
+    StringList findAllPackages() const;
+
 private:
     DENG2_PRIVATE(d)
 };

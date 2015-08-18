@@ -167,6 +167,22 @@ DENG2_PIMPL(PackageLoader)
         return true;
     }
 
+    void listPackagesInIndex(FileIndex const &index, StringList &list)
+    {
+        for(auto i = index.begin(); i != index.end(); ++i)
+        {
+            if(i->first.fileNameExtension() == ".pack")
+            {
+                String path = i->second->path();
+
+                // The special persistent data package should be ignored.
+                if(path == "/home/persist.pack") continue;
+
+                list.append(path);
+            }
+        }
+    }
+
     DENG2_PIMPL_AUDIENCE(Activity)
 };
 
@@ -287,6 +303,14 @@ void PackageLoader::loadFromCommandLine()
             load(args.at(p));
         }
     }
+}
+
+StringList PackageLoader::findAllPackages() const
+{
+    StringList all;
+    d->listPackagesInIndex(App::fileSystem().indexFor(DENG2_TYPE_NAME(Folder)), all);
+    d->listPackagesInIndex(App::fileSystem().indexFor(DENG2_TYPE_NAME(ArchiveFolder)), all);
+    return all;
 }
 
 } // namespace de
