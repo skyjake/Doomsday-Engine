@@ -45,7 +45,7 @@ DENG2_PIMPL(MobjAnimator)
     /**
      * Specialized animation sequence state for a running animation.
      */
-    struct Sequence : public ModelDrawable::Animator::Animation
+    struct Sequence : public ModelDrawable::Animator::OngoingSequence
     {
         enum LoopMode {
             NotLooping = 0,
@@ -69,7 +69,7 @@ DENG2_PIMPL(MobjAnimator)
             node   = rootNode;
         }
 
-        Sequence(Sequence const &other) : Animation(other)
+        Sequence(Sequence const &other) : OngoingSequence(other)
         {
             apply(other);
         }
@@ -116,10 +116,10 @@ DENG2_PIMPL(MobjAnimator)
     struct RenderVar
     {
         struct Value {
-            de::Animation anim;
+            Animation anim;
             Rangef wrap;
 
-            Value(de::Animation const &a) : anim(a) {}
+            Value(Animation const &a) : anim(a) {}
         };
         QList<Value> values;
         GLUniform *uniform = nullptr;
@@ -127,7 +127,7 @@ DENG2_PIMPL(MobjAnimator)
         void init(float value)
         {
             values.clear();
-            values.append(de::Animation(value, de::Animation::Linear));
+            values.append(Animation(value, Animation::Linear));
         }
 
         template <typename VecType>
@@ -136,7 +136,7 @@ DENG2_PIMPL(MobjAnimator)
             values.clear();
             for(int i = 0; i < vec.size(); ++i)
             {
-                values.append(de::Animation(vec[i], de::Animation::Linear));
+                values.append(Animation(vec[i], Animation::Linear));
             }
         }
 
@@ -290,7 +290,7 @@ DENG2_PIMPL(MobjAnimator)
         }
     }
 
-    void addBinding(String const &varName, de::Animation &anim)
+    void addBinding(String const &varName, Animation &anim)
     {
         names.add(varName)
                 .set(new NativeValue(&anim, &ScriptSystem::builtInClass("Animation")))

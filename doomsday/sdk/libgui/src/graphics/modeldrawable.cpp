@@ -1065,15 +1065,15 @@ DENG2_PIMPL(ModelDrawable)
         // Apply all current animations.
         for(int i = 0; i < animation->count(); ++i)
         {
-            Animator::Animation const &anim = animation->at(i);
+            auto const &animSeq = animation->at(i);
 
             // The animation has been validated earlier.
-            DENG2_ASSERT(duint(anim.animId) < scene->mNumAnimations);
-            DENG2_ASSERT(nodeNameToPtr.contains(anim.node));
+            DENG2_ASSERT(duint(animSeq.animId) < scene->mNumAnimations);
+            DENG2_ASSERT(nodeNameToPtr.contains(animSeq.node));
 
             accumulateAnimationTransforms(animation->currentTime(i),
-                                          *scene->mAnimations[anim.animId],
-                                          *nodeNameToPtr[anim.node]);
+                                          *scene->mAnimations[animSeq.animId],
+                                          *nodeNameToPtr[animSeq.node]);
         }
     }
 
@@ -1364,8 +1364,7 @@ DENG2_PIMPL_NOREF(ModelDrawable::Animator)
 {
     Constructor constructor;
     ModelDrawable const *model;
-    typedef QList<Animation *> Animations;
-    Animations anims;
+    QList<OngoingSequence *> anims;
 
     Instance(Constructor ctr, ModelDrawable const *mdl = 0)
         : constructor(ctr)
@@ -1376,30 +1375,30 @@ DENG2_PIMPL_NOREF(ModelDrawable::Animator)
         qDeleteAll(anims);
     }
 
-    Animation &add(Animation *anim)
+    OngoingSequence &add(OngoingSequence *seq)
     {
-        DENG2_ASSERT(anim != nullptr);
+        DENG2_ASSERT(seq != nullptr);
         DENG2_ASSERT(model != nullptr);
 
         // Verify first.
-        if(anim->animId < 0 || anim->animId >= model->animationCount())
+        if(seq->animId < 0 || seq->animId >= model->animationCount())
         {
             throw InvalidError("ModelDrawable::Animator::add",
                                "Specified animation does not exist");
         }
-        if(!model->nodeExists(anim->node))
+        if(!model->nodeExists(seq->node))
         {
             throw InvalidError("ModelDrawable::Animator::add",
-                               "Node '" + anim->node + "' does not exist");
+                               "Node '" + seq->node + "' does not exist");
         }
 
-        anims.append(anim);
+        anims.append(seq);
         return *anims.last();
     }
 
     void stopByNode(String const &node)
     {
-        QMutableListIterator<Animation *> iter(anims);
+        QMutableListIterator<OngoingSequence *> iter(anims);
         while(iter.hasNext())
         {
             iter.next();
@@ -1411,9 +1410,9 @@ DENG2_PIMPL_NOREF(ModelDrawable::Animator)
         }
     }
 
-    Animation const *findAny(String const &rootNode) const
+    OngoingSequence const *findAny(String const &rootNode) const
     {
-        foreach(Animation const *anim, anims)
+        foreach(OngoingSequence const *anim, anims)
         {
             if(anim->node == rootNode)
                 return anim;
@@ -1421,9 +1420,9 @@ DENG2_PIMPL_NOREF(ModelDrawable::Animator)
         return nullptr;
     }
 
-    Animation const *find(int animId, String const &rootNode) const
+    OngoingSequence const *find(int animId, String const &rootNode) const
     {
-        foreach(Animation const *anim, anims)
+        foreach(OngoingSequence const *anim, anims)
         {
             if(anim->animId == animId && anim->node == rootNode)
                 return anim;
@@ -1461,12 +1460,14 @@ int ModelDrawable::Animator::count() const
     return d->anims.size();
 }
 
-ModelDrawable::Animator::Animation const &ModelDrawable::Animator::at(int index) const
+ModelDrawable::Animator::OngoingSequence const &
+ModelDrawable::Animator::at(int index) const
 {
     return *d->anims.at(index);
 }
 
-ModelDrawable::Animator::Animation &ModelDrawable::Animator::at(int index)
+ModelDrawable::Animator::OngoingSequence &
+ModelDrawable::Animator::at(int index)
 {
     return *d->anims[index];
 }
@@ -1481,23 +1482,23 @@ bool ModelDrawable::Animator::isRunning(int animId, String const &rootNode) cons
     return d->isRunning(animId, rootNode);
 }
 
-ModelDrawable::Animator::Animation *ModelDrawable::Animator::find(String const &rootNode) const
+ModelDrawable::Animator::OngoingSequence *ModelDrawable::Animator::find(String const &rootNode) const
 {
-    return const_cast<Animation *>(d->findAny(rootNode));
+    return const_cast<OngoingSequence *>(d->findAny(rootNode));
 }
 
-ModelDrawable::Animator::Animation *ModelDrawable::Animator::find(int animId, String const &rootNode) const
+ModelDrawable::Animator::OngoingSequence *ModelDrawable::Animator::find(int animId, String const &rootNode) const
 {
-    return const_cast<Animation *>(d->find(animId, rootNode));
+    return const_cast<OngoingSequence *>(d->find(animId, rootNode));
 }
 
-ModelDrawable::Animator::Animation &
+ModelDrawable::Animator::OngoingSequence &
 ModelDrawable::Animator::start(String const &animName, String const &rootNode)
 {
     return start(model().animationIdForName(animName), rootNode);
 }
 
-ModelDrawable::Animator::Animation &
+ModelDrawable::Animator::OngoingSequence &
 ModelDrawable::Animator::start(int animId, String const &rootNode)
 {
     d->stopByNode(rootNode);
@@ -1512,7 +1513,7 @@ ModelDrawable::Animator::start(int animId, String const &rootNode)
 
     auto const &animData = *scene.mAnimations[animId];
 
-    Animation *anim = d->constructor();
+    OngoingSequence *anim = d->constructor();
     anim->animId = animId;
     anim->node   = rootNode;
     anim->time   = 0.0;
@@ -1541,18 +1542,18 @@ ddouble ModelDrawable::Animator::currentTime(int index) const
     return at(index).time;
 }
 
-void ModelDrawable::Animator::Animation::initialize()
+void ModelDrawable::Animator::OngoingSequence::initialize()
 {}
 
-bool ModelDrawable::Animator::Animation::isAtEnd() const
+bool ModelDrawable::Animator::OngoingSequence::isAtEnd() const
 {
     return time >= duration;
 }
 
-ModelDrawable::Animator::Animation *
-ModelDrawable::Animator::Animation::make() // static
+ModelDrawable::Animator::OngoingSequence *
+ModelDrawable::Animator::OngoingSequence::make() // static
 {
-    return new Animation;
+    return new OngoingSequence;
 }
 
 } // namespace de

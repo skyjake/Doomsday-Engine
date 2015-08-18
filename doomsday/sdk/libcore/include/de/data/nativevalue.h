@@ -28,6 +28,9 @@ namespace de {
  * Reference to a native object. Only stores a pointer, and is not informed about the
  * deletion of the referenced object. The creator of NativeValue instances must ensure
  * that the values are not used after the referenced object has been destroyed.
+ *
+ * @todo Must have a mechanism to be informed about deletion of the target object to
+ * be useful for general purposes.
  */
 class DENG2_PUBLIC NativeValue : public Value
 {
