@@ -459,6 +459,7 @@ void R_ProjectSprite(mobj_t &mob)
             vis->data.model2.object   = &mob;
             vis->data.model2.animator = animator;
             vis->data.model2.model    = &animator->model();
+            vis->data.model2.auxData  = &mobjData->auxiliaryModelData();
         }
         else
         {

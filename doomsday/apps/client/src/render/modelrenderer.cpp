@@ -430,6 +430,8 @@ DENG2_PIMPL(ModelRenderer)
     template <typename Params>
     void draw(Params const &p)
     {
+        DENG2_ASSERT(p.auxData != nullptr);
+
         p.animator->bindUniforms(program); /// @todo Constant buffers?
         p.model->draw(p.animator,
                       !p.auxData->passes.isEmpty()? &p.auxData->passes :
