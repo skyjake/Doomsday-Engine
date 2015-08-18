@@ -1,4 +1,4 @@
-/** @file sv_pool.cpp  Delta Pools.
+/** @file sv_pool.cpp  Server delta pools.
  *
  * Delta Pools use PU_MAP, which means all the memory allocated for them
  * is deallocated when the map changes. Sv_InitPools() is called in
@@ -1724,23 +1724,23 @@ dfloat Sv_GetMaxSoundDistance(sounddelta_t const *delta)
         return DDMAXFLOAT;
     }
 
-    return volume * ::soundMaxDist;
+    return volume * App_AudioSystem().soundVolumeAttenuationRange().end;
 }
 
 /**
  * @return  The flags that remain after exclusion.
  */
-int Sv_ExcludeDelta(pool_t* pool, const void* deltaPtr)
+int Sv_ExcludeDelta(pool_t *pool, void const *deltaPtr)
 {
-    const delta_t*      delta = (delta_t const *) deltaPtr;
-    player_t*           plr = DD_Player(pool->owner);
-    mobj_t*             poolViewer = plr->publicData().mo;
-    int                 flags = delta->flags;
+    delta_t const *delta     = (delta_t const *) deltaPtr;
+    mobj_t const *poolViewer = DD_Player(pool->owner)->publicData().mo;
+
+    int flags = delta->flags;
 
     // Can we exclude information from the delta? (for this player only)
     if(delta->type == DT_MOBJ)
     {
-        const mobjdelta_t *mobjDelta = (mobjdelta_t const *) deltaPtr;
+        mobjdelta_t const *mobjDelta = (mobjdelta_t const *) deltaPtr;
 
         if(poolViewer && poolViewer->thinker.id == delta->id)
         {
@@ -1782,15 +1782,13 @@ int Sv_ExcludeDelta(pool_t* pool, const void* deltaPtr)
             flags &= ~PDF_CAMERA_EXCLUDE;
 
             /* $unifiedangles */
-            /*
-            if(!(player->flags & DDPF_FIXANGLES))
+            /*if(!(player->flags & DDPF_FIXANGLES))
             {
                 // Fixangles means that the server overrides the clientside
                 // view angles. Normally they are always clientside, so
                 // exclude them here.
                 flags &= ~(PDF_CLYAW | PDF_CLPITCH);
-            }
-             */
+            }*/
         }
         else
         {

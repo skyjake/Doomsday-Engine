@@ -61,9 +61,6 @@ static dint totalFrameCount;
 
 static dint lastTransmitTic;
 
-/**
- * Send all the relevant information to each client.
- */
 void Sv_TransmitFrame()
 {
     // Obviously clients don't transmit anything.
@@ -743,13 +740,10 @@ writeDeltaLength:
 #endif
 }
 
-/**
- * Returns an estimate for the maximum frame size appropriate for the client.
- * The bandwidth rating is updated whenever a frame is sent.
- */
 dsize Sv_GetMaxFrameSize(dint playerNumber)
 {
     DENG2_ASSERT(playerNumber >= 0 && playerNumber < DDMAXPLAYERS);
+    DENG2_UNUSED(playerNumber);
     dsize size = MINIMUM_FRAME_SIZE + FRAME_SIZE_FACTOR * 40 /* BWR_DEFAULT */;
 
     // What about the communications medium?

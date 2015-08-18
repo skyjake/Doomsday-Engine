@@ -106,7 +106,7 @@ public:
      * @param cacheBytes   Total number of bytes used is written here.
      * @param sampleCount  Total number of cached samples is written here.
      */
-    void info(uint *cacheBytes, uint *sampleCount);
+    void info(uint *cacheBytes, uint *sampleCount) const;
 
 private:
     DENG2_PRIVATE(d)

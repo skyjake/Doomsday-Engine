@@ -1,12 +1,9 @@
-/**\file p_user.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file p_user.c  Common player related logic.
  *
- *\author Copyright © 2000-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 Activision
- *\author Copyright © 1993-1996 by id Software, Inc.
+ * @authors Copyright © 2000-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1999 Activision
+ * @authors Copyright © 1993-1996 id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,12 +19,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
- */
-
-/**
- * Player related stuff.
- *
- * Bobbing POV/weapon, movement, pending weapon...
  */
 
 #include "common.h"
@@ -1123,7 +1114,7 @@ void P_PlayerThinkSounds(player_t* player)
         case PCLASS_FIGHTER:
             if(plrmo->mom[MZ] <= -35 &&
                plrmo->mom[MZ] >= -40 && !player->morphTics &&
-               !S_IsPlaying(SFX_PLAYER_FIGHTER_FALLING_SCREAM, plrmo))
+               !S_SoundIsPlaying(SFX_PLAYER_FIGHTER_FALLING_SCREAM, plrmo))
             {
                 S_StartSound(SFX_PLAYER_FIGHTER_FALLING_SCREAM, plrmo);
             }
@@ -1132,7 +1123,7 @@ void P_PlayerThinkSounds(player_t* player)
         case PCLASS_CLERIC:
             if(plrmo->mom[MZ] <= -35 &&
                plrmo->mom[MZ] >= -40 && !player->morphTics &&
-               !S_IsPlaying(SFX_PLAYER_CLERIC_FALLING_SCREAM, plrmo))
+               !S_SoundIsPlaying(SFX_PLAYER_CLERIC_FALLING_SCREAM, plrmo))
             {
                 S_StartSound(SFX_PLAYER_CLERIC_FALLING_SCREAM, plrmo);
             }
@@ -1141,7 +1132,7 @@ void P_PlayerThinkSounds(player_t* player)
         case PCLASS_MAGE:
             if(plrmo->mom[MZ] <= -35 &&
                plrmo->mom[MZ] >= -40 && !player->morphTics &&
-               !S_IsPlaying(SFX_PLAYER_MAGE_FALLING_SCREAM, plrmo))
+               !S_SoundIsPlaying(SFX_PLAYER_MAGE_FALLING_SCREAM, plrmo))
             {
                 S_StartSound(SFX_PLAYER_MAGE_FALLING_SCREAM, plrmo);
             }

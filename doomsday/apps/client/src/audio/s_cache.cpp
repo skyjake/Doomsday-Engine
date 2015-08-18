@@ -62,6 +62,8 @@ static dint upsampleFactor(dint rate)
     {
         factor = de::max(1, ::sfxRate / rate);
     }
+#else
+    DENG2_UNUSED(rate);
 #endif
     return factor;
 }
@@ -226,25 +228,17 @@ static void resample(void *dst, dint dstBytesPer, dint dstRate, void const *src,
 }
 
 /**
- * Prepare the given sound sample @a smp for caching.
+ * Configure the given sound sample @a smp.
  *
- * If the sample @a data is already in the right format, just make a copy of it.
- *
- * If necessary, resample the sound @a data upwards to the minimum resolution and
- * bits (specified in the user Config). (You can play higher resolution sounds
- * than the current setting, but not lower resolution ones.)
- *
- * Converts the sample @a data and writes it to the (M_Malloc() allocated) buffer in @a smp
- * (ownership is given to the sfxsample_t).
- *
+ * @param smp         sfxsample_t info to configure.
  * @param data        Actual sample data.
  * @param size        Size in bytes.
  * @param numSamples  Number of samples.
  * @param bytesPer    Bytes per sample (1 or 2).
  * @param rate        Samples per second.
  */
-void configureSample(sfxsample_t &smp, void const *data, duint size,
-    dint numSamples, dint bytesPer, dint rate)
+void configureSample(sfxsample_t &smp, void const * /*data*/, duint size, dint numSamples,
+    dint bytesPer, dint rate)
 {
     zap(smp);
     smp.bytesPer   = bytesPer;
@@ -389,9 +383,19 @@ DENG2_PIMPL(SfxSampleCache)
         // Free all memory allocated for the item.
         delete &item;
     }
+
     /**
      * Caches a copy of the given sample. If it's already in the cache and has the
      * same format, nothing is done.
+     *
+     * If the sample @a data is already in the right format, just make a copy of it.
+     *
+     * If necessary, resample the sound @a data upwards to the minimum resolution
+     * and bits (specified in the user Config). (You can play higher resolution sounds
+     * than the current setting, but not lower resolution ones.)
+     *
+     * Converts the sample @a data and writes it to the (M_Malloc() allocated) buffer
+     * (ownership is given to the sfxsample_t).
      *
      * @param soundId       Id number of the sound sample.
      * @param data          Actual sample data.
@@ -423,7 +427,6 @@ DENG2_PIMPL(SfxSampleCache)
         }
         else
         {
-            // Add a new CacheItem for the sample.
             item = &insertCacheItem(soundId);
         }
 
@@ -551,7 +554,7 @@ void SfxSampleCache::maybeRunPurge()
     }
 }
 
-void SfxSampleCache::info(duint *cacheBytes, duint *sampleCount)
+void SfxSampleCache::info(duint *cacheBytes, duint *sampleCount) const
 {
     duint size  = 0;
     duint count = 0;

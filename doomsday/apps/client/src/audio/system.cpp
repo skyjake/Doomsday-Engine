@@ -33,7 +33,7 @@
 #  include "server/sv_sound.h"
 #endif
 
-#include "audio/s_cache.h"
+#include "api_audiod_sfx.h"
 #ifdef __CLIENT__
 #  include "audio/m_mus2midi.h"
 #  include "audio/sfxchannel.h"
@@ -63,24 +63,15 @@
 
 using namespace de;
 
-dint soundMinDist = 256;  // No distance attenuation this close.
-dint soundMaxDist = 2025;
-
-// Setting these variables is enough to adjust the volumes.
-// S_StartFrame() will call the actual routines to change the volume
-// when there are changes.
-dint sfxVolume = 255 * 2/3;
-dint musVolume = 255 * 2/3;
-
-dint sfxBits = 8;
-dint sfxRate = 11025;
-
 #ifdef __CLIENT__
 #  ifdef MACOSX
 /// Built-in QuickTime audio interface implemented by MusicPlayer.m
 DENG_EXTERN_C audiointerface_music_t audiodQuickTimeMusic;
 #  endif
 #endif
+
+dint sfxBits    = 8;
+dint sfxRate    = 11025;
 
 namespace audio {
 
@@ -91,14 +82,20 @@ static duint const SOUND_LOGICAL_PURGEINTERVAL = 2000;  ///< 2 seconds
 static dint const SOUND_CHANNEL_COUNT_DEFAULT  = 16;
 static dint const SOUND_CHANNEL_COUNT_MAX      = 256;
 static dint const SOUND_CHANNEL_2DCOUNT        = 4;
-static char const *MUSIC_BUFFEREDFILE          = (char *)"dd-buffered-song";
+static String const MUSIC_BUFFEREDFILE         ("dd-buffered-song");
 
 static thread_t refreshHandle;
 static volatile bool allowRefresh, refreshing;
 
-static bool sfxNoRndPitch;  ///< @todo should be a cvar.
+/// @todo should be a cvars:
+static bool sfxNoRndPitch;
+#endif  // __CLIENT__
+static dint sfxDistMin = 256;  ///< No distance attenuation this close.
+static dint sfxDistMax = 2025;
 
+#ifdef __CLIENT__
 // Console variables:
+static dint sfxVolume = 255 * 2/3;
 static dint sfx16Bit;
 static dint sfxSampleRate = 11025;
 static dint sfx3D;
@@ -107,6 +104,7 @@ static byte sfxOneSoundPerEmitter;  //< @c false= Traditional Doomsday behavior:
 #ifdef __CLIENT__
 static dfloat sfxReverbStrength = 0.5f;
 
+static dint musVolume = 255 * 2/3;
 static char *musMidiFontPath = (char *) "";
 // When multiple sources are available this setting determines which to use (mus < ext < cd).
 static audio::System::MusicSource musSourcePreference = audio::System::MUSP_EXT;
@@ -174,15 +172,11 @@ static audiodriverid_t identifierToDriverId(String name)
 }
 
 /**
- * Returns @c true if the given @a file appears to contain MUS format music.
+ * Usually the display player.
  */
-static bool recognizeMus(de::File1 &file)
+static mobj_t *getListenerMobj()
 {
-    char buf[4];
-    file.read((uint8_t *)buf, 0, 4);
-
-    // ASCII "MUS" and CTRL-Z (hex 4d 55 53 1a)
-    return !qstrncmp(buf, "MUS\x01a", 4);
+    return DD_Player(::displayPlayer)->publicData().mo;
 }
 #endif
 
@@ -245,7 +239,6 @@ DENG2_PIMPL(System)
      */
     bool initDriver(audiodriverid_t driverId)
     {
-        LOG_AS("audio::System");
         try
         {
             AudioDriver &driver = driverById(driverId);
@@ -563,7 +556,6 @@ DENG2_PIMPL(System)
      */
     struct LogicSound
     {
-        //dint soundId     = 0;
         mobj_t *emitter  = nullptr;
         duint endTime    = 0;
         bool isRepeating = false;
@@ -719,20 +711,17 @@ DENG2_PIMPL(System)
             return 0;
 
         File1 &lump = App_FileSystem().lump(lumpNum);
-        if(recognizeMus(lump))
+        if(M_MusRecognize(lump))
         {
-            // Lump is in DOOM's MUS format. We must first convert it to MIDI.
+            // Lump is in DOOM's MUS format.
             if(!canPlayMUS) return -1;
 
+            // Read the lump, convert to MIDI and output to a temp file in the
+            // working directory. Use a filename with the .mid extension so that
+            // any player which relies on the it for format recognition works as
+            // expected.
             String const srcFile = composeMusicBufferFilename(".mid");
-
-            // Read the lump, convert to MIDI and output to a temp file in the working directory.
-            // Use a filename with the .mid extension so that any player which relies on the it
-            // for format recognition works as expected.
-            duint8 *buf = (duint8 *) M_Malloc(lump.size());
-            lump.read(buf, 0, lump.size());
-            M_Mus2Midi((void *)buf, lump.size(), srcFile.toUtf8().constData());
-            M_Free(buf); buf = nullptr;
+            M_Mus2Midi(lump, srcFile.toUtf8().constData());
 
             return forAllInterfaces(AUDIO_IMUSIC, [&srcFile, &looped] (void *ifs)
             {
@@ -802,7 +791,7 @@ DENG2_PIMPL(System)
         // Already been here?
         if(musAvail) return;
 
-        LOG_AUDIO_VERBOSE("Initializing Music subsystem...");
+        LOG_AUDIO_VERBOSE("Initializing music playback...");
 
         musAvail       = false;
         musCurrentSong = "";
@@ -864,12 +853,12 @@ DENG2_PIMPL(System)
         if(!musAvail) return;
 
         static dint oldMusVolume = -1;
-        if(::musVolume != oldMusVolume)
+        if(musVolume != oldMusVolume)
         {
-            oldMusVolume = ::musVolume;
+            oldMusVolume = musVolume;
 
             // Set volume of all available interfaces.
-            dfloat newVolume = ::musVolume / 255.0f;
+            dfloat newVolume = musVolume / 255.0f;
             forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [&newVolume] (void *ifs)
             {
                 auto *iMusic = (audiointerface_music_generic_t *) ifs;
@@ -1090,6 +1079,281 @@ DENG2_PIMPL(System)
         });
     }
 
+    /**
+     * Used by the high-level sound interface to play sounds on the local system.
+     *
+     * @param sample   Sample to play (must be stored persistently! No copy is made).
+     * @param volume   Volume at which the sample should be played.
+     * @param freq     Relative and modifies the sample's rate.
+     * @param emitter  If @c nullptr, @a fixedpos is checked for a position. If both
+     *                 @a emitter and @a fixedpos are @c nullptr, then the sound is
+     *                 played as centered 2D.
+     * @param origin   Fixed position where the sound if emitted, or @c nullptr.
+     * @param flags    Additional flags (@ref soundFlags).
+     *
+     * @return  @c true, if a sound is started.
+     */
+    bool playSound(sfxsample_t *sample, dfloat volume, dfloat freq, mobj_t *emitter,
+        coord_t const *origin, dint flags)
+    {
+        DENG2_ASSERT(sample);
+        if(!sfxAvail) return false;
+
+        bool const play3D = sfx3D && (emitter || origin);
+
+        if(sample->id < 1 || sample->id >= ::defs.sounds.size()) return false;
+        if(volume <= 0 || !sample->size) return false;
+
+        if(emitter && sfxOneSoundPerEmitter)
+        {
+            // Stop any other sounds from the same emitter.
+            if(self.stopSoundWithLowerPriority(0, emitter, ::defs.sounds[sample->id].priority) < 0)
+            {
+                // Something with a higher priority is playing, can't start now.
+                LOG_AUDIO_MSG("Not playing soundId:%i (prio:%i) because overridden (emitter id:%i)")
+                    << sample->id
+                    << ::defs.sounds[sample->id].priority
+                    << emitter->thinker.id;
+                return false;
+            }
+        }
+
+        // Calculate the new sound's priority.
+        dint const nowTime  = Timer_Ticks();
+        dfloat const myPrio = self.rateSoundPriority(emitter, origin, volume, nowTime);
+
+        bool haveChannelPrios = false;
+        dfloat channelPrios[256/*MAX_CHANNEL_COUNT*/];
+        dfloat lowPrio = 0;
+
+        // Ensure there aren't already too many channels playing this sample.
+        sfxinfo_t *info = &::runtimeDefs.sounds[sample->id];
+        if(info->channels > 0)
+        {
+            // The decision to stop channels is based on priorities.
+            getSfxChannelPriorities(channelPrios);
+            haveChannelPrios = true;
+
+            dint count = sfxChannels->countPlaying(sample->id);
+            while(count >= info->channels)
+            {
+                // Stop the lowest priority sound of the playing instances, again
+                // noting sounds that are more important than us.
+                dint idx = 0;
+                SfxChannel *selCh = nullptr;
+                sfxChannels->forAll([&sample, &myPrio, &channelPrios,
+                                     &selCh, &lowPrio, &idx] (SfxChannel &ch)
+                {
+                    dfloat const chPriority = channelPrios[idx++];
+
+                    if(ch.hasBuffer())
+                    {
+                        sfxbuffer_t &sbuf = ch.buffer();
+                        if((sbuf.flags & SFXBF_PLAYING))
+                        {
+                            DENG2_ASSERT(sbuf.sample != nullptr);
+
+                            if(sbuf.sample->id == sample->id &&
+                               (myPrio >= chPriority && (!selCh || chPriority <= lowPrio)))
+                            {
+                                selCh   = &ch;
+                                lowPrio = chPriority;
+                            }
+                        }
+                    }
+
+                    return LoopContinue;
+                });
+
+                if(!selCh)
+                {
+                    // The new sound can't be played because we were unable to stop
+                    // enough channels to accommodate the limitation.
+                    LOG_AUDIO_XVERBOSE("Not playing soundId:%i because all channels are busy")
+                        << sample->id;
+                    return false;
+                }
+
+                // Stop this one.
+                count--;
+                selCh->stop();
+            }
+        }
+
+        // Hit count tells how many times the cached sound has been used.
+        sfxSampleCache.hit(sample->id);
+
+        /*
+         * Pick a channel for the sound. We will do our best to play the sound,
+         * cancelling existing ones if need be. The ideal choice is a free channel
+         * that is already loaded with the sample, in the correct format and mode.
+         */
+        self.allowSfxRefresh(false);
+
+        // First look through the stopped channels. At this stage we're very picky:
+        // only the perfect choice will be good enough.
+        SfxChannel *selCh = sfxChannels->tryFindVacant(play3D, sample->bytesPer,
+                                                       sample->rate, sample->id);
+
+        if(!selCh)
+        {
+            // Perhaps there is a vacant channel (with any sample, but preferably one
+            // with no sample already loaded).
+            selCh = sfxChannels->tryFindVacant(play3D, sample->bytesPer, sample->rate, 0);
+        }
+
+        if(!selCh)
+        {
+            // Try any non-playing channel in the correct format.
+            selCh = sfxChannels->tryFindVacant(play3D, sample->bytesPer, sample->rate, -1);
+        }
+
+        if(!selCh)
+        {
+            // A perfect channel could not be found.
+            // We must use a channel with the wrong format or decide which one of the
+            // playing ones gets stopped.
+
+            if(!haveChannelPrios)
+            {
+                getSfxChannelPriorities(channelPrios);
+            }
+
+            // All channels with a priority less than or equal to ours can be stopped.
+            SfxChannel *prioCh = nullptr;
+            dint idx = 0;
+            sfxChannels->forAll([&play3D, &myPrio, &channelPrios,
+                                 &selCh, &prioCh, &lowPrio, &idx] (SfxChannel &ch)
+            {
+                dfloat const chPriority = channelPrios[idx++];
+
+                if(ch.hasBuffer())
+                {
+                    // Sample buffer must be configured for the right mode.
+                    sfxbuffer_t &sbuf = ch.buffer();
+                    if(play3D == ((sbuf.flags & SFXBF_3D) != 0))
+                    {
+                        if(!(sbuf.flags & SFXBF_PLAYING))
+                        {
+                            // This channel is not playing, we'll take it!
+                            selCh = &ch;
+                            return LoopAbort;
+                        }
+
+                        // Are we more important than this sound?
+                        // We want to choose the lowest priority sound.
+                        if(myPrio >= chPriority && (!prioCh || chPriority <= lowPrio))
+                        {
+                            prioCh  = &ch;
+                            lowPrio = chPriority;
+                        }
+                    }
+                }
+
+                return LoopContinue;
+            });
+
+            // If a good low-priority channel was found, use it.
+            if(prioCh)
+            {
+                selCh = prioCh;
+                selCh->stop();
+            }
+        }
+
+        if(!selCh)
+        {
+            // A suitable channel was not found.
+            self.allowSfxRefresh(true);
+            LOG_AUDIO_XVERBOSE("Failed to find suitable channel for sample id:%i") << sample->id;
+            return false;
+        }
+
+        DENG2_ASSERT(selCh->hasBuffer());
+        // The sample buffer may need to be reformatted.
+
+        if(selCh->buffer().rate  != sample->rate ||
+           selCh->buffer().bytes != sample->bytesPer)
+        {
+            // Create a new sample buffer with the correct format.
+            self.sfx()->Destroy(&selCh->buffer());
+            selCh->setBuffer(self.sfx()->Create(play3D ? SFXBF_3D : 0, sample->bytesPer * 8, sample->rate));
+        }
+        sfxbuffer_t &sbuf = selCh->buffer();
+
+        // Configure buffer flags.
+        sbuf.flags &= ~(SFXBF_REPEAT | SFXBF_DONT_STOP);
+        if(flags & SF_REPEAT)    sbuf.flags |= SFXBF_REPEAT;
+        if(flags & SF_DONT_STOP) sbuf.flags |= SFXBF_DONT_STOP;
+
+        // Init the channel information.
+        selCh->setFlags(selCh->flags() & ~(SFXCF_NO_ORIGIN | SFXCF_NO_ATTENUATION | SFXCF_NO_UPDATE));
+        selCh->setVolume(volume);
+        selCh->setFrequency(freq);
+
+        if(!emitter && !origin)
+        {
+            selCh->setFlags(selCh->flags() | SFXCF_NO_ORIGIN);
+            selCh->setEmitter(nullptr);
+        }
+        else
+        {
+            selCh->setEmitter(emitter);
+            if(origin)
+            {
+                selCh->setFixedOrigin(Vector3d(origin));
+            }
+        }
+
+        if(flags & SF_NO_ATTENUATION)
+        {   
+            // The sound can be heard from any distance.
+            selCh->setFlags(selCh->flags() | SFXCF_NO_ATTENUATION);
+        }
+
+        /**
+         * Load in the sample. Must load prior to setting properties, because
+         * the audio driver might actually create the real buffer only upon
+         * loading.
+         *
+         * @note The sample is not reloaded if a sample with the same ID is
+         * already loaded on the channel.
+         */
+        if(!sbuf.sample || sbuf.sample->id != sample->id)
+        {
+            self.sfx()->Load(&sbuf, sample);
+        }
+
+        // Update channel properties.
+        selCh->updatePriority();
+
+        // 3D sounds need a few extra properties set up.
+        if(play3D)
+        {
+            // Init the buffer's min/max distances.
+            // This is only done once, when the sound is started (i.e., here).
+            dfloat const minDist = (selCh->flags() & SFXCF_NO_ATTENUATION) ? 10000 : sfxDistMin;
+            dfloat const maxDist = (selCh->flags() & SFXCF_NO_ATTENUATION) ? 20000 : sfxDistMax;
+
+            self.sfx()->Set(&sbuf, SFXBP_MIN_DISTANCE, minDist);
+            self.sfx()->Set(&sbuf, SFXBP_MAX_DISTANCE, maxDist);
+        }
+
+        // This'll commit all the deferred properties.
+        self.sfx()->Listener(SFXLP_UPDATE, 0);
+
+        // Start playing.
+        self.sfx()->Play(&sbuf);
+
+        self.allowSfxRefresh();
+
+        // Take note of the start time.
+        selCh->setStartTime(nowTime);
+
+        // Sound successfully started.
+        return true;
+    }
+
 #endif  // __CLIENT__
 
     void sfxClearLogical()
@@ -1198,7 +1462,6 @@ DENG2_PIMPL(System)
             }
 
             auto *ls = new Instance::LogicSound;
-            //ls->soundId     = soundId;
             ls->emitter     = emitter;
             ls->isRepeating = isRepeating;
             ls->endTime     = Timer_RealMilliseconds() + length;
@@ -1266,10 +1529,10 @@ DENG2_PIMPL(System)
         if(!sfxAvail || !sfx3D) return;
 
         // No volume means no sound.
-        if(!::sfxVolume) return;
+        if(!sfxVolume) return;
 
         // Update the listener mobj.
-        self.setSfxListener(S_GetListenerMobj());
+        sfxListener = getListenerMobj();
         if(sfxListener)
         {
             {
@@ -1399,6 +1662,8 @@ void System::timeChanged(Clock const &)
     // Nothing to do.
 }
 
+#ifdef __CLIENT__
+
 String System::description() const
 {
 #define TABBED(A, B)  _E(Ta) "  " _E(l) A _E(.) " " _E(Tb) << (B) << "\n"
@@ -1408,8 +1673,9 @@ String System::description() const
 
     os << _E(b) "Audio configuration:\n" _E(.);
 
-    os << TABBED("Music volume:",  musVolume);
-#ifdef __CLIENT__
+    os << TABBED("Sound volume:", sfxVolume);
+
+    os << TABBED("Music volume:", musVolume);
     String const midiFontPath(musMidiFontPath);
     os << TABBED("Music sound font:", midiFontPath.isEmpty() ? "None" : midiFontPath);
     os << TABBED("Music source preference:", musicSourceAsText(musSourcePreference));
@@ -1430,14 +1696,12 @@ String System::description() const
                << d->interfaceName(ifs.i.sfx) << "\n";
         }
     }
-#endif
 
     return str.rightStrip();
 
 #undef TABBED
 }
 
-#ifdef __CLIENT__
 void System::reset()
 {
     LOG_AS("audio::System");
@@ -1515,7 +1779,7 @@ void System::endFrame()
             // Update channel and listener properties.
 
             // If no listener is available - no 3D positioning is done.
-            d->sfxListener = S_GetListenerMobj();
+            d->sfxListener = getListenerMobj();
 
             // Update channels.
             d->sfxChannels->forAll([] (SfxChannel &ch)
@@ -1610,6 +1874,11 @@ String System::musicSourceAsText(MusicSource source)  // static
     return "(invalid)";
 }
 
+dint System::musicVolume() const
+{
+    return musVolume;
+}
+
 bool System::musicIsAvailable() const
 {
     return d->musAvail;
@@ -1664,6 +1933,8 @@ bool System::musicIsPaused() const
 
 dint System::playMusic(Record const &definition, bool looped)
 {
+    if(::isDedicated) return true;
+
     if(!d->musAvail) return false;
 
     LOG_AS("audio::System");
@@ -1736,7 +2007,7 @@ dint System::playMusic(Record const &definition, bool looped)
             }
             break;
 
-        default: DENG2_ASSERT(!"Mus_Start: Invalid value for order[i]"); break;
+        default: DENG2_ASSERT(!"Invalid value for order[i]"); break;
         }
     }
 
@@ -1781,6 +2052,20 @@ void System::updateMusicMidiFont()
     d->setMusicProperty(AUDIOP_SOUNDFONT_FILENAME, path.expand().toString().toLatin1().constData());
 }
 
+dint System::soundVolume() const
+{
+    return sfxVolume;
+}
+
+#endif  // __CLIENT__
+
+Rangei System::soundVolumeAttenuationRange() const
+{
+    return Rangei(sfxDistMin, sfxDistMax);
+}
+
+#ifdef __CLIENT__
+
 bool System::sfxIsAvailable() const
 {
     return d->sfxAvail;
@@ -1799,11 +2084,6 @@ bool System::mustUpsampleToSfxRate() const
 mobj_t *System::sfxListener()
 {
     return d->sfxListener;
-}
-
-void System::setSfxListener(mobj_t *newListener)
-{
-    d->sfxListener = newListener;
 }
 
 #endif  // __CLIENT__
@@ -1988,265 +2268,85 @@ void System::stopSound(dint soundId, mobj_t *emitter, dint flags)
 }
 
 #ifdef __CLIENT__
-dint System::playSound(sfxsample_t *sample, dfloat volume, dfloat freq, mobj_t *emitter,
-    coord_t *fixedOrigin, dint flags)
+bool System::playSound(dint soundIdAndFlags, mobj_t *emitter, coord_t const *origin,
+    dfloat volume)
 {
-    DENG2_ASSERT(sample);
-    if(!d->sfxAvail) return false;
-
-    bool const play3D = sfx3D && (emitter || fixedOrigin);
-
     LOG_AS("audio::System");
-    if(sample->id < 1 || sample->id >= ::defs.sounds.size()) return false;
-    if(volume <= 0 || !sample->size) return false;
 
-    if(emitter && sfxOneSoundPerEmitter)
+    // A dedicated server never starts any local sounds (only logical sounds in the LSM).
+    if(::isDedicated) return false;
+
+    // Sounds cannot be started while in busy mode...
+    if(DoomsdayApp::app().busyMode().isActive())
+        return false;
+
+    dint const soundId = (soundIdAndFlags & ~DDSF_FLAG_MASK);
+    if(soundId <= 0 || soundId >= ::defs.sounds.size())
+        return false;
+
+    // Skip if sounds won't be heard.
+    if(sfxVolume <= 0 || volume <= 0)
+        return false;
+
+    if(volume > 1)
     {
-        // Stop any other sounds from the same emitter.
-        if(stopSoundWithLowerPriority(0, emitter, ::defs.sounds[sample->id].priority) < 0)
-        {
-            // Something with a higher priority is playing, can't start now.
-            LOG_AUDIO_MSG("Not playing soundId:%i (prio:%i) because overridden (emitter id:%i)")
-                << sample->id
-                << ::defs.sounds[sample->id].priority
-                << emitter->thinker.id;
+        LOGDEV_AUDIO_WARNING("Volume is too high (%f > 1)") << volume;
+    }
+
+    dfloat freq = 1;
+    // This is the sound we're going to play.
+    sfxinfo_t *info = Def_GetSoundInfo(soundId, &freq, &volume);
+    if(!info) return false;  // Hmm? This ID is not defined.
+
+    bool const isRepeating = (soundIdAndFlags & DDSF_REPEAT) || Def_SoundIsRepeating(soundId);
+
+    // Check the distance (if applicable).
+    if(!(info->flags & SF_NO_ATTENUATION) && !(soundIdAndFlags & DDSF_NO_ATTENUATION))
+    {
+        // If origin is too far, don't even think about playing the sound.
+        coord_t const *point = (emitter ? emitter->origin : origin);
+        if(Mobj_ApproxPointDistance(getListenerMobj(), point) > sfxDistMax)
             return false;
-        }
     }
 
-    // Calculate the new sound's priority.
-    dint const nowTime  = Timer_Ticks();
-    dfloat const myPrio = rateSoundPriority(emitter, fixedOrigin, volume, nowTime);
-
-    bool haveChannelPrios = false;
-    dfloat channelPrios[256/*MAX_CHANNEL_COUNT*/];
-    dfloat lowPrio = 0;
-
-    // Ensure there aren't already too many channels playing this sample.
-    sfxinfo_t *info = &::runtimeDefs.sounds[sample->id];
-    if(info->channels > 0)
+    // Load the sample.
+    sfxsample_t *sample = d->sfxSampleCache.cache(soundId);
+    if(!sample)
     {
-        // The decision to stop channels is based on priorities.
-        d->getSfxChannelPriorities(channelPrios);
-        haveChannelPrios = true;
-
-        dint count = d->sfxChannels->countPlaying(sample->id);
-        while(count >= info->channels)
+        if(d->sfxAvail)
         {
-            // Stop the lowest priority sound of the playing instances, again
-            // noting sounds that are more important than us.
-            dint idx = 0;
-            SfxChannel *selCh = nullptr;
-            d->sfxChannels->forAll([&sample, &myPrio, &channelPrios,
-                                    &selCh, &lowPrio, &idx] (SfxChannel &ch)
-            {
-                dfloat const chPriority = channelPrios[idx++];
-
-                if(ch.hasBuffer())
-                {
-                    sfxbuffer_t &sbuf = ch.buffer();
-                    if((sbuf.flags & SFXBF_PLAYING))
-                    {
-                        DENG2_ASSERT(sbuf.sample != nullptr);
-
-                        if(sbuf.sample->id == sample->id &&
-                           (myPrio >= chPriority && (!selCh || chPriority <= lowPrio)))
-                        {
-                            selCh   = &ch;
-                            lowPrio = chPriority;
-                        }
-                    }
-                }
-
-                return LoopContinue;
-            });
-
-            if(!selCh)
-            {
-                // The new sound can't be played because we were unable to stop
-                // enough channels to accommodate the limitation.
-                LOG_AUDIO_XVERBOSE("Not playing soundId:%i because all channels are busy")
-                    << sample->id;
-                return false;
-            }
-
-            // Stop this one.
-            count--;
-            selCh->stop();
+            LOG_AUDIO_VERBOSE("Caching of sound %i failed") << soundId;
         }
-    }
-
-    // Hit count tells how many times the cached sound has been used.
-    d->sfxSampleCache.hit(sample->id);
-
-    /*
-     * Pick a channel for the sound. We will do our best to play the sound,
-     * cancelling existing ones if need be. The ideal choice is a free channel
-     * that is already loaded with the sample, in the correct format and mode.
-     */
-    allowSfxRefresh(false);
-
-    // First look through the stopped channels. At this stage we're very picky:
-    // only the perfect choice will be good enough.
-    SfxChannel *selCh = d->sfxChannels->tryFindVacant(play3D, sample->bytesPer,
-                                                      sample->rate, sample->id);
-
-    if(!selCh)
-    {
-        // Perhaps there is a vacant channel (with any sample, but preferably one
-        // with no sample already loaded).
-        selCh = d->sfxChannels->tryFindVacant(play3D, sample->bytesPer, sample->rate, 0);
-    }
-
-    if(!selCh)
-    {
-        // Try any non-playing channel in the correct format.
-        selCh = d->sfxChannels->tryFindVacant(play3D, sample->bytesPer, sample->rate, -1);
-    }
-
-    if(!selCh)
-    {
-        // A perfect channel could not be found.
-        // We must use a channel with the wrong format or decide which one of the
-        // playing ones gets stopped.
-
-        if(!haveChannelPrios)
-        {
-            d->getSfxChannelPriorities(channelPrios);
-        }
-
-        // All channels with a priority less than or equal to ours can be stopped.
-        SfxChannel *prioCh = nullptr;
-        dint idx = 0;
-        d->sfxChannels->forAll([&play3D, &myPrio, &channelPrios,
-                                &selCh, &prioCh, &lowPrio, &idx] (SfxChannel &ch)
-        {
-            dfloat const chPriority = channelPrios[idx++];
-
-            if(ch.hasBuffer())
-            {
-                // Sample buffer must be configured for the right mode.
-                sfxbuffer_t &sbuf = ch.buffer();
-                if(play3D == ((sbuf.flags & SFXBF_3D) != 0))
-                {
-                    if(!(sbuf.flags & SFXBF_PLAYING))
-                    {
-                        // This channel is not playing, we'll take it!
-                        selCh = &ch;
-                        return LoopAbort;
-                    }
-
-                    // Are we more important than this sound?
-                    // We want to choose the lowest priority sound.
-                    if(myPrio >= chPriority && (!prioCh || chPriority <= lowPrio))
-                    {
-                        prioCh  = &ch;
-                        lowPrio = chPriority;
-                    }
-                }
-            }
-
-            return LoopContinue;
-        });
-
-        // If a good low-priority channel was found, use it.
-        if(prioCh)
-        {
-            selCh = prioCh;
-            selCh->stop();
-        }
-    }
-
-    if(!selCh)
-    {
-        // A suitable channel was not found.
-        allowSfxRefresh(true);
-        LOG_AUDIO_XVERBOSE("Failed to find suitable channel for sample id:%i") << sample->id;
         return false;
     }
 
-    DENG2_ASSERT(selCh->hasBuffer());
-    // The sample buffer may need to be reformatted.
-
-    if(selCh->buffer().rate  != sample->rate ||
-       selCh->buffer().bytes != sample->bytesPer)
+    // Random frequency alteration? (Multipliers chosen to match original
+    // sound code.)
+    if(!sfxNoRndPitch)
     {
-        // Create a new sample buffer with the correct format.
-        sfx()->Destroy(&selCh->buffer());
-        selCh->setBuffer(sfx()->Create(play3D ? SFXBF_3D : 0, sample->bytesPer * 8, sample->rate));
-    }
-    sfxbuffer_t &sbuf = selCh->buffer();
-
-    // Configure buffer flags.
-    sbuf.flags &= ~(SFXBF_REPEAT | SFXBF_DONT_STOP);
-    if(flags & SF_REPEAT)    sbuf.flags |= SFXBF_REPEAT;
-    if(flags & SF_DONT_STOP) sbuf.flags |= SFXBF_DONT_STOP;
-
-    // Init the channel information.
-    selCh->setFlags(selCh->flags() & ~(SFXCF_NO_ORIGIN | SFXCF_NO_ATTENUATION | SFXCF_NO_UPDATE));
-    selCh->setVolume(volume);
-    selCh->setFrequency(freq);
-
-    if(!emitter && !fixedOrigin)
-    {
-        selCh->setFlags(selCh->flags() | SFXCF_NO_ORIGIN);
-        selCh->setEmitter(nullptr);
-    }
-    else
-    {
-        selCh->setEmitter(emitter);
-        if(fixedOrigin)
+        if(info->flags & SF_RANDOM_SHIFT)
         {
-            selCh->setFixedOrigin(Vector3d(fixedOrigin));
+            freq += (RNG_RandFloat() - RNG_RandFloat()) * (7.0f / 255);
+        }
+        if(info->flags & SF_RANDOM_SHIFT2)
+        {
+            freq += (RNG_RandFloat() - RNG_RandFloat()) * (15.0f / 255);
         }
     }
 
-    if(flags & SF_NO_ATTENUATION)
-    {   
-        // The sound can be heard from any distance.
-        selCh->setFlags(selCh->flags() | SFXCF_NO_ATTENUATION);
-    }
-
-    /**
-     * Load in the sample. Must load prior to setting properties, because the audio driver
-     * might actually create the real buffer only upon loading.
-     *
-     * @note The sample is not reloaded if a sample with the same ID is already loaded on
-     * the channel.
-     */
-    if(!sbuf.sample || sbuf.sample->id != sample->id)
+    // If the sound has an exclusion group, either all or the same emitter's
+    // iterations of this sound will stop.
+    if(info->group)
     {
-        sfx()->Load(&sbuf, sample);
+        stopSoundGroup(info->group, (info->flags & SF_GLOBAL_EXCLUDE) ? nullptr : emitter);
     }
 
-    // Update channel properties.
-    selCh->updatePriority();
-
-    // 3D sounds need a few extra properties set up.
-    if(play3D)
-    {
-        // Init the buffer's min/max distances.
-        // This is only done once, when the sound is started (i.e., here).
-        dfloat const minDist = (selCh->flags() & SFXCF_NO_ATTENUATION) ? 10000 : ::soundMinDist;
-        dfloat const maxDist = (selCh->flags() & SFXCF_NO_ATTENUATION) ? 20000 : ::soundMaxDist;
-
-        sfx()->Set(&sbuf, SFXBP_MIN_DISTANCE, minDist);
-        sfx()->Set(&sbuf, SFXBP_MAX_DISTANCE, maxDist);
-    }
-
-    // This'll commit all the deferred properties.
-    sfx()->Listener(SFXLP_UPDATE, 0);
-
-    // Start playing.
-    sfx()->Play(&sbuf);
-
-    allowSfxRefresh();
-
-    // Take note of the start time.
-    selCh->setStartTime(nowTime);
-
-    // Sound successfully started.
-    return true;
+    // Let's play it.
+    dint flags = 0;
+    flags |= (((info->flags & SF_NO_ATTENUATION) || (soundIdAndFlags & DDSF_NO_ATTENUATION)) ? SF_NO_ATTENUATION : 0);
+    flags |= (isRepeating ? SF_REPEAT : 0);
+    flags |= ((info->flags & SF_DONT_STOP) ? SF_DONT_STOP : 0);
+    return d->playSound(sample, volume, freq, emitter, origin, flags);
 }
 
 dfloat System::rateSoundPriority(mobj_t *emitter, coord_t const *point, dfloat volume,
@@ -2310,12 +2410,12 @@ audiodriverid_t System::toDriverId(AudioDriver const *driver) const
 }
 #endif
 
-SfxSampleCache /*const*/ &System::sfxSampleCache() const
+#ifdef __CLIENT__
+SfxSampleCache const &System::sfxSampleCache() const
 {
     return d->sfxSampleCache;
 }
 
-#ifdef __CLIENT__
 bool System::hasSfxChannels()
 {
     return bool( d->sfxChannels );
@@ -2393,7 +2493,7 @@ void System::aboutToUnloadMap()
 void System::worldMapChanged()
 {
     // Update who is listening now.
-    setSfxListener(S_GetListenerMobj());
+    d->sfxListener = getListenerMobj();
 }
 #endif
 
@@ -2465,8 +2565,9 @@ D_CMD(PlayMusic)
     DENG2_UNUSED(src);
 
     LOG_AS("playmusic (Cmd)");
+    System &audioSys = App_AudioSystem();
 
-    if(!App_AudioSystem().musicIsAvailable())
+    if(!audioSys.musicIsAvailable())
     {
         LOGDEV_SCR_ERROR("Music subsystem is not available");
         return false;
@@ -2479,7 +2580,7 @@ D_CMD(PlayMusic)
         // Play a file associated with the referenced music definition.
         if(Record const *definition = ::defs.musics.tryFind("id", argv[1]))
         {
-            return Mus_Start(*definition, looped);
+            return audioSys.playMusic(*definition, looped);
         }
         LOG_RES_WARNING("Music '%s' not defined") << argv[1];
         return false;
@@ -2490,22 +2591,21 @@ D_CMD(PlayMusic)
         // Play a file referenced directly.
         if(!qstricmp(argv[1], "lump"))
         {
-            return Mus_StartLump(App_FileSystem().lumpNumForName(argv[2]), looped);
+            return audioSys.playMusicLump(App_FileSystem().lumpNumForName(argv[2]), looped);
         }
         else if(!qstricmp(argv[1], "file"))
         {
-            return Mus_StartFile(argv[2], looped);
+            return audioSys.playMusicFile(argv[2], looped);
         }
         else if(!qstricmp(argv[1], "cd"))
         {
-            if(!App_AudioSystem().cd())
+            if(!audioSys.cd())
             {
                 LOG_AUDIO_WARNING("No CD audio interface available");
                 return false;
             }
-            return Mus_StartCDTrack(String(argv[2]).toInt(), looped);
+            return audioSys.playMusicCDTrack(String(argv[2]).toInt(), looped);
         }
-        return false;
     }
 
     LOG_SCR_NOTE("Usage:\n  %s (music-def)") << argv[0];
@@ -2577,12 +2677,12 @@ using namespace audio;
 
 // Music: ---------------------------------------------------------------------------
 
-bool Mus_IsPlaying()
+void S_PauseMusic(dd_bool paused)
 {
 #ifdef __CLIENT__
-    return App_AudioSystem().musicIsPlaying();
+    App_AudioSystem().pauseMusic(paused);
 #else
-    return false;
+    DENG2_UNUSED(paused);
 #endif
 }
 
@@ -2593,64 +2693,12 @@ void S_StopMusic()
 #endif
 }
 
-void S_PauseMusic(dd_bool paused)
+dd_bool S_StartMusicNum(dint musicId, dd_bool looped)
 {
 #ifdef __CLIENT__
-    App_AudioSystem().pauseMusic(paused);
-#else
-    DENG2_UNUSED(paused);
-#endif
-}
-
-dint Mus_Start(Record const &definition, bool looped)
-{
-#ifdef __CLIENT__
-    return App_AudioSystem().playMusic(definition, looped);
-#else
-    DENG2_UNUSED2(definition, looped);
-    return 0;
-#endif
-}
-
-dint Mus_StartLump(lumpnum_t lumpNum, bool looped)
-{
-#ifdef __CLIENT__
-    return App_AudioSystem().playMusicLump(lumpNum, looped);
-#else
-    DENG2_UNUSED2(lumpNum, looped);
-    return 0;
-#endif
-}
-
-dint Mus_StartFile(char const *filePath, bool looped)
-{
-#ifdef __CLIENT__
-    return App_AudioSystem().playMusicFile(filePath, looped);
-#else
-    DENG2_UNUSED2(filePath, looped);
-    return 0;
-#endif
-}
-
-dint Mus_StartCDTrack(dint cdTrack, bool looped)
-{
-#ifdef __CLIENT__
-    return App_AudioSystem().playMusicCDTrack(cdTrack, looped);
-#else
-    DENG2_UNUSED2(cdTrack, looped);
-    return 0;
-#endif
-}
-
-dint S_StartMusicNum(dint musicId, dd_bool looped)
-{
-#ifdef __CLIENT__
-    if(::isDedicated) return true;
-
     if(musicId >= 0 && musicId < ::defs.musics.size())
     {
-        Record const &def = ::defs.musics[musicId];
-        return Mus_Start(def, looped);
+        return App_AudioSystem().playMusic(::defs.musics[musicId], looped);
     }
     return false;
 #else
@@ -2659,7 +2707,7 @@ dint S_StartMusicNum(dint musicId, dd_bool looped)
 #endif
 }
 
-dint S_StartMusic(char const *musicId, dd_bool looped)
+dd_bool S_StartMusic(char const *musicId, dd_bool looped)
 {
     dint idx = ::defs.getMusicNum(musicId);
     if(idx < 0)
@@ -2676,95 +2724,28 @@ dint S_StartMusic(char const *musicId, dd_bool looped)
 
 // Sound Effects: -------------------------------------------------------------------
 
-mobj_t *S_GetListenerMobj()
+dd_bool S_SoundIsPlaying(dint soundId, mobj_t *emitter)
 {
-    return DD_Player(::displayPlayer)->publicData().mo;
+    return (dd_bool) App_AudioSystem().soundIsPlaying(soundId, emitter);
 }
 
-dint S_LocalSoundAtVolumeFrom(dint soundIdAndFlags, mobj_t *origin, coord_t *point, dfloat volume)
+void S_StopSound(dint soundId, mobj_t *emitter)
+{
+    App_AudioSystem().stopSound(soundId, emitter);
+}
+
+void S_StopSound2(dint soundId, mobj_t *emitter, dint flags)
+{
+    App_AudioSystem().stopSound(soundId, emitter, flags);
+}
+
+dint S_LocalSoundAtVolumeFrom(dint soundIdAndFlags, mobj_t *emitter, coord_t *origin,
+    dfloat volume)
 {
 #ifdef __CLIENT__
-    LOG_AS("S_LocalSoundAtVolumeFrom");
-
-    // A dedicated server never starts any local sounds (only logical sounds in the LSM).
-    if(::isDedicated) return false;
-
-    // Sounds cannot be started while in busy mode...
-    if(DoomsdayApp::app().busyMode().isActive())
-        return false;
-
-    dint const soundId = (soundIdAndFlags & ~DDSF_FLAG_MASK);
-    if(soundId <= 0 || soundId >= ::defs.sounds.size())
-        return false;
-
-    // Skip if sounds won't be heard.
-    if(::sfxVolume <= 0 || volume <= 0)
-        return false;
-
-    if(volume > 1)
-    {
-        LOGDEV_AUDIO_WARNING("Volume is too high (%f > 1)") << volume;
-    }
-
-    dfloat freq = 1;
-    // This is the sound we're going to play.
-    sfxinfo_t *info = Def_GetSoundInfo(soundId, &freq, &volume);
-    if(!info) return false;  // Hmm? This ID is not defined.
-
-    bool const isRepeating = (soundIdAndFlags & DDSF_REPEAT) || Def_SoundIsRepeating(soundId);
-
-    // Check the distance (if applicable).
-    if(!(info->flags & SF_NO_ATTENUATION) && !(soundIdAndFlags & DDSF_NO_ATTENUATION))
-    {
-        // If origin is too far, don't even think about playing the sound.
-        coord_t *fixPoint = (origin ? origin->origin : point);
-
-        if(Mobj_ApproxPointDistance(S_GetListenerMobj(), fixPoint) > soundMaxDist)
-            return false;
-    }
-
-    // Load the sample.
-    sfxsample_t *sample = App_AudioSystem().sfxSampleCache().cache(soundId);
-    if(!sample)
-    {
-        if(App_AudioSystem().sfxIsAvailable())
-        {
-            LOG_AUDIO_VERBOSE("Caching of sound %i failed") << soundId;
-        }
-        return false;
-    }
-
-    // Random frequency alteration? (Multipliers chosen to match original
-    // sound code.)
-    if(!sfxNoRndPitch)
-    {
-        if(info->flags & SF_RANDOM_SHIFT)
-        {
-            freq += (RNG_RandFloat() - RNG_RandFloat()) * (7.0f / 255);
-        }
-        if(info->flags & SF_RANDOM_SHIFT2)
-        {
-            freq += (RNG_RandFloat() - RNG_RandFloat()) * (15.0f / 255);
-        }
-    }
-
-    // If the sound has an exclusion group, either all or the same emitter's
-    // iterations of this sound will stop.
-    if(info->group)
-    {
-        mobj_t *emitter = ((info->flags & SF_GLOBAL_EXCLUDE) ? nullptr : origin);
-        S_StopSoundGroup(info->group, emitter);
-    }
-
-    // Let's play it.
-    dint flags = 0;
-    flags |= (((info->flags & SF_NO_ATTENUATION) || (soundIdAndFlags & DDSF_NO_ATTENUATION)) ? SF_NO_ATTENUATION : 0);
-    flags |= (isRepeating ? SF_REPEAT : 0);
-    flags |= ((info->flags & SF_DONT_STOP) ? SF_DONT_STOP : 0);
-    return App_AudioSystem().playSound(sample, volume, freq, origin, point, flags);
-
+    return App_AudioSystem().playSound(soundIdAndFlags, emitter, origin, volume);
 #else
-    DENG2_UNUSED4(soundIdAndFlags, origin, point, volume);
+    DENG2_UNUSED4(soundIdAndFlags, emitter, origin, volume);
     return false;
 #endif
 }
@@ -2776,13 +2757,12 @@ dint S_LocalSoundAtVolume(dint soundIdAndFlags, mobj_t *emitter, dfloat volume)
 
 dint S_LocalSound(dint soundIdAndFlags, mobj_t *emitter)
 {
-    // Play local sound at max volume.
-    return S_LocalSoundAtVolumeFrom(soundIdAndFlags, emitter, nullptr, 1);
+    return S_LocalSoundAtVolumeFrom(soundIdAndFlags, emitter, nullptr, 1/*max volume*/);
 }
 
 dint S_LocalSoundFrom(dint soundIdAndFlags, coord_t *origin)
 {
-    return S_LocalSoundAtVolumeFrom(soundIdAndFlags, nullptr, origin, 1);
+    return S_LocalSoundAtVolumeFrom(soundIdAndFlags, nullptr, origin, 1/*max volume*/);
 }
 
 dint S_StartSound(dint soundIdAndFlags, mobj_t *emitter)
@@ -2817,49 +2797,20 @@ dint S_StartSoundAtVolume(dint soundIdAndFlags, mobj_t *emitter, dfloat volume)
     return S_LocalSoundAtVolume(soundIdAndFlags, emitter, volume);
 }
 
-dint S_ConsoleSound(dint soundId, mobj_t *emitter, dint targetConsole)
+dint S_ConsoleSound(dint soundIdAndFlags, mobj_t *emitter, dint targetConsole)
 {
 #ifdef __SERVER__
-    Sv_Sound(soundId, emitter, targetConsole);
+    Sv_Sound(soundIdAndFlags, emitter, targetConsole);
 #endif
 
     // If it's for us, we can hear it.
     if(targetConsole == consolePlayer)
     {
-        S_LocalSound(soundId, emitter);
+        S_LocalSound(soundIdAndFlags, emitter);
     }
 
     return true;
 }
-
-void S_StopSound(dint soundId, mobj_t *emitter)
-{
-    App_AudioSystem().stopSound(soundId, emitter);
-}
-
-void S_StopSound2(dint soundId, mobj_t *emitter, dint flags)
-{
-    App_AudioSystem().stopSound(soundId, emitter, flags);
-}
-
-dint S_IsPlaying(dint soundId, mobj_t *emitter)
-{
-    return (dint) App_AudioSystem().soundIsPlaying(soundId, emitter);
-}
-
-#ifdef __CLIENT__
-
-void S_StopSoundGroup(dint group, mobj_t *emitter)
-{
-    App_AudioSystem().stopSoundGroup(group, emitter);
-}
-
-dint S_StopSoundWithLowerPriority(dint soundId, mobj_t *emitter, dint defPriority)
-{
-    return App_AudioSystem().stopSoundWithLowerPriority(soundId, emitter, defPriority);
-}
-
-#endif  // __CLIENT__
 
 DENG_DECLARE_API(S) =
 {
@@ -2874,7 +2825,7 @@ DENG_DECLARE_API(S) =
     S_ConsoleSound,
     S_StopSound,
     S_StopSound2,
-    S_IsPlaying,
+    S_SoundIsPlaying,
     S_StartMusic,
     S_StartMusicNum,
     S_StopMusic,

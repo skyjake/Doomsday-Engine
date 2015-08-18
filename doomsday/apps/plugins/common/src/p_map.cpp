@@ -1,7 +1,7 @@
 /** @file p_map.cpp  Common map routines.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 1993-1996 by id Software, Inc.
  *
  * @par License
@@ -514,7 +514,7 @@ static int PIT_CheckThing(mobj_t *thing, void * /*context*/)
                         S_StartSound(SFX_SPIRIT_ATTACK, tmThing);
 
                         if((thing->flags & MF_COUNTKILL) && P_Random() < 128 &&
-                           !S_IsPlaying(SFX_PUPPYBEAT, thing))
+                           !S_SoundIsPlaying(SFX_PUPPYBEAT, thing))
                         {
                             if((thing->type == MT_CENTAUR) ||
                                (thing->type == MT_CENTAURLEADER) ||
@@ -643,13 +643,13 @@ static int PIT_CheckThing(mobj_t *thing, void * /*context*/)
                         P_DamageMobj(thing, tmThing, tmThing->target, 3, false);
                     }
 
-                    if(!S_IsPlaying(SFX_MAGE_LIGHTNING_ZAP, tmThing))
+                    if(!S_SoundIsPlaying(SFX_MAGE_LIGHTNING_ZAP, tmThing))
                     {
                         S_StartSound(SFX_MAGE_LIGHTNING_ZAP, tmThing);
                     }
 
                     if((thing->flags & MF_COUNTKILL) && P_Random() < 64 &&
-                       !S_IsPlaying(SFX_PUPPYBEAT, thing))
+                       !S_SoundIsPlaying(SFX_PUPPYBEAT, thing))
                     {
                         if((thing->type == MT_CENTAUR) ||
                            (thing->type == MT_CENTAURLEADER) ||

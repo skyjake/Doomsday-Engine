@@ -1,8 +1,8 @@
-/** @file m_mus2midi.h MUS to MIDI conversion.
+/** @file m_mus2midi.h  MUS data format utilities.
  * @ingroup audio
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,25 +18,24 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef __DOOMSDAY_MUS2MIDI_H__
-#define __DOOMSDAY_MUS2MIDI_H__
+#ifndef AUDIO_DATA_MUS_H
+#define AUDIO_DATA_MUS_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <doomsday/filesys/file.h>
 
 /**
- * Converts DOOM MUS format music into MIDI music. The output is written to a
- * native file.
+ * Returns @c true if the given @a file appears to contain music in DOOM MUS format.
+ */
+bool M_MusRecognize(de::File1 &file);
+
+/**
+ * Converts DOOM MUS format music into MIDI music. The output is written to a native file.
  *
  * @param data     The MUS data to convert.
  * @param length   The length of the data in bytes.
  * @param outFile  Name of the file the resulting MIDI data will be written to.
  */
-dd_bool M_Mus2Midi(void* data, size_t length, const char* outFile);
+bool M_Mus2Midi(void *data, size_t length, char const *outFile);
+bool M_Mus2Midi(de::File1 &file, char const *outFile);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif
+#endif  // AUDIO_DATA_MUS_H

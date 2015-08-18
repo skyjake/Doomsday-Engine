@@ -1,7 +1,7 @@
 /** @file sn_sonix.cpp  Sound sequence scripts.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 1999 Activision
  *
  * @par License
@@ -381,8 +381,8 @@ void SN_UpdateActiveSequences()
             continue;
         }
 
-        // If ID is zero, S_IsPlaying returns true if any sound is playing.
-        bool sndPlaying = (node->currentSoundID ? CPP_BOOL(S_IsPlaying(node->currentSoundID, node->mobj)) : false);
+        // If ID is zero, S_SoundIsPlaying returns true if any sound is playing.
+        bool sndPlaying = (node->currentSoundID ? CPP_BOOL(S_SoundIsPlaying(node->currentSoundID, node->mobj)) : false);
 
         switch(*node->sequencePtr)
         {

@@ -1,7 +1,7 @@
 /** @file p_inter.c
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 1999 Activision
  *
  * @par License
@@ -2325,7 +2325,7 @@ int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source, int damageP
             {
                 if(P_Random() < 96)
                 {
-                    statenum_t          state;
+                    statenum_t state;
 
                     target->flags |= MF_JUSTHIT; // fight back!
 
@@ -2338,7 +2338,7 @@ int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source, int damageP
                     //target->frame |= FF_FULLBRIGHT;
     // <-- fixme
                     if((target->flags & MF_COUNTKILL) && P_Random() < 128 &&
-                       !S_IsPlaying(SFX_PUPPYBEAT, target))
+                       !S_SoundIsPlaying(SFX_PUPPYBEAT, target))
                     {
                         if((target->type == MT_CENTAUR) ||
                            (target->type == MT_CENTAURLEADER) ||
@@ -2351,7 +2351,7 @@ int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source, int damageP
             }
             else
             {
-                statenum_t          state;
+                statenum_t state;
 
                 target->flags |= MF_JUSTHIT; // fight back!
 
@@ -2361,7 +2361,7 @@ int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source, int damageP
                 if(inflictor && inflictor->type == MT_POISONCLOUD)
                 {
                     if(target->flags & MF_COUNTKILL && P_Random() < 128 &&
-                       !S_IsPlaying(SFX_PUPPYBEAT, target))
+                       !S_SoundIsPlaying(SFX_PUPPYBEAT, target))
                     {
                         if((target->type == MT_CENTAUR) ||
                            (target->type == MT_CENTAURLEADER) ||

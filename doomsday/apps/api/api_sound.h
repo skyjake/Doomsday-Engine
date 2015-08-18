@@ -126,19 +126,19 @@ DENG_API_TYPEDEF(S)
      *
      * @return  Non-zero if a sound is playing.
      */
-    int (*IsPlaying)(int soundId, struct mobj_s *emitter);
+    dd_bool (*SoundIsPlaying)(int soundId, struct mobj_s *emitter);
 
     /**
      * @return  @c NULL, if the song is found.
      */
-    int (*StartMusic)(char const *musicId, dd_bool looped);
+    dd_bool (*StartMusic)(char const *musicId, dd_bool looped);
 
     /**
      * Start a song based on its number.
      *
      * @return  @c NULL, if the given @a musicId exists.
      */
-    int (*StartMusicNum)(int musicId, dd_bool looped);
+    dd_bool (*StartMusicNum)(int musicId, dd_bool looped);
 
     /**
      * Stops playing a song.
@@ -163,7 +163,7 @@ DENG_API_T(S);
 #define S_ConsoleSound              _api_S.ConsoleSound
 #define S_StopSound2                _api_S.StopSound2
 #define S_StopSound                 _api_S.StopSound
-#define S_IsPlaying                 _api_S.IsPlaying
+#define S_SoundIsPlaying            _api_S.SoundIsPlaying
 #define S_StartMusic                _api_S.StartMusic
 #define S_StartMusicNum             _api_S.StartMusicNum
 #define S_StopMusic                 _api_S.StopMusic

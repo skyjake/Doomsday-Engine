@@ -22,17 +22,14 @@
 
 #include "dd_types.h"  // lumpnum_t
 #include "api_sound.h"
-#ifdef __CLIENT__
-#  include "api_audiod_sfx.h"  // sfxsample_t
-
-#  include "audio/audiodriver.h"
-#endif
 #include "audio/s_cache.h"
 #ifdef __CLIENT__
+#  include "audio/audiodriver.h"
 #  include "audio/sfxchannel.h"
+#  include <de/Range>
 #  include <de/Record>
-#  include <de/String>
 #endif
+#include <de/String>
 #include <de/System>
 
 #define SFX_LOWEST_PRIORITY     ( -1000 )
@@ -62,20 +59,14 @@ public:
     // Systems observe the passage of time.
     void timeChanged(de::Clock const &) override;
 
+#ifdef __CLIENT__
+
     /**
      * Returns a textual, human-friendly description of the audio system configuration
      * including an active playback interface itemization (suitable for logging, error
      * messages, etc..).
      */
     de::String description() const;
-
-    /**
-     * Perform playback intialization for Sound Effects and Music.
-     * @todo observe App?
-     */
-    void initPlayback();
-
-#ifdef __CLIENT__
 
     /**
      * Perform playback deintialization for Sound Effects and Music.
@@ -105,6 +96,11 @@ public:  // Music playback: ----------------------------------------------------
      * Provides a human-friendly, textual representation of the given music @a source.
      */
     static de::String musicSourceAsText(MusicSource source);
+
+    /**
+     * Convenient method returning the current music playback volume.
+     */
+    int musicVolume() const;
 
     /**
      * Determines if a @em music playback interface is available.
@@ -151,6 +147,21 @@ public:  // Music playback: ----------------------------------------------------
 public:  // Sound effect playback: ---------------------------------------------------
 
     /**
+     * Convenient method returning the current sound effect playback volume.
+     */
+    int soundVolume() const;
+
+#endif  // __CLIENT__
+
+    /**
+     * Convenient method returning the current sound effect volume attention range in
+     * map space units.
+     */
+    de::Rangei soundVolumeAttenuationRange() const;
+
+#ifdef __CLIENT__
+
+    /**
      * Determines if a @em sfx playback interface is available.
      */
     bool sfxIsAvailable() const;
@@ -164,7 +175,6 @@ public:  // Sound effect playback: ---------------------------------------------
     bool mustUpsampleToSfxRate() const;
 
     struct mobj_s *sfxListener();
-    void setSfxListener(struct mobj_s *newListener);
 
 #endif  // __CLIENT__
 
@@ -177,14 +187,31 @@ public:  // Sound effect playback: ---------------------------------------------
     bool soundIsPlaying(int soundId, struct mobj_s *emitter) const;
 
 #ifdef __CLIENT__
+
+    /**
+     * Stop all sounds of the group. If an emitter is specified, only it's sounds are checked.
+     */
     void stopSoundGroup(int group, struct mobj_s *emitter);
+
+    /**
+     * Stops all channels that are playing the specified sound.
+     *
+     * @param soundId      @c 0 = all sounds are stopped.
+     * @param emitter      If not @c nullptr, then the channel's emitter mobj must match.
+     * @param defPriority  If >= 0, the currently playing sound must have a lower priority
+     *                     than this to be stopped. Returns -1 if the sound @a id has a
+     *                     lower priority than a currently playing sound.
+     *
+     * @return  The number of samples stopped.
+     */
     int stopSoundWithLowerPriority(int soundId, struct mobj_s *emitter, int defPriority);
-#endif
+
+#endif  // __CLIENT__
 
     /**
      * @param soundId  @c 0: stops all sounds originating from the given @a emitter.
-     * @param emitter  @c nullptr: stops all sounds with the ID. Otherwise both @a soundId
-     *                 and @a emitter must match.
+     * @param emitter  @c nullptr: stops all sounds with the given @a soundId. Otherwise
+     *                 both @a soundId and @a emitter must match.
      * @param flags    @ref soundStopFlags.
      */
     void stopSound(int soundId, struct mobj_s *emitter, int flags = 0);
@@ -192,26 +219,26 @@ public:  // Sound effect playback: ---------------------------------------------
 #ifdef __CLIENT__
 
     /**
-     * Used by the high-level sound interface to play sounds on the local system.
+     * Start playing a sound.
      *
-     * @param sample    Sample to play (must be stored persistently! No copy is made).
-     * @param volume    Volume at which the sample should be played.
-     * @param freq      Relative and modifies the sample's rate.
-     * @param emitter   If @c nullptr, @a fixedpos is checked for a position. If both
-     *                  @a emitter and @a fixedpos are @c nullptr, then the sound is played
-     *                  as centered 2D.
-     * @param fixedpos  Fixed position where the sound if emitted, or @c nullptr.
-     * @param flags     Additional flags (@ref soundPlayFlags).
+     * If @a emitter and @a origin are both @c nullptr, the sound is played in 2D and
+     * centered.
      *
-     * @return  @c true, if a sound is started.
+     * @param soundIdAndFlags  ID of the sound to play. Flags can be included (DDSF_*).
+     * @param emitter          Mobj where the sound originates. May be @c nullptr.
+     * @param origin           World coordinates where the sound originate. May be @c nullptr.
+     * @param volume           Volume for the sound (0...1).
+     *
+     * @return  @c true if a sound was started.
      */
-    int playSound(sfxsample_t *sample, float volume, float freq, struct mobj_s *emitter,
-                  coord_t *fixedOrigin, int flags);
+    bool playSound(int soundIdAndFlags, struct mobj_s *emitter, coord_t const *origin,
+        float volume = 1 /*max volume*/);
 
     /**
      * The priority of a sound is affected by distance, volume and age.
      */
-    float rateSoundPriority(struct mobj_s *emitter, coord_t const *point, float volume, int startTic);
+    float rateSoundPriority(struct mobj_s *emitter, coord_t const *origin, float volume,
+        int startTic);
 
 public:  // Low-level driver interfaces: ---------------------------------------------
 
@@ -247,11 +274,18 @@ public:  /// @todo make private:
     void clearLogical();
 
     /**
-     * Provides mutable access to the sound sample cache (waveforms).
+     * Perform playback intialization for Sound Effects and Music.
+     * @todo observe App?
      */
-    SfxSampleCache /*const*/ &sfxSampleCache() const;
+    void initPlayback();
 
 #ifdef __CLIENT__
+
+    /**
+     * Provides immutable access to the sound sample cache (waveforms).
+     */
+    SfxSampleCache const &sfxSampleCache() const;
+
     /// @todo refactor away.
     bool hasSfxChannels();
 
@@ -288,57 +322,6 @@ private:
 
 }  // namespace audio
 
-// Music: ---------------------------------------------------------------------------
-
-int Mus_Start(de::Record const &definition, bool looped);
-int Mus_StartLump(lumpnum_t lumpNum, bool looped);
-int Mus_StartFile(char const *filePath, bool looped);
-int Mus_StartCDTrack(int cdTrack, bool looped);
-
-// Sound effects: -------------------------------------------------------------------
-
-extern int soundMinDist, soundMaxDist;
 extern int sfxBits, sfxRate;
-
-#ifdef __CLIENT__
-extern int sfxVolume, musVolume;
-
-/**
- * Usually the display player.
- */
-mobj_t *S_GetListenerMobj();
-
-/**
- * Stop all sounds of the group. If an emitter is specified, only it's sounds are checked.
- */
-void S_StopSoundGroup(int group, struct mobj_s *emitter);
-
-/**
- * Stops all channels that are playing the specified sound.
- *
- * @param soundId      @c 0 = all sounds are stopped.
- * @param emitter      If not @c nullptr, then the channel's emitter mobj must match.
- * @param defPriority  If >= 0, the currently playing sound must have a lower priority
- *                     than this to be stopped. Returns -1 if the sound @a id has a lower
- *                     priority than a currently playing sound.
- *
- * @return  The number of samples stopped.
- */
-int S_StopSoundWithLowerPriority(int soundId, struct mobj_s *emitter, ddboolean_t byPriority);
-
-#endif  // __CLIENT__
-
-/**
- * @defgroup soundPlayFlags  Sound Start Flags
- * @ingroup flags
- * @{
- */
-#define SF_RANDOM_SHIFT     0x1   ///< Random frequency shift.
-#define SF_RANDOM_SHIFT2    0x2   ///< 2x bigger random frequency shift.
-#define SF_GLOBAL_EXCLUDE   0x4   ///< Exclude all emitters.
-#define SF_NO_ATTENUATION   0x8   ///< Very, very loud...
-#define SF_REPEAT           0x10  ///< Repeats until stopped.
-#define SF_DONT_STOP        0x20  ///< Sound can't be stopped while playing.
-/// @}
 
 #endif  // CLIENT_AUDIO_SYSTEM_H

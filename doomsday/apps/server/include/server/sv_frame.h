@@ -1,5 +1,4 @@
 /** @file sv_frame.h  Frame Generation and Transmission.
- *
  * @ingroup server
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -28,7 +27,15 @@
 #  error "server/sv_frame.h requires C++"
 #endif
 
+/**
+ * Send all the relevant information to each client.
+ */
 void Sv_TransmitFrame();
+
+/**
+ * Returns an estimate for the maximum frame size appropriate for the client. The bandwidth
+ * rating is updated whenever a frame is sent.
+ */
 de::dsize Sv_GetMaxFrameSize(de::dint playerNumber);
 
 #endif  // SERVER_FRAME_H

@@ -1,4 +1,4 @@
-/** @file p_user.h Common player related logic.
+/** @file p_user.h  Common player related logic.
  *
  * Bobbing POV/weapon, movement, pending weapon, etc...
  *

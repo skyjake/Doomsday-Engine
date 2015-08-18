@@ -81,6 +81,19 @@ private:
 extern ded_t defs;  ///< Main definitions database (internal).
 struct xgclass_s;   ///< @note The actual classes are on game side.
 
+/**
+ * @defgroup soundFlags  Sound behavior flags
+ * @ingroup flags
+ * @{
+ */
+#define SF_RANDOM_SHIFT         ( 0x01 )  ///< Random frequency shift.
+#define SF_RANDOM_SHIFT2        ( 0x02 )  ///< 2x bigger random frequency shift.
+#define SF_GLOBAL_EXCLUDE       ( 0x04 )  ///< Exclude all emitters.
+#define SF_NO_ATTENUATION       ( 0x08 )  ///< Very, very loud...
+#define SF_REPEAT               ( 0x10 )  ///< Repeats until stopped.
+#define SF_DONT_STOP            ( 0x20 )  ///< Sound can't be stopped while playing.
+/// @}
+
 struct sfxinfo_t
 {
     void *data;           ///< Pointer to sound data.
@@ -94,7 +107,7 @@ struct sfxinfo_t
     int priority;
     int channels;         ///< Max. channels for the sound to occupy.
     int usefulness;       ///< Used to determine when to cache out.
-    int flags;
+    int flags;            ///< @ref soundFlags
     int group;
     ddstring_t external;  ///< Path to external file.
 };

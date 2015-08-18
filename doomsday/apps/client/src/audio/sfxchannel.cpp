@@ -155,6 +155,8 @@ dfloat SfxChannel::priority() const
 /// @todo audio::System should observe. -ds
 void SfxChannel::updatePriority()
 {
+    System &audioSys = App_AudioSystem();
+
     // If no sound buffer is assigned we've no need to update.
     sfxbuffer_t *sbuf = d->buffer;
     if(!sbuf) return;
@@ -178,44 +180,44 @@ void SfxChannel::updatePriority()
     }
 
     // Frequency is common to both 2D and 3D sounds.
-    App_AudioSystem().sfx()->Set(sbuf, SFXBP_FREQUENCY, d->frequency);
+    audioSys.sfx()->Set(sbuf, SFXBP_FREQUENCY, d->frequency);
 
     if(sbuf->flags & SFXBF_3D)
     {
         // Volume is affected only by maxvol.
-        App_AudioSystem().sfx()->Set(sbuf, SFXBP_VOLUME, d->volume * ::sfxVolume / 255.0f);
-        if(d->emitter && d->emitter == App_AudioSystem().sfxListener())
+        audioSys.sfx()->Set(sbuf, SFXBP_VOLUME, d->volume * audioSys.soundVolume() / 255.0f);
+        if(d->emitter && d->emitter == audioSys.sfxListener())
         {
             // Emitted by the listener object. Go to relative position mode
             // and set the position to (0,0,0).
             dfloat vec[3]; vec[0] = vec[1] = vec[2] = 0;
-            App_AudioSystem().sfx()->Set(sbuf, SFXBP_RELATIVE_MODE, true);
-            App_AudioSystem().sfx()->Setv(sbuf, SFXBP_POSITION, vec);
+            audioSys.sfx()->Set(sbuf, SFXBP_RELATIVE_MODE, true);
+            audioSys.sfx()->Setv(sbuf, SFXBP_POSITION, vec);
         }
         else
         {
             // Use the channel's map space origin.
             dfloat origin[3];
             V3f_Copyd(origin, d->origin);
-            App_AudioSystem().sfx()->Set(sbuf, SFXBP_RELATIVE_MODE, false);
-            App_AudioSystem().sfx()->Setv(sbuf, SFXBP_POSITION, origin);
+            audioSys.sfx()->Set(sbuf, SFXBP_RELATIVE_MODE, false);
+            audioSys.sfx()->Setv(sbuf, SFXBP_POSITION, origin);
         }
 
         // If the sound is emitted by the listener, speed is zero.
-        if(d->emitter && d->emitter != App_AudioSystem().sfxListener() &&
+        if(d->emitter && d->emitter != audioSys.sfxListener() &&
            Thinker_IsMobjFunc(d->emitter->thinker.function))
         {
             dfloat vec[3];
             vec[0] = d->emitter->mom[0] * TICSPERSEC;
             vec[1] = d->emitter->mom[1] * TICSPERSEC;
             vec[2] = d->emitter->mom[2] * TICSPERSEC;
-            App_AudioSystem().sfx()->Setv(sbuf, SFXBP_VELOCITY, vec);
+            audioSys.sfx()->Setv(sbuf, SFXBP_VELOCITY, vec);
         }
         else
         {
             // Not moving.
             dfloat vec[3]; vec[0] = vec[1] = vec[2] = 0;
-            App_AudioSystem().sfx()->Setv(sbuf, SFXBP_VELOCITY, vec);
+            audioSys.sfx()->Setv(sbuf, SFXBP_VELOCITY, vec);
         }
     }
     else
@@ -225,7 +227,7 @@ void SfxChannel::updatePriority()
 
         // This is a 2D buffer.
         if((d->flags & SFXCF_NO_ORIGIN) ||
-           (d->emitter && d->emitter == App_AudioSystem().sfxListener()))
+           (d->emitter && d->emitter == audioSys.sfxListener()))
         {
             dist = 1;
             pan = 0;
@@ -233,20 +235,23 @@ void SfxChannel::updatePriority()
         else
         {
             // Calculate roll-off attenuation. [.125/(.125+x), x=0..1]
-            dist = Mobj_ApproxPointDistance(App_AudioSystem().sfxListener(), d->origin);
-            if(dist < ::soundMinDist || (d->flags & SFXCF_NO_ATTENUATION))
+            Rangei const &attenRange = audioSys.soundVolumeAttenuationRange();
+
+            dist = Mobj_ApproxPointDistance(audioSys.sfxListener(), d->origin);
+
+            if(dist < attenRange.start || (d->flags & SFXCF_NO_ATTENUATION))
             {
                 // No distance attenuation.
                 dist = 1;
             }
-            else if(dist > ::soundMaxDist)
+            else if(dist > attenRange.end)
             {
                 // Can't be heard.
                 dist = 0;
             }
             else
             {
-                dfloat const normdist = (dist - ::soundMinDist) / (::soundMaxDist - ::soundMinDist);
+                dfloat const normdist = (dist - attenRange.start) / attenRange.size();
 
                 // Apply the linear factor so that at max distance there
                 // really is silence.
@@ -254,7 +259,7 @@ void SfxChannel::updatePriority()
             }
 
             // And pan, too. Calculate angle from listener to emitter.
-            if(mobj_t *listener = App_AudioSystem().sfxListener())
+            if(mobj_t *listener = audioSys.sfxListener())
             {
                 dfloat angle = (M_PointToAngle2(listener->origin, d->origin) - listener->angle) / (dfloat) ANGLE_MAX * 360;
 
@@ -282,8 +287,8 @@ void SfxChannel::updatePriority()
             }
         }
 
-        App_AudioSystem().sfx()->Set(sbuf, SFXBP_VOLUME, d->volume * dist * ::sfxVolume / 255.0f);
-        App_AudioSystem().sfx()->Set(sbuf, SFXBP_PAN, pan);
+        audioSys.sfx()->Set(sbuf, SFXBP_VOLUME, d->volume * dist * audioSys.soundVolume() / 255.0f);
+        audioSys.sfx()->Set(sbuf, SFXBP_PAN, pan);
     }
 }
 
