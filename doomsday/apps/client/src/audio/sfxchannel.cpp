@@ -29,6 +29,14 @@
 #include <QList>
 #include <QtAlgorithms>
 
+// Debug visual headers:
+#include "audio/s_cache.h"
+#include "gl/gl_main.h"
+#include "api_fontrender.h"
+#include "render/rend_font.h"
+#include "ui/ui_main.h"
+#include <de/concurrency.h>
+
 using namespace de;
 
 namespace audio {
@@ -403,14 +411,6 @@ LoopResult SfxChannels::forAll(std::function<LoopResult (SfxChannel &)> func) co
 using namespace audio;
 
 // Debug visual: -----------------------------------------------------------------
-
-//#include "dd_main.h" // App_AudioSystem()
-#include "audio/s_cache.h"
-#include "gl/gl_main.h"
-#include "api_fontrender.h"
-#include "render/rend_font.h"
-#include "ui/ui_main.h"
-#include <de/concurrency.h>
 
 dint showSoundInfo;
 byte refMonitor;
