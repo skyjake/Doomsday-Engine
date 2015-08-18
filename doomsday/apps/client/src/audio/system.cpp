@@ -1799,7 +1799,6 @@ void System::endFrame()
         d->getBaseInterface(sfx()).Event(SFXEV_END);
     }
 }
-#endif
 
 void System::initPlayback()
 {
@@ -1809,7 +1808,6 @@ void System::initPlayback()
     if(cmdLine.has("-nosound") || cmdLine.has("-noaudio"))
         return;
 
-#ifdef __CLIENT__
     LOG_AUDIO_VERBOSE("Initializing for playback...");
 
     // Disable random pitch changes?
@@ -1847,10 +1845,7 @@ void System::initPlayback()
 
     // Print a summary of the active configuration to the log.
     LOG_AUDIO_MSG("%s") << description();
-#endif
 }
-
-#ifdef __CLIENT__
 
 void System::deinitPlayback()
 {

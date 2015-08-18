@@ -154,8 +154,8 @@ public:  // Sound effect playback: ---------------------------------------------
 #endif  // __CLIENT__
 
     /**
-     * Convenient method returning the current sound effect volume attention range in
-     * map space units.
+     * Convenient method returning the current sound effect volume attenuation range,
+     * in map space units.
      */
     de::Rangei soundVolumeAttenuationRange() const;
 
@@ -268,18 +268,12 @@ public:  /// @todo make private:
     void aboutToUnloadMap();
 #ifdef __CLIENT__
     void worldMapChanged();
-#endif
-
-    /// @todo refactor away.
-    void clearLogical();
 
     /**
      * Perform playback intialization for Sound Effects and Music.
      * @todo observe App?
      */
     void initPlayback();
-
-#ifdef __CLIENT__
 
     /**
      * Provides immutable access to the sound sample cache (waveforms).
@@ -315,6 +309,7 @@ public:  /// @todo make private:
 
     /// @todo Should not be exposed to users of this class. -ds
     void startLogical(int soundIdAndFlags, struct mobj_s *emitter);
+    void clearLogical();
 
 private:
     DENG2_PRIVATE(d)

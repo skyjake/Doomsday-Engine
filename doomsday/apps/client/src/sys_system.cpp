@@ -90,7 +90,9 @@ void Sys_Init()
 
     LOG_VERBOSE("Setting up platform state...");
 
+#ifdef __CLIENT__
     App_AudioSystem().initPlayback();
+#endif
 
 #ifdef DENG_CATCH_SIGNALS
     // Register handler for abnormal situations (in release build).
