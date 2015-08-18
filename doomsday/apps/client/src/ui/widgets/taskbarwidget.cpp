@@ -29,6 +29,7 @@
 #include "ui/dialogs/manualconnectiondialog.h"
 #include "ui/dialogs/vrsettingsdialog.h"
 #include "ui/dialogs/gamesdialog.h"
+#include "ui/dialogs/packagesdialog.h"
 #include "updater/updatersettingsdialog.h"
 #include "ui/clientwindow.h"
 #include "ui/clientrootwidget.h"
@@ -74,10 +75,10 @@ enum MenuItemPositions
     // Config menu:
     POS_RENDERER_SETTINGS = 0,
     POS_VR_SETTINGS       = 1,
-    POS_CONFIG_SEPARATOR  = 2,
+    POS_CONFIG_SEPARATOR  = 3,
 
-    POS_AUDIO_SETTINGS    = 4,
-    POS_INPUT_SETTINGS    = 5
+    POS_AUDIO_SETTINGS    = 5,
+    POS_INPUT_SETTINGS    = 6
 };
 
 DENG_GUI_PIMPL(TaskBarWidget)
@@ -385,7 +386,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     d->status->set(bg);
     d->status->setWidthPolicy(ui::Expand);
     d->status->rule().setInput(Rule::Height, rule().height());
-    add(d->status);        
+    add(d->status);
 
     d->updateStatus();
 
@@ -430,6 +431,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     d->configMenu->items()
             << new ui::SubwidgetItem(style().images().image("renderer"), tr("Renderer"), ui::Left, makePopup<RendererSettingsDialog>)
             << new ui::SubwidgetItem(style().images().image("vr"),       tr("3D & VR"),  ui::Left, makePopup<VRSettingsDialog>)
+            << new ui::SubwidgetItem(tr("Packages"), ui::Left, makePopup<PackagesDialog>)
             << new ui::Item(ui::Item::Separator)
             << new ui::SubwidgetItem(style().images().image("display"),  tr("Video"),    ui::Left, makePopup<VideoSettingsDialog>)
             << new ui::SubwidgetItem(style().images().image("audio"),    tr("Audio"),    ui::Left, makePopup<AudioSettingsDialog>)
@@ -442,7 +444,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << new ui::ActionItem(tr("Show Tutorial"), new SignalAction(this, SLOT(showTutorial())))
             << new ui::VariableToggleItem(tr("Menu Annotations"), App::config("ui.showAnnotations"))
             << new ui::Item(ui::Item::Annotation, tr("Annotations briefly describe menu functions."));
-    
+
     d->mainMenu->items()
             << new ui::Item(ui::Item::Separator, tr("Games"))
             << new ui::ActionItem(tr("Switch Game..."), new SignalAction(this, SLOT(switchGame())))

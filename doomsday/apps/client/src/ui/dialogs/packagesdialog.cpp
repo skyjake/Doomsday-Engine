@@ -17,6 +17,9 @@
  */
 
 #include "ui/dialogs/packagesdialog.h"
+#include "clientapp.h"
+
+#include <de/FileSystem>
 
 using namespace de;
 
@@ -24,12 +27,21 @@ DENG_GUI_PIMPL(PackagesDialog)
 {
     Instance(Public *i) : Base(i)
     {}
+
+    void populate()
+    {
+        StringList packages = App::packageLoader().findAllPackages();
+        qSort(packages);
+        qDebug() << "Found packages:" << packages;
+    }
 };
 
 PackagesDialog::PackagesDialog()
-    : DialogWidget("packages")
+    : DialogWidget("packages", WithHeading)
     , d(new Instance(this))
 {
+    heading().setText(tr("Packages"));
+    buttons() << new DialogButtonItem(Default | Accept, tr("Close"));
 
+    d->populate();
 }
-
