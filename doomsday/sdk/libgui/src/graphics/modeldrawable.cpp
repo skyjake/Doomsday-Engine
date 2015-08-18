@@ -1545,7 +1545,7 @@ ddouble ModelDrawable::Animator::currentTime(int index) const
 void ModelDrawable::Animator::OngoingSequence::initialize()
 {}
 
-bool ModelDrawable::Animator::OngoingSequence::isAtEnd() const
+bool ModelDrawable::Animator::OngoingSequence::atEnd() const
 {
     return time >= duration;
 }

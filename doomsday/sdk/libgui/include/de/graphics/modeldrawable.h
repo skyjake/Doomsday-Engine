@@ -108,7 +108,7 @@ public:
             /**
              * Determines if the sequence is at its duration or past it.
              */
-            bool isAtEnd() const;
+            bool atEnd() const;
 
             /**
              * Constructs an OngoingSequence instance. This is used by default if no other

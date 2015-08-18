@@ -98,7 +98,7 @@ DENG2_PIMPL(MobjAnimator)
                 // Looping animations are always running.
                 return true;
             }
-            return !isAtEnd();
+            return !atEnd();
         }
 
         static Sequence *make() { return new Sequence; }
@@ -436,7 +436,7 @@ void MobjAnimator::advanceTime(TimeDelta const &elapsed)
         {
             // When a looping animation has completed a loop, it may still trigger
             // a variant.
-            if(anim.isAtEnd())
+            if(anim.atEnd())
             {
                 retrigger = true;
                 anim.time -= anim.duration; // Trigger only once per loop.
