@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_FUNCTION_H
@@ -73,7 +73,8 @@ public:
      * Constructor.
      *
      * @param args      Names of the function arguments.
-     * @param defaults  Default values for some or all of the arguments.
+     * @param defaults  Default values for some or all of the arguments. Ownership
+     *                  of the values is transferred to Function.
      */
     Function(Arguments const &args, Defaults const &defaults);
 
@@ -223,11 +224,13 @@ public:
     NativeFunctionSpec(Function::NativeEntryPoint entryPoint,
                        char const *nativeName,
                        String const &name,
-                       Function::Arguments const &argNames = Function::Arguments())
+                       Function::Arguments const &argNames = Function::Arguments(),
+                       Function::Defaults const &argDefaults = Function::Defaults())
         : _entryPoint(entryPoint)
         , _nativeName(nativeName)
         , _name(name)
         , _argNames(argNames)
+        , _argDefaults(argDefaults)
     {}
 
     /**
@@ -244,6 +247,7 @@ private:
     char const *_nativeName;
     String _name;
     Function::Arguments _argNames;
+    Function::Defaults _argDefaults;
 };
 
 #define DENG2_FUNC_NOARG(Name, ScriptMemberName) \
@@ -251,6 +255,10 @@ private:
 
 #define DENG2_FUNC(Name, ScriptMemberName, Args) \
     de::NativeFunctionSpec(Function_ ## Name, # Name, ScriptMemberName, de::Function::Arguments() << Args)
+
+#define DENG2_FUNC_DEFS(Name, ScriptMemberName, Args, Defaults) \
+    de::NativeFunctionSpec(Function_ ## Name, # Name, ScriptMemberName, \
+                           de::Function::Arguments() << Args, Defaults)
 
 /**
  * Utility that keeps track of which entry points have been bound and unregisters

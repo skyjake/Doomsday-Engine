@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_VALUE_H
@@ -28,7 +28,6 @@ namespace de {
 
 class Process;
 class Record;
-class NumberValue;
 
 /**
  * The base class for all runtime values.  This is an abstract class.
@@ -53,7 +52,7 @@ public:
 
     // Types used by all values:
     typedef ddouble Number;     /**< Numbers are in double-precision. */
-    typedef String Text;        /**< Text strings. */
+    typedef String  Text;       /**< Text strings. */
 
 public:
     virtual ~Value();
@@ -102,7 +101,7 @@ public:
      * Convert the value to into a text string.  All values have
      * to implement this.
      */
-    virtual Text asText() const = 0;     
+    virtual Text asText() const = 0;
 
     template <typename ValueType>
     bool is() const {
@@ -164,6 +163,8 @@ public:
      */
     virtual Value const &element(Value const &index) const;
 
+    Value const &element(dint index) const;
+
     /**
      * Get a specific element of the value.  This is meaningful with
      * arrays and dictionaries.
@@ -173,6 +174,8 @@ public:
      * @return  Element value (modifiable).
      */
     virtual Value &element(Value const &index);
+
+    Value &element(dint index);
 
     /**
      * Duplicates an element of the value. This is necessary when the
@@ -322,6 +325,21 @@ protected:
         TIME
     };
 };
+
+/**
+ * Utility for converting a Value with two elements into a Range. This
+ * only works if the value contains a sufficient number of elements and they
+ * can be converted to numbers.
+ *
+ * @param value  Value with multiple elements.
+ *
+ * @return Vector.
+ */
+template <typename RangeType>
+RangeType rangeFromValue(Value const &value) {
+    return RangeType(value.element(0).asNumber(),
+                     value.element(1).asNumber());
+}
 
 } // namespace de
 

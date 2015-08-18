@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Lex"
@@ -30,7 +30,12 @@ String const &Lex::input() const
 {
     return *_input;
 }
-    
+
+bool Lex::atEnd() const
+{
+    return _state.pos >= duint(_input->size());
+}
+
 duint Lex::pos() const
 {
     return _state.pos;
@@ -38,12 +43,12 @@ duint Lex::pos() const
 
 QChar Lex::peek() const
 {
-    if(_state.pos >= duint(_input->size()))
+    if(atEnd())
     {
         // There is no more; trying to get() will throw an exception.
         return 0;
     }
-    
+
     QChar c = _input->at(_state.pos);
 
     if(!_mode.testFlag(SkipComments) && (c == _lineCommentChar))
@@ -58,23 +63,24 @@ QChar Lex::peek() const
         }
         return '\n';
     }
-    
+
     _nextPos = _state.pos + 1;
     return _input->at(_state.pos);
 }
-    
+
 QChar Lex::get()
 {
-    QChar c = peek();
-    if(c == 0)
+    if(atEnd())
     {
         /// @throw OutOfInputError  No more characters left in input.
         throw OutOfInputError("Lex::get", "No more characters in input");
     }
-    
+
+    QChar c = peek();
+
     // The next position is determined by peek().
     _state.pos = _nextPos;
-    
+
     // Did we move to a new line?
     if(c == '\n')
     {
@@ -108,7 +114,7 @@ void Lex::skipToNextLine()
 
 bool Lex::onlyWhiteOnLine()
 {
-    State saved = _state;    
+    State saved = _state;
     try
     {
         for(;;)
@@ -137,7 +143,7 @@ duint Lex::countLineStartSpace() const
 {
     duint pos = _state.lineStartPos;
     duint count = 0;
-    
+
     while(pos < duint(_input->size()) && isWhite(_input->at(pos++))) count++;
     return count;
 }

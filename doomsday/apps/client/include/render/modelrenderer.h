@@ -22,6 +22,7 @@
 #include <de/ModelDrawable>
 #include <de/ModelBank>
 #include <de/GLState>
+#include <de/Scheduler>
 
 #include <QList>
 #include <QMap>
@@ -57,8 +58,10 @@ public:
     struct AnimSequence {
         de::String name;        ///< Name of the sequence.
         de::Record const *def;  ///< Record describing the sequence (in asset metadata).
-        AnimSequence(de::String const &n, de::Record const &d)
-            : name(n), def(&d) {}
+        de::Scheduler *timeline = nullptr; ///< Script timeline (owned).
+        de::String sharedTimeline; ///< Name of shared timeline (if specified).
+
+        AnimSequence(de::String const &n, de::Record const &d);
     };
     typedef QList<AnimSequence> AnimSequences;
     struct StateAnims : public QMap<de::String, AnimSequences> {};
@@ -72,7 +75,13 @@ public:
         de::Matrix4f transformation;
         de::gl::Cull cull = de::gl::Back;
         de::ModelDrawable::Passes passes;
+
         StateAnims animations;
+
+        /// Shared timelines (not sequence-specific). Owned.
+        QMap<de::String, de::Scheduler *> timelines;
+
+        ~AuxiliaryData();
     };
 
     DENG2_ERROR(DefinitionError);
@@ -88,6 +97,8 @@ public:
      * Provides access to the bank containing available drawable models.
      */
     de::ModelBank &bank();
+
+    AuxiliaryData const *auxiliaryData(de::DotPath const &modelId) const;
 
     StateAnims const *animations(de::DotPath const &modelId) const;
 

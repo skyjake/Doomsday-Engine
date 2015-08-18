@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Value"
@@ -119,7 +119,7 @@ Value *Value::next()
 }
 
 bool Value::isFalse() const
-{ 
+{
     // Default implementation -- some values may be neither true nor false.
     return !isTrue();
 }
@@ -136,7 +136,7 @@ void Value::negate()
     /// @throw ArithmeticError Value cannot be negated.
     throw ArithmeticError("Value::negate", "Value cannot be negated");
 }
- 
+
 void Value::sum(Value const &/*value*/)
 {
     /// @throw ArithmeticError Value cannot be summed.
@@ -146,21 +146,21 @@ void Value::sum(Value const &/*value*/)
 void Value::subtract(Value const &/*subtrahend*/)
 {
     /// @throw ArithmeticError Value cannot be subtracted from.
-    throw ArithmeticError("Value::subtract", "Value cannot be subtracted from");    
+    throw ArithmeticError("Value::subtract", "Value cannot be subtracted from");
 }
- 
+
 void Value::divide(Value const &/*divisor*/)
 {
     /// @throw ArithmeticError Value cannot be divided.
     throw ArithmeticError("Value::divide", "Value cannot be divided");
 }
- 
+
 void Value::multiply(Value const &/*value*/)
 {
     /// @throw ArithmeticError Value cannot be multiplied.
     throw ArithmeticError("Value::multiply", "Value cannot be multiplied");
 }
- 
+
 void Value::modulo(Value const &/*divisor*/)
 {
     /// @throw ArithmeticError Module operation is not defined for the value.
@@ -186,34 +186,34 @@ Value *Value::constructFrom(Reader &reader)
     reader.mark();
     reader >> id;
     reader.rewind();
-    
+
     std::auto_ptr<Value> result;
     switch(id)
     {
     case NONE:
         result.reset(new NoneValue);
         break;
-        
+
     case NUMBER:
         result.reset(new NumberValue);
         break;
-        
+
     case TEXT:
         result.reset(new TextValue);
         break;
-        
+
     case ARRAY:
         result.reset(new ArrayValue);
         break;
-        
+
     case DICTIONARY:
         result.reset(new DictionaryValue);
         break;
-        
+
     case BLOCK:
         result.reset(new BlockValue);
         break;
-        
+
     case FUNCTION:
         result.reset(new FunctionValue);
         break;
@@ -225,9 +225,9 @@ Value *Value::constructFrom(Reader &reader)
     case TIME:
         result.reset(new TimeValue);
         break;
-        
+
     default:
-        /// @throw DeserializationError The identifier that species the type of the 
+        /// @throw DeserializationError The identifier that species the type of the
         /// serialized value was invalid.
         throw DeserializationError("Value::constructFrom", "Invalid value identifier");
     }
@@ -235,4 +235,14 @@ Value *Value::constructFrom(Reader &reader)
     // Deserialize it.
     reader >> *result.get();
     return result.release();
+}
+
+Value const &Value::element(dint index) const
+{
+    return element(NumberValue(index));
+}
+
+Value &Value::element(dint index)
+{
+    return element(NumberValue(index));
 }

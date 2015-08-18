@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_LEX_H
@@ -36,7 +36,7 @@ namespace de {
 class DENG2_PUBLIC Lex
 {
 public:
-    /// Attempt to read characters when there are non left. @ingroup errors
+    /// Attempt to read characters when there are none left. @ingroup errors
     DENG2_ERROR(OutOfInputError);
 
     enum ModeFlag {
@@ -79,6 +79,9 @@ public:
 
     /// Returns the input string in its entirety.
     String const &input() const;
+
+    /// Determines if the input string has been entirely read.
+    bool atEnd() const;
 
     /// Returns the current position of the analyzer.
     duint pos() const;

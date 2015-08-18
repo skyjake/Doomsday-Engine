@@ -29,6 +29,7 @@
 #include <de/ModelDrawable>
 
 class TextureVariantSpec;
+class MobjAnimator;
 struct vissprite_t;
 
 /// Absolute maximum number of vertices per submodel supported by this module.
@@ -65,7 +66,7 @@ struct drawmodel2params_t
     struct mobj_s const *object;
     de::ModelDrawable const *model;
     ModelRenderer::AuxiliaryData const *auxData;
-    de::ModelDrawable::Animator const *animator;
+    MobjAnimator const *animator;
 };
 
 DENG_EXTERN_C de::dbyte useModels;

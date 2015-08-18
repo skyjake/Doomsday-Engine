@@ -83,51 +83,51 @@ public:
     {
     public:
         /**
-         * Specialized animators may derive from Animation to extend the amount of
+         * Specialized animators may derive from OngoingSequence to extend the amount of
          * data associated with each running animation sequence.
          */
-        class LIBGUI_PUBLIC Animation
+        class LIBGUI_PUBLIC OngoingSequence
         {
         public:
-            int animId;         ///< Which animation to use.
+            int animId;         ///< Which animation to use in a ModelDrawable.
             ddouble time;       ///< Animation time.
             ddouble duration;   ///< Animation duration.
             String node;        ///< Target node.
 
         public:
-            virtual ~Animation() {}
+            virtual ~OngoingSequence() {}
 
             /**
              * Called after the basic parameters of the animation have been set for
-             * a newly constructed animation.
+             * a newly constructed sequence.
              */
             virtual void initialize();
 
             DENG2_AS_IS_METHODS()
 
             /**
-             * Determines if the animation is at its duration or past it.
+             * Determines if the sequence is at its duration or past it.
              */
-            bool isAtEnd() const;
+            bool atEnd() const;
 
             /**
-             * Constructs an Animation instance. This is used by default if no other
+             * Constructs an OngoingSequence instance. This is used by default if no other
              * constructor is provided.
              *
-             * @return  Animation instance, to be owned by ModelDrawable::Animator.
+             * @return  OngoingSequence instance, to be owned by ModelDrawable::Animator.
              */
-            static Animation *make();
+            static OngoingSequence *make();
         };
 
-        typedef std::function<Animation * ()> Constructor;
+        typedef std::function<OngoingSequence * ()> Constructor;
 
         /// Referenced node or animation was not found in the model. @ingroup errors
         DENG2_ERROR(InvalidError);
 
     public:
-        Animator(Constructor animationConstructor = Animation::make);
+        Animator(Constructor sequenceConstructor = OngoingSequence::make);
         Animator(ModelDrawable const &model,
-                 Constructor animationConstructor = Animation::make);
+                 Constructor sequenceConstructor = OngoingSequence::make);
 
         virtual ~Animator() {}
 
@@ -145,15 +145,15 @@ public:
 
         inline bool isEmpty() const { return !count(); }
 
-        Animation const &at(int index) const;
+        OngoingSequence const &at(int index) const;
 
-        Animation &at(int index);
+        OngoingSequence &at(int index);
 
         bool isRunning(String const &animName, String const &rootNode = "") const;
         bool isRunning(int animId, String const &rootNode = "") const;
 
-        Animation *find(String const &rootNode = "") const;
-        Animation *find(int animId, String const &rootNode = "") const;
+        OngoingSequence *find(String const &rootNode = "") const;
+        OngoingSequence *find(int animId, String const &rootNode = "") const;
 
         /**
          * Starts an animation sequence. A previous sequence running on this node will
@@ -162,9 +162,9 @@ public:
          * @param animName  Animation sequence name.
          * @param rootNode  Animation root.
          *
-         * @return Animation.
+         * @return OngoingSequence.
          */
-        Animation &start(String const &animName, String const &rootNode = "");
+        OngoingSequence &start(String const &animName, String const &rootNode = "");
 
         /**
          * Starts an animation sequence. A previous sequence running on this node will
@@ -173,9 +173,9 @@ public:
          * @param animId    Animation sequence number.
          * @param rootNode  Animation root.
          *
-         * @return Animation.
+         * @return OngoingSequence.
          */
-        Animation &start(int animId, String const &rootNode = "");
+        OngoingSequence &start(int animId, String const &rootNode = "");
 
         void stop(int index);
 

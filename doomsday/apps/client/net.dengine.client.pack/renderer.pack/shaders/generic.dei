@@ -1,4 +1,4 @@
-group generic {
+generic {
     # Simple shader with untextured vertices. There is an additional constant
     # color applied to all vertices. Uses a combined model-view-projection
     # matrix.
@@ -42,7 +42,7 @@ group generic {
             }"        
     }
     
-    group textured {    
+    textured {    
         # Simple shader with one texture plus a color per vertex. Uses a
         # combined model-view-projection matrix.
         shader color {

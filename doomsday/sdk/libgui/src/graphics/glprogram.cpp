@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/GLProgram"
@@ -41,9 +41,9 @@ DENG2_PIMPL(GLProgram)
 , DENG2_OBSERVES(GLUniform, Deletion)
 , DENG2_OBSERVES(GuiApp, GLContextChange)
 {
-    typedef QSet<GLUniform const *> Uniforms;
+    typedef QSet<GLUniform const *>  Uniforms;
     typedef QList<GLUniform const *> UniformList;
-    typedef QSet<GLShader const *> Shaders;
+    typedef QSet<GLShader const *>   Shaders;
 
     Uniforms bound;
     Uniforms changed;
@@ -332,7 +332,7 @@ GLProgram &GLProgram::build(GLShader const *vertexShader, GLShader const *fragme
     d->releaseButRetainBindings();
     d->attach(vertexShader);
     d->attach(fragmentShader);
-    d->bindVertexAttribs();    
+    d->bindVertexAttribs();
     d->markAllBoundUniformsChanged();
 
     setState(Ready);

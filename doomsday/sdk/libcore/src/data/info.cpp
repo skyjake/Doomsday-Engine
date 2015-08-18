@@ -31,6 +31,7 @@ static QString const WHITESPACE = " \t\r\n";
 static QString const WHITESPACE_OR_COMMENT = " \t\r\n#";
 static QString const TOKEN_BREAKING_CHARS = "#:=$(){}<>,\"" + WHITESPACE;
 static QString const INCLUDE_TOKEN = "@include";
+static QString const SCRIPT_TOKEN = "script";
 
 DENG2_PIMPL(Info)
 {
@@ -73,7 +74,7 @@ DENG2_PIMPL(Info)
         , rootBlock("", "", *i)
         , finder(&defaultFinder)
     {
-        scriptBlockTypes << "script";
+        scriptBlockTypes << SCRIPT_TOKEN;
     }
 
     /**
@@ -349,29 +350,20 @@ DENG2_PIMPL(Info)
         return value;
     }
 
-    InfoValue parseScript(int numStatements = 0)
+    InfoValue parseScript(int requiredStatementCount = 0)
     {
         int startPos = cursor - 1;
         String remainder = content.substr(startPos);
         ScriptLex lex(remainder);
-        try
-        {
-            TokenBuffer tokens;
-            int count = 0;
 
-            // Read an appropriate number of statements.
-            while(lex.getStatement(tokens))
-            {
-                if(numStatements > 0 && ++count == numStatements)
-                    goto success;
-            }
-            throw SyntaxError("Info::parseScript",
-                              QString("Unexpected end of script starting at line %1").arg(currentLine));
-success:;
-        }
-        catch(ScriptLex::MismatchedBracketError const &)
+        TokenBuffer tokens;
+        int count = 0;
+
+        // Read an appropriate number of statements.
+        while(lex.getStatement(tokens, ScriptLex::StopAtMismatchedCloseBrace))
         {
-            // A mismatched bracket signals the end of the script block.
+            if(requiredStatementCount > 0 &&
+               ++count == requiredStatementCount) break; // We're good now.
         }
 
         // Continue parsing normally from here.
@@ -391,7 +383,8 @@ success:;
 
         //qDebug() << "now at" << content.substr(endPos - 15, endPos) << "^" << content.substr(endPos);
 
-        return InfoValue(content.substr(startPos, lex.pos() - 1), InfoValue::Script);
+        // Whitespace is removed from beginning and end.
+        return InfoValue(content.substr(startPos, lex.pos() - 1).trimmed(), InfoValue::Script);
     }
 
     /**
@@ -497,9 +490,13 @@ success:;
         DENG2_ASSERT(blockType != ")");
 
         String blockName;
-        if(peekToken() != "(" && peekToken() != "{")
+
+        if(!scriptBlockTypes.contains(blockType)) // script blocks are never named
         {
-            blockName = parseValue();
+            if(peekToken() != "(" && peekToken() != "{")
+            {
+                blockName = parseValue();
+            }
         }
 
         if(!implicitBlockType.isEmpty() && blockName.isEmpty() &&
@@ -537,7 +534,7 @@ success:;
             if(scriptBlockTypes.contains(blockType))
             {
                 // Parse as Doomsday Script.
-                block->add(new KeyElement("script", parseScript()));
+                block->add(new KeyElement(SCRIPT_TOKEN, parseScript()));
             }
             else
             {
@@ -583,6 +580,9 @@ success:;
             String content = finder->findIncludedInfoSource(includeName, self, &includePath);
 
             Info included;
+            included.setImplicitBlockType(implicitBlockType);
+            included.setScriptBlocks(scriptBlockTypes);
+            included.setAllowDuplicateBlocksOfType(allowDuplicateBlocksOfType);
             included.setFinder(*finder); // use ours
             included.setSourcePath(includePath);
             included.parse(content);

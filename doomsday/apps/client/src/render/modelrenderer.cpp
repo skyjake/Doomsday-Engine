@@ -17,9 +17,10 @@
  */
 
 #include "render/modelrenderer.h"
-#include "gl/gl_main.h"
+#include "render/mobjanimator.h"
 #include "render/rend_main.h"
 #include "render/vissprite.h"
+#include "gl/gl_main.h"
 #include "world/p_players.h"
 #include "world/clientmobjthinkerdata.h"
 #include "clientapp.h"
@@ -44,6 +45,7 @@ static String const DEF_PASS        ("pass");
 static String const DEF_MESHES      ("meshes");
 static String const DEF_BLENDFUNC   ("blendFunc");
 static String const DEF_BLENDOP     ("blendOp");
+static String const DEF_TIMELINE    ("timeline");
 
 DENG2_PIMPL(ModelRenderer)
 , DENG2_OBSERVES(filesys::AssetObserver, Availability)
@@ -153,6 +155,7 @@ DENG2_PIMPL(ModelRenderer)
         {
             model.setAtlas(*atlas);
 
+            model.setDefaultTexture(ModelDrawable::Diffuse,  defaultEmission); // blank
             model.setDefaultTexture(ModelDrawable::Normals,  defaultNormals);
             model.setDefaultTexture(ModelDrawable::Emissive, defaultEmission);
             model.setDefaultTexture(ModelDrawable::Specular, defaultSpecular);
@@ -280,7 +283,14 @@ DENG2_PIMPL(ModelRenderer)
                 }
             }
 
-            // TODO: Check for a possible timeline and calculate time factors accordingly.
+            // Timelines.
+            auto timelines = ScriptedInfo::subrecordsOfType(DEF_TIMELINE, asset.subrecord(DEF_ANIMATION));
+            DENG2_FOR_EACH_CONST(Record::Subrecords, timeline, timelines)
+            {
+                Scheduler *scheduler = new Scheduler;
+                scheduler->addFromInfo(*timeline.value());
+                aux->timelines[timeline.key()] = scheduler;
+            }
         }
 
         // Rendering passes.
@@ -416,6 +426,18 @@ DENG2_PIMPL(ModelRenderer)
 
         lightCount++;
     }
+
+    template <typename Params>
+    void draw(Params const &p)
+    {
+        DENG2_ASSERT(p.auxData != nullptr);
+
+        p.animator->bindUniforms(program); /// @todo Constant buffers?
+        p.model->draw(p.animator,
+                      !p.auxData->passes.isEmpty()? &p.auxData->passes :
+                                                    nullptr);
+        p.animator->unbindUniforms(program);
+    }
 };
 
 ModelRenderer::ModelRenderer() : d(new Instance(this))
@@ -436,16 +458,21 @@ ModelBank &ModelRenderer::bank()
     return d->bank;
 }
 
+ModelRenderer::AuxiliaryData const *ModelRenderer::auxiliaryData(DotPath const &modelId) const
+{
+    return d->bank.userData(modelId)->maybeAs<AuxiliaryData>();
+}
+
 ModelRenderer::StateAnims const *ModelRenderer::animations(DotPath const &modelId) const
 {
-    if(auto const *aux = d->bank.userData(modelId)->maybeAs<AuxiliaryData>())
+    if(auto const *aux = auxiliaryData(modelId))
     {
         if(!aux->animations.isEmpty())
         {
             return &aux->animations;
         }
     }
-    return 0;
+    return nullptr;
 }
 
 void ModelRenderer::render(vissprite_t const &spr)
@@ -489,8 +516,7 @@ void ModelRenderer::render(vissprite_t const &spr)
     d->setupLighting(spr.light);
 
     // Draw the model using the current animation state.
-    p.model->draw(p.animator,
-                  !p.auxData->passes.isEmpty()? &p.auxData->passes : nullptr);
+    d->draw(p);
     GLState::pop();
 
     /// @todo Something is interfering with the cull setting elsewhere (remove this).
@@ -515,8 +541,7 @@ void ModelRenderer::render(vispsprite_t const &pspr)
     d->setupLighting(pspr.light);
 
     GLState::push().setCull(p.auxData->cull);
-    p.model->draw(p.animator,
-                  !p.auxData->passes.isEmpty()? &p.auxData->passes : nullptr);
+    d->draw(p);
     GLState::pop();
 
     /// @todo Something is interfering with the cull setting elsewhere (remove this).
@@ -538,4 +563,27 @@ int ModelRenderer::identifierFromText(String const &text,
         id = resolver(text);
     }
     return id;
+}
+
+ModelRenderer::AnimSequence::AnimSequence(String const &name, Record const &def)
+    : name(name)
+    , def(&def)
+{
+    // Parse timeline events.
+    if(def.hasSubrecord(DEF_TIMELINE))
+    {
+        timeline = new Scheduler;
+        timeline->addFromInfo(def.subrecord(DEF_TIMELINE));
+    }
+    else if(def.hasMember(DEF_TIMELINE))
+    {
+        // Uses a shared timeline in the definition. This will be looked up when
+        // the animation starts.
+        sharedTimeline = def.gets(DEF_TIMELINE);
+    }
+}
+
+ModelRenderer::AuxiliaryData::~AuxiliaryData()
+{
+    qDeleteAll(timelines.values());
 }

@@ -23,9 +23,7 @@ group model {
             attribute highp vec4 aBoneWeights;
 
             varying highp vec2 vUV;
-            varying highp vec2 vNormalUV;
-            varying highp vec2 vSpecularUV;
-            varying highp vec2 vEmissionUV;
+            varying highp vec4 vUVBounds[4];
             varying highp vec3 vLightDirs[4]; // tangent space
             varying highp vec3 vEyeDir;       // tangent space
 
@@ -61,27 +59,27 @@ group model {
                 
                 // Eye direction in tangent space.
                 vEyeDir = (uEyePos - modelPos.xyz/modelPos.w) * tangentSpace;
-                
-                vUV         = aBounds.xy  + aUV * aBounds.zw;
-                vNormalUV   = aBounds2.xy + aUV * aBounds2.zw;
-                vSpecularUV = aBounds3.xy + aUV * aBounds3.zw;
-                vEmissionUV = aBounds4.xy + aUV * aBounds4.zw;
+                          
+                vUV = aUV;
+                vUVBounds[0] = aBounds;
+                vUVBounds[1] = aBounds2;
+                vUVBounds[2] = aBounds3;
+                vUVBounds[3] = aBounds4;
             }"
         fragment = "
             uniform sampler2D uTex;
             uniform highp vec4 uAmbientLight;
             uniform highp vec4 uLightIntensities[4];
+            uniform highp float uEmission;
             
             varying highp vec2 vUV;
-            varying highp vec2 vNormalUV;
-            varying highp vec2 vSpecularUV;
-            varying highp vec2 vEmissionUV;
+            varying highp vec4 vUVBounds[4];
             varying highp vec3 vLightDirs[4]; // tangent space
             varying highp vec3 vEyeDir;       // tangent space
             
-            highp vec3 normalVector() 
+            highp vec3 normalVector(highp vec2 uv) 
             {
-                return normalize((texture2D(uTex, vNormalUV).xyz * 2.0) - 1.0);
+                return normalize((texture2D(uTex, uv).xyz * 2.0) - 1.0);
             }
 
             highp vec4 diffuseLight(int index, highp vec3 normal) 
@@ -94,7 +92,7 @@ group model {
                 return max(d * uLightIntensities[index], vec4(0.0));
             }
             
-            highp vec4 specularLight(int index, highp vec3 normal) 
+            highp vec4 specularLight(highp vec2 specularUV, int index, highp vec3 normal) 
             {
                 if(uLightIntensities[index].a <= 0.001) 
                 {
@@ -111,7 +109,7 @@ group model {
                 highp vec3 reflected = reflect(-vLightDirs[index], normal);
                 
                 // Check the specular texture for parameters.
-                highp vec4 specular = texture2D(uTex, vSpecularUV);
+                highp vec4 specular = texture2D(uTex, specularUV);
                 highp float shininess = max(1.0, specular.a * 7.0);
                 
                 highp float d =  
@@ -124,9 +122,16 @@ group model {
             }
             
             void main(void) 
-            {        
-                highp vec3 normal = normalVector();
-                highp vec4 diffuse = texture2D(uTex, vUV);
+            {
+                // Calculate UV at the fragment (wrapped inside the bounds).
+                highp vec2 wrappedUV = fract(vUV);
+                highp vec2 uv         = vUVBounds[0].xy + wrappedUV * vUVBounds[0].zw;
+                highp vec2 normalUV   = vUVBounds[1].xy + wrappedUV * vUVBounds[1].zw;
+                highp vec2 specularUV = vUVBounds[2].xy + wrappedUV * vUVBounds[2].zw;
+                highp vec2 emissiveUV = vUVBounds[3].xy + wrappedUV * vUVBounds[3].zw;
+            
+                highp vec3 normal = normalVector(normalUV);
+                highp vec4 diffuse = texture2D(uTex, uv);
                         
                 gl_FragColor = diffuse *
                     (uAmbientLight + 
@@ -136,12 +141,12 @@ group model {
                      diffuseLight(3, normal));
 
                 highp vec4 specular =
-                    specularLight(0, normal) +
-                    specularLight(1, normal) +
-                    specularLight(2, normal) +
-                    specularLight(3, normal);
+                    specularLight(specularUV, 0, normal) +
+                    specularLight(specularUV, 1, normal) +
+                    specularLight(specularUV, 2, normal) +
+                    specularLight(specularUV, 3, normal);
                     
-                highp vec4 emission = texture2D(uTex, vEmissionUV);
+                highp vec4 emission = uEmission * texture2D(uTex, emissiveUV);
                     
                 gl_FragColor.rgb += specular.rgb + (emission.rgb * emission.a);
                 gl_FragColor.a = min(1.0, diffuse.a + specular.a + emission.a);

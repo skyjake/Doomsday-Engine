@@ -20,7 +20,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_VECTOR_H
@@ -71,7 +71,7 @@ template <typename VecType>
 VecType vectorFromValue(Value const &value) {
     VecType converted;
     for(int i = 0; i < converted.size(); ++i) {
-        converted[i] = typename VecType::ValueType(value.element(NumberValue(i)).asNumber());
+        converted[i] = typename VecType::ValueType(value.element(i).asNumber());
     }
     return converted;
 }

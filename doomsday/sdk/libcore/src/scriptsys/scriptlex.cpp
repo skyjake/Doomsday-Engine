@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/ScriptLex"
@@ -60,11 +60,11 @@ String const ScriptLex::WEAK_ASSIGN("?=");
 ScriptLex::ScriptLex(String const &input) : Lex(input)
 {}
 
-duint ScriptLex::getStatement(TokenBuffer &output)
+duint ScriptLex::getStatement(TokenBuffer &output, Behaviors const &behavior)
 {
     // Get rid of the previous contents of the token buffer.
     output.clear();
-    
+
     duint counter = 0; // How many tokens have we added?
 
     enum BracketType {
@@ -77,7 +77,7 @@ duint ScriptLex::getStatement(TokenBuffer &output)
 
     // Skip any whitespace before the beginning of the statement.
     skipWhite();
-    
+
     // We have arrived at a non-white token. What is our indentation
     // for this statement?
     duint indentation = countLineStartSpace();
@@ -85,163 +85,169 @@ duint ScriptLex::getStatement(TokenBuffer &output)
     // Now we can start forming tokens until we arrive at a non-escaped
     // newline. Also, the statement does not end until all braces and
     // parenthesis have been closed.
-    try
+    while(!atEnd())
     {
-        forever
+        // Tokens are primarily separated by whitespace.
+        skipWhiteExceptNewline();
+
+        if(behavior.testFlag(StopAtMismatchedCloseBrace) &&
+           !bracketLevel[BRACKET_CURLY] &&
+            peek() == '}')
         {
-            // Tokens are primarily separated by whitespace.
-            skipWhiteExceptNewline();
+            // Don't read past the bracket.
+            break;
+        }
 
-            // This will be the first character of the token.
-            QChar c = get();
-            
-            if(c == '\n' || c == ';')
+        // This will be the first character of the token.
+        QChar c = get();
+
+        if(c == '\n' || c == ';')
+        {
+            // A statement ending character? Open brackets prevent the statement
+            // from ending here.
+            if(Vector3i(bracketLevel).max() > 0)
+                continue;
+            else
+                break;
+        }
+
+        output.newToken(lineNumber());
+
+        if(c == '\\')
+        {
+            // An escaped newline?
+            if(onlyWhiteOnLine())
             {
-                // A statement ending character? Open brackets prevent the statement
-                // from ending here.
-                if(Vector3i(bracketLevel).max() > 0)
-                    continue;
-                else
-                    break;
-            }
-
-            output.newToken(lineNumber());    
-
-            if(c == '\\')
-            {
-                // An escaped newline?
-                if(onlyWhiteOnLine())
-                {
-                    skipToNextLine();
-                    continue;
-                }
-            }
-
-            output.appendChar(c);
-
-            if(c == '"' || c == '\'')
-            {
-                // Read an entire string constant into the token.
-                // The type of the token is also determined.
-                output.setType(parseString(c, indentation, output));
-
-                // The string token is complete.
-                output.endToken();
-                counter++;
+                skipToNextLine();
                 continue;
             }
+        }
 
-            // Is it a number literal?
-            if((c == '.' && isNumeric(peek())) || isNumeric(c))
+        output.appendChar(c);
+
+        if(c == '"' || c == '\'')
+        {
+            // Read an entire string constant into the token.
+            // The type of the token is also determined.
+            output.setType(parseString(c, indentation, output));
+
+            // The string token is complete.
+            output.endToken();
+            counter++;
+            continue;
+        }
+
+        // Is it a number literal?
+        if((c == '.' && isNumeric(peek())) || isNumeric(c))
+        {
+            bool gotPoint = (c == '.');
+            bool isHex = (c == '0' && (peek() == 'x' || peek() == 'X'));
+            bool gotX = false;
+
+            output.setType(Token::LITERAL_NUMBER);
+
+            // Read until a non-numeric character is found.
+            while(isNumeric((c = peek())) || (isHex && isHexNumeric(c)) ||
+                  (!isHex && !gotPoint && c == '.') ||
+                  (isHex && !gotX && (c == 'x' || c == 'X')))
             {
-                bool gotPoint = (c == '.');
-                bool isHex = (c == '0' && (peek() == 'x' || peek() == 'X'));
-                bool gotX = false;
-                
-                output.setType(Token::LITERAL_NUMBER);
+                // Just one decimal point.
+                if(c == '.') gotPoint = true;
+                // Just one 'x'.
+                if(c == 'x' || c == 'X') gotX = true;
+                output.appendChar(get());
+            }
+            output.endToken();
+            counter++;
+            continue;
+        }
 
-                // Read until a non-numeric character is found.
-                while(isNumeric((c = peek())) || (isHex && isHexNumeric(c)) || 
-                    (!isHex && !gotPoint && c == '.') || 
-                    (isHex && !gotX && (c == 'x' || c == 'X')))
-                {
-                    // Just one decimal point.
-                    if(c == '.') gotPoint = true;
-                    // Just one 'x'.
-                    if(c == 'x' || c == 'X') gotX = true;
-                    output.appendChar(get());
-                }
-                output.endToken();
-                counter++;
-                continue;
+        // Alphanumeric characters are joined into a token.
+        if(isAlphaNumeric(c))
+        {
+            output.setType(Token::IDENTIFIER);
+
+            while(isAlphaNumeric((c = peek())))
+            {
+                output.appendChar(get());
             }
 
-            // Alphanumeric characters are joined into a token.
-            if(isAlphaNumeric(c))
-            {
-                output.setType(Token::IDENTIFIER);
-                
-                while(isAlphaNumeric((c = peek())))
-                {
-                    output.appendChar(get());
-                }
-                
-                // It might be that this is a keyword.
-                if(isKeyword(output.latest()))
-                {
-                    output.setType(Token::KEYWORD);
-                }
-                
-                output.endToken();
-                counter++;
-                continue;
-            }
-
-            // The scope keyword.
-            if(c == '-' && peek() == '>')
+            // It might be that this is a keyword.
+            if(isKeyword(output.latest()))
             {
                 output.setType(Token::KEYWORD);
-                output.appendChar(get());
-                output.endToken();
-                counter++;
-                continue;
             }
 
-            if(isOperator(c))
-            {
-                output.setType(Token::OPERATOR);
-                
-                if(combinesWith(c, peek()))
-                {
-                    output.appendChar(get());
-                    /// @todo  Three-character tokens: >>=, <<=
-                }
-                else
-                {
-                    // Keep score of bracket levels, since they prevent 
-                    // newlines from ending the statement.
-                    if(c == '(') bracketLevel[BRACKET_PARENTHESIS]++;
-                    if(c == ')') bracketLevel[BRACKET_PARENTHESIS]--;
-                    if(c == '[') bracketLevel[BRACKET_SQUARE]++;
-                    if(c == ']') bracketLevel[BRACKET_SQUARE]--;
-                    if(c == '{') bracketLevel[BRACKET_CURLY]++;
-                    if(c == '}') bracketLevel[BRACKET_CURLY]--;
-
-                    if(Vector3i(bracketLevel).min() < 0)
-                    {
-                        // Very unusual!
-                        throw MismatchedBracketError("ScriptLex::getStatement",
-                                                     "Mismatched bracket '" + QString(c) +
-                                                     "' on line " +
-                                                     QString::number(lineNumber()));
-                    }
-                }
-
-                // Many operators are just one character long.
-                output.endToken();
-                counter++;
-                continue;
-            }
-
-            // Unexpected character!
-            throw UnexpectedCharacterError("ScriptLex::getStatement",
-                "Character '" + String(1, c) + "' was unexpected");
+            output.endToken();
+            counter++;
+            continue;
         }
+
+        // The scope keyword.
+        if(c == '-' && peek() == '>')
+        {
+            output.setType(Token::KEYWORD);
+            output.appendChar(get());
+            output.endToken();
+            counter++;
+            continue;
+        }
+
+        if(isOperator(c))
+        {
+            output.setType(Token::OPERATOR);
+
+            if(combinesWith(c, peek()))
+            {
+                output.appendChar(get());
+                /// @todo  Three-character tokens: >>=, <<=
+            }
+            else
+            {
+                // Keep score of bracket levels, since they prevent
+                // newlines from ending the statement.
+                if(c == '(') bracketLevel[BRACKET_PARENTHESIS]++;
+                if(c == ')') bracketLevel[BRACKET_PARENTHESIS]--;
+                if(c == '[') bracketLevel[BRACKET_SQUARE]++;
+                if(c == ']') bracketLevel[BRACKET_SQUARE]--;
+                if(c == '{') bracketLevel[BRACKET_CURLY]++;
+                if(c == '}') bracketLevel[BRACKET_CURLY]--;
+
+                if(Vector3i(bracketLevel).min() < 0)
+                {
+                    // Very unusual!
+                    throw MismatchedBracketError("ScriptLex::getStatement",
+                                                 "Mismatched bracket '" + QString(c) +
+                                                 "' on line " +
+                                                 QString::number(lineNumber()));
+                }
+            }
+
+            // Many operators are just one character long.
+            output.endToken();
+            counter++;
+            continue;
+        }
+
+        // Unexpected character!
+        throw UnexpectedCharacterError("ScriptLex::getStatement",
+                                       "Character '" + String(1, c) + "' was unexpected");
     }
-    catch(OutOfInputError const &)
+
+    // Open brackets left?
+    if(atEnd())
     {
-        // Open brackets left?
         for(int i = 0; i < MAX_BRACKETS; ++i)
         {
             if(bracketLevel[i] > 0)
             {
-                throw MismatchedBracketError("ScriptLex::getStatement", "Unclosed bracket '" + 
+                throw MismatchedBracketError("ScriptLex::getStatement", "Unclosed bracket '" +
                     String(i == BRACKET_PARENTHESIS? ")" :
                            i == BRACKET_SQUARE? "]" : "}") + "'");
             }
         }
     }
-        
+
     return counter; // Number of tokens added.
 }
 
@@ -253,12 +259,12 @@ ScriptLex::parseString(QChar startChar, duint startIndentation, TokenBuffer &out
           Token::LITERAL_STRING_QUOTED );
     bool longString = false;
     duint charLineNumber = lineNumber();
-    
+
     ModeSpan readingMode(*this, SkipComments);
-    
+
     // The token already contains the startChar.
     QChar c = get();
-    
+
     if(c == '\n')
     {
         // This can't be good.
@@ -268,7 +274,7 @@ ScriptLex::parseString(QChar startChar, duint startIndentation, TokenBuffer &out
     }
 
     output.appendChar(c);
-    
+
     if(c == startChar)
     {
         // Already over?
@@ -284,12 +290,12 @@ ScriptLex::parseString(QChar startChar, duint startIndentation, TokenBuffer &out
             return type;
         }
     }
-    
+
     // Read chars until something interesting is found.
     for(;;)
     {
         charLineNumber = lineNumber();
-        
+
         output.appendChar(c = get());
         if(c == '\\') // Escape?
         {
@@ -334,16 +340,16 @@ ScriptLex::parseString(QChar startChar, duint startIndentation, TokenBuffer &out
             break;
         }
     }
-    
+
     return (longString? Token::LITERAL_STRING_LONG : type);
 }
 
 bool ScriptLex::isOperator(QChar c)
 {
-    return (c == '=' || c == ',' || c == '.' 
-        || c == '-' || c == '+' || c == '/' || c == '*' || c == '%' 
+    return (c == '=' || c == ',' || c == '.'
+        || c == '-' || c == '+' || c == '/' || c == '*' || c == '%'
         || c == '&' || c == '|' || c == '!' || c == '^' || c == '~'
-        || c == '(' || c == ')' || c == '{' || c == '}' || c == '[' || c == ']' 
+        || c == '(' || c == ')' || c == '{' || c == '}' || c == '[' || c == ']'
         || c == ':' || c == '<' || c == '>' || c == '?');
 }
 
@@ -351,7 +357,7 @@ bool ScriptLex::combinesWith(QChar a, QChar b)
 {
     if(b == '=')
     {
-        return (a == '=' || a == '+' || a == '-' || a == '/' 
+        return (a == '=' || a == '+' || a == '-' || a == '/'
             || a == '*' || a == '%' || a == '!' || a == '|' || a == '&'
             || a == '^' || a == '~' || a == '<' || a == '>' || a == ':' || a == '?');
     }
@@ -423,14 +429,14 @@ String ScriptLex::unescapeStringToken(Token const &token)
     DENG2_ASSERT(token.type() == Token::LITERAL_STRING_APOSTROPHE ||
                  token.type() == Token::LITERAL_STRING_QUOTED ||
                  token.type() == Token::LITERAL_STRING_LONG);
-    
+
     String result;
     QTextStream os(&result);
     bool escaped = false;
-    
+
     QChar const *begin = token.begin();
     QChar const *end = token.end();
-    
+
     // A long string?
     if(token.type() == Token::LITERAL_STRING_LONG)
     {
@@ -444,7 +450,7 @@ String ScriptLex::unescapeStringToken(Token const &token)
         ++begin;
         --end;
     }
-    
+
     for(QChar const *ptr = begin; ptr != end; ++ptr)
     {
         if(escaped)
@@ -496,14 +502,14 @@ String ScriptLex::unescapeStringToken(Token const &token)
                 QString num(const_cast<QChar const *>(ptr + 1), 2);
                 duint code = num.toInt(0, 16);
                 c = QChar(code);
-                ptr += 2; 
+                ptr += 2;
             }
             else
             {
                 // Unknown escape sequence?
                 os << '\\' << *ptr;
                 continue;
-            }            
+            }
             os << c;
         }
         else
@@ -513,11 +519,11 @@ String ScriptLex::unescapeStringToken(Token const &token)
                 escaped = true;
                 continue;
             }
-            os << *ptr; 
+            os << *ptr;
         }
     }
     DENG2_ASSERT(!escaped);
-    
+
     return result;
 }
 
