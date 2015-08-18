@@ -60,7 +60,7 @@ String const ScriptLex::WEAK_ASSIGN("?=");
 ScriptLex::ScriptLex(String const &input) : Lex(input)
 {}
 
-duint ScriptLex::getStatement(TokenBuffer &output)
+duint ScriptLex::getStatement(TokenBuffer &output, Behaviors const &behavior)
 {
     // Get rid of the previous contents of the token buffer.
     output.clear();
@@ -89,6 +89,14 @@ duint ScriptLex::getStatement(TokenBuffer &output)
     {
         // Tokens are primarily separated by whitespace.
         skipWhiteExceptNewline();
+
+        if(behavior.testFlag(StopAtMismatchedCloseBrace) &&
+           !bracketLevel[BRACKET_CURLY] &&
+            peek() == '}')
+        {
+            // Don't read past the bracket.
+            break;
+        }
 
         // This will be the first character of the token.
         QChar c = get();

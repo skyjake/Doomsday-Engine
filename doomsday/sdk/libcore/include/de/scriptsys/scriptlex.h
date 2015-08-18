@@ -14,14 +14,16 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
- 
+
 #ifndef LIBDENG2_SCRIPTLEX_H
 #define LIBDENG2_SCRIPTLEX_H
 
 #include "../Lex"
 #include "../TokenBuffer"
+
+#include <QFlags>
 
 namespace de {
 
@@ -88,17 +90,25 @@ public:
     static String const SCOPE_ASSIGN;
     static String const WEAK_ASSIGN;
 
+    enum Behavior
+    {
+        DefaultBehavior = 0,
+        StopAtMismatchedCloseBrace = 0x1 ///< Mismatched } is treated as end of input.
+    };
+    Q_DECLARE_FLAGS(Behaviors, Behavior)
+
 public:
     ScriptLex(String const &input = "");
 
     /**
      * Analyze one complete statement from the input.
      *
-     * @param output Buffer for output tokens.
+     * @param output    Buffer for output tokens.
+     * @param behavior  Parsing behavior.
      *
      * @return  The number of tokens added to the output token buffer.
      */
-    duint getStatement(TokenBuffer &output);
+    duint getStatement(TokenBuffer &output, Behaviors const &behavior = DefaultBehavior);
 
     /**
      * Parse a string.
@@ -133,6 +143,8 @@ public:
     /// Converts a token to a number.
     static ddouble tokenToNumber(Token const &token);
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(ScriptLex::Behaviors)
 
 } // namespace de
 

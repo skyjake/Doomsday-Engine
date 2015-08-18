@@ -350,29 +350,20 @@ DENG2_PIMPL(Info)
         return value;
     }
 
-    InfoValue parseScript(int numStatements = 0)
+    InfoValue parseScript(int requiredStatementCount = 0)
     {
         int startPos = cursor - 1;
         String remainder = content.substr(startPos);
         ScriptLex lex(remainder);
-        try
-        {
-            TokenBuffer tokens;
-            int count = 0;
 
-            // Read an appropriate number of statements.
-            while(lex.getStatement(tokens))
-            {
-                if(numStatements > 0 && ++count == numStatements)
-                    goto success;
-            }
-            throw SyntaxError("Info::parseScript",
-                              QString("Unexpected end of script starting at line %1").arg(currentLine));
-success:;
-        }
-        catch(ScriptLex::MismatchedBracketError const &)
+        TokenBuffer tokens;
+        int count = 0;
+
+        // Read an appropriate number of statements.
+        while(lex.getStatement(tokens, ScriptLex::StopAtMismatchedCloseBrace))
         {
-            // A mismatched bracket signals the end of the script block.
+            if(requiredStatementCount > 0 &&
+               ++count == requiredStatementCount) break; // We're good now.
         }
 
         // Continue parsing normally from here.
