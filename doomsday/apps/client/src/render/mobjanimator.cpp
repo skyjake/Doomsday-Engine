@@ -36,7 +36,8 @@ static String const DEF_VARIABLE   ("variable");
 static String const DEF_WRAP       ("wrap");
 
 static String const VAR_SELF ("self");
-static String const VAR_ASSET("__asset__");
+static String const VAR_ID   ("__id__");
+static String const VAR_ASSET("asset");
 
 static int const ANIM_DEFAULT_PRIORITY = 1;
 
@@ -194,18 +195,20 @@ DENG2_PIMPL(MobjAnimator)
         : Base(i)
         , auxData(ClientApp::renderSystem().modelRenderer().auxiliaryData(id))
     {
-        names.addText(VAR_ASSET, id).setReadOnly();
-        names.add(VAR_SELF).set(new RecordValue(App::asset(id).accessedRecord())).setReadOnly();
+        names.addText(VAR_ID, id).setReadOnly();
+        names.add(VAR_ASSET).set(new RecordValue(App::asset(id).accessedRecord())).setReadOnly();
 
-        initVariables();
+        // VAR_SELF should point to the thing's namespace, or player's for psprites
+
+        initShaderVariables();
     }
 
     ~Instance()
     {
-        deinitVariables();
+        deinitShaderVariables();
     }
 
-    void initVariables()
+    void initShaderVariables()
     {
         auto const &def = names[VAR_SELF].valueAsRecord();
         if(def.has("render"))
@@ -297,7 +300,7 @@ DENG2_PIMPL(MobjAnimator)
                 .setReadOnly();
     }
 
-    void deinitVariables()
+    void deinitShaderVariables()
     {
         qDeleteAll(renderVars.values());
     }
@@ -325,6 +328,11 @@ MobjAnimator::MobjAnimator(DotPath const &id, ModelDrawable const &model)
     : ModelDrawable::Animator(model, Instance::Sequence::make)
     , d(new Instance(this, id))
 {}
+
+void MobjAnimator::setOwnerNamespace(Record &names)
+{
+    d->names.add(VAR_SELF).set(new RecordValue(names));
+}
 
 void MobjAnimator::triggerByState(String const &stateName)
 {

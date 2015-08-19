@@ -27,6 +27,7 @@
  * Mobj-specific model animator.
  *
  * The state and movement of the mobj determine which animation sequences are started.
+ * Also used for psprites, since they are pretty much light-weight mobjs.
  */
 class MobjAnimator : public de::ModelDrawable::Animator
 {
@@ -35,6 +36,14 @@ public:
 
 public:
     MobjAnimator(de::DotPath const &id, de::ModelDrawable const &model);
+
+    /**
+     * Sets the namespace of the animator's owner. Available as "self" in animation
+     * scripts.
+     *
+     * @param names  Owner's namespace.
+     */
+    void setOwnerNamespace(de::Record &names);
 
     void triggerByState(de::String const &stateName);
 

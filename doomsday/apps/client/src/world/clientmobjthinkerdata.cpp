@@ -102,6 +102,7 @@ DENG2_PIMPL(ClientMobjThinkerData)
             ModelBank::ModelWithData loaded = modelBank().modelAndData(modelId());
             ModelDrawable &model = *loaded.first;
             animator.reset(new MobjAnimator(modelId(), model));
+            animator->setOwnerNamespace(self.info());
 
             modelAuxData = &loaded.second->as<ModelRenderer::AuxiliaryData>();
 
