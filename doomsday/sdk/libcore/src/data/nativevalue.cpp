@@ -20,39 +20,66 @@
 
 namespace de {
 
-NativeValue::NativeValue(ObjectPtr object, Record const *memberScope)
-    : _object(object)
-    , _memberScope(memberScope)
-{}
-
-NativeValue::ObjectPtr NativeValue::object() const
+DENG2_PIMPL_NOREF(NativeValue)
+, DENG2_OBSERVES(Deletable, Deletion)
 {
-    return _object;
+    Object *object = nullptr;
+    Record const *memberScope = nullptr;
+
+    ~Instance()
+    {
+        setObject(nullptr);
+    }
+
+    void setObject(Object *obj)
+    {
+        if(object) object->audienceForDeletion -= this;
+        object = obj;
+        if(object) object->audienceForDeletion += this;
+    }
+
+    void objectWasDeleted(Deletable *obj)
+    {
+        DENG2_ASSERT(object == obj);
+        object = nullptr;
+    }
+};
+
+NativeValue::NativeValue(Object *object, Record const *memberScope)
+    : d(new Instance)
+{
+    d->memberScope = memberScope;
+    d->setObject(object);
 }
 
-void NativeValue::setObject(ObjectPtr object)
+NativeValue::Object *NativeValue::object() const
 {
-    _object = object;
+    return d->object;
+}
+
+void NativeValue::setObject(Object *object)
+{
+    d->object = object;
 }
 
 Value *NativeValue::duplicate() const
 {
-    return new NativeValue(_object, _memberScope);
+    return new NativeValue(d->object, d->memberScope);
 }
 
 Value::Text NativeValue::asText() const
 {
-    return QString("(native object %1)").arg(dintptr(_object), 0, 16);
+    return QString("(native object 0x%1)").arg(dintptr(d->object), 0, 16);
 }
 
 bool NativeValue::isTrue() const
 {
-    return _object != nullptr;
+    return d->object != nullptr;
 }
 
 Record *NativeValue::memberScope() const
 {
-    return const_cast<Record *>(_memberScope);
+    return const_cast<Record *>(d->memberScope);
 }
 
 void NativeValue::operator >> (Writer &) const

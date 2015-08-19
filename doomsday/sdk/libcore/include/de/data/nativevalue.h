@@ -21,27 +21,34 @@
 
 #include "../Value"
 #include "../Record"
+#include "../Deletable"
 
 namespace de {
 
 /**
- * Reference to a native object. Only stores a pointer, and is not informed about the
- * deletion of the referenced object. The creator of NativeValue instances must ensure
- * that the values are not used after the referenced object has been destroyed.
+ * Reference to a native object. Only stores a pointer, and observes the deletion of the
+ * referenced object.
  *
- * @todo Must have a mechanism to be informed about deletion of the target object to
- * be useful for general purposes.
+ * The referenced objects must be derived from Deletable, because scripts may duplicate
+ * values and the values may get copied into any Variable. All NativeValue instances
+ * referencing a native object must be changed to point to @c nullptr if the native
+ * object gets deleted.
  */
 class DENG2_PUBLIC NativeValue : public Value
 {
 public:
-    typedef void * ObjectPtr;
+    typedef Deletable Object;
 
 public:
-    NativeValue(ObjectPtr object, Record const *memberScope);
+    NativeValue(Object *object, Record const *memberScope);
 
-    ObjectPtr object() const;
-    void setObject(ObjectPtr object);
+    Object *object() const;
+    void setObject(Object *object);
+
+    template <typename Type>
+    Type *nativeObject() const {
+        return static_cast<Type *>(object());
+    }
 
     // Implementations of pure virtual methods.
     Value *duplicate() const;
@@ -56,8 +63,7 @@ public:
     void operator << (Reader &from);
 
 private:
-    ObjectPtr _object;
-    Record const *_memberScope;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace de
