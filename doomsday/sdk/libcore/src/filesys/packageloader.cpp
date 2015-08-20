@@ -105,6 +105,19 @@ DENG2_PIMPL(PackageLoader)
     }
 
     /**
+     * Parses or updates the metadata of a package, and checks it for validity.
+     * A ValidationError is thrown if the package metadata does not comply with the
+     * minimum requirements.
+     *
+     * @param packFile  Package file (".pack" folder).
+     */
+    static void checkPackage(File &packFile)
+    {
+        Package::parseMetadata(packFile);
+        Package::validateMetadata(packFile.info().subrecord("package"));
+    }
+
+    /**
      * Given a package identifier, pick one of the available versions of the package
      * based on predefined criteria.
      *
@@ -126,9 +139,7 @@ DENG2_PIMPL(PackageLoader)
         // Each must have a version specified.
         DENG2_FOR_EACH_CONST(FS::FoundFiles, i, found)
         {
-            File *pkg = *i;
-            Package::parseMetadata(*pkg);
-            Package::validateMetadata(pkg->info().subrecord("package"));
+            checkPackage(**i);
         }
 
         found.sort(ascendingPackagesByLatest);
@@ -173,12 +184,23 @@ DENG2_PIMPL(PackageLoader)
         {
             if(i->first.fileNameExtension() == ".pack")
             {
-                String path = i->second->path();
+                try
+                {
+                    File &file = *i->second;
+                    String path = file.path();
 
-                // The special persistent data package should be ignored.
-                if(path == "/home/persist.pack") continue;
+                    // The special persistent data package should be ignored.
+                    if(path == "/home/persist.pack") continue;
 
-                list.append(path);
+                    // Check the metadata.
+                    checkPackage(file);
+
+                    list.append(path);
+                }
+                catch(Package::ValidationError const &)
+                {
+                    // Not a loadable package.
+                }
             }
         }
     }
