@@ -50,6 +50,7 @@ group dialog {
     rule message.width     { constant $= UNIT * 115 }
     rule download.width    { constant $= UNIT * 115 }
     rule multiplayer.width { constant $= UNIT * 80 }
+    rule packages.width    { constant $= UNIT * 100 }
 }
 
 group alerts {
