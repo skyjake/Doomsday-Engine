@@ -10,40 +10,40 @@ rule halfunit { constant $= UNIT / 2 }
 rule gap      { constant $= UNIT * 3 }
 rule glow     { constant $= UNIT * 25 }
 
-group label {
+label {
     rule gap { constant $= gap.constant / 2 }
 }
 
 rule scrollarea.bar { constant $= UNIT }
 
-group popup {
-    group menu {
+popup {
+    menu {
         rule margin { constant $= UNIT }
         rule paddedmargin { constant $= UNIT * 8 }
     }
 }
 
-group document {
+document {
     rule progress    { constant $= UNIT * 30 }
     rule popup.width { constant $= UNIT * 120 }
 }
 
-group editor {
+editor {
     rule width { constant $= UNIT * 60 }
     rule completion.height { constant $= UNIT * 100 }
 }
 
-group progress {
+progress {
     rule textgap { constant $= gap.constant }
 }
 
-group slider {
+slider {
     rule width  { constant $= UNIT * 55 }
     rule label  { constant $= UNIT * 9 }
     rule editor { constant $= UNIT * 20 }
 }
 
-group dialog {
+dialog {
     rule gap { constant $= UNIT * 2 }
 
     rule about.width       { constant $= UNIT * 80 }
@@ -53,33 +53,33 @@ group dialog {
     rule packages.width    { constant $= UNIT * 100 }
 }
 
-group alerts {
+alerts {
     rule width { constant $= UNIT * 100 }
 }
 
-group sidebar {
+sidebar {
     rule width { constant $= UNIT * 80 }
 }
 
-group console {
+console {
     rule prompt.width { constant $= UNIT * 13 }
     rule width { constant $= UNIT * 125 }
 
-    group commandline {
+    commandline {
         rule width.min { constant $= UNIT * 25 }
         rule width.max { constant $= UNIT * 75 }
     }
 }
 
-group gameselection {
+gameselection {
     rule max.width  { constant $= UNIT * 270 }
     rule max.height { constant $= UNIT * 215 }
 }
 
-group coloradjustment {
+coloradjustment {
     rule slider { constant $= slider.width.constant * 1.36 }
 }
 
-group rendererappearance {
+rendererappearance {
     rule width { constant $= UNIT * 100 }
 }
