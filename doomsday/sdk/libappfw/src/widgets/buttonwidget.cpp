@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/ButtonWidget"
@@ -32,6 +32,7 @@ DENG2_OBSERVES(Action, Triggered)
     DotPath originalTextColor;
     Vector4f originalTextModColor;
     DotPath bgColorId;
+    DotPath borderColorId;
     HoverColorMode hoverColorMode;
     bool infoStyle;
     Action *action;
@@ -43,6 +44,7 @@ DENG2_OBSERVES(Action, Triggered)
         : Base(i)
         , state(Up)
         , bgColorId("background")
+        , borderColorId("text")
         , hoverColorMode(ReplaceColor)
         , infoStyle(false)
         , action(0)
@@ -142,10 +144,17 @@ DENG2_OBSERVES(Action, Triggered)
         }
     }
 
+    Vector4f borderColor() const
+    {
+        return style().colors().colorf(borderColorId) *
+               Vector4f(1, 1, 1, frameOpacity);
+    }
+
     void setDefaultBackground()
     {
         self.set(Background(style().colors().colorf(bgColorId),
-                            Background::GradientFrame, Vector4f(1, 1, 1, frameOpacity), 6));
+                            Background::GradientFrame,
+                            borderColor(), 6));
     }
 
     void updateBackground()
@@ -154,9 +163,7 @@ DENG2_OBSERVES(Action, Triggered)
         if(bg.type == Background::GradientFrame)
         {
             bg.solidFill = style().colors().colorf(bgColorId);
-            /// @todo Make this Style-able. -jk
-            bg.color = infoStyle? Vector4f(0, 0, 0, frameOpacity) :
-                                  Vector4f(1, 1, 1, frameOpacity);
+            bg.color = borderColor();
             self.set(bg);
         }
     }
@@ -198,15 +205,17 @@ void ButtonWidget::useInfoStyle(bool yes)
 {
     d->infoStyle = yes;
     if(yes)
-    {        
+    {
         d->originalTextColor = "inverted.text";
         setHoverTextColor("inverted.text", ReplaceColor);
+        setBorderColor("inverted.text");
         setBackgroundColor("inverted.background");
     }
     else
     {
         d->originalTextColor = "text";
         setHoverTextColor("text", ReplaceColor);
+        setBorderColor("text");
         setBackgroundColor("background");
     }
     setTextColor(d->originalTextColor);
@@ -229,6 +238,12 @@ void ButtonWidget::setHoverTextColor(DotPath const &hoverTextId, HoverColorMode 
 void ButtonWidget::setBackgroundColor(DotPath const &bgColorId)
 {
     d->bgColorId = bgColorId;
+    d->updateBackground();
+}
+
+void ButtonWidget::setBorderColor(DotPath const &borderColorId)
+{
+    d->borderColorId = borderColorId;
     d->updateBackground();
 }
 
