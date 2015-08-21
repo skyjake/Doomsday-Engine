@@ -23,6 +23,7 @@
 #include <de/MenuWidget>
 #include <de/ChildWidgetOrganizer>
 #include <de/SequentialLayout>
+#include <de/DocumentPopupWidget>
 
 using namespace de;
 
@@ -50,7 +51,20 @@ DENG_GUI_PIMPL(PackagesDialog)
      * the package.
      */
     class Widget : public GuiWidget
+            , DENG2_OBSERVES(PanelWidget, Close)
     {
+    private:
+        struct InfoAction : public Action
+        {
+            Widget &owner;
+
+            InfoAction(Widget &widget) : owner(widget) {}
+            void trigger() {
+                Action::trigger();
+                owner.openInfoPopup();
+            }
+        };
+
     public:
         Widget(PackageItem const &item)
             : _item(item)
@@ -65,6 +79,8 @@ DENG_GUI_PIMPL(PackagesDialog)
             _subtitle->setSizePolicy(ui::Fixed, ui::Expand);
             _subtitle->setAlignment(ui::AlignLeft);
             _subtitle->setTextLineAlignment(ui::AlignLeft);
+            _subtitle->setFont("small");
+            _subtitle->setTextColor("accent");
             _subtitle->margins().setTop("").setBottom("unit").setLeft("unit");
 
             add(_loadButton = new ButtonWidget);
@@ -72,6 +88,7 @@ DENG_GUI_PIMPL(PackagesDialog)
             add(_infoButton = new ButtonWidget);
             _infoButton->setSizePolicy(ui::Expand, ui::Fixed);
             _infoButton->setText(_E(s)_E(B) + tr("..."));
+            _infoButton->setAction(new InfoAction(*this));
 
             createTagButtons();
 
@@ -81,24 +98,32 @@ DENG_GUI_PIMPL(PackagesDialog)
 
             _title->rule()
                     .setInput(Rule::Width, titleWidth)
-                    .setInput(Rule::Left, rule().left())
-                    .setInput(Rule::Top,  rule().top());
+                    .setInput(Rule::Left,  rule().left())
+                    .setInput(Rule::Top,   rule().top());
             _subtitle->rule()
                     .setInput(Rule::Width, titleWidth)
-                    .setInput(Rule::Left, rule().left())
-                    .setInput(Rule::Top,  _title->rule().bottom());
+                    .setInput(Rule::Left,  rule().left())
+                    .setInput(Rule::Top,   _title->rule().bottom());
 
             _loadButton->rule()
                     .setInput(Rule::Right, rule().right() - _infoButton->rule().width())
                     .setMidAnchorY(rule().midY());
             _infoButton->rule()
-                    .setInput(Rule::Right, rule().right())
+                    .setInput(Rule::Right,  rule().right())
                     .setInput(Rule::Height, _loadButton->rule().height())
                     .setMidAnchorY(rule().midY());
 
             rule().setInput(Rule::Width,  style().rules().rule("dialog.packages.width"))
                   .setInput(Rule::Height, _title->rule().height() +
                             _subtitle->rule().height() + _tags.at(0)->rule().height());
+        }
+
+        ~Widget()
+        {
+            if(_popup)
+            {
+                _popup->audienceForClose() -= this;
+            }
         }
 
         void createTagButtons()
@@ -111,8 +136,8 @@ DENG_GUI_PIMPL(PackagesDialog)
                 auto *btn = new ButtonWidget;
                 btn->setText(_E(l) + tag.toLower());
                 btn->setFont("small");
-                btn->setTextColor("accent");
-                btn->set(Background(Background::Rounded, style().colors().colorf("accent"), 6));
+                btn->setTextColor("altaccent");
+                btn->set(Background(Background::Rounded, style().colors().colorf("altaccent"), 6));
                 btn->setSizePolicy(ui::Expand, ui::Expand);
                 btn->margins()
                         .setTop("unit").setBottom("unit")
@@ -127,15 +152,21 @@ DENG_GUI_PIMPL(PackagesDialog)
         void updateContents()
         {
             _title->setText(_item.info.gets("title"));
-            _subtitle->setText(_E(n) + packageId());
+            _subtitle->setText(packageId());
 
             if(isLoaded())
             {
                 _loadButton->setText(tr("Unload"));
+                _loadButton->setTextColor("altaccent");
+                _loadButton->setBorderColor("altaccent");
+                _title->setFont("choice.selected");
             }
             else
             {
                 _loadButton->setText(tr("Load"));
+                _loadButton->setTextColor("text");
+                _loadButton->setBorderColor("text");
+                _title->setFont("default");
             }
         }
 
@@ -149,6 +180,37 @@ DENG_GUI_PIMPL(PackagesDialog)
             return _item.info.gets("ID");
         }
 
+        void openInfoPopup()
+        {
+            if(_popup)
+            {
+                _popup->close();
+                return;
+            }
+
+            _popup = new DocumentPopupWidget;
+            _popup->audienceForClose() += this;
+            _popup->setAnchorAndOpeningDirection(_infoButton->rule(), ui::Left);
+            _popup->setDeleteAfterDismissed(true);
+            _popup->document().setText(QString("%1%2" _E(.) "\n%3\n" _E(l) "Version:" _E(.) " %4\n"
+                                            _E(l) "License:" _E(.)_E(>) " %5\n")
+                                       .arg(_E(1))
+                                       .arg(_item.info.gets("title"))
+                                       .arg(packageId())
+                                       .arg(_item.info.gets("version"))
+                                       .arg(_item.info.gets("license")));
+            add(_popup);
+            _popup->open();
+        }
+
+        void panelBeingClosed(PanelWidget &panel)
+        {
+            if(_popup == &panel)
+            {
+                _popup = nullptr;
+            }
+        }
+
     private:
         PackageItem const &_item;
         LabelWidget *_title;
@@ -156,6 +218,7 @@ DENG_GUI_PIMPL(PackagesDialog)
         QList<ButtonWidget *> _tags;
         ButtonWidget *_loadButton;
         ButtonWidget *_infoButton;
+        DocumentPopupWidget *_popup = nullptr;
     };
 
     Instance(Public *i) : Base(i)
