@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/PopupWidget"
@@ -101,7 +101,8 @@ DENG_GUI_PIMPL(PopupWidget)
                     .setInput(Rule::Top, OperatorRule::clamped(
                                   *anchorY - self.rule().height() / 2,
                                   self.margins().top(),
-                                  self.root().viewHeight() - self.rule().height() - self.margins().bottom()));
+                                  self.root().viewHeight() - self.rule().height() -
+                                  self.margins().bottom() + self.margins().top()));
             break;
 
         case ui::Right:
@@ -337,7 +338,7 @@ bool PopupWidget::handleEvent(Event const &event)
             }
         }
         return true;
-    }    
+    }
 
     if(event.type() == Event::KeyPress  ||
        event.type() == Event::KeyRepeat ||
