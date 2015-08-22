@@ -678,7 +678,10 @@ void GuiWidget::update()
         d->styleChanged = false;
         updateStyle();
     }
-    d->updateOpacityForDisabledWidgets();
+    if(!d->attribs.testFlag(ManualOpacity))
+    {
+        d->updateOpacityForDisabledWidgets();
+    }
 
     d->firstUpdateAfterCreation = false;
 }

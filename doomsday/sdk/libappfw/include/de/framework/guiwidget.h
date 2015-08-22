@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBAPPFW_GUIWIDGET_H
@@ -176,6 +176,12 @@ public:
         RetainStatePersistently = 0x1,
 
         AnimateOpacityWhenEnabledOrDisabled = 0x2,
+
+        /**
+         * Widget will not automatically change opacity depending on state (e.g., when
+         * disabled).
+         */
+        ManualOpacity = 0x10,
 
         /**
          * Prevents the drawing of the widget contents even if it visible. The texture
@@ -489,14 +495,14 @@ struct GuiWidgetDeleter {
         GuiWidget::destroy(w);
     }
 };
-    
+
 template <typename WidgetType>
 class UniqueWidgetPtr : public std::unique_ptr<WidgetType, GuiWidgetDeleter<WidgetType>> {
 public:
     UniqueWidgetPtr(WidgetType *w = nullptr)
         : std::unique_ptr<WidgetType, GuiWidgetDeleter<WidgetType>>(w) {}
 };
-    
+
 } // namespace de
 
 #endif // LIBAPPFW_GUIWIDGET_H

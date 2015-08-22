@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/PopupMenuWidget"
@@ -126,7 +126,8 @@ DENG_GUI_PIMPL(PopupMenuWidget)
         if(item.semantics().testFlag(ui::Item::Separator))
         {
             LabelWidget &lab = widget.as<LabelWidget>();
-            lab.setTextColor(item.semantics().testFlag(ui::Item::Annotation)? "label.altaccent" : "label.accent");
+            lab.setTextColor(item.semantics().testFlag(ui::Item::Annotation)? "label.altaccent" :
+                                                                              "label.accent");
             lab.setMaximumTextWidth(*maxItemWidth);
             lab.rule().setInput(Rule::Width, *maxItemWidth);
             return;
