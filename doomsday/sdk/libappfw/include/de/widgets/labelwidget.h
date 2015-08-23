@@ -104,6 +104,13 @@ public:
     Rule const &contentWidth() const;
     Rule const &contentHeight() const;
 
+    enum FillMode {
+        FillWithImage,
+        FillWithText
+    };
+
+    void setFillMode(FillMode fillMode);
+
     /**
      * Sets the gap between the text and image. Defaults to "label.gap".
      *
@@ -113,12 +120,12 @@ public:
 
     DotPath const &textGap() const;
 
-    enum FillMode {
-        FillWithImage,
-        FillWithText
+    enum TextShadow {
+        NoShadow,
+        RectangleShadow
     };
 
-    void setFillMode(FillMode fillMode);
+    void setTextShadow(TextShadow shadow, DotPath const &shadowColor = "label.shadow");
 
     enum AlignmentMode {
         AlignByCombination,

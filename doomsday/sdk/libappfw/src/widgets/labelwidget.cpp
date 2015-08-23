@@ -42,11 +42,14 @@ public Font::RichFormat::IStyle
     Alignment imageAlign;
     Alignment overlayAlign;
     FillMode fillMode = FillWithImage;
+    TextShadow textShadow = NoShadow;
+    DotPath textShadowColorId { "label.shadow" };
     ContentFit imageFit;
     Vector2f overrideImageSize;
     float imageScale;
     Vector4f imageColor;
     Vector4f textGLColor;
+    Vector4f shadowColor;
     Rule const *maxTextWidth;
 
     ConstantRule *width;
@@ -128,6 +131,7 @@ public Font::RichFormat::IStyle
         accentColor    = st.colors().color("label.accent");
         dimAccentColor = st.colors().color("label.dimaccent");
         altAccentColor = st.colors().color("label.altaccent");
+        shadowColor    = st.colors().colorf(textShadowColorId);
 
         glText.setFont(self.font());
         glText.forceUpdate();
@@ -656,6 +660,13 @@ DotPath const &LabelWidget::textGap() const
     return d->gapId;
 }
 
+void LabelWidget::setTextShadow(TextShadow shadow, DotPath const &colorId)
+{
+    d->textShadow = shadow;
+    d->textShadowColorId = colorId;
+    d->updateStyle();
+}
+
 void LabelWidget::setFillMode(FillMode fillMode)
 {
     d->fillMode = fillMode;
@@ -804,9 +815,22 @@ void LabelWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
     }
     if(d->hasText())
     {
-        // Shadow + text.
-        /*composer.makeVertices(verts, textPos.topLeft + Vector2i(0, 2),
-                              lineAlign, Vector4f(0, 0, 0, 1));*/
+        // Shadow behind the text.
+        if(d->textShadow == RectangleShadow)
+        {
+            Rectanglef textBox = Rectanglef::fromSize(textSize());
+            ui::applyAlignment(d->lineAlign, textBox, layout.text);
+            int const boxSize = toDevicePixels(114);
+            Vector2f const off(0, textBox.height() * .08f);
+            Vector2f const hoff(textBox.height()/2, 0);
+            verts.makeFlexibleFrame(Rectanglef(textBox.midLeft() + hoff + off,
+                                               textBox.midRight() - hoff + off)
+                                        .expanded(boxSize),
+                                    boxSize,
+                                    d->shadowColor,
+                                    root().atlas().imageRectf(root().borderGlow()));
+        }
+
         d->glText.makeVertices(verts, layout.text, d->lineAlign, d->lineAlign, d->textGLColor);
     }
 
