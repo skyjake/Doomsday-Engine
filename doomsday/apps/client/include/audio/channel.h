@@ -1,4 +1,4 @@
-/** @file sfxchannel.h  Logical sound channel (for sound effects).
+/** @file channel.h  Logical sound playback channel.
  * @ingroup audio
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -19,12 +19,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_AUDIO_SFXCHANNEL_H
-#define CLIENT_AUDIO_SFXCHANNEL_H
-
-#ifndef __cplusplus
-#  error "sfxchannel.h requires C++"
-#endif
+#ifndef CLIENT_AUDIO_CHANNEL_H
+#define CLIENT_AUDIO_CHANNEL_H
 
 #include "api_audiod_sfx.h"  // sfxbuffer_t
 #include "world/p_object.h"  // mobj_t
@@ -40,17 +36,17 @@
 namespace audio {
 
 /**
- * Models a logical sound channel (for sound effects).
+ * Models a logical sound playback channel (for sound effects).
  */
-class SfxChannel
+class Channel
 {
 public:
     /// No sound buffer is assigned to the channel. @ingroup errors
     DENG2_ERROR(MissingBufferError);
 
 public:
-    SfxChannel();
-    ~SfxChannel();
+    Channel();
+    ~Channel();
 
     /**
      * Determines whether a sound buffer is assigned to the channel.
@@ -66,7 +62,7 @@ public:
 
     /**
      * Stop any sound currently playing on the channel.
-     * @note Just stopping a sound buffer doesn't affect refresh.
+     * @note Just stopping a channel doesn't affect refresh!
      */
     void stop();
 
@@ -80,13 +76,13 @@ public:
     void setFrequency(float newFrequency);
 
     /**
-     * Returns the current sound volume: 1.0 is max.
+     * Returns the current channel volume: 1.0 is max.
      */
     float volume() const;
     void setVolume(float newVolume);
 
     /**
-     * Returns the attributed sound emitter if any (may be @c nullptr).
+     * Returns the attributed sound-emitter if any (may be @c nullptr).
      */
     struct mobj_s *emitter() const;
     void setEmitter(struct mobj_s *newEmitter);
@@ -94,9 +90,9 @@ public:
     void setFixedOrigin(de::Vector3d const &newOrigin);
 
     /**
-     * Calculate priority points for a sound playing on the channel. They are used
-     * to determine which sounds can be cancelled by new sounds. Zero is the lowest
-     * priority.
+     * Calculate priority points for sound currently playing on the channel. These
+     * points are used to determine which sounds can be overridden by new sounds.
+     * Zero is the lowest priority.
      */
     float priority() const;
 
@@ -117,49 +113,48 @@ private:
 /**
  * Implements high-level logic for managing a set of logical sound channels.
  */
-class SfxChannels
+class Channels
 {
 public:
     /**
-     * Construct a new SfxChannel set (comprising @a count channels).
+     * Construct a new sound Channel set (comprising @a count channels).
      */
-    SfxChannels(int count);
+    Channels(int count);
 
     /**
-     * Returns the total number of channels.
+     * Returns the total number of sound Channels.
      */
     int count() const;
 
     /**
-     * Returns the total number of sound channels currently playing a/the sound sample
-     * associated with the given sound @a id.
+     * Returns the total number of Channels currently playing a/the sound sample
+     * associated with the given @a soundId.
      */
-    int countPlaying(int id);
+    int countPlaying(int soundId);
 
     /**
-     * Returns @a true if one or more sound channels is currently playing a/the sound sample
+     * Returns @a true if at least one Channel is currently playing a/the sound sample
      * associated with the given sound @a id.
      */
     inline bool isPlaying(int id) { return countPlaying(id) > 0; }
 
     /**
-     * Attempt to find an unused SfxChannel suitable for playing a sound sample.
+     * Attempt to find an unused Channel suitable for playing a sample with the given
+     * format.
      *
      * @param use3D
      * @param bytes
      * @param rate
-     * @param sampleId
+     * @param soundId
      */
-    SfxChannel *tryFindVacant(bool use3D, int bytes, int rate, int sampleId) const;
+    Channel *tryFindVacant(bool use3D, int bytes, int rate, int soundId) const;
 
     void refreshAll();
 
     /**
-     * Iterate through the channels making a callback for each.
-     *
-     * @param func  Callback to make for each SfxChannel.
+     * Iterate through the Channels, executing @a callback for each.
      */
-    de::LoopResult forAll(std::function<de::LoopResult (SfxChannel &)> func) const;
+    de::LoopResult forAll(std::function<de::LoopResult (Channel &)> callback) const;
 
 private:
     DENG2_PRIVATE(d)
@@ -175,6 +170,6 @@ extern byte refMonitor;
 /**
  * Draws debug information on-screen.
  */
-void Sfx_ChannelDrawer();
+void UI_AudioChannelDrawer();
 
-#endif  // CLIENT_AUDIO_SFXCHANNEL_H
+#endif  // CLIENT_AUDIO_CHANNEL_H

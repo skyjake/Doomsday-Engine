@@ -1,4 +1,4 @@
-/** @file s_cache.cpp  Sound sample cache.
+/** @file samplecache.cpp  Sound sample cache.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
@@ -18,7 +18,7 @@
  */
 
 #include "de_base.h"
-#include "audio/s_cache.h"
+#include "audio/samplecache.h"
 
 #include "dd_main.h"  // App_AudioSystem()
 #include "def_main.h"  // Def_Get*()
@@ -114,7 +114,7 @@ static void resample(void *dst, dint dstBytesPer, dint dstRate, void const *src,
     if(dstRate == 2 * srcRate)
     {
         if(dstBytesPer == 1)
-        {   
+        {
             // The source has a byte per sample as well.
             duchar const *sp = (duchar const *) src;
             duchar *dp       = (duchar *) dst;
@@ -245,7 +245,7 @@ void configureSample(sfxsample_t &smp, void const * /*data*/, duint size, dint n
     smp.size       = numSamples * bytesPer;
     smp.rate       = rate;
     smp.numSamples = numSamples;
-        
+
     // Apply the upsample factor.
     dint const rsfactor = upsampleFactor(rate);
     smp.rate       *= rsfactor;
@@ -260,7 +260,7 @@ void configureSample(sfxsample_t &smp, void const * /*data*/, duint size, dint n
     }
 }
 
-SfxSampleCache::CacheItem::CacheItem()
+SampleCache::CacheItem::CacheItem()
     : next(nullptr)
     , prev(nullptr)
     , hits(0)
@@ -269,19 +269,19 @@ SfxSampleCache::CacheItem::CacheItem()
     zap(sample);
 }
 
-SfxSampleCache::CacheItem::~CacheItem()
+SampleCache::CacheItem::~CacheItem()
 {
     // We have ownership of the sample data.
     M_Free(sample.data);
 }
 
-void SfxSampleCache::CacheItem::hit()
+void SampleCache::CacheItem::hit()
 {
     hits += 1;
     lastUsed = Timer_Ticks();
 }
 
-void SfxSampleCache::CacheItem::replaceSample(sfxsample_t &newSample)
+void SampleCache::CacheItem::replaceSample(sfxsample_t &newSample)
 {
     hits = 0;
 
@@ -291,7 +291,7 @@ void SfxSampleCache::CacheItem::replaceSample(sfxsample_t &newSample)
     std::memcpy(&sample, &newSample, sizeof(sample));
 }
 
-DENG2_PIMPL(SfxSampleCache)
+DENG2_PIMPL(SampleCache)
 {
     /**
      * Cached samples are placed in a hash (key: sound id).
@@ -473,18 +473,18 @@ DENG2_PIMPL(SfxSampleCache)
     DENG2_PIMPL_AUDIENCE(SampleRemove)
 };
 
-DENG2_AUDIENCE_METHOD(SfxSampleCache, SampleRemove)
+DENG2_AUDIENCE_METHOD(SampleCache, SampleRemove)
 
-SfxSampleCache::SfxSampleCache() : d(new Instance(this))
+SampleCache::SampleCache() : d(new Instance(this))
 {}
 
-void SfxSampleCache::clear()
+void SampleCache::clear()
 {
     d->removeAll();
     d->lastPurge = 0;
 }
 
-void SfxSampleCache::maybeRunPurge()
+void SampleCache::maybeRunPurge()
 {
 #ifdef __CLIENT__
     // If no interface for SFX playback is available then we have nothing to do.
@@ -533,7 +533,7 @@ void SfxSampleCache::maybeRunPurge()
         {
 #ifdef __CLIENT__
             // If the sample is playing we won't remove it now.
-            if(App_AudioSystem().sfxChannels().isPlaying(it->sample.id))
+            if(App_AudioSystem().channels().isPlaying(it->sample.id))
                 continue;
 #endif
 
@@ -554,7 +554,7 @@ void SfxSampleCache::maybeRunPurge()
     }
 }
 
-void SfxSampleCache::info(duint *cacheBytes, duint *sampleCount) const
+void SampleCache::info(duint *cacheBytes, duint *sampleCount) const
 {
     duint size  = 0;
     duint count = 0;
@@ -569,7 +569,7 @@ void SfxSampleCache::info(duint *cacheBytes, duint *sampleCount) const
     if(sampleCount) *sampleCount = count;
 }
 
-void SfxSampleCache::hit(dint soundId)
+void SampleCache::hit(dint soundId)
 {
     if(CacheItem *found = d->tryFind(soundId))
     {
@@ -577,9 +577,9 @@ void SfxSampleCache::hit(dint soundId)
     }
 }
 
-sfxsample_t *SfxSampleCache::cache(dint soundId)
+sfxsample_t *SampleCache::cache(dint soundId)
 {
-    LOG_AS("SfxSampleCache");
+    LOG_AS("SampleCache");
 
 #ifdef __CLIENT__
     // If no interface for SFX playback is available there is no benefit to caching

@@ -34,9 +34,10 @@
 #endif
 
 #include "api_audiod_sfx.h"
+#include "audio/samplecache.h"
 #ifdef __CLIENT__
-#  include "audio/m_mus2midi.h"
-#  include "audio/sfxchannel.h"
+#  include "audio/channel.h"
+#  include "audio/mus.h"
 #endif
 
 #include "api_map.h"
@@ -70,19 +71,19 @@ DENG_EXTERN_C audiointerface_music_t audiodQuickTimeMusic;
 #  endif
 #endif
 
-dint sfxBits    = 8;
-dint sfxRate    = 11025;
+dint sfxBits = 8;
+dint sfxRate = 11025;
 
 namespace audio {
 
 static audio::System *theAudioSystem;
 
-static duint const SOUND_LOGICAL_PURGEINTERVAL = 2000;  ///< 2 seconds
+static duint const PURGEINTERVAL = 2000;  ///< 2 seconds
 #ifdef __CLIENT__
-static dint const SOUND_CHANNEL_COUNT_DEFAULT  = 16;
-static dint const SOUND_CHANNEL_COUNT_MAX      = 256;
-static dint const SOUND_CHANNEL_2DCOUNT        = 4;
-static String const MUSIC_BUFFEREDFILE         ("dd-buffered-song");
+static dint const CHANNEL_COUNT_DEFAULT  = 16;
+static dint const CHANNEL_COUNT_MAX      = 256;
+static dint const CHANNEL_2DCOUNT        = 4;
+static String const MUSIC_BUFFEREDFILE   ("dd-buffered-song");
 
 static thread_t refreshHandle;
 static volatile bool allowRefresh, refreshing;
@@ -118,10 +119,10 @@ static audio::System::MusicSource musSourcePreference = audio::System::MUSP_EXT;
  *
  * @todo Use a real mutex, will you?
  */
-static dint C_DECL sfxChannelRefreshThread(void *)
+static dint C_DECL channelRefreshThread(void *)
 {
     // We'll continue looping until the Sfx module is shut down.
-    while(App_AudioSystem().sfxIsAvailable() && App_AudioSystem().hasSfxChannels())
+    while(App_AudioSystem().sfxIsAvailable() && App_AudioSystem().hasChannels())
     {
         // The bit is swapped on each refresh (debug info).
         ::refMonitor ^= 1;
@@ -130,7 +131,7 @@ static dint C_DECL sfxChannelRefreshThread(void *)
         {
             // Do the refresh.
             refreshing = true;
-            App_AudioSystem().sfxChannels().refreshAll();
+            App_AudioSystem().channels().refreshAll();
             refreshing = false;
 
             // Let's take a nap.
@@ -183,13 +184,13 @@ static mobj_t *getListenerMobj()
 DENG2_PIMPL(System)
 #ifdef __CLIENT__
 , DENG2_OBSERVES(App, GameUnload)
-, DENG2_OBSERVES(SfxSampleCache, SampleRemove)
+, DENG2_OBSERVES(SampleCache, SampleRemove)
 #endif
 {
 #ifdef __CLIENT__
-    AudioDriver drivers[AUDIODRIVER_COUNT];
+    Driver drivers[AUDIODRIVER_COUNT];
 
-    AudioDriver &driverById(audiodriverid_t id)
+    Driver &driverById(audiodriverid_t id)
     {
         DENG2_ASSERT(VALID_AUDIODRIVER_IDENTIFIER(id));
         return drivers[id];
@@ -198,14 +199,14 @@ DENG2_PIMPL(System)
     /**
      * Chooses the default audio driver based on configuration options.
      */
-    audiodriverid_t chooseAudioDriver()
+    audiodriverid_t chooseDriver()
     {
         CommandLine &cmdLine = App::commandLine();
 
         // No audio output?
         if(::isDedicated)
             return AUDIOD_DUMMY;
-    
+
         if(cmdLine.has("-dummy"))
             return AUDIOD_DUMMY;
 
@@ -241,7 +242,7 @@ DENG2_PIMPL(System)
     {
         try
         {
-            AudioDriver &driver = driverById(driverId);
+            Driver &driver = driverById(driverId);
 
             switch(driverId)
             {
@@ -264,10 +265,10 @@ DENG2_PIMPL(System)
             driver.initialize();
             return driver.isInitialized();
         }
-        catch(AudioDriver::LoadError const &er)
+        catch(Driver::LoadError const &er)
         {
             LOG_AUDIO_WARNING("Failed initializing driver \"%s\":\n")
-                << AudioDriver_GetName(driverId)
+                << Driver_GetName(driverId)
                 << er.asText();
         }
         return false;
@@ -276,7 +277,7 @@ DENG2_PIMPL(System)
     audiodriverid_t initDriverIfNeeded(String const &identifier)
     {
         audiodriverid_t id  = identifierToDriverId(identifier);
-        AudioDriver &driver = driverById(id);
+        Driver &driver = driverById(id);
         if(!driver.isInitialized())
         {
             initDriver(id);
@@ -291,7 +292,7 @@ DENG2_PIMPL(System)
         if(App::commandLine().has("-nosound"))
             return false;
 
-        audiodriverid_t defaultDriverId = chooseAudioDriver();
+        audiodriverid_t defaultDriverId = chooseDriver();
 
         bool ok = initDriver(defaultDriverId);
 
@@ -303,12 +304,12 @@ DENG2_PIMPL(System)
             ok = initDriver(defaultDriverId);
         }
 #endif
-
         if(ok)
         {
             // Choose the interfaces to use.
             selectInterfaces(defaultDriverId);
         }
+
         return ok;
     }
 
@@ -321,7 +322,7 @@ DENG2_PIMPL(System)
         }
 
         // Unload the plugins after everything has been shut down.
-        for(AudioDriver &driver : drivers)
+        for(Driver &driver : drivers)
         {
             driver.unload();
         }
@@ -336,7 +337,7 @@ DENG2_PIMPL(System)
      * @todo The audio interface could also declare which audio formats it is capable
      * of playing (e.g., MIDI only, CD tracks only).
      */
-    struct AudioInterface
+    struct PlaybackInterface
     {
         audiointerfacetype_t type;
         union {
@@ -346,7 +347,7 @@ DENG2_PIMPL(System)
             audiointerface_cd_t    *cd;
         } i;
     };
-    QList<AudioInterface> activeInterfaces;
+    QList<PlaybackInterface> activeInterfaces;
 
     /**
      * Choose the SFX, Music, and CD audio interfaces to use.
@@ -355,12 +356,12 @@ DENG2_PIMPL(System)
      */
     void selectInterfaces(audiodriverid_t defaultDriverId)
     {
-        AudioDriver &defaultDriver = driverById(defaultDriverId);
+        Driver &defaultDriver = driverById(defaultDriverId);
 
         // The default driver goes on the bottom of the stack.
         if(defaultDriver.hasSfx())
         {
-            AudioInterface ifs; zap(ifs);
+            PlaybackInterface ifs; zap(ifs);
             ifs.type  = AUDIO_ISFX;
             ifs.i.any = &defaultDriver.iSfx();
             activeInterfaces << ifs;  // a copy is made
@@ -368,7 +369,7 @@ DENG2_PIMPL(System)
 
         if(defaultDriver.hasMusic())
         {
-            AudioInterface ifs; zap(ifs);
+            PlaybackInterface ifs; zap(ifs);
             ifs.type  = AUDIO_IMUSIC;
             ifs.i.any = &defaultDriver.iMusic();
             activeInterfaces << ifs;  // a copy is made
@@ -377,7 +378,7 @@ DENG2_PIMPL(System)
         else if(defaultDriverId != AUDIOD_DUMMY)
         {
             // On the Mac, use the built-in QuickTime interface as the fallback for music.
-            AudioInterface ifs; zap(ifs);
+            PlaybackInterface ifs; zap(ifs);
             ifs.type  = AUDIO_IMUSIC;
             ifs.i.any = &::audiodQuickTimeMusic;
             activeInterfaces << ifs;  // a copy is made
@@ -390,10 +391,10 @@ DENG2_PIMPL(System)
         if(defaultDriverId == AUDIOD_FMOD)
         {
             initDriverIfNeeded("fluidsynth");
-            AudioDriver &fluidSynth = driverById(AUDIOD_FLUIDSYNTH);
+            Driver &fluidSynth = driverById(AUDIOD_FLUIDSYNTH);
             if(fluidSynth.isInitialized())
             {
-                AudioInterface ifs; zap(ifs);
+                PlaybackInterface ifs; zap(ifs);
                 ifs.type  = AUDIO_IMUSIC;
                 ifs.i.any = &fluidSynth.iMusic();
                 activeInterfaces << ifs;  // a copy is made
@@ -403,7 +404,7 @@ DENG2_PIMPL(System)
 
         if(defaultDriver.hasCd())
         {
-            AudioInterface ifs; zap(ifs);
+            PlaybackInterface ifs; zap(ifs);
             ifs.type  = AUDIO_ICD;
             ifs.i.any = &defaultDriver.iCd();
             activeInterfaces << ifs;  // a copy is made
@@ -417,11 +418,11 @@ DENG2_PIMPL(System)
             // Check for SFX override.
             if(cmdLine.matches("-isfx", cmdLine.at(p)))
             {
-                AudioDriver &driver = driverById(initDriverIfNeeded(cmdLine.at(++p)));
+                Driver &driver = driverById(initDriverIfNeeded(cmdLine.at(++p)));
                 if(!driver.hasSfx())
-                    throw Error("selectInterfaces", "Audio driver '" + driver.name() + "' does not provide an SFX interface");
+                    throw Error("selectInterfaces", "Driver \"" + driver.name() + "\" does not provide a SFX interface");
 
-                AudioInterface ifs; zap(ifs);
+                PlaybackInterface ifs; zap(ifs);
                 ifs.type  = AUDIO_ISFX;
                 ifs.i.any = &driver.iSfx();
                 activeInterfaces << ifs;  // a copy is made
@@ -431,11 +432,11 @@ DENG2_PIMPL(System)
             // Check for Music override.
             if(cmdLine.matches("-imusic", cmdLine.at(p)))
             {
-                AudioDriver &driver = driverById(initDriverIfNeeded(cmdLine.at(++p)));
+                Driver &driver = driverById(initDriverIfNeeded(cmdLine.at(++p)));
                 if(!driver.hasMusic())
-                    throw Error("selectInterfaces", "Audio driver '" + driver.name() + "' does not provide a Music interface");
+                    throw Error("selectInterfaces", "Driver \"" + driver.name() + "\" does not provide a Music interface");
 
-                AudioInterface ifs; zap(ifs);
+                PlaybackInterface ifs; zap(ifs);
                 ifs.type  = AUDIO_IMUSIC;
                 ifs.i.any = &driver.iMusic();
                 activeInterfaces << ifs;  // a copy is made
@@ -445,11 +446,11 @@ DENG2_PIMPL(System)
             // Check for CD override.
             if(cmdLine.matches("-icd", cmdLine.at(p)))
             {
-                AudioDriver &driver = driverById(initDriverIfNeeded(cmdLine.at(++p)));
+                Driver &driver = driverById(initDriverIfNeeded(cmdLine.at(++p)));
                 if(!driver.hasCd())
-                    throw Error("selectInterfaces", "Audio driver '" + driver.name() + "' does not provide a CD interface");
+                    throw Error("selectInterfaces", "Driver \"" + driver.name() + "\" does not provide a CD interface");
 
-                AudioInterface ifs; zap(ifs);
+                PlaybackInterface ifs; zap(ifs);
                 ifs.type  = AUDIO_ICD;
                 ifs.i.any = &driver.iCd();
                 activeInterfaces << ifs;  // a copy is made
@@ -475,7 +476,7 @@ DENG2_PIMPL(System)
         {
             for(dint i = activeInterfaces.count(); i--> 0; )
             {
-                AudioInterface const &ifs = activeInterfaces[i];
+                PlaybackInterface const &ifs = activeInterfaces[i];
                 if(ifs.type == type ||
                    (type == AUDIO_IMUSIC_OR_ICD && (ifs.type == AUDIO_IMUSIC ||
                                                     ifs.type == AUDIO_ICD)))
@@ -500,7 +501,7 @@ DENG2_PIMPL(System)
     {
         if(anyAudioInterface)
         {
-            for(AudioDriver const &driver : drivers)
+            for(Driver const &driver : drivers)
             {
                 if((void *)&driver.iSfx()   == anyAudioInterface ||
                    (void *)&driver.iMusic() == anyAudioInterface ||
@@ -510,14 +511,14 @@ DENG2_PIMPL(System)
                 }
             }
         }
-        throw Error("audio::System::getBaseInterface", "Unknown audio interface");
+        throw Error("audio::System::getBaseInterface", "Unknown playback interface");
     }
 
     audiointerfacetype_t interfaceType(void *anyAudioInterface) const
     {
         if(anyAudioInterface)
         {
-            for(AudioDriver const &driver : drivers)
+            for(Driver const &driver : drivers)
             {
                 if((void *)&driver.iSfx()   == anyAudioInterface) return AUDIO_ISFX;
                 if((void *)&driver.iMusic() == anyAudioInterface) return AUDIO_IMUSIC;
@@ -531,7 +532,7 @@ DENG2_PIMPL(System)
     {
         if(anyAudioInterface)
         {
-            for(AudioDriver const &driver : drivers)
+            for(Driver const &driver : drivers)
             {
                 String const name = driver.interfaceName(anyAudioInterface);
                 if(!name.isEmpty()) return name;
@@ -576,13 +577,15 @@ DENG2_PIMPL(System)
     bool sfxAvail = false;              ///< @c true if a sound driver is initialized for sound effect playback.
     mobj_t *sfxListener = nullptr;
     SectorCluster *sfxListenerCluster = nullptr;
-    std::unique_ptr<SfxChannels> sfxChannels;
 #endif
-
-    SfxSampleCache sfxSampleCache;      ///< @todo should be __CLIENT__ only.
     LogicSoundHash sfxLogicHash;
     duint sfxLogicLastPurge = 0;
     bool sfxLogicOneSoundPerEmitter = false;  ///< set at the start of the frame
+
+    SampleCache sampleCache;
+#ifdef __CLIENT__
+    std::unique_ptr<Channels> channels;
+#endif
 
     Instance(Public *i) : Base(i)
     {
@@ -590,7 +593,7 @@ DENG2_PIMPL(System)
 
 #ifdef __CLIENT__
         App::app().audienceForGameUnload() += this;
-        sfxSampleCache.audienceForSampleRemove() += this;
+        sampleCache.audienceForSampleRemove() += this;
 #endif
     }
 
@@ -598,7 +601,7 @@ DENG2_PIMPL(System)
     {
         sfxClearLogical();
 #ifdef __CLIENT__
-        sfxSampleCache.audienceForSampleRemove() -= this;
+        sampleCache.audienceForSampleRemove() -= this;
         App::app().audienceForGameUnload() -= this;
 #endif
 
@@ -696,6 +699,7 @@ DENG2_PIMPL(System)
         }
         catch(FS1::NotFoundError const &)
         {}  // Ignore this error.
+
         return 0;  // Continue.
     }
 
@@ -893,11 +897,11 @@ DENG2_PIMPL(System)
         self.sfx()->Listener(SFXLP_UNITS_PER_METER, 30);
         self.sfx()->Listener(SFXLP_DOPPLER, 1.5f);
 
-        // The audio driver is working, let's create the channels.
-        initSfxChannels();
+        // The drivers are working; prepare playback channels.
+        initChannels();
 
         // (Re)Init the sample cache.
-        sfxSampleCache.clear();
+        sampleCache.clear();
 
         // Initialize reverb effects to off.
         sfxListenerNoReverb();
@@ -921,7 +925,7 @@ DENG2_PIMPL(System)
         if(!disableRefresh)
         {
             // Start the refresh thread. It will run until the Sfx module is shut down.
-            refreshHandle = Sys_StartThread(sfxChannelRefreshThread, nullptr);
+            refreshHandle = Sys_StartThread(channelRefreshThread, nullptr);
             if(!refreshHandle)
             {
                 throw Error("audio::System::initSfx", "Failed to start refresh thread");
@@ -957,10 +961,10 @@ DENG2_PIMPL(System)
         }
 
         // Clear the sample cache.
-        sfxSampleCache.clear();
+        sampleCache.clear();
 
         // Destroy channels.
-        shutdownSfxChannels();
+        shutdownChannels();
     }
 
     /**
@@ -972,7 +976,7 @@ DENG2_PIMPL(System)
         if(!sfxAvail) return;
 
         self.allowSfxRefresh(false);
-        sfxChannels->forAll([this, &id] (SfxChannel &ch)
+        channels->forAll([this, &id] (Channel &ch)
         {
             if(ch.hasBuffer())
             {
@@ -991,10 +995,10 @@ DENG2_PIMPL(System)
     /**
      * Stop all channels and destroy their buffers.
      */
-    void destroySfxChannels()
+    void destroyChannels()
     {
         self.allowSfxRefresh(false);
-        sfxChannels->forAll([this] (SfxChannel &ch)
+        channels->forAll([this] (Channel &ch)
         {
             ch.stop();
             if(ch.hasBuffer())
@@ -1007,11 +1011,11 @@ DENG2_PIMPL(System)
         self.allowSfxRefresh(true);
     }
 
-    void createSfxChannels()
+    void createChannels()
     {
-        if(!bool( sfxChannels )) return; // Huh?
+        if(!bool( channels )) return; // Huh?
 
-        dint num2D = sfx3D ? SOUND_CHANNEL_2DCOUNT: sfxChannels->count();  // The rest will be 3D.
+        dint num2D = sfx3D ? CHANNEL_2DCOUNT: channels->count();  // The rest will be 3D.
         dint bits  = sfxBits;
         dint rate  = sfxRate;
 
@@ -1021,7 +1025,7 @@ DENG2_PIMPL(System)
 
         // Create sample buffers for the channels.
         dint idx = 0;
-        sfxChannels->forAll([this, &num2D, &bits, &rate, &idx] (SfxChannel &ch)
+        channels->forAll([this, &num2D, &bits, &rate, &idx] (Channel &ch)
         {
             ch.setBuffer(self.sfx()->Create(num2D-- > 0 ? 0 : SFXBF_3D, bits, rate));
             if(!ch.hasBuffer())
@@ -1034,45 +1038,45 @@ DENG2_PIMPL(System)
     }
 
     // Create channels according to the current mode.
-    void initSfxChannels()
+    void initChannels()
     {
-        dint numChannels = SOUND_CHANNEL_COUNT_DEFAULT;
+        dint numChannels = CHANNEL_COUNT_DEFAULT;
         // The -sfxchan option can be used to change the number of channels.
         if(CommandLine_CheckWith("-sfxchan", 1))
         {
-            numChannels = de::clamp(1, String(CommandLine_Next()).toInt(), SOUND_CHANNEL_COUNT_MAX);
+            numChannels = de::clamp(1, String(CommandLine_Next()).toInt(), CHANNEL_COUNT_MAX);
             LOG_AUDIO_NOTE("Initialized %i sound effect channels") << numChannels;
         }
 
         // Allocate and init the channels.
-        sfxChannels.reset(new SfxChannels(numChannels));
-        createSfxChannels();
+        channels.reset(new Channels(numChannels));
+        createChannels();
     }
 
     /**
      * Frees all memory allocated for the channels.
      */
-    void shutdownSfxChannels()
+    void shutdownChannels()
     {
-        destroySfxChannels();
-        sfxChannels.reset();
+        destroyChannels();
+        channels.reset();
     }
 
     /**
-     * Destroys all channels and creates them again.
+     * Destroys and then replaces all channels.
      */
-    void recreateSfxChannels()
+    void recreateChannels()
     {
-        destroySfxChannels();
-        createSfxChannels();
+        destroyChannels();
+        createChannels();
     }
 
-    void getSfxChannelPriorities(dfloat *prios) const
+    void getChannelPriorities(dfloat *prios) const
     {
         if(!prios) return;
 
         dint idx = 0;
-        sfxChannels->forAll([&prios, &idx] (SfxChannel &ch)
+        channels->forAll([&prios, &idx] (Channel &ch)
         {
             prios[idx++] = ch.priority();
             return LoopContinue;
@@ -1110,7 +1114,7 @@ DENG2_PIMPL(System)
             if(self.stopSoundWithLowerPriority(0, emitter, ::defs.sounds[sample->id].priority) < 0)
             {
                 // Something with a higher priority is playing, can't start now.
-                LOG_AUDIO_MSG("Not playing soundId:%i (prio:%i) because overridden (emitter id:%i)")
+                LOG_AUDIO_MSG("Not playing sound id:%i (prio:%i) because overridden (emitter id:%i)")
                     << sample->id
                     << ::defs.sounds[sample->id].priority
                     << emitter->thinker.id;
@@ -1131,18 +1135,18 @@ DENG2_PIMPL(System)
         if(info->channels > 0)
         {
             // The decision to stop channels is based on priorities.
-            getSfxChannelPriorities(channelPrios);
+            getChannelPriorities(channelPrios);
             haveChannelPrios = true;
 
-            dint count = sfxChannels->countPlaying(sample->id);
+            dint count = channels->countPlaying(sample->id);
             while(count >= info->channels)
             {
                 // Stop the lowest priority sound of the playing instances, again
                 // noting sounds that are more important than us.
                 dint idx = 0;
-                SfxChannel *selCh = nullptr;
-                sfxChannels->forAll([&sample, &myPrio, &channelPrios,
-                                     &selCh, &lowPrio, &idx] (SfxChannel &ch)
+                Channel *selCh = nullptr;
+                channels->forAll([&sample, &myPrio, &channelPrios,
+                                  &selCh, &lowPrio, &idx] (Channel &ch)
                 {
                     dfloat const chPriority = channelPrios[idx++];
 
@@ -1169,7 +1173,7 @@ DENG2_PIMPL(System)
                 {
                     // The new sound can't be played because we were unable to stop
                     // enough channels to accommodate the limitation.
-                    LOG_AUDIO_XVERBOSE("Not playing soundId:%i because all channels are busy")
+                    LOG_AUDIO_XVERBOSE("Not playing sound id:%i because all channels are busy")
                         << sample->id;
                     return false;
                 }
@@ -1181,7 +1185,7 @@ DENG2_PIMPL(System)
         }
 
         // Hit count tells how many times the cached sound has been used.
-        sfxSampleCache.hit(sample->id);
+        sampleCache.hit(sample->id);
 
         /*
          * Pick a channel for the sound. We will do our best to play the sound,
@@ -1192,20 +1196,20 @@ DENG2_PIMPL(System)
 
         // First look through the stopped channels. At this stage we're very picky:
         // only the perfect choice will be good enough.
-        SfxChannel *selCh = sfxChannels->tryFindVacant(play3D, sample->bytesPer,
-                                                       sample->rate, sample->id);
+        Channel *selCh = channels->tryFindVacant(play3D, sample->bytesPer,
+                                                 sample->rate, sample->id);
 
         if(!selCh)
         {
             // Perhaps there is a vacant channel (with any sample, but preferably one
             // with no sample already loaded).
-            selCh = sfxChannels->tryFindVacant(play3D, sample->bytesPer, sample->rate, 0);
+            selCh = channels->tryFindVacant(play3D, sample->bytesPer, sample->rate, 0);
         }
 
         if(!selCh)
         {
             // Try any non-playing channel in the correct format.
-            selCh = sfxChannels->tryFindVacant(play3D, sample->bytesPer, sample->rate, -1);
+            selCh = channels->tryFindVacant(play3D, sample->bytesPer, sample->rate, -1);
         }
 
         if(!selCh)
@@ -1216,14 +1220,14 @@ DENG2_PIMPL(System)
 
             if(!haveChannelPrios)
             {
-                getSfxChannelPriorities(channelPrios);
+                getChannelPriorities(channelPrios);
             }
 
             // All channels with a priority less than or equal to ours can be stopped.
-            SfxChannel *prioCh = nullptr;
+            Channel *prioCh = nullptr;
             dint idx = 0;
-            sfxChannels->forAll([&play3D, &myPrio, &channelPrios,
-                                 &selCh, &prioCh, &lowPrio, &idx] (SfxChannel &ch)
+            channels->forAll([&play3D, &myPrio, &channelPrios,
+                              &selCh, &prioCh, &lowPrio, &idx] (Channel &ch)
             {
                 dfloat const chPriority = channelPrios[idx++];
 
@@ -1306,18 +1310,17 @@ DENG2_PIMPL(System)
         }
 
         if(flags & SF_NO_ATTENUATION)
-        {   
+        {
             // The sound can be heard from any distance.
             selCh->setFlags(selCh->flags() | SFXCF_NO_ATTENUATION);
         }
 
         /**
-         * Load in the sample. Must load prior to setting properties, because
-         * the audio driver might actually create the real buffer only upon
-         * loading.
+         * Load in the sample. Must load prior to setting properties, because the driver
+         * might actually create the real buffer only upon loading.
          *
-         * @note The sample is not reloaded if a sample with the same ID is
-         * already loaded on the channel.
+         * @note The sample is not reloaded if a sample with the same ID is already loaded
+         * on the channel.
          */
         if(!sbuf.sample || sbuf.sample->id != sample->id)
         {
@@ -1369,7 +1372,7 @@ DENG2_PIMPL(System)
     {
         // Too soon?
         duint const nowTime = Timer_RealMilliseconds();
-        if(nowTime - sfxLogicLastPurge < SOUND_LOGICAL_PURGEINTERVAL) return;
+        if(nowTime - sfxLogicLastPurge < PURGEINTERVAL) return;
 
         // Peform the purge now.
         LOGDEV_AUDIO_XVERBOSE("purging logic sound hash...");
@@ -1391,9 +1394,8 @@ DENG2_PIMPL(System)
     }
 
     /**
-     * The sound is removed from the list of playing sounds. Called whenever
-     * a sound is stopped, regardless of whether it was actually playing on
-     * the local system.
+     * The sound is removed from the list of playing sounds. Called whenever a sound is
+     * stopped, regardless of whether it was actually playing on the local system.
      *
      * @note If @a soundId == 0 and @a emitter == nullptr then stop everything.
      *
@@ -1425,14 +1427,13 @@ DENG2_PIMPL(System)
     }
 
     /**
-     * The sound is entered into the list of playing sounds. Called when a
-     * 'world class' sound is started, regardless of whether it's actually
-     * started on the local system.
+     * The sound is entered into the list of playing sounds. Called when a 'world class'
+     * sound is started, regardless of whether it's actually started on the local system.
      *
-     * @todo Why does the Server cache sound samples and/or care to know the
-     * length of the samples? It is entirely possible that the Client is using
-     * a different set of samples so using this information on server side (for
-     * scheduling of remote playback events?) is not logical. -ds
+     * @todo Why does the Server cache sound samples and/or care to know the length of
+     * the samples? It is entirely possible that the Client is using a different set of
+     * samples so using this information on server side (for scheduling of remote playback
+     * events?) is not logical. -ds
      */
     void sfxStartLogical(dint soundIdAndFlags, mobj_t *emitter)
     {
@@ -1440,7 +1441,7 @@ DENG2_PIMPL(System)
 
         // Cache the sound sample associated with @a soundId (if necessary)
         // so that we can determine it's length.
-        if(sfxsample_t *sample = sfxSampleCache.cache(soundId))
+        if(sfxsample_t *sample = sampleCache.cache(soundId))
         {
             bool const isRepeating = (soundIdAndFlags & DDSF_REPEAT) || Def_SoundIsRepeating(soundId);
 
@@ -1589,7 +1590,7 @@ DENG2_PIMPL(System)
         LOG_AUDIO_VERBOSE("Switching to %s mode...") << (old3DMode ? "2D" : "3D");
 
         // To make the change effective, re-create all channels.
-        recreateSfxChannels();
+        recreateChannels();
 
         if(old3DMode)
         {
@@ -1623,10 +1624,10 @@ DENG2_PIMPL(System)
                 // Set the new buffer format.
                 ::sfxBits = newBits;
                 ::sfxRate = newRate;
-                recreateSfxChannels();
+                recreateChannels();
 
                 // The cache just became useless, clear it.
-                sfxSampleCache.clear();
+                sampleCache.clear();
             }
             old16Bit = sfx16Bit;
             oldRate  = sfxSampleRate;
@@ -1683,7 +1684,7 @@ String System::description() const
     // Include an active playback interface itemization.
     for(dint i = d->activeInterfaces.count(); i--> 0; )
     {
-        Instance::AudioInterface const &ifs = d->activeInterfaces[i];
+        Instance::PlaybackInterface const &ifs = d->activeInterfaces[i];
 
         if(ifs.type == AUDIO_IMUSIC || ifs.type == AUDIO_ICD)
         {
@@ -1712,14 +1713,14 @@ void System::reset()
         d->sfxListenerCluster = nullptr;
 
         // Stop all channels.
-        d->sfxChannels->forAll([] (SfxChannel &ch)
+        d->channels->forAll([] (Channel &ch)
         {
             ch.stop();
             return LoopContinue;
         });
 
         // Clear the sample cache.
-        d->sfxSampleCache.clear();
+        d->sampleCache.clear();
     }
 
     stopMusic();
@@ -1748,7 +1749,7 @@ void System::startFrame()
         d->updateSfxSampleRateIfChanged();
 
         // Should we purge the cache (to conserve memory)?
-        d->sfxSampleCache.maybeRunPurge();
+        d->sampleCache.maybeRunPurge();
     }
 
     if(d->musAvail)
@@ -1782,7 +1783,7 @@ void System::endFrame()
             d->sfxListener = getListenerMobj();
 
             // Update channels.
-            d->sfxChannels->forAll([] (SfxChannel &ch)
+            d->channels->forAll([] (Channel &ch)
             {
                 if(ch.hasBuffer() && (ch.buffer().flags & SFXBF_PLAYING))
                 {
@@ -1857,7 +1858,7 @@ void System::deinitPlayback()
     d->unloadDrivers();
 }
 
-String System::musicSourceAsText(MusicSource source)  // static 
+String System::musicSourceAsText(MusicSource source)  // static
 {
     static char const *sourceNames[3] = {
         /* MUSP_MUS */ "MUS lumps",
@@ -2122,7 +2123,7 @@ bool System::soundIsPlaying(dint soundId, mobj_t *emitter) const
     // being played currently.
     if(!d->sfxAvail) return false;
 
-    return d->sfxChannels->forAll([&id, &emitter] (SfxChannel &ch)
+    return d->channels->forAll([&id, &emitter] (Channel &ch)
     {
         if(ch.hasSample())
         {
@@ -2156,7 +2157,7 @@ void System::stopSoundGroup(dint group, mobj_t *emitter)
 {
     if(!d->sfxAvail) return;
     LOG_AS("audio::System");
-    d->sfxChannels->forAll([this, &group, &emitter] (SfxChannel &ch)
+    d->channels->forAll([this, &group, &emitter] (Channel &ch)
     {
         if(ch.hasBuffer())
         {
@@ -2178,7 +2179,7 @@ dint System::stopSoundWithLowerPriority(dint id, mobj_t *emitter, dint defPriori
 
     LOG_AS("audio::System");
     dint stopCount = 0;
-    d->sfxChannels->forAll([this, &id, &emitter, &defPriority, &stopCount] (SfxChannel &ch)
+    d->channels->forAll([this, &id, &emitter, &defPriority, &stopCount] (Channel &ch)
     {
         if(!ch.hasBuffer()) return LoopContinue;
         sfxbuffer_t &sbuf = ch.buffer();
@@ -2305,7 +2306,7 @@ bool System::playSound(dint soundIdAndFlags, mobj_t *emitter, coord_t const *ori
     }
 
     // Load the sample.
-    sfxsample_t *sample = d->sfxSampleCache.cache(soundId);
+    sfxsample_t *sample = d->sampleCache.cache(soundId);
     if(!sample)
     {
         if(d->sfxAvail)
@@ -2395,7 +2396,7 @@ audiointerface_cd_t *System::cd() const
     return found;
 }
 
-audiodriverid_t System::toDriverId(AudioDriver const *driver) const
+audiodriverid_t System::toDriverId(Driver const *driver) const
 {
     if(driver && driver >= &d->drivers[0] && driver <= &d->drivers[AUDIODRIVER_COUNT])
     {
@@ -2406,20 +2407,20 @@ audiodriverid_t System::toDriverId(AudioDriver const *driver) const
 #endif
 
 #ifdef __CLIENT__
-SfxSampleCache const &System::sfxSampleCache() const
+SampleCache const &System::sampleCache() const
 {
-    return d->sfxSampleCache;
+    return d->sampleCache;
 }
 
-bool System::hasSfxChannels()
+bool System::hasChannels()
 {
-    return bool( d->sfxChannels );
+    return bool( d->channels );
 }
 
-SfxChannels &System::sfxChannels() const
+Channels &System::channels() const
 {
-    DENG2_ASSERT(d->sfxChannels.get() != nullptr);
-    return *d->sfxChannels;
+    DENG2_ASSERT(d->channels.get() != nullptr);
+    return *d->channels;
 }
 
 void System::allowSfxRefresh(bool allow)
@@ -2429,8 +2430,8 @@ void System::allowSfxRefresh(bool allow)
 
     allowRefresh = allow;
 
-    // If we're denying refresh, let's make sure that if it's currently
-    // running, we don't continue until it has stopped.
+    // If we're denying refresh, let's make sure that if it's currently running,
+    // we don't continue until it has stopped.
     if(!allow)
     {
         while(refreshing)
@@ -2469,7 +2470,7 @@ void System::aboutToUnloadMap()
 
 #ifdef __CLIENT__
     // Mobjs are about to be destroyed so stop all sound channels using one as an emitter.
-    d->sfxChannels->forAll([] (SfxChannel &ch)
+    d->channels->forAll([] (Channel &ch)
     {
         if(ch.emitter())
         {

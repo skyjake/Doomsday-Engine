@@ -1,6 +1,6 @@
 /** @file material.h  Logical material resource.
  *
- * @authors Copyright © 2009-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2009-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
@@ -18,21 +18,21 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RESOURCE_MATERIAL_H
-#define DENG_RESOURCE_MATERIAL_H
+#ifndef RESOURCE_MATERIAL_H
+#define RESOURCE_MATERIAL_H
 
 #include <functional>
 #include <QList>
 #include <de/Error>
 #include <de/Observers>
 #include <de/Vector>
-#include "audio/s_environ.h"
 #include "MapElement"
 #include "world/dmuargs.h"
 #ifdef __CLIENT__
 #  include "MaterialVariantSpec"
 #endif
 #include "Texture"
+#include "def_main.h"  // AudioEnvironment(Id)
 
 class MaterialManifest;
 #ifdef __CLIENT__
@@ -458,4 +458,4 @@ typedef Material::Layer      MaterialLayer;
 typedef Material::Decoration MaterialDecoration;
 #endif
 
-#endif  // DENG_RESOURCE_MATERIAL_H
+#endif  // RESOURCE_MATERIAL_H

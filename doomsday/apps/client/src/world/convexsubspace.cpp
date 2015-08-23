@@ -422,17 +422,17 @@ bool ConvexSubspace::updateAudioEnvironment()
         return false;
     }
 
-    float envSpaceAccum[NUM_AUDIO_ENVIRONMENTS];
+    dfloat envSpaceAccum[NUM_AUDIO_ENVIRONMENTS];
     de::zap(envSpaceAccum);
 
     // Space is the rough volume of the BSP leaf (bounding box).
     AABoxd const &aaBox = poly().aaBox();
-    d->aenv.reverb[SRD_SPACE] = int(cluster().ceiling().height() - cluster().floor().height())
-                         * (aaBox.maxX - aaBox.minX) * (aaBox.maxY - aaBox.minY);
+    d->aenv.reverb[SRD_SPACE] = dint(cluster().ceiling().height() - cluster().floor().height())
+                              * (aaBox.maxX - aaBox.minX) * (aaBox.maxY - aaBox.minY);
 
     // The other reverb properties can be found out by taking a look at the
     // materials of all surfaces in the BSP leaf.
-    float total  = 0;
+    dfloat total  = 0;
     HEdge *base  = poly().hedge();
     HEdge *hedge = base;
     do
@@ -454,16 +454,16 @@ bool ConvexSubspace::updateAudioEnvironment()
     }
 
     // Average the results.
-    for(int i = AE_FIRST; i < NUM_AUDIO_ENVIRONMENTS; ++i)
+    for(dint i = AE_FIRST; i < NUM_AUDIO_ENVIRONMENTS; ++i)
     {
         envSpaceAccum[i] /= total;
     }
 
     // Accumulate and clamp the final characteristics
-    int accum[NUM_REVERB_DATA]; zap(accum);
-    for(int i = AE_FIRST; i < NUM_AUDIO_ENVIRONMENTS; ++i)
+    dint accum[NUM_REVERB_DATA]; zap(accum);
+    for(dint i = AE_FIRST; i < NUM_AUDIO_ENVIRONMENTS; ++i)
     {
-        AudioEnvironment const &envInfo = S_AudioEnvironment(AudioEnvironmentId(i));
+        AudioEnvironment const &envInfo = Def_AudioEnvironment(AudioEnvironmentId(i));
         // Volume.
         accum[SRD_VOLUME]  += envSpaceAccum[i] * envInfo.volumeMul;
 

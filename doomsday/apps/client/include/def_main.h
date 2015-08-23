@@ -82,6 +82,31 @@ extern ded_t defs;  ///< Main definitions database (internal).
 struct xgclass_s;   ///< @note The actual classes are on game side.
 
 /**
+ * Unique identifiers for hard-coded AudioEnvironment configurations.
+ */
+enum AudioEnvironmentId
+{
+    AE_NONE = -1,
+    AE_FIRST = 0,
+    AE_METAL = AE_FIRST,
+    AE_ROCK,
+    AE_WOOD,
+    AE_CLOTH,
+    NUM_AUDIO_ENVIRONMENTS
+};
+
+/**
+ * Defines the properties of an audio environment.
+ */
+struct AudioEnvironment
+{
+    char const name[9];  ///< Symbolic type name.
+    int volumeMul;
+    int decayMul;
+    int dampingMul;
+};
+
+/**
  * @defgroup soundFlags  Sound behavior flags
  * @ingroup flags
  * @{
@@ -176,6 +201,22 @@ ded_ptcgen_t *Def_GetGenerator(struct uri_s const *uri);
 ded_ptcgen_t *Def_GetGenerator(de::Uri const &uri);
 ded_ptcgen_t *Def_GetDamageGenerator(int mobjType);
 ded_light_t *Def_GetLightDef(int spr, int frame);
+
+/**
+ * Lookup the symbolic name of the identified audio environment.
+ */
+char const *Def_AudioEnvironmentName(AudioEnvironmentId id);
+
+/**
+ * Lookup the identified audio environment.
+ */
+AudioEnvironment const &Def_AudioEnvironment(AudioEnvironmentId id);
+
+/**
+ * Lookup the audio environment associated with material @a uri. If no environment
+ * is defined then @c AE_NONE is returned.
+ */
+AudioEnvironmentId Def_AudioEnvironmentId(de::Uri const *uri);
 
 state_t *Def_GetState(int num);
 

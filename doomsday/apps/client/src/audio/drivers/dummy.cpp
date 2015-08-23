@@ -1,7 +1,4 @@
-/** @file sys_audiod_dummy.cpp  Dummy Audio Driver.
- *
- * Used in dedicated server mode, when it's necessary to simulate sound playing
- * but not actually play anything.
+/** @file audio/drivers/dummy.cpp  Dummy audio driver.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
@@ -21,32 +18,33 @@
  */
 
 #include "de_base.h"
-#include "audio/audiodriver.h"
+#include "audio/drivers/dummy.h"
 
 #include <de/timer.h>
 #include "api_audiod.h"
 #include "api_audiod_sfx.h"
 
-int         DS_DummyInit(void);
-void        DS_DummyShutdown(void);
-void        DS_DummyEvent(int type);
+using namespace de;
 
-int         DS_Dummy_SFX_Init(void);
-sfxbuffer_t* DS_Dummy_SFX_CreateBuffer(int flags, int bits, int rate);
-void        DS_Dummy_SFX_DestroyBuffer(sfxbuffer_t* buf);
-void        DS_Dummy_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample);
-void        DS_Dummy_SFX_Reset(sfxbuffer_t* buf);
-void        DS_Dummy_SFX_Play(sfxbuffer_t* buf);
-void        DS_Dummy_SFX_Stop(sfxbuffer_t* buf);
-void        DS_Dummy_SFX_Refresh(sfxbuffer_t* buf);
-void        DS_Dummy_SFX_Set(sfxbuffer_t* buf, int prop, float value);
-void        DS_Dummy_SFX_Setv(sfxbuffer_t* buf, int prop, float* values);
-void        DS_Dummy_SFX_Listener(int prop, float value);
-void        DS_Dummy_SFX_Listenerv(int prop, float* values);
-int         DS_Dummy_SFX_Getv(int prop, void* values);
+// Base interface:
+int DS_DummyInit();
+void DS_DummyShutdown();
+void DS_DummyEvent(int type);
 
-DENG_EXTERN_C audiodriver_t        audiod_dummy;
-DENG_EXTERN_C audiointerface_sfx_t audiod_dummy_sfx;
+// Sfx interface:
+int DS_Dummy_SFX_Init();
+sfxbuffer_t *DS_Dummy_SFX_CreateBuffer(int flags, int bits, int rate);
+void DS_Dummy_SFX_DestroyBuffer(sfxbuffer_t *buf);
+void DS_Dummy_SFX_Load(sfxbuffer_t *buf, struct sfxsample_s *sample);
+void DS_Dummy_SFX_Reset(sfxbuffer_t *buf);
+void DS_Dummy_SFX_Play(sfxbuffer_t *buf);
+void DS_Dummy_SFX_Stop(sfxbuffer_t *buf);
+void DS_Dummy_SFX_Refresh(sfxbuffer_t *buf);
+void DS_Dummy_SFX_Set(sfxbuffer_t *buf, int prop, float value);
+void DS_Dummy_SFX_Setv(sfxbuffer_t *buf, int prop, float *values);
+void DS_Dummy_SFX_Listener(int prop, float value);
+void DS_Dummy_SFX_Listenerv(int prop, float *values);
+int DS_Dummy_SFX_Getv(int prop, void *values);
 
 audiodriver_t audiod_dummy = {
     DS_DummyInit,
@@ -71,27 +69,27 @@ audiointerface_sfx_t audiod_dummy_sfx = { {
     DS_Dummy_SFX_Getv
 } };
 
-static dd_bool inited;
+static bool inited;
 
 /**
  * Initialization of the sound driver.
  * @return @c true if successful.
  */
-int DS_DummyInit(void)
+int DS_DummyInit()
 {
-    if(inited)
-        return true; // Already initialized.
-
-    inited = true;
-    return true;
+    if(!::inited)
+    {
+        ::inited = true;
+    }
+    return ::inited;
 }
 
 /**
  * Shut everything down.
  */
-void DS_DummyShutdown(void)
+void DS_DummyShutdown()
 {
-    inited = false;
+    ::inited = false;
 }
 
 /**
@@ -105,30 +103,26 @@ void DS_DummyEvent(int /*type*/)
     // Do nothing...
 }
 
-int DS_Dummy_SFX_Init(void)
+int DS_Dummy_SFX_Init()
 {
-    return inited;
+    return ::inited;
 }
 
-sfxbuffer_t* DS_Dummy_SFX_CreateBuffer(int flags, int bits, int rate)
+sfxbuffer_t *DS_Dummy_SFX_CreateBuffer(int flags, int bits, int rate)
 {
-    sfxbuffer_t* buf;
-
-    // Clear the buffer.
-    buf = (sfxbuffer_t *) Z_Calloc(sizeof(*buf), PU_APPSTATIC, 0);
+    auto *buf = (sfxbuffer_t *) Z_Calloc(sizeof(sfxbuffer_t), PU_APPSTATIC, 0);
 
     buf->bytes = bits / 8;
-    buf->rate = rate;
+    buf->rate  = rate;
     buf->flags = flags;
-    buf->freq = rate; // Modified by calls to Set(SFXBP_FREQUENCY).
+    buf->freq  = rate;  // Modified by calls to Set(SFXBP_FREQUENCY).
 
     return buf;
 }
 
-void DS_Dummy_SFX_DestroyBuffer(sfxbuffer_t* buf)
+void DS_Dummy_SFX_DestroyBuffer(sfxbuffer_t *buf)
 {
-    if(!buf)
-        return;
+    if(!buf) return;
 
     // Free the memory allocated for the buffer.
     Z_Free(buf);
@@ -142,15 +136,14 @@ void DS_Dummy_SFX_DestroyBuffer(sfxbuffer_t* buf)
  * @param buf     Sound buffer.
  * @param sample  Sample data.
  */
-void DS_Dummy_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
+void DS_Dummy_SFX_Load(sfxbuffer_t *buf, struct sfxsample_s *sample)
 {
-    if(!buf || !sample)
-        return;
+    DENG2_ASSERT(buf && sample);
 
     // Now the buffer is ready for playing.
-    buf->sample = sample;
+    buf->sample  = sample;
     buf->written = sample->size;
-    buf->flags &= ~SFXBF_RELOAD;
+    buf->flags  &= ~SFXBF_RELOAD;
 }
 
 /**
@@ -158,13 +151,12 @@ void DS_Dummy_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
  *
  * @param buf  Sound buffer.
  */
-void DS_Dummy_SFX_Reset(sfxbuffer_t* buf)
+void DS_Dummy_SFX_Reset(sfxbuffer_t *buf)
 {
-    if(!buf)
-        return;
+    DENG2_ASSERT(buf);
 
     DS_Dummy_SFX_Stop(buf);
-    buf->sample = NULL;
+    buf->sample = nullptr;
     buf->flags &= ~SFXBF_RELOAD;
 }
 
@@ -172,19 +164,18 @@ void DS_Dummy_SFX_Reset(sfxbuffer_t* buf)
  * @param buf  Sound buffer.
  * @return The length of the buffer in milliseconds.
  */
-unsigned int DS_DummyBufferLength(sfxbuffer_t* buf)
+uint DS_DummyBufferLength(sfxbuffer_t *buf)
 {
-    if(!buf)
-        return 0;
-
+    DENG2_ASSERT(buf && buf->sample);
     return 1000 * buf->sample->numSamples / buf->freq;
 }
 
-void DS_Dummy_SFX_Play(sfxbuffer_t* buf)
+void DS_Dummy_SFX_Play(sfxbuffer_t *buf)
 {
+    DENG2_ASSERT(buf);
+
     // Playing is quite impossible without a sample.
-    if(!buf || !buf->sample)
-        return;
+    if(!buf->sample) return;
 
     // Do we need to reload?
     if(buf->flags & SFXBF_RELOAD)
@@ -201,10 +192,9 @@ void DS_Dummy_SFX_Play(sfxbuffer_t* buf)
     buf->flags |= SFXBF_PLAYING;
 }
 
-void DS_Dummy_SFX_Stop(sfxbuffer_t* buf)
+void DS_Dummy_SFX_Stop(sfxbuffer_t *buf)
 {
-    if(!buf)
-        return;
+    DENG2_ASSERT(buf);
 
     // Clear the flag that tells the Sfx module about playing buffers.
     buf->flags &= ~SFXBF_PLAYING;
@@ -217,10 +207,12 @@ void DS_Dummy_SFX_Stop(sfxbuffer_t* buf)
  * Buffer streamer. Called by the Sfx refresh thread.
  * @param buf  Sound buffer.
  */
-void DS_Dummy_SFX_Refresh(sfxbuffer_t* buf)
+void DS_Dummy_SFX_Refresh(sfxbuffer_t *buf)
 {
+    DENG2_ASSERT(buf);
+
     // Can only be done if there is a sample and the buffer is playing.
-    if(!buf || !buf->sample || !(buf->flags & SFXBF_PLAYING))
+    if(!buf->sample || !(buf->flags & SFXBF_PLAYING))
         return;
 
     // Have we passed the predicted end of sample?
@@ -242,10 +234,9 @@ void DS_Dummy_SFX_Refresh(sfxbuffer_t* buf)
  *              - SFXBP_RELATIVE_MODE
  * @param value Value for the property.
  */
-void DS_Dummy_SFX_Set(sfxbuffer_t* buf, int prop, float value)
+void DS_Dummy_SFX_Set(sfxbuffer_t *buf, int prop, float value)
 {
-    if(!buf)
-        return;
+    DENG2_ASSERT(buf);
 
     switch(prop)
     {
@@ -253,8 +244,7 @@ void DS_Dummy_SFX_Set(sfxbuffer_t* buf, int prop, float value)
         buf->freq = buf->rate * value;
         break;
 
-    default:
-        break;
+    default: break;
     }
 }
 
@@ -265,7 +255,7 @@ void DS_Dummy_SFX_Set(sfxbuffer_t* buf, int prop, float value)
  * @param property      SFXBP_POSITION
  *                      SFXBP_VELOCITY
  */
-void DS_Dummy_SFX_Setv(sfxbuffer_t* /*buf*/, int /*prop*/, float* /*values*/)
+void DS_Dummy_SFX_Setv(sfxbuffer_t * /*buf*/, int /*prop*/, float * /*values*/)
 {
     // Nothing to do.
 }
@@ -283,7 +273,7 @@ void DS_Dummy_SFX_Listener(int /*prop*/, float /*value*/)
 /**
  * Values use SRD_* for indices.
  */
-void DS_DummyListenerEnvironment(float* /*rev*/)
+void DS_DummyListenerEnvironment(float * /*rev*/)
 {
     // Nothing to do.
 }
@@ -291,7 +281,7 @@ void DS_DummyListenerEnvironment(float* /*rev*/)
 /**
  * Call SFXLP_UPDATE at the end of every channel update.
  */
-void DS_Dummy_SFX_Listenerv(int /*prop*/, float* /*values*/)
+void DS_Dummy_SFX_Listenerv(int /*prop*/, float * /*values*/)
 {
     // Nothing to do.
 }
@@ -302,22 +292,20 @@ void DS_Dummy_SFX_Listenerv(int /*prop*/, float* /*values*/)
  * @param prop    Property (SFXP_*).
  * @param values  Pointer to return value(s).
  */
-int DS_Dummy_SFX_Getv(int prop, void* values)
+int DS_Dummy_SFX_Getv(int prop, void *values)
 {
     switch(prop)
     {
     case SFXIP_DISABLE_CHANNEL_REFRESH: {
         /// The return value is a single 32-bit int.
-        int* wantDisable = (int*) values;
+        auto *wantDisable = (int *) values;
         if(wantDisable)
         {
             // We are not playing any audio.
             *wantDisable = true;
         }
-        break; }
+        return true; }
 
-    default:
-        return false;
+    default: return false;
     }
-    return true;
 }

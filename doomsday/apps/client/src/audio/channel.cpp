@@ -1,4 +1,4 @@
-/** @file sfxchannel.cpp  Logical sound channel (for sound effects).
+/** @file channel.cpp  Logical sound playback channel.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
@@ -18,7 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "audio/sfxchannel.h"
+#include "audio/channel.h"
 
 #include "world/thinkers.h"
 #include "dd_main.h"     // remove me
@@ -30,7 +30,7 @@
 #include <QtAlgorithms>
 
 // Debug visual headers:
-#include "audio/s_cache.h"
+#include "audio/samplecache.h"
 #include "gl/gl_main.h"
 #include "api_fontrender.h"
 #include "render/rend_font.h"
@@ -41,7 +41,7 @@ using namespace de;
 
 namespace audio {
 
-DENG2_PIMPL_NOREF(SfxChannel)
+DENG2_PIMPL_NOREF(Channel)
 {
     dint flags = 0;                 ///< SFXCF_* flags.
     dfloat frequency = 0;           ///< Frequency adjustment: 1.0 is normal.
@@ -56,35 +56,35 @@ DENG2_PIMPL_NOREF(SfxChannel)
     Instance() { zap(origin); }
 };
 
-SfxChannel::SfxChannel() : d(new Instance)
+Channel::Channel() : d(new Instance)
 {}
 
-SfxChannel::~SfxChannel()
+Channel::~Channel()
 {}
 
-bool SfxChannel::hasBuffer() const
+bool Channel::hasBuffer() const
 {
     return d->buffer != nullptr;
 }
 
-sfxbuffer_t &SfxChannel::buffer()
+sfxbuffer_t &Channel::buffer()
 {
     if(d->buffer) return *d->buffer;
     /// @throw MissingBufferError  No sound buffer is currently assigned.
-    throw MissingBufferError("SfxChannel::buffer", "No sound buffer is assigned");
+    throw MissingBufferError("audio::Channel::buffer", "No sound buffer is assigned");
 }
 
-sfxbuffer_t const &SfxChannel::buffer() const
+sfxbuffer_t const &Channel::buffer() const
 {
-    return const_cast<SfxChannel *>(this)->buffer();
+    return const_cast<Channel *>(this)->buffer();
 }
 
-void SfxChannel::setBuffer(sfxbuffer_t *newBuffer)
+void Channel::setBuffer(sfxbuffer_t *newBuffer)
 {
     d->buffer = newBuffer;
 }
 
-void SfxChannel::stop()
+void Channel::stop()
 {
     if(!d->buffer) return;
 
@@ -92,55 +92,55 @@ void SfxChannel::stop()
     App_AudioSystem().sfx()->Stop(d->buffer);
 }
 
-dint SfxChannel::flags() const
+dint Channel::flags() const
 {
     return d->flags;
 }
 
 /// @todo Use QFlags -ds
-void SfxChannel::setFlags(dint newFlags)
+void Channel::setFlags(dint newFlags)
 {
     d->flags = newFlags;
 }
 
-dfloat SfxChannel::frequency() const
+dfloat Channel::frequency() const
 {
     return d->frequency;
 }
 
-void SfxChannel::setFrequency(dfloat newFrequency)
+void Channel::setFrequency(dfloat newFrequency)
 {
     d->frequency = newFrequency;
 }
 
-dfloat SfxChannel::volume() const
+dfloat Channel::volume() const
 {
     return d->volume;
 }
 
-void SfxChannel::setVolume(dfloat newVolume)
+void Channel::setVolume(dfloat newVolume)
 {
     d->volume = newVolume;
 }
 
-mobj_t *SfxChannel::emitter() const
+mobj_t *Channel::emitter() const
 {
     return d->emitter;
 }
 
-void SfxChannel::setEmitter(mobj_t *newEmitter)
+void Channel::setEmitter(mobj_t *newEmitter)
 {
     d->emitter = newEmitter;
 }
 
-void SfxChannel::setFixedOrigin(Vector3d const &newOrigin)
+void Channel::setFixedOrigin(Vector3d const &newOrigin)
 {
     d->origin[0] = newOrigin.x;
     d->origin[1] = newOrigin.y;
     d->origin[2] = newOrigin.z;
 }
 
-dfloat SfxChannel::priority() const
+dfloat Channel::priority() const
 {
     if(!d->buffer || !(d->buffer->flags & SFXBF_PLAYING))
         return SFX_LOWEST_PRIORITY;
@@ -153,7 +153,7 @@ dfloat SfxChannel::priority() const
 }
 
 /// @todo audio::System should observe. -ds
-void SfxChannel::updatePriority()
+void Channel::updatePriority()
 {
     System &audioSys = App_AudioSystem();
 
@@ -292,19 +292,19 @@ void SfxChannel::updatePriority()
     }
 }
 
-int SfxChannel::startTime() const
+int Channel::startTime() const
 {
     return d->startTime;
 }
 
-void SfxChannel::setStartTime(dint newStartTime)
+void Channel::setStartTime(dint newStartTime)
 {
     d->startTime = newStartTime;
 }
 
-DENG2_PIMPL(SfxChannels)
+DENG2_PIMPL(Channels)
 {
-    QList<SfxChannel *> all;
+    QList<Channel *> all;
 
     Instance(Public *i) : Base(i) {}
     ~Instance() { clearAll(); }
@@ -322,27 +322,27 @@ DENG2_PIMPL(SfxChannels)
         clearAll();
         for(dint i = 0; i < newSize; ++i)
         {
-            all << new SfxChannel;
+            all << new Channel;
         }
     }
 };
 
-SfxChannels::SfxChannels(dint count) : d(new Instance(this))
+Channels::Channels(dint count) : d(new Instance(this))
 {
     d->resize(count);
 }
 
-dint SfxChannels::count() const
+dint Channels::count() const
 {
     return d->all.count();
 }
 
-dint SfxChannels::countPlaying(dint id)
+dint Channels::countPlaying(dint id)
 {
     DENG2_ASSERT( App_AudioSystem().sfxIsAvailable() );  // sanity check
 
     dint count = 0;
-    forAll([&id, &count] (SfxChannel &ch)
+    forAll([&id, &count] (Channel &ch)
     {
         if(ch.hasBuffer())
         {
@@ -357,9 +357,9 @@ dint SfxChannels::countPlaying(dint id)
     return count;
 }
 
-SfxChannel *SfxChannels::tryFindVacant(bool use3D, dint bytes, dint rate, dint sampleId) const
+Channel *Channels::tryFindVacant(bool use3D, dint bytes, dint rate, dint sampleId) const
 {
-    for(SfxChannel *ch : d->all)
+    for(Channel *ch : d->all)
     {
         if(!ch->hasBuffer()) continue;
         sfxbuffer_t const &sbuf = ch->buffer();
@@ -390,9 +390,9 @@ SfxChannel *SfxChannels::tryFindVacant(bool use3D, dint bytes, dint rate, dint s
     return nullptr;  // None suitable.
 }
 
-void SfxChannels::refreshAll()
+void Channels::refreshAll()
 {
-    forAll([] (SfxChannel &ch)
+    forAll([] (Channel &ch)
     {
         if(ch.hasBuffer() && (ch.buffer().flags & SFXBF_PLAYING))
         {
@@ -402,9 +402,9 @@ void SfxChannels::refreshAll()
     });
 }
 
-LoopResult SfxChannels::forAll(std::function<LoopResult (SfxChannel &)> func) const
+LoopResult Channels::forAll(std::function<LoopResult (Channel &)> func) const
 {
-    for(SfxChannel *ch : d->all)
+    for(Channel *ch : d->all)
     {
         if(auto result = func(*ch)) return result;
     }
@@ -420,7 +420,7 @@ using namespace audio;
 dint showSoundInfo;
 byte refMonitor;
 
-void Sfx_ChannelDrawer()
+void UI_AudioChannelDrawer()
 {
     if(!::showSoundInfo) return;
 
@@ -452,7 +452,7 @@ void Sfx_ChannelDrawer()
 
     // Sample cache information.
     duint cachesize, ccnt;
-    App_AudioSystem().sfxSampleCache().info(&cachesize, &ccnt);
+    App_AudioSystem().sampleCache().info(&cachesize, &ccnt);
     char buf[200]; sprintf(buf, "Cached:%i (%i)", cachesize, ccnt);
 
     FR_SetColor(1, 1, 1);
@@ -460,7 +460,7 @@ void Sfx_ChannelDrawer()
 
     // Print a line of info about each channel.
     dint idx = 0;
-    App_AudioSystem().sfxChannels().forAll([&lh, &idx] (audio::SfxChannel &ch)
+    App_AudioSystem().channels().forAll([&lh, &idx] (audio::Channel &ch)
     {
         if(ch.hasBuffer() && (ch.buffer().flags & SFXBF_PLAYING))
         {

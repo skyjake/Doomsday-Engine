@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef CLIENT_AUDIO_SYSTEM_H
@@ -22,10 +22,9 @@
 
 #include "dd_types.h"  // lumpnum_t
 #include "api_sound.h"
-#include "audio/s_cache.h"
 #ifdef __CLIENT__
-#  include "audio/audiodriver.h"
-#  include "audio/sfxchannel.h"
+#  include "audio/channel.h"
+#  include "audio/driver.h"
 #  include <de/Range>
 #  include <de/Record>
 #endif
@@ -35,6 +34,10 @@
 #define SFX_LOWEST_PRIORITY     ( -1000 )
 
 namespace audio {
+
+#ifdef __CLIENT__
+class SampleCache;
+#endif
 
 /**
  * Client audio subsystem.
@@ -129,12 +132,12 @@ public:  // Music playback: ----------------------------------------------------
 
     /**
      * Start playing a song. The chosen interface depends on what's available and what
-     * kind of resources have been associated with the song. Any previously playing song
-     * is stopped.
+     * sources have been associated with the song. Any song currently playing song is
+     * stopped.
      *
-     * @param definition  Music definition describing which associated music file to play.
+     * @param definition  Music definition describing the associated music sources.
      *
-     * @return  Non-zero if the song is successfully played.
+     * @return  Non-zero if a song is successfully played.
      */
     int playMusic(de::Record const &definition, bool looped = false);
 
@@ -179,17 +182,18 @@ public:  // Sound effect playback: ---------------------------------------------
 #endif  // __CLIENT__
 
     /**
-     * Returns true if the sound is currently playing somewhere in the world. It doesn't
-     * matter if it's audible or not.
+     * Returns true if the sound is currently playing somewhere in the world. It does
+     * not matter if it is audible (or not).
      *
-     * @param soundId  @c 0= true if any sounds are playing using the specified @a emitter.
+     * @param soundId  @c 0= true if sounds are playing using the specified @a emitter.
      */
     bool soundIsPlaying(int soundId, struct mobj_s *emitter) const;
 
 #ifdef __CLIENT__
 
     /**
-     * Stop all sounds of the group. If an emitter is specified, only it's sounds are checked.
+     * Stop all sounds of the given sound @a group. If an emitter is specified, only
+     * it's sounds are checked.
      */
     void stopSoundGroup(int group, struct mobj_s *emitter);
 
@@ -199,8 +203,8 @@ public:  // Sound effect playback: ---------------------------------------------
      * @param soundId      @c 0 = all sounds are stopped.
      * @param emitter      If not @c nullptr, then the channel's emitter mobj must match.
      * @param defPriority  If >= 0, the currently playing sound must have a lower priority
-     *                     than this to be stopped. Returns -1 if the sound @a id has a
-     *                     lower priority than a currently playing sound.
+     *                     than this to be stopped. Returns -1 if the sound @a id has
+     *                     a lower priority than a currently playing sound.
      *
      * @return  The number of samples stopped.
      */
@@ -247,7 +251,7 @@ public:  // Low-level driver interfaces: ---------------------------------------
      * SFX playback is @em not available.
      */
     audiointerface_sfx_generic_t *sfx() const;
-    
+
     /**
      * Returns the currently active, primary CD playback interface. @c nullptr is returned
      * if CD playback is @em not available.
@@ -276,23 +280,23 @@ public:  /// @todo make private:
     void initPlayback();
 
     /**
-     * Provides immutable access to the sound sample cache (waveforms).
+     * Provides immutable access to the sample cache (waveforms).
      */
-    SfxSampleCache const &sfxSampleCache() const;
+    SampleCache const &sampleCache() const;
 
     /// @todo refactor away.
-    bool hasSfxChannels();
+    bool hasChannels();
 
     /**
      * Provides mutable access to the sound channels.
      */
-    SfxChannels &sfxChannels() const;
+    Channels &channels() const;
 
     /**
-     * Enabling refresh is simple: the refresh thread is resumed. When
-     * disabling refresh, first make sure a new refresh doesn't begin (using
-     * allowRefresh). We still have to see if a refresh is being made and wait
-     * for it to stop. Then we can suspend the refresh thread.
+     * Enabling refresh is simple: the refresh thread is resumed. When disabling refresh,
+     * first make sure a new refresh doesn't begin (using allowRefresh). We still have
+     * to see if a refresh is being made and wait for it to stop. Then we can suspend
+     * the refresh thread.
      */
     void allowSfxRefresh(bool allow = true);
 
@@ -303,7 +307,7 @@ public:  /// @todo make private:
      * Lookup the unique identifier associated with the given audio @a driver.
      * @todo refactor away.
      */
-    audiodriverid_t toDriverId(AudioDriver const *driver) const;
+    audiodriverid_t toDriverId(Driver const *driver) const;
 
 #endif  // __CLIENT__
 

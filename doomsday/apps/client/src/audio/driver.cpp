@@ -1,4 +1,4 @@
-/** @file audiodriver.cpp  Audio driver loading and interface management.
+/** @file driver.cpp  Logical audio driver (model).
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
@@ -18,12 +18,12 @@
  * 02110-1301 USA</small>
  */
 
-#include "audio/audiodriver.h"
+#include "audio/driver.h"
 
 #include "dd_main.h"
-#include "audio/sys_audiod_dummy.h"
+#include "audio/drivers/dummy.h"
 #ifndef DENG_DISABLE_SDLMIXER
-#  include "audio/sys_audiod_sdlmixer.h"
+#  include "audio/drivers/sdlmixer.h"
 #endif
 
 #include <de/Library>
@@ -32,7 +32,9 @@
 
 using namespace de;
 
-DENG2_PIMPL(AudioDriver)
+namespace audio {
+
+DENG2_PIMPL(Driver)
 {
     bool initialized   = false;
     ::Library *library = nullptr;
@@ -50,7 +52,7 @@ DENG2_PIMPL(AudioDriver)
         zap(iCd);
     }
 
-    static LibraryFile *findAudioPlugin(String const &name)
+    static LibraryFile *findPlugin(String const &name)
     {
         if(!name.isEmpty())
         {
@@ -158,23 +160,23 @@ DENG2_PIMPL(AudioDriver)
     }
 };
 
-AudioDriver::AudioDriver() : d(new Instance(this))
+Driver::Driver() : d(new Instance(this))
 {}
 
-String AudioDriver::name() const
+String Driver::name() const
 {
     if(!isLoaded()) return "(invalid)";
-    return AudioDriver_GetName(App_AudioSystem().toDriverId(this));
+    return Driver_GetName(App_AudioSystem().toDriverId(this));
 }
 
-AudioDriver::Status AudioDriver::status() const
+Driver::Status Driver::status() const
 {
     if(d->initialized) return Initialized;
     if(d->iBase.Init != nullptr) return Loaded;
     return Invalid;
 }
 
-String AudioDriver::statusAsText() const
+String Driver::statusAsText() const
 {
     switch(status())
     {
@@ -183,19 +185,19 @@ String AudioDriver::statusAsText() const
     case Initialized: return "Initialized";
 
     default:
-        DENG2_ASSERT(!"AudioDriver::statusAsText: Unknown status");
+        DENG2_ASSERT(!"audio::Driver::statusAsText: Unknown status");
         return "Unknown";
     }
 }
 
-void AudioDriver::load(String const &identifier)
+void Driver::load(String const &identifier)
 {
-    LOG_AS("AudioDriver");
+    LOG_AS("audio::Driver");
 
     if(isLoaded())
     {
         /// @throw LoadError  Attempted to load on top of an already loaded driver.
-        throw LoadError("AudioDriver::load", "Already initialized. Cannot load '" + identifier + "'");
+        throw LoadError("audio::Driver::load", "Already initialized. Cannot load '" + identifier + "'");
     }
 
     // Perhaps a built-in audio driver?
@@ -213,24 +215,24 @@ void AudioDriver::load(String const &identifier)
 #endif
 
     // Perhaps a plugin audio driver?
-    if(LibraryFile *plugin = Instance::findAudioPlugin(identifier))
+    if(LibraryFile *plugin = Instance::findPlugin(identifier))
     {
         d->importInterfaces(*plugin);
         return;
     }
 
     /// @throw LoadError  Unknown driver specified.
-    throw LoadError("AudioDriver::load", "Unknown driver \"" + identifier + "\"");
+    throw LoadError("audio::Driver::load", "Unknown driver \"" + identifier + "\"");
 }
 
-void AudioDriver::unload()
+void Driver::unload()
 {
-    LOG_AS("AudioDriver");
+    LOG_AS("audio::Driver");
 
     if(isInitialized())
     {
         /// @throw LoadError  Cannot unload while initialized.
-        throw LoadError("AudioDriver::unload", "'" + name() + "' is still initialized, cannot unload");
+        throw LoadError("audio::Driver::unload", "\"" + name() + "\" is still initialized, cannot unload");
     }
 
     if(isLoaded())
@@ -243,9 +245,9 @@ void AudioDriver::unload()
     }
 }
 
-void AudioDriver::initialize()
+void Driver::initialize()
 {
-    LOG_AS("AudioDriver");
+    LOG_AS("audio::Driver");
 
     // Already been here?
     if(d->initialized) return;
@@ -254,9 +256,9 @@ void AudioDriver::initialize()
     d->initialized = d->iBase.Init();
 }
 
-void AudioDriver::deinitialize()
+void Driver::deinitialize()
 {
-    LOG_AS("AudioDriver");
+    LOG_AS("audio::Driver");
 
     // Already been here?
     if(!d->initialized) return;
@@ -268,47 +270,47 @@ void AudioDriver::deinitialize()
     d->initialized = false;
 }
 
-::Library *AudioDriver::library() const
+::Library *Driver::library() const
 {
     return d->library;
 }
 
-audiodriver_t /*const*/ &AudioDriver::iBase() const
+audiodriver_t /*const*/ &Driver::iBase() const
 {
     return d->iBase;
 }
 
-bool AudioDriver::hasSfx() const
+bool Driver::hasSfx() const
 {
     return iSfx().gen.Init != nullptr;
 }
 
-bool AudioDriver::hasMusic() const
+bool Driver::hasMusic() const
 {
     return iMusic().gen.Init != nullptr;
 }
 
-bool AudioDriver::hasCd() const
+bool Driver::hasCd() const
 {
     return iCd().gen.Init != nullptr;
 }
 
-audiointerface_sfx_t /*const*/ &AudioDriver::iSfx() const
+audiointerface_sfx_t /*const*/ &Driver::iSfx() const
 {
     return d->iSfx;
 }
 
-audiointerface_music_t /*const*/ &AudioDriver::iMusic() const
+audiointerface_music_t /*const*/ &Driver::iMusic() const
 {
     return d->iMusic;
 }
 
-audiointerface_cd_t /*const*/ &AudioDriver::iCd() const
+audiointerface_cd_t /*const*/ &Driver::iCd() const
 {
     return d->iCd;
 }
 
-String AudioDriver::interfaceName(void *anyAudioInterface) const
+String Driver::interfaceName(void *anyAudioInterface) const
 {
     if((void *)&d->iSfx == anyAudioInterface)
     {
@@ -333,9 +335,9 @@ String AudioDriver::interfaceName(void *anyAudioInterface) const
     return "";  // Not recognized.
 }
 
-String AudioDriver_GetName(audiodriverid_t id)
+String Driver_GetName(audiodriverid_t id)
 {
-    static String const audioDriverNames[AUDIODRIVER_COUNT] = {
+    static String const driverNames[AUDIODRIVER_COUNT] = {
         /* AUDIOD_DUMMY */      "Dummy",
         /* AUDIOD_SDL_MIXER */  "SDLMixer",
         /* AUDIOD_OPENAL */     "OpenAL",
@@ -345,8 +347,10 @@ String AudioDriver_GetName(audiodriverid_t id)
         /* AUDIOD_WINMM */      "Windows Multimedia"  // Win32 only
     };
     if(VALID_AUDIODRIVER_IDENTIFIER(id))
-        return audioDriverNames[id];
+        return driverNames[id];
 
-    DENG2_ASSERT(!"S_GetDriverName: Unknown driver id");
+    DENG2_ASSERT(!"audio::Driver_GetName: Unknown driver id");
     return "";
 }
+
+}  // namespace audio

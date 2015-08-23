@@ -525,7 +525,7 @@ String Material::description() const
 #endif
                + _E(l) + "\nDrawable: "  + _E(.) + DENG2_BOOL_YESNO(isDrawable())
 #ifdef __CLIENT__
-               + _E(l) + " EnvClass: \"" + _E(.) + (audioEnvironment() == AE_NONE? "N/A" : S_AudioEnvironmentName(audioEnvironment())) + "\""
+               + _E(l) + " EnvClass: \"" + _E(.) + (audioEnvironment() == AE_NONE? "N/A" : Def_AudioEnvironmentName(audioEnvironment())) + "\""
 #endif
                + _E(l) + " SkyMasked: "  + _E(.) + DENG2_BOOL_YESNO(isSkyMasked());
 

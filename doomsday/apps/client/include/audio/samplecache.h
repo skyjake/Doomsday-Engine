@@ -1,4 +1,4 @@
-/** @file s_cache.h  Sound sample cache.
+/** @file samplecache.h  Sound sample cache.
  * @ingroup audio
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -18,8 +18,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef AUDIO_SFXSAMPLECACHE_H
-#define AUDIO_SFXSAMPLECACHE_H
+#ifndef AUDIO_SAMPLECACHE_H
+#define AUDIO_SAMPLECACHE_H
 
 #include "api_audiod_sfx.h"  // sfxsample_t
 #include <de/Observers>
@@ -36,7 +36,7 @@ namespace audio {
  *
  * @todo Use de::WaveformBank instead. -ds
  */
-class SfxSampleCache
+class SampleCache
 {
 public:
     /// Notified when a sound sample is about to be removed from the cache.
@@ -68,7 +68,7 @@ public:
     /**
      * Construct a new (empty) sound sample cache.
      */
-    SfxSampleCache();
+    SampleCache();
 
     /**
      * Call this to clear all sound samples from the cache.
@@ -114,4 +114,4 @@ private:
 
 }  // namespace audio
 
-#endif  // AUDIO_SFXSAMPLECACHE_H
+#endif  // AUDIO_SAMPLECACHE_H

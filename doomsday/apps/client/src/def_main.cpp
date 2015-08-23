@@ -75,6 +75,15 @@ RuntimeDefs runtimeDefs;
 static bool defsInited;
 static mobjinfo_t *gettingFor;
 
+/// Hardcoded AudioEnvironment configurations (@todo make customizable).
+static AudioEnvironment audioEnv[1 + NUM_AUDIO_ENVIRONMENTS] = {
+    { "",          0,       0,      0   },
+    { "Metal",     255,     255,    25  },
+    { "Rock",      200,     160,    100 },
+    { "Wood",      80,      50,     200 },
+    { "Cloth",     5,       5,      255 }
+};
+
 static inline FS1 &fileSys()
 {
     return App_FileSystem();
@@ -135,6 +144,44 @@ void Def_Destroy()
     ::runtimeDefs.clear();
 
     ::defsInited = false;
+}
+
+char const *Def_AudioEnvironmentName(AudioEnvironmentId id)
+{
+    DENG2_ASSERT(id >= AE_NONE && id < NUM_AUDIO_ENVIRONMENTS);
+    return ::audioEnv[1 + dint( id )].name;
+}
+
+AudioEnvironment const &Def_AudioEnvironment(AudioEnvironmentId id)
+{
+    DENG2_ASSERT(id >= AE_NONE && id < NUM_AUDIO_ENVIRONMENTS);
+    return ::audioEnv[1 + dint( id )];
+}
+
+AudioEnvironmentId Def_AudioEnvironmentId(de::Uri const *uri)
+{
+    if(uri)
+    {
+        for(dint i = 0; i < ::defs.textureEnv.size(); ++i)
+        {
+            ded_tenviron_t const *env = &::defs.textureEnv[i];
+            for(dint k = 0; k < env->materials.size(); ++k)
+            {
+                de::Uri *ref = env->materials[k].uri;
+                if(!ref || *ref != *uri) continue;
+
+                // Is this a known environment?
+                for(dint m = 0; m < NUM_AUDIO_ENVIRONMENTS; ++m)
+                {
+                    AudioEnvironment const &envInfo = Def_AudioEnvironment(AudioEnvironmentId(m));
+                    if(!qstricmp(env->id, envInfo.name))
+                        return AudioEnvironmentId(m);
+                }
+                return AE_NONE;
+            }
+        }
+    }
+    return AE_NONE;
 }
 
 state_t *Def_GetState(dint num)
@@ -918,7 +965,7 @@ static void configureMaterial(Material &mat, Record const &definition)
     mat.markSkyMasked((matDef.geti("flags") & MATF_SKYMASK) != 0);
 
 #ifdef __CLIENT__
-    mat.setAudioEnvironment(S_AudioEnvironmentId(&materialUri));
+    mat.setAudioEnvironment(Def_AudioEnvironmentId(&materialUri));
 #endif
 
     // Reconfigure the layers.

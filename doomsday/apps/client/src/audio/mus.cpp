@@ -1,4 +1,4 @@
-/** @file m_mus2midi.cpp  MUS data format utilities.
+/** @file mus.cpp  MUS data format utilities.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
@@ -19,7 +19,7 @@
  */
 
 #include "de_platform.h"
-#include "audio/m_mus2midi.h"
+#include "audio/mus.h"
 
 #include <doomsday/filesys/fs_util.h>
 #include <de/Log>

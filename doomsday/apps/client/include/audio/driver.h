@@ -1,4 +1,4 @@
-/** @file audiodriver.h  Logical Audio Driver Model.
+/** @file driver.h  Logical audio driver (model).
  * @ingroup audio
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -19,12 +19,9 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef AUDIO_AUDIODRIVER_H
-#define AUDIO_AUDIODRIVER_H
+#ifndef CLIENT_AUDIO_DRIVER_H
+#define CLIENT_AUDIO_DRIVER_H
 
-#ifndef __cplusplus
-#  error "audiodriver.h requires C++"
-#endif
 #ifdef __SERVER__
 #  error "audio" is not available in a SERVER build
 #endif
@@ -36,12 +33,12 @@
 #include <de/Error>
 #include <de/String>
 
+namespace audio {
+
 /**
  * Models a logical audio driver, suitable for both built-in drivers and plugins.
- *
- * @ingroup audio
  */
-class AudioDriver
+class Driver
 {
 public:
     /// Base class for load related errors. @ingroup errors
@@ -58,9 +55,9 @@ public:
     };
 
     /**
-     * Construct a new AudioDriver (invalid until loaded).
+     * Construct a new audio Driver (invalid until loaded).
      */
-    AudioDriver();
+    Driver();
 
     /**
      * Returns the human-friendly name of the audio driver if loaded; otherwise a
@@ -98,7 +95,7 @@ public:
      * Initialize the audio driver if necessary, ready for use.
      */
     void initialize();
-    
+
     /**
      * Deinitialize the audio driver if necessary, so that it may be unloaded.
      */
@@ -154,6 +151,8 @@ private:
     DENG2_PRIVATE(d)
 };
 
-de::String AudioDriver_GetName(audiodriverid_t id);
+de::String Driver_GetName(audiodriverid_t id);
 
-#endif  // AUDIO_AUDIODRIVER_H
+}  // namespace audio
+
+#endif  // CLIENT_AUDIO_DRIVER_H

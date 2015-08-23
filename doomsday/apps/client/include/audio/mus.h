@@ -1,7 +1,8 @@
-/** @file
+/** @file mus.h  MUS data format utilities.
+ * @ingroup audio
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,20 +18,24 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#ifndef AUDIO_DATA_MUS_H
+#define AUDIO_DATA_MUS_H
+
+#include <doomsday/filesys/file.h>
+
 /**
- * sys_audiod_dummy.h: Dummy Music Driver.
- *
- * Used in dedicated server mode.
+ * Returns @c true if the given @a file appears to contain music in DOOM MUS format.
  */
+bool M_MusRecognize(de::File1 &file);
 
-#ifndef __DOOMSDAY_SYSTEM_AUDIO_DUMMY_H__
-#define __DOOMSDAY_SYSTEM_AUDIO_DUMMY_H__
+/**
+ * Converts DOOM MUS format music into MIDI music. The output is written to a native file.
+ *
+ * @param data     The MUS data to convert.
+ * @param length   The length of the data in bytes.
+ * @param outFile  Name of the file the resulting MIDI data will be written to.
+ */
+bool M_Mus2Midi(void *data, size_t length, char const *outFile);
+bool M_Mus2Midi(de::File1 &file, char const *outFile);
 
-#include <de/liblegacy.h>
-#include "api_audiod.h"
-#include "api_audiod_sfx.h"
-
-DENG_EXTERN_C audiodriver_t audiod_dummy;
-DENG_EXTERN_C audiointerface_sfx_t audiod_dummy_sfx;
-
-#endif
+#endif  // AUDIO_DATA_MUS_H

@@ -1,8 +1,7 @@
-/** @file
+/** @file audio/drivers/dummy.cpp  Dummy audio driver.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright © 2006-2007 Jamie Jones <yagisan@dengine.net>
+ * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,22 +17,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * sys_audiod_sdlmixer.h: Default Audio Driver.
- *
- * Uses SDL_mixer, for SFX, Ext and Mus interfaces.
- */
-
-#ifndef __DOOMSDAY_SYSTEM_AUDIO_SDLMIXER_H__
-#define __DOOMSDAY_SYSTEM_AUDIO_SDLMIXER_H__
+#ifndef CLIENT_AUDIO_DRIVER_DUMMY_H
+#define CLIENT_AUDIO_DRIVER_DUMMY_H
 
 #include <de/liblegacy.h>
 #include "api_audiod.h"
 #include "api_audiod_sfx.h"
-#include "api_audiod_mus.h"
 
-DENG_EXTERN_C audiodriver_t audiod_sdlmixer;
-DENG_EXTERN_C audiointerface_sfx_t audiod_sdlmixer_sfx;
-DENG_EXTERN_C audiointerface_music_t audiod_sdlmixer_music;
+DENG_EXTERN_C audiodriver_t audiod_dummy;
+DENG_EXTERN_C audiointerface_sfx_t audiod_dummy_sfx;
 
-#endif
+#endif  // CLIENT_AUDIO_DRIVER_DUMMY_H
