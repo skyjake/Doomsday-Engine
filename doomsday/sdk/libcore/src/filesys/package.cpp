@@ -306,6 +306,11 @@ void Package::validateMetadata(Record const &packageInfo)
     }
 }
 
+QStringList Package::tags(File const &packageFile)
+{
+    return packageFile.info().gets("package.tags").split(' ', QString::SkipEmptyParts);
+}
+
 static String stripAfterFirstUnderscore(String str)
 {
     int pos = str.indexOf('_');
