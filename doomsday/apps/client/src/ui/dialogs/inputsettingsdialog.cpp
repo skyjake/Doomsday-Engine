@@ -116,6 +116,7 @@ InputSettingsDialog::InputSettingsDialog(String const &name)
     : DialogWidget(name, WithHeading), d(new Instance(this))
 {
     heading().setText(tr("Input Settings"));
+    heading().setImage(style().images().image("input"));
 
     d->syncInput->setText(tr("Vanilla 35Hz Input Rate"));
     d->syncMouse->setText(tr("Uniform Mouse Axis Sensitivity"));

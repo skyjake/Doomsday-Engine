@@ -97,6 +97,7 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
     : DialogWidget(name, WithHeading), d(new Instance(this))
 {
     heading().setText(tr("Audio Settings"));
+    heading().setImage(style().images().image("audio"));
 
     auto *sfxVolLabel   = LabelWidget::newWithText(tr("SFX Volume:"), &area());
     auto *musicVolLabel = LabelWidget::newWithText(tr("Music Volume:"), &area());

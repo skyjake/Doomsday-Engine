@@ -271,6 +271,7 @@ PackagesDialog::PackagesDialog()
     , d(new Instance(this))
 {
     heading().setText(tr("Packages"));
+    heading().setImage(style().images().image("package"));
     buttons() << new DialogButtonItem(Default | Accept, tr("Close"));
 
     area().setContentSize(d->menu->rule().width(), d->menu->rule().height());

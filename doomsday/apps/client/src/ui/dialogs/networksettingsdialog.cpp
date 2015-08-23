@@ -66,6 +66,7 @@ NetworkSettingsDialog::NetworkSettingsDialog(String const &name)
     : DialogWidget(name, WithHeading), d(new Instance(this))
 {
     heading().setText(tr("Network Settings"));
+    heading().setImage(style().images().image("network"));
 
     d->devInfo->setText(tr("Developer Info"));
 
