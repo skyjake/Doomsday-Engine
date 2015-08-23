@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/MessageDialog"
@@ -43,6 +43,10 @@ DENG_GUI_PIMPL(MessageDialog)
         title->setTextColor("accent");
         title->setSizePolicy(ui::Fixed, ui::Expand);
         title->setAlignment(ui::AlignLeft);
+        title->setTextAlignment(ui::AlignRight);
+        title->setOverrideImageSize(title->font().ascent().valuei());
+        title->setImageColor(style().colors().colorf("accent"));
+        title->setTextGap("gap");
         title->setTextLineAlignment(ui::AlignLeft);
         message->setSizePolicy(ui::Fixed, ui::Expand);
         message->setAlignment(ui::AlignLeft);

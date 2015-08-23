@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/DialogWidget"
@@ -158,15 +158,20 @@ public ChildWidgetOrganizer::IFilter
                     .setBottom("")
                     .setTop (style().rules().rule("gap") + style().rules().rule("dialog.gap"))
                     .setLeft(style().rules().rule("gap") + style().rules().rule("dialog.gap"));
-            heading->setSizePolicy(ui::Expand, ui::Expand);
+            heading->setSizePolicy(ui::Filled, ui::Expand);
             heading->setTextColor("accent");
-            heading->setAlignment(ui::AlignLeft);
+            heading->setImageColor(style().colors().colorf("accent"));
+            heading->setOverrideImageSize(heading->font().ascent().valuei());
+            heading->setTextGap("dialog.gap");
+            heading->setTextAlignment(ui::AlignRight);
             heading->setTextLineAlignment(ui::AlignLeft);
+            heading->setFillMode(LabelWidget::FillWithText);
             container->add(heading);
 
             heading->rule()
-                    .setInput(Rule::Top, self.rule().top())
-                    .setInput(Rule::Left, self.rule().left());
+                    .setInput(Rule::Top,   self.rule().top())
+                    .setInput(Rule::Left,  self.rule().left())
+                    .setInput(Rule::Right, area->rule().right());
 
             area->rule().setInput(Rule::Top, heading->rule().bottom());
         }
