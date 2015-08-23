@@ -431,7 +431,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     d->configMenu->items()
             << new ui::SubwidgetItem(style().images().image("renderer"), tr("Renderer"), ui::Left, makePopup<RendererSettingsDialog>)
             << new ui::SubwidgetItem(style().images().image("vr"),       tr("3D & VR"),  ui::Left, makePopup<VRSettingsDialog>)
-            << new ui::SubwidgetItem(tr("Packages"), ui::Left, makePopup<PackagesDialog>)
+            << new ui::SubwidgetItem(style().images().image("package"),  tr("Packages"), ui::Left, makePopup<PackagesDialog>)
             << new ui::Item(ui::Item::Separator)
             << new ui::SubwidgetItem(style().images().image("display"),  tr("Video"),    ui::Left, makePopup<VideoSettingsDialog>)
             << new ui::SubwidgetItem(style().images().image("audio"),    tr("Audio"),    ui::Left, makePopup<AudioSettingsDialog>)
@@ -814,6 +814,8 @@ void TaskBarWidget::connectToServerManually()
 void TaskBarWidget::showTutorial()
 {
     if(BusyMode_Active()) return;
+
+    d->mainMenu->close();
 
     // The widget will dispose of itself when finished.
     TutorialWidget *tutorial = new TutorialWidget;

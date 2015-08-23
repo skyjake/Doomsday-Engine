@@ -51,7 +51,7 @@ DENG_GUI_PIMPL(PackagesDialog)
      * the package.
      */
     class Widget : public GuiWidget
-            , DENG2_OBSERVES(PanelWidget, Close)
+                 , DENG2_OBSERVES(PanelWidget, Close)
     {
     private:
         struct InfoAction : public Action
@@ -131,13 +131,13 @@ DENG_GUI_PIMPL(PackagesDialog)
             SequentialLayout layout(_subtitle->rule().left(),
                                     _subtitle->rule().bottom(), ui::Right);
 
-            for(QString tag : _item.info.gets("tags").split(' ', QString::SkipEmptyParts))
+            for(QString tag : Package::tags(_item.file))
             {
                 auto *btn = new ButtonWidget;
                 btn->setText(_E(l) + tag.toLower());
                 btn->setFont("small");
-                btn->setTextColor("altaccent");
-                btn->set(Background(Background::Rounded, style().colors().colorf("altaccent"), 6));
+                btn->setTextColor("accent");
+                btn->set(Background(Background::Rounded, style().colors().colorf("accent"), 6));
                 btn->setSizePolicy(ui::Expand, ui::Expand);
                 btn->margins()
                         .setTop("unit").setBottom("unit")
@@ -192,9 +192,9 @@ DENG_GUI_PIMPL(PackagesDialog)
             _popup->audienceForClose() += this;
             _popup->setAnchorAndOpeningDirection(_infoButton->rule(), ui::Left);
             _popup->setDeleteAfterDismissed(true);
-            _popup->document().setText(QString("%1%2" _E(.) "\n%3\n" _E(l) "Version:" _E(.) " %4\n"
-                                            _E(l) "License:" _E(.)_E(>) " %5\n")
-                                       .arg(_E(1))
+            _popup->document().setText(QString(_E(1) "%1" _E(.) "\n%2\n"
+                                               _E(l) "Version: " _E(.) "%3\n"
+                                               _E(l) "License: " _E(.)_E(>) "%4\n")
                                        .arg(_item.info.gets("title"))
                                        .arg(packageId())
                                        .arg(_item.info.gets("version"))
@@ -228,9 +228,8 @@ DENG_GUI_PIMPL(PackagesDialog)
         menu->enablePageKeys(false);
         menu->setGridSize(1, ui::Expand, 0, ui::Expand);
         menu->rule()
-                //.setInput(Rule::Width, style().rules().rule("dialog.packages.width"))
-                .setInput(Rule::Left,  self.area().contentRule().left())
-                .setInput(Rule::Top,   self.area().contentRule().top());
+                .setInput(Rule::Left, self.area().contentRule().left())
+                .setInput(Rule::Top,  self.area().contentRule().top());
         menu->organizer().setWidgetFactory(*this);
     }
 
@@ -242,16 +241,11 @@ DENG_GUI_PIMPL(PackagesDialog)
         for(String const &path : packages)
         {
             Folder const &pack = App::rootFolder().locate<Folder>(path);
-
-            menu->items() << new PackageItem(pack);
-
-            //Record const &info = pack.info().subrecord("package");
-            /*qDebug() << path
-                     << "id:" << info.gets("ID")
-                     << "title:" << info.gets("title")
-                     << "version:" << info.gets("version")
-                     << "license:" << info.gets("license")
-                     << "tags:" << info.gets("tags");*/
+            // Core packages are mandatory and thus omitted.
+            if(!Package::tags(pack).contains("core"))
+            {
+                menu->items() << new PackageItem(pack);
+            }
         }
     }
 
