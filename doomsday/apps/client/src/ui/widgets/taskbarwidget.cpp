@@ -66,10 +66,10 @@ enum MenuItemPositions
 {
     // DE menu:
     POS_GAMES             = 1,
-    POS_UNLOAD            = 2,
-    POS_GAMES_SEPARATOR   = 3,
-    POS_MULTIPLAYER       = 4,
-    POS_CONNECT           = 5,
+    POS_MULTIPLAYER       = 2,
+    POS_CONNECT           = 3,
+    POS_GAMES_SEPARATOR   = 4,
+    POS_UNLOAD            = 5,
     POS_IWAD_FOLDER       = 8,
 
     // Config menu:
@@ -448,10 +448,10 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     d->mainMenu->items()
             << new ui::Item(ui::Item::Separator, tr("Games"))
             << new ui::ActionItem(tr("Switch Game..."), new SignalAction(this, SLOT(switchGame())))
-            << unloadMenu                           // hidden with null-game
-            << new ui::Item(ui::Item::Separator)
             << new ui::ActionItem(tr("Multiplayer Games..."), new SignalAction(this, SLOT(showMultiplayer())))
             << new ui::ActionItem(tr("Connect to Server..."), new SignalAction(this, SLOT(connectToServerManually())))
+            << new ui::Item(ui::Item::Separator)
+            << unloadMenu                           // hidden with null-game
             << new ui::Item(ui::Item::Separator)
             << new ui::Item(ui::Item::Separator, tr("Application"))
             << new ui::ActionItem(tr("IWAD Folder..."), new SignalAction(this, SLOT(chooseIWADFolder())))
