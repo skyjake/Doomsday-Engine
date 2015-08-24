@@ -31,6 +31,7 @@ logo {
 image fold     { path = "graphics/fold.png" }
 image gauge    { path = "graphics/gauge.png" }
 image gear     { path = "graphics/gear.png" }
+image package  { path = "graphics/package.png" }
 close {
     image ring     { path = "graphics/close.png" }
     image ringless { path = "graphics/close-ringless.png" }
