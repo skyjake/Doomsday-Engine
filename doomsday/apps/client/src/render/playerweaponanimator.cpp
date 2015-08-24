@@ -65,7 +65,7 @@ DENG2_PIMPL_NOREF(PlayerWeaponAnimator)
 
     void assetBeingDeleted(Asset &)
     {
-        animator.reset();
+        de::trash(animator.release());
         modelAuxData = nullptr;
     }
 
