@@ -155,8 +155,11 @@ void Garbage_TrashMalloc(void *ptr)
 
 void Garbage_TrashInstance(void *ptr, GarbageDestructor destructor)
 {
-    Garbage *g = garbageForThread(QThread::currentThread());
-    g->allocs[ptr] = destructor;
+    if(ptr)
+    {
+        Garbage *g = garbageForThread(QThread::currentThread());
+        g->allocs[ptr] = destructor;
+    }
 }
 
 int Garbage_IsTrashed(void const *ptr)

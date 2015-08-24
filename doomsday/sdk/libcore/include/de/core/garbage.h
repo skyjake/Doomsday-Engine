@@ -18,7 +18,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_GARBAGE_COLLECTOR_H
@@ -107,6 +107,24 @@ DENG2_PUBLIC void Garbage_ClearForThread(void);
 
 #ifdef __cplusplus
 } // extern "C"
-#endif
+
+namespace de {
+
+/**
+ * Helper template for deleting arbitrary C++ objects via the garbage collector.
+ */
+template <typename Type>
+void deleter(void *p) {
+    delete reinterpret_cast<Type *>(p);
+}
+
+template <typename Type>
+void trash(Type *ptr) {
+    Garbage_TrashInstance(ptr, deleter<Type>);
+}
+
+} // namespace de
+
+#endif // __cplusplus
 
 #endif // LIBDENG2_GARBAGE_COLLECTOR_H
