@@ -23,6 +23,8 @@
 #include "clientapp.h"
 #include "def_main.h"
 
+#include <de/Garbage>
+
 using namespace de;
 
 DENG2_PIMPL_NOREF(PlayerWeaponAnimator)
