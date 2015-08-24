@@ -331,6 +331,10 @@ DENG2_PIMPL(ClientWindow)
             LOG_NOTE("Starting tutorial (not shown before)");
             QTimer::singleShot(500, taskBar, SLOT(showTutorial()));
         }
+        else
+        {
+            taskBar->close();
+        }
     }
 
     void gameReadinessUpdated()
