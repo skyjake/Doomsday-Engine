@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_OBSERVERS_H
@@ -82,9 +82,9 @@
 /**
  * Macro for defining an observer interface containing a single method.
  *
- * @param Name    Name of the audience. E.g., "Deletion" produces @c DeletionAudience 
+ * @param Name    Name of the audience. E.g., "Deletion" produces @c DeletionAudience
  *                and @c audienceForDeletion.
- * @param Method  The pure virtual method that the observer has to implement. 
+ * @param Method  The pure virtual method that the observer has to implement.
  *                The @c virtual keyword and <code>=0</code> are automatically included.
  */
 #define DENG2_DEFINE_AUDIENCE(Name, Method) \

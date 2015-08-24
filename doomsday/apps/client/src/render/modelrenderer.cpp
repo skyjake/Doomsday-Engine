@@ -106,16 +106,6 @@ DENG2_PIMPL(ModelRenderer)
         defaultSpecular = atlas->alloc(img);
 
         uTex = *atlas;
-
-        /*
-        // All loaded items should use this atlas.
-        bank.iterate([this] (DotPath const &path)
-        {
-            if(bank.isLoaded(path))
-            {
-                setupModel(bank.model(path));
-            }
-        });*/
     }
 
     void deinit()
@@ -129,7 +119,10 @@ DENG2_PIMPL(ModelRenderer)
 
     void assetAvailabilityChanged(String const &identifier, filesys::AssetObserver::Event event)
     {
-        //qDebug() << "loading model:" << identifier << event;
+        LOG_RES_MSG("Model asset \"%s\" is now %s")
+                << identifier
+                << (event == filesys::AssetObserver::Added? "available" :
+                                                            "unavailable");
 
         if(event == filesys::AssetObserver::Added)
         {

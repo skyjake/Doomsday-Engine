@@ -157,7 +157,7 @@ DENG_GUI_PIMPL(PopupWidget)
         if(&widget == realParent)
         {
             // We don't know who the real parent is any more.
-            realParent = 0;
+            realParent = nullptr;
         }
     }
 };
