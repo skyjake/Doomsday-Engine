@@ -37,8 +37,10 @@
 #include <de/Drawable>
 #include <de/CompositorWidget>
 #include <de/NotificationAreaWidget>
+#include <de/FadeToBlackWidget>
 #include <de/SignalAction>
 #include <de/VRWindowTransform>
+#include <de/GuiWidgetRef>
 #include <de/concurrency.h>
 #include <doomsday/console/exec.h>
 #include "api_console.h"
@@ -96,8 +98,9 @@ DENG2_PIMPL(ClientWindow)
     LabelWidget *background = nullptr;
     GuiWidget *iwadNotice = nullptr;
     GameSelectionWidget *gameSelMenu = nullptr;
+    GuiWidgetRef<FadeToBlackWidget> fader;
     BusyWidget *busy = nullptr;
-    GuiWidget *sidebar = nullptr;    
+    GuiWidget *sidebar = nullptr;
     PrivilegedLogWidget *privLog = nullptr;
     LabelWidget *cursor = nullptr;
     ConstantRule *cursorX;
@@ -824,6 +827,27 @@ DENG2_PIMPL(ClientWindow)
             cursorHasBeenHidden = false;
         }
     }
+
+    void setupFadeFromBlack(TimeDelta const &span)
+    {
+        if(!fader)
+        {
+            fader.reset(new FadeToBlackWidget);
+            fader->rule().setRect(root.viewRule());
+            root.add(fader); // on top of everything else
+        }
+        fader->initFadeFromBlack(span);
+        fader->start();
+    }
+
+    void completeFade()
+    {
+        // Check if the fade is done.
+        if(fader)
+        {
+            fader->disposeIfDone();
+        }
+    }
 };
 
 ClientWindow::ClientWindow(String const &id)
@@ -999,6 +1023,7 @@ void ClientWindow::postDraw()
 
     ClientApp::app().postFrame(); /// @todo what about multiwindow?
     d->updateFpsNotification(frameRate());
+    d->completeFade();
 }
 
 void ClientWindow::canvasGLResized(Canvas &canvas)
@@ -1212,6 +1237,16 @@ bool ClientWindow::hasSidebar(SidebarLocation location) const
 bool ClientWindow::handleFallbackEvent(Event const &event)
 {
     return d->handleFallbackEvent(event);
+}
+
+void ClientWindow::fadeContentFromBlack(TimeDelta const &duration)
+{
+    d->setupFadeFromBlack(duration);
+}
+
+FadeToBlackWidget *ClientWindow::contentFade()
+{
+    return d->fader;
 }
 
 #if defined(UNIX) && !defined(MACOSX)
