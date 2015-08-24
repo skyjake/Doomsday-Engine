@@ -210,7 +210,7 @@ DENG2_PIMPL(MobjAnimator)
 
     void initShaderVariables()
     {
-        auto const &def = names[VAR_SELF].valueAsRecord();
+        auto const &def = names[VAR_ASSET].valueAsRecord();
         if(def.has("render"))
         {
             static char const *componentNames[] = { "x", "y", "z", "w" };
