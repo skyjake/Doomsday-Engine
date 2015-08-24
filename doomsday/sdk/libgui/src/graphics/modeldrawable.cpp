@@ -1361,18 +1361,34 @@ Vector3f ModelDrawable::midPoint() const
 //---------------------------------------------------------------------------------------
 
 DENG2_PIMPL_NOREF(ModelDrawable::Animator)
+, DENG2_OBSERVES(Asset, Deletion)
 {
     Constructor constructor;
-    ModelDrawable const *model;
+    ModelDrawable const *model = nullptr;
     QList<OngoingSequence *> anims;
 
     Instance(Constructor ctr, ModelDrawable const *mdl = 0)
         : constructor(ctr)
-        , model(mdl) {}
+    {
+        setModel(mdl);
+    }
 
     ~Instance()
     {
+        setModel(nullptr);
         qDeleteAll(anims);
+    }
+
+    void setModel(ModelDrawable const *mdl)
+    {
+        if(model) model->audienceForDeletion() -= this;
+        model = mdl;
+        if(model) model->audienceForDeletion() += this;
+    }
+
+    void assetBeingDeleted(Asset &a)
+    {
+        if(model == &a) model = nullptr;
     }
 
     OngoingSequence &add(OngoingSequence *seq)
@@ -1446,7 +1462,7 @@ ModelDrawable::Animator::Animator(ModelDrawable const &model, Constructor constr
 
 void ModelDrawable::Animator::setModel(ModelDrawable const &model)
 {
-    d->model = &model;
+    d->setModel(&model);
 }
 
 ModelDrawable const &ModelDrawable::Animator::model() const

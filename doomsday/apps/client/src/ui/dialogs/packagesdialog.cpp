@@ -54,20 +54,46 @@ DENG_GUI_PIMPL(PackagesDialog)
                  , DENG2_OBSERVES(PanelWidget, Close)
     {
     private:
+        /// Action to show information about a package.
         struct InfoAction : public Action
         {
             Widget &owner;
 
             InfoAction(Widget &widget) : owner(widget) {}
-            void trigger() {
+
+            void trigger()
+            {
                 Action::trigger();
                 owner.openInfoPopup();
             }
         };
 
+        /// Action to load or unload a package.
+        struct LoadAction : public Action
+        {
+            Widget &owner;
+
+            LoadAction(Widget &widget) : owner(widget) {}
+
+            void trigger()
+            {
+                Action::trigger();
+                auto &loader = App::packageLoader();
+                if(loader.isLoaded(owner.packageId()))
+                {
+                    loader.unload(owner.packageId());
+                }
+                else
+                {
+                    loader.load(owner.packageId());
+                }
+                owner.updateContents();
+            }
+        };
+
     public:
         Widget(PackageItem const &item)
-            : _item(item)
+            : _item(&item)
         {
             add(_title = new LabelWidget);
             _title->setSizePolicy(ui::Fixed, ui::Expand);
@@ -85,6 +111,8 @@ DENG_GUI_PIMPL(PackagesDialog)
 
             add(_loadButton = new ButtonWidget);
             _loadButton->setSizePolicy(ui::Expand, ui::Expand);
+            _loadButton->setAction(new LoadAction(*this));
+
             add(_infoButton = new ButtonWidget);
             _infoButton->setSizePolicy(ui::Expand, ui::Fixed);
             _infoButton->setText(_E(s)_E(B) + tr("..."));
@@ -131,13 +159,11 @@ DENG_GUI_PIMPL(PackagesDialog)
             SequentialLayout layout(_subtitle->rule().left(),
                                     _subtitle->rule().bottom(), ui::Right);
 
-            for(QString tag : Package::tags(_item.file))
+            for(QString tag : Package::tags(_item->file))
             {
                 auto *btn = new ButtonWidget;
                 btn->setText(_E(l) + tag.toLower());
-                btn->setFont("small");
-                btn->setTextColor("accent");
-                btn->set(Background(Background::Rounded, style().colors().colorf("accent"), 6));
+                updateTagButtonStyle(btn, "accent");
                 btn->setSizePolicy(ui::Expand, ui::Expand);
                 btn->margins()
                         .setTop("unit").setBottom("unit")
@@ -149,10 +175,19 @@ DENG_GUI_PIMPL(PackagesDialog)
             }
         }
 
+        void updateTagButtonStyle(ButtonWidget *tag, String const &color)
+        {
+            tag->setFont("small");
+            tag->setTextColor(color);
+            tag->set(Background(Background::Rounded, style().colors().colorf(color), 6));
+        }
+
         void updateContents()
         {
-            _title->setText(_item.info.gets("title"));
+            _title->setText(_item->info.gets("title"));
             _subtitle->setText(packageId());
+
+            String auxColor = "accent";
 
             if(isLoaded())
             {
@@ -160,6 +195,7 @@ DENG_GUI_PIMPL(PackagesDialog)
                 _loadButton->setTextColor("altaccent");
                 _loadButton->setBorderColor("altaccent");
                 _title->setFont("choice.selected");
+                auxColor = "altaccent";
             }
             else
             {
@@ -167,6 +203,12 @@ DENG_GUI_PIMPL(PackagesDialog)
                 _loadButton->setTextColor("text");
                 _loadButton->setBorderColor("text");
                 _title->setFont("default");
+            }
+
+            _subtitle->setTextColor(auxColor);
+            for(ButtonWidget *b : _tags)
+            {
+                updateTagButtonStyle(b, auxColor);
             }
         }
 
@@ -177,7 +219,7 @@ DENG_GUI_PIMPL(PackagesDialog)
 
         String packageId() const
         {
-            return _item.info.gets("ID");
+            return _item->info.gets("ID");
         }
 
         void openInfoPopup()
@@ -195,10 +237,10 @@ DENG_GUI_PIMPL(PackagesDialog)
             _popup->document().setText(QString(_E(1) "%1" _E(.) "\n%2\n"
                                                _E(l) "Version: " _E(.) "%3\n"
                                                _E(l) "License: " _E(.)_E(>) "%4\n")
-                                       .arg(_item.info.gets("title"))
+                                       .arg(_item->info.gets("title"))
                                        .arg(packageId())
-                                       .arg(_item.info.gets("version"))
-                                       .arg(_item.info.gets("license")));
+                                       .arg(_item->info.gets("version"))
+                                       .arg(_item->info.gets("license")));
             add(_popup);
             _popup->open();
         }
@@ -212,7 +254,7 @@ DENG_GUI_PIMPL(PackagesDialog)
         }
 
     private:
-        PackageItem const &_item;
+        PackageItem const *_item;
         LabelWidget *_title;
         LabelWidget *_subtitle;
         QList<ButtonWidget *> _tags;

@@ -26,6 +26,7 @@
 using namespace de;
 
 DENG2_PIMPL_NOREF(PlayerWeaponAnimator)
+, DENG2_OBSERVES(Asset, Deletion)
 {
     ClientPlayer *player;
     std::unique_ptr<MobjAnimator> animator;
@@ -37,12 +38,18 @@ DENG2_PIMPL_NOREF(PlayerWeaponAnimator)
 
     void setupAsset(String const &identifier)
     {
+        if(animator)
+        {
+            animator->model().audienceForDeletion() -= this;
+        }
+
         // Is there a model for the weapon?
         if(modelBank().has(identifier))
         {
             // Prepare the animation state of the model.
             ModelBank::ModelWithData loaded = modelBank().modelAndData(identifier);
             ModelDrawable &model = *loaded.first;
+            model.audienceForDeletion() += this;
             animator.reset(new MobjAnimator(identifier, model));
             animator->setOwnerNamespace(player->info());
 
@@ -54,6 +61,12 @@ DENG2_PIMPL_NOREF(PlayerWeaponAnimator)
             animator.reset();
             modelAuxData = nullptr;
         }
+    }
+
+    void assetBeingDeleted(Asset &)
+    {
+        animator.reset();
+        modelAuxData = nullptr;
     }
 
     static ModelBank &modelBank()

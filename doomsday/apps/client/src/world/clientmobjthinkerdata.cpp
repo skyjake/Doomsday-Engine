@@ -42,12 +42,13 @@ namespace internal
 using namespace ::internal;
 
 DENG2_PIMPL(ClientMobjThinkerData)
+, DENG2_OBSERVES(Asset, Deletion)
 {
     Flags flags;
     std::unique_ptr<RemoteSync> sync;
     std::unique_ptr<MobjAnimator> animator;
-    Matrix4f modelMatrix;
     ModelRenderer::AuxiliaryData const *modelAuxData = nullptr;
+    Matrix4f modelMatrix;
 
     Instance(Public *i) : Base(i)
     {}
@@ -58,6 +59,11 @@ DENG2_PIMPL(ClientMobjThinkerData)
         {
             sync.reset(new RemoteSync(*other.sync));
         }
+    }
+
+    ~Instance()
+    {
+        deinit();
     }
 
     String thingName() const
@@ -80,9 +86,10 @@ DENG2_PIMPL(ClientMobjThinkerData)
         return ClientApp::renderSystem().modelRenderer().bank();
     }
 
-    void deinitModel()
+    void assetBeingDeleted(Asset &a)
     {
-        animator.reset();
+        de::trash(animator.release());
+        modelAuxData = nullptr;
     }
 
     /**
@@ -101,6 +108,7 @@ DENG2_PIMPL(ClientMobjThinkerData)
             // Prepare the animation state of the model.
             ModelBank::ModelWithData loaded = modelBank().modelAndData(modelId());
             ModelDrawable &model = *loaded.first;
+            model.audienceForDeletion() += this;
             animator.reset(new MobjAnimator(modelId(), model));
             animator->setOwnerNamespace(self.info());
 
@@ -113,6 +121,14 @@ DENG2_PIMPL(ClientMobjThinkerData)
                 Vector3f const dims = modelMatrix * model.dimensions();
                 modelMatrix = Matrix4f::scale(self.mobj()->height / dims.y * 1.2f /*aspect correct*/) * modelMatrix;
             }
+        }
+    }
+
+    void deinit()
+    {
+        if(animator)
+        {
+            animator->model().audienceForDeletion() -= this;
         }
     }
 
