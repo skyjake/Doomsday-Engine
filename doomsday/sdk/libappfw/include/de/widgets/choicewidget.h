@@ -13,13 +13,13 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBAPPFW_CHOICEWIDGET_H
 #define LIBAPPFW_CHOICEWIDGET_H
 
-#include "../ButtonWidget"
+#include "../PopupButtonWidget"
 #include "../PopupMenuWidget"
 #include "../ui/ActionItem"
 
@@ -33,7 +33,7 @@ namespace de {
  *
  * The default opening direction for the popup is to the right.
  */
-class LIBAPPFW_PUBLIC ChoiceWidget : public ButtonWidget
+class LIBAPPFW_PUBLIC ChoiceWidget : public PopupButtonWidget
 {
     Q_OBJECT
 
@@ -57,8 +57,6 @@ public:
 
 public:
     ChoiceWidget(String const &name = "");
-
-    void setOpeningDirection(ui::Direction dir);
 
     ui::Data &items();
 

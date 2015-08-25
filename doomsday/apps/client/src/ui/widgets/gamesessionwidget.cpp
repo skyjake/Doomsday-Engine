@@ -19,18 +19,18 @@
 #include "ui/widgets/gamesessionwidget.h"
 
 #include <de/App>
+#include <de/PopupButtonWidget>
 #include <de/DocumentPopupWidget>
 
 using namespace de;
 
 DENG2_PIMPL(GameSessionWidget)
-, DENG2_OBSERVES(de::ButtonWidget, Press)
 , DENG2_OBSERVES(App, GameUnload)
 {
     PopupStyle popupStyle;
     ButtonWidget *load;
-    ButtonWidget *info;
-    ButtonWidget *funcs = nullptr;
+    PopupButtonWidget *info;
+    PopupButtonWidget *funcs = nullptr;
     DocumentPopupWidget *doc = nullptr;
     PopupMenuWidget *menu = nullptr;
 
@@ -40,11 +40,10 @@ DENG2_PIMPL(GameSessionWidget)
     {
         // Set up the buttons.
         self.add(load = new ButtonWidget);
-        self.add(info = new ButtonWidget);
+        self.add(info = new PopupButtonWidget);
         if(popupStyle == PopupMenu)
         {
-            self.add(funcs = new ButtonWidget);
-            funcs->audienceForPress() += this;
+            self.add(funcs = new PopupButtonWidget);
         }
 
         load->disable();
@@ -57,18 +56,21 @@ DENG2_PIMPL(GameSessionWidget)
         info->setWidthPolicy(ui::Expand);
         info->setAlignment(ui::AlignBottom);
         info->setText(_E(s)_E(B) + tr("..."));
-        info->audienceForPress() += this;
 
         // Set up the info/actions popup widget.
         self.add(doc = new DocumentPopupWidget);
         doc->document().setMaximumLineWidth(doc->style().rules().rule("document.popup.width").valuei());
+        info->setPopup(*doc, popupOpeningDirection);
+        info->setOpener([this] (PopupWidget *) {
+            self.updateInfoContent();
+            doc->open();
+        });
 
         if(popupStyle == PopupMenu)
         {
             self.add(menu = new PopupMenuWidget);
-            menu->setAnchorAndOpeningDirection(funcs->rule(), ui::Right);
+            funcs->setPopup(*menu, ui::Right);
         }
-        doc->setAnchorAndOpeningDirection(info->rule(), popupOpeningDirection);
 
         App::app().audienceForGameUnload() += this;
     }
@@ -85,19 +87,6 @@ DENG2_PIMPL(GameSessionWidget)
     {
         doc->close(0);
         if(menu) menu->close(0);
-    }
-
-    void buttonPressed(ButtonWidget &btn)
-    {
-        if(&btn == info)
-        {
-            self.updateInfoContent();
-            doc->open();
-        }
-        else
-        {
-            menu->open();
-        }
     }
 };
 

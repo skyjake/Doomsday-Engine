@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_OPERATORRULE_H
@@ -44,13 +44,16 @@ public:
         Divide,
         Maximum,
         Minimum,
-        Floor
+        Floor,
+        Select ///< Negative selects left, positive selects right.
     };
 
 public:
     OperatorRule(Operator op, Rule const &unary);
 
     OperatorRule(Operator op, Rule const &left, Rule const &right);
+
+    OperatorRule(Operator op, Rule const &left, Rule const &right, Rule const &condition);
 
 public:
     static OperatorRule &maximum(Rule const &left, Rule const &right) {
@@ -82,6 +85,15 @@ public:
         return OperatorRule::minimum(OperatorRule::maximum(value, low), high);
     }
 
+    static OperatorRule &select(Rule const &ifLessThanZero,
+                                Rule const &ifGreaterThanOrEqualToZero,
+                                Rule const &selection) {
+        return *refless(new OperatorRule(Select,
+                                         ifLessThanZero,
+                                         ifGreaterThanOrEqualToZero,
+                                         selection));
+    }
+
 protected:
     ~OperatorRule();
 
@@ -93,6 +105,7 @@ private:
     Operator _operator;
     Rule const *_leftOperand;
     Rule const *_rightOperand;
+    Rule const *_condition;
 };
 
 inline OperatorRule &operator + (Rule const &left, int right) {

@@ -99,3 +99,7 @@ document {
     color accent    { rgb $= inverted.accent.rgb }
     color dimaccent { rgb <0.85, 0.68, 0.34> }
 }
+
+gamefilter {
+    color background { rgb <0.5, 0.5, 0.5> }
+}

@@ -89,6 +89,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
         Id _id;
     };
 
+    bool infoStyle = false;
     ButtonWidget *hover;
     int oldScrollY;
     Rule const *widestItem;
@@ -146,7 +147,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
         {
             addToMaxWidth(widget);
 
-            b->setHoverTextColor("inverted.text");
+            setButtonColors(*b);
             b->setSizePolicy(ui::Expand, ui::Expand);
 
             if(!b->is<ToggleWidget>())
@@ -202,6 +203,14 @@ DENG_GUI_PIMPL(PopupMenuWidget)
         }
     }
 
+    void setButtonColors(ButtonWidget &button)
+    {
+        bool const hovering = (hover == &button);
+        button.setTextColor(!hovering ^ infoStyle? "text" : "inverted.text");
+        button.setHoverTextColor(!hovering ^ infoStyle? "inverted.text" : "text",
+                                 ButtonWidget::ReplaceColor);
+    }
+
     void updateItemHitRules()
     {
         GridLayout const &layout = self.menu().layout();
@@ -231,7 +240,8 @@ DENG_GUI_PIMPL(PopupMenuWidget)
         {
             if(ButtonWidget *button = child->maybeAs<ButtonWidget>())
             {
-                if(button->hasImage())
+                // Menu item images are expected to be on the left side.
+                if(button->hasImage() && button->textAlignment() == ui::AlignRight)
                     return true;
             }
         }
@@ -279,7 +289,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
                 if(useExtraPadding)
                 {
                     Rule const *padRule = holdRef(padding);
-                    if(button->hasImage())
+                    if(button->hasImage() && button->textAlignment() == ui::AlignRight)
                     {
                         LabelWidget::ContentLayout layout;
                         button->contentLayout(layout);
@@ -299,14 +309,9 @@ DENG_GUI_PIMPL(PopupMenuWidget)
 
     void buttonStateChanged(ButtonWidget &button, ButtonWidget::State state)
     {
-        if(state != ButtonWidget::Up)
-        {
-            button.setImageColor(style().colors().colorf("inverted.text"));
-        }
-        else
-        {
-            button.setImageColor(style().colors().colorf("text"));
-        }
+        button.setImageColor(style().colors().colorf
+                             ((state != ButtonWidget::Up) ^ infoStyle? "inverted.text" :
+                                                                       "text"));
 
         // Position item highlight.
         if(&button == hover && state == ButtonWidget::Up)
@@ -379,6 +384,17 @@ DENG_GUI_PIMPL(PopupMenuWidget)
             self.menu().updateLayout();
         }
     }
+
+    void updateButtonColors()
+    {
+        for(Widget *w : self.menu().childWidgets())
+        {
+            if(ButtonWidget *btn = w->maybeAs<ButtonWidget>())
+            {
+                setButtonColors(*btn);
+            }
+        }
+    }
 };
 
 PopupMenuWidget::PopupMenuWidget(String const &name)
@@ -397,6 +413,13 @@ MenuWidget &PopupMenuWidget::menu() const
     return static_cast<MenuWidget &>(content());
 }
 
+void PopupMenuWidget::useInfoStyle(bool yes)
+{
+    PopupWidget::useInfoStyle(yes);
+    d->infoStyle = yes;
+    d->updateButtonColors();
+}
+
 void PopupMenuWidget::update()
 {
     PopupWidget::update();
@@ -411,8 +434,8 @@ void PopupMenuWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
     {
         verts.makeQuad(d->highlightRect(),
                        d->hover->state() == ButtonWidget::Hover?
-                           style().colors().colorf("inverted.background") :
-                           style().colors().colorf("accent"),
+                           style().colors().colorf(!d->infoStyle? "inverted.background" : "background") :
+                           style().colors().colorf(!d->infoStyle? "accent" : "inverted.accent"),
                        root().atlas().imageRectf(root().solidWhitePixel()).middle());
     }
 }
@@ -424,14 +447,6 @@ void PopupMenuWidget::preparePanelForOpening()
     d->updateItemHitRules();
     d->updateItemMargins();
 
-    // Make sure the menu doesn't go beyond the top of the view.
-    if(openingDirection() == ui::Up)
-    {
-        menu().rule().setInput(Rule::Height,
-                OperatorRule::minimum(menu().contentRule().height() + menu().margins().height(),
-                                      anchorY() - menu().margins().top()));
-    }
-
     PopupWidget::preparePanelForOpening();
 }
 
@@ -441,9 +456,10 @@ void PopupMenuWidget::panelClosing()
 
     if(d->hover)
     {
-        d->hover->setTextModulationColorf(Vector4f(1, 1, 1, 1));
-        d->hover->setImageColor(style().colors().colorf("text"));
+        auto &btn = *d->hover;
         d->hover = 0;
+        d->setButtonColors(btn);
+        btn.setImageColor(style().colors().colorf(!d->infoStyle? "text" : "inverted.text"));
         requestGeometry();
     }
 

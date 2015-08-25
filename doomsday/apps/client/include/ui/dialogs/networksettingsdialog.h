@@ -33,7 +33,6 @@ public:
 
 public slots:
     void resetToDefaults();
-    void showDeveloperPopup();
 
 private:
     DENG2_PRIVATE(d)

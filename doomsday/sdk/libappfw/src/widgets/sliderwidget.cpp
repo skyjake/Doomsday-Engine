@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/SliderWidget"
@@ -87,6 +87,7 @@ DENG_GUI_PIMPL(SliderWidget)
     State state;
     Vector2i grabFrom;
     ddouble grabValue;
+    SafeWidgetPtr<ValuePopup> editPop;
 
     // Visualization.
     bool animating;
@@ -252,7 +253,7 @@ DENG_GUI_PIMPL(SliderWidget)
                                 Vector4f(1, 1, 1, frameOpacity),
                                 atlas().imageRectf(root().boldRoundCorners()));
 
-        // Labels.        
+        // Labels.
         if(labels[Start].isReady())
         {
             labels[Start].makeVertices(verts,
@@ -599,14 +600,18 @@ bool SliderWidget::handleEvent(Event const &event)
     {
         switch(handleMouseClick(event, MouseEvent::Right))
         {
-        case MouseClickFinished: {
-            ValuePopup *pop = new ValuePopup(*this);
-            pop->setAnchorAndOpeningDirection(rule(),
-                    rule().recti().middle().y < root().viewHeight().valuei()/2? ui::Down : ui::Up);
-            pop->setDeleteAfterDismissed(true);
-            root().addOnTop(pop);
-            pop->open();
-            return true; }
+        case MouseClickFinished:
+            if(!d->editPop)
+            {
+                ValuePopup *pop = new ValuePopup(*this);
+                d->editPop.reset(pop);
+                pop->setAnchorAndOpeningDirection(rule(),
+                        rule().recti().middle().y < root().viewHeight().valuei()/2? ui::Down : ui::Up);
+                pop->setDeleteAfterDismissed(true);
+                root().addOnTop(pop);
+                pop->open();
+            }
+            return true;
 
         case MouseClickStarted:
         case MouseClickAborted:

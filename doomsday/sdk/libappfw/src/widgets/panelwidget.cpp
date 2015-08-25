@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/PanelWidget"
@@ -36,10 +36,10 @@ DENG_GUI_PIMPL(PanelWidget)
 {
     typedef DefaultVertexBuf VertexBuf;
 
-    bool opened;
-    ui::Direction dir;
-    ui::SizePolicy secondaryPolicy;
-    GuiWidget *content;
+    bool opened = false;
+    ui::Direction dir = ui::Down;
+    ui::SizePolicy secondaryPolicy = ui::Expand;
+    GuiWidget *content = nullptr;
     ScalarRule *openingRule;
     QTimer dismissTimer;
 
@@ -47,16 +47,9 @@ DENG_GUI_PIMPL(PanelWidget)
 
     // GL objects.
     Drawable drawable;
-    GLUniform uMvpMatrix;
-    //GLUniform uColor;
+    GLUniform uMvpMatrix { "uMvpMatrix", GLUniform::Mat4 };
 
-    Instance(Public *i)
-        : Base(i)
-        , opened(false)
-        , dir(ui::Down)
-        , secondaryPolicy(ui::Expand)
-        , content(0)
-        , uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
+    Instance(Public *i) : Base(i)
     {
         openingRule = new ScalarRule(0);
 
@@ -230,7 +223,7 @@ PanelWidget::PanelWidget(String const &name) : GuiWidget(name), d(new Instance(t
 void PanelWidget::setContent(GuiWidget *content)
 {
     if(d->content)
-    {        
+    {
         destroy(takeContent());
     }
 

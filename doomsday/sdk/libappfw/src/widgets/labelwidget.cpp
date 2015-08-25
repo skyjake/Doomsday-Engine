@@ -683,6 +683,11 @@ void LabelWidget::setTextAlignment(Alignment const &textAlign)
     d->textAlign = textAlign;
 }
 
+ui::Alignment LabelWidget::textAlignment() const
+{
+    return d->textAlign;
+}
+
 void LabelWidget::setTextLineAlignment(Alignment const &textLineAlign)
 {
     d->lineAlign = textLineAlign;

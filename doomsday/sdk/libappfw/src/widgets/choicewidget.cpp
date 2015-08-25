@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/ChoiceWidget"
@@ -73,7 +73,7 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
         choices->menu().organizer().audienceForWidgetUpdate() += this;
         self.add(choices);
 
-        self.setAction(new SignalAction(thisPublic, SLOT(openPopup())));
+        self.setPopup(*choices, ui::Right);
 
         updateButtonWithSelection();
         updateStyle();
@@ -212,14 +212,11 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
     }
 };
 
-ChoiceWidget::ChoiceWidget(String const &name) : ButtonWidget(name), d(new Instance(this))
+ChoiceWidget::ChoiceWidget(String const &name)
+    : PopupButtonWidget(name), d(new Instance(this))
 {
     setOpeningDirection(ui::Right);
-}
-
-void ChoiceWidget::setOpeningDirection(Direction dir)
-{
-    d->choices->setAnchorAndOpeningDirection(hitRule(), dir);
+    d->choices->setAllowDirectionFlip(false);
 }
 
 PopupMenuWidget &ChoiceWidget::popup()

@@ -130,11 +130,12 @@ public:
         hideIcon();
 
         // The notification has a hidden button that can be clicked.
-        _clickable = new ButtonWidget;
+        _clickable = new PopupButtonWidget;
         _clickable->setOpacity(0); // not drawn
         _clickable->rule().setRect(rule());
-        _clickable->setAction(new SignalAction(&ClientApp::updater(),
-                                               SLOT(showCurrentDownload())));
+        _clickable->setOpener([] (PopupWidget *) {
+            ClientApp::updater().showCurrentDownload();
+        });
         add(_clickable);
     }
 
@@ -148,9 +149,14 @@ public:
         _icon->setImageColor(Vector4f());
     }
 
+    PopupButtonWidget &popupButton()
+    {
+        return *_clickable;
+    }
+
 private:
     LabelWidget *_icon;
-    ButtonWidget *_clickable;
+    PopupButtonWidget *_clickable;
 };
 
 DENG2_PIMPL(Updater)
@@ -416,7 +422,7 @@ DENG2_PIMPL(Updater)
         LOG_MSG("Download and install update");
 
         download = new DownloadDialog(latestPackageUri, latestPackageUri2);
-        download->setAnchorAndOpeningDirection(status->rule(), ui::Down);
+        status->popupButton().setPopup(*download, ui::Down);
         QObject::connect(download, SIGNAL(closed()), thisPublic, SLOT(downloadDialogClosed()));
         QObject::connect(download, SIGNAL(downloadProgress(int)),thisPublic, SLOT(downloadProgressed(int)));
         QObject::connect(download, SIGNAL(downloadFailed(QString)), thisPublic, SLOT(downloadFailed(QString)));

@@ -24,6 +24,7 @@
 #include <de/ChildWidgetOrganizer>
 #include <de/SequentialLayout>
 #include <de/DocumentPopupWidget>
+#include <de/PopupButtonWidget>
 
 using namespace de;
 
@@ -51,23 +52,8 @@ DENG_GUI_PIMPL(PackagesDialog)
      * the package.
      */
     class Widget : public GuiWidget
-                 , DENG2_OBSERVES(PanelWidget, Close)
     {
     private:
-        /// Action to show information about a package.
-        struct InfoAction : public Action
-        {
-            Widget &owner;
-
-            InfoAction(Widget &widget) : owner(widget) {}
-
-            void trigger()
-            {
-                Action::trigger();
-                owner.openInfoPopup();
-            }
-        };
-
         /// Action to load or unload a package.
         struct LoadAction : public Action
         {
@@ -113,10 +99,12 @@ DENG_GUI_PIMPL(PackagesDialog)
             _loadButton->setSizePolicy(ui::Expand, ui::Expand);
             _loadButton->setAction(new LoadAction(*this));
 
-            add(_infoButton = new ButtonWidget);
+            add(_infoButton = new PopupButtonWidget);
             _infoButton->setSizePolicy(ui::Expand, ui::Fixed);
             _infoButton->setText(_E(s)_E(B) + tr("..."));
-            _infoButton->setAction(new InfoAction(*this));
+            _infoButton->setPopup([this] (PopupButtonWidget const &) {
+                return makeInfoPopup();
+            }, ui::Left);
 
             createTagButtons();
 
@@ -144,14 +132,6 @@ DENG_GUI_PIMPL(PackagesDialog)
             rule().setInput(Rule::Width,  style().rules().rule("dialog.packages.width"))
                   .setInput(Rule::Height, _title->rule().height() +
                             _subtitle->rule().height() + _tags.at(0)->rule().height());
-        }
-
-        ~Widget()
-        {
-            if(_popup)
-            {
-                _popup->audienceForClose() -= this;
-            }
         }
 
         void createTagButtons()
@@ -222,35 +202,17 @@ DENG_GUI_PIMPL(PackagesDialog)
             return _item->info.gets("ID");
         }
 
-        void openInfoPopup()
+        PopupWidget *makeInfoPopup() const
         {
-            if(_popup)
-            {
-                _popup->close();
-                return;
-            }
-
-            _popup = new DocumentPopupWidget;
-            _popup->audienceForClose() += this;
-            _popup->setAnchorAndOpeningDirection(_infoButton->rule(), ui::Left);
-            _popup->setDeleteAfterDismissed(true);
-            _popup->document().setText(QString(_E(1) "%1" _E(.) "\n%2\n"
-                                               _E(l) "Version: " _E(.) "%3\n"
-                                               _E(l) "License: " _E(.)_E(>) "%4\n")
-                                       .arg(_item->info.gets("title"))
-                                       .arg(packageId())
-                                       .arg(_item->info.gets("version"))
-                                       .arg(_item->info.gets("license")));
-            add(_popup);
-            _popup->open();
-        }
-
-        void panelBeingClosed(PanelWidget &panel)
-        {
-            if(_popup == &panel)
-            {
-                _popup = nullptr;
-            }
+            auto *pop = new DocumentPopupWidget;
+            pop->document().setText(QString(_E(1) "%1" _E(.) "\n%2\n"
+                                            _E(l) "Version: " _E(.) "%3\n"
+                                            _E(l) "License: " _E(.)_E(>) "%4\n")
+                                    .arg(_item->info.gets("title"))
+                                    .arg(packageId())
+                                    .arg(_item->info.gets("version"))
+                                    .arg(_item->info.gets("license")));
+            return pop;
         }
 
     private:
@@ -259,8 +221,7 @@ DENG_GUI_PIMPL(PackagesDialog)
         LabelWidget *_subtitle;
         QList<ButtonWidget *> _tags;
         ButtonWidget *_loadButton;
-        ButtonWidget *_infoButton;
-        DocumentPopupWidget *_popup = nullptr;
+        PopupButtonWidget *_infoButton;
     };
 
     Instance(Public *i) : Base(i)

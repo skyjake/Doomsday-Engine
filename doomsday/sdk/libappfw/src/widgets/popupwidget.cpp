@@ -34,24 +34,21 @@ namespace de {
 DENG_GUI_PIMPL(PopupWidget)
 , DENG2_OBSERVES(Widget, Deletion)
 {
-    bool useInfoStyle;
-    bool deleteAfterDismiss;
-    bool clickToClose;
-    bool outsideClickOngoing;
-    Widget *realParent;
-    Rule const *anchorX;
-    Rule const *anchorY;
+    bool flexibleDir = true;
+    bool useInfoStyle = false;
+    bool deleteAfterDismiss = false;
+    bool clickToClose = true;
+    bool outsideClickOngoing = false;
+    Widget *realParent = nullptr;
+    /*Rule const *anchorTop = nullptr;
+    Rule const *anchorY = nullptr;
+    //Rule const *anchorWidth = nullptr;
+    Rule const *anchorBottom = nullptr;
+    Rule const *anchorOffset = new ConstantRule(0);*/
+    RuleRectangle anchor;
     Rule const *marker;
 
-    Instance(Public *i)
-        : Base(i)
-        , useInfoStyle(false)
-        , deleteAfterDismiss(false)
-        , clickToClose(true)
-        , outsideClickOngoing(false)
-        , realParent(0)
-        , anchorX(0)
-        , anchorY(0)
+    Instance(Public *i) : Base(i)
     {
         // Style.
         marker = &style().rules().rule("gap");
@@ -60,25 +57,103 @@ DENG_GUI_PIMPL(PopupWidget)
     ~Instance()
     {
         if(realParent) realParent->audienceForDeletion() -= this;
+    }
 
-        releaseRef(anchorX);
-        releaseRef(anchorY);
+    void flipOpeningDirectionIfNeeded()
+    {
+        ui::Direction openDir = self.openingDirection();
+
+        // Opening direction depends on the anchor position: popup will open to
+        // direction that has more space available.
+        switch(openDir)
+        {
+        case ui::Up:
+            if(anchor.midY().value() < self.root().viewHeight().value()/2)
+            {
+                openDir = ui::Down;
+            }
+            break;
+
+        case ui::Down:
+            if(anchor.midY().value() > self.root().viewHeight().value()/2)
+            {
+                openDir = ui::Up;
+            }
+            break;
+
+        case ui::Left:
+            if(anchor.midX().value() < self.root().viewWidth().value()/2)
+            {
+                openDir = ui::Right;
+            }
+            break;
+
+        case ui::Right:
+            if(anchor.midX().value() > self.root().viewWidth().value()/2)
+            {
+                openDir = ui::Left;
+            }
+            break;
+
+        default:
+            break;
+        }
+
+        self.setOpeningDirection(openDir);
+    }
+
+    typedef Vector2<Rule const *> Vector2R;
+
+    Vector2R anchorRule() const
+    {
+        switch(self.openingDirection())
+        {
+        case ui::Up:
+            return Vector2R(&anchor.midX(), &anchor.top());
+
+        case ui::Down:
+            return Vector2R(&anchor.midX(), &anchor.bottom());
+
+        case ui::Left:
+            return Vector2R(&anchor.left(), &anchor.midY());
+
+        case ui::Right:
+            return Vector2R(&anchor.right(), &anchor.midY());
+
+        default:
+            break;
+        }
+
+        return Vector2R(&anchor.midX(), &anchor.midY());
+    }
+
+    Vector2i anchorPos() const
+    {
+        auto rule = anchorRule();
+        return Vector2i(rule.x->valuei(), rule.y->valuei());
     }
 
     void updateLayout()
     {
         self.rule()
+                .clearInput(Rule::Left)
+                .clearInput(Rule::Right)
+                .clearInput(Rule::Top)
+                .clearInput(Rule::Bottom)
                 .clearInput(Rule::AnchorX)
                 .clearInput(Rule::AnchorY);
+
+        auto anchorPos = anchorRule();
 
         switch(self.openingDirection())
         {
         case ui::Up:
             self.rule()
                     .setInput(Rule::Bottom, OperatorRule::maximum(
-                                  *anchorY - *marker, self.rule().height()))
+                                  *anchorPos.y - *marker,
+                                  self.rule().height()))
                     .setInput(Rule::Left, OperatorRule::clamped(
-                                  *anchorX - self.rule().width() / 2,
+                                  *anchorPos.x - self.rule().width() / 2,
                                   self.margins().left(),
                                   self.root().viewWidth() - self.rule().width() - self.margins().right()));
             break;
@@ -86,10 +161,10 @@ DENG_GUI_PIMPL(PopupWidget)
         case ui::Down:
             self.rule()
                     .setInput(Rule::Top,  OperatorRule::minimum(
-                                  *anchorY + *marker,
+                                  *anchorPos.y + *marker,
                                   self.root().viewHeight() - self.rule().height() - self.margins().bottom()))
                     .setInput(Rule::Left, OperatorRule::clamped(
-                                  *anchorX - self.rule().width() / 2,
+                                  *anchorPos.x - self.rule().width() / 2,
                                   self.margins().left(),
                                   self.root().viewWidth() - self.rule().width() - self.margins().right()));
             break;
@@ -97,9 +172,10 @@ DENG_GUI_PIMPL(PopupWidget)
         case ui::Left:
             self.rule()
                     .setInput(Rule::Right, OperatorRule::maximum(
-                                  *anchorX - *marker, self.rule().width()))
+                                  *anchorPos.x - *marker,
+                                  self.rule().width()))
                     .setInput(Rule::Top, OperatorRule::clamped(
-                                  *anchorY - self.rule().height() / 2,
+                                  *anchorPos.y - self.rule().height() / 2,
                                   self.margins().top(),
                                   self.root().viewHeight() - self.rule().height() -
                                   self.margins().bottom() + self.margins().top()));
@@ -108,19 +184,17 @@ DENG_GUI_PIMPL(PopupWidget)
         case ui::Right:
             self.rule()
                     .setInput(Rule::Left, OperatorRule::minimum(
-                                  *anchorX + *marker,
+                                  *anchorPos.x + *marker,
                                   self.root().viewWidth() - self.rule().width() - self.margins().right()))
                     .setInput(Rule::Top,  OperatorRule::clamped(
-                                  *anchorY - self.rule().height() / 2,
+                                  *anchorPos.y - self.rule().height() / 2,
                                   self.margins().top(),
                                   self.root().viewHeight() - self.rule().height() - self.margins().bottom()));
             break;
 
         case ui::NoDirection:
-            self.rule()
-                    .setInput(Rule::AnchorX, *anchorX)
-                    .setInput(Rule::AnchorY, *anchorY)
-                    .setAnchorPoint(Vector2f(.5f, .5f));
+            self.rule().setMidAnchorX(*anchorPos.x)
+                       .setMidAnchorY(*anchorPos.y);
             break;
         }
     }
@@ -183,7 +257,9 @@ int PopupWidget::levelOfNesting() const
 
 void PopupWidget::setAnchorAndOpeningDirection(RuleRectangle const &rule, ui::Direction dir)
 {
-    if(dir == ui::NoDirection)
+    d->anchor.setRect(rule);
+
+/*    if(dir == ui::NoDirection)
     {
         // Anchored to the middle by default.
         setAnchor(rule.left() + rule.width() / 2,
@@ -200,22 +276,33 @@ void PopupWidget::setAnchorAndOpeningDirection(RuleRectangle const &rule, ui::Di
         setAnchorY(dir == ui::Up? rule.top() : rule.bottom());
     }
 
+    changeRef(d->anchorWidth,  rule.width());
+    changeRef(d->anchorHeight, rule.height());*/
+
     setOpeningDirection(dir);
+}
+
+void PopupWidget::setAllowDirectionFlip(bool flex)
+{
+    d->flexibleDir = flex;
 }
 
 void PopupWidget::setAnchor(Vector2i const &pos)
 {
-    setAnchor(Const(pos.x), Const(pos.y));
+    d->anchor.setLeftTop(Const(pos.x), Const(pos.y));
+    d->anchor.setRightBottom(d->anchor.left(), d->anchor.top());
 }
 
 void PopupWidget::setAnchorX(int xPos)
 {
-    setAnchorX(Const(xPos));
+    d->anchor.setInput(Rule::Left,  Const(xPos))
+             .setInput(Rule::Right, Const(xPos));
 }
 
 void PopupWidget::setAnchorY(int yPos)
 {
-    setAnchorY(Const(yPos));
+    d->anchor.setInput(Rule::Top,    Const(yPos))
+             .setInput(Rule::Bottom, Const(yPos));
 }
 
 void PopupWidget::setAnchor(Rule const &x, Rule const &y)
@@ -226,30 +313,24 @@ void PopupWidget::setAnchor(Rule const &x, Rule const &y)
 
 void PopupWidget::setAnchorX(Rule const &x)
 {
-    releaseRef(d->anchorX);
-    d->anchorX = holdRef(x);
+    d->anchor.setInput(Rule::Left,   x)
+             .setInput(Rule::Right,  x);
 }
 
 void PopupWidget::setAnchorY(Rule const &y)
 {
-    releaseRef(d->anchorY);
-    d->anchorY = holdRef(y);
+    d->anchor.setInput(Rule::Top,    y)
+             .setInput(Rule::Bottom, y);
 }
 
-Rule const &PopupWidget::anchorX() const
+RuleRectangle const &PopupWidget::anchor() const
 {
-    return *d->anchorX;
-}
-
-Rule const &PopupWidget::anchorY() const
-{
-    return *d->anchorY;
+    return d->anchor;
 }
 
 void PopupWidget::detachAnchor()
 {
-    setAnchorX(Constf(anchorX().value()));
-    setAnchorY(Constf(anchorY().value()));
+    setAnchor(d->anchorPos());
     d->updateLayout();
 }
 
@@ -263,9 +344,9 @@ void PopupWidget::setClickToClose(bool clickCloses)
     d->clickToClose = clickCloses;
 }
 
-void PopupWidget::useInfoStyle()
+void PopupWidget::useInfoStyle(bool yes)
 {
-    d->useInfoStyle = true;
+    d->useInfoStyle = yes;
     d->updateStyle();
 }
 
@@ -289,55 +370,13 @@ bool PopupWidget::handleEvent(Event const &event)
     // Popups eat all mouse button events.
     if(event.type() == Event::MouseButton)
     {
-        MouseEvent const &mouse = event.as<MouseEvent>();
+        //MouseEvent const &mouse = event.as<MouseEvent>();
         bool const inside = hitTest(event);
 
-        // Clicking outside the popup will close it.
-        if(d->clickToClose)
+        if(!inside && d->clickToClose)
         {
-            switch(mouse.state())
-            {
-            case MouseEvent::Pressed:
-                if(!inside)
-                {
-                    d->outsideClickOngoing = true;
-                }
-                break;
-
-            case MouseEvent::Released:
-                if(!inside && d->outsideClickOngoing)
-                {
-                    /* This needs to satisfy the following conditions:
-                     *
-                     * - Since a mouse click comprises a Press followed by a Release, we shouldn't
-                     *   let the potential clicked widget that lies outside the popup know of the
-                     *   click before it has successfully completed.
-                     *
-                     * - Buttons perform their action when clicked, so the clicked widget must
-                     *   be notified before the popup is closed. This way buttons that open
-                     *   popup menus can either be used to toggle the menu open/closed, but also
-                     *   immediately open their menu if it currently is closed.
-                     */
-                    if(GuiWidget const *hit = root().globalHitTest(mouse.pos()))
-                    {
-                        DENG2_ASSERT(hit != this); // !inside
-
-                        if(hit->isEnabled() && hit->isVisible())
-                        {
-                            // Replay the click on this widget.
-                            const_cast<GuiWidget *>(hit)->handleEvent(
-                                    MouseEvent(mouse.button(), MouseEvent::Pressed, mouse.pos()));
-                            const_cast<GuiWidget *>(hit)->handleEvent(mouse);
-                        }
-                    }
-
-                    close(0); // immediately
-                }
-                d->outsideClickOngoing = false;
-                break;
-            }
+            close(0.1);
         }
-        return true;
     }
 
     if(event.type() == Event::KeyPress  ||
@@ -377,8 +416,7 @@ void PopupWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
     v.texCoord = root().atlas().imageRectf(root().solidWhitePixel()).middle();
 
     int marker = d->marker->valuei();
-
-    Vector2i anchorPos(d->anchorX->valuei(), d->anchorY->valuei());
+    Vector2i anchorPos = d->anchorPos();
 
     if(dir == ui::Up)
     {
@@ -427,6 +465,11 @@ void PopupWidget::preparePanelForOpening()
     d->updateStyle();
 
     PanelWidget::preparePanelForOpening();
+
+    if(d->flexibleDir)
+    {
+        d->flipOpeningDirectionIfNeeded();
+    }
 
     // Reparent the popup into the root widget, on top of everything else.
     d->realParent = Widget::parent();

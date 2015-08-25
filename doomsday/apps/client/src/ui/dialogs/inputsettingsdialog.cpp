@@ -174,11 +174,10 @@ InputSettingsDialog::InputSettingsDialog(String const &name)
             << new DialogButtonItem(Default | Accept, tr("Close"))
             << new DialogButtonItem(Action, tr("Reset to Defaults"),
                                     new SignalAction(this, SLOT(resetToDefaults())))
-            << new DialogButtonItem(Action | Id1,
-                                    style().images().image("gauge"),
-                                    new SignalAction(this, SLOT(showDeveloperPopup())));
+            << new DialogButtonItem(ActionPopup | Id1,
+                                    style().images().image("gauge"));
 
-    d->devPopup->setAnchorAndOpeningDirection(buttonWidget(Id1)->rule(), ui::Up);
+    popupButtonWidget(Id1)->setPopup(*d->devPopup);
 
     d->fetch();
 }
@@ -211,9 +210,4 @@ void InputSettingsDialog::mouseSensitivityChanged(double value)
             d->mouseSensiX->setCVarValueFromWidget();
         }
     }
-}
-
-void InputSettingsDialog::showDeveloperPopup()
-{
-    d->devPopup->open();
 }
