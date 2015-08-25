@@ -31,7 +31,7 @@
 #include <de/ui/VariableToggleItem>
 #include <de/ui/SubwidgetItem>
 #include <de/SignalAction>
-#include <de/ButtonWidget>
+#include <de/PopupButtonWidget>
 #include <de/ScriptCommandWidget>
 #include <de/PopupMenuWidget>
 #include <de/ToggleWidget>
@@ -49,8 +49,8 @@ DENG_GUI_PIMPL(ConsoleWidget),
 DENG2_OBSERVES(Variable, Change)
 {
     GuiWidget *buttons = nullptr;
-    ButtonWidget *button = nullptr;
-    ButtonWidget *promptButton = nullptr;
+    PopupButtonWidget *button = nullptr;
+    PopupButtonWidget *promptButton = nullptr;
     PopupMenuWidget *logMenu = nullptr;
     PopupMenuWidget *promptMenu = nullptr;
     ConsoleCommandWidget *cmdLine = nullptr;
@@ -94,7 +94,7 @@ DENG2_OBSERVES(Variable, Change)
     }
 
     void expandLog(int delta, bool useOffsetAnimation)
-    {       
+    {
         // Cannot expand if the user is grabbing the top edge.
         if(grabbed == TopEdge) return;
 
@@ -213,7 +213,7 @@ DENG2_OBSERVES(Variable, Change)
         scriptCmd->setAttribute(AnimateOpacityWhenEnabledOrDisabled, UnsetFlags);
         cmdLine  ->setAttribute(AnimateOpacityWhenEnabledOrDisabled, UnsetFlags);
 
-        scriptCmd->show(yes);        
+        scriptCmd->show(yes);
         scriptCmd->enable(yes);
         cmdLine->show(!yes);
         cmdLine->disable(yes);
@@ -281,8 +281,8 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
     d->buttons = new GuiWidget;
     add(d->buttons);
 
-    // Button for opening the Log History menu.    
-    d->button = new ButtonWidget;
+    // Button for opening the Log History menu.
+    d->button = new PopupButtonWidget;
     d->button->setSizePolicy(ui::Expand, ui::Expand);
     d->button->setImage(style().images().image("log"));
     d->button->setOverrideImageSize(style().fonts().font("default").height().valuei());
@@ -295,7 +295,7 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
             .setInput(Rule::Width,  d->button->rule().height()); // square
 
     // Button for opening the console prompt menu.
-    d->promptButton = new ButtonWidget;
+    d->promptButton = new PopupButtonWidget;
     d->promptButton->addEventHandler(new Instance::RightClick(d));
 
     d->promptButton->rule()
@@ -343,7 +343,7 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
 
     // Menu for log history related features.
     d->logMenu = new PopupMenuWidget;
-    d->logMenu->setAnchor(d->button->rule().midX(), d->button->rule().top());
+    d->button->setPopup(*d->logMenu);
     d->logMenu->items()
             << new ui::ActionItem(tr("Show Full Log"), new SignalAction(this, SLOT(showFullLog())))
             << new ui::ActionItem(tr("Close Log"), new SignalAction(this, SLOT(closeLogAndUnfocusCommandLine())))
@@ -361,23 +361,21 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
             << new ui::VariableToggleItem(tr("Entry Metadata"), App::config("log.showMetadata"))
             << new ui::Item(ui::Item::Annotation, tr("Time and subsystem of each new entry is printed."))
             << new ui::Item(ui::Item::Separator)
-            << new ui::SubwidgetItem(tr("Log Filter & Alerts..."), ui::Right, makePopup<LogSettingsDialog>);
+            << new ui::SubwidgetItem(tr("Log Filter & Alerts"), ui::Right, makePopup<LogSettingsDialog>);
 
     add(d->logMenu);
-    d->button->setAction(new SignalAction(d->logMenu, SLOT(open())));
 
     // Menu for console prompt behavior.
     d->promptMenu = new PopupMenuWidget;
-    d->promptMenu->setAnchor(d->promptButton->rule().midX(), d->promptButton->rule().top());
+    d->promptButton->setPopup(*d->promptMenu);
     d->promptMenu->items()
-            << new ui::SubwidgetItem(tr("Shortcut Key..."), ui::Right, consoleShortcutPopup)
+            << new ui::SubwidgetItem(tr("Shortcut Key"), ui::Right, consoleShortcutPopup)
             << new ui::Item(ui::Item::Separator)
             << new ui::VariableToggleItem(tr("Doomsday Script"), App::config("console.script"))
             << new ui::Item(ui::Item::Annotation,
                             tr("The command prompt becomes an interactive script "
                                "process with access to all the runtime DS modules."));
     add(d->promptMenu);
-    d->promptButton->setAction(new SignalAction(d->promptMenu, SLOT(open())));
 
     d->setScriptMode(App::config().getb("console.script"));
 

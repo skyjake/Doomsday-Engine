@@ -99,9 +99,9 @@ DENG_GUI_PIMPL(TaskBarWidget)
 
     GuiWidget *backBlur;
     ConsoleWidget *console;
-    ButtonWidget *logo;
-    ButtonWidget *conf;
-    ButtonWidget *multi;
+    PopupButtonWidget *logo;
+    PopupButtonWidget *conf;
+    PopupButtonWidget *multi;
     LabelWidget *status;
     PopupMenuWidget *mainMenu;
     PopupMenuWidget *configMenu;
@@ -361,7 +361,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             .setInput(Rule::Height, rule().height());
 
     // DE logo.
-    d->logo = new ButtonWidget("de-button");
+    d->logo = new PopupButtonWidget("de-button");
     d->logo->setImage(style().images().image("logo.px128"));
     d->logo->setImageScale(.475f);
     d->logo->setImageFit(FitToHeight | OriginalAspectRatio);
@@ -374,12 +374,11 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     add(d->logo);
 
     // Settings.
-    ButtonWidget *conf = new ButtonWidget("conf-button");
-    d->conf = conf;
-    conf->setImage(style().images().image("gear"));
-    conf->setSizePolicy(ui::Expand, ui::Filled);
-    conf->rule().setInput(Rule::Height, rule().height());
-    add(conf);
+    d->conf = new PopupButtonWidget("conf-button");
+    d->conf->setImage(style().images().image("gear"));
+    d->conf->setSizePolicy(ui::Expand, ui::Filled);
+    d->conf->rule().setInput(Rule::Height, rule().height());
+    add(d->conf);
 
     // Currently loaded game.
     d->status = new LabelWidget;
@@ -391,9 +390,8 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     d->updateStatus();
 
     // Multiplayer.
-    d->multi = new ButtonWidget;
+    d->multi = new PopupButtonWidget;
     d->multi->hide(); // hidden when not connected
-    d->multi->setAction(new SignalAction(this, SLOT(openMultiplayerMenu())));
     d->multi->setImage(style().images().image("network"));
     d->multi->setTextAlignment(ui::AlignRight);
     d->multi->setText(tr("MP"));
@@ -406,15 +404,15 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
 
     // Settings menu.
     add(d->configMenu = new PopupMenuWidget("conf-menu"));
-    d->configMenu->setAnchorAndOpeningDirection(conf->rule(), ui::Up);
+    d->conf->setPopup(*d->configMenu);
 
     // Multiplayer menu.
     add(d->multiMenu = new MultiplayerMenuWidget);
-    d->multiMenu->setAnchorAndOpeningDirection(d->multi->rule(), ui::Up);
+    d->multi->setPopup(*d->multiMenu);
 
     // The DE menu.
     add(d->mainMenu = new PopupMenuWidget("de-menu"));
-    d->mainMenu->setAnchorAndOpeningDirection(d->logo->rule(), ui::Up);
+    d->logo->setPopup(*d->mainMenu);
 
     // Game unloading confirmation submenu.
     auto *unloadMenu = new ui::SubmenuItem(style().images().image("close.ring"),
@@ -462,9 +460,6 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << new ui::ActionItem(tr("Quit Doomsday"), new CommandAction("quit"));
 
     d->showOrHideMenuItems();
-
-    conf->setAction(new SignalAction(this, SLOT(openConfigMenu())));
-    d->logo->setAction(new SignalAction(this, SLOT(openMainMenu())));
 
     // Set the initial command line layout.
     updateCommandLineLayout();

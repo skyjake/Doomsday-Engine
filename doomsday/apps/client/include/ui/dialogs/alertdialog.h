@@ -64,7 +64,6 @@ public:
 
 public slots:
     void showListOfAlerts();
-    void showLogFilterSettings();
     void hideNotification();
     void autohideTimeChanged();
 

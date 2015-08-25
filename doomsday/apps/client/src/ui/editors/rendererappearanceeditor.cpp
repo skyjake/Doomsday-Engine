@@ -165,6 +165,7 @@ DENG2_OBSERVES(App, GameChange)
         {
             CVarChoiceWidget *w = new CVarChoiceWidget(cvar);
             w->setOpeningDirection(opening);
+            w->popup().useInfoStyle();
             _group->add(w);
             _layout << *w;
             return w;
@@ -253,7 +254,7 @@ DENG2_OBSERVES(App, GameChange)
     DialogContentStylist stylist;
     ScrollAreaWidget *container;
     IndirectRule *firstColumnWidth; ///< Shared by all groups.
-    ButtonWidget *close;    
+    ButtonWidget *close;
     ProfilePickerWidget *profile;
 
     Group *skyGroup;
@@ -402,7 +403,7 @@ DENG2_OBSERVES(App, GameChange)
 
         lensGroup->addLabel(tr("Pixel Doubling:"));
         lensGroup->addSlider(App::config("render.fx.resize.factor"), Ranged(1, 8), .1, 1);
-        
+
         lensGroup->addSpace();
         lensGroup->addToggle("rend-bloom", tr("Bloom"));
 
@@ -731,7 +732,7 @@ RendererAppearanceEditor::RendererAppearanceEditor()
             .setInput(Rule::Right,  area.right())
             .setInput(Rule::Bottom, title->rule().bottom());
 
-    SequentialLayout layout(area.left(), title->rule().bottom(), Down);    
+    SequentialLayout layout(area.left(), title->rule().bottom(), Down);
 
     layout.append(*profLabel, SequentialLayout::IgnoreMinorAxis);
     d->profile->rule()

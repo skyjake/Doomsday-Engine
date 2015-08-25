@@ -143,11 +143,10 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
             << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, tr("Close"))
             << new DialogButtonItem(DialogWidget::Action, tr("Reset to Defaults"),
                                     new SignalAction(this, SLOT(resetToDefaults())))
-            << new DialogButtonItem(DialogWidget::Action | Id1,
-                                    style().images().image("gauge"),
-                                    new SignalAction(this, SLOT(showDeveloperPopup())));
+            << new DialogButtonItem(DialogWidget::ActionPopup | Id1,
+                                    style().images().image("gauge"));
 
-    d->devPopup->setAnchorAndOpeningDirection(buttonWidget(Id1)->rule(), ui::Up);
+    popupButtonWidget(Id1)->setPopup(*d->devPopup);
 
     d->fetch();
 }
@@ -157,9 +156,4 @@ void AudioSettingsDialog::resetToDefaults()
     ClientApp::audioSettings().resetToDefaults();
 
     d->fetch();
-}
-
-void AudioSettingsDialog::showDeveloperPopup()
-{
-    d->devPopup->open();
 }
