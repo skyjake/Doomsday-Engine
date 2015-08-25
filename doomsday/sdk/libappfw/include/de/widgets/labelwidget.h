@@ -145,6 +145,8 @@ public:
 
     void setTextAlignment(ui::Alignment const &textAlign);
 
+    ui::Alignment textAlignment() const;
+
     void setTextLineAlignment(ui::Alignment const &textLineAlign);
 
     void setTextModulationColorf(Vector4f const &colorf);
