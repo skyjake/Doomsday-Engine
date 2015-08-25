@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBAPPFW_POPUPWIDGET_H
@@ -82,7 +82,7 @@ public:
      * Sets the style of the popup to the one used for informational popups
      * rather than interactive (the default) ones.
      */
-    void useInfoStyle();
+    void useInfoStyle(bool yes = true);
 
     bool isUsingInfoStyle();
 

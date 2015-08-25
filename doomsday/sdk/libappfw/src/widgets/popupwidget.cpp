@@ -263,9 +263,9 @@ void PopupWidget::setClickToClose(bool clickCloses)
     d->clickToClose = clickCloses;
 }
 
-void PopupWidget::useInfoStyle()
+void PopupWidget::useInfoStyle(bool yes)
 {
-    d->useInfoStyle = true;
+    d->useInfoStyle = yes;
     d->updateStyle();
 }
 
