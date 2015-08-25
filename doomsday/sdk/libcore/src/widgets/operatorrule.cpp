@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/OperatorRule"
@@ -23,7 +23,11 @@
 namespace de {
 
 OperatorRule::OperatorRule(Operator op, Rule const &unary)
-    : Rule(), _operator(op), _leftOperand(&unary), _rightOperand(0)
+    : Rule()
+    , _operator(op)
+    , _leftOperand(&unary)
+    , _rightOperand(nullptr)
+    , _condition(nullptr)
 {
     DENG2_ASSERT(_leftOperand != 0);
 
@@ -31,25 +35,63 @@ OperatorRule::OperatorRule(Operator op, Rule const &unary)
 }
 
 OperatorRule::OperatorRule(Operator op, Rule const &left, Rule const &right)
-    : Rule(), _operator(op), _leftOperand(&left), _rightOperand(&right)
+    : Rule()
+    , _operator(op)
+    , _leftOperand(&left)
+    , _rightOperand(&right)
+    , _condition(nullptr)
 {
-    DENG2_ASSERT(_leftOperand != 0);
-    DENG2_ASSERT(_rightOperand != 0);
-
     dependsOn(_leftOperand);
     if(_rightOperand != _leftOperand) dependsOn(_rightOperand);
+}
+
+OperatorRule::OperatorRule(OperatorRule::Operator op, Rule const &left, Rule const &right, Rule const &condition)
+    : Rule()
+    , _operator(op)
+    , _leftOperand(&left)
+    , _rightOperand(&right)
+    , _condition(&condition)
+{
+    DENG2_ASSERT(_leftOperand != _rightOperand);
+    DENG2_ASSERT(_condition != _leftOperand);
+    DENG2_ASSERT(_condition != _rightOperand);
+
+    dependsOn(_leftOperand);
+    dependsOn(_rightOperand);
+    dependsOn(_condition);
 }
 
 OperatorRule::~OperatorRule()
 {
     independentOf(_leftOperand);
     if(_rightOperand != _leftOperand) independentOf(_rightOperand);
+    independentOf(_condition);
 }
 
 void OperatorRule::update()
 {
-    float leftValue  = (_leftOperand?  _leftOperand->value()  : 0);
-    float rightValue = (_rightOperand? _rightOperand->value() : 0);
+    float leftValue = 0;
+    float rightValue = 0;
+
+    if(_operator == Select)
+    {
+        // Only evaluate the selected operand.
+        if(_condition->value() < 0)
+        {
+            leftValue = _leftOperand->value();
+        }
+        else
+        {
+            rightValue = _rightOperand->value();
+        }
+    }
+    else
+    {
+        // Evaluate both operands.
+        leftValue  = (_leftOperand?  _leftOperand->value()  : 0);
+        rightValue = (_rightOperand? _rightOperand->value() : 0);
+    }
+
     float v = leftValue;
 
     switch(_operator)
@@ -96,6 +138,10 @@ void OperatorRule::update()
 
     case Floor:
         v = de::floor(leftValue);
+        break;
+
+    case Select:
+        v = (_condition->value() < 0? leftValue : rightValue);
         break;
     }
 

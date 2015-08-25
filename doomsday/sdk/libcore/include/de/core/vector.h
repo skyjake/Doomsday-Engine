@@ -108,6 +108,7 @@ public:
     Vector2(Type a = Type(0), Type b = Type(0)) : x(a), y(b) {}
     Vector2(Type const *ab) : x(ab[0]), y(ab[1]) {}
     Vector2(Value const &value) { *this = vectorFromValue< Vector2<Type> >(value); }
+    Vector2(Vector2 const &other) : x(other.x), y(other.y) {}
 
     /// Implicit conversion operator to a float vector.
     operator Vector2<dfloat> () const {
