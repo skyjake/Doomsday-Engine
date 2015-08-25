@@ -1,290 +1,107 @@
-/**\file dswinmm.cpp
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file dswinmm.cpp  Windows Multimedia, Doomsday audio driver plugin.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2008-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2008-2015 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small>
  */
-
-/**
- * Music Driver for audio playback using Windows Multimedia (winmm).
- */
-
-// HEADER FILES ------------------------------------------------------------
-
-#include <de/c_wrapper.h>
-
-#include <math.h>
 
 #include "dswinmm.h"
+
+#include "cdaudio.h"
 #include "midistream.h"
+#include "mixer.h"
+#include <de/App>
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-typedef struct mixerdata_s {
-    dd_bool available;
-    MIXERLINE line;
-    MIXERLINECONTROLS controls;
-    MIXERCONTROL volume;
-} mixerdata_t;
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static dd_bool initedOk = false;
-static int verbose = 0;
-
-static int midiAvail = false;
-static WinMIDIStreamer* MIDIStreamer = NULL;
-
-static int initMixerOk = 0;
-static MMRESULT res;
-static HMIXER mixer = NULL;
-static mixerdata_t mixCD, mixMidi;
-
-static int origVol; // The original MIDI volume.
-static int origCDVol; // The original CD-DA volume.
-
-// CODE --------------------------------------------------------------------
-
-int mixer4i(int device, int action, int control, int parm)
-{
-    MIXERCONTROLDETAILS ctrlDetails;
-    MIXERCONTROLDETAILS_UNSIGNED mcdUnsigned[2];
-    MIXERCONTROL *mctrl;
-    MIXERLINE  *mline;
-    mixerdata_t *mix;
-    int         i;
-
-    if(!initMixerOk)
-        return MIX_ERROR;
-
-    // This is quite specific at the moment.
-    // Only allow setting the CD volume.
-    if(device != MIX_CDAUDIO && device != MIX_MIDI)
-        return MIX_ERROR;
-    if(control != MIX_VOLUME)
-        return MIX_ERROR;
-
-    // Choose the mixer line.
-    mix = (device == MIX_CDAUDIO ? &mixCD : &mixMidi);
-
-    // Is the mixer line for the requested device available?
-    if(!mix->available)
-        return MIX_ERROR;
-
-    mline = &mix->line;
-    mctrl = &mix->volume;
-
-    // Init the data structure.
-    memset(&ctrlDetails, 0, sizeof(ctrlDetails));
-    ctrlDetails.cbStruct = sizeof(ctrlDetails);
-    ctrlDetails.dwControlID = mctrl->dwControlID;
-    ctrlDetails.cChannels = 1;  //mline->cChannels;
-    ctrlDetails.cbDetails = sizeof(mcdUnsigned);
-    ctrlDetails.paDetails = &mcdUnsigned;
-
-    switch(action)
-    {
-    case MIX_GET:
-        res =
-            mixerGetControlDetails((HMIXEROBJ) mixer, &ctrlDetails,
-                                   MIXER_GETCONTROLDETAILSF_VALUE);
-        if(res != MMSYSERR_NOERROR)
-            return MIX_ERROR;
-
-        // The bigger one is the real volume.
-        i = mcdUnsigned[mcdUnsigned[0].dwValue >
-                        mcdUnsigned[1].dwValue ? 0 : 1].dwValue;
-
-        // Return the value in range 0-255.
-        return (255 * (i - mctrl->Bounds.dwMinimum)) /
-            (mctrl->Bounds.dwMaximum - mctrl->Bounds.dwMinimum);
-
-    case MIX_SET:
-        // Clamp it.
-        if(parm < 0)
-            parm = 0;
-        if(parm > 255)
-            parm = 255;
-
-        // Set both channels to the same volume (center balance).
-        mcdUnsigned[0].dwValue = mcdUnsigned[1].dwValue =
-            (parm * (mctrl->Bounds.dwMaximum - mctrl->Bounds.dwMinimum)) /
-            255 + mctrl->Bounds.dwMinimum;
-
-        res =
-            mixerSetControlDetails((HMIXEROBJ) mixer, &ctrlDetails,
-                                   MIXER_SETCONTROLDETAILSF_VALUE);
-        if(res != MMSYSERR_NOERROR)
-            return MIX_ERROR;
-        break;
-
-    default:
-        return MIX_ERROR;
-    }
-    return MIX_OK;
-}
-
-static int mixer3i(int device, int action, int control)
-{
-    return mixer4i(device, action, control, 0);
-}
-
-static void initMixerLine(mixerdata_t* mix, DWORD type)
-{
-    memset(mix, 0, sizeof(*mix));
-    mix->line.cbStruct = sizeof(mix->line);
-    mix->line.dwComponentType = type;
-    if((res =
-        mixerGetLineInfo((HMIXEROBJ) mixer, &mix->line,
-                         MIXER_GETLINEINFOF_COMPONENTTYPE)) !=
-       MMSYSERR_NOERROR)
-    {
-        App_Log(DE2_AUDIO_ERROR, "[WinMM] Error getting line info: Error %i", res);
-        return;
-    }
-
-    App_Log(DE2_DEV_AUDIO_MSG, "  Destination line idx: %i", mix->line.dwDestination);
-    App_Log(DE2_DEV_AUDIO_MSG, "  Line ID: 0x%x", mix->line.dwLineID);
-    App_Log(DE2_DEV_AUDIO_MSG, "  Channels: %i", mix->line.cChannels);
-    App_Log(DE2_DEV_AUDIO_MSG, "  Controls: %i", mix->line.cControls);
-    App_Log(DE2_AUDIO_MSG, "  Line name: %s (%s)", mix->line.szName, mix->line.szShortName);
-
-    mix->controls.cbStruct = sizeof(mix->controls);
-    mix->controls.dwLineID = mix->line.dwLineID;
-    mix->controls.dwControlType = MIXERCONTROL_CONTROLTYPE_VOLUME;
-    mix->controls.cControls = 1;
-    mix->controls.cbmxctrl = sizeof(mix->volume);
-    mix->controls.pamxctrl = &mix->volume;
-    if((res =
-        mixerGetLineControls((HMIXEROBJ) mixer, &mix->controls,
-                             MIXER_GETLINECONTROLSF_ONEBYTYPE)) !=
-       MMSYSERR_NOERROR)
-    {
-        App_Log(DE2_AUDIO_ERROR, "[WinMM] Error getting line controls (vol): error %i", res);
-        return;
-    }
-
-    App_Log(DE2_DEV_AUDIO_MSG, "  Volume control ID: 0x%x", mix->volume.dwControlID);
-    App_Log(DE2_AUDIO_MSG, "  Volume name: %s (%s)", mix->volume.szName, mix->volume.szShortName);
-    App_Log(DE2_DEV_AUDIO_MSG, "  Min/Max: %i/%i", mix->volume.Bounds.dwMinimum,
-            mix->volume.Bounds.dwMaximum);
-
-    // This mixer line is now available.
-    mix->available = true;
-}
+using namespace de;
 
 /**
- * A ridiculous amount of code to do something this simple.
- * But mixers are pretty abstract a subject, I guess...
- * (No, the API just sucks.)
+ * Macro for conveniently accessing the de::App singleton instance.
  */
-static int initMixer(void)
+#define DENG2_APP               (&de::App::app())
+
+static bool inited;
+static dint origCdVol    = -1;  ///< Original volume. @c -1= unknown.
+static dint origSynthVol = -1;  ///< Original volume. @c -1= unknown.
+
+static std::unique_ptr<Mixer> mixer;
+static std::unique_ptr<CdAudio> cdaudio;
+static std::unique_ptr<MidiStreamer> midiStreamer;
+
+int DS_Init()
 {
-    MIXERCAPS   mixerCaps;
-    int         num = mixerGetNumDevs(); // Number of mixer devices.
+    //LOG_WIP("[WinMM]DS_Init");
 
-    if(initMixerOk || CommandLine_Check("-nomixer"))
-        return true;
+    // Already been here?
+    if(inited) return true;
 
-    App_Log(DE2_AUDIO_VERBOSE, "[WinMM] Number of mixer devices: %i", num);
+    ::origCdVol    = -1;
+    ::origSynthVol = -1;
 
-    // Open the mixer device.
-    res = mixerOpen(&mixer, 0, 0, 0, MIXER_OBJECTF_MIXER);
-    if(res != MMSYSERR_NOERROR)
+    // Initialize the line mixer?
+    if(!DENG2_APP->commandLine().has("-nomixer"))
     {
-        App_Log(DE2_AUDIO_ERROR, "[WinMM] Error opening mixer: Error %i", res);
-        return 0;
+        LOG_AUDIO_VERBOSE("[WinMM] Number of mixer devices: %i")
+            << Mixer::deviceCount();
+
+        ::mixer.reset(new Mixer);
+        if(::mixer->isReady())
+        {
+            // Get the original mixer volume settings (restored at shutdown).
+            if(::mixer->cdLine().isReady())
+            {
+                ::origCdVol = ::mixer->cdLine().volume();
+            }
+
+            if(::mixer->synthLine().isReady())
+            {
+                ::origSynthVol = ::mixer->synthLine().volume();
+            }
+        }
     }
 
-    // Get the device caps.
-    mixerGetDevCaps((UINT_PTR) mixer, &mixerCaps, sizeof(mixerCaps));
-
-    App_Log(DE2_AUDIO_MSG, "[WinMM] %s", mixerCaps.szPname);
-    App_Log(DE2_AUDIO_VERBOSE, "  Audio line destinations: %i", mixerCaps.cDestinations);
-
-    // Init CD mixer.
-    App_Log(DE2_AUDIO_VERBOSE, "Init CD audio line:");
-    initMixerLine(&mixCD, MIXERLINE_COMPONENTTYPE_SRC_COMPACTDISC);
-    App_Log(DE2_AUDIO_VERBOSE, "Init synthesizer line:");
-    initMixerLine(&mixMidi, MIXERLINE_COMPONENTTYPE_SRC_SYNTHESIZER);
-
-    // We're successful.
-    initMixerOk = true;
-
-    // Get the original mixer volume settings (restored at shutdown).
-    origVol = mixer3i(MIX_MIDI, MIX_GET, MIX_VOLUME);
-    origCDVol = mixer3i(MIX_CDAUDIO, MIX_GET, MIX_VOLUME);
-
-    return true;
+    ::inited = true;
+    return ::inited;
 }
 
-static void shutdownMixer(void)
+void DS_Shutdown()
 {
-    if(!initMixerOk)
-        return; // Can't uninitialize if not inited.
+    //LOG_WIP("[WinMM]DS_Shutdown");
 
-    // Restore the original mixer volumes, if possible.
-    mixer4i(MIX_MIDI, MIX_SET, MIX_VOLUME, origVol);
-    if(origCDVol != MIX_ERROR)
-        mixer4i(MIX_CDAUDIO, MIX_SET, MIX_VOLUME, origCDVol);
-
-    mixerClose(mixer);
-    mixer = NULL;
-    initMixerOk = false;
-}
-
-int DS_Init(void)
-{
-    // Are we in verbose mode?
-    verbose = CommandLine_Exists("-verbose");
-
-    initMixer();
-
-    initedOk = true;
-    return true;
-}
-
-void DS_Shutdown(void)
-{
-    if(!initedOk)
-        return; // Wha?
+    // Already been here?
+    if(!::inited) return;
 
     // In case the engine hasn't already done so, close open interfaces.
     DM_CDAudio_Shutdown();
     DM_Music_Shutdown();
 
-    shutdownMixer();
+    // Restore original line out volumes?
+    if(bool( ::mixer ))
+    {
+        if(::origCdVol >= 0)
+        {
+            ::mixer->cdLine().setVolume(::origCdVol);
+        }
+        if(::origSynthVol >= 0)
+        {
+            ::mixer->synthLine().setVolume(::origSynthVol);
+        }
+    }
+    // We're done with the mixer.
+    ::mixer.reset();
 
-    initedOk = false;
+    ::inited = false;
 }
 
 /**
@@ -296,135 +113,236 @@ void DS_Event(int /*type*/)
     // Do nothing...
 }
 
-/**
- * @return              @c true, if successful.
- */
-int DM_Music_Init(void)
+int DM_CDAudio_Init()
 {
-    if(midiAvail)
-        return true; // Already initialized.
+    //LOG_WIP("[WinMM]DM_CDAudio_Init");
 
-    App_Log(DE2_AUDIO_NOTE, "[WinMM] %i MIDI-Out devices present", midiOutGetNumDevs());
-
-    MIDIStreamer = new WinMIDIStreamer;
-
-    // Open the midi stream.
-    if(!MIDIStreamer || !MIDIStreamer->OpenStream())
-        return false;
-
-    // Double output volume?
-    MIDIStreamer->volumeShift = CommandLine_Exists("-mdvol") ? 1 : 0;
-
-    // Now the MIDI is available.
-    App_Log(DE2_AUDIO_VERBOSE, "[WinMM] MIDI initialized");
-
-    return midiAvail = true;
-}
-
-void DM_Music_Shutdown(void)
-{
-    if(midiAvail)
+    if(!cdaudio)
     {
-        delete MIDIStreamer;
-        MIDIStreamer = NULL;
-        midiAvail = false;
+        cdaudio.reset(new CdAudio);
     }
+    return bool( cdaudio );
 }
 
-void DM_Music_Set(int prop, float value)
+void DM_CDAudio_Shutdown()
 {
-    if(!midiAvail)
-        return;
+    //LOG_WIP("[WinMM]DM_CDAudio_Shutdown");
+
+    ::cdaudio.reset();
+}
+
+void DM_CDAudio_Set(int prop, float value)
+{
+    //LOG_WIP("[WinMM]DM_CDAudio_Set(prop:%i value:%f)") << prop << value;
+
+    if(!::cdaudio) return;
 
     switch(prop)
     {
     case MUSIP_VOLUME:
+        if(bool( ::mixer ))
         {
-        int                 val = MINMAX_OF(0, (byte) (value * 255 + .5f), 255);
-
-        // Straighten the volume curve.
-        val <<= 8; // Make it a word.
-        val = (int) (255.9980469 * sqrt(value));
-        mixer4i(MIX_MIDI, MIX_SET, MIX_VOLUME, val);
-        break;
+            if(::mixer->cdLine().isReady())
+            {
+                mixer->cdLine().setVolume(value);
+            }
         }
-
-    default:
         break;
+
+    default: break;
     }
 }
 
-int DM_Music_Get(int prop, void* ptr)
+int DM_CDAudio_Get(int prop, void *ptr)
 {
+    //LOG_WIP("[WinMM]DM_CDAudio_Get(prop:%i ptr:%p)") << prop << dintptr(ptr);
+
+    if(!::cdaudio) return 0;
+
     switch(prop)
     {
     case MUSIP_ID:
         if(ptr)
         {
-            strcpy((char*) ptr, "WinMM::Mus");
+            qstrcpy((char *) ptr, "WinMM::CD");
+            return 1;
+        }
+        break;
+
+    case MUSIP_PLAYING:
+        return ::cdaudio->isPlaying();
+
+    default: break;
+    }
+
+    return 0;
+}
+
+void DM_CDAudio_Update()
+{
+    //LOG_WIP("[WinMM]DM_CDAudio_Update");
+
+    if(!::cdaudio) return;
+    ::cdaudio->update();
+}
+
+int DM_CDAudio_Play(int newTrack, int looped)
+{
+    //LOG_WIP("[WinMM]DM_CDAudio_Play(newTrack:%i looped:%b)") << newTrack << CPP_BOOL(looped);
+
+    if(!::cdaudio) return 0;
+    return ::cdaudio->play(newTrack, CPP_BOOL(looped));
+}
+
+void DM_CDAudio_Pause(int doPause)
+{
+    //LOG_WIP("[WinMM]DM_CDAudio_Pause(doPause:%b)") << CPP_BOOL(doPause);
+
+    if(!::cdaudio) return;
+    ::cdaudio->pause(CPP_BOOL(doPause));
+}
+
+void DM_CDAudio_Stop()
+{
+    //LOG_WIP("[WinMM]DM_CDAudio_Stop");
+
+    if(!::cdaudio) return;
+    ::cdaudio->stop();
+}
+
+/**
+ * Returns @c true if successful.
+ */
+int DM_Music_Init()
+{
+    //LOG_WIP("[WinMM]DM_Music_Init");
+
+    // Already been here?
+    if(bool( ::midiStreamer )) return true;
+
+    LOG_AUDIO_NOTE("[WinMM] %i MIDI-Out devices present")
+        << MidiStreamer::deviceCount();
+
+    ::midiStreamer.reset(new MidiStreamer);
+    try
+    {
+        // Try to open the output stream.
+        ::midiStreamer->openStream();
+
+        // Double output volume?
+        ::midiStreamer->setVolumeShift(DENG2_APP->commandLine().has("-mdvol") ? 1 : 0);
+
+        // Now the MIDI is available.
+        LOG_AUDIO_VERBOSE("[WinMM] MIDI initialized");
+        return true;
+    }
+    catch(MidiStreamer::OpenError const &er)
+    {
+        LOG_AUDIO_ERROR("[WinMM]. ") << er.asText();
+    }
+    return false;
+}
+
+void DM_Music_Shutdown()
+{
+    //LOG_WIP("[WinMM]DM_Music_Shutdown");
+
+    ::midiStreamer.reset();
+}
+
+void DM_Music_Set(int prop, float value)
+{
+    //LOG_WIP("[WinMM]DM_Music_Set(prop:%i value:%f)") << prop << value;
+
+    if(!::midiStreamer) return;
+
+    switch(prop)
+    {
+    case MUSIP_VOLUME: 
+        if(bool( ::mixer ))
+        {
+            if(::mixer->synthLine().isReady())
+            {
+                ::mixer->synthLine().setVolume(value);
+            }
+        }
+        break;
+
+    default: break;
+    }
+}
+
+int DM_Music_Get(int prop, void *ptr)
+{
+    //LOG_WIP("[WinMM]DM_Music_Get(prop:%i ptr:%p)") << prop << dintptr(ptr);
+
+    switch(prop)
+    {
+    case MUSIP_ID:
+        if(ptr)
+        {
+            qstrcpy((char *) ptr, "WinMM::Mus");
             return true;
         }
         break;
 
     case MUSIP_PLAYING:
-        if(midiAvail && MIDIStreamer)
-            return (MIDIStreamer->IsPlaying()? true : false);
-        return false;
-
-    default:
+        if(bool( ::midiStreamer ))
+        {
+            return ::midiStreamer->isPlaying();
+        }
         break;
+
+    default: break;
     }
 
     return false;
 }
 
-void DM_Music_Update(void)
+void DM_Music_Update()
 {
+    //LOG_WIP("[WinMM]DM_Music_Update");
     // No need to do anything. The callback handles restarting.
 }
 
-void DM_Music_Stop(void)
+void DM_Music_Stop()
 {
-    if(midiAvail)
-    {
-        MIDIStreamer->Stop();
-    }
+    //LOG_WIP("[WinMM]DM_Music_Stop");
+    if(!::midiStreamer) return;
+
+    ::midiStreamer->stop();
 }
 
 int DM_Music_Play(int looped)
 {
-    if(midiAvail)
-    {
-        MIDIStreamer->Play(looped);
-        return true;
-    }
+    //LOG_WIP("[WinMM]DM_Music_Play(looped:%b)") << CPP_BOOL(looped);
+    if(!::midiStreamer) return false;
 
-    return false;
+    ::midiStreamer->play(looped);
+    return true;
 }
 
 void DM_Music_Pause(int setPause)
 {
-    if(midiAvail)
-    {
-        MIDIStreamer->Pause(setPause);
-    }
+    //LOG_WIP("[WinMM]DM_Music_Pause(setPause:%b)") << CPP_BOOL(setPause);
+    if(!::midiStreamer) return;
+
+    ::midiStreamer->pause(setPause);
 }
 
-void* DM_Music_SongBuffer(unsigned int length)
+void *DM_Music_SongBuffer(unsigned int length)
 {
-    if(midiAvail)
-    {
-        return MIDIStreamer->SongBuffer(length);
-    }
+    //LOG_WIP("[WinMM]DM_Music_SongBuffer(length:%u)") << length;
+    if(!::midiStreamer) return nullptr;
 
-    return NULL;
+    return ::midiStreamer->songBuffer(length);
 }
 
 /**
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-DENG_EXTERN_C const char* deng_LibraryType(void)
+DENG_EXTERN_C char const *deng_LibraryType()
 {
     return "deng-plugin/audio";
 }

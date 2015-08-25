@@ -1,9 +1,7 @@
-/** @file cdaudio.cpp  Compact Disc-Digital Audio (CD-DA) / "Redbook" playback.
- *
- * Uses the Windows API MCI interface.
+/** @file cdaudio.cpp  WinMM CD-DA playback interface.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,195 +18,218 @@
  * 02110-1301 USA</small>
  */
 
-#include "dswinmm.h"
+#define WIN32_LEAN_AND_MEAN
+#if defined(_WIN32_WINNT) && _WIN32_WINNT < 0x0400
+# undef _WIN32_WINNT
+#endif
+#ifndef _WIN32_WINNT
+# define _WIN32_WINNT 0x0400
+#endif
+
+#include "cdaudio.h"
+
+#include <de/Error>
+#include <de/Log>
 #include <de/c_wrapper.h>
 #include <de/timer.h>
-#include <cmath>
+#include <windows.h>
+#include <mmsystem.h>
 #include <cstdio>
 
-#define DEVICEID "mycd"
-
-static int cdInited = false;
-
-// Currently playing track info:
-static int cdCurrentTrack = 0;
-static dd_bool cdLooping;
-static double cdStartTime, cdPauseTime, cdTrackLength;
+using namespace de;
 
 /**
- * Execute an MCI command string.
- *
- * Returns @c true iff successful.
+ * @todo fixme: (Debug) NtClose throws "invalid handle was specified" during deinit -ds
  */
-static int sendMCICmd(char *returnInfo, int returnLength, char const *format, ...)
+DENG2_PIMPL(CdAudio)
 {
-    char buf[300];
-    va_list args;
+    // Base class for MCI command errors. @ingroup errors
+    DENG2_ERROR(MCIError);
 
-    va_start(args, format);
-    dd_vsnprintf(buf, sizeof(buf), format, args);
-    va_end(args);
+    // Device binding:
+    String deviceId;
+    bool initialized = false;
 
-    if(MCIERROR error = mciSendStringA(buf, returnInfo, returnLength, NULL))
+    // Current track:
+    dint track = -1;  ///< @c -1= not set
+    ddouble trackLength = 0;
+
+    // Playback:
+    bool looping = false;
+    ddouble startTime = 0;
+    ddouble pauseTime = 0;
+
+    Instance(Public *i) : Base(i) {}
+    ~Instance() { DENG2_ASSERT(!initialized); }
+
+    void initialize()
     {
-        mciGetErrorStringA(error, buf, 300);
-        App_Log(DE2_AUDIO_ERROR, "[WinMM] CD playback error: %s", buf);
-        return false;
-    }
+        if(initialized) return;
+        if(deviceId.isEmpty()) return;
 
-    return true;
-}
-
-/**
- * @return  Length of the track in seconds.
- */
-static int getTrackLength(int track)
-{
-    char lenString[80];
-
-    if(!sendMCICmd(lenString, 80, "status " DEVICEID " length track %i",
-                   track))
-        return 0;
-
-    int minutes, seconds;
-    sscanf(lenString, "%i:%i", &minutes, &seconds);
-    return minutes * 60 + seconds;
-}
-
-static int isPlaying()
-{
-    char lenString[80];
-
-    if(!sendMCICmd(lenString, 80, "status " DEVICEID " mode wait"))
-        return false;
-
-    if(strcmp(lenString, "playing") == 0)
-        return true;
-
-    return false;
-}
-
-void DM_CDAudio_Set(int prop, float value)
-{
-    if(!cdInited) return;
-
-    switch(prop)
-    {
-    case MUSIP_VOLUME: {
-        // Straighten the volume curve.
-        int val = MINMAX_OF(0, int(value * 255 + .5f), 255);
-        val <<= 8; // Make it a word.
-        val = (int) (255.9980469 * sqrt(value));
-        mixer4i(MIX_CDAUDIO, MIX_SET, MIX_VOLUME, val);
-        break; }
-
-    default: break;
-    }
-}
-
-int DM_CDAudio_Get(int prop, void *ptr)
-{
-    if(!cdInited) return false;
-
-    switch(prop)
-    {
-    case MUSIP_ID:
-        if(ptr)
+        try
         {
-            strcpy((char*) ptr, "WinMM::CD");
-            return true;
+            sendMCICmd(String("open cdaudio alias ") + deviceId);
+            sendMCICmd(String("set ") + deviceId + " time format tmsf");
+            initialized = true;
         }
-        break;
-
-    case MUSIP_PLAYING:
-        return (cdInited && isPlaying()? true : false);
-
-    default: break;
+        catch(MCIError const &er)
+        {
+            LOG_AUDIO_ERROR("Init failed. ") << er.asText();
+        };
     }
 
+    void deinitialize()
+    {
+        if(!initialized) return;
+        
+        initialized = false;
+        try
+        {
+            sendMCICmd(String("close ") + deviceId);
+        }
+        catch(MCIError const &er)
+        {
+            LOG_AUDIO_ERROR("Deinit failed. ") << er.asText();
+        }
+    }
+
+    /**
+     * Returns the length of the given @a track number in seconds.
+     */
+    dint getTrackLength(dint track)
+    {
+        if(!initialized) return 0;
+
+        try
+        {
+            Block const lenStr = sendMCICmd(String("status ") + deviceId + " length track " + String::number(track))
+                                     .toLatin1();
+            dint minutes, seconds;
+            sscanf(lenStr.constData(), "%i:%i", &minutes, &seconds);
+            return minutes * 60 + seconds;
+        }
+        catch(Instance::MCIError const &er)
+        {
+            LOG_AUDIO_ERROR("") << er.asText();
+        }
+        return 0;
+    }
+
+    /**
+     * Execute an MCI command string.
+     */
+    static String sendMCICmd(String const &command)
+    {
+        static char retInfo[80];
+        zap(retInfo);
+
+        LOG_WIP("Sending command:\n") << command;
+        if(MCIERROR error = mciSendStringA(command.toLatin1().constData(), retInfo, 80, nullptr))
+        {
+            char msg[300];
+            mciGetErrorStringA(error, msg, 300);
+            throw MCIError("[WinMM]CDAudio", String("MCI Error:") + msg);
+        }
+        return retInfo;
+    }
+};
+
+CdAudio::CdAudio(String const &deviceId) : d(new Instance(this))
+{
+    LOG_AS("[WinMM]CdAudio");
+    d->deviceId = deviceId;
+    d->initialize();
+}
+
+CdAudio::~CdAudio()
+{
+    LOG_AS("[WinMM]~CdAudio");
+    stop();
+    d->deinitialize();
+}
+
+void CdAudio::update()
+{
+    if(d->track < 0 || !d->looping) return;
+    
+    // Time to restart the track?
+    if(Timer_Seconds() - d->startTime > d->trackLength)
+    {
+        LOG_AS("[WinMM]CdAudio::update");
+        LOG_WIP("Restarting track #%i...") << d->track;
+        play(d->track, true);
+    }
+}
+
+bool CdAudio::isPlaying()
+{
+    if(!d->initialized) return false;
+    try
+    {
+        return Instance::sendMCICmd(String("status ") + d->deviceId + " mode wait")
+                             .beginsWith("playing");
+    }
+    catch(Instance::MCIError const &er)
+    {
+        LOG_AS("[WinMM]CDAudio::isPlaying");
+        LOG_AUDIO_ERROR("") << er.asText();
+    }
     return false;
 }
 
-int DM_CDAudio_Init()
+void CdAudio::stop()
 {
-    if(cdInited) return true;
+    if(!d->initialized) return;
+    if(d->track < 0) return;
 
-    if(!sendMCICmd(0, 0, "open cdaudio alias " DEVICEID))
-        return false;
-
-    if(!sendMCICmd(0, 0, "set " DEVICEID " time format tmsf"))
-        return false;
-
-    cdCurrentTrack = 0;
-    cdLooping = false;
-    cdStartTime = cdPauseTime = cdTrackLength = 0;
-
-    // Successful initialization.
-    return cdInited = true;
+    d->track = -1;
+    Instance::sendMCICmd(String("stop ") + d->deviceId);
 }
 
-void DM_CDAudio_Shutdown()
+void CdAudio::pause(bool setPause)
 {
-    if(!cdInited) return;
+    if(!d->initialized) return;
 
-    DM_CDAudio_Stop();
-    sendMCICmd(0, 0, "close " DEVICEID);
-
-    cdInited = false;
-}
-
-void DM_CDAudio_Update()
-{
-    if(!cdInited) return;
-
-    // Check for looping.
-    if(cdCurrentTrack && cdLooping &&
-       Timer_Seconds() - cdStartTime > cdTrackLength)
+    if(d->track >= 0)
     {
-        // Restart the track.
-        DM_CDAudio_Play(cdCurrentTrack, true);
+        Instance::sendMCICmd(String(setPause ? "pause " : "play ") + d->deviceId);
     }
-}
 
-int DM_CDAudio_Play(int track, int looped)
-{
-    if(!cdInited) return false;
-
-    // Get the length of the track.
-    int len = getTrackLength(track);
-    cdTrackLength = len;
-    if(!len) return false; // Hmm?!
-
-    // Play it!
-    if(!sendMCICmd(0, 0, "play " DEVICEID " from %i to %i", track,
-                   MCI_MAKE_TMSF(track, 0, len, 0)))
-        return false;
-
-    // Success!
-    cdLooping = (looped? true:false);
-    cdStartTime = Timer_Seconds();
-    return cdCurrentTrack = track;
-}
-
-void DM_CDAudio_Pause(int pause)
-{
-    if(!cdInited) return;
-
-    sendMCICmd(0, 0, "%s " DEVICEID, pause ? "pause" : "play");
-    if(pause)
+    if(setPause)
     {
-        cdPauseTime = Timer_Seconds();
+        d->pauseTime = Timer_Seconds();
     }
     else
     {
-        cdStartTime += Timer_Seconds() - cdPauseTime;
+        d->startTime += Timer_Seconds() - d->pauseTime;
     }
 }
 
-void DM_CDAudio_Stop()
+bool CdAudio::play(dint newTrack, bool looped)
 {
-    if(!cdInited || !cdCurrentTrack) return;
+    if(!d->initialized) return false;
 
-    cdCurrentTrack = 0;
-    sendMCICmd(0, 0, "stop " DEVICEID);
+    LOG_AS("[WinMM]CdAudio::play");
+
+    // Only play CD-DA tracks of non-zero length.
+    d->trackLength = d->getTrackLength(newTrack);
+    if(!d->trackLength) return false;
+
+    d->track = -1;
+
+    // Play it!
+    try
+    {
+        Instance::sendMCICmd(String("play ") + d->deviceId + " from " + String::number(newTrack) + " to " + String::number(MCI_MAKE_TMSF(newTrack, 0, d->trackLength, 0)));
+        d->looping   = looped;
+        d->startTime = Timer_Seconds();
+        d->track     = newTrack;
+        return true;
+    }
+    catch(Instance::MCIError const &er)
+    {
+        LOG_AUDIO_ERROR("") << er.asText();
+    }
+    return false;
 }

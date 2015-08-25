@@ -1,68 +1,54 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file cdaudio.h  WinMM CD-DA playback interface.
  *
- *\author Copyright © 2008-2009 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2008-2015 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small>
  */
+
+#ifndef WINMM_CDAUDIO_H
+#define WINMM_CDAUDIO_H
+
+#include <de/libcore.h>
+#include <de/String>
 
 /**
- * cdaudio.h: Plays CDAudio tracks via winmm API.
+ * Compact Disc-Digital Audio (CD-DA) (a.k.a., "Redbook") playback.
+ *
+ * Uses the Windows API MCI interface.
  */
-
-#ifndef __WIN_CDAUDIO_H__
-#define __WIN_CDAUDIO_H__
-
-#define WIN32_LEAN_AND_MEAN
-
-#if defined(_WIN32_WINNT) && _WIN32_WINNT < 0x0400
-# undef _WIN32_WINNT
-#endif
-#ifndef _WIN32_WINNT
-# define _WIN32_WINNT 0x0400
-#endif
-
-#include <windows.h>
-#include <mmsystem.h>
-
-typedef unsigned char   byte;
-
-class WinCDAudio {
+class CdAudio
+{
 public:
-    WinCDAudio();
-    ~WinCDAudio(void);
+    /**
+     * Construct a new CDAudio interface and initialize WinMM, ready for use.
+     */
+    CdAudio(de::String const &deviceId = "mycd");
+    virtual ~CdAudio();
 
-    void        Update(void);
-    int         Play(int track, int looped);
-    void        Pause(int pause);
-    void        Stop(void);
+    bool isPlaying();
+
+    void stop();
+
+    void pause(bool setPause);
+
+    bool play(int newTrack, bool looped = false);
+
+public:
+    void update();
 
 private:
-    int         IsMediaPresent(void);
-    int         GetTrackLength(int track);
-
-protected:
-    int         isInited;
-
-    // Currently playing track info:
-    int         currentTrack;
-    int         isLooping;
-    double      startTime, pauseTime, trackLength;
+    DENG2_PRIVATE(d)
 };
 
-#endif
+#endif  // WINMM_CDAUDIO_H

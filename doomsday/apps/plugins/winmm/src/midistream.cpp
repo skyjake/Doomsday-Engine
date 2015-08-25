@@ -1,76 +1,87 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file midistream.cpp  Plays MIDI streams via the winmm API.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2008 Daniel Swanson <danij@dengine.net>
+ * @todo Consolidate MUS -> MIDI conversion using Doomsday's own functionality.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small>
  */
 
-/**
- * midistream.cpp: Plays MIDI streams via the winmm API.
- */
+#define WIN32_LEAN_AND_MEAN
 
-// HEADER FILES ------------------------------------------------------------
-
-#include <malloc.h>
-#include <stdio.h>
+#if defined(_WIN32_WINNT) && _WIN32_WINNT < 0x0400
+# undef _WIN32_WINNT
+#endif
+#ifndef _WIN32_WINNT
+# define _WIN32_WINNT 0x0400
+#endif
 
 #include "midistream.h"
 
-// MACROS ------------------------------------------------------------------
+#include <de/String>
+#include <windows.h>
+#include <mmsystem.h>
+#include <cstdio>
+#include <memory>
 
-#define MAX_BUFFER_LEN      (65535)
-#define MAX_BUFFERS         (8)
-#define BUFFER_ALLOC        (4096) // Allocate in 4K chunks.
+using namespace de;
 
-// TYPES -------------------------------------------------------------------
+typedef unsigned char byte;
 
-typedef struct {
-    char        id[4]; // Identifier ("MUS" 0x1A).
-    WORD        scoreLen;
-    WORD        scoreStart;
-    WORD        channels; // Number of primary channels.
-    WORD        secondaryChannels; // Number of secondary channels.
-    WORD        instrCnt;
-    WORD        dummy;
+#define MAX_BUFFER_LEN      ( 65535 )
+#define MAX_BUFFERS         ( 8 )
+#define BUFFER_ALLOC        ( 4096 )  ///< Allocate in 4K chunks.
+
+struct musheader_t
+{
+    char id[4];              ///< Identifier ("MUS" 0x1A).
+    WORD scoreLen;
+    WORD scoreStart;
+    WORD channels;           ///< Number of primary channels.
+    WORD secondaryChannels;  ///< Number of secondary channels.
+    WORD instrCnt;
+    WORD dummy;
     // The instrument list begins here.
-} musheader_t;
+};
 
-typedef struct {
+struct museventdesc_t
+{
     unsigned char channel:4;
     unsigned char event:3;
     unsigned char last:1;
-} museventdesc_t;
+};
 
-enum // MUS event types.
+/**
+ * MUS event types.
+ */
+enum
 {
     MUS_EV_RELEASE_NOTE,
     MUS_EV_PLAY_NOTE,
     MUS_EV_PITCH_WHEEL,
-    MUS_EV_SYSTEM, // Valueless controller.
+    MUS_EV_SYSTEM,        ///< Valueless controller.
     MUS_EV_CONTROLLER,
-    MUS_EV_FIVE, // ?
+    MUS_EV_FIVE,
     MUS_EV_SCORE_END,
-    MUS_EV_SEVEN // ?
+    MUS_EV_SEVEN
 };
 
-enum // MUS controllers.
+/**
+ * MUS controllers.
+ */
+enum
 {
     MUS_CTRL_INSTRUMENT,
     MUS_CTRL_BANK,
@@ -92,19 +103,10 @@ enum // MUS controllers.
     NUM_MUS_CTRLS
 };
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+static MMRESULT res;
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static const char ctrlMus2Midi[NUM_MUS_CTRLS] = {
+static char const ctrlMus2Midi[NUM_MUS_CTRLS] =
+{
     0, // Not used.
     0, // Bank select.
     1, // Modulation.
@@ -124,302 +126,365 @@ static const char ctrlMus2Midi[NUM_MUS_CTRLS] = {
     121  // Reset all controllers.
 };
 
-// CODE --------------------------------------------------------------------
-
-/**
- * WinMIDIStreamer - Constructor.
- */
-WinMIDIStreamer::WinMIDIStreamer(void)
+DENG2_PIMPL(MidiStreamer)
 {
-    UINT                i;
+    dint volumeShift;
 
-    midiStr = NULL;
-    playing = 0;
-    registered = FALSE;
-    song = NULL;
+    HMIDISTRM midiStr;
+    UINT devId;
+    dint playing;       ///< The song is playing/looping.
+    byte chanVols[16];  ///< Last volume for each channel.
+    void *song;
+    size_t songSize;
+
+    MIDIHDR midiBuffers[8];
+    LPMIDIHDR loopBuffer;
+    dint registered;
+    byte *readPos;
+    dint readTime;      ///< In ticks.
+
+    Instance(Public *i) : Base(i) {}
+
+    static void CALLBACK Callback(HMIDIOUT /*hmo*/, UINT uMsg, DWORD_PTR dwInstance,
+        DWORD dwParam1, DWORD /*dwParam2*/)
+    {
+        auto &inst = *(Instance *)dwInstance;
+
+        switch(uMsg)
+        {
+        case MOM_DONE:
+            if(inst.playing)
+            {
+                // This buffer has stopped. Is this the last buffer?
+                // If so, check for looping.
+                if((LPMIDIHDR) dwParam1 == inst.loopBuffer)
+                {
+                    // Play all buffers again.
+                    inst.self.play(true);
+                }
+                else
+                {
+                    inst.playing = false;
+                }
+            }
+            break;
+
+        default: break;
+        }
+    }
+
+    void deregisterSong()
+    {
+        if(!registered) return;
+
+        // First stop the song.
+        self.stop();
+
+        // This is the actual unregistration.
+        for(dint i = 0; i < MAX_BUFFERS; ++i)
+        {
+            MIDIHDR &buf = midiBuffers[i];
+            if(buf.dwUser)
+            {
+                midiOutUnprepareHeader((HMIDIOUT) midiStr, &buf, sizeof(buf));
+                free(buf.lpData);
+
+                // Clear for re-use.
+                de::zap(buf);
+            }
+        }
+
+        registered = FALSE;
+    }
+
+    LPMIDIHDR getFreeBuffer()
+    {
+        for(dint i = 0; i < MAX_BUFFERS; ++i)
+        {
+            MIDIHDR &buf = midiBuffers[i];
+
+            if(buf.dwUser == FALSE)
+            {
+                // Mark the header used.
+                buf.dwUser = TRUE;
+
+                // Allocate some memory for buffer.
+                buf.dwBufferLength  = BUFFER_ALLOC;
+                buf.lpData          = (LPSTR) malloc(buf.dwBufferLength);
+                buf.dwBytesRecorded = 0;
+                buf.dwFlags         = 0;
+
+                return &buf;
+            }
+        }
+
+        return nullptr;
+    }
+
+    /**
+     * Note that lpData changes during reallocation!
+     *
+     * @return  @c false if the allocation can't be done.
+     */
+    dint resizeWorkBuffer(LPMIDIHDR mh)
+    {
+        DENG2_ASSERT(mh);
+
+        // Don't allocate too large buffers.
+        if(mh->dwBufferLength + BUFFER_ALLOC > MAX_BUFFER_LEN)
+            return FALSE;
+
+        mh->dwBufferLength += BUFFER_ALLOC;
+        mh->lpData = (LPSTR) realloc(mh->lpData, mh->dwBufferLength);
+
+        // Allocation was successful.
+        return TRUE;
+    }
+
+    /**
+     * Reads the MUS data and produces the next corresponding MIDI event.
+     *
+     * @return  @c false, when the score ends.
+     */
+    dint getNextEvent(MIDIEVENT *mev)
+    {
+        dint i;
+
+        mev->dwDeltaTime = readTime;
+        readTime = 0;
+
+        auto *evDesc = (museventdesc_t *) readPos++;
+        byte midiStatus = 0;
+        byte midiChan   = 0;
+        byte midiParm1  = 0;
+        byte midiParm2  = 0;
+
+        // Construct the MIDI event.
+        switch(evDesc->event)
+        {
+        case MUS_EV_RELEASE_NOTE:
+            midiStatus = 0x80;
+
+            // Which note?
+            midiParm1 = *readPos++;
+            break;
+
+        case MUS_EV_PLAY_NOTE:
+            midiStatus = 0x90;
+
+            // Which note?
+            midiParm1 = *readPos++;
+            // Is the volume there, too?
+            if(midiParm1 & 0x80)
+                chanVols[evDesc->channel] = *readPos++;
+            midiParm1 &= 0x7f;
+            if((i = chanVols[evDesc->channel] << volumeShift) > 127)
+                i = 127;
+            midiParm2 = i;
+
+            /*LOGDEV_AUDIO_XVERBOSE("time: %i note: p1:%i p2:%i")
+                << mev->dwDeltaTime << midiParm1 << midiParm2;*/
+            break;
+
+        case MUS_EV_CONTROLLER:
+            midiStatus = 0xb0;
+            midiParm1 = *readPos++;
+            midiParm2 = *readPos++;
+
+            // The instrument control is mapped to another kind of MIDI event.
+            if(midiParm1 == MUS_CTRL_INSTRUMENT)
+            {
+                midiStatus = 0xc0;
+                midiParm1 = midiParm2;
+                midiParm2 = 0;
+            }
+            else
+            {
+                // Use the conversion table.
+                midiParm1 = ctrlMus2Midi[midiParm1];
+            }
+            break;
+
+        case MUS_EV_PITCH_WHEEL:
+            /**
+             * 2 bytes, 14 bit value. 0x2000 is the center.
+             * First seven bits go to parm1, the rest to parm2.
+             */
+
+            midiStatus = 0xe0;
+            i = *readPos++ << 6;
+            midiParm1 = i & 0x7f;
+            midiParm2 = i >> 7;
+
+            /*LOGDEV_AUDIO_XVERBOSE("pitch wheel: ch %d (%x %x = %x)")
+                << evDesc->channel << midiParm1 << midiParm2 << midiParm1 | (midiParm2 << 7);*/
+            break;
+
+        case MUS_EV_SYSTEM:
+            midiStatus = 0xb0;
+            midiParm1 = ctrlMus2Midi[*readPos++];
+            break;
+
+        default:
+        case MUS_EV_SCORE_END:
+            // We're done.
+            return FALSE;
+        }
+
+        // Choose the channel.
+        midiChan = evDesc->channel;
+        // Redirect MUS channel 16 to MIDI channel 10 (percussion).
+        if(midiChan == 15)
+            midiChan = 9;
+        else if(midiChan == 9)
+            midiChan = 15;
+
+        /*LOGDEV_AUDIO_XVERBOSE("MIDI event/%d: %x %d %d")
+            << evDesc->channel << midiStatus << midiParm1 << midiParm2;*/
+
+        mev->dwEvent =
+            (MEVT_SHORTMSG << 24) | midiChan | midiStatus | (midiParm1 << 8) |
+            (midiParm2 << 16);
+
+        // Check if this was the last event in a group.
+        if(!evDesc->last)
+            return TRUE;
+
+        // Read the time delta.
+        readTime = 0;
+        do
+        {
+            midiParm1 = *readPos++;
+            readTime = readTime * 128 + (midiParm1 & 0x7f);
+        } while(midiParm1 & 0x80);
+
+        return TRUE;
+    }
+};
+
+MidiStreamer::MidiStreamer() : d(new Instance(this))
+{
+    d->midiStr    = nullptr;
+    d->playing    = 0;
+    d->registered = FALSE;
+    d->song       = nullptr;
 
     // Clear the MIDI buffers.
-    memset(midiBuffers, 0, sizeof(midiBuffers));
+    std::memset(d->midiBuffers, 0, sizeof(d->midiBuffers));
+
     // Init channel volumes.
-    for(i = 0; i < 16; ++i)
-        chanVols[i] = 64;
-}
-
-/**
- * WinMIDIStreamer - Destructor.
- */
-WinMIDIStreamer::~WinMIDIStreamer(void)
-{
-    CloseStream();
-}
-
-int WinMIDIStreamer::OpenStream(void)
-{
-    MMRESULT            mmres;
-    MIDIPROPTIMEDIV     tdiv;
-
-    devId = MIDI_MAPPER;
-    if(MMSYSERR_NOERROR != (mmres =
-        midiStreamOpen(&midiStr, &devId, 1, (DWORD_PTR) Callback,
-                       (DWORD_PTR) this, CALLBACK_FUNCTION)))
+    for(dint i = 0; i < 16; ++i)
     {
-        printf("WinMIDIStreamer::OpenStream: midiStreamOpen error %i.\n", mmres);
-        return FALSE;
+        d->chanVols[i] = 64;
+    }
+}
+
+MidiStreamer::~MidiStreamer()
+{
+    closeStream();
+}
+
+void MidiStreamer::setVolumeShift(dint newVolumeShift)
+{
+    d->volumeShift = newVolumeShift;
+}
+
+dint MidiStreamer::volumeShift() const
+{
+    return d->volumeShift;
+}
+
+void MidiStreamer::openStream()
+{
+    d->devId = MIDI_MAPPER;
+    if((::res = midiStreamOpen(&d->midiStr, &d->devId, 1, (DWORD_PTR) Instance::Callback,
+                               (DWORD_PTR) &d, CALLBACK_FUNCTION))
+       != MMSYSERR_NOERROR)
+    {
+        throw OpenError("MidiStreamer::openStream", "Failed to open. Error: " + String::number(::res));
     }
 
     // Set stream time format, 140 ticks per quarter note.
-    tdiv.cbStruct = sizeof(tdiv);
+    MIDIPROPTIMEDIV tdiv;
+    tdiv.cbStruct  = sizeof(tdiv);
     tdiv.dwTimeDiv = 140;
-    if(MMSYSERR_NOERROR != (mmres =
-        midiStreamProperty(midiStr, (BYTE *) & tdiv,
-                           MIDIPROP_SET | MIDIPROP_TIMEDIV)))
+
+    if((::res = midiStreamProperty(d->midiStr, (BYTE *) &tdiv, MIDIPROP_SET | MIDIPROP_TIMEDIV))
+       != MMSYSERR_NOERROR)
     {
-        printf("WinMIDIStreamer::OpenStream: time format! %i\n", mmres);
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-void WinMIDIStreamer::CloseStream(void)
-{
-    FreeSongBuffer();
-
-    if(midiStr)
-    {
-        Reset();
-        midiStreamClose(midiStr);
+        throw OpenError("MidiStreamer::openStream", "Failing setting time format. Error: " + String::number(::res));
     }
 }
 
-/**
- * Reads the MUS data and produces the next corresponding MIDI event.
- *
- * @return              @c false, when the score ends.
- */
-int WinMIDIStreamer::GetNextEvent(MIDIEVENT* mev)
+void MidiStreamer::closeStream()
 {
-    int                 i;
-    museventdesc_t*     evDesc;
-    byte                midiStatus, midiChan, midiParm1, midiParm2;
+    freeSongBuffer();
 
-    mev->dwDeltaTime = readTime;
-    readTime = 0;
-
-    evDesc = (museventdesc_t *) readPos++;
-    midiStatus = midiChan = midiParm1 = midiParm2 = 0;
-
-    // Construct the MIDI event.
-    switch(evDesc->event)
+    if(d->midiStr)
     {
-    case MUS_EV_RELEASE_NOTE:
-        midiStatus = 0x80;
-
-        // Which note?
-        midiParm1 = *readPos++;
-        break;
-
-    case MUS_EV_PLAY_NOTE:
-        midiStatus = 0x90;
-
-        // Which note?
-        midiParm1 = *readPos++;
-        // Is the volume there, too?
-        if(midiParm1 & 0x80)
-            chanVols[evDesc->channel] = *readPos++;
-        midiParm1 &= 0x7f;
-        if((i = chanVols[evDesc->channel] << volumeShift) > 127)
-            i = 127;
-        midiParm2 = i;
-
-/*#if _DEBUG
-        App_Log(DE2_DEV_AUDIO_XVERBOSE, "time: %i note: p1:%i p2:%i",
-            mev->dwDeltaTime, midiParm1, midiParm2);
-#endif*/
-        break;
-
-    case MUS_EV_CONTROLLER:
-        midiStatus = 0xb0;
-        midiParm1 = *readPos++;
-        midiParm2 = *readPos++;
-
-        // The instrument control is mapped to another kind of MIDI event.
-        if(midiParm1 == MUS_CTRL_INSTRUMENT)
-        {
-            midiStatus = 0xc0;
-            midiParm1 = midiParm2;
-            midiParm2 = 0;
-        }
-        else
-        {
-            // Use the conversion table.
-            midiParm1 = ctrlMus2Midi[midiParm1];
-        }
-        break;
-
-    case MUS_EV_PITCH_WHEEL:
-        /**
-         * 2 bytes, 14 bit value. 0x2000 is the center.
-         * First seven bits go to parm1, the rest to parm2.
-         */
-
-        midiStatus = 0xe0;
-        i = *readPos++ << 6;
-        midiParm1 = i & 0x7f;
-        midiParm2 = i >> 7;
-
-/*#if _DEBUG
-        App_Log(DE2_DEV_AUDIO_XVERBOSE, "pitch wheel: ch %d (%x %x = %x)", evDesc->channel,
-            midiParm1, midiParm2, midiParm1 | (midiParm2 << 7));
-#endif*/
-        break;
-
-    case MUS_EV_SYSTEM:
-        midiStatus = 0xb0;
-        midiParm1 = ctrlMus2Midi[*readPos++];
-        break;
-
-    default:
-    case MUS_EV_SCORE_END:
-        // We're done.
-        return FALSE;
+        reset();
+        midiStreamClose(d->midiStr);
     }
-
-    // Choose the channel.
-    midiChan = evDesc->channel;
-    // Redirect MUS channel 16 to MIDI channel 10 (percussion).
-    if(midiChan == 15)
-        midiChan = 9;
-    else if(midiChan == 9)
-        midiChan = 15;
-
-/*#if _DEBUG
-    App_Log(DE2_DEV_AUDIO_XVERBOSE, "MIDI event/%d: %x %d %d", evDesc->channel, midiStatus,
-            midiParm1,midiParm2);
-#endif*/
-
-    mev->dwEvent =
-        (MEVT_SHORTMSG << 24) | midiChan | midiStatus | (midiParm1 << 8) |
-        (midiParm2 << 16);
-
-    // Check if this was the last event in a group.
-    if(!evDesc->last)
-        return TRUE;
-
-    // Read the time delta.
-    readTime = 0;
-    do
-    {
-        midiParm1 = *readPos++;
-        readTime = readTime * 128 + (midiParm1 & 0x7f);
-    } while(midiParm1 & 0x80);
-
-    return TRUE;
 }
 
-/**
- * Note that lpData changes during reallocation!
- *
- * @return              @c false, if the allocation can't be done.
- */
-int WinMIDIStreamer::ResizeWorkBuffer(LPMIDIHDR mh)
+void *MidiStreamer::songBuffer(dsize length)
 {
-    // Don't allocate too large buffers.
-    if(mh->dwBufferLength + BUFFER_ALLOC > MAX_BUFFER_LEN)
-        return FALSE;
+    freeSongBuffer();
+    d->songSize = length;
+    d->song     = malloc(length);
 
-    mh->dwBufferLength += BUFFER_ALLOC;
-    mh->lpData = (LPSTR) realloc(mh->lpData, mh->dwBufferLength);
-
-    // Allocation was successful.
-    return TRUE;
+    return d->song;
 }
 
-void* WinMIDIStreamer::SongBuffer(size_t length)
+void MidiStreamer::freeSongBuffer()
 {
-    FreeSongBuffer();
-    songSize = length;
+    d->deregisterSong();
 
-    return song = malloc(length);
+    if(d->song)
+        free(d->song);
+    d->song     = nullptr;
+    d->songSize = 0;
 }
 
-void WinMIDIStreamer::FreeSongBuffer(void)
+void MidiStreamer::play(bool looped)
 {
-    DeregisterSong();
-
-    if(song)
-        free(song);
-    song = NULL;
-    songSize = 0;
-}
-
-LPMIDIHDR WinMIDIStreamer::GetFreeBuffer(void)
-{
-    int                 i;
-
-    for(i = 0; i < MAX_BUFFERS; ++i)
-    {
-        LPMIDIHDR           mh = &midiBuffers[i];
-
-        if(mh->dwUser == FALSE)
-        {
-            // Mark the header used.
-            mh->dwUser = TRUE;
-
-            // Allocate some memory for buffer.
-            mh->dwBufferLength = BUFFER_ALLOC;
-            mh->lpData = (LPSTR) malloc(mh->dwBufferLength);
-            mh->dwBytesRecorded = 0;
-            mh->dwFlags = 0;
-
-            return mh;
-        }
-    }
-
-    return NULL;
-}
-
-void WinMIDIStreamer::Play(int looped)
-{
-    UINT                i;
-
     // Do we need to prepare the MIDI data?
-    if(!registered)
+    if(!d->registered)
     {
         // The song is already loaded in the song buffer.
-        DeregisterSong();
+        d->deregisterSong();
 
         // Prepare the buffers.
-        if(song)
+        if(d->song)
         {
-            LPMIDIHDR           mh = GetFreeBuffer();
-            MIDIEVENT           mev;
-            DWORD*              ptr;
+            LPMIDIHDR mh = d->getFreeBuffer();
+            DENG2_ASSERT(mh);
 
             // First add the tempo.
-            ptr = (DWORD *) mh->lpData;
+            auto ptr = (DWORD *) mh->lpData;
             *ptr++ = 0;
             *ptr++ = 0;
             *ptr++ = (MEVT_TEMPO << 24) | 1000000; // One second.
             mh->dwBytesRecorded = 3 * sizeof(DWORD);
 
+            d->readPos  = (byte *) d->song + ((musheader_t *)d->song)->scoreStart;
+            d->readTime = 0;
+
             // Start reading the events.
-            readPos = (byte *) song + ((musheader_t*)song)->scoreStart;
-            readTime = 0;
-            while(GetNextEvent(&mev))
+            MIDIEVENT mev;
+            while(d->getNextEvent(&mev))
             {
                 // Is the buffer getting full?
                 if(mh->dwBufferLength - mh->dwBytesRecorded < 3 * sizeof(DWORD))
                 {
                     // Try to get more buffer.
-                    if(!ResizeWorkBuffer(mh))
+                    if(!d->resizeWorkBuffer(mh))
                     {
                         // Not possible, buffer size has reached the limit.
                         // We need to start working on another one.
-                        midiOutPrepareHeader((HMIDIOUT) midiStr, mh, sizeof(*mh));
-                        mh = GetFreeBuffer();
-                        if(!mh)
-                            return; // Oops.
+                        midiOutPrepareHeader((HMIDIOUT) d->midiStr, mh, sizeof(*mh));
+                        mh = d->getFreeBuffer();
+                        if(!mh) return;  // Oops.
                     }
                 }
 
@@ -432,129 +497,78 @@ void WinMIDIStreamer::Play(int looped)
             }
 
             // Prepare the last buffer, too.
-            midiOutPrepareHeader((HMIDIOUT) midiStr, mh, sizeof(*mh));
+            midiOutPrepareHeader((HMIDIOUT) d->midiStr, mh, sizeof(*mh));
         }
 
         // Now there is a registered song.
-        registered = TRUE;
+        d->registered = TRUE;
     }
 
-    playing = true;
-    Reset();
+    d->playing = true;
+    reset();
 
     // Stream out all buffers.
-    for(i = 0; i < MAX_BUFFERS; ++i)
+    for(dint i = 0; i < MAX_BUFFERS; ++i)
     {
-        if(midiBuffers[i].dwUser)
+        MIDIHDR &buf = d->midiBuffers[i];
+        if(buf.dwUser)
         {
-            loopBuffer = &midiBuffers[i];
-            midiStreamOut(midiStr, &midiBuffers[i], sizeof(midiBuffers[i]));
+            d->loopBuffer = &buf;
+            midiStreamOut(d->midiStr, &buf, sizeof(buf));
         }
     }
 
     // If we aren't looping, don't bother.
     if(!looped)
-        loopBuffer = NULL;
+    {
+        d->loopBuffer = nullptr;
+    }
 
     // Start playing.
-    midiStreamRestart(midiStr);
+    midiStreamRestart(d->midiStr);
 }
 
-void WinMIDIStreamer::Pause(int setPause)
+void MidiStreamer::pause(bool setPause)
 {
-    playing = !setPause;
+    d->playing = !setPause;
     if(setPause)
-        midiStreamPause(midiStr);
+    {
+        midiStreamPause(d->midiStr);
+    }
     else
-        midiStreamRestart(midiStr);
+    {
+        midiStreamRestart(d->midiStr);
+    }
 }
 
-void WinMIDIStreamer::Reset(void)
+void MidiStreamer::reset()
 {
-    int                 i;
+    midiStreamStop(d->midiStr);
 
-    midiStreamStop(midiStr);
-
-    // Reset channel settings.
-    for(i = 0; i <= 0xf; ++i) // All channels.
+    // Reset all channel settings.
+    for(dint i = 0; i <= 0xf; ++i)
     {
-        midiOutShortMsg((HMIDIOUT) midiStr, 0xe0 | i | 64 << 16); // Pitch bend.
+        midiOutShortMsg((HMIDIOUT) d->midiStr, 0xe0 | i | 64 << 16);  // Pitch bend.
     }
 
-    midiOutReset((HMIDIOUT) midiStr);
+    midiOutReset((HMIDIOUT) d->midiStr);
 }
 
-void WinMIDIStreamer::Stop(void)
+void MidiStreamer::stop()
 {
-    if(!playing)
-        return;
+    if(!d->playing) return;
 
-    playing = false;
-    loopBuffer = NULL;
-    Reset();
+    d->playing    = false;
+    d->loopBuffer = nullptr;
+    reset();
 }
 
-void WinMIDIStreamer::DeregisterSong(void)
+bool MidiStreamer::isPlaying()
 {
-    int                 i;
-
-    if(!registered)
-        return;
-
-    // First stop the song.
-    Stop();
-
-    // This is the actual unregistration.
-    for(i = 0; i < MAX_BUFFERS; ++i)
-    {
-        if(midiBuffers[i].dwUser)
-        {
-            LPMIDIHDR               mh = &midiBuffers[i];
-
-            midiOutUnprepareHeader((HMIDIOUT) midiStr, mh, sizeof(*mh));
-            free(mh->lpData);
-
-            // Clear for re-use.
-            memset(mh, 0, sizeof(*mh));
-        }
-    }
-
-    registered = FALSE;
+    return d->playing;
 }
 
-int WinMIDIStreamer::IsPlaying(void)
+dint MidiStreamer::deviceCount()  // static
 {
-    return playing;
-}
-
-void CALLBACK WinMIDIStreamer::Callback(HMIDIOUT /*hmo*/, UINT uMsg,
-                                        DWORD_PTR dwInstance, DWORD dwParam1,
-                                        DWORD /*dwParam2*/)
-{
-    WinMIDIStreamer*    me = (WinMIDIStreamer*) dwInstance;
-    LPMIDIHDR           mh;
-
-    switch(uMsg)
-    {
-    case MOM_DONE:
-        if(!me->playing)
-            return;
-
-        mh = (LPMIDIHDR) dwParam1;
-        // This buffer has stopped. Is this the last buffer?
-        // If so, check for looping.
-        if(mh == me->loopBuffer)
-        {
-            // Play all buffers again.
-            me->Play(true);
-        }
-        else
-        {
-            me->playing = false;
-        }
-        break;
-
-    default:
-        break;
-    }
+    return midiOutGetNumDevs();
 }

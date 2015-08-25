@@ -402,7 +402,7 @@ void DS_SDLMixer_SFX_Set(sfxbuffer_t *buf, int prop, float value)
     {
     case SFXBP_VOLUME:
         // 'written' is used for storing the volume of the channel.
-        buf->written = (duint) (value * MIX_MAX_VOLUME);
+        buf->written = duint( value * MIX_MAX_VOLUME );
         Mix_Volume(buf->cursor, buf->written);
         break;
 

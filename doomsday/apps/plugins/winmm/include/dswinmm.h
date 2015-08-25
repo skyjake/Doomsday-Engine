@@ -1,7 +1,7 @@
-/** @file dswinmm.h  Windows Multimedia audio driver.
+/** @file dswinmm.h  Doomsday audio driver plugin for Windows Multimedia.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -13,63 +13,19 @@
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA</small>
+ * General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small>
  */
 
-#ifndef __DSWINMM_H__
-#define __DSWINMM_H__
-
-#define WIN32_LEAN_AND_MEAN
-
-#include <windows.h>
-#include <mmsystem.h>
+#ifndef WINMM_MAIN_H
+#define WINMM_MAIN_H
 
 #include "doomsday.h"
 #include "api_audiod_mus.h"
 
 DENG_USING_API(Con);
 
-// Mixer return values.
-enum {
-    MIX_ERROR = -1,
-    MIX_OK
-};
-
-// Mixer devices.
-enum {
-    MIX_CDAUDIO,
-    MIX_MIDI
-};
-
-// Mixer actions.
-enum {
-    MIX_GET,
-    MIX_SET
-};
-
-// Mixer controls.
-enum {
-    MIX_VOLUME // 0-255
-};
-
-int mixer4i(int device, int action, int control, int parm);
-
-/// Public music interface -----------------------------------------------------
-
-int DM_Music_Init();
-void DM_Music_Shutdown();
-void DM_Music_Reset();
-void DM_Music_Update();
-void DM_Music_Set(int prop, float value);
-int DM_Music_Get(int prop, void *ptr);
-void DM_Music_Pause(int pause);
-void DM_Music_Stop();
-void *DM_Music_SongBuffer(unsigned int length);
-int DM_Music_Play(int looped);
-
-/// CD Audio interface ---------------------------------------------------------
+// CD-Audio interface: ------------------------------------------------------------------
 
 /**
  * Initialize the CDAudio-interface.
@@ -111,4 +67,26 @@ void DM_CDAudio_Stop();
  */
 int DM_CDAudio_Play(int track, int looped);
 
-#endif // __DSWINMM_H__
+// Music interface: ---------------------------------------------------------------------
+
+int DM_Music_Init();
+
+void DM_Music_Shutdown();
+
+void DM_Music_Reset();
+
+void DM_Music_Update();
+
+void DM_Music_Set(int prop, float value);
+
+int DM_Music_Get(int prop, void *ptr);
+
+void DM_Music_Pause(int pause);
+
+void DM_Music_Stop();
+
+void *DM_Music_SongBuffer(unsigned int length);
+
+int DM_Music_Play(int looped);
+
+#endif  // WINMM_MAIN_H

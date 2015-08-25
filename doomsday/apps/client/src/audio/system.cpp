@@ -420,7 +420,7 @@ DENG2_PIMPL(System)
             {
                 Driver &driver = driverById(initDriverIfNeeded(cmdLine.at(++p)));
                 if(!driver.hasSfx())
-                    throw Error("selectInterfaces", "Driver \"" + driver.name() + "\" does not provide a SFX interface");
+                    throw Error("selectInterfaces", "Audio driver \"" + driver.name() + "\" does not provide a SFX interface");
 
                 PlaybackInterface ifs; zap(ifs);
                 ifs.type  = AUDIO_ISFX;
@@ -434,7 +434,7 @@ DENG2_PIMPL(System)
             {
                 Driver &driver = driverById(initDriverIfNeeded(cmdLine.at(++p)));
                 if(!driver.hasMusic())
-                    throw Error("selectInterfaces", "Driver \"" + driver.name() + "\" does not provide a Music interface");
+                    throw Error("selectInterfaces", "Audio driver \"" + driver.name() + "\" does not provide a Music interface");
 
                 PlaybackInterface ifs; zap(ifs);
                 ifs.type  = AUDIO_IMUSIC;
@@ -448,7 +448,7 @@ DENG2_PIMPL(System)
             {
                 Driver &driver = driverById(initDriverIfNeeded(cmdLine.at(++p)));
                 if(!driver.hasCd())
-                    throw Error("selectInterfaces", "Driver \"" + driver.name() + "\" does not provide a CD interface");
+                    throw Error("selectInterfaces", "Audio driver \"" + driver.name() + "\" does not provide a CD interface");
 
                 PlaybackInterface ifs; zap(ifs);
                 ifs.type  = AUDIO_ICD;
@@ -1934,7 +1934,7 @@ dint System::playMusic(Record const &definition, bool looped)
     if(!d->musAvail) return false;
 
     LOG_AS("audio::System");
-    LOG_AUDIO_MSG("Starting music \"%s\"%s") << definition.gets("id") << (looped ? " looped" : "");
+    LOG_AUDIO_MSG("Playing song \"%s\"%s") << definition.gets("id") << (looped ? " looped" : "");
     //LOG_AUDIO_VERBOSE("Current song '%s'") << d->musCurrentSong;
 
     // We will not restart the currently playing song.
@@ -2015,6 +2015,8 @@ dint System::playMusicLump(lumpnum_t lumpNum, bool looped)
 {
     stopMusic();
     LOG_AS("audio::System");
+    LOG_AUDIO_MSG("Playing music lump #%i%s...")
+        << lumpNum << (looped ? " looped" : "");
     return d->playMusicLump(lumpNum, looped);
 }
 
@@ -2022,6 +2024,8 @@ dint System::playMusicFile(String const &filePath, bool looped)
 {
     stopMusic();
     LOG_AS("audio::System");
+    LOG_AUDIO_MSG("Playing music file \"%s\"%s...")
+        << NativePath(filePath).pretty() << (looped ? " looped" : "");
     return d->playMusicFile(filePath, looped);
 }
 
@@ -2029,6 +2033,8 @@ dint System::playMusicCDTrack(dint cdTrack, bool looped)
 {
     stopMusic();
     LOG_AS("audio::System");
+    LOG_AUDIO_MSG("Playing music CD track #%i%s...")
+        << cdTrack << (looped ? " looped" : "");
     return d->playMusicCDTrack(cdTrack, looped);
 }
 

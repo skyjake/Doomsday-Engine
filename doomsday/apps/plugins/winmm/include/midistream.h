@@ -1,83 +1,63 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**@file midistream.h  Plays MIDI streams via the WinMM API.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small>
  */
 
-/**
- * midistream.h: Plays MIDI streams via the winmm API.
- */
+#ifndef WINMM_MIDISTREAMER_H
+#define WINMM_MIDISTREAMER_H
 
-#ifndef __WIN_MIDISTREAMER_H__
-#define __WIN_MIDISTREAMER_H__
+#include <de/libcore.h>
+#include <de/Error>
 
-#define WIN32_LEAN_AND_MEAN
-
-#if defined(_WIN32_WINNT) && _WIN32_WINNT < 0x0400
-# undef _WIN32_WINNT
-#endif
-#ifndef _WIN32_WINNT
-# define _WIN32_WINNT 0x0400
-#endif
-
-#include <windows.h>
-#include <mmsystem.h>
-
-typedef unsigned char   byte;
-
-class WinMIDIStreamer {
+class MidiStreamer
+{
 public:
-    WinMIDIStreamer(void);
-    ~WinMIDIStreamer(void);
-    int         OpenStream(void);
-    void*       SongBuffer(size_t length);
-    void        FreeSongBuffer(void);
-    void        CloseStream(void);
-    void        Play(int looped);
-    void        Pause(int setPause);
-    void        Reset(void);
-    void        Stop(void);
-    int         IsPlaying(void);
+    /// Failed openning the output stream. @ingroup errors
+    DENG2_ERROR(OpenError);
 
-    int         volumeShift;
+public:
+    MidiStreamer();
+    virtual ~MidiStreamer();
 
-protected:
-    static void CALLBACK Callback(HMIDIOUT, UINT, DWORD_PTR, DWORD, DWORD);
-    LPMIDIHDR   GetFreeBuffer(void);
-    int         ResizeWorkBuffer(LPMIDIHDR mh);
-    int         GetNextEvent(MIDIEVENT* mev);
-    void        DeregisterSong(void);
+    void setVolumeShift(de::dint newVolumeShift);
+    de::dint volumeShift() const;
 
-    HMIDISTRM   midiStr;
-    UINT        devId;
-    int         playing; // The song is playing/looping.
-    byte        chanVols[16]; // Last volume for each channel.
-    void*       song;
-    size_t      songSize;
+    void openStream();
+    void closeStream();
 
-    MIDIHDR     midiBuffers[8];
-    LPMIDIHDR   loopBuffer;
-    int         registered;
-    byte*       readPos;
-    int         readTime; // In ticks.
+    void *songBuffer(de::dsize length);
+    void freeSongBuffer();
+
+    bool isPlaying();
+    void reset();
+    void stop();
+
+    void pause(bool setPause = true);
+
+    void play(bool looped = false);
+
+public:
+    /**
+     * Query the number of MIDI output devices on the host system.
+     */
+    static de::dint deviceCount();
+
+private:
+    DENG2_PRIVATE(d)
 };
 
-#endif
+#endif  // WINMM_MIDISTREAMER_H
