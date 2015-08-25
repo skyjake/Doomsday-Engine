@@ -40,7 +40,6 @@
 #include <de/FadeToBlackWidget>
 #include <de/SignalAction>
 #include <de/VRWindowTransform>
-#include <de/GuiWidgetRef>
 #include <de/concurrency.h>
 #include <doomsday/console/exec.h>
 #include "api_console.h"
@@ -98,7 +97,7 @@ DENG2_PIMPL(ClientWindow)
     LabelWidget *background = nullptr;
     GuiWidget *iwadNotice = nullptr;
     GameSelectionWidget *gameSelMenu = nullptr;
-    GuiWidgetRef<FadeToBlackWidget> fader;
+    SafeWidgetPtr<FadeToBlackWidget> fader;
     BusyWidget *busy = nullptr;
     GuiWidget *sidebar = nullptr;
     PrivilegedLogWidget *privLog = nullptr;

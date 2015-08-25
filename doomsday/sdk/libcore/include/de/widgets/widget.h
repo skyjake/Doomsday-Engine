@@ -15,7 +15,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_WIDGET_H
@@ -228,6 +228,11 @@ public:
     bool isFirstChild() const;
     bool isLastChild() const;
 
+    /**
+     * Removes the widget from its parent, if it has a parent.
+     */
+    void orphan();
+
     // Utilities.
     String uniqueName(String const &name) const;
 
@@ -275,6 +280,49 @@ private:
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Widget::Behaviors)
+
+/**
+ * Auto-nulled pointer to a Widget. Does not own the target widget.
+ */
+template <typename WidgetType>
+class SafeWidgetPtr : DENG2_OBSERVES(Widget, Deletion)
+{
+public:
+    SafeWidgetPtr(WidgetType *ptr = nullptr) {
+        reset(ptr);
+    }
+    ~SafeWidgetPtr() {
+        reset(nullptr);
+    }
+    void reset(WidgetType *ptr = nullptr) {
+        if(_ptr) _ptr->Widget::audienceForDeletion() -= this;
+        _ptr = ptr;
+        if(_ptr) _ptr->Widget::audienceForDeletion() += this;
+    }
+    WidgetType *operator -> () const {
+        return _ptr;
+    }
+    operator WidgetType const * () const {
+        return _ptr;
+    }
+    operator WidgetType * () {
+        return _ptr;
+    }
+    WidgetType *get() const {
+        return _ptr;
+    }
+    explicit operator bool() const {
+        return _ptr != nullptr;
+    }
+    void widgetBeingDeleted(Widget &widget) {
+        if(&widget == _ptr) {
+            _ptr = nullptr;
+        }
+    }
+
+private:
+    WidgetType *_ptr = nullptr;
+};
 
 } // namespace de
 
