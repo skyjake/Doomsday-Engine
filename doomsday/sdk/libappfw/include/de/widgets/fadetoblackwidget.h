@@ -27,7 +27,7 @@ namespace de {
 /**
  * Fade to/from black.
  */
-class FadeToBlackWidget : public LabelWidget
+class LIBAPPFW_PUBLIC FadeToBlackWidget : public LabelWidget
 {
 public:
     FadeToBlackWidget();
