@@ -46,6 +46,7 @@ public:
     BaseGuiApp(int &argc, char **argv);
 
     void initSubsystems(SubsystemInitFlags flags = DefaultSubsystems);
+    double dpiFactor() const;
 
 public:
     static BaseGuiApp &app();
