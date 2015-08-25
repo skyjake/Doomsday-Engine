@@ -447,14 +447,6 @@ void PopupMenuWidget::preparePanelForOpening()
     d->updateItemHitRules();
     d->updateItemMargins();
 
-    // Make sure the menu doesn't go beyond the top of the view.
-    if(openingDirection() == ui::Up)
-    {
-        menu().rule().setInput(Rule::Height,
-                OperatorRule::minimum(menu().contentRule().height() + menu().margins().height(),
-                                      anchorY() - menu().margins().top()));
-    }
-
     PopupWidget::preparePanelForOpening();
 }
 
