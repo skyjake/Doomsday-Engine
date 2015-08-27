@@ -41,7 +41,8 @@ static std::unique_ptr<MidiStreamer> midiStreamer;
 
 int DS_Init()
 {
-    //LOG_WIP("[WinMM]DS_Init");
+    LOG_AS("[WinMM]");
+    //LOG_WIP("DS_Init");
 
     // Already been here?
     if(inited) return true;
@@ -52,7 +53,7 @@ int DS_Init()
     // Initialize the line mixer?
     if(!DENG2_APP->commandLine().has("-nomixer"))
     {
-        LOG_AUDIO_VERBOSE("[WinMM] Number of mixer devices: %i")
+        LOG_AUDIO_VERBOSE("Number of mixer devices: %i")
             << Mixer::deviceCount();
 
         ::mixer.reset(new Mixer);
@@ -77,7 +78,8 @@ int DS_Init()
 
 void DS_Shutdown()
 {
-    //LOG_WIP("[WinMM]DS_Shutdown");
+    LOG_AS("[WinMM]");
+    //LOG_WIP("DS_Shutdown");
 
     // Already been here?
     if(!::inited) return;
@@ -115,7 +117,8 @@ void DS_Event(int /*type*/)
 
 int DM_CDAudio_Init()
 {
-    //LOG_WIP("[WinMM]DM_CDAudio_Init");
+    LOG_AS("[WinMM]");
+    //LOG_WIP("DM_CDAudio_Init");
 
     if(!cdaudio)
     {
@@ -126,14 +129,16 @@ int DM_CDAudio_Init()
 
 void DM_CDAudio_Shutdown()
 {
-    //LOG_WIP("[WinMM]DM_CDAudio_Shutdown");
+    LOG_AS("[WinMM]");
+    //LOG_WIP("DM_CDAudio_Shutdown");
 
     ::cdaudio.reset();
 }
 
 void DM_CDAudio_Set(int prop, float value)
 {
-    //LOG_WIP("[WinMM]DM_CDAudio_Set(prop:%i value:%f)") << prop << value;
+    LOG_AS("[WinMM]");
+    //LOG_WIP("DM_CDAudio_Set(prop:%i value:%f)") << prop << value;
 
     if(!::cdaudio) return;
 
@@ -155,7 +160,8 @@ void DM_CDAudio_Set(int prop, float value)
 
 int DM_CDAudio_Get(int prop, void *ptr)
 {
-    //LOG_WIP("[WinMM]DM_CDAudio_Get(prop:%i ptr:%p)") << prop << dintptr(ptr);
+    LOG_AS("[WinMM]");
+    //LOG_WIP("DM_CDAudio_Get(prop:%i ptr:%p)") << prop << dintptr(ptr);
 
     if(!::cdaudio) return 0;
 
@@ -180,7 +186,8 @@ int DM_CDAudio_Get(int prop, void *ptr)
 
 void DM_CDAudio_Update()
 {
-    //LOG_WIP("[WinMM]DM_CDAudio_Update");
+    LOG_AS("[WinMM]");
+    //LOG_WIP("DM_CDAudio_Update");
 
     if(!::cdaudio) return;
     ::cdaudio->update();
@@ -188,7 +195,8 @@ void DM_CDAudio_Update()
 
 int DM_CDAudio_Play(int newTrack, int looped)
 {
-    //LOG_WIP("[WinMM]DM_CDAudio_Play(newTrack:%i looped:%b)") << newTrack << CPP_BOOL(looped);
+    LOG_AS("[WinMM]");
+    //LOG_WIP("DM_CDAudio_Play(newTrack:%i looped:%b)") << newTrack << CPP_BOOL(looped);
 
     if(!::cdaudio) return 0;
     return ::cdaudio->play(newTrack, CPP_BOOL(looped));
@@ -196,7 +204,8 @@ int DM_CDAudio_Play(int newTrack, int looped)
 
 void DM_CDAudio_Pause(int doPause)
 {
-    //LOG_WIP("[WinMM]DM_CDAudio_Pause(doPause:%b)") << CPP_BOOL(doPause);
+    LOG_AS("[WinMM]");
+    //LOG_WIP("DM_CDAudio_Pause(doPause:%b)") << CPP_BOOL(doPause);
 
     if(!::cdaudio) return;
     ::cdaudio->pause(CPP_BOOL(doPause));
@@ -204,7 +213,8 @@ void DM_CDAudio_Pause(int doPause)
 
 void DM_CDAudio_Stop()
 {
-    //LOG_WIP("[WinMM]DM_CDAudio_Stop");
+    LOG_AS("[WinMM]");
+    //LOG_WIP("DM_CDAudio_Stop");
 
     if(!::cdaudio) return;
     ::cdaudio->stop();
@@ -215,12 +225,13 @@ void DM_CDAudio_Stop()
  */
 int DM_Music_Init()
 {
-    //LOG_WIP("[WinMM]DM_Music_Init");
+    LOG_AS("[WinMM]");
+    //LOG_WIP("DM_Music_Init");
 
     // Already been here?
     if(bool( ::midiStreamer )) return true;
 
-    LOG_AUDIO_NOTE("[WinMM] %i MIDI-Out devices present")
+    LOG_AUDIO_NOTE("Number of %i MIDI-out devices: %i")
         << MidiStreamer::deviceCount();
 
     ::midiStreamer.reset(new MidiStreamer);
@@ -233,26 +244,28 @@ int DM_Music_Init()
         ::midiStreamer->setVolumeShift(DENG2_APP->commandLine().has("-mdvol") ? 1 : 0);
 
         // Now the MIDI is available.
-        LOG_AUDIO_VERBOSE("[WinMM] MIDI initialized");
+        LOG_AUDIO_VERBOSE("MIDI initialized");
         return true;
     }
     catch(MidiStreamer::OpenError const &er)
     {
-        LOG_AUDIO_ERROR("[WinMM]. ") << er.asText();
+        LOG_AUDIO_ERROR("") << er.asText();
     }
     return false;
 }
 
 void DM_Music_Shutdown()
 {
-    //LOG_WIP("[WinMM]DM_Music_Shutdown");
+    LOG_AS("[WinMM]");
+    //LOG_WIP("DM_Music_Shutdown");
 
     ::midiStreamer.reset();
 }
 
 void DM_Music_Set(int prop, float value)
 {
-    //LOG_WIP("[WinMM]DM_Music_Set(prop:%i value:%f)") << prop << value;
+    LOG_AS("[WinMM]");
+    //LOG_WIP("DM_Music_Set(prop:%i value:%f)") << prop << value;
 
     if(!::midiStreamer) return;
 
@@ -274,7 +287,8 @@ void DM_Music_Set(int prop, float value)
 
 int DM_Music_Get(int prop, void *ptr)
 {
-    //LOG_WIP("[WinMM]DM_Music_Get(prop:%i ptr:%p)") << prop << dintptr(ptr);
+    LOG_AS("[WinMM]");
+    //LOG_WIP("DM_Music_Get(prop:%i ptr:%p)") << prop << dintptr(ptr);
 
     switch(prop)
     {
@@ -301,13 +315,15 @@ int DM_Music_Get(int prop, void *ptr)
 
 void DM_Music_Update()
 {
-    //LOG_WIP("[WinMM]DM_Music_Update");
+    //LOG_AS("[WinMM]");
+    //LOG_WIP("DM_Music_Update");
     // No need to do anything. The callback handles restarting.
 }
 
 void DM_Music_Stop()
 {
-    //LOG_WIP("[WinMM]DM_Music_Stop");
+    LOG_AS("[WinMM]");
+    //LOG_WIP("DM_Music_Stop");
     if(!::midiStreamer) return;
 
     ::midiStreamer->stop();
@@ -315,7 +331,8 @@ void DM_Music_Stop()
 
 int DM_Music_Play(int looped)
 {
-    //LOG_WIP("[WinMM]DM_Music_Play(looped:%b)") << CPP_BOOL(looped);
+    LOG_AS("[WinMM]");
+    //LOG_WIP("DM_Music_Play(looped:%b)") << CPP_BOOL(looped);
     if(!::midiStreamer) return false;
 
     ::midiStreamer->play(looped);
@@ -324,7 +341,8 @@ int DM_Music_Play(int looped)
 
 void DM_Music_Pause(int setPause)
 {
-    //LOG_WIP("[WinMM]DM_Music_Pause(setPause:%b)") << CPP_BOOL(setPause);
+    LOG_AS("[WinMM]");
+    //LOG_WIP("DM_Music_Pause(setPause:%b)") << CPP_BOOL(setPause);
     if(!::midiStreamer) return;
 
     ::midiStreamer->pause(setPause);
@@ -332,7 +350,8 @@ void DM_Music_Pause(int setPause)
 
 void *DM_Music_SongBuffer(unsigned int length)
 {
-    //LOG_WIP("[WinMM]DM_Music_SongBuffer(length:%u)") << length;
+    LOG_AS("[WinMM]");
+    //LOG_WIP("DM_Music_SongBuffer(length:%u)") << length;
     if(!::midiStreamer) return nullptr;
 
     return ::midiStreamer->songBuffer(length);

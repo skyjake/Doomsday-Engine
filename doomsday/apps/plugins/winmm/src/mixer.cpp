@@ -71,7 +71,7 @@ DENG2_PIMPL_NOREF(Mixer::Line)
                                      MIXER_OBJECTF_HMIXER | MIXER_GETLINEINFOF_COMPONENTTYPE))
            != MMSYSERR_NOERROR)
         {
-            LOG_AUDIO_ERROR("[WinMM] Error getting line info: Error %u") << ::res;
+            LOG_AUDIO_ERROR("Error getting line info: Error %u") << ::res;
             return;
         }
 
@@ -93,7 +93,7 @@ DENG2_PIMPL_NOREF(Mixer::Line)
                                          MIXER_OBJECTF_HMIXER | MIXER_GETLINECONTROLSF_ONEBYTYPE))
            != MMSYSERR_NOERROR)
         {
-            LOG_AUDIO_ERROR("[WinMM] Error getting line controls (vol): error %u") << ::res;
+            LOG_AUDIO_ERROR("Error getting line controls (vol): error %u") << ::res;
             return;
         }
 
@@ -140,12 +140,12 @@ Mixer const &Mixer::Line::mixer() const
 
 void Mixer::Line::setVolume(dfloat newVolume)
 {
-    LOG_AS("[WinMM]Mixer::Line");
+    LOG_AS("Mixer::Line");
 
     if(!d->initialized)
     {
         /// @throw Mixer::ReadyError  Not yet initialized.
-        throw Mixer::ReadyError("[WinMM]Mixer::Line::setVolume", "Line is not initialized");
+        throw Mixer::ReadyError("Mixer::Line::setVolume", "Line is not initialized");
     }
 
     // Straighten the volume curve.
@@ -178,12 +178,12 @@ void Mixer::Line::setVolume(dfloat newVolume)
 
 dint Mixer::Line::volume() const
 {
-    LOG_AS("[WinMM]Mixer::Line");
+    LOG_AS("Mixer::Line");
 
     if(!d->initialized)
     {
         /// @throw Mixer::ReadyError  Not yet initialized.
-        throw Mixer::ReadyError("[WinMM]Mixer::Line::volume", "Line is not initialized");
+        throw Mixer::ReadyError("Mixer::Line::volume", "Line is not initialized");
     }
 
     /// @todo Evidently there is only a single volume control for both channels on Windows 10.
@@ -232,7 +232,7 @@ DENG2_PIMPL_NOREF(Mixer)
         if((::res = mixerOpen(&hndl, 0, 0, 0, MIXER_OBJECTF_MIXER))
            != MMSYSERR_NOERROR)
         {
-            LOG_AUDIO_ERROR("[WinMM] Error opening mixer: Error %u") << ::res;
+            LOG_AUDIO_ERROR("Error opening mixer: Error %u") << ::res;
             return;
         }
 
@@ -243,7 +243,7 @@ DENG2_PIMPL_NOREF(Mixer)
             // Log available caps.
             MIXERCAPS mixerCaps;
             mixerGetDevCaps((UINT_PTR) hndl, &mixerCaps, sizeof(mixerCaps));
-            LOG_AUDIO_MSG("[WinMM] %s") << mixerCaps.szPname;
+            LOG_AUDIO_MSG("Using mixer for device: %s") << mixerCaps.szPname;
             LOG_AUDIO_VERBOSE("  Audio line destinations: %i") << mixerCaps.cDestinations;
         }
 
@@ -267,13 +267,13 @@ DENG2_PIMPL_NOREF(Mixer)
 
 Mixer::Mixer() : d(new Instance)
 {
-    LOG_AS("[WinMM]Mixer");
+    LOG_AS("Mixer");
     d->initialize(*this);
 }
 
 Mixer::~Mixer()
 {
-    LOG_AS("[WinMM]~Mixer");
+    LOG_AS("~Mixer");
     d->deinitialize();
 }
 

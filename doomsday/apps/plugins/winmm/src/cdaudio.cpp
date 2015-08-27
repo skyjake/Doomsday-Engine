@@ -129,7 +129,7 @@ DENG2_PIMPL(CdAudio)
         {
             char msg[300];
             mciGetErrorStringA(error, msg, 300);
-            throw MCIError("[WinMM]CDAudio", String("MCI Error:") + msg);
+            throw MCIError("CDAudio", String("MCI Error:") + msg);
         }
         return retInfo;
     }
@@ -137,14 +137,14 @@ DENG2_PIMPL(CdAudio)
 
 CdAudio::CdAudio(String const &deviceId) : d(new Instance(this))
 {
-    LOG_AS("[WinMM]CdAudio");
+    LOG_AS("CdAudio");
     d->deviceId = deviceId;
     d->initialize();
 }
 
 CdAudio::~CdAudio()
 {
-    LOG_AS("[WinMM]~CdAudio");
+    LOG_AS("~CdAudio");
     stop();
     d->deinitialize();
 }
@@ -156,7 +156,7 @@ void CdAudio::update()
     // Time to restart the track?
     if(Timer_Seconds() - d->startTime > d->trackLength)
     {
-        LOG_AS("[WinMM]CdAudio::update");
+        LOG_AS("CdAudio::update");
         LOG_WIP("Restarting track #%i...") << d->track;
         play(d->track, true);
     }
@@ -172,7 +172,7 @@ bool CdAudio::isPlaying()
     }
     catch(Instance::MCIError const &er)
     {
-        LOG_AS("[WinMM]CDAudio::isPlaying");
+        LOG_AS("CDAudio::isPlaying");
         LOG_AUDIO_ERROR("") << er.asText();
     }
     return false;
@@ -210,7 +210,7 @@ bool CdAudio::play(dint newTrack, bool looped)
 {
     if(!d->initialized) return false;
 
-    LOG_AS("[WinMM]CdAudio::play");
+    LOG_AS("CdAudio::play");
 
     // Only play CD-DA tracks of non-zero length.
     d->trackLength = d->getTrackLength(newTrack);
