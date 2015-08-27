@@ -46,7 +46,7 @@ public:
 
 public:
     Channel();
-    ~Channel();
+    virtual ~Channel();
 
     /**
      * Determines whether a sound buffer is assigned to the channel.
@@ -59,6 +59,8 @@ public:
     sfxbuffer_t       &buffer();
     sfxbuffer_t const &buffer() const;
     void setBuffer(sfxbuffer_t *newBuffer);
+
+    void releaseBuffer();
 
     /**
      * Stop any sound currently playing on the channel.
@@ -117,9 +119,10 @@ class Channels
 {
 public:
     /**
-     * Construct a new sound Channel set (comprising @a count channels).
+     * Construct a new (empty) sound Channel set.
      */
-    Channels(int count);
+    Channels();
+    virtual ~Channels();
 
     /**
      * Returns the total number of sound Channels.
@@ -139,6 +142,16 @@ public:
     inline bool isPlaying(int id) { return countPlaying(id) > 0; }
 
     /**
+     * Add @a newChannel to the set.
+     *
+     * @param newChannel  Channel to add. Ownership is given to the set. If this
+     * channel is already owned by the set - nothing happens.
+     *
+     * @return  Same as @a newChannel, for caller convenience.
+     */
+    Channel &add(Channel &newChannel);
+
+    /**
      * Attempt to find an unused Channel suitable for playing a sample with the given
      * format.
      *
@@ -149,12 +162,14 @@ public:
      */
     Channel *tryFindVacant(bool use3D, int bytes, int rate, int soundId) const;
 
-    void refreshAll();
-
     /**
      * Iterate through the Channels, executing @a callback for each.
      */
     de::LoopResult forAll(std::function<de::LoopResult (Channel &)> callback) const;
+
+public:
+    void refreshAll();
+    void releaseAllBuffers();
 
 private:
     DENG2_PRIVATE(d)

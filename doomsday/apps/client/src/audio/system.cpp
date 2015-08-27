@@ -964,7 +964,7 @@ DENG2_PIMPL(System)
         sampleCache.clear();
 
         // Destroy channels.
-        shutdownChannels();
+        channels.reset();
     }
 
     /**
@@ -993,51 +993,8 @@ DENG2_PIMPL(System)
     }
 
     /**
-     * Stop all channels and destroy their buffers.
+     * Destroys and then recreates the sound Channels according to the current mode.
      */
-    void destroyChannels()
-    {
-        self.allowSfxRefresh(false);
-        channels->forAll([this] (Channel &ch)
-        {
-            ch.stop();
-            if(ch.hasBuffer())
-            {
-                self.sfx()->Destroy(&ch.buffer());
-                ch.setBuffer(nullptr);
-            }
-            return LoopContinue;
-        });
-        self.allowSfxRefresh();
-    }
-
-    void createChannels()
-    {
-        if(!bool( channels )) return; // Huh?
-
-        dint num2D = sfx3D ? CHANNEL_2DCOUNT: channels->count();  // The rest will be 3D.
-        dint bits  = sfxBits;
-        dint rate  = sfxRate;
-
-        // Change the primary buffer format to match the channel format.
-        dfloat parm[2] = { dfloat(bits), dfloat(rate) };
-        self.sfx()->Listenerv(SFXLP_PRIMARY_FORMAT, parm);
-
-        // Create sample buffers for the channels.
-        dint idx = 0;
-        channels->forAll([this, &num2D, &bits, &rate, &idx] (Channel &ch)
-        {
-            ch.setBuffer(self.sfx()->Create(num2D-- > 0 ? 0 : SFXBF_3D, bits, rate));
-            if(!ch.hasBuffer())
-            {
-                LOG_AUDIO_WARNING("Failed to create sample buffer for #%i") << idx;
-            }
-            idx += 1;
-            return LoopContinue;
-        });
-    }
-
-    // Create channels according to the current mode.
     void initChannels()
     {
         dint numChannels = CHANNEL_COUNT_DEFAULT;
@@ -1048,27 +1005,23 @@ DENG2_PIMPL(System)
             LOG_AUDIO_NOTE("Initialized %i sound effect channels") << numChannels;
         }
 
-        // Allocate and init the channels.
-        channels.reset(new Channels(numChannels));
-        createChannels();
-    }
+        // Change the primary buffer format to match the channel format.
+        dfloat parm[2] = { dfloat(sfxBits), dfloat(sfxRate) };
+        self.sfx()->Listenerv(SFXLP_PRIMARY_FORMAT, parm);
 
-    /**
-     * Frees all memory allocated for the channels.
-     */
-    void shutdownChannels()
-    {
-        destroyChannels();
-        channels.reset();
-    }
-
-    /**
-     * Destroys and then replaces all channels.
-     */
-    void recreateChannels()
-    {
-        destroyChannels();
-        createChannels();
+        // Replace the entire channel set (we'll reconfigure).
+        channels.reset(new Channels);
+        dint num2D = sfx3D ? CHANNEL_2DCOUNT: numChannels;  // The rest will be 3D.
+        for(dint i = 0; i < numChannels; ++i)
+        {
+            auto *ch = new Channel;
+            ch->setBuffer(self.sfx()->Create(num2D-- > 0 ? 0 : SFXBF_3D, sfxBits, sfxRate));
+            if(!ch->hasBuffer())
+            {
+                LOG_AUDIO_WARNING("Failed creating (sample) buffer for Channel #%i") << i;
+            }
+            channels->add(*ch);
+        }
     }
 
     void getChannelPriorities(dfloat *prios) const
@@ -1588,8 +1541,8 @@ DENG2_PIMPL(System)
 
         LOG_AUDIO_VERBOSE("Switching to %s mode...") << (old3DMode ? "2D" : "3D");
 
-        // To make the change effective, re-create all channels.
-        recreateChannels();
+        // Re-create the sound Channels.
+        initChannels();
 
         if(old3DMode)
         {
@@ -1623,7 +1576,7 @@ DENG2_PIMPL(System)
                 // Set the new buffer format.
                 ::sfxBits = newBits;
                 ::sfxRate = newRate;
-                recreateChannels();
+                initChannels();
 
                 // The cache just became useless, clear it.
                 sampleCache.clear();

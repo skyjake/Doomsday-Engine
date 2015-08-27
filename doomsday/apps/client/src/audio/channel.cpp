@@ -292,7 +292,7 @@ void Channel::updatePriority()
     }
 }
 
-int Channel::startTime() const
+dint Channel::startTime() const
 {
     return d->startTime;
 }
@@ -300,6 +300,15 @@ int Channel::startTime() const
 void Channel::setStartTime(dint newStartTime)
 {
     d->startTime = newStartTime;
+}
+
+void Channel::releaseBuffer()
+{
+    stop();
+    if(!hasBuffer()) return;
+
+    App_AudioSystem().sfx()->Destroy(&buffer());
+    setBuffer(nullptr);
 }
 
 DENG2_PIMPL(Channels)
@@ -312,24 +321,16 @@ DENG2_PIMPL(Channels)
     void clearAll()
     {
         qDeleteAll(all);
-    }
-
-    /// @todo support dynamically resizing in both directions. -ds
-    void resize(dint newSize)
-    {
-        if(newSize < 0) newSize = 0;
-
-        clearAll();
-        for(dint i = 0; i < newSize; ++i)
-        {
-            all << new Channel;
-        }
+        all.clear();
     }
 };
 
-Channels::Channels(dint count) : d(new Instance(this))
+Channels::Channels() : d(new Instance(this))
+{}
+
+Channels::~Channels()
 {
-    d->resize(count);
+    releaseAllBuffers();
 }
 
 dint Channels::count() const
@@ -355,6 +356,16 @@ dint Channels::countPlaying(dint soundId)
         return LoopContinue;
     });
     return count;
+}
+
+Channel &Channels::add(Channel &newChannel)
+{
+    if(!d->all.contains(&newChannel))
+    {
+        /// @todo Log channel configuration, update lookup tables for buffer configs, etc...
+        d->all << &newChannel;
+    }
+    return newChannel;
 }
 
 Channel *Channels::tryFindVacant(bool use3D, dint bytes, dint rate, dint soundId) const
@@ -400,6 +411,17 @@ void Channels::refreshAll()
         }
         return LoopContinue;
     });
+}
+
+void Channels::releaseAllBuffers()
+{
+    App_AudioSystem().allowSfxRefresh(false);
+    forAll([this] (Channel &ch)
+    {
+        ch.releaseBuffer();
+        return LoopContinue;
+    });
+    App_AudioSystem().allowSfxRefresh();
 }
 
 LoopResult Channels::forAll(std::function<LoopResult (Channel &)> func) const
