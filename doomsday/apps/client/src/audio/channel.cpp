@@ -312,16 +312,54 @@ void Channel::releaseBuffer()
 }
 
 DENG2_PIMPL(Channels)
+, DENG2_OBSERVES(SampleCache, SampleRemove)
 {
     QList<Channel *> all;
 
-    Instance(Public *i) : Base(i) {}
-    ~Instance() { clearAll(); }
+    Instance(Public *i) : Base(i) 
+    {
+        App_AudioSystem().sampleCache().audienceForSampleRemove() += this;
+    }
+
+    ~Instance()
+    {
+        clearAll();
+
+        App_AudioSystem().sampleCache().audienceForSampleRemove() -= this;
+    }
+
+    static inline audio::System &system()
+    {
+        return App_AudioSystem();
+    }
 
     void clearAll()
     {
         qDeleteAll(all);
         all.clear();
+    }
+
+    /**
+     * The given @a sample will soon no longer exist. All channels currently loaded
+     * with it must be reset.
+     */
+    void sfxSampleCacheAboutToRemove(sfxsample_t const &sample)
+    {
+        system().allowSfxRefresh(false);
+        self.forAll([&sample] (Channel &ch)
+        {
+            if(ch.hasBuffer())
+            {
+                sfxbuffer_t &sbuf = ch.buffer();
+                if(sbuf.sample && sbuf.sample->soundId == sample.soundId)
+                {
+                    // Stop and unload.
+                    system().sfx()->Reset(&sbuf);
+                }
+            }
+            return LoopContinue;
+        });
+        system().allowSfxRefresh();
     }
 };
 
@@ -340,7 +378,7 @@ dint Channels::count() const
 
 dint Channels::countPlaying(dint soundId)
 {
-    DENG2_ASSERT( App_AudioSystem().sfxIsAvailable() );  // sanity check
+    DENG2_ASSERT( d->system().sfxIsAvailable() );  // sanity check
 
     dint count = 0;
     forAll([&soundId, &count] (Channel &ch)
@@ -403,11 +441,11 @@ Channel *Channels::tryFindVacant(bool use3D, dint bytes, dint rate, dint soundId
 
 void Channels::refreshAll()
 {
-    forAll([] (Channel &ch)
+    forAll([this] (Channel &ch)
     {
         if(ch.hasBuffer() && (ch.buffer().flags & SFXBF_PLAYING))
         {
-            App_AudioSystem().sfx()->Refresh(&ch.buffer());
+            d->system().sfx()->Refresh(&ch.buffer());
         }
         return LoopContinue;
     });
@@ -415,13 +453,13 @@ void Channels::refreshAll()
 
 void Channels::releaseAllBuffers()
 {
-    App_AudioSystem().allowSfxRefresh(false);
+    d->system().allowSfxRefresh(false);
     forAll([this] (Channel &ch)
     {
         ch.releaseBuffer();
         return LoopContinue;
     });
-    App_AudioSystem().allowSfxRefresh();
+    d->system().allowSfxRefresh();
 }
 
 LoopResult Channels::forAll(std::function<LoopResult (Channel &)> func) const

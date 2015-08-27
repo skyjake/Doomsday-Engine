@@ -184,7 +184,6 @@ static mobj_t *getListenerMobj()
 DENG2_PIMPL(System)
 #ifdef __CLIENT__
 , DENG2_OBSERVES(App, GameUnload)
-, DENG2_OBSERVES(SampleCache, SampleRemove)
 #endif
 {
 #ifdef __CLIENT__
@@ -593,7 +592,6 @@ DENG2_PIMPL(System)
 
 #ifdef __CLIENT__
         App::app().audienceForGameUnload() += this;
-        sampleCache.audienceForSampleRemove() += this;
 #endif
     }
 
@@ -601,7 +599,6 @@ DENG2_PIMPL(System)
     {
         sfxClearLogical();
 #ifdef __CLIENT__
-        sampleCache.audienceForSampleRemove() -= this;
         App::app().audienceForGameUnload() -= this;
 #endif
 
@@ -965,31 +962,6 @@ DENG2_PIMPL(System)
 
         // Destroy channels.
         channels.reset();
-    }
-
-    /**
-     * The specified @a sample will soon no longer exist. All channels currently
-     * loaded with it must be reset.
-     */
-    void unloadSample(sfxsample_t const &sample)
-    {
-        if(!sfxAvail) return;
-
-        self.allowSfxRefresh(false);
-        channels->forAll([this, &sample] (Channel &ch)
-        {
-            if(ch.hasBuffer())
-            {
-                sfxbuffer_t &sbuf = ch.buffer();
-                if(sbuf.sample && sbuf.sample->soundId == sample.soundId)
-                {
-                    // Stop and unload.
-                    self.sfx()->Reset(&sbuf);
-                }
-            }
-            return LoopContinue;
-        });
-        self.allowSfxRefresh();
     }
 
     /**
@@ -1584,13 +1556,6 @@ DENG2_PIMPL(System)
             old16Bit = sfx16Bit;
             oldRate  = sfxSampleRate;
         }
-    }
-
-    void sfxSampleCacheAboutToRemove(sfxsample_t const &sample)
-    {
-        // Reset all channels loaded with the sample data and stop all sounds using
-        // this sample (the sample data will be gone soon).
-        unloadSample(sample);
     }
 
     void aboutToUnloadGame(game::Game const &)
