@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "ui/dialogs/aboutdialog.h"
@@ -107,11 +107,12 @@ AboutDialog::AboutDialog() : DialogWidget("about"), d(new Instance(this))
 
     buttons()
             << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("Close"))
-            << new DialogButtonItem(DialogWidget::Action, tr("GL"), new SignalAction(d->glPopup, SLOT(open())))
-            << new DialogButtonItem(DialogWidget::Action, tr("Audio"), new SignalAction(d->audioPopup, SLOT(open())))
-            << new DialogButtonItem(DialogWidget::Action, tr("Homepage..."), new SignalAction(&ClientApp::app(), SLOT(openHomepageInBrowser())));
+            << new DialogButtonItem(DialogWidget::ActionPopup, tr("GL"))
+            << new DialogButtonItem(DialogWidget::ActionPopup, tr("Audio"))
+            << new DialogButtonItem(DialogWidget::Action, tr("Homepage..."),
+                                    new SignalAction(&ClientApp::app(), SLOT(openHomepageInBrowser())));
 
     // The popups are anchored to their button.
-    d->glPopup->setAnchorAndOpeningDirection(buttonWidget(tr("GL")).rule(), ui::Up);
-    d->audioPopup->setAnchorAndOpeningDirection(buttonWidget(tr("Audio")).rule(), ui::Up);
+    popupButtonWidget(tr("GL")).setPopup(*d->glPopup);
+    popupButtonWidget(tr("Audio")).setPopup(*d->audioPopup);
 }

@@ -37,6 +37,7 @@
 #include <de/Drawable>
 #include <de/CompositorWidget>
 #include <de/NotificationAreaWidget>
+#include <de/FadeToBlackWidget>
 #include <de/SignalAction>
 #include <de/VRWindowTransform>
 #include <de/concurrency.h>
@@ -96,8 +97,9 @@ DENG2_PIMPL(ClientWindow)
     LabelWidget *background = nullptr;
     GuiWidget *iwadNotice = nullptr;
     GameSelectionWidget *gameSelMenu = nullptr;
+    SafeWidgetPtr<FadeToBlackWidget> fader;
     BusyWidget *busy = nullptr;
-    GuiWidget *sidebar = nullptr;    
+    GuiWidget *sidebar = nullptr;
     PrivilegedLogWidget *privLog = nullptr;
     LabelWidget *cursor = nullptr;
     ConstantRule *cursorX;
@@ -183,7 +185,7 @@ DENG2_PIMPL(ClientWindow)
         background = new LabelWidget("background");
         background->setImageColor(Vector4f(0, 0, 0, 1));
         background->setImage(style.images().image("window.background"));
-        background->setImageFit(ui::FitToSize);
+        background->setImageFit(ui::OriginalAspectRatio | ui::FitToSize | ui::CoverArea);
         background->setSizePolicy(ui::Filled, ui::Filled);
         background->margins().set("");
         background->rule().setRect(root.viewRule());
@@ -218,7 +220,7 @@ DENG2_PIMPL(ClientWindow)
                                                 (root.viewWidth() -
                                                  style.rules().rule("gameselection.max.width")) / 2));
         gameSelMenu->margins().setLeft(pad).setRight(pad);
-        gameSelMenu->filter().useInvertedStyle();
+        //gameSelMenu->filter().useInvertedStyle();
         gameSelMenu->filter().setOpacity(.9f);
         gameSelMenu->filter().rule()
                 .setInput(Rule::Left,  gameSelMenu->rule().left() + gameSelMenu->margins().left())
@@ -234,7 +236,7 @@ DENG2_PIMPL(ClientWindow)
             LabelWidget *notice = LabelWidget::newWithText(_E(b) + tr("No playable games were found.\n") + _E(.) +
                                                            tr("Please select the folder where you have one or more game WAD files."),
                                                            iwadNotice);
-            notice->setTextColor("inverted.text");
+            notice->setTextColor("text");
             notice->setSizePolicy(ui::Expand, ui::Expand);
             notice->rule()
                     .setMidAnchorX(root.viewRule().midX())
@@ -330,6 +332,10 @@ DENG2_PIMPL(ClientWindow)
             App::config().set("tutorial.shown", true);
             LOG_NOTE("Starting tutorial (not shown before)");
             QTimer::singleShot(500, taskBar, SLOT(showTutorial()));
+        }
+        else
+        {
+            taskBar->close();
         }
     }
 
@@ -562,7 +568,7 @@ DENG2_PIMPL(ClientWindow)
     }
 
     void updateFpsNotification(float fps)
-    {       
+    {
         notifications->showOrHide(*fpsCounter, self.isFPSCounterVisible());
 
         if(!fequal(oldFps, fps))
@@ -820,6 +826,27 @@ DENG2_PIMPL(ClientWindow)
             cursorHasBeenHidden = false;
         }
     }
+
+    void setupFadeFromBlack(TimeDelta const &span)
+    {
+        if(!fader)
+        {
+            fader.reset(new FadeToBlackWidget);
+            fader->rule().setRect(root.viewRule());
+            root.add(fader); // on top of everything else
+        }
+        fader->initFadeFromBlack(span);
+        fader->start();
+    }
+
+    void completeFade()
+    {
+        // Check if the fade is done.
+        if(fader)
+        {
+            fader->disposeIfDone();
+        }
+    }
 };
 
 ClientWindow::ClientWindow(String const &id)
@@ -995,6 +1022,7 @@ void ClientWindow::postDraw()
 
     ClientApp::app().postFrame(); /// @todo what about multiwindow?
     d->updateFpsNotification(frameRate());
+    d->completeFade();
 }
 
 void ClientWindow::canvasGLResized(Canvas &canvas)
@@ -1208,6 +1236,16 @@ bool ClientWindow::hasSidebar(SidebarLocation location) const
 bool ClientWindow::handleFallbackEvent(Event const &event)
 {
     return d->handleFallbackEvent(event);
+}
+
+void ClientWindow::fadeContentFromBlack(TimeDelta const &duration)
+{
+    d->setupFadeFromBlack(duration);
+}
+
+FadeToBlackWidget *ClientWindow::contentFade()
+{
+    return d->fader;
 }
 
 #if defined(UNIX) && !defined(MACOSX)

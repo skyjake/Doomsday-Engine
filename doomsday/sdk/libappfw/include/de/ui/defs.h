@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBAPPFW_UI_DEFS_H
@@ -119,6 +119,8 @@ enum ContentFitFlag
     FitToWidth          = 0x1,
     FitToHeight         = 0x2,
     OriginalAspectRatio = 0x4,
+    CoverArea           = 0x8, ///< Entire available area should be covered, even if
+                               ///< one dimension doesn't fit.
 
     FitToSize = FitToWidth | FitToHeight
 };

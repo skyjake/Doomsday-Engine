@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/ProgressWidget"
@@ -95,18 +95,6 @@ DENG_GUI_PIMPL(ProgressWidget), public Lockable
                        gradientThick, solidThick, 30,
                        shadowColor,
                        root().atlas().imageRectf(root().borderGlow()), 0);
-
-        // Shadow behind the text.
-        Rectanglef textBox = Rectanglef::fromSize(self.textSize());
-        ui::applyAlignment(ui::AlignCenter, textBox, layout.text);
-        int const boxSize = textBox.height() * 6;
-        Vector2f const off(0, textBox.height() * .16f);
-        Vector2f const hoff(textBox.height(), 0);
-        verts.makeFlexibleFrame(Rectanglef(textBox.midLeft() + hoff + off,
-                                           textBox.midRight() - hoff + off)
-                                    .expanded(boxSize),
-                                boxSize, Vector4f(shadowColor, shadowColor.w * .75f),
-                                root().atlas().imageRectf(root().borderGlow()));
 
         self.LabelWidget::glMakeGeometry(verts);
 
@@ -192,6 +180,7 @@ ProgressWidget::ProgressWidget(String const &name)
 
     setTextAlignment(ui::AlignRight);
     setTextLineAlignment(ui::AlignLeft);
+    setTextShadow(RectangleShadow);
 }
 
 void ProgressWidget::useMiniStyle(DotPath const &colorId)

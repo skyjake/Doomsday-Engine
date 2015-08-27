@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Animation"
@@ -278,7 +278,7 @@ DENG2_PIMPL(App)
                 level = LogEntry::XVerbose;
             }
 
-            logFilter.setMinLevel(LogEntry::AllDomains, level);            
+            logFilter.setMinLevel(LogEntry::AllDomains, level);
         }
 
         // Enable developer messages across the board?
@@ -485,7 +485,7 @@ NativePath App::nativePluginBinaryPath()
         d->cmdLine.makeAbsolutePath(opt.pos + 1);
         return (d->cachedPluginBinaryPath = d->cmdLine.at(opt.pos + 1));
     }
-    
+
     NativePath path;
 #ifdef WIN32
     path = d->appPath.fileNamePath() / "plugins";
@@ -538,7 +538,7 @@ Archive const &App::persistentData()
     }
     return *persist;
 }
-    
+
 Archive &App::mutablePersistentData()
 {
     Archive *persist = DENG2_APP->d->persistentData;
@@ -592,7 +592,7 @@ NativePath App::nativeBasePath()
     if(!path.exists())
     {
         // Fall back to using the application binary path, which always exists.
-        // We use this instead of the working directory because the basedir is 
+        // We use this instead of the working directory because the basedir is
         // meant for storing read-only data files that may be deployed with
         // the application binary.
         path = d->appPath.fileNamePath();
@@ -696,7 +696,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
     d->clock.setTime(Time::currentHighPerformanceTime());
 
     // Now we can start observing progress of time.
-    d->clock.audienceForTimeChange() += this;    
+    d->clock.audienceForTimeChange() += this;
 
     if(allowPlugins)
     {

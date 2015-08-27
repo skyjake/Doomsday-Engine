@@ -218,6 +218,7 @@ UpdaterSettingsDialog::UpdaterSettingsDialog(Mode mode, String const &name)
     : DialogWidget(name, WithHeading), d(new Instance(this, mode))
 {
     heading().setText(tr("Updater Settings"));
+    heading().setImage(style().images().image("updater"));
 }
 
 bool UpdaterSettingsDialog::settingsHaveChanged() const

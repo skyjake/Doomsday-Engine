@@ -31,6 +31,8 @@ static String const PACKAGE("package");
 static String const PACKAGE_ORDER("package.__order__");
 static String const PACKAGE_IMPORT_PATH("package.importPath");
 
+static String const VAR_ID("ID");
+
 Package::Asset::Asset(Record const &rec) : RecordAccessor(rec) {}
 
 Package::Asset::Asset(Record const *rec) : RecordAccessor(rec) {}
@@ -230,7 +232,7 @@ void Package::parseMetadata(File &packageFile) // static
         if(!needParse) return;
 
         // The package identifier and path are automatically set.
-        metadata.set("id", identifierForFile(packageFile));
+        metadata.set(VAR_ID, identifierForFile(packageFile));
         metadata.set("path", packageFile.path());
 
         // Check for a ScriptedInfo source.
@@ -266,8 +268,13 @@ void Package::parseMetadata(File &packageFile) // static
 
 void Package::validateMetadata(Record const &packageInfo)
 {
+    if(!packageInfo.has(VAR_ID))
+    {
+        throw ValidationError("Package::validateMetadata", "Not a package");
+    }
+
     // A domain is required in all package identifiers.
-    DotPath const ident(packageInfo.gets("id"));
+    DotPath const ident(packageInfo.gets(VAR_ID));
 
     if(ident.segmentCount() <= 1)
     {
@@ -286,18 +293,22 @@ void Package::validateMetadata(Record const &packageInfo)
                               .arg(packageInfo.gets("path")));
     }
 
-    char const *required[] = { "title", "version", "license", "tags", 0 };
-
-    for(int i = 0; required[i]; ++i)
+    static char const *required[] = { "title", "version", "license", "tags" };
+    for(char const *req : required)
     {
-        if(!packageInfo.has(required[i]))
+        if(!packageInfo.has(req))
         {
             throw IncompleteMetadataError("Package::validateMetadata",
                                           QString("Package \"%1\" does not have '%2' in its metadata")
                                           .arg(packageInfo.gets("path"))
-                                          .arg(required[i]));
+                                          .arg(req));
         }
     }
+}
+
+QStringList Package::tags(File const &packageFile)
+{
+    return packageFile.info().gets("package.tags").split(' ', QString::SkipEmptyParts);
 }
 
 static String stripAfterFirstUnderscore(String str)

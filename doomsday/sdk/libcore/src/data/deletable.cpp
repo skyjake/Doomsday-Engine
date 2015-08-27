@@ -1,6 +1,6 @@
-/** @file popupmenuwidget.h
+/** @file deletable.cpp
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2015 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -16,40 +16,16 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_POPUPMENUWIDGET_H
-#define LIBAPPFW_POPUPMENUWIDGET_H
-
-#include "../PopupWidget"
-#include "../MenuWidget"
+#include "de/Deletable"
 
 namespace de {
 
-/**
- * Popup widget that contains a menu.
- */
-class LIBAPPFW_PUBLIC PopupMenuWidget : public PopupWidget
+Deletable::~Deletable()
 {
-public:
-    PopupMenuWidget(String const &name = "");
-
-    MenuWidget &menu() const;
-
-    ui::Data &items() { return menu().items(); }
-
-    void useInfoStyle(bool yes = true);
-
-    // Events.
-    void update();
-
-protected:
-    void glMakeGeometry(DefaultVertexBuf::Builder &verts);
-    void preparePanelForOpening();
-    void panelClosing();
-
-private:
-    DENG2_PRIVATE(d)
-};
+    DENG2_FOR_AUDIENCE(Deletion, i)
+    {
+        i->objectWasDeleted(this);
+    }
+}
 
 } // namespace de
-
-#endif // LIBAPPFW_POPUPMENUWIDGET_H

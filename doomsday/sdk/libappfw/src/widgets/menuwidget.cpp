@@ -13,14 +13,16 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/MenuWidget"
 #include "de/PopupMenuWidget"
+#include "de/PopupButtonWidget"
 #include "de/VariableToggleWidget"
 #include "de/ChildWidgetOrganizer"
 #include "de/GridLayout"
+#include "de/StyleProceduralImage"
 #include "de/ui/ListData"
 #include "de/ui/ActionItem"
 #include "de/ui/SubwidgetItem"
@@ -40,55 +42,50 @@ DENG2_PIMPL(MenuWidget)
     /**
      * Base class for sub-widget actions. Handles ownership/openness tracking.
      */
-    class SubAction : public de::Action, DENG2_OBSERVES(Widget, Deletion)
+    class SubAction : public de::Action
     {
     public:
         SubAction(MenuWidget::Instance *inst, ui::Item const &parentItem)
             : d(inst)
             , _parentItem(parentItem)
             , _dir(ui::Right)
-            , _widget(0)
         {}
 
         ~SubAction()
         {
-            if(_widget)
-            {
-                delete _widget;
-            }
+            delete _widget.get();
         }
 
         void setWidget(PopupWidget *w, ui::Direction openingDirection)
         {
-            _widget = w;
+            _widget.reset(w);
 
             // Popups need a parent.
             d->self.add(_widget);
 
-            _widget->audienceForDeletion() += this;
             _dir = openingDirection;
-        }
-
-        void widgetBeingDeleted(Widget &)
-        {
-            _widget = 0;
         }
 
         bool isTriggered() const
         {
-            return _widget != 0;
+            return bool(_widget);
+        }
+
+        GuiWidget &parent() const
+        {
+            auto *p = d->organizer.itemWidget(_parentItem);
+            DENG2_ASSERT(p != 0);
+            return *p;
         }
 
         void trigger()
         {
+            DENG2_ASSERT(bool(_widget));
+            if(_widget->isOpeningOrClosing()) return;
+
             Action::trigger();
 
-            DENG2_ASSERT(_widget != 0);
-
-            GuiWidget *parent = d->organizer.itemWidget(_parentItem);
-            DENG2_ASSERT(parent != 0);
-
-            _widget->setAnchorAndOpeningDirection(parent->hitRule(), _dir);
+            _widget->setAnchorAndOpeningDirection(parent().hitRule(), _dir);
 
             d->keepTrackOfSubWidget(_widget);
             _widget->open();
@@ -98,7 +95,7 @@ DENG2_PIMPL(MenuWidget)
         MenuWidget::Instance *d;
         ui::Item const &_parentItem;
         ui::Direction _dir;
-        PopupWidget *_widget;
+        SafeWidgetPtr<PopupWidget> _widget;
     };
 
     /**
@@ -165,7 +162,7 @@ DENG2_PIMPL(MenuWidget)
         // We will create widgets ourselves.
         organizer.setWidgetFactory(*this);
 
-        // The default context is empty.        
+        // The default context is empty.
         setContext(&defaultItems);
     }
 
@@ -214,6 +211,12 @@ DENG2_PIMPL(MenuWidget)
         needLayout = true;
     }
 
+    static void setFoldIndicatorForDirection(LabelWidget &label, ui::Direction dir)
+    {
+        label.setImage(new StyleProceduralImage("fold", label, dir == ui::Right? -90 : 90));
+        label.setTextAlignment(dir == ui::Right? ui::AlignLeft : ui::AlignRight);
+    }
+
     /*
      * Menu items are represented as buttons and labels.
      */
@@ -222,16 +225,24 @@ DENG2_PIMPL(MenuWidget)
         if(item.semantics().testFlag(Item::ShownAsButton))
         {
             // Normal clickable button.
-            ButtonWidget *b = new ButtonWidget;
+            ButtonWidget *b = (item.semantics().testFlag(Item::ShownAsPopupButton)?
+                                   new PopupButtonWidget : new ButtonWidget);
             b->setTextAlignment(ui::AlignRight);
-
             if(item.is<SubmenuItem>())
             {
-                b->setAction(new SubmenuAction(this, item.as<SubmenuItem>()));
+                auto const &subItem = item.as<SubmenuItem>();
+                b->setAction(new SubmenuAction(this, subItem));
+                setFoldIndicatorForDirection(*b, subItem.openingDirection());
             }
             else if(item.is<SubwidgetItem>())
             {
-                b->setAction(new SubwidgetAction(this, item.as<SubwidgetItem>()));
+                auto const &subItem = item.as<SubwidgetItem>();
+                b->setAction(new SubwidgetAction(this, subItem));
+                setFoldIndicatorForDirection(*b, subItem.openingDirection());
+                if(subItem.image().isNull())
+                {
+                    setFoldIndicatorForDirection(*b, subItem.openingDirection());
+                }
             }
             return b;
         }
@@ -274,7 +285,10 @@ DENG2_PIMPL(MenuWidget)
         {
             if(LabelWidget *label = widget.maybeAs<LabelWidget>())
             {
-                label->setImage(img->image());
+                if(!img->image().isNull())
+                {
+                    label->setImage(img->image());
+                }
             }
         }
 
@@ -312,7 +326,7 @@ DENG2_PIMPL(MenuWidget)
     }
 
     void panelBeingClosed(PanelWidget &popup)
-    {        
+    {
         openSubs.remove(&popup);
     }
 

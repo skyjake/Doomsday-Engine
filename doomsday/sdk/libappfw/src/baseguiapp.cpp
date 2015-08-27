@@ -88,6 +88,7 @@ DENG2_PIMPL_NOREF(BaseGuiApp)
     GLShaderBank shaders;
     WaveformBank waveforms;
     VRConfig vr;
+    double dpiFactor = 1.0;
 };
 
 BaseGuiApp::BaseGuiApp(int &argc, char **argv)
@@ -101,23 +102,32 @@ BaseGuiApp::BaseGuiApp(int &argc, char **argv)
             << DENG2_FUNC (App_LoadFont,       "loadFont", "fileName");
 }
 
+double BaseGuiApp::dpiFactor() const
+{
+    return d->dpiFactor;
+}
+
 void BaseGuiApp::initSubsystems(SubsystemInitFlags flags)
 {
     GuiApp::initSubsystems(flags);
     
-    double dpiFactor = 1.0;
-
 #ifdef DENG2_QT_5_0_OR_NEWER
-    dpiFactor = devicePixelRatio();
+# ifdef WIN32
+    d->dpiFactor = primaryScreen()->logicalDotsPerInch() / 96.0;
+# else
+    d->dpiFactor = devicePixelRatio();
+# endif
+#else
+    d->dpiFactor = 1.0;
 #endif
 
     // The "-dpi" option overrides the detected DPI factor.
     if(auto dpi = commandLine().check("-dpi", 1))
     {
-        dpiFactor = dpi.params.at(0).toDouble();
+        d->dpiFactor = dpi.params.at(0).toDouble();
     }
 
-    scriptSystem().nativeModule("DisplayMode").set("DPI_FACTOR", dpiFactor);
+    scriptSystem().nativeModule("DisplayMode").set("DPI_FACTOR", d->dpiFactor);
 
     d->uiState.reset(new PersistentState("UIState"));
 }

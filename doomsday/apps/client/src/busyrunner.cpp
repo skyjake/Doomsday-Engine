@@ -61,6 +61,7 @@ DENG2_PIMPL_NOREF(BusyRunner)
     timespan_t  busyTime = 0;
     bool        busyWillAnimateTransition = false;
     bool        busyWasIgnoringInput = false;
+    bool        fadeFromBlack = false;
 
     Instance()
     {
@@ -80,6 +81,11 @@ DENG2_PIMPL_NOREF(BusyRunner)
 
     void busyModeWillBegin(BusyTask &firstTask)
     {
+        if(auto *fader = ClientWindow::main().contentFade())
+        {
+            fader->cancel();
+        }
+
         // Are we doing a transition effect?
         busyWillAnimateTransition = animatedTransitionActive(firstTask.mode);
         if(busyWillAnimateTransition)
@@ -87,6 +93,7 @@ DENG2_PIMPL_NOREF(BusyRunner)
             Con_TransitionConfigure();
         }
 
+        fadeFromBlack        = (firstTask.mode & BUSYF_STARTUP) != 0;
         busyWasIgnoringInput = ClientApp::inputSystem().ignoreEvents();
 
         // Limit frame rate to 60, no point pushing it any faster while busy.
@@ -136,6 +143,11 @@ DENG2_PIMPL_NOREF(BusyRunner)
         busyThread = nullptr;
 
         eventLoop->exit(result);
+
+        if(fadeFromBlack)
+        {
+            ClientWindow::main().fadeContentFromBlack(2);
+        }
     }
 };
 

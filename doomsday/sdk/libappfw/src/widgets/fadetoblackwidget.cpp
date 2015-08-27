@@ -1,6 +1,6 @@
-/** @file popupmenuwidget.h
+/** @file fadetoblackwidget.cpp  Fade to/from black.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2015 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -16,40 +16,47 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_POPUPMENUWIDGET_H
-#define LIBAPPFW_POPUPMENUWIDGET_H
-
-#include "../PopupWidget"
-#include "../MenuWidget"
+#include "de/FadeToBlackWidget"
 
 namespace de {
 
-/**
- * Popup widget that contains a menu.
- */
-class LIBAPPFW_PUBLIC PopupMenuWidget : public PopupWidget
+DENG2_PIMPL_NOREF(FadeToBlackWidget)
 {
-public:
-    PopupMenuWidget(String const &name = "");
-
-    MenuWidget &menu() const;
-
-    ui::Data &items() { return menu().items(); }
-
-    void useInfoStyle(bool yes = true);
-
-    // Events.
-    void update();
-
-protected:
-    void glMakeGeometry(DefaultVertexBuf::Builder &verts);
-    void preparePanelForOpening();
-    void panelClosing();
-
-private:
-    DENG2_PRIVATE(d)
+    TimeDelta span = 1;
 };
 
-} // namespace de
+FadeToBlackWidget::FadeToBlackWidget() : d(new Instance)
+{
+    set(Background(Vector4f(0, 0, 0, 1)));
+}
 
-#endif // LIBAPPFW_POPUPMENUWIDGET_H
+void FadeToBlackWidget::initFadeFromBlack(TimeDelta const &span)
+{
+    setOpacity(1);
+    d->span = span;
+}
+
+void FadeToBlackWidget::start()
+{
+    setOpacity(0, d->span);
+}
+
+void FadeToBlackWidget::cancel()
+{
+    setOpacity(0);
+}
+
+bool FadeToBlackWidget::isDone() const
+{
+    return opacity().done();
+}
+
+void FadeToBlackWidget::disposeIfDone()
+{
+    if(isDone())
+    {
+        destroyLater(this);
+    }
+}
+
+} // namespace de

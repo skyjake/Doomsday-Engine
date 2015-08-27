@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/LabelWidget"
@@ -41,11 +41,15 @@ public Font::RichFormat::IStyle
     Alignment lineAlign;
     Alignment imageAlign;
     Alignment overlayAlign;
+    FillMode fillMode = FillWithImage;
+    TextShadow textShadow = NoShadow;
+    DotPath textShadowColorId { "label.shadow" };
     ContentFit imageFit;
     Vector2f overrideImageSize;
     float imageScale;
     Vector4f imageColor;
     Vector4f textGLColor;
+    Vector4f shadowColor;
     Rule const *maxTextWidth;
 
     ConstantRule *width;
@@ -100,7 +104,7 @@ public Font::RichFormat::IStyle
         width  = new ConstantRule(0);
         height = new ConstantRule(0);
 
-        uColor = Vector4f(1, 1, 1, 1);        
+        uColor = Vector4f(1, 1, 1, 1);
         updateStyle();
 
         // The readiness of the LabelWidget depends on glText being ready.
@@ -127,6 +131,7 @@ public Font::RichFormat::IStyle
         accentColor    = st.colors().color("label.accent");
         dimAccentColor = st.colors().color("label.dimaccent");
         altAccentColor = st.colors().color("label.altaccent");
+        shadowColor    = st.colors().colorf(textShadowColorId);
 
         glText.setFont(self.font());
         glText.forceUpdate();
@@ -272,7 +277,14 @@ public Font::RichFormat::IStyle
         {
             if(hasText() && textAlign & (AlignLeft | AlignRight))
             {
-                layout.image.setWidth(int(contentRect.width()) - int(layout.text.width()) - gap);
+                if(fillMode == FillWithImage)
+                {
+                    layout.image.setWidth(int(contentRect.width()) - int(layout.text.width()) - gap);
+                }
+                else
+                {
+                    layout.text.setWidth(int(contentRect.width()) - int(layout.image.width()) - gap);
+                }
             }
             else
             {
@@ -284,7 +296,14 @@ public Font::RichFormat::IStyle
         {
             if(hasText() && textAlign & (AlignTop | AlignBottom))
             {
-                layout.image.setHeight(int(contentRect.height()) - int(layout.text.height()) - gap);
+                if(fillMode == FillWithImage)
+                {
+                    layout.image.setHeight(int(contentRect.height()) - int(layout.text.height()) - gap);
+                }
+                else
+                {
+                    layout.text.setHeight(int(contentRect.height()) - int(layout.image.height()) - gap);
+                }
             }
             else
             {
@@ -322,18 +341,34 @@ public Font::RichFormat::IStyle
                     if(imageFit.testFlag(FitToWidth))
                     {
                         float scale = 1;
-                        if(layout.image.width() > rect.width())
+                        if(imageFit.testFlag(CoverArea))
                         {
-                            scale = float(rect.width()) / float(layout.image.width());
+                            // Scale to cover the area.
+                            if(layout.image.width() < rect.width())
+                            {
+                                scale = float(rect.width()) / float(layout.image.width());
+                            }
+                            else if(layout.image.height() < rect.height())
+                            {
+                                scale = float(rect.height() / float(layout.image.height()));
+                            }
                         }
-                        else if(layout.image.height() > rect.height())
+                        else
                         {
-                            scale = float(rect.height()) / float(layout.image.height());
+                            // Scale to fit in both dimensions.
+                            if(layout.image.width() > rect.width())
+                            {
+                                scale = float(rect.width()) / float(layout.image.width());
+                            }
+                            else if(layout.image.height() > rect.height())
+                            {
+                                scale = float(rect.height()) / float(layout.image.height());
+                            }
                         }
                         layout.image.setSize(Vector2f(layout.image.size()) * scale);
                     }
                 }
-            }           
+            }
 
             // Apply Filled image scaling now.
             if(horizPolicy == Filled)
@@ -625,6 +660,18 @@ DotPath const &LabelWidget::textGap() const
     return d->gapId;
 }
 
+void LabelWidget::setTextShadow(TextShadow shadow, DotPath const &colorId)
+{
+    d->textShadow = shadow;
+    d->textShadowColorId = colorId;
+    d->updateStyle();
+}
+
+void LabelWidget::setFillMode(FillMode fillMode)
+{
+    d->fillMode = fillMode;
+}
+
 void LabelWidget::setAlignment(Alignment const &align, AlignmentMode mode)
 {
     d->align = align;
@@ -634,6 +681,11 @@ void LabelWidget::setAlignment(Alignment const &align, AlignmentMode mode)
 void LabelWidget::setTextAlignment(Alignment const &textAlign)
 {
     d->textAlign = textAlign;
+}
+
+ui::Alignment LabelWidget::textAlignment() const
+{
+    return d->textAlign;
 }
 
 void LabelWidget::setTextLineAlignment(Alignment const &textLineAlign)
@@ -768,10 +820,23 @@ void LabelWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
     }
     if(d->hasText())
     {
-        // Shadow + text.
-        /*composer.makeVertices(verts, textPos.topLeft + Vector2i(0, 2),
-                              lineAlign, Vector4f(0, 0, 0, 1));*/
-        d->glText.makeVertices(verts, layout.text, AlignCenter, d->lineAlign, d->textGLColor);
+        // Shadow behind the text.
+        if(d->textShadow == RectangleShadow)
+        {
+            Rectanglef textBox = Rectanglef::fromSize(textSize());
+            ui::applyAlignment(d->lineAlign, textBox, layout.text);
+            int const boxSize = toDevicePixels(114);
+            Vector2f const off(0, textBox.height() * .08f);
+            Vector2f const hoff(textBox.height()/2, 0);
+            verts.makeFlexibleFrame(Rectanglef(textBox.midLeft() + hoff + off,
+                                               textBox.midRight() - hoff + off)
+                                        .expanded(boxSize),
+                                    boxSize,
+                                    d->shadowColor,
+                                    root().atlas().imageRectf(root().borderGlow()));
+        }
+
+        d->glText.makeVertices(verts, layout.text, d->lineAlign, d->lineAlign, d->textGLColor);
     }
 
     if(!d->overlayImage.isNull())

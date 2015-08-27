@@ -1,6 +1,6 @@
-/** @file popupmenuwidget.h
+/** @file fadetoblackwidget.h  Fade to/from black.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2015 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -16,35 +16,31 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_POPUPMENUWIDGET_H
-#define LIBAPPFW_POPUPMENUWIDGET_H
+#ifndef LIBAPPFW_FADETOBLACKWIDGET
+#define LIBAPPFW_FADETOBLACKWIDGET
 
-#include "../PopupWidget"
-#include "../MenuWidget"
+#include "../LabelWidget"
+#include <de/Time>
 
 namespace de {
 
 /**
- * Popup widget that contains a menu.
+ * Fade to/from black.
  */
-class LIBAPPFW_PUBLIC PopupMenuWidget : public PopupWidget
+class LIBAPPFW_PUBLIC FadeToBlackWidget : public LabelWidget
 {
 public:
-    PopupMenuWidget(String const &name = "");
+    FadeToBlackWidget();
 
-    MenuWidget &menu() const;
+    void initFadeFromBlack(TimeDelta const &span);
 
-    ui::Data &items() { return menu().items(); }
+    void start();
 
-    void useInfoStyle(bool yes = true);
+    void cancel();
 
-    // Events.
-    void update();
+    bool isDone() const;
 
-protected:
-    void glMakeGeometry(DefaultVertexBuf::Builder &verts);
-    void preparePanelForOpening();
-    void panelClosing();
+    void disposeIfDone();
 
 private:
     DENG2_PRIVATE(d)
@@ -52,4 +48,5 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_POPUPMENUWIDGET_H
+#endif // LIBAPPFW_FADETOBLACKWIDGET
+

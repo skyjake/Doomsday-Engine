@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_FILESYSTEM_H
@@ -196,7 +196,7 @@ public:
                             std::function<LoopResult (File &)> func);
 
     int findAllOfTypes(StringList const &typeIdentifiers, String const &path, FoundFiles &found) const;
-    
+
     /**
      * Finds a single file matching a full or partial path. The search is
      * done using the file system's index; no recursive descent into
@@ -268,7 +268,7 @@ public:
      *
      * For example, to look up the index for NativeFile instances:
      * @code
-     * FS::Index const &nativeFileIndex = App::fileSystem().indexFor(DENG2_TYPE_NAME(NativeFile));
+     * FileIndex const &nativeFileIndex = App::fileSystem().indexFor(DENG2_TYPE_NAME(NativeFile));
      * @endcode
      */
     FileIndex const &indexFor(String const &typeIdentifier) const;

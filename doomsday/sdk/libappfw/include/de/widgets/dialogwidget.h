@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBAPPFW_DIALOGWIDGET_H
@@ -22,6 +22,7 @@
 #include "popupwidget.h"
 #include "scrollareawidget.h"
 #include "menuwidget.h"
+#include "popupbuttonwidget.h"
 
 namespace de {
 
@@ -87,6 +88,9 @@ public:
         Yes     = 0x8,
         No      = 0x10,
         Action  = 0x20,
+        Popup   = 0x40, ///< Uses a PopupButtonWidget.
+
+        ActionPopup = Action | Popup,
 
         IdMask  = 0xff0000,
         Id1     = 0x010000,
@@ -112,6 +116,8 @@ public:
          */
         ButtonItem(RoleFlags flags, String const &label = "");
 
+        ButtonItem(RoleFlags flags, Image const &image);
+
         /**
          * Button with custom action.
          * @param flags   Role flags for the button.
@@ -125,6 +131,8 @@ public:
         ButtonItem(RoleFlags flags, Image const &image, String const &label, RefArg<de::Action> action);
 
         RoleFlags role() const { return _role; }
+
+        static Semantics itemSemantics(RoleFlags flags);
 
     private:
         RoleFlags _role;
@@ -170,8 +178,10 @@ public:
     ui::Data &buttons();
 
     ButtonWidget &buttonWidget(String const &label) const;
+    PopupButtonWidget &popupButtonWidget(String const &label) const;
 
     ButtonWidget *buttonWidget(int roleId) const;
+    PopupButtonWidget *popupButtonWidget(int roleId) const;
 
     /**
      * Sets the action that will be triggered if the dialog is accepted. The action
@@ -186,6 +196,8 @@ public:
      * Shows the dialog and blocks execution until the dialog is closed --
      * another event loop is started for event processing. Call either accept()
      * or reject() to dismiss the dialog.
+     *
+     * The dialog must not be part of the widget tree when this is called.
      *
      * @param root  Root where to execute the dialog.
      *

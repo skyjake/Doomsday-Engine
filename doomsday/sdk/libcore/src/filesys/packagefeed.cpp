@@ -94,7 +94,7 @@ bool PackageFeed::prune(File &file) const
 {
     if(LinkFile const *link = file.maybeAs<LinkFile>())
     {
-        if(ArchiveFolder const *pkg = link->target().maybeAs<ArchiveFolder>())
+        if(Folder const *pkg = link->target().maybeAs<Folder>())
         {
             // Links to unloaded packages should be pruned.
             if(!d->loader.isLoaded(*pkg)) return true;

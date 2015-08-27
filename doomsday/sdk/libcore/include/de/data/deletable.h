@@ -1,6 +1,6 @@
-/** @file popupmenuwidget.h
+/** @file deletable.h  Object whose deletion can be observed.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2015 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -16,40 +16,25 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_POPUPMENUWIDGET_H
-#define LIBAPPFW_POPUPMENUWIDGET_H
+#ifndef LIBDENG2_DELETABLE_H
+#define LIBDENG2_DELETABLE_H
 
-#include "../PopupWidget"
-#include "../MenuWidget"
+#include "../Observers"
 
 namespace de {
 
 /**
- * Popup widget that contains a menu.
+ * Object whose deletion can be observed.
  */
-class LIBAPPFW_PUBLIC PopupMenuWidget : public PopupWidget
+class DENG2_PUBLIC Deletable
 {
 public:
-    PopupMenuWidget(String const &name = "");
+    virtual ~Deletable();
 
-    MenuWidget &menu() const;
-
-    ui::Data &items() { return menu().items(); }
-
-    void useInfoStyle(bool yes = true);
-
-    // Events.
-    void update();
-
-protected:
-    void glMakeGeometry(DefaultVertexBuf::Builder &verts);
-    void preparePanelForOpening();
-    void panelClosing();
-
-private:
-    DENG2_PRIVATE(d)
+    DENG2_DEFINE_AUDIENCE(Deletion, void objectWasDeleted(Deletable *))
 };
 
 } // namespace de
 
-#endif // LIBAPPFW_POPUPMENUWIDGET_H
+#endif // LIBDENG2_DELETABLE_H
+

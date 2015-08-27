@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBAPPFW_POPUPWIDGET_H
@@ -21,6 +21,7 @@
 
 #include "../PanelWidget"
 #include "../ui/defs.h"
+#include <de/RuleRectangle>
 
 namespace de {
 
@@ -47,6 +48,14 @@ public:
 
     void setAnchorAndOpeningDirection(RuleRectangle const &rule, ui::Direction dir);
 
+    /**
+     * Enables or disables the popup to flip the opening direction if there
+     * isn't enough room in the main direction. This is enabled by default.
+     *
+     * @param flex  @c true to be flexible, otherwise @c false.
+     */
+    void setAllowDirectionFlip(bool flex);
+
     void setAnchor(Vector2i const &pos);
     void setAnchorX(int xPos);
     void setAnchorY(int yPos);
@@ -54,8 +63,7 @@ public:
     void setAnchorX(Rule const &x);
     void setAnchorY(Rule const &y);
 
-    Rule const &anchorX() const;
-    Rule const &anchorY() const;
+    RuleRectangle const &anchor() const;
 
     /**
      * Replace the anchor with rules of matching constant value.
@@ -82,7 +90,7 @@ public:
      * Sets the style of the popup to the one used for informational popups
      * rather than interactive (the default) ones.
      */
-    void useInfoStyle();
+    void useInfoStyle(bool yes = true);
 
     bool isUsingInfoStyle();
 

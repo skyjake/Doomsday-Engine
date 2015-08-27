@@ -111,6 +111,7 @@ VRSettingsDialog::VRSettingsDialog(String const &name)
     : DialogWidget(name, WithHeading), d(new Instance(this))
 {
     heading().setText(tr("3D & VR Settings"));
+    heading().setImage(style().images().image("vr"));
 
     LabelWidget *modeLabel     = LabelWidget::newWithText(tr("Stereo Mode:"), &area());
     LabelWidget *heightLabel   = LabelWidget::newWithText(tr("Height (m):"), &area());

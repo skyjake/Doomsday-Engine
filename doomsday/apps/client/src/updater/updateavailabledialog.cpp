@@ -1,4 +1,4 @@
-/** @file updateavailabledialog.cpp Dialog for notifying the user about available updates. 
+/** @file updateavailabledialog.cpp Dialog for notifying the user about available updates.
  * @ingroup updater
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -118,6 +118,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
             askUpgrade = true;
 
             self.title().setText(tr("Update Available"));
+            self.title().setImage(style().images().image("updater"));
             self.message().setText(tr("There is an update available. The latest %1 release is %2, while you are running %3.")
                                    .arg(channel)
                                    .arg(_E(b) + latestVersion.asText() + _E(.))
@@ -212,7 +213,7 @@ void UpdateAvailableDialog::editSettings()
     st->setAnchorAndOpeningDirection(buttonWidget(DialogWidget::Id1)->rule(), ui::Up);
     st->setDeleteAfterDismissed(true);
     if(st->exec(root()))
-    {        
+    {
         // The Gear button will soon be deleted, so we'll need to detach from it.
         st->detachAnchor();
 

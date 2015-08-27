@@ -24,6 +24,7 @@
 #include <de/PersistentCanvasWindow>
 #include <de/BaseWindow>
 #include <de/NotificationAreaWidget>
+#include <de/FadeToBlackWidget>
 
 #include "ui/clientrootwidget.h"
 #include "resource/image.h"
@@ -149,6 +150,9 @@ public:
      * The current render target is cleared before drawing.
      */
     void drawGameContent();
+
+    void fadeContentFromBlack(de::TimeDelta const &duration);
+    de::FadeToBlackWidget *contentFade();
 
     void fadeInTaskBarBlur(de::TimeDelta span);
     void fadeOutTaskBarBlur(de::TimeDelta span);

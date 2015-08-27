@@ -23,9 +23,12 @@
 #include "clientapp.h"
 #include "def_main.h"
 
+#include <de/Garbage>
+
 using namespace de;
 
 DENG2_PIMPL_NOREF(PlayerWeaponAnimator)
+, DENG2_OBSERVES(Asset, Deletion)
 {
     ClientPlayer *player;
     std::unique_ptr<MobjAnimator> animator;
@@ -37,13 +40,20 @@ DENG2_PIMPL_NOREF(PlayerWeaponAnimator)
 
     void setupAsset(String const &identifier)
     {
+        if(animator)
+        {
+            animator->model().audienceForDeletion() -= this;
+        }
+
         // Is there a model for the weapon?
         if(modelBank().has(identifier))
         {
             // Prepare the animation state of the model.
             ModelBank::ModelWithData loaded = modelBank().modelAndData(identifier);
             ModelDrawable &model = *loaded.first;
+            model.audienceForDeletion() += this;
             animator.reset(new MobjAnimator(identifier, model));
+            animator->setOwnerNamespace(player->info());
 
             // The basic transformation of the model.
             modelAuxData = &loaded.second->as<ModelRenderer::AuxiliaryData>();
@@ -53,6 +63,12 @@ DENG2_PIMPL_NOREF(PlayerWeaponAnimator)
             animator.reset();
             modelAuxData = nullptr;
         }
+    }
+
+    void assetBeingDeleted(Asset &)
+    {
+        de::trash(animator.release());
+        modelAuxData = nullptr;
     }
 
     static ModelBank &modelBank()

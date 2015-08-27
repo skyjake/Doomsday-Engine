@@ -29,6 +29,7 @@
 #include "ui/dialogs/manualconnectiondialog.h"
 #include "ui/dialogs/vrsettingsdialog.h"
 #include "ui/dialogs/gamesdialog.h"
+#include "ui/dialogs/packagesdialog.h"
 #include "updater/updatersettingsdialog.h"
 #include "ui/clientwindow.h"
 #include "ui/clientrootwidget.h"
@@ -65,19 +66,19 @@ enum MenuItemPositions
 {
     // DE menu:
     POS_GAMES             = 1,
-    POS_UNLOAD            = 2,
-    POS_GAMES_SEPARATOR   = 3,
-    POS_MULTIPLAYER       = 4,
-    POS_CONNECT           = 5,
+    POS_MULTIPLAYER       = 2,
+    POS_CONNECT           = 3,
+    POS_GAMES_SEPARATOR   = 4,
+    POS_UNLOAD            = 5,
     POS_IWAD_FOLDER       = 8,
 
     // Config menu:
     POS_RENDERER_SETTINGS = 0,
     POS_VR_SETTINGS       = 1,
-    POS_CONFIG_SEPARATOR  = 2,
+    POS_CONFIG_SEPARATOR  = 3,
 
-    POS_AUDIO_SETTINGS    = 4,
-    POS_INPUT_SETTINGS    = 5
+    POS_AUDIO_SETTINGS    = 5,
+    POS_INPUT_SETTINGS    = 6
 };
 
 DENG_GUI_PIMPL(TaskBarWidget)
@@ -98,9 +99,9 @@ DENG_GUI_PIMPL(TaskBarWidget)
 
     GuiWidget *backBlur;
     ConsoleWidget *console;
-    ButtonWidget *logo;
-    ButtonWidget *conf;
-    ButtonWidget *multi;
+    PopupButtonWidget *logo;
+    PopupButtonWidget *conf;
+    PopupButtonWidget *multi;
     LabelWidget *status;
     PopupMenuWidget *mainMenu;
     PopupMenuWidget *configMenu;
@@ -360,7 +361,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             .setInput(Rule::Height, rule().height());
 
     // DE logo.
-    d->logo = new ButtonWidget("de-button");
+    d->logo = new PopupButtonWidget("de-button");
     d->logo->setImage(style().images().image("logo.px128"));
     d->logo->setImageScale(.475f);
     d->logo->setImageFit(FitToHeight | OriginalAspectRatio);
@@ -373,26 +374,24 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     add(d->logo);
 
     // Settings.
-    ButtonWidget *conf = new ButtonWidget("conf-button");
-    d->conf = conf;
-    conf->setImage(style().images().image("gear"));
-    conf->setSizePolicy(ui::Expand, ui::Filled);
-    conf->rule().setInput(Rule::Height, rule().height());
-    add(conf);
+    d->conf = new PopupButtonWidget("conf-button");
+    d->conf->setImage(style().images().image("gear"));
+    d->conf->setSizePolicy(ui::Expand, ui::Filled);
+    d->conf->rule().setInput(Rule::Height, rule().height());
+    add(d->conf);
 
     // Currently loaded game.
     d->status = new LabelWidget;
     d->status->set(bg);
     d->status->setWidthPolicy(ui::Expand);
     d->status->rule().setInput(Rule::Height, rule().height());
-    add(d->status);        
+    add(d->status);
 
     d->updateStatus();
 
     // Multiplayer.
-    d->multi = new ButtonWidget;
+    d->multi = new PopupButtonWidget;
     d->multi->hide(); // hidden when not connected
-    d->multi->setAction(new SignalAction(this, SLOT(openMultiplayerMenu())));
     d->multi->setImage(style().images().image("network"));
     d->multi->setTextAlignment(ui::AlignRight);
     d->multi->setText(tr("MP"));
@@ -405,15 +404,15 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
 
     // Settings menu.
     add(d->configMenu = new PopupMenuWidget("conf-menu"));
-    d->configMenu->setAnchorAndOpeningDirection(conf->rule(), ui::Up);
+    d->conf->setPopup(*d->configMenu);
 
     // Multiplayer menu.
     add(d->multiMenu = new MultiplayerMenuWidget);
-    d->multiMenu->setAnchorAndOpeningDirection(d->multi->rule(), ui::Up);
+    d->multi->setPopup(*d->multiMenu);
 
     // The DE menu.
     add(d->mainMenu = new PopupMenuWidget("de-menu"));
-    d->mainMenu->setAnchorAndOpeningDirection(d->logo->rule(), ui::Up);
+    d->logo->setPopup(*d->mainMenu);
 
     // Game unloading confirmation submenu.
     auto *unloadMenu = new ui::SubmenuItem(style().images().image("close.ring"),
@@ -430,6 +429,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     d->configMenu->items()
             << new ui::SubwidgetItem(style().images().image("renderer"), tr("Renderer"), ui::Left, makePopup<RendererSettingsDialog>)
             << new ui::SubwidgetItem(style().images().image("vr"),       tr("3D & VR"),  ui::Left, makePopup<VRSettingsDialog>)
+            << new ui::SubwidgetItem(style().images().image("package"),  tr("Packages"), ui::Left, makePopup<PackagesDialog>)
             << new ui::Item(ui::Item::Separator)
             << new ui::SubwidgetItem(style().images().image("display"),  tr("Video"),    ui::Left, makePopup<VideoSettingsDialog>)
             << new ui::SubwidgetItem(style().images().image("audio"),    tr("Audio"),    ui::Left, makePopup<AudioSettingsDialog>)
@@ -442,14 +442,14 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << new ui::ActionItem(tr("Show Tutorial"), new SignalAction(this, SLOT(showTutorial())))
             << new ui::VariableToggleItem(tr("Menu Annotations"), App::config("ui.showAnnotations"))
             << new ui::Item(ui::Item::Annotation, tr("Annotations briefly describe menu functions."));
-    
+
     d->mainMenu->items()
             << new ui::Item(ui::Item::Separator, tr("Games"))
             << new ui::ActionItem(tr("Switch Game..."), new SignalAction(this, SLOT(switchGame())))
-            << unloadMenu                           // hidden with null-game
-            << new ui::Item(ui::Item::Separator)
             << new ui::ActionItem(tr("Multiplayer Games..."), new SignalAction(this, SLOT(showMultiplayer())))
             << new ui::ActionItem(tr("Connect to Server..."), new SignalAction(this, SLOT(connectToServerManually())))
+            << new ui::Item(ui::Item::Separator)
+            << unloadMenu                           // hidden with null-game
             << new ui::Item(ui::Item::Separator)
             << new ui::Item(ui::Item::Separator, tr("Application"))
             << new ui::ActionItem(tr("IWAD Folder..."), new SignalAction(this, SLOT(chooseIWADFolder())))
@@ -460,9 +460,6 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << new ui::ActionItem(tr("Quit Doomsday"), new CommandAction("quit"));
 
     d->showOrHideMenuItems();
-
-    conf->setAction(new SignalAction(this, SLOT(openConfigMenu())));
-    d->logo->setAction(new SignalAction(this, SLOT(openMainMenu())));
 
     // Set the initial command line layout.
     updateCommandLineLayout();
@@ -812,6 +809,8 @@ void TaskBarWidget::connectToServerManually()
 void TaskBarWidget::showTutorial()
 {
     if(BusyMode_Active()) return;
+
+    d->mainMenu->close();
 
     // The widget will dispose of itself when finished.
     TutorialWidget *tutorial = new TutorialWidget;

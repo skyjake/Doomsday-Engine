@@ -366,11 +366,7 @@ DENG2_PIMPL(GuiWidget)
 
     static float toDevicePixels(float logicalPixels)
     {
-#ifdef DENG2_QT_5_0_OR_NEWER
-        return logicalPixels * qApp->devicePixelRatio();
-#else
-        return logicalPixels;
-#endif
+        return logicalPixels * DENG2_BASE_GUI_APP->dpiFactor();
     }
 };
 
@@ -678,7 +674,10 @@ void GuiWidget::update()
         d->styleChanged = false;
         updateStyle();
     }
-    d->updateOpacityForDisabledWidgets();
+    if(!d->attribs.testFlag(ManualOpacity))
+    {
+        d->updateOpacityForDisabledWidgets();
+    }
 
     d->firstUpdateAfterCreation = false;
 }

@@ -83,7 +83,7 @@ DENG_GUI_PIMPL(AlertDialog)
         }
     };
 
-    UniqueWidgetPtr<ButtonWidget> notification;
+    UniqueWidgetPtr<PopupButtonWidget> notification;
     MenuWidget *alerts;
     bool clearOnDismiss;
     TextStyling styling;
@@ -100,11 +100,13 @@ DENG_GUI_PIMPL(AlertDialog)
         , clearOnDismiss(false)
         , maxCount(100)
     {
-        notification.reset(new ButtonWidget);
+        notification.reset(new PopupButtonWidget);
         notification->setSizePolicy(ui::Expand, ui::Expand);
         notification->setImage(style().images().image("alert"));
         notification->setOverrideImageSize(style().fonts().font("default").height().value());
-        notification->setAction(new SignalAction(thisPublic, SLOT(showListOfAlerts())));
+        notification->setOpener([this] (PopupWidget *) {
+            self.showListOfAlerts();
+        });
 
         // The menu expands with all the alerts, and the dialog's scroll area allows
         // browsing it up and down.
@@ -120,7 +122,7 @@ DENG_GUI_PIMPL(AlertDialog)
 
         alerts->organizer().audienceForWidgetCreation() += this;
         alerts->organizer().audienceForWidgetUpdate() += this;
-        
+
         // Set up the automatic hide timer.
         QObject::connect(&hideTimer, SIGNAL(timeout()), thisPublic, SLOT(hideNotification()));
         hideTimer.setSingleShot(true);
@@ -254,7 +256,7 @@ DENG_GUI_PIMPL(AlertDialog)
             hideTimer.start(autoHideAfterSeconds() * 1000);
         }
     }
-    
+
     void hideNotification()
     {
         notifs().hideChild(*notification);
@@ -293,19 +295,28 @@ DENG_GUI_PIMPL(AlertDialog)
 AlertDialog::AlertDialog(String const &/*name*/) : d(new Instance(this))
 {
     // The dialog is connected to the notification icon.
-    setAnchorAndOpeningDirection(d->notification->rule(), ui::Down);
+    d->notification->setPopup(*this, ui::Down);
 
     buttons() << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default,
                                       tr("Clear All"))
-              << new DialogButtonItem(DialogWidget::Action | DialogWidget::Id1,
-                                      style().images().image("gear"),
-                                      new SignalAction(this, SLOT(showLogFilterSettings())));
+              << new DialogButtonItem(DialogWidget::ActionPopup | DialogWidget::Id1,
+                                      style().images().image("gear"));
 
     // Auto-hide setting, positioned next to the Gear button.
     // These are not part of the dialog proper, but should be styled like regular
     // dialog contents.
     d->stylist.setContainer(*this);
-    ButtonWidget const &gearButton = *buttonWidget(DialogWidget::Id1);
+    auto &gearButton = *popupButtonWidget(DialogWidget::Id1);
+
+    gearButton.setPopup([] (PopupButtonWidget const &) {
+        return new LogSettingsDialog;
+    }, ui::Left);
+    gearButton.setOpener([this] (PopupWidget *pop) {
+        auto &dlg = pop->as<LogSettingsDialog>();
+        connect(this, SIGNAL(closed()), pop, SLOT(close()));
+        dlg.orphan();
+        dlg.exec(root());
+    });
 
     auto *lab = LabelWidget::newWithText(tr("Hide After:"), this);
 
@@ -317,11 +328,11 @@ AlertDialog::AlertDialog(String const &/*name*/) : d(new Instance(this))
             << new ChoiceItem(tr("10 mins"), 10 * 60)
             << new ChoiceItem(tr("Never"),   0);
     d->updateAutohideTimeSelection();
-    
+
     lab->rule()
         .setInput(Rule::Left, gearButton.rule().right())
         .setMidAnchorY(gearButton.rule().midY());
-    
+
     d->autohideTimes->rule()
         .setInput(Rule::Left, lab->rule().right())
         .setInput(Rule::Top,  lab->rule().top());
@@ -359,15 +370,6 @@ void AlertDialog::showListOfAlerts()
 
     area().scrollToTop(0);
     open();
-}
-
-void AlertDialog::showLogFilterSettings()
-{
-    LogSettingsDialog *st = new LogSettingsDialog;
-    st->setAnchorAndOpeningDirection(buttonWidget(DialogWidget::Id1)->rule(), ui::Left);
-    st->setDeleteAfterDismissed(true);
-    connect(this, SIGNAL(closed()), st, SLOT(close()));
-    st->exec(root());
 }
 
 void AlertDialog::hideNotification()

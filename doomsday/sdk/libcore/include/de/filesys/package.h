@@ -153,6 +153,8 @@ public:
      */
     static void validateMetadata(Record const &packageInfo);
 
+    static QStringList tags(File const &packageFile);
+
     static String identifierForFile(File const &file);
 
     /**
@@ -165,14 +167,14 @@ public:
     static File const *containerOfFile(File const &file);
 
     static String identifierForContainerOfFile(File const &file);
-    
+
     /**
      * Finds the package that contains @a file and returns its modification time.
-     * If the file doesn't appear to be inside a package, returns the file's 
+     * If the file doesn't appear to be inside a package, returns the file's
      * modification time.
      *
      * @param file  File.
-     * 
+     *
      * @return Modification time of file or package.
      */
     static Time containerOfFileModifiedAt(File const &file);

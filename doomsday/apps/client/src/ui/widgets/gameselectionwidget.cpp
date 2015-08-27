@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "ui/widgets/gameselectionwidget.h"
@@ -68,11 +68,12 @@ DENG_GUI_PIMPL(GameSelectionWidget)
             , titleText(headingText)
             , type(selType)
             , numCols(3)
-        {           
+        {
             owner->self.add(makeTitle(headingText));
             title().setFont("title");
-            title().setTextColor("inverted.text");
-            title().setHoverTextColor("inverted.text", ButtonWidget::ReplaceColor);
+            title().setTextColor("accent");
+            title().setHoverTextColor("text", ButtonWidget::ReplaceColor);
+            title().setTextShadow(LabelWidget::RectangleShadow);
             title().margins().setLeft("").setRight("");
 
             switch(type)
@@ -118,7 +119,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
                     .setTop   (style().rules().rule("gap") * 2)
                     .setBottom(noGames->margins().top());
             noGames->setFont("heading");
-            noGames->setTextColor("inverted.text");
+            noGames->setTextColor("text");
             noGames->setOpacity(.4f);
             noGames->hide();
         }
@@ -338,7 +339,7 @@ GameSelectionWidget::GameSelectionWidget(String const &name)
     : ScrollAreaWidget(name), d(new Instance(this))
 {
     enableIndicatorDraw(true);
-    setScrollBarColor("inverted.accent");
+    setScrollBarColor("accent");
 
     // By default attach the filter above the widget.
     d->filter->rule()
@@ -429,7 +430,7 @@ void GameSelectionWidget::operator >> (PersistentState &toState) const
     {
         // Save the fold open/closed state.
         st.set(name() + "." + s->name() + ".open", s->isOpen());
-    }    
+    }
 }
 
 void GameSelectionWidget::operator << (PersistentState const &fromState)
@@ -460,14 +461,14 @@ void GameSelectionWidget::updateSubsetLayout()
 void GameSelectionWidget::select(ui::Item const *item)
 {
     if(!item) return;
-    
+
     // Should we perform an action afterwards? The signal handling may lead to
     // destruction of the widget, so we'll hold a ref to the action.
     AutoRef<Action> postAction(d->doAction? makeAction(*item) : nullptr);
-    
+
     // Notify.
     emit gameSessionSelected(item);
-    
+
     if(bool(postAction))
     {
         postAction->trigger();

@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBAPPFW_LABELWIDGET_H
@@ -104,6 +104,13 @@ public:
     Rule const &contentWidth() const;
     Rule const &contentHeight() const;
 
+    enum FillMode {
+        FillWithImage,
+        FillWithText
+    };
+
+    void setFillMode(FillMode fillMode);
+
     /**
      * Sets the gap between the text and image. Defaults to "label.gap".
      *
@@ -112,6 +119,13 @@ public:
     void setTextGap(DotPath const &styleRuleId);
 
     DotPath const &textGap() const;
+
+    enum TextShadow {
+        NoShadow,
+        RectangleShadow
+    };
+
+    void setTextShadow(TextShadow shadow, DotPath const &shadowColor = "label.shadow");
 
     enum AlignmentMode {
         AlignByCombination,
@@ -130,6 +144,8 @@ public:
                       AlignmentMode alignMode = AlignByCombination);
 
     void setTextAlignment(ui::Alignment const &textAlign);
+
+    ui::Alignment textAlignment() const;
 
     void setTextLineAlignment(ui::Alignment const &textLineAlign);
 

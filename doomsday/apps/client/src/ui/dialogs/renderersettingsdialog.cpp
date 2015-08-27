@@ -129,6 +129,7 @@ RendererSettingsDialog::RendererSettingsDialog(String const &name)
     : DialogWidget(name, WithHeading), d(new Instance(this))
 {
     heading().setText(tr("Renderer Settings"));
+    heading().setImage(style().images().image("renderer"));
 
     LabelWidget *appearLabel = LabelWidget::newWithText(tr("Appearance:"), &area());
     appearLabel->setName("appearance-label"); // for lookup from tutorial
@@ -161,12 +162,11 @@ RendererSettingsDialog::RendererSettingsDialog(String const &name)
             << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, tr("Close"))
             << new DialogButtonItem(DialogWidget::Action, tr("Reset to Defaults"),
                                     new SignalAction(this, SLOT(resetToDefaults())))
-            << new DialogButtonItem(DialogWidget::Action | Id1,
-                                    style().images().image("gauge"),
-                                    new SignalAction(this, SLOT(showDeveloperPopup())));
+            << new DialogButtonItem(DialogWidget::ActionPopup | Id1,
+                                    style().images().image("gauge"));
 
     // Identifiers popup opens from the button.
-    d->devPopup->setAnchorAndOpeningDirection(buttonWidget(Id1)->rule(), ui::Up);
+    popupButtonWidget(Id1)->setPopup(*d->devPopup);
 
     connect(this, SIGNAL(closed()), d->devPopup, SLOT(close()));
     connect(d->appear, SIGNAL(profileEditorRequested()), this, SLOT(editProfile()));

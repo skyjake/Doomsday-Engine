@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/DialogWidget"
@@ -158,15 +158,20 @@ public ChildWidgetOrganizer::IFilter
                     .setBottom("")
                     .setTop (style().rules().rule("gap") + style().rules().rule("dialog.gap"))
                     .setLeft(style().rules().rule("gap") + style().rules().rule("dialog.gap"));
-            heading->setSizePolicy(ui::Expand, ui::Expand);
+            heading->setSizePolicy(ui::Filled, ui::Expand);
             heading->setTextColor("accent");
-            heading->setAlignment(ui::AlignLeft);
+            heading->setImageColor(style().colors().colorf("accent"));
+            heading->setOverrideImageSize(heading->font().ascent().valuei());
+            heading->setTextGap("dialog.gap");
+            heading->setTextAlignment(ui::AlignRight);
             heading->setTextLineAlignment(ui::AlignLeft);
+            heading->setFillMode(LabelWidget::FillWithText);
             container->add(heading);
 
             heading->rule()
-                    .setInput(Rule::Top, self.rule().top())
-                    .setInput(Rule::Left, self.rule().left());
+                    .setInput(Rule::Top,   self.rule().top())
+                    .setInput(Rule::Left,  self.rule().left())
+                    .setInput(Rule::Right, area->rule().right());
 
             area->rule().setInput(Rule::Top, heading->rule().bottom());
         }
@@ -215,7 +220,7 @@ public ChildWidgetOrganizer::IFilter
         Rule const *maxHeight = holdRef(root().viewHeight());
         if(self.openingDirection() == ui::Down)
         {
-            changeRef(maxHeight, *maxHeight - self.anchorY() - style().rules().rule("gap"));
+            changeRef(maxHeight, *maxHeight - self.anchor().top() - style().rules().rule("gap"));
         }
 
         // The container's height is limited by the height of the view. Normally
@@ -458,7 +463,7 @@ ui::Data &DialogWidget::buttons()
     return d->buttonItems;
 }
 
-ButtonWidget &DialogWidget::buttonWidget(de::String const &label) const
+ButtonWidget &DialogWidget::buttonWidget(String const &label) const
 {
     GuiWidget *w = d->buttons->organizer().itemWidget(label);
     if(w) return w->as<ButtonWidget>();
@@ -467,6 +472,11 @@ ButtonWidget &DialogWidget::buttonWidget(de::String const &label) const
     if(w) return w->as<ButtonWidget>();
 
     throw UndefinedLabel("DialogWidget::buttonWidget", "Undefined label \"" + label + "\"");
+}
+
+PopupButtonWidget &DialogWidget::popupButtonWidget(String const &label) const
+{
+    return buttonWidget(label).as<PopupButtonWidget>();
 }
 
 ButtonWidget *DialogWidget::buttonWidget(int roleId) const
@@ -484,6 +494,15 @@ ButtonWidget *DialogWidget::buttonWidget(int roleId) const
         }
     }
     return 0;
+}
+
+PopupButtonWidget *DialogWidget::popupButtonWidget(int roleId) const
+{
+    if(auto *btn = buttonWidget(roleId))
+    {
+        return &btn->as<PopupButtonWidget>();
+    }
+    return nullptr;
 }
 
 void DialogWidget::setAcceptanceAction(RefArg<de::Action> action)
@@ -669,19 +688,35 @@ void DialogWidget::finish(int result)
 }
 
 DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, String const &label)
-    : ui::ActionItem(label, 0), _role(flags)
+    : ui::ActionItem(itemSemantics(flags), label, 0)
+    , _role(flags)
+{}
+
+DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, Image const &image)
+    : ui::ActionItem(itemSemantics(flags), image)
+    , _role(flags)
 {}
 
 DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, String const &label, RefArg<de::Action> action)
-    : ui::ActionItem(label, action), _role(flags)
+    : ui::ActionItem(itemSemantics(flags), label, action)
+    , _role(flags)
 {}
 
 DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, Image const &image, RefArg<de::Action> action)
-    : ui::ActionItem(image, "", action), _role(flags)
+    : ui::ActionItem(itemSemantics(flags), image, "", action)
+    , _role(flags)
 {}
 
 DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, Image const &image, String const &label, RefArg<de::Action> action)
-    : ui::ActionItem(image, label, action), _role(flags)
+    : ui::ActionItem(itemSemantics(flags), image, label, action)
+    , _role(flags)
 {}
+
+ui::Item::Semantics DialogWidget::ButtonItem::itemSemantics(RoleFlags flags)
+{
+    Semantics smt = ActivationClosesPopup | ShownAsButton;
+    if(flags & Popup) smt |= ShownAsPopupButton;
+    return smt;
+}
 
 } // namespace de

@@ -349,6 +349,15 @@ Widget *Widget::remove(Widget &child)
 
     return &child;
 }
+    
+void Widget::orphan()
+{
+    if(d->parent)
+    {
+        d->parent->remove(*this);
+    }
+    DENG2_ASSERT(d->parent == nullptr);
+}
 
 Widget *Widget::find(String const &name)
 {

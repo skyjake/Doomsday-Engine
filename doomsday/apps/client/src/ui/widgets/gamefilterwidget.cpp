@@ -49,8 +49,8 @@ DENG_GUI_PIMPL(GameFilterWidget)
 
         // Optional background.
         self.add(background = new LabelWidget);
-        background->set(Background(Vector4f(style().colors().colorf("text"), 0),
-                                   Background::BlurredWithSolidFill));
+        background->set(Background(style().colors().colorf("gamefilter.background"),
+                                   Background::Blurred));
         background->setOpacity(0);
         background->setAttribute(IndependentOpacity);
         background->hide(); // hidden by default

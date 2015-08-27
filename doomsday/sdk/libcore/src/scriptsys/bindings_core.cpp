@@ -28,6 +28,7 @@
 #include "de/Record"
 #include "de/RecordValue"
 #include "de/TextValue"
+#include "de/Animation"
 
 namespace de {
 
@@ -112,7 +113,7 @@ static Value *Function_File_ReadUtf8(Context &ctx, Function::ArgumentValues cons
 
 static Animation &animationInstance(Context &ctx)
 {
-    Animation *obj = reinterpret_cast<Animation *>(ctx.instanceScope().as<NativeValue>().object());
+    Animation *obj = ctx.instanceScope().as<NativeValue>().nativeObject<Animation>();
     if(!obj)
     {
         throw Value::IllegalError("ScriptSystem::animationInstance", "No Animation instance available");
@@ -180,21 +181,21 @@ void initCoreModule(Binder &binder, Record &coreModule)
 
     // Animation
     {
-        Function::Defaults setValueDefaults;
-        setValueDefaults["span"]  = new NumberValue(0.0);
-        setValueDefaults["delay"] = new NumberValue(0.0);
+        Function::Defaults setValueArgs;
+        setValueArgs["span"]  = new NumberValue(0.0);
+        setValueArgs["delay"] = new NumberValue(0.0);
 
-        Function::Defaults setValueFromDefaults;
-        setValueFromDefaults["delay"] = new NumberValue(0.0);
+        Function::Defaults setValueFromArgs;
+        setValueFromArgs["delay"] = new NumberValue(0.0);
 
         Record &anim = coreModule.addRecord("Animation");
         binder.init(anim)
                 << DENG2_FUNC_NOARG(Animation_Value, "value")
                 << DENG2_FUNC_NOARG(Animation_Target, "target")
                 << DENG2_FUNC_DEFS (Animation_SetValue, "setValue",
-                                    "value" << "span" << "delay", setValueDefaults)
+                                    "value" << "span" << "delay", setValueArgs)
                 << DENG2_FUNC_DEFS (Animation_SetValueFrom, "setValueFrom",
-                                    "fromValue" << "toValue" << "span" << "delay", setValueFromDefaults);
+                                    "fromValue" << "toValue" << "span" << "delay", setValueFromArgs);
     }
 }
 
