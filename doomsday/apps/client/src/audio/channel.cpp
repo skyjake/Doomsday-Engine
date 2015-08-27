@@ -337,17 +337,17 @@ dint Channels::count() const
     return d->all.count();
 }
 
-dint Channels::countPlaying(dint id)
+dint Channels::countPlaying(dint soundId)
 {
     DENG2_ASSERT( App_AudioSystem().sfxIsAvailable() );  // sanity check
 
     dint count = 0;
-    forAll([&id, &count] (Channel &ch)
+    forAll([&soundId, &count] (Channel &ch)
     {
         if(ch.hasBuffer())
         {
             sfxbuffer_t &sbuf = ch.buffer();
-            if((sbuf.flags & SFXBF_PLAYING) && sbuf.sample && sbuf.sample->id == id)
+            if((sbuf.flags & SFXBF_PLAYING) && sbuf.sample && sbuf.sample->soundId == soundId)
             {
                 count += 1;
             }
@@ -357,7 +357,7 @@ dint Channels::countPlaying(dint id)
     return count;
 }
 
-Channel *Channels::tryFindVacant(bool use3D, dint bytes, dint rate, dint sampleId) const
+Channel *Channels::tryFindVacant(bool use3D, dint bytes, dint rate, dint soundId) const
 {
     for(Channel *ch : d->all)
     {
@@ -371,12 +371,12 @@ Channel *Channels::tryFindVacant(bool use3D, dint bytes, dint rate, dint sampleI
             continue;
 
         // What about the sample?
-        if(sampleId > 0)
+        if(soundId > 0)
         {
-            if(!sbuf.sample || sbuf.sample->id != sampleId)
+            if(!sbuf.sample || sbuf.sample->soundId != soundId)
                 continue;
         }
-        else if(sampleId == 0)
+        else if(soundId == 0)
         {
             // We're trying to find a channel with no sample already loaded.
             if(sbuf.sample)
@@ -491,8 +491,8 @@ void UI_AudioChannelDrawer()
                     (sbuf.flags & SFXBF_PLAYING) ? 'P' : '.',
                     (sbuf.flags & SFXBF_REPEAT ) ? 'R' : '.',
                     (sbuf.flags & SFXBF_RELOAD ) ? 'L' : '.',
-                    sbuf.sample ? sbuf.sample->id : 0,
-                    sbuf.sample ? ::defs.sounds[sbuf.sample->id].id : "",
+                    sbuf.sample ? sbuf.sample->soundId : 0,
+                    sbuf.sample ? ::defs.sounds[sbuf.sample->soundId].id : "",
                     sbuf.sample ? sbuf.sample->size : 0,
                     sbuf.bytes, sbuf.rate / 1000, sbuf.length,
                     sbuf.cursor, sbuf.written);

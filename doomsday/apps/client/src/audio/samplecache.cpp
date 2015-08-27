@@ -327,7 +327,7 @@ DENG2_PIMPL(SampleCache)
     {
         for(CacheItem *it = hashFor(soundId).first; it; it = it->next)
         {
-            if(it->sample.id == soundId)
+            if(it->sample.soundId == soundId)
                 return it;
         }
         return nullptr;  // Not found.
@@ -363,7 +363,7 @@ DENG2_PIMPL(SampleCache)
 
         notifyRemove(item);
 
-        Hash &hash = hashFor(item.sample.id);
+        Hash &hash = hashFor(item.sample.soundId);
 
         // Unlink the item.
         if(hash.last == &item)
@@ -377,7 +377,7 @@ DENG2_PIMPL(SampleCache)
             item.prev->next = item.next;
 
 #ifdef __CLIENT__
-        App_AudioSystem().allowSfxRefresh(true);
+        App_AudioSystem().allowSfxRefresh();
 #endif
 
         // Free all memory allocated for the item.
@@ -431,8 +431,8 @@ DENG2_PIMPL(SampleCache)
         }
 
         // Attribute the sample with tracking identifiers.
-        cached.id    = soundId;
-        cached.group = group;
+        cached.soundId = soundId;
+        cached.group   = group;
 
         // Perform resampling if necessary.
         resample(cached.data = M_Malloc(cached.size), cached.bytesPer, cached.rate,
@@ -533,7 +533,7 @@ void SampleCache::maybeRunPurge()
         {
 #ifdef __CLIENT__
             // If the sample is playing we won't remove it now.
-            if(App_AudioSystem().channels().isPlaying(it->sample.id))
+            if(App_AudioSystem().channels().isPlaying(it->sample.soundId))
                 continue;
 #endif
 

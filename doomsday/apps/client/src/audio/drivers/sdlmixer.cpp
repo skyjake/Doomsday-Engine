@@ -264,7 +264,7 @@ void DS_SDLMixer_SFX_Load(sfxbuffer_t *buf, sfxsample_t *sample)
     if(buf->sample)
     {
         // Is the same one?
-        if(buf->sample->id == sample->id)
+        if(buf->sample->soundId == sample->soundId)
             return;
 
         // Free the existing data.

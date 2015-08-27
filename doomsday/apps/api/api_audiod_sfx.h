@@ -87,7 +87,7 @@ enum
 };
 
 typedef struct sfxsample_s {
-    int             id;          ///< Id number of the sound sample.
+    int             soundId;     ///< Id number of the sound.
     void *          data;        ///< Actual sample data.
     unsigned int    size;        ///< Size in bytes.
     int             numSamples;  ///< Number of samples.

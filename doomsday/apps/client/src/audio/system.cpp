@@ -684,7 +684,7 @@ DENG2_PIMPL(System)
                     String const bufPath = composeMusicBufferFilename();
 
                     dsize len = hndl->length();
-                    duint8 *buf = (duint8 *)M_Malloc(len);
+                    auto *buf = (duint8 *)M_Malloc(len);
                     hndl->read(buf, len);
                     F_Dump(buf, len, bufPath.toUtf8().constData());
                     M_Free(buf); buf = nullptr;
@@ -968,20 +968,20 @@ DENG2_PIMPL(System)
     }
 
     /**
-     * The specified sample will soon no longer exist. All channel buffers
-     * loaded with the sample will be reset.
+     * The specified @a sample will soon no longer exist. All channels currently
+     * loaded with it must be reset.
      */
-    void unloadSoundID(dint id)
+    void unloadSample(sfxsample_t const &sample)
     {
         if(!sfxAvail) return;
 
         self.allowSfxRefresh(false);
-        channels->forAll([this, &id] (Channel &ch)
+        channels->forAll([this, &sample] (Channel &ch)
         {
             if(ch.hasBuffer())
             {
                 sfxbuffer_t &sbuf = ch.buffer();
-                if(sbuf.sample && sbuf.sample->id == id)
+                if(sbuf.sample && sbuf.sample->soundId == sample.soundId)
                 {
                     // Stop and unload.
                     self.sfx()->Reset(&sbuf);
@@ -989,7 +989,7 @@ DENG2_PIMPL(System)
             }
             return LoopContinue;
         });
-        self.allowSfxRefresh(true);
+        self.allowSfxRefresh();
     }
 
     /**
@@ -1008,7 +1008,7 @@ DENG2_PIMPL(System)
             }
             return LoopContinue;
         });
-        self.allowSfxRefresh(true);
+        self.allowSfxRefresh();
     }
 
     void createChannels()
@@ -1097,26 +1097,25 @@ DENG2_PIMPL(System)
      *
      * @return  @c true, if a sound is started.
      */
-    bool playSound(sfxsample_t *sample, dfloat volume, dfloat freq, mobj_t *emitter,
+    bool playSound(sfxsample_t &sample, dfloat volume, dfloat freq, mobj_t *emitter,
         coord_t const *origin, dint flags)
     {
-        DENG2_ASSERT(sample);
         if(!sfxAvail) return false;
 
         bool const play3D = sfx3D && (emitter || origin);
 
-        if(sample->id < 1 || sample->id >= ::defs.sounds.size()) return false;
-        if(volume <= 0 || !sample->size) return false;
+        if(sample.soundId < 1 || sample.soundId >= ::defs.sounds.size()) return false;
+        if(volume <= 0 || !sample.size) return false;
 
         if(emitter && sfxOneSoundPerEmitter)
         {
             // Stop any other sounds from the same emitter.
-            if(self.stopSoundWithLowerPriority(0, emitter, ::defs.sounds[sample->id].priority) < 0)
+            if(self.stopSoundWithLowerPriority(0, emitter, ::defs.sounds[sample.soundId].priority) < 0)
             {
                 // Something with a higher priority is playing, can't start now.
                 LOG_AUDIO_MSG("Not playing sound id:%i (prio:%i) because overridden (emitter id:%i)")
-                    << sample->id
-                    << ::defs.sounds[sample->id].priority
+                    << sample.soundId
+                    << ::defs.sounds[sample.soundId].priority
                     << emitter->thinker.id;
                 return false;
             }
@@ -1131,14 +1130,14 @@ DENG2_PIMPL(System)
         dfloat lowPrio = 0;
 
         // Ensure there aren't already too many channels playing this sample.
-        sfxinfo_t *info = &::runtimeDefs.sounds[sample->id];
+        sfxinfo_t *info = &::runtimeDefs.sounds[sample.soundId];
         if(info->channels > 0)
         {
             // The decision to stop channels is based on priorities.
             getChannelPriorities(channelPrios);
             haveChannelPrios = true;
 
-            dint count = channels->countPlaying(sample->id);
+            dint count = channels->countPlaying(sample.soundId);
             while(count >= info->channels)
             {
                 // Stop the lowest priority sound of the playing instances, again
@@ -1157,7 +1156,7 @@ DENG2_PIMPL(System)
                         {
                             DENG2_ASSERT(sbuf.sample != nullptr);
 
-                            if(sbuf.sample->id == sample->id &&
+                            if(sbuf.sample->soundId == sample.soundId &&
                                (myPrio >= chPriority && (!selCh || chPriority <= lowPrio)))
                             {
                                 selCh   = &ch;
@@ -1174,7 +1173,7 @@ DENG2_PIMPL(System)
                     // The new sound can't be played because we were unable to stop
                     // enough channels to accommodate the limitation.
                     LOG_AUDIO_XVERBOSE("Not playing sound id:%i because all channels are busy")
-                        << sample->id;
+                        << sample.soundId;
                     return false;
                 }
 
@@ -1185,7 +1184,7 @@ DENG2_PIMPL(System)
         }
 
         // Hit count tells how many times the cached sound has been used.
-        sampleCache.hit(sample->id);
+        sampleCache.hit(sample.soundId);
 
         /*
          * Pick a channel for the sound. We will do our best to play the sound,
@@ -1196,20 +1195,20 @@ DENG2_PIMPL(System)
 
         // First look through the stopped channels. At this stage we're very picky:
         // only the perfect choice will be good enough.
-        Channel *selCh = channels->tryFindVacant(play3D, sample->bytesPer,
-                                                 sample->rate, sample->id);
+        Channel *selCh = channels->tryFindVacant(play3D, sample.bytesPer,
+                                                 sample.rate, sample.soundId);
 
         if(!selCh)
         {
             // Perhaps there is a vacant channel (with any sample, but preferably one
             // with no sample already loaded).
-            selCh = channels->tryFindVacant(play3D, sample->bytesPer, sample->rate, 0);
+            selCh = channels->tryFindVacant(play3D, sample.bytesPer, sample.rate, 0);
         }
 
         if(!selCh)
         {
             // Try any non-playing channel in the correct format.
-            selCh = channels->tryFindVacant(play3D, sample->bytesPer, sample->rate, -1);
+            selCh = channels->tryFindVacant(play3D, sample.bytesPer, sample.rate, -1);
         }
 
         if(!selCh)
@@ -1269,19 +1268,19 @@ DENG2_PIMPL(System)
         {
             // A suitable channel was not found.
             self.allowSfxRefresh(true);
-            LOG_AUDIO_XVERBOSE("Failed to find suitable channel for sample id:%i") << sample->id;
+            LOG_AUDIO_XVERBOSE("Failed to find suitable channel for sample id:%i") << sample.soundId;
             return false;
         }
 
         DENG2_ASSERT(selCh->hasBuffer());
         // The sample buffer may need to be reformatted.
 
-        if(selCh->buffer().rate  != sample->rate ||
-           selCh->buffer().bytes != sample->bytesPer)
+        if(selCh->buffer().rate  != sample.rate ||
+           selCh->buffer().bytes != sample.bytesPer)
         {
             // Create a new sample buffer with the correct format.
             self.sfx()->Destroy(&selCh->buffer());
-            selCh->setBuffer(self.sfx()->Create(play3D ? SFXBF_3D : 0, sample->bytesPer * 8, sample->rate));
+            selCh->setBuffer(self.sfx()->Create(play3D ? SFXBF_3D : 0, sample.bytesPer * 8, sample.rate));
         }
         sfxbuffer_t &sbuf = selCh->buffer();
 
@@ -1322,9 +1321,9 @@ DENG2_PIMPL(System)
          * @note The sample is not reloaded if a sample with the same ID is already loaded
          * on the channel.
          */
-        if(!sbuf.sample || sbuf.sample->id != sample->id)
+        if(!sbuf.sample || sbuf.sample->soundId != sample.soundId)
         {
-            self.sfx()->Load(&sbuf, sample);
+            self.sfx()->Load(&sbuf, &sample);
         }
 
         // Update channel properties.
@@ -1403,7 +1402,7 @@ DENG2_PIMPL(System)
      */
     dint sfxStopLogical(dint soundId, mobj_t *emitter)
     {
-        dint stopCount = 0;
+        dint numStopped = 0;
         MutableLogicSoundHashIterator it(sfxLogicHash);
         while(it.hasNext())
         {
@@ -1421,9 +1420,9 @@ DENG2_PIMPL(System)
 
             delete &lsound;
             it.remove();
-            stopCount++;
+            numStopped += 1;
         }
-        return stopCount;
+        return numStopped;
     }
 
     /**
@@ -1638,7 +1637,7 @@ DENG2_PIMPL(System)
     {
         // Reset all channels loaded with the sample data and stop all sounds using
         // this sample (the sample data will be gone soon).
-        unloadSoundID(sample.id);
+        unloadSample(sample);
     }
 
     void aboutToUnloadGame(game::Game const &)
@@ -2190,7 +2189,7 @@ dint System::stopSoundWithLowerPriority(dint id, mobj_t *emitter, dint defPriori
         if(!ch.hasBuffer()) return LoopContinue;
         sfxbuffer_t &sbuf = ch.buffer();
 
-        if(!(sbuf.flags & SFXBF_PLAYING) || (id && sbuf.sample->id != id) ||
+        if(!(sbuf.flags & SFXBF_PLAYING) || (id && sbuf.sample->soundId != id) ||
            (emitter && ch.emitter() != emitter))
         {
             return LoopContinue;
@@ -2208,7 +2207,7 @@ dint System::stopSoundWithLowerPriority(dint id, mobj_t *emitter, dint defPriori
         // Check the priority.
         if(defPriority >= 0)
         {
-            dint oldPrio = ::defs.sounds[sbuf.sample->id].priority;
+            dint oldPrio = ::defs.sounds[sbuf.sample->soundId].priority;
             if(oldPrio < defPriority)  // Old is more important.
             {
                 stopCount = -1;
@@ -2348,7 +2347,7 @@ bool System::playSound(dint soundIdAndFlags, mobj_t *emitter, coord_t const *ori
     flags |= (((info->flags & SF_NO_ATTENUATION) || (soundIdAndFlags & DDSF_NO_ATTENUATION)) ? SF_NO_ATTENUATION : 0);
     flags |= (isRepeating ? SF_REPEAT : 0);
     flags |= ((info->flags & SF_DONT_STOP) ? SF_DONT_STOP : 0);
-    return d->playSound(sample, volume, freq, emitter, origin, flags);
+    return d->playSound(*sample, volume, freq, emitter, origin, flags);
 }
 
 dfloat System::rateSoundPriority(mobj_t *emitter, coord_t const *point, dfloat volume,
