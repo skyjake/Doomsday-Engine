@@ -61,12 +61,12 @@ deng_extassimp {
 }
 else:!macx:!win32 {
     # Are the development files installed?
-    !system(pkg-config --exists assimp) {
+    !system($$PKG_CONFIG --exists assimp) {
         error(Missing dependency: Open Asset Import Library)
     }
 
-    aiOpts = $$system(pkg-config --cflags assimp)
-    aiLibs = $$system(pkg-config --libs assimp)
+    aiOpts = $$system($$PKG_CONFIG --cflags assimp)
+    aiLibs = $$system($$PKG_CONFIG --libs assimp)
 }
 else {
     error(Open Asset Import Library location not defined (ASSIMP_DIR))

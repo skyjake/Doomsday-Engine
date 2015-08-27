@@ -29,10 +29,10 @@ else:macx {
 }
 else {
     # Generic Unix.
-    sdlflags = $$system(pkg-config sdl --cflags)
+    sdlflags = $$system($$PKG_CONFIG sdl --cflags)
     QMAKE_CFLAGS += $$sdlflags
     QMAKE_CXXFLAGS += $$sdlflags
-    LIBS += $$system(pkg-config sdl --libs)
+    LIBS += $$system($$PKG_CONFIG sdl --libs)
 }
 
 # Should we include SDL_mixer in the build, too?

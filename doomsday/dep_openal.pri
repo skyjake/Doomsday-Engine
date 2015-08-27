@@ -19,11 +19,11 @@ else:macx {
 else {
     # Generic Unix.
     # Check that the dev library is installed.
-    !system(pkg-config --exists openal) {
+    !system($$PKG_CONFIG --exists openal) {
         error(Missing dependency: OpenAL library (development headers). Alternatively disable the OpenAL plugin by removing deng_openal from CONFIG.)
     }
-    oalFlags = $$system(pkg-config --cflags openal)
+    oalFlags = $$system($$PKG_CONFIG --cflags openal)
     QMAKE_CFLAGS += $$oalFlags
     QMAKE_CXXFLAGS += $$oalFlags
-    LIBS += $$system(pkg-config --libs openal)
+    LIBS += $$system($$PKG_CONFIG --libs openal)
 }

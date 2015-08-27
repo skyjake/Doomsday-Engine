@@ -36,6 +36,10 @@ deng_c++11|c++11 {
 
 # Unix System Tools ----------------------------------------------------------
 
+isEmpty(PKG_CONFIG) {
+    PKG_CONFIG = pkg-config
+}
+
 # Python 2 to be used in generated scripts.
 isEmpty(SCRIPT_PYTHON) {
     exists(/usr/bin/python2.7):    SCRIPT_PYTHON = /usr/bin/python2.7

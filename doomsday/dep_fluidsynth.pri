@@ -1,10 +1,10 @@
 # Build configuration for libfluidsynth.
 unix {
     # Is the FluidSynth development files installed?
-    system(pkg-config --exists fluidsynth) {
-        flags = $$system(pkg-config --cflags fluidsynth)
+    system($$PKG_CONFIG --exists fluidsynth) {
+        flags = $$system($$PKG_CONFIG --cflags fluidsynth)
         QMAKE_CFLAGS += $$flags
         QMAKE_CXXFLAGS += $$flags
-        LIBS += $$system(pkg-config --libs fluidsynth)
+        LIBS += $$system($$PKG_CONFIG --libs fluidsynth)
     }
 }

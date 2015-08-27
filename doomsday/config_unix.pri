@@ -43,7 +43,9 @@ DENG_PLUGIN_LIB_DIR = $$DENG_LIB_DIR/doomsday
 # the linker where to find them.
 !contains(DENG_LIB_DIR, ^/usr/.*): QMAKE_LFLAGS += -Wl,-rpath,$$DENG_LIB_DIR
 
-DENG_BASE_DIR = $$PREFIX/share/doomsday
+isEmpty(DENG_BASE_DIR) {
+    DENG_BASE_DIR = $$PREFIX/share/doomsday
+}
 DENG_DATA_DIR = $$DENG_BASE_DIR/data
 
 DEFINES += DENG_BASE_DIR=\"\\\"$${DENG_BASE_DIR}/\\\"\"

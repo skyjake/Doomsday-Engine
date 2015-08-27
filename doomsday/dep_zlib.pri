@@ -16,6 +16,6 @@ else:macx {
 }
 else {
     # Generic Unix.
-    QMAKE_CFLAGS += $$system(pkg-config zlib --cflags)
-    LIBS += $$system(pkg-config zlib --libs)
+    QMAKE_CFLAGS += $$system($$PKG_CONFIG zlib --cflags)
+    LIBS += $$system($$PKG_CONFIG zlib --libs)
 }

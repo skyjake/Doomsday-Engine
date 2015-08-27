@@ -30,13 +30,13 @@ else:macx:!isEmpty(SDL2_FRAMEWORK_DIR) {
 }
 else {
     # Generic setup via pkg-config.
-    !system(pkg-config --exists sdl2) {
+    !system($$PKG_CONFIG --exists sdl2) {
         error(Missing dependency: SDL2)
     }
-    sdlflags = $$system(pkg-config sdl2 --cflags)
+    sdlflags = $$system($$PKG_CONFIG sdl2 --cflags)
     QMAKE_CFLAGS += $$sdlflags
     QMAKE_CXXFLAGS += $$sdlflags
-    LIBS += $$system(pkg-config sdl2 --libs)
+    LIBS += $$system($$PKG_CONFIG sdl2 --libs)
 }
 
 # Should we include SDL2_mixer in the build, too?
@@ -70,10 +70,10 @@ else {
         LIBS += -framework SDL2_mixer
     }
     else {
-        !system(pkg-config --exists SDL2_mixer) {
+        !system($$PKG_CONFIG --exists SDL2_mixer) {
             error(Missing dependency: SDL2_mixer)
         }
-        LIBS += $$system(pkg-config --libs SDL2_mixer)
+        LIBS += $$system($$PKG_CONFIG --libs SDL2_mixer)
     }
 }
 
