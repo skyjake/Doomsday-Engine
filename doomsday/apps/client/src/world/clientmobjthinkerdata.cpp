@@ -86,7 +86,7 @@ DENG2_PIMPL(ClientMobjThinkerData)
         return ClientApp::renderSystem().modelRenderer().bank();
     }
 
-    void assetBeingDeleted(Asset &a)
+    void assetBeingDeleted(Asset &)
     {
         de::trash(animator.release());
         modelAuxData = nullptr;
