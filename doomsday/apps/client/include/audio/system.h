@@ -292,14 +292,6 @@ public:  /// @todo make private:
      */
     Channels &channels() const;
 
-    /**
-     * Enabling refresh is simple: the refresh thread is resumed. When disabling refresh,
-     * first make sure a new refresh doesn't begin (using allowRefresh). We still have
-     * to see if a refresh is being made and wait for it to stop. Then we can suspend
-     * the refresh thread.
-     */
-    void allowSfxRefresh(bool allow = true);
-
     /// @todo refactor away.
     void requestSfxListenerUpdate();
 

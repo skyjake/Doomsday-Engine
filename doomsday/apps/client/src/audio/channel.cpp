@@ -20,26 +20,34 @@
 
 #include "audio/channel.h"
 
+#include "audio/samplecache.h"
 #include "world/thinkers.h"
-#include "dd_main.h"     // remove me
-#include "def_main.h"    // ::defs
+#include "dd_main.h"         // remove me
+#include "def_main.h"        // ::defs
+#include "sys_system.h"      // Sys_Sleep()
 #include <de/Log>
-#include <de/timer.h>    // TICSPERSEC
-#include <de/vector1.h>  // remove me
+#include <de/concurrency.h>
+#include <de/timer.h>        // TICSPERSEC
+#include <de/vector1.h>      // remove me
 #include <QList>
 #include <QtAlgorithms>
 
 // Debug visual headers:
-#include "audio/samplecache.h"
+//#include "audio/samplecache.h"
 #include "gl/gl_main.h"
 #include "api_fontrender.h"
 #include "render/rend_font.h"
 #include "ui/ui_main.h"
-#include <de/concurrency.h>
+//#include <de/concurrency.h>
 
 using namespace de;
 
 namespace audio {
+
+static inline audio::System &system()
+{
+    return App_AudioSystem();
+}
 
 DENG2_PIMPL_NOREF(Channel)
 {
@@ -88,8 +96,7 @@ void Channel::stop()
 {
     if(!d->buffer) return;
 
-    /// @todo audio::System should observe. -ds
-    App_AudioSystem().sfx()->Stop(d->buffer);
+    system().sfx()->Stop(d->buffer);
 }
 
 dint Channel::flags() const
@@ -146,17 +153,15 @@ dfloat Channel::priority() const
         return SFX_LOWEST_PRIORITY;
 
     if(d->flags & SFXCF_NO_ORIGIN)
-        return App_AudioSystem().rateSoundPriority(0, 0, d->volume, d->startTime);
+        return system().rateSoundPriority(0, 0, d->volume, d->startTime);
 
     // d->origin is set to emitter->xyz during updates.
-    return App_AudioSystem().rateSoundPriority(0, d->origin, d->volume, d->startTime);
+    return system().rateSoundPriority(0, d->origin, d->volume, d->startTime);
 }
 
 /// @todo audio::System should observe. -ds
 void Channel::updatePriority()
 {
-    System &audioSys = App_AudioSystem();
-
     // If no sound buffer is assigned we've no need to update.
     sfxbuffer_t *sbuf = d->buffer;
     if(!sbuf) return;
@@ -180,44 +185,44 @@ void Channel::updatePriority()
     }
 
     // Frequency is common to both 2D and 3D sounds.
-    audioSys.sfx()->Set(sbuf, SFXBP_FREQUENCY, d->frequency);
+    system().sfx()->Set(sbuf, SFXBP_FREQUENCY, d->frequency);
 
     if(sbuf->flags & SFXBF_3D)
     {
         // Volume is affected only by maxvol.
-        audioSys.sfx()->Set(sbuf, SFXBP_VOLUME, d->volume * audioSys.soundVolume() / 255.0f);
-        if(d->emitter && d->emitter == audioSys.sfxListener())
+        system().sfx()->Set(sbuf, SFXBP_VOLUME, d->volume * system().soundVolume() / 255.0f);
+        if(d->emitter && d->emitter == system().sfxListener())
         {
             // Emitted by the listener object. Go to relative position mode
             // and set the position to (0,0,0).
             dfloat vec[3]; vec[0] = vec[1] = vec[2] = 0;
-            audioSys.sfx()->Set(sbuf, SFXBP_RELATIVE_MODE, true);
-            audioSys.sfx()->Setv(sbuf, SFXBP_POSITION, vec);
+            system().sfx()->Set(sbuf, SFXBP_RELATIVE_MODE, true);
+            system().sfx()->Setv(sbuf, SFXBP_POSITION, vec);
         }
         else
         {
             // Use the channel's map space origin.
             dfloat origin[3];
             V3f_Copyd(origin, d->origin);
-            audioSys.sfx()->Set(sbuf, SFXBP_RELATIVE_MODE, false);
-            audioSys.sfx()->Setv(sbuf, SFXBP_POSITION, origin);
+            system().sfx()->Set(sbuf, SFXBP_RELATIVE_MODE, false);
+            system().sfx()->Setv(sbuf, SFXBP_POSITION, origin);
         }
 
         // If the sound is emitted by the listener, speed is zero.
-        if(d->emitter && d->emitter != audioSys.sfxListener() &&
+        if(d->emitter && d->emitter != system().sfxListener() &&
            Thinker_IsMobjFunc(d->emitter->thinker.function))
         {
             dfloat vec[3];
             vec[0] = d->emitter->mom[0] * TICSPERSEC;
             vec[1] = d->emitter->mom[1] * TICSPERSEC;
             vec[2] = d->emitter->mom[2] * TICSPERSEC;
-            audioSys.sfx()->Setv(sbuf, SFXBP_VELOCITY, vec);
+            system().sfx()->Setv(sbuf, SFXBP_VELOCITY, vec);
         }
         else
         {
             // Not moving.
             dfloat vec[3]; vec[0] = vec[1] = vec[2] = 0;
-            audioSys.sfx()->Setv(sbuf, SFXBP_VELOCITY, vec);
+            system().sfx()->Setv(sbuf, SFXBP_VELOCITY, vec);
         }
     }
     else
@@ -227,7 +232,7 @@ void Channel::updatePriority()
 
         // This is a 2D buffer.
         if((d->flags & SFXCF_NO_ORIGIN) ||
-           (d->emitter && d->emitter == audioSys.sfxListener()))
+           (d->emitter && d->emitter == system().sfxListener()))
         {
             dist = 1;
             pan = 0;
@@ -235,9 +240,9 @@ void Channel::updatePriority()
         else
         {
             // Calculate roll-off attenuation. [.125/(.125+x), x=0..1]
-            Rangei const &attenRange = audioSys.soundVolumeAttenuationRange();
+            Rangei const &attenRange = system().soundVolumeAttenuationRange();
 
-            dist = Mobj_ApproxPointDistance(audioSys.sfxListener(), d->origin);
+            dist = Mobj_ApproxPointDistance(system().sfxListener(), d->origin);
 
             if(dist < attenRange.start || (d->flags & SFXCF_NO_ATTENUATION))
             {
@@ -259,7 +264,7 @@ void Channel::updatePriority()
             }
 
             // And pan, too. Calculate angle from listener to emitter.
-            if(mobj_t *listener = audioSys.sfxListener())
+            if(mobj_t *listener = system().sfxListener())
             {
                 dfloat angle = (M_PointToAngle2(listener->origin, d->origin) - listener->angle) / (dfloat) ANGLE_MAX * 360;
 
@@ -287,8 +292,8 @@ void Channel::updatePriority()
             }
         }
 
-        audioSys.sfx()->Set(sbuf, SFXBP_VOLUME, d->volume * dist * audioSys.soundVolume() / 255.0f);
-        audioSys.sfx()->Set(sbuf, SFXBP_PAN, pan);
+        system().sfx()->Set(sbuf, SFXBP_VOLUME, d->volume * dist * system().soundVolume() / 255.0f);
+        system().sfx()->Set(sbuf, SFXBP_PAN, pan);
     }
 }
 
@@ -307,9 +312,116 @@ void Channel::releaseBuffer()
     stop();
     if(!hasBuffer()) return;
 
-    App_AudioSystem().sfx()->Destroy(&buffer());
+    system().sfx()->Destroy(&buffer());
     setBuffer(nullptr);
 }
+
+struct ChannelRefresher
+{
+    thread_t thread = nullptr;
+    volatile bool paused = false;
+    volatile bool refreshing = false;
+
+    void pause()
+    {
+        if(paused) return;  // No change.
+
+        paused = true;
+        // Make sure that if currently running, we don't continue until it has stopped.
+        while(refreshing)
+        {
+            Sys_Sleep(0);
+        }
+        // Sys_SuspendThread(refreshHandle, true);
+    }
+
+    void resume()
+    {
+        if(!paused) return;  // No change.
+        paused = false;
+        // Sys_SuspendThread(refreshHandle, false);
+    }
+
+    /**
+     * Start the sound channel refresh thread. It will stop on its own when it
+     * notices that the rest of the sound system is going down.
+     */
+    void init()
+    {
+        refreshing = false;
+        paused     = false;
+
+        dint disableRefresh = false;
+
+        // Nothing to refresh?
+        if(!system().sfx()) goto noRefresh;
+
+        if(system().sfx()->Getv)
+        {
+            system().sfx()->Getv(SFXIP_DISABLE_CHANNEL_REFRESH, &disableRefresh);
+        }
+
+        if(!disableRefresh)
+        {
+            // Start the refresh thread. It will run until the Sfx module is shut down.
+            thread = Sys_StartThread(refreshThread, this);
+            if(!thread)
+            {
+                throw Error("audio::ChannelRefresher::init", "Failed starting the refresh thread");
+            }
+        }
+        else
+        {
+    noRefresh:
+            LOGDEV_AUDIO_NOTE("Audio driver does not require a refresh thread");
+        }
+    }
+
+private:
+
+    /**
+     * This is a high-priority thread that periodically checks if the channels need
+     * to be updated with more data. The thread terminates when it notices that the
+     * channels have been destroyed. The Sfx audio driver maintains a 250ms buffer
+     * for each channel, which means the refresh must be done often enough to keep
+     * them filled.
+     *
+     * @todo Use a real mutex, will you?
+     */
+    static dint C_DECL refreshThread(void *refresher)
+    {
+        auto &inst = *static_cast<ChannelRefresher *>(refresher);
+
+        // We'll continue looping until the Sfx module is shut down.
+        while(system().sfxIsAvailable() && system().hasChannels())
+        {
+            // The bit is swapped on each refresh (debug info).
+            ::refMonitor ^= 1;
+
+            if(!inst.paused)
+            {
+                // Do the refresh.
+                inst.refreshing = true;
+                system().channels().refreshAll();
+                inst.refreshing = false;
+
+                // Let's take a nap.
+                Sys_Sleep(200);
+            }
+            else
+            {
+                // Refreshing is not allowed, so take a shorter nap while
+                // waiting for allowRefresh.
+                Sys_Sleep(150);
+            }
+        }
+
+        // Time to end this thread.
+        return 0;
+    }
+};
+
+static ChannelRefresher refresher;
 
 DENG2_PIMPL(Channels)
 , DENG2_OBSERVES(SampleCache, SampleRemove)
@@ -318,19 +430,14 @@ DENG2_PIMPL(Channels)
 
     Instance(Public *i) : Base(i) 
     {
-        App_AudioSystem().sampleCache().audienceForSampleRemove() += this;
+        system().sampleCache().audienceForSampleRemove() += this;
     }
 
     ~Instance()
     {
         clearAll();
 
-        App_AudioSystem().sampleCache().audienceForSampleRemove() -= this;
-    }
-
-    static inline audio::System &system()
-    {
-        return App_AudioSystem();
+        system().sampleCache().audienceForSampleRemove() -= this;
     }
 
     void clearAll()
@@ -345,7 +452,7 @@ DENG2_PIMPL(Channels)
      */
     void sfxSampleCacheAboutToRemove(sfxsample_t const &sample)
     {
-        system().allowSfxRefresh(false);
+        refresher.pause();
         self.forAll([&sample] (Channel &ch)
         {
             if(ch.hasBuffer())
@@ -359,7 +466,7 @@ DENG2_PIMPL(Channels)
             }
             return LoopContinue;
         });
-        system().allowSfxRefresh();
+        refresher.resume();
     }
 };
 
@@ -368,6 +475,15 @@ Channels::Channels() : d(new Instance(this))
 
 Channels::~Channels()
 {
+    // Stop further refreshing if in progress.
+    refresher.paused = true;
+    if(refresher.thread)
+    {
+        // Wait for the refresh thread to stop.
+        Sys_WaitThread(refresher.thread, 2000, nullptr);
+        refresher.thread = nullptr;
+    }
+
     releaseAllBuffers();
 }
 
@@ -378,7 +494,7 @@ dint Channels::count() const
 
 dint Channels::countPlaying(dint soundId)
 {
-    DENG2_ASSERT( d->system().sfxIsAvailable() );  // sanity check
+    DENG2_ASSERT( system().sfxIsAvailable() );  // sanity check
 
     dint count = 0;
     forAll([&soundId, &count] (Channel &ch)
@@ -439,29 +555,6 @@ Channel *Channels::tryFindVacant(bool use3D, dint bytes, dint rate, dint soundId
     return nullptr;  // None suitable.
 }
 
-void Channels::refreshAll()
-{
-    forAll([this] (Channel &ch)
-    {
-        if(ch.hasBuffer() && (ch.buffer().flags & SFXBF_PLAYING))
-        {
-            d->system().sfx()->Refresh(&ch.buffer());
-        }
-        return LoopContinue;
-    });
-}
-
-void Channels::releaseAllBuffers()
-{
-    d->system().allowSfxRefresh(false);
-    forAll([this] (Channel &ch)
-    {
-        ch.releaseBuffer();
-        return LoopContinue;
-    });
-    d->system().allowSfxRefresh();
-}
-
 LoopResult Channels::forAll(std::function<LoopResult (Channel &)> func) const
 {
     for(Channel *ch : d->all)
@@ -469,6 +562,46 @@ LoopResult Channels::forAll(std::function<LoopResult (Channel &)> func) const
         if(auto result = func(*ch)) return result;
     }
     return LoopContinue;
+}
+
+void Channels::refreshAll()
+{
+    forAll([this] (Channel &ch)
+    {
+        if(ch.hasBuffer() && (ch.buffer().flags & SFXBF_PLAYING))
+        {
+            system().sfx()->Refresh(&ch.buffer());
+        }
+        return LoopContinue;
+    });
+}
+
+void Channels::releaseAllBuffers()
+{
+    refresher.pause();
+    forAll([this] (Channel &ch)
+    {
+        ch.releaseBuffer();
+        return LoopContinue;
+    });
+    refresher.resume();
+}
+
+void Channels::allowRefresh(bool allow)
+{
+    if(allow)
+    {
+        refresher.resume();
+    }
+    else
+    {
+        refresher.pause();
+    }
+}
+
+void Channels::initRefresh()
+{
+    refresher.init();
 }
 
 }  // namespace audio

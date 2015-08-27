@@ -25,9 +25,6 @@
 #include "dd_share.h"      // SF_* flags
 #include "dd_main.h"       // ::isDedicated
 #include "def_main.h"      // ::defs
-#ifdef __CLIENT__
-#  include "sys_system.h"  // Sys_Sleep()
-#endif
 
 #ifdef __SERVER__
 #  include "server/sv_sound.h"
@@ -56,7 +53,6 @@
 #include <de/App>
 #include <de/timer.h>
 #ifdef __CLIENT__
-#  include <de/concurrency.h>
 #  include <de/memory.h>
 #endif
 #include <QMultiHash>
@@ -85,9 +81,6 @@ static dint const CHANNEL_COUNT_MAX      = 256;
 static dint const CHANNEL_2DCOUNT        = 4;
 static String const MUSIC_BUFFEREDFILE   ("dd-buffered-song");
 
-static thread_t refreshHandle;
-static volatile bool allowRefresh, refreshing;
-
 /// @todo should be a cvars:
 static bool sfxNoRndPitch;
 #endif  // __CLIENT__
@@ -109,45 +102,6 @@ static dint musVolume = 255 * 2/3;
 static char *musMidiFontPath = (char *) "";
 // When multiple sources are available this setting determines which to use (mus < ext < cd).
 static audio::System::MusicSource musSourcePreference = audio::System::MUSP_EXT;
-
-/**
- * This is a high-priority thread that periodically checks if the channels need
- * to be updated with more data. The thread terminates when it notices that the
- * channels have been destroyed. The Sfx audio driver maintains a 250ms buffer
- * for each channel, which means the refresh must be done often enough to keep
- * them filled.
- *
- * @todo Use a real mutex, will you?
- */
-static dint C_DECL channelRefreshThread(void *)
-{
-    // We'll continue looping until the Sfx module is shut down.
-    while(App_AudioSystem().sfxIsAvailable() && App_AudioSystem().hasChannels())
-    {
-        // The bit is swapped on each refresh (debug info).
-        ::refMonitor ^= 1;
-
-        if(allowRefresh)
-        {
-            // Do the refresh.
-            refreshing = true;
-            App_AudioSystem().channels().refreshAll();
-            refreshing = false;
-
-            // Let's take a nap.
-            Sys_Sleep(200);
-        }
-        else
-        {
-            // Refreshing is not allowed, so take a shorter nap while
-            // waiting for allowRefresh.
-            Sys_Sleep(150);
-        }
-    }
-
-    // Time to end this thread.
-    return 0;
-}
 
 static audiodriverid_t identifierToDriverId(String name)
 {
@@ -894,45 +848,16 @@ DENG2_PIMPL(System)
         self.sfx()->Listener(SFXLP_UNITS_PER_METER, 30);
         self.sfx()->Listener(SFXLP_DOPPLER, 1.5f);
 
-        // The drivers are working; prepare playback channels.
-        initChannels();
-
         // (Re)Init the sample cache.
         sampleCache.clear();
 
         // Initialize reverb effects to off.
         sfxListenerNoReverb();
 
-        // Finally, start the sound channel refresh thread. It will stop on its
-        // own when it notices that the rest of the sound system is going down.
-
-        refreshing   = false;
-        allowRefresh = true;
-
-        dint disableRefresh = false;
-
-        // Nothing to refresh?
-        if(!self.sfx()) goto noRefresh;
-
-        if(self.sfx()->Getv)
-        {
-            self.sfx()->Getv(SFXIP_DISABLE_CHANNEL_REFRESH, &disableRefresh);
-        }
-
-        if(!disableRefresh)
-        {
-            // Start the refresh thread. It will run until the Sfx module is shut down.
-            refreshHandle = Sys_StartThread(channelRefreshThread, nullptr);
-            if(!refreshHandle)
-            {
-                throw Error("audio::System::initSfx", "Failed to start refresh thread");
-            }
-        }
-        else
-        {
-    noRefresh:
-            LOGDEV_AUDIO_NOTE("Audio driver does not require a refresh thread");
-        }
+        // The drivers are working; prepare playback channels and start the sound
+        // channel refresh thread (if needed).
+        initChannels();
+        channels->initRefresh();
 
         // The Sfx module is now available.
         sfxAvail = true;
@@ -946,21 +871,12 @@ DENG2_PIMPL(System)
         // Not initialized?
         if(!sfxAvail) return;
 
-        // These will stop further refreshing.
-        sfxAvail     = false;
-        allowRefresh = false;
-
-        if(refreshHandle)
-        {
-            // Wait for the sfx refresh thread to stop.
-            Sys_WaitThread(refreshHandle, 2000, nullptr);
-            refreshHandle = nullptr;
-        }
+        sfxAvail = false;
 
         // Clear the sample cache.
         sampleCache.clear();
 
-        // Destroy channels.
+        // Destroy channels (and stop the refresh thread if running).
         channels.reset();
     }
 
@@ -1116,7 +1032,7 @@ DENG2_PIMPL(System)
          * cancelling existing ones if need be. The ideal choice is a free channel
          * that is already loaded with the sample, in the correct format and mode.
          */
-        self.allowSfxRefresh(false);
+        channels->allowRefresh(false);
 
         // First look through the stopped channels. At this stage we're very picky:
         // only the perfect choice will be good enough.
@@ -1192,7 +1108,7 @@ DENG2_PIMPL(System)
         if(!selCh)
         {
             // A suitable channel was not found.
-            self.allowSfxRefresh(true);
+            channels->allowRefresh(true);
             LOG_AUDIO_XVERBOSE("Failed to find suitable channel for sample id:%i") << sample.soundId;
             return false;
         }
@@ -1272,7 +1188,7 @@ DENG2_PIMPL(System)
         // Start playing.
         self.sfx()->Play(&sbuf);
 
-        self.allowSfxRefresh();
+        channels->allowRefresh();
 
         // Take note of the start time.
         selCh->setStartTime(nowTime);
@@ -2344,26 +2260,6 @@ Channels &System::channels() const
 {
     DENG2_ASSERT(d->channels.get() != nullptr);
     return *d->channels;
-}
-
-void System::allowSfxRefresh(bool allow)
-{
-    if(!d->sfxAvail) return;
-    if(allowRefresh == allow) return; // No change.
-
-    allowRefresh = allow;
-
-    // If we're denying refresh, let's make sure that if it's currently running,
-    // we don't continue until it has stopped.
-    if(!allow)
-    {
-        while(refreshing)
-        {
-            Sys_Sleep(0);
-        }
-    }
-
-    // Sys_SuspendThread(::refreshHandle, !allow);
 }
 
 void System::requestSfxListenerUpdate()

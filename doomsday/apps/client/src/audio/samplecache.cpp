@@ -358,7 +358,7 @@ DENG2_PIMPL(SampleCache)
     void removeCacheItem(CacheItem &item)
     {
 #ifdef __CLIENT__
-        App_AudioSystem().allowSfxRefresh(false);
+        App_AudioSystem().channels().allowRefresh(false);
 #endif
 
         notifyRemove(item);
@@ -377,7 +377,7 @@ DENG2_PIMPL(SampleCache)
             item.prev->next = item.next;
 
 #ifdef __CLIENT__
-        App_AudioSystem().allowSfxRefresh();
+        App_AudioSystem().channels().allowRefresh();
 #endif
 
         // Free all memory allocated for the item.
