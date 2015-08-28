@@ -28,6 +28,7 @@ logo {
 }
 
 # Generic:
+image refresh  { path = "graphics/refresh.png" }
 image fold     { path = "graphics/fold.png" }
 image gauge    { path = "graphics/gauge.png" }
 image gear     { path = "graphics/gear.png" }

@@ -25,6 +25,7 @@
 #include <de/SequentialLayout>
 #include <de/DocumentPopupWidget>
 #include <de/PopupButtonWidget>
+#include <de/SignalAction>
 
 using namespace de;
 
@@ -38,13 +39,22 @@ DENG_GUI_PIMPL(PackagesDialog)
      */
     struct PackageItem : public ui::Item
     {
-        File const &file;
-        Record const &info;
+        File const *file;
+        Record const *info;
 
         PackageItem(File const &packFile)
-            : file(packFile)
-            , info(file.info().subrecord("package"))
-        {}
+            : file(&packFile)
+            , info(&file->info().subrecord("package"))
+        {
+            setData(QString(info->gets("ID")));
+        }
+
+        void setFile(File const &packFile)
+        {
+            file = &packFile;
+            info = &file->info().subrecord("package");
+            notifyChange();
+        }
     };
 
     /**
@@ -139,7 +149,7 @@ DENG_GUI_PIMPL(PackagesDialog)
             SequentialLayout layout(_subtitle->rule().left(),
                                     _subtitle->rule().bottom(), ui::Right);
 
-            for(QString tag : Package::tags(_item->file))
+            for(QString tag : Package::tags(*_item->file))
             {
                 auto *btn = new ButtonWidget;
                 btn->setText(_E(l) + tag.toLower());
@@ -164,7 +174,7 @@ DENG_GUI_PIMPL(PackagesDialog)
 
         void updateContents()
         {
-            _title->setText(_item->info.gets("title"));
+            _title->setText(_item->info->gets("title"));
             _subtitle->setText(packageId());
 
             String auxColor = "accent";
@@ -199,7 +209,7 @@ DENG_GUI_PIMPL(PackagesDialog)
 
         String packageId() const
         {
-            return _item->info.gets("ID");
+            return _item->info->gets("ID");
         }
 
         PopupWidget *makeInfoPopup() const
@@ -207,11 +217,13 @@ DENG_GUI_PIMPL(PackagesDialog)
             auto *pop = new DocumentPopupWidget;
             pop->document().setText(QString(_E(1) "%1" _E(.) "\n%2\n"
                                             _E(l) "Version: " _E(.) "%3\n"
-                                            _E(l) "License: " _E(.)_E(>) "%4\n")
-                                    .arg(_item->info.gets("title"))
+                                            _E(l) "License: " _E(.)_E(>) "%4" _E(<)
+                                            _E(l) "\nFile: " _E(.)_E(>)_E(C) "%5")
+                                    .arg(_item->info->gets("title"))
                                     .arg(packageId())
-                                    .arg(_item->info.gets("version"))
-                                    .arg(_item->info.gets("license")));
+                                    .arg(_item->info->gets("version"))
+                                    .arg(_item->info->gets("license"))
+                                    .arg(_item->file->description()));
             return pop;
         }
 
@@ -241,11 +253,30 @@ DENG_GUI_PIMPL(PackagesDialog)
         StringList packages = App::packageLoader().findAllPackages();
         qSort(packages);
 
+        // Remove from the list those packages that are no longer listed.
+        for(ui::DataPos i = 0; i < menu->items().size(); ++i)
+        {
+            if(!packages.contains(menu->items().at(i).data().toString()))
+            {
+                menu->items().remove(i--);
+            }
+        }
+
+        // Add/update the listed packages.
         for(String const &path : packages)
         {
             Folder const &pack = App::rootFolder().locate<Folder>(path);
+
             // Core packages are mandatory and thus omitted.
-            if(!Package::tags(pack).contains("core"))
+            if(Package::tags(pack).contains("core")) continue;
+
+            // Is this already in the list?
+            ui::DataPos pos = menu->items().findData(pack.info().gets("package.ID"));
+            if(pos != ui::Data::InvalidPos)
+            {
+                menu->items().at(pos).as<PackageItem>().setFile(pack);
+            }
+            else
             {
                 menu->items() << new PackageItem(pack);
             }
@@ -269,9 +300,18 @@ PackagesDialog::PackagesDialog()
 {
     heading().setText(tr("Packages"));
     heading().setImage(style().images().image("package"));
-    buttons() << new DialogButtonItem(Default | Accept, tr("Close"));
+    buttons()
+            << new DialogButtonItem(Default | Accept, tr("Close"))
+            << new DialogButtonItem(Action, style().images().image("refresh"),
+                                    new SignalAction(this, SLOT(refreshPackages())));
 
     area().setContentSize(d->menu->rule().width(), d->menu->rule().height());
 
+    refreshPackages();
+}
+
+void PackagesDialog::refreshPackages()
+{
+    App::fileSystem().refresh();
     d->populate();
 }
