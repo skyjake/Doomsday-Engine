@@ -26,8 +26,13 @@
  */
 class PackagesDialog : public de::DialogWidget
 {
+    Q_OBJECT
+
 public:
     PackagesDialog();
+
+public slots:
+    void refreshPackages();
 
 private:
     DENG2_PRIVATE(d)
