@@ -121,7 +121,6 @@ DENG2_PIMPL(ClientApp)
     Binder binder;
     QScopedPointer<Updater> updater;
     BusyRunner busyRunner;
-    SettingsRegister audioSettings;
     SettingsRegister networkSettings;
     SettingsRegister logSettings;
     QMenuBar *menuBar;
@@ -313,25 +312,13 @@ DENG2_PIMPL(ClientApp)
                     .define(SReg::ConfigVariable, String("alert.%1").arg(name));
         }
 
-        /// @todo These belong in their respective subsystems.
+        /// @todo These belong in a "network::System".
 
         networkSettings
                 .define(SReg::StringCVar, "net-master-address", "www.dengine.net")
                 .define(SReg::StringCVar, "net-master-path",    "/master.php")
                 .define(SReg::IntCVar,    "net-master-port",    0)
                 .define(SReg::IntCVar,    "net-dev",            0);
-
-        audioSettings
-                .define(SReg::IntCVar,    "sound-volume",        255 * 2/3)
-                .define(SReg::IntCVar,    "music-volume",        255 * 2/3)
-                .define(SReg::FloatCVar,  "sound-reverb-volume", 0.5f)
-                .define(SReg::IntCVar,    "sound-info",          0)
-                .define(SReg::IntCVar,    "sound-rate",          11025)
-                .define(SReg::IntCVar,    "sound-16bit",         0)
-                .define(SReg::IntCVar,    "sound-3d",            0)
-                .define(SReg::IntCVar,    "sound-overlap-stop",  0)
-                .define(SReg::IntCVar,    "music-source",        ::audio::System::MUSP_EXT)
-                .define(SReg::StringCVar, "music-soundfont",     "");
     }
 
 #ifdef UNIX
@@ -552,11 +539,6 @@ SettingsRegister &ClientApp::logSettings()
 SettingsRegister &ClientApp::networkSettings()
 {
     return app().d->networkSettings;
-}
-
-SettingsRegister &ClientApp::audioSettings()
-{
-    return app().d->audioSettings;
 }
 
 ServerLink &ClientApp::serverLink()

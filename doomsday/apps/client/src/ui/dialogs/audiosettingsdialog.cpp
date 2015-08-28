@@ -83,9 +83,9 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
 
     void fetch()
     {
-        foreach(Widget *w, self.area().childWidgets() + devPopup->content().childWidgets())
+        for(Widget *w : self.area().childWidgets() + devPopup->content().childWidgets())
         {
-            if(ICVarWidget *cv = w->maybeAs<ICVarWidget>())
+            if(auto *cv = w->maybeAs<ICVarWidget>())
             {
                 cv->updateFromCVar();
             }
@@ -153,7 +153,7 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
 
 void AudioSettingsDialog::resetToDefaults()
 {
-    ClientApp::audioSettings().resetToDefaults();
+    ClientApp::audioSystem().settings().resetToDefaults();
 
     d->fetch();
 }

@@ -141,6 +141,8 @@ DENG2_PIMPL(System)
 #endif
 {
 #ifdef __CLIENT__
+    SettingsRegister settings;
+
     Driver drivers[AUDIODRIVER_COUNT];
 
     Driver &driverById(audiodriverid_t id)
@@ -545,6 +547,20 @@ DENG2_PIMPL(System)
         theAudioSystem = thisPublic;
 
 #ifdef __CLIENT__
+        // Initialize settings.
+        typedef SettingsRegister SReg; // convenience
+        settings
+            .define(SReg::IntCVar,    "sound-volume",        255 * 2/3)
+            .define(SReg::IntCVar,    "music-volume",        255 * 2/3)
+            .define(SReg::FloatCVar,  "sound-reverb-volume", 0.5f)
+            .define(SReg::IntCVar,    "sound-info",          0)
+            .define(SReg::IntCVar,    "sound-rate",          11025)
+            .define(SReg::IntCVar,    "sound-16bit",         0)
+            .define(SReg::IntCVar,    "sound-3d",            0)
+            .define(SReg::IntCVar,    "sound-overlap-stop",  0)
+            .define(SReg::IntCVar,    "music-source",        MUSP_EXT)
+            .define(SReg::StringCVar, "music-soundfont",     "");
+
         App::app().audienceForGameUnload() += this;
 #endif
     }
@@ -1497,6 +1513,11 @@ void System::timeChanged(Clock const &)
 }
 
 #ifdef __CLIENT__
+
+SettingsRegister &System::settings()
+{
+    return d->settings;
+}
 
 String System::description() const
 {

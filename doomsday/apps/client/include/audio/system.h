@@ -21,10 +21,15 @@
 #define CLIENT_AUDIO_SYSTEM_H
 
 #include "dd_types.h"  // lumpnum_t
+#ifdef __CLIENT__
+#include "SettingsRegister"
+#endif
+
 #include "api_sound.h"
 #ifdef __CLIENT__
 #  include "audio/channel.h"
 #  include "audio/driver.h"
+
 #  include <de/Range>
 #  include <de/Record>
 #endif
@@ -63,6 +68,7 @@ public:
     void timeChanged(de::Clock const &) override;
 
 #ifdef __CLIENT__
+    SettingsRegister &settings();
 
     /**
      * Returns a textual, human-friendly description of the audio system configuration
