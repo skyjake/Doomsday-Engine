@@ -2,9 +2,9 @@
  * @ingroup dehread
  *
  * @todo Presently there are a number of unsupported features which should not
- *       be ignored. (Most if not all features should be supported.)
+ * be ignored. (Most if not all features should be supported.)
  *
- * @author Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @author Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  * @author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
@@ -33,6 +33,7 @@
 #include <de/memory.h>
 #include <doomsday/filesys/lumpindex.h>
 #include <doomsday/defs/thing.h>
+#include <doomsday/defs/sound.h>
 #include <doomsday/defs/state.h>
 #include <de/App>
 #include <de/ArrayValue>
@@ -49,7 +50,7 @@
 using namespace de;
 
 static int stackDepth;
-static const int maxIncludeDepth = de::max(0, DEHREADER_INCLUDE_DEPTH_MAX);
+static int const maxIncludeDepth = de::max(0, DEHREADER_INCLUDE_DEPTH_MAX);
 
 /// Mask containing only those reader flags which should be passed from the current
 /// parser to any child parsers for file include statements.
@@ -394,8 +395,8 @@ public:
                     }
                     else if(line.beginsWith("Sound", Qt::CaseInsensitive))
                     {
-                        ded_sound_t *sound;
-                        Dummy<ded_sound_t> dummySound;
+                        Record *sound;
+                        Record dummySound;
 
                         String const arg   = line.substr(5).leftStrip();
                         int const soundNum = parseSoundNum(arg);
@@ -411,7 +412,7 @@ public:
                         }
 
                         skipToNextLine();
-                        parseSound(sound, sound == &dummySound);
+                        parseSound(*sound, sound == &dummySound);
                     }
                     else if(line.beginsWith("Text", Qt::CaseInsensitive))
                     {
@@ -870,8 +871,8 @@ public:
                             }
 
                             int const soundsIdx = value;
-                            ded_sound_t const &sound = ded->sounds[soundsIdx];
-                            mobj.setSound(mapping->id, sound.id);
+                            Record const &sound = ded->sounds[soundsIdx];
+                            mobj.setSound(mapping->id, sound.gets("id"));
 
                             LOG_DEBUG("Type #%i \"%s\" sound:%s => \"%s\" (#%i)")
                                     << thingNum << mobj.gets("id") << mapping->name
@@ -1197,17 +1198,17 @@ public:
         }
     }
 
-    void parseSound(ded_sound_t *sound, bool ignore = false)
+    void parseSound(defn::Sound sound, bool ignore = false)
     {
         LOG_AS("parseSound");
-        int const soundNum = ded->sounds.indexOf(sound);
+        int const soundNum = sound.geti("__order__");
 
         for(; lineInCurrentSection(); skipToNextLine())
         {
             String var, expr;
             parseAssignmentStatement(line, var, expr);
 
-            if(!var.compareWithoutCase("Offset")) // sound->id
+            if(!var.compareWithoutCase("Offset"))  // sound->id
             {
                 LOG_WARNING("DeHackEd Sound.Offset is not supported");
             }
@@ -1216,9 +1217,9 @@ public:
                 int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
-                    sound->group = value;
+                    sound.def().set("group", value);
                     LOG_DEBUG("Sound #%i \"%s\" group => %i")
-                            << soundNum << sound->id << sound->group;
+                            << soundNum << sound.gets("id") << sound.geti("group");
                 }
             }
             else if(!var.compareWithoutCase("Value"))
@@ -1226,9 +1227,9 @@ public:
                 int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
-                    sound->priority = value;
+                    sound.def().set("priority", value);
                     LOG_DEBUG("Sound #%i \"%s\" priority => %i")
-                            << soundNum << sound->id << sound->priority;
+                            << soundNum << sound.gets("id") << sound.geti("priority");
                 }
             }
             else if(!var.compareWithoutCase("Zero 1")) // sound->link
@@ -1240,9 +1241,9 @@ public:
                 int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
-                    sound->linkPitch = value;
+                    sound.def().set("linkPitch", value);
                     LOG_DEBUG("Sound #%i \"%s\" linkPitch => %i")
-                            << soundNum << sound->id << sound->linkPitch;
+                            << soundNum << sound.gets("id") << sound.geti("linkPitch");
                 }
             }
             else if(!var.compareWithoutCase("Zero 3"))
@@ -1250,9 +1251,9 @@ public:
                 int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
-                    sound->linkVolume = value;
+                    sound.def().set("linkVolume", value);
                     LOG_DEBUG("Sound #%i \"%s\" linkVolume => %i")
-                            << soundNum << sound->id << sound->linkVolume;
+                            << soundNum << sound.gets("id") << sound.geti("linkVolume");
                 }
             }
             else if(!var.compareWithoutCase("Zero 4")) // ??
@@ -1268,7 +1269,7 @@ public:
                 int const lumpNum = expr.toInt(0, 0, String::AllowSuffix);
                 if(!ignore)
                 {
-                    LumpIndex const &lumpIndex = *reinterpret_cast<LumpIndex const *>(F_LumpIndex());
+                    auto const &lumpIndex = *reinterpret_cast<LumpIndex const *>(F_LumpIndex());
                     int const numLumps = lumpIndex.size();
                     if(lumpNum < 0 || lumpNum >= numLumps)
                     {
@@ -1276,9 +1277,9 @@ public:
                     }
                     else
                     {
-                        qstrncpy(sound->lumpName, lumpIndex[lumpNum].name().toUtf8().constData(), DED_STRINGID_LEN + 1);
+                        sound.def().set("lumpName", lumpIndex[lumpNum].name());
                         LOG_DEBUG("Sound #%i \"%s\" lumpName => \"%s\"")
-                                << soundNum << sound->id << sound->lumpName;
+                                << soundNum << sound.gets("id") << sound.gets("lumpName");
                     }
                 }
             }
@@ -1854,21 +1855,21 @@ public:
         /// @todo Why the restriction?
         if(findSoundLumpNameInMap(origName) < 0) return false;
 
-        Block origNamePrefUtf8 = String("DS%1").arg(origName).toUtf8();
-        Block newNamePrefUtf8  = String("DS%1").arg(newName ).toUtf8();
+        auto const origNamePref = String("DS") + origName;
+        auto const newNamePref  = String("DS") + newName;
 
         // Update ALL sounds using this lump name.
         int numPatched = 0;
         for(int i = 0; i < ded->sounds.size(); ++i)
         {
-            ded_sound_t &sound = ded->sounds[i];
-            if(qstricmp(sound.lumpName, origNamePrefUtf8.constData())) continue;
+            Record &sound = ded->sounds[i];
+            if(sound.gets("lumpName").compareWithoutCase(origNamePref)) continue;
 
-            qstrncpy(sound.lumpName, newNamePrefUtf8.constData(), 9);
+            sound.set("lumpName", newNamePref);
             numPatched++;
 
             LOG_DEBUG("Sound #%i \"%s\" lumpName => \"%s\"")
-                    << i << sound.id << sound.lumpName;
+                    << i << sound.gets("id") << sound.gets("lumpName");
         }
         return (numPatched > 0);
     }

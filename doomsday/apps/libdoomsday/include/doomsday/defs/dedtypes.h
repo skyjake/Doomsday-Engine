@@ -45,11 +45,10 @@ typedef char ded_stringid_t[DED_STRINGID_LEN + 1];
 typedef ded_stringid_t ded_string_t;
 typedef ded_stringid_t ded_mobjid_t;
 typedef ded_stringid_t ded_stateid_t;
-typedef ded_stringid_t ded_soundid_t;
 typedef ded_stringid_t ded_funcid_t;
 typedef char ded_func_t[DED_FUNC_LEN + 1];
 typedef int ded_flags_t;
-typedef char* ded_anystring_t;
+typedef char *ded_anystring_t;
 
 typedef struct LIBDOOMSDAY_PUBLIC ded_uri_s {
     de::Uri *uri;
@@ -142,27 +141,6 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_light_s {
     }
 } ded_light_t;
 
-typedef struct LIBDOOMSDAY_PUBLIC ded_sound_s {
-    ded_soundid_t   id; // ID of this sound, refered to by others.
-    ded_string_t    name; // A tag name for the sound.
-    ded_string_t    lumpName; // Actual lump name of the sound ("DS" not included).
-    de::Uri*        ext; // External sound file (WAV).
-    ded_soundid_t   link; // Link to another sound.
-    int             linkPitch;
-    int             linkVolume;
-    int             priority; // Priority classification.
-    int             channels; // Max number of channels to occupy.
-    int             group; // Exclusion group.
-    ded_flags_t     flags; // Flags (like chg_pitch).
-
-    void release() {
-        delete ext;
-    }
-    void reallocate() {
-        DED_DUP_URI(ext);
-    }
-} ded_sound_t;
-
 struct ded_text_t
 {
     ded_stringid_t id;
@@ -211,8 +189,8 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_linetype_s {
     float           tickerStart;
     float           tickerEnd;
     int             tickerInterval;
-    ded_soundid_t   actSound;
-    ded_soundid_t   deactSound;
+    ded_stringid_t  actSound;
+    ded_stringid_t  deactSound;
     int             evChain;
     int             actChain;
     int             deactChain;
@@ -251,7 +229,7 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_sectortype_s {
     float           end[5];
     float           interval[5][2];
     int             count[5];
-    ded_soundid_t   ambientSound;
+    ded_stringid_t  ambientSound;
     float           soundInterval[2]; // min,max
     float           materialMoveAngle[2]; // floor, ceil
     float           materialMoveSpeed[2]; // floor, ceil

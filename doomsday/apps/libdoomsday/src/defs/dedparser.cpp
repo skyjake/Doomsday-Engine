@@ -61,6 +61,7 @@
 #include "doomsday/defs/model.h"
 #include "doomsday/defs/music.h"
 #include "doomsday/defs/sky.h"
+#include "doomsday/defs/sound.h"
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/filesys/fs_util.h"
 #include "doomsday/filesys/sys_direc.h"
@@ -816,6 +817,7 @@ DENG2_PIMPL(DEDParser)
         int   prevRefDefIdx = -1; // For "Copy".
         int   prevLineTypeDefIdx = -1; // For "Copy".
         int   prevSectorTypeDefIdx = -1; // For "Copy".
+        int   prevSoundDefIdx = -1; // For "Copy".
         int   depth;
         char *rootStr = 0, *ptr;
         int   bCopyNext = 0;
@@ -1736,31 +1738,88 @@ DENG2_PIMPL(DEDParser)
             }
 
             if(ISTOKEN("Sound"))
-            {   // A new sound.
-                ded_sound_t*        snd;
+            {   
+                bool bModify = false;
+                Record dummySound;
+                Record *sound = nullptr;
 
-                idx = DED_AddSound(ded, "");
-                snd = &ded->sounds[idx];
+                ReadToken();
+                if(!ISTOKEN("Mods"))
+                {
+                    // New sounds are appended to the end of the list.
+                    idx = ded->addSound();
+                    sound = &ded->sounds[idx];
+                }
+                else if(!bCopyNext)
+                {
+                    ded_stringid_t otherSoundId;
+
+                    READSTR(otherSoundId);
+                    ReadToken();
+
+                    idx = ded->getSoundNum(otherSoundId);
+                    if(idx >= 0)
+                    {
+                        sound = &ded->sounds[idx];
+                        bModify = true;
+                    }
+                    else
+                    {
+                        if(!source)
+                        {
+                            LOG_RES_WARNING("Ignoring unknown Sound \"%s\" in %s on line #%i")
+                            << otherSoundId << (source ? source->fileName : "?")
+                            << (source ? source->lineNumber : 0);
+                        }
+
+                        // We'll read into a dummy definition.
+                        defn::Sound(dummySound).resetToDefaults();
+                        sound = &dummySound;
+                    }
+                }
+                else
+                {
+                    setError("Cannot both Copy(Previous) and Modify");
+                    retVal = false;
+                    goto ded_end_read;
+                }
+                DENG2_ASSERT(sound != 0);
+
+                if(prevSoundDefIdx >= 0 && bCopyNext)
+                {
+                    ded->sounds.copy(prevSoundDefIdx, *sound);
+                }
+                if(source->custom) sound->set("custom", true);
 
                 FINDBEGIN;
-                for(;;)
+                forever
                 {
                     READLABEL;
-                    RV_STR("ID", snd->id)
-                    RV_STR("Lump", snd->lumpName)
-                    RV_STR("Name", snd->name)
-                    RV_STR("Link", snd->link)
-                    RV_INT("Link pitch", snd->linkPitch)
-                    RV_INT("Link volume", snd->linkVolume)
-                    RV_INT("Priority", snd->priority)
-                    RV_INT("Max channels", snd->channels)
-                    RV_INT("Group", snd->group)
-                    RV_FLAGS("Flags", snd->flags, "sf_")
-                    RV_URI("Ext", &snd->ext, "Sfx")
-                    RV_URI("File", &snd->ext, "Sfx")
-                    RV_URI("File name", &snd->ext, "Sfx")
+                    // ID cannot be changed when modifying
+                    if(!bModify && ISLABEL("ID"))
+                    {
+                        READSTR((*sound)["id"]);
+                    }
+                    else RV_STR("Name", (*sound)["name"])
+                    RV_STR("Lump", (*sound)["lumpName"])
+                    RV_STR("Link", (*sound)["link"])
+                    RV_INT("Link pitch", (*sound)["linkPitch"])
+                    RV_INT("Link volume", (*sound)["linkVolume"])
+                    RV_INT("Priority", (*sound)["priority"])
+                    RV_INT("Max channels", (*sound)["channels"])
+                    RV_INT("Group", (*sound)["group"])
+                    RV_FLAGS("Flags", (*sound)["flags"], "sf_")
+                    RV_URI("Ext", (*sound)["ext"], "Sfx")
+                    RV_URI("File", (*sound)["ext"], "Sfx")
+                    RV_URI("File name", (*sound)["ext"], "Sfx")
                     RV_END
                     CHECKSC;
+                }
+
+                // If we did not read into a dummy update the previous index.
+                if(idx > 0)
+                {
+                    prevSoundDefIdx = idx;
                 }
             }
 

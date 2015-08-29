@@ -1,9 +1,8 @@
 /** @file p_sound.h  id Tech 1 sound playback functionality.
- *
  * @ingroup play
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 1993-1996 id Software, Inc.
  *
  * @par License
@@ -60,7 +59,6 @@ void S_SectorStopSounds(Sector *sec);
 void S_PlaneSound(Plane *pln, int id);
 
 #ifdef __JHEXEN__
-int S_GetSoundID(char const *name);
 
 /**
  * Attempt to parse the script on the identified @a path as "sound definition" data.
@@ -69,10 +67,11 @@ int S_GetSoundID(char const *name);
  * to patch those definitions...
  */
 void SndInfoParser(Str const *path);
+
 #endif
 
 #ifdef __cplusplus
-} // extern "C"
+}  // extern "C"
 #endif
 
-#endif // LIBCOMMON_PLAY_SOUND_H
+#endif  // LIBCOMMON_PLAY_SOUND_H

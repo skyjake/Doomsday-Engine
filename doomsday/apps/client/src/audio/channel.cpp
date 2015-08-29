@@ -685,7 +685,7 @@ void UI_AudioChannelDrawer()
                     (sbuf.flags & SFXBF_REPEAT ) ? 'R' : '.',
                     (sbuf.flags & SFXBF_RELOAD ) ? 'L' : '.',
                     sbuf.sample ? sbuf.sample->soundId : 0,
-                    sbuf.sample ? ::defs.sounds[sbuf.sample->soundId].id : "",
+                    sbuf.sample ? ::defs.sounds[sbuf.sample->soundId].gets("id") : "",
                     sbuf.sample ? sbuf.sample->size : 0,
                     sbuf.bytes, sbuf.rate / 1000, sbuf.length,
                     sbuf.cursor, sbuf.written);

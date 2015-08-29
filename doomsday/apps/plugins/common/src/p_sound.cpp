@@ -70,11 +70,6 @@ void S_PlaneSound(Plane *pln, int id)
 
 #ifdef __JHEXEN__
 
-int S_GetSoundID(char const *name)
-{
-    return Defs().getSoundNumForName(name);
-}
-
 void SndInfoParser(ddstring_s const *path)
 {
     AutoStr *script = M_ReadFileIntoString(path, 0);
@@ -131,7 +126,7 @@ void SndInfoParser(ddstring_s const *path)
             int const soundIndex       = Defs().getSoundNumForName(Str_Text(lexer.readString()));
             ddstring_t const *lumpName = lexer.readString();
 
-            if(soundIndex)
+            if(soundIndex >= 0)
             {
                 Def_Set(DD_DEF_SOUND, soundIndex,
                         DD_LUMP, Str_At(lumpName, 0) == '?' ? "default" : Str_Text(lumpName));
@@ -141,7 +136,7 @@ void SndInfoParser(ddstring_s const *path)
 
     // All sounds left without a lumpname will use "DEFAULT".
     char buf[80];
-    for(int i = 0; i < Get(DD_NUMSOUNDS); ++i)
+    for(int i = 0; i < Defs().sounds.size(); ++i)
     {
         /// @kludge This uses a kludge to traverse the entire sound list.
         /// @todo Implement a mechanism for walking the Def databases.

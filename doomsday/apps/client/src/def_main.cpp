@@ -1408,29 +1408,30 @@ void Def_Read()
     ::runtimeDefs.sounds.append(::defs.sounds.size());
     for(dint i = 0; i < ::runtimeDefs.sounds.size(); ++i)
     {
-        ded_sound_t *snd = &::defs.sounds[i];
+        Record const &snd = ::defs.sounds[i];
         // Make sure duplicate defs overwrite the earliest.
-        sfxinfo_t *si    = &::runtimeDefs.sounds[::defs.getSoundNum(snd->id)];
+        sfxinfo_t *si    = &::runtimeDefs.sounds[::defs.getSoundNum(snd.gets("id"))];
 
-        qstrcpy(si->id, snd->id);
-        qstrcpy(si->lumpName, snd->lumpName);
-        si->lumpNum     = (qstrlen(snd->lumpName) > 0? fileSys().lumpNumForName(snd->lumpName) : -1);
-        qstrcpy(si->name, snd->name);
+        qstrcpy(si->id, snd.gets("id").toUtf8().constData());
+        qstrcpy(si->lumpName, snd.gets("lumpName").toUtf8().constData());
+        si->lumpNum     = (!snd.gets("lumpName").isEmpty() ? fileSys().lumpNumForName(snd.gets("lumpName")) : -1);
+        qstrcpy(si->name, snd.gets("name").toUtf8().constData());
 
-        dint const soundIdx = ::defs.getSoundNum(snd->link);
+        dint const soundIdx = ::defs.getSoundNum(snd.gets("link"));
         si->link        = (soundIdx >= 0 ? &::runtimeDefs.sounds[soundIdx] : 0);
 
-        si->linkPitch   = snd->linkPitch;
-        si->linkVolume  = snd->linkVolume;
-        si->priority    = snd->priority;
-        si->channels    = snd->channels;
-        si->flags       = snd->flags;
-        si->group       = snd->group;
+        si->linkPitch   = snd.geti("linkPitch");
+        si->linkVolume  = snd.geti("linkVolume");
+        si->priority    = snd.geti("priority");
+        si->channels    = snd.geti("channels");
+        si->flags       = snd.geti("flags");
+        si->group       = snd.geti("group");
 
         Str_Init(&si->external);
-        if(snd->ext)
+        if(!snd.gets("ext").isEmpty())
         {
-            Str_Set(&si->external, snd->ext->pathCStr());
+            de::Uri extUri(snd.gets("ext"), RC_NULL);
+            Str_Set(&si->external, extUri.pathCStr());
         }
     }
 

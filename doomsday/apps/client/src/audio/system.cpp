@@ -967,12 +967,12 @@ DENG2_PIMPL(System)
         if(emitter && sfxOneSoundPerEmitter)
         {
             // Stop any other sounds from the same emitter.
-            if(self.stopSoundWithLowerPriority(0, emitter, ::defs.sounds[sample.soundId].priority) < 0)
+            if(self.stopSoundWithLowerPriority(0, emitter, ::defs.sounds[sample.soundId].geti("priority")) < 0)
             {
                 // Something with a higher priority is playing, can't start now.
                 LOG_AUDIO_MSG("Not playing sound id:%i (prio:%i) because overridden (emitter id:%i)")
                     << sample.soundId
-                    << ::defs.sounds[sample.soundId].priority
+                    << ::defs.sounds[sample.soundId].geti("priority")
                     << emitter->thinker.id;
                 return false;
             }
@@ -2062,7 +2062,7 @@ dint System::stopSoundWithLowerPriority(dint id, mobj_t *emitter, dint defPriori
         // Check the priority.
         if(defPriority >= 0)
         {
-            dint oldPrio = ::defs.sounds[sbuf.sample->soundId].priority;
+            dint oldPrio = ::defs.sounds[sbuf.sample->soundId].geti("priority");
             if(oldPrio < defPriority)  // Old is more important.
             {
                 stopCount = -1;

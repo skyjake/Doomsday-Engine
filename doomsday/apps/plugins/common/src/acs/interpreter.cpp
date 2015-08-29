@@ -25,6 +25,7 @@
 #include "acs/system.h"
 #include "dmu_lib.h"
 #include "g_common.h"
+#include "g_defs.h"
 #include "gamesession.h"
 #include "player.h"
 #include "p_map.h"
@@ -862,7 +863,8 @@ namespace internal
         }
         int volume = interp.locals.pop();
 
-        S_StartSoundAtVolume(S_GetSoundID(interp.scriptSys().module().constant(interp.locals.pop()).toUtf8().constData()),
+        String const soundName = interp.scriptSys().module().constant(interp.locals.pop());
+        S_StartSoundAtVolume(de::max(Defs().getSoundNumForName(soundName.toUtf8().constData()), 0),
                              emitter, volume / 127.0f);
         return Continue;
     }
@@ -870,7 +872,8 @@ namespace internal
     ACS_COMMAND(ThingSound)
     {
         int volume   = interp.locals.pop();
-        int sound    = S_GetSoundID(interp.scriptSys().module().constant(interp.locals.pop()).toUtf8().constData());
+        String const soundName = interp.scriptSys().module().constant(interp.locals.pop());
+        int sound    = de::max(Defs().getSoundNumForName(soundName.toUtf8().constData()), 0);
         int tid      = interp.locals.pop();
         int searcher = -1;
 
@@ -905,8 +908,9 @@ namespace internal
             }
         }
 
-        int sound = S_GetSoundID(interp.scriptSys().module().constant(interp.locals.pop()).toUtf8().constData());
-        S_StartSoundAtVolume(sound, emitter, volume / 127.0f);
+        String const soundName = interp.scriptSys().module().constant(interp.locals.pop());
+        S_StartSoundAtVolume(de::max(Defs().getSoundNumForName(soundName.toUtf8().constData()), 0),
+                             emitter, volume / 127.0f);
 
         return Continue;
     }

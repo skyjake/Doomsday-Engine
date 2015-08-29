@@ -38,6 +38,7 @@
 #include "doomsday/defs/model.h"
 #include "doomsday/defs/music.h"
 #include "doomsday/defs/sky.h"
+#include "doomsday/defs/sound.h"
 
 using namespace de;
 
@@ -62,6 +63,7 @@ ded_s::ded_s()
     , materials  (names.addRecord("materials"))
     , models     (names.addRecord("models"))
     , skies      (names.addRecord("skies"))
+    , sounds     (names.addRecord("sounds"))
     , musics     (names.addRecord("musics"))
     , mapInfos   (names.addRecord("mapInfos"))
     , finales    (names.addRecord("finales"))
@@ -82,6 +84,8 @@ ded_s::ded_s()
     models.addLookupKey("state");
     musics.addLookupKey("id", DEDRegister::OnlyFirst);
     skies.addLookupKey("id");
+    sounds.addLookupKey("id", DEDRegister::OnlyFirst);
+    sounds.addLookupKey("name");
 
     clear();
 }
@@ -176,6 +180,13 @@ int ded_s::addSky()
     return def.geti("__order__");
 }
 
+int ded_s::addSound()
+{
+    Record &def = sounds.append();
+    defn::Sound(def).resetToDefaults();
+    return def.geti("__order__");
+}
+
 void ded_s::release()
 {
     flags.clear();
@@ -234,13 +245,6 @@ int DED_AddLight(ded_t* ded, char const* stateid)
     ded_light_t* light = ded->lights.append();
     strcpy(light->state, stateid);
     return ded->lights.indexOf(light);
-}
-
-int DED_AddSound(ded_t* ded, char const* id)
-{
-    ded_sound_t* snd = ded->sounds.append();
-    strcpy(snd->id, id);
-    return ded->sounds.indexOf(snd);
 }
 
 int DED_AddText(ded_t* ded, char const* id)
@@ -520,14 +524,15 @@ int ded_s::getSkyNum(char const *id) const
     return -1;*/
 }
 
-int ded_s::getSoundNum(String const &id) const
+int ded_s::getSoundNum(char const *id) const
 {
-    return getSoundNum(id.toUtf8());
-}
+    if(Record const *def = sounds.tryFind("id", id))
+    {
+        return def->geti("__order__");
+    }
+    return -1;
 
-int ded_s::getSoundNum(const char *id) const
-{
-    int idx = -1;
+    /*int idx = -1;
     if(id && id[0] && sounds.size())
     {
         int i = 0;
@@ -535,19 +540,30 @@ int ded_s::getSoundNum(const char *id) const
             if(!qstricmp(sounds[i].id, id)) idx = i;
         } while(idx == -1 && ++i < sounds.size());
     }
-    return idx;
+    return idx;*/
 }
 
-int ded_s::getSoundNumForName(const char *name) const
+int ded_s::getSoundNum(String const &id) const
 {
-    if(!name || !name[0])
+    return getSoundNum(id.toUtf8());
+}
+
+int ded_s::getSoundNumForName(char const *name) const
+{
+    if(Record const *def = sounds.tryFind("name", name))
+    {
+        return def->geti("__order__");
+    }
+    return -1;
+
+    /*if(!name || !name[0])
         return -1;
 
     for(int i = 0; i < sounds.size(); ++i)
         if(!qstricmp(sounds[i].name, name))
             return i;
 
-    return 0;
+    return 0;*/
 }
 
 int ded_s::getSpriteNum(String const &id) const

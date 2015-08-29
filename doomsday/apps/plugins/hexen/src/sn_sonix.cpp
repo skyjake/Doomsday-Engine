@@ -194,7 +194,7 @@ void SndSeqParser(Str const *path)
             verifySequencePtr(tempDataStart, tempDataPtr);
 
             *tempDataPtr++ = SS_CMD_PLAYREPEAT;
-            *tempDataPtr++ = Defs().getSoundNumForName(Str_Text(lexer.readString()));
+            *tempDataPtr++ = de::max(Defs().getSoundNumForName(Str_Text(lexer.readString())), 0);
             continue;
         }
         if(!Str_CompareIgnoreCase(lexer.token(), "playtime"))
@@ -202,7 +202,7 @@ void SndSeqParser(Str const *path)
             verifySequencePtr(tempDataStart, tempDataPtr);
 
             *tempDataPtr++ = SS_CMD_PLAY;
-            *tempDataPtr++ = Defs().getSoundNumForName(Str_Text(lexer.readString()));
+            *tempDataPtr++ = de::max(Defs().getSoundNumForName(Str_Text(lexer.readString())), 0);
             *tempDataPtr++ = SS_CMD_DELAY;
             *tempDataPtr++ = (int)lexer.readNumber();
             continue;
@@ -212,7 +212,7 @@ void SndSeqParser(Str const *path)
             verifySequencePtr(tempDataStart, tempDataPtr);
 
             *tempDataPtr++ = SS_CMD_PLAY;
-            *tempDataPtr++ = Defs().getSoundNumForName(Str_Text(lexer.readString()));
+            *tempDataPtr++ = de::max(Defs().getSoundNumForName(Str_Text(lexer.readString())), 0);
             *tempDataPtr++ = SS_CMD_WAITUNTILDONE;
             continue;
         }
@@ -221,7 +221,7 @@ void SndSeqParser(Str const *path)
             verifySequencePtr(tempDataStart, tempDataPtr);
 
             *tempDataPtr++ = SS_CMD_PLAY;
-            *tempDataPtr++ = Defs().getSoundNumForName(Str_Text(lexer.readString()));
+            *tempDataPtr++ = de::max(Defs().getSoundNumForName(Str_Text(lexer.readString())), 0);
             continue;
         }
         if(!Str_CompareIgnoreCase(lexer.token(), "delayrand"))
@@ -251,7 +251,7 @@ void SndSeqParser(Str const *path)
         }
         if(!Str_CompareIgnoreCase(lexer.token(), "stopsound"))
         {
-            SequenceTranslate[seqCommmandIndex].stopSound = Defs().getSoundNumForName(Str_Text(lexer.readString()));
+            SequenceTranslate[seqCommmandIndex].stopSound = de::max(Defs().getSoundNumForName(Str_Text(lexer.readString())), 0);
             *tempDataPtr++ = SS_CMD_STOPSOUND;
             continue;
         }

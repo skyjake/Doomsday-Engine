@@ -80,7 +80,7 @@ struct LIBDOOMSDAY_PUBLIC ded_s
     DEDRegister skies;
 
     // Sounds.
-    DEDArray<ded_sound_t> sounds;
+    DEDRegister sounds;
 
     // Music.
     DEDRegister musics;
@@ -154,6 +154,8 @@ public:
 
     int addSky();
 
+    int addSound();
+
     int evalFlags(char const *ptr) const;
     
     int getEpisodeNum(de::String const &id) const;
@@ -177,11 +179,6 @@ public:
     int getSoundNum(char const *id) const;
     int getSoundNum(de::String const &id) const;
 
-    /**
-     * Looks up a sound using @a name key.
-     * @param name  Sound name.
-     * @return If the name is not found, returns the NULL sound index (zero).
-     */
     int getSoundNumForName(char const *name) const;
 
     int getSpriteNum(char const *id) const;
@@ -221,7 +218,6 @@ extern "C" {
 
 int             DED_AddSprite(ded_t* ded, char const* name);
 int             DED_AddLight(ded_t* ded, char const* stateID);
-int             DED_AddSound(ded_t* ded, char const* id);
 int             DED_AddText(ded_t* ded, char const* id);
 int             DED_AddTextureEnv(ded_t* ded, char const* id);
 int             DED_AddValue(ded_t *ded, char const* id);

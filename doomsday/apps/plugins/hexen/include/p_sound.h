@@ -1,9 +1,7 @@
-/**
- * @file p_sound.h
- * Sound related utility routines.
+/** @file p_sound.h  Sound related utility routines.
  *
- * @authors Copyright &copy; 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -27,11 +25,6 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-#define MAX_SND_DIST        (2025)
-#define MAX_CHANNELS        (16)
-
-int S_GetSoundID(const char* name);
-
 /**
  * Starts the song of the specified map, updating the currentmap definition
  * in the process.
@@ -43,4 +36,4 @@ void S_MapMusic(uint episode, uint map);
 
 void S_ParseSndInfoLump(void);
 
-#endif // LIBHEXEN_SOUND_H
+#endif  // LIBHEXEN_SOUND_H
