@@ -1,6 +1,6 @@
 # Bloom is a specialized additive blur that only applies to bright pixels 
 # (given a configurable threshold for brightness).
-group fx.bloom {
+fx.bloom {
     common = "
         uniform highp mat4 uMvpMatrix;
         uniform highp vec4 uColor;

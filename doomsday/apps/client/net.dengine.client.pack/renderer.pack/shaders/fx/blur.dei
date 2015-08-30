@@ -1,7 +1,7 @@
-group fx {
+fx {
     # Blurring is done in two passes: horizontal and vertical. This is more
     # efficient than doing the equivalent amount of blurring in a single pass.
-    group blur {
+    blur {
         # Both passes use the same vertex shader.
         common = "
             uniform highp mat4 uMvpMatrix;

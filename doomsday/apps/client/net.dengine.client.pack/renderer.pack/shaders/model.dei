@@ -1,4 +1,4 @@
-group model {
+model {
     # Shader for skeletal animation and generic per-pixel lighting:
     # diffuse color, normal map, emission map, specular intensity.
     shader skeletal.normal_specular_emission {
