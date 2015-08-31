@@ -66,6 +66,7 @@ DENG2_PIMPL(ModelRenderer)
     GLUniform uLightIntensities { "uLightIntensities", GLUniform::Vec4Array, MAX_LIGHTS };
     Matrix4f inverseLocal;
     int lightCount = 0;
+    Id defaultDiffuse  { Id::None };
     Id defaultNormals  { Id::None };
     Id defaultEmission { Id::None };
     Id defaultSpecular { Id::None };
@@ -92,8 +93,12 @@ DENG2_PIMPL(ModelRenderer)
         atlas->setBorderSize(1);
         atlas->setMarginSize(0);
 
-        // Fallback normal map for models who don't provide one.
+        // Fallback diffuse map (solid black).
         QImage img(QSize(1, 1), QImage::Format_ARGB32);
+        img.fill(qRgba(0, 0, 0, 255));
+        defaultDiffuse = atlas->alloc(img);
+
+        // Fallback normal map for models who don't provide one.
         img.fill(qRgba(127, 127, 255, 255)); // z+
         defaultNormals = atlas->alloc(img);
 
@@ -148,7 +153,7 @@ DENG2_PIMPL(ModelRenderer)
         {
             model.setAtlas(*atlas);
 
-            model.setDefaultTexture(ModelDrawable::Diffuse,  defaultEmission); // blank
+            model.setDefaultTexture(ModelDrawable::Diffuse,  defaultDiffuse);
             model.setDefaultTexture(ModelDrawable::Normals,  defaultNormals);
             model.setDefaultTexture(ModelDrawable::Emissive, defaultEmission);
             model.setDefaultTexture(ModelDrawable::Specular, defaultSpecular);
