@@ -57,14 +57,17 @@ DENG2_PIMPL(Driver)
 
     ~Instance()
     {
+        // Should have been deinitialized by now.
+        DENG2_ASSERT(!initialized);
+
         // Unload the library.
         Library_Delete(library);
     }
     
     /**
-     * Lookup the value of named @em string property from the driver.
+     * Lookup the value of a named @em string property from the driver.
      */
-    String getStringProperty(dint prop)
+    String getPropertyAsString(dint prop)
     {
         ddstring_t str; Str_InitStd(&str);
         DENG2_ASSERT(iBase.Get);
@@ -75,7 +78,7 @@ DENG2_PIMPL(Driver)
             return string;
         }
         /// @throw ReadPropertyError  Driver returned not successful.
-        throw ReadPropertyError("audio::Driver::getStringProperty", "Error reading property:" + String::number(prop));
+        throw ReadPropertyError("audio::Driver::getPropertyAsString", "Error reading property:" + String::number(prop));
     }
 };
 
@@ -176,12 +179,12 @@ bool Driver::recognize(LibraryFile &library)  // static
 
 String Driver::identifier() const
 {
-    return d->getStringProperty(AUDIOP_IDENTIFIER).toLower();
+    return d->getPropertyAsString(AUDIOP_IDENTIFIER).toLower();
 }
 
 String Driver::name() const
 {
-    return d->getStringProperty(AUDIOP_NAME);
+    return d->getPropertyAsString(AUDIOP_NAME);
 }
 
 Driver::Status Driver::status() const
@@ -233,9 +236,22 @@ void Driver::deinitialize()
     return d->library;
 }
 
-audiodriver_t /*const*/ &Driver::iBase() const
+void Driver::startFrame()
 {
-    return d->iBase;
+    if(!d->initialized) return;
+    d->iBase.Event(SFXEV_BEGIN);
+}
+
+void Driver::endFrame()
+{
+    if(!d->initialized) return;
+    d->iBase.Event(SFXEV_END);
+}
+
+void Driver::musicMidiFontChanged(String const &newMidiFontPath)
+{
+    if(!d->initialized) return;
+    if(d->iBase.Set) d->iBase.Set(AUDIOP_SOUNDFONT_FILENAME, newMidiFontPath.toLatin1().constData());
 }
 
 bool Driver::hasSfx() const

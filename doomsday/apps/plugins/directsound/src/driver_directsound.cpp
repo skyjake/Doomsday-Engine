@@ -446,7 +446,7 @@ int DS_Get(int prop, void *ptr)
         if(name) Str_Set(name, "DirectSound");
         return true; }
 
-    default: DENG2_ASSERT("[OpenAL]DS_Get: Unknown property"); break;
+    default: DENG2_ASSERT("[DirectSound]DS_Get: Unknown property"); break;
     }
     return false;
 }

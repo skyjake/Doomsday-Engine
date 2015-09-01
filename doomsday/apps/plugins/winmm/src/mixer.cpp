@@ -71,7 +71,7 @@ DENG2_PIMPL_NOREF(Mixer::Line)
                                      MIXER_OBJECTF_HMIXER | MIXER_GETLINEINFOF_COMPONENTTYPE))
            != MMSYSERR_NOERROR)
         {
-            LOG_AUDIO_ERROR("Error getting line info: Error %u") << ::res;
+            LOG_AUDIO_ERROR("Failed getting line info: Error %u") << ::res;
             return;
         }
 
@@ -93,7 +93,7 @@ DENG2_PIMPL_NOREF(Mixer::Line)
                                          MIXER_OBJECTF_HMIXER | MIXER_GETLINECONTROLSF_ONEBYTYPE))
            != MMSYSERR_NOERROR)
         {
-            LOG_AUDIO_ERROR("Error getting line controls (vol): error %u") << ::res;
+            LOG_AUDIO_ERROR("Failed getting line controls (vol): Error %u") << ::res;
             return;
         }
 
@@ -232,7 +232,7 @@ DENG2_PIMPL_NOREF(Mixer)
         if((::res = mixerOpen(&hndl, 0, 0, 0, MIXER_OBJECTF_MIXER))
            != MMSYSERR_NOERROR)
         {
-            LOG_AUDIO_ERROR("Error opening mixer: Error %u") << ::res;
+            LOG_AUDIO_ERROR("Failed opening mixer: Error %u") << ::res;
             return;
         }
 

@@ -134,7 +134,7 @@ DENG2_PIMPL(System)
 
     Driver *tryFindDriver(String driverId)
     {
-        driverId = driverId.toLower();  // Symbolic identfiers are lowercase.
+        driverId = driverId.toLower();  // Symbolic identifiers are lowercase.
         for(Driver *driver : drivers)
         for(String const &id : driver->identifier().split(';'))
         {
@@ -149,6 +149,29 @@ DENG2_PIMPL(System)
         if(Driver *driver = tryFindDriver(driverId)) return *driver;
         /// @throw MissingDriverError  Unknown driver identifier specified.
         throw MissingDriverError("audio::System::Instance::driverByIdentifier", "Unknown audio driver '" + driverId + "'");
+    }
+
+    /**
+     * Find the Driver to which @a anyAudioInterface belongs.
+     *
+     * @param playbackInterface  Pointer to a SFX, Music, or CD interface.
+     */
+    Driver &findDriverByInterface(void *playbackInterface) const
+    {
+        if(playbackInterface)
+        {
+            for(Driver *driver : drivers)
+            {
+                if((void *)&driver->iSfx()   == playbackInterface ||
+                   (void *)&driver->iMusic() == playbackInterface ||
+                   (void *)&driver->iCd()    == playbackInterface)
+                {
+                    return *driver;
+                }
+            }
+        }
+        /// @throw MissingDriverError  Unknown playback interface specified.
+        throw MissingDriverError("audio::System::findDriverByInterface", "Unknown playback interface");
     }
 
     void unloadDrivers()
@@ -473,31 +496,6 @@ DENG2_PIMPL(System)
         return LoopContinue;
     }
 
-    /**
-     * Find the Base interface of the audio driver to which @a anyAudioInterface
-     * belongs.
-     *
-     * @param anyAudioInterface  Pointer to a SFX, Music, or CD interface.
-     *
-     * @return Audio interface, or @c nullptr if the none of the loaded drivers match.
-     */
-    audiodriver_t &getBaseInterface(void *anyAudioInterface) const
-    {
-        if(anyAudioInterface)
-        {
-            for(Driver const *driver : drivers)
-            {
-                if((void *)&driver->iSfx()   == anyAudioInterface ||
-                   (void *)&driver->iMusic() == anyAudioInterface ||
-                   (void *)&driver->iCd()    == anyAudioInterface)
-                {
-                    return driver->iBase();
-                }
-            }
-        }
-        throw Error("audio::System::getBaseInterface", "Unknown playback interface");
-    }
-
     audiointerfacetype_t interfaceType(void *anyAudioInterface) const
     {
         if(anyAudioInterface)
@@ -617,31 +615,6 @@ DENG2_PIMPL(System)
 
         // Compose the name.
         return MUSIC_BUFFEREDFILE + String::number(currentBufFile) + ext;
-    }
-
-    void setMusicProperty(dint prop, void const *ptr)
-    {
-        forAllInterfaces(AUDIO_IMUSIC, [this, &prop, &ptr] (void *ifs)
-        {
-            audiodriver_t &iBase = getBaseInterface(ifs);
-            if(iBase.Set) iBase.Set(prop, ptr);
-            return LoopContinue;
-        });
-
-        if(prop == AUDIOP_SOUNDFONT_FILENAME)
-        {
-            auto *fn = (char const *) ptr;
-            if(!fn || !fn[0]) return; // No path.
-
-            if(F_FileExists(fn))
-            {
-                LOG_AUDIO_MSG("Current soundfont set to: \"%s\"") << fn;
-            }
-            else
-            {
-                LOG_AUDIO_WARNING("Soundfont \"%s\" not found") << fn;
-            }
-        }
     }
 
     dint playMusicFile(String const &virtualOrNativePath, bool looped = false)
@@ -1625,7 +1598,8 @@ void System::startFrame()
         // Update all channels (freq, 2D:pan,volume, 3D:position,velocity).
 
         // Update the active interface.
-        d->getBaseInterface(sfx()).Event(SFXEV_BEGIN);
+        /// @todo Driver should observe -ds
+        d->findDriverByInterface(sfx()).startFrame();
 
         // Have there been changes to the cvar settings?
         d->updateSfx3DModeIfChanged();
@@ -1680,7 +1654,8 @@ void System::endFrame()
         }
 
         // Update the active interface.
-        d->getBaseInterface(sfx()).Event(SFXEV_END);
+        /// @todo Driver should observe -ds
+        d->findDriverByInterface(sfx()).endFrame();
     }
 }
 
@@ -1935,8 +1910,24 @@ void System::updateMusicMidiFont()
         path = "/System/Library/Components/CoreAudio.component/Contents/Resources/gs_instruments.dls";
     }
 #endif
+    path = path.expand();
 
-    d->setMusicProperty(AUDIOP_SOUNDFONT_FILENAME, path.expand().toString().toLatin1().constData());
+    if(F_FileExists(path.toString().toLatin1().constData()))
+    {
+        LOG_AUDIO_MSG("Current soundfont set to: \"%s\"") << path.pretty();
+    }
+    else
+    {
+        LOG_AUDIO_WARNING("Soundfont \"%s\" not found") << path.pretty();
+    }
+
+    // Notify the drivers.
+    path.expand().toString();
+    d->forAllInterfaces(AUDIO_IMUSIC, [this, &path] (void *ifs)
+    {
+        d->findDriverByInterface(ifs).musicMidiFontChanged(path);
+        return LoopContinue;
+    });
 }
 
 dint System::soundVolume() const

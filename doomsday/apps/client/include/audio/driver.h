@@ -80,22 +80,14 @@ public:
     static Driver *newFromLibrary(de::LibraryFile &library);
 
     /**
-     * Returns the textual, symbolic identifier of the audio driver (lower case),
-     * for use in Config.
-     *
-     * @note An audio driver may be have multiple identifiers, in which case they
-     * will be returned here and delimited with ';' characters.
-     *
-     * @todo Once the audio driver/interface configuration is stored persistently
-     * in Config we should remove the alternative identifiers at this time. -ds
+     * Initialize the audio driver if necessary, ready for use.
      */
-    de::String identifier() const;
+    void initialize();
 
     /**
-     * Returns the human-friendly name of the audio driver if loaded; otherwise a
-     * zero-length string is returned.
+     * Deinitialize the audio driver if necessary, so that it may be unloaded.
      */
-    de::String name() const;
+    void deinitialize();
 
     /**
      * Returns the logical driver status.
@@ -111,14 +103,30 @@ public:
     inline bool isInitialized() const { return status() == Initialized; }
 
     /**
-     * Initialize the audio driver if necessary, ready for use.
+     * Returns the textual, symbolic identifier of the audio driver (lower case),
+     * for use in Config.
+     *
+     * @note An audio driver may have multiple identifiers, in which case they will
+     * be returned here and delimited with ';' characters.
+     *
+     * @todo Once the audio driver/interface configuration is stored persistently
+     * in Config we should remove the alternative identifiers at this time. -ds
      */
-    void initialize();
+    de::String identifier() const;
 
     /**
-     * Deinitialize the audio driver if necessary, so that it may be unloaded.
+     * Returns the human-friendly name of the audio driver if loaded; otherwise a
+     * zero-length string is returned.
      */
-    void deinitialize();
+    de::String name() const;
+
+    /**
+     * Instruct the driver of a change in music MIDI font.
+     *
+     * @param newMidiFontPath  Native path to the new MIDI font. Use a zero-length
+     * string to clear/unload the existing font.
+     */
+    void musicMidiFontChanged(de::String const &newMidiFontPath);
 
     /**
      * Returns the plugin library for the loaded audio driver (may return
@@ -126,13 +134,10 @@ public:
      */
     ::Library *library() const;
 
-public:  // Interfaces: -----------------------------------------------------------
+    void startFrame();
+    void endFrame();
 
-    /**
-     * Returns the @em Base interface for the audio driver. The Base interface is
-     * used for high-level tasks such as (de)initializing the audio driver.
-     */
-    audiodriver_t /*const*/ &iBase() const;
+public:  // Interfaces: -----------------------------------------------------------
 
     /// Returns @c true if the audio driver provides @em Sfx playback.
     bool hasSfx() const;
