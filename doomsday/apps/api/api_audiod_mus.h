@@ -1,9 +1,8 @@
-/**
- * @file api_audiod_mus.h
- * Music interface for an audio driver. @ingroup audio
+/** @file api_audiod_mus.h  Music interface for an audio driver.
+ * @ingroup audio
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef __DOOMSDAY_AUDIO_DRIVER_MUSIC_H__
-#define __DOOMSDAY_AUDIO_DRIVER_MUSIC_H__
+#ifndef CLIENT_API_AUDIO_DRIVER_MUSIC_H
+#define CLIENT_API_AUDIO_DRIVER_MUSIC_H
 
 /// @addtogroup audio
 ///@{
@@ -47,9 +46,9 @@ typedef struct audiointerface_music_generic_s {
 /// Driver interface for playing music.
 typedef struct audiointerface_music_s {
     audiointerface_music_generic_t gen;
-    void*           (*SongBuffer) (unsigned int length);
+    void *          (*SongBuffer) (unsigned int length);
     int             (*Play) (int looped);
-    int             (*PlayFile) (const char *filename, int looped);
+    int             (*PlayFile) (char const *filename, int looped);
 } audiointerface_music_t;
 
 /// Driver interface for playing CD tracks.
@@ -60,4 +59,4 @@ typedef struct audiointerface_cd_s {
 
 ///@}
 
-#endif
+#endif  // CLIENT_API_AUDIO_DRIVER_MUSIC_H

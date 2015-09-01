@@ -1,9 +1,8 @@
-/**
- * @file api_audiod.h
- * Audio driver interface. @ingroup audio
+/** @file api_audiod.h  Audio driver interface.
+ * @ingroup audio
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,25 +19,23 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_AUDIO_DRIVER_INTERFACE_H
-#define LIBDENG_AUDIO_DRIVER_INTERFACE_H
+#ifndef CLIENT_API_AUDIO_DRIVER_INTERFACE_H
+#define CLIENT_API_AUDIO_DRIVER_INTERFACE_H
 
 /**
  * @defgroup audio Audio
  */
 ///@{
 
-typedef enum audiodriverid_e {
-    AUDIOD_INVALID = -1,
-    AUDIOD_DUMMY = 0,
-    AUDIOD_SDL_MIXER,
-    AUDIOD_OPENAL,
-    AUDIOD_FMOD,
-    AUDIOD_FLUIDSYNTH,
-    AUDIOD_DSOUND,  // Win32 only
-    AUDIOD_WINMM,   // Win32 only
-    AUDIODRIVER_COUNT
-} audiodriverid_t;
+/**
+ * Audio driver properties.
+ */
+enum
+{
+    AUDIOP_IDENTIFIER,         ///< Symbolic driver identifier (stored persistently, in Config).
+    AUDIOP_NAME,               ///< Human-friendly textual name (for user presentation, in the UI).
+    AUDIOP_SOUNDFONT_FILENAME  ///< Music sound font (file name and path).
+};
 
 typedef enum {
     AUDIO_INONE,
@@ -48,22 +45,11 @@ typedef enum {
     AUDIO_IMUSIC_OR_ICD
 } audiointerfacetype_t;
 
-#ifdef WIN32
-#  define VALID_AUDIODRIVER_IDENTIFIER(id)    ((id) >= AUDIOD_DUMMY && (id) < AUDIODRIVER_COUNT)
-#else
-#  define VALID_AUDIODRIVER_IDENTIFIER(id)    ((id) >= AUDIOD_DUMMY && (id) <= AUDIOD_FLUIDSYNTH)
-#endif
-
-// Audio driver properties.
-enum {
-    AUDIOP_SOUNDFONT_FILENAME,
-    AUDIOP_SFX_INTERFACE                ///< audiointerface_sfx_t to play sounds with
-};
-
 typedef struct audiodriver_s {
     int (*Init) (void);
     void (*Shutdown) (void);
     void (*Event) (int type);
+    int (*Get) (int prop, void *ptr);
     int (*Set) (int prop, void const *ptr);
 } audiodriver_t;
 
@@ -73,4 +59,4 @@ typedef struct audiointerface_base_s {
 
 ///@}
 
-#endif /* LIBDENG_AUDIO_DRIVER_INTERFACE_H */
+#endif  // CLIENT_API_AUDIO_DRIVER_INTERFACE_H

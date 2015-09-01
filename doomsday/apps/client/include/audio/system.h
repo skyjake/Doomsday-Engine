@@ -27,9 +27,11 @@
 
 #include "api_sound.h"
 #ifdef __CLIENT__
-#  include "audio/channel.h"
-#  include "audio/driver.h"
+#  include "api_audiod.h"      ///< @todo remove me
+#  include "api_audiod_mus.h"  ///< @todo remove me
+#  include "api_audiod_sfx.h"  ///< @todo remove me
 
+#  include "audio/channel.h"
 #  include <de/Range>
 #  include <de/Record>
 #endif
@@ -300,12 +302,6 @@ public:  /// @todo make private:
 
     /// @todo refactor away.
     void requestSfxListenerUpdate();
-
-    /**
-     * Lookup the unique identifier associated with the given audio @a driver.
-     * @todo refactor away.
-     */
-    audiodriverid_t toDriverId(Driver const *driver) const;
 
 #endif  // __CLIENT__
 

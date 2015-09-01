@@ -1,9 +1,9 @@
-/**
- * @file driver_fmod.cpp
- * FMOD Ex audio plugin. @ingroup dsfmod
+/** @file driver_fmod.cpp  FMOD Ex audio plugin.
+ * @ingroup dsfmod
  *
  * @authors Copyright © 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *
+ * @authors Copyright © 2015 Daniel Swanson <danij@dengine.net>
+  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html (with exception granted to allow
  * linking against FMOD Ex)
@@ -40,91 +40,92 @@
  */
 
 #include "driver_fmod.h"
+
 #include "api_audiod.h"
 #include "api_audiod_sfx.h"
-#include <stdio.h>
+#include "doomsday.h"
+#include <de/c_wrapper.h>
+
+#include <cstdio>
 #include <fmod.h>
 #include <fmod_errors.h>
 #include <fmod.hpp>
 
-#include "doomsday.h"
-#include <de/c_wrapper.h>
+FMOD::System *fmodSystem;
 
-FMOD::System* fmodSystem = 0;
+static FMOD_RESULT result;
 
 /**
  * Initialize the FMOD Ex sound driver.
  */
-int DS_Init(void)
+int DS_Init()
 {
-    if(fmodSystem)
-    {
-        return true; // Already initialized.
-    }
+    // Already been here?
+    if(::fmodSystem) return true;
 
     // Create the FMOD audio system.
-    FMOD_RESULT result;
-    if((result = FMOD::System_Create(&fmodSystem)) != FMOD_OK)
+    if((::result = FMOD::System_Create(&::fmodSystem)) != FMOD_OK)
     {
-        LOGDEV_AUDIO_ERROR("FMOD::System_Create failed (%d) %s") << result << FMOD_ErrorString(result);
-        fmodSystem = 0;
+        LOGDEV_AUDIO_ERROR("FMOD::System_Create failed (%d) %s")
+            << ::result << FMOD_ErrorString(::result);
+        ::fmodSystem = nullptr;
         return false;
     }
 
 #ifdef WIN32
     // Figure out the system's configured speaker mode.
     FMOD_SPEAKERMODE speakerMode;
-    result = fmodSystem->getDriverCaps(0, 0, 0, &speakerMode);
-    if(result == FMOD_OK)
+    if((::result = ::fmodSystem->getDriverCaps(0, 0, 0, &speakerMode)) == FMOD_OK)
     {
-        fmodSystem->setSpeakerMode(speakerMode);
+        ::fmodSystem->setSpeakerMode(speakerMode);
     }
 #endif
 
     // Manual overrides.
     if(CommandLine_Exists("-speaker51"))
     {
-        fmodSystem->setSpeakerMode(FMOD_SPEAKERMODE_5POINT1);
+        ::fmodSystem->setSpeakerMode(FMOD_SPEAKERMODE_5POINT1);
     }
     if(CommandLine_Exists("-speaker71"))
     {
-        fmodSystem->setSpeakerMode(FMOD_SPEAKERMODE_7POINT1);
+        ::fmodSystem->setSpeakerMode(FMOD_SPEAKERMODE_7POINT1);
     }
     if(CommandLine_Exists("-speakerprologic"))
     {
-        fmodSystem->setSpeakerMode(FMOD_SPEAKERMODE_SRS5_1_MATRIX);
+        ::fmodSystem->setSpeakerMode(FMOD_SPEAKERMODE_SRS5_1_MATRIX);
     }
 
     // Initialize FMOD.
-    if((result = fmodSystem->init(50, FMOD_INIT_NORMAL | FMOD_INIT_3D_RIGHTHANDED | FMOD_INIT_HRTF_LOWPASS, 0)) != FMOD_OK)
+    if((::result = ::fmodSystem->init(50, FMOD_INIT_NORMAL | FMOD_INIT_3D_RIGHTHANDED | FMOD_INIT_HRTF_LOWPASS, 0)) != FMOD_OK)
     {
-        LOGDEV_AUDIO_ERROR("FMOD init failed: (%d) %s") << result << FMOD_ErrorString(result);
-        fmodSystem->release();
-        fmodSystem = 0;
+        LOGDEV_AUDIO_ERROR("FMOD init failed: (%d) %s")
+            << ::result << FMOD_ErrorString(::result);
+
+        ::fmodSystem->release();
+        ::fmodSystem = nullptr;
         return false;
     }
 
     // Options.
-    FMOD_ADVANCEDSETTINGS settings;
-    zeroStruct(settings);
+    FMOD_ADVANCEDSETTINGS settings; zeroStruct(settings);
     settings.HRTFMaxAngle = 360;
     settings.HRTFMinAngle = 180;
-    settings.HRTFFreq = 11000;
-    fmodSystem->setAdvancedSettings(&settings);
+    settings.HRTFFreq     = 11000;
+    ::fmodSystem->setAdvancedSettings(&settings);
 
-#ifdef _DEBUG
+#ifdef DENG2_DEBUG
     int numPlugins = 0;
-    fmodSystem->getNumPlugins(FMOD_PLUGINTYPE_CODEC, &numPlugins);
+    ::fmodSystem->getNumPlugins(FMOD_PLUGINTYPE_CODEC, &numPlugins);
     DSFMOD_TRACE("Plugins loaded: " << numPlugins);
-    for(int i = 0; i < numPlugins; i++)
+    for(int i = 0; i < numPlugins; ++i)
     {
-        unsigned int handle;
-        fmodSystem->getPluginHandle(FMOD_PLUGINTYPE_CODEC, i, &handle);
+        uint handle;
+        ::fmodSystem->getPluginHandle(FMOD_PLUGINTYPE_CODEC, i, &handle);
 
         FMOD_PLUGINTYPE pType;
         char pName[100];
-        unsigned int pVer = 0;
-        fmodSystem->getPluginInfo(handle, &pType, pName, sizeof(pName), &pVer);
+        uint pVer = 0;
+        ::fmodSystem->getPluginInfo(handle, &pType, pName, sizeof(pName), &pVer);
 
         DSFMOD_TRACE("Plugin " << i << ", handle " << handle << ": type " << pType
                      << ", name:'" << pName << "', ver:" << pVer);
@@ -141,14 +142,14 @@ int DS_Init(void)
 /**
  * Shut everything down.
  */
-void DS_Shutdown(void)
+void DS_Shutdown()
 {
     DMFmod_Music_Shutdown();
     DMFmod_CDAudio_Shutdown();
 
     DSFMOD_TRACE("DS_Shutdown.");
-    fmodSystem->release();
-    fmodSystem = 0;
+    ::fmodSystem->release();
+    ::fmodSystem = nullptr;
 }
 
 /**
@@ -157,43 +158,65 @@ void DS_Shutdown(void)
  */
 void DS_Event(int type)
 {
-    if(!fmodSystem) return;
+    if(!::fmodSystem) return;
 
     if(type == SFXEV_END)
     {
         // End of frame, do an update.
-        fmodSystem->update();
+        ::fmodSystem->update();
     }
 }
 
-int DS_Set(int prop, const void* ptr)
+int DS_Get(int prop, void *ptr)
 {
-    if(!fmodSystem) return false;
-
     switch(prop)
     {
-    case AUDIOP_SOUNDFONT_FILENAME: {
-        const char* path = reinterpret_cast<const char*>(ptr);
-        DSFMOD_TRACE("DS_Set: Soundfont = " << path);
-        if(!path || !strlen(path))
-        {
-            // Use the default.
-            path = 0;
-        }
-        DMFmod_Music_SetSoundFont(path);
+    case AUDIOP_IDENTIFIER: {
+        auto *id = reinterpret_cast<AutoStr *>(ptr);
+        DENG2_ASSERT(id);
+        if(id) Str_Set(id, "fmod");
         return true; }
 
-    default:
-        DSFMOD_TRACE("DS_Set: Unknown property " << prop);
-        return false;
+    case AUDIOP_NAME: {
+        auto *name = reinterpret_cast<AutoStr *>(ptr);
+        DENG2_ASSERT(name);
+        if(name) Str_Set(name, "FMOD");
+        return true; }
+
+    default: DSFMOD_TRACE("DS_Get: Unknown property " << prop); break;
     }
+    return false;
+}
+
+int DS_Set(int prop, void const *ptr)
+{
+    if(::fmodSystem)
+    {
+        switch(prop)
+        {
+        case AUDIOP_SOUNDFONT_FILENAME: {
+            auto const *path = reinterpret_cast<char const *>(ptr);
+            DSFMOD_TRACE("DS_Set: Soundfont = " << path);
+            if(!path || !qstrlen(path))
+            {
+                // Use the default.
+                path = nullptr;
+            }
+            DMFmod_Music_SetSoundFont(path);
+            return true; }
+
+        default: DSFMOD_TRACE("DS_Set: Unknown property " << prop); break;
+        }
+    }
+
+    return false;
 }
 
 /**
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-DENG_EXTERN_C const char* deng_LibraryType(void)
+DENG_EXTERN_C char const *deng_LibraryType()
 {
     return "deng-plugin/audio";
 }

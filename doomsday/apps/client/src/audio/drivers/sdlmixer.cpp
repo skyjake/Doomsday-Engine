@@ -42,6 +42,7 @@ using namespace de;
 int DS_SDLMixerInit();
 void DS_SDLMixerShutdown();
 void DS_SDLMixerEvent(int type);
+int DS_SDLMixerGet(int prop, void *ptr);
 
 // Sfx interface:
 int DS_SDLMixer_SFX_Init();
@@ -69,7 +70,9 @@ int DS_SDLMixer_Music_PlayFile(char const *fileName, int looped);
 audiodriver_t audiod_sdlmixer = {
     DS_SDLMixerInit,
     DS_SDLMixerShutdown,
-    DS_SDLMixerEvent
+    DS_SDLMixerEvent,
+    DS_SDLMixerGet,
+    nullptr
 };
 
 audiointerface_sfx_t audiod_sdlmixer_sfx = { {
@@ -211,6 +214,27 @@ void DS_SDLMixerShutdown()
 void DS_SDLMixerEvent(int)
 {
     // Not supported.
+}
+
+int DS_SDLMixerGet(int prop, void *ptr)
+{
+    switch(prop)
+    {
+    case AUDIOP_IDENTIFIER: {
+        auto *id = reinterpret_cast<AutoStr *>(ptr);
+        DENG2_ASSERT(id);
+        if(id) Str_Set(id, "sdlmixer");
+        return true; }
+
+    case AUDIOP_NAME: {
+        auto *name = reinterpret_cast<AutoStr *>(ptr);
+        DENG2_ASSERT(name);
+        if(name) Str_Set(name, "SDLMixer");
+        return true; }
+
+    default: DENG2_ASSERT("DS_SDLMixerGet: Unknown property"); break;
+    }
+    return false;
 }
 
 int DS_SDLMixer_SFX_Init()

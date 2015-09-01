@@ -21,6 +21,7 @@
 #define WINMM_MAIN_H
 
 #include "doomsday.h"
+#include "api_audiod.h"
 #include "api_audiod_mus.h"
 
 DENG_USING_API(Con);

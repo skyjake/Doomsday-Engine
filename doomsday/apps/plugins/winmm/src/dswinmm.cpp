@@ -115,6 +115,27 @@ void DS_Event(int /*type*/)
     // Do nothing...
 }
 
+int DS_Get(int prop, void *ptr)
+{
+    switch(prop)
+    {
+    case AUDIOP_IDENTIFIER: {
+        auto *id = reinterpret_cast<AutoStr *>(ptr);
+        DENG2_ASSERT(id);
+        if(id) Str_Set(id, "winmm");
+        return true; }
+
+    case AUDIOP_NAME: {
+        auto *name = reinterpret_cast<AutoStr *>(ptr);
+        DENG2_ASSERT(name);
+        if(name) Str_Set(name, "Windows Multimedia");
+        return true; }
+
+    default: DENG2_ASSERT("[WinMM]DS_Get: Unknown property"); break;
+    }
+    return false;
+}
+
 int DM_CDAudio_Init()
 {
     LOG_AS("[WinMM]");

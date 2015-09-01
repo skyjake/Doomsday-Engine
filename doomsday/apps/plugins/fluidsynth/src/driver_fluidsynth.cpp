@@ -1,8 +1,8 @@
-/**
- * @file driver_fluidsynth.cpp
- * FluidSynth music plugin. @ingroup dsfluidsynth
+/** @file driver_fluidsynth.cpp  FluidSynth music plugin.
+ * @ingroup dsfluidsynth
  *
- * @authors Copyright Â© 2011-2013 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,52 +20,51 @@
  */
 
 #include "driver_fluidsynth.h"
-#include "api_audiod.h"
-#include <stdio.h>
-#include <string.h>
-#include <de/c_wrapper.h>
 
 #include "doomsday.h"
+#include "api_audiod.h"
 
-static fluid_settings_t* fsConfig;
-static fluid_synth_t* fsSynth;
-static audiointerface_sfx_t* fsSfx;
-static fluid_audio_driver_t* fsDriver;
+#include <de/c_wrapper.h>
+#include <cstdio>
+#include <cstring>
 
-fluid_synth_t* DMFluid_Synth()
+static fluid_settings_t *fsConfig;
+static fluid_synth_t *fsSynth;
+static audiointerface_sfx_t *fsSfx;
+static fluid_audio_driver_t *fsDriver;
+
+fluid_synth_t *DMFluid_Synth()
 {
-    DENG_ASSERT(fsSynth != 0);
+    DENG2_ASSERT(fsSynth != nullptr);
     return fsSynth;
 }
 
-fluid_audio_driver_t* DMFluid_Driver()
+fluid_audio_driver_t *DMFluid_Driver()
 {
     return fsDriver;
 }
 
-audiointerface_sfx_generic_t* DMFluid_Sfx()
+audiointerface_sfx_generic_t *DMFluid_Sfx()
 {
-    DENG_ASSERT(fsSfx != 0);
+    DENG_ASSERT(fsSfx != nullptr);
     return &fsSfx->gen;
 }
 
 /**
  * Initialize the FluidSynth sound driver.
  */
-int DS_Init(void)
+int DS_Init()
 {
-    if(fsSynth)
-    {
-        return true; // Already initialized.
-    }
+    // Already been here?
+    if(fsSynth) return true;
 
     // Set up a reasonable configuration.
-    fsConfig = new_fluid_settings();
-    fluid_settings_setnum(fsConfig, "synth.gain", MAX_SYNTH_GAIN);
+    ::fsConfig = new_fluid_settings();
+    fluid_settings_setnum(::fsConfig, "synth.gain", MAX_SYNTH_GAIN);
 
     // Create the synthesizer.
-    fsSynth = new_fluid_synth(fsConfig);
-    if(!fsSynth)
+    ::fsSynth = new_fluid_synth(::fsConfig);
+    if(!::fsSynth)
     {
         App_Log(DE2_AUDIO_ERROR, "[FluidSynth] Failed to create synthesizer");
         return false;
@@ -78,15 +77,15 @@ int DS_Init(void)
     {
         strcpy(driverName, FLUIDSYNTH_DEFAULT_DRIVER_NAME);
     }
-    fluid_settings_setstr(fsConfig, "audio.driver", driverName);
-    fsDriver = new_fluid_audio_driver(fsConfig, fsSynth);
-    if(!fsDriver)
+    fluid_settings_setstr(::fsConfig, "audio.driver", driverName);
+    ::fsDriver = new_fluid_audio_driver(::fsConfig, ::fsSynth);
+    if(!::fsDriver)
     {
         App_Log(DE2_AUDIO_ERROR, "[FluidSynth] Failed to load audio driver '%s'", driverName);
         return false;
     }
 #else
-    fsDriver = NULL;
+    fsDriver = nullptr;
 #endif
 
     DSFLUIDSYNTH_TRACE("DS_Init: FluidSynth initialized.");
@@ -96,23 +95,21 @@ int DS_Init(void)
 /**
  * Shut everything down.
  */
-void DS_Shutdown(void)
+void DS_Shutdown()
 {
-    if(!fsSynth) return;
+    // Already been here?
+    if(!::fsSynth) return;
 
     DMFluid_Shutdown();
 
     DSFLUIDSYNTH_TRACE("DS_Shutdown.");
 
-    if(fsDriver)
+    if(::fsDriver)
     {
-        delete_fluid_audio_driver(fsDriver);
+        delete_fluid_audio_driver(::fsDriver);
     }
-    delete_fluid_synth(fsSynth);
-    delete_fluid_settings(fsConfig);
-
-    fsSynth = 0;
-    fsConfig = 0;
+    delete_fluid_synth(::fsSynth); fsSynth = nullptr;
+    delete_fluid_settings(::fsConfig); fsConfig = nullptr;
 }
 
 /**
@@ -121,7 +118,7 @@ void DS_Shutdown(void)
  */
 void DS_Event(int type)
 {
-    if(!fsSynth) return;
+    if(!::fsSynth) return;
 
     if(type == SFXEV_END)
     {
@@ -130,14 +127,33 @@ void DS_Event(int type)
     }
 }
 
-int DS_Set(int prop, const void* ptr)
+int DS_Get(int prop, void *ptr)
 {
-    //if(!fmodSystem) return false;
+    switch(prop)
+    {
+    case AUDIOP_IDENTIFIER: {
+        auto *id = reinterpret_cast<AutoStr *>(ptr);
+        DENG2_ASSERT(id);
+        if(id) Str_Set(id, "fluidsynth");
+        return true; }
 
+    case AUDIOP_NAME: {
+        auto *name = reinterpret_cast<AutoStr *>(ptr);
+        DENG2_ASSERT(name);
+        if(name) Str_Set(name, "FluidSynth");
+        return true; }
+
+    default: DSFLUIDSYNTH_TRACE("DS_Get: Unknown property " << prop); break;
+    }
+    return false;
+}
+
+int DS_Set(int prop, void const *ptr)
+{
     switch(prop)
     {
     case AUDIOP_SOUNDFONT_FILENAME: {
-        const char* path = reinterpret_cast<const char*>(ptr);
+        auto const *path = reinterpret_cast<char const *>(ptr);
         DSFLUIDSYNTH_TRACE("DS_Set: Soundfont = " << path);
         if(!path || !strlen(path))
         {
@@ -148,14 +164,14 @@ int DS_Set(int prop, const void* ptr)
         return true; }
 
     case AUDIOP_SFX_INTERFACE:
-        fsSfx = (audiointerface_sfx_t*) ptr;
+        fsSfx = reinterpret_cast<audiointerface_sfx_t *>(ptr);
         DSFLUIDSYNTH_TRACE("DS_Set: iSFX = " << fsSfx);
         return true;
 
-    default:
-        DSFLUIDSYNTH_TRACE("DS_Set: Unknown property " << prop);
-        return false;
+    default: DSFLUIDSYNTH_TRACE("DS_Set: Unknown property " << prop); break;
     }
+
+    return false;
 }
 
 /**

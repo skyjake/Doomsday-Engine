@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef CLIENT_AUDIO_DRIVER_SFX_H
-#define CLIENT_AUDIO_DRIVER_SFX_H
+#ifndef CLIENT_API_AUDIO_DRIVER_SFX_H
+#define CLIENT_API_AUDIO_DRIVER_SFX_H
 
 /// @addtogroup audio
 ///@{
@@ -30,12 +30,12 @@
  * @ingroup audio apiFlags
  */
 ///@{
-#define SFXBF_PLAYING       0x1         ///< The buffer is playing.
-#define SFXBF_3D            0x2         ///< Otherwise playing in 2D mode.
-#define SFXBF_REPEAT        0x4         ///< Buffer will repeat until stopped.
-#define SFXBF_DONT_STOP     0x8         ///< Never stop until normal finish.
-#define SFXBF_STREAM        0x10        ///< Buffer plays in streaming mode (looping).
-#define SFXBF_RELOAD        0x10000     ///< Sample must be reloaded before playing.
+#define SFXBF_PLAYING       ( 0x1     )  ///< The buffer is playing.
+#define SFXBF_3D            ( 0x2     )  ///< Otherwise playing in 2D mode.
+#define SFXBF_REPEAT        ( 0x4     )  ///< Buffer will repeat until stopped.
+#define SFXBF_DONT_STOP     ( 0x8     )  ///< Never stop until normal finish.
+#define SFXBF_STREAM        ( 0x10    )  ///< Buffer plays in streaming mode (looping).
+#define SFXBF_RELOAD        ( 0x10000 )  ///< Sample must be reloaded before playing.
 ///@}
 
 /**
@@ -43,8 +43,8 @@
  */
 enum
 {
-    SFXIP_DISABLE_CHANNEL_REFRESH  = 1, ///< The channel refresh thread is not needed.
-    SFXIP_ANY_SAMPLE_RATE_ACCEPTED = 2  ///< Samples don't all need the same rate.
+    SFXIP_DISABLE_CHANNEL_REFRESH  = 1,  ///< The channel refresh thread is not needed.
+    SFXIP_ANY_SAMPLE_RATE_ACCEPTED = 2   ///< Samples don't all need the same rate.
 };
 
 /**
@@ -52,8 +52,8 @@ enum
  */
 enum
 {
-    SFXEV_BEGIN,            ///< An update is about to begin.
-    SFXEV_END               ///< The update is done.
+    SFXEV_BEGIN,  ///< An update is about to begin.
+    SFXEV_END     ///< The update is done.
 };
 
 /**
@@ -61,10 +61,10 @@ enum
  */
 enum
 {
-    SFXBP_VOLUME,           ///< 0..1
-    SFXBP_FREQUENCY,        ///< 1 = normal
-    SFXBP_PAN,              ///< -1..1 (2D only)
-    SFXBP_MIN_DISTANCE,     ///< 3D only
+    SFXBP_VOLUME,        ///< 0..1
+    SFXBP_FREQUENCY,     ///< 1 = normal
+    SFXBP_PAN,           ///< -1..1 (2D only)
+    SFXBP_MIN_DISTANCE,  ///< 3D only
     SFXBP_MAX_DISTANCE,
     SFXBP_POSITION,
     SFXBP_VELOCITY,
@@ -140,4 +140,4 @@ typedef struct audiointerface_sfx_s {
 
 ///@}
 
-#endif  // CLIENT_AUDIO_DRIVER_SFX_H
+#endif  // CLIENT_API_AUDIO_DRIVER_SFX_H

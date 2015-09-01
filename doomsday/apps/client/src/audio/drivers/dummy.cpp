@@ -20,9 +20,9 @@
 #include "de_base.h"
 #include "audio/drivers/dummy.h"
 
-#include <de/timer.h>
 #include "api_audiod.h"
 #include "api_audiod_sfx.h"
+#include <de/timer.h>
 
 using namespace de;
 
@@ -30,6 +30,7 @@ using namespace de;
 int DS_DummyInit();
 void DS_DummyShutdown();
 void DS_DummyEvent(int type);
+int DS_DummyGet(int prop, void *ptr);
 
 // Sfx interface:
 int DS_Dummy_SFX_Init();
@@ -50,7 +51,8 @@ audiodriver_t audiod_dummy = {
     DS_DummyInit,
     DS_DummyShutdown,
     DS_DummyEvent,
-    0
+    DS_DummyGet,
+    nullptr
 };
 
 audiointerface_sfx_t audiod_dummy_sfx = { {
@@ -101,6 +103,27 @@ void DS_DummyShutdown()
 void DS_DummyEvent(int /*type*/)
 {
     // Do nothing...
+}
+
+int DS_DummyGet(int prop, void *ptr)
+{
+    switch(prop)
+    {
+    case AUDIOP_IDENTIFIER: {
+        auto *id = reinterpret_cast<AutoStr *>(ptr);
+        DENG2_ASSERT(id);
+        if(id) Str_Set(id, "dummy");
+        return true; }
+
+    case AUDIOP_NAME: {
+        auto *name = reinterpret_cast<AutoStr *>(ptr);
+        DENG2_ASSERT(name);
+        if(name) Str_Set(name, "Dummy Driver");
+        return true; }
+
+    default: DENG2_ASSERT("DS_DummyGet: Unknown property"); break;
+    }
+    return false;
 }
 
 int DS_Dummy_SFX_Init()

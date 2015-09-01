@@ -10,6 +10,7 @@ deng_API
 DS_Init
 DS_Shutdown
 DS_Event
+DS_Get
 
 DM_Music_Init
 DM_Music_Update

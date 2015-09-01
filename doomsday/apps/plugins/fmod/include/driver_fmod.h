@@ -1,8 +1,8 @@
-/**
- * @file driver_fmod.h
- * FMOD Ex audio plugin. @ingroup dsfmod
+/** @file driver_fmod.h  FMOD Ex audio plugin.
+ * @ingroup dsfmod
  *
  * @authors Copyright © 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html (with exception granted to allow
@@ -41,16 +41,15 @@
 
 /**
  * @defgroup dsfmod
- * FMOD Ex audio plugin.
  */
 
-#ifndef __DSFMOD_DRIVER_H__
-#define __DSFMOD_DRIVER_H__
+#ifndef DSFMOD_AUDIO_DRIVER_H
+#define DSFMOD_AUDIO_DRIVER_H
 
 #include <fmod.h>
 #include <fmod.hpp>
 #include <fmod_errors.h>
-#include <stdio.h>
+#include <cstdio>
 #include <cassert>
 #include <iostream>
 #include <de/Log>
@@ -58,10 +57,11 @@
 
 extern "C" {
     
-int     DS_Init(void);
-void    DS_Shutdown(void);
-void    DS_Event(int type);
-int     DS_Set(int prop, const void* ptr);
+int DS_Init(void);
+void DS_Shutdown(void);
+void DS_Event(int type);
+int DS_Get(int prop, void *ptr);
+int DS_Set(int prop, void const *ptr);
 
 }
 
@@ -72,7 +72,7 @@ int     DS_Set(int prop, const void* ptr);
         LOGDEV_AUDIO_WARNING("[FMOD] Error at %s, line %i: (%d) %s") << __FILE__ << __LINE__ << result << FMOD_ErrorString(result); \
     }
 
-extern FMOD::System* fmodSystem;
+extern FMOD::System *fmodSystem;
 
 #include "fmod_sfx.h"
 #include "fmod_music.h"
@@ -81,4 +81,4 @@ extern FMOD::System* fmodSystem;
 
 DENG_USING_API(Con);
 
-#endif /* end of include guard: __DSFMOD_DRIVER_H__ */
+#endif  // DSFMOD_AUDIO_DRIVER_H

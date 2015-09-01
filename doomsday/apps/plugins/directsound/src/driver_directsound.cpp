@@ -1,42 +1,32 @@
-/**\file driver_directsound.cpp
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file driver_directsound.cpp  DirectSound (8.0 with EAX 2.0) audio plugin.
+ * @ingroup dsdsound
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @note Buffers are created on Load.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-/**
- * Win32 SFX driver for DirectSound, with EAX 2.0.
- *
- * Uses DirectSound 8.0
- * Buffers created on Load.
- */
-
-// HEADER FILES ------------------------------------------------------------
 
 #define DIRECTSOUND_VERSION 0x0800
 
 #define WIN32_LEAN_AND_MEAN
 
-#include <math.h>
-#include <stdlib.h>
+#include <cmath>
+#include <cstdlib>
 #include <windows.h>
 #include <mmsystem.h>
 #include <dsound.h>
@@ -54,101 +44,77 @@
 DENG_DECLARE_API(Base);
 DENG_DECLARE_API(Con);
 
-// MACROS ------------------------------------------------------------------
-
 // DirectSound(3D)Buffer Pointer
 #define DSBUF(buf)          ((LPDIRECTSOUNDBUFFER) buf->ptr)
 #define DSBUF3D(buf)        ((LPDIRECTSOUND3DBUFFER8) buf->ptr3D)
 
 #define MAX_FAILED_PROPS    (10)
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
 extern "C" {
-int             DS_Init(void);
-void            DS_Shutdown(void);
-void            DS_Event(int type);
+int DS_Init(void);
+void DS_Shutdown(void);
+void DS_Event(int type);
 
-int             DS_SFX_Init(void);
-sfxbuffer_t*    DS_SFX_CreateBuffer(int flags, int bits, int rate);
-void            DS_SFX_DestroyBuffer(sfxbuffer_t* buf);
-void            DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample);
-void            DS_SFX_Reset(sfxbuffer_t* buf);
-void            DS_SFX_Play(sfxbuffer_t* buf);
-void            DS_SFX_Stop(sfxbuffer_t* buf);
-void            DS_SFX_Refresh(sfxbuffer_t* buf);
-void            DS_SFX_Set(sfxbuffer_t* buf, int prop, float value);
-void            DS_SFX_Setv(sfxbuffer_t* buf, int prop, float* values);
-void            DS_SFX_Listener(int prop, float value);
-void            DS_SFX_Listenerv(int prop, float* values);
+int DS_SFX_Init(void);
+sfxbuffer_t *DS_SFX_CreateBuffer(int flags, int bits, int rate);
+void DS_SFX_DestroyBuffer(sfxbuffer_t *buf);
+void DS_SFX_Load(sfxbuffer_t *buf, struct sfxsample_s *sample);
+void DS_SFX_Reset(sfxbuffer_t *buf);
+void DS_SFX_Play(sfxbuffer_t *buf);
+void DS_SFX_Stop(sfxbuffer_t *buf);
+void DS_SFX_Refresh(sfxbuffer_t *buf);
+void DS_SFX_Set(sfxbuffer_t *buf, int prop, float value);
+void DS_SFX_Setv(sfxbuffer_t *buf, int prop, float *values);
+void DS_SFX_Listener(int prop, float value);
+void DS_SFX_Listenerv(int prop, float *values);
 }
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+static void commitEAXDeferred();
 
-static void     commitEAXDeferred(void);
+static dd_bool initOk;
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-static dd_bool initOk = false;
-
-static LPDIRECTSOUND8 dsound = NULL;
-static LPDIRECTSOUNDBUFFER primary = NULL;
-static LPDIRECTSOUND3DLISTENER8 dsListener = NULL;
-static LPKSPROPERTYSET propertySet = NULL;
-static dd_bool ignoreEAXErrors = false;
+static LPDIRECTSOUND8 dsound;
+static LPDIRECTSOUNDBUFFER primary;
+static LPDIRECTSOUND3DLISTENER8 dsListener;
+static LPKSPROPERTYSET propertySet;
+static dd_bool ignoreEAXErrors;
 static dd_bool canSetPSF = true;
 
 static DWORD failedProps[MAX_FAILED_PROPS];
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
+static HRESULT hr;
 
-// CODE --------------------------------------------------------------------
-
-static IDirectSoundBuffer8* createBuffer(DSBUFFERDESC* desc)
+static IDirectSoundBuffer8 *createBuffer(DSBUFFERDESC *desc)
 {
-    IDirectSoundBuffer* buf;
-    IDirectSoundBuffer8* buf8;
-    HRESULT             hr;
-
-    if(!desc)
-        return NULL;
+    if(!desc) return nullptr;
 
     // Try to create a secondary buffer with the requested properties.
-    if(FAILED(hr = dsound->CreateSoundBuffer(desc, &buf, NULL)))
-        return NULL;
+    IDirectSoundBuffer *buf;
+    if(FAILED(hr = dsound->CreateSoundBuffer(desc, &buf, nullptr)))
+        return nullptr;
 
     // Obtain the DirectSoundBuffer8 interface.
-    if(FAILED
-       (hr = buf->QueryInterface(IID_IDirectSoundBuffer8, (LPVOID*) &buf8)))
-        buf8 = NULL;
+    IDirectSoundBuffer8 *buf8;
+    if(FAILED(hr = buf->QueryInterface(IID_IDirectSoundBuffer8, (LPVOID *) &buf8)))
+    {
+        buf8 = nullptr;
+    }
 
     // Release the old interface, we don't need it.
     buf->Release();
     return buf8;
 }
 
-static IDirectSound3DBuffer8* get3DBuffer(IDirectSoundBuffer8* buf8)
+static IDirectSound3DBuffer8 *get3DBuffer(IDirectSoundBuffer8 *buf8)
 {
-    IDirectSound3DBuffer8* buf3d;
-    HRESULT             hr;
-
-    if(!buf8)
-        return NULL;
+    if(!buf8) return nullptr;
 
     // Query the 3D interface.
-    if(FAILED(hr = buf8->QueryInterface(IID_IDirectSound3DBuffer8,
-                                        (LPVOID*) &buf3d)))
+    IDirectSound3DBuffer8 *buf3d;
+    if(FAILED(hr = buf8->QueryInterface(IID_IDirectSound3DBuffer8, (LPVOID *) &buf3d)))
     {
         App_Log(DE2_DEV_AUDIO_WARNING, "[DirectSound] get3DBuffer: Failed to get 3D interface (0x%x)", hr);
-        buf3d = NULL;
+        buf3d = nullptr;
     }
 
     return buf3d;
@@ -157,24 +123,18 @@ static IDirectSound3DBuffer8* get3DBuffer(IDirectSoundBuffer8* buf8)
 /**
  * Does the EAX implementation support getting/setting of a propertry.
  *
- * @param prop          Property id (constant) to be checked.
- * @return              @c true, if supported.
+ * @param prop  Property id (constant) to be checked.
+ * @return  @c true if supported.
  */
 static dd_bool queryEAXSupport(int prop)
 {
-#define EAXSUP          (KSPROPERTY_SUPPORT_GET | KSPROPERTY_SUPPORT_SET)
+#define EAXSUP          ( KSPROPERTY_SUPPORT_GET | KSPROPERTY_SUPPORT_SET )
 
-    if(propertySet)
-    {
-        ULONG               support = 0;
+    if(!propertySet) return false;
 
-        propertySet->QuerySupport(DSPROPSETID_EAX_ListenerProperties, prop,
-                                  &support);
-
-        return (support & EAXSUP) == EAXSUP? true : false;
-    }
-
-    return false;
+    ULONG support = 0;
+    propertySet->QuerySupport(DSPROPSETID_EAX_ListenerProperties, prop, &support);
+    return (support & EAXSUP) == EAXSUP;
 
 #undef EAXSUP
 }
@@ -182,16 +142,16 @@ static dd_bool queryEAXSupport(int prop)
 /**
  * Init DirectSound, start playing the primary buffer.
  *
- * @return              @c true, iff successful.
+ * @return  @c true if successful.
  */
-int DS_Init(void)
+int DS_Init()
 {
 #define NUMBUFFERS_HW_3D ((uint) dsoundCaps.dwFreeHw3DStreamingBuffers)
 #define NUMBUFFERS_HW_2D ((uint) dsoundCaps.dwFreeHwMixingStreamingBuffers)
 
     typedef struct eaxproperty_s {
         DSPROPERTY_EAX_LISTENERPROPERTY prop;
-        char*           name;
+        char *name;
     } eaxproperty_t;
 
     static const eaxproperty_t eaxProps[] = {
@@ -203,23 +163,25 @@ int DS_Init(void)
         { DSPROPERTY_EAXLISTENER_NONE, NULL } // terminate.
     };
 
-    DSBUFFERDESC        desc;
-    DSCAPS              dsoundCaps;
-    HWND                hWnd;
-    HRESULT             hr;
-    //uint                numHW3DBuffers = 0;
-    dd_bool             useEAX, eaxAvailable = false,
-                        primaryBuffer3D = false, primaryBufferHW = false;
-    dd_bool             haveInstance = false;
+    DSBUFFERDESC desc;
+    DSCAPS dsoundCaps;
+    HWND hWnd;
+    HRESULT hr;
+    //uint numHW3DBuffers = 0;
+    dd_bool useEAX = false;
+    dd_bool eaxAvailable = false;
+    dd_bool primaryBuffer3D = false;
+    dd_bool primaryBufferHW = false;
+    dd_bool haveInstance = false;
 
-    if(dsound)
-        return true; // Already initialized?
+    // Already been here?
+    if(dsound) return true;
 
     App_Log(DE2_AUDIO_VERBOSE, "[DirectSound] Initializing Direct Sound...");
 
     // Can we set the Primary Sound Format?
     canSetPSF = !CommandLine_Exists("-nopsf");
-    useEAX = !CommandLine_Exists("-noeax");
+    useEAX    = !CommandLine_Exists("-noeax");
 
     if(!(hWnd = (HWND) DD_GetVariable(DD_WINDOW_HANDLE)))
     {
@@ -466,6 +428,27 @@ void DS_Shutdown(void)
 void DS_Event(int /*type*/)
 {
     // Do nothing...
+}
+
+int DS_Get(int prop, void *ptr)
+{
+    switch(prop)
+    {
+    case AUDIOP_IDENTIFIER: {
+        auto *id = reinterpret_cast<AutoStr *>(ptr);
+        DENG2_ASSERT(id);
+        if(id) Str_Set(id, "directsound;dsound");
+        return true; }
+
+    case AUDIOP_NAME: {
+        auto *name = reinterpret_cast<AutoStr *>(ptr);
+        DENG2_ASSERT(name);
+        if(name) Str_Set(name, "DirectSound");
+        return true; }
+
+    default: DENG2_ASSERT("[OpenAL]DS_Get: Unknown property"); break;
+    }
+    return false;
 }
 
 int DS_SFX_Init(void)

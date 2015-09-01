@@ -22,9 +22,9 @@
 
 #include "audio/system.h"
 
-#include "dd_share.h"      // SF_* flags
-#include "dd_main.h"       // ::isDedicated
-#include "def_main.h"      // ::defs
+#include "dd_share.h"  // SF_* flags
+#include "dd_main.h"   // ::isDedicated
+#include "def_main.h"  // ::defs
 
 #ifdef __SERVER__
 #  include "server/sv_sound.h"
@@ -33,7 +33,7 @@
 #include "api_audiod_sfx.h"
 #include "audio/samplecache.h"
 #ifdef __CLIENT__
-#  include "audio/channel.h"
+#  include "audio/driver.h"
 #  include "audio/mus.h"
 #endif
 
@@ -51,6 +51,11 @@
 #  include <doomsday/filesys/fs_util.h>
 #endif
 #include <de/App>
+#ifdef __CLIENT__
+#  include <de/Error>
+#  include <de/LibraryFile>
+#  include <de/NativeFile>
+#endif
 #include <de/timer.h>
 #ifdef __CLIENT__
 #  include <de/memory.h>
@@ -103,29 +108,6 @@ static char *musMidiFontPath = (char *) "";
 // When multiple sources are available this setting determines which to use (mus < ext < cd).
 static audio::System::MusicSource musSourcePreference = audio::System::MUSP_EXT;
 
-static audiodriverid_t identifierToDriverId(String name)
-{
-    static String const driverIdentifier[AUDIODRIVER_COUNT] = {
-        "dummy",
-        "sdlmixer",
-        "openal",
-        "fmod",
-        "fluidsynth",
-        "dsound",
-        "winmm"
-    };
-
-    name = name.toLower();
-
-    for(dint i = 0; i < AUDIODRIVER_COUNT; ++i)
-    {
-        if(name == driverIdentifier[i]) return audiodriverid_t( i );
-    }
-
-    LOG_AUDIO_ERROR("'%s' is not a valid audio driver name") << name;
-    return AUDIOD_INVALID;
-}
-
 /**
  * Usually the display player.
  */
@@ -135,155 +117,164 @@ static mobj_t *getListenerMobj()
 }
 #endif
 
+/**
+ * @todo Simplify architecture - load the "dummy" driver, always -ds
+ */
 DENG2_PIMPL(System)
 #ifdef __CLIENT__
 , DENG2_OBSERVES(App, GameUnload)
 #endif
 {
 #ifdef __CLIENT__
+    /// Required/referenced audio driver is missing. @ingroup errors
+    DENG2_ERROR(MissingDriverError);
+
     SettingsRegister settings;
+    QList<Driver *> drivers;
 
-    Driver drivers[AUDIODRIVER_COUNT];
-
-    Driver &driverById(audiodriverid_t id)
+    Driver *tryFindDriver(String driverId)
     {
-        DENG2_ASSERT(VALID_AUDIODRIVER_IDENTIFIER(id));
-        return drivers[id];
+        driverId = driverId.toLower();  // Symbolic identfiers are lowercase.
+        for(Driver *driver : drivers)
+        for(String const &id : driver->identifier().split(';'))
+        {
+            if(id == driverId)
+                return driver;
+        }
+        return nullptr;
     }
 
-    /**
-     * Chooses the default audio driver based on configuration options.
-     */
-    audiodriverid_t chooseDriver()
+    Driver &findDriver(String driverId)
     {
-        CommandLine &cmdLine = App::commandLine();
-
-        // No audio output?
-        if(::isDedicated)
-            return AUDIOD_DUMMY;
-
-        if(cmdLine.has("-dummy"))
-            return AUDIOD_DUMMY;
-
-        if(cmdLine.has("-fmod"))
-            return AUDIOD_FMOD;
-
-        if(cmdLine.has("-oal") || cmdLine.has("-openal"))
-            return AUDIOD_OPENAL;
-
-#ifdef WIN32
-        if(cmdLine.has("-dsound"))
-            return AUDIOD_DSOUND;
-
-        if(cmdLine.has("-winmm"))
-            return AUDIOD_WINMM;
-#endif
-
-#ifndef DENG_DISABLE_SDLMIXER
-        if(cmdLine.has("-sdlmixer"))
-            return AUDIOD_SDL_MIXER;
-#endif
-
-        // The default audio driver.
-        return AUDIOD_FMOD;
-    }
-
-    /**
-     * Initializes the audio driver interfaces.
-     *
-     * @return  @c true iff successful.
-     */
-    bool initDriver(audiodriverid_t driverId)
-    {
-        try
-        {
-            Driver &driver = driverById(driverId);
-
-            switch(driverId)
-            {
-            case AUDIOD_DUMMY:      driver.load("dummy");       break;
-#ifndef DENG_DISABLE_SDLMIXER
-            case AUDIOD_SDL_MIXER:  driver.load("sdlmixer");    break;
-#endif
-            case AUDIOD_OPENAL:     driver.load("openal");      break;
-            case AUDIOD_FMOD:       driver.load("fmod");        break;
-            case AUDIOD_FLUIDSYNTH: driver.load("fluidsynth");  break;
-#ifdef WIN32
-            case AUDIOD_DSOUND:     driver.load("directsound"); break;
-            case AUDIOD_WINMM:      driver.load("winmm");       break;
-#endif
-
-            default: return false;
-            }
-
-            // All loaded drivers are automatically initialized so they are ready for use.
-            driver.initialize();
-            return driver.isInitialized();
-        }
-        catch(Driver::LoadError const &er)
-        {
-            LOG_AUDIO_WARNING("Failed initializing driver \"%s\":\n")
-                << Driver_GetName(driverId)
-                << er.asText();
-        }
-        return false;
-    }
-
-    audiodriverid_t initDriverIfNeeded(String const &identifier)
-    {
-        audiodriverid_t id  = identifierToDriverId(identifier);
-        Driver &driver = driverById(id);
-        if(!driver.isInitialized())
-        {
-            initDriver(id);
-        }
-        return id;
-    }
-
-    bool loadDrivers()
-    {
-        activeInterfaces.clear();
-
-        if(App::commandLine().has("-nosound"))
-            return false;
-
-        audiodriverid_t defaultDriverId = chooseDriver();
-
-        bool ok = initDriver(defaultDriverId);
-
-        // Fallback option for the default driver.
-#ifndef DENG_DISABLE_SDLMIXER
-        if(!ok)
-        {
-            defaultDriverId = AUDIOD_SDL_MIXER;
-            ok = initDriver(defaultDriverId);
-        }
-#endif
-        if(ok)
-        {
-            // Choose the interfaces to use.
-            selectInterfaces(defaultDriverId);
-        }
-
-        return ok;
+        if(Driver *driver = tryFindDriver(driverId)) return *driver;
+        /// @throw MissingDriverError  Unknown driver identifier specified.
+        throw MissingDriverError("audio::System::Instance::driverByIdentifier", "Unknown audio driver '" + driverId + "'");
     }
 
     void unloadDrivers()
     {
         // Deinitialize all loaded drivers. (Note: reverse order)
-        for(dint i = AUDIODRIVER_COUNT; i--> 0; )
+        /// @todo fixme: load order != initialization order -ds
+        for(dint i = drivers.count(); i--> 0; )
         {
-            drivers[i].deinitialize();
+            drivers[i]->deinitialize();
         }
 
         // Unload the plugins after everything has been shut down.
-        for(Driver &driver : drivers)
-        {
-            driver.unload();
-        }
+        qDeleteAll(drivers);
+        drivers.clear();
 
         // No more interfaces available.
         activeInterfaces.clear();
+    }
+
+    /**
+     * Chooses the default audio driver based on configuration options.
+     */
+    String chooseDriver()
+    {
+        // No audio output?
+        if(::isDedicated) return "dummy";
+
+        // Presently the audio driver configuration is inferred and/or specified
+        // using command line options.
+        /// @todo Store this information persistently in Config. -ds
+        CommandLine &cmdLine = App::commandLine();
+        for(Driver const *driver : drivers)
+        for(QString const &id : driver->identifier().split(';'))
+        {
+#ifdef DENG_DISABLE_SDLMIXER
+            /// @todo As this is a built-in driver, simply don't publish it. -ds
+            if(id == "sdlmixer")
+                continue;
+#endif
+
+            if(cmdLine.has("-" + id))
+                return id;
+        }
+
+        return "fmod";  // The default audio driver.
+    }
+
+    void loadDrivers()
+    {
+        DENG2_ASSERT(activeInterfaces.isEmpty());
+        DENG2_ASSERT(drivers.isEmpty());
+        DENG2_ASSERT(!App::commandLine().has("-nosound"));
+
+        // Firstly - built-in audio drivers.
+        //loadDriver("dummy");
+        //loadDriver("sdlmixer");
+
+        // Secondly - plugin audio drivers.
+        Library_forAll([this] (LibraryFile &libFile)
+        {
+            if(Driver::recognize(libFile))
+            {
+                LOG_AUDIO_VERBOSE("Loading plugin audio driver '%s'...") << libFile.name();
+                if(auto *driver = Driver::newFromLibrary(libFile))
+                {
+                    // Add the new driver to the collection.
+                    drivers << driver;
+                }
+                else
+                {
+                    LOG_AUDIO_WARNING("Failed loading plugin audio driver '%s'") << libFile.name();
+                }
+            }
+            return LoopContinue;
+        });
+
+        // Log a summary of the available drivers.
+        dint n = 0;
+        LOG_AUDIO_MSG("Loaded audio drivers (%i)") << drivers.count();
+        for(Driver const *driver : drivers)
+        {
+            LOG_AUDIO_MSG("%i: %s (id:%s)") << n << driver->name() << driver->identifier();
+            n += 1;
+        }
+
+        // Choose the default driver and initialize it.
+        /// @todo Defer until an interface is added. -ds
+        Driver *defaultDriver = tryFindDriver(chooseDriver());
+        if(defaultDriver)
+        {
+            initDriverIfNeeded(*defaultDriver);
+        }
+        // Fallback option for the default driver.
+#ifndef DENG_DISABLE_SDLMIXER
+        if(!defaultDriver || !defaultDriver->isInitialized())
+        {
+            defaultDriver = &findDriver("sdlmixer");
+            initDriverIfNeeded(*defaultDriver);
+        }
+#endif
+
+        if(defaultDriver && defaultDriver->isInitialized())
+        {
+            // Choose the interfaces to use.
+            selectInterfaces(*defaultDriver);
+        }
+    }
+
+    /**
+     * Initialize the given audio @a driver if necessary.
+     *
+     * @return  Same as @a driver, for caller convenience.
+     */
+    Driver &initDriverIfNeeded(Driver &driver)
+    {
+        if(!driver.isInitialized())
+        {
+            LOG_AUDIO_VERBOSE("Initializing audio driver '%s'...") << driver.identifier();
+            driver.initialize();
+            if(!driver.isInitialized())
+            {
+                /// @todo Why, exactly? (log it!) -ds
+                LOG_AUDIO_WARNING("Failed initializing audio driver '%s'") << driver.identifier();
+            }
+        }
+        return driver;
     }
 
     /**
@@ -304,22 +295,26 @@ DENG2_PIMPL(System)
     };
     QList<PlaybackInterface> activeInterfaces;
 
+    void addPlaybackInterface(PlaybackInterface const &ifs)
+    {
+        DENG2_ASSERT(ifs.type == AUDIO_ISFX || ifs.type == AUDIO_IMUSIC || ifs.type == AUDIO_ICD);
+        DENG2_ASSERT(ifs.i.any != nullptr);
+        /// @todo Ensure this interface is not already present! -ds
+        activeInterfaces << ifs;  // a copy is made
+    }
+
     /**
      * Choose the SFX, Music, and CD audio interfaces to use.
-     *
-     * @param defaultDriverId  Default audio driver to use unless overridden.
      */
-    void selectInterfaces(audiodriverid_t defaultDriverId)
+    void selectInterfaces(Driver &defaultDriver)
     {
-        Driver &defaultDriver = driverById(defaultDriverId);
-
         // The default driver goes on the bottom of the stack.
         if(defaultDriver.hasSfx())
         {
             PlaybackInterface ifs; zap(ifs);
             ifs.type  = AUDIO_ISFX;
             ifs.i.any = &defaultDriver.iSfx();
-            activeInterfaces << ifs;  // a copy is made
+            addPlaybackInterface(ifs);  // a copy is made
         }
 
         if(defaultDriver.hasMusic())
@@ -327,23 +322,24 @@ DENG2_PIMPL(System)
             PlaybackInterface ifs; zap(ifs);
             ifs.type  = AUDIO_IMUSIC;
             ifs.i.any = &defaultDriver.iMusic();
-            activeInterfaces << ifs;  // a copy is made
+            addPlaybackInterface(ifs);  // a copy is made
         }
+#if 0
 #ifdef MACOSX
-        else if(defaultDriverId != AUDIOD_DUMMY)
+        else if(defaultDriver.identifier() != "dummy")
         {
             // On the Mac, use the built-in QuickTime interface as the fallback for music.
             PlaybackInterface ifs; zap(ifs);
             ifs.type  = AUDIO_IMUSIC;
             ifs.i.any = &::audiodQuickTimeMusic;
-            activeInterfaces << ifs;  // a copy is made
+            addPlaybackInterface(ifs);  // a copy is made
         }
 #endif
 
 #ifndef WIN32
         // At the moment, dsFMOD supports streaming samples so we can
         // automatically load dsFluidSynth for MIDI music.
-        if(defaultDriverId == AUDIOD_FMOD)
+        if(defaultDriver.identifier() == "fmod")
         {
             initDriverIfNeeded("fluidsynth");
             Driver &fluidSynth = driverById(AUDIOD_FLUIDSYNTH);
@@ -352,9 +348,10 @@ DENG2_PIMPL(System)
                 PlaybackInterface ifs; zap(ifs);
                 ifs.type  = AUDIO_IMUSIC;
                 ifs.i.any = &fluidSynth.iMusic();
-                activeInterfaces << ifs;  // a copy is made
+                addPlaybackInterface(ifs);  // a copy is made
             }
         }
+#endif
 #endif
 
         if(defaultDriver.hasCd())
@@ -362,7 +359,7 @@ DENG2_PIMPL(System)
             PlaybackInterface ifs; zap(ifs);
             ifs.type  = AUDIO_ICD;
             ifs.i.any = &defaultDriver.iCd();
-            activeInterfaces << ifs;  // a copy is made
+            addPlaybackInterface(ifs);  // a copy is made
         }
 
         CommandLine &cmdLine = App::commandLine();
@@ -370,52 +367,84 @@ DENG2_PIMPL(System)
         {
             if(!cmdLine.isOption(p)) continue;
 
-            // Check for SFX override.
+            // A SFX override?
             if(cmdLine.matches("-isfx", cmdLine.at(p)))
             {
-                Driver &driver = driverById(initDriverIfNeeded(cmdLine.at(++p)));
-                if(!driver.hasSfx())
-                    throw Error("selectInterfaces", "Audio driver \"" + driver.name() + "\" does not provide a SFX interface");
-
-                PlaybackInterface ifs; zap(ifs);
-                ifs.type  = AUDIO_ISFX;
-                ifs.i.any = &driver.iSfx();
-                activeInterfaces << ifs;  // a copy is made
+                try
+                {
+                    Driver &driver = findDriver(cmdLine.at(++p));
+                    initDriverIfNeeded(driver);
+                    if(driver.hasSfx())
+                    {
+                        PlaybackInterface ifs; zap(ifs);
+                        ifs.type  = AUDIO_ISFX;
+                        ifs.i.any = &driver.iSfx();
+                        addPlaybackInterface(ifs);  // a copy is made
+                    }
+                    else
+                    {
+                        LOG_AUDIO_WARNING("Audio driver \"" + driver.name() + "\" does not provide a SFX interface");
+                    }
+                }
+                catch(MissingDriverError const &er)
+                {
+                    LOG_AUDIO_WARNING("") << er.asText();
+                }
                 continue;
             }
 
-            // Check for Music override.
+            // A Music override?
             if(cmdLine.matches("-imusic", cmdLine.at(p)))
             {
-                Driver &driver = driverById(initDriverIfNeeded(cmdLine.at(++p)));
-                if(!driver.hasMusic())
-                    throw Error("selectInterfaces", "Audio driver \"" + driver.name() + "\" does not provide a Music interface");
-
-                PlaybackInterface ifs; zap(ifs);
-                ifs.type  = AUDIO_IMUSIC;
-                ifs.i.any = &driver.iMusic();
-                activeInterfaces << ifs;  // a copy is made
+                try
+                {
+                    Driver &driver = findDriver(cmdLine.at(++p));
+                    initDriverIfNeeded(driver);
+                    if(driver.hasMusic())
+                    {
+                        PlaybackInterface ifs; zap(ifs);
+                        ifs.type  = AUDIO_IMUSIC;
+                        ifs.i.any = &driver.iMusic();
+                        addPlaybackInterface(ifs);  // a copy is made
+                    }
+                    else
+                    {
+                        LOG_AUDIO_WARNING("Audio driver \"" + driver.name() + "\" does not provide a Music interface");
+                    }
+                }
+                catch(MissingDriverError const &er)
+                {
+                    LOG_AUDIO_WARNING("") << er.asText();
+                }
                 continue;
             }
 
-            // Check for CD override.
+            // A CD override?
             if(cmdLine.matches("-icd", cmdLine.at(p)))
             {
-                Driver &driver = driverById(initDriverIfNeeded(cmdLine.at(++p)));
-                if(!driver.hasCd())
-                    throw Error("selectInterfaces", "Audio driver \"" + driver.name() + "\" does not provide a CD interface");
-
-                PlaybackInterface ifs; zap(ifs);
-                ifs.type  = AUDIO_ICD;
-                ifs.i.any = &driver.iCd();
-                activeInterfaces << ifs;  // a copy is made
+                try
+                {
+                    Driver &driver = findDriver(cmdLine.at(++p));
+                    initDriverIfNeeded(driver);
+                    if(driver.hasCd())
+                    {
+                        PlaybackInterface ifs; zap(ifs);
+                        ifs.type  = AUDIO_ICD;
+                        ifs.i.any = &driver.iCd();
+                        addPlaybackInterface(ifs);  // a copy is made
+                    }
+                    else
+                    {
+                        LOG_AUDIO_WARNING("Audio driver \"" + driver.name() + "\" does not provide a CD interface");
+                    }
+                }
+                catch(MissingDriverError const &er)
+                {
+                    LOG_AUDIO_WARNING("") << er.asText();
+                }
                 continue;
             }
         }
-
-        // Let the music driver(s) know of the primary sfx interface, in case they
-        // want to play audio through it.
-        setMusicProperty(AUDIOP_SFX_INTERFACE, self.sfx());
     }
 
     /**
@@ -456,13 +485,13 @@ DENG2_PIMPL(System)
     {
         if(anyAudioInterface)
         {
-            for(Driver const &driver : drivers)
+            for(Driver const *driver : drivers)
             {
-                if((void *)&driver.iSfx()   == anyAudioInterface ||
-                   (void *)&driver.iMusic() == anyAudioInterface ||
-                   (void *)&driver.iCd()    == anyAudioInterface)
+                if((void *)&driver->iSfx()   == anyAudioInterface ||
+                   (void *)&driver->iMusic() == anyAudioInterface ||
+                   (void *)&driver->iCd()    == anyAudioInterface)
                 {
-                    return driver.iBase();
+                    return driver->iBase();
                 }
             }
         }
@@ -473,11 +502,11 @@ DENG2_PIMPL(System)
     {
         if(anyAudioInterface)
         {
-            for(Driver const &driver : drivers)
+            for(Driver const *driver : drivers)
             {
-                if((void *)&driver.iSfx()   == anyAudioInterface) return AUDIO_ISFX;
-                if((void *)&driver.iMusic() == anyAudioInterface) return AUDIO_IMUSIC;
-                if((void *)&driver.iCd()    == anyAudioInterface) return AUDIO_ICD;
+                if((void *)&driver->iSfx()   == anyAudioInterface) return AUDIO_ISFX;
+                if((void *)&driver->iMusic() == anyAudioInterface) return AUDIO_IMUSIC;
+                if((void *)&driver->iCd()    == anyAudioInterface) return AUDIO_ICD;
             }
         }
         return AUDIO_INONE;
@@ -487,9 +516,9 @@ DENG2_PIMPL(System)
     {
         if(anyAudioInterface)
         {
-            for(Driver const &driver : drivers)
+            for(Driver const *driver : drivers)
             {
-                String const name = driver.interfaceName(anyAudioInterface);
+                String const name = driver->interfaceName(anyAudioInterface);
                 if(!name.isEmpty()) return name;
             }
         }
@@ -1668,9 +1697,11 @@ void System::initPlayback()
     // Disable random pitch changes?
     sfxNoRndPitch = cmdLine.has("-norndpitch");
 
-    // Try to load the audio driver plugin(s).
-    if(d->loadDrivers())
+    // Try to load the audio drivers?
+    if(!App::commandLine().has("-nosound"))
     {
+        d->loadDrivers();
+
         // Init for sound effects.
         try
         {
@@ -2256,17 +2287,6 @@ audiointerface_cd_t *System::cd() const
     return found;
 }
 
-audiodriverid_t System::toDriverId(Driver const *driver) const
-{
-    if(driver && driver >= &d->drivers[0] && driver <= &d->drivers[AUDIODRIVER_COUNT])
-    {
-        return audiodriverid_t( driver - d->drivers );
-    }
-    return AUDIOD_INVALID;
-}
-#endif
-
-#ifdef __CLIENT__
 SampleCache const &System::sampleCache() const
 {
     return d->sampleCache;

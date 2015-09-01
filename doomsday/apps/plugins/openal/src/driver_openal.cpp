@@ -1,6 +1,5 @@
-/**
- * @file driver_openal.cpp
- * OpenAL audio plugin. @ingroup dsopenal
+/** @file driver_openal.cpp  OpenAL audio plugin.
+ * @ingroup dsopenal
  *
  * @bug Not 64bit clean: In function 'DS_SFX_CreateBuffer': cast to pointer from integer of different size
  * @bug Not 64bit clean: In function 'DS_SFX_DestroyBuffer': cast to pointer from integer of different size
@@ -11,7 +10,7 @@
  * @bug Not 64bit clean: In function 'DS_SFX_Setv': cast to pointer from integer of different size
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -44,7 +43,7 @@
 #  include <AL/al.h>
 #  include <AL/alc.h>
 #endif
-#include <stdio.h>
+#include <cstdio>
 #include <cassert>
 #include <iostream>
 #include <cstring>
@@ -59,13 +58,13 @@
 DENG_DECLARE_API(Con);
 
 #define SRC(buf) ( (ALuint) PTR2INT(buf->ptr3D) )
-#define BUF(buf) ( (ALuint) PTR2INT(buf->ptr) )
+#define BUF(buf) ( (ALuint) PTR2INT(buf->ptr)   )
 
 //enum { VX, VY, VZ };
 
 #ifdef WIN32
-ALenum(*EAXGet) (const struct _GUID* propertySetID, ALuint prop, ALuint source, ALvoid* value, ALuint size);
-ALenum(*EAXSet) (const struct _GUID* propertySetID, ALuint prop, ALuint source, ALvoid* value, ALuint size);
+ALenum(*EAXGet) (struct _GUID const *propertySetID, ALuint prop, ALuint source, ALvoid *value, ALuint size);
+ALenum(*EAXSet) (struct _GUID const *propertySetID, ALuint prop, ALuint source, ALvoid *value, ALuint size);
 #endif
 
 // Doomsday expects symbols to be exported without mangling.
@@ -77,18 +76,18 @@ void DS_Shutdown(void);
 void DS_Event(int type);
 
 int DS_SFX_Init(void);
-sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate);
-void DS_SFX_DestroyBuffer(sfxbuffer_t* buf);
-void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample);
-void DS_SFX_Reset(sfxbuffer_t* buf);
-void DS_SFX_Play(sfxbuffer_t* buf);
-void DS_SFX_Stop(sfxbuffer_t* buf);
-void DS_SFX_Refresh(sfxbuffer_t* buf);
-void DS_SFX_Set(sfxbuffer_t* buf, int prop, float value);
-void DS_SFX_Setv(sfxbuffer_t* buf, int prop, float* values);
+sfxbuffer_t *DS_SFX_CreateBuffer(int flags, int bits, int rate);
+void DS_SFX_DestroyBuffer(sfxbuffer_t *buf);
+void DS_SFX_Load(sfxbuffer_t *buf, struct sfxsample_s *sample);
+void DS_SFX_Reset(sfxbuffer_t *buf);
+void DS_SFX_Play(sfxbuffer_t *buf);
+void DS_SFX_Stop(sfxbuffer_t *buf);
+void DS_SFX_Refresh(sfxbuffer_t *buf);
+void DS_SFX_Set(sfxbuffer_t *buf, int prop, float value);
+void DS_SFX_Setv(sfxbuffer_t *buf, int prop, float *values);
 void DS_SFX_Listener(int prop, float value);
-void DS_SFX_Listenerv(int prop, float* values);
-int DS_SFX_Getv(int prop, void* values);
+void DS_SFX_Listenerv(int prop, float *values);
+int DS_SFX_Getv(int prop, void *values);
 
 } // extern "C"
 
@@ -102,12 +101,12 @@ struct _GUID DSPROPSETID_EAX20_BufferProperties = {
 };
 #endif
 
-static dd_bool initOk = false;
-static dd_bool hasEAX = false;
+static dd_bool initOk;
+static dd_bool hasEAX;
 static float unitsPerMeter = 1;
-static float headYaw, headPitch; // In radians.
-static ALCdevice* device = 0;
-static ALCcontext* context = 0;
+static float headYaw, headPitch;  ///< In radians.
+static ALCdevice *device;
+static ALCcontext *context;
 
 #ifdef DENG_DSOPENAL_DEBUG
 #  define DSOPENAL_TRACE(args)  std::cerr << "[dsOpenAL] " << args << std::endl;
@@ -118,23 +117,23 @@ static ALCcontext* context = 0;
 #define DSOPENAL_ERRCHECK(errorcode) \
     error(errorcode, __FILE__, __LINE__)
 
-static int error(ALenum errorCode, const char* file, int line)
+static int error(ALenum errorCode, char const *file, int line)
 {
     if(errorCode == AL_NO_ERROR) return false;
     std::cerr << "[dsOpenAL] Error at " << file << ", line " << line
-              << ": (" << (int)errorCode << ") " << (const char*)alGetString(errorCode);
+              << ": (" << (int)errorCode << ") " << (char const *)alGetString(errorCode);
     return true;
 }
 
-static void loadExtensions(void)
+static void loadExtensions()
 {
 #ifdef WIN32
     // Check for EAX 2.0.
-    hasEAX = alIsExtensionPresent((ALchar*) "EAX2.0");
+    hasEAX = alIsExtensionPresent((ALchar *) "EAX2.0");
     if(hasEAX)
     {
-        EAXGet = (ALenum (*)(const struct _GUID*, ALuint, ALuint, ALvoid*, ALuint))alGetProcAddress("EAXGet");
-        EAXSet = (ALenum (*)(const struct _GUID*, ALuint, ALuint, ALvoid*, ALuint))alGetProcAddress("EAXSet");
+        EAXGet = (ALenum (*)(struct _GUID const *, ALuint, ALuint, ALvoid *, ALuint))alGetProcAddress("EAXGet");
+        EAXSet = (ALenum (*)(struct _GUID const *, ALuint, ALuint, ALvoid *, ALuint))alGetProcAddress("EAXSet");
         if(!EAXGet || !EAXSet)
             hasEAX = false;
     }
@@ -143,10 +142,10 @@ static void loadExtensions(void)
 #endif
 }
 
-int DS_Init(void)
+int DS_Init()
 {
-    // Already initialized?
-    if(initOk) return true;
+    // Already been here?
+    if(::initOk) return true;
 
     // Open the default playback device.
     device = alcOpenDevice(NULL);
@@ -175,7 +174,7 @@ int DS_Init(void)
     return true;
 }
 
-void DS_Shutdown(void)
+void DS_Shutdown()
 {
     if(!initOk) return;
 
@@ -193,14 +192,35 @@ void DS_Event(int /*type*/)
     // Not supported.
 }
 
-int DS_SFX_Init(void)
+int DS_Get(int prop, void *ptr)
+{
+    switch(prop)
+    {
+    case AUDIOP_IDENTIFIER: {
+        auto *id = reinterpret_cast<AutoStr *>(ptr);
+        DENG2_ASSERT(id);
+        if(id) Str_Set(id, "openal;oal");
+        return true; }
+
+    case AUDIOP_NAME: {
+        auto *name = reinterpret_cast<AutoStr *>(ptr);
+        DENG2_ASSERT(name);
+        if(name) Str_Set(name, "OpenAL");
+        return true; }
+
+    default: DENG2_ASSERT("[OpenAL]DS_Get: Unknown property"); break;
+    }
+    return false;
+}
+
+int DS_SFX_Init()
 {
     return true;
 }
 
-sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate)
+sfxbuffer_t *DS_SFX_CreateBuffer(int flags, int bits, int rate)
 {
-    sfxbuffer_t* buf;
+    sfxbuffer_t *buf;
     ALuint bufName, srcName;
 
     // Create a new buffer and a new source.

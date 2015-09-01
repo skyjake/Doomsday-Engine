@@ -41,23 +41,55 @@ namespace audio {
 class Driver
 {
 public:
-    /// Base class for load related errors. @ingroup errors
-    DENG2_ERROR(LoadError);
+    /// Loaded driver returned "not successful" when trying to read a property. @ingroup errors
+    DENG2_ERROR(ReadPropertyError);
+
+    /// Loaded driver returned "not successful" when trying to write a property. @ingroup errors
+    DENG2_ERROR(WritePropertyError);
 
     /**
      * Logical driver status.
      */
     enum Status
     {
-        Invalid,     ///< Invalid state (i.e., not yet loaded).
         Loaded,      ///< Library is loaded but not yet in use.
         Initialized  ///< Library is loaded and initialized ready for use.
     };
 
     /**
-     * Construct a new audio Driver (invalid until loaded).
+     * If the driver is still initialized it will be automatically deinitialized
+     * when this is called, before then unloading the underlying Library.
      */
-    Driver();
+    virtual ~Driver();
+
+    /**
+     * Returns @c true if the given @a library appears to be useable with Driver.
+     *
+     * @see newFromLibrary()
+     */
+    static bool recognize(de::LibraryFile &library);
+
+    /**
+     * Attempt to load a new Driver from the given @a library.
+     *
+     * @return  Pointer to a new Driver instance if successful. Ownership is given
+     * to the caller.
+     *
+     * @see recognize()
+     */
+    static Driver *newFromLibrary(de::LibraryFile &library);
+
+    /**
+     * Returns the textual, symbolic identifier of the audio driver (lower case),
+     * for use in Config.
+     *
+     * @note An audio driver may be have multiple identifiers, in which case they
+     * will be returned here and delimited with ';' characters.
+     *
+     * @todo Once the audio driver/interface configuration is stored persistently
+     * in Config we should remove the alternative identifiers at this time. -ds
+     */
+    de::String identifier() const;
 
     /**
      * Returns the human-friendly name of the audio driver if loaded; otherwise a
@@ -75,21 +107,8 @@ public:
      */
     de::String statusAsText() const;
 
-    inline bool isInvalid    () const { return status() == Invalid;     }
     inline bool isLoaded     () const { return status() >= Loaded;      }
     inline bool isInitialized() const { return status() == Initialized; }
-
-    /**
-     * Load the audio driver library and import symbols.
-     *
-     * @note Once loaded the driver must be @ref initialized before use.
-     */
-    void load(de::String const &identifier);
-
-    /**
-     * Unload the audio driver
-     */
-    void unload();
 
     /**
      * Initialize the audio driver if necessary, ready for use.
@@ -102,8 +121,8 @@ public:
     void deinitialize();
 
     /**
-     * Returns the plugin library for the loaded audio driver, if any (may return
-     * @c nullptr if not yet loaded, or this is a built-in driver).
+     * Returns the plugin library for the loaded audio driver (may return
+     * @c nullptr if this is a built-in driver).
      */
     ::Library *library() const;
 
@@ -125,8 +144,8 @@ public:  // Interfaces: --------------------------------------------------------
     bool hasCd() const;
 
     /**
-     * Returns the @em Sfx interface for the audio driver. The Sfx interface is
-     * used for playback of sound effects.
+     * Returns the @em Sfx interface for the audio driver. The Sfx interface is used
+     * for playback of sound effects.
      */
     audiointerface_sfx_t /*const*/ &iSfx() const;
 
@@ -148,10 +167,10 @@ public:  // Interfaces: --------------------------------------------------------
     de::String interfaceName(void *anyAudioInterface) const;
 
 private:
+    Driver();
+
     DENG2_PRIVATE(d)
 };
-
-de::String Driver_GetName(audiodriverid_t id);
 
 }  // namespace audio
 
