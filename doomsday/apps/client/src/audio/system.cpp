@@ -52,7 +52,6 @@
 #endif
 #include <de/App>
 #ifdef __CLIENT__
-#  include <de/Error>
 #  include <de/LibraryFile>
 #  include <de/NativeFile>
 #endif
@@ -126,9 +125,6 @@ DENG2_PIMPL(System)
 #endif
 {
 #ifdef __CLIENT__
-    /// Required/referenced audio driver is missing. @ingroup errors
-    DENG2_ERROR(MissingDriverError);
-
     SettingsRegister settings;
     QList<Driver *> drivers;
 
@@ -148,7 +144,7 @@ DENG2_PIMPL(System)
     {
         if(Driver *driver = tryFindDriver(driverId)) return *driver;
         /// @throw MissingDriverError  Unknown driver identifier specified.
-        throw MissingDriverError("audio::System::Instance::driverByIdentifier", "Unknown audio driver '" + driverId + "'");
+        throw MissingDriverError("audio::System::findDriver", "Unknown audio driver '" + driverId + "'");
     }
 
     /**
@@ -1718,6 +1714,25 @@ void System::deinitPlayback()
     d->unloadDrivers();
 }
 
+Driver const *System::tryFindDriver(String driverId) const
+{
+    return d->tryFindDriver(driverId);
+}
+
+Driver const &System::findDriver(String driverId) const
+{
+    return d->findDriver(driverId);
+}
+
+LoopResult System::forAllDrivers(std::function<LoopResult (Driver const &)> func) const
+{
+    for(Driver *driver : d->drivers)
+    {
+        if(auto result = func(*driver)) return result;
+    }
+    return LoopContinue;
+}
+
 String System::musicSourceAsText(MusicSource source)  // static
 {
     static char const *sourceNames[3] = {
@@ -2490,8 +2505,8 @@ static void musicMidiFontChanged()
 
 void System::consoleRegister()  // static
 {
-    // Sound effects:
 #ifdef __CLIENT__
+    // Sound effects:
     C_VAR_INT     ("sound-16bit",         &sfx16Bit,              0, 0, 1);
     C_VAR_INT     ("sound-3d",            &sfx3D,                 0, 0, 1);
 #endif

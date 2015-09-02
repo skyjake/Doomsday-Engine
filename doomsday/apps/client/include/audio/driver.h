@@ -26,11 +26,11 @@
 #  error "audio" is not available in a SERVER build
 #endif
 
-#include "api_audiod.h"
 #include "api_audiod_mus.h"
 #include "api_audiod_sfx.h"
 #include <doomsday/library.h>
 #include <de/Error>
+#include <de/LibraryFile>
 #include <de/String>
 
 namespace audio {

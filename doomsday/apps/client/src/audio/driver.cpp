@@ -21,13 +21,12 @@
 #include "audio/driver.h"
 
 #include "dd_main.h"
+#include "api_audiod.h"
 #include "audio/drivers/dummy.h"
 #ifndef DENG_DISABLE_SDLMIXER
 #  include "audio/drivers/sdlmixer.h"
 #endif
-
 #include <de/Library>
-#include <de/LibraryFile>
 #include <de/NativeFile>
 
 using namespace de;

@@ -32,38 +32,36 @@
 #  include "api_audiod_sfx.h"  ///< @todo remove me
 
 #  include "audio/channel.h"
+#  include <de/Error>
 #  include <de/Range>
 #  include <de/Record>
 #endif
 #include <de/String>
 #include <de/System>
+#ifdef __CLIENT__
+#  include <functional>
+#endif
 
 #define SFX_LOWEST_PRIORITY     ( -1000 )
 
 namespace audio {
 
 #ifdef __CLIENT__
+class Driver;
 class SampleCache;
 #endif
 
 /**
  * Client audio subsystem.
  *
- * Singleton: there can only be one instance of the audio system at a time.
- *
  * @ingroup audio
  */
 class System : public de::System
 {
 public:
-    static System &get();
-
     /**
-     * Register the console commands and variables of this module.
+     * Instantiate the singleton audio::System instance.
      */
-    static void consoleRegister();
-
-public:
     System();
 
     // Systems observe the passage of time.
@@ -254,6 +252,27 @@ public:  // Sound effect playback: ---------------------------------------------
 
 public:  // Low-level driver interfaces: ---------------------------------------------
 
+    /// Required/referenced audio driver is missing. @ingroup errors
+    DENG2_ERROR(MissingDriverError);
+
+    /**
+     * Lookup the loaded audio Driver associated with the given (unique) @a driverId.
+     */
+    Driver const &findDriver(de::String driverId) const;
+
+    /**
+     * Search for a loaded audio Driver associated with the given (unique) @a driverId.
+     *
+     * @return  Pointer to the loaded audio Driver if found; otherwise @c nullptr.
+     */
+    Driver const *tryFindDriver(de::String driverId) const;
+
+    /**
+     * Iterate through the loaded audio Drivers (in load order), executing @a callback
+     * for each.
+     */
+    de::LoopResult forAllDrivers(std::function<de::LoopResult (Driver const &)> callback) const;
+
     /**
      * Returns the currently active, primary SFX interface. @c nullptr is returned if
      * SFX playback is @em not available.
@@ -308,6 +327,17 @@ public:  /// @todo make private:
     /// @todo Should not be exposed to users of this class. -ds
     void startLogical(int soundIdAndFlags, struct mobj_s *emitter);
     void clearLogical();
+
+public:
+    /**
+     * Returns the singleton audio::System instance.
+     */
+    static System &get();
+
+    /**
+     * Register the console commands and variables of this module.
+     */
+    static void consoleRegister();
 
 private:
     DENG2_PRIVATE(d)
