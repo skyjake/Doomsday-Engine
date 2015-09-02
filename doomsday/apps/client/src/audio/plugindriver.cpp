@@ -172,9 +172,7 @@ String PluginDriver::description() const
 {
     return String(_E(b) "%1\n" _E(.)
                   _E(l) "Identifier: " _E(.) "%2 "
-                  _E(D)_E(b) "Startup resources:\n" _E(.)_E(.) "%3\n"
-                  _E(D)_E(b) "Other resources:\n" _E(.)_E(.) "%4\n"
-                  _E(D)_E(b) "Status: " _E(.) "%5")
+                  _E(D)_E(b) "Status: " _E(.) "%3")
             .arg(name())
             .arg(identifier())
             .arg(statusAsText());
