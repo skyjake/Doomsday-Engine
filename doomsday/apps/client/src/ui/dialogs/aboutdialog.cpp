@@ -19,7 +19,7 @@
 #include "ui/dialogs/aboutdialog.h"
 
 #include "gl/sys_opengl.h"
-#include "audio/driver.h"
+#include "audio/system.h"
 #include "clientapp.h"
 #include "versioninfo.h"
 

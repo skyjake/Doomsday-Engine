@@ -256,22 +256,138 @@ public:  // Low-level driver interfaces: ---------------------------------------
     DENG2_ERROR(MissingDriverError);
 
     /**
+     * Base class for a logical audio driver.
+     */
+    class IDriver
+    {
+    public:
+        /// Base class for property read errors. @ingroup errors
+        DENG2_ERROR(ReadPropertyError);
+
+        /// Base class for propert write errors. @ingroup errors
+        DENG2_ERROR(WritePropertyError);
+
+        /**
+         * Logical driver status.
+         */
+        enum Status
+        {
+            Loaded,      ///< Library is loaded but not yet in use.
+            Initialized  ///< Library is loaded and initialized ready for use.
+        };
+
+        /**
+         * If the driver is still initialized it should be automatically deinitialized
+         * when this is called.
+         */
+        virtual ~IDriver();
+
+        DENG2_AS_IS_METHODS()
+
+        /**
+         * Initialize the audio driver if necessary, ready for use.
+         */
+        virtual void initialize() = 0;
+
+        /**
+         * Deinitialize the audio driver if necessary, so that it may be unloaded.
+         */
+        virtual void deinitialize() = 0;
+
+        /**
+         * Returns the logical driver status.
+         */
+        virtual Status status() const = 0;
+
+        /**
+         * Returns a human-friendly, textual description of the logical driver status.
+         */
+        de::String statusAsText() const;
+
+        inline bool isLoaded     () const { return status() >= Loaded;      }
+        inline bool isInitialized() const { return status() == Initialized; }
+
+        /**
+         * Returns the textual, symbolic identifier of the audio driver (lower case),
+         * for use in Config.
+         *
+         * @note An audio driver may have multiple identifiers, in which case they will
+         * be returned here and delimited with ';' characters.
+         *
+         * @todo Once the audio driver/interface configuration is stored persistently
+         * in Config we should remove the alternative identifiers at this time. -ds
+         */
+        virtual de::String identifier() const = 0;
+
+        /**
+         * Returns the human-friendly name of the audio driver if loaded; otherwise a
+         * zero-length string is returned.
+         */
+        virtual de::String name() const = 0;
+
+        /**
+         * Instruct the driver of a change in music MIDI font.
+         *
+         * @param newMidiFontPath  Native path to the new MIDI font. Use a zero-length
+         * string to clear/unload the existing font.
+         */
+        virtual void musicMidiFontChanged(de::String const &/*newMidiFontPath*/) {}
+
+        virtual void startFrame() {}
+        virtual void endFrame() {}
+
+    public:  // Interfaces: -----------------------------------------------------------
+
+        /// Returns @c true if the audio driver provides @em Sfx playback.
+        virtual bool hasSfx() const = 0;
+
+        /// Returns @c true if the audio driver provides @em Music playback.
+        virtual bool hasMusic() const = 0;
+
+        /// Returns @c true if the audio driver provides @em CD playback.
+        virtual bool hasCd() const = 0;
+
+        /**
+         * Returns the @em Sfx interface for the audio driver. The Sfx interface is used
+         * for playback of sound effects.
+         */
+        virtual audiointerface_sfx_t /*const*/ &iSfx() const = 0;
+
+        /**
+         * Returns the @em Music interface for the audio driver. The Music interface is
+         * used for playback of music (i.e., complete songs).
+         */
+        virtual audiointerface_music_t /*const*/ &iMusic() const = 0;
+
+        /**
+         * Returns the @em CD interface for the audio driver. The CD interface is used
+         * for playback of music by streaming it from a compact disk.
+         */
+        virtual audiointerface_cd_t /*const*/ &iCd() const = 0;
+
+        /**
+         * Returns the human-friendly name for @a playbackInterface.
+         */
+        virtual de::String interfaceName(void *playbackInterface) const = 0;
+    };
+
+    /**
      * Lookup the loaded audio Driver associated with the given (unique) @a driverId.
      */
-    Driver const &findDriver(de::String driverId) const;
+    IDriver const &findDriver(de::String driverId) const;
 
     /**
      * Search for a loaded audio Driver associated with the given (unique) @a driverId.
      *
      * @return  Pointer to the loaded audio Driver if found; otherwise @c nullptr.
      */
-    Driver const *tryFindDriver(de::String driverId) const;
+    IDriver const *tryFindDriver(de::String driverId) const;
 
     /**
      * Iterate through the loaded audio Drivers (in load order), executing @a callback
      * for each.
      */
-    de::LoopResult forAllDrivers(std::function<de::LoopResult (Driver const &)> callback) const;
+    de::LoopResult forAllDrivers(std::function<de::LoopResult (IDriver const &)> callback) const;
 
     /**
      * Returns the currently active, primary SFX interface. @c nullptr is returned if

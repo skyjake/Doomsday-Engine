@@ -1,4 +1,4 @@
-/** @file driver.cpp  Logical audio driver (model).
+/** @file plugindriver.cpp  Plugin based audio driver.
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
@@ -18,25 +18,17 @@
  * 02110-1301 USA</small>
  */
 
-#include "audio/driver.h"
+#include "audio/plugindriver.h"
 
-#include "dd_main.h"
-#include "api_audiod.h"
-#include "audio/drivers/dummy.h"
-#ifndef DENG_DISABLE_SDLMIXER
-#  include "audio/drivers/sdlmixer.h"
-#endif
 #include <de/Library>
+#include <de/Log>
 #include <de/NativeFile>
 
 using namespace de;
 
 namespace audio {
 
-/**
- * @todo Separate driver logic from plugin loading logic. -ds
- */
-DENG2_PIMPL(Driver)
+DENG2_PIMPL(PluginDriver)
 {
     bool initialized   = false;
     ::Library *library = nullptr;  ///< Library instance (owned).
@@ -77,25 +69,25 @@ DENG2_PIMPL(Driver)
             return string;
         }
         /// @throw ReadPropertyError  Driver returned not successful.
-        throw ReadPropertyError("audio::Driver::getPropertyAsString", "Error reading property:" + String::number(prop));
+        throw ReadPropertyError("audio::PluginDriver::getPropertyAsString", "Error reading property:" + String::number(prop));
     }
 };
 
-Driver::Driver() : d(new Instance(this))
+PluginDriver::PluginDriver() : d(new Instance(this))
 {}
 
-Driver::~Driver()
+PluginDriver::~PluginDriver()
 {
-    LOG_AS("~audio::Driver");
+    LOG_AS("~audio::PluginDriver");
     deinitialize();  // If necessary.
 }
 
-Driver *Driver::newFromLibrary(LibraryFile &libFile)  // static
+PluginDriver *PluginDriver::newFromLibrary(LibraryFile &libFile)  // static
 {
     try
     {
-        std::unique_ptr<Driver> driver(new Driver);
-        Driver &inst = *driver;
+        std::unique_ptr<PluginDriver> driver(new PluginDriver);
+        PluginDriver &inst = *driver;
 
         inst.d->library = Library_New(libFile.path().toUtf8().constData());
         if(!inst.d->library)
@@ -157,13 +149,13 @@ Driver *Driver::newFromLibrary(LibraryFile &libFile)  // static
     }
     catch(de::Library::SymbolMissingError const &er)
     {
-        LOG_AS("audio::Driver");
+        LOG_AS("audio::PluginDriver");
         LOG_AUDIO_ERROR("") << er.asText();
     }
     return nullptr;
 }
 
-bool Driver::recognize(LibraryFile &library)  // static
+bool PluginDriver::recognize(LibraryFile &library)  // static
 {
     // By convention, driver plugin names use a standard prefix.
     if(!library.name().beginsWith("audio_")) return false;
@@ -176,38 +168,26 @@ bool Driver::recognize(LibraryFile &library)  // static
     return true;
 }
 
-String Driver::identifier() const
+String PluginDriver::identifier() const
 {
     return d->getPropertyAsString(AUDIOP_IDENTIFIER).toLower();
 }
 
-String Driver::name() const
+String PluginDriver::name() const
 {
     return d->getPropertyAsString(AUDIOP_NAME);
 }
 
-Driver::Status Driver::status() const
+audio::System::IDriver::Status PluginDriver::status() const
 {
     if(d->initialized) return Initialized;
     DENG2_ASSERT(d->iBase.Init != nullptr);
     return Loaded;
 }
 
-String Driver::statusAsText() const
+void PluginDriver::initialize()
 {
-    switch(status())
-    {
-    case Loaded:      return "Loaded";
-    case Initialized: return "Initialized";
-
-    default: DENG2_ASSERT(!"audio::Driver::statusAsText: Invalid status"); break;
-    }
-    return "Invalid";
-}
-
-void Driver::initialize()
-{
-    LOG_AS("audio::Driver");
+    LOG_AS("audio::PluginDriver");
 
     // Already been here?
     if(d->initialized) return;
@@ -216,9 +196,9 @@ void Driver::initialize()
     d->initialized = d->iBase.Init();
 }
 
-void Driver::deinitialize()
+void PluginDriver::deinitialize()
 {
-    LOG_AS("audio::Driver");
+    LOG_AS("audio::PluginDriver");
 
     // Already been here?
     if(!d->initialized) return;
@@ -230,60 +210,60 @@ void Driver::deinitialize()
     d->initialized = false;
 }
 
-::Library *Driver::library() const
+::Library *PluginDriver::library() const
 {
     return d->library;
 }
 
-void Driver::startFrame()
+void PluginDriver::startFrame()
 {
     if(!d->initialized) return;
     d->iBase.Event(SFXEV_BEGIN);
 }
 
-void Driver::endFrame()
+void PluginDriver::endFrame()
 {
     if(!d->initialized) return;
     d->iBase.Event(SFXEV_END);
 }
 
-void Driver::musicMidiFontChanged(String const &newMidiFontPath)
+void PluginDriver::musicMidiFontChanged(String const &newMidiFontPath)
 {
     if(!d->initialized) return;
     if(d->iBase.Set) d->iBase.Set(AUDIOP_SOUNDFONT_FILENAME, newMidiFontPath.toLatin1().constData());
 }
 
-bool Driver::hasSfx() const
+bool PluginDriver::hasSfx() const
 {
     return iSfx().gen.Init != nullptr;
 }
 
-bool Driver::hasMusic() const
+bool PluginDriver::hasMusic() const
 {
     return iMusic().gen.Init != nullptr;
 }
 
-bool Driver::hasCd() const
+bool PluginDriver::hasCd() const
 {
     return iCd().gen.Init != nullptr;
 }
 
-audiointerface_sfx_t /*const*/ &Driver::iSfx() const
+audiointerface_sfx_t /*const*/ &PluginDriver::iSfx() const
 {
     return d->iSfx;
 }
 
-audiointerface_music_t /*const*/ &Driver::iMusic() const
+audiointerface_music_t /*const*/ &PluginDriver::iMusic() const
 {
     return d->iMusic;
 }
 
-audiointerface_cd_t /*const*/ &Driver::iCd() const
+audiointerface_cd_t /*const*/ &PluginDriver::iCd() const
 {
     return d->iCd;
 }
 
-String Driver::interfaceName(void *playbackInterface) const
+String PluginDriver::interfaceName(void *playbackInterface) const
 {
     if((void *)&d->iSfx == playbackInterface)
     {

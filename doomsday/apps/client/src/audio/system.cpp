@@ -33,8 +33,8 @@
 #include "api_audiod_sfx.h"
 #include "audio/samplecache.h"
 #ifdef __CLIENT__
-#  include "audio/driver.h"
 #  include "audio/mus.h"
+#  include "audio/plugindriver.h"
 #endif
 
 #include "api_map.h"
@@ -54,6 +54,7 @@
 #ifdef __CLIENT__
 #  include <de/LibraryFile>
 #  include <de/NativeFile>
+#  include <de/Observers>
 #endif
 #include <de/timer.h>
 #ifdef __CLIENT__
@@ -114,6 +115,24 @@ static mobj_t *getListenerMobj()
 {
     return DD_Player(::displayPlayer)->publicData().mo;
 }
+
+System::IDriver::~IDriver()
+{
+    // Should have been deinitialized by now.
+    DENG2_ASSERT(!isInitialized());
+}
+
+String System::IDriver::statusAsText() const
+{
+    switch(status())
+    {
+    case Loaded:      return "Loaded";
+    case Initialized: return "Initialized";
+
+    default: DENG2_ASSERT(!"audio::System::IDriver::statusAsText: Invalid status"); break;
+    }
+    return "Invalid";
+}
 #endif
 
 /**
@@ -126,12 +145,12 @@ DENG2_PIMPL(System)
 {
 #ifdef __CLIENT__
     SettingsRegister settings;
-    QList<Driver *> drivers;
+    QList<IDriver *> drivers;
 
-    Driver *tryFindDriver(String driverId)
+    IDriver *tryFindDriver(String driverId)
     {
         driverId = driverId.toLower();  // Symbolic identifiers are lowercase.
-        for(Driver *driver : drivers)
+        for(IDriver *driver : drivers)
         for(String const &id : driver->identifier().split(';'))
         {
             if(id == driverId)
@@ -140,9 +159,9 @@ DENG2_PIMPL(System)
         return nullptr;
     }
 
-    Driver &findDriver(String driverId)
+    IDriver &findDriver(String driverId)
     {
-        if(Driver *driver = tryFindDriver(driverId)) return *driver;
+        if(IDriver *driver = tryFindDriver(driverId)) return *driver;
         /// @throw MissingDriverError  Unknown driver identifier specified.
         throw MissingDriverError("audio::System::findDriver", "Unknown audio driver '" + driverId + "'");
     }
@@ -152,11 +171,11 @@ DENG2_PIMPL(System)
      *
      * @param playbackInterface  Pointer to a SFX, Music, or CD interface.
      */
-    Driver &findDriverByInterface(void *playbackInterface) const
+    IDriver &findDriverByInterface(void *playbackInterface) const
     {
         if(playbackInterface)
         {
-            for(Driver *driver : drivers)
+            for(IDriver *driver : drivers)
             {
                 if((void *)&driver->iSfx()   == playbackInterface ||
                    (void *)&driver->iMusic() == playbackInterface ||
@@ -199,7 +218,7 @@ DENG2_PIMPL(System)
         // using command line options.
         /// @todo Store this information persistently in Config. -ds
         CommandLine &cmdLine = App::commandLine();
-        for(Driver const *driver : drivers)
+        for(IDriver const *driver : drivers)
         for(QString const &id : driver->identifier().split(';'))
         {
 #ifdef DENG_DISABLE_SDLMIXER
@@ -228,10 +247,10 @@ DENG2_PIMPL(System)
         // Secondly - plugin audio drivers.
         Library_forAll([this] (LibraryFile &libFile)
         {
-            if(Driver::recognize(libFile))
+            if(PluginDriver::recognize(libFile))
             {
                 LOG_AUDIO_VERBOSE("Loading plugin audio driver '%s'...") << libFile.name();
-                if(auto *driver = Driver::newFromLibrary(libFile))
+                if(auto *driver = PluginDriver::newFromLibrary(libFile))
                 {
                     // Add the new driver to the collection.
                     drivers << driver;
@@ -247,7 +266,7 @@ DENG2_PIMPL(System)
         // Log a summary of the available drivers.
         dint n = 0;
         LOG_AUDIO_MSG("Loaded audio drivers (%i)") << drivers.count();
-        for(Driver const *driver : drivers)
+        for(IDriver const *driver : drivers)
         {
             LOG_AUDIO_MSG("%i: %s (id:%s)") << n << driver->name() << driver->identifier();
             n += 1;
@@ -255,7 +274,7 @@ DENG2_PIMPL(System)
 
         // Choose the default driver and initialize it.
         /// @todo Defer until an interface is added. -ds
-        Driver *defaultDriver = tryFindDriver(chooseDriver());
+        IDriver *defaultDriver = tryFindDriver(chooseDriver());
         if(defaultDriver)
         {
             initDriverIfNeeded(*defaultDriver);
@@ -281,7 +300,7 @@ DENG2_PIMPL(System)
      *
      * @return  Same as @a driver, for caller convenience.
      */
-    Driver &initDriverIfNeeded(Driver &driver)
+    IDriver &initDriverIfNeeded(IDriver &driver)
     {
         if(!driver.isInitialized())
         {
@@ -325,7 +344,7 @@ DENG2_PIMPL(System)
     /**
      * Choose the SFX, Music, and CD audio interfaces to use.
      */
-    void selectInterfaces(Driver &defaultDriver)
+    void selectInterfaces(IDriver &defaultDriver)
     {
         // The default driver goes on the bottom of the stack.
         if(defaultDriver.hasSfx())
@@ -391,7 +410,7 @@ DENG2_PIMPL(System)
             {
                 try
                 {
-                    Driver &driver = findDriver(cmdLine.at(++p));
+                    IDriver &driver = findDriver(cmdLine.at(++p));
                     initDriverIfNeeded(driver);
                     if(driver.hasSfx())
                     {
@@ -417,7 +436,7 @@ DENG2_PIMPL(System)
             {
                 try
                 {
-                    Driver &driver = findDriver(cmdLine.at(++p));
+                    IDriver &driver = findDriver(cmdLine.at(++p));
                     initDriverIfNeeded(driver);
                     if(driver.hasMusic())
                     {
@@ -443,7 +462,7 @@ DENG2_PIMPL(System)
             {
                 try
                 {
-                    Driver &driver = findDriver(cmdLine.at(++p));
+                    IDriver &driver = findDriver(cmdLine.at(++p));
                     initDriverIfNeeded(driver);
                     if(driver.hasCd())
                     {
@@ -496,7 +515,7 @@ DENG2_PIMPL(System)
     {
         if(anyAudioInterface)
         {
-            for(Driver const *driver : drivers)
+            for(IDriver const *driver : drivers)
             {
                 if((void *)&driver->iSfx()   == anyAudioInterface) return AUDIO_ISFX;
                 if((void *)&driver->iMusic() == anyAudioInterface) return AUDIO_IMUSIC;
@@ -510,7 +529,7 @@ DENG2_PIMPL(System)
     {
         if(anyAudioInterface)
         {
-            for(Driver const *driver : drivers)
+            for(IDriver const *driver : drivers)
             {
                 String const name = driver->interfaceName(anyAudioInterface);
                 if(!name.isEmpty()) return name;
@@ -1714,19 +1733,19 @@ void System::deinitPlayback()
     d->unloadDrivers();
 }
 
-Driver const *System::tryFindDriver(String driverId) const
+System::IDriver const *System::tryFindDriver(String driverId) const
 {
     return d->tryFindDriver(driverId);
 }
 
-Driver const &System::findDriver(String driverId) const
+System::IDriver const &System::findDriver(String driverId) const
 {
     return d->findDriver(driverId);
 }
 
-LoopResult System::forAllDrivers(std::function<LoopResult (Driver const &)> func) const
+LoopResult System::forAllDrivers(std::function<LoopResult (IDriver const &)> func) const
 {
-    for(Driver *driver : d->drivers)
+    for(IDriver *driver : d->drivers)
     {
         if(auto result = func(*driver)) return result;
     }
