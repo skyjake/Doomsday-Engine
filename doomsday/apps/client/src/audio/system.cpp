@@ -2381,7 +2381,7 @@ D_CMD(ListDrivers)
     }
 
     String list;
-    dint numDrivers;
+    dint numDrivers = 0;
     audioSys.forAllDrivers([&list, &numDrivers] (System::IDriver const &driver)
     {
         if(!list.isEmpty()) list += "\n";
@@ -2389,11 +2389,10 @@ D_CMD(ListDrivers)
         list += String(_E(0)
                        _E(Ta) "%1 "
                        _E(Tb) _E(2) "%2" _E(i) "%3")
-                .arg(driver.identifier())
-                .arg(driver.name())
-                .arg(driver.statusAsText());
+                  .arg(driver.identifier())
+                  .arg(driver.name())
+                  .arg(driver.statusAsText());
 
-        LOG_MSG(" %s (id:%s)") << driver.name() << driver.identifier();
         numDrivers += 1;
         return LoopContinue;
     });
@@ -2409,7 +2408,7 @@ D_CMD(ListDrivers)
 D_CMD(InspectDriver)
 {
     DENG2_UNUSED2(src, argc);
-    String const &driverId(argv[1]);
+    String const driverId(argv[1]);
     if(System::IDriver const *driver = App_AudioSystem().tryFindDriver(driverId))
     {
         LOG_MSG("") << driver->description();
@@ -2570,7 +2569,7 @@ void System::consoleRegister()  // static
 #ifdef __CLIENT__
     // Drivers:
     C_CMD("listaudiodrivers",   nullptr, ListDrivers);
-    C_CMD("inspectaudiodriver", nullptr, InspectDriver);
+    C_CMD("inspectaudiodriver", "s",     InspectDriver);
 
     // Sound effects:
     C_VAR_INT     ("sound-16bit",         &sfx16Bit,              0, 0, 1);

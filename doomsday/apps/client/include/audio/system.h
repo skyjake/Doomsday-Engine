@@ -308,7 +308,8 @@ public:  // Low-level driver interfaces: ---------------------------------------
         inline bool isInitialized() const { return status() == Initialized; }
 
         /**
-         * 
+         * Returns detailed information about the driver as styled text. Printed by
+         * "inspectaudiodriver", for instance.
          */
         virtual de::String description() const = 0;
 
@@ -325,13 +326,12 @@ public:  // Low-level driver interfaces: ---------------------------------------
         virtual de::String identifier() const = 0;
 
         /**
-         * Returns the human-friendly name of the audio driver if loaded; otherwise a
-         * zero-length string is returned.
+         * Returns the human-friendly name of the audio driver.
          */
         virtual de::String name() const = 0;
 
         /**
-         * Instruct the driver of a change in music MIDI font.
+         * Notify the driver of a change in music MIDI font.
          *
          * @param newMidiFontPath  Native path to the new MIDI font. Use a zero-length
          * string to clear/unload the existing font.
@@ -341,22 +341,22 @@ public:  // Low-level driver interfaces: ---------------------------------------
         virtual void startFrame() {}
         virtual void endFrame() {}
 
-    public:  // Interfaces: -----------------------------------------------------------
-
-        /// Returns @c true if the audio driver provides @em Sfx playback.
-        virtual bool hasSfx() const = 0;
-
-        /// Returns @c true if the audio driver provides @em Music playback.
-        virtual bool hasMusic() const = 0;
+    public:  // Playback Interfaces: -------------------------------------------------
 
         /// Returns @c true if the audio driver provides @em CD playback.
         virtual bool hasCd() const = 0;
 
+        /// Returns @c true if the audio driver provides @em Music playback.
+        virtual bool hasMusic() const = 0;
+
+        /// Returns @c true if the audio driver provides @em Sfx playback.
+        virtual bool hasSfx() const = 0;
+
         /**
-         * Returns the @em Sfx interface for the audio driver. The Sfx interface is used
-         * for playback of sound effects.
+         * Returns the @em CD interface for the audio driver. The CD interface is used
+         * for playback of music by streaming it from a compact disk.
          */
-        virtual audiointerface_sfx_t /*const*/ &iSfx() const = 0;
+        virtual audiointerface_cd_t /*const*/ &iCd() const = 0;
 
         /**
          * Returns the @em Music interface for the audio driver. The Music interface is
@@ -365,10 +365,10 @@ public:  // Low-level driver interfaces: ---------------------------------------
         virtual audiointerface_music_t /*const*/ &iMusic() const = 0;
 
         /**
-         * Returns the @em CD interface for the audio driver. The CD interface is used
-         * for playback of music by streaming it from a compact disk.
+         * Returns the @em Sfx interface for the audio driver. The Sfx interface is used
+         * for playback of sound effects.
          */
-        virtual audiointerface_cd_t /*const*/ &iCd() const = 0;
+        virtual audiointerface_sfx_t /*const*/ &iSfx() const = 0;
 
         /**
          * Returns the human-friendly name for @a playbackInterface.

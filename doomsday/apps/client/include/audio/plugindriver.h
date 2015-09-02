@@ -73,6 +73,7 @@ public:  // Implements audio::System::IDriver: ---------------------------------
     void deinitialize();
 
     Status status() const;
+
     de::String description() const;
     de::String identifier() const;
     de::String name() const;
@@ -81,13 +82,13 @@ public:  // Implements audio::System::IDriver: ---------------------------------
     void startFrame();
     void endFrame();
 
+    bool hasCd() const;
     bool hasSfx() const;
     bool hasMusic() const;
-    bool hasCd() const;
 
-    audiointerface_sfx_t /*const*/ &iSfx() const;
-    audiointerface_music_t /*const*/ &iMusic() const;
     audiointerface_cd_t /*const*/ &iCd() const;
+    audiointerface_music_t /*const*/ &iMusic() const;
+    audiointerface_sfx_t /*const*/ &iSfx() const;
     de::String interfaceName(void *playbackInterface) const;
 
 private:

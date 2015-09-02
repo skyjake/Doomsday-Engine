@@ -28,7 +28,7 @@ using namespace de;
 
 namespace audio {
 
-DENG2_PIMPL(PluginDriver)
+DENG2_PIMPL_NOREF(PluginDriver)
 {
     bool initialized   = false;
     ::Library *library = nullptr;  ///< Library instance (owned).
@@ -38,7 +38,7 @@ DENG2_PIMPL(PluginDriver)
     audiointerface_music_t iMusic;
     audiointerface_cd_t    iCd;
 
-    Instance(Public *i) : Base(i)
+    Instance()
     {
         de::zap(iBase);
         de::zap(iSfx);
@@ -73,7 +73,7 @@ DENG2_PIMPL(PluginDriver)
     }
 };
 
-PluginDriver::PluginDriver() : d(new Instance(this))
+PluginDriver::PluginDriver() : d(new Instance)
 {}
 
 PluginDriver::~PluginDriver()
@@ -163,7 +163,7 @@ bool PluginDriver::recognize(LibraryFile &library)  // static
     // Driver plugins are native files.
     if(!library.source()->is<NativeFile>()) return false;
 
-    // This appears to be usuable with Driver.
+    // This appears to be usuable with PluginDriver.
     /// @todo Open the library and ensure it's type matches.
     return true;
 }
@@ -173,9 +173,9 @@ String PluginDriver::description() const
     return String(_E(b) "%1\n" _E(.)
                   _E(l) "Identifier: " _E(.) "%2 "
                   _E(D)_E(b) "Status: " _E(.) "%3")
-            .arg(name())
-            .arg(identifier())
-            .arg(statusAsText());
+             .arg(name())
+             .arg(identifier())
+             .arg(statusAsText());
 }
 
 String PluginDriver::identifier() const
