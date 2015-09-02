@@ -152,7 +152,7 @@ DENG2_PIMPL(System)
     }
 
     /**
-     * Find the Driver to which @a anyAudioInterface belongs.
+     * Find the Driver to which @a playbackInterface belongs.
      *
      * @param playbackInterface  Pointer to a SFX, Music, or CD interface.
      */
@@ -171,7 +171,7 @@ DENG2_PIMPL(System)
             }
         }
         /// @throw MissingDriverError  Unknown playback interface specified.
-        throw MissingDriverError("audio::System::findDriverByInterface", "Unknown playback interface");
+        throw MissingDriverError("audio::System::Instance::findDriverByInterface", "Unknown playback interface");
     }
 
     void unloadDrivers()
@@ -1922,7 +1922,6 @@ void System::updateMusicMidiFont()
     }
 
     // Notify the drivers.
-    path.expand().toString();
     d->forAllInterfaces(AUDIO_IMUSIC, [this, &path] (void *ifs)
     {
         d->findDriverByInterface(ifs).musicMidiFontChanged(path);

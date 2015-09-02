@@ -284,18 +284,18 @@ audiointerface_cd_t /*const*/ &Driver::iCd() const
     return d->iCd;
 }
 
-String Driver::interfaceName(void *anyAudioInterface) const
+String Driver::interfaceName(void *playbackInterface) const
 {
-    if((void *)&d->iSfx == anyAudioInterface)
+    if((void *)&d->iSfx == playbackInterface)
     {
-        /// @todo  SFX interfaces can't be named yet.
+        /// @todo SFX interfaces can't be named yet.
         return name();
     }
 
-    if((void *)&d->iMusic == anyAudioInterface || (void *)&d->iCd == anyAudioInterface)
+    if((void *)&d->iMusic == playbackInterface || (void *)&d->iCd == playbackInterface)
     {
-        char buf[256];  /// @todo  This could easily overflow...
-        auto *gen = (audiointerface_music_generic_t *) anyAudioInterface;
+        char buf[256];  /// @todo This could easily overflow...
+        auto *gen = (audiointerface_music_generic_t *) playbackInterface;
         if(gen->Get(MUSIP_ID, buf))
         {
             return buf;

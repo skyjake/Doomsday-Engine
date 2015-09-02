@@ -167,9 +167,9 @@ public:  // Interfaces: --------------------------------------------------------
     audiointerface_cd_t /*const*/ &iCd() const;
 
     /**
-     * Returns the human-friendly name for @a anyAudioInterface.
+     * Returns the human-friendly name for @a playbackInterface.
      */
-    de::String interfaceName(void *anyAudioInterface) const;
+    de::String interfaceName(void *playbackInterface) const;
 
 private:
     Driver();

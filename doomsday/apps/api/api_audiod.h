@@ -53,10 +53,6 @@ typedef struct audiodriver_s {
     int (*Set) (int prop, void const *ptr);
 } audiodriver_t;
 
-typedef struct audiointerface_base_s {
-    int (*Init) (void);
-} audiointerface_base_t;
-
 ///@}
 
 #endif  // CLIENT_API_AUDIO_DRIVER_INTERFACE_H
