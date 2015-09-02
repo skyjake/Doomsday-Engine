@@ -1,0 +1,6 @@
+@summary{
+    Print detailed information about loaded audio driver to the console.
+}
+@description{
+    Params: inspectaudiodriver (identifier) @cbr For example, 'inspectaudiodriver fmod'.
+}

@@ -264,7 +264,7 @@ public:  // Low-level driver interfaces: ---------------------------------------
         /// Base class for property read errors. @ingroup errors
         DENG2_ERROR(ReadPropertyError);
 
-        /// Base class for propert write errors. @ingroup errors
+        /// Base class for property write errors. @ingroup errors
         DENG2_ERROR(WritePropertyError);
 
         /**
@@ -272,15 +272,15 @@ public:  // Low-level driver interfaces: ---------------------------------------
          */
         enum Status
         {
-            Loaded,      ///< Library is loaded but not yet in use.
-            Initialized  ///< Library is loaded and initialized ready for use.
+            Loaded,      ///< Driver is loaded but not yet in use.
+            Initialized  ///< Driver is loaded and initialized ready for use.
         };
 
         /**
          * If the driver is still initialized it should be automatically deinitialized
-         * when this is called.
+         * before this is called.
          */
-        virtual ~IDriver();
+        virtual ~IDriver() {}
 
         DENG2_AS_IS_METHODS()
 
@@ -306,6 +306,11 @@ public:  // Low-level driver interfaces: ---------------------------------------
 
         inline bool isLoaded     () const { return status() >= Loaded;      }
         inline bool isInitialized() const { return status() == Initialized; }
+
+        /**
+         * 
+         */
+        virtual de::String description() const = 0;
 
         /**
          * Returns the textual, symbolic identifier of the audio driver (lower case),
@@ -372,19 +377,24 @@ public:  // Low-level driver interfaces: ---------------------------------------
     };
 
     /**
-     * Lookup the loaded audio Driver associated with the given (unique) @a driverId.
+     * Returns the total number of loaded audio drivers. 
+     */
+    int driverCount() const;
+
+    /**
+     * Lookup the loaded audio driver associated with the given (unique) @a driverId.
      */
     IDriver const &findDriver(de::String driverId) const;
 
     /**
-     * Search for a loaded audio Driver associated with the given (unique) @a driverId.
+     * Search for a loaded audio driver associated with the given (unique) @a driverId.
      *
      * @return  Pointer to the loaded audio Driver if found; otherwise @c nullptr.
      */
     IDriver const *tryFindDriver(de::String driverId) const;
 
     /**
-     * Iterate through the loaded audio Drivers (in load order), executing @a callback
+     * Iterate through the loaded audio drivers (in load order), executing @a callback
      * for each.
      */
     de::LoopResult forAllDrivers(std::function<de::LoopResult (IDriver const &)> callback) const;

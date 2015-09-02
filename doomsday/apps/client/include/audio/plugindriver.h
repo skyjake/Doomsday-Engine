@@ -63,8 +63,7 @@ public:
     static PluginDriver *newFromLibrary(de::LibraryFile &library);
 
     /**
-     * Returns the plugin library for the loaded audio driver (may return
-     * @c nullptr if this is a built-in driver).
+     * Returns the plugin library for the loaded audio driver.
      */
     ::Library *library() const;
 
@@ -74,6 +73,7 @@ public:  // Implements audio::System::IDriver: ---------------------------------
     void deinitialize();
 
     Status status() const;
+    de::String description() const;
     de::String identifier() const;
     de::String name() const;
 

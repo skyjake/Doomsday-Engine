@@ -116,12 +116,6 @@ static mobj_t *getListenerMobj()
     return DD_Player(::displayPlayer)->publicData().mo;
 }
 
-System::IDriver::~IDriver()
-{
-    // Should have been deinitialized by now.
-    DENG2_ASSERT(!isInitialized());
-}
-
 String System::IDriver::statusAsText() const
 {
     switch(status())
@@ -262,15 +256,6 @@ DENG2_PIMPL(System)
             }
             return LoopContinue;
         });
-
-        // Log a summary of the available drivers.
-        dint n = 0;
-        LOG_AUDIO_MSG("Loaded audio drivers (%i)") << drivers.count();
-        for(IDriver const *driver : drivers)
-        {
-            LOG_AUDIO_MSG("%i: %s (id:%s)") << n << driver->name() << driver->identifier();
-            n += 1;
-        }
 
         // Choose the default driver and initialize it.
         /// @todo Defer until an interface is added. -ds
@@ -1733,6 +1718,11 @@ void System::deinitPlayback()
     d->unloadDrivers();
 }
 
+dint System::driverCount() const
+{
+    return d->drivers.count();
+}
+
 System::IDriver const *System::tryFindDriver(String driverId) const
 {
     return d->tryFindDriver(driverId);
@@ -2375,6 +2365,59 @@ void System::worldMapChanged()
     // Update who is listening now.
     d->sfxListener = getListenerMobj();
 }
+
+/**
+ * Console command for logging a summary of the loaded audio drivers.
+ */
+D_CMD(ListDrivers)
+{
+    DENG2_UNUSED3(src, argc, argv);
+    System &audioSys = App_AudioSystem();
+
+    if(audioSys.driverCount() <= 0)
+    {
+        LOG_MSG("No audio drivers are currently loaded");
+        return true;
+    }
+
+    String list;
+    dint numDrivers;
+    audioSys.forAllDrivers([&list, &numDrivers] (System::IDriver const &driver)
+    {
+        if(!list.isEmpty()) list += "\n";
+
+        list += String(_E(0)
+                       _E(Ta) "%1 "
+                       _E(Tb) _E(2) "%2" _E(i) "%3")
+                .arg(driver.identifier())
+                .arg(driver.name())
+                .arg(driver.statusAsText());
+
+        LOG_MSG(" %s (id:%s)") << driver.name() << driver.identifier();
+        numDrivers += 1;
+        return LoopContinue;
+    });
+
+    LOG_MSG("Loaded Audio Drivers (%i):") << numDrivers;
+    LOG_MSG("") << list;
+    return true;
+}
+
+/**
+ * Console command for inspecting a loaded audio driver.
+ */
+D_CMD(InspectDriver)
+{
+    DENG2_UNUSED2(src, argc);
+    String const &driverId(argv[1]);
+    if(System::IDriver const *driver = App_AudioSystem().tryFindDriver(driverId))
+    {
+        LOG_MSG("") << driver->description();
+        return true;
+    }
+    LOG_WARNING("Unknown audio driver \"%s\"") << driverId;
+    return false;
+}
 #endif
 
 /**
@@ -2525,6 +2568,10 @@ static void musicMidiFontChanged()
 void System::consoleRegister()  // static
 {
 #ifdef __CLIENT__
+    // Drivers:
+    C_CMD("listaudiodrivers",   nullptr, ListDrivers);
+    C_CMD("inspectaudiodriver", nullptr, InspectDriver);
+
     // Sound effects:
     C_VAR_INT     ("sound-16bit",         &sfx16Bit,              0, 0, 1);
     C_VAR_INT     ("sound-3d",            &sfx3D,                 0, 0, 1);
