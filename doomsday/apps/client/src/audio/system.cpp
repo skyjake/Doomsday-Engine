@@ -54,7 +54,6 @@
 #ifdef __CLIENT__
 #  include <de/LibraryFile>
 #  include <de/NativeFile>
-#  include <de/Observers>
 #endif
 #include <de/timer.h>
 #ifdef __CLIENT__
@@ -114,6 +113,11 @@ static audio::System::MusicSource musSourcePreference = audio::System::MUSP_EXT;
 static mobj_t *getListenerMobj()
 {
     return DD_Player(::displayPlayer)->publicData().mo;
+}
+
+System &System::IDriver::audioSystem()  // static
+{
+    return App_AudioSystem();
 }
 
 String System::IDriver::statusAsText() const
@@ -1497,8 +1501,18 @@ DENG2_PIMPL(System)
         self.reset();
     }
 
+    DENG2_PIMPL_AUDIENCE(FrameBegins)
+    DENG2_PIMPL_AUDIENCE(FrameEnds)
+    DENG2_PIMPL_AUDIENCE(MidiFontChange)
+
 #endif  // __CLIENT__
 };
+
+#ifdef __CLIENT__
+DENG2_AUDIENCE_METHOD(System, FrameBegins)
+DENG2_AUDIENCE_METHOD(System, FrameEnds)
+DENG2_AUDIENCE_METHOD(System, MidiFontChange)
+#endif
 
 System::System() : d(new Instance(this))
 {}
@@ -1597,9 +1611,8 @@ void System::startFrame()
     {
         // Update all channels (freq, 2D:pan,volume, 3D:position,velocity).
 
-        // Update the active interface.
-        /// @todo Driver should observe -ds
-        d->findDriverByInterface(sfx()).startFrame();
+        // Notify interested parties.
+        DENG2_FOR_AUDIENCE2(FrameBegins, i) i->systemFrameBegins(*this);
 
         // Have there been changes to the cvar settings?
         d->updateSfx3DModeIfChanged();
@@ -1653,9 +1666,8 @@ void System::endFrame()
             d->updateSfxListener();
         }
 
-        // Update the active interface.
-        /// @todo Driver should observe -ds
-        d->findDriverByInterface(sfx()).endFrame();
+        // Notify interested parties.
+        DENG2_FOR_AUDIENCE2(FrameEnds, i) i->systemFrameEnds(*this);
     }
 }
 
@@ -1945,12 +1957,8 @@ void System::updateMusicMidiFont()
         LOG_AUDIO_WARNING("Soundfont \"%s\" not found") << path.pretty();
     }
 
-    // Notify the drivers.
-    d->forAllInterfaces(AUDIO_IMUSIC, [this, &path] (void *ifs)
-    {
-        d->findDriverByInterface(ifs).musicMidiFontChanged(path);
-        return LoopContinue;
-    });
+    // Notify interested parties.
+    DENG2_FOR_AUDIENCE2(MidiFontChange, i) i->systemMidiFontChanged(path);
 }
 
 dint System::soundVolume() const

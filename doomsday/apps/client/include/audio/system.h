@@ -33,6 +33,7 @@
 
 #  include "audio/channel.h"
 #  include <de/Error>
+#  include <de/Observers>
 #  include <de/Range>
 #  include <de/Record>
 #endif
@@ -58,6 +59,15 @@ class SampleCache;
  */
 class System : public de::System
 {
+#ifdef __CLIENT__
+public:
+    /// Notified when a new audio frame begins.
+    DENG2_DEFINE_AUDIENCE2(FrameBegins, void systemFrameBegins(System &system))
+
+    // Notified when a new audio frame ends.
+    DENG2_DEFINE_AUDIENCE2(FrameEnds,   void systemFrameEnds(System &system))
+#endif
+
 public:
     /**
      * Instantiate the singleton audio::System instance.
@@ -90,6 +100,9 @@ public:
     void reset();
 
 public:  // Music playback: ----------------------------------------------------------
+
+    /// Notified whenever a MIDI font change occurs.
+    DENG2_DEFINE_AUDIENCE2(MidiFontChange, void systemMidiFontChanged(de::String const &newMidiFontPath))
 
     /**
      * Music source preference.
@@ -284,6 +297,9 @@ public:  // Low-level driver interfaces: ---------------------------------------
 
         DENG2_AS_IS_METHODS()
 
+        /// Returns a reference to the application's audio system.
+        static System &audioSystem();
+
         /**
          * Initialize the audio driver if necessary, ready for use.
          */
@@ -329,17 +345,6 @@ public:  // Low-level driver interfaces: ---------------------------------------
          * Returns the human-friendly title of the audio driver.
          */
         virtual de::String title() const = 0;
-
-        /**
-         * Notify the driver of a change in music MIDI font.
-         *
-         * @param newMidiFontPath  Native path to the new MIDI font. Use a zero-length
-         * string to clear/unload the existing font.
-         */
-        virtual void musicMidiFontChanged(de::String const &/*newMidiFontPath*/) {}
-
-        virtual void startFrame() {}
-        virtual void endFrame() {}
 
     public:  // Playback Interfaces: -------------------------------------------------
 

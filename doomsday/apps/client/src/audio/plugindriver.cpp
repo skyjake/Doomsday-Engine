@@ -20,8 +20,10 @@
 
 #include "audio/plugindriver.h"
 
+#include "audio/system.h"
 #include <de/Library>
 #include <de/Log>
+#include <de/Observers>
 #include <de/NativeFile>
 
 using namespace de;
@@ -29,6 +31,9 @@ using namespace de;
 namespace audio {
 
 DENG2_PIMPL_NOREF(PluginDriver)
+, DENG2_OBSERVES(audio::System, FrameBegins)
+, DENG2_OBSERVES(audio::System, FrameEnds)
+, DENG2_OBSERVES(audio::System, MidiFontChange)
 {
     bool initialized   = false;
     ::Library *library = nullptr;  ///< Library instance (owned).
@@ -60,8 +65,8 @@ DENG2_PIMPL_NOREF(PluginDriver)
      */
     String getPropertyAsString(dint prop)
     {
-        ddstring_t str; Str_InitStd(&str);
         DENG2_ASSERT(iBase.Get);
+        ddstring_t str; Str_InitStd(&str);
         if(iBase.Get(prop, &str))
         {
             auto string = String(Str_Text(&str));
@@ -70,6 +75,25 @@ DENG2_PIMPL_NOREF(PluginDriver)
         }
         /// @throw ReadPropertyError  Driver returned not successful.
         throw ReadPropertyError("audio::PluginDriver::Instance::getPropertyAsString", "Error reading property:" + String::number(prop));
+    }
+
+    void systemFrameBegins(audio::System &)
+    {
+        DENG2_ASSERT(initialized);
+        iBase.Event(SFXEV_BEGIN);
+    }
+
+    void systemFrameEnds(audio::System &)
+    {
+        DENG2_ASSERT(initialized);
+        iBase.Event(SFXEV_END);
+    }
+
+    void systemMidiFontChanged(String const &newMidiFontPath)
+    {
+        DENG2_ASSERT(initialized);
+        DENG2_ASSERT(iBase.Set);
+        iBase.Set(AUDIOP_SOUNDFONT_FILENAME, newMidiFontPath.toLatin1().constData());
     }
 };
 
@@ -234,6 +258,17 @@ void PluginDriver::initialize()
 
     DENG2_ASSERT(d->iBase.Init != nullptr);
     d->initialized = d->iBase.Init();
+
+    // We want notification at various times:
+    if(hasSfx())
+    {
+        audioSystem().audienceForFrameBegins() += d;
+        audioSystem().audienceForFrameEnds()   += d;
+    }
+    if(d->iBase.Set)
+    {
+        audioSystem().audienceForMidiFontChange() += d;
+    }
 }
 
 void PluginDriver::deinitialize()
@@ -247,30 +282,24 @@ void PluginDriver::deinitialize()
     {
         d->iBase.Shutdown();
     }
+
+    // Stop receiving notifications:
+    if(d->iBase.Set)
+    {
+        audioSystem().audienceForMidiFontChange() -= d;
+    }
+    if(hasSfx())
+    {
+        audioSystem().audienceForFrameEnds()   -= d;
+        audioSystem().audienceForFrameBegins() -= d;
+    }
+
     d->initialized = false;
 }
 
 ::Library *PluginDriver::library() const
 {
     return d->library;
-}
-
-void PluginDriver::startFrame()
-{
-    if(!d->initialized) return;
-    d->iBase.Event(SFXEV_BEGIN);
-}
-
-void PluginDriver::endFrame()
-{
-    if(!d->initialized) return;
-    d->iBase.Event(SFXEV_END);
-}
-
-void PluginDriver::musicMidiFontChanged(String const &newMidiFontPath)
-{
-    if(!d->initialized) return;
-    if(d->iBase.Set) d->iBase.Set(AUDIOP_SOUNDFONT_FILENAME, newMidiFontPath.toLatin1().constData());
 }
 
 bool PluginDriver::hasCd() const
