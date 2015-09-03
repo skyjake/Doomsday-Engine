@@ -81,7 +81,9 @@ DENG2_PIMPL_NOREF(PluginDriver)
     void systemFrameBegins(audio::System &)
     {
         DENG2_ASSERT(initialized);
-        iBase.Event(SFXEV_BEGIN);
+        if(iSfx.gen.Init)   iBase.Event(SFXEV_BEGIN);
+        if(iCd.gen.Init)    iCd.gen.Update();
+        if(iMusic.gen.Init) iMusic.gen.Update();
     }
 
     void systemFrameEnds(audio::System &)
@@ -261,11 +263,8 @@ void PluginDriver::initialize()
     d->initialized = d->iBase.Init();
 
     // We want notification at various times:
-    if(hasSfx())
-    {
-        audioSystem().audienceForFrameBegins() += d;
-        audioSystem().audienceForFrameEnds()   += d;
-    }
+    audioSystem().audienceForFrameBegins() += d;
+    audioSystem().audienceForFrameEnds()   += d;
     if(d->iBase.Set)
     {
         audioSystem().audienceForMidiFontChange() += d;
@@ -289,11 +288,8 @@ void PluginDriver::deinitialize()
     {
         audioSystem().audienceForMidiFontChange() -= d;
     }
-    if(hasSfx())
-    {
-        audioSystem().audienceForFrameEnds()   -= d;
-        audioSystem().audienceForFrameBegins() -= d;
-    }
+    audioSystem().audienceForFrameEnds()   -= d;
+    audioSystem().audienceForFrameBegins() -= d;
 
     d->initialized = false;
 }

@@ -167,29 +167,6 @@ DENG2_PIMPL(System)
         throw MissingDriverError("audio::System::findDriver", "Unknown audio driver '" + driverIdKey + "'");
     }
 
-    /**
-     * Find the Driver to which @a playbackInterface belongs.
-     *
-     * @param playbackInterface  Pointer to a SFX, Music, or CD interface.
-     */
-    IDriver &findDriverByInterface(void *playbackInterface) const
-    {
-        if(playbackInterface)
-        {
-            for(IDriver *driver : drivers)
-            {
-                if((void *)&driver->iSfx()   == playbackInterface ||
-                   (void *)&driver->iMusic() == playbackInterface ||
-                   (void *)&driver->iCd()    == playbackInterface)
-                {
-                    return *driver;
-                }
-            }
-        }
-        /// @throw MissingDriverError  Unknown playback interface specified.
-        throw MissingDriverError("audio::System::Instance::findDriverByInterface", "Unknown playback interface");
-    }
-
     void unloadDrivers()
     {
         // Deinitialize all loaded drivers. (Note: reverse order)
@@ -501,20 +478,6 @@ DENG2_PIMPL(System)
             }
         }
         return LoopContinue;
-    }
-
-    audiointerfacetype_t interfaceType(void *anyAudioInterface) const
-    {
-        if(anyAudioInterface)
-        {
-            for(IDriver const *driver : drivers)
-            {
-                if((void *)&driver->iSfx()   == anyAudioInterface) return AUDIO_ISFX;
-                if((void *)&driver->iMusic() == anyAudioInterface) return AUDIO_IMUSIC;
-                if((void *)&driver->iCd()    == anyAudioInterface) return AUDIO_ICD;
-            }
-        }
-        return AUDIO_INONE;
     }
 
     String interfaceName(void *anyAudioInterface) const
@@ -1610,12 +1573,12 @@ void System::startFrame()
 #ifdef __CLIENT__
     d->updateMusicVolumeIfChanged();
 
+    // Notify interested parties.
+    DENG2_FOR_AUDIENCE2(FrameBegins, i) i->systemFrameBegins(*this);
+
     if(sfxIsAvailable())
     {
         // Update all channels (freq, 2D:pan,volume, 3D:position,velocity).
-
-        // Notify interested parties.
-        DENG2_FOR_AUDIENCE2(FrameBegins, i) i->systemFrameBegins(*this);
 
         // Have there been changes to the cvar settings?
         d->updateSfx3DModeIfChanged();
@@ -1623,17 +1586,6 @@ void System::startFrame()
 
         // Should we purge the cache (to conserve memory)?
         d->sampleCache.maybeRunPurge();
-    }
-
-    if(d->musAvail)
-    {
-        // Update all interfaces.
-        d->forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [] (void *ifs)
-        {
-            auto *iMusic = (audiointerface_music_generic_t *) ifs;
-            iMusic->Update();
-            return LoopContinue;
-        });
     }
 #endif
 
@@ -1646,32 +1598,29 @@ void System::endFrame()
 {
     LOG_AS("audio::System");
 
-    if(sfxIsAvailable())
+    if(sfxIsAvailable() && !BusyMode_Active())
     {
-        if(!BusyMode_Active())
+        // Update channel and listener properties.
+
+        // If no listener is available - no 3D positioning is done.
+        d->sfxListener = getListenerMobj();
+
+        // Update channels.
+        d->channels->forAll([] (Channel &ch)
         {
-            // Update channel and listener properties.
-
-            // If no listener is available - no 3D positioning is done.
-            d->sfxListener = getListenerMobj();
-
-            // Update channels.
-            d->channels->forAll([] (Channel &ch)
+            if(ch.hasBuffer() && (ch.buffer().flags & SFXBF_PLAYING))
             {
-                if(ch.hasBuffer() && (ch.buffer().flags & SFXBF_PLAYING))
-                {
-                    ch.updatePriority();
-                }
-                return LoopContinue;
-            });
+                ch.updatePriority();
+            }
+            return LoopContinue;
+        });
 
-            // Update listener.
-            d->updateSfxListener();
-        }
-
-        // Notify interested parties.
-        DENG2_FOR_AUDIENCE2(FrameEnds, i) i->systemFrameEnds(*this);
+        // Update listener.
+        d->updateSfxListener();
     }
+
+    // Notify interested parties.
+    DENG2_FOR_AUDIENCE2(FrameEnds, i) i->systemFrameEnds(*this);
 }
 
 void System::initPlayback()
