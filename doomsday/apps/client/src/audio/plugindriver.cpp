@@ -20,6 +20,7 @@
 
 #include "audio/plugindriver.h"
 
+#include "api_audiod.h"
 #include "audio/system.h"
 #include <de/Library>
 #include <de/Log>

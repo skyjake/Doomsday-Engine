@@ -78,10 +78,6 @@ public:  // Implements audio::System::IDriver: ---------------------------------
     de::String identityKey() const;
     de::String title() const;
 
-    void musicMidiFontChanged(de::String const &newMidiFontPath);
-    void startFrame();
-    void endFrame();
-
     bool hasCd() const;
     bool hasMusic() const;
     bool hasSfx() const;

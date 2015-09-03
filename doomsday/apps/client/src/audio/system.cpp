@@ -30,6 +30,9 @@
 #  include "server/sv_sound.h"
 #endif
 
+#ifdef __CLIENT__
+#  include "api_audiod.h"
+#endif
 #include "api_audiod_sfx.h"
 #include "audio/samplecache.h"
 #ifdef __CLIENT__

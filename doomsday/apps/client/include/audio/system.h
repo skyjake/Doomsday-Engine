@@ -27,7 +27,6 @@
 
 #include "api_sound.h"
 #ifdef __CLIENT__
-#  include "api_audiod.h"      ///< @todo remove me
 #  include "api_audiod_mus.h"  ///< @todo remove me
 #  include "api_audiod_sfx.h"  ///< @todo remove me
 
@@ -48,7 +47,6 @@
 namespace audio {
 
 #ifdef __CLIENT__
-class Driver;
 class SampleCache;
 #endif
 
@@ -64,8 +62,11 @@ public:
     /// Notified when a new audio frame begins.
     DENG2_DEFINE_AUDIENCE2(FrameBegins, void systemFrameBegins(System &system))
 
-    // Notified when a new audio frame ends.
+    /// Notified when the current audio frame ends.
     DENG2_DEFINE_AUDIENCE2(FrameEnds,   void systemFrameEnds(System &system))
+
+    /// Notified whenever a MIDI font change occurs.
+    DENG2_DEFINE_AUDIENCE2(MidiFontChange, void systemMidiFontChanged(de::String const &newMidiFontPath))
 #endif
 
 public:
@@ -100,9 +101,6 @@ public:
     void reset();
 
 public:  // Music playback: ----------------------------------------------------------
-
-    /// Notified whenever a MIDI font change occurs.
-    DENG2_DEFINE_AUDIENCE2(MidiFontChange, void systemMidiFontChanged(de::String const &newMidiFontPath))
 
     /**
      * Music source preference.
