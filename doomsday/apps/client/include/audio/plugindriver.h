@@ -75,16 +75,16 @@ public:  // Implements audio::System::IDriver: ---------------------------------
     Status status() const;
 
     de::String description() const;
-    de::String identifier() const;
-    de::String name() const;
+    de::String identityKey() const;
+    de::String title() const;
 
     void musicMidiFontChanged(de::String const &newMidiFontPath);
     void startFrame();
     void endFrame();
 
     bool hasCd() const;
-    bool hasSfx() const;
     bool hasMusic() const;
+    bool hasSfx() const;
 
     audiointerface_cd_t /*const*/ &iCd() const;
     audiointerface_music_t /*const*/ &iMusic() const;

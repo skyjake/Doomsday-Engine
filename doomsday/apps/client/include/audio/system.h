@@ -323,12 +323,12 @@ public:  // Low-level driver interfaces: ---------------------------------------
          * @todo Once the audio driver/interface configuration is stored persistently
          * in Config we should remove the alternative identifiers at this time. -ds
          */
-        virtual de::String identifier() const = 0;
+        virtual de::String identityKey() const = 0;
 
         /**
-         * Returns the human-friendly name of the audio driver.
+         * Returns the human-friendly title of the audio driver.
          */
-        virtual de::String name() const = 0;
+        virtual de::String title() const = 0;
 
         /**
          * Notify the driver of a change in music MIDI font.
@@ -382,16 +382,16 @@ public:  // Low-level driver interfaces: ---------------------------------------
     int driverCount() const;
 
     /**
-     * Lookup the loaded audio driver associated with the given (unique) @a driverId.
+     * Lookup the loaded audio driver associated with the given (unique) @a driverIdKey.
      */
-    IDriver const &findDriver(de::String driverId) const;
+    IDriver const &findDriver(de::String driverIdKey) const;
 
     /**
-     * Search for a loaded audio driver associated with the given (unique) @a driverId.
+     * Search for a loaded audio driver associated with the given (unique) @a driverIdKey.
      *
      * @return  Pointer to the loaded audio Driver if found; otherwise @c nullptr.
      */
-    IDriver const *tryFindDriver(de::String driverId) const;
+    IDriver const *tryFindDriver(de::String driverIdKey) const;
 
     /**
      * Iterate through the loaded audio drivers (in load order), executing @a callback

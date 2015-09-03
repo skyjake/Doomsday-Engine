@@ -32,8 +32,8 @@
  */
 enum
 {
-    AUDIOP_IDENTIFIER,         ///< Symbolic driver identifier (stored persistently, in Config).
-    AUDIOP_NAME,               ///< Human-friendly textual name (for user presentation, in the UI).
+    AUDIOP_IDENTITYKEY,        ///< Symbolic driver identifier (stored persistently, in Config).
+    AUDIOP_TITLE,              ///< Human-friendly textual title (for user presentation, in the UI).
     AUDIOP_SOUNDFONT_FILENAME  ///< Music sound font (file name and path).
 };
 

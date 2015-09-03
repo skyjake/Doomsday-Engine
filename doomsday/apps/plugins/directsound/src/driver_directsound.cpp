@@ -402,23 +402,23 @@ int DS_Init()
 /**
  * Shut everything down.
  */
-void DS_Shutdown(void)
+void DS_Shutdown()
 {
     if(propertySet)
         propertySet->Release();
-    propertySet = NULL;
+    propertySet = nullptr;
 
     if(dsListener)
         dsListener->Release();
-    dsListener = NULL;
+    dsListener = nullptr;
 
     if(primary)
         primary->Release();
-    primary = NULL;
+    primary = nullptr;
 
     if(dsound)
         dsound->Release();
-    dsound = NULL;
+    dsound = nullptr;
 }
 
 /**
@@ -434,16 +434,16 @@ int DS_Get(int prop, void *ptr)
 {
     switch(prop)
     {
-    case AUDIOP_IDENTIFIER: {
-        auto *id = reinterpret_cast<AutoStr *>(ptr);
-        DENG2_ASSERT(id);
-        if(id) Str_Set(id, "directsound;dsound");
+    case AUDIOP_IDENTITYKEY: {
+        auto *idKey = reinterpret_cast<AutoStr *>(ptr);
+        DENG2_ASSERT(idKey);
+        if(idKey) Str_Set(idKey, "directsound;dsound");
         return true; }
 
-    case AUDIOP_NAME: {
-        auto *name = reinterpret_cast<AutoStr *>(ptr);
-        DENG2_ASSERT(name);
-        if(name) Str_Set(name, "DirectSound");
+    case AUDIOP_TITLE: {
+        auto *title = reinterpret_cast<AutoStr *>(ptr);
+        DENG2_ASSERT(title);
+        if(title) Str_Set(title, "DirectSound");
         return true; }
 
     default: DENG2_ASSERT("[DirectSound]DS_Get: Unknown property"); break;

@@ -109,16 +109,16 @@ int DS_DummyGet(int prop, void *ptr)
 {
     switch(prop)
     {
-    case AUDIOP_IDENTIFIER: {
-        auto *id = reinterpret_cast<AutoStr *>(ptr);
-        DENG2_ASSERT(id);
-        if(id) Str_Set(id, "dummy");
+    case AUDIOP_IDENTITYKEY: {
+        auto *idKey = reinterpret_cast<AutoStr *>(ptr);
+        DENG2_ASSERT(idKey);
+        if(idKey) Str_Set(idKey, "dummy");
         return true; }
 
-    case AUDIOP_NAME: {
-        auto *name = reinterpret_cast<AutoStr *>(ptr);
-        DENG2_ASSERT(name);
-        if(name) Str_Set(name, "Dummy Driver");
+    case AUDIOP_TITLE: {
+        auto *title = reinterpret_cast<AutoStr *>(ptr);
+        DENG2_ASSERT(title);
+        if(title) Str_Set(title, "Dummy Driver");
         return true; }
 
     default: DENG2_ASSERT("DS_DummyGet: Unknown property"); break;

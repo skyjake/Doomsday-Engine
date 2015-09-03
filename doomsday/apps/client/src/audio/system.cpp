@@ -141,23 +141,23 @@ DENG2_PIMPL(System)
     SettingsRegister settings;
     QList<IDriver *> drivers;
 
-    IDriver *tryFindDriver(String driverId)
+    IDriver *tryFindDriver(String driverIdKey)
     {
-        driverId = driverId.toLower();  // Symbolic identifiers are lowercase.
+        driverIdKey = driverIdKey.toLower();  // Symbolic identity keys are lowercase.
         for(IDriver *driver : drivers)
-        for(String const &id : driver->identifier().split(';'))
+        for(String const &idKey : driver->identityKey().split(';'))
         {
-            if(id == driverId)
+            if(idKey == driverIdKey)
                 return driver;
         }
         return nullptr;
     }
 
-    IDriver &findDriver(String driverId)
+    IDriver &findDriver(String driverIdKey)
     {
-        if(IDriver *driver = tryFindDriver(driverId)) return *driver;
+        if(IDriver *driver = tryFindDriver(driverIdKey)) return *driver;
         /// @throw MissingDriverError  Unknown driver identifier specified.
-        throw MissingDriverError("audio::System::findDriver", "Unknown audio driver '" + driverId + "'");
+        throw MissingDriverError("audio::System::findDriver", "Unknown audio driver '" + driverIdKey + "'");
     }
 
     /**
@@ -213,7 +213,7 @@ DENG2_PIMPL(System)
         /// @todo Store this information persistently in Config. -ds
         CommandLine &cmdLine = App::commandLine();
         for(IDriver const *driver : drivers)
-        for(QString const &id : driver->identifier().split(';'))
+        for(QString const &id : driver->identityKey().split(';'))
         {
 #ifdef DENG_DISABLE_SDLMIXER
             /// @todo As this is a built-in driver, simply don't publish it. -ds
@@ -289,12 +289,12 @@ DENG2_PIMPL(System)
     {
         if(!driver.isInitialized())
         {
-            LOG_AUDIO_VERBOSE("Initializing audio driver '%s'...") << driver.identifier();
+            LOG_AUDIO_VERBOSE("Initializing audio driver '%s'...") << driver.identityKey();
             driver.initialize();
             if(!driver.isInitialized())
             {
                 /// @todo Why, exactly? (log it!) -ds
-                LOG_AUDIO_WARNING("Failed initializing audio driver '%s'") << driver.identifier();
+                LOG_AUDIO_WARNING("Failed initializing audio driver '%s'") << driver.identityKey();
             }
         }
         return driver;
@@ -406,7 +406,7 @@ DENG2_PIMPL(System)
                     }
                     else
                     {
-                        LOG_AUDIO_WARNING("Audio driver \"" + driver.name() + "\" does not provide a SFX interface");
+                        LOG_AUDIO_WARNING("Audio driver \"" + driver.title() + "\" does not provide a SFX interface");
                     }
                 }
                 catch(MissingDriverError const &er)
@@ -432,7 +432,7 @@ DENG2_PIMPL(System)
                     }
                     else
                     {
-                        LOG_AUDIO_WARNING("Audio driver \"" + driver.name() + "\" does not provide a Music interface");
+                        LOG_AUDIO_WARNING("Audio driver \"" + driver.title() + "\" does not provide a Music interface");
                     }
                 }
                 catch(MissingDriverError const &er)
@@ -458,7 +458,7 @@ DENG2_PIMPL(System)
                     }
                     else
                     {
-                        LOG_AUDIO_WARNING("Audio driver \"" + driver.name() + "\" does not provide a CD interface");
+                        LOG_AUDIO_WARNING("Audio driver \"" + driver.title() + "\" does not provide a CD interface");
                     }
                 }
                 catch(MissingDriverError const &er)
@@ -1723,14 +1723,14 @@ dint System::driverCount() const
     return d->drivers.count();
 }
 
-System::IDriver const *System::tryFindDriver(String driverId) const
+System::IDriver const *System::tryFindDriver(String driverIdKey) const
 {
-    return d->tryFindDriver(driverId);
+    return d->tryFindDriver(driverIdKey);
 }
 
-System::IDriver const &System::findDriver(String driverId) const
+System::IDriver const &System::findDriver(String driverIdKey) const
 {
-    return d->findDriver(driverId);
+    return d->findDriver(driverIdKey);
 }
 
 LoopResult System::forAllDrivers(std::function<LoopResult (IDriver const &)> func) const
@@ -2388,9 +2388,9 @@ D_CMD(ListDrivers)
 
         list += String(_E(0)
                        _E(Ta) "%1 "
-                       _E(Tb) _E(2) "%2" _E(i) "%3")
-                  .arg(driver.identifier())
-                  .arg(driver.name())
+                       _E(Tb) _E(2) "%2 " _E(i) "%3")
+                  .arg(driver.identityKey())
+                  .arg(driver.title())
                   .arg(driver.statusAsText());
 
         numDrivers += 1;

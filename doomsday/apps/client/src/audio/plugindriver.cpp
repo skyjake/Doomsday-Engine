@@ -69,7 +69,7 @@ DENG2_PIMPL_NOREF(PluginDriver)
             return string;
         }
         /// @throw ReadPropertyError  Driver returned not successful.
-        throw ReadPropertyError("audio::PluginDriver::getPropertyAsString", "Error reading property:" + String::number(prop));
+        throw ReadPropertyError("audio::PluginDriver::Instance::getPropertyAsString", "Error reading property:" + String::number(prop));
     }
 };
 
@@ -170,22 +170,52 @@ bool PluginDriver::recognize(LibraryFile &library)  // static
 
 String PluginDriver::description() const
 {
-    return String(_E(b) "%1\n" _E(.)
-                  _E(l) "Identifier: " _E(.) "%2 "
-                  _E(D)_E(b) "Status: " _E(.) "%3")
-             .arg(name())
-             .arg(identifier())
-             .arg(statusAsText());
+    auto desc = String(     _E(b) "%1" _E(.)
+                       "\n" _E(l) "IdentityKey: " _E(.) "%2")
+                  .arg(title())
+                  .arg(identityKey());
+
+    if(isInitialized())
+    {
+        // Summarize available playback interfaces.
+        String piSummary;
+        if(hasCd())
+        {
+            //if(!piSummary.isEmpty()) piSummary += "\n" _E(0);
+            piSummary += " - CD: " _E(>) + interfaceName(&iCd()) + _E(<);
+        }
+        if(hasMusic())
+        {
+            if(!piSummary.isEmpty()) piSummary += "\n" _E(0);
+            piSummary += " - Music: " _E(>) + interfaceName(&iMusic()) + _E(<);
+        }
+        if(hasSfx())
+        {
+            if(!piSummary.isEmpty()) piSummary += "\n" _E(0);
+            piSummary += " - SFX: " _E(>) + interfaceName(&iSfx()) + _E(<);
+        }
+
+        if(!piSummary.isEmpty())
+        {
+            desc += "\n" _E(D)_E(b) "Playback interfaces:"
+                    "\n" _E(.)_E(.) + piSummary;
+        }
+    }
+
+    // Finally, the high-level status of the driver.
+    desc += "\n" _E(D)_E(b) "Status: " _E(.) + statusAsText();
+
+    return desc;
 }
 
-String PluginDriver::identifier() const
+String PluginDriver::identityKey() const
 {
-    return d->getPropertyAsString(AUDIOP_IDENTIFIER).toLower();
+    return d->getPropertyAsString(AUDIOP_IDENTITYKEY).toLower();
 }
 
-String PluginDriver::name() const
+String PluginDriver::title() const
 {
-    return d->getPropertyAsString(AUDIOP_NAME);
+    return d->getPropertyAsString(AUDIOP_TITLE);
 }
 
 audio::System::IDriver::Status PluginDriver::status() const
@@ -243,9 +273,9 @@ void PluginDriver::musicMidiFontChanged(String const &newMidiFontPath)
     if(d->iBase.Set) d->iBase.Set(AUDIOP_SOUNDFONT_FILENAME, newMidiFontPath.toLatin1().constData());
 }
 
-bool PluginDriver::hasSfx() const
+bool PluginDriver::hasCd() const
 {
-    return iSfx().gen.Init != nullptr;
+    return iCd().gen.Init != nullptr;
 }
 
 bool PluginDriver::hasMusic() const
@@ -253,19 +283,9 @@ bool PluginDriver::hasMusic() const
     return iMusic().gen.Init != nullptr;
 }
 
-bool PluginDriver::hasCd() const
+bool PluginDriver::hasSfx() const
 {
-    return iCd().gen.Init != nullptr;
-}
-
-audiointerface_sfx_t /*const*/ &PluginDriver::iSfx() const
-{
-    return d->iSfx;
-}
-
-audiointerface_music_t /*const*/ &PluginDriver::iMusic() const
-{
-    return d->iMusic;
+    return iSfx().gen.Init != nullptr;
 }
 
 audiointerface_cd_t /*const*/ &PluginDriver::iCd() const
@@ -273,12 +293,22 @@ audiointerface_cd_t /*const*/ &PluginDriver::iCd() const
     return d->iCd;
 }
 
+audiointerface_music_t /*const*/ &PluginDriver::iMusic() const
+{
+    return d->iMusic;
+}
+
+audiointerface_sfx_t /*const*/ &PluginDriver::iSfx() const
+{
+    return d->iSfx;
+}
+
 String PluginDriver::interfaceName(void *playbackInterface) const
 {
     if((void *)&d->iSfx == playbackInterface)
     {
         /// @todo SFX interfaces can't be named yet.
-        return name();
+        return title();
     }
 
     if((void *)&d->iMusic == playbackInterface || (void *)&d->iCd == playbackInterface)

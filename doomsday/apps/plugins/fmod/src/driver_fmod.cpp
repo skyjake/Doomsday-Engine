@@ -171,16 +171,16 @@ int DS_Get(int prop, void *ptr)
 {
     switch(prop)
     {
-    case AUDIOP_IDENTIFIER: {
-        auto *id = reinterpret_cast<AutoStr *>(ptr);
-        DENG2_ASSERT(id);
-        if(id) Str_Set(id, "fmod");
+    case AUDIOP_IDENTITYKEY: {
+        auto *idKey = reinterpret_cast<AutoStr *>(ptr);
+        DENG2_ASSERT(idKey);
+        if(idKey) Str_Set(idKey, "fmod");
         return true; }
 
-    case AUDIOP_NAME: {
-        auto *name = reinterpret_cast<AutoStr *>(ptr);
-        DENG2_ASSERT(name);
-        if(name) Str_Set(name, "FMOD");
+    case AUDIOP_TITLE: {
+        auto *title = reinterpret_cast<AutoStr *>(ptr);
+        DENG2_ASSERT(title);
+        if(title) Str_Set(title, "FMOD");
         return true; }
 
     default: DSFMOD_TRACE("DS_Get: Unknown property " << prop); break;
