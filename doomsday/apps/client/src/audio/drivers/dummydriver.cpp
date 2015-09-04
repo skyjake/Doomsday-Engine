@@ -291,19 +291,19 @@ audiointerface_sfx_t /*const*/ &DummyDriver::iSfx() const
     return d->iSfx;
 }
 
-String DummyDriver::interfaceName(void *playbackInterface) const
+DotPath DummyDriver::interfacePath(void *playbackInterface) const
 {
     if((void *)&d->iCd == playbackInterface)
     {
-        return "Dummy/CD";
+        return identityKey() + ".cd";
     }
     if((void *)&d->iMusic == playbackInterface)
     {
-        return "Dummy/Music";
+        return identityKey() + "music";
     }
     if((void *)&d->iSfx == playbackInterface)
     {
-        return "Dummy/SFX";
+        return identityKey() + "sfx";
     }
 
     return "";  // Not recognized.

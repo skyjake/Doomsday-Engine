@@ -94,7 +94,7 @@ int DM_CDAudio_Get(int prop, void* ptr)
     case MUSIP_ID:
         if(ptr)
         {
-            strcpy((char*) ptr, "FMOD/CD");
+            strcpy((char *) ptr, "cd");
             return true;
         }
         break;

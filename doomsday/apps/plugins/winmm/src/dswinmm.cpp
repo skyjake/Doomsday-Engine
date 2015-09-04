@@ -191,7 +191,7 @@ int DM_CDAudio_Get(int prop, void *ptr)
     case MUSIP_ID:
         if(ptr)
         {
-            qstrcpy((char *) ptr, "WinMM::CD");
+            qstrcpy((char *) ptr, "cd");
             return 1;
         }
         break;
@@ -316,7 +316,7 @@ int DM_Music_Get(int prop, void *ptr)
     case MUSIP_ID:
         if(ptr)
         {
-            qstrcpy((char *) ptr, "WinMM::Mus");
+            qstrcpy((char *) ptr, "music");
             return true;
         }
         break;

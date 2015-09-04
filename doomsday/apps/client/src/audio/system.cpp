@@ -150,17 +150,17 @@ String System::IDriver::description() const
         if(hasCd())
         {
             //if(!piSummary.isEmpty()) piSummary += "\n" _E(0);
-            piSummary += " - CD: " _E(>) + interfaceName(&iCd()) + _E(<);
+            piSummary += " - CD: " _E(>) + interfacePath(&iCd()) + _E(<);
         }
         if(hasMusic())
         {
             if(!piSummary.isEmpty()) piSummary += "\n" _E(0);
-            piSummary += " - Music: " _E(>) + interfaceName(&iMusic()) + _E(<);
+            piSummary += " - Music: " _E(>) + interfacePath(&iMusic()) + _E(<);
         }
         if(hasSfx())
         {
             if(!piSummary.isEmpty()) piSummary += "\n" _E(0);
-            piSummary += " - SFX: " _E(>) + interfaceName(&iSfx()) + _E(<);
+            piSummary += " - SFX: " _E(>) + interfacePath(&iSfx()) + _E(<);
         }
 
         if(!piSummary.isEmpty())
@@ -514,14 +514,14 @@ DENG2_PIMPL(System)
         return LoopContinue;
     }
 
-    String interfaceName(void *anyAudioInterface) const
+    DotPath interfacePath(void *playbackInterface) const
     {
-        if(anyAudioInterface)
+        if(playbackInterface)
         {
             for(IDriver const *driver : drivers)
             {
-                String const name = driver->interfaceName(anyAudioInterface);
-                if(!name.isEmpty()) return name;
+                DotPath const path = driver->interfacePath(playbackInterface);
+                if(!path.isEmpty()) return path;
             }
         }
         return "(invalid)";
@@ -793,7 +793,7 @@ DENG2_PIMPL(System)
             else
             {
                 LOG_AUDIO_WARNING("Failed to initialize \"%s\" for music playback")
-                    << interfaceName(iMusic);
+                    << interfacePath(iMusic);
             }
             return LoopContinue;
         });
@@ -1559,12 +1559,12 @@ String System::description() const
         if(ifs.type == AUDIO_IMUSIC || ifs.type == AUDIO_ICD)
         {
             os << _E(Ta) _E(l) "  " << (ifs.type == AUDIO_IMUSIC ? "Music" : "CD") << ": "
-               << _E(.) _E(Tb) << d->interfaceName(ifs.i.any) << "\n";
+               << _E(.) _E(Tb) << d->interfacePath(ifs.i.any) << "\n";
         }
         else if(ifs.type == AUDIO_ISFX)
         {
             os << _E(Ta) _E(l) << "  SFX: " << _E(.) _E(Tb)
-               << d->interfaceName(ifs.i.sfx) << "\n";
+               << d->interfacePath(ifs.i.sfx) << "\n";
         }
     }
 

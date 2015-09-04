@@ -319,7 +319,7 @@ static int DS_SDLMixer_Music_Get(int prop, void *value)
     switch(prop)
     {
     case MUSIP_ID:
-        strcpy((char *) value, "SDLMixer::Music");
+        strcpy((char *) value, "music");
         return true;
 
     case MUSIP_PLAYING:
@@ -560,19 +560,19 @@ audiointerface_sfx_t /*const*/ &SdlMixerDriver::iSfx() const
     return d->iSfx;
 }
 
-String SdlMixerDriver::interfaceName(void *playbackInterface) const
+DotPath SdlMixerDriver::interfacePath(void *playbackInterface) const
 {
     if((void *)&d->iCd == playbackInterface)
     {
-        return "SDL_mixer/CD";
+        return identityKey() + ".cd";
     }
     if((void *)&d->iMusic == playbackInterface)
     {
-        return "SDL_mixer/Music";
+        return identityKey() + ".music";
     }
     if((void *)&d->iSfx == playbackInterface)
     {
-        return "SDL_mixer/SFX";
+        return identityKey() + ".sfx";
     }
 
     return "";  // Not recognized.

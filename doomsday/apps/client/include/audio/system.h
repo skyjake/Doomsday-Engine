@@ -32,12 +32,14 @@
 
 #  include "audio/channel.h"
 #  include <de/Error>
+#  include <de/DotPath>
 #  include <de/Observers>
 #  include <de/Range>
 #  include <de/Record>
 #endif
 #include <de/String>
 #include <de/System>
+#include <QChar>
 #ifdef __CLIENT__
 #  include <functional>
 #endif
@@ -374,9 +376,12 @@ public:  // Low-level driver interfaces: ---------------------------------------
         virtual audiointerface_sfx_t /*const*/ &iSfx() const = 0;
 
         /**
-         * Returns the human-friendly name for @a playbackInterface.
+         * Returns the symbolic path descriptor for the given @a playbackInterface if
+         * found; otherwise a zero-length path is returned.
+         *
+         * @param playbackInterface  Playback interface to lookup.
          */
-        virtual de::String interfaceName(void *playbackInterface) const = 0;
+        virtual de::DotPath interfacePath(void *playbackInterface) const = 0;
     };
 
     /**

@@ -296,12 +296,12 @@ audiointerface_sfx_t /*const*/ &PluginDriver::iSfx() const
     return d->iSfx;
 }
 
-String PluginDriver::interfaceName(void *playbackInterface) const
+DotPath PluginDriver::interfacePath(void *playbackInterface) const
 {
     if((void *)&d->iSfx == playbackInterface)
     {
-        /// @todo SFX interfaces can't be named yet.
-        return title();
+        /// @todo SFX interfaces aren't named yet.
+        return identityKey() + ".unnamed_sfx";
     }
 
     if((void *)&d->iMusic == playbackInterface || (void *)&d->iCd == playbackInterface)
@@ -310,11 +310,12 @@ String PluginDriver::interfaceName(void *playbackInterface) const
         auto *gen = (audiointerface_music_generic_t *) playbackInterface;
         if(gen->Get(MUSIP_ID, buf))
         {
-            return buf;
+            return identityKey() + "." + String(buf);
         }
         else
         {
-            return "[MUSIP_ID not defined]";
+            DENG2_ASSERT(!"[MUSIP_ID not defined]");
+            return identityKey() + ".unnamed_music";
         }
     }
 

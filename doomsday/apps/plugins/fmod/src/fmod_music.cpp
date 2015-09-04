@@ -193,7 +193,7 @@ int DMFmod_Music_Get(int prop, void* ptr)
     case MUSIP_ID:
         if(ptr)
         {
-            strcpy((char*) ptr, "FMOD/Ext");
+            strcpy((char *) ptr, "music");
             return true;
         }
         break;

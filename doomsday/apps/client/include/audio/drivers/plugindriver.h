@@ -84,7 +84,7 @@ public:  // Implements audio::System::IDriver: ---------------------------------
     audiointerface_cd_t /*const*/ &iCd() const;
     audiointerface_music_t /*const*/ &iMusic() const;
     audiointerface_sfx_t /*const*/ &iSfx() const;
-    de::String interfaceName(void *playbackInterface) const;
+    de::DotPath interfacePath(void *playbackInterface) const;
 
 private:
     PluginDriver();
