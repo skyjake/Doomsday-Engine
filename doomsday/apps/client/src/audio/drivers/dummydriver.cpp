@@ -251,11 +251,6 @@ audio::System::IDriver::Status DummyDriver::status() const
     return Loaded;
 }
 
-String DummyDriver::description() const
-{
-    return "blah";
-}
-
 String DummyDriver::identityKey() const
 {
     return "dummy";

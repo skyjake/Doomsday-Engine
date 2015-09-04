@@ -135,6 +135,46 @@ String System::IDriver::statusAsText() const
     }
     return "Invalid";
 }
+
+String System::IDriver::description() const
+{
+    auto desc = String(     _E(b) "%1" _E(.)
+                       "\n" _E(l) "IdentityKey: " _E(.) "%2")
+                  .arg(title())
+                  .arg(identityKey());
+
+    if(isInitialized())
+    {
+        // Summarize available playback interfaces.
+        String piSummary;
+        if(hasCd())
+        {
+            //if(!piSummary.isEmpty()) piSummary += "\n" _E(0);
+            piSummary += " - CD: " _E(>) + interfaceName(&iCd()) + _E(<);
+        }
+        if(hasMusic())
+        {
+            if(!piSummary.isEmpty()) piSummary += "\n" _E(0);
+            piSummary += " - Music: " _E(>) + interfaceName(&iMusic()) + _E(<);
+        }
+        if(hasSfx())
+        {
+            if(!piSummary.isEmpty()) piSummary += "\n" _E(0);
+            piSummary += " - SFX: " _E(>) + interfaceName(&iSfx()) + _E(<);
+        }
+
+        if(!piSummary.isEmpty())
+        {
+            desc += "\n" _E(D)_E(b) "Playback interfaces:"
+                    "\n" _E(.)_E(.) + piSummary;
+        }
+    }
+
+    // Finally, the high-level status of the driver.
+    desc += "\n" _E(D)_E(b) "Status: " _E(.) + statusAsText();
+
+    return desc;
+}
 #endif
 
 /**
@@ -2346,7 +2386,8 @@ D_CMD(ListDrivers)
         return LoopContinue;
     });
 
-    LOG_MSG("Loaded Audio Drivers (%i):") << numDrivers;
+    LOG_MSG(_E(b) "Loaded Audio Drivers (%i):") << numDrivers;
+    LOG_MSG(_E(R) "\n");
     LOG_MSG("") << list;
     return true;
 }

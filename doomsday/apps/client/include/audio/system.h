@@ -325,7 +325,7 @@ public:  // Low-level driver interfaces: ---------------------------------------
          * Returns detailed information about the driver as styled text. Printed by
          * "inspectaudiodriver", for instance.
          */
-        virtual de::String description() const = 0;
+        de::String description() const;
 
         /**
          * Returns the textual, symbolic identifier of the audio driver (lower case),

@@ -520,11 +520,6 @@ audio::System::IDriver::Status SdlMixerDriver::status() const
     return Loaded;
 }
 
-String SdlMixerDriver::description() const
-{
-    return "blah";
-}
-
 String SdlMixerDriver::identityKey() const
 {
     return "sdlmixer";

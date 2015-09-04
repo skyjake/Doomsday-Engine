@@ -202,46 +202,6 @@ bool PluginDriver::recognize(LibraryFile &library)  // static
     return true;
 }
 
-String PluginDriver::description() const
-{
-    auto desc = String(     _E(b) "%1" _E(.)
-                       "\n" _E(l) "IdentityKey: " _E(.) "%2")
-                  .arg(title())
-                  .arg(identityKey());
-
-    if(isInitialized())
-    {
-        // Summarize available playback interfaces.
-        String piSummary;
-        if(hasCd())
-        {
-            //if(!piSummary.isEmpty()) piSummary += "\n" _E(0);
-            piSummary += " - CD: " _E(>) + interfaceName(&iCd()) + _E(<);
-        }
-        if(hasMusic())
-        {
-            if(!piSummary.isEmpty()) piSummary += "\n" _E(0);
-            piSummary += " - Music: " _E(>) + interfaceName(&iMusic()) + _E(<);
-        }
-        if(hasSfx())
-        {
-            if(!piSummary.isEmpty()) piSummary += "\n" _E(0);
-            piSummary += " - SFX: " _E(>) + interfaceName(&iSfx()) + _E(<);
-        }
-
-        if(!piSummary.isEmpty())
-        {
-            desc += "\n" _E(D)_E(b) "Playback interfaces:"
-                    "\n" _E(.)_E(.) + piSummary;
-        }
-    }
-
-    // Finally, the high-level status of the driver.
-    desc += "\n" _E(D)_E(b) "Status: " _E(.) + statusAsText();
-
-    return desc;
-}
-
 String PluginDriver::identityKey() const
 {
     return d->getPropertyAsString(AUDIOP_IDENTITYKEY).toLower();

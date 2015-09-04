@@ -74,7 +74,6 @@ public:  // Implements audio::System::IDriver: ---------------------------------
 
     Status status() const;
 
-    de::String description() const;
     de::String identityKey() const;
     de::String title() const;
 
