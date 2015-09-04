@@ -37,6 +37,7 @@
 #ifdef __CLIENT__
 #  include "audio/drivers/dummydriver.h"
 #  include "audio/drivers/plugindriver.h"
+#  include "audio/drivers/sdlmixerdriver.h"
 #  include "audio/mus.h"
 #endif
 
@@ -196,12 +197,6 @@ DENG2_PIMPL(System)
         for(IDriver const *driver : drivers)
         for(QString const &driverIdKey : driver->identityKey().split(';'))
         {
-#ifdef DENG_DISABLE_SDLMIXER
-            /// @todo As this is a built-in driver, simply don't publish it. -ds
-            if(driverIdKey == "sdlmixer")
-                continue;
-#endif
-
             if(cmdLine.has("-" + driverIdKey))
                 return driverIdKey;
         }
@@ -217,7 +212,9 @@ DENG2_PIMPL(System)
 
         // Firstly - built-in audio drivers.
         drivers << new DummyDriver;
-        //loadDriver("sdlmixer");
+#ifndef DENG_DISABLE_SDLMIXER
+        drivers << new SdlMixerDriver;
+#endif
 
         // Secondly - plugin audio drivers.
         Library_forAll([this] (LibraryFile &libFile)

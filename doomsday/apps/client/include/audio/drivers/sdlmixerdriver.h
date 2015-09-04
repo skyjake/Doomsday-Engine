@@ -1,7 +1,8 @@
-/** @file dummydriver.cpp  Dummy audio driver.
+/** @file sdlmixerdriver.cpp  Audio driver for playback using SDL_mixer.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2007 Jamie Jones <yagisan@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,8 +18,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_AUDIO_DUMMYDRIVER_H
-#define CLIENT_AUDIO_DUMMYDRIVER_H
+#ifndef DENG_DISABLE_SDLMIXER
+#ifndef CLIENT_AUDIO_SDLMIXERDRIVER_H
+#define CLIENT_AUDIO_SDLMIXERDRIVER_H
 
 #ifdef __SERVER__
 #  error "audio" is not available in a SERVER build
@@ -34,18 +36,18 @@
 namespace audio {
 
 /**
- * Provides a null-op audio driver.
+ * Provides an audio driver for playback usnig SDL_mixer.
  */
-class DummyDriver : public audio::System::IDriver
+class SdlMixerDriver : public audio::System::IDriver
 {
 public:
-    DummyDriver();
+    SdlMixerDriver();
 
     /**
      * If the driver is still initialized it will be automatically deinitialized
      * when this is called.
      */
-    virtual ~DummyDriver();
+    virtual ~SdlMixerDriver();
 
 public:  // Implements audio::System::IDriver: -----------------------------------
 
@@ -73,4 +75,5 @@ private:
 
 }  // namespace audio
 
-#endif  // CLIENT_AUDIO_DUMMYDRIVER_H
+#endif  // CLIENT_AUDIO_SDLMIXERDRIVER_H
+#endif  // !DENG_DISABLE_SDLMIXER
