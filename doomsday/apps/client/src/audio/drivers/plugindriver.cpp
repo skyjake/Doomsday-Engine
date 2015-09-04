@@ -37,12 +37,23 @@ DENG2_PIMPL_NOREF(PluginDriver)
     bool initialized   = false;
     ::Library *library = nullptr;  ///< Library instance (owned).
 
+    /// @todo Extract this into a (base) Plugin class. -ds
+    struct IPlugin
+    {
+        int (*Init) (void);
+        void (*Shutdown) (void);
+        void (*Event) (int type);
+        int (*Get) (int prop, void *ptr);
+        int (*Set) (int prop, void const *ptr);
+    } iBase;
+
     audiointerface_sfx_t   iSfx;
     audiointerface_music_t iMusic;
     audiointerface_cd_t    iCd;
 
     Instance()
     {
+        de::zap(iBase);
         de::zap(iSfx);
         de::zap(iMusic);
         de::zap(iCd);
