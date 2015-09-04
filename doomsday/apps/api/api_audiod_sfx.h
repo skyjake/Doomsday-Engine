@@ -117,21 +117,113 @@ typedef struct sfxbuffer_s {
  */
 typedef int (*sfxstreamfunc_t)(sfxbuffer_t *buf, void *data, unsigned int size);
 
-/// Generic driver interface. All other interfaces are based on this.
-typedef struct audiointerface_sfx_generic_s {
-    int             (*Init) (void);
-    sfxbuffer_t *   (*Create) (int flags, int bits, int rate);
-    void            (*Destroy) (sfxbuffer_t *buf);
-    void            (*Load) (sfxbuffer_t *buf, struct sfxsample_s *sample);
-    void            (*Reset) (sfxbuffer_t *buf);
-    void            (*Play) (sfxbuffer_t *buf);
-    void            (*Stop) (sfxbuffer_t *buf);
-    void            (*Refresh) (sfxbuffer_t *buf);
-    void            (*Set) (sfxbuffer_t *buf, int prop, float value);
-    void            (*Setv) (sfxbuffer_t *buf, int prop, float *values);
-    void            (*Listener) (int prop, float value);
-    void            (*Listenerv) (int prop, float *values);
-    int             (*Getv) (int prop, void *values);
+/**
+ * Generic driver interface. All other interfaces are based on this.
+ */
+typedef struct audiointerface_sfx_generic_s
+{
+    /**
+     * Perform any initialization necessary before playback can begin.
+     *
+     * @return  Non-zero if successful (or already-initialized).
+     */
+    int (*Init) (void);
+
+    /**
+     * Allocate a managed sample buffer with the given specification.
+     *
+     * @param flags
+     * @param bits
+     * @param rate
+     *
+     * @return  Suitable (and possibly newly allocated) sample buffer. Ownership
+     * is retained.
+     */
+    sfxbuffer_t *(*Create) (int flags, int bits, int rate);
+
+    /**
+     * Release the managed sample @a buffer. Calling this invalidates any other
+     * existing references or pointers to @a buffer.
+     */
+    void (*Destroy) (sfxbuffer_t *buffer);
+
+    /**
+     * Prepare the buffer for playing a sample by filling the buffer with as
+     * much sample data as fits. The pointer to sample is saved, so the caller
+     * mustn't free it while the sample is loaded.
+     *
+     * @param buffer  Sound buffer.
+     * @param sample  Sample data.
+     */
+    void (*Load) (sfxbuffer_t *buffer, struct sfxsample_s *sample);
+
+    /**
+     * Stop @a buffer if playing and forget about it's sample.
+     *
+     * @param buffer  Sound buffer.
+     */
+    void (*Reset) (sfxbuffer_t *buffer);
+
+    /**
+     * Start playing the sample loaded in @a buffer.
+     */
+    void (*Play) (sfxbuffer_t *buffer);
+
+    /**
+     * Stop @a buffer if playing and forget about it's sample.
+     */
+    void (*Stop) (sfxbuffer_t *buffer);
+
+    /**
+     * Called periodically by the audio system's refresh thread, so that @a buffer
+     * can be filled with sample data, for streaming purposes.
+     *
+     * @note Don't do anything too time-consuming...
+     */
+    void (*Refresh) (sfxbuffer_t *buffer);
+
+    /**
+     * @param buffer   Sound buffer.
+     * @param property  Buffer property:
+     *              - SFXBP_VOLUME (if negative, interpreted as attenuation)
+     *              - SFXBP_FREQUENCY
+     *              - SFXBP_PAN (-1..1)
+     *              - SFXBP_MIN_DISTANCE
+     *              - SFXBP_MAX_DISTANCE
+     *              - SFXBP_RELATIVE_MODE
+     * @param value Value for the property.
+     */
+    void (*Set) (sfxbuffer_t *buffer, int prop, float value);
+
+    /**
+     * Coordinates specified in world coordinate system, converted to DSound's:
+     * +X to the right, +Y up and +Z away (Y and Z swapped, i.e.).
+     *
+     * @param property      SFXBP_POSITION
+     *                      SFXBP_VELOCITY
+     */
+    void (*Setv) (sfxbuffer_t *buffer, int prop, float *values);
+
+    /**
+     * @param property      SFXLP_UNITS_PER_METER
+     *                      SFXLP_DOPPLER
+     *                      SFXLP_UPDATE
+     */
+    void (*Listener) (int prop, float value);
+
+    /**
+     * Call SFXLP_UPDATE at the end of every channel update.
+     */
+    void (*Listenerv) (int prop, float *values);
+
+    /**
+     * Gets a driver property.
+     *
+     * @param prop    Property (SFXP_*).
+     * @param values  Pointer to return value(s).
+     */
+    int  (*Getv) (int prop, void *values);
+
 } audiointerface_sfx_generic_t;
 
 typedef struct audiointerface_sfx_s {

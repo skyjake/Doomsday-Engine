@@ -18,13 +18,11 @@
  * 02110-1301 USA</small>
  */
 
-#include "audio/plugindriver.h"
+#include "audio/drivers/plugindriver.h"
 
 #include "api_audiod.h"
-#include "audio/system.h"
 #include <de/Library>
 #include <de/Log>
-#include <de/Observers>
 #include <de/NativeFile>
 
 using namespace de;

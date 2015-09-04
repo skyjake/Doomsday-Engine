@@ -33,11 +33,11 @@
 #ifdef __CLIENT__
 #  include "api_audiod.h"
 #endif
-#include "api_audiod_sfx.h"
 #include "audio/samplecache.h"
 #ifdef __CLIENT__
+#  include "audio/drivers/dummydriver.h"
+#  include "audio/drivers/plugindriver.h"
 #  include "audio/mus.h"
-#  include "audio/plugindriver.h"
 #endif
 
 #include "api_map.h"
@@ -189,24 +189,21 @@ DENG2_PIMPL(System)
      */
     String chooseDriver()
     {
-        // No audio output?
-        if(::isDedicated) return "dummy";
-
         // Presently the audio driver configuration is inferred and/or specified
         // using command line options.
         /// @todo Store this information persistently in Config. -ds
         CommandLine &cmdLine = App::commandLine();
         for(IDriver const *driver : drivers)
-        for(QString const &id : driver->identityKey().split(';'))
+        for(QString const &driverIdKey : driver->identityKey().split(';'))
         {
 #ifdef DENG_DISABLE_SDLMIXER
             /// @todo As this is a built-in driver, simply don't publish it. -ds
-            if(id == "sdlmixer")
+            if(driverIdKey == "sdlmixer")
                 continue;
 #endif
 
-            if(cmdLine.has("-" + id))
-                return id;
+            if(cmdLine.has("-" + driverIdKey))
+                return driverIdKey;
         }
 
         return "fmod";  // The default audio driver.
@@ -219,7 +216,7 @@ DENG2_PIMPL(System)
         DENG2_ASSERT(!App::commandLine().has("-nosound"));
 
         // Firstly - built-in audio drivers.
-        //loadDriver("dummy");
+        drivers << new DummyDriver;
         //loadDriver("sdlmixer");
 
         // Secondly - plugin audio drivers.
@@ -455,8 +452,8 @@ DENG2_PIMPL(System)
     }
 
     /**
-     * Iterate through the active interfaces of a given type, in descending priority
-     * order: the most important interface is visited first.
+     * Iterate through the active interfaces of a given type, in descending
+     * priority order: the most important interface is visited first.
      *
      * @param type  Type of interface to process.
      * @param func  Callback to make for each interface.
@@ -1629,43 +1626,37 @@ void System::initPlayback()
 
     CommandLine &cmdLine = App::commandLine();
     if(cmdLine.has("-nosound") || cmdLine.has("-noaudio"))
+    {
+        LOG_AUDIO_NOTE("Music and sound effects are disabled");
         return;
+    }
 
     LOG_AUDIO_VERBOSE("Initializing for playback...");
 
     // Disable random pitch changes?
     sfxNoRndPitch = cmdLine.has("-norndpitch");
 
-    // Try to load the audio drivers?
-    if(!App::commandLine().has("-nosound"))
+    // Try to load the audio drivers.
+    d->loadDrivers();
+
+    // Initialize sfx playback.
+    try
     {
-        d->loadDrivers();
-
-        // Init for sound effects.
-        try
-        {
-            d->initSfx();
-        }
-        catch(Error const &er)
-        {
-            LOG_AUDIO_NOTE("Failed initializing playback for sound effects:\n")
-                << er.asText();
-        }
-
-        // Init for music.
-        try
-        {
-            d->initMusic();
-        }
-        catch(Error const &er)
-        {
-            LOG_AUDIO_NOTE("Failed initializing playback for music:\n")
-                << er.asText();
-        }
+        d->initSfx();
     }
-    else
+    catch(Error const &er)
     {
-        LOG_AUDIO_NOTE("Music and sound effects are disabled");
+        LOG_AUDIO_NOTE("Failed initializing playback for sound effects:\n") << er.asText();
+    }
+
+    // Initialize music playback.
+    try
+    {
+        d->initMusic();
+    }
+    catch(Error const &er)
+    {
+        LOG_AUDIO_NOTE("Failed initializing playback for music:\n") << er.asText();
     }
 
     // Print a summary of the active configuration to the log.
