@@ -45,14 +45,6 @@ typedef enum {
     AUDIO_IMUSIC_OR_ICD
 } audiointerfacetype_t;
 
-typedef struct audiodriver_s {
-    int (*Init) (void);
-    void (*Shutdown) (void);
-    void (*Event) (int type);
-    int (*Get) (int prop, void *ptr);
-    int (*Set) (int prop, void const *ptr);
-} audiodriver_t;
-
 ///@}
 
 #endif  // CLIENT_API_AUDIO_DRIVER_INTERFACE_H

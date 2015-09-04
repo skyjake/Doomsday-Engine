@@ -1,4 +1,4 @@
-/** @file sdlmixerdriver.cpp  Audio driver for playback using SDL_mixer.
+/** @file sdlmixerdriver.h  Audio driver for playback using SDL_mixer.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>

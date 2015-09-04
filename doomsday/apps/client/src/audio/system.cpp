@@ -1633,7 +1633,8 @@ void System::initPlayback()
     // Disable random pitch changes?
     sfxNoRndPitch = cmdLine.has("-norndpitch");
 
-    // Try to load the audio drivers.
+    // Load all the available audio drivers and then select and initialize playback
+    // interfaces specified in Config.
     d->loadDrivers();
 
     // Initialize sfx playback.

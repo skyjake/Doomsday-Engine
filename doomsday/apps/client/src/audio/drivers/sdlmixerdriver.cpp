@@ -386,13 +386,13 @@ DENG2_PIMPL_NOREF(SdlMixerDriver)
         de::zap(iCd);
 
         de::zap(iMusic);
-        iMusic.gen.Init     = DS_SDLMixer_Music_Init;
-        iMusic.gen.Update   = DS_SDLMixer_Music_Update;
-        iMusic.gen.Set      = DS_SDLMixer_Music_Set;
-        iMusic.gen.Get      = DS_SDLMixer_Music_Get;
-        iMusic.gen.Pause    = DS_SDLMixer_Music_Pause;
-        iMusic.gen.Stop     = DS_SDLMixer_Music_Stop;
-        iMusic.PlayFile     = DS_SDLMixer_Music_PlayFile;
+        iMusic.gen.Init    = DS_SDLMixer_Music_Init;
+        iMusic.gen.Update  = DS_SDLMixer_Music_Update;
+        iMusic.gen.Set     = DS_SDLMixer_Music_Set;
+        iMusic.gen.Get     = DS_SDLMixer_Music_Get;
+        iMusic.gen.Pause   = DS_SDLMixer_Music_Pause;
+        iMusic.gen.Stop    = DS_SDLMixer_Music_Stop;
+        iMusic.PlayFile    = DS_SDLMixer_Music_PlayFile;
 
         de::zap(iSfx);
         iSfx.gen.Init      = DS_SDLMixer_SFX_Init;
@@ -418,7 +418,6 @@ DENG2_PIMPL_NOREF(SdlMixerDriver)
     void systemFrameBegins(audio::System &)
     {
         DENG2_ASSERT(initialized);
-        iCd.gen.Update();
         iMusic.gen.Update();
     }
 };
@@ -430,7 +429,6 @@ SdlMixerDriver::~SdlMixerDriver()
 {
     LOG_AS("~audio::SdlMixerDriver");
     deinitialize();  // If necessary.
-
 }
 
 void SdlMixerDriver::initialize()

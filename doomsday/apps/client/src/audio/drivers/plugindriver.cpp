@@ -37,14 +37,12 @@ DENG2_PIMPL_NOREF(PluginDriver)
     bool initialized   = false;
     ::Library *library = nullptr;  ///< Library instance (owned).
 
-    audiodriver_t          iBase;
     audiointerface_sfx_t   iSfx;
     audiointerface_music_t iMusic;
     audiointerface_cd_t    iCd;
 
     Instance()
     {
-        de::zap(iBase);
         de::zap(iSfx);
         de::zap(iMusic);
         de::zap(iCd);
@@ -58,7 +56,7 @@ DENG2_PIMPL_NOREF(PluginDriver)
         // Unload the library.
         Library_Delete(library);
     }
-    
+
     /**
      * Lookup the value of a named @em string property from the driver.
      */
