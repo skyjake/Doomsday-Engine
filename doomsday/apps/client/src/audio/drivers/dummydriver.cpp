@@ -299,11 +299,11 @@ DotPath DummyDriver::interfacePath(void *playbackInterface) const
     }
     if((void *)&d->iMusic == playbackInterface)
     {
-        return identityKey() + "music";
+        return identityKey() + ".music";
     }
     if((void *)&d->iSfx == playbackInterface)
     {
-        return identityKey() + "sfx";
+        return identityKey() + ".sfx";
     }
 
     return "";  // Not recognized.

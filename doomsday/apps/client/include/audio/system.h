@@ -20,26 +20,26 @@
 #ifndef CLIENT_AUDIO_SYSTEM_H
 #define CLIENT_AUDIO_SYSTEM_H
 
-#include "dd_types.h"  // lumpnum_t
 #ifdef __CLIENT__
-#include "SettingsRegister"
-#endif
+#  include "dd_types.h"  // lumpnum_t
+#  include "SettingsRegister"
 
-#include "api_sound.h"
-#ifdef __CLIENT__
 #  include "api_audiod_mus.h"  ///< @todo remove me
 #  include "api_audiod_sfx.h"  ///< @todo remove me
-
 #  include "audio/channel.h"
-#  include <de/Error>
-#  include <de/DotPath>
-#  include <de/Observers>
-#  include <de/Range>
-#  include <de/Record>
 #endif
-#include <de/String>
+
+#include "world/p_object.h"
+
+#ifdef __CLIENT__
+#  include <de/DotPath>
+#  include <de/Error>
+#  include <de/Observers>
+#  include <de/Record>
+#  include <de/String>
+#endif
+#include <de/Range>
 #include <de/System>
-#include <QChar>
 #ifdef __CLIENT__
 #  include <functional>
 #endif

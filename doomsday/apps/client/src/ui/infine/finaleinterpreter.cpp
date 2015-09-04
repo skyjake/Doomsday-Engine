@@ -36,6 +36,7 @@
 #include "api_material.h"
 #include "api_render.h"
 #include "api_resource.h"
+#include "api_sound.h"
 
 #include "network/net_main.h"
 
