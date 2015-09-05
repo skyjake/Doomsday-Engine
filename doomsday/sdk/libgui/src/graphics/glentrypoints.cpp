@@ -117,6 +117,12 @@ PFNGLVERTEXATTRIBDIVISORARBPROC                     glVertexAttribDivisorARB;
 PFNGLRENDERBUFFERSTORAGEMULTISAMPLECOVERAGENVPROC   glRenderbufferStorageMultisampleCoverageNV;
 #endif
 
+static void reportMissingEntryPoint(char const *name)
+{
+    throw de::Error("getAllOpenGLEntryPoints", 
+                    QString("Required OpenGL function missing: %1").arg(name));
+}
+
 void getAllOpenGLEntryPoints()
 {
     static bool haveProcs = false;
@@ -132,7 +138,8 @@ void getAllOpenGLEntryPoints()
 #  define GET_PROC_EXT(name) *((void (**)())&name) = glXGetProcAddress((GLubyte const *)#name)
 #endif
 
-#define GET_PROC(name) GET_PROC_EXT(name); DENG2_ASSERT(name != 0) // must have
+#define GET_PROC(name)  GET_PROC_EXT(name); DENG2_ASSERT(name != 0); \
+                        if(!name) { reportMissingEntryPoint(#name); } // must have
 
 #ifdef LIBGUI_FETCH_GL_1_3
     GET_PROC(glActiveTexture);
