@@ -130,90 +130,100 @@ void getAllOpenGLEntryPoints()
 
 #ifdef WIN32
 #  ifdef MSVC
-#    define GET_PROC_EXT(name) *((void**)&name) = wglGetProcAddress(#name)
+#    define GET_PROC_EXT_ALT(varName, altName)  *((void**)&varName) = wglGetProcAddress(#altName)
+#    define GET_PROC_EXT(name)                  GET_PROC_EXT_ALT(name, name)
 #  else
-#    define GET_PROC_EXT(name) *reinterpret_cast<PROC *>(&name) = wglGetProcAddress(#name)
+#    define GET_PROC_EXT_ALT(varName, altName)  *reinterpret_cast<PROC *>(&varName) = wglGetProcAddress(#altName)
+#    define GET_PROC_EXT(name)                  GET_PROC_EXT_ALT(name, name)
 #  endif
 #else
-#  define GET_PROC_EXT(name) *((void (**)())&name) = glXGetProcAddress((GLubyte const *)#name)
+#  define GET_PROC_EXT_ALT(varName, altName)    *((void (**)())&varName) = glXGetProcAddress((GLubyte const *)#altName)
+#  define GET_PROC_EXT(name)                    GET_PROC_EXT_ALT(name, name)
 #endif
 
 #define GET_PROC(name)  GET_PROC_EXT(name); DENG2_ASSERT(name != 0); \
                         if(!name) { reportMissingEntryPoint(#name); } // must have
 
+#define GET_PROC_ALT(name, altName) \
+    GET_PROC_EXT_ALT(name, altName); /* try the alternative name first */ \
+    if(!name) { \
+        GET_PROC_EXT(name); DENG2_ASSERT(name != 0); \
+        if(!name) { reportMissingEntryPoint(#name); } /* must have */ \
+    }
+
 #ifdef LIBGUI_FETCH_GL_1_3
-    GET_PROC(glActiveTexture);
-    GET_PROC(glBlendEquation);
-    GET_PROC(glClientActiveTexture);
-    GET_PROC(glMultiTexCoord2f);
-    GET_PROC(glMultiTexCoord2fv);
+    GET_PROC    (glActiveTexture);
+    GET_PROC    (glBlendEquation);
+    GET_PROC    (glClientActiveTexture);
+    GET_PROC    (glMultiTexCoord2f);
+    GET_PROC    (glMultiTexCoord2fv);
 #endif
 
 #ifdef WIN32
-    GET_PROC(wglGetExtensionsStringARB);
+    GET_PROC    (wglGetExtensionsStringARB);
 #endif
 
-    GET_PROC(glAttachShader);
+    GET_PROC    (glAttachShader);
 
-    GET_PROC(glBindAttribLocation);
-    GET_PROC(glBindBuffer);
-    GET_PROC(glBindFramebuffer);
-    GET_PROC(glBindRenderbuffer);
-    GET_PROC(glBlendFuncSeparate);
-    GET_PROC(glBufferData);
+    GET_PROC    (glBindAttribLocation);
+    GET_PROC    (glBindBuffer);
+    GET_PROC_ALT(glBindFramebuffer, glBindFramebufferEXT);
+    GET_PROC_ALT(glBindRenderbuffer, glBindRenderbufferEXT);
+    GET_PROC_ALT(glBlendFuncSeparate, glBlendFuncSeparateEXT);
+    GET_PROC    (glBufferData);
 
-    GET_PROC(glCheckFramebufferStatus);
-    GET_PROC(glCompileShader);
-    GET_PROC(glCreateProgram);
-    GET_PROC(glCreateShader);
+    GET_PROC_ALT(glCheckFramebufferStatus, glCheckFramebufferStatusEXT);
+    GET_PROC    (glCompileShader);
+    GET_PROC    (glCreateProgram);
+    GET_PROC    (glCreateShader);
 
-    GET_PROC(glDeleteBuffers);
-    GET_PROC(glDeleteFramebuffers);
-    GET_PROC(glDeleteProgram);
-    GET_PROC(glDeleteRenderbuffers);
-    GET_PROC(glDeleteShader);
-    GET_PROC(glDetachShader);
-    GET_PROC(glDisableVertexAttribArray);
+    GET_PROC    (glDeleteBuffers);
+    GET_PROC_ALT(glDeleteFramebuffers, glDeleteFramebuffersEXT);
+    GET_PROC    (glDeleteProgram);
+    GET_PROC_ALT(glDeleteRenderbuffers, glDeleteRenderbuffersEXT);
+    GET_PROC    (glDeleteShader);
+    GET_PROC    (glDetachShader);
+    GET_PROC    (glDisableVertexAttribArray);
 
-    GET_PROC(glEnableVertexAttribArray);
+    GET_PROC    (glEnableVertexAttribArray);
 
-    GET_PROC(glFramebufferRenderbuffer);
-    GET_PROC(glFramebufferTexture2D);
+    GET_PROC_ALT(glFramebufferRenderbuffer, glFramebufferRenderbufferEXT);
+    GET_PROC_ALT(glFramebufferTexture2D, glFramebufferTexture2DEXT);
 
-    GET_PROC(glGenBuffers);
-    GET_PROC(glGenFramebuffers);
-    GET_PROC(glGenerateMipmap);
-    GET_PROC(glGenRenderbuffers);
-    GET_PROC(glGetAttribLocation);
-    GET_PROC(glGetProgramInfoLog);
-    GET_PROC(glGetProgramiv);
-    GET_PROC(glGetShaderInfoLog);
-    GET_PROC(glGetShaderiv);
-    GET_PROC(glGetShaderSource);
-    GET_PROC(glGetUniformLocation);
+    GET_PROC    (glGenBuffers);
+    GET_PROC_ALT(glGenFramebuffers, glGenFramebuffersEXT);
+    GET_PROC_ALT(glGenerateMipmap, glGenerateMipmapEXT);
+    GET_PROC_ALT(glGenRenderbuffers, glGenRenderbuffersEXT);
+    GET_PROC    (glGetAttribLocation);
+    GET_PROC    (glGetProgramInfoLog);
+    GET_PROC    (glGetProgramiv);
+    GET_PROC    (glGetShaderInfoLog);
+    GET_PROC    (glGetShaderiv);
+    GET_PROC    (glGetShaderSource);
+    GET_PROC    (glGetUniformLocation);
 
-    GET_PROC(glIsBuffer);
-    GET_PROC(glIsFramebuffer);
-    GET_PROC(glIsProgram);
+    GET_PROC    (glIsBuffer);
+    GET_PROC_ALT(glIsFramebuffer, glIsFramebufferEXT);
+    GET_PROC    (glIsProgram);
 
-    GET_PROC(glLinkProgram);
+    GET_PROC    (glLinkProgram);
 
-    GET_PROC(glRenderbufferStorage);
+    GET_PROC_ALT(glRenderbufferStorage, glRenderbufferStorageEXT);
 
-    GET_PROC(glShaderSource);
+    GET_PROC    (glShaderSource);
 
-    GET_PROC(glUniform1f);
-    GET_PROC(glUniform1i);
-    GET_PROC(glUniform2f);
-    GET_PROC(glUniform3f);
-    GET_PROC(glUniform3fv);
-    GET_PROC(glUniform4f);
-    GET_PROC(glUniform4fv);
-    GET_PROC(glUniformMatrix3fv);
-    GET_PROC(glUniformMatrix4fv);
-    GET_PROC(glUseProgram);
+    GET_PROC    (glUniform1f);
+    GET_PROC    (glUniform1i);
+    GET_PROC    (glUniform2f);
+    GET_PROC    (glUniform3f);
+    GET_PROC    (glUniform3fv);
+    GET_PROC    (glUniform4f);
+    GET_PROC    (glUniform4fv);
+    GET_PROC    (glUniformMatrix3fv);
+    GET_PROC    (glUniformMatrix4fv);
+    GET_PROC    (glUseProgram);
 
-    GET_PROC(glVertexAttribPointer);
+    GET_PROC    (glVertexAttribPointer);
 
     // Extensions:
 
