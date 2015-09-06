@@ -1,5 +1,4 @@
 /** @file driver_openal.cpp  OpenAL audio plugin.
- * @ingroup dsopenal
  *
  * @bug Not 64bit clean: In function 'DS_SFX_CreateBuffer': cast to pointer from integer of different size
  * @bug Not 64bit clean: In function 'DS_SFX_DestroyBuffer': cast to pointer from integer of different size
@@ -43,17 +42,19 @@
 #  include <AL/al.h>
 #  include <AL/alc.h>
 #endif
-#include <cstdio>
-#include <cassert>
-#include <iostream>
-#include <cstring>
-#include <cmath>
 
 #include "api_audiod.h"
 #include "api_audiod_sfx.h"
 #include "doomsday.h"
 
 #include <de/c_wrapper.h>
+#include <de/memoryzone.h>
+
+#include <cstdio>
+#include <cassert>
+#include <iostream>
+#include <cstring>
+#include <cmath>
 
 DENG_DECLARE_API(Con);
 
@@ -74,6 +75,7 @@ extern "C" {
 int DS_Init(void);
 void DS_Shutdown(void);
 void DS_Event(int type);
+int DS_Get(int prop, void *ptr);
 
 int DS_SFX_Init(void);
 sfxbuffer_t *DS_SFX_CreateBuffer(int flags, int bits, int rate);
@@ -129,16 +131,16 @@ static void loadExtensions()
 {
 #ifdef WIN32
     // Check for EAX 2.0.
-    hasEAX = alIsExtensionPresent((ALchar *) "EAX2.0");
-    if(hasEAX)
+    ::hasEAX = alIsExtensionPresent((ALchar *) "EAX2.0");
+    if(::hasEAX)
     {
-        EAXGet = (ALenum (*)(struct _GUID const *, ALuint, ALuint, ALvoid *, ALuint))alGetProcAddress("EAXGet");
-        EAXSet = (ALenum (*)(struct _GUID const *, ALuint, ALuint, ALvoid *, ALuint))alGetProcAddress("EAXSet");
-        if(!EAXGet || !EAXSet)
-            hasEAX = false;
+        ::EAXGet = (ALenum (*)(struct _GUID const *, ALuint, ALuint, ALvoid *, ALuint))alGetProcAddress("EAXGet");
+        ::EAXSet = (ALenum (*)(struct _GUID const *, ALuint, ALuint, ALvoid *, ALuint))alGetProcAddress("EAXSet");
+        if(!::EAXGet || !::EAXSet)
+            ::hasEAX = false;
     }
 #else
-    hasEAX = false;
+    ::hasEAX = false;
 #endif
 }
 
@@ -148,15 +150,15 @@ int DS_Init()
     if(::initOk) return true;
 
     // Open the default playback device.
-    device = alcOpenDevice(NULL);
-    if(!device)
+    ::device = alcOpenDevice(nullptr);
+    if(!::device)
     {
         App_Log(DE2_AUDIO_ERROR, "OpenAL init failed (using default playback device)");
         return false;
     }
 
     // Create and make current a new context.
-    alcMakeContextCurrent(context = alcCreateContext(device, NULL));
+    alcMakeContextCurrent(::context = alcCreateContext(::device, nullptr));
     DSOPENAL_ERRCHECK(alGetError());
 
     // Attempt to load and configure the EAX extensions.
@@ -165,25 +167,26 @@ int DS_Init()
     // Configure the listener and global OpenAL properties/state.
     alListenerf(AL_GAIN, 1);
     alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
-    headYaw = headPitch = 0;
-    unitsPerMeter = 36;
+    ::headYaw = ::headPitch = 0;
+    ::unitsPerMeter = 36;
 
     // Everything is OK.
-    DSOPENAL_TRACE("DS_Init: OpenAL initialized%s." << (hasEAX? " (EAX 2.0 available)" : ""));
-    initOk = true;
+    DSOPENAL_TRACE("DS_Init: OpenAL initialized%s." << (::hasEAX? " (EAX 2.0 available)" : ""));
+    ::initOk = true;
     return true;
 }
 
 void DS_Shutdown()
 {
-    if(!initOk) return;
+    if(!::initOk) return;
 
-    alcMakeContextCurrent(NULL);
-    alcDestroyContext(context);
-    alcCloseDevice(device);
+    alcMakeContextCurrent(nullptr);
+    alcDestroyContext(::context);
+    ::context = nullptr;
 
-    context = NULL;
-    device = NULL;
+    alcCloseDevice(::device);
+    ::device = nullptr;
+
     initOk = false;
 }
 
@@ -220,31 +223,27 @@ int DS_SFX_Init()
 
 sfxbuffer_t *DS_SFX_CreateBuffer(int flags, int bits, int rate)
 {
-    sfxbuffer_t *buf;
-    ALuint bufName, srcName;
-
-    // Create a new buffer and a new source.
+    ALuint bufName;
     alGenBuffers(1, &bufName);
     if(DSOPENAL_ERRCHECK(alGetError()))
-        return NULL;
+        return nullptr;
 
+    ALuint srcName;
     alGenSources(1, &srcName);
     if(DSOPENAL_ERRCHECK(alGetError()))
     {
         alDeleteBuffers(1, &bufName);
-        return NULL;
+        return nullptr;
     }
 
-    /*
-    // Attach the buffer to the source.
+    /*// Attach the buffer to the source.
     alSourcei(srcName, AL_BUFFER, bufName);
     if(DSOPENAL_ERRCHECK(alGetError()))
     {
         alDeleteSources(1, &srcName);
         alDeleteBuffers(1, &bufName);
-        return NULL;
-    }
-    */
+        return nullptr;
+    }*/
 
     if(!(flags & SFXBF_3D))
     {
@@ -254,34 +253,32 @@ sfxbuffer_t *DS_SFX_CreateBuffer(int flags, int bits, int rate)
     }
 
     // Create the buffer object.
-    buf = static_cast<sfxbuffer_t*>(Z_Calloc(sizeof(*buf), PU_APPSTATIC, 0));
+    sfxbuffer_t *buf = static_cast<sfxbuffer_t *>(Z_Calloc(sizeof(*buf), PU_APPSTATIC, 0));
 
-    buf->ptr = INT2PTR(void, bufName);
+    buf->ptr   = INT2PTR(void, bufName);
     buf->ptr3D = INT2PTR(void, srcName);
     buf->bytes = bits / 8;
-    buf->rate = rate;
+    buf->rate  = rate;
     buf->flags = flags;
-    buf->freq = rate; // Modified by calls to Set(SFXBP_FREQUENCY).
+    buf->freq  = rate;  // Modified by calls to Set(SFXBP_FREQUENCY).
 
     return buf;
 }
 
-void DS_SFX_DestroyBuffer(sfxbuffer_t* buf)
+void DS_SFX_DestroyBuffer(sfxbuffer_t *buf)
 {
-    ALuint srcName, bufName;
-
     if(!buf) return;
 
-    srcName = SRC(buf);
-    bufName = BUF(buf);
-
+    ALuint srcName = SRC(buf);
     alDeleteSources(1, &srcName);
+
+    ALuint bufName = BUF(buf);
     alDeleteBuffers(1, &bufName);
 
     Z_Free(buf);
 }
 
-void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
+void DS_SFX_Load(sfxbuffer_t *buf, struct sfxsample_s *sample)
 {
     if(!buf || !sample) return;
 
@@ -289,8 +286,8 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
     if(buf->sample)
     {
         // Is the same one?
-        if(buf->sample->id == sample->id)
-            return; // No need to reload.
+        if(buf->sample->soundId == sample->soundId)
+            return;  // No need to reload.
     }
 
     // Make sure its not bound right now.
@@ -310,23 +307,21 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
 /**
  * Stops the buffer and makes it forget about its sample.
  */
-void DS_SFX_Reset(sfxbuffer_t* buf)
+void DS_SFX_Reset(sfxbuffer_t *buf)
 {
     if(!buf) return;
 
     DS_SFX_Stop(buf);
     alSourcei(SRC(buf), AL_BUFFER, 0);
-    buf->sample = NULL;
+    buf->sample = nullptr;
 }
 
-void DS_SFX_Play(sfxbuffer_t* buf)
+void DS_SFX_Play(sfxbuffer_t *buf)
 {
-    ALuint source;
-
     // Playing is quite impossible without a sample.
     if(!buf || !buf->sample) return;
 
-    source = SRC(buf);
+    ALuint source = SRC(buf);
     alSourcei(source, AL_BUFFER, BUF(buf));
     alSourcei(source, AL_LOOPING, (buf->flags & SFXBF_REPEAT) != 0);
     alSourcePlay(source);
@@ -336,7 +331,7 @@ void DS_SFX_Play(sfxbuffer_t* buf)
     buf->flags |= SFXBF_PLAYING;
 }
 
-void DS_SFX_Stop(sfxbuffer_t* buf)
+void DS_SFX_Stop(sfxbuffer_t *buf)
 {
     if(!buf || !buf->sample) return;
 
@@ -344,12 +339,11 @@ void DS_SFX_Stop(sfxbuffer_t* buf)
     buf->flags &= ~SFXBF_PLAYING;
 }
 
-void DS_SFX_Refresh(sfxbuffer_t* buf)
+void DS_SFX_Refresh(sfxbuffer_t *buf)
 {
-    ALint state;
-
     if(!buf || !buf->sample) return;
 
+    ALint state;
     alGetSourcei(SRC(buf), AL_SOURCE_STATE, &state);
     if(state == AL_STOPPED)
     {
@@ -358,28 +352,28 @@ void DS_SFX_Refresh(sfxbuffer_t* buf)
 }
 
 /**
- * @param yaw           Yaw in radians.
- * @param pitch         Pitch in radians.
- * @param front         Ptr to front vector, can be @c NULL.
- * @param up            Ptr to up vector, can be @c NULL.
+ * @param yaw    Yaw in radians.
+ * @param pitch  Pitch in radians.
+ * @param front  Ptr to front vector.
+ * @param up     Ptr to up vector.
  */
-static void vectors(float yaw, float pitch, float* front, float* up)
+static void vectors(float yaw, float pitch, float *front = nullptr, float *up = nullptr)
 {
     if(!front && !up)
-        return; // Nothing to do.
+        return;  // Nothing to do.
 
     if(front)
     {
-        front[VX] = (float) (cos(yaw) * cos(pitch));
-        front[VZ] = (float) (sin(yaw) * cos(pitch));
-        front[VY] = (float) sin(pitch);
+        front[0] = (float) (cos(yaw) * cos(pitch));
+        front[2] = (float) (sin(yaw) * cos(pitch));
+        front[1] = (float) sin(pitch);
     }
 
     if(up)
     {
-        up[VX] = (float) (-cos(yaw) * sin(pitch));
-        up[VZ] = (float) (-sin(yaw) * sin(pitch));
-        up[VY] = (float) cos(pitch);
+        up[0] = (float) (-cos(yaw) * sin(pitch));
+        up[2] = (float) (-sin(yaw) * sin(pitch));
+        up[1] = (float) cos(pitch);
     }
 }
 
@@ -389,18 +383,15 @@ static void vectors(float yaw, float pitch, float* front, float* up)
 static void setPan(ALuint source, float pan)
 {
     float pos[3];
-
     vectors((float) (headYaw - pan * DD_PI / 2), headPitch, pos, 0);
     alSourcefv(source, AL_POSITION, pos);
 }
 
-void DS_SFX_Set(sfxbuffer_t* buf, int prop, float value)
+void DS_SFX_Set(sfxbuffer_t *buf, int prop, float value)
 {
-    ALuint source;
-
     if(!buf) return;
 
-    source = SRC(buf);
+    ALuint source = SRC(buf);
 
     switch(prop)
     {
@@ -410,7 +401,7 @@ void DS_SFX_Set(sfxbuffer_t* buf, int prop, float value)
 
     case SFXBP_FREQUENCY: {
         unsigned int dw = (int) (buf->rate * value);
-        if(dw != buf->freq) // Don't set redundantly.
+        if(dw != buf->freq)  // Don't set redundantly.
         {
             buf->freq = dw;
             alSourcef(source, AL_PITCH, value);
@@ -422,11 +413,11 @@ void DS_SFX_Set(sfxbuffer_t* buf, int prop, float value)
         break;
 
     case SFXBP_MIN_DISTANCE:
-        alSourcef(source, AL_REFERENCE_DISTANCE, value / unitsPerMeter);
+        alSourcef(source, AL_REFERENCE_DISTANCE, value / ::unitsPerMeter);
         break;
 
     case SFXBP_MAX_DISTANCE:
-        alSourcef(source, AL_MAX_DISTANCE, value / unitsPerMeter);
+        alSourcef(source, AL_MAX_DISTANCE, value / ::unitsPerMeter);
         break;
 
     case SFXBP_RELATIVE_MODE:
@@ -437,24 +428,22 @@ void DS_SFX_Set(sfxbuffer_t* buf, int prop, float value)
     }
 }
 
-void DS_SFX_Setv(sfxbuffer_t* buf, int prop, float* values)
+void DS_SFX_Setv(sfxbuffer_t *buf, int prop, float *values)
 {
-    ALuint source;
-
     if(!buf || !values) return;
 
-    source = SRC(buf);
+    ALuint source = SRC(buf);
 
     switch(prop)
     {
     case SFXBP_POSITION:
-        alSource3f(source, AL_POSITION, values[VX] / unitsPerMeter,
-                   values[VZ] / unitsPerMeter, values[VY] / unitsPerMeter);
+        alSource3f(source, AL_POSITION, values[0] / ::unitsPerMeter,
+                   values[2] / ::unitsPerMeter, values[1] / ::unitsPerMeter);
         break;
 
     case SFXBP_VELOCITY:
-        alSource3f(source, AL_VELOCITY, values[VX] / unitsPerMeter,
-                   values[VZ] / unitsPerMeter, values[VY] / unitsPerMeter);
+        alSource3f(source, AL_VELOCITY, values[0] / ::unitsPerMeter,
+                   values[2] / ::unitsPerMeter, values[1] / ::unitsPerMeter);
         break;
 
     default: break;
@@ -466,7 +455,7 @@ void DS_SFX_Listener(int prop, float value)
     switch(prop)
     {
     case SFXLP_UNITS_PER_METER:
-        unitsPerMeter = value;
+        ::unitsPerMeter = value;
         break;
 
     case SFXLP_DOPPLER:
@@ -477,10 +466,8 @@ void DS_SFX_Listener(int prop, float value)
     }
 }
 
-void DS_SFX_Listenerv(int prop, float* values)
+void DS_SFX_Listenerv(int prop, float *values)
 {
-    float ori[6];
-
     if(!values) return;
 
     switch(prop)
@@ -490,21 +477,22 @@ void DS_SFX_Listenerv(int prop, float* values)
         break;
 
     case SFXLP_POSITION:
-        alListener3f(AL_POSITION, values[VX] / unitsPerMeter,
-                     values[VZ] / unitsPerMeter, values[VY] / unitsPerMeter);
+        alListener3f(AL_POSITION, values[0] / ::unitsPerMeter,
+                     values[2] / ::unitsPerMeter, values[1] / ::unitsPerMeter);
         break;
 
     case SFXLP_VELOCITY:
-        alListener3f(AL_VELOCITY, values[VX] / unitsPerMeter,
-                     values[VZ] / unitsPerMeter, values[VY] / unitsPerMeter);
+        alListener3f(AL_VELOCITY, values[0] / ::unitsPerMeter,
+                     values[2] / ::unitsPerMeter, values[1] / ::unitsPerMeter);
         break;
 
-    case SFXLP_ORIENTATION:
-        vectors(headYaw = (float) (values[VX] / 180 * DD_PI),
-                headPitch = (float) (values[VY] / 180 * DD_PI),
+    case SFXLP_ORIENTATION: {
+        float ori[6];
+        vectors(::headYaw   = (float) (values[0] / 180 * DD_PI),
+                ::headPitch = (float) (values[1] / 180 * DD_PI),
                 ori, ori + 3);
         alListenerfv(AL_ORIENTATION, ori);
-        break;
+        break; }
 
     case SFXLP_REVERB: // Not supported.
         break;
@@ -525,11 +513,11 @@ int DS_SFX_Getv(int /*prop*/, void* /*values*/)
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-DENG_EXTERN_C const char* deng_LibraryType(void)
+DENG_EXTERN_C char const *deng_LibraryType()
 {
     return "deng-plugin/audio";
 }
 
 DENG_API_EXCHANGE(
-        DENG_GET_API(DE_API_CONSOLE, Con);
+    DENG_GET_API(DE_API_CONSOLE, Con);
 )
