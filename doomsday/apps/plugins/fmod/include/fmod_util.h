@@ -1,6 +1,5 @@
-/**
- * @file fmod_util.h
- * Utilities. @ingroup dsfmod
+/** @file fmod_util.h  Utilities.
+ * @ingroup dsfmod
  *
  * @authors Copyright © 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -55,14 +54,16 @@
 #  define strnicmp _strnicmp
 #endif
 
-class FMODVector : public FMOD_VECTOR {
+class FMODVector : public FMOD_VECTOR
+{
 public:
     FMODVector(float _x = 0, float _y = 0, float _z = 0) {
         x = _x;
         y = _y;
         z = _z;
     }
-    void set(const float* values) {
+
+    void set(float const *values) {
         x = values[0];
         y = values[1];
         z = values[2];
@@ -70,11 +71,9 @@ public:
 };
 
 template <typename T>
-inline void zeroStruct(T& t) {
+inline void zeroStruct(T &t) {
     std::memset(&t, 0, sizeof(T));
     t.cbsize = sizeof(T);
 }
 
-bool endsWith(const char* str, const char* ending);
-
-#endif /* end of include guard: __DSFMOD_UTIL_H__ */
+#endif  // __DSFMOD_UTIL_H__

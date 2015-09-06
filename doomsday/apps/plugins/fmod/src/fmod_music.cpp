@@ -1,8 +1,7 @@
-/**
- * @file fmod_music.cpp
- * Music playback interface. @ingroup dsfmod
+/** @file fmod_music.cpp  Music playback interface.
  *
  * @authors Copyright © 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html (with exception granted to allow
@@ -40,13 +39,16 @@
  */
 
 #include "driver_fmod.h"
-#include <string.h>
-#include <string>
+
+#include <de/String>
+#include <cstring>
+
+using namespace de;
 
 struct SongBuffer
 {
     int size;
-    char* data;
+    char *data;
 
     SongBuffer(int newSize) : size(newSize) {
         data = new char[newSize];
@@ -57,97 +59,84 @@ struct SongBuffer
     }
 };
 
-static FMOD::Sound* song;
-static FMOD::Channel* music;
-static bool needReleaseSong;
 static float musicVolume;
-static SongBuffer* songBuffer;
 static std::string soundFontFileName;
 
+static FMOD::Sound *song;
+static SongBuffer *songBuffer;
+static bool needReleaseSong;
+
+static FMOD::Channel *music;
+
 static FMOD_RESULT F_CALLBACK
-musicCallback(FMOD_CHANNEL* chanPtr, FMOD_CHANNEL_CALLBACKTYPE type,
-              void* /*commanddata1*/, void* /*commanddata2*/)
+musicCallback(FMOD_CHANNEL *chanPtr, FMOD_CHANNEL_CALLBACKTYPE type,
+    void * /*commanddata1*/, void * /*commanddata2*/)
 {
-    if(reinterpret_cast<FMOD::Channel*>(chanPtr) != music)
-        return FMOD_OK; // Safety check.
+    if(reinterpret_cast<FMOD::Channel *>(chanPtr) != ::music)
+        return FMOD_OK;  // Safety check.
 
     switch(type)
     {
     case FMOD_CHANNEL_CALLBACKTYPE_END:
         // The music has stopped.
-        music = 0;
+        ::music = nullptr;
         break;
 
-    default:
-        break;
+    default: break;
     }
+
     return FMOD_OK;
 }
 
 static void releaseSong()
 {
-    if(song)
+    if(::song)
     {
-        if(needReleaseSong)
+        if(::needReleaseSong)
         {
-            DSFMOD_TRACE("releaseSong: Song " << song << " will be released.");
-            song->release();
+            DSFMOD_TRACE("releaseSong: Song " << ::song << " will be released.");
+            ::song->release();
         }
         else
         {
-            DSFMOD_TRACE("releaseSong: Song " << song << " will NOT be released.");
+            DSFMOD_TRACE("releaseSong: Song " << ::song << " will NOT be released.");
         }
-        song = 0;
-        needReleaseSong = false;
+        ::song = nullptr;
+        ::needReleaseSong = false;
     }
-    music = 0;
+
+    ::music = nullptr;
 }
 
 static void releaseSongBuffer()
 {
-    if(songBuffer)
+    delete ::songBuffer;
+    ::songBuffer = nullptr;
+}
+
+static bool startSong()
+{
+    if(!::fmodSystem) return false;
+
+    if(!::song) return false;
+
+    if(::music)
     {
-        delete songBuffer;
-        songBuffer = 0;
+        ::music->stop();
     }
-}
 
-void setDefaultStreamBufferSize()
-{
-    if(!fmodSystem) return;
+    // Start playing the song.
+    FMOD_RESULT res = ::fmodSystem->playSound(FMOD_CHANNEL_FREE, ::song, true, &::music);
+    DSFMOD_ERRCHECK(res);
 
-    FMOD_RESULT result;
-    result = fmodSystem->setStreamBufferSize(16*1024, FMOD_TIMEUNIT_RAWBYTES);
-    DSFMOD_ERRCHECK(result);
-}
+    // Properties.
+    ::music->setVolume(::musicVolume);
+    ::music->setCallback(::musicCallback);
 
-int DM_Music_Init(void)
-{
-    music = 0;
-    song = 0;
-    needReleaseSong = false;
-    musicVolume = 1.f;
-    songBuffer = 0;
-    soundFontFileName.clear(); // empty for the default
-    return fmodSystem != 0;
-}
+    // Start playing.
+    ::music->setPaused(false);
 
-void DMFmod_Music_Shutdown(void)
-{
-    if(!fmodSystem) return;
-
-    releaseSongBuffer();
-    releaseSong();
-
-    soundFontFileName.clear();
-
-    // Will be shut down with the rest of FMOD.
-    DSFMOD_TRACE("Music_Shutdown.");
-}
-
-void DM_Music_Shutdown(void)
-{
-    DMFmod_Music_Shutdown();
+    return true;
 }
 
 /// @internal
@@ -155,29 +144,76 @@ void DMFmod_Music_SetSoundFont(char const *fileName)
 {
     if(fileName && fileName[0])
     {
-        soundFontFileName = fileName;
+        ::soundFontFileName = fileName;
     }
     else
     {
-        soundFontFileName.clear();
+        ::soundFontFileName.clear();
     }
+}
+
+/// @internal
+bool DMFmod_Music_PlaySound(FMOD::Sound *customSound, bool needRelease)
+{
+    releaseSong();
+    releaseSongBuffer();
+
+    // Use this as the song.
+    ::needReleaseSong = needRelease;
+    ::song = customSound;
+    return startSong();
+}
+
+void setDefaultStreamBufferSize()
+{
+    if(!::fmodSystem) return;
+
+    FMOD_RESULT res = fmodSystem->setStreamBufferSize(16*1024, FMOD_TIMEUNIT_RAWBYTES);
+    DSFMOD_ERRCHECK(res);
+}
+
+int DM_Music_Init()
+{
+    ::music           = nullptr;
+    ::song            = nullptr;
+    ::needReleaseSong = false;
+    ::musicVolume     = 1.f;
+    ::songBuffer      = nullptr;
+    ::soundFontFileName.clear(); // empty for the default
+    return ::fmodSystem != nullptr;
+}
+
+void DMFmod_Music_Shutdown()
+{
+    if(!::fmodSystem) return;
+
+    releaseSongBuffer();
+    releaseSong();
+
+    ::soundFontFileName.clear();
+
+    // Will be shut down with the rest of FMOD.
+    DSFMOD_TRACE("Music_Shutdown.");
+}
+
+void DM_Music_Shutdown()
+{
+    DMFmod_Music_Shutdown();
 }
 
 void DMFmod_Music_Set(int prop, float value)
 {
-    if(!fmodSystem)
-        return;
+    if(!::fmodSystem) return;
 
     switch(prop)
     {
     case MUSIP_VOLUME:
-        musicVolume = value;
-        if(music) music->setVolume(musicVolume);
-        DSFMOD_TRACE("Music_Set: MUSIP_VOLUME = " << musicVolume);
+        ::musicVolume = value;
+        if(::music) ::music->setVolume(::musicVolume);
+        DSFMOD_TRACE("Music_Set: MUSIP_VOLUME = " << ::musicVolume);
         break;
 
-    default:
-        break;
+    default: break;
     }
 }
 
@@ -186,125 +222,90 @@ void DM_Music_Set(int prop, float value)
     DMFmod_Music_Set(prop, value);
 }
 
-int DMFmod_Music_Get(int prop, void* ptr)
+int DMFmod_Music_Get(int prop, void *ptr)
 {
     switch(prop)
     {
     case MUSIP_ID:
         if(ptr)
         {
-            strcpy((char *) ptr, "music");
+            qstrcpy((char *) ptr, "music");
             return true;
         }
         break;
 
     case MUSIP_PLAYING:
-        if(!fmodSystem) return false;
-        return music != 0; // NULL when not playing.
+        if(!::fmodSystem) return false;
+        return ::music != nullptr;  /// @c nullptr when not playing.
 
-    default:
-        break;
+    default: break;
     }
 
     return false;
 }
 
-int DM_Music_Get(int prop, void* ptr)
+int DM_Music_Get(int prop, void *ptr)
 {
     return DMFmod_Music_Get(prop, ptr);
 }
 
-void DM_Music_Update(void)
+void DM_Music_Update()
 {
     // No need to do anything. The callback handles restarting.
 }
 
-void DMFmod_Music_Stop(void)
+void DMFmod_Music_Stop()
 {
-    if(!fmodSystem || !music) return;
+    if(!::fmodSystem || !::music) return;
 
-    DSFMOD_TRACE("Music_Stop.");
-
-    music->stop();
+    DSFMOD_TRACE("Music_Stop");
+    ::music->stop();
 }
 
-void DM_Music_Stop(void)
+void DM_Music_Stop()
 {
     DMFmod_Music_Stop();
 }
 
-static bool startSong()
-{
-    if(!fmodSystem || !song) return false;
-
-    if(music) music->stop();
-
-    // Start playing the song.
-    FMOD_RESULT result;
-    result = fmodSystem->playSound(FMOD_CHANNEL_FREE, song, true, &music);
-    DSFMOD_ERRCHECK(result);
-
-    // Properties.
-    music->setVolume(musicVolume);
-    music->setCallback(musicCallback);
-
-    // Start playing.
-    music->setPaused(false);
-    return true;
-}
-
-/// @internal
-bool DMFmod_Music_PlaySound(FMOD::Sound* customSound, bool needRelease)
-{
-    releaseSong();
-    releaseSongBuffer();
-
-    // Use this as the song.
-    needReleaseSong = needRelease;
-    song = customSound;
-    return startSong();
-}
-
 int DM_Music_Play(int looped)
 {
-    if(!fmodSystem) return false;
+    if(!::fmodSystem) return false;
 
-    if(songBuffer)
+    if(::songBuffer)
     {
         // Get rid of the old song.
         releaseSong();
 
         setDefaultStreamBufferSize();
 
-        FMOD_CREATESOUNDEXINFO extra;
-        zeroStruct(extra);
-        extra.length = songBuffer->size;
-        if(endsWith(soundFontFileName.c_str(), ".dls"))
+        FMOD_CREATESOUNDEXINFO extra; zeroStruct(extra);
+        extra.length = ::songBuffer->size;
+        if(!String::fromStdString(::soundFontFileName).fileNameExtension().compareWithoutCase(".dls"))
         {
             extra.dlsname = soundFontFileName.c_str();
         }
 
         // Load a new song.
-        FMOD_RESULT result;
-        result = fmodSystem->createSound(songBuffer->data,
-                                         FMOD_CREATESTREAM | FMOD_OPENMEMORY |
-                                         (looped? FMOD_LOOP_NORMAL : 0),
-                                         &extra, &song);
-        DSFMOD_TRACE("Music_Play: songBuffer has " << songBuffer->size << " bytes, created Sound " << song);
-        DSFMOD_ERRCHECK(result);
+        FMOD_RESULT res = ::fmodSystem->createSound(::songBuffer->data,
+                                                    FMOD_CREATESTREAM | FMOD_OPENMEMORY | (looped ? FMOD_LOOP_NORMAL : 0),
+                                                    &extra, &song);
+        DSFMOD_TRACE("Music_Play: songBuffer has " << ::songBuffer->size << " bytes, created Sound " << ::song);
+        DSFMOD_ERRCHECK(res);
 
-        needReleaseSong = true;
+        ::needReleaseSong = true;
 
         // The song buffer remains in memory, in case FMOD needs to stream from it.
     }
+
     return startSong();
 }
 
 void DMFmod_Music_Pause(int setPause)
 {
-    if(!fmodSystem || !music) return;
-
-    music->setPaused(setPause != 0);
+    if(!::fmodSystem) return;
+    
+    if(!::music) return;
+    ::music->setPaused(setPause != 0);
 }
 
 void DM_Music_Pause(int setPause)
@@ -312,9 +313,9 @@ void DM_Music_Pause(int setPause)
     DMFmod_Music_Pause(setPause);
 }
 
-void* DM_Music_SongBuffer(unsigned int length)
+void *DM_Music_SongBuffer(unsigned int length)
 {
-    if(!fmodSystem) return NULL;
+    if(!::fmodSystem) return nullptr;
 
     releaseSongBuffer();
 
@@ -322,13 +323,13 @@ void* DM_Music_SongBuffer(unsigned int length)
 
     // The caller will put data in this buffer. Before playing, we will create the
     // FMOD sound based on the data in the song buffer.
-    songBuffer = new SongBuffer(length);
-    return songBuffer->data;
+    ::songBuffer = new SongBuffer(length);
+    return ::songBuffer->data;
 }
 
-int DM_Music_PlayFile(const char *filename, int looped)
+int DM_Music_PlayFile(char const *filename, int looped)
 {
-    if(!fmodSystem) return false;
+    if(!::fmodSystem) return false;
 
     // Get rid of the current song.
     releaseSong();
@@ -336,20 +337,18 @@ int DM_Music_PlayFile(const char *filename, int looped)
 
     setDefaultStreamBufferSize();
 
-    FMOD_CREATESOUNDEXINFO extra;
-    zeroStruct(extra);
-    if(endsWith(soundFontFileName.c_str(), ".dls"))
+    FMOD_CREATESOUNDEXINFO extra; zeroStruct(extra);
+    if(!String::fromStdString(::soundFontFileName).fileNameExtension().compareWithoutCase(".dls"))
     {
-        extra.dlsname = soundFontFileName.c_str();
+        extra.dlsname = ::soundFontFileName.c_str();
     }
 
-    FMOD_RESULT result;
-    result = fmodSystem->createSound(filename, FMOD_CREATESTREAM | (looped? FMOD_LOOP_NORMAL : 0),
-                                     &extra, &song);
-    DSFMOD_TRACE("Music_Play: loaded '" << filename << "' => Sound " << song);
-    DSFMOD_ERRCHECK(result);
+    FMOD_RESULT res = ::fmodSystem->createSound(filename, FMOD_CREATESTREAM | (looped ? FMOD_LOOP_NORMAL : 0),
+                                                &extra, &::song);
+    DSFMOD_TRACE("Music_Play: loaded '" << filename << "' => Sound " << ::song);
+    DSFMOD_ERRCHECK(res);
 
-    needReleaseSong = true;
+    ::needReleaseSong = true;
 
     return startSong();
 }

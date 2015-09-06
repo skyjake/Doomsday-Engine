@@ -1,7 +1,7 @@
 /** @file fmod_cd.cpp  CD audio playback.
  *
  * @authors Copyright © 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2014-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html (with exception granted to allow
@@ -45,14 +45,13 @@ static FMOD::Sound *cdSound;
 
 int DM_CDAudio_Init()
 {
-    numDrives = 0;
+    ::numDrives = 0;
 
-    FMOD_RESULT result;
-    result = fmodSystem->getNumCDROMDrives(&numDrives);
-    DSFMOD_ERRCHECK(result);
-    DSFMOD_TRACE("CDAudio_Init: " << numDrives << " CD drives available.");
+    FMOD_RESULT res = ::fmodSystem->getNumCDROMDrives(&::numDrives);
+    DSFMOD_ERRCHECK(res);
+    DSFMOD_TRACE("CDAudio_Init: " << ::numDrives << " CD drives available.");
 
-    return fmodSystem != nullptr;
+    return ::fmodSystem != nullptr;
 }
 
 void DMFmod_CDAudio_Shutdown()
@@ -73,7 +72,7 @@ void DM_CDAudio_Update()
 
 void DM_CDAudio_Set(int prop, float value)
 {
-    if(!fmodSystem) return;
+    if(!::fmodSystem) return;
 
     switch(prop)
     {
@@ -85,16 +84,16 @@ void DM_CDAudio_Set(int prop, float value)
     }
 }
 
-int DM_CDAudio_Get(int prop, void* ptr)
+int DM_CDAudio_Get(int prop, void *ptr)
 {
-    if(!fmodSystem) return false;
+    if(!::fmodSystem) return false;
 
     switch(prop)
     {
     case MUSIP_ID:
         if(ptr)
         {
-            strcpy((char *) ptr, "cd");
+            qstrcpy((char *) ptr, "cd");
             return true;
         }
         break;
@@ -112,28 +111,28 @@ int DM_CDAudio_Get(int prop, void* ptr)
 
 int DM_CDAudio_Play(int track, int looped)
 {
-    if(!fmodSystem) return false;
-    if(!numDrives)
+    if(!::fmodSystem) return false;
+
+    if(!::numDrives)
     {
         DSFMOD_TRACE("CDAudio_Play: No CD drives available.");
         return false;
     }
 
     // Use a bigger stream buffer for CD audio.
-    fmodSystem->setStreamBufferSize(64*1024, FMOD_TIMEUNIT_RAWBYTES);
+    ::fmodSystem->setStreamBufferSize(64*1024, FMOD_TIMEUNIT_RAWBYTES);
 
     // Get the drive name.
     /// @todo Make drive selection configurable.
-    FMOD_RESULT result;
     char driveName[80];
-    fmodSystem->getCDROMDriveName(0, driveName, sizeof(driveName), 0, 0, 0, 0);
+    FMOD_RESULT res = ::fmodSystem->getCDROMDriveName(0, driveName, sizeof(driveName), 0, 0, 0, 0);
     DSFMOD_TRACE("CDAudio_Play: CD drive name: '" << driveName << "'");
 
     FMOD::Sound *trackSound = nullptr;
     bool needRelease = false;
 
 #if MACOSX
-    for(char* ptr = driveName; *ptr; ptr++)
+    for(char *ptr = driveName; *ptr; ptr++)
     {
         if(*ptr == '/') *ptr = ':';
     }
@@ -143,7 +142,7 @@ int DM_CDAudio_Play(int track, int looped)
     sprintf(trackPath, "/Volumes/%s/%i Audio Track.aiff", driveName, track);
     DSFMOD_TRACE("CDAudio_Play: Opening track: " << trackPath);
 
-    result = fmodSystem->createStream(trackPath, (looped? FMOD_LOOP_NORMAL : 0), 0, &trackSound);
+    res = ::fmodSystem->createStream(trackPath, (looped ? FMOD_LOOP_NORMAL : 0), 0, &trackSound);
     DSFMOD_TRACE("CDAudio_Play: Track " << track << " => Sound " << trackSound);
     DSFMOD_ERRCHECK(result);
 
@@ -155,20 +154,20 @@ int DM_CDAudio_Play(int track, int looped)
     track--;
 #endif
 
-    if(!cdSound)
+    if(!::cdSound)
     {
         // Get info about the CD tracks.
-        result = fmodSystem->createStream(driveName, FMOD_OPENONLY, 0, &cdSound);
-        DSFMOD_TRACE("CDAudio_Play: Opening CD, cdSound " << cdSound);
-        DSFMOD_ERRCHECK(result);
-        if(result != FMOD_OK) return false;
+        res = ::fmodSystem->createStream(driveName, FMOD_OPENONLY, 0, &::cdSound);
+        DSFMOD_TRACE("CDAudio_Play: Opening CD, cdSound " << ::cdSound);
+        DSFMOD_ERRCHECK(res);
+        if(res != FMOD_OK) return false;
     }
-    DENG2_ASSERT(cdSound);
+    DENG2_ASSERT(::cdSound);
 
     int numTracks = 0;
-    result = cdSound->getNumSubSounds(&numTracks);
+    res = ::cdSound->getNumSubSounds(&numTracks);
     DSFMOD_TRACE("CDAudio_Play: Number of tracks = " << numTracks);
-    if(result != FMOD_OK) return false;
+    if(res != FMOD_OK) return false;
 
     // The subsounds are indexed starting from zero (CD track 1 == subsound 0).
     track--;
@@ -179,8 +178,8 @@ int DM_CDAudio_Play(int track, int looped)
         return false;
     }
 
-    result = cdSound->getSubSound(track, &trackSound);
-    DSFMOD_ERRCHECK(result);
+    res = ::cdSound->getSubSound(track, &trackSound);
+    DSFMOD_ERRCHECK(res);
     DSFMOD_TRACE("CDAudio_Play: Track " << track + 1 << " got subsound " << trackSound);
 
     if(looped)
@@ -201,8 +200,9 @@ void DM_CDAudio_Stop()
 {
     DMFmod_Music_Stop();
 
-    if(cdSound)
+    if(::cdSound)
     {
-        cdSound->release(); cdSound = nullptr;
+        ::cdSound->release();
+        ::cdSound = nullptr;
     }
 }

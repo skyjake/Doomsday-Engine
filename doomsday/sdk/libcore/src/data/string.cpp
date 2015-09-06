@@ -632,6 +632,11 @@ String String::fromLatin1(IByteArray const &byteArray)
     return QString::fromLatin1(reinterpret_cast<char const *>(Block(byteArray).data()));
 }
 
+String String::fromStdString(std::string const &sstring)
+{
+    return QString::fromStdString(sstring);
+}
+
 size_t de::qchar_strlen(QChar const *str)
 {
     if(!str) return 0;

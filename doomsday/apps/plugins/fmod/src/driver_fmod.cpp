@@ -1,5 +1,4 @@
 /** @file driver_fmod.cpp  FMOD Ex audio plugin.
- * @ingroup dsfmod
  *
  * @authors Copyright © 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2015 Daniel Swanson <danij@dengine.net>

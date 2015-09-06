@@ -1,8 +1,7 @@
-/**
- * @file fmod_sfx.cpp
- * Sound effects interface. @ingroup dsfmod
+/** @file fmod_sfx.cpp  Sound effects interface.
  *
  * @authors Copyright © 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html (with exception granted to allow
@@ -40,31 +39,26 @@
  */
 
 #include "driver_fmod.h"
+
 #include "dd_share.h"
-#include <stdlib.h>
+#include <cstdlib>
 #include <cmath>
 #include <vector>
 #include <map>
 
-typedef std::map<FMOD::Sound*, sfxbuffer_t*> Streams;
 typedef std::vector<char> RawSamplePCM8;
 
 struct BufferInfo
 {
-    FMOD::Channel* channel;
-    FMOD::Sound* sound;
-    FMOD_MODE mode;
-    float pan;
-    float volume;
-    float minDistanceMeters;
-    float maxDistanceMeters;
+    FMOD::Channel *channel = nullptr;
+    FMOD::Sound *sound = nullptr;
+    FMOD_MODE mode = 0;
+    float pan = 0.f;
+    float volume = 1.f;
+    float minDistanceMeters = 10.f;
+    float maxDistanceMeters = 100.f;
     FMODVector position;
     FMODVector velocity;
-
-    BufferInfo()
-        : channel(0), sound(0), mode(0),
-          pan(0.f), volume(1.f),
-          minDistanceMeters(10), maxDistanceMeters(100) {}
 
     /**
      * Changes the channel's 3D position mode (head-relative or world coordinates).
@@ -117,9 +111,11 @@ struct Listener
 static float unitsPerMeter = 1.f;
 static float dopplerScale = 1.f;
 static Listener listener;
+
+typedef std::map<FMOD::Sound *, sfxbuffer_t *> Streams;
 static Streams streams;
 
-const char* sfxPropToString(int prop)
+char const *sfxPropToString(int prop)
 {
     switch(prop)
     {
@@ -135,89 +131,84 @@ const char* sfxPropToString(int prop)
     }
 }
 
-static BufferInfo& bufferInfo(sfxbuffer_t* buf)
+static BufferInfo &bufferInfo(sfxbuffer_t *buf)
 {
-    assert(buf->ptr != 0);
-    return *reinterpret_cast<BufferInfo*>(buf->ptr);
+    DENG2_ASSERT(buf && buf->ptr);
+    return *reinterpret_cast<BufferInfo *>(buf->ptr);
 }
 
-static FMOD_RESULT F_CALLBACK channelCallback(FMOD_CHANNEL* chanPtr,
-                                              FMOD_CHANNEL_CALLBACKTYPE type,
-                                              void* /*commanddata1*/,
-                                              void* /*commanddata2*/)
+static FMOD_RESULT F_CALLBACK channelCallback(FMOD_CHANNEL *chanPtr,
+    FMOD_CHANNEL_CALLBACKTYPE type, void * /*commanddata1*/, void * /*commanddata2*/)
 {
-    FMOD::Channel *channel = reinterpret_cast<FMOD::Channel*>(chanPtr);
-    sfxbuffer_t *buf = 0;
+    DENG2_ASSERT(chanPtr);
+    auto *channel = reinterpret_cast<FMOD::Channel *>(chanPtr);
 
     switch(type)
     {
-    case FMOD_CHANNEL_CALLBACKTYPE_END:
+    case FMOD_CHANNEL_CALLBACKTYPE_END: {
         // The sound has ended, mark the channel.
-        channel->getUserData(reinterpret_cast<void**>(&buf));
+        sfxbuffer_t *buf = nullptr;
+        channel->getUserData(reinterpret_cast<void **>(&buf));
         if(buf)
         {
             LOGDEV_AUDIO_XVERBOSE("[FMOD] channelCallback: sfxbuffer %p stops") << buf;
             buf->flags &= ~SFXBF_PLAYING;
             // The channel becomes invalid after the sound stops.
-            bufferInfo(buf).channel = 0;
+            bufferInfo(buf).channel = nullptr;
         }
-        channel->setCallback(0);
-        channel->setUserData(0);
-        break;
+        channel->setCallback(nullptr);
+        channel->setUserData(nullptr);
+        break; }
 
-    default:
-        break;
+    default: break;
     }
+
     return FMOD_OK;
 }
 
-int DS_SFX_Init(void)
+int DS_SFX_Init()
 {
-    return fmodSystem != 0;
+    return ::fmodSystem != nullptr;
 }
 
-sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate)
+sfxbuffer_t *DS_SFX_CreateBuffer(int flags, int bits, int rate)
 {
     DSFMOD_TRACE("SFX_CreateBuffer: flags=" << flags << ", bits=" << bits << ", rate=" << rate);
 
-    sfxbuffer_t* buf;
-
-    // Clear the buffer.
-    buf = reinterpret_cast<sfxbuffer_t*>(calloc(sizeof(*buf), 1));
-
-    // Initialize with format info.
+    // Allocate and configure a new buffer.
+    sfxbuffer_t *buf = reinterpret_cast<sfxbuffer_t *>(calloc(sizeof(*buf), 1));
     buf->bytes = bits / 8;
-    buf->rate = rate;
+    buf->rate  = rate;
     buf->flags = flags;
-    buf->freq = rate; // Modified by calls to Set(SFXBP_FREQUENCY).
+    buf->freq  = rate;  // Modified by calls to Set(SFXBP_FREQUENCY).
 
     // Allocate extra state information.
-    buf->ptr = new BufferInfo;
+    buf->ptr   = new BufferInfo;
 
     LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_CreateBuffer: Created sfxbuffer %p") << buf;
 
     return buf;
 }
 
-void DS_SFX_DestroyBuffer(sfxbuffer_t* buf)
+void DS_SFX_DestroyBuffer(sfxbuffer_t *buf)
 {
     if(!buf) return;
 
     LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_DestroyBuffer: Destroying sfxbuffer %p") << buf;
 
-    BufferInfo& info = bufferInfo(buf);
+    BufferInfo &info = bufferInfo(buf);
     if(info.sound)
     {
         info.sound->release();
-        streams.erase(info.sound);
+        ::streams.erase(info.sound);
     }
 
     // Free the memory allocated for the buffer.
-    delete reinterpret_cast<BufferInfo*>(buf->ptr);
+    delete reinterpret_cast<BufferInfo *>(buf->ptr);
     free(buf);
 }
 
-static void toSigned8bit(const unsigned char* source, int size, RawSamplePCM8& output)
+static void toSigned8bit(unsigned char const *source, int size, RawSamplePCM8 &output)
 {
     output.clear();
     output.resize(size);
@@ -227,22 +218,23 @@ static void toSigned8bit(const unsigned char* source, int size, RawSamplePCM8& o
     }
 }
 
-static FMOD_RESULT F_CALLBACK pcmReadCallback(FMOD_SOUND* soundPtr, void* data, unsigned int datalen)
+static FMOD_RESULT F_CALLBACK
+pcmReadCallback(FMOD_SOUND *soundPtr, void *data, unsigned int datalen)
 {
-    FMOD::Sound* sound = reinterpret_cast<FMOD::Sound*>(soundPtr);
+    DENG2_ASSERT(soundPtr);
+    auto *sound = reinterpret_cast<FMOD::Sound *>(soundPtr);
 
-    Streams::iterator found = streams.find(sound);
-    if(found == streams.end())
+    Streams::iterator found = ::streams.find(sound);
+    if(found == ::streams.end())
     {
         return FMOD_ERR_NOTREADY;
     }
 
-    sfxbuffer_t* buf = found->second;
-    DENG_ASSERT(buf != NULL);
-    DENG_ASSERT(buf->flags & SFXBF_STREAM);
+    sfxbuffer_t *buf = found->second;
+    DENG2_ASSERT(buf && buf->flags & SFXBF_STREAM);
 
     // Call the stream callback.
-    sfxstreamfunc_t func = reinterpret_cast<sfxstreamfunc_t>(buf->sample->data);
+    auto func = reinterpret_cast<sfxstreamfunc_t>(buf->sample->data);
     if(func(buf, data, datalen))
     {
         return FMOD_OK;
@@ -255,29 +247,30 @@ static FMOD_RESULT F_CALLBACK pcmReadCallback(FMOD_SOUND* soundPtr, void* data, 
 }
 
 /**
- * Prepare the buffer for playing a sample by filling the buffer with as
- * much sample data as fits. The pointer to sample is saved, so the caller
- * mustn't free it while the sample is loaded.
+ * Prepare the buffer for playing a sample by filling the buffer with as much sample
+ * data as fits. The pointer to sample is saved, so the caller mustn't free it while
+ * the sample is loaded.
  */
-void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
+void DS_SFX_Load(sfxbuffer_t *buf, struct sfxsample_s *sample)
 {
-    if(!fmodSystem || !buf || !sample) return;
+    DENG2_ASSERT(buf && sample);
 
-    bool streaming = (buf->flags & SFXBF_STREAM) != 0;
+    if(!::fmodSystem) return;
+
+    bool const streaming = (buf->flags & SFXBF_STREAM) != 0;
 
     // Tell the engine we have used up the entire sample already.
-    buf->sample = sample;
+    buf->sample  = sample;
     buf->written = sample->size;
-    buf->flags &= ~SFXBF_RELOAD;
+    buf->flags  &= ~SFXBF_RELOAD;
 
-    BufferInfo& info = bufferInfo(buf);
+    BufferInfo &info = bufferInfo(buf);
 
-    FMOD_CREATESOUNDEXINFO params;
-    zeroStruct(params);
-    params.length = sample->size;
+    FMOD_CREATESOUNDEXINFO params; zeroStruct(params);
+    params.length           = sample->size;
     params.defaultfrequency = sample->rate;
-    params.numchannels = 1; // Doomsday only uses mono samples currently.
-    params.format = (sample->bytesPer == 1? FMOD_SOUND_FORMAT_PCM8 : FMOD_SOUND_FORMAT_PCM16);
+    params.numchannels      = 1; // Doomsday only uses mono samples currently.
+    params.format           = (sample->bytesPer == 1? FMOD_SOUND_FORMAT_PCM8 : FMOD_SOUND_FORMAT_PCM16);
 
     LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Load: sfxbuffer %p sample (size:%i, freq:%i, bps:%i)")
             << buf << sample->size << sample->rate << sample->bytesPer;
@@ -287,24 +280,25 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
     {
         LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Load: Releasing buffer's old Sound %p") << info.sound;
         info.sound->release();
-        streams.erase(info.sound);
+        ::streams.erase(info.sound);
     }
 
     RawSamplePCM8 signConverted;
-    const char* sampleData = reinterpret_cast<const char*>(sample->data);
+    auto const *sampleData = reinterpret_cast<char const *>(sample->data);
     if(!streaming)
     {
         if(sample->bytesPer == 1)
         {
             // Doomsday gives us unsigned 8-bit audio samples.
-            toSigned8bit(reinterpret_cast<const unsigned char*>(sample->data), sample->size, signConverted);
+            toSigned8bit(reinterpret_cast<unsigned char const *>(sample->data), sample->size, signConverted);
             sampleData = &signConverted[0];
         }
-        info.mode = FMOD_OPENMEMORY |
-                    FMOD_OPENRAW |
-                    FMOD_HARDWARE |
-                    (buf->flags & SFXBF_3D? FMOD_3D : FMOD_2D) |
-                    (buf->flags & SFXBF_REPEAT? FMOD_LOOP_NORMAL : 0);
+
+        info.mode = FMOD_OPENMEMORY
+                  | FMOD_OPENRAW
+                  | FMOD_HARDWARE
+                  | (buf->flags & SFXBF_3D? FMOD_3D : FMOD_2D)
+                  | (buf->flags & SFXBF_REPEAT? FMOD_LOOP_NORMAL : 0);
     }
     else // Set up for streaming.
     {
@@ -313,34 +307,35 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
                     FMOD_HARDWARE |
                     FMOD_LOOP_NORMAL;
 
-        params.numchannels = 2; /// @todo  Make this configurable.
-        params.length = sample->numSamples;
+        params.numchannels      = 2;  /// @todo  Make this configurable.
+        params.length           = sample->numSamples;
         params.decodebuffersize = sample->rate / 4;
-        params.pcmreadcallback = pcmReadCallback;
-        sampleData = 0; // will be streamed
+        params.pcmreadcallback  = pcmReadCallback;
+
+        sampleData = nullptr;  // will be streamed
     }
+
     if(buf->flags & SFXBF_3D)
     {
         info.mode |= FMOD_3D_WORLDRELATIVE;
     }
 
     // Pass the sample to FMOD.
-    FMOD_RESULT result;
-    result = fmodSystem->createSound(sampleData, info.mode, &params, &info.sound);
-    DSFMOD_ERRCHECK(result);
+    FMOD_RESULT res = ::fmodSystem->createSound(sampleData, info.mode, &params, &info.sound);
+    DSFMOD_ERRCHECK(res);
     LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Load: created Sound %p%s")
             << info.sound << (streaming? " as streaming" : "");
 
     if(streaming)
     {
         // Keep a record of the playing stream for the PCM read callback.
-        streams[info.sound] = buf;
+        ::streams[info.sound] = buf;
         LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Load: noting %p belongs to streaming buffer %p")
                 << info.sound << buf;
     }
 
     // Not started yet.
-    info.channel = 0;
+    info.channel = nullptr;
 
 #ifdef _DEBUG
     // Check memory.
@@ -356,10 +351,9 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
 /**
  * Stops the buffer and makes it forget about its sample.
  */
-void DS_SFX_Reset(sfxbuffer_t* buf)
+void DS_SFX_Reset(sfxbuffer_t *buf)
 {
-    if(!buf)
-        return;
+    if(!buf) return;
 
     LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Reset: sfxbuffer %p") << buf;
 
@@ -367,12 +361,12 @@ void DS_SFX_Reset(sfxbuffer_t* buf)
     buf->sample = 0;
     buf->flags &= ~SFXBF_RELOAD;
 
-    BufferInfo& info = bufferInfo(buf);
+    BufferInfo &info = bufferInfo(buf);
     if(info.sound)
     {
         LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Reset: releasing Sound %p") << info.sound;
         info.sound->release();
-        streams.erase(info.sound);
+        ::streams.erase(info.sound);
     }
     if(info.channel)
     {
@@ -383,18 +377,16 @@ void DS_SFX_Reset(sfxbuffer_t* buf)
     info = BufferInfo();
 }
 
-void DS_SFX_Play(sfxbuffer_t* buf)
+void DS_SFX_Play(sfxbuffer_t *buf)
 {
     // Playing is quite impossible without a sample.
-    if(!buf || !buf->sample)
-        return;
+    if(!buf || !buf->sample) return;
 
-    BufferInfo& info = bufferInfo(buf);
-    assert(info.sound != 0);
+    BufferInfo &info = bufferInfo(buf);
+    DENG2_ASSERT(info.sound);
 
-    FMOD_RESULT result;
-    result = fmodSystem->playSound(FMOD_CHANNEL_FREE, info.sound, true, &info.channel);
-    DSFMOD_ERRCHECK(result);
+    FMOD_RESULT res = ::fmodSystem->playSound(FMOD_CHANNEL_FREE, info.sound, true, &info.channel);
+    DSFMOD_ERRCHECK(res);
 
     if(!info.channel) return;
 
@@ -423,26 +415,26 @@ void DS_SFX_Play(sfxbuffer_t* buf)
     buf->flags |= SFXBF_PLAYING;
 }
 
-void DS_SFX_Stop(sfxbuffer_t* buf)
+void DS_SFX_Stop(sfxbuffer_t *buf)
 {
     if(!buf) return;
 
     LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Stop: sfxbuffer %p") << buf;
 
-    BufferInfo& info = bufferInfo(buf);
+    BufferInfo &info = bufferInfo(buf);
 
-    Streams::iterator found = streams.find(info.sound);
-    if(found != streams.end() && info.channel)
+    Streams::iterator found = ::streams.find(info.sound);
+    if(found != ::streams.end() && info.channel)
     {
         info.channel->setPaused(true);
     }
 
     if(info.channel)
     {
-        info.channel->setUserData(0);
-        info.channel->setCallback(0);
+        info.channel->setUserData(nullptr);
+        info.channel->setCallback(nullptr);
         info.channel->setMute(true);
-        info.channel = 0;
+        info.channel = nullptr;
     }    
 
     // Clear the flag that tells the Sfx module about playing buffers.
@@ -453,7 +445,7 @@ void DS_SFX_Stop(sfxbuffer_t* buf)
  * Buffer streamer. Called by the Sfx refresh thread.
  * FMOD handles this for us.
  */
-void DS_SFX_Refresh(sfxbuffer_t*)
+void DS_SFX_Refresh(sfxbuffer_t *)
 {}
 
 /**
@@ -464,31 +456,30 @@ void DS_SFX_Refresh(sfxbuffer_t*)
  *                      SFXBP_MAX_DISTANCE
  *                      SFXBP_RELATIVE_MODE
  */
-void DS_SFX_Set(sfxbuffer_t* buf, int prop, float value)
+void DS_SFX_Set(sfxbuffer_t *buf, int prop, float value)
 {
-    if(!buf)
-        return;
+    if(!buf) return;
 
-    BufferInfo& info = bufferInfo(buf);
+    BufferInfo &info = bufferInfo(buf);
 
     switch(prop)
     {
     case SFXBP_VOLUME:
-        if(FEQUAL(info.volume, value)) return; // No change.
-        assert(value >= 0);
+        if(de::fequal(info.volume, value)) return; // No change.
+        DENG2_ASSERT(value >= 0);
         info.volume = value;
         if(info.channel) info.channel->setVolume(info.volume);
         break;
 
     case SFXBP_FREQUENCY: {
-        unsigned int newFreq = (unsigned int) (buf->rate * value);
+        auto newFreq = (unsigned int) (buf->rate * value);
         if(buf->freq == newFreq) return; // No change.
         buf->freq = newFreq;
         if(info.channel) info.channel->setFrequency(float(buf->freq));
         break; }
 
     case SFXBP_PAN:
-        if(FEQUAL(info.pan, value)) return; // No change.
+        if(de::fequal(info.pan, value)) return; // No change.
         info.pan = value;
         if(info.channel) info.channel->setPan(info.pan);
         break;
@@ -523,11 +514,13 @@ void DS_SFX_Set(sfxbuffer_t* buf, int prop, float value)
  * @param property      SFXBP_POSITION
  *                      SFXBP_VELOCITY
  */
-void DS_SFX_Setv(sfxbuffer_t* buf, int prop, float* values)
+void DS_SFX_Setv(sfxbuffer_t *buf, int prop, float *values)
 {
-    if(!fmodSystem || !buf) return;
+    if(!buf) return;
 
-    BufferInfo& info = bufferInfo(buf);
+    if(!::fmodSystem) return;
+    
+    BufferInfo &info = bufferInfo(buf);
 
     switch(prop)
     {
@@ -556,21 +549,21 @@ void DS_SFX_Listener(int prop, float value)
     switch(prop)
     {
     case SFXLP_UNITS_PER_METER:
-        unitsPerMeter = value;
-        fmodSystem->set3DSettings(dopplerScale, unitsPerMeter, 1.0f);
-        DSFMOD_TRACE("SFX_Listener: Units per meter = " << unitsPerMeter);
+        ::unitsPerMeter = value;
+        ::fmodSystem->set3DSettings(::dopplerScale, ::unitsPerMeter, 1.0f);
+        DSFMOD_TRACE("SFX_Listener: Units per meter = " << ::unitsPerMeter);
         break;
 
     case SFXLP_DOPPLER:
-        dopplerScale = value;
-        fmodSystem->set3DSettings(dopplerScale, unitsPerMeter, 1.0f);
+        ::dopplerScale = value;
+        ::fmodSystem->set3DSettings(::dopplerScale, ::unitsPerMeter, 1.0f);
         DSFMOD_TRACE("SFX_Listener: Doppler factor = " << value);
         break;
 
     case SFXLP_UPDATE:
         // Update the properties set with Listenerv.
-        fmodSystem->set3DListenerAttributes(0, &listener.position, &listener.velocity,
-                                            &listener.front, &listener.up);
+        ::fmodSystem->set3DListenerAttributes(0, &::listener.position, &::listener.velocity,
+                                              &::listener.front, &::listener.up);
         break;
 
     default:
@@ -595,9 +588,11 @@ static int linearToLog(float vol)
  *
  * @param reverb  Array of NUM_REVERB_DATA parameters (see SRD_*).
  */
-static void updateListenerEnvironmentSettings(float* reverb)
+static void updateListenerEnvironmentSettings(float *reverb)
 {
-    if(!fmodSystem || !reverb) return;
+    if(!reverb) return;
+
+    if(!::fmodSystem) return;
 
     DSFMOD_TRACE("updateListenerEnvironmentSettings: " <<
                  reverb[0] << " " << reverb[1] << " " <<
@@ -608,16 +603,16 @@ static void updateListenerEnvironmentSettings(float* reverb)
        reverb[SRD_DECAY]  == 0 && reverb[SRD_DAMPING] == 0)
     {
         FMOD_REVERB_PROPERTIES noReverb = FMOD_PRESET_OFF;
-        fmodSystem->setReverbAmbientProperties(&noReverb);
+        ::fmodSystem->setReverbAmbientProperties(&noReverb);
         return;
     }
 
-    const static FMOD_REVERB_PROPERTIES presetPlain       = FMOD_PRESET_PLAIN;
-    const static FMOD_REVERB_PROPERTIES presetConcertHall = FMOD_PRESET_CONCERTHALL;
-    const static FMOD_REVERB_PROPERTIES presetAuditorium  = FMOD_PRESET_AUDITORIUM;
-    const static FMOD_REVERB_PROPERTIES presetCave        = FMOD_PRESET_CAVE;
-    const static FMOD_REVERB_PROPERTIES presetGeneric     = FMOD_PRESET_GENERIC;
-    const static FMOD_REVERB_PROPERTIES presetRoom        = FMOD_PRESET_ROOM;
+    static const FMOD_REVERB_PROPERTIES presetPlain       = FMOD_PRESET_PLAIN;
+    static const FMOD_REVERB_PROPERTIES presetConcertHall = FMOD_PRESET_CONCERTHALL;
+    static const FMOD_REVERB_PROPERTIES presetAuditorium  = FMOD_PRESET_AUDITORIUM;
+    static const FMOD_REVERB_PROPERTIES presetCave        = FMOD_PRESET_CAVE;
+    static const FMOD_REVERB_PROPERTIES presetGeneric     = FMOD_PRESET_GENERIC;
+    static const FMOD_REVERB_PROPERTIES presetRoom        = FMOD_PRESET_ROOM;
 
     float space = reverb[SRD_SPACE];
     if(reverb[SRD_DECAY] > .5)
@@ -659,28 +654,28 @@ static void updateListenerEnvironmentSettings(float* reverb)
     // A slightly increased roll-off. (Not in FMOD?)
     //props.RoomRolloffFactor = 1.3f;
 
-    fmodSystem->setReverbAmbientProperties(&props);
+    ::fmodSystem->setReverbAmbientProperties(&props);
 }
 
 /**
  * @param prop  SFXLP_ORIENTATION  (yaw, pitch) in degrees.
  */
-void DS_SFX_Listenerv(int prop, float* values)
+void DS_SFX_Listenerv(int prop, float *values)
 {
     switch(prop)
     {
     case SFXLP_POSITION:
-        listener.position.set(values);
+        ::listener.position.set(values);
         //DSFMOD_TRACE("Pos:" << values[0] << "," << values[1] << "," << values[2]);
         break;
 
     case SFXLP_ORIENTATION:
         // Convert the angles to front and up vectors.
-        listener.setOrientation(float(values[0]/180*M_PI), float(values[1]/180*M_PI));
+        ::listener.setOrientation(float(values[0]/180*M_PI), float(values[1]/180*M_PI));
         break;
 
     case SFXLP_VELOCITY:
-        listener.velocity.set(values);
+        ::listener.velocity.set(values);
         break;
 
     case SFXLP_REVERB:

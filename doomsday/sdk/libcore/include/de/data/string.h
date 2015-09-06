@@ -295,6 +295,8 @@ public:
      */
     static String fromLatin1(IByteArray const &byteArray);
 
+    static String fromStdString(std::string const &sstring);
+
     static dint compareWithCase(QChar const *a, QChar const *b, dsize count);
 
     /**
