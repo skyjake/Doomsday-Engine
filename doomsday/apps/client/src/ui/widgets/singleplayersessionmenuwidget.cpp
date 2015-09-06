@@ -45,9 +45,7 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
             : ui::ImageItem(ShownAsButton, label)
             , SessionItem(owner)
             , game(gameRef)
-        {
-            setData(&gameRef);
-        }
+        {}
 
         String title() const { return game.title(); }
         String gameIdentityKey() const { return game.identityKey(); }

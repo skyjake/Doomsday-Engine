@@ -1,8 +1,8 @@
 <?php
-/** @file masterserver.class.php Master Server implementation version 1.3
+/** @file masterserver.class.php  Master Server implementation version 1.3
  *
- * @authors Copyright Â© 2003-2013 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- * @authors Copyright Â© 2009-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2009-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

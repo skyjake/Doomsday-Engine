@@ -1,8 +1,8 @@
 <?php
 /** @file master.php Doomsday Master Server interface
  *
- * @authors Copyright Â© 2003-2013 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
- * @authors Copyright Â© 2009-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2009-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -113,7 +113,7 @@ function return_xmllog()
     }
 }
 
-$query = $HTTP_SERVER_VARS['QUERY_STRING'];
+$query = $_SERVER['QUERY_STRING'];
 
 // There are five operating modes:
 // 1. Server announcement processing.
@@ -125,7 +125,7 @@ $query = $HTTP_SERVER_VARS['QUERY_STRING'];
 if(isset($GLOBALS['HTTP_RAW_POST_DATA']) && empty($query))
 {
     $announcement = $GLOBALS['HTTP_RAW_POST_DATA'];
-    $remote = $HTTP_SERVER_VARS['REMOTE_ADDR'];
+    $remote = $_SERVER['REMOTE_ADDR'];
 
     update_server($announcement, $remote);
 }
