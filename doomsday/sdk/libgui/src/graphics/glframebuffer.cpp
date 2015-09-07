@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/GLFramebuffer"
@@ -162,17 +162,40 @@ DENG2_PIMPL(GLFramebuffer)
         try
         {
             // We'd like to use texture attachments for both color and depth/stencil.
+            // If this fails, we'll try a couple of different alternate setups (which
+            // may mean that some renderer features are unavailable).
             target.configure(&color, &depthStencil);
         }
         catch(GLTarget::ConfigError const &er)
         {
-            // Alternatively try without depth/stencil texture (some renderer features
-            // will not be available!).
-            LOG_GL_WARNING("Texture-based framebuffer failed: %s\n"
-                           "Trying fallback without depth/stencil texture")
-                    << er.asText();
+            try
+            {
+                LOG_GL_WARNING("Texture-based framebuffer failed: %s\n"
+                               "Trying fallback without depth/stencil texture")
+                        << er.asText();
 
-            target.configure(GLTarget::Color, color, GLTarget::DepthStencil);
+                target.configure(GLTarget::Color, color, GLTarget::DepthStencil);
+            }
+            catch(GLTarget::ConfigError const &er)
+            {
+                try
+                {
+                    LOG_GL_WARNING("Unified depth/stencil buffer failed: %s\n"
+                                   "Trying to allocate separately")
+                            << er.asText();
+
+                    target.configure(GLTarget::Color, color,
+                                     GLTarget::DepthStencil | GLTarget::SeparateDepthAndStencil);
+                }
+                catch(GLTarget::ConfigError const &er)
+                {
+                    LOG_GL_WARNING("Separate depth and stencil buffers failed: %s\n"
+                                   "Final fallback: disabling render-to-texture")
+                            << er.asText();
+
+                    target.configure(size, GLTarget::ColorDepthStencil);
+                }
+            }
         }
 
         target.clear(GLTarget::ColorDepthStencil);
@@ -304,9 +327,9 @@ void GLFramebuffer::glInit()
     LOG_AS("GLFramebuffer");
 
     // Check for some integral OpenGL functionality.
-    if(!GLInfo::extensions().ARB_framebuffer_object)
+    if(!GLInfo::extensions().EXT_framebuffer_object)
     {
-        LOG_GL_WARNING("Required GL_ARB_framebuffer_object is missing!");
+        LOG_GL_WARNING("Required GL_EXT_framebuffer_object is missing!");
     }
     if(!GLInfo::extensions().EXT_packed_depth_stencil)
     {
@@ -398,7 +421,7 @@ void GLFramebuffer::drawBuffer(float opacity)
 }
 
 bool GLFramebuffer::setDefaultMultisampling(int sampleCount)
-{   
+{
     LOG_AS("GLFramebuffer");
 
     int const newCount = max(1, sampleCount);
