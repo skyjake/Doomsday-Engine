@@ -159,42 +159,59 @@ DENG2_PIMPL(GLFramebuffer)
 
         DENG2_ASSERT(depthStencil.isReady());
 
-        try
+        // Try a couple of different ways to set up the FBO.
+        for(int attempt = 0; ; ++attempt)
         {
-            // We'd like to use texture attachments for both color and depth/stencil.
-            // If this fails, we'll try a couple of different alternate setups (which
-            // may mean that some renderer features are unavailable).
-            target.configure(&color, &depthStencil);
-        }
-        catch(GLTarget::ConfigError const &er)
-        {
+            String failMsg;
             try
             {
-                LOG_GL_WARNING("Texture-based framebuffer failed: %s\n"
-                               "Trying fallback without depth/stencil texture")
-                        << er.asText();
+                switch(attempt)
+                {
+                case 0:
+                    // Most preferred: render both color and depth+stencil to textures.
+                    // Allows shaders to access contents of the entire framebuffer.
+                    failMsg = "Texture-based framebuffer failed: %s\n"
+                              "Trying again without depth/stencil texture";
+                    target.configure(&color, &depthStencil);
+                    break;
 
-                target.configure(GLTarget::Color, color, GLTarget::DepthStencil);
+                case 1:
+                    failMsg = "Color texture with unified depth/stencil renderbuffer failed: %s\n"
+                              "Trying again without stencil";
+                    target.configure(GLTarget::Color, color, GLTarget::DepthStencil);
+                    LOG_GL_WARNING("Renderer feature unavailable: lensflare depth");
+                    break;
+
+                case 2:
+                    failMsg = "Color texture with depth renderbuffer failed: %s\n"
+                              "Trying again without texture buffers";
+                    target.configure(GLTarget::Color, color, GLTarget::Depth);
+                    LOG_GL_WARNING("Renderer features unavailable: sky mask, lensflare depth");
+                    break;
+
+                case 3:
+                    failMsg = "Renderbuffer-based framebuffer failed: %s\n"
+                              "Trying again without stencil";
+                    target.configure(size, GLTarget::ColorDepthStencil);
+                    LOG_GL_WARNING("Renderer features unavailable: postfx, lensflare depth");
+                    break;
+
+                case 4:
+                    // Final fallback: simple FBO with just color+depth renderbuffers.
+                    // No postfx, no access from shaders, no sky mask.
+                    target.configure(size, GLTarget::ColorDepth);
+                    LOG_GL_WARNING("Renderer features unavailable: postfx, sky mask, lensflare depth");
+                    break;
+
+                default:
+                    break;
+                }
+                break; // success!
             }
             catch(GLTarget::ConfigError const &er)
             {
-                try
-                {
-                    LOG_GL_WARNING("Unified depth/stencil buffer failed: %s\n"
-                                   "Trying to allocate separately")
-                            << er.asText();
-
-                    target.configure(GLTarget::Color, color,
-                                     GLTarget::DepthStencil | GLTarget::SeparateDepthAndStencil);
-                }
-                catch(GLTarget::ConfigError const &er)
-                {
-                    LOG_GL_WARNING("Separate depth and stencil buffers failed: %s\n"
-                                   "Final fallback: disabling render-to-texture")
-                            << er.asText();
-
-                    target.configure(size, GLTarget::ColorDepthStencil);
-                }
+                if(failMsg.isEmpty()) throw er; // Can't handle it.
+                LOG_GL_NOTE(failMsg) << er.asText();
             }
         }
 
