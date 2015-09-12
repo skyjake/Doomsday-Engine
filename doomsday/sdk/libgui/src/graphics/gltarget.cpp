@@ -16,7 +16,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/GLTarget"
@@ -79,7 +79,7 @@ DENG2_OBSERVES(Asset, Deletion)
     GLTexture *bufTextures[MAX_ATTACHMENTS];
     Flags flags;
     Flags textureAttachment;    ///< Where to attach @a texture.
-    GLTexture *texture;    
+    GLTexture *texture;
     Vector2ui size;
     Vector4f clearColor;
     Rectangleui activeRect; ///< Initially null.
@@ -255,7 +255,9 @@ DENG2_OBSERVES(Asset, Deletion)
             attachRenderbuffer(ColorBuffer, GL_RGBA8, GL_COLOR_ATTACHMENT0);
         }
 
-        if(flags.testFlag(DepthStencil) && (!texture || textureAttachment == Color))
+        if( flags.testFlag(DepthStencil) &&
+           !flags.testFlag(SeparateDepthAndStencil) &&
+           (!texture || textureAttachment == Color))
         {
             // We can use a combined depth/stencil buffer.
             LOG_GL_VERBOSE("FBO %i: depth+stencil renderbuffer %s") << fbo << size.asText();
@@ -267,12 +269,12 @@ DENG2_OBSERVES(Asset, Deletion)
             if(flags.testFlag(Depth) && !textureAttachment.testFlag(Depth))
             {
                 LOG_GL_VERBOSE("FBO %i: depth renderbuffer %s") << fbo << size.asText();
-                attachRenderbuffer(DepthBuffer, GL_DEPTH_COMPONENT16, GL_DEPTH_ATTACHMENT);
+                attachRenderbuffer(DepthBuffer, GL_DEPTH_COMPONENT, GL_DEPTH_ATTACHMENT);
             }
             if(flags.testFlag(Stencil) && !textureAttachment.testFlag(Stencil))
             {
                 LOG_GL_VERBOSE("FBO %i: stencil renderbuffer %s") << fbo << size.asText();
-                attachRenderbuffer(StencilBuffer, GL_STENCIL_INDEX8, GL_STENCIL_ATTACHMENT);
+                attachRenderbuffer(StencilBuffer, GL_STENCIL_INDEX, GL_STENCIL_ATTACHMENT);
             }
         }
 
@@ -354,7 +356,7 @@ DENG2_OBSERVES(Asset, Deletion)
                 status == GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT? "Incomplete attachments" :
                 status == GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS? "Mismatch with dimensions" :
                 status == GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT? "No images attached" :
-                                                                        "Unsupported");
+                                                                        QString("Unsupported (0x%1)").arg(status, 0, 16));
         }
         self.setState(Ready);
     }
@@ -521,7 +523,7 @@ void GLTarget::glBind() const
         //DENG2_ASSERT(!d->fbo || glIsFramebuffer(d->fbo));
         if(d->fbo && !glIsFramebuffer(d->fbo))
         {
-            qDebug() << "GLTarget: WARNING! Attempting to bind FBO" << d->fbo 
+            qDebug() << "GLTarget: WARNING! Attempting to bind FBO" << d->fbo
                      << "that is not a valid OpenGL FBO";
         }
 
