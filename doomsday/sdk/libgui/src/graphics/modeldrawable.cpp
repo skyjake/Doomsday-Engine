@@ -1358,7 +1358,11 @@ Vector3f ModelDrawable::midPoint() const
     return (d->maxPoint + d->minPoint) / 2.f;
 }
 
+} // namespace de
+
 //---------------------------------------------------------------------------------------
+
+namespace de {
 
 DENG2_PIMPL_NOREF(ModelDrawable::Animator)
 , DENG2_OBSERVES(Asset, Deletion)

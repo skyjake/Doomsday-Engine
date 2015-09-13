@@ -7,7 +7,8 @@
 # - transform: normal, uppercase, lowercase
 
 script { 
-    import Version, gui 
+    import Version, gui, DisplayMode
+     
     # Load the Open Sans font contained in this pack.
     def loadOpenSans()
         import App
@@ -79,14 +80,14 @@ group {
 
     font default {
         family: Liberation Sans
-        size: 13pt
+        size $: gui.scale("13pt", DisplayMode.DPI_FACTOR)
         weight: normal
         style: normal
     }
 
     font monospace inherits default {
         family: FreeMono
-        size: 12pt
+        size $: gui.scale("12pt", DisplayMode.DPI_FACTOR)
     }
 }
 

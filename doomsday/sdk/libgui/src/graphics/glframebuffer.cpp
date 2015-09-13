@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/GLFramebuffer"
@@ -159,20 +159,60 @@ DENG2_PIMPL(GLFramebuffer)
 
         DENG2_ASSERT(depthStencil.isReady());
 
-        try
+        // Try a couple of different ways to set up the FBO.
+        for(int attempt = 0; ; ++attempt)
         {
-            // We'd like to use texture attachments for both color and depth/stencil.
-            target.configure(&color, &depthStencil);
-        }
-        catch(GLTarget::ConfigError const &er)
-        {
-            // Alternatively try without depth/stencil texture (some renderer features
-            // will not be available!).
-            LOG_GL_WARNING("Texture-based framebuffer failed: %s\n"
-                           "Trying fallback without depth/stencil texture")
-                    << er.asText();
+            String failMsg;
+            try
+            {
+                switch(attempt)
+                {
+                case 0:
+                    // Most preferred: render both color and depth+stencil to textures.
+                    // Allows shaders to access contents of the entire framebuffer.
+                    failMsg = "Texture-based framebuffer failed: %s\n"
+                              "Trying again without depth/stencil texture";
+                    target.configure(&color, &depthStencil);
+                    break;
 
-            target.configure(GLTarget::Color, color, GLTarget::DepthStencil);
+                case 1:
+                    failMsg = "Color texture with unified depth/stencil renderbuffer failed: %s\n"
+                              "Trying again without stencil";
+                    target.configure(GLTarget::Color, color, GLTarget::DepthStencil);
+                    LOG_GL_WARNING("Renderer feature unavailable: lensflare depth");
+                    break;
+
+                case 2:
+                    failMsg = "Color texture with depth renderbuffer failed: %s\n"
+                              "Trying again without texture buffers";
+                    target.configure(GLTarget::Color, color, GLTarget::Depth);
+                    LOG_GL_WARNING("Renderer features unavailable: sky mask, lensflare depth");
+                    break;
+
+                case 3:
+                    failMsg = "Renderbuffer-based framebuffer failed: %s\n"
+                              "Trying again without stencil";
+                    target.configure(size, GLTarget::ColorDepthStencil);
+                    LOG_GL_WARNING("Renderer features unavailable: postfx, lensflare depth");
+                    break;
+
+                case 4:
+                    // Final fallback: simple FBO with just color+depth renderbuffers.
+                    // No postfx, no access from shaders, no sky mask.
+                    target.configure(size, GLTarget::ColorDepth);
+                    LOG_GL_WARNING("Renderer features unavailable: postfx, sky mask, lensflare depth");
+                    break;
+
+                default:
+                    break;
+                }
+                break; // success!
+            }
+            catch(GLTarget::ConfigError const &er)
+            {
+                if(failMsg.isEmpty()) throw er; // Can't handle it.
+                LOG_GL_NOTE(failMsg) << er.asText();
+            }
         }
 
         target.clear(GLTarget::ColorDepthStencil);
@@ -304,9 +344,9 @@ void GLFramebuffer::glInit()
     LOG_AS("GLFramebuffer");
 
     // Check for some integral OpenGL functionality.
-    if(!GLInfo::extensions().ARB_framebuffer_object)
+    if(!GLInfo::extensions().EXT_framebuffer_object)
     {
-        LOG_GL_WARNING("Required GL_ARB_framebuffer_object is missing!");
+        LOG_GL_WARNING("Required GL_EXT_framebuffer_object is missing!");
     }
     if(!GLInfo::extensions().EXT_packed_depth_stencil)
     {
@@ -398,7 +438,7 @@ void GLFramebuffer::drawBuffer(float opacity)
 }
 
 bool GLFramebuffer::setDefaultMultisampling(int sampleCount)
-{   
+{
     LOG_AS("GLFramebuffer");
 
     int const newCount = max(1, sampleCount);
