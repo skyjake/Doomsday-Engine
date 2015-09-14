@@ -62,6 +62,11 @@ void NativeValue::setObject(Object *object)
     d->object = object;
 }
 
+Value::Text NativeValue::typeId() const
+{
+    return "Native";
+}
+
 Value *NativeValue::duplicate() const
 {
     return new NativeValue(d->object, d->memberScope);

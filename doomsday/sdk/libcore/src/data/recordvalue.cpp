@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/RecordValue"
@@ -147,6 +147,11 @@ Record const &RecordValue::dereference() const
     return *d->record;
 }
 
+Value::Text RecordValue::typeId() const
+{
+    return "Record";
+}
+
 Value *RecordValue::duplicate() const
 {
     verify();
@@ -198,7 +203,7 @@ Value *RecordValue::duplicateElement(Value const &value) const
     TextValue const *text = dynamic_cast<TextValue const *>(&value);
     if(!text)
     {
-        throw IllegalIndexError("RecordValue::duplicateElement", 
+        throw IllegalIndexError("RecordValue::duplicateElement",
                                 "Records must be indexed with text values");
     }
     if(dereference().hasMember(*text))
@@ -215,7 +220,7 @@ bool RecordValue::contains(Value const &value) const
     TextValue const *text = dynamic_cast<TextValue const *>(&value);
     if(!text)
     {
-        throw IllegalIndexError("RecordValue::contains", 
+        throw IllegalIndexError("RecordValue::contains",
                                 "Records must be indexed with text values");
     }
     return dereference().has(*text);
@@ -232,7 +237,7 @@ dint RecordValue::compare(Value const &value) const
     if(!recValue)
     {
         // Can't be the same.
-        return cmp(reinterpret_cast<void const *>(this), 
+        return cmp(reinterpret_cast<void const *>(this),
                    reinterpret_cast<void const *>(&value));
     }
     return cmp(recValue->d->record, d->record);
@@ -277,7 +282,7 @@ void RecordValue::operator << (Reader &from)
     from >> id;
     if(id != RECORD)
     {
-        /// @throw DeserializationError The identifier that species the type of the 
+        /// @throw DeserializationError The identifier that species the type of the
         /// serialized value was invalid.
         throw DeserializationError("RecordValue::operator <<", "Invalid ID");
     }

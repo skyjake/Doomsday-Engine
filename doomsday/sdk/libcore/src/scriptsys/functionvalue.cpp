@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/FunctionValue"
@@ -99,9 +99,14 @@ void FunctionValue::operator << (Reader &from)
     from >> id;
     if(id != FUNCTION)
     {
-        /// @throw DeserializationError The identifier that species the type of the 
+        /// @throw DeserializationError The identifier that species the type of the
         /// serialized value was invalid.
         throw DeserializationError("FunctionValue::operator <<", "Invalid ID");
     }
     from >> *_func;
+}
+
+Value::Text FunctionValue::typeId() const
+{
+    return "Function";
 }

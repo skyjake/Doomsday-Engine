@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/RefValue"
@@ -186,4 +186,9 @@ void RefValue::variableBeingDeleted(Variable &DENG2_DEBUG_ONLY(variable))
 {
     DENG2_ASSERT(_variable == &variable);
     _variable = 0;
+}
+
+Value::Text RefValue::typeId() const
+{
+    return "Ref";
 }
