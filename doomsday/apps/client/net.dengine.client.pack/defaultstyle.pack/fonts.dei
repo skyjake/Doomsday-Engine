@@ -43,7 +43,7 @@ group {
 
     script {
         # Define mappings for native font styles and weights.
-        import App, DisplayMode
+        import App
         App.addFontMapping("Helvetica Neue", {
             ['regular', 25]: 'HelveticaNeue-Light',
             ['regular', 50]: 'HelveticaNeue',
