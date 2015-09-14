@@ -86,7 +86,7 @@ static void initialize(void)
     if(joy)
     {
         // Show some info.
-        LOG_INPUT_MSG("Joystick name: %s" ) << SDL_JoystickName(joy);
+        LOG_INPUT_MSG("Joystick name: %s" ) << Joystick_Name();
 
         // We'll handle joystick events manually
         SDL_JoystickEventState(SDL_ENABLE);
@@ -107,7 +107,7 @@ static void initialize(void)
 }
 #endif
 
-dd_bool Joystick_Init(void)
+bool Joystick_Init(void)
 {
 #ifndef DENG_NO_SDL
     if(joyInited) return true; // Already initialized.
@@ -135,7 +135,7 @@ void Joystick_Shutdown(void)
 #endif
 }
 
-dd_bool Joystick_IsPresent(void)
+bool Joystick_IsPresent(void)
 {
     return joyAvailable;
 }
@@ -227,5 +227,14 @@ void Joystick_GetState(joystate_t *state)
     }
 #else
     memset(state, 0, sizeof(*state));
+#endif
+}
+
+de::String Joystick_Name()
+{
+#ifndef DENG_NO_SDL
+    return SDL_JoystickName(joy);
+#else
+    return "";
 #endif
 }
