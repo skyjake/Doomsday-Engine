@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBCORE_H
@@ -118,7 +118,7 @@
  * must use the platform-specific functions.
  */
 #if defined(UNIX) && defined(DENG2_C_API_ONLY)
-#  include <strings.h> // strcasecmp etc. 
+#  include <strings.h> // strcasecmp etc.
 #endif
 
 /*
@@ -180,7 +180,7 @@
  * Macro for determining the name of a type (using RTTI).
  */
 #define DENG2_TYPE_NAME(t)  (typeid(t).name())
-    
+
 /**
  * Macro for hiding the warning about an unused parameter.
  */
@@ -351,7 +351,7 @@ class PrivateAutoPtr
     DENG2_NO_ASSIGN(PrivateAutoPtr)
 
 public:
-    PrivateAutoPtr(InstType *p = 0) : ptr(p) {}
+    PrivateAutoPtr(InstType *p) : ptr(p) {}
     ~PrivateAutoPtr() { reset(); }
 
     InstType &operator * () const { return *ptr; }
@@ -507,7 +507,7 @@ struct LoopResult
     operator int () const { return value; }
     operator GenericLoopResult () const { return GenericLoopResult(value); }
 };
-    
+
 /**
  * All serialization in all contexts use a common protocol version number.
  * Whenever anything changes in serialization, the protocol version needs to be
