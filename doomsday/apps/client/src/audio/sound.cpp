@@ -24,6 +24,7 @@
 #include "world/thinkers.h"
 #include "def_main.h"        // SF-* flags, remove me
 #include <de/Log>
+#include <de/Observers>
 #include <de/timer.h>        // TICSPERSEC
 #include <de/vector1.h>      // remove me
 
@@ -31,7 +32,12 @@ using namespace de;
 
 namespace audio {
 
+/**
+ * @note Loading must be done prior to setting properties, because the driver might defer
+ * creation of the actual data buffer.
+ */
 DENG2_PIMPL_NOREF(Sound)
+, DENG2_OBSERVES(System, FrameEnds)
 {
     dint flags = 0;                 ///< SFXCF_* flags.
     dfloat frequency = 0;           ///< Frequency adjustment: 1.0 is normal.
@@ -51,6 +57,22 @@ DENG2_PIMPL_NOREF(Sound)
     {
         DENG2_ASSERT(System::get().sfx() != nullptr);
         return *(audiointerface_sfx_t *) System::get().sfx();
+    }
+
+    void updateOriginIfNeeded()
+    {
+        // Updating is only necessary if we are tracking an emitter.
+        if(!emitter) return;
+
+        origin[0] = emitter->origin[0];
+        origin[1] = emitter->origin[1];
+        origin[2] = emitter->origin[2];
+
+        // If this is a mobj, center the Z pos.
+        if(Thinker_IsMobjFunc(emitter->thinker.function))
+        {
+            origin[2] += emitter->height / 2;
+        }
     }
 
     /**
@@ -81,6 +103,144 @@ DENG2_PIMPL_NOREF(Sound)
         if(!buffer) return;
         sfx().gen.Setv(buffer, prop, values);
     }
+
+    /**
+     * Flushes property changes to the assigned data buffer (if any).
+     *
+     * @param force  Usually updates are only necessary during playback. Use
+     *               @c true= to override this check and write the properties
+     *               regardless.
+     */
+    void updateBuffer(bool force = false)
+    {
+        DENG2_ASSERT(buffer);
+
+        // Disabled?
+        if(flags & SFXCF_NO_UPDATE) return;
+
+        // Updates are only necessary during playback.
+        if(!(flags & SFXBF_PLAYING) && !force) return;
+
+        // When tracking an emitter we need the latest origin coordinates.
+        updateOriginIfNeeded();
+
+        // Frequency is common to both 2D and 3D sounds.
+        setBufferProperty(SFXBP_FREQUENCY, frequency);
+
+        if(buffer->flags & SFXBF_3D)
+        {
+            // Volume is affected only by maxvol.
+            setBufferProperty(SFXBP_VOLUME, volume * System::get().soundVolume() / 255.0f);
+            if(emitter && emitter == System::get().sfxListener())
+            {
+                // Emitted by the listener object. Go to relative position mode
+                // and set the position to (0,0,0).
+                dfloat vec[3]; vec[0] = vec[1] = vec[2] = 0;
+                setBufferProperty(SFXBP_RELATIVE_MODE, true);
+                setBufferPropertyv(SFXBP_POSITION, vec);
+            }
+            else
+            {
+                // Use the channel's map space origin.
+                dfloat originf[3];
+                V3f_Copyd(originf, origin);
+                setBufferProperty(SFXBP_RELATIVE_MODE, false);
+                setBufferPropertyv(SFXBP_POSITION, originf);
+            }
+
+            // If the sound is emitted by the listener, speed is zero.
+            if(emitter && emitter != System::get().sfxListener() &&
+               Thinker_IsMobjFunc(emitter->thinker.function))
+            {
+                dfloat vec[3];
+                vec[0] = emitter->mom[0] * TICSPERSEC;
+                vec[1] = emitter->mom[1] * TICSPERSEC;
+                vec[2] = emitter->mom[2] * TICSPERSEC;
+                setBufferPropertyv(SFXBP_VELOCITY, vec);
+            }
+            else
+            {
+                // Not moving.
+                dfloat vec[3]; vec[0] = vec[1] = vec[2] = 0;
+                setBufferPropertyv(SFXBP_VELOCITY, vec);
+            }
+        }
+        else
+        {
+            dfloat dist = 0;
+            dfloat finalPan = 0;
+
+            // This is a 2D buffer.
+            if((flags & SFXCF_NO_ORIGIN) ||
+               (emitter && emitter == System::get().sfxListener()))
+            {
+                dist = 1;
+                finalPan = 0;
+            }
+            else
+            {
+                // Calculate roll-off attenuation. [.125/(.125+x), x=0..1]
+                Ranged const attenRange = System::get().soundVolumeAttenuationRange();
+
+                dist = Mobj_ApproxPointDistance(System::get().sfxListener(), origin);
+
+                if(dist < attenRange.start || (flags & SFXCF_NO_ATTENUATION))
+                {
+                    // No distance attenuation.
+                    dist = 1;
+                }
+                else if(dist > attenRange.end)
+                {
+                    // Can't be heard.
+                    dist = 0;
+                }
+                else
+                {
+                    ddouble const normdist = (dist - attenRange.start) / attenRange.size();
+
+                    // Apply the linear factor so that at max distance there
+                    // really is silence.
+                    dist = .125f / (.125f + normdist) * (1 - normdist);
+                }
+
+                // And pan, too. Calculate angle from listener to emitter.
+                if(mobj_t *listener = System::get().sfxListener())
+                {
+                    dfloat angle = (M_PointToAngle2(listener->origin, origin) - listener->angle) / (dfloat) ANGLE_MAX * 360;
+
+                    // We want a signed angle.
+                    if(angle > 180)
+                        angle -= 360;
+
+                    // Front half.
+                    if(angle <= 90 && angle >= -90)
+                    {
+                        finalPan = -angle / 90;
+                    }
+                    else
+                    {
+                        // Back half.
+                        finalPan = (angle + (angle > 0 ? -180 : 180)) / 90;
+                        // Dampen sounds coming from behind.
+                        dist *= (1 + (finalPan > 0 ? finalPan : -finalPan)) / 2;
+                    }
+                }
+                else
+                {
+                    // No listener mobj? Can't pan, then.
+                    finalPan = 0;
+                }
+            }
+
+            setBufferProperty(SFXBP_VOLUME, volume * dist * System::get().soundVolume() / 255.0f);
+            setBufferProperty(SFXBP_PAN, finalPan);
+        }
+    }
+
+    void systemFrameEnds(System &)
+    {
+        updateBuffer();
+    }
 };
 
 Sound::Sound() : d(new Instance)
@@ -101,10 +261,28 @@ sfxbuffer_t const &Sound::buffer() const
     throw MissingBufferError("audio::Sound::buffer", "No data buffer is assigned");
 }
 
+void Sound::releaseBuffer()
+{
+    stop();
+    if(!hasBuffer()) return;
+
+    // Cancel frame notifications - we'll soon have no buffer to update.
+    System::get().audienceForFrameEnds() -= d;
+
+    d->sfx().gen.Destroy(d->buffer);
+    d->buffer = nullptr;
+}
+
 void Sound::setBuffer(sfxbuffer_t *newBuffer)
 {
     releaseBuffer();
     d->buffer = newBuffer;
+
+    if(d->buffer)
+    {
+        // We want notification when the frame ends in order to flush deferred property writes.
+        System::get().audienceForFrameEnds() += d;
+    }
 }
 
 dint Sound::flags() const
@@ -167,160 +345,24 @@ dfloat Sound::priority() const
     return System::get().rateSoundPriority(0, d->origin, d->volume, d->startTime);
 }
 
-void Sound::updateBuffer()
-{
-    // If no sound buffer is assigned we've no need to update.
-    sfxbuffer_t *sbuf = d->buffer;
-    if(!sbuf) return;
-
-    // Disabled?
-    if(d->flags & SFXCF_NO_UPDATE) return;
-
-    // If we know the emitter update our origin info.
-    if(mobj_t *emitter = d->emitter)
-    {
-        d->origin[0] = emitter->origin[0];
-        d->origin[1] = emitter->origin[1];
-        d->origin[2] = emitter->origin[2];
-
-        // If this is a mobj, center the Z pos.
-        if(Thinker_IsMobjFunc(emitter->thinker.function))
-        {
-            // Sounds originate from the center.
-            d->origin[2] += emitter->height / 2;
-        }
-    }
-
-    // Frequency is common to both 2D and 3D sounds.
-    d->setBufferProperty(SFXBP_FREQUENCY, d->frequency);
-
-    if(sbuf->flags & SFXBF_3D)
-    {
-        // Volume is affected only by maxvol.
-        d->setBufferProperty(SFXBP_VOLUME, d->volume * System::get().soundVolume() / 255.0f);
-        if(d->emitter && d->emitter == System::get().sfxListener())
-        {
-            // Emitted by the listener object. Go to relative position mode
-            // and set the position to (0,0,0).
-            dfloat vec[3]; vec[0] = vec[1] = vec[2] = 0;
-            d->setBufferProperty(SFXBP_RELATIVE_MODE, true);
-            d->setBufferPropertyv(SFXBP_POSITION, vec);
-        }
-        else
-        {
-            // Use the channel's map space origin.
-            dfloat origin[3];
-            V3f_Copyd(origin, d->origin);
-            d->setBufferProperty(SFXBP_RELATIVE_MODE, false);
-            d->setBufferPropertyv(SFXBP_POSITION, origin);
-        }
-
-        // If the sound is emitted by the listener, speed is zero.
-        if(d->emitter && d->emitter != System::get().sfxListener() &&
-           Thinker_IsMobjFunc(d->emitter->thinker.function))
-        {
-            dfloat vec[3];
-            vec[0] = d->emitter->mom[0] * TICSPERSEC;
-            vec[1] = d->emitter->mom[1] * TICSPERSEC;
-            vec[2] = d->emitter->mom[2] * TICSPERSEC;
-            d->setBufferPropertyv(SFXBP_VELOCITY, vec);
-        }
-        else
-        {
-            // Not moving.
-            dfloat vec[3]; vec[0] = vec[1] = vec[2] = 0;
-            d->setBufferPropertyv(SFXBP_VELOCITY, vec);
-        }
-    }
-    else
-    {
-        dfloat dist = 0;
-        dfloat pan  = 0;
-
-        // This is a 2D buffer.
-        if((d->flags & SFXCF_NO_ORIGIN) ||
-           (d->emitter && d->emitter == System::get().sfxListener()))
-        {
-            dist = 1;
-            pan = 0;
-        }
-        else
-        {
-            // Calculate roll-off attenuation. [.125/(.125+x), x=0..1]
-            Ranged const attenRange = System::get().soundVolumeAttenuationRange();
-
-            dist = Mobj_ApproxPointDistance(System::get().sfxListener(), d->origin);
-
-            if(dist < attenRange.start || (d->flags & SFXCF_NO_ATTENUATION))
-            {
-                // No distance attenuation.
-                dist = 1;
-            }
-            else if(dist > attenRange.end)
-            {
-                // Can't be heard.
-                dist = 0;
-            }
-            else
-            {
-                ddouble const normdist = (dist - attenRange.start) / attenRange.size();
-
-                // Apply the linear factor so that at max distance there
-                // really is silence.
-                dist = .125f / (.125f + normdist) * (1 - normdist);
-            }
-
-            // And pan, too. Calculate angle from listener to emitter.
-            if(mobj_t *listener = System::get().sfxListener())
-            {
-                dfloat angle = (M_PointToAngle2(listener->origin, d->origin) - listener->angle) / (dfloat) ANGLE_MAX * 360;
-
-                // We want a signed angle.
-                if(angle > 180)
-                    angle -= 360;
-
-                // Front half.
-                if(angle <= 90 && angle >= -90)
-                {
-                    pan = -angle / 90;
-                }
-                else
-                {
-                    // Back half.
-                    pan = (angle + (angle > 0 ? -180 : 180)) / 90;
-                    // Dampen sounds coming from behind.
-                    dist *= (1 + (pan > 0 ? pan : -pan)) / 2;
-                }
-            }
-            else
-            {
-                // No listener mobj? Can't pan, then.
-                pan = 0;
-            }
-        }
-
-        d->setBufferProperty(SFXBP_VOLUME, d->volume * dist * System::get().soundVolume() / 255.0f);
-        d->setBufferProperty(SFXBP_PAN, pan);
-    }
-}
-
 dint Sound::startTime() const
 {
     return d->startTime;
 }
 
-void Sound::releaseBuffer()
+void Sound::load(sfxsample_t &sample)
 {
-    stop();
-    if(!hasBuffer()) return;
+    if(!d->buffer)
+    {
+        /// @throw MissingBufferError  Loading is impossible without a buffer...
+        throw MissingBufferError("Sound::load", "Attempted with no data buffer assigned");
+    }
 
-    d->sfx().gen.Destroy(d->buffer);
-    setBuffer(nullptr);
-}
-
-void Sound::load(sfxsample_t *sample)
-{
-    d->sfx().gen.Load(d->buffer, sample);
+    // Don't reload if a sample with the same sound ID is already loaded.
+    if(!d->buffer->sample || d->buffer->sample->soundId != sample.soundId)
+    {
+        d->sfx().gen.Load(d->buffer, &sample);
+    }
 }
 
 void Sound::reset()
@@ -337,7 +379,7 @@ void Sound::play()
     }
 
     // Flush deferred property value changes to the assigned data buffer.
-    updateBuffer();
+    d->updateBuffer(true/*force*/);
 
     // 3D sounds need a few extra properties set up.
     if(d->buffer->flags & SFXBF_3D)
@@ -353,7 +395,7 @@ void Sound::play()
     d->startTime = Timer_Ticks();  // Note the current time.
 }
 
-void Sound::setPlayingMode(de::dint sfFlags)
+void Sound::setPlayingMode(dint sfFlags)
 {
     if(d->buffer)
     {

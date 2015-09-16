@@ -91,11 +91,6 @@ public:
     float priority() const;
 
     /**
-     * Flushes sound property changes to the assigned data buffer (if any).
-     */
-    void updateBuffer();
-
-    /**
      * Returns the time in tics that the sound was last played.
      */
     int startTime() const;
@@ -107,9 +102,10 @@ public:  // Playback interface: ------------------------------------------------
      * sample data as fits. The pointer to sample is saved, so the caller mustn't
      * free it while the sample is loaded.
      *
-     * @param sample  Sample data to load.
+     * @note The sample is not reloaded if the buffer is already loaded with data
+     * with the same sound ID.
      */
-    void load(sfxsample_t *sample);
+    void load(sfxsample_t &sample);
 
     /**
      * Stop the sound if playing and forget about any sample loaded in the buffer.

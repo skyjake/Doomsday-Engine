@@ -1175,21 +1175,11 @@ DENG2_PIMPL(System)
             selCh->setFlags(selCh->flags() | SFXCF_NO_ATTENUATION);
         }
 
-        /**
-         * Load in the sample. Must load prior to setting properties, because the driver
-         * might actually create the real buffer only upon loading.
-         *
-         * @note The sample is not reloaded if a sample with the same ID is already loaded
-         * on the channel.
-         */
-        sfxbuffer_t const &sbuf = selCh->buffer();
-        if(!sbuf.sample || sbuf.sample->soundId != sample.soundId)
-        {
-            selCh->load(&sample);
-        }
-
         // Update listener properties.
         self.sfx()->Listener(SFXLP_UPDATE, 0);
+
+        // Load in the sample if needed.
+        selCh->load(sample);
 
         // Start playing.
         selCh->play();
@@ -1615,22 +1605,9 @@ void System::endFrame()
 
     if(sfxIsAvailable() && !BusyMode_Active())
     {
-        // Update channel and listener properties.
-
+        // Update listener properties.
         // If no listener is available - no 3D positioning is done.
         d->sfxListener = getListenerMobj();
-
-        // Write sound properties to data buffers.
-        d->channels->forAll([] (Sound/*Channel*/ &ch)
-        {
-            if(ch.hasBuffer() && (ch.buffer().flags & SFXBF_PLAYING))
-            {
-                ch.updateBuffer();
-            }
-            return LoopContinue;
-        });
-
-        // Update listener.
         d->updateSfxListener();
     }
 
