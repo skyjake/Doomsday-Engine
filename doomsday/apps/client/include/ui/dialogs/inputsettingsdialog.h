@@ -37,6 +37,7 @@ public slots:
 protected slots:
     void mouseTogglesChanged();
     void mouseSensitivityChanged(double value);
+    void applyControllerPreset();
 
 private:
     DENG2_PRIVATE(d)
