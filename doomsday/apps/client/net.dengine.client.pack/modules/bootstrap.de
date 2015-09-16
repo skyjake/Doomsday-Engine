@@ -76,3 +76,5 @@ App.audienceForGameAddition += [runLegacySavegameConversion]
 
 # Whenever a game is loaded, we'll run pending hooks.
 App.audienceForGameChange += [runPluginLoadHooks]
+
+import controllers

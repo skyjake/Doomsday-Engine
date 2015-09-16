@@ -1,0 +1,106 @@
+# Gamepad Controller Presets
+
+import Input
+
+record Gamepad()        
+    def __init__(id, regex)
+        """Arguments:
+            id:     Identifier of the controller.
+            regex:  One or more regexes (Text, or Array of Texts)
+                    for matching against the joystick name.
+        """
+        self.id = id        
+        self.regex = regex
+    end
+
+    def bind(); end
+
+    def register()
+        regs = self.regex
+        if typeof(regs) != 'Array': regs = [regs]
+        for reg in regs
+            Input.controllerPresets[reg] = Record(self)
+        end
+    end
+end
+
+def event(context, button, command, repeat=False)
+    """Bind an event to a console command."""
+    Input.bindEvent('%s:%s-down' % [context, button], command)
+    if repeat: Input.bindEvent('%s:%s-repeat' % [context, button], command)
+end
+
+def control(ctl, impulse, inverse=False)
+    """Bind a control to a player impulse."""
+    if inverse: ctl += '-inverse'
+    Input.bindControl(ctl, 'local1-%s' % impulse)
+end
+       
+record GenericGamepad(Gamepad)
+    def __init__(): self.Gamepad->__init__('Generic', '')
+    def bind()
+        print 'Bindings for GenericGamePad:', self.id
+    end
+end
+
+record PlaystationGamepad(Gamepad)
+    def __init__(id, regex): self.Gamepad->__init__(id, regex)
+    def bind()
+        x = 'joy-button15'
+        o = 'joy-button14'
+        tri = 'joy-button13'
+        sqr = 'joy-button16'
+        play = 'joy-button4'
+        select = 'joy-button1'
+        leftPress = 'joy-button2'
+        rightPress = 'joy-button3'
+        up = 'joy-button5'
+        down = 'joy-button7'
+        left = 'joy-button8'
+        right = 'joy-button6'
+        L1 = 'joy-button11'
+        L2 = 'joy-button9'
+        R1 = 'joy-button12'
+        R2 = 'joy-button10'
+        leftHoriz = 'joy-x'
+        leftVert = 'joy-y'
+        rightHoriz = 'joy-z'
+        rightVert = 'joy-w'
+        
+        event('shortcut', select, 'menu')
+
+        event('menu', o, 'menuback')
+        event('menu', x, 'menuselect')
+        event('menu', up, 'menuup', repeat=True)
+        event('menu', down, 'menudown', repeat=True)
+        event('menu', left, 'menuleft', repeat=True)
+        event('menu', right, 'menuright', repeat=True)
+
+        event('game', play, 'pause')
+        event('game', rightPress, 'impulse lookcenter')
+        event('game', tri, 'impulse jump')
+        event('game', sqr, 'impulse use')
+        event('game', x, 'impulse use')
+        event('game', up, 'impulse nextweapon')
+        event('game', down, 'impulse prevweapon')
+        event('game', L1, 'impulse automap')
+        
+        event('map', rightPress, 'impulse follow')
+        event('map', leftPress, 'impulse rotate')
+        
+        control(rightHoriz, 'mappanx')
+        control(rightVert, 'mappany', inverse=True)
+        control(R2, 'mapzoom')
+        control(R1, 'mapzoom', inverse=True)
+        
+        control(leftHoriz, 'sidestep')
+        control(leftVert, 'walk', inverse=True)
+        control(rightHoriz, 'turn')
+        control(rightVert, 'look', inverse=True)
+        control(R1, 'attack')
+        control(L2, 'speed')
+    end
+end
+
+GenericGamepad().register()
+PlaystationGamepad('PS3', ['PLAYSTATION\(R\)3 Controller']).register()
