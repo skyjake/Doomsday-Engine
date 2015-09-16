@@ -22,95 +22,10 @@
 #ifndef CLIENT_AUDIO_CHANNEL_H
 #define CLIENT_AUDIO_CHANNEL_H
 
-#include "api_audiod_sfx.h"  // sfxbuffer_t
-#include "world/p_object.h"  // mobj_t
-#include <de/Error>
-#include <de/Vector>
+#include "audio/sound.h"
 #include <functional>
 
-// Channel flags.
-#define SFXCF_NO_ORIGIN         ( 0x1 )  ///< Sound is coming from a mystical emitter.
-#define SFXCF_NO_ATTENUATION    ( 0x2 )  ///< Sound is very, very loud.
-#define SFXCF_NO_UPDATE         ( 0x4 )  ///< Channel update is skipped.
-
 namespace audio {
-
-/**
- * Models a logical sound playback channel (for sound effects).
- */
-class Channel
-{
-public:
-    /// No sound buffer is assigned to the channel. @ingroup errors
-    DENG2_ERROR(MissingBufferError);
-
-public:
-    Channel();
-    virtual ~Channel();
-
-    /**
-     * Determines whether a sound buffer is assigned to the channel.
-     */
-    bool hasBuffer() const;
-
-    /**
-     * Returns the sound buffer assigned to the channel.
-     */
-    sfxbuffer_t       &buffer();
-    sfxbuffer_t const &buffer() const;
-    void setBuffer(sfxbuffer_t *newBuffer);
-
-    void releaseBuffer();
-
-    /**
-     * Stop any sound currently playing on the channel.
-     * @note Just stopping a channel doesn't affect refresh!
-     */
-    void stop();
-
-    int flags() const;
-    void setFlags(int newFlags);
-
-    /**
-     * Returns the current sound frequency adjustment: 1.0 is normal.
-     */
-    float frequency() const;
-    void setFrequency(float newFrequency);
-
-    /**
-     * Returns the current channel volume: 1.0 is max.
-     */
-    float volume() const;
-    void setVolume(float newVolume);
-
-    /**
-     * Returns the attributed sound-emitter if any (may be @c nullptr).
-     */
-    struct mobj_s *emitter() const;
-    void setEmitter(struct mobj_s *newEmitter);
-
-    void setFixedOrigin(de::Vector3d const &newOrigin);
-
-    /**
-     * Calculate priority points for sound currently playing on the channel. These
-     * points are used to determine which sounds can be overridden by new sounds.
-     * Zero is the lowest priority.
-     */
-    float priority() const;
-
-    /**
-     * Updates the channel properties based on 2D/3D position calculations. Listener
-     * may be @c nullptr. Sounds emitted from the listener object are considered to
-     * be inside the listener's head.
-     */
-    void updatePriority();
-
-    int startTime() const;
-    void setStartTime(int newStartTime);
-
-private:
-    DENG2_PRIVATE(d)
-};
 
 /**
  * Implements high-level logic for managing a set of logical sound channels.
@@ -142,30 +57,28 @@ public:
     inline bool isPlaying(int id) { return countPlaying(id) > 0; }
 
     /**
-     * Add @a newChannel to the set.
+     * Add a new channel using the given @a sound.
      *
-     * @param newChannel  Channel to add. Ownership is given to the set. If this
-     * channel is already owned by the set - nothing happens.
-     *
-     * @return  Same as @a newChannel, for caller convenience.
+     * @param sound  Sound to create a channel for. Ownership is unaffected. As sounds
+     * can only be mapped to a single channel at a time - if channel exists which is
+     * already using this sound then it is returned instead.
      */
-    Channel &add(Channel &newChannel);
+    Sound/*Channel*/ &add(Sound &sound);
 
     /**
-     * Attempt to find an unused Channel suitable for playing a sample with the given
-     * format.
+     * Attempt to find a Channel suitable for playing a sample with the given format.
      *
      * @param use3D
      * @param bytes
      * @param rate
      * @param soundId
      */
-    Channel *tryFindVacant(bool use3D, int bytes, int rate, int soundId) const;
+    Sound/*Channel*/ *tryFindVacant(bool use3D, int bytes, int rate, int soundId) const;
 
     /**
      * Iterate through the Channels, executing @a callback for each.
      */
-    de::LoopResult forAll(std::function<de::LoopResult (Channel &)> callback) const;
+    de::LoopResult forAll(std::function<de::LoopResult (Sound/*Channel*/ &)> callback) const;
 
 public:
     void refreshAll();

@@ -20,15 +20,15 @@
 
 #include "audio/channel.h"
 
+#include "def_main.h"           // ::defs
+#include "sys_system.h"         // Sys_Sleep()
+
+#include "audio/system.h"
 #include "audio/samplecache.h"
 #include "world/thinkers.h"
-#include "dd_main.h"         // remove me
-#include "def_main.h"        // ::defs
-#include "sys_system.h"      // Sys_Sleep()
+
 #include <de/Log>
 #include <de/concurrency.h>
-#include <de/timer.h>        // TICSPERSEC
-#include <de/vector1.h>      // remove me
 #include <QList>
 #include <QtAlgorithms>
 
@@ -43,278 +43,6 @@
 using namespace de;
 
 namespace audio {
-
-static inline audio::System &system()
-{
-    return App_AudioSystem();
-}
-
-DENG2_PIMPL_NOREF(Channel)
-{
-    dint flags = 0;                 ///< SFXCF_* flags.
-    dfloat frequency = 0;           ///< Frequency adjustment: 1.0 is normal.
-    dfloat volume = 0;              ///< Sound volume: 1.0 is max.
-
-    mobj_t *emitter = nullptr;      ///< Mobj emitter for the sound, if any (not owned).
-    coord_t origin[3];              ///< Emit from here (synced with emitter).
-
-    sfxbuffer_t *buffer = nullptr;  ///< Assigned sound buffer, if any (not owned).
-    dint startTime = 0;             ///< When the assigned sound sample was last started.
-
-    Instance() { zap(origin); }
-};
-
-Channel::Channel() : d(new Instance)
-{}
-
-Channel::~Channel()
-{}
-
-bool Channel::hasBuffer() const
-{
-    return d->buffer != nullptr;
-}
-
-sfxbuffer_t &Channel::buffer()
-{
-    if(d->buffer) return *d->buffer;
-    /// @throw MissingBufferError  No sound buffer is currently assigned.
-    throw MissingBufferError("audio::Channel::buffer", "No sound buffer is assigned");
-}
-
-sfxbuffer_t const &Channel::buffer() const
-{
-    return const_cast<Channel *>(this)->buffer();
-}
-
-void Channel::setBuffer(sfxbuffer_t *newBuffer)
-{
-    d->buffer = newBuffer;
-}
-
-void Channel::stop()
-{
-    if(!d->buffer) return;
-
-    system().sfx()->Stop(d->buffer);
-}
-
-dint Channel::flags() const
-{
-    return d->flags;
-}
-
-/// @todo Use QFlags -ds
-void Channel::setFlags(dint newFlags)
-{
-    d->flags = newFlags;
-}
-
-dfloat Channel::frequency() const
-{
-    return d->frequency;
-}
-
-void Channel::setFrequency(dfloat newFrequency)
-{
-    d->frequency = newFrequency;
-}
-
-dfloat Channel::volume() const
-{
-    return d->volume;
-}
-
-void Channel::setVolume(dfloat newVolume)
-{
-    d->volume = newVolume;
-}
-
-mobj_t *Channel::emitter() const
-{
-    return d->emitter;
-}
-
-void Channel::setEmitter(mobj_t *newEmitter)
-{
-    d->emitter = newEmitter;
-}
-
-void Channel::setFixedOrigin(Vector3d const &newOrigin)
-{
-    d->origin[0] = newOrigin.x;
-    d->origin[1] = newOrigin.y;
-    d->origin[2] = newOrigin.z;
-}
-
-dfloat Channel::priority() const
-{
-    if(!d->buffer || !(d->buffer->flags & SFXBF_PLAYING))
-        return SFX_LOWEST_PRIORITY;
-
-    if(d->flags & SFXCF_NO_ORIGIN)
-        return system().rateSoundPriority(0, 0, d->volume, d->startTime);
-
-    // d->origin is set to emitter->xyz during updates.
-    return system().rateSoundPriority(0, d->origin, d->volume, d->startTime);
-}
-
-/// @todo audio::System should observe. -ds
-void Channel::updatePriority()
-{
-    // If no sound buffer is assigned we've no need to update.
-    sfxbuffer_t *sbuf = d->buffer;
-    if(!sbuf) return;
-
-    // Disabled?
-    if(d->flags & SFXCF_NO_UPDATE) return;
-
-    // If we know the emitter update our origin info.
-    if(mobj_t *emitter = d->emitter)
-    {
-        d->origin[0] = emitter->origin[0];
-        d->origin[1] = emitter->origin[1];
-        d->origin[2] = emitter->origin[2];
-
-        // If this is a mobj, center the Z pos.
-        if(Thinker_IsMobjFunc(emitter->thinker.function))
-        {
-            // Sounds originate from the center.
-            d->origin[2] += emitter->height / 2;
-        }
-    }
-
-    // Frequency is common to both 2D and 3D sounds.
-    system().sfx()->Set(sbuf, SFXBP_FREQUENCY, d->frequency);
-
-    if(sbuf->flags & SFXBF_3D)
-    {
-        // Volume is affected only by maxvol.
-        system().sfx()->Set(sbuf, SFXBP_VOLUME, d->volume * system().soundVolume() / 255.0f);
-        if(d->emitter && d->emitter == system().sfxListener())
-        {
-            // Emitted by the listener object. Go to relative position mode
-            // and set the position to (0,0,0).
-            dfloat vec[3]; vec[0] = vec[1] = vec[2] = 0;
-            system().sfx()->Set(sbuf, SFXBP_RELATIVE_MODE, true);
-            system().sfx()->Setv(sbuf, SFXBP_POSITION, vec);
-        }
-        else
-        {
-            // Use the channel's map space origin.
-            dfloat origin[3];
-            V3f_Copyd(origin, d->origin);
-            system().sfx()->Set(sbuf, SFXBP_RELATIVE_MODE, false);
-            system().sfx()->Setv(sbuf, SFXBP_POSITION, origin);
-        }
-
-        // If the sound is emitted by the listener, speed is zero.
-        if(d->emitter && d->emitter != system().sfxListener() &&
-           Thinker_IsMobjFunc(d->emitter->thinker.function))
-        {
-            dfloat vec[3];
-            vec[0] = d->emitter->mom[0] * TICSPERSEC;
-            vec[1] = d->emitter->mom[1] * TICSPERSEC;
-            vec[2] = d->emitter->mom[2] * TICSPERSEC;
-            system().sfx()->Setv(sbuf, SFXBP_VELOCITY, vec);
-        }
-        else
-        {
-            // Not moving.
-            dfloat vec[3]; vec[0] = vec[1] = vec[2] = 0;
-            system().sfx()->Setv(sbuf, SFXBP_VELOCITY, vec);
-        }
-    }
-    else
-    {
-        dfloat dist = 0;
-        dfloat pan  = 0;
-
-        // This is a 2D buffer.
-        if((d->flags & SFXCF_NO_ORIGIN) ||
-           (d->emitter && d->emitter == system().sfxListener()))
-        {
-            dist = 1;
-            pan = 0;
-        }
-        else
-        {
-            // Calculate roll-off attenuation. [.125/(.125+x), x=0..1]
-            Rangei const &attenRange = system().soundVolumeAttenuationRange();
-
-            dist = Mobj_ApproxPointDistance(system().sfxListener(), d->origin);
-
-            if(dist < attenRange.start || (d->flags & SFXCF_NO_ATTENUATION))
-            {
-                // No distance attenuation.
-                dist = 1;
-            }
-            else if(dist > attenRange.end)
-            {
-                // Can't be heard.
-                dist = 0;
-            }
-            else
-            {
-                dfloat const normdist = (dist - attenRange.start) / attenRange.size();
-
-                // Apply the linear factor so that at max distance there
-                // really is silence.
-                dist = .125f / (.125f + normdist) * (1 - normdist);
-            }
-
-            // And pan, too. Calculate angle from listener to emitter.
-            if(mobj_t *listener = system().sfxListener())
-            {
-                dfloat angle = (M_PointToAngle2(listener->origin, d->origin) - listener->angle) / (dfloat) ANGLE_MAX * 360;
-
-                // We want a signed angle.
-                if(angle > 180)
-                    angle -= 360;
-
-                // Front half.
-                if(angle <= 90 && angle >= -90)
-                {
-                    pan = -angle / 90;
-                }
-                else
-                {
-                    // Back half.
-                    pan = (angle + (angle > 0 ? -180 : 180)) / 90;
-                    // Dampen sounds coming from behind.
-                    dist *= (1 + (pan > 0 ? pan : -pan)) / 2;
-                }
-            }
-            else
-            {
-                // No listener mobj? Can't pan, then.
-                pan = 0;
-            }
-        }
-
-        system().sfx()->Set(sbuf, SFXBP_VOLUME, d->volume * dist * system().soundVolume() / 255.0f);
-        system().sfx()->Set(sbuf, SFXBP_PAN, pan);
-    }
-}
-
-dint Channel::startTime() const
-{
-    return d->startTime;
-}
-
-void Channel::setStartTime(dint newStartTime)
-{
-    d->startTime = newStartTime;
-}
-
-void Channel::releaseBuffer()
-{
-    stop();
-    if(!hasBuffer()) return;
-
-    system().sfx()->Destroy(&buffer());
-    setBuffer(nullptr);
-}
 
 struct ChannelRefresher
 {
@@ -354,11 +82,11 @@ struct ChannelRefresher
         dint disableRefresh = false;
 
         // Nothing to refresh?
-        if(!system().sfx()) goto noRefresh;
+        if(!System::get().sfx()) goto noRefresh;
 
-        if(system().sfx()->Getv)
+        if(System::get().sfx()->Getv)
         {
-            system().sfx()->Getv(SFXIP_DISABLE_CHANNEL_REFRESH, &disableRefresh);
+            System::get().sfx()->Getv(SFXIP_DISABLE_CHANNEL_REFRESH, &disableRefresh);
         }
 
         if(!disableRefresh)
@@ -393,7 +121,7 @@ private:
         auto &inst = *static_cast<ChannelRefresher *>(refresher);
 
         // We'll continue looping until the Sfx module is shut down.
-        while(system().sfxIsAvailable() && system().hasChannels())
+        while(System::get().sfxIsAvailable() && System::get().hasChannels())
         {
             // The bit is swapped on each refresh (debug info).
             ::refMonitor ^= 1;
@@ -402,7 +130,7 @@ private:
             {
                 // Do the refresh.
                 inst.refreshing = true;
-                system().channels().refreshAll();
+                System::get().channels().refreshAll();
                 inst.refreshing = false;
 
                 // Let's take a nap.
@@ -426,18 +154,18 @@ static ChannelRefresher refresher;
 DENG2_PIMPL(Channels)
 , DENG2_OBSERVES(SampleCache, SampleRemove)
 {
-    QList<Channel *> all;
+    QList<Sound/*Channel*/ *> all;
 
     Instance(Public *i) : Base(i) 
     {
-        system().sampleCache().audienceForSampleRemove() += this;
+        System::get().sampleCache().audienceForSampleRemove() += this;
     }
 
     ~Instance()
     {
         clearAll();
 
-        system().sampleCache().audienceForSampleRemove() -= this;
+        System::get().sampleCache().audienceForSampleRemove() -= this;
     }
 
     void clearAll()
@@ -453,7 +181,7 @@ DENG2_PIMPL(Channels)
     void sfxSampleCacheAboutToRemove(sfxsample_t const &sample)
     {
         refresher.pause();
-        self.forAll([&sample] (Channel &ch)
+        self.forAll([&sample] (Sound/*Channel*/ &ch)
         {
             if(ch.hasBuffer())
             {
@@ -461,7 +189,7 @@ DENG2_PIMPL(Channels)
                 if(sbuf.sample && sbuf.sample->soundId == sample.soundId)
                 {
                     // Stop and unload.
-                    system().sfx()->Reset(&sbuf);
+                    ch.ifs().gen.Reset(&sbuf);
                 }
             }
             return LoopContinue;
@@ -494,10 +222,10 @@ dint Channels::count() const
 
 dint Channels::countPlaying(dint soundId)
 {
-    DENG2_ASSERT( system().sfxIsAvailable() );  // sanity check
+    DENG2_ASSERT( System::get().sfxIsAvailable() );  // sanity check
 
     dint count = 0;
-    forAll([&soundId, &count] (Channel &ch)
+    forAll([&soundId, &count] (Sound/*Channel*/ &ch)
     {
         if(ch.hasBuffer())
         {
@@ -512,19 +240,19 @@ dint Channels::countPlaying(dint soundId)
     return count;
 }
 
-Channel &Channels::add(Channel &newChannel)
+Sound/*Channel*/ &Channels::add(Sound &sound)
 {
-    if(!d->all.contains(&newChannel))
+    if(!d->all.contains(&sound))
     {
-        /// @todo Log channel configuration, update lookup tables for buffer configs, etc...
-        d->all << &newChannel;
+        /// @todo Log sound configuration, update lookup tables for buffer configs, etc...
+        d->all << &sound;
     }
-    return newChannel;
+    return sound;
 }
 
-Channel *Channels::tryFindVacant(bool use3D, dint bytes, dint rate, dint soundId) const
+Sound/*Channel*/ *Channels::tryFindVacant(bool use3D, dint bytes, dint rate, dint soundId) const
 {
-    for(Channel *ch : d->all)
+    for(Sound/*Channel*/ *ch : d->all)
     {
         if(!ch->hasBuffer()) continue;
         sfxbuffer_t const &sbuf = ch->buffer();
@@ -555,9 +283,9 @@ Channel *Channels::tryFindVacant(bool use3D, dint bytes, dint rate, dint soundId
     return nullptr;  // None suitable.
 }
 
-LoopResult Channels::forAll(std::function<LoopResult (Channel &)> func) const
+LoopResult Channels::forAll(std::function<LoopResult (Sound/*Channel*/ &)> func) const
 {
-    for(Channel *ch : d->all)
+    for(Sound/*Channel*/ *ch : d->all)
     {
         if(auto result = func(*ch)) return result;
     }
@@ -566,11 +294,11 @@ LoopResult Channels::forAll(std::function<LoopResult (Channel &)> func) const
 
 void Channels::refreshAll()
 {
-    forAll([this] (Channel &ch)
+    forAll([this] (Sound/*Channel*/ &ch)
     {
         if(ch.hasBuffer() && (ch.buffer().flags & SFXBF_PLAYING))
         {
-            system().sfx()->Refresh(&ch.buffer());
+            ch.ifs().gen.Refresh(&ch.buffer());
         }
         return LoopContinue;
     });
@@ -579,7 +307,7 @@ void Channels::refreshAll()
 void Channels::releaseAllBuffers()
 {
     refresher.pause();
-    forAll([this] (Channel &ch)
+    forAll([this] (Sound/*Channel*/ &ch)
     {
         ch.releaseBuffer();
         return LoopContinue;
@@ -633,7 +361,7 @@ void UI_AudioChannelDrawer()
     FR_SetColorAndAlpha(1, 1, 0, 1);
 
     dint const lh = FR_SingleLineHeight("Q");
-    if(!App_AudioSystem().sfxIsAvailable())
+    if(!audio::System::get().sfxIsAvailable())
     {
         FR_DrawTextXY("Sfx disabled", 0, 0);
         glDisable(GL_TEXTURE_2D);
@@ -645,7 +373,7 @@ void UI_AudioChannelDrawer()
 
     // Sample cache information.
     duint cachesize, ccnt;
-    App_AudioSystem().sampleCache().info(&cachesize, &ccnt);
+    audio::System::get().sampleCache().info(&cachesize, &ccnt);
     char buf[200]; sprintf(buf, "Cached:%i (%i)", cachesize, ccnt);
 
     FR_SetColor(1, 1, 1);
@@ -653,7 +381,7 @@ void UI_AudioChannelDrawer()
 
     // Print a line of info about each channel.
     dint idx = 0;
-    App_AudioSystem().channels().forAll([&lh, &idx] (audio::Channel &ch)
+    audio::System::get().channels().forAll([&lh, &idx] (Sound/*Channel*/ &ch)
     {
         if(ch.hasBuffer() && (ch.buffer().flags & SFXBF_PLAYING))
         {

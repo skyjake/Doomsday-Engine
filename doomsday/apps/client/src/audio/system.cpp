@@ -903,6 +903,13 @@ DENG2_PIMPL(System)
         channels.reset();
     }
 
+    Sound *makeSound(bool stereoPositioning, int bitsPer, int rate)
+    {
+        std::unique_ptr<Sound> sound(new Sound);
+        sound->setBuffer(self.sfx()->Create(stereoPositioning ? 0 : SFXBF_3D, bitsPer, rate));
+        return sound.release();
+    }
+
     /**
      * Destroys and then recreates the sound Channels according to the current mode.
      */
@@ -925,13 +932,11 @@ DENG2_PIMPL(System)
         dint num2D = sfx3D ? CHANNEL_2DCOUNT: numChannels;  // The rest will be 3D.
         for(dint i = 0; i < numChannels; ++i)
         {
-            auto *ch = new Channel;
-            ch->setBuffer(self.sfx()->Create(num2D-- > 0 ? 0 : SFXBF_3D, sfxBits, sfxRate));
-            if(!ch->hasBuffer())
+            Sound/*Channel*/ &ch = channels->add(*makeSound(num2D-- > 0 ? true : SFXBF_3D, sfxBits, sfxRate));
+            if(!ch.hasBuffer())
             {
-                LOG_AUDIO_WARNING("Failed creating (sample) buffer for Channel #%i") << i;
+                LOG_AUDIO_WARNING("Failed creating Sound for Channel #%i") << i;
             }
-            channels->add(*ch);
         }
     }
 
@@ -940,7 +945,7 @@ DENG2_PIMPL(System)
         if(!prios) return;
 
         dint idx = 0;
-        channels->forAll([&prios, &idx] (Channel &ch)
+        channels->forAll([&prios, &idx] (Sound/*Channel*/ &ch)
         {
             prios[idx++] = ch.priority();
             return LoopContinue;
@@ -1007,9 +1012,9 @@ DENG2_PIMPL(System)
                 // Stop the lowest priority sound of the playing instances, again
                 // noting sounds that are more important than us.
                 dint idx = 0;
-                Channel *selCh = nullptr;
+                Sound/*Channel*/ *selCh = nullptr;
                 channels->forAll([&sample, &myPrio, &channelPrios,
-                                  &selCh, &lowPrio, &idx] (Channel &ch)
+                                  &selCh, &lowPrio, &idx] (Sound/*Channel*/ &ch)
                 {
                     dfloat const chPriority = channelPrios[idx++];
 
@@ -1059,8 +1064,8 @@ DENG2_PIMPL(System)
 
         // First look through the stopped channels. At this stage we're very picky:
         // only the perfect choice will be good enough.
-        Channel *selCh = channels->tryFindVacant(play3D, sample.bytesPer,
-                                                 sample.rate, sample.soundId);
+        Sound/*Channel*/ *selCh = channels->tryFindVacant(play3D, sample.bytesPer,
+                                                          sample.rate, sample.soundId);
 
         if(!selCh)
         {
@@ -1087,10 +1092,10 @@ DENG2_PIMPL(System)
             }
 
             // All channels with a priority less than or equal to ours can be stopped.
-            Channel *prioCh = nullptr;
+            Sound/*Channel*/ *prioCh = nullptr;
             dint idx = 0;
             channels->forAll([&play3D, &myPrio, &channelPrios,
-                              &selCh, &prioCh, &lowPrio, &idx] (Channel &ch)
+                              &selCh, &prioCh, &lowPrio, &idx] (Sound/*Channel*/ &ch)
             {
                 dfloat const chPriority = channelPrios[idx++];
 
@@ -1187,11 +1192,11 @@ DENG2_PIMPL(System)
          */
         if(!sbuf.sample || sbuf.sample->soundId != sample.soundId)
         {
-            self.sfx()->Load(&sbuf, &sample);
+            selCh->load(&sample);
         }
 
         // Update channel properties.
-        selCh->updatePriority();
+        selCh->updateBuffer();
 
         // 3D sounds need a few extra properties set up.
         if(play3D)
@@ -1201,15 +1206,15 @@ DENG2_PIMPL(System)
             dfloat const minDist = (selCh->flags() & SFXCF_NO_ATTENUATION) ? 10000 : sfxDistMin;
             dfloat const maxDist = (selCh->flags() & SFXCF_NO_ATTENUATION) ? 20000 : sfxDistMax;
 
-            self.sfx()->Set(&sbuf, SFXBP_MIN_DISTANCE, minDist);
-            self.sfx()->Set(&sbuf, SFXBP_MAX_DISTANCE, maxDist);
+            selCh->set(SFXBP_MIN_DISTANCE, minDist);
+            selCh->set(SFXBP_MAX_DISTANCE, maxDist);
         }
 
         // This'll commit all the deferred properties.
         self.sfx()->Listener(SFXLP_UPDATE, 0);
 
         // Start playing.
-        self.sfx()->Play(&sbuf);
+        selCh->play();
 
         channels->allowRefresh();
 
@@ -1583,8 +1588,8 @@ void System::reset()
     {
         d->sfxListenerCluster = nullptr;
 
-        // Stop all channels.
-        d->channels->forAll([] (Channel &ch)
+        // Stop all sounds.
+        d->channels->forAll([] (Sound/*Channel*/ &ch)
         {
             ch.stop();
             return LoopContinue;
@@ -1640,12 +1645,12 @@ void System::endFrame()
         // If no listener is available - no 3D positioning is done.
         d->sfxListener = getListenerMobj();
 
-        // Update channels.
-        d->channels->forAll([] (Channel &ch)
+        // Write sound properties to data buffers.
+        d->channels->forAll([] (Sound/*Channel*/ &ch)
         {
             if(ch.hasBuffer() && (ch.buffer().flags & SFXBF_PLAYING))
             {
-                ch.updatePriority();
+                ch.updateBuffer();
             }
             return LoopContinue;
         });
@@ -2052,16 +2057,16 @@ void System::stopSoundGroup(dint group, mobj_t *emitter)
 {
     if(!d->sfxAvail) return;
     LOG_AS("audio::System");
-    d->channels->forAll([this, &group, &emitter] (Channel &ch)
+    d->channels->forAll([this, &group, &emitter] (Sound/*Channel*/ &ch)
     {
         if(ch.hasBuffer())
         {
-            sfxbuffer_t &sbuf = ch.buffer();
+            sfxbuffer_t const &sbuf = ch.buffer();
             if((sbuf.flags & SFXBF_PLAYING) &&
                (sbuf.sample->group == group && (!emitter || ch.emitter() == emitter)))
             {
                 // This channel must stop.
-                sfx()->Stop(&sbuf);
+                ch.stop();
             }
         }
         return LoopContinue;
@@ -2074,7 +2079,7 @@ dint System::stopSoundWithLowerPriority(dint id, mobj_t *emitter, dint defPriori
 
     LOG_AS("audio::System");
     dint stopCount = 0;
-    d->channels->forAll([this, &id, &emitter, &defPriority, &stopCount] (Channel &ch)
+    d->channels->forAll([this, &id, &emitter, &defPriority, &stopCount] (Sound/*Channel*/ &ch)
     {
         if(!ch.hasBuffer()) return LoopContinue;
         sfxbuffer_t &sbuf = ch.buffer();
@@ -2106,9 +2111,9 @@ dint System::stopSoundWithLowerPriority(dint id, mobj_t *emitter, dint defPriori
         }
 
         // This channel must be stopped!
-        /// @todo should observe. -ds
-        sfx()->Stop(&sbuf);
-        ++stopCount;
+        ch.stop();
+        stopCount += 1;
+
         return LoopContinue;
     });
 
@@ -2334,7 +2339,7 @@ void System::aboutToUnloadMap()
 
 #ifdef __CLIENT__
     // Mobjs are about to be destroyed so stop all sound channels using one as an emitter.
-    d->channels->forAll([] (Channel &ch)
+    d->channels->forAll([] (Sound/*Channel*/ &ch)
     {
         if(ch.emitter())
         {
