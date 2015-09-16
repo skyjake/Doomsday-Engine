@@ -1707,7 +1707,7 @@ void Sv_DrainPool(uint clientNumber)
  * Returns the maximum distance for the sound. If the origin is any farther,
  * the delta will not be sent to the client in question.
  */
-dfloat Sv_GetMaxSoundDistance(sounddelta_t const *delta)
+ddouble Sv_GetMaxSoundDistance(sounddelta_t const *delta)
 {
     dfloat volume = 1;
 

@@ -179,7 +179,7 @@ public:  // Sound effect playback: ---------------------------------------------
      * Convenient method returning the current sound effect volume attenuation range,
      * in map space units.
      */
-    de::Rangei soundVolumeAttenuationRange() const;
+    de::Ranged soundVolumeAttenuationRange() const;
 
 #ifdef __CLIENT__
 

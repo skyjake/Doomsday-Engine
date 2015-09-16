@@ -932,7 +932,7 @@ DENG2_PIMPL(System)
         dint num2D = sfx3D ? CHANNEL_2DCOUNT: numChannels;  // The rest will be 3D.
         for(dint i = 0; i < numChannels; ++i)
         {
-            Sound/*Channel*/ &ch = channels->add(*makeSound(num2D-- > 0 ? true : SFXBF_3D, sfxBits, sfxRate));
+            Sound/*Channel*/ &ch = channels->add(*makeSound(num2D-- > 0, sfxBits, sfxRate));
             if(!ch.hasBuffer())
             {
                 LOG_AUDIO_WARNING("Failed creating Sound for Channel #%i") << i;
@@ -991,8 +991,7 @@ DENG2_PIMPL(System)
         }
 
         // Calculate the new sound's priority.
-        dint const nowTime  = Timer_Ticks();
-        dfloat const myPrio = self.rateSoundPriority(emitter, origin, volume, nowTime);
+        dfloat const myPrio = self.rateSoundPriority(emitter, origin, volume, Timer_Ticks());
 
         bool haveChannelPrios = false;
         dfloat channelPrios[256/*MAX_CHANNEL_COUNT*/];
@@ -1020,7 +1019,7 @@ DENG2_PIMPL(System)
 
                     if(ch.hasBuffer())
                     {
-                        sfxbuffer_t &sbuf = ch.buffer();
+                        sfxbuffer_t const &sbuf = ch.buffer();
                         if((sbuf.flags & SFXBF_PLAYING))
                         {
                             DENG2_ASSERT(sbuf.sample != nullptr);
@@ -1102,7 +1101,7 @@ DENG2_PIMPL(System)
                 if(ch.hasBuffer())
                 {
                     // Sample buffer must be configured for the right mode.
-                    sfxbuffer_t &sbuf = ch.buffer();
+                    sfxbuffer_t const &sbuf = ch.buffer();
                     if(play3D == ((sbuf.flags & SFXBF_3D) != 0))
                     {
                         if(!(sbuf.flags & SFXBF_PLAYING))
@@ -1148,17 +1147,10 @@ DENG2_PIMPL(System)
            selCh->buffer().bytes != sample.bytesPer)
         {
             // Create a new sample buffer with the correct format.
-            self.sfx()->Destroy(&selCh->buffer());
             selCh->setBuffer(self.sfx()->Create(play3D ? SFXBF_3D : 0, sample.bytesPer * 8, sample.rate));
         }
-        sfxbuffer_t &sbuf = selCh->buffer();
 
-        // Configure buffer flags.
-        sbuf.flags &= ~(SFXBF_REPEAT | SFXBF_DONT_STOP);
-        if(flags & SF_REPEAT)    sbuf.flags |= SFXBF_REPEAT;
-        if(flags & SF_DONT_STOP) sbuf.flags |= SFXBF_DONT_STOP;
-
-        // Init the channel information.
+        selCh->setPlayingMode(flags);
         selCh->setFlags(selCh->flags() & ~(SFXCF_NO_ORIGIN | SFXCF_NO_ATTENUATION | SFXCF_NO_UPDATE));
         selCh->setVolume(volume);
         selCh->setFrequency(freq);
@@ -1190,36 +1182,19 @@ DENG2_PIMPL(System)
          * @note The sample is not reloaded if a sample with the same ID is already loaded
          * on the channel.
          */
+        sfxbuffer_t const &sbuf = selCh->buffer();
         if(!sbuf.sample || sbuf.sample->soundId != sample.soundId)
         {
             selCh->load(&sample);
         }
 
-        // Update channel properties.
-        selCh->updateBuffer();
-
-        // 3D sounds need a few extra properties set up.
-        if(play3D)
-        {
-            // Init the buffer's min/max distances.
-            // This is only done once, when the sound is started (i.e., here).
-            dfloat const minDist = (selCh->flags() & SFXCF_NO_ATTENUATION) ? 10000 : sfxDistMin;
-            dfloat const maxDist = (selCh->flags() & SFXCF_NO_ATTENUATION) ? 20000 : sfxDistMax;
-
-            selCh->set(SFXBP_MIN_DISTANCE, minDist);
-            selCh->set(SFXBP_MAX_DISTANCE, maxDist);
-        }
-
-        // This'll commit all the deferred properties.
+        // Update listener properties.
         self.sfx()->Listener(SFXLP_UPDATE, 0);
 
         // Start playing.
         selCh->play();
 
         channels->allowRefresh();
-
-        // Take note of the start time.
-        selCh->setStartTime(nowTime);
 
         // Sound successfully started.
         return true;
@@ -1955,9 +1930,9 @@ dint System::soundVolume() const
 
 #endif  // __CLIENT__
 
-Rangei System::soundVolumeAttenuationRange() const
+Ranged System::soundVolumeAttenuationRange() const
 {
-    return Rangei(sfxDistMin, sfxDistMax);
+    return Ranged(sfxDistMin, sfxDistMax);
 }
 
 #ifdef __CLIENT__
@@ -2082,7 +2057,7 @@ dint System::stopSoundWithLowerPriority(dint id, mobj_t *emitter, dint defPriori
     d->channels->forAll([this, &id, &emitter, &defPriority, &stopCount] (Sound/*Channel*/ &ch)
     {
         if(!ch.hasBuffer()) return LoopContinue;
-        sfxbuffer_t &sbuf = ch.buffer();
+        sfxbuffer_t const &sbuf = ch.buffer();
 
         if(!(sbuf.flags & SFXBF_PLAYING) || (id && sbuf.sample->soundId != id) ||
            (emitter && ch.emitter() != emitter))

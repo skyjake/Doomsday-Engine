@@ -185,11 +185,11 @@ DENG2_PIMPL(Channels)
         {
             if(ch.hasBuffer())
             {
-                sfxbuffer_t &sbuf = ch.buffer();
+                sfxbuffer_t const &sbuf = ch.buffer();
                 if(sbuf.sample && sbuf.sample->soundId == sample.soundId)
                 {
                     // Stop and unload.
-                    ch.ifs().gen.Reset(&sbuf);
+                    ch.reset();
                 }
             }
             return LoopContinue;
@@ -229,7 +229,7 @@ dint Channels::countPlaying(dint soundId)
     {
         if(ch.hasBuffer())
         {
-            sfxbuffer_t &sbuf = ch.buffer();
+            sfxbuffer_t const &sbuf = ch.buffer();
             if((sbuf.flags & SFXBF_PLAYING) && sbuf.sample && sbuf.sample->soundId == soundId)
             {
                 count += 1;
@@ -298,7 +298,7 @@ void Channels::refreshAll()
     {
         if(ch.hasBuffer() && (ch.buffer().flags & SFXBF_PLAYING))
         {
-            ch.ifs().gen.Refresh(&ch.buffer());
+            ch.refresh();
         }
         return LoopContinue;
     });
@@ -405,7 +405,7 @@ void UI_AudioChannelDrawer()
 
         if(ch.hasBuffer())
         {
-            sfxbuffer_t &sbuf = ch.buffer();
+            sfxbuffer_t const &sbuf = ch.buffer();
 
             sprintf(buf, "    %c%c%c%c id=%03i/%-8s ln=%05i b=%i rt=%2i bs=%05i (C%05i/W%05i)",
                     (sbuf.flags & SFXBF_3D     ) ? '3' : '.',

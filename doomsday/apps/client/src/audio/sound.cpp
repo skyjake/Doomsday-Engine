@@ -22,6 +22,7 @@
 
 #include "audio/system.h"
 #include "world/thinkers.h"
+#include "def_main.h"        // SF-* flags, remove me
 #include <de/Log>
 #include <de/timer.h>        // TICSPERSEC
 #include <de/vector1.h>      // remove me
@@ -51,6 +52,35 @@ DENG2_PIMPL_NOREF(Sound)
         DENG2_ASSERT(System::get().sfx() != nullptr);
         return *(audiointerface_sfx_t *) System::get().sfx();
     }
+
+    /**
+     * @param property  Buffer property:
+     *              - SFXBP_VOLUME (if negative, interpreted as attenuation)
+     *              - SFXBP_FREQUENCY
+     *              - SFXBP_PAN (-1..1)
+     *              - SFXBP_MIN_DISTANCE
+     *              - SFXBP_MAX_DISTANCE
+     *              - SFXBP_RELATIVE_MODE
+     * @param value Value for the property.
+     */
+    void setBufferProperty(dint prop, dfloat value)
+    {
+        if(!buffer) return;
+        sfx().gen.Set(buffer, prop, value);
+    }
+
+    /**
+     * Coordinates specified in world coordinate system, converted to DSound's:
+     * +X to the right, +Y up and +Z away (Y and Z swapped, i.e.).
+     *
+     * @param property  - SFXBP_POSITION
+     *                  - SFXBP_VELOCITY
+     */
+    void setBufferPropertyv(dint prop, dfloat *values)
+    {
+        if(!buffer) return;
+        sfx().gen.Setv(buffer, prop, values);
+    }
 };
 
 Sound::Sound() : d(new Instance)
@@ -64,20 +94,16 @@ bool Sound::hasBuffer() const
     return d->buffer != nullptr;
 }
 
-sfxbuffer_t &Sound::buffer()
+sfxbuffer_t const &Sound::buffer() const
 {
     if(d->buffer) return *d->buffer;
     /// @throw MissingBufferError  No sound buffer is currently assigned.
     throw MissingBufferError("audio::Sound::buffer", "No data buffer is assigned");
 }
 
-sfxbuffer_t const &Sound::buffer() const
-{
-    return const_cast<Sound *>(this)->buffer();
-}
-
 void Sound::setBuffer(sfxbuffer_t *newBuffer)
 {
+    releaseBuffer();
     d->buffer = newBuffer;
 }
 
@@ -166,27 +192,27 @@ void Sound::updateBuffer()
     }
 
     // Frequency is common to both 2D and 3D sounds.
-    d->sfx().gen.Set(sbuf, SFXBP_FREQUENCY, d->frequency);
+    d->setBufferProperty(SFXBP_FREQUENCY, d->frequency);
 
     if(sbuf->flags & SFXBF_3D)
     {
         // Volume is affected only by maxvol.
-        d->sfx().gen.Set(sbuf, SFXBP_VOLUME, d->volume * System::get().soundVolume() / 255.0f);
+        d->setBufferProperty(SFXBP_VOLUME, d->volume * System::get().soundVolume() / 255.0f);
         if(d->emitter && d->emitter == System::get().sfxListener())
         {
             // Emitted by the listener object. Go to relative position mode
             // and set the position to (0,0,0).
             dfloat vec[3]; vec[0] = vec[1] = vec[2] = 0;
-            d->sfx().gen.Set(sbuf, SFXBP_RELATIVE_MODE, true);
-            d->sfx().gen.Setv(sbuf, SFXBP_POSITION, vec);
+            d->setBufferProperty(SFXBP_RELATIVE_MODE, true);
+            d->setBufferPropertyv(SFXBP_POSITION, vec);
         }
         else
         {
             // Use the channel's map space origin.
             dfloat origin[3];
             V3f_Copyd(origin, d->origin);
-            d->sfx().gen.Set(sbuf, SFXBP_RELATIVE_MODE, false);
-            d->sfx().gen.Setv(sbuf, SFXBP_POSITION, origin);
+            d->setBufferProperty(SFXBP_RELATIVE_MODE, false);
+            d->setBufferPropertyv(SFXBP_POSITION, origin);
         }
 
         // If the sound is emitted by the listener, speed is zero.
@@ -197,13 +223,13 @@ void Sound::updateBuffer()
             vec[0] = d->emitter->mom[0] * TICSPERSEC;
             vec[1] = d->emitter->mom[1] * TICSPERSEC;
             vec[2] = d->emitter->mom[2] * TICSPERSEC;
-            d->sfx().gen.Setv(sbuf, SFXBP_VELOCITY, vec);
+            d->setBufferPropertyv(SFXBP_VELOCITY, vec);
         }
         else
         {
             // Not moving.
             dfloat vec[3]; vec[0] = vec[1] = vec[2] = 0;
-            d->sfx().gen.Setv(sbuf, SFXBP_VELOCITY, vec);
+            d->setBufferPropertyv(SFXBP_VELOCITY, vec);
         }
     }
     else
@@ -221,7 +247,7 @@ void Sound::updateBuffer()
         else
         {
             // Calculate roll-off attenuation. [.125/(.125+x), x=0..1]
-            Rangei const &attenRange = System::get().soundVolumeAttenuationRange();
+            Ranged const attenRange = System::get().soundVolumeAttenuationRange();
 
             dist = Mobj_ApproxPointDistance(System::get().sfxListener(), d->origin);
 
@@ -237,7 +263,7 @@ void Sound::updateBuffer()
             }
             else
             {
-                dfloat const normdist = (dist - attenRange.start) / attenRange.size();
+                ddouble const normdist = (dist - attenRange.start) / attenRange.size();
 
                 // Apply the linear factor so that at max distance there
                 // really is silence.
@@ -273,8 +299,8 @@ void Sound::updateBuffer()
             }
         }
 
-        d->sfx().gen.Set(sbuf, SFXBP_VOLUME, d->volume * dist * System::get().soundVolume() / 255.0f);
-        d->sfx().gen.Set(sbuf, SFXBP_PAN, pan);
+        d->setBufferProperty(SFXBP_VOLUME, d->volume * dist * System::get().soundVolume() / 255.0f);
+        d->setBufferProperty(SFXBP_PAN, pan);
     }
 }
 
@@ -283,17 +309,12 @@ dint Sound::startTime() const
     return d->startTime;
 }
 
-void Sound::setStartTime(dint newStartTime)
-{
-    d->startTime = newStartTime;
-}
-
 void Sound::releaseBuffer()
 {
     stop();
     if(!hasBuffer()) return;
 
-    d->sfx().gen.Destroy(&buffer());
+    d->sfx().gen.Destroy(d->buffer);
     setBuffer(nullptr);
 }
 
@@ -309,7 +330,37 @@ void Sound::reset()
 
 void Sound::play()
 {
+    if(!d->buffer)
+    {
+        /// @throw MissingBufferError  Playing is obviously impossible without data to play...
+        throw MissingBufferError("Sound::play", "Attempted with no data buffer assigned");
+    }
+
+    // Flush deferred property value changes to the assigned data buffer.
+    updateBuffer();
+
+    // 3D sounds need a few extra properties set up.
+    if(d->buffer->flags & SFXBF_3D)
+    {
+        // Configure the attentuation distances.
+        // This is only done once, when the sound is first played (i.e., here).
+        Ranged const attenRange = System::get().soundVolumeAttenuationRange();
+        d->setBufferProperty(SFXBP_MIN_DISTANCE, (d->flags & SFXCF_NO_ATTENUATION) ? 10000 : attenRange.start);
+        d->setBufferProperty(SFXBP_MAX_DISTANCE, (d->flags & SFXCF_NO_ATTENUATION) ? 20000 : attenRange.end);
+    }
+
     d->sfx().gen.Play(d->buffer);
+    d->startTime = Timer_Ticks();  // Note the current time.
+}
+
+void Sound::setPlayingMode(de::dint sfFlags)
+{
+    if(d->buffer)
+    {
+        d->buffer->flags &= ~(SFXBF_REPEAT | SFXBF_DONT_STOP);
+        if(sfFlags & SF_REPEAT)    d->buffer->flags |= SFXBF_REPEAT;
+        if(sfFlags & SF_DONT_STOP) d->buffer->flags |= SFXBF_DONT_STOP;
+    }
 }
 
 void Sound::stop()
@@ -320,21 +371,6 @@ void Sound::stop()
 void Sound::refresh()
 {
     d->sfx().gen.Refresh(d->buffer);
-}
-
-void Sound::set(dint prop, dfloat value)
-{
-    d->sfx().gen.Set(d->buffer, prop, value);
-}
-
-void Sound::setv(dint prop, dfloat *values)
-{
-    d->sfx().gen.Setv(d->buffer, prop, values);
-}
-
-audiointerface_sfx_t &Sound::ifs() const
-{
-    return d->sfx();
 }
 
 }  // namespace audio

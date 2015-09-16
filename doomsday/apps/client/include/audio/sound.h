@@ -55,7 +55,6 @@ public:
     /**
      * Returns the assigned data buffer.
      */
-    sfxbuffer_t       &buffer();
     sfxbuffer_t const &buffer() const;
     void setBuffer(sfxbuffer_t *newBuffer);
 
@@ -101,15 +100,12 @@ public:
      */
     int startTime() const;
 
-    /// @todo refactor away.
-    void setStartTime(int newStartTime);
-
 public:  // Playback interface: ----------------------------------------------------
 
     /**
-     * Prepare the buffer for playing a sample by filling the buffer with as
-     * much sample data as fits. The pointer to sample is saved, so the caller
-     * mustn't free it while the sample is loaded.
+     * Prepare the buffer for playing a sample by filling the buffer with as much
+     * sample data as fits. The pointer to sample is saved, so the caller mustn't
+     * free it while the sample is loaded.
      *
      * @param sample  Sample data to load.
      */
@@ -126,6 +122,7 @@ public:  // Playback interface: ------------------------------------------------
      * Start playing the sound loaded in the buffer.
      */
     void play();
+    void setPlayingMode(int sfFlags);
 
     /**
      * Stop the sound if playing and forget about any sample loaded in the buffer.
@@ -141,30 +138,6 @@ public:  // Playback interface: ------------------------------------------------
      * @note Don't do anything too time-consuming...
      */
     void refresh();
-
-    /**
-     * @param property  Buffer property:
-     *              - SFXBP_VOLUME (if negative, interpreted as attenuation)
-     *              - SFXBP_FREQUENCY
-     *              - SFXBP_PAN (-1..1)
-     *              - SFXBP_MIN_DISTANCE
-     *              - SFXBP_MAX_DISTANCE
-     *              - SFXBP_RELATIVE_MODE
-     * @param value Value for the property.
-     */
-    void set(int prop, float value);
-
-    /**
-     * Coordinates specified in world coordinate system, converted to DSound's:
-     * +X to the right, +Y up and +Z away (Y and Z swapped, i.e.).
-     *
-     * @param property  - SFXBP_POSITION
-     *                  - SFXBP_VELOCITY
-     */
-    void setv(int prop, float *values);
-
-public:  /// @todo remove me
-    audiointerface_sfx_t &ifs() const;
 
 private:
     DENG2_PRIVATE(d)
