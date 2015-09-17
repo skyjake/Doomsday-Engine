@@ -61,10 +61,10 @@ void DummyDriver::CdPlayer::shutdown()
 void DummyDriver::CdPlayer::update()
 {}
 
-void DummyDriver::CdPlayer::set(dint, dfloat)
+void DummyDriver::CdPlayer::setVolume(dfloat)
 {}
 
-dint DummyDriver::CdPlayer::get(dint, void *) const
+bool DummyDriver::CdPlayer::isPlaying() const
 {
     return false;
 }
@@ -103,10 +103,10 @@ void DummyDriver::MusicPlayer::shutdown()
 void DummyDriver::MusicPlayer::update()
 {}
 
-void DummyDriver::MusicPlayer::set(dint, dfloat)
+void DummyDriver::MusicPlayer::setVolume(dfloat)
 {}
 
-dint DummyDriver::MusicPlayer::get(dint, void *) const
+bool DummyDriver::MusicPlayer::isPlaying() const
 {
     return false;
 }
@@ -184,6 +184,12 @@ Sound *DummyDriver::SoundPlayer::makeSound(bool stereoPositioning, dint bitsPer,
     return sound.release();
 }
 
+bool DummyDriver::SoundPlayer::anyRateAccepted() const
+{
+    // We are not playing any audio so yeah, whatever.
+    return true;
+}
+
 void DummyDriver::SoundPlayer::stop(sfxbuffer_t *buf)
 {
     DENG2_ASSERT(buf);
@@ -254,51 +260,55 @@ void DummyDriver::SoundPlayer::refresh(sfxbuffer_t *buf)
     }
 }
 
-void DummyDriver::SoundPlayer::set(sfxbuffer_t *buf, dint prop, dfloat value)
+bool DummyDriver::SoundPlayer::needsRefresh() const
 {
-    DENG2_ASSERT(buf);
-
-    switch(prop)
-    {
-    case SFXBP_FREQUENCY:
-        buf->freq = buf->rate * value;
-        break;
-
-    default: break;
-    }
+    // We are not playing any audio so no.
+    return false;
 }
 
-void DummyDriver::SoundPlayer::setv(sfxbuffer_t *, dint, dfloat *)
+void DummyDriver::SoundPlayer::setFrequency(sfxbuffer_t *buffer, dfloat newFrequency)
 {
-    // Nothing to do.
+    buffer->freq = buffer->rate * newFrequency;
 }
 
-dint DummyDriver::SoundPlayer::getv(dint prop, void *values) const
+void DummyDriver::SoundPlayer::setOrigin(sfxbuffer_t *, Vector3d const &)
 {
-    switch(prop)
-    {
-    case SFXIP_DISABLE_CHANNEL_REFRESH: {
-        /// The return value is a single 32-bit int.
-        auto *wantDisable = (dint *) values;
-        if(wantDisable)
-        {
-            // We are not playing any audio.
-            *wantDisable = true;
-        }
-        return true; }
+    // Not supported.
+}
 
-    default: return false;
-    }
+void DummyDriver::SoundPlayer::setPan(sfxbuffer_t *, dfloat)
+{
+    // Not supported.
+}
+
+void DummyDriver::SoundPlayer::setPositioning(sfxbuffer_t *, bool)
+{
+    // Not supported.
+}
+
+void DummyDriver::SoundPlayer::setVelocity(sfxbuffer_t *, Vector3d const &)
+{
+    // Not supported.
+}
+
+void DummyDriver::SoundPlayer::setVolume(sfxbuffer_t *, dfloat)
+{
+    // Not supported.
+}
+
+void DummyDriver::SoundPlayer::setVolumeAttenuationRange(sfxbuffer_t *, Ranged const &)
+{
+    // Not supported.
 }
 
 void DummyDriver::SoundPlayer::listener(dint, dfloat)
 {
-    // Nothing to do.
+    // Not supported.
 }
 
 void DummyDriver::SoundPlayer::listenerv(dint, dfloat *)
 {
-    // Nothing to do.
+    // Not supported.
 }
 
 // ----------------------------------------------------------------------------------

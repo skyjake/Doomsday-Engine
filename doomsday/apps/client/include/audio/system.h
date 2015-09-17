@@ -193,14 +193,6 @@ public:  // Sound effect playback: ---------------------------------------------
      */
     bool sfxIsAvailable() const;
 
-    /**
-     * Determines whether the active @em SFX interface expects all samples to use the
-     * same sampler rate.
-     *
-     * @return  @c true if resampling is required; otherwise @c false.
-     */
-    bool mustUpsampleToSfxRate() const;
-
     struct mobj_s *sfxListener();
 
 #endif  // __CLIENT__
@@ -512,8 +504,8 @@ public:  /// @todo revise API:
     virtual void shutdown() = 0;
 
     virtual void update() = 0;
-    virtual void set(de::dint prop, de::dfloat value) = 0;
-    virtual de::dint get(de::dint prop, void *value) const = 0;
+    virtual void setVolume(de::dfloat newVolume) = 0;
+    virtual bool isPlaying() const = 0;
     virtual void pause(de::dint pause) = 0;
     virtual void stop() = 0;
 
@@ -530,8 +522,8 @@ public:  /// @todo revise API:
     virtual void shutdown() = 0;
 
     virtual void update() = 0;
-    virtual void set(de::dint prop, de::dfloat value) = 0;
-    virtual de::dint get(de::dint prop, void *value) const = 0;
+    virtual void setVolume(de::dfloat newVolume) = 0;
+    virtual bool isPlaying() const = 0;
     virtual void pause(de::dint pause) = 0;
     virtual void stop() = 0;
 
@@ -564,6 +556,12 @@ public:  /// @todo revise API:
     virtual de::dint init() = 0;
 
     /**
+     * Returns @c true if samples can use any sampler rate; otherwise @c false if
+     * the user must ensure that all samples use the same sampler rate.
+     */
+    virtual bool anyRateAccepted() const = 0;
+
+    /**
      * Allocate a managed sample buffer with the given specification.
      *
      * @param flags
@@ -593,8 +591,11 @@ public:  /// @todo revise API:
 
     /**
      * Stop @a buffer if playing and forget about it's sample.
-     *
-     * @param buffer  Sound buffer.
+     */
+    virtual void stop(sfxbuffer_t *buffer) = 0;
+
+    /**
+     * Stop @a buffer if playing and forget about it's sample.
      */
     virtual void reset(sfxbuffer_t *buffer) = 0;
 
@@ -603,40 +604,26 @@ public:  /// @todo revise API:
      */
     virtual void play(sfxbuffer_t *buffer) = 0;
 
-    /**
-     * Stop @a buffer if playing and forget about it's sample.
-     */
-    virtual void stop(sfxbuffer_t *buffer) = 0;
+    virtual void setFrequency(sfxbuffer_t *buffer, de::dfloat newFrequency) = 0;
+    virtual void setOrigin(sfxbuffer_t *buffer, de::Vector3d const &newOrigin) = 0;
+    virtual void setPan(sfxbuffer_t *buffer, de::dfloat newPan) = 0;
+    virtual void setPositioning(sfxbuffer_t *buffer, bool headRelative) = 0;
+    virtual void setVelocity(sfxbuffer_t *buffer, de::Vector3d const &newVelocity) = 0;
+    virtual void setVolume(sfxbuffer_t *buffer, de::dfloat newVolume) = 0;
+    virtual void setVolumeAttenuationRange(sfxbuffer_t *buffer, de::Ranged const &newRange) = 0;
 
     /**
-     * Called periodically by the audio system's refresh thread, so that @a buffer
-     * can be filled with sample data, for streaming purposes.
+     * Returns @c true if the sound requires refreshing manually.
+     */
+    virtual bool needsRefresh() const = 0;
+
+    /**
+     * Will be called periodically by the audio system's refresh thread, if refreshing
+     * is needed, so that @a buffer can be filled with sample data, for streaming purposes.
      *
      * @note Don't do anything too time-consuming...
      */
     virtual void refresh(sfxbuffer_t *buffer) = 0;
-
-    /**
-     * @param buffer   Sound buffer.
-     * @param property  Buffer property:
-     *              - SFXBP_VOLUME (if negative, interpreted as attenuation)
-     *              - SFXBP_FREQUENCY
-     *              - SFXBP_PAN (-1..1)
-     *              - SFXBP_MIN_DISTANCE
-     *              - SFXBP_MAX_DISTANCE
-     *              - SFXBP_RELATIVE_MODE
-     * @param value Value for the property.
-     */
-    virtual void set(sfxbuffer_t *buffer, de::dint prop, de::dfloat value) = 0;
-
-    /**
-     * Coordinates specified in world coordinate system, converted to DSound's:
-     * +X to the right, +Y up and +Z away (Y and Z swapped, i.e.).
-     *
-     * @param property      SFXBP_POSITION
-     *                      SFXBP_VELOCITY
-     */
-    virtual void setv(sfxbuffer_t *buffer, de::dint prop, de::dfloat *values) = 0;
 
     /**
      * @param property      SFXLP_UNITS_PER_METER
@@ -649,14 +636,6 @@ public:  /// @todo revise API:
      * Call SFXLP_UPDATE at the end of every channel update.
      */
     virtual void listenerv(de::dint prop, de::dfloat *values) = 0;
-
-    /**
-     * Gets a driver property.
-     *
-     * @param prop    Property (SFXP_*).
-     * @param values  Pointer to return value(s).
-     */
-    virtual de::dint getv(de::dint prop, void *values) const = 0;
 };
 
 #endif  // __CLIENT__

@@ -79,13 +79,9 @@ struct ChannelRefresher
         refreshing = false;
         paused     = false;
 
-        dint disableRefresh = false;
-
         DENG2_ASSERT(System::get().sfxIsAvailable());
 
-        System::get().sfx().getv(SFXIP_DISABLE_CHANNEL_REFRESH, &disableRefresh);
-
-        if(!disableRefresh)
+        if(System::get().sfx().needsRefresh())
         {
             // Start the refresh thread. It will run until the Sfx module is shut down.
             thread = Sys_StartThread(refreshThread, this);

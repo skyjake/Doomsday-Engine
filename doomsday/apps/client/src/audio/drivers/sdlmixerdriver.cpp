@@ -83,10 +83,10 @@ void SdlMixerDriver::CdPlayer::shutdown()
 void SdlMixerDriver::CdPlayer::update()
 {}
 
-void SdlMixerDriver::CdPlayer::set(dint, dfloat)
+void SdlMixerDriver::CdPlayer::setVolume(dfloat)
 {}
 
-dint SdlMixerDriver::CdPlayer::get(dint, void *) const
+bool SdlMixerDriver::CdPlayer::isPlaying() const
 {
     return false;
 }
@@ -141,35 +141,16 @@ void SdlMixerDriver::MusicPlayer::update()
     // Nothing to update.
 }
 
-void SdlMixerDriver::MusicPlayer::set(dint prop, dfloat value)
+void SdlMixerDriver::MusicPlayer::setVolume(dfloat newVolume)
 {
     if(!_initialized) return;
-
-    switch(prop)
-    {
-    case MUSIP_VOLUME:
-        Mix_VolumeMusic(dint( MIX_MAX_VOLUME * value ));
-        break;
-
-    default: break;
-    }
+    Mix_VolumeMusic(dint( MIX_MAX_VOLUME * newVolume ));
 }
 
-dint SdlMixerDriver::MusicPlayer::get(dint prop, void *value) const
+bool SdlMixerDriver::MusicPlayer::isPlaying() const
 {
     if(!_initialized) return false;
-
-    switch(prop)
-    {
-    case MUSIP_ID:
-        qstrcpy((char *) value, "music");
-        return true;
-
-    case MUSIP_PLAYING:
-        return Mix_PlayingMusic();
-
-    default: return false;
-    }
+    return Mix_PlayingMusic();
 }
 
 void SdlMixerDriver::MusicPlayer::pause(dint pause)
@@ -248,6 +229,12 @@ String SdlMixerDriver::SoundPlayer::name() const
 dint SdlMixerDriver::SoundPlayer::init()
 {
     return _initialized = true;
+}
+
+bool SdlMixerDriver::SoundPlayer::anyRateAccepted() const
+{
+    // No - please upsample for us.
+    return false;
 }
 
 sfxbuffer_t *SdlMixerDriver::SoundPlayer::create(dint flags, dint bits, dint rate)
@@ -413,6 +400,11 @@ void SdlMixerDriver::SoundPlayer::refresh(sfxbuffer_t *buf)
     }
 }
 
+bool SdlMixerDriver::SoundPlayer::needsRefresh() const
+{
+    return true;
+}
+
 void SdlMixerDriver::SoundPlayer::play(sfxbuffer_t *buf)
 {
     DENG2_ASSERT(buf);
@@ -431,28 +423,41 @@ void SdlMixerDriver::SoundPlayer::play(sfxbuffer_t *buf)
     buf->flags |= SFXBF_PLAYING;
 }
 
-void SdlMixerDriver::SoundPlayer::set(sfxbuffer_t *buf, dint prop, dfloat value)
+void SdlMixerDriver::SoundPlayer::setFrequency(sfxbuffer_t *, dfloat)
 {
-    DENG2_ASSERT(buf);
-
-    switch(prop)
-    {
-    case SFXBP_VOLUME:
-        // 'written' is used for storing the volume of the channel.
-        buf->written = duint( value * MIX_MAX_VOLUME );
-        Mix_Volume(buf->cursor, buf->written);
-        break;
-
-    case SFXBP_PAN: { // -1 ... +1
-        auto const right = dint( (value + 1) * 127 );
-        Mix_SetPanning(buf->cursor, 254 - right, right);
-        break; }
-
-    default: break;
-    }
+    // Not supported.
 }
 
-void SdlMixerDriver::SoundPlayer::setv(sfxbuffer_t *, dint , dfloat *)
+void SdlMixerDriver::SoundPlayer::setOrigin(sfxbuffer_t *buffer, Vector3d const &newOrigin)
+{
+    // Not supported.
+}
+
+/// @param newPan  (-1 ... +1)
+void SdlMixerDriver::SoundPlayer::setPan(sfxbuffer_t *buffer, dfloat newPan)
+{
+    auto const right = dint( (newPan + 1) * 127 );
+    Mix_SetPanning(buffer->cursor, 254 - right, right);
+}
+
+void SdlMixerDriver::SoundPlayer::setPositioning(sfxbuffer_t *buffer, bool headRelative)
+{
+    // Not supported.
+}
+
+void SdlMixerDriver::SoundPlayer::setVelocity(sfxbuffer_t *buffer, Vector3d const &newVelocity)
+{
+    // Not supported.
+}
+
+void SdlMixerDriver::SoundPlayer::setVolume(sfxbuffer_t *buffer, dfloat newVolume)
+{
+    // 'written' is used for storing the volume of the channel.
+    buffer->written = duint( newVolume * MIX_MAX_VOLUME );
+    Mix_Volume(buffer->cursor, buffer->written);
+}
+
+void SdlMixerDriver::SoundPlayer::setVolumeAttenuationRange(sfxbuffer_t *buffer, Ranged const &newRange)
 {
     // Not supported.
 }
@@ -465,12 +470,6 @@ void SdlMixerDriver::SoundPlayer::listener(dint, dfloat)
 void SdlMixerDriver::SoundPlayer::listenerv(dint, dfloat *)
 {
     // Not supported.
-}
-
-dint SdlMixerDriver::SoundPlayer::getv(de::dint, void *) const
-{
-    // Not supported.
-    return false;
 }
 
 // ----------------------------------------------------------------------------------

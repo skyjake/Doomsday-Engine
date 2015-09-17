@@ -79,35 +79,6 @@ DENG2_PIMPL_NOREF(Sound)
     }
 
     /**
-     * @param property  Buffer property:
-     *              - SFXBP_VOLUME (if negative, interpreted as attenuation)
-     *              - SFXBP_FREQUENCY
-     *              - SFXBP_PAN (-1..1)
-     *              - SFXBP_MIN_DISTANCE
-     *              - SFXBP_MAX_DISTANCE
-     *              - SFXBP_RELATIVE_MODE
-     * @param value Value for the property.
-     */
-    void setBufferProperty(dint prop, dfloat value)
-    {
-        if(!buffer) return;
-        getPlayer().set(buffer, prop, value);
-    }
-
-    /**
-     * Coordinates specified in world coordinate system, converted to DSound's:
-     * +X to the right, +Y up and +Z away (Y and Z swapped, i.e.).
-     *
-     * @param property  - SFXBP_POSITION
-     *                  - SFXBP_VELOCITY
-     */
-    void setBufferPropertyv(dint prop, dfloat *values)
-    {
-        if(!buffer) return;
-        getPlayer().setv(buffer, prop, values);
-    }
-
-    /**
      * Flushes property changes to the assigned data buffer.
      *
      * @param force  Usually updates are only necessary during playback. Use
@@ -128,44 +99,36 @@ DENG2_PIMPL_NOREF(Sound)
         updateOriginIfNeeded();
 
         // Frequency is common to both 2D and 3D sounds.
-        setBufferProperty(SFXBP_FREQUENCY, frequency);
+        getPlayer().setFrequency(buffer, frequency);
 
         if(buffer->flags & SFXBF_3D)
         {
             // Volume is affected only by maxvol.
-            setBufferProperty(SFXBP_VOLUME, volume * System::get().soundVolume() / 255.0f);
+            getPlayer().setVolume(buffer, volume * System::get().soundVolume() / 255.0f);
             if(emitter && emitter == System::get().sfxListener())
             {
                 // Emitted by the listener object. Go to relative position mode
                 // and set the position to (0,0,0).
-                dfloat vec[3]; vec[0] = vec[1] = vec[2] = 0;
-                setBufferProperty(SFXBP_RELATIVE_MODE, true);
-                setBufferPropertyv(SFXBP_POSITION, vec);
+                getPlayer().setPositioning(buffer, true/*head-relative*/);
+                getPlayer().setOrigin(buffer, Vector3d());
             }
             else
             {
                 // Use the channel's map space origin.
-                dfloat originf[3];
-                V3f_Copyd(originf, origin);
-                setBufferProperty(SFXBP_RELATIVE_MODE, false);
-                setBufferPropertyv(SFXBP_POSITION, originf);
+                getPlayer().setPositioning(buffer, false/*absolute*/);
+                getPlayer().setOrigin(buffer, origin);
             }
 
             // If the sound is emitted by the listener, speed is zero.
             if(emitter && emitter != System::get().sfxListener() &&
                Thinker_IsMobjFunc(emitter->thinker.function))
             {
-                dfloat vec[3];
-                vec[0] = emitter->mom[0] * TICSPERSEC;
-                vec[1] = emitter->mom[1] * TICSPERSEC;
-                vec[2] = emitter->mom[2] * TICSPERSEC;
-                setBufferPropertyv(SFXBP_VELOCITY, vec);
+                getPlayer().setVelocity(buffer, Vector3d(emitter->mom)* TICSPERSEC);
             }
             else
             {
                 // Not moving.
-                dfloat vec[3]; vec[0] = vec[1] = vec[2] = 0;
-                setBufferPropertyv(SFXBP_VELOCITY, vec);
+                getPlayer().setVelocity(buffer, Vector3d());
             }
         }
         else
@@ -235,8 +198,8 @@ DENG2_PIMPL_NOREF(Sound)
                 }
             }
 
-            setBufferProperty(SFXBP_VOLUME, volume * dist * System::get().soundVolume() / 255.0f);
-            setBufferProperty(SFXBP_PAN, finalPan);
+            getPlayer().setVolume(buffer, volume * dist * System::get().soundVolume() / 255.0f);
+            getPlayer().setPan(buffer, finalPan);
         }
     }
 
@@ -373,9 +336,14 @@ void Sound::play()
     {
         // Configure the attentuation distances.
         // This is only done once, when the sound is first played (i.e., here).
-        Ranged const attenRange = System::get().soundVolumeAttenuationRange();
-        d->setBufferProperty(SFXBP_MIN_DISTANCE, (d->flags & SFXCF_NO_ATTENUATION) ? 10000 : attenRange.start);
-        d->setBufferProperty(SFXBP_MAX_DISTANCE, (d->flags & SFXCF_NO_ATTENUATION) ? 20000 : attenRange.end);
+        if(d->flags & SFXCF_NO_ATTENUATION)
+        {
+            d->getPlayer().setVolumeAttenuationRange(d->buffer, Ranged(10000, 20000));
+        }
+        else
+        {
+            d->getPlayer().setVolumeAttenuationRange(d->buffer, System::get().soundVolumeAttenuationRange());
+        }
     }
 
     d->getPlayer().play(d->buffer);

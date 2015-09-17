@@ -872,11 +872,11 @@ DENG2_PIMPL(System)
             {
                 if(auto *musicPlayer = plr.maybeAs<IMusicPlayer>())
                 {
-                    musicPlayer->set(MUSIP_VOLUME, newVolume);
+                    musicPlayer->setVolume(newVolume);
                 }
                 if(auto *cdPlayer = plr.maybeAs<ICdPlayer>())
                 {
-                    cdPlayer->set(MUSIP_VOLUME, newVolume);
+                    cdPlayer->setVolume(newVolume);
                 }
                 return LoopContinue;
             });
@@ -1742,13 +1742,13 @@ bool System::musicIsPlaying() const
     {
         if(auto *musicPlayer = plr.maybeAs<IMusicPlayer>())
         {
-            return musicPlayer->get(MUSIP_PLAYING, nullptr);
+            return musicPlayer->isPlaying();
         }
         if(auto *cdPlayer = plr.maybeAs<ICdPlayer>())
         {
-            return cdPlayer->get(MUSIP_PLAYING, nullptr);
+            return cdPlayer->isPlaying();
         }
-        return 0; // Continue
+        return false; // Continue
     });
 }
 
@@ -1955,13 +1955,6 @@ Ranged System::soundVolumeAttenuationRange() const
 bool System::sfxIsAvailable() const
 {
     return d->sfxAvail;
-}
-
-bool System::mustUpsampleToSfxRate() const
-{
-    dint anyRateAccepted = 0;
-    sfx().getv(SFXIP_ANY_SAMPLE_RATE_ACCEPTED, &anyRateAccepted);
-    return (anyRateAccepted ? false : true);
 }
 
 mobj_t *System::sfxListener()

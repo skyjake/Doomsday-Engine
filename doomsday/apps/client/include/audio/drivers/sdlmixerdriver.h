@@ -60,8 +60,8 @@ public:  // Sound players: -----------------------------------------------------
         void shutdown();
 
         void update();
-        void set(de::dint prop, de::dfloat value);
-        de::dint get(de::dint prop, void *value) const;
+        void setVolume(de::dfloat newVolume);
+        bool isPlaying() const;
         void pause(de::dint pause);
         void stop();
 
@@ -83,8 +83,8 @@ public:  // Sound players: -----------------------------------------------------
         void shutdown();
 
         void update();
-        void set(de::dint prop, de::dfloat value);
-        de::dint get(de::dint prop, void *value) const;
+        void setVolume(de::dfloat newVolume);
+        bool isPlaying() const;
         void pause(de::dint pause);
         void stop();
 
@@ -108,6 +108,7 @@ public:  // Sound players: -----------------------------------------------------
         de::String name() const;
 
         de::dint init();
+        bool anyRateAccepted() const;
 
         Sound *makeSound(bool stereoPositioning, de::dint bitsPer, de::dint rate);
         sfxbuffer_t *create(de::dint flags, de::dint bits, de::dint rate);
@@ -118,11 +119,16 @@ public:  // Sound players: -----------------------------------------------------
         void play(sfxbuffer_t *buffer);
         void stop(sfxbuffer_t *buffer);
         void refresh(sfxbuffer_t *buffer);
-        void set(sfxbuffer_t *buffer, de::dint prop, de::dfloat value);
-        void setv(sfxbuffer_t *buffer, de::dint prop, de::dfloat *values);
+        bool needsRefresh() const;
+        void setFrequency(sfxbuffer_t *buffer, de::dfloat newFrequency);
+        void setOrigin(sfxbuffer_t *buffer, de::Vector3d const &newOrigin);
+        void setPan(sfxbuffer_t *buffer, de::dfloat newPan);
+        void setPositioning(sfxbuffer_t *buffer, bool headRelative);
+        void setVelocity(sfxbuffer_t *buffer, de::Vector3d const &newVelocity);
+        void setVolume(sfxbuffer_t *buffer, de::dfloat newVolume);
+        void setVolumeAttenuationRange(sfxbuffer_t *buffer, de::Ranged const &newRange);
         void listener(de::dint prop, de::dfloat value);
         void listenerv(de::dint prop, de::dfloat *values);
-        de::dint getv(de::dint prop, void *values) const;
 
     private:
         SoundPlayer(SdlMixerDriver &driver);

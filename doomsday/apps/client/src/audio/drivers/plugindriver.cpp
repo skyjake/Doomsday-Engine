@@ -38,10 +38,11 @@ PluginDriver::CdPlayer::CdPlayer(PluginDriver &driver) : ICdPlayer(driver)
 String PluginDriver::CdPlayer::name() const
 {
     char buf[256];  /// @todo This could easily overflow...
-    if(get(MUSIP_ID, buf)) return buf;
+    DENG2_ASSERT(_imp.gen.Init);
+    if(_imp.gen.Get(MUSIP_ID, buf)) return buf;
 
     DENG2_ASSERT(!"[MUSIP_ID not defined]");
-    return driver().identityKey() + ".unnamed_music";
+    return "unnamed_music";
 }
 
 dint PluginDriver::CdPlayer::init()
@@ -62,16 +63,16 @@ void PluginDriver::CdPlayer::update()
     _imp.gen.Update();
 }
 
-void PluginDriver::CdPlayer::set(dint prop, dfloat value)
+void PluginDriver::CdPlayer::setVolume(dfloat newVolume)
 {
     DENG2_ASSERT(_imp.gen.Set);
-    _imp.gen.Set(prop, value);
+    _imp.gen.Set(MUSIP_VOLUME, newVolume);
 }
 
-dint PluginDriver::CdPlayer::get(dint prop, void *value) const
+bool PluginDriver::CdPlayer::isPlaying() const
 {
     DENG2_ASSERT(_imp.gen.Get);
-    return _imp.gen.Get(prop, value);
+    return _imp.gen.Get(MUSIP_PLAYING, nullptr);
 }
 
 void PluginDriver::CdPlayer::pause(dint pause)
@@ -123,14 +124,16 @@ void PluginDriver::MusicPlayer::update()
     _imp.gen.Update();
 }
 
-void PluginDriver::MusicPlayer::set(dint prop, dfloat value)
+void PluginDriver::MusicPlayer::setVolume(dfloat newVolume)
 {
-    _imp.gen.Set(prop, value);
+    if(!_initialized) return;
+    _imp.gen.Set(MUSIP_VOLUME, newVolume);
 }
 
-dint PluginDriver::MusicPlayer::get(dint prop, void *value) const
+bool PluginDriver::MusicPlayer::isPlaying() const
 {
-    return _imp.gen.Get(prop, value);
+    if(!_initialized) return false;
+    return _imp.gen.Get(MUSIP_PLAYING, nullptr);
 }
 
 void PluginDriver::MusicPlayer::pause(dint pause)
@@ -186,11 +189,20 @@ String PluginDriver::SoundPlayer::name() const
 
 dint PluginDriver::SoundPlayer::init()
 {
+    DENG2_ASSERT(_imp.gen.Init);
     return _imp.gen.Init();
+}
+
+bool PluginDriver::SoundPlayer::anyRateAccepted() const
+{
+    dint anyRateAccepted = 0;
+    if(_imp.gen.Getv) _imp.gen.Getv(SFXIP_ANY_SAMPLE_RATE_ACCEPTED, &anyRateAccepted);
+    return CPP_BOOL( anyRateAccepted );
 }
 
 sfxbuffer_t *PluginDriver::SoundPlayer::create(dint flags, dint bits, dint rate)
 {
+    DENG2_ASSERT(_imp.gen.Create);
     return _imp.gen.Create(flags, bits, rate);
 }
 
@@ -203,58 +215,102 @@ Sound *PluginDriver::SoundPlayer::makeSound(bool stereoPositioning, dint bitsPer
 
 void PluginDriver::SoundPlayer::destroy(sfxbuffer_t *buffer)
 {
+    DENG2_ASSERT(_imp.gen.Destroy);
     _imp.gen.Destroy(buffer);
 }
 
 void PluginDriver::SoundPlayer::load(sfxbuffer_t *buffer, sfxsample_t *sample)
 {
+    DENG2_ASSERT(_imp.gen.Load);
     _imp.gen.Load(buffer, sample);
+}
+
+void PluginDriver::SoundPlayer::stop(sfxbuffer_t *buffer)
+{
+    DENG2_ASSERT(_imp.gen.Stop);
+    _imp.gen.Stop(buffer);
 }
 
 void PluginDriver::SoundPlayer::reset(sfxbuffer_t *buffer)
 {
+    DENG2_ASSERT(_imp.gen.Reset);
     _imp.gen.Reset(buffer);
 }
 
 void PluginDriver::SoundPlayer::play(sfxbuffer_t *buffer)
 {
+    DENG2_ASSERT(_imp.gen.Play);
     _imp.gen.Play(buffer);
 }
 
-void PluginDriver::SoundPlayer::stop(sfxbuffer_t *buffer)
+bool PluginDriver::SoundPlayer::needsRefresh() const
 {
-    _imp.gen.Stop(buffer);
+    dint disableRefresh = false;
+    if(_imp.gen.Getv) _imp.gen.Getv(SFXIP_DISABLE_CHANNEL_REFRESH, &disableRefresh);
+    return !disableRefresh;
 }
 
 void PluginDriver::SoundPlayer::refresh(sfxbuffer_t *buffer)
 {
+    DENG2_ASSERT(_imp.gen.Refresh);
     _imp.gen.Refresh(buffer);
 }
 
-void PluginDriver::SoundPlayer::set(sfxbuffer_t *buffer, dint prop, dfloat value)
+void PluginDriver::SoundPlayer::setFrequency(sfxbuffer_t *buffer, dfloat newFrequency)
 {
-    _imp.gen.Set(buffer, prop, value);
+    DENG2_ASSERT(_imp.gen.Set);
+    _imp.gen.Set(buffer, SFXBP_FREQUENCY, newFrequency);
 }
 
-void PluginDriver::SoundPlayer::setv(sfxbuffer_t *buffer, dint prop, dfloat *values)
+void PluginDriver::SoundPlayer::setOrigin(sfxbuffer_t *buffer, Vector3d const &newOrigin)
 {
-    _imp.gen.Setv(buffer, prop, values);
+    DENG2_ASSERT(_imp.gen.Setv);
+    dfloat vec[3]; newOrigin.toVector3f().decompose(vec);
+    _imp.gen.Setv(buffer, SFXBP_POSITION, vec);
+}
+
+void PluginDriver::SoundPlayer::setPan(sfxbuffer_t *buffer, dfloat newPan)
+{
+    DENG2_ASSERT(_imp.gen.Set);
+    _imp.gen.Set(buffer, SFXBP_PAN, newPan);
+}
+
+void PluginDriver::SoundPlayer::setPositioning(sfxbuffer_t *buffer, bool headRelative)
+{
+    DENG2_ASSERT(_imp.gen.Set);
+    _imp.gen.Set(buffer, SFXBP_RELATIVE_MODE, dfloat( headRelative ));
+}
+
+void PluginDriver::SoundPlayer::setVelocity(sfxbuffer_t *buffer, Vector3d const &newVelocity)
+{
+    DENG2_ASSERT(_imp.gen.Setv);
+    dfloat vec[3]; newVelocity.toVector3f().decompose(vec);
+    _imp.gen.Setv(buffer, SFXBP_VELOCITY, vec);
+}
+
+void PluginDriver::SoundPlayer::setVolume(sfxbuffer_t *buffer, dfloat newVolume)
+{
+    DENG2_ASSERT(_imp.gen.Set);
+    _imp.gen.Set(buffer, SFXBP_VOLUME, newVolume);
+}
+
+void PluginDriver::SoundPlayer::setVolumeAttenuationRange(sfxbuffer_t *buffer, Ranged const &newRange)
+{
+    DENG2_ASSERT(_imp.gen.Set);
+    _imp.gen.Set(buffer, SFXBP_MIN_DISTANCE, dfloat( newRange.start ));
+    _imp.gen.Set(buffer, SFXBP_MAX_DISTANCE, dfloat( newRange.end ));
 }
 
 void PluginDriver::SoundPlayer::listener(dint prop, dfloat value)
 {
+    DENG2_ASSERT(_imp.gen.Listener);
     _imp.gen.Listener(prop, value);
 }
 
 void PluginDriver::SoundPlayer::listenerv(dint prop, dfloat *values)
 {
+    DENG2_ASSERT(_imp.gen.Listenerv);
     _imp.gen.Listenerv(prop, values);
-}
-
-dint PluginDriver::SoundPlayer::getv(dint prop, void *values) const
-{
-    if(!_imp.gen.Getv) return false;
-    return _imp.gen.Getv(prop, values);
 }
 
 // ----------------------------------------------------------------------------------
