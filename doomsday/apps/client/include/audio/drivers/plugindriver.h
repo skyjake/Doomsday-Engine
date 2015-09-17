@@ -67,6 +67,91 @@ public:
      */
     ::Library *library() const;
 
+public:  // Sound players: -------------------------------------------------------
+
+    class CdPlayer : public ICdPlayer
+    {
+    public:
+        de::String name() const;
+
+        de::dint init();
+        void shutdown();
+
+        void update();
+        void set(de::dint prop, de::dfloat value);
+        de::dint get(de::dint prop, void *value) const;
+        void pause(de::dint pause);
+        void stop();
+
+        de::dint play(de::dint track, de::dint looped);
+
+    private:
+        CdPlayer(PluginDriver &driver);
+        friend class PluginDriver;
+
+        bool _initialized = false;
+        audiointerface_cd_t _imp;
+    };
+
+    class MusicPlayer : public IMusicPlayer
+    {
+    public:
+        de::String name() const;
+
+        de::dint init();
+        void shutdown();
+
+        void update();
+        void set(de::dint prop, de::dfloat value);
+        de::dint get(de::dint prop, void *value) const;
+        void pause(de::dint pause);
+        void stop();
+
+        bool canPlayBuffer() const;
+        void *songBuffer(de::duint length);
+        de::dint play(de::dint looped);
+
+        bool canPlayFile() const;
+        de::dint playFile(char const *filename, de::dint looped);
+
+    private:
+        MusicPlayer(PluginDriver &driver);
+        friend class PluginDriver;
+
+        bool _initialized = false;
+        audiointerface_music_t _imp;
+    };
+
+    class SoundPlayer : public ISoundPlayer
+    {
+    public:
+        de::String name() const;
+
+        de::dint init();
+
+        Sound *makeSound(bool stereoPositioning, de::dint bitsPer, de::dint rate);
+        sfxbuffer_t *create(de::dint flags, de::dint bits, de::dint rate);
+
+        void destroy(sfxbuffer_t *buffer);
+        void load(sfxbuffer_t *buffer, sfxsample_t *sample);
+        void reset(sfxbuffer_t *buffer);
+        void play(sfxbuffer_t *buffer);
+        void stop(sfxbuffer_t *buffer);
+        void refresh(sfxbuffer_t *buffer);
+        void set(sfxbuffer_t *buffer, de::dint prop, de::dfloat value);
+        void setv(sfxbuffer_t *buffer, de::dint prop, de::dfloat *values);
+        void listener(de::dint prop, de::dfloat value);
+        void listenerv(de::dint prop, de::dfloat *values);
+        de::dint getv(de::dint prop, void *values) const;
+
+    private:
+        SoundPlayer(PluginDriver &driver);
+        friend class PluginDriver;
+
+        bool _initialized = false;
+        audiointerface_sfx_t _imp;
+    };
+
 public:  // Implements audio::System::IDriver: -----------------------------------
 
     void initialize();
@@ -81,10 +166,10 @@ public:  // Implements audio::System::IDriver: ---------------------------------
     bool hasMusic() const;
     bool hasSfx() const;
 
-    audiointerface_cd_t /*const*/ &iCd() const;
-    audiointerface_music_t /*const*/ &iMusic() const;
-    audiointerface_sfx_t /*const*/ &iSfx() const;
-    de::DotPath interfacePath(void *playbackInterface) const;
+    ICdPlayer /*const*/ &iCd() const;
+    IMusicPlayer /*const*/ &iMusic() const;
+    ISoundPlayer /*const*/ &iSfx() const;
+    de::DotPath interfacePath(IPlayer &player) const;
 
 private:
     PluginDriver();

@@ -39,26 +39,29 @@ namespace audio {
 DENG2_PIMPL_NOREF(Sound)
 , DENG2_OBSERVES(System, FrameEnds)
 {
-    dint flags = 0;                 ///< SFXCF_* flags.
-    dfloat frequency = 0;           ///< Frequency adjustment: 1.0 is normal.
-    dfloat volume = 0;              ///< Sound volume: 1.0 is max.
+    dint flags = 0;                  ///< SFXCF_* flags.
+    dfloat frequency = 0;            ///< Frequency adjustment: 1.0 is normal.
+    dfloat volume = 0;               ///< Sound volume: 1.0 is max.
 
-    mobj_t *emitter = nullptr;      ///< Mobj emitter for the sound, if any (not owned).
-    coord_t origin[3];              ///< Emit from here (synced with emitter).
+    mobj_t *emitter = nullptr;       ///< Mobj emitter for the sound, if any (not owned).
+    coord_t origin[3];               ///< Emit from here (synced with emitter).
 
-    sfxbuffer_t *buffer = nullptr;  ///< Assigned sound buffer, if any (not owned).
-    dint startTime = 0;             ///< When the assigned sound sample was last started.
+    sfxbuffer_t *buffer = nullptr;   ///< Assigned sound buffer, if any (not owned).
+    dint startTime = 0;              ///< When the assigned sound sample was last started.
 
-    Instance() { zap(origin); }
+    ISoundPlayer *player = nullptr;  ///< Owning player (not owned).
 
-    /// @todo Sounds should be constructed by an OO interface wrapper class, which can
-    /// associate the managed buffer with a reference to the Driver that manages it -ds
-    audiointerface_sfx_t &sfx() const
+    Instance()
     {
-        DENG2_ASSERT(System::get().sfx() != nullptr);
-        return *(audiointerface_sfx_t *) System::get().sfx();
+        de::zap(origin);
     }
 
+    inline ISoundPlayer &getPlayer()
+    {
+        DENG2_ASSERT(player != 0);
+        return *player;
+    }
+    
     void updateOriginIfNeeded()
     {
         // Updating is only necessary if we are tracking an emitter.
@@ -88,7 +91,7 @@ DENG2_PIMPL_NOREF(Sound)
     void setBufferProperty(dint prop, dfloat value)
     {
         if(!buffer) return;
-        sfx().gen.Set(buffer, prop, value);
+        getPlayer().set(buffer, prop, value);
     }
 
     /**
@@ -101,11 +104,11 @@ DENG2_PIMPL_NOREF(Sound)
     void setBufferPropertyv(dint prop, dfloat *values)
     {
         if(!buffer) return;
-        sfx().gen.Setv(buffer, prop, values);
+        getPlayer().setv(buffer, prop, values);
     }
 
     /**
-     * Flushes property changes to the assigned data buffer (if any).
+     * Flushes property changes to the assigned data buffer.
      *
      * @param force  Usually updates are only necessary during playback. Use
      *               @c true= to override this check and write the properties
@@ -119,7 +122,7 @@ DENG2_PIMPL_NOREF(Sound)
         if(flags & SFXCF_NO_UPDATE) return;
 
         // Updates are only necessary during playback.
-        if(!(flags & SFXBF_PLAYING) && !force) return;
+        if(!(buffer->flags & SFXBF_PLAYING) && !force) return;
 
         // When tracking an emitter we need the latest origin coordinates.
         updateOriginIfNeeded();
@@ -243,11 +246,15 @@ DENG2_PIMPL_NOREF(Sound)
     }
 };
 
-Sound::Sound() : d(new Instance)
-{}
+Sound::Sound(ISoundPlayer &player) : d(new Instance)
+{
+    d->player = &player;
+}
 
 Sound::~Sound()
-{}
+{
+    releaseBuffer();
+}
 
 bool Sound::hasBuffer() const
 {
@@ -269,7 +276,7 @@ void Sound::releaseBuffer()
     // Cancel frame notifications - we'll soon have no buffer to update.
     System::get().audienceForFrameEnds() -= d;
 
-    d->sfx().gen.Destroy(d->buffer);
+    d->getPlayer().destroy(d->buffer);
     d->buffer = nullptr;
 }
 
@@ -296,26 +303,6 @@ void Sound::setFlags(dint newFlags)
     d->flags = newFlags;
 }
 
-dfloat Sound::frequency() const
-{
-    return d->frequency;
-}
-
-void Sound::setFrequency(dfloat newFrequency)
-{
-    d->frequency = newFrequency;
-}
-
-dfloat Sound::volume() const
-{
-    return d->volume;
-}
-
-void Sound::setVolume(dfloat newVolume)
-{
-    d->volume = newVolume;
-}
-
 mobj_t *Sound::emitter() const
 {
     return d->emitter;
@@ -335,7 +322,7 @@ void Sound::setFixedOrigin(Vector3d const &newOrigin)
 
 dfloat Sound::priority() const
 {
-    if(!d->buffer || !(d->buffer->flags & SFXBF_PLAYING))
+    if(!isPlaying())
         return SFX_LOWEST_PRIORITY;
 
     if(d->flags & SFXCF_NO_ORIGIN)
@@ -343,11 +330,6 @@ dfloat Sound::priority() const
 
     // d->origin is set to emitter->xyz during updates.
     return System::get().rateSoundPriority(0, d->origin, d->volume, d->startTime);
-}
-
-dint Sound::startTime() const
-{
-    return d->startTime;
 }
 
 void Sound::load(sfxsample_t &sample)
@@ -361,13 +343,18 @@ void Sound::load(sfxsample_t &sample)
     // Don't reload if a sample with the same sound ID is already loaded.
     if(!d->buffer->sample || d->buffer->sample->soundId != sample.soundId)
     {
-        d->sfx().gen.Load(d->buffer, &sample);
+        d->getPlayer().load(d->buffer, &sample);
     }
+}
+
+void Sound::stop()
+{
+    d->getPlayer().stop(d->buffer);
 }
 
 void Sound::reset()
 {
-    d->sfx().gen.Reset(d->buffer);
+    d->getPlayer().reset(d->buffer);
 }
 
 void Sound::play()
@@ -391,7 +378,7 @@ void Sound::play()
         d->setBufferProperty(SFXBP_MAX_DISTANCE, (d->flags & SFXCF_NO_ATTENUATION) ? 20000 : attenRange.end);
     }
 
-    d->sfx().gen.Play(d->buffer);
+    d->getPlayer().play(d->buffer);
     d->startTime = Timer_Ticks();  // Note the current time.
 }
 
@@ -405,14 +392,41 @@ void Sound::setPlayingMode(dint sfFlags)
     }
 }
 
-void Sound::stop()
+dint Sound::startTime() const
 {
-    d->sfx().gen.Stop(d->buffer);
+    return d->startTime;
+}
+
+Sound &Sound::setFrequency(dfloat newFrequency)
+{
+    d->frequency = newFrequency;
+    return *this;
+}
+
+Sound &Sound::setVolume(dfloat newVolume)
+{
+    d->volume = newVolume;
+    return *this;
+}
+
+bool Sound::isPlaying() const
+{
+    return d->buffer && (d->buffer->flags & SFXBF_PLAYING) != 0;
+}
+
+dfloat Sound::frequency() const
+{
+    return d->frequency;
+}
+
+dfloat Sound::volume() const
+{
+    return d->volume;
 }
 
 void Sound::refresh()
 {
-    d->sfx().gen.Refresh(d->buffer);
+    d->getPlayer().refresh(d->buffer);
 }
 
 }  // namespace audio

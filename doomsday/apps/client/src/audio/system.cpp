@@ -39,6 +39,7 @@
 #  include "audio/drivers/dummydriver.h"
 #  include "audio/drivers/plugindriver.h"
 #  include "audio/drivers/sdlmixerdriver.h"
+#  include "audio/channel.h"
 #  include "audio/mus.h"
 #endif
 
@@ -120,6 +121,35 @@ static mobj_t *getListenerMobj()
     return DD_Player(::displayPlayer)->publicData().mo;
 }
 
+// ----------------------------------------------------------------------------------
+
+System::IDriver::IPlayer::IPlayer(IDriver &driver) : _driver(&driver)
+{}
+
+System::IDriver &System::IDriver::IPlayer::driver() const
+{
+    DENG2_ASSERT(_driver != nullptr);
+    return *_driver;
+};
+
+DotPath System::IDriver::IPlayer::identityKey() const
+{
+    return driver().identityKey() + "." + name();
+}
+
+// ----------------------------------------------------------------------------------
+
+ICdPlayer::ICdPlayer(System::IDriver &driver) : IPlayer(driver)
+{}
+
+IMusicPlayer::IMusicPlayer(System::IDriver &driver) : IPlayer(driver)
+{}
+
+ISoundPlayer::ISoundPlayer(System::IDriver &driver) : IPlayer(driver)
+{}
+
+// ----------------------------------------------------------------------------------
+
 System &System::IDriver::audioSystem()  // static
 {
     return App_AudioSystem();
@@ -151,17 +181,17 @@ String System::IDriver::description() const
         if(hasCd())
         {
             //if(!piSummary.isEmpty()) piSummary += "\n" _E(0);
-            piSummary += " - CD: " _E(>) + interfacePath(&iCd()) + _E(<);
+            piSummary += " - CD: " _E(>) + iCd().name() + _E(<);
         }
         if(hasMusic())
         {
             if(!piSummary.isEmpty()) piSummary += "\n" _E(0);
-            piSummary += " - Music: " _E(>) + interfacePath(&iMusic()) + _E(<);
+            piSummary += " - Music: " _E(>) + iMusic().name() + _E(<);
         }
         if(hasSfx())
         {
             if(!piSummary.isEmpty()) piSummary += "\n" _E(0);
-            piSummary += " - SFX: " _E(>) + interfacePath(&iSfx()) + _E(<);
+            piSummary += " - SFX: " _E(>) + iSfx().name() + _E(<);
         }
 
         if(!piSummary.isEmpty())
@@ -177,6 +207,8 @@ String System::IDriver::description() const
     return desc;
 }
 #endif
+
+// ----------------------------------------------------------------------------------
 
 /**
  * @todo Simplify architecture - load the "dummy" driver, always -ds
@@ -328,19 +360,14 @@ DENG2_PIMPL(System)
     struct PlaybackInterface
     {
         audiointerfacetype_t type;
-        union {
-            void                   *any;
-            audiointerface_sfx_t   *sfx;
-            audiointerface_music_t *music;
-            audiointerface_cd_t    *cd;
-        } i;
+        IDriver::IPlayer *player;
     };
     QList<PlaybackInterface> activeInterfaces;
 
     void addPlaybackInterface(PlaybackInterface const &ifs)
     {
         DENG2_ASSERT(ifs.type == AUDIO_ISFX || ifs.type == AUDIO_IMUSIC || ifs.type == AUDIO_ICD);
-        DENG2_ASSERT(ifs.i.any != nullptr);
+        DENG2_ASSERT(ifs.player != nullptr);
         /// @todo Ensure this interface is not already present! -ds
         activeInterfaces << ifs;  // a copy is made
     }
@@ -354,16 +381,16 @@ DENG2_PIMPL(System)
         if(defaultDriver.hasSfx())
         {
             PlaybackInterface ifs; zap(ifs);
-            ifs.type  = AUDIO_ISFX;
-            ifs.i.any = &defaultDriver.iSfx();
+            ifs.type   = AUDIO_ISFX;
+            ifs.player = &defaultDriver.iSfx();
             addPlaybackInterface(ifs);  // a copy is made
         }
 
         if(defaultDriver.hasMusic())
         {
             PlaybackInterface ifs; zap(ifs);
-            ifs.type  = AUDIO_IMUSIC;
-            ifs.i.any = &defaultDriver.iMusic();
+            ifs.type   = AUDIO_IMUSIC;
+            ifs.player = &defaultDriver.iMusic();
             addPlaybackInterface(ifs);  // a copy is made
         }
 #if 0
@@ -372,8 +399,8 @@ DENG2_PIMPL(System)
         {
             // On the Mac, use the built-in QuickTime interface as the fallback for music.
             PlaybackInterface ifs; zap(ifs);
-            ifs.type  = AUDIO_IMUSIC;
-            ifs.i.any = &::audiodQuickTimeMusic;
+            ifs.type   = AUDIO_IMUSIC;
+            ifs.player = &::audiodQuickTimeMusic;
             addPlaybackInterface(ifs);  // a copy is made
         }
 #endif
@@ -388,8 +415,8 @@ DENG2_PIMPL(System)
             if(fluidSynth.isInitialized())
             {
                 PlaybackInterface ifs; zap(ifs);
-                ifs.type  = AUDIO_IMUSIC;
-                ifs.i.any = &fluidSynth.iMusic();
+                ifs.type   = AUDIO_IMUSIC;
+                ifs.player = &fluidSynth.iMusic();
                 addPlaybackInterface(ifs);  // a copy is made
             }
         }
@@ -399,8 +426,8 @@ DENG2_PIMPL(System)
         if(defaultDriver.hasCd())
         {
             PlaybackInterface ifs; zap(ifs);
-            ifs.type  = AUDIO_ICD;
-            ifs.i.any = &defaultDriver.iCd();
+            ifs.type   = AUDIO_ICD;
+            ifs.player = &defaultDriver.iCd();
             addPlaybackInterface(ifs);  // a copy is made
         }
 
@@ -419,8 +446,8 @@ DENG2_PIMPL(System)
                     if(driver.hasSfx())
                     {
                         PlaybackInterface ifs; zap(ifs);
-                        ifs.type  = AUDIO_ISFX;
-                        ifs.i.any = &driver.iSfx();
+                        ifs.type   = AUDIO_ISFX;
+                        ifs.player = &driver.iSfx();
                         addPlaybackInterface(ifs);  // a copy is made
                     }
                     else
@@ -445,8 +472,8 @@ DENG2_PIMPL(System)
                     if(driver.hasMusic())
                     {
                         PlaybackInterface ifs; zap(ifs);
-                        ifs.type  = AUDIO_IMUSIC;
-                        ifs.i.any = &driver.iMusic();
+                        ifs.type   = AUDIO_IMUSIC;
+                        ifs.player = &driver.iMusic();
                         addPlaybackInterface(ifs);  // a copy is made
                     }
                     else
@@ -471,8 +498,8 @@ DENG2_PIMPL(System)
                     if(driver.hasCd())
                     {
                         PlaybackInterface ifs; zap(ifs);
-                        ifs.type  = AUDIO_ICD;
-                        ifs.i.any = &driver.iCd();
+                        ifs.type   = AUDIO_ICD;
+                        ifs.player = &driver.iCd();
                         addPlaybackInterface(ifs);  // a copy is made
                     }
                     else
@@ -496,7 +523,8 @@ DENG2_PIMPL(System)
      * @param type  Type of interface to process.
      * @param func  Callback to make for each interface.
      */
-    LoopResult forAllInterfaces(audiointerfacetype_t type, std::function<LoopResult (void *)> func) const
+    LoopResult forAllInterfaces(audiointerfacetype_t type,
+        std::function<LoopResult (IDriver::IPlayer &)> func) const
     {
         if(type != AUDIO_INONE)
         {
@@ -507,7 +535,7 @@ DENG2_PIMPL(System)
                    (type == AUDIO_IMUSIC_OR_ICD && (ifs.type == AUDIO_IMUSIC ||
                                                     ifs.type == AUDIO_ICD)))
                 {
-                    if(auto result = func(ifs.i.any))
+                    if(auto result = func(*ifs.player))
                         return result;
                 }
             }
@@ -515,18 +543,6 @@ DENG2_PIMPL(System)
         return LoopContinue;
     }
 
-    DotPath interfacePath(void *playbackInterface) const
-    {
-        if(playbackInterface)
-        {
-            for(IDriver const *driver : drivers)
-            {
-                DotPath const path = driver->interfacePath(playbackInterface);
-                if(!path.isEmpty()) return path;
-            }
-        }
-        return "(invalid)";
-    }
 #endif  // __CLIENT__
 
     /**
@@ -638,21 +654,21 @@ DENG2_PIMPL(System)
         {
             std::unique_ptr<FileHandle> hndl(&App_FileSystem().openFile(path, "rb"));
 
-            auto didPlay = forAllInterfaces(AUDIO_IMUSIC, [this, &hndl, &looped] (void *ifs)
+            auto didPlay = forAllInterfaces(AUDIO_IMUSIC, [this, &hndl, &looped] (IDriver::IPlayer &plr)
             {
-                auto *iMusic = (audiointerface_music_t *) ifs;
+                auto &musicPlayer = plr.as<IMusicPlayer>();
 
                 // Does this interface offer buffered playback?
-                if(iMusic->Play && iMusic->SongBuffer)
+                if(musicPlayer.canPlayBuffer())
                 {
                     // Buffer the data using the driver's own facility.
                     dsize const len = hndl->length();
-                    hndl->read((duint8 *) iMusic->SongBuffer(len), len);
+                    hndl->read((duint8 *) musicPlayer.songBuffer(len), len);
 
-                    return iMusic->Play(looped);
+                    return musicPlayer.play(looped);
                 }
                 // Does this interface offer playback from a native file?
-                else if(iMusic->PlayFile)
+                else if(musicPlayer.canPlayFile())
                 {
                     // Write the data to disk and play from there.
                     String const bufPath = composeMusicBufferFilename();
@@ -663,7 +679,7 @@ DENG2_PIMPL(System)
                     F_Dump(buf, len, bufPath.toUtf8().constData());
                     M_Free(buf); buf = nullptr;
 
-                    return iMusic->PlayFile(bufPath.toUtf8().constData(), looped);
+                    return musicPlayer.playFile(bufPath.toUtf8().constData(), looped);
                 }
                 return 0;  // Continue.
             });
@@ -701,34 +717,34 @@ DENG2_PIMPL(System)
             String const srcFile = composeMusicBufferFilename(".mid");
             M_Mus2Midi(lump, srcFile.toUtf8().constData());
 
-            return forAllInterfaces(AUDIO_IMUSIC, [&srcFile, &looped] (void *ifs)
+            return forAllInterfaces(AUDIO_IMUSIC, [&srcFile, &looped] (IDriver::IPlayer &plr)
             {
-                auto *iMusic = (audiointerface_music_t *) ifs;
-                if(iMusic->PlayFile)
+                auto &musicPlayer = plr.as<IMusicPlayer>();
+                if(musicPlayer.canPlayFile())
                 {
-                    return iMusic->PlayFile(srcFile.toUtf8().constData(), looped);
+                    return musicPlayer.playFile(srcFile.toUtf8().constData(), looped);
                 }
                 return 0;  // Continue.
             });
         }
 
-        return forAllInterfaces(AUDIO_IMUSIC, [this, &lump, &looped] (void *ifs)
+        return forAllInterfaces(AUDIO_IMUSIC, [this, &lump, &looped] (IDriver::IPlayer &plr)
         {
-            auto *iMusic = (audiointerface_music_t *) ifs;
+            auto &musicPlayer = plr.as<IMusicPlayer>();
 
             // Does this interface offer buffered playback?
-            if(iMusic->Play && iMusic->SongBuffer)
+            if(musicPlayer.canPlayBuffer())
             {
                 // Buffer the data using the driver's own facility.
                 std::unique_ptr<FileHandle> hndl(&App_FileSystem().openLump(lump));
                 dsize const length  = hndl->length();
-                hndl->read((duint8 *) iMusic->SongBuffer(length), length);
+                hndl->read((duint8 *) musicPlayer.songBuffer(length), length);
                 App_FileSystem().releaseFile(hndl->file());
 
-                return iMusic->Play(looped);
+                return musicPlayer.play(looped);
             }
             // Does this interface offer playback from a native file?
-            else if(iMusic->PlayFile)
+            else if(musicPlayer.canPlayFile())
             {
                 // Write the data to disk and play from there.
                 String const fileName = composeMusicBufferFilename();
@@ -738,7 +754,7 @@ DENG2_PIMPL(System)
                     return 0;
                 }
 
-                return iMusic->PlayFile(fileName.toUtf8().constData(), looped);
+                return musicPlayer.playFile(fileName.toUtf8().constData(), looped);
             }
 
             return 0;  // Continue.
@@ -750,14 +766,9 @@ DENG2_PIMPL(System)
         // Assume track 0 is not valid.
         if(track == 0) return 0;
 
-        return forAllInterfaces(AUDIO_ICD, [&track, &looped] (void *ifs)
+        return forAllInterfaces(AUDIO_ICD, [&track, &looped] (IDriver::IPlayer &plr)
         {
-            auto *iCD = (audiointerface_cd_t *) ifs;
-            if(iCD->Play)
-            {
-                return iCD->Play(track, looped);
-            }
-            return 0;  // Continue.
+            return plr.as<ICdPlayer>().play(track, looped);
         });
     }
 
@@ -784,17 +795,31 @@ DENG2_PIMPL(System)
 
         // Initialize interfaces for music playback.
         dint initialized = 0;
-        forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [this, &initialized] (void *ifs)
+        forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [&initialized] (IDriver::IPlayer &plr)
         {
-            auto *iMusic = (audiointerface_music_generic_t *) ifs;
-            if(iMusic->Init())
+            if(auto *musicPlayer = plr.maybeAs<IMusicPlayer>())
             {
-                initialized += 1;
+                if(musicPlayer->init())
+                {
+                    initialized += 1;
+                }
+                else
+                {
+                    LOG_AUDIO_WARNING("Failed to initialize \"%s\" for music playback")
+                        << musicPlayer->identityKey();
+                }
             }
-            else
+            if(auto *cdPlayer = plr.maybeAs<ICdPlayer>())
             {
-                LOG_AUDIO_WARNING("Failed to initialize \"%s\" for music playback")
-                    << interfacePath(iMusic);
+                if(cdPlayer->init())
+                {
+                    initialized += 1;
+                }
+                else
+                {
+                    LOG_AUDIO_WARNING("Failed to initialize \"%s\" for music playback")
+                        << cdPlayer->identityKey();
+                }
             }
             return LoopContinue;
         });
@@ -818,10 +843,16 @@ DENG2_PIMPL(System)
         musAvail = false;
 
         // Shutdown interfaces.
-        forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [] (void *ifs)
+        forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [] (IDriver::IPlayer &plr)
         {
-            auto *iMusic = (audiointerface_music_generic_t *) ifs;
-            if(iMusic->Shutdown) iMusic->Shutdown();
+            if(auto *musicPlayer = plr.maybeAs<IMusicPlayer>())
+            {
+                musicPlayer->shutdown();
+            }
+            if(auto *cdPlayer = plr.maybeAs<ICdPlayer>())
+            {
+                cdPlayer->shutdown();
+            }
             return LoopContinue;
         });
     }
@@ -837,10 +868,16 @@ DENG2_PIMPL(System)
 
             // Set volume of all available interfaces.
             dfloat newVolume = musVolume / 255.0f;
-            forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [&newVolume] (void *ifs)
+            forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [&newVolume] (IDriver::IPlayer &plr)
             {
-                auto *iMusic = (audiointerface_music_generic_t *) ifs;
-                iMusic->Set(MUSIP_VOLUME, newVolume);
+                if(auto *musicPlayer = plr.maybeAs<IMusicPlayer>())
+                {
+                    musicPlayer->set(MUSIP_VOLUME, newVolume);
+                }
+                if(auto *cdPlayer = plr.maybeAs<ICdPlayer>())
+                {
+                    cdPlayer->set(MUSIP_VOLUME, newVolume);
+                }
                 return LoopContinue;
             });
         }
@@ -862,14 +899,12 @@ DENG2_PIMPL(System)
         }
 
         LOG_AUDIO_VERBOSE("Initializing sound effect playback...");
-        // No available interface?
-        if(!self.sfx()) return;
 
         // This is based on the scientific calculations that if the DOOM marine
         // is 56 units tall, 60 is about two meters.
         //// @todo Derive from the viewheight.
-        self.sfx()->Listener(SFXLP_UNITS_PER_METER, 30);
-        self.sfx()->Listener(SFXLP_DOPPLER, 1.5f);
+        self.sfx().listener(SFXLP_UNITS_PER_METER, 30);
+        self.sfx().listener(SFXLP_DOPPLER, 1.5f);
 
         // (Re)Init the sample cache.
         sampleCache.clear();
@@ -877,13 +912,12 @@ DENG2_PIMPL(System)
         // Initialize reverb effects to off.
         sfxListenerNoReverb();
 
-        // The drivers are working; prepare playback channels and start the sound
-        // channel refresh thread (if needed).
-        initChannels();
-        channels->initRefresh();
-
         // The Sfx module is now available.
         sfxAvail = true;
+
+        // Prepare the channel map and start the sound refresh thread (if needed).
+        initChannels();
+        channels->initRefresh();
     }
 
     /**
@@ -903,13 +937,6 @@ DENG2_PIMPL(System)
         channels.reset();
     }
 
-    Sound *makeSound(bool stereoPositioning, int bitsPer, int rate)
-    {
-        std::unique_ptr<Sound> sound(new Sound);
-        sound->setBuffer(self.sfx()->Create(stereoPositioning ? 0 : SFXBF_3D, bitsPer, rate));
-        return sound.release();
-    }
-
     /**
      * Destroys and then recreates the sound Channels according to the current mode.
      */
@@ -925,14 +952,14 @@ DENG2_PIMPL(System)
 
         // Change the primary buffer format to match the channel format.
         dfloat parm[2] = { dfloat(sfxBits), dfloat(sfxRate) };
-        self.sfx()->Listenerv(SFXLP_PRIMARY_FORMAT, parm);
+        self.sfx().listenerv(SFXLP_PRIMARY_FORMAT, parm);
 
         // Replace the entire channel set (we'll reconfigure).
         channels.reset(new Channels);
         dint num2D = sfx3D ? CHANNEL_2DCOUNT: numChannels;  // The rest will be 3D.
         for(dint i = 0; i < numChannels; ++i)
         {
-            Sound/*Channel*/ &ch = channels->add(*makeSound(num2D-- > 0, sfxBits, sfxRate));
+            Sound/*Channel*/ &ch = channels->add(*self.sfx().makeSound(num2D-- > 0, sfxBits, sfxRate));
             if(!ch.hasBuffer())
             {
                 LOG_AUDIO_WARNING("Failed creating Sound for Channel #%i") << i;
@@ -1017,19 +1044,13 @@ DENG2_PIMPL(System)
                 {
                     dfloat const chPriority = channelPrios[idx++];
 
-                    if(ch.hasBuffer())
+                    if(ch.isPlaying())
                     {
-                        sfxbuffer_t const &sbuf = ch.buffer();
-                        if((sbuf.flags & SFXBF_PLAYING))
+                        if(   ch.buffer().sample->soundId == sample.soundId
+                           && (myPrio >= chPriority && (!selCh || chPriority <= lowPrio)))
                         {
-                            DENG2_ASSERT(sbuf.sample != nullptr);
-
-                            if(sbuf.sample->soundId == sample.soundId &&
-                               (myPrio >= chPriority && (!selCh || chPriority <= lowPrio)))
-                            {
-                                selCh   = &ch;
-                                lowPrio = chPriority;
-                            }
+                            selCh   = &ch;
+                            lowPrio = chPriority;
                         }
                     }
 
@@ -1101,10 +1122,9 @@ DENG2_PIMPL(System)
                 if(ch.hasBuffer())
                 {
                     // Sample buffer must be configured for the right mode.
-                    sfxbuffer_t const &sbuf = ch.buffer();
-                    if(play3D == ((sbuf.flags & SFXBF_3D) != 0))
+                    if(play3D == ((ch.buffer().flags & SFXBF_3D) != 0))
                     {
-                        if(!(sbuf.flags & SFXBF_PLAYING))
+                        if(!ch.isPlaying())
                         {
                             // This channel is not playing, we'll take it!
                             selCh = &ch;
@@ -1147,13 +1167,13 @@ DENG2_PIMPL(System)
            selCh->buffer().bytes != sample.bytesPer)
         {
             // Create a new sample buffer with the correct format.
-            selCh->setBuffer(self.sfx()->Create(play3D ? SFXBF_3D : 0, sample.bytesPer * 8, sample.rate));
+            selCh->setBuffer(self.sfx().create(play3D ? SFXBF_3D : 0, sample.bytesPer * 8, sample.rate));
         }
 
         selCh->setPlayingMode(flags);
         selCh->setFlags(selCh->flags() & ~(SFXCF_NO_ORIGIN | SFXCF_NO_ATTENUATION | SFXCF_NO_UPDATE));
-        selCh->setVolume(volume);
-        selCh->setFrequency(freq);
+        selCh->setVolume(volume)
+              .setFrequency(freq);
 
         if(!emitter && !origin)
         {
@@ -1176,7 +1196,7 @@ DENG2_PIMPL(System)
         }
 
         // Update listener properties.
-        self.sfx()->Listener(SFXLP_UPDATE, 0);
+        self.sfx().listener(SFXLP_UPDATE, 0);
 
         // Load in the sample if needed.
         selCh->load(sample);
@@ -1354,8 +1374,8 @@ DENG2_PIMPL(System)
         sfxListenerCluster = nullptr;
 
         dfloat rev[4] = { 0, 0, 0, 0 };
-        self.sfx()->Listenerv(SFXLP_REVERB, rev);
-        self.sfx()->Listener(SFXLP_UPDATE, 0);
+        self.sfx().listenerv(SFXLP_REVERB, rev);
+        self.sfx().listener(SFXLP_UPDATE, 0);
     }
 
     void updateSfxListener()
@@ -1374,7 +1394,7 @@ DENG2_PIMPL(System)
                 auto const origin = Vector4f(getSfxListenerOrigin().toVector3f(), 0);
                 dfloat vec[4];
                 origin.decompose(vec);
-                self.sfx()->Listenerv(SFXLP_POSITION, vec);
+                self.sfx().listenerv(SFXLP_POSITION, vec);
             }
             {
                 // Orientation. (0,0) will produce front=(1,0,0) and up=(0,0,1).
@@ -1382,14 +1402,14 @@ DENG2_PIMPL(System)
                     sfxListener->angle / (dfloat) ANGLE_MAX * 360,
                     (sfxListener->dPlayer ? LOOKDIR2DEG(sfxListener->dPlayer->lookDir) : 0)
                 };
-                self.sfx()->Listenerv(SFXLP_ORIENTATION, vec);
+                self.sfx().listenerv(SFXLP_ORIENTATION, vec);
             }
             {
                 // Velocity. The unit is world distance units per second
                 auto const velocity = Vector4f(Vector3d(sfxListener->mom).toVector3f(), 0) * TICSPERSEC;
                 dfloat vec[4];
                 velocity.decompose(vec);
-                self.sfx()->Listenerv(SFXLP_VELOCITY, vec);
+                self.sfx().listenerv(SFXLP_VELOCITY, vec);
             }
 
             // Reverb effects. Has the current sector cluster changed?
@@ -1406,12 +1426,12 @@ DENG2_PIMPL(System)
                     vec[i] = envFactors[i];
                 }
                 vec[SRD_VOLUME] *= sfxReverbStrength;
-                self.sfx()->Listenerv(SFXLP_REVERB, vec);
+                self.sfx().listenerv(SFXLP_REVERB, vec);
             }
         }
 
         // Update all listener properties.
-        self.sfx()->Listener(SFXLP_UPDATE, 0);
+        self.sfx().listener(SFXLP_UPDATE, 0);
     }
 
     void updateSfx3DModeIfChanged()
@@ -1530,12 +1550,12 @@ String System::description() const
         if(ifs.type == AUDIO_IMUSIC || ifs.type == AUDIO_ICD)
         {
             os << _E(Ta) _E(l) "  " << (ifs.type == AUDIO_IMUSIC ? "Music" : "CD") << ": "
-               << _E(.) _E(Tb) << d->interfacePath(ifs.i.any) << "\n";
+               << _E(.) _E(Tb) << ifs.player->identityKey() << "\n";
         }
         else if(ifs.type == AUDIO_ISFX)
         {
             os << _E(Ta) _E(l) << "  SFX: " << _E(.) _E(Tb)
-               << d->interfacePath(ifs.i.sfx) << "\n";
+               << ifs.player->identityKey() << "\n";
         }
     }
 
@@ -1718,10 +1738,17 @@ bool System::musicIsAvailable() const
 bool System::musicIsPlaying() const
 {
     //LOG_AS("audio::System");
-    return d->forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [] (void *ifs)
+    return d->forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [] (IDriver::IPlayer &plr)
     {
-        auto *iMusic = (audiointerface_music_t *) ifs;
-        return iMusic->gen.Get(MUSIP_PLAYING, nullptr);
+        if(auto *musicPlayer = plr.maybeAs<IMusicPlayer>())
+        {
+            return musicPlayer->get(MUSIP_PLAYING, nullptr);
+        }
+        if(auto *cdPlayer = plr.maybeAs<ICdPlayer>())
+        {
+            return cdPlayer->get(MUSIP_PLAYING, nullptr);
+        }
+        return 0; // Continue
     });
 }
 
@@ -1733,10 +1760,16 @@ void System::stopMusic()
     d->musCurrentSong = "";
 
     // Stop all interfaces.
-    d->forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [] (void *ifs)
+    d->forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [] (IDriver::IPlayer &plr)
     {
-        auto *iMusic = (audiointerface_music_generic_t *) ifs;
-        iMusic->Stop();
+        if(auto *musicPlayer = plr.maybeAs<IMusicPlayer>())
+        {
+            musicPlayer->stop();
+        }
+        if(auto *cdPlayer = plr.maybeAs<ICdPlayer>())
+        {
+            cdPlayer->stop();
+        }
         return LoopContinue;
     });
 }
@@ -1749,10 +1782,16 @@ void System::pauseMusic(bool doPause)
     d->musPaused = !d->musPaused;
 
     // Pause playback on all interfaces.
-    d->forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [&doPause] (void *ifs)
+    d->forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [&doPause] (IDriver::IPlayer &plr)
     {
-        auto *iMusic = (audiointerface_music_generic_t *) ifs;
-        iMusic->Pause(doPause);
+        if(auto *musicPlayer = plr.maybeAs<IMusicPlayer>())
+        {
+            musicPlayer->pause(doPause);
+        }
+        if(auto *cdPlayer = plr.maybeAs<ICdPlayer>())
+        {
+            cdPlayer->pause(doPause);
+        }
         return LoopContinue;
     });
 }
@@ -1814,10 +1853,9 @@ dint System::playMusic(Record const &definition, bool looped)
         switch(source[i])
         {
         case MUSP_CD:
-            if(cd())
+            if(d->playMusicCDTrack(defn::Music(definition).cdTrack(), looped))
             {
-                if(d->playMusicCDTrack(defn::Music(definition).cdTrack(), looped))
-                    return true;
+                return true;
             }
             break;
 
@@ -1922,10 +1960,7 @@ bool System::sfxIsAvailable() const
 bool System::mustUpsampleToSfxRate() const
 {
     dint anyRateAccepted = 0;
-    if(sfx()->Getv)
-    {
-        sfx()->Getv(SFXIP_ANY_SAMPLE_RATE_ACCEPTED, &anyRateAccepted);
-    }
+    sfx().getv(SFXIP_ANY_SAMPLE_RATE_ACCEPTED, &anyRateAccepted);
     return (anyRateAccepted ? false : true);
 }
 
@@ -1977,13 +2012,12 @@ bool System::soundIsPlaying(dint soundId, mobj_t *emitter) const
 
     return d->channels->forAll([&id, &emitter] (Channel &ch)
     {
-        if(ch.hasSample())
+        if(ch.isPlaying())
         {
-            sfxbuffer_t &sbuf = ch.sample();
+            sfxbuffer_t &sbuf = ch.buffer();
 
-            if(!(sbuf.flags & SFXBF_PLAYING) ||
-               ch.emitter() != emitter ||
-               id && sbuf.sample->id != id)
+            if(   ch.emitter() != emitter
+               || (id && sbuf.sample->id != id))
             {
                 return LoopContinue;
             }
@@ -2011,11 +2045,9 @@ void System::stopSoundGroup(dint group, mobj_t *emitter)
     LOG_AS("audio::System");
     d->channels->forAll([this, &group, &emitter] (Sound/*Channel*/ &ch)
     {
-        if(ch.hasBuffer())
+        if(ch.isPlaying())
         {
-            sfxbuffer_t const &sbuf = ch.buffer();
-            if((sbuf.flags & SFXBF_PLAYING) &&
-               (sbuf.sample->group == group && (!emitter || ch.emitter() == emitter)))
+            if(ch.buffer().sample->group == group && (!emitter || ch.emitter() == emitter))
             {
                 // This channel must stop.
                 ch.stop();
@@ -2033,11 +2065,11 @@ dint System::stopSoundWithLowerPriority(dint id, mobj_t *emitter, dint defPriori
     dint stopCount = 0;
     d->channels->forAll([this, &id, &emitter, &defPriority, &stopCount] (Sound/*Channel*/ &ch)
     {
-        if(!ch.hasBuffer()) return LoopContinue;
+        if(!ch.isPlaying()) return LoopContinue;
+            
         sfxbuffer_t const &sbuf = ch.buffer();
-
-        if(!(sbuf.flags & SFXBF_PLAYING) || (id && sbuf.sample->soundId != id) ||
-           (emitter && ch.emitter() != emitter))
+        if(   (id && sbuf.sample->soundId != id)
+           || (emitter && ch.emitter() != emitter))
         {
             return LoopContinue;
         }
@@ -2224,28 +2256,34 @@ dfloat System::rateSoundPriority(mobj_t *emitter, coord_t const *point, dfloat v
     return 1000 * volume - Mobj_ApproxPointDistance(d->sfxListener, origin) / 2 - timeoff;
 }
 
-audiointerface_sfx_generic_t *System::sfx() const
+ISoundPlayer &System::sfx() const
 {
     // The primary interface is the first one.
-    audiointerface_sfx_generic_t *found = nullptr;
-    d->forAllInterfaces(AUDIO_ISFX, [&found] (void *ifs)
+    ISoundPlayer *found = nullptr;
+    d->forAllInterfaces(AUDIO_ISFX, [&found] (IDriver::IPlayer &plr)
     {
-        found = (audiointerface_sfx_generic_t *)ifs;
+        found = &plr.as<ISoundPlayer>();
         return LoopAbort;
     });
-    return found;
+    if(found) return *found;
+
+    /// @throw Error  No suitable sound player is available.
+    throw Error("System::sfx", "No Sound player available");
 }
 
-audiointerface_cd_t *System::cd() const
+ICdPlayer &System::cd() const
 {
     // The primary interface is the first one.
-    audiointerface_cd_t *found = nullptr;
-    d->forAllInterfaces(AUDIO_ICD, [&found] (void *ifs)
+    ICdPlayer *found = nullptr;
+    d->forAllInterfaces(AUDIO_ICD, [&found] (IDriver::IPlayer &plr)
     {
-        found = (audiointerface_cd_t *)ifs;
+        found = &plr.as<ICdPlayer>();
         return LoopAbort;
     });
-    return found;
+    if(found) return *found;
+
+    /// @throw Error  No suitable sound player is available.
+    throw Error("System::cd", "No CD player available");
 }
 
 SampleCache const &System::sampleCache() const
@@ -2469,11 +2507,6 @@ D_CMD(PlayMusic)
         }
         else if(!qstricmp(argv[1], "cd"))
         {
-            if(!audioSys.cd())
-            {
-                LOG_AUDIO_WARNING("No CD audio interface available");
-                return false;
-            }
             return audioSys.playMusicCDTrack(String(argv[2]).toInt(), looped);
         }
     }

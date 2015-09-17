@@ -81,13 +81,9 @@ struct ChannelRefresher
 
         dint disableRefresh = false;
 
-        // Nothing to refresh?
-        if(!System::get().sfx()) goto noRefresh;
+        DENG2_ASSERT(System::get().sfxIsAvailable());
 
-        if(System::get().sfx()->Getv)
-        {
-            System::get().sfx()->Getv(SFXIP_DISABLE_CHANNEL_REFRESH, &disableRefresh);
-        }
+        System::get().sfx().getv(SFXIP_DISABLE_CHANNEL_REFRESH, &disableRefresh);
 
         if(!disableRefresh)
         {
@@ -100,7 +96,6 @@ struct ChannelRefresher
         }
         else
         {
-    noRefresh:
             LOGDEV_AUDIO_NOTE("Audio driver does not require a refresh thread");
         }
     }
@@ -227,10 +222,10 @@ dint Channels::countPlaying(dint soundId)
     dint count = 0;
     forAll([&soundId, &count] (Sound/*Channel*/ &ch)
     {
-        if(ch.hasBuffer())
+        if(ch.isPlaying())
         {
             sfxbuffer_t const &sbuf = ch.buffer();
-            if((sbuf.flags & SFXBF_PLAYING) && sbuf.sample && sbuf.sample->soundId == soundId)
+            if(sbuf.sample && sbuf.sample->soundId == soundId)
             {
                 count += 1;
             }
@@ -254,11 +249,10 @@ Sound/*Channel*/ *Channels::tryFindVacant(bool use3D, dint bytes, dint rate, din
 {
     for(Sound/*Channel*/ *ch : d->all)
     {
-        if(!ch->hasBuffer()) continue;
-        sfxbuffer_t const &sbuf = ch->buffer();
+        if(!ch->isPlaying()) continue;
 
-        if((sbuf.flags & SFXBF_PLAYING)
-           || use3D != ((sbuf.flags & SFXBF_3D) != 0)
+        sfxbuffer_t const &sbuf = ch->buffer();
+        if(   use3D != ((sbuf.flags & SFXBF_3D) != 0)
            || sbuf.bytes != bytes
            || sbuf.rate  != rate)
             continue;
@@ -296,7 +290,7 @@ void Channels::refreshAll()
 {
     forAll([this] (Sound/*Channel*/ &ch)
     {
-        if(ch.hasBuffer() && (ch.buffer().flags & SFXBF_PLAYING))
+        if(ch.isPlaying())
         {
             ch.refresh();
         }
@@ -383,7 +377,7 @@ void UI_AudioChannelDrawer()
     dint idx = 0;
     audio::System::get().channels().forAll([&lh, &idx] (Sound/*Channel*/ &ch)
     {
-        if(ch.hasBuffer() && (ch.buffer().flags & SFXBF_PLAYING))
+        if(ch.isPlaying())
         {
             FR_SetColor(1, 1, 1);
         }

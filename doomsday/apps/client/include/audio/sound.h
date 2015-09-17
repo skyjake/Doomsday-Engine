@@ -23,6 +23,7 @@
 #define CLIENT_AUDIO_SOUND_H
 
 #include "api_audiod_sfx.h"  // sfxbuffer_t
+#include "audio/system.h"
 #include "world/p_object.h"  // mobj_t
 #include <de/Error>
 #include <de/Vector>
@@ -44,7 +45,7 @@ public:
     DENG2_ERROR(MissingBufferError);
 
 public:
-    Sound();
+    Sound(ISoundPlayer &player);
     virtual ~Sound();
 
     /**
@@ -64,18 +65,6 @@ public:
     void setFlags(int newFlags);
 
     /**
-     * Returns the current frequency adjustment: 1.0 is normal.
-     */
-    float frequency() const;
-    void setFrequency(float newFrequency);
-
-    /**
-     * Returns the current volume: 1.0 is max.
-     */
-    float volume() const;
-    void setVolume(float newVolume);
-
-    /**
      * Returns the attributed emitter if any (may be @c nullptr).
      */
     struct mobj_s *emitter() const;
@@ -88,12 +77,32 @@ public:
      * the channel mapper to determine which sounds can be overridden by new sounds.
      * Zero is the lowest priority.
      */
-    float priority() const;
+    de::dfloat priority() const;
 
     /**
-     * Returns the time in tics that the sound was last played.
+     * Change the playback frequency modifier to @a newFrequency (Hz).
      */
-    int startTime() const;
+    Sound &setFrequency(de::dfloat newFrequency);
+
+    /**
+     * Change the playback volume modifier to @a newVolume.
+     */
+    Sound &setVolume(de::dfloat newVolume);
+
+    /**
+     * Returns @c true if the sound is currently playing.
+     */
+    bool isPlaying() const;
+
+    /**
+     * Returns the current playback frequency modifier: 1.0 is normal.
+     */
+    de::dfloat frequency() const;
+
+    /**
+     * Returns the current playback volume modifier: 1.0 is max.
+     */
+    de::dfloat volume() const;
 
 public:  // Playback interface: ----------------------------------------------------
 
@@ -110,6 +119,13 @@ public:  // Playback interface: ------------------------------------------------
     /**
      * Stop the sound if playing and forget about any sample loaded in the buffer.
      *
+     * @note Just stopping doesn't affect refresh!
+     */
+    void stop();
+
+    /**
+     * Stop the sound if playing and forget about any sample loaded in the buffer.
+     *
      * @todo Logically distinct from @ref stop() ? -ds
      */
     void reset();
@@ -118,15 +134,14 @@ public:  // Playback interface: ------------------------------------------------
      * Start playing the sound loaded in the buffer.
      */
     void play();
-    void setPlayingMode(int sfFlags);
+    void setPlayingMode(de::dint sfFlags);
 
     /**
-     * Stop the sound if playing and forget about any sample loaded in the buffer.
-     *
-     * @note Just stopping doesn't affect refresh!
+     * Returns the time in tics that the sound was last played.
      */
-    void stop();
+    de::dint startTime() const;
 
+public:
     /**
      * Called periodically by the audio system's refresh thread, so that the buffer
      * can be filled with sample data, for streaming purposes.

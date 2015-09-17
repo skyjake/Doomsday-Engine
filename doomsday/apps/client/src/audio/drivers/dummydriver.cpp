@@ -19,7 +19,7 @@
 
 #include "audio/drivers/dummydriver.h"
 
-#include "api_audiod_sfx.h"
+#include "audio/sound.h"
 #include <de/Log>
 #include <de/memoryzone.h>
 #include <de/timer.h>
@@ -28,21 +28,145 @@ using namespace de;
 
 namespace audio {
 
-static bool sfxInitialized;
-
-static int DS_Dummy_SFX_Init()
+/**
+ * @param buf  Sound buffer.
+ * @return The length of the buffer in milliseconds.
+ */
+static duint getBufferLength(sfxbuffer_t *buf)
 {
-    return sfxInitialized = true;
+    DENG2_ASSERT(buf && buf->sample);
+    return 1000 * buf->sample->numSamples / buf->freq;
 }
 
-static void DS_Dummy_SFX_DestroyBuffer(sfxbuffer_t *buf)
+// ----------------------------------------------------------------------------------
+
+DummyDriver::CdPlayer::CdPlayer(DummyDriver &driver) : ICdPlayer(driver)
+{}
+
+String DummyDriver::CdPlayer::name() const
+{
+    return "cd";
+}
+
+dint DummyDriver::CdPlayer::init()
+{
+    return _initialized = true;
+}
+
+void DummyDriver::CdPlayer::shutdown()
+{
+    _initialized = false;
+}
+
+void DummyDriver::CdPlayer::update()
+{}
+
+void DummyDriver::CdPlayer::set(dint, dfloat)
+{}
+
+dint DummyDriver::CdPlayer::get(dint, void *) const
+{
+    return false;
+}
+
+void DummyDriver::CdPlayer::pause(dint)
+{}
+
+void DummyDriver::CdPlayer::stop()
+{}
+
+dint DummyDriver::CdPlayer::play(dint, dint)
+{
+    return true;
+}
+
+// ----------------------------------------------------------------------------------
+
+DummyDriver::MusicPlayer::MusicPlayer(DummyDriver &driver) : IMusicPlayer(driver)
+{}
+
+String DummyDriver::MusicPlayer::name() const
+{
+    return "music";
+}
+
+dint DummyDriver::MusicPlayer::init()
+{
+    return _initialized = true;
+}
+
+void DummyDriver::MusicPlayer::shutdown()
+{
+    _initialized = false;
+}
+
+void DummyDriver::MusicPlayer::update()
+{}
+
+void DummyDriver::MusicPlayer::set(dint, dfloat)
+{}
+
+dint DummyDriver::MusicPlayer::get(dint, void *) const
+{
+    return false;
+}
+
+void DummyDriver::MusicPlayer::pause(dint)
+{}
+
+void DummyDriver::MusicPlayer::stop()
+{}
+
+bool DummyDriver::MusicPlayer::canPlayBuffer() const
+{
+    return false;  /// @todo Should support this...
+}
+
+void *DummyDriver::MusicPlayer::songBuffer(duint)
+{
+    return nullptr;
+}
+
+dint DummyDriver::MusicPlayer::play(dint)
+{
+    return true;
+}
+
+bool DummyDriver::MusicPlayer::canPlayFile() const
+{
+    return true;
+}
+
+dint DummyDriver::MusicPlayer::playFile(char const *, dint)
+{
+    return true;
+}
+
+// ----------------------------------------------------------------------------------
+
+DummyDriver::SoundPlayer::SoundPlayer(DummyDriver &driver) : ISoundPlayer(driver)
+{}
+
+String DummyDriver::SoundPlayer::name() const
+{
+    return "sfx";
+}
+
+dint DummyDriver::SoundPlayer::init()
+{
+    return _initialized = true;
+}
+
+void DummyDriver::SoundPlayer::destroy(sfxbuffer_t *buf)
 {
     // Free the memory allocated for the buffer.
     Z_Free(buf);
 }
 
-static sfxbuffer_t *DS_Dummy_SFX_CreateBuffer(int flags, int bits, int rate)
+sfxbuffer_t *DummyDriver::SoundPlayer::create(dint flags, dint bits, dint rate)
 {
+    /// @todo fixme: We have ownership - ensure the buffer is destroyed when the
+    /// SoundPlayer is. -ds
     auto *buf = (sfxbuffer_t *) Z_Calloc(sizeof(sfxbuffer_t), PU_APPSTATIC, 0);
 
     buf->bytes = bits / 8;
@@ -53,17 +177,14 @@ static sfxbuffer_t *DS_Dummy_SFX_CreateBuffer(int flags, int bits, int rate)
     return buf;
 }
 
-/**
- * @param buf  Sound buffer.
- * @return The length of the buffer in milliseconds.
- */
-static uint DS_DummyBufferLength(sfxbuffer_t *buf)
+Sound *DummyDriver::SoundPlayer::makeSound(bool stereoPositioning, dint bitsPer, dint rate)
 {
-    DENG2_ASSERT(buf && buf->sample);
-    return 1000 * buf->sample->numSamples / buf->freq;
+    std::unique_ptr<Sound> sound(new Sound(*this));
+    sound->setBuffer(create(stereoPositioning ? 0 : SFXBF_3D, bitsPer, rate));
+    return sound.release();
 }
 
-static void DS_Dummy_SFX_Stop(sfxbuffer_t *buf)
+void DummyDriver::SoundPlayer::stop(sfxbuffer_t *buf)
 {
     DENG2_ASSERT(buf);
 
@@ -74,16 +195,16 @@ static void DS_Dummy_SFX_Stop(sfxbuffer_t *buf)
     buf->flags |= SFXBF_RELOAD;
 }
 
-static void DS_Dummy_SFX_Reset(sfxbuffer_t *buf)
+void DummyDriver::SoundPlayer::reset(sfxbuffer_t *buf)
 {
     DENG2_ASSERT(buf);
 
-    DS_Dummy_SFX_Stop(buf);
+    stop(buf);
     buf->sample = nullptr;
     buf->flags &= ~SFXBF_RELOAD;
 }
 
-static void DS_Dummy_SFX_Load(sfxbuffer_t *buf, struct sfxsample_s *sample)
+void DummyDriver::SoundPlayer::load(sfxbuffer_t *buf, sfxsample_t *sample)
 {
     DENG2_ASSERT(buf && sample);
 
@@ -93,7 +214,7 @@ static void DS_Dummy_SFX_Load(sfxbuffer_t *buf, struct sfxsample_s *sample)
     buf->flags  &= ~SFXBF_RELOAD;
 }
 
-static void DS_Dummy_SFX_Play(sfxbuffer_t *buf)
+void DummyDriver::SoundPlayer::play(sfxbuffer_t *buf)
 {
     DENG2_ASSERT(buf);
 
@@ -103,21 +224,21 @@ static void DS_Dummy_SFX_Play(sfxbuffer_t *buf)
     // Do we need to reload?
     if(buf->flags & SFXBF_RELOAD)
     {
-        DS_Dummy_SFX_Load(buf, buf->sample);
+        load(buf, buf->sample);
     }
 
     // The sound starts playing now?
     if(!(buf->flags & SFXBF_PLAYING))
     {
         // Calculate the end time (milliseconds).
-        buf->endTime = Timer_RealMilliseconds() + DS_DummyBufferLength(buf);
+        buf->endTime = Timer_RealMilliseconds() + getBufferLength(buf);
     }
 
     // The buffer is now playing.
     buf->flags |= SFXBF_PLAYING;
 }
 
-static void DS_Dummy_SFX_Refresh(sfxbuffer_t *buf)
+void DummyDriver::SoundPlayer::refresh(sfxbuffer_t *buf)
 {
     DENG2_ASSERT(buf);
 
@@ -129,11 +250,11 @@ static void DS_Dummy_SFX_Refresh(sfxbuffer_t *buf)
     if(!(buf->flags & SFXBF_REPEAT) && Timer_RealMilliseconds() >= buf->endTime)
     {
         // Time for the sound to stop.
-        DS_Dummy_SFX_Stop(buf);
+        stop(buf);
     }
 }
 
-static void DS_Dummy_SFX_Set(sfxbuffer_t *buf, int prop, float value)
+void DummyDriver::SoundPlayer::set(sfxbuffer_t *buf, dint prop, dfloat value)
 {
     DENG2_ASSERT(buf);
 
@@ -147,18 +268,18 @@ static void DS_Dummy_SFX_Set(sfxbuffer_t *buf, int prop, float value)
     }
 }
 
-static void DS_Dummy_SFX_Setv(sfxbuffer_t * /*buf*/, int /*prop*/, float * /*values*/)
+void DummyDriver::SoundPlayer::setv(sfxbuffer_t *, dint, dfloat *)
 {
     // Nothing to do.
 }
 
-static int DS_Dummy_SFX_Getv(int prop, void *values)
+dint DummyDriver::SoundPlayer::getv(dint prop, void *values) const
 {
     switch(prop)
     {
     case SFXIP_DISABLE_CHANNEL_REFRESH: {
         /// The return value is a single 32-bit int.
-        auto *wantDisable = (int *) values;
+        auto *wantDisable = (dint *) values;
         if(wantDisable)
         {
             // We are not playing any audio.
@@ -170,44 +291,32 @@ static int DS_Dummy_SFX_Getv(int prop, void *values)
     }
 }
 
-static void DS_Dummy_SFX_Listener(int /*prop*/, float /*value*/)
+void DummyDriver::SoundPlayer::listener(dint, dfloat)
 {
     // Nothing to do.
 }
 
-static void DS_Dummy_SFX_Listenerv(int /*prop*/, float * /*values*/)
+void DummyDriver::SoundPlayer::listenerv(dint, dfloat *)
 {
     // Nothing to do.
 }
 
-DENG2_PIMPL_NOREF(DummyDriver)
+// ----------------------------------------------------------------------------------
+
+DENG2_PIMPL(DummyDriver)
 {
     bool initialized = false;
 
-    audiointerface_cd_t iCd;
-    audiointerface_music_t iMusic;
-    audiointerface_sfx_t iSfx;
+    CdPlayer iCd;
+    MusicPlayer iMusic;
+    SoundPlayer iSfx;
 
-    Instance()
-    {
-        de::zap(iCd);
-        de::zap(iMusic);
-
-        de::zap(iSfx);
-        iSfx.gen.Init      = DS_Dummy_SFX_Init;
-        iSfx.gen.Create    = DS_Dummy_SFX_CreateBuffer;
-        iSfx.gen.Destroy   = DS_Dummy_SFX_DestroyBuffer;
-        iSfx.gen.Load      = DS_Dummy_SFX_Load;
-        iSfx.gen.Reset     = DS_Dummy_SFX_Reset;
-        iSfx.gen.Play      = DS_Dummy_SFX_Play;
-        iSfx.gen.Stop      = DS_Dummy_SFX_Stop;
-        iSfx.gen.Refresh   = DS_Dummy_SFX_Refresh;
-        iSfx.gen.Set       = DS_Dummy_SFX_Set;
-        iSfx.gen.Setv      = DS_Dummy_SFX_Setv;
-        iSfx.gen.Listener  = DS_Dummy_SFX_Listener;
-        iSfx.gen.Listenerv = DS_Dummy_SFX_Listenerv;
-        iSfx.gen.Getv      = DS_Dummy_SFX_Getv;
-    }
+    Instance(Public *i)
+        : Base(i)
+        , iCd   (self)
+        , iMusic(self)
+        , iSfx  (self)
+    {}
 
     ~Instance()
     {
@@ -216,7 +325,7 @@ DENG2_PIMPL_NOREF(DummyDriver)
     }
 };
 
-DummyDriver::DummyDriver() : d(new Instance)
+DummyDriver::DummyDriver() : d(new Instance(this))
 {}
 
 DummyDriver::~DummyDriver()
@@ -276,37 +385,19 @@ bool DummyDriver::hasSfx() const
     return d->initialized;
 }
 
-audiointerface_cd_t /*const*/ &DummyDriver::iCd() const
+ICdPlayer /*const*/ &DummyDriver::iCd() const
 {
     return d->iCd;
 }
 
-audiointerface_music_t /*const*/ &DummyDriver::iMusic() const
+IMusicPlayer /*const*/ &DummyDriver::iMusic() const
 {
     return d->iMusic;
 }
 
-audiointerface_sfx_t /*const*/ &DummyDriver::iSfx() const
+ISoundPlayer /*const*/ &DummyDriver::iSfx() const
 {
     return d->iSfx;
-}
-
-DotPath DummyDriver::interfacePath(void *playbackInterface) const
-{
-    if((void *)&d->iCd == playbackInterface)
-    {
-        return identityKey() + ".cd";
-    }
-    if((void *)&d->iMusic == playbackInterface)
-    {
-        return identityKey() + ".music";
-    }
-    if((void *)&d->iSfx == playbackInterface)
-    {
-        return identityKey() + ".sfx";
-    }
-
-    return "";  // Not recognized.
 }
 
 }  // namespace audio

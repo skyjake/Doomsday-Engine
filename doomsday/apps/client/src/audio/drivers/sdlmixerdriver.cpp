@@ -21,6 +21,7 @@
 
 #include "audio/drivers/sdlmixerdriver.h"
 
+#include "audio/sound.h"
 #include <de/Log>
 #include <de/memoryzone.h>
 #include <de/timer.h>
@@ -37,20 +38,17 @@ namespace audio {
 
 static dint numChannels;
 static bool *usedChannels;
-static bool sfxInitialized;
 
 static Mix_Music *lastMusic;
-static bool musicInitialized;
 
 /**
- * This is the hook we ask SDL_mixer to call when music playback finishes.
+ * Returns the length of the buffer in milliseconds.
  */
-#ifdef DENG2_DEBUG
-static void musicPlaybackFinished()
+static duint getBufferLength(sfxbuffer_t const &buf)
 {
-    LOG_AUDIO_VERBOSE("[SDLMixer] Music playback finished");
+    DENG2_ASSERT(buf.sample);
+    return 1000 * buf.sample->numSamples / buf.freq;
 }
-#endif
 
 static dint getFreeChannel()
 {
@@ -62,22 +60,200 @@ static dint getFreeChannel()
     return -1;
 }
 
+// ----------------------------------------------------------------------------------
+
+SdlMixerDriver::CdPlayer::CdPlayer(SdlMixerDriver &driver) : ICdPlayer(driver)
+{}
+
+String SdlMixerDriver::CdPlayer::name() const
+{
+    return "cd";
+}
+
+dint SdlMixerDriver::CdPlayer::init()
+{
+    return _initialized = true;
+}
+
+void SdlMixerDriver::CdPlayer::shutdown()
+{
+    _initialized = false;
+}
+
+void SdlMixerDriver::CdPlayer::update()
+{}
+
+void SdlMixerDriver::CdPlayer::set(dint, dfloat)
+{}
+
+dint SdlMixerDriver::CdPlayer::get(dint, void *) const
+{
+    return false;
+}
+
+void SdlMixerDriver::CdPlayer::pause(dint)
+{}
+
+void SdlMixerDriver::CdPlayer::stop()
+{}
+
+dint SdlMixerDriver::CdPlayer::play(dint, dint)
+{
+    return true;
+}
+
+// ----------------------------------------------------------------------------------
+
 /**
- * Returns the length of the buffer in milliseconds.
+ * This is the hook we ask SDL_mixer to call when music playback finishes.
  */
-static duint getBufLength(sfxbuffer_t const &buf)
+#ifdef DENG2_DEBUG
+static void musicPlaybackFinished()
 {
-    DENG2_ASSERT(buf.sample);
-    return 1000 * buf.sample->numSamples / buf.freq;
+    LOG_AUDIO_VERBOSE("[SDLMixer] Music playback finished");
+}
+#endif
+
+SdlMixerDriver::MusicPlayer::MusicPlayer(SdlMixerDriver &driver) : IMusicPlayer(driver)
+{}
+
+String SdlMixerDriver::MusicPlayer::name() const
+{
+    return "music";
 }
 
-static int DS_SDLMixer_SFX_Init()
+dint SdlMixerDriver::MusicPlayer::init()
 {
-    return sfxInitialized = true;
+#ifdef DENG2_DEBUG
+    Mix_HookMusicFinished(musicPlaybackFinished);
+#endif
+
+    return _initialized = true;
 }
 
-static sfxbuffer_t *DS_SDLMixer_SFX_CreateBuffer(int flags, int bits, int rate)
+void SdlMixerDriver::MusicPlayer::shutdown()
 {
+    _initialized = false;
+}
+
+void SdlMixerDriver::MusicPlayer::update()
+{
+    // Nothing to update.
+}
+
+void SdlMixerDriver::MusicPlayer::set(dint prop, dfloat value)
+{
+    if(!_initialized) return;
+
+    switch(prop)
+    {
+    case MUSIP_VOLUME:
+        Mix_VolumeMusic(dint( MIX_MAX_VOLUME * value ));
+        break;
+
+    default: break;
+    }
+}
+
+dint SdlMixerDriver::MusicPlayer::get(dint prop, void *value) const
+{
+    if(!_initialized) return false;
+
+    switch(prop)
+    {
+    case MUSIP_ID:
+        qstrcpy((char *) value, "music");
+        return true;
+
+    case MUSIP_PLAYING:
+        return Mix_PlayingMusic();
+
+    default: return false;
+    }
+}
+
+void SdlMixerDriver::MusicPlayer::pause(dint pause)
+{
+    if(!_initialized) return;
+
+    if(pause)
+    {
+        Mix_PauseMusic();
+    }
+    else
+    {
+        Mix_ResumeMusic();
+    }
+}
+
+void SdlMixerDriver::MusicPlayer::stop()
+{
+    if(!_initialized) return;
+
+    Mix_HaltMusic();
+}
+
+bool SdlMixerDriver::MusicPlayer::canPlayBuffer() const
+{
+    return false;
+}
+
+void *SdlMixerDriver::MusicPlayer::songBuffer(duint)
+{
+    return nullptr;
+}
+
+dint SdlMixerDriver::MusicPlayer::play(dint)
+{
+    return false;
+}
+
+bool SdlMixerDriver::MusicPlayer::canPlayFile() const
+{
+    return true;
+}
+
+dint SdlMixerDriver::MusicPlayer::playFile(char const *filename, dint looped)
+{
+    if(!_initialized) return false;
+
+    // Free any previously loaded music.
+    if(lastMusic)
+    {
+        Mix_HaltMusic();
+        Mix_FreeMusic(lastMusic);
+    }
+
+    lastMusic = Mix_LoadMUS(filename);
+    if(!lastMusic)
+    {
+        LOG_AS("SdlMixerDriver::MusicPlayer");
+        LOG_AUDIO_ERROR("Failed to load music: %s") << Mix_GetError();
+        return false;
+    }
+
+    return !Mix_PlayMusic(lastMusic, looped ? -1 : 1);
+}
+
+// ----------------------------------------------------------------------------------
+
+SdlMixerDriver::SoundPlayer::SoundPlayer(SdlMixerDriver &driver) : ISoundPlayer(driver)
+{}
+
+String SdlMixerDriver::SoundPlayer::name() const
+{
+    return "sfx";
+}
+
+dint SdlMixerDriver::SoundPlayer::init()
+{
+    return _initialized = true;
+}
+
+sfxbuffer_t *SdlMixerDriver::SoundPlayer::create(dint flags, dint bits, dint rate)
+{
+    /// @todo fixme: We have ownership - ensure the buffer is destroyed when the
+    /// SoundPlayer is. -ds
     auto *buf = (sfxbuffer_t *) Z_Calloc(sizeof(sfxbuffer_t), PU_APPSTATIC, 0);
 
     buf->bytes = bits / 8;
@@ -104,7 +280,14 @@ static sfxbuffer_t *DS_SDLMixer_SFX_CreateBuffer(int flags, int bits, int rate)
     return buf;
 }
 
-static void DS_SDLMixer_SFX_DestroyBuffer(sfxbuffer_t *buf)
+Sound *SdlMixerDriver::SoundPlayer::makeSound(bool stereoPositioning, int bitsPer, int rate)
+{
+    std::unique_ptr<Sound> sound(new Sound(*this));
+    sound->setBuffer(create(stereoPositioning ? 0 : SFXBF_3D, bitsPer, rate));
+    return sound.release();
+}
+
+void SdlMixerDriver::SoundPlayer::destroy(sfxbuffer_t *buf)
 {
     if(!buf) return;
 
@@ -113,7 +296,7 @@ static void DS_SDLMixer_SFX_DestroyBuffer(sfxbuffer_t *buf)
     Z_Free(buf);
 }
 
-static void DS_SDLMixer_SFX_Load(sfxbuffer_t *buf, sfxsample_t *sample)
+void SdlMixerDriver::SoundPlayer::load(sfxbuffer_t *buf, sfxsample_t *sample)
 {
     DENG2_ASSERT(buf && sample);
 
@@ -184,7 +367,7 @@ static void DS_SDLMixer_SFX_Load(sfxbuffer_t *buf, sfxsample_t *sample)
     buf->sample = sample;
 }
 
-static void DS_SDLMixer_SFX_Stop(sfxbuffer_t *buf)
+void SdlMixerDriver::SoundPlayer::stop(sfxbuffer_t *buf)
 {
     DENG2_ASSERT(buf);
 
@@ -195,11 +378,11 @@ static void DS_SDLMixer_SFX_Stop(sfxbuffer_t *buf)
     buf->flags &= ~SFXBF_PLAYING;
 }
 
-static void DS_SDLMixer_SFX_Reset(sfxbuffer_t *buf)
+void SdlMixerDriver::SoundPlayer::reset(sfxbuffer_t *buf)
 {
     DENG2_ASSERT(buf);
 
-    DS_SDLMixer_SFX_Stop(buf);
+    stop(buf);
     buf->sample = nullptr;
 
     // Unallocate the resources of the source.
@@ -207,7 +390,7 @@ static void DS_SDLMixer_SFX_Reset(sfxbuffer_t *buf)
     buf->ptr = nullptr;
 }
 
-static void DS_SDLMixer_SFX_Refresh(sfxbuffer_t *buf)
+void SdlMixerDriver::SoundPlayer::refresh(sfxbuffer_t *buf)
 {
     DENG2_ASSERT(buf);
 
@@ -230,7 +413,7 @@ static void DS_SDLMixer_SFX_Refresh(sfxbuffer_t *buf)
     }
 }
 
-static void DS_SDLMixer_SFX_Play(sfxbuffer_t *buf)
+void SdlMixerDriver::SoundPlayer::play(sfxbuffer_t *buf)
 {
     DENG2_ASSERT(buf);
 
@@ -242,13 +425,13 @@ static void DS_SDLMixer_SFX_Play(sfxbuffer_t *buf)
     Mix_PlayChannel(buf->cursor, (Mix_Chunk *) buf->ptr, (buf->flags & SFXBF_REPEAT ? -1 : 0));
 
     // Calculate the end time (milliseconds).
-    buf->endTime = Timer_RealMilliseconds() + getBufLength(*buf);
+    buf->endTime = Timer_RealMilliseconds() + getBufferLength(*buf);
 
     // The buffer is now playing.
     buf->flags |= SFXBF_PLAYING;
 }
 
-static void DS_SDLMixer_SFX_Set(sfxbuffer_t *buf, int prop, float value)
+void SdlMixerDriver::SoundPlayer::set(sfxbuffer_t *buf, dint prop, dfloat value)
 {
     DENG2_ASSERT(buf);
 
@@ -269,145 +452,44 @@ static void DS_SDLMixer_SFX_Set(sfxbuffer_t *buf, int prop, float value)
     }
 }
 
-static void DS_SDLMixer_SFX_Setv(sfxbuffer_t *, int , float *)
+void SdlMixerDriver::SoundPlayer::setv(sfxbuffer_t *, dint , dfloat *)
 {
     // Not supported.
 }
 
-static void DS_SDLMixer_SFX_Listener(int, float)
+void SdlMixerDriver::SoundPlayer::listener(dint, dfloat)
 {
     // Not supported.
 }
 
-static void DS_SDLMixer_SFX_Listenerv(int, float *)
+void SdlMixerDriver::SoundPlayer::listenerv(dint, dfloat *)
 {
     // Not supported.
 }
 
-static int DS_SDLMixer_Music_Init()
+dint SdlMixerDriver::SoundPlayer::getv(de::dint, void *) const
 {
-#ifdef DENG2_DEBUG
-    Mix_HookMusicFinished(musicPlaybackFinished);
-#endif
-
-    return musicInitialized = true;
+    // Not supported.
+    return false;
 }
 
-static void DS_SDLMixer_Music_Update()
-{
-    // Nothing to update.
-}
+// ----------------------------------------------------------------------------------
 
-static void DS_SDLMixer_Music_Set(int prop, float value)
-{
-    if(!musicInitialized) return;
-
-    switch(prop)
-    {
-    case MUSIP_VOLUME:
-        Mix_VolumeMusic(dint( MIX_MAX_VOLUME * value ));
-        break;
-
-    default: break;
-    }
-}
-
-static int DS_SDLMixer_Music_Get(int prop, void *value)
-{
-    if(!musicInitialized) return false;
-
-    switch(prop)
-    {
-    case MUSIP_ID:
-        strcpy((char *) value, "music");
-        return true;
-
-    case MUSIP_PLAYING:
-        return Mix_PlayingMusic();
-
-    default: return false;
-    }
-}
-
-static void DS_SDLMixer_Music_Pause(int pause)
-{
-    if(!musicInitialized) return;
-
-    if(pause)
-    {
-        Mix_PauseMusic();
-    }
-    else
-    {
-        Mix_ResumeMusic();
-    }
-}
-
-static void DS_SDLMixer_Music_Stop()
-{
-    if(!musicInitialized) return;
-
-    Mix_HaltMusic();
-}
-
-static int DS_SDLMixer_Music_PlayFile(char const *filename, int looped)
-{
-    if(!musicInitialized) return false;
-
-    // Free any previously loaded music.
-    if(lastMusic)
-    {
-        Mix_HaltMusic();
-        Mix_FreeMusic(lastMusic);
-    }
-
-    lastMusic = Mix_LoadMUS(filename);
-    if(!lastMusic)
-    {
-        LOG_AS("DS_SDLMixer_Music_PlayFile");
-        LOG_AUDIO_ERROR("Failed to load music: %s") << Mix_GetError();
-        return false;
-    }
-
-    return !Mix_PlayMusic(lastMusic, looped ? -1 : 1);
-}
-
-DENG2_PIMPL_NOREF(SdlMixerDriver)
+DENG2_PIMPL(SdlMixerDriver)
 , DENG2_OBSERVES(audio::System, FrameBegins)
 {
     bool initialized = false;
 
-    audiointerface_cd_t iCd;
-    audiointerface_music_t iMusic;
-    audiointerface_sfx_t iSfx;
+    CdPlayer iCd;
+    MusicPlayer iMusic;
+    SoundPlayer iSfx;
 
-    Instance()
-    {
-        de::zap(iCd);
-
-        de::zap(iMusic);
-        iMusic.gen.Init    = DS_SDLMixer_Music_Init;
-        iMusic.gen.Update  = DS_SDLMixer_Music_Update;
-        iMusic.gen.Set     = DS_SDLMixer_Music_Set;
-        iMusic.gen.Get     = DS_SDLMixer_Music_Get;
-        iMusic.gen.Pause   = DS_SDLMixer_Music_Pause;
-        iMusic.gen.Stop    = DS_SDLMixer_Music_Stop;
-        iMusic.PlayFile    = DS_SDLMixer_Music_PlayFile;
-
-        de::zap(iSfx);
-        iSfx.gen.Init      = DS_SDLMixer_SFX_Init;
-        iSfx.gen.Create    = DS_SDLMixer_SFX_CreateBuffer;
-        iSfx.gen.Destroy   = DS_SDLMixer_SFX_DestroyBuffer;
-        iSfx.gen.Load      = DS_SDLMixer_SFX_Load;
-        iSfx.gen.Reset     = DS_SDLMixer_SFX_Reset;
-        iSfx.gen.Play      = DS_SDLMixer_SFX_Play;
-        iSfx.gen.Stop      = DS_SDLMixer_SFX_Stop;
-        iSfx.gen.Refresh   = DS_SDLMixer_SFX_Refresh;
-        iSfx.gen.Set       = DS_SDLMixer_SFX_Set;
-        iSfx.gen.Setv      = DS_SDLMixer_SFX_Setv;
-        iSfx.gen.Listener  = DS_SDLMixer_SFX_Listener;
-        iSfx.gen.Listenerv = DS_SDLMixer_SFX_Listenerv;
-    }
+    Instance(Public *i)
+        : Base(i)
+        , iCd   (self)
+        , iMusic(self)
+        , iSfx  (self)
+    {}
 
     ~Instance()
     {
@@ -418,11 +500,11 @@ DENG2_PIMPL_NOREF(SdlMixerDriver)
     void systemFrameBegins(audio::System &)
     {
         DENG2_ASSERT(initialized);
-        iMusic.gen.Update();
+        iMusic.update();
     }
 };
 
-SdlMixerDriver::SdlMixerDriver() : d(new Instance)
+SdlMixerDriver::SdlMixerDriver() : d(new Instance(this))
 {}
 
 SdlMixerDriver::~SdlMixerDriver()
@@ -545,37 +627,19 @@ bool SdlMixerDriver::hasSfx() const
     return d->initialized;
 }
 
-audiointerface_cd_t /*const*/ &SdlMixerDriver::iCd() const
+ICdPlayer /*const*/ &SdlMixerDriver::iCd() const
 {
     return d->iCd;
 }
 
-audiointerface_music_t /*const*/ &SdlMixerDriver::iMusic() const
+IMusicPlayer /*const*/ &SdlMixerDriver::iMusic() const
 {
     return d->iMusic;
 }
 
-audiointerface_sfx_t /*const*/ &SdlMixerDriver::iSfx() const
+ISoundPlayer /*const*/ &SdlMixerDriver::iSfx() const
 {
     return d->iSfx;
-}
-
-DotPath SdlMixerDriver::interfacePath(void *playbackInterface) const
-{
-    if((void *)&d->iCd == playbackInterface)
-    {
-        return identityKey() + ".cd";
-    }
-    if((void *)&d->iMusic == playbackInterface)
-    {
-        return identityKey() + ".music";
-    }
-    if((void *)&d->iSfx == playbackInterface)
-    {
-        return identityKey() + ".sfx";
-    }
-
-    return "";  // Not recognized.
 }
 
 }  // namespace audio

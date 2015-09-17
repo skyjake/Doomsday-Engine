@@ -26,7 +26,6 @@
 
 #  include "api_audiod_mus.h"  ///< @todo remove me
 #  include "api_audiod_sfx.h"  ///< @todo remove me
-#  include "audio/channel.h"
 #endif
 
 #include "world/p_object.h"
@@ -49,7 +48,13 @@
 namespace audio {
 
 #ifdef __CLIENT__
+class ICdPlayer;
+class IMusicPlayer;
+class ISoundPlayer;
+
+class Channels;
 class SampleCache;
+class Sound;
 #endif
 
 /**
@@ -348,6 +353,34 @@ public:  // Low-level driver interfaces: ---------------------------------------
 
     public:  // Playback Interfaces: -------------------------------------------------
 
+        class IPlayer
+        {
+        public:
+            IPlayer(IDriver &driver);
+            virtual ~IPlayer() {}
+            DENG2_AS_IS_METHODS()
+
+            /**
+             * Returns the associated audio driver.
+             */
+            IDriver &driver() const;
+
+            /**
+             * Returns the driver-unique, symbolic name for the player.
+             */
+            virtual de::String name() const = 0;
+
+            /**
+             * Composes the textual, symbolic identifier, including that of the driver
+             * to produce a unique identifier for the player (lower case), for use in
+             * Config.
+             */
+            de::DotPath identityKey() const;
+
+        private:
+            IDriver *_driver = nullptr;
+        };
+
         /// Returns @c true if the audio driver provides @em CD playback.
         virtual bool hasCd() const = 0;
 
@@ -358,30 +391,22 @@ public:  // Low-level driver interfaces: ---------------------------------------
         virtual bool hasSfx() const = 0;
 
         /**
-         * Returns the @em CD interface for the audio driver. The CD interface is used
-         * for playback of music by streaming it from a compact disk.
+         * Returns the @em CD interface for the audio driver. The CD interface is
+         * used for playback of music by streaming it from a compact disk.
          */
-        virtual audiointerface_cd_t /*const*/ &iCd() const = 0;
+        virtual ICdPlayer /*const*/ &iCd() const = 0;
 
         /**
-         * Returns the @em Music interface for the audio driver. The Music interface is
-         * used for playback of music (i.e., complete songs).
+         * Returns the @em Music interface for the audio driver. The Music interface
+         * is used for playback of music (i.e., complete songs).
          */
-        virtual audiointerface_music_t /*const*/ &iMusic() const = 0;
+        virtual IMusicPlayer /*const*/ &iMusic() const = 0;
 
         /**
-         * Returns the @em Sfx interface for the audio driver. The Sfx interface is used
-         * for playback of sound effects.
+         * Returns the @em Sfx interface for the audio driver. The Sfx interface
+         * is used for playback of sound effects.
          */
-        virtual audiointerface_sfx_t /*const*/ &iSfx() const = 0;
-
-        /**
-         * Returns the symbolic path descriptor for the given @a playbackInterface if
-         * found; otherwise a zero-length path is returned.
-         *
-         * @param playbackInterface  Playback interface to lookup.
-         */
-        virtual de::DotPath interfacePath(void *playbackInterface) const = 0;
+        virtual ISoundPlayer /*const*/ &iSfx() const = 0;
     };
 
     /**
@@ -408,19 +433,17 @@ public:  // Low-level driver interfaces: ---------------------------------------
     de::LoopResult forAllDrivers(std::function<de::LoopResult (IDriver const &)> callback) const;
 
     /**
-     * Returns the currently active, primary SFX interface. @c nullptr is returned if
-     * SFX playback is @em not available.
+     * Returns the currently active, primary SFX interface.
      */
-    audiointerface_sfx_generic_t *sfx() const;
+    ISoundPlayer &sfx() const;
 
     /**
-     * Returns the currently active, primary CD playback interface. @c nullptr is returned
-     * if CD playback is @em not available.
+     * Returns the currently active, primary CD playback interface.
      *
      * @note  The CD interface is considered to belong in the music aggregate interface
      * and usually does not need to be individually manipulated.
      */
-    audiointerface_cd_t *cd() const;
+    ICdPlayer &cd() const;
 
 #endif  // __CLIENT__
 
@@ -476,6 +499,167 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
+
+#ifdef __CLIENT__
+
+class ICdPlayer : public System::IDriver::IPlayer
+{
+public:
+    ICdPlayer(System::IDriver &driver);
+
+public:  /// @todo revise API:
+    virtual de::dint init() = 0;
+    virtual void shutdown() = 0;
+
+    virtual void update() = 0;
+    virtual void set(de::dint prop, de::dfloat value) = 0;
+    virtual de::dint get(de::dint prop, void *value) const = 0;
+    virtual void pause(de::dint pause) = 0;
+    virtual void stop() = 0;
+
+    virtual de::dint play(de::dint track, de::dint looped) = 0;
+};
+
+class IMusicPlayer : public System::IDriver::IPlayer
+{
+public:
+    IMusicPlayer(System::IDriver &driver);
+
+public:  /// @todo revise API:
+    virtual de::dint init() = 0;
+    virtual void shutdown() = 0;
+
+    virtual void update() = 0;
+    virtual void set(de::dint prop, de::dfloat value) = 0;
+    virtual de::dint get(de::dint prop, void *value) const = 0;
+    virtual void pause(de::dint pause) = 0;
+    virtual void stop() = 0;
+
+    /// Return @c true if the player provides playback from a managed buffer.
+    virtual bool canPlayBuffer() const { return false; }
+
+    virtual void *songBuffer(de::duint length) = 0;
+    virtual de::dint play(de::dint looped) = 0;
+
+    /// Returns @c true if the player provides playback from a native file.
+    virtual bool canPlayFile() const { return false; }
+
+    virtual de::dint playFile(char const *filename, de::dint looped) = 0;
+};
+
+class ISoundPlayer : public System::IDriver::IPlayer
+{
+public:
+    ISoundPlayer(System::IDriver &driver);
+
+    virtual Sound *makeSound(bool stereoPositioning, de::dint bitsPer, de::dint rate) = 0;
+
+public:  /// @todo revise API:
+
+    /**
+     * Perform any initialization necessary before playback can begin.
+     *
+     * @return  Non-zero if successful (or already-initialized).
+     */
+    virtual de::dint init() = 0;
+
+    /**
+     * Allocate a managed sample buffer with the given specification.
+     *
+     * @param flags
+     * @param bits
+     * @param rate
+     *
+     * @return  Suitable (and possibly newly allocated) sample buffer. Ownership
+     * is retained.
+     */
+    virtual sfxbuffer_t *create(de::dint flags, de::dint bits, de::dint rate) = 0;
+
+    /**
+     * Release the managed sample @a buffer. Calling this invalidates any other
+     * existing references or pointers to @a buffer.
+     */
+    virtual void destroy(sfxbuffer_t *buffer) = 0;
+
+    /**
+     * Prepare the buffer for playing a sample by filling the buffer with as
+     * much sample data as fits. The pointer to sample is saved, so the caller
+     * mustn't free it while the sample is loaded.
+     *
+     * @param buffer  Sound buffer.
+     * @param sample  Sample data.
+     */
+    virtual void load(sfxbuffer_t *buffer, sfxsample_t *sample) = 0;
+
+    /**
+     * Stop @a buffer if playing and forget about it's sample.
+     *
+     * @param buffer  Sound buffer.
+     */
+    virtual void reset(sfxbuffer_t *buffer) = 0;
+
+    /**
+     * Start playing the sample loaded in @a buffer.
+     */
+    virtual void play(sfxbuffer_t *buffer) = 0;
+
+    /**
+     * Stop @a buffer if playing and forget about it's sample.
+     */
+    virtual void stop(sfxbuffer_t *buffer) = 0;
+
+    /**
+     * Called periodically by the audio system's refresh thread, so that @a buffer
+     * can be filled with sample data, for streaming purposes.
+     *
+     * @note Don't do anything too time-consuming...
+     */
+    virtual void refresh(sfxbuffer_t *buffer) = 0;
+
+    /**
+     * @param buffer   Sound buffer.
+     * @param property  Buffer property:
+     *              - SFXBP_VOLUME (if negative, interpreted as attenuation)
+     *              - SFXBP_FREQUENCY
+     *              - SFXBP_PAN (-1..1)
+     *              - SFXBP_MIN_DISTANCE
+     *              - SFXBP_MAX_DISTANCE
+     *              - SFXBP_RELATIVE_MODE
+     * @param value Value for the property.
+     */
+    virtual void set(sfxbuffer_t *buffer, de::dint prop, de::dfloat value) = 0;
+
+    /**
+     * Coordinates specified in world coordinate system, converted to DSound's:
+     * +X to the right, +Y up and +Z away (Y and Z swapped, i.e.).
+     *
+     * @param property      SFXBP_POSITION
+     *                      SFXBP_VELOCITY
+     */
+    virtual void setv(sfxbuffer_t *buffer, de::dint prop, de::dfloat *values) = 0;
+
+    /**
+     * @param property      SFXLP_UNITS_PER_METER
+     *                      SFXLP_DOPPLER
+     *                      SFXLP_UPDATE
+     */
+    virtual void listener(de::dint prop, de::dfloat value) = 0;
+
+    /**
+     * Call SFXLP_UPDATE at the end of every channel update.
+     */
+    virtual void listenerv(de::dint prop, de::dfloat *values) = 0;
+
+    /**
+     * Gets a driver property.
+     *
+     * @param prop    Property (SFXP_*).
+     * @param values  Pointer to return value(s).
+     */
+    virtual de::dint getv(de::dint prop, void *values) const = 0;
+};
+
+#endif  // __CLIENT__
 
 }  // namespace audio
 

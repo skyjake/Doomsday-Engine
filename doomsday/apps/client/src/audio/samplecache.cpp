@@ -22,6 +22,9 @@
 
 #include "dd_main.h"  // App_AudioSystem()
 #include "def_main.h"  // Def_Get*()
+#ifdef __CLIENT__
+#  include "audio/channel.h"
+#endif
 #include "audio/system.h"
 
 #include <doomsday/filesys/fs_main.h>
