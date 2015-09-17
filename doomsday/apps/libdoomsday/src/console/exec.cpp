@@ -99,6 +99,8 @@ D_CMD(InspectMobj);
 D_CMD(DebugCrash);
 D_CMD(DebugError);
 
+void initVariableBindings(Binder &);
+
 static int executeSubCmd(const char *subCmd, byte src, dd_bool isNetCmd);
 static void Con_SplitIntoSubCommands(char const *command,
                                      timespan_t markerOffset, byte src,
@@ -109,6 +111,7 @@ static void Con_ClearExecBuffer(void);
 byte    ConsoleSilent = false;
 
 static dd_bool      ConsoleInited;   // Has Con_Init() been called?
+static Binder       consoleBinder;
 static execbuff_t * exBuff;
 static int          exBuffSize;
 static execbuff_t * curExec;
@@ -250,6 +253,13 @@ dd_bool Con_Init(void)
     if(ConsoleInited) return true;
 
     LOG_SCR_VERBOSE("Initializing the console...");
+
+    // Doomsday Script bindings to access console features.
+    /// @todo Some of these should become obsolete once cvars/cmds are moved to
+    /// DS records.
+    consoleBinder.initNew();
+    initVariableBindings(consoleBinder);
+    App::scriptSystem().addNativeModule("Console", consoleBinder.module());
 
     exBuff = NULL;
     exBuffSize = 0;
