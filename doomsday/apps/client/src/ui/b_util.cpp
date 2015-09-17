@@ -429,7 +429,7 @@ bool B_CheckAxisPosition(Binding::ControlTest test, float testPos, float pos)
     return false;
 }
 
-bool B_CheckCondition(Record const *cond, int localNum, BindContext *context)
+bool B_CheckCondition(Record const *cond, int localNum, BindContext const *context)
 {
     DENG2_ASSERT(cond);
     bool const fulfilled = !cond->getb("negate");
@@ -499,7 +499,7 @@ bool B_EqualConditions(Record const &a, Record const &b)
 }
 
 /// @todo: Belongs in BindContext? -ds
-void B_EvaluateImpulseBindings(BindContext *context, int localNum, int impulseId,
+void B_EvaluateImpulseBindings(BindContext const *context, int localNum, int impulseId,
     float *pos, float *relativeOffset, bool allowTriggered)
 {
     DENG2_ASSERT(context); // Why call without one?
@@ -507,7 +507,7 @@ void B_EvaluateImpulseBindings(BindContext *context, int localNum, int impulseId
 
     *pos = 0;
     *relativeOffset = 0;
-    
+
     if(localNum < 0 || localNum >= DDMAXPLAYERS) return; // No local player specified.
 
     uint const nowTime = Timer_RealMilliseconds();
