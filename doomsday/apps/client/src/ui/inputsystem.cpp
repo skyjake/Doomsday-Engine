@@ -339,6 +339,8 @@ DENG2_PIMPL(InputSystem)
                 << DENG2_FUNC(InputSystem_BindEvent, "bindEvent", "event" << "command")
                 << DENG2_FUNC(InputSystem_BindControl, "bindControl", "control" << "impulse");
 
+        binder.module().addNumber("DEADZONE_DEFAULT", DEFAULT_JOYSTICK_DEADZONE).setReadOnly();
+
         App::scriptSystem().addNativeModule("Input", binder.module());
 
         gameControllerPresets.reset(new ControllerPresets(IDEV_JOY1, "input-joy-preset"));
