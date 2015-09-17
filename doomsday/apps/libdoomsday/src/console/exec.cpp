@@ -248,6 +248,19 @@ static void PrepareCmdArgs(cmdargs_t *cargs, const char *lpCmdLine)
 #undef IS_ESC_CHAR
 }
 
+static Value *Function_Console_ListVars(Context &, Function::ArgumentValues const &args)
+{
+    StringList vars;
+    Con_TermsRegex(vars, args.at(0)->asText(), WT_CVAR);
+
+    std::unique_ptr<ArrayValue> result(new ArrayValue);
+    for(String v : vars)
+    {
+        *result << new TextValue(v);
+    }
+    return result.release();
+}
+
 dd_bool Con_Init(void)
 {
     if(ConsoleInited) return true;
@@ -259,6 +272,7 @@ dd_bool Con_Init(void)
     /// DS records.
     consoleBinder.initNew();
     initVariableBindings(consoleBinder);
+    consoleBinder << DENG2_FUNC(Console_ListVars, "listVars", "pattern");
     App::scriptSystem().addNativeModule("Console", consoleBinder.module());
 
     exBuff = NULL;

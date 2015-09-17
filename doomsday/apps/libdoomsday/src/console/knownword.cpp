@@ -32,6 +32,7 @@
 #include <de/c_wrapper.h>
 #include <de/strutil.h>
 #include <QList>
+#include <QRegExp>
 
 using namespace de;
 
@@ -211,6 +212,7 @@ int Con_IterateKnownWords(KnownWordMatchMode matchMode,
     knownwordtype_t matchType = (VALID_KNOWNWORDTYPE(type)? type : WT_ANY);
     size_t patternLength = (pattern? strlen(pattern) : 0);
     int result = 0;
+    QRegExp const regex(matchMode == KnownWordRegex? pattern : "", Qt::CaseInsensitive);
 
     updateKnownWords();
 
@@ -230,6 +232,11 @@ int Con_IterateKnownWords(KnownWordMatchMode matchMode,
             else if(matchMode == KnownWordExactMatch)
             {
                 if(strcasecmp(Str_Text(textString), pattern))
+                    continue; // Didn't match.
+            }
+            else if(matchMode == KnownWordRegex)
+            {
+                if(!regex.exactMatch(Str_Text(textString)))
                     continue; // Didn't match.
             }
         }
@@ -421,4 +428,18 @@ shell::Lexicon Con_Lexicon()
 void Con_SetApplicationKnownWordCallback(void (*callback)())
 {
     appWordsCallback = callback;
+}
+
+static int addToStringList(knownword_t const *word, void *parameters)
+{
+    StringList *terms = reinterpret_cast<StringList *>(parameters);
+    terms->append(Str_Text(Con_KnownWordToString(word)));
+    return 0;
+}
+
+void Con_TermsRegex(StringList &terms, String const &pattern, knownwordtype_t wordType)
+{
+    terms.clear();
+    Con_IterateKnownWords(KnownWordRegex, pattern.toUtf8(), wordType,
+                          addToStringList, &terms);
 }

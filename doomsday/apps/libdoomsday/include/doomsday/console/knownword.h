@@ -76,8 +76,9 @@ LIBDOOMSDAY_PUBLIC int Con_IterateKnownWords(char const *pattern, knownwordtype_
     int (*callback)(knownword_t const *word, void *parameters), void *parameters);
 
 enum KnownWordMatchMode {
-    KnownWordExactMatch, // case insensitive
-    KnownWordStartsWith  // case insensitive
+    KnownWordExactMatch,  // case insensitive
+    KnownWordStartsWith,  // case insensitive
+    KnownWordRegex        // case insensitive
 };
 
 LIBDOOMSDAY_PUBLIC int Con_IterateKnownWords(KnownWordMatchMode matchMode, char const *pattern,
@@ -108,5 +109,8 @@ LIBDOOMSDAY_PUBLIC de::String Con_AnnotatedConsoleTerms(QStringList terms);
  * Collects all the known words of the console into a Lexicon.
  */
 LIBDOOMSDAY_PUBLIC de::shell::Lexicon Con_Lexicon();
+
+LIBDOOMSDAY_PUBLIC void Con_TermsRegex(de::StringList &terms, de::String const &pattern,
+                                       knownwordtype_t wordType);
 
 #endif // LIBDOOMSDAY_CONSOLE_KNOWNWORD_H
