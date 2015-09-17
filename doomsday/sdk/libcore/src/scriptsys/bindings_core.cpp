@@ -62,6 +62,11 @@ static Value *Function_String_Lower(Context &ctx, Function::ArgumentValues const
     return new TextValue(ctx.instanceScope().asText().lower());
 }
 
+static Value *Function_Path_WithoutFileName(Context &, Function::ArgumentValues const &args)
+{
+    return new TextValue(args.at(0)->asText().fileNamePath());
+}
+
 static Value *Function_Dictionary_Keys(Context &ctx, Function::ArgumentValues const &)
 {
     return ctx.instanceScope().as<DictionaryValue>().contentsAsArray(DictionaryValue::Keys);
@@ -168,6 +173,13 @@ void initCoreModule(Binder &binder, Record &coreModule)
                 << DENG2_FUNC_NOARG(String_FileNameExtension, "fileNameExtension")
                 << DENG2_FUNC_NOARG(String_FileNameWithoutExtension, "fileNameWithoutExtension")
                 << DENG2_FUNC_NOARG(String_FileNameAndPathWithoutExtension, "fileNameAndPathWithoutExtension");
+    }
+
+    // Path
+    {
+        Record &path = coreModule.addRecord("Path");
+        binder.init(path)
+                << DENG2_FUNC(Path_WithoutFileName, "withoutFileName", "path");
     }
 
     // File
