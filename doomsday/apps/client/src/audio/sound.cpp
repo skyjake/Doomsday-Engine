@@ -20,13 +20,11 @@
 
 #include "audio/sound.h"
 
-#include "audio/system.h"
 #include "world/thinkers.h"
-#include "def_main.h"        // SF-* flags, remove me
+#include "def_main.h"        // SF_* flags, remove me
 #include <de/Log>
 #include <de/Observers>
 #include <de/timer.h>        // TICSPERSEC
-#include <de/vector1.h>      // remove me
 
 using namespace de;
 
@@ -44,17 +42,12 @@ DENG2_PIMPL_NOREF(Sound)
     dfloat volume = 0;               ///< Sound volume: 1.0 is max.
 
     mobj_t *emitter = nullptr;       ///< Mobj emitter for the sound, if any (not owned).
-    coord_t origin[3];               ///< Emit from here (synced with emitter).
+    Vector3d origin;                 ///< Emit from here (synced with emitter).
 
     sfxbuffer_t *buffer = nullptr;   ///< Assigned sound buffer, if any (not owned).
     dint startTime = 0;              ///< When the assigned sound sample was last started.
 
     ISoundPlayer *player = nullptr;  ///< Owning player (not owned).
-
-    Instance()
-    {
-        de::zap(origin);
-    }
 
     inline ISoundPlayer &getPlayer()
     {
@@ -67,14 +60,11 @@ DENG2_PIMPL_NOREF(Sound)
         // Updating is only necessary if we are tracking an emitter.
         if(!emitter) return;
 
-        origin[0] = emitter->origin[0];
-        origin[1] = emitter->origin[1];
-        origin[2] = emitter->origin[2];
-
+        origin = Mobj_Origin(*emitter);
         // If this is a mobj, center the Z pos.
         if(Thinker_IsMobjFunc(emitter->thinker.function))
         {
-            origin[2] += emitter->height / 2;
+            origin.z += emitter->height / 2;
         }
     }
 
@@ -93,42 +83,42 @@ DENG2_PIMPL_NOREF(Sound)
         if(flags & SFXCF_NO_UPDATE) return;
 
         // Updates are only necessary during playback.
-        if(!(buffer->flags & SFXBF_PLAYING) && !force) return;
+        if(!getPlayer().isPlaying(*buffer) && !force) return;
 
         // When tracking an emitter we need the latest origin coordinates.
         updateOriginIfNeeded();
 
         // Frequency is common to both 2D and 3D sounds.
-        getPlayer().setFrequency(buffer, frequency);
+        getPlayer().setFrequency(*buffer, frequency);
 
         if(buffer->flags & SFXBF_3D)
         {
             // Volume is affected only by maxvol.
-            getPlayer().setVolume(buffer, volume * System::get().soundVolume() / 255.0f);
+            getPlayer().setVolume(*buffer, volume * System::get().soundVolume() / 255.0f);
             if(emitter && emitter == System::get().sfxListener())
             {
                 // Emitted by the listener object. Go to relative position mode
                 // and set the position to (0,0,0).
-                getPlayer().setPositioning(buffer, true/*head-relative*/);
-                getPlayer().setOrigin(buffer, Vector3d());
+                getPlayer().setPositioning(*buffer, true/*head-relative*/);
+                getPlayer().setOrigin(*buffer, Vector3d());
             }
             else
             {
                 // Use the channel's map space origin.
-                getPlayer().setPositioning(buffer, false/*absolute*/);
-                getPlayer().setOrigin(buffer, origin);
+                getPlayer().setPositioning(*buffer, false/*absolute*/);
+                getPlayer().setOrigin(*buffer, origin);
             }
 
             // If the sound is emitted by the listener, speed is zero.
             if(emitter && emitter != System::get().sfxListener() &&
                Thinker_IsMobjFunc(emitter->thinker.function))
             {
-                getPlayer().setVelocity(buffer, Vector3d(emitter->mom)* TICSPERSEC);
+                getPlayer().setVelocity(*buffer, Vector3d(emitter->mom)* TICSPERSEC);
             }
             else
             {
                 // Not moving.
-                getPlayer().setVelocity(buffer, Vector3d());
+                getPlayer().setVelocity(*buffer, Vector3d());
             }
         }
         else
@@ -148,7 +138,7 @@ DENG2_PIMPL_NOREF(Sound)
                 // Calculate roll-off attenuation. [.125/(.125+x), x=0..1]
                 Ranged const attenRange = System::get().soundVolumeAttenuationRange();
 
-                dist = Mobj_ApproxPointDistance(System::get().sfxListener(), origin);
+                dist = System::get().distanceToListener(origin);
 
                 if(dist < attenRange.start || (flags & SFXCF_NO_ATTENUATION))
                 {
@@ -172,7 +162,10 @@ DENG2_PIMPL_NOREF(Sound)
                 // And pan, too. Calculate angle from listener to emitter.
                 if(mobj_t *listener = System::get().sfxListener())
                 {
-                    dfloat angle = (M_PointToAngle2(listener->origin, origin) - listener->angle) / (dfloat) ANGLE_MAX * 360;
+                    dfloat angle = (M_PointXYToAngle2(listener->origin[0], listener->origin[1],
+                                                      origin.x, origin.y)
+                                        - listener->angle)
+                                 / (dfloat) ANGLE_MAX * 360;
 
                     // We want a signed angle.
                     if(angle > 180)
@@ -198,8 +191,8 @@ DENG2_PIMPL_NOREF(Sound)
                 }
             }
 
-            getPlayer().setVolume(buffer, volume * dist * System::get().soundVolume() / 255.0f);
-            getPlayer().setPan(buffer, finalPan);
+            getPlayer().setVolume(*buffer, volume * dist * System::get().soundVolume() / 255.0f);
+            getPlayer().setPan(*buffer, finalPan);
         }
     }
 
@@ -239,7 +232,7 @@ void Sound::releaseBuffer()
     // Cancel frame notifications - we'll soon have no buffer to update.
     System::get().audienceForFrameEnds() -= d;
 
-    d->getPlayer().destroy(d->buffer);
+    d->getPlayer().destroy(*d->buffer);
     d->buffer = nullptr;
 }
 
@@ -278,9 +271,7 @@ void Sound::setEmitter(mobj_t *newEmitter)
 
 void Sound::setFixedOrigin(Vector3d const &newOrigin)
 {
-    d->origin[0] = newOrigin.x;
-    d->origin[1] = newOrigin.y;
-    d->origin[2] = newOrigin.z;
+    d->origin = newOrigin;
 }
 
 dfloat Sound::priority() const
@@ -292,7 +283,8 @@ dfloat Sound::priority() const
         return System::get().rateSoundPriority(0, 0, d->volume, d->startTime);
 
     // d->origin is set to emitter->xyz during updates.
-    return System::get().rateSoundPriority(0, d->origin, d->volume, d->startTime);
+    ddouble origin[3]; d->origin.decompose(origin);
+    return System::get().rateSoundPriority(0, origin, d->volume, d->startTime);
 }
 
 void Sound::load(sfxsample_t &sample)
@@ -306,18 +298,18 @@ void Sound::load(sfxsample_t &sample)
     // Don't reload if a sample with the same sound ID is already loaded.
     if(!d->buffer->sample || d->buffer->sample->soundId != sample.soundId)
     {
-        d->getPlayer().load(d->buffer, &sample);
+        d->getPlayer().load(*d->buffer, sample);
     }
 }
 
 void Sound::stop()
 {
-    d->getPlayer().stop(d->buffer);
+    d->getPlayer().stop(*d->buffer);
 }
 
 void Sound::reset()
 {
-    d->getPlayer().reset(d->buffer);
+    d->getPlayer().reset(*d->buffer);
 }
 
 void Sound::play()
@@ -338,15 +330,15 @@ void Sound::play()
         // This is only done once, when the sound is first played (i.e., here).
         if(d->flags & SFXCF_NO_ATTENUATION)
         {
-            d->getPlayer().setVolumeAttenuationRange(d->buffer, Ranged(10000, 20000));
+            d->getPlayer().setVolumeAttenuationRange(*d->buffer, Ranged(10000, 20000));
         }
         else
         {
-            d->getPlayer().setVolumeAttenuationRange(d->buffer, System::get().soundVolumeAttenuationRange());
+            d->getPlayer().setVolumeAttenuationRange(*d->buffer, System::get().soundVolumeAttenuationRange());
         }
     }
 
-    d->getPlayer().play(d->buffer);
+    d->getPlayer().play(*d->buffer);
     d->startTime = Timer_Ticks();  // Note the current time.
 }
 
@@ -379,7 +371,7 @@ Sound &Sound::setVolume(dfloat newVolume)
 
 bool Sound::isPlaying() const
 {
-    return d->buffer && (d->buffer->flags & SFXBF_PLAYING) != 0;
+    return d->buffer && d->getPlayer().isPlaying(*d->buffer);
 }
 
 dfloat Sound::frequency() const
@@ -394,7 +386,7 @@ dfloat Sound::volume() const
 
 void Sound::refresh()
 {
-    d->getPlayer().refresh(d->buffer);
+    d->getPlayer().refresh(*d->buffer);
 }
 
 }  // namespace audio

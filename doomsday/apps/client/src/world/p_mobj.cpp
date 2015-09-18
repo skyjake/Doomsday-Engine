@@ -836,12 +836,11 @@ DENG_EXTERN_C angle_t Mobj_AngleSmoothed(mobj_t *mob)
     return mob->angle;
 }
 
-coord_t Mobj_ApproxPointDistance(mobj_t const *mob, coord_t const *point)
+coord_t Mobj_ApproxPointDistance(mobj_t const &mob, Vector3d const &point)
 {
-    if(!mob || !point) return 0;
-    return M_ApproxDistance(point[2] - mob->origin[2],
-                            M_ApproxDistance(point[0] - mob->origin[0],
-                                             point[1] - mob->origin[1]));
+    return M_ApproxDistance(point.z - mob.origin[2],
+                            M_ApproxDistance(point.x - mob.origin[0],
+                                             point.y - mob.origin[1]));
 }
 
 coord_t Mobj_BobOffset(mobj_t const &mob)

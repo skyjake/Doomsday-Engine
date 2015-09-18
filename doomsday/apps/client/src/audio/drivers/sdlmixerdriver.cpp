@@ -267,39 +267,35 @@ sfxbuffer_t *SdlMixerDriver::SoundPlayer::create(dint flags, dint bits, dint rat
     return buf;
 }
 
-Sound *SdlMixerDriver::SoundPlayer::makeSound(bool stereoPositioning, int bitsPer, int rate)
+Sound *SdlMixerDriver::SoundPlayer::makeSound(bool stereoPositioning, dint bitsPer, dint rate)
 {
     std::unique_ptr<Sound> sound(new Sound(*this));
     sound->setBuffer(create(stereoPositioning ? 0 : SFXBF_3D, bitsPer, rate));
     return sound.release();
 }
 
-void SdlMixerDriver::SoundPlayer::destroy(sfxbuffer_t *buf)
+void SdlMixerDriver::SoundPlayer::destroy(sfxbuffer_t &buf)
 {
-    if(!buf) return;
-
-    Mix_HaltChannel(buf->cursor);
-    usedChannels[buf->cursor] = false;
-    Z_Free(buf);
+    Mix_HaltChannel(buf.cursor);
+    usedChannels[buf.cursor] = false;
+    Z_Free(&buf);
 }
 
-void SdlMixerDriver::SoundPlayer::load(sfxbuffer_t *buf, sfxsample_t *sample)
+void SdlMixerDriver::SoundPlayer::load(sfxbuffer_t &buf, sfxsample_t &sample)
 {
-    DENG2_ASSERT(buf && sample);
-
     // Does the buffer already have a sample loaded?
-    if(buf->sample)
+    if(buf.sample)
     {
         // Is the same one?
-        if(buf->sample->soundId == sample->soundId)
+        if(buf.sample->soundId == sample.soundId)
             return;
 
         // Free the existing data.
-        buf->sample = nullptr;
-        Mix_FreeChunk((Mix_Chunk *) buf->ptr);
+        buf.sample = nullptr;
+        Mix_FreeChunk((Mix_Chunk *) buf.ptr);
     }
 
-    dsize const size = 8 + 4 + 8 + 16 + 8 + sample->size;
+    dsize const size = 8 + 4 + 8 + 16 + 8 + sample.size;
     static char localBuf[0x40000];
     char *conv = nullptr;
     if(size <= sizeof(localBuf))
@@ -312,12 +308,12 @@ void SdlMixerDriver::SoundPlayer::load(sfxbuffer_t *buf, sfxsample_t *sample)
     }
 
     // Transfer the sample to SDL_mixer by converting it to WAVE format.
-    strcpy(conv, "RIFF");
-    *(Uint32 *) (conv + 4) = DD_ULONG(4 + 8 + 16 + 8 + sample->size);
-    strcpy(conv + 8, "WAVE");
+    qstrcpy(conv, "RIFF");
+    *(Uint32 *) (conv + 4) = DD_ULONG(4 + 8 + 16 + 8 + sample.size);
+    qstrcpy(conv + 8, "WAVE");
 
     // Format chunk.
-    strcpy(conv + 12, "fmt ");
+    qstrcpy(conv + 12, "fmt ");
     *(Uint32 *) (conv + 16) = DD_ULONG(16);
     /**
      * WORD wFormatTag;         // Format category
@@ -329,18 +325,18 @@ void SdlMixerDriver::SoundPlayer::load(sfxbuffer_t *buf, sfxsample_t *sample)
      */
     *(Uint16 *) (conv + 20) = DD_USHORT(1);
     *(Uint16 *) (conv + 22) = DD_USHORT(1);
-    *(Uint32 *) (conv + 24) = DD_ULONG(sample->rate);
-    *(Uint32 *) (conv + 28) = DD_ULONG(sample->rate * sample->bytesPer);
-    *(Uint16 *) (conv + 32) = DD_USHORT(sample->bytesPer);
-    *(Uint16 *) (conv + 34) = DD_USHORT(sample->bytesPer * 8);
+    *(Uint32 *) (conv + 24) = DD_ULONG(sample.rate);
+    *(Uint32 *) (conv + 28) = DD_ULONG(sample.rate * sample.bytesPer);
+    *(Uint16 *) (conv + 32) = DD_USHORT(sample.bytesPer);
+    *(Uint16 *) (conv + 34) = DD_USHORT(sample.bytesPer * 8);
 
     // Data chunk.
-    strcpy(conv + 36, "data");
-    *(Uint32 *) (conv + 40) = DD_ULONG(sample->size);
-    std::memcpy(conv + 44, sample->data, sample->size);
+    qstrcpy(conv + 36, "data");
+    *(Uint32 *) (conv + 40) = DD_ULONG(sample.size);
+    std::memcpy(conv + 44, sample.data, sample.size);
 
-    buf->ptr = Mix_LoadWAV_RW(SDL_RWFromMem(conv, 44 + sample->size), 1);
-    if(!buf->ptr)
+    buf.ptr = Mix_LoadWAV_RW(SDL_RWFromMem(conv, 44 + sample.size), 1);
+    if(!buf.ptr)
     {
         LOG_AS("DS_SDLMixer_SFX_Load");
         LOG_AUDIO_WARNING("Failed loading sample: %s") << Mix_GetError();
@@ -351,38 +347,32 @@ void SdlMixerDriver::SoundPlayer::load(sfxbuffer_t *buf, sfxsample_t *sample)
         M_Free(conv);
     }
 
-    buf->sample = sample;
+    buf.sample = &sample;
 }
 
-void SdlMixerDriver::SoundPlayer::stop(sfxbuffer_t *buf)
+void SdlMixerDriver::SoundPlayer::stop(sfxbuffer_t &buf)
 {
-    DENG2_ASSERT(buf);
+    if(!buf.sample) return;
 
-    if(!buf->sample) return;
-
-    Mix_HaltChannel(buf->cursor);
+    Mix_HaltChannel(buf.cursor);
     //usedChannels[buf->cursor] = false;
-    buf->flags &= ~SFXBF_PLAYING;
+    buf.flags &= ~SFXBF_PLAYING;
 }
 
-void SdlMixerDriver::SoundPlayer::reset(sfxbuffer_t *buf)
+void SdlMixerDriver::SoundPlayer::reset(sfxbuffer_t &buf)
 {
-    DENG2_ASSERT(buf);
-
     stop(buf);
-    buf->sample = nullptr;
+    buf.sample = nullptr;
 
     // Unallocate the resources of the source.
-    Mix_FreeChunk((Mix_Chunk *) buf->ptr);
-    buf->ptr = nullptr;
+    Mix_FreeChunk((Mix_Chunk *) buf.ptr);
+    buf.ptr = nullptr;
 }
 
-void SdlMixerDriver::SoundPlayer::refresh(sfxbuffer_t *buf)
+void SdlMixerDriver::SoundPlayer::refresh(sfxbuffer_t &buf)
 {
-    DENG2_ASSERT(buf);
-
     // Can only be done if there is a sample and the buffer is playing.
-    if(!buf->sample || !(buf->flags & SFXBF_PLAYING))
+    if(!buf.sample || !isPlaying(buf))
         return;
 
     duint const nowTime = Timer_RealMilliseconds();
@@ -393,10 +383,10 @@ void SdlMixerDriver::SoundPlayer::refresh(sfxbuffer_t *buf)
      * since the millisecond counter overflows. It only affects sounds that
      * are playing while the overflow happens, though.
      */
-    if(!(buf->flags & SFXBF_REPEAT) && nowTime >= buf->endTime)
+    if(!(buf.flags & SFXBF_REPEAT) && nowTime >= buf.endTime)
     {
         // Time for the sound to stop.
-        buf->flags &= ~SFXBF_PLAYING;
+        buf.flags &= ~SFXBF_PLAYING;
     }
 }
 
@@ -405,59 +395,62 @@ bool SdlMixerDriver::SoundPlayer::needsRefresh() const
     return true;
 }
 
-void SdlMixerDriver::SoundPlayer::play(sfxbuffer_t *buf)
+void SdlMixerDriver::SoundPlayer::play(sfxbuffer_t &buf)
 {
-    DENG2_ASSERT(buf);
-
     // Playing is quite impossible without a sample.
-    if(!buf->sample) return;
+    if(!buf.sample) return;
 
     // Update the volume at which the sample will be played.
-    Mix_Volume(buf->cursor, buf->written);
-    Mix_PlayChannel(buf->cursor, (Mix_Chunk *) buf->ptr, (buf->flags & SFXBF_REPEAT ? -1 : 0));
+    Mix_Volume(buf.cursor, buf.written);
+    Mix_PlayChannel(buf.cursor, (Mix_Chunk *) buf.ptr, (buf.flags & SFXBF_REPEAT ? -1 : 0));
 
     // Calculate the end time (milliseconds).
-    buf->endTime = Timer_RealMilliseconds() + getBufferLength(*buf);
+    buf.endTime = Timer_RealMilliseconds() + getBufferLength(buf);
 
     // The buffer is now playing.
-    buf->flags |= SFXBF_PLAYING;
+    buf.flags |= SFXBF_PLAYING;
 }
 
-void SdlMixerDriver::SoundPlayer::setFrequency(sfxbuffer_t *, dfloat)
+bool SdlMixerDriver::SoundPlayer::isPlaying(sfxbuffer_t &buf) const
+{
+    return (buf.flags & SFXBF_PLAYING) != 0;
+}
+
+void SdlMixerDriver::SoundPlayer::setFrequency(sfxbuffer_t &, dfloat)
 {
     // Not supported.
 }
 
-void SdlMixerDriver::SoundPlayer::setOrigin(sfxbuffer_t *buffer, Vector3d const &newOrigin)
+void SdlMixerDriver::SoundPlayer::setOrigin(sfxbuffer_t &, Vector3d const &)
 {
     // Not supported.
 }
 
 /// @param newPan  (-1 ... +1)
-void SdlMixerDriver::SoundPlayer::setPan(sfxbuffer_t *buffer, dfloat newPan)
+void SdlMixerDriver::SoundPlayer::setPan(sfxbuffer_t &buf, dfloat newPan)
 {
     auto const right = dint( (newPan + 1) * 127 );
-    Mix_SetPanning(buffer->cursor, 254 - right, right);
+    Mix_SetPanning(buf.cursor, 254 - right, right);
 }
 
-void SdlMixerDriver::SoundPlayer::setPositioning(sfxbuffer_t *buffer, bool headRelative)
+void SdlMixerDriver::SoundPlayer::setPositioning(sfxbuffer_t &, bool)
 {
     // Not supported.
 }
 
-void SdlMixerDriver::SoundPlayer::setVelocity(sfxbuffer_t *buffer, Vector3d const &newVelocity)
+void SdlMixerDriver::SoundPlayer::setVelocity(sfxbuffer_t &, Vector3d const &)
 {
     // Not supported.
 }
 
-void SdlMixerDriver::SoundPlayer::setVolume(sfxbuffer_t *buffer, dfloat newVolume)
+void SdlMixerDriver::SoundPlayer::setVolume(sfxbuffer_t &buf, dfloat newVolume)
 {
     // 'written' is used for storing the volume of the channel.
-    buffer->written = duint( newVolume * MIX_MAX_VOLUME );
-    Mix_Volume(buffer->cursor, buffer->written);
+    buf.written = duint( newVolume * MIX_MAX_VOLUME );
+    Mix_Volume(buf.cursor, buf.written);
 }
 
-void SdlMixerDriver::SoundPlayer::setVolumeAttenuationRange(sfxbuffer_t *buffer, Ranged const &newRange)
+void SdlMixerDriver::SoundPlayer::setVolumeAttenuationRange(sfxbuffer_t &, Ranged const &)
 {
     // Not supported.
 }

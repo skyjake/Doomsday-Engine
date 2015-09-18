@@ -195,6 +195,12 @@ public:  // Sound effect playback: ---------------------------------------------
 
     struct mobj_s *sfxListener();
 
+    /**
+     * Convenient method determining the distance from the given map space @a point to
+     * the active listener, in map space units; returns @c 0 if no listener is active.
+     */
+    coord_t distanceToListener(de::Vector3d const &point) const;
+
 #endif  // __CLIENT__
 
     /**
@@ -577,7 +583,7 @@ public:  /// @todo revise API:
      * Release the managed sample @a buffer. Calling this invalidates any other
      * existing references or pointers to @a buffer.
      */
-    virtual void destroy(sfxbuffer_t *buffer) = 0;
+    virtual void destroy(sfxbuffer_t &buffer) = 0;
 
     /**
      * Prepare the buffer for playing a sample by filling the buffer with as
@@ -587,30 +593,32 @@ public:  /// @todo revise API:
      * @param buffer  Sound buffer.
      * @param sample  Sample data.
      */
-    virtual void load(sfxbuffer_t *buffer, sfxsample_t *sample) = 0;
+    virtual void load(sfxbuffer_t &buffer, sfxsample_t &sample) = 0;
 
     /**
      * Stop @a buffer if playing and forget about it's sample.
      */
-    virtual void stop(sfxbuffer_t *buffer) = 0;
+    virtual void stop(sfxbuffer_t &buffer) = 0;
 
     /**
      * Stop @a buffer if playing and forget about it's sample.
      */
-    virtual void reset(sfxbuffer_t *buffer) = 0;
+    virtual void reset(sfxbuffer_t &buffer) = 0;
 
     /**
      * Start playing the sample loaded in @a buffer.
      */
-    virtual void play(sfxbuffer_t *buffer) = 0;
+    virtual void play(sfxbuffer_t &buffer) = 0;
 
-    virtual void setFrequency(sfxbuffer_t *buffer, de::dfloat newFrequency) = 0;
-    virtual void setOrigin(sfxbuffer_t *buffer, de::Vector3d const &newOrigin) = 0;
-    virtual void setPan(sfxbuffer_t *buffer, de::dfloat newPan) = 0;
-    virtual void setPositioning(sfxbuffer_t *buffer, bool headRelative) = 0;
-    virtual void setVelocity(sfxbuffer_t *buffer, de::Vector3d const &newVelocity) = 0;
-    virtual void setVolume(sfxbuffer_t *buffer, de::dfloat newVolume) = 0;
-    virtual void setVolumeAttenuationRange(sfxbuffer_t *buffer, de::Ranged const &newRange) = 0;
+    virtual bool isPlaying(sfxbuffer_t &buffer) const = 0;
+
+    virtual void setFrequency(sfxbuffer_t &buffer, de::dfloat newFrequency) = 0;
+    virtual void setOrigin(sfxbuffer_t &buffer, de::Vector3d const &newOrigin) = 0;
+    virtual void setPan(sfxbuffer_t &buffer, de::dfloat newPan) = 0;
+    virtual void setPositioning(sfxbuffer_t &buffer, bool headRelative) = 0;
+    virtual void setVelocity(sfxbuffer_t &buffer, de::Vector3d const &newVelocity) = 0;
+    virtual void setVolume(sfxbuffer_t &buffer, de::dfloat newVolume) = 0;
+    virtual void setVolumeAttenuationRange(sfxbuffer_t &buffer, de::Ranged const &newRange) = 0;
 
     /**
      * Returns @c true if the sound requires refreshing manually.
@@ -623,7 +631,7 @@ public:  /// @todo revise API:
      *
      * @note Don't do anything too time-consuming...
      */
-    virtual void refresh(sfxbuffer_t *buffer) = 0;
+    virtual void refresh(sfxbuffer_t &buffer) = 0;
 
     /**
      * @param property      SFXLP_UNITS_PER_METER

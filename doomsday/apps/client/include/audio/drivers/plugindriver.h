@@ -133,20 +133,21 @@ public:  // Sound players: -----------------------------------------------------
         Sound *makeSound(bool stereoPositioning, de::dint bitsPer, de::dint rate);
         sfxbuffer_t *create(de::dint flags, de::dint bits, de::dint rate);
 
-        void destroy(sfxbuffer_t *buffer);
-        void load(sfxbuffer_t *buffer, sfxsample_t *sample);
-        void reset(sfxbuffer_t *buffer);
-        void play(sfxbuffer_t *buffer);
-        void stop(sfxbuffer_t *buffer);
-        void refresh(sfxbuffer_t *buffer);
+        void destroy(sfxbuffer_t &buffer);
+        void load(sfxbuffer_t &buffer, sfxsample_t &sample);
+        void reset(sfxbuffer_t &buffer);
+        void play(sfxbuffer_t &buffer);
+        bool isPlaying(sfxbuffer_t &buffer) const;
+        void stop(sfxbuffer_t &buffer);
+        void refresh(sfxbuffer_t &buffer);
         bool needsRefresh() const;
-        void setFrequency(sfxbuffer_t *buffer, de::dfloat newFrequency);
-        void setOrigin(sfxbuffer_t *buffer, de::Vector3d const &newOrigin);
-        void setPan(sfxbuffer_t *buffer, de::dfloat newPan);
-        void setPositioning(sfxbuffer_t *buffer, bool headRelative);
-        void setVelocity(sfxbuffer_t *buffer, de::Vector3d const &newVelocity);
-        void setVolume(sfxbuffer_t *buffer, de::dfloat newVolume);
-        void setVolumeAttenuationRange(sfxbuffer_t *buffer, de::Ranged const &newRange);
+        void setFrequency(sfxbuffer_t &buffer, de::dfloat newFrequency);
+        void setOrigin(sfxbuffer_t &buffer, de::Vector3d const &newOrigin);
+        void setPan(sfxbuffer_t &buffer, de::dfloat newPan);
+        void setPositioning(sfxbuffer_t &buffer, bool headRelative);
+        void setVelocity(sfxbuffer_t &buffer, de::Vector3d const &newVelocity);
+        void setVolume(sfxbuffer_t &buffer, de::dfloat newVolume);
+        void setVolumeAttenuationRange(sfxbuffer_t &buffer, de::Ranged const &newRange);
         void listener(de::dint prop, de::dfloat value);
         void listenerv(de::dint prop, de::dfloat *values);
 

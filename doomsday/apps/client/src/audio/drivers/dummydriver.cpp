@@ -32,10 +32,10 @@ namespace audio {
  * @param buf  Sound buffer.
  * @return The length of the buffer in milliseconds.
  */
-static duint getBufferLength(sfxbuffer_t *buf)
+static duint getBufferLength(sfxbuffer_t &buf)
 {
-    DENG2_ASSERT(buf && buf->sample);
-    return 1000 * buf->sample->numSamples / buf->freq;
+    DENG2_ASSERT(buf.sample);
+    return 1000 * buf.sample->numSamples / buf.freq;
 }
 
 // ----------------------------------------------------------------------------------
@@ -157,10 +157,10 @@ dint DummyDriver::SoundPlayer::init()
     return _initialized = true;
 }
 
-void DummyDriver::SoundPlayer::destroy(sfxbuffer_t *buf)
+void DummyDriver::SoundPlayer::destroy(sfxbuffer_t &buf)
 {
     // Free the memory allocated for the buffer.
-    Z_Free(buf);
+    Z_Free(&buf);
 }
 
 sfxbuffer_t *DummyDriver::SoundPlayer::create(dint flags, dint bits, dint rate)
@@ -190,70 +190,65 @@ bool DummyDriver::SoundPlayer::anyRateAccepted() const
     return true;
 }
 
-void DummyDriver::SoundPlayer::stop(sfxbuffer_t *buf)
+void DummyDriver::SoundPlayer::stop(sfxbuffer_t &buf)
 {
-    DENG2_ASSERT(buf);
-
     // Clear the flag that tells the Sfx module about playing buffers.
-    buf->flags &= ~SFXBF_PLAYING;
+    buf.flags &= ~SFXBF_PLAYING;
 
     // If the sound is started again, it needs to be reloaded.
-    buf->flags |= SFXBF_RELOAD;
+    buf.flags |= SFXBF_RELOAD;
 }
 
-void DummyDriver::SoundPlayer::reset(sfxbuffer_t *buf)
+void DummyDriver::SoundPlayer::reset(sfxbuffer_t &buf)
 {
-    DENG2_ASSERT(buf);
-
     stop(buf);
-    buf->sample = nullptr;
-    buf->flags &= ~SFXBF_RELOAD;
+    buf.sample = nullptr;
+    buf.flags &= ~SFXBF_RELOAD;
 }
 
-void DummyDriver::SoundPlayer::load(sfxbuffer_t *buf, sfxsample_t *sample)
+void DummyDriver::SoundPlayer::load(sfxbuffer_t &buf, sfxsample_t &sample)
 {
-    DENG2_ASSERT(buf && sample);
-
     // Now the buffer is ready for playing.
-    buf->sample  = sample;
-    buf->written = sample->size;
-    buf->flags  &= ~SFXBF_RELOAD;
+    buf.sample  = &sample;
+    buf.written = sample.size;
+    buf.flags  &= ~SFXBF_RELOAD;
 }
 
-void DummyDriver::SoundPlayer::play(sfxbuffer_t *buf)
+void DummyDriver::SoundPlayer::play(sfxbuffer_t &buf)
 {
-    DENG2_ASSERT(buf);
-
     // Playing is quite impossible without a sample.
-    if(!buf->sample) return;
+    if(!buf.sample) return;
 
     // Do we need to reload?
-    if(buf->flags & SFXBF_RELOAD)
+    if(buf.flags & SFXBF_RELOAD)
     {
-        load(buf, buf->sample);
+        load(buf, *buf.sample);
     }
 
     // The sound starts playing now?
-    if(!(buf->flags & SFXBF_PLAYING))
+    if(!isPlaying(buf))
     {
         // Calculate the end time (milliseconds).
-        buf->endTime = Timer_RealMilliseconds() + getBufferLength(buf);
+        buf.endTime = Timer_RealMilliseconds() + getBufferLength(buf);
     }
 
     // The buffer is now playing.
-    buf->flags |= SFXBF_PLAYING;
+    buf.flags |= SFXBF_PLAYING;
 }
 
-void DummyDriver::SoundPlayer::refresh(sfxbuffer_t *buf)
+bool DummyDriver::SoundPlayer::isPlaying(sfxbuffer_t &buf) const
 {
-    DENG2_ASSERT(buf);
+    return (buf.flags & SFXBF_PLAYING) != 0;
+}
 
+void DummyDriver::SoundPlayer::refresh(sfxbuffer_t &buf)
+{
     // Can only be done if there is a sample and the buffer is playing.
-    if(!buf->sample || !(buf->flags & SFXBF_PLAYING))
+    if(!buf.sample || !isPlaying(buf))
         return;
 
     // Have we passed the predicted end of sample?
-    if(!(buf->flags & SFXBF_REPEAT) && Timer_RealMilliseconds() >= buf->endTime)
+    if(!(buf.flags & SFXBF_REPEAT) && Timer_RealMilliseconds() >= buf.endTime)
     {
         // Time for the sound to stop.
         stop(buf);
@@ -266,37 +261,37 @@ bool DummyDriver::SoundPlayer::needsRefresh() const
     return false;
 }
 
-void DummyDriver::SoundPlayer::setFrequency(sfxbuffer_t *buffer, dfloat newFrequency)
+void DummyDriver::SoundPlayer::setFrequency(sfxbuffer_t &buf, dfloat newFrequency)
 {
-    buffer->freq = buffer->rate * newFrequency;
+    buf.freq = buf.rate * newFrequency;
 }
 
-void DummyDriver::SoundPlayer::setOrigin(sfxbuffer_t *, Vector3d const &)
-{
-    // Not supported.
-}
-
-void DummyDriver::SoundPlayer::setPan(sfxbuffer_t *, dfloat)
+void DummyDriver::SoundPlayer::setOrigin(sfxbuffer_t &, Vector3d const &)
 {
     // Not supported.
 }
 
-void DummyDriver::SoundPlayer::setPositioning(sfxbuffer_t *, bool)
+void DummyDriver::SoundPlayer::setPan(sfxbuffer_t &, dfloat)
 {
     // Not supported.
 }
 
-void DummyDriver::SoundPlayer::setVelocity(sfxbuffer_t *, Vector3d const &)
+void DummyDriver::SoundPlayer::setPositioning(sfxbuffer_t &, bool)
 {
     // Not supported.
 }
 
-void DummyDriver::SoundPlayer::setVolume(sfxbuffer_t *, dfloat)
+void DummyDriver::SoundPlayer::setVelocity(sfxbuffer_t &, Vector3d const &)
 {
     // Not supported.
 }
 
-void DummyDriver::SoundPlayer::setVolumeAttenuationRange(sfxbuffer_t *, Ranged const &)
+void DummyDriver::SoundPlayer::setVolume(sfxbuffer_t &, dfloat)
+{
+    // Not supported.
+}
+
+void DummyDriver::SoundPlayer::setVolumeAttenuationRange(sfxbuffer_t &, Ranged const &)
 {
     // Not supported.
 }

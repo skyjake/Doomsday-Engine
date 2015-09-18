@@ -1962,6 +1962,15 @@ mobj_t *System::sfxListener()
     return d->sfxListener;
 }
 
+coord_t System::distanceToListener(Vector3d const &point) const
+{
+    if(mobj_t const *listener = getListenerMobj())
+    {
+        return Mobj_ApproxPointDistance(*listener, point);
+    }
+    return 0;
+}
+
 #endif  // __CLIENT__
 
 bool System::soundIsPlaying(dint soundId, mobj_t *emitter) const
@@ -2177,8 +2186,7 @@ bool System::playSound(dint soundIdAndFlags, mobj_t *emitter, coord_t const *ori
     if(!(info->flags & SF_NO_ATTENUATION) && !(soundIdAndFlags & DDSF_NO_ATTENUATION))
     {
         // If origin is too far, don't even think about playing the sound.
-        coord_t const *point = (emitter ? emitter->origin : origin);
-        if(Mobj_ApproxPointDistance(getListenerMobj(), point) > sfxDistMax)
+        if(distanceToListener(emitter ? emitter->origin : origin) > sfxDistMax)
             return false;
     }
 
@@ -2246,7 +2254,7 @@ dfloat System::rateSoundPriority(mobj_t *emitter, coord_t const *point, dfloat v
         origin = point;
     }
 
-    return 1000 * volume - Mobj_ApproxPointDistance(d->sfxListener, origin) / 2 - timeoff;
+    return 1000 * volume - Mobj_ApproxPointDistance(*d->sfxListener, origin) / 2 - timeoff;
 }
 
 ISoundPlayer &System::sfx() const
