@@ -1712,7 +1712,7 @@ void P_PlayerThinkUpdateControls(player_t *player)
     brain->speed = (!FEQUAL(vel, 0));
 
     // Check for strafe.
-    P_GetControlState(playerNum, CTL_MODIFIER_1, &vel, 0);
+    //P_GetControlState(playerNum, CTL_MODIFIER_1, &vel, 0);
     //strafe = (!FEQUAL(vel, 0));
 
     // Move status.

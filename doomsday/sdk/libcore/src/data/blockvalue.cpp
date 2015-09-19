@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/BlockValue"
@@ -28,7 +28,7 @@ using namespace de;
 BlockValue::BlockValue()
 {}
 
-BlockValue::BlockValue(Block const &block) : _value(block) 
+BlockValue::BlockValue(Block const &block) : _value(block)
 {}
 
 Block &BlockValue::block()
@@ -82,7 +82,7 @@ void BlockValue::sum(Value const &value)
         /// @throw ArithmeticError @a value was not a BlockValue. BlockValue can only be
         /// summed with another BlockValue.
         throw ArithmeticError("BlockValue::sum", "Value cannot be summed");
-    }    
+    }
     _value += other->_value;
 }
 
@@ -97,10 +97,15 @@ void BlockValue::operator << (Reader &from)
     from >> id;
     if(id != BLOCK)
     {
-        /// @throw DeserializationError The identifier that species the type of the 
+        /// @throw DeserializationError The identifier that species the type of the
         /// serialized value was invalid.
         throw DeserializationError("BlockValue::operator <<", "Invalid ID");
     }
     _value.clear();
     from >> _value;
+}
+
+Value::Text BlockValue::typeId() const
+{
+    return "Block";
 }

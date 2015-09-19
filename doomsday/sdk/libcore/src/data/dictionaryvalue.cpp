@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/DictionaryValue"
@@ -59,13 +59,13 @@ void DictionaryValue::clear()
 void DictionaryValue::add(Value *key, Value *value)
 {
     Elements::iterator existing = _elements.find(ValueRef(key));
-    
+
     if(existing != _elements.end())
     {
         // Found it. Replace old value.
         delete existing->second;
         existing->second = value;
-        
+
         // We already have the key, so the new one is unnecessary.
         delete key;
     }
@@ -110,6 +110,11 @@ ArrayValue *DictionaryValue::contentsAsArray(ContentSelection selection) const
     return array.take();
 }
 
+Value::Text DictionaryValue::typeId() const
+{
+    return "Dictionary";
+}
+
 Value *DictionaryValue::duplicate() const
 {
     return new DictionaryValue(*this);
@@ -139,7 +144,7 @@ Value::Text DictionaryValue::asText() const
         s << " " << label << content.replace("\n", "\n" + String(label.size() + 2, ' '));
         isFirst = false;
     }
-    
+
     s << " }";
     return result;
 }
@@ -256,7 +261,7 @@ void DictionaryValue::sum(Value const &value)
     {
         throw ArithmeticError("DictionaryValue::sum", "Values cannot be summed");
     }
-    
+
     for(Elements::const_iterator i = other->_elements.begin();
         i != other->_elements.end(); ++i)
     {
@@ -295,7 +300,7 @@ void DictionaryValue::operator << (Reader &from)
     from >> id;
     if(id != DICTIONARY)
     {
-        /// @throw DeserializationError The identifier that species the type of the 
+        /// @throw DeserializationError The identifier that species the type of the
         /// serialized value was invalid.
         throw DeserializationError("DictionaryValue::operator <<", "Invalid ID");
     }

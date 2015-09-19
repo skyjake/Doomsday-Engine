@@ -37,6 +37,7 @@ byte useJoystick = false; ///< cvar Joystick input enabled?
 
 static LPDIRECTINPUTDEVICE8 didJoy;
 static DIDEVICEINSTANCE firstJoystick;
+static de::String joyName;
 
 static int counter;
 
@@ -62,7 +63,7 @@ static BOOL CALLBACK enumJoysticks(LPCDIDEVICEINSTANCE lpddi, void* ref)
     return DIENUM_CONTINUE;
 }
 
-dd_bool Joystick_Init()
+bool Joystick_Init()
 {
     int joyProp[] = {
         DIJOFS_X, DIJOFS_Y, DIJOFS_Z,
@@ -118,7 +119,8 @@ dd_bool Joystick_Init()
     }
 
     // Show some info.
-    LOG_INPUT_MSG("Joystick name: %s") << ddi.tszProductName; /// @todo unicode? -jk
+    joyName = ddi.tszProductName; /// @todo unicode? -jk        
+    LOG_INPUT_MSG("Joystick name: %s") << joyName;
 
     // Create the joystick device.
     HRESULT hr = dInput->CreateDevice(ddi.guidInstance, &didJoy, 0);
@@ -197,7 +199,7 @@ void Joystick_Shutdown(void)
     DirectInput_KillDevice(&didJoy);
 }
 
-dd_bool Joystick_IsPresent(void)
+bool Joystick_IsPresent(void)
 {
     return (didJoy != 0);
 }
@@ -270,4 +272,9 @@ void Joystick_GetState(joystate_t* state)
         else
             state->hatAngle[i] = pov / 100.0f;
     }
+}
+
+de::String Joystick_Name()
+{
+    return joyName;
 }

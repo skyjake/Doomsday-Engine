@@ -282,6 +282,33 @@ void BindContext::clearAllBindings()
     LOG_INPUT_VERBOSE(_E(b) "'%s'" _E(.) " cleared") << d->name;
 }
 
+void BindContext::clearBindingsForDevice(int deviceId)
+{
+    // Collect all the bindings that should be deleted.
+    QSet<int> ids;
+    forAllCommandBindings([&ids, &deviceId] (Record const &bind)
+    {
+        if(bind.geti("deviceId") == deviceId)
+        {
+            ids.insert(bind.geti("id"));
+        }
+        return LoopContinue;
+    });
+    forAllImpulseBindings([&ids, &deviceId] (Record const &bind)
+    {
+        if(bind.geti("deviceId") == deviceId)
+        {
+            ids.insert(bind.geti("id"));
+        }
+        return LoopContinue;
+    });
+
+    foreach(int id, ids)
+    {
+        deleteBinding(id);
+    }
+}
+
 Record *BindContext::bindCommand(char const *eventDesc, char const *command)
 {
     DENG2_ASSERT(eventDesc && command && command[0]);

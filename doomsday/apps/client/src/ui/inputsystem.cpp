@@ -53,6 +53,7 @@
 #include "ui/inputdeviceaxiscontrol.h"
 #include "ui/inputdevicebuttoncontrol.h"
 #include "ui/inputdevicehatcontrol.h"
+#include "ui/controllerpresets.h"
 #include "ui/sys_input.h"
 
 #include "sys_system.h" // novideo
@@ -62,6 +63,8 @@ using namespace de;
 #define DEFAULT_JOYSTICK_DEADZONE  .05f  ///< 5%
 
 #define MAX_AXIS_FILTER  40
+
+static char *joyControllerPreset = (char *) "";
 
 static InputDevice *makeKeyboard(String const &name, String const &title = "")
 {
@@ -172,13 +175,25 @@ static Value *Function_InputSystem_BindEvent(Context &, Function::ArgumentValues
     String eventDesc = args[0]->asText();
     String command   = args[1]->asText();
 
-    if(ClientApp::inputSystem().bindCommand(eventDesc.toLatin1(), command.toLatin1()))
+    if(ClientApp::inputSystem().bindCommand(eventDesc.toLatin1(), command.toUtf8()))
     {
         // Success.
         return new NumberValue(true);
     }
 
     // Failed to create the binding...
+    return new NumberValue(false);
+}
+
+static Value *Function_InputSystem_BindControl(Context &, Function::ArgumentValues const &args)
+{
+    String control = args[0]->asText();
+    String impulse = args[1]->asText();
+
+    if(ClientApp::inputSystem().bindImpulse(control.toLatin1(), impulse.toLatin1()))
+    {
+        return new NumberValue(true);
+    }
     return new NumberValue(false);
 }
 
@@ -221,7 +236,7 @@ static char const *allocEventString(char const *str)
     DENG2_ASSERT(eventStringRover >= 0 && eventStringRover < MAXEVENTS);
     M_Free(eventStrings[eventStringRover]);
     char const *returnValue = eventStrings[eventStringRover] = strdup(str);
-    
+
     if(++eventStringRover >= MAXEVENTS)
     {
         eventStringRover = 0;
@@ -306,6 +321,8 @@ DENG2_PIMPL(InputSystem)
     typedef QList<BindContext *> BindContexts;
     BindContexts contexts;  ///< Ordered from highest to lowest priority.
 
+    std::unique_ptr<ControllerPresets> gameControllerPresets;
+
     Instance(Public *i) : Base(i)
     {
         // Initialize settings.
@@ -319,9 +336,14 @@ DENG2_PIMPL(InputSystem)
 
         // Initialize script bindings.
         binder.initNew()
-                << DENG2_FUNC(InputSystem_BindEvent, "bindEvent", "event" << "command");
+                << DENG2_FUNC(InputSystem_BindEvent, "bindEvent", "event" << "command")
+                << DENG2_FUNC(InputSystem_BindControl, "bindControl", "control" << "impulse");
+
+        binder.module().addNumber("DEADZONE_DEFAULT", DEFAULT_JOYSTICK_DEADZONE).setReadOnly();
 
         App::scriptSystem().addNativeModule("Input", binder.module());
+
+        gameControllerPresets.reset(new ControllerPresets(IDEV_JOY1, "input-joy-preset"));
 
         // Initialize system APIs.
         I_InitInterfaces();
@@ -1298,6 +1320,11 @@ int InputSystem::contextCount() const
     return d->contexts.count();
 }
 
+ControllerPresets &InputSystem::gameControllerPresets()
+{
+    return *d->gameControllerPresets;
+}
+
 bool InputSystem::hasContext(String const &name) const
 {
     return contextPtr(name) != nullptr;
@@ -1488,6 +1515,14 @@ void InputSystem::removeAllBindings()
 
     // We can restart the id counter, all the old bindings were removed.
     Binding::resetIdentifiers();
+}
+
+void InputSystem::removeBindingsForDevice(int deviceId)
+{
+    for(auto *context : d->contexts)
+    {
+        context->clearBindingsForDevice(deviceId);
+    }
 }
 
 D_CMD(ListDevices)
@@ -1684,8 +1719,9 @@ void InputSystem::consoleRegister() // static
 #define PROTECTED_FLAGS     (CMDF_NO_DEDICATED | CMDF_DED | CMDF_CLIENT)
 
     // Variables:
-    C_VAR_BYTE("input-conflict-zerocontrol", &zeroControlUponConflict, 0, 0, 1);
-    C_VAR_BYTE("input-sharp",                &useSharpInputEvents,     0, 0, 1);
+    C_VAR_BYTE   ("input-conflict-zerocontrol", &zeroControlUponConflict, 0, 0, 1);
+    C_VAR_BYTE   ("input-sharp",                &useSharpInputEvents,     0, 0, 1);
+    C_VAR_CHARPTR("input-joy-preset",           &joyControllerPreset,     0, 0, 0);
 
     // Commands:
     C_CMD_FLAGS("activatebcontext",     "s",        ActivateContext,    PROTECTED_FLAGS);

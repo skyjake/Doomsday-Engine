@@ -115,6 +115,8 @@ public: // Binding management: -------------------------------------------------
 
     void clearAllBindings();
 
+    void clearBindingsForDevice(int deviceId);
+
     /**
      * @param id  Unique identifier of the binding to delete.
      * @return  @c true if the binding was found and deleted.
