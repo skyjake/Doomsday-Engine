@@ -24,6 +24,7 @@
 
 #include <de/memory.h>
 #include <de/PathTree>
+#include <de/Function>
 
 using namespace de;
 
@@ -612,6 +613,82 @@ void Con_AddKnownWordsForVariables()
 
     cvarDirectory->traverse(PathTree::NoBranch, NULL, CVarDirectory::no_hash,
                             addVariableToKnownWords);
+}
+
+static Value *Function_Console_Get(Context &, Function::ArgumentValues const &args)
+{
+    String const name = args.at(0)->asText();
+    cvar_t *var = Con_FindVariable(name.toUtf8());
+    if(!var)
+    {
+        throw Error("Function_Console_Get",
+                    QString("Unknown console variable: %1").arg(name));
+    }
+    switch(var->type)
+    {
+    case CVT_BYTE:
+        return new NumberValue(CVar_Byte(var));
+
+    case CVT_INT:
+        return new NumberValue(CVar_Integer(var));
+
+    case CVT_FLOAT:
+        return new NumberValue(CVar_Float(var));
+
+    case CVT_CHARPTR:  ///< ptr points to a char*, which points to the string.
+        return new TextValue(CVar_String(var));
+
+    case CVT_URIPTR:
+        return new TextValue(CVar_Uri(var).asText());
+
+    default:
+        break;
+    }
+    return nullptr;
+}
+
+static Value *Function_Console_Set(Context &, Function::ArgumentValues const &args)
+{
+    String const name = args.at(0)->asText();
+    cvar_t *var = Con_FindVariable(name.toUtf8());
+    if(!var)
+    {
+        throw Error("Function_Console_Set",
+                    QString("Unknown console variable: %1").arg(name));
+    }
+
+    Value const &value = *args.at(1);
+    switch(var->type)
+    {
+    case CVT_BYTE:
+    case CVT_INT:
+        CVar_SetInteger(var, value.asInt());
+        break;
+
+    case CVT_FLOAT:
+        CVar_SetFloat(var, value.asNumber());
+        break;
+
+    case CVT_CHARPTR:  ///< ptr points to a char*, which points to the string.
+        CVar_SetString(var, value.asText().toUtf8());
+        break;
+
+    case CVT_URIPTR:
+        CVar_SetUri(var, de::Uri(value.asText()));
+        break;
+
+    default:
+        break;
+    }
+
+    return nullptr;
+}
+
+void initVariableBindings(Binder &binder)
+{
+    binder
+        << DENG2_FUNC(Console_Get, "get", "name")
+        << DENG2_FUNC(Console_Set, "set", "name" << "value");
 }
 
 #ifdef DENG_DEBUG

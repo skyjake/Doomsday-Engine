@@ -51,6 +51,7 @@ public:
     }
 
     // Implementations of pure virtual methods.
+    Text typeId() const;
     Value *duplicate() const;
     Text asText() const;
     bool isTrue() const;

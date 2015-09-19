@@ -436,8 +436,8 @@ void MobjAnimator::advanceTime(TimeDelta const &elapsed)
 
         if(anim.looping == Sequence::NotLooping)
         {
-            // Clamp at the end.
-            anim.time = min(anim.time, anim.duration);
+            // Clamp at the end. Use epsilon so it doesn't wrap around in ModelDrawable.
+            anim.time = min(anim.time, anim.duration - de::FLOAT_EPSILON);
         }
 
         if(anim.looping == Sequence::Looping)

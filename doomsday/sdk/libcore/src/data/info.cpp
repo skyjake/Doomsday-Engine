@@ -779,21 +779,21 @@ void Info::BlockElement::moveContents(BlockElement &destination)
 Info::Info() : d(new Instance(this))
 {}
 
-Info::Info(String const &source)
+Info::Info(String const &source) : d(nullptr)
 {
     QScopedPointer<Instance> inst(new Instance(this)); // parsing may throw exception
     inst->parse(source);
     d.reset(inst.take());
 }
 
-Info::Info(File const &file)
+Info::Info(File const &file) : d(nullptr)
 {
     QScopedPointer<Instance> inst(new Instance(this)); // parsing may throw exception
     inst->parse(file);
     d.reset(inst.take());
 }
 
-Info::Info(String const &source, IIncludeFinder const &finder)
+Info::Info(String const &source, IIncludeFinder const &finder) : d(nullptr)
 {
     QScopedPointer<Instance> inst(new Instance(this)); // parsing may throw exception
     inst->finder = &finder;

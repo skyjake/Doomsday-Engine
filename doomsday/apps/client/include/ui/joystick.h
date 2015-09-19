@@ -21,18 +21,14 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_SYSTEM_JOYSTICK_H
-#define LIBDENG_SYSTEM_JOYSTICK_H
+#ifndef DENG_CLIENT_UI_JOYSTICK_H
+#define DENG_CLIENT_UI_JOYSTICK_H
 
 #ifdef __SERVER__
 #  error Joystick is not available in a SERVER build
 #endif
 
-#include "dd_types.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <de/String>
 
 #define IJOY_AXISMIN    -10000
 #define IJOY_AXISMAX    10000
@@ -51,18 +47,16 @@ typedef struct joystate_s {
     float hatAngle[IJOY_MAXHATS];      ///< 0 - 359 degrees.
 } joystate_t;
 
-void Joystick_Register(void);
+void Joystick_Register();
 
-dd_bool Joystick_Init(void);
+bool Joystick_Init();
 
-void Joystick_Shutdown(void);
+void Joystick_Shutdown();
 
-dd_bool Joystick_IsPresent(void);
+bool Joystick_IsPresent();
 
 void Joystick_GetState(joystate_t *state);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
+de::String Joystick_Name();
 
-#endif // LIBDENG_SYSTEM_JOYSTICK_H
+#endif // DENG_CLIENT_UI_JOYSTICK_H

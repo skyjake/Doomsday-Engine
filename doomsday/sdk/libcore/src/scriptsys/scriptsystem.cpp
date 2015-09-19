@@ -36,11 +36,6 @@
 
 namespace de {
 
-static Value *Function_Path_WithoutFileName(Context &, Function::ArgumentValues const &args)
-{
-    return new TextValue(args.at(0)->asText().fileNamePath());
-}
-
 static ScriptSystem *_scriptSystem = 0;
 
 DENG2_PIMPL(ScriptSystem)
@@ -54,7 +49,6 @@ DENG2_PIMPL(ScriptSystem)
     NativeModules nativeModules; // not owned
     Record coreModule;  // Script: built-in script classes and functions.
     Record versionModule; // Version: information about the platform and build
-    Record pathModule;    // Path: path manipulation routines (based on native classes Path, NativePath, String)
 
     /// Resident modules.
     typedef QMap<String, Module *> Modules; // owned
@@ -87,11 +81,6 @@ DENG2_PIMPL(ScriptSystem)
 #endif
             addNativeModule("Version", mod);
         }
-
-        // Setup the Path module.
-        binder.init(pathModule)
-                << DENG2_FUNC(Path_WithoutFileName, "withoutFileName", "path");
-        addNativeModule("Path", pathModule);
     }
 
     ~Instance()

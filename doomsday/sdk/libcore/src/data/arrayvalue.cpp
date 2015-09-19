@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/ArrayValue"
@@ -78,7 +78,7 @@ Value::Text ArrayValue::asText() const
         s << " " << content.replace("\n", "\n  ");
         isFirst = false;
     }
-    
+
     s << " ]";
     return result;
 }
@@ -173,7 +173,7 @@ dint ArrayValue::compare(Value const &value) const
         // These appear identical.
         return 0;
     }
-    return Value::compare(value);    
+    return Value::compare(value);
 }
 
 void ArrayValue::sum(Value const &value)
@@ -185,7 +185,7 @@ void ArrayValue::sum(Value const &value)
         /// with another ArrayValue.
         throw ArithmeticError("ArrayValue::sum", "Array cannot be summed with value");
     }
-    
+
     for(Elements::const_iterator i = array->_elements.begin(); i != array->_elements.end(); ++i)
     {
         _elements.push_back((*i)->duplicate());
@@ -237,7 +237,7 @@ ArrayValue::Elements::iterator ArrayValue::indexToIterator(dint index)
     {
         /// @throw OutOfBoundsError @a index is out of bounds.
         throw OutOfBoundsError("ArrayValue::indexToIterator", "Index is out of bounds");
-    }    
+    }
 }
 
 ArrayValue::Elements::const_iterator ArrayValue::indexToIterator(dint index) const
@@ -254,7 +254,7 @@ ArrayValue::Elements::const_iterator ArrayValue::indexToIterator(dint index) con
     {
         /// @throw OutOfBoundsError @a index is out of bounds.
         throw OutOfBoundsError("ArrayValue::indexToIterator", "Index is out of bounds");
-    }    
+    }
 }
 
 void ArrayValue::insert(dint index, Value *value)
@@ -263,7 +263,7 @@ void ArrayValue::insert(dint index, Value *value)
     {
         add(value);
     }
-    else 
+    else
     {
         _elements.insert(indexToIterator(index), value);
     }
@@ -275,7 +275,7 @@ void ArrayValue::replace(dint index, Value *value)
     delete *elem;
     *elem = value;
 }
-    
+
 void ArrayValue::remove(dint index)
 {
     Elements::iterator elem = indexToIterator(index);
@@ -294,7 +294,7 @@ ArrayValue &ArrayValue::operator << (Value const &value)
     add(value.duplicate());
     return *this;
 }
-    
+
 Value *ArrayValue::popLast()
 {
     DENG2_ASSERT(size() > 0);
@@ -337,7 +337,7 @@ void ArrayValue::operator << (Reader &from)
     from >> id;
     if(id != ARRAY)
     {
-        /// @throw DeserializationError The identifier that species the type of the 
+        /// @throw DeserializationError The identifier that species the type of the
         /// serialized value was invalid.
         throw DeserializationError("ArrayValue::operator <<", "Invalid ID");
     }
@@ -378,4 +378,9 @@ Value const &ArrayValue::element(dint index) const
 Value const &ArrayValue::operator [] (dint index) const
 {
     return element(index);
+}
+
+Value::Text ArrayValue::typeId() const
+{
+    return "Array";
 }

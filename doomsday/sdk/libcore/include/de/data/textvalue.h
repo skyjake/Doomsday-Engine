@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_TEXTVALUE_H
@@ -44,6 +44,7 @@ public:
     /// Converts the TextValue to plain text.
     operator String const &() const;
 
+    Text typeId() const;
     Value *duplicate() const;
     Number asNumber() const;
     Text asText() const;

@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_TIMEVALUE_H
@@ -36,6 +36,7 @@ public:
     /// Returns the time of the value.
     Time time() const { return _time; }
 
+    Text typeId() const;
     Value *duplicate() const;
     Text asText() const;
     bool isTrue() const;

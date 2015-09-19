@@ -95,6 +95,9 @@ private:
 #ifdef DENG2_DEBUG
 public:
     static int totalCount; // Number of Counted objects in existence.
+# ifdef DENG_USE_COUNTED_TRACING
+    static void printAllocs();
+# endif
 #endif
 };
 

@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/BuiltInExpression"
@@ -59,7 +59,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
 {
     std::auto_ptr<Value> value(evaluator.popResult());
     ArrayValue const &args = value.get()->as<ArrayValue>();
-    
+
     switch(_type)
     {
     case LENGTH:
@@ -69,7 +69,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
                 "Expected exactly one argument for LENGTH");
         }
         return new NumberValue(args.at(1).size());
-        
+
     case DICTIONARY_KEYS:
     case DICTIONARY_VALUES:
     {
@@ -80,7 +80,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
                 String(_type == DICTIONARY_KEYS?
                        "DICTIONARY_KEYS" : "DICTIONARY_VALUES"));
         }
-        
+
         DictionaryValue const *dict = dynamic_cast<DictionaryValue const *>(&args.at(1));
         if(!dict)
         {
@@ -117,8 +117,8 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
         }
         return keys;
     }
-    
-    case RECORD_MEMBERS:    
+
+    case RECORD_MEMBERS:
     case RECORD_SUBRECORDS:
     {
         if(args.size() != 2)
@@ -127,7 +127,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
                 "Expected exactly one argument for " +
                 String(_type == RECORD_MEMBERS? "RECORD_MEMBERS" : "RECORD_SUBRECORDS"));
         }
-        
+
         RecordValue const *rec = dynamic_cast<RecordValue const *>(&args.at(1));
         if(!rec)
         {
@@ -186,7 +186,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
         // The only argument is an absolute path of the file.
         return new RecordValue(App::rootFolder().locate<File>(args.at(1).asText()).info());
     }
-    
+
     case AS_NUMBER:
         if(args.size() != 2)
         {
@@ -273,7 +273,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
         Writer(*data.get()) << args.at(1);
         return data.release();
     }
-    
+
     case DESERIALIZE:
     {
         if(args.size() != 2)
@@ -298,7 +298,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
         throw WrongArgumentsError("BuiltInExpression::evaluate",
             "deserialize() can operate only on block values");
     }
-        
+
     case FLOOR:
         if(args.size() != 2)
         {
@@ -324,6 +324,14 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
         return subProcess.context().evaluator().result().duplicate();
     }
 
+    case TYPE_OF:
+        if(args.size() != 2)
+        {
+            throw WrongArgumentsError("BuiltInExpression::evaluate",
+                                      "Expected exactly one argument for TYPE_OF");
+        }
+        return new TextValue(args.at(1).typeId());
+
     default:
         DENG2_ASSERT(false);
     }
@@ -345,7 +353,7 @@ void BuiltInExpression::operator << (Reader &from)
     from >> id;
     if(id != BUILT_IN)
     {
-        /// @throw DeserializationError The identifier that species the type of the 
+        /// @throw DeserializationError The identifier that species the type of the
         /// serialized expression was invalid.
         throw DeserializationError("BuiltInExpression::operator <<", "Invalid ID");
     }
@@ -382,11 +390,12 @@ static struct {
     { "serialize",   BuiltInExpression::SERIALIZE },
     { "subrecords",  BuiltInExpression::RECORD_SUBRECORDS },
     { "timedelta",   BuiltInExpression::TIME_DELTA },
+    { "typeof",      BuiltInExpression::TYPE_OF },
     { NULL,          BuiltInExpression::NONE }
 };
 
 BuiltInExpression::Type BuiltInExpression::findType(String const &identifier)
-{    
+{
     for(duint i = 0; types[i].str; ++i)
     {
         if(identifier == types[i].str)
