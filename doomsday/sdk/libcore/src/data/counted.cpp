@@ -23,12 +23,29 @@ namespace de {
 
 #ifdef DENG2_DEBUG
 int Counted::totalCount = 0; ///< Should return back to zero when program ends.
+# ifdef DENG_USE_COUNTED_TRACING
+static QHash<void *, QByteArray> countedAllocs;
+void Counted::printAllocs()
+{
+    qDebug() << "Counted objects:" << Counted::totalCount;
+    for(auto i = countedAllocs.constBegin(); i != countedAllocs.constEnd(); ++i)
+    {
+        qDebug() << "-=- Object" << i.key();
+        qDebug() << i.value();
+    }
+}
+# endif
 #endif
 
 Counted::Counted() : _refCount(1)
 {
 #ifdef DENG2_DEBUG
     totalCount++;
+# ifdef DENG_USE_COUNTED_TRACING
+    QString trace;
+    DENG2_BACKTRACE(32, trace);
+    countedAllocs[this] = trace.toLatin1();
+# endif
 #endif
 }
 
@@ -36,8 +53,10 @@ Counted::~Counted()
 {
 #ifdef DENG2_DEBUG
     totalCount--;
+# ifdef DENG_USE_COUNTED_TRACING
+    countedAllocs.remove(this);
+# endif
 #endif
-    //qDebug() << "~Counted" << this << typeid(*this).name() << "refCount:" << _refCount;
 
     DENG2_ASSERT(_refCount == 0);
 }

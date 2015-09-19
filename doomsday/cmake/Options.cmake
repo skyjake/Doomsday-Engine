@@ -27,3 +27,11 @@ option (DENG_FAKE_MEMORY_ZONE
 if (DENG_FAKE_MEMORY_ZONE)
     add_definitions (-DLIBDENG_FAKE_MEMORY_ZONE)
 endif ()
+
+option (DENG_ENABLE_COUNTED_TRACING
+    "(Debug) Keep track of where de::Counted objects are allocated"
+    OFF
+)
+if (DENG_ENABLE_COUNTED_TRACING)
+    add_definitions (-DDENG_USE_COUNTED_TRACING)
+endif ()
