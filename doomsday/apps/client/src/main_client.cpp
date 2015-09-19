@@ -83,10 +83,10 @@ int main(int argc, char** argv)
         }
     }
 
-     // Check that all reference-counted objects have been deleted.
+    // Check that all reference-counted objects have been deleted.
 #ifdef DENG2_DEBUG
 # ifdef DENG_USE_COUNTED_TRACING
-     if(de::Counted::totalCount > 0)
+    if(de::Counted::totalCount > 0)
     {
         de::Counted::printAllocs();
     }
