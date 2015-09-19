@@ -327,7 +327,7 @@ static void substituteInCommand(String const &command, ddevent_t const &event, d
 Action *CommandBinding::makeAction(ddevent_t const &event, BindContext const &context,
     bool respectHigherContexts) const
 {
-    if(geti("type") != event.type)   return nullptr;
+    if(geti("type") != event.type) return nullptr;
 
     InputDevice const *dev = nullptr;
     if(event.type != E_SYMBOLIC)
@@ -431,7 +431,7 @@ Action *CommandBinding::makeAction(ddevent_t const &event, BindContext const &co
     ArrayValue const &conds = def().geta("condition");
     DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, conds.elements())
     {
-        if(!B_CheckCondition((*i)->as<RecordValue>().record(), 0, nullptr))
+        if(!B_CheckCondition((*i)->as<RecordValue>().record(), 0, &context))
             return nullptr;
     }
 
