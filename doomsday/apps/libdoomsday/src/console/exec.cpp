@@ -291,6 +291,7 @@ void Con_Shutdown(void)
 
     Con_ClearExecBuffer();
     Con_ShutdownDatabases();
+    consoleBinder.deinit();
 
     ConsoleInited = false;
 }
