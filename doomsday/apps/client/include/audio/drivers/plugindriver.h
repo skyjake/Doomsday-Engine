@@ -26,6 +26,9 @@
 #  error "audio" is not available in a SERVER build
 #endif
 
+#include "api_audiod_mus.h"  ///< @todo remove me
+#include "api_audiod_sfx.h"  ///< @todo remove me
+#include "audio/sound.h"
 #include "audio/system.h"
 #include <doomsday/library.h>
 #include <de/LibraryFile>
@@ -129,25 +132,12 @@ public:  // Sound players: -----------------------------------------------------
 
         de::dint init();
         bool anyRateAccepted() const;
+        bool needsRefresh() const;
 
         Sound *makeSound(bool stereoPositioning, de::dint bitsPer, de::dint rate);
         sfxbuffer_t *create(de::dint flags, de::dint bits, de::dint rate);
-
         void destroy(sfxbuffer_t &buffer);
-        void load(sfxbuffer_t &buffer, sfxsample_t &sample);
-        void reset(sfxbuffer_t &buffer);
-        void play(sfxbuffer_t &buffer);
-        bool isPlaying(sfxbuffer_t &buffer) const;
-        void stop(sfxbuffer_t &buffer);
-        void refresh(sfxbuffer_t &buffer);
-        bool needsRefresh() const;
-        void setFrequency(sfxbuffer_t &buffer, de::dfloat newFrequency);
-        void setOrigin(sfxbuffer_t &buffer, de::Vector3d const &newOrigin);
-        void setPan(sfxbuffer_t &buffer, de::dfloat newPan);
-        void setPositioning(sfxbuffer_t &buffer, bool headRelative);
-        void setVelocity(sfxbuffer_t &buffer, de::Vector3d const &newVelocity);
-        void setVolume(sfxbuffer_t &buffer, de::dfloat newVolume);
-        void setVolumeAttenuationRange(sfxbuffer_t &buffer, de::Ranged const &newRange);
+
         void listener(de::dint prop, de::dfloat value);
         void listenerv(de::dint prop, de::dfloat *values);
 
@@ -157,6 +147,39 @@ public:  // Sound players: -----------------------------------------------------
 
         bool _initialized = false;
         audiointerface_sfx_t _imp;
+    };
+
+    class Sound : public audio::Sound
+    {
+    public:
+        Sound(SoundPlayer &player);
+        virtual ~Sound();
+
+        bool hasBuffer() const;
+        sfxbuffer_t const &buffer() const;
+        void setBuffer(sfxbuffer_t *newBuffer);
+        void releaseBuffer();
+        int flags() const;
+        void setFlags(int newFlags);
+        struct mobj_s *emitter() const;
+        void setEmitter(struct mobj_s *newEmitter);
+        void setFixedOrigin(de::Vector3d const &newOrigin);
+        de::dfloat priority() const;
+        audio::Sound &setFrequency(de::dfloat newFrequency);
+        audio::Sound &setVolume(de::dfloat newVolume);
+        bool isPlaying() const;
+        de::dfloat frequency() const;
+        de::dfloat volume() const;
+        void load(sfxsample_t &sample);
+        void stop();
+        void reset();
+        void play();
+        void setPlayingMode(de::dint sfFlags);
+        de::dint startTime() const;
+        void refresh();
+
+    private:
+        DENG2_PRIVATE(d)
     };
 
 public:  // Implements audio::System::IDriver: -----------------------------------
@@ -169,14 +192,10 @@ public:  // Implements audio::System::IDriver: ---------------------------------
     de::String identityKey() const;
     de::String title() const;
 
-    bool hasCd() const;
-    bool hasMusic() const;
-    bool hasSfx() const;
-
-    ICdPlayer /*const*/ &iCd() const;
-    IMusicPlayer /*const*/ &iMusic() const;
-    ISoundPlayer /*const*/ &iSfx() const;
-    de::DotPath interfacePath(IPlayer &player) const;
+    de::dint playerCount() const;
+    IPlayer const &findPlayer(de::String playerIdKey) const;
+    IPlayer const *tryFindPlayer(de::String driverIdKey) const;
+    de::LoopResult forAllPlayers(std::function<de::LoopResult (IPlayer &)> callback) const;
 
 private:
     PluginDriver();

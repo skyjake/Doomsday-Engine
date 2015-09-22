@@ -61,7 +61,7 @@ static dint upsampleFactor(dint rate)
     dint factor = 1;
 #ifdef __CLIENT__
     // If we need to upsample - determine the scale factor.
-    if(!App_AudioSystem().sfx().anyRateAccepted())
+    if(!App_AudioSystem().sfxAnyRateAccepted())
     {
         factor = de::max(1, ::sfxRate / rate);
     }

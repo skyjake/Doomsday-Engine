@@ -1,7 +1,8 @@
 /** @file sdlmixerdriver.cpp  Audio driver for playback using SDL_mixer.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -22,9 +23,12 @@
 #include "audio/drivers/sdlmixerdriver.h"
 
 #include "audio/sound.h"
+#include "world/thinkers.h"
+#include "def_main.h"        // SF_* flags, remove me
 #include <de/Log>
+#include <de/Observers>
 #include <de/memoryzone.h>
-#include <de/timer.h>
+#include <de/timer.h>        // TICSPERSEC
 #include <SDL.h>
 #include <SDL_mixer.h>
 #include <cstdlib>
@@ -269,7 +273,7 @@ sfxbuffer_t *SdlMixerDriver::SoundPlayer::create(dint flags, dint bits, dint rat
 
 Sound *SdlMixerDriver::SoundPlayer::makeSound(bool stereoPositioning, dint bitsPer, dint rate)
 {
-    std::unique_ptr<Sound> sound(new Sound(*this));
+    std::unique_ptr<Sound> sound(new SdlMixerDriver::Sound(*this));
     sound->setBuffer(create(stereoPositioning ? 0 : SFXBF_3D, bitsPer, rate));
     return sound.release();
 }
@@ -281,178 +285,9 @@ void SdlMixerDriver::SoundPlayer::destroy(sfxbuffer_t &buf)
     Z_Free(&buf);
 }
 
-void SdlMixerDriver::SoundPlayer::load(sfxbuffer_t &buf, sfxsample_t &sample)
-{
-    // Does the buffer already have a sample loaded?
-    if(buf.sample)
-    {
-        // Is the same one?
-        if(buf.sample->soundId == sample.soundId)
-            return;
-
-        // Free the existing data.
-        buf.sample = nullptr;
-        Mix_FreeChunk((Mix_Chunk *) buf.ptr);
-    }
-
-    dsize const size = 8 + 4 + 8 + 16 + 8 + sample.size;
-    static char localBuf[0x40000];
-    char *conv = nullptr;
-    if(size <= sizeof(localBuf))
-    {
-        conv = localBuf;
-    }
-    else
-    {
-        conv = (char *) M_Malloc(size);
-    }
-
-    // Transfer the sample to SDL_mixer by converting it to WAVE format.
-    qstrcpy(conv, "RIFF");
-    *(Uint32 *) (conv + 4) = DD_ULONG(4 + 8 + 16 + 8 + sample.size);
-    qstrcpy(conv + 8, "WAVE");
-
-    // Format chunk.
-    qstrcpy(conv + 12, "fmt ");
-    *(Uint32 *) (conv + 16) = DD_ULONG(16);
-    /**
-     * WORD wFormatTag;         // Format category
-     * WORD wChannels;          // Number of channels
-     * uint dwSamplesPerSec;    // Sampling rate
-     * uint dwAvgBytesPerSec;   // For buffer estimation
-     * WORD wBlockAlign;        // Data block size
-     * WORD wBitsPerSample;     // Sample size
-     */
-    *(Uint16 *) (conv + 20) = DD_USHORT(1);
-    *(Uint16 *) (conv + 22) = DD_USHORT(1);
-    *(Uint32 *) (conv + 24) = DD_ULONG(sample.rate);
-    *(Uint32 *) (conv + 28) = DD_ULONG(sample.rate * sample.bytesPer);
-    *(Uint16 *) (conv + 32) = DD_USHORT(sample.bytesPer);
-    *(Uint16 *) (conv + 34) = DD_USHORT(sample.bytesPer * 8);
-
-    // Data chunk.
-    qstrcpy(conv + 36, "data");
-    *(Uint32 *) (conv + 40) = DD_ULONG(sample.size);
-    std::memcpy(conv + 44, sample.data, sample.size);
-
-    buf.ptr = Mix_LoadWAV_RW(SDL_RWFromMem(conv, 44 + sample.size), 1);
-    if(!buf.ptr)
-    {
-        LOG_AS("DS_SDLMixer_SFX_Load");
-        LOG_AUDIO_WARNING("Failed loading sample: %s") << Mix_GetError();
-    }
-
-    if(conv != localBuf)
-    {
-        M_Free(conv);
-    }
-
-    buf.sample = &sample;
-}
-
-void SdlMixerDriver::SoundPlayer::stop(sfxbuffer_t &buf)
-{
-    if(!buf.sample) return;
-
-    Mix_HaltChannel(buf.cursor);
-    //usedChannels[buf->cursor] = false;
-    buf.flags &= ~SFXBF_PLAYING;
-}
-
-void SdlMixerDriver::SoundPlayer::reset(sfxbuffer_t &buf)
-{
-    stop(buf);
-    buf.sample = nullptr;
-
-    // Unallocate the resources of the source.
-    Mix_FreeChunk((Mix_Chunk *) buf.ptr);
-    buf.ptr = nullptr;
-}
-
-void SdlMixerDriver::SoundPlayer::refresh(sfxbuffer_t &buf)
-{
-    // Can only be done if there is a sample and the buffer is playing.
-    if(!buf.sample || !isPlaying(buf))
-        return;
-
-    duint const nowTime = Timer_RealMilliseconds();
-
-    /**
-     * Have we passed the predicted end of sample?
-     * @note This test fails if the game has been running for about 50 days,
-     * since the millisecond counter overflows. It only affects sounds that
-     * are playing while the overflow happens, though.
-     */
-    if(!(buf.flags & SFXBF_REPEAT) && nowTime >= buf.endTime)
-    {
-        // Time for the sound to stop.
-        buf.flags &= ~SFXBF_PLAYING;
-    }
-}
-
 bool SdlMixerDriver::SoundPlayer::needsRefresh() const
 {
     return true;
-}
-
-void SdlMixerDriver::SoundPlayer::play(sfxbuffer_t &buf)
-{
-    // Playing is quite impossible without a sample.
-    if(!buf.sample) return;
-
-    // Update the volume at which the sample will be played.
-    Mix_Volume(buf.cursor, buf.written);
-    Mix_PlayChannel(buf.cursor, (Mix_Chunk *) buf.ptr, (buf.flags & SFXBF_REPEAT ? -1 : 0));
-
-    // Calculate the end time (milliseconds).
-    buf.endTime = Timer_RealMilliseconds() + getBufferLength(buf);
-
-    // The buffer is now playing.
-    buf.flags |= SFXBF_PLAYING;
-}
-
-bool SdlMixerDriver::SoundPlayer::isPlaying(sfxbuffer_t &buf) const
-{
-    return (buf.flags & SFXBF_PLAYING) != 0;
-}
-
-void SdlMixerDriver::SoundPlayer::setFrequency(sfxbuffer_t &, dfloat)
-{
-    // Not supported.
-}
-
-void SdlMixerDriver::SoundPlayer::setOrigin(sfxbuffer_t &, Vector3d const &)
-{
-    // Not supported.
-}
-
-/// @param newPan  (-1 ... +1)
-void SdlMixerDriver::SoundPlayer::setPan(sfxbuffer_t &buf, dfloat newPan)
-{
-    auto const right = dint( (newPan + 1) * 127 );
-    Mix_SetPanning(buf.cursor, 254 - right, right);
-}
-
-void SdlMixerDriver::SoundPlayer::setPositioning(sfxbuffer_t &, bool)
-{
-    // Not supported.
-}
-
-void SdlMixerDriver::SoundPlayer::setVelocity(sfxbuffer_t &, Vector3d const &)
-{
-    // Not supported.
-}
-
-void SdlMixerDriver::SoundPlayer::setVolume(sfxbuffer_t &buf, dfloat newVolume)
-{
-    // 'written' is used for storing the volume of the channel.
-    buf.written = duint( newVolume * MIX_MAX_VOLUME );
-    Mix_Volume(buf.cursor, buf.written);
-}
-
-void SdlMixerDriver::SoundPlayer::setVolumeAttenuationRange(sfxbuffer_t &, Ranged const &)
-{
-    // Not supported.
 }
 
 void SdlMixerDriver::SoundPlayer::listener(dint, dfloat)
@@ -463,6 +298,517 @@ void SdlMixerDriver::SoundPlayer::listener(dint, dfloat)
 void SdlMixerDriver::SoundPlayer::listenerv(dint, dfloat *)
 {
     // Not supported.
+}
+
+/**
+ * @note Loading must be done prior to setting properties, because the driver might defer
+ * creation of the actual data buffer.
+ */
+DENG2_PIMPL_NOREF(SdlMixerDriver::Sound)
+, DENG2_OBSERVES(System, FrameEnds)
+{
+    dint flags = 0;                  ///< SFXCF_* flags.
+    dfloat frequency = 0;            ///< Frequency adjustment: 1.0 is normal.
+    dfloat volume = 0;               ///< Sound volume: 1.0 is max.
+
+    mobj_t *emitter = nullptr;       ///< Mobj emitter for the sound, if any (not owned).
+    Vector3d origin;                 ///< Emit from here (synced with emitter).
+
+    sfxbuffer_t *buffer = nullptr;   ///< Assigned sound buffer, if any (not owned).
+    dint startTime = 0;              ///< When the assigned sound sample was last started.
+
+    SoundPlayer *player = nullptr;  ///< Owning player (not owned).
+
+    inline SoundPlayer &getPlayer()
+    {
+        DENG2_ASSERT(player != 0);
+        return *player;
+    }
+    
+    void updateOriginIfNeeded()
+    {
+        // Updating is only necessary if we are tracking an emitter.
+        if(!emitter) return;
+
+        origin = Mobj_Origin(*emitter);
+        // If this is a mobj, center the Z pos.
+        if(Thinker_IsMobjFunc(emitter->thinker.function))
+        {
+            origin.z += emitter->height / 2;
+        }
+    }
+
+    /**
+     * Flushes property changes to the assigned data buffer.
+     *
+     * @param force  Usually updates are only necessary during playback. Use
+     *               @c true= to override this check and write the properties
+     *               regardless.
+     */
+    void updateBuffer(bool force = false)
+    {
+        DENG2_ASSERT(buffer);
+
+        // Disabled?
+        if(flags & SFXCF_NO_UPDATE) return;
+
+        // Updates are only necessary during playback.
+        if(!isPlaying(*buffer) && !force) return;
+
+        // When tracking an emitter we need the latest origin coordinates.
+        updateOriginIfNeeded();
+
+        // Frequency is common to both 2D and 3D sounds.
+        setFrequency(*buffer, frequency);
+
+        if(buffer->flags & SFXBF_3D)
+        {
+            // Volume is affected only by maxvol.
+            setVolume(*buffer, volume * System::get().soundVolume() / 255.0f);
+            if(emitter && emitter == System::get().sfxListener())
+            {
+                // Emitted by the listener object. Go to relative position mode
+                // and set the position to (0,0,0).
+                setPositioning(*buffer, true/*head-relative*/);
+                setOrigin(*buffer, Vector3d());
+            }
+            else
+            {
+                // Use the channel's map space origin.
+                setPositioning(*buffer, false/*absolute*/);
+                setOrigin(*buffer, origin);
+            }
+
+            // If the sound is emitted by the listener, speed is zero.
+            if(emitter && emitter != System::get().sfxListener() &&
+               Thinker_IsMobjFunc(emitter->thinker.function))
+            {
+                setVelocity(*buffer, Vector3d(emitter->mom)* TICSPERSEC);
+            }
+            else
+            {
+                // Not moving.
+                setVelocity(*buffer, Vector3d());
+            }
+        }
+        else
+        {
+            dfloat dist = 0;
+            dfloat finalPan = 0;
+
+            // This is a 2D buffer.
+            if((flags & SFXCF_NO_ORIGIN) ||
+               (emitter && emitter == System::get().sfxListener()))
+            {
+                dist = 1;
+                finalPan = 0;
+            }
+            else
+            {
+                // Calculate roll-off attenuation. [.125/(.125+x), x=0..1]
+                Ranged const attenRange = System::get().soundVolumeAttenuationRange();
+
+                dist = System::get().distanceToListener(origin);
+
+                if(dist < attenRange.start || (flags & SFXCF_NO_ATTENUATION))
+                {
+                    // No distance attenuation.
+                    dist = 1;
+                }
+                else if(dist > attenRange.end)
+                {
+                    // Can't be heard.
+                    dist = 0;
+                }
+                else
+                {
+                    ddouble const normdist = (dist - attenRange.start) / attenRange.size();
+
+                    // Apply the linear factor so that at max distance there
+                    // really is silence.
+                    dist = .125f / (.125f + normdist) * (1 - normdist);
+                }
+
+                // And pan, too. Calculate angle from listener to emitter.
+                if(mobj_t *listener = System::get().sfxListener())
+                {
+                    dfloat angle = (M_PointXYToAngle2(listener->origin[0], listener->origin[1],
+                                                      origin.x, origin.y)
+                                        - listener->angle)
+                                 / (dfloat) ANGLE_MAX * 360;
+
+                    // We want a signed angle.
+                    if(angle > 180)
+                        angle -= 360;
+
+                    // Front half.
+                    if(angle <= 90 && angle >= -90)
+                    {
+                        finalPan = -angle / 90;
+                    }
+                    else
+                    {
+                        // Back half.
+                        finalPan = (angle + (angle > 0 ? -180 : 180)) / 90;
+                        // Dampen sounds coming from behind.
+                        dist *= (1 + (finalPan > 0 ? finalPan : -finalPan)) / 2;
+                    }
+                }
+                else
+                {
+                    // No listener mobj? Can't pan, then.
+                    finalPan = 0;
+                }
+            }
+
+            setVolume(*buffer, volume * dist * System::get().soundVolume() / 255.0f);
+            setPan(*buffer, finalPan);
+        }
+    }
+
+    void systemFrameEnds(System &)
+    {
+        updateBuffer();
+    }
+
+    void load(sfxbuffer_t &buf, sfxsample_t &sample)
+    {
+        // Does the buffer already have a sample loaded?
+        if(buf.sample)
+        {
+            // Is the same one?
+            if(buf.sample->soundId == sample.soundId)
+                return;
+
+            // Free the existing data.
+            buf.sample = nullptr;
+            Mix_FreeChunk((Mix_Chunk *) buf.ptr);
+        }
+
+        dsize const size = 8 + 4 + 8 + 16 + 8 + sample.size;
+        static char localBuf[0x40000];
+        char *conv = nullptr;
+        if(size <= sizeof(localBuf))
+        {
+            conv = localBuf;
+        }
+        else
+        {
+            conv = (char *) M_Malloc(size);
+        }
+
+        // Transfer the sample to SDL_mixer by converting it to WAVE format.
+        qstrcpy(conv, "RIFF");
+        *(Uint32 *) (conv + 4) = DD_ULONG(4 + 8 + 16 + 8 + sample.size);
+        qstrcpy(conv + 8, "WAVE");
+
+        // Format chunk.
+        qstrcpy(conv + 12, "fmt ");
+        *(Uint32 *) (conv + 16) = DD_ULONG(16);
+        /**
+         * WORD wFormatTag;         // Format category
+         * WORD wChannels;          // Number of channels
+         * uint dwSamplesPerSec;    // Sampling rate
+         * uint dwAvgBytesPerSec;   // For buffer estimation
+         * WORD wBlockAlign;        // Data block size
+         * WORD wBitsPerSample;     // Sample size
+         */
+        *(Uint16 *) (conv + 20) = DD_USHORT(1);
+        *(Uint16 *) (conv + 22) = DD_USHORT(1);
+        *(Uint32 *) (conv + 24) = DD_ULONG(sample.rate);
+        *(Uint32 *) (conv + 28) = DD_ULONG(sample.rate * sample.bytesPer);
+        *(Uint16 *) (conv + 32) = DD_USHORT(sample.bytesPer);
+        *(Uint16 *) (conv + 34) = DD_USHORT(sample.bytesPer * 8);
+
+        // Data chunk.
+        qstrcpy(conv + 36, "data");
+        *(Uint32 *) (conv + 40) = DD_ULONG(sample.size);
+        std::memcpy(conv + 44, sample.data, sample.size);
+
+        buf.ptr = Mix_LoadWAV_RW(SDL_RWFromMem(conv, 44 + sample.size), 1);
+        if(!buf.ptr)
+        {
+            LOG_AS("DS_SDLMixer_SFX_Load");
+            LOG_AUDIO_WARNING("Failed loading sample: %s") << Mix_GetError();
+        }
+
+        if(conv != localBuf)
+        {
+            M_Free(conv);
+        }
+
+        buf.sample = &sample;
+    }
+
+    void stop(sfxbuffer_t &buf)
+    {
+        if(!buf.sample) return;
+
+        Mix_HaltChannel(buf.cursor);
+        //usedChannels[buf->cursor] = false;
+        buf.flags &= ~SFXBF_PLAYING;
+    }
+
+    void reset(sfxbuffer_t &buf)
+    {
+        stop(buf);
+        buf.sample = nullptr;
+
+        // Unallocate the resources of the source.
+        Mix_FreeChunk((Mix_Chunk *) buf.ptr);
+        buf.ptr = nullptr;
+    }
+
+    void refresh(sfxbuffer_t &buf)
+    {
+        // Can only be done if there is a sample and the buffer is playing.
+        if(!buf.sample || !isPlaying(buf))
+            return;
+
+        duint const nowTime = Timer_RealMilliseconds();
+
+        /**
+         * Have we passed the predicted end of sample?
+         * @note This test fails if the game has been running for about 50 days,
+         * since the millisecond counter overflows. It only affects sounds that
+         * are playing while the overflow happens, though.
+         */
+        if(!(buf.flags & SFXBF_REPEAT) && nowTime >= buf.endTime)
+        {
+            // Time for the sound to stop.
+            buf.flags &= ~SFXBF_PLAYING;
+        }
+    }
+
+    void play(sfxbuffer_t &buf)
+    {
+        // Playing is quite impossible without a sample.
+        if(!buf.sample) return;
+
+        // Update the volume at which the sample will be played.
+        Mix_Volume(buf.cursor, buf.written);
+        Mix_PlayChannel(buf.cursor, (Mix_Chunk *) buf.ptr, (buf.flags & SFXBF_REPEAT ? -1 : 0));
+
+        // Calculate the end time (milliseconds).
+        buf.endTime = Timer_RealMilliseconds() + getBufferLength(buf);
+
+        // The buffer is now playing.
+        buf.flags |= SFXBF_PLAYING;
+    }
+
+    bool isPlaying(sfxbuffer_t &buf) const
+    {
+        return (buf.flags & SFXBF_PLAYING) != 0;
+    }
+
+    /// @param newPan  (-1 ... +1)
+    void setPan(sfxbuffer_t &buf, dfloat newPan)
+    {
+        auto const right = dint( (newPan + 1) * 127 );
+        Mix_SetPanning(buf.cursor, 254 - right, right);
+    }
+
+    void setVolume(sfxbuffer_t &buf, dfloat newVolume)
+    {
+        // 'written' is used for storing the volume of the channel.
+        buf.written = duint( newVolume * MIX_MAX_VOLUME );
+        Mix_Volume(buf.cursor, buf.written);
+    }
+
+    // Unsupported sound buffer property manipulation:
+
+    void setFrequency(sfxbuffer_t &, dfloat) {}
+    void setOrigin(sfxbuffer_t &, Vector3d const &) {}
+    void setPositioning(sfxbuffer_t &, bool) {}
+    void setVelocity(sfxbuffer_t &, Vector3d const &) {}
+    void setVolumeAttenuationRange(sfxbuffer_t &, Ranged const &) {}
+};
+
+SdlMixerDriver::Sound::Sound(SdlMixerDriver::SoundPlayer &player) : d(new Instance)
+{
+    d->player = &player;
+}
+
+SdlMixerDriver::Sound::~Sound()
+{
+    releaseBuffer();
+}
+
+bool SdlMixerDriver::Sound::hasBuffer() const
+{
+    return d->buffer != nullptr;
+}
+
+sfxbuffer_t const &SdlMixerDriver::Sound::buffer() const
+{
+    if(d->buffer) return *d->buffer;
+    /// @throw MissingBufferError  No sound buffer is currently assigned.
+    throw MissingBufferError("audio::SdlMixerDriver::Sound::buffer", "No data buffer is assigned");
+}
+
+void SdlMixerDriver::Sound::releaseBuffer()
+{
+    stop();
+    if(!hasBuffer()) return;
+
+    // Cancel frame notifications - we'll soon have no buffer to update.
+    System::get().audienceForFrameEnds() -= d;
+
+    d->getPlayer().destroy(*d->buffer);
+    d->buffer = nullptr;
+}
+
+void SdlMixerDriver::Sound::setBuffer(sfxbuffer_t *newBuffer)
+{
+    releaseBuffer();
+    d->buffer = newBuffer;
+
+    if(d->buffer)
+    {
+        // We want notification when the frame ends in order to flush deferred property writes.
+        System::get().audienceForFrameEnds() += d;
+    }
+}
+
+dint SdlMixerDriver::Sound::flags() const
+{
+    return d->flags;
+}
+
+/// @todo Use QFlags -ds
+void SdlMixerDriver::Sound::setFlags(dint newFlags)
+{
+    d->flags = newFlags;
+}
+
+mobj_t *SdlMixerDriver::Sound::emitter() const
+{
+    return d->emitter;
+}
+
+void SdlMixerDriver::Sound::setEmitter(mobj_t *newEmitter)
+{
+    d->emitter = newEmitter;
+}
+
+void SdlMixerDriver::Sound::setFixedOrigin(Vector3d const &newOrigin)
+{
+    d->origin = newOrigin;
+}
+
+dfloat SdlMixerDriver::Sound::priority() const
+{
+    if(!isPlaying())
+        return SFX_LOWEST_PRIORITY;
+
+    if(d->flags & SFXCF_NO_ORIGIN)
+        return System::get().rateSoundPriority(0, 0, d->volume, d->startTime);
+
+    // d->origin is set to emitter->xyz during updates.
+    ddouble origin[3]; d->origin.decompose(origin);
+    return System::get().rateSoundPriority(0, origin, d->volume, d->startTime);
+}
+
+void SdlMixerDriver::Sound::load(sfxsample_t &sample)
+{
+    if(!d->buffer)
+    {
+        /// @throw MissingBufferError  Loading is impossible without a buffer...
+        throw MissingBufferError("audio::SdlMixerDriver::Sound::load", "Attempted with no data buffer assigned");
+    }
+
+    // Don't reload if a sample with the same sound ID is already loaded.
+    if(!d->buffer->sample || d->buffer->sample->soundId != sample.soundId)
+    {
+        d->load(*d->buffer, sample);
+    }
+}
+
+void SdlMixerDriver::Sound::stop()
+{
+    d->stop(*d->buffer);
+}
+
+void SdlMixerDriver::Sound::reset()
+{
+    d->reset(*d->buffer);
+}
+
+void SdlMixerDriver::Sound::play()
+{
+    if(!d->buffer)
+    {
+        /// @throw MissingBufferError  Playing is obviously impossible without data to play...
+        throw MissingBufferError("audio::SdlMixerDriver::Sound::play", "Attempted with no data buffer assigned");
+    }
+
+    // Flush deferred property value changes to the assigned data buffer.
+    d->updateBuffer(true/*force*/);
+
+    // 3D sounds need a few extra properties set up.
+    if(d->buffer->flags & SFXBF_3D)
+    {
+        // Configure the attentuation distances.
+        // This is only done once, when the sound is first played (i.e., here).
+        if(d->flags & SFXCF_NO_ATTENUATION)
+        {
+            d->setVolumeAttenuationRange(*d->buffer, Ranged(10000, 20000));
+        }
+        else
+        {
+            d->setVolumeAttenuationRange(*d->buffer, System::get().soundVolumeAttenuationRange());
+        }
+    }
+
+    d->play(*d->buffer);
+    d->startTime = Timer_Ticks();  // Note the current time.
+}
+
+void SdlMixerDriver::Sound::setPlayingMode(dint sfFlags)
+{
+    if(d->buffer)
+    {
+        d->buffer->flags &= ~(SFXBF_REPEAT | SFXBF_DONT_STOP);
+        if(sfFlags & SF_REPEAT)    d->buffer->flags |= SFXBF_REPEAT;
+        if(sfFlags & SF_DONT_STOP) d->buffer->flags |= SFXBF_DONT_STOP;
+    }
+}
+
+dint SdlMixerDriver::Sound::startTime() const
+{
+    return d->startTime;
+}
+
+audio::Sound &SdlMixerDriver::Sound::setFrequency(dfloat newFrequency)
+{
+    d->frequency = newFrequency;
+    return *this;
+}
+
+audio::Sound &SdlMixerDriver::Sound::setVolume(dfloat newVolume)
+{
+    d->volume = newVolume;
+    return *this;
+}
+
+bool SdlMixerDriver::Sound::isPlaying() const
+{
+    return d->buffer && d->isPlaying(*d->buffer);
+}
+
+dfloat SdlMixerDriver::Sound::frequency() const
+{
+    return d->frequency;
+}
+
+dfloat SdlMixerDriver::Sound::volume() const
+{
+    return d->volume;
+}
+
+void SdlMixerDriver::Sound::refresh()
+{
+    d->refresh(*d->buffer);
 }
 
 // ----------------------------------------------------------------------------------
@@ -604,34 +950,39 @@ String SdlMixerDriver::title() const
     return "SDL_mixer";
 }
 
-bool SdlMixerDriver::hasCd() const
+dint SdlMixerDriver::playerCount() const
 {
-    return false;
+    return d->initialized ? 3 : 0;
 }
 
-bool SdlMixerDriver::hasMusic() const
+SdlMixerDriver::IPlayer const *SdlMixerDriver::tryFindPlayer(String name) const
 {
-    return d->initialized;
+    if(!name.isEmpty() && d->initialized)
+    {
+        name = name.lower();
+        if(d->iCd   .name() == name) return &d->iCd;
+        if(d->iMusic.name() == name) return &d->iMusic;
+        if(d->iSfx  .name() == name) return &d->iSfx;
+    }
+    return nullptr;  // Not found.
 }
 
-bool SdlMixerDriver::hasSfx() const
+SdlMixerDriver::IPlayer const &SdlMixerDriver::findPlayer(String name) const
 {
-    return d->initialized;
+    if(auto *player = tryFindPlayer(name)) return *player;
+    /// @throw MissingPlayerError  Unknown identity key specified.
+    throw MissingPlayerError("SdlMixerDriver::findPlayer", "Unknown player \"" + name + "\"");
 }
 
-ICdPlayer /*const*/ &SdlMixerDriver::iCd() const
+LoopResult SdlMixerDriver::forAllPlayers(std::function<LoopResult (IPlayer &)> callback) const
 {
-    return d->iCd;
-}
-
-IMusicPlayer /*const*/ &SdlMixerDriver::iMusic() const
-{
-    return d->iMusic;
-}
-
-ISoundPlayer /*const*/ &SdlMixerDriver::iSfx() const
-{
-    return d->iSfx;
+    if(d->initialized)
+    {
+        if(auto result = callback(d->iCd))    return result;
+        if(auto result = callback(d->iMusic)) return result;
+        if(auto result = callback(d->iSfx))   return result;
+    }
+    return LoopContinue;  // Continue iteration.
 }
 
 }  // namespace audio

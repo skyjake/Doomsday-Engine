@@ -36,7 +36,7 @@
 namespace audio {
 
 /**
- * Models a playable sound.
+ * Interface model for a playable sound.
  */
 class Sound
 {
@@ -45,66 +45,64 @@ public:
     DENG2_ERROR(MissingBufferError);
 
 public:
-    Sound(ISoundPlayer &player);
-    virtual ~Sound();
+    virtual ~Sound() {}
+    DENG2_AS_IS_METHODS()
 
     /**
      * Determines whether a data buffer is assigned.
      */
-    bool hasBuffer() const;
+    virtual bool hasBuffer() const = 0;
 
     /**
      * Returns the assigned data buffer.
      */
-    sfxbuffer_t const &buffer() const;
-    void setBuffer(sfxbuffer_t *newBuffer);
+    virtual sfxbuffer_t const &buffer() const = 0;
+    virtual void setBuffer(sfxbuffer_t *newBuffer) = 0;
 
-    void releaseBuffer();
+    virtual void releaseBuffer() = 0;
 
-    int flags() const;
-    void setFlags(int newFlags);
+    virtual int flags() const = 0;
+    virtual void setFlags(int newFlags) = 0;
 
     /**
      * Returns the attributed emitter if any (may be @c nullptr).
      */
-    struct mobj_s *emitter() const;
-    void setEmitter(struct mobj_s *newEmitter);
+    virtual struct mobj_s *emitter() const = 0;
+    virtual void setEmitter(struct mobj_s *newEmitter) = 0;
 
-    void setFixedOrigin(de::Vector3d const &newOrigin);
+    virtual void setFixedOrigin(de::Vector3d const &newOrigin) = 0;
 
     /**
      * Calculate priority points for the currently playing. These points are used by
      * the channel mapper to determine which sounds can be overridden by new sounds.
      * Zero is the lowest priority.
      */
-    de::dfloat priority() const;
+    virtual de::dfloat priority() const = 0;
 
     /**
      * Change the playback frequency modifier to @a newFrequency (Hz).
      */
-    Sound &setFrequency(de::dfloat newFrequency);
+    virtual Sound &setFrequency(de::dfloat newFrequency) = 0;
 
     /**
      * Change the playback volume modifier to @a newVolume.
      */
-    Sound &setVolume(de::dfloat newVolume);
+    virtual Sound &setVolume(de::dfloat newVolume) = 0;
 
     /**
      * Returns @c true if the sound is currently playing.
      */
-    bool isPlaying() const;
+    virtual bool isPlaying() const = 0;
 
     /**
      * Returns the current playback frequency modifier: 1.0 is normal.
      */
-    de::dfloat frequency() const;
+    virtual de::dfloat frequency() const = 0;
 
     /**
      * Returns the current playback volume modifier: 1.0 is max.
      */
-    de::dfloat volume() const;
-
-public:  // Playback interface: ----------------------------------------------------
+    virtual de::dfloat volume() const = 0;
 
     /**
      * Prepare the buffer for playing a sample by filling the buffer with as much
@@ -114,44 +112,40 @@ public:  // Playback interface: ------------------------------------------------
      * @note The sample is not reloaded if the buffer is already loaded with data
      * with the same sound ID.
      */
-    void load(sfxsample_t &sample);
+    virtual void load(sfxsample_t &sample) = 0;
 
     /**
      * Stop the sound if playing and forget about any sample loaded in the buffer.
      *
      * @note Just stopping doesn't affect refresh!
      */
-    void stop();
+    virtual void stop() = 0;
 
     /**
      * Stop the sound if playing and forget about any sample loaded in the buffer.
      *
      * @todo Logically distinct from @ref stop() ? -ds
      */
-    void reset();
+    virtual void reset() = 0;
 
     /**
      * Start playing the sound loaded in the buffer.
      */
-    void play();
-    void setPlayingMode(de::dint sfFlags);
+    virtual void play() = 0;
+    virtual void setPlayingMode(de::dint sfFlags) = 0;
 
     /**
      * Returns the time in tics that the sound was last played.
      */
-    de::dint startTime() const;
+    virtual de::dint startTime() const = 0;
 
-public:
     /**
      * Called periodically by the audio system's refresh thread, so that the buffer
      * can be filled with sample data, for streaming purposes.
      *
      * @note Don't do anything too time-consuming...
      */
-    void refresh();
-
-private:
-    DENG2_PRIVATE(d)
+    virtual void refresh() = 0;
 };
 
 }  // namespace audio

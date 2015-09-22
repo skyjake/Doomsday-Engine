@@ -81,7 +81,7 @@ struct ChannelRefresher
 
         DENG2_ASSERT(System::get().sfxIsAvailable());
 
-        if(System::get().sfx().needsRefresh())
+        if(System::get().sfxNeedsRefresh())
         {
             // Start the refresh thread. It will run until the Sfx module is shut down.
             thread = Sys_StartThread(refreshThread, this);

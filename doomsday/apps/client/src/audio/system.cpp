@@ -167,6 +167,14 @@ String System::IDriver::statusAsText() const
     return "Invalid";
 }
 
+static String playerTypeName(System::IDriver::IPlayer const &player)
+{
+    if(player.is<ICdPlayer>())    return "CD";
+    if(player.is<IMusicPlayer>()) return "Music";
+    if(player.is<ISoundPlayer>()) return "SFX";
+    return "(unknown)";
+}
+
 String System::IDriver::description() const
 {
     auto desc = String(     _E(b) "%1" _E(.)
@@ -176,28 +184,18 @@ String System::IDriver::description() const
 
     if(isInitialized())
     {
-        // Summarize available playback interfaces.
-        String piSummary;
-        if(hasCd())
+        // Summarize available player interfaces.
+        String pSummary;
+        forAllPlayers([&pSummary] (IPlayer &player)
         {
-            //if(!piSummary.isEmpty()) piSummary += "\n" _E(0);
-            piSummary += " - CD: " _E(>) + iCd().name() + _E(<);
-        }
-        if(hasMusic())
+            if(!pSummary.isEmpty()) pSummary += "\n" _E(0);
+            pSummary += " - " + playerTypeName(player) + ": " _E(>) + player.name() + _E(<);
+            return LoopContinue;
+        });
+        if(!pSummary.isEmpty())
         {
-            if(!piSummary.isEmpty()) piSummary += "\n" _E(0);
-            piSummary += " - Music: " _E(>) + iMusic().name() + _E(<);
-        }
-        if(hasSfx())
-        {
-            if(!piSummary.isEmpty()) piSummary += "\n" _E(0);
-            piSummary += " - SFX: " _E(>) + iSfx().name() + _E(<);
-        }
-
-        if(!piSummary.isEmpty())
-        {
-            desc += "\n" _E(D)_E(b) "Playback interfaces:"
-                    "\n" _E(.)_E(.) + piSummary;
+            desc += "\n" _E(D)_E(b) "Player interfaces:"
+                    "\n" _E(.)_E(.) + pSummary;
         }
     }
 
@@ -372,30 +370,75 @@ DENG2_PIMPL(System)
         activeInterfaces << ifs;  // a copy is made
     }
 
+    ICdPlayer *tryFindDriverCdPlayer(IDriver &driver)
+    {
+        ICdPlayer *found = nullptr;  // Not found.
+        driver.forAllPlayers([&found] (IDriver::IPlayer &player)
+        {
+            if(auto *cdPlayer = player.maybeAs<ICdPlayer>())
+            {
+                found = cdPlayer;
+                return LoopAbort;
+            }
+            return LoopContinue;
+        });
+        return found;
+    }
+
+    IMusicPlayer *tryFindDriverMusicPlayer(IDriver &driver)
+    {
+        IMusicPlayer *found = nullptr;  // Not found.
+        driver.forAllPlayers([&found] (IDriver::IPlayer &player)
+        {
+            if(auto *musicPlayer = player.maybeAs<IMusicPlayer>())
+            {
+                found = musicPlayer;
+                return LoopAbort;
+            }
+            return LoopContinue;
+        });
+        return found;
+    }
+
+    ISoundPlayer *tryFindDriverSoundPlayer(IDriver &driver)
+    {
+        ISoundPlayer *found = nullptr;  // Not found.
+        driver.forAllPlayers([&found] (IDriver::IPlayer &player)
+        {
+            if(auto *soundPlayer = player.maybeAs<ISoundPlayer>())
+            {
+                found = soundPlayer;
+                return LoopAbort;
+            }
+            return LoopContinue;
+        });
+        return found;
+    }
+
     /**
      * Choose the SFX, Music, and CD audio interfaces to use.
      */
     void selectInterfaces(IDriver &defaultDriver)
     {
         // The default driver goes on the bottom of the stack.
-        if(defaultDriver.hasSfx())
+        if(ISoundPlayer *player = tryFindDriverSoundPlayer(defaultDriver))
         {
             PlaybackInterface ifs; zap(ifs);
             ifs.type   = AUDIO_ISFX;
-            ifs.player = &defaultDriver.iSfx();
+            ifs.player = player;
             addPlaybackInterface(ifs);  // a copy is made
         }
 
-        if(defaultDriver.hasMusic())
+        if(IMusicPlayer *player = tryFindDriverMusicPlayer(defaultDriver))
         {
             PlaybackInterface ifs; zap(ifs);
             ifs.type   = AUDIO_IMUSIC;
-            ifs.player = &defaultDriver.iMusic();
+            ifs.player = player;
             addPlaybackInterface(ifs);  // a copy is made
         }
 #if 0
 #ifdef MACOSX
-        else if(defaultDriver.identifier() != "dummy")
+        else if(defaultDriver.identityKey() != "dummy")
         {
             // On the Mac, use the built-in QuickTime interface as the fallback for music.
             PlaybackInterface ifs; zap(ifs);
@@ -408,26 +451,26 @@ DENG2_PIMPL(System)
 #ifndef WIN32
         // At the moment, dsFMOD supports streaming samples so we can
         // automatically load dsFluidSynth for MIDI music.
-        if(defaultDriver.identifier() == "fmod")
+        if(defaultDriver.identityKey() == "fmod")
         {
             initDriverIfNeeded("fluidsynth");
-            Driver &fluidSynth = driverById(AUDIOD_FLUIDSYNTH);
-            if(fluidSynth.isInitialized())
+            IDriver &fluidSynth = driverById(AUDIOD_FLUIDSYNTH);
+            if(IMusicPlayer *player = tryFindDriverMusicPlayer(fluidSynth))
             {
                 PlaybackInterface ifs; zap(ifs);
                 ifs.type   = AUDIO_IMUSIC;
-                ifs.player = &fluidSynth.iMusic();
+                ifs.player = player;
                 addPlaybackInterface(ifs);  // a copy is made
             }
         }
 #endif
 #endif
 
-        if(defaultDriver.hasCd())
+        if(ICdPlayer *player = tryFindDriverCdPlayer(defaultDriver))
         {
             PlaybackInterface ifs; zap(ifs);
             ifs.type   = AUDIO_ICD;
-            ifs.player = &defaultDriver.iCd();
+            ifs.player = player;
             addPlaybackInterface(ifs);  // a copy is made
         }
 
@@ -443,11 +486,11 @@ DENG2_PIMPL(System)
                 {
                     IDriver &driver = findDriver(cmdLine.at(++p));
                     initDriverIfNeeded(driver);
-                    if(driver.hasSfx())
+                    if(ISoundPlayer *player = tryFindDriverSoundPlayer(driver))
                     {
                         PlaybackInterface ifs; zap(ifs);
                         ifs.type   = AUDIO_ISFX;
-                        ifs.player = &driver.iSfx();
+                        ifs.player = player;
                         addPlaybackInterface(ifs);  // a copy is made
                     }
                     else
@@ -469,11 +512,11 @@ DENG2_PIMPL(System)
                 {
                     IDriver &driver = findDriver(cmdLine.at(++p));
                     initDriverIfNeeded(driver);
-                    if(driver.hasMusic())
+                    if(IMusicPlayer *player = tryFindDriverMusicPlayer(driver))
                     {
                         PlaybackInterface ifs; zap(ifs);
                         ifs.type   = AUDIO_IMUSIC;
-                        ifs.player = &driver.iMusic();
+                        ifs.player = player;
                         addPlaybackInterface(ifs);  // a copy is made
                     }
                     else
@@ -495,11 +538,11 @@ DENG2_PIMPL(System)
                 {
                     IDriver &driver = findDriver(cmdLine.at(++p));
                     initDriverIfNeeded(driver);
-                    if(driver.hasCd())
+                    if(ICdPlayer *player = tryFindDriverCdPlayer(driver))
                     {
                         PlaybackInterface ifs; zap(ifs);
                         ifs.type   = AUDIO_ICD;
-                        ifs.player = &driver.iCd();
+                        ifs.player = player;
                         addPlaybackInterface(ifs);  // a copy is made
                     }
                     else
@@ -541,6 +584,60 @@ DENG2_PIMPL(System)
             }
         }
         return LoopContinue;
+    }
+
+    /**
+     * Returns the currently active, primary CdPlayer.
+     */
+    ICdPlayer &cd() const
+    {
+        // The primary interface is the first one.
+        ICdPlayer *found = nullptr;
+        forAllInterfaces(AUDIO_ICD, [&found] (IDriver::IPlayer &plr)
+        {
+            found = &plr.as<ICdPlayer>();
+            return LoopAbort;
+        });
+        if(found) return *found;
+
+        /// @throw Error  No suitable sound player is available.
+        throw Error("audio::System::Instance::cd", "No CdPlayer available");
+    }
+
+    /**
+     * Returns the currently active, primary MusicPlayer.
+     */
+    IMusicPlayer &music() const
+    {
+        // The primary interface is the first one.
+        IMusicPlayer *found = nullptr;
+        forAllInterfaces(AUDIO_ICD, [&found] (IDriver::IPlayer &plr)
+        {
+            found = &plr.as<IMusicPlayer>();
+            return LoopAbort;
+        });
+        if(found) return *found;
+
+        /// @throw Error  No suitable sound player is available.
+        throw Error("audio::System::Instance::music", "No MusicPlayer available");
+    }
+
+    /**
+     * Returns the currently active, primary SoundPlayer.
+     */
+    ISoundPlayer &sfx() const
+    {
+        // The primary interface is the first one.
+        ISoundPlayer *found = nullptr;
+        forAllInterfaces(AUDIO_ISFX, [&found] (IDriver::IPlayer &plr)
+        {
+            found = &plr.as<ISoundPlayer>();
+            return LoopAbort;
+        });
+        if(found) return *found;
+
+        /// @throw Error  No suitable sound player is available.
+        throw Error("audio::System::Instance::sfx", "No SoundPlayer available");
     }
 
 #endif  // __CLIENT__
@@ -903,8 +1000,8 @@ DENG2_PIMPL(System)
         // This is based on the scientific calculations that if the DOOM marine
         // is 56 units tall, 60 is about two meters.
         //// @todo Derive from the viewheight.
-        self.sfx().listener(SFXLP_UNITS_PER_METER, 30);
-        self.sfx().listener(SFXLP_DOPPLER, 1.5f);
+        sfx().listener(SFXLP_UNITS_PER_METER, 30);
+        sfx().listener(SFXLP_DOPPLER, 1.5f);
 
         // (Re)Init the sample cache.
         sampleCache.clear();
@@ -952,14 +1049,14 @@ DENG2_PIMPL(System)
 
         // Change the primary buffer format to match the channel format.
         dfloat parm[2] = { dfloat(sfxBits), dfloat(sfxRate) };
-        self.sfx().listenerv(SFXLP_PRIMARY_FORMAT, parm);
+        sfx().listenerv(SFXLP_PRIMARY_FORMAT, parm);
 
         // Replace the entire channel set (we'll reconfigure).
         channels.reset(new Channels);
         dint num2D = sfx3D ? CHANNEL_2DCOUNT: numChannels;  // The rest will be 3D.
         for(dint i = 0; i < numChannels; ++i)
         {
-            Sound/*Channel*/ &ch = channels->add(*self.sfx().makeSound(num2D-- > 0, sfxBits, sfxRate));
+            Sound/*Channel*/ &ch = channels->add(*sfx().makeSound(num2D-- > 0, sfxBits, sfxRate));
             if(!ch.hasBuffer())
             {
                 LOG_AUDIO_WARNING("Failed creating Sound for Channel #%i") << i;
@@ -1167,7 +1264,7 @@ DENG2_PIMPL(System)
            selCh->buffer().bytes != sample.bytesPer)
         {
             // Create a new sample buffer with the correct format.
-            selCh->setBuffer(self.sfx().create(play3D ? SFXBF_3D : 0, sample.bytesPer * 8, sample.rate));
+            selCh->setBuffer(sfx().create(play3D ? SFXBF_3D : 0, sample.bytesPer * 8, sample.rate));
         }
 
         selCh->setPlayingMode(flags);
@@ -1196,7 +1293,7 @@ DENG2_PIMPL(System)
         }
 
         // Update listener properties.
-        self.sfx().listener(SFXLP_UPDATE, 0);
+        sfx().listener(SFXLP_UPDATE, 0);
 
         // Load in the sample if needed.
         selCh->load(sample);
@@ -1374,8 +1471,8 @@ DENG2_PIMPL(System)
         sfxListenerCluster = nullptr;
 
         dfloat rev[4] = { 0, 0, 0, 0 };
-        self.sfx().listenerv(SFXLP_REVERB, rev);
-        self.sfx().listener(SFXLP_UPDATE, 0);
+        sfx().listenerv(SFXLP_REVERB, rev);
+        sfx().listener(SFXLP_UPDATE, 0);
     }
 
     void updateSfxListener()
@@ -1394,7 +1491,7 @@ DENG2_PIMPL(System)
                 auto const origin = Vector4f(getSfxListenerOrigin().toVector3f(), 0);
                 dfloat vec[4];
                 origin.decompose(vec);
-                self.sfx().listenerv(SFXLP_POSITION, vec);
+                sfx().listenerv(SFXLP_POSITION, vec);
             }
             {
                 // Orientation. (0,0) will produce front=(1,0,0) and up=(0,0,1).
@@ -1402,14 +1499,14 @@ DENG2_PIMPL(System)
                     sfxListener->angle / (dfloat) ANGLE_MAX * 360,
                     (sfxListener->dPlayer ? LOOKDIR2DEG(sfxListener->dPlayer->lookDir) : 0)
                 };
-                self.sfx().listenerv(SFXLP_ORIENTATION, vec);
+                sfx().listenerv(SFXLP_ORIENTATION, vec);
             }
             {
                 // Velocity. The unit is world distance units per second
                 auto const velocity = Vector4f(Vector3d(sfxListener->mom).toVector3f(), 0) * TICSPERSEC;
                 dfloat vec[4];
                 velocity.decompose(vec);
-                self.sfx().listenerv(SFXLP_VELOCITY, vec);
+                sfx().listenerv(SFXLP_VELOCITY, vec);
             }
 
             // Reverb effects. Has the current sector cluster changed?
@@ -1426,12 +1523,12 @@ DENG2_PIMPL(System)
                     vec[i] = envFactors[i];
                 }
                 vec[SRD_VOLUME] *= sfxReverbStrength;
-                self.sfx().listenerv(SFXLP_REVERB, vec);
+                sfx().listenerv(SFXLP_REVERB, vec);
             }
         }
 
         // Update all listener properties.
-        self.sfx().listener(SFXLP_UPDATE, 0);
+        sfx().listener(SFXLP_UPDATE, 0);
     }
 
     void updateSfx3DModeIfChanged()
@@ -2257,36 +2354,6 @@ dfloat System::rateSoundPriority(mobj_t *emitter, coord_t const *point, dfloat v
     return 1000 * volume - Mobj_ApproxPointDistance(*d->sfxListener, origin) / 2 - timeoff;
 }
 
-ISoundPlayer &System::sfx() const
-{
-    // The primary interface is the first one.
-    ISoundPlayer *found = nullptr;
-    d->forAllInterfaces(AUDIO_ISFX, [&found] (IDriver::IPlayer &plr)
-    {
-        found = &plr.as<ISoundPlayer>();
-        return LoopAbort;
-    });
-    if(found) return *found;
-
-    /// @throw Error  No suitable sound player is available.
-    throw Error("System::sfx", "No Sound player available");
-}
-
-ICdPlayer &System::cd() const
-{
-    // The primary interface is the first one.
-    ICdPlayer *found = nullptr;
-    d->forAllInterfaces(AUDIO_ICD, [&found] (IDriver::IPlayer &plr)
-    {
-        found = &plr.as<ICdPlayer>();
-        return LoopAbort;
-    });
-    if(found) return *found;
-
-    /// @throw Error  No suitable sound player is available.
-    throw Error("System::cd", "No CD player available");
-}
-
 SampleCache const &System::sampleCache() const
 {
     return d->sampleCache;
@@ -2307,6 +2374,18 @@ void System::requestSfxListenerUpdate()
 {
     // Request a listener reverb update at the end of the frame.
     d->sfxListenerCluster = nullptr;
+}
+
+bool System::sfxAnyRateAccepted() const
+{
+    if(!sfxIsAvailable()) return false;
+    return d->sfx().anyRateAccepted();
+}
+
+bool System::sfxNeedsRefresh() const
+{
+    if(!sfxIsAvailable()) return false;
+    return d->sfx().needsRefresh();
 }
 
 #endif  // __CLIENT__

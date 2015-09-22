@@ -21,15 +21,11 @@
 #define CLIENT_AUDIO_SYSTEM_H
 
 #ifdef __CLIENT__
-#  include "dd_types.h"  // lumpnum_t
+#  include "dd_types.h"        // lumpnum_t
 #  include "SettingsRegister"
-
-#  include "api_audiod_mus.h"  ///< @todo remove me
-#  include "api_audiod_sfx.h"  ///< @todo remove me
+#  include "api_audiod_sfx.h"  ///< sfxbuffer_t, @todo remove me
 #endif
-
 #include "world/p_object.h"
-
 #ifdef __CLIENT__
 #  include <de/DotPath>
 #  include <de/Error>
@@ -283,6 +279,9 @@ public:  // Low-level driver interfaces: ---------------------------------------
         /// Base class for property write errors. @ingroup errors
         DENG2_ERROR(WritePropertyError);
 
+        /// Referenced player interface is missing. @ingroup errors
+        DENG2_ERROR(MissingPlayerError);
+
         /**
          * Logical driver status.
          */
@@ -379,38 +378,35 @@ public:  // Low-level driver interfaces: ---------------------------------------
             IDriver *_driver = nullptr;
         };
 
-        /// Returns @c true if the audio driver provides @em CD playback.
-        virtual bool hasCd() const = 0;
-
-        /// Returns @c true if the audio driver provides @em Music playback.
-        virtual bool hasMusic() const = 0;
-
-        /// Returns @c true if the audio driver provides @em Sfx playback.
-        virtual bool hasSfx() const = 0;
+        /**
+         * Returns the total number of player interfaces. 
+         */
+        virtual de::dint playerCount() const = 0;
 
         /**
-         * Returns the @em CD interface for the audio driver. The CD interface is
-         * used for playback of music by streaming it from a compact disk.
+         * Lookup the player interface associated with the given (driver-unique)
+         * @a name.
          */
-        virtual ICdPlayer /*const*/ &iCd() const = 0;
+        virtual IPlayer const &findPlayer(de::String name) const = 0;
 
         /**
-         * Returns the @em Music interface for the audio driver. The Music interface
-         * is used for playback of music (i.e., complete songs).
+         * Search for a player interface associated with the given (driver-unique)
+         * @a name.
+         *
+         * @return  Pointer to the player interface if found; otherwise @c nullptr.
          */
-        virtual IMusicPlayer /*const*/ &iMusic() const = 0;
+        virtual IPlayer const *tryFindPlayer(de::String name) const = 0;
 
         /**
-         * Returns the @em Sfx interface for the audio driver. The Sfx interface
-         * is used for playback of sound effects.
+         * Iterate through the player interfaces, executing @a callback for each.
          */
-        virtual ISoundPlayer /*const*/ &iSfx() const = 0;
+        virtual de::LoopResult forAllPlayers(std::function<de::LoopResult (IPlayer &)> callback) const = 0;
     };
 
     /**
      * Returns the total number of loaded audio drivers. 
      */
-    int driverCount() const;
+    de::dint driverCount() const;
 
     /**
      * Lookup the loaded audio driver associated with the given (unique) @a driverIdKey.
@@ -429,19 +425,6 @@ public:  // Low-level driver interfaces: ---------------------------------------
      * for each.
      */
     de::LoopResult forAllDrivers(std::function<de::LoopResult (IDriver const &)> callback) const;
-
-    /**
-     * Returns the currently active, primary SFX interface.
-     */
-    ISoundPlayer &sfx() const;
-
-    /**
-     * Returns the currently active, primary CD playback interface.
-     *
-     * @note  The CD interface is considered to belong in the music aggregate interface
-     * and usually does not need to be individually manipulated.
-     */
-    ICdPlayer &cd() const;
 
 #endif  // __CLIENT__
 
@@ -476,6 +459,9 @@ public:  /// @todo make private:
 
     /// @todo refactor away.
     void requestSfxListenerUpdate();
+
+    bool sfxAnyRateAccepted() const;
+    bool sfxNeedsRefresh() const;
 
 #endif  // __CLIENT__
 
@@ -550,10 +536,6 @@ class ISoundPlayer : public System::IDriver::IPlayer
 public:
     ISoundPlayer(System::IDriver &driver);
 
-    virtual Sound *makeSound(bool stereoPositioning, de::dint bitsPer, de::dint rate) = 0;
-
-public:  /// @todo revise API:
-
     /**
      * Perform any initialization necessary before playback can begin.
      *
@@ -566,6 +548,27 @@ public:  /// @todo revise API:
      * the user must ensure that all samples use the same sampler rate.
      */
     virtual bool anyRateAccepted() const = 0;
+
+    /**
+     * Returns @c true if the sound requires refreshing manually.
+     */
+    virtual bool needsRefresh() const = 0;
+
+    /**
+     * @param property - SFXLP_UNITS_PER_METER
+     *                 - SFXLP_DOPPLER
+     *                 - SFXLP_UPDATE
+     */
+    virtual void listener(de::dint prop, de::dfloat value) = 0;
+
+    /**
+     * Call SFXLP_UPDATE at the end of every channel update.
+     */
+    virtual void listenerv(de::dint prop, de::dfloat *values) = 0;
+
+public:  // Sound management: --------------------------------------------------------
+
+    virtual Sound *makeSound(bool stereoPositioning, de::dint bitsPer, de::dint rate) = 0;
 
     /**
      * Allocate a managed sample buffer with the given specification.
@@ -584,66 +587,6 @@ public:  /// @todo revise API:
      * existing references or pointers to @a buffer.
      */
     virtual void destroy(sfxbuffer_t &buffer) = 0;
-
-    /**
-     * Prepare the buffer for playing a sample by filling the buffer with as
-     * much sample data as fits. The pointer to sample is saved, so the caller
-     * mustn't free it while the sample is loaded.
-     *
-     * @param buffer  Sound buffer.
-     * @param sample  Sample data.
-     */
-    virtual void load(sfxbuffer_t &buffer, sfxsample_t &sample) = 0;
-
-    /**
-     * Stop @a buffer if playing and forget about it's sample.
-     */
-    virtual void stop(sfxbuffer_t &buffer) = 0;
-
-    /**
-     * Stop @a buffer if playing and forget about it's sample.
-     */
-    virtual void reset(sfxbuffer_t &buffer) = 0;
-
-    /**
-     * Start playing the sample loaded in @a buffer.
-     */
-    virtual void play(sfxbuffer_t &buffer) = 0;
-
-    virtual bool isPlaying(sfxbuffer_t &buffer) const = 0;
-
-    virtual void setFrequency(sfxbuffer_t &buffer, de::dfloat newFrequency) = 0;
-    virtual void setOrigin(sfxbuffer_t &buffer, de::Vector3d const &newOrigin) = 0;
-    virtual void setPan(sfxbuffer_t &buffer, de::dfloat newPan) = 0;
-    virtual void setPositioning(sfxbuffer_t &buffer, bool headRelative) = 0;
-    virtual void setVelocity(sfxbuffer_t &buffer, de::Vector3d const &newVelocity) = 0;
-    virtual void setVolume(sfxbuffer_t &buffer, de::dfloat newVolume) = 0;
-    virtual void setVolumeAttenuationRange(sfxbuffer_t &buffer, de::Ranged const &newRange) = 0;
-
-    /**
-     * Returns @c true if the sound requires refreshing manually.
-     */
-    virtual bool needsRefresh() const = 0;
-
-    /**
-     * Will be called periodically by the audio system's refresh thread, if refreshing
-     * is needed, so that @a buffer can be filled with sample data, for streaming purposes.
-     *
-     * @note Don't do anything too time-consuming...
-     */
-    virtual void refresh(sfxbuffer_t &buffer) = 0;
-
-    /**
-     * @param property      SFXLP_UNITS_PER_METER
-     *                      SFXLP_DOPPLER
-     *                      SFXLP_UPDATE
-     */
-    virtual void listener(de::dint prop, de::dfloat value) = 0;
-
-    /**
-     * Call SFXLP_UPDATE at the end of every channel update.
-     */
-    virtual void listenerv(de::dint prop, de::dfloat *values) = 0;
 };
 
 #endif  // __CLIENT__

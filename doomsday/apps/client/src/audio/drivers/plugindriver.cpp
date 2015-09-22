@@ -1,7 +1,8 @@
 /** @file plugindriver.cpp  Plugin based audio driver.
  *
- * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,11 +21,15 @@
 
 #include "audio/drivers/plugindriver.h"
 
-#include "api_audiod.h"
+#include "api_audiod.h"      // AUDIOP_* flags
 #include "audio/sound.h"
+#include "world/thinkers.h"
+#include "def_main.h"        // SF_* flags, remove me
 #include <de/Library>
 #include <de/Log>
+#include <de/Observers>
 #include <de/NativeFile>
+#include <de/timer.h>        // TICSPERSEC
 
 using namespace de;
 
@@ -216,7 +221,7 @@ sfxbuffer_t *PluginDriver::SoundPlayer::create(dint flags, dint bits, dint rate)
 
 Sound *PluginDriver::SoundPlayer::makeSound(bool stereoPositioning, dint bitsPer, dint rate)
 {
-    std::unique_ptr<Sound> sound(new Sound(*this));
+    std::unique_ptr<Sound> sound(new PluginDriver::Sound(*this));
     sound->setBuffer(create(stereoPositioning ? 0 : SFXBF_3D, bitsPer, rate));
     return sound.release();
 }
@@ -227,91 +232,11 @@ void PluginDriver::SoundPlayer::destroy(sfxbuffer_t &buf)
     _imp.gen.Destroy(&buf);
 }
 
-void PluginDriver::SoundPlayer::load(sfxbuffer_t &buf, sfxsample_t &sample)
-{
-    DENG2_ASSERT(_imp.gen.Load);
-    _imp.gen.Load(&buf, &sample);
-}
-
-void PluginDriver::SoundPlayer::stop(sfxbuffer_t &buf)
-{
-    DENG2_ASSERT(_imp.gen.Stop);
-    _imp.gen.Stop(&buf);
-}
-
-void PluginDriver::SoundPlayer::reset(sfxbuffer_t &buf)
-{
-    DENG2_ASSERT(_imp.gen.Reset);
-    _imp.gen.Reset(&buf);
-}
-
-void PluginDriver::SoundPlayer::play(sfxbuffer_t &buf)
-{
-    DENG2_ASSERT(_imp.gen.Play);
-    _imp.gen.Play(&buf);
-}
-
-bool PluginDriver::SoundPlayer::isPlaying(sfxbuffer_t &buf) const
-{
-    return (buf.flags & SFXBF_PLAYING) != 0;
-}
-
 bool PluginDriver::SoundPlayer::needsRefresh() const
 {
     dint disableRefresh = false;
     if(_imp.gen.Getv) _imp.gen.Getv(SFXIP_DISABLE_CHANNEL_REFRESH, &disableRefresh);
     return !disableRefresh;
-}
-
-void PluginDriver::SoundPlayer::refresh(sfxbuffer_t &buf)
-{
-    DENG2_ASSERT(_imp.gen.Refresh);
-    _imp.gen.Refresh(&buf);
-}
-
-void PluginDriver::SoundPlayer::setFrequency(sfxbuffer_t &buf, dfloat newFrequency)
-{
-    DENG2_ASSERT(_imp.gen.Set);
-    _imp.gen.Set(&buf, SFXBP_FREQUENCY, newFrequency);
-}
-
-void PluginDriver::SoundPlayer::setOrigin(sfxbuffer_t &buf, Vector3d const &newOrigin)
-{
-    DENG2_ASSERT(_imp.gen.Setv);
-    dfloat vec[3]; newOrigin.toVector3f().decompose(vec);
-    _imp.gen.Setv(&buf, SFXBP_POSITION, vec);
-}
-
-void PluginDriver::SoundPlayer::setPan(sfxbuffer_t &buf, dfloat newPan)
-{
-    DENG2_ASSERT(_imp.gen.Set);
-    _imp.gen.Set(&buf, SFXBP_PAN, newPan);
-}
-
-void PluginDriver::SoundPlayer::setPositioning(sfxbuffer_t &buf, bool headRelative)
-{
-    DENG2_ASSERT(_imp.gen.Set);
-    _imp.gen.Set(&buf, SFXBP_RELATIVE_MODE, dfloat( headRelative ));
-}
-
-void PluginDriver::SoundPlayer::setVelocity(sfxbuffer_t &buf, Vector3d const &newVelocity)
-{
-    DENG2_ASSERT(_imp.gen.Setv);
-    dfloat vec[3]; newVelocity.toVector3f().decompose(vec);
-    _imp.gen.Setv(&buf, SFXBP_VELOCITY, vec);
-}
-
-void PluginDriver::SoundPlayer::setVolume(sfxbuffer_t &buf, dfloat newVolume)
-{
-    DENG2_ASSERT(_imp.gen.Set);
-    _imp.gen.Set(&buf, SFXBP_VOLUME, newVolume);
-}
-
-void PluginDriver::SoundPlayer::setVolumeAttenuationRange(sfxbuffer_t &buf, Ranged const &newRange)
-{
-    DENG2_ASSERT(_imp.gen.Set);
-    _imp.gen.Set(&buf, SFXBP_MIN_DISTANCE, dfloat( newRange.start ));
-    _imp.gen.Set(&buf, SFXBP_MAX_DISTANCE, dfloat( newRange.end ));
 }
 
 void PluginDriver::SoundPlayer::listener(dint prop, dfloat value)
@@ -324,6 +249,445 @@ void PluginDriver::SoundPlayer::listenerv(dint prop, dfloat *values)
 {
     DENG2_ASSERT(_imp.gen.Listenerv);
     _imp.gen.Listenerv(prop, values);
+}
+
+/**
+ * @note Loading must be done prior to setting properties, because the driver might defer
+ * creation of the actual data buffer.
+ */
+DENG2_PIMPL_NOREF(PluginDriver::Sound)
+, DENG2_OBSERVES(System, FrameEnds)
+{
+    dint flags = 0;                  ///< SFXCF_* flags.
+    dfloat frequency = 0;            ///< Frequency adjustment: 1.0 is normal.
+    dfloat volume = 0;               ///< Sound volume: 1.0 is max.
+
+    mobj_t *emitter = nullptr;       ///< Mobj emitter for the sound, if any (not owned).
+    Vector3d origin;                 ///< Emit from here (synced with emitter).
+
+    sfxbuffer_t *buffer = nullptr;   ///< Assigned sound buffer, if any (not owned).
+    dint startTime = 0;              ///< When the assigned sound sample was last started.
+
+    SoundPlayer *player = nullptr;  ///< Owning player (not owned).
+
+    inline SoundPlayer &getPlayer()
+    {
+        DENG2_ASSERT(player != 0);
+        return *player;
+    }
+    
+    void updateOriginIfNeeded()
+    {
+        // Updating is only necessary if we are tracking an emitter.
+        if(!emitter) return;
+
+        origin = Mobj_Origin(*emitter);
+        // If this is a mobj, center the Z pos.
+        if(Thinker_IsMobjFunc(emitter->thinker.function))
+        {
+            origin.z += emitter->height / 2;
+        }
+    }
+
+    /**
+     * Flushes property changes to the assigned data buffer.
+     *
+     * @param force  Usually updates are only necessary during playback. Use
+     *               @c true= to override this check and write the properties
+     *               regardless.
+     */
+    void updateBuffer(bool force = false)
+    {
+        DENG2_ASSERT(buffer);
+
+        // Disabled?
+        if(flags & SFXCF_NO_UPDATE) return;
+
+        // Updates are only necessary during playback.
+        if(!isPlaying(*buffer) && !force) return;
+
+        // When tracking an emitter we need the latest origin coordinates.
+        updateOriginIfNeeded();
+
+        // Frequency is common to both 2D and 3D sounds.
+        setFrequency(*buffer, frequency);
+
+        if(buffer->flags & SFXBF_3D)
+        {
+            // Volume is affected only by maxvol.
+            setVolume(*buffer, volume * System::get().soundVolume() / 255.0f);
+            if(emitter && emitter == System::get().sfxListener())
+            {
+                // Emitted by the listener object. Go to relative position mode
+                // and set the position to (0,0,0).
+                setPositioning(*buffer, true/*head-relative*/);
+                setOrigin(*buffer, Vector3d());
+            }
+            else
+            {
+                // Use the channel's map space origin.
+                setPositioning(*buffer, false/*absolute*/);
+                setOrigin(*buffer, origin);
+            }
+
+            // If the sound is emitted by the listener, speed is zero.
+            if(emitter && emitter != System::get().sfxListener() &&
+               Thinker_IsMobjFunc(emitter->thinker.function))
+            {
+                setVelocity(*buffer, Vector3d(emitter->mom)* TICSPERSEC);
+            }
+            else
+            {
+                // Not moving.
+                setVelocity(*buffer, Vector3d());
+            }
+        }
+        else
+        {
+            dfloat dist = 0;
+            dfloat finalPan = 0;
+
+            // This is a 2D buffer.
+            if((flags & SFXCF_NO_ORIGIN) ||
+               (emitter && emitter == System::get().sfxListener()))
+            {
+                dist = 1;
+                finalPan = 0;
+            }
+            else
+            {
+                // Calculate roll-off attenuation. [.125/(.125+x), x=0..1]
+                Ranged const attenRange = System::get().soundVolumeAttenuationRange();
+
+                dist = System::get().distanceToListener(origin);
+
+                if(dist < attenRange.start || (flags & SFXCF_NO_ATTENUATION))
+                {
+                    // No distance attenuation.
+                    dist = 1;
+                }
+                else if(dist > attenRange.end)
+                {
+                    // Can't be heard.
+                    dist = 0;
+                }
+                else
+                {
+                    ddouble const normdist = (dist - attenRange.start) / attenRange.size();
+
+                    // Apply the linear factor so that at max distance there
+                    // really is silence.
+                    dist = .125f / (.125f + normdist) * (1 - normdist);
+                }
+
+                // And pan, too. Calculate angle from listener to emitter.
+                if(mobj_t *listener = System::get().sfxListener())
+                {
+                    dfloat angle = (M_PointXYToAngle2(listener->origin[0], listener->origin[1],
+                                                      origin.x, origin.y)
+                                        - listener->angle)
+                                 / (dfloat) ANGLE_MAX * 360;
+
+                    // We want a signed angle.
+                    if(angle > 180)
+                        angle -= 360;
+
+                    // Front half.
+                    if(angle <= 90 && angle >= -90)
+                    {
+                        finalPan = -angle / 90;
+                    }
+                    else
+                    {
+                        // Back half.
+                        finalPan = (angle + (angle > 0 ? -180 : 180)) / 90;
+                        // Dampen sounds coming from behind.
+                        dist *= (1 + (finalPan > 0 ? finalPan : -finalPan)) / 2;
+                    }
+                }
+                else
+                {
+                    // No listener mobj? Can't pan, then.
+                    finalPan = 0;
+                }
+            }
+
+            setVolume(*buffer, volume * dist * System::get().soundVolume() / 255.0f);
+            setPan(*buffer, finalPan);
+        }
+    }
+
+    void systemFrameEnds(System &)
+    {
+        updateBuffer();
+    }
+
+    void load(sfxbuffer_t &buf, sfxsample_t &sample)
+    {
+        DENG2_ASSERT(getPlayer()._imp.gen.Load);
+        getPlayer()._imp.gen.Load(&buf, &sample);
+    }
+
+    void stop(sfxbuffer_t &buf)
+    {
+        DENG2_ASSERT(getPlayer()._imp.gen.Stop);
+        getPlayer()._imp.gen.Stop(&buf);
+    }
+
+    void reset(sfxbuffer_t &buf)
+    {
+        DENG2_ASSERT(getPlayer()._imp.gen.Reset);
+        getPlayer()._imp.gen.Reset(&buf);
+    }
+
+    void play(sfxbuffer_t &buf)
+    {
+        DENG2_ASSERT(getPlayer()._imp.gen.Play);
+        getPlayer()._imp.gen.Play(&buf);
+    }
+
+    bool isPlaying(sfxbuffer_t &buf) const
+    {
+        return (buf.flags & SFXBF_PLAYING) != 0;
+    }
+
+    void refresh(sfxbuffer_t &buf)
+    {
+        DENG2_ASSERT(getPlayer()._imp.gen.Refresh);
+        getPlayer()._imp.gen.Refresh(&buf);
+    }
+
+    void setFrequency(sfxbuffer_t &buf, dfloat newFrequency)
+    {
+        DENG2_ASSERT(getPlayer()._imp.gen.Set);
+        getPlayer()._imp.gen.Set(&buf, SFXBP_FREQUENCY, newFrequency);
+    }
+
+    void setOrigin(sfxbuffer_t &buf, Vector3d const &newOrigin)
+    {
+        DENG2_ASSERT(getPlayer()._imp.gen.Setv);
+        dfloat vec[3]; newOrigin.toVector3f().decompose(vec);
+        getPlayer()._imp.gen.Setv(&buf, SFXBP_POSITION, vec);
+    }
+
+    void setPan(sfxbuffer_t &buf, dfloat newPan)
+    {
+        DENG2_ASSERT(getPlayer()._imp.gen.Set);
+        getPlayer()._imp.gen.Set(&buf, SFXBP_PAN, newPan);
+    }
+
+    void setPositioning(sfxbuffer_t &buf, bool headRelative)
+    {
+        DENG2_ASSERT(getPlayer()._imp.gen.Set);
+        getPlayer()._imp.gen.Set(&buf, SFXBP_RELATIVE_MODE, dfloat( headRelative ));
+    }
+
+    void setVelocity(sfxbuffer_t &buf, Vector3d const &newVelocity)
+    {
+        DENG2_ASSERT(getPlayer()._imp.gen.Setv);
+        dfloat vec[3]; newVelocity.toVector3f().decompose(vec);
+        getPlayer()._imp.gen.Setv(&buf, SFXBP_VELOCITY, vec);
+    }
+
+    void setVolume(sfxbuffer_t &buf, dfloat newVolume)
+    {
+        DENG2_ASSERT(getPlayer()._imp.gen.Set);
+        getPlayer()._imp.gen.Set(&buf, SFXBP_VOLUME, newVolume);
+    }
+
+    void setVolumeAttenuationRange(sfxbuffer_t &buf, Ranged const &newRange)
+    {
+        DENG2_ASSERT(getPlayer()._imp.gen.Set);
+        getPlayer()._imp.gen.Set(&buf, SFXBP_MIN_DISTANCE, dfloat( newRange.start ));
+        getPlayer()._imp.gen.Set(&buf, SFXBP_MAX_DISTANCE, dfloat( newRange.end ));
+    }
+};
+
+PluginDriver::Sound::Sound(PluginDriver::SoundPlayer &player) : d(new Instance)
+{
+    d->player = &player;
+}
+
+PluginDriver::Sound::~Sound()
+{
+    releaseBuffer();
+}
+
+bool PluginDriver::Sound::hasBuffer() const
+{
+    return d->buffer != nullptr;
+}
+
+sfxbuffer_t const &PluginDriver::Sound::buffer() const
+{
+    if(d->buffer) return *d->buffer;
+    /// @throw MissingBufferError  No sound buffer is currently assigned.
+    throw MissingBufferError("audio::PluginDriver::Sound::buffer", "No data buffer is assigned");
+}
+
+void PluginDriver::Sound::releaseBuffer()
+{
+    stop();
+    if(!hasBuffer()) return;
+
+    // Cancel frame notifications - we'll soon have no buffer to update.
+    System::get().audienceForFrameEnds() -= d;
+
+    d->getPlayer().destroy(*d->buffer);
+    d->buffer = nullptr;
+}
+
+void PluginDriver::Sound::setBuffer(sfxbuffer_t *newBuffer)
+{
+    releaseBuffer();
+    d->buffer = newBuffer;
+
+    if(d->buffer)
+    {
+        // We want notification when the frame ends in order to flush deferred property writes.
+        System::get().audienceForFrameEnds() += d;
+    }
+}
+
+dint PluginDriver::Sound::flags() const
+{
+    return d->flags;
+}
+
+/// @todo Use QFlags -ds
+void PluginDriver::Sound::setFlags(dint newFlags)
+{
+    d->flags = newFlags;
+}
+
+mobj_t *PluginDriver::Sound::emitter() const
+{
+    return d->emitter;
+}
+
+void PluginDriver::Sound::setEmitter(mobj_t *newEmitter)
+{
+    d->emitter = newEmitter;
+}
+
+void PluginDriver::Sound::setFixedOrigin(Vector3d const &newOrigin)
+{
+    d->origin = newOrigin;
+}
+
+dfloat PluginDriver::Sound::priority() const
+{
+    if(!isPlaying())
+        return SFX_LOWEST_PRIORITY;
+
+    if(d->flags & SFXCF_NO_ORIGIN)
+        return System::get().rateSoundPriority(0, 0, d->volume, d->startTime);
+
+    // d->origin is set to emitter->xyz during updates.
+    ddouble origin[3]; d->origin.decompose(origin);
+    return System::get().rateSoundPriority(0, origin, d->volume, d->startTime);
+}
+
+void PluginDriver::Sound::load(sfxsample_t &sample)
+{
+    if(!d->buffer)
+    {
+        /// @throw MissingBufferError  Loading is impossible without a buffer...
+        throw MissingBufferError("audio::PluginDriver::Sound::load", "Attempted with no data buffer assigned");
+    }
+
+    // Don't reload if a sample with the same sound ID is already loaded.
+    if(!d->buffer->sample || d->buffer->sample->soundId != sample.soundId)
+    {
+        d->load(*d->buffer, sample);
+    }
+}
+
+void PluginDriver::Sound::stop()
+{
+    d->stop(*d->buffer);
+}
+
+void PluginDriver::Sound::reset()
+{
+    d->reset(*d->buffer);
+}
+
+void PluginDriver::Sound::play()
+{
+    if(!d->buffer)
+    {
+        /// @throw MissingBufferError  Playing is obviously impossible without data to play...
+        throw MissingBufferError("audio::PluginDriver::Sound::play", "Attempted with no data buffer assigned");
+    }
+
+    // Flush deferred property value changes to the assigned data buffer.
+    d->updateBuffer(true/*force*/);
+
+    // 3D sounds need a few extra properties set up.
+    if(d->buffer->flags & SFXBF_3D)
+    {
+        // Configure the attentuation distances.
+        // This is only done once, when the sound is first played (i.e., here).
+        if(d->flags & SFXCF_NO_ATTENUATION)
+        {
+            d->setVolumeAttenuationRange(*d->buffer, Ranged(10000, 20000));
+        }
+        else
+        {
+            d->setVolumeAttenuationRange(*d->buffer, System::get().soundVolumeAttenuationRange());
+        }
+    }
+
+    d->play(*d->buffer);
+    d->startTime = Timer_Ticks();  // Note the current time.
+}
+
+void PluginDriver::Sound::setPlayingMode(dint sfFlags)
+{
+    if(d->buffer)
+    {
+        d->buffer->flags &= ~(SFXBF_REPEAT | SFXBF_DONT_STOP);
+        if(sfFlags & SF_REPEAT)    d->buffer->flags |= SFXBF_REPEAT;
+        if(sfFlags & SF_DONT_STOP) d->buffer->flags |= SFXBF_DONT_STOP;
+    }
+}
+
+dint PluginDriver::Sound::startTime() const
+{
+    return d->startTime;
+}
+
+audio::Sound &PluginDriver::Sound::setFrequency(dfloat newFrequency)
+{
+    d->frequency = newFrequency;
+    return *this;
+}
+
+audio::Sound &PluginDriver::Sound::setVolume(dfloat newVolume)
+{
+    d->volume = newVolume;
+    return *this;
+}
+
+bool PluginDriver::Sound::isPlaying() const
+{
+    return d->buffer && d->isPlaying(*d->buffer);
+}
+
+dfloat PluginDriver::Sound::frequency() const
+{
+    return d->frequency;
+}
+
+dfloat PluginDriver::Sound::volume() const
+{
+    return d->volume;
+}
+
+void PluginDriver::Sound::refresh()
+{
+    d->refresh(*d->buffer);
 }
 
 // ----------------------------------------------------------------------------------
@@ -566,34 +930,55 @@ void PluginDriver::deinitialize()
     return d->library;
 }
 
-bool PluginDriver::hasCd() const
+dint PluginDriver::playerCount() const
 {
-    return iCd().as<CdPlayer>()._imp.gen.Init != nullptr;
+    dint count = 0;
+    if(d->initialized)
+    {
+        if(d->iCd   ._imp.gen.Init != nullptr) count += 1;
+        if(d->iMusic._imp.gen.Init != nullptr) count += 1;
+        if(d->iSfx  ._imp.gen.Init != nullptr) count += 1;
+    }
+    return count;
 }
 
-bool PluginDriver::hasMusic() const
+PluginDriver::IPlayer const *PluginDriver::tryFindPlayer(String name) const
 {
-    return iMusic().as<MusicPlayer>()._imp.gen.Init != nullptr;
+    if(!name.isEmpty() && d->initialized)
+    {
+        name = name.lower();
+        if(d->iCd   .name() == name) return &d->iCd;
+        if(d->iMusic.name() == name) return &d->iMusic;
+        if(d->iSfx  .name() == name) return &d->iSfx;
+    }
+    return nullptr;  // Not found.
 }
 
-bool PluginDriver::hasSfx() const
+PluginDriver::IPlayer const &PluginDriver::findPlayer(String name) const
 {
-    return iSfx().as<SoundPlayer>()._imp.gen.Init != nullptr;
+    if(auto *player = tryFindPlayer(name)) return *player;
+    /// @throw MissingPlayerError  Unknown identity key specified.
+    throw MissingPlayerError("PluginDriver::findPlayer", "Unknown player \"" + name + "\"");
 }
 
-ICdPlayer /*const*/ &PluginDriver::iCd() const
+LoopResult PluginDriver::forAllPlayers(std::function<LoopResult (IPlayer &)> callback) const
 {
-    return d->iCd;
-}
-
-IMusicPlayer /*const*/ &PluginDriver::iMusic() const
-{
-    return d->iMusic;
-}
-
-ISoundPlayer /*const*/ &PluginDriver::iSfx() const
-{
-    return d->iSfx;
+    if(d->initialized)
+    {
+        if(d->iCd._imp.gen.Init != nullptr)
+        {
+            if(auto result = callback(d->iCd))    return result;
+        }
+        if(d->iMusic._imp.gen.Init != nullptr)
+        {
+            if(auto result = callback(d->iMusic)) return result;
+        }
+        if(d->iSfx._imp.gen.Init != nullptr)
+        {
+            if(auto result = callback(d->iSfx))   return result;
+        }
+    }
+    return LoopContinue;  // Continue iteration.
 }
 
 }  // namespace audio
