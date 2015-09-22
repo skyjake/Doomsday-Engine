@@ -32,6 +32,25 @@ using namespace de;
 
 namespace audio {
 
+static void deleteBuffer(sfxbuffer_t *buf)
+{
+    Z_Free(buf);
+}
+
+static sfxbuffer_t *newBuffer(dint flags, dint bits, dint rate)
+{
+    /// @todo fixme: We have ownership - ensure the buffer is destroyed when
+    /// DummyDriver::Sound is. -ds
+    auto *buf = (sfxbuffer_t *) Z_Calloc(sizeof(sfxbuffer_t), PU_APPSTATIC, 0);
+
+    buf->bytes = bits / 8;
+    buf->rate  = rate;
+    buf->flags = flags;
+    buf->freq  = rate;  // Modified by calls to Set(SFXBP_FREQUENCY).
+
+    return buf;
+}
+
 /**
  * @param buf  Sound buffer.
  * @return The length of the buffer in milliseconds.
@@ -161,33 +180,6 @@ dint DummyDriver::SoundPlayer::init()
     return _initialized = true;
 }
 
-void DummyDriver::SoundPlayer::destroy(sfxbuffer_t &buf)
-{
-    // Free the memory allocated for the buffer.
-    Z_Free(&buf);
-}
-
-sfxbuffer_t *DummyDriver::SoundPlayer::create(dint flags, dint bits, dint rate)
-{
-    /// @todo fixme: We have ownership - ensure the buffer is destroyed when the
-    /// SoundPlayer is. -ds
-    auto *buf = (sfxbuffer_t *) Z_Calloc(sizeof(sfxbuffer_t), PU_APPSTATIC, 0);
-
-    buf->bytes = bits / 8;
-    buf->rate  = rate;
-    buf->flags = flags;
-    buf->freq  = rate;  // Modified by calls to Set(SFXBP_FREQUENCY).
-
-    return buf;
-}
-
-Sound *DummyDriver::SoundPlayer::makeSound(bool stereoPositioning, dint bitsPer, dint rate)
-{
-    std::unique_ptr<Sound> sound(new DummyDriver::Sound(*this));
-    sound->setBuffer(create(stereoPositioning ? 0 : SFXBF_3D, bitsPer, rate));
-    return sound.release();
-}
-
 bool DummyDriver::SoundPlayer::anyRateAccepted() const
 {
     // We are not playing any audio so yeah, whatever.
@@ -210,6 +202,13 @@ void DummyDriver::SoundPlayer::listenerv(dint, dfloat *)
     // Not supported.
 }
 
+Sound *DummyDriver::SoundPlayer::makeSound(bool stereoPositioning, dint bitsPer, dint rate)
+{
+    std::unique_ptr<Sound> sound(new DummyDriver::Sound);
+    sound->setBuffer(newBuffer(stereoPositioning ? 0 : SFXBF_3D, bitsPer, rate));
+    return sound.release();
+}
+
 /**
  * @note Loading must be done prior to setting properties, because the driver might defer
  * creation of the actual data buffer.
@@ -227,14 +226,6 @@ DENG2_PIMPL_NOREF(DummyDriver::Sound)
     sfxbuffer_t *buffer = nullptr;   ///< Assigned sound buffer, if any (not owned).
     dint startTime = 0;              ///< When the assigned sound sample was last started.
 
-    SoundPlayer *player = nullptr;  ///< Owning player (not owned).
-
-    inline SoundPlayer &getPlayer()
-    {
-        DENG2_ASSERT(player != 0);
-        return *player;
-    }
-    
     void updateOriginIfNeeded()
     {
         // Updating is only necessary if we are tracking an emitter.
@@ -461,10 +452,8 @@ DENG2_PIMPL_NOREF(DummyDriver::Sound)
     void setVolumeAttenuationRange(sfxbuffer_t &, Ranged const &) {}
 };
 
-DummyDriver::Sound::Sound(DummyDriver::SoundPlayer &player) : d(new Instance)
-{
-    d->player = &player;
-}
+DummyDriver::Sound::Sound() : d(new Instance)
+{}
 
 DummyDriver::Sound::~Sound()
 {
@@ -491,7 +480,7 @@ void DummyDriver::Sound::releaseBuffer()
     // Cancel frame notifications - we'll soon have no buffer to update.
     System::get().audienceForFrameEnds() -= d;
 
-    d->getPlayer().destroy(*d->buffer);
+    deleteBuffer(d->buffer);
     d->buffer = nullptr;
 }
 
@@ -504,6 +493,16 @@ void DummyDriver::Sound::setBuffer(sfxbuffer_t *newBuffer)
     {
         // We want notification when the frame ends in order to flush deferred property writes.
         System::get().audienceForFrameEnds() += d;
+    }
+}
+
+void DummyDriver::Sound::format(bool stereoPositioning, dint bytesPer, dint rate)
+{
+    // Do we need to (re)create the sound data buffer?
+    if(   !d->buffer
+       || (d->buffer->rate != rate || d->buffer->bytes != bytesPer))
+    {
+        setBuffer(newBuffer(stereoPositioning ? 0 : SFXBF_3D, bytesPer, rate));
     }
 }
 

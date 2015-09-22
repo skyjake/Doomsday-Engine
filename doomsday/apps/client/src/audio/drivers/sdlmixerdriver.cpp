@@ -45,15 +45,6 @@ static bool *usedChannels;
 
 static Mix_Music *lastMusic;
 
-/**
- * Returns the length of the buffer in milliseconds.
- */
-static duint getBufferLength(sfxbuffer_t const &buf)
-{
-    DENG2_ASSERT(buf.sample);
-    return 1000 * buf.sample->numSamples / buf.freq;
-}
-
 static dint getFreeChannel()
 {
     for(dint i = 0; i < numChannels; ++i)
@@ -62,6 +53,52 @@ static dint getFreeChannel()
             return i;
     }
     return -1;
+}
+
+static void deleteBuffer(sfxbuffer_t &buf)
+{
+    Mix_HaltChannel(buf.cursor);
+    usedChannels[buf.cursor] = false;
+    Z_Free(&buf);
+}
+
+static sfxbuffer_t *newBuffer(dint flags, dint bits, dint rate)
+{
+    /// @todo fixme: We have ownership - ensure the buffer is destroyed when
+    /// SdlMixerDriver::Sound is. -ds
+    auto *buf = (sfxbuffer_t *) Z_Calloc(sizeof(sfxbuffer_t), PU_APPSTATIC, 0);
+
+    buf->bytes = bits / 8;
+    buf->rate  = rate;
+    buf->flags = flags;
+    buf->freq  = rate;  // Modified by calls to Set(SFXBP_FREQUENCY).
+
+    // The cursor is used to keep track of the channel on which the sample
+    // is playing.
+    buf->cursor = getFreeChannel();
+    if((dint)buf->cursor < 0)
+    {
+        buf->cursor = numChannels++;
+        usedChannels = (bool *) M_Realloc(usedChannels, sizeof(usedChannels[0]) * numChannels);
+
+        // Make sure we have enough channels allocated.
+        Mix_AllocateChannels(numChannels);
+
+        Mix_UnregisterAllEffects(buf->cursor);
+    }
+
+    usedChannels[buf->cursor] = true;
+
+    return buf;
+}
+
+/**
+ * Returns the length of the buffer in milliseconds.
+ */
+static duint getBufferLength(sfxbuffer_t const &buf)
+{
+    DENG2_ASSERT(buf.sample);
+    return 1000 * buf.sample->numSamples / buf.freq;
 }
 
 // ----------------------------------------------------------------------------------
@@ -241,50 +278,6 @@ bool SdlMixerDriver::SoundPlayer::anyRateAccepted() const
     return false;
 }
 
-sfxbuffer_t *SdlMixerDriver::SoundPlayer::create(dint flags, dint bits, dint rate)
-{
-    /// @todo fixme: We have ownership - ensure the buffer is destroyed when the
-    /// SoundPlayer is. -ds
-    auto *buf = (sfxbuffer_t *) Z_Calloc(sizeof(sfxbuffer_t), PU_APPSTATIC, 0);
-
-    buf->bytes = bits / 8;
-    buf->rate  = rate;
-    buf->flags = flags;
-    buf->freq  = rate;  // Modified by calls to Set(SFXBP_FREQUENCY).
-
-    // The cursor is used to keep track of the channel on which the sample
-    // is playing.
-    buf->cursor = getFreeChannel();
-    if((dint)buf->cursor < 0)
-    {
-        buf->cursor = numChannels++;
-        usedChannels = (bool *) M_Realloc(usedChannels, sizeof(usedChannels[0]) * numChannels);
-
-        // Make sure we have enough channels allocated.
-        Mix_AllocateChannels(numChannels);
-
-        Mix_UnregisterAllEffects(buf->cursor);
-    }
-
-    usedChannels[buf->cursor] = true;
-
-    return buf;
-}
-
-Sound *SdlMixerDriver::SoundPlayer::makeSound(bool stereoPositioning, dint bitsPer, dint rate)
-{
-    std::unique_ptr<Sound> sound(new SdlMixerDriver::Sound(*this));
-    sound->setBuffer(create(stereoPositioning ? 0 : SFXBF_3D, bitsPer, rate));
-    return sound.release();
-}
-
-void SdlMixerDriver::SoundPlayer::destroy(sfxbuffer_t &buf)
-{
-    Mix_HaltChannel(buf.cursor);
-    usedChannels[buf.cursor] = false;
-    Z_Free(&buf);
-}
-
 bool SdlMixerDriver::SoundPlayer::needsRefresh() const
 {
     return true;
@@ -298,6 +291,13 @@ void SdlMixerDriver::SoundPlayer::listener(dint, dfloat)
 void SdlMixerDriver::SoundPlayer::listenerv(dint, dfloat *)
 {
     // Not supported.
+}
+
+Sound *SdlMixerDriver::SoundPlayer::makeSound(bool stereoPositioning, dint bitsPer, dint rate)
+{
+    std::unique_ptr<Sound> sound(new SdlMixerDriver::Sound);
+    sound->setBuffer(newBuffer(stereoPositioning ? 0 : SFXBF_3D, bitsPer, rate));
+    return sound.release();
 }
 
 /**
@@ -316,14 +316,6 @@ DENG2_PIMPL_NOREF(SdlMixerDriver::Sound)
 
     sfxbuffer_t *buffer = nullptr;   ///< Assigned sound buffer, if any (not owned).
     dint startTime = 0;              ///< When the assigned sound sample was last started.
-
-    SoundPlayer *player = nullptr;  ///< Owning player (not owned).
-
-    inline SoundPlayer &getPlayer()
-    {
-        DENG2_ASSERT(player != 0);
-        return *player;
-    }
     
     void updateOriginIfNeeded()
     {
@@ -624,10 +616,8 @@ DENG2_PIMPL_NOREF(SdlMixerDriver::Sound)
     void setVolumeAttenuationRange(sfxbuffer_t &, Ranged const &) {}
 };
 
-SdlMixerDriver::Sound::Sound(SdlMixerDriver::SoundPlayer &player) : d(new Instance)
-{
-    d->player = &player;
-}
+SdlMixerDriver::Sound::Sound() : d(new Instance)
+{}
 
 SdlMixerDriver::Sound::~Sound()
 {
@@ -654,7 +644,7 @@ void SdlMixerDriver::Sound::releaseBuffer()
     // Cancel frame notifications - we'll soon have no buffer to update.
     System::get().audienceForFrameEnds() -= d;
 
-    d->getPlayer().destroy(*d->buffer);
+    deleteBuffer(*d->buffer);
     d->buffer = nullptr;
 }
 
@@ -667,6 +657,16 @@ void SdlMixerDriver::Sound::setBuffer(sfxbuffer_t *newBuffer)
     {
         // We want notification when the frame ends in order to flush deferred property writes.
         System::get().audienceForFrameEnds() += d;
+    }
+}
+
+void SdlMixerDriver::Sound::format(bool stereoPositioning, dint bytesPer, dint rate)
+{
+    // Do we need to (re)create the sound data buffer?
+    if(   !d->buffer
+       || (d->buffer->rate != rate || d->buffer->bytes != bytesPer))
+    {
+        setBuffer(newBuffer(stereoPositioning ? 0 : SFXBF_3D, bytesPer, rate));
     }
 }
 

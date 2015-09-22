@@ -566,27 +566,19 @@ public:
      */
     virtual void listenerv(de::dint prop, de::dfloat *values) = 0;
 
-public:  // Sound management: --------------------------------------------------------
-
+    /**
+     * Prepare another Sound instance ready for loading with sample data.
+     *
+     * @param stereoPositioning  @c true= the resultant Sound should be configured
+     * suitably for stereo posititioning; otherwise use 3D positioning.
+     *
+     * @param bitsPer            Number of bits per sample.
+     * @param rate               Sampler rate / frequency in Hz.
+     *
+     * @return  Sound instance, preconfigured as specified; otherwise @c nullptr
+     * if the driver does not support the given configuration.
+     */
     virtual Sound *makeSound(bool stereoPositioning, de::dint bitsPer, de::dint rate) = 0;
-
-    /**
-     * Allocate a managed sample buffer with the given specification.
-     *
-     * @param flags
-     * @param bits
-     * @param rate
-     *
-     * @return  Suitable (and possibly newly allocated) sample buffer. Ownership
-     * is retained.
-     */
-    virtual sfxbuffer_t *create(de::dint flags, de::dint bits, de::dint rate) = 0;
-
-    /**
-     * Release the managed sample @a buffer. Calling this invalidates any other
-     * existing references or pointers to @a buffer.
-     */
-    virtual void destroy(sfxbuffer_t &buffer) = 0;
 };
 
 #endif  // __CLIENT__

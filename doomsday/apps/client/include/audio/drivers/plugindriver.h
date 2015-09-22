@@ -93,7 +93,6 @@ public:  // Sound players: -----------------------------------------------------
         friend class PluginDriver;
 
         bool _initialized = false;
-        audiointerface_cd_t _imp;
     };
 
     class MusicPlayer : public IMusicPlayer
@@ -122,7 +121,6 @@ public:  // Sound players: -----------------------------------------------------
         friend class PluginDriver;
 
         bool _initialized = false;
-        audiointerface_music_t _imp;
     };
 
     class SoundPlayer : public ISoundPlayer
@@ -134,19 +132,16 @@ public:  // Sound players: -----------------------------------------------------
         bool anyRateAccepted() const;
         bool needsRefresh() const;
 
-        Sound *makeSound(bool stereoPositioning, de::dint bitsPer, de::dint rate);
-        sfxbuffer_t *create(de::dint flags, de::dint bits, de::dint rate);
-        void destroy(sfxbuffer_t &buffer);
-
         void listener(de::dint prop, de::dfloat value);
         void listenerv(de::dint prop, de::dfloat *values);
+
+        Sound *makeSound(bool stereoPositioning, de::dint bitsPer, de::dint rate);
 
     private:
         SoundPlayer(PluginDriver &driver);
         friend class PluginDriver;
 
         bool _initialized = false;
-        audiointerface_sfx_t _imp;
     };
 
     class Sound : public audio::Sound
@@ -159,6 +154,7 @@ public:  // Sound players: -----------------------------------------------------
         sfxbuffer_t const &buffer() const;
         void setBuffer(sfxbuffer_t *newBuffer);
         void releaseBuffer();
+        void format(bool stereoPositioning, de::dint bytesPer, de::dint rate);
         int flags() const;
         void setFlags(int newFlags);
         struct mobj_s *emitter() const;
@@ -193,9 +189,14 @@ public:  // Implements audio::System::IDriver: ---------------------------------
     de::String title() const;
 
     de::dint playerCount() const;
-    IPlayer const &findPlayer(de::String playerIdKey) const;
-    IPlayer const *tryFindPlayer(de::String driverIdKey) const;
+    IPlayer const &findPlayer(de::String name) const;
+    IPlayer const *tryFindPlayer(de::String name) const;
     de::LoopResult forAllPlayers(std::function<de::LoopResult (IPlayer &)> callback) const;
+
+public:
+    audiointerface_cd_t &iCd() const;
+    audiointerface_music_t &iMusic() const;
+    audiointerface_sfx_t &iSound() const;
 
 private:
     PluginDriver();

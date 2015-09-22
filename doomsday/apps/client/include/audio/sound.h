@@ -58,8 +58,8 @@ public:
      */
     virtual sfxbuffer_t const &buffer() const = 0;
     virtual void setBuffer(sfxbuffer_t *newBuffer) = 0;
-
     virtual void releaseBuffer() = 0;
+    virtual void format(bool stereoPositioning, de::dint bytesPer, de::dint rate) = 0;
 
     virtual int flags() const = 0;
     virtual void setFlags(int newFlags) = 0;
