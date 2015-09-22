@@ -1260,7 +1260,7 @@ DENG2_PIMPL(System)
         DENG2_ASSERT(selCh->hasBuffer());
         // The sample buffer may need to be reformatted.
 
-        selCh->format(!play3D, sample.bytesPer * 8, sample.rate);
+        selCh->format(!play3D, sample.bytesPer, sample.rate);
         selCh->setPlayingMode(flags);
         selCh->setFlags(selCh->flags() & ~(SFXCF_NO_ORIGIN | SFXCF_NO_ATTENUATION | SFXCF_NO_UPDATE));
         selCh->setVolume(volume)

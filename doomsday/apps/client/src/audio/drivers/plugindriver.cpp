@@ -232,10 +232,10 @@ void PluginDriver::SoundPlayer::listenerv(dint prop, dfloat *values)
     driver().as<PluginDriver>().iSound().gen.Listenerv(prop, values);
 }
 
-Sound *PluginDriver::SoundPlayer::makeSound(bool stereoPositioning, dint bitsPer, dint rate)
+Sound *PluginDriver::SoundPlayer::makeSound(bool stereoPositioning, dint bytesPer, dint rate)
 {
     std::unique_ptr<Sound> sound(new PluginDriver::Sound(*this));
-    sound->setBuffer(driver().as<PluginDriver>().iSound().gen.Create(stereoPositioning ? 0 : SFXBF_3D, bitsPer, rate));
+    sound->setBuffer(driver().as<PluginDriver>().iSound().gen.Create(stereoPositioning ? 0 : SFXBF_3D, bytesPer * 8, rate));
     return sound.release();
 }
 

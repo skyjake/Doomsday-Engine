@@ -202,10 +202,10 @@ void DummyDriver::SoundPlayer::listenerv(dint, dfloat *)
     // Not supported.
 }
 
-Sound *DummyDriver::SoundPlayer::makeSound(bool stereoPositioning, dint bitsPer, dint rate)
+Sound *DummyDriver::SoundPlayer::makeSound(bool stereoPositioning, dint bytesPer, dint rate)
 {
     std::unique_ptr<Sound> sound(new DummyDriver::Sound);
-    sound->setBuffer(newBuffer(stereoPositioning ? 0 : SFXBF_3D, bitsPer, rate));
+    sound->setBuffer(newBuffer(stereoPositioning ? 0 : SFXBF_3D, bytesPer * 8, rate));
     return sound.release();
 }
 

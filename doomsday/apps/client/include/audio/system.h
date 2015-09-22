@@ -570,15 +570,15 @@ public:
      * Prepare another Sound instance ready for loading with sample data.
      *
      * @param stereoPositioning  @c true= the resultant Sound should be configured
-     * suitably for stereo posititioning; otherwise use 3D positioning.
+     * suitably for stereo positioning; otherwise use 3D positioning.
      *
-     * @param bitsPer            Number of bits per sample.
+     * @param bytesPer           Number of bytes per sample.
      * @param rate               Sampler rate / frequency in Hz.
      *
      * @return  Sound instance, preconfigured as specified; otherwise @c nullptr
      * if the driver does not support the given configuration.
      */
-    virtual Sound *makeSound(bool stereoPositioning, de::dint bitsPer, de::dint rate) = 0;
+    virtual Sound *makeSound(bool stereoPositioning, de::dint bytesPer, de::dint rate) = 0;
 };
 
 #endif  // __CLIENT__

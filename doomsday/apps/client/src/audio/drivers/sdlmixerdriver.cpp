@@ -293,10 +293,10 @@ void SdlMixerDriver::SoundPlayer::listenerv(dint, dfloat *)
     // Not supported.
 }
 
-Sound *SdlMixerDriver::SoundPlayer::makeSound(bool stereoPositioning, dint bitsPer, dint rate)
+Sound *SdlMixerDriver::SoundPlayer::makeSound(bool stereoPositioning, dint bytesPer, dint rate)
 {
     std::unique_ptr<Sound> sound(new SdlMixerDriver::Sound);
-    sound->setBuffer(newBuffer(stereoPositioning ? 0 : SFXBF_3D, bitsPer, rate));
+    sound->setBuffer(newBuffer(stereoPositioning ? 0 : SFXBF_3D, bytesPer * 8, rate));
     return sound.release();
 }
 
