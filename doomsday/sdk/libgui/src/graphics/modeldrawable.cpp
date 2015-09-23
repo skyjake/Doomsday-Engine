@@ -1559,7 +1559,13 @@ void ModelDrawable::Animator::advanceTime(TimeDelta const &)
 
 ddouble ModelDrawable::Animator::currentTime(int index) const
 {
-    return at(index).time;
+    auto const &anim = at(index);
+    ddouble t = anim.time;
+    if(anim.flags.testFlag(OngoingSequence::ClampToDuration))
+    {
+        t = min(t, anim.duration - de::FLOAT_EPSILON);
+    }
+    return t;
 }
 
 void ModelDrawable::Animator::OngoingSequence::initialize()

@@ -320,6 +320,8 @@ DENG2_PIMPL(MobjAnimator)
         {
             anim.clock.reset(new Scheduler::Clock(*anim.timeline, &names));
         }
+        applyFlagOperation(anim.flags, Sequence::Flags(Sequence::ClampToDuration),
+                           anim.looping == Sequence::Looping? UnsetFlags : SetFlags);
         return anim;
     }
 };
@@ -436,8 +438,8 @@ void MobjAnimator::advanceTime(TimeDelta const &elapsed)
 
         if(anim.looping == Sequence::NotLooping)
         {
-            // Clamp at the end. Use epsilon so it doesn't wrap around in ModelDrawable.
-            anim.time = min(anim.time, anim.duration - de::FLOAT_EPSILON);
+            // Clamp at the end.
+            anim.time = min(anim.time, anim.duration);
         }
 
         if(anim.looping == Sequence::Looping)
