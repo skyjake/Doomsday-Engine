@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef CLIENT_API_AUDIO_DRIVER_INTERFACE_H
-#define CLIENT_API_AUDIO_DRIVER_INTERFACE_H
+#ifndef CLIENT_API_AUDIO_DRIVER_H
+#define CLIENT_API_AUDIO_DRIVER_H
 
 /**
  * @defgroup audio Audio
@@ -37,14 +37,6 @@ enum
     AUDIOP_SOUNDFONT_FILENAME  ///< Music sound font (file name and path).
 };
 
-typedef enum {
-    AUDIO_INONE,
-    AUDIO_ISFX,
-    AUDIO_IMUSIC,
-    AUDIO_ICD,
-    AUDIO_IMUSIC_OR_ICD
-} audiointerfacetype_t;
-
 ///@}
 
-#endif  // CLIENT_API_AUDIO_DRIVER_INTERFACE_H
+#endif  // CLIENT_API_AUDIO_DRIVER_H

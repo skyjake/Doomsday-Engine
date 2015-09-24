@@ -154,15 +154,7 @@ DENG2_PIMPL(Channels)
 
     ~Instance()
     {
-        clearAll();
-
         System::get().sampleCache().audienceForSampleRemove() -= this;
-    }
-
-    void clearAll()
-    {
-        qDeleteAll(all);
-        all.clear();
     }
 
     /**

@@ -53,8 +53,8 @@ public:  // Sound players: -----------------------------------------------------
     public:
         de::String name() const;
 
-        de::dint init();
-        void shutdown();
+        de::dint initialize();
+        void deinitialize();
 
         void update();
         void setVolume(de::dfloat newVolume);
@@ -76,8 +76,8 @@ public:  // Sound players: -----------------------------------------------------
     public:
         de::String name() const;
 
-        de::dint init();
-        void shutdown();
+        de::dint initialize();
+        void deinitialize();
 
         void update();
         void setVolume(de::dfloat value);
@@ -104,7 +104,9 @@ public:  // Sound players: -----------------------------------------------------
     public:
         de::String name() const;
 
-        de::dint init();
+        de::dint initialize();
+        void deinitialize();
+
         bool anyRateAccepted() const;
         bool needsRefresh() const;
 
@@ -117,7 +119,7 @@ public:  // Sound players: -----------------------------------------------------
         SoundPlayer(DummyDriver &driver);
         friend class DummyDriver;
 
-        bool _initialized = false;
+        DENG2_PRIVATE(d)
     };
 
     class Sound : public audio::Sound

@@ -82,6 +82,16 @@ dint sfxRate = 11025;
 
 namespace audio {
 
+#ifdef __CLIENT__
+enum audiointerfacetype_t
+{
+    AUDIO_ISFX,
+    AUDIO_IMUSIC,
+    AUDIO_ICD,
+    AUDIO_IMUSIC_OR_ICD
+};
+#endif
+
 static audio::System *theAudioSystem;
 
 static duint const PURGEINTERVAL = 2000;  ///< 2 seconds
@@ -569,18 +579,15 @@ DENG2_PIMPL(System)
     LoopResult forAllInterfaces(audiointerfacetype_t type,
         std::function<LoopResult (IDriver::IPlayer &)> func) const
     {
-        if(type != AUDIO_INONE)
+        for(dint i = activeInterfaces.count(); i--> 0; )
         {
-            for(dint i = activeInterfaces.count(); i--> 0; )
+            PlaybackInterface const &ifs = activeInterfaces[i];
+            if(ifs.type == type ||
+                (type == AUDIO_IMUSIC_OR_ICD && (ifs.type == AUDIO_IMUSIC ||
+                                                ifs.type == AUDIO_ICD)))
             {
-                PlaybackInterface const &ifs = activeInterfaces[i];
-                if(ifs.type == type ||
-                   (type == AUDIO_IMUSIC_OR_ICD && (ifs.type == AUDIO_IMUSIC ||
-                                                    ifs.type == AUDIO_ICD)))
-                {
-                    if(auto result = func(*ifs.player))
-                        return result;
-                }
+                if(auto result = func(*ifs.player))
+                    return result;
             }
         }
         return LoopContinue;
@@ -611,7 +618,7 @@ DENG2_PIMPL(System)
     {
         // The primary interface is the first one.
         IMusicPlayer *found = nullptr;
-        forAllInterfaces(AUDIO_ICD, [&found] (IDriver::IPlayer &plr)
+        forAllInterfaces(AUDIO_IMUSIC, [&found] (IDriver::IPlayer &plr)
         {
             found = &plr.as<IMusicPlayer>();
             return LoopAbort;
@@ -894,29 +901,14 @@ DENG2_PIMPL(System)
         dint initialized = 0;
         forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [&initialized] (IDriver::IPlayer &plr)
         {
-            if(auto *musicPlayer = plr.maybeAs<IMusicPlayer>())
+            if(plr.initialize())
             {
-                if(musicPlayer->init())
-                {
-                    initialized += 1;
-                }
-                else
-                {
-                    LOG_AUDIO_WARNING("Failed to initialize \"%s\" for music playback")
-                        << musicPlayer->identityKey();
-                }
+                initialized += 1;
             }
-            if(auto *cdPlayer = plr.maybeAs<ICdPlayer>())
+            else
             {
-                if(cdPlayer->init())
-                {
-                    initialized += 1;
-                }
-                else
-                {
-                    LOG_AUDIO_WARNING("Failed to initialize \"%s\" for music playback")
-                        << cdPlayer->identityKey();
-                }
+                LOG_AUDIO_WARNING("Failed to initialize \"%s\" for music playback")
+                    << plr.identityKey();
             }
             return LoopContinue;
         });
@@ -942,14 +934,7 @@ DENG2_PIMPL(System)
         // Shutdown interfaces.
         forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [] (IDriver::IPlayer &plr)
         {
-            if(auto *musicPlayer = plr.maybeAs<IMusicPlayer>())
-            {
-                musicPlayer->shutdown();
-            }
-            if(auto *cdPlayer = plr.maybeAs<ICdPlayer>())
-            {
-                cdPlayer->shutdown();
-            }
+            plr.deinitialize();
             return LoopContinue;
         });
     }
@@ -997,20 +982,36 @@ DENG2_PIMPL(System)
 
         LOG_AUDIO_VERBOSE("Initializing sound effect playback...");
 
+        // (Re)Init the sample cache.
+        sampleCache.clear();
+
+        // Initialize interfaces for music playback.
+        dint initialized = 0;
+        forAllInterfaces(AUDIO_ISFX, [&initialized] (IDriver::IPlayer &plr)
+        {
+            if(plr.initialize())
+            {
+                initialized += 1;
+            }
+            else
+            {
+                LOG_AUDIO_WARNING("Failed to initialize \"%s\" for sound playback")
+                    << plr.identityKey();
+            }
+            return LoopContinue;
+        });
+
+        // Remember whether an interface for sound playback initialized successfully.
+        sfxAvail = initialized >= 1;
+
         // This is based on the scientific calculations that if the DOOM marine
         // is 56 units tall, 60 is about two meters.
         //// @todo Derive from the viewheight.
         sfx().listener(SFXLP_UNITS_PER_METER, 30);
         sfx().listener(SFXLP_DOPPLER, 1.5f);
 
-        // (Re)Init the sample cache.
-        sampleCache.clear();
-
         // Initialize reverb effects to off.
         sfxListenerNoReverb();
-
-        // The Sfx module is now available.
-        sfxAvail = true;
 
         // Prepare the channel map and start the sound refresh thread (if needed).
         initChannels();
@@ -1030,8 +1031,15 @@ DENG2_PIMPL(System)
         // Clear the sample cache.
         sampleCache.clear();
 
-        // Destroy channels (and stop the refresh thread if running).
+        // Clear the channel map (and stop the refresh thread if running).
         channels.reset();
+
+        // Shutdown interfaces.
+        forAllInterfaces(AUDIO_ISFX, [] (IDriver::IPlayer &plr)
+        {
+            plr.deinitialize();
+            return LoopContinue;
+        });
     }
 
     /**
@@ -2274,11 +2282,14 @@ bool System::playSound(dint soundIdAndFlags, mobj_t *emitter, coord_t const *ori
     bool const isRepeating = (soundIdAndFlags & DDSF_REPEAT) || Def_SoundIsRepeating(soundId);
 
     // Check the distance (if applicable).
-    if(!(info->flags & SF_NO_ATTENUATION) && !(soundIdAndFlags & DDSF_NO_ATTENUATION))
+    if(emitter || origin)
     {
-        // If origin is too far, don't even think about playing the sound.
-        if(distanceToListener(emitter ? emitter->origin : origin) > sfxDistMax)
-            return false;
+        if(!(info->flags & SF_NO_ATTENUATION) && !(soundIdAndFlags & DDSF_NO_ATTENUATION))
+        {
+            // If origin is too far, don't even think about playing the sound.
+            if(distanceToListener(emitter ? emitter->origin : origin) > sfxDistMax)
+                return false;
+        }
     }
 
     // Load the sample.

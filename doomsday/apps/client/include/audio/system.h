@@ -358,6 +358,17 @@ public:  // Low-level driver interfaces: ---------------------------------------
             DENG2_AS_IS_METHODS()
 
             /**
+             * Perform any initialization necessary before playback can begin.
+             * @return  Non-zero if successful (or already-initialized).
+             */
+            virtual de::dint initialize() = 0;
+
+            /**
+             * Perform any deinitializaion necessary before the driver is unloaded.
+             */
+            virtual void deinitialize() = 0;
+
+            /**
              * Returns the associated audio driver.
              */
             IDriver &driver() const;
@@ -492,9 +503,6 @@ public:
     ICdPlayer(System::IDriver &driver);
 
 public:  /// @todo revise API:
-    virtual de::dint init() = 0;
-    virtual void shutdown() = 0;
-
     virtual void update() = 0;
     virtual void setVolume(de::dfloat newVolume) = 0;
     virtual bool isPlaying() const = 0;
@@ -510,9 +518,6 @@ public:
     IMusicPlayer(System::IDriver &driver);
 
 public:  /// @todo revise API:
-    virtual de::dint init() = 0;
-    virtual void shutdown() = 0;
-
     virtual void update() = 0;
     virtual void setVolume(de::dfloat newVolume) = 0;
     virtual bool isPlaying() const = 0;
@@ -535,13 +540,6 @@ class ISoundPlayer : public System::IDriver::IPlayer
 {
 public:
     ISoundPlayer(System::IDriver &driver);
-
-    /**
-     * Perform any initialization necessary before playback can begin.
-     *
-     * @return  Non-zero if successful (or already-initialized).
-     */
-    virtual de::dint init() = 0;
 
     /**
      * Returns @c true if samples can use any sampler rate; otherwise @c false if

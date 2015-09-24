@@ -33,6 +33,8 @@
 #include <SDL_mixer.h>
 #include <cstdlib>
 #include <cstring>
+#include <QList>
+#include <QtAlgorithms>
 
 using namespace de;
 
@@ -111,12 +113,12 @@ String SdlMixerDriver::CdPlayer::name() const
     return "cd";
 }
 
-dint SdlMixerDriver::CdPlayer::init()
+dint SdlMixerDriver::CdPlayer::initialize()
 {
     return _initialized = true;
 }
 
-void SdlMixerDriver::CdPlayer::shutdown()
+void SdlMixerDriver::CdPlayer::deinitialize()
 {
     _initialized = false;
 }
@@ -140,7 +142,7 @@ void SdlMixerDriver::CdPlayer::stop()
 
 dint SdlMixerDriver::CdPlayer::play(dint, dint)
 {
-    return true;
+    return _initialized;
 }
 
 // ----------------------------------------------------------------------------------
@@ -163,17 +165,25 @@ String SdlMixerDriver::MusicPlayer::name() const
     return "music";
 }
 
-dint SdlMixerDriver::MusicPlayer::init()
+dint SdlMixerDriver::MusicPlayer::initialize()
 {
+    if(!_initialized)
+    {
 #ifdef DENG2_DEBUG
-    Mix_HookMusicFinished(musicPlaybackFinished);
+        Mix_HookMusicFinished(musicPlaybackFinished);
 #endif
-
-    return _initialized = true;
+        _initialized = true;
+    }
+    return _initialized;
 }
 
-void SdlMixerDriver::MusicPlayer::shutdown()
+void SdlMixerDriver::MusicPlayer::deinitialize()
 {
+    if(!_initialized) return;
+
+#ifdef DENG2_DEBUG
+    Mix_HookMusicFinished(nullptr);
+#endif
     _initialized = false;
 }
 
@@ -232,7 +242,7 @@ dint SdlMixerDriver::MusicPlayer::play(dint)
 
 bool SdlMixerDriver::MusicPlayer::canPlayFile() const
 {
-    return true;
+    return _initialized;
 }
 
 dint SdlMixerDriver::MusicPlayer::playFile(char const *filename, dint looped)
@@ -259,7 +269,27 @@ dint SdlMixerDriver::MusicPlayer::playFile(char const *filename, dint looped)
 
 // ----------------------------------------------------------------------------------
 
-SdlMixerDriver::SoundPlayer::SoundPlayer(SdlMixerDriver &driver) : ISoundPlayer(driver)
+DENG2_PIMPL_NOREF(SdlMixerDriver::SoundPlayer)
+{
+    bool initialized = false;
+    QList<SdlMixerDriver::Sound *> sounds;
+
+    ~Instance()
+    {
+        // Should be deinitialized by now.
+        DENG2_ASSERT(!initialized);
+    }
+
+    void clearSounds()
+    {
+        qDeleteAll(sounds);
+        sounds.clear();
+    }
+};
+
+SdlMixerDriver::SoundPlayer::SoundPlayer(SdlMixerDriver &driver)
+    : ISoundPlayer(driver)
+    , d(new Instance)
 {}
 
 String SdlMixerDriver::SoundPlayer::name() const
@@ -267,9 +297,17 @@ String SdlMixerDriver::SoundPlayer::name() const
     return "sfx";
 }
 
-dint SdlMixerDriver::SoundPlayer::init()
+dint SdlMixerDriver::SoundPlayer::initialize()
 {
-    return _initialized = true;
+    return d->initialized = true;
+}
+
+void SdlMixerDriver::SoundPlayer::deinitialize()
+{
+    if(!d->initialized) return;
+
+    d->initialized = false;
+    d->clearSounds();
 }
 
 bool SdlMixerDriver::SoundPlayer::anyRateAccepted() const
@@ -280,7 +318,7 @@ bool SdlMixerDriver::SoundPlayer::anyRateAccepted() const
 
 bool SdlMixerDriver::SoundPlayer::needsRefresh() const
 {
-    return true;
+    return d->initialized;
 }
 
 void SdlMixerDriver::SoundPlayer::listener(dint, dfloat)
@@ -295,9 +333,11 @@ void SdlMixerDriver::SoundPlayer::listenerv(dint, dfloat *)
 
 Sound *SdlMixerDriver::SoundPlayer::makeSound(bool stereoPositioning, dint bytesPer, dint rate)
 {
+    if(!d->initialized) return nullptr;
     std::unique_ptr<Sound> sound(new SdlMixerDriver::Sound);
     sound->setBuffer(newBuffer(stereoPositioning ? 0 : SFXBF_3D, bytesPer * 8, rate));
-    return sound.release();
+    d->sounds << sound.release();
+    return d->sounds.last();
 }
 
 /**

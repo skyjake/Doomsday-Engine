@@ -27,6 +27,8 @@
 #include <de/Observers>
 #include <de/memoryzone.h>
 #include <de/timer.h>        // TICSPERSEC
+#include <QList>
+#include <QtAlgorithms>
 
 using namespace de;
 
@@ -71,12 +73,12 @@ String DummyDriver::CdPlayer::name() const
     return "cd";
 }
 
-dint DummyDriver::CdPlayer::init()
+dint DummyDriver::CdPlayer::initialize()
 {
     return _initialized = true;
 }
 
-void DummyDriver::CdPlayer::shutdown()
+void DummyDriver::CdPlayer::deinitialize()
 {
     _initialized = false;
 }
@@ -113,12 +115,12 @@ String DummyDriver::MusicPlayer::name() const
     return "music";
 }
 
-dint DummyDriver::MusicPlayer::init()
+dint DummyDriver::MusicPlayer::initialize()
 {
     return _initialized = true;
 }
 
-void DummyDriver::MusicPlayer::shutdown()
+void DummyDriver::MusicPlayer::deinitialize()
 {
     _initialized = false;
 }
@@ -167,6 +169,24 @@ dint DummyDriver::MusicPlayer::playFile(char const *, dint)
 
 // ----------------------------------------------------------------------------------
 
+DENG2_PIMPL_NOREF(DummyDriver::SoundPlayer)
+{
+    bool initialized = false;
+    QList<DummyDriver::Sound *> sounds;
+
+    ~Instance()
+    {
+        // Should have been deintialized by now.
+        DENG2_ASSERT(!initialized);
+    }
+
+    void clearSounds()
+    {
+        qDeleteAll(sounds);
+        sounds.clear();
+    }
+};
+
 DummyDriver::SoundPlayer::SoundPlayer(DummyDriver &driver) : ISoundPlayer(driver)
 {}
 
@@ -175,15 +195,23 @@ String DummyDriver::SoundPlayer::name() const
     return "sfx";
 }
 
-dint DummyDriver::SoundPlayer::init()
+dint DummyDriver::SoundPlayer::initialize()
 {
-    return _initialized = true;
+    return d->initialized = true;
+}
+
+void DummyDriver::SoundPlayer::deinitialize()
+{
+    if(!d->initialized) return;
+
+    d->initialized = false;
+    d->clearSounds();
 }
 
 bool DummyDriver::SoundPlayer::anyRateAccepted() const
 {
     // We are not playing any audio so yeah, whatever.
-    return true;
+    return d->initialized;
 }
 
 bool DummyDriver::SoundPlayer::needsRefresh() const
@@ -204,9 +232,11 @@ void DummyDriver::SoundPlayer::listenerv(dint, dfloat *)
 
 Sound *DummyDriver::SoundPlayer::makeSound(bool stereoPositioning, dint bytesPer, dint rate)
 {
+    if(!d->initialized) return nullptr;
     std::unique_ptr<Sound> sound(new DummyDriver::Sound);
     sound->setBuffer(newBuffer(stereoPositioning ? 0 : SFXBF_3D, bytesPer * 8, rate));
-    return sound.release();
+    d->sounds << sound.release();
+    return d->sounds.last();
 }
 
 /**
