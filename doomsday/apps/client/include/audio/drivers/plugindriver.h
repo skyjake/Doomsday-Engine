@@ -157,7 +157,6 @@ public:  // Sound players: -----------------------------------------------------
         bool hasBuffer() const;
         sfxbuffer_t const &buffer() const;
         void setBuffer(sfxbuffer_t *newBuffer);
-        void releaseBuffer();
         void format(bool stereoPositioning, de::dint bytesPer, de::dint rate);
         int flags() const;
         void setFlags(int newFlags);

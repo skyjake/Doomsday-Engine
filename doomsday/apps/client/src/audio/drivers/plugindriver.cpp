@@ -340,6 +340,11 @@ DENG2_PIMPL_NOREF(PluginDriver::Sound)
 
     SoundPlayer *player = nullptr;  ///< Owning player (not owned).
     
+    ~Instance()
+    {
+        DENG2_ASSERT(buffer == nullptr);
+    }
+
     inline audiointerface_sfx_t &getDriverISound()
     {
         DENG2_ASSERT(player != nullptr);
@@ -595,21 +600,21 @@ sfxbuffer_t const &PluginDriver::Sound::buffer() const
     throw MissingBufferError("audio::PluginDriver::Sound::buffer", "No data buffer is assigned");
 }
 
-void PluginDriver::Sound::releaseBuffer()
-{
-    stop();
-    if(!hasBuffer()) return;
-
-    // Cancel frame notifications - we'll soon have no buffer to update.
-    System::get().audienceForFrameEnds() -= d;
-
-    d->getDriverISound().gen.Destroy(d->buffer);
-    d->buffer = nullptr;
-}
-
 void PluginDriver::Sound::setBuffer(sfxbuffer_t *newBuffer)
 {
-    releaseBuffer();
+    if(d->buffer == newBuffer) return;
+
+    stop();
+
+    if(d->buffer)
+    {
+        // Cancel frame notifications - we'll soon have no buffer to update.
+        System::get().audienceForFrameEnds() -= d;
+
+        d->getDriverISound().gen.Destroy(d->buffer);
+        d->buffer = nullptr;
+    }
+
     d->buffer = newBuffer;
 
     if(d->buffer)

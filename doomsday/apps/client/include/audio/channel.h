@@ -82,7 +82,6 @@ public:
 
 public:
     void refreshAll();
-    void releaseAllBuffers();
 
     /**
      * Enabling refresh is simple: the refresh thread is resumed. When disabling

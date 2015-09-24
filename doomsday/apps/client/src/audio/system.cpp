@@ -985,7 +985,7 @@ DENG2_PIMPL(System)
         // (Re)Init the sample cache.
         sampleCache.clear();
 
-        // Initialize interfaces for music playback.
+        // Initialize interfaces for sound playback.
         dint initialized = 0;
         forAllInterfaces(AUDIO_ISFX, [&initialized] (IDriver::IPlayer &plr)
         {

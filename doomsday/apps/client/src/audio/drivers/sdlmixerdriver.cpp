@@ -27,7 +27,7 @@
 #include "def_main.h"        // SF_* flags, remove me
 #include <de/Log>
 #include <de/Observers>
-#include <de/memoryzone.h>
+#include <de/memory.h>
 #include <de/timer.h>        // TICSPERSEC
 #include <SDL.h>
 #include <SDL_mixer.h>
@@ -61,15 +61,15 @@ static void deleteBuffer(sfxbuffer_t &buf)
 {
     Mix_HaltChannel(buf.cursor);
     usedChannels[buf.cursor] = false;
-    Z_Free(&buf);
+    delete &buf;
 }
 
 static sfxbuffer_t *newBuffer(dint flags, dint bits, dint rate)
 {
     /// @todo fixme: We have ownership - ensure the buffer is destroyed when
     /// SdlMixerDriver::Sound is. -ds
-    auto *buf = (sfxbuffer_t *) Z_Calloc(sizeof(sfxbuffer_t), PU_APPSTATIC, 0);
-
+    auto *buf = new sfxbuffer_t;
+    de::zapPtr(buf);
     buf->bytes = bits / 8;
     buf->rate  = rate;
     buf->flags = flags;
@@ -357,6 +357,11 @@ DENG2_PIMPL_NOREF(SdlMixerDriver::Sound)
     sfxbuffer_t *buffer = nullptr;   ///< Assigned sound buffer, if any (not owned).
     dint startTime = 0;              ///< When the assigned sound sample was last started.
     
+    ~Instance()
+    {
+        DENG2_ASSERT(buffer == nullptr);
+    }
+
     void updateOriginIfNeeded()
     {
         // Updating is only necessary if we are tracking an emitter.
@@ -676,21 +681,21 @@ sfxbuffer_t const &SdlMixerDriver::Sound::buffer() const
     throw MissingBufferError("audio::SdlMixerDriver::Sound::buffer", "No data buffer is assigned");
 }
 
-void SdlMixerDriver::Sound::releaseBuffer()
-{
-    stop();
-    if(!hasBuffer()) return;
-
-    // Cancel frame notifications - we'll soon have no buffer to update.
-    System::get().audienceForFrameEnds() -= d;
-
-    deleteBuffer(*d->buffer);
-    d->buffer = nullptr;
-}
-
 void SdlMixerDriver::Sound::setBuffer(sfxbuffer_t *newBuffer)
 {
-    releaseBuffer();
+    if(d->buffer == newBuffer) return;
+
+    stop();
+
+    if(d->buffer)
+    {
+        // Cancel frame notifications - we'll soon have no buffer to update.
+        System::get().audienceForFrameEnds() -= d;
+
+        deleteBuffer(*d->buffer);
+        d->buffer = nullptr;
+    }
+    
     d->buffer = newBuffer;
 
     if(d->buffer)

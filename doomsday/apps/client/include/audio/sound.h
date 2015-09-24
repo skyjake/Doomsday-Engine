@@ -54,11 +54,18 @@ public:
     virtual bool hasBuffer() const = 0;
 
     /**
-     * Returns the assigned data buffer.
+     * Returns the assigned sound data buffer.
      */
     virtual sfxbuffer_t const &buffer() const = 0;
+
+    /**
+     * Replace the sound data buffer with @a newBuffer, giving ownership to the
+     * Sound (which will ensure said buffer is destroyed when the sound is).
+     */
     virtual void setBuffer(sfxbuffer_t *newBuffer) = 0;
-    virtual void releaseBuffer() = 0;
+
+    inline void releaseBuffer() { setBuffer(nullptr); }
+
     virtual void format(bool stereoPositioning, de::dint bytesPer, de::dint rate) = 0;
 
     virtual int flags() const = 0;

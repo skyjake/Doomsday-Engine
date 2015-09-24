@@ -157,6 +157,17 @@ DENG2_PIMPL(Channels)
         System::get().sampleCache().audienceForSampleRemove() -= this;
     }
 
+    void releaseAllBuffers()
+    {
+        refresher.pause();
+        self.forAll([this] (Sound/*Channel*/ &ch)
+        {
+            ch.releaseBuffer();
+            return LoopContinue;
+        });
+        refresher.resume();
+    }
+
     /**
      * The given @a sample will soon no longer exist. All channels currently loaded
      * with it must be reset.
@@ -195,7 +206,7 @@ Channels::~Channels()
         refresher.thread = nullptr;
     }
 
-    releaseAllBuffers();
+    d->releaseAllBuffers();
 }
 
 dint Channels::count() const
@@ -284,17 +295,6 @@ void Channels::refreshAll()
         }
         return LoopContinue;
     });
-}
-
-void Channels::releaseAllBuffers()
-{
-    refresher.pause();
-    forAll([this] (Sound/*Channel*/ &ch)
-    {
-        ch.releaseBuffer();
-        return LoopContinue;
-    });
-    refresher.resume();
 }
 
 void Channels::allowRefresh(bool allow)

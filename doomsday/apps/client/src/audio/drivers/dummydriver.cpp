@@ -25,7 +25,6 @@
 #include "def_main.h"        // SF_* flags, remove me
 #include <de/Log>
 #include <de/Observers>
-#include <de/memoryzone.h>
 #include <de/timer.h>        // TICSPERSEC
 #include <QList>
 #include <QtAlgorithms>
@@ -34,22 +33,14 @@ using namespace de;
 
 namespace audio {
 
-static void deleteBuffer(sfxbuffer_t *buf)
-{
-    Z_Free(buf);
-}
-
 static sfxbuffer_t *newBuffer(dint flags, dint bits, dint rate)
 {
-    /// @todo fixme: We have ownership - ensure the buffer is destroyed when
-    /// DummyDriver::Sound is. -ds
-    auto *buf = (sfxbuffer_t *) Z_Calloc(sizeof(sfxbuffer_t), PU_APPSTATIC, 0);
-
+    auto *buf = new sfxbuffer_t;
+    de::zapPtr(buf);
     buf->bytes = bits / 8;
     buf->rate  = rate;
     buf->flags = flags;
     buf->freq  = rate;  // Modified by calls to Set(SFXBP_FREQUENCY).
-
     return buf;
 }
 
@@ -255,6 +246,11 @@ DENG2_PIMPL_NOREF(DummyDriver::Sound)
 
     sfxbuffer_t *buffer = nullptr;   ///< Assigned sound buffer, if any (not owned).
     dint startTime = 0;              ///< When the assigned sound sample was last started.
+
+    ~Instance()
+    {
+        DENG2_ASSERT(buffer == nullptr);
+    }
 
     void updateOriginIfNeeded()
     {
@@ -502,21 +498,21 @@ sfxbuffer_t const &DummyDriver::Sound::buffer() const
     throw MissingBufferError("audio::DummyDriver::Sound::buffer", "No data buffer is assigned");
 }
 
-void DummyDriver::Sound::releaseBuffer()
-{
-    stop();
-    if(!hasBuffer()) return;
-
-    // Cancel frame notifications - we'll soon have no buffer to update.
-    System::get().audienceForFrameEnds() -= d;
-
-    deleteBuffer(d->buffer);
-    d->buffer = nullptr;
-}
-
 void DummyDriver::Sound::setBuffer(sfxbuffer_t *newBuffer)
 {
-    releaseBuffer();
+    if(d->buffer == newBuffer) return;
+
+    stop();
+
+    if(d->buffer)
+    {
+        // Cancel frame notifications - we'll soon have no buffer to update.
+        System::get().audienceForFrameEnds() -= d;
+
+        delete d->buffer;
+        d->buffer = nullptr;
+    }
+
     d->buffer = newBuffer;
 
     if(d->buffer)
