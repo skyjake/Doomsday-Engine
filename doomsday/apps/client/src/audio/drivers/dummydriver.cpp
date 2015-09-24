@@ -205,10 +205,9 @@ bool DummyDriver::SoundPlayer::anyRateAccepted() const
     return d->initialized;
 }
 
-bool DummyDriver::SoundPlayer::needsRefresh() const
+void DummyDriver::SoundPlayer::allowRefresh(bool)
 {
-    // We are not playing any audio so no.
-    return false;
+    // We are not playing any audio so consider it done.
 }
 
 void DummyDriver::SoundPlayer::listener(dint, dfloat)

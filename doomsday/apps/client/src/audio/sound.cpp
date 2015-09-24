@@ -1,4 +1,4 @@
-/** @file sound.cpp  Interface for sound playback.
+/** @file sound.cpp  Interface for playing sounds.
  *
  * @authors Copyright © 2014-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2015 Daniel Swanson <danij@dengine.net>
@@ -40,4 +40,4 @@ Sound::~Sound()
     }
 }
 
-} // namespace audio
+}  // namespace audio

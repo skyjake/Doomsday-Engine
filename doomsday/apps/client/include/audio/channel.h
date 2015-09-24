@@ -3,7 +3,6 @@
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
- * @authors Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -39,27 +38,26 @@ public:
 
 public:
     /**
-     * Construct a new (empty) sound Channel set.
+     * Construct a new (empty) sound channel set.
      */
     Channels();
-    virtual ~Channels();
 
     /**
-     * Returns the total number of sound Channels.
+     * Returns the total number of sound channels.
      */
-    int count() const;
+    de::dint count() const;
 
     /**
-     * Returns the total number of Channels currently playing a/the sound sample
+     * Returns the total number of channels currently playing a/the sound sample
      * associated with the given @a soundId.
      */
-    int countPlaying(int soundId);
+    de::dint countPlaying(de::dint soundId) const;
 
     /**
-     * Returns @a true if at least one Channel is currently playing a/the sound sample
-     * associated with the given sound @a id.
+     * Returns @a true if at least one channel is currently playing a/the sound sample
+     * associated with the given @a soundId.
      */
-    inline bool isPlaying(int id) { return countPlaying(id) > 0; }
+    inline bool isPlaying(de::dint soundId) const { return countPlaying(soundId) > 0; }
 
     /**
      * Add a new channel using the given @a sound.
@@ -71,31 +69,19 @@ public:
     Sound/*Channel*/ &add(Sound &sound);
 
     /**
-     * Attempt to find a Channel suitable for playing a sample with the given format.
+     * Attempt to find a channel suitable for playing a sample with the given format.
      *
      * @param use3D
      * @param bytes
      * @param rate
      * @param soundId
      */
-    Sound/*Channel*/ *tryFindVacant(bool use3D, int bytes, int rate, int soundId) const;
+    Sound/*Channel*/ *tryFindVacant(bool use3D, de::dint bytes, de::dint rate, de::dint soundId) const;
 
     /**
-     * Iterate through the Channels, executing @a callback for each.
+     * Iterate through the channels, executing @a callback for each.
      */
     de::LoopResult forAll(std::function<de::LoopResult (Sound/*Channel*/ &)> callback) const;
-
-public:
-    void refreshAll();
-
-    /**
-     * Enabling refresh is simple: the refresh thread is resumed. When disabling
-     * refresh, first make sure a new refresh doesn't begin (using allowRefresh).
-     * We still have to see if a refresh is being made and wait for it to stop.
-     * Then we can suspend the refresh thread.
-     */
-    void allowRefresh(bool allow = true);
-    void initRefresh();
 
 private:
     DENG2_PRIVATE(d)
@@ -106,7 +92,7 @@ private:
 // Debug visual: -----------------------------------------------------------------
 
 extern int showSoundInfo;
-extern byte refMonitor;
+//extern byte refMonitor;
 
 /**
  * Draws debug information on-screen.

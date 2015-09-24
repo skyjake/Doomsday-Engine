@@ -1004,18 +1004,19 @@ DENG2_PIMPL(System)
         // Remember whether an interface for sound playback initialized successfully.
         sfxAvail = initialized >= 1;
 
-        // This is based on the scientific calculations that if the DOOM marine
-        // is 56 units tall, 60 is about two meters.
-        //// @todo Derive from the viewheight.
-        sfx().listener(SFXLP_UNITS_PER_METER, 30);
-        sfx().listener(SFXLP_DOPPLER, 1.5f);
+        if(sfxAvail)
+        {
+            // This is based on the scientific calculations that if the DOOM marine
+            // is 56 units tall, 60 is about two meters.
+            //// @todo Derive from the viewheight.
+            sfx().listener(SFXLP_UNITS_PER_METER, 30);
+            sfx().listener(SFXLP_DOPPLER, 1.5f);
 
-        // Initialize reverb effects to off.
-        sfxListenerNoReverb();
+            sfxListenerNoReverb();
+        }
 
-        // Prepare the channel map and start the sound refresh thread (if needed).
+        // Prepare the channel map.
         initChannels();
-        channels->initRefresh();
     }
 
     /**
@@ -1185,7 +1186,7 @@ DENG2_PIMPL(System)
          * cancelling existing ones if need be. The ideal choice is a free channel
          * that is already loaded with the sample, in the correct format and mode.
          */
-        channels->allowRefresh(false);
+        self.sfxAllowRefresh(false);
 
         // First look through the stopped channels. At this stage we're very picky:
         // only the perfect choice will be good enough.
@@ -1260,7 +1261,7 @@ DENG2_PIMPL(System)
         if(!selCh)
         {
             // A suitable channel was not found.
-            channels->allowRefresh(true);
+            self.sfxAllowRefresh();
             LOG_AUDIO_XVERBOSE("Failed to find suitable channel for sample id:%i") << sample.soundId;
             return false;
         }
@@ -1303,7 +1304,7 @@ DENG2_PIMPL(System)
         // Start playing.
         selCh->play();
 
-        channels->allowRefresh();
+        self.sfxAllowRefresh();
 
         // Sound successfully started.
         return true;
@@ -2364,18 +2365,13 @@ SampleCache const &System::sampleCache() const
     return d->sampleCache;
 }
 
-bool System::hasChannels()
-{
-    return bool( d->channels );
-}
-
-Channels &System::channels() const
+Channels const &System::channels() const
 {
     DENG2_ASSERT(d->channels.get() != nullptr);
     return *d->channels;
 }
 
-void System::requestSfxListenerUpdate()
+void System::sfxRequestListenerUpdate()
 {
     // Request a listener reverb update at the end of the frame.
     d->sfxListenerCluster = nullptr;
@@ -2387,10 +2383,13 @@ bool System::sfxAnyRateAccepted() const
     return d->sfx().anyRateAccepted();
 }
 
-bool System::sfxNeedsRefresh() const
+void System::sfxAllowRefresh(bool allow)
 {
-    if(!sfxIsAvailable()) return false;
-    return d->sfx().needsRefresh();
+    d->forAllInterfaces(AUDIO_ISFX, [&allow] (IDriver::IPlayer &plr)
+    {
+        plr.as<ISoundPlayer>().allowRefresh(allow);
+        return LoopContinue;
+    });
 }
 
 #endif  // __CLIENT__
@@ -2621,7 +2620,7 @@ D_CMD(PauseMusic)
 
 static void sfxReverbStrengthChanged()
 {
-    App_AudioSystem().requestSfxListenerUpdate();
+    App_AudioSystem().sfxRequestListenerUpdate();
 }
 
 static void musicMidiFontChanged()

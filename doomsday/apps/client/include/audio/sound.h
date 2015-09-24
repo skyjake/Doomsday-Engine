@@ -1,9 +1,8 @@
-/** @file channel.h  Logical sound playback channel.
+/** @file sound.h  Interface for playing sounds.
  * @ingroup audio
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
- * @authors Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

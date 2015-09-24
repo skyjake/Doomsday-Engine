@@ -29,6 +29,8 @@
 
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/resource/wav.h>
+#include <de/memory.h>
+#include <de/memoryzone.h>
 #include <de/timer.h>
 #include <cstring>
 
@@ -240,10 +242,10 @@ static void resample(void *dst, dint dstBytesPer, dint dstRate, void const *src,
  * @param bytesPer    Bytes per sample (1 or 2).
  * @param rate        Samples per second.
  */
-void configureSample(sfxsample_t &smp, void const * /*data*/, duint size, dint numSamples,
-    dint bytesPer, dint rate)
+static void configureSample(sfxsample_t &smp, void const * /*data*/, duint size,
+    dint numSamples, dint bytesPer, dint rate)
 {
-    zap(smp);
+    de::zap(smp);
     smp.bytesPer   = bytesPer;
     smp.size       = numSamples * bytesPer;
     smp.rate       = rate;
@@ -263,35 +265,70 @@ void configureSample(sfxsample_t &smp, void const * /*data*/, duint size, dint n
     }
 }
 
-SampleCache::CacheItem::CacheItem()
-    : next(nullptr)
-    , prev(nullptr)
-    , hits(0)
-    , lastUsed(0)
+DENG2_PIMPL_NOREF(Sample)
 {
-    zap(sample);
+    DENG2_PIMPL_AUDIENCE(Deletion)
+};
+
+DENG2_AUDIENCE_METHOD(Sample, Deletion)
+
+Sample::Sample() : d(new Instance)
+{
+    de::zapPtr(static_cast<sfxsample_t *>(this));
 }
 
-SampleCache::CacheItem::~CacheItem()
+Sample::~Sample()
 {
-    // We have ownership of the sample data.
-    M_Free(sample.data);
+    // Notify interested parties.
+    DENG2_FOR_AUDIENCE2(Deletion, i)
+    {
+        i->sampleBeingDeleted(*this);
+    }
+
+    // We have ownership of the sound data.
+    M_Free(data);
 }
+
+DENG2_PIMPL_NOREF(SampleCache::CacheItem)
+{
+    dint hits = 0;                   ///< Total number of cache hits.
+    dint lastUsed = 0;               ///< Time in tics when a cache hit was last registered.
+    std::unique_ptr<Sample> sample;  ///< Cached sample data (owned).
+};
+
+SampleCache::CacheItem::CacheItem() : d(new Instance)
+{}
 
 void SampleCache::CacheItem::hit()
 {
-    hits += 1;
-    lastUsed = Timer_Ticks();
+    d->hits += 1;
+    d->lastUsed = Timer_Ticks();
 }
 
-void SampleCache::CacheItem::replaceSample(sfxsample_t &newSample)
+dint SampleCache::CacheItem::hitCount() const
 {
-    hits = 0;
+    return d->hits;
+}
 
-    // Release the existing sample data if any.
-    M_Free(sample.data);
-    // Replace the sample.
-    std::memcpy(&sample, &newSample, sizeof(sample));
+dint SampleCache::CacheItem::lastUsed() const
+{
+    return d->lastUsed;
+}
+
+bool SampleCache::CacheItem::hasSample() const
+{
+    return bool( d->sample );
+}
+
+Sample &SampleCache::CacheItem::sample() const
+{
+    return *d->sample;
+}
+
+void SampleCache::CacheItem::replaceSample(Sample *newSample)
+{
+    d->hits = 0;
+    d->sample.reset(newSample);
 }
 
 DENG2_PIMPL(SampleCache)
@@ -330,7 +367,7 @@ DENG2_PIMPL(SampleCache)
     {
         for(CacheItem *it = hashFor(soundId).first; it; it = it->next)
         {
-            if(it->sample.soundId == soundId)
+            if(it->sample().soundId == soundId)
                 return it;
         }
         return nullptr;  // Not found.
@@ -361,12 +398,12 @@ DENG2_PIMPL(SampleCache)
     void removeCacheItem(CacheItem &item)
     {
 #ifdef __CLIENT__
-        App_AudioSystem().channels().allowRefresh(false);
+        App_AudioSystem().sfxAllowRefresh(false);
 #endif
 
         notifyRemove(item);
 
-        Hash &hash = hashFor(item.sample.soundId);
+        Hash &hash = hashFor(item.sample().soundId);
 
         // Unlink the item.
         if(hash.last == &item)
@@ -380,7 +417,7 @@ DENG2_PIMPL(SampleCache)
             item.prev->next = item.next;
 
 #ifdef __CLIENT__
-        App_AudioSystem().channels().allowRefresh();
+        App_AudioSystem().sfxAllowRefresh();
 #endif
 
         // Free all memory allocated for the item.
@@ -413,8 +450,8 @@ DENG2_PIMPL(SampleCache)
     CacheItem &insert(dint soundId, void const *data, duint size, dint numSamples,
         dint bytesPer, dint rate, dint group)
     {
-        sfxsample_t cached;
-        configureSample(cached, data, size, numSamples, bytesPer, rate);
+        std::unique_ptr<Sample> cached(new Sample);
+        configureSample(*cached, data, size, numSamples, bytesPer, rate);
 
         // Have we already cached a comparable sample?
         CacheItem *item = tryFind(soundId);
@@ -422,7 +459,7 @@ DENG2_PIMPL(SampleCache)
         {
             // A sample is already in the cache.
             // If the existing sample is in the same format - use it.
-            if(cached.bytesPer * 8 == ::sfxBits && cached.rate == ::sfxRate)
+            if(cached->bytesPer * 8 == ::sfxBits && cached->rate == ::sfxRate)
                 return *item;
 
             // Sample format differs - uncache it (we'll reuse this CacheItem).
@@ -434,15 +471,15 @@ DENG2_PIMPL(SampleCache)
         }
 
         // Attribute the sample with tracking identifiers.
-        cached.soundId = soundId;
-        cached.group   = group;
+        cached->soundId = soundId;
+        cached->group   = group;
 
         // Perform resampling if necessary.
-        resample(cached.data = M_Malloc(cached.size), cached.bytesPer, cached.rate,
+        resample(cached->data = M_Malloc(cached->size), cached->bytesPer, cached->rate,
                  data, bytesPer, rate, numSamples, size);
 
         // Replace the cached sample.
-        item->replaceSample(cached);
+        item->replaceSample(cached.release());
 
         return *item;
     }
@@ -469,7 +506,7 @@ DENG2_PIMPL(SampleCache)
     {
         DENG2_FOR_PUBLIC_AUDIENCE2(SampleRemove, i)
         {
-            i->sfxSampleCacheAboutToRemove(item.sample);
+            i->sampleCacheAboutToRemove(item.sample());
         }
     }
 
@@ -510,14 +547,14 @@ void SampleCache::maybeRunPurge()
     for(CacheItem *it = hash.first; it; it = next)
     {
         next = it->next;
-        if(nowTime - it->lastUsed > MAX_CACHE_TICS)
+        if(nowTime - it->lastUsed() > MAX_CACHE_TICS)
         {
             // This sound hasn't been used in a looong time.
             d->removeCacheItem(*it);
             continue;
         }
 
-        totalSize += it->sample.size + sizeof(*it);
+        totalSize += it->sample().size + sizeof(*it);
     }
 
     dint const maxSize = MAX_CACHE_KB * 1024;
@@ -536,15 +573,15 @@ void SampleCache::maybeRunPurge()
         {
 #ifdef __CLIENT__
             // If the sample is playing we won't remove it now.
-            if(App_AudioSystem().channels().isPlaying(it->sample.soundId))
+            if(App_AudioSystem().channels().isPlaying(it->sample().soundId))
                 continue;
 #endif
 
             // This sample could be removed, let's check the hits.
-            if(!lowest || it->hits < lowHits)
+            if(!lowest || it->hitCount() < lowHits)
             {
                 lowest  = it;
-                lowHits = it->hits;
+                lowHits = it->hitCount();
             }
         }
 
@@ -552,7 +589,7 @@ void SampleCache::maybeRunPurge()
         if(!lowest) break;
 
         // Stop and uncache this cached sample.
-        totalSize -= lowest->sample.size + sizeof(*lowest);
+        totalSize -= lowest->sample().size + sizeof(*lowest);
         d->removeCacheItem(*lowest);
     }
 }
@@ -564,7 +601,7 @@ void SampleCache::info(duint *cacheBytes, duint *sampleCount) const
     for(Instance::Hash &hash : d->hash)
     for(CacheItem *it = hash.first; it; it = it->next)
     {
-        size  += it->sample.size;
+        size  += it->sample().size;
         count += 1;
     }
 
@@ -580,7 +617,7 @@ void SampleCache::hit(dint soundId)
     }
 }
 
-sfxsample_t *SampleCache::cache(dint soundId)
+Sample *SampleCache::cache(dint soundId)
 {
     LOG_AS("SampleCache");
 
@@ -596,7 +633,7 @@ sfxsample_t *SampleCache::cache(dint soundId)
 
     // Have we already cached this?
     if(CacheItem *existing = d->tryFind(soundId))
-        return &existing->sample;
+        return &existing->sample();
 
     // Lookup info for this sound.
     sfxinfo_t *info = Def_GetSoundInfo(soundId, 0, 0);
@@ -705,7 +742,7 @@ sfxsample_t *SampleCache::cache(dint soundId)
         CacheItem &item = d->insert(soundId, data, bytesPer * numSamples, numSamples,
                                     bytesPer, rate, info->group);
         Z_Free(data);
-        return &item.sample;
+        return &item.sample();
     }
 
     // Probably an old-fashioned DOOM sample.
@@ -734,7 +771,7 @@ sfxsample_t *SampleCache::cache(dint soundId)
 
                 lump.unlock();
 
-                return &item.sample;
+                return &item.sample();
             }
         }
     }

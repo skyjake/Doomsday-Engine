@@ -21,15 +21,17 @@
 
 #include "audio/drivers/plugindriver.h"
 
-#include "api_audiod.h"      // AUDIOP_* flags
-#include "audio/sound.h"
+#include "api_audiod.h"         // AUDIOP_* flags
+#include "audio/samplecache.h"
 #include "world/thinkers.h"
-#include "def_main.h"        // SF_* flags, remove me
+#include "def_main.h"           // SF_* flags, remove me
+#include "sys_system.h"         // Sys_Sleep()
 #include <de/Library>
 #include <de/Log>
 #include <de/Observers>
 #include <de/NativeFile>
-#include <de/timer.h>        // TICSPERSEC
+#include <de/concurrency.h>
+#include <de/timer.h>           // TICSPERSEC
 #include <QList>
 #include <QtAlgorithms>
 
@@ -224,10 +226,15 @@ dint PluginDriver::MusicPlayer::playFile(char const *filename, dint looped)
 // ----------------------------------------------------------------------------------
 
 DENG2_PIMPL_NOREF(PluginDriver::SoundPlayer)
+, DENG2_OBSERVES(SampleCache, SampleRemove)
 {
     bool needInit    = true;
     bool initialized = false;
     QList<PluginDriver::Sound *> sounds;
+
+    thread_t refreshThread      = nullptr;
+    volatile bool refreshPaused = false;
+    volatile bool refreshing    = false;
 
     ~Instance()
     {
@@ -235,10 +242,99 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundPlayer)
         DENG2_ASSERT(!initialized);
     }
 
+    /**
+     * This is a high-priority thread that periodically checks if the sounds need
+     * to be updated with more data. The thread terminates when it notices that the
+     * sound player is deinitialized.
+     *
+     * Each sound uses a 250ms buffer, which means the refresh must be done often
+     * enough to keep them filled.
+     *
+     * @todo Use a real mutex, will you?
+     */
+    static dint C_DECL RefreshThread(void *instance)
+    {
+        auto &inst = *static_cast<Instance *>(instance);
+
+        // We'll continue looping until the player is deinitialized.
+        while(inst.initialized)
+        {
+            // The bit is swapped on each refresh (debug info).
+            //::refMonitor ^= 1;
+
+            if(!inst.refreshPaused)
+            {
+                // Do the refresh.
+                inst.refreshing = true;
+                for(PluginDriver::Sound *sound : inst.sounds)
+                {
+                    if(sound->isPlaying())
+                    {
+                        sound->refresh();
+                    }
+                }
+                inst.refreshing = false;
+
+                // Let's take a nap.
+                Sys_Sleep(200);
+            }
+            else
+            {
+                // Refreshing is not allowed, so take a shorter nap while
+                // waiting for allowRefresh.
+                Sys_Sleep(150);
+            }
+        }
+
+        // Time to end this thread.
+        return 0;
+    }
+
+    void pauseRefresh()
+    {
+        if(refreshPaused) return;  // No change.
+
+        refreshPaused = true;
+        // Make sure that if currently running, we don't continue until it has stopped.
+        while(refreshing)
+        {
+            Sys_Sleep(0);
+        }
+        // Sys_SuspendThread(refreshThread, true);
+    }
+
+    void resumeRefresh()
+    {
+        if(!refreshPaused) return;  // No change.
+        refreshPaused = false;
+        // Sys_SuspendThread(refreshThread, false);
+    }
+
     void clearSounds()
     {
         qDeleteAll(sounds);
         sounds.clear();
+    }
+
+    /**
+     * The given @a sample will soon no longer exist. All channels currently loaded
+     * with it must be reset.
+     */
+    void sampleCacheAboutToRemove(Sample const &sample)
+    {
+        pauseRefresh();
+        for(PluginDriver::Sound *sound : sounds)
+        {
+            if(!sound->hasBuffer()) continue;
+
+            sfxbuffer_t const &sbuf = sound->buffer();
+            if(sbuf.sample && sbuf.sample->soundId == sample.soundId)
+            {
+                // Stop and unload.
+                sound->reset();
+            }
+        }
+        resumeRefresh();
     }
 };
 
@@ -260,6 +356,11 @@ dint PluginDriver::SoundPlayer::initialize()
         d->needInit = false;
         DENG2_ASSERT(driver().as<PluginDriver>().iSound().gen.Init);
         d->initialized = driver().as<PluginDriver>().iSound().gen.Init();
+
+        if(d->initialized)
+        {
+            driver().audioSystem().sampleCache().audienceForSampleRemove() += d;
+        }
     }
     return d->initialized;
 }
@@ -268,11 +369,30 @@ void PluginDriver::SoundPlayer::deinitialize()
 {
     if(!d->initialized) return;
 
-    d->initialized = false;
+    // Cancel sample cache removal notification - we intend to clear sounds.
+    driver().audioSystem().sampleCache().audienceForSampleRemove() -= d;
+
+    // Stop any sounds still playing (note: does not affect refresh).
+    for(PluginDriver::Sound *sound : d->sounds)
+    {
+        sound->stop();
+    }
+
+    d->initialized = false;  // Signal the refresh thread to stop.
+    d->pauseRefresh();       // Stop further refreshing if in progress.
+
+    if(d->refreshThread)
+    {
+        // Wait for the refresh thread to stop.
+        Sys_WaitThread(d->refreshThread, 2000, nullptr);
+        d->refreshThread = nullptr;
+    }
+
     /*if(driver().as<PluginDriver>().iSound().gen.Shutdown)
     {
         driver().as<PluginDriver>().iSound().gen.Shutdown();
     }*/
+
     d->clearSounds();
     d->needInit = true;
 }
@@ -298,6 +418,21 @@ bool PluginDriver::SoundPlayer::needsRefresh() const
     return !disableRefresh;
 }
 
+void PluginDriver::SoundPlayer::allowRefresh(bool allow)
+{
+    if(!d->initialized) return;
+    if(!needsRefresh()) return;
+
+    if(allow)
+    {
+        d->resumeRefresh();
+    }
+    else
+    {
+        d->pauseRefresh();
+    }
+}
+
 void PluginDriver::SoundPlayer::listener(dint prop, dfloat value)
 {
     if(!d->initialized) return;
@@ -318,6 +453,20 @@ Sound *PluginDriver::SoundPlayer::makeSound(bool stereoPositioning, dint bytesPe
     std::unique_ptr<Sound> sound(new PluginDriver::Sound(*this));
     sound->setBuffer(driver().as<PluginDriver>().iSound().gen.Create(stereoPositioning ? 0 : SFXBF_3D, bytesPer * 8, rate));
     d->sounds << sound.release();
+    if(d->sounds.count() == 1)
+    {
+        // Start the sound refresh thread. It will stop on its own when it notices that
+        // the player is deinitialized.
+        d->refreshing    = false;
+        d->refreshPaused = false;
+
+        // Start the refresh thread.
+        d->refreshThread = Sys_StartThread(Instance::RefreshThread, d.get());
+        if(!d->refreshThread)
+        {
+            throw Error("PluginDriver::SoundPlayer::makeSound", "Failed starting the refresh thread");
+        }
+    }
     return d->sounds.last();
 }
 
@@ -339,7 +488,7 @@ DENG2_PIMPL_NOREF(PluginDriver::Sound)
     dint startTime = 0;              ///< When the assigned sound sample was last started.
 
     SoundPlayer *player = nullptr;  ///< Owning player (not owned).
-    
+
     ~Instance()
     {
         DENG2_ASSERT(buffer == nullptr);
@@ -690,11 +839,15 @@ void PluginDriver::Sound::load(sfxsample_t &sample)
 
 void PluginDriver::Sound::stop()
 {
+    if(!d->buffer) return;
+
     d->stop(*d->buffer);
 }
 
 void PluginDriver::Sound::reset()
 {
+    if(!d->buffer) return;
+
     d->reset(*d->buffer);
 }
 

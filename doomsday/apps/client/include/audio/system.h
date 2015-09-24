@@ -23,7 +23,6 @@
 #ifdef __CLIENT__
 #  include "dd_types.h"        // lumpnum_t
 #  include "SettingsRegister"
-#  include "api_audiod_sfx.h"  ///< sfxbuffer_t, @todo remove me
 #endif
 #include "world/p_object.h"
 #ifdef __CLIENT__
@@ -460,24 +459,28 @@ public:  /// @todo make private:
      */
     SampleCache const &sampleCache() const;
 
-    /// @todo refactor away.
-    bool hasChannels();
-
     /**
-     * Provides mutable access to the sound channels.
+     * Provides access to the sound channels (for debug purposes).
      */
-    Channels &channels() const;
+    Channels const &channels() const;
 
     /// @todo refactor away.
-    void requestSfxListenerUpdate();
+    void sfxRequestListenerUpdate();
 
     bool sfxAnyRateAccepted() const;
-    bool sfxNeedsRefresh() const;
+
+    /**
+     * Enabling refresh is simple: the refresh thread(s) is resumed. When disabling
+     * refresh, first make sure a new refresh doesn't begin (using allowRefresh).
+     * We still have to see if a refresh is being made and wait for it to stop.
+     * Then we can suspend the refresh thread.
+     */
+    void sfxAllowRefresh(bool allow = true);
 
 #endif  // __CLIENT__
 
     /// @todo Should not be exposed to users of this class. -ds
-    void startLogical(int soundIdAndFlags, struct mobj_s *emitter);
+    void startLogical(de::dint soundIdAndFlags, struct mobj_s *emitter);
     void clearLogical();
 
 public:
@@ -542,15 +545,22 @@ public:
     ISoundPlayer(System::IDriver &driver);
 
     /**
-     * Returns @c true if samples can use any sampler rate; otherwise @c false if
-     * the user must ensure that all samples use the same sampler rate.
+     * Returns @c true if samples can use any sampler rate; otherwise @c false
+     * if the user must ensure that all samples use the same sampler rate.
      */
     virtual bool anyRateAccepted() const = 0;
 
     /**
-     * Returns @c true if the sound requires refreshing manually.
+     * Called by the audio::System to temporarily enable/disable refreshing of
+     * sound data buffers in order to perform a critical task which operates
+     * on the current state of that data.
+     *
+     * For example, when selecting a logical audio channel on which to play a
+     * new sound it is imperative that Sound states do not change while doing
+     * so (e.g., some audio drivers make use of a background thread for paging
+     * a subset of the waveform data, for streaming purposes).
      */
-    virtual bool needsRefresh() const = 0;
+    virtual void allowRefresh(bool allow = true) = 0;
 
     /**
      * @param property - SFXLP_UNITS_PER_METER

@@ -27,6 +27,23 @@
 namespace audio {
 
 /**
+ * @todo Use libgui's de::Waveform instead. -ds
+ */
+class Sample : public sfxsample_t
+{
+public:
+    /// Audience notified when the sample is about to be deleted.
+    DENG2_DEFINE_AUDIENCE2(Deletion, void sampleBeingDeleted(Sample const &sample))
+
+public:
+    Sample();
+    virtual ~Sample();
+
+private:
+    DENG2_PRIVATE(d)
+};
+
+/**
  * Data cache for sfxsample_t.
  *
  * To play a sound:
@@ -39,29 +56,52 @@ namespace audio {
 class SampleCache
 {
 public:
-    /// Notified when a sound sample is about to be removed from the cache.
-    DENG2_DEFINE_AUDIENCE2(SampleRemove, void sfxSampleCacheAboutToRemove(sfxsample_t const &sample))
+    /// Audience notified when a sound sample is about to be removed from the cache.
+    DENG2_DEFINE_AUDIENCE2(SampleRemove, void sampleCacheAboutToRemove(Sample const &sample))
 
     struct CacheItem
     {
-        CacheItem *next, *prev;
-
-        int hits;            ///< Number of cache hits.
-        int lastUsed;        ///< Tic the sample was last hit.
-        sfxsample_t sample;  ///< The cached sample data.
+        CacheItem *next = nullptr;
+        CacheItem *prev = nullptr;
 
         CacheItem();
-        ~CacheItem();
 
         /**
-         * Register a cache hit and remember the current tic.
+         * Returns @c true if a Sample data payload is assigned.
+         * @ref sample(), replaceSample()
+         */
+        bool hasSample() const;
+
+        /**
+         * Returns the associated Sample data payload.
+         * @ref hasSample(), replaceSample()
+         */
+        Sample &sample() const;
+
+        /**
+         * Replace the cached sample data with a @a newSample.
+         * @ref hasSample(), sample()
+         */
+        void replaceSample(Sample *newSample);
+
+        /**
+         * Register a cache hit and remember the current time.
          */
         void hit();
 
         /**
-         * Replace the cached sample data with a copy of @a newSample.
+         * Returns the total number of registered cache hits for the data payload.
          */
-        void replaceSample(sfxsample_t &newSample);
+        de::dint hitCount() const;
+
+        /**
+         * Returns the time in tics when the last cache hit was registered for the
+         * data payload.
+         */
+        de::dint lastUsed() const;
+
+    private:
+        DENG2_PRIVATE(d)
     };
 
 public:
@@ -88,7 +128,7 @@ public:
      * @param soundId  Sound sample identifier.
      * @return  Associated sfxsample_t if found; otherwise @c nullptr.
      */
-    sfxsample_t *cache(int soundId);
+    Sample *cache(de::dint soundId);
 
     /**
      * Register a cache hit on the sound sample associated with @a id.
@@ -98,7 +138,7 @@ public:
      *
      * @param soundId  Sound sample identifier.
      */
-    void hit(int soundId);
+    void hit(de::dint soundId);
 
     /**
      * Returns cache usage info (for debug).
@@ -106,7 +146,7 @@ public:
      * @param cacheBytes   Total number of bytes used is written here.
      * @param sampleCount  Total number of cached samples is written here.
      */
-    void info(uint *cacheBytes, uint *sampleCount) const;
+    void info(de::duint *cacheBytes, de::duint *sampleCount) const;
 
 private:
     DENG2_PRIVATE(d)

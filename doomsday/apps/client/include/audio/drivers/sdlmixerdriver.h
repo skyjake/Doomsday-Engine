@@ -110,7 +110,7 @@ public:  // Sound players: -----------------------------------------------------
         void deinitialize();
 
         bool anyRateAccepted() const;
-        bool needsRefresh() const;
+        void allowRefresh(bool allow);
 
         void listener(de::dint prop, de::dfloat value);
         void listenerv(de::dint prop, de::dfloat *values);

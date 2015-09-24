@@ -130,11 +130,16 @@ public:  // Sound players: -----------------------------------------------------
     public:
         de::String name() const;
 
+        /**
+         * Returns @c true if the plugin requires refreshing Sounds manually.
+         */
+        bool needsRefresh() const;
+
         de::dint initialize();
         void deinitialize();
 
         bool anyRateAccepted() const;
-        bool needsRefresh() const;
+        void allowRefresh(bool allow);
 
         void listener(de::dint prop, de::dfloat value);
         void listenerv(de::dint prop, de::dfloat *values);
