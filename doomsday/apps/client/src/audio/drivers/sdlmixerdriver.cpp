@@ -66,8 +66,6 @@ static void deleteBuffer(sfxbuffer_t &buf)
 
 static sfxbuffer_t *newBuffer(dint flags, dint bits, dint rate)
 {
-    /// @todo fixme: We have ownership - ensure the buffer is destroyed when
-    /// SdlMixerDriver::Sound is. -ds
     auto *buf = new sfxbuffer_t;
     de::zapPtr(buf);
     buf->bytes = bits / 8;

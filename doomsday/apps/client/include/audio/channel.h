@@ -23,6 +23,7 @@
 #define CLIENT_AUDIO_CHANNEL_H
 
 #include "audio/sound.h"
+#include <de/Observers>
 #include <functional>
 
 namespace audio {
@@ -32,6 +33,10 @@ namespace audio {
  */
 class Channels
 {
+public:
+    /// Audience to be notified when the channel mapping changes.
+    DENG2_DEFINE_AUDIENCE2(Remapped, void channelsRemapped(Channels &))
+
 public:
     /**
      * Construct a new (empty) sound Channel set.

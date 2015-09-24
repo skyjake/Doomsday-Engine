@@ -154,7 +154,23 @@ DENG2_PIMPL(Channels)
 
     ~Instance()
     {
+        clearAll();
+
         System::get().sampleCache().audienceForSampleRemove() -= this;
+    }
+
+    void clearAll()
+    {
+        all.clear();
+        notifyRemapped();
+    }
+
+    void notifyRemapped()
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE2(Remapped, i)
+        {
+            i->channelsRemapped(self);
+        }
     }
 
     void releaseAllBuffers()
@@ -190,7 +206,11 @@ DENG2_PIMPL(Channels)
         });
         refresher.resume();
     }
+
+    DENG2_PIMPL_AUDIENCE(Remapped)
 };
+
+DENG2_AUDIENCE_METHOD(Channels, Remapped)
 
 Channels::Channels() : d(new Instance(this))
 {}
@@ -240,6 +260,8 @@ Sound/*Channel*/ &Channels::add(Sound &sound)
     {
         /// @todo Log sound configuration, update lookup tables for buffer configs, etc...
         d->all << &sound;
+
+        d->notifyRemapped();
     }
     return sound;
 }

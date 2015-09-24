@@ -26,6 +26,7 @@
 #include "audio/system.h"
 #include "world/p_object.h"  // mobj_t
 #include <de/Error>
+#include <de/Observers>
 #include <de/Vector>
 
 // Sound flags.
@@ -44,8 +45,12 @@ public:
     /// No data buffer is assigned. @ingroup errors
     DENG2_ERROR(MissingBufferError);
 
+    /// Audience to be notified when the sound instance is about to be deleted.
+    DENG2_DEFINE_AUDIENCE2(Deletion, void soundBeingDeleted(Sound &))
+
 public:
-    virtual ~Sound() {}
+    Sound();
+    virtual ~Sound();
     DENG2_AS_IS_METHODS()
 
     /**
@@ -153,6 +158,9 @@ public:
      * @note Don't do anything too time-consuming...
      */
     virtual void refresh() = 0;
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 }  // namespace audio
