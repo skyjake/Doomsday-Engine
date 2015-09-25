@@ -91,16 +91,21 @@ public:
     de::String description() const;
 
     /**
+     * Stop all channels and music, delete the entire sample cache.
+     * @todo observe ClientApp?
+     */
+    void reset();
+
+    /**
      * Perform playback deintialization for Sound Effects and Music.
      * @todo observe ClientApp?
      */
     void deinitPlayback();
 
     /**
-     * Stop all channels and music, delete the entire sample cache.
-     * @todo observe ClientApp?
+     * Provides access to the sound channels.
      */
-    void reset();
+    Channels /*const*/ &channels() const;
 
 public:  // Music playback: ----------------------------------------------------------
 
@@ -122,7 +127,7 @@ public:  // Music playback: ----------------------------------------------------
     /**
      * Convenient method returning the current music playback volume.
      */
-    int musicVolume() const;
+    de::dint musicVolume() const;
 
     /**
      * Determines if a @em music playback interface is available.
@@ -158,20 +163,26 @@ public:  // Music playback: ----------------------------------------------------
      *
      * @return  Non-zero if a song is successfully played.
      */
-    int playMusic(de::Record const &definition, bool looped = false);
+    de::dint playMusic(de::Record const &definition, bool looped = false);
 
-    int playMusicLump(lumpnum_t lumpNum, bool looped = false);
-    int playMusicFile(de::String const &filePath, bool looped = false);
-    int playMusicCDTrack(int cdTrack, bool looped = false);
+    de::dint playMusicLump(lumpnum_t lumpNum, bool looped = false);
+    de::dint playMusicFile(de::String const &filePath, bool looped = false);
+    de::dint playMusicCDTrack(de::dint cdTrack, bool looped = false);
 
     void updateMusicMidiFont();
 
 public:  // Sound effect playback: ---------------------------------------------------
 
     /**
+     * Returns @c true if one or more playback interfaces are available for audible
+     * @em sound playback exists on the local system.
+     */
+    bool soundPlaybackAvailable() const;
+
+    /**
      * Convenient method returning the current sound effect playback volume.
      */
-    int soundVolume() const;
+    de::dint soundVolume() const;
 
 #endif  // __CLIENT__
 
@@ -181,63 +192,23 @@ public:  // Sound effect playback: ---------------------------------------------
      */
     de::Ranged soundVolumeAttenuationRange() const;
 
-#ifdef __CLIENT__
-
-    /**
-     * Determines if a @em sfx playback interface is available.
-     */
-    bool sfxIsAvailable() const;
-
-    struct mobj_s *sfxListener();
-
-    /**
-     * Convenient method determining the distance from the given map space @a point to
-     * the active listener, in map space units; returns @c 0 if no listener is active.
-     */
-    coord_t distanceToListener(de::Vector3d const &point) const;
-
-#endif  // __CLIENT__
-
     /**
      * Returns true if the sound is currently playing somewhere in the world. It does
      * not matter if it is audible (or not).
      *
      * @param soundId  @c 0= true if sounds are playing using the specified @a emitter.
      */
-    bool soundIsPlaying(int soundId, struct mobj_s *emitter) const;
+    bool soundIsPlaying(de::dint soundId, struct mobj_s *emitter) const;
 
 #ifdef __CLIENT__
 
-    /**
-     * Stop all sounds of the given sound @a group. If an emitter is specified, only
-     * it's sounds are checked.
-     */
-    void stopSoundGroup(int group, struct mobj_s *emitter);
+    struct mobj_s *listener();
 
     /**
-     * Stops all channels that are playing the specified sound.
-     *
-     * @param soundId      @c 0 = all sounds are stopped.
-     * @param emitter      If not @c nullptr, then the channel's emitter mobj must match.
-     * @param defPriority  If >= 0, the currently playing sound must have a lower priority
-     *                     than this to be stopped. Returns -1 if the sound @a id has
-     *                     a lower priority than a currently playing sound.
-     *
-     * @return  The number of samples stopped.
+     * Convenient method determining the distance from the given map space @a point to
+     * the active listener, in map space units; returns @c 0 if no listener is active.
      */
-    int stopSoundWithLowerPriority(int soundId, struct mobj_s *emitter, int defPriority);
-
-#endif  // __CLIENT__
-
-    /**
-     * @param soundId  @c 0: stops all sounds originating from the given @a emitter.
-     * @param emitter  @c nullptr: stops all sounds with the given @a soundId. Otherwise
-     *                 both @a soundId and @a emitter must match.
-     * @param flags    @ref soundStopFlags.
-     */
-    void stopSound(int soundId, struct mobj_s *emitter, int flags = 0);
-
-#ifdef __CLIENT__
+    coord_t distanceToListener(de::Vector3d const &point) const;
 
     /**
      * Start playing a sound.
@@ -252,14 +223,8 @@ public:  // Sound effect playback: ---------------------------------------------
      *
      * @return  @c true if a sound was started.
      */
-    bool playSound(int soundIdAndFlags, struct mobj_s *emitter, coord_t const *origin,
-        float volume = 1 /*max volume*/);
-
-    /**
-     * The priority of a sound is affected by distance, volume and age.
-     */
-    float rateSoundPriority(struct mobj_s *emitter, coord_t const *origin, float volume,
-        int startTic);
+    bool playSound(de::dint soundIdAndFlags, struct mobj_s *emitter, coord_t const *origin,
+        de::dfloat volume = 1 /*max volume*/);
 
 public:  // Low-level driver interfaces: ---------------------------------------------
 
@@ -298,8 +263,8 @@ public:  // Low-level driver interfaces: ---------------------------------------
 
         DENG2_AS_IS_METHODS()
 
-        /// Returns a reference to the application's audio system.
-        static System &audioSystem();
+        /// Returns a reference to the application's singleton audio System instance.
+        static inline System &audioSystem() { return System::get(); }
 
         /**
          * Initialize the audio driver if necessary, ready for use.
@@ -394,8 +359,7 @@ public:  // Low-level driver interfaces: ---------------------------------------
         virtual de::dint playerCount() const = 0;
 
         /**
-         * Lookup the player interface associated with the given (driver-unique)
-         * @a name.
+         * Lookup the player interface associated with the given (driver-unique) @a name.
          */
         virtual IPlayer const &findPlayer(de::String name) const = 0;
 
@@ -439,48 +403,51 @@ public:  // Low-level driver interfaces: ---------------------------------------
 #endif  // __CLIENT__
 
 public:  /// @todo make private:
+    void aboutToUnloadMap();
     void startFrame();
 #ifdef __CLIENT__
     void endFrame();
-#endif
 
-    void aboutToUnloadMap();
-#ifdef __CLIENT__
     void worldMapChanged();
 
     /**
-     * Perform playback intialization for Sound Effects and Music.
+     * Perform playback intialization for Sound (effects) and Music.
      * @todo observe App?
      */
     void initPlayback();
 
+    /// @todo refactor away.
+    void requestListenerUpdate();
+
     /**
-     * Provides immutable access to the sample cache (waveforms).
+     * Provides access to the sample (waveform) cache.
      */
     SampleCache const &sampleCache() const;
 
     /**
-     * Provides access to the sound channels (for debug purposes).
-     */
-    Channels const &channels() const;
-
-    /// @todo refactor away.
-    void sfxRequestListenerUpdate();
-
-    bool sfxAnyRateAccepted() const;
-
-    /**
-     * Enabling refresh is simple: the refresh thread(s) is resumed. When disabling
-     * refresh, first make sure a new refresh doesn't begin (using allowRefresh).
-     * We still have to see if a refresh is being made and wait for it to stop.
-     * Then we can suspend the refresh thread.
+     * Enabling refresh is simple: the refresh thread(s) is resumed. When disabling refresh,
+     * first make sure a new refresh doesn't begin (using allowRefresh). We still have to
+     * see if a refresh is being made and wait for it to stop. Then we can suspend the 
+     * refresh thread.
      */
     void sfxAllowRefresh(bool allow = true);
 
+    bool sfxAnyRateAccepted() const;
 #endif  // __CLIENT__
 
-    /// @todo Should not be exposed to users of this class. -ds
     void startLogical(de::dint soundIdAndFlags, struct mobj_s *emitter);
+
+    /**
+     * The sound is removed from the list of playing sounds. To be called whenever a/the
+     * associated sound is stopped, regardless of whether it was actually playing on the
+     * local system.
+     *
+     * @note Use @a soundId == 0 and @a emitter == nullptr to stop @em everything.
+     *
+     * @return  Number of sounds stopped.
+     */
+    de::dint stopLogical(de::dint soundId, struct mobj_s *emitter);
+
     void clearLogical();
 
 public:

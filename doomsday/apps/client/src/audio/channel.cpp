@@ -76,8 +76,6 @@ dint Channels::count() const
 
 dint Channels::countPlaying(dint soundId) const
 {
-    DENG2_ASSERT( System::get().sfxIsAvailable() );  // sanity check
-
     dint count = 0;
     forAll([&soundId, &count] (Sound/*Channel*/ &ch)
     {
@@ -96,6 +94,7 @@ dint Channels::countPlaying(dint soundId) const
 
 Sound/*Channel*/ &Channels::add(Sound &sound)
 {
+    LOG_AS("audio::Channels");
     if(!d->all.contains(&sound))
     {
         /// @todo Log sound configuration, update lookup tables for buffer configs, etc...
@@ -106,14 +105,78 @@ Sound/*Channel*/ &Channels::add(Sound &sound)
     return sound;
 }
 
-Sound/*Channel*/ *Channels::tryFindVacant(bool use3D, dint bytes, dint rate, dint soundId) const
+dint Channels::stopGroup(dint group, mobj_t *emitter)
 {
+    LOG_AS("audio::Channels");
+    dint stopCount = 0;
+    for(Sound/*Channel*/ *ch : d->all)
+    {
+        if(!ch->isPlaying()) continue;
+
+        if(   ch->buffer().sample->group == group
+           && (!emitter || ch->emitter() == emitter))
+        {
+            // This channel must be stopped!
+            ch->stop();
+            stopCount += 1;
+        }
+    }
+
+    return stopCount;
+}
+
+dint Channels::stopWithLowerPriority(dint id, mobj_t *emitter, dint defPriority)
+{
+    LOG_AS("audio::Channels");
+    dint stopCount = 0;
+    for(Sound/*Channel*/ *ch : d->all)
+    {
+        if(!ch->isPlaying()) continue;
+            
+        sfxbuffer_t const &sbuf = ch->buffer();
+        if(   (id && sbuf.sample->soundId != id)
+           || (emitter && ch->emitter() != emitter))
+        {
+            continue;
+        }
+
+        // Can it be stopped?
+        if(sbuf.flags & SFXBF_DONT_STOP)
+        {
+            // The emitter might get destroyed...
+            ch->setEmitter(nullptr);
+            ch->setFlags(ch->flags() | (SFXCF_NO_UPDATE | SFXCF_NO_ORIGIN));
+            continue;
+        }
+
+        // Check the priority.
+        if(defPriority >= 0)
+        {
+            dint oldPrio = ::defs.sounds[sbuf.sample->soundId].geti("priority");
+            if(oldPrio < defPriority)  // Old is more important.
+            {
+                stopCount = -1;
+                break;
+            }
+        }
+
+        // This channel must be stopped!
+        ch->stop();
+        stopCount += 1;
+    }
+
+    return stopCount;
+}
+
+Sound/*Channel*/ *Channels::tryFindVacant(bool stereoPositioning, dint bytes, dint rate, dint soundId) const
+{
+    LOG_AS("audio::Channels");
     for(Sound/*Channel*/ *ch : d->all)
     {
         if(!ch->isPlaying()) continue;
 
         sfxbuffer_t const &sbuf = ch->buffer();
-        if(   use3D != ((sbuf.flags & SFXBF_3D) != 0)
+        if(   stereoPositioning != ((sbuf.flags & SFXBF_3D) == 0)
            || sbuf.bytes != bytes
            || sbuf.rate  != rate)
             continue;
@@ -176,7 +239,7 @@ void UI_AudioChannelDrawer()
     FR_SetColorAndAlpha(1, 1, 0, 1);
 
     dint const lh = FR_SingleLineHeight("Q");
-    if(!audio::System::get().sfxIsAvailable())
+    if(!audio::System::get().soundPlaybackAvailable())
     {
         FR_DrawTextXY("Sfx disabled", 0, 0);
         glDisable(GL_TEXTURE_2D);

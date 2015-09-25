@@ -530,7 +530,8 @@ void SampleCache::maybeRunPurge()
     // If no interface for SFX playback is available then we have nothing to do.
     // The assumption being that a manual clear is performed if/when SFX playback
     // availability changes.
-    if(!App_AudioSystem().sfxIsAvailable()) return;
+    if(!App_AudioSystem().soundPlaybackAvailable())
+        return;
 #endif
 
     // Is it time for a purge?
@@ -625,7 +626,8 @@ Sample *SampleCache::cache(dint soundId)
     // If no interface for SFX playback is available there is no benefit to caching
     // sound samples that won't be heard.
     /// @todo audio::System should handle this by restricting access. -ds
-    if(!App_AudioSystem().sfxIsAvailable()) return nullptr;
+    if(!App_AudioSystem().soundPlaybackAvailable())
+        return nullptr;
 #endif
 
     // Ignore invalid sound IDs.

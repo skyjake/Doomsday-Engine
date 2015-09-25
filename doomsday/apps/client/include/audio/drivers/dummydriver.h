@@ -136,8 +136,8 @@ public:  // Sound players: -----------------------------------------------------
         void setFlags(int newFlags);
         struct mobj_s *emitter() const;
         void setEmitter(struct mobj_s *newEmitter);
-        void setFixedOrigin(de::Vector3d const &newOrigin);
-        de::dfloat priority() const;
+        void setOrigin(de::Vector3d const &newOrigin);
+        de::Vector3d origin() const;
         audio::Sound &setFrequency(de::dfloat newFrequency);
         audio::Sound &setVolume(de::dfloat newVolume);
         bool isPlaying() const;

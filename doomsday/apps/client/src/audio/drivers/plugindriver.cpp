@@ -540,7 +540,7 @@ DENG2_PIMPL_NOREF(PluginDriver::Sound)
         {
             // Volume is affected only by maxvol.
             setVolume(*buffer, volume * System::get().soundVolume() / 255.0f);
-            if(emitter && emitter == System::get().sfxListener())
+            if(emitter && emitter == System::get().listener())
             {
                 // Emitted by the listener object. Go to relative position mode
                 // and set the position to (0,0,0).
@@ -555,7 +555,7 @@ DENG2_PIMPL_NOREF(PluginDriver::Sound)
             }
 
             // If the sound is emitted by the listener, speed is zero.
-            if(emitter && emitter != System::get().sfxListener() &&
+            if(emitter && emitter != System::get().listener() &&
                Thinker_IsMobjFunc(emitter->thinker.function))
             {
                 setVelocity(*buffer, Vector3d(emitter->mom)* TICSPERSEC);
@@ -573,7 +573,7 @@ DENG2_PIMPL_NOREF(PluginDriver::Sound)
 
             // This is a 2D buffer.
             if((flags & SFXCF_NO_ORIGIN) ||
-               (emitter && emitter == System::get().sfxListener()))
+               (emitter && emitter == System::get().listener()))
             {
                 dist = 1;
                 finalPan = 0;
@@ -605,7 +605,7 @@ DENG2_PIMPL_NOREF(PluginDriver::Sound)
                 }
 
                 // And pan, too. Calculate angle from listener to emitter.
-                if(mobj_t *listener = System::get().sfxListener())
+                if(mobj_t *listener = System::get().listener())
                 {
                     dfloat angle = (M_PointXYToAngle2(listener->origin[0], listener->origin[1],
                                                       origin.x, origin.y)
@@ -804,22 +804,14 @@ void PluginDriver::Sound::setEmitter(mobj_t *newEmitter)
     d->emitter = newEmitter;
 }
 
-void PluginDriver::Sound::setFixedOrigin(Vector3d const &newOrigin)
+void PluginDriver::Sound::setOrigin(Vector3d const &newOrigin)
 {
     d->origin = newOrigin;
 }
 
-dfloat PluginDriver::Sound::priority() const
+Vector3d PluginDriver::Sound::origin() const
 {
-    if(!isPlaying())
-        return SFX_LOWEST_PRIORITY;
-
-    if(d->flags & SFXCF_NO_ORIGIN)
-        return System::get().rateSoundPriority(0, 0, d->volume, d->startTime);
-
-    // d->origin is set to emitter->xyz during updates.
-    ddouble origin[3]; d->origin.decompose(origin);
-    return System::get().rateSoundPriority(0, origin, d->volume, d->startTime);
+    return d->origin;
 }
 
 void PluginDriver::Sound::load(sfxsample_t &sample)
@@ -1224,7 +1216,7 @@ LoopResult PluginDriver::forAllPlayers(std::function<LoopResult (IPlayer &)> cal
         }
         if(d->iSound.gen.Init != nullptr)
         {
-            if(auto result = callback(d->sound))   return result;
+            if(auto result = callback(d->sound)) return result;
         }
     }
     return LoopContinue;  // Continue iteration.

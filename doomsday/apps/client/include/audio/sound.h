@@ -22,7 +22,6 @@
 #define CLIENT_AUDIO_SOUND_H
 
 #include "api_audiod_sfx.h"  // sfxbuffer_t
-#include "audio/system.h"
 #include "world/p_object.h"  // mobj_t
 #include <de/Error>
 #include <de/Observers>
@@ -81,14 +80,8 @@ public:
     virtual struct mobj_s *emitter() const = 0;
     virtual void setEmitter(struct mobj_s *newEmitter) = 0;
 
-    virtual void setFixedOrigin(de::Vector3d const &newOrigin) = 0;
-
-    /**
-     * Calculate priority points for the currently playing. These points are used by
-     * the channel mapper to determine which sounds can be overridden by new sounds.
-     * Zero is the lowest priority.
-     */
-    virtual de::dfloat priority() const = 0;
+    virtual void setOrigin(de::Vector3d const &newOrigin) = 0;
+    virtual de::Vector3d origin() const = 0;
 
     /**
      * Change the playback frequency modifier to @a newFrequency (Hz).
@@ -157,6 +150,20 @@ public:
      * @note Don't do anything too time-consuming...
      */
     virtual void refresh() = 0;
+
+public:
+    /**
+     * The priority of a sound is affected by distance, volume and age. These points
+     * are used by the audio channel mapper to determine which currently playing Sound(s)
+     * can be overridden with new sounds. Zero is the lowest priority.
+     */
+    static de::dfloat ratePriority(struct mobj_s *listener, struct mobj_s *emitter,
+        coord_t const *origin, de::dfloat volume, de::dint startTic);
+
+    /**
+     * Calculate priority points for the sound. 
+     */
+    de::dfloat priority() const;
 
 private:
     DENG2_PRIVATE(d)

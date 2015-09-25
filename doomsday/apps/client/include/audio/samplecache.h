@@ -67,20 +67,20 @@ public:
         CacheItem();
 
         /**
-         * Returns @c true if a Sample data payload is assigned.
-         * @ref sample(), replaceSample()
+         * Returns @c true if Sample data payload is assigned.
+         * @see sample(), replaceSample()
          */
         bool hasSample() const;
 
         /**
          * Returns the associated Sample data payload.
-         * @ref hasSample(), replaceSample()
+         * @see hasSample(), replaceSample()
          */
         Sample &sample() const;
 
         /**
-         * Replace the cached sample data with a @a newSample.
-         * @ref hasSample(), sample()
+         * Replace the cached sample data with @a newSample.
+         * @see hasSample(), sample()
          */
         void replaceSample(Sample *newSample);
 

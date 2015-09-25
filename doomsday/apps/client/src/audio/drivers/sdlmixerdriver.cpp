@@ -541,7 +541,7 @@ DENG2_PIMPL_NOREF(SdlMixerDriver::Sound)
         {
             // Volume is affected only by maxvol.
             setVolume(*buffer, volume * System::get().soundVolume() / 255.0f);
-            if(emitter && emitter == System::get().sfxListener())
+            if(emitter && emitter == System::get().listener())
             {
                 // Emitted by the listener object. Go to relative position mode
                 // and set the position to (0,0,0).
@@ -556,7 +556,7 @@ DENG2_PIMPL_NOREF(SdlMixerDriver::Sound)
             }
 
             // If the sound is emitted by the listener, speed is zero.
-            if(emitter && emitter != System::get().sfxListener() &&
+            if(emitter && emitter != System::get().listener() &&
                Thinker_IsMobjFunc(emitter->thinker.function))
             {
                 setVelocity(*buffer, Vector3d(emitter->mom)* TICSPERSEC);
@@ -574,7 +574,7 @@ DENG2_PIMPL_NOREF(SdlMixerDriver::Sound)
 
             // This is a 2D buffer.
             if((flags & SFXCF_NO_ORIGIN) ||
-               (emitter && emitter == System::get().sfxListener()))
+               (emitter && emitter == System::get().listener()))
             {
                 dist = 1;
                 finalPan = 0;
@@ -606,7 +606,7 @@ DENG2_PIMPL_NOREF(SdlMixerDriver::Sound)
                 }
 
                 // And pan, too. Calculate angle from listener to emitter.
-                if(mobj_t *listener = System::get().sfxListener())
+                if(mobj_t *listener = System::get().listener())
                 {
                     dfloat angle = (M_PointXYToAngle2(listener->origin[0], listener->origin[1],
                                                       origin.x, origin.y)
@@ -875,22 +875,14 @@ void SdlMixerDriver::Sound::setEmitter(mobj_t *newEmitter)
     d->emitter = newEmitter;
 }
 
-void SdlMixerDriver::Sound::setFixedOrigin(Vector3d const &newOrigin)
+void SdlMixerDriver::Sound::setOrigin(Vector3d const &newOrigin)
 {
     d->origin = newOrigin;
 }
 
-dfloat SdlMixerDriver::Sound::priority() const
+Vector3d SdlMixerDriver::Sound::origin() const
 {
-    if(!isPlaying())
-        return SFX_LOWEST_PRIORITY;
-
-    if(d->flags & SFXCF_NO_ORIGIN)
-        return System::get().rateSoundPriority(0, 0, d->volume, d->startTime);
-
-    // d->origin is set to emitter->xyz during updates.
-    ddouble origin[3]; d->origin.decompose(origin);
-    return System::get().rateSoundPriority(0, origin, d->volume, d->startTime);
+    return d->origin;
 }
 
 void SdlMixerDriver::Sound::load(sfxsample_t &sample)

@@ -19,6 +19,11 @@
 
 #include "audio/sound.h"
 
+#include "audio/system.h"
+#include <de/timer.h>
+
+using namespace de;
+
 namespace audio {
 
 DENG2_PIMPL_NOREF(Sound)
@@ -38,6 +43,41 @@ Sound::~Sound()
     {
         i->soundBeingDeleted(*this);
     }
+}
+
+dfloat Sound::ratePriority(mobj_t *listener, mobj_t *emitter, coord_t const *origin,
+    dfloat volume, dint startTic)  // static
+{
+    // Deminish the priority rating over five seconds from the start time until zero.
+    dfloat const timeoff   = 1000 * (Timer_Ticks() - startTic) / (5.0f * TICSPERSEC);
+
+    // Is this sound without an origin?
+    if(!listener || (!emitter && !origin))
+    {
+        return 1000 * volume - timeoff;
+    }
+
+    // The sound has an origin so rate according to distance.
+
+    if(emitter)
+    {
+        origin = emitter->origin;
+    }
+
+    return 1000 * volume - Mobj_ApproxPointDistance(*listener, origin) / 2 - timeoff;
+}
+
+dfloat Sound::priority() const
+{
+    if(!isPlaying())
+        return SFX_LOWEST_PRIORITY;
+
+    if(flags() & SFXCF_NO_ORIGIN)
+        return ratePriority(audio::System::get().listener(), 0, 0, volume(), startTime());
+
+    /// @note The origin is updated to match our emitter during updates.
+    ddouble pos[3]; origin().decompose(pos);
+    return ratePriority(audio::System::get().listener(), 0, pos, volume(), startTime());
 }
 
 }  // namespace audio
