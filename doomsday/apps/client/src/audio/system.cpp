@@ -1181,20 +1181,20 @@ DENG2_PIMPL(System)
 
         // First look through the stopped channels. At this stage we're very picky:
         // only the perfect choice will be good enough.
-        Sound/*Channel*/ *selCh = channels->tryFindVacant(play3D, sample.bytesPer,
+        Sound/*Channel*/ *selCh = channels->tryFindVacant(!play3D, sample.bytesPer,
                                                           sample.rate, sample.soundId);
 
         if(!selCh)
         {
             // Perhaps there is a vacant channel (with any sample, but preferably one
             // with no sample already loaded).
-            selCh = channels->tryFindVacant(play3D, sample.bytesPer, sample.rate, 0);
+            selCh = channels->tryFindVacant(!play3D, sample.bytesPer, sample.rate, 0);
         }
 
         if(!selCh)
         {
             // Try any non-playing channel in the correct format.
-            selCh = channels->tryFindVacant(play3D, sample.bytesPer, sample.rate, -1);
+            selCh = channels->tryFindVacant(!play3D, sample.bytesPer, sample.rate, -1);
         }
 
         if(!selCh)

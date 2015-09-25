@@ -72,7 +72,7 @@ public:
      * Attempt to find a channel suitable for playing a sound with the given format.
      *
      * @param stereoPositioning  @c true= suitable for stereo sound positioning; otherwise
-     * suitable for sound 3D positioning.
+     * suitable for 3D sound positioning.
      *
      * @param bytesPer
      * @param rate
