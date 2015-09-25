@@ -142,7 +142,7 @@ static Vector3d mobjOriginSmoothed(mobj_t *mob)
 static void findMobjZOrigin(mobj_t &mob, bool floorAdjust, vissprite_t &vis)
 {
     validCount++;
-    Mobj_Map(mob).forAllSectorsTouchingMobj(mob, [&mob, &floorAdjust, &vis] (Sector &sector)
+    Mob_Map(mob).forAllSectorsTouchingMobj(mob, [&mob, &floorAdjust, &vis] (Sector &sector)
     {
         if(floorAdjust && mob.origin[2] == sector.floor().height())
         {

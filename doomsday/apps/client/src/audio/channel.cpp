@@ -20,6 +20,7 @@
 #include "audio/channel.h"
 
 #include "audio/system.h"
+#include <de/timer.h>
 #include <QList>
 
 // Debug visual headers:
@@ -74,21 +75,26 @@ dint Channels::count() const
     return d->all.count();
 }
 
-dint Channels::countPlaying(dint soundId) const
+dint Channels::countPlaying(dint soundId, mobj_t *emitter) const
 {
     dint count = 0;
-    forAll([&soundId, &count] (Sound/*Channel*/ &ch)
+    for(Sound/*Channel*/ *ch : d->all)
     {
-        if(ch.isPlaying())
+        if(!ch->isPlaying()) continue;
+        if(emitter && ch->emitter() != emitter) continue;
+        if(soundId && ch->buffer().sample->soundId != soundId) continue;
+
+        // Once playing, repeating sounds don't stop.
+        /*if(!(ch->buffer().flags & SFXBF_REPEAT))
         {
-            sfxbuffer_t const &sbuf = ch.buffer();
-            if(sbuf.sample && sbuf.sample->soundId == soundId)
-            {
-                count += 1;
-            }
-        }
-        return LoopContinue;
-    });
+            // Check time. The flag is updated after a slight delay (only at refresh).
+            dint const ticsToDelay = ch->buffer().sample->numSamples / dfloat( ch->buffer().freq ) * TICSPERSEC;
+            if(Timer_Ticks() - ch->startTime() < ticsToDelay)
+                continue;
+        }*/
+ 
+        count += 1;
+    }
     return count;
 }
 
@@ -125,7 +131,30 @@ dint Channels::stopGroup(dint group, mobj_t *emitter)
     return stopCount;
 }
 
-dint Channels::stopWithLowerPriority(dint id, mobj_t *emitter, dint defPriority)
+dint Channels::stopWithEmitter(mobj_t *emitter, bool clearSoundEmitter)
+{
+    LOG_AS("audio::Channels");
+    dint stopCount = 0;
+    for(Sound/*Channel*/ *ch : d->all)
+    {
+        if(!ch->emitter()) continue;
+
+        if(!emitter || ch->emitter() == emitter)
+        {
+            // This channel must be stopped!.
+            ch->stop();
+            stopCount += 1;
+
+            if(clearSoundEmitter)
+            {
+                ch->setEmitter(nullptr);
+            }
+        }
+    }
+    return stopCount;
+}
+
+dint Channels::stopWithLowerPriority(dint soundId, mobj_t *emitter, dint defPriority)
 {
     LOG_AS("audio::Channels");
     dint stopCount = 0;
@@ -133,15 +162,14 @@ dint Channels::stopWithLowerPriority(dint id, mobj_t *emitter, dint defPriority)
     {
         if(!ch->isPlaying()) continue;
             
-        sfxbuffer_t const &sbuf = ch->buffer();
-        if(   (id && sbuf.sample->soundId != id)
+        if(   (soundId && ch->buffer().sample->soundId != soundId)
            || (emitter && ch->emitter() != emitter))
         {
             continue;
         }
 
         // Can it be stopped?
-        if(sbuf.flags & SFXBF_DONT_STOP)
+        if(ch->buffer().flags & SFXBF_DONT_STOP)
         {
             // The emitter might get destroyed...
             ch->setEmitter(nullptr);
@@ -152,7 +180,7 @@ dint Channels::stopWithLowerPriority(dint id, mobj_t *emitter, dint defPriority)
         // Check the priority.
         if(defPriority >= 0)
         {
-            dint oldPrio = ::defs.sounds[sbuf.sample->soundId].geti("priority");
+            dint oldPrio = ::defs.sounds[ch->buffer().sample->soundId].geti("priority");
             if(oldPrio < defPriority)  // Old is more important.
             {
                 stopCount = -1;

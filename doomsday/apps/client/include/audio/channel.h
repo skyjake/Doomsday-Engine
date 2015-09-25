@@ -49,15 +49,17 @@ public:
 
     /**
      * Returns the total number of channels currently playing a/the sound associated with
-     * the given @a soundId.
+     * the given @a soundId and/or @a emitter.
      */
-    de::dint countPlaying(de::dint soundId) const;
+    de::dint countPlaying(de::dint soundId, struct mobj_s *emitter = nullptr) const;
 
     /**
      * Returns @a true if one or more channels are currently playing a/the sound associated
      * with the given @a soundId.
      */
-    inline bool isPlaying(de::dint soundId) const { return countPlaying(soundId) > 0; }
+    inline bool isPlaying(de::dint soundId, struct mobj_s *emitter = nullptr) const {
+        return countPlaying(soundId, emitter) > 0;
+    }
 
     /**
      * Add a new channel and configure with the given @a sound.
@@ -92,7 +94,20 @@ public:
      *
      * @return  Number of channels stopped.
      */
-    de::dint stopGroup(de::dint group, struct mobj_s *emitter);
+    de::dint stopGroup(de::dint group, struct mobj_s *emitter = nullptr);
+
+    /**
+     * Stop all channels currently playing a sound using the specified @a emitter.
+     *
+     * @param emitter            If not @c nullptr the sound's emitter must match; otherwise
+     * stop @em all sounds using @em any emitter.
+     *
+     * @param clearSoundEmitter  If @c true, clear the sound -> emitter association for
+     * any matching Sounds that are stopped.
+     *
+     * @return  Number of channels stopped.
+     */
+    de::dint stopWithEmitter(struct mobj_s *emitter = nullptr, bool clearEmitter = true);
 
     /**
      * Stop all channels currently playing a/the sound with a lower priority rating.

@@ -91,21 +91,32 @@ public:
     de::String description() const;
 
     /**
-     * Stop all channels and music, delete the entire sample cache.
-     * @todo observe ClientApp?
-     */
-    void reset();
-
-    /**
-     * Perform playback deintialization for Sound Effects and Music.
-     * @todo observe ClientApp?
-     */
-    void deinitPlayback();
-
-    /**
-     * Provides access to the sound channels.
+     * Provides access to the sound Channels.
      */
     Channels /*const*/ &channels() const;
+
+    /**
+     * Returns the world map object used as the current sound listener, if any (may return
+     * @c nullptr if none is configured).
+     */
+    struct mobj_s *listener();
+
+    /**
+     * Convenient method determining the distance from the given world map space @a point
+     * to the active listener, in map space units; otherwise returns @c 0 if no current
+     * listener exists.
+     */
+    coord_t distanceToListener(de::Vector3d const &point) const;
+
+    /**
+     * Provides access to the sample (waveform) cache.
+     */
+    SampleCache &sampleCache() const;
+
+    /**
+     * Determines the necessary upsample factor for the given sample @a rate.
+     */
+    de::dint upsampleFactor(de::dint rate) const;
 
 public:  // Music playback: ----------------------------------------------------------
 
@@ -125,24 +136,26 @@ public:  // Music playback: ----------------------------------------------------
     static de::String musicSourceAsText(MusicSource source);
 
     /**
+     * Returns @c true if one or more interface for audible @em music playback is
+     * available on the local system.
+     */
+    bool musicPlaybackAvailable() const;
+
+    /**
      * Convenient method returning the current music playback volume.
      */
     de::dint musicVolume() const;
 
     /**
-     * Determines if a @em music playback interface is available.
-     */
-    bool musicIsAvailable() const;
-
-    /**
-     * Determines if @em music is currently playing (on any music interface).
+     * Returns true if @em music is currently playing (on any music interface). It does
+     * not matter if it is audible (or not).
      */
     bool musicIsPlaying() const;
 
     /**
-     * Stop all currently playing @em music, if any (affects all music interfaces).
+     * Returns @c true if the currently playing @em music is paused.
      */
-    void stopMusic();
+    bool musicIsPaused() const;
 
     /**
      * Pauses or resumes the @em music.
@@ -150,9 +163,9 @@ public:  // Music playback: ----------------------------------------------------
     void pauseMusic(bool doPause = true);
 
     /**
-     * Returns @c true if the currently playing @em music is paused.
+     * Stop all currently playing @em music, if any (affects all music interfaces).
      */
-    bool musicIsPaused() const;
+    void stopMusic();
 
     /**
      * Start playing a song. The chosen interface depends on what's available and what
@@ -169,13 +182,11 @@ public:  // Music playback: ----------------------------------------------------
     de::dint playMusicFile(de::String const &filePath, bool looped = false);
     de::dint playMusicCDTrack(de::dint cdTrack, bool looped = false);
 
-    void updateMusicMidiFont();
-
-public:  // Sound effect playback: ---------------------------------------------------
+public:  // Sound playback: -------------------------------------------------------------
 
     /**
-     * Returns @c true if one or more playback interfaces are available for audible
-     * @em sound playback exists on the local system.
+     * Returns @c true if one or more interface for audible @em sound playback is available
+     * on the local system.
      */
     bool soundPlaybackAvailable() const;
 
@@ -187,28 +198,21 @@ public:  // Sound effect playback: ---------------------------------------------
 #endif  // __CLIENT__
 
     /**
-     * Convenient method returning the current sound effect volume attenuation range,
-     * in map space units.
+     * Convenient method returning the current sound effect volume attenuation range, in
+     * map space units.
      */
     de::Ranged soundVolumeAttenuationRange() const;
 
-    /**
-     * Returns true if the sound is currently playing somewhere in the world. It does
-     * not matter if it is audible (or not).
-     *
-     * @param soundId  @c 0= true if sounds are playing using the specified @a emitter.
-     */
-    bool soundIsPlaying(de::dint soundId, struct mobj_s *emitter) const;
-
 #ifdef __CLIENT__
 
-    struct mobj_s *listener();
-
     /**
-     * Convenient method determining the distance from the given map space @a point to
-     * the active listener, in map space units; returns @c 0 if no listener is active.
+     * Returns true if the sound is currently playing somewhere in the world. It does not
+     * matter if it is audible (or not).
+     *
+     * @param soundId  @c 0= true if sounds are playing using the specified @a emitter.
+     * @param emitter  Mobj where the sound originates. May be @c nullptr.
      */
-    coord_t distanceToListener(de::Vector3d const &point) const;
+    bool soundIsPlaying(de::dint soundId, struct mobj_s *emitter) const;
 
     /**
      * Start playing a sound.
@@ -226,7 +230,7 @@ public:  // Sound effect playback: ---------------------------------------------
     bool playSound(de::dint soundIdAndFlags, struct mobj_s *emitter, coord_t const *origin,
         de::dfloat volume = 1 /*max volume*/);
 
-public:  // Low-level driver interfaces: ---------------------------------------------
+public:  // Low-level driver interfaces: ------------------------------------------------
 
     /// Required/referenced audio driver is missing. @ingroup errors
     DENG2_ERROR(MissingDriverError);
@@ -296,14 +300,14 @@ public:  // Low-level driver interfaces: ---------------------------------------
         de::String description() const;
 
         /**
-         * Returns the textual, symbolic identifier of the audio driver (lower case),
-         * for use in Config.
+         * Returns the textual, symbolic identifier of the audio driver (lower case), for
+         * use in Config.
          *
          * @note An audio driver may have multiple identifiers, in which case they will
          * be returned here and delimited with ';' characters.
          *
-         * @todo Once the audio driver/interface configuration is stored persistently
-         * in Config we should remove the alternative identifiers at this time. -ds
+         * @todo Once the audio driver/interface configuration is stored persistently in
+         * Config we should remove the alternative identifiers at this time. -ds
          */
         virtual de::String identityKey() const = 0;
 
@@ -312,7 +316,7 @@ public:  // Low-level driver interfaces: ---------------------------------------
          */
         virtual de::String title() const = 0;
 
-    public:  // Playback Interfaces: -------------------------------------------------
+    public:  // Playback Interfaces: ----------------------------------------------------
 
         class IPlayer
         {
@@ -400,42 +404,50 @@ public:  // Low-level driver interfaces: ---------------------------------------
      */
     de::LoopResult forAllDrivers(std::function<de::LoopResult (IDriver const &)> callback) const;
 
-#endif  // __CLIENT__
-
 public:  /// @todo make private:
-    void aboutToUnloadMap();
     void startFrame();
-#ifdef __CLIENT__
     void endFrame();
 
-    void worldMapChanged();
-
     /**
-     * Perform playback intialization for Sound (effects) and Music.
+     * Perform playback intialization (both sound effects and music).
      * @todo observe App?
      */
     void initPlayback();
 
+    /**
+     * Perform playback deintialization (both sound effects and music).
+     * @todo observe App?
+     */
+    void deinitPlayback();
+
+    /**
+     * Stop channels (all playing sounds and music), clear the Sample data cache.
+     * @todo observe ClientApp?
+     */
+    void reset();
+
     /// @todo refactor away.
     void requestListenerUpdate();
 
-    /**
-     * Provides access to the sample (waveform) cache.
-     */
-    SampleCache const &sampleCache() const;
+    /// @todo refactor away.
+    void updateMusicMidiFont();
 
     /**
-     * Enabling refresh is simple: the refresh thread(s) is resumed. When disabling refresh,
-     * first make sure a new refresh doesn't begin (using allowRefresh). We still have to
-     * see if a refresh is being made and wait for it to stop. Then we can suspend the 
-     * refresh thread.
+     * Enabling sound refresh is simple: the refresh thread(s) is resumed. When disabling
+     * refresh, first make sure a new refresh doesn't begin (using allowRefresh). We still
+     * have to see if a refresh is being made and wait for it to stop. Then we can suspend
+     * the  refresh thread.
      */
-    void sfxAllowRefresh(bool allow = true);
+    void allowSoundRefresh(bool allow = true);
 
-    bool sfxAnyRateAccepted() const;
+    void worldMapChanged();
 #endif  // __CLIENT__
 
-    void startLogical(de::dint soundIdAndFlags, struct mobj_s *emitter);
+    /**
+     * Determines whether a logical sound is currently playing, irrespective of whether it
+     * is audible or not.
+     */
+    bool logicalIsPlaying(de::dint soundId, struct mobj_s *emitter) const;
 
     /**
      * The sound is removed from the list of playing sounds. To be called whenever a/the
@@ -448,7 +460,9 @@ public:  /// @todo make private:
      */
     de::dint stopLogical(de::dint soundId, struct mobj_s *emitter);
 
-    void clearLogical();
+    void startLogical(de::dint soundIdAndFlags, struct mobj_s *emitter);
+
+    void clearAllLogical();
 
 public:
     /**

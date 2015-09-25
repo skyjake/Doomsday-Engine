@@ -48,6 +48,9 @@
 #  include "client/cl_frame.h"
 #  include "client/cl_player.h"
 
+#  include "audio/channel.h"
+#  include "audio/sound.h"
+
 #  include "gl/gl_main.h"
 #endif
 
@@ -417,10 +420,8 @@ DENG2_PIMPL(WorldSystem)
      *
      * @return  The loaded map if successful. Ownership given to the caller.
      */
-    Map *loadMap(res::MapManifest &mapManifest, MapConversionReporter *reporter = nullptr)
+    Map *loadMap(res::MapManifest const &mapManifest, MapConversionReporter *reporter = nullptr)
     {
-        LOG_AS("WorldSystem::loadMap");
-
         /*if(mapManifest.lastLoadAttemptFailed && !forceRetry)
             return nullptr;
 
@@ -676,68 +677,6 @@ DENG2_PIMPL(WorldSystem)
         self.notifyMapChange();
     }
 
-    /// @todo Split this into subtasks (load, make current, cache assets).
-    bool changeMap(res::MapManifest *mapManifest = nullptr)
-    {
-#ifdef __CLIENT__
-        if(map)
-        {
-            // Remove the current map from our audiences.
-            /// @todo Map should handle this.
-            self.audienceForFrameBegin() -= map;
-        }
-#endif
-
-        // As the memory zone does not provide the mechanisms to prepare another
-        // map in parallel we must free the current map first.
-        /// @todo The memory zone would still be useful if the purge and tagging
-        /// mechanisms allowed more fine grained control. It is no longer useful
-        /// for allocating memory used elsewhere so it should be repurposed for
-        /// this usage specifically.
-#ifdef __CLIENT__
-        R_DestroyContactLists();
-#endif
-        delete map; map = nullptr;
-        Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
-
-        // Are we just unloading the current map?
-        if(!mapManifest) return true;
-
-        LOG_MSG("Loading map \"%s\"...") << mapManifest->composeUri().path();
-
-        // A new map is about to be set up.
-        ::ddMapSetup = true;
-
-        // Attempt to load in the new map.
-        MapConversionReporter reporter;
-        Map *newMap = loadMap(*mapManifest, &reporter);
-        if(newMap)
-        {
-            // The map may still be in an editable state -- switch to playable.
-            bool const mapIsPlayable = newMap->endEditing();
-
-            // Cancel further reports about the map.
-            reporter.setMap(nullptr);
-
-            if(!mapIsPlayable)
-            {
-                // Darn. Discard the useless data.
-                delete newMap; newMap = nullptr;
-            }
-        }
-
-        // This becomes the new current map.
-        makeCurrent(newMap);
-
-        // We've finished setting up the map.
-        ::ddMapSetup = false;
-
-        // Output a human-readable report of any issues encountered during conversion.
-        reporter.writeLog();
-
-        return map != nullptr;
-    }
-
 #ifdef __CLIENT__
     void updateHandOrigin()
     {
@@ -771,33 +710,100 @@ Map &WorldSystem::map() const
 {
     if(d->map) return *d->map;
     /// @throw MapError Attempted with no map loaded.
-    throw MapError("WorldSystem::map", "No map is currently loaded");
+    throw MapError("world::System::map", "No map is currently loaded");
 }
 
+/// @todo Split this into subtasks (load, make current, cache assets).
 bool WorldSystem::changeMap(de::Uri const &mapUri)
 {
-    res::MapManifest *mapDef = nullptr;
+    LOG_AS("world::System");
+    res::MapManifest const *mapManifest = resSys().tryFindMapManifest(mapUri);
 
-    if(!mapUri.path().isEmpty())
+#ifdef __SERVER__
+    // Whenever the map changes, remote players must tell us when they're
+    // ready to begin receiving frames.
+    for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        mapDef = resSys().tryFindMapManifest(mapUri);
-    }
-
-    // Switch to busy mode (if we haven't already) except when simply unloading.
-    if(!mapUri.path().isEmpty() && !DoomsdayApp::app().busyMode().isActive())
-    {
-        /// @todo Use progress bar mode and update progress during the setup.
-        return DoomsdayApp::app().busyMode().runNewTaskWithName(
-                    BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (::verbose ? BUSYF_CONSOLE_OUTPUT : 0),
-                    "Loading map...", [this, &mapDef] (void *)
+        if(DD_Player(i)->isConnected())
         {
-            return d->changeMap(mapDef);
-        });
+            LOG_DEBUG("Client %i marked as 'not ready' to receive frames.") << i;
+            DD_Player(i)->ready = false;
+        }
     }
-    else
+#endif
+
+    // Initialize the logical sound manager.
+    App_AudioSystem().clearAllLogical();
+
+#ifdef __CLIENT__
+    App_ResourceSystem().purgeCacheQueue();
+
+    if(d->map)
     {
-        return d->changeMap(mapDef);
+        /// Remove the current map from our audiences. @todo Map should handle this -ds
+        audienceForFrameBegin() -= d->map;
+
+        // Map objects are about to be destroyed.
+        /// - Stop all channels using one as emitter. @todo Should observe map object deletion -ds
+        ClientApp::audioSystem().channels().forAll([this] (::audio::Sound/*Channel*/ &ch)
+        {
+            if(ch.emitter() && &Mob_Map(*ch.emitter()) == d->map)
+            {
+                // This channel must be stopped!
+                ch.stop();
+            }
+            return LoopContinue;
+        });
+        /// - Forget the current listener mob. @todo Should observe map object deletion -ds
+        ClientApp::audioSystem().requestListenerUpdate();
     }
+
+    // As the memory zone does not provide the mechanisms to prepare another map in parallel
+    // we must free the current map first.
+    /// @todo The memory zone would still be useful if the purge and tagging mechanisms
+    /// allowed more fine grained control. It is no longer useful for allocating memory
+    /// used elsewhere so it should be repurposed for this usage specifically.
+    R_DestroyContactLists();
+#endif
+    delete d->map; d->map = nullptr;
+    Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
+
+    // Are we just unloading the current map?
+    if(!mapManifest) return true;
+
+    LOG_MSG("Loading map \"%s\"...") << mapManifest->composeUri().path();
+
+    // A new map is about to be set up.
+    ::ddMapSetup = true;
+
+    // Attempt to load in the new map.
+    MapConversionReporter reporter;
+    Map *newMap = d->loadMap(*mapManifest, &reporter);
+    if(newMap)
+    {
+        // The map may still be in an editable state -- switch to playable.
+        bool const mapIsPlayable = newMap->endEditing();
+
+        // Cancel further reports about the map.
+        reporter.setMap(nullptr);
+
+        if(!mapIsPlayable)
+        {
+            // Darn. Discard the useless data.
+            delete newMap; newMap = nullptr;
+        }
+    }
+
+    // This becomes the new current map.
+    d->makeCurrent(newMap);
+
+    // We've finished setting up the map.
+    ::ddMapSetup = false;
+
+    // Output a human-readable report of any issues encountered during conversion.
+    reporter.writeLog();
+
+    return d->map != nullptr;
 }
 
 void WorldSystem::reset()

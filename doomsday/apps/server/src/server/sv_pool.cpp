@@ -1497,7 +1497,7 @@ coord_t Sv_MobjDistance(mobj_t const *mo, ownerinfo_t const *info, dd_bool isRea
 {
     coord_t z;
 
-    if(isReal && !Mobj_Map(*mo).thinkers().isUsedMobjId(mo->thinker.id))
+    if(isReal && !Mob_Map(*mo).thinkers().isUsedMobjId(mo->thinker.id))
     {
         // This mobj does not exist any more!
         return DDMAXFLOAT;

@@ -132,7 +132,7 @@ mobj_t *P_MobjCreate(thinkfunc_t function, Vector3d const &origin, angle_t angle
     mob->ddFlags  = ddflags;
     mob->lumIdx   = -1;
     mob->thinker.function = function;
-    Mobj_Map(*mob).thinkers().add(mob->thinker);
+    Mob_Map(*mob).thinkers().add(mob->thinker);
 
     return mob;
 }
@@ -159,7 +159,7 @@ DENG_EXTERN_C void Mobj_Destroy(mobj_t *mo)
 
     S_StopSound(0, mo);
 
-    Mobj_Map(*mo).thinkers().remove(reinterpret_cast<thinker_t &>(*mo));
+    Mob_Map(*mo).thinkers().remove(reinterpret_cast<thinker_t &>(*mo));
 }
 
 /**
@@ -272,7 +272,7 @@ DENG_EXTERN_C void Mobj_OriginSmoothed(mobj_t *mo, coord_t origin[3])
 #endif
 }
 
-de::Map &Mobj_Map(mobj_t const &mobj)
+de::Map &Mob_Map(mobj_t const &mobj)
 {
     return Thinker_Map(mobj.thinker);
 }
@@ -321,7 +321,7 @@ void Mobj_SpawnParticleGen(mobj_t *source, ded_ptcgen_t const *def)
 
     //if(!useParticles) return;
 
-    Generator *gen = Mobj_Map(*source).newGenerator();
+    Generator *gen = Mob_Map(*source).newGenerator();
     if(!gen) return;
 
     /*LOG_INFO("SpawnPtcGen: %s/%i (src:%s typ:%s mo:%p)")
@@ -363,7 +363,7 @@ DENG_EXTERN_C void Mobj_SpawnDamageParticleGen(mobj_t *mo, mobj_t *inflictor, in
     ded_ptcgen_t const *def = Def_GetDamageGenerator(mo->type);
     if(def)
     {
-        Generator *gen = Mobj_Map(*mo).newGenerator();
+        Generator *gen = Mob_Map(*mo).newGenerator();
         if(!gen) return; // No more generators.
 
         gen->count = def->particles;

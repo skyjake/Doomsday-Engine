@@ -2477,7 +2477,7 @@ LoopResult Map::forAllLinesTouchingMobj(mobj_t &mob, std::function<LoopResult (L
     /// measure would not be necessary at this level if the caller(s) instead took
     /// responsibility for managing relationship changes during the iteration. -ds
 
-    if(&Mobj_Map(mob) == this && Mobj_IsLinked(mob) && mob.lineRoot)
+    if(&Mob_Map(mob) == this && Mobj_IsLinked(mob) && mob.lineRoot)
     {
         QVarLengthArray<Line *, 16> linkStore;
 
@@ -2503,7 +2503,7 @@ LoopResult Map::forAllSectorsTouchingMobj(mobj_t &mob, std::function<LoopResult 
     /// measure would not be necessary at this level if the caller(s) instead took
     /// responsibility for managing relationship changes during the iteration. -ds
 
-    if(&Mobj_Map(mob) == this && Mobj_IsLinked(mob))
+    if(&Mob_Map(mob) == this && Mobj_IsLinked(mob))
     {
         QVarLengthArray<Sector *, 16> linkStore;
 

@@ -471,7 +471,7 @@ void ClientApp::initialize()
 void ClientApp::preFrame()
 {
     // Frame synchronous I/O operations.
-    App_AudioSystem().startFrame();
+    audioSystem().startFrame();
 
     if(gx.BeginFrame) /// @todo Move to GameSystem::timeChanged().
     {
@@ -493,7 +493,7 @@ void ClientApp::postFrame()
         gx.EndFrame();
     }
 
-    App_AudioSystem().endFrame();
+    audioSystem().endFrame();
 
     // This is a good time to recycle unneeded memory allocations, as we're just
     // finished and shown a frame and there might be free time before we have to

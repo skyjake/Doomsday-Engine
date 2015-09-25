@@ -262,7 +262,7 @@ void ClPlayer_MoveLocal(coord_t dx, coord_t dy, coord_t z, bool onground)
         Mobj_Link(mo, MLF_SECTOR | MLF_BLOCKMAP);
     }
 
-    mo->_bspLeaf = &Mobj_Map(*mo).bspLeafAt_FixedPrecision(Mobj_Origin(*mo));
+    mo->_bspLeaf = &Mob_Map(*mo).bspLeafAt_FixedPrecision(Mobj_Origin(*mo));
     mo->floorZ   = Mobj_Sector(mo)->floor().height();
     mo->ceilingZ = Mobj_Sector(mo)->ceiling().height();
 

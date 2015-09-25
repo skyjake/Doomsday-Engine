@@ -31,9 +31,6 @@
 #endif
 
 #include "api_sound.h"
-#ifdef __CLIENT__
-#  include "api_audiod.h"
-#endif
 #include "audio/samplecache.h"
 #ifdef __CLIENT__
 #  include "audio/drivers/dummydriver.h"
@@ -59,12 +56,8 @@
 #include <de/App>
 #ifdef __CLIENT__
 #  include <de/LibraryFile>
-#  include <de/NativeFile>
 #endif
 #include <de/timer.h>
-#ifdef __CLIENT__
-#  include <de/memory.h>
-#endif
 #include <QMultiHash>
 #include <QtAlgorithms>
 
@@ -91,8 +84,6 @@ enum audiointerfacetype_t
     AUDIO_IMUSIC_OR_ICD
 };
 #endif
-
-static audio::System *theAudioSystem;
 
 static duint const PURGEINTERVAL = 2000;  ///< 2 seconds
 #ifdef __CLIENT__
@@ -122,6 +113,11 @@ static dint musVolume = 255 * 2/3;
 static char *musMidiFontPath = (char *) "";
 // When multiple sources are available this setting determines which to use (mus < ext < cd).
 static audio::System::MusicSource musSourcePreference = audio::System::MUSP_EXT;
+#endif  // __CLIENT__
+
+static audio::System *theAudioSystem;
+
+#ifdef __CLIENT__
 
 /**
  * Usually the display player.
@@ -400,7 +396,25 @@ DENG2_PIMPL(System)
         activeInterfaces << ifs;  // a copy is made
     }
 
-    ICdPlayer *tryFindDriverCdPlayer(IDriver &driver)
+    /**
+     * Returns the currently active, primary CdPlayer.
+     */
+    ICdPlayer &getCdPlayer() const
+    {
+        // The primary interface is the first one.
+        ICdPlayer *found = nullptr;
+        forAllInterfaces(AUDIO_ICD, [&found] (IDriver::IPlayer &plr)
+        {
+            found = &plr.as<ICdPlayer>();
+            return LoopAbort;
+        });
+        if(found) return *found;
+
+        /// @throw Error  No suitable sound player is available.
+        throw Error("audio::System::Instance::getCdPlayer", "No CdPlayer available");
+    }
+
+    ICdPlayer *tryFindCdPlayer(IDriver &driver)
     {
         ICdPlayer *found = nullptr;  // Not found.
         driver.forAllPlayers([&found] (IDriver::IPlayer &player)
@@ -415,7 +429,25 @@ DENG2_PIMPL(System)
         return found;
     }
 
-    IMusicPlayer *tryFindDriverMusicPlayer(IDriver &driver)
+    /**
+     * Returns the currently active, primary MusicPlayer.
+     */
+    IMusicPlayer &getMusicPlayer() const
+    {
+        // The primary interface is the first one.
+        IMusicPlayer *found = nullptr;
+        forAllInterfaces(AUDIO_IMUSIC, [&found] (IDriver::IPlayer &plr)
+        {
+            found = &plr.as<IMusicPlayer>();
+            return LoopAbort;
+        });
+        if(found) return *found;
+
+        /// @throw Error  No suitable sound player is available.
+        throw Error("audio::System::Instance::getMusicPlayer", "No MusicPlayer available");
+    }
+
+    IMusicPlayer *tryFindMusicPlayer(IDriver &driver)
     {
         IMusicPlayer *found = nullptr;  // Not found.
         driver.forAllPlayers([&found] (IDriver::IPlayer &player)
@@ -430,7 +462,25 @@ DENG2_PIMPL(System)
         return found;
     }
 
-    ISoundPlayer *tryFindDriverSoundPlayer(IDriver &driver)
+    /**
+     * Returns the currently active, primary SoundPlayer.
+     */
+    ISoundPlayer &getSoundPlayer() const
+    {
+        // The primary interface is the first one.
+        ISoundPlayer *found = nullptr;
+        forAllInterfaces(AUDIO_ISFX, [&found] (IDriver::IPlayer &plr)
+        {
+            found = &plr.as<ISoundPlayer>();
+            return LoopAbort;
+        });
+        if(found) return *found;
+
+        /// @throw Error  No suitable sound player is available.
+        throw Error("audio::System::Instance::getSoundPlayer", "No SoundPlayer available");
+    }
+
+    ISoundPlayer *tryFindSoundPlayer(IDriver &driver)
     {
         ISoundPlayer *found = nullptr;  // Not found.
         driver.forAllPlayers([&found] (IDriver::IPlayer &player)
@@ -451,7 +501,7 @@ DENG2_PIMPL(System)
     void selectInterfaces(IDriver &defaultDriver)
     {
         // The default driver goes on the bottom of the stack.
-        if(ISoundPlayer *player = tryFindDriverSoundPlayer(defaultDriver))
+        if(ISoundPlayer *player = tryFindSoundPlayer(defaultDriver))
         {
             PlaybackInterface ifs; zap(ifs);
             ifs.type   = AUDIO_ISFX;
@@ -459,7 +509,7 @@ DENG2_PIMPL(System)
             addPlaybackInterface(ifs);  // a copy is made
         }
 
-        if(IMusicPlayer *player = tryFindDriverMusicPlayer(defaultDriver))
+        if(IMusicPlayer *player = tryFindMusicPlayer(defaultDriver))
         {
             PlaybackInterface ifs; zap(ifs);
             ifs.type   = AUDIO_IMUSIC;
@@ -485,7 +535,7 @@ DENG2_PIMPL(System)
         {
             initDriverIfNeeded("fluidsynth");
             IDriver &fluidSynth = driverById(AUDIOD_FLUIDSYNTH);
-            if(IMusicPlayer *player = tryFindDriverMusicPlayer(fluidSynth))
+            if(IMusicPlayer *player = tryFindMusicPlayer(fluidSynth))
             {
                 PlaybackInterface ifs; zap(ifs);
                 ifs.type   = AUDIO_IMUSIC;
@@ -496,7 +546,7 @@ DENG2_PIMPL(System)
 #endif
 #endif
 
-        if(ICdPlayer *player = tryFindDriverCdPlayer(defaultDriver))
+        if(ICdPlayer *player = tryFindCdPlayer(defaultDriver))
         {
             PlaybackInterface ifs; zap(ifs);
             ifs.type   = AUDIO_ICD;
@@ -516,7 +566,7 @@ DENG2_PIMPL(System)
                 {
                     IDriver &driver = findDriver(cmdLine.at(++p));
                     initDriverIfNeeded(driver);
-                    if(ISoundPlayer *player = tryFindDriverSoundPlayer(driver))
+                    if(ISoundPlayer *player = tryFindSoundPlayer(driver))
                     {
                         PlaybackInterface ifs; zap(ifs);
                         ifs.type   = AUDIO_ISFX;
@@ -542,7 +592,7 @@ DENG2_PIMPL(System)
                 {
                     IDriver &driver = findDriver(cmdLine.at(++p));
                     initDriverIfNeeded(driver);
-                    if(IMusicPlayer *player = tryFindDriverMusicPlayer(driver))
+                    if(IMusicPlayer *player = tryFindMusicPlayer(driver))
                     {
                         PlaybackInterface ifs; zap(ifs);
                         ifs.type   = AUDIO_IMUSIC;
@@ -568,7 +618,7 @@ DENG2_PIMPL(System)
                 {
                     IDriver &driver = findDriver(cmdLine.at(++p));
                     initDriverIfNeeded(driver);
-                    if(ICdPlayer *player = tryFindDriverCdPlayer(driver))
+                    if(ICdPlayer *player = tryFindCdPlayer(driver))
                     {
                         PlaybackInterface ifs; zap(ifs);
                         ifs.type   = AUDIO_ICD;
@@ -611,60 +661,6 @@ DENG2_PIMPL(System)
             }
         }
         return LoopContinue;
-    }
-
-    /**
-     * Returns the currently active, primary CdPlayer.
-     */
-    ICdPlayer &cd() const
-    {
-        // The primary interface is the first one.
-        ICdPlayer *found = nullptr;
-        forAllInterfaces(AUDIO_ICD, [&found] (IDriver::IPlayer &plr)
-        {
-            found = &plr.as<ICdPlayer>();
-            return LoopAbort;
-        });
-        if(found) return *found;
-
-        /// @throw Error  No suitable sound player is available.
-        throw Error("audio::System::Instance::cd", "No CdPlayer available");
-    }
-
-    /**
-     * Returns the currently active, primary MusicPlayer.
-     */
-    IMusicPlayer &music() const
-    {
-        // The primary interface is the first one.
-        IMusicPlayer *found = nullptr;
-        forAllInterfaces(AUDIO_IMUSIC, [&found] (IDriver::IPlayer &plr)
-        {
-            found = &plr.as<IMusicPlayer>();
-            return LoopAbort;
-        });
-        if(found) return *found;
-
-        /// @throw Error  No suitable sound player is available.
-        throw Error("audio::System::Instance::music", "No MusicPlayer available");
-    }
-
-    /**
-     * Returns the currently active, primary SoundPlayer.
-     */
-    ISoundPlayer &sfx() const
-    {
-        // The primary interface is the first one.
-        ISoundPlayer *found = nullptr;
-        forAllInterfaces(AUDIO_ISFX, [&found] (IDriver::IPlayer &plr)
-        {
-            found = &plr.as<ISoundPlayer>();
-            return LoopAbort;
-        });
-        if(found) return *found;
-
-        /// @throw Error  No suitable sound player is available.
-        throw Error("audio::System::Instance::sfx", "No SoundPlayer available");
     }
 
     bool musAvail = false;              ///< @c true if at least one driver is initialized for music playback.
@@ -999,8 +995,8 @@ DENG2_PIMPL(System)
             // This is based on the scientific calculations that if the DOOM marine
             // is 56 units tall, 60 is about two meters.
             //// @todo Derive from the viewheight.
-            sfx().listener(SFXLP_UNITS_PER_METER, 30);
-            sfx().listener(SFXLP_DOPPLER, 1.5f);
+            getSoundPlayer().listener(SFXLP_UNITS_PER_METER, 30);
+            getSoundPlayer().listener(SFXLP_DOPPLER, 1.5f);
 
             sfxListenerNoReverb();
         }
@@ -1048,14 +1044,14 @@ DENG2_PIMPL(System)
 
         // Change the primary buffer format to match the channel format.
         dfloat parm[2] = { dfloat(sfxBits), dfloat(sfxRate) };
-        sfx().listenerv(SFXLP_PRIMARY_FORMAT, parm);
+        getSoundPlayer().listenerv(SFXLP_PRIMARY_FORMAT, parm);
 
         // Replace the entire channel set (we'll reconfigure).
         channels.reset(new Channels);
         dint num2D = sfx3D ? CHANNEL_2DCOUNT: numChannels;  // The rest will be 3D.
         for(dint i = 0; i < numChannels; ++i)
         {
-            Sound/*Channel*/ &ch = channels->add(*sfx().makeSound(num2D-- > 0, sfxBits, sfxRate));
+            Sound/*Channel*/ &ch = channels->add(*getSoundPlayer().makeSound(num2D-- > 0, sfxBits, sfxRate));
             if(!ch.hasBuffer())
             {
                 LOG_AUDIO_WARNING("Failed creating Sound for Channel #%i") << i;
@@ -1177,7 +1173,7 @@ DENG2_PIMPL(System)
          * cancelling existing ones if need be. The ideal choice is a free channel
          * that is already loaded with the sample, in the correct format and mode.
          */
-        self.sfxAllowRefresh(false);
+        self.allowSoundRefresh(false);
 
         // First look through the stopped channels. At this stage we're very picky:
         // only the perfect choice will be good enough.
@@ -1252,7 +1248,7 @@ DENG2_PIMPL(System)
         if(!selCh)
         {
             // A suitable channel was not found.
-            self.sfxAllowRefresh();
+            self.allowSoundRefresh();
             LOG_AUDIO_XVERBOSE("Failed to find suitable channel for sample id:%i") << sample.soundId;
             return false;
         }
@@ -1288,14 +1284,14 @@ DENG2_PIMPL(System)
         }
 
         // Update listener properties.
-        sfx().listener(SFXLP_UPDATE, 0);
+        getSoundPlayer().listener(SFXLP_UPDATE, 0);
 
         // Load in the sample if needed and start playing.
         sound.load(sample);
         sound.play();
 
         // Paging of Sound playback data may now continue.
-        self.sfxAllowRefresh();
+        self.allowSoundRefresh();
 
         // Sound successfully started.
         return true;
@@ -1437,8 +1433,8 @@ DENG2_PIMPL(System)
         sfxListenerCluster = nullptr;
 
         dfloat rev[4] = { 0, 0, 0, 0 };
-        sfx().listenerv(SFXLP_REVERB, rev);
-        sfx().listener(SFXLP_UPDATE, 0);
+        getSoundPlayer().listenerv(SFXLP_REVERB, rev);
+        getSoundPlayer().listener(SFXLP_UPDATE, 0);
     }
 
     void updateSfxListener()
@@ -1457,7 +1453,7 @@ DENG2_PIMPL(System)
                 auto const origin = Vector4f(getSfxListenerOrigin().toVector3f(), 0);
                 dfloat vec[4];
                 origin.decompose(vec);
-                sfx().listenerv(SFXLP_POSITION, vec);
+                getSoundPlayer().listenerv(SFXLP_POSITION, vec);
             }
             {
                 // Orientation. (0,0) will produce front=(1,0,0) and up=(0,0,1).
@@ -1465,14 +1461,14 @@ DENG2_PIMPL(System)
                     sfxListener->angle / (dfloat) ANGLE_MAX * 360,
                     (sfxListener->dPlayer ? LOOKDIR2DEG(sfxListener->dPlayer->lookDir) : 0)
                 };
-                sfx().listenerv(SFXLP_ORIENTATION, vec);
+                getSoundPlayer().listenerv(SFXLP_ORIENTATION, vec);
             }
             {
                 // Velocity. The unit is world distance units per second
                 auto const velocity = Vector4f(Vector3d(sfxListener->mom).toVector3f(), 0) * TICSPERSEC;
                 dfloat vec[4];
                 velocity.decompose(vec);
-                sfx().listenerv(SFXLP_VELOCITY, vec);
+                getSoundPlayer().listenerv(SFXLP_VELOCITY, vec);
             }
 
             // Reverb effects. Has the current sector cluster changed?
@@ -1489,12 +1485,12 @@ DENG2_PIMPL(System)
                     vec[i] = envFactors[i];
                 }
                 vec[SRD_VOLUME] *= sfxReverbStrength;
-                sfx().listenerv(SFXLP_REVERB, vec);
+                getSoundPlayer().listenerv(SFXLP_REVERB, vec);
             }
         }
 
         // Update all listener properties.
-        sfx().listener(SFXLP_UPDATE, 0);
+        getSoundPlayer().listener(SFXLP_UPDATE, 0);
     }
 
     void updateSfx3DModeIfChanged()
@@ -1649,7 +1645,6 @@ void System::reset()
 
     stopMusic();
 }
-#endif
 
 /**
  * @todo Do this in timeChanged()
@@ -1658,7 +1653,6 @@ void System::startFrame()
 {
     LOG_AS("audio::System");
 
-#ifdef __CLIENT__
     d->updateMusicVolumeIfChanged();
 
     // Notify interested parties.
@@ -1675,13 +1669,11 @@ void System::startFrame()
         // Should we purge the cache (to conserve memory)?
         d->sampleCache.maybeRunPurge();
     }
-#endif
 
     d->sfxLogicOneSoundPerEmitter = sfxOneSoundPerEmitter;
     d->sfxPurgeLogical();
 }
 
-#ifdef __CLIENT__
 void System::endFrame()
 {
     LOG_AS("audio::System");
@@ -1788,14 +1780,14 @@ String System::musicSourceAsText(MusicSource source)  // static
     return "(invalid)";
 }
 
+bool System::musicPlaybackAvailable() const
+{
+    return d->musAvail;
+}
+
 dint System::musicVolume() const
 {
     return musVolume;
-}
-
-bool System::musicIsAvailable() const
-{
-    return d->musAvail;
 }
 
 bool System::musicIsPlaying() const
@@ -2034,75 +2026,19 @@ coord_t System::distanceToListener(Vector3d const &point) const
     return 0;
 }
 
-#endif  // __CLIENT__
-
 bool System::soundIsPlaying(dint soundId, mobj_t *emitter) const
 {
-    //LOG_AS("audio::System");
-
     // Use the logic sound hash to determine whether the referenced sound is being
     // played currently. We don't care whether its audible or not.
-    duint const nowTime = Timer_RealMilliseconds();
-    if(soundId)
-    {
-        auto it = d->sfxLogicHash.constFind(soundId);
-        while(it != d->sfxLogicHash.constEnd() && it.key() == soundId)
-        {
-            LogicSound const &lsound = *it.value();
-            if(lsound.emitter == emitter && lsound.isPlaying(nowTime))
-                return true;
-
-            ++it;
-        }
-    }
-    else if(emitter)
-    {
-        // Check if the emitter is playing any sound.
-        auto it = d->sfxLogicHash.constBegin();
-        while(it != d->sfxLogicHash.constEnd())
-        {
-            LogicSound const &lsound = *it.value();
-            if(lsound.emitter == emitter && lsound.isPlaying(nowTime))
-                return true;
-
-            ++it;
-        }
-    }
-    return false;
+    return logicalIsPlaying(soundId, emitter);
 
 #if 0
     // Use the sound channels to determine whether the referenced sound is actually
     // being played currently.
-    if(!d->sfxAvail) return false;
-
-    return d->channels->forAll([&id, &emitter] (Channel &ch)
-    {
-        if(ch.isPlaying())
-        {
-            sfxbuffer_t &sbuf = ch.buffer();
-
-            if(   ch.emitter() != emitter
-               || (id && sbuf.sample->id != id))
-            {
-                return LoopContinue;
-            }
-
-            // Once playing, repeating sounds don't stop.
-            if(sbuf.flags & SFXBF_REPEAT)
-                return LoopAbort;
-
-            // Check time. The flag is updated after a slight delay (only at refresh).
-            if(Sys_GetTime() - ch->startTime() < sbuf.sample->numsamples / (dfloat) sbuf.freq * TICSPERSEC)
-            {
-                return LoopAbort;
-            }
-        }
-        return LoopContinue;
-    });
+    return d->channels->isPlaying(soundId, emitter);
 #endif
 }
 
-#ifdef __CLIENT__
 bool System::playSound(dint soundIdAndFlags, mobj_t *emitter, coord_t const *origin,
     dfloat volume)
 {
@@ -2186,9 +2122,23 @@ bool System::playSound(dint soundIdAndFlags, mobj_t *emitter, coord_t const *ori
     return d->playSound(*sample, volume, freq, emitter, origin, flags);
 }
 
-SampleCache const &System::sampleCache() const
+SampleCache &System::sampleCache() const
 {
     return d->sampleCache;
+}
+
+dint System::upsampleFactor(dint rate) const
+{
+    dint factor = 1;
+    if(soundPlaybackAvailable())
+    {
+        // If we need to upsample - determine the scale factor.
+        if(!d->getSoundPlayer().anyRateAccepted())
+        {
+            factor = de::max(1, ::sfxRate / rate);
+        }
+    }
+    return factor;
 }
 
 Channels &System::channels() const
@@ -2203,7 +2153,7 @@ void System::requestListenerUpdate()
     d->sfxListenerCluster = nullptr;
 }
 
-void System::sfxAllowRefresh(bool allow)
+void System::allowSoundRefresh(bool allow)
 {
     d->forAllInterfaces(AUDIO_ISFX, [&allow] (IDriver::IPlayer &plr)
     {
@@ -2212,24 +2162,44 @@ void System::sfxAllowRefresh(bool allow)
     });
 }
 
-bool System::sfxAnyRateAccepted() const
-{
-    if(!soundPlaybackAvailable()) return false;
-    return d->sfx().anyRateAccepted();
-}
-
 #endif  // __CLIENT__
 
-void System::clearLogical()
+void System::clearAllLogical()
 {
     LOG_AS("audio::System");
     d->sfxClearLogical();
 }
 
-void System::startLogical(dint soundIdAndFlags, mobj_t *emitter)
+bool System::logicalIsPlaying(dint soundId, mobj_t *emitter) const
 {
     LOG_AS("audio::System");
-    d->sfxStartLogical(soundIdAndFlags, emitter);
+    duint const nowTime = Timer_RealMilliseconds();
+    if(soundId)
+    {
+        auto it = d->sfxLogicHash.constFind(soundId);
+        while(it != d->sfxLogicHash.constEnd() && it.key() == soundId)
+        {
+            LogicSound const &lsound = *it.value();
+            if(lsound.emitter == emitter && lsound.isPlaying(nowTime))
+                return true;
+
+            ++it;
+        }
+    }
+    else if(emitter)
+    {
+        // Check if the emitter is playing any sound.
+        auto it = d->sfxLogicHash.constBegin();
+        while(it != d->sfxLogicHash.constEnd())
+        {
+            LogicSound const &lsound = *it.value();
+            if(lsound.emitter == emitter && lsound.isPlaying(nowTime))
+                return true;
+
+            ++it;
+        }
+    }
+    return false;
 }
 
 dint System::stopLogical(dint soundId, mobj_t *emitter)
@@ -2258,28 +2228,10 @@ dint System::stopLogical(dint soundId, mobj_t *emitter)
     return numStopped;
 }
 
-void System::aboutToUnloadMap()
+void System::startLogical(dint soundIdAndFlags, mobj_t *emitter)
 {
     LOG_AS("audio::System");
-    LOG_AUDIO_VERBOSE("Cleaning for map unload...");
-
-    d->sfxClearLogical();
-
-#ifdef __CLIENT__
-    // Mobjs are about to be destroyed so stop all sound channels using one as an emitter.
-    d->channels->forAll([] (Sound/*Channel*/ &ch)
-    {
-        if(ch.emitter())
-        {
-            ch.setEmitter(nullptr);
-            ch.stop();
-        }
-        return LoopContinue;
-    });
-
-    // Sectors, too, for that matter.
-    d->sfxListenerCluster = nullptr;
-#endif
+    d->sfxStartLogical(soundIdAndFlags, emitter);
 }
 
 #ifdef __CLIENT__
@@ -2414,9 +2366,9 @@ D_CMD(PlayMusic)
     DENG2_UNUSED(src);
     LOG_AS("playmusic (Cmd)");
 
-    if(!System::get().musicIsAvailable())
+    if(!System::get().musicPlaybackAvailable())
     {
-        LOGDEV_SCR_ERROR("Music subsystem is not available");
+        LOGDEV_SCR_ERROR("Music playback is not available");
         return false;
     }
 
@@ -2572,7 +2524,13 @@ dd_bool S_StartMusic(char const *musicId, dd_bool looped)
 
 dd_bool S_SoundIsPlaying(dint soundId, mobj_t *emitter)
 {
+#ifdef __CLIENT__
     return (dd_bool) audio::System::get().soundIsPlaying(soundId, emitter);
+#else
+    // Use the logic sound hash to determine whether the referenced sound is being
+    // played currently. We don't care whether its audible or not.
+    return (dd_bool) audio::System::get().logicalIsPlaying(soundId, emitter);
+#endif
 }
 
 /**

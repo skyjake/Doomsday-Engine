@@ -55,28 +55,19 @@ static dint const MAX_CACHE_KB     = 4096;
 // Even one minute of silence is quite a long time during gameplay.
 static dint const MAX_CACHE_TICS   = TICSPERSEC * 60 * 4;  // 4 minutes.
 
-/**
- * Determines the necessary upsample factor for the given sample @a rate.
- */
-static dint upsampleFactor(dint rate)
-{
-    dint factor = 1;
-#ifdef __CLIENT__
-    // If we need to upsample - determine the scale factor.
-    if(!App_AudioSystem().sfxAnyRateAccepted())
-    {
-        factor = de::max(1, ::sfxRate / rate);
-    }
-#else
-    DENG2_UNUSED(rate);
-#endif
-    return factor;
-}
-
 // Utility for converting an unsigned byte to signed short (for resampling).
 static dshort inline U8_S16(duchar b)
 {
     return (b - 0x80) << 8;
+}
+
+static dint upsampleFactor(dint rate)
+{
+#ifdef __CLIENT__
+    return System::get().upsampleFactor(rate);
+#else
+    return 1;
+#endif
 }
 
 /**
@@ -252,15 +243,15 @@ static void configureSample(sfxsample_t &smp, void const * /*data*/, duint size,
     smp.numSamples = numSamples;
 
     // Apply the upsample factor.
-    dint const rsfactor = upsampleFactor(rate);
-    smp.rate       *= rsfactor;
-    smp.numSamples *= rsfactor;
-    smp.size       *= rsfactor;
+    dint const scale = upsampleFactor(rate);
+    smp.rate       *= scale;
+    smp.numSamples *= scale;
+    smp.size       *= scale;
 
     // Resample to 16bit?
     if(::sfxBits == 16 && smp.bytesPer == 1)
     {
-        smp.bytesPer = 2;
+        smp.bytesPer  = 2;
         smp.size     *= 2;
     }
 }
@@ -398,7 +389,7 @@ DENG2_PIMPL(SampleCache)
     void removeCacheItem(CacheItem &item)
     {
 #ifdef __CLIENT__
-        App_AudioSystem().sfxAllowRefresh(false);
+        App_AudioSystem().allowSoundRefresh(false);
 #endif
 
         notifyRemove(item);
@@ -417,7 +408,7 @@ DENG2_PIMPL(SampleCache)
             item.prev->next = item.next;
 
 #ifdef __CLIENT__
-        App_AudioSystem().sfxAllowRefresh();
+        App_AudioSystem().allowSoundRefresh();
 #endif
 
         // Free all memory allocated for the item.

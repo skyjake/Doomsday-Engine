@@ -140,6 +140,7 @@ MapManifest &System::findMapManifest(de::Uri const &mapUri) const
 
 MapManifest *System::tryFindMapManifest(de::Uri const &mapUri) const
 {
+    if(mapUri.isEmpty()) return nullptr;
     // Only one resource scheme is known for maps.
     if(mapUri.scheme().compareWithoutCase("Maps")) return nullptr;
     return d->mapManifests.tryFind(mapUri.path(), PathTree::MatchFull | PathTree::NoBranch);

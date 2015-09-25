@@ -1431,7 +1431,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
         App_ResourceSystem().clearAllAnimGroups();
         App_ResourceSystem().clearAllColorPalettes();
 
-        App_AudioSystem().clearLogical();
+        App_AudioSystem().clearAllLogical();
 
         Con_ClearDatabases();
 

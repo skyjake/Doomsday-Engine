@@ -80,7 +80,7 @@ void P_MobjRecycle(mobj_t *mob);
  *
  * @see Thinker_Map()
  */
-de::Map &Mobj_Map(mobj_t const &mob);
+de::Map &Mob_Map(mobj_t const &mob);
 
 /**
  * Returns @c true if the map-object has been linked into the map. The only time this is

@@ -1508,28 +1508,23 @@ DENG_EXTERN_C dd_bool P_MapChange(char const *uriCString)
     {
         App_FatalError("P_MapChange: Invalid Uri argument.");
     }
+    de::Uri mapUri(uriCString, RC_NULL);
 
-    // Initialize the logical sound manager.
-    App_AudioSystem().aboutToUnloadMap();
-
-#ifdef __CLIENT__
-    App_ResourceSystem().purgeCacheQueue();
-#endif
-
-#ifdef __SERVER__
-    // Whenever the map changes, remote players must tell us when they're
-    // ready to begin receiving frames.
-    for(uint i = 0; i < DDMAXPLAYERS; ++i)
+    // Switch to busy mode (if we haven't already) except when simply unloading.
+    if(!mapUri.path().isEmpty() && !DoomsdayApp::app().busyMode().isActive())
     {
-        if(DD_Player(i)->isConnected())
+        /// @todo Use progress bar mode and update progress during the setup.
+        return (dd_bool) DoomsdayApp::app().busyMode().runNewTaskWithName(
+            BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (::verbose ? BUSYF_CONSOLE_OUTPUT : 0),
+            "Loading map...", [&mapUri] (void *)
         {
-            LOG_DEBUG("Client %i marked as 'not ready' to receive frames.") << i;
-            DD_Player(i)->ready = false;
-        }
+            return App_WorldSystem().changeMap(mapUri);
+        });
     }
-#endif
-
-    return (dd_bool) App_WorldSystem().changeMap(de::Uri(uriCString, RC_NULL));
+    else
+    {
+        return (dd_bool) App_WorldSystem().changeMap(mapUri);
+    }
 }
 
 #undef P_CountMapObjs
@@ -1559,14 +1554,14 @@ DENG_EXTERN_C void Mobj_Link(mobj_t *mobj, int flags)
 DENG_EXTERN_C void Mobj_Unlink(mobj_t *mobj)
 {
     if(!mobj || !Mobj_IsLinked(*mobj)) return;
-    Mobj_Map(*mobj).unlink(*mobj);
+    Mob_Map(*mobj).unlink(*mobj);
 }
 
 #undef Mobj_TouchedLinesIterator
 DENG_EXTERN_C int Mobj_TouchedLinesIterator(mobj_t *mob, int (*callback) (Line *, void *), void *context)
 {
     DENG2_ASSERT(mob && callback);
-    LoopResult result = Mobj_Map(*mob).forAllLinesTouchingMobj(*mob, [&callback, &context] (Line &line)
+    LoopResult result = Mob_Map(*mob).forAllLinesTouchingMobj(*mob, [&callback, &context] (Line &line)
     {
         return LoopResult( callback(&line, context) );
     });
@@ -1577,7 +1572,7 @@ DENG_EXTERN_C int Mobj_TouchedLinesIterator(mobj_t *mob, int (*callback) (Line *
 DENG_EXTERN_C int Mobj_TouchedSectorsIterator(mobj_t *mob, int (*callback) (Sector *, void *), void *context)
 {
     DENG2_ASSERT(mob && callback);
-    LoopResult result = Mobj_Map(*mob).forAllSectorsTouchingMobj(*mob, [&callback, &context] (Sector &sector)
+    LoopResult result = Mob_Map(*mob).forAllSectorsTouchingMobj(*mob, [&callback, &context] (Sector &sector)
     {
         return LoopResult( callback(&sector, context) );
     });
