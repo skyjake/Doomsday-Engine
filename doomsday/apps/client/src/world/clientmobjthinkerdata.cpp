@@ -33,7 +33,8 @@ namespace internal
 {
     enum Flag
     {
-        Initialized = 0x1       ///< Thinker data has been initialized.
+        Initialized = 0x1,      ///< Thinker data has been initialized.
+        StateChanged = 0x2      ///< State has changed during the current tick.
     };
     Q_DECLARE_FLAGS(Flags, Flag)
     Q_DECLARE_OPERATORS_FOR_FLAGS(Flags)
@@ -193,6 +194,11 @@ ClientMobjThinkerData::ClientMobjThinkerData(ClientMobjThinkerData const &other)
 void ClientMobjThinkerData::think()
 {
     d->initOnce();
+    if(d->flags.testFlag(StateChanged))
+    {
+        d->flags &= ~StateChanged;
+        d->triggerStateAnimations();
+    }
     d->triggerMovementAnimations();
     d->advanceAnimations(SECONDSPERTIC); // mobjs think only on sharp ticks
 }
@@ -248,6 +254,6 @@ void ClientMobjThinkerData::stateChanged(state_t const *previousState)
     bool const justSpawned = !previousState;
 
     d->initOnce();
-    d->triggerStateAnimations();
+    d->flags |= StateChanged; // Will trigger animations during think.
     d->triggerParticleGenerators(justSpawned);
 }
