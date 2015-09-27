@@ -51,8 +51,8 @@ extern "C" {
  * Revision number increases with each small (maintenance) release.
  */
 
-#define DOOMSDAY_VERSION_BASE   "1.15.3"
-#define DOOMSDAY_VERSION_NUMBER 1,15,3,0 // For WIN32 version info.
+#define DOOMSDAY_VERSION_BASE   "1.15.4"
+#define DOOMSDAY_VERSION_NUMBER 1,15,4,0 // For WIN32 version info.
 //#define DOOMSDAY_RELEASE_NAME   "Example"
 
 /**
@@ -60,8 +60,8 @@ extern "C" {
  * Possible values are "Unstable", "Candidate" and "Stable".
  */
 //#define DOOMSDAY_RELEASE_TYPE   "Unstable"
-//#define DOOMSDAY_RELEASE_TYPE   "Candidate"
-#define DOOMSDAY_RELEASE_TYPE   "Stable"
+#define DOOMSDAY_RELEASE_TYPE   "Candidate"
+//#define DOOMSDAY_RELEASE_TYPE   "Stable"
 
 /**
  * Copyright string is used in WIN32 binary metadata markup.
