@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBGUI_GLINFO_H
@@ -32,7 +32,6 @@ public:
     struct Extensions
     {
         duint32 ARB_draw_instanced : 1;
-        duint32 ARB_framebuffer_object : 1;
         duint32 ARB_instanced_arrays : 1;
         duint32 ARB_texture_env_combine : 1;
         duint32 ARB_texture_non_power_of_two : 1;
@@ -40,6 +39,7 @@ public:
         duint32 EXT_blend_subtract : 1;
         duint32 EXT_framebuffer_blit : 1;
         duint32 EXT_framebuffer_multisample : 1;
+        duint32 EXT_framebuffer_object : 1;
         duint32 EXT_packed_depth_stencil : 1;
         duint32 EXT_texture_compression_s3tc : 1;
         duint32 EXT_texture_filter_anisotropic : 1;

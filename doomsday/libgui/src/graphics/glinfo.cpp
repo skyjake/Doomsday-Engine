@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/GLInfo"
@@ -90,7 +90,7 @@ DENG2_PIMPL_NOREF(GLInfo)
 
 #ifdef WIN32
         // Prefer the wgl-specific extensions.
-        if(wglGetExtensionsStringARB != nullptr && 
+        if(wglGetExtensionsStringARB != nullptr &&
            checkExtensionString(ext, (GLubyte const *)wglGetExtensionsStringARB(wglGetCurrentDC())))
             return true;
 #endif
@@ -119,7 +119,6 @@ DENG2_PIMPL_NOREF(GLInfo)
 
         // Extensions.
         ext.ARB_draw_instanced             = query("GL_ARB_draw_instanced");
-        ext.ARB_framebuffer_object         = query("GL_ARB_framebuffer_object");
         ext.ARB_instanced_arrays           = query("GL_ARB_instanced_arrays");
         ext.ARB_texture_env_combine        = query("GL_ARB_texture_env_combine") || query("GL_EXT_texture_env_combine");
         ext.ARB_texture_non_power_of_two   = query("GL_ARB_texture_non_power_of_two");
@@ -127,6 +126,7 @@ DENG2_PIMPL_NOREF(GLInfo)
         ext.EXT_blend_subtract             = query("GL_EXT_blend_subtract");
         ext.EXT_framebuffer_blit           = query("GL_EXT_framebuffer_blit");
         ext.EXT_framebuffer_multisample    = query("GL_EXT_framebuffer_multisample");
+        ext.EXT_framebuffer_object         = query("GL_EXT_framebuffer_object");
         ext.EXT_packed_depth_stencil       = query("GL_EXT_packed_depth_stencil");
         ext.EXT_texture_compression_s3tc   = query("GL_EXT_texture_compression_s3tc");
         ext.EXT_texture_filter_anisotropic = query("GL_EXT_texture_filter_anisotropic");

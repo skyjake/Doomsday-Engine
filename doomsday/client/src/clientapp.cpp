@@ -78,6 +78,8 @@ static void handleLegacyCoreTerminate(char const *msg)
 
 static void continueInitWithEventLoopRunning()
 {
+    if(!ClientWindowSystem::mainExists()) return;
+
     // Show the main window. This causes initialization to finish (in busy mode)
     // as the canvas is visible and ready for initialization.
     ClientWindowSystem::main().show();
