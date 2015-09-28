@@ -20,12 +20,12 @@
 #ifndef SERVERAPP_H
 #define SERVERAPP_H
 
+#include <de/Range>
 #include <de/TextApp>
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/Games>
 #include "serversystem.h"
 #include "ui/infine/infinesystem.h"
-#include "audio/system.h"
 #include "resource/resourcesystem.h"
 #include "world/worldsystem.h"
 
@@ -48,9 +48,33 @@ public:
     static ServerApp &app();
     static ServerSystem &serverSystem();
     static InFineSystem &infineSystem();
-    static ::audio::System &audioSystem();
     static ResourceSystem &resourceSystem();
     static WorldSystem &worldSystem();
+
+public:  // Remote sound scheduling: ----------------------------------------------------
+    /// @todo Belongs in the network domain?
+
+    de::Ranged soundVolumeAttenuationRange();
+
+    /**
+     * Determines whether a logical sound is currently playing (irrespective of whether
+     * it is audible or not on Client side).
+     */
+    bool logicalSoundIsPlaying(de::dint soundId, struct mobj_s *emitter) const;
+
+    /**
+     * The sound is removed from the list of playing sounds. To be called whenever a/the
+     * associated sound is stopped.
+     *
+     * @note Use @a soundId == 0 and @a emitter == nullptr to stop @em everything.
+     *
+     * @return  Number of sounds stopped.
+     */
+    de::dint stopLogicalSound(de::dint soundId, struct mobj_s *emitter);
+
+    void startLogicalSound(de::dint soundIdAndFlags, struct mobj_s *emitter);
+
+    void clearAllLogicalSounds();
 
 private:
     DENG2_PRIVATE(d)

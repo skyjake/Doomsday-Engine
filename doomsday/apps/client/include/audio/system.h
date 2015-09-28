@@ -1,4 +1,4 @@
-/** @file audio/system.h  Audio subsystem.
+/** @file audio/system.h  Client side audio subsystem.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
@@ -20,29 +20,26 @@
 #ifndef CLIENT_AUDIO_SYSTEM_H
 #define CLIENT_AUDIO_SYSTEM_H
 
-#ifdef __CLIENT__
-#  include "dd_types.h"        // lumpnum_t
-#  include "SettingsRegister"
+#ifdef __SERVER__
+#  error "audio" is not available in a SERVER build
 #endif
+
+#include "dd_types.h"        // lumpnum_t
+#include "SettingsRegister"
 #include "world/p_object.h"
-#ifdef __CLIENT__
-#  include <de/DotPath>
-#  include <de/Error>
-#  include <de/Observers>
-#  include <de/Record>
-#  include <de/String>
-#endif
+#include <de/DotPath>
+#include <de/Error>
+#include <de/Observers>
+#include <de/Record>
+#include <de/String>
 #include <de/Range>
 #include <de/System>
-#ifdef __CLIENT__
-#  include <functional>
-#endif
+#include <functional>
 
 #define SFX_LOWEST_PRIORITY     ( -1000 )
 
 namespace audio {
 
-#ifdef __CLIENT__
 class ICdPlayer;
 class IMusicPlayer;
 class ISoundPlayer;
@@ -50,7 +47,6 @@ class ISoundPlayer;
 class Channels;
 class SampleCache;
 class Sound;
-#endif
 
 /**
  * Client audio subsystem.
@@ -59,7 +55,6 @@ class Sound;
  */
 class System : public de::System
 {
-#ifdef __CLIENT__
 public:
     /// Notified when a new audio frame begins.
     DENG2_DEFINE_AUDIENCE2(FrameBegins, void systemFrameBegins(System &system))
@@ -69,7 +64,6 @@ public:
 
     /// Notified whenever a MIDI font change occurs.
     DENG2_DEFINE_AUDIENCE2(MidiFontChange, void systemMidiFontChanged(de::String const &newMidiFontPath))
-#endif
 
 public:
     /**
@@ -80,7 +74,6 @@ public:
     // Systems observe the passage of time.
     void timeChanged(de::Clock const &) override;
 
-#ifdef __CLIENT__
     SettingsRegister &settings();
 
     /**
@@ -195,15 +188,11 @@ public:  // Sound playback: ----------------------------------------------------
      */
     de::dint soundVolume() const;
 
-#endif  // __CLIENT__
-
     /**
      * Convenient method returning the current sound effect volume attenuation range, in
      * map space units.
      */
     de::Ranged soundVolumeAttenuationRange() const;
-
-#ifdef __CLIENT__
 
     /**
      * Returns true if the sound is currently playing somewhere in the world. It does not
@@ -441,13 +430,12 @@ public:  /// @todo make private:
     void allowSoundRefresh(bool allow = true);
 
     void worldMapChanged();
-#endif  // __CLIENT__
 
     /**
      * Determines whether a logical sound is currently playing, irrespective of whether it
      * is audible or not.
      */
-    bool logicalIsPlaying(de::dint soundId, struct mobj_s *emitter) const;
+    bool logicalSoundIsPlaying(de::dint soundId, struct mobj_s *emitter) const;
 
     /**
      * The sound is removed from the list of playing sounds. To be called whenever a/the
@@ -458,11 +446,11 @@ public:  /// @todo make private:
      *
      * @return  Number of sounds stopped.
      */
-    de::dint stopLogical(de::dint soundId, struct mobj_s *emitter);
+    de::dint stopLogicalSound(de::dint soundId, struct mobj_s *emitter);
 
-    void startLogical(de::dint soundIdAndFlags, struct mobj_s *emitter);
+    void startLogicalSound(de::dint soundIdAndFlags, struct mobj_s *emitter);
 
-    void clearAllLogical();
+    void clearAllLogicalSounds();
 
 public:
     /**
@@ -478,8 +466,6 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
-
-#ifdef __CLIENT__
 
 class ICdPlayer : public System::IDriver::IPlayer
 {
@@ -569,8 +555,6 @@ public:
      */
     virtual Sound *makeSound(bool stereoPositioning, de::dint bytesPer, de::dint rate) = 0;
 };
-
-#endif  // __CLIENT__
 
 }  // namespace audio
 

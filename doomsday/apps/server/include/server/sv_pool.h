@@ -1,4 +1,4 @@
-/** @file sv_pool.h Delta Pools.
+/** @file sv_pool.h  Delta Pools.
  * @ingroup server
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -18,8 +18,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef __DOOMSDAY_SERVER_POOL_H__
-#define __DOOMSDAY_SERVER_POOL_H__
+#ifndef SERVER_POOL_H
+#define SERVER_POOL_H
 
 #include "dd_share.h"
 #include "world/plane.h"
@@ -27,8 +27,9 @@
 #include "world/polyobj.h"
 #include "world/surface.h"
 #include "sv_missile.h"
-
 #ifdef __cplusplus
+#include <de/Range>
+
 extern "C" {
 #endif
 
@@ -294,7 +295,7 @@ void Sv_NewSoundDelta(int soundId, mobj_t *emitter, Sector *sourceSector,
     float volume, dd_bool isRepeating, int clientsMask);
 
 #ifdef __cplusplus
-} // extern "C"
+}  // extern "C"
 #endif
 
-#endif
+#endif  // SERVER_POOL_H

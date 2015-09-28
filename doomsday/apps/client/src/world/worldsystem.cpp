@@ -20,47 +20,20 @@
 
 #include "world/worldsystem.h"
 
-#include <map>
-#include <utility>
-#include <QMap>
-#include <QtAlgorithms>
-#include <de/memoryzone.h>
-#include <de/timer.h>
-#include <de/Error>
-#include <de/Log>
-#include <de/Time>
-#include <doomsday/doomsdayapp.h>
-#include <doomsday/console/cmd.h>
-#include <doomsday/console/exec.h>
-#include <doomsday/console/var.h>
-#include <doomsday/defs/mapinfo.h>
-
-#include "dd_main.h"
-#include "dd_def.h"
-#include "dd_loop.h"
-#include "def_main.h"  // ::defs
-
-#include "api_player.h"
-
 #ifdef __CLIENT__
 #  include "clientapp.h"
 #  include "client/cl_def.h"
 #  include "client/cl_frame.h"
 #  include "client/cl_player.h"
-
-#  include "audio/channel.h"
-#  include "audio/sound.h"
-
-#  include "gl/gl_main.h"
 #endif
-
 #ifdef __SERVER__
+#  include "serverapp.h"
 #  include "server/sv_pool.h"
 #endif
 
-#include "network/net_main.h"
-
+#include "api_player.h"
 #include "world/p_players.h"
+
 #include "world/p_ticker.h"
 #include "world/sky.h"
 #include "world/thinkers.h"
@@ -75,6 +48,11 @@
 #  include "HueCircle"
 #  include "Lumobj"
 
+#  include "gl/gl_main.h"
+
+#  include "audio/channel.h"
+#  include "audio/sound.h"
+
 #  include "render/viewports.h"  // R_ResetViewer
 #  include "render/rend_fakeradio.h"
 #  include "render/rend_main.h"
@@ -84,6 +62,27 @@
 #  include "edit_bias.h"
 #  include "ui/progress.h"
 #endif
+
+#include "network/net_main.h"
+
+#include "dd_main.h"
+#include "dd_def.h"
+#include "dd_loop.h"
+#include "def_main.h"  // ::defs
+#include <doomsday/doomsdayapp.h>
+#include <doomsday/console/cmd.h>
+#include <doomsday/console/exec.h>
+#include <doomsday/console/var.h>
+#include <doomsday/defs/mapinfo.h>
+#include <de/Error>
+#include <de/Log>
+#include <de/Time>
+#include <de/memoryzone.h>
+#include <de/timer.h>
+#include <QMap>
+#include <QtAlgorithms>
+#include <map>
+#include <utility>
 
 using namespace de;
 
@@ -581,7 +580,7 @@ DENG2_PIMPL(WorldSystem)
         map->initPolyobjs();
 
 #ifdef __CLIENT__
-        App_AudioSystem().worldMapChanged();
+        ClientApp::audioSystem().worldMapChanged();
 #endif
 
 #ifdef __SERVER__
@@ -733,9 +732,11 @@ bool WorldSystem::changeMap(de::Uri const &mapUri)
 #endif
 
     // Initialize the logical sound manager.
-    App_AudioSystem().clearAllLogical();
+#ifdef __SERVER__
+    ServerApp::app().clearAllLogicalSounds();
+#else
+    ClientApp::audioSystem().clearAllLogicalSounds();
 
-#ifdef __CLIENT__
     App_ResourceSystem().purgeCacheQueue();
 
     if(d->map)
@@ -751,6 +752,7 @@ bool WorldSystem::changeMap(de::Uri const &mapUri)
             {
                 // This channel must be stopped!
                 ch.stop();
+                ch.setEmitter(nullptr);
             }
             return LoopContinue;
         });

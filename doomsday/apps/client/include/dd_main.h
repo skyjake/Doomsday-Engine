@@ -29,7 +29,6 @@
 #include <doomsday/plugins.h>
 #include <doomsday/Games>
 
-#include "audio/system.h"
 #include "resource/resourcesystem.h"
 #include "world/worldsystem.h"
 #include "ui/infine/infinesystem.h"
@@ -59,9 +58,6 @@ bool DD_IsShuttingDown();
 void App_Error(char const *error, ...);
 
 void App_AbnormalShutdown(char const *error);
-
-/// Returns the application's global audio::System.
-audio::System &App_AudioSystem();
 
 /// Returns the application's global InFineSystem.
 InFineSystem &App_InFineSystem();

@@ -26,19 +26,14 @@
 #include "dd_main.h"   // ::isDedicated
 #include "def_main.h"  // ::defs
 
-#ifdef __SERVER__
-#  include "server/sv_sound.h"
-#endif
-
 #include "api_sound.h"
+#include "audio/drivers/dummydriver.h"
+#include "audio/drivers/plugindriver.h"
+#include "audio/drivers/sdlmixerdriver.h"
+#include "audio/channel.h"
+#include "audio/logicsound.h"
+#include "audio/mus.h"
 #include "audio/samplecache.h"
-#ifdef __CLIENT__
-#  include "audio/drivers/dummydriver.h"
-#  include "audio/drivers/plugindriver.h"
-#  include "audio/drivers/sdlmixerdriver.h"
-#  include "audio/channel.h"
-#  include "audio/mus.h"
-#endif
 
 #include "api_map.h"
 #include "world/p_players.h"
@@ -48,26 +43,21 @@
 
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
-#ifdef __CLIENT__
-#  include <doomsday/defs/music.h>
-#  include <doomsday/filesys/fs_main.h>
-#  include <doomsday/filesys/fs_util.h>
-#endif
+#include <doomsday/defs/music.h>
+#include <doomsday/filesys/fs_main.h>
+#include <doomsday/filesys/fs_util.h>
 #include <de/App>
-#ifdef __CLIENT__
-#  include <de/LibraryFile>
-#endif
+#include <de/LibraryFile>
 #include <de/timer.h>
 #include <QMultiHash>
+#include <QMutableHashIterator>
 #include <QtAlgorithms>
 
 using namespace de;
 
-#ifdef __CLIENT__
-#  ifdef MACOSX
+#ifdef MACOSX
 /// Built-in QuickTime audio interface implemented by MusicPlayer.m
 DENG_EXTERN_C audiointerface_music_t audiodQuickTimeMusic;
-#  endif
 #endif
 
 dint sfxBits = 8;
@@ -75,7 +65,6 @@ dint sfxRate = 11025;
 
 namespace audio {
 
-#ifdef __CLIENT__
 enum audiointerfacetype_t
 {
     AUDIO_ISFX,
@@ -83,41 +72,34 @@ enum audiointerfacetype_t
     AUDIO_ICD,
     AUDIO_IMUSIC_OR_ICD
 };
-#endif
 
-static duint const PURGEINTERVAL = 2000;  ///< 2 seconds
-#ifdef __CLIENT__
+static duint const PURGEINTERVAL         = 2000;  ///< 2 seconds
+
 static dint const CHANNEL_COUNT_DEFAULT  = 16;
 static dint const CHANNEL_COUNT_MAX      = 256;
 static dint const CHANNEL_2DCOUNT        = 4;
+
 static String const MUSIC_BUFFEREDFILE   ("dd-buffered-song");
 
 /// @todo should be a cvars:
-static bool sfxNoRndPitch;
-#endif  // __CLIENT__
 static dint sfxDistMin = 256;  ///< No distance attenuation this close.
 static dint sfxDistMax = 2025;
+static bool sfxNoRndPitch;
 
-#ifdef __CLIENT__
 // Console variables:
 static dint sfxVolume = 255 * 2/3;
 static dint sfx16Bit;
 static dint sfxSampleRate = 11025;
 static dint sfx3D;
-#endif  // __CLIENT__
 static byte sfxOneSoundPerEmitter;  //< @c false= Traditional Doomsday behavior: allow sounds to overlap.
-#ifdef __CLIENT__
 static dfloat sfxReverbStrength = 0.5f;
 
 static dint musVolume = 255 * 2/3;
 static char *musMidiFontPath = (char *) "";
 // When multiple sources are available this setting determines which to use (mus < ext < cd).
 static audio::System::MusicSource musSourcePreference = audio::System::MUSP_EXT;
-#endif  // __CLIENT__
 
 static audio::System *theAudioSystem;
-
-#ifdef __CLIENT__
 
 /**
  * Usually the display player.
@@ -126,35 +108,6 @@ static mobj_t *getListenerMobj()
 {
     return DD_Player(::displayPlayer)->publicData().mo;
 }
-
-#endif
-// --------------------------------------------------------------------------------------
-
-/**
- * LogicSounds are used to track currently playing sounds on a logical level (irrespective
- * of whether playback is available, or if the sounds are actually audible to anyone).
- *
- * @todo The premise behind this functionality is fundamentally flawed in that it assumes
- * that the same samples are used by both the Client and the Server, and that the latter
- * schedules remote playback of the former (determined by examining sample lengths on the
- * Server's side). Furthermore, the Server should not be dictating 'oneSoundPerEmitter'
- * policy so that Clients can be configured independently. -ds
- */
-struct LogicSound
-{
-    mobj_t *emitter  = nullptr;
-    duint endTime    = 0;
-    bool isRepeating = false;
-
-    bool inline isPlaying(duint nowTime) const {
-        return (isRepeating || endTime > nowTime);
-    }
-};
-typedef QMultiHash<dint /*key: soundId*/, LogicSound *> LogicSoundHash;
-typedef QMutableHashIterator<dint /*key: soundId*/, LogicSound *> MutableLogicSoundHashIterator;
-
-// --------------------------------------------------------------------------------------
-#ifdef __CLIENT__
 
 System::IDriver::IPlayer::IPlayer(IDriver &driver) : _driver(&driver)
 {}
@@ -231,18 +184,14 @@ String System::IDriver::description() const
     return desc;
 }
 
-#endif  // __CLIENT__
 // --------------------------------------------------------------------------------------
 
 /**
  * @todo Simplify architecture - load the "dummy" driver, always -ds
  */
 DENG2_PIMPL(System)
-#ifdef __CLIENT__
 , DENG2_OBSERVES(App, GameUnload)
-#endif
 {
-#ifdef __CLIENT__
     SettingsRegister settings;
     QList<IDriver *> drivers;
 
@@ -672,11 +621,12 @@ DENG2_PIMPL(System)
     mobj_t *sfxListener = nullptr;
     SectorCluster *sfxListenerCluster = nullptr;
     std::unique_ptr<Channels> channels;
-#endif
 
-    LogicSoundHash sfxLogicHash;
-    duint sfxLogicLastPurge = 0;
-    bool sfxLogicOneSoundPerEmitter = false;  ///< set at the start of the frame
+    typedef QMultiHash<dint /*key: soundId*/, LogicSound *> LogicalSoundHash;
+    typedef QMutableHashIterator<dint /*key: soundId*/, LogicSound *> MutableLogicalSoundHashIterator;
+    LogicalSoundHash sfxLogicalSounds;
+    duint sfxLogicalSoundLastPurge    = 0;
+    bool sfxLogicalSoundOnePerEmitter = false;  ///< set at the start of the frame
 
     SampleCache sampleCache;
 
@@ -684,7 +634,6 @@ DENG2_PIMPL(System)
     {
         theAudioSystem = thisPublic;
 
-#ifdef __CLIENT__
         // Initialize settings.
         typedef SettingsRegister SReg; // convenience
         settings
@@ -700,20 +649,16 @@ DENG2_PIMPL(System)
             .define(SReg::StringCVar, "music-soundfont",     "");
 
         App::app().audienceForGameUnload() += this;
-#endif
     }
 
     ~Instance()
     {
-        sfxClearLogical();
-#ifdef __CLIENT__
+        sfxClearLogicalSounds();
         App::app().audienceForGameUnload() -= this;
-#endif
 
         theAudioSystem = nullptr;
     }
 
-#ifdef __CLIENT__
     String composeMusicBufferFilename(String const &ext = "")
     {
         // Switch the name of the buffered song file?
@@ -1297,29 +1242,27 @@ DENG2_PIMPL(System)
         return true;
     }
 
-#endif  // __CLIENT__
-
-    void sfxClearLogical()
+    void sfxClearLogicalSounds()
     {
-        qDeleteAll(sfxLogicHash);
-        sfxLogicHash.clear();
+        qDeleteAll(sfxLogicalSounds);
+        sfxLogicalSounds.clear();
     }
 
     /**
      * Maybe remove stopped sounds from the LSM.
      */
-    void sfxPurgeLogical()
+    void sfxPurgeLogicalSounds()
     {
         // Too soon?
         duint const nowTime = Timer_RealMilliseconds();
-        if(nowTime - sfxLogicLastPurge < PURGEINTERVAL) return;
+        if(nowTime - sfxLogicalSoundLastPurge < PURGEINTERVAL) return;
 
         // Peform the purge now.
         LOGDEV_AUDIO_XVERBOSE("purging logic sound hash...");
-        sfxLogicLastPurge = nowTime;
+        sfxLogicalSoundLastPurge = nowTime;
 
         // Check all sounds in the hash.
-        MutableLogicSoundHashIterator it(sfxLogicHash);
+        MutableLogicalSoundHashIterator it(sfxLogicalSounds);
         while(it.hasNext())
         {
             it.next();
@@ -1334,46 +1277,8 @@ DENG2_PIMPL(System)
     }
 
     /**
-     * The sound is removed from the list of playing sounds. Called whenever a sound is
-     * stopped, regardless of whether it was actually playing on the local system.
-     *
-     * @note If @a soundId == 0 and @a emitter == nullptr then stop everything.
-     *
-     * @return  Number of sounds stopped.
-     */
-    dint sfxStopLogical(dint soundId, mobj_t *emitter)
-    {
-        dint numStopped = 0;
-        MutableLogicSoundHashIterator it(sfxLogicHash);
-        while(it.hasNext())
-        {
-            it.next();
-
-            LogicSound const &lsound = *it.value();
-            if(soundId)
-            {
-                if(it.key() != soundId) continue;
-            }
-            else if(emitter)
-            {
-                if(lsound.emitter != emitter) continue;
-            }
-
-            delete &lsound;
-            it.remove();
-            numStopped += 1;
-        }
-        return numStopped;
-    }
-
-    /**
      * The sound is entered into the list of playing sounds. Called when a 'world class'
      * sound is started, regardless of whether it's actually started on the local system.
-     *
-     * @todo Why does the Server cache sound samples and/or care to know the length of
-     * the samples? It is entirely possible that the Client is using a different set of
-     * samples so using this information on server side (for scheduling of remote playback
-     * events?) is not logical. -ds
      */
     void sfxStartLogical(dint soundIdAndFlags, mobj_t *emitter)
     {
@@ -1396,21 +1301,19 @@ DENG2_PIMPL(System)
             if(!length) return;
 
             // Only one sound per emitter?
-            if(emitter && sfxLogicOneSoundPerEmitter)
+            if(emitter && sfxLogicalSoundOnePerEmitter)
             {
                 // Stop all other sounds.
-                sfxStopLogical(0, emitter);
+                self.stopLogicalSound(0, emitter);
             }
 
             auto *ls = new LogicSound;
             ls->emitter     = emitter;
             ls->isRepeating = isRepeating;
             ls->endTime     = Timer_RealMilliseconds() + length;
-            sfxLogicHash.insert(soundId, ls);
+            sfxLogicalSounds.insert(soundId, ls);
         }
     }
-
-#ifdef __CLIENT__
 
     /**
      * Returns the 3D position of the sound effect listener, in map space.
@@ -1554,15 +1457,11 @@ DENG2_PIMPL(System)
     DENG2_PIMPL_AUDIENCE(FrameBegins)
     DENG2_PIMPL_AUDIENCE(FrameEnds)
     DENG2_PIMPL_AUDIENCE(MidiFontChange)
-
-#endif  // __CLIENT__
 };
 
-#ifdef __CLIENT__
 DENG2_AUDIENCE_METHOD(System, FrameBegins)
 DENG2_AUDIENCE_METHOD(System, FrameEnds)
 DENG2_AUDIENCE_METHOD(System, MidiFontChange)
-#endif
 
 System::System() : d(new Instance(this))
 {}
@@ -1577,8 +1476,6 @@ void System::timeChanged(Clock const &)
 {
     // Nothing to do.
 }
-
-#ifdef __CLIENT__
 
 SettingsRegister &System::settings()
 {
@@ -1670,8 +1567,8 @@ void System::startFrame()
         d->sampleCache.maybeRunPurge();
     }
 
-    d->sfxLogicOneSoundPerEmitter = sfxOneSoundPerEmitter;
-    d->sfxPurgeLogical();
+    d->sfxLogicalSoundOnePerEmitter = sfxOneSoundPerEmitter;
+    d->sfxPurgeLogicalSounds();
 }
 
 void System::endFrame()
@@ -1998,14 +1895,10 @@ dint System::soundVolume() const
     return sfxVolume;
 }
 
-#endif  // __CLIENT__
-
 Ranged System::soundVolumeAttenuationRange() const
 {
     return Ranged(sfxDistMin, sfxDistMax);
 }
-
-#ifdef __CLIENT__
 
 bool System::soundPlaybackAvailable() const
 {
@@ -2030,7 +1923,7 @@ bool System::soundIsPlaying(dint soundId, mobj_t *emitter) const
 {
     // Use the logic sound hash to determine whether the referenced sound is being
     // played currently. We don't care whether its audible or not.
-    return logicalIsPlaying(soundId, emitter);
+    return logicalSoundIsPlaying(soundId, emitter);
 
 #if 0
     // Use the sound channels to determine whether the referenced sound is actually
@@ -2162,22 +2055,20 @@ void System::allowSoundRefresh(bool allow)
     });
 }
 
-#endif  // __CLIENT__
-
-void System::clearAllLogical()
+void System::clearAllLogicalSounds()
 {
     LOG_AS("audio::System");
-    d->sfxClearLogical();
+    d->sfxClearLogicalSounds();
 }
 
-bool System::logicalIsPlaying(dint soundId, mobj_t *emitter) const
+bool System::logicalSoundIsPlaying(dint soundId, mobj_t *emitter) const
 {
     LOG_AS("audio::System");
     duint const nowTime = Timer_RealMilliseconds();
     if(soundId)
     {
-        auto it = d->sfxLogicHash.constFind(soundId);
-        while(it != d->sfxLogicHash.constEnd() && it.key() == soundId)
+        auto it = d->sfxLogicalSounds.constFind(soundId);
+        while(it != d->sfxLogicalSounds.constEnd() && it.key() == soundId)
         {
             LogicSound const &lsound = *it.value();
             if(lsound.emitter == emitter && lsound.isPlaying(nowTime))
@@ -2189,8 +2080,8 @@ bool System::logicalIsPlaying(dint soundId, mobj_t *emitter) const
     else if(emitter)
     {
         // Check if the emitter is playing any sound.
-        auto it = d->sfxLogicHash.constBegin();
-        while(it != d->sfxLogicHash.constEnd())
+        auto it = d->sfxLogicalSounds.constBegin();
+        while(it != d->sfxLogicalSounds.constEnd())
         {
             LogicSound const &lsound = *it.value();
             if(lsound.emitter == emitter && lsound.isPlaying(nowTime))
@@ -2202,11 +2093,11 @@ bool System::logicalIsPlaying(dint soundId, mobj_t *emitter) const
     return false;
 }
 
-dint System::stopLogical(dint soundId, mobj_t *emitter)
+dint System::stopLogicalSound(dint soundId, mobj_t *emitter)
 {
     LOG_AS("audio::System");
     dint numStopped = 0;
-    MutableLogicSoundHashIterator it(d->sfxLogicHash);
+    Instance::MutableLogicalSoundHashIterator it(d->sfxLogicalSounds);
     while(it.hasNext())
     {
         it.next();
@@ -2228,13 +2119,12 @@ dint System::stopLogical(dint soundId, mobj_t *emitter)
     return numStopped;
 }
 
-void System::startLogical(dint soundIdAndFlags, mobj_t *emitter)
+void System::startLogicalSound(dint soundIdAndFlags, mobj_t *emitter)
 {
     LOG_AS("audio::System");
     d->sfxStartLogical(soundIdAndFlags, emitter);
 }
 
-#ifdef __CLIENT__
 void System::worldMapChanged()
 {
     // Update who is listening now.
@@ -2295,7 +2185,6 @@ D_CMD(InspectDriver)
     LOG_WARNING("Unknown audio driver \"%s\"") << driverId;
     return false;
 }
-#endif
 
 /**
  * Console command for playing a (local) sound effect.
@@ -2355,8 +2244,6 @@ D_CMD(PlaySound)
 
     return true;
 }
-
-#ifdef __CLIENT__
 
 /**
  * CCmd: Play a music track.
@@ -2434,11 +2321,9 @@ static void musicMidiFontChanged()
 {
     System::get().updateMusicMidiFont();
 }
-#endif
 
 void System::consoleRegister()  // static
 {
-#ifdef __CLIENT__
     // Drivers:
     C_CMD("listaudiodrivers",   nullptr, ListDrivers);
     C_CMD("inspectaudiodriver", "s",     InspectDriver);
@@ -2446,9 +2331,7 @@ void System::consoleRegister()  // static
     // Sound effects:
     C_VAR_INT     ("sound-16bit",         &sfx16Bit,              0, 0, 1);
     C_VAR_INT     ("sound-3d",            &sfx3D,                 0, 0, 1);
-#endif
     C_VAR_BYTE    ("sound-overlap-stop",  &sfxOneSoundPerEmitter, 0, 0, 1);
-#ifdef __CLIENT__
     C_VAR_INT     ("sound-rate",          &sfxSampleRate,         0, 11025, 44100);
     C_VAR_FLOAT2  ("sound-reverb-volume", &sfxReverbStrength,     0, 0, 1.5f, sfxReverbStrengthChanged);
     C_VAR_INT     ("sound-volume",        &sfxVolume,             0, 0, 255);
@@ -2466,7 +2349,6 @@ void System::consoleRegister()  // static
 
     // Debug:
     C_VAR_INT     ("sound-info",          &showSoundInfo,         0, 0, 1);
-#endif
 }
 
 }  // namespace audio
@@ -2477,32 +2359,21 @@ using namespace audio;
 
 void S_PauseMusic(dd_bool paused)
 {
-#ifdef __CLIENT__
     audio::System::get().pauseMusic(paused);
-#else
-    DENG2_UNUSED(paused);
-#endif
 }
 
 void S_StopMusic()
 {
-#ifdef __CLIENT__
     audio::System::get().stopMusic();
-#endif
 }
 
 dd_bool S_StartMusicNum(dint musicId, dd_bool looped)
 {
-#ifdef __CLIENT__
     if(musicId >= 0 && musicId < ::defs.musics.size())
     {
         return audio::System::get().playMusic(::defs.musics[musicId], looped);
     }
     return false;
-#else
-    DENG2_UNUSED2(musicId, looped);
-    return false;
-#endif
 }
 
 dd_bool S_StartMusic(char const *musicId, dd_bool looped)
@@ -2524,13 +2395,7 @@ dd_bool S_StartMusic(char const *musicId, dd_bool looped)
 
 dd_bool S_SoundIsPlaying(dint soundId, mobj_t *emitter)
 {
-#ifdef __CLIENT__
     return (dd_bool) audio::System::get().soundIsPlaying(soundId, emitter);
-#else
-    // Use the logic sound hash to determine whether the referenced sound is being
-    // played currently. We don't care whether its audible or not.
-    return (dd_bool) audio::System::get().logicalIsPlaying(soundId, emitter);
-#endif
 }
 
 /**
@@ -2593,19 +2458,10 @@ static void stopSound(dint soundId, mobj_t *emitter, dint flags)
     }
 
     // No special stop behavior.
-#ifdef __CLIENT__
     audio::System::get().channels().stopWithLowerPriority(soundId, emitter, -1);
-#endif
 
     // Notify the LSM.
-    if(audio::System::get().stopLogical(soundId, emitter))
-    {
-#ifdef __SERVER__
-        // In netgames, the server is responsible for telling clients when to stop sounds.
-        // The LSM will tell us if a sound was stopped somewhere in the world.
-        Sv_StopSound(soundId, emitter);
-#endif
-    }
+    audio::System::get().stopLogicalSound(soundId, emitter);
 }
 
 void S_StopSound2(dint soundId, mobj_t *emitter, dint flags)
@@ -2621,12 +2477,7 @@ void S_StopSound(dint soundId, mobj_t *emitter)
 dint S_LocalSoundAtVolumeFrom(dint soundIdAndFlags, mobj_t *emitter, coord_t *origin,
     dfloat volume)
 {
-#ifdef __CLIENT__
     return audio::System::get().playSound(soundIdAndFlags, emitter, origin, volume);
-#else
-    DENG2_UNUSED4(soundIdAndFlags, emitter, origin, volume);
-    return false;
-#endif
 }
 
 dint S_LocalSoundAtVolume(dint soundIdAndFlags, mobj_t *emitter, dfloat volume)
@@ -2646,48 +2497,29 @@ dint S_LocalSoundFrom(dint soundIdAndFlags, coord_t *origin)
 
 dint S_StartSound(dint soundIdAndFlags, mobj_t *emitter)
 {
-#ifdef __SERVER__
-    // The sound is audible to everybody.
-    Sv_Sound(soundIdAndFlags, emitter, SVSF_TO_ALL);
-#endif
-    audio::System::get().startLogical(soundIdAndFlags, emitter);
-
+    audio::System::get().startLogicalSound(soundIdAndFlags, emitter);
     return S_LocalSound(soundIdAndFlags, emitter);
 }
 
 dint S_StartSoundEx(dint soundIdAndFlags, mobj_t *emitter)
 {
-#ifdef __SERVER__
-    Sv_Sound(soundIdAndFlags, emitter, SVSF_TO_ALL | SVSF_EXCLUDE_ORIGIN);
-#endif
-    audio::System::get().startLogical(soundIdAndFlags, emitter);
-
+    audio::System::get().startLogicalSound(soundIdAndFlags, emitter);
     return S_LocalSound(soundIdAndFlags, emitter);
 }
 
 dint S_StartSoundAtVolume(dint soundIdAndFlags, mobj_t *emitter, dfloat volume)
 {
-#ifdef __SERVER__
-    Sv_SoundAtVolume(soundIdAndFlags, emitter, volume, SVSF_TO_ALL);
-#endif
-    audio::System::get().startLogical(soundIdAndFlags, emitter);
-
-    // The sound is audible to everybody.
+    audio::System::get().startLogicalSound(soundIdAndFlags, emitter);
     return S_LocalSoundAtVolume(soundIdAndFlags, emitter, volume);
 }
 
 dint S_ConsoleSound(dint soundIdAndFlags, mobj_t *emitter, dint targetConsole)
 {
-#ifdef __SERVER__
-    Sv_Sound(soundIdAndFlags, emitter, targetConsole);
-#endif
-
     // If it's for us, we can hear it.
     if(targetConsole == consolePlayer)
     {
         S_LocalSound(soundIdAndFlags, emitter);
     }
-
     return true;
 }
 

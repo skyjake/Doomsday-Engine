@@ -120,6 +120,7 @@
 #  include "network/net_main.h"
 
 #  include "server/sv_def.h"
+#  include "server/sv_pool.h"
 #endif
 
 using namespace de;
@@ -566,20 +567,6 @@ void App_AbnormalShutdown(char const *message)
 
     // Get outta here.
     exit(1);
-}
-
-::audio::System &App_AudioSystem()
-{
-    if(App::appExists())
-    {
-#ifdef __CLIENT__
-        return ClientApp::audioSystem();
-#endif
-#ifdef __SERVER__
-        return ServerApp::audioSystem();
-#endif
-    }
-    throw Error("App_AudioSystem", "App not yet initialized");
 }
 
 ResourceSystem &App_ResourceSystem()
@@ -1431,7 +1418,11 @@ bool App_ChangeGame(Game &game, bool allowReload)
         App_ResourceSystem().clearAllAnimGroups();
         App_ResourceSystem().clearAllColorPalettes();
 
-        App_AudioSystem().clearAllLogical();
+#ifdef __CLIENT__
+        ClientApp::audioSystem().clearAllLogicalSounds();
+#else
+        ServerApp::app().clearAllLogicalSounds();
+#endif
 
         Con_ClearDatabases();
 
@@ -2220,7 +2211,7 @@ void DD_UpdateEngineState()
 
 #ifdef __CLIENT__
     // Stop playing sounds and music.
-    App_AudioSystem().reset();
+    ClientApp::audioSystem().reset();
 
     BusyMode_FreezeGameForBusyMode();
     GL_SetFilter(false);
@@ -3148,9 +3139,9 @@ static void consoleRegister()
     Con_Register();
     Games::consoleRegister();
     DH_Register();
+#ifdef __CLIENT__
     ::audio::System::consoleRegister();
 
-#ifdef __CLIENT__
     C_CMD("clear",           "", Clear);
     C_CMD("update",          "", CheckForUpdates);
     C_CMD("updateandnotify", "", CheckForUpdatesAndNotify);

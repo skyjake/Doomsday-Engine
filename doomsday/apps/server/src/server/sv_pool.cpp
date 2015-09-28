@@ -24,18 +24,19 @@
 #include "de_base.h"
 #include "server/sv_pool.h"
 
-#include <cmath>
-#include <de/mathutil.h>
-#include <de/timer.h>
-#include <de/vector1.h>
-#include "def_main.h"  // Def_SameStateSequence
-
 #include "network/net_main.h"
 
 #include "world/p_object.h"
 #include "world/p_players.h"
 #include "world/thinkers.h"
 #include "Sector"
+
+#include "serverapp.h"
+#include "def_main.h"  // Def_SameStateSequence
+#include <de/mathutil.h>
+#include <de/timer.h>
+#include <de/vector1.h>
+#include <cmath>
 
 using namespace de;
 
@@ -1724,7 +1725,7 @@ ddouble Sv_GetMaxSoundDistance(sounddelta_t const *delta)
         return DDMAXFLOAT;
     }
 
-    return volume * App_AudioSystem().soundVolumeAttenuationRange().end;
+    return volume * ServerApp::app().soundVolumeAttenuationRange().end;
 }
 
 /**

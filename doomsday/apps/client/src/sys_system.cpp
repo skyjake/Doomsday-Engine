@@ -91,7 +91,7 @@ void Sys_Init()
     LOG_VERBOSE("Setting up platform state...");
 
 #ifdef __CLIENT__
-    App_AudioSystem().initPlayback();
+    ClientApp::audioSystem().initPlayback();
 #endif
 
 #ifdef DENG_CATCH_SIGNALS
@@ -138,7 +138,7 @@ void Sys_Shutdown()
 #ifdef __CLIENT__
     // Let's shut down sound first, so Windows' HD-hogging doesn't jam
     // the MUS player (would produce horrible bursts of notes).
-    App_AudioSystem().deinitPlayback();
+    ClientApp::audioSystem().deinitPlayback();
 
     GL_Shutdown();
     if(ClientApp::hasInputSystem())

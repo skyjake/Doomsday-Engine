@@ -24,9 +24,12 @@
 #include "def_main.h"  // Def_Get*()
 #ifdef __CLIENT__
 #  include "audio/channel.h"
+#  include "audio/system.h"
 #endif
-#include "audio/system.h"
 
+#ifdef __CLIENT__
+#  include "clientapp.h"
+#endif
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/resource/wav.h>
 #include <de/memory.h>
@@ -248,12 +251,14 @@ static void configureSample(sfxsample_t &smp, void const * /*data*/, duint size,
     smp.numSamples *= scale;
     smp.size       *= scale;
 
+#ifdef __CLIENT__
     // Resample to 16bit?
     if(::sfxBits == 16 && smp.bytesPer == 1)
     {
         smp.bytesPer  = 2;
         smp.size     *= 2;
     }
+#endif
 }
 
 DENG2_PIMPL_NOREF(Sample)
@@ -389,7 +394,7 @@ DENG2_PIMPL(SampleCache)
     void removeCacheItem(CacheItem &item)
     {
 #ifdef __CLIENT__
-        App_AudioSystem().allowSoundRefresh(false);
+        ClientApp::audioSystem().allowSoundRefresh(false);
 #endif
 
         notifyRemove(item);
@@ -408,7 +413,7 @@ DENG2_PIMPL(SampleCache)
             item.prev->next = item.next;
 
 #ifdef __CLIENT__
-        App_AudioSystem().allowSoundRefresh();
+        ClientApp::audioSystem().allowSoundRefresh();
 #endif
 
         // Free all memory allocated for the item.
@@ -428,15 +433,15 @@ DENG2_PIMPL(SampleCache)
      * Converts the sample @a data and writes it to the (M_Malloc() allocated) buffer
      * (ownership is given to the sfxsample_t).
      *
-     * @param soundId       Id number of the sound sample.
-     * @param data          Actual sample data.
-     * @param size          Size in bytes.
-     * @param numSamples    Number of samples.
-     * @param bytesPer      Bytes per sample (1 or 2).
-     * @param rate          Samples per second.
-     * @param group         Exclusion group (0, if none).
+     * @param soundId     Id number of the sound sample.
+     * @param data        Actual sample data.
+     * @param size        Size in bytes.
+     * @param numSamples  Number of samples.
+     * @param bytesPer    Bytes per sample (1 or 2).
+     * @param rate        Samples per second.
+     * @param group       Exclusion group (0, if none).
      *
-     * @returns             Ptr to the cached sample. Always valid.
+     * @returns  The cached sample.
      */
     CacheItem &insert(dint soundId, void const *data, duint size, dint numSamples,
         dint bytesPer, dint rate, dint group)
@@ -450,7 +455,8 @@ DENG2_PIMPL(SampleCache)
         {
             // A sample is already in the cache.
             // If the existing sample is in the same format - use it.
-            if(cached->bytesPer * 8 == ::sfxBits && cached->rate == ::sfxRate)
+            if(item->sample().bytesPer == cached->bytesPer &&
+               item->sample().rate     == cached->rate)
                 return *item;
 
             // Sample format differs - uncache it (we'll reuse this CacheItem).
@@ -521,7 +527,7 @@ void SampleCache::maybeRunPurge()
     // If no interface for SFX playback is available then we have nothing to do.
     // The assumption being that a manual clear is performed if/when SFX playback
     // availability changes.
-    if(!App_AudioSystem().soundPlaybackAvailable())
+    if(!ClientApp::audioSystem().soundPlaybackAvailable())
         return;
 #endif
 
@@ -565,7 +571,7 @@ void SampleCache::maybeRunPurge()
         {
 #ifdef __CLIENT__
             // If the sample is playing we won't remove it now.
-            if(App_AudioSystem().channels().isPlaying(it->sample().soundId))
+            if(ClientApp::audioSystem().channels().isPlaying(it->sample().soundId))
                 continue;
 #endif
 
@@ -617,7 +623,7 @@ Sample *SampleCache::cache(dint soundId)
     // If no interface for SFX playback is available there is no benefit to caching
     // sound samples that won't be heard.
     /// @todo audio::System should handle this by restricting access. -ds
-    if(!App_AudioSystem().soundPlaybackAvailable())
+    if(!ClientApp::audioSystem().soundPlaybackAvailable())
         return nullptr;
 #endif
 
