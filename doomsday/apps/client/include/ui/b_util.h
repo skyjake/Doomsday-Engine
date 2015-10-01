@@ -56,7 +56,7 @@ bool B_CheckAxisPosition(Binding::ControlTest test, float testPos, float pos);
  * @param localNum  Local player number.
  * @param context   Relevant binding context, if any (may be @c nullptr).
  */
-bool B_CheckCondition(de::Record const *cond, int localNum, BindContext *context);
+bool B_CheckCondition(de::Record const *cond, int localNum, BindContext const *context);
 
 bool B_EqualConditions(de::Record const &a, de::Record const &b);
 
@@ -72,7 +72,7 @@ bool B_ParseJoystickTypeAndId(ddeventtype_t &type, int &id, int deviceId, char c
 
 de::String B_ControlDescToString(int deviceId, ddeventtype_t type, int id);
 
-void B_EvaluateImpulseBindings(BindContext *context, int localNum, int impulseId,
+void B_EvaluateImpulseBindings(BindContext const *context, int localNum, int impulseId,
     float *pos, float *relativeOffset, bool allowTriggered);
 
 char const *B_ShortNameForKey(int ddKey, bool forceLowercase = true);

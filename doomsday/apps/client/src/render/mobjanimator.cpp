@@ -320,6 +320,8 @@ DENG2_PIMPL(MobjAnimator)
         {
             anim.clock.reset(new Scheduler::Clock(*anim.timeline, &names));
         }
+        applyFlagOperation(anim.flags, Sequence::Flags(Sequence::ClampToDuration),
+                           anim.looping == Sequence::Looping? UnsetFlags : SetFlags);
         return anim;
     }
 };
@@ -466,7 +468,13 @@ void MobjAnimator::advanceTime(TimeDelta const &elapsed)
         {
             String const node = anim.node;
 
-            stop(i--); // `anim` gets deleted
+            // Keep the last animation intact so there's something to update the
+            // model state with (ModelDrawable being shared with multiple objects,
+            // so each animator needs to retain its bone transformations).
+            if(count() > 1)
+            {
+                stop(i--); // `anim` gets deleted
+            }
 
             // Start a previously triggered pending animation.
             auto &pending = d->pendingAnimForNode;

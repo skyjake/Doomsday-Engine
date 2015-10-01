@@ -1,5 +1,5 @@
-group vr {
-    group oculusrift {
+vr {
+    oculusrift {
         shader barrel {
             vertex = "
                 #version 120

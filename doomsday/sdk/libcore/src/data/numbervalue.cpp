@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/NumberValue"
@@ -90,7 +90,7 @@ dint NumberValue::compare(Value const &value) const
             return 0;
         }
         return cmp(_value, other->_value);
-    }    
+    }
     return Value::compare(value);
 }
 
@@ -106,7 +106,7 @@ void NumberValue::sum(Value const &value)
     {
         throw ArithmeticError("NumberValue::sum", "Values cannot be summed");
     }
-    
+
     _value += other->_value;
 }
 
@@ -115,9 +115,9 @@ void NumberValue::subtract(Value const &value)
     NumberValue const *other = dynamic_cast<NumberValue const *>(&value);
     if(!other)
     {
-        throw ArithmeticError("Value::subtract", "Value cannot be subtracted from");    
+        throw ArithmeticError("Value::subtract", "Value cannot be subtracted from");
     }
-    
+
     _value -= other->_value;
 }
 
@@ -128,10 +128,10 @@ void NumberValue::divide(Value const &divisor)
     {
         throw ArithmeticError("NumberValue::divide", "Value cannot be divided");
     }
-    
+
     _value /= other->_value;
 }
- 
+
 void NumberValue::multiply(Value const &value)
 {
     NumberValue const *other = dynamic_cast<NumberValue const *>(&value);
@@ -139,7 +139,7 @@ void NumberValue::multiply(Value const &value)
     {
         throw ArithmeticError("NumberValue::multiply", "Value cannot be multiplied");
     }
-    
+
     _value *= other->_value;
 }
 
@@ -173,7 +173,7 @@ void NumberValue::operator << (Reader &from)
     from >> id;
     if(id != NUMBER)
     {
-        /// @throw DeserializationError The identifier that species the type of the 
+        /// @throw DeserializationError The identifier that species the type of the
         /// serialized value was invalid.
         throw DeserializationError("NumberValue::operator <<", "Invalid ID");
     }
@@ -182,6 +182,11 @@ void NumberValue::operator << (Reader &from)
 
     _semantic = SemanticHints((flags & SEMANTIC_BOOLEAN? Boolean : 0) |
                               (flags & SEMANTIC_HEX?     Hex : 0));
+}
+
+Value::Text NumberValue::typeId() const
+{
+    return "Number";
 }
 
 } // namespace de

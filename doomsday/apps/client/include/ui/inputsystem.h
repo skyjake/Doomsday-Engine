@@ -29,6 +29,7 @@
 
 class BindContext;
 class InputDevice;
+class ControllerPresets;
 
 #define DEFAULT_BINDING_CONTEXT_NAME    "game"
 #define CONSOLE_BINDING_CONTEXT_NAME    "console"
@@ -211,6 +212,13 @@ public: // Binding (context) management --------------------------------------
      */
     void removeAllBindings();
 
+    /**
+     * Remove all bindings of a particular device in all contexts.
+     *
+     * @param deviceId  Device identifier.
+     */
+    void removeBindingsForDevice(int deviceId);
+
     // ---
 
     /**
@@ -263,6 +271,8 @@ public: // Binding (context) management --------------------------------------
      * Returns the total number of binding contexts in the system.
      */
     int contextCount() const;
+
+    ControllerPresets &gameControllerPresets();
 
 public:
     /**

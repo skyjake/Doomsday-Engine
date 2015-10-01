@@ -53,6 +53,9 @@ struct Range
     inline Type wrap(Type const &i) const {
         return de::wrap(i, start, end);
     }
+    inline Type random() const {
+        return start + frand() * size();
+    }
     inline Range &operator |= (Type const &value) {
         start = de::min(start, value);
         end   = de::max(end,   value);

@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/GridPopupWidget"
@@ -72,6 +72,14 @@ GridPopupWidget &GridPopupWidget::operator << (GuiWidget *widget)
 GridPopupWidget &GridPopupWidget::operator << (Rule const &rule)
 {
     d->layout << rule;
+    return *this;
+}
+
+GridPopupWidget &GridPopupWidget::addSpanning(GuiWidget *widget, int cellSpan)
+{
+    d->container->add(widget);
+    d->layout.setCellAlignment(Vector2i(0, d->layout.gridSize().y), ui::AlignLeft);
+    d->layout.append(*widget, cellSpan);
     return *this;
 }
 

@@ -224,7 +224,7 @@ void R_ProjectSprite(mobj_t &mob)
     defn::Sprite sprite(*spriteRec);
     try
     {
-        Record const &spriteView = sprite.nearestView(mob.angle, R_ViewPointToAngle(mob.origin), !!mf);
+        Record const &spriteView = sprite.nearestView(mob.angle, R_ViewPointToAngle(mob.origin), !!hasModel);
         mat      = resSys().materialPtr(de::Uri(spriteView.gets("material"), RC_NULL));
         matFlipS = spriteView.getb("mirrorX");
     }
@@ -251,7 +251,7 @@ void R_ProjectSprite(mobj_t &mob)
 
     bool const fullbright = ((mob.state->flags & STF_FULLBRIGHT) != 0 || levelFullBright);
     // Align to the view plane? (Means scaling down Z with models)
-    bool const viewAlign  = (!mf && ((mob.ddFlags & DDMF_VIEWALIGN) || alwaysAlign == 1))
+    bool const viewAlign  = (!hasModel && ((mob.ddFlags & DDMF_VIEWALIGN) || alwaysAlign == 1))
                             || alwaysAlign == 3;
 
     // Perform visibility checking by projecting a view-aligned line segment
@@ -259,8 +259,8 @@ void R_ProjectSprite(mobj_t &mob)
     // been clipped away according to the 360 degree angle clipper.
     coord_t const visWidth = Mobj_VisualRadius(mob) * 2;  /// @todo ignorant of rotation...
     Vector2d v1, v2;
-    R_ProjectViewRelativeLine2D(moPos, mf || viewAlign, visWidth,
-                                (mf? 0 : coord_t(-tex->base().origin().x) - (visWidth / 2.0f)),
+    R_ProjectViewRelativeLine2D(moPos, hasModel || viewAlign, visWidth,
+                                (hasModel? 0 : coord_t(-tex->base().origin().x) - (visWidth / 2.0f)),
                                 v1, v2);
 
     // Not visible?

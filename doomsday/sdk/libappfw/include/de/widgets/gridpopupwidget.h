@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBAPPFW_GRIDPOPUPWIDGET_H
@@ -64,6 +64,16 @@ public:
      * @return Reference to this widget (fluent interface).
      */
     GridPopupWidget &operator << (Rule const &rule);
+
+    /**
+     * Adds a widget to the popup grid, spanning more than one columns.
+     * The widget becomes a child of the popup's container and is added
+     * to the grid layout as the next item.
+     *
+     * @param widget    Widget to add
+     * @param cellSpan  Number of columns to span.
+     */
+    GridPopupWidget &addSpanning(GuiWidget *widget, int cellSpan = 2);
 
     /**
      * Finalizes the layout of the popup. Call this after all the layout items

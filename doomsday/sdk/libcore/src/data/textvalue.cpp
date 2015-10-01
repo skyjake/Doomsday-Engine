@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/TextValue"
@@ -94,7 +94,7 @@ void TextValue::sum(Value const &value)
     {
         throw ArithmeticError("TextValue::sum", "Value cannot be summed");
     }
-    
+
     _value += other->_value;
 }
 
@@ -105,9 +105,9 @@ void TextValue::multiply(Value const &value)
     {
         throw ArithmeticError("Value::multiply", "Value cannot be multiplied");
     }
-    
+
     ddouble factor = other->asNumber();
-    
+
     if(factor <= 0)
     {
         _value.clear();
@@ -140,7 +140,7 @@ void TextValue::divide(Value const &value)
 void TextValue::modulo(Value const &value)
 {
     list<Value const *> args;
-    
+
     ArrayValue const *array = dynamic_cast<ArrayValue const *>(&value);
     if(array)
     {
@@ -155,7 +155,7 @@ void TextValue::modulo(Value const &value)
         // Just one.
         args.push_back(&value);
     }
-    
+
     _value = substitutePlaceholders(_value, args);
 }
 
@@ -164,11 +164,11 @@ String TextValue::substitutePlaceholders(String const &pattern, const std::list<
     QString result;
     QTextStream out(&result);
     list<Value const *>::const_iterator arg = args.begin();
-    
+
     for(String::const_iterator i = pattern.begin(); i != pattern.end(); ++i)
     {
         QChar ch = *i;
-        
+
         if(ch == '%')
         {
             if(arg == args.end())
@@ -176,7 +176,7 @@ String TextValue::substitutePlaceholders(String const &pattern, const std::list<
                 throw IllegalPatternError("TextValue::replacePlaceholders",
                     "Too few substitution values");
             }
-            
+
             out << String::patternFormat(i, pattern.end(), **arg);
             ++arg;
         }
@@ -185,7 +185,7 @@ String TextValue::substitutePlaceholders(String const &pattern, const std::list<
             out << ch;
         }
     }
-    
+
     return result;
 }
 
@@ -208,4 +208,9 @@ void TextValue::operator << (Reader &from)
 void TextValue::setValue(String const &text)
 {
     _value = text;
+}
+
+Value::Text TextValue::typeId() const
+{
+    return "Text";
 }

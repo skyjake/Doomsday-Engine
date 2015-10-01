@@ -1,7 +1,7 @@
-group fx {
+fx {
     # Post-processing shaders need to have uFadeInOut (0..1) for
     # fading the effect in/out.
-    group post {
+    post {
         shader monochrome {
             vertex = "
                 uniform highp mat4 uMvpMatrix;

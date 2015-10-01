@@ -77,6 +77,14 @@ public:
     virtual Value *duplicateAsReference() const;
 
     /**
+     * Returns the type of the value as a text string identifier. For instance, for
+     * a TextValue this would be 'Text'.
+     *
+     * @return Type identifier.
+     */
+    virtual Text typeId() const = 0;
+
+    /**
      * Convert the value to a number.  Implementing this is
      * optional.  The default implementation will raise an
      * exception.

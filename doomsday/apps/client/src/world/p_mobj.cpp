@@ -973,6 +973,9 @@ D_CMD(InspectMobj)
             << mob->angle
             << Vector3d(mob->origin).asText()
             << Vector3d(mob->mom).asText();
+#ifdef __CLIENT__
+    LOG_MAP_MSG("VisAngle:%x") << mob->visAngle;
+#endif
     LOG_MAP_MSG("FloorZ:%f CeilingZ:%f") << mob->floorZ << mob->ceilingZ;
     if(SectorCluster *cluster = Mobj_ClusterPtr(*mob))
     {

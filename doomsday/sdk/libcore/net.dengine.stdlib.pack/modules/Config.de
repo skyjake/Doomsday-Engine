@@ -39,7 +39,8 @@ def setDefaults(d = None)
         d = Config
     end
 
-    d.importPath = ['', '/modules']
+    # User's Doomsday Script import override paths (checked before packages).
+    d.importPath = ['']
 
     # Log parameters.
     record d.log

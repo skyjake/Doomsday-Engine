@@ -89,10 +89,19 @@ public:
         class LIBGUI_PUBLIC OngoingSequence
         {
         public:
+            enum Flag
+            {
+                ClampToDuration = 0x1,
+                Defaults = 0
+            };
+            Q_DECLARE_FLAGS(Flags, Flag)
+
+        public:
             int animId;         ///< Which animation to use in a ModelDrawable.
             ddouble time;       ///< Animation time.
             ddouble duration;   ///< Animation duration.
             String node;        ///< Target node.
+            Flags flags;
 
         public:
             virtual ~OngoingSequence() {}
@@ -390,6 +399,8 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(ModelDrawable::Animator::OngoingSequence::Flags)
 
 } // namespace de
 

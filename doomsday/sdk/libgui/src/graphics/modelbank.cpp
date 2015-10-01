@@ -46,7 +46,9 @@ DENG2_PIMPL(ModelBank)
     Instance(Public *i) : Base(i) {}
 };
 
-ModelBank::ModelBank() : Bank("ModelBank", BackgroundThread)
+ModelBank::ModelBank()
+    : Bank("ModelBank", BackgroundThread)
+    , d(new Instance(this))
 {}
 
 void ModelBank::add(DotPath const &id, String const &sourcePath)

@@ -1,5 +1,5 @@
-group debug {
-    group textured {    
+debug {
+    textured {    
         # Visualize alpha information.
         shader alpha {
             vertex = "
