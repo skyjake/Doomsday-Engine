@@ -229,7 +229,7 @@ state_t *Def_GetState(int num);
  *
  * @return  Sound info (from definitions).
  */
-sfxinfo_t *Def_GetSoundInfo(int soundId, float *freq, float *volume);
+sfxinfo_t *Def_GetSoundInfo(int soundId, float *freq = nullptr, float *volume = nullptr);
 
 /**
  * Returns @c true if the given @a soundId is defined as a repeating sound.

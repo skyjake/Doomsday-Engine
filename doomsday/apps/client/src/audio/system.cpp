@@ -1959,7 +1959,7 @@ bool System::playSound(dint soundIdAndFlags, mobj_t *emitter, coord_t const *ori
 
     dfloat freq = 1;
     // This is the sound we're going to play.
-    sfxinfo_t *info = Def_GetSoundInfo(soundId, &freq, &volume);
+    sfxinfo_t const *info = Def_GetSoundInfo(soundId, &freq, &volume);
     if(!info) return false;  // Hmm? This ID is not defined.
 
     bool const isRepeating = (soundIdAndFlags & DDSF_REPEAT) || Def_SoundIsRepeating(soundId);

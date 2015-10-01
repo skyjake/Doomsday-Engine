@@ -68,6 +68,14 @@ typedef struct wav_format_s {
 #define WReadAndAdvance(pByte, pDest, length) \
     { memcpy(pDest, pByte, length); pByte += length; }
 
+dd_bool WAV_Recognize(de::File1 &file)
+{
+    if(file.size() <= 8) return false;
+    uint8_t hdr[12];
+    file.read(hdr, 0, 12);
+    return WAV_CheckFormat((char *)hdr);
+}
+
 int WAV_CheckFormat(const char* data)
 {
     return !strncmp(data, "RIFF", 4) && !strncmp(data + 8, "WAVE", 4);

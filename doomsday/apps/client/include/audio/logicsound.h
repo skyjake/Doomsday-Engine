@@ -21,6 +21,10 @@
 #ifndef AUDIO_LOGICSOUND_H
 #define AUDIO_LOGICSOUND_H
 
+#ifdef __SERVER__
+#  error "audio" is not available in a SERVER build
+#endif
+
 namespace audio {
 
 /**

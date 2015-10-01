@@ -1,7 +1,7 @@
-/** @file serverapp.cpp  The server application.
+/** @file serverapp.cpp  Server application (Singleton).
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,16 +19,13 @@
 
 #define DENG_NO_API_MACROS_SOUND
 
-#include "de_platform.h"
+#include "de_base.h"
 #include "serverapp.h"
 
 #include "serverplayer.h"
 #include "server/sv_sound.h"
 
-#include "api_audiod_sfx.h"    // sfxsample_t
 #include "api_sound.h"
-#include "audio/logicsound.h"
-#include "audio/samplecache.h"
 
 #include "api_map.h"
 #include "world/p_object.h"
@@ -36,26 +33,31 @@
 #include "Sector"
 
 #include "dd_main.h"
-#include "dd_def.h"
-#include "dd_loop.h"
-#include "sys_system.h"
-#include "def_main.h"
 #if WIN32
 #  include "dd_winit.h"
 #elif UNIX
 #  include "dd_uinit.h"
 #endif
-#include <de/Log>
+#include "dd_def.h"
+#include "dd_loop.h"
+#include "def_main.h"
+#include "sys_system.h"
+#include <doomsday/filesys/fs_main.h>
+#include <doomsday/resource/wav.h>
 #include <de/Error>
 #include <de/Garbage>
+#include <de/Log>
 #include <de/c_wrapper.h>
+#include <de/memoryzone.h>
 #include <de/timer.h>
 #include <QDebug>
+#include <QHash>
 #include <QMultiHash>
 #include <QMutableHashIterator>
 #include <QNetworkProxyFactory>
 #include <QtAlgorithms>
 #include <cstdlib>
+#include <cstring>
 
 using namespace de;
 
@@ -66,6 +68,37 @@ static void handleAppTerminate(char const *msg)
     qFatal("Application terminated due to exception:\n%s\n", msg);
 }
 
+struct WaveformData
+{
+    dint soundId    = 0;  ///< Id number of the sound.
+    dint rate       = 0;  ///< Samples per second.
+    dint numSamples = 0;  ///< Number of samples.
+    dint bytesPer   = 0;  ///< Bytes per sample (1 or 2).
+
+    inline bool isRepeating() const {
+        return Def_SoundIsRepeating(soundId);
+    }
+
+    inline dsize size() const {
+        return bytesPer * numSamples;
+    }
+};
+
+/**
+ * LogicSounds are used to track currently playing sounds on a logical level (irrespective
+ * of whether playback is available, or if the sounds are actually audible to anyone).
+ */
+struct LogicSound
+{
+    bool repeat     = false;
+    mobj_t *emitter = nullptr;
+    duint endTime   = 0;
+
+    bool inline isPlaying(duint nowTime) const {
+        return (repeat || endTime > nowTime);
+    }
+};
+
 DENG2_PIMPL(ServerApp)
 , DENG2_OBSERVES(Plugins, PublishAPI)
 {
@@ -74,10 +107,12 @@ DENG2_PIMPL(ServerApp)
     WorldSystem worldSys;
     InFineSystem infineSys;
 
-    typedef QMultiHash<dint /*key: soundId*/, audio::LogicSound *> LogicalSoundHash;
-    typedef QMutableHashIterator<dint /*key: soundId*/, audio::LogicSound *> MutableLogicalSoundHashIterator;
+    typedef QMultiHash<dint /*key: soundId*/, LogicSound *> LogicalSoundHash;
+    typedef QMutableHashIterator<dint /*key: soundId*/, LogicSound *> MutableLogicalSoundHashIterator;
     LogicalSoundHash logicalSounds;
-    audio::SampleCache sampleCache;
+
+    typedef QHash<dint /*(key: soundId*/, WaveformData> WaveformDataHash;
+    WaveformDataHash waveformData;
 
     Instance(Public *i) : Base(i)
     {
@@ -97,6 +132,168 @@ DENG2_PIMPL(ServerApp)
     {
         qDeleteAll(logicalSounds);
         logicalSounds.clear();
+    }
+
+    /**
+     * Lookup WaveformData for a sound sample associated with @a soundId.
+     *
+     * @param soundId  Unique sound identifier.
+     *
+     * @return  Associated WaveformData if found; otherwise @c nullptr.
+     */
+    WaveformData const *tryFindWaveformData(dint soundId)
+    {
+        // Lookup info for this sound.
+        sfxinfo_t const *info = Def_GetSoundInfo(soundId);
+        if(!info)
+        {
+            // Ignore invalid sound IDs.
+            if(soundId > 0)
+            {
+                LOG_AUDIO_WARNING("Ignoring sound id:%i (missing sfxinfo_t)") << soundId;
+            }
+            return nullptr;
+        }
+
+        // Have we already cached this?
+        auto const existing = waveformData.constFind(soundId);
+        if(existing != waveformData.cend()) return &existing.value();
+
+        // Attempt to cache this now.
+        LOG_AUDIO_VERBOSE("Caching sample '%s' (id:%i)...") << info->id << soundId;
+
+        dint bytesPer   = 0;
+        dint rate       = 0;
+        dint numSamples = 0;
+
+        /**
+         * Figure out where to get the sample data for this sound. It might be from a
+         * data file such as a WAD or external sound resources. The definition and the
+         * configuration settings will help us in making the decision.
+         */
+        bool found = false;
+
+        /// Has an external sound file been defined?
+        /// @note Path is relative to the base path.
+        if(!Str_IsEmpty(&info->external))
+        {
+            String const searchPath = App_BasePath() / String(Str_Text(&info->external));
+
+            // Try loading.
+            if(void *data = WAV_Load(searchPath.toUtf8().constData(), &bytesPer, &rate, &numSamples))
+            {
+                Z_Free(data);
+                found = true;
+                bytesPer /= 8;  // Was returned as bits.
+            }
+        }
+
+        // If external didn't succeed, let's try the default resource dir.
+        if(!found)
+        {
+            /**
+             * If the sound has an invalid lumpname, search external anyway. If the
+             * original sound is from a PWAD, we won't look for an external resource
+             * (probably a custom sound).
+             *
+             * @todo should be a cvar.
+             */
+            if(info->lumpNum < 0 || !App_FileSystem().lump(info->lumpNum).container().hasCustom())
+            {
+                try
+                {
+                    String const foundPath =
+                        App_BasePath() / App_FileSystem().findPath(de::Uri(info->lumpName, RC_SOUND),
+                                                                   RLF_DEFAULT, App_ResourceClass(RC_SOUND));
+
+                    if(void *data = WAV_Load(foundPath.toUtf8().constData(), &bytesPer, &rate, &numSamples))
+                    {
+                        // Loading was successful.
+                        Z_Free(data);
+                        found = true;
+                        bytesPer /= 8;  // Was returned as bits.
+                    }
+                }
+                catch(FS1::NotFoundError const &)
+                {}  // Ignore this error.
+            }
+        }
+
+        // No sample loaded yet?
+        if(!found)
+        {
+            // Try loading from the lump.
+            if(info->lumpNum < 0)
+            {
+                LOG_AUDIO_WARNING("Failed to locate lump resource '%s' for sample '%s'")
+                    << info->lumpName << info->id;
+                return nullptr;
+            }
+
+            File1 &lump = App_FileSystem().lump(info->lumpNum);
+            if(WAV_Recognize(lump))
+            {
+                // Load as WAV, then.
+                if(void *data = WAV_MemoryLoad((byte const *) lump.cache(), lump.size(),
+                                                &bytesPer, &rate, &numSamples))
+                {
+                    Z_Free(data);
+                    found = true;
+                    bytesPer /= 8;  // Was returned as bits.
+                }
+                lump.unlock();
+            }
+
+            if(!found)
+            {
+                // Abort...
+                LOG_AUDIO_WARNING("Unknown WAV format in lump '%s'") << info->lumpName;
+                return nullptr;
+            }
+        }
+
+        if(found)  // Loaded!
+        {
+            // Insert/replace existing database record for this sound sample.
+            WaveformData rec;
+            rec.soundId    = soundId;
+            rec.rate       = rate;
+            rec.numSamples = numSamples;
+            rec.bytesPer   = bytesPer;
+            return &waveformData.insert(soundId, rec).value();  // A copy is made.
+        }
+
+        // Probably an old-fashioned DOOM sample.
+        if(info->lumpNum >= 0)
+        {
+            File1 /*const &*/lump = App_FileSystem().lump(info->lumpNum);
+            if(lump.size() > 8)
+            {
+                duint8 hdr[8];
+                lump.read(hdr, 0, 8);
+                lump.unlock();
+
+                dint const head = DD_SHORT(*(dshort const *) (hdr));
+
+                rate       = DD_SHORT(*(dshort const *) (hdr + 2));
+                numSamples = de::max(0, DD_LONG(*(dint const *) (hdr + 4)));
+                bytesPer   = 1;  // 8-bit.
+
+                if(head == 3 && numSamples > 0 && (unsigned) numSamples <= lump.size() - 8)
+                {
+                    // Insert/replace existing database record for this sound sample.
+                    WaveformData rec;
+                    rec.soundId    = soundId;
+                    rec.rate       = rate;
+                    rec.numSamples = numSamples;
+                    rec.bytesPer   = bytesPer;
+                    return &waveformData.insert(soundId, rec).value();  // A copy is made.
+                }
+            }
+        }
+
+        LOG_AUDIO_WARNING("Unknown lump '%s' sound format") << info->lumpName;
+        return nullptr;
     }
 
     void publishAPIToPlugin(::Library *plugin)
@@ -260,7 +457,7 @@ bool ServerApp::logicalSoundIsPlaying(dint soundId, mobj_t *emitter) const
         auto it = d->logicalSounds.constFind(soundId);
         while(it != d->logicalSounds.constEnd() && it.key() == soundId)
         {
-            audio::LogicSound const &lsound = *it.value();
+            LogicSound const &lsound = *it.value();
             if(lsound.emitter == emitter && lsound.isPlaying(nowTime))
                 return true;
 
@@ -273,7 +470,7 @@ bool ServerApp::logicalSoundIsPlaying(dint soundId, mobj_t *emitter) const
         auto it = d->logicalSounds.constBegin();
         while(it != d->logicalSounds.constEnd())
         {
-            audio::LogicSound const &lsound = *it.value();
+            LogicSound const &lsound = *it.value();
             if(lsound.emitter == emitter && lsound.isPlaying(nowTime))
                 return true;
 
@@ -291,7 +488,7 @@ dint ServerApp::stopLogicalSound(dint soundId, mobj_t *emitter)
     {
         it.next();
 
-        audio::LogicSound const &lsound = *it.value();
+        LogicSound const &lsound = *it.value();
         if(soundId)
         {
             if(it.key() != soundId) continue;
@@ -320,26 +517,27 @@ void ServerApp::startLogicalSound(dint soundIdAndFlags, mobj_t *emitter)
 {
     dint const soundId = (soundIdAndFlags & ~DDSF_FLAG_MASK);
 
-    // Cache the sound sample associated with @a soundId (if necessary)
-    // so that we can determine it's length.
-    if(sfxsample_t *sample = d->sampleCache.cache(soundId))
+    // Only start a logical sound if WaveformData associated with the given @a soundId is
+    // available (necessary for scheduling remote playback, which needs to know the length
+    // of the sound in seconds).
+    if(WaveformData const *sample = d->tryFindWaveformData(soundId))
     {
-        bool const isRepeating = (soundIdAndFlags & DDSF_REPEAT) || Def_SoundIsRepeating(soundId);
+        bool const repeat = (soundIdAndFlags & DDSF_REPEAT) || sample->isRepeating();
 
         duint length = (1000 * sample->numSamples) / sample->rate;
-        if(isRepeating && length > 1)
+        if(repeat)
         {
-            length = 1;
+            length = de::min<duint>(length, 1);
         }
 
         // Ignore zero length sounds.
-        /// @todo Shouldn't we still stop others though? -ds
+        /// @todo Shouldn't we still stop others, though? -ds
         if(!length) return;
 
-        auto *ls = new audio::LogicSound;
-        ls->emitter     = emitter;
-        ls->isRepeating = isRepeating;
-        ls->endTime     = Timer_RealMilliseconds() + length;
+        auto *ls = new LogicSound;
+        ls->emitter = emitter;
+        ls->repeat  = repeat;
+        ls->endTime = Timer_RealMilliseconds() + length;
         d->logicalSounds.insert(soundId, ls);
     }
 }
@@ -353,24 +551,8 @@ void ServerApp::startLogicalSound(dint soundIdAndFlags, mobj_t *emitter)
  * @todo The premise behind this functionality is fundamentally flawed in that it assumes
  * that the same samples are used by both the Client and the Server, and that the latter
  * schedules remote playback of the former (determined by examining sample lengths on the
- * Server's side) -ds
+ * Server's side). -ds
  */
-
-void S_PauseMusic(dd_bool)
-{
-    // Stub: We don't play music locally on server side.
-}
-
-void S_StopMusic()
-{
-    // Stub: We don't play music locally on server side.
-}
-
-dd_bool S_StartMusicNum(dint, dd_bool)
-{
-    // We don't play music locally on server side.
-    return false;
-}
 
 dd_bool S_StartMusic(char const *musicId, dd_bool looped)
 {
@@ -387,20 +569,40 @@ dd_bool S_StartMusic(char const *musicId, dd_bool looped)
     return S_StartMusicNum(idx, looped);
 }
 
-dd_bool S_SoundIsPlaying(dint soundId, mobj_t *emitter)
+dint S_StartSound(dint soundIdAndFlags, mobj_t *emitter)
 {
-    // Use the logic sound hash to determine whether the referenced sound is being
-    // played currently. We don't care whether its audible or not.
-    return (dd_bool) ServerApp::app().logicalSoundIsPlaying(soundId, emitter);
+    // The sound is audible to everybody.
+    Sv_Sound(soundIdAndFlags, emitter, SVSF_TO_ALL);
+    ServerApp::app().startLogicalSound(soundIdAndFlags, emitter);
+
+    // We don't play sounds locally on server side.
+    return false;
 }
 
-/**
- * @param soundId  @c 0= stop all sounds originating from the given @a emitter.
- * @param emitter  @c nullptr: stops all sounds with the given @a soundId. Otherwise
- *                 both @a soundId and @a emitter must match.
- * @param flags    @ref soundStopFlags.
- */
-static void stopSound(dint soundId, struct mobj_s *emitter, dint flags = 0);
+dint S_StartSoundEx(dint soundIdAndFlags, mobj_t *emitter)
+{
+    Sv_Sound(soundIdAndFlags, emitter, SVSF_TO_ALL | SVSF_EXCLUDE_ORIGIN);
+    ServerApp::app().startLogicalSound(soundIdAndFlags, emitter);
+
+    // We don't play sounds locally on server side.
+    return false;
+}
+
+dint S_StartSoundAtVolume(dint soundIdAndFlags, mobj_t *emitter, dfloat volume)
+{
+    // The sound is audible to everybody.
+    Sv_SoundAtVolume(soundIdAndFlags, emitter, volume, SVSF_TO_ALL);
+    ServerApp::app().startLogicalSound(soundIdAndFlags, emitter);
+
+    // We don't play sounds locally on server side.
+    return false;
+}
+
+dint S_ConsoleSound(dint soundIdAndFlags, mobj_t *emitter, dint targetConsole)
+{
+    Sv_Sound(soundIdAndFlags, emitter, targetConsole);
+    return true;
+}
 
 /**
  * @param sectorEmitter  Sector in which to stop sounds.
@@ -416,7 +618,7 @@ static void stopSoundsInEmitterChain(ddmobj_base_t *sectorEmitter, dint soundId,
     // Are we stopping with this sector's emitter?
     if(flags & SSF_SECTOR)
     {
-        stopSound(soundId, (mobj_t *)sectorEmitter);
+        _api_S.StopSound(soundId, (mobj_t *)sectorEmitter);
     }
 
     // Are we stopping with linked emitters?
@@ -428,11 +630,11 @@ static void stopSoundsInEmitterChain(ddmobj_base_t *sectorEmitter, dint soundId,
     while((base = (ddmobj_base_t *)base->thinker.next))
     {
         // Stop sounds from this emitter.
-        stopSound(soundId, (mobj_t *)base);
+        _api_S.StopSound(soundId, (mobj_t *)base);
     }
 }
 
-static void stopSound(dint soundId, mobj_t *emitter, dint flags)
+void S_StopSound2(dint soundId, mobj_t *emitter, dint flags)
 {
     // Are we performing any special stop behaviors?
     if(emitter && flags)
@@ -458,15 +660,10 @@ static void stopSound(dint soundId, mobj_t *emitter, dint flags)
     // Notify the LSM.
     if(ServerApp::app().stopLogicalSound(soundId, emitter))
     {
-        // In netgames, the server is responsible for telling clients when to stop sounds.
+        // We are responsible for instructing connected Clients when to stop sounds.
         // The LSM will tell us if a sound was stopped somewhere in the world.
         Sv_StopSound(soundId, emitter);
     }
-}
-
-void S_StopSound2(dint soundId, mobj_t *emitter, dint flags)
-{
-    stopSound(soundId, emitter, flags);
 }
 
 void S_StopSound(dint soundId, mobj_t *emitter)
@@ -474,64 +671,11 @@ void S_StopSound(dint soundId, mobj_t *emitter)
     S_StopSound2(soundId, emitter, 0/*flags*/);
 }
 
-dint S_LocalSoundAtVolumeFrom(dint, mobj_t *, coord_t *, dfloat)
+dd_bool S_SoundIsPlaying(dint soundId, mobj_t *emitter)
 {
-    // We don't play sounds locally on server side.
-    return false;
-}
-
-dint S_LocalSoundAtVolume(dint soundIdAndFlags, mobj_t *emitter, dfloat volume)
-{
-    return S_LocalSoundAtVolumeFrom(soundIdAndFlags, emitter, nullptr, volume);
-}
-
-dint S_LocalSound(dint soundIdAndFlags, mobj_t *emitter)
-{
-    return S_LocalSoundAtVolumeFrom(soundIdAndFlags, emitter, nullptr, 1/*max volume*/);
-}
-
-dint S_LocalSoundFrom(dint soundIdAndFlags, coord_t *origin)
-{
-    return S_LocalSoundAtVolumeFrom(soundIdAndFlags, nullptr, origin, 1/*max volume*/);
-}
-
-dint S_StartSound(dint soundIdAndFlags, mobj_t *emitter)
-{
-    // The sound is audible to everybody.
-    Sv_Sound(soundIdAndFlags, emitter, SVSF_TO_ALL);
-    ServerApp::app().startLogicalSound(soundIdAndFlags, emitter);
-
-    return S_LocalSound(soundIdAndFlags, emitter);
-}
-
-dint S_StartSoundEx(dint soundIdAndFlags, mobj_t *emitter)
-{
-    Sv_Sound(soundIdAndFlags, emitter, SVSF_TO_ALL | SVSF_EXCLUDE_ORIGIN);
-    ServerApp::app().startLogicalSound(soundIdAndFlags, emitter);
-
-    return S_LocalSound(soundIdAndFlags, emitter);
-}
-
-dint S_StartSoundAtVolume(dint soundIdAndFlags, mobj_t *emitter, dfloat volume)
-{
-    Sv_SoundAtVolume(soundIdAndFlags, emitter, volume, SVSF_TO_ALL);
-    ServerApp::app().startLogicalSound(soundIdAndFlags, emitter);
-
-    // The sound is audible to everybody.
-    return S_LocalSoundAtVolume(soundIdAndFlags, emitter, volume);
-}
-
-dint S_ConsoleSound(dint soundIdAndFlags, mobj_t *emitter, dint targetConsole)
-{
-    Sv_Sound(soundIdAndFlags, emitter, targetConsole);
-
-    // If it's for us, we can hear it.
-    if(targetConsole == consolePlayer)
-    {
-        S_LocalSound(soundIdAndFlags, emitter);
-    }
-
-    return true;
+    // Use the logic sound hash to determine whether the referenced sound is being
+    // played currently. We don't care whether its audible or not.
+    return (dd_bool) ServerApp::app().logicalSoundIsPlaying(soundId, emitter);
 }
 
 DENG_DECLARE_API(S) =

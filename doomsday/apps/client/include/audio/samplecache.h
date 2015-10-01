@@ -21,6 +21,10 @@
 #ifndef AUDIO_SAMPLECACHE_H
 #define AUDIO_SAMPLECACHE_H
 
+#ifdef __SERVER__
+#  error "audio" is not available in a SERVER build
+#endif
+
 #include "api_audiod_sfx.h"  // sfxsample_t
 #include <de/Observers>
 

@@ -635,7 +635,7 @@ Sample *SampleCache::cache(dint soundId)
         return &existing->sample();
 
     // Lookup info for this sound.
-    sfxinfo_t *info = Def_GetSoundInfo(soundId, 0, 0);
+    sfxinfo_t const *info = Def_GetSoundInfo(soundId);
     if(!info)
     {
         LOG_AUDIO_WARNING("Ignoring sound id:%i (missing sfxinfo_t)") << soundId;
@@ -745,11 +745,9 @@ Sample *SampleCache::cache(dint soundId)
     }
 
     // Probably an old-fashioned DOOM sample.
-    dsize lumpLength = 0;
     if(info->lumpNum >= 0)
     {
-        File1 &lump = App_FileSystem().lump(info->lumpNum);
-
+        File1 /*const */&lump = App_FileSystem().lump(info->lumpNum);
         if(lump.size() > 8)
         {
             duint8 hdr[8];
@@ -759,7 +757,7 @@ Sample *SampleCache::cache(dint soundId)
             numSamples = de::max(0, DD_LONG(*(dint const *) (hdr + 4)));
             bytesPer   = 1; // 8-bit.
 
-            if(head == 3 && numSamples > 0 && (unsigned) numSamples <= lumpLength - 8)
+            if(head == 3 && numSamples > 0 && (unsigned) numSamples <= lump.size() - 8)
             {
                 // The sample data can be used as-is - load directly from the lump cache.
                 duint8 const *data = lump.cache() + 8;  // Skip the header.

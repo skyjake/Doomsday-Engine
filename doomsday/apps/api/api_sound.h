@@ -107,12 +107,13 @@ DENG_API_TYPEDEF(S)
      * Stop playing sound(s), either by their unique identifier or by their
      * emitter.
      *
-     * @param soundId  @c 0: stops all sounds originating from the given @a emitter.
-     * @param emitter  @c nullptr: stops all sounds with the ID.
-     *                 Otherwise both ID and origin must match.
+     * @param soundId  @c 0= stop all sounds originating from the given @a emitter.
+     * @param emitter  @c nullptr: stops all sounds with the given @a soundId; otherwise
+     *                 both @a soundId and @a emitter must match.
+     * @param flags    @ref soundStopFlags.
      */
     void (*StopSound)(int soundId, struct mobj_s *emitter/*, flags = 0*/);
-
+    
     /**
      * @copydoc StopSound()
      * @param flags  @ref soundStopFlags

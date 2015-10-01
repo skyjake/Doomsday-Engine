@@ -24,7 +24,10 @@
 #define LIBDOOMSDAY_RESOURCE_WAV_H
 
 #include "../libdoomsday.h"
+#include <doomsday/filesys/file.h>
 #include <de/types.h>
+
+LIBDOOMSDAY_PUBLIC dd_bool WAV_Recognize(de::File1 &file);
 
 /**
  * Verifies that the data in the buffer @a data looks like WAV.

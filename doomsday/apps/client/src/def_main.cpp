@@ -223,7 +223,7 @@ sfxinfo_t *Def_GetSoundInfo(dint soundId, dfloat *freq, dfloat *volume)
 
 bool Def_SoundIsRepeating(dint soundId)
 {
-    if(sfxinfo_t *info = Def_GetSoundInfo(soundId, nullptr, nullptr))
+    if(sfxinfo_t *info = Def_GetSoundInfo(soundId))
     {
         return (info->flags & SF_REPEAT) != 0;
     }

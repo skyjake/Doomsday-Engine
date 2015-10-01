@@ -25,7 +25,6 @@ file (GLOB_RECURSE SOURCES src/*.cpp)
 # TODO: Get rid of these, shared code should be in libdoomsday.
 set (src ../client)
 set (SHARED_WITH_CLIENT
-    ${src}/include/audio/samplecache.h
     ${src}/include/color.h
     ${src}/include/con_config.h
     ${src}/include/dd_def.h
@@ -117,7 +116,6 @@ set (SHARED_WITH_CLIENT
     ${src}/src/api_console.cpp
     ${src}/src/api_filesys.cpp
     ${src}/src/api_uri.cpp
-    ${src}/src/audio/samplecache.cpp
     ${src}/src/color.cpp
     ${src}/src/con_config.cpp
     ${src}/src/dd_loop.cpp

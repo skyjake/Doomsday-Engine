@@ -140,3 +140,43 @@ DENG_EXTERN_C void R_ProjectSprite(struct mobj_s *mo)
 {
     DENG_UNUSED(mo);
 }
+
+dd_bool S_StartMusicNum(int, dd_bool)
+{
+    // We don't play music locally on server side.
+    return false;
+}
+
+void S_StopMusic()
+{
+    // We don't play music locally on server side.
+}
+
+void S_PauseMusic(dd_bool)
+{
+    // We don't play music locally on server side.
+}
+
+int S_LocalSoundAtVolumeFrom(int, struct mobj_s *, coord_t *, float)
+{
+    // We don't play sounds locally on server side.
+    return false;
+}
+
+int S_LocalSoundAtVolume(int soundIdAndFlags, struct mobj_s *emitter, float volume)
+{
+    // We don't play sounds locally on server side.
+    return false;
+}
+
+int S_LocalSound(int soundIdAndFlags, struct mobj_s *emitter)
+{
+    // We don't play sounds locally on server side.
+    return false;
+}
+
+int S_LocalSoundFrom(int soundIdAndFlags, coord_t *origin)
+{
+    // We don't play sounds locally on server side.
+    return false;
+}
