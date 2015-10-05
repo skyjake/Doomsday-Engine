@@ -67,10 +67,9 @@ namespace audio {
 
 enum audiointerfacetype_t
 {
-    AUDIO_ISFX,
-    AUDIO_IMUSIC,
     AUDIO_ICD,
-    AUDIO_IMUSIC_OR_ICD
+    AUDIO_IMUSIC,
+    AUDIO_ISFX
 };
 
 static duint const PURGEINTERVAL         = 2000;  ///< 2 seconds
@@ -109,30 +108,7 @@ static mobj_t *getListenerMobj()
     return DD_Player(::displayPlayer)->publicData().mo;
 }
 
-System::IDriver::IPlayer::IPlayer(IDriver &driver) : _driver(&driver)
-{}
-
-System::IDriver &System::IDriver::IPlayer::driver() const
-{
-    DENG2_ASSERT(_driver != nullptr);
-    return *_driver;
-};
-
-DotPath System::IDriver::IPlayer::identityKey() const
-{
-    return driver().identityKey() + "." + name();
-}
-
-ICdPlayer::ICdPlayer(System::IDriver &driver) : IPlayer(driver)
-{}
-
-IMusicPlayer::IMusicPlayer(System::IDriver &driver) : IPlayer(driver)
-{}
-
-ISoundPlayer::ISoundPlayer(System::IDriver &driver) : IPlayer(driver)
-{}
-
-static String playerTypeName(System::IDriver::IPlayer const &player)
+static String playerTypeName(IPlayer const &player)
 {
     if(player.is<ICdPlayer>())    return "CD";
     if(player.is<IMusicPlayer>()) return "Music";
@@ -165,10 +141,10 @@ String System::IDriver::description() const
     {
         // Summarize available player interfaces.
         String pSummary;
-        forAllPlayers([&pSummary] (IPlayer &player)
+        forAllPlayers([this, &pSummary] (IPlayer &player)
         {
             if(!pSummary.isEmpty()) pSummary += "\n" _E(0);
-            pSummary += " - " + playerTypeName(player) + ": " _E(>) + player.name() + _E(<);
+            pSummary += " - " + playerTypeName(player) + ": " _E(>) + playerName(player) + _E(<);
             return LoopContinue;
         });
         if(!pSummary.isEmpty())
@@ -333,7 +309,22 @@ DENG2_PIMPL(System)
     struct PlaybackInterface
     {
         audiointerfacetype_t type;
-        IDriver::IPlayer *player;
+        IDriver *driver;
+        IPlayer *player;
+
+        IDriver &getDriver() const {
+            DENG2_ASSERT(driver);
+            return *driver;
+        }
+
+        IPlayer &getPlayer() const {
+            DENG2_ASSERT(player);
+            return *player;
+        }
+
+        DotPath identityKey() const {
+            return getDriver().identityKey().split(';').first() + "." + getDriver().playerName(*player);
+        }
     };
     QList<PlaybackInterface> activeInterfaces;
 
@@ -352,11 +343,15 @@ DENG2_PIMPL(System)
     {
         // The primary interface is the first one.
         ICdPlayer *found = nullptr;
-        forAllInterfaces(AUDIO_ICD, [&found] (IDriver::IPlayer &plr)
+        for(dint i = activeInterfaces.count(); i--> 0; )
         {
-            found = &plr.as<ICdPlayer>();
-            return LoopAbort;
-        });
+            PlaybackInterface const &ifs = activeInterfaces[i];
+            if(ifs.type == AUDIO_ICD)
+            {
+                found = &ifs.getPlayer().as<ICdPlayer>();
+                break;
+            }
+        }
         if(found) return *found;
 
         /// @throw Error  No suitable sound player is available.
@@ -366,7 +361,7 @@ DENG2_PIMPL(System)
     ICdPlayer *tryFindCdPlayer(IDriver &driver)
     {
         ICdPlayer *found = nullptr;  // Not found.
-        driver.forAllPlayers([&found] (IDriver::IPlayer &player)
+        driver.forAllPlayers([&found] (IPlayer &player)
         {
             if(auto *cdPlayer = player.maybeAs<ICdPlayer>())
             {
@@ -385,11 +380,15 @@ DENG2_PIMPL(System)
     {
         // The primary interface is the first one.
         IMusicPlayer *found = nullptr;
-        forAllInterfaces(AUDIO_IMUSIC, [&found] (IDriver::IPlayer &plr)
+        for(dint i = activeInterfaces.count(); i--> 0; )
         {
-            found = &plr.as<IMusicPlayer>();
-            return LoopAbort;
-        });
+            PlaybackInterface const &ifs = activeInterfaces[i];
+            if(ifs.type == AUDIO_IMUSIC)
+            {
+                found = &ifs.getPlayer().as<IMusicPlayer>();
+                break;
+            }
+        }
         if(found) return *found;
 
         /// @throw Error  No suitable sound player is available.
@@ -399,7 +398,7 @@ DENG2_PIMPL(System)
     IMusicPlayer *tryFindMusicPlayer(IDriver &driver)
     {
         IMusicPlayer *found = nullptr;  // Not found.
-        driver.forAllPlayers([&found] (IDriver::IPlayer &player)
+        driver.forAllPlayers([&found] (IPlayer &player)
         {
             if(auto *musicPlayer = player.maybeAs<IMusicPlayer>())
             {
@@ -418,11 +417,15 @@ DENG2_PIMPL(System)
     {
         // The primary interface is the first one.
         ISoundPlayer *found = nullptr;
-        forAllInterfaces(AUDIO_ISFX, [&found] (IDriver::IPlayer &plr)
+        for(dint i = activeInterfaces.count(); i--> 0; )
         {
-            found = &plr.as<ISoundPlayer>();
-            return LoopAbort;
-        });
+            PlaybackInterface const &ifs = activeInterfaces[i];
+            if(ifs.type == AUDIO_ISFX)
+            {
+                found = &ifs.getPlayer().as<ISoundPlayer>();
+                break;
+            }
+        }
         if(found) return *found;
 
         /// @throw Error  No suitable sound player is available.
@@ -432,7 +435,7 @@ DENG2_PIMPL(System)
     ISoundPlayer *tryFindSoundPlayer(IDriver &driver)
     {
         ISoundPlayer *found = nullptr;  // Not found.
-        driver.forAllPlayers([&found] (IDriver::IPlayer &player)
+        driver.forAllPlayers([&found] (IPlayer &player)
         {
             if(auto *soundPlayer = player.maybeAs<ISoundPlayer>())
             {
@@ -454,6 +457,7 @@ DENG2_PIMPL(System)
         {
             PlaybackInterface ifs; zap(ifs);
             ifs.type   = AUDIO_ISFX;
+            ifs.driver = &defaultDriver;
             ifs.player = player;
             addPlaybackInterface(ifs);  // a copy is made
         }
@@ -462,6 +466,7 @@ DENG2_PIMPL(System)
         {
             PlaybackInterface ifs; zap(ifs);
             ifs.type   = AUDIO_IMUSIC;
+            ifs.driver = &defaultDriver;
             ifs.player = player;
             addPlaybackInterface(ifs);  // a copy is made
         }
@@ -472,6 +477,7 @@ DENG2_PIMPL(System)
             // On the Mac, use the built-in QuickTime interface as the fallback for music.
             PlaybackInterface ifs; zap(ifs);
             ifs.type   = AUDIO_IMUSIC;
+            ifs.driver = &defaultDriver;
             ifs.player = &::audiodQuickTimeMusic;
             addPlaybackInterface(ifs);  // a copy is made
         }
@@ -488,6 +494,7 @@ DENG2_PIMPL(System)
             {
                 PlaybackInterface ifs; zap(ifs);
                 ifs.type   = AUDIO_IMUSIC;
+                is.driver  = &defaultDriver;
                 ifs.player = player;
                 addPlaybackInterface(ifs);  // a copy is made
             }
@@ -499,6 +506,7 @@ DENG2_PIMPL(System)
         {
             PlaybackInterface ifs; zap(ifs);
             ifs.type   = AUDIO_ICD;
+            ifs.driver = &defaultDriver;
             ifs.player = player;
             addPlaybackInterface(ifs);  // a copy is made
         }
@@ -519,12 +527,13 @@ DENG2_PIMPL(System)
                     {
                         PlaybackInterface ifs; zap(ifs);
                         ifs.type   = AUDIO_ISFX;
+                        ifs.driver = &driver;
                         ifs.player = player;
                         addPlaybackInterface(ifs);  // a copy is made
                     }
                     else
                     {
-                        LOG_AUDIO_WARNING("Audio driver \"" + driver.title() + "\" does not provide a SFX interface");
+                        LOG_AUDIO_WARNING("Audio driver \"" + driver.title() + "\" does not provide a SFX player");
                     }
                 }
                 catch(MissingDriverError const &er)
@@ -545,12 +554,13 @@ DENG2_PIMPL(System)
                     {
                         PlaybackInterface ifs; zap(ifs);
                         ifs.type   = AUDIO_IMUSIC;
+                        ifs.driver = &driver;
                         ifs.player = player;
                         addPlaybackInterface(ifs);  // a copy is made
                     }
                     else
                     {
-                        LOG_AUDIO_WARNING("Audio driver \"" + driver.title() + "\" does not provide a Music interface");
+                        LOG_AUDIO_WARNING("Audio driver \"" + driver.title() + "\" does not provide a Music player");
                     }
                 }
                 catch(MissingDriverError const &er)
@@ -571,12 +581,13 @@ DENG2_PIMPL(System)
                     {
                         PlaybackInterface ifs; zap(ifs);
                         ifs.type   = AUDIO_ICD;
+                        ifs.driver = &driver;
                         ifs.player = player;
                         addPlaybackInterface(ifs);  // a copy is made
                     }
                     else
                     {
-                        LOG_AUDIO_WARNING("Audio driver \"" + driver.title() + "\" does not provide a CD interface");
+                        LOG_AUDIO_WARNING("Audio driver \"" + driver.title() + "\" does not provide a CD player");
                     }
                 }
                 catch(MissingDriverError const &er)
@@ -586,30 +597,6 @@ DENG2_PIMPL(System)
                 continue;
             }
         }
-    }
-
-    /**
-     * Iterate through the active interfaces of a given type, in descending
-     * priority order: the most important interface is visited first.
-     *
-     * @param type  Type of interface to process.
-     * @param func  Callback to make for each interface.
-     */
-    LoopResult forAllInterfaces(audiointerfacetype_t type,
-        std::function<LoopResult (IDriver::IPlayer &)> func) const
-    {
-        for(dint i = activeInterfaces.count(); i--> 0; )
-        {
-            PlaybackInterface const &ifs = activeInterfaces[i];
-            if(ifs.type == type ||
-                (type == AUDIO_IMUSIC_OR_ICD && (ifs.type == AUDIO_IMUSIC ||
-                                                ifs.type == AUDIO_ICD)))
-            {
-                if(auto result = func(*ifs.player))
-                    return result;
-            }
-        }
-        return LoopContinue;
     }
 
     bool musAvail = false;              ///< @c true if at least one driver is initialized for music playback.
@@ -688,10 +675,14 @@ DENG2_PIMPL(System)
         try
         {
             std::unique_ptr<FileHandle> hndl(&App_FileSystem().openFile(path, "rb"));
-
-            auto didPlay = forAllInterfaces(AUDIO_IMUSIC, [this, &hndl, &looped] (IDriver::IPlayer &plr)
+            dint didPlay = false;
+            for(dint i = activeInterfaces.count(); i--> 0; )
             {
-                auto &musicPlayer = plr.as<IMusicPlayer>();
+                PlaybackInterface const &ifs = activeInterfaces[i];
+                if(ifs.type != AUDIO_IMUSIC)
+                    continue;
+
+                auto &musicPlayer = ifs.getPlayer().as<IMusicPlayer>();
 
                 // Does this interface offer buffered playback?
                 if(musicPlayer.canPlayBuffer())
@@ -700,7 +691,8 @@ DENG2_PIMPL(System)
                     dsize const len = hndl->length();
                     hndl->read((duint8 *) musicPlayer.songBuffer(len), len);
 
-                    return musicPlayer.play(looped);
+                    if(didPlay = musicPlayer.play(looped))
+                        break;
                 }
                 // Does this interface offer playback from a native file?
                 else if(musicPlayer.canPlayFile())
@@ -714,10 +706,10 @@ DENG2_PIMPL(System)
                     F_Dump(buf, len, bufPath.toUtf8().constData());
                     M_Free(buf); buf = nullptr;
 
-                    return musicPlayer.playFile(bufPath.toUtf8().constData(), looped);
+                    if(didPlay = musicPlayer.playFile(bufPath.toUtf8().constData(), looped))
+                        break;
                 }
-                return 0;  // Continue.
-            });
+            }
 
             App_FileSystem().releaseFile(hndl->file());
             return didPlay;
@@ -752,20 +744,30 @@ DENG2_PIMPL(System)
             String const srcFile = composeMusicBufferFilename(".mid");
             M_Mus2Midi(lump, srcFile.toUtf8().constData());
 
-            return forAllInterfaces(AUDIO_IMUSIC, [&srcFile, &looped] (IDriver::IPlayer &plr)
+            for(dint i = activeInterfaces.count(); i--> 0; )
             {
-                auto &musicPlayer = plr.as<IMusicPlayer>();
+                PlaybackInterface const &ifs = activeInterfaces[i];
+                if(ifs.type != AUDIO_IMUSIC)
+                    continue;
+
+                auto &musicPlayer = ifs.getPlayer().as<IMusicPlayer>();
                 if(musicPlayer.canPlayFile())
                 {
-                    return musicPlayer.playFile(srcFile.toUtf8().constData(), looped);
+                    if(dint result = musicPlayer.playFile(srcFile.toUtf8().constData(), looped))
+                        return result;
                 }
-                return 0;  // Continue.
-            });
+            }
+
+            return 0;
         }
 
-        return forAllInterfaces(AUDIO_IMUSIC, [this, &lump, &looped] (IDriver::IPlayer &plr)
+        for(dint i = activeInterfaces.count(); i--> 0; )
         {
-            auto &musicPlayer = plr.as<IMusicPlayer>();
+            PlaybackInterface const &ifs = activeInterfaces[i];
+            if(ifs.type != AUDIO_IMUSIC)
+                continue;
+
+            auto &musicPlayer = ifs.getPlayer().as<IMusicPlayer>();
 
             // Does this interface offer buffered playback?
             if(musicPlayer.canPlayBuffer())
@@ -776,35 +778,42 @@ DENG2_PIMPL(System)
                 hndl->read((duint8 *) musicPlayer.songBuffer(length), length);
                 App_FileSystem().releaseFile(hndl->file());
 
-                return musicPlayer.play(looped);
+                if(dint result = musicPlayer.play(looped))
+                    return result;
             }
             // Does this interface offer playback from a native file?
             else if(musicPlayer.canPlayFile())
             {
                 // Write the data to disk and play from there.
                 String const fileName = composeMusicBufferFilename();
-                if(!F_DumpFile(lump, fileName.toUtf8().constData()))
+                if(F_DumpFile(lump, fileName.toUtf8().constData()))
                 {
-                    // Failed to write the lump...
-                    return 0;
+                    if(dint result = musicPlayer.playFile(fileName.toUtf8().constData(), looped))
+                        return result;
                 }
-
-                return musicPlayer.playFile(fileName.toUtf8().constData(), looped);
             }
+        }
 
-            return 0;  // Continue.
-        });
+        return false;
     }
 
     dint playMusicCDTrack(dint track, bool looped)
     {
         // Assume track 0 is not valid.
-        if(track == 0) return 0;
-
-        return forAllInterfaces(AUDIO_ICD, [&track, &looped] (IDriver::IPlayer &plr)
+        if(track != 0)
         {
-            return plr.as<ICdPlayer>().play(track, looped);
-        });
+            for(dint i = activeInterfaces.count(); i--> 0; )
+            {
+                PlaybackInterface const &ifs = activeInterfaces[i];
+                if(ifs.type == AUDIO_ICD)
+                {
+                    if(dint result = ifs.getPlayer().as<ICdPlayer>().play(track, looped))
+                        return result;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -830,19 +839,22 @@ DENG2_PIMPL(System)
 
         // Initialize interfaces for music playback.
         dint initialized = 0;
-        forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [&initialized] (IDriver::IPlayer &plr)
+        for(dint i = activeInterfaces.count(); i--> 0; )
         {
-            if(plr.initialize())
+            PlaybackInterface const &ifs = activeInterfaces[i];
+            if(ifs.type != AUDIO_IMUSIC && ifs.type != AUDIO_ICD)
+                continue;
+
+            if(ifs.getPlayer().initialize())
             {
                 initialized += 1;
             }
             else
             {
                 LOG_AUDIO_WARNING("Failed to initialize \"%s\" for music playback")
-                    << plr.identityKey();
+                    << ifs.identityKey();
             }
-            return LoopContinue;
-        });
+        }
 
         // Remember whether an interface for music playback initialized successfully.
         musAvail = initialized >= 1;
@@ -863,11 +875,14 @@ DENG2_PIMPL(System)
         musAvail = false;
 
         // Shutdown interfaces.
-        forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [] (IDriver::IPlayer &plr)
+        for(dint i = activeInterfaces.count(); i--> 0; )
         {
-            plr.deinitialize();
-            return LoopContinue;
-        });
+            PlaybackInterface const &ifs = activeInterfaces[i];
+            if(ifs.type == AUDIO_ICD || ifs.type == AUDIO_IMUSIC)
+            {
+                ifs.getPlayer().deinitialize();
+            }
+        }
     }
 
     void updateMusicVolumeIfChanged()
@@ -881,18 +896,16 @@ DENG2_PIMPL(System)
 
             // Set volume of all available interfaces.
             dfloat newVolume = musVolume / 255.0f;
-            forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [&newVolume] (IDriver::IPlayer &plr)
+            for(dint i = activeInterfaces.count(); i--> 0; )
             {
-                if(auto *musicPlayer = plr.maybeAs<IMusicPlayer>())
+                PlaybackInterface const &ifs = activeInterfaces[i];
+                switch(ifs.type)
                 {
-                    musicPlayer->setVolume(newVolume);
+                case AUDIO_ICD:    ifs.getPlayer().as<ICdPlayer   >().setVolume(newVolume); break;
+                case AUDIO_IMUSIC: ifs.getPlayer().as<IMusicPlayer>().setVolume(newVolume); break;
+                default: break;
                 }
-                if(auto *cdPlayer = plr.maybeAs<ICdPlayer>())
-                {
-                    cdPlayer->setVolume(newVolume);
-                }
-                return LoopContinue;
-            });
+            }
         }
     }
 
@@ -918,19 +931,22 @@ DENG2_PIMPL(System)
 
         // Initialize interfaces for sound playback.
         dint initialized = 0;
-        forAllInterfaces(AUDIO_ISFX, [&initialized] (IDriver::IPlayer &plr)
+        for(dint i = activeInterfaces.count(); i--> 0; )
         {
-            if(plr.initialize())
+            PlaybackInterface const &ifs = activeInterfaces[i];
+            if(ifs.type != AUDIO_ISFX)
+                continue;
+
+            if(ifs.getPlayer().initialize())
             {
                 initialized += 1;
             }
             else
             {
                 LOG_AUDIO_WARNING("Failed to initialize \"%s\" for sound playback")
-                    << plr.identityKey();
+                    << ifs.identityKey();
             }
-            return LoopContinue;
-        });
+        }
 
         // Remember whether an interface for sound playback initialized successfully.
         sfxAvail = initialized >= 1;
@@ -967,11 +983,14 @@ DENG2_PIMPL(System)
         channels.reset();
 
         // Shutdown interfaces.
-        forAllInterfaces(AUDIO_ISFX, [] (IDriver::IPlayer &plr)
+        for(dint i = activeInterfaces.count(); i--> 0; )
         {
-            plr.deinitialize();
-            return LoopContinue;
-        });
+            PlaybackInterface const &ifs = activeInterfaces[i];
+            if(ifs.type == AUDIO_ISFX)
+            {
+                ifs.getPlayer().as<ISoundPlayer>().deinitialize();
+            }
+        }
     }
 
     /**
@@ -1499,19 +1518,21 @@ String System::description() const
     os << TABBED("Music source preference:", musicSourceAsText(musSourcePreference));
 
     // Include an active playback interface itemization.
+    QStringList playerNames;
     for(dint i = d->activeInterfaces.count(); i--> 0; )
     {
-        Instance::PlaybackInterface const &ifs = d->activeInterfaces[i];
+        auto const &player = d->activeInterfaces[i];
+        String const &playerIdKey = player.identityKey();
 
-        if(ifs.type == AUDIO_IMUSIC || ifs.type == AUDIO_ICD)
+        if(player.type == AUDIO_IMUSIC || player.type == AUDIO_ICD)
         {
-            os << _E(Ta) _E(l) "  " << (ifs.type == AUDIO_IMUSIC ? "Music" : "CD") << ": "
-               << _E(.) _E(Tb) << ifs.player->identityKey() << "\n";
+            os << _E(Ta) _E(l) "  " << (player.type == AUDIO_IMUSIC ? "Music" : "CD") << ": "
+               << _E(.) _E(Tb) << playerIdKey << "\n";
         }
-        else if(ifs.type == AUDIO_ISFX)
+        else if(player.type == AUDIO_ISFX)
         {
             os << _E(Ta) _E(l) << "  SFX: " << _E(.) _E(Tb)
-               << ifs.player->identityKey() << "\n";
+               << playerIdKey << "\n";
         }
     }
 
@@ -1690,18 +1711,23 @@ dint System::musicVolume() const
 bool System::musicIsPlaying() const
 {
     //LOG_AS("audio::System");
-    return d->forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [] (IDriver::IPlayer &plr)
+    for(dint i = d->activeInterfaces.count(); i--> 0; )
     {
-        if(auto *musicPlayer = plr.maybeAs<IMusicPlayer>())
+        Instance::PlaybackInterface const &ifs = d->activeInterfaces[i];
+        switch(ifs.type)
         {
-            return musicPlayer->isPlaying();
+        case AUDIO_ICD:
+            if(ifs.getPlayer().as<ICdPlayer   >().isPlaying()) return true;
+            break;
+
+        case AUDIO_IMUSIC:
+            if(ifs.getPlayer().as<IMusicPlayer>().isPlaying()) return true;
+            break;
+
+        default: break;
         }
-        if(auto *cdPlayer = plr.maybeAs<ICdPlayer>())
-        {
-            return cdPlayer->isPlaying();
-        }
-        return false; // Continue
-    });
+    }
+    return false;
 }
 
 void System::stopMusic()
@@ -1712,18 +1738,16 @@ void System::stopMusic()
     d->musCurrentSong = "";
 
     // Stop all interfaces.
-    d->forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [] (IDriver::IPlayer &plr)
+    for(dint i = d->activeInterfaces.count(); i--> 0; )
     {
-        if(auto *musicPlayer = plr.maybeAs<IMusicPlayer>())
+        Instance::PlaybackInterface const &ifs = d->activeInterfaces[i];
+        switch(ifs.type)
         {
-            musicPlayer->stop();
+        case AUDIO_ICD:     ifs.getPlayer().as<ICdPlayer   >().stop(); break;
+        case AUDIO_IMUSIC:  ifs.getPlayer().as<IMusicPlayer>().stop(); break;
+        default: break;
         }
-        if(auto *cdPlayer = plr.maybeAs<ICdPlayer>())
-        {
-            cdPlayer->stop();
-        }
-        return LoopContinue;
-    });
+    }
 }
 
 void System::pauseMusic(bool doPause)
@@ -1734,18 +1758,16 @@ void System::pauseMusic(bool doPause)
     d->musPaused = !d->musPaused;
 
     // Pause playback on all interfaces.
-    d->forAllInterfaces(AUDIO_IMUSIC_OR_ICD, [&doPause] (IDriver::IPlayer &plr)
+    for(dint i = d->activeInterfaces.count(); i--> 0; )
     {
-        if(auto *musicPlayer = plr.maybeAs<IMusicPlayer>())
+        Instance::PlaybackInterface const &ifs = d->activeInterfaces[i];
+        switch(ifs.type)
         {
-            musicPlayer->pause(doPause);
+        case AUDIO_ICD:    ifs.getPlayer().as<ICdPlayer   >().pause(doPause); break;
+        case AUDIO_IMUSIC: ifs.getPlayer().as<IMusicPlayer>().pause(doPause); break;
+        default: break;
         }
-        if(auto *cdPlayer = plr.maybeAs<ICdPlayer>())
-        {
-            cdPlayer->pause(doPause);
-        }
-        return LoopContinue;
-    });
+    }
 }
 
 bool System::musicIsPaused() const
@@ -2048,11 +2070,14 @@ void System::requestListenerUpdate()
 
 void System::allowSoundRefresh(bool allow)
 {
-    d->forAllInterfaces(AUDIO_ISFX, [&allow] (IDriver::IPlayer &plr)
+    for(dint i = d->activeInterfaces.count(); i--> 0; )
     {
-        plr.as<ISoundPlayer>().allowRefresh(allow);
-        return LoopContinue;
-    });
+        Instance::PlaybackInterface const &ifs = d->activeInterfaces[i];
+        if(ifs.type == AUDIO_ISFX)
+        {
+            ifs.getPlayer().as<ISoundPlayer>().allowRefresh(allow);
+        }
+    }
 }
 
 void System::clearAllLogicalSounds()

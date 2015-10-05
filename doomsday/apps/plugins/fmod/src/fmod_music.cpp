@@ -226,7 +226,7 @@ int DMFmod_Music_Get(int prop, void *ptr)
 {
     switch(prop)
     {
-    case MUSIP_ID:
+    case MUSIP_IDENTITYKEY:
         if(ptr)
         {
             qstrcpy((char *) ptr, "music");

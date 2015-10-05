@@ -56,13 +56,8 @@ static duint getBufferLength(sfxbuffer_t &buf)
 
 // ----------------------------------------------------------------------------------
 
-DummyDriver::CdPlayer::CdPlayer(DummyDriver &driver) : ICdPlayer(driver)
+DummyDriver::CdPlayer::CdPlayer()
 {}
-
-String DummyDriver::CdPlayer::name() const
-{
-    return "cd";
-}
 
 dint DummyDriver::CdPlayer::initialize()
 {
@@ -98,13 +93,8 @@ dint DummyDriver::CdPlayer::play(dint, dint)
 
 // ----------------------------------------------------------------------------------
 
-DummyDriver::MusicPlayer::MusicPlayer(DummyDriver &driver) : IMusicPlayer(driver)
+DummyDriver::MusicPlayer::MusicPlayer()
 {}
-
-String DummyDriver::MusicPlayer::name() const
-{
-    return "music";
-}
 
 dint DummyDriver::MusicPlayer::initialize()
 {
@@ -178,13 +168,9 @@ DENG2_PIMPL_NOREF(DummyDriver::SoundPlayer)
     }
 };
 
-DummyDriver::SoundPlayer::SoundPlayer(DummyDriver &driver) : ISoundPlayer(driver)
+DummyDriver::SoundPlayer::SoundPlayer()
+    : d(new Instance)
 {}
-
-String DummyDriver::SoundPlayer::name() const
-{
-    return "sfx";
-}
 
 dint DummyDriver::SoundPlayer::initialize()
 {
@@ -579,11 +565,13 @@ void DummyDriver::Sound::load(sfxsample_t &sample)
 
 void DummyDriver::Sound::stop()
 {
+    if(!d->buffer) return;
     d->stop(*d->buffer);
 }
 
 void DummyDriver::Sound::reset()
 {
+    if(!d->buffer) return;
     d->reset(*d->buffer);
 }
 
@@ -670,15 +658,15 @@ DENG2_PIMPL(DummyDriver)
 {
     bool initialized = false;
 
-    CdPlayer iCd;
-    MusicPlayer iMusic;
-    SoundPlayer iSfx;
+    CdPlayer cd;
+    MusicPlayer music;
+    SoundPlayer sound;
 
     Instance(Public *i)
         : Base(i)
-        , iCd   (self)
-        , iMusic(self)
-        , iSfx  (self)
+        , cd   ()
+        , music()
+        , sound()
     {}
 
     ~Instance()
@@ -738,32 +726,21 @@ dint DummyDriver::playerCount() const
     return d->initialized ? 3 : 0;
 }
 
-DummyDriver::IPlayer const *DummyDriver::tryFindPlayer(String name) const
+String DummyDriver::playerName(IPlayer const &player) const
 {
-    if(!name.isEmpty() && d->initialized)
-    {
-        name = name.lower();
-        if(d->iCd   .name() == name) return &d->iCd;
-        if(d->iMusic.name() == name) return &d->iMusic;
-        if(d->iSfx  .name() == name) return &d->iSfx;
-    }
-    return nullptr;  // Not found.
-}
-
-DummyDriver::IPlayer const &DummyDriver::findPlayer(String name) const
-{
-    if(auto *player = tryFindPlayer(name)) return *player;
-    /// @throw MissingPlayerError  Unknown identity key specified.
-    throw MissingPlayerError("DummyDriver::findPlayer", "Unknown player \"" + name + "\"");
+    if(&player == &d->cd)    return "cd";
+    if(&player == &d->music) return "music";
+    if(&player == &d->sound) return "sfx";
+    return "";  // Unknown.
 }
 
 LoopResult DummyDriver::forAllPlayers(std::function<LoopResult (IPlayer &)> callback) const
 {
     if(d->initialized)
     {
-        if(auto result = callback(d->iCd))    return result;
-        if(auto result = callback(d->iMusic)) return result;
-        if(auto result = callback(d->iSfx))   return result;
+        if(auto result = callback(d->cd))    return result;
+        if(auto result = callback(d->music)) return result;
+        if(auto result = callback(d->sound)) return result;
     }
     return LoopContinue;  // Continue iteration.
 }

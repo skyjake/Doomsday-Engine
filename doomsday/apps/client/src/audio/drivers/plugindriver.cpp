@@ -39,18 +39,15 @@ using namespace de;
 
 namespace audio {
 
-PluginDriver::CdPlayer::CdPlayer(PluginDriver &driver) : ICdPlayer(driver)
+PluginDriver::CdPlayer::CdPlayer(PluginDriver &driver)
+    : _driver(&driver)
 {}
 
-String PluginDriver::CdPlayer::name() const
+PluginDriver &PluginDriver::CdPlayer::driver() const
 {
-    char buf[256];  /// @todo This could easily overflow...
-    DENG2_ASSERT(driver().as<PluginDriver>().iCd().gen.Get);
-    if(driver().as<PluginDriver>().iCd().gen.Get(MUSIP_ID, buf)) return buf;
-
-    DENG2_ASSERT(!"[MUSIP_ID not defined]");
-    return "unnamed_music";
-}
+    DENG2_ASSERT(_driver != nullptr);
+    return *_driver;
+};
 
 dint PluginDriver::CdPlayer::initialize()
 {
@@ -119,18 +116,15 @@ dint PluginDriver::CdPlayer::play(dint track, dint looped)
 
 // ----------------------------------------------------------------------------------
 
-PluginDriver::MusicPlayer::MusicPlayer(PluginDriver &driver) : IMusicPlayer(driver)
+PluginDriver::MusicPlayer::MusicPlayer(PluginDriver &driver)
+ : _driver(&driver)
 {}
 
-String PluginDriver::MusicPlayer::name() const
+PluginDriver &PluginDriver::MusicPlayer::driver() const
 {
-    char buf[256];  /// @todo This could easily overflow...
-    DENG2_ASSERT(driver().as<PluginDriver>().iMusic().gen.Get);
-    if(driver().as<PluginDriver>().iMusic().gen.Get(MUSIP_ID, buf)) return buf;
-
-    DENG2_ASSERT(!"[MUSIP_ID not defined]");
-    return "unnamed_music";
-}
+    DENG2_ASSERT(_driver != nullptr);
+    return *_driver;
+};
 
 dint PluginDriver::MusicPlayer::initialize()
 {
@@ -228,8 +222,9 @@ dint PluginDriver::MusicPlayer::playFile(char const *filename, dint looped)
 DENG2_PIMPL_NOREF(PluginDriver::SoundPlayer)
 , DENG2_OBSERVES(SampleCache, SampleRemove)
 {
-    bool needInit    = true;
-    bool initialized = false;
+    PluginDriver *driver = nullptr;
+    bool needInit        = true;
+    bool initialized     = false;
     QList<PluginDriver::Sound *> sounds;
 
     thread_t refreshThread      = nullptr;
@@ -339,15 +334,16 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundPlayer)
 };
 
 PluginDriver::SoundPlayer::SoundPlayer(PluginDriver &driver)
-    : ISoundPlayer(driver)
-    , d(new Instance)
-{}
-
-String PluginDriver::SoundPlayer::name() const
+    : d(new Instance)
 {
-    /// @todo SFX interfaces aren't named yet.
-    return "unnamed_sfx";
+    d->driver = &driver;
 }
+
+PluginDriver &PluginDriver::SoundPlayer::driver() const
+{
+    DENG2_ASSERT(d->driver != nullptr);
+    return *d->driver;
+};
 
 dint PluginDriver::SoundPlayer::initialize()
 {
@@ -359,7 +355,7 @@ dint PluginDriver::SoundPlayer::initialize()
 
         if(d->initialized)
         {
-            driver().audioSystem().sampleCache().audienceForSampleRemove() += d;
+            audio::System::get().sampleCache().audienceForSampleRemove() += d;
         }
     }
     return d->initialized;
@@ -370,7 +366,7 @@ void PluginDriver::SoundPlayer::deinitialize()
     if(!d->initialized) return;
 
     // Cancel sample cache removal notification - we intend to clear sounds.
-    driver().audioSystem().sampleCache().audienceForSampleRemove() -= d;
+    audio::System::get().sampleCache().audienceForSampleRemove() -= d;
 
     // Stop any sounds still playing (note: does not affect refresh).
     for(PluginDriver::Sound *sound : d->sounds)
@@ -494,10 +490,10 @@ DENG2_PIMPL_NOREF(PluginDriver::Sound)
         DENG2_ASSERT(buffer == nullptr);
     }
 
-    inline audiointerface_sfx_t &getDriverISound()
+    inline PluginDriver &getDriver()
     {
         DENG2_ASSERT(player != nullptr);
-        return player->driver().as<PluginDriver>().iSound();
+        return player->driver().as<PluginDriver>();
     }
 
     void updateOriginIfNeeded()
@@ -522,7 +518,9 @@ DENG2_PIMPL_NOREF(PluginDriver::Sound)
      */
     void updateBuffer(bool force = false)
     {
-        DENG2_ASSERT(buffer);
+        auto &driver = getDriver();
+
+        if(!buffer) return;
 
         // Disabled?
         if(flags & SFXCF_NO_UPDATE) return;
@@ -534,36 +532,41 @@ DENG2_PIMPL_NOREF(PluginDriver::Sound)
         updateOriginIfNeeded();
 
         // Frequency is common to both 2D and 3D sounds.
-        setFrequency(*buffer, frequency);
+        driver.iSound().gen.Set(buffer, SFXBP_FREQUENCY, frequency);
 
         if(buffer->flags & SFXBF_3D)
         {
             // Volume is affected only by maxvol.
-            setVolume(*buffer, volume * System::get().soundVolume() / 255.0f);
+            driver.iSound().gen.Set(buffer, SFXBP_VOLUME, volume * System::get().soundVolume() / 255.0f);
+
             if(emitter && emitter == System::get().listener())
             {
                 // Emitted by the listener object. Go to relative position mode
                 // and set the position to (0,0,0).
-                setPositioning(*buffer, true/*head-relative*/);
-                setOrigin(*buffer, Vector3d());
+                float vec[] = { 0, 0, 0 };
+                driver.iSound().gen.Set (buffer, SFXBP_RELATIVE_MODE, 1/*headRelative*/);
+                driver.iSound().gen.Setv(buffer, SFXBP_POSITION, vec);
             }
             else
             {
                 // Use the channel's map space origin.
-                setPositioning(*buffer, false/*absolute*/);
-                setOrigin(*buffer, origin);
+                driver.iSound().gen.Set (buffer, SFXBP_RELATIVE_MODE, 0/*absolute*/);
+                dfloat vec[3]; origin.toVector3f().decompose(vec);
+                driver.iSound().gen.Setv(buffer, SFXBP_POSITION, vec);
             }
 
             // If the sound is emitted by the listener, speed is zero.
             if(emitter && emitter != System::get().listener() &&
                Thinker_IsMobjFunc(emitter->thinker.function))
             {
-                setVelocity(*buffer, Vector3d(emitter->mom)* TICSPERSEC);
+                dfloat vec[3]; (Vector3d(emitter->mom) * TICSPERSEC).toVector3f().decompose(vec);
+                driver.iSound().gen.Setv(buffer, SFXBP_VELOCITY, vec);
             }
             else
             {
                 // Not moving.
-                setVelocity(*buffer, Vector3d());
+                dfloat vec[] = { 0, 0, 0 };
+                driver.iSound().gen.Setv(buffer, SFXBP_VELOCITY, vec);
             }
         }
         else
@@ -636,8 +639,8 @@ DENG2_PIMPL_NOREF(PluginDriver::Sound)
                 }
             }
 
-            setVolume(*buffer, volume * dist * System::get().soundVolume() / 255.0f);
-            setPan(*buffer, finalPan);
+            driver.iSound().gen.Set(buffer, SFXBP_VOLUME, volume * dist * System::get().soundVolume() / 255.0f);
+            driver.iSound().gen.Set(buffer, SFXBP_PAN, finalPan);
         }
     }
 
@@ -646,84 +649,9 @@ DENG2_PIMPL_NOREF(PluginDriver::Sound)
         updateBuffer();
     }
 
-    void load(sfxbuffer_t &buf, sfxsample_t &sample)
-    {
-        DENG2_ASSERT(getDriverISound().gen.Load);
-        getDriverISound().gen.Load(&buf, &sample);
-    }
-
-    void stop(sfxbuffer_t &buf)
-    {
-        DENG2_ASSERT(getDriverISound().gen.Stop);
-        getDriverISound().gen.Stop(&buf);
-    }
-
-    void reset(sfxbuffer_t &buf)
-    {
-        DENG2_ASSERT(getDriverISound().gen.Reset);
-        getDriverISound().gen.Reset(&buf);
-    }
-
-    void play(sfxbuffer_t &buf)
-    {
-        DENG2_ASSERT(getDriverISound().gen.Play);
-        getDriverISound().gen.Play(&buf);
-    }
-
     bool isPlaying(sfxbuffer_t &buf) const
     {
         return (buf.flags & SFXBF_PLAYING) != 0;
-    }
-
-    void refresh(sfxbuffer_t &buf)
-    {
-        DENG2_ASSERT(getDriverISound().gen.Refresh);
-        getDriverISound().gen.Refresh(&buf);
-    }
-
-    void setFrequency(sfxbuffer_t &buf, dfloat newFrequency)
-    {
-        DENG2_ASSERT(getDriverISound().gen.Set);
-        getDriverISound().gen.Set(&buf, SFXBP_FREQUENCY, newFrequency);
-    }
-
-    void setOrigin(sfxbuffer_t &buf, Vector3d const &newOrigin)
-    {
-        DENG2_ASSERT(getDriverISound().gen.Setv);
-        dfloat vec[3]; newOrigin.toVector3f().decompose(vec);
-        getDriverISound().gen.Setv(&buf, SFXBP_POSITION, vec);
-    }
-
-    void setPan(sfxbuffer_t &buf, dfloat newPan)
-    {
-        DENG2_ASSERT(getDriverISound().gen.Set);
-        getDriverISound().gen.Set(&buf, SFXBP_PAN, newPan);
-    }
-
-    void setPositioning(sfxbuffer_t &buf, bool headRelative)
-    {
-        DENG2_ASSERT(getDriverISound().gen.Set);
-        getDriverISound().gen.Set(&buf, SFXBP_RELATIVE_MODE, dfloat( headRelative ));
-    }
-
-    void setVelocity(sfxbuffer_t &buf, Vector3d const &newVelocity)
-    {
-        DENG2_ASSERT(getDriverISound().gen.Setv);
-        dfloat vec[3]; newVelocity.toVector3f().decompose(vec);
-        getDriverISound().gen.Setv(&buf, SFXBP_VELOCITY, vec);
-    }
-
-    void setVolume(sfxbuffer_t &buf, dfloat newVolume)
-    {
-        DENG2_ASSERT(getDriverISound().gen.Set);
-        getDriverISound().gen.Set(&buf, SFXBP_VOLUME, newVolume);
-    }
-
-    void setVolumeAttenuationRange(sfxbuffer_t &buf, Ranged const &newRange)
-    {
-        DENG2_ASSERT(getDriverISound().gen.Set);
-        getDriverISound().gen.Set(&buf, SFXBP_MIN_DISTANCE, dfloat( newRange.start ));
-        getDriverISound().gen.Set(&buf, SFXBP_MAX_DISTANCE, dfloat( newRange.end ));
     }
 };
 
@@ -760,7 +688,7 @@ void PluginDriver::Sound::setBuffer(sfxbuffer_t *newBuffer)
         // Cancel frame notifications - we'll soon have no buffer to update.
         System::get().audienceForFrameEnds() -= d;
 
-        d->getDriverISound().gen.Destroy(d->buffer);
+        d->getDriver().iSound().gen.Destroy(d->buffer);
         d->buffer = nullptr;
     }
 
@@ -779,7 +707,7 @@ void PluginDriver::Sound::format(bool stereoPositioning, dint bytesPer, dint rat
     if(   !d->buffer
        || (d->buffer->rate != rate || d->buffer->bytes != bytesPer))
     {
-        setBuffer(d->getDriverISound().gen.Create(stereoPositioning ? 0 : SFXBF_3D, bytesPer, rate));
+        setBuffer(d->getDriver().iSound().gen.Create(stereoPositioning ? 0 : SFXBF_3D, bytesPer, rate));
     }
 }
 
@@ -825,7 +753,8 @@ void PluginDriver::Sound::load(sfxsample_t &sample)
     // Don't reload if a sample with the same sound ID is already loaded.
     if(!d->buffer->sample || d->buffer->sample->soundId != sample.soundId)
     {
-        d->load(*d->buffer, sample);
+        DENG2_ASSERT(d->getDriver().iSound().gen.Load);
+        d->getDriver().iSound().gen.Load(d->buffer, &sample);
     }
 }
 
@@ -833,14 +762,16 @@ void PluginDriver::Sound::stop()
 {
     if(!d->buffer) return;
 
-    d->stop(*d->buffer);
+    DENG2_ASSERT(d->getDriver().iSound().gen.Stop);
+    d->getDriver().iSound().gen.Stop(d->buffer);
 }
 
 void PluginDriver::Sound::reset()
 {
     if(!d->buffer) return;
 
-    d->reset(*d->buffer);
+    DENG2_ASSERT(d->getDriver().iSound().gen.Reset);
+    d->getDriver().iSound().gen.Reset(d->buffer);
 }
 
 void PluginDriver::Sound::play()
@@ -857,19 +788,26 @@ void PluginDriver::Sound::play()
     // 3D sounds need a few extra properties set up.
     if(d->buffer->flags & SFXBF_3D)
     {
+        DENG2_ASSERT(d->getDriver().iSound().gen.Set);
+
         // Configure the attentuation distances.
         // This is only done once, when the sound is first played (i.e., here).
         if(d->flags & SFXCF_NO_ATTENUATION)
         {
-            d->setVolumeAttenuationRange(*d->buffer, Ranged(10000, 20000));
+            d->getDriver().iSound().gen.Set(d->buffer, SFXBP_MIN_DISTANCE, 10000);
+            d->getDriver().iSound().gen.Set(d->buffer, SFXBP_MAX_DISTANCE, 20000);
         }
         else
         {
-            d->setVolumeAttenuationRange(*d->buffer, System::get().soundVolumeAttenuationRange());
+            Ranged const &range = System::get().soundVolumeAttenuationRange();
+            d->getDriver().iSound().gen.Set(d->buffer, SFXBP_MIN_DISTANCE, dfloat( range.start ));
+            d->getDriver().iSound().gen.Set(d->buffer, SFXBP_MAX_DISTANCE, dfloat( range.end ));
         }
     }
 
-    d->play(*d->buffer);
+    DENG2_ASSERT(d->getDriver().iSound().gen.Play);
+    d->getDriver().iSound().gen.Play(d->buffer);
+
     d->startTime = Timer_Ticks();  // Note the current time.
 }
 
@@ -917,7 +855,8 @@ dfloat PluginDriver::Sound::volume() const
 
 void PluginDriver::Sound::refresh()
 {
-    d->refresh(*d->buffer);
+    DENG2_ASSERT(d->getDriver().iSound().gen.Refresh);
+    d->getDriver().iSound().gen.Refresh(d->buffer);
 }
 
 // ----------------------------------------------------------------------------------
@@ -942,11 +881,22 @@ DENG2_PIMPL(PluginDriver)
         IPlugin() { de::zapPtr(this); }
     } iBase;
 
-    audiointerface_cd_t iCd;
-    audiointerface_music_t iMusic;
-    audiointerface_sfx_t iSound;
+    struct ICd : public audiointerface_cd_t
+    {
+        ICd() { de::zapPtr(this); }
+    } iCd;
 
-    CdPlayer cd;
+    struct IMusic : public audiointerface_music_t
+    {
+        IMusic() { de::zapPtr(this); }
+    } iMusic;
+
+    struct ISound : public audiointerface_sfx_t
+    {
+        ISound() { de::zapPtr(this); }
+    } iSound;
+
+    CdPlayer    cd;
     MusicPlayer music;
     SoundPlayer sound;
 
@@ -955,11 +905,7 @@ DENG2_PIMPL(PluginDriver)
         , cd   (self)
         , music(self)
         , sound(self)
-    {
-        de::zap(iCd);
-        de::zap(iMusic);
-        de::zap(iSound);
-    }
+    {}
 
     ~Instance()
     {
@@ -971,9 +917,9 @@ DENG2_PIMPL(PluginDriver)
     }
 
     /**
-     * Lookup the value of a named @em string property from the driver.
+     * Lookup the value of driver property @a prop.
      */
-    String getPropertyAsString(dint prop)
+    String getPropertyAsString(dint prop) const
     {
         DENG2_ASSERT(iBase.Get);
         ddstring_t str; Str_InitStd(&str);
@@ -985,6 +931,33 @@ DENG2_PIMPL(PluginDriver)
         }
         /// @throw ReadPropertyError  Driver returned not successful.
         throw ReadPropertyError("audio::PluginDriver::Instance::getPropertyAsString", "Error reading property:" + String::number(prop));
+    }
+
+    /**
+     * Lookup the value of @a player property @a prop.
+     */
+    String getPlayerPropertyAsString(IPlayer const &player, dint prop) const
+    {
+        if(&player == &cd)
+        {
+            char buf[256];  /// @todo This could easily overflow...
+            DENG2_ASSERT(self.iCd().gen.Get);
+            if(self.iCd().gen.Get(prop, buf)) return buf;
+            return "";
+        }
+        if(&player == &music)
+        {
+            char buf[256];  /// @todo This could easily overflow...
+            DENG2_ASSERT(self.iMusic().gen.Get);
+            if(self.iMusic().gen.Get(prop, buf)) return buf;
+            return "";
+        }
+        if(&player == &sound)
+        {
+            /// @todo SFX interfaces aren't named yet.
+            return "";
+        }
+        throw ReadPropertyError("audio::PluginDriver::Instance::getPlayerPropertyAsString", "Error reading player property:" + String::number(prop));
     }
 
     void systemFrameBegins(audio::System &)
@@ -1183,24 +1156,20 @@ dint PluginDriver::playerCount() const
     return count;
 }
 
-PluginDriver::IPlayer const *PluginDriver::tryFindPlayer(String name) const
+String PluginDriver::playerName(IPlayer const &player) const
 {
-    if(!name.isEmpty() && d->initialized)
+    /// @todo SFX interfaces aren't named yet.
+    if(&player == &d->sound) return "unnamed_sfx";
+
+    if(&player == &d->cd || &player == &d->music || &player == &d->sound)
     {
-        name = name.lower();
-        if(d->cd   .name() == name) return &d->cd;
-        if(d->music.name() == name) return &d->music;
-        if(d->sound.name() == name) return &d->sound;
+        String idKey = d->getPlayerPropertyAsString(player, MUSIP_IDENTITYKEY);
+        if(!idKey.isEmpty()) return idKey;
     }
-    return nullptr;  // Not found.
+    DENG2_ASSERT(!"[MUSIP_IDENTITYKEY not defined]");
+    return "";  // Unknown.
 }
 
-PluginDriver::IPlayer const &PluginDriver::findPlayer(String name) const
-{
-    if(auto *player = tryFindPlayer(name)) return *player;
-    /// @throw MissingPlayerError  Unknown identity key specified.
-    throw MissingPlayerError("PluginDriver::findPlayer", "Unknown player \"" + name + "\"");
-}
 
 LoopResult PluginDriver::forAllPlayers(std::function<LoopResult (IPlayer &)> callback) const
 {

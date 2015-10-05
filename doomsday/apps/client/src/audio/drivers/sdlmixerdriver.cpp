@@ -104,13 +104,8 @@ static duint getBufferLength(sfxbuffer_t const &buf)
 
 // ----------------------------------------------------------------------------------
 
-SdlMixerDriver::CdPlayer::CdPlayer(SdlMixerDriver &driver) : ICdPlayer(driver)
+SdlMixerDriver::CdPlayer::CdPlayer()
 {}
-
-String SdlMixerDriver::CdPlayer::name() const
-{
-    return "cd";
-}
 
 dint SdlMixerDriver::CdPlayer::initialize()
 {
@@ -156,13 +151,8 @@ static void musicPlaybackFinished()
 }
 #endif
 
-SdlMixerDriver::MusicPlayer::MusicPlayer(SdlMixerDriver &driver) : IMusicPlayer(driver)
+SdlMixerDriver::MusicPlayer::MusicPlayer()
 {}
-
-String SdlMixerDriver::MusicPlayer::name() const
-{
-    return "music";
-}
 
 dint SdlMixerDriver::MusicPlayer::initialize()
 {
@@ -380,21 +370,15 @@ DENG2_PIMPL_NOREF(SdlMixerDriver::SoundPlayer)
     }
 };
 
-SdlMixerDriver::SoundPlayer::SoundPlayer(SdlMixerDriver &driver)
-    : ISoundPlayer(driver)
-    , d(new Instance)
+SdlMixerDriver::SoundPlayer::SoundPlayer()
+    : d(new Instance)
 {}
-
-String SdlMixerDriver::SoundPlayer::name() const
-{
-    return "sfx";
-}
 
 dint SdlMixerDriver::SoundPlayer::initialize()
 {
     if(!d->initialized)
     {
-        driver().audioSystem().sampleCache().audienceForSampleRemove() += d;
+        audio::System::get().sampleCache().audienceForSampleRemove() += d;
         d->initialized = true;
     }
     return true;
@@ -405,7 +389,7 @@ void SdlMixerDriver::SoundPlayer::deinitialize()
     if(!d->initialized) return;
 
     // Cancel sample cache removal notification - we intend to clear sounds.
-    driver().audioSystem().sampleCache().audienceForSampleRemove() -= d;
+    audio::System::get().sampleCache().audienceForSampleRemove() -= d;
 
     // Stop any sounds still playing (note: does not affect refresh).
     for(SdlMixerDriver::Sound *sound : d->sounds)
@@ -998,15 +982,15 @@ DENG2_PIMPL(SdlMixerDriver)
 {
     bool initialized = false;
 
-    CdPlayer iCd;
-    MusicPlayer iMusic;
-    SoundPlayer iSfx;
+    CdPlayer cd;
+    MusicPlayer music;
+    SoundPlayer sound;
 
     Instance(Public *i)
         : Base(i)
-        , iCd   (self)
-        , iMusic(self)
-        , iSfx  (self)
+        , cd   ()
+        , music()
+        , sound()
     {}
 
     ~Instance()
@@ -1018,7 +1002,7 @@ DENG2_PIMPL(SdlMixerDriver)
     void systemFrameBegins(audio::System &)
     {
         DENG2_ASSERT(initialized);
-        iMusic.update();
+        music.update();
     }
 };
 
@@ -1135,32 +1119,21 @@ dint SdlMixerDriver::playerCount() const
     return d->initialized ? 3 : 0;
 }
 
-SdlMixerDriver::IPlayer const *SdlMixerDriver::tryFindPlayer(String name) const
+String SdlMixerDriver::playerName(IPlayer const &player) const
 {
-    if(!name.isEmpty() && d->initialized)
-    {
-        name = name.lower();
-        if(d->iCd   .name() == name) return &d->iCd;
-        if(d->iMusic.name() == name) return &d->iMusic;
-        if(d->iSfx  .name() == name) return &d->iSfx;
-    }
-    return nullptr;  // Not found.
-}
-
-SdlMixerDriver::IPlayer const &SdlMixerDriver::findPlayer(String name) const
-{
-    if(auto *player = tryFindPlayer(name)) return *player;
-    /// @throw MissingPlayerError  Unknown identity key specified.
-    throw MissingPlayerError("SdlMixerDriver::findPlayer", "Unknown player \"" + name + "\"");
+    if(&player == &d->cd)    return "cd";
+    if(&player == &d->music) return "music";
+    if(&player == &d->sound) return "sfx";
+    return "";  // Unknown.
 }
 
 LoopResult SdlMixerDriver::forAllPlayers(std::function<LoopResult (IPlayer &)> callback) const
 {
     if(d->initialized)
     {
-        if(auto result = callback(d->iCd))    return result;
-        if(auto result = callback(d->iMusic)) return result;
-        if(auto result = callback(d->iSfx))   return result;
+        if(auto result = callback(d->cd))    return result;
+        if(auto result = callback(d->music)) return result;
+        if(auto result = callback(d->sound)) return result;
     }
     return LoopContinue;  // Continue iteration.
 }

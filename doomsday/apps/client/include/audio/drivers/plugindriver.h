@@ -75,10 +75,9 @@ public:  // Sound players: -----------------------------------------------------
     class CdPlayer : public ICdPlayer
     {
     public:
-        de::String name() const;
-
         de::dint initialize();
         void deinitialize();
+        PluginDriver &driver() const;
 
         void update();
         void setVolume(de::dfloat newVolume);
@@ -92,17 +91,17 @@ public:  // Sound players: -----------------------------------------------------
         CdPlayer(PluginDriver &driver);
         friend class PluginDriver;
 
-        bool _initialized = false;
-        bool _needInit    = true;
+        bool _initialized     = false;
+        bool _needInit        = true;
+        PluginDriver *_driver = nullptr;
     };
 
     class MusicPlayer : public IMusicPlayer
     {
     public:
-        de::String name() const;
-
         de::dint initialize();
         void deinitialize();
+        PluginDriver &driver() const;
 
         void update();
         void setVolume(de::dfloat newVolume);
@@ -121,15 +120,14 @@ public:  // Sound players: -----------------------------------------------------
         MusicPlayer(PluginDriver &driver);
         friend class PluginDriver;
 
-        bool _initialized = false;
-        bool _needInit    = true;
+        bool _initialized     = false;
+        bool _needInit        = true;
+        PluginDriver *_driver = nullptr;
     };
 
     class SoundPlayer : public ISoundPlayer
     {
     public:
-        de::String name() const;
-
         /**
          * Returns @c true if the plugin requires refreshing Sounds manually.
          */
@@ -137,6 +135,7 @@ public:  // Sound players: -----------------------------------------------------
 
         de::dint initialize();
         void deinitialize();
+        PluginDriver &driver() const;
 
         bool anyRateAccepted() const;
         void allowRefresh(bool allow);
@@ -197,8 +196,7 @@ public:  // Implements audio::System::IDriver: ---------------------------------
     de::String title() const;
 
     de::dint playerCount() const;
-    IPlayer const &findPlayer(de::String name) const;
-    IPlayer const *tryFindPlayer(de::String name) const;
+    de::String playerName(IPlayer const &player) const;
     de::LoopResult forAllPlayers(std::function<de::LoopResult (IPlayer &)> callback) const;
 
 public:

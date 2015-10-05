@@ -163,7 +163,7 @@ static int DM_Ext_Get(int property, void *value)
 
     switch (property)
     {
-    case MUSIP_ID:
+    case MUSIP_IDENTITYKEY:
         strcpy(reinterpret_cast<char *>(value), "QuickTime(Cocoa)/Ext");
         break;
 

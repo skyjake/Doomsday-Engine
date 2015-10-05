@@ -53,8 +53,6 @@ public:  // Sound players: -----------------------------------------------------
     class CdPlayer : public ICdPlayer
     {
     public:
-        de::String name() const;
-
         de::dint initialize();
         void deinitialize();
 
@@ -67,7 +65,7 @@ public:  // Sound players: -----------------------------------------------------
         de::dint play(de::dint track, de::dint looped);
 
     private:
-        CdPlayer(SdlMixerDriver &driver);
+        CdPlayer();
         friend class SdlMixerDriver;
 
         bool _initialized = false;
@@ -76,8 +74,6 @@ public:  // Sound players: -----------------------------------------------------
     class MusicPlayer : public IMusicPlayer
     {
     public:
-        de::String name() const;
-
         de::dint initialize();
         void deinitialize();
 
@@ -95,7 +91,7 @@ public:  // Sound players: -----------------------------------------------------
         de::dint playFile(char const *filename, de::dint looped);
 
     private:
-        MusicPlayer(SdlMixerDriver &driver);
+        MusicPlayer();
         friend class SdlMixerDriver;
 
         bool _initialized = false;
@@ -104,8 +100,6 @@ public:  // Sound players: -----------------------------------------------------
     class SoundPlayer : public ISoundPlayer
     {
     public:
-        de::String name() const;
-
         de::dint initialize();
         void deinitialize();
 
@@ -118,7 +112,7 @@ public:  // Sound players: -----------------------------------------------------
         Sound *makeSound(bool stereoPositioning, de::dint bitsPer, de::dint rate);
 
     private:
-        SoundPlayer(SdlMixerDriver &driver);
+        SoundPlayer();
         friend class SdlMixerDriver;
         
         DENG2_PRIVATE(d)
@@ -168,8 +162,7 @@ public:  // Implements audio::System::IDriver: ---------------------------------
     de::String title() const;
 
     de::dint playerCount() const;
-    IPlayer const &findPlayer(de::String name) const;
-    IPlayer const *tryFindPlayer(de::String name) const;
+    de::String playerName(IPlayer const &player) const;
     de::LoopResult forAllPlayers(std::function<de::LoopResult (IPlayer &)> callback) const;
 
 private:

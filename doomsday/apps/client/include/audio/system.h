@@ -40,9 +40,7 @@
 
 namespace audio {
 
-class ICdPlayer;
-class IMusicPlayer;
-class ISoundPlayer;
+class IPlayer;
 
 class Channels;
 class SampleCache;
@@ -307,62 +305,15 @@ public:  // Low-level driver interfaces: ---------------------------------------
 
     public:  // Playback Interfaces: ----------------------------------------------------
 
-        class IPlayer
-        {
-        public:
-            IPlayer(IDriver &driver);
-            virtual ~IPlayer() {}
-            DENG2_AS_IS_METHODS()
-
-            /**
-             * Perform any initialization necessary before playback can begin.
-             * @return  Non-zero if successful (or already-initialized).
-             */
-            virtual de::dint initialize() = 0;
-
-            /**
-             * Perform any deinitializaion necessary before the driver is unloaded.
-             */
-            virtual void deinitialize() = 0;
-
-            /**
-             * Returns the associated audio driver.
-             */
-            IDriver &driver() const;
-
-            /**
-             * Returns the driver-unique, symbolic name for the player.
-             */
-            virtual de::String name() const = 0;
-
-            /**
-             * Composes the textual, symbolic identifier, including that of the driver
-             * to produce a unique identifier for the player (lower case), for use in
-             * Config.
-             */
-            de::DotPath identityKey() const;
-
-        private:
-            IDriver *_driver = nullptr;
-        };
-
         /**
          * Returns the total number of player interfaces. 
          */
         virtual de::dint playerCount() const = 0;
 
         /**
-         * Lookup the player interface associated with the given (driver-unique) @a name.
+         * Returns the driver-unique, symbolic name for the player.
          */
-        virtual IPlayer const &findPlayer(de::String name) const = 0;
-
-        /**
-         * Search for a player interface associated with the given (driver-unique)
-         * @a name.
-         *
-         * @return  Pointer to the player interface if found; otherwise @c nullptr.
-         */
-        virtual IPlayer const *tryFindPlayer(de::String name) const = 0;
+        virtual de::String playerName(IPlayer const &player) const = 0;
 
         /**
          * Iterate through the player interfaces, executing @a callback for each.
@@ -467,12 +418,28 @@ private:
     DENG2_PRIVATE(d)
 };
 
-class ICdPlayer : public System::IDriver::IPlayer
+class IPlayer
 {
 public:
-    ICdPlayer(System::IDriver &driver);
+    virtual ~IPlayer() {}
+    DENG2_AS_IS_METHODS()
 
-public:  /// @todo revise API:
+    /**
+     * Perform any initialization necessary before playback can begin.
+     * @return  Non-zero if successful (or already-initialized).
+     */
+    virtual de::dint initialize() = 0;
+
+    /**
+     * Perform any deinitializaion necessary before the driver is unloaded.
+     */
+    virtual void deinitialize() = 0;
+};
+
+/// @todo revise API:
+class ICdPlayer : public IPlayer
+{
+public:
     virtual void update() = 0;
     virtual void setVolume(de::dfloat newVolume) = 0;
     virtual bool isPlaying() const = 0;
@@ -482,12 +449,10 @@ public:  /// @todo revise API:
     virtual de::dint play(de::dint track, de::dint looped) = 0;
 };
 
-class IMusicPlayer : public System::IDriver::IPlayer
+/// @todo revise API:
+class IMusicPlayer : public IPlayer
 {
 public:
-    IMusicPlayer(System::IDriver &driver);
-
-public:  /// @todo revise API:
     virtual void update() = 0;
     virtual void setVolume(de::dfloat newVolume) = 0;
     virtual bool isPlaying() const = 0;
@@ -506,11 +471,10 @@ public:  /// @todo revise API:
     virtual de::dint playFile(char const *filename, de::dint looped) = 0;
 };
 
-class ISoundPlayer : public System::IDriver::IPlayer
+/// @todo revise API:
+class ISoundPlayer : public IPlayer
 {
 public:
-    ISoundPlayer(System::IDriver &driver);
-
     /**
      * Returns @c true if samples can use any sampler rate; otherwise @c false
      * if the user must ensure that all samples use the same sampler rate.

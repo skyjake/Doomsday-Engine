@@ -398,7 +398,7 @@ int DM_Music_Get(int prop, void* ptr)
 {
     switch(prop)
     {
-    case MUSIP_ID:
+    case MUSIP_IDENTITYKEY:
         if(ptr)
         {
             strcpy((char*) ptr, "music");
