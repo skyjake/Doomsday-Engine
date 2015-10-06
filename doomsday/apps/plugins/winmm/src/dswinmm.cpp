@@ -184,20 +184,22 @@ int DM_CDAudio_Get(int prop, void *ptr)
     LOG_AS("[WinMM]");
     //LOG_WIP("DM_CDAudio_Get(prop:%i ptr:%p)") << prop << dintptr(ptr);
 
-    if(!::cdaudio) return 0;
-
     switch(prop)
     {
     case MUSIP_IDENTITYKEY:
         if(ptr)
         {
             qstrcpy((char *) ptr, "cd");
-            return 1;
+            return true;
         }
         break;
 
     case MUSIP_PLAYING:
-        return ::cdaudio->isPlaying();
+        if(bool(::cdaudio))
+        {
+            return ::cdaudio->isPlaying();
+        }
+        break;
 
     default: break;
     }

@@ -1145,54 +1145,78 @@ void PluginDriver::deinitialize()
     return d->library;
 }
 
-dint PluginDriver::playerCount() const
+QList<Record> PluginDriver::listInterfaces() const
 {
-    dint count = 0;
-    if(d->initialized)
+    QList<Record> list;
+    String const driverIdKey = identityKey().split(';').first();
+
+    if(d->iCd.gen.Init != nullptr)
     {
-        if(d->iCd   .gen.Init != nullptr) count += 1;
-        if(d->iMusic.gen.Init != nullptr) count += 1;
-        if(d->iSound.gen.Init != nullptr) count += 1;
+        String const idKey = d->getPlayerPropertyAsString(d->cd, MUSIP_IDENTITYKEY);
+        if(!idKey.isEmpty())
+        {
+            Record rec;
+            rec.addNumber("type",        System::AUDIO_ICD);
+            rec.addText  ("identityKey", DotPath(driverIdKey) / idKey);
+            list << rec;  // A copy is made.
+        }
+        else DENG2_ASSERT(!"[MUSIP_IDENTITYKEY not defined]");
     }
-    return count;
+    if(d->iMusic.gen.Init != nullptr)
+    {
+        String const idKey = d->getPlayerPropertyAsString(d->music, MUSIP_IDENTITYKEY);
+        if(!idKey.isEmpty())
+        {
+            Record rec;
+            rec.addNumber("type",        System::AUDIO_IMUSIC);
+            rec.addText  ("identityKey", DotPath(driverIdKey) / idKey);
+            list << rec;
+        }
+        else DENG2_ASSERT(!"[MUSIP_IDENTITYKEY not defined]");
+    }
+    if(d->iSound.gen.Init != nullptr)
+    {
+        String const idKey = d->getPlayerPropertyAsString(d->sound, SFXIP_IDENTITYKEY);
+        if(!idKey.isEmpty())
+        {
+            Record rec;
+            rec.addNumber("type",        System::AUDIO_ISFX);
+            rec.addText  ("identityKey", DotPath(driverIdKey) / idKey);
+            list << rec;
+        }
+        else DENG2_ASSERT(!"[SFXIP_IDENTITYKEY not defined]");
+    }
+    return list;
 }
 
-String PluginDriver::playerIdentityKey(IPlayer const &player) const
+IPlayer &PluginDriver::findPlayer(String interfaceIdentityKey) const
 {
-    if(&player == &d->cd || &player == &d->music)
-    {
-        String idKey = d->getPlayerPropertyAsString(player, MUSIP_IDENTITYKEY);
-        if(!idKey.isEmpty()) return idKey;
-        DENG2_ASSERT(!"[MUSIP_IDENTITYKEY not defined]");
-    }
-    if(&player == &d->sound)
-    {
-        String idKey = d->getPlayerPropertyAsString(player, SFXIP_IDENTITYKEY);
-        if(!idKey.isEmpty()) return idKey;
-        DENG2_ASSERT(!"[SFXIP_IDENTITYKEY not defined]");
-    }
-    return "";  // Unknown.
+    if(IPlayer *found = tryFindPlayer(interfaceIdentityKey)) return *found;
+    /// @throw MissingPlayerError  Unknown interface referenced.
+    throw MissingPlayerError("PluginDriver::findPlayer", "Unknown playback interface \"" + interfaceIdentityKey + "\"");
 }
 
-
-LoopResult PluginDriver::forAllPlayers(std::function<LoopResult (IPlayer &)> callback) const
+IPlayer *PluginDriver::tryFindPlayer(String interfaceIdentityKey) const
 {
-    if(d->initialized)
+    interfaceIdentityKey = interfaceIdentityKey.toLower();
+
+    if(d->iCd.gen.Init != nullptr)
     {
-        if(d->iCd.gen.Init != nullptr)
-        {
-            if(auto result = callback(d->cd))    return result;
-        }
-        if(d->iMusic.gen.Init != nullptr)
-        {
-            if(auto result = callback(d->music)) return result;
-        }
-        if(d->iSound.gen.Init != nullptr)
-        {
-            if(auto result = callback(d->sound)) return result;
-        }
+        if(d->getPlayerPropertyAsString(d->cd   , MUSIP_IDENTITYKEY) == interfaceIdentityKey)
+            return &d->cd;
     }
-    return LoopContinue;  // Continue iteration.
+    if(d->iMusic.gen.Init != nullptr)
+    {
+        if(d->getPlayerPropertyAsString(d->music, MUSIP_IDENTITYKEY) == interfaceIdentityKey)
+            return &d->music;
+    }
+    if(d->iSound.gen.Init != nullptr)
+    {
+        if(d->getPlayerPropertyAsString(d->sound, SFXIP_IDENTITYKEY) == interfaceIdentityKey)
+            return &d->sound;
+    }
+
+    return nullptr;  // Not found.
 }
 
 audiointerface_cd_t &PluginDriver::iCd() const

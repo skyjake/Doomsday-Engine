@@ -604,54 +604,46 @@ dint S_ConsoleSound(dint soundIdAndFlags, mobj_t *emitter, dint targetConsole)
     return true;
 }
 
-/**
- * @param sectorEmitter  Sector in which to stop sounds.
- * @param soundId        Unique identifier of the sound to be stopped.
- *                       If @c 0, ID not checked.
- * @param flags          @ref soundStopFlags
- */
-static void stopSoundsInEmitterChain(ddmobj_base_t *sectorEmitter, dint soundId, dint flags)
-{
-    if(!sectorEmitter || !flags)
-        return;
-
-    // Are we stopping with this sector's emitter?
-    if(flags & SSF_SECTOR)
-    {
-        _api_S.StopSound(soundId, (mobj_t *)sectorEmitter);
-    }
-
-    // Are we stopping with linked emitters?
-    if(!(flags & SSF_SECTOR_LINKED_SURFACES))
-        return;
-
-    // Process the rest of the emitter chain.
-    ddmobj_base_t *base = sectorEmitter;
-    while((base = (ddmobj_base_t *)base->thinker.next))
-    {
-        // Stop sounds from this emitter.
-        _api_S.StopSound(soundId, (mobj_t *)base);
-    }
-}
-
 void S_StopSound2(dint soundId, mobj_t *emitter, dint flags)
 {
     // Are we performing any special stop behaviors?
     if(emitter && flags)
     {
+        // Sector-based sound stopping.
+
+        SoundEmitter *secEmitter = nullptr;
         if(emitter->thinker.id)
         {
-            // Emitter is a real Mobj.
-            stopSoundsInEmitterChain(&Mobj_Sector(emitter)->soundEmitter(), soundId, flags);
-            return;
+            /// @var emitter is a map-object.
+            secEmitter = &Mobj_Sector(emitter)->soundEmitter();
+        }
+        else
+        {
+            // The head of the chain is the sector. Find it.
+            while(emitter->thinker.prev)
+            {
+                emitter = (mobj_t *)emitter->thinker.prev;
+            }
+            secEmitter = (SoundEmitter *)emitter;
+        }
+        DENG2_ASSERT(secEmitter);
+
+        // Stop sounds emitted by the Sector's emitter?
+        if(flags & SSF_SECTOR)
+        {
+            _api_S.StopSound(soundId, (mobj_t *)secEmitter);
         }
 
-        // The head of the chain is the sector. Find it.
-        while(emitter->thinker.prev)
+        // Stop sounds emitted by Sector-linked (plane/wall) emitters?
+        if(flags & SSF_SECTOR_LINKED_SURFACES)
         {
-            emitter = (mobj_t *)emitter->thinker.prev;
+            // Process the rest of the emitter chain.
+            while((secEmitter = (SoundEmitter *)secEmitter->thinker.next))
+            {
+                // Stop sounds from this emitter.
+                _api_S.StopSound(soundId, (mobj_t *)secEmitter);
+            }
         }
-        stopSoundsInEmitterChain((ddmobj_base_t *)emitter, soundId, flags);
         return;
     }
 

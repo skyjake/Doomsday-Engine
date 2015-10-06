@@ -1114,28 +1114,39 @@ String SdlMixerDriver::title() const
     return "SDL_mixer";
 }
 
-dint SdlMixerDriver::playerCount() const
+QList<Record> SdlMixerDriver::listInterfaces() const
 {
-    return d->initialized ? 3 : 0;
-}
-
-String SdlMixerDriver::playerIdentityKey(IPlayer const &player) const
-{
-    if(&player == &d->cd)    return "cd";
-    if(&player == &d->music) return "music";
-    if(&player == &d->sound) return "sfx";
-    return "";  // Unknown.
-}
-
-LoopResult SdlMixerDriver::forAllPlayers(std::function<LoopResult (IPlayer &)> callback) const
-{
-    if(d->initialized)
+    QList<Record> list;
     {
-        if(auto result = callback(d->cd))    return result;
-        if(auto result = callback(d->music)) return result;
-        if(auto result = callback(d->sound)) return result;
+        Record rec;
+        rec.addNumber("type",        System::AUDIO_IMUSIC);
+        rec.addText  ("identityKey", DotPath(identityKey()) / "music");
+        list << rec;
     }
-    return LoopContinue;  // Continue iteration.
+    {
+        Record rec;
+        rec.addNumber("type",        System::AUDIO_ISFX);
+        rec.addText  ("identityKey", DotPath(identityKey()) / "sfx");
+        list << rec;
+    }
+    return list;
+}
+
+IPlayer &SdlMixerDriver::findPlayer(String interfaceIdentityKey) const
+{
+    if(IPlayer *found = tryFindPlayer(interfaceIdentityKey)) return *found;
+    /// @throw MissingPlayerError  Unknown interface referenced.
+    throw MissingPlayerError("SdlMixerDriver::findPlayer", "Unknown playback interface \"" + interfaceIdentityKey + "\"");
+}
+
+IPlayer *SdlMixerDriver::tryFindPlayer(String interfaceIdentityKey) const
+{
+    interfaceIdentityKey = interfaceIdentityKey.toLower();
+
+    if(interfaceIdentityKey == "music") return &d->music;
+    if(interfaceIdentityKey == "sfx")   return &d->sound;
+
+    return nullptr;  // Not found.
 }
 
 }  // namespace audio

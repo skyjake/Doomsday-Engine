@@ -30,10 +30,11 @@
 #include <de/DotPath>
 #include <de/Error>
 #include <de/Observers>
+#include <de/Range>
 #include <de/Record>
 #include <de/String>
-#include <de/Range>
 #include <de/System>
+#include <QList>
 #include <functional>
 
 #define SFX_LOWEST_PRIORITY     ( -1000 )
@@ -62,6 +63,15 @@ public:
 
     /// Notified whenever a MIDI font change occurs.
     DENG2_DEFINE_AUDIENCE2(MidiFontChange, void systemMidiFontChanged(de::String const &newMidiFontPath))
+
+    enum audiointerfacetype_t
+    {
+        AUDIO_ICD,
+        AUDIO_IMUSIC,
+        AUDIO_ISFX
+    };
+
+    static de::String audioInterfaceTypeAsText(audiointerfacetype_t type);
 
 public:
     /**
@@ -234,11 +244,9 @@ public:  // Low-level driver interfaces: ---------------------------------------
         /// Base class for property write errors. @ingroup errors
         DENG2_ERROR(WritePropertyError);
 
-        /// Referenced player interface is missing. @ingroup errors
-        DENG2_ERROR(MissingPlayerError);
 
         /**
-         * Logical driver status.
+         * Logical driver statuses.
          */
         enum Status
         {
@@ -305,21 +313,27 @@ public:  // Low-level driver interfaces: ---------------------------------------
 
     public:  // Playback Interfaces: ----------------------------------------------------
 
-        /**
-         * Returns the total number of player interfaces. 
-         */
-        virtual de::dint playerCount() const = 0;
+        /// Referenced player interface is missing. @ingroup errors
+        DENG2_ERROR(MissingPlayerError);
 
         /**
-         * Returns the driver-unique, textual, symbolic identifier of the player interface
-         * (lower case), for use in Config.
+         * Returns a listing of the logical playback interfaces implemented by the driver.
+         * It is irrelevant whether said interfaces are presently available.
+         *
+         * Naturally, this means the driver must support interface enumeration @em before
+         * driver initialization. The driver and/or interface may still fail to initialize
+         * later, though.
+         *
+         * Each interface record must contain at least the following required elements:
+         * - (NumberValue)"type"      : AudioInterfaceType identifier.
+         *
+         * - (TextValue)"identityKey" : Driver-unique, textual, symbolic identifier for
+         *   the player interface (lower case), for use in Config.
          */
-        virtual de::String playerIdentityKey(IPlayer const &player) const = 0;
+        virtual QList<de::Record> listInterfaces() const = 0;
 
-        /**
-         * Iterate through the player interfaces, executing @a callback for each.
-         */
-        virtual de::LoopResult forAllPlayers(std::function<de::LoopResult (IPlayer &)> callback) const = 0;
+        virtual IPlayer &findPlayer   (de::String interfaceIdentityKey) const = 0;
+        virtual IPlayer *tryFindPlayer(de::String interfaceIdentityKey) const = 0;
     };
 
     /**

@@ -159,9 +159,10 @@ public:  // Implements audio::System::IDriver: ---------------------------------
     de::String identityKey() const;
     de::String title() const;
 
-    de::dint playerCount() const;
-    de::String playerIdentityKey(IPlayer const &player) const;
-    de::LoopResult forAllPlayers(std::function<de::LoopResult (IPlayer &)> callback) const;
+    QList<de::Record> listInterfaces() const;
+
+    IPlayer &findPlayer   (de::String interfaceIdentityKey) const;
+    IPlayer *tryFindPlayer(de::String interfaceIdentityKey) const;
 
 private:
     DENG2_PRIVATE(d)

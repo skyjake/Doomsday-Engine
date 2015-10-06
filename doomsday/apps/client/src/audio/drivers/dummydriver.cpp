@@ -721,28 +721,46 @@ String DummyDriver::title() const
     return "Dummy Driver";
 }
 
-dint DummyDriver::playerCount() const
+QList<Record> DummyDriver::listInterfaces() const
 {
-    return d->initialized ? 3 : 0;
-}
-
-String DummyDriver::playerIdentityKey(IPlayer const &player) const
-{
-    if(&player == &d->cd)    return "cd";
-    if(&player == &d->music) return "music";
-    if(&player == &d->sound) return "sfx";
-    return "";  // Unknown.
-}
-
-LoopResult DummyDriver::forAllPlayers(std::function<LoopResult (IPlayer &)> callback) const
-{
-    if(d->initialized)
+    QList<Record> list;
     {
-        if(auto result = callback(d->cd))    return result;
-        if(auto result = callback(d->music)) return result;
-        if(auto result = callback(d->sound)) return result;
+        Record rec;
+        rec.addNumber("type",        System::AUDIO_ICD);
+        rec.addText  ("identityKey", DotPath(identityKey()) / "cd");
+        list << rec;  // A copy is made.
     }
-    return LoopContinue;  // Continue iteration.
+    {
+        Record rec;
+        rec.addNumber("type",        System::AUDIO_IMUSIC);
+        rec.addText  ("identityKey", DotPath(identityKey()) / "music");
+        list << rec;
+    }
+    {
+        Record rec;
+        rec.addNumber("type",        System::AUDIO_ISFX);
+        rec.addText  ("identityKey", DotPath(identityKey()) / "sfx");
+        list << rec;
+    }
+    return list;
+}
+
+IPlayer &DummyDriver::findPlayer(String interfaceIdentityKey) const
+{
+    if(IPlayer *found = tryFindPlayer(interfaceIdentityKey)) return *found;
+    /// @throw MissingPlayerError  Unknown interface referenced.
+    throw MissingPlayerError("DummyDriver::findPlayer", "Unknown playback interface \"" + interfaceIdentityKey + "\"");
+}
+
+IPlayer *DummyDriver::tryFindPlayer(String interfaceIdentityKey) const
+{
+    interfaceIdentityKey = interfaceIdentityKey.toLower();
+
+    if(interfaceIdentityKey == "cd")    return &d->cd;
+    if(interfaceIdentityKey == "music") return &d->music;
+    if(interfaceIdentityKey == "sfx")   return &d->sound;
+
+    return nullptr;  // Not found.
 }
 
 }  // namespace audio
