@@ -493,7 +493,7 @@ DENG2_PIMPL_NOREF(PluginDriver::Sound)
     inline PluginDriver &getDriver()
     {
         DENG2_ASSERT(player != nullptr);
-        return player->driver().as<PluginDriver>();
+        return player->driver();
     }
 
     void updateOriginIfNeeded()
@@ -938,23 +938,23 @@ DENG2_PIMPL(PluginDriver)
      */
     String getPlayerPropertyAsString(IPlayer const &player, dint prop) const
     {
+        char buf[256];  /// @todo This could easily overflow...
         if(&player == &cd)
         {
-            char buf[256];  /// @todo This could easily overflow...
             DENG2_ASSERT(self.iCd().gen.Get);
             if(self.iCd().gen.Get(prop, buf)) return buf;
             return "";
         }
         if(&player == &music)
         {
-            char buf[256];  /// @todo This could easily overflow...
             DENG2_ASSERT(self.iMusic().gen.Get);
             if(self.iMusic().gen.Get(prop, buf)) return buf;
             return "";
         }
         if(&player == &sound)
         {
-            /// @todo SFX interfaces aren't named yet.
+            DENG2_ASSERT(self.iSound().gen.Getv);
+            if(self.iSound().gen.Getv(prop, buf)) return buf;
             return "";
         }
         throw ReadPropertyError("audio::PluginDriver::Instance::getPlayerPropertyAsString", "Error reading player property:" + String::number(prop));
@@ -1028,7 +1028,7 @@ PluginDriver *PluginDriver::newFromLibrary(LibraryFile &libFile)  // static
             lib.setSymbolPtr( inst.d->iSound.gen.Setv,      "DS_SFX_Setv");
             lib.setSymbolPtr( inst.d->iSound.gen.Listener,  "DS_SFX_Listener");
             lib.setSymbolPtr( inst.d->iSound.gen.Listenerv, "DS_SFX_Listenerv");
-            lib.setSymbolPtr( inst.d->iSound.gen.Getv,      "DS_SFX_Getv", de::Library::OptionalSymbol);
+            lib.setSymbolPtr( inst.d->iSound.gen.Getv,      "DS_SFX_Getv");
         }
 
         if(lib.hasSymbol("DM_Music_Init"))
@@ -1106,6 +1106,7 @@ void PluginDriver::initialize()
 
     DENG2_ASSERT(d->iBase.Init != nullptr);
     d->initialized = d->iBase.Init();
+    if(!d->initialized) return;
 
     // We want notification at various times:
     audioSystem().audienceForFrameBegins() += d;
@@ -1156,17 +1157,20 @@ dint PluginDriver::playerCount() const
     return count;
 }
 
-String PluginDriver::playerName(IPlayer const &player) const
+String PluginDriver::playerIdentityKey(IPlayer const &player) const
 {
-    /// @todo SFX interfaces aren't named yet.
-    if(&player == &d->sound) return "unnamed_sfx";
-
-    if(&player == &d->cd || &player == &d->music || &player == &d->sound)
+    if(&player == &d->cd || &player == &d->music)
     {
         String idKey = d->getPlayerPropertyAsString(player, MUSIP_IDENTITYKEY);
         if(!idKey.isEmpty()) return idKey;
+        DENG2_ASSERT(!"[MUSIP_IDENTITYKEY not defined]");
     }
-    DENG2_ASSERT(!"[MUSIP_IDENTITYKEY not defined]");
+    if(&player == &d->sound)
+    {
+        String idKey = d->getPlayerPropertyAsString(player, SFXIP_IDENTITYKEY);
+        if(!idKey.isEmpty()) return idKey;
+        DENG2_ASSERT(!"[SFXIP_IDENTITYKEY not defined]");
+    }
     return "";  // Unknown.
 }
 

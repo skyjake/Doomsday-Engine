@@ -162,7 +162,7 @@ public:  // Implements audio::System::IDriver: ---------------------------------
     de::String title() const;
 
     de::dint playerCount() const;
-    de::String playerName(IPlayer const &player) const;
+    de::String playerIdentityKey(IPlayer const &player) const;
     de::LoopResult forAllPlayers(std::function<de::LoopResult (IPlayer &)> callback) const;
 
 private:

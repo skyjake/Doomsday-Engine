@@ -66,6 +66,7 @@ void DS_SFX_Set(sfxbuffer_t *buf, int prop, float value);
 void DS_SFX_Setv(sfxbuffer_t *buf, int prop, float *values);
 void DS_SFX_Listener(int prop, float value);
 void DS_SFX_Listenerv(int prop, float *values);
+int DS_SFX_Getv(int prop, void *ptr);
 }
 
 static void commitEAXDeferred();
@@ -1214,6 +1215,25 @@ void DS_SFX_Listenerv(int prop, float *values)
         DS_SFX_Listener(prop, 0);
         break;
     }
+}
+
+int DS_SFX_Getv(int prop, void *ptr)
+{
+    switch(prop)
+    {
+    case SFXIP_IDENTITYKEY: {
+        auto *identityKey = reinterpret_cast<char *>(ptr);
+        if(identityKey)
+        {
+            qstrcpy(identityKey, "sfx");
+            return true;
+        }
+        break; }
+
+    default: break;
+    }
+
+    return false;
 }
 
 /**

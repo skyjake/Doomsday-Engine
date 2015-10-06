@@ -311,9 +311,10 @@ public:  // Low-level driver interfaces: ---------------------------------------
         virtual de::dint playerCount() const = 0;
 
         /**
-         * Returns the driver-unique, symbolic name for the player.
+         * Returns the driver-unique, textual, symbolic identifier of the player interface
+         * (lower case), for use in Config.
          */
-        virtual de::String playerName(IPlayer const &player) const = 0;
+        virtual de::String playerIdentityKey(IPlayer const &player) const = 0;
 
         /**
          * Iterate through the player interfaces, executing @a callback for each.

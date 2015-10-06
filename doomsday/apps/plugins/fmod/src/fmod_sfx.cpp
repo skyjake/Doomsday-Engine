@@ -435,7 +435,7 @@ void DS_SFX_Stop(sfxbuffer_t *buf)
         info.channel->setCallback(nullptr);
         info.channel->setMute(true);
         info.channel = nullptr;
-    }    
+    }
 
     // Clear the flag that tells the Sfx module about playing buffers.
     buf->flags &= ~SFXBF_PLAYING;
@@ -519,7 +519,7 @@ void DS_SFX_Setv(sfxbuffer_t *buf, int prop, float *values)
     if(!buf) return;
 
     if(!::fmodSystem) return;
-    
+
     BufferInfo &info = bufferInfo(buf);
 
     switch(prop)
@@ -684,44 +684,47 @@ void DS_SFX_Listenerv(int prop, float *values)
 
     case SFXLP_PRIMARY_FORMAT:
         DSFMOD_TRACE("SFX_Listenerv: Ignoring SFXLP_PRIMARY_FORMAT.");
-        return;
+        break;
 
-    default:
-        return;
+    default: break;
     }
 }
 
-/**
- * Gets a driver property.
- *
- * @param prop    Property (SFXP_*).
- * @param values  Pointer to return value(s).
- */
-int DS_SFX_Getv(int prop, void *values)
+int DS_SFX_Getv(int prop, void *ptr)
 {
     switch(prop)
     {
+    case SFXIP_IDENTITYKEY: {
+        auto *identityKey = reinterpret_cast<char *>(ptr);
+        if(identityKey)
+        {
+            qstrcpy(identityKey, "sfx");
+            return true;
+        }
+        break; }
+
     case SFXIP_DISABLE_CHANNEL_REFRESH: {
-        /// The return value is a single 32-bit int.
-        int *wantDisable = reinterpret_cast<int *>(values);
+        auto *wantDisable = reinterpret_cast<int *>(ptr);
         if(wantDisable)
         {
-            // Channel refresh is handled by FMOD, so we don't need to do anything.
+            // FMOD handles refresh automatically; *we* don't need to do anything.
             *wantDisable = true;
+            return true;
         }
         break; }
 
     case SFXIP_ANY_SAMPLE_RATE_ACCEPTED: {
-        int *anySampleRate = reinterpret_cast<int *>(values);
+        auto *anySampleRate = reinterpret_cast<int *>(ptr);
         if(anySampleRate)
         {
             // FMOD can resample on the fly as needed.
             *anySampleRate = true;
+            return true;
         }
         break; }
 
-    default:
-        return false;
+    default: break;
     }
-    return true;
+
+    return false;
 }

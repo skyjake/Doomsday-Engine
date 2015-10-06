@@ -144,7 +144,7 @@ String System::IDriver::description() const
         forAllPlayers([this, &pSummary] (IPlayer &player)
         {
             if(!pSummary.isEmpty()) pSummary += "\n" _E(0);
-            pSummary += " - " + playerTypeName(player) + ": " _E(>) + playerName(player) + _E(<);
+            pSummary += " - " + playerTypeName(player) + ": " _E(>) + playerIdentityKey(player) + _E(<);
             return LoopContinue;
         });
         if(!pSummary.isEmpty())
@@ -309,8 +309,8 @@ DENG2_PIMPL(System)
     struct PlaybackInterface
     {
         audiointerfacetype_t type;
-        IDriver *driver;
         IPlayer *player;
+        IDriver *driver;
 
         IDriver &getDriver() const {
             DENG2_ASSERT(driver);
@@ -323,17 +323,21 @@ DENG2_PIMPL(System)
         }
 
         DotPath identityKey() const {
-            return getDriver().identityKey().split(';').first() + "." + getDriver().playerName(*player);
+            return getDriver().identityKey().split(';').first() + "." + getDriver().playerIdentityKey(*player);
         }
     };
     QList<PlaybackInterface> activeInterfaces;
 
-    void addPlaybackInterface(PlaybackInterface const &ifs)
+    PlaybackInterface &addActiveInterface(audiointerfacetype_t type, IPlayer &player,
+                                          IDriver *driver = nullptr)
     {
-        DENG2_ASSERT(ifs.type == AUDIO_ISFX || ifs.type == AUDIO_IMUSIC || ifs.type == AUDIO_ICD);
-        DENG2_ASSERT(ifs.player != nullptr);
         /// @todo Ensure this interface is not already present! -ds
+        PlaybackInterface ifs; de::zap(ifs);
+        ifs.type   = type;
+        ifs.player = &player;
+        ifs.driver = driver;
         activeInterfaces << ifs;  // a copy is made
+        return activeInterfaces.last();
     }
 
     /**
@@ -455,31 +459,19 @@ DENG2_PIMPL(System)
         // The default driver goes on the bottom of the stack.
         if(ISoundPlayer *player = tryFindSoundPlayer(defaultDriver))
         {
-            PlaybackInterface ifs; zap(ifs);
-            ifs.type   = AUDIO_ISFX;
-            ifs.driver = &defaultDriver;
-            ifs.player = player;
-            addPlaybackInterface(ifs);  // a copy is made
+            addActiveInterface(AUDIO_ISFX, *player, &defaultDriver);
         }
 
         if(IMusicPlayer *player = tryFindMusicPlayer(defaultDriver))
         {
-            PlaybackInterface ifs; zap(ifs);
-            ifs.type   = AUDIO_IMUSIC;
-            ifs.driver = &defaultDriver;
-            ifs.player = player;
-            addPlaybackInterface(ifs);  // a copy is made
+            addActiveInterface(AUDIO_IMUSIC, *player, &defaultDriver);
         }
 #if 0
 #ifdef MACOSX
         else if(defaultDriver.identityKey() != "dummy")
         {
             // On the Mac, use the built-in QuickTime interface as the fallback for music.
-            PlaybackInterface ifs; zap(ifs);
-            ifs.type   = AUDIO_IMUSIC;
-            ifs.driver = &defaultDriver;
-            ifs.player = &::audiodQuickTimeMusic;
-            addPlaybackInterface(ifs);  // a copy is made
+            addActiveInterface(AUDIO_IMUSIC, ::audiodQuickTimeMusic, &defaultDriver);
         }
 #endif
 
@@ -492,11 +484,7 @@ DENG2_PIMPL(System)
             IDriver &fluidSynth = driverById(AUDIOD_FLUIDSYNTH);
             if(IMusicPlayer *player = tryFindMusicPlayer(fluidSynth))
             {
-                PlaybackInterface ifs; zap(ifs);
-                ifs.type   = AUDIO_IMUSIC;
-                is.driver  = &defaultDriver;
-                ifs.player = player;
-                addPlaybackInterface(ifs);  // a copy is made
+                addActiveInterface(AUDIO_IMUSIC, *player, &defaultDriver);
             }
         }
 #endif
@@ -504,11 +492,7 @@ DENG2_PIMPL(System)
 
         if(ICdPlayer *player = tryFindCdPlayer(defaultDriver))
         {
-            PlaybackInterface ifs; zap(ifs);
-            ifs.type   = AUDIO_ICD;
-            ifs.driver = &defaultDriver;
-            ifs.player = player;
-            addPlaybackInterface(ifs);  // a copy is made
+            addActiveInterface(AUDIO_ICD, *player, &defaultDriver);
         }
 
         CommandLine &cmdLine = App::commandLine();
@@ -525,11 +509,7 @@ DENG2_PIMPL(System)
                     initDriverIfNeeded(driver);
                     if(ISoundPlayer *player = tryFindSoundPlayer(driver))
                     {
-                        PlaybackInterface ifs; zap(ifs);
-                        ifs.type   = AUDIO_ISFX;
-                        ifs.driver = &driver;
-                        ifs.player = player;
-                        addPlaybackInterface(ifs);  // a copy is made
+                        addActiveInterface(AUDIO_ISFX, *player, &driver);
                     }
                     else
                     {
@@ -552,11 +532,7 @@ DENG2_PIMPL(System)
                     initDriverIfNeeded(driver);
                     if(IMusicPlayer *player = tryFindMusicPlayer(driver))
                     {
-                        PlaybackInterface ifs; zap(ifs);
-                        ifs.type   = AUDIO_IMUSIC;
-                        ifs.driver = &driver;
-                        ifs.player = player;
-                        addPlaybackInterface(ifs);  // a copy is made
+                        addActiveInterface(AUDIO_IMUSIC, *player, &driver);
                     }
                     else
                     {
@@ -579,11 +555,7 @@ DENG2_PIMPL(System)
                     initDriverIfNeeded(driver);
                     if(ICdPlayer *player = tryFindCdPlayer(driver))
                     {
-                        PlaybackInterface ifs; zap(ifs);
-                        ifs.type   = AUDIO_ICD;
-                        ifs.driver = &driver;
-                        ifs.player = player;
-                        addPlaybackInterface(ifs);  // a copy is made
+                        addActiveInterface(AUDIO_ICD, *player, &driver);  // a copy is made
                     }
                     else
                     {
@@ -1518,22 +1490,11 @@ String System::description() const
     os << TABBED("Music source preference:", musicSourceAsText(musSourcePreference));
 
     // Include an active playback interface itemization.
-    QStringList playerNames;
     for(dint i = d->activeInterfaces.count(); i--> 0; )
     {
-        auto const &player = d->activeInterfaces[i];
-        String const &playerIdKey = player.identityKey();
-
-        if(player.type == AUDIO_IMUSIC || player.type == AUDIO_ICD)
-        {
-            os << _E(Ta) _E(l) "  " << (player.type == AUDIO_IMUSIC ? "Music" : "CD") << ": "
-               << _E(.) _E(Tb) << playerIdKey << "\n";
-        }
-        else if(player.type == AUDIO_ISFX)
-        {
-            os << _E(Ta) _E(l) << "  SFX: " << _E(.) _E(Tb)
-               << playerIdKey << "\n";
-        }
+        auto const &ifs = d->activeInterfaces[i];
+        os << _E(Ta) _E(l) "  " << playerTypeName(ifs.getPlayer()) << ": "
+           << _E(.) _E(Tb) << ifs.identityKey() << "\n";
     }
 
     return str.rightStrip();

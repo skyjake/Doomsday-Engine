@@ -1119,7 +1119,7 @@ dint SdlMixerDriver::playerCount() const
     return d->initialized ? 3 : 0;
 }
 
-String SdlMixerDriver::playerName(IPlayer const &player) const
+String SdlMixerDriver::playerIdentityKey(IPlayer const &player) const
 {
     if(&player == &d->cd)    return "cd";
     if(&player == &d->music) return "music";

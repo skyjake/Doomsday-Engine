@@ -44,7 +44,8 @@
 enum
 {
     SFXIP_DISABLE_CHANNEL_REFRESH  = 1,  ///< The channel refresh thread is not needed.
-    SFXIP_ANY_SAMPLE_RATE_ACCEPTED = 2   ///< Samples don't all need the same rate.
+    SFXIP_ANY_SAMPLE_RATE_ACCEPTED = 2,  ///< Samples don't all need the same rate.
+    SFXIP_IDENTITYKEY
 };
 
 /**

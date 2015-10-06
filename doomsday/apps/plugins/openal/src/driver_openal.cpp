@@ -89,7 +89,7 @@ void DS_SFX_Set(sfxbuffer_t *buf, int prop, float value);
 void DS_SFX_Setv(sfxbuffer_t *buf, int prop, float *values);
 void DS_SFX_Listener(int prop, float value);
 void DS_SFX_Listenerv(int prop, float *values);
-int DS_SFX_Getv(int prop, void *values);
+int DS_SFX_Getv(int prop, void *ptr);
 
 } // extern "C"
 
@@ -503,10 +503,23 @@ void DS_SFX_Listenerv(int prop, float *values)
     }
 }
 
-int DS_SFX_Getv(int /*prop*/, void* /*values*/)
+int DS_SFX_Getv(int prop, void *ptr)
 {
-    // Stub.
-    return 0;
+    switch(prop)
+    {
+    case SFXIP_IDENTITYKEY: {
+        auto *identityKey = reinterpret_cast<char *>(ptr);
+        if(identityKey)
+        {
+            qstrcpy(identityKey, "sfx");
+            return true;
+        }
+        break; }
+
+    default: break;
+    }
+
+    return false;
 }
 
 /**

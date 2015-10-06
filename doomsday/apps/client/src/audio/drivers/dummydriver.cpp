@@ -726,7 +726,7 @@ dint DummyDriver::playerCount() const
     return d->initialized ? 3 : 0;
 }
 
-String DummyDriver::playerName(IPlayer const &player) const
+String DummyDriver::playerIdentityKey(IPlayer const &player) const
 {
     if(&player == &d->cd)    return "cd";
     if(&player == &d->music) return "music";
