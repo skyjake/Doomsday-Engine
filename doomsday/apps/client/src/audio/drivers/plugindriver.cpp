@@ -54,8 +54,8 @@ dint PluginDriver::CdPlayer::initialize()
     if(_needInit)
     {
         _needInit = false;
-        DENG2_ASSERT(driver().as<PluginDriver>().iCd().gen.Init);
-        _initialized = driver().as<PluginDriver>().iCd().gen.Init();
+        DENG2_ASSERT(driver().iCd().gen.Init);
+        _initialized = driver().iCd().gen.Init();
     }
     return _initialized;
 }
@@ -65,9 +65,9 @@ void PluginDriver::CdPlayer::deinitialize()
     if(!_initialized) return;
 
     _initialized = false;
-    if(driver().as<PluginDriver>().iCd().gen.Shutdown)
+    if(driver().iCd().gen.Shutdown)
     {
-        driver().as<PluginDriver>().iCd().gen.Shutdown();
+        driver().iCd().gen.Shutdown();
     }
     _needInit = true;
 }
@@ -75,43 +75,43 @@ void PluginDriver::CdPlayer::deinitialize()
 void PluginDriver::CdPlayer::update()
 {
     if(!_initialized) return;
-    DENG2_ASSERT(driver().as<PluginDriver>().iCd().gen.Update);
-    driver().as<PluginDriver>().iCd().gen.Update();
+    DENG2_ASSERT(driver().iCd().gen.Update);
+    driver().iCd().gen.Update();
 }
 
 void PluginDriver::CdPlayer::setVolume(dfloat newVolume)
 {
     if(!_initialized) return;
-    DENG2_ASSERT(driver().as<PluginDriver>().iCd().gen.Set);
-    driver().as<PluginDriver>().iCd().gen.Set(MUSIP_VOLUME, newVolume);
+    DENG2_ASSERT(driver().iCd().gen.Set);
+    driver().iCd().gen.Set(MUSIP_VOLUME, newVolume);
 }
 
 bool PluginDriver::CdPlayer::isPlaying() const
 {
     if(!_initialized) return false;
-    DENG2_ASSERT(driver().as<PluginDriver>().iCd().gen.Get);
-    return driver().as<PluginDriver>().iCd().gen.Get(MUSIP_PLAYING, nullptr);
+    DENG2_ASSERT(driver().iCd().gen.Get);
+    return driver().iCd().gen.Get(MUSIP_PLAYING, nullptr);
 }
 
 void PluginDriver::CdPlayer::pause(dint pause)
 {
     if(!_initialized) return;
-    DENG2_ASSERT(driver().as<PluginDriver>().iCd().gen.Pause);
-    driver().as<PluginDriver>().iCd().gen.Pause(pause);
+    DENG2_ASSERT(driver().iCd().gen.Pause);
+    driver().iCd().gen.Pause(pause);
 }
 
 void PluginDriver::CdPlayer::stop()
 {
     if(!_initialized) return;
-    DENG2_ASSERT(driver().as<PluginDriver>().iCd().gen.Stop);
-    driver().as<PluginDriver>().iCd().gen.Stop();
+    DENG2_ASSERT(driver().iCd().gen.Stop);
+    driver().iCd().gen.Stop();
 }
 
 dint PluginDriver::CdPlayer::play(dint track, dint looped)
 {
     if(!_initialized) return false;
-    DENG2_ASSERT(driver().as<PluginDriver>().iCd().Play);
-    return driver().as<PluginDriver>().iCd().Play(track, looped);
+    DENG2_ASSERT(driver().iCd().Play);
+    return driver().iCd().Play(track, looped);
 }
 
 // ----------------------------------------------------------------------------------
@@ -131,8 +131,8 @@ dint PluginDriver::MusicPlayer::initialize()
     if(_needInit)
     {
         _needInit = false;
-        DENG2_ASSERT(driver().as<PluginDriver>().iMusic().gen.Init);
-        _initialized = driver().as<PluginDriver>().iMusic().gen.Init();
+        DENG2_ASSERT(driver().iMusic().gen.Init);
+        _initialized = driver().iMusic().gen.Init();
     }
     return _initialized;
 }
@@ -142,9 +142,9 @@ void PluginDriver::MusicPlayer::deinitialize()
     if(!_initialized) return;
 
     _initialized = false;
-    if(driver().as<PluginDriver>().iMusic().gen.Shutdown)
+    if(driver().iMusic().gen.Shutdown)
     {
-        driver().as<PluginDriver>().iMusic().gen.Shutdown();
+        driver().iMusic().gen.Shutdown();
     }
     _needInit = true;
 }
@@ -152,69 +152,69 @@ void PluginDriver::MusicPlayer::deinitialize()
 void PluginDriver::MusicPlayer::update()
 {
     if(!_initialized) return;
-    DENG2_ASSERT(driver().as<PluginDriver>().iMusic().gen.Update);
-    driver().as<PluginDriver>().iMusic().gen.Update();
+    DENG2_ASSERT(driver().iMusic().gen.Update);
+    driver().iMusic().gen.Update();
 }
 
 void PluginDriver::MusicPlayer::setVolume(dfloat newVolume)
 {
     if(!_initialized) return;
-    DENG2_ASSERT(driver().as<PluginDriver>().iMusic().gen.Set);
-    driver().as<PluginDriver>().iMusic().gen.Set(MUSIP_VOLUME, newVolume);
+    DENG2_ASSERT(driver().iMusic().gen.Set);
+    driver().iMusic().gen.Set(MUSIP_VOLUME, newVolume);
 }
 
 bool PluginDriver::MusicPlayer::isPlaying() const
 {
     if(!_initialized) return false;
-    DENG2_ASSERT(driver().as<PluginDriver>().iMusic().gen.Get);
-    return driver().as<PluginDriver>().iMusic().gen.Get(MUSIP_PLAYING, nullptr);
+    DENG2_ASSERT(driver().iMusic().gen.Get);
+    return driver().iMusic().gen.Get(MUSIP_PLAYING, nullptr);
 }
 
 void PluginDriver::MusicPlayer::pause(dint pause)
 {
     if(!_initialized) return;
-    DENG2_ASSERT(driver().as<PluginDriver>().iMusic().gen.Pause);
-    driver().as<PluginDriver>().iMusic().gen.Pause(pause);
+    DENG2_ASSERT(driver().iMusic().gen.Pause);
+    driver().iMusic().gen.Pause(pause);
 }
 
 void PluginDriver::MusicPlayer::stop()
 {
     if(!_initialized) return;
-    DENG2_ASSERT(driver().as<PluginDriver>().iMusic().gen.Stop);
-    driver().as<PluginDriver>().iMusic().gen.Stop();
+    DENG2_ASSERT(driver().iMusic().gen.Stop);
+    driver().iMusic().gen.Stop();
 }
 
 bool PluginDriver::MusicPlayer::canPlayBuffer() const
 {
     if(!_initialized) return false;
-    return driver().as<PluginDriver>().iMusic().Play != nullptr && driver().as<PluginDriver>().iMusic().SongBuffer != nullptr;
+    return driver().iMusic().Play != nullptr && driver().iMusic().SongBuffer != nullptr;
 }
 
 void *PluginDriver::MusicPlayer::songBuffer(duint length)
 {
     if(!_initialized) return nullptr;
-    if(!driver().as<PluginDriver>().iMusic().SongBuffer) return nullptr;
-    return driver().as<PluginDriver>().iMusic().SongBuffer(length);
+    if(!driver().iMusic().SongBuffer) return nullptr;
+    return driver().iMusic().SongBuffer(length);
 }
 
 dint PluginDriver::MusicPlayer::play(dint looped)
 {
     if(!_initialized) return false;
-    if(!driver().as<PluginDriver>().iMusic().Play) return false;
-    return driver().as<PluginDriver>().iMusic().Play(looped);
+    if(!driver().iMusic().Play) return false;
+    return driver().iMusic().Play(looped);
 }
 
 bool PluginDriver::MusicPlayer::canPlayFile() const
 {
     if(!_initialized) return false;
-    return driver().as<PluginDriver>().iMusic().PlayFile != nullptr;
+    return driver().iMusic().PlayFile != nullptr;
 }
 
 dint PluginDriver::MusicPlayer::playFile(char const *filename, dint looped)
 {
     if(!_initialized) return false;
-    if(!driver().as<PluginDriver>().iMusic().PlayFile) return false;
-    return driver().as<PluginDriver>().iMusic().PlayFile(filename, looped);
+    if(!driver().iMusic().PlayFile) return false;
+    return driver().iMusic().PlayFile(filename, looped);
 }
 
 // ----------------------------------------------------------------------------------
@@ -350,8 +350,8 @@ dint PluginDriver::SoundPlayer::initialize()
     if(d->needInit)
     {
         d->needInit = false;
-        DENG2_ASSERT(driver().as<PluginDriver>().iSound().gen.Init);
-        d->initialized = driver().as<PluginDriver>().iSound().gen.Init();
+        DENG2_ASSERT(driver().iSound().gen.Init);
+        d->initialized = driver().iSound().gen.Init();
 
         if(d->initialized)
         {
@@ -384,9 +384,9 @@ void PluginDriver::SoundPlayer::deinitialize()
         d->refreshThread = nullptr;
     }
 
-    /*if(driver().as<PluginDriver>().iSound().gen.Shutdown)
+    /*if(driver().iSound().gen.Shutdown)
     {
-        driver().as<PluginDriver>().iSound().gen.Shutdown();
+        driver().iSound().gen.Shutdown();
     }*/
 
     d->clearSounds();
@@ -396,9 +396,9 @@ void PluginDriver::SoundPlayer::deinitialize()
 bool PluginDriver::SoundPlayer::anyRateAccepted() const
 {
     dint anyRateAccepted = 0;
-    if(driver().as<PluginDriver>().iSound().gen.Getv)
+    if(driver().iSound().gen.Getv)
     {
-        driver().as<PluginDriver>().iSound().gen.Getv(SFXIP_ANY_SAMPLE_RATE_ACCEPTED, &anyRateAccepted);
+        driver().iSound().gen.Getv(SFXIP_ANY_SAMPLE_RATE_ACCEPTED, &anyRateAccepted);
     }
     return CPP_BOOL( anyRateAccepted );
 }
@@ -407,9 +407,9 @@ bool PluginDriver::SoundPlayer::needsRefresh() const
 {
     if(!d->initialized) return false;
     dint disableRefresh = false;
-    if(driver().as<PluginDriver>().iSound().gen.Getv)
+    if(driver().iSound().gen.Getv)
     {
-        driver().as<PluginDriver>().iSound().gen.Getv(SFXIP_DISABLE_CHANNEL_REFRESH, &disableRefresh);
+        driver().iSound().gen.Getv(SFXIP_DISABLE_CHANNEL_REFRESH, &disableRefresh);
     }
     return !disableRefresh;
 }
@@ -432,22 +432,22 @@ void PluginDriver::SoundPlayer::allowRefresh(bool allow)
 void PluginDriver::SoundPlayer::listener(dint prop, dfloat value)
 {
     if(!d->initialized) return;
-    DENG2_ASSERT(driver().as<PluginDriver>().iSound().gen.Listener);
-    driver().as<PluginDriver>().iSound().gen.Listener(prop, value);
+    DENG2_ASSERT(driver().iSound().gen.Listener);
+    driver().iSound().gen.Listener(prop, value);
 }
 
 void PluginDriver::SoundPlayer::listenerv(dint prop, dfloat *values)
 {
     if(!d->initialized) return;
-    DENG2_ASSERT(driver().as<PluginDriver>().iSound().gen.Listenerv);
-    driver().as<PluginDriver>().iSound().gen.Listenerv(prop, values);
+    DENG2_ASSERT(driver().iSound().gen.Listenerv);
+    driver().iSound().gen.Listenerv(prop, values);
 }
 
 Sound *PluginDriver::SoundPlayer::makeSound(bool stereoPositioning, dint bytesPer, dint rate)
 {
     if(!d->initialized) return nullptr;
     std::unique_ptr<Sound> sound(new PluginDriver::Sound(*this));
-    sound->setBuffer(driver().as<PluginDriver>().iSound().gen.Create(stereoPositioning ? 0 : SFXBF_3D, bytesPer * 8, rate));
+    sound->setBuffer(driver().iSound().gen.Create(stereoPositioning ? 0 : SFXBF_3D, bytesPer * 8, rate));
     d->sounds << sound.release();
     if(d->sounds.count() == 1)
     {
@@ -483,7 +483,7 @@ DENG2_PIMPL_NOREF(PluginDriver::Sound)
     sfxbuffer_t *buffer = nullptr;   ///< Assigned sound buffer, if any (not owned).
     dint startTime = 0;              ///< When the assigned sound sample was last started.
 
-    SoundPlayer *player = nullptr;  ///< Owning player (not owned).
+    SoundPlayer *player = nullptr;   ///< Owning player (not owned).
 
     ~Instance()
     {

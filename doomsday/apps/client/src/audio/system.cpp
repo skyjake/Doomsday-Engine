@@ -115,7 +115,7 @@ String System::IDriver::statusAsText() const
 
     default: DENG2_ASSERT(!"audio::System::IDriver::statusAsText: Invalid status"); break;
     }
-    return "Invalid";
+    return "(invalid)";
 }
 
 String System::IDriver::description() const
@@ -135,7 +135,7 @@ String System::IDriver::description() const
         for(Record const rec : interfaces)
         {
             if(!pSummary.isEmpty()) pSummary += "\n" _E(0);
-            pSummary += " - " + System::audioInterfaceTypeAsText(audiointerfacetype_t(rec.geti("type")))
+            pSummary += " - " + System::playbackInterfaceTypeAsText(PlaybackInterfaceType(rec.geti("type")))
                       + ": " _E(>) + rec.gets("identityKey") + _E(<);
         }
         desc += "\n" _E(.)_E(.) + pSummary;
@@ -162,7 +162,7 @@ DENG2_PIMPL(System)
     QList<IDriver *> drivers;  //< All loaded audio drivers.
 
     typedef QMap<String /*key: identity key*/, Record> PlaybackInterfaceMap;
-    PlaybackInterfaceMap interfaces[3/*AudioInterfaceCount*/];
+    PlaybackInterfaceMap interfaces[PlaybackInterfaceTypeCount];
 
     struct ActiveInterface
     {
@@ -189,16 +189,16 @@ DENG2_PIMPL(System)
     };
     QList<ActiveInterface> activeInterfaces;  //< Initialization order.
 
-    Record &findInterface(audiointerfacetype_t type, DotPath const &identityKey)
+    Record &findInterface(PlaybackInterfaceType type, DotPath const &identityKey)
     {
         if(auto *found = tryFindInterface(type, identityKey)) return *found;
         /// @throw MissingPlaybackInterfaceError  Unknown type & identity key pair specified.
         throw /*MissingPlaybackInterface*/Error("audio::System::Instance::findInterface", "Unknown interface identity key \"" + identityKey + "\"");
     }
 
-    Record *tryFindInterface(audiointerfacetype_t type, DotPath const &identityKey)
+    Record *tryFindInterface(PlaybackInterfaceType type, DotPath const &identityKey)
     {
-        DENG2_ASSERT(dint(type) >= 0 && dint(type) < 3/*AudioInterfaceTypeCount*/);
+        DENG2_ASSERT(dint(type) >= 0 && dint(type) < PlaybackInterfaceTypeCount);
         auto found = interfaces[dint(type)].find(identityKey.toStringRef().toLower());
         if(found != interfaces[dint(type)].end()) return &found.value();
         return nullptr;
@@ -207,13 +207,13 @@ DENG2_PIMPL(System)
     Record &addInterface(Record const &rec)
     {
         dint type = rec.geti("type");
-        DENG2_ASSERT(type >= 0 && type < 3/*AudioInterfaceCount*/);
+        DENG2_ASSERT(type >= 0 && type < PlaybackInterfaceTypeCount);
         return interfaces[type].insert(rec.gets("identityKey"), rec).value();  // a copy is made
     }
 
     bool interfaceIsActive(Record const &interfaceDef)
     {
-        for(ActiveInterface const active : activeInterfaces)
+        for(ActiveInterface const &active : activeInterfaces)
         {
             if(&active.def() == &interfaceDef) return true;
         }
@@ -230,8 +230,9 @@ DENG2_PIMPL(System)
     IDriver *tryFindDriver(String driverIdKey)
     {
         driverIdKey = driverIdKey.toLower();  // Symbolic identity keys are lowercase.
+
         for(IDriver *driver : drivers)
-        for(String const &idKey : driver->identityKey().split(';'))
+        for(QString const &idKey : driver->identityKey().split(';'))
         {
             if(idKey == driverIdKey)
                 return driver;
@@ -251,9 +252,9 @@ DENG2_PIMPL(System)
 
         // Reject this driver if it's identity key(s) is not unique.
         for(IDriver const *other : drivers)
-        for(String const otherIdKey : other->identityKey().split(';'))
+        for(QString const &otherIdKey : other->identityKey().split(';'))
         {
-            for(String const idKey : driver->identityKey().split(';'))
+            for(QString const &idKey : driver->identityKey().split(';'))
             {
                 if(otherIdKey == idKey)
                 {
@@ -276,7 +277,7 @@ DENG2_PIMPL(System)
         for(Record const &rec : driver->listInterfaces())
         {
             DotPath const idKey(rec.gets("identityKey"));
-            auto const type = audiointerfacetype_t( rec.geti("type") );
+            auto const type = PlaybackInterfaceType( rec.geti("type") );
 
             // Ensure the identity key for this interface is well-formed.
             if(idKey.segmentCount() < 2 || idKey.firstSegment() != driver->identityKey().split(';').first())
@@ -375,8 +376,12 @@ DENG2_PIMPL(System)
      * @return  ';' delimited listing of player interface identity keys, from least to
      * most preferred.
      */
-    String interfacePriority(audiointerfacetype_t type)
+    String interfacePriority(PlaybackInterfaceType type)
     {
+        // Presently the audio driver configuration is inferred and/or specified using
+        // command line options.
+        /// @todo Store this information persistently (in Config). -ds
+
         String list;
 
         String arg;
@@ -387,9 +392,6 @@ DENG2_PIMPL(System)
         case AUDIO_ISFX:   arg = "-isfx";   break;
         }
 
-        // Presently the audio driver configuration is inferred and/or specified using
-        // command line options.
-        /// @todo Store this information persistently (in Config). -ds
         CommandLine &cmdLine = App::commandLine();
         for(dint p = 1; p < cmdLine.count() - 1; ++p)
         {
@@ -417,7 +419,7 @@ DENG2_PIMPL(System)
      *
      * @return  Sanitized list of playback interfaces in the order given.
      */
-    QStringList parseInterfacePriority(audiointerfacetype_t type, String priorityList)
+    QStringList parseInterfacePriority(PlaybackInterfaceType type, String priorityList)
     {
         priorityList = priorityList.lower();  // Identity keys are always lowercase.
 
@@ -428,20 +430,20 @@ DENG2_PIMPL(System)
         QMutableStringListIterator it(list);
         while(it.hasNext())
         {
-            DotPath idKey = String(it.next()).strip();
+            DotPath idKey(String(it.next()).strip());
 
             // Resolve driver identity key aliases.
             if(idKey.segmentCount() > 1)
             {
-                if(IDriver const *driver = tryFindDriver(idKey.firstSegment().toString()))
+                if(IDriver const *driver = tryFindDriver(idKey.firstSegment()))
                 {
                     idKey = DotPath(driver->identityKey().split(';').first())
-                          / idKey.toString().mid(idKey.firstSegment().length() + 1);
+                          / idKey.toStringRef().mid(idKey.firstSegment().length() + 1);
                 }
             }
 
             // Do we know this playback interface?
-            if(Record *foundInterface = tryFindInterface(type, idKey))
+            if(Record const *foundInterface = tryFindInterface(type, idKey))
             {
                 it.setValue(foundInterface->gets("identityKey"));
             }
@@ -482,7 +484,7 @@ DENG2_PIMPL(System)
         return "fmod";  // The default audio driver.
     }
 
-    IPlayer &getPlayer(audiointerfacetype_t type, DotPath const identityKey)
+    IPlayer &getPlayer(PlaybackInterfaceType type, DotPath const &identityKey)
     {
         if(identityKey.segmentCount() > 1)
         {
@@ -490,9 +492,9 @@ DENG2_PIMPL(System)
             if(IPlayer *player = driver.tryFindPlayer(identityKey.segment(1)))
             {
                 // Ensure the player is of the expected type.
-                if(    (type == AUDIO_ICD    && player->is<ICdPlayer>())
-                    || (type == AUDIO_IMUSIC && player->is<IMusicPlayer>())
-                    || (type == AUDIO_ISFX   && player->is<ISoundPlayer>()))
+                if(   (type == AUDIO_ICD    && player->is<ICdPlayer>())
+                   || (type == AUDIO_IMUSIC && player->is<IMusicPlayer>())
+                   || (type == AUDIO_ISFX   && player->is<ISoundPlayer>()))
                 {
                     return *player;
                 }
@@ -504,7 +506,7 @@ DENG2_PIMPL(System)
 
     inline IPlayer &getPlayerFor(Record const &ifs)
     {
-        return getPlayer(audiointerfacetype_t( ifs.geti("type") ), ifs.gets("identityKey"));
+        return getPlayer(PlaybackInterfaceType( ifs.geti("type") ), ifs.gets("identityKey"));
     }
 
     void activateInterfaces()
@@ -528,9 +530,9 @@ DENG2_PIMPL(System)
         // ----
 
 
-        for(dint i = 0; i < 3; ++i)
+        for(dint i = 0; i < PlaybackInterfaceTypeCount; ++i)
         {
-            auto const type = audiointerfacetype_t( i );
+            auto const type = PlaybackInterfaceType( i );
             for(DotPath const idKey : parseInterfacePriority(type, interfacePriority(type)))
             {
                 try
@@ -542,7 +544,7 @@ DENG2_PIMPL(System)
                         IPlayer &player = getPlayerFor(foundInterface);
 
                         // If this interface belongs to a driver - ensure that the
-                        // driver is initialize the before activating the interface.
+                        // driver is initialized before activating the interface.
                         if(idKey.segmentCount() > 1)
                         {
                             if(IDriver *driver = tryFindDriver(idKey.firstSegment()))
@@ -554,7 +556,7 @@ DENG2_PIMPL(System)
                         ActiveInterface active; de::zap(active);
                         active._def    = &foundInterface;
                         active._player = &player;
-                        activeInterfaces.append(active);  // a copy is made.
+                        activeInterfaces.append(active);  // A copy is made.
                     }
                 }
                 catch(MissingDriverError const &er)
@@ -1655,19 +1657,6 @@ DENG2_AUDIENCE_METHOD(System, MidiFontChange)
 System::System() : d(new Instance(this))
 {}
 
-String System::audioInterfaceTypeAsText(audiointerfacetype_t type)  // static
-{
-    switch(type)
-    {
-    case AUDIO_ICD:    return "CD";
-    case AUDIO_IMUSIC: return "Music";
-    case AUDIO_ISFX:   return "SFX";
-
-    default: DENG2_ASSERT(!"Unknown audiointerfacetype_t"); break;
-    }
-    return "";
-}
-
 audio::System &System::get()
 {
     DENG2_ASSERT(theAudioSystem);
@@ -1701,7 +1690,7 @@ String System::description() const
     for(dint i = d->activeInterfaces.count(); i--> 0; )
     {
         Instance::ActiveInterface &active = d->activeInterfaces[i];
-        os << _E(Ta) _E(l) "  " << audioInterfaceTypeAsText(audiointerfacetype_t( active.def().geti("type") )) << ": "
+        os << _E(Ta) _E(l) "  " << playbackInterfaceTypeAsText(PlaybackInterfaceType( active.def().geti("type") )) << ": "
            << _E(.) _E(Tb) << active.def().gets("identityKey") << "\n";
     }
 
@@ -1853,18 +1842,6 @@ LoopResult System::forAllDrivers(std::function<LoopResult (IDriver const &)> fun
         if(auto result = func(*driver)) return result;
     }
     return LoopContinue;
-}
-
-String System::musicSourceAsText(MusicSource source)  // static
-{
-    static char const *sourceNames[3] = {
-        /* MUSP_MUS */ "MUS lumps",
-        /* MUSP_EXT */ "External files",
-        /* MUSP_CD */  "CD",
-    };
-    if(source >= MUSP_MUS && source <= MUSP_CD)
-        return sourceNames[dint( source )];
-    return "(invalid)";
 }
 
 bool System::musicPlaybackAvailable() const
@@ -2325,6 +2302,32 @@ void System::worldMapChanged()
     d->sfxListener = getListenerMobj();
 }
 
+String System::musicSourceAsText(MusicSource source)  // static
+{
+    switch(source)
+    {
+    case MUSP_MUS: return "MUS lumps";
+    case MUSP_EXT: return "External files";
+    case MUSP_CD:  return "CD";
+
+    default: DENG2_ASSERT(!"Unknown MusicSource"); break;
+    }
+    return "(invalid)";
+}
+
+String System::playbackInterfaceTypeAsText(PlaybackInterfaceType type)  // static
+{
+    switch(type)
+    {
+    case AUDIO_ICD:    return "CD";
+    case AUDIO_IMUSIC: return "Music";
+    case AUDIO_ISFX:   return "SFX";
+
+    default: DENG2_ASSERT(!"Unknown PlaybackInterfaceType"); break;
+    }
+    return "(unknown)";
+}
+
 /**
  * Console command for logging a summary of the loaded audio drivers.
  */
@@ -2534,7 +2537,7 @@ void System::consoleRegister()  // static
 
     // Music:
     C_VAR_CHARPTR2("music-soundfont",     &musMidiFontPath,       0, 0, 0, musicMidiFontChanged);
-    C_VAR_INT     ("music-source",        &musSourcePriority,   0, 0, 2);
+    C_VAR_INT     ("music-source",        &musSourcePriority,     0, 0, 2);
     C_VAR_INT     ("music-volume",        &musVolume,             0, 0, 255);
 
     C_CMD_FLAGS("pausemusic", nullptr, PauseMusic, CMDF_NO_DEDICATED);

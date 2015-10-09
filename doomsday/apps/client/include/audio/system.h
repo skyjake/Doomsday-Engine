@@ -56,22 +56,13 @@ class System : public de::System
 {
 public:
     /// Notified when a new audio frame begins.
-    DENG2_DEFINE_AUDIENCE2(FrameBegins, void systemFrameBegins(System &system))
+    DENG2_DEFINE_AUDIENCE2(FrameBegins,    void systemFrameBegins(System &system))
 
     /// Notified when the current audio frame ends.
-    DENG2_DEFINE_AUDIENCE2(FrameEnds,   void systemFrameEnds(System &system))
+    DENG2_DEFINE_AUDIENCE2(FrameEnds,      void systemFrameEnds(System &system))
 
     /// Notified whenever a MIDI font change occurs.
     DENG2_DEFINE_AUDIENCE2(MidiFontChange, void systemMidiFontChanged(de::String const &newMidiFontPath))
-
-    enum audiointerfacetype_t
-    {
-        AUDIO_ICD,
-        AUDIO_IMUSIC,
-        AUDIO_ISFX
-    };
-
-    static de::String audioInterfaceTypeAsText(audiointerfacetype_t type);
 
 public:
     /**
@@ -232,6 +223,17 @@ public:  // Low-level driver interfaces: ---------------------------------------
     /// Required/referenced audio driver is missing. @ingroup errors
     DENG2_ERROR(MissingDriverError);
 
+    enum PlaybackInterfaceType
+    {
+        AUDIO_ICD,
+        AUDIO_IMUSIC,
+        AUDIO_ISFX,
+
+        PlaybackInterfaceTypeCount
+    };
+
+    static de::String playbackInterfaceTypeAsText(PlaybackInterfaceType type);
+
     /**
      * Base class for a logical audio driver.
      */
@@ -243,7 +245,6 @@ public:  // Low-level driver interfaces: ---------------------------------------
 
         /// Base class for property write errors. @ingroup errors
         DENG2_ERROR(WritePropertyError);
-
 
         /**
          * Logical driver statuses.
@@ -325,7 +326,7 @@ public:  // Low-level driver interfaces: ---------------------------------------
          * later, though.
          *
          * Each interface record must contain at least the following required elements:
-         * - (NumberValue)"type"      : AudioInterfaceType identifier.
+         * - (NumberValue)"type"      : PlaybackInterfaceType identifier.
          *
          * - (TextValue)"identityKey" : Driver-unique, textual, symbolic identifier for
          *   the player interface (lower case), for use in Config.
