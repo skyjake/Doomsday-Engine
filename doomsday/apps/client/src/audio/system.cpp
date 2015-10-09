@@ -316,34 +316,26 @@ DENG2_PIMPL(System)
         }
     }
 
-    IDriver &initDriverIfNeeded(IDriver &driver)
-    {
-        if(!driver.isInitialized())
-        {
-            LOG_AUDIO_VERBOSE("Initializing audio driver '%s'...") << driver.identityKey();
-            driver.initialize();
-            if(!driver.isInitialized())
-            {
-                /// @todo Why, exactly? (log it!) -ds
-                LOG_AUDIO_WARNING("Failed initializing audio driver '%s'") << driver.identityKey();
-            }
-        }
-        return driver;
-    }
-
     void unloadDrivers()
     {
         // Deinitialize all loaded drivers we have since initialized.
-        // Note: Do this in reverse initialization order.
-        while(!activeInterfaces.isEmpty())
+        // As each driver may provide multiple interfaces, which, may be initialized in any
+        // order - the initialization order is reverse earliest in the active interface order.
+        QList<IDriver *> reverseInitOrder;
+        for(ActiveInterface const &active : activeInterfaces)
         {
-            ActiveInterface const &active = activeInterfaces.last();
-            if(active.hasDriver())
-            {
-                active.driver().deinitialize();
-            }
-            activeInterfaces.removeLast();
+            if(!active.hasDriver()) continue;
+
+            IDriver *driver = &active.driver();
+            if(!reverseInitOrder.contains(driver))
+                reverseInitOrder.prepend(driver);
         }
+        for(IDriver *driver : reverseInitOrder)
+        {
+            LOG_AUDIO_VERBOSE("Deinitializing audio driver '%s'...") << driver->identityKey();
+            driver->deinitialize();
+        }
+        activeInterfaces.clear();
 
         // Clear the interface database.
         for(auto &interfaceMap : interfaces) { interfaceMap.clear(); }
@@ -503,13 +495,28 @@ DENG2_PIMPL(System)
         return getPlayer(PlaybackInterfaceType( ifs.geti("type") ), ifs.gets("identityKey"));
     }
 
+    IDriver &initDriverIfNeeded(IDriver &driver)
+    {
+        if(!driver.isInitialized())
+        {
+            LOG_AUDIO_VERBOSE("Initializing audio driver '%s'...") << driver.identityKey();
+            driver.initialize();
+            if(!driver.isInitialized())
+            {
+                /// @todo Why, exactly? (log it!) -ds
+                LOG_AUDIO_WARNING("Failed initializing audio driver '%s'") << driver.identityKey();
+            }
+        }
+        return driver;
+    }
+
     /**
      * Activate the playback interface associated with the given @a interfaceDef if it is
      * not already activated.
      */
     void activateInterface(Record const &interfaceDef)
     {
-        // Have we already activated the associated interace?
+        // Have we already activated the associated interface?
         if(interfaceIsActive(interfaceDef))
             return;
 
@@ -518,8 +525,8 @@ DENG2_PIMPL(System)
             IDriver *driver = nullptr;
             IPlayer &player = getPlayerFor(interfaceDef);
 
-            // If this interface belongs to a driver - ensure that the
-            // driver is initialized before activating the interface.
+            // If this interface belongs to a driver - ensure that the driver is initialized
+            // before activating the interface.
             DotPath const idKey = interfaceDef.gets("identityKey");
             if(idKey.segmentCount() > 1)
             {
