@@ -318,7 +318,7 @@ DENG2_PIMPL_NOREF(DummyDriver::Sound)
             else
             {
                 // Calculate roll-off attenuation. [.125/(.125+x), x=0..1]
-                Ranged const attenRange = System::get().soundVolumeAttenuationRange();
+                Ranged const attenRange = System::get().worldStageSoundVolumeAttenuationRange();
 
                 dist = System::get().distanceToWorldStageListener(origin);
 
@@ -597,7 +597,7 @@ void DummyDriver::Sound::play()
         }
         else
         {
-            d->setVolumeAttenuationRange(*d->buffer, System::get().soundVolumeAttenuationRange());
+            d->setVolumeAttenuationRange(*d->buffer, System::get().worldStageSoundVolumeAttenuationRange());
         }
     }
 
@@ -748,8 +748,8 @@ QList<Record> DummyDriver::listInterfaces() const
 IPlayer &DummyDriver::findPlayer(String interfaceIdentityKey) const
 {
     if(IPlayer *found = tryFindPlayer(interfaceIdentityKey)) return *found;
-    /// @throw MissingPlayerError  Unknown interface referenced.
-    throw MissingPlayerError("DummyDriver::findPlayer", "Unknown playback interface \"" + interfaceIdentityKey + "\"");
+    /// @throw UnknownInterfaceError  Unknown interface referenced.
+    throw UnknownInterfaceError("DummyDriver::findPlayer", "Unknown playback interface \"" + interfaceIdentityKey + "\"");
 }
 
 IPlayer *DummyDriver::tryFindPlayer(String interfaceIdentityKey) const

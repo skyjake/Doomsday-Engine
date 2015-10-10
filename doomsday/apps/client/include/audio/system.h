@@ -63,8 +63,6 @@ enum SoundStage
 
 /**
  * Music source preference.
- *
- * @todo Belongs in the resource system. -ds
  */
 enum MusicSource
 {
@@ -72,6 +70,11 @@ enum MusicSource
     MUSP_EXT,  ///< "External" file.
     MUSP_CD    ///< CD track.
 };
+
+/**
+ * Provides a human-friendly, textual representation of the given music @a source.
+ */
+de::String MusicSourceAsText(MusicSource source);
 
 /**
  * Client audio subsystem.
@@ -138,12 +141,7 @@ public:
      */
     void resetSoundStage(SoundStage soundStage);
 
-public:  // Music playback: ----------------------------------------------------------
-
-    /**
-     * Provides a human-friendly, textual representation of the given music @a source.
-     */
-    static de::String musicSourceAsText(MusicSource source);
+public:  // Music playback: -------------------------------------------------------------
 
     /**
      * Returns @c true if one or more interface for audible @em music playback is
@@ -173,11 +171,6 @@ public:  // Music playback: ----------------------------------------------------
     void pauseMusic(bool doPause = true);
 
     /**
-     * Stop all currently playing @em music, if any (affects all music interfaces).
-     */
-    void stopMusic();
-
-    /**
      * Start playing a song. The chosen interface depends on what's available and what
      * sources have been associated with the song. Any song currently playing song is
      * stopped.
@@ -192,6 +185,11 @@ public:  // Music playback: ----------------------------------------------------
     de::dint playMusicFile(de::String const &filePath, bool looped = false);
     de::dint playMusicCDTrack(de::dint cdTrack, bool looped = false);
 
+    /**
+     * Stop all currently playing @em music, if any (affects all music interfaces).
+     */
+    void stopMusic();
+
 public:  // Sound playback: -------------------------------------------------------------
 
     /**
@@ -204,25 +202,6 @@ public:  // Sound playback: ----------------------------------------------------
      * Convenient method returning the current sound effect playback volume.
      */
     de::dint soundVolume() const;
-
-    /**
-     * Convenient method returning the current WorldStage sound effect volume attenuation
-     * range, in map space units.
-     */
-    de::Ranged soundVolumeAttenuationRange() const;
-
-    /**
-     * Convenient method determining the distance from the given map space @a point to the
-     * active WorldStage listener, in map space units; otherwise returns @c 0 if no current
-     * listener exists.
-     */
-    coord_t distanceToWorldStageListener(de::Vector3d const &point) const;
-
-    /**
-     * Returns the WorldStage map object used as the current sound listener, if any (may
-     * return @c nullptr if none is configured).
-     */
-    struct mobj_s *worldStageListener();
 
     /**
      * Returns true if the referenced sound is currently playing somewhere in the given
@@ -262,6 +241,25 @@ public:  // Sound playback: ----------------------------------------------------
      */
     void stopSound(SoundStage soundStage, de::dint soundId, struct mobj_s *emitter,
         de::dint flags = 0 /*no special stop behaviors*/);
+
+    /**
+     * Convenient method determining the distance from the given map space @a point to the
+     * active WorldStage listener, in map space units; otherwise returns @c 0 if no current
+     * listener exists.
+     */
+    coord_t distanceToWorldStageListener(de::Vector3d const &point) const;
+
+    /**
+     * Returns the WorldStage map object used as the current sound listener, if any (may
+     * return @c nullptr if none is configured).
+     */
+    struct mobj_s *worldStageListener();
+
+    /**
+     * Convenient method returning the current WorldStage sound effect volume attenuation
+     * range, in map space units.
+     */
+    de::Ranged worldStageSoundVolumeAttenuationRange() const;
 
 public:  // Low-level driver/playback interfaces: ---------------------------------------
 
@@ -311,15 +309,8 @@ public:  // Low-level driver/playback interfaces: ------------------------------
         /// Returns a reference to the application's singleton audio System instance.
         static inline System &audioSystem() { return System::get(); }
 
-        /**
-         * Initialize the audio driver if necessary, ready for use.
-         */
-        virtual void initialize() = 0;
-
-        /**
-         * Deinitialize the audio driver if necessary, so that it may be unloaded.
-         */
-        virtual void deinitialize() = 0;
+        inline bool isLoaded     () const { return status() >= Loaded;      }
+        inline bool isInitialized() const { return status() == Initialized; }
 
         /**
          * Returns the logical driver status.
@@ -331,14 +322,21 @@ public:  // Low-level driver/playback interfaces: ------------------------------
          */
         de::String statusAsText() const;
 
-        inline bool isLoaded     () const { return status() >= Loaded;      }
-        inline bool isInitialized() const { return status() == Initialized; }
-
         /**
          * Returns detailed information about the driver as styled text. Printed by
          * "inspectaudiodriver", for instance.
          */
         de::String description() const;
+
+        /**
+         * Initialize the audio driver if necessary, ready for use.
+         */
+        virtual void initialize() = 0;
+
+        /**
+         * Deinitialize the audio driver if necessary, so that it may be unloaded.
+         */
+        virtual void deinitialize() = 0;
 
         /**
          * Returns the textual, symbolic identifier of the audio driver (lower case), for
@@ -359,8 +357,8 @@ public:  // Low-level driver/playback interfaces: ------------------------------
 
     public:  // Playback Interfaces: ----------------------------------------------------
 
-        /// Referenced player interface is missing. @ingroup errors
-        DENG2_ERROR(MissingPlayerError);
+        /// Referenced playback interface unknown. @ingroup errors
+        DENG2_ERROR(UnknownInterfaceError);
 
         /**
          * Returns a listing of the logical playback interfaces implemented by the driver.
@@ -414,19 +412,19 @@ public:  /// @todo make private:
     void endFrame();
 
     /**
-     * Perform playback intialization (both sound effects and music).
+     * Perform playback intialization (both music and sounds).
      * @todo observe App?
      */
     void initPlayback();
 
     /**
-     * Perform playback deintialization (both sound effects and music).
+     * Perform playback deintialization (both music and sounds).
      * @todo observe App?
      */
     void deinitPlayback();
 
     /**
-     * Stop channels (all playing sounds and music), clear the Sample data cache.
+     * Stop channels (playing music and all sounds), clear the Sample data cache.
      * @todo observe ClientApp?
      */
     void reset();

@@ -103,6 +103,19 @@ static mobj_t *getListenerMobj()
     return DD_Player(::displayPlayer)->publicData().mo;
 }
 
+String MusicSourceAsText(MusicSource source)  // static
+{
+    switch(source)
+    {
+    case MUSP_MUS: return "MUS lumps";
+    case MUSP_EXT: return "External files";
+    case MUSP_CD:  return "CD";
+
+    default: DENG2_ASSERT(!"Unknown MusicSource"); break;
+    }
+    return "(invalid)";
+}
+
 // --------------------------------------------------------------------------------------
 
 String System::IDriver::statusAsText() const
@@ -474,19 +487,17 @@ DENG2_PIMPL(System)
         if(identityKey.segmentCount() > 1)
         {
             IDriver const &driver = findDriver(identityKey.segment(0));
-            if(IPlayer *player = driver.tryFindPlayer(identityKey.segment(1)))
+            IPlayer &player = driver.findPlayer(identityKey.segment(1));
+            // Ensure this player is of the expected type.
+            if(   (type == AUDIO_ICD    && player.is<ICdPlayer>())
+               || (type == AUDIO_IMUSIC && player.is<IMusicPlayer>())
+               || (type == AUDIO_ISFX   && player.is<ISoundPlayer>()))
             {
-                // Ensure the player is of the expected type.
-                if(   (type == AUDIO_ICD    && player->is<ICdPlayer>())
-                   || (type == AUDIO_IMUSIC && player->is<IMusicPlayer>())
-                   || (type == AUDIO_ISFX   && player->is<ISoundPlayer>()))
-                {
-                    return *player;
-                }
+                return player;
             }
         }
         // Internal bookkeeping error: No such player found!
-        throw Error("audio::System::Instance::getPlayer", "Failed to locate player for \"" + identityKey + "\"");
+        throw Error("audio::System::Instance::getPlayer", "Failed to locate " + self.playbackInterfaceTypeAsText(type) + " player for \"" + identityKey + "\"");
     }
 
     inline IPlayer &getPlayerFor(Record const &ifs)
@@ -1800,7 +1811,7 @@ String System::description() const
 
     String const midiFontPath(musMidiFontPath);
     os << TABBED("Music sound font:", midiFontPath.isEmpty() ? "None" : midiFontPath);
-    os << TABBED("Music source priority:", musicSourceAsText(musSourcePriority));
+    os << TABBED("Music source priority:", MusicSourceAsText(musSourcePriority));
 
     os << _E(T`) "Playback interface priority:\n";
     for(dint i = d->activeInterfaces.count(); i--> 0; )
@@ -1815,150 +1826,37 @@ String System::description() const
 #undef TABBED
 }
 
-void System::reset()
+Channels &System::channels() const
 {
-    LOG_AS("audio::System");
-    LOG_AUDIO_VERBOSE("Reseting...");
-
-    if(d->sfxAvail)
-    {
-        d->sfxListenerCluster = nullptr;
-
-        // Stop all sounds.
-        d->channels->forAll([] (Sound/*Channel*/ &ch)
-        {
-            ch.stop();
-            return LoopContinue;
-        });
-
-        // Clear the sample cache.
-        d->sampleCache.clear();
-    }
-
-    stopMusic();
+    DENG2_ASSERT(d->channels.get() != nullptr);
+    return *d->channels;
 }
 
-/**
- * @todo Do this in timeChanged()
- */
-void System::startFrame()
+SampleCache &System::sampleCache() const
 {
-    LOG_AS("audio::System");
+    return d->sampleCache;
+}
 
-    d->updateMusicVolumeIfChanged();
-
-    // Notify interested parties.
-    DENG2_FOR_AUDIENCE2(FrameBegins, i) i->systemFrameBegins(*this);
-
+dint System::upsampleFactor(dint rate) const
+{
+    dint factor = 1;
     if(soundPlaybackAvailable())
     {
-        // Update all channels (freq, 2D:pan,volume, 3D:position,velocity).
-
-        // Have there been changes to the cvar settings?
-        d->updateSfx3DModeIfChanged();
-        d->updateSfxSampleRateIfChanged();
-
-        // Should we purge the cache (to conserve memory)?
-        d->sampleCache.maybeRunPurge();
+        // If we need to upsample - determine the scale factor.
+        if(!d->getSoundPlayer().anyRateAccepted())
+        {
+            factor = de::max(1, ::sfxRate / rate);
+        }
     }
-
-    d->sfxLogicalSoundOnePerEmitter = sfxOneSoundPerEmitter;
-    d->sfxPurgeLogicalSounds();
+    return factor;
 }
 
-void System::endFrame()
+void System::resetSoundStage(SoundStage soundStage)
 {
-    LOG_AS("audio::System");
-
-    if(soundPlaybackAvailable() && !BusyMode_Active())
+    if(soundStage == WorldStage)
     {
-        // Update listener properties.
-        // If no listener is available - no 3D positioning is done.
-        d->sfxListener = getListenerMobj();
-        d->updateSfxListener();
+        d->sfxClearLogicalSounds();
     }
-
-    // Notify interested parties.
-    DENG2_FOR_AUDIENCE2(FrameEnds, i) i->systemFrameEnds(*this);
-}
-
-void System::initPlayback()
-{
-    LOG_AS("audio::System");
-
-    CommandLine &cmdLine = App::commandLine();
-    if(cmdLine.has("-nosound") || cmdLine.has("-noaudio"))
-    {
-        LOG_AUDIO_NOTE("Music and sound effects are disabled");
-        return;
-    }
-
-    LOG_AUDIO_VERBOSE("Initializing for playback...");
-
-    // Disable random pitch changes?
-    sfxNoRndPitch = cmdLine.has("-norndpitch");
-
-    // Load all the available audio drivers and then select and initialize playback
-    // interfaces specified in Config.
-    d->loadDrivers();
-    d->activateInterfaces();
-
-    // Initialize sfx playback.
-    try
-    {
-        d->initSfx();
-    }
-    catch(Error const &er)
-    {
-        LOG_AUDIO_NOTE("Failed initializing playback for sound effects:\n") << er.asText();
-    }
-
-    // Initialize music playback.
-    try
-    {
-        d->initMusic();
-    }
-    catch(Error const &er)
-    {
-        LOG_AUDIO_NOTE("Failed initializing playback for music:\n") << er.asText();
-    }
-
-    // Print a summary of the active configuration to the log.
-    LOG_AUDIO_MSG("%s") << description();
-}
-
-void System::deinitPlayback()
-{
-    LOG_AS("audio::System");
-
-    d->deinitSfx();
-    d->deinitMusic();
-
-    d->unloadDrivers();
-}
-
-dint System::driverCount() const
-{
-    return d->drivers.count();
-}
-
-System::IDriver const *System::tryFindDriver(String driverIdKey) const
-{
-    return d->tryFindDriver(driverIdKey);
-}
-
-System::IDriver const &System::findDriver(String driverIdKey) const
-{
-    return d->findDriver(driverIdKey);
-}
-
-LoopResult System::forAllDrivers(std::function<LoopResult (IDriver const &)> func) const
-{
-    for(IDriver *driver : d->drivers)
-    {
-        if(auto result = func(*driver)) return result;
-    }
-    return LoopContinue;
 }
 
 bool System::musicPlaybackAvailable() const
@@ -2175,33 +2073,14 @@ void System::updateMusicMidiFont()
     DENG2_FOR_AUDIENCE2(MidiFontChange, i) i->systemMidiFontChanged(path);
 }
 
-dint System::soundVolume() const
-{
-    return sfxVolume;
-}
-
-Ranged System::soundVolumeAttenuationRange() const
-{
-    return Ranged(sfxDistMin, sfxDistMax);
-}
-
 bool System::soundPlaybackAvailable() const
 {
     return d->sfxAvail;
 }
 
-mobj_t *System::worldStageListener()
+dint System::soundVolume() const
 {
-    return d->sfxListener;
-}
-
-coord_t System::distanceToWorldStageListener(Vector3d const &point) const
-{
-    if(mobj_t const *listener = getListenerMobj())
-    {
-        return Mobj_ApproxPointDistance(*listener, point);
-    }
-    return 0;
+    return sfxVolume;
 }
 
 bool System::soundIsPlaying(SoundStage soundStage, dint soundId, mobj_t *emitter) const
@@ -2361,43 +2240,175 @@ void System::stopSound(SoundStage soundStage, dint soundId, mobj_t *emitter, din
     }
 }
 
-SampleCache &System::sampleCache() const
+mobj_t *System::worldStageListener()
 {
-    return d->sampleCache;
+    return d->sfxListener;
 }
 
-dint System::upsampleFactor(dint rate) const
+coord_t System::distanceToWorldStageListener(Vector3d const &point) const
 {
-    dint factor = 1;
-    if(soundPlaybackAvailable())
+    if(mobj_t const *listener = getListenerMobj())
     {
-        // If we need to upsample - determine the scale factor.
-        if(!d->getSoundPlayer().anyRateAccepted())
-        {
-            factor = de::max(1, ::sfxRate / rate);
-        }
+        return Mobj_ApproxPointDistance(*listener, point);
     }
-    return factor;
+    return 0;
 }
 
-void System::resetSoundStage(SoundStage soundStage)
+Ranged System::worldStageSoundVolumeAttenuationRange() const
 {
-    if(soundStage == WorldStage)
-    {
-        d->sfxClearLogicalSounds();
-    }
-}
-
-Channels &System::channels() const
-{
-    DENG2_ASSERT(d->channels.get() != nullptr);
-    return *d->channels;
+    return Ranged(sfxDistMin, sfxDistMax);
 }
 
 void System::requestWorldStageListenerUpdate()
 {
     // Request a listener reverb update at the end of the frame.
     d->sfxListenerCluster = nullptr;
+}
+
+dint System::driverCount() const
+{
+    return d->drivers.count();
+}
+
+System::IDriver const *System::tryFindDriver(String driverIdKey) const
+{
+    return d->tryFindDriver(driverIdKey);
+}
+
+System::IDriver const &System::findDriver(String driverIdKey) const
+{
+    return d->findDriver(driverIdKey);
+}
+
+LoopResult System::forAllDrivers(std::function<LoopResult (IDriver const &)> func) const
+{
+    for(IDriver *driver : d->drivers)
+    {
+        if(auto result = func(*driver)) return result;
+    }
+    return LoopContinue;
+}
+
+void System::reset()
+{
+    LOG_AS("audio::System");
+    LOG_AUDIO_VERBOSE("Reseting...");
+
+    if(d->sfxAvail)
+    {
+        d->sfxListenerCluster = nullptr;
+
+        // Stop all sounds.
+        d->channels->forAll([] (Sound/*Channel*/ &ch)
+        {
+            ch.stop();
+            return LoopContinue;
+        });
+
+        // Clear the sample cache.
+        d->sampleCache.clear();
+    }
+
+    stopMusic();
+}
+
+/**
+ * @todo Do this in timeChanged()
+ */
+void System::startFrame()
+{
+    LOG_AS("audio::System");
+
+    d->updateMusicVolumeIfChanged();
+
+    // Notify interested parties.
+    DENG2_FOR_AUDIENCE2(FrameBegins, i) i->systemFrameBegins(*this);
+
+    if(soundPlaybackAvailable())
+    {
+        // Update all channels (freq, 2D:pan,volume, 3D:position,velocity).
+
+        // Have there been changes to the cvar settings?
+        d->updateSfx3DModeIfChanged();
+        d->updateSfxSampleRateIfChanged();
+
+        // Should we purge the cache (to conserve memory)?
+        d->sampleCache.maybeRunPurge();
+    }
+
+    d->sfxLogicalSoundOnePerEmitter = sfxOneSoundPerEmitter;
+    d->sfxPurgeLogicalSounds();
+}
+
+void System::endFrame()
+{
+    LOG_AS("audio::System");
+
+    if(soundPlaybackAvailable() && !BusyMode_Active())
+    {
+        // Update listener properties.
+        // If no listener is available - no 3D positioning is done.
+        d->sfxListener = getListenerMobj();
+        d->updateSfxListener();
+    }
+
+    // Notify interested parties.
+    DENG2_FOR_AUDIENCE2(FrameEnds, i) i->systemFrameEnds(*this);
+}
+
+void System::initPlayback()
+{
+    LOG_AS("audio::System");
+
+    CommandLine &cmdLine = App::commandLine();
+    if(cmdLine.has("-nosound") || cmdLine.has("-noaudio"))
+    {
+        LOG_AUDIO_NOTE("Music and sound effects are disabled");
+        return;
+    }
+
+    LOG_AUDIO_VERBOSE("Initializing for playback...");
+
+    // Disable random pitch changes?
+    sfxNoRndPitch = cmdLine.has("-norndpitch");
+
+    // Load all the available audio drivers and then select and initialize playback
+    // interfaces specified in Config.
+    d->loadDrivers();
+    d->activateInterfaces();
+
+    // Initialize sfx playback.
+    try
+    {
+        d->initSfx();
+    }
+    catch(Error const &er)
+    {
+        LOG_AUDIO_NOTE("Failed initializing playback for sound effects:\n") << er.asText();
+    }
+
+    // Initialize music playback.
+    try
+    {
+        d->initMusic();
+    }
+    catch(Error const &er)
+    {
+        LOG_AUDIO_NOTE("Failed initializing playback for music:\n") << er.asText();
+    }
+
+    // Print a summary of the active configuration to the log.
+    LOG_AUDIO_MSG("%s") << description();
+}
+
+void System::deinitPlayback()
+{
+    LOG_AS("audio::System");
+
+    d->deinitSfx();
+    d->deinitMusic();
+
+    d->unloadDrivers();
 }
 
 void System::allowSoundRefresh(bool allow)
@@ -2416,19 +2427,6 @@ void System::worldMapChanged()
 {
     // Update who is listening now.
     d->sfxListener = getListenerMobj();
-}
-
-String System::musicSourceAsText(MusicSource source)  // static
-{
-    switch(source)
-    {
-    case MUSP_MUS: return "MUS lumps";
-    case MUSP_EXT: return "External files";
-    case MUSP_CD:  return "CD";
-
-    default: DENG2_ASSERT(!"Unknown MusicSource"); break;
-    }
-    return "(invalid)";
 }
 
 String System::playbackInterfaceTypeAsText(PlaybackInterfaceType type)  // static
