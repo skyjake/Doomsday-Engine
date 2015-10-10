@@ -286,8 +286,8 @@ public:  // Sound playback: ----------------------------------------------------
     struct mobj_s *worldStageListener();
 
     /**
-     * Convenient method returning the current WorldStage sound effect volume attenuation
-     * range, in map space units.
+     * Convenient method returning the current WorldStage sound volume attenuation range,
+     * in map space units.
      */
     de::Ranged worldStageSoundVolumeAttenuationRange() const;
 
@@ -413,7 +413,7 @@ public:  // Low-level driver/playback interfaces: ------------------------------
          * - (NumberValue)"type"      : PlaybackInterfaceType identifier.
          *
          * - (TextValue)"identityKey" : Driver-unique, textual, symbolic identifier for
-         *   the player interface (lower case), for use in Config.
+         *   the player interface (lowercase), for use in Config.
          */
         virtual QList<de::Record> listInterfaces() const = 0;
 
@@ -460,13 +460,13 @@ public:  /// @todo make private:
 
     /**
      * Perform playback intialization (both music and sounds).
-     * @todo observe App?
+     * @todo observe ClientApp?
      */
     void initPlayback();
 
     /**
      * Perform playback deintialization (both music and sounds).
-     * @todo observe App?
+     * @todo observe ClientApp?
      */
     void deinitPlayback();
 

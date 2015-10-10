@@ -67,8 +67,6 @@ dint sfxRate = 11025;
 
 namespace audio {
 
-static duint const PURGEINTERVAL         = 2000;  ///< 2 seconds
-
 static dint const CHANNEL_COUNT_DEFAULT  = 16;
 static dint const CHANNEL_COUNT_MAX      = 256;
 static dint const CHANNEL_2DCOUNT        = 4;
@@ -98,7 +96,7 @@ static audio::System *theAudioSystem;
 /**
  * Usually the display player.
  */
-static mobj_t *getListenerMobj()
+static mobj_t *getListenerMob()
 {
     return DD_Player(::displayPlayer)->publicData().mo;
 }
@@ -176,6 +174,7 @@ DENG2_PIMPL(System)
     SettingsRegister settings;
     QList<IDriver *> drivers;  //< All loaded audio drivers.
 
+    /// All indexed playback interfaces.
     typedef QMap<String /*key: identity key*/, Record> PlaybackInterfaceMap;
     PlaybackInterfaceMap interfaces[PlaybackInterfaceTypeCount];
 
@@ -532,6 +531,8 @@ DENG2_PIMPL(System)
 
         try
         {
+            IPlayer &player = getPlayerFor(interfaceDef);
+
             // If this interface belongs to a driver - ensure that the driver is initialized
             // before activating the interface.
             IDriver *driver = nullptr;
@@ -549,11 +550,11 @@ DENG2_PIMPL(System)
 
             ActiveInterface active;
             active._def    = const_cast<Record *>(&interfaceDef);
-            active._player = &getPlayerFor(interfaceDef);
+            active._player = &player;
             active._driver = driver;
             activeInterfaces.append(active);  // A copy is made.
         }
-        catch(MissingDriverError const &er)
+        catch(IDriver::UnknownInterfaceError const &er)
         {
             // Log but otherwise ignore this error.
             LOG_AUDIO_ERROR("") << er.asText();
@@ -592,260 +593,198 @@ DENG2_PIMPL(System)
         }
     }
 
-#if 0
-    /**
-     * Chooses the default audio driver based on configuration options.
-     */
-    String chooseDriver()
-    {
-        // Presently the audio driver configuration is inferred and/or specified
-        // using command line options.
-        /// @todo Store this information persistently in Config. -ds
-        CommandLine &cmdLine = App::commandLine();
-        for(IDriver const *driver : drivers)
-        for(QString const &driverIdKey : driver->identityKey().split(';'))
-        {
-            if(cmdLine.has("-" + driverIdKey))
-                return driverIdKey;
-        }
-
-        return "fmod";  // The default audio driver.
-    }
-
-    void selectInterfaces()
-    {
-        // Choose the default driver and initialize it.
-        /// @todo Defer until an interface is added. -ds
-        IDriver *defaultDriver = tryFindDriver(chooseDriver());
-        if(defaultDriver)
-        {
-            initDriverIfNeeded(*defaultDriver);
-        }
-        // Fallback option for the default driver.
-#ifndef DENG_DISABLE_SDLMIXER
-        if(!defaultDriver || !defaultDriver->isInitialized())
-        {
-            defaultDriver = &findDriver("sdlmixer");
-            initDriverIfNeeded(*defaultDriver);
-        }
-#endif
-
-        if(defaultDriver && defaultDriver->isInitialized())
-        {
-            // The default driver goes on the bottom of the stack.
-            if(ISoundPlayer *player = tryFindSoundPlayer(*defaultDriver))
-            {
-                addActiveInterface(AUDIO_ISFX, *player, defaultDriver);
-            }
-
-            if(IMusicPlayer *player = tryFindMusicPlayer(*defaultDriver))
-            {
-                addActiveInterface(AUDIO_IMUSIC, *player, defaultDriver);
-            }
-#if 0
-#ifdef MACOSX
-            else if(defaultDriver->identityKey() != "dummy")
-            {
-                // On the Mac, use the built-in QuickTime interface as the fallback for music.
-                addActiveInterface(AUDIO_IMUSIC, ::audiodQuickTimeMusic, defaultDriver);
-            }
-#endif
-
-#ifndef WIN32
-            // At the moment, dsFMOD supports streaming samples so we can
-            // automatically load dsFluidSynth for MIDI music.
-            if(defaultDriver->identityKey() == "fmod")
-            {
-                IDriver &fluidSynth = findDriver("fluidsynth");
-                initDriverIfNeeded(fluidSynth);
-                if(IMusicPlayer *player = tryFindMusicPlayer(fluidSynth))
-                {
-                    addActiveInterface(AUDIO_IMUSIC, *player, defaultDriver);
-                }
-            }
-#endif
-#endif
-
-            if(ICdPlayer *player = tryFindCdPlayer(*defaultDriver))
-            {
-                addActiveInterface(AUDIO_ICD, *player, defaultDriver);
-            }
-
-            CommandLine &cmdLine = App::commandLine();
-            for(dint p = 1; p < cmdLine.count() - 1; ++p)
-            {
-                if(!cmdLine.isOption(p)) continue;
-
-                // A SFX override?
-                if(cmdLine.matches("-isfx", cmdLine.at(p)))
-                {
-                    try
-                    {
-                        IDriver &driver = findDriver(cmdLine.at(++p));
-                        initDriverIfNeeded(driver);
-                        if(ISoundPlayer *player = tryFindSoundPlayer(driver))
-                        {
-                            addActiveInterface(AUDIO_ISFX, *player, &driver);
-                        }
-                        else
-                        {
-                            LOG_AUDIO_WARNING("Audio driver \"" + driver.title() + "\" does not provide a SFX player");
-                        }
-                    }
-                    catch(MissingDriverError const &er)
-                    {
-                        LOG_AUDIO_WARNING("") << er.asText();
-                    }
-                    continue;
-                }
-
-                // A Music override?
-                if(cmdLine.matches("-imusic", cmdLine.at(p)))
-                {
-                    try
-                    {
-                        IDriver &driver = findDriver(cmdLine.at(++p));
-                        initDriverIfNeeded(driver);
-                        if(IMusicPlayer *player = tryFindMusicPlayer(driver))
-                        {
-                            addActiveInterface(AUDIO_IMUSIC, *player, &driver);
-                        }
-                        else
-                        {
-                            LOG_AUDIO_WARNING("Audio driver \"" + driver.title() + "\" does not provide a Music player");
-                        }
-                    }
-                    catch(MissingDriverError const &er)
-                    {
-                        LOG_AUDIO_WARNING("") << er.asText();
-                    }
-                    continue;
-                }
-
-                // A CD override?
-                if(cmdLine.matches("-icd", cmdLine.at(p)))
-                {
-                    try
-                    {
-                        IDriver &driver = findDriver(cmdLine.at(++p));
-                        initDriverIfNeeded(driver);
-                        if(ICdPlayer *player = tryFindCdPlayer(driver))
-                        {
-                            addActiveInterface(AUDIO_ICD, *player, &driver);
-                        }
-                        else
-                        {
-                            LOG_AUDIO_WARNING("Audio driver \"" + driver.title() + "\" does not provide a CD player");
-                        }
-                    }
-                    catch(MissingDriverError const &er)
-                    {
-                        LOG_AUDIO_WARNING("") << er.asText();
-                    }
-                    continue;
-                }
-            }
-        }
-    }
-#endif
-
-    /**
-     * Returns the currently active, primary CdPlayer.
-     */
-    ICdPlayer &getCdPlayer() const
-    {
-        // The primary interface is the first one.
-        ICdPlayer *found = nullptr;
-        for(dint i = activeInterfaces.count(); i--> 0; )
-        {
-            ActiveInterface const &active = activeInterfaces[i];
-            if(active.def().geti("type") == AUDIO_ICD)
-            {
-                found = &active.playerAs<ICdPlayer>();
-                break;
-            }
-        }
-        if(found) return *found;
-
-        /// @throw Error  No suitable sound player is available.
-        throw Error("audio::System::Instance::getCdPlayer", "No CdPlayer available");
-    }
-
-    /**
-     * Returns the currently active, primary MusicPlayer.
-     */
-    IMusicPlayer &getMusicPlayer() const
-    {
-        // The primary interface is the first one.
-        IMusicPlayer *found = nullptr;
-        for(dint i = activeInterfaces.count(); i--> 0; )
-        {
-            ActiveInterface const &active = activeInterfaces[i];
-            if(active.def().geti("type") == AUDIO_IMUSIC)
-            {
-                found = &active.playerAs<IMusicPlayer>();
-                break;
-            }
-        }
-        if(found) return *found;
-
-        /// @throw Error  No suitable sound player is available.
-        throw Error("audio::System::Instance::getMusicPlayer", "No MusicPlayer available");
-    }
-
-    /**
-     * Returns the currently active, primary SoundPlayer.
-     */
-    ISoundPlayer &getSoundPlayer() const
-    {
-        // The primary interface is the first one.
-        ISoundPlayer *found = nullptr;
-        for(dint i = activeInterfaces.count(); i--> 0; )
-        {
-            ActiveInterface const &active = activeInterfaces[i];
-            if(active.def().geti("type") == AUDIO_ISFX)
-            {
-                found = &active.playerAs<ISoundPlayer>();
-                break;
-            }
-        }
-        if(found) return *found;
-
-        /// @throw Error  No suitable sound player is available.
-        throw Error("audio::System::Instance::getSoundPlayer", "No SoundPlayer available");
-    }
-
-    bool musAvail = false;              ///< @c true if at least one driver is initialized for music playback.
-    bool musNeedBufFileSwitch = false;  ///< @c true= choose a new file name for the buffered playback file when asked. */
-    String musCurrentSong;
-    bool musPaused = false;
-
-    bool sfxAvail = false;              ///< @c true if a sound driver is initialized for sound effect playback.
-    mobj_t *sfxListener = nullptr;
-    SectorCluster *sfxListenerCluster = nullptr;
-    std::unique_ptr<Channels> channels;
-
     /**
      * Logical sounds are used to track currently playing sounds on a purely logical level
-     * (irrespective of whether playback interfaces are available, or if the sounds will
-     * actually be audible to anyone).
+     * in relevant sound stage (irrespective of whether playback interfaces are available,
+     * or if the sounds will actually be audible to anyone).
+     *
+     * Presently used for sounds playing in the WorldStage only.
      */
-    struct LogicSound
+    struct LogicalSounds
     {
-        struct mobj_s *emitter = nullptr;
-        uint endTime     = 0;
-        bool isRepeating = false;
+        static duint const PURGE_INTERVAL = 2000;  ///< 2 seconds
 
-        bool inline isPlaying(uint nowTime) const {
-            return (isRepeating || endTime > nowTime);
+        struct LogicSound
+        {
+            bool repeat;
+            duint endTime;
+            mobj_t *emitter;
+
+            LogicSound(duint endTime, bool repeat = false, mobj_t *emitter = nullptr)
+                : repeat(repeat)
+                , endTime(endTime)
+                , emitter(emitter)
+            {}
+
+            /**
+             * Returns @c true if the sound is currently playing relative to @a nowTime.
+             */
+            bool isPlaying(duint nowTime) const { return (repeat || endTime > nowTime); }
+        };
+
+        ~LogicalSounds()
+        {
+            clear();
         }
-    };
-    typedef QMultiHash<dint /*key: soundId*/, LogicSound *> LogicalSoundHash;
-    typedef QMutableHashIterator<dint /*key: soundId*/, LogicSound *> MutableLogicalSoundHashIterator;
-    LogicalSoundHash sfxLogicalSounds;
-    duint sfxLogicalSoundLastPurge    = 0;
-    bool sfxLogicalSoundOnePerEmitter = false;  ///< set at the start of the frame
 
+        void clear()
+        {
+            qDeleteAll(sounds);
+            sounds.clear();
+        }
+
+        /**
+         * Determines whether a logical sound is currently playing, irrespective of whether
+         * it is audible or not.
+         */
+        bool isPlaying(dint soundId, mobj_t *emitter) const
+        {
+            duint const nowTime = Timer_RealMilliseconds();
+            if(soundId)
+            {
+                auto it = sounds.constFind(soundId);
+                while(it != sounds.constEnd() && it.key() == soundId)
+                {
+                    LogicSound const &sound = *it.value();
+                    if(sound.emitter == emitter && sound.isPlaying(nowTime))
+                        return true;
+
+                    ++it;
+                }
+            }
+            else if(emitter)
+            {
+                // Check if the emitter is playing any sound.
+                auto it = sounds.constBegin();
+                while(it != sounds.constEnd())
+                {
+                    LogicSound const &sound = *it.value();
+                    if(sound.emitter == emitter && sound.isPlaying(nowTime))
+                        return true;
+
+                    ++it;
+                }
+            }
+            return false;
+        }
+
+        /**
+         * The sound is removed from the list of playing sounds. To be called whenever
+         * a/the associated sound is stopped, regardless of whether it was actually playing
+         * on the local system.
+         *
+         * @note Use @a soundId == 0 and @a emitter == nullptr to stop @em everything.
+         *
+         * @return  Number of sounds stopped.
+         */
+        dint stop(dint soundId, mobj_t *emitter)
+        {
+            dint numStopped = 0;
+            MutableLogicSoundHashIterator it(sounds);
+            while(it.hasNext())
+            {
+                it.next();
+
+                LogicSound const &sound = *it.value();
+                if(soundId)
+                {
+                    if(it.key() != soundId) continue;
+                }
+                else if(emitter)
+                {
+                    if(sound.emitter != emitter) continue;
+                }
+
+                delete &sound;
+                it.remove();
+                numStopped += 1;
+            }
+            return numStopped;
+        }
+
+        void start(dint soundIdAndFlags, mobj_t *emitter)
+        {
+            dint const soundId = (soundIdAndFlags & ~DDSF_FLAG_MASK);
+
+            // Cache the sound sample associated with @a soundId (if necessary)
+            // so that we can determine it's length.
+            if(sfxsample_t const *sample = System::get().sampleCache().cache(soundId))
+            {
+                bool const repeat = (soundIdAndFlags & DDSF_REPEAT) || Def_SoundIsRepeating(soundId);
+
+                duint length = sample->milliseconds();
+                if(repeat && length > 1) length = 1;
+
+                // Ignore zero length sounds.
+                /// @todo Shouldn't we still stop others though? -ds
+                if(!length) return;
+
+                // Only one sound per emitter?
+                if(emitter && oneSoundPerEmitter)
+                {
+                    // Stop all other sounds.
+                    stop(0, emitter);
+                }
+
+                sounds.insert(soundId, new LogicSound(Timer_RealMilliseconds() + length,
+                                                      repeat, emitter));
+            }
+        }
+
+        /**
+         * Remove stopped logical sounds if a purge is due.
+         */
+        void maybeRunPurge()
+        {
+            // Too soon?
+            duint const nowTime = Timer_RealMilliseconds();
+            if(nowTime - lastPurge < PURGE_INTERVAL) return;
+
+            // Peform the purge now.
+            LOGDEV_AUDIO_XVERBOSE("Purging logic sound hash...");
+            lastPurge = nowTime;
+
+            // Check all sounds in the hash.
+            MutableLogicSoundHashIterator it(sounds);
+            while(it.hasNext())
+            {
+                it.next();
+                LogicSound &sound = *it.value();
+                if(!sound.repeat && sound.endTime < nowTime)
+                {
+                    // This has stopped.
+                    delete &sound;
+                    it.remove();
+                }
+            }
+        }
+
+        void setOnePerSoundEmitter(bool yes = true)
+        {
+            oneSoundPerEmitter = yes;
+        }
+
+    private:
+        typedef QMultiHash<dint /*key: soundId*/, LogicSound *> LogicSoundHash;
+        typedef QMutableHashIterator<dint /*key: soundId*/, LogicSound *> MutableLogicSoundHashIterator;
+        LogicSoundHash sounds;
+
+        duint lastPurge         = 0;
+        bool oneSoundPerEmitter = false;  ///< Set when a new audio frame begins.
+
+    } logicalSounds;
+
+    bool musicAvail = false;                 ///< @c true if one or more interfaces are initialized for music playback.
+    bool soundAvail = false;                 ///< @c true if one or more interfaces are initialized for sound playback.
+
+    bool musicPaused = false;
+    String musicCurrentSong;
+    bool musicNeedSwitchBufferFile = false;  ///< @c true= choose a new file name for the buffered playback file when asked. */
+
+    mobj_t *worldStageListener               = nullptr;
+    SectorCluster *worldStageListenerCluster = nullptr;
+
+    std::unique_ptr<Channels> channels;
     SampleCache sampleCache;
 
     Instance(Public *i) : Base(i)
@@ -871,7 +810,6 @@ DENG2_PIMPL(System)
 
     ~Instance()
     {
-        sfxClearLogicalSounds();
         App::app().audienceForGameUnload() -= this;
 
         theAudioSystem = nullptr;
@@ -881,10 +819,10 @@ DENG2_PIMPL(System)
     {
         // Switch the name of the buffered song file?
         static dint currentBufFile = 0;
-        if(musNeedBufFileSwitch)
+        if(musicNeedSwitchBufferFile)
         {
             currentBufFile ^= 1;
-            musNeedBufFileSwitch = false;
+            musicNeedSwitchBufferFile = false;
         }
 
         // Compose the name.
@@ -893,7 +831,7 @@ DENG2_PIMPL(System)
 
     dint playMusicFile(String const &virtualOrNativePath, bool looped = false)
     {
-        DENG2_ASSERT(musAvail);
+        DENG2_ASSERT(musicAvail);
 
         if(virtualOrNativePath.isEmpty())
             return 0;
@@ -957,7 +895,7 @@ DENG2_PIMPL(System)
      */
     dint playMusicLump(lumpnum_t lumpNum, bool looped = false, bool canPlayMUS = true)
     {
-        DENG2_ASSERT(musAvail);
+        DENG2_ASSERT(musicAvail);
 
         if(!App_FileSystem().nameIndex().hasLump(lumpNum))
             return 0;
@@ -1053,13 +991,13 @@ DENG2_PIMPL(System)
     void initMusic()
     {
         // Already been here?
-        if(musAvail) return;
+        if(musicAvail) return;
 
         LOG_AUDIO_VERBOSE("Initializing music playback...");
 
-        musAvail       = false;
-        musCurrentSong = "";
-        musPaused      = false;
+        musicAvail       = false;
+        musicCurrentSong = "";
+        musicPaused      = false;
 
         CommandLine &cmdLine = App::commandLine();
         if(::isDedicated || cmdLine.has("-nomusic"))
@@ -1088,8 +1026,8 @@ DENG2_PIMPL(System)
         }
 
         // Remember whether an interface for music playback initialized successfully.
-        musAvail = initialized >= 1;
-        if(musAvail)
+        musicAvail = initialized >= 1;
+        if(musicAvail)
         {
             // Tell audio drivers about our soundfont config.
             self.updateMusicMidiFont();
@@ -1102,8 +1040,8 @@ DENG2_PIMPL(System)
     void deinitMusic()
     {
         // Already been here?
-        if(!musAvail) return;
-        musAvail = false;
+        if(!musicAvail) return;
+        musicAvail = false;
 
         // Shutdown interfaces.
         for(dint i = activeInterfaces.count(); i--> 0; )
@@ -1116,37 +1054,13 @@ DENG2_PIMPL(System)
         }
     }
 
-    void updateMusicVolumeIfChanged()
-    {
-        if(!musAvail) return;
-
-        static dint oldMusVolume = -1;
-        if(musVolume != oldMusVolume)
-        {
-            oldMusVolume = musVolume;
-
-            // Set volume of all active interfaces.
-            dfloat newVolume = musVolume / 255.0f;
-            for(dint i = activeInterfaces.count(); i--> 0; )
-            {
-                ActiveInterface &active = activeInterfaces[i];
-                switch(active.def().geti("type"))
-                {
-                case AUDIO_ICD:    active.playerAs<ICdPlayer   >().setVolume(newVolume); break;
-                case AUDIO_IMUSIC: active.playerAs<IMusicPlayer>().setVolume(newVolume); break;
-                default: break;
-                }
-            }
-        }
-    }
-
     /**
-     * Perform initialization for sound effect playback.
+     * Perform initialization for sound playback.
      */
-    void initSfx()
+    void initSound()
     {
         // Already initialized?
-        if(sfxAvail) return;
+        if(soundAvail) return;
 
         // Check if sound has been disabled with a command line option.
         if(App::commandLine().has("-nosfx"))
@@ -1180,8 +1094,8 @@ DENG2_PIMPL(System)
         }
 
         // Remember whether an interface for sound playback initialized successfully.
-        sfxAvail = initialized >= 1;
-        if(sfxAvail)
+        soundAvail = initialized >= 1;
+        if(soundAvail)
         {
             // This is based on the scientific calculations that if the DOOM marine
             // is 56 units tall, 60 is about two meters.
@@ -1189,7 +1103,7 @@ DENG2_PIMPL(System)
             getSoundPlayer().listener(SFXLP_UNITS_PER_METER, 30);
             getSoundPlayer().listener(SFXLP_DOPPLER, 1.5f);
 
-            sfxListenerNoReverb();
+            disableWorldStageReverb();
         }
 
         // Prepare the channel map.
@@ -1197,14 +1111,14 @@ DENG2_PIMPL(System)
     }
 
     /**
-     * Perform deinitialization for sound effect playback.
+     * Perform deinitialization for sound playback.
      */
-    void deinitSfx()
+    void deinitSound()
     {
         // Not initialized?
-        if(!sfxAvail) return;
+        if(!soundAvail) return;
 
-        sfxAvail = false;
+        soundAvail = false;
 
         // Clear the sample cache.
         sampleCache.clear();
@@ -1282,7 +1196,7 @@ DENG2_PIMPL(System)
     bool playSound(sfxsample_t &sample, dfloat volume, dfloat freq, mobj_t *emitter,
         coord_t const *origin, dint flags)
     {
-        if(!sfxAvail) return false;
+        if(!soundAvail) return false;
 
         bool const play3D = sfx3D && (emitter || origin);
 
@@ -1491,249 +1405,56 @@ DENG2_PIMPL(System)
         return true;
     }
 
-    void sfxClearLogicalSounds()
+    void disableWorldStageReverb()
     {
-        qDeleteAll(sfxLogicalSounds);
-        sfxLogicalSounds.clear();
-    }
+        if(!soundAvail) return;
 
-    /**
-     * Maybe remove stopped sounds from the LSM.
-     */
-    void sfxPurgeLogicalSounds()
-    {
-        // Too soon?
-        duint const nowTime = Timer_RealMilliseconds();
-        if(nowTime - sfxLogicalSoundLastPurge < PURGEINTERVAL) return;
-
-        // Peform the purge now.
-        LOGDEV_AUDIO_XVERBOSE("purging logic sound hash...");
-        sfxLogicalSoundLastPurge = nowTime;
-
-        // Check all sounds in the hash.
-        MutableLogicalSoundHashIterator it(sfxLogicalSounds);
-        while(it.hasNext())
-        {
-            it.next();
-            LogicSound &lsound = *it.value();
-            if(!lsound.isRepeating && lsound.endTime < nowTime)
-            {
-                // This has stopped.
-                delete &lsound;
-                it.remove();
-            }
-        }
-    }
-
-    /**
-     * Determines whether a logical sound is currently playing, irrespective of whether
-     * it is audible or not.
-     */
-    bool sfxLogicalSoundIsPlaying(dint soundId, mobj_t *emitter) const
-    {
-        duint const nowTime = Timer_RealMilliseconds();
-        if(soundId)
-        {
-            auto it = sfxLogicalSounds.constFind(soundId);
-            while(it != sfxLogicalSounds.constEnd() && it.key() == soundId)
-            {
-                LogicSound const &lsound = *it.value();
-                if(lsound.emitter == emitter && lsound.isPlaying(nowTime))
-                    return true;
-
-                ++it;
-            }
-        }
-        else if(emitter)
-        {
-            // Check if the emitter is playing any sound.
-            auto it = sfxLogicalSounds.constBegin();
-            while(it != sfxLogicalSounds.constEnd())
-            {
-                LogicSound const &lsound = *it.value();
-                if(lsound.emitter == emitter && lsound.isPlaying(nowTime))
-                    return true;
-
-                ++it;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * The sound is removed from the list of playing sounds. To be called whenever a/the
-     * associated sound is stopped, regardless of whether it was actually playing on the
-     * local system.
-     *
-     * @note Use @a soundId == 0 and @a emitter == nullptr to stop @em everything.
-     *
-     * @return  Number of sounds stopped.
-     */
-    dint sfxStopLogicalSound(dint soundId, mobj_t *emitter)
-    {
-        dint numStopped = 0;
-        MutableLogicalSoundHashIterator it(sfxLogicalSounds);
-        while(it.hasNext())
-        {
-            it.next();
-
-            LogicSound const &lsound = *it.value();
-            if(soundId)
-            {
-                if(it.key() != soundId) continue;
-            }
-            else if(emitter)
-            {
-                if(lsound.emitter != emitter) continue;
-            }
-
-            delete &lsound;
-            it.remove();
-            numStopped += 1;
-        }
-        return numStopped;
-    }
-
-    /**
-     * The sound is entered into the list of playing sounds. Called when a 'world class'
-     * sound is started, regardless of whether it's actually started on the local system.
-     */
-    void sfxStartLogicalSound(dint soundIdAndFlags, mobj_t *emitter)
-    {
-        dint const soundId = (soundIdAndFlags & ~DDSF_FLAG_MASK);
-
-        // Cache the sound sample associated with @a soundId (if necessary)
-        // so that we can determine it's length.
-        if(sfxsample_t *sample = sampleCache.cache(soundId))
-        {
-            bool const isRepeating = (soundIdAndFlags & DDSF_REPEAT) || Def_SoundIsRepeating(soundId);
-
-            duint length = (1000 * sample->numSamples) / sample->rate;
-            if(isRepeating && length > 1)
-            {
-                length = 1;
-            }
-
-            // Ignore zero length sounds.
-            /// @todo Shouldn't we still stop others though? -ds
-            if(!length) return;
-
-            // Only one sound per emitter?
-            if(emitter && sfxLogicalSoundOnePerEmitter)
-            {
-                // Stop all other sounds.
-                sfxStopLogicalSound(0, emitter);
-            }
-
-            auto *ls = new LogicSound;
-            ls->emitter     = emitter;
-            ls->isRepeating = isRepeating;
-            ls->endTime     = Timer_RealMilliseconds() + length;
-            sfxLogicalSounds.insert(soundId, ls);
-        }
-    }
-
-    /**
-     * Returns the 3D position of the sound effect listener, in map space.
-     */
-    Vector3d getSfxListenerOrigin() const
-    {
-        if(sfxListener)
-        {
-            auto origin = Vector3d(sfxListener->origin);
-            origin.z += sfxListener->height - 5;  /// @todo Make it exactly eye-level! (viewheight).
-            return origin;
-        }
-        return Vector3d();
-    }
-
-    void sfxListenerNoReverb()
-    {
-        if(!sfxAvail) return;
-
-        sfxListenerCluster = nullptr;
+        worldStageListenerCluster = nullptr;
 
         dfloat rev[4] = { 0, 0, 0, 0 };
         getSoundPlayer().listenerv(SFXLP_REVERB, rev);
         getSoundPlayer().listener(SFXLP_UPDATE, 0);
     }
 
-    void updateSfxListener()
+    /**
+     * Returns the 3D origin of the WorldStage sound listener in map space units.
+     */
+    Vector3d worldStageListenerOrigin() const
     {
-        if(!sfxAvail || !sfx3D) return;
-
-        // No volume means no sound.
-        if(!sfxVolume) return;
-
-        // Update the listener mobj.
-        sfxListener = getListenerMobj();
-        if(sfxListener)
+        if(worldStageListener)
         {
-            {
-                // Origin. At eye-level.
-                auto const origin = Vector4f(getSfxListenerOrigin().toVector3f(), 0);
-                dfloat vec[4];
-                origin.decompose(vec);
-                getSoundPlayer().listenerv(SFXLP_POSITION, vec);
-            }
-            {
-                // Orientation. (0,0) will produce front=(1,0,0) and up=(0,0,1).
-                dfloat vec[2] = {
-                    sfxListener->angle / (dfloat) ANGLE_MAX * 360,
-                    (sfxListener->dPlayer ? LOOKDIR2DEG(sfxListener->dPlayer->lookDir) : 0)
-                };
-                getSoundPlayer().listenerv(SFXLP_ORIENTATION, vec);
-            }
-            {
-                // Velocity. The unit is world distance units per second
-                auto const velocity = Vector4f(Vector3d(sfxListener->mom).toVector3f(), 0) * TICSPERSEC;
-                dfloat vec[4];
-                velocity.decompose(vec);
-                getSoundPlayer().listenerv(SFXLP_VELOCITY, vec);
-            }
+            auto origin = Vector3d(worldStageListener->origin);
+            origin.z += worldStageListener->height - 5;  /// @todo Make it exactly eye-level! (viewheight).
+            return origin;
+        }
+        return Vector3d();
+    }
 
-            // Reverb effects. Has the current sector cluster changed?
-            SectorCluster *newCluster = Mobj_ClusterPtr(*sfxListener);
-            if(newCluster && (!sfxListenerCluster || sfxListenerCluster != newCluster))
-            {
-                sfxListenerCluster = newCluster;
+    void updateMusicVolumeIfChanged()
+    {
+        if(!musicAvail) return;
 
-                // It may be necessary to recalculate the reverb properties...
-                AudioEnvironmentFactors const &envFactors = sfxListenerCluster->reverb();
-                dfloat vec[NUM_REVERB_DATA];
-                for(dint i = 0; i < NUM_REVERB_DATA; ++i)
+        static dint oldMusVolume = -1;
+        if(musVolume != oldMusVolume)
+        {
+            oldMusVolume = musVolume;
+
+            // Set volume of all active interfaces.
+            dfloat newVolume = musVolume / 255.0f;
+            for(dint i = activeInterfaces.count(); i--> 0; )
+            {
+                ActiveInterface &active = activeInterfaces[i];
+                switch(active.def().geti("type"))
                 {
-                    vec[i] = envFactors[i];
+                case AUDIO_ICD:    active.playerAs<ICdPlayer   >().setVolume(newVolume); break;
+                case AUDIO_IMUSIC: active.playerAs<IMusicPlayer>().setVolume(newVolume); break;
+                default: break;
                 }
-                vec[SRD_VOLUME] *= sfxReverbStrength;
-                getSoundPlayer().listenerv(SFXLP_REVERB, vec);
             }
         }
-
-        // Update all listener properties.
-        getSoundPlayer().listener(SFXLP_UPDATE, 0);
     }
 
-    void updateSfx3DModeIfChanged()
-    {
-        static dint old3DMode = false;
-
-        if(old3DMode == sfx3D) return;  // No change.
-
-        LOG_AUDIO_VERBOSE("Switching to %s mode...") << (old3DMode ? "2D" : "3D");
-
-        // Re-create the sound Channels.
-        initChannels();
-
-        if(old3DMode)
-        {
-            // Going 2D - ensure reverb is disabled.
-            sfxListenerNoReverb();
-        }
-        old3DMode = sfx3D;
-    }
-
-    void updateSfxSampleRateIfChanged()
+    void updateUpsampleRateIfChanged()
     {
         static dint old16Bit = false;
         static dint oldRate  = 11025;
@@ -1765,6 +1486,129 @@ DENG2_PIMPL(System)
             old16Bit = sfx16Bit;
             oldRate  = sfxSampleRate;
         }
+    }
+
+    void updateSoundPositioningIfChanged()
+    {
+        static dint old3DMode = false;
+
+        if(old3DMode == sfx3D) return;  // No change.
+
+        LOG_AUDIO_VERBOSE("Switching to %s sound positioning...") << (old3DMode ? "stereo" : "3D");
+
+        // Re-create the sound Channels.
+        initChannels();
+
+        if(old3DMode)
+        {
+            // Going 2D - ensure reverb is disabled.
+            disableWorldStageReverb();
+        }
+        old3DMode = sfx3D;
+    }
+
+    void updateWorldStageListener()
+    {
+        if(!soundAvail || !sfx3D) return;
+
+        // No volume means no sound.
+        if(!sfxVolume) return;
+
+        // Update the listener mob.
+        worldStageListener = getListenerMob();
+        if(worldStageListener)
+        {
+            {
+                // Origin. At eye-level.
+                auto const origin = Vector4f(worldStageListenerOrigin().toVector3f(), 0);
+                dfloat vec[4];
+                origin.decompose(vec);
+                getSoundPlayer().listenerv(SFXLP_POSITION, vec);
+            }
+            {
+                // Orientation. (0,0) will produce front=(1,0,0) and up=(0,0,1).
+                dfloat vec[2] = {
+                    worldStageListener->angle / (dfloat) ANGLE_MAX * 360,
+                    (worldStageListener->dPlayer ? LOOKDIR2DEG(worldStageListener->dPlayer->lookDir) : 0)
+                };
+                getSoundPlayer().listenerv(SFXLP_ORIENTATION, vec);
+            }
+            {
+                // Velocity. The unit is world distance units per second
+                auto const velocity = Vector4f(Vector3d(worldStageListener->mom).toVector3f(), 0) * TICSPERSEC;
+                dfloat vec[4];
+                velocity.decompose(vec);
+                getSoundPlayer().listenerv(SFXLP_VELOCITY, vec);
+            }
+
+            // Reverb effects. Has the current sector cluster changed?
+            SectorCluster *newCluster = Mobj_ClusterPtr(*worldStageListener);
+            if(newCluster && (!worldStageListenerCluster || worldStageListenerCluster != newCluster))
+            {
+                worldStageListenerCluster = newCluster;
+
+                // It may be necessary to recalculate the reverb properties...
+                AudioEnvironmentFactors const &envFactors = worldStageListenerCluster->reverb();
+                dfloat vec[NUM_REVERB_DATA];
+                for(dint i = 0; i < NUM_REVERB_DATA; ++i)
+                {
+                    vec[i] = envFactors[i];
+                }
+                vec[SRD_VOLUME] *= sfxReverbStrength;
+                getSoundPlayer().listenerv(SFXLP_REVERB, vec);
+            }
+        }
+
+        // Update all listener properties.
+        getSoundPlayer().listener(SFXLP_UPDATE, 0);
+    }
+
+    /**
+     * Returns the currently active, primary CdPlayer.
+     */
+    ICdPlayer &getCdPlayer() const
+    {
+        // The primary interface is the first one.
+        for(dint i = activeInterfaces.count(); i--> 0; )
+        {
+            ActiveInterface const &active = activeInterfaces[i];
+            if(active.def().geti("type") == AUDIO_ICD)
+                return active.playerAs<ICdPlayer>();
+        }
+        /// Internal Error: No suitable cd player is available.
+        throw Error("audio::System::Instance::getCdPlayer", "No CdPlayer available");
+    }
+
+    /**
+     * Returns the currently active, primary MusicPlayer.
+     */
+    IMusicPlayer &getMusicPlayer() const
+    {
+        // The primary interface is the first one.
+        for(dint i = activeInterfaces.count(); i--> 0; )
+        {
+            ActiveInterface const &active = activeInterfaces[i];
+            if(active.def().geti("type") == AUDIO_IMUSIC)
+                return active.playerAs<IMusicPlayer>();
+        }
+        /// Internal Error: No suitable music player is available.
+        throw Error("audio::System::Instance::getMusicPlayer", "No MusicPlayer available");
+    }
+
+    /**
+     * Returns the currently active, primary SoundPlayer.
+     */
+    ISoundPlayer &getSoundPlayer() const
+    {
+        // The primary interface is the first one.
+        for(dint i = activeInterfaces.count(); i--> 0; )
+        {
+            ActiveInterface const &active = activeInterfaces[i];
+            if(active.def().geti("type") == AUDIO_ISFX)
+                return active.playerAs<ISoundPlayer>();
+        }
+        /// Internal Error: No suitable sound player is available.
+        throw Error("audio::System::Instance::getSoundPlayer", "No SoundPlayer available");
     }
 
     void aboutToUnloadGame(game::Game const &)
@@ -1855,13 +1699,13 @@ void System::resetSoundStage(SoundStage soundStage)
 {
     if(soundStage == WorldStage)
     {
-        d->sfxClearLogicalSounds();
+        d->logicalSounds.clear();
     }
 }
 
 bool System::musicPlaybackAvailable() const
 {
-    return d->musAvail;
+    return d->musicAvail;
 }
 
 dint System::musicVolume() const
@@ -1893,10 +1737,10 @@ bool System::musicIsPlaying() const
 
 void System::stopMusic()
 {
-    if(!d->musAvail) return;
+    if(!d->musicAvail) return;
 
     LOG_AS("audio::System");
-    d->musCurrentSong = "";
+    d->musicCurrentSong = "";
 
     // Stop all interfaces.
     for(dint i = d->activeInterfaces.count(); i--> 0; )
@@ -1913,10 +1757,10 @@ void System::stopMusic()
 
 void System::pauseMusic(bool doPause)
 {
-    if(!d->musAvail) return;
+    if(!d->musicAvail) return;
 
     LOG_AS("audio::System");
-    d->musPaused = !d->musPaused;
+    d->musicPaused = !d->musicPaused;
 
     // Pause playback on all interfaces.
     for(dint i = d->activeInterfaces.count(); i--> 0; )
@@ -1933,31 +1777,31 @@ void System::pauseMusic(bool doPause)
 
 bool System::musicIsPaused() const
 {
-    return d->musPaused;
+    return d->musicPaused;
 }
 
 dint System::playMusic(Record const &definition, bool looped)
 {
     if(::isDedicated) return true;
 
-    if(!d->musAvail) return false;
+    if(!d->musicAvail) return false;
 
     LOG_AS("audio::System");
     LOG_AUDIO_MSG("Playing song \"%s\"%s") << definition.gets("id") << (looped ? " looped" : "");
     //LOG_AUDIO_VERBOSE("Current song '%s'") << d->musCurrentSong;
 
     // We will not restart the currently playing song.
-    if(definition.gets("id") == d->musCurrentSong && musicIsPlaying())
+    if(definition.gets("id") == d->musicCurrentSong && musicIsPlaying())
         return false;
 
     // Stop the currently playing song.
     stopMusic();
 
     // Switch to an unused file buffer if asked.
-    d->musNeedBufFileSwitch = true;
+    d->musicNeedSwitchBufferFile = true;
 
     // This is the song we're playing now.
-    d->musCurrentSong = definition.gets("id");
+    d->musicCurrentSong = definition.gets("id");
 
     // Determine the music source, order preferences.
     dint source[3];
@@ -2075,7 +1919,7 @@ void System::updateMusicMidiFont()
 
 bool System::soundPlaybackAvailable() const
 {
-    return d->sfxAvail;
+    return d->soundAvail;
 }
 
 dint System::soundVolume() const
@@ -2087,7 +1931,7 @@ bool System::soundIsPlaying(SoundStage soundStage, dint soundId, mobj_t *emitter
 {
     // Use the logic sound hash to determine whether the referenced sound is being
     // played currently. We don't care whether its audible or not.
-    return d->sfxLogicalSoundIsPlaying(soundId, emitter);
+    return d->logicalSounds.isPlaying(soundId, emitter);
 
 #if 0
     // Use the sound channels to determine whether the referenced sound is actually
@@ -2103,7 +1947,7 @@ bool System::playSound(SoundStage soundStage, dint soundIdAndFlags, mobj_t *emit
 
     if(soundStage == WorldStage)
     {
-        d->sfxStartLogicalSound(soundIdAndFlags, emitter);
+        d->logicalSounds.start(soundIdAndFlags, emitter);
     }
 
     // A dedicated server never starts any local sounds (only logical sounds in the LSM).
@@ -2148,7 +1992,7 @@ bool System::playSound(SoundStage soundStage, dint soundIdAndFlags, mobj_t *emit
     sfxsample_t *sample = d->sampleCache.cache(soundId);
     if(!sample)
     {
-        if(d->sfxAvail)
+        if(d->soundAvail)
         {
             LOG_AUDIO_VERBOSE("Caching of sound %i failed") << soundId;
         }
@@ -2235,19 +2079,19 @@ void System::stopSound(SoundStage soundStage, dint soundId, mobj_t *emitter, din
 
     if(soundStage == WorldStage)
     {
-        // Notify the LSM.
-        d->sfxStopLogicalSound(soundId, emitter);
+        // Stop logical sound tracking.
+        d->logicalSounds.stop(soundId, emitter);
     }
 }
 
 mobj_t *System::worldStageListener()
 {
-    return d->sfxListener;
+    return d->worldStageListener;
 }
 
 coord_t System::distanceToWorldStageListener(Vector3d const &point) const
 {
-    if(mobj_t const *listener = getListenerMobj())
+    if(mobj_t const *listener = getListenerMob())
     {
         return Mobj_ApproxPointDistance(*listener, point);
     }
@@ -2262,7 +2106,7 @@ Ranged System::worldStageSoundVolumeAttenuationRange() const
 void System::requestWorldStageListenerUpdate()
 {
     // Request a listener reverb update at the end of the frame.
-    d->sfxListenerCluster = nullptr;
+    d->worldStageListenerCluster = nullptr;
 }
 
 dint System::driverCount() const
@@ -2294,9 +2138,9 @@ void System::reset()
     LOG_AS("audio::System");
     LOG_AUDIO_VERBOSE("Reseting...");
 
-    if(d->sfxAvail)
+    if(d->soundAvail)
     {
-        d->sfxListenerCluster = nullptr;
+        requestWorldStageListenerUpdate();
 
         // Stop all sounds.
         d->channels->forAll([] (Sound/*Channel*/ &ch)
@@ -2329,15 +2173,15 @@ void System::startFrame()
         // Update all channels (freq, 2D:pan,volume, 3D:position,velocity).
 
         // Have there been changes to the cvar settings?
-        d->updateSfx3DModeIfChanged();
-        d->updateSfxSampleRateIfChanged();
+        d->updateSoundPositioningIfChanged();
+        d->updateUpsampleRateIfChanged();
 
         // Should we purge the cache (to conserve memory)?
         d->sampleCache.maybeRunPurge();
     }
 
-    d->sfxLogicalSoundOnePerEmitter = sfxOneSoundPerEmitter;
-    d->sfxPurgeLogicalSounds();
+    d->logicalSounds.setOnePerSoundEmitter(sfxOneSoundPerEmitter);
+    d->logicalSounds.maybeRunPurge();
 }
 
 void System::endFrame()
@@ -2346,10 +2190,10 @@ void System::endFrame()
 
     if(soundPlaybackAvailable() && !BusyMode_Active())
     {
-        // Update listener properties.
+        // Update WorldStage listener properties.
         // If no listener is available - no 3D positioning is done.
-        d->sfxListener = getListenerMobj();
-        d->updateSfxListener();
+        d->worldStageListener = getListenerMob();
+        d->updateWorldStageListener();
     }
 
     // Notify interested parties.
@@ -2377,10 +2221,10 @@ void System::initPlayback()
     d->loadDrivers();
     d->activateInterfaces();
 
-    // Initialize sfx playback.
+    // Initialize sound playback.
     try
     {
-        d->initSfx();
+        d->initSound();
     }
     catch(Error const &er)
     {
@@ -2405,7 +2249,7 @@ void System::deinitPlayback()
 {
     LOG_AS("audio::System");
 
-    d->deinitSfx();
+    d->deinitSound();
     d->deinitMusic();
 
     d->unloadDrivers();
@@ -2426,7 +2270,7 @@ void System::allowSoundRefresh(bool allow)
 void System::worldMapChanged()
 {
     // Update who is listening now.
-    d->sfxListener = getListenerMobj();
+    d->worldStageListener = getListenerMob();
 }
 
 String System::playbackInterfaceTypeAsText(PlaybackInterfaceType type)  // static
