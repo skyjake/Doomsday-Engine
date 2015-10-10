@@ -132,7 +132,7 @@ public:
     SampleCache &sampleCache() const;
 
     /**
-     * Determines the necessary upsample factor for the given sample @a rate.
+     * Determines the necessary upsample factor for the given waveform sample @a rate.
      */
     de::dint upsampleFactor(de::dint rate) const;
 
@@ -146,27 +146,37 @@ public:  // Music playback: ----------------------------------------------------
     /**
      * Returns @c true if one or more interface for audible @em music playback is
      * available on the local system.
+     *
+     * @see soundPlaybackAvailable()
      */
     bool musicPlaybackAvailable() const;
 
     /**
      * Convenient method returning the current music playback volume.
+     *
+     * @see soundVolume()
      */
     de::dint musicVolume() const;
 
     /**
      * Returns true if @em music is currently playing (on any music interface). It does
      * not matter if it is audible (or not).
+     *
+     * @see musicIsPaused(), playMusic()
      */
     bool musicIsPlaying() const;
 
     /**
      * Returns @c true if the currently playing @em music is paused.
+     *
+     * @see pauseMusic(), musicIsPlaying()
      */
     bool musicIsPaused() const;
 
     /**
-     * Pauses or resumes the @em music.
+     * Pauses or resumes the currently playing @em music, if any.
+     *
+     * @see musicIsPaused(), musicIsPlaying(), stopMusic()
      */
     void pauseMusic(bool doPause = true);
 
@@ -178,6 +188,8 @@ public:  // Music playback: ----------------------------------------------------
      * @param definition  Music definition describing the associated music sources.
      *
      * @return  Non-zero if a song is successfully played.
+     *
+     * @see musicIsPlaying(), musicIsPaused(), pauseMusic()
      */
     de::dint playMusic(de::Record const &definition, bool looped = false);
 
@@ -187,6 +199,8 @@ public:  // Music playback: ----------------------------------------------------
 
     /**
      * Stop all currently playing @em music, if any (affects all music interfaces).
+     *
+     * @see musicIsPlaying(), pauseMusic(),
      */
     void stopMusic();
 
@@ -195,11 +209,15 @@ public:  // Sound playback: ----------------------------------------------------
     /**
      * Returns @c true if one or more interface for audible @em sound playback is available
      * on the local system.
+     *
+     * @see musicPlaybackAvailable()
      */
     bool soundPlaybackAvailable() const;
 
     /**
      * Convenient method returning the current sound effect playback volume.
+     *
+     * @see musicVolume()
      */
     de::dint soundVolume() const;
 
@@ -209,7 +227,9 @@ public:  // Sound playback: ----------------------------------------------------
      *
      * @param soundStage  SoundStage to check.
      * @param soundId     @c 0= true if sounds are playing using the specified @a emitter.
-     * @param emitter     World stage SoundEmitter (originator). May be @c nullptr.
+     * @param emitter     WorldStage SoundEmitter (originator). May be @c nullptr.
+     *
+     * @see playSound(), stopSound()
      */
     bool soundIsPlaying(SoundStage soundStage, de::dint soundId, struct mobj_s *emitter) const;
 
@@ -224,9 +244,13 @@ public:  // Sound playback: ----------------------------------------------------
      * @param emitter          WorldStage SoundEmitter (originator). May be @c nullptr.
      * @param origin           WorldStage space coordinates where the sound originates.
      *                         May be @c nullptr.
-     * @param volume           Volume for the sound (0...1).
+     * @param volume           Volume for the sound [0...1] (not final; will be affected
+     *                         by the global @ref soundVolume() factor and if applicable,
+     *                         attenuated according to @ref distanceToWorldStageListener()).
      *
      * @return  @c true if a sound was started.
+     *
+     * @see soundIsPlaying(), stopSound()
      */
     bool playSound(SoundStage soundStage, de::dint soundIdAndFlags, struct mobj_s *emitter,
         coord_t const *origin, de::dfloat volume = 1 /*max volume*/);
@@ -235,9 +259,11 @@ public:  // Sound playback: ----------------------------------------------------
      * Stop playing sound(s) in the specified @a soundStage.
      *
      * @param soundStage  SoundStage in which to stop sounds.
-     * @param soundId     ID of the sound to stop.
+     * @param soundId     Unique identifier of the sound(s) to stop.
      * @param emitter     WorldStage SoundEmitter (originator). May be @c nullptr.
      * @param flags       @ref soundStopFlags.
+     *
+     * @see soundIsPlaying(), stopSound()
      */
     void stopSound(SoundStage soundStage, de::dint soundId, struct mobj_s *emitter,
         de::dint flags = 0 /*no special stop behaviors*/);
@@ -246,12 +272,16 @@ public:  // Sound playback: ----------------------------------------------------
      * Convenient method determining the distance from the given map space @a point to the
      * active WorldStage listener, in map space units; otherwise returns @c 0 if no current
      * listener exists.
+     *
+     * @see worldStageListener()
      */
     coord_t distanceToWorldStageListener(de::Vector3d const &point) const;
 
     /**
      * Returns the WorldStage map object used as the current sound listener, if any (may
      * return @c nullptr if none is configured).
+     *
+     * @see distanceToWorldStageListener()
      */
     struct mobj_s *worldStageListener();
 
@@ -278,7 +308,7 @@ public:  // Low-level driver/playback interfaces: ------------------------------
     static de::String playbackInterfaceTypeAsText(PlaybackInterfaceType type);
 
     /**
-     * Base class for a logical audio driver.
+     * Interface for a component providing logical audio driver functionality.
      */
     class IDriver
     {
@@ -299,14 +329,14 @@ public:  // Low-level driver/playback interfaces: ------------------------------
         };
 
         /**
-         * If the driver is still initialized it should be automatically deinitialized
+         * Implementers of this interface are expected to automatically @ref deinitialize()
          * before this is called.
          */
         virtual ~IDriver() {}
 
         DENG2_AS_IS_METHODS()
 
-        /// Returns a reference to the application's singleton audio System instance.
+        /// Returns a reference to the application's singleton audio::System instance.
         static inline System &audioSystem() { return System::get(); }
 
         inline bool isLoaded     () const { return status() >= Loaded;      }
@@ -314,17 +344,24 @@ public:  // Low-level driver/playback interfaces: ------------------------------
 
         /**
          * Returns the logical driver status.
+         *
+         * @see statusAsText()
          */
         virtual Status status() const = 0;
 
         /**
-         * Returns a human-friendly, textual description of the logical driver status.
+         * Returns a human-friendly, textual description of the current, high-level logical
+         * status of the driver.
+         *
+         * @see status()
          */
         de::String statusAsText() const;
 
         /**
-         * Returns detailed information about the driver as styled text. Printed by
-         * "inspectaudiodriver", for instance.
+         * Returns detailed information about the driver as styled text. Printed by the
+         * "inspectaudiodriver" console command, for instance.
+         *
+         * @see identityKey(), title(), statusAsText()
          */
         de::String description() const;
 
@@ -347,11 +384,15 @@ public:  // Low-level driver/playback interfaces: ------------------------------
          *
          * @todo Once the audio driver/interface configuration is stored persistently in
          * Config we should remove the alternative identifiers at this time. -ds
+         *
+         * @see title()
          */
         virtual de::String identityKey() const = 0;
 
         /**
          * Returns the human-friendly title of the audio driver.
+         *
+         * @see description(), identityKey()
          */
         virtual de::String title() const = 0;
 
@@ -381,12 +422,14 @@ public:  // Low-level driver/playback interfaces: ------------------------------
     };
 
     /**
-     * Returns the total number of loaded audio drivers. 
+     * Returns the total number of loaded audio drivers.
      */
     de::dint driverCount() const;
 
     /**
      * Lookup the loaded audio driver associated with the given (unique) @a driverIdKey.
+     *
+     * @see tryFindDriver(), forAllDrivers()
      */
     IDriver const &findDriver(de::String driverIdKey) const;
 
@@ -394,12 +437,16 @@ public:  // Low-level driver/playback interfaces: ------------------------------
      * Search for a loaded audio driver associated with the given (unique) @a driverIdKey.
      *
      * @return  Pointer to the loaded audio Driver if found; otherwise @c nullptr.
+     *
+     * @see findDriver(), forAllDrivers()
      */
     IDriver const *tryFindDriver(de::String driverIdKey) const;
 
     /**
      * Iterate through the loaded audio drivers (in load order), executing @a callback
      * for each.
+     *
+     * @see driverCount(), findDriver(), tryFindDriver()
      */
     de::LoopResult forAllDrivers(std::function<de::LoopResult (IDriver const &)> callback) const;
 
