@@ -539,7 +539,7 @@ DENG2_PIMPL_NOREF(PluginDriver::Sound)
             // Volume is affected only by maxvol.
             driver.iSound().gen.Set(buffer, SFXBP_VOLUME, volume * System::get().soundVolume() / 255.0f);
 
-            if(emitter && emitter == System::get().listener())
+            if(emitter && emitter == System::get().worldStageListener())
             {
                 // Emitted by the listener object. Go to relative position mode
                 // and set the position to (0,0,0).
@@ -556,7 +556,7 @@ DENG2_PIMPL_NOREF(PluginDriver::Sound)
             }
 
             // If the sound is emitted by the listener, speed is zero.
-            if(emitter && emitter != System::get().listener() &&
+            if(emitter && emitter != System::get().worldStageListener() &&
                Thinker_IsMobjFunc(emitter->thinker.function))
             {
                 dfloat vec[3]; (Vector3d(emitter->mom) * TICSPERSEC).toVector3f().decompose(vec);
@@ -576,7 +576,7 @@ DENG2_PIMPL_NOREF(PluginDriver::Sound)
 
             // This is a 2D buffer.
             if((flags & SFXCF_NO_ORIGIN) ||
-               (emitter && emitter == System::get().listener()))
+               (emitter && emitter == System::get().worldStageListener()))
             {
                 dist = 1;
                 finalPan = 0;
@@ -586,7 +586,7 @@ DENG2_PIMPL_NOREF(PluginDriver::Sound)
                 // Calculate roll-off attenuation. [.125/(.125+x), x=0..1]
                 Ranged const attenRange = System::get().soundVolumeAttenuationRange();
 
-                dist = System::get().distanceToListener(origin);
+                dist = System::get().distanceToWorldStageListener(origin);
 
                 if(dist < attenRange.start || (flags & SFXCF_NO_ATTENUATION))
                 {
@@ -608,7 +608,7 @@ DENG2_PIMPL_NOREF(PluginDriver::Sound)
                 }
 
                 // And pan, too. Calculate angle from listener to emitter.
-                if(mobj_t *listener = System::get().listener())
+                if(mobj_t *listener = System::get().worldStageListener())
                 {
                     dfloat angle = (M_PointXYToAngle2(listener->origin[0], listener->origin[1],
                                                       origin.x, origin.y)

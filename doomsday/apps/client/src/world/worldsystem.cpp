@@ -735,7 +735,7 @@ bool WorldSystem::changeMap(de::Uri const &mapUri)
 #ifdef __SERVER__
     ServerApp::app().clearAllLogicalSounds();
 #else
-    ClientApp::audioSystem().clearAllLogicalSounds();
+    ClientApp::audioSystem().resetSoundStage(::audio::WorldStage);
 
     App_ResourceSystem().purgeCacheQueue();
 
@@ -757,7 +757,7 @@ bool WorldSystem::changeMap(de::Uri const &mapUri)
             return LoopContinue;
         });
         /// - Forget the current listener mob. @todo Should observe map object deletion -ds
-        ClientApp::audioSystem().requestListenerUpdate();
+        ClientApp::audioSystem().requestWorldStageListenerUpdate();
     }
 
     // As the memory zone does not provide the mechanisms to prepare another map in parallel

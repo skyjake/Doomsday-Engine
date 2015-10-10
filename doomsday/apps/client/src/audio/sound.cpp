@@ -73,11 +73,11 @@ dfloat Sound::priority() const
         return SFX_LOWEST_PRIORITY;
 
     if(flags() & SFXCF_NO_ORIGIN)
-        return ratePriority(audio::System::get().listener(), 0, 0, volume(), startTime());
+        return ratePriority(audio::System::get().worldStageListener(), 0, 0, volume(), startTime());
 
     /// @note The origin is updated to match our emitter during updates.
     ddouble pos[3]; origin().decompose(pos);
-    return ratePriority(audio::System::get().listener(), 0, pos, volume(), startTime());
+    return ratePriority(audio::System::get().worldStageListener(), 0, pos, volume(), startTime());
 }
 
 }  // namespace audio

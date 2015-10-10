@@ -41,11 +41,37 @@
 
 namespace audio {
 
-class IPlayer;
-
 class Channels;
+class IPlayer;
 class SampleCache;
-class Sound;
+
+/**
+ * Sound stages provide the means for playing sounds in independent contexts.
+ */
+enum SoundStage
+{
+    /// The "world" sound stage supports playing sounds that originate from world/map
+    /// space SoundEmitters, with (optional) distance based volume attenuation and/or
+    /// environmental audio effects.
+    WorldStage,
+
+    /// The "local" sound stage is a simpler context intended for playing sounds with
+    /// no emitters, no volume attenuation, or most other features implemented for the
+    /// WorldStage. This context is primarily intended for playing UI sounds.
+    LocalStage
+};
+
+/**
+ * Music source preference.
+ *
+ * @todo Belongs in the resource system. -ds
+ */
+enum MusicSource
+{
+    MUSP_MUS,  ///< WAD lump/file.
+    MUSP_EXT,  ///< "External" file.
+    MUSP_CD    ///< CD track.
+};
 
 /**
  * Client audio subsystem.
@@ -70,9 +96,19 @@ public:
      */
     System();
 
-    // Systems observe the passage of time.
-    void timeChanged(de::Clock const &) override;
+    /**
+     * Returns the singleton audio::System instance.
+     */
+    static System &get();
 
+    /**
+     * Register the console commands and variables of this module.
+     */
+    static void consoleRegister();
+
+    /**
+     * Provides access to the settings register of this module (cvars etc...).
+     */
     SettingsRegister &settings();
 
     /**
@@ -83,25 +119,12 @@ public:
     de::String description() const;
 
     /**
-     * Provides access to the sound Channels.
+     * Provides access to the playback Channels.
      */
     Channels /*const*/ &channels() const;
 
     /**
-     * Returns the world map object used as the current sound listener, if any (may return
-     * @c nullptr if none is configured).
-     */
-    struct mobj_s *listener();
-
-    /**
-     * Convenient method determining the distance from the given world map space @a point
-     * to the active listener, in map space units; otherwise returns @c 0 if no current
-     * listener exists.
-     */
-    coord_t distanceToListener(de::Vector3d const &point) const;
-
-    /**
-     * Provides access to the sample (waveform) cache.
+     * Provides access to the sample (waveform) asset cache.
      */
     SampleCache &sampleCache() const;
 
@@ -110,17 +133,12 @@ public:
      */
     de::dint upsampleFactor(de::dint rate) const;
 
-public:  // Music playback: ----------------------------------------------------------
-
     /**
-     * Music source preference.
+     * Reset playback tracking in the specified @a soundStage.
      */
-    enum MusicSource
-    {
-        MUSP_MUS,  ///< WAD lump/file.
-        MUSP_EXT,  ///< "External" file.
-        MUSP_CD    ///< CD track.
-    };
+    void resetSoundStage(SoundStage soundStage);
+
+public:  // Music playback: ----------------------------------------------------------
 
     /**
      * Provides a human-friendly, textual representation of the given music @a source.
@@ -188,37 +206,64 @@ public:  // Sound playback: ----------------------------------------------------
     de::dint soundVolume() const;
 
     /**
-     * Convenient method returning the current sound effect volume attenuation range, in
-     * map space units.
+     * Convenient method returning the current WorldStage sound effect volume attenuation
+     * range, in map space units.
      */
     de::Ranged soundVolumeAttenuationRange() const;
 
     /**
-     * Returns true if the sound is currently playing somewhere in the world. It does not
-     * matter if it is audible (or not).
-     *
-     * @param soundId  @c 0= true if sounds are playing using the specified @a emitter.
-     * @param emitter  Mobj where the sound originates. May be @c nullptr.
+     * Convenient method determining the distance from the given map space @a point to the
+     * active WorldStage listener, in map space units; otherwise returns @c 0 if no current
+     * listener exists.
      */
-    bool soundIsPlaying(de::dint soundId, struct mobj_s *emitter) const;
+    coord_t distanceToWorldStageListener(de::Vector3d const &point) const;
 
     /**
-     * Start playing a sound.
+     * Returns the WorldStage map object used as the current sound listener, if any (may
+     * return @c nullptr if none is configured).
+     */
+    struct mobj_s *worldStageListener();
+
+    /**
+     * Returns true if the referenced sound is currently playing somewhere in the given
+     * @a soundStage. It does not matter if it is audible (or not).
      *
-     * If @a emitter and @a origin are both @c nullptr, the sound is played in 2D and
-     * centered.
+     * @param soundStage  SoundStage to check.
+     * @param soundId     @c 0= true if sounds are playing using the specified @a emitter.
+     * @param emitter     World stage SoundEmitter (originator). May be @c nullptr.
+     */
+    bool soundIsPlaying(SoundStage soundStage, de::dint soundId, struct mobj_s *emitter) const;
+
+    /**
+     * Start playing a sound in the specified @a soundStage.
      *
+     * If @a emitter and @a origin are both @c nullptr, the sound will be played with stereo
+     * positioning (centered).
+     *
+     * @param soundStage       SoundStage in which to play the sound.
      * @param soundIdAndFlags  ID of the sound to play. Flags can be included (DDSF_*).
-     * @param emitter          Mobj where the sound originates. May be @c nullptr.
-     * @param origin           World coordinates where the sound originate. May be @c nullptr.
+     * @param emitter          WorldStage SoundEmitter (originator). May be @c nullptr.
+     * @param origin           WorldStage space coordinates where the sound originates.
+     *                         May be @c nullptr.
      * @param volume           Volume for the sound (0...1).
      *
      * @return  @c true if a sound was started.
      */
-    bool playSound(de::dint soundIdAndFlags, struct mobj_s *emitter, coord_t const *origin,
-        de::dfloat volume = 1 /*max volume*/);
+    bool playSound(SoundStage soundStage, de::dint soundIdAndFlags, struct mobj_s *emitter,
+        coord_t const *origin, de::dfloat volume = 1 /*max volume*/);
 
-public:  // Low-level driver interfaces: ------------------------------------------------
+    /**
+     * Stop playing sound(s) in the specified @a soundStage.
+     *
+     * @param soundStage  SoundStage in which to stop sounds.
+     * @param soundId     ID of the sound to stop.
+     * @param emitter     WorldStage SoundEmitter (originator). May be @c nullptr.
+     * @param flags       @ref soundStopFlags.
+     */
+    void stopSound(SoundStage soundStage, de::dint soundId, struct mobj_s *emitter,
+        de::dint flags = 0 /*no special stop behaviors*/);
+
+public:  // Low-level driver/playback interfaces: ---------------------------------------
 
     /// Required/referenced audio driver is missing. @ingroup errors
     DENG2_ERROR(MissingDriverError);
@@ -360,6 +405,10 @@ public:  // Low-level driver interfaces: ---------------------------------------
      */
     de::LoopResult forAllDrivers(std::function<de::LoopResult (IDriver const &)> callback) const;
 
+public:
+    // Systems observe the passage of time.
+    void timeChanged(de::Clock const &) override;
+
 public:  /// @todo make private:
     void startFrame();
     void endFrame();
@@ -383,7 +432,7 @@ public:  /// @todo make private:
     void reset();
 
     /// @todo refactor away.
-    void requestListenerUpdate();
+    void requestWorldStageListenerUpdate();
 
     /// @todo refactor away.
     void updateMusicMidiFont();
@@ -397,38 +446,6 @@ public:  /// @todo make private:
     void allowSoundRefresh(bool allow = true);
 
     void worldMapChanged();
-
-    /**
-     * Determines whether a logical sound is currently playing, irrespective of whether it
-     * is audible or not.
-     */
-    bool logicalSoundIsPlaying(de::dint soundId, struct mobj_s *emitter) const;
-
-    /**
-     * The sound is removed from the list of playing sounds. To be called whenever a/the
-     * associated sound is stopped, regardless of whether it was actually playing on the
-     * local system.
-     *
-     * @note Use @a soundId == 0 and @a emitter == nullptr to stop @em everything.
-     *
-     * @return  Number of sounds stopped.
-     */
-    de::dint stopLogicalSound(de::dint soundId, struct mobj_s *emitter);
-
-    void startLogicalSound(de::dint soundIdAndFlags, struct mobj_s *emitter);
-
-    void clearAllLogicalSounds();
-
-public:
-    /**
-     * Returns the singleton audio::System instance.
-     */
-    static System &get();
-
-    /**
-     * Register the console commands and variables of this module.
-     */
-    static void consoleRegister();
 
 private:
     DENG2_PRIVATE(d)
@@ -486,6 +503,8 @@ public:
 
     virtual de::dint playFile(char const *filename, de::dint looped) = 0;
 };
+
+class Sound;
 
 /// @todo revise API:
 class ISoundPlayer : public IPlayer
