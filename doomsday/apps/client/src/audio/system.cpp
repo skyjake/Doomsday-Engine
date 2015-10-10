@@ -22,10 +22,6 @@
 
 #include "audio/system.h"
 
-#include "dd_share.h"  // SF_* flags
-#include "dd_main.h"   // ::isDedicated
-#include "def_main.h"  // ::defs
-
 #include "api_sound.h"
 #include "audio/drivers/dummydriver.h"
 #include "audio/drivers/plugindriver.h"
@@ -39,6 +35,10 @@
 #include "world/thinkers.h"
 #include "Sector"
 #include "SectorCluster"
+
+#include "dd_main.h"   // App_*System()
+#include "dd_share.h"  // SF_* flags
+#include "def_main.h"  // ::defs
 
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
@@ -608,9 +608,9 @@ DENG2_PIMPL(System)
         {
             bool repeat;
             duint endTime;
-            mobj_t *emitter;
+            SoundEmitter *emitter;
 
-            LogicSound(duint endTime, bool repeat = false, mobj_t *emitter = nullptr)
+            LogicSound(duint endTime, bool repeat = false, SoundEmitter *emitter = nullptr)
                 : repeat(repeat)
                 , endTime(endTime)
                 , emitter(emitter)
@@ -637,7 +637,7 @@ DENG2_PIMPL(System)
          * Determines whether a logical sound is currently playing, irrespective of whether
          * it is audible or not.
          */
-        bool isPlaying(dint soundId, mobj_t *emitter) const
+        bool isPlaying(dint soundId, SoundEmitter *emitter) const
         {
             duint const nowTime = Timer_RealMilliseconds();
             if(soundId)
@@ -677,7 +677,7 @@ DENG2_PIMPL(System)
          *
          * @return  Number of sounds stopped.
          */
-        dint stop(dint soundId, mobj_t *emitter)
+        dint stop(dint soundId, SoundEmitter *emitter = nullptr)
         {
             dint numStopped = 0;
             MutableLogicSoundHashIterator it(sounds);
@@ -702,7 +702,7 @@ DENG2_PIMPL(System)
             return numStopped;
         }
 
-        void start(dint soundIdAndFlags, mobj_t *emitter)
+        void start(dint soundIdAndFlags, SoundEmitter *emitter = nullptr)
         {
             dint const soundId = (soundIdAndFlags & ~DDSF_FLAG_MASK);
 
@@ -1000,7 +1000,7 @@ DENG2_PIMPL(System)
         musicPaused      = false;
 
         CommandLine &cmdLine = App::commandLine();
-        if(::isDedicated || cmdLine.has("-nomusic"))
+        if(cmdLine.has("-nomusic"))
         {
             LOG_AUDIO_NOTE("Music disabled");
             return;
@@ -1193,7 +1193,7 @@ DENG2_PIMPL(System)
      *
      * @return  @c true, if a sound is started.
      */
-    bool playSound(sfxsample_t &sample, dfloat volume, dfloat freq, mobj_t *emitter,
+    bool playSound(sfxsample_t &sample, dfloat volume, dfloat freq, SoundEmitter *emitter,
         coord_t const *origin, dint flags)
     {
         if(!soundAvail) return false;
@@ -1218,7 +1218,7 @@ DENG2_PIMPL(System)
         }
 
         // Calculate the new sound's priority.
-        dfloat const myPrio = Sound::ratePriority(self.worldStageListener(), emitter,
+        dfloat const myPrio = Sound::ratePriority(self.worldStageListenerPtr(), emitter,
                                                   origin, volume, Timer_Ticks());
 
         bool haveChannelPrios = false;
@@ -1683,6 +1683,8 @@ SampleCache &System::sampleCache() const
 
 dint System::upsampleFactor(dint rate) const
 {
+    //LOG_AS("audio::System");
+
     dint factor = 1;
     if(soundPlaybackAvailable())
     {
@@ -1697,6 +1699,8 @@ dint System::upsampleFactor(dint rate) const
 
 void System::resetSoundStage(SoundStage soundStage)
 {
+    LOG_AS("audio::System");
+
     if(soundStage == WorldStage)
     {
         d->logicalSounds.clear();
@@ -1782,8 +1786,6 @@ bool System::musicIsPaused() const
 
 dint System::playMusic(Record const &definition, bool looped)
 {
-    if(::isDedicated) return true;
-
     if(!d->musicAvail) return false;
 
     LOG_AS("audio::System");
@@ -1927,8 +1929,9 @@ dint System::soundVolume() const
     return sfxVolume;
 }
 
-bool System::soundIsPlaying(SoundStage soundStage, dint soundId, mobj_t *emitter) const
+bool System::soundIsPlaying(SoundStage soundStage, dint soundId, SoundEmitter *emitter) const
 {
+    //LOG_AS("audio::System");
     // Use the logic sound hash to determine whether the referenced sound is being
     // played currently. We don't care whether its audible or not.
     return d->logicalSounds.isPlaying(soundId, emitter);
@@ -1940,7 +1943,7 @@ bool System::soundIsPlaying(SoundStage soundStage, dint soundId, mobj_t *emitter
 #endif
 }
 
-bool System::playSound(SoundStage soundStage, dint soundIdAndFlags, mobj_t *emitter,
+bool System::playSound(SoundStage soundStage, dint soundIdAndFlags, SoundEmitter *emitter,
     coord_t const *origin,  dfloat volume)
 {
     LOG_AS("audio::System");
@@ -1949,9 +1952,6 @@ bool System::playSound(SoundStage soundStage, dint soundIdAndFlags, mobj_t *emit
     {
         d->logicalSounds.start(soundIdAndFlags, emitter);
     }
-
-    // A dedicated server never starts any local sounds (only logical sounds in the LSM).
-    if(::isDedicated) return false;
 
     // Sounds cannot be started while in busy mode...
     if(DoomsdayApp::app().busyMode().isActive())
@@ -1975,7 +1975,7 @@ bool System::playSound(SoundStage soundStage, dint soundIdAndFlags, mobj_t *emit
     sfxinfo_t const *info = Def_GetSoundInfo(soundId, &freq, &volume);
     if(!info) return false;  // Hmm? This ID is not defined.
 
-    bool const isRepeating = (soundIdAndFlags & DDSF_REPEAT) || Def_SoundIsRepeating(soundId);
+    bool const repeat = (soundIdAndFlags & DDSF_REPEAT) || Def_SoundIsRepeating(soundId);
 
     // Check the distance (if applicable).
     if(emitter || origin)
@@ -2023,51 +2023,49 @@ bool System::playSound(SoundStage soundStage, dint soundIdAndFlags, mobj_t *emit
     // Let's play it.
     dint flags = 0;
     flags |= (((info->flags & SF_NO_ATTENUATION) || (soundIdAndFlags & DDSF_NO_ATTENUATION)) ? SF_NO_ATTENUATION : 0);
-    flags |= (isRepeating ? SF_REPEAT : 0);
+    flags |= (repeat ? SF_REPEAT : 0);
     flags |= ((info->flags & SF_DONT_STOP) ? SF_DONT_STOP : 0);
     return d->playSound(*sample, volume, freq, emitter, origin, flags);
 }
 
-void System::stopSound(SoundStage soundStage, dint soundId, mobj_t *emitter, dint flags)
+void System::stopSound(SoundStage soundStage, dint soundId, SoundEmitter *emitter, dint flags)
 {
+    LOG_AS("audio::System");
+
     // Are we performing any special stop behaviors?
     if(soundStage == WorldStage)
     {
         if(emitter && flags)
         {
             // Sector-based sound stopping.
-
-            SoundEmitter *secEmitter = nullptr;
             if(emitter->thinker.id)
             {
                 /// @var emitter is a map-object.
-                secEmitter = &Mobj_Sector(emitter)->soundEmitter();
+                emitter = &Mobj_Sector((mobj_t *)emitter)->soundEmitter();
             }
             else
             {
                 // The head of the chain is the sector. Find it.
                 while(emitter->thinker.prev)
                 {
-                    emitter = (mobj_t *)emitter->thinker.prev;
+                    emitter = (SoundEmitter *)emitter->thinker.prev;
                 }
-                secEmitter = (SoundEmitter *)emitter;
             }
-            DENG2_ASSERT(secEmitter);
 
             // Stop sounds emitted by the Sector's emitter?
             if(flags & SSF_SECTOR)
             {
-                stopSound(soundStage, soundId, (mobj_t *)secEmitter);
+                stopSound(soundStage, soundId, emitter);
             }
 
             // Stop sounds emitted by Sector-linked (plane/wall) emitters?
             if(flags & SSF_SECTOR_LINKED_SURFACES)
             {
                 // Process the rest of the emitter chain.
-                while((secEmitter = (SoundEmitter *)secEmitter->thinker.next))
+                while((emitter = (SoundEmitter *)emitter->thinker.next))
                 {
                     // Stop sounds from this emitter.
-                    stopSound(soundStage, soundId, (mobj_t *)secEmitter);
+                    stopSound(soundStage, soundId, emitter);
                 }
             }
             return;
@@ -2084,7 +2082,7 @@ void System::stopSound(SoundStage soundStage, dint soundId, mobj_t *emitter, din
     }
 }
 
-mobj_t *System::worldStageListener()
+mobj_t *System::worldStageListenerPtr()
 {
     return d->worldStageListener;
 }
@@ -2479,6 +2477,8 @@ static void musicMidiFontChanged()
 
 void System::consoleRegister()  // static
 {
+    LOG_AS("audio::System");
+
     // Drivers:
     C_CMD("listaudiodrivers",   nullptr, ListDrivers);
     C_CMD("inspectaudiodriver", "s",     InspectDriver);
@@ -2550,12 +2550,12 @@ dd_bool S_StartMusic(char const *musicId, dd_bool looped)
 
 dd_bool S_SoundIsPlaying(dint soundId, mobj_t *emitter)
 {
-    return (dd_bool) audio::System::get().soundIsPlaying(audio::WorldStage, soundId, emitter);
+    return (dd_bool) audio::System::get().soundIsPlaying(audio::WorldStage, soundId, (SoundEmitter *)emitter);
 }
 
 void S_StopSound2(dint soundId, mobj_t *emitter, dint flags)
 {
-    audio::System::get().stopSound(audio::WorldStage, soundId, emitter, flags);
+    audio::System::get().stopSound(audio::WorldStage, soundId, (SoundEmitter *)emitter, flags);
 }
 
 void S_StopSound(dint soundId, mobj_t *emitter)
@@ -2563,10 +2563,9 @@ void S_StopSound(dint soundId, mobj_t *emitter)
     S_StopSound2(soundId, emitter, 0/*flags*/);
 }
 
-dint S_LocalSoundAtVolumeFrom(dint soundIdAndFlags, mobj_t *emitter, coord_t *origin,
-    dfloat volume)
+dint S_LocalSoundAtVolumeFrom(dint soundIdAndFlags, mobj_t *emitter, coord_t *origin, dfloat volume)
 {
-    return audio::System::get().playSound(audio::LocalStage, soundIdAndFlags, emitter, origin, volume);
+    return audio::System::get().playSound(audio::LocalStage, soundIdAndFlags, (SoundEmitter *)emitter, origin, volume);
 }
 
 dint S_LocalSoundAtVolume(dint soundIdAndFlags, mobj_t *emitter, dfloat volume)
@@ -2586,7 +2585,7 @@ dint S_LocalSound(dint soundIdAndFlags, mobj_t *emitter)
 
 dint S_StartSoundAtVolume(dint soundIdAndFlags, mobj_t *emitter, dfloat volume)
 {
-    return audio::System::get().playSound(audio::WorldStage, soundIdAndFlags, emitter, nullptr, volume);
+    return audio::System::get().playSound(audio::WorldStage, soundIdAndFlags, (SoundEmitter *)emitter, nullptr, volume);
 }
 
 dint S_StartSoundEx(dint soundIdAndFlags, mobj_t *emitter)

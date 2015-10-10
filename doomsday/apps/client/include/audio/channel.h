@@ -1,4 +1,4 @@
-/** @file channel.h  Sound playback channels.
+/** @file channel.h  Audio playback channels.
  * @ingroup audio
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -38,40 +38,40 @@ public:
 
 public:
     /**
-     * Construct a new (empty) channel set.
+     * Construct a new (empty) playback channel set.
      */
     Channels();
 
     /**
-     * Returns the total number of channels.
+     * Returns the total number of playback channels.
      */
     de::dint count() const;
 
     /**
-     * Returns the total number of channels currently playing a/the sound associated with
-     * the given @a soundId and/or @a emitter.
+     * Returns the total number of playback channels currently playing a/the sound associated
+     * with the given @a soundId and/or @a emitter.
      */
-    de::dint countPlaying(de::dint soundId, struct mobj_s *emitter = nullptr) const;
+    de::dint countPlaying(de::dint soundId, SoundEmitter *emitter = nullptr) const;
 
     /**
-     * Returns @a true if one or more channels are currently playing a/the sound associated
-     * with the given @a soundId.
+     * Returns @a true if one or more playback channels are currently playing a/the sound
+     * associated with the given @a soundId.
      */
-    inline bool isPlaying(de::dint soundId, struct mobj_s *emitter = nullptr) const {
+    inline bool isPlaying(de::dint soundId, SoundEmitter *emitter = nullptr) const {
         return countPlaying(soundId, emitter) > 0;
     }
 
     /**
-     * Add a new channel and configure with the given @a sound.
+     * Add a new playback channel and configure with the given @a sound.
      *
-     * @param sound  Sound to create a channel for. Ownership is unaffected. As sounds
-     * can only be mapped to a single channel at a time - if a channel exists which is
-     * already using this sound then @em it is returned instead.
+     * @param sound  Sound to create a playback channel for. Ownership is unaffected. As
+     * sounds can only be mapped to a single channel at a time - if a channel exists which
+     * is already using this sound then @em it is returned instead.
      */
     Sound/*Channel*/ &add(Sound &sound);
 
     /**
-     * Attempt to find a channel suitable for playing a sound with the given format.
+     * Attempt to find a playback channel suitable for a sound with the given format.
      *
      * @param stereoPositioning  @c true= suitable for stereo sound positioning; otherwise
      * suitable for 3D sound positioning.
@@ -86,18 +86,18 @@ public:
         de::dint soundId) const;
 
     /**
-     * Stop all channels currently playing a/the sound associated with the given sound
-     * @a group. If an @a emitter is specified, only stop sounds emitted by it.
+     * Stop all playback channels currently playing a/the sound associated with the given
+     * sound @a group. If an @a emitter is specified, only stop sounds emitted by it.
      *
      * @param group    Sound group identifier.
      * @param emitter  If not @c nullptr the referenced sound's emitter must match.
      *
      * @return  Number of channels stopped.
      */
-    de::dint stopGroup(de::dint group, struct mobj_s *emitter = nullptr);
+    de::dint stopGroup(de::dint group, SoundEmitter *emitter = nullptr);
 
     /**
-     * Stop all channels currently playing a sound using the specified @a emitter.
+     * Stop all playback channels currently playing a sound using the specified @a emitter.
      *
      * @param emitter            If not @c nullptr the sound's emitter must match; otherwise
      * stop @em all sounds using @em any emitter.
@@ -107,10 +107,10 @@ public:
      *
      * @return  Number of channels stopped.
      */
-    de::dint stopWithEmitter(struct mobj_s *emitter = nullptr, bool clearEmitter = true);
+    de::dint stopWithEmitter(SoundEmitter *emitter = nullptr, bool clearEmitter = true);
 
     /**
-     * Stop all channels currently playing a/the sound with a lower priority rating.
+     * Stop all playback channels currently playing a/the sound with a lower priority rating.
      *
      * @param soundId      If > 0, the currently playing sound must be associated with
      * this identifier; otherwise @em all sounds are stopped.
@@ -123,10 +123,10 @@ public:
      *
      * @return  Number of channels stopped.
      */
-    de::dint stopWithLowerPriority(de::dint soundId, struct mobj_s *emitter, de::dint defPriority);
+    de::dint stopWithLowerPriority(de::dint soundId, SoundEmitter *emitter, de::dint defPriority);
 
     /**
-     * Iterate through the channels, executing @a callback for each.
+     * Iterate through the playback channels, executing @a callback for each.
      */
     de::LoopResult forAll(std::function<de::LoopResult (Sound/*Channel*/ &)> callback) const;
 

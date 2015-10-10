@@ -130,8 +130,8 @@ public:  // Sound players: -----------------------------------------------------
         void format(bool stereoPositioning, de::dint bytesPer, de::dint rate);
         int flags() const;
         void setFlags(int newFlags);
-        struct mobj_s *emitter() const;
-        void setEmitter(struct mobj_s *newEmitter);
+        SoundEmitter *emitter() const;
+        void setEmitter(SoundEmitter *newEmitter);
         void setOrigin(de::Vector3d const &newOrigin);
         de::Vector3d origin() const;
         audio::Sound &setFrequency(de::dfloat newFrequency);

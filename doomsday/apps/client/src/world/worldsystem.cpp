@@ -748,7 +748,7 @@ bool WorldSystem::changeMap(de::Uri const &mapUri)
         /// - Stop all channels using one as emitter. @todo Should observe map object deletion -ds
         ClientApp::audioSystem().channels().forAll([this] (::audio::Sound/*Channel*/ &ch)
         {
-            if(ch.emitter() && &Mob_Map(*ch.emitter()) == d->map)
+            if(ch.emitter() && &Thinker_Map(ch.emitter()->thinker) == d->map)
             {
                 // This channel must be stopped!
                 ch.stop();

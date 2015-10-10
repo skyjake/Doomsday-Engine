@@ -222,15 +222,15 @@ Sound *DummyDriver::SoundPlayer::makeSound(bool stereoPositioning, dint bytesPer
 DENG2_PIMPL_NOREF(DummyDriver::Sound)
 , DENG2_OBSERVES(System, FrameEnds)
 {
-    dint flags = 0;                  ///< SFXCF_* flags.
-    dfloat frequency = 0;            ///< Frequency adjustment: 1.0 is normal.
-    dfloat volume = 0;               ///< Sound volume: 1.0 is max.
+    dint flags = 0;                   ///< SFXCF_* flags.
+    dfloat frequency = 0;             ///< Frequency adjustment: 1.0 is normal.
+    dfloat volume = 0;                ///< Sound volume: 1.0 is max.
 
-    mobj_t *emitter = nullptr;       ///< Mobj emitter for the sound, if any (not owned).
-    Vector3d origin;                 ///< Emit from here (synced with emitter).
+    SoundEmitter *emitter = nullptr;  ///< Emitter for the sound, if any (not owned).
+    Vector3d origin;                  ///< Emit from here (synced with emitter).
 
-    sfxbuffer_t *buffer = nullptr;   ///< Assigned sound buffer, if any (not owned).
-    dint startTime = 0;              ///< When the assigned sound sample was last started.
+    sfxbuffer_t *buffer = nullptr;    ///< Assigned sound buffer, if any (not owned).
+    dint startTime = 0;               ///< When the assigned sound sample was last started.
 
     ~Instance()
     {
@@ -242,11 +242,11 @@ DENG2_PIMPL_NOREF(DummyDriver::Sound)
         // Updating is only necessary if we are tracking an emitter.
         if(!emitter) return;
 
-        origin = Mobj_Origin(*emitter);
-        // If this is a mobj, center the Z pos.
+        origin = Vector3d(emitter->origin);
+        // If this is a ap object, center the Z pos.
         if(Thinker_IsMobjFunc(emitter->thinker.function))
         {
-            origin.z += emitter->height / 2;
+            origin.z += ((mobj_t *)emitter)->height / 2;
         }
     }
 
@@ -277,7 +277,7 @@ DENG2_PIMPL_NOREF(DummyDriver::Sound)
         {
             // Volume is affected only by maxvol.
             setVolume(*buffer, volume * System::get().soundVolume() / 255.0f);
-            if(emitter && emitter == System::get().worldStageListener())
+            if(emitter && emitter == (ddmobj_base_t *)System::get().worldStageListenerPtr())
             {
                 // Emitted by the listener object. Go to relative position mode
                 // and set the position to (0,0,0).
@@ -292,10 +292,10 @@ DENG2_PIMPL_NOREF(DummyDriver::Sound)
             }
 
             // If the sound is emitted by the listener, speed is zero.
-            if(emitter && emitter != System::get().worldStageListener() &&
+            if(emitter && emitter != (ddmobj_base_t *)System::get().worldStageListenerPtr() &&
                Thinker_IsMobjFunc(emitter->thinker.function))
             {
-                setVelocity(*buffer, Vector3d(emitter->mom)* TICSPERSEC);
+                setVelocity(*buffer, Vector3d(((mobj_t *)emitter)->mom)* TICSPERSEC);
             }
             else
             {
@@ -310,7 +310,7 @@ DENG2_PIMPL_NOREF(DummyDriver::Sound)
 
             // This is a 2D buffer.
             if((flags & SFXCF_NO_ORIGIN) ||
-               (emitter && emitter == System::get().worldStageListener()))
+               (emitter && emitter == (ddmobj_base_t *)System::get().worldStageListenerPtr()))
             {
                 dist = 1;
                 finalPan = 0;
@@ -342,7 +342,7 @@ DENG2_PIMPL_NOREF(DummyDriver::Sound)
                 }
 
                 // And pan, too. Calculate angle from listener to emitter.
-                if(mobj_t *listener = System::get().worldStageListener())
+                if(mobj_t *listener = System::get().worldStageListenerPtr())
                 {
                     dfloat angle = (M_PointXYToAngle2(listener->origin[0], listener->origin[1],
                                                       origin.x, origin.y)
@@ -528,12 +528,12 @@ void DummyDriver::Sound::setFlags(dint newFlags)
     d->flags = newFlags;
 }
 
-mobj_t *DummyDriver::Sound::emitter() const
+SoundEmitter *DummyDriver::Sound::emitter() const
 {
     return d->emitter;
 }
 
-void DummyDriver::Sound::setEmitter(mobj_t *newEmitter)
+void DummyDriver::Sound::setEmitter(SoundEmitter *newEmitter)
 {
     d->emitter = newEmitter;
 }

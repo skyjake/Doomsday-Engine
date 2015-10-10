@@ -77,8 +77,8 @@ public:
     /**
      * Returns the attributed emitter if any (may be @c nullptr).
      */
-    virtual struct mobj_s *emitter() const = 0;
-    virtual void setEmitter(struct mobj_s *newEmitter) = 0;
+    virtual SoundEmitter *emitter() const = 0;
+    virtual void setEmitter(SoundEmitter *newEmitter) = 0;
 
     virtual void setOrigin(de::Vector3d const &newOrigin) = 0;
     virtual de::Vector3d origin() const = 0;
@@ -157,7 +157,7 @@ public:
      * are used by the audio channel mapper to determine which currently playing Sound(s)
      * can be overridden with new sounds. Zero is the lowest priority.
      */
-    static de::dfloat ratePriority(struct mobj_s *listener, struct mobj_s *emitter,
+    static de::dfloat ratePriority(struct mobj_s *listener, SoundEmitter *emitter,
         coord_t const *origin, de::dfloat volume, de::dint startTic);
 
     /**

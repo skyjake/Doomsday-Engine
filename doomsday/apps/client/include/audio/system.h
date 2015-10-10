@@ -231,7 +231,7 @@ public:  // Sound playback: ----------------------------------------------------
      *
      * @see playSound(), stopSound()
      */
-    bool soundIsPlaying(SoundStage soundStage, de::dint soundId, struct mobj_s *emitter) const;
+    bool soundIsPlaying(SoundStage soundStage, de::dint soundId, SoundEmitter *emitter) const;
 
     /**
      * Start playing a sound in the specified @a soundStage.
@@ -252,7 +252,7 @@ public:  // Sound playback: ----------------------------------------------------
      *
      * @see soundIsPlaying(), stopSound()
      */
-    bool playSound(SoundStage soundStage, de::dint soundIdAndFlags, struct mobj_s *emitter,
+    bool playSound(SoundStage soundStage, de::dint soundIdAndFlags, SoundEmitter *emitter,
         coord_t const *origin, de::dfloat volume = 1 /*max volume*/);
 
     /**
@@ -265,7 +265,7 @@ public:  // Sound playback: ----------------------------------------------------
      *
      * @see soundIsPlaying(), stopSound()
      */
-    void stopSound(SoundStage soundStage, de::dint soundId, struct mobj_s *emitter,
+    void stopSound(SoundStage soundStage, de::dint soundId, SoundEmitter *emitter,
         de::dint flags = 0 /*no special stop behaviors*/);
 
     /**
@@ -273,7 +273,7 @@ public:  // Sound playback: ----------------------------------------------------
      * active WorldStage listener, in map space units; otherwise returns @c 0 if no current
      * listener exists.
      *
-     * @see worldStageListener()
+     * @see worldStageListenerPtr()
      */
     coord_t distanceToWorldStageListener(de::Vector3d const &point) const;
 
@@ -283,7 +283,7 @@ public:  // Sound playback: ----------------------------------------------------
      *
      * @see distanceToWorldStageListener()
      */
-    struct mobj_s *worldStageListener();
+    struct mobj_s *worldStageListenerPtr();
 
     /**
      * Convenient method returning the current WorldStage sound volume attenuation range,

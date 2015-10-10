@@ -75,7 +75,7 @@ dint Channels::count() const
     return d->all.count();
 }
 
-dint Channels::countPlaying(dint soundId, mobj_t *emitter) const
+dint Channels::countPlaying(dint soundId, SoundEmitter *emitter) const
 {
     dint count = 0;
     for(Sound/*Channel*/ *ch : d->all)
@@ -111,7 +111,7 @@ Sound/*Channel*/ &Channels::add(Sound &sound)
     return sound;
 }
 
-dint Channels::stopGroup(dint group, mobj_t *emitter)
+dint Channels::stopGroup(dint group, SoundEmitter *emitter)
 {
     LOG_AS("audio::Channels");
     dint stopCount = 0;
@@ -131,7 +131,7 @@ dint Channels::stopGroup(dint group, mobj_t *emitter)
     return stopCount;
 }
 
-dint Channels::stopWithEmitter(mobj_t *emitter, bool clearSoundEmitter)
+dint Channels::stopWithEmitter(SoundEmitter *emitter, bool clearSoundEmitter)
 {
     LOG_AS("audio::Channels");
     dint stopCount = 0;
@@ -154,7 +154,7 @@ dint Channels::stopWithEmitter(mobj_t *emitter, bool clearSoundEmitter)
     return stopCount;
 }
 
-dint Channels::stopWithLowerPriority(dint soundId, mobj_t *emitter, dint defPriority)
+dint Channels::stopWithLowerPriority(dint soundId, SoundEmitter *emitter, dint defPriority)
 {
     LOG_AS("audio::Channels");
     dint stopCount = 0;
@@ -196,7 +196,8 @@ dint Channels::stopWithLowerPriority(dint soundId, mobj_t *emitter, dint defPrio
     return stopCount;
 }
 
-Sound/*Channel*/ *Channels::tryFindVacant(bool stereoPositioning, dint bytes, dint rate, dint soundId) const
+Sound/*Channel*/ *Channels::tryFindVacant(bool stereoPositioning, dint bytes, dint rate,
+    dint soundId) const
 {
     LOG_AS("audio::Channels");
     for(Sound/*Channel*/ *ch : d->all)
