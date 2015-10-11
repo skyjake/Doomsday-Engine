@@ -33,17 +33,6 @@ using namespace de;
 
 namespace audio {
 
-static sfxbuffer_t *newBuffer(dint flags, dint bits, dint rate)
-{
-    auto *buf = new sfxbuffer_t;
-    de::zapPtr(buf);
-    buf->bytes = bits / 8;
-    buf->rate  = rate;
-    buf->flags = flags;
-    buf->freq  = rate;  // Modified by calls to Set(SFXBP_FREQUENCY).
-    return buf;
-}
-
 /**
  * @param buf  Sound buffer.
  * @return The length of the buffer in milliseconds.
@@ -209,8 +198,7 @@ void DummyDriver::SoundPlayer::listenerv(dint, dfloat *)
 Sound *DummyDriver::SoundPlayer::makeSound(bool stereoPositioning, dint bytesPer, dint rate)
 {
     if(!d->initialized) return nullptr;
-    std::unique_ptr<Sound> sound(new DummyDriver::Sound);
-    sound->setBuffer(newBuffer(stereoPositioning ? 0 : SFXBF_3D, bytesPer * 8, rate));
+    std::unique_ptr<Sound> sound(new DummyDriver::Sound(stereoPositioning, bytesPer, rate));
     d->sounds << sound.release();
     return d->sounds.last();
 }
@@ -228,13 +216,26 @@ DENG2_PIMPL_NOREF(DummyDriver::Sound)
 
     SoundEmitter *emitter = nullptr;  ///< Emitter for the sound, if any (not owned).
     Vector3d origin;                  ///< Emit from here (synced with emitter).
-
-    sfxbuffer_t *buffer = nullptr;    ///< Assigned sound buffer, if any (not owned).
     dint startTime = 0;               ///< When the assigned sound sample was last started.
+
+    sfxbuffer_t buffer;
+    bool valid = false;               ///< Set to @c true when in the valid state.
+
+    Instance()
+    {
+        de::zap(buffer);
+
+        // We want notification when the frame ends in order to flush deferred property writes.
+        System::get().audienceForFrameEnds() += this;
+    }
 
     ~Instance()
     {
-        DENG2_ASSERT(buffer == nullptr);
+        // Ensure to stop playback, if we haven't already.
+        stop(buffer);
+
+        // Cancel frame notifications.
+        System::get().audienceForFrameEnds() -= this;
     }
 
     void updateOriginIfNeeded()
@@ -259,48 +260,46 @@ DENG2_PIMPL_NOREF(DummyDriver::Sound)
      */
     void updateBuffer(bool force = false)
     {
-        DENG2_ASSERT(buffer);
-
         // Disabled?
         if(flags & SFXCF_NO_UPDATE) return;
 
         // Updates are only necessary during playback.
-        if(!isPlaying(*buffer) && !force) return;
+        if(!isPlaying(buffer) && !force) return;
 
         // When tracking an emitter we need the latest origin coordinates.
         updateOriginIfNeeded();
 
         // Frequency is common to both 2D and 3D sounds.
-        setFrequency(*buffer, frequency);
+        setFrequency(buffer, frequency);
 
-        if(buffer->flags & SFXBF_3D)
+        if(buffer.flags & SFXBF_3D)
         {
             // Volume is affected only by maxvol.
-            setVolume(*buffer, volume * System::get().soundVolume() / 255.0f);
+            setVolume(buffer, volume * System::get().soundVolume() / 255.0f);
             if(emitter && emitter == (ddmobj_base_t *)System::get().worldStageListenerPtr())
             {
                 // Emitted by the listener object. Go to relative position mode
                 // and set the position to (0,0,0).
-                setPositioning(*buffer, true/*head-relative*/);
-                setOrigin(*buffer, Vector3d());
+                setPositioning(buffer, true/*head-relative*/);
+                setOrigin(buffer, Vector3d());
             }
             else
             {
                 // Use the channel's map space origin.
-                setPositioning(*buffer, false/*absolute*/);
-                setOrigin(*buffer, origin);
+                setPositioning(buffer, false/*absolute*/);
+                setOrigin(buffer, origin);
             }
 
             // If the sound is emitted by the listener, speed is zero.
             if(emitter && emitter != (ddmobj_base_t *)System::get().worldStageListenerPtr() &&
                Thinker_IsMobjFunc(emitter->thinker.function))
             {
-                setVelocity(*buffer, Vector3d(((mobj_t *)emitter)->mom)* TICSPERSEC);
+                setVelocity(buffer, Vector3d(((mobj_t *)emitter)->mom)* TICSPERSEC);
             }
             else
             {
                 // Not moving.
-                setVelocity(*buffer, Vector3d());
+                setVelocity(buffer, Vector3d());
             }
         }
         else
@@ -373,8 +372,8 @@ DENG2_PIMPL_NOREF(DummyDriver::Sound)
                 }
             }
 
-            setVolume(*buffer, volume * dist * System::get().soundVolume() / 255.0f);
-            setPan(*buffer, finalPan);
+            setVolume(buffer, volume * dist * System::get().soundVolume() / 255.0f);
+            setPan(buffer, finalPan);
         }
     }
 
@@ -463,57 +462,39 @@ DENG2_PIMPL_NOREF(DummyDriver::Sound)
     void setVolumeAttenuationRange(sfxbuffer_t &, Ranged const &) {}
 };
 
-DummyDriver::Sound::Sound() : d(new Instance)
-{}
+DummyDriver::Sound::Sound(bool stereoPositioning, dint bytesPer, dint rate)
+    : d(new Instance)
+{
+    format(stereoPositioning, bytesPer, rate);
+}
 
 DummyDriver::Sound::~Sound()
+{}
+
+bool DummyDriver::Sound::isValid() const
 {
-    releaseBuffer();
+    return d->valid;
 }
 
-bool DummyDriver::Sound::hasBuffer() const
+sfxsample_t const *DummyDriver::Sound::samplePtr() const
 {
-    return d->buffer != nullptr;
-}
-
-sfxbuffer_t const &DummyDriver::Sound::buffer() const
-{
-    if(d->buffer) return *d->buffer;
-    /// @throw MissingBufferError  No sound buffer is currently assigned.
-    throw MissingBufferError("audio::DummyDriver::Sound::buffer", "No data buffer is assigned");
-}
-
-void DummyDriver::Sound::setBuffer(sfxbuffer_t *newBuffer)
-{
-    if(d->buffer == newBuffer) return;
-
-    stop();
-
-    if(d->buffer)
-    {
-        // Cancel frame notifications - we'll soon have no buffer to update.
-        System::get().audienceForFrameEnds() -= d;
-
-        delete d->buffer;
-        d->buffer = nullptr;
-    }
-
-    d->buffer = newBuffer;
-
-    if(d->buffer)
-    {
-        // We want notification when the frame ends in order to flush deferred property writes.
-        System::get().audienceForFrameEnds() += d;
-    }
+    return d->buffer.sample;
 }
 
 void DummyDriver::Sound::format(bool stereoPositioning, dint bytesPer, dint rate)
 {
-    // Do we need to (re)create the sound data buffer?
-    if(   !d->buffer
-       || (d->buffer->rate != rate || d->buffer->bytes != bytesPer))
+    // Do we need to (re)configure the sample data buffer?
+    if(d->buffer.rate != rate || d->buffer.bytes != bytesPer)
     {
-        setBuffer(newBuffer(stereoPositioning ? 0 : SFXBF_3D, bytesPer, rate));
+        stop();
+        DENG2_ASSERT(!d->isPlaying(d->buffer));
+
+        de::zap(d->buffer);
+        d->buffer.bytes = bytesPer;
+        d->buffer.rate  = rate;
+        d->buffer.flags = stereoPositioning ? 0 : SFXBF_3D;
+        d->buffer.freq  = rate;  // Modified by calls to Set(SFXBP_FREQUENCY).
+        d->valid = true;
     }
 }
 
@@ -550,74 +531,62 @@ Vector3d DummyDriver::Sound::origin() const
 
 void DummyDriver::Sound::load(sfxsample_t &sample)
 {
-    if(!d->buffer)
-    {
-        /// @throw MissingBufferError  Loading is impossible without a buffer...
-        throw MissingBufferError("audio::DummyDriver::Sound::load", "Attempted with no data buffer assigned");
-    }
-
     // Don't reload if a sample with the same sound ID is already loaded.
-    if(!d->buffer->sample || d->buffer->sample->soundId != sample.soundId)
+    if(!d->buffer.sample || d->buffer.sample->soundId != sample.soundId)
     {
-        d->load(*d->buffer, sample);
+        d->load(d->buffer, sample);
     }
 }
 
 void DummyDriver::Sound::stop()
 {
-    if(!d->buffer) return;
-    d->stop(*d->buffer);
+    d->stop(d->buffer);
 }
 
 void DummyDriver::Sound::reset()
 {
-    if(!d->buffer) return;
-    d->reset(*d->buffer);
+    d->reset(d->buffer);
 }
 
 void DummyDriver::Sound::play()
 {
-    if(!d->buffer)
-    {
-        /// @throw MissingBufferError  Playing is obviously impossible without data to play...
-        throw MissingBufferError("audio::DummyDriver::Sound::play", "Attempted with no data buffer assigned");
-    }
-
     // Flush deferred property value changes to the assigned data buffer.
     d->updateBuffer(true/*force*/);
 
     // 3D sounds need a few extra properties set up.
-    if(d->buffer->flags & SFXBF_3D)
+    if(d->buffer.flags & SFXBF_3D)
     {
         // Configure the attentuation distances.
         // This is only done once, when the sound is first played (i.e., here).
         if(d->flags & SFXCF_NO_ATTENUATION)
         {
-            d->setVolumeAttenuationRange(*d->buffer, Ranged(10000, 20000));
+            d->setVolumeAttenuationRange(d->buffer, Ranged(10000, 20000));
         }
         else
         {
-            d->setVolumeAttenuationRange(*d->buffer, System::get().worldStageSoundVolumeAttenuationRange());
+            d->setVolumeAttenuationRange(d->buffer, System::get().worldStageSoundVolumeAttenuationRange());
         }
     }
 
-    d->play(*d->buffer);
+    d->play(d->buffer);
     d->startTime = Timer_Ticks();  // Note the current time.
 }
 
 void DummyDriver::Sound::setPlayingMode(dint sfFlags)
 {
-    if(d->buffer)
-    {
-        d->buffer->flags &= ~(SFXBF_REPEAT | SFXBF_DONT_STOP);
-        if(sfFlags & SF_REPEAT)    d->buffer->flags |= SFXBF_REPEAT;
-        if(sfFlags & SF_DONT_STOP) d->buffer->flags |= SFXBF_DONT_STOP;
-    }
+    d->buffer.flags &= ~(SFXBF_REPEAT | SFXBF_DONT_STOP);
+    if(sfFlags & SF_REPEAT)    d->buffer.flags |= SFXBF_REPEAT;
+    if(sfFlags & SF_DONT_STOP) d->buffer.flags |= SFXBF_DONT_STOP;
 }
 
 dint DummyDriver::Sound::startTime() const
 {
     return d->startTime;
+}
+
+dint DummyDriver::Sound::endTime() const
+{
+    return d->buffer.endTime;
 }
 
 audio::Sound &DummyDriver::Sound::setFrequency(dfloat newFrequency)
@@ -634,7 +603,7 @@ audio::Sound &DummyDriver::Sound::setVolume(dfloat newVolume)
 
 bool DummyDriver::Sound::isPlaying() const
 {
-    return d->buffer && d->isPlaying(*d->buffer);
+    return d->isPlaying(d->buffer);
 }
 
 dfloat DummyDriver::Sound::frequency() const
@@ -649,7 +618,7 @@ dfloat DummyDriver::Sound::volume() const
 
 void DummyDriver::Sound::refresh()
 {
-    d->refresh(*d->buffer);
+    d->refresh(d->buffer);
 }
 
 // ----------------------------------------------------------------------------------

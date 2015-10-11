@@ -23,7 +23,6 @@
 
 #include "api_audiod_sfx.h"  // sfxbuffer_t
 #include "world/p_object.h"  // mobj_t
-#include <de/Error>
 #include <de/Observers>
 #include <de/Vector>
 
@@ -40,9 +39,6 @@ namespace audio {
 class Sound
 {
 public:
-    /// No data buffer is assigned. @ingroup errors
-    DENG2_ERROR(MissingBufferError);
-
     /// Audience to be notified when the sound instance is about to be deleted.
     DENG2_DEFINE_AUDIENCE2(Deletion, void soundBeingDeleted(Sound &))
 
@@ -52,22 +48,15 @@ public:
     DENG2_AS_IS_METHODS()
 
     /**
-     * Determines whether a data buffer is assigned.
+     * Returns @c true if the sound is in valid state (i.e., the previous format
+     * completed successfully and it is ready to receive a sample of that format).
      */
-    virtual bool hasBuffer() const = 0;
+    virtual bool isValid() const = 0;
 
     /**
-     * Returns the assigned sound data buffer.
+     * Returns a pointer to the loaded sample data, if any (may return @c nullptr).
      */
-    virtual sfxbuffer_t const &buffer() const = 0;
-
-    /**
-     * Replace the sound data buffer with @a newBuffer, giving ownership to the
-     * Sound (which will ensure said buffer is destroyed when the sound is).
-     */
-    virtual void setBuffer(sfxbuffer_t *newBuffer) = 0;
-
-    inline void releaseBuffer() { setBuffer(nullptr); }
+    virtual sfxsample_t const *samplePtr() const = 0;
 
     virtual void format(bool stereoPositioning, de::dint bytesPer, de::dint rate) = 0;
 
@@ -142,6 +131,11 @@ public:
      * Returns the time in tics that the sound was last played.
      */
     virtual de::dint startTime() const = 0;
+
+    /**
+     * Returns the time in tics that the currently loaded sample last ended; otherwise @c 0.
+     */
+    virtual de::dint endTime() const = 0;
 
     /**
      * Called periodically by the audio system's refresh thread, so that the buffer

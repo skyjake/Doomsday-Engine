@@ -121,12 +121,11 @@ public:  // Sound players: -----------------------------------------------------
     class Sound : public audio::Sound
     {
     public:
-        Sound();
+        Sound(bool stereoPositioning, de::dint bytesPer, de::dint rate);
         virtual ~Sound();
 
-        bool hasBuffer() const;
-        sfxbuffer_t const &buffer() const;
-        void setBuffer(sfxbuffer_t *newBuffer);
+        bool isValid() const;
+        sfxsample_t const *samplePtr() const;
         void format(bool stereoPositioning, de::dint bytesPer, de::dint rate);
         int flags() const;
         void setFlags(int newFlags);
@@ -145,6 +144,7 @@ public:  // Sound players: -----------------------------------------------------
         void play();
         void setPlayingMode(de::dint sfFlags);
         de::dint startTime() const;
+        de::dint endTime() const;
         void refresh();
 
     private:

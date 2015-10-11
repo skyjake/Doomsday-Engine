@@ -1159,8 +1159,8 @@ DENG2_PIMPL(System)
         dint num2D = sfx3D ? CHANNEL_2DCOUNT: numChannels;  // The rest will be 3D.
         for(dint i = 0; i < numChannels; ++i)
         {
-            Sound/*Channel*/ &ch = channels->add(*getSoundPlayer().makeSound(num2D-- > 0, sfxBits, sfxRate));
-            if(!ch.hasBuffer())
+            Sound/*Channel*/ &ch = channels->add(*getSoundPlayer().makeSound(num2D-- > 0, sfxBits / 8, sfxRate));
+            if(!ch.isValid())
             {
                 LOG_AUDIO_WARNING("Failed creating Sound for Channel #%i") << i;
             }
@@ -1247,7 +1247,7 @@ DENG2_PIMPL(System)
 
                     if(ch.isPlaying())
                     {
-                        if(   ch.buffer().sample->soundId == sample.soundId
+                        if(   ch.samplePtr()->soundId == sample.soundId
                            && (myPrio >= chPriority && (!selCh || chPriority <= lowPrio)))
                         {
                             selCh   = &ch;
@@ -1320,7 +1320,7 @@ DENG2_PIMPL(System)
             {
                 dfloat const chPriority = channelPrios[idx++];
 
-                if(ch.hasBuffer())
+                if(ch.isValid())
                 {
                     // Sample buffer must be configured for the right mode.
                     if(play3D == ((ch.buffer().flags & SFXBF_3D) != 0))
@@ -1362,8 +1362,8 @@ DENG2_PIMPL(System)
         }
 
         Sound &sound = *selCh;
-        DENG2_ASSERT(sound.hasBuffer());
-        // The sample buffer may need to be reformatted.
+        DENG2_ASSERT(sound.isValid());
+        // The sound may need to be reformatted.
 
         sound.format(!play3D, sample.bytesPer, sample.rate);
         sound.setPlayingMode(flags);
@@ -1393,6 +1393,8 @@ DENG2_PIMPL(System)
 
         // Update listener properties.
         getSoundPlayer().listener(SFXLP_UPDATE, 0);
+
+        DENG2_ASSERT(sound.isValid());
 
         // Load in the sample if needed and start playing.
         sound.load(sample);

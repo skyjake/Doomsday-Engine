@@ -82,13 +82,13 @@ dint Channels::countPlaying(dint soundId, SoundEmitter *emitter) const
     {
         if(!ch->isPlaying()) continue;
         if(emitter && ch->emitter() != emitter) continue;
-        if(soundId && ch->buffer().sample->soundId != soundId) continue;
+        if(soundId && ch->samplePtr()->soundId != soundId) continue;
 
         // Once playing, repeating sounds don't stop.
         /*if(!(ch->buffer().flags & SFXBF_REPEAT))
         {
             // Check time. The flag is updated after a slight delay (only at refresh).
-            dint const ticsToDelay = ch->buffer().sample->numSamples / dfloat( ch->buffer().freq ) * TICSPERSEC;
+            dint const ticsToDelay = ch->samplePtr()->numSamples / dfloat( ch->buffer().freq ) * TICSPERSEC;
             if(Timer_Ticks() - ch->startTime() < ticsToDelay)
                 continue;
         }*/
@@ -119,7 +119,7 @@ dint Channels::stopGroup(dint group, SoundEmitter *emitter)
     {
         if(!ch->isPlaying()) continue;
 
-        if(   ch->buffer().sample->group == group
+        if(   ch->samplePtr()->group == group
            && (!emitter || ch->emitter() == emitter))
         {
             // This channel must be stopped!
@@ -162,7 +162,7 @@ dint Channels::stopWithLowerPriority(dint soundId, SoundEmitter *emitter, dint d
     {
         if(!ch->isPlaying()) continue;
             
-        if(   (soundId && ch->buffer().sample->soundId != soundId)
+        if(   (soundId && ch->samplePtr()->soundId != soundId)
            || (emitter && ch->emitter() != emitter))
         {
             continue;
@@ -180,7 +180,7 @@ dint Channels::stopWithLowerPriority(dint soundId, SoundEmitter *emitter, dint d
         // Check the priority.
         if(defPriority >= 0)
         {
-            dint oldPrio = ::defs.sounds[ch->buffer().sample->soundId].geti("priority");
+            dint oldPrio = ::defs.sounds[ch->samplePtr()->soundId].geti("priority");
             if(oldPrio < defPriority)  // Old is more important.
             {
                 stopCount = -1;
@@ -204,22 +204,21 @@ Sound/*Channel*/ *Channels::tryFindVacant(bool stereoPositioning, dint bytes, di
     {
         if(!ch->isPlaying()) continue;
 
-        sfxbuffer_t const &sbuf = ch->buffer();
-        if(   stereoPositioning != ((sbuf.flags & SFXBF_3D) == 0)
-           || sbuf.bytes != bytes
-           || sbuf.rate  != rate)
+        if(   stereoPositioning != ((ch->buffer().flags & SFXBF_3D) == 0)
+           || ch->buffer().bytes != bytes
+           || ch->buffer().rate  != rate)
             continue;
 
         // What about the sample?
         if(soundId > 0)
         {
-            if(!sbuf.sample || sbuf.sample->soundId != soundId)
+            if(!ch->samplePtr() || ch->samplePtr()->soundId != soundId)
                 continue;
         }
         else if(soundId == 0)
         {
             // We're trying to find a channel with no sample already loaded.
-            if(sbuf.sample)
+            if(ch->samplePtr())
                 continue;
         }
 
@@ -307,25 +306,24 @@ void UI_AudioChannelDrawer()
                 !(ch.flags() & SFXCF_NO_ORIGIN     ) ? 'O' : '.',
                 !(ch.flags() & SFXCF_NO_ATTENUATION) ? 'A' : '.',
                 ch.emitter() ? 'E' : '.',
-                ch.volume(), ch.frequency(), ch.startTime(),
-                ch.hasBuffer() ? ch.buffer().endTime : 0,
-                ch.emitter()   ? ch.emitter()->thinker.id : 0);
+                ch.volume(), ch.frequency(), ch.startTime(), ch.endTime(),
+                ch.emitter() ? ch.emitter()->thinker.id : 0);
         FR_DrawTextXY(buf, 5, lh * (1 + idx * 2));
 
-        if(ch.hasBuffer())
+        if(ch.isValid())
         {
-            sfxbuffer_t const &sbuf = ch.buffer();
+            sfxsample_t const *sample = ch.samplePtr();
 
             sprintf(buf, "    %c%c%c%c id=%03i/%-8s ln=%05i b=%i rt=%2i bs=%05i (C%05i/W%05i)",
-                    (sbuf.flags & SFXBF_3D     ) ? '3' : '.',
-                    (sbuf.flags & SFXBF_PLAYING) ? 'P' : '.',
-                    (sbuf.flags & SFXBF_REPEAT ) ? 'R' : '.',
-                    (sbuf.flags & SFXBF_RELOAD ) ? 'L' : '.',
-                    sbuf.sample ? sbuf.sample->soundId : 0,
-                    sbuf.sample ? ::defs.sounds[sbuf.sample->soundId].gets("id") : "",
-                    sbuf.sample ? sbuf.sample->size : 0,
-                    sbuf.bytes, sbuf.rate / 1000, sbuf.length,
-                    sbuf.cursor, sbuf.written);
+                    (ch.buffer().flags & SFXBF_3D     ) ? '3' : '.',
+                    (ch.buffer().flags & SFXBF_PLAYING) ? 'P' : '.',
+                    (ch.buffer().flags & SFXBF_REPEAT ) ? 'R' : '.',
+                    (ch.buffer().flags & SFXBF_RELOAD ) ? 'L' : '.',
+                    sample ? sample->soundId : 0,
+                    sample ? ::defs.sounds[sample->soundId].gets("id") : "",
+                    sample ? sample->size : 0,
+                    ch.buffer().bytes, ch.buffer().rate / 1000, ch.buffer().length,
+                    ch.buffer().cursor, ch.buffer().written);
             FR_DrawTextXY(buf, 5, lh * (2 + idx * 2));
         }
 

@@ -23,15 +23,19 @@
 
 #include "api_audiod.h"         // AUDIOP_* flags
 #include "audio/samplecache.h"
+
 #include "world/thinkers.h"
-#include "def_main.h"           // SF_* flags, remove me
-#include "sys_system.h"         // Sys_Sleep()
+
+#include "def_main.h"    // SF_* flags, remove me
+#include "sys_system.h"  // Sys_Sleep()
+
+#include <de/Error>
 #include <de/Library>
 #include <de/Log>
-#include <de/Observers>
 #include <de/NativeFile>
+#include <de/Observers>
 #include <de/concurrency.h>
-#include <de/timer.h>           // TICSPERSEC
+#include <de/timer.h>        // TICSPERSEC
 #include <QList>
 #include <QtAlgorithms>
 
@@ -320,10 +324,9 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundPlayer)
         pauseRefresh();
         for(PluginDriver::Sound *sound : sounds)
         {
-            if(!sound->hasBuffer()) continue;
+            if(!sound->isValid()) continue;
 
-            sfxbuffer_t const &sbuf = sound->buffer();
-            if(sbuf.sample && sbuf.sample->soundId == sample.soundId)
+            if(sound->samplePtr() && sound->samplePtr()->soundId == sample.soundId)
             {
                 // Stop and unload.
                 sound->reset();
@@ -446,8 +449,7 @@ void PluginDriver::SoundPlayer::listenerv(dint prop, dfloat *values)
 Sound *PluginDriver::SoundPlayer::makeSound(bool stereoPositioning, dint bytesPer, dint rate)
 {
     if(!d->initialized) return nullptr;
-    std::unique_ptr<Sound> sound(new PluginDriver::Sound(*this));
-    sound->setBuffer(driver().iSound().gen.Create(stereoPositioning ? 0 : SFXBF_3D, bytesPer * 8, rate));
+    std::unique_ptr<Sound> sound(new PluginDriver::Sound(*this, stereoPositioning, bytesPer, rate));
     d->sounds << sound.release();
     if(d->sounds.count() == 1)
     {
@@ -473,6 +475,9 @@ Sound *PluginDriver::SoundPlayer::makeSound(bool stereoPositioning, dint bytesPe
 DENG2_PIMPL_NOREF(PluginDriver::Sound)
 , DENG2_OBSERVES(System, FrameEnds)
 {
+    /// No data buffer is assigned. @ingroup errors
+    DENG2_ERROR(MissingBufferError);
+
     dint flags = 0;                   ///< SFXCF_* flags.
     dfloat frequency = 0;             ///< Frequency adjustment: 1.0 is normal.
     dfloat volume = 0;                ///< Sound volume: 1.0 is max.
@@ -487,6 +492,7 @@ DENG2_PIMPL_NOREF(PluginDriver::Sound)
 
     ~Instance()
     {
+        setBuffer(nullptr);
         DENG2_ASSERT(buffer == nullptr);
     }
 
@@ -494,6 +500,40 @@ DENG2_PIMPL_NOREF(PluginDriver::Sound)
     {
         DENG2_ASSERT(player != nullptr);
         return player->driver();
+    }
+
+    sfxbuffer_t &getBuffer() const
+    {
+        if(buffer) return *buffer;
+        /// @throw MissingBufferError  No sound buffer is currently assigned.
+        throw MissingBufferError("audio::PluginDriver::Sound::Instance", "No sample buffer is assigned");
+    }
+
+    /**
+     * Replace the sample data buffer with @a newBuffer.
+     */
+    void setBuffer(sfxbuffer_t *newBuffer)
+    {
+        if(buffer == newBuffer) return;
+
+        stop();
+
+        if(buffer)
+        {
+            // Cancel frame notifications - we'll soon have no buffer to update.
+            System::get().audienceForFrameEnds() -= this;
+
+            getDriver().iSound().gen.Destroy(buffer);
+            buffer = nullptr;
+        }
+
+        buffer = newBuffer;
+
+        if(buffer)
+        {
+            // We want notification when the frame ends in order to flush deferred property writes.
+            System::get().audienceForFrameEnds() += this;
+        }
     }
 
     void updateOriginIfNeeded()
@@ -653,52 +693,34 @@ DENG2_PIMPL_NOREF(PluginDriver::Sound)
     {
         return (buf.flags & SFXBF_PLAYING) != 0;
     }
+
+    void stop()
+    {
+        if(!buffer) return;
+
+        DENG2_ASSERT(getDriver().iSound().gen.Stop);
+        getDriver().iSound().gen.Stop(buffer);
+    }
 };
 
-PluginDriver::Sound::Sound(PluginDriver::SoundPlayer &player) : d(new Instance)
+PluginDriver::Sound::Sound(PluginDriver::SoundPlayer &player, bool stereoPositioning, dint bytesPer, dint rate)
+    : d(new Instance)
 {
     d->player = &player;
+    format(stereoPositioning, bytesPer, rate);
 }
 
 PluginDriver::Sound::~Sound()
-{
-    releaseBuffer();
-}
+{}
 
-bool PluginDriver::Sound::hasBuffer() const
+bool PluginDriver::Sound::isValid() const
 {
     return d->buffer != nullptr;
 }
 
-sfxbuffer_t const &PluginDriver::Sound::buffer() const
+sfxsample_t const *PluginDriver::Sound::samplePtr() const
 {
-    if(d->buffer) return *d->buffer;
-    /// @throw MissingBufferError  No sound buffer is currently assigned.
-    throw MissingBufferError("audio::PluginDriver::Sound::buffer", "No data buffer is assigned");
-}
-
-void PluginDriver::Sound::setBuffer(sfxbuffer_t *newBuffer)
-{
-    if(d->buffer == newBuffer) return;
-
-    stop();
-
-    if(d->buffer)
-    {
-        // Cancel frame notifications - we'll soon have no buffer to update.
-        System::get().audienceForFrameEnds() -= d;
-
-        d->getDriver().iSound().gen.Destroy(d->buffer);
-        d->buffer = nullptr;
-    }
-
-    d->buffer = newBuffer;
-
-    if(d->buffer)
-    {
-        // We want notification when the frame ends in order to flush deferred property writes.
-        System::get().audienceForFrameEnds() += d;
-    }
+    return d->buffer ? d->buffer->sample : nullptr;
 }
 
 void PluginDriver::Sound::format(bool stereoPositioning, dint bytesPer, dint rate)
@@ -707,7 +729,7 @@ void PluginDriver::Sound::format(bool stereoPositioning, dint bytesPer, dint rat
     if(   !d->buffer
        || (d->buffer->rate != rate || d->buffer->bytes != bytesPer))
     {
-        setBuffer(d->getDriver().iSound().gen.Create(stereoPositioning ? 0 : SFXBF_3D, bytesPer, rate));
+        d->setBuffer(d->getDriver().iSound().gen.Create(stereoPositioning ? 0 : SFXBF_3D, bytesPer, rate));
     }
 }
 
@@ -744,26 +766,17 @@ Vector3d PluginDriver::Sound::origin() const
 
 void PluginDriver::Sound::load(sfxsample_t &sample)
 {
-    if(!d->buffer)
-    {
-        /// @throw MissingBufferError  Loading is impossible without a buffer...
-        throw MissingBufferError("audio::PluginDriver::Sound::load", "Attempted with no data buffer assigned");
-    }
-
     // Don't reload if a sample with the same sound ID is already loaded.
-    if(!d->buffer->sample || d->buffer->sample->soundId != sample.soundId)
+    if(!d->getBuffer().sample || d->getBuffer().sample->soundId != sample.soundId)
     {
         DENG2_ASSERT(d->getDriver().iSound().gen.Load);
-        d->getDriver().iSound().gen.Load(d->buffer, &sample);
+        d->getDriver().iSound().gen.Load(&d->getBuffer(), &sample);
     }
 }
 
 void PluginDriver::Sound::stop()
 {
-    if(!d->buffer) return;
-
-    DENG2_ASSERT(d->getDriver().iSound().gen.Stop);
-    d->getDriver().iSound().gen.Stop(d->buffer);
+    d->stop();
 }
 
 void PluginDriver::Sound::reset()
@@ -776,17 +789,11 @@ void PluginDriver::Sound::reset()
 
 void PluginDriver::Sound::play()
 {
-    if(!d->buffer)
-    {
-        /// @throw MissingBufferError  Playing is obviously impossible without data to play...
-        throw MissingBufferError("audio::PluginDriver::Sound::play", "Attempted with no data buffer assigned");
-    }
-
     // Flush deferred property value changes to the assigned data buffer.
     d->updateBuffer(true/*force*/);
 
     // 3D sounds need a few extra properties set up.
-    if(d->buffer->flags & SFXBF_3D)
+    if(d->getBuffer().flags & SFXBF_3D)
     {
         DENG2_ASSERT(d->getDriver().iSound().gen.Set);
 
@@ -794,19 +801,19 @@ void PluginDriver::Sound::play()
         // This is only done once, when the sound is first played (i.e., here).
         if(d->flags & SFXCF_NO_ATTENUATION)
         {
-            d->getDriver().iSound().gen.Set(d->buffer, SFXBP_MIN_DISTANCE, 10000);
-            d->getDriver().iSound().gen.Set(d->buffer, SFXBP_MAX_DISTANCE, 20000);
+            d->getDriver().iSound().gen.Set(&d->getBuffer(), SFXBP_MIN_DISTANCE, 10000);
+            d->getDriver().iSound().gen.Set(&d->getBuffer(), SFXBP_MAX_DISTANCE, 20000);
         }
         else
         {
             Ranged const &range = System::get().worldStageSoundVolumeAttenuationRange();
-            d->getDriver().iSound().gen.Set(d->buffer, SFXBP_MIN_DISTANCE, dfloat( range.start ));
-            d->getDriver().iSound().gen.Set(d->buffer, SFXBP_MAX_DISTANCE, dfloat( range.end ));
+            d->getDriver().iSound().gen.Set(&d->getBuffer(), SFXBP_MIN_DISTANCE, dfloat( range.start ));
+            d->getDriver().iSound().gen.Set(&d->getBuffer(), SFXBP_MAX_DISTANCE, dfloat( range.end ));
         }
     }
 
     DENG2_ASSERT(d->getDriver().iSound().gen.Play);
-    d->getDriver().iSound().gen.Play(d->buffer);
+    d->getDriver().iSound().gen.Play(&d->getBuffer());
 
     d->startTime = Timer_Ticks();  // Note the current time.
 }
@@ -824,6 +831,11 @@ void PluginDriver::Sound::setPlayingMode(dint sfFlags)
 dint PluginDriver::Sound::startTime() const
 {
     return d->startTime;
+}
+
+dint PluginDriver::Sound::endTime() const
+{
+    return isValid() && d->buffer ? d->buffer->endTime : 0;
 }
 
 audio::Sound &PluginDriver::Sound::setFrequency(dfloat newFrequency)
