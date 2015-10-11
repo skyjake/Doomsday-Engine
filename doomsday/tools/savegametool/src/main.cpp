@@ -165,7 +165,7 @@ int main(int argc, char **argv)
     try
     {
         TextApp app(argc, argv);
-        app.setMetadata("Deng Team", "dengine.net", "Savegame Tool", "1.0.0");
+        app.setMetadata("Deng Team", "dengine.net", "Savegame Tool", "1.0.1");
         app.initSubsystems(App::DisablePlugins | App::DisablePersistentData);
 
         // Name the log output file appropriately.
