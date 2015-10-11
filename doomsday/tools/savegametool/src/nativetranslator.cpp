@@ -222,7 +222,7 @@ DENG2_PIMPL(NativeTranslator)
             // determine the game identity key unambigously, without some assistance.
             if(gamemode == 4 /*doom2*/)
             {
-                if(fallbackGameId.isEmpty())
+                if(!fallbackGameId.isEmpty())
                 {
                     return fallbackGameId;
                 }
