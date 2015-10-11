@@ -23,68 +23,29 @@
 #include "audio/drivers/sdlmixerdriver.h"
 
 #include "audio/samplecache.h"
-#include "world/thinkers.h"
-#include "def_main.h"           // SF_* flags, remove me
-#include "sys_system.h"         // Sys_Sleep()
+
+#include "world/thinkers.h"  // Thinker_IsMobjFunc()
+#include "def_main.h"        // SF_* flags, remove me
+#include "sys_system.h"      // Sys_Sleep()
+
 #include <de/Log>
 #include <de/Observers>
 #include <de/concurrency.h>
-#include <de/memory.h>
-#include <de/timer.h>           // TICSPERSEC
+#include <de/timer.h>        // TICSPERSEC
 #include <SDL.h>
 #include <SDL_mixer.h>
 #include <cstdlib>
 #include <cstring>
+#include <QBitArray>
 #include <QList>
 #include <QtAlgorithms>
 
 using namespace de;
 
-#define DEFAULT_MIDI_COMMAND    "" //"timidity"
-
 namespace audio {
 
-static dint numChannels;
-static bool *usedChannels;
-
 static Mix_Music *lastMusic;
-
-static dint firstUnusedChannel()
-{
-    for(dint i = 0; i < numChannels; ++i)
-    {
-        if(!usedChannels[i])
-            return i;
-    }
-    return -1;
-}
-
-static dint acquireChannel()
-{
-    dint channel = firstUnusedChannel();
-    if(channel < 0)
-    {
-        channel = numChannels++;
-        usedChannels = (bool *) M_Realloc(usedChannels, sizeof(*usedChannels) * numChannels);
-
-        // Make sure we have enough channels allocated.
-        Mix_AllocateChannels(numChannels);
-        Mix_UnregisterAllEffects(channel);
-    }
-    usedChannels[channel] = true;
-    return channel;
-}
-
-static void releaseChannel(dint channel)
-{
-    if(channel < 0) return;
-
-    Mix_HaltChannel(channel);
-    DENG2_ASSERT(channel >= 0 && channel < numChannels);
-    usedChannels[channel] = false;
-}
-
-// ----------------------------------------------------------------------------------
+static QBitArray usedChannels;
 
 /**
  * This is the hook we ask SDL_mixer to call when music playback finishes.
@@ -95,6 +56,42 @@ static void musicPlaybackFinished()
     LOG_AUDIO_VERBOSE("[SDLMixer] Music playback finished");
 }
 #endif
+
+static dint firstUnusedChannel()
+{
+    for(dint i = 0; i < usedChannels.count(); ++i)
+    {
+        if(!usedChannels.testBit(i))
+            return i;
+    }
+    return -1;
+}
+
+static dint acquireChannel()
+{
+    dint channel = firstUnusedChannel();
+    if(channel < 0)
+    {
+        usedChannels.resize(usedChannels.count() + 1);
+        channel = usedChannels.count() - 1;
+
+        // Make sure we have enough channels allocated.
+        Mix_AllocateChannels(usedChannels.count());
+        Mix_UnregisterAllEffects(channel);
+    }
+    usedChannels.setBit(channel, true);
+    return channel;
+}
+
+static void releaseChannel(dint channel)
+{
+    if(channel < 0) return;
+
+    Mix_HaltChannel(channel);
+    usedChannels.setBit(channel, false);
+}
+
+// ----------------------------------------------------------------------------------
 
 SdlMixerDriver::MusicPlayer::MusicPlayer()
 {}
@@ -663,7 +660,7 @@ DENG2_PIMPL_NOREF(SdlMixerDriver::Sound)
         if(!buf.sample) return;
 
         Mix_HaltChannel(buf.cursor);
-        //usedChannels[buf->cursor] = false;
+        //usedChannels.setBit(buf->cursor, false);
         buf.flags &= ~SFXBF_PLAYING;
     }
 
@@ -1018,7 +1015,7 @@ void SdlMixerDriver::initialize()
 
     // Prepare to play simultaneous sounds.
     /*numChannels =*/ Mix_AllocateChannels(MIX_CHANNELS);
-    usedChannels = nullptr;
+    usedChannels.clear();
 
     // We want notification when a new audio frame begins.
     audioSystem().audienceForFrameBegins() += d;
@@ -1039,7 +1036,7 @@ void SdlMixerDriver::deinitialize()
     // Stop receiving notifications:
     audioSystem().audienceForFrameBegins() -= d;
 
-    M_Free(usedChannels); usedChannels = nullptr;
+    usedChannels.clear();
 
     if(lastMusic)
     {
