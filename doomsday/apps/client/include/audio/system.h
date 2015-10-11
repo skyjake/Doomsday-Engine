@@ -182,13 +182,14 @@ public:  // Music playback: ----------------------------------------------------
 
     /**
      * Start playing a song. The chosen interface depends on what's available and what
-     * sources have been associated with the song. Any song currently playing song is
-     * stopped.
+     * sources have been associated with the song. Any song currently playing is stopped.
      *
      * @param definition  Music definition describing the associated music sources.
+     * @param looped      @c true= restart the music each time playback completes.
      *
      * @return  Non-zero if a song is successfully played.
      *
+     * @see playMusicLump(), playMusicFile(), playMusicCDTrack()
      * @see musicIsPlaying(), musicIsPaused(), pauseMusic()
      */
     de::dint playMusic(de::Record const &definition, bool looped = false);
@@ -293,9 +294,6 @@ public:  // Sound playback: ----------------------------------------------------
 
 public:  // Low-level driver/playback interfaces: ---------------------------------------
 
-    /// Required/referenced audio driver is missing. @ingroup errors
-    DENG2_ERROR(MissingDriverError);
-
     enum PlaybackInterfaceType
     {
         AUDIO_ICD,
@@ -306,6 +304,9 @@ public:  // Low-level driver/playback interfaces: ------------------------------
     };
 
     static de::String playbackInterfaceTypeAsText(PlaybackInterfaceType type);
+
+    /// Required/referenced audio driver is missing. @ingroup errors
+    DENG2_ERROR(MissingDriverError);
 
     /**
      * Interface for a component providing logical audio driver functionality.

@@ -84,15 +84,6 @@ static void releaseChannel(dint channel)
     usedChannels[channel] = false;
 }
 
-/**
- * Returns the length of the buffer in milliseconds.
- */
-static duint getBufferLength(sfxbuffer_t const &buf)
-{
-    DENG2_ASSERT(buf.sample);
-    return 1000 * buf.sample->numSamples / buf.freq;
-}
-
 // ----------------------------------------------------------------------------------
 
 SdlMixerDriver::CdPlayer::CdPlayer()
@@ -754,7 +745,7 @@ DENG2_PIMPL_NOREF(SdlMixerDriver::Sound)
         Mix_PlayChannel(buf.cursor, (Mix_Chunk *) buf.ptr, (buf.flags & SFXBF_REPEAT ? -1 : 0));
 
         // Calculate the end time (milliseconds).
-        buf.endTime = Timer_RealMilliseconds() + getBufferLength(buf);
+        buf.endTime = Timer_RealMilliseconds() + buf.milliseconds();
 
         // The buffer is now playing.
         buf.flags |= SFXBF_PLAYING;
@@ -842,6 +833,21 @@ void SdlMixerDriver::Sound::setFlags(dint newFlags)
     d->flags = newFlags;
 }
 
+bool SdlMixerDriver::Sound::stereoPositioning() const
+{
+    return (d->buffer.flags & SFXBF_3D) == 0;
+}
+
+dint SdlMixerDriver::Sound::bytes() const
+{
+    return d->buffer.bytes;
+}
+
+dint SdlMixerDriver::Sound::rate() const
+{
+    return d->buffer.rate;
+}
+
 SoundEmitter *SdlMixerDriver::Sound::emitter() const
 {
     return d->emitter;
@@ -881,8 +887,20 @@ void SdlMixerDriver::Sound::reset()
     d->reset(d->buffer);
 }
 
-void SdlMixerDriver::Sound::play()
+void SdlMixerDriver::Sound::play(PlayingMode mode)
 {
+    if(isPlaying()) return;
+
+    if(mode == NotPlaying) return;
+
+    d->buffer.flags &= ~(SFXBF_REPEAT | SFXBF_DONT_STOP);
+    switch(mode)
+    {
+    case Looping:        d->buffer.flags |= SFXBF_REPEAT;    break;
+    case OnceDontDelete: d->buffer.flags |= SFXBF_DONT_STOP; break;
+    default: break;
+    }
+
     // Flush deferred property value changes to the assigned data buffer.
     d->updateBuffer(true/*force*/);
 
@@ -903,13 +921,6 @@ void SdlMixerDriver::Sound::play()
 
     d->play(d->buffer);
     d->startTime = Timer_Ticks();  // Note the current time.
-}
-
-void SdlMixerDriver::Sound::setPlayingMode(dint sfFlags)
-{
-    d->buffer.flags &= ~(SFXBF_REPEAT | SFXBF_DONT_STOP);
-    if(sfFlags & SF_REPEAT)    d->buffer.flags |= SFXBF_REPEAT;
-    if(sfFlags & SF_DONT_STOP) d->buffer.flags |= SFXBF_DONT_STOP;
 }
 
 dint SdlMixerDriver::Sound::startTime() const
@@ -934,9 +945,12 @@ audio::Sound &SdlMixerDriver::Sound::setVolume(dfloat newVolume)
     return *this;
 }
 
-bool SdlMixerDriver::Sound::isPlaying() const
+audio::Sound::PlayingMode SdlMixerDriver::Sound::mode() const
 {
-    return d->isPlaying(d->buffer);
+    if(!d->isPlaying(d->buffer))          return NotPlaying;
+    if(d->buffer.flags & SFXBF_REPEAT)    return Looping;
+    if(d->buffer.flags & SFXBF_DONT_STOP) return OnceDontDelete;
+    return Once;
 }
 
 dfloat SdlMixerDriver::Sound::frequency() const

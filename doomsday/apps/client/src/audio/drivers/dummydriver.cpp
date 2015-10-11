@@ -33,18 +33,6 @@ using namespace de;
 
 namespace audio {
 
-/**
- * @param buf  Sound buffer.
- * @return The length of the buffer in milliseconds.
- */
-static duint getBufferLength(sfxbuffer_t &buf)
-{
-    DENG2_ASSERT(buf.sample);
-    return 1000 * buf.sample->numSamples / buf.freq;
-}
-
-// ----------------------------------------------------------------------------------
-
 DummyDriver::CdPlayer::CdPlayer()
 {}
 
@@ -417,12 +405,8 @@ DENG2_PIMPL_NOREF(DummyDriver::Sound)
             load(buf, *buf.sample);
         }
 
-        // The sound starts playing now?
-        if(!isPlaying(buf))
-        {
-            // Calculate the end time (milliseconds).
-            buf.endTime = Timer_RealMilliseconds() + getBufferLength(buf);
-        }
+        // Calculate the end time (milliseconds).
+        buf.endTime = Timer_RealMilliseconds() + buf.milliseconds();
 
         // The buffer is now playing.
         buf.flags |= SFXBF_PLAYING;
@@ -509,6 +493,21 @@ void DummyDriver::Sound::setFlags(dint newFlags)
     d->flags = newFlags;
 }
 
+bool DummyDriver::Sound::stereoPositioning() const
+{
+    return (d->buffer.flags & SFXBF_3D) == 0;
+}
+
+dint DummyDriver::Sound::bytes() const
+{
+    return d->buffer.bytes;
+}
+
+dint DummyDriver::Sound::rate() const
+{
+    return d->buffer.rate;
+}
+
 SoundEmitter *DummyDriver::Sound::emitter() const
 {
     return d->emitter;
@@ -548,8 +547,20 @@ void DummyDriver::Sound::reset()
     d->reset(d->buffer);
 }
 
-void DummyDriver::Sound::play()
+void DummyDriver::Sound::play(PlayingMode mode)
 {
+    if(isPlaying()) return;
+
+    if(mode == NotPlaying) return;
+
+    d->buffer.flags &= ~(SFXBF_REPEAT | SFXBF_DONT_STOP);
+    switch(mode)
+    {
+    case Looping:        d->buffer.flags |= SFXBF_REPEAT;    break;
+    case OnceDontDelete: d->buffer.flags |= SFXBF_DONT_STOP; break;
+    default: break;
+    }
+
     // Flush deferred property value changes to the assigned data buffer.
     d->updateBuffer(true/*force*/);
 
@@ -570,13 +581,6 @@ void DummyDriver::Sound::play()
 
     d->play(d->buffer);
     d->startTime = Timer_Ticks();  // Note the current time.
-}
-
-void DummyDriver::Sound::setPlayingMode(dint sfFlags)
-{
-    d->buffer.flags &= ~(SFXBF_REPEAT | SFXBF_DONT_STOP);
-    if(sfFlags & SF_REPEAT)    d->buffer.flags |= SFXBF_REPEAT;
-    if(sfFlags & SF_DONT_STOP) d->buffer.flags |= SFXBF_DONT_STOP;
 }
 
 dint DummyDriver::Sound::startTime() const
@@ -601,9 +605,12 @@ audio::Sound &DummyDriver::Sound::setVolume(dfloat newVolume)
     return *this;
 }
 
-bool DummyDriver::Sound::isPlaying() const
+audio::Sound::PlayingMode DummyDriver::Sound::mode() const
 {
-    return d->isPlaying(d->buffer);
+    if(!d->isPlaying(d->buffer))          return NotPlaying;
+    if(d->buffer.flags & SFXBF_REPEAT)    return Looping;
+    if(d->buffer.flags & SFXBF_DONT_STOP) return OnceDontDelete;
+    return Once;
 }
 
 dfloat DummyDriver::Sound::frequency() const

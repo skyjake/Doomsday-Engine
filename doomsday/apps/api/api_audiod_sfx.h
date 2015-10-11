@@ -110,12 +110,21 @@ typedef struct sfxbuffer_s {
     struct sfxsample_s *sample;  ///< Source sample data.
     int             bytes;       ///< Bytes per sample (1 or 2).
     int             rate;        ///< Samples per second.
-    int             flags;
+    int             flags;       ///< @ref sfxBufferFlags
     unsigned int    length;      ///< Length of the buffer (bytes).
     unsigned int    cursor;      ///< Write cursor position (%length).
     unsigned int    written;     ///< Total bytes written.
     unsigned int    endTime;     ///< System time, milliseconds (if !repeating).
     unsigned int    freq;        ///< Played samples per second (real freq).
+
+#ifdef __cplusplus
+    /**
+     * Returns the length of the buffer in milliseconds.
+     */
+    unsigned int milliseconds() const {
+        return sample ? (1000 * sample->numSamples / freq) : 0;
+    }
+#endif
 } sfxbuffer_t;
 
 /**

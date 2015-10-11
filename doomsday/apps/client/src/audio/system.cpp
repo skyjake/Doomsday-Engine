@@ -1198,7 +1198,7 @@ DENG2_PIMPL(System)
     {
         if(!soundAvail) return false;
 
-        bool const play3D = sfx3D && (emitter || origin);
+        bool const stereoPositioning = !(sfx3D && (emitter || origin));
 
         if(sample.soundId < 1 || sample.soundId >= ::defs.sounds.size()) return false;
         if(volume <= 0 || !sample.size) return false;
@@ -1285,20 +1285,20 @@ DENG2_PIMPL(System)
 
         // First look through the stopped channels. At this stage we're very picky:
         // only the perfect choice will be good enough.
-        Sound/*Channel*/ *selCh = channels->tryFindVacant(!play3D, sample.bytesPer,
+        Sound/*Channel*/ *selCh = channels->tryFindVacant(stereoPositioning, sample.bytesPer,
                                                           sample.rate, sample.soundId);
 
         if(!selCh)
         {
             // Perhaps there is a vacant channel (with any sample, but preferably one
             // with no sample already loaded).
-            selCh = channels->tryFindVacant(!play3D, sample.bytesPer, sample.rate, 0);
+            selCh = channels->tryFindVacant(stereoPositioning, sample.bytesPer, sample.rate, 0);
         }
 
         if(!selCh)
         {
             // Try any non-playing channel in the correct format.
-            selCh = channels->tryFindVacant(!play3D, sample.bytesPer, sample.rate, -1);
+            selCh = channels->tryFindVacant(stereoPositioning, sample.bytesPer, sample.rate, -1);
         }
 
         if(!selCh)
@@ -1315,7 +1315,7 @@ DENG2_PIMPL(System)
             // All channels with a priority less than or equal to ours can be stopped.
             Sound/*Channel*/ *prioCh = nullptr;
             dint idx = 0;
-            channels->forAll([&play3D, &myPrio, &channelPrios,
+            channels->forAll([&stereoPositioning, &myPrio, &channelPrios,
                               &selCh, &prioCh, &lowPrio, &idx] (Sound/*Channel*/ &ch)
             {
                 dfloat const chPriority = channelPrios[idx++];
@@ -1323,7 +1323,7 @@ DENG2_PIMPL(System)
                 if(ch.isValid())
                 {
                     // Sample buffer must be configured for the right mode.
-                    if(play3D == ((ch.buffer().flags & SFXBF_3D) != 0))
+                    if(stereoPositioning == ch.stereoPositioning())
                     {
                         if(!ch.isPlaying())
                         {
@@ -1365,8 +1365,7 @@ DENG2_PIMPL(System)
         DENG2_ASSERT(sound.isValid());
         // The sound may need to be reformatted.
 
-        sound.format(!play3D, sample.bytesPer, sample.rate);
-        sound.setPlayingMode(flags);
+        sound.format(stereoPositioning, sample.bytesPer, sample.rate);
         sound.setFlags(sound.flags() & ~(SFXCF_NO_ORIGIN | SFXCF_NO_ATTENUATION | SFXCF_NO_UPDATE));
         sound.setVolume(volume)
              .setFrequency(freq);
@@ -1394,11 +1393,14 @@ DENG2_PIMPL(System)
         // Update listener properties.
         getSoundPlayer().listener(SFXLP_UPDATE, 0);
 
+        // Load in the sample if needed.
         DENG2_ASSERT(sound.isValid());
-
-        // Load in the sample if needed and start playing.
         sound.load(sample);
-        sound.play();
+
+        // Start playing.
+        sound.play(  (flags & SF_REPEAT)    ? Sound::Looping
+                   : (flags & SF_DONT_STOP) ? Sound::OnceDontDelete
+                                            : Sound::Once);
 
         // Paging of Sound playback data may now continue.
         self.allowSoundRefresh();

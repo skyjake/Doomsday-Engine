@@ -42,6 +42,13 @@ public:
     /// Audience to be notified when the sound instance is about to be deleted.
     DENG2_DEFINE_AUDIENCE2(Deletion, void soundBeingDeleted(Sound &))
 
+    enum PlayingMode {
+        NotPlaying,
+        Once,           ///< Play once and then delete the sound.
+        OnceDontDelete, ///< Play once then pause the sound.
+        Looping         ///< Keep looping the sound.
+    };
+
 public:
     Sound();
     virtual ~Sound();
@@ -58,10 +65,14 @@ public:
      */
     virtual sfxsample_t const *samplePtr() const = 0;
 
-    virtual void format(bool stereoPositioning, de::dint bytesPer, de::dint rate) = 0;
-
     virtual int flags() const = 0;
     virtual void setFlags(int newFlags) = 0;
+
+    virtual void format(bool stereoPositioning, de::dint bytesPer, de::dint rate) = 0;
+
+    virtual bool stereoPositioning() const = 0;
+    virtual de::dint bytes() const = 0;
+    virtual de::dint rate() const = 0;
 
     /**
      * Returns the attributed emitter if any (may be @c nullptr).
@@ -82,10 +93,12 @@ public:
      */
     virtual Sound &setVolume(de::dfloat newVolume) = 0;
 
+    virtual PlayingMode mode() const = 0;
+
     /**
      * Returns @c true if the sound is currently playing.
      */
-    virtual bool isPlaying() const = 0;
+    virtual bool isPlaying() const;
 
     /**
      * Returns the current playback frequency modifier: 1.0 is normal.
@@ -122,10 +135,9 @@ public:
     virtual void reset() = 0;
 
     /**
-     * Start playing the sound loaded in the buffer.
+     * Start playing the sound.
      */
-    virtual void play() = 0;
-    virtual void setPlayingMode(de::dint sfFlags) = 0;
+    virtual void play(PlayingMode mode = Once) = 0;
 
     /**
      * Returns the time in tics that the sound was last played.

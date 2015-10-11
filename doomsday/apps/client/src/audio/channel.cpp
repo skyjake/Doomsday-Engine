@@ -169,7 +169,7 @@ dint Channels::stopWithLowerPriority(dint soundId, SoundEmitter *emitter, dint d
         }
 
         // Can it be stopped?
-        if(ch->buffer().flags & SFXBF_DONT_STOP)
+        if(ch->mode() == Sound::OnceDontDelete)
         {
             // The emitter might get destroyed...
             ch->setEmitter(nullptr);
@@ -202,11 +202,11 @@ Sound/*Channel*/ *Channels::tryFindVacant(bool stereoPositioning, dint bytes, di
     LOG_AS("audio::Channels");
     for(Sound/*Channel*/ *ch : d->all)
     {
-        if(!ch->isPlaying()) continue;
+        if(ch->isPlaying()) continue;
 
-        if(   stereoPositioning != ((ch->buffer().flags & SFXBF_3D) == 0)
-           || ch->buffer().bytes != bytes
-           || ch->buffer().rate  != rate)
+        if(   ch->stereoPositioning() != stereoPositioning 
+           || ch->bytes()             != bytes
+           || ch->rate()              != rate)
             continue;
 
         // What about the sample?
@@ -291,14 +291,7 @@ void UI_AudioChannelDrawer()
     dint idx = 0;
     audio::System::get().channels().forAll([&lh, &idx] (Sound/*Channel*/ &ch)
     {
-        if(ch.isPlaying())
-        {
-            FR_SetColor(1, 1, 1);
-        }
-        else
-        {
-            FR_SetColor(1, 1, 0);
-        }
+        FR_SetColor(1, 1, ch.isPlaying() ? 1 : 0);
 
         char buf[200];
         sprintf(buf, "%02i: %c%c%c v=%3.1f f=%3.3f st=%i et=%u mobj=%i",
@@ -314,16 +307,20 @@ void UI_AudioChannelDrawer()
         {
             sfxsample_t const *sample = ch.samplePtr();
 
-            sprintf(buf, "    %c%c%c%c id=%03i/%-8s ln=%05i b=%i rt=%2i bs=%05i (C%05i/W%05i)",
-                    (ch.buffer().flags & SFXBF_3D     ) ? '3' : '.',
-                    (ch.buffer().flags & SFXBF_PLAYING) ? 'P' : '.',
-                    (ch.buffer().flags & SFXBF_REPEAT ) ? 'R' : '.',
-                    (ch.buffer().flags & SFXBF_RELOAD ) ? 'L' : '.',
-                    sample ? sample->soundId : 0,
-                    sample ? ::defs.sounds[sample->soundId].gets("id") : "",
+            Block soundDefId;
+            if(sample)
+            {
+                soundDefId = ::defs.sounds[sample->soundId].gets("id").toUtf8();
+            }
+
+            sprintf(buf, "    %c%c%c id=%03i/%-8s ln=%05i b=%i rt=%2i",// bs=%05i (C%05i/W%05i)"
+                    ch.stereoPositioning()              ? '.' : '3',
+                    ch.isPlaying()                      ? 'P' : '.',
+                    ch.mode() == audio::Sound::Looping  ? 'R' : '.',
+                    sample ? sample->soundId : 0, soundDefId.constData(),
                     sample ? sample->size : 0,
-                    ch.buffer().bytes, ch.buffer().rate / 1000, ch.buffer().length,
-                    ch.buffer().cursor, ch.buffer().written);
+                    ch.bytes(), ch.rate() / 1000);/*,
+                    ch.buffer().length, ch.buffer().cursor, ch.buffer().written);*/
             FR_DrawTextXY(buf, 5, lh * (2 + idx * 2));
         }
 

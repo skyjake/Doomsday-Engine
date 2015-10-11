@@ -45,6 +45,11 @@ Sound::~Sound()
     }
 }
 
+bool Sound::isPlaying() const
+{
+    return mode() != NotPlaying;
+}
+
 dfloat Sound::ratePriority(mobj_t *listener, SoundEmitter *emitter, coord_t const *origin,
     dfloat volume, dint startTic)  // static
 {

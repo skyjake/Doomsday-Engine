@@ -485,6 +485,10 @@ DENG2_PIMPL_NOREF(PluginDriver::Sound)
     SoundEmitter *emitter = nullptr;  ///< Emitter for the sound, if any (not owned).
     Vector3d origin;                  ///< Emit from here (synced with emitter).
 
+    bool stereoPositioning = true;
+    dint bytes = 0;
+    dint rate = 0;
+
     sfxbuffer_t *buffer = nullptr;    ///< Assigned sound buffer, if any (not owned).
     dint startTime = 0;               ///< When the assigned sound sample was last started.
 
@@ -725,11 +729,16 @@ sfxsample_t const *PluginDriver::Sound::samplePtr() const
 
 void PluginDriver::Sound::format(bool stereoPositioning, dint bytesPer, dint rate)
 {
+    d->stereoPositioning = stereoPositioning;
+    d->bytes = bytesPer;
+    d->rate  = rate;
+
     // Do we need to (re)create the sound data buffer?
     if(   !d->buffer
-       || (d->buffer->rate != rate || d->buffer->bytes != bytesPer))
+       || (d->buffer->rate != d->rate || d->buffer->bytes != d->bytes))
     {
-        d->setBuffer(d->getDriver().iSound().gen.Create(stereoPositioning ? 0 : SFXBF_3D, bytesPer, rate));
+        d->setBuffer(d->getDriver().iSound().gen.Create(d->stereoPositioning ? 0 : SFXBF_3D,
+                                                        d->bytes, d->rate));
     }
 }
 
@@ -742,6 +751,21 @@ dint PluginDriver::Sound::flags() const
 void PluginDriver::Sound::setFlags(dint newFlags)
 {
     d->flags = newFlags;
+}
+
+bool PluginDriver::Sound::stereoPositioning() const
+{
+    return d->stereoPositioning;
+}
+
+dint PluginDriver::Sound::bytes() const
+{
+    return d->bytes;
+}
+
+dint PluginDriver::Sound::rate() const
+{
+    return d->rate;
 }
 
 SoundEmitter *PluginDriver::Sound::emitter() const
@@ -787,8 +811,20 @@ void PluginDriver::Sound::reset()
     d->getDriver().iSound().gen.Reset(d->buffer);
 }
 
-void PluginDriver::Sound::play()
+void PluginDriver::Sound::play(PlayingMode mode)
 {
+    if(isPlaying()) return;
+
+    if(mode == NotPlaying) return;
+
+    d->getBuffer().flags &= ~(SFXBF_REPEAT | SFXBF_DONT_STOP);
+    switch(mode)
+    {
+    case Looping:        d->getBuffer().flags |= SFXBF_REPEAT;    break;
+    case OnceDontDelete: d->getBuffer().flags |= SFXBF_DONT_STOP; break;
+    default: break;
+    }
+
     // Flush deferred property value changes to the assigned data buffer.
     d->updateBuffer(true/*force*/);
 
@@ -818,16 +854,6 @@ void PluginDriver::Sound::play()
     d->startTime = Timer_Ticks();  // Note the current time.
 }
 
-void PluginDriver::Sound::setPlayingMode(dint sfFlags)
-{
-    if(d->buffer)
-    {
-        d->buffer->flags &= ~(SFXBF_REPEAT | SFXBF_DONT_STOP);
-        if(sfFlags & SF_REPEAT)    d->buffer->flags |= SFXBF_REPEAT;
-        if(sfFlags & SF_DONT_STOP) d->buffer->flags |= SFXBF_DONT_STOP;
-    }
-}
-
 dint PluginDriver::Sound::startTime() const
 {
     return d->startTime;
@@ -850,9 +876,12 @@ audio::Sound &PluginDriver::Sound::setVolume(dfloat newVolume)
     return *this;
 }
 
-bool PluginDriver::Sound::isPlaying() const
+audio::Sound::PlayingMode PluginDriver::Sound::mode() const
 {
-    return d->buffer && d->isPlaying(*d->buffer);
+    if(!d->buffer || !d->isPlaying(*d->buffer)) return NotPlaying;
+    if(d->buffer->flags & SFXBF_REPEAT)         return Looping;
+    if(d->buffer->flags & SFXBF_DONT_STOP)      return OnceDontDelete;
+    return Once;
 }
 
 dfloat PluginDriver::Sound::frequency() const
