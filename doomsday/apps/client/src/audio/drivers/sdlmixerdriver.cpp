@@ -86,43 +86,6 @@ static void releaseChannel(dint channel)
 
 // ----------------------------------------------------------------------------------
 
-SdlMixerDriver::CdPlayer::CdPlayer()
-{}
-
-dint SdlMixerDriver::CdPlayer::initialize()
-{
-    return _initialized = true;
-}
-
-void SdlMixerDriver::CdPlayer::deinitialize()
-{
-    _initialized = false;
-}
-
-void SdlMixerDriver::CdPlayer::update()
-{}
-
-void SdlMixerDriver::CdPlayer::setVolume(dfloat)
-{}
-
-bool SdlMixerDriver::CdPlayer::isPlaying() const
-{
-    return false;
-}
-
-void SdlMixerDriver::CdPlayer::pause(dint)
-{}
-
-void SdlMixerDriver::CdPlayer::stop()
-{}
-
-dint SdlMixerDriver::CdPlayer::play(dint, dint)
-{
-    return _initialized;
-}
-
-// ----------------------------------------------------------------------------------
-
 /**
  * This is the hook we ask SDL_mixer to call when music playback finishes.
  */
@@ -975,13 +938,11 @@ DENG2_PIMPL(SdlMixerDriver)
 {
     bool initialized = false;
 
-    CdPlayer cd;
     MusicPlayer music;
     SoundPlayer sound;
 
     Instance(Public *i)
         : Base(i)
-        , cd   ()
         , music()
         , sound()
     {}

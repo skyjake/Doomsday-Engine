@@ -43,33 +43,12 @@ public:
     SdlMixerDriver();
 
     /**
-     * If the driver is still initialized it will be automatically deinitialized
-     * when this is called.
+     * If the driver is still initialized it will be automatically deinitialized when this
+     * is called.
      */
     virtual ~SdlMixerDriver();
 
-public:  // Sound players: -------------------------------------------------------
-
-    class CdPlayer : public ICdPlayer
-    {
-    public:
-        de::dint initialize();
-        void deinitialize();
-
-        void update();
-        void setVolume(de::dfloat newVolume);
-        bool isPlaying() const;
-        void pause(de::dint pause);
-        void stop();
-
-        de::dint play(de::dint track, de::dint looped);
-
-    private:
-        CdPlayer();
-        friend class SdlMixerDriver;
-
-        bool _initialized = false;
-    };
+public:  // Sound players: --------------------------------------------------------------
 
     class MusicPlayer : public IMusicPlayer
     {
@@ -153,7 +132,7 @@ public:  // Sound players: -----------------------------------------------------
         DENG2_PRIVATE(d)
     };
 
-public:  // Implements audio::System::IDriver: -----------------------------------
+public:  // Implements audio::System::IDriver: ------------------------------------------
 
     void initialize();
     void deinitialize();
