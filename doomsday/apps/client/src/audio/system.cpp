@@ -875,7 +875,7 @@ DENG2_PIMPL(System)
                     F_Dump(buf, len, bufPath.toUtf8().constData());
                     M_Free(buf); buf = nullptr;
 
-                    if(didPlay = musicPlayer.playFile(bufPath.toUtf8().constData(), looped))
+                    if(didPlay = musicPlayer.playFile(bufPath, looped))
                         break;
                 }
             }
@@ -922,7 +922,7 @@ DENG2_PIMPL(System)
                 auto &musicPlayer = active.playerAs<IMusicPlayer>();
                 if(musicPlayer.canPlayFile())
                 {
-                    if(dint result = musicPlayer.playFile(srcFile.toUtf8().constData(), looped))
+                    if(dint result = musicPlayer.playFile(srcFile, looped))
                         return result;
                 }
             }
@@ -957,7 +957,7 @@ DENG2_PIMPL(System)
                 String const fileName = composeMusicBufferFilename();
                 if(F_DumpFile(lump, fileName.toUtf8().constData()))
                 {
-                    if(dint result = musicPlayer.playFile(fileName.toUtf8().constData(), looped))
+                    if(dint result = musicPlayer.playFile(fileName, looped))
                         return result;
                 }
             }

@@ -114,7 +114,7 @@ public:  // Sound players: -----------------------------------------------------
         de::dint play(de::dint looped);
 
         bool canPlayFile() const;
-        de::dint playFile(char const *filename, de::dint looped);
+        de::dint playFile(de::String const &filename, de::dint looped);
 
     private:
         MusicPlayer(PluginDriver &driver);

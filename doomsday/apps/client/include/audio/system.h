@@ -547,7 +547,7 @@ public:
     /// Returns @c true if the player provides playback from a native file.
     virtual bool canPlayFile() const { return false; }
 
-    virtual de::dint playFile(char const *filename, de::dint looped) = 0;
+    virtual de::dint playFile(de::String const &filename, de::dint looped) = 0;
 };
 
 class Sound;

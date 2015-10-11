@@ -214,11 +214,11 @@ bool PluginDriver::MusicPlayer::canPlayFile() const
     return driver().iMusic().PlayFile != nullptr;
 }
 
-dint PluginDriver::MusicPlayer::playFile(char const *filename, dint looped)
+dint PluginDriver::MusicPlayer::playFile(String const &filename, dint looped)
 {
     if(!_initialized) return false;
     if(!driver().iMusic().PlayFile) return false;
-    return driver().iMusic().PlayFile(filename, looped);
+    return driver().iMusic().PlayFile(filename.toUtf8().constData(), looped);
 }
 
 // ----------------------------------------------------------------------------------

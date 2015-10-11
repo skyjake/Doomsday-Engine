@@ -120,7 +120,7 @@ bool DummyDriver::MusicPlayer::canPlayFile() const
     return true;
 }
 
-dint DummyDriver::MusicPlayer::playFile(char const *, dint)
+dint DummyDriver::MusicPlayer::playFile(String const &, dint)
 {
     return true;
 }

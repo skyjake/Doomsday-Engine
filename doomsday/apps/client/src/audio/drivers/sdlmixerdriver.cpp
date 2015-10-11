@@ -31,6 +31,7 @@
 #include <de/Log>
 #include <de/Observers>
 #include <de/concurrency.h>
+#include <de/memory.h>
 #include <de/timer.h>        // TICSPERSEC
 #include <SDL.h>
 #include <SDL_mixer.h>
@@ -176,7 +177,7 @@ bool SdlMixerDriver::MusicPlayer::canPlayFile() const
     return _initialized;
 }
 
-dint SdlMixerDriver::MusicPlayer::playFile(char const *filename, dint looped)
+dint SdlMixerDriver::MusicPlayer::playFile(String const &filename, dint looped)
 {
     if(!_initialized) return false;
 
@@ -187,7 +188,7 @@ dint SdlMixerDriver::MusicPlayer::playFile(char const *filename, dint looped)
         Mix_FreeMusic(lastMusic);
     }
 
-    lastMusic = Mix_LoadMUS(filename);
+    lastMusic = Mix_LoadMUS(filename.toUtf8().constData());
     if(!lastMusic)
     {
         LOG_AS("SdlMixerDriver::MusicPlayer");
