@@ -462,8 +462,8 @@ enum FlagOp {
     ReplaceFlags = 2    ///< Specified flags become the new set of flags, replacing all previous flags.
 };
 
-template <typename FlagsType>
-void applyFlagOperation(FlagsType &flags, FlagsType const &newFlags, FlagOp operation) {
+template <typename FlagsType, typename FlagsCompatibleType>
+void applyFlagOperation(FlagsType &flags, FlagsCompatibleType const &newFlags, FlagOp operation) {
     switch(operation) {
     case SetFlags:     flags |= newFlags;  break;
     case UnsetFlags:   flags &= ~newFlags; break;
