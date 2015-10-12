@@ -36,8 +36,8 @@ class GLBuffer;
 /**
  * Drawable that is constructed out of a 3D model.
  *
- * 3D model data is loaded using the Open Asset Import Library from multiple different
- * source formats.
+ * 3D model data is loaded using the Open Asset Import Library from multiple
+ * different source formats.
  *
  * Lifetime.
  *
@@ -212,9 +212,9 @@ public:
     };
 
     /**
-     * Interface for image loaders that provide the content for texture images when
-     * given a path. The default loader just checks if there is an image file in the
-     * file system at the given path.
+     * Interface for image loaders that provide the content for texture images
+     * when given a path. The default loader just checks if there is an image
+     * file in the file system at the given path.
      */
     class LIBGUI_PUBLIC IImageLoader
     {
@@ -266,8 +266,8 @@ public:
     void clear();
 
     /**
-     * Loads a model from a file. This is a synchronous operation and may take a while,
-     * but can be called in a background thread.
+     * Loads a model from a file. This is a synchronous operation and may take
+     * a while, but can be called in a background thread.
      *
      * After loading, you must call glInit() before drawing it. glInit() will be
      * called automatically if needed.
@@ -277,8 +277,8 @@ public:
     void load(File const &file);
 
     /**
-     * Finds the id of an animation that has the name @a name. Note that animation
-     * names are optional.
+     * Finds the id of an animation that has the name @a name. Note that
+     * animation names are optional.
      *
      * @param name  Animation name.
      *
@@ -311,7 +311,8 @@ public:
     bool nodeExists(String const &name) const;
 
     /**
-     * Atlas to use for any textures needed by the model. This is needed for glInit().
+     * Atlas to use for any textures needed by the model. This is needed for
+     * glInit().
      *
      * @param atlas  Atlas for model textures.
      */
@@ -328,9 +329,9 @@ public:
     /**
      * Sets which textures are to be passed to the model shader via the GL buffer.
      *
-     * By default, the model only has a diffuse map. The user of ModelDrawable must
-     * specify the indices for the other texture maps depending on how the shader expects
-     * to receive them.
+     * By default, the model only has a diffuse map. The user of ModelDrawable
+     * must specify the indices for the other texture maps depending on how the
+     * shader expects to receive them.
      *
      * @param mapsToUse  Up to four map types. The map at index zero will be specified
      *                   as the first texture bounds (@c aBounds in the shader), index
@@ -349,10 +350,12 @@ public:
     void setDefaultTexture(TextureMap textureType, Id const &atlasId);
 
     /**
-     * Prepares a loaded model for drawing by constructing all the required GL objects.
+     * Prepares a loaded model for drawing by constructing all the required GL
+     * objects.
      *
-     * This method will be called automatically when needed, however you can also call it
-     * manually at a suitable time. Only call this from the main (UI) thread.
+     * This method will be called automatically when needed, however you can
+     * also call it manually at a suitable time. Only call this from the main
+     * (UI) thread.
      */
     void glInit();
 
@@ -362,8 +365,8 @@ public:
     void glDeinit();
 
     /**
-     * Sets or changes one of the texture maps used by the model. This can be used to
-     * override the maps set up automatically by glInit().
+     * Sets or changes one of the texture maps used by the model. This can be
+     * used to override the maps set up automatically by glInit().
      *
      * @param materialId  Which material to modify.
      * @param textureMap  Texture to set.
