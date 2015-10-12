@@ -49,14 +49,14 @@ DENG2_PIMPL_NOREF(PlayerWeaponAnimator)
         if(modelBank().has(identifier))
         {
             // Prepare the animation state of the model.
-            ModelBank::ModelWithData loaded = modelBank().modelAndData(identifier);
+            auto loaded = modelBank().modelAndData<ModelRenderer::AuxiliaryData>(identifier);
             ModelDrawable &model = *loaded.first;
             model.audienceForDeletion() += this;
             animator.reset(new MobjAnimator(identifier, model));
             animator->setOwnerNamespace(player->info());
 
             // The basic transformation of the model.
-            modelAuxData = &loaded.second->as<ModelRenderer::AuxiliaryData>();
+            modelAuxData = loaded.second;
         }
         else
         {

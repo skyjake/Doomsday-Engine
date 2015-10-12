@@ -63,7 +63,15 @@ public:
 
     IUserData const *userData(DotPath const &id) const;
 
-    ModelWithData modelAndData(DotPath const &id);
+    ModelWithData modelAndData(DotPath const &id) const;
+
+    template <typename Type>
+    std::pair<ModelDrawable *, Type *> modelAndData(DotPath const &id) const
+    {
+        ModelWithData entry = modelAndData(id);
+        return std::pair<ModelDrawable *, Type *>
+                (entry.first, static_cast<Type *>(entry.second));
+    }
 
 protected:
     IData *loadFromSource(ISource &source);

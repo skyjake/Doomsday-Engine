@@ -107,13 +107,13 @@ DENG2_PIMPL(ClientMobjThinkerData)
         if(modelBank().has(modelId()))
         {
             // Prepare the animation state of the model.
-            ModelBank::ModelWithData loaded = modelBank().modelAndData(modelId());
+            auto loaded = modelBank().modelAndData<ModelRenderer::AuxiliaryData>(modelId());
             ModelDrawable &model = *loaded.first;
             model.audienceForDeletion() += this;
             animator.reset(new MobjAnimator(modelId(), model));
             animator->setOwnerNamespace(self.info());
 
-            modelAuxData = &loaded.second->as<ModelRenderer::AuxiliaryData>();
+            modelAuxData = loaded.second;
 
             // Apply possible scaling operations on the model.
             modelMatrix = modelAuxData->transformation;
