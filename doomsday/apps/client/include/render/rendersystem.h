@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef CLIENT_RENDERSYSTEM_H
@@ -28,86 +28,12 @@
 #include "settingsregister.h"
 #include "projectedtexturedata.h"
 #include "vectorlightdata.h"
+#include "projectionlist.h"
+#include "vectorlightlist.h"
 
 class AngleClipper;
 class ModelRenderer;
 class SkyDrawable;
-
-/**
- * Geometry backing store (arrays).
- * @todo Replace with GLBuffer -ds
- */
-struct Store
-{
-    de::Vector3f *posCoords    = nullptr;
-    de::Vector4ub *colorCoords = nullptr;
-    de::Vector2f *texCoords[2];
-    de::Vector2f *modCoords    = nullptr;
-
-    Store();
-    ~Store();
-
-    void rewind();
-
-    void clear();
-
-    de::duint allocateVertices(de::duint count);
-
-private:
-    de::duint _vertCount = 0;
-    de::duint _vertMax   = 0;
-};
-
-/// @todo make private to RenderSystem
-struct ProjectionList
-{
-    struct Node
-    {
-        Node *next, *nextUsed;
-        ProjectedTextureData projection;
-    };
-
-    Node *head = nullptr;
-    bool sortByLuma;       ///< @c true= Sort from brightest to darkest.
-
-    static void init();
-    static void rewind();
-
-    inline ProjectionList &operator << (ProjectedTextureData &texp) { return add(texp); }
-
-    ProjectionList &add(ProjectedTextureData &texp);
-
-private:
-    static Node *firstNode;
-    static Node *cursorNode;
-
-    static Node *newNode();
-};
-
-/// @todo make private to RenderSystem
-struct VectorLightList
-{
-    struct Node
-    {
-        Node *next, *nextUsed;
-        VectorLightData vlight;
-    };
-
-    Node *head = nullptr;
-
-    static void init();
-    static void rewind();
-
-    inline VectorLightList &operator << (VectorLightData &texp) { return add(texp); }
-
-    VectorLightList &add(VectorLightData &texp);
-
-private:
-    static Node *firstNode;
-    static Node *cursorNode;
-
-    static Node *newNode();
-};
 
 /**
  * Renderer subsystems, draw lists, etc... @ingroup render
