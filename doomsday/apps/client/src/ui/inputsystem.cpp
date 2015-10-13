@@ -311,9 +311,7 @@ DENG2_PIMPL(InputSystem)
     bool ignoreInput = false;
 
     SettingsRegister settings;
-
     Binder binder;
-    Record *scriptBindings = nullptr;
 
     typedef QList<InputDevice *> Devices;
     Devices devices;
