@@ -32,12 +32,15 @@ static String const DEF_PROBABILITY("prob");
 static String const DEF_ROOT_NODE  ("node");
 static String const DEF_LOOPING    ("looping");
 static String const DEF_PRIORITY   ("priority");
+static String const DEF_PASS       ("pass");
 static String const DEF_VARIABLE   ("variable");
 static String const DEF_WRAP       ("wrap");
 
 static String const VAR_SELF ("self");
 static String const VAR_ID   ("__id__");
 static String const VAR_ASSET("asset");
+
+static String const PASS_GLOBAL("");
 
 static int const ANIM_DEFAULT_PRIORITY = 1;
 
@@ -189,7 +192,8 @@ DENG2_PIMPL(MobjAnimator)
         }
     };
 
-    QMap<String, RenderVar *> renderVars;
+    typedef QHash<String, RenderVar *> RenderVars;
+    QHash<String, RenderVars> passVars;
 
     Instance(Public *i, DotPath const &id)
         : Base(i)
@@ -213,83 +217,98 @@ DENG2_PIMPL(MobjAnimator)
         auto const &def = names[VAR_ASSET].valueAsRecord();
         if(def.has("render"))
         {
-            static char const *componentNames[] = { "x", "y", "z", "w" };
+            Record const &renderBlock = def.subrecord("render");
 
-            // Look up the variable declarations.
-            auto vars = ScriptedInfo::subrecordsOfType(DEF_VARIABLE, def.subrecord("render"));
-            DENG2_FOR_EACH_CONST(Record::Subrecords, i, vars)
+            parseVariables(renderBlock);
+
+            // Check variables in each rendering pass.
+            auto passes = ScriptedInfo::subrecordsOfType(DEF_PASS, renderBlock);
+            DENG2_FOR_EACH_CONST(Record::Subrecords, i, passes)
             {
-                std::unique_ptr<RenderVar> var(new RenderVar);
-
-                GLUniform::Type uniformType = GLUniform::Float;
-
-                // Initialize the appropriate type of value animation and uniform,
-                // depending on the "value" key in the definition.
-                auto const &valueDef = *i.value();
-                Value const &initialValue = valueDef["value"].value();
-                if(auto const *array = initialValue.maybeAs<ArrayValue>())
-                {
-                    switch(array->size())
-                    {
-                    default:
-                        throw DefinitionError("MobjAnimator::initVariables",
-                                              QString("%1: Invalid initial value size (%2) for render.variable")
-                                              .arg(valueDef.gets(ScriptedInfo::VAR_SOURCE))
-                                              .arg(array->size()));
-
-                    case 2:
-                        var->init(vectorFromValue<Vector2f>(*array));
-                        uniformType = GLUniform::Vec2;
-                        break;
-
-                    case 3:
-                        var->init(vectorFromValue<Vector3f>(*array));
-                        uniformType = GLUniform::Vec3;
-                        break;
-
-                    case 4:
-                        var->init(vectorFromValue<Vector4f>(*array));
-                        uniformType = GLUniform::Vec4;
-                        break;
-                    }
-
-                    // Expose the components individually in the namespace for scripts.
-                    for(int k = 0; k < var->values.size(); ++k)
-                    {
-                        addBinding(String(i.key()).concatenateMember(componentNames[k]),
-                                   var->values[k].anim);
-                    }
-                }
-                else
-                {
-                    var->init(float(initialValue.asNumber()));
-
-                    // Expose in the namespace for scripts.
-                    addBinding(i.key(), var->values[0].anim);
-                }
-
-                // Optional range wrapping.
-                if(valueDef.hasSubrecord(DEF_WRAP))
-                {
-                    for(int k = 0; k < 4; ++k)
-                    {
-                        String const varName = QString("%s.%s").arg(DEF_WRAP).arg(componentNames[k]);
-                        if(valueDef.has(varName))
-                        {
-                            var->values[k].wrap = rangeFromValue<Rangef>(valueDef.geta(varName));
-                        }
-                    }
-                }
-                else if(valueDef.has(DEF_WRAP))
-                {
-                    var->values[0].wrap = rangeFromValue<Rangef>(valueDef.geta(DEF_WRAP));
-                }
-
-                // Uniform to be passed to the shader.
-                var->uniform = new GLUniform(i.key().toLatin1(), uniformType);
-
-                renderVars[i.key()] = var.release();
+                parseVariables(*i.value(), i.key());
             }
+        }
+    }
+
+    void parseVariables(Record const &block, String const &passName = PASS_GLOBAL)
+    {
+        static char const *componentNames[] = { "x", "y", "z", "w" };
+
+        // Look up the variable declarations.
+        auto vars = ScriptedInfo::subrecordsOfType(DEF_VARIABLE, block);
+        DENG2_FOR_EACH_CONST(Record::Subrecords, i, vars)
+        {
+            std::unique_ptr<RenderVar> var(new RenderVar);
+
+            GLUniform::Type uniformType = GLUniform::Float;
+
+            // Initialize the appropriate type of value animation and uniform,
+            // depending on the "value" key in the definition.
+            auto const &valueDef = *i.value();
+            Value const &initialValue = valueDef["value"].value();
+            if(auto const *array = initialValue.maybeAs<ArrayValue>())
+            {
+                switch(array->size())
+                {
+                default:
+                    throw DefinitionError("MobjAnimator::initVariables",
+                                          QString("%1: Invalid initial value size (%2) for render.variable")
+                                          .arg(valueDef.gets(ScriptedInfo::VAR_SOURCE))
+                                          .arg(array->size()));
+
+                case 2:
+                    var->init(vectorFromValue<Vector2f>(*array));
+                    uniformType = GLUniform::Vec2;
+                    break;
+
+                case 3:
+                    var->init(vectorFromValue<Vector3f>(*array));
+                    uniformType = GLUniform::Vec3;
+                    break;
+
+                case 4:
+                    var->init(vectorFromValue<Vector4f>(*array));
+                    uniformType = GLUniform::Vec4;
+                    break;
+                }
+
+                // Expose the components individually in the namespace for scripts.
+                for(int k = 0; k < var->values.size(); ++k)
+                {
+                    addBinding(passName.concatenateMember(String(i.key()).concatenateMember(componentNames[k])),
+                               var->values[k].anim);
+                }
+            }
+            else
+            {
+                var->init(float(initialValue.asNumber()));
+
+                // Expose in the namespace for scripts.
+                addBinding(passName.concatenateMember(i.key()),
+                           var->values[0].anim);
+            }
+
+            // Optional range wrapping.
+            if(valueDef.hasSubrecord(DEF_WRAP))
+            {
+                for(int k = 0; k < 4; ++k)
+                {
+                    String const varName = QString("%1.%2").arg(DEF_WRAP).arg(componentNames[k]);
+                    if(valueDef.has(varName))
+                    {
+                        var->values[k].wrap = rangeFromValue<Rangef>(valueDef.geta(varName));
+                    }
+                }
+            }
+            else if(valueDef.has(DEF_WRAP))
+            {
+                var->values[0].wrap = rangeFromValue<Rangef>(valueDef.geta(DEF_WRAP));
+            }
+
+            // Uniform to be passed to the shader.
+            var->uniform = new GLUniform(i.key().toLatin1(), uniformType);
+
+            passVars[passName][i.key()] = var.release();
         }
     }
 
@@ -302,7 +321,11 @@ DENG2_PIMPL(MobjAnimator)
 
     void deinitShaderVariables()
     {
-        qDeleteAll(renderVars.values());
+        for(RenderVars const &vars : passVars.values())
+        {
+            qDeleteAll(vars.values());
+        }
+        passVars.clear();
     }
 
     int animationId(String const &name) const
@@ -320,7 +343,7 @@ DENG2_PIMPL(MobjAnimator)
         {
             anim.clock.reset(new Scheduler::Clock(*anim.timeline, &names));
         }
-        applyFlagOperation(anim.flags, Sequence::Flags(Sequence::ClampToDuration),
+        applyFlagOperation(anim.flags, Sequence::ClampToDuration,
                            anim.looping == Sequence::Looping? UnsetFlags : SetFlags);
         return anim;
     }
@@ -500,19 +523,28 @@ ddouble MobjAnimator::currentTime(int index) const
     return ModelDrawable::Animator::currentTime(index); // + frameTimePos;
 }
 
-void MobjAnimator::bindUniforms(GLProgram &program) const
+void MobjAnimator::bindUniforms(GLProgram &program, BindOperation operation) const
 {
-    for(auto i : d->renderVars.values())
-    {
-        i->updateUniform();
-        program.bind(*i->uniform);
-    }
+    bindPassUniforms(program, PASS_GLOBAL, operation);
 }
 
-void MobjAnimator::unbindUniforms(GLProgram &program) const
+void MobjAnimator::bindPassUniforms(GLProgram &program, String const &passName,
+                                    BindOperation operation) const
 {
-    for(auto i : d->renderVars.values())
+    auto const vars = d->passVars.constFind(passName);
+    if(vars != d->passVars.constEnd())
     {
-        program.unbind(*i->uniform);
+        for(auto i : vars.value())
+        {
+            if(operation == Bind)
+            {
+                i->updateUniform();
+                program.bind(*i->uniform);
+            }
+            else
+            {
+                program.unbind(*i->uniform);
+            }
+        }
     }
 }

@@ -85,6 +85,7 @@ public:
     };
 
     DENG2_ERROR(DefinitionError);
+    DENG2_ERROR(TextureMappingError);
 
 public:
     ModelRenderer();
