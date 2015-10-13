@@ -1,6 +1,6 @@
 /** @file modeldrawable.h  Drawable specialized for 3D models.
  *
- * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2014-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -29,6 +29,8 @@
 #include <QBitArray>
 #include <QVariant>
 
+#include <functional>
+
 namespace de {
 
 class GLBuffer;
@@ -45,6 +47,10 @@ class GLBuffer;
  *
  * Animation.
  *
+ * @todo Refactor: Split the non-Assimp specific parts into a MeshDrawable base
+ * class, so it can be used with meshes generated procedurally (e.g., the map),
+ * taking advantage of the rendering pass and instancing features.
+ *
  * @ingroup gl
  */
 class LIBGUI_PUBLIC ModelDrawable : public AssetGroup
@@ -53,25 +59,25 @@ public:
     /// An error occurred during the loading of the model data. @ingroup errors
     DENG2_ERROR(LoadError);
 
-    DENG2_DEFINE_AUDIENCE2(AboutToGLInit, void modelAboutToGLInit(ModelDrawable &))
-
-    enum TextureMap // note: used as indices internally
+    enum TextureMap // note: enum values used as indices internally
     {
         Diffuse = 0,    ///< Surface color and opacity.
-        Normals = 1,    /**< Normal map where RGB values are directly interpreted as vectors.
-                             Blue 255 is Z+1 meaning straight up. Color value 128 means zero.
-                             The default normal vector pointing straight away from the
-                             surface is therefore (128, 128, 255) => (0, 0, 1). */
+        Normals = 1,    /**< Normal map where RGB values are directly interpreted
+                             as vectors. Blue 255 is Z+1 meaning straight up.
+                             Color value 128 means zero. The default normal vector
+                             pointing straight away from the surface is therefore
+                             (128, 128, 255) => (0, 0, 1). */
         Specular = 2,   ///< Specular color (RGB) and reflection sharpness (A).
-        Emissive = 3,   /**< Additional light emitted by the surface that is not affected by
-                             external factors. */
-        Height = 4,     /**< Height values are converted to a normal map. Lighter regions
-                             are higher than dark regions. */
+        Emissive = 3,   /**< Additional light emitted by the surface that is not
+                             affected by external factors. */
+        Height = 4,     /**< Height values are converted to a normal map. Lighter
+                             regions are higher than dark regions. */
 
         Unknown
     };
 
     static TextureMap textToTextureMap(String const &text);
+    static String textureMapToText(TextureMap map);
 
     /**
      * Animation state for a model. There can be any number of ongoing animations,
@@ -235,15 +241,35 @@ public:
     };
 
     /**
-     * Rendering pass. When no rendering passes are specified, all the meshes of the
-     * model are rendered in one pass with regular alpha blending.
+     * Rendering pass. When no rendering passes are specified, all the meshes
+     * of the model are rendered in one pass with regular alpha blending.
      */
-    struct LIBGUI_PUBLIC Pass {
-        QBitArray meshes;   ///< One bit per model mesh.
+    struct LIBGUI_PUBLIC Pass
+    {
+        enum Flag
+        {
+            Enabled = 0x1,
+            DefaultFlags = Enabled
+        };
+        Q_DECLARE_FLAGS(Flags, Flag)
+
+        String name;
+        Flags flags = DefaultFlags;
+        QBitArray meshes; ///< One bit per model mesh.
+        GLProgram *program = nullptr; ///< Shading program.
         gl::BlendFunc blendFunc { gl::SrcAlpha, gl::OneMinusSrcAlpha };
         gl::BlendOp blendOp = gl::Add;
     };
     typedef QList<Pass> Passes;
+
+    // Audiences:
+    DENG2_DEFINE_AUDIENCE2(AboutToGLInit, void modelAboutToGLInit(ModelDrawable &))
+
+    enum ProgramBinding { AboutToBind, Unbound };
+    typedef std::function<void (GLProgram &, ProgramBinding)> ProgramBindingFunc;
+
+    enum PassState { PassBegun, PassEnded };
+    typedef std::function<void (Pass const &, PassState)> RenderingPassFunc;
 
 public:
     ModelDrawable();
@@ -251,8 +277,8 @@ public:
     /**
      * Sets the object responsible for loading texture images.
      *
-     * By default, ModelDrawable uses a simple loader that tries to load image files
-     * directly from the file system.
+     * By default, ModelDrawable uses a simple loader that tries to load image
+     * files directly from the file system.
      *
      * @param loader  Image loader.
      */
@@ -366,7 +392,8 @@ public:
 
     /**
      * Sets or changes one of the texture maps used by the model. This can be
-     * used to override the maps set up automatically by glInit().
+     * used to override the maps set up automatically by glInit() (which gets
+     * information from the model file).
      *
      * @param materialId  Which material to modify.
      * @param textureMap  Texture to set.
@@ -375,19 +402,45 @@ public:
     void setTexturePath(int materialId, TextureMap textureMap, String const &path);
 
     /**
-     * Sets the GL program used for shading the model.
+     * Sets or changes one of the texture maps in an alternative material.
+     * By default, alternative maps are not in use.
+     *
+     * @param altMaterialName
+     * @param textureMap
+     * @param path
+     */
+    /*void setTexturePath(String const &altMaterialName, TextureMap textureMap,
+                        String const &path);*/
+
+    /**
+     * Sets the GL program used for shading the model. This program is used if the
+     * rendering passes don't specify other shaders.
      *
      * @param program  GL program.
      */
-    void setProgram(GLProgram &program);
+    void setProgram(GLProgram *program);
 
-    void unsetProgram();
+    GLProgram *program() const;
 
     void draw(Animator const *animation = nullptr,
-              Passes const *drawPasses = nullptr) const;
+              Passes const *drawPasses = nullptr,
+              ProgramBindingFunc programCallback = ProgramBindingFunc(),
+              RenderingPassFunc passCallback = RenderingPassFunc()) const;
 
     void drawInstanced(GLBuffer const &instanceAttribs,
                        Animator const *animation = nullptr) const;
+
+    /**
+     * When a draw operation is ongoing, returns the current rendering pass.
+     * Otherwise returns nullptr.
+     */
+    Pass const *currentPass() const;
+
+    /**
+     * When a draw operation is ongoing, returns the current GL program.
+     * Otherwise returns nullptr.
+     */
+    GLProgram *currentProgram() const;
 
     /**
      * Dimensions of the default pose, in model space.
@@ -403,6 +456,7 @@ private:
     DENG2_PRIVATE(d)
 };
 
+Q_DECLARE_OPERATORS_FOR_FLAGS(ModelDrawable::Pass::Flags)
 Q_DECLARE_OPERATORS_FOR_FLAGS(ModelDrawable::Animator::OngoingSequence::Flags)
 
 } // namespace de

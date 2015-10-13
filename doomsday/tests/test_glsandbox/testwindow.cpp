@@ -292,7 +292,7 @@ DENG2_OBSERVES(Bank, Load)
                         "}\n"))
                 << uMvpMatrix
                 << uModelTex;
-        model.setProgram(modelProgram);
+        model.setProgram(&modelProgram);
     }
 
     void bankLoaded(DotPath const &path)
@@ -463,7 +463,7 @@ DENG2_OBSERVES(Bank, Load)
         case TestModel:
             modelMatrix = Matrix4f::translate(Vector3f(0, std::cos(uTime.toFloat()/2.5f), 0)) *
                           Matrix4f::rotate(std::cos(uTime.toFloat()/2) * 45, Vector3f(1, 0, 0)) *
-                          Matrix4f::rotate(std::sin(uTime.toFloat()/3) * 60, Vector3f(0, 1, 0)) *                         
+                          Matrix4f::rotate(std::sin(uTime.toFloat()/3) * 60, Vector3f(0, 1, 0)) *
                           Matrix4f::scale(3.f / de::max(model.dimensions().x, model.dimensions().y, model.dimensions().z)) *
                           Matrix4f::translate(-model.midPoint());
             break;
