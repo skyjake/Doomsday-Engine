@@ -34,32 +34,32 @@ namespace de {
 
 static Value *Function_String_FileNamePath(Context &ctx, Function::ArgumentValues const &)
 {
-    return new TextValue(ctx.instanceScope().asText().fileNamePath());
+    return new TextValue(ctx.nativeSelf().asText().fileNamePath());
 }
 
 static Value *Function_String_FileNameExtension(Context &ctx, Function::ArgumentValues const &)
 {
-    return new TextValue(ctx.instanceScope().asText().fileNameExtension());
+    return new TextValue(ctx.nativeSelf().asText().fileNameExtension());
 }
 
 static Value *Function_String_FileNameWithoutExtension(Context &ctx, Function::ArgumentValues const &)
 {
-    return new TextValue(ctx.instanceScope().asText().fileNameWithoutExtension());
+    return new TextValue(ctx.nativeSelf().asText().fileNameWithoutExtension());
 }
 
 static Value *Function_String_FileNameAndPathWithoutExtension(Context &ctx, Function::ArgumentValues const &)
 {
-    return new TextValue(ctx.instanceScope().asText().fileNameAndPathWithoutExtension());
+    return new TextValue(ctx.nativeSelf().asText().fileNameAndPathWithoutExtension());
 }
 
 static Value *Function_String_Upper(Context &ctx, Function::ArgumentValues const &)
 {
-    return new TextValue(ctx.instanceScope().asText().upper());
+    return new TextValue(ctx.nativeSelf().asText().upper());
 }
 
 static Value *Function_String_Lower(Context &ctx, Function::ArgumentValues const &)
 {
-    return new TextValue(ctx.instanceScope().asText().lower());
+    return new TextValue(ctx.nativeSelf().asText().lower());
 }
 
 static Value *Function_Path_WithoutFileName(Context &, Function::ArgumentValues const &args)
@@ -69,24 +69,18 @@ static Value *Function_Path_WithoutFileName(Context &, Function::ArgumentValues 
 
 static Value *Function_Dictionary_Keys(Context &ctx, Function::ArgumentValues const &)
 {
-    return ctx.instanceScope().as<DictionaryValue>().contentsAsArray(DictionaryValue::Keys);
+    return ctx.nativeSelf().as<DictionaryValue>().contentsAsArray(DictionaryValue::Keys);
 }
 
 static Value *Function_Dictionary_Values(Context &ctx, Function::ArgumentValues const &)
 {
-    return ctx.instanceScope().as<DictionaryValue>().contentsAsArray(DictionaryValue::Values);
+    return ctx.nativeSelf().as<DictionaryValue>().contentsAsArray(DictionaryValue::Values);
 }
 
 static File const &fileInstance(Context &ctx)
 {
-    Record const *obj = ctx.instanceScope().as<RecordValue>().record();
-    if(!obj)
-    {
-        throw Value::IllegalError("ScriptSystem::fileInstance", "No File instance available");
-    }
-
     // The record is expected to have a path (e.g., File info record).
-    return App::rootFolder().locate<File>(obj->gets("path", "/"));
+    return App::rootFolder().locate<File>(ctx.selfInstance().gets("path", "/"));
 }
 
 static Value *Function_File_Locate(Context &ctx, Function::ArgumentValues const &args)
@@ -118,7 +112,7 @@ static Value *Function_File_ReadUtf8(Context &ctx, Function::ArgumentValues cons
 
 static Animation &animationInstance(Context &ctx)
 {
-    Animation *obj = ctx.instanceScope().as<NativeValue>().nativeObject<Animation>();
+    Animation *obj = ctx.nativeSelf().as<NativeValue>().nativeObject<Animation>();
     if(!obj)
     {
         throw Value::IllegalError("ScriptSystem::animationInstance", "No Animation instance available");

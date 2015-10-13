@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_PROCESS_H
@@ -183,11 +183,11 @@ public:
      *                   must be a DictionaryValue containing values for the
      *                   named arguments of the call. The rest of the array
      *                   are the unnamed arguments.
-     * @param instanceScope  Optional scope that becomes the value of the "self"
+     * @param self  Optional scope that becomes the value of the "self"
      *                   variable. Ownership given to Process.
      */
     void call(Function const &function, ArrayValue const &arguments,
-              Value *instanceScope = 0);
+              Value *self = 0);
 
     /**
      * Collects the namespaces currently visible. This includes the process's
