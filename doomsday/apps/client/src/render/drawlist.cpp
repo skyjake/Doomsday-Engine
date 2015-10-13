@@ -26,6 +26,7 @@
 #include "clientapp.h"
 #include "gl/gl_main.h"
 #include "render/rend_main.h"
+#include "render/store.h"
 
 using namespace de;
 

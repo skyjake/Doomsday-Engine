@@ -42,6 +42,7 @@
 #include "render/r_main.h"  // levelFullBright
 #include "render/shadowedge.h"
 #include "render/viewports.h"  // R_FrameCount()
+#include "render/store.h"
 
 using namespace de;
 
