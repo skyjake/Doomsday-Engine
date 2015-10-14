@@ -17,7 +17,7 @@
  */
 
 #include "render/modelrenderer.h"
-#include "render/mobjanimator.h"
+#include "render/stateanimator.h"
 #include "render/rend_main.h"
 #include "render/vissprite.h"
 #include "gl/gl_main.h"
@@ -29,6 +29,7 @@
 #include <de/App>
 #include <de/ModelBank>
 #include <de/ScriptedInfo>
+#include <de/NativeValue>
 
 #include <QHash>
 
@@ -569,8 +570,8 @@ DENG2_PIMPL(ModelRenderer)
             [&p] (GLProgram &program, ModelDrawable::ProgramBinding binding)
             {
                 p.animator->bindUniforms(program,
-                    binding == ModelDrawable::AboutToBind? MobjAnimator::Bind :
-                                                           MobjAnimator::Unbind);
+                    binding == ModelDrawable::AboutToBind? StateAnimator::Bind :
+                                                           StateAnimator::Unbind);
             },
 
             // Callback for each rendering pass:
@@ -578,8 +579,8 @@ DENG2_PIMPL(ModelRenderer)
             {
                 p.animator->bindPassUniforms(*p.model->currentProgram(),
                     pass.name,
-                    state == ModelDrawable::PassBegun? MobjAnimator::Bind :
-                                                       MobjAnimator::Unbind);
+                    state == ModelDrawable::PassBegun? StateAnimator::Bind :
+                                                       StateAnimator::Unbind);
             }
         );
     }

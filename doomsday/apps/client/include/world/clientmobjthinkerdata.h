@@ -52,7 +52,7 @@
 //#define CLM_MAGIC1          0xdecafed1
 //#define CLM_MAGIC2          0xcafedeb8
 
-class MobjAnimator;
+class StateAnimator;
 
 /**
  * Private client-side data for mobjs. This includes any per-object state for rendering
@@ -104,9 +104,9 @@ public:
      *
      * @return Animation state, or @c NULL if not drawn as a model.
      */
-    MobjAnimator *animator();
+    StateAnimator *animator();
 
-    MobjAnimator const *animator() const;
+    StateAnimator const *animator() const;
 
     de::Matrix4f const &modelTransformation() const;
 

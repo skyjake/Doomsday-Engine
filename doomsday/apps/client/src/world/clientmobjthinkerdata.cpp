@@ -24,7 +24,7 @@
 #include "clientapp.h"
 #include "dd_loop.h"
 #include "render/modelrenderer.h"
-#include "render/mobjanimator.h"
+#include "render/stateanimator.h"
 #include "world/generator.h"
 
 using namespace de;
@@ -47,7 +47,7 @@ DENG2_PIMPL(ClientMobjThinkerData)
 {
     Flags flags;
     std::unique_ptr<RemoteSync> sync;
-    std::unique_ptr<MobjAnimator> animator;
+    std::unique_ptr<StateAnimator> animator;
     ModelRenderer::AuxiliaryData const *modelAuxData = nullptr;
     Matrix4f modelMatrix;
 
@@ -110,7 +110,7 @@ DENG2_PIMPL(ClientMobjThinkerData)
             auto loaded = modelBank().modelAndData<ModelRenderer::AuxiliaryData>(modelId());
             ModelDrawable &model = *loaded.first;
             model.audienceForDeletion() += this;
-            animator.reset(new MobjAnimator(modelId(), model));
+            animator.reset(new StateAnimator(modelId(), model));
             animator->setOwnerNamespace(self.info());
 
             modelAuxData = loaded.second;
@@ -227,12 +227,12 @@ ClientMobjThinkerData::RemoteSync &ClientMobjThinkerData::remoteSync()
     return *d->sync;
 }
 
-MobjAnimator *ClientMobjThinkerData::animator()
+StateAnimator *ClientMobjThinkerData::animator()
 {
     return d->animator.get();
 }
 
-MobjAnimator const *ClientMobjThinkerData::animator() const
+StateAnimator const *ClientMobjThinkerData::animator() const
 {
     return d->animator.get();
 }

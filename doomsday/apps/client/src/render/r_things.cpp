@@ -41,7 +41,7 @@
 
 #include "render/r_main.h"
 #include "render/angleclipper.h"
-#include "render/mobjanimator.h"
+#include "render/stateanimator.h"
 #include "render/rend_halo.h"
 #include "render/vissprite.h"
 
@@ -191,7 +191,7 @@ void R_ProjectSprite(mobj_t &mob)
     ModelDef *mf = nullptr, *nextmf = nullptr;
     dfloat interp = 0;
 
-    MobjAnimator const *animator = nullptr; // GL2 model present?
+    StateAnimator const *animator = nullptr; // GL2 model present?
 
     if(useModels)
     {

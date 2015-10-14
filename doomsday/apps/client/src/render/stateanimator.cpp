@@ -1,4 +1,4 @@
-/** @file mobjanimator.cpp
+/** @file stateanimator.cpp
  *
  * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "render/mobjanimator.h"
+#include "render/stateanimator.h"
 #include "render/rendersystem.h"
 #include "clientapp.h"
 #include "dd_loop.h"
@@ -44,7 +44,7 @@ static String const PASS_GLOBAL("");
 
 static int const ANIM_DEFAULT_PRIORITY = 1;
 
-DENG2_PIMPL(MobjAnimator)
+DENG2_PIMPL(StateAnimator)
 {
     /**
      * Specialized animation sequence state for a running animation.
@@ -251,7 +251,7 @@ DENG2_PIMPL(MobjAnimator)
                 switch(array->size())
                 {
                 default:
-                    throw DefinitionError("MobjAnimator::initVariables",
+                    throw DefinitionError("StateAnimator::initVariables",
                                           QString("%1: Invalid initial value size (%2) for render.variable")
                                           .arg(valueDef.gets(ScriptedInfo::VAR_SOURCE))
                                           .arg(array->size()));
@@ -349,17 +349,17 @@ DENG2_PIMPL(MobjAnimator)
     }
 };
 
-MobjAnimator::MobjAnimator(DotPath const &id, ModelDrawable const &model)
+StateAnimator::StateAnimator(DotPath const &id, ModelDrawable const &model)
     : ModelDrawable::Animator(model, Instance::Sequence::make)
     , d(new Instance(this, id))
 {}
 
-void MobjAnimator::setOwnerNamespace(Record &names)
+void StateAnimator::setOwnerNamespace(Record &names)
 {
     d->names.add(VAR_SELF).set(new RecordValue(names));
 }
 
-void MobjAnimator::triggerByState(String const &stateName)
+void StateAnimator::triggerByState(String const &stateName)
 {
     using Sequence = Instance::Sequence;
 
@@ -370,7 +370,7 @@ void MobjAnimator::triggerByState(String const &stateName)
     auto found = stateAnims->constFind(stateName);
     if(found == stateAnims->constEnd()) return;
 
-    LOG_AS("MobjAnimator");
+    LOG_AS("StateAnimator");
     LOGDEV_GL_XVERBOSE("triggerByState: ") << stateName;
 
     d->currentStateName = stateName;
@@ -442,7 +442,7 @@ void MobjAnimator::triggerByState(String const &stateName)
     }
 }
 
-void MobjAnimator::advanceTime(TimeDelta const &elapsed)
+void StateAnimator::advanceTime(TimeDelta const &elapsed)
 {
     ModelDrawable::Animator::advanceTime(elapsed);
 
@@ -516,19 +516,19 @@ void MobjAnimator::advanceTime(TimeDelta const &elapsed)
     }
 }
 
-ddouble MobjAnimator::currentTime(int index) const
+ddouble StateAnimator::currentTime(int index) const
 {
     // Mobjs think on sharp ticks only, however we need to ensure time advances on
     // every frame for smooth animation.
     return ModelDrawable::Animator::currentTime(index); // + frameTimePos;
 }
 
-void MobjAnimator::bindUniforms(GLProgram &program, BindOperation operation) const
+void StateAnimator::bindUniforms(GLProgram &program, BindOperation operation) const
 {
     bindPassUniforms(program, PASS_GLOBAL, operation);
 }
 
-void MobjAnimator::bindPassUniforms(GLProgram &program, String const &passName,
+void StateAnimator::bindPassUniforms(GLProgram &program, String const &passName,
                                     BindOperation operation) const
 {
     auto const vars = d->passVars.constFind(passName);
