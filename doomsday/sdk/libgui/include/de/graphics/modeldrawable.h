@@ -392,27 +392,28 @@ public:
      */
     void glDeinit();
 
+    struct LIBGUI_PUBLIC MaterialId
+    {
+        int id;
+        int variant;
+
+        MaterialId(int id, int variant = 0)
+            : id(id)
+            , variant(variant)
+        {}
+    };
+
     /**
      * Sets or changes one of the texture maps used by the model. This can be
      * used to override the maps set up automatically by glInit() (which gets
      * information from the model file).
      *
-     * @param materialId  Which material to modify.
+     * @param material    Which material to modify.
      * @param textureMap  Texture to set.
      * @param path        Path of the texture image.
      */
-    void setTexturePath(int materialId, TextureMap textureMap, String const &path);
-
-    /**
-     * Sets or changes one of the texture maps in an alternative material.
-     * By default, alternative maps are not in use.
-     *
-     * @param altMaterialName
-     * @param textureMap
-     * @param path
-     */
-    /*void setTexturePath(String const &altMaterialName, TextureMap textureMap,
-                        String const &path);*/
+    void setTexturePath(MaterialId const &material, TextureMap textureMap,
+                        String const &path);
 
     /**
      * Sets the GL program used for shading the model. This program is used if the
@@ -457,6 +458,14 @@ public:
      * Otherwise returns nullptr.
      */
     GLProgram *currentProgram() const;
+
+    /**
+     * Changes the variant used for drawing. This can also be called during
+     * a draw operation, e.g., from the pass callback.
+     *
+     * @param index  Variant to use for drawing.
+     */
+    void setVariant(int index);
 
     /**
      * Dimensions of the default pose, in model space.
