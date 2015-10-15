@@ -47,6 +47,9 @@ class GLBuffer;
  *
  * Animation.
  *
+ * A model may have multiple alternative vertex buffers, so that each has its
+ * own set of texture coordinates. This allows mapping different textures.
+ *
  * @todo Refactor: Split the non-Assimp specific parts into a MeshDrawable base
  * class, so it can be used with meshes generated procedurally (e.g., the map),
  * taking advantage of the rendering pass and instancing features.
@@ -394,10 +397,10 @@ public:
 
     struct LIBGUI_PUBLIC MaterialId
     {
-        int id;
-        int variant;
+        duint id;
+        duint variant;
 
-        MaterialId(int id, int variant = 0)
+        MaterialId(duint id, duint variant = 0)
             : id(id)
             , variant(variant)
         {}
