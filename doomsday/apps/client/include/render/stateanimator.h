@@ -51,6 +51,12 @@ public:
 
     de::ddouble currentTime(int index) const;
 
+    /**
+     * Returns a bit mask that specifies which rendering passes are currently
+     * enabled for this object. This should be passed to ModelDrawable::draw().
+     */
+    QBitArray passMask() const;
+
     enum BindOperation { Bind, Unbind };
 
     /**

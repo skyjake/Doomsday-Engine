@@ -19,6 +19,7 @@
 #ifndef DENG_CLIENT_MODELRENDERER_H
 #define DENG_CLIENT_MODELRENDERER_H
 
+#include <de/Function>
 #include <de/ModelDrawable>
 #include <de/ModelBank>
 #include <de/GLState>
@@ -118,6 +119,8 @@ public:
     void render(vispsprite_t const &pspr);
 
 public:
+    static void initBindings(de::Binder &binder, de::Record &module);
+
     static int identifierFromText(de::String const &text,
                                   std::function<int (de::String const &)> resolver);
 

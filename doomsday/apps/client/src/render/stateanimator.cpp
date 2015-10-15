@@ -35,16 +35,19 @@ static String const DEF_PRIORITY   ("priority");
 static String const DEF_PASS       ("pass");
 static String const DEF_VARIABLE   ("variable");
 static String const DEF_WRAP       ("wrap");
+static String const DEF_ENABLED    ("enabled");
 
-static String const VAR_SELF ("self");
-static String const VAR_ID   ("__id__");
-static String const VAR_ASSET("asset");
+static String const VAR_SELF   ("self");
+static String const VAR_ID     ("__id__");
+static String const VAR_ASSET  ("asset");
+static String const VAR_ENABLED("enabled");
 
 static String const PASS_GLOBAL("");
 
 static int const ANIM_DEFAULT_PRIORITY = 1;
 
 DENG2_PIMPL(StateAnimator)
+, DENG2_OBSERVES(Variable, Change)
 {
     /**
      * Specialized animation sequence state for a running animation.
@@ -112,6 +115,8 @@ DENG2_PIMPL(StateAnimator)
     QHash<String, Sequence> pendingAnimForNode;
     String currentStateName;
     Record names; ///< Local context for scripts.
+    QBitArray passMask;
+    QHash<String, int> passIndexLookup;
 
     /**
      * Animatable variable bound to a GL uniform. The value can have 1...4 float
@@ -214,23 +219,40 @@ DENG2_PIMPL(StateAnimator)
 
     void initShaderVariables()
     {
+        int passIndex = 0;
+        passIndexLookup.clear();
+
         auto const &def = names[VAR_ASSET].valueAsRecord();
         if(def.has("render"))
         {
             Record const &renderBlock = def.subrecord("render");
 
-            parseVariables(renderBlock);
+            initVariablesForPass(renderBlock);
 
-            // Check variables in each rendering pass.
+            // Each rendering pass is represented by a subrecord, named
+            // according the to the pass names.
             auto passes = ScriptedInfo::subrecordsOfType(DEF_PASS, renderBlock);
             DENG2_FOR_EACH_CONST(Record::Subrecords, i, passes)
             {
-                parseVariables(*i.value(), i.key());
+                passIndexLookup[i.key()] = passIndex++;
+
+                Record &passRec = names.addRecord(i.key());
+                passRec.addBoolean(VAR_ENABLED,
+                                   ScriptedInfo::isTrue(*i.value(), DEF_ENABLED, true))
+                       .audienceForChange() += this;
+
+                initVariablesForPass(*i.value(), i.key());
             }
         }
+
+        DENG2_ASSERT(passIndex == auxData->passes.size());
+        DENG2_ASSERT(passIndexLookup.size() == auxData->passes.size());
+
+        passMask.resize(auxData->passes.size());
+        updatePassMask();
     }
 
-    void parseVariables(Record const &block, String const &passName = PASS_GLOBAL)
+    void initVariablesForPass(Record const &block, String const &passName = PASS_GLOBAL)
     {
         static char const *componentNames[] = { "x", "y", "z", "w" };
 
@@ -326,6 +348,26 @@ DENG2_PIMPL(StateAnimator)
             qDeleteAll(vars.values());
         }
         passVars.clear();
+    }
+
+    void variableValueChanged(Variable &, Value const &)
+    {
+        // This is called when one of the "(pass).enabled" variables is modified.
+        updatePassMask();
+    }
+
+    void updatePassMask()
+    {
+        Record::Subrecords enabledPasses = names.subrecords([] (Record const &sub) {
+            return sub.getb(DEF_ENABLED, false);
+        });
+
+        passMask.fill(false);
+        for(String name : enabledPasses.keys())
+        {
+            DENG2_ASSERT(passIndexLookup.contains(name));
+            passMask.setBit(passIndexLookup[name], true);
+        }
     }
 
     int animationId(String const &name) const
@@ -521,6 +563,11 @@ ddouble StateAnimator::currentTime(int index) const
     // Mobjs think on sharp ticks only, however we need to ensure time advances on
     // every frame for smooth animation.
     return ModelDrawable::Animator::currentTime(index); // + frameTimePos;
+}
+
+QBitArray StateAnimator::passMask() const
+{
+    return d->passMask;
 }
 
 void StateAnimator::bindUniforms(GLProgram &program, BindOperation operation) const

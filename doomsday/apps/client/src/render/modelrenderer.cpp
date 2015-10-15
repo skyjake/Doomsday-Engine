@@ -47,7 +47,6 @@ static String const DEF_RENDER      ("render");
 static String const DEF_TEXTURE_MAPPING("textureMapping");
 static String const DEF_SHADER      ("shader");
 static String const DEF_PASS        ("pass");
-static String const DEF_ENABLED     ("enabled");
 static String const DEF_MESHES      ("meshes");
 static String const DEF_BLENDFUNC   ("blendFunc");
 static String const DEF_BLENDOP     ("blendOp");
@@ -388,12 +387,13 @@ DENG2_PIMPL(ModelRenderer)
         }
 
         ModelDrawable::Mapping textureMapping;
+        String modelShader = DEFAULT_SHADER;
 
         // Rendering passes.
         if(asset.has(DEF_RENDER))
         {
             Record const &renderBlock = asset.subrecord(DEF_RENDER);
-            String const modelShader = renderBlock.gets(DEF_SHADER, DEFAULT_SHADER);
+            modelShader = renderBlock.gets(DEF_SHADER, modelShader);
 
             auto passes = ScriptedInfo::subrecordsOfType(DEF_PASS, renderBlock);
             for(String key : ScriptedInfo::sortRecordsBySource(passes))
@@ -403,13 +403,9 @@ DENG2_PIMPL(ModelRenderer)
                     auto const &def = *passes[key];
 
                     ModelDrawable::Pass pass;
-                    pass.meshes.resize(model.meshCount());
                     pass.name = key;
-                    applyFlagOperation(pass.flags,
-                                       ModelDrawable::Pass::Enabled,
-                                       ScriptedInfo::isFalse(def, DEF_ENABLED, false)?
-                                           UnsetFlags : SetFlags);
 
+                    pass.meshes.resize(model.meshCount());
                     for(Value const *value : def.geta(DEF_MESHES).elements())
                     {
                         int meshId = identifierFromText(value->asText(), [&model] (String const &text) {
@@ -433,10 +429,10 @@ DENG2_PIMPL(ModelRenderer)
 
                     aux->passes.append(pass);
                 }
-                catch(DefinitionError const &er)
+                catch(Error const &er)
                 {
-                    LOG_RES_ERROR("Error in rendering pass definition of asset \"%s\": %s")
-                            << path << er.asText();
+                    LOG_RES_ERROR("Rendering pass \"%s\" in asset \"%s\" is invalid: %s")
+                            << key << path << er.asText();
                 }
             }
         }
@@ -446,10 +442,18 @@ DENG2_PIMPL(ModelRenderer)
         // shader for the entire model.
         if(aux->passes.isEmpty())
         {
-            // Use the default shader (use count not incremented).
-            model.setProgram(programs[DEFAULT_SHADER]);
-            composeTextureMappings(textureMapping,
-                                   ClientApp::shaders()[DEFAULT_SHADER]);
+            try
+            {
+                // Use the default shader (use count not incremented).
+                model.setProgram(programs[modelShader]);
+                composeTextureMappings(textureMapping,
+                                       ClientApp::shaders()[modelShader]);
+            }
+            catch(Error const &er)
+            {
+                LOG_RES_ERROR("Asset \"%s\" cannot use shader \"%s\": %s")
+                        << path << modelShader << er.asText();
+            }
         }
 
         // Configure the texture mapping. Shaders used with the model must
@@ -565,6 +569,7 @@ DENG2_PIMPL(ModelRenderer)
         p.model->draw(
             p.animator,
             p.auxData->passes.isEmpty()? nullptr : &p.auxData->passes,
+            p.animator->passMask(),
 
             // Callback for when the program changes:
             [&p] (GLProgram &program, ModelDrawable::ProgramBinding binding)
@@ -710,6 +715,14 @@ int ModelRenderer::identifierFromText(String const &text,
     }
     return id;
 }
+
+void ModelRenderer::initBindings(Binder &binder, Record &module) // static
+{
+    DENG2_UNUSED(binder);
+    DENG2_UNUSED(module);
+}
+
+//-----------------------------------------------------------------------------
 
 ModelRenderer::AnimSequence::AnimSequence(String const &name, Record const &def)
     : name(name)
