@@ -166,9 +166,9 @@ void RefValue::assign(Value *value)
     _variable->set(value);
 }
 
-void RefValue::call(Process &process, Value const &arguments, Value *instanceScope) const
+void RefValue::call(Process &process, Value const &arguments, Value *self) const
 {
-    dereference().call(process, arguments, instanceScope);
+    dereference().call(process, arguments, self);
 }
 
 void RefValue::operator >> (Writer &to) const

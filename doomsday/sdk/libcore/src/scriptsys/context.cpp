@@ -14,12 +14,13 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Context"
 #include "de/Statement"
 #include "de/Process"
+#include "de/RecordValue"
 
 namespace de {
 
@@ -83,7 +84,7 @@ DENG2_PIMPL(Context)
     /// The local namespace of this context.
     Record *names;
 
-    QScopedPointer<Value> instanceScope;
+    QScopedPointer<Value> nativeSelf;
 
     Variable throwaway;
 
@@ -167,7 +168,7 @@ bool Context::hasExternalGlobalNamespace() const
     return !d->ownsNamespace;
 }
 
-Record &Context::names() 
+Record &Context::names()
 {
     return *d->names;
 }
@@ -190,7 +191,7 @@ void Context::reset()
     while(!d->controlFlow.empty())
     {
         d->popFlow();
-    }    
+    }
     d->evaluator.reset();
 }
 
@@ -241,7 +242,7 @@ void Context::jumpBreak(duint count)
     {
         throw JumpError("Context::jumpBreak", "Invalid number of nested breaks");
     }
-    
+
     Statement const *st = NULL;
     while((!st || count > 0) && d->controlFlow.size())
     {
@@ -282,7 +283,7 @@ Value *Context::iterationValue()
 void Context::setIterationValue(Value *value)
 {
     DENG2_ASSERT(d->controlFlow.size());
-    
+
     Instance::ControlFlow &fl = d->flow();
     if(fl.iteration)
     {
@@ -291,20 +292,30 @@ void Context::setIterationValue(Value *value)
     fl.iteration = value;
 }
 
-void Context::setInstanceScope(Value *scope)
+void Context::setNativeSelf(Value *scope)
 {
-    d->instanceScope.reset(scope);
+    d->nativeSelf.reset(scope);
 }
 
-Value &Context::instanceScope() const
+Value &Context::nativeSelf() const
 {
-    DENG2_ASSERT(!d->instanceScope.isNull());
-    if(d->instanceScope.isNull())
+    DENG2_ASSERT(!d->nativeSelf.isNull());
+    if(d->nativeSelf.isNull())
     {
-        throw UndefinedScopeError("Context::instanceScope",
+        throw UndefinedScopeError("Context::nativeSelf",
                                   "Context is not executing in scope of any instance");
     }
-    return *d->instanceScope;
+    return *d->nativeSelf;
+}
+
+Record &Context::selfInstance() const
+{
+    Record *obj = nativeSelf().as<RecordValue>().record();
+    if(!obj)
+    {
+        throw UndefinedScopeError("Context::selfInstance", "No \"self\" instance has been set");
+    }
+    return *obj;
 }
 
 Variable &Context::throwaway()

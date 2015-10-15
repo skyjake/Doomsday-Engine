@@ -194,7 +194,7 @@ struct vispsprite_t
         struct vispsprite_model2_s {
             de::ModelDrawable const *model;
             ModelAuxiliaryData const *auxData;
-            MobjAnimator const *animator;
+            StateAnimator const *animator;
         } model2;
     } data;
 };

@@ -20,7 +20,7 @@
 #define CLIENT_RENDER_PLAYERWEAPONANIMATOR_H
 
 #include <de/ModelDrawable>
-#include "mobjanimator.h"
+#include "stateanimator.h"
 
 class ClientPlayer;
 struct state_s;
@@ -46,7 +46,7 @@ public:
 
     de::ModelDrawable const *model() const;
 
-    MobjAnimator &animator();
+    StateAnimator &animator();
 
     void setupVisPSprite(vispsprite_t &spr) const;
 

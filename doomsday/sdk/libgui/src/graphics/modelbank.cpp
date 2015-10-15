@@ -71,7 +71,7 @@ ModelBank::IUserData const *ModelBank::userData(DotPath const &id) const
     return data(id).as<Instance::Data>().userData.get();
 }
 
-ModelBank::ModelWithData ModelBank::modelAndData(DotPath const &id)
+ModelBank::ModelWithData ModelBank::modelAndData(DotPath const &id) const
 {
     auto &item = data(id).as<Instance::Data>();
     return ModelWithData(&item.model, item.userData.get());

@@ -81,7 +81,7 @@ public:
     void multiply(Value const &value);
     void modulo(Value const &divisor);
     void assign(Value *value);
-    void call(Process &process, Value const &arguments, Value *instanceScope) const;
+    void call(Process &process, Value const &arguments, Value *self) const;
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;

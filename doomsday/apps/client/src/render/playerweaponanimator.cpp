@@ -17,7 +17,7 @@
  */
 
 #include "render/playerweaponanimator.h"
-#include "render/mobjanimator.h"
+#include "render/stateanimator.h"
 #include "render/vissprite.h"
 #include "clientplayer.h"
 #include "clientapp.h"
@@ -31,7 +31,7 @@ DENG2_PIMPL_NOREF(PlayerWeaponAnimator)
 , DENG2_OBSERVES(Asset, Deletion)
 {
     ClientPlayer *player;
-    std::unique_ptr<MobjAnimator> animator;
+    std::unique_ptr<StateAnimator> animator;
     ModelRenderer::AuxiliaryData const *modelAuxData = nullptr;
 
     Instance(ClientPlayer *plr)
@@ -49,14 +49,14 @@ DENG2_PIMPL_NOREF(PlayerWeaponAnimator)
         if(modelBank().has(identifier))
         {
             // Prepare the animation state of the model.
-            ModelBank::ModelWithData loaded = modelBank().modelAndData(identifier);
+            auto loaded = modelBank().modelAndData<ModelRenderer::AuxiliaryData>(identifier);
             ModelDrawable &model = *loaded.first;
             model.audienceForDeletion() += this;
-            animator.reset(new MobjAnimator(identifier, model));
+            animator.reset(new StateAnimator(identifier, model));
             animator->setOwnerNamespace(player->info());
 
             // The basic transformation of the model.
-            modelAuxData = &loaded.second->as<ModelRenderer::AuxiliaryData>();
+            modelAuxData = loaded.second;
         }
         else
         {
@@ -94,7 +94,7 @@ void PlayerWeaponAnimator::stateChanged(state_s const *state)
     }
 }
 
-MobjAnimator &PlayerWeaponAnimator::animator()
+StateAnimator &PlayerWeaponAnimator::animator()
 {
     DENG2_ASSERT(hasModel());
     return *d->animator;

@@ -17,7 +17,7 @@
  */
 
 #include "render/modelrenderer.h"
-#include "render/mobjanimator.h"
+#include "render/stateanimator.h"
 #include "render/rend_main.h"
 #include "render/vissprite.h"
 #include "gl/gl_main.h"
@@ -29,6 +29,9 @@
 #include <de/App>
 #include <de/ModelBank>
 #include <de/ScriptedInfo>
+#include <de/NativeValue>
+
+#include <QHash>
 
 using namespace de;
 
@@ -41,11 +44,15 @@ static String const DEF_MIRROR      ("mirror");
 static String const DEF_STATE       ("state");
 static String const DEF_SEQUENCE    ("sequence");
 static String const DEF_RENDER      ("render");
+static String const DEF_TEXTURE_MAPPING("textureMapping");
+static String const DEF_SHADER      ("shader");
 static String const DEF_PASS        ("pass");
 static String const DEF_MESHES      ("meshes");
 static String const DEF_BLENDFUNC   ("blendFunc");
 static String const DEF_BLENDOP     ("blendOp");
 static String const DEF_TIMELINE    ("timeline");
+
+static String const DEFAULT_SHADER  ("model.skeletal.normal_specular_emission");
 
 DENG2_PIMPL(ModelRenderer)
 , DENG2_OBSERVES(filesys::AssetObserver, Availability)
@@ -54,10 +61,30 @@ DENG2_PIMPL(ModelRenderer)
 {
 #define MAX_LIGHTS  4
 
+    struct Program : public GLProgram
+    {
+        String shaderName;
+        int useCount = 1; ///< Number of models using the program.
+    };
+
+    /**
+     * All shader programs needed for loaded models. All programs are ready for drawing,
+     * and the common uniforms are bound.
+     */
+    struct Programs : public QHash<String, Program *>
+    {
+        ~Programs()
+        {
+            // Everything should have been unloaded.
+            DENG2_ASSERT(empty());
+        }
+    };
+    Programs programs;
+
     filesys::AssetObserver observer { "model\\..*" };
     ModelBank bank;
     std::unique_ptr<AtlasTexture> atlas;
-    GLProgram program; /// @todo Specific models may want to use a custom program.
+
     GLUniform uMvpMatrix        { "uMvpMatrix",        GLUniform::Mat4 };
     GLUniform uTex              { "uTex",              GLUniform::Sampler2D };
     GLUniform uEyePos           { "uEyePos",           GLUniform::Vec3 };
@@ -79,13 +106,9 @@ DENG2_PIMPL(ModelRenderer)
 
     void init()
     {
-        ClientApp::shaders().build(program, "model.skeletal.normal_specular_emission")
-                << uMvpMatrix
-                << uTex
-                << uEyePos
-                << uAmbientLight
-                << uLightDirs
-                << uLightIntensities;
+        // The default shader is used whenever a model does not specifically
+        // request another one.
+        loadProgram(DEFAULT_SHADER);
 
         atlas.reset(AtlasTexture::newWithKdTreeAllocator(
                     Atlas::DefaultFlags,
@@ -119,7 +142,7 @@ DENG2_PIMPL(ModelRenderer)
         bank.unloadAll(Bank::ImmediatelyInCurrentThread);
 
         atlas.reset();
-        program.clear();
+        unloadProgram(*programs[DEFAULT_SHADER]);
     }
 
     void assetAvailabilityChanged(String const &identifier, filesys::AssetObserver::Event event)
@@ -138,12 +161,20 @@ DENG2_PIMPL(ModelRenderer)
         }
         else
         {
+            // Unload additional resources associated with the model.
+            auto entry = bank.modelAndData<AuxiliaryData const>(identifier);
+            for(auto const &pass : entry.second->passes)
+            {
+                DENG2_ASSERT(pass.program);
+                unloadProgram(*static_cast<Program *>(pass.program));
+            }
+
             bank.remove(identifier);
         }
     }
 
     /**
-     * Configures a ModelDrawable with the appropriate atlas and GL program.
+     * Configures a ModelDrawable with the common texture atlas.
      *
      * @param model  Model to configure.
      */
@@ -157,26 +188,62 @@ DENG2_PIMPL(ModelRenderer)
             model.setDefaultTexture(ModelDrawable::Normals,  defaultNormals);
             model.setDefaultTexture(ModelDrawable::Emissive, defaultEmission);
             model.setDefaultTexture(ModelDrawable::Specular, defaultSpecular);
-
-            // Use the texture mapping specified in the shader. This has to be done
-            // only now because earlier we may not have the shader available yet.
-            Record const &def = ClientApp::shaders()["model.skeletal.normal_specular_emission"];
-            if(def.has("textureMapping"))
-            {
-                ModelDrawable::Mapping mapping;
-                for(Value const *value : def.geta("textureMapping").elements())
-                {
-                    mapping << ModelDrawable::textToTextureMap(value->asText());
-                }
-                //qDebug() << "using mapping" << mapping;
-                model.setTextureMapping(mapping);
-            }
         }
         else
         {
             model.unsetAtlas();
         }
-        model.setProgram(program);
+    }
+
+    /**
+     * Initializes a program and stores it in the programs hash. If the program already
+     * has been loaded before, the program use count is incremented.
+     *
+     * @param name  Name of the shader program.
+     *
+     * @return Shader program.
+     */
+    Program *loadProgram(String const &name)
+    {
+        if(programs.contains(name))
+        {
+            programs[name]->useCount++;
+            return programs[name];
+        }
+
+        std::unique_ptr<Program> prog(new Program);
+        prog->shaderName = name;
+
+        LOG_RES_VERBOSE("Loading model shader \"%s\"") << name;
+
+        // Bind the mandatory common state.
+        ClientApp::shaders().build(*prog, name)
+                << uMvpMatrix
+                << uTex
+                << uEyePos
+                << uAmbientLight
+                << uLightDirs
+                << uLightIntensities;
+
+        programs[name] = prog.get();
+        return prog.release();
+    }
+
+    /**
+     * Decrements a program's use count, and deletes the program altogether if it has
+     * no more users.
+     *
+     * @param name  Name of the shader program.
+     */
+    void unloadProgram(Program &program)
+    {
+        if(--program.useCount == 0)
+        {
+            String name = program.shaderName;
+            LOG_RES_VERBOSE("Model shader \"%s\" unloaded (no more users)") << name;
+            delete &program;
+            programs.remove(name);
+        }
     }
 
     void modelAboutToGLInit(ModelDrawable &model)
@@ -216,6 +283,33 @@ DENG2_PIMPL(ModelRenderer)
         if(text == "ReverseSubtract") return gl::ReverseSubtract;
         throw DefinitionError("ModelRenderer::textToBlendOp",
                               QString("Invalid blending operation \"%1\"").arg(text));
+    }
+
+    void composeTextureMappings(ModelDrawable::Mapping &mapping,
+                                Record const &shaderDef)
+    {
+        if(shaderDef.has(DEF_TEXTURE_MAPPING))
+        {
+            ArrayValue const &array = shaderDef.geta(DEF_TEXTURE_MAPPING);
+            for(int i = 0; i < int(array.size()); ++i)
+            {
+                ModelDrawable::TextureMap map = ModelDrawable::textToTextureMap(array.element(i).asText());
+                if(i == mapping.size())
+                {
+                    mapping << map;
+                }
+                else if(mapping.at(i) != map)
+                {
+                    // Must match what the shader expects to receive.
+                    QStringList list;
+                    for(auto map : mapping) list << ModelDrawable::textureMapToText(map);
+                    throw TextureMappingError("ModelRenderer::composeTextureMappings",
+                                              QString("Texture mapping <%1> is incompatible with shader %2")
+                                                  .arg(list.join(", "))
+                                                  .arg(shaderDef.gets(ScriptedInfo::VAR_SOURCE)));
+                }
+            }
+        }
     }
 
     /**
@@ -259,11 +353,12 @@ DENG2_PIMPL(ModelRenderer)
             auto mats = asset.subrecord(DEF_MATERIAL).subrecords();
             DENG2_FOR_EACH_CONST(Record::Subrecords, mat, mats)
             {
-                handleMaterialTexture(model, mat.key(), *mat.value(), "diffuseMap",  ModelDrawable::Diffuse);
-                handleMaterialTexture(model, mat.key(), *mat.value(), "normalMap",   ModelDrawable::Normals);
-                handleMaterialTexture(model, mat.key(), *mat.value(), "heightMap",   ModelDrawable::Height);
-                handleMaterialTexture(model, mat.key(), *mat.value(), "specularMap", ModelDrawable::Specular);
-                handleMaterialTexture(model, mat.key(), *mat.value(), "emissiveMap", ModelDrawable::Emissive);
+                Record const &matDef = *mat.value();
+                handleMaterialTexture(model, mat.key(), matDef, "diffuseMap",  ModelDrawable::Diffuse);
+                handleMaterialTexture(model, mat.key(), matDef, "normalMap",   ModelDrawable::Normals);
+                handleMaterialTexture(model, mat.key(), matDef, "heightMap",   ModelDrawable::Height);
+                handleMaterialTexture(model, mat.key(), matDef, "specularMap", ModelDrawable::Specular);
+                handleMaterialTexture(model, mat.key(), matDef, "emissiveMap", ModelDrawable::Emissive);
             }
         }
 
@@ -291,16 +386,25 @@ DENG2_PIMPL(ModelRenderer)
             }
         }
 
+        ModelDrawable::Mapping textureMapping;
+        String modelShader = DEFAULT_SHADER;
+
         // Rendering passes.
         if(asset.has(DEF_RENDER))
         {
-            auto passes = ScriptedInfo::subrecordsOfType(DEF_PASS, asset.subrecord(DEF_RENDER));
+            Record const &renderBlock = asset.subrecord(DEF_RENDER);
+            modelShader = renderBlock.gets(DEF_SHADER, modelShader);
+
+            auto passes = ScriptedInfo::subrecordsOfType(DEF_PASS, renderBlock);
             for(String key : ScriptedInfo::sortRecordsBySource(passes))
             {
                 try
                 {
                     auto const &def = *passes[key];
+
                     ModelDrawable::Pass pass;
+                    pass.name = key;
+
                     pass.meshes.resize(model.meshCount());
                     for(Value const *value : def.geta(DEF_MESHES).elements())
                     {
@@ -309,6 +413,7 @@ DENG2_PIMPL(ModelRenderer)
                         });
                         pass.meshes.setBit(meshId, true);
                     }
+
                     if(def.has(DEF_BLENDFUNC))
                     {
                         ArrayValue const &blendDef = def.geta(DEF_BLENDFUNC);
@@ -316,15 +421,46 @@ DENG2_PIMPL(ModelRenderer)
                         pass.blendFunc.second = textToBlendFunc(blendDef.at(1).asText());
                     }
                     pass.blendOp = textToBlendOp(def.gets(DEF_BLENDOP, "Add"));
+
+                    String const passShader = def.gets(DEF_SHADER, modelShader);
+                    pass.program = loadProgram(passShader);
+                    composeTextureMappings(textureMapping,
+                                           ClientApp::shaders()[passShader]);
+
                     aux->passes.append(pass);
                 }
-                catch(DefinitionError const &er)
+                catch(Error const &er)
                 {
-                    LOG_RES_ERROR("Error in rendering pass definition of asset \"%s\": %s")
-                            << path << er.asText();
+                    LOG_RES_ERROR("Rendering pass \"%s\" in asset \"%s\" is invalid: %s")
+                            << key << path << er.asText();
                 }
             }
         }
+
+        // Rendering passes will always have programs associated with them.
+        // However, if there are no passes, we need to set up the default
+        // shader for the entire model.
+        if(aux->passes.isEmpty())
+        {
+            try
+            {
+                // Use the default shader (use count not incremented).
+                model.setProgram(programs[modelShader]);
+                composeTextureMappings(textureMapping,
+                                       ClientApp::shaders()[modelShader]);
+            }
+            catch(Error const &er)
+            {
+                LOG_RES_ERROR("Asset \"%s\" cannot use shader \"%s\": %s")
+                        << path << modelShader << er.asText();
+            }
+        }
+
+        // Configure the texture mapping. Shaders used with the model must
+        // be compatible with this mapping order (enforced above). The mapping
+        // affects the order in which texture coordinates are packed into vertex
+        // arrays.
+        model.setTextureMapping(textureMapping);
 
         // Store the additional information in the bank.
         bank.setUserData(path, aux.release());
@@ -425,16 +561,33 @@ DENG2_PIMPL(ModelRenderer)
         lightCount++;
     }
 
-    template <typename Params>
+    template <typename Params> // generic to accommodate psprites and vispsprites
     void draw(Params const &p)
     {
         DENG2_ASSERT(p.auxData != nullptr);
 
-        p.animator->bindUniforms(program); /// @todo Constant buffers?
-        p.model->draw(p.animator,
-                      !p.auxData->passes.isEmpty()? &p.auxData->passes :
-                                                    nullptr);
-        p.animator->unbindUniforms(program);
+        p.model->draw(
+            p.animator,
+            p.auxData->passes.isEmpty()? nullptr : &p.auxData->passes,
+            p.animator->passMask(),
+
+            // Callback for when the program changes:
+            [&p] (GLProgram &program, ModelDrawable::ProgramBinding binding)
+            {
+                p.animator->bindUniforms(program,
+                    binding == ModelDrawable::AboutToBind? StateAnimator::Bind :
+                                                           StateAnimator::Unbind);
+            },
+
+            // Callback for each rendering pass:
+            [&p] (ModelDrawable::Pass const &pass, ModelDrawable::PassState state)
+            {
+                p.animator->bindPassUniforms(*p.model->currentProgram(),
+                    pass.name,
+                    state == ModelDrawable::PassBegun? StateAnimator::Bind :
+                                                       StateAnimator::Unbind);
+            }
+        );
     }
 };
 
@@ -562,6 +715,14 @@ int ModelRenderer::identifierFromText(String const &text,
     }
     return id;
 }
+
+void ModelRenderer::initBindings(Binder &binder, Record &module) // static
+{
+    DENG2_UNUSED(binder);
+    DENG2_UNUSED(module);
+}
+
+//-----------------------------------------------------------------------------
 
 ModelRenderer::AnimSequence::AnimSequence(String const &name, Record const &def)
     : name(name)

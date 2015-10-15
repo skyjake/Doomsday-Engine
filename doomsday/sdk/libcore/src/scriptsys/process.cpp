@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Process"
@@ -147,7 +147,7 @@ DENG2_PIMPL(Process)
         return false;
     }
 };
-    
+
 /// If execution continues for longer than this, a HangError is thrown.
 static TimeDelta const MAX_EXECUTION_TIME = 10;
 
@@ -185,7 +185,7 @@ dsize Process::depth() const
 void Process::run(Script const &script)
 {
     d->run(script.firstStatement());
-    
+
     // Set up the automatic variables.
     Record &ns = globals();
     if(ns.has("__file__"))
@@ -202,18 +202,18 @@ void Process::suspend(bool suspended)
 {
     if(d->state == Stopped)
     {
-        throw SuspendError("Process:suspend", 
+        throw SuspendError("Process:suspend",
             "Stopped processes cannot be suspended or resumed");
-    }    
-    
+    }
+
     d->state = (suspended? Suspended : Running);
 }
 
 void Process::stop()
 {
     d->state = Stopped;
-    
-    // Clear the context stack, apart from the bottommost context, which 
+
+    // Clear the context stack, apart from the bottommost context, which
     // represents the process itself.
     DENG2_FOR_EACH_REVERSE(Instance::ContextStack, i, d->stack)
     {
@@ -226,7 +226,7 @@ void Process::stop()
 
     // Erase all but the first context.
     d->stack.erase(d->stack.begin() + 1, d->stack.end());
-    
+
     // This will reset any half-done evaluations, but it won't clear the namespace.
     context().reset();
 }
@@ -262,14 +262,14 @@ void Process::execute()
             else if(d->startedAt.since() > MAX_EXECUTION_TIME)
             {
                 /// @throw HangError  Execution takes too long.
-                throw HangError("Process::execute", 
+                throw HangError("Process::execute",
                     "Script execution takes too long, or is stuck in an infinite loop");
             }
         }
         catch(Error const &err)
         {
             //std::cerr << "Caught " << err.asText() << " at depth " << depth() << "\n";
-            
+
             // Fast-forward to find a suitable catch statement.
             if(d->jumpIntoCatch(err))
             {
@@ -277,7 +277,7 @@ void Process::execute()
                 // pointing at the catch compound's first statement.
                 continue;
             }
-        
+
             if(startDepth > 1)
             {
                 // Pop this context off, it has not caught the exception.
@@ -314,8 +314,8 @@ Context *Process::popContext()
     {
         delete d->stack.back();
         d->stack.pop_back();
-    }    
-    
+    }
+
     return topmost;
 }
 
@@ -338,10 +338,10 @@ void Process::finish(Value *returnValue)
     else
     {
         DENG2_ASSERT(d->stack.back()->type() == Context::BaseProcess);
-        
+
         // This was the last level.
         d->state = Stopped;
-    }   
+    }
 }
 
 String const &Process::workingPath() const
@@ -354,18 +354,18 @@ void Process::setWorkingPath(String const &newWorkingPath)
     d->workingPath = newWorkingPath;
 }
 
-void Process::call(Function const &function, ArrayValue const &arguments, Value *instanceScope)
+void Process::call(Function const &function, ArrayValue const &arguments, Value *self)
 {
     // First map the argument values.
     Function::ArgumentValues argValues;
     function.mapArgumentValues(arguments, argValues);
-    
+
     if(function.isNative())
     {
         // Do a native function call.
-        context().setInstanceScope(instanceScope);
+        context().setNativeSelf(self);
         context().evaluator().pushResult(function.callNative(context(), argValues));
-        context().setInstanceScope(0);
+        context().setNativeSelf(0);
     }
     else
     {
@@ -379,16 +379,16 @@ void Process::call(Function const &function, ArrayValue const &arguments, Value 
         // If the function is not in the global namespace, add its own parent
         // namespace to the stack, too.
 
-        
+
         // Create a new context.
         pushContext(new Context(Context::FunctionCall, this));
 
         // If the scope is defined, create the "self" variable for it.
-        if(instanceScope)
+        if(self)
         {
-            context().names().add(new Variable("self", instanceScope /*taken*/));
+            context().names().add(new Variable("self", self /*taken*/));
         }
-        
+
         // Create local variables for the arguments in the new context.
         Function::ArgumentValues::const_iterator b = argValues.begin();
         Function::Arguments::const_iterator a = function.arguments().begin();
@@ -399,7 +399,7 @@ void Process::call(Function const &function, ArrayValue const &arguments, Value 
 
             context().names().add(new Variable(*a, (*b)->duplicate()));
         }
-        
+
         // This should never be called if the process is suspended.
         DENG2_ASSERT(d->state != Suspended);
 
@@ -425,7 +425,7 @@ void Process::namespaces(Namespaces &spaces) const
     spaces.clear();
 
     bool gotFunction = false;
-    
+
     DENG2_FOR_EACH_CONST_REVERSE(Instance::ContextStack, i, d->stack)
     {
         Context &context = **i;

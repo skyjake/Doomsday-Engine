@@ -23,6 +23,7 @@
 #include <de/memory.h>
 #include <de/memoryzone.h>
 #include <de/ScriptedInfo>
+#include <de/Function>
 #include "clientapp.h"
 #include "render/rend_main.h"
 #include "render/rend_halo.h"
@@ -45,6 +46,9 @@ using namespace de;
 
 DENG2_PIMPL(RenderSystem)
 {
+    Binder binder;
+    Record renderModule;
+
     ModelRenderer models;
     SkyDrawable sky;
     SettingsRegister settings;
@@ -203,16 +207,12 @@ DENG2_PIMPL(RenderSystem)
     {
         LOG_AS("RenderSystem");
 
+        ModelRenderer::initBindings(binder, renderModule);
+        ClientApp::scriptSystem().addNativeModule("Render", renderModule);
+
         // Load the required packages.
         App::packageLoader().load("net.dengine.client.renderer");
         App::packageLoader().load("net.dengine.client.renderer.lensflares");
-
-        // -=- DEVEL -=-
-        //App::packageLoader().load("net.dengine.client.testmodel");
-
-        /*Package::Asset asset = App::asset("model.thing.possessed");
-        qDebug() << asset.accessedRecord().asText();
-        qDebug() << asset.getPath("path");*/
 
         loadAllShaders();
         loadImages();

@@ -1,6 +1,6 @@
 /** @file modeldrawable.cpp  Drawable specialized for 3D models.
  *
- * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2014-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -277,6 +277,9 @@ DENG2_PIMPL(ModelDrawable)
     TextureMap textureOrder[MAX_TEXTURES];
     Id::Type defaultTexIds[MAX_TEXTURES];
     QVector<MaterialData> materials; // indexed by material index
+    //QHash<String, MaterialData> alternativeMaterials; // named extra materials (textures kept it atlas)
+
+    /// @todo Use a TextureBank to manage the texture content owned by the model.
 
     bool needMakeBuffer { false };
     AtlasTexture *atlas { nullptr };
@@ -687,7 +690,7 @@ DENG2_PIMPL(ModelDrawable)
         needMakeBuffer = true;
     }
 
-    // Bone & Mesh Setup ----------------------------------------------------------------
+//- Bone & Mesh Setup -------------------------------------------------------------------
 
     void clearBones()
     {
@@ -852,8 +855,8 @@ DENG2_PIMPL(ModelDrawable)
                 v.texBounds3 = Vector4f(0, 0, 1, 1);
                 v.texBounds4 = Vector4f(0, 0, 1, 1);
 
-                /// @todo Add support for multiple UVs, not just mapping the same ones to
-                /// different bounds. -jk
+                /// @todo Add support for multiple UVs, not just mapping the
+                /// same ones to different bounds. -jk
 
                 if(scene->HasMaterials())
                 {
@@ -918,7 +921,7 @@ DENG2_PIMPL(ModelDrawable)
         buffer->setIndices(gl::Triangles, indx, gl::Static);
     }
 
-    // Animation ------------------------------------------------------------------------
+//- Animation ---------------------------------------------------------------------------
 
     struct AccumData
     {
@@ -1056,7 +1059,13 @@ DENG2_PIMPL(ModelDrawable)
                                                 anim.mNumPositionKeys));
     }
 
-    // Drawing --------------------------------------------------------------------------
+//- Drawing -----------------------------------------------------------------------------
+
+    GLProgram *drawProgram = nullptr;
+    Pass const *drawPass = nullptr;
+    QBitArray passMask;
+    ProgramBindingFunc programCallback;
+    RenderingPassFunc passCallback;
 
     void updateMatricesFromAnimation(Animator const *animation) const
     {
@@ -1081,16 +1090,36 @@ DENG2_PIMPL(ModelDrawable)
     {
         if(needMakeBuffer) makeBuffer();
 
-        DENG2_ASSERT(program != 0);
-        DENG2_ASSERT(buffer != 0);
+        DENG2_ASSERT(drawProgram == nullptr);
+        DENG2_ASSERT(buffer != nullptr);
 
         // Draw the meshes in this node.
         updateMatricesFromAnimation(animation);
 
         GLState::current().apply();
+    }
 
-        program->bind(uBoneMatrices);
-        program->beginUse();
+    void setDrawProgram(GLProgram *prog)
+    {
+        if(drawProgram)
+        {
+            drawProgram->unbind(uBoneMatrices);
+            if(programCallback)
+            {
+                programCallback(*drawProgram, Unbound);
+            }
+        }
+
+        drawProgram = prog;
+
+        if(drawProgram)
+        {
+            if(programCallback)
+            {
+                programCallback(*drawProgram, AboutToBind);
+            }
+            drawProgram->bind(uBoneMatrices);
+        }
     }
 
     void initRanges(GLBuffer::DrawRanges &ranges, QBitArray const &meshes)
@@ -1127,18 +1156,58 @@ DENG2_PIMPL(ModelDrawable)
     {
         preDraw(animation);
 
-        GLBuffer::DrawRanges ranges;
-        for(Pass const &pass : passes)
+        try
         {
-            ranges.clear();
-            initRanges(ranges, pass.meshes);
+            GLBuffer::DrawRanges ranges;
+            for(int i = 0; i < passes.size(); ++i)
+            {
+                Pass const &pass = passes.at(i);
 
-            GLState::push()
-                    .setBlendFunc(pass.blendFunc)
-                    .setBlendOp(pass.blendOp)
-                    .apply();
-            buffer->draw(&ranges);
-            GLState::pop();
+                // Is this pass disabled?
+                if(!passMask.isEmpty() && !passMask.testBit(i))
+                {
+                    continue;
+                }
+
+                drawPass = &pass;
+                setDrawProgram(pass.program? pass.program : program);
+                if(!drawProgram)
+                {
+                    throw ProgramError("ModelDrawable::draw",
+                                       QString("Rendering pass %1 (\"%2\") has no shader program")
+                                        .arg(i).arg(pass.name));
+                }
+
+                if(passCallback)
+                {
+                    passCallback(pass, PassBegun);
+                }
+
+                drawProgram->beginUse();
+
+                ranges.clear();
+                initRanges(ranges, pass.meshes);
+
+                GLState::push()
+                        .setBlendFunc(pass.blendFunc)
+                        .setBlendOp(pass.blendOp)
+                        .apply();
+                buffer->draw(&ranges);
+                GLState::pop();
+
+                drawProgram->endUse();
+
+                if(passCallback)
+                {
+                    passCallback(pass, PassEnded);
+                }
+            }
+        }
+        catch(Error const &er)
+        {
+            LOG_GL_ERROR("Failed to draw model \"%s\": %s")
+                    << sourcePath
+                    << er.asText();
         }
 
         postDraw();
@@ -1147,14 +1216,15 @@ DENG2_PIMPL(ModelDrawable)
     void drawInstanced(GLBuffer const &attribs, Animator const *animation)
     {
         preDraw(animation);
+        setDrawProgram(program); /// @todo Rendering passes for instanced drawing. -jk
         buffer->drawInstanced(attribs);
         postDraw();
     }
 
     void postDraw()
     {
-        program->endUse();
-        program->unbind(uBoneMatrices);
+        setDrawProgram(nullptr);
+        drawPass = nullptr;
     }
 
     DENG2_PIMPL_AUDIENCE(AboutToGLInit)
@@ -1162,22 +1232,39 @@ DENG2_PIMPL(ModelDrawable)
 
 DENG2_AUDIENCE_METHOD(ModelDrawable, AboutToGLInit)
 
+namespace internal
+{
+    static struct {
+        char const *text;
+        ModelDrawable::TextureMap map;
+    } const mappings[] {
+        { "diffuse",  ModelDrawable::Diffuse  },
+        { "normals",  ModelDrawable::Normals  },
+        { "specular", ModelDrawable::Specular },
+        { "emission", ModelDrawable::Emissive },
+        { "height",   ModelDrawable::Height   },
+        { "unknown",  ModelDrawable::Unknown  }
+    };
+} // namespace internal
+
 ModelDrawable::TextureMap ModelDrawable::textToTextureMap(String const &text)
 {
-    struct { char const *text; TextureMap map; } const mappings[] {
-        { "diffuse",  Diffuse  },
-        { "normals",  Normals  },
-        { "specular", Specular },
-        { "emission", Emissive },
-        { "height",   Height   }
-    };
-
-    for(auto const &mapping : mappings)
+    for(auto const &mapping : internal::mappings)
     {
         if(!text.compareWithoutCase(mapping.text))
             return mapping.map;
     }
     return Unknown;
+}
+
+String ModelDrawable::textureMapToText(TextureMap map)
+{
+    for(auto const &mapping : internal::mappings)
+    {
+        if(mapping.map == map)
+            return mapping.text;
+    }
+    return "unknown";
 }
 
 ModelDrawable::ModelDrawable() : d(new Instance(this))
@@ -1316,24 +1403,34 @@ void ModelDrawable::setTexturePath(int materialId, TextureMap tex, String const 
     }
 }
 
-void ModelDrawable::setProgram(GLProgram &program)
+void ModelDrawable::setProgram(GLProgram *program)
 {
-    d->program = &program;
+    d->program = program;
 }
 
-void ModelDrawable::unsetProgram()
+GLProgram *ModelDrawable::program() const
 {
-    d->program = 0;
+    return d->program;
 }
 
 void ModelDrawable::draw(Animator const *animation,
-                         Passes const *passes) const
+                         Passes const *passes,
+                         QBitArray const &passMask,
+                         ProgramBindingFunc programCallback,
+                         RenderingPassFunc passCallback) const
 {
     const_cast<ModelDrawable *>(this)->glInit();
 
-    if(isReady() && d->program && d->atlas)
+    if(isReady() && d->atlas)
     {
+        d->passMask        = passMask;
+        d->programCallback = programCallback;
+        d->passCallback    = passCallback;
+
         d->draw(animation, passes? *passes : d->defaultPasses);
+
+        d->programCallback = ProgramBindingFunc();
+        d->passCallback    = RenderingPassFunc();
     }
 }
 
@@ -1346,6 +1443,16 @@ void ModelDrawable::drawInstanced(GLBuffer const &instanceAttribs,
     {
         d->drawInstanced(instanceAttribs, animation);
     }
+}
+
+ModelDrawable::Pass const *ModelDrawable::currentPass() const
+{
+    return d->drawPass;
+}
+
+GLProgram *ModelDrawable::currentProgram() const
+{
+    return d->drawProgram;
 }
 
 Vector3f ModelDrawable::dimensions() const
