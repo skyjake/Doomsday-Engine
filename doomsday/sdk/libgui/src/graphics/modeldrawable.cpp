@@ -690,7 +690,7 @@ DENG2_PIMPL(ModelDrawable)
         needMakeBuffer = true;
     }
 
-    // Bone & Mesh Setup ----------------------------------------------------------------
+//- Bone & Mesh Setup -------------------------------------------------------------------
 
     void clearBones()
     {
@@ -921,7 +921,7 @@ DENG2_PIMPL(ModelDrawable)
         buffer->setIndices(gl::Triangles, indx, gl::Static);
     }
 
-    // Animation ------------------------------------------------------------------------
+//- Animation ---------------------------------------------------------------------------
 
     struct AccumData
     {
@@ -1059,10 +1059,11 @@ DENG2_PIMPL(ModelDrawable)
                                                 anim.mNumPositionKeys));
     }
 
-    // Drawing --------------------------------------------------------------------------
+//- Drawing -----------------------------------------------------------------------------
 
     GLProgram *drawProgram = nullptr;
     Pass const *drawPass = nullptr;
+    QBitArray passMask;
     ProgramBindingFunc programCallback;
     RenderingPassFunc passCallback;
 
@@ -1102,7 +1103,6 @@ DENG2_PIMPL(ModelDrawable)
     {
         if(drawProgram)
         {
-            drawProgram->endUse();
             drawProgram->unbind(uBoneMatrices);
             if(programCallback)
             {
@@ -1119,7 +1119,6 @@ DENG2_PIMPL(ModelDrawable)
                 programCallback(*drawProgram, AboutToBind);
             }
             drawProgram->bind(uBoneMatrices);
-            drawProgram->beginUse();
         }
     }
 
@@ -1157,38 +1156,58 @@ DENG2_PIMPL(ModelDrawable)
     {
         preDraw(animation);
 
-        GLBuffer::DrawRanges ranges;
-        for(Pass const &pass : passes)
+        try
         {
-            if(!pass.flags.testFlag(Pass::Enabled))
+            GLBuffer::DrawRanges ranges;
+            for(int i = 0; i < passes.size(); ++i)
             {
-                continue;
+                Pass const &pass = passes.at(i);
+
+                // Is this pass disabled?
+                if(!passMask.isEmpty() && !passMask.testBit(i))
+                {
+                    continue;
+                }
+
+                drawPass = &pass;
+                setDrawProgram(pass.program? pass.program : program);
+                if(!drawProgram)
+                {
+                    throw ProgramError("ModelDrawable::draw",
+                                       QString("Rendering pass %1 (\"%2\") has no shader program")
+                                        .arg(i).arg(pass.name));
+                }
+
+                if(passCallback)
+                {
+                    passCallback(pass, PassBegun);
+                }
+
+                drawProgram->beginUse();
+
+                ranges.clear();
+                initRanges(ranges, pass.meshes);
+
+                GLState::push()
+                        .setBlendFunc(pass.blendFunc)
+                        .setBlendOp(pass.blendOp)
+                        .apply();
+                buffer->draw(&ranges);
+                GLState::pop();
+
+                drawProgram->endUse();
+
+                if(passCallback)
+                {
+                    passCallback(pass, PassEnded);
+                }
             }
-
-            drawPass = &pass;
-            setDrawProgram(pass.program? pass.program : program);
-
-            DENG2_ASSERT(drawProgram != nullptr);
-
-            if(passCallback)
-            {
-                passCallback(pass, PassBegun);
-            }
-
-            ranges.clear();
-            initRanges(ranges, pass.meshes);
-
-            GLState::push()
-                    .setBlendFunc(pass.blendFunc)
-                    .setBlendOp(pass.blendOp)
-                    .apply();
-            buffer->draw(&ranges);
-            GLState::pop();
-
-            if(passCallback)
-            {
-                passCallback(pass, PassEnded);
-            }
+        }
+        catch(Error const &er)
+        {
+            LOG_GL_ERROR("Failed to draw model \"%s\": %s")
+                    << sourcePath
+                    << er.asText();
         }
 
         postDraw();
@@ -1396,13 +1415,15 @@ GLProgram *ModelDrawable::program() const
 
 void ModelDrawable::draw(Animator const *animation,
                          Passes const *passes,
+                         QBitArray const &passMask,
                          ProgramBindingFunc programCallback,
                          RenderingPassFunc passCallback) const
 {
     const_cast<ModelDrawable *>(this)->glInit();
 
-    if(isReady() && d->program && d->atlas)
+    if(isReady() && d->atlas)
     {
+        d->passMask        = passMask;
         d->programCallback = programCallback;
         d->passCallback    = passCallback;
 

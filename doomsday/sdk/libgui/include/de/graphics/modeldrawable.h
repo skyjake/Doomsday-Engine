@@ -59,6 +59,9 @@ public:
     /// An error occurred during the loading of the model data. @ingroup errors
     DENG2_ERROR(LoadError);
 
+    /// There was a shader program related problem. @ingroup errors
+    DENG2_ERROR(ProgramError);
+
     enum TextureMap // note: enum values used as indices internally
     {
         Diffuse = 0,    ///< Surface color and opacity.
@@ -248,8 +251,7 @@ public:
     {
         enum Flag
         {
-            Enabled = 0x1,
-            DefaultFlags = Enabled
+            DefaultFlags = 0
         };
         Q_DECLARE_FLAGS(Flags, Flag)
 
@@ -422,8 +424,22 @@ public:
 
     GLProgram *program() const;
 
+    /**
+     * Draws the model.
+     *
+     * @param animation   Animation state.
+     * @param drawPasses  Rendering passes. If omitted, all meshes are drawn
+     *                    with normal alpha blending.
+     * @param passMask    Sets a mask that specifies which rendering passes are
+     *                    enabled. Each bit in the array corresponds to an
+     *                    element in @a drawPasses. An empty mask (size zero)
+     *                    means that all passes are enabled.
+     * @param programCallback
+     * @param passCallback
+     */
     void draw(Animator const *animation = nullptr,
               Passes const *drawPasses = nullptr,
+              QBitArray const &passMask = QBitArray(),
               ProgramBindingFunc programCallback = ProgramBindingFunc(),
               RenderingPassFunc passCallback = RenderingPassFunc()) const;
 
