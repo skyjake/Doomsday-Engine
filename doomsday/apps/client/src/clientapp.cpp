@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de_platform.h"
@@ -119,7 +119,7 @@ DENG2_PIMPL(ClientApp)
 , DENG2_OBSERVES(Plugins, PublishAPI)
 , DENG2_OBSERVES(Plugins, Notification)
 , DENG2_OBSERVES(Games, Progress)
-{    
+{
     Binder binder;
     QScopedPointer<Updater> updater;
     BusyRunner busyRunner;
@@ -219,12 +219,20 @@ DENG2_PIMPL(ClientApp)
 
     ~Instance()
     {
-        LogBuffer::get().removeSink(logAlarm);
+        try
+        {
+            LogBuffer::get().removeSink(logAlarm);
 
-        self.vr().oculusRift().deinit();
+            self.vr().oculusRift().deinit();
 
-        Sys_Shutdown();
-        DD_Shutdown();
+            Sys_Shutdown();
+            DD_Shutdown();
+        }
+        catch(Error const &er)
+        {
+            qWarning() << "Exception during ~ClientApp:" << er.asText();
+            DENG2_ASSERT(!"Unclean shutdown: exception in ~ClientApp");
+        }
 
         updater.reset();
         delete worldSys;
