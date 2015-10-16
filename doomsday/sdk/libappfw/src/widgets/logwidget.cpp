@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/LogWidget"
@@ -399,7 +399,7 @@ public Font::RichFormat::IStyle
     }
 
     void updateStyle()
-    {        
+    {
         Style const &st = style();
 
         font           = &self.font();
@@ -531,6 +531,11 @@ public Font::RichFormat::IStyle
         // TODO: If content height changes below the visible range, we should adjust
         // the current scroll position so that the entries don't change position
         // inside the view.
+
+        if(!self.isAtBottom())
+        {
+            self.scrollPositionY().shift(delta);
+        }
     }
 
     void fetchNewCachedEntries()
@@ -734,7 +739,7 @@ nextAttempt:
         // available for drawing.
         if(heightDelta)
         {
-            modifyContentHeight(heightDelta);            
+            modifyContentHeight(heightDelta);
             if(needHeightNotify && heightDelta > 0)
             {
                 emit self.contentHeightIncreased(heightDelta);
