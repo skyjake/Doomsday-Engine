@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_ERROR_H
@@ -54,7 +54,7 @@ private:
 };
 
 } // namespace de
-    
+
 /**
  * Macro for defining an exception class that belongs to a parent group of
  * exceptions.  This should be used so that whoever uses the class
@@ -76,5 +76,8 @@ private:
  * @note One must put a semicolon after the macro invocation.
  */
 #define DENG2_ERROR(Name) DENG2_SUB_ERROR(de::Error, Name)
+
+/// Thrown from the expectedAs() method if a cast cannot be made as expected.
+DENG2_ERROR(CastError);
 
 #endif // LIBDENG2_ERROR_H
