@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_ZIPARCHIVE_H
@@ -22,6 +22,7 @@
 
 #include "../Archive"
 #include "../NativePath"
+#include "../filesys/IInterpreter"
 
 namespace de {
 
@@ -97,6 +98,10 @@ public:
      * @return @c true, if the file looks like an archive.
      */
     static bool recognize(NativePath const &path);
+
+    struct DENG2_PUBLIC Interpreter : public filesys::IInterpreter {
+        File *interpretFile(File *sourceData) const override;
+    };
 
 protected:
     void readFromSource(Entry const &entry, Path const &path, IBlock &uncompressedData) const;

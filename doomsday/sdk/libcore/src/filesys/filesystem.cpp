@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/FS"
@@ -35,6 +35,8 @@ static FileIndex const emptyIndex; // never contains any files
 
 DENG2_PIMPL_NOREF(FileSystem)
 {
+    QList<filesys::IInterpreter const *> interpreters;
+
     /// The main index to all files in the file system.
     FileIndex index;
 
@@ -57,6 +59,11 @@ DENG2_PIMPL_NOREF(FileSystem)
 
 FileSystem::FileSystem() : d(new Instance)
 {}
+
+void FileSystem::addInterpreter(filesys::IInterpreter const &interpreter)
+{
+    d->interpreters.prepend(&interpreter);
+}
 
 void FileSystem::refresh()
 {
@@ -136,62 +143,23 @@ Folder &FileSystem::makeFolderWithFeed(String const &path, Feed *feed,
 
 File *FileSystem::interpret(File *sourceData)
 {
+    DENG2_ASSERT(sourceData != nullptr);
+
     LOG_AS("FS::interpret");
-
-    /// @todo  One should be able to define new interpreters dynamically.
-
     try
     {
-        if(LibraryFile::recognize(*sourceData))
+        for(filesys::IInterpreter const *i : d->interpreters)
         {
-            LOG_RES_VERBOSE("Interpreted ") << sourceData->description() << " as a shared library";
-
-            // It is a shared library intended for Doomsday.
-            return new LibraryFile(sourceData);
-        }
-        if(ZipArchive::recognize(*sourceData))
-        {
-            try
+            if(auto *file = i->interpretFile(sourceData))
             {
-                // It is a ZIP archive: we will represent it as a folder.
-                std::auto_ptr<ArchiveFolder> package;
-
-                if(sourceData->name().fileNameExtension() == ".save")
-                {
-                    /// @todo fixme: Don't assume this is a save package.
-                    LOG_RES_VERBOSE("Interpreted %s as a SavedSession") << sourceData->description();
-                    package.reset(new game::SavedSession(*sourceData, sourceData->name()));
-                }
-                else
-                {
-                    LOG_RES_VERBOSE("Interpreted %s as a ZIP format archive") << sourceData->description();
-                    package.reset(new ArchiveFolder(*sourceData, sourceData->name()));
-                }
-
-                // Archive opened successfully, give ownership of the source to the folder.
-                package->setSource(sourceData);
-                return package.release();
-            }
-            catch(Archive::FormatError const &)
-            {
-                // Even though it was recognized as an archive, the file
-                // contents may still prove to be corrupted.
-                LOG_RES_WARNING("Archive in %s is invalid") << sourceData->description();
-            }
-            catch(IByteArray::OffsetError const &)
-            {
-                LOG_RES_WARNING("Archive in %s is truncated") << sourceData->description();
-            }
-            catch(IIStream::InputError const &er)
-            {
-                LOG_RES_WARNING("Failed to read %s") << sourceData->description();
-                LOGDEV_RES_WARNING("%s") << er.asText();
+                return file;
             }
         }
     }
-    catch(Error const &err)
+    catch(Error const &er)
     {
-        LOG_RES_ERROR("") << err.asText();
+        LOG_RES_ERROR("Failed to interpret contents of %s: %s")
+                << sourceData->description() << er.asText();
 
         // The error is one we don't know how to handle. We were given
         // responsibility of the source file, so it has to be deleted.
