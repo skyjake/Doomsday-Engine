@@ -266,6 +266,17 @@
 #define DENG2_NO_COPY(ClassName) \
     private: ClassName(ClassName const &);
 
+/**
+ * Macro for declaring methods for convenient casting:
+ *
+ * - `is` checks if the object can be casted.
+ * - `as` performs the cast as efficiently as possible (just a `static_cast`).
+ *   Use this when the cast is always known to be legal.
+ * - `maybeAs` does a `dynamic_cast` (which has slower performance). Failure
+ *   to cast simply results in nullptr.
+ * - `expectedAs` does a `dynamic_cast` and throws an exception if the cast fails.
+ *   Slowest performance, but is the safest.
+ */
 #define DENG2_AS_IS_METHODS() \
     template <typename T_> \
     bool is() const { return dynamic_cast<T_ const *>(this) != 0; } \
@@ -283,6 +294,16 @@
     T_ *maybeAs() { return dynamic_cast<T_ *>(this); } \
     template <typename T_> \
     T_ const *maybeAs() const { return dynamic_cast<T_ const *>(this); } \
+    template <typename T_> \
+    T_ &expectedAs() { \
+        if(auto *t = maybeAs<T_>()) return *t; \
+        throw CastError(QString("Cannot cast %1 to %2").arg(DENG2_TYPE_NAME(this)).arg(DENG2_TYPE_NAME(T_))); \
+    } \
+    template <typename T_> \
+    T_ const &expectedAs() const { \
+        if(auto const *t = maybeAs<T_>()) return *t; \
+        throw CastError(QString("Cannot cast %1 to %2").arg(DENG2_TYPE_NAME(this)).arg(DENG2_TYPE_NAME(T_))); \
+    }
 
 /**
  * Macro for starting the definition of a private implementation struct. The
