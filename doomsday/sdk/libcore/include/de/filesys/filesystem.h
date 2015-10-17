@@ -125,9 +125,10 @@ public:
      * Registered interpreters get used automatically when feeds populate
      * folders with files.
      *
-     * All registered interpreters are consulted in last-to-first order.
+     * All registered interpreters are consulted in last-to-first order until
+     * one is found that produces an interpreted file.
      *
-     * @param interpreter  Interpreter object. Ownership not taken.
+     * @param interpreter  Interpreter object.
      */
     void addInterpreter(filesys::IInterpreter const &interpreter);
 
