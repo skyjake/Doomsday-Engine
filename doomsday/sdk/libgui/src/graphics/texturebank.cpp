@@ -18,54 +18,69 @@
 
 #include "de/TextureBank"
 
+#include <QHash>
+
 namespace de {
 
 DENG2_PIMPL_NOREF(TextureBank::ImageSource)
 {
-    DotPath id;
+    DotPath sourcePath;
 };
 
-TextureBank::ImageSource::ImageSource(DotPath const &id) : d(new Instance)
+TextureBank::ImageSource::ImageSource(DotPath const &sourcePath) : d(new Instance)
 {
-    d->id = id;
+    d->sourcePath = sourcePath;
 }
 
-DotPath const &TextureBank::ImageSource::id() const
+DotPath const &TextureBank::ImageSource::sourcePath() const
 {
-    return d->id;
+    return d->sourcePath;
 }
 
-DENG2_PIMPL_NOREF(TextureBank)
+DENG2_PIMPL(TextureBank)
 {
     struct TextureData : public IData
     {
-        AtlasTexture *atlas;
-        Id id;
+        Instance *d;
+        Id id { Id::None };
 
-        TextureData(Image const &image, AtlasTexture *atlasTex) : atlas(atlasTex)
+        TextureData(Image const &image, Instance *owner) : d(owner)
         {
-            id = atlas->alloc(image);
+            id = d->atlas->alloc(image);
 
             /// @todo Reduce size if doesn't fit? Can be expanded when requested for use.
         }
 
         ~TextureData()
         {
-            atlas->release(id);
+            d->pathForAtlasId.remove(id);
+            d->atlas->release(id);
         }
     };
 
-    AtlasTexture *atlas;
+    AtlasTexture *atlas { nullptr };
+    QHash<Id::Type, String> pathForAtlasId; // reverse lookup
 
-    Instance() : atlas(0) {}
+    Instance(Public *i) : Base(i) {}
+
+    ~Instance()
+    {
+        // Get rid of items before the reverse lookup hash is destroyed.
+        self.clear();
+    }
 };
 
-TextureBank::TextureBank() : Bank("TextureBank"), d(new Instance)
+TextureBank::TextureBank() : Bank("TextureBank"), d(new Instance(this))
 {}
 
-void TextureBank::setAtlas(AtlasTexture &atlas)
+void TextureBank::setAtlas(AtlasTexture *atlas)
 {
-    d->atlas = &atlas;
+    d->atlas = atlas;
+}
+
+AtlasTexture *TextureBank::atlas()
+{
+    return d->atlas;
 }
 
 Id const &TextureBank::texture(DotPath const &id)
@@ -73,10 +88,21 @@ Id const &TextureBank::texture(DotPath const &id)
     return data(id).as<Instance::TextureData>().id;
 }
 
+Path TextureBank::sourcePathForAtlasId(Id const &id) const
+{
+    auto found = d->pathForAtlasId.constFind(id);
+    if(found != d->pathForAtlasId.constEnd())
+    {
+        return found.value();
+    }
+    return "";
+}
+
 Bank::IData *TextureBank::loadFromSource(ISource &source)
 {
-    DENG2_ASSERT(d->atlas != 0);
-    return new Instance::TextureData(source.as<ImageSource>().load(), d->atlas);
+    auto *data = new Instance::TextureData(source.as<ImageSource>().load(), d);
+    d->pathForAtlasId.insert(data->id, source.as<ImageSource>().sourcePath());
+    return data;
 }
 
 } // namespace de
