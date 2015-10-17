@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Bank"
@@ -145,7 +145,7 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
             if(data.get())
             {
                 LOG_RES_VERBOSE("Item \"%s\" data cleared from memory (%i bytes)")
-                        << path('.') << data->sizeInMemory();
+                        << path(bank->d->sepChar) << data->sizeInMemory();
                 data->aboutToUnload();
                 data.reset();
             }
@@ -158,7 +158,7 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
 
             data.reset(newData);
             accessedAt = Time();
-            bank->d->notify(Notification(Notification::Loaded, path('.')));
+            bank->d->notify(Notification(Notification::Loaded, path(bank->d->sepChar)));
         }
 
         /// Load the item into memory from its current cache.
@@ -193,7 +193,8 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
             // us. This may take an unspecified amount of time.
             QScopedPointer<IData> loaded(bank->loadFromSource(*source));
 
-            LOG_RES_XVERBOSE("Loaded \"%s\" from source in %.2f seconds") << path('.') << startedAt.since();
+            LOG_RES_XVERBOSE("Loaded \"%s\" from source in %.2f seconds")
+                    << path(bank->d->sepChar) << startedAt.since();
 
             if(loaded.data())
             {
@@ -225,14 +226,16 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
                     QScopedPointer<IData> blank(bank->newData());
                     reader >> *blank->asSerializable();
                     setData(blank.take());
-                    LOG_RES_XVERBOSE("Deserialized \"%s\" in %.2f seconds") << path('.') << startedAt.since();
+                    LOG_RES_XVERBOSE("Deserialized \"%s\" in %.2f seconds")
+                            << path(bank->d->sepChar) << startedAt.since();
                     return; // Done!
                 }
                 // We cannot use this.
             }
             catch(Error const &er)
             {
-                LOG_RES_WARNING("Failed to deserialize \"%s\":\n") << path('.') << er.asText();
+                LOG_RES_WARNING("Failed to deserialize \"%s\":\n")
+                        << path(bank->d->sepChar) << er.asText();
             }
 
             // Fallback option.
@@ -301,8 +304,7 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
                 fromCache.remove(*this);
                 cache = &toCache;
 
-                // Externally we use dotted paths.
-                Path const itemPath = path('.');
+                Path const itemPath = path(bank->d->sepChar);
 
                 LOGDEV_RES_XVERBOSE("Item \"%s\" moved to %s cache")
                         << itemPath << Cache::formatAsText(toCache.format());
@@ -525,6 +527,7 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
     typedef FIFO<Notification> NotifyQueue;
 
     char const *nameForLog;
+    QChar sepChar { '.' }; ///< Default separator in identifier paths.
     Flags flags;
     SourceCache sourceCache;
     ObjectCache memoryCache;
@@ -597,7 +600,7 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
 
     void clear()
     {
-        jobs.waitForDone();        
+        jobs.waitForDone();
 
         items.clear();
         sourceCache.clear();
@@ -639,7 +642,7 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
 
                 if(item.isValidSerialTime(hotTime))
                 {
-                    LOGDEV_RES_MSG("Found valid serialized copy of \"%s\"") << item.path('.');
+                    LOGDEV_RES_MSG("Found valid serialized copy of \"%s\"") << item.path(sepChar);
 
                     item.serial = array;
                     best = serialCache;
@@ -652,7 +655,7 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
     }
 
     void load(Path const &path, Importance importance)
-    {       
+    {
         beginJob(new Job(self, Job::Load, path), importance);
     }
 
@@ -731,11 +734,18 @@ Bank::Bank(char const *nameForLog, Flags const &flags, String const &hotStorageL
 }
 
 Bank::~Bank()
-{}
+{
+    clear();
+}
 
 Bank::Flags Bank::flags() const
 {
     return d->flags;
+}
+
+void Bank::setSeparator(QChar sep)
+{
+    d->sepChar = sep;
 }
 
 void Bank::setHotStorageCacheLocation(String const &location)
@@ -829,7 +839,7 @@ dint Bank::allItems(Names &names) const
 void Bank::iterate(std::function<void (DotPath const &)> func) const
 {
     PathTree::FoundPaths paths;
-    d->items.findAllPaths(paths, PathTree::NoBranch, '.');
+    d->items.findAllPaths(paths, PathTree::NoBranch, d->sepChar);
     foreach(String const &path, paths)
     {
         func(path);
@@ -926,7 +936,7 @@ void Bank::unloadAll(Importance importance, CacheLevel maxLevel)
     allItems(names);
     DENG2_FOR_EACH(Names, i, names)
     {
-        unload(*i, maxLevel, importance);
+        unload(Path(*i, d->sepChar), maxLevel, importance);
     }
 }
 
