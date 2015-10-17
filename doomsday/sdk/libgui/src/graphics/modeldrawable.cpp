@@ -18,6 +18,7 @@
 
 #include "de/ModelDrawable"
 #include "de/HeightMap"
+#include "de/ImageFile"
 
 #include <de/App>
 #include <de/ByteArrayFile>
@@ -154,8 +155,7 @@ struct DefaultImageLoader : public ModelDrawable::IImageLoader
 {
     Image loadImage(String const &path)
     {
-        File const &texFile = App::rootFolder().locate<File>(path);
-        Image img = Image::fromData(texFile, texFile.name().fileNameExtension());
+        Image img = App::rootFolder().locate<ImageFile>(path).image();
         if(img.depth() == 24)
         {
             // Model texture atlases need to have an alpha channel.
@@ -312,10 +312,23 @@ DENG2_PIMPL(ModelDrawable)
      */
     struct GLData
     {
+        struct TextureSource : public TextureBank::ImageSource
+        {
+            GLData *d;
+
+            TextureSource(String const &path, GLData *glData)
+                : ImageSource(Path(path))
+                , d(glData) {}
+
+            Image load() const
+            {
+                return d->imageLoader->loadImage(sourcePath().toString());
+            }
+        };
+
         Id::Type defaultTexIds[MAX_TEXTURES];
         TextureMap textureOrder[MAX_TEXTURES];
 
-        AtlasTexture *atlas { nullptr }; /// @todo Remove this, use the bank.
         IImageLoader *imageLoader { &defaultImageLoader };
         TextureBank textureBank;
         QList<Variant *> variants; // owned
@@ -326,6 +339,9 @@ DENG2_PIMPL(ModelDrawable)
 
         GLData()
         {
+            // We use file paths as identifiers.
+            textureBank.setSeparator('/');
+
             textureOrder[0] = Diffuse;
             textureOrder[1] = textureOrder[2] = textureOrder[3] = Unknown;
             zap(defaultTexIds);
@@ -370,36 +386,29 @@ DENG2_PIMPL(ModelDrawable)
             scene = nullptr;
         }
 
-        bool isDefaultTexture(Id const &id) const
-        {
-            for(Id const &defTex : defaultTexIds)
-            {
-                if(id == defTex) return true;
-            }
-            return false;
-        }
-
         void releaseTexture(Id const &id)
         {
-            if(!id || isDefaultTexture(id)) return; // We don't own this, don't release.
+            if(!id) return; // We don't own this, don't release.
 
-            qDebug() << "Releasing model texture" << id.asText();
-            atlas->release(id);
+            Path texPath = textureBank.sourcePathForAtlasId(id);
+            DENG2_ASSERT(!texPath.isEmpty());
+
+            qDebug() << "Releasing model texture" << id.asText()
+                     << "path:" << texPath;
+            textureBank.unload(texPath);
         }
 
         void releaseTexturesFromAtlas()
         {
-            if(!atlas) return;
             textureBank.unloadAll(Bank::ImmediatelyInCurrentThread);
             for(Variant *var : variants)
             {
-                foreach(auto const &materialData, var->materials)
+                for(auto &materialData : var->materials)
                 {
-                    for(Id const &id : materialData.texIds)
-                        releaseTexture(id);
+                    zap(materialData.texIds);
                 }
-                var->materials.clear();
             }
+            textureBank.clear();
         }
 
         void fallBackToDefaultTexture(Variant::MaterialData &materialData,
@@ -411,26 +420,12 @@ DENG2_PIMPL(ModelDrawable)
             }
         }
 
-        void setTextureMapping(Mapping mapsToUse)
-        {
-            for(int i = 0; i < MAX_TEXTURES; ++i)
-            {
-                textureOrder[i] = (i < mapsToUse.size()? mapsToUse.at(i) : Unknown);
-
-                // Height is an alias for normals.
-                if(textureOrder[i] == Height) textureOrder[i] = Normals;
-            }
-            needMakeBuffer = true;
-        }
-
         /**
          * Load all the textures of the model. The textures are allocated into the
          * atlas provided to the model.
          */
         void initTextures()
         {
-            DENG2_ASSERT(atlas != 0);
-
             for(duint varIdx = 0; varIdx < duint(variants.size()); ++varIdx)
             {
                 for(duint i = 0; i < scene->mNumMaterials; ++i)
@@ -482,7 +477,7 @@ DENG2_PIMPL(ModelDrawable)
                 if(materialData.custom.contains(map))
                 {
                     qDebug() << "loading custom path" << materialData.custom[map];
-                    return setTexture(matId, map, imageLoader->loadImage(materialData.custom[map]));
+                    return setTexture(matId, map, materialData.custom[map]);
                 }
             }
             catch(Error const &er)
@@ -504,9 +499,7 @@ DENG2_PIMPL(ModelDrawable)
 
                     try
                     {
-                        setTexture(matId, map,
-                                   imageLoader->loadImage(sourcePath.fileNamePath() /
-                                                          NativePath(texPath.C_Str())));
+                        setTexture(matId, map, sourcePath.fileNamePath() / NativePath(texPath.C_Str()));
                         break;
                     }
                     catch(Error const &er)
@@ -518,6 +511,56 @@ DENG2_PIMPL(ModelDrawable)
             }
         }
 
+        void setTexture(MaterialId const &matId, TextureMap map, String contentPath)
+        {
+            if(!scene) return;
+            if(matId.variant >= duint(variants.size())) return;
+            if(matId.id >= scene->mNumMaterials) return;
+            if(map == Unknown) return;
+
+            DENG2_ASSERT(textureBank.atlas());
+
+            Variant &variant = *variants[matId.variant];
+            auto &materialData = variant.materials[matId.id];
+            Id::Type &destId = (map == Height? materialData.texIds[Normals] :
+                                               materialData.texIds[map]);
+
+            /// @todo Release a previously loaded texture, if it isn't used
+            /// in any material. -jk
+
+            if(map == Height)
+            {
+                // Convert the height map into a normal map.
+                contentPath = contentPath.concatenatePath("HeightMap.toNormals");
+            }
+
+            Path const path(contentPath);
+
+            // If this image is unknown, load it now.
+            if(!textureBank.has(path))
+            {
+                textureBank.add(path, new TextureSource(contentPath, this));
+                textureBank.load(path);
+            }
+
+            destId = textureBank.texture(path);
+
+            // The buffer needs to be updated with the new texture bounds.
+            needMakeBuffer = true;
+        }
+
+        void setTextureMapping(Mapping mapsToUse)
+        {
+            for(int i = 0; i < MAX_TEXTURES; ++i)
+            {
+                textureOrder[i] = (i < mapsToUse.size()? mapsToUse.at(i) : Unknown);
+
+                // Height is an alias for normals.
+                if(textureOrder[i] == Height) textureOrder[i] = Normals;
+            }
+            needMakeBuffer = true;
+        }
+
         /**
          * Sets a custom texture that will be loaded when the model is glInited.
          *
@@ -525,9 +568,9 @@ DENG2_PIMPL(ModelDrawable)
          * @param tex    Texture map.
          * @param path   Image file path.
          */
-        void setCustomTexture(MaterialId const &matId, TextureMap map, String const &path)
+        void setCustomTexturePath(MaterialId const &matId, TextureMap map, String const &path)
         {
-            DENG2_ASSERT(!atlas);
+            DENG2_ASSERT(!textureBank.atlas());
             DENG2_ASSERT(matId.variant < duint(variants.size()));
 
             Variant &variant = *variants[matId.variant];
@@ -535,43 +578,6 @@ DENG2_PIMPL(ModelDrawable)
             DENG2_ASSERT(matId.id < duint(variant.materials.size()));
 
             variant.materials[matId.id].custom.insert(map, path);
-        }
-
-        void setTexture(MaterialId const &matId, TextureMap map, Image const &content)
-        {
-            if(!scene) return;
-            if(matId.variant >= duint(variants.size())) return;
-            if(matId.id >= scene->mNumMaterials) return;
-            if(map == Unknown) return;
-
-            DENG2_ASSERT(atlas != 0);
-
-            Variant &variant = *variants[matId.variant];
-            auto &materialData = variant.materials[matId.id];
-            Id::Type &id = (map == Height? materialData.texIds[Normals] :
-                                           materialData.texIds[map]);
-
-            // Release a previously loaded texture.
-            if(id)
-            {
-                releaseTexture(id);
-                id = Id::None;
-            }
-
-            if(map == Height)
-            {
-                // Convert the height map into a normal map.
-                HeightMap heightMap;
-                heightMap.loadGrayscale(content);
-                id = atlas->alloc(heightMap.makeNormalMap());
-            }
-            else
-            {
-                id = atlas->alloc(content);
-            }
-
-            // The buffer needs to be updated with the new texture bounds.
-            needMakeBuffer = true;
         }
     };
 
@@ -955,11 +961,11 @@ DENG2_PIMPL(ModelDrawable)
 
                         if(material.texIds[map])
                         {
-                            v.texBounds[t] = glData.atlas->imageRectf(material.texIds[map]).xywh();
+                            v.texBounds[t] = glData.textureBank.atlas()->imageRectf(material.texIds[map]).xywh();
                         }
                         else if(glData.defaultTexIds[map])
                         {
-                            v.texBounds[t] = glData.atlas->imageRectf(glData.defaultTexIds[map]).xywh();
+                            v.texBounds[t] = glData.textureBank.atlas()->imageRectf(glData.defaultTexIds[map]).xywh();
                         }
                         else
                         {
@@ -1268,7 +1274,7 @@ DENG2_PIMPL(ModelDrawable)
 
                 GLState::push()
                         .setBlendFunc(pass.blendFunc)
-                        .setBlendOp(pass.blendOp)
+                        .setBlendOp  (pass.blendOp)
                         .apply();
                 {
                     drawProgram->beginUse();
@@ -1421,14 +1427,14 @@ bool ModelDrawable::nodeExists(String const &name) const
 
 void ModelDrawable::setAtlas(AtlasTexture &atlas)
 {
-    d->glData.atlas = &atlas;
-    d->glData.textureBank.setAtlas(atlas);
+    //d->glData.atlas = &atlas;
+    d->glData.textureBank.setAtlas(&atlas);
 }
 
 void ModelDrawable::unsetAtlas()
 {
     d->glData.releaseTexturesFromAtlas();
-    d->glData.atlas = 0;
+    d->glData.textureBank.setAtlas(nullptr);
 }
 
 ModelDrawable::Mapping ModelDrawable::diffuseNormalsSpecularEmission() // static
@@ -1466,15 +1472,15 @@ int ModelDrawable::materialId(String const &name) const
 
 void ModelDrawable::setTexturePath(MaterialId const &material, TextureMap tex, String const &path)
 {
-    if(d->glData.atlas)
+    if(d->glData.textureBank.atlas())
     {
         // Load immediately.
-        d->glData.setTexture(material, tex, d->glData.imageLoader->loadImage(path));
+        d->glData.setTexture(material, tex, path);
     }
     else
     {
         // This will override what the model specifies.
-        d->glData.setCustomTexture(material, tex, path);
+        d->glData.setCustomTexturePath(material, tex, path);
     }
 }
 
@@ -1496,7 +1502,7 @@ void ModelDrawable::draw(Animator const *animation,
 {
     const_cast<ModelDrawable *>(this)->glInit();
 
-    if(isReady() && d->glData.atlas)
+    if(isReady() && d->glData.textureBank.atlas())
     {
         d->passMask        = passMask;
         d->programCallback = programCallback;
@@ -1514,7 +1520,7 @@ void ModelDrawable::drawInstanced(GLBuffer const &instanceAttribs,
 {
     const_cast<ModelDrawable *>(this)->glInit();
 
-    if(isReady() && d->program && d->glData.atlas)
+    if(isReady() && d->program && d->glData.textureBank.atlas())
     {
         d->drawInstanced(instanceAttribs, animation);
     }
