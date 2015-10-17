@@ -482,8 +482,8 @@ DENG2_PIMPL(ModelDrawable)
             }
             catch(Error const &er)
             {
-                LOG_RES_WARNING("Failed to load custom model texture (type %i): %s")
-                        << type << er.asText();
+                LOG_RES_WARNING("Failed to load custom model %s texture: %s")
+                        << textureMapToText(textureMapType(type)) << er.asText();
             }
 
             qDebug() << "    type:" << type
@@ -504,8 +504,8 @@ DENG2_PIMPL(ModelDrawable)
                     }
                     catch(Error const &er)
                     {
-                        LOG_RES_WARNING("Failed to load model texture (type %i): %s")
-                                << type << er.asText();
+                        LOG_RES_WARNING("Failed to load model %s texture: %s")
+                                << textureMapToText(textureMapType(type)) << er.asText();
                     }
                 }
             }
@@ -1334,7 +1334,7 @@ static struct {
 
 } // namespace internal
 
-ModelDrawable::TextureMap ModelDrawable::textToTextureMap(String const &text)
+ModelDrawable::TextureMap ModelDrawable::textToTextureMap(String const &text) // static
 {
     for(auto const &mapping : internal::mappings)
     {
@@ -1344,7 +1344,7 @@ ModelDrawable::TextureMap ModelDrawable::textToTextureMap(String const &text)
     return Unknown;
 }
 
-String ModelDrawable::textureMapToText(TextureMap map)
+String ModelDrawable::textureMapToText(TextureMap map) // static
 {
     for(auto const &mapping : internal::mappings)
     {
