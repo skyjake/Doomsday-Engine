@@ -135,9 +135,8 @@ DENG2_PIMPL(Record)
         return value && value->record() && value->hasOwnership();
     }
 
-    Record::Subrecords listSubrecords(std::function<bool (Record const &)> filter) const
+    LoopResult forSubrecords(std::function<LoopResult (String const &, Record &)> func) const
     {
-        Subrecords subs;
         DENG2_FOR_EACH_CONST(Members, i, members)
         {
             Variable const &member = *i.value();
@@ -146,12 +145,27 @@ DENG2_PIMPL(Record)
                 Record *rec = member.value().as<RecordValue>().record();
                 DENG2_ASSERT(rec != 0); // subrecords are owned, so cannot have been deleted
 
-                // Must pass the filter.
-                if(!filter(*rec)) continue;
-
-                subs.insert(i.key(), rec);
+                if(auto result = func(i.key(), *rec))
+                {
+                    return result;
+                }
             }
         }
+        return LoopContinue;
+    }
+
+    Record::Subrecords listSubrecords(std::function<bool (Record const &)> filter) const
+    {
+        Subrecords subs;
+        forSubrecords([&subs, filter] (String const &name, Record &rec)
+        {
+            // Must pass the filter.
+            if(filter(rec))
+            {
+                subs.insert(name, &rec);
+            }
+            return LoopContinue;
+        });
         return subs;
     }
 
@@ -563,7 +577,23 @@ Record::Subrecords Record::subrecords() const
 
 Record::Subrecords Record::subrecords(std::function<bool (Record const &)> filter) const
 {
-    return d->listSubrecords([&] (Record const &rec) { return filter(rec); });
+    return d->listSubrecords([&] (Record const &rec)
+    {
+        return filter(rec);
+    });
+}
+
+LoopResult Record::forSubrecords(std::function<LoopResult (String const &, Record &)> func)
+{
+    return d->forSubrecords(func);
+}
+
+LoopResult Record::forSubrecords(std::function<LoopResult (String const &, Record const &)> func) const
+{
+    return d->forSubrecords([func] (String const &name, Record &rec)
+    {
+        return func(name, rec);
+    });
 }
 
 String Record::asText(String const &prefix, List *lines) const
