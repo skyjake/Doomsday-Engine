@@ -37,6 +37,7 @@ using namespace de;
 
 static String const DEF_ANIMATION   ("animation");
 static String const DEF_MATERIAL    ("material");
+static String const DEF_VARIANT     ("variant");
 static String const DEF_UP_VECTOR   ("up");
 static String const DEF_FRONT_VECTOR("front");
 static String const DEF_AUTOSCALE   ("autoscale");
@@ -53,6 +54,7 @@ static String const DEF_BLENDOP     ("blendOp");
 static String const DEF_TIMELINE    ("timeline");
 
 static String const DEFAULT_SHADER  ("model.skeletal.normal_specular_emission");
+static String const DEFAULT_MATERIAL("default");
 
 DENG2_PIMPL(ModelRenderer)
 , DENG2_OBSERVES(filesys::AssetObserver, Availability)
@@ -285,6 +287,16 @@ DENG2_PIMPL(ModelRenderer)
                               QString("Invalid blending operation \"%1\"").arg(text));
     }
 
+    /**
+     * Compose texture mappings of one or more shaders.
+     *
+     * All shaders used on one model must have the same mappings. Otherwise
+     * the vertex data in the static model VBO is not compatible with all of
+     * them (redoing the VBOs during drawing is inadvisable).
+     *
+     * @param mapping    Model texture mapping.
+     * @param shaderDef  Shader definition.
+     */
     void composeTextureMappings(ModelDrawable::Mapping &mapping,
                                 Record const &shaderDef)
     {
@@ -347,19 +359,35 @@ DENG2_PIMPL(ModelRenderer)
         aux->transformation = Matrix4f::unnormalizedFrame(front, up, !mirror);
         aux->autoscaleToThingHeight = !ScriptedInfo::isFalse(asset, DEF_AUTOSCALE, false);
 
-        // Custom texture maps.
+        // Custom texture maps and additional materials.
+        aux->materialIndexForName.insert(DEFAULT_MATERIAL, 0);
         if(asset.has(DEF_MATERIAL))
         {
-            auto mats = asset.subrecord(DEF_MATERIAL).subrecords();
-            DENG2_FOR_EACH_CONST(Record::Subrecords, mat, mats)
+            asset.subrecord(DEF_MATERIAL).forSubrecords(
+                [this, &model, &aux] (String const &blockName, Record const &block)
             {
-                Record const &matDef = *mat.value();
-                handleMaterialTexture(model, mat.key(), matDef, "diffuseMap",  ModelDrawable::Diffuse);
-                handleMaterialTexture(model, mat.key(), matDef, "normalMap",   ModelDrawable::Normals);
-                handleMaterialTexture(model, mat.key(), matDef, "heightMap",   ModelDrawable::Height);
-                handleMaterialTexture(model, mat.key(), matDef, "specularMap", ModelDrawable::Specular);
-                handleMaterialTexture(model, mat.key(), matDef, "emissiveMap", ModelDrawable::Emissive);
-            }
+                if(ScriptedInfo::blockType(block) == DEF_VARIANT)
+                {
+                    String const materialName = blockName;
+                    if(!aux->materialIndexForName.contains(materialName))
+                    {
+                        // Add a new material.
+                        aux->materialIndexForName.insert(materialName, model.addMaterial());
+                    }
+                    block.forSubrecords([this, &model, &aux, &materialName]
+                                        (String const &matName, Record const &matDef)
+                    {
+                        setupMaterial(model, matName, aux->materialIndexForName[materialName], matDef);
+                        return LoopContinue;
+                    });
+                }
+                else
+                {
+                    // The default material.
+                    setupMaterial(model, blockName, 0, block);
+                }
+                return LoopContinue;
+            });
         }
 
         // Set up the animation sequences for states.
@@ -466,21 +494,34 @@ DENG2_PIMPL(ModelRenderer)
         bank.setUserData(path, aux.release());
     }
 
-    void handleMaterialTexture(ModelDrawable &model,
-                               String const &matName,
+    void setupMaterial(ModelDrawable &model,
+                       String const &meshName,
+                       duint materialIndex,
+                       Record const &matDef)
+    {
+        ModelDrawable::MeshId const mesh {
+            (duint) identifierFromText(meshName, [&model] (String const &text) {
+                return model.meshId(text); }),
+            materialIndex
+        };
+
+        setupMaterialTexture(model, mesh, matDef, "diffuseMap",  ModelDrawable::Diffuse);
+        setupMaterialTexture(model, mesh, matDef, "normalMap",   ModelDrawable::Normals);
+        setupMaterialTexture(model, mesh, matDef, "heightMap",   ModelDrawable::Height);
+        setupMaterialTexture(model, mesh, matDef, "specularMap", ModelDrawable::Specular);
+        setupMaterialTexture(model, mesh, matDef, "emissiveMap", ModelDrawable::Emissive);
+    }
+
+    void setupMaterialTexture(ModelDrawable &model,
+                               ModelDrawable::MeshId const &mesh,
                                Record const &matDef,
                                String const &textureName,
                                ModelDrawable::TextureMap map)
     {
         if(matDef.has(textureName))
         {
-            String path = ScriptedInfo::absolutePathInContext(matDef, matDef.gets(textureName));
-
-            int matId = identifierFromText(matName, [&model] (String const &text) {
-                return model.materialId(text);
-            });
-
-            model.setTexturePath(matId, map, path);
+            String const path = ScriptedInfo::absolutePathInContext(matDef, matDef.gets(textureName));
+            model.setTexturePath(mesh, map, path);
         }
     }
 
@@ -582,6 +623,7 @@ DENG2_PIMPL(ModelRenderer)
             // Callback for each rendering pass:
             [&p] (ModelDrawable::Pass const &pass, ModelDrawable::PassState state)
             {
+                p.model->setMaterial(p.animator->materialForPass(pass.name));
                 p.animator->bindPassUniforms(*p.model->currentProgram(),
                     pass.name,
                     state == ModelDrawable::PassBegun? StateAnimator::Bind :

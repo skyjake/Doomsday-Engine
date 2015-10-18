@@ -57,6 +57,16 @@ public:
      */
     QBitArray passMask() const;
 
+    /**
+     * Determines the material to use during a rendering pass. These are
+     * determined by the "material" variables in the object's namespace.
+     *
+     * @param passName  Name of the rendering pass.
+     *
+     * @return Material index.
+     */
+    de::duint materialForPass(de::String const &passName) const;
+
     enum BindOperation { Bind, Unbind };
 
     /**
@@ -75,7 +85,8 @@ public:
      *                   named, e.g., "render.(passName).uName".
      * @param operation  Bind or unbind.
      */
-    void bindPassUniforms(de::GLProgram &program, de::String const &passName,
+    void bindPassUniforms(de::GLProgram &program,
+                          de::String const &passName,
                           BindOperation operation) const;
 
 private:

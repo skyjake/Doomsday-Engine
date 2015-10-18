@@ -36,13 +36,16 @@ static String const DEF_PASS       ("pass");
 static String const DEF_VARIABLE   ("variable");
 static String const DEF_WRAP       ("wrap");
 static String const DEF_ENABLED    ("enabled");
+static String const DEF_MATERIAL   ("material");
 
-static String const VAR_SELF   ("self");
-static String const VAR_ID     ("__id__");
-static String const VAR_ASSET  ("asset");
-static String const VAR_ENABLED("enabled");
+static String const VAR_SELF    ("self");
+static String const VAR_ID      ("__id__");
+static String const VAR_ASSET   ("asset");
+static String const VAR_ENABLED ("enabled");
+static String const VAR_MATERIAL("material");
 
 static String const PASS_GLOBAL("");
+static String const DEFAULT_MATERIAL("default");
 
 static int const ANIM_DEFAULT_PRIORITY = 1;
 
@@ -200,6 +203,8 @@ DENG2_PIMPL(StateAnimator)
     typedef QHash<String, RenderVar *> RenderVars;
     QHash<String, RenderVars> passVars;
 
+    QHash<String, Variable *> passMaterials;
+
     Instance(Public *i, DotPath const &id)
         : Base(i)
         , auxData(ClientApp::renderSystem().modelRenderer().auxiliaryData(id))
@@ -250,11 +255,21 @@ DENG2_PIMPL(StateAnimator)
 
         passMask.resize(auxData->passes.size());
         updatePassMask();
+
+        qDebug() << "Namespaces:\n" << names.asText();
     }
 
     void initVariablesForPass(Record const &block, String const &passName = PASS_GLOBAL)
     {
         static char const *componentNames[] = { "x", "y", "z", "w" };
+
+        // Each pass has a variable for selecting the material.
+        // The default value is optionally specified in the definition.
+        passMaterials.insert(passName,
+                             &names.addText(passName.concatenateMember(VAR_MATERIAL),
+                                            block.gets(DEF_MATERIAL, DEFAULT_MATERIAL)));
+
+        /// @todo Should observe if the variable above is deleted unexpectedly. -jk
 
         // Look up the variable declarations.
         auto vars = ScriptedInfo::subrecordsOfType(DEF_VARIABLE, block);
@@ -348,6 +363,7 @@ DENG2_PIMPL(StateAnimator)
             qDeleteAll(vars.values());
         }
         passVars.clear();
+        passMaterials.clear();
     }
 
     void variableValueChanged(Variable &, Value const &)
@@ -509,8 +525,8 @@ void StateAnimator::advanceTime(TimeDelta const &elapsed)
 
         if(anim.looping == Sequence::Looping)
         {
-            // When a looping animation has completed a loop, it may still trigger
-            // a variant.
+            // When a looping animation has completed a loop, it may still
+            // trigger a variant.
             if(anim.atEnd())
             {
                 retrigger = true;
@@ -568,6 +584,26 @@ ddouble StateAnimator::currentTime(int index) const
 QBitArray StateAnimator::passMask() const
 {
     return d->passMask;
+}
+
+duint StateAnimator::materialForPass(String const &passName) const
+{
+   auto const iter = d->passMaterials.constFind(passName);
+   if(iter != d->passMaterials.constEnd())
+   {
+       Variable const *material = iter.value();
+       DENG2_ASSERT(material != nullptr);
+       auto const matIndex = d->auxData->materialIndexForName.constFind(material->value().asText());
+       if(matIndex != d->auxData->materialIndexForName.constEnd())
+       {
+           return matIndex.value();
+       }
+   }
+   else
+   {
+       return materialForPass(PASS_GLOBAL);
+   }
+   return 0; // default material
 }
 
 void StateAnimator::bindUniforms(GLProgram &program, BindOperation operation) const

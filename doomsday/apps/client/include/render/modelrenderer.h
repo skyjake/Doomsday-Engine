@@ -56,7 +56,8 @@ public:
     /**
      * Animation sequence definition.
      */
-    struct AnimSequence {
+    struct AnimSequence
+    {
         de::String name;        ///< Name of the sequence.
         de::Record const *def;  ///< Record describing the sequence (in asset metadata).
         de::Scheduler *timeline = nullptr; ///< Script timeline (owned).
@@ -65,6 +66,7 @@ public:
         AnimSequence(de::String const &n, de::Record const &d);
     };
     typedef QList<AnimSequence> AnimSequences;
+
     struct StateAnims : public QMap<de::String, AnimSequences> {};
 
     /**
@@ -75,12 +77,17 @@ public:
         bool autoscaleToThingHeight = true;
         de::Matrix4f transformation;
         de::gl::Cull cull = de::gl::Back;
+
+        QHash<de::String, de::duint> materialIndexForName;
+
+        /// Rendering passes. Will not change after init.
         de::ModelDrawable::Passes passes;
 
+        /// Animation sequences.
         StateAnims animations;
 
         /// Shared timelines (not sequence-specific). Owned.
-        QMap<de::String, de::Scheduler *> timelines;
+        QHash<de::String, de::Scheduler *> timelines;
 
         ~AuxiliaryData();
     };
