@@ -36,19 +36,36 @@ namespace de {
 class GLBuffer;
 
 /**
- * Drawable that is constructed out of a 3D model.
+ * Drawable that is constructed out of a 3D model file and texture map images.
  *
- * 3D model data is loaded using the Open Asset Import Library from multiple
- * different source formats.
+ * 3D model data is loaded using the Open Asset Import Library that supports
+ * multiple different source formats.
  *
  * Lifetime.
  *
- * Texture maps.
+ * @par Animation
  *
- * Animation.
+ * ModelDrawable supports skeletal animation sequences.
  *
- * A model may have multiple alternative vertex buffers, so that each has its
- * own set of texture coordinates. This allows mapping different textures.
+ * The nested class ModelDrawable::Animator is responsible for keeping track of
+ * a model's animation state. When drawing an animated model, in addition to
+ * having a ModelDrawable instance, one needs to create a
+ * ModelDrawable::Animator and pass it to the draw() method.
+ *
+ * @par Textures and materials
+ *
+ * The model is composed of one or more meshes. Each mesh has a set of texture
+ * maps associated with it (e.g., diffuse, normals, etc.). A set of texture
+ * maps for all meshes is called a "material". ModelDrawable may have multiple
+ * materials, but only one of them is active for drawing at a time. Only one
+ * copy of each texture image is stored in the atlas even though multiple
+ * materials use it.
+ *
+ * Internally, each material corresponds to a separate static vertex buffer.
+ * The vertex coordinates in each buffer are prepared with the textures'
+ * locations on the atlas. The active material can thus be switched at any time
+ * during drawing, e.g., between rendering passes, without incurring a
+ * performance penalty.
  *
  * @todo Refactor: Split the non-Assimp specific parts into a MeshDrawable base
  * class, so it can be used with meshes generated procedurally (e.g., the map),
@@ -252,10 +269,7 @@ public:
      */
     struct LIBGUI_PUBLIC Pass
     {
-        enum Flag
-        {
-            DefaultFlags = 0
-        };
+        enum Flag { DefaultFlags = 0 };
         Q_DECLARE_FLAGS(Flags, Flag)
 
         String name;
@@ -266,6 +280,22 @@ public:
         gl::BlendOp blendOp = gl::Add;
     };
     typedef QList<Pass> Passes;
+
+    /**
+     * Identifies a mesh.
+     */
+    struct LIBGUI_PUBLIC MeshId
+    {
+        duint index;
+        duint material;
+
+        MeshId(duint index, duint material = 0)
+            : index(index)
+            , material(material)
+        {}
+    };
+
+    typedef QList<TextureMap> Mapping;
 
     // Audiences:
     DENG2_DEFINE_AUDIENCE2(AboutToGLInit, void modelAboutToGLInit(ModelDrawable &))
@@ -333,7 +363,7 @@ public:
     /**
      * Locates a material specified in the model by its name.
      *
-     * @param name  Name of the material
+     * @param name  Name of the material.
      *
      * @return Material id.
      */
@@ -355,8 +385,6 @@ public:
      */
     void unsetAtlas();
 
-    typedef QList<TextureMap> Mapping;
-
     /**
      * Sets which textures are to be passed to the model shader via the GL buffer.
      *
@@ -372,6 +400,10 @@ public:
 
     static Mapping diffuseNormalsSpecularEmission();
 
+    duint addMaterial();
+
+    void resetMaterials();
+
     /**
      * Sets the texture map that is used if no other map is provided.
      *
@@ -379,6 +411,18 @@ public:
      * @param atlasId      Identifier in the atlas.
      */
     void setDefaultTexture(TextureMap textureType, Id const &atlasId);
+
+    /**
+     * Sets or changes one of the texture maps used by a mesh. This can be
+     * used to override the maps set up automatically by glInit() (that gets
+     * information from the model file).
+     *
+     * @param mesh        Which mesh to modify.
+     * @param textureMap  Texture to set.
+     * @param path        Path of the texture image.
+     */
+    void setTexturePath(MeshId const &mesh, TextureMap textureMap,
+                        String const &path);
 
     /**
      * Prepares a loaded model for drawing by constructing all the required GL
@@ -394,29 +438,6 @@ public:
      * Releases all the GL resources of the model.
      */
     void glDeinit();
-
-    struct LIBGUI_PUBLIC MaterialId
-    {
-        duint id;
-        duint variant;
-
-        MaterialId(duint id, duint variant = 0)
-            : id(id)
-            , variant(variant)
-        {}
-    };
-
-    /**
-     * Sets or changes one of the texture maps used by the model. This can be
-     * used to override the maps set up automatically by glInit() (which gets
-     * information from the model file).
-     *
-     * @param material    Which material to modify.
-     * @param textureMap  Texture to set.
-     * @param path        Path of the texture image.
-     */
-    void setTexturePath(MaterialId const &material, TextureMap textureMap,
-                        String const &path);
 
     /**
      * Sets the GL program used for shading the model. This program is used if the
@@ -463,12 +484,16 @@ public:
     GLProgram *currentProgram() const;
 
     /**
-     * Changes the variant used for drawing. This can also be called during
-     * a draw operation, e.g., from the pass callback.
+     * Changes the material used for drawing. This can also be called during a
+     * draw operation, e.g., from the pass callback.
      *
-     * @param index  Variant to use for drawing.
+     * This method is const because it can be called during drawing, and it
+     * doesn't change the internal GL resources of the model. It only affects
+     * which vertex buffer is selected for drawing.
+     *
+     * @param index  Material to use for drawing.
      */
-    void setVariant(int index);
+    void setMaterial(duint index) const;
 
     /**
      * Dimensions of the default pose, in model space.

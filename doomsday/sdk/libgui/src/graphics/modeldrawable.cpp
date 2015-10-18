@@ -286,8 +286,8 @@ DENG2_PIMPL(ModelDrawable)
 
             MaterialData() { zap(texIds); }
         };
-        QVector<MaterialData> materials; // indexed by material index
 
+        QVector<MaterialData> materials; // indexed by material index
         std::unique_ptr<VBuf> buffer;
     };
 
@@ -357,17 +357,29 @@ DENG2_PIMPL(ModelDrawable)
             scene = sceneData;
 
             DENG2_ASSERT(variants.isEmpty());
-            variants << new Variant; // default is at index zero
+            addMaterial(); // default is at index zero
+        }
 
-            // Prepare material information.
-            qDebug() << "materials:" << scene->mNumMaterials;
-            for(Variant *var : variants)
+        void deinitVariants()
+        {
+            qDeleteAll(variants);
+            variants.clear();
+        }
+
+        duint addMaterial()
+        {
+            DENG2_ASSERT(scene != nullptr);
+
+            // Each variant has its own GLBuffer.
+            needMakeBuffer = true;
+
+            Variant *var = new Variant;
+            for(duint i = 0; i < scene->mNumMaterials; ++i)
             {
-                for(duint i = 0; i < scene->mNumMaterials; ++i)
-                {
-                    var->materials << Variant::MaterialData();
-                }
+                var->materials << Variant::MaterialData();
             }
+            variants << var;
+            return variants.size() - 1;
         }
 
         void init(String modelSourcePath)
@@ -381,8 +393,7 @@ DENG2_PIMPL(ModelDrawable)
         void deinit()
         {
             releaseTexturesFromAtlas();
-            qDeleteAll(variants);
-            variants.clear();
+            deinitVariants();
             scene = nullptr;
         }
 
@@ -645,7 +656,7 @@ DENG2_PIMPL(ModelDrawable)
         scene = importer.GetScene();
 
         glData.initVariants(scene);
-        drawVariant = 0;
+        drawMaterial = 0;
 
         initBones();
 
@@ -1150,7 +1161,7 @@ DENG2_PIMPL(ModelDrawable)
     GLProgram *drawProgram = nullptr;
     Pass const *drawPass = nullptr;
     QBitArray passMask;
-    int drawVariant = 0;
+    int drawMaterial = 0;
     ProgramBindingFunc programCallback;
     RenderingPassFunc passCallback;
 
@@ -1278,7 +1289,7 @@ DENG2_PIMPL(ModelDrawable)
                         .apply();
                 {
                     drawProgram->beginUse();
-                    glData.variants.at(drawVariant)->buffer->draw(&ranges);
+                    glData.variants.at(drawMaterial)->buffer->draw(&ranges);
                     drawProgram->endUse();
                 }
                 GLState::pop();
@@ -1303,7 +1314,7 @@ DENG2_PIMPL(ModelDrawable)
     {
         preDraw(animation);
         setDrawProgram(program); /// @todo Rendering passes for instanced drawing. -jk
-        glData.variants.at(drawVariant)->buffer->drawInstanced(attribs);
+        glData.variants.at(drawMaterial)->buffer->drawInstanced(attribs);
         postDraw();
     }
 
@@ -1442,6 +1453,23 @@ ModelDrawable::Mapping ModelDrawable::diffuseNormalsSpecularEmission() // static
     return Mapping() << Diffuse << Normals << Specular << Emissive;
 }
 
+duint ModelDrawable::addMaterial()
+{
+    // This should only be done when the asset is not in use.
+    DENG2_ASSERT(!d->modelAsset.isReady());
+
+    return d->glData.addMaterial();
+}
+
+void ModelDrawable::resetMaterials()
+{
+    // This should only be done when the asset is not in use.
+    DENG2_ASSERT(!d->modelAsset.isReady());
+
+    d->glData.deinitVariants();
+    d->glData.initVariants(d->scene);
+}
+
 void ModelDrawable::setTextureMapping(Mapping mapsToUse)
 {
     d->glData.setTextureMapping(mapsToUse);
@@ -1536,11 +1564,11 @@ GLProgram *ModelDrawable::currentProgram() const
     return d->drawProgram;
 }
 
-void ModelDrawable::setVariant(int index)
+void ModelDrawable::setMaterial(duint index) const
 {
-    if(index >= 0 && index < d->glData.variants.size())
+    if(index < duint(d->glData.variants.size()))
     {
-        d->drawVariant = index;
+        d->drawMaterial = index;
     }
 }
 
