@@ -1,4 +1,4 @@
-/** @file masterserver.cpp Communication with the Master Server. 
+/** @file masterserver.cpp Communication with the Master Server.
  * @ingroup network
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -51,9 +51,10 @@ static String const DEFAULT_API_URL = "www.dengine.net/master.php";
 
 dd_bool masterAware = false; // cvar
 
-static QString masterUrl(const char* suffix = 0)
+static QString masterUrl(char const *suffix = 0)
 {
     String u = App::config().gets("masterServer.apiUrl", DEFAULT_API_URL);
+    if(u.isEmpty()) return u;
     if(!u.startsWith("http")) u = "http://" + u;
     if(suffix) u += suffix;
     return u;
@@ -87,6 +88,8 @@ MasterWorker::MasterWorker() : d(new Instance)
 void MasterWorker::newJob(Action action, void* data)
 {
     LOG_AS("MasterWorker");
+
+    if(masterUrl().isEmpty()) return;
 
     job_t job;
     job.act = action;
