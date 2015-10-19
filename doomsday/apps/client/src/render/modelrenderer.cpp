@@ -607,29 +607,7 @@ DENG2_PIMPL(ModelRenderer)
     {
         DENG2_ASSERT(p.auxData != nullptr);
 
-        p.model->draw(
-            p.animator,
-            p.auxData->passes.isEmpty()? nullptr : &p.auxData->passes,
-            p.animator->passMask(),
-
-            // Callback for when the program changes:
-            [&p] (GLProgram &program, ModelDrawable::ProgramBinding binding)
-            {
-                p.animator->bindUniforms(program,
-                    binding == ModelDrawable::AboutToBind? StateAnimator::Bind :
-                                                           StateAnimator::Unbind);
-            },
-
-            // Callback for each rendering pass:
-            [&p] (ModelDrawable::Pass const &pass, ModelDrawable::PassState state)
-            {
-                p.model->setMaterial(p.animator->materialForPass(pass.name));
-                p.animator->bindPassUniforms(*p.model->currentProgram(),
-                    pass.name,
-                    state == ModelDrawable::PassBegun? StateAnimator::Bind :
-                                                       StateAnimator::Unbind);
-            }
-        );
+        p.model->draw(&p.animator->appearance(), p.animator);
     }
 };
 

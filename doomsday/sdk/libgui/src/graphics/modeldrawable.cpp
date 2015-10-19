@@ -443,25 +443,25 @@ DENG2_PIMPL(ModelDrawable)
                 {
                     qDebug() << "  material #" << i << "variant:" << varIdx;
 
-                    MaterialId const matId(i, varIdx);
+                    MeshId const mesh(i, varIdx);
                     auto &mat = variants[varIdx]->materials[i];
 
                     // Load all known types of textures, falling back to defaults.
-                    loadTextureImage(matId, aiTextureType_DIFFUSE);
+                    loadTextureImage(mesh, aiTextureType_DIFFUSE);
                     fallBackToDefaultTexture(mat, Diffuse);
 
-                    loadTextureImage(matId, aiTextureType_NORMALS);
+                    loadTextureImage(mesh, aiTextureType_NORMALS);
                     if(!mat.texIds[Normals])
                     {
                         // Try a height field instead. This will be converted to a normal map.
-                        loadTextureImage(matId, aiTextureType_HEIGHT);
+                        loadTextureImage(mesh, aiTextureType_HEIGHT);
                     }
                     fallBackToDefaultTexture(mat, Normals);
 
-                    loadTextureImage(matId, aiTextureType_SPECULAR);
+                    loadTextureImage(mesh, aiTextureType_SPECULAR);
                     fallBackToDefaultTexture(mat, Specular);
 
-                    loadTextureImage(matId, aiTextureType_EMISSIVE);
+                    loadTextureImage(mesh, aiTextureType_EMISSIVE);
                     fallBackToDefaultTexture(mat, Emissive);
                 }
             }
@@ -471,16 +471,16 @@ DENG2_PIMPL(ModelDrawable)
          * Attempts to load a texture image specified in the material. Also checks if
          * an overridden custom path is provided, though.
          *
-         * @param materialId  Material index.
-         * @param type        AssImp texture type.
+         * @param mesh  Identifies the mesh whose texture is being loaded.
+         * @param type  AssImp texture type.
          */
-        void loadTextureImage(MaterialId const &matId, aiTextureType type)
+        void loadTextureImage(MeshId const &mesh, aiTextureType type)
         {
             DENG2_ASSERT(imageLoader != 0);
 
             TextureMap map = textureMapType(type);
-            aiMaterial const &material = *scene->mMaterials[matId.id];
-            auto const &materialData = variants.at(matId.variant)->materials[matId.id];
+            aiMaterial const &material = *scene->mMaterials[mesh.index];
+            auto const &materialData = variants.at(mesh.material)->materials[mesh.index];
 
             try
             {
@@ -488,7 +488,7 @@ DENG2_PIMPL(ModelDrawable)
                 if(materialData.custom.contains(map))
                 {
                     qDebug() << "loading custom path" << materialData.custom[map];
-                    return setTexture(matId, map, materialData.custom[map]);
+                    return setTexture(mesh, map, materialData.custom[map]);
                 }
             }
             catch(Error const &er)
@@ -510,7 +510,7 @@ DENG2_PIMPL(ModelDrawable)
 
                     try
                     {
-                        setTexture(matId, map, sourcePath.fileNamePath() / NativePath(texPath.C_Str()));
+                        setTexture(mesh, map, sourcePath.fileNamePath() / NativePath(texPath.C_Str()));
                         break;
                     }
                     catch(Error const &er)
@@ -522,17 +522,19 @@ DENG2_PIMPL(ModelDrawable)
             }
         }
 
-        void setTexture(MaterialId const &matId, TextureMap map, String contentPath)
+        void setTexture(MeshId const &mesh, TextureMap map, String contentPath)
         {
             if(!scene) return;
-            if(matId.variant >= duint(variants.size())) return;
-            if(matId.id >= scene->mNumMaterials) return;
+            if(mesh.material >= duint(variants.size())) return;
+            if(mesh.index >= scene->mNumMaterials) return;
             if(map == Unknown) return;
 
+            DENG2_ASSERT(scene->mNumMaterials == scene->mNumMeshes);
             DENG2_ASSERT(textureBank.atlas());
 
-            Variant &variant = *variants[matId.variant];
-            auto &materialData = variant.materials[matId.id];
+            Variant &variant = *variants[mesh.material];
+            auto &materialData = variant.materials[mesh.index];
+
             Id::Type &destId = (map == Height? materialData.texIds[Normals] :
                                                materialData.texIds[map]);
 
@@ -579,16 +581,16 @@ DENG2_PIMPL(ModelDrawable)
          * @param tex    Texture map.
          * @param path   Image file path.
          */
-        void setCustomTexturePath(MaterialId const &matId, TextureMap map, String const &path)
+        void setCustomTexturePath(MeshId const &mesh, TextureMap map, String const &path)
         {
             DENG2_ASSERT(!textureBank.atlas());
-            DENG2_ASSERT(matId.variant < duint(variants.size()));
+            DENG2_ASSERT(mesh.material < duint(variants.size()));
 
-            Variant &variant = *variants[matId.variant];
+            Variant &variant = *variants[mesh.material];
 
-            DENG2_ASSERT(matId.id < duint(variant.materials.size()));
+            DENG2_ASSERT(mesh.index < duint(variant.materials.size()));
 
-            variant.materials[matId.id].custom.insert(map, path);
+            variant.materials[mesh.index].custom.insert(map, path);
         }
     };
 
@@ -656,7 +658,6 @@ DENG2_PIMPL(ModelDrawable)
         scene = importer.GetScene();
 
         glData.initVariants(scene);
-        drawMaterial = 0;
 
         initBones();
 
@@ -1156,15 +1157,6 @@ DENG2_PIMPL(ModelDrawable)
                                                 anim.mNumPositionKeys));
     }
 
-//- Drawing -----------------------------------------------------------------------------
-
-    GLProgram *drawProgram = nullptr;
-    Pass const *drawPass = nullptr;
-    QBitArray passMask;
-    int drawMaterial = 0;
-    ProgramBindingFunc programCallback;
-    RenderingPassFunc passCallback;
-
     void updateMatricesFromAnimation(Animator const *animation) const
     {
         if(!scene->HasAnimations() || !animation) return;
@@ -1184,6 +1176,11 @@ DENG2_PIMPL(ModelDrawable)
         }
     }
 
+//- Drawing -----------------------------------------------------------------------------
+
+    GLProgram *drawProgram = nullptr;
+    Pass const *drawPass = nullptr;
+
     void preDraw(Animator const *animation)
     {
         if(glData.needMakeBuffer) makeBuffer();
@@ -1196,14 +1193,14 @@ DENG2_PIMPL(ModelDrawable)
         GLState::current().apply();
     }
 
-    void setDrawProgram(GLProgram *prog)
+    void setDrawProgram(GLProgram *prog, Appearance const *appearance = nullptr)
     {
         if(drawProgram)
         {
             drawProgram->unbind(uBoneMatrices);
-            if(programCallback)
+            if(appearance && appearance->programCallback)
             {
-                programCallback(*drawProgram, Unbound);
+                appearance->programCallback(*drawProgram, Unbound);
             }
         }
 
@@ -1211,9 +1208,9 @@ DENG2_PIMPL(ModelDrawable)
 
         if(drawProgram)
         {
-            if(programCallback)
+            if(appearance && appearance->programCallback)
             {
-                programCallback(*drawProgram, AboutToBind);
+                appearance->programCallback(*drawProgram, AboutToBind);
             }
             drawProgram->bind(uBoneMatrices);
         }
@@ -1249,25 +1246,28 @@ DENG2_PIMPL(ModelDrawable)
         }
     }
 
-    void draw(Animator const *animation, Passes const &passes)
+    void draw(Appearance const *appearance, Animator const *animation)
     {
+        Passes const *passes = appearance->drawPasses? appearance->drawPasses :
+                                                       &defaultPasses;
         preDraw(animation);
 
         try
         {
             GLBuffer::DrawRanges ranges;
-            for(int i = 0; i < passes.size(); ++i)
+            for(int i = 0; i < passes->size(); ++i)
             {
-                Pass const &pass = passes.at(i);
+                Pass const &pass = passes->at(i);
 
                 // Is this pass disabled?
-                if(!passMask.isEmpty() && !passMask.testBit(i))
+                if(appearance && !appearance->passMask.isEmpty() &&
+                                 !appearance->passMask.testBit(i))
                 {
                     continue;
                 }
 
                 drawPass = &pass;
-                setDrawProgram(pass.program? pass.program : program);
+                setDrawProgram(pass.program? pass.program : program, appearance);
                 if(!drawProgram)
                 {
                     throw ProgramError("ModelDrawable::draw",
@@ -1275,9 +1275,15 @@ DENG2_PIMPL(ModelDrawable)
                                         .arg(i).arg(pass.name));
                 }
 
-                if(passCallback)
+                if(appearance && appearance->passCallback)
                 {
-                    passCallback(pass, PassBegun);
+                    appearance->passCallback(pass, PassBegun);
+                }
+
+                duint material = 0;
+                if(appearance && appearance->passMaterial.size() >= passes->size())
+                {
+                    material = appearance->passMaterial.at(i);
                 }
 
                 ranges.clear();
@@ -1289,14 +1295,14 @@ DENG2_PIMPL(ModelDrawable)
                         .apply();
                 {
                     drawProgram->beginUse();
-                    glData.variants.at(drawMaterial)->buffer->draw(&ranges);
+                    glData.variants.at(material)->buffer->draw(&ranges);
                     drawProgram->endUse();
                 }
                 GLState::pop();
 
-                if(passCallback)
+                if(appearance && appearance->passCallback)
                 {
-                    passCallback(pass, PassEnded);
+                    appearance->passCallback(pass, PassEnded);
                 }
             }
         }
@@ -1312,9 +1318,11 @@ DENG2_PIMPL(ModelDrawable)
 
     void drawInstanced(GLBuffer const &attribs, Animator const *animation)
     {
+        /// @todo Rendering passes for instanced drawing. -jk
+
         preDraw(animation);
-        setDrawProgram(program); /// @todo Rendering passes for instanced drawing. -jk
-        glData.variants.at(drawMaterial)->buffer->drawInstanced(attribs);
+        setDrawProgram(program);
+        glData.variants.at(0)->buffer->drawInstanced(attribs);
         postDraw();
     }
 
@@ -1498,17 +1506,17 @@ int ModelDrawable::materialId(String const &name) const
     return d->findMaterial(name);
 }
 
-void ModelDrawable::setTexturePath(MaterialId const &material, TextureMap tex, String const &path)
+void ModelDrawable::setTexturePath(MeshId const &mesh, TextureMap tex, String const &path)
 {
     if(d->glData.textureBank.atlas())
     {
         // Load immediately.
-        d->glData.setTexture(material, tex, path);
+        d->glData.setTexture(mesh, tex, path);
     }
     else
     {
         // This will override what the model specifies.
-        d->glData.setCustomTexturePath(material, tex, path);
+        d->glData.setCustomTexturePath(mesh, tex, path);
     }
 }
 
@@ -1522,24 +1530,14 @@ GLProgram *ModelDrawable::program() const
     return d->program;
 }
 
-void ModelDrawable::draw(Animator const *animation,
-                         Passes const *passes,
-                         QBitArray const &passMask,
-                         ProgramBindingFunc programCallback,
-                         RenderingPassFunc passCallback) const
+void ModelDrawable::draw(Appearance const *appearance,
+                           Animator const *animation) const
 {
     const_cast<ModelDrawable *>(this)->glInit();
 
     if(isReady() && d->glData.textureBank.atlas())
     {
-        d->passMask        = passMask;
-        d->programCallback = programCallback;
-        d->passCallback    = passCallback;
-
-        d->draw(animation, passes? *passes : d->defaultPasses);
-
-        d->programCallback = ProgramBindingFunc();
-        d->passCallback    = RenderingPassFunc();
+        d->draw(appearance, animation);
     }
 }
 
@@ -1564,14 +1562,6 @@ GLProgram *ModelDrawable::currentProgram() const
     return d->drawProgram;
 }
 
-void ModelDrawable::setMaterial(duint index) const
-{
-    if(index < duint(d->glData.variants.size()))
-    {
-        d->drawMaterial = index;
-    }
-}
-
 Vector3f ModelDrawable::dimensions() const
 {
     return d->maxPoint - d->minPoint;
@@ -1580,6 +1570,16 @@ Vector3f ModelDrawable::dimensions() const
 Vector3f ModelDrawable::midPoint() const
 {
     return (d->maxPoint + d->minPoint) / 2.f;
+}
+
+int ModelDrawable::Passes::findName(String const &name) const
+{
+    for(int i = 0; i < size(); ++i)
+    {
+        if(at(i).name == name) // case sensitive
+            return i;
+    }
+    return -1;
 }
 
 } // namespace de

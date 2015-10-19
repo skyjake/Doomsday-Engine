@@ -51,21 +51,7 @@ public:
 
     de::ddouble currentTime(int index) const;
 
-    /**
-     * Returns a bit mask that specifies which rendering passes are currently
-     * enabled for this object. This should be passed to ModelDrawable::draw().
-     */
-    QBitArray passMask() const;
-
-    /**
-     * Determines the material to use during a rendering pass. These are
-     * determined by the "material" variables in the object's namespace.
-     *
-     * @param passName  Name of the rendering pass.
-     *
-     * @return Material index.
-     */
-    de::duint materialForPass(de::String const &passName) const;
+    de::ModelDrawable::Appearance const &appearance() const;
 
     enum BindOperation { Bind, Unbind };
 
