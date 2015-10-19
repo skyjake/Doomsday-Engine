@@ -51,11 +51,7 @@ public:
 
     de::ddouble currentTime(int index) const;
 
-    /**
-     * Returns a bit mask that specifies which rendering passes are currently
-     * enabled for this object. This should be passed to ModelDrawable::draw().
-     */
-    QBitArray passMask() const;
+    de::ModelDrawable::Appearance const &appearance() const;
 
     enum BindOperation { Bind, Unbind };
 
@@ -75,7 +71,8 @@ public:
      *                   named, e.g., "render.(passName).uName".
      * @param operation  Bind or unbind.
      */
-    void bindPassUniforms(de::GLProgram &program, de::String const &passName,
+    void bindPassUniforms(de::GLProgram &program,
+                          de::String const &passName,
                           BindOperation operation) const;
 
 private:

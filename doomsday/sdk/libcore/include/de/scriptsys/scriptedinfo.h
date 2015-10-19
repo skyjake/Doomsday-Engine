@@ -206,6 +206,8 @@ public:
                        bool defaultValue = false /* assume false if missing */);
 
 public:
+    static String blockType(Record const &block);
+
     static Paths allBlocksOfType(String const &blockType, Record const &root);
 
     /**
@@ -234,6 +236,9 @@ public:
 
     /// Name of a special variable where the source location of a record is stored.
     static String const VAR_SOURCE;
+
+    /// Name of a special variable where the block type is stored.
+    static String const VAR_BLOCK_TYPE;
 
 private:
     DENG2_PRIVATE(d)

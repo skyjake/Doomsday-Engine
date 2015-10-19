@@ -27,16 +27,16 @@
 
 namespace de {
 
-String const ScriptedInfo::SCRIPT      = "script";
-String const ScriptedInfo::BLOCK_GROUP = "group";
-String const ScriptedInfo::VAR_SOURCE  = "__source__";
+String const ScriptedInfo::SCRIPT         = "script";
+String const ScriptedInfo::BLOCK_GROUP    = "group";
+String const ScriptedInfo::VAR_SOURCE     = "__source__";
+String const ScriptedInfo::VAR_BLOCK_TYPE = "__type__";
 
 static String const BLOCK_NAMESPACE = "namespace";
 static String const BLOCK_SCRIPT    = ScriptedInfo::SCRIPT;
 static String const KEY_SCRIPT      = ScriptedInfo::SCRIPT;
 static String const KEY_INHERITS    = "inherits";
 static String const KEY_CONDITION   = "condition";
-static String const VAR_BLOCK_TYPE  = "__type__";
 static String const VAR_SCRIPT      = "__script%1__";
 
 DENG2_PIMPL(ScriptedInfo)
@@ -591,6 +591,11 @@ bool ScriptedInfo::isTrue(RecordAccessor const &rec, String const &name, bool de
         return isTrue(rec.get(name));
     }
     return defaultValue;
+}
+
+String ScriptedInfo::blockType(Record const &block)
+{
+    return block.gets(VAR_BLOCK_TYPE, BLOCK_GROUP).toLower();
 }
 
 bool ScriptedInfo::isFalse(RecordAccessor const &rec, String const &name, bool defaultValue)

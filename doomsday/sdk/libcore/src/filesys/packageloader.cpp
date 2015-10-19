@@ -20,6 +20,7 @@
 #include "de/FS"
 #include "de/App"
 #include "de/Version"
+#include "de/Info"
 
 #include <QMap>
 
@@ -201,6 +202,13 @@ DENG2_PIMPL(PackageLoader)
                 {
                     // Not a loadable package.
                 }
+                catch(Info::SyntaxError const &)
+                {
+                    // Not a loadable package.
+                }
+
+                /// @todo Store the errors so that the UI can show a list of
+                /// problematic packages. -jk
             }
         }
     }

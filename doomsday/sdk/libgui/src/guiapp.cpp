@@ -1,6 +1,6 @@
 /** @file guiapp.cpp  Application with GUI support.
  *
- * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -13,11 +13,12 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/GuiApp"
 #include "de/graphics/opengl.h"
+#include "de/ImageFile"
 #include <de/Log>
 
 #ifdef DENG2_QT_5_0_OR_NEWER
@@ -47,6 +48,9 @@ GuiApp::GuiApp(int &argc, char **argv)
       App(applicationFilePath(), arguments()),
       d(new Instance(this))
 {
+    static ImageFile::Interpreter intrpImageFile;
+    fileSystem().addInterpreter(intrpImageFile);
+
     // Core packages for GUI functionality.
     addInitPackage("net.dengine.stdlib.gui");
 }

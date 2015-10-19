@@ -25,12 +25,13 @@
 namespace de {
 
 /**
- * Bank of ModelDrawable instances.
+ * Bank of ModelDrawable instances. @ingroup gl
  *
- * Loads model files using background tasks, as model files may contain large amounts of
- * geometry and preprocessing operations may be involved.
+ * Loads model files using background tasks, as model files may contain large
+ * amounts of geometry and preprocessing operations may be involved.
  *
- * @ingroup gl
+ * @todo Consider refactoring so that the Data items are derived from
+ * ModelDrawable.
  */
 class LIBGUI_PUBLIC ModelBank : public Bank
 {

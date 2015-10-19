@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/LibraryFile"
@@ -36,8 +36,8 @@ LibraryFile::~LibraryFile()
 {
     DENG2_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
     audienceForDeletion().clear();
-    
-    deindex();    
+
+    deindex();
     delete _library;
 }
 
@@ -54,7 +54,7 @@ Library &LibraryFile::library()
     {
         return *_library;
     }
-    
+
     /// @todo A method for File for making a NativeFile out of any File.
     NativeFile *native = source()->maybeAs<NativeFile>();
     if(!native)
@@ -64,7 +64,7 @@ Library &LibraryFile::library()
         throw UnsupportedSourceError("LibraryFile::library", source()->description() +
             ": can only load from NativeFile");
     }
-    
+
     _library = new Library(native->nativePath());
     return *_library;
 }
@@ -124,4 +124,17 @@ bool LibraryFile::recognize(File const &file)
     }
 #endif
     return false;
+}
+
+File *LibraryFile::Interpreter::interpretFile(File *sourceData) const
+{
+    if(recognize(*sourceData))
+    {
+        LOG_RES_VERBOSE("Interpreted ") << sourceData->description()
+                                        << " as a shared library";
+
+        // It is a shared library intended for Doomsday.
+        return new LibraryFile(sourceData);
+    }
+    return nullptr;
 }

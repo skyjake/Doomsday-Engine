@@ -36,16 +36,36 @@ namespace de {
 class GLBuffer;
 
 /**
- * Drawable that is constructed out of a 3D model.
+ * Drawable that is constructed out of a 3D model file and texture map images.
  *
- * 3D model data is loaded using the Open Asset Import Library from multiple
- * different source formats.
+ * 3D model data is loaded using the Open Asset Import Library that supports
+ * multiple different source formats.
  *
  * Lifetime.
  *
- * Texture maps.
+ * @par Animation
  *
- * Animation.
+ * ModelDrawable supports skeletal animation sequences.
+ *
+ * The nested class ModelDrawable::Animator is responsible for keeping track of
+ * a model's animation state. When drawing an animated model, in addition to
+ * having a ModelDrawable instance, one needs to create a
+ * ModelDrawable::Animator and pass it to the draw() method.
+ *
+ * @par Textures and materials
+ *
+ * The model is composed of one or more meshes. Each mesh has a set of texture
+ * maps associated with it (e.g., diffuse, normals, etc.). A set of texture
+ * maps for all meshes is called a "material". ModelDrawable may have multiple
+ * materials, but only one of them is active for drawing at a time. Only one
+ * copy of each texture image is stored in the atlas even though multiple
+ * materials use it.
+ *
+ * Internally, each material corresponds to a separate static vertex buffer.
+ * The vertex coordinates in each buffer are prepared with the textures'
+ * locations on the atlas. The active material can thus be switched at any time
+ * during drawing, e.g., between rendering passes, without incurring a
+ * performance penalty.
  *
  * @todo Refactor: Split the non-Assimp specific parts into a MeshDrawable base
  * class, so it can be used with meshes generated procedurally (e.g., the map),
@@ -249,29 +269,86 @@ public:
      */
     struct LIBGUI_PUBLIC Pass
     {
-        enum Flag
-        {
-            DefaultFlags = 0
-        };
-        Q_DECLARE_FLAGS(Flags, Flag)
-
         String name;
-        Flags flags = DefaultFlags;
         QBitArray meshes; ///< One bit per model mesh.
         GLProgram *program = nullptr; ///< Shading program.
         gl::BlendFunc blendFunc { gl::SrcAlpha, gl::OneMinusSrcAlpha };
         gl::BlendOp blendOp = gl::Add;
     };
-    typedef QList<Pass> Passes;
 
-    // Audiences:
-    DENG2_DEFINE_AUDIENCE2(AboutToGLInit, void modelAboutToGLInit(ModelDrawable &))
+    struct LIBGUI_PUBLIC Passes : public QList<Pass>
+    {
+        /**
+         * Finds the pass with a given name. Performance is O(n) (i.e., suitable
+         * for non-repeated use). The lookup is done case-sensitively.
+         *
+         * @param name  Pass name.
+         *
+         * @return Index of the pass. If not found, returns -1.
+         */
+        int findName(String const &name) const;
+    };
 
     enum ProgramBinding { AboutToBind, Unbound };
     typedef std::function<void (GLProgram &, ProgramBinding)> ProgramBindingFunc;
 
     enum PassState { PassBegun, PassEnded };
     typedef std::function<void (Pass const &, PassState)> RenderingPassFunc;
+
+    /**
+     * Per-instance appearance parameters.
+     */
+    struct LIBGUI_PUBLIC Appearance
+    {
+        enum Flag { DefaultFlags = 0 };
+        Q_DECLARE_FLAGS(Flags, Flag)
+
+        Flags flags = DefaultFlags;
+
+        /**
+         * Rendering passes. If omitted, all meshes are drawn with normal
+         * alpha blending.
+         */
+        Passes const *drawPasses = nullptr;
+
+        /**
+         * Specifies the material used for each rendering pass. Size of the
+         * list must equal the number of passes. If it doesn't, the default
+         * material (0) is used during drawing.
+         *
+         * Switching the material doesn't change the internal GL resources
+         * of the model. It only determines which vertex buffer is selected
+         * for drawing the pass.
+         */
+        QList<duint> passMaterial;
+
+        /**
+         * Sets a mask that specifies which rendering passes are enabled. Each
+         * bit in the array corresponds to an element in @a drawPasses. An
+         * empty mask (size zero) means that all passes are enabled.
+         */
+        QBitArray passMask = QBitArray();
+
+        ProgramBindingFunc programCallback = ProgramBindingFunc();
+        RenderingPassFunc passCallback = RenderingPassFunc();
+    };
+
+    /**
+     * Identifies a mesh.
+     */
+    struct LIBGUI_PUBLIC MeshId
+    {
+        duint index;
+        duint material;
+
+        MeshId(duint index, duint material = 0 /*default material*/)
+            : index(index), material(material) {}
+    };
+
+    typedef QList<TextureMap> Mapping;
+
+    // Audiences:
+    DENG2_DEFINE_AUDIENCE2(AboutToGLInit, void modelAboutToGLInit(ModelDrawable &))
 
 public:
     ModelDrawable();
@@ -330,7 +407,7 @@ public:
     /**
      * Locates a material specified in the model by its name.
      *
-     * @param name  Name of the material
+     * @param name  Name of the material.
      *
      * @return Material id.
      */
@@ -352,8 +429,6 @@ public:
      */
     void unsetAtlas();
 
-    typedef QList<TextureMap> Mapping;
-
     /**
      * Sets which textures are to be passed to the model shader via the GL buffer.
      *
@@ -369,6 +444,10 @@ public:
 
     static Mapping diffuseNormalsSpecularEmission();
 
+    duint addMaterial();
+
+    void resetMaterials();
+
     /**
      * Sets the texture map that is used if no other map is provided.
      *
@@ -376,6 +455,18 @@ public:
      * @param atlasId      Identifier in the atlas.
      */
     void setDefaultTexture(TextureMap textureType, Id const &atlasId);
+
+    /**
+     * Sets or changes one of the texture maps used by a mesh. This can be
+     * used to override the maps set up automatically by glInit() (that gets
+     * information from the model file).
+     *
+     * @param mesh        Which mesh to modify.
+     * @param textureMap  Texture to set.
+     * @param path        Path of the texture image.
+     */
+    void setTexturePath(MeshId const &mesh, TextureMap textureMap,
+                        String const &path);
 
     /**
      * Prepares a loaded model for drawing by constructing all the required GL
@@ -393,28 +484,6 @@ public:
     void glDeinit();
 
     /**
-     * Sets or changes one of the texture maps used by the model. This can be
-     * used to override the maps set up automatically by glInit() (which gets
-     * information from the model file).
-     *
-     * @param materialId  Which material to modify.
-     * @param textureMap  Texture to set.
-     * @param path        Path of the texture image.
-     */
-    void setTexturePath(int materialId, TextureMap textureMap, String const &path);
-
-    /**
-     * Sets or changes one of the texture maps in an alternative material.
-     * By default, alternative maps are not in use.
-     *
-     * @param altMaterialName
-     * @param textureMap
-     * @param path
-     */
-    /*void setTexturePath(String const &altMaterialName, TextureMap textureMap,
-                        String const &path);*/
-
-    /**
      * Sets the GL program used for shading the model. This program is used if the
      * rendering passes don't specify other shaders.
      *
@@ -427,21 +496,15 @@ public:
     /**
      * Draws the model.
      *
+     * @param appearance  Appearance parameters.
      * @param animation   Animation state.
-     * @param drawPasses  Rendering passes. If omitted, all meshes are drawn
-     *                    with normal alpha blending.
-     * @param passMask    Sets a mask that specifies which rendering passes are
-     *                    enabled. Each bit in the array corresponds to an
-     *                    element in @a drawPasses. An empty mask (size zero)
-     *                    means that all passes are enabled.
-     * @param programCallback
-     * @param passCallback
      */
-    void draw(Animator const *animation = nullptr,
-              Passes const *drawPasses = nullptr,
-              QBitArray const &passMask = QBitArray(),
-              ProgramBindingFunc programCallback = ProgramBindingFunc(),
-              RenderingPassFunc passCallback = RenderingPassFunc()) const;
+    void draw(Appearance const *appearance = nullptr,
+              Animator const *animation = nullptr) const;
+
+    void draw(Animator const *animation) const {
+        draw(nullptr, animation);
+    }
 
     void drawInstanced(GLBuffer const &instanceAttribs,
                        Animator const *animation = nullptr) const;
@@ -472,7 +535,7 @@ private:
     DENG2_PRIVATE(d)
 };
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(ModelDrawable::Pass::Flags)
+Q_DECLARE_OPERATORS_FOR_FLAGS(ModelDrawable::Appearance::Flags)
 Q_DECLARE_OPERATORS_FOR_FLAGS(ModelDrawable::Animator::OngoingSequence::Flags)
 
 } // namespace de

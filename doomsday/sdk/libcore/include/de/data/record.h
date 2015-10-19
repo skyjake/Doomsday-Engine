@@ -402,6 +402,10 @@ public:
      */
     Subrecords subrecords(std::function<bool (Record const &)> filter) const;
 
+    LoopResult forSubrecords(std::function<LoopResult (String const &, Record &)> func);
+
+    LoopResult forSubrecords(std::function<LoopResult (String const &, Record const &)> func) const;
+
     /**
      * Creates a text representation of the record. Each variable name is
      * prefixed with @a prefix.

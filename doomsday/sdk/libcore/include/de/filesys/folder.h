@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_FOLDER_H
@@ -101,7 +101,7 @@ public:
     virtual ~Folder();
 
     String describe() const;
-    
+
     String describeFeeds() const;
 
     /**
@@ -247,14 +247,21 @@ public:
      */
     template <typename Type>
     Type &locate(String const &path) const {
-        Type *found = tryLocate<Type>(path);
+        File *found = tryLocateFile(path);
         if(!found) {
-            /// @throw NotFoundError  Path didn't exist, or the located file had
-            /// an incompatible type.
-            throw NotFoundError("Folder::locate", "\"" + path +"\" was not found or had incompatible type "
+            /// @throw NotFoundError  Path didn't exist.
+            throw NotFoundError("Folder::locate", "\"" + path + "\" was not found "
                                 "(in " + description() + ")");
         }
-        return *found;
+        if(Type *casted = dynamic_cast<Type *>(found)) {
+            return *casted;
+        }
+        /// @throw NotFoundError  Found file could not be cast to the
+        /// requested type.
+        throw NotFoundError("Folder::locate",
+                            QString("%1 has incompatible type; wanted %2")
+                                .arg(found->description())
+                                .arg(DENG2_TYPE_NAME(Type)));
     }
 
     /**

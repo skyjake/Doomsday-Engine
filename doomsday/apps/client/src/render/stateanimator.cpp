@@ -32,17 +32,21 @@ static String const DEF_PROBABILITY("prob");
 static String const DEF_ROOT_NODE  ("node");
 static String const DEF_LOOPING    ("looping");
 static String const DEF_PRIORITY   ("priority");
+static String const DEF_RENDER     ("render");
 static String const DEF_PASS       ("pass");
 static String const DEF_VARIABLE   ("variable");
 static String const DEF_WRAP       ("wrap");
 static String const DEF_ENABLED    ("enabled");
+static String const DEF_MATERIAL   ("material");
 
-static String const VAR_SELF   ("self");
-static String const VAR_ID     ("__id__");
-static String const VAR_ASSET  ("asset");
-static String const VAR_ENABLED("enabled");
+static String const VAR_SELF    ("self");
+static String const VAR_ID      ("__id__");
+static String const VAR_ASSET   ("asset");
+static String const VAR_ENABLED ("enabled");
+static String const VAR_MATERIAL("material");
 
 static String const PASS_GLOBAL("");
+static String const DEFAULT_MATERIAL("default");
 
 static int const ANIM_DEFAULT_PRIORITY = 1;
 
@@ -114,9 +118,11 @@ DENG2_PIMPL(StateAnimator)
     ModelRenderer::AuxiliaryData const *auxData;
     QHash<String, Sequence> pendingAnimForNode;
     String currentStateName;
-    Record names; ///< Local context for scripts.
-    QBitArray passMask;
-    QHash<String, int> passIndexLookup;
+    Record names; ///< Local context for scripts, i.e., per-object model state.
+
+    ModelDrawable::Appearance appearance;
+    QHash<String, int> indexForPassName;
+    QHash<Variable *, int> passForMaterialVariable;
 
     /**
      * Animatable variable bound to a GL uniform. The value can have 1...4 float
@@ -207,25 +213,55 @@ DENG2_PIMPL(StateAnimator)
         names.addText(VAR_ID, id).setReadOnly();
         names.add(VAR_ASSET).set(new RecordValue(App::asset(id).accessedRecord())).setReadOnly();
 
-        // VAR_SELF should point to the thing's namespace, or player's for psprites
+        /// @todo VAR_SELF should point to the thing's namespace, or player's
+        /// namespace for psprites. -jk
 
-        initShaderVariables();
+        initVariables();
+
+        // Set up the appearance.
+        appearance.programCallback = [this] (GLProgram &program, ModelDrawable::ProgramBinding binding)
+        {
+            self.bindUniforms(program,
+                binding == ModelDrawable::AboutToBind? StateAnimator::Bind :
+                                                       StateAnimator::Unbind);
+        };
+        appearance.passCallback = [this] (ModelDrawable::Pass const &pass, ModelDrawable::PassState state)
+        {
+            self.bindPassUniforms(*self.model().currentProgram(),
+                pass.name,
+                state == ModelDrawable::PassBegun? StateAnimator::Bind :
+                                                   StateAnimator::Unbind);
+        };
     }
 
     ~Instance()
     {
-        deinitShaderVariables();
+        deinitVariables();
     }
 
-    void initShaderVariables()
+    void initVariables()
     {
-        int passIndex = 0;
-        passIndexLookup.clear();
+        int const passCount = auxData->passes.size();
 
-        auto const &def = names[VAR_ASSET].valueAsRecord();
-        if(def.has("render"))
+        // Clear lookups affected by the variables.
+        indexForPassName.clear();
+        appearance.passMaterial.clear();
+        if(!passCount)
         {
-            Record const &renderBlock = def.subrecord("render");
+            // Material to be used with the default pass.
+            appearance.passMaterial << 0;
+        }
+        else
+        {
+            for(int i = 0; i < passCount; ++i) appearance.passMaterial << 0;
+        }
+        appearance.passMask.resize(passCount);
+
+        int passIndex = 0;
+        auto const &def = names[VAR_ASSET].valueAsRecord();
+        if(def.has(DEF_RENDER))
+        {
+            Record const &renderBlock = def.subrecord(DEF_RENDER);
 
             initVariablesForPass(renderBlock);
 
@@ -234,7 +270,7 @@ DENG2_PIMPL(StateAnimator)
             auto passes = ScriptedInfo::subrecordsOfType(DEF_PASS, renderBlock);
             DENG2_FOR_EACH_CONST(Record::Subrecords, i, passes)
             {
-                passIndexLookup[i.key()] = passIndex++;
+                indexForPassName[i.key()] = passIndex++;
 
                 Record &passRec = names.addRecord(i.key());
                 passRec.addBoolean(VAR_ENABLED,
@@ -245,18 +281,28 @@ DENG2_PIMPL(StateAnimator)
             }
         }
 
-        DENG2_ASSERT(passIndex == auxData->passes.size());
-        DENG2_ASSERT(passIndexLookup.size() == auxData->passes.size());
+        DENG2_ASSERT(passIndex == passCount);
+        DENG2_ASSERT(indexForPassName.size() == passCount);
 
-        passMask.resize(auxData->passes.size());
         updatePassMask();
+        updatePassMaterials();
     }
 
     void initVariablesForPass(Record const &block, String const &passName = PASS_GLOBAL)
     {
         static char const *componentNames[] = { "x", "y", "z", "w" };
 
-        // Look up the variable declarations.
+        // Each pass has a variable for selecting the material.
+        // The default value is optionally specified in the definition.
+        Variable &passMaterialVar = names.addText(passName.concatenateMember(VAR_MATERIAL),
+                                                  block.gets(DEF_MATERIAL, DEFAULT_MATERIAL));
+        passMaterialVar.audienceForChange() += this;
+        passForMaterialVariable.insert(&passMaterialVar, auxData->passes.findName(passName));
+
+        /// @todo Should observe if the variable above is deleted unexpectedly. -jk
+
+        // Create the animated variables to be used with the shader based
+        // on the pass definitions.
         auto vars = ScriptedInfo::subrecordsOfType(DEF_VARIABLE, block);
         DENG2_FOR_EACH_CONST(Record::Subrecords, i, vars)
         {
@@ -330,6 +376,8 @@ DENG2_PIMPL(StateAnimator)
             // Uniform to be passed to the shader.
             var->uniform = new GLUniform(i.key().toLatin1(), uniformType);
 
+            // Compose a lookup for quickly finding the variables of each pass
+            // (by pass name).
             passVars[passName][i.key()] = var.release();
         }
     }
@@ -341,19 +389,80 @@ DENG2_PIMPL(StateAnimator)
                 .setReadOnly();
     }
 
-    void deinitShaderVariables()
+    void deinitVariables()
     {
         for(RenderVars const &vars : passVars.values())
         {
             qDeleteAll(vars.values());
         }
         passVars.clear();
+        appearance.passMaterial.clear();
     }
 
-    void variableValueChanged(Variable &, Value const &)
+    Variable const &materialVariableForPass(duint passIndex) const
     {
-        // This is called when one of the "(pass).enabled" variables is modified.
-        updatePassMask();
+        if(!auxData->passes.isEmpty())
+        {
+            String const varName = auxData->passes.at(passIndex).name.concatenateMember(VAR_MATERIAL);
+            if(names.has(varName))
+            {
+                return names[varName];
+            }
+        }
+        return names[VAR_MATERIAL];
+    }
+
+    void updatePassMaterials()
+    {
+        for(int i = 0; i < appearance.passMaterial.size(); ++i)
+        {
+            appearance.passMaterial[i] = materialForUserProvidedName(
+                        materialVariableForPass(i).value().asText());
+        }
+    }
+
+    void variableValueChanged(Variable &var, Value const &newValue)
+    {
+        if(var.name() == VAR_MATERIAL)
+        {
+            // Update the corresponding pass material.
+            int passIndex = passForMaterialVariable[&var];
+            if(passIndex < 0)
+            {
+                updatePassMaterials();
+            }
+            else
+            {
+                appearance.passMaterial[passIndex] = materialForUserProvidedName(newValue.asText());
+            }
+        }
+        else
+        {
+            DENG2_ASSERT(var.name() == VAR_ENABLED);
+
+            // This is called when one of the "(pass).enabled" variables is modified.
+            updatePassMask();
+        }
+    }
+
+    /**
+     * Determines the material to use during a rendering pass. These are
+     * determined by the "material" variables in the object's namespace.
+     *
+     * @param materialName  Name of the material to use.
+     *
+     * @return Material index.
+     */
+    duint materialForUserProvidedName(String const &materialName) const
+    {
+       auto const matIndex = auxData->materialIndexForName.constFind(materialName);
+       if(matIndex != auxData->materialIndexForName.constEnd())
+       {
+           return matIndex.value();
+       }
+       LOG_RES_WARNING("Asset \"%s\" does not have a material called '%s'")
+               << names.gets(VAR_ID) << materialName;
+       return 0; // default material
     }
 
     void updatePassMask()
@@ -362,11 +471,11 @@ DENG2_PIMPL(StateAnimator)
             return sub.getb(DEF_ENABLED, false);
         });
 
-        passMask.fill(false);
+        appearance.passMask.fill(false);
         for(String name : enabledPasses.keys())
         {
-            DENG2_ASSERT(passIndexLookup.contains(name));
-            passMask.setBit(passIndexLookup[name], true);
+            DENG2_ASSERT(indexForPassName.contains(name));
+            appearance.passMask.setBit(indexForPassName[name], true);
         }
     }
 
@@ -509,8 +618,8 @@ void StateAnimator::advanceTime(TimeDelta const &elapsed)
 
         if(anim.looping == Sequence::Looping)
         {
-            // When a looping animation has completed a loop, it may still trigger
-            // a variant.
+            // When a looping animation has completed a loop, it may still
+            // trigger a variant.
             if(anim.atEnd())
             {
                 retrigger = true;
@@ -565,9 +674,9 @@ ddouble StateAnimator::currentTime(int index) const
     return ModelDrawable::Animator::currentTime(index); // + frameTimePos;
 }
 
-QBitArray StateAnimator::passMask() const
+ModelDrawable::Appearance const &StateAnimator::appearance() const
 {
-    return d->passMask;
+    return d->appearance;
 }
 
 void StateAnimator::bindUniforms(GLProgram &program, BindOperation operation) const
