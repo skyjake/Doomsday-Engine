@@ -311,7 +311,7 @@ DENG2_PIMPL(ClientApp)
 
     void initSettings()
     {
-        typedef SettingsRegister SReg; // convenience
+        using SReg = SettingsRegister; // convenience
 
         // Log filter and alert settings.
         for(int i = LogEntry::FirstDomainBit; i <= LogEntry::LastDomainBit; ++i)
@@ -326,10 +326,8 @@ DENG2_PIMPL(ClientApp)
         /// @todo These belong in their respective subsystems.
 
         networkSettings
-                .define(SReg::StringCVar, "net-master-address", "www.dengine.net")
-                .define(SReg::StringCVar, "net-master-path",    "/master.php")
-                .define(SReg::IntCVar,    "net-master-port",    0)
-                .define(SReg::IntCVar,    "net-dev",            0);
+                .define(SReg::ConfigVariable, "masterServer.apiUrl", "www.dengine.net/master.php")
+                .define(SReg::IntCVar,        "net-dev",             0);
 
         audioSettings
                 .define(SReg::IntCVar,    "sound-volume",        255 * 2/3)
