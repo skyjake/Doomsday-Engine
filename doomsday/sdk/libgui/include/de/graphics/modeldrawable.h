@@ -274,6 +274,10 @@ public:
         GLProgram *program = nullptr; ///< Shading program.
         gl::BlendFunc blendFunc { gl::SrcAlpha, gl::OneMinusSrcAlpha };
         gl::BlendOp blendOp = gl::Add;
+
+        bool operator == (Pass const &other) const {
+            return name == other.name; // Passes are uniquely identified by names.                   
+        }
     };
 
     struct LIBGUI_PUBLIC Passes : public QList<Pass>
@@ -539,5 +543,7 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(ModelDrawable::Appearance::Flags)
 Q_DECLARE_OPERATORS_FOR_FLAGS(ModelDrawable::Animator::OngoingSequence::Flags)
 
 } // namespace de
+
+LIBGUI_PUBLIC uint qHash(de::ModelDrawable::Pass const &pass);
 
 #endif // LIBGUI_MODELDRAWABLE_H

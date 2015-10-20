@@ -1807,3 +1807,8 @@ ModelDrawable::Animator::OngoingSequence::make() // static
 }
 
 } // namespace de
+
+uint qHash(de::ModelDrawable::Pass const &pass)
+{
+    return qHash(pass.name);
+}
