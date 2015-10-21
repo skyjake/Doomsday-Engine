@@ -223,8 +223,6 @@ static ddouble ticksToSeconds(ddouble ticks, aiAnimation const &anim)
 /// Bone used for vertices that have no bones.
 static String const DUMMY_BONE_NAME = "__deng_dummy-bone__";
 
-static String const DEFAULT_VARIANT;
-
 DENG2_PIMPL(ModelDrawable)
 {
     typedef GLBufferT<ModelVertex> VBuf;
@@ -277,20 +275,6 @@ DENG2_PIMPL(ModelDrawable)
         Matrix4f offset;
     };
 
-    struct Variant
-    {
-        struct MaterialData
-        {
-            Id::Type texIds[MAX_TEXTURES];
-            QHash<TextureMap, String> custom;
-
-            MaterialData() { zap(texIds); }
-        };
-
-        QVector<MaterialData> materials; // indexed by material index
-        std::unique_ptr<VBuf> buffer;
-    };
-
     Asset modelAsset;
     String sourcePath;
     Assimp::Importer importer;
@@ -312,6 +296,28 @@ DENG2_PIMPL(ModelDrawable)
      */
     struct GLData
     {
+        /**
+         * Each material has its own VBO with a particular, fixed set of texture
+         * coordinates.
+         */
+        struct Material
+        {
+            struct MeshTextures
+            {
+                Id::Type texIds[MAX_TEXTURES];
+                QHash<TextureMap, String> customPaths;
+
+                MeshTextures() { zap(texIds); }
+            };
+
+            QVector<MeshTextures> meshTextures; // indexed by mesh index
+            std::unique_ptr<VBuf> buffer;
+        };
+
+        /**
+         * Source information for a texture used in one or more of the meshes.
+         * Depends on the ModelDrawable's IImageLoader.
+         */
         struct TextureSource : public TextureBank::ImageSource
         {
             GLData *d;
@@ -326,15 +332,15 @@ DENG2_PIMPL(ModelDrawable)
             }
         };
 
-        Id::Type defaultTexIds[MAX_TEXTURES];
-        TextureMap textureOrder[MAX_TEXTURES];
-
+        Id::Type defaultTexIds[MAX_TEXTURES];  ///< Used if no other texture is provided.
+        TextureMap textureOrder[MAX_TEXTURES]; ///< Order of textures for vertex buffer texcoords.
         IImageLoader *imageLoader { &defaultImageLoader };
-        TextureBank textureBank;
-        QList<Variant *> variants; // owned
 
+        TextureBank textureBank;
+        QList<Material *> materials; // owned
         bool needMakeBuffer { false };
-        String sourcePath;
+
+        String sourcePath; ///< Location of the model file (imported with Assimp).
         aiScene const *scene { nullptr };
 
         GLData()
@@ -349,40 +355,38 @@ DENG2_PIMPL(ModelDrawable)
 
         ~GLData()
         {
-            qDeleteAll(variants);
+            qDeleteAll(materials);
         }
 
-        void initVariants(aiScene const *sceneData)
+        void initMaterials()
         {
-            scene = sceneData;
-
-            DENG2_ASSERT(variants.isEmpty());
+            DENG2_ASSERT(materials.isEmpty());
             addMaterial(); // default is at index zero
         }
 
-        void deinitVariants()
+        void deinitMaterials()
         {
-            qDeleteAll(variants);
-            variants.clear();
+            qDeleteAll(materials);
+            materials.clear();
         }
 
         duint addMaterial()
         {
             DENG2_ASSERT(scene != nullptr);
 
-            // Each variant has its own GLBuffer.
+            // Each material has its own GLBuffer.
             needMakeBuffer = true;
 
-            Variant *var = new Variant;
-            for(duint i = 0; i < scene->mNumMaterials; ++i)
+            Material *material = new Material;
+            for(duint i = 0; i < scene->mNumMeshes; ++i)
             {
-                var->materials << Variant::MaterialData();
+                material->meshTextures << Material::MeshTextures();
             }
-            variants << var;
-            return variants.size() - 1;
+            materials << material;
+            return materials.size() - 1;
         }
 
-        void init(String modelSourcePath)
+        void glInit(String modelSourcePath)
         {
             sourcePath = modelSourcePath;
 
@@ -390,11 +394,11 @@ DENG2_PIMPL(ModelDrawable)
             initTextures();
         }
 
-        void deinit()
+        void glDeinit()
         {
             releaseTexturesFromAtlas();
-            deinitVariants();
-            scene = nullptr;
+            //deinitMaterials();
+            //scene = nullptr;
         }
 
         void releaseTexture(Id const &id)
@@ -412,57 +416,58 @@ DENG2_PIMPL(ModelDrawable)
         void releaseTexturesFromAtlas()
         {
             textureBank.unloadAll(Bank::ImmediatelyInCurrentThread);
-            for(Variant *var : variants)
+            for(Material *mat : materials)
             {
-                for(auto &materialData : var->materials)
+                for(auto &mesh : mat->meshTextures)
                 {
-                    zap(materialData.texIds);
+                    zap(mesh.texIds);
                 }
             }
             textureBank.clear();
         }
 
-        void fallBackToDefaultTexture(Variant::MaterialData &materialData,
+        void fallBackToDefaultTexture(Material::MeshTextures &mesh,
                                       TextureMap map) const
         {
-            if(!materialData.texIds[map])
+            if(!mesh.texIds[map])
             {
-                materialData.texIds[map] = defaultTexIds[map];
+                mesh.texIds[map] = defaultTexIds[map];
             }
         }
 
         /**
-         * Load all the textures of the model. The textures are allocated into the
-         * atlas provided to the model.
+         * Load all the textures of the model, for all materials. The textures
+         * are allocated into the atlas provided to the model.
+         *
+         * Only a single copy of each texture image is kept in the atlas even
+         * if the same image is beig used in many meshes.
          */
         void initTextures()
         {
-            for(duint varIdx = 0; varIdx < duint(variants.size()); ++varIdx)
+            for(duint matIdx = 0; matIdx < duint(materials.size()); ++matIdx)
             {
-                for(duint i = 0; i < scene->mNumMaterials; ++i)
+                for(duint i = 0; i < scene->mNumMeshes; ++i)
                 {
-                    qDebug() << "  material #" << i << "variant:" << varIdx;
-
-                    MeshId const mesh(i, varIdx);
-                    auto &mat = variants[varIdx]->materials[i];
+                    MeshId const mesh(i, matIdx);
+                    auto &textures = materials[matIdx]->meshTextures[i];
 
                     // Load all known types of textures, falling back to defaults.
                     loadTextureImage(mesh, aiTextureType_DIFFUSE);
-                    fallBackToDefaultTexture(mat, Diffuse);
+                    fallBackToDefaultTexture(textures, Diffuse);
 
                     loadTextureImage(mesh, aiTextureType_NORMALS);
-                    if(!mat.texIds[Normals])
+                    if(!textures.texIds[Normals])
                     {
                         // Try a height field instead. This will be converted to a normal map.
                         loadTextureImage(mesh, aiTextureType_HEIGHT);
                     }
-                    fallBackToDefaultTexture(mat, Normals);
+                    fallBackToDefaultTexture(textures, Normals);
 
                     loadTextureImage(mesh, aiTextureType_SPECULAR);
-                    fallBackToDefaultTexture(mat, Specular);
+                    fallBackToDefaultTexture(textures, Specular);
 
                     loadTextureImage(mesh, aiTextureType_EMISSIVE);
-                    fallBackToDefaultTexture(mat, Emissive);
+                    fallBackToDefaultTexture(textures, Emissive);
                 }
             }
         }
@@ -478,17 +483,19 @@ DENG2_PIMPL(ModelDrawable)
         {
             DENG2_ASSERT(imageLoader != 0);
 
-            TextureMap map = textureMapType(type);
-            aiMaterial const &material = *scene->mMaterials[mesh.index];
-            auto const &materialData = variants.at(mesh.material)->materials[mesh.index];
+            aiMesh     const &sceneMesh     = *scene->mMeshes[mesh.index];
+            aiMaterial const &sceneMaterial = *scene->mMaterials[sceneMesh.mMaterialIndex];
+
+            auto const &meshTextures = materials.at(mesh.material)->meshTextures[mesh.index];
+            TextureMap const map = textureMapType(type);
 
             try
             {
                 // Custom override path?
-                if(materialData.custom.contains(map))
+                if(meshTextures.customPaths.contains(map))
                 {
-                    qDebug() << "loading custom path" << materialData.custom[map];
-                    return setTexture(mesh, map, materialData.custom[map]);
+                    qDebug() << "loading custom path" << meshTextures.customPaths[map];
+                    return setTexture(mesh, map, meshTextures.customPaths[map]);
                 }
             }
             catch(Error const &er)
@@ -497,27 +504,22 @@ DENG2_PIMPL(ModelDrawable)
                         << textureMapToText(textureMapType(type)) << er.asText();
             }
 
-            qDebug() << "    type:" << type
-                     << "count:" << material.GetTextureCount(type);
-
             // Load the texture based on the information specified in the model's materials.
             aiString texPath;
-            for(duint s = 0; s < material.GetTextureCount(type); ++s)
+            for(duint s = 0; s < sceneMaterial.GetTextureCount(type); ++s)
             {
-                if(material.GetTexture(type, s, &texPath) == AI_SUCCESS)
+                try
                 {
-                    qDebug() << "    texture #" << s << texPath.C_Str();
-
-                    try
+                    if(sceneMaterial.GetTexture(type, s, &texPath) == AI_SUCCESS)
                     {
                         setTexture(mesh, map, sourcePath.fileNamePath() / NativePath(texPath.C_Str()));
                         break;
                     }
-                    catch(Error const &er)
-                    {
-                        LOG_RES_WARNING("Failed to load model %s texture: %s")
-                                << textureMapToText(textureMapType(type)) << er.asText();
-                    }
+                }
+                catch(Error const &er)
+                {
+                    LOG_RES_WARNING("Failed to load model %s texture: %s")
+                            << textureMapToText(textureMapType(type)) << er.asText();
                 }
             }
         }
@@ -525,18 +527,17 @@ DENG2_PIMPL(ModelDrawable)
         void setTexture(MeshId const &mesh, TextureMap map, String contentPath)
         {
             if(!scene) return;
-            if(mesh.material >= duint(variants.size())) return;
-            if(mesh.index >= scene->mNumMaterials) return;
-            if(map == Unknown) return;
+            if(map == Unknown) return; // Ignore unmapped textures.
+            if(mesh.material >= duint(materials.size())) return;
+            if(mesh.index >= scene->mNumMeshes) return;
 
-            DENG2_ASSERT(scene->mNumMaterials == scene->mNumMeshes);
             DENG2_ASSERT(textureBank.atlas());
 
-            Variant &variant = *variants[mesh.material];
-            auto &materialData = variant.materials[mesh.index];
+            Material &material = *materials[mesh.material];
+            auto &meshTextures = material.meshTextures[mesh.index];
 
-            Id::Type &destId = (map == Height? materialData.texIds[Normals] :
-                                               materialData.texIds[map]);
+            Id::Type &destId = (map == Height? meshTextures.texIds[Normals] :
+                                               meshTextures.texIds[map]);
 
             /// @todo Release a previously loaded texture, if it isn't used
             /// in any material. -jk
@@ -555,6 +556,11 @@ DENG2_PIMPL(ModelDrawable)
                 textureBank.add(path, new TextureSource(contentPath, this));
                 textureBank.load(path);
             }
+
+            qDebug() << "material:" << mesh.material
+                     << "mesh:" << mesh.index
+                     << textureMapToText(map)
+                     << "file:" << contentPath;
 
             destId = textureBank.texture(path);
 
@@ -583,14 +589,11 @@ DENG2_PIMPL(ModelDrawable)
          */
         void setCustomTexturePath(MeshId const &mesh, TextureMap map, String const &path)
         {
-            DENG2_ASSERT(!textureBank.atlas());
-            DENG2_ASSERT(mesh.material < duint(variants.size()));
+            DENG2_ASSERT(!textureBank.atlas()); // in-use textures cannot be replaced on the fly
+            DENG2_ASSERT(mesh.index < scene->mNumMeshes);
+            DENG2_ASSERT(mesh.material < duint(materials.size()));
 
-            Variant &variant = *variants[mesh.material];
-
-            DENG2_ASSERT(mesh.index < duint(variant.materials.size()));
-
-            variant.materials[mesh.index].custom.insert(map, path);
+            materials[mesh.material]->meshTextures[mesh.index].customPaths.insert(map, path);
         }
     };
 
@@ -638,7 +641,7 @@ DENG2_PIMPL(ModelDrawable)
         }
         importer.SetPropertyString(AI_CONFIG_IMPORT_MD5_ANIM_SEQUENCE_NAMES, anims.toStdString());
 
-        scene = 0;
+        scene = glData.scene = nullptr;
         sourcePath = file.path();
 
         // Read the model file and apply suitable postprocessing to clean up the data.
@@ -655,9 +658,7 @@ DENG2_PIMPL(ModelDrawable)
                             .arg(file.description()).arg(importer.GetErrorString()));
         }
 
-        scene = importer.GetScene();
-
-        glData.initVariants(scene);
+        scene = glData.scene = importer.GetScene();
 
         initBones();
 
@@ -696,6 +697,8 @@ DENG2_PIMPL(ModelDrawable)
         nodeNameToPtr.insert("", scene->mRootNode);
         buildNodeLookup(*scene->mRootNode);
 
+        glData.initMaterials();
+
         // Default rendering passes to use if none specified.
         Pass pass;
         pass.meshes.resize(scene->mNumMeshes);
@@ -725,7 +728,7 @@ DENG2_PIMPL(ModelDrawable)
         sourcePath.clear();
         defaultPasses.clear();
         importer.FreeScene();
-        scene = 0;
+        scene = glData.scene = nullptr;
     }
 
     void glInit()
@@ -747,7 +750,7 @@ DENG2_PIMPL(ModelDrawable)
             i->modelAboutToGLInit(self);
         }
 
-        glData.init(sourcePath);
+        glData.glInit(sourcePath);
 
         // Initialize all meshes in the scene into a single GL buffer.
         makeBuffer();
@@ -758,7 +761,7 @@ DENG2_PIMPL(ModelDrawable)
 
     void glDeinit()
     {
-        glData.deinit();
+        glData.glDeinit();
         clearBones();
 
         modelAsset.setState(NotReady);
@@ -909,18 +912,18 @@ DENG2_PIMPL(ModelDrawable)
     void makeBuffer()
     {
         glData.needMakeBuffer = false;
-        for(Variant *var : glData.variants)
+        for(GLData::Material *material : glData.materials)
         {
-            makeBuffer(*var);
+            makeBuffer(*material);
         }
     }
 
     /**
      * Allocates and fills in the GL buffer containing vertex information.
      *
-     * @param variant  Variant whose vertex buffer to create.
+     * @param material  Material whose vertex buffer to create.
      */
-    void makeBuffer(Variant &variant)
+    void makeBuffer(GLData::Material &material)
     {
         VBuf::Vertices verts;
         VBuf::Indices indx;
@@ -959,31 +962,26 @@ DENG2_PIMPL(ModelDrawable)
                 v.texBounds[2] = Vector4f(0, 0, 1, 1);
                 v.texBounds[3] = Vector4f(0, 0, 1, 1);
 
-                /// @todo Add support for multiple UVs, not just mapping the
-                /// same ones to different bounds. -jk
+                auto const &meshTextures = material.meshTextures[m];
 
-                if(scene->HasMaterials())
+                for(int t = 0; t < MAX_TEXTURES; ++t)
                 {
-                    auto const &material = variant.materials[mesh.mMaterialIndex];
-                    for(int t = 0; t < MAX_TEXTURES; ++t)
-                    {
-                        // Apply the specified order for the textures.
-                        TextureMap map = glData.textureOrder[t];
-                        if(map < 0 || map >= MAX_TEXTURES) continue;
+                    // Apply the specified order for the textures.
+                    TextureMap map = glData.textureOrder[t];
+                    if(map < 0 || map >= MAX_TEXTURES) continue;
 
-                        if(material.texIds[map])
-                        {
-                            v.texBounds[t] = glData.textureBank.atlas()->imageRectf(material.texIds[map]).xywh();
-                        }
-                        else if(glData.defaultTexIds[map])
-                        {
-                            v.texBounds[t] = glData.textureBank.atlas()->imageRectf(glData.defaultTexIds[map]).xywh();
-                        }
-                        else
-                        {
-                            // Not included in material.
-                            v.texBounds[t] = Vector4f();
-                        }
+                    if(meshTextures.texIds[map])
+                    {
+                        v.texBounds[t] = glData.textureBank.atlas()->imageRectf(meshTextures.texIds[map]).xywh();
+                    }
+                    else if(glData.defaultTexIds[map])
+                    {
+                        v.texBounds[t] = glData.textureBank.atlas()->imageRectf(glData.defaultTexIds[map]).xywh();
+                    }
+                    else
+                    {
+                        // Not included in material.
+                        v.texBounds[t] = Vector4f();
                     }
                 }
 
@@ -1013,10 +1011,10 @@ DENG2_PIMPL(ModelDrawable)
             base += mesh.mNumVertices;
         }
 
-        VBuf *buf = new VBuf;
+        std::unique_ptr<VBuf> buf(new VBuf);
         buf->setVertices(verts, gl::Static);
         buf->setIndices(gl::Triangles, indx, gl::Static);
-        variant.buffer.reset(buf);
+        material.buffer = std::move(buf);
     }
 
 //- Animation ---------------------------------------------------------------------------
@@ -1295,7 +1293,7 @@ DENG2_PIMPL(ModelDrawable)
                         .apply();
                 {
                     drawProgram->beginUse();
-                    glData.variants.at(material)->buffer->draw(&ranges);
+                    glData.materials.at(material)->buffer->draw(&ranges);
                     drawProgram->endUse();
                 }
                 GLState::pop();
@@ -1322,7 +1320,7 @@ DENG2_PIMPL(ModelDrawable)
 
         preDraw(animation);
         setDrawProgram(program);
-        glData.variants.at(0)->buffer->drawInstanced(attribs);
+        glData.materials.at(0)->buffer->drawInstanced(attribs);
         postDraw();
     }
 
@@ -1474,8 +1472,8 @@ void ModelDrawable::resetMaterials()
     // This should only be done when the asset is not in use.
     DENG2_ASSERT(!d->modelAsset.isReady());
 
-    d->glData.deinitVariants();
-    d->glData.initVariants(d->scene);
+    d->glData.deinitMaterials();
+    d->glData.initMaterials();
 }
 
 void ModelDrawable::setTextureMapping(Mapping mapsToUse)

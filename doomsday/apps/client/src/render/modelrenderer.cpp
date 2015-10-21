@@ -53,8 +53,8 @@ static String const DEF_BLENDFUNC   ("blendFunc");
 static String const DEF_BLENDOP     ("blendOp");
 static String const DEF_TIMELINE    ("timeline");
 
-static String const DEFAULT_SHADER  ("model.skeletal.normal_specular_emission");
-static String const DEFAULT_MATERIAL("default");
+static String const SHADER_DEFAULT  ("model.skeletal.normal_specular_emission");
+static String const MATERIAL_DEFAULT("default");
 
 DENG2_PIMPL(ModelRenderer)
 , DENG2_OBSERVES(filesys::AssetObserver, Availability)
@@ -110,7 +110,7 @@ DENG2_PIMPL(ModelRenderer)
     {
         // The default shader is used whenever a model does not specifically
         // request another one.
-        loadProgram(DEFAULT_SHADER);
+        loadProgram(SHADER_DEFAULT);
 
         atlas.reset(AtlasTexture::newWithKdTreeAllocator(
                     Atlas::DefaultFlags,
@@ -144,7 +144,7 @@ DENG2_PIMPL(ModelRenderer)
         bank.unloadAll(Bank::ImmediatelyInCurrentThread);
 
         atlas.reset();
-        unloadProgram(*programs[DEFAULT_SHADER]);
+        unloadProgram(*programs[SHADER_DEFAULT]);
     }
 
     void assetAvailabilityChanged(String const &identifier, filesys::AssetObserver::Event event)
@@ -360,7 +360,7 @@ DENG2_PIMPL(ModelRenderer)
         aux->autoscaleToThingHeight = !ScriptedInfo::isFalse(asset, DEF_AUTOSCALE, false);
 
         // Custom texture maps and additional materials.
-        aux->materialIndexForName.insert(DEFAULT_MATERIAL, 0);
+        aux->materialIndexForName.insert(MATERIAL_DEFAULT, 0);
         if(asset.has(DEF_MATERIAL))
         {
             asset.subrecord(DEF_MATERIAL).forSubrecords(
@@ -415,7 +415,7 @@ DENG2_PIMPL(ModelRenderer)
         }
 
         ModelDrawable::Mapping textureMapping;
-        String modelShader = DEFAULT_SHADER;
+        String modelShader = SHADER_DEFAULT;
 
         // Rendering passes.
         if(asset.has(DEF_RENDER))
@@ -505,18 +505,18 @@ DENG2_PIMPL(ModelRenderer)
             materialIndex
         };
 
-        setupMaterialTexture(model, mesh, matDef, "diffuseMap",  ModelDrawable::Diffuse);
-        setupMaterialTexture(model, mesh, matDef, "normalMap",   ModelDrawable::Normals);
-        setupMaterialTexture(model, mesh, matDef, "heightMap",   ModelDrawable::Height);
-        setupMaterialTexture(model, mesh, matDef, "specularMap", ModelDrawable::Specular);
-        setupMaterialTexture(model, mesh, matDef, "emissiveMap", ModelDrawable::Emissive);
+        setupMaterialTexture(model, mesh, matDef, QStringLiteral("diffuseMap"),  ModelDrawable::Diffuse);
+        setupMaterialTexture(model, mesh, matDef, QStringLiteral("normalMap"),   ModelDrawable::Normals);
+        setupMaterialTexture(model, mesh, matDef, QStringLiteral("heightMap"),   ModelDrawable::Height);
+        setupMaterialTexture(model, mesh, matDef, QStringLiteral("specularMap"), ModelDrawable::Specular);
+        setupMaterialTexture(model, mesh, matDef, QStringLiteral("emissiveMap"), ModelDrawable::Emissive);
     }
 
     void setupMaterialTexture(ModelDrawable &model,
-                               ModelDrawable::MeshId const &mesh,
-                               Record const &matDef,
-                               String const &textureName,
-                               ModelDrawable::TextureMap map)
+                              ModelDrawable::MeshId const &mesh,
+                              Record const &matDef,
+                              String const &textureName,
+                              ModelDrawable::TextureMap map)
     {
         if(matDef.has(textureName))
         {
