@@ -703,7 +703,7 @@ DENG2_PIMPL(ModelDrawable)
         Pass pass;
         pass.meshes.resize(scene->mNumMeshes);
         pass.meshes.fill(true);
-        defaultPasses.append(pass);
+        defaultPasses << pass;
     }
 
     void buildNodeLookup(aiNode const &node)

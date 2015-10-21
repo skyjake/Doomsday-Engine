@@ -219,7 +219,10 @@ DENG2_PIMPL(StateAnimator)
         initVariables();
 
         // Set up the appearance.
-        appearance.drawPasses = &auxData->passes;
+        if(!auxData->passes.isEmpty())
+        {
+            appearance.drawPasses = &auxData->passes;
+        }
         appearance.programCallback = [this] (GLProgram &program, ModelDrawable::ProgramBinding binding)
         {
             self.bindUniforms(program,
