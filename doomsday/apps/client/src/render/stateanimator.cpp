@@ -260,6 +260,10 @@ DENG2_PIMPL(StateAnimator)
             for(int i = 0; i < passCount; ++i) appearance.passMaterial << 0;
         }
         appearance.passMask.resize(passCount);
+        
+        // The main material variable should always exist. The "render" definition
+        // may override this default value.
+        names.addText(VAR_MATERIAL, "default");
 
         int passIndex = 0;
         auto const &def = names[VAR_ASSET].valueAsRecord();
