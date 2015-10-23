@@ -109,18 +109,29 @@ DENG2_PIMPL(ClientMobjThinkerData)
             // Prepare the animation state of the model.
             auto loaded = modelBank().modelAndData<ModelRenderer::AuxiliaryData>(modelId());
             ModelDrawable &model = *loaded.first;
-            model.audienceForDeletion() += this;
-            animator.reset(new StateAnimator(modelId(), model));
-            animator->setOwnerNamespace(self.info());
-
-            modelAuxData = loaded.second;
-
-            // Apply possible scaling operations on the model.
-            modelMatrix = modelAuxData->transformation;
-            if(modelAuxData->autoscaleToThingHeight)
+            try
             {
-                Vector3f const dims = modelMatrix * model.dimensions();
-                modelMatrix = Matrix4f::scale(self.mobj()->height / dims.y * 1.2f /*aspect correct*/) * modelMatrix;
+                model.audienceForDeletion() += this;
+                
+                animator.reset(new StateAnimator(modelId(), model));
+                animator->setOwnerNamespace(self.info());
+
+                modelAuxData = loaded.second;
+
+                // Apply possible scaling operations on the model.
+                modelMatrix = modelAuxData->transformation;
+                if(modelAuxData->autoscaleToThingHeight)
+                {
+                    Vector3f const dims = modelMatrix * model.dimensions();
+                    modelMatrix = Matrix4f::scale(self.mobj()->height / dims.y * 1.2f /*aspect correct*/) * modelMatrix;
+                }
+            }
+            catch(Error const &er)
+            {
+                model.audienceForDeletion() -= this;
+                
+                LOG_RES_ERROR("Failed to set up asset '%s' for map object %i: %s")
+                    << modelId() << self.mobj()->thinker.id << er.asText();
             }
         }
     }
