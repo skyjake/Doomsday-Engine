@@ -555,11 +555,10 @@ DENG2_PIMPL(ModelDrawable)
 
             Path const path(contentPath);
 
-            // If this image is unknown, load it now.
+            // If this image is unknown, add it now to the bank.
             if(!textureBank.has(path))
             {
                 textureBank.add(path, new TextureSource(contentPath, this));
-                textureBank.load(path);
             }
 
             qDebug() << "material:" << mesh.material
