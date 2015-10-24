@@ -98,7 +98,7 @@ enum AudioEnvironmentId
 /**
  * Defines the properties of an audio environment.
  */
-struct AudioEnvironment
+struct AudioEnvironmentDef
 {
     char const name[9];  ///< Symbolic type name.
     int volumeMul;
@@ -210,7 +210,7 @@ char const *Def_AudioEnvironmentName(AudioEnvironmentId id);
 /**
  * Lookup the identified audio environment.
  */
-AudioEnvironment const &Def_AudioEnvironment(AudioEnvironmentId id);
+AudioEnvironmentDef const &Def_AudioEnvironment(AudioEnvironmentId id);
 
 /**
  * Lookup the audio environment associated with material @a uri. If no environment

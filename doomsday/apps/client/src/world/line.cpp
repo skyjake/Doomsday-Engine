@@ -756,7 +756,7 @@ static void addMissingMaterial(LineSide &side, dint section)
         if(hedge->hasFace() && hedge->face().hasMapElement())
         {
             SectorCluster &cluster = hedge->face().mapElementAs<ConvexSubspace>().cluster();
-            cluster.markReverbDirty();
+            cluster.markAudioEnvironmentDirty();
             cluster.markVisPlanesDirty();
         }
     }

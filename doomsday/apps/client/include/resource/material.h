@@ -140,11 +140,11 @@ public:
     AudioEnvironmentId audioEnvironment() const;
 
     /**
-     * Change the attributed audio environment for the material to @a newEnvironment.
+     * Change the attributed audio environment for the material to @a environmentId.
      */
-    void setAudioEnvironment(AudioEnvironmentId newEnvironment);
+    void setAudioEnvironment(AudioEnvironmentId environmentId);
 
-public:  // Layers --------------------------------------------------------------------
+public:  //- Layers ---------------------------------------------------------------------
 
     /// The referenced layer does not exist. @ingroup errors
     DENG2_ERROR(MissingLayerError);
@@ -255,7 +255,8 @@ public:  // Layers -------------------------------------------------------------
     void clearAllLayers();
 
 #ifdef __CLIENT__
-public:  // Decorations ---------------------------------------------------------------
+
+public:  //- Decorations ----------------------------------------------------------------
 
     /// The referenced decoration does not exist. @ingroup errors
     DENG2_ERROR(MissingDecorationError);
@@ -407,7 +408,7 @@ public:  // Decorations --------------------------------------------------------
      */
     void clearAllDecorations();
 
-public:  // Animators -----------------------------------------------------------------
+public:  //- Animators ------------------------------------------------------------------
 
     /**
      * Returns the total number of MaterialAnimators for the material.

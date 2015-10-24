@@ -412,9 +412,6 @@ enum {
     NUM_REVERB_DATA
 };
 
-/// Environmental audio characteristics. @ingroup world
-typedef float AudioEnvironmentFactors[NUM_REVERB_DATA];
-
 //------------------------------------------------------------------------
 //
 // Mobjs

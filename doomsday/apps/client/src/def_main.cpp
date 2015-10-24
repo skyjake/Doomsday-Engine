@@ -76,7 +76,7 @@ static bool defsInited;
 static mobjinfo_t *gettingFor;
 
 /// Hardcoded AudioEnvironment configurations (@todo make customizable).
-static AudioEnvironment audioEnv[1 + NUM_AUDIO_ENVIRONMENTS] = {
+static AudioEnvironmentDef audioEnvDefs[1 + NUM_AUDIO_ENVIRONMENTS] = {
     { "",          0,       0,      0   },
     { "Metal",     255,     255,    25  },
     { "Rock",      200,     160,    100 },
@@ -149,13 +149,13 @@ void Def_Destroy()
 char const *Def_AudioEnvironmentName(AudioEnvironmentId id)
 {
     DENG2_ASSERT(id >= AE_NONE && id < NUM_AUDIO_ENVIRONMENTS);
-    return ::audioEnv[1 + dint( id )].name;
+    return ::audioEnvDefs[1 + dint( id )].name;
 }
 
-AudioEnvironment const &Def_AudioEnvironment(AudioEnvironmentId id)
+AudioEnvironmentDef const &Def_AudioEnvironment(AudioEnvironmentId id)
 {
     DENG2_ASSERT(id >= AE_NONE && id < NUM_AUDIO_ENVIRONMENTS);
-    return ::audioEnv[1 + dint( id )];
+    return ::audioEnvDefs[1 + dint( id )];
 }
 
 AudioEnvironmentId Def_AudioEnvironmentId(de::Uri const *uri)
@@ -164,18 +164,18 @@ AudioEnvironmentId Def_AudioEnvironmentId(de::Uri const *uri)
     {
         for(dint i = 0; i < ::defs.textureEnv.size(); ++i)
         {
-            ded_tenviron_t const *env = &::defs.textureEnv[i];
-            for(dint k = 0; k < env->materials.size(); ++k)
+            ded_tenviron_t const &texEnv = ::defs.textureEnv[i];
+            for(dint k = 0; k < texEnv.materials.size(); ++k)
             {
-                de::Uri *ref = env->materials[k].uri;
+                de::Uri *ref = texEnv.materials[k].uri;
                 if(!ref || *ref != *uri) continue;
 
                 // Is this a known environment?
                 for(dint m = 0; m < NUM_AUDIO_ENVIRONMENTS; ++m)
                 {
-                    AudioEnvironment const &envInfo = Def_AudioEnvironment(AudioEnvironmentId(m));
-                    if(!qstricmp(env->id, envInfo.name))
-                        return AudioEnvironmentId(m);
+                    auto const aenvId = AudioEnvironmentId( m );
+                    if(!qstricmp(texEnv.id, Def_AudioEnvironment(aenvId).name))
+                        return aenvId;
                 }
                 return AE_NONE;
             }
