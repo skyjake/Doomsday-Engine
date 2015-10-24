@@ -35,3 +35,5 @@ option (DENG_ENABLE_COUNTED_TRACING
 if (DENG_ENABLE_COUNTED_TRACING)
     add_definitions (-DDENG_USE_COUNTED_TRACING)
 endif ()
+
+option (DENG_ENABLE_EAX "(DirectSound | OpenAL) Enable/disable EAX (2.0 or later)" ON)
