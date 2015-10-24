@@ -1534,7 +1534,11 @@ DENG2_PIMPL(Map)
     }
 
 #endif  // __CLIENT__
+
+    DENG2_PIMPL_AUDIENCE(MapObjectBspLeafChange)
 };
+
+DENG2_AUDIENCE_METHOD(Map, MapObjectBspLeafChange)
 
 Map::Map(res::MapManifest *manifest)
     : world::Map(manifest)
@@ -2656,7 +2660,15 @@ void Map::link(mobj_t &mob, dint flags)
         d->unlinkMobjFromSectors(mob);
         bspLeafAtOrigin.sectorPtr()->link(&mob);
     }
-    mob._bspLeaf = &bspLeafAtOrigin;
+
+    if(mob._bspLeaf != &bspLeafAtOrigin)
+    {
+        mob._bspLeaf = &bspLeafAtOrigin;
+
+        // Notify interested parties.
+        /// @todo Ideally this notification would come from the map-object itself. -ds
+        DENG2_FOR_AUDIENCE2(MapObjectBspLeafChange, i) i->mapObjectBspLeafChanged(mob);
+    }
 
     // Link into blockmap?
     if(flags & MLF_BLOCKMAP)

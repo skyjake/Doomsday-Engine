@@ -21,20 +21,9 @@
 #ifndef WORLD_MAP_H
 #define WORLD_MAP_H
 
-#include <functional>
-#include <QList>
-#include <QHash>
-#include <QSet>
-#include <doomsday/world/map.h>
-#include <doomsday/uri.h>
-#include <de/BinaryTree>
-#include <de/Observers>
-#include <de/Vector>
-
-#include "Mesh"
-
 #include "BspNode"
 #include "Line"
+#include "Mesh"
 #include "Polyobj"
 
 #ifdef __CLIENT__
@@ -49,6 +38,16 @@
 #  include "Lumobj"
 #  include "render/skydrawable.h"
 #endif
+
+#include <doomsday/world/map.h>
+#include <doomsday/uri.h>
+#include <de/BinaryTree>
+#include <de/Observers>
+#include <de/Vector>
+#include <functional>
+#include <QList>
+#include <QHash>
+#include <QSet>
 
 class BspLeaf;
 class ConvexSubspace;
@@ -391,6 +390,10 @@ public:  // Lines & Line-Sides -------------------------------------------------
     static dint toSideIndex(dint lineIndex, dint side);
 
 public:  // Map-objects -----------------------------------------------------------
+
+    /// Notified whenever the BspLeaf at the origin of linked map-object changes.
+    /// @todo This notification would ideally come from the MapObject itself. -ds
+    DENG2_DEFINE_AUDIENCE2(MapObjectBspLeafChange,void mapObjectBspLeafChanged(struct mobj_s &))
 
     LoopResult forAllMobjsTouchingLine(Line &line, std::function<LoopResult (struct mobj_s &)> func) const;
 
