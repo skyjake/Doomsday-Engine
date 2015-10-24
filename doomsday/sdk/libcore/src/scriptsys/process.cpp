@@ -187,15 +187,7 @@ void Process::run(Script const &script)
     d->run(script.firstStatement());
 
     // Set up the automatic variables.
-    Record &ns = globals();
-    if(ns.has("__file__"))
-    {
-        ns["__file__"].set(TextValue(script.path()));
-    }
-    else
-    {
-        ns.add(new Variable("__file__", new TextValue(script.path()), Variable::AllowText));
-    }
+    globals().set(Record::VAR_FILE, script.path());
 }
 
 void Process::suspend(bool suspended)

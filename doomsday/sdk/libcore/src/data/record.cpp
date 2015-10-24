@@ -42,7 +42,8 @@ namespace de {
 /// excerpt.
 int const SUBRECORD_CONTENT_EXCERPT_THRESHOLD = 100; // lines
 
-String const Record::VAR_SUPER       = "__super__";
+String const Record::VAR_SUPER = "__super__";
+String const Record::VAR_FILE  = "__file__";
 
 /**
  * Each record is given a unique identifier, so that serialized record
@@ -598,11 +599,13 @@ LoopResult Record::forSubrecords(std::function<LoopResult (String const &, Recor
 
 String Record::asText(String const &prefix, List *lines) const
 {
+    /*
     // If this is a module, don't print out the entire contents.
-    if(!gets("__file__", "").isEmpty())
+    /// @todo Should only apply to actual modules. -jk
+    if(!gets(VAR_FILE, "").isEmpty())
     {
-        return QString("(Record imported from \"%1\")").arg(gets("__file__"));
-    }
+        return QString("(Record imported from \"%1\")").arg(gets(VAR_FILE));
+    }*/
 
     // Recursive calls to collect all variables in the record.
     if(lines)

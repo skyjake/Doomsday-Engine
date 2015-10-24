@@ -22,6 +22,8 @@
 
 #include "../String"
 #include "../NativePath"
+#include "../SourceLineTable"
+
 #include <QStringList>
 #include <QHash>
 
@@ -89,9 +91,8 @@ public:
         BlockElement *parent() const;
 
         void setSourceLocation(String const &sourcePath, int line);
-        String sourcePath() const;
-        int lineNumber() const;
         String sourceLocation() const;
+        duint32 sourceLineId() const;
 
         Type type() const;
         bool isKey() const { return type() == Key; }
@@ -387,6 +388,9 @@ public:
      * false, the key was not found and @a value is not changed.
      */
     bool findValueForKey(String const &key, String &value) const;
+
+    static String sourceLocation(duint32 lineId);
+    static SourceLineTable const &sourceLineTable();
 
 private:
     DENG2_PRIVATE(d)

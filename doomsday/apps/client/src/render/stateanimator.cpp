@@ -329,7 +329,7 @@ DENG2_PIMPL(StateAnimator)
                 default:
                     throw DefinitionError("StateAnimator::initVariables",
                                           QString("%1: Invalid initial value size (%2) for render.variable")
-                                          .arg(valueDef.gets(ScriptedInfo::VAR_SOURCE))
+                                          .arg(ScriptedInfo::sourceLocation(valueDef))
                                           .arg(array->size()));
 
                 case 2:

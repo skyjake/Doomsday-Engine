@@ -318,7 +318,7 @@ DENG2_PIMPL(ModelRenderer)
                     throw TextureMappingError("ModelRenderer::composeTextureMappings",
                                               QString("Texture mapping <%1> is incompatible with shader %2")
                                                   .arg(list.join(", "))
-                                                  .arg(shaderDef.gets(ScriptedInfo::VAR_SOURCE)));
+                                                  .arg(ScriptedInfo::sourceLocation(shaderDef)));
                 }
             }
         }

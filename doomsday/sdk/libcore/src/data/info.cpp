@@ -21,8 +21,9 @@
 #include "de/ScriptLex"
 #include "de/Log"
 #include "de/LogBuffer"
-#include "de/Zeroed"
 #include "de/App"
+#include "de/SourceLineTable"
+
 #include <QFile>
 
 namespace de {
@@ -32,6 +33,8 @@ static QString const WHITESPACE_OR_COMMENT = " \t\r\n#";
 static QString const TOKEN_BREAKING_CHARS = "#:=$(){}<>,\"" + WHITESPACE;
 static QString const INCLUDE_TOKEN = "@include";
 static QString const SCRIPT_TOKEN = "script";
+
+static SourceLineTable sourceLineTable;
 
 DENG2_PIMPL(Info)
 {
@@ -634,9 +637,8 @@ DENG2_PIMPL_NOREF(Info::Element)
 {
     Type type;
     String name;
-    Zeroed<BlockElement *> parent;
-    String sourcePath;
-    Zeroed<int> lineNumber;
+    BlockElement *parent = nullptr;
+    SourceLineTable::LineId sourceLine = 0;
 };
 
 Info::Element::Element(Type type, String const &name)
@@ -661,23 +663,17 @@ Info::BlockElement *Info::Element::parent() const
 
 void Info::Element::setSourceLocation(String const &sourcePath, int line)
 {
-    d->sourcePath = sourcePath;
-    d->lineNumber = line;
-}
-
-String Info::Element::sourcePath() const
-{
-    return d->sourcePath;
-}
-
-int Info::Element::lineNumber() const
-{
-    return d->lineNumber;
+    d->sourceLine = de::sourceLineTable.lineId(sourcePath, line);
 }
 
 String Info::Element::sourceLocation() const
 {
-    return String("%1:%2").arg(d->sourcePath).arg(d->lineNumber);
+    return de::sourceLineTable.sourceLocation(d->sourceLine);
+}
+
+duint32 Info::Element::sourceLineId() const
+{
+    return d->sourceLine;
 }
 
 Info::Element::Type Info::Element::type() const
@@ -881,6 +877,16 @@ bool Info::findValueForKey(String const &key, String &value) const
         return true;
     }
     return false;
+}
+
+String Info::sourceLocation(duint32 lineId) // static
+{
+    return de::sourceLineTable.sourceLocation(lineId);
+}
+
+SourceLineTable const &Info::sourceLineTable() // static
+{
+    return de::sourceLineTable;
 }
 
 } // namespace de

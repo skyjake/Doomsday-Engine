@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/NameExpression"
@@ -181,7 +181,7 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
     // If a new variable/record is required and one is in scope, we cannot continue.
     if(flags().testFlag(NotInScope) && variable)
     {
-        throw AlreadyExistsError("NameExpression::evaluate", 
+        throw AlreadyExistsError("NameExpression::evaluate",
             "Identifier '" + d->identifier + "' already exists");
     }
 
@@ -238,7 +238,7 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
     if(flags() & Import)
     {
         Record *record = &App::scriptSystem().importModule(d->identifier,
-            evaluator.process().globals()["__file__"].value().asText());
+            evaluator.process().globals()[Record::VAR_FILE].value().asText());
 
         // Overwrite any existing member with this identifier.
         spaces.front()->add(variable = new Variable(d->identifier));
@@ -256,7 +256,7 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
 
         return new RecordValue(record);
     }
-    
+
     if(variable)
     {
         // Variables can be referred to by reference or value.
@@ -273,7 +273,7 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
             return variable->value().duplicateAsReference();
         }
     }
-    
+
     throw NotFoundError("NameExpression::evaluate", "Identifier '" + d->identifier +
                         "' does not exist");
 }
@@ -293,7 +293,7 @@ void NameExpression::operator << (Reader &from)
     from >> id;
     if(id != NAME)
     {
-        /// @throw DeserializationError The identifier that species the type of the 
+        /// @throw DeserializationError The identifier that species the type of the
         /// serialized expression was invalid.
         throw DeserializationError("NameExpression::operator <<", "Invalid ID");
     }

@@ -46,6 +46,11 @@ NumberValue::NumberValue(bool initialBoolean)
     : _value(initialBoolean? True : False), _semantic(Boolean)
 {}
 
+void NumberValue::setSemanticHints(SemanticHints hints)
+{
+    _semantic = hints;
+}
+
 Value *NumberValue::duplicate() const
 {
     return new NumberValue(_value, _semantic);

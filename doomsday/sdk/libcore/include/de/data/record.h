@@ -70,6 +70,9 @@ public:
     /// Name of the special variable that specifies super records.
     static String const VAR_SUPER;
 
+    /// Name of the special variable that identifies the source file.
+    static String const VAR_FILE;
+
     typedef QMap<String, Variable *> Members;
     typedef QMap<String, Record *> Subrecords;
     typedef std::pair<String, String> KeyValue;
