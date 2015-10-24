@@ -894,6 +894,13 @@ Bank::IData &Bank::data(DotPath const &path) const
     item.wait();
 
     TimeDelta const waitTime = requestedAt.since();
+
+    item.lock();
+    if(!item.data.get())
+    {
+        throw LoadError(QLatin1String(d->nameForLog) + "::data", "Failed to load \"" + path + "\"");
+    }
+
     if(waitTime > 0.0)
     {
         LOG_RES_VERBOSE("\"%s\" loaded (waited %.3f seconds)") << path << waitTime;
@@ -903,11 +910,6 @@ Bank::IData &Bank::data(DotPath const &path) const
         LOG_RES_VERBOSE("\"%s\" loaded") << path;
     }
 
-    item.lock();
-    if(!item.data.get())
-    {
-        throw LoadError(QLatin1String(d->nameForLog) + "::data", "Failed to load \"" + path + "\"");
-    }
     return *item.data;
 }
 
