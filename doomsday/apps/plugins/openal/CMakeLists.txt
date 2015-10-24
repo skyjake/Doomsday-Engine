@@ -8,6 +8,12 @@ include (../PluginConfig.cmake)
 
 find_package (OpenAL QUIET)
 
+if (DENG_ENABLE_EAX)
+    if (WIN32)
+        find_package (EAX)
+    endif ()
+endif()
+
 if (OPENAL_FOUND)
     # Check if the headers are in a plain folder.
     set (CMAKE_REQUIRED_INCLUDES ${OPENAL_INCLUDE_DIR})
@@ -24,6 +30,10 @@ if (OPENAL_FOUND)
     file (GLOB SOURCES src/*.cpp include/*.h)
     deng_add_plugin (audio_openal ${SOURCES})
     target_link_libraries (audio_openal PRIVATE ${OPENAL_LIBRARY})
+    if (TARGET EAX2)
+        add_definitions (-DHAVE_EAX)
+        target_link_libraries (audio_openal PRIVATE EAX2)
+    endif ()
 
     if (WIN32)
         find_program (OPENAL_DLL OpenAL32.dll)

@@ -42,34 +42,27 @@
 #  include <AL/al.h>
 #  include <AL/alc.h>
 #endif
+#ifdef HAVE_EAX
+#  include <eax.h>
+#endif
 
+#include "doomsday.h"
 #include "api_audiod.h"
 #include "api_audiod_sfx.h"
-#include "doomsday.h"
 
-#include <de/c_wrapper.h>
-#include <de/memoryzone.h>
+#include <de/App>
+#include <de/Error>
+#include <de/Log>
+#include <QStringList>
+#include <QTextStream>
 
+#include <de/memoryzone.h>  /// @todo remove me
 #include <cstdio>
-#include <cassert>
 #include <iostream>
 #include <cstring>
 #include <cmath>
 
-DENG_DECLARE_API(Con);
-
-#define SRC(buf) ( (ALuint) PTR2INT(buf->ptr3D) )
-#define BUF(buf) ( (ALuint) PTR2INT(buf->ptr)   )
-
-//enum { VX, VY, VZ };
-
-#ifdef WIN32
-ALenum(*EAXGet) (struct _GUID const *propertySetID, ALuint prop, ALuint source, ALvoid *value, ALuint size);
-ALenum(*EAXSet) (struct _GUID const *propertySetID, ALuint prop, ALuint source, ALvoid *value, ALuint size);
-#endif
-
 // Doomsday expects symbols to be exported without mangling.
-
 extern "C" {
 
 int DS_Init(void);
@@ -91,56 +84,123 @@ void DS_SFX_Listener(int prop, float value);
 void DS_SFX_Listenerv(int prop, float *values);
 int DS_SFX_Getv(int prop, void *ptr);
 
-} // extern "C"
+}  // extern "C"
 
-#ifdef WIN32
-// EAX 2.0 GUIDs
-struct _GUID DSPROPSETID_EAX20_ListenerProperties = {
-    0x306a6a8, 0xb224, 0x11d2, {0x99, 0xe5, 0x0, 0x0, 0xe8, 0xd8, 0xc7, 0x22}
-};
-struct _GUID DSPROPSETID_EAX20_BufferProperties = {
-    0x306a6a7, 0xb224, 0x11d2, {0x99, 0xe5, 0x0, 0x0, 0xe8, 0xd8, 0xc7, 0x22}
-};
+using namespace de;
+
+#define SRC(buf) ( (ALuint) PTR2INT(buf->ptr3D) )
+#define BUF(buf) ( (ALuint) PTR2INT(buf->ptr)   )
+
+static bool initOk;
+static bool eaxAvailable;
+
+#ifdef HAVE_EAX
+static bool eaxDisabled;
+
+static EAXGet alEAXGet;
+static EAXSet alEAXSet;
 #endif
 
-static dd_bool initOk;
-static dd_bool hasEAX;
-static float unitsPerMeter = 1;
-static float headYaw, headPitch;  ///< In radians.
+static dfloat headYaw, headPitch;  ///< In radians.
+static dfloat unitsPerMeter;
+
 static ALCdevice *device;
 static ALCcontext *context;
 
-#ifdef DENG_DSOPENAL_DEBUG
-#  define DSOPENAL_TRACE(args)  std::cerr << "[dsOpenAL] " << args << std::endl;
-#else
-#  define DSOPENAL_TRACE(args)
+static ALenum ec;
+
+static String alErrorToText(ALenum errorCode, String const &file = "", dint line = -1)
+{
+    if(errorCode == AL_NO_ERROR)
+    {
+        DENG2_ASSERT(!"This is not an error code...");
+        return "";
+    }
+    auto text = String("(0x%1)").arg(errorCode, 0, 16) + " " + alGetString(errorCode);
+    if(!file.isEmpty())
+    {
+        text += " at " + file + ", line " + String::number(line);
+    }
+    return text;
+}
+
+#ifdef DENG2_DEBUG
+#define alErrorToText(errorcode) alErrorToText((errorcode), __FILE__, __LINE__)
 #endif
 
-#define DSOPENAL_ERRCHECK(errorcode) \
-    error(errorcode, __FILE__, __LINE__)
-
-static int error(ALenum errorCode, char const *file, int line)
+static void logAvailableDevices()
 {
-    if(errorCode == AL_NO_ERROR) return false;
-    std::cerr << "[dsOpenAL] Error at " << file << ", line " << line
-              << ": (" << (int)errorCode << ") " << (char const *)alGetString(errorCode);
-    return true;
+    if(!alcIsExtensionPresent(nullptr, "ALC_ENUMERATION_EXT"))
+        return;
+
+    // Extract the unique device names from the encoded device specifier list.
+    // Device specifiers end with a single @c NULL. List is terminated with double @c NULL.
+    QStringList allDeviceNames;
+    for(auto *devices = (char const *)alcGetString(nullptr, ALC_DEVICE_SPECIFIER);
+        (*devices); devices += qstrlen(devices) + 1)
+    {
+        auto const deviceName = String(devices);
+        if(!deviceName.isEmpty())
+        {
+            allDeviceNames << deviceName;
+        }
+    }
+    //allDeviceNames.removeDuplicates();
+    if(allDeviceNames.isEmpty())
+        return;
+
+    auto const defaultDeviceName = String((char const *)alcGetString(nullptr, ALC_DEFAULT_DEVICE_SPECIFIER));
+
+    // Summarize the available devices.
+    LOG_AUDIO_MSG("OpenAL Devices Available (%i):") << allDeviceNames.count();
+    dint idx = 0;
+    for(String const deviceName : allDeviceNames)
+    {
+        ALCdevice *device = alcOpenDevice(deviceName.toLatin1().constData());
+        if(!device) continue;
+
+        // Create context so we can query more specific information.
+        dint verMajor = 1, verMinor = 0;
+        if(ALCcontext *context = alcCreateContext(device, nullptr))
+        {
+            alcMakeContextCurrent(context);
+
+            alcGetIntegerv(device, ALC_MAJOR_VERSION, sizeof(verMajor), &verMajor);
+            alcGetIntegerv(device, ALC_MINOR_VERSION, sizeof(verMinor), &verMinor);
+
+            alcMakeContextCurrent(nullptr);
+            alcDestroyContext(context);
+        }
+
+        // We're done with this device (for now at least).
+        alcCloseDevice(device);
+
+        LOG_AUDIO_MSG("%i: %s%s (API %i.%i)")
+            << (idx++) << deviceName
+            << (deviceName.compareWithoutCase(defaultDeviceName) == 0 ? " (default)" : "")
+            << verMajor << verMinor;
+    }
 }
 
 static void loadExtensions()
 {
-#ifdef WIN32
+#ifdef HAVE_EAX
     // Check for EAX 2.0.
-    ::hasEAX = alIsExtensionPresent((ALchar *) "EAX2.0");
-    if(::hasEAX)
+    ::eaxAvailable = alIsExtensionPresent((ALchar *)"EAX2.0") == AL_TRUE;
+    if(::eaxAvailable)
     {
-        ::EAXGet = (ALenum (*)(struct _GUID const *, ALuint, ALuint, ALvoid *, ALuint))alGetProcAddress("EAXGet");
-        ::EAXSet = (ALenum (*)(struct _GUID const *, ALuint, ALuint, ALvoid *, ALuint))alGetProcAddress("EAXSet");
-        if(!::EAXGet || !::EAXSet)
-            ::hasEAX = false;
+        ::alEAXGet = de::function_cast<EAXGet>(alGetProcAddress((ALchar *)"EAXGet"));
+        ::alEAXSet = de::function_cast<EAXSet>(alGetProcAddress((ALchar *)"EAXSet"));
+        if(!::alEAXGet || !::alEAXSet)
+            ::eaxAvailable = false;
+
+        /*if(::eaxAvailable)
+        {
+            ::eaxUseXRAM = alIsExtensionPresent((ALchar *)"EAX-RAM") == AL_TRUE;
+        }*/
     }
 #else
-    ::hasEAX = false;
+    ::eaxAvailable = false;
 #endif
 }
 
@@ -149,31 +209,112 @@ int DS_Init()
     // Already been here?
     if(::initOk) return true;
 
-    // Open the default playback device.
-    ::device = alcOpenDevice(nullptr);
-    if(!::device)
+    LOG_AUDIO_VERBOSE("Initializing OpenAL...");
+    ::device  = nullptr;
+    ::context = nullptr;
+
+    ::unitsPerMeter = 1;
+    ::headYaw       = 0;
+    ::headPitch     = 0;
+
+    ::eaxAvailable = false;
+#ifdef HAVE_EAX
+    ::eaxDisabled  = DENG2_APP->commandLine().has("-noeax");
+    ::alEAXGet     = nullptr;
+    ::alEAXSet     = nullptr;
+#endif
+
+    // Lets enumerate the available devices to provide a useful summary for the user.
+    logAvailableDevices();
+
+    // Lookup the default playback device.
+    auto defaultDeviceName = String((char const *)alcGetString(nullptr, ALC_DEFAULT_DEVICE_SPECIFIER));
+
+    // The -oaldevice option can be used to override the default.
+    /// @todo Store this persistently in Config. -ds
+    if(auto preferredDevice = DENG2_APP->commandLine().check("-oaldevice", 1))
     {
-        App_Log(DE2_AUDIO_ERROR, "OpenAL init failed (using default playback device)");
+        String const otherName = preferredDevice.params.at(0).strip();
+        if(otherName.compareWithoutCase(defaultDeviceName))
+            defaultDeviceName.prepend(otherName + ';');
+    }
+
+    // Try to open the preferred playback device.
+    for(String const deviceName : defaultDeviceName.split(';'))
+    {
+        if(deviceName.isEmpty()) continue;
+
+        ::device = alcOpenDevice(deviceName.toLatin1().constData());
+        if(::device) break;
+
+        LOG_AS("[OpenAL]");
+        LOG_AUDIO_ERROR("Failed opening device \"%s\"") << deviceName;
+    }
+
+    // We cannot continue without an OpenAL device...
+    if(!::device) return false;
+
+    // Create a new context and make it current.
+    alcMakeContextCurrent(::context = alcCreateContext(::device, nullptr));
+    if((ec = alGetError()) != AL_NO_ERROR)
+    {
+        LOG_AS("[OpenAL]");
+        LOG_AUDIO_ERROR("Failed making context for device \"%s\":\n")
+            << alcGetString(NULL, ALC_DEVICE_SPECIFIER)
+            << alErrorToText(ec);
         return false;
     }
 
-    // Create and make current a new context.
-    alcMakeContextCurrent(::context = alcCreateContext(::device, nullptr));
-    DSOPENAL_ERRCHECK(alGetError());
+    // Determine the OpenAL API version we are working with.
+    dint verMajor, verMinor;
+    alcGetIntegerv(::device, ALC_MAJOR_VERSION, sizeof(verMajor), &verMajor);
+    alcGetIntegerv(::device, ALC_MINOR_VERSION, sizeof(verMinor), &verMinor);
 
     // Attempt to load and configure the EAX extensions.
     loadExtensions();
 
-    // Configure the listener and global OpenAL properties/state.
-    alListenerf(AL_GAIN, 1);
-    alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
-    ::headYaw = ::headPitch = 0;
+    // Configure global soundstage properties/state
+    ::headYaw = 0;
+    ::headPitch = 0;
     ::unitsPerMeter = 36;
+    alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
+    if((ec = alGetError()) != AL_NO_ERROR)
+    {
+        LOG_AS("[OpenAL]");
+        LOG_AUDIO_ERROR("Failed configuring soundstage:\n") << alErrorToText(ec);
+    }
+
+    // Configure the listener.
+    alListenerf(AL_GAIN, 1);
+    if((ec = alGetError()) != AL_NO_ERROR)
+    {
+        LOG_AS("[OpenAL]");
+        LOG_AUDIO_ERROR("Failed configuring listener:\n") << alErrorToText(ec);
+    }
+
+    // Log an overview of the OpenAL configuration:
+#define TABBED(A, B)  _E(Ta) "  " _E(l) A _E(.) " " _E(Tb) << B << "\n"
+
+    String str;
+    QTextStream os(&str);
+
+    os << _E(b) "OpenAL information:\n" << _E(.);
+
+    os << TABBED("Version:", String("%1.%2.0").arg(verMajor).arg(verMinor));
+    os << TABBED("Renderer:", alcGetString(::device, ALC_DEVICE_SPECIFIER));
+    String environmentModel = ::eaxAvailable ? "EAX 2.0" : "None";
+#ifdef HAVE_EAX
+    if(::eaxAvailable && ::eaxDisabled)
+        environmentModel += " (disabled)";
+#endif
+    os << TABBED("Environment model:", environmentModel);
+
+    LOG_AUDIO_MSG(str.rightStrip());
+
+#undef TABBED
 
     // Everything is OK.
-    DSOPENAL_TRACE("DS_Init: OpenAL initialized%s." << (::hasEAX? " (EAX 2.0 available)" : ""));
-    ::initOk = true;
-    return true;
+    return ::initOk = true;
 }
 
 void DS_Shutdown()
@@ -190,7 +331,7 @@ void DS_Shutdown()
     initOk = false;
 }
 
-void DS_Event(int /*type*/)
+void DS_Event(int)
 {
     // Not supported.
 }
@@ -225,31 +366,48 @@ sfxbuffer_t *DS_SFX_CreateBuffer(int flags, int bits, int rate)
 {
     ALuint bufName;
     alGenBuffers(1, &bufName);
-    if(DSOPENAL_ERRCHECK(alGetError()))
-        return nullptr;
-
-    ALuint srcName;
-    alGenSources(1, &srcName);
-    if(DSOPENAL_ERRCHECK(alGetError()))
+    if((ec = alGetError()) != AL_NO_ERROR)
     {
-        alDeleteBuffers(1, &bufName);
+        LOG_AS("[OpenAL]");
+        LOG_AUDIO_ERROR("Failed creating buffer (bits:%i rate:%i):\n")
+            << bits << rate
+            << alErrorToText(ec);
         return nullptr;
     }
 
-    /*// Attach the buffer to the source.
+    ALuint srcName;
+    alGenSources(1, &srcName);
+    if((ec = alGetError()) != AL_NO_ERROR)
+    {
+        alDeleteBuffers(1, &bufName);
+
+        LOG_AS("[OpenAL]");
+        LOG_AUDIO_ERROR("Failed generating sources (1):\n") << alErrorToText(ec);
+        return nullptr;
+    }
+
+    // Attach the buffer to the source.
     alSourcei(srcName, AL_BUFFER, bufName);
-    if(DSOPENAL_ERRCHECK(alGetError()))
+    if((ec = alGetError()) != AL_NO_ERROR)
     {
         alDeleteSources(1, &srcName);
         alDeleteBuffers(1, &bufName);
+
+        LOG_AS("[OpenAL]");
+        LOG_AUDIO_ERROR("Failed attaching buffer to source:\n") << alErrorToText(ec);
         return nullptr;
-    }*/
+    }
 
     if(!(flags & SFXBF_3D))
     {
         // 2D sounds are around the listener.
         alSourcei(srcName, AL_SOURCE_RELATIVE, AL_TRUE);
         alSourcef(srcName, AL_ROLLOFF_FACTOR, 0);
+        if((ec = alGetError()) != AL_NO_ERROR)
+        {
+            LOG_AS("[OpenAL]");
+            LOGDEV_AUDIO_WARNING("Failed configuring source:\n") << alErrorToText(ec);
+        }
     }
 
     // Create the buffer object.
@@ -297,10 +455,14 @@ void DS_SFX_Load(sfxbuffer_t *buf, struct sfxsample_s *sample)
                  sample->bytesPer == 1 ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16,
                  sample->data, sample->size, sample->rate);
 
-    if(DSOPENAL_ERRCHECK(alGetError()))
+    if((ec = alGetError()) != AL_NO_ERROR)
     {
-        /// @todo What to do?
+        /// @todo What to do? -jk
+
+        LOG_AS("[OpenAL]");
+        LOG_AUDIO_ERROR("Failed to buffer sample:\n") << alErrorToText(ec);
     }
+
     buf->sample = sample;
 }
 
@@ -313,6 +475,12 @@ void DS_SFX_Reset(sfxbuffer_t *buf)
 
     DS_SFX_Stop(buf);
     alSourcei(SRC(buf), AL_BUFFER, 0);
+    if((ec = alGetError()) != AL_NO_ERROR)
+    {
+        LOG_AS("[OpenAL]");
+        LOG_AUDIO_ERROR("Failed resetting buffer:\n") << alErrorToText(ec);
+    }
+
     buf->sample = nullptr;
 }
 
@@ -325,7 +493,11 @@ void DS_SFX_Play(sfxbuffer_t *buf)
     alSourcei(source, AL_BUFFER, BUF(buf));
     alSourcei(source, AL_LOOPING, (buf->flags & SFXBF_REPEAT) != 0);
     alSourcePlay(source);
-    DSOPENAL_ERRCHECK(alGetError());
+    if((ec = alGetError()) != AL_NO_ERROR)
+    {
+        LOG_AS("[OpenAL]");
+        LOG_AUDIO_ERROR("Failed to play buffer:\n") << alErrorToText(ec);
+    }
 
     // The buffer is now playing.
     buf->flags |= SFXBF_PLAYING;
@@ -336,6 +508,12 @@ void DS_SFX_Stop(sfxbuffer_t *buf)
     if(!buf || !buf->sample) return;
 
     alSourceRewind(SRC(buf));
+    if((ec = alGetError()) != AL_NO_ERROR)
+    {
+        LOG_AS("[OpenAL]");
+        LOG_AUDIO_ERROR("Failed rewinding buffer:\n") << alErrorToText(ec);
+    }
+
     buf->flags &= ~SFXBF_PLAYING;
 }
 
@@ -345,6 +523,12 @@ void DS_SFX_Refresh(sfxbuffer_t *buf)
 
     ALint state;
     alGetSourcei(SRC(buf), AL_SOURCE_STATE, &state);
+    if((ec = alGetError()) != AL_NO_ERROR)
+    {
+        LOG_AS("[OpenAL]");
+        LOG_AUDIO_ERROR("Failed querying source state:\n") << alErrorToText(ec);
+    }
+
     if(state == AL_STOPPED)
     {
         buf->flags &= ~SFXBF_PLAYING;
@@ -354,74 +538,91 @@ void DS_SFX_Refresh(sfxbuffer_t *buf)
 /**
  * @param yaw    Yaw in radians.
  * @param pitch  Pitch in radians.
- * @param front  Ptr to front vector.
- * @param up     Ptr to up vector.
+ * @param front  Front vector is written here.
+ * @param up     Up vector is written here.
  */
-static void vectors(float yaw, float pitch, float *front = nullptr, float *up = nullptr)
+static void vectors(dfloat yaw, dfloat pitch, Vector3f &front, Vector3f &up)
 {
-    if(!front && !up)
-        return;  // Nothing to do.
-
-    if(front)
-    {
-        front[0] = (float) (cos(yaw) * cos(pitch));
-        front[2] = (float) (sin(yaw) * cos(pitch));
-        front[1] = (float) sin(pitch);
-    }
-
-    if(up)
-    {
-        up[0] = (float) (-cos(yaw) * sin(pitch));
-        up[2] = (float) (-sin(yaw) * sin(pitch));
-        up[1] = (float) cos(pitch);
-    }
-}
-
-/**
- * Pan is linear, from -1 to 1. 0 is in the middle.
- */
-static void setPan(ALuint source, float pan)
-{
-    float pos[3];
-    vectors((float) (headYaw - pan * DD_PI / 2), headPitch, pos, 0);
-    alSourcefv(source, AL_POSITION, pos);
+    front = Vector3f( cos(yaw) * cos(pitch), sin(pitch),  sin(yaw) * cos(pitch));
+    up    = Vector3f(-cos(yaw) * sin(pitch), cos(pitch), -sin(yaw) * sin(pitch));
 }
 
 void DS_SFX_Set(sfxbuffer_t *buf, int prop, float value)
 {
     if(!buf) return;
 
-    ALuint source = SRC(buf);
-
     switch(prop)
     {
     case SFXBP_VOLUME:
-        alSourcef(source, AL_GAIN, value);
+        alSourcef(SRC(buf), AL_GAIN, value);
+        if((ec = alGetError()) != AL_NO_ERROR)
+        {
+            LOG_AS("[OpenAL]");
+            LOG_AUDIO_ERROR("Failed setting source volume:\n") << alErrorToText(ec);
+        }
         break;
 
     case SFXBP_FREQUENCY: {
-        unsigned int dw = (int) (buf->rate * value);
+        auto dw = duint(buf->rate * value);
         if(dw != buf->freq)  // Don't set redundantly.
         {
             buf->freq = dw;
-            alSourcef(source, AL_PITCH, value);
+            alSourcef(SRC(buf), AL_PITCH, value);
+            if((ec = alGetError()) != AL_NO_ERROR)
+            {
+                LOG_AS("[OpenAL]");
+                LOG_AUDIO_ERROR("Failed setting source pitch:\n") << alErrorToText(ec);
+            }
         }
         break; }
 
-    case SFXBP_PAN:
-        setPan(source, value);
-        break;
+    case SFXBP_PAN: {  // Pan is linear, from -1 to 1. 0 is in the middle.
+        if(buf->flags & SFXBF_3D)
+        {
+            Vector3f front, up;
+            vectors(dfloat( ::headYaw - value * DD_PI / 2 ), ::headPitch, front, up);
+
+            dfloat vec[3]; front.decompose(vec);
+            alSourcefv(SRC(buf), AL_POSITION, vec);
+        }
+        else
+        {
+            dfloat vec[3] = { value, 0, 0};
+            alSourcefv(SRC(buf), AL_POSITION, vec);
+        }
+
+        if((ec = alGetError()) != AL_NO_ERROR)
+        {
+            LOG_AS("[OpenAL]");
+            LOG_AUDIO_ERROR("Failed setting source panning:\n") << alErrorToText(ec);
+        }
+        break; }
 
     case SFXBP_MIN_DISTANCE:
-        alSourcef(source, AL_REFERENCE_DISTANCE, value / ::unitsPerMeter);
+        alSourcef(SRC(buf), AL_REFERENCE_DISTANCE, value / ::unitsPerMeter);
+        if((ec = alGetError()) != AL_NO_ERROR)
+        {
+            LOG_AS("[OpenAL]");
+            LOG_AUDIO_ERROR("Failed setting source min-distance:\n") << alErrorToText(ec);
+        }
         break;
 
     case SFXBP_MAX_DISTANCE:
-        alSourcef(source, AL_MAX_DISTANCE, value / ::unitsPerMeter);
+        alSourcef(SRC(buf), AL_MAX_DISTANCE, value / ::unitsPerMeter);
+        if((ec = alGetError()) != AL_NO_ERROR)
+        {
+            LOG_AS("[OpenAL]");
+            LOG_AUDIO_ERROR("Failed setting source max-distance:\n") << alErrorToText(ec);
+        }
         break;
 
     case SFXBP_RELATIVE_MODE:
-        alSourcei(source, AL_SOURCE_RELATIVE, value ? AL_TRUE : AL_FALSE);
+        alSourcei(SRC(buf), AL_SOURCE_RELATIVE, value ? AL_TRUE : AL_FALSE);
+        if((ec = alGetError()) != AL_NO_ERROR)
+        {
+            LOG_AS("[OpenAL]");
+            LOG_AUDIO_ERROR("Failed setting source relative-mode:\n") << alErrorToText(ec);
+        }
         break;
 
     default: break;
@@ -432,34 +633,153 @@ void DS_SFX_Setv(sfxbuffer_t *buf, int prop, float *values)
 {
     if(!buf || !values) return;
 
-    ALuint source = SRC(buf);
-
     switch(prop)
     {
-    case SFXBP_POSITION:
-        alSource3f(source, AL_POSITION, values[0] / ::unitsPerMeter,
-                   values[2] / ::unitsPerMeter, values[1] / ::unitsPerMeter);
-        break;
+    case SFXBP_POSITION: {
+        auto const position = Vector3f(values).xzy() / ::unitsPerMeter;
+        alSource3f(SRC(buf), AL_POSITION, position.x, position.y, position.z);
+        if((ec = alGetError()) != AL_NO_ERROR)
+        {
+            LOG_AS("[OpenAL]");
+            LOG_AUDIO_ERROR("Failed setting source position:\n") << alErrorToText(ec);
+        }
+        break; }
 
-    case SFXBP_VELOCITY:
-        alSource3f(source, AL_VELOCITY, values[0] / ::unitsPerMeter,
-                   values[2] / ::unitsPerMeter, values[1] / ::unitsPerMeter);
-        break;
+    case SFXBP_VELOCITY: {
+        auto const velocity = Vector3f(values).xzy() / ::unitsPerMeter;
+        alSource3f(SRC(buf), AL_VELOCITY, velocity.x, velocity.y, velocity.z);
+        if((ec = alGetError()) != AL_NO_ERROR)
+        {
+            LOG_AS("[OpenAL]");
+            LOG_AUDIO_ERROR("Failed setting source velocity:\n") << alErrorToText(ec);
+        }
+        break; }
 
     default: break;
     }
 }
 
+#ifdef HAVE_EAX
+
+/**
+ * Utility for converting linear volume 0..1 to logarithmic -10000..0.
+ */
+static dint volLinearToLog(dfloat vol)
+{
+    if(vol <= 0) return EAXLISTENER_MINROOM;
+    if(vol >= 1) return EAXLISTENER_MAXROOM;
+
+    // Straighten the volume curve.
+    return de::clamp<dint>(EAXLISTENER_MINROOM, 100 * 20 * log10(vol), EAXLISTENER_MAXROOM);
+}
+
+/**
+ * Translate a Doomsday audio environment to a suitable EAX environment type.
+ */
+static dint eaxEnvironment(dfloat space, dfloat decay = 0.f)
+{
+    if(decay > .5)
+    {
+        // This much decay needs at least the Generic environment.
+        if(space < .2)
+            space = .2f;
+    }
+
+    if(space >= 1.0f) return EAX_ENVIRONMENT_PLAIN;
+    if(space >= 0.8f) return EAX_ENVIRONMENT_CONCERTHALL;
+    if(space >= 0.6f) return EAX_ENVIRONMENT_AUDITORIUM;
+    if(space >= 0.4f) return EAX_ENVIRONMENT_CAVE;
+    if(space >= 0.2f) return EAX_ENVIRONMENT_GENERIC;
+
+    return EAX_ENVIRONMENT_ROOM;
+}
+
+static void setEAXdw(ALuint prop, dint value)
+{
+    alEAXSet(&DSPROPSETID_EAX20_ListenerProperties, prop | DSPROPERTY_EAXLISTENER_DEFERRED, 0, &value, sizeof(value));
+    if((ec = alGetError()) != AL_NO_ERROR)
+    {
+        LOG_AS("[OpenAL]");
+        LOGDEV_AUDIO_WARNING("setEAXdw (prop:%i value:%i) failed:\n")
+            << prop << value << alErrorToText(ec);
+    }
+}
+
+static void setEAXf(ALuint prop, dfloat value)
+{
+    alEAXSet(&DSPROPSETID_EAX_ListenerProperties, prop | DSPROPERTY_EAXLISTENER_DEFERRED, 0, &value, sizeof(value));
+    if((ec = alGetError()) != AL_NO_ERROR)
+    {
+        LOG_AS("[OpenAL]");
+        LOGDEV_AUDIO_WARNING("setEAXf (prop:%i value:%f) failed:\n")
+            << prop << value << alErrorToText(ec);
+    }
+}
+
+/**
+ * Linear multiplication for a logarithmic property.
+ */
+static void mulEAXdw(ALuint prop, dfloat mul)
+{
+    ulong value;
+    alEAXGet(&DSPROPSETID_EAX_ListenerProperties, prop, 0, &value, sizeof(value));
+    if((ec = alGetError()) != AL_NO_ERROR)
+    {
+        LOG_AS("[OpenAL]");
+        LOGDEV_AUDIO_WARNING("mulEAXdw (prop:%i) get failed:\n")
+            << prop << alErrorToText(ec);
+    }
+    setEAXdw(prop, volLinearToLog(pow(10, value / 2000.0f) * mul));
+}
+
+/**
+ * Linear multiplication for a linear property.
+ */
+static void mulEAXf(ALuint prop, dfloat mul, dfloat min, dfloat max)
+{
+    dfloat value;
+    alEAXGet(&DSPROPSETID_EAX_ListenerProperties, prop, 0, &value, sizeof(value));
+    if((ec = alGetError()) != AL_NO_ERROR)
+    {
+        LOG_AS("[OpenAL]");
+        LOGDEV_AUDIO_WARNING("mulEAXf (prop:%i) get failed:\n")
+            << prop << alErrorToText(ec);
+    }
+    setEAXf(prop, de::clamp(min, value * mul, max));
+}
+#endif  // HAVE_EAX
+
 void DS_SFX_Listener(int prop, float value)
 {
     switch(prop)
     {
+#ifdef HAVE_EAX
+    case SFXLP_UPDATE:
+        // If EAX is available, commit deferred property changes.
+        if(::eaxAvailable && !::eaxDisabled)
+        {
+            alEAXSet(&DSPROPSETID_EAX_ListenerProperties, DSPROPERTY_EAXLISTENER_COMMITDEFERREDSETTINGS, 0, nullptr, 0);
+            if((ec = alGetError()) != AL_NO_ERROR)
+            {
+                LOG_AS("[OpenAL]");
+                LOGDEV_AUDIO_WARNING("Failed commiting deferred listener EAX properties:\n")
+                    << alErrorToText(ec);
+            }
+        }
+        break;
+#endif
+
     case SFXLP_UNITS_PER_METER:
         ::unitsPerMeter = value;
         break;
 
     case SFXLP_DOPPLER:
         alDopplerFactor(value);
+        if((ec = alGetError()) != AL_NO_ERROR)
+        {
+            LOG_AS("[OpenAL]");
+            LOG_AUDIO_ERROR("Failed setting Doppler factor:\n") << alErrorToText(ec);
+        }
         break;
 
     default: break;
@@ -476,26 +796,67 @@ void DS_SFX_Listenerv(int prop, float *values)
         // No need to concern ourselves with this kind of things...
         break;
 
-    case SFXLP_POSITION:
-        alListener3f(AL_POSITION, values[0] / ::unitsPerMeter,
-                     values[2] / ::unitsPerMeter, values[1] / ::unitsPerMeter);
-        break;
-
-    case SFXLP_VELOCITY:
-        alListener3f(AL_VELOCITY, values[0] / ::unitsPerMeter,
-                     values[2] / ::unitsPerMeter, values[1] / ::unitsPerMeter);
-        break;
-
-    case SFXLP_ORIENTATION: {
-        float ori[6];
-        vectors(::headYaw   = (float) (values[0] / 180 * DD_PI),
-                ::headPitch = (float) (values[1] / 180 * DD_PI),
-                ori, ori + 3);
-        alListenerfv(AL_ORIENTATION, ori);
+    case SFXLP_POSITION: {
+        auto const position = Vector3f(values).xzy() / ::unitsPerMeter;
+        alListener3f(AL_POSITION, position.x, position.y, position.z);
+        if((ec = alGetError()) != AL_NO_ERROR)
+        {
+            LOG_AS("[OpenAL]");
+            LOG_AUDIO_ERROR("Failed setting listener position:\n") << alErrorToText(ec);
+        }
         break; }
 
-    case SFXLP_REVERB: // Not supported.
+    case SFXLP_VELOCITY: {
+        auto const velocity = Vector3f(values).xzy() / ::unitsPerMeter;
+        alListener3f(AL_VELOCITY, velocity.x, velocity.y, velocity.z);
+        if((ec = alGetError()) != AL_NO_ERROR)
+        {
+            LOG_AS("[OpenAL]");
+            LOG_AUDIO_ERROR("Failed setting listener velocity:\n") << alErrorToText(ec);
+        }
+        break; }
+
+    case SFXLP_ORIENTATION: {
+        Vector3f front, up;
+        vectors(::headYaw   = dfloat( values[0] / 180 * DD_PI ),
+                ::headPitch = dfloat( values[1] / 180 * DD_PI ),
+                front, up);
+
+        dfloat vec[6]; front.decompose(vec); up.decompose(vec + 3);
+        alListenerfv(AL_ORIENTATION, vec);
+        if((ec = alGetError()) != AL_NO_ERROR)
+        {
+            LOG_AS("[OpenAL]");
+            LOG_AUDIO_ERROR("Failed setting listener orientation:\n") << alErrorToText(ec);
+        }
+        break; }
+
+#ifdef HAVE_EAX
+    case SFXLP_REVERB:
+        // If EAX is available, set the listening environmental properties.
+        if(::eaxAvailable && !::eaxDisabled)
+        {
+            // @var values  Uses SRD_* for indices.
+            dfloat const *env = values;
+
+            // Set the environment.
+            setEAXdw(DSPROPERTY_EAXLISTENER_ENVIRONMENT, eaxEnvironment(env[SRD_SPACE], env[SRD_DECAY]));
+
+            // General reverb volume adjustment.
+            setEAXdw(DSPROPERTY_EAXLISTENER_ROOM, volLinearToLog(env[SRD_VOLUME]));
+
+            // Reverb decay.
+            mulEAXf(DSPROPERTY_EAXLISTENER_DECAYTIME, (env[SRD_DECAY] - .5f) * 1.5f + 1,
+                    EAXLISTENER_MINDECAYTIME, EAXLISTENER_MAXDECAYTIME);
+
+            // Damping.
+            mulEAXdw(DSPROPERTY_EAXLISTENER_ROOMHF, de::max(.1f, 1.1f * (1.2f - env[SRD_DAMPING])));
+
+            // A slightly increased roll-off.
+            setEAXf(DSPROPERTY_EAXLISTENER_ROOMROLLOFFFACTOR, 1.3f);
+        }
         break;
+#endif
 
     default:
         DS_SFX_Listener(prop, 0);
@@ -530,6 +891,8 @@ DENG_EXTERN_C char const *deng_LibraryType()
 {
     return "deng-plugin/audio";
 }
+
+DENG_DECLARE_API(Con);
 
 DENG_API_EXCHANGE(
     DENG_GET_API(DE_API_CONSOLE, Con);
