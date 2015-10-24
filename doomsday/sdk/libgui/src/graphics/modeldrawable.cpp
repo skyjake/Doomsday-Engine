@@ -500,8 +500,11 @@ DENG2_PIMPL(ModelDrawable)
             }
             catch(Error const &er)
             {
-                LOG_RES_WARNING("Failed to load custom model %s texture: %s")
-                        << textureMapToText(textureMapType(type)) << er.asText();
+                LOG_RES_WARNING("Failed to load user-defined %s texture for "
+                                "mesh %i (material %i): %s")
+                        << textureMapToText(textureMapType(type))
+                        << mesh.index << mesh.material
+                        << er.asText();
             }
 
             // Load the texture based on the information specified in the model's materials.
@@ -518,8 +521,10 @@ DENG2_PIMPL(ModelDrawable)
                 }
                 catch(Error const &er)
                 {
-                    LOG_RES_WARNING("Failed to load model %s texture: %s")
-                            << textureMapToText(textureMapType(type)) << er.asText();
+                    LOG_RES_WARNING("Failed to load %s texture for mesh %i "
+                                    "(material %i) based on info from model file: %s")
+                            << textureMapToText(textureMapType(type))
+                            << mesh.index << mesh.material << er.asText();
                 }
             }
         }
