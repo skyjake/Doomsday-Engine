@@ -463,15 +463,15 @@ bool ConvexSubspace::updateAudioEnvironment()
     dint accum[NUM_REVERB_DATA]; zap(accum);
     for(dint i = AE_FIRST; i < NUM_AUDIO_ENVIRONMENTS; ++i)
     {
-        AudioEnvironment const &envInfo = Def_AudioEnvironment(AudioEnvironmentId(i));
+        AudioEnvironmentDef const &aenvDef = Def_AudioEnvironment(AudioEnvironmentId(i));
         // Volume.
-        accum[SRD_VOLUME]  += envSpaceAccum[i] * envInfo.volumeMul;
+        accum[SRD_VOLUME]  += envSpaceAccum[i] * aenvDef.volumeMul;
 
         // Decay time.
-        accum[SRD_DECAY]   += envSpaceAccum[i] * envInfo.decayMul;
+        accum[SRD_DECAY]   += envSpaceAccum[i] * aenvDef.decayMul;
 
         // High frequency damping.
-        accum[SRD_DAMPING] += envSpaceAccum[i] * envInfo.dampingMul;
+        accum[SRD_DAMPING] += envSpaceAccum[i] * aenvDef.dampingMul;
     }
     d->aenv.reverb[SRD_VOLUME]  = de::min(accum[SRD_VOLUME],  255);
     d->aenv.reverb[SRD_DECAY]   = de::min(accum[SRD_DECAY],   255);

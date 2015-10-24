@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_CONVEXSUBSPACE_H
-#define DENG_WORLD_CONVEXSUBSPACE_H
+#ifndef WORLD_CONVEXSUBSPACE_H
+#define WORLD_CONVEXSUBSPACE_H
 
 #include <functional>
 #include <de/Error>
@@ -176,31 +176,36 @@ public:
     int lastSpriteProjectFrame() const;
     void setLastSpriteProjectFrame(int newFrameNumber);
 
-public: // Audio Environment (reverb) ---------------------------------------------
+public:  //- Audio environment (reverb) -------------------------------------------------
     /**
      * Audio environment characteristics.
      */
     struct AudioEnvironmentData
     {
         // Final reverb factors.
-        typedef uint ReverbFactors[NUM_REVERB_DATA];
+        typedef de::duint ReverbFactors[NUM_REVERB_DATA];
         ReverbFactors reverb;
 
         AudioEnvironmentData() { de::zap(reverb); }
     };
 
     /**
-     * Recalculate the environmental audio characteristics (reverb) of the subspace.
+     * Recalculate the audio environment (reverb) characteristics of the subspace.
+     *
+     * @see audioEnvironment()
      */
     bool updateAudioEnvironment();
 
     /**
-     * Provides access to the final environmental audio environment characteristics
-     * of the subspace, for efficient accumulation.
+     * Provides access to the current audio environment (reverb) characteristics in the
+     * subspace, for efficient accumulation.
+     *
+     * @see updateAudioEnvironment()
      */
     AudioEnvironmentData const &audioEnvironmentData() const;
 
-public: // Luminous objects -------------------------------------------------------
+public:  //- Luminous objects -----------------------------------------------------------
+
     /**
      * Returns the total number of Lumobjs linked to the subspace.
      */
@@ -239,7 +244,8 @@ public: // Luminous objects ----------------------------------------------------
     void link(Lumobj &lumobj);
 #endif // __CLIENT__
 
-public: // Poly objects -----------------------------------------------------------
+public:  //- Poly-objects ---------------------------------------------------------------
+
     /**
      * Returns the total number of Polyobjs linked to the subspace.
      */
@@ -267,7 +273,9 @@ public: // Poly objects --------------------------------------------------------
     void link(struct polyobj_s const &polyobj);
 
 #ifdef __CLIENT__
-public: // Shadowing-lines (fakeradio) --------------------------------------------
+
+public:  //- Shadowing lines (fakeradio) ------------------------------------------------
+
     /**
      * Returns the total number of shadow line sides linked in the subspace.
      */
@@ -300,8 +308,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-#ifdef __CLIENT__
-typedef ConvexSubspace::AudioEnvironmentData ConvexSubspaceAudioEnvironmentData;
-#endif
-
-#endif // DENG_WORLD_CONVEXSUBSPACE_H
+#endif  // WORLD_CONVEXSUBSPACE_H

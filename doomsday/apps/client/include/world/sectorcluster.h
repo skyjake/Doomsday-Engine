@@ -20,23 +20,22 @@
 #ifndef WORLD_SECTORCLUSTER_H
 #define WORLD_SECTORCLUSTER_H
 
-#include <de/Observers>
-#include <de/Vector>
-#include <de/aabox.h>
-#include <QList>
-
-#include "dd_share.h" // AudioEnvironmentFactors
-
 #include "HEdge"
-
 #include "MapElement"
 #include "Line"
 #include "Plane"
 #include "Sector"
 
 #ifdef __CLIENT__
+#  include "audio/environment.h"
+
 #  include "render/lightgrid.h"
 #endif
+
+#include <de/Observers>
+#include <de/Vector>
+#include <de/aabox.h>
+#include <QList>
 
 class ConvexSubspace;
 #ifdef __CLIENT__
@@ -58,7 +57,12 @@ class SectorCluster
 {
 public:
     /// Notified when the cluster is about to be deleted.
-    DENG2_DEFINE_AUDIENCE(Deletion, void sectorClusterBeingDeleted(SectorCluster const &cluster))
+    DENG2_DEFINE_AUDIENCE2(Deletion, void sectorClusterBeingDeleted(SectorCluster const &cluster))
+
+#ifdef __CLIENT__
+    /// Notified whenever the audio::Environment changes.
+    DENG2_DEFINE_AUDIENCE2(AudioEnvironmentChange, void sectorClusterAudioEnvironmentChanged(SectorCluster &cluster))
+#endif
 
     typedef QList<ConvexSubspace *> Subspaces;
 
@@ -211,20 +215,21 @@ public:
     coord_t roughArea() const;
 
     /**
-     * Request re-calculation of environmental audio (reverb) characteristics for
-     * the cluster (update is deferred until next accessed).
+     * Request re-calculation of environmental audio (reverb) characteristics for the cluster
+     * (update is deferred until next accessed).
      *
-     * To be called whenever any of the properties governing reverb properties
-     * have changed (i.e., wall/plane material changes).
+     * To be called whenever any of the properties governing reverb properties have changed
+     * (i.e., wall/plane material changes).
      */
-    void markReverbDirty(bool yes = true);
+    void markAudioEnvironmentDirty();
 
     /**
-     * Returns the final environmental audio characteristics (reverb) of the
-     * cluster. Note that if a reverb update is scheduled it will be done at
-     * this time (@ref markReverbDirty()).
+     * Returns the final environmental audio characteristics (reverb) of the cluster. Note
+     * that if a reverb update is scheduled it will be done at this time.
+     *
+     * @see markAudioEnvironmentDirty()
      */
-    AudioEnvironmentFactors const &reverb() const;
+    ::audio::Environment const &audioEnvironment() const;
 
     /**
      * Returns the unique identifier of the light source.
