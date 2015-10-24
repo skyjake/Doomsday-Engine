@@ -20,16 +20,13 @@
 #include "de_base.h"
 #include "audio/samplecache.h"
 
-#include "dd_main.h"  // App_AudioSystem()
-#include "def_main.h"  // Def_Get*()
-#ifdef __CLIENT__
-#  include "audio/channel.h"
-#  include "audio/system.h"
-#endif
+#include "audio/mixer.h"
+#include "audio/system.h"
 
-#ifdef __CLIENT__
-#  include "clientapp.h"
-#endif
+#include "clientapp.h"
+#include "dd_main.h"    // App_AudioSystem()
+#include "def_main.h"   // Def_Get*()
+
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/resource/wav.h>
 #include <de/memory.h>
@@ -38,11 +35,6 @@
 #include <cstring>
 
 using namespace de;
-
-#ifdef __SERVER__
-#  define BEGIN_COP
-#  define END_COP
-#endif
 
 namespace audio {
 
@@ -62,15 +54,6 @@ static dint const MAX_CACHE_TICS   = TICSPERSEC * 60 * 4;  // 4 minutes.
 static dshort inline U8_S16(duchar b)
 {
     return (b - 0x80) << 8;
-}
-
-static dint upsampleFactor(dint rate)
-{
-#ifdef __CLIENT__
-    return System::get().upsampleFactor(rate);
-#else
-    return 1;
-#endif
 }
 
 /**
@@ -246,19 +229,17 @@ static void configureSample(sfxsample_t &smp, void const * /*data*/, duint size,
     smp.numSamples = numSamples;
 
     // Apply the upsample factor.
-    dint const scale = upsampleFactor(rate);
+    dint const scale = System::get().upsampleFactor(rate);
     smp.rate       *= scale;
     smp.numSamples *= scale;
     smp.size       *= scale;
 
-#ifdef __CLIENT__
     // Resample to 16bit?
     if(::sfxBits == 16 && smp.bytesPer == 1)
     {
         smp.bytesPer  = 2;
         smp.size     *= 2;
     }
-#endif
 }
 
 DENG2_PIMPL_NOREF(Sample)
@@ -393,9 +374,7 @@ DENG2_PIMPL(SampleCache)
 
     void removeCacheItem(CacheItem &item)
     {
-#ifdef __CLIENT__
-        ClientApp::audioSystem().allowSoundRefresh(false);
-#endif
+        ClientApp::audioSystem().allowChannelRefresh(false);
 
         notifyRemove(item);
 
@@ -412,9 +391,7 @@ DENG2_PIMPL(SampleCache)
         if(item.prev)
             item.prev->next = item.next;
 
-#ifdef __CLIENT__
-        ClientApp::audioSystem().allowSoundRefresh();
-#endif
+        ClientApp::audioSystem().allowChannelRefresh();
 
         // Free all memory allocated for the item.
         delete &item;
@@ -523,13 +500,11 @@ void SampleCache::clear()
 
 void SampleCache::maybeRunPurge()
 {
-#ifdef __CLIENT__
     // If no interface for SFX playback is available then we have nothing to do.
     // The assumption being that a manual clear is performed if/when SFX playback
     // availability changes.
     if(!ClientApp::audioSystem().soundPlaybackAvailable())
         return;
-#endif
 
     // Is it time for a purge?
     dint const nowTime = Timer_Ticks();
@@ -569,11 +544,17 @@ void SampleCache::maybeRunPurge()
         for(Instance::Hash &hash : d->hash)
         for(CacheItem *it = hash.first; it; it = it->next)
         {
-#ifdef __CLIENT__
-            // If the sample is playing we won't remove it now.
-            if(ClientApp::audioSystem().channels().isPlaying(it->sample().soundId))
-                continue;
-#endif
+            // If an audio driver is still playing the sample we can't remove it.
+            auto const stillPlaying =
+                ClientApp::audioSystem().forAllDrivers([&it] (System::IDriver const &driver)
+            {
+                return driver.forAllChannels(System::IDriver::AUDIO_ISFX, [&it] (Channel const &base)
+                {
+                    auto &ch = base.as<SoundChannel>();
+                    return ch.isPlaying() && ch.samplePtr()->soundId == it->sample().soundId;
+                });
+            });
+            if(stillPlaying) continue;
 
             // This sample could be removed, let's check the hits.
             if(!lowest || it->hitCount() < lowHits)
@@ -619,13 +600,11 @@ Sample *SampleCache::cache(dint soundId)
 {
     LOG_AS("SampleCache");
 
-#ifdef __CLIENT__
     // If no interface for SFX playback is available there is no benefit to caching
     // sound samples that won't be heard.
     /// @todo audio::System should handle this by restricting access. -ds
     if(!ClientApp::audioSystem().soundPlaybackAvailable())
         return nullptr;
-#endif
 
     // Ignore invalid sound IDs.
     if(soundId <= 0) return nullptr;
