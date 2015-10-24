@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_RECORD_H
@@ -41,7 +41,7 @@ class NativeFunctionSpec;
 
 #define DENG2_ADD_NUMBER_CONSTANT(record, constant) \
     (record).addNumber(#constant, constant).setReadOnly()
-    
+
 /**
  * A set of variables. A record may have any number of subrecords. Note
  * that the members of a record do not have an order.
@@ -68,7 +68,7 @@ public:
     DENG2_ERROR(UnnamedError);
 
     /// Name of the special variable that specifies super records.
-    static String const SUPER_NAME;
+    static String const VAR_SUPER;
 
     typedef QMap<String, Variable *> Members;
     typedef QMap<String, Record *> Subrecords;
@@ -401,6 +401,10 @@ public:
      * @return Map of subrecords.
      */
     Subrecords subrecords(std::function<bool (Record const &)> filter) const;
+
+    LoopResult forSubrecords(std::function<LoopResult (String const &, Record &)> func);
+
+    LoopResult forSubrecords(std::function<LoopResult (String const &, Record const &)> func) const;
 
     /**
      * Creates a text representation of the record. Each variable name is

@@ -24,7 +24,7 @@
 #include "clientapp.h"
 #include "dd_loop.h"
 #include "render/modelrenderer.h"
-#include "render/mobjanimator.h"
+#include "render/stateanimator.h"
 #include "world/generator.h"
 
 using namespace de;
@@ -47,7 +47,7 @@ DENG2_PIMPL(ClientMobjThinkerData)
 {
     Flags flags;
     std::unique_ptr<RemoteSync> sync;
-    std::unique_ptr<MobjAnimator> animator;
+    std::unique_ptr<StateAnimator> animator;
     ModelRenderer::AuxiliaryData const *modelAuxData = nullptr;
     Matrix4f modelMatrix;
 
@@ -107,20 +107,31 @@ DENG2_PIMPL(ClientMobjThinkerData)
         if(modelBank().has(modelId()))
         {
             // Prepare the animation state of the model.
-            ModelBank::ModelWithData loaded = modelBank().modelAndData(modelId());
+            auto loaded = modelBank().modelAndData<ModelRenderer::AuxiliaryData>(modelId());
             ModelDrawable &model = *loaded.first;
-            model.audienceForDeletion() += this;
-            animator.reset(new MobjAnimator(modelId(), model));
-            animator->setOwnerNamespace(self.info());
-
-            modelAuxData = &loaded.second->as<ModelRenderer::AuxiliaryData>();
-
-            // Apply possible scaling operations on the model.
-            modelMatrix = modelAuxData->transformation;
-            if(modelAuxData->autoscaleToThingHeight)
+            try
             {
-                Vector3f const dims = modelMatrix * model.dimensions();
-                modelMatrix = Matrix4f::scale(self.mobj()->height / dims.y * 1.2f /*aspect correct*/) * modelMatrix;
+                model.audienceForDeletion() += this;
+                
+                animator.reset(new StateAnimator(modelId(), model));
+                animator->setOwnerNamespace(self.info());
+
+                modelAuxData = loaded.second;
+
+                // Apply possible scaling operations on the model.
+                modelMatrix = modelAuxData->transformation;
+                if(modelAuxData->autoscaleToThingHeight)
+                {
+                    Vector3f const dims = modelMatrix * model.dimensions();
+                    modelMatrix = Matrix4f::scale(self.mobj()->height / dims.y * 1.2f /*aspect correct*/) * modelMatrix;
+                }
+            }
+            catch(Error const &er)
+            {
+                model.audienceForDeletion() -= this;
+                
+                LOG_RES_ERROR("Failed to set up asset '%s' for map object %i: %s")
+                    << modelId() << self.mobj()->thinker.id << er.asText();
             }
         }
     }
@@ -227,12 +238,12 @@ ClientMobjThinkerData::RemoteSync &ClientMobjThinkerData::remoteSync()
     return *d->sync;
 }
 
-MobjAnimator *ClientMobjThinkerData::animator()
+StateAnimator *ClientMobjThinkerData::animator()
 {
     return d->animator.get();
 }
 
-MobjAnimator const *ClientMobjThinkerData::animator() const
+StateAnimator const *ClientMobjThinkerData::animator() const
 {
     return d->animator.get();
 }

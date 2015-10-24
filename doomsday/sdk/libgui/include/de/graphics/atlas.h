@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBGUI_ATLAS_H
@@ -87,7 +87,7 @@ public:
     class LIBGUI_PUBLIC IAllocator
     {
     public:
-        typedef QMap<Id, Rectanglei> Allocations;
+        typedef QHash<Id, Rectanglei> Allocations;
 
     public:
         virtual ~IAllocator() {}

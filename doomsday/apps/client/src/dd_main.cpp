@@ -2383,7 +2383,7 @@ dint DD_GetInteger(dint ddvalue)
     case DD_USING_HEAD_TRACKING:
         return vrCfg().mode() == VRConfig::OculusRift && vrCfg().oculusRift().isReady();
 #endif
-            
+
     case DD_NUMMOBJTYPES:
         return ::defs.things.size();
 
@@ -2930,7 +2930,7 @@ D_CMD(Version)
     LOG_NOTE(_E(D) DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_FULLTEXT);
     LOG_MSG(_E(l) "Homepage: " _E(.) _E(i) DOOMSDAY_HOMEURL _E(.)
             "\n" _E(l) "Project: " _E(.) _E(i) DENGPROJECT_HOMEURL);
-    
+
     // Print the version info of the current game if loaded.
     if(App_GameLoaded())
     {

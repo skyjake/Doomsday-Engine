@@ -24,6 +24,7 @@
 #include "../Folder"
 #include "../FileIndex"
 #include "../System"
+#include "IInterpreter"
 
 #include <QFlags>
 #include <functional>
@@ -115,6 +116,21 @@ public:
      * refreshed; initially it is empty.
      */
     FileSystem();
+
+    /**
+     * Registers a new file content interpreter.
+     *
+     * A file interpreter takes a "raw" file (e.g., byte array) and provides
+     * access to the file contents in a high-level manner (e.g., an Image).
+     * Registered interpreters get used automatically when feeds populate
+     * folders with files.
+     *
+     * All registered interpreters are consulted in last-to-first order until
+     * one is found that produces an interpreted file.
+     *
+     * @param interpreter  Interpreter object.
+     */
+    void addInterpreter(filesys::IInterpreter const &interpreter);
 
     void printIndex();
 

@@ -31,6 +31,8 @@
 
 namespace de {
 
+class File;
+
 /**
  * Thin wrapper over QImage allowing use of some custom/raw image formats.
  *
@@ -167,6 +169,13 @@ public:
 
     /// @copydoc fromData()
     static Image fromData(Block const &data, String const &formatHint = "");
+
+    /**
+     * Attempts to recognize if a file contains a supported image content format.
+     * @param file  File whose contents to recognize.
+     * @return `true` if image data can be loaded from the file.
+     */
+    static bool recognize(File const &file);
 
 private:
     DENG2_PRIVATE(d)

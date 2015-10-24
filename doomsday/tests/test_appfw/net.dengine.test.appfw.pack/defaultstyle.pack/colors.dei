@@ -29,6 +29,7 @@ group label {
     color accent    { rgb $= accent.rgb }
     color dimaccent { rgb <0.85, 0.68, 0.34> }
     color altaccent { rgb $= altaccent.rgb }
+    color shadow    { rgb $= gui.colorAlpha(background.rgb, 0.34) }
 }
 
 group popup {

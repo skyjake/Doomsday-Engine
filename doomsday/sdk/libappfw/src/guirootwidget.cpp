@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/GuiRootWidget"
@@ -94,9 +94,9 @@ DENG2_PIMPL(GuiRootWidget)
         }
     };
     struct StyleImage : public TextureBank::ImageSource {
-        StyleImage(DotPath const &id) : ImageSource(id) {}
+        StyleImage(DotPath const &sourcePath) : ImageSource(sourcePath) {}
         Image load() const {
-            return Style::get().images().image(id());
+            return Style::get().images().image(sourcePath());
         }
     };
 
@@ -137,7 +137,7 @@ DENG2_PIMPL(GuiRootWidget)
                             Atlas::BackingStore | Atlas::AllowDefragment,
                             GLTexture::maximumSize().min(GLTexture::Size(4096, 4096))));
             uTexAtlas = *atlas;
-            texBank.setAtlas(*atlas);
+            texBank.setAtlas(atlas.data());
 
             // Load a set of general purpose textures (derived classes may extend this).
             self.loadCommonTextures();
@@ -288,7 +288,7 @@ void GuiRootWidget::handleEventAsFallback(Event const &)
 {}
 
 void GuiRootWidget::loadCommonTextures()
-{   
+{
     d->initBankContents();
 }
 

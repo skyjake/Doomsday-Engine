@@ -71,7 +71,14 @@ DENG2_OBSERVES(App, GameChange)
                 break;
 
             case ConfigVariable:
-                App::config()[name].set(NumberValue(val.toDouble()));
+                if(!qstrcmp(val.typeName(), "QString"))
+                {
+                    App::config()[name].set(TextValue(val.toString()));
+                }
+                else
+                {
+                    App::config()[name].set(NumberValue(val.toDouble()));
+                }
                 break;
             }
         }
@@ -156,6 +163,10 @@ DENG2_OBSERVES(App, GameChange)
             {
                 return var.value().asNumber();
             }
+            else if(var.value().is<TextValue>())
+            {
+                return var.value().asText();
+            }
             else
             {
                 // Oops, we don't support this yet.
@@ -197,9 +208,17 @@ DENG2_OBSERVES(App, GameChange)
                 val = QString(Con_GetString(st.name.toLatin1()));
                 break;
 
-            case ConfigVariable:
-                val = App::config()[st.name].value().asNumber();
-                break;
+            case ConfigVariable: {
+                Value const &cfgValue = App::config()[st.name].value();
+                if(cfgValue.is<NumberValue>())
+                {
+                    val = cfgValue.asNumber();
+                }
+                else
+                {
+                    val = cfgValue.asText();
+                }
+                break; }
             }
 
             prof.values[st.name] = val;

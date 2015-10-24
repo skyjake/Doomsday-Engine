@@ -18,13 +18,15 @@
 
 #include "de/Image"
 #include "de/graphics/opengl.h"
-#include <de/Reader>
-#include <de/Writer>
+
 #include <de/Block>
+#include <de/File>
 #include <de/FixedByteArray>
-#include <de/Vector>
-#include <de/Zeroed>
 #include <de/Log>
+#include <de/Reader>
+#include <de/Vector>
+#include <de/Writer>
+#include <de/Zeroed>
 
 #include <QDataStream>
 #include <QPainter>
@@ -790,6 +792,13 @@ Image Image::fromData(Block const &data, String const &formatHint)
     /// @todo Could check when alpha channel isn't needed and return an RGB888
     /// image instead. -jk
     return QImage::fromData(data).convertToFormat(QImage::Format_ARGB32);
+}
+
+bool Image::recognize(File const &file)
+{
+    String const ext = file.name().fileNameExtension().toLower();
+    return (ext == ".tga"  || ext == ".pcx" || ext == ".png"  || ext == ".jpg" ||
+            ext == ".jpeg" || ext == ".gif" || ext == ".tiff" || ext == ".ico");
 }
 
 } // namespace de

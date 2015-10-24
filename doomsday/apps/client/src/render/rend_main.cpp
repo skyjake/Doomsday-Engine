@@ -91,6 +91,7 @@
 #include "render/rend_particle.h"
 #include "render/rendpoly.h"
 #include "render/skydrawable.h"
+#include "render/store.h"
 #include "render/viewports.h"
 #include "render/vissprite.h"
 #include "render/vr.h"
@@ -806,7 +807,7 @@ static void lightVertex(Vector4f &color, Vector3f const &vtx, dfloat lightLevel,
  *
  * @param verts             Geometry to be illuminated.
  *
- * Surface geometry: 
+ * Surface geometry:
  * @param numVertices       Total number of map-space surface geometry vertices.
  * @param posCoords         Position coordinates for the map-space surface geometry.
  * @param mapElement        Source MapElement for the map-space surface geometry.

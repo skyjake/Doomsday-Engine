@@ -25,12 +25,13 @@
 namespace de {
 
 /**
- * Bank of ModelDrawable instances.
+ * Bank of ModelDrawable instances. @ingroup gl
  *
- * Loads model files using background tasks, as model files may contain large amounts of
- * geometry and preprocessing operations may be involved.
+ * Loads model files using background tasks, as model files may contain large
+ * amounts of geometry and preprocessing operations may be involved.
  *
- * @ingroup gl
+ * @todo Consider refactoring so that the Data items are derived from
+ * ModelDrawable.
  */
 class LIBGUI_PUBLIC ModelBank : public Bank
 {
@@ -63,7 +64,15 @@ public:
 
     IUserData const *userData(DotPath const &id) const;
 
-    ModelWithData modelAndData(DotPath const &id);
+    ModelWithData modelAndData(DotPath const &id) const;
+
+    template <typename Type>
+    std::pair<ModelDrawable *, Type *> modelAndData(DotPath const &id) const
+    {
+        ModelWithData entry = modelAndData(id);
+        return std::pair<ModelDrawable *, Type *>
+                (entry.first, static_cast<Type *>(entry.second));
+    }
 
 protected:
     IData *loadFromSource(ISource &source);

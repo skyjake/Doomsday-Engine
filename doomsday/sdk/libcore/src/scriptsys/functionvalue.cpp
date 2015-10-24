@@ -77,7 +77,7 @@ dint FunctionValue::compare(Value const &value) const
     return -1;
 }
 
-void FunctionValue::call(Process &process, Value const &arguments, Value *instanceScope) const
+void FunctionValue::call(Process &process, Value const &arguments, Value *self) const
 {
     ArrayValue const *array = dynamic_cast<ArrayValue const *>(&arguments);
     if(!array)
@@ -85,7 +85,7 @@ void FunctionValue::call(Process &process, Value const &arguments, Value *instan
         /// @throw IllegalError  The call arguments must be an array value.
         throw IllegalError("FunctionValue::call", "Arguments is not an array");
     }
-    process.call(*_func, *array, instanceScope);
+    process.call(*_func, *array, self);
 }
 
 void FunctionValue::operator >> (Writer &to) const

@@ -300,13 +300,13 @@ public:
     /**
      * Applies the call operator on the value.
      *
-     * @param process        Process where the call is made.
-     * @param arguments      Arguments of the call.
-     * @param instanceScope  Optional scope that becomes the value of the "self"
-     *                       variable in the called function's local namespace.
-     *                       Ownership taken.
+     * @param process    Process where the call is made.
+     * @param arguments  Arguments of the call.
+     * @param self       Optional scope that becomes the value of the "self"
+     *                   variable in the called function's local namespace.
+     *                   Ownership taken.
      */
-    virtual void call(Process &process, Value const &arguments, Value *instanceScope = 0) const;
+    virtual void call(Process &process, Value const &arguments, Value *self = 0) const;
 
 public:
     /**

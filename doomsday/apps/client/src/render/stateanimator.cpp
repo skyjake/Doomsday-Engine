@@ -1,4 +1,4 @@
-/** @file mobjanimator.cpp
+/** @file stateanimator.cpp
  *
  * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "render/mobjanimator.h"
+#include "render/stateanimator.h"
 #include "render/rendersystem.h"
 #include "clientapp.h"
 #include "dd_loop.h"
@@ -32,16 +32,26 @@ static String const DEF_PROBABILITY("prob");
 static String const DEF_ROOT_NODE  ("node");
 static String const DEF_LOOPING    ("looping");
 static String const DEF_PRIORITY   ("priority");
+static String const DEF_RENDER     ("render");
+static String const DEF_PASS       ("pass");
 static String const DEF_VARIABLE   ("variable");
 static String const DEF_WRAP       ("wrap");
+static String const DEF_ENABLED    ("enabled");
+static String const DEF_MATERIAL   ("material");
 
-static String const VAR_SELF ("self");
-static String const VAR_ID   ("__id__");
-static String const VAR_ASSET("asset");
+static String const VAR_SELF    ("self");
+static String const VAR_ID      ("__id__");
+static String const VAR_ASSET   ("asset");
+static String const VAR_ENABLED ("enabled");
+static String const VAR_MATERIAL("material");
+
+static String const PASS_GLOBAL("");
+static String const DEFAULT_MATERIAL("default");
 
 static int const ANIM_DEFAULT_PRIORITY = 1;
 
-DENG2_PIMPL(MobjAnimator)
+DENG2_PIMPL(StateAnimator)
+, DENG2_OBSERVES(Variable, Change)
 {
     /**
      * Specialized animation sequence state for a running animation.
@@ -108,7 +118,11 @@ DENG2_PIMPL(MobjAnimator)
     ModelRenderer::AuxiliaryData const *auxData;
     QHash<String, Sequence> pendingAnimForNode;
     String currentStateName;
-    Record names; ///< Local context for scripts.
+    Record names; ///< Local context for scripts, i.e., per-object model state.
+
+    ModelDrawable::Appearance appearance;
+    QHash<String, int> indexForPassName;
+    QHash<Variable *, int> passForMaterialVariable;
 
     /**
      * Animatable variable bound to a GL uniform. The value can have 1...4 float
@@ -189,7 +203,8 @@ DENG2_PIMPL(MobjAnimator)
         }
     };
 
-    QMap<String, RenderVar *> renderVars;
+    typedef QHash<String, RenderVar *> RenderVars;
+    QHash<String, RenderVars> passVars;
 
     Instance(Public *i, DotPath const &id)
         : Base(i)
@@ -198,98 +213,184 @@ DENG2_PIMPL(MobjAnimator)
         names.addText(VAR_ID, id).setReadOnly();
         names.add(VAR_ASSET).set(new RecordValue(App::asset(id).accessedRecord())).setReadOnly();
 
-        // VAR_SELF should point to the thing's namespace, or player's for psprites
+        /// @todo VAR_SELF should point to the thing's namespace, or player's
+        /// namespace for psprites. -jk
 
-        initShaderVariables();
+        initVariables();
+
+        // Set up the appearance.
+        if(!auxData->passes.isEmpty())
+        {
+            appearance.drawPasses = &auxData->passes;
+        }
+        appearance.programCallback = [this] (GLProgram &program, ModelDrawable::ProgramBinding binding)
+        {
+            self.bindUniforms(program,
+                binding == ModelDrawable::AboutToBind? StateAnimator::Bind :
+                                                       StateAnimator::Unbind);
+        };
+        appearance.passCallback = [this] (ModelDrawable::Pass const &pass, ModelDrawable::PassState state)
+        {
+            self.bindPassUniforms(*self.model().currentProgram(),
+                pass.name,
+                state == ModelDrawable::PassBegun? StateAnimator::Bind :
+                                                   StateAnimator::Unbind);
+        };
     }
 
     ~Instance()
     {
-        deinitShaderVariables();
+        deinitVariables();
     }
 
-    void initShaderVariables()
+    void initVariables()
     {
-        auto const &def = names[VAR_ASSET].valueAsRecord();
-        if(def.has("render"))
+        int const passCount = auxData->passes.size();
+
+        // Clear lookups affected by the variables.
+        indexForPassName.clear();
+        appearance.passMaterial.clear();
+        if(!passCount)
         {
-            static char const *componentNames[] = { "x", "y", "z", "w" };
+            // Material to be used with the default pass.
+            appearance.passMaterial << 0;
+        }
+        else
+        {
+            for(int i = 0; i < passCount; ++i) appearance.passMaterial << 0;
+        }
+        appearance.passMask.resize(passCount);
+        
+        // The main material variable should always exist. The "render" definition
+        // may override this default value.
+        names.addText(VAR_MATERIAL, "default");
 
-            // Look up the variable declarations.
-            auto vars = ScriptedInfo::subrecordsOfType(DEF_VARIABLE, def.subrecord("render"));
-            DENG2_FOR_EACH_CONST(Record::Subrecords, i, vars)
+        // The main material variable should always exist. The "render" definition
+        // may override this default value.
+        names.addText(VAR_MATERIAL, "default");
+
+        int passIndex = 0;
+        auto const &def = names[VAR_ASSET].valueAsRecord();
+        if(def.has(DEF_RENDER))
+        {
+            Record const &renderBlock = def.subrecord(DEF_RENDER);
+
+            initVariablesForPass(renderBlock);
+
+            // Each rendering pass is represented by a subrecord, named
+            // according the to the pass names.
+            auto passes = ScriptedInfo::subrecordsOfType(DEF_PASS, renderBlock);
+            DENG2_FOR_EACH_CONST(Record::Subrecords, i, passes)
             {
-                std::unique_ptr<RenderVar> var(new RenderVar);
+                indexForPassName[i.key()] = passIndex++;
 
-                GLUniform::Type uniformType = GLUniform::Float;
+                Record &passRec = names.addRecord(i.key());
+                passRec.addBoolean(VAR_ENABLED,
+                                   ScriptedInfo::isTrue(*i.value(), DEF_ENABLED, true))
+                       .audienceForChange() += this;
 
-                // Initialize the appropriate type of value animation and uniform,
-                // depending on the "value" key in the definition.
-                auto const &valueDef = *i.value();
-                Value const &initialValue = valueDef["value"].value();
-                if(auto const *array = initialValue.maybeAs<ArrayValue>())
-                {
-                    switch(array->size())
-                    {
-                    default:
-                        throw DefinitionError("MobjAnimator::initVariables",
-                                              QString("%1: Invalid initial value size (%2) for render.variable")
-                                              .arg(valueDef.gets(ScriptedInfo::VAR_SOURCE))
-                                              .arg(array->size()));
-
-                    case 2:
-                        var->init(vectorFromValue<Vector2f>(*array));
-                        uniformType = GLUniform::Vec2;
-                        break;
-
-                    case 3:
-                        var->init(vectorFromValue<Vector3f>(*array));
-                        uniformType = GLUniform::Vec3;
-                        break;
-
-                    case 4:
-                        var->init(vectorFromValue<Vector4f>(*array));
-                        uniformType = GLUniform::Vec4;
-                        break;
-                    }
-
-                    // Expose the components individually in the namespace for scripts.
-                    for(int k = 0; k < var->values.size(); ++k)
-                    {
-                        addBinding(String(i.key()).concatenateMember(componentNames[k]),
-                                   var->values[k].anim);
-                    }
-                }
-                else
-                {
-                    var->init(float(initialValue.asNumber()));
-
-                    // Expose in the namespace for scripts.
-                    addBinding(i.key(), var->values[0].anim);
-                }
-
-                // Optional range wrapping.
-                if(valueDef.hasSubrecord(DEF_WRAP))
-                {
-                    for(int k = 0; k < 4; ++k)
-                    {
-                        String const varName = QString("%s.%s").arg(DEF_WRAP).arg(componentNames[k]);
-                        if(valueDef.has(varName))
-                        {
-                            var->values[k].wrap = rangeFromValue<Rangef>(valueDef.geta(varName));
-                        }
-                    }
-                }
-                else if(valueDef.has(DEF_WRAP))
-                {
-                    var->values[0].wrap = rangeFromValue<Rangef>(valueDef.geta(DEF_WRAP));
-                }
-
-                // Uniform to be passed to the shader.
-                var->uniform = new GLUniform(i.key().toLatin1(), uniformType);
-
-                renderVars[i.key()] = var.release();
+                initVariablesForPass(*i.value(), i.key());
             }
+        }
+
+        DENG2_ASSERT(passIndex == passCount);
+        DENG2_ASSERT(indexForPassName.size() == passCount);
+
+        updatePassMask();
+        updatePassMaterials();
+    }
+
+    void initVariablesForPass(Record const &block, String const &passName = PASS_GLOBAL)
+    {
+        static char const *componentNames[] = { "x", "y", "z", "w" };
+
+        // Each pass has a variable for selecting the material.
+        // The default value is optionally specified in the definition.
+        Variable &passMaterialVar = names.addText(passName.concatenateMember(VAR_MATERIAL),
+                                                  block.gets(DEF_MATERIAL, DEFAULT_MATERIAL));
+        passMaterialVar.audienceForChange() += this;
+        passForMaterialVariable.insert(&passMaterialVar, auxData->passes.findName(passName));
+
+        /// @todo Should observe if the variable above is deleted unexpectedly. -jk
+
+        // Create the animated variables to be used with the shader based
+        // on the pass definitions.
+        auto vars = ScriptedInfo::subrecordsOfType(DEF_VARIABLE, block);
+        DENG2_FOR_EACH_CONST(Record::Subrecords, i, vars)
+        {
+            std::unique_ptr<RenderVar> var(new RenderVar);
+
+            GLUniform::Type uniformType = GLUniform::Float;
+
+            // Initialize the appropriate type of value animation and uniform,
+            // depending on the "value" key in the definition.
+            auto const &valueDef = *i.value();
+            Value const &initialValue = valueDef["value"].value();
+            if(auto const *array = initialValue.maybeAs<ArrayValue>())
+            {
+                switch(array->size())
+                {
+                default:
+                    throw DefinitionError("StateAnimator::initVariables",
+                                          QString("%1: Invalid initial value size (%2) for render.variable")
+                                          .arg(valueDef.gets(ScriptedInfo::VAR_SOURCE))
+                                          .arg(array->size()));
+
+                case 2:
+                    var->init(vectorFromValue<Vector2f>(*array));
+                    uniformType = GLUniform::Vec2;
+                    break;
+
+                case 3:
+                    var->init(vectorFromValue<Vector3f>(*array));
+                    uniformType = GLUniform::Vec3;
+                    break;
+
+                case 4:
+                    var->init(vectorFromValue<Vector4f>(*array));
+                    uniformType = GLUniform::Vec4;
+                    break;
+                }
+
+                // Expose the components individually in the namespace for scripts.
+                for(int k = 0; k < var->values.size(); ++k)
+                {
+                    addBinding(passName.concatenateMember(String(i.key()).concatenateMember(componentNames[k])),
+                               var->values[k].anim);
+                }
+            }
+            else
+            {
+                var->init(float(initialValue.asNumber()));
+
+                // Expose in the namespace for scripts.
+                addBinding(passName.concatenateMember(i.key()),
+                           var->values[0].anim);
+            }
+
+            // Optional range wrapping.
+            if(valueDef.hasSubrecord(DEF_WRAP))
+            {
+                for(int k = 0; k < 4; ++k)
+                {
+                    String const varName = QString("%1.%2").arg(DEF_WRAP).arg(componentNames[k]);
+                    if(valueDef.has(varName))
+                    {
+                        var->values[k].wrap = rangeFromValue<Rangef>(valueDef.geta(varName));
+                    }
+                }
+            }
+            else if(valueDef.has(DEF_WRAP))
+            {
+                var->values[0].wrap = rangeFromValue<Rangef>(valueDef.geta(DEF_WRAP));
+            }
+
+            // Uniform to be passed to the shader.
+            var->uniform = new GLUniform(i.key().toLatin1(), uniformType);
+
+            // Compose a lookup for quickly finding the variables of each pass
+            // (by pass name).
+            passVars[passName][i.key()] = var.release();
         }
     }
 
@@ -300,9 +401,94 @@ DENG2_PIMPL(MobjAnimator)
                 .setReadOnly();
     }
 
-    void deinitShaderVariables()
+    void deinitVariables()
     {
-        qDeleteAll(renderVars.values());
+        for(RenderVars const &vars : passVars.values())
+        {
+            qDeleteAll(vars.values());
+        }
+        passVars.clear();
+        appearance.passMaterial.clear();
+    }
+
+    Variable const &materialVariableForPass(duint passIndex) const
+    {
+        if(!auxData->passes.isEmpty())
+        {
+            String const varName = auxData->passes.at(passIndex).name.concatenateMember(VAR_MATERIAL);
+            if(names.has(varName))
+            {
+                return names[varName];
+            }
+        }
+        return names[VAR_MATERIAL];
+    }
+
+    void updatePassMaterials()
+    {
+        for(int i = 0; i < appearance.passMaterial.size(); ++i)
+        {
+            appearance.passMaterial[i] = materialForUserProvidedName(
+                        materialVariableForPass(i).value().asText());
+        }
+    }
+
+    void variableValueChanged(Variable &var, Value const &newValue)
+    {
+        if(var.name() == VAR_MATERIAL)
+        {
+            // Update the corresponding pass material.
+            int passIndex = passForMaterialVariable[&var];
+            if(passIndex < 0)
+            {
+                updatePassMaterials();
+            }
+            else
+            {
+                appearance.passMaterial[passIndex] = materialForUserProvidedName(newValue.asText());
+            }
+        }
+        else
+        {
+            DENG2_ASSERT(var.name() == VAR_ENABLED);
+
+            // This is called when one of the "(pass).enabled" variables is modified.
+            updatePassMask();
+        }
+    }
+
+    /**
+     * Determines the material to use during a rendering pass. These are
+     * determined by the "material" variables in the object's namespace.
+     *
+     * @param materialName  Name of the material to use.
+     *
+     * @return Material index.
+     */
+    duint materialForUserProvidedName(String const &materialName) const
+    {
+       auto const matIndex = auxData->materialIndexForName.constFind(materialName);
+       if(matIndex != auxData->materialIndexForName.constEnd())
+       {
+           return matIndex.value();
+       }
+       LOG_RES_WARNING("Asset \"%s\" does not have a material called '%s'")
+               << names.gets(VAR_ID) << materialName;
+       return 0; // default material
+    }
+
+    void updatePassMask()
+    {
+        Record::Subrecords enabledPasses = names.subrecords([] (Record const &sub) {
+            return sub.getb(DEF_ENABLED, false);
+        });
+
+        appearance.passMask.fill(false);
+        for(String name : enabledPasses.keys())
+        {
+            DENG2_ASSERT(indexForPassName.contains(name));
+            appearance.passMask.setBit(indexForPassName[name], true);
+        }
     }
 
     int animationId(String const &name) const
@@ -320,23 +506,23 @@ DENG2_PIMPL(MobjAnimator)
         {
             anim.clock.reset(new Scheduler::Clock(*anim.timeline, &names));
         }
-        applyFlagOperation(anim.flags, Sequence::Flags(Sequence::ClampToDuration),
+        applyFlagOperation(anim.flags, Sequence::ClampToDuration,
                            anim.looping == Sequence::Looping? UnsetFlags : SetFlags);
         return anim;
     }
 };
 
-MobjAnimator::MobjAnimator(DotPath const &id, ModelDrawable const &model)
+StateAnimator::StateAnimator(DotPath const &id, ModelDrawable const &model)
     : ModelDrawable::Animator(model, Instance::Sequence::make)
     , d(new Instance(this, id))
 {}
 
-void MobjAnimator::setOwnerNamespace(Record &names)
+void StateAnimator::setOwnerNamespace(Record &names)
 {
     d->names.add(VAR_SELF).set(new RecordValue(names));
 }
 
-void MobjAnimator::triggerByState(String const &stateName)
+void StateAnimator::triggerByState(String const &stateName)
 {
     using Sequence = Instance::Sequence;
 
@@ -347,7 +533,7 @@ void MobjAnimator::triggerByState(String const &stateName)
     auto found = stateAnims->constFind(stateName);
     if(found == stateAnims->constEnd()) return;
 
-    LOG_AS("MobjAnimator");
+    LOG_AS("StateAnimator");
     LOGDEV_GL_XVERBOSE("triggerByState: ") << stateName;
 
     d->currentStateName = stateName;
@@ -419,7 +605,7 @@ void MobjAnimator::triggerByState(String const &stateName)
     }
 }
 
-void MobjAnimator::advanceTime(TimeDelta const &elapsed)
+void StateAnimator::advanceTime(TimeDelta const &elapsed)
 {
     ModelDrawable::Animator::advanceTime(elapsed);
 
@@ -444,8 +630,8 @@ void MobjAnimator::advanceTime(TimeDelta const &elapsed)
 
         if(anim.looping == Sequence::Looping)
         {
-            // When a looping animation has completed a loop, it may still trigger
-            // a variant.
+            // When a looping animation has completed a loop, it may still
+            // trigger a variant.
             if(anim.atEnd())
             {
                 retrigger = true;
@@ -493,26 +679,40 @@ void MobjAnimator::advanceTime(TimeDelta const &elapsed)
     }
 }
 
-ddouble MobjAnimator::currentTime(int index) const
+ddouble StateAnimator::currentTime(int index) const
 {
     // Mobjs think on sharp ticks only, however we need to ensure time advances on
     // every frame for smooth animation.
     return ModelDrawable::Animator::currentTime(index); // + frameTimePos;
 }
 
-void MobjAnimator::bindUniforms(GLProgram &program) const
+ModelDrawable::Appearance const &StateAnimator::appearance() const
 {
-    for(auto i : d->renderVars.values())
-    {
-        i->updateUniform();
-        program.bind(*i->uniform);
-    }
+    return d->appearance;
 }
 
-void MobjAnimator::unbindUniforms(GLProgram &program) const
+void StateAnimator::bindUniforms(GLProgram &program, BindOperation operation) const
 {
-    for(auto i : d->renderVars.values())
+    bindPassUniforms(program, PASS_GLOBAL, operation);
+}
+
+void StateAnimator::bindPassUniforms(GLProgram &program, String const &passName,
+                                    BindOperation operation) const
+{
+    auto const vars = d->passVars.constFind(passName);
+    if(vars != d->passVars.constEnd())
     {
-        program.unbind(*i->uniform);
+        for(auto i : vars.value())
+        {
+            if(operation == Bind)
+            {
+                i->updateUniform();
+                program.bind(*i->uniform);
+            }
+            else
+            {
+                program.unbind(*i->uniform);
+            }
+        }
     }
 }

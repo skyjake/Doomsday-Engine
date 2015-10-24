@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Record"
@@ -41,8 +41,8 @@ namespace de {
 /// maximum number of lines that a subrecord can have before it is shown as a short
 /// excerpt.
 int const SUBRECORD_CONTENT_EXCERPT_THRESHOLD = 100; // lines
-    
-String const Record::SUPER_NAME = "__super__";
+
+String const Record::VAR_SUPER       = "__super__";
 
 /**
  * Each record is given a unique identifier, so that serialized record
@@ -135,9 +135,8 @@ DENG2_PIMPL(Record)
         return value && value->record() && value->hasOwnership();
     }
 
-    Record::Subrecords listSubrecords(std::function<bool (Record const &)> filter) const
+    LoopResult forSubrecords(std::function<LoopResult (String const &, Record &)> func) const
     {
-        Subrecords subs;
         DENG2_FOR_EACH_CONST(Members, i, members)
         {
             Variable const &member = *i.value();
@@ -146,12 +145,27 @@ DENG2_PIMPL(Record)
                 Record *rec = member.value().as<RecordValue>().record();
                 DENG2_ASSERT(rec != 0); // subrecords are owned, so cannot have been deleted
 
-                // Must pass the filter.
-                if(!filter(*rec)) continue;
-
-                subs.insert(i.key(), rec);
+                if(auto result = func(i.key(), *rec))
+                {
+                    return result;
+                }
             }
         }
+        return LoopContinue;
+    }
+
+    Record::Subrecords listSubrecords(std::function<bool (Record const &)> filter) const
+    {
+        Subrecords subs;
+        forSubrecords([&subs, filter] (String const &name, Record &rec)
+        {
+            // Must pass the filter.
+            if(filter(rec))
+            {
+                subs.insert(name, &rec);
+            }
+            return LoopContinue;
+        });
         return subs;
     }
 
@@ -239,7 +253,7 @@ DENG2_PIMPL(Record)
 
             // After deserialization all record values own their records.
             if(value->hasOwnership() && !value->usedToHaveOwnership())
-            {                
+            {
                 // Do we happen to know the record from earlier?
                 duint32 oldTargetId = value->record()->d->oldUniqueId;
                 if(refMap.contains(oldTargetId))
@@ -431,7 +445,7 @@ Variable &Record::addFunction(const String &name, Function *func)
             .add(new Variable(Instance::memberNameFromPath(name),
                               new FunctionValue(func), Variable::AllowFunction));
 }
-    
+
 Record &Record::add(String const &name, Record *subrecord)
 {
     std::auto_ptr<Record> sub(subrecord);
@@ -517,7 +531,7 @@ Variable &Record::operator [] (String const &name)
 {
     return const_cast<Variable &>((*const_cast<Record const *>(this))[name]);
 }
-    
+
 Variable const &Record::operator [] (String const &name) const
 {
     // Path notation allows looking into subrecords.
@@ -563,7 +577,23 @@ Record::Subrecords Record::subrecords() const
 
 Record::Subrecords Record::subrecords(std::function<bool (Record const &)> filter) const
 {
-    return d->listSubrecords([&] (Record const &rec) { return filter(rec); });
+    return d->listSubrecords([&] (Record const &rec)
+    {
+        return filter(rec);
+    });
+}
+
+LoopResult Record::forSubrecords(std::function<LoopResult (String const &, Record &)> func)
+{
+    return d->forSubrecords(func);
+}
+
+LoopResult Record::forSubrecords(std::function<LoopResult (String const &, Record const &)> func) const
+{
+    return d->forSubrecords([func] (String const &name, Record &rec)
+    {
+        return func(name, rec);
+    });
 }
 
 String Record::asText(String const &prefix, List *lines) const
@@ -573,7 +603,7 @@ String Record::asText(String const &prefix, List *lines) const
     {
         return QString("(Record imported from \"%1\")").arg(gets("__file__"));
     }
-    
+
     // Recursive calls to collect all variables in the record.
     if(lines)
     {
@@ -582,7 +612,7 @@ String Record::asText(String const &prefix, List *lines) const
         {
             String separator = (d->isSubrecord(*i.value())? "." : ":");
             String subContent = i.value()->value().asText();
-            
+
             // If the content is very long, shorten it.
             int numberOfLines = subContent.count(QChar('\n'));
             if(numberOfLines > SUBRECORD_CONTENT_EXCERPT_THRESHOLD)
@@ -604,7 +634,7 @@ String Record::asText(String const &prefix, List *lines) const
 
     // Collect.
     asText(prefix, &allLines);
-    
+
     // Sort and find maximum length.
     qSort(allLines);
     for(List::iterator i = allLines.begin(); i != allLines.end(); ++i)
@@ -645,11 +675,11 @@ Function const &Record::function(String const &name) const
 
 void Record::addSuperRecord(Value *superValue)
 {
-    if(!has(SUPER_NAME))
+    if(!has(VAR_SUPER))
     {
-        addArray(SUPER_NAME);
+        addArray(VAR_SUPER);
     }
-    (*this)[SUPER_NAME].array().add(superValue);
+    (*this)[VAR_SUPER].array().add(superValue);
 }
 
 void Record::operator >> (Writer &to) const
@@ -660,7 +690,7 @@ void Record::operator >> (Writer &to) const
         to << *i.value();
     }
 }
-    
+
 void Record::operator << (Reader &from)
 {
     LOG_AS("Record deserialization");

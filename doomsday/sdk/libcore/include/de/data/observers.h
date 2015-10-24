@@ -151,25 +151,26 @@ namespace de {
  *
  * @par How to use the non-pimpl audience macros
  *
- * These examples explain how to create an audience called "Deletion". In general,
- * audience names should be nouns like this so they can be used in the form
- * "audience for (something)".
+ * These examples explain how to create an audience called "Deletion". In
+ * general, audience names should be nouns like this so they can be used in the
+ * form "audience for (something)".
  *
- * In a class declaration, define the audience in the @c public section of the class:
- * <pre>DENG2_DEFINE_AUDIENCE(Deletion, ...interface-function...)</pre>
+ * In a class declaration, define the audience in the @c public section of the
+ * class: <pre>DENG2_DEFINE_AUDIENCE(Deletion, ...interface-function...)</pre>
  *
- * This will generate a public member variable called @c audienceForDeletion that
- * can be directly manipulated by other objects.
+ * This will generate a public member variable called @c audienceForDeletion
+ * that can be directly manipulated by other objects.
  *
- * Note that because the audience is created as a public member variable, this can
- * easily lead to ABI backwards compatibility issues down the road if there is
- * need to make changes to the class.
+ * Note that because the audience is created as a public member variable, this
+ * can easily lead to ABI backwards compatibility issues down the road if there
+ * is need to make changes to the class.
  *
  * @par How to use the pimpl audience macros
  *
- * Another set of macros is provided for declaring and defining a pimpl-friendly
- * audience. The caveat is that you'll need to separately declare accessor methods
- * and define the audience inside the private implementation of the class.
+ * Another set of macros is provided for declaring and defining a
+ * pimpl-friendly audience. The caveat is that you'll need to separately
+ * declare accessor methods and define the audience inside the private
+ * implementation of the class.
  *
  * First, define the audience in the @c public section of the class:
  * <pre>DENG2_DEFINE_AUDIENCE2(Deletion, ...interface-function...)</pre>
@@ -177,11 +178,11 @@ namespace de {
  * This works like DENG2_DEFINE_AUDIENCE, but without a public member variable.
  * Instead, accessor methods are declared for accessing the audience.
  *
- * Then, inside the private implementation (@c Instance struct), define the audience:
- * <pre>DENG2_PIMPL_AUDIENCE(Deletion)</pre>
+ * Then, inside the private implementation (@c Instance struct), define the
+ * audience: <pre>DENG2_PIMPL_AUDIENCE(Deletion)</pre>
  *
- * Finally, define the accessor methods (for instance, just before the constructor
- * of the class):
+ * Finally, define the accessor methods (for instance, just before the
+ * constructor of the class):
  * <pre>DENG2_AUDIENCE_METHOD(ClassName, Deletion)</pre>
  *
  * It is recommended to keep the DENG2_PIMPL_AUDIENCE and DENG2_AUDIENCE_METHOD
@@ -198,7 +199,7 @@ template <typename Type>
 class Observers : public Lockable
 {
 public:
-    typedef QSet<Type *> Members;
+    typedef QSet<Type *> Members; // note: unordered, hash-based
     typedef typename Members::iterator iterator;
     typedef typename Members::const_iterator const_iterator;
     typedef typename Members::size_type size_type;

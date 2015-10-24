@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de_platform.h"
@@ -119,7 +119,7 @@ DENG2_PIMPL(ClientApp)
 , DENG2_OBSERVES(Plugins, PublishAPI)
 , DENG2_OBSERVES(Plugins, Notification)
 , DENG2_OBSERVES(Games, Progress)
-{    
+{
     Binder binder;
     QScopedPointer<Updater> updater;
     BusyRunner busyRunner;
@@ -218,12 +218,20 @@ DENG2_PIMPL(ClientApp)
 
     ~Instance()
     {
-        LogBuffer::get().removeSink(logAlarm);
+        try
+        {
+            LogBuffer::get().removeSink(logAlarm);
 
-        self.vr().oculusRift().deinit();
+            self.vr().oculusRift().deinit();
 
-        Sys_Shutdown();
-        DD_Shutdown();
+            Sys_Shutdown();
+            DD_Shutdown();
+        }
+        catch(Error const &er)
+        {
+            qWarning() << "Exception during ~ClientApp:" << er.asText();
+            DENG2_ASSERT(!"Unclean shutdown: exception in ~ClientApp");
+        }
 
         updater.reset();
         delete worldSys;
@@ -302,7 +310,7 @@ DENG2_PIMPL(ClientApp)
 
     void initSettings()
     {
-        typedef SettingsRegister SReg; // convenience
+        using SReg = SettingsRegister; // convenience
 
         // Log filter and alert settings.
         for(int i = LogEntry::FirstDomainBit; i <= LogEntry::LastDomainBit; ++i)
@@ -317,10 +325,8 @@ DENG2_PIMPL(ClientApp)
         /// @todo These belong in a "network::System".
 
         networkSettings
-                .define(SReg::StringCVar, "net-master-address", "www.dengine.net")
-                .define(SReg::StringCVar, "net-master-path",    "/master.php")
-                .define(SReg::IntCVar,    "net-master-port",    0)
-                .define(SReg::IntCVar,    "net-dev",            0);
+                .define(SReg::ConfigVariable, "masterServer.apiUrl", "www.dengine.net/master.php")
+                .define(SReg::IntCVar,        "net-dev",             0);
     }
 
 #ifdef UNIX

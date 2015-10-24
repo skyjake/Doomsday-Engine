@@ -20,19 +20,20 @@
 #include "de/Animation"
 #include "de/App"
 #include "de/ArchiveFeed"
+#include "de/ArchiveFolder"
 #include "de/ArrayValue"
 #include "de/Block"
 #include "de/DictionaryValue"
 #include "de/DirectoryFeed"
 #include "de/FileLogSink"
-#include "de/PackageFeed"
+#include "de/LibraryFile"
 #include "de/Log"
 #include "de/LogBuffer"
 #include "de/LogFilter"
 #include "de/Module"
 #include "de/NativeFile"
 #include "de/NumberValue"
-#include "de/ArchiveFolder"
+#include "de/PackageFeed"
 #include "de/Record"
 #include "de/ScriptSystem"
 #include "de/Version"
@@ -142,6 +143,12 @@ DENG2_PIMPL(App)
 
         // Built-in systems.
         systems << &fs << &scriptSys;
+
+        // Built-in file interpreters.
+        static LibraryFile::Interpreter intrpLibraryFile;
+        static ZipArchive::Interpreter  intrpZipArchive;
+        fs.addInterpreter(intrpLibraryFile);
+        fs.addInterpreter(intrpZipArchive);
 
         // Native App module.
         appModule.addArray("audienceForGameChange"); // game change observers

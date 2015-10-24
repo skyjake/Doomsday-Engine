@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_CONTEXT_H
@@ -139,18 +139,28 @@ public:
     void setIterationValue(Value *value);
 
     /**
-     * Sets the instance scope of the context. This is equivalent to the value
-     * of the "self" variable, however only used for native function calls.
+     * Sets the instance scope of the context, i.e., the "self" object whose
+     * contents are being accessed. This is used when executing native
+     * functions and it is comparable to the "self" variable that gets added to
+     * script contexts.
      *
      * @param scope  Value that specifies the instance whose scope the context
      *               is being evaluated in. Ownership taken.
      */
-    void setInstanceScope(Value *scope);
+    void setNativeSelf(Value *nativeSelf);
 
     /**
      * Returns the current instance scope. A scope must exist if this is called.
      */
-    Value &instanceScope() const;
+    Value &nativeSelf() const;
+
+    /**
+     * Returns the self instance. This makes the assumption that "self" is a
+     * RecordValue pointing to the instance record.
+     *
+     * @return Instance currently designated as "self".
+     */
+    Record &selfInstance() const;
 
     /**
      * Returns the throwaway variable. This can be used for dumping

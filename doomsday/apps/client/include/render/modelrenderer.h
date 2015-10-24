@@ -19,6 +19,7 @@
 #ifndef DENG_CLIENT_MODELRENDERER_H
 #define DENG_CLIENT_MODELRENDERER_H
 
+#include <de/Function>
 #include <de/ModelDrawable>
 #include <de/ModelBank>
 #include <de/GLState>
@@ -55,7 +56,8 @@ public:
     /**
      * Animation sequence definition.
      */
-    struct AnimSequence {
+    struct AnimSequence
+    {
         de::String name;        ///< Name of the sequence.
         de::Record const *def;  ///< Record describing the sequence (in asset metadata).
         de::Scheduler *timeline = nullptr; ///< Script timeline (owned).
@@ -64,6 +66,7 @@ public:
         AnimSequence(de::String const &n, de::Record const &d);
     };
     typedef QList<AnimSequence> AnimSequences;
+
     struct StateAnims : public QMap<de::String, AnimSequences> {};
 
     /**
@@ -74,17 +77,23 @@ public:
         bool autoscaleToThingHeight = true;
         de::Matrix4f transformation;
         de::gl::Cull cull = de::gl::Back;
+
+        QHash<de::String, de::duint> materialIndexForName;
+
+        /// Rendering passes. Will not change after init.
         de::ModelDrawable::Passes passes;
 
+        /// Animation sequences.
         StateAnims animations;
 
         /// Shared timelines (not sequence-specific). Owned.
-        QMap<de::String, de::Scheduler *> timelines;
+        QHash<de::String, de::Scheduler *> timelines;
 
         ~AuxiliaryData();
     };
 
     DENG2_ERROR(DefinitionError);
+    DENG2_ERROR(TextureMappingError);
 
 public:
     ModelRenderer();
@@ -117,6 +126,8 @@ public:
     void render(vispsprite_t const &pspr);
 
 public:
+    static void initBindings(de::Binder &binder, de::Record &module);
+
     static int identifierFromText(de::String const &text,
                                   std::function<int (de::String const &)> resolver);
 

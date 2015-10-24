@@ -261,9 +261,9 @@ private:
                            de::Function::Arguments() << Args, Defaults)
 
 /**
- * Utility that keeps track of which entry points have been bound and unregisters
- * them when the instance is destroyed. Use as a member in a class that registers
- * native entry points.
+ * Utility that keeps track of which entry points have been bound and
+ * unregisters them when the Binder instance is destroyed. For example, use as
+ * a member in a class that registers native entry points.
  *
  * @ingroup script
  */
