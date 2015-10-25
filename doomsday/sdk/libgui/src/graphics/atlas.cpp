@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Atlas"
@@ -31,7 +31,8 @@ DENG2_PIMPL(Atlas)
     Size totalSize;
     int margin;
     int border;
-    std::auto_ptr<IAllocator> allocator;
+    std::unique_ptr<IAllocator> allocator;
+    QHash<Id::Type, Image *> deferred; ///< Only used with DeferredAllocations.
     Image backing;
     bool needCommit;
     bool needFullCommit;
@@ -56,7 +57,18 @@ DENG2_PIMPL(Atlas)
         }
     }
 
-    bool hasBacking() const
+    ~Instance()
+    {
+        allocator.reset();
+        self.cancelDeferred();
+    }
+
+    inline bool usingDeferredMode() const
+    {
+        return flags.testFlag(DeferredAllocations);
+    }
+
+    inline bool hasBacking() const
     {
         return flags.testFlag(BackingStore);
     }
@@ -104,7 +116,7 @@ DENG2_PIMPL(Atlas)
 
     float usedPercentage() const
     {
-        if(!allocator.get()) return 0;
+        if(!allocator) return 0;
 
         duint totalPx = totalSize.x * totalSize.y;
         duint usedPx = 0;
@@ -114,6 +126,111 @@ DENG2_PIMPL(Atlas)
             usedPx += alloc.width() * alloc.height();
         }
         return float(usedPx) / float(totalPx);
+    }
+
+    /**
+     * Submits the image to the backing store, or commits it if no backing
+     * store is available.
+     *
+     * @param image  Image.
+     * @param rect   Rectangle for the image determined by an IAllocator.
+     */
+    void submitImage(Image const &image, Rectanglei const &rect)
+    {
+        Rectanglei const noBorders  = rect.shrunk(border);
+        Rectanglei const withMargin = rect.expanded(margin);
+
+        if(hasBacking())
+        {
+            // The margin is cleared to transparent black.
+            backing.fill(withMargin, Image::Color(0, 0, 0, 0));
+
+            if(border > 0)
+            {
+                if(flags.testFlag(WrapBordersInBackingStore))
+                {
+                    // Wrap using the source image (left, right, top, bottom edges).
+                    backing.drawPartial(image, Rectanglei(0, 0, border, image.height()),
+                                           rect.topRight() + Vector2i(-border, border));
+
+                    backing.drawPartial(image, Rectanglei(image.width() - border, 0,
+                                                             border, image.height()),
+                                           rect.topLeft + Vector2i(0, border));
+
+                    backing.drawPartial(image, Rectanglei(0, 0, image.width(), border),
+                                           rect.bottomLeft() + Vector2i(border, -border));
+
+                    backing.drawPartial(image, Rectanglei(0, image.height() - border,
+                                                             image.width(), border),
+                                           rect.topLeft + Vector2i(border, 0));
+                }
+            }
+            backing.draw(image, noBorders.topLeft);
+
+            //backing.toQImage().save(QString("backing-%1.png").arg(uint64_t(this)));
+
+            markAsChanged(rect);
+        }
+        else
+        {
+            // No backing, must commit immediately.
+            if(border > 0)
+            {
+                // Expand with borders (repeat edges).
+                QImage const srcImg = image.toQImage();
+                int const sw = srcImg.width();
+                int const sh = srcImg.height();
+
+                QImage bordered(QSize(rect.width(), rect.height()), srcImg.format());
+                int const w = bordered.width();
+                int const h = bordered.height();
+
+                QPainter painter(&bordered);
+                painter.setCompositionMode(QPainter::CompositionMode_Source);
+                painter.fillRect(bordered.rect(), QColor(0, 0, 0, 0));
+
+                /// @todo This really only works for a border of 1 pixels. Should
+                /// repeat the same outmost edge pixels for every border. -jk
+
+                painter.drawImage(border, border, srcImg);
+                painter.drawImage(border, 0,     srcImg, 0, 0, sw, 1); // top
+                painter.drawImage(border, h - 1, srcImg, 0, sh - 1, sw, 1); // bottom
+                painter.drawImage(0, border,     srcImg, 0, 0, 1, sh); // left
+                painter.drawImage(w - 1, border, srcImg, sw - 1, 0, 1, sh); // right
+
+                // Corners.
+                painter.drawImage(0, 0,         srcImg, 0, 0, 1, 1);
+                painter.drawImage(w - 1, 0,     srcImg, sw - 1, 0, 1, 1);
+                painter.drawImage(0, h - 1,     srcImg, 0, sh - 1, 1, 1);
+                painter.drawImage(w - 1, h - 1, srcImg, sw - 1, sh - 1, 1, 1);
+
+                self.commit(bordered, rect.topLeft);
+            }
+            else
+            {
+                self.commit(image, noBorders.topLeft);
+            }
+        }
+    }
+
+    void submitDeferred()
+    {
+        for(auto i = deferred.begin(); i != deferred.end(); ++i)
+        {
+            try
+            {
+                Rectanglei rect;
+                allocator->rect(i.key(), rect);
+                submitImage(*i.value(), rect);
+            }
+            catch(Error const &er)
+            {
+                LOG_GL_ERROR("Allocation %s could not be submitted: %s")
+                        << i.key() << er.asText();
+            }
+            delete i.value(); // we own the Image
+        }
+        deferred.clear();
     }
 
     /**
@@ -176,6 +293,11 @@ Atlas::Atlas(Flags const &flags, Size const &totalSize)
     : d(new Instance(this, flags, totalSize))
 {}
 
+Atlas::Flags Atlas::flags() const
+{
+    return d->flags;
+}
+
 void Atlas::setAllocator(IAllocator *allocator)
 {
     DENG2_GUARD(this);
@@ -188,6 +310,11 @@ void Atlas::setAllocator(IAllocator *allocator)
         d->allocator->clear(); // using new metrics
     }
     d->markFullyChanged();
+}
+
+Atlas::IAllocator *Atlas::takeAllocator()
+{
+    return d->allocator.release();
 }
 
 void Atlas::setMarginSize(dint marginPixels)
@@ -208,7 +335,7 @@ void Atlas::clear()
 {
     DENG2_GUARD(this);
 
-    if(d->allocator.get())
+    if(d->allocator)
     {
         d->allocator->clear();
     }
@@ -226,7 +353,7 @@ void Atlas::setTotalSize(Size const &totalSize)
 
     d->totalSize = totalSize;
 
-    if(d->allocator.get())
+    if(d->allocator)
     {
         d->allocator->setMetrics(totalSize, d->margin);
     }
@@ -246,8 +373,8 @@ Atlas::Size Atlas::totalSize() const
     return d->totalSize;
 }
 
-Id Atlas::alloc(Image const &image)
-{    
+Id Atlas::alloc(Image const &image, Id const &chosenId)
+{
     if(image.isNull())
     {
         LOG_AS("Atlas");
@@ -259,7 +386,7 @@ Id Atlas::alloc(Image const &image)
     DENG2_ASSERT(d->allocator.get());
 
     Rectanglei rect;
-    Id id = d->allocator->allocate(d->sizeWithBorders(image.size()), rect);
+    Id id = d->allocator->allocate(d->sizeWithBorders(image.size()), rect, chosenId);
 
     if(id.isNone() && d->flags.testFlag(AllowDefragment) && d->mayDefrag)
     {
@@ -267,7 +394,7 @@ Id Atlas::alloc(Image const &image)
         d->defragment();
 
         // Try again...
-        id = d->allocator->allocate(d->sizeWithBorders(image.size()), rect);
+        id = d->allocator->allocate(d->sizeWithBorders(image.size()), rect, chosenId);
     }
 
     if(!id.isNone())
@@ -275,82 +402,19 @@ Id Atlas::alloc(Image const &image)
         // Defragmenting may again be helpful.
         d->mayDefrag = true;
 
-        Rectanglei const noBorders  = rect.shrunk(d->border);
-        Rectanglei const withMargin = rect.expanded(d->margin);
-
-        if(d->hasBacking())
+        if(!d->usingDeferredMode())
         {
-            // The margin is cleared to transparent black.
-            d->backing.fill(withMargin, Image::Color(0, 0, 0, 0));
-
-            if(d->border > 0)
-            {
-                if(d->flags.testFlag(WrapBordersInBackingStore))
-                {
-                    // Wrap using the source image (left, right, top, bottom edges).
-                    d->backing.drawPartial(image, Rectanglei(0, 0, d->border, image.height()),
-                                           rect.topRight() + Vector2i(-d->border, d->border));
-
-                    d->backing.drawPartial(image, Rectanglei(image.width() - d->border, 0,
-                                                             d->border, image.height()),
-                                           rect.topLeft + Vector2i(0, d->border));
-
-                    d->backing.drawPartial(image, Rectanglei(0, 0, image.width(), d->border),
-                                           rect.bottomLeft() + Vector2i(d->border, -d->border));
-
-                    d->backing.drawPartial(image, Rectanglei(0, image.height() - d->border,
-                                                             image.width(), d->border),
-                                           rect.topLeft + Vector2i(d->border, 0));
-                }
-            }
-            d->backing.draw(image, noBorders.topLeft);
-
-            //d->backing.toQImage().save(QString("backing-%1.png").arg(uint64_t(this)));
-
-            d->markAsChanged(rect);
+            // Submit the image to the backing store (or commit).
+            d->submitImage(image, rect);
         }
         else
         {
-            // No backing, must commit immediately.
-            if(d->border > 0)
-            {
-                // Expand with borders (repeat edges).
-                QImage const srcImg = image.toQImage();
-                int const sw = srcImg.width();
-                int const sh = srcImg.height();
-
-                QImage bordered(QSize(rect.width(), rect.height()), srcImg.format());
-                int const w = bordered.width();
-                int const h = bordered.height();
-
-                QPainter painter(&bordered);
-                painter.setCompositionMode(QPainter::CompositionMode_Source);
-                painter.fillRect(bordered.rect(), QColor(0, 0, 0, 0));
-
-                /// @todo This really only works for a border of 1 pixels. Should
-                /// repeat the same outmost edge pixels for every border. -jk
-
-                painter.drawImage(d->border, d->border, srcImg);
-                painter.drawImage(d->border, 0,     srcImg, 0, 0, sw, 1); // top
-                painter.drawImage(d->border, h - 1, srcImg, 0, sh - 1, sw, 1); // bottom
-                painter.drawImage(0, d->border,     srcImg, 0, 0, 1, sh); // left
-                painter.drawImage(w - 1, d->border, srcImg, sw - 1, 0, 1, sh); // right
-
-                // Corners.
-                painter.drawImage(0, 0,         srcImg, 0, 0, 1, 1);
-                painter.drawImage(w - 1, 0,     srcImg, sw - 1, 0, 1, 1);
-                painter.drawImage(0, h - 1,     srcImg, 0, sh - 1, 1, 1);
-                painter.drawImage(w - 1, h - 1, srcImg, sw - 1, sh - 1, 1, 1);
-
-                commit(bordered, rect.topLeft);
-            }
-            else
-            {
-                commit(image, noBorders.topLeft);
-            }
+            // Keep the image in a buffer. This will be submitted later
+            // if the user chooses to do so.
+            d->deferred.insert(id, new Image(image));
         }
     }
-    else
+    else if(!d->usingDeferredMode())
     {
         LOG_AS("Atlas");
         if(!d->fullReportedAt.isValid() || d->fullReportedAt.since() > 1.0)
@@ -431,6 +495,10 @@ Rectanglef Atlas::imageRectf(Id const &id) const
 Image Atlas::image(Id const &id) const
 {
     DENG2_GUARD(this);
+    if(d->deferred.contains(id))
+    {
+        return *d->deferred[id];
+    }
     if(d->hasBacking() && d->allocator.get() && contains(id))
     {
         return d->backing.subImage(imageRect(id));
@@ -442,9 +510,10 @@ void Atlas::commit() const
 {
     DENG2_GUARD(this);
 
-    if(!d->needCommit || !d->hasBacking()) return;
-
     LOG_AS("Atlas");
+    d->submitDeferred();
+
+    if(!d->needCommit || !d->hasBacking()) return;
 
     if(d->mustCommitFull())
     {
@@ -468,6 +537,19 @@ void Atlas::commit() const
 
     d->needCommit = false;
     d->needFullCommit = false;
+}
+
+void Atlas::cancelDeferred()
+{
+    for(auto i = d->deferred.constBegin(); i != d->deferred.constEnd(); ++i)
+    {
+        delete i.value(); // we own a copy of the Image
+        if(d->allocator)
+        {
+            release(i.key());
+        }
+    }
+    d->deferred.clear();
 }
 
 } // namespace de

@@ -74,6 +74,12 @@ public:
          */
         LogCommitsAsXVerbose = 0x8,
 
+        /**
+         * Allocations will not be committed until manually requested. Deferred
+         * allocations can also be cancelled before committing.
+         */
+        DeferredAllocations = 0x10,
+
         DefaultFlags = 0
     };
     Q_DECLARE_FLAGS(Flags, Flag)
@@ -102,7 +108,7 @@ public:
         virtual void setMetrics(Size const &totalSize, int margin) = 0;
 
         virtual void clear() = 0;
-        virtual Id   allocate(Size const &size, Rectanglei &rect) = 0;
+        virtual Id   allocate(Size const &size, Rectanglei &rect, Id const &knownId) = 0;
         virtual void release(Id const &id) = 0;
 
         /**
@@ -139,12 +145,16 @@ public:
      */
     Atlas(Flags const &flags = DefaultFlags, Size const &totalSize = Size());
 
+    Flags flags() const;
+
     /**
      * Sets the allocator for the atlas. The atlas is cleared automatically.
      *
      * @param allocator  Allocator instance. Atlas gets ownership.
      */
     void setAllocator(IAllocator *allocator);
+
+    IAllocator *takeAllocator();
 
     /**
      * Sets the size of the margin that is left between allocations. The default is
@@ -185,12 +195,13 @@ public:
      * Attempts to allocate an image into the atlas. If defragmentation is
      * allowed, it may occur during the operation.
      *
-     * @param image  Image content to allocate.
+     * @param image     Image content to allocate.
+     * @param chosenId  Id for the allocation, if it has already been chosen.
      *
      * @return Identifier of the allocated image. If Id::None, the allocation
      * failed because the atlas is too full.
      */
-    Id alloc(Image const &image);
+    Id alloc(Image const &image, Id const &chosenId = Id::None);
 
     /**
      * Releases a previously allocated image from the atlas.
@@ -245,8 +256,15 @@ public:
     /**
      * Request committing the backing store to the physical atlas storage.
      * This does nothing if there are no changes in the atlas.
+     *
+     * Deferred commits will also be committed.
      */
     void commit() const;
+
+    /**
+     * Deferred allocations will all be cancelled.
+     */
+    void cancelDeferred();
 
 protected:
     virtual void commitFull(Image const &fullImage) const = 0;

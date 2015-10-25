@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBGUI_ROWATLASALLOCATOR_H
@@ -36,17 +36,17 @@ class LIBGUI_PUBLIC RowAtlasAllocator : public Atlas::IAllocator
 public:
     RowAtlasAllocator();
 
-    void setMetrics(Atlas::Size const &totalSize, int margin);
+    void setMetrics(Atlas::Size const &totalSize, int margin) override;
 
-    void clear();
-    Id allocate(Atlas::Size const &size, Rectanglei &rect);
-    void release(Id const &id);
-    bool optimize();
+    void clear() override;
+    Id allocate(Atlas::Size const &size, Rectanglei &rect, Id const &knownId) override;
+    void release(Id const &id) override;
+    bool optimize() override;
 
-    int count() const;
-    Atlas::Ids ids() const;
-    void rect(Id const &id, Rectanglei &rect) const;
-    Allocations allocs() const;
+    int count() const override;
+    Atlas::Ids ids() const override;
+    void rect(Id const &id, Rectanglei &rect) const override;
+    Allocations allocs() const override;
 
 private:
     DENG2_PRIVATE(d)
