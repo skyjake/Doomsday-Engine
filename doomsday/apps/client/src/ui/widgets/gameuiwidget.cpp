@@ -25,7 +25,7 @@
 #include "api_console.h"
 #include "edit_bias.h"
 
-#include "audio/channel.h"  // debug visual
+#include "audio/mixer.h"       // debug visual
 #include "network/net_main.h"
 #include "gl/gl_main.h"
 

@@ -28,7 +28,7 @@
 
 #include "api_audiod_mus.h"  ///< @todo remove me
 #include "api_audiod_sfx.h"  ///< @todo remove me
-#include "audio/sound.h"
+#include "audio/channel.h"
 #include "audio/system.h"
 #include <doomsday/library.h>
 #include <de/LibraryFile>
@@ -51,19 +51,19 @@ public:
     /**
      * Returns @c true if the given @a library appears to be useable with PluginDriver.
      *
-     * @see newFromLibrary()
+     * @see interpretFile()
      */
     static bool recognize(de::LibraryFile &library);
 
     /**
-     * Attempt to load a new PluginDriver from the given @a library.
+     * Attempt to interpret the given @a library as a PluginDriver.
      *
      * @return  Pointer to a new PluginDriver instance if successful. Ownership is
      * given to the caller.
      *
      * @see recognize()
      */
-    static PluginDriver *newFromLibrary(de::LibraryFile &library);
+    static PluginDriver *interpretFile(de::LibraryFile *library);
 
     /**
      * Returns the plugin library for the loaded audio driver.
@@ -72,20 +72,16 @@ public:
 
 public:  // Sound players: -------------------------------------------------------
 
-    class CdPlayer : public ICdPlayer
+    class CdPlayer : public IPlayer, public audiointerface_cd_t
     {
     public:
         de::dint initialize();
         void deinitialize();
         PluginDriver &driver() const;
 
-        void update();
-        void setVolume(de::dfloat newVolume);
-        bool isPlaying() const;
-        void pause(de::dint pause);
-        void stop();
+        Channel *makeChannel();
 
-        de::dint play(de::dint track, de::dint looped);
+        de::LoopResult forAllChannels(std::function<de::LoopResult (Channel const &)> callback) const;
 
     private:
         CdPlayer(PluginDriver &driver);
@@ -96,25 +92,16 @@ public:  // Sound players: -----------------------------------------------------
         PluginDriver *_driver = nullptr;
     };
 
-    class MusicPlayer : public IMusicPlayer
+    class MusicPlayer : public IPlayer, public audiointerface_music_t
     {
     public:
         de::dint initialize();
         void deinitialize();
         PluginDriver &driver() const;
 
-        void update();
-        void setVolume(de::dfloat newVolume);
-        bool isPlaying() const;
-        void pause(de::dint pause);
-        void stop();
+        Channel *makeChannel();
 
-        bool canPlayBuffer() const;
-        void *songBuffer(de::duint length);
-        de::dint play(de::dint looped);
-
-        bool canPlayFile() const;
-        de::dint playFile(de::String const &filename, de::dint looped);
+        de::LoopResult forAllChannels(std::function<de::LoopResult (Channel const &)> callback) const;
 
     private:
         MusicPlayer(PluginDriver &driver);
@@ -125,7 +112,7 @@ public:  // Sound players: -----------------------------------------------------
         PluginDriver *_driver = nullptr;
     };
 
-    class SoundPlayer : public ISoundPlayer
+    class SoundPlayer : public ISoundPlayer, public audiointerface_sfx_t
     {
     public:
         /**
@@ -143,7 +130,9 @@ public:  // Sound players: -----------------------------------------------------
         void listener(de::dint prop, de::dfloat value);
         void listenerv(de::dint prop, de::dfloat *values);
 
-        Sound *makeSound(bool stereoPositioning, de::dint bitsPer, de::dint rate);
+        Channel *makeChannel();
+
+        de::LoopResult forAllChannels(std::function<de::LoopResult (Channel const &)> callback) const;
 
     private:
         SoundPlayer(PluginDriver &driver);
@@ -152,38 +141,92 @@ public:  // Sound players: -----------------------------------------------------
         DENG2_PRIVATE(d)
     };
 
-    class Sound : public audio::Sound
+    class CdChannel : public audio::CdChannel
     {
     public:
-        Sound(SoundPlayer &player, bool stereoPositioning, de::dint bytesPer, de::dint rate);
-        virtual ~Sound();
-
-        bool isValid() const;
-        sfxsample_t const *samplePtr() const;
-        int flags() const;
-        void setFlags(int newFlags);
-        void format(bool stereoPositioning, de::dint bytesPer, de::dint rate);
-        bool stereoPositioning() const;
-        de::dint bytes() const;
-        de::dint rate() const;
-        SoundEmitter *emitter() const;
-        void setEmitter(SoundEmitter *newEmitter);
-        void setOrigin(de::Vector3d const &newOrigin);
-        de::Vector3d origin() const;
-        audio::Sound &setFrequency(de::dfloat newFrequency);
-        audio::Sound &setVolume(de::dfloat newVolume);
-        PlayingMode mode() const;
-        de::dfloat frequency() const;
-        de::dfloat volume() const;
-        void load(sfxsample_t &sample);
+        Channel &setVolume(de::dfloat newVolume);
         void stop();
-        void reset();
-        void play(PlayingMode mode);
-        de::dint startTime() const;
-        de::dint endTime() const;
-        void refresh();
+
+        void update();
+        bool isPlaying() const;
+        void pause(de::dint pause);
+
+        de::dint play(de::dint track, de::dint looped);
 
     private:
+        CdChannel(PluginDriver &driver);
+        friend class CdPlayer;
+
+        PluginDriver *_driver = nullptr;
+    };
+
+    class MusicChannel : public audio::MusicChannel
+    {
+    public:
+        Channel &setVolume(de::dfloat newVolume);
+        void stop();
+
+        void update();
+        bool isPlaying() const;
+        void pause(de::dint pause);
+
+        bool canPlayBuffer() const;
+        void *songBuffer(de::duint length);
+        de::dint play(de::dint looped);
+
+        bool canPlayFile() const;
+        de::dint playFile(de::String const &filename, de::dint looped);
+
+    private:
+        MusicChannel(PluginDriver &driver);
+        friend class MusicPlayer;
+
+        PluginDriver *_driver = nullptr;
+    };
+
+    class SoundChannel : public audio::SoundChannel
+    {
+    public:
+        PlayingMode mode() const;
+
+        void play(PlayingMode mode);
+        void stop();
+
+        SoundEmitter *emitter() const;
+        de::dfloat frequency() const;
+        de::Vector3d origin() const;
+        Positioning positioning() const;
+        de::dfloat volume() const;
+
+        audio::SoundChannel &setEmitter(SoundEmitter *newEmitter);
+        audio::SoundChannel &setFrequency(de::dfloat newFrequency);
+        audio::SoundChannel &setOrigin(de::Vector3d const &newOrigin);
+        Channel             &setVolume(de::dfloat newVolume);
+
+        de::dint flags() const;
+        void setFlags(de::dint newFlags);
+
+        void update();
+        void reset();
+
+        bool format(Positioning positioning, de::dint bytesPer, de::dint rate);
+        bool isValid() const;
+
+        void load(sfxsample_t const &sample);
+
+        de::dint bytes() const;
+        de::dint rate() const;
+        de::dint startTime() const;
+        de::dint endTime() const;
+
+        sfxsample_t const *samplePtr() const;
+
+        void updateEnvironment();
+
+    private:
+        SoundChannel(PluginDriver &owner);
+        friend class SoundPlayer;
+
         DENG2_PRIVATE(d)
     };
 
@@ -202,10 +245,13 @@ public:  // Implements audio::System::IDriver: ---------------------------------
     IPlayer &findPlayer   (de::String interfaceIdentityKey) const;
     IPlayer *tryFindPlayer(de::String interfaceIdentityKey) const;
 
+    de::LoopResult forAllChannels(PlaybackInterfaceType type,
+        std::function<de::LoopResult (Channel const &)> callback) const;
+
 public:
-    audiointerface_cd_t &iCd() const;
-    audiointerface_music_t &iMusic() const;
-    audiointerface_sfx_t &iSound() const;
+    CdPlayer    &iCd   () const;
+    MusicPlayer &iMusic() const;
+    SoundPlayer &iSound() const;
 
 private:
     PluginDriver();

@@ -1,4 +1,4 @@
-/** @file sound.cpp  Interface for playing sounds.
+/** @file sound.cpp  POD structure for a logical sound.
  *
  * @authors Copyright © 2014-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2015 Daniel Swanson <danij@dengine.net>
@@ -19,69 +19,35 @@
 
 #include "audio/sound.h"
 
-#include "audio/system.h"
-#include <de/timer.h>
+#include "audio/stage.h"
+#include "world/p_object.h"
+#include <de/timer.h>  // TICSPERSEC
 
 using namespace de;
 
 namespace audio {
 
-DENG2_PIMPL_NOREF(Sound)
+dfloat Sound::ratePriority(dfloat volume, SoundEmitter const *emitter, ddouble const *origin,
+    dint startTime, Listener *listener)  // static
 {
-    DENG2_PIMPL_AUDIENCE(Deletion)
-};
+    mobj_t const *tracking = listener ? listener->trackedMapObject() : nullptr;
 
-DENG2_AUDIENCE_METHOD(Sound, Deletion)
+    // Deminish the rating over five seconds from the start time until zero.
+    dfloat const timeoff = 1000 * (Timer_Ticks() - startTime) / (5.0f * TICSPERSEC);
 
-Sound::Sound() : d(new Instance)
-{}
-
-Sound::~Sound()
-{
-    // Notify interested parties.
-    DENG2_FOR_AUDIENCE2(Deletion, i)
-    {
-        i->soundBeingDeleted(*this);
-    }
-}
-
-bool Sound::isPlaying() const
-{
-    return mode() != NotPlaying;
-}
-
-dfloat Sound::ratePriority(mobj_t *listener, SoundEmitter *emitter, coord_t const *origin,
-    dfloat volume, dint startTic)  // static
-{
-    // Deminish the priority rating over five seconds from the start time until zero.
-    dfloat const timeoff   = 1000 * (Timer_Ticks() - startTic) / (5.0f * TICSPERSEC);
-
-    // Is this sound without an origin?
-    if(!listener || (!emitter && !origin))
+    // Rate sounds without an origin simply by playback volume.
+    if(!tracking || (!emitter && !origin))
     {
         return 1000 * volume - timeoff;
     }
-
-    // The sound has an origin so rate according to distance.
-    if(emitter)
+    // Rate sounds with an origin by both distance and playback volume.
+    else
     {
-        origin = emitter->origin;
+        ddouble const distFromListener
+            = Mobj_ApproxPointDistance(*tracking, emitter ? emitter->origin : origin);
+
+        return 1000 * volume - distFromListener / 2 - timeoff;
     }
-
-    return 1000 * volume - Mobj_ApproxPointDistance(*listener, origin) / 2 - timeoff;
-}
-
-dfloat Sound::priority() const
-{
-    if(!isPlaying())
-        return SFX_LOWEST_PRIORITY;
-
-    if(flags() & SFXCF_NO_ORIGIN)
-        return ratePriority(audio::System::get().worldStageListenerPtr(), 0, 0, volume(), startTime());
-
-    /// @note The origin is updated to match our emitter during updates.
-    ddouble pos[3]; origin().decompose(pos);
-    return ratePriority(audio::System::get().worldStageListenerPtr(), 0, pos, volume(), startTime());
 }
 
 }  // namespace audio

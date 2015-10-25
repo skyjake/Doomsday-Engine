@@ -27,7 +27,7 @@
 #endif
 
 #include "api_audiod_sfx.h"  ///< sfxbuffer_t @todo remove me
-#include "audio/sound.h"
+#include "audio/channel.h"
 #include "audio/system.h"
 #include <de/String>
 #include <de/liblegacy.h>
@@ -50,24 +50,15 @@ public:
 
 public:  // Sound players: --------------------------------------------------------------
 
-    class MusicPlayer : public IMusicPlayer
+    class MusicPlayer : public IPlayer
     {
     public:
         de::dint initialize();
         void deinitialize();
 
-        void update();
-        void setVolume(de::dfloat newVolume);
-        bool isPlaying() const;
-        void pause(de::dint pause);
-        void stop();
+        Channel *makeChannel();
 
-        bool canPlayBuffer() const;
-        void *songBuffer(de::duint length);
-        de::dint play(de::dint looped);
-
-        bool canPlayFile() const;
-        de::dint playFile(de::String const &filename, de::dint looped);
+        de::LoopResult forAllChannels(std::function<de::LoopResult (Channel const &)> callback) const;
 
     private:
         MusicPlayer();
@@ -88,7 +79,9 @@ public:  // Sound players: -----------------------------------------------------
         void listener(de::dint prop, de::dfloat value);
         void listenerv(de::dint prop, de::dfloat *values);
 
-        Sound *makeSound(bool stereoPositioning, de::dint bitsPer, de::dint rate);
+        Channel *makeChannel();
+
+        de::LoopResult forAllChannels(std::function<de::LoopResult (Channel const &)> callback) const;
 
     private:
         SoundPlayer();
@@ -97,38 +90,71 @@ public:  // Sound players: -----------------------------------------------------
         DENG2_PRIVATE(d)
     };
 
-    class Sound : public audio::Sound
+    class MusicChannel : public audio::MusicChannel
     {
     public:
-        Sound(bool stereoPositioning, de::dint bytesPer, de::dint rate);
-        virtual ~Sound();
+        Channel &setVolume(de::dfloat newVolume);
+        void stop();
 
+        void update();
+        bool isPlaying() const;
+        void pause(de::dint pause);
+
+        bool canPlayBuffer() const;
+        void *songBuffer(de::duint length);
+        de::dint play(de::dint looped);
+
+        bool canPlayFile() const;
+        de::dint playFile(de::String const &filename, de::dint looped);
+
+    public:
+        MusicChannel();
+        friend class MusicPlayer;
+    };
+
+    class SoundChannel : public audio::SoundChannel
+    {
+    public:
+        PlayingMode mode() const;
+
+        void play(PlayingMode mode);
+        void stop();
+
+        SoundEmitter *emitter() const;
+        de::dfloat frequency() const;
+        de::Vector3d origin() const;
+        Positioning positioning() const;
+        de::dfloat volume() const;
+
+        audio::SoundChannel &setEmitter(SoundEmitter *newEmitter);
+        audio::SoundChannel &setFrequency(de::dfloat newFrequency);
+        audio::SoundChannel &setOrigin(de::Vector3d const &newOrigin);
+        Channel             &setVolume(de::dfloat newVolume);
+
+        de::dint flags() const;
+        void setFlags(de::dint newFlags);
+
+        void update();
+        void reset();
+
+        bool format(Positioning positioning, de::dint bytesPer, de::dint rate);
         bool isValid() const;
-        sfxsample_t const *samplePtr() const;
-        int flags() const;
-        void setFlags(int newFlags);
-        void format(bool stereoPositioning, de::dint bytesPer, de::dint rate);
-        bool stereoPositioning() const;
+
+        void load(sfxsample_t const &sample);
+
         de::dint bytes() const;
         de::dint rate() const;
-        SoundEmitter *emitter() const;
-        void setEmitter(SoundEmitter *newEmitter);
-        void setOrigin(de::Vector3d const &newOrigin);
-        de::Vector3d origin() const;
-        audio::Sound &setFrequency(de::dfloat newFrequency);
-        audio::Sound &setVolume(de::dfloat newVolume);
-        PlayingMode mode() const;
-        de::dfloat frequency() const;
-        de::dfloat volume() const;
-        void load(sfxsample_t &sample);
-        void stop();
-        void reset();
-        void play(PlayingMode mode);
         de::dint startTime() const;
         de::dint endTime() const;
-        void refresh();
+
+        sfxsample_t const *samplePtr() const;
+
+        void updateEnvironment();
 
     private:
+        SoundChannel();
+        friend class SoundPlayer;
+
         DENG2_PRIVATE(d)
     };
 
@@ -146,6 +172,9 @@ public:  // Implements audio::System::IDriver: ---------------------------------
 
     IPlayer &findPlayer   (de::String interfaceIdentityKey) const;
     IPlayer *tryFindPlayer(de::String interfaceIdentityKey) const;
+
+    de::LoopResult forAllChannels(PlaybackInterfaceType type,
+        std::function<de::LoopResult (Channel const &)> callback) const;
 
 private:
     DENG2_PRIVATE(d)

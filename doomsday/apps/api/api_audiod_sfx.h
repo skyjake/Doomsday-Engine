@@ -53,8 +53,8 @@ enum
  */
 enum
 {
-    SFXEV_BEGIN,  ///< An update is about to begin.
-    SFXEV_END     ///< The update is done.
+    SFXEV_UNUSED1,
+    SFXEV_REFRESH  ///< Now is the time to refresh the currently playing sounds if needed.
 };
 
 /**

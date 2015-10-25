@@ -159,9 +159,9 @@ void DS_Event(int type)
 {
     if(!::fmodSystem) return;
 
-    if(type == SFXEV_END)
+    if(type == SFXEV_REFRESH)
     {
-        // End of frame, do an update.
+        // Time to do an update.
         ::fmodSystem->update();
     }
 }

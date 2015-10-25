@@ -24,13 +24,15 @@
 #  error "audio" is not available in a SERVER build
 #endif
 
+#include "audio/channel.h"
+#include "audio/stage.h"
+
 #include "dd_types.h"        // lumpnum_t
 #include "SettingsRegister"
 #include "world/p_object.h"
 #include <de/DotPath>
 #include <de/Error>
 #include <de/Observers>
-#include <de/Range>
 #include <de/Record>
 #include <de/String>
 #include <de/System>
@@ -41,14 +43,14 @@
 
 namespace audio {
 
-class Channels;
 class IPlayer;
+class Mixer;
 class SampleCache;
 
 /**
- * Sound stages provide the means for playing sounds in independent contexts.
+ * Stages provide the means for concurrent playback in logically independent contexts.
  */
-enum SoundStage
+enum StageId
 {
     /// The "world" sound stage supports playing sounds that originate from world/map
     /// space SoundEmitters, with (optional) distance based volume attenuation and/or
@@ -62,7 +64,7 @@ enum SoundStage
 };
 
 /**
- * Music source preference.
+ * Symbolic music source identifiers.
  */
 enum MusicSource
 {
@@ -122,9 +124,9 @@ public:
     de::String description() const;
 
     /**
-     * Provides access to the playback Channels.
+     * Provides access to the Channel Mixer.
      */
-    Channels /*const*/ &channels() const;
+    Mixer /*const*/ &mixer() const;
 
     /**
      * Provides access to the sample (waveform) asset cache.
@@ -137,9 +139,14 @@ public:
     de::dint upsampleFactor(de::dint rate) const;
 
     /**
-     * Reset playback tracking in the specified @a soundStage.
+     * Reset playback tracking in the sound Stage associated with the given @a stageId.
      */
-    void resetSoundStage(SoundStage soundStage);
+    void resetStage(StageId stage);
+
+    /**
+     * Provides access to the world sound Stage (FYI).
+     */
+    Stage /*const*/ &worldStage() const;
 
 public:  // Music playback: -------------------------------------------------------------
 
@@ -226,13 +233,13 @@ public:  // Sound playback: ----------------------------------------------------
      * Returns true if the referenced sound is currently playing somewhere in the given
      * @a soundStage. It does not matter if it is audible (or not).
      *
-     * @param soundStage  SoundStage to check.
-     * @param soundId     @c 0= true if sounds are playing using the specified @a emitter.
-     * @param emitter     WorldStage SoundEmitter (originator). May be @c nullptr.
+     * @param stageId  Unique identifier of the sound Stage to check.
+     * @param soundId  @c 0= true if sounds are playing using the specified @a emitter.
+     * @param emitter  WorldStage SoundEmitter (originator). May be @c nullptr.
      *
      * @see playSound(), stopSound()
      */
-    bool soundIsPlaying(SoundStage soundStage, de::dint soundId, SoundEmitter *emitter) const;
+    bool soundIsPlaying(StageId stageId, de::dint soundId, SoundEmitter *emitter) const;
 
     /**
      * Start playing a sound in the specified @a soundStage.
@@ -240,7 +247,7 @@ public:  // Sound playback: ----------------------------------------------------
      * If @a emitter and @a origin are both @c nullptr, the sound will be played with stereo
      * positioning (centered).
      *
-     * @param soundStage       SoundStage in which to play the sound.
+     * @param stageId          Unique identifier of the sound Stage on which to play.
      * @param soundIdAndFlags  ID of the sound to play. Flags can be included (DDSF_*).
      * @param emitter          WorldStage SoundEmitter (originator). May be @c nullptr.
      * @param origin           WorldStage space coordinates where the sound originates.
@@ -253,57 +260,23 @@ public:  // Sound playback: ----------------------------------------------------
      *
      * @see soundIsPlaying(), stopSound()
      */
-    bool playSound(SoundStage soundStage, de::dint soundIdAndFlags, SoundEmitter *emitter,
+    bool playSound(StageId stageId, de::dint soundIdAndFlags, SoundEmitter *emitter,
         coord_t const *origin, de::dfloat volume = 1 /*max volume*/);
 
     /**
      * Stop playing sound(s) in the specified @a soundStage.
      *
-     * @param soundStage  SoundStage in which to stop sounds.
-     * @param soundId     Unique identifier of the sound(s) to stop.
-     * @param emitter     WorldStage SoundEmitter (originator). May be @c nullptr.
-     * @param flags       @ref soundStopFlags.
+     * @param stageId  Unique identifier of the sound Stage on which to stop sounds.
+     * @param soundId  Unique identifier of the sound(s) to stop.
+     * @param emitter  WorldStage SoundEmitter (originator). May be @c nullptr.
+     * @param flags    @ref soundStopFlags.
      *
      * @see soundIsPlaying(), stopSound()
      */
-    void stopSound(SoundStage soundStage, de::dint soundId, SoundEmitter *emitter,
+    void stopSound(StageId stageId, de::dint soundId, SoundEmitter *emitter,
         de::dint flags = 0 /*no special stop behaviors*/);
 
-    /**
-     * Convenient method determining the distance from the given map space @a point to the
-     * active WorldStage listener, in map space units; otherwise returns @c 0 if no current
-     * listener exists.
-     *
-     * @see worldStageListenerPtr()
-     */
-    coord_t distanceToWorldStageListener(de::Vector3d const &point) const;
-
-    /**
-     * Returns the WorldStage map object used as the current sound listener, if any (may
-     * return @c nullptr if none is configured).
-     *
-     * @see distanceToWorldStageListener()
-     */
-    struct mobj_s *worldStageListenerPtr();
-
-    /**
-     * Convenient method returning the current WorldStage sound volume attenuation range,
-     * in map space units.
-     */
-    de::Ranged worldStageSoundVolumeAttenuationRange() const;
-
 public:  // Low-level driver/playback interfaces: ---------------------------------------
-
-    enum PlaybackInterfaceType
-    {
-        AUDIO_ICD,
-        AUDIO_IMUSIC,
-        AUDIO_ISFX,
-
-        PlaybackInterfaceTypeCount
-    };
-
-    static de::String playbackInterfaceTypeAsText(PlaybackInterfaceType type);
 
     /// Required/referenced audio driver is missing. @ingroup errors
     DENG2_ERROR(MissingDriverError);
@@ -340,7 +313,6 @@ public:  // Low-level driver/playback interfaces: ------------------------------
         /// Returns a reference to the application's singleton audio::System instance.
         static inline System &audioSystem() { return System::get(); }
 
-        inline bool isLoaded     () const { return status() >= Loaded;      }
         inline bool isInitialized() const { return status() == Initialized; }
 
         /**
@@ -402,6 +374,17 @@ public:  // Low-level driver/playback interfaces: ------------------------------
         /// Referenced playback interface unknown. @ingroup errors
         DENG2_ERROR(UnknownInterfaceError);
 
+        enum PlaybackInterfaceType
+        {
+            AUDIO_ICD,
+            AUDIO_IMUSIC,
+            AUDIO_ISFX,
+
+            PlaybackInterfaceTypeCount
+        };
+
+        static de::String playbackInterfaceTypeAsText(PlaybackInterfaceType type);
+
         /**
          * Returns a listing of the logical playback interfaces implemented by the driver.
          * It is irrelevant whether said interfaces are presently available.
@@ -420,6 +403,13 @@ public:  // Low-level driver/playback interfaces: ------------------------------
 
         virtual IPlayer &findPlayer   (de::String interfaceIdentityKey) const = 0;
         virtual IPlayer *tryFindPlayer(de::String interfaceIdentityKey) const = 0;
+
+        /**
+         * Iterate through available playback channels of the given @a type, and execute
+         * @a callback for each.
+         */
+        virtual de::LoopResult forAllChannels(PlaybackInterfaceType type,
+            std::function<de::LoopResult (Channel const &)> callback) const = 0;
     };
 
     /**
@@ -478,18 +468,14 @@ public:  /// @todo make private:
     void reset();
 
     /// @todo refactor away.
-    void requestWorldStageListenerUpdate();
-
-    /// @todo refactor away.
     void updateMusicMidiFont();
 
     /**
-     * Enabling sound refresh is simple: the refresh thread(s) is resumed. When disabling
-     * refresh, first make sure a new refresh doesn't begin (using allowRefresh). We still
-     * have to see if a refresh is being made and wait for it to stop. Then we can suspend
-     * the  refresh thread.
+     * Enabling refresh is simple: the refresh thread(s) is resumed. When disabling refresh,
+     * first make sure a new refresh doesn't begin (using allowRefresh). We still have to
+     * see if a refresh is being made and wait for it to stop before we can suspend thread(s).
      */
-    void allowSoundRefresh(bool allow = true);
+    void allowChannelRefresh(bool allow = true);
 
     void worldMapChanged();
 
@@ -497,6 +483,7 @@ private:
     DENG2_PRIVATE(d)
 };
 
+/// @todo revise API:
 class IPlayer
 {
 public:
@@ -513,64 +500,33 @@ public:
      * Perform any deinitializaion necessary before the driver is unloaded.
      */
     virtual void deinitialize() = 0;
+
+    virtual de::LoopResult forAllChannels(std::function<de::LoopResult (Channel const &)> callback) const = 0;
+
+    /**
+     * Construct a new Channel instance (note: ownership is retained).
+     */
+    virtual Channel *makeChannel() = 0;
 };
 
-/// @todo revise API:
-class ICdPlayer : public IPlayer
-{
-public:
-    virtual void update() = 0;
-    virtual void setVolume(de::dfloat newVolume) = 0;
-    virtual bool isPlaying() const = 0;
-    virtual void pause(de::dint pause) = 0;
-    virtual void stop() = 0;
-
-    virtual de::dint play(de::dint track, de::dint looped) = 0;
-};
-
-/// @todo revise API:
-class IMusicPlayer : public IPlayer
-{
-public:
-    virtual void update() = 0;
-    virtual void setVolume(de::dfloat newVolume) = 0;
-    virtual bool isPlaying() const = 0;
-    virtual void pause(de::dint pause) = 0;
-    virtual void stop() = 0;
-
-    /// Return @c true if the player provides playback from a managed buffer.
-    virtual bool canPlayBuffer() const { return false; }
-
-    virtual void *songBuffer(de::duint length) = 0;
-    virtual de::dint play(de::dint looped) = 0;
-
-    /// Returns @c true if the player provides playback from a native file.
-    virtual bool canPlayFile() const { return false; }
-
-    virtual de::dint playFile(de::String const &filename, de::dint looped) = 0;
-};
-
-class Sound;
-
-/// @todo revise API:
 class ISoundPlayer : public IPlayer
 {
 public:
     /**
-     * Returns @c true if samples can use any sampler rate; otherwise @c false
-     * if the user must ensure that all samples use the same sampler rate.
+     * Returns @c true if samples can use any sampler rate; otherwise @c false if the user
+     * is responsible for ensuring all samples use the same sampler rate.
      */
     virtual bool anyRateAccepted() const = 0;
 
     /**
-     * Called by the audio::System to temporarily enable/disable refreshing of
-     * sound data buffers in order to perform a critical task which operates
-     * on the current state of that data.
+     * Called by the audio::System to temporarily enable/disable refreshing of sound data
+     * buffers in order to perform a critical task which operates on the current state of
+     * that data.
      *
-     * For example, when selecting a logical audio channel on which to play a
-     * new sound it is imperative that Sound states do not change while doing
-     * so (e.g., some audio drivers make use of a background thread for paging
-     * a subset of the waveform data, for streaming purposes).
+     * For example, when selecting a logical audio channel on which to play a new sound
+     * it is imperative that Sound states do not change while doing so (e.g., some audio
+     * drivers make use of a background thread for paging a subset of the waveform data,
+     * for streaming purposes).
      */
     virtual void allowRefresh(bool allow = true) = 0;
 
@@ -585,20 +541,6 @@ public:
      * Call SFXLP_UPDATE at the end of every channel update.
      */
     virtual void listenerv(de::dint prop, de::dfloat *values) = 0;
-
-    /**
-     * Prepare another Sound instance ready for loading with sample data.
-     *
-     * @param stereoPositioning  @c true= the resultant Sound should be configured
-     * suitably for stereo positioning; otherwise use 3D positioning.
-     *
-     * @param bytesPer           Number of bytes per sample.
-     * @param rate               Sampler rate / frequency in Hz.
-     *
-     * @return  Sound instance, preconfigured as specified; otherwise @c nullptr
-     * if the driver does not support the given configuration.
-     */
-    virtual Sound *makeSound(bool stereoPositioning, de::dint bytesPer, de::dint rate) = 0;
 };
 
 }  // namespace audio

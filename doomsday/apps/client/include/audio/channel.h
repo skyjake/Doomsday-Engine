@@ -1,4 +1,4 @@
-/** @file channel.h  Audio playback channels.
+/** @file channel.h  Interface for an audio playback channel.
  * @ingroup audio
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -21,129 +21,190 @@
 #ifndef CLIENT_AUDIO_CHANNEL_H
 #define CLIENT_AUDIO_CHANNEL_H
 
-#include "audio/sound.h"
+#include "dd_share.h"        // SoundEmitter
+#include "api_audiod_sfx.h"  // sfxsample_t
 #include <de/Observers>
-#include <functional>
+#include <de/Vector>
+
+// Playback flags.
+#define SFXCF_NO_ORIGIN         ( 0x1 )  ///< The originator is a mystical emitter.
+#define SFXCF_NO_ATTENUATION    ( 0x2 )  ///< Play it very, very loud.
+#define SFXCF_NO_UPDATE         ( 0x4 )  ///< Channel update is skipped.
 
 namespace audio {
 
 /**
- * Implements high-level logic for managing a set of audio playback channels.
+ * Positioning modes for sound stage environment effects.
  */
-class Channels
+enum Positioning
+{
+    StereoPositioning,   ///< Simple 2D stereo, not 3D.
+    AbsolutePositioning  ///< Originates from a fixed point in the sound stage.
+};
+
+/**
+ * Interface model for a playback channel.
+ *
+ * @ingroup audio
+ */
+class Channel
 {
 public:
-    /// Audience to be notified when a channel mapping change occurs.
-    DENG2_DEFINE_AUDIENCE2(Remapped, void channelsRemapped(Channels &))
+    /// Audience to be notified when the channel is about to be deleted.
+    DENG2_DEFINE_AUDIENCE2(Deletion, void channelBeingDeleted(Channel &))
+
+    enum PlayingMode {
+        NotPlaying,
+        Once,            ///< Play once and then discard the loaded data / stream.
+        OnceDontDelete,  ///< Play once then pause.
+        Looping          ///< Keep looping.
+    };
 
 public:
-    /**
-     * Construct a new (empty) playback channel set.
-     */
-    Channels();
+    Channel();
+    virtual ~Channel();
+    DENG2_AS_IS_METHODS()
 
     /**
-     * Returns the total number of playback channels.
+     * Change the volume factor to @a newVolume.
      */
-    de::dint count() const;
+    virtual Channel &setVolume(de::dfloat newVolume) = 0;
 
     /**
-     * Returns the total number of playback channels currently playing a/the sound associated
-     * with the given @a soundId and/or @a emitter.
+     * Stop if playing and forget about any loaded data in the buffer.
+     *
+     * @note Just stopping doesn't affect refresh!
      */
-    de::dint countPlaying(de::dint soundId, SoundEmitter *emitter = nullptr) const;
-
-    /**
-     * Returns @a true if one or more playback channels are currently playing a/the sound
-     * associated with the given @a soundId.
-     */
-    inline bool isPlaying(de::dint soundId, SoundEmitter *emitter = nullptr) const {
-        return countPlaying(soundId, emitter) > 0;
-    }
-
-    /**
-     * Add a new playback channel and configure with the given @a sound.
-     *
-     * @param sound  Sound to create a playback channel for. Ownership is unaffected. As
-     * sounds can only be mapped to a single channel at a time - if a channel exists which
-     * is already using this sound then @em it is returned instead.
-     */
-    Sound/*Channel*/ &add(Sound &sound);
-
-    /**
-     * Attempt to find a playback channel suitable for a sound with the given format.
-     *
-     * @param stereoPositioning  @c true= suitable for stereo sound positioning; otherwise
-     * suitable for 3D sound positioning.
-     *
-     * @param bytesPer
-     * @param rate
-     *
-     * @param soundId   If > 0, the channel must currently be loaded with a/the sound
-     * associated with this identifier.
-     */
-    Sound/*Channel*/ *tryFindVacant(bool stereoPositioning, de::dint bytesPer, de::dint rate,
-        de::dint soundId) const;
-
-    /**
-     * Stop all playback channels currently playing a/the sound associated with the given
-     * sound @a group. If an @a emitter is specified, only stop sounds emitted by it.
-     *
-     * @param group    Sound group identifier.
-     * @param emitter  If not @c nullptr the referenced sound's emitter must match.
-     *
-     * @return  Number of channels stopped.
-     */
-    de::dint stopGroup(de::dint group, SoundEmitter *emitter = nullptr);
-
-    /**
-     * Stop all playback channels currently playing a sound using the specified @a emitter.
-     *
-     * @param emitter            If not @c nullptr the sound's emitter must match; otherwise
-     * stop @em all sounds using @em any emitter.
-     *
-     * @param clearSoundEmitter  If @c true, clear the sound -> emitter association for
-     * any matching Sounds that are stopped.
-     *
-     * @return  Number of channels stopped.
-     */
-    de::dint stopWithEmitter(SoundEmitter *emitter = nullptr, bool clearEmitter = true);
-
-    /**
-     * Stop all playback channels currently playing a/the sound with a lower priority rating.
-     *
-     * @param soundId      If > 0, the currently playing sound must be associated with
-     * this identifier; otherwise @em all sounds are stopped.
-     *
-     * @param emitter      If not @c nullptr the referenced sound's emitter must match.
-     *
-     * @param defPriority  If >= 0, the currently playing sound must have a lower priority
-     * than this to be stopped. Returns -1 if the sound @a id has a lower priority than
-     * a currently playing sound.
-     *
-     * @return  Number of channels stopped.
-     */
-    de::dint stopWithLowerPriority(de::dint soundId, SoundEmitter *emitter, de::dint defPriority);
-
-    /**
-     * Iterate through the playback channels, executing @a callback for each.
-     */
-    de::LoopResult forAll(std::function<de::LoopResult (Sound/*Channel*/ &)> callback) const;
+    virtual void stop() = 0;
 
 private:
     DENG2_PRIVATE(d)
 };
 
+class BaseMusicChannel : public Channel
+{
+public:
+    BaseMusicChannel() : Channel() {}
+    virtual ~BaseMusicChannel() {}
+
+    virtual void update() = 0;
+    virtual bool isPlaying() const = 0;
+    virtual void pause(de::dint pause) = 0;
+};
+
+class CdChannel : public BaseMusicChannel
+{
+public:
+    CdChannel() : BaseMusicChannel() {}
+    virtual de::dint play(de::dint track, de::dint looped) = 0;
+};
+
+class MusicChannel : public BaseMusicChannel
+{
+public:
+    MusicChannel() : BaseMusicChannel() {}
+
+    /// Return @c true if the player provides playback from a managed buffer.
+    virtual bool canPlayBuffer() const { return false; }
+
+    virtual void *songBuffer(de::duint length) = 0;
+    virtual de::dint play(de::dint looped) = 0;
+
+    /// Returns @c true if the player provides playback from a native file.
+    virtual bool canPlayFile() const { return false; }
+
+    virtual de::dint playFile(de::String const &filename, de::dint looped) = 0;
+};
+
+class SoundChannel : public Channel
+{
+public:
+    SoundChannel();
+
+    /**
+     * Returns the current playback mode (set when @ref play() is called).
+     */
+    virtual PlayingMode mode() const = 0;
+
+    inline bool isPlaying()       const { return mode() != NotPlaying; }
+    inline bool isPlayingLooped() const { return mode() == Looping;    }
+
+    /**
+     * Start playing the currently configured stream/waveform/whatever data.
+     */
+    virtual void play(PlayingMode mode = Once) = 0;
+
+public:  //- Sound properties: ----------------------------------------------------------
+
+    virtual SoundEmitter *emitter() const = 0;
+    virtual de::dfloat frequency() const = 0;
+    virtual de::Vector3d origin() const = 0;
+    virtual Positioning positioning() const = 0;
+    virtual de::dfloat volume() const = 0;
+
+    virtual SoundChannel &setEmitter(SoundEmitter *newEmitter) = 0;
+    virtual SoundChannel &setFrequency(de::dfloat newFrequency) = 0;
+    virtual SoundChannel &setOrigin(de::Vector3d const &newOrigin) = 0;
+
+public:
+    virtual de::dint flags() const = 0;
+    virtual void setFlags(de::dint newFlags) = 0;
+
+    /**
+     * Perform a channel update. Can be used for filling the channel with waveform data
+     * for streaming purposes, or similar.
+     *
+     * @note Don't do anything too time-consuming...
+     */
+    virtual void update() = 0;
+
+    /**
+     * Stop the sound if playing and forget about any sample loaded in the buffer.
+     *
+     * @todo Logically distinct from @ref stop() ? -ds
+     */
+    virtual void reset() = 0;
+
+    /**
+     * @return  @c true if the (re)format completed successfully (equivalent to calling
+     * @ref isValid() after this), for caller convenience.
+     */
+    virtual bool format(Positioning positioning, de::dint bytesPer, de::dint rate) = 0;
+
+    /**
+     * Returns @c true if the channel is in valid state (i.e., the previous @ref format()
+     * completed successfully and it is ready to receive a sample of that format).
+     */
+    virtual bool isValid() const = 0;
+
+    /**
+     * Prepare the buffer for playing a sample by filling the buffer with as much sample
+     * data as fits. The pointer to sample is saved, so the caller mustn't free it while
+     * the sample is loaded.
+     *
+     * @note The sample is not reloaded if the buffer is already loaded with data with the
+     * same sound ID.
+     */
+    virtual void load(sfxsample_t const &sample) = 0;
+
+    virtual de::dint bytes() const = 0;
+    virtual de::dint rate() const = 0;
+
+    /**
+     * Returns the time in tics that the sound was last played.
+     */
+    virtual de::dint startTime() const = 0;
+
+    /**
+     * Returns the time in tics that the currently loaded sample last ended; otherwise @c 0.
+     */
+    virtual de::dint endTime() const = 0;
+
+    virtual sfxsample_t const *samplePtr() const = 0;
+
+    virtual void updateEnvironment() = 0;
+};
+
 }  // namespace audio
-
-// Debug visual: ------------------------------------------------------------------------
-
-extern int showSoundInfo;
-//extern byte refMonitor;
-
-/**
- * Draws debug information on-screen.
- */
-void UI_AudioChannelDrawer();
 
 #endif  // CLIENT_AUDIO_CHANNEL_H

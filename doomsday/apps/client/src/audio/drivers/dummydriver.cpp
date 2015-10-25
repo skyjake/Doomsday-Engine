@@ -20,7 +20,7 @@
 
 #include "audio/drivers/dummydriver.h"
 
-#include "audio/sound.h"
+#include "audio/channel.h"
 #include "world/thinkers.h"
 #include "def_main.h"        // SF_* flags, remove me
 #include <de/Log>
@@ -46,26 +46,14 @@ void DummyDriver::CdPlayer::deinitialize()
     _initialized = false;
 }
 
-void DummyDriver::CdPlayer::update()
-{}
-
-void DummyDriver::CdPlayer::setVolume(dfloat)
-{}
-
-bool DummyDriver::CdPlayer::isPlaying() const
+Channel *DummyDriver::CdPlayer::makeChannel()
 {
-    return false;
+    return new DummyDriver::CdChannel;
 }
 
-void DummyDriver::CdPlayer::pause(dint)
-{}
-
-void DummyDriver::CdPlayer::stop()
-{}
-
-dint DummyDriver::CdPlayer::play(dint, dint)
+LoopResult DummyDriver::CdPlayer::forAllChannels(std::function<LoopResult (Channel const &)> callback) const
 {
-    return true;
+    return LoopContinue;
 }
 
 // ----------------------------------------------------------------------------------
@@ -83,46 +71,14 @@ void DummyDriver::MusicPlayer::deinitialize()
     _initialized = false;
 }
 
-void DummyDriver::MusicPlayer::update()
-{}
-
-void DummyDriver::MusicPlayer::setVolume(dfloat)
-{}
-
-bool DummyDriver::MusicPlayer::isPlaying() const
+Channel *DummyDriver::MusicPlayer::makeChannel()
 {
-    return false;
+    return new DummyDriver::MusicChannel;
 }
 
-void DummyDriver::MusicPlayer::pause(dint)
-{}
-
-void DummyDriver::MusicPlayer::stop()
-{}
-
-bool DummyDriver::MusicPlayer::canPlayBuffer() const
+LoopResult DummyDriver::MusicPlayer::forAllChannels(std::function<LoopResult (Channel const &)> callback) const
 {
-    return false;  /// @todo Should support this...
-}
-
-void *DummyDriver::MusicPlayer::songBuffer(duint)
-{
-    return nullptr;
-}
-
-dint DummyDriver::MusicPlayer::play(dint)
-{
-    return true;
-}
-
-bool DummyDriver::MusicPlayer::canPlayFile() const
-{
-    return true;
-}
-
-dint DummyDriver::MusicPlayer::playFile(String const &, dint)
-{
-    return true;
+    return LoopContinue;
 }
 
 // ----------------------------------------------------------------------------------
@@ -130,7 +86,7 @@ dint DummyDriver::MusicPlayer::playFile(String const &, dint)
 DENG2_PIMPL_NOREF(DummyDriver::SoundPlayer)
 {
     bool initialized = false;
-    QList<DummyDriver::Sound *> sounds;
+    QList<DummyDriver::SoundChannel *> channels;
 
     ~Instance()
     {
@@ -138,10 +94,10 @@ DENG2_PIMPL_NOREF(DummyDriver::SoundPlayer)
         DENG2_ASSERT(!initialized);
     }
 
-    void clearSounds()
+    void clearChannels()
     {
-        qDeleteAll(sounds);
-        sounds.clear();
+        qDeleteAll(channels);
+        channels.clear();
     }
 };
 
@@ -159,7 +115,7 @@ void DummyDriver::SoundPlayer::deinitialize()
     if(!d->initialized) return;
 
     d->initialized = false;
-    d->clearSounds();
+    d->clearChannels();
 }
 
 bool DummyDriver::SoundPlayer::anyRateAccepted() const
@@ -183,26 +139,116 @@ void DummyDriver::SoundPlayer::listenerv(dint, dfloat *)
     // Not supported.
 }
 
-Sound *DummyDriver::SoundPlayer::makeSound(bool stereoPositioning, dint bytesPer, dint rate)
+Channel *DummyDriver::SoundPlayer::makeChannel()
 {
     if(!d->initialized) return nullptr;
-    std::unique_ptr<Sound> sound(new DummyDriver::Sound(stereoPositioning, bytesPer, rate));
-    d->sounds << sound.release();
-    return d->sounds.last();
+    std::unique_ptr<DummyDriver::SoundChannel> channel(new DummyDriver::SoundChannel);
+    d->channels << channel.get();
+    return channel.release();
 }
+
+LoopResult DummyDriver::SoundPlayer::forAllChannels(std::function<LoopResult (Channel const &)> callback) const
+{
+    for(Channel const *ch : d->channels)
+    {
+        if(auto result = callback(*ch))
+            return result;
+    }
+    return LoopContinue;
+}
+
+// --------------------------------------------------------------------------------------
+
+DummyDriver::CdChannel::CdChannel() : audio::CdChannel()
+{}
+
+void DummyDriver::CdChannel::update()
+{}
+
+Channel &DummyDriver::CdChannel::setVolume(dfloat)
+{
+    return *this;
+}
+
+bool DummyDriver::CdChannel::isPlaying() const
+{
+    return false;
+}
+
+void DummyDriver::CdChannel::pause(dint)
+{}
+
+void DummyDriver::CdChannel::stop()
+{}
+
+dint DummyDriver::CdChannel::play(dint, dint)
+{
+    return true;
+}
+
+// --------------------------------------------------------------------------------------
+
+DummyDriver::MusicChannel::MusicChannel() : audio::MusicChannel()
+{}
+
+void DummyDriver::MusicChannel::update()
+{}
+
+Channel &DummyDriver::MusicChannel::setVolume(dfloat)
+{
+    return *this;
+}
+
+bool DummyDriver::MusicChannel::isPlaying() const
+{
+    return false;
+}
+
+void DummyDriver::MusicChannel::pause(dint)
+{}
+
+void DummyDriver::MusicChannel::stop()
+{}
+
+bool DummyDriver::MusicChannel::canPlayBuffer() const
+{
+    return false;  /// @todo Should support this...
+}
+
+void *DummyDriver::MusicChannel::songBuffer(duint)
+{
+    return nullptr;
+}
+
+dint DummyDriver::MusicChannel::play(dint)
+{
+    return true;
+}
+
+bool DummyDriver::MusicChannel::canPlayFile() const
+{
+    return true;
+}
+
+dint DummyDriver::MusicChannel::playFile(String const &, dint)
+{
+    return true;
+}
+
+// --------------------------------------------------------------------------------------
 
 /**
  * @note Loading must be done prior to setting properties, because the driver might defer
  * creation of the actual data buffer.
  */
-DENG2_PIMPL_NOREF(DummyDriver::Sound)
+DENG2_PIMPL_NOREF(DummyDriver::SoundChannel)
 , DENG2_OBSERVES(System, FrameEnds)
 {
     dint flags = 0;                   ///< SFXCF_* flags.
     dfloat frequency = 0;             ///< Frequency adjustment: 1.0 is normal.
     dfloat volume = 0;                ///< Sound volume: 1.0 is max.
 
-    SoundEmitter *emitter = nullptr;  ///< Emitter for the sound, if any (not owned).
+    SoundEmitter *emitter = nullptr;  ///< SoundEmitter for the sound, if any (not owned).
     Vector3d origin;                  ///< Emit from here (synced with emitter).
     dint startTime = 0;               ///< When the assigned sound sample was last started.
 
@@ -264,7 +310,7 @@ DENG2_PIMPL_NOREF(DummyDriver::Sound)
         {
             // Volume is affected only by maxvol.
             setVolume(buffer, volume * System::get().soundVolume() / 255.0f);
-            if(emitter && emitter == (ddmobj_base_t *)System::get().worldStageListenerPtr())
+            if(emitter && emitter == (ddmobj_base_t const *)System::get().worldStage().listener().trackedMapObject())
             {
                 // Emitted by the listener object. Go to relative position mode
                 // and set the position to (0,0,0).
@@ -279,8 +325,8 @@ DENG2_PIMPL_NOREF(DummyDriver::Sound)
             }
 
             // If the sound is emitted by the listener, speed is zero.
-            if(emitter && emitter != (ddmobj_base_t *)System::get().worldStageListenerPtr() &&
-               Thinker_IsMobjFunc(emitter->thinker.function))
+            if(emitter && emitter != (ddmobj_base_t const *)System::get().worldStage().listener().trackedMapObject()
+               && Thinker_IsMobjFunc(emitter->thinker.function))
             {
                 setVelocity(buffer, Vector3d(((mobj_t *)emitter)->mom)* TICSPERSEC);
             }
@@ -297,7 +343,7 @@ DENG2_PIMPL_NOREF(DummyDriver::Sound)
 
             // This is a 2D buffer.
             if((flags & SFXCF_NO_ORIGIN) ||
-               (emitter && emitter == (ddmobj_base_t *)System::get().worldStageListenerPtr()))
+               (emitter && emitter == (ddmobj_base_t const *)System::get().worldStage().listener().trackedMapObject()))
             {
                 dist = 1;
                 finalPan = 0;
@@ -305,9 +351,9 @@ DENG2_PIMPL_NOREF(DummyDriver::Sound)
             else
             {
                 // Calculate roll-off attenuation. [.125/(.125+x), x=0..1]
-                Ranged const attenRange = System::get().worldStageSoundVolumeAttenuationRange();
+                Ranged const attenRange = System::get().worldStage().listener().volumeAttenuationRange();
 
-                dist = System::get().distanceToWorldStageListener(origin);
+                dist = System::get().worldStage().listener().distanceFrom(origin);
 
                 if(dist < attenRange.start || (flags & SFXCF_NO_ATTENUATION))
                 {
@@ -329,7 +375,7 @@ DENG2_PIMPL_NOREF(DummyDriver::Sound)
                 }
 
                 // And pan, too. Calculate angle from listener to emitter.
-                if(mobj_t *listener = System::get().worldStageListenerPtr())
+                if(mobj_t const *listener = System::get().worldStage().listener().trackedMapObject())
                 {
                     dfloat angle = (M_PointXYToAngle2(listener->origin[0], listener->origin[1],
                                                       origin.x, origin.y)
@@ -386,11 +432,13 @@ DENG2_PIMPL_NOREF(DummyDriver::Sound)
         buf.flags &= ~SFXBF_RELOAD;
     }
 
-    void load(sfxbuffer_t &buf, sfxsample_t &sample)
+    void load(sfxbuffer_t &buf, sfxsample_t *sample)
     {
+        DENG2_ASSERT(sample != nullptr);
+
         // Now the buffer is ready for playing.
-        buf.sample  = &sample;
-        buf.written = sample.size;
+        buf.sample  = sample;
+        buf.written = sample->size;
         buf.flags  &= ~SFXBF_RELOAD;
     }
 
@@ -402,7 +450,7 @@ DENG2_PIMPL_NOREF(DummyDriver::Sound)
         // Do we need to reload?
         if(buf.flags & SFXBF_RELOAD)
         {
-            load(buf, *buf.sample);
+            load(buf, buf.sample);
         }
 
         // Calculate the end time (milliseconds).
@@ -446,108 +494,22 @@ DENG2_PIMPL_NOREF(DummyDriver::Sound)
     void setVolumeAttenuationRange(sfxbuffer_t &, Ranged const &) {}
 };
 
-DummyDriver::Sound::Sound(bool stereoPositioning, dint bytesPer, dint rate)
-    : d(new Instance)
+DummyDriver::SoundChannel::SoundChannel()
+    : audio::SoundChannel()
+    , d(new Instance)
 {
-    format(stereoPositioning, bytesPer, rate);
+    format(StereoPositioning, 1, 11025);
 }
 
-DummyDriver::Sound::~Sound()
-{}
-
-bool DummyDriver::Sound::isValid() const
+Channel::PlayingMode DummyDriver::SoundChannel::mode() const
 {
-    return d->valid;
+    if(!d->isPlaying(d->buffer))          return NotPlaying;
+    if(d->buffer.flags & SFXBF_REPEAT)    return Looping;
+    if(d->buffer.flags & SFXBF_DONT_STOP) return OnceDontDelete;
+    return Once;
 }
 
-sfxsample_t const *DummyDriver::Sound::samplePtr() const
-{
-    return d->buffer.sample;
-}
-
-void DummyDriver::Sound::format(bool stereoPositioning, dint bytesPer, dint rate)
-{
-    // Do we need to (re)configure the sample data buffer?
-    if(d->buffer.rate != rate || d->buffer.bytes != bytesPer)
-    {
-        stop();
-        DENG2_ASSERT(!d->isPlaying(d->buffer));
-
-        de::zap(d->buffer);
-        d->buffer.bytes = bytesPer;
-        d->buffer.rate  = rate;
-        d->buffer.flags = stereoPositioning ? 0 : SFXBF_3D;
-        d->buffer.freq  = rate;  // Modified by calls to Set(SFXBP_FREQUENCY).
-        d->valid = true;
-    }
-}
-
-dint DummyDriver::Sound::flags() const
-{
-    return d->flags;
-}
-
-/// @todo Use QFlags -ds
-void DummyDriver::Sound::setFlags(dint newFlags)
-{
-    d->flags = newFlags;
-}
-
-bool DummyDriver::Sound::stereoPositioning() const
-{
-    return (d->buffer.flags & SFXBF_3D) == 0;
-}
-
-dint DummyDriver::Sound::bytes() const
-{
-    return d->buffer.bytes;
-}
-
-dint DummyDriver::Sound::rate() const
-{
-    return d->buffer.rate;
-}
-
-SoundEmitter *DummyDriver::Sound::emitter() const
-{
-    return d->emitter;
-}
-
-void DummyDriver::Sound::setEmitter(SoundEmitter *newEmitter)
-{
-    d->emitter = newEmitter;
-}
-
-void DummyDriver::Sound::setOrigin(Vector3d const &newOrigin)
-{
-    d->origin = newOrigin;
-}
-
-Vector3d DummyDriver::Sound::origin() const
-{
-    return d->origin;
-}
-
-void DummyDriver::Sound::load(sfxsample_t &sample)
-{
-    // Don't reload if a sample with the same sound ID is already loaded.
-    if(!d->buffer.sample || d->buffer.sample->soundId != sample.soundId)
-    {
-        d->load(d->buffer, sample);
-    }
-}
-
-void DummyDriver::Sound::stop()
-{
-    d->stop(d->buffer);
-}
-
-void DummyDriver::Sound::reset()
-{
-    d->reset(d->buffer);
-}
-
-void DummyDriver::Sound::play(PlayingMode mode)
+void DummyDriver::SoundChannel::play(PlayingMode mode)
 {
     if(isPlaying()) return;
 
@@ -575,7 +537,7 @@ void DummyDriver::Sound::play(PlayingMode mode)
         }
         else
         {
-            d->setVolumeAttenuationRange(d->buffer, System::get().worldStageSoundVolumeAttenuationRange());
+            d->setVolumeAttenuationRange(d->buffer, System::get().worldStage().listener().volumeAttenuationRange());
         }
     }
 
@@ -583,49 +545,142 @@ void DummyDriver::Sound::play(PlayingMode mode)
     d->startTime = Timer_Ticks();  // Note the current time.
 }
 
-dint DummyDriver::Sound::startTime() const
+void DummyDriver::SoundChannel::stop()
 {
-    return d->startTime;
+    d->stop(d->buffer);
 }
 
-dint DummyDriver::Sound::endTime() const
+SoundEmitter *DummyDriver::SoundChannel::emitter() const
 {
-    return d->buffer.endTime;
+    return d->emitter;
 }
 
-audio::Sound &DummyDriver::Sound::setFrequency(dfloat newFrequency)
+dfloat DummyDriver::SoundChannel::frequency() const
+{
+    return d->frequency;
+}
+
+Vector3d DummyDriver::SoundChannel::origin() const
+{
+    return d->origin;
+}
+
+Positioning DummyDriver::SoundChannel::positioning() const
+{
+    return (d->buffer.flags & SFXBF_3D) ? AbsolutePositioning : StereoPositioning;
+}
+
+dfloat DummyDriver::SoundChannel::volume() const
+{
+    return d->volume;
+}
+
+audio::SoundChannel &DummyDriver::SoundChannel::setEmitter(SoundEmitter *newEmitter)
+{
+    d->emitter = newEmitter;
+    return *this;
+}
+
+audio::SoundChannel &DummyDriver::SoundChannel::setFrequency(dfloat newFrequency)
 {
     d->frequency = newFrequency;
     return *this;
 }
 
-audio::Sound &DummyDriver::Sound::setVolume(dfloat newVolume)
+audio::SoundChannel &DummyDriver::SoundChannel::setOrigin(Vector3d const &newOrigin)
+{
+    d->origin = newOrigin;
+    return *this;
+}
+
+Channel &DummyDriver::SoundChannel::setVolume(dfloat newVolume)
 {
     d->volume = newVolume;
     return *this;
 }
 
-audio::Sound::PlayingMode DummyDriver::Sound::mode() const
+dint DummyDriver::SoundChannel::flags() const
 {
-    if(!d->isPlaying(d->buffer))          return NotPlaying;
-    if(d->buffer.flags & SFXBF_REPEAT)    return Looping;
-    if(d->buffer.flags & SFXBF_DONT_STOP) return OnceDontDelete;
-    return Once;
+    return d->flags;
 }
 
-dfloat DummyDriver::Sound::frequency() const
+void DummyDriver::SoundChannel::setFlags(dint newFlags)
 {
-    return d->frequency;
+    d->flags = newFlags;
 }
 
-dfloat DummyDriver::Sound::volume() const
-{
-    return d->volume;
-}
-
-void DummyDriver::Sound::refresh()
+void DummyDriver::SoundChannel::update()
 {
     d->refresh(d->buffer);
+}
+
+void DummyDriver::SoundChannel::reset()
+{
+    d->reset(d->buffer);
+}
+
+bool DummyDriver::SoundChannel::format(Positioning positioning, dint bytesPer, dint rate)
+{
+    // Do we need to (re)configure the sample data buffer?
+    if(this->positioning() != positioning
+       || d->buffer.rate   != rate
+       || d->buffer.bytes  != bytesPer)
+    {
+        stop();
+        DENG2_ASSERT(!isPlaying());
+
+        de::zap(d->buffer);
+        d->buffer.bytes = bytesPer;
+        d->buffer.rate  = rate;
+        d->buffer.flags = positioning == AbsolutePositioning ? SFXBF_3D : 0;
+        d->buffer.freq  = rate;  // Modified by calls to Set(SFXBP_FREQUENCY).
+        d->valid = true;
+    }
+    return isValid();
+}
+
+bool DummyDriver::SoundChannel::isValid() const
+{
+    return d->valid;
+}
+
+void DummyDriver::SoundChannel::load(sfxsample_t const &sample)
+{
+    // Don't reload if a sample with the same sound ID is already loaded.
+    if(!d->buffer.sample || d->buffer.sample->soundId != sample.soundId)
+    {
+        d->load(d->buffer, &const_cast<sfxsample_t &>(sample));
+    }
+}
+
+dint DummyDriver::SoundChannel::bytes() const
+{
+    return d->buffer.bytes;
+}
+
+dint DummyDriver::SoundChannel::rate() const
+{
+    return d->buffer.rate;
+}
+
+sfxsample_t const *DummyDriver::SoundChannel::samplePtr() const
+{
+    return d->buffer.sample;
+}
+
+dint DummyDriver::SoundChannel::startTime() const
+{
+    return d->startTime;
+}
+
+dint DummyDriver::SoundChannel::endTime() const
+{
+    return d->buffer.endTime;
+}
+
+void DummyDriver::SoundChannel::updateEnvironment()
+{
+    // Not supported.
 }
 
 // ----------------------------------------------------------------------------------
@@ -657,13 +712,12 @@ DummyDriver::DummyDriver() : d(new Instance(this))
 
 DummyDriver::~DummyDriver()
 {
-    LOG_AS("~audio::DummyDriver");
     deinitialize();  // If necessary.
 }
 
 void DummyDriver::initialize()
 {
-    LOG_AS("audio::DummyDriver");
+    LOG_AS("DummyDriver");
 
     // Already been here?
     if(d->initialized) return;
@@ -673,7 +727,7 @@ void DummyDriver::initialize()
 
 void DummyDriver::deinitialize()
 {
-    LOG_AS("audio::DummyDriver");
+    LOG_AS("DummyDriver");
 
     // Already been here?
     if(!d->initialized) return;
@@ -702,19 +756,19 @@ QList<Record> DummyDriver::listInterfaces() const
     QList<Record> list;
     {
         Record rec;
-        rec.addNumber("type",        System::AUDIO_ICD);
+        rec.addNumber("type",        AUDIO_ICD);
         rec.addText  ("identityKey", DotPath(identityKey()) / "cd");
         list << rec;  // A copy is made.
     }
     {
         Record rec;
-        rec.addNumber("type",        System::AUDIO_IMUSIC);
+        rec.addNumber("type",        AUDIO_IMUSIC);
         rec.addText  ("identityKey", DotPath(identityKey()) / "music");
         list << rec;
     }
     {
         Record rec;
-        rec.addNumber("type",        System::AUDIO_ISFX);
+        rec.addNumber("type",        AUDIO_ISFX);
         rec.addText  ("identityKey", DotPath(identityKey()) / "sfx");
         list << rec;
     }
@@ -737,6 +791,34 @@ IPlayer *DummyDriver::tryFindPlayer(String interfaceIdentityKey) const
     if(interfaceIdentityKey == "sfx")   return &d->sound;
 
     return nullptr;  // Not found.
+}
+
+LoopResult DummyDriver::forAllChannels(PlaybackInterfaceType type,
+    std::function<LoopResult (Channel const &)> callback) const
+{
+    switch(type)
+    {
+    case AUDIO_ICD:
+        return d->cd.forAllChannels([&callback] (Channel const &ch)
+        {
+            return callback(ch);
+        });
+
+    case AUDIO_IMUSIC:
+        return d->music.forAllChannels([&callback] (Channel const &ch)
+        {
+            return callback(ch);
+        });
+
+    case AUDIO_ISFX:
+        return d->sound.forAllChannels([&callback] (Channel const &ch)
+        {
+            return callback(ch);
+        });
+
+    default: break;
+    }
+    return LoopContinue;
 }
 
 }  // namespace audio

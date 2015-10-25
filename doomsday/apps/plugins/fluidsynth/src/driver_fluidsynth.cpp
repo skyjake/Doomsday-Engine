@@ -120,9 +120,9 @@ void DS_Event(int type)
 {
     if(!::fsSynth) return;
 
-    if(type == SFXEV_END)
+    if(type == SFXEV_REFRESH)
     {
-        // End of frame, do an update.
+        // Time to do an update.
         DMFluid_Update();
     }
 }

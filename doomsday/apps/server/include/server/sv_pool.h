@@ -184,7 +184,7 @@ typedef struct {
 } polydelta_t;
 
 typedef struct {
-    delta_t         delta; // id = Emitter identifier (mobjid/sectoridx)
+    delta_t         delta; // id = SoundEmitter identifier (mobjid/sectoridx)
     int             sound; // Sound ID
     mobj_t*         mobj;
     float           volume;

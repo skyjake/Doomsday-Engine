@@ -50,8 +50,7 @@
 
 #  include "gl/gl_main.h"
 
-#  include "audio/channel.h"
-#  include "audio/sound.h"
+#  include "audio/mixer.h"
 
 #  include "render/viewports.h"  // R_ResetViewer
 #  include "render/rend_fakeradio.h"
@@ -735,19 +734,21 @@ bool WorldSystem::changeMap(de::Uri const &mapUri)
 #ifdef __SERVER__
     ServerApp::app().clearAllLogicalSounds();
 #else
-    ClientApp::audioSystem().resetSoundStage(::audio::WorldStage);
+    ClientApp::audioSystem().resetStage(::audio::WorldStage);
 
     App_ResourceSystem().purgeCacheQueue();
 
     if(d->map)
     {
-        /// Remove the current map from our audiences. @todo Map should handle this -ds
+        /// Remove the current map from our audiences. @todo Map should handle this. -ds
         audienceForFrameBegin() -= d->map;
 
         // Map objects are about to be destroyed.
-        /// - Stop all channels using one as emitter. @todo Should observe map object deletion -ds
-        ClientApp::audioSystem().channels().forAll([this] (::audio::Sound/*Channel*/ &ch)
+        /// - Stop all channels using one as emitter.
+        ClientApp::audioSystem().mixer()["fx"].forAllChannels([this] (::audio::Channel &base)
         {
+            auto &ch = base.as<::audio::SoundChannel>();
+
             if(ch.emitter() && &Thinker_Map(ch.emitter()->thinker) == d->map)
             {
                 // This channel must be stopped!
@@ -756,8 +757,9 @@ bool WorldSystem::changeMap(de::Uri const &mapUri)
             }
             return LoopContinue;
         });
-        /// - Forget the current listener mob. @todo Should observe map object deletion -ds
-        ClientApp::audioSystem().requestWorldStageListenerUpdate();
+        /// - Instruct the Listener to forget the map-object being tracked.
+        /// @todo Should observe MapObject deletion. -ds
+        ClientApp::audioSystem().worldStage().listener().setTrackedMapObject(nullptr);
     }
 
     // As the memory zone does not provide the mechanisms to prepare another map in parallel
