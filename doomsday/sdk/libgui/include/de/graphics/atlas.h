@@ -32,6 +32,26 @@
 namespace de {
 
 /**
+ * Interface for any Atlas-type class. @ingroup gl
+ *
+ * The allocations must be committed before being used.
+ */
+class LIBGUI_PUBLIC IAtlas
+{
+public:
+    DENG2_ERROR(OutOfSpaceError);
+
+    virtual ~IAtlas() {}
+
+    virtual Id alloc(Image const &image, Id const &chosenId = Id::None) = 0;
+    virtual void release(Id const &id) = 0;
+    virtual bool contains(Id const &id) const = 0;
+    virtual void commit() const = 0;
+
+    virtual Rectanglef imageRectf(Id const &id) const = 0;
+};
+
+/**
  * Abstract image-based atlas.
  *
  * The logic that determines how and where new content is allocated is
@@ -39,7 +59,7 @@ namespace de {
  *
  * @ingroup gl
  */
-class LIBGUI_PUBLIC Atlas : public Lockable
+class LIBGUI_PUBLIC Atlas : public IAtlas, public Lockable
 {
 public:
     typedef Image::Size Size;
@@ -201,16 +221,29 @@ public:
      * @return Identifier of the allocated image. If Id::None, the allocation
      * failed because the atlas is too full.
      */
-    Id alloc(Image const &image, Id const &chosenId = Id::None);
+    Id alloc(Image const &image, Id const &chosenId = Id::None) override;
 
     /**
      * Releases a previously allocated image from the atlas.
      *
      * @param id  Identifier of an allocated image.
      */
-    void release(Id const &id);
+    void release(Id const &id) override;
 
-    bool contains(Id const &id) const;
+    bool contains(Id const &id) const override;
+
+    /**
+     * Request committing the backing store to the physical atlas storage.
+     * This does nothing if there are no changes in the atlas.
+     *
+     * Deferred commits will also be committed.
+     */
+    void commit() const override;
+
+    /**
+     * Deferred allocations will all be cancelled.
+     */
+    void cancelDeferred();
 
     /**
      * Returns the number of images in the atlas.
@@ -242,7 +275,7 @@ public:
      * @return Normalized coordinates of the image on the atlas. Always within
      * [0,1].
      */
-    Rectanglef imageRectf(Id const &id) const;
+    Rectanglef imageRectf(Id const &id) const override;
 
     /**
      * Returns the image content allocated earlier. Requires BackingStore.
@@ -252,19 +285,6 @@ public:
      * @return Image that was provided earlier to alloc().
      */
     Image image(Id const &id) const;
-
-    /**
-     * Request committing the backing store to the physical atlas storage.
-     * This does nothing if there are no changes in the atlas.
-     *
-     * Deferred commits will also be committed.
-     */
-    void commit() const;
-
-    /**
-     * Deferred allocations will all be cancelled.
-     */
-    void cancelDeferred();
 
 protected:
     virtual void commitFull(Image const &fullImage) const = 0;

@@ -20,12 +20,12 @@
 #define LIBGUI_TEXTUREBANK_H
 
 #include <de/Bank>
-#include "../AtlasTexture"
+#include "../Atlas"
 
 namespace de {
 
 /**
- * Bank that stores images on a texture atlas for use in GL drawing.
+ * Bank that stores images on an atlas.
  *
  * The data item sources in the bank must be derived from TextureBank::ImageSource.
  *
@@ -58,9 +58,9 @@ public:
      *
      * @param atlas  Texture atlas. Ownership not taken.
      */
-    void setAtlas(AtlasTexture *atlas);
+    void setAtlas(IAtlas *atlas);
 
-    AtlasTexture *atlas();
+    IAtlas *atlas();
 
     Id const &texture(DotPath const &id);
 

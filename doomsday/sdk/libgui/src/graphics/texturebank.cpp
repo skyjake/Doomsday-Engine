@@ -58,7 +58,7 @@ DENG2_PIMPL(TextureBank)
         }
     };
 
-    AtlasTexture *atlas { nullptr };
+    IAtlas *atlas { nullptr };
     QHash<Id::Type, String> pathForAtlasId; // reverse lookup
 
     Instance(Public *i) : Base(i) {}
@@ -73,12 +73,12 @@ DENG2_PIMPL(TextureBank)
 TextureBank::TextureBank() : Bank("TextureBank"), d(new Instance(this))
 {}
 
-void TextureBank::setAtlas(AtlasTexture *atlas)
+void TextureBank::setAtlas(IAtlas *atlas)
 {
     d->atlas = atlas;
 }
 
-AtlasTexture *TextureBank::atlas()
+IAtlas *TextureBank::atlas()
 {
     return d->atlas;
 }

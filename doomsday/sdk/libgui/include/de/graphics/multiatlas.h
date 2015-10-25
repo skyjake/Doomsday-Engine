@@ -47,7 +47,6 @@ class LIBGUI_PUBLIC MultiAtlas
 {
 public:
     DENG2_ERROR(InvalidError);
-    DENG2_ERROR(OutOfSpaceError);
 
     /**
      * Group of allocations.
@@ -57,7 +56,7 @@ public:
      *
      * When deleted, releases all allocations.
      */
-    class LIBGUI_PUBLIC AllocGroup : public Asset
+    class LIBGUI_PUBLIC AllocGroup : public IAtlas, public Asset
     {
     public:
         AllocGroup(MultiAtlas &multiAtlas);
@@ -69,16 +68,18 @@ public:
          * @return Id of the new allocation. This Id will be used for final
          * committed allocation, too.
          */
-        Id alloc(Image const &image);
+        Id alloc(Image const &image, Id const &knownId = Id::None) override;
 
-        void release(Id const &id);
+        void release(Id const &id) override;
 
-        bool contains(Id const &id) const;
+        bool contains(Id const &id) const override;
 
         /**
          * Commit all the allocated images.
          */
-        void commit();
+        void commit() const override;
+
+        Rectanglef imageRectf(Id const &id) const override;
 
         /**
          * Returns the Atlas where the group's images have been allocated to.

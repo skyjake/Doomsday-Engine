@@ -1446,9 +1446,8 @@ bool ModelDrawable::nodeExists(String const &name) const
     return d->nodeNameToPtr.contains(name);
 }
 
-void ModelDrawable::setAtlas(AtlasTexture &atlas)
+void ModelDrawable::setAtlas(IAtlas &atlas)
 {
-    //d->glData.atlas = &atlas;
     d->glData.textureBank.setAtlas(&atlas);
 }
 
@@ -1456,6 +1455,11 @@ void ModelDrawable::unsetAtlas()
 {
     d->glData.releaseTexturesFromAtlas();
     d->glData.textureBank.setAtlas(nullptr);
+}
+
+IAtlas *ModelDrawable::atlas() const
+{
+    return d->glData.textureBank.atlas();
 }
 
 ModelDrawable::Mapping ModelDrawable::diffuseNormalsSpecularEmission() // static

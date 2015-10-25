@@ -101,8 +101,8 @@ DENG2_PIMPL(MultiAtlas)
         {
             return *blank;
         }
-        throw OutOfSpaceError("MultiAtlas::allocatePending",
-                              "Even an empty atlas cannot fit the pending allocations");
+        throw IAtlas::OutOfSpaceError("MultiAtlas::allocatePending",
+                                      "Even an empty atlas cannot fit the pending allocations");
     }
 };
 
@@ -177,20 +177,20 @@ MultiAtlas::AllocGroup::AllocGroup(MultiAtlas &multiAtlas)
     : d(new Instance(this, multiAtlas))
 {}
 
-Id MultiAtlas::AllocGroup::alloc(Image const &image)
+Id MultiAtlas::AllocGroup::alloc(Image const &image, Id const &knownId)
 {
     if(!d->atlas)
     {
         // This will be a pending allocation until the group is committed.
         // This Id will be used in the atlas when committing.
-        Id allocId;
+        Id allocId { knownId.isNone()? Id() : knownId };
         d->pending.insert(allocId, new Image(image));
         return allocId;
     }
     else
     {
         // After committing, allocations are always done in the chosen atlas.
-        Id allocId { d->atlas->alloc(image) };
+        Id allocId { d->atlas->alloc(image, knownId) };
         d->allocated.insert(allocId);
         return allocId;
     }
@@ -218,7 +218,7 @@ bool MultiAtlas::AllocGroup::contains(Id const &id) const
     return d->pending.contains(id) || d->allocated.contains(id);
 }
 
-void MultiAtlas::AllocGroup::commit()
+void MultiAtlas::AllocGroup::commit() const
 {
     if(!d->owner)
     {
@@ -236,7 +236,18 @@ void MultiAtlas::AllocGroup::commit()
         delete i.value(); // free the Image
     }
     d->pending.clear();
-    setState(Ready);
+
+    const_cast<MultiAtlas::AllocGroup *>(this)->setState(Ready);
+}
+
+Rectanglef MultiAtlas::AllocGroup::imageRectf(Id const &id) const
+{
+    if(d->atlas)
+    {
+        return d->atlas->imageRectf(id);
+    }
+    throw InvalidError("MultiAtlas::AllocGroup::imageRectf",
+                       "Allocation group has not yet been committed to an atlas");
 }
 
 Atlas const *MultiAtlas::AllocGroup::atlas() const
