@@ -2,6 +2,9 @@ model {
     # Shader for skeletal animation and generic per-pixel lighting:
     # diffuse color, normal map, emission map, specular intensity.
     shader skeletal.normal_specular_emission {
+        variable uAlpha      { value = 1 }
+        variable uAlphaLimit { value = 0 }
+        variable uEmission   { value = 0 }
         # Mapping when used with ModelDrawable.
         textureMapping <diffuse, normals, specular, emission>
         vertex = "
@@ -69,8 +72,9 @@ model {
         fragment = "
             uniform sampler2D uTex;
             uniform highp vec4 uAmbientLight;
-            uniform highp vec4 uLightIntensities[4];
+            uniform highp vec4 uLightIntensities[4];        
             uniform highp float uEmission;
+            uniform highp float uAlpha;
             uniform highp float uAlphaLimit; // alpha test to discard fragments
             
             varying highp vec2 vUV;
@@ -133,6 +137,7 @@ model {
             
                 highp vec3 normal = normalVector(normalUV);
                 highp vec4 diffuse = texture2D(uTex, uv);
+                diffuse.a *= uAlpha;
                         
                 gl_FragColor = diffuse *
                     (uAmbientLight + 
