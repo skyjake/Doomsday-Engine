@@ -26,6 +26,7 @@
 #include <de/Rectangle>
 #include <de/Observers>
 #include <de/Lockable>
+#include <de/Deletable>
 
 #include "../Image"
 
@@ -59,7 +60,7 @@ public:
  *
  * @ingroup gl
  */
-class LIBGUI_PUBLIC Atlas : public IAtlas, public Lockable
+class LIBGUI_PUBLIC Atlas : public IAtlas, public Lockable, public Deletable
 {
 public:
     typedef Image::Size Size;

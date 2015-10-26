@@ -40,9 +40,15 @@ DENG2_PIMPL(MultiAtlas)
     ~Instance()
     {
         // Delete all the atlases.
-        qDeleteAll(atlases);
+        release();
 
         // AllocGroups will get notified by Deletable and make themselves invalid.
+    }
+
+    void release()
+    {
+        qDeleteAll(atlases);
+        atlases.clear();
     }
 
     Atlas *getEmptyAtlas()
@@ -110,6 +116,11 @@ MultiAtlas::MultiAtlas(IAtlasFactory &factory)
     : d(new Instance(this, factory))
 {}
 
+void MultiAtlas::clear()
+{
+    d->release();
+}
+
 } // namespace de
 
 //-----------------------------------------------------------------------------
@@ -134,6 +145,10 @@ DENG2_PIMPL_NOREF(MultiAtlas::AllocGroup)
 
     ~Instance()
     {
+        if(atlas)
+        {
+            atlas->audienceForDeletion -= this;
+        }
         if(owner)
         {
             owner->d->audienceForDeletion -= this;
@@ -141,13 +156,22 @@ DENG2_PIMPL_NOREF(MultiAtlas::AllocGroup)
         }
     }
 
-    void objectWasDeleted(Deletable *)
+    void objectWasDeleted(Deletable *deleted)
     {
         // This group is no longer valid for use.
-        owner = nullptr;
-        atlas = nullptr;
-
-        cancelPending();
+        if(deleted == owner->d)
+        {
+            owner = nullptr;
+            if(atlas) atlas->audienceForDeletion -= this;
+            atlas = nullptr;
+            cancelPending();
+        }
+        else
+        {
+            // Just the atlas.
+            DENG2_ASSERT(deleted == atlas);
+            atlas = nullptr;
+        }
         allocated.clear();
         self->setState(Asset::NotReady);
     }
@@ -229,6 +253,7 @@ void MultiAtlas::AllocGroup::commit() const
     {
         // Time to decide which atlas to use.
         d->atlas = &d->owner->d->allocatePending(d->pending);
+        d->atlas->audienceForDeletion += d;
     }
     for(auto i = d->pending.begin(); i != d->pending.end(); ++i)
     {

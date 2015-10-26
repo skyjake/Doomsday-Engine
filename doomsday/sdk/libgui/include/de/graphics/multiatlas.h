@@ -119,6 +119,11 @@ public:
 public:
     MultiAtlas(IAtlasFactory &factory);
 
+    /**
+     * Destroys all the atlases. Existing AllocGroups will become invalid.
+     */
+    void clear();
+
 private:
     DENG2_PRIVATE(d)
 };
