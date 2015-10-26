@@ -23,6 +23,8 @@ namespace de {
 
 DENG2_PIMPL(ModelBank)
 {
+    Constructor modelConstructor;
+
     /// Source information for loading a model.
     struct Source : public ISource
     {
@@ -34,21 +36,25 @@ DENG2_PIMPL(ModelBank)
     /// Loaded model instance.
     struct Data : public IData
     {
-        ModelDrawable model;
+        std::unique_ptr<ModelDrawable> model;
         std::unique_ptr<IUserData> userData;
 
-        Data(String const &path)
+        Data(ModelDrawable *model, String const &path)
+            : model(model)
         {
-            model.load(App::rootFolder().locate<File>(path));
+            model->load(App::rootFolder().locate<File>(path));
         }
     };
 
-    Instance(Public *i) : Base(i) {}
+    Instance(Public *i, Constructor c)
+        : Base(i)
+        , modelConstructor(c? c : [] () { return new ModelDrawable; })
+    {}
 };
 
-ModelBank::ModelBank()
+ModelBank::ModelBank(Constructor modelConstructor)
     : Bank("ModelBank", BackgroundThread)
-    , d(new Instance(this))
+    , d(new Instance(this, modelConstructor))
 {}
 
 void ModelBank::add(DotPath const &id, String const &sourcePath)
@@ -58,7 +64,7 @@ void ModelBank::add(DotPath const &id, String const &sourcePath)
 
 ModelDrawable &ModelBank::model(DotPath const &id)
 {
-    return data(id).as<Instance::Data>().model;
+    return *data(id).as<Instance::Data>().model;
 }
 
 void ModelBank::setUserData(DotPath const &id, IUserData *anim)
@@ -74,12 +80,13 @@ ModelBank::IUserData const *ModelBank::userData(DotPath const &id) const
 ModelBank::ModelWithData ModelBank::modelAndData(DotPath const &id) const
 {
     auto &item = data(id).as<Instance::Data>();
-    return ModelWithData(&item.model, item.userData.get());
+    return ModelWithData(item.model.get(), item.userData.get());
 }
 
 Bank::IData *ModelBank::loadFromSource(ISource &source)
 {
-    return new Instance::Data(source.as<Instance::Source>().path);
+    return new Instance::Data(d->modelConstructor(),
+                              source.as<Instance::Source>().path);
 }
 
 } // namespace de

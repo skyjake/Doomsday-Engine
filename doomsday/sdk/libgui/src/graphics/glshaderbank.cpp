@@ -13,12 +13,13 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/GLShaderBank"
 #include "de/GLProgram"
 #include "de/GLShader"
+#include "de/GLUniform"
 
 #include <de/App>
 #include <de/ScriptedInfo>
@@ -46,7 +47,7 @@ DENG2_PIMPL(GLShaderBank)
             Type type;
 
             ShaderSource(String const &str = "", Type t = ShaderSourceText)
-                : source(str), type(t) {}            
+                : source(str), type(t) {}
 
             void convertToSourceText()
             {
@@ -68,11 +69,12 @@ DENG2_PIMPL(GLShaderBank)
         };
 
         GLShaderBank &bank;
+        String id;
         ShaderSource vertex;
         ShaderSource fragment;
 
-        Source(GLShaderBank &b, ShaderSource const &vtx, ShaderSource const &frag)
-            : bank(b), vertex(vtx), fragment(frag)
+        Source(GLShaderBank &b, String const &id, ShaderSource const &vtx, ShaderSource const &frag)
+            : bank(b), id(id), vertex(vtx), fragment(frag)
         {}
 
         Time sourceModifiedAt(ShaderSource const &src) const
@@ -108,10 +110,16 @@ DENG2_PIMPL(GLShaderBank)
     {
         GLShader *vertex;
         GLShader *fragment;
+        QSet<GLUniform *> defaultUniforms;
 
         Data(GLShader *v, GLShader *f)
-            : vertex(holdRef(v)), fragment(holdRef(f)) {}
-        ~Data() {
+            : vertex(holdRef(v))
+            , fragment(holdRef(f))
+        {}
+
+        ~Data()
+        {
+            qDeleteAll(defaultUniforms);
             releaseRef(vertex);
             releaseRef(fragment);
         }
@@ -186,6 +194,14 @@ GLProgram &GLShaderBank::build(GLProgram &program, DotPath const &path) const
 {
     Instance::Data &i = data(path).as<Instance::Data>();
     program.build(i.vertex, i.fragment);
+
+    // Bind the default uniforms. These will be used if no overriding
+    // uniforms are bound.
+    for(GLUniform *uniform : i.defaultUniforms)
+    {
+        program << *uniform;
+    }
+
     return program;
 }
 
@@ -243,14 +259,66 @@ Bank::ISource *GLShaderBank::newSourceFromInfo(String const &id)
         }
     }
 
-    return new Source(*this, vtx, frag);
+    return new Source(*this, id, vtx, frag);
 }
 
 Bank::IData *GLShaderBank::loadFromSource(ISource &source)
 {
     Instance::Source &src = source.as<Instance::Source>();
-    return new Instance::Data(src.load(GLShader::Vertex),
-                              src.load(GLShader::Fragment));
+    std::unique_ptr<Instance::Data> data(new Instance::Data(src.load(GLShader::Vertex),
+                                                            src.load(GLShader::Fragment)));
+    // Create default uniforms.
+    Record const &def = info()[src.id];
+    auto const vars = ScriptedInfo::subrecordsOfType(QStringLiteral("variable"), def);
+    for(auto i = vars.begin(); i != vars.end(); ++i)
+    {
+        std::unique_ptr<GLUniform> uniform;
+        Block const uName = i.key().toLatin1();
+
+        // Initialize the appropriate type of value animation and uniform,
+        // depending on the "value" key in the definition.
+        Value const &valueDef = i.value()->get("value");
+        if(auto const *array = valueDef.maybeAs<ArrayValue>())
+        {
+            switch(array->size())
+            {
+            default:
+                throw DefinitionError("GLShaderBank::loadFromSource",
+                                      QString("%1: Invalid initial value size (%2) for shader variable")
+                                      .arg(ScriptedInfo::sourceLocation(*i.value()))
+                                      .arg(array->size()));
+
+            case 1:
+                uniform.reset(new GLUniform(uName, GLUniform::Float));
+                *uniform = array->element(0).asNumber();
+                break;
+
+            case 2:
+                uniform.reset(new GLUniform(uName, GLUniform::Vec2));
+                *uniform = vectorFromValue<Vector2f>(*array);
+                break;
+
+            case 3:
+                uniform.reset(new GLUniform(uName, GLUniform::Vec3));
+                *uniform = vectorFromValue<Vector3f>(*array);
+                break;
+
+            case 4:
+                uniform.reset(new GLUniform(uName, GLUniform::Vec4));
+                *uniform = vectorFromValue<Vector4f>(*array);
+                break;
+            }
+        }
+        else
+        {
+            uniform.reset(new GLUniform(uName, GLUniform::Float));
+            *uniform = valueDef.asNumber();
+        }
+
+        data->defaultUniforms.insert(uniform.release());
+    }
+
+    return data.release();
 }
 
 } // namespace de

@@ -26,10 +26,31 @@
 #include <de/Rectangle>
 #include <de/Observers>
 #include <de/Lockable>
+#include <de/Deletable>
 
 #include "../Image"
 
 namespace de {
+
+/**
+ * Interface for any Atlas-type class. @ingroup gl
+ *
+ * The allocations must be committed before being used.
+ */
+class LIBGUI_PUBLIC IAtlas
+{
+public:
+    DENG2_ERROR(OutOfSpaceError);
+
+    virtual ~IAtlas() {}
+
+    virtual Id alloc(Image const &image, Id const &chosenId = Id::None) = 0;
+    virtual void release(Id const &id) = 0;
+    virtual bool contains(Id const &id) const = 0;
+    virtual void commit() const = 0;
+
+    virtual Rectanglef imageRectf(Id const &id) const = 0;
+};
 
 /**
  * Abstract image-based atlas.
@@ -39,7 +60,7 @@ namespace de {
  *
  * @ingroup gl
  */
-class LIBGUI_PUBLIC Atlas : public Lockable
+class LIBGUI_PUBLIC Atlas : public IAtlas, public Lockable, public Deletable
 {
 public:
     typedef Image::Size Size;
@@ -74,6 +95,12 @@ public:
          */
         LogCommitsAsXVerbose = 0x8,
 
+        /**
+         * Allocations will not be committed until manually requested. Deferred
+         * allocations can also be cancelled before committing.
+         */
+        DeferredAllocations = 0x10,
+
         DefaultFlags = 0
     };
     Q_DECLARE_FLAGS(Flags, Flag)
@@ -102,7 +129,7 @@ public:
         virtual void setMetrics(Size const &totalSize, int margin) = 0;
 
         virtual void clear() = 0;
-        virtual Id   allocate(Size const &size, Rectanglei &rect) = 0;
+        virtual Id   allocate(Size const &size, Rectanglei &rect, Id const &knownId) = 0;
         virtual void release(Id const &id) = 0;
 
         /**
@@ -139,12 +166,16 @@ public:
      */
     Atlas(Flags const &flags = DefaultFlags, Size const &totalSize = Size());
 
+    Flags flags() const;
+
     /**
      * Sets the allocator for the atlas. The atlas is cleared automatically.
      *
      * @param allocator  Allocator instance. Atlas gets ownership.
      */
     void setAllocator(IAllocator *allocator);
+
+    IAllocator *takeAllocator();
 
     /**
      * Sets the size of the margin that is left between allocations. The default is
@@ -185,21 +216,35 @@ public:
      * Attempts to allocate an image into the atlas. If defragmentation is
      * allowed, it may occur during the operation.
      *
-     * @param image  Image content to allocate.
+     * @param image     Image content to allocate.
+     * @param chosenId  Id for the allocation, if it has already been chosen.
      *
      * @return Identifier of the allocated image. If Id::None, the allocation
      * failed because the atlas is too full.
      */
-    Id alloc(Image const &image);
+    Id alloc(Image const &image, Id const &chosenId = Id::None) override;
 
     /**
      * Releases a previously allocated image from the atlas.
      *
      * @param id  Identifier of an allocated image.
      */
-    void release(Id const &id);
+    void release(Id const &id) override;
 
-    bool contains(Id const &id) const;
+    bool contains(Id const &id) const override;
+
+    /**
+     * Request committing the backing store to the physical atlas storage.
+     * This does nothing if there are no changes in the atlas.
+     *
+     * Deferred commits will also be committed.
+     */
+    void commit() const override;
+
+    /**
+     * Deferred allocations will all be cancelled.
+     */
+    void cancelDeferred();
 
     /**
      * Returns the number of images in the atlas.
@@ -231,7 +276,7 @@ public:
      * @return Normalized coordinates of the image on the atlas. Always within
      * [0,1].
      */
-    Rectanglef imageRectf(Id const &id) const;
+    Rectanglef imageRectf(Id const &id) const override;
 
     /**
      * Returns the image content allocated earlier. Requires BackingStore.
@@ -241,12 +286,6 @@ public:
      * @return Image that was provided earlier to alloc().
      */
     Image image(Id const &id) const;
-
-    /**
-     * Request committing the backing store to the physical atlas storage.
-     * This does nothing if there are no changes in the atlas.
-     */
-    void commit() const;
 
 protected:
     virtual void commitFull(Image const &fullImage) const = 0;

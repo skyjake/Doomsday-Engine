@@ -60,6 +60,8 @@ public:
     NumberValue(duint initialUnsignedInteger, SemanticHints semantic = Generic);
     NumberValue(bool initialBoolean);
 
+    void setSemanticHints(SemanticHints hints);
+
     /**
      * Conversion template that forces a cast to another type.
      */

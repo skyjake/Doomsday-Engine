@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/KdTreeAtlasAllocator"
@@ -37,8 +37,7 @@ DENG2_PIMPL(KdTreeAtlasAllocator)
     typedef BinaryTree<Partition> Node;
     Node root;
 
-    Instance(Public *i) : Base(i), margin(0), root(Partition())
-    {}
+    Instance(Public *i) : Base(i), margin(0), root(Partition()) {}
 
     void initTree(Node &rootNode)
     {
@@ -239,9 +238,10 @@ void KdTreeAtlasAllocator::clear()
     d->root.clear();
 }
 
-Id KdTreeAtlasAllocator::allocate(Atlas::Size const &size, Rectanglei &rect)
+Id KdTreeAtlasAllocator::allocate(Atlas::Size const &size, Rectanglei &rect,
+                                  Id const &knownId)
 {
-    Id newId = d->allocate(d->root, size, rect);
+    Id newId = d->allocate(d->root, size, rect, knownId);
     if(newId.isNone())
     {
         // No large enough free space available.

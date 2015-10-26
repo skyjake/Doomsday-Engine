@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/GLUniform"
@@ -39,7 +39,7 @@ DENG2_PIMPL(GLUniform)
         Vector4f *vector;
         Matrix3f *mat3;
         Matrix4f *mat4;
-        GLTexture const *tex;        
+        GLTexture const *tex;
     } value;
     duint elemCount;
 
@@ -209,9 +209,9 @@ void GLUniform::setName(char const *nameInShader)
     d->name.append('\0');
 }
 
-QLatin1String GLUniform::name() const
+Block GLUniform::name() const
 {
-    return QLatin1String(d->name);
+    return d->name;
 }
 
 GLUniform::Type GLUniform::type() const

@@ -192,9 +192,8 @@ struct vispsprite_t
             de::dfloat inter;             ///< Frame interpolation, 0..1
         } model;
         struct vispsprite_model2_s {
-            de::ModelDrawable const *model;
-            ModelAuxiliaryData const *auxData;
-            StateAnimator const *animator;
+            render::Model const *model;
+            render::StateAnimator const *animator;
         } model2;
     } data;
 };

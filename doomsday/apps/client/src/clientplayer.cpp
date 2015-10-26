@@ -25,11 +25,11 @@ using namespace de;
 
 DENG2_PIMPL(ClientPlayer)
 {
-    viewdata_t           viewport;
-    ConsoleEffectStack   effects;
-    PlayerWeaponAnimator playerWeaponAnimator;
-    clplayerstate_t      clPlayerState;
-    DemoTimer            demoTimer;
+    viewdata_t         viewport;
+    ConsoleEffectStack effects;
+    render::PlayerWeaponAnimator playerWeaponAnimator;
+    clplayerstate_t    clPlayerState;
+    DemoTimer          demoTimer;
 
     state_t const *lastPSpriteState = nullptr;
     String weaponAssetId;
@@ -81,7 +81,7 @@ ConsoleEffectStack const &ClientPlayer::fxStack() const
     return d->effects;
 }
 
-PlayerWeaponAnimator &ClientPlayer::playerWeaponAnimator()
+render::PlayerWeaponAnimator &ClientPlayer::playerWeaponAnimator()
 {
     return d->playerWeaponAnimator;
 }

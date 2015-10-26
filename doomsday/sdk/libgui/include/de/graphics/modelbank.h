@@ -22,6 +22,8 @@
 #include <de/Bank>
 #include <de/ModelDrawable>
 
+#include <functional>
+
 namespace de {
 
 /**
@@ -46,14 +48,21 @@ public:
         DENG2_AS_IS_METHODS()
     };
 
+    typedef std::function<ModelDrawable * ()> Constructor;
     typedef std::pair<ModelDrawable *, IUserData *> ModelWithData;
 
 public:
-    ModelBank();
+    ModelBank(Constructor modelConstructor = nullptr);
 
     void add(DotPath const &id, String const &sourcePath);
 
     ModelDrawable &model(DotPath const &id);
+
+    template <typename Type>
+    Type &model(DotPath const &id)
+    {
+        return static_cast<Type &>(model(id));
+    }
 
     /**
      * Sets the user data of a loaded model.

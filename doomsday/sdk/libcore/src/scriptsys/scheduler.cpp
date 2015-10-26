@@ -115,12 +115,12 @@ void Scheduler::addFromInfo(Record const &timelineRecord)
         {
             addScript(def.getd("at", 0.0),
                       def.gets(ScriptedInfo::SCRIPT),
-                      def.gets(ScriptedInfo::VAR_SOURCE, ""));
+                      ScriptedInfo::sourceLocation(def));
         }
         catch(Error const &er)
         {
             LOG_RES_ERROR("%s: Error in timeline script: %s")
-                    << def.gets(ScriptedInfo::VAR_SOURCE)
+                    << ScriptedInfo::sourceLocation(def)
                     << er.asText();
         }
     }
