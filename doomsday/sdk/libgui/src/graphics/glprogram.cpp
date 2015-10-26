@@ -342,14 +342,22 @@ DENG2_PIMPL(GLProgram)
         changed.remove(uniform);
 
         auto &stack = stacks[uniform->name()];
-        stack.pop();
-        if(!stack.isEmpty())
+        if(stack.top() == uniform)
         {
-            // The new topmost binding becomes active.
-            active.insert(stack.top());
-            changed.insert(stack.top());
+            stack.pop();
+            if(!stack.isEmpty())
+            {
+                // The new topmost binding becomes active.
+                active.insert(stack.top());
+                changed.insert(stack.top());
+            }
         }
         else
+        {
+            // It might be deeper in the stack.
+            stack.removeAll(uniform);
+        }
+        if(stack.isEmpty())
         {
             stacks.remove(uniform->name());
         }
