@@ -44,6 +44,9 @@ Model::AnimSequence::AnimSequence(String const &name, Record const &def)
 
 Model::~Model()
 {
+    // The commit group will be deleted now.
+    unsetAtlas();
+    
     qDeleteAll(timelines.values());
 }
 

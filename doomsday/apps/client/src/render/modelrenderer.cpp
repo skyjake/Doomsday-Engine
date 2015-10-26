@@ -89,7 +89,7 @@ DENG2_PIMPL(ModelRenderer)
 
     MultiAtlas atlasPool { *this };
 
-    struct DefaultTextures
+    /*struct DefaultTextures
     {
         Id diffuse  { Id::None };
         Id normals  { Id::None };
@@ -118,7 +118,7 @@ DENG2_PIMPL(ModelRenderer)
             specular = atlas.alloc(img);
         }
     };
-    QHash<Atlas const *, DefaultTextures> defaultTextures;
+    QHash<Atlas const *, DefaultTextures> defaultTextures;*/
 
     filesys::AssetObserver observer { "model\\..*" };
     ModelBank bank { [] () -> ModelDrawable * { return new render::Model; } };
@@ -152,7 +152,7 @@ DENG2_PIMPL(ModelRenderer)
         bank.unloadAll(Bank::ImmediatelyInCurrentThread);
 
         atlasPool.clear();
-        defaultTextures.clear();
+        //defaultTextures.clear();
         unloadProgram(*programs[SHADER_DEFAULT]);
     }
 
@@ -166,7 +166,7 @@ DENG2_PIMPL(ModelRenderer)
         atlas->setMarginSize(0);
 
         // The default textures are present on each atlas.
-        defaultTextures[atlas].alloc(*atlas);
+        //defaultTextures[atlas].alloc(*atlas);
 
         return atlas;
     }
@@ -256,13 +256,13 @@ DENG2_PIMPL(ModelRenderer)
 
         model.setAtlas(*model.textures);
 
-        DENG2_ASSERT(defaultTextures.contains(model.textures->atlas()));
+        /*DENG2_ASSERT(defaultTextures.contains(model.textures->atlas()));
 
         DefaultTextures &defaults = defaultTextures[model.textures->atlas()];
         model.setDefaultTexture(ModelDrawable::Diffuse,  defaults.diffuse);
         model.setDefaultTexture(ModelDrawable::Normals,  defaults.normals);
         model.setDefaultTexture(ModelDrawable::Emissive, defaults.emission);
-        model.setDefaultTexture(ModelDrawable::Specular, defaults.specular);
+        model.setDefaultTexture(ModelDrawable::Specular, defaults.specular);*/
     }
 
     static gl::Blend textToBlendFunc(String const &text)
@@ -615,6 +615,8 @@ DENG2_PIMPL(ModelRenderer)
     template <typename Params> // generic to accommodate psprites and vispsprites
     void draw(Params const &p)
     {
+        uTex = static_cast<AtlasTexture const *>(p.model->textures->atlas());
+        
         p.model->draw(&p.animator->appearance(), p.animator);
     }
 };
