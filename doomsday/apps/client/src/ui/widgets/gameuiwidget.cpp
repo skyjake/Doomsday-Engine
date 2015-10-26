@@ -106,7 +106,7 @@ DENG2_PIMPL(GameUIWidget)
             Rend_LightGridVisual(App_WorldSystem().map().lightGrid());
         }
         Net_Drawer();
-        UI_AudioChannelDrawer();
+        UI_AudioMixerDrawer();
 
         DGL_End();
     }

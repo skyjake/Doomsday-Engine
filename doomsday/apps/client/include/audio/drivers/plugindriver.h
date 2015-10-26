@@ -144,53 +144,61 @@ public:  // Sound players: -----------------------------------------------------
     class CdChannel : public audio::CdChannel
     {
     public:
-        Channel &setVolume(de::dfloat newVolume);
-        void stop();
+        PlayingMode mode() const override;
+        void play(PlayingMode mode) override;
+        void stop() override;
+        bool isPaused() const override;
+        void pause() override;
+        void resume() override;
+        Channel &setVolume(de::dfloat value) override;
 
-        void update();
-        bool isPlaying() const;
-        void pause(de::dint pause);
-
-        de::dint play(de::dint track, de::dint looped);
+        void bindTrack(de::dint track);
 
     private:
         CdChannel(PluginDriver &driver);
         friend class CdPlayer;
 
         PluginDriver *_driver = nullptr;
+
+        PlayingMode _mode = NotPlaying;
+        de::dint _track   = -1;
     };
 
     class MusicChannel : public audio::MusicChannel
     {
     public:
-        Channel &setVolume(de::dfloat newVolume);
-        void stop();
-
-        void update();
-        bool isPlaying() const;
-        void pause(de::dint pause);
+        PlayingMode mode() const override;
+        void play(PlayingMode mode) override;
+        void stop() override;
+        bool isPaused() const override;
+        void pause() override;
+        void resume() override;
+        Channel &setVolume(de::dfloat value) override;
 
         bool canPlayBuffer() const;
         void *songBuffer(de::duint length);
-        de::dint play(de::dint looped);
-
         bool canPlayFile() const;
-        de::dint playFile(de::String const &filename, de::dint looped);
+        void bindFile(de::String const &sourcePath);
 
     private:
         MusicChannel(PluginDriver &driver);
         friend class MusicPlayer;
 
         PluginDriver *_driver = nullptr;
+
+        PlayingMode _mode = NotPlaying;
+        de::String _sourcePath;
     };
 
     class SoundChannel : public audio::SoundChannel
     {
     public:
-        PlayingMode mode() const;
-
-        void play(PlayingMode mode);
-        void stop();
+        PlayingMode mode() const override;
+        void play(PlayingMode mode) override;
+        void stop() override;
+        bool isPaused() const override;
+        void pause() override;
+        void resume() override;
 
         SoundEmitter *emitter() const;
         de::dfloat frequency() const;
@@ -201,7 +209,7 @@ public:  // Sound players: -----------------------------------------------------
         audio::SoundChannel &setEmitter(SoundEmitter *newEmitter);
         audio::SoundChannel &setFrequency(de::dfloat newFrequency);
         audio::SoundChannel &setOrigin(de::Vector3d const &newOrigin);
-        Channel             &setVolume(de::dfloat newVolume);
+        Channel             &setVolume(de::dfloat newVolume) override;
 
         de::dint flags() const;
         void setFlags(de::dint newFlags);

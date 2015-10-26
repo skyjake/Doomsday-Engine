@@ -132,8 +132,9 @@ DENG2_PIMPL(MidiStreamer)
 
     HMIDISTRM midiStr;
     UINT devId;
-    dint playing;       ///< The song is playing/looping.
-    byte chanVols[16];  ///< Last volume for each channel.
+    dint playing;         ///< The song is playing/looping.
+    bool paused = false;
+    byte chanVols[16];    ///< Last volume for each channel.
     void *song;
     size_t songSize;
 
@@ -398,7 +399,7 @@ void MidiStreamer::openStream()
 {
     d->devId = MIDI_MAPPER;
     if((::res = midiStreamOpen(&d->midiStr, &d->devId, 1, (DWORD_PTR) Instance::Callback,
-                               (DWORD_PTR) &d, CALLBACK_FUNCTION))
+                               (DWORD_PTR) d.get(), CALLBACK_FUNCTION))
        != MMSYSERR_NOERROR)
     {
         throw OpenError("MidiStreamer::openStream", "Failed to open. Error: " + String::number(::res));
@@ -448,6 +449,8 @@ void MidiStreamer::freeSongBuffer()
 
 void MidiStreamer::play(bool looped)
 {
+    d->paused = false;
+
     // Do we need to prepare the MIDI data?
     if(!d->registered)
     {
@@ -528,17 +531,25 @@ void MidiStreamer::play(bool looped)
     midiStreamRestart(d->midiStr);
 }
 
-void MidiStreamer::pause(bool setPause)
+bool MidiStreamer::isPaused() const
 {
-    d->playing = !setPause;
-    if(setPause)
-    {
-        midiStreamPause(d->midiStr);
-    }
-    else
-    {
-        midiStreamRestart(d->midiStr);
-    }
+    return d->paused;
+}
+
+void MidiStreamer::pause()
+{
+    if(!d->playing) return;
+
+    d->paused = true;
+    midiStreamPause(d->midiStr);
+}
+
+void MidiStreamer::resume()
+{
+    if(!d->playing) return;
+
+    d->paused = false;
+    midiStreamRestart(d->midiStr);
 }
 
 void MidiStreamer::reset()
@@ -552,12 +563,14 @@ void MidiStreamer::reset()
     }
 
     midiOutReset((HMIDIOUT) d->midiStr);
+    d->paused = false;
 }
 
 void MidiStreamer::stop()
 {
     if(!d->playing) return;
 
+    d->paused     = false;
     d->playing    = false;
     d->loopBuffer = nullptr;
     reset();

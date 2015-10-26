@@ -238,6 +238,16 @@ int DMFmod_Music_Get(int prop, void *ptr)
         if(!::fmodSystem) return false;
         return ::music != nullptr;  /// @c nullptr when not playing.
 
+    case MUSIP_PAUSED:
+        if(::fmodSystem && ::music)
+        {
+            bool paused = false;
+            ::music->getPaused(&paused);
+            *(reinterpret_cast<dint *>(ptr)) = dint(paused);
+            return true;
+        }
+        break;
+
     default: break;
     }
 

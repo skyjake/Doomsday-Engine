@@ -28,8 +28,9 @@
 /// Music interface properties.
 enum {
     MUSIP_IDENTITYKEY,  ///< Only for Get()ing.
-    MUSIP_PLAYING,      ///< Is playback in progress?
-    MUSIP_VOLUME
+    MUSIP_PLAYING,      ///< Has playback begun?
+    MUSIP_VOLUME,       ///< Volume factor.
+    MUSIP_PAUSED        ///< Has playback been paused?
 };
 
 /// Generic driver interface. All other interfaces are based on this.

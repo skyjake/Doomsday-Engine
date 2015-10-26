@@ -103,6 +103,13 @@ int DM_CDAudio_Get(int prop, void *ptr)
         }
         break;
 
+    case MUSIP_PAUSED:
+        if(::fmodSystem)
+        {
+            return DMFmod_Music_Get(MUSIP_PAUSED, ptr);
+        }
+        break;
+
     default: DENG2_ASSERT(!"CDAudio_Get: Unknown property id"); break;
     }
 

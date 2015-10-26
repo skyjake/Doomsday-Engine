@@ -46,7 +46,9 @@ public:
     void reset();
     void stop();
 
-    void pause(bool setPause = true);
+    bool isPaused() const;
+    void pause();
+    void resume();
 
     void play(bool looped = false);
 

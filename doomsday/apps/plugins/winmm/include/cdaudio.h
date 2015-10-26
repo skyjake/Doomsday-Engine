@@ -40,7 +40,9 @@ public:
 
     void stop();
 
-    void pause(bool setPause);
+    bool isPaused() const;
+    void pause();
+    void resume();
 
     bool play(int newTrack, bool looped = false);
 

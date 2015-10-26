@@ -195,9 +195,17 @@ int DM_CDAudio_Get(int prop, void *ptr)
         break;
 
     case MUSIP_PLAYING:
-        if(bool(::cdaudio))
+        if(::cdaudio)
         {
             return ::cdaudio->isPlaying();
+        }
+        break;
+
+    case MUSIP_PAUSED:
+        if(::cdaudio)
+        {
+            *(reinterpret_cast<dint *>(ptr)) = ::cdaudio->isPaused();
+            return true;
         }
         break;
 
@@ -231,7 +239,9 @@ void DM_CDAudio_Pause(int doPause)
     //LOG_WIP("DM_CDAudio_Pause(doPause:%b)") << CPP_BOOL(doPause);
 
     if(!::cdaudio) return;
-    ::cdaudio->pause(CPP_BOOL(doPause));
+
+    if(doPause) ::cdaudio->pause();
+    else        ::cdaudio->resume();
 }
 
 void DM_CDAudio_Stop()
@@ -252,9 +262,9 @@ int DM_Music_Init()
     //LOG_WIP("DM_Music_Init");
 
     // Already been here?
-    if(bool( ::midiStreamer )) return true;
+    if(::midiStreamer) return true;
 
-    LOG_AUDIO_NOTE("Number of %i MIDI-out devices: %i")
+    LOG_AUDIO_NOTE("Number of MIDI-out devices: %i")
         << MidiStreamer::deviceCount();
 
     ::midiStreamer.reset(new MidiStreamer);
@@ -324,9 +334,17 @@ int DM_Music_Get(int prop, void *ptr)
         break;
 
     case MUSIP_PLAYING:
-        if(bool( ::midiStreamer ))
+        if(::midiStreamer)
         {
             return ::midiStreamer->isPlaying();
+        }
+        break;
+
+    case MUSIP_PAUSED:
+        if(::midiStreamer)
+        {
+            *(reinterpret_cast<dint *>(ptr)) = ::midiStreamer->isPaused();
+            return true;
         }
         break;
 
@@ -368,7 +386,8 @@ void DM_Music_Pause(int setPause)
     //LOG_WIP("DM_Music_Pause(setPause:%b)") << CPP_BOOL(setPause);
     if(!::midiStreamer) return;
 
-    ::midiStreamer->pause(setPause);
+    if(setPause) ::midiStreamer->pause();
+    else         ::midiStreamer->resume();
 }
 
 void *DM_Music_SongBuffer(unsigned int length)

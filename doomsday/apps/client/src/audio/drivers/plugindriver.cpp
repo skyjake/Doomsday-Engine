@@ -414,12 +414,6 @@ PluginDriver::CdChannel::CdChannel(PluginDriver &driver)
     , _driver(&driver)
 {}
 
-void PluginDriver::CdChannel::update()
-{
-    DENG2_ASSERT(_driver->iCd().gen.Update);
-    _driver->iCd().gen.Update();
-}
-
 Channel &PluginDriver::CdChannel::setVolume(dfloat newVolume)
 {
     DENG2_ASSERT(_driver->iCd().gen.Set);
@@ -427,16 +421,30 @@ Channel &PluginDriver::CdChannel::setVolume(dfloat newVolume)
     return *this;
 }
 
-bool PluginDriver::CdChannel::isPlaying() const
+bool PluginDriver::CdChannel::isPaused() const
 {
-    DENG2_ASSERT(_driver->iCd().gen.Get);
-    return _driver->iCd().gen.Get(MUSIP_PLAYING, nullptr);
+    if(isPlaying())
+    {
+        dint result = 0;
+        DENG2_ASSERT(_driver->iCd().gen.Get);
+        if(_driver->iCd().gen.Get(MUSIP_PAUSED, &result))
+            return CPP_BOOL( result );
+    }
+    return false;
 }
 
-void PluginDriver::CdChannel::pause(dint pause)
+void PluginDriver::CdChannel::pause()
 {
+    if(!isPlaying()) return;
     DENG2_ASSERT(_driver->iCd().gen.Pause);
-    _driver->iCd().gen.Pause(pause);
+    _driver->iCd().gen.Pause(true);
+}
+
+void PluginDriver::CdChannel::resume()
+{
+    if(!isPlaying()) return;
+    DENG2_ASSERT(_driver->iCd().gen.Pause);
+    _driver->iCd().gen.Pause(false);
 }
 
 void PluginDriver::CdChannel::stop()
@@ -445,10 +453,35 @@ void PluginDriver::CdChannel::stop()
     _driver->iCd().gen.Stop();
 }
 
-dint PluginDriver::CdChannel::play(dint track, dint looped)
+Channel::PlayingMode PluginDriver::CdChannel::mode() const
 {
-    DENG2_ASSERT(_driver->iCd().Play);
-    return _driver->iCd().Play(track, looped);
+    DENG2_ASSERT(_driver->iCd().gen.Get);
+    if(!_driver->iCd().gen.Get(MUSIP_PLAYING, nullptr/*unused*/))
+        return NotPlaying;
+    return _mode;
+}
+
+void PluginDriver::CdChannel::play(PlayingMode mode)
+{
+    if(isPlaying()) return;
+    if(mode == NotPlaying) return;
+
+    if(_track >= 0)
+    {
+        DENG2_ASSERT(_driver->iCd().Play);
+        if(_driver->iCd().Play(_track, dint(mode == Looping)))
+        {
+            _mode = mode;
+            return;
+        }
+        throw Error("PluginDriver::CdChannel::play", "Failed playing track #" + String::number(_track));
+    }
+    throw Error("PluginDriver::CdChannel::play", "No track bound");
+}
+
+void PluginDriver::CdChannel::bindTrack(dint track)
+{
+    _track = track;
 }
 
 // --------------------------------------------------------------------------------------
@@ -458,12 +491,6 @@ PluginDriver::MusicChannel::MusicChannel(PluginDriver &driver)
     , _driver(&driver)
 {}
 
-void PluginDriver::MusicChannel::update()
-{
-    DENG2_ASSERT(_driver->iMusic().gen.Update);
-    _driver->iMusic().gen.Update();
-}
-
 Channel &PluginDriver::MusicChannel::setVolume(dfloat newVolume)
 {
     DENG2_ASSERT(_driver->iMusic().gen.Set);
@@ -471,22 +498,73 @@ Channel &PluginDriver::MusicChannel::setVolume(dfloat newVolume)
     return *this;
 }
 
-bool PluginDriver::MusicChannel::isPlaying() const
+bool PluginDriver::MusicChannel::isPaused() const
 {
-    DENG2_ASSERT(_driver->iMusic().gen.Get);
-    return _driver->iMusic().gen.Get(MUSIP_PLAYING, nullptr);
+    if(isPlaying())
+    {
+        dint result = 0;
+        DENG2_ASSERT(_driver->iMusic().gen.Get);
+        if(_driver->iMusic().gen.Get(MUSIP_PAUSED, &result))
+            return CPP_BOOL( result );
+    }
+    return false;
 }
 
-void PluginDriver::MusicChannel::pause(dint pause)
+void PluginDriver::MusicChannel::pause()
 {
+    if(!isPlaying()) return;
     DENG2_ASSERT(_driver->iMusic().gen.Pause);
-    _driver->iMusic().gen.Pause(pause);
+    _driver->iMusic().gen.Pause(true);
+}
+
+void PluginDriver::MusicChannel::resume()
+{
+    if(!isPlaying()) return;
+    DENG2_ASSERT(_driver->iMusic().gen.Pause);
+    _driver->iMusic().gen.Pause(false);
 }
 
 void PluginDriver::MusicChannel::stop()
 {
+    if(!isPlaying()) return;
     DENG2_ASSERT(_driver->iMusic().gen.Stop);
     _driver->iMusic().gen.Stop();
+}
+
+Channel::PlayingMode PluginDriver::MusicChannel::mode() const
+{
+    DENG2_ASSERT(_driver->iMusic().gen.Get);
+    if(!_driver->iMusic().gen.Get(MUSIP_PLAYING, nullptr/*unused*/))
+        return NotPlaying;
+
+    return _mode;
+}
+
+void PluginDriver::MusicChannel::play(PlayingMode mode)
+{
+    if(isPlaying()) return;
+    if(mode == NotPlaying) return;
+
+    if(!_sourcePath.isEmpty())
+    {
+        DENG2_ASSERT(_driver->iMusic().PlayFile);
+        if(_driver->iMusic().PlayFile(_sourcePath.toUtf8().constData(), dint( mode == Looping )))
+        {
+            _mode = mode;
+            return;
+        }
+        throw Error("PluginDriver::MusicChannel::play", "Failed playing source \"" + _sourcePath + "\"");
+    }
+    else
+    {
+        DENG2_ASSERT(_driver->iMusic().Play);
+        if(_driver->iMusic().Play(dint( mode == Looping )))
+        {
+            _mode = mode;
+            return;
+        }
+        throw Error("PluginDriver::MusicChannel::play", "Failed playing buffered data");
+    }
 }
 
 bool PluginDriver::MusicChannel::canPlayBuffer() const
@@ -496,14 +574,11 @@ bool PluginDriver::MusicChannel::canPlayBuffer() const
 
 void *PluginDriver::MusicChannel::songBuffer(duint length)
 {
+    stop();
+    _sourcePath.clear();
+
     if(!_driver->iMusic().SongBuffer) return nullptr;
     return _driver->iMusic().SongBuffer(length);
-}
-
-dint PluginDriver::MusicChannel::play(dint looped)
-{
-    if(!_driver->iMusic().Play) return false;
-    return _driver->iMusic().Play(looped);
 }
 
 bool PluginDriver::MusicChannel::canPlayFile() const
@@ -511,10 +586,10 @@ bool PluginDriver::MusicChannel::canPlayFile() const
     return _driver->iMusic().PlayFile != nullptr;
 }
 
-dint PluginDriver::MusicChannel::playFile(String const &filename, dint looped)
+void PluginDriver::MusicChannel::bindFile(String const &path)
 {
-    if(!_driver->iMusic().PlayFile) return false;
-    return _driver->iMusic().PlayFile(filename.toUtf8().constData(), looped);
+    stop();
+    _sourcePath = path;
 }
 
 // --------------------------------------------------------------------------------------
@@ -865,6 +940,21 @@ void PluginDriver::SoundChannel::play(PlayingMode mode)
 void PluginDriver::SoundChannel::stop()
 {
     d->stop();
+}
+
+bool PluginDriver::SoundChannel::isPaused() const
+{
+    return false;  // Never...
+}
+
+void PluginDriver::SoundChannel::pause()
+{
+    // Never paused...
+}
+
+void PluginDriver::SoundChannel::resume()
+{
+    // Never paused...
 }
 
 SoundEmitter *PluginDriver::SoundChannel::emitter() const

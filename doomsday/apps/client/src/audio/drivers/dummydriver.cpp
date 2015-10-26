@@ -162,28 +162,46 @@ LoopResult DummyDriver::SoundPlayer::forAllChannels(std::function<LoopResult (Ch
 DummyDriver::CdChannel::CdChannel() : audio::CdChannel()
 {}
 
-void DummyDriver::CdChannel::update()
-{}
-
 Channel &DummyDriver::CdChannel::setVolume(dfloat)
 {
     return *this;
 }
 
-bool DummyDriver::CdChannel::isPlaying() const
+bool DummyDriver::CdChannel::isPaused() const
 {
-    return false;
+    return _paused;
 }
 
-void DummyDriver::CdChannel::pause(dint)
-{}
+void DummyDriver::CdChannel::pause()
+{
+    _paused = true;
+}
+
+void DummyDriver::CdChannel::resume()
+{
+    _paused = false;
+}
 
 void DummyDriver::CdChannel::stop()
 {}
 
-dint DummyDriver::CdChannel::play(dint, dint)
+Channel::PlayingMode DummyDriver::CdChannel::mode() const
 {
-    return true;
+    return _mode;
+}
+
+void DummyDriver::CdChannel::play(PlayingMode mode)
+{
+    if(isPlaying()) return;
+    if(mode == NotPlaying) return;
+
+    if(_track < 0) Error("DummyDriver::CdChannel::play", "No track is bound");
+    _mode = mode;
+}
+
+void DummyDriver::CdChannel::bindTrack(dint track)
+{
+    _track = de::max(-1, track);
 }
 
 // --------------------------------------------------------------------------------------
@@ -191,24 +209,42 @@ dint DummyDriver::CdChannel::play(dint, dint)
 DummyDriver::MusicChannel::MusicChannel() : audio::MusicChannel()
 {}
 
-void DummyDriver::MusicChannel::update()
-{}
-
 Channel &DummyDriver::MusicChannel::setVolume(dfloat)
 {
     return *this;
 }
 
-bool DummyDriver::MusicChannel::isPlaying() const
+bool DummyDriver::MusicChannel::isPaused() const
 {
-    return false;
+    return _paused;
 }
 
-void DummyDriver::MusicChannel::pause(dint)
-{}
+void DummyDriver::MusicChannel::pause()
+{
+    _paused = true;
+}
+
+void DummyDriver::MusicChannel::resume()
+{
+    _paused = false;
+}
 
 void DummyDriver::MusicChannel::stop()
 {}
+
+Channel::PlayingMode DummyDriver::MusicChannel::mode() const
+{
+    return _mode;
+}
+
+void DummyDriver::MusicChannel::play(PlayingMode mode)
+{
+    if(isPlaying()) return;
+    if(mode == NotPlaying) return;
+
+    if(_sourcePath.isEmpty()) Error("DummyDriver::MusicChannel::play", "No track is bound");
+    _mode = mode;
+}
 
 bool DummyDriver::MusicChannel::canPlayBuffer() const
 {
@@ -220,19 +256,14 @@ void *DummyDriver::MusicChannel::songBuffer(duint)
     return nullptr;
 }
 
-dint DummyDriver::MusicChannel::play(dint)
-{
-    return true;
-}
-
 bool DummyDriver::MusicChannel::canPlayFile() const
 {
     return true;
 }
 
-dint DummyDriver::MusicChannel::playFile(String const &, dint)
+void DummyDriver::MusicChannel::bindFile(String const &sourcePath)
 {
-    return true;
+    _sourcePath = sourcePath;
 }
 
 // --------------------------------------------------------------------------------------
@@ -548,6 +579,21 @@ void DummyDriver::SoundChannel::play(PlayingMode mode)
 void DummyDriver::SoundChannel::stop()
 {
     d->stop(d->buffer);
+}
+
+bool DummyDriver::SoundChannel::isPaused() const
+{
+    return false;  // Never...
+}
+
+void DummyDriver::SoundChannel::pause()
+{
+    // Never paused...
+}
+
+void DummyDriver::SoundChannel::resume()
+{
+    // Never paused...
 }
 
 SoundEmitter *DummyDriver::SoundChannel::emitter() const

@@ -1134,35 +1134,47 @@ DENG2_PIMPL(System)
             dint didPlay = (*mixer)["music"].forAllChannels([this, &hndl, &looped] (Channel &base)
             {
                 if(!base.is<MusicChannel>())
-                    return 0;  // Continue iteration.
+                    return LoopContinue;
 
                 auto &ch = base.as<MusicChannel>();
 
                 // Does this channel support buffered playback?
                 if(ch.canPlayBuffer())
                 {
-                    // Buffer the data using the driver's own facility.
-                    dsize const len = hndl->length();
-                    hndl->read((duint8 *) ch.songBuffer(len), len);
-                    return ch.play(looped);
+                    try
+                    {
+                        // Buffer the data using the driver's own facility.
+                        dsize const len = hndl->length();
+                        hndl->read((duint8 *) ch.songBuffer(len), len);
+                        ch.play(looped ? Channel::Looping : Channel::OnceDontDelete);
+                        return LoopAbort;  // Success!
+                    }
+                    catch(Error const &)
+                    {}
                 }
 
                 // Does this channel support playback from a native file?
                 if(ch.canPlayFile())
                 {
-                    // Write the data to disk and play from there.
-                    String const bufPath = composeMusicBufferFilename();
+                    try
+                    {
+                        // Write the data to disk and play from there.
+                        String const bufPath = composeMusicBufferFilename();
 
-                    dsize len = hndl->length();
-                    auto *buf = (duint8 *)M_Malloc(len);
-                    hndl->read(buf, len);
-                    F_Dump(buf, len, bufPath.toUtf8().constData());
-                    M_Free(buf); buf = nullptr;
-
-                    return ch.playFile(bufPath, looped);
+                        dsize len = hndl->length();
+                        auto *buf = (duint8 *)M_Malloc(len);
+                        hndl->read(buf, len);
+                        F_Dump(buf, len, bufPath.toUtf8().constData());
+                        M_Free(buf); buf = nullptr;
+                        ch.bindFile(bufPath);
+                        ch.play(looped ? Channel::Looping : Channel::OnceDontDelete);
+                        return LoopAbort;  // Success!
+                    }
+                    catch(Error const &)
+                    {}
                 }
 
-                return 0;  // Continue iteration.
+                return LoopContinue;
             });
 
             App_FileSystem().releaseFile(hndl->file());
@@ -1198,36 +1210,50 @@ DENG2_PIMPL(System)
             String const srcFile = composeMusicBufferFilename(".mid");
             M_Mus2Midi(lump, srcFile.toUtf8().constData());
 
-            return (*mixer)["music"].forAllChannels([&srcFile, &looped] (Channel &base)
+            auto didPlay = (*mixer)["music"].forAllChannels([&srcFile, &looped] (Channel &base)
             {
                 if(auto *ch = base.maybeAs<MusicChannel>())
                 {
                     if(ch->canPlayFile())
                     {
-                        return ch->playFile(srcFile, looped);
+                        try
+                        {
+                            ch->bindFile(srcFile);
+                            ch->play(looped ? Channel::Looping : Channel::OnceDontDelete);
+                            return LoopAbort;  // Success!
+                        }
+                        catch(Error const &)
+                        {}
                     }
                 }
-                return 0;  // Continue iteration.
+                return LoopContinue;
             });
+            if(didPlay) return 1;
         }
 
         return (*mixer)["music"].forAllChannels([this, &lump, &looped] (Channel &base)
         {
             if(!base.is<MusicChannel>())
-                return 0;  // Continue iteration.
+                return LoopContinue;
 
             auto &ch = base.as<MusicChannel>();
 
             // Does this channel offer buffered playback?
             if(ch.canPlayBuffer())
             {
-                // Buffer the data using the driver's own facility.
-                std::unique_ptr<FileHandle> hndl(&App_FileSystem().openLump(lump));
-                dsize const length  = hndl->length();
-                hndl->read((duint8 *) ch.songBuffer(length), length);
-                App_FileSystem().releaseFile(hndl->file());
+                try
+                {
+                    // Buffer the data using the driver's own facility.
+                    std::unique_ptr<FileHandle> hndl(&App_FileSystem().openLump(lump));
+                    dsize const length  = hndl->length();
+                    hndl->read((duint8 *) ch.songBuffer(length), length);
+                    App_FileSystem().releaseFile(hndl->file());
 
-                return ch.play(looped);
+                    ch.play(looped ? Channel::Looping : Channel::OnceDontDelete);
+                    return LoopAbort;  // Success!
+                }
+                catch(Error const &)
+                {}
             }
 
             // Does this channel offer playback from a native file?
@@ -1237,11 +1263,18 @@ DENG2_PIMPL(System)
                 String const fileName = composeMusicBufferFilename();
                 if(F_DumpFile(lump, fileName.toUtf8().constData()))
                 {
-                    return ch.playFile(fileName, looped);
+                    try
+                    {
+                        ch.bindFile(fileName);
+                        ch.play(looped ? Channel::Looping : Channel::OnceDontDelete);
+                        return LoopAbort;  // Success!
+                    }
+                    catch(Error const &)
+                    {}
                 }
             }
 
-            return 0;  // Continue iteration.
+            return LoopContinue;
         });
     }
 
@@ -1255,9 +1288,16 @@ DENG2_PIMPL(System)
         {
             if(auto *ch = base.maybeAs<CdChannel>())
             {
-                return ch->play(cdTrack, looped);
+                try
+                {
+                    ch->bindTrack(cdTrack);
+                    ch->play(looped ? Channel::Looping : Channel::OnceDontDelete);
+                    return LoopAbort;  // Success!
+                }
+                catch(Error const &)
+                {}
             }
-            return 0;  // Continue iteration.
+            return LoopContinue;
         });
     }
 
@@ -1696,7 +1736,7 @@ bool System::musicIsPlaying() const
     //LOG_AS("audio::System");
     return mixer()["music"].forAllChannels([] (Channel &ch)
     {
-        return ch.as<BaseMusicChannel>().isPlaying();
+        return ch.isPlaying();
     });
 }
 
@@ -1725,7 +1765,8 @@ void System::pauseMusic(bool doPause)
     // Pause all currently playing music channels.
     mixer()["music"].forAllChannels([&doPause] (Channel &ch)
     {
-        ch.as<BaseMusicChannel>().pause(doPause);
+        if(doPause) ch.pause();
+        else        ch.resume();
         return LoopContinue;
     });
 }
@@ -1740,12 +1781,14 @@ dint System::playMusic(Record const &definition, bool looped)
     if(!d->musicAvail) return false;
 
     LOG_AS("audio::System");
-    LOG_AUDIO_MSG("Playing song \"%s\"%s") << definition.gets("id") << (looped ? " looped" : "");
-    //LOG_AUDIO_VERBOSE("Current song '%s'") << d->musCurrentSong;
+    LOG_AUDIO_MSG("Playing song \"%s\"%s...") << definition.gets("id") << (looped ? " looped" : "");
 
     // We will not restart the currently playing song.
     if(definition.gets("id") == d->musicCurrentSong && musicIsPlaying())
+    {
+        //LOG_AUDIO_MSG("..already playing (must stop to restart)");
         return false;
+    }
 
     // Stop the currently playing song.
     stopMusic();
@@ -2485,7 +2528,7 @@ void System::consoleRegister()  // static
     C_CMD_FLAGS("stopmusic",  "",      StopMusic,  CMDF_NO_DEDICATED);
 
     // Debug:
-    C_VAR_INT     ("sound-info",          &showSoundInfo,         0, 0, 1);
+    C_VAR_INT     ("sound-info",          &showMixerInfo,         0, 0, 1);
 
     DENG2_DEBUG_ONLY(
         C_CMD("inspectaudiomixer", nullptr, InspectMixer);

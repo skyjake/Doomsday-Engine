@@ -349,37 +349,59 @@ LoopResult SdlMixerDriver::SoundPlayer::forAllChannels(std::function<LoopResult 
 SdlMixerDriver::MusicChannel::MusicChannel() : audio::MusicChannel()
 {}
 
-void SdlMixerDriver::MusicChannel::update()
-{
-    // Nothing to update.
-}
-
 Channel &SdlMixerDriver::MusicChannel::setVolume(dfloat newVolume)
 {
     Mix_VolumeMusic(dint( MIX_MAX_VOLUME * newVolume ));
     return *this;
 }
 
-bool SdlMixerDriver::MusicChannel::isPlaying() const
+bool SdlMixerDriver::MusicChannel::isPaused() const
 {
-    return Mix_PlayingMusic();
+    if(!isPlaying()) return false;
+    return CPP_BOOL( Mix_PausedMusic() );
 }
 
-void SdlMixerDriver::MusicChannel::pause(dint pause)
+void SdlMixerDriver::MusicChannel::pause()
 {
-    if(pause)
-    {
-        Mix_PauseMusic();
-    }
-    else
-    {
-        Mix_ResumeMusic();
-    }
+    if(!isPlaying()) return;
+    Mix_PauseMusic();
+}
+
+void SdlMixerDriver::MusicChannel::resume()
+{
+    if(!isPlaying()) return;
+    Mix_ResumeMusic();
 }
 
 void SdlMixerDriver::MusicChannel::stop()
 {
+    if(!isPlaying()) return;
     Mix_HaltMusic();
+}
+
+Channel::PlayingMode SdlMixerDriver::MusicChannel::mode() const
+{
+    if(!Mix_PlayingMusic())
+        return NotPlaying;
+
+    return _mode;
+}
+
+void SdlMixerDriver::MusicChannel::play(PlayingMode mode)
+{
+    if(isPlaying()) return;
+    if(mode == NotPlaying) return;
+
+    if(lastMusic)
+    {
+        if(Mix_PlayMusic(lastMusic, mode == Looping ? -1 : 1))
+        {
+            _mode = mode;
+            return;
+        }
+        throw Error("SdlMixerDriver::MusicChannel::play", "Failed to play source \"" + _sourcePath + "\"");
+    }
+    throw Error("SdlMixerDriver::MusicChannel::play", "No source is bound");
 }
 
 bool SdlMixerDriver::MusicChannel::canPlayBuffer() const
@@ -389,12 +411,9 @@ bool SdlMixerDriver::MusicChannel::canPlayBuffer() const
 
 void *SdlMixerDriver::MusicChannel::songBuffer(duint)
 {
+    stop();
+    _sourcePath.clear();
     return nullptr;
-}
-
-dint SdlMixerDriver::MusicChannel::play(dint)
-{
-    return false;
 }
 
 bool SdlMixerDriver::MusicChannel::canPlayFile() const
@@ -402,8 +421,13 @@ bool SdlMixerDriver::MusicChannel::canPlayFile() const
     return true;
 }
 
-dint SdlMixerDriver::MusicChannel::playFile(String const &filename, dint looped)
+void SdlMixerDriver::MusicChannel::bindFile(String const &sourcePath)
 {
+    if(_sourcePath == sourcePath) return;
+
+    stop();
+
+    _sourcePath = sourcePath;
     // Free any previously loaded music.
     if(lastMusic)
     {
@@ -411,15 +435,12 @@ dint SdlMixerDriver::MusicChannel::playFile(String const &filename, dint looped)
         Mix_FreeMusic(lastMusic);
     }
 
-    lastMusic = Mix_LoadMUS(filename.toUtf8().constData());
+    lastMusic = Mix_LoadMUS(_sourcePath.toUtf8().constData());
     if(!lastMusic)
     {
-        LOG_AS("SdlMixerDriver::MusicPlayer");
-        LOG_AUDIO_ERROR("Failed to load music: %s") << Mix_GetError();
-        return false;
+        LOG_AS("SdlMixerDriver::MusicChannel");
+        LOG_AUDIO_ERROR("Failed binding file:\n") << Mix_GetError();
     }
-
-    return !Mix_PlayMusic(lastMusic, looped ? -1 : 1);
 }
 
 // --------------------------------------------------------------------------------------
@@ -818,6 +839,24 @@ void SdlMixerDriver::SoundChannel::play(PlayingMode mode)
 void SdlMixerDriver::SoundChannel::stop()
 {
     d->stop(d->buffer);
+}
+
+bool SdlMixerDriver::SoundChannel::isPaused() const
+{
+    if(!isPlaying()) return false;
+    return CPP_BOOL( Mix_Paused(d->buffer.cursor) );
+}
+
+void SdlMixerDriver::SoundChannel::pause()
+{
+    if(!isPlaying()) return;
+    Mix_Pause(d->buffer.cursor);
+}
+
+void SdlMixerDriver::SoundChannel::resume()
+{
+    if(!isPlaying()) return;
+    Mix_Resume(d->buffer.cursor);
 }
 
 SoundEmitter *SdlMixerDriver::SoundChannel::emitter() const

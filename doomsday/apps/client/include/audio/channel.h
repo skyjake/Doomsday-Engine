@@ -66,62 +66,6 @@ public:
     DENG2_AS_IS_METHODS()
 
     /**
-     * Change the volume factor to @a newVolume.
-     */
-    virtual Channel &setVolume(de::dfloat newVolume) = 0;
-
-    /**
-     * Stop if playing and forget about any loaded data in the buffer.
-     *
-     * @note Just stopping doesn't affect refresh!
-     */
-    virtual void stop() = 0;
-
-private:
-    DENG2_PRIVATE(d)
-};
-
-class BaseMusicChannel : public Channel
-{
-public:
-    BaseMusicChannel() : Channel() {}
-    virtual ~BaseMusicChannel() {}
-
-    virtual void update() = 0;
-    virtual bool isPlaying() const = 0;
-    virtual void pause(de::dint pause) = 0;
-};
-
-class CdChannel : public BaseMusicChannel
-{
-public:
-    CdChannel() : BaseMusicChannel() {}
-    virtual de::dint play(de::dint track, de::dint looped) = 0;
-};
-
-class MusicChannel : public BaseMusicChannel
-{
-public:
-    MusicChannel() : BaseMusicChannel() {}
-
-    /// Return @c true if the player provides playback from a managed buffer.
-    virtual bool canPlayBuffer() const { return false; }
-
-    virtual void *songBuffer(de::duint length) = 0;
-    virtual de::dint play(de::dint looped) = 0;
-
-    /// Returns @c true if the player provides playback from a native file.
-    virtual bool canPlayFile() const { return false; }
-
-    virtual de::dint playFile(de::String const &filename, de::dint looped) = 0;
-};
-
-class SoundChannel : public Channel
-{
-public:
-    SoundChannel();
-
-    /**
      * Returns the current playback mode (set when @ref play() is called).
      */
     virtual PlayingMode mode() const = 0;
@@ -133,6 +77,52 @@ public:
      * Start playing the currently configured stream/waveform/whatever data.
      */
     virtual void play(PlayingMode mode = Once) = 0;
+
+    /**
+     * Stop if playing and forget about any loaded data in the buffer.
+     *
+     * @note Just stopping doesn't affect refresh!
+     */
+    virtual void stop() = 0;
+
+    virtual bool isPaused() const = 0;
+    virtual void pause() = 0;
+    virtual void resume() = 0;
+
+    /**
+     * Change the volume factor to @a newVolume.
+     */
+    virtual Channel &setVolume(de::dfloat newVolume) = 0;
+
+private:
+    DENG2_PRIVATE(d)
+};
+
+class CdChannel : public Channel
+{
+public:
+    CdChannel() : Channel() {}
+    virtual void bindTrack(de::dint track) = 0;
+};
+
+class MusicChannel : public Channel
+{
+public:
+    MusicChannel() : Channel() {}
+
+    /// Returns @c true if playback is possible from a bound data buffer.
+    virtual bool canPlayBuffer() const { return false; }
+    virtual void *songBuffer(de::duint length) = 0;
+
+    /// Returns @c true if playback is possible from a bound data file.
+    virtual bool canPlayFile() const { return false; }
+    virtual void bindFile(de::String const &filename) = 0;
+};
+
+class SoundChannel : public Channel
+{
+public:
+    SoundChannel();
 
 public:  //- Sound properties: ----------------------------------------------------------
 

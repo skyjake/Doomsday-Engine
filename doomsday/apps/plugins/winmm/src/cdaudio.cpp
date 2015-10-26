@@ -187,23 +187,43 @@ void CdAudio::stop()
     Instance::sendMCICmd(String("stop ") + d->deviceId);
 }
 
-void CdAudio::pause(bool setPause)
+bool CdAudio::isPaused() const
+{
+    if(!d->initialized) return false;
+    if(d->track < 0) return false;
+    try
+    {
+        return Instance::sendMCICmd(String("status ") + d->deviceId + " mode wait")
+                             .beginsWith("paused");
+    }
+    catch(Instance::MCIError const &er)
+    {
+        LOG_AS("CDAudio::isPaused");
+        LOG_AUDIO_ERROR("") << er.asText();
+    }
+    return false;
+}
+
+void CdAudio::pause()
 {
     if(!d->initialized) return;
 
     if(d->track >= 0)
     {
-        Instance::sendMCICmd(String(setPause ? "pause " : "play ") + d->deviceId);
+        Instance::sendMCICmd(String("pause ") + d->deviceId);
     }
+    d->pauseTime = Timer_Seconds();
+}
 
-    if(setPause)
+void CdAudio::resume()
+{
+    if(!d->initialized) return;
+
+    if(d->track >= 0)
     {
-        d->pauseTime = Timer_Seconds();
+        Instance::sendMCICmd(String("play ") + d->deviceId);
     }
-    else
-    {
-        d->startTime += Timer_Seconds() - d->pauseTime;
-    }
+    d->startTime += Timer_Seconds() - d->pauseTime;
 }
 
 bool CdAudio::play(dint newTrack, bool looped)
