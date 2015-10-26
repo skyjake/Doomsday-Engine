@@ -355,7 +355,12 @@ DENG2_PIMPL(GLProgram)
         else
         {
             // It might be deeper in the stack.
-            stack.removeAll(uniform);
+            //stack.removeAll(uniform); // added in Qt 5.4
+            int found = stack.indexOf(uniform);
+            if(found >= 0)
+            {
+                stack.remove(found);
+            }
         }
         if(stack.isEmpty())
         {
