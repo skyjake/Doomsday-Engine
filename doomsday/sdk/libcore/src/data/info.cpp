@@ -551,8 +551,8 @@ DENG2_PIMPL(Info)
                     if(!element)
                     {
                         throw SyntaxError("Info::parseBlockElement",
-                                          QString("Block element was never closed, end of file encountered before '%1' was found (on line %2).")
-                                          .arg(endToken).arg(currentLine));
+                                          QString("Block element (on line %1) was never closed, end of file encountered before '%2' was found (on line %3).")
+                                          .arg(startLine).arg(endToken).arg(currentLine));
                     }
                     block->add(element);
                 }
