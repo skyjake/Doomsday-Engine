@@ -30,6 +30,7 @@
 #include <de/ModelBank>
 #include <de/ScriptedInfo>
 #include <de/NativeValue>
+#include <de/MultiAtlas>
 
 #include <QHash>
 
@@ -56,10 +57,13 @@ static String const DEF_TIMELINE    ("timeline");
 static String const SHADER_DEFAULT  ("model.skeletal.normal_specular_emission");
 static String const MATERIAL_DEFAULT("default");
 
+static Atlas::Size const MAX_ATLAS_SIZE(8192, 8192);
+
 DENG2_PIMPL(ModelRenderer)
 , DENG2_OBSERVES(filesys::AssetObserver, Availability)
 , DENG2_OBSERVES(Bank, Load)
 , DENG2_OBSERVES(ModelDrawable, AboutToGLInit)
+, public MultiAtlas::IAtlasFactory
 {
 #define MAX_LIGHTS  4
 
@@ -83,9 +87,41 @@ DENG2_PIMPL(ModelRenderer)
     };
     Programs programs;
 
+    MultiAtlas atlasPool { *this };
+
+    struct DefaultTextures
+    {
+        Id diffuse  { Id::None };
+        Id normals  { Id::None };
+        Id emission { Id::None };
+        Id specular { Id::None };
+
+        void alloc(Atlas &atlas)
+        {
+            DENG2_ASSERT(diffuse.isNone());
+
+            // Fallback diffuse map (solid black).
+            QImage img(QSize(1, 1), QImage::Format_ARGB32);
+            img.fill(qRgba(0, 0, 0, 255));
+            diffuse = atlas.alloc(img);
+
+            // Fallback normal map for models who don't provide one.
+            img.fill(qRgba(127, 127, 255, 255)); // z+
+            normals = atlas.alloc(img);
+
+            // Fallback emission map for models who don't have one.
+            img.fill(qRgba(0, 0, 0, 0));
+            emission = atlas.alloc(img);
+
+            // Fallback specular map (no specular reflections).
+            img.fill(qRgba(0, 0, 0, 0));
+            specular = atlas.alloc(img);
+        }
+    };
+    QHash<Atlas const *, DefaultTextures> defaultTextures;
+
     filesys::AssetObserver observer { "model\\..*" };
-    ModelBank bank;
-    std::unique_ptr<AtlasTexture> atlas;
+    ModelBank bank { [] () -> ModelDrawable * { return new render::Model; } };
 
     GLUniform uMvpMatrix        { "uMvpMatrix",        GLUniform::Mat4 };
     GLUniform uTex              { "uTex",              GLUniform::Sampler2D };
@@ -93,12 +129,9 @@ DENG2_PIMPL(ModelRenderer)
     GLUniform uAmbientLight     { "uAmbientLight",     GLUniform::Vec4 };
     GLUniform uLightDirs        { "uLightDirs",        GLUniform::Vec3Array, MAX_LIGHTS };
     GLUniform uLightIntensities { "uLightIntensities", GLUniform::Vec4Array, MAX_LIGHTS };
+
     Matrix4f inverseLocal;
     int lightCount = 0;
-    Id defaultDiffuse  { Id::None };
-    Id defaultNormals  { Id::None };
-    Id defaultEmission { Id::None };
-    Id defaultSpecular { Id::None };
 
     Instance(Public *i) : Base(i)
     {
@@ -111,31 +144,6 @@ DENG2_PIMPL(ModelRenderer)
         // The default shader is used whenever a model does not specifically
         // request another one.
         loadProgram(SHADER_DEFAULT);
-
-        atlas.reset(AtlasTexture::newWithKdTreeAllocator(
-                    Atlas::DefaultFlags,
-                    GLTexture::maximumSize().min(GLTexture::Size(4096, 4096))));
-        atlas->setBorderSize(1);
-        atlas->setMarginSize(0);
-
-        // Fallback diffuse map (solid black).
-        QImage img(QSize(1, 1), QImage::Format_ARGB32);
-        img.fill(qRgba(0, 0, 0, 255));
-        defaultDiffuse = atlas->alloc(img);
-
-        // Fallback normal map for models who don't provide one.
-        img.fill(qRgba(127, 127, 255, 255)); // z+
-        defaultNormals = atlas->alloc(img);
-
-        // Fallback emission map for models who don't have one.
-        img.fill(qRgba(0, 0, 0, 0));
-        defaultEmission = atlas->alloc(img);
-
-        // Fallback specular map (no specular reflections).
-        img.fill(qRgba(0, 0, 0, 0));
-        defaultSpecular = atlas->alloc(img);
-
-        uTex = *atlas;
     }
 
     void deinit()
@@ -143,8 +151,24 @@ DENG2_PIMPL(ModelRenderer)
         // GL resources must be accessed from the main thread only.
         bank.unloadAll(Bank::ImmediatelyInCurrentThread);
 
-        atlas.reset();
+        atlasPool.clear();
+        defaultTextures.clear();
         unloadProgram(*programs[SHADER_DEFAULT]);
+    }
+
+    Atlas *makeAtlas(MultiAtlas &) override
+    {
+        // Construct a new atlas to be used in the MultiAtlas.
+        Atlas *atlas = AtlasTexture::newWithKdTreeAllocator(
+                    Atlas::DeferredAllocations,
+                    GLTexture::maximumSize().min(MAX_ATLAS_SIZE));
+        atlas->setBorderSize(1);
+        atlas->setMarginSize(0);
+
+        // The default textures are present on each atlas.
+        defaultTextures[atlas].alloc(*atlas);
+
+        return atlas;
     }
 
     void assetAvailabilityChanged(String const &identifier, filesys::AssetObserver::Event event)
@@ -164,36 +188,14 @@ DENG2_PIMPL(ModelRenderer)
         else
         {
             // Unload additional resources associated with the model.
-            auto entry = bank.modelAndData<AuxiliaryData const>(identifier);
-            for(auto const &pass : entry.second->passes)
+            auto const &model = bank.model<render::Model const>(identifier);
+            for(auto const &pass : model.passes)
             {
                 DENG2_ASSERT(pass.program);
                 unloadProgram(*static_cast<Program *>(pass.program));
             }
 
             bank.remove(identifier);
-        }
-    }
-
-    /**
-     * Configures a ModelDrawable with the common texture atlas.
-     *
-     * @param model  Model to configure.
-     */
-    void setupModel(ModelDrawable &model)
-    {
-        if(atlas)
-        {
-            model.setAtlas(*atlas);
-
-            model.setDefaultTexture(ModelDrawable::Diffuse,  defaultDiffuse);
-            model.setDefaultTexture(ModelDrawable::Normals,  defaultNormals);
-            model.setDefaultTexture(ModelDrawable::Emissive, defaultEmission);
-            model.setDefaultTexture(ModelDrawable::Specular, defaultSpecular);
-        }
-        else
-        {
-            model.unsetAtlas();
         }
     }
 
@@ -248,9 +250,19 @@ DENG2_PIMPL(ModelRenderer)
         }
     }
 
-    void modelAboutToGLInit(ModelDrawable &model)
+    void modelAboutToGLInit(ModelDrawable &drawable)
     {
-        setupModel(model);
+        auto &model = static_cast<render::Model &>(drawable);
+
+        model.setAtlas(*model.textures);
+
+        DENG2_ASSERT(defaultTextures.contains(model.textures->atlas()));
+
+        DefaultTextures &defaults = defaultTextures[model.textures->atlas()];
+        model.setDefaultTexture(ModelDrawable::Diffuse,  defaults.diffuse);
+        model.setDefaultTexture(ModelDrawable::Normals,  defaults.normals);
+        model.setDefaultTexture(ModelDrawable::Emissive, defaults.emission);
+        model.setDefaultTexture(ModelDrawable::Specular, defaults.specular);
     }
 
     static gl::Blend textToBlendFunc(String const &text)
@@ -334,12 +346,10 @@ DENG2_PIMPL(ModelRenderer)
     void bankLoaded(DotPath const &path)
     {
         // Models use the shared atlas.
-        ModelDrawable &model = bank.model(path);
+        render::Model &model = bank.model<render::Model>(path);
         model.audienceForAboutToGLInit() += this;
 
         auto const asset = App::asset(path);
-
-        std::unique_ptr<AuxiliaryData> aux(new AuxiliaryData);
 
         // Determine the coordinate system of the model.
         Vector3f front(0, 0, 1);
@@ -353,31 +363,31 @@ DENG2_PIMPL(ModelRenderer)
             up = Vector3f(asset.geta(DEF_UP_VECTOR));
         }
         bool mirror = ScriptedInfo::isTrue(asset, DEF_MIRROR);
-        aux->cull = mirror? gl::Back : gl::Front;
+        model.cull = mirror? gl::Back : gl::Front;
         // Assimp's coordinate system uses different handedness than Doomsday,
         // so mirroring is needed.
-        aux->transformation = Matrix4f::unnormalizedFrame(front, up, !mirror);
-        aux->autoscaleToThingHeight = !ScriptedInfo::isFalse(asset, DEF_AUTOSCALE, false);
+        model.transformation = Matrix4f::unnormalizedFrame(front, up, !mirror);
+        model.autoscaleToThingHeight = !ScriptedInfo::isFalse(asset, DEF_AUTOSCALE, false);
 
         // Custom texture maps and additional materials.
-        aux->materialIndexForName.insert(MATERIAL_DEFAULT, 0);
+        model.materialIndexForName.insert(MATERIAL_DEFAULT, 0);
         if(asset.has(DEF_MATERIAL))
         {
             asset.subrecord(DEF_MATERIAL).forSubrecords(
-                [this, &model, &aux] (String const &blockName, Record const &block)
+                [this, &model] (String const &blockName, Record const &block)
             {
                 if(ScriptedInfo::blockType(block) == DEF_VARIANT)
                 {
                     String const materialName = blockName;
-                    if(!aux->materialIndexForName.contains(materialName))
+                    if(!model.materialIndexForName.contains(materialName))
                     {
                         // Add a new material.
-                        aux->materialIndexForName.insert(materialName, model.addMaterial());
+                        model.materialIndexForName.insert(materialName, model.addMaterial());
                     }
-                    block.forSubrecords([this, &model, &aux, &materialName]
+                    block.forSubrecords([this, &model, &materialName]
                                         (String const &matName, Record const &matDef)
                     {
-                        setupMaterial(model, matName, aux->materialIndexForName[materialName], matDef);
+                        setupMaterial(model, matName, model.materialIndexForName[materialName], matDef);
                         return LoopContinue;
                     });
                 }
@@ -400,7 +410,7 @@ DENG2_PIMPL(ModelRenderer)
                 auto seqs = ScriptedInfo::subrecordsOfType(DEF_SEQUENCE, *state.value());
                 for(String key : ScriptedInfo::sortRecordsBySource(seqs))
                 {
-                    aux->animations[state.key()] << AnimSequence(key, *seqs[key]);
+                    model.animations[state.key()] << render::Model::AnimSequence(key, *seqs[key]);
                 }
             }
 
@@ -410,7 +420,7 @@ DENG2_PIMPL(ModelRenderer)
             {
                 Scheduler *scheduler = new Scheduler;
                 scheduler->addFromInfo(*timeline.value());
-                aux->timelines[timeline.key()] = scheduler;
+                model.timelines[timeline.key()] = scheduler;
             }
         }
 
@@ -455,7 +465,7 @@ DENG2_PIMPL(ModelRenderer)
                     composeTextureMappings(textureMapping,
                                            ClientApp::shaders()[passShader]);
 
-                    aux->passes.append(pass);
+                    model.passes.append(pass);
                 }
                 catch(Error const &er)
                 {
@@ -468,7 +478,7 @@ DENG2_PIMPL(ModelRenderer)
         // Rendering passes will always have programs associated with them.
         // However, if there are no passes, we need to set up the default
         // shader for the entire model.
-        if(aux->passes.isEmpty())
+        if(model.passes.isEmpty())
         {
             try
             {
@@ -490,8 +500,8 @@ DENG2_PIMPL(ModelRenderer)
         // arrays.
         model.setTextureMapping(textureMapping);
 
-        // Store the additional information in the bank.
-        bank.setUserData(path, aux.release());
+        // Textures of the model will be kept here.
+        model.textures.reset(new MultiAtlas::AllocGroup(atlasPool));
     }
 
     void setupMaterial(ModelDrawable &model,
@@ -605,8 +615,6 @@ DENG2_PIMPL(ModelRenderer)
     template <typename Params> // generic to accommodate psprites and vispsprites
     void draw(Params const &p)
     {
-        DENG2_ASSERT(p.auxData != nullptr);
-
         p.model->draw(&p.animator->appearance(), p.animator);
     }
 };
@@ -629,19 +637,12 @@ ModelBank &ModelRenderer::bank()
     return d->bank;
 }
 
-ModelRenderer::AuxiliaryData const *ModelRenderer::auxiliaryData(DotPath const &modelId) const
+render::Model::StateAnims const *ModelRenderer::animations(DotPath const &modelId) const
 {
-    return d->bank.userData(modelId)->maybeAs<AuxiliaryData>();
-}
-
-ModelRenderer::StateAnims const *ModelRenderer::animations(DotPath const &modelId) const
-{
-    if(auto const *aux = auxiliaryData(modelId))
+    auto const &model = d->bank.model<render::Model const>(modelId);
+    if(!model.animations.isEmpty())
     {
-        if(!aux->animations.isEmpty())
-        {
-            return &aux->animations;
-        }
+        return &model.animations;
     }
     return nullptr;
 }
@@ -675,7 +676,7 @@ void ModelRenderer::render(vissprite_t const &spr)
     {
         auto const &mobjData = THINKER_DATA(p.object->thinker, ClientMobjThinkerData);
         modelToLocal = modelToLocal * mobjData.modelTransformation();
-        culling = mobjData.auxiliaryModelData().cull;
+        culling = p.model->cull;
     }
 
     GLState::push().setCull(culling);
@@ -700,7 +701,7 @@ void ModelRenderer::render(vispsprite_t const &pspr)
 
     Matrix4f modelToLocal =
             Matrix4f::rotate(180, Vector3f(0, 1, 0)) *
-            p.auxData->transformation;
+            p.model->transformation;
 
     Matrix4f localToView = GL_GetProjectionMatrix() * Matrix4f::translate(Vector3f(0, -10, 11));
     d->setEyeSpaceTransformation(modelToLocal,
@@ -711,7 +712,7 @@ void ModelRenderer::render(vispsprite_t const &pspr)
 
     d->setupLighting(pspr.light);
 
-    GLState::push().setCull(p.auxData->cull);
+    GLState::push().setCull(p.model->cull);
     d->draw(p);
     GLState::pop();
 
@@ -740,29 +741,4 @@ void ModelRenderer::initBindings(Binder &binder, Record &module) // static
 {
     DENG2_UNUSED(binder);
     DENG2_UNUSED(module);
-}
-
-//-----------------------------------------------------------------------------
-
-ModelRenderer::AnimSequence::AnimSequence(String const &name, Record const &def)
-    : name(name)
-    , def(&def)
-{
-    // Parse timeline events.
-    if(def.hasSubrecord(DEF_TIMELINE))
-    {
-        timeline = new Scheduler;
-        timeline->addFromInfo(def.subrecord(DEF_TIMELINE));
-    }
-    else if(def.hasMember(DEF_TIMELINE))
-    {
-        // Uses a shared timeline in the definition. This will be looked up when
-        // the animation starts.
-        sharedTimeline = def.gets(DEF_TIMELINE);
-    }
-}
-
-ModelRenderer::AuxiliaryData::~AuxiliaryData()
-{
-    qDeleteAll(timelines.values());
 }

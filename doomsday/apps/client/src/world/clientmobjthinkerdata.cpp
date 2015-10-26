@@ -47,8 +47,7 @@ DENG2_PIMPL(ClientMobjThinkerData)
 {
     Flags flags;
     std::unique_ptr<RemoteSync> sync;
-    std::unique_ptr<StateAnimator> animator;
-    ModelRenderer::AuxiliaryData const *modelAuxData = nullptr;
+    std::unique_ptr<render::StateAnimator> animator;
     Matrix4f modelMatrix;
 
     Instance(Public *i) : Base(i)
@@ -90,7 +89,6 @@ DENG2_PIMPL(ClientMobjThinkerData)
     void assetBeingDeleted(Asset &)
     {
         de::trash(animator.release());
-        modelAuxData = nullptr;
     }
 
     /**
@@ -107,20 +105,17 @@ DENG2_PIMPL(ClientMobjThinkerData)
         if(modelBank().has(modelId()))
         {
             // Prepare the animation state of the model.
-            auto loaded = modelBank().modelAndData<ModelRenderer::AuxiliaryData>(modelId());
-            ModelDrawable &model = *loaded.first;
+            auto const &model = modelBank().model<render::Model>(modelId());
             try
             {
                 model.audienceForDeletion() += this;
-                
-                animator.reset(new StateAnimator(modelId(), model));
+
+                animator.reset(new render::StateAnimator(modelId(), model));
                 animator->setOwnerNamespace(self.info());
 
-                modelAuxData = loaded.second;
-
                 // Apply possible scaling operations on the model.
-                modelMatrix = modelAuxData->transformation;
-                if(modelAuxData->autoscaleToThingHeight)
+                modelMatrix = model.transformation;
+                if(model.autoscaleToThingHeight)
                 {
                     Vector3f const dims = modelMatrix * model.dimensions();
                     modelMatrix = Matrix4f::scale(self.mobj()->height / dims.y * 1.2f /*aspect correct*/) * modelMatrix;
@@ -129,7 +124,7 @@ DENG2_PIMPL(ClientMobjThinkerData)
             catch(Error const &er)
             {
                 model.audienceForDeletion() -= this;
-                
+
                 LOG_RES_ERROR("Failed to set up asset '%s' for map object %i: %s")
                     << modelId() << self.mobj()->thinker.id << er.asText();
             }
@@ -238,12 +233,12 @@ ClientMobjThinkerData::RemoteSync &ClientMobjThinkerData::remoteSync()
     return *d->sync;
 }
 
-StateAnimator *ClientMobjThinkerData::animator()
+render::StateAnimator *ClientMobjThinkerData::animator()
 {
     return d->animator.get();
 }
 
-StateAnimator const *ClientMobjThinkerData::animator() const
+render::StateAnimator const *ClientMobjThinkerData::animator() const
 {
     return d->animator.get();
 }
@@ -251,11 +246,6 @@ StateAnimator const *ClientMobjThinkerData::animator() const
 Matrix4f const &ClientMobjThinkerData::modelTransformation() const
 {
     return d->modelMatrix;
-}
-
-ModelRenderer::AuxiliaryData const &ClientMobjThinkerData::auxiliaryModelData() const
-{
-    return *d->modelAuxData;
 }
 
 void ClientMobjThinkerData::stateChanged(state_t const *previousState)

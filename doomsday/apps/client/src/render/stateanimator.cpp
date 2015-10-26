@@ -28,6 +28,8 @@
 
 using namespace de;
 
+namespace render {
+
 static String const DEF_PROBABILITY("prob");
 static String const DEF_ROOT_NODE  ("node");
 static String const DEF_LOOPING    ("looping");
@@ -115,7 +117,6 @@ DENG2_PIMPL(StateAnimator)
         static Sequence *make() { return new Sequence; }
     };
 
-    ModelRenderer::AuxiliaryData const *auxData;
     QHash<String, Sequence> pendingAnimForNode;
     String currentStateName;
     Record names; ///< Local context for scripts, i.e., per-object model state.
@@ -206,9 +207,7 @@ DENG2_PIMPL(StateAnimator)
     typedef QHash<String, RenderVar *> RenderVars;
     QHash<String, RenderVars> passVars;
 
-    Instance(Public *i, DotPath const &id)
-        : Base(i)
-        , auxData(ClientApp::renderSystem().modelRenderer().auxiliaryData(id))
+    Instance(Public *i, DotPath const &id) : Base(i)
     {
         names.addText(VAR_ID, id).setReadOnly();
         names.add(VAR_ASSET).set(new RecordValue(App::asset(id).accessedRecord())).setReadOnly();
@@ -219,9 +218,9 @@ DENG2_PIMPL(StateAnimator)
         initVariables();
 
         // Set up the appearance.
-        if(!auxData->passes.isEmpty())
+        if(!self.model().passes.isEmpty())
         {
-            appearance.drawPasses = &auxData->passes;
+            appearance.drawPasses = &self.model().passes;
         }
         appearance.programCallback = [this] (GLProgram &program, ModelDrawable::ProgramBinding binding)
         {
@@ -245,7 +244,7 @@ DENG2_PIMPL(StateAnimator)
 
     void initVariables()
     {
-        int const passCount = auxData->passes.size();
+        int const passCount = self.model().passes.size();
 
         // Clear lookups affected by the variables.
         indexForPassName.clear();
@@ -304,7 +303,7 @@ DENG2_PIMPL(StateAnimator)
         Variable &passMaterialVar = names.addText(passName.concatenateMember(VAR_MATERIAL),
                                                   block.gets(DEF_MATERIAL, DEFAULT_MATERIAL));
         passMaterialVar.audienceForChange() += this;
-        passForMaterialVariable.insert(&passMaterialVar, auxData->passes.findName(passName));
+        passForMaterialVariable.insert(&passMaterialVar, self.model().passes.findName(passName));
 
         /// @todo Should observe if the variable above is deleted unexpectedly. -jk
 
@@ -416,9 +415,10 @@ DENG2_PIMPL(StateAnimator)
 
     Variable const &materialVariableForPass(duint passIndex) const
     {
-        if(!auxData->passes.isEmpty())
+        auto const &model = self.model();
+        if(!model.passes.isEmpty())
         {
-            String const varName = auxData->passes.at(passIndex).name.concatenateMember(VAR_MATERIAL);
+            String const varName = model.passes.at(passIndex).name.concatenateMember(VAR_MATERIAL);
             if(names.has(varName))
             {
                 return names[varName];
@@ -470,8 +470,9 @@ DENG2_PIMPL(StateAnimator)
      */
     duint materialForUserProvidedName(String const &materialName) const
     {
-       auto const matIndex = auxData->materialIndexForName.constFind(materialName);
-       if(matIndex != auxData->materialIndexForName.constEnd())
+       auto const &model = self.model();
+       auto const matIndex = model.materialIndexForName.constFind(materialName);
+       if(matIndex != model.materialIndexForName.constEnd())
        {
            return matIndex.value();
        }
@@ -515,10 +516,15 @@ DENG2_PIMPL(StateAnimator)
     }
 };
 
-StateAnimator::StateAnimator(DotPath const &id, ModelDrawable const &model)
+StateAnimator::StateAnimator(DotPath const &id, Model const &model)
     : ModelDrawable::Animator(model, Instance::Sequence::make)
     , d(new Instance(this, id))
 {}
+
+Model const &StateAnimator::model() const
+{
+    return static_cast<Model const &>(ModelDrawable::Animator::model());
+}
 
 void StateAnimator::setOwnerNamespace(Record &names)
 {
@@ -530,7 +536,7 @@ void StateAnimator::triggerByState(String const &stateName)
     using Sequence = Instance::Sequence;
 
     // No animations can be triggered if none are available.
-    auto const *stateAnims = (d->auxData? &d->auxData->animations : nullptr);
+    auto const *stateAnims = &model().animations;
     if(!stateAnims) return;
 
     auto found = stateAnims->constFind(stateName);
@@ -541,7 +547,7 @@ void StateAnimator::triggerByState(String const &stateName)
 
     d->currentStateName = stateName;
 
-    foreach(ModelRenderer::AnimSequence const &seq, found.value())
+    foreach(Model::AnimSequence const &seq, found.value())
     {
         try
         {
@@ -565,8 +571,8 @@ void StateAnimator::triggerByState(String const &stateName)
             Scheduler *timeline = seq.timeline;
             if(!seq.sharedTimeline.isEmpty())
             {
-                auto tl = d->auxData->timelines.constFind(seq.sharedTimeline);
-                if(tl != d->auxData->timelines.constEnd())
+                auto tl = model().timelines.constFind(seq.sharedTimeline);
+                if(tl != model().timelines.constEnd())
                 {
                     timeline = tl.value();
                 }
@@ -719,3 +725,5 @@ void StateAnimator::bindPassUniforms(GLProgram &program, String const &passName,
         }
     }
 }
+
+} // namespace render

@@ -27,12 +27,13 @@
 
 using namespace de;
 
+namespace render {
+
 DENG2_PIMPL_NOREF(PlayerWeaponAnimator)
 , DENG2_OBSERVES(Asset, Deletion)
 {
     ClientPlayer *player;
     std::unique_ptr<StateAnimator> animator;
-    ModelRenderer::AuxiliaryData const *modelAuxData = nullptr;
 
     Instance(ClientPlayer *plr)
         : player(plr)
@@ -49,26 +50,20 @@ DENG2_PIMPL_NOREF(PlayerWeaponAnimator)
         if(modelBank().has(identifier))
         {
             // Prepare the animation state of the model.
-            auto loaded = modelBank().modelAndData<ModelRenderer::AuxiliaryData>(identifier);
-            ModelDrawable &model = *loaded.first;
+            auto &model = modelBank().model<Model>(identifier);
             model.audienceForDeletion() += this;
             animator.reset(new StateAnimator(identifier, model));
             animator->setOwnerNamespace(player->info());
-
-            // The basic transformation of the model.
-            modelAuxData = loaded.second;
         }
         else
         {
             animator.reset();
-            modelAuxData = nullptr;
         }
     }
 
     void assetBeingDeleted(Asset &)
     {
         de::trash(animator.release());
-        modelAuxData = nullptr;
     }
 
     static ModelBank &modelBank()
@@ -106,7 +101,6 @@ void PlayerWeaponAnimator::setupVisPSprite(vispsprite_t &spr) const
 
     spr.type = VPSPR_MODEL2;
     spr.data.model2.model = model();
-    spr.data.model2.auxData = d->modelAuxData;
     spr.data.model2.animator = d->animator.get();
 }
 
@@ -123,8 +117,10 @@ bool PlayerWeaponAnimator::hasModel() const
     return bool(d->animator);
 }
 
-ModelDrawable const *PlayerWeaponAnimator::model() const
+Model const *PlayerWeaponAnimator::model() const
 {
     if(!hasModel()) return nullptr;
     return &d->animator->model();
 }
+
+} // namespace render

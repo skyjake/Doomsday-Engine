@@ -29,7 +29,7 @@
 #include <de/ModelDrawable>
 
 class TextureVariantSpec;
-class StateAnimator;
+namespace render { class StateAnimator; }
 struct vissprite_t;
 
 /// Absolute maximum number of vertices per submodel supported by this module.
@@ -64,9 +64,8 @@ struct drawmodelparams_t
 struct drawmodel2params_t
 {
     struct mobj_s const *object;
-    de::ModelDrawable const *model;
-    ModelRenderer::AuxiliaryData const *auxData;
-    StateAnimator const *animator;
+    render::Model const *model;
+    render::StateAnimator const *animator;
 };
 
 DENG_EXTERN_C de::dbyte useModels;

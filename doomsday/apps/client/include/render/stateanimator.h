@@ -23,6 +23,8 @@
 #include <de/ModelDrawable>
 #include <de/GLProgram>
 
+namespace render {
+
 /**
  * State-based object animator for `ModelDrawable`s.
  *
@@ -35,7 +37,9 @@ public:
     DENG2_ERROR(DefinitionError);
 
 public:
-    StateAnimator(de::DotPath const &id, de::ModelDrawable const &model);
+    StateAnimator(de::DotPath const &id, Model const &model);
+
+    Model const &model() const;
 
     /**
      * Sets the namespace of the animator's owner. Available as "self" in animation
@@ -78,5 +82,7 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
+
+} // namespace render
 
 #endif // DENG_CLIENT_RENDER_STATEANIMATOR_H

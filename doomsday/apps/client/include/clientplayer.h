@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef CLIENT_CLIENTPLAYER_H
@@ -24,7 +24,7 @@
 #include "lzss.h" // legacy demo code
 
 struct ConsoleEffectStack;
-class PlayerWeaponAnimator;
+namespace render { class PlayerWeaponAnimator; }
 
 /**
  * Information about a client player.
@@ -79,12 +79,12 @@ public:
     ConsoleEffectStack &fxStack();
     ConsoleEffectStack const &fxStack() const;
 
-    PlayerWeaponAnimator &playerWeaponAnimator();
+    render::PlayerWeaponAnimator &playerWeaponAnimator();
 
     DemoTimer &demoTimer();
 
     void tick(timespan_t elapsed);
-        
+
     /**
      * Sets the id of the currently active weapon of this player. This is used for
      * looking up assets related to the weapon (e.g., "model.weapon.(id)").
