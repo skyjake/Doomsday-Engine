@@ -470,6 +470,8 @@ DENG2_PIMPL(ModelDrawable)
                     fallBackToDefaultTexture(textures, Emissive);
                 }
             }
+            // All textures loaded.
+            textureBank.atlas()->commit();
         }
 
         /**
