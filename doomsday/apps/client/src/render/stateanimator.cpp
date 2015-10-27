@@ -259,7 +259,7 @@ DENG2_PIMPL(StateAnimator)
             for(int i = 0; i < passCount; ++i) appearance.passMaterial << 0;
         }
         appearance.passMask.resize(passCount);
-        
+
         // The main material variable should always exist. The "render" definition
         // may override this default value.
         names.addText(VAR_MATERIAL, "default");
@@ -279,16 +279,18 @@ DENG2_PIMPL(StateAnimator)
             // Each rendering pass is represented by a subrecord, named
             // according the to the pass names.
             auto passes = ScriptedInfo::subrecordsOfType(DEF_PASS, renderBlock);
-            DENG2_FOR_EACH_CONST(Record::Subrecords, i, passes)
+            for(String passName : ScriptedInfo::sortRecordsBySource(passes))
             {
-                indexForPassName[i.key()] = passIndex++;
+                Record const &passDef = *passes[passName];
 
-                Record &passRec = names.addRecord(i.key());
+                indexForPassName[passName] = passIndex++;
+
+                Record &passRec = names.addRecord(passName);
                 passRec.addBoolean(VAR_ENABLED,
-                                   ScriptedInfo::isTrue(*i.value(), DEF_ENABLED, true))
+                                   ScriptedInfo::isTrue(passDef, DEF_ENABLED, true))
                        .audienceForChange() += this;
 
-                initVariablesForPass(*i.value(), i.key());
+                initVariablesForPass(passDef, passName);
             }
         }
 
