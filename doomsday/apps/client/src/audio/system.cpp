@@ -190,37 +190,59 @@ DENG2_PIMPL(System)
     typedef QMap<String /*key: identity key*/, Record> PlaybackInterfaceMap;
     PlaybackInterfaceMap interfaces[IDriver::PlaybackInterfaceTypeCount];
 
-    struct ActiveInterface
+    class ActiveInterface
     {
-        Record *_def     = nullptr;
-        IPlayer *_player = nullptr;
-        IDriver *_driver = nullptr;
+        Record *_def = nullptr;
 
-        Record &def() const {
+    public:
+        IPlayer *player = nullptr;
+        IDriver *driver = nullptr;
+
+        ActiveInterface(Record &def, IDriver *driver, IPlayer *player)
+            : _def(&def), driver(driver), player(player)
+        {}
+
+        Record &def() const
+        {
             DENG2_ASSERT(_def);
             return *_def;
         }
 
-        IPlayer &player() const {
-            DENG2_ASSERT(_player);
-            return *_player;
+        inline IDriver::PlaybackInterfaceType type() const
+        {
+            return IDriver::PlaybackInterfaceType( def().geti("type") );
         }
 
-        template <typename Type>
-        Type &playerAs() const {
-            if(!dynamic_cast<Type *>(&player())) {
-                throw Error("ActiveInterface::player<Type>", "Player is not compatible with Type");
+        bool initialize()
+        {
+            if(player)
+            {
+                return CPP_BOOL( player->initialize() );
             }
-            return *dynamic_cast<Type *>(&player());
+            return true;
         }
 
-        bool hasDriver() const {
-            return _driver != nullptr;
+        void deinitialize()
+        {
+            if(player)
+            {
+                player->deinitialize();
+            }
         }
 
-        IDriver &driver() const {
-            DENG2_ASSERT(_driver);
-            return *_driver;
+        // Note: Drivers retain ownership of channels.
+        Channel *makeChannel()
+        {
+            DENG2_ASSERT(driver);
+            return driver->makeChannel(type());
+        }
+        
+        void allowRefresh(bool allow)
+        {
+            if(player && type() == IDriver::AUDIO_ISFX)
+            {
+                player->as<ISoundPlayer>().allowRefresh(allow);
+            }
         }
     };
     QList<ActiveInterface> activeInterfaces;  //< Initialization order.
@@ -347,11 +369,11 @@ DENG2_PIMPL(System)
         QList<IDriver *> reverseInitOrder;
         for(ActiveInterface const &active : activeInterfaces)
         {
-            if(!active.hasDriver()) continue;
-
-            IDriver *driver = &active.driver();
-            if(!reverseInitOrder.contains(driver))
-                reverseInitOrder.prepend(driver);
+            if(IDriver *driver = active.driver)
+            {
+                if(!reverseInitOrder.contains(driver))
+                    reverseInitOrder.prepend(driver);
+            }
         }
         for(IDriver *driver : reverseInitOrder)
         {
@@ -571,11 +593,8 @@ DENG2_PIMPL(System)
                 }
             }
 
-            ActiveInterface active;
-            active._def    = const_cast<Record *>(&interfaceDef);
-            active._player = &player;
-            active._driver = driver;
-            activeInterfaces.append(active);  // A copy is made.
+            ActiveInterface active(const_cast<Record &>(interfaceDef), driver, &player);
+            activeInterfaces.append(active); // A copy is made.
         }
         catch(IDriver::UnknownInterfaceError const &er)
         {
@@ -641,12 +660,12 @@ DENG2_PIMPL(System)
         dint initialized = 0;
         for(dint i = activeInterfaces.count(); i--> 0; )
         {
-            ActiveInterface const &active = activeInterfaces[i];
-            if(   active.def().geti("type") != IDriver::AUDIO_IMUSIC
-               && active.def().geti("type") != IDriver::AUDIO_ICD)
+            ActiveInterface &active = activeInterfaces[i];
+            if(   active.type() != IDriver::AUDIO_IMUSIC
+               && active.type() != IDriver::AUDIO_ICD)
                 continue;
 
-            if(active.player().initialize())
+            if(active.initialize())
             {
                 initialized += 1;
             }
@@ -679,10 +698,10 @@ DENG2_PIMPL(System)
         for(dint i = activeInterfaces.count(); i--> 0; )
         {
             ActiveInterface &active = activeInterfaces[i];
-            if(   active.def().geti("type") == IDriver::AUDIO_ICD
-               || active.def().geti("type") == IDriver::AUDIO_IMUSIC)
+            if(   active.type() == IDriver::AUDIO_ICD
+               || active.type() == IDriver::AUDIO_IMUSIC)
             {
-                active.player().deinitialize();
+                active.deinitialize();
             }
         }
     }
@@ -723,11 +742,11 @@ DENG2_PIMPL(System)
         dint initialized = 0;
         for(dint i = activeInterfaces.count(); i--> 0; )
         {
-            ActiveInterface const &active = activeInterfaces[i];
-            if(active.def().geti("type") != IDriver::AUDIO_ISFX)
+            ActiveInterface &active = activeInterfaces[i];
+            if(active.type() != IDriver::AUDIO_ISFX)
                 continue;
 
-            if(active.player().initialize())
+            if(active.initialize())
             {
                 initialized += 1;
             }
@@ -758,10 +777,10 @@ DENG2_PIMPL(System)
         // Shutdown active interfaces.
         for(dint i = activeInterfaces.count(); i--> 0; )
         {
-            ActiveInterface const &active = activeInterfaces[i];
-            if(active.def().geti("type") == IDriver::AUDIO_ISFX)
+            ActiveInterface &active = activeInterfaces[i];
+            if(active.type() == IDriver::AUDIO_ISFX)
             {
-                active.playerAs<ISoundPlayer>().deinitialize();
+                active.deinitialize();
             }
         }
     }
@@ -836,32 +855,23 @@ DENG2_PIMPL(System)
         /// lifetime and positioning mode switches dynamically. -ds
         for(dint i = activeInterfaces.count(); i--> 0; )
         {
-            ActiveInterface const &active = activeInterfaces[i];
-            auto const type = IDriver::PlaybackInterfaceType( active.def().geti("type") );
-
-            switch(type)
+            ActiveInterface &active = activeInterfaces[i];
+            switch(active.type())
             {
             case IDriver::AUDIO_ICD:
             case IDriver::AUDIO_IMUSIC:
-                (*mixer)["music"].addChannel(active.driver().makeChannel(type));
+                (*mixer)["music"].addChannel(active.makeChannel());
                 break;
 
             case IDriver::AUDIO_ISFX:
                 if((*mixer)["fx"].channelCount() == 0)
                 {
-                    // Change the primary buffer format to match the channel format.
-                    /// @todo defer. -ds
-                    dfloat parm[2] = { dfloat(sfxBits), dfloat(sfxRate) };
-                    active.playerAs<ISoundPlayer>().listenerv(SFXLP_PRIMARY_FORMAT, parm);
-
                     dint const maxChannels = de::clamp(1, maxSoundChannels(), CHANNEL_COUNT_MAX);
                     dint numStereo = sfx3D ? CHANNEL_2DCOUNT : maxChannels;  // The rest will be 3D.
                     for(dint i = 0; i < maxChannels; ++i)
                     {
                         Positioning const positioning = numStereo-- > 0 ? StereoPositioning : AbsolutePositioning;
-
-                        // Note: Drivers retain ownership of channels.
-                        Channel *channel = active.driver().makeChannel(type);
+                        Channel *channel = active.makeChannel();
                         if(!channel)
                         {
                             dint const numAvailable = (*mixer)["fx"].channelCount();
@@ -1614,7 +1624,10 @@ DENG2_PIMPL(System)
         {
             ActiveInterface const &active = activeInterfaces[i];
             if(active.def().geti("type") == IDriver::AUDIO_ISFX)
-                return active.playerAs<ISoundPlayer>();
+            {
+                DENG2_ASSERT(active.player);
+                return active.player->as<ISoundPlayer>();
+            }
         }
         /// Internal Error: No suitable sound player is available.
         throw Error("audio::System::Instance::getSoundPlayer", "No SoundPlayer available");
@@ -1670,7 +1683,7 @@ String System::description() const
     for(dint i = d->activeInterfaces.count(); i--> 0; )
     {
         Instance::ActiveInterface &active = d->activeInterfaces[i];
-        os << _E(Ta) _E(l) "  " << IDriver::playbackInterfaceTypeAsText(IDriver::PlaybackInterfaceType( active.def().geti("type") )) << ": "
+        os << _E(Ta) _E(l) "  " << IDriver::playbackInterfaceTypeAsText(active.type()) << ": "
            << _E(.) _E(Tb) << active.def().gets("identityKey") << "\n";
     }
 
@@ -2274,11 +2287,7 @@ void System::allowChannelRefresh(bool allow)
 {
     for(dint i = d->activeInterfaces.count(); i--> 0; )
     {
-        Instance::ActiveInterface const &active = d->activeInterfaces[i];
-        if(active.def().geti("type") == IDriver::AUDIO_ISFX)
-        {
-            active.playerAs<ISoundPlayer>().allowRefresh(allow);
-        }
+        d->activeInterfaces[i].allowRefresh(allow);
     }
 }
 

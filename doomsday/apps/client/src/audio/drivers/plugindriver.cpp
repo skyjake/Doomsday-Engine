@@ -928,15 +928,22 @@ DENG2_PIMPL(PluginDriver)
 
                 if(initialized)
                 {
-                    // This is based on the scientific calculations that if the DOOM marine
-                    // is 56 units tall, 60 is about two meters.
-                    //// @todo Derive from the viewheight.
-                    gen.Listener(SFXLP_UNITS_PER_METER, 30);
-                    gen.Listener(SFXLP_DOPPLER, 1.5f);
+                    if(gen.Listener && gen.Listenerv)
+                    {
+                        // Change the primary buffer format to match the channel format.
+                        dfloat pformat[2] = { dfloat(::sfxBits), dfloat(::sfxRate) };
+                        gen.Listenerv(SFXLP_PRIMARY_FORMAT, pformat);
 
-                    dfloat rev[4] = { 0, 0, 0, 0 };
-                    gen.Listenerv(SFXLP_REVERB, rev);
-                    gen.Listener(SFXLP_UPDATE, 0);
+                        // This is based on the scientific calculations that if the DOOM marine
+                        // is 56 units tall, 60 is about two meters.
+                        //// @todo Derive from the viewheight.
+                        gen.Listener(SFXLP_UNITS_PER_METER, 30);
+                        gen.Listener(SFXLP_DOPPLER, 1.5f);
+
+                        dfloat rev[4] = { 0, 0, 0, 0 };
+                        gen.Listenerv(SFXLP_REVERB, rev);
+                        gen.Listener(SFXLP_UPDATE, 0);
+                    }
 
                     audio::System::get().sampleCache().audienceForSampleRemove() += this;
                 }
@@ -1468,6 +1475,13 @@ Channel *PluginDriver::makeChannel(PlaybackInterfaceType type)
             d->channels[type] << channel.get();
             if(d->channels[type].count() == 1)
             {
+                if(d->sound.gen.Listenerv)
+                {
+                    // Change the primary buffer format to match the channel format.
+                    dfloat pformat[2] = { dfloat(::sfxBits), dfloat(::sfxRate) };
+                    d->sound.gen.Listenerv(SFXLP_PRIMARY_FORMAT, pformat);
+                }
+
                 // Start the channel refresh thread. It will stop on its own when it notices that
                 // the player is deinitialized.
                 d->sound.refreshing    = false;

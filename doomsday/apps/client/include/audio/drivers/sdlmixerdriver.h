@@ -139,10 +139,10 @@ public:  //- Implements audio::System::IDriver: --------------------------------
     IPlayer &findPlayer   (de::String interfaceIdentityKey) const;
     IPlayer *tryFindPlayer(de::String interfaceIdentityKey) const;
 
-    Channel *makeChannel(PlaybackInterfaceType type);
+    Channel *makeChannel(PlaybackInterfaceType type) override;
 
     de::LoopResult forAllChannels(PlaybackInterfaceType type,
-        std::function<de::LoopResult (Channel const &)> callback) const;
+        std::function<de::LoopResult (Channel const &)> callback) const override;
 
 private:
     DENG2_PRIVATE(d)
