@@ -524,6 +524,12 @@ DENG2_PIMPL(Info)
             {
                 String keyName = peekToken();
                 nextToken();
+                if(peekToken() == "(" || peekToken() == "{")
+                {
+                    throw SyntaxError("Info::parseBlockElement",
+                                      QString("Attribute on line %1 is missing a value")
+                                      .arg(currentLine));
+                }
                 InfoValue value = parseValue();
 
                 // This becomes a key element inside the block but it's
