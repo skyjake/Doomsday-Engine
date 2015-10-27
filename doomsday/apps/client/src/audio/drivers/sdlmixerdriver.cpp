@@ -94,258 +94,6 @@ static void releaseChannel(dint channel)
 
 // --------------------------------------------------------------------------------------
 
-SdlMixerDriver::MusicPlayer::MusicPlayer()
-{}
-
-dint SdlMixerDriver::MusicPlayer::initialize()
-{
-    if(!_initialized)
-    {
-#ifdef DENG2_DEBUG
-        Mix_HookMusicFinished(musicPlaybackFinished);
-#endif
-        _initialized = true;
-    }
-    return _initialized;
-}
-
-void SdlMixerDriver::MusicPlayer::deinitialize()
-{
-    if(!_initialized) return;
-
-#ifdef DENG2_DEBUG
-    Mix_HookMusicFinished(nullptr);
-#endif
-    _initialized = false;
-}
-
-Channel *SdlMixerDriver::MusicPlayer::makeChannel()
-{
-    return new SdlMixerDriver::MusicChannel;
-}
-
-LoopResult SdlMixerDriver::MusicPlayer::forAllChannels(std::function<LoopResult (Channel const &)> callback) const
-{
-    return LoopContinue;
-}
-
-// --------------------------------------------------------------------------------------
-
-DENG2_PIMPL_NOREF(SdlMixerDriver::SoundPlayer)
-, DENG2_OBSERVES(SampleCache, SampleRemove)
-{
-    bool initialized = false;
-    QList<SdlMixerDriver::SoundChannel *> channels;
-
-    thread_t refreshThread      = nullptr;
-    volatile bool refreshPaused = false;
-    volatile bool refreshing    = false;
-
-    ~Instance()
-    {
-        // Should be deinitialized by now.
-        DENG2_ASSERT(!initialized);
-    }
-
-    /**
-     * This is a high-priority thread that periodically checks if the channels need to be
-     * updated with more data. The thread terminates when it notices that the sound player
-     * is deinitialized.
-     *
-     * Each sound uses a 250ms buffer, which means the refresh must be done often
-     * enough to keep them filled.
-     *
-     * @todo Use a real mutex, will you?
-     */
-    static dint C_DECL RefreshThread(void *instance)
-    {
-        auto &inst = *static_cast<Instance *>(instance);
-
-        // We'll continue looping until the player is deinitialized.
-        while(inst.initialized)
-        {
-            // The bit is swapped on each refresh (debug info).
-            //::refMonitor ^= 1;
-
-            if(!inst.refreshPaused)
-            {
-                // Do the refresh.
-                inst.refreshing = true;
-                for(SdlMixerDriver::SoundChannel *channel : inst.channels)
-                {
-                    if(channel->isPlaying())
-                    {
-                        channel->update();
-                    }
-                }
-                inst.refreshing = false;
-
-                // Let's take a nap.
-                Sys_Sleep(200);
-            }
-            else
-            {
-                // Refreshing is not allowed, so take a shorter nap while
-                // waiting for allowRefresh.
-                Sys_Sleep(150);
-            }
-        }
-
-        // Time to end this thread.
-        return 0;
-    }
-
-    void pauseRefresh()
-    {
-        if(refreshPaused) return;  // No change.
-
-        refreshPaused = true;
-        // Make sure that if currently running, we don't continue until it has stopped.
-        while(refreshing)
-        {
-            Sys_Sleep(0);
-        }
-        // Sys_SuspendThread(refreshThread, true);
-    }
-
-    void resumeRefresh()
-    {
-        if(!refreshPaused) return;  // No change.
-        refreshPaused = false;
-        // Sys_SuspendThread(refreshThread, false);
-    }
-
-    void clearChannels()
-    {
-        qDeleteAll(channels);
-        channels.clear();
-    }
-
-    /**
-     * The given @a sample will soon no longer exist. All channels currently loaded
-     * with it must be reset.
-     */
-    void sampleCacheAboutToRemove(Sample const &sample)
-    {
-        pauseRefresh();
-        for(SdlMixerDriver::SoundChannel *channel : channels)
-        {
-            if(!channel->isValid()) continue;
-
-            if(channel->samplePtr() && channel->samplePtr()->soundId == sample.soundId)
-            {
-                // Stop and unload.
-                channel->reset();
-            }
-        }
-        resumeRefresh();
-    }
-};
-
-SdlMixerDriver::SoundPlayer::SoundPlayer()
-    : d(new Instance)
-{}
-
-dint SdlMixerDriver::SoundPlayer::initialize()
-{
-    if(!d->initialized)
-    {
-        audio::System::get().sampleCache().audienceForSampleRemove() += d;
-        d->initialized = true;
-    }
-    return true;
-}
-
-void SdlMixerDriver::SoundPlayer::deinitialize()
-{
-    if(!d->initialized) return;
-
-    // Cancel sample cache removal notification - we intend to clear sounds.
-    audio::System::get().sampleCache().audienceForSampleRemove() -= d;
-
-    // Stop any sounds still playing (note: does not affect refresh).
-    for(SdlMixerDriver::SoundChannel *channel : d->channels)
-    {
-        channel->stop();
-    }
-
-    d->initialized = false;  // Signal the refresh thread to stop.
-    d->pauseRefresh();       // Stop further refreshing if in progress.
-
-    if(d->refreshThread)
-    {
-        // Wait for the refresh thread to stop.
-        Sys_WaitThread(d->refreshThread, 2000, nullptr);
-        d->refreshThread = nullptr;
-    }
-
-    d->clearChannels();
-}
-
-bool SdlMixerDriver::SoundPlayer::anyRateAccepted() const
-{
-    // No - please upsample for us.
-    return false;
-}
-
-void SdlMixerDriver::SoundPlayer::allowRefresh(bool allow)
-{
-    if(!d->initialized) return;
-
-    if(allow)
-    {
-        d->resumeRefresh();
-    }
-    else
-    {
-        d->pauseRefresh();
-    }
-}
-
-void SdlMixerDriver::SoundPlayer::listener(dint, dfloat)
-{
-    // Not supported.
-}
-
-void SdlMixerDriver::SoundPlayer::listenerv(dint, dfloat *)
-{
-    // Not supported.
-}
-
-Channel *SdlMixerDriver::SoundPlayer::makeChannel()
-{
-    if(!d->initialized) return nullptr;
-    std::unique_ptr<SdlMixerDriver::SoundChannel> channel(new SdlMixerDriver::SoundChannel);
-    d->channels << channel.release();
-    if(d->channels.count() == 1)
-    {
-        // Start the sound refresh thread. It will stop on its own when it notices that
-        // the player is deinitialized.
-        d->refreshing    = false;
-        d->refreshPaused = false;
-
-        // Start the refresh thread.
-        d->refreshThread = Sys_StartThread(Instance::RefreshThread, d.get());
-        if(!d->refreshThread)
-        {
-            throw Error("SdlMixerDriver::SoundPlayer::makeSoundChannel", "Failed starting the refresh thread");
-        }
-    }
-    return d->channels.last();
-}
-
-LoopResult SdlMixerDriver::SoundPlayer::forAllChannels(std::function<LoopResult (Channel const &)> callback) const
-{
-    for(Channel const *ch : d->channels)
-    {
-        if(auto result = callback(*ch))
-            return result;
-    }
-    return LoopContinue;
-}
-
-// --------------------------------------------------------------------------------------
-
 SdlMixerDriver::MusicChannel::MusicChannel() : audio::MusicChannel()
 {}
 
@@ -1005,20 +753,261 @@ DENG2_PIMPL(SdlMixerDriver)
 {
     bool initialized = false;
 
+    struct MusicPlayer : public IPlayer
+    {
+        bool initialized = false;
+
+        dint initialize()
+        {
+            if(!initialized)
+            {
+#ifdef DENG2_DEBUG
+                Mix_HookMusicFinished(musicPlaybackFinished);
+#endif
+                initialized = true;
+            }
+            return initialized;
+        }
+
+        void deinitialize()
+        {
+            if(!initialized) return;
+
+#ifdef DENG2_DEBUG
+            Mix_HookMusicFinished(nullptr);
+#endif
+            initialized = false;
+        }
+
+        Channel *makeChannel()
+        {
+            return new SdlMixerDriver::MusicChannel;
+        }
+
+        LoopResult forAllChannels(std::function<LoopResult (Channel const &)> callback) const
+        {
+            return LoopContinue;
+        }
+    };
+
+    struct SoundPlayer : public ISoundPlayer
+    , DENG2_OBSERVES(SampleCache, SampleRemove)
+    {
+        bool initialized = false;
+
+        struct Channels : public QList<Channel *>
+        {
+            ~Channels() { DENG2_ASSERT(isEmpty()); }
+        } channels;
+        
+        thread_t refreshThread      = nullptr;
+        volatile bool refreshPaused = false;
+        volatile bool refreshing    = false;
+
+        ~SoundPlayer() { DENG2_ASSERT(!initialized); }
+
+        void clearChannels()
+        {
+            qDeleteAll(channels);
+            channels.clear();
+        }
+
+        dint initialize()
+        {
+            if(!initialized)
+            {
+                audio::System::get().sampleCache().audienceForSampleRemove() += this;
+                initialized = true;
+            }
+            return true;
+        }
+
+        void deinitialize()
+        {
+            if(!initialized) return;
+
+            // Cancel sample cache removal notification - we intend to clear sounds.
+            audio::System::get().sampleCache().audienceForSampleRemove() -= this;
+
+            // Stop any sounds still playing (note: does not affect refresh).
+            for(Channel *channel : channels)
+            {
+                channel->stop();
+            }
+
+            initialized = false;  // Signal the refresh thread to stop.
+            pauseRefresh();       // Stop further refreshing if in progress.
+
+            if(refreshThread)
+            {
+                // Wait for the refresh thread to stop.
+                Sys_WaitThread(refreshThread, 2000, nullptr);
+                refreshThread = nullptr;
+            }
+
+            clearChannels();
+        }
+
+        bool anyRateAccepted() const
+        {
+            // No - please upsample for us.
+            return false;
+        }
+
+        void allowRefresh(bool allow)
+        {
+            if(!initialized) return;
+
+            if(allow)
+            {
+                resumeRefresh();
+            }
+            else
+            {
+                pauseRefresh();
+            }
+        }
+
+        void listener(dint prop, dfloat value)
+        {
+            // Not supported.
+        }
+
+        void listenerv(dint prop, dfloat *values)
+        {
+            // Not supported.
+        }
+
+        Channel *makeChannel()
+        {
+            if(!initialized) return nullptr;
+            std::unique_ptr<Channel> channel(new SdlMixerDriver::SoundChannel);
+            channels << channel.release();
+            if(channels.count() == 1)
+            {
+                // Start the sound refresh thread. It will stop on its own when it notices that
+                // the player is deinitialized.
+                refreshing    = false;
+                refreshPaused = false;
+
+                // Start the refresh thread.
+                refreshThread = Sys_StartThread(RefreshThread, this);
+                if(!refreshThread)
+                {
+                    throw Error("SdlMixerDriver::makeChannel", "Failed starting the refresh thread");
+                }
+            }
+            return channels.last();
+        }
+
+        LoopResult forAllChannels(std::function<LoopResult (Channel const &)> callback) const
+        {
+            for(Channel const *ch : channels)
+            {
+                if(auto result = callback(*ch))
+                    return result;
+            }
+            return LoopContinue;
+        }
+
+    private:
+        /**
+         * This is a high-priority thread that periodically checks if the channels need to be
+         * updated with more data. The thread terminates when it notices that the sound player
+         * is deinitialized.
+         *
+         * Each sound uses a 250ms buffer, which means the refresh must be done often
+         * enough to keep them filled.
+         *
+         * @todo Use a real mutex, will you?
+         */
+        static dint C_DECL RefreshThread(void *player)
+        {
+            auto &inst = *static_cast<SoundPlayer *>(player);
+
+            // We'll continue looping until the player is deinitialized.
+            while(inst.initialized)
+            {
+                // The bit is swapped on each refresh (debug info).
+                //::refMonitor ^= 1;
+
+                if(!inst.refreshPaused)
+                {
+                    // Do the refresh.
+                    inst.refreshing = true;
+                    for(Channel *channel : inst.channels)
+                    {
+                        if(channel->isPlaying())
+                        {
+                            channel->as<SdlMixerDriver::SoundChannel>().update();
+                        }
+                    }
+                    inst.refreshing = false;
+
+                    // Let's take a nap.
+                    Sys_Sleep(200);
+                }
+                else
+                {
+                    // Refreshing is not allowed, so take a shorter nap while
+                    // waiting for allowRefresh.
+                    Sys_Sleep(150);
+                }
+            }
+
+            // Time to end this thread.
+            return 0;
+        }
+
+        void pauseRefresh()
+        {
+            if(refreshPaused) return;  // No change.
+
+            refreshPaused = true;
+            // Make sure that if currently running, we don't continue until it has stopped.
+            while(refreshing)
+            {
+                Sys_Sleep(0);
+            }
+            // Sys_SuspendThread(refreshThread, true);
+        }
+
+        void resumeRefresh()
+        {
+            if(!refreshPaused) return;  // No change.
+            refreshPaused = false;
+            // Sys_SuspendThread(refreshThread, false);
+        }
+
+        /**
+         * The given @a sample will soon no longer exist. All channels currently loaded
+         * with it must be reset.
+         */
+        void sampleCacheAboutToRemove(Sample const &sample)
+        {
+            pauseRefresh();
+            for(Channel *base : channels)
+            {
+                auto &ch = base->as<SdlMixerDriver::SoundChannel>();
+
+                if(!ch.isValid()) continue;
+
+                if(ch.samplePtr() && ch.samplePtr()->soundId == sample.soundId)
+                {
+                    // Stop and unload.
+                    ch.reset();
+                }
+            }
+            resumeRefresh();
+        }
+    };
+
     MusicPlayer music;
     SoundPlayer sound;
 
-    Instance(Public *i)
-        : Base(i)
-        , music()
-        , sound()
-    {}
+    Instance(Public *i) : Base(i) {}
 
-    ~Instance()
-    {
-        // Should have been deinitialized by now.
-        DENG2_ASSERT(!initialized);
-    }
+    ~Instance() { DENG2_ASSERT(!initialized); }
 };
 
 SdlMixerDriver::SdlMixerDriver() : d(new Instance(this))

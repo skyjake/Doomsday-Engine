@@ -26,13 +26,15 @@
 #  error "audio" is not available in a SERVER build
 #endif
 
-#include "api_audiod_mus.h"  ///< @todo remove me
-#include "api_audiod_sfx.h"  ///< @todo remove me
 #include "audio/channel.h"
 #include "audio/system.h"
 #include <doomsday/library.h>
 #include <de/LibraryFile>
 #include <de/String>
+
+struct audiointerface_cd_s;
+struct audiointerface_music_s;
+struct audiointerface_sfx_s;
 
 namespace audio {
 
@@ -70,76 +72,7 @@ public:
      */
     ::Library *library() const;
 
-public:  // Sound players: -------------------------------------------------------
-
-    class CdPlayer : public IPlayer, public audiointerface_cd_t
-    {
-    public:
-        de::dint initialize();
-        void deinitialize();
-        PluginDriver &driver() const;
-
-        Channel *makeChannel();
-
-        de::LoopResult forAllChannels(std::function<de::LoopResult (Channel const &)> callback) const;
-
-    private:
-        CdPlayer(PluginDriver &driver);
-        friend class PluginDriver;
-
-        bool _initialized     = false;
-        bool _needInit        = true;
-        PluginDriver *_driver = nullptr;
-    };
-
-    class MusicPlayer : public IPlayer, public audiointerface_music_t
-    {
-    public:
-        de::dint initialize();
-        void deinitialize();
-        PluginDriver &driver() const;
-
-        Channel *makeChannel();
-
-        de::LoopResult forAllChannels(std::function<de::LoopResult (Channel const &)> callback) const;
-
-    private:
-        MusicPlayer(PluginDriver &driver);
-        friend class PluginDriver;
-
-        bool _initialized     = false;
-        bool _needInit        = true;
-        PluginDriver *_driver = nullptr;
-    };
-
-    class SoundPlayer : public ISoundPlayer, public audiointerface_sfx_t
-    {
-    public:
-        /**
-         * Returns @c true if the plugin requires refreshing Sounds manually.
-         */
-        bool needsRefresh() const;
-
-        de::dint initialize();
-        void deinitialize();
-        PluginDriver &driver() const;
-
-        bool anyRateAccepted() const;
-        void allowRefresh(bool allow);
-
-        void listener(de::dint prop, de::dfloat value);
-        void listenerv(de::dint prop, de::dfloat *values);
-
-        Channel *makeChannel();
-
-        de::LoopResult forAllChannels(std::function<de::LoopResult (Channel const &)> callback) const;
-
-    private:
-        SoundPlayer(PluginDriver &driver);
-        friend class PluginDriver;
-
-        DENG2_PRIVATE(d)
-    };
+public:  //- Playback channels: ---------------------------------------------------------
 
     class CdChannel : public audio::CdChannel
     {
@@ -154,12 +87,12 @@ public:  // Sound players: -----------------------------------------------------
 
         void bindTrack(de::dint track);
 
-    private:
+    //private:
         CdChannel(PluginDriver &driver);
-        friend class CdPlayer;
+        //friend class PluginDriver;
 
+    private:
         PluginDriver *_driver = nullptr;
-
         PlayingMode _mode = NotPlaying;
         de::dint _track   = -1;
     };
@@ -180,12 +113,12 @@ public:  // Sound players: -----------------------------------------------------
         bool canPlayFile() const;
         void bindFile(de::String const &sourcePath);
 
-    private:
+    //private:
         MusicChannel(PluginDriver &driver);
-        friend class MusicPlayer;
+        //friend class PluginDriver;
 
+    private:
         PluginDriver *_driver = nullptr;
-
         PlayingMode _mode = NotPlaying;
         de::String _sourcePath;
     };
@@ -231,14 +164,15 @@ public:  // Sound players: -----------------------------------------------------
 
         void updateEnvironment();
 
-    private:
-        SoundChannel(PluginDriver &owner);
-        friend class SoundPlayer;
+    //private:
+        SoundChannel(PluginDriver &driver);
+        //friend class PluginDriver;
 
+    private:
         DENG2_PRIVATE(d)
     };
 
-public:  // Implements audio::System::IDriver: -----------------------------------
+public:  //- Implements audio::System::IDriver: -----------------------------------------
 
     void initialize();
     void deinitialize();
@@ -257,13 +191,12 @@ public:  // Implements audio::System::IDriver: ---------------------------------
         std::function<de::LoopResult (Channel const &)> callback) const;
 
 public:
-    CdPlayer    &iCd   () const;
-    MusicPlayer &iMusic() const;
-    SoundPlayer &iSound() const;
+    struct audiointerface_cd_s    &iCd   () const;
+    struct audiointerface_music_s &iMusic() const;
+    struct audiointerface_sfx_s   &iSound() const;
 
 private:
     PluginDriver();
-
     DENG2_PRIVATE(d)
 };
 

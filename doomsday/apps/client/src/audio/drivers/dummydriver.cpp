@@ -33,132 +33,6 @@ using namespace de;
 
 namespace audio {
 
-DummyDriver::CdPlayer::CdPlayer()
-{}
-
-dint DummyDriver::CdPlayer::initialize()
-{
-    return _initialized = true;
-}
-
-void DummyDriver::CdPlayer::deinitialize()
-{
-    _initialized = false;
-}
-
-Channel *DummyDriver::CdPlayer::makeChannel()
-{
-    return new DummyDriver::CdChannel;
-}
-
-LoopResult DummyDriver::CdPlayer::forAllChannels(std::function<LoopResult (Channel const &)> callback) const
-{
-    return LoopContinue;
-}
-
-// ----------------------------------------------------------------------------------
-
-DummyDriver::MusicPlayer::MusicPlayer()
-{}
-
-dint DummyDriver::MusicPlayer::initialize()
-{
-    return _initialized = true;
-}
-
-void DummyDriver::MusicPlayer::deinitialize()
-{
-    _initialized = false;
-}
-
-Channel *DummyDriver::MusicPlayer::makeChannel()
-{
-    return new DummyDriver::MusicChannel;
-}
-
-LoopResult DummyDriver::MusicPlayer::forAllChannels(std::function<LoopResult (Channel const &)> callback) const
-{
-    return LoopContinue;
-}
-
-// ----------------------------------------------------------------------------------
-
-DENG2_PIMPL_NOREF(DummyDriver::SoundPlayer)
-{
-    bool initialized = false;
-    QList<DummyDriver::SoundChannel *> channels;
-
-    ~Instance()
-    {
-        // Should have been deintialized by now.
-        DENG2_ASSERT(!initialized);
-    }
-
-    void clearChannels()
-    {
-        qDeleteAll(channels);
-        channels.clear();
-    }
-};
-
-DummyDriver::SoundPlayer::SoundPlayer()
-    : d(new Instance)
-{}
-
-dint DummyDriver::SoundPlayer::initialize()
-{
-    return d->initialized = true;
-}
-
-void DummyDriver::SoundPlayer::deinitialize()
-{
-    if(!d->initialized) return;
-
-    d->initialized = false;
-    d->clearChannels();
-}
-
-bool DummyDriver::SoundPlayer::anyRateAccepted() const
-{
-    // We are not playing any audio so yeah, whatever.
-    return d->initialized;
-}
-
-void DummyDriver::SoundPlayer::allowRefresh(bool)
-{
-    // We are not playing any audio so consider it done.
-}
-
-void DummyDriver::SoundPlayer::listener(dint, dfloat)
-{
-    // Not supported.
-}
-
-void DummyDriver::SoundPlayer::listenerv(dint, dfloat *)
-{
-    // Not supported.
-}
-
-Channel *DummyDriver::SoundPlayer::makeChannel()
-{
-    if(!d->initialized) return nullptr;
-    std::unique_ptr<DummyDriver::SoundChannel> channel(new DummyDriver::SoundChannel);
-    d->channels << channel.get();
-    return channel.release();
-}
-
-LoopResult DummyDriver::SoundPlayer::forAllChannels(std::function<LoopResult (Channel const &)> callback) const
-{
-    for(Channel const *ch : d->channels)
-    {
-        if(auto result = callback(*ch))
-            return result;
-    }
-    return LoopContinue;
-}
-
-// --------------------------------------------------------------------------------------
-
 DummyDriver::CdChannel::CdChannel() : audio::CdChannel()
 {}
 
@@ -729,11 +603,131 @@ void DummyDriver::SoundChannel::updateEnvironment()
     // Not supported.
 }
 
-// ----------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------
 
 DENG2_PIMPL(DummyDriver)
 {
     bool initialized = false;
+
+    struct CdPlayer : public IPlayer
+    {
+        bool initialized = false;
+
+        de::dint initialize()
+        {
+            return initialized = true;
+        }
+
+        void deinitialize()
+        {
+            initialized = false;
+        }
+
+        Channel *makeChannel()
+        {
+            return new DummyDriver::CdChannel;
+        }
+
+        de::LoopResult forAllChannels(std::function<LoopResult (Channel const &)> callback) const
+        {
+            return LoopContinue;
+        }
+    };
+
+    struct MusicPlayer : public IPlayer
+    {
+        bool initialized = false;
+
+        dint initialize()
+        {
+            return initialized = true;
+        }
+
+        void deinitialize()
+        {
+            initialized = false;
+        }
+
+        Channel *makeChannel()
+        {
+            return new DummyDriver::MusicChannel;
+        }
+
+        LoopResult forAllChannels(std::function<LoopResult (Channel const &)> callback) const
+        {
+            return LoopContinue;
+        }
+    };
+
+    struct SoundPlayer : public ISoundPlayer
+    {
+        bool initialized = false;
+
+        struct Channels : QList<DummyDriver::SoundChannel *>
+        {
+            ~Channels() { DENG2_ASSERT(isEmpty()); }
+        } channels;
+
+       ~SoundPlayer() { DENG2_ASSERT(!initialized); }
+
+        void clearChannels()
+        {
+            qDeleteAll(channels);
+            channels.clear();
+        }
+
+        bool anyRateAccepted() const
+        {
+            // We are not playing any audio so yeah, whatever.
+            return initialized;
+        }
+
+        dint initialize()
+        {
+            return initialized = true;
+        }
+
+        void deinitialize()
+        {
+            if(!initialized) return;
+
+            initialized = false;
+            clearChannels();
+        }
+
+        void allowRefresh(bool allow)
+        {
+            // We are not playing any audio so consider it done.
+        }
+
+        void listener(dint prop, dfloat value)
+        {
+            // Not supported.
+        }
+        
+        void listenerv(dint prop, dfloat *values)
+        {
+            // Not supported.
+        }
+
+        Channel *makeChannel()
+        {
+            if(!initialized) return nullptr;
+            std::unique_ptr<DummyDriver::SoundChannel> channel(new DummyDriver::SoundChannel);
+            channels << channel.get();
+            return channel.release();
+        }
+
+        LoopResult forAllChannels(std::function<LoopResult (Channel const &)> callback) const
+        {
+            for(Channel const *ch : channels)
+            {
+                if(auto result = callback(*ch))
+                    return result;
+            }
+            return LoopContinue;
+        }
+    };
 
     CdPlayer cd;
     MusicPlayer music;

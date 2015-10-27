@@ -48,47 +48,7 @@ public:
      */
     virtual ~SdlMixerDriver();
 
-public:  // Sound players: --------------------------------------------------------------
-
-    class MusicPlayer : public IPlayer
-    {
-    public:
-        de::dint initialize();
-        void deinitialize();
-
-        Channel *makeChannel();
-
-        de::LoopResult forAllChannels(std::function<de::LoopResult (Channel const &)> callback) const;
-
-    private:
-        MusicPlayer();
-        friend class SdlMixerDriver;
-
-        bool _initialized = false;
-    };
-
-    class SoundPlayer : public ISoundPlayer
-    {
-    public:
-        de::dint initialize();
-        void deinitialize();
-
-        bool anyRateAccepted() const;
-        void allowRefresh(bool allow);
-
-        void listener(de::dint prop, de::dfloat value);
-        void listenerv(de::dint prop, de::dfloat *values);
-
-        Channel *makeChannel();
-
-        de::LoopResult forAllChannels(std::function<de::LoopResult (Channel const &)> callback) const;
-
-    private:
-        SoundPlayer();
-        friend class SdlMixerDriver;
-        
-        DENG2_PRIVATE(d)
-    };
+public:  //- Playback Channels: ---------------------------------------------------------
 
     class MusicChannel : public audio::MusicChannel
     {
@@ -106,10 +66,11 @@ public:  // Sound players: -----------------------------------------------------
         bool canPlayFile() const;
         void bindFile(de::String const &sourcePath);
 
-    public:
+    //private:
         MusicChannel();
-        friend class MusicPlayer;
+        //friend class SdlMixerDriver;
 
+    private:
         PlayingMode _mode = NotPlaying;
         de::String _sourcePath;
     };
@@ -155,14 +116,15 @@ public:  // Sound players: -----------------------------------------------------
 
         void updateEnvironment();
 
-    private:
+    //private:
         SoundChannel();
-        friend class SoundPlayer;
+        //friend class SdlMixerDriver;
 
+    private:
         DENG2_PRIVATE(d)
     };
 
-public:  // Implements audio::System::IDriver: ------------------------------------------
+public:  //- Implements audio::System::IDriver: -----------------------------------------
 
     void initialize();
     void deinitialize();

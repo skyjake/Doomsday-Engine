@@ -21,7 +21,9 @@
 
 #include "audio/drivers/plugindriver.h"
 
-#include "api_audiod.h"         // AUDIOP_* flags
+#include "api_audiod.h"      // AUDIOP_* flags
+#include "api_audiod_mus.h"
+#include "api_audiod_sfx.h"
 #include "audio/samplecache.h"
 
 #include "world/thinkers.h"
@@ -42,372 +44,6 @@
 using namespace de;
 
 namespace audio {
-
-PluginDriver::CdPlayer::CdPlayer(PluginDriver &driver)
-    : _driver(&driver)
-{
-    de::zap(gen);
-    Play = nullptr;
-}
-
-PluginDriver &PluginDriver::CdPlayer::driver() const
-{
-    DENG2_ASSERT(_driver != nullptr);
-    return *_driver;
-};
-
-dint PluginDriver::CdPlayer::initialize()
-{
-    if(_needInit)
-    {
-        _needInit = false;
-        DENG2_ASSERT(gen.Init);
-        _initialized = gen.Init();
-    }
-    return _initialized;
-}
-
-void PluginDriver::CdPlayer::deinitialize()
-{
-    if(!_initialized) return;
-
-    _initialized = false;
-    if(gen.Shutdown)
-    {
-        gen.Shutdown();
-    }
-    _needInit = true;
-}
-
-Channel *PluginDriver::CdPlayer::makeChannel()
-{
-    return new PluginDriver::CdChannel(driver());
-}
-
-LoopResult PluginDriver::CdPlayer::forAllChannels(std::function<LoopResult (Channel const &)> callback) const
-{
-    return LoopContinue;
-}
-
-// ----------------------------------------------------------------------------------
-
-PluginDriver::MusicPlayer::MusicPlayer(PluginDriver &driver)
- : _driver(&driver)
-{
-    de::zap(gen);
-    SongBuffer = nullptr;
-    Play       = nullptr;
-    PlayFile   = nullptr;
-}
-
-PluginDriver &PluginDriver::MusicPlayer::driver() const
-{
-    DENG2_ASSERT(_driver != nullptr);
-    return *_driver;
-};
-
-dint PluginDriver::MusicPlayer::initialize()
-{
-    if(_needInit)
-    {
-        _needInit = false;
-        DENG2_ASSERT(gen.Init);
-        _initialized = gen.Init();
-    }
-    return _initialized;
-}
-
-void PluginDriver::MusicPlayer::deinitialize()
-{
-    if(!_initialized) return;
-
-    _initialized = false;
-    if(gen.Shutdown)
-    {
-        gen.Shutdown();
-    }
-    _needInit = true;
-}
-
-Channel *PluginDriver::MusicPlayer::makeChannel()
-{
-    return new PluginDriver::MusicChannel(driver());
-}
-
-LoopResult PluginDriver::MusicPlayer::forAllChannels(std::function<LoopResult (Channel const &)> callback) const
-{
-    return LoopContinue;
-}
-
-// ----------------------------------------------------------------------------------
-
-DENG2_PIMPL_NOREF(PluginDriver::SoundPlayer)
-, DENG2_OBSERVES(SampleCache, SampleRemove)
-{
-    PluginDriver *driver = nullptr;
-    bool needInit        = true;
-    bool initialized     = false;
-    QList<PluginDriver::SoundChannel *> channels;
-
-    thread_t refreshThread      = nullptr;
-    volatile bool refreshPaused = false;
-    volatile bool refreshing    = false;
-
-    ~Instance()
-    {
-        // Should have been deinitialized by now.
-        DENG2_ASSERT(!initialized);
-    }
-
-    /**
-     * This is a high-priority thread that periodically checks if the channels need
-     * to be updated with more data. The thread terminates when it notices that the
-     * sound player is deinitialized.
-     *
-     * Each sound uses a 250ms buffer, which means the refresh must be done often
-     * enough to keep them filled.
-     *
-     * @todo Use a real mutex, will you?
-     */
-    static dint C_DECL RefreshThread(void *instance)
-    {
-        auto &inst = *static_cast<Instance *>(instance);
-
-        // We'll continue looping until the player is deinitialized.
-        while(inst.initialized)
-        {
-            // The bit is swapped on each refresh (debug info).
-            //::refMonitor ^= 1;
-
-            if(!inst.refreshPaused)
-            {
-                // Do the refresh.
-                inst.refreshing = true;
-                for(PluginDriver::SoundChannel *channel : inst.channels)
-                {
-                    if(channel->isPlaying())
-                    {
-                        channel->update();
-                    }
-                }
-                inst.refreshing = false;
-
-                // Let's take a nap.
-                Sys_Sleep(200);
-            }
-            else
-            {
-                // Refreshing is not allowed, so take a shorter nap while
-                // waiting for allowRefresh.
-                Sys_Sleep(150);
-            }
-        }
-
-        // Time to end this thread.
-        return 0;
-    }
-
-    void pauseRefresh()
-    {
-        if(refreshPaused) return;  // No change.
-
-        refreshPaused = true;
-        // Make sure that if currently running, we don't continue until it has stopped.
-        while(refreshing)
-        {
-            Sys_Sleep(0);
-        }
-        // Sys_SuspendThread(refreshThread, true);
-    }
-
-    void resumeRefresh()
-    {
-        if(!refreshPaused) return;  // No change.
-        refreshPaused = false;
-        // Sys_SuspendThread(refreshThread, false);
-    }
-
-    void clearChannels()
-    {
-        qDeleteAll(channels);
-        channels.clear();
-    }
-
-    /**
-     * The given @a sample will soon no longer exist. All channels currently loaded
-     * with it must be reset.
-     */
-    void sampleCacheAboutToRemove(Sample const &sample)
-    {
-        pauseRefresh();
-        for(PluginDriver::SoundChannel *channel : channels)
-        {
-            if(!channel->isValid()) continue;
-
-            if(channel->samplePtr() && channel->samplePtr()->soundId == sample.soundId)
-            {
-                // Stop and unload.
-                channel->reset();
-            }
-        }
-        resumeRefresh();
-    }
-};
-
-PluginDriver::SoundPlayer::SoundPlayer(PluginDriver &driver)
-    : d(new Instance)
-{
-    d->driver = &driver;
-    de::zap(gen);
-}
-
-PluginDriver &PluginDriver::SoundPlayer::driver() const
-{
-    DENG2_ASSERT(d->driver != nullptr);
-    return *d->driver;
-};
-
-dint PluginDriver::SoundPlayer::initialize()
-{
-    if(d->needInit)
-    {
-        d->needInit = false;
-        DENG2_ASSERT(gen.Init);
-        d->initialized = gen.Init();
-
-        if(d->initialized)
-        {
-            // This is based on the scientific calculations that if the DOOM marine
-            // is 56 units tall, 60 is about two meters.
-            //// @todo Derive from the viewheight.
-            gen.Listener(SFXLP_UNITS_PER_METER, 30);
-            gen.Listener(SFXLP_DOPPLER, 1.5f);
-
-            dfloat rev[4] = { 0, 0, 0, 0 };
-            gen.Listenerv(SFXLP_REVERB, rev);
-            gen.Listener(SFXLP_UPDATE, 0);
-
-            audio::System::get().sampleCache().audienceForSampleRemove() += d;
-        }
-    }
-    return d->initialized;
-}
-
-void PluginDriver::SoundPlayer::deinitialize()
-{
-    if(!d->initialized) return;
-
-    // Cancel sample cache removal notification - we intend to clear sounds.
-    audio::System::get().sampleCache().audienceForSampleRemove() -= d;
-
-    // Stop any channels still playing (note: does not affect refresh).
-    for(PluginDriver::SoundChannel *channel : d->channels)
-    {
-        channel->stop();
-    }
-
-    d->initialized = false;  // Signal the refresh thread to stop.
-    d->pauseRefresh();       // Stop further refreshing if in progress.
-
-    if(d->refreshThread)
-    {
-        // Wait for the refresh thread to stop.
-        Sys_WaitThread(d->refreshThread, 2000, nullptr);
-        d->refreshThread = nullptr;
-    }
-
-    /*if(gen.Shutdown)
-    {
-        gen.Shutdown();
-    }*/
-
-    d->clearChannels();
-    d->needInit = true;
-}
-
-bool PluginDriver::SoundPlayer::anyRateAccepted() const
-{
-    dint anyRateAccepted = 0;
-    if(gen.Getv)
-    {
-        gen.Getv(SFXIP_ANY_SAMPLE_RATE_ACCEPTED, &anyRateAccepted);
-    }
-    return CPP_BOOL( anyRateAccepted );
-}
-
-bool PluginDriver::SoundPlayer::needsRefresh() const
-{
-    if(!d->initialized) return false;
-    dint disableRefresh = false;
-    if(gen.Getv)
-    {
-        gen.Getv(SFXIP_DISABLE_CHANNEL_REFRESH, &disableRefresh);
-    }
-    return !disableRefresh;
-}
-
-void PluginDriver::SoundPlayer::allowRefresh(bool allow)
-{
-    if(!d->initialized) return;
-    if(!needsRefresh()) return;
-
-    if(allow)
-    {
-        d->resumeRefresh();
-    }
-    else
-    {
-        d->pauseRefresh();
-    }
-}
-
-void PluginDriver::SoundPlayer::listener(dint prop, dfloat value)
-{
-    if(!d->initialized) return;
-    DENG2_ASSERT(gen.Listener);
-    gen.Listener(prop, value);
-}
-
-void PluginDriver::SoundPlayer::listenerv(dint prop, dfloat *values)
-{
-    if(!d->initialized) return;
-    DENG2_ASSERT(gen.Listenerv);
-    gen.Listenerv(prop, values);
-}
-
-Channel *PluginDriver::SoundPlayer::makeChannel()
-{
-    if(!d->initialized) return nullptr;
-    std::unique_ptr<PluginDriver::SoundChannel> channel(new PluginDriver::SoundChannel(driver()));
-    d->channels << channel.release();
-    if(d->channels.count() == 1)
-    {
-        // Start the channel refresh thread. It will stop on its own when it notices that
-        // the player is deinitialized.
-        d->refreshing    = false;
-        d->refreshPaused = false;
-
-        // Start the refresh thread.
-        d->refreshThread = Sys_StartThread(Instance::RefreshThread, d.get());
-        if(!d->refreshThread)
-        {
-            throw Error("PluginDriver::SoundPlayer::makeSoundChannel", "Failed starting the refresh thread");
-        }
-    }
-    return d->channels.last();
-}
-
-LoopResult PluginDriver::SoundPlayer::forAllChannels(std::function<LoopResult (Channel const &)> callback) const
-{
-    for(Channel const *ch : d->channels)
-    {
-        if(auto result = callback(*ch))
-            return result;
-    }
-    return LoopContinue;
-}
-
-// --------------------------------------------------------------------------------------
 
 PluginDriver::CdChannel::CdChannel(PluginDriver &driver)
     : audio::CdChannel()
@@ -606,26 +242,25 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundChannel)
     /// No data buffer is assigned. @ingroup errors
     DENG2_ERROR(MissingBufferError);
 
-    PluginDriver &driver;             ///< Owning driver (not owned).
+    PluginDriver &driver;             ///< Owning driver.
 
     dint flags = 0;                   ///< SFXCF_* flags.
+    SoundEmitter *emitter = nullptr;  ///< Emitter for the sound, if any (not owned).
+    Listener *listener    = nullptr;  ///< Listener for the sound, if any (not owned).
 
-    dfloat frequency = 0;             ///< Frequency adjustment: 1.0 is normal.
-    dfloat volume = 0;                ///< Sound volume: 1.0 is max.
-    SoundEmitter *emitter = nullptr;  ///< SoundEmitter for the sound, if any (not owned).
-    Vector3d origin;                  ///< Emit from here (synced with emitter).
-
-    Positioning positioning = StereoPositioning;
-    dint bytes = 0;
-    dint rate = 0;
-
-    sfxbuffer_t *buffer = nullptr;    ///< Assigned sound buffer, if any (not owned).
-    dint startTime = 0;               ///< When the assigned sound sample was last started.
-
-    Listener *listener = nullptr;
     // Only necessary when using 3D positioning.
     /// @todo optimize: stop observing when this changes. -ds
     bool needEnvironmentUpdate = false;
+
+    dfloat frequency = 0;             ///< Frequency adjustment: 1.0 is normal.
+    Vector3d origin;                  ///< Emit from here (synced with emitter).
+    Positioning positioning = StereoPositioning;
+    dint rate        = 11025;
+    dfloat volume    = 0;             ///< Sound volume: 1.0 is max.
+
+    dint bytes = 1;
+    sfxbuffer_t *buffer = nullptr;    ///< Assigned sound buffer, if any (not owned).
+    dint startTime = 0;               ///< When the assigned sound sample was last started.
 
     Instance(PluginDriver &owner) : driver(owner)
     {}
@@ -1142,7 +777,7 @@ void PluginDriver::SoundChannel::updateEnvironment()
     d->driver.iSound().gen.Listener(SFXLP_UPDATE, 0);
 }
 
-// ----------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------
 
 DENG2_PIMPL(PluginDriver)
 , DENG2_OBSERVES(audio::System, FrameBegins)
@@ -1163,6 +798,367 @@ DENG2_PIMPL(PluginDriver)
 
         IPlugin() { de::zapPtr(this); }
     } iBase;
+
+    struct CdPlayer : public IPlayer, public audiointerface_cd_t
+    {
+        bool initialized     = false;
+        bool needInit        = true;
+        PluginDriver *driver = nullptr;
+
+        CdPlayer(PluginDriver &driver) : driver(&driver)
+        {
+            de::zap(gen);
+            Play = nullptr;
+        }
+
+        dint initialize()
+        {
+            if(needInit)
+            {
+                needInit = false;
+                DENG2_ASSERT(gen.Init);
+                initialized = gen.Init();
+            }
+            return initialized;
+        }
+
+        void deinitialize()
+        {
+            if(!initialized) return;
+
+            initialized = false;
+            if(gen.Shutdown)
+            {
+                gen.Shutdown();
+            }
+            needInit = true;
+        }
+
+        Channel *makeChannel()
+        {
+            DENG2_ASSERT(driver);
+            return new PluginDriver::CdChannel(*driver);
+        }
+
+        LoopResult forAllChannels(std::function<LoopResult (Channel const &)> callback) const
+        {
+            return LoopContinue;
+        }
+    };
+
+    struct MusicPlayer : public IPlayer, public audiointerface_music_t
+    {
+        bool initialized     = false;
+        bool needInit        = true;
+        PluginDriver *driver = nullptr;
+
+        MusicPlayer(PluginDriver &driver) : driver(&driver)
+        {
+            de::zap(gen);
+            SongBuffer = nullptr;
+            Play       = nullptr;
+            PlayFile   = nullptr;
+        }
+
+        dint initialize()
+        {
+            if(needInit)
+            {
+                needInit = false;
+                DENG2_ASSERT(gen.Init);
+                initialized = gen.Init();
+            }
+            return initialized;
+        }
+
+        void deinitialize()
+        {
+            if(!initialized) return;
+
+            initialized = false;
+            if(gen.Shutdown)
+            {
+                gen.Shutdown();
+            }
+            needInit = true;
+        }
+
+        Channel *makeChannel()
+        {
+            DENG2_ASSERT(driver);
+            return new PluginDriver::MusicChannel(*driver);
+        }
+
+        LoopResult forAllChannels(std::function<LoopResult (Channel const &)> callback) const
+        {
+            return LoopContinue;
+        }
+    };
+
+    struct SoundPlayer : public ISoundPlayer, public audiointerface_sfx_t
+    , DENG2_OBSERVES(SampleCache, SampleRemove)
+    {
+        PluginDriver *driver = nullptr;
+        bool needInit        = true;
+        bool initialized     = false;
+
+        struct Channels : public QList<PluginDriver::SoundChannel *>
+        {
+            ~Channels() { DENG2_ASSERT(isEmpty()); }
+        } channels;
+
+        thread_t refreshThread      = nullptr;
+        volatile bool refreshPaused = false;
+        volatile bool refreshing    = false;
+
+        SoundPlayer(PluginDriver &driver) : driver(&driver)
+        {
+            de::zap(gen);
+        }
+
+        ~SoundPlayer() { DENG2_ASSERT(!initialized); }
+
+        void clearChannels()
+        {
+            qDeleteAll(channels);
+            channels.clear();
+        }
+
+        /**
+         * Returns @c true if any frequency/sample rate is permitted for audio data.
+         */
+        bool anyRateAccepted() const
+        {
+            dint anyRateAccepted = 0;
+            if(gen.Getv)
+            {
+                gen.Getv(SFXIP_ANY_SAMPLE_RATE_ACCEPTED, &anyRateAccepted);
+            }
+            return CPP_BOOL( anyRateAccepted );
+        }
+
+        /**
+         * Returns @c true if manual refreshing of playback Channels is needed.
+         */
+        bool needsRefresh() const
+        {
+            if(!initialized) return false;
+            dint disableRefresh = false;
+            if(gen.Getv)
+            {
+                gen.Getv(SFXIP_DISABLE_CHANNEL_REFRESH, &disableRefresh);
+            }
+            return !disableRefresh;
+        }
+
+        dint initialize()
+        {
+            if(needInit)
+            {
+                needInit = false;
+                DENG2_ASSERT(gen.Init);
+                initialized = gen.Init();
+
+                if(initialized)
+                {
+                    // This is based on the scientific calculations that if the DOOM marine
+                    // is 56 units tall, 60 is about two meters.
+                    //// @todo Derive from the viewheight.
+                    gen.Listener(SFXLP_UNITS_PER_METER, 30);
+                    gen.Listener(SFXLP_DOPPLER, 1.5f);
+
+                    dfloat rev[4] = { 0, 0, 0, 0 };
+                    gen.Listenerv(SFXLP_REVERB, rev);
+                    gen.Listener(SFXLP_UPDATE, 0);
+
+                    audio::System::get().sampleCache().audienceForSampleRemove() += this;
+                }
+            }
+            return initialized;
+        }
+
+        void deinitialize()
+        {
+            if(!initialized) return;
+
+            // Cancel sample cache removal notification - we intend to clear sounds.
+            audio::System::get().sampleCache().audienceForSampleRemove() -= this;
+
+            // Stop any channels still playing (note: does not affect refresh).
+            for(PluginDriver::SoundChannel *channel : channels)
+            {
+                channel->stop();
+            }
+
+            initialized = false;  // Signal the refresh thread to stop.
+            pauseRefresh();       // Stop further refreshing if in progress.
+
+            if(refreshThread)
+            {
+                // Wait for the refresh thread to stop.
+                Sys_WaitThread(refreshThread, 2000, nullptr);
+                refreshThread = nullptr;
+            }
+
+            /*if(gen.Shutdown)
+            {
+                gen.Shutdown();
+            }*/
+
+            clearChannels();
+            needInit = true;
+        }
+
+        void allowRefresh(bool allow)
+        {
+            if(!initialized) return;
+            if(!needsRefresh()) return;
+
+            if(allow)
+            {
+                resumeRefresh();
+            }
+            else
+            {
+                pauseRefresh();
+            }
+        }
+
+        void listener(dint prop, dfloat value)
+        {
+            if(!initialized) return;
+            DENG2_ASSERT(gen.Listener);
+            gen.Listener(prop, value);
+        }
+
+        void listenerv(dint prop, dfloat *values)
+        {
+            if(!initialized) return;
+            DENG2_ASSERT(gen.Listenerv);
+            gen.Listenerv(prop, values);
+        }
+
+        Channel *makeChannel()
+        {
+            if(!initialized) return nullptr;
+            std::unique_ptr<PluginDriver::SoundChannel> channel(new PluginDriver::SoundChannel(*driver));
+            channels << channel.release();
+            if(channels.count() == 1)
+            {
+                // Start the channel refresh thread. It will stop on its own when it notices that
+                // the player is deinitialized.
+                refreshing    = false;
+                refreshPaused = false;
+
+                // Start the refresh thread.
+                refreshThread = Sys_StartThread(RefreshThread, this);
+                if(!refreshThread)
+                {
+                    throw Error("PluginDriver::makeSoundChannel", "Failed starting the refresh thread");
+                }
+            }
+            return channels.last();
+        }
+
+        LoopResult forAllChannels(std::function<LoopResult (Channel const &)> callback) const
+        {
+            for(Channel const *ch : channels)
+            {
+                if(auto result = callback(*ch))
+                    return result;
+            }
+            return LoopContinue;
+        }
+
+    private:
+        /**
+         * This is a high-priority thread that periodically checks if the channels need
+         * to be updated with more data. The thread terminates when it notices that the
+         * sound player is deinitialized.
+         *
+         * Each sound uses a 250ms buffer, which means the refresh must be done often
+         * enough to keep them filled.
+         *
+         * @todo Use a real mutex, will you?
+         */
+        static dint C_DECL RefreshThread(void *player)
+        {
+            auto &inst = *static_cast<SoundPlayer *>(player);
+
+            // We'll continue looping until the player is deinitialized.
+            while(inst.initialized)
+            {
+                // The bit is swapped on each refresh (debug info).
+                //::refMonitor ^= 1;
+
+                if(!inst.refreshPaused)
+                {
+                    // Do the refresh.
+                    inst.refreshing = true;
+                    for(PluginDriver::SoundChannel *channel : inst.channels)
+                    {
+                        if(channel->isPlaying())
+                        {
+                            channel->update();
+                        }
+                    }
+                    inst.refreshing = false;
+
+                    // Let's take a nap.
+                    Sys_Sleep(200);
+                }
+                else
+                {
+                    // Refreshing is not allowed, so take a shorter nap while
+                    // waiting for allowRefresh.
+                    Sys_Sleep(150);
+                }
+            }
+
+            // Time to end this thread.
+            return 0;
+        }
+
+        void pauseRefresh()
+        {
+            if(refreshPaused) return;  // No change.
+
+            refreshPaused = true;
+            // Make sure that if currently running, we don't continue until it has stopped.
+            while(refreshing)
+            {
+                Sys_Sleep(0);
+            }
+            // Sys_SuspendThread(refreshThread, true);
+        }
+
+        void resumeRefresh()
+        {
+            if(!refreshPaused) return;  // No change.
+            refreshPaused = false;
+            // Sys_SuspendThread(refreshThread, false);
+        }
+
+        /**
+         * The given @a sample will soon no longer exist. All channels currently loaded
+         * with it must be reset.
+         */
+        void sampleCacheAboutToRemove(Sample const &sample)
+        {
+            pauseRefresh();
+            for(PluginDriver::SoundChannel *channel : channels)
+            {
+                if(!channel->isValid()) continue;
+
+                if(channel->samplePtr() && channel->samplePtr()->soundId == sample.soundId)
+                {
+                    // Stop and unload.
+                    channel->reset();
+                }
+            }
+            resumeRefresh();
+        }
+    };
 
     CdPlayer    cd;
     MusicPlayer music;
@@ -1519,17 +1515,17 @@ LoopResult PluginDriver::forAllChannels(PlaybackInterfaceType type,
     return LoopContinue;
 }
 
-PluginDriver::CdPlayer &PluginDriver::iCd() const
+struct audiointerface_cd_s &PluginDriver::iCd() const
 {
     return d->cd;
 }
 
-PluginDriver::MusicPlayer &PluginDriver::iMusic() const
+struct audiointerface_music_s &PluginDriver::iMusic() const
 {
     return d->music;
 }
 
-PluginDriver::SoundPlayer &PluginDriver::iSound() const
+struct audiointerface_sfx_s &PluginDriver::iSound() const
 {
     return d->sound;
 }

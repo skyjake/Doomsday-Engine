@@ -1486,13 +1486,12 @@ DENG2_PIMPL(System)
 
         SoundChannel &channel = *selCh;
         DENG2_ASSERT(channel.isValid());
-        // The sound may need to be reformatted.
 
+        // The sound may need to be reformatted.
         channel.format(positioning, sample.bytesPer, sample.rate);
         channel.setFlags(channel.flags() & ~(SFXCF_NO_ORIGIN | SFXCF_NO_ATTENUATION | SFXCF_NO_UPDATE));
         channel.setVolume(volume);
         channel.setFrequency(frequency);
-
         if(!emitter && !origin)
         {
             channel.setFlags(channel.flags() | SFXCF_NO_ORIGIN);
@@ -1506,7 +1505,6 @@ DENG2_PIMPL(System)
                 channel.setOrigin(Vector3d(origin));
             }
         }
-
         if(flags & SF_NO_ATTENUATION)
         {
             // The sound can be heard from any distance.
