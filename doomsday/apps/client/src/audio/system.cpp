@@ -837,11 +837,13 @@ DENG2_PIMPL(System)
         for(dint i = activeInterfaces.count(); i--> 0; )
         {
             ActiveInterface const &active = activeInterfaces[i];
-            switch(active.def().geti("type"))
+            auto const type = IDriver::PlaybackInterfaceType( active.def().geti("type") );
+
+            switch(type)
             {
             case IDriver::AUDIO_ICD:
             case IDriver::AUDIO_IMUSIC:
-                (*mixer)["music"].addChannel(active.player().makeChannel());
+                (*mixer)["music"].addChannel(active.driver().makeChannel(type));
                 break;
 
             case IDriver::AUDIO_ISFX:
@@ -859,7 +861,7 @@ DENG2_PIMPL(System)
                         Positioning const positioning = numStereo-- > 0 ? StereoPositioning : AbsolutePositioning;
 
                         // Note: Drivers retain ownership of channels.
-                        Channel *channel = active.player().makeChannel();
+                        Channel *channel = active.driver().makeChannel(type);
                         if(!channel)
                         {
                             dint const numAvailable = (*mixer)["fx"].channelCount();

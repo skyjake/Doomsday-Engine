@@ -833,18 +833,7 @@ DENG2_PIMPL(PluginDriver)
             }
             needInit = true;
         }
-
-        Channel *makeChannel()
-        {
-            DENG2_ASSERT(driver);
-            return new PluginDriver::CdChannel(*driver);
-        }
-
-        LoopResult forAllChannels(std::function<LoopResult (Channel const &)> callback) const
-        {
-            return LoopContinue;
-        }
-    };
+    } cd;
 
     struct MusicPlayer : public IPlayer, public audiointerface_music_t
     {
@@ -882,18 +871,7 @@ DENG2_PIMPL(PluginDriver)
             }
             needInit = true;
         }
-
-        Channel *makeChannel()
-        {
-            DENG2_ASSERT(driver);
-            return new PluginDriver::MusicChannel(*driver);
-        }
-
-        LoopResult forAllChannels(std::function<LoopResult (Channel const &)> callback) const
-        {
-            return LoopContinue;
-        }
-    };
+    } music;
 
     struct SoundPlayer : public ISoundPlayer, public audiointerface_sfx_t
     , DENG2_OBSERVES(SampleCache, SampleRemove)
@@ -901,11 +879,6 @@ DENG2_PIMPL(PluginDriver)
         PluginDriver *driver = nullptr;
         bool needInit        = true;
         bool initialized     = false;
-
-        struct Channels : public QList<PluginDriver::SoundChannel *>
-        {
-            ~Channels() { DENG2_ASSERT(isEmpty()); }
-        } channels;
 
         thread_t refreshThread      = nullptr;
         volatile bool refreshPaused = false;
@@ -917,12 +890,6 @@ DENG2_PIMPL(PluginDriver)
         }
 
         ~SoundPlayer() { DENG2_ASSERT(!initialized); }
-
-        void clearChannels()
-        {
-            qDeleteAll(channels);
-            channels.clear();
-        }
 
         /**
          * Returns @c true if any frequency/sample rate is permitted for audio data.
@@ -985,7 +952,7 @@ DENG2_PIMPL(PluginDriver)
             audio::System::get().sampleCache().audienceForSampleRemove() -= this;
 
             // Stop any channels still playing (note: does not affect refresh).
-            for(PluginDriver::SoundChannel *channel : channels)
+            for(Channel *channel : driver->d->channels[AUDIO_ISFX])
             {
                 channel->stop();
             }
@@ -1005,7 +972,9 @@ DENG2_PIMPL(PluginDriver)
                 gen.Shutdown();
             }*/
 
-            clearChannels();
+            qDeleteAll(driver->d->channels[AUDIO_ISFX]);
+            driver->d->channels[AUDIO_ISFX].clear();
+
             needInit = true;
         }
 
@@ -1038,39 +1007,6 @@ DENG2_PIMPL(PluginDriver)
             gen.Listenerv(prop, values);
         }
 
-        Channel *makeChannel()
-        {
-            if(!initialized) return nullptr;
-            std::unique_ptr<PluginDriver::SoundChannel> channel(new PluginDriver::SoundChannel(*driver));
-            channels << channel.release();
-            if(channels.count() == 1)
-            {
-                // Start the channel refresh thread. It will stop on its own when it notices that
-                // the player is deinitialized.
-                refreshing    = false;
-                refreshPaused = false;
-
-                // Start the refresh thread.
-                refreshThread = Sys_StartThread(RefreshThread, this);
-                if(!refreshThread)
-                {
-                    throw Error("PluginDriver::makeSoundChannel", "Failed starting the refresh thread");
-                }
-            }
-            return channels.last();
-        }
-
-        LoopResult forAllChannels(std::function<LoopResult (Channel const &)> callback) const
-        {
-            for(Channel const *ch : channels)
-            {
-                if(auto result = callback(*ch))
-                    return result;
-            }
-            return LoopContinue;
-        }
-
-    private:
         /**
          * This is a high-priority thread that periodically checks if the channels need
          * to be updated with more data. The thread terminates when it notices that the
@@ -1095,11 +1031,11 @@ DENG2_PIMPL(PluginDriver)
                 {
                     // Do the refresh.
                     inst.refreshing = true;
-                    for(PluginDriver::SoundChannel *channel : inst.channels)
+                    for(Channel *channel : inst.driver->d->channels[AUDIO_ISFX])
                     {
                         if(channel->isPlaying())
                         {
-                            channel->update();
+                            channel->as<SoundChannel>().update();
                         }
                     }
                     inst.refreshing = false;
@@ -1146,23 +1082,26 @@ DENG2_PIMPL(PluginDriver)
         void sampleCacheAboutToRemove(Sample const &sample)
         {
             pauseRefresh();
-            for(PluginDriver::SoundChannel *channel : channels)
+            for(Channel *base : driver->d->channels[AUDIO_ISFX])
             {
-                if(!channel->isValid()) continue;
+                auto &ch = base->as<SoundChannel>();
 
-                if(channel->samplePtr() && channel->samplePtr()->soundId == sample.soundId)
+                if(!ch.isValid()) continue;
+
+                if(ch.samplePtr() && ch.samplePtr()->soundId == sample.soundId)
                 {
                     // Stop and unload.
-                    channel->reset();
+                    ch.reset();
                 }
             }
             resumeRefresh();
         }
-    };
+    } sound;
 
-    CdPlayer    cd;
-    MusicPlayer music;
-    SoundPlayer sound;
+    struct ChannelSet : public QList<Channel *>
+    {
+        ~ChannelSet() { DENG2_ASSERT(isEmpty()); }
+    } channels[PlaybackInterfaceTypeCount];
 
     Instance(Public *i)
         : Base(i)
@@ -1178,6 +1117,15 @@ DENG2_PIMPL(PluginDriver)
 
         // Unload the library.
         Library_Delete(library);
+    }
+
+    void clearChannels()
+    {
+        for(ChannelSet &set : channels)
+        {
+            qDeleteAll(set);
+            set.clear();
+        }
     }
 
     /**
@@ -1487,30 +1435,68 @@ IPlayer *PluginDriver::tryFindPlayer(String interfaceIdentityKey) const
     return nullptr;  // Not found.
 }
 
-LoopResult PluginDriver::forAllChannels(PlaybackInterfaceType type,
-    std::function<LoopResult (Channel const &)> callback) const
+Channel *PluginDriver::makeChannel(PlaybackInterfaceType type)
 {
+    if(!d->initialized)
+        return nullptr;
+
     switch(type)
     {
     case AUDIO_ICD:
-        return d->cd.forAllChannels([&callback] (Channel const &ch)
+        // Initialize this interface now if we haven't already.
+        if(d->cd.initialize())
         {
-            return callback(ch);
-        });
+            std::unique_ptr<Channel> channel(new CdChannel(*this));
+            d->channels[type] << channel.get();
+            return channel.release();
+        }
+        break;
 
     case AUDIO_IMUSIC:
-        return d->music.forAllChannels([&callback] (Channel const &ch)
+        if(d->music.initialize())
         {
-            return callback(ch);
-        });
+            std::unique_ptr<Channel> channel(new MusicChannel(*this));
+            d->channels[type] << channel.get();
+            return channel.release();
+        }
+        break;
 
     case AUDIO_ISFX:
-        return d->sound.forAllChannels([&callback] (Channel const &ch)
+        if(d->sound.initialize())
         {
-            return callback(ch);
-        });
+            std::unique_ptr<Channel> channel(new SoundChannel(*this));
+            d->channels[type] << channel.get();
+            if(d->channels[type].count() == 1)
+            {
+                // Start the channel refresh thread. It will stop on its own when it notices that
+                // the player is deinitialized.
+                d->sound.refreshing    = false;
+                d->sound.refreshPaused = false;
+
+                // Start the refresh thread.
+                d->sound.refreshThread = Sys_StartThread(Instance::SoundPlayer::RefreshThread, &d->sound);
+                if(!d->sound.refreshThread)
+                {
+                    throw Error("PluginDriver::makeChannel", "Failed starting the refresh thread");
+                }
+            }
+            return channel.release();
+        }
+        break;
 
     default: break;
+    }
+
+    return nullptr;
+}
+
+LoopResult PluginDriver::forAllChannels(PlaybackInterfaceType type,
+    std::function<LoopResult (Channel const &)> callback) const
+{
+    for(Channel const *ch : d->channels[type])
+    {
+        if(auto result = callback(*ch))
+            return result;
     }
     return LoopContinue;
 }

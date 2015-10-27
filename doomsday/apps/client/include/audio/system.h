@@ -405,6 +405,11 @@ public:  // Low-level driver/playback interfaces: ------------------------------
         virtual IPlayer *tryFindPlayer(de::String interfaceIdentityKey) const = 0;
 
         /**
+         * Construct a new playback Channel of the given @a type (note: ownership is retained).
+         */
+        virtual Channel *makeChannel(PlaybackInterfaceType type) = 0;
+
+        /**
          * Iterate through available playback channels of the given @a type, and execute
          * @a callback for each.
          */
@@ -500,13 +505,6 @@ public:
      * Perform any deinitializaion necessary before the driver is unloaded.
      */
     virtual void deinitialize() = 0;
-
-    virtual de::LoopResult forAllChannels(std::function<de::LoopResult (Channel const &)> callback) const = 0;
-
-    /**
-     * Construct a new Channel instance (note: ownership is retained).
-     */
-    virtual Channel *makeChannel() = 0;
 };
 
 class ISoundPlayer : public IPlayer

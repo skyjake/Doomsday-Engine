@@ -139,6 +139,8 @@ public:  //- Implements audio::System::IDriver: --------------------------------
     IPlayer &findPlayer   (de::String interfaceIdentityKey) const;
     IPlayer *tryFindPlayer(de::String interfaceIdentityKey) const;
 
+    Channel *makeChannel(PlaybackInterfaceType type);
+
     de::LoopResult forAllChannels(PlaybackInterfaceType type,
         std::function<de::LoopResult (Channel const &)> callback) const;
 

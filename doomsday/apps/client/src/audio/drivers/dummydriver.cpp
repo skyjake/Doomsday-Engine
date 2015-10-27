@@ -609,6 +609,11 @@ DENG2_PIMPL(DummyDriver)
 {
     bool initialized = false;
 
+    struct ChannelSet : public QList<Channel *>
+    {
+        ~ChannelSet() { DENG2_ASSERT(isEmpty()); }
+    } channels[PlaybackInterfaceTypeCount];
+
     struct CdPlayer : public IPlayer
     {
         bool initialized = false;
@@ -622,17 +627,7 @@ DENG2_PIMPL(DummyDriver)
         {
             initialized = false;
         }
-
-        Channel *makeChannel()
-        {
-            return new DummyDriver::CdChannel;
-        }
-
-        de::LoopResult forAllChannels(std::function<LoopResult (Channel const &)> callback) const
-        {
-            return LoopContinue;
-        }
-    };
+    } cd;
 
     struct MusicPlayer : public IPlayer
     {
@@ -647,34 +642,13 @@ DENG2_PIMPL(DummyDriver)
         {
             initialized = false;
         }
-
-        Channel *makeChannel()
-        {
-            return new DummyDriver::MusicChannel;
-        }
-
-        LoopResult forAllChannels(std::function<LoopResult (Channel const &)> callback) const
-        {
-            return LoopContinue;
-        }
-    };
+    } music;
 
     struct SoundPlayer : public ISoundPlayer
     {
         bool initialized = false;
 
-        struct Channels : QList<DummyDriver::SoundChannel *>
-        {
-            ~Channels() { DENG2_ASSERT(isEmpty()); }
-        } channels;
-
-       ~SoundPlayer() { DENG2_ASSERT(!initialized); }
-
-        void clearChannels()
-        {
-            qDeleteAll(channels);
-            channels.clear();
-        }
+        ~SoundPlayer() { DENG2_ASSERT(!initialized); }
 
         bool anyRateAccepted() const
         {
@@ -692,7 +666,6 @@ DENG2_PIMPL(DummyDriver)
             if(!initialized) return;
 
             initialized = false;
-            clearChannels();
         }
 
         void allowRefresh(bool allow)
@@ -709,41 +682,19 @@ DENG2_PIMPL(DummyDriver)
         {
             // Not supported.
         }
+    } sound;
 
-        Channel *makeChannel()
-        {
-            if(!initialized) return nullptr;
-            std::unique_ptr<DummyDriver::SoundChannel> channel(new DummyDriver::SoundChannel);
-            channels << channel.get();
-            return channel.release();
-        }
+    Instance(Public *i) : Base(i) {}
 
-        LoopResult forAllChannels(std::function<LoopResult (Channel const &)> callback) const
-        {
-            for(Channel const *ch : channels)
-            {
-                if(auto result = callback(*ch))
-                    return result;
-            }
-            return LoopContinue;
-        }
-    };
+    ~Instance() { DENG2_ASSERT(!initialized); }
 
-    CdPlayer cd;
-    MusicPlayer music;
-    SoundPlayer sound;
-
-    Instance(Public *i)
-        : Base(i)
-        , cd   ()
-        , music()
-        , sound()
-    {}
-
-    ~Instance()
+    void clearChannels()
     {
-        // Should have been deinitialized by now.
-        DENG2_ASSERT(!initialized);
+        for(ChannelSet &set : channels)
+        {
+            qDeleteAll(set);
+            set.clear();
+        }
     }
 };
 
@@ -771,6 +722,11 @@ void DummyDriver::deinitialize()
 
     // Already been here?
     if(!d->initialized) return;
+
+    d->cd.deinitialize();
+    d->music.deinitialize();
+    d->sound.deinitialize();
+    d->clearChannels();
 
     d->initialized = false;
 }
@@ -833,30 +789,56 @@ IPlayer *DummyDriver::tryFindPlayer(String interfaceIdentityKey) const
     return nullptr;  // Not found.
 }
 
-LoopResult DummyDriver::forAllChannels(PlaybackInterfaceType type,
-    std::function<LoopResult (Channel const &)> callback) const
+Channel *DummyDriver::makeChannel(PlaybackInterfaceType type)
 {
+    if(!d->initialized)
+        return nullptr;
+
     switch(type)
     {
     case AUDIO_ICD:
-        return d->cd.forAllChannels([&callback] (Channel const &ch)
+        // Initialize this interface now if we haven't already.
+        if(d->cd.initialize())
         {
-            return callback(ch);
-        });
+            std::unique_ptr<Channel> channel(new CdChannel);
+            d->channels[type] << channel.get();
+            return channel.release();
+        }
+        break;
 
     case AUDIO_IMUSIC:
-        return d->music.forAllChannels([&callback] (Channel const &ch)
+        // Initialize this interface now if we haven't already.
+        if(d->music.initialize())
         {
-            return callback(ch);
-        });
+            std::unique_ptr<Channel> channel(new MusicChannel);
+            d->channels[type] << channel.get();
+            return channel.release();
+        }
+        break;
 
     case AUDIO_ISFX:
-        return d->sound.forAllChannels([&callback] (Channel const &ch)
+        // Initialize this interface now if we haven't already.
+        if(d->sound.initialize())
         {
-            return callback(ch);
-        });
+            std::unique_ptr<Channel> channel(new SoundChannel);
+            d->channels[type] << channel.get();
+            return channel.release();
+        }
+        break;
 
     default: break;
+    }
+
+    return nullptr;
+}
+
+LoopResult DummyDriver::forAllChannels(PlaybackInterfaceType type,
+    std::function<LoopResult (Channel const &)> callback) const
+{
+    for(Channel *ch : d->channels[type])
+    {
+        if(auto result = callback(*ch))
+            return result;
     }
     return LoopContinue;
 }
