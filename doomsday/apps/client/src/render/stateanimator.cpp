@@ -259,11 +259,7 @@ DENG2_PIMPL(StateAnimator)
 
         // The main material variable should always exist. The "render" definition
         // may override this default value.
-        names.addText(VAR_MATERIAL, "default");
-
-        // The main material variable should always exist. The "render" definition
-        // may override this default value.
-        names.addText(VAR_MATERIAL, "default");
+        names.addText(VAR_MATERIAL, DEFAULT_MATERIAL);
 
         int passIndex = 0;
         auto const &def = names[VAR_ASSET].valueAsRecord();
