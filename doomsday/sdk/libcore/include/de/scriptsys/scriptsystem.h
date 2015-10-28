@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_SCRIPTSYSTEM_H
@@ -101,7 +101,7 @@ public:
      * @param name       Name of the module to look for.
      * @param localPath  Which absolute path to use as the local folder (as import path "").
      *
-     * @return
+     * @return Found source file.
      */
     File const &findModuleSource(String const &name, String const &localPath = "");
 

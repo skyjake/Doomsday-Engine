@@ -212,9 +212,6 @@ DENG2_PIMPL(StateAnimator)
         names.addText(VAR_ID, id).setReadOnly();
         names.add(VAR_ASSET).set(new RecordValue(App::asset(id).accessedRecord())).setReadOnly();
 
-        /// @todo VAR_SELF should point to the thing's namespace, or player's
-        /// namespace for psprites. -jk
-
         initVariables();
 
         // Set up the appearance.
