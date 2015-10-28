@@ -20,8 +20,9 @@
 #include "audio/mixer.h"
 
 #include "audio/system.h"
-#include <de/timer.h>
-#include <QList>
+#include <QMap>
+#include <QSet>
+#include <QtAlgorithms>
 
 // Debug visual headers:
 #include "audio/samplecache.h"
@@ -31,16 +32,13 @@
 #include "ui/ui_main.h"
 #include "def_main.h"           // ::defs
 #include <de/concurrency.h>
-#include <QList>
-#include <QSet>
-#include <QtAlgorithms>
 
 using namespace de;
 
 namespace audio {
 
 DENG2_PIMPL(Mixer::Track)
-, DENG2_OBSERVES(Channel, Deletion)
+, DENG2_OBSERVES(Deletable, Deletion)
 {
     Mixer &mixer;              ///< Owner of the track.
 
@@ -64,10 +62,10 @@ DENG2_PIMPL(Mixer::Track)
         DENG2_ASSERT(channels.isEmpty());
     }
 
-    void channelBeingDeleted(Channel &deleted)
+    void objectWasDeleted(Deletable *deleted)
     {
-        DENG2_ASSERT(channels.contains(&deleted));
-        self.removeChannel(&deleted);
+        DENG2_ASSERT(channels.contains(reinterpret_cast<Channel *>(deleted)));
+        self.removeChannel(reinterpret_cast<Channel *>(deleted));
     }
 
     DENG2_PIMPL_AUDIENCE(ChannelsRemapped)
@@ -118,7 +116,7 @@ Mixer::Track &Mixer::Track::addChannel(Channel *channel)
     if(d->channels.size() != sizeBefore)
     {
         // Start observing the channel so that we can unmap it automatically.
-        channel->audienceForDeletion() += d;
+        channel->audienceForDeletion += d;
 
         // Notify interested parties:
         DENG2_FOR_AUDIENCE2(ChannelsRemapped, i) i->trackChannelsRemapped(*this);
@@ -132,7 +130,7 @@ Mixer::Track &Mixer::Track::removeChannel(Channel *channel)
     d->channels.remove(channel);
     if(d->channels.size() != sizeBefore)
     {
-        channel->audienceForDeletion() -= d;
+        channel->audienceForDeletion -= d;
 
         // Notify interested parties:
         DENG2_FOR_AUDIENCE2(ChannelsRemapped, i) i->trackChannelsRemapped(*this);
@@ -153,11 +151,7 @@ DENG2_PIMPL_NOREF(Mixer)
 {
     struct Tracks : QMap<String /*key: trackId*/, Track *>
     {
-        ~Tracks()
-        {
-            // Should be empty by now.
-            DENG2_ASSERT(isEmpty());
-        }
+        ~Tracks() { DENG2_ASSERT(isEmpty()); }
     } tracks;
 };
 

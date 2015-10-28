@@ -23,6 +23,7 @@
 
 #include "dd_share.h"        // SoundEmitter
 #include "api_audiod_sfx.h"  // sfxsample_t
+#include <de/Deletable>
 #include <de/Observers>
 #include <de/Vector>
 
@@ -47,12 +48,9 @@ enum Positioning
  *
  * @ingroup audio
  */
-class Channel
+class Channel : public de::Deletable
 {
 public:
-    /// Audience to be notified when the channel is about to be deleted.
-    DENG2_DEFINE_AUDIENCE2(Deletion, void channelBeingDeleted(Channel &))
-
     enum PlayingMode {
         NotPlaying,
         Once,            ///< Play once and then discard the loaded data / stream.
@@ -60,9 +58,6 @@ public:
         Looping          ///< Keep looping.
     };
 
-public:
-    Channel();
-    virtual ~Channel();
     DENG2_AS_IS_METHODS()
 
     /**
@@ -79,7 +74,7 @@ public:
     virtual void play(PlayingMode mode = Once) = 0;
 
     /**
-     * Stop if playing and forget about any loaded data in the buffer.
+     * Stop if playing and forget about currently configured stream/waveform/whatever data.
      *
      * @note Just stopping doesn't affect refresh!
      */
@@ -93,23 +88,17 @@ public:
      * Change the volume factor to @a newVolume.
      */
     virtual Channel &setVolume(de::dfloat newVolume) = 0;
-
-private:
-    DENG2_PRIVATE(d)
 };
 
 class CdChannel : public Channel
 {
 public:
-    CdChannel() : Channel() {}
     virtual void bindTrack(de::dint track) = 0;
 };
 
 class MusicChannel : public Channel
 {
 public:
-    MusicChannel() : Channel() {}
-
     /// Returns @c true if playback is possible from a bound data buffer.
     virtual bool canPlayBuffer() const { return false; }
     virtual void *songBuffer(de::duint length) = 0;
@@ -121,9 +110,6 @@ public:
 
 class SoundChannel : public Channel
 {
-public:
-    SoundChannel();
-
 public:  //- Sound properties: ----------------------------------------------------------
 
     virtual SoundEmitter *emitter() const = 0;

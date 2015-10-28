@@ -22,10 +22,9 @@
 
 #include "audio/channel.h"
 #include "world/thinkers.h"
-#include "def_main.h"        // SF_* flags, remove me
 #include <de/Log>
 #include <de/Observers>
-#include <de/timer.h>        // TICSPERSEC
+#include <de/timer.h>
 #include <QList>
 #include <QtAlgorithms>
 
@@ -142,22 +141,18 @@ void DummyDriver::MusicChannel::bindFile(String const &sourcePath)
 
 // --------------------------------------------------------------------------------------
 
-/**
- * @note Loading must be done prior to setting properties, because the driver might defer
- * creation of the actual data buffer.
- */
 DENG2_PIMPL_NOREF(DummyDriver::SoundChannel)
 , DENG2_OBSERVES(System, FrameEnds)
 {
     bool noUpdate    = false;  ///< @c true if skipping updates (when stopped, before deletion).
 
     PlayingMode playingMode = { NotPlaying };
-    dint startTime   = 0;  ///< When playback last started (Ticks).
-    duint endTime    = 0;  ///< When playback last ended if not looping (Milliseconds).
+    dint startTime   = 0;      ///< When playback last started (Ticks).
+    duint endTime    = 0;      ///< When playback last ended if not looping (Milliseconds).
 
     Positioning positioning = { StereoPositioning };
-    dfloat frequency = 0;  ///< Frequency adjustment: 1.0 is normal.
-    dfloat volume    = 0;  ///< Sound volume: 1.0 is max.
+    dfloat frequency = 1;      ///< {0..1} Frequency/pitch adjustment factor.
+    dfloat volume    = 1;      ///< {0..1} Volume adjustment factor.
 
     struct EmitterData
     {
@@ -218,7 +213,8 @@ DENG2_PIMPL_NOREF(DummyDriver::SoundChannel)
             }
         }
     } buffer;
-    bool bufferIsValid = true;  ///< @c true when the Buffer matches the last requested format.
+
+    bool bufferIsValid = true;  ///< @c true when @var buffer matches the last requested format.
 
     Instance()
     {
@@ -233,11 +229,10 @@ DENG2_PIMPL_NOREF(DummyDriver::SoundChannel)
     }
 
     /**
-     * Flushes property changes to the assigned data buffer.
+     * Flushes property changes to the data buffer.
      *
-     * @param force  Usually updates are only necessary during playback. Use
-     *               @c true= to override this check and write the properties
-     *               regardless.
+     * @param force  Usually updates are only necessary during playback. Use @c true to
+     * override this check and write the properties regardless.
      */
     void updateBuffer(bool force = false)
     {

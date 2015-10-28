@@ -339,12 +339,12 @@ public:  // Low-level driver/playback interfaces: ------------------------------
         de::String description() const;
 
         /**
-         * Initialize the audio driver if necessary, ready for use.
+         * Initialize the driver if necessary, ready for use.
          */
         virtual void initialize() = 0;
 
         /**
-         * Deinitialize the audio driver if necessary, so that it may be unloaded.
+         * Deinitialize the driver if necessary, so that it may be unloaded.
          */
         virtual void deinitialize() = 0;
 
@@ -355,8 +355,8 @@ public:  // Low-level driver/playback interfaces: ------------------------------
          * @note An audio driver may have multiple identifiers, in which case they will
          * be returned here and delimited with ';' characters.
          *
-         * @todo Once the audio driver/interface configuration is stored persistently in
-         * Config we should remove the alternative identifiers at this time. -ds
+         * @todo Once the driver configuration is stored persistently in Config we should
+         * remove the alternative identifiers at this time. -ds
          *
          * @see title()
          */
@@ -369,7 +369,7 @@ public:  // Low-level driver/playback interfaces: ------------------------------
          */
         virtual de::String title() const = 0;
 
-    public:  // Playback Interfaces: ----------------------------------------------------
+    public:  //- Playback Channels: -----------------------------------------------------
 
         /// Referenced playback interface unknown. @ingroup errors
         DENG2_ERROR(UnknownInterfaceError);
@@ -401,9 +401,6 @@ public:  // Low-level driver/playback interfaces: ------------------------------
          */
         virtual QList<de::Record> listInterfaces() const = 0;
 
-        virtual IPlayer &findPlayer   (de::String interfaceIdentityKey) const = 0;
-        virtual IPlayer *tryFindPlayer(de::String interfaceIdentityKey) const = 0;
-
         /**
          * Construct a new playback Channel of the given @a type (note: ownership is retained).
          */
@@ -415,6 +412,11 @@ public:  // Low-level driver/playback interfaces: ------------------------------
          */
         virtual de::LoopResult forAllChannels(PlaybackInterfaceType type,
             std::function<de::LoopResult (Channel const &)> callback) const = 0;
+
+        // ---
+
+        virtual IPlayer &findPlayer   (de::String interfaceIdentityKey) const = 0;
+        virtual IPlayer *tryFindPlayer(de::String interfaceIdentityKey) const = 0;
     };
 
     /**
