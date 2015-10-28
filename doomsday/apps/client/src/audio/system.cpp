@@ -1513,9 +1513,6 @@ DENG2_PIMPL(System)
             channel.setFlags(channel.flags() | SFXCF_NO_ATTENUATION);
         }
 
-        // Update listener properties.
-        getSoundPlayer().listener(SFXLP_UPDATE, 0);
-
         // Load in the sample if needed.
         DENG2_ASSERT(channel.isValid());
         channel.load(sample);

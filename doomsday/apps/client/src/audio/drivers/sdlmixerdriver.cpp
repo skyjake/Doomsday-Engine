@@ -850,16 +850,6 @@ DENG2_PIMPL(SdlMixerDriver)
             }
         }
 
-        void listener(dint prop, dfloat value)
-        {
-            // Not supported.
-        }
-
-        void listenerv(dint prop, dfloat *values)
-        {
-            // Not supported.
-        }
-
         /**
          * This is a high-priority thread that periodically checks if the channels need to be
          * updated with more data. The thread terminates when it notices that the sound player

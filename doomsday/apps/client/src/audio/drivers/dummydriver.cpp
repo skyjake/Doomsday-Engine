@@ -672,16 +672,6 @@ DENG2_PIMPL(DummyDriver)
         {
             // We are not playing any audio so consider it done.
         }
-
-        void listener(dint prop, dfloat value)
-        {
-            // Not supported.
-        }
-        
-        void listenerv(dint prop, dfloat *values)
-        {
-            // Not supported.
-        }
     } sound;
 
     Instance(Public *i) : Base(i) {}

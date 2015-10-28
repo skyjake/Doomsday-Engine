@@ -527,18 +527,6 @@ public:
      * for streaming purposes).
      */
     virtual void allowRefresh(bool allow = true) = 0;
-
-    /**
-     * @param property - SFXLP_UNITS_PER_METER
-     *                 - SFXLP_DOPPLER
-     *                 - SFXLP_UPDATE
-     */
-    virtual void listener(de::dint prop, de::dfloat value) = 0;
-
-    /**
-     * Call SFXLP_UPDATE at the end of every channel update.
-     */
-    virtual void listenerv(de::dint prop, de::dfloat *values) = 0;
 };
 
 }  // namespace audio

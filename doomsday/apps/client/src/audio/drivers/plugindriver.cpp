@@ -544,6 +544,10 @@ void PluginDriver::SoundChannel::play(PlayingMode mode)
     d->observeListener(&System::get().worldStage().listener());
 
     // Flush deferred property value changes to the assigned data buffer.
+    if(d->driver.iSound().gen.Listener)
+    {
+        d->driver.iSound().gen.Listener(SFXLP_UPDATE, 0);
+    }
     d->updateBuffer(true/*force*/);
 
     // 3D sounds need a few extra properties set up.
@@ -998,20 +1002,6 @@ DENG2_PIMPL(PluginDriver)
             {
                 pauseRefresh();
             }
-        }
-
-        void listener(dint prop, dfloat value)
-        {
-            if(!initialized) return;
-            DENG2_ASSERT(gen.Listener);
-            gen.Listener(prop, value);
-        }
-
-        void listenerv(dint prop, dfloat *values)
-        {
-            if(!initialized) return;
-            DENG2_ASSERT(gen.Listenerv);
-            gen.Listenerv(prop, values);
         }
 
         /**
