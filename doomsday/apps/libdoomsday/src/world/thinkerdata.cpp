@@ -90,6 +90,9 @@ Record const &ThinkerData::info() const
     return d->info;
 }
 
+void ThinkerData::initBindings()
+{}
+
 #ifdef DENG2_DEBUG
 duint32 ThinkerData::DebugCounter::total = 0;
 ThinkerData::DebugValidator ensureAllPrivateDataIsReleased;

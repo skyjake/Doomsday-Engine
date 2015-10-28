@@ -35,10 +35,12 @@ public:
     MobjThinkerData();
     MobjThinkerData(MobjThinkerData const &other);
 
-    IData *duplicate() const;
+    IData *duplicate() const override;
 
     mobj_t *mobj();
     mobj_t const *mobj() const;
+
+    void initBindings() override;
 
     /**
      * Called whenever the current state of the mobj has changed.

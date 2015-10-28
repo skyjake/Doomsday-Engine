@@ -49,6 +49,13 @@ public:
     de::Record &info();
     de::Record const &info() const;
 
+    /**
+     * Initializes Doomsday Script bindings for the thinker. This is called
+     * when the thinker is added to the world, so mobjs have been assigned
+     * their IDs.
+     */
+    virtual void initBindings();
+
 private:
     DENG2_PRIVATE(d)
 

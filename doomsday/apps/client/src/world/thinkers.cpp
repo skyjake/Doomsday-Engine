@@ -429,7 +429,12 @@ void Thinker_InitPrivateData(thinker_t *th)
         th->d = new ThinkerData;
     }
 
-    if(th->d) THINKER_DATA(*th, ThinkerData).setThinker(th);
+    if(th->d)
+    {
+        auto &thinkerData = THINKER_DATA(*th, ThinkerData);
+        thinkerData.setThinker(th);
+        thinkerData.initBindings();
+    }
 }
 
 /**

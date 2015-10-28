@@ -19,7 +19,12 @@
 
 #include "doomsday/world/mobjthinkerdata.h"
 
+#include <de/ScriptSystem>
+#include <de/RecordValue>
+
 using namespace de;
+
+static String const VAR_ID("__id__");
 
 DENG2_PIMPL_NOREF(MobjThinkerData)
 {};
@@ -46,6 +51,19 @@ mobj_t *MobjThinkerData::mobj()
 mobj_t const *MobjThinkerData::mobj() const
 {
     return reinterpret_cast<mobj_t const *>(&thinker());
+}
+
+void MobjThinkerData::initBindings()
+{
+    ThinkerData::initBindings();
+
+    // World.Thing is the class for mobjs.
+    info().addSuperRecord(new RecordValue(ScriptSystem::get().nativeModule(
+            QStringLiteral("World")).subrecord(QStringLiteral("Thing"))));
+
+    // The ID is important because this is how the object is identified in
+    // script functions (relied upon by World.Thing).
+    info().addNumber(VAR_ID, mobj()->thinker.id).setReadOnly();
 }
 
 void MobjThinkerData::stateChanged(state_t const *)

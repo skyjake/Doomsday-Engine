@@ -80,6 +80,7 @@ set (SHARED_WITH_CLIENT
     ${src}/include/ui/infine/finaletextwidget.h
     ${src}/include/ui/infine/finalewidget.h
     ${src}/include/world/dmuargs.h
+    ${src}/include/world/bindings_world.h
     ${src}/include/world/blockmap.h
     ${src}/include/world/bsp/convexsubspaceproxy.h
     ${src}/include/world/bsp/edgetip.h
@@ -114,7 +115,7 @@ set (SHARED_WITH_CLIENT
     ${src}/include/world/surface.h
     ${src}/include/world/thinkers.h
     ${src}/include/world/vertex.h
-    ${src}/include/world/worldsystem.h    
+    ${src}/include/world/worldsystem.h
 
     ${src}/src/api_console.cpp
     ${src}/src/api_filesys.cpp
@@ -174,6 +175,7 @@ set (SHARED_WITH_CLIENT
     ${src}/src/ui/infine/infinesystem.cpp
     ${src}/src/world/api_map.cpp
     ${src}/src/world/api_mapedit.cpp
+    ${src}/src/world/bindings_world.cpp
     ${src}/src/world/blockmap.cpp
     ${src}/src/world/bsp/convexsubspaceproxy.cpp
     ${src}/src/world/bsp/hplane.cpp
@@ -213,7 +215,7 @@ set (SHARED_WITH_CLIENT
 )
 
 if (WIN32)
-    include_directories (../client/include/windows)    
+    include_directories (../client/include/windows)
     list (APPEND SHARED_WITH_CLIENT ${src}/src/windows/dd_winit.cpp)
 endif ()
 
@@ -225,7 +227,7 @@ if (UNIX)
         set (MAN_PAGE ${CMAKE_CURRENT_BINARY_DIR}/doomsday-server.6)
         list (APPEND SOURCES ${MAN_PAGE})
         deng_add_amedoc (MAN ${MAN_PAGE} ${DENG_SOURCE_DIR}/doc/server server.ame)
-    endif ()        
+    endif ()
 endif ()
 
 add_executable (server ${SOURCES} ${HEADERS} ${API_HEADERS} ${SHARED_WITH_CLIENT})
@@ -246,7 +248,7 @@ target_link_libraries (server
     lzss
 )
 
-# Server is installed as part of the "client" component instead of the 
+# Server is installed as part of the "client" component instead of the
 # default "tools".
 deng_install_tool (server client)
 

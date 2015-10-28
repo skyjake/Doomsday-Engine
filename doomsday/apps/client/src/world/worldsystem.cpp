@@ -29,6 +29,8 @@
 #include <de/Error>
 #include <de/Log>
 #include <de/Time>
+#include <de/Binder>
+#include <de/ScriptSystem>
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/exec.h>
@@ -61,6 +63,7 @@
 #include "world/p_ticker.h"
 #include "world/sky.h"
 #include "world/thinkers.h"
+#include "world/bindings_world.h"
 #include "edit_map.h"
 #include "Plane"
 #include "Sector"
@@ -298,6 +301,9 @@ static String cacheIdForMap(String const &sourcePath)
 
 DENG2_PIMPL(WorldSystem)
 {
+    Binder binder;               ///< Doomsday Script bindings for the World.
+    Record worldModule;
+
     Map *map = nullptr;          ///< Current map.
     Record fallbackMapInfo;      ///< Used when no effective MapInfo definition.
 
@@ -308,6 +314,9 @@ DENG2_PIMPL(WorldSystem)
 
     Instance(Public *i) : Base(i)
     {
+        world::initBindings(binder, worldModule);
+        ScriptSystem::get().addNativeModule("World", worldModule);
+
         // One time init of the fallback MapInfo definition.
         defn::MapInfo(fallbackMapInfo).resetToDefaults();
     }

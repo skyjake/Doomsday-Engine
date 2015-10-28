@@ -199,6 +199,8 @@ ClientMobjThinkerData::ClientMobjThinkerData(ClientMobjThinkerData const &other)
 
 void ClientMobjThinkerData::think()
 {
+    MobjThinkerData::think();
+
     d->initOnce();
     if(d->flags.testFlag(StateChanged))
     {
