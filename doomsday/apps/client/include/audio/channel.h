@@ -186,9 +186,11 @@ public:
     virtual de::dint startTime() const = 0;
 
     /**
-     * Returns the time in tics that the currently loaded sample last ended; otherwise @c 0.
+     * Returns the time in milliseconds when playback of the currently loaded sample has
+     * ended (or, will end if called before then); otherwise returns @c 0 if no sample is
+     * currently loaded.
      */
-    virtual de::dint endTime() const = 0;
+    virtual de::duint endTime() const = 0;
 
     virtual sfxsample_t const *samplePtr() const = 0;
 

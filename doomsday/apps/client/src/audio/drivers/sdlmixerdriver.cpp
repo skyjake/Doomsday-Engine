@@ -207,7 +207,7 @@ DENG2_PIMPL_NOREF(SdlMixerDriver::SoundChannel)
     SoundEmitter *emitter = nullptr;  ///< SoundEmitter for the sound, if any (not owned).
     Vector3d origin;                  ///< Emit from here (synced with emitter).
 
-    dint startTime = 0;               ///< When the assigned sound sample was last started.
+    dint startTime = 0;               ///< When the assigned sound sample was last started (Ticks).
 
     sfxbuffer_t buffer;
     bool valid = false;               ///< Set to @c true when in the valid state.
@@ -732,7 +732,7 @@ dint SdlMixerDriver::SoundChannel::startTime() const
     return d->startTime;
 }
 
-dint SdlMixerDriver::SoundChannel::endTime() const
+duint SdlMixerDriver::SoundChannel::endTime() const
 {
     return d->buffer.endTime;
 }

@@ -109,8 +109,8 @@ public:  //- Playback Channels: ------------------------------------------------
 
         de::dint bytes() const;
         de::dint rate() const;
-        de::dint startTime() const;
-        de::dint endTime() const;
+        de::dint startTime() const override;
+        de::duint endTime() const override;
 
         sfxsample_t const *samplePtr() const;
 

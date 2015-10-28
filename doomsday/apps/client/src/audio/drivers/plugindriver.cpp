@@ -260,7 +260,7 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundChannel)
 
     dint bytes = 1;
     sfxbuffer_t *buffer = nullptr;    ///< Assigned sound buffer, if any (not owned).
-    dint startTime = 0;               ///< When the assigned sound sample was last started.
+    dint startTime = 0;               ///< When the assigned sound sample was last started (Ticks).
 
     Instance(PluginDriver &owner) : driver(owner)
     {}
@@ -721,7 +721,7 @@ dint PluginDriver::SoundChannel::startTime() const
     return d->startTime;
 }
 
-dint PluginDriver::SoundChannel::endTime() const
+duint PluginDriver::SoundChannel::endTime() const
 {
     return isValid() && d->buffer ? d->buffer->endTime : 0;
 }

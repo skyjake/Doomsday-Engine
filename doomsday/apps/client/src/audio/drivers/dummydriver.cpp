@@ -155,10 +155,51 @@ DENG2_PIMPL_NOREF(DummyDriver::SoundChannel)
 
     SoundEmitter *emitter = nullptr;  ///< SoundEmitter for the sound, if any (not owned).
     Vector3d origin;                  ///< Emit from here (synced with emitter).
-    dint startTime = 0;               ///< When the assigned sound sample was last started.
 
-    sfxbuffer_t buffer;
-    bool valid = false;               ///< Set to @c true when in the valid state.
+    PlayingMode playingMode = { NotPlaying };
+    Positioning positioning = { StereoPositioning };
+
+    dint startTime = 0;               ///< When playback last started (Ticks).
+    duint endTime  = 0;               ///< When playback last ended if not looping (Milliseconds).
+
+    bool bufferIsValid = true;        ///< @c true when the buffer matches the last requested format.
+
+    struct Buffer
+    {
+        sfxsample_t *data   = nullptr;
+        bool needReloadData = false;
+
+        dint sampleBytes = 1;      ///< Bytes per sample (1 or 2).
+        dint sampleRate  = 11025;  ///< Number of samples per second.
+
+        duint milliseconds(dfloat frequency) const
+        {
+            if(!data) return 0;
+            return 1000 * data->numSamples / sampleRate * frequency;
+        }
+
+        void unload()
+        {
+            data = nullptr;
+            needReloadData = false;
+        }
+
+        void load(sfxsample_t *sample)
+        {
+            data = sample;
+            needReloadData = false;
+            // Now the buffer is ready for playing.
+        }
+
+        void reloadIfNeeded()
+        {
+            if(needReloadData)
+            {
+                DENG2_ASSERT(data);
+                load(data);
+            }
+        }
+    } buffer;
 
     Instance()
     {
@@ -170,9 +211,6 @@ DENG2_PIMPL_NOREF(DummyDriver::SoundChannel)
 
     ~Instance()
     {
-        // Ensure to stop playback, if we haven't already.
-        stop(buffer);
-
         // Cancel frame notifications.
         System::get().audienceForFrameEnds() -= this;
     }
@@ -203,116 +241,10 @@ DENG2_PIMPL_NOREF(DummyDriver::SoundChannel)
         if(flags & SFXCF_NO_UPDATE) return;
 
         // Updates are only necessary during playback.
-        if(!isPlaying(buffer) && !force) return;
-
-        // When tracking an emitter we need the latest origin coordinates.
-        updateOriginIfNeeded();
-
-        // Frequency is common to both 2D and 3D sounds.
-        setFrequency(buffer, frequency);
-
-        if(buffer.flags & SFXBF_3D)
+        if(playingMode != NotPlaying || force)
         {
-            // Volume is affected only by maxvol.
-            setVolume(buffer, volume * System::get().soundVolume() / 255.0f);
-            if(emitter && emitter == (ddmobj_base_t const *)System::get().worldStage().listener().trackedMapObject())
-            {
-                // Emitted by the listener object. Go to relative position mode
-                // and set the position to (0,0,0).
-                setPositioning(buffer, true/*head-relative*/);
-                setOrigin(buffer, Vector3d());
-            }
-            else
-            {
-                // Use the channel's map space origin.
-                setPositioning(buffer, false/*absolute*/);
-                setOrigin(buffer, origin);
-            }
-
-            // If the sound is emitted by the listener, speed is zero.
-            if(emitter && emitter != (ddmobj_base_t const *)System::get().worldStage().listener().trackedMapObject()
-               && Thinker_IsMobjFunc(emitter->thinker.function))
-            {
-                setVelocity(buffer, Vector3d(((mobj_t *)emitter)->mom)* TICSPERSEC);
-            }
-            else
-            {
-                // Not moving.
-                setVelocity(buffer, Vector3d());
-            }
-        }
-        else
-        {
-            dfloat dist = 0;
-            dfloat finalPan = 0;
-
-            // This is a 2D buffer.
-            if((flags & SFXCF_NO_ORIGIN) ||
-               (emitter && emitter == (ddmobj_base_t const *)System::get().worldStage().listener().trackedMapObject()))
-            {
-                dist = 1;
-                finalPan = 0;
-            }
-            else
-            {
-                // Calculate roll-off attenuation. [.125/(.125+x), x=0..1]
-                Ranged const attenRange = System::get().worldStage().listener().volumeAttenuationRange();
-
-                dist = System::get().worldStage().listener().distanceFrom(origin);
-
-                if(dist < attenRange.start || (flags & SFXCF_NO_ATTENUATION))
-                {
-                    // No distance attenuation.
-                    dist = 1;
-                }
-                else if(dist > attenRange.end)
-                {
-                    // Can't be heard.
-                    dist = 0;
-                }
-                else
-                {
-                    ddouble const normdist = (dist - attenRange.start) / attenRange.size();
-
-                    // Apply the linear factor so that at max distance there
-                    // really is silence.
-                    dist = .125f / (.125f + normdist) * (1 - normdist);
-                }
-
-                // And pan, too. Calculate angle from listener to emitter.
-                if(mobj_t const *listener = System::get().worldStage().listener().trackedMapObject())
-                {
-                    dfloat angle = (M_PointXYToAngle2(listener->origin[0], listener->origin[1],
-                                                      origin.x, origin.y)
-                                        - listener->angle)
-                                 / (dfloat) ANGLE_MAX * 360;
-
-                    // We want a signed angle.
-                    if(angle > 180)
-                        angle -= 360;
-
-                    // Front half.
-                    if(angle <= 90 && angle >= -90)
-                    {
-                        finalPan = -angle / 90;
-                    }
-                    else
-                    {
-                        // Back half.
-                        finalPan = (angle + (angle > 0 ? -180 : 180)) / 90;
-                        // Dampen sounds coming from behind.
-                        dist *= (1 + (finalPan > 0 ? finalPan : -finalPan)) / 2;
-                    }
-                }
-                else
-                {
-                    // No listener mobj? Can't pan, then.
-                    finalPan = 0;
-                }
-            }
-
-            setVolume(buffer, volume * dist * System::get().soundVolume() / 255.0f);
-            setPan(buffer, finalPan);
+            // When tracking an emitter we need the latest origin coordinates.
+            updateOriginIfNeeded();
         }
     }
 
@@ -320,98 +252,16 @@ DENG2_PIMPL_NOREF(DummyDriver::SoundChannel)
     {
         updateBuffer();
     }
-
-    void stop(sfxbuffer_t &buf)
-    {
-        // Clear the flag that tells the Sfx module about playing buffers.
-        buf.flags &= ~SFXBF_PLAYING;
-
-        // If the sound is started again, it needs to be reloaded.
-        buf.flags |= SFXBF_RELOAD;
-    }
-
-    void reset(sfxbuffer_t &buf)
-    {
-        stop(buf);
-        buf.sample = nullptr;
-        buf.flags &= ~SFXBF_RELOAD;
-    }
-
-    void load(sfxbuffer_t &buf, sfxsample_t *sample)
-    {
-        DENG2_ASSERT(sample != nullptr);
-
-        // Now the buffer is ready for playing.
-        buf.sample  = sample;
-        buf.written = sample->size;
-        buf.flags  &= ~SFXBF_RELOAD;
-    }
-
-    void play(sfxbuffer_t &buf)
-    {
-        // Playing is quite impossible without a sample.
-        if(!buf.sample) return;
-
-        // Do we need to reload?
-        if(buf.flags & SFXBF_RELOAD)
-        {
-            load(buf, buf.sample);
-        }
-
-        // Calculate the end time (milliseconds).
-        buf.endTime = Timer_RealMilliseconds() + buf.milliseconds();
-
-        // The buffer is now playing.
-        buf.flags |= SFXBF_PLAYING;
-    }
-
-    bool isPlaying(sfxbuffer_t &buf) const
-    {
-        return (buf.flags & SFXBF_PLAYING) != 0;
-    }
-
-    void refresh(sfxbuffer_t &buf)
-    {
-        // Can only be done if there is a sample and the buffer is playing.
-        if(!buf.sample || !isPlaying(buf))
-            return;
-
-        // Have we passed the predicted end of sample?
-        if(!(buf.flags & SFXBF_REPEAT) && Timer_RealMilliseconds() >= buf.endTime)
-        {
-            // Time for the sound to stop.
-            stop(buf);
-        }
-    }
-
-    void setFrequency(sfxbuffer_t &buf, dfloat newFrequency)
-    {
-        buf.freq = buf.rate * newFrequency;
-    }
-
-    // Unsupported sound buffer property manipulation:
-
-    void setOrigin(sfxbuffer_t &, Vector3d const &) {}
-    void setPan(sfxbuffer_t &, dfloat) {}
-    void setPositioning(sfxbuffer_t &, bool) {}
-    void setVelocity(sfxbuffer_t &, Vector3d const &) {}
-    void setVolume(sfxbuffer_t &, dfloat) {}
-    void setVolumeAttenuationRange(sfxbuffer_t &, Ranged const &) {}
 };
 
 DummyDriver::SoundChannel::SoundChannel()
     : audio::SoundChannel()
     , d(new Instance)
-{
-    format(StereoPositioning, 1, 11025);
-}
+{}
 
 Channel::PlayingMode DummyDriver::SoundChannel::mode() const
 {
-    if(!d->isPlaying(d->buffer))          return NotPlaying;
-    if(d->buffer.flags & SFXBF_REPEAT)    return Looping;
-    if(d->buffer.flags & SFXBF_DONT_STOP) return OnceDontDelete;
-    return Once;
+    return d->playingMode;
 }
 
 void DummyDriver::SoundChannel::play(PlayingMode mode)
@@ -420,39 +270,31 @@ void DummyDriver::SoundChannel::play(PlayingMode mode)
 
     if(mode == NotPlaying) return;
 
-    d->buffer.flags &= ~(SFXBF_REPEAT | SFXBF_DONT_STOP);
-    switch(mode)
+    d->buffer.reloadIfNeeded();
+    // Playing is quite impossible without a loaded sample.
+    if(!d->buffer.data)
     {
-    case Looping:        d->buffer.flags |= SFXBF_REPEAT;    break;
-    case OnceDontDelete: d->buffer.flags |= SFXBF_DONT_STOP; break;
-    default: break;
+        throw Error("DummyDriver::SoundChannel", "No sample is bound");
     }
 
     // Flush deferred property value changes to the assigned data buffer.
     d->updateBuffer(true/*force*/);
 
-    // 3D sounds need a few extra properties set up.
-    if(d->buffer.flags & SFXBF_3D)
-    {
-        // Configure the attentuation distances.
-        // This is only done once, when the sound is first played (i.e., here).
-        if(d->flags & SFXCF_NO_ATTENUATION)
-        {
-            d->setVolumeAttenuationRange(d->buffer, Ranged(10000, 20000));
-        }
-        else
-        {
-            d->setVolumeAttenuationRange(d->buffer, System::get().worldStage().listener().volumeAttenuationRange());
-        }
-    }
+    // Playback begins!
+    d->playingMode = mode;
 
-    d->play(d->buffer);
-    d->startTime = Timer_Ticks();  // Note the current time.
+    // Remember the current time.
+    d->startTime = Timer_Ticks();
+
+    // Predict when the first/only playback cycle will end (in milliseconds).
+    d->endTime = Timer_RealMilliseconds() + d->buffer.milliseconds(d->frequency);
 }
 
 void DummyDriver::SoundChannel::stop()
 {
-    d->stop(d->buffer);
+    // Playback ends forthwith!
+    d->playingMode = NotPlaying;
+    d->buffer.needReloadData = true;  // If subsequently started again.
 }
 
 bool DummyDriver::SoundChannel::isPaused() const
@@ -487,7 +329,7 @@ Vector3d DummyDriver::SoundChannel::origin() const
 
 Positioning DummyDriver::SoundChannel::positioning() const
 {
-    return (d->buffer.flags & SFXBF_3D) ? AbsolutePositioning : StereoPositioning;
+    return d->positioning;
 }
 
 dfloat DummyDriver::SoundChannel::volume() const
@@ -531,61 +373,66 @@ void DummyDriver::SoundChannel::setFlags(dint newFlags)
 
 void DummyDriver::SoundChannel::update()
 {
-    d->refresh(d->buffer);
+    // Playback of non-looping sounds must stop when the first playback cycle ends.
+    if(isPlaying() && !isPlayingLooped() && Timer_RealMilliseconds() >= d->endTime)
+    {
+        stop();
+    }
 }
 
 void DummyDriver::SoundChannel::reset()
 {
-    d->reset(d->buffer);
+    stop();
+    d->buffer.unload();
 }
 
 bool DummyDriver::SoundChannel::format(Positioning positioning, dint bytesPer, dint rate)
 {
     // Do we need to (re)configure the sample data buffer?
-    if(this->positioning() != positioning
-       || d->buffer.rate   != rate
-       || d->buffer.bytes  != bytesPer)
+    if(   d->positioning        != positioning
+       || d->buffer.sampleRate  != rate
+       || d->buffer.sampleBytes != bytesPer)
     {
         stop();
         DENG2_ASSERT(!isPlaying());
 
+        d->positioning = positioning;
+
         de::zap(d->buffer);
-        d->buffer.bytes = bytesPer;
-        d->buffer.rate  = rate;
-        d->buffer.flags = positioning == AbsolutePositioning ? SFXBF_3D : 0;
-        d->buffer.freq  = rate;  // Modified by calls to Set(SFXBP_FREQUENCY).
-        d->valid = true;
+        d->buffer.sampleBytes = bytesPer;
+        d->buffer.sampleRate  = rate;
+        d->bufferIsValid = true;
     }
     return isValid();
 }
 
 bool DummyDriver::SoundChannel::isValid() const
 {
-    return d->valid;
+    return d->bufferIsValid;
 }
 
 void DummyDriver::SoundChannel::load(sfxsample_t const &sample)
 {
     // Don't reload if a sample with the same sound ID is already loaded.
-    if(!d->buffer.sample || d->buffer.sample->soundId != sample.soundId)
+    if(!d->buffer.data || d->buffer.data->soundId != sample.soundId)
     {
-        d->load(d->buffer, &const_cast<sfxsample_t &>(sample));
+        d->buffer.load(&const_cast<sfxsample_t &>(sample));
     }
 }
 
 dint DummyDriver::SoundChannel::bytes() const
 {
-    return d->buffer.bytes;
+    return d->buffer.sampleBytes;
 }
 
 dint DummyDriver::SoundChannel::rate() const
 {
-    return d->buffer.rate;
+    return d->buffer.sampleRate;
 }
 
 sfxsample_t const *DummyDriver::SoundChannel::samplePtr() const
 {
-    return d->buffer.sample;
+    return d->buffer.data;
 }
 
 dint DummyDriver::SoundChannel::startTime() const
@@ -593,9 +440,9 @@ dint DummyDriver::SoundChannel::startTime() const
     return d->startTime;
 }
 
-dint DummyDriver::SoundChannel::endTime() const
+duint DummyDriver::SoundChannel::endTime() const
 {
-    return d->buffer.endTime;
+    return d->endTime;
 }
 
 void DummyDriver::SoundChannel::updateEnvironment()
