@@ -1480,6 +1480,10 @@ Channel *PluginDriver::makeChannel(PlaybackInterfaceType type)
                     // Change the primary buffer format to match the channel format.
                     dfloat pformat[2] = { dfloat(::sfxBits), dfloat(::sfxRate) };
                     d->sound.gen.Listenerv(SFXLP_PRIMARY_FORMAT, pformat);
+
+                    dfloat rev[4] = { 0, 0, 0, 0 };
+                    d->sound.gen.Listenerv(SFXLP_REVERB, rev);
+                    d->sound.gen.Listener(SFXLP_UPDATE, 0);
                 }
 
                 // Start the channel refresh thread. It will stop on its own when it notices that

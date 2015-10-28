@@ -51,6 +51,12 @@ public:
     static void consoleRegister();
 
     /**
+     * Toggle the use of audio::Environment characteristics for the listener according to
+     * @a enableOrDisable, notifying the EnvironmentChange audience if changed.
+     */
+    void useEnvironment(bool enableOrDisable);
+
+    /**
      * Returns the effective audio::Environment at the listener's current position. Whenever
      * an environment change occurs the EnvironmentChange audience is notified.
      */

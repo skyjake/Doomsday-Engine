@@ -41,6 +41,7 @@ DENG2_PIMPL(Listener)
 , DENG2_OBSERVES(SectorCluster, AudioEnvironmentChange)
 , DENG2_OBSERVES(SectorCluster, Deletion)
 {
+    bool useEnvironment    = false;
     mobj_t *tracking       = nullptr;
     SectorCluster *cluster = nullptr;
 
@@ -66,7 +67,7 @@ DENG2_PIMPL(Listener)
 
         cluster = newCluster;
 
-        if(cluster)
+        if(cluster && useEnvironment)
         {
             cluster->audienceForAudioEnvironmentChange() += this;
             cluster->audienceForDeletion()               += this;
@@ -78,6 +79,8 @@ DENG2_PIMPL(Listener)
     /// @todo MapObject should produce the notification we want. -ds
     void mapObjectBspLeafChanged(mobj_t &mob)
     {
+        DENG2_ASSERT(useEnvironment);
+
         // Ignore if we aren't tracking this particular map-object.
         if(tracking != &mob) return;
 
@@ -91,20 +94,24 @@ DENG2_PIMPL(Listener)
         {
             tracking = nullptr;
             cluster  = nullptr;
-            notifyEnvironmentChanged();
+
+            if(useEnvironment)
+            {
+                notifyEnvironmentChanged();
+            }
         }
     }
 
     void sectorClusterAudioEnvironmentChanged(SectorCluster &changed)
     {
-        DENG2_ASSERT(tracking && cluster == &changed);
+        DENG2_ASSERT(useEnvironment && tracking && cluster == &changed);
         DENG2_UNUSED(changed);
         notifyEnvironmentChanged();
     }
 
     void sectorClusterBeingDeleted(SectorCluster const &deleting)
     {
-        DENG2_ASSERT(tracking && cluster == &deleting);
+        DENG2_ASSERT(useEnvironment && tracking && cluster == &deleting);
         DENG2_UNUSED(deleting);
         observeCluster(nullptr);
     }
@@ -130,6 +137,8 @@ Environment Listener::environment()
     LOG_AS("audio::Listener");
     if(d->cluster)
     {
+        DENG2_ASSERT(d->useEnvironment);
+
         // It may be necessary to recalculate the Environment (cached).
         Environment env = d->cluster->audioEnvironment();
 
@@ -197,24 +206,39 @@ void Listener::setTrackedMapObject(mobj_t *mapObjectToTrack)
 
     if(d->tracking)
     {
-        Mob_Map(*d->tracking).audienceForDeletion              () -= d;
-        Mob_Map(*d->tracking).audienceForMapObjectBspLeafChange() -= d;
+        Mob_Map(*d->tracking).audienceForDeletion() -= d;
+        if(d->useEnvironment)
+        {
+            Mob_Map(*d->tracking).audienceForMapObjectBspLeafChange() -= d;
+        }
     }
 
     d->tracking = mapObjectToTrack;
 
     if(d->tracking)
     {
-        Mob_Map(*d->tracking).audienceForMapObjectBspLeafChange() += d;
-        Mob_Map(*d->tracking).audienceForDeletion              () += d;
+        if(d->useEnvironment)
+        {
+            Mob_Map(*d->tracking).audienceForMapObjectBspLeafChange() += d;
+        }
+        Mob_Map(*d->tracking).audienceForDeletion() += d;
     }
 
-    d->observeCluster(d->tracking ? Mobj_ClusterPtr(*d->tracking) : nullptr);
+    d->observeCluster(d->useEnvironment && d->tracking ? Mobj_ClusterPtr(*d->tracking) : nullptr);
+}
+
+void Listener::useEnvironment(bool enableOrDisable)
+{
+    if(d->useEnvironment != enableOrDisable)
+    {
+        d->useEnvironment = enableOrDisable;
+        d->observeCluster(d->useEnvironment && d->tracking ? Mobj_ClusterPtr(*d->tracking) : nullptr);
+    }
 }
 
 void Listener::requestEnvironmentUpdate()
 {
-    //if(!d->tracking) return;
+    if(!d->useEnvironment) return;
 
     d->notifyEnvironmentChanged();
 }

@@ -195,8 +195,8 @@ DENG2_PIMPL(System)
         Record *_def = nullptr;
 
     public:
-        IPlayer *player = nullptr;
         IDriver *driver = nullptr;
+        IPlayer *player = nullptr;
 
         ActiveInterface(Record &def, IDriver *driver, IPlayer *player)
             : _def(&def), driver(driver), player(player)
@@ -706,18 +706,6 @@ DENG2_PIMPL(System)
         }
     }
 
-    void disableEnvironments()
-    {
-        worldStage.listener().requestEnvironmentUpdate();
-
-        if(!soundAvail) return;
-
-        dfloat rev[4] = { 0, 0, 0, 0 };
-        ISoundPlayer &soundPlayer = getSoundPlayer();
-        soundPlayer.listenerv(SFXLP_REVERB, rev);
-        soundPlayer.listener(SFXLP_UPDATE, 0);
-    }
-
     /**
      * Perform initialization for sound playback.
      */
@@ -761,7 +749,7 @@ DENG2_PIMPL(System)
         soundAvail = initialized >= 1;
 
         // Disable environmental audio effects by default.
-        disableEnvironments();
+        worldStage.listener().useEnvironment(false);
     }
 
     /**
@@ -866,6 +854,8 @@ DENG2_PIMPL(System)
             case IDriver::AUDIO_ISFX:
                 if((*mixer)["fx"].channelCount() == 0)
                 {
+                    worldStage.listener().useEnvironment(sfx3D);
+
                     dint const maxChannels = de::clamp(1, maxSoundChannels(), CHANNEL_COUNT_MAX);
                     dint numStereo = sfx3D ? CHANNEL_2DCOUNT : maxChannels;  // The rest will be 3D.
                     for(dint i = 0; i < maxChannels; ++i)
@@ -1609,7 +1599,7 @@ DENG2_PIMPL(System)
         if(old3DMode)
         {
             // Disable environmental audio effects - we're going stereo.
-            disableEnvironments();
+            worldStage.listener().useEnvironment(false);
         }
         old3DMode = sfx3D;
     }
@@ -2146,14 +2136,16 @@ void System::reset()
 
     if(d->soundAvail)
     {
-        d->worldStage.listener().requestEnvironmentUpdate();
-
         // Stop all currently playing sound channels.
         mixer()["fx"].forAllChannels([] (Channel &ch)
         {
             ch.stop();
             return LoopContinue;
         });
+
+        // Force an Environment update for all channels.
+        d->worldStage.listener().setTrackedMapObject(nullptr);
+        d->worldStage.listener().setTrackedMapObject(getListenerMob());
 
         // Clear the sample cache.
         d->sampleCache.clear();
@@ -2197,9 +2189,9 @@ void System::endFrame()
     /// @todo Should observe. -ds
     d->worldStage.listener().setTrackedMapObject(getListenerMob());
 
-    // Update environmental audio characteristics of all channels currently playing sounds
-    // affected by the world-Stage Listener.
-    if(sfx3D && soundPlaybackAvailable() && !BusyMode_Active())
+    // Instruct currently playing Channels to write any effective Environment changes if
+    // necessary (from the configured Listener of the Stage they are playing on).
+    if(sfx3D && !BusyMode_Active())
     {
         mixer()["fx"].forAllChannels([] (Channel &base)
         {
