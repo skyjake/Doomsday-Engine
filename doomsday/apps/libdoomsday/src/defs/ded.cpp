@@ -55,17 +55,17 @@ float ded_ptcstage_t::particleRadius(int ptcIDX) const
 }
 
 ded_s::ded_s()
-    : flags      (names.addRecord("flags"))
-    , episodes   (names.addRecord("episodes"))
-    , things     (names.addRecord("things"))
-    , states     (names.addRecord("states"))
-    , materials  (names.addRecord("materials"))
-    , models     (names.addRecord("models"))
-    , skies      (names.addRecord("skies"))
-    , musics     (names.addRecord("musics"))
-    , mapInfos   (names.addRecord("mapInfos"))
-    , finales    (names.addRecord("finales"))
-    , decorations(names.addRecord("decorations"))
+    : flags      (names.addSubrecord("flags"))
+    , episodes   (names.addSubrecord("episodes"))
+    , things     (names.addSubrecord("things"))
+    , states     (names.addSubrecord("states"))
+    , materials  (names.addSubrecord("materials"))
+    , models     (names.addSubrecord("models"))
+    , skies      (names.addSubrecord("skies"))
+    , musics     (names.addSubrecord("musics"))
+    , mapInfos   (names.addSubrecord("mapInfos"))
+    , finales    (names.addSubrecord("finales"))
+    , decorations(names.addSubrecord("decorations"))
 {
     decorations.addLookupKey("texture");
     episodes.addLookupKey("id");

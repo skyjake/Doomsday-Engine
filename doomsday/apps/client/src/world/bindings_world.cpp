@@ -50,7 +50,7 @@ void initBindings(Binder &binder, Record &worldModule)
 {
     // Thing
     {
-        Record &thing = worldModule.addRecord("Thing");
+        Record &thing = worldModule.addSubrecord("Thing");
         binder.init(thing)
                 << DENG2_FUNC_NOARG(Thing_Health, "health");
     }

@@ -159,8 +159,20 @@ public:
 
     /**
      * Determines if the record contains a subrecord named @a subrecordName.
+     * Subrecords are owned by this record.
      */
     bool hasSubrecord(String const &subrecordName) const;
+
+    /**
+     * Determines if the record contains a variable @a recordName that
+     * references or owns a record. Records can be descended into with the
+     * member (.) notation.
+     *
+     * @param recordName  Variable name.
+     *
+     * @return @c true if the variable points to a record.
+     */
+    bool hasRecord(String const &recordName) const;
 
     /**
      * Adds a new variable to the record.
@@ -303,7 +315,7 @@ public:
      *
      * @return  The new subrecord.
      */
-    Record &addRecord(String const &name);
+    Record &addSubrecord(String const &name);
 
     /**
      * Removes a subrecord from the record.

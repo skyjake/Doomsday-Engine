@@ -115,7 +115,7 @@ DENG2_PIMPL(ScriptedInfo)
                 if(!ns.has(varName))
                 {
                     // If it doesn't exist yet, make sure it does.
-                    ns.addRecord(varName);
+                    ns.addSubrecord(varName);
                 }
                 ns.add("self") = new RecordValue(ns.subrecord(varName));
                 needRemoveSelf = true;
@@ -319,7 +319,7 @@ DENG2_PIMPL(ScriptedInfo)
                 // Create the block record if it doesn't exist.
                 if(!ns.has(varName))
                 {
-                    ns.addRecord(varName);
+                    ns.addSubrecord(varName);
                 }
                 Record &blockRecord = ns[varName];
 

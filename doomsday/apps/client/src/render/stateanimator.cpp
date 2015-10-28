@@ -278,7 +278,7 @@ DENG2_PIMPL(StateAnimator)
 
                 indexForPassName[passName] = passIndex++;
 
-                Record &passRec = names.addRecord(passName);
+                Record &passRec = names.addSubrecord(passName);
                 passRec.addBoolean(VAR_ENABLED,
                                    ScriptedInfo::isTrue(passDef, DEF_ENABLED, true))
                        .audienceForChange() += this;

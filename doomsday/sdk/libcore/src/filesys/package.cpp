@@ -203,7 +203,7 @@ void Package::parseMetadata(File &packageFile) // static
         // The package's information is stored in a subrecord.
         if(!packageFile.info().has(PACKAGE))
         {
-            packageFile.info().addRecord(PACKAGE);
+            packageFile.info().addSubrecord(PACKAGE);
         }
 
         Record &metadata        = packageFile.info().subrecord(PACKAGE);

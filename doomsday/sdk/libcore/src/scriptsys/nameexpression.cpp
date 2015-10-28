@@ -190,7 +190,7 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
        (flags().testFlag(NewSubrecordIfNotInScope) && !variable))
     {
         // Replaces existing member with this identifier.
-        Record &record = spaces.front()->addRecord(d->identifier);
+        Record &record = spaces.front()->addSubrecord(d->identifier);
         return new RecordValue(record);
     }
 

@@ -62,7 +62,7 @@ void SavedSession::Metadata::parse(String const &source)
         info.parse(source);
 
         // Rebuild the game rules subrecord.
-        Record &rules = addRecord("gameRules");
+        Record &rules = addSubrecord("gameRules");
         foreach(Info::Element const *elem, info.root().contentsInOrder())
         {
             if(Info::KeyElement const *key = elem->maybeAs<Info::KeyElement>())
