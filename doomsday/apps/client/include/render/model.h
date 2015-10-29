@@ -31,6 +31,8 @@ namespace render {
 /**
  * Drawable model with client-specific extra information, e.g., animation
  * sequences.
+ *
+ * @todo Refactor: This could look more like a proper class, yes? -jk
  */
 struct Model : public de::ModelDrawable
 {

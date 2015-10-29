@@ -76,9 +76,15 @@ DENG2_PIMPL(ClientMobjThinkerData)
         return Def_GetStateName(self.mobj()->state);
     }
 
+    bool isStateInCurrentSequence(state_t const *previous)
+    {
+        if(!previous) return false;
+        return Def_GetState(previous->nextState) == self.mobj()->state;
+    }
+
     String modelId() const
     {
-        return String("model.thing.%1").arg(thingName().toLower());
+        return QStringLiteral("model.thing.%1").arg(thingName().toLower());
     }
 
     static ModelBank &modelBank()
@@ -145,11 +151,16 @@ DENG2_PIMPL(ClientMobjThinkerData)
      * a less than 1.0 probability for starting. The sequence may be identified either by
      * name ("walk") or index (for example, "#3").
      */
-    void triggerStateAnimations()
+    void triggerStateAnimations(state_t const *state = nullptr)
     {
-        if(animator)
+        if(flags.testFlag(StateChanged))
         {
-            animator->triggerByState(stateName());
+            flags &= ~StateChanged;
+            if(animator)
+            {
+                animator->triggerByState(state? Def_GetStateName(state) :
+                                                stateName());
+            }
         }
     }
 
@@ -202,11 +213,7 @@ void ClientMobjThinkerData::think()
     MobjThinkerData::think();
 
     d->initOnce();
-    if(d->flags.testFlag(StateChanged))
-    {
-        d->flags &= ~StateChanged;
-        d->triggerStateAnimations();
-    }
+    d->triggerStateAnimations(); // with current state
     d->triggerMovementAnimations();
     d->advanceAnimations(SECONDSPERTIC); // mobjs think only on sharp ticks
 }
@@ -257,6 +264,22 @@ void ClientMobjThinkerData::stateChanged(state_t const *previousState)
     bool const justSpawned = !previousState;
 
     d->initOnce();
-    d->flags |= StateChanged; // Will trigger animations during think.
+    if(d->flags.testFlag(StateChanged) && d->isStateInCurrentSequence(previousState))
+    {
+        /*
+         * Mobj state has already been flagged as changed, but triggers for the
+         * previous state haven't fired yet. Because it's the same sequence, it
+         * might be the one that triggers an animation, so let's not miss the
+         * trigger.
+         */
+        d->triggerStateAnimations(previousState);
+    }
+    /*
+     * Trigger animations later during think(). This is done to avoid multiple
+     * state changes during a single tick from interrupting longer sequences,
+     * for instance allowing consecutive attack sequences to play as a single,
+     * long sequence (e.g., Hexen's Ettin).
+     */
+    d->flags |= StateChanged;
     d->triggerParticleGenerators(justSpawned);
 }

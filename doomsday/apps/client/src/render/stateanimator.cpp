@@ -55,6 +55,8 @@ static int const ANIM_DEFAULT_PRIORITY = 1;
 DENG2_PIMPL(StateAnimator)
 , DENG2_OBSERVES(Variable, Change)
 {
+    enum BindOperation { Bind, Unbind };
+
     /**
      * Specialized animation sequence state for a running animation.
      */
@@ -221,16 +223,14 @@ DENG2_PIMPL(StateAnimator)
         }
         appearance.programCallback = [this] (GLProgram &program, ModelDrawable::ProgramBinding binding)
         {
-            self.bindUniforms(program,
-                binding == ModelDrawable::AboutToBind? StateAnimator::Bind :
-                                                       StateAnimator::Unbind);
+            bindUniforms(program,
+                binding == ModelDrawable::AboutToBind? Bind : Unbind);
         };
         appearance.passCallback = [this] (ModelDrawable::Pass const &pass, ModelDrawable::PassState state)
         {
-            self.bindPassUniforms(*self.model().currentProgram(),
+            bindPassUniforms(*self.model().currentProgram(),
                 pass.name,
-                state == ModelDrawable::PassBegun? StateAnimator::Bind :
-                                                   StateAnimator::Unbind);
+                state == ModelDrawable::PassBegun? Bind : Unbind);
         };
     }
 
@@ -494,6 +494,47 @@ DENG2_PIMPL(StateAnimator)
         }
     }
 
+    /**
+     * Binds or unbinds uniforms that apply to all rendering passes.
+     *
+     * @param program    Program where bindings are made.
+     * @param operation  Bind or unbind.
+     */
+    void bindUniforms(de::GLProgram &program, BindOperation operation) const
+    {
+        bindPassUniforms(program, PASS_GLOBAL, operation);
+    }
+
+    /**
+     * Binds or unbinds uniforms that apply to a single rendering pass.
+     *
+     * @param program    Program where bindings are made.
+     * @param passName   Name of the rendering pass. The render variables are
+     *                   named, e.g., "render.(passName).uName".
+     * @param operation  Bind or unbind.
+     */
+    void bindPassUniforms(de::GLProgram &program,
+                          de::String const &passName,
+                          BindOperation operation) const
+    {
+        auto const vars = passVars.constFind(passName);
+        if(vars != passVars.constEnd())
+        {
+            for(auto i : vars.value())
+            {
+                if(operation == Bind)
+                {
+                    i->updateUniform();
+                    program.bind(*i->uniform);
+                }
+                else
+                {
+                    program.unbind(*i->uniform);
+                }
+            }
+        }
+    }
+
     int animationId(String const &name) const
     {
         return ModelRenderer::identifierFromText(name, [this] (String const &name) {
@@ -542,7 +583,7 @@ void StateAnimator::triggerByState(String const &stateName)
     if(found == stateAnims->constEnd()) return;
 
     LOG_AS("StateAnimator");
-    LOGDEV_GL_XVERBOSE("triggerByState: ") << stateName;
+    //LOGDEV_GL_XVERBOSE("triggerByState: ") << stateName;
 
     d->currentStateName = stateName;
 
@@ -608,7 +649,8 @@ void StateAnimator::triggerByState(String const &stateName)
             continue;
         }
 
-        LOG_GL_VERBOSE("Starting animation: " _E(b)) << seq.name;
+        /*LOG_GL_XVERBOSE("Mobj %i starting animation: " _E(b))
+                << d->names.geti("self.__id__") << seq.name;*/
         break;
     }
 }
@@ -697,32 +739,6 @@ ddouble StateAnimator::currentTime(int index) const
 ModelDrawable::Appearance const &StateAnimator::appearance() const
 {
     return d->appearance;
-}
-
-void StateAnimator::bindUniforms(GLProgram &program, BindOperation operation) const
-{
-    bindPassUniforms(program, PASS_GLOBAL, operation);
-}
-
-void StateAnimator::bindPassUniforms(GLProgram &program, String const &passName,
-                                     BindOperation operation) const
-{
-    auto const vars = d->passVars.constFind(passName);
-    if(vars != d->passVars.constEnd())
-    {
-        for(auto i : vars.value())
-        {
-            if(operation == Bind)
-            {
-                i->updateUniform();
-                program.bind(*i->uniform);
-            }
-            else
-            {
-                program.unbind(*i->uniform);
-            }
-        }
-    }
 }
 
 } // namespace render

@@ -57,28 +57,6 @@ public:
 
     de::ModelDrawable::Appearance const &appearance() const;
 
-    enum BindOperation { Bind, Unbind };
-
-    /**
-     * Binds or unbinds uniforms that apply to all rendering passes.
-     *
-     * @param program    Program where bindings are made.
-     * @param operation  Bind or unbind.
-     */
-    void bindUniforms(de::GLProgram &program, BindOperation operation) const;
-
-    /**
-     * Binds or unbinds uniforms that apply to a single rendering pass.
-     *
-     * @param program    Program where bindings are made.
-     * @param passName   Name of the rendering pass. The render variables are
-     *                   named, e.g., "render.(passName).uName".
-     * @param operation  Bind or unbind.
-     */
-    void bindPassUniforms(de::GLProgram &program,
-                          de::String const &passName,
-                          BindOperation operation) const;
-
 private:
     DENG2_PRIVATE(d)
 };
