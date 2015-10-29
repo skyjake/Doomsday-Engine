@@ -239,9 +239,6 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundChannel)
 , DENG2_OBSERVES(Listener, Deletion)
 , DENG2_OBSERVES(System,   FrameEnds)
 {
-    /// No data buffer is assigned. @ingroup errors
-    DENG2_ERROR(MissingBufferError);
-
     PluginDriver &driver;          ///< Owning driver.
     bool noUpdate    = false;      ///< @c true if skipping updates (when stopped, before deletion).
 
@@ -281,11 +278,21 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundChannel)
 
     struct Buffer
     {
+        /// No data is attached. @ingroup errors
+        DENG2_ERROR(MissingDataError);
+
         dint sampleBytes  = 1;        ///< Bytes per sample (1 or 2).
         dint sampleRate   = 11025;    ///< Number of samples per second.
         sfxbuffer_t *data = nullptr;  ///< External data buffer, if any (not owned).
 
         ~Buffer() { DENG2_ASSERT(data == nullptr); }
+
+        sfxbuffer_t &getData() const
+        {
+            if(data) return *data;
+            /// @throw MissingDataError  No data is currently attached.
+            throw MissingDataError("audio::PluginDriver::SoundChannel::Instance", "No data attached");
+        }
     } buffer;
 
     Instance(PluginDriver &owner) : driver(owner) {}
@@ -294,61 +301,24 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundChannel)
     {
         // Stop observing the configured listener (if we haven't already).
         observeListener(nullptr);
-
-        setBufferData(nullptr);
-        DENG2_ASSERT(buffer.data == nullptr);
-    }
-
-    sfxbuffer_t &getBufferData() const
-    {
-        if(buffer.data) return *buffer.data;
-        /// @throw MissingBufferError  No sound buffer is currently assigned.
-        throw MissingBufferError("audio::PluginDriver::SoundChannel::Instance", "No sample buffer is assigned");
     }
 
     /**
-     * Replace the sample buffer with @a data.
-     */
-    void setBufferData(sfxbuffer_t *data)
-    {
-        if(buffer.data == data) return;
-
-        stop();
-
-        if(buffer.data)
-        {
-            // Cancel frame notifications - we'll soon have no buffer to update.
-            System::get().audienceForFrameEnds() -= this;
-
-            driver.iSound().gen.Destroy(buffer.data);
-        }
-
-        buffer.data = data;
-
-        if(buffer.data)
-        {
-            // We want notification when the frame ends in order to flush deferred property writes.
-            System::get().audienceForFrameEnds() += this;
-        }
-    }
-
-    /**
-     * Flushes property changes to the assigned data buffer.
+     * Writes deferred Listener and/or Environment changes to the audio driver.
      *
-     * @param force  Usually updates are only necessary during playback. Use
-     *               @c true= to override this check and write the properties
-     *               regardless.
+     * @param force  Usually updates are only necessary during playback. Use @c true to
+     * override this check and write the changes regardless.
      */
-    void updateBuffer(bool force = false)
+    void writeDeferredProperties(bool force = false)
     {
         if(!buffer.data) return;
-        sfxbuffer_t *buf = &getBufferData();
+        sfxbuffer_t *buf = &buffer.getData();
 
         // Disabled?
         if(noUpdate) return;
 
         // Updates are only necessary during playback.
-        if(!isPlaying(*buf) && !force) return;
+        if(!(buf->flags & SFXBF_PLAYING) && !force) return;
 
         // When tracking an emitter we need the latest origin coordinates.
         emitter.updateOriginIfNeeded();
@@ -468,20 +438,7 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundChannel)
 
     void systemFrameEnds(System &)
     {
-        updateBuffer();
-    }
-
-    bool isPlaying(sfxbuffer_t &buf) const
-    {
-        return (buf.flags & SFXBF_PLAYING) != 0;
-    }
-
-    void stop()
-    {
-        if(!buffer.data) return;
-
-        DENG2_ASSERT(driver.iSound().gen.Stop);
-        driver.iSound().gen.Stop(&getBufferData());
+        writeDeferredProperties();
     }
 
     void observeListener(Listener *newListener)
@@ -530,9 +487,9 @@ PluginDriver::SoundChannel::SoundChannel(PluginDriver &owner)
 
 Channel::PlayingMode PluginDriver::SoundChannel::mode() const
 {
-    if(!d->buffer.data || !d->isPlaying(d->getBufferData())) return NotPlaying;
-    if(d->getBufferData().flags & SFXBF_REPEAT)              return Looping;
-    if(d->getBufferData().flags & SFXBF_DONT_STOP)           return OnceDontDelete;
+    if(!d->buffer.data || !(d->buffer.getData().flags & SFXBF_PLAYING)) return NotPlaying;
+    if( d->buffer.getData().flags & SFXBF_REPEAT)                       return Looping;
+    if( d->buffer.getData().flags & SFXBF_DONT_STOP)                    return OnceDontDelete;
     return Once;
 }
 
@@ -543,7 +500,7 @@ void PluginDriver::SoundChannel::play(PlayingMode mode)
     if(mode == NotPlaying) return;
 
     DENG2_ASSERT(d->buffer.data);
-    sfxbuffer_t *buf = &d->getBufferData();
+    sfxbuffer_t *buf = &d->buffer.getData();
     buf->flags &= ~(SFXBF_REPEAT | SFXBF_DONT_STOP);
     switch(mode)
     {
@@ -561,7 +518,7 @@ void PluginDriver::SoundChannel::play(PlayingMode mode)
     {
         d->driver.iSound().gen.Listener(SFXLP_UPDATE, 0);
     }
-    d->updateBuffer(true/*force*/);
+    d->writeDeferredProperties(true/*force*/);
 
     // 3D sounds need a few extra properties set up.
     if(buf->flags & SFXBF_3D)
@@ -591,7 +548,9 @@ void PluginDriver::SoundChannel::play(PlayingMode mode)
 
 void PluginDriver::SoundChannel::stop()
 {
-    d->stop();
+    if(!d->buffer.data) return;
+    DENG2_ASSERT(d->driver.iSound().gen.Stop);
+    d->driver.iSound().gen.Stop(&d->buffer.getData());
 }
 
 bool PluginDriver::SoundChannel::isPaused() const
@@ -680,37 +639,51 @@ void PluginDriver::SoundChannel::setFlags(dint flags)
 
 void PluginDriver::SoundChannel::update()
 {
-    DENG2_ASSERT(d->driver.iSound().gen.Refresh && d->buffer.data);
+    if(!d->buffer.data) return;
+    DENG2_ASSERT(d->driver.iSound().gen.Refresh);
     d->driver.iSound().gen.Refresh(d->buffer.data);
 }
 
 void PluginDriver::SoundChannel::reset()
 {
     if(!d->buffer.data) return;
-
-    DENG2_ASSERT(d->driver.iSound().gen.Reset && d->buffer.data);
+    DENG2_ASSERT(d->driver.iSound().gen.Reset);
     d->driver.iSound().gen.Reset(d->buffer.data);
 }
 
 bool PluginDriver::SoundChannel::format(Positioning positioning, dint bytesPer, dint rate)
 {
-    // Do we need to (re)create the sound data buffer?
+    // We may need to replace the playback data buffer.
     if(!d->buffer.data
        || d->positioning        != positioning
        || d->buffer.sampleBytes != bytesPer
        || d->buffer.sampleRate  != rate)
     {
         stop();
+
         DENG2_ASSERT(!isPlaying());
+        if(d->buffer.data)
+        {
+            // Cancel frame notifications - we'll soon have no buffer to update.
+            System::get().audienceForFrameEnds() -= d;
+
+            d->driver.iSound().gen.Destroy(d->buffer.data);
+            d->buffer.data = nullptr;
+        }
 
         /// @todo Don't duplicate state! -ds
         d->positioning        = positioning;
         d->buffer.sampleBytes = bytesPer;
         d->buffer.sampleRate  = rate;
 
-        d->buffer.data = d->driver.iSound()
-                                  .gen.Create(d->positioning == AbsolutePositioning ? SFXBF_3D : 0,
-                                              d->buffer.sampleBytes * 8, d->buffer.sampleRate);
+        d->buffer.data =
+            d->driver.iSound().gen.Create(d->positioning == AbsolutePositioning ? SFXBF_3D : 0,
+                                          d->buffer.sampleBytes * 8, d->buffer.sampleRate);
+        if(d->buffer.data)
+        {
+            // We want notification when the frame ends in order to flush deferred property writes.
+            System::get().audienceForFrameEnds() += d;
+        }
     }
     return isValid();
 }
@@ -723,11 +696,11 @@ bool PluginDriver::SoundChannel::isValid() const
 void PluginDriver::SoundChannel::load(sfxsample_t const &sample)
 {
     // Don't reload if a sample with the same sound ID is already loaded.
-    sfxbuffer_t *buf = &d->getBufferData();
-    if(!buf->sample || buf->sample->soundId != sample.soundId)
+    sfxbuffer_t &buffer = d->buffer.getData();
+    if(!buffer.sample || buffer.sample->soundId != sample.soundId)
     {
         DENG2_ASSERT(d->driver.iSound().gen.Load);
-        d->driver.iSound().gen.Load(buf, &const_cast<sfxsample_t &>(sample));
+        d->driver.iSound().gen.Load(&buffer, &const_cast<sfxsample_t &>(sample));
     }
 }
 
@@ -748,12 +721,12 @@ dint PluginDriver::SoundChannel::startTime() const
 
 duint PluginDriver::SoundChannel::endTime() const
 {
-    return isValid() && d->buffer.data ? d->getBufferData().endTime : 0;
+    return isValid() && d->buffer.data ? d->buffer.getData().endTime : 0;
 }
 
 sfxsample_t const *PluginDriver::SoundChannel::samplePtr() const
 {
-    return d->buffer.data ? d->getBufferData().sample : nullptr;
+    return d->buffer.data ? d->buffer.getData().sample : nullptr;
 }
 
 void PluginDriver::SoundChannel::updateEnvironment()
