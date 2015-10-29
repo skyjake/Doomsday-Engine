@@ -242,81 +242,93 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundChannel)
     /// No data buffer is assigned. @ingroup errors
     DENG2_ERROR(MissingBufferError);
 
-    PluginDriver &driver;             ///< Owning driver.
+    PluginDriver &driver;          ///< Owning driver.
+    bool noUpdate    = false;      ///< @c true if skipping updates (when stopped, before deletion).
 
-    dint flags = 0;                   ///< SFXCF_* flags.
-    SoundEmitter *emitter = nullptr;  ///< Emitter for the sound, if any (not owned).
-    Listener *listener    = nullptr;  ///< Listener for the sound, if any (not owned).
+    dint startTime   = 0;          ///< When playback last started (Ticks).
+
+    Positioning positioning = { StereoPositioning };
+    dfloat frequency = 1;          ///< {0..1} Frequency/pitch adjustment factor.
+    dfloat volume    = 1;          ///< {0..1} Volume adjustment factor.
+
+    Listener *listener = nullptr;  ///< Listener for the sound, if any (not owned).
 
     // Only necessary when using 3D positioning.
     /// @todo optimize: stop observing when this changes. -ds
     bool needEnvironmentUpdate = false;
 
-    dfloat frequency = 0;             ///< Frequency adjustment: 1.0 is normal.
-    Vector3d origin;                  ///< Emit from here (synced with emitter).
-    Positioning positioning = StereoPositioning;
-    dint rate        = 11025;
-    dfloat volume    = 0;             ///< Sound volume: 1.0 is max.
+    struct EmitterData
+    {
+        bool noOrigin            = true;     ///< @c true if the originator is some mystical emitter.
+        bool noVolumeAttenuation = true;     ///< @c true if (distance based) volume attenuation is disabled.
+        SoundEmitter *tracking   = nullptr;  ///< Emitter to track, if any (not owned).
+        Vector3d origin;                     ///< Emit from here (synced with emitter).
 
-    dint bytes = 1;
-    sfxbuffer_t *buffer = nullptr;    ///< Assigned sound buffer, if any (not owned).
-    dint startTime = 0;               ///< When the assigned sound sample was last started (Ticks).
+        void updateOriginIfNeeded()
+        {
+            // Only if we are tracking an emitter.
+            if(!tracking) return;
 
-    Instance(PluginDriver &owner) : driver(owner)
-    {}
+            origin = Vector3d(tracking->origin);
+
+            // When tracking a map-object set the Z axis position to the object's center.
+            if(Thinker_IsMobjFunc(tracking->thinker.function))
+            {
+                origin.z += ((mobj_t *)tracking)->height / 2;
+            }
+        }
+    } emitter;
+
+    struct Buffer
+    {
+        dint sampleBytes  = 1;        ///< Bytes per sample (1 or 2).
+        dint sampleRate   = 11025;    ///< Number of samples per second.
+        sfxbuffer_t *data = nullptr;  ///< External data buffer, if any (not owned).
+
+        ~Buffer() { DENG2_ASSERT(data == nullptr); }
+    } buffer;
+
+    Instance(PluginDriver &owner) : driver(owner) {}
 
     ~Instance()
     {
         // Stop observing the configured listener (if we haven't already).
         observeListener(nullptr);
 
-        setBuffer(nullptr);
-        DENG2_ASSERT(buffer == nullptr);
+        setBufferData(nullptr);
+        DENG2_ASSERT(buffer.data == nullptr);
     }
 
-    sfxbuffer_t &getBuffer() const
+    sfxbuffer_t &getBufferData() const
     {
-        if(buffer) return *buffer;
+        if(buffer.data) return *buffer.data;
         /// @throw MissingBufferError  No sound buffer is currently assigned.
         throw MissingBufferError("audio::PluginDriver::SoundChannel::Instance", "No sample buffer is assigned");
     }
 
     /**
-     * Replace the sample data buffer with @a newBuffer.
+     * Replace the sample buffer with @a data.
      */
-    void setBuffer(sfxbuffer_t *newBuffer)
+    void setBufferData(sfxbuffer_t *data)
     {
-        if(buffer == newBuffer) return;
+        if(buffer.data == data) return;
 
         stop();
 
-        if(buffer)
+        if(buffer.data)
         {
             // Cancel frame notifications - we'll soon have no buffer to update.
             System::get().audienceForFrameEnds() -= this;
 
-            driver.iSound().gen.Destroy(buffer);
+            driver.iSound().gen.Destroy(buffer.data);
         }
 
-        buffer = newBuffer;
+        buffer.data = data;
 
-        if(buffer)
+        if(buffer.data)
         {
             // We want notification when the frame ends in order to flush deferred property writes.
             System::get().audienceForFrameEnds() += this;
-        }
-    }
-
-    void updateOriginIfNeeded()
-    {
-        // Updating is only necessary if we are tracking an emitter.
-        if(!emitter) return;
-
-        origin = Vector3d(emitter->origin);
-        // If this is a map object, center the Z pos.
-        if(Thinker_IsMobjFunc(emitter->thinker.function))
-        {
-            origin.z += ((mobj_t *)emitter)->height / 2;
         }
     }
 
@@ -329,53 +341,54 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundChannel)
      */
     void updateBuffer(bool force = false)
     {
-        if(!buffer) return;
+        if(!buffer.data) return;
+        sfxbuffer_t *buf = &getBufferData();
 
         // Disabled?
-        if(flags & SFXCF_NO_UPDATE) return;
+        if(noUpdate) return;
 
         // Updates are only necessary during playback.
-        if(!isPlaying(*buffer) && !force) return;
+        if(!isPlaying(*buf) && !force) return;
 
         // When tracking an emitter we need the latest origin coordinates.
-        updateOriginIfNeeded();
+        emitter.updateOriginIfNeeded();
 
         // Frequency is common to both 2D and 3D sounds.
-        driver.iSound().gen.Set(buffer, SFXBP_FREQUENCY, frequency);
+        driver.iSound().gen.Set(buf, SFXBP_FREQUENCY, frequency);
 
-        if(buffer->flags & SFXBF_3D)
+        if(buf->flags & SFXBF_3D)
         {
             // Volume is affected only by maxvol.
-            driver.iSound().gen.Set(buffer, SFXBP_VOLUME, volume * System::get().soundVolume() / 255.0f);
+            driver.iSound().gen.Set(buf, SFXBP_VOLUME, volume * System::get().soundVolume() / 255.0f);
 
-            if(emitter && emitter == (ddmobj_base_t const *)System::get().worldStage().listener().trackedMapObject())
+            if(emitter.tracking && emitter.tracking == (ddmobj_base_t const *)System::get().worldStage().listener().trackedMapObject())
             {
                 // Emitted by the listener object. Go to relative position mode
                 // and set the position to (0,0,0).
                 float vec[] = { 0, 0, 0 };
-                driver.iSound().gen.Set (buffer, SFXBP_RELATIVE_MODE, 1/*headRelative*/);
-                driver.iSound().gen.Setv(buffer, SFXBP_POSITION, vec);
+                driver.iSound().gen.Set (buf, SFXBP_RELATIVE_MODE, 1/*headRelative*/);
+                driver.iSound().gen.Setv(buf, SFXBP_POSITION, vec);
             }
             else
             {
                 // Use the channel's map space origin.
-                driver.iSound().gen.Set (buffer, SFXBP_RELATIVE_MODE, 0/*absolute*/);
-                dfloat vec[3]; origin.toVector3f().decompose(vec);
-                driver.iSound().gen.Setv(buffer, SFXBP_POSITION, vec);
+                driver.iSound().gen.Set (buf, SFXBP_RELATIVE_MODE, 0/*absolute*/);
+                dfloat vec[3]; emitter.origin.toVector3f().decompose(vec);
+                driver.iSound().gen.Setv(buf, SFXBP_POSITION, vec);
             }
 
             // If the sound is emitted by the listener, speed is zero.
-            if(emitter && emitter != (ddmobj_base_t const *)System::get().worldStage().listener().trackedMapObject() &&
-               Thinker_IsMobjFunc(emitter->thinker.function))
+            if(emitter.tracking && emitter.tracking != (ddmobj_base_t const *)System::get().worldStage().listener().trackedMapObject() &&
+               Thinker_IsMobjFunc(emitter.tracking->thinker.function))
             {
-                dfloat vec[3]; (Vector3d(((mobj_t *)emitter)->mom) * TICSPERSEC).toVector3f().decompose(vec);
-                driver.iSound().gen.Setv(buffer, SFXBP_VELOCITY, vec);
+                dfloat vec[3]; (Vector3d(((mobj_t *)emitter.tracking)->mom) * TICSPERSEC).toVector3f().decompose(vec);
+                driver.iSound().gen.Setv(buf, SFXBP_VELOCITY, vec);
             }
             else
             {
                 // Not moving.
                 dfloat vec[] = { 0, 0, 0 };
-                driver.iSound().gen.Setv(buffer, SFXBP_VELOCITY, vec);
+                driver.iSound().gen.Setv(buf, SFXBP_VELOCITY, vec);
             }
         }
         else
@@ -384,8 +397,8 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundChannel)
             dfloat finalPan = 0;
 
             // This is a 2D buffer.
-            if((flags & SFXCF_NO_ORIGIN) ||
-               (emitter && emitter == (ddmobj_base_t const *)System::get().worldStage().listener().trackedMapObject()))
+            if((emitter.noOrigin) ||
+               (emitter.tracking && emitter.tracking == (ddmobj_base_t const *)System::get().worldStage().listener().trackedMapObject()))
             {
                 dist = 1;
                 finalPan = 0;
@@ -395,9 +408,9 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundChannel)
                 // Calculate roll-off attenuation. [.125/(.125+x), x=0..1]
                 Ranged const attenRange = System::get().worldStage().listener().volumeAttenuationRange();
 
-                dist = System::get().worldStage().listener().distanceFrom(origin);
+                dist = System::get().worldStage().listener().distanceFrom(emitter.origin);
 
-                if(dist < attenRange.start || (flags & SFXCF_NO_ATTENUATION))
+                if(dist < attenRange.start || emitter.noVolumeAttenuation)
                 {
                     // No distance attenuation.
                     dist = 1;
@@ -420,7 +433,7 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundChannel)
                 if(mobj_t const *tracking = System::get().worldStage().listener().trackedMapObject())
                 {
                     dfloat angle = (M_PointXYToAngle2(tracking->origin[0], tracking->origin[1],
-                                                      origin.x, origin.y)
+                                                      emitter.origin.x, emitter.origin.y)
                                         - tracking->angle)
                                  / (dfloat) ANGLE_MAX * 360;
 
@@ -448,8 +461,8 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundChannel)
                 }
             }
 
-            driver.iSound().gen.Set(buffer, SFXBP_VOLUME, volume * dist * System::get().soundVolume() / 255.0f);
-            driver.iSound().gen.Set(buffer, SFXBP_PAN, finalPan);
+            driver.iSound().gen.Set(buf, SFXBP_VOLUME, volume * dist * System::get().soundVolume() / 255.0f);
+            driver.iSound().gen.Set(buf, SFXBP_PAN, finalPan);
         }
     }
 
@@ -465,10 +478,10 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundChannel)
 
     void stop()
     {
-        if(!buffer) return;
+        if(!buffer.data) return;
 
         DENG2_ASSERT(driver.iSound().gen.Stop);
-        driver.iSound().gen.Stop(buffer);
+        driver.iSound().gen.Stop(&getBufferData());
     }
 
     void observeListener(Listener *newListener)
@@ -513,15 +526,13 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundChannel)
 PluginDriver::SoundChannel::SoundChannel(PluginDriver &owner)
     : audio::SoundChannel()
     , d(new Instance(owner))
-{
-    format(StereoPositioning, 1, 11025);
-}
+{}
 
 Channel::PlayingMode PluginDriver::SoundChannel::mode() const
 {
-    if(!d->buffer || !d->isPlaying(*d->buffer)) return NotPlaying;
-    if(d->buffer->flags & SFXBF_REPEAT)         return Looping;
-    if(d->buffer->flags & SFXBF_DONT_STOP)      return OnceDontDelete;
+    if(!d->buffer.data || !d->isPlaying(d->getBufferData())) return NotPlaying;
+    if(d->getBufferData().flags & SFXBF_REPEAT)              return Looping;
+    if(d->getBufferData().flags & SFXBF_DONT_STOP)           return OnceDontDelete;
     return Once;
 }
 
@@ -531,11 +542,13 @@ void PluginDriver::SoundChannel::play(PlayingMode mode)
 
     if(mode == NotPlaying) return;
 
-    d->getBuffer().flags &= ~(SFXBF_REPEAT | SFXBF_DONT_STOP);
+    DENG2_ASSERT(d->buffer.data);
+    sfxbuffer_t *buf = &d->getBufferData();
+    buf->flags &= ~(SFXBF_REPEAT | SFXBF_DONT_STOP);
     switch(mode)
     {
-    case Looping:        d->getBuffer().flags |= SFXBF_REPEAT;    break;
-    case OnceDontDelete: d->getBuffer().flags |= SFXBF_DONT_STOP; break;
+    case Looping:        buf->flags |= SFXBF_REPEAT;    break;
+    case OnceDontDelete: buf->flags |= SFXBF_DONT_STOP; break;
     default: break;
     }
 
@@ -551,27 +564,27 @@ void PluginDriver::SoundChannel::play(PlayingMode mode)
     d->updateBuffer(true/*force*/);
 
     // 3D sounds need a few extra properties set up.
-    if(d->getBuffer().flags & SFXBF_3D)
+    if(buf->flags & SFXBF_3D)
     {
         DENG2_ASSERT(d->driver.iSound().gen.Set);
 
         // Configure the attentuation distances.
         // This is only done once, when the sound is first played (i.e., here).
-        if(d->flags & SFXCF_NO_ATTENUATION)
+        if(d->emitter.noVolumeAttenuation)
         {
-            d->driver.iSound().gen.Set(&d->getBuffer(), SFXBP_MIN_DISTANCE, 10000);
-            d->driver.iSound().gen.Set(&d->getBuffer(), SFXBP_MAX_DISTANCE, 20000);
+            d->driver.iSound().gen.Set(buf, SFXBP_MIN_DISTANCE, 10000);
+            d->driver.iSound().gen.Set(buf, SFXBP_MAX_DISTANCE, 20000);
         }
         else
         {
             Ranged const &range = System::get().worldStage().listener().volumeAttenuationRange();
-            d->driver.iSound().gen.Set(&d->getBuffer(), SFXBP_MIN_DISTANCE, dfloat( range.start ));
-            d->driver.iSound().gen.Set(&d->getBuffer(), SFXBP_MAX_DISTANCE, dfloat( range.end ));
+            d->driver.iSound().gen.Set(buf, SFXBP_MIN_DISTANCE, dfloat( range.start ));
+            d->driver.iSound().gen.Set(buf, SFXBP_MAX_DISTANCE, dfloat( range.end ));
         }
     }
 
     DENG2_ASSERT(d->driver.iSound().gen.Play);
-    d->driver.iSound().gen.Play(&d->getBuffer());
+    d->driver.iSound().gen.Play(buf);
 
     d->startTime = Timer_Ticks();  // Note the current time.
 }
@@ -598,7 +611,7 @@ void PluginDriver::SoundChannel::resume()
 
 SoundEmitter *PluginDriver::SoundChannel::emitter() const
 {
-    return d->emitter;
+    return d->emitter.tracking;
 }
 
 dfloat PluginDriver::SoundChannel::frequency() const
@@ -608,7 +621,7 @@ dfloat PluginDriver::SoundChannel::frequency() const
 
 Vector3d PluginDriver::SoundChannel::origin() const
 {
-    return d->origin;
+    return d->emitter.origin;
 }
 
 Positioning PluginDriver::SoundChannel::positioning() const
@@ -623,7 +636,7 @@ dfloat PluginDriver::SoundChannel::volume() const
 
 audio::SoundChannel &PluginDriver::SoundChannel::setEmitter(SoundEmitter *newEmitter)
 {
-    d->emitter = newEmitter;
+    d->emitter.tracking = newEmitter;
     return *this;
 }
 
@@ -635,7 +648,7 @@ audio::SoundChannel &PluginDriver::SoundChannel::setFrequency(dfloat newFrequenc
 
 audio::SoundChannel &PluginDriver::SoundChannel::setOrigin(Vector3d const &newOrigin)
 {
-    d->origin = newOrigin;
+    d->emitter.origin = newOrigin;
     return *this;
 }
 
@@ -647,73 +660,85 @@ Channel &PluginDriver::SoundChannel::setVolume(dfloat newVolume)
 
 dint PluginDriver::SoundChannel::flags() const
 {
-    return d->flags;
+    dint flags = 0;
+
+    if(d->emitter.noOrigin)            flags |= SFXCF_NO_ORIGIN;
+    if(d->emitter.noVolumeAttenuation) flags |= SFXCF_NO_ATTENUATION;
+
+    if(d->noUpdate) flags |= SFXCF_NO_UPDATE;
+
+    return flags;
 }
 
-void PluginDriver::SoundChannel::setFlags(dint newFlags)
+void PluginDriver::SoundChannel::setFlags(dint flags)
 {
-    d->flags = newFlags;
+    d->emitter.noOrigin            = CPP_BOOL(flags & SFXCF_NO_ORIGIN);
+    d->emitter.noVolumeAttenuation = CPP_BOOL(flags & SFXCF_NO_ATTENUATION);
+
+    d->noUpdate = CPP_BOOL(flags & SFXCF_NO_UPDATE);
 }
 
 void PluginDriver::SoundChannel::update()
 {
-    DENG2_ASSERT(d->driver.iSound().gen.Refresh);
-    d->driver.iSound().gen.Refresh(d->buffer);
+    DENG2_ASSERT(d->driver.iSound().gen.Refresh && d->buffer.data);
+    d->driver.iSound().gen.Refresh(d->buffer.data);
 }
 
 void PluginDriver::SoundChannel::reset()
 {
-    if(!d->buffer) return;
+    if(!d->buffer.data) return;
 
-    DENG2_ASSERT(d->driver.iSound().gen.Reset);
-    d->driver.iSound().gen.Reset(d->buffer);
+    DENG2_ASSERT(d->driver.iSound().gen.Reset && d->buffer.data);
+    d->driver.iSound().gen.Reset(d->buffer.data);
 }
 
 bool PluginDriver::SoundChannel::format(Positioning positioning, dint bytesPer, dint rate)
 {
     // Do we need to (re)create the sound data buffer?
-    if(!d->buffer
-       || d->positioning != positioning
-       || d->bytes       != bytesPer
-       || d->rate        != rate)
+    if(!d->buffer.data
+       || d->positioning        != positioning
+       || d->buffer.sampleBytes != bytesPer
+       || d->buffer.sampleRate  != rate)
     {
         stop();
         DENG2_ASSERT(!isPlaying());
 
         /// @todo Don't duplicate state! -ds
-        d->positioning = positioning;
-        d->bytes       = bytesPer;
-        d->rate        = rate;
+        d->positioning        = positioning;
+        d->buffer.sampleBytes = bytesPer;
+        d->buffer.sampleRate  = rate;
 
-        d->setBuffer(d->driver.iSound().gen.Create(d->positioning == AbsolutePositioning ? SFXBF_3D : 0,
-                                                   d->bytes * 8, d->rate));
+        d->buffer.data = d->driver.iSound()
+                                  .gen.Create(d->positioning == AbsolutePositioning ? SFXBF_3D : 0,
+                                              d->buffer.sampleBytes * 8, d->buffer.sampleRate);
     }
     return isValid();
 }
 
 bool PluginDriver::SoundChannel::isValid() const
 {
-    return d->buffer != nullptr;
+    return d->buffer.data != nullptr;
 }
 
 void PluginDriver::SoundChannel::load(sfxsample_t const &sample)
 {
     // Don't reload if a sample with the same sound ID is already loaded.
-    if(!d->getBuffer().sample || d->getBuffer().sample->soundId != sample.soundId)
+    sfxbuffer_t *buf = &d->getBufferData();
+    if(!buf->sample || buf->sample->soundId != sample.soundId)
     {
         DENG2_ASSERT(d->driver.iSound().gen.Load);
-        d->driver.iSound().gen.Load(&d->getBuffer(), &const_cast<sfxsample_t &>(sample));
+        d->driver.iSound().gen.Load(buf, &const_cast<sfxsample_t &>(sample));
     }
 }
 
 dint PluginDriver::SoundChannel::bytes() const
 {
-    return d->bytes;
+    return d->buffer.sampleBytes;
 }
 
 dint PluginDriver::SoundChannel::rate() const
 {
-    return d->rate;
+    return d->buffer.sampleRate;
 }
 
 dint PluginDriver::SoundChannel::startTime() const
@@ -723,12 +748,12 @@ dint PluginDriver::SoundChannel::startTime() const
 
 duint PluginDriver::SoundChannel::endTime() const
 {
-    return isValid() && d->buffer ? d->buffer->endTime : 0;
+    return isValid() && d->buffer.data ? d->getBufferData().endTime : 0;
 }
 
 sfxsample_t const *PluginDriver::SoundChannel::samplePtr() const
 {
-    return d->buffer ? d->buffer->sample : nullptr;
+    return d->buffer.data ? d->getBufferData().sample : nullptr;
 }
 
 void PluginDriver::SoundChannel::updateEnvironment()
@@ -743,24 +768,14 @@ void PluginDriver::SoundChannel::updateEnvironment()
     Listener &listener = System::get().worldStage().listener();
     if(listener.trackedMapObject())
     {
-        {
-            // Position.
-            dfloat vec[4];
-            Vector4f(listener.position().toVector3f(), 0).decompose(vec);
-            d->driver.iSound().gen.Listenerv(SFXLP_POSITION, vec);
-        }
-        {
-            // Orientation.
-            dfloat vec[2];
-            listener.orientation().toVector2f().decompose(vec);
-            d->driver.iSound().gen.Listenerv(SFXLP_ORIENTATION, vec);
-        }
-        {
-            // Velocity.
-            dfloat vec[4];
-            Vector4f(listener.velocity().toVector3f() * TICSPERSEC, 0).decompose(vec);
-            d->driver.iSound().gen.Listenerv(SFXLP_VELOCITY, vec);
-        }
+        dfloat position[4]; Vector4f(listener.position().toVector3f(), 0).decompose(position);
+        d->driver.iSound().gen.Listenerv(SFXLP_POSITION, position);
+
+        dfloat orientation[2]; listener.orientation().toVector2f().decompose(orientation);
+        d->driver.iSound().gen.Listenerv(SFXLP_ORIENTATION, orientation);
+
+        dfloat velocity[4]; Vector4f(listener.velocity().toVector3f() * TICSPERSEC, 0).decompose(velocity);
+        d->driver.iSound().gen.Listenerv(SFXLP_VELOCITY, velocity);
     }
 
     if(d->needEnvironmentUpdate)

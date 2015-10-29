@@ -156,11 +156,10 @@ DENG2_PIMPL_NOREF(DummyDriver::SoundChannel)
 
     struct EmitterData
     {
-        bool noOrigin            = true;   ///< @c true if the originator is some mystical emitter.
-        bool noVolumeAttenuation = true;   ///< @c true if (distance based) volume attenuation is disabled.
-
-        SoundEmitter *tracking = nullptr;  ///< Emitter to track, if any (not owned).
-        Vector3d origin;                   ///< Emit from here (synced with emitter).
+        bool noOrigin            = true;     ///< @c true if the originator is some mystical emitter.
+        bool noVolumeAttenuation = true;     ///< @c true if (distance based) volume attenuation is disabled.
+        SoundEmitter *tracking   = nullptr;  ///< Emitter to track, if any (not owned).
+        Vector3d origin;                     ///< Emit from here (synced with emitter).
 
         void updateOriginIfNeeded()
         {
