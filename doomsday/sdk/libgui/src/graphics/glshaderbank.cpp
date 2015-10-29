@@ -246,16 +246,20 @@ Bank::ISource *GLShaderBank::newSourceFromInfo(String const &id)
     // Additional shaders to append to the main source.
     if(def.has("include.vertex"))
     {
-        DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, def["include.vertex"].value().as<ArrayValue>().elements())
+        // Including in reverse to retain order -- each one is prepended.
+        auto const &incs = def["include.vertex"].value().as<ArrayValue>().elements();
+        for(int i = incs.size() - 1; i >= 0; --i)
         {
-            vtx.insertFromFile(relativeToPath(def) / (*i)->asText());
+            vtx.insertFromFile(relativeToPath(def) / incs.at(i)->asText());
         }
     }
     if(def.has("include.fragment"))
     {
-        DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, def["include.fragment"].value().as<ArrayValue>().elements())
+        // Including in reverse to retain order -- each one is prepended.
+        auto const &incs = def["include.fragment"].value().as<ArrayValue>().elements();
+        for(int i = incs.size() - 1; i >= 0; --i)
         {
-            frag.insertFromFile(relativeToPath(def) / (*i)->asText());
+            frag.insertFromFile(relativeToPath(def) / incs.at(i)->asText());
         }
     }
 
