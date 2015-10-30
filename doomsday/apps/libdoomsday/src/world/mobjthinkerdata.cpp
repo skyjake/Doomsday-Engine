@@ -70,3 +70,6 @@ void MobjThinkerData::stateChanged(state_t const *)
 {
     // overridden
 }
+
+void MobjThinkerData::damageReceived(int, mobj_t const *)
+{}

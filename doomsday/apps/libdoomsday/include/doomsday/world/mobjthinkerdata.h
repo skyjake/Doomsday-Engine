@@ -49,6 +49,15 @@ public:
      */
     virtual void stateChanged(state_t const *previousState);
 
+    /**
+     * Called whenever the mobj receives damage. This is a notification of
+     * damage already received.
+     *
+     * @param points     Amount of damage.
+     * @param direction  If not @c nullptr, identifies the source of the damage.
+     */
+    virtual void damageReceived(int points, mobj_t const *inflictor);
+
 private:
     DENG2_PRIVATE(d)
 };
