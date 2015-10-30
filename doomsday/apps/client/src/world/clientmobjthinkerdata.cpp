@@ -18,14 +18,16 @@
  */
 
 #include "de_base.h"
-#include "world/clientmobjthinkerdata.h"
-
-#include <QFlags>
-#include "clientapp.h"
 #include "dd_loop.h"
+#include "clientapp.h"
+#include "world/generator.h"
+#include "world/clientmobjthinkerdata.h"
 #include "render/modelrenderer.h"
 #include "render/stateanimator.h"
-#include "world/generator.h"
+
+#include <de/RecordValue>
+#include <de/Process>
+#include <QFlags>
 
 using namespace de;
 
@@ -117,7 +119,7 @@ DENG2_PIMPL(ClientMobjThinkerData)
                 model.audienceForDeletion() += this;
 
                 animator.reset(new render::StateAnimator(modelId(), model));
-                animator->setOwnerNamespace(self.info());
+                animator->setOwnerNamespace(self.info(), QStringLiteral("THING"));
 
                 // Apply possible scaling operations on the model.
                 modelMatrix = model.transformation;
@@ -282,4 +284,18 @@ void ClientMobjThinkerData::stateChanged(state_t const *previousState)
      */
     d->flags |= StateChanged;
     d->triggerParticleGenerators(justSpawned);
+}
+
+void ClientMobjThinkerData::damageReceived(int damage, mobj_t const *inflictor)
+{
+    MobjThinkerData::damageReceived(damage, inflictor);
+
+    // How about some particles, yes?
+    // Only works when both target and inflictor are real mobjs.
+    Mobj_SpawnDamageParticleGen(mobj(), inflictor, damage);
+
+    if(d->animator)
+    {
+        d->animator->triggerDamage(damage);
+    }
 }

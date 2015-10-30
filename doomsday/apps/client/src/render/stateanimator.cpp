@@ -41,9 +41,8 @@ static String const DEF_WRAP       ("wrap");
 static String const DEF_ENABLED    ("enabled");
 static String const DEF_MATERIAL   ("material");
 
-static String const VAR_SELF    ("self");
-static String const VAR_ID      ("__id__");
-static String const VAR_ASSET   ("asset");
+static String const VAR_ID      ("ID");
+static String const VAR_ASSET   ("ASSET");
 static String const VAR_ENABLED ("enabled");
 static String const VAR_MATERIAL("material");
 
@@ -566,9 +565,9 @@ Model const &StateAnimator::model() const
     return static_cast<Model const &>(ModelDrawable::Animator::model());
 }
 
-void StateAnimator::setOwnerNamespace(Record &names)
+void StateAnimator::setOwnerNamespace(Record &names, String const &varName)
 {
-    d->names.add(VAR_SELF).set(new RecordValue(names));
+    d->names.add(varName).set(new RecordValue(names));
 }
 
 void StateAnimator::triggerByState(String const &stateName)
@@ -652,6 +651,18 @@ void StateAnimator::triggerByState(String const &stateName)
         /*LOG_GL_XVERBOSE("Mobj %i starting animation: " _E(b))
                 << d->names.geti("self.__id__") << seq.name;*/
         break;
+    }
+}
+
+void StateAnimator::triggerDamage(int points)
+{
+    if(d->names.has(QStringLiteral("ASSET.onDamage")))
+    {
+        Record ns;
+        ns.add(QStringLiteral("d")).set(new RecordValue(d->names));
+        Process::scriptCall(Process::IgnoreResult, ns,
+                            QStringLiteral("d.ASSET.onDamage"),
+                            "$d", points);
     }
 }
 
@@ -739,6 +750,11 @@ ddouble StateAnimator::currentTime(int index) const
 ModelDrawable::Appearance const &StateAnimator::appearance() const
 {
     return d->appearance;
+}
+
+Record const &StateAnimator::names() const
+{
+    return d->names;
 }
 
 } // namespace render
