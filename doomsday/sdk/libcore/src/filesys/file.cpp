@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/File"
@@ -60,8 +60,8 @@ File::File(String const &fileName) : Node(fileName), d(new Instance)
     d->source = this;
 
     // Core.File provides the member functions for files.
-    d->info.addSuperRecord(new RecordValue(ScriptSystem::get().builtInClass("File")));
-    
+    d->info.addSuperRecord(ScriptSystem::builtInClass("File"));
+
     // Create the default set of info variables common to all files.
     d->info.add(new Variable("name",       new Accessor(*this, Accessor::NAME),        Accessor::VARIABLE_MODE));
     d->info.add(new Variable("path",       new Accessor(*this, Accessor::PATH),        Accessor::VARIABLE_MODE));
@@ -184,7 +184,7 @@ Feed *File::originFeed() const
 {
     return d->originFeed;
 }
-        
+
 void File::setSource(File *source)
 {
     DENG2_GUARD(this);
@@ -195,8 +195,8 @@ void File::setSource(File *source)
         delete d->source;
     }
     d->source = source;
-}        
-        
+}
+
 File const *File::source() const
 {
     DENG2_GUARD(this);
@@ -234,7 +234,7 @@ void File::setStatus(Status const &status)
     }
 }
 
-File::Status const &File::status() const 
+File::Status const &File::status() const
 {
     DENG2_GUARD(this);
 
@@ -396,13 +396,13 @@ void File::Accessor::update() const
 
     // We need to alter the value content.
     Accessor *nonConst = const_cast<Accessor *>(this);
-    
+
     switch(_prop)
     {
     case NAME:
         nonConst->setValue(_owner.name());
         break;
-        
+
     case PATH:
         nonConst->setValue(_owner.path());
         break;

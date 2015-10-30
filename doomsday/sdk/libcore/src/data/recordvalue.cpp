@@ -257,7 +257,7 @@ void RecordValue::call(Process &process, Value const &arguments, Value *) const
     // initialized as a member of the class.
     QScopedPointer<RecordValue> instance(new RecordValue(new Record, RecordValue::OwnsRecord));
 
-    instance->record()->addSuperRecord(new RecordValue(d->record));
+    instance->record()->addSuperRecord(*d->record);
 
     // If there is an initializer method, call it now.
     if(dereference().hasMember("__init__"))

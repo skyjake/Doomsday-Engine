@@ -44,6 +44,7 @@ int const SUBRECORD_CONTENT_EXCERPT_THRESHOLD = 100; // lines
 
 String const Record::VAR_SUPER = "__super__";
 String const Record::VAR_FILE  = "__file__";
+String const Record::VAR_NATIVE_SELF = "__self__";
 
 /**
  * Each record is given a unique identifier, so that serialized record
@@ -692,6 +693,11 @@ void Record::addSuperRecord(Value *superValue)
         addArray(VAR_SUPER);
     }
     (*this)[VAR_SUPER].array().add(superValue);
+}
+
+void Record::addSuperRecord(Record const &superRecord)
+{
+    addSuperRecord(new RecordValue(superRecord));
 }
 
 void Record::operator >> (Writer &to) const

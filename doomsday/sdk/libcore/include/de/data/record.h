@@ -73,6 +73,8 @@ public:
     /// Name of the special variable that identifies the source file.
     static String const VAR_FILE;
 
+    static String const VAR_NATIVE_SELF;
+
     typedef QMap<String, Variable *> Members;
     typedef QMap<String, Record *> Subrecords;
     typedef std::pair<String, String> KeyValue;
@@ -463,6 +465,14 @@ public:
      * @param superValue  Value referencing the super record to add. Ownership taken.
      */
     void addSuperRecord(Value *superValue);
+
+    /**
+     * Adds a new record to be used as a superclass of this record.
+     *
+     * @param superRecord  Record to use as super record. A new RecordValue is
+     *                     created to refer to this record.
+     */
+    void addSuperRecord(Record const &superRecord);
 
     /**
      * Adds a new native function to the record according to the specification.

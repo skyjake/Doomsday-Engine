@@ -108,7 +108,21 @@ public:
     void timeChanged(Clock const &);
 
 public:
+    /**
+     * Returns a built-in Doomsday Script class from the Core module.
+     * @param name  Name of the class.
+     * @return Class record.
+     */
     static Record &builtInClass(String const &name);
+
+    /**
+     * Returns a built-in Doomsday Script class from the specified module.
+     * @param nativeModuleName  Name of the module where the class is located.
+     * @param className         Name of the class.
+     * @return Class record.
+     */
+    static Record &builtInClass(String const &nativeModuleName,
+                                String const &className);
 
     static ScriptSystem &get();
 

@@ -287,8 +287,13 @@ File const &ScriptSystem::findModuleSource(String const &name, String const &loc
 
 Record &ScriptSystem::builtInClass(String const &name)
 {
-    return const_cast<Record &>(ScriptSystem::get().nativeModule("Core")
-                                .getAs<RecordValue>(name).dereference());
+    return builtInClass(QStringLiteral("Core"), name);
+}
+
+Record &ScriptSystem::builtInClass(String const &nativeModuleName, String const &className)
+{
+    return const_cast<Record &>(ScriptSystem::get().nativeModule(nativeModuleName)
+                                .getr(className).dereference());
 }
 
 ScriptSystem &ScriptSystem::get()
