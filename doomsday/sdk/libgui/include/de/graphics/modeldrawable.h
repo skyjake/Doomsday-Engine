@@ -20,6 +20,7 @@
 #define LIBGUI_MODELDRAWABLE_H
 
 #include <de/Asset>
+#include <de/Deletable>
 #include <de/File>
 #include <de/GLProgram>
 #include <de/GLState>
@@ -108,7 +109,7 @@ public:
      *
      * @ingroup gl
      */
-    class LIBGUI_PUBLIC Animator
+    class LIBGUI_PUBLIC Animator : public Deletable
     {
     public:
         /**

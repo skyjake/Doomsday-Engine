@@ -210,6 +210,9 @@ DENG2_PIMPL(StateAnimator)
 
     Instance(Public *i, DotPath const &id) : Base(i)
     {
+        names.add(Record::VAR_NATIVE_SELF).set(new NativeValue(&self)).setReadOnly();
+        names.addSuperRecord(ScriptSystem::builtInClass(QStringLiteral("Render"),
+                                                        QStringLiteral("StateAnimator")));
         names.addText(VAR_ID, id).setReadOnly();
         names.add(VAR_ASSET).set(new RecordValue(App::asset(id).accessedRecord())).setReadOnly();
 
