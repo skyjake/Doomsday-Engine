@@ -241,7 +241,6 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundChannel)
 {
     PluginDriver &driver;          ///< Owning driver.
     bool noUpdate    = false;      ///< @c true if skipping updates (when stopped, before deletion).
-
     dint startTime   = 0;          ///< When playback last started (Ticks).
 
     Positioning positioning = { StereoPositioning };
@@ -304,6 +303,63 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundChannel)
     }
 
     /**
+     * Determines whether the channel is configured such that the emitter *is* the listener.
+     */
+    bool emitterIsListener() const
+    {
+        return listener
+               && emitter.tracking
+               && emitter.tracking == (ddmobj_base_t const *)listener->trackedMapObject();
+    }
+
+    /**
+     * Determines whether the channel is configured to use a moveable emitter.
+     */
+    bool emitterIsMoving() const
+    {
+        return emitter.tracking
+               && !emitterIsListener()
+               && Thinker_IsMobjFunc(emitter.tracking->thinker.function);
+    }
+
+    /**
+     * Determines whether the channel is configured to play an "originless" sound.
+     */
+    bool noOrigin() const
+    {
+        return emitter.noOrigin || emitterIsListener();
+    }
+
+    /**
+     * Begin observing @a newListener for porientation/translation and environment changes
+     * which we'll apply to the channel when beginning playback (and updating each frame).
+     *
+     * @note Listeners are Stage components and not simple properties of a/the currently
+     * playing sound in order to minimize the effects of playing new sounds on previously
+     * configured channels (i.e., tracking Stage changes independently).
+     */
+    void observeListener(Listener *newListener)
+    {
+        // No change?
+        if(listener == newListener) return;
+
+        if(listener)
+        {
+           listener->audienceForEnvironmentChange() -= this;
+           listener->audienceForDeletion()          -= this;
+        }
+
+        listener = newListener;
+        needEnvironmentUpdate = true;
+
+        if(listener)
+        {
+            listener->audienceForDeletion()          += this;
+            listener->audienceForEnvironmentChange() += this;
+        }
+    }
+
+    /**
      * Writes deferred Listener and/or Environment changes to the audio driver.
      *
      * @param force  Usually updates are only necessary during playback. Use @c true to
@@ -326,31 +382,31 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundChannel)
         // Frequency is common to both 2D and 3D sounds.
         driver.iSound().gen.Set(buf, SFXBP_FREQUENCY, frequency);
 
+        // Use Absolute/Relative-Positioning (in 3D)?
         if(buf->flags & SFXBF_3D)
         {
             // Volume is affected only by maxvol.
             driver.iSound().gen.Set(buf, SFXBP_VOLUME, volume * System::get().soundVolume() / 255.0f);
 
-            if(emitter.tracking && emitter.tracking == (ddmobj_base_t const *)System::get().worldStage().listener().trackedMapObject())
+            if(emitterIsListener())
             {
-                // Emitted by the listener object. Go to relative position mode
-                // and set the position to (0,0,0).
-                float vec[] = { 0, 0, 0 };
+                // Position relative to the listener.
+                dfloat vec[] = { 0, 0, 0 };
                 driver.iSound().gen.Set (buf, SFXBP_RELATIVE_MODE, 1/*headRelative*/);
                 driver.iSound().gen.Setv(buf, SFXBP_POSITION, vec);
             }
             else
             {
-                // Use the channel's map space origin.
-                driver.iSound().gen.Set (buf, SFXBP_RELATIVE_MODE, 0/*absolute*/);
+                // Position at the origin of the emitter.
                 dfloat vec[3]; emitter.origin.toVector3f().decompose(vec);
+                driver.iSound().gen.Set (buf, SFXBP_RELATIVE_MODE, 0/*absolute*/);
                 driver.iSound().gen.Setv(buf, SFXBP_POSITION, vec);
             }
 
-            // If the sound is emitted by the listener, speed is zero.
-            if(emitter.tracking && emitter.tracking != (ddmobj_base_t const *)System::get().worldStage().listener().trackedMapObject() &&
-               Thinker_IsMobjFunc(emitter.tracking->thinker.function))
+            // Update the emitter velocity.
+            if(emitterIsMoving())
             {
+                DENG2_ASSERT(emitter.tracking);
                 dfloat vec[3]; (Vector3d(((mobj_t *)emitter.tracking)->mom) * TICSPERSEC).toVector3f().decompose(vec);
                 driver.iSound().gen.Setv(buf, SFXBP_VELOCITY, vec);
             }
@@ -361,104 +417,64 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundChannel)
                 driver.iSound().gen.Setv(buf, SFXBP_VELOCITY, vec);
             }
         }
+        // Use StereoPositioning.
         else
         {
-            dfloat dist = 0;
-            dfloat finalPan = 0;
+            dfloat volAtten = 1;  // No attenuation.
+            dfloat panning  = 0;  // No panning.
 
-            // This is a 2D buffer.
-            if((emitter.noOrigin) ||
-               (emitter.tracking && emitter.tracking == (ddmobj_base_t const *)System::get().worldStage().listener().trackedMapObject()))
+            if(listener && !noOrigin())
             {
-                dist = 1;
-                finalPan = 0;
-            }
-            else
-            {
-                // Calculate roll-off attenuation. [.125/(.125+x), x=0..1]
-                Ranged const attenRange = System::get().worldStage().listener().volumeAttenuationRange();
-
-                dist = System::get().worldStage().listener().distanceFrom(emitter.origin);
-
-                if(dist < attenRange.start || emitter.noVolumeAttenuation)
+                // Apply listener angle based source panning?
+                if(mobj_t const *tracking = listener->trackedMapObject())
                 {
-                    // No distance attenuation.
-                    dist = 1;
-                }
-                else if(dist > attenRange.end)
-                {
-                    // Can't be heard.
-                    dist = 0;
-                }
-                else
-                {
-                    ddouble const normdist = (dist - attenRange.start) / attenRange.size();
-
-                    // Apply the linear factor so that at max distance there
-                    // really is silence.
-                    dist = .125f / (.125f + normdist) * (1 - normdist);
-                }
-
-                // And pan, too. Calculate angle from listener to emitter.
-                if(mobj_t const *tracking = System::get().worldStage().listener().trackedMapObject())
-                {
-                    dfloat angle = (M_PointXYToAngle2(tracking->origin[0], tracking->origin[1],
-                                                      emitter.origin.x, emitter.origin.y)
-                                        - tracking->angle)
-                                 / (dfloat) ANGLE_MAX * 360;
-
+                    dfloat angle = listener->angleFrom(emitter.origin);
                     // We want a signed angle.
-                    if(angle > 180)
-                        angle -= 360;
+                    if(angle > 180) angle -= 360;
 
-                    // Front half.
-                    if(angle <= 90 && angle >= -90)
+                    if(angle <= 90 && angle >= -90)  // Front half.
                     {
-                        finalPan = -angle / 90;
+                        panning = -angle / 90;
                     }
-                    else
+                    else  // Back half.
                     {
-                        // Back half.
-                        finalPan = (angle + (angle > 0 ? -180 : 180)) / 90;
-                        // Dampen sounds coming from behind.
-                        dist *= (1 + (finalPan > 0 ? finalPan : -finalPan)) / 2;
+                        panning = (angle + (angle > 0 ? -180 : 180)) / 90;
                     }
                 }
-                else
+
+                // Apply listener distance based volume attenuation?
+                if(!emitter.noVolumeAttenuation)
                 {
-                    // No listener mobj? Can't pan, then.
-                    finalPan = 0;
+                    ddouble const dist      = listener->distanceFrom(emitter.origin);
+                    Ranged const attenRange = listener->volumeAttenuationRange();
+
+                    if(dist >= attenRange.start)
+                    {
+                        if(dist > attenRange.end)
+                        {
+                            // Won't be heard.
+                            volAtten = 0;
+                        }
+                        else
+                        {
+                            // Calculate roll-off attenuation [.125/(.125+x), x=0..1]
+                            // Apply a linear factor to ensure absolute silence at the
+                            // maximum distance.
+                            ddouble ip = (dist - attenRange.start) / attenRange.size();
+                            volAtten = de::clamp<dfloat>(0, .125f / (.125f + ip) * (1 - ip), 1);
+                        }
+                    }
                 }
             }
 
-            driver.iSound().gen.Set(buf, SFXBP_VOLUME, volume * dist * System::get().soundVolume() / 255.0f);
-            driver.iSound().gen.Set(buf, SFXBP_PAN, finalPan);
-        }
-    }
+            if(!de::fequal(panning, 0))
+            {
+                // Dampen sounds coming from behind the listener.
+                volAtten *= (1 + (panning > 0 ? panning : -panning)) / 2;
+            }
 
-    void systemFrameEnds(System &)
-    {
-        writeDeferredProperties();
-    }
-
-    void observeListener(Listener *newListener)
-    {
-        // No change?
-        if(listener == newListener) return;
-
-        if(listener)
-        {
-           listener->audienceForEnvironmentChange() -= this;
-           listener->audienceForDeletion()          -= this;
-        }
-
-        listener = newListener;
-        needEnvironmentUpdate = true;
-
-        if(listener)
-        {
-            listener->audienceForDeletion()          += this;
-            listener->audienceForEnvironmentChange() += this;
+            driver.iSound().gen.Set(buf, SFXBP_VOLUME, volume * volAtten * System::get().soundVolume() / 255.0f);
+            driver.iSound().gen.Set(buf, SFXBP_PAN, panning);
         }
     }
 
@@ -477,6 +493,11 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundChannel)
         // Defer until the end of the frame.
         needEnvironmentUpdate = true;
         listener = nullptr;
+    }
+
+    void systemFrameEnds(System &)
+    {
+        writeDeferredProperties();
     }
 };
 

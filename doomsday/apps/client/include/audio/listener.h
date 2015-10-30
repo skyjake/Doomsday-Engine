@@ -63,11 +63,21 @@ public:
     Environment environment();
 
     /**
-     * Convenient method determining the world space distance (in map units) from the given
-     * @a point to the listener. If no map-object is currently being tracked then @c 0 is
-     * returned instead.
+     * Determines the world space angle in degrees [0..360) between the listener and the
+     * given @a point.
      *
-     * @see position(), inVolumeAttenuationRangeOf()
+     * If no map-object is currently being tracked the listener is understood to be at a
+     * fixed (x:0, y:0) origin for the purposes of this calculation.
+     *
+     * @see distanceFrom()
+     */
+    de::dfloat angleFrom(de::Vector3d const &point) const;
+
+    /**
+     * Determines the world space distance (in map units) from the given @a point to the
+     * listener. If no map-object is currently being tracked then @c 0 is returned instead.
+     *
+     * @see position(), inAudibleRangeOf(), angleFrom()
      */
     de::ddouble distanceFrom(de::Vector3d const &point) const;
 

@@ -228,12 +228,12 @@ DENG2_PIMPL_NOREF(DummyDriver::SoundChannel)
     }
 
     /**
-     * Flushes property changes to the data buffer.
+     * Writes deferred Listener and/or Environment changes to the audio driver.
      *
      * @param force  Usually updates are only necessary during playback. Use @c true to
-     * override this check and write the properties regardless.
+     * override this check and write the changes regardless.
      */
-    void updateBuffer(bool force = false)
+    void writeDeferredProperties(bool force = false)
     {
         // Disabled?
         if(noUpdate) return;
@@ -248,7 +248,7 @@ DENG2_PIMPL_NOREF(DummyDriver::SoundChannel)
 
     void systemFrameEnds(System &)
     {
-        updateBuffer();
+        writeDeferredProperties();
     }
 };
 
@@ -276,7 +276,7 @@ void DummyDriver::SoundChannel::play(PlayingMode mode)
     }
 
     // Flush deferred property value changes to the assigned data buffer.
-    d->updateBuffer(true/*force*/);
+    d->writeDeferredProperties(true/*force*/);
 
     // Playback begins!
     d->playingMode = mode;
@@ -381,7 +381,13 @@ void DummyDriver::SoundChannel::setFlags(dint flags)
 
 void DummyDriver::SoundChannel::update()
 {
-    // Playback of non-looping sounds must stop when the first playback cycle ends.
+    /**
+     * Playback of non-looping sounds must stop when the first playback cycle ends.
+     *
+     * @note This test fails if the game has been running for about 50 days, since the
+     * millisecond counter overflows. It only affects sounds that are playing while the
+     * overflow happens, though.
+     */
     if(isPlaying() && !isPlayingLooped() && Timer_RealMilliseconds() >= d->endTime)
     {
         stop();
@@ -398,17 +404,18 @@ bool DummyDriver::SoundChannel::format(Positioning positioning, dint bytesPer, d
 {
     // Do we need to (re)configure the sample data buffer?
     if(   d->positioning        != positioning
-       || d->buffer.sampleRate  != rate
-       || d->buffer.sampleBytes != bytesPer)
+       || d->buffer.sampleBytes != bytesPer
+       || d->buffer.sampleRate  != rate)
     {
         stop();
         DENG2_ASSERT(!isPlaying());
 
         d->positioning = positioning;
 
-        de::zap(d->buffer);
+        d->buffer.unload();
         d->buffer.sampleBytes = bytesPer;
         d->buffer.sampleRate  = rate;
+
         d->bufferIsValid = true;
     }
     return isValid();

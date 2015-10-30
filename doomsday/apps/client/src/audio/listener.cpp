@@ -180,6 +180,20 @@ Vector3d Listener::velocity() const
     return Vector3d();  // Not moving.
 }
 
+dfloat Listener::angleFrom(Vector3d const &point) const
+{
+    ddouble origin[3]; position().decompose(origin);
+    ddouble pointv[3]; point     .decompose(pointv);
+
+    angle_t angle = M_PointToAngle2(origin, pointv);
+    if(d->tracking)
+    {
+        angle -= d->tracking->angle;
+    }
+
+    return (angle) / (dfloat) ANGLE_MAX * 360;
+}
+
 ddouble Listener::distanceFrom(Vector3d const &point) const
 {
     if(mobj_t const *mob = d->tracking)
