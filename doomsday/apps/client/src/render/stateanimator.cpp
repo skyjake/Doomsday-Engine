@@ -606,7 +606,7 @@ void StateAnimator::triggerByState(String const &stateName)
 
             int const priority = seq.def->geti(DEF_PRIORITY, ANIM_DEFAULT_PRIORITY);
 
-            // Loop up the timeline.
+            // Look up the timeline.
             Scheduler *timeline = seq.timeline;
             if(!seq.sharedTimeline.isEmpty())
             {
