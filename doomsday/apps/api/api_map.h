@@ -346,7 +346,7 @@ DENG_API_TYPEDEF(Map)
      */
     void            (*MO_Unlink)(struct mobj_s *mobj);
 
-    void            (*MO_SpawnDamageParticleGen)(struct mobj_s *mobj, struct mobj_s *inflictor, int amount);
+    void            (*MO_SpawnDamageParticleGen)(struct mobj_s const *mobj, struct mobj_s const *inflictor, int amount);
 
     /**
      * The callback function will be called once for each line that crosses
