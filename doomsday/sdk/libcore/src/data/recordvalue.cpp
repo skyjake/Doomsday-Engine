@@ -42,7 +42,9 @@ DENG2_PIMPL_NOREF(RecordValue)
     Instance() : record(0) {}
 };
 
-RecordValue::RecordValue(Record *record, OwnershipFlags o) : d(new Instance)
+RecordValue::RecordValue(Record *record, OwnershipFlags o)
+    : RecordAccessor(record)
+    , d(new Instance)
 {
     d->record = record;
     d->ownership = o;
@@ -57,7 +59,9 @@ RecordValue::RecordValue(Record *record, OwnershipFlags o) : d(new Instance)
     }
 }
 
-RecordValue::RecordValue(Record const &record) : d(new Instance)
+RecordValue::RecordValue(Record const &record)
+    : RecordAccessor(record)
+    , d(new Instance)
 {
     d->record = const_cast<Record *>(&record);
 
@@ -104,6 +108,7 @@ void RecordValue::setRecord(Record *record, OwnershipFlags ownership)
 
     d->record = record;
     d->ownership = ownership;
+    setAccessedRecord(d->record);
 
     if(d->record && !d->ownership.testFlag(OwnsRecord))
     {
@@ -121,8 +126,9 @@ Record *RecordValue::takeRecord()
         throw OwnershipError("RecordValue::takeRecord", "Value does not own the record");
     }
     Record *rec = d->record;
-    d->record = 0;
-    d->ownership = 0;
+    d->record = nullptr;
+    d->ownership = RecordNotOwned;
+    setAccessedRecord(nullptr);
     return rec;
 }
 
@@ -301,7 +307,8 @@ void RecordValue::recordBeingDeleted(Record &DENG2_DEBUG_ONLY(record))
 
     DENG2_ASSERT(d->record == &record);
     DENG2_ASSERT(!d->ownership.testFlag(OwnsRecord));
-    d->record = 0;
+    d->record = nullptr;
+    setAccessedRecord(nullptr);
 }
 
 } // namespace de

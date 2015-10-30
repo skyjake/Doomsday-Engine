@@ -24,6 +24,7 @@
 namespace de {
 
 class Record;
+class RecordValue;
 
 /**
  * Utility class with convenient get*() methods. While Record is designed to be used
@@ -64,16 +65,16 @@ public:
     String gets(String const &name) const;
     String gets(String const &name, String const &defaultValue) const;
     ArrayValue const &geta(String const &name) const;
+    RecordValue const &getr(String const &name) const;
 
     Record const &subrecord(String const &name) const;
 
     template <typename ValueType>
     ValueType const &getAs(String const &name) const {
         ValueType const *v = get(name).maybeAs<ValueType>();
-        if(!v)
-        {
+        if(!v) {
             throw ValueTypeError("RecordAccessor::getAs", String("Cannot cast to expected type (") +
-                                 DENG2_TYPE_NAME(ValueType) + ")");
+                                 DENG2_TYPE_NAME(ValueType) + " const)");
         }
         return *v;
     }
