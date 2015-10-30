@@ -196,4 +196,9 @@ void Scheduler::Clock::advanceTime(TimeDelta const &elapsed)
     d->advanceTime(elapsed);
 }
 
+bool Scheduler::Clock::isFinished() const
+{
+    return d->events.empty();
+}
+
 } // namespace de
