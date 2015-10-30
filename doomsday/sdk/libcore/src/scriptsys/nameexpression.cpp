@@ -129,7 +129,6 @@ String const &NameExpression::identifier() const
 Value *NameExpression::evaluate(Evaluator &evaluator) const
 {
     //LOG_AS("NameExpression::evaluate");
-    //std::cout << "NameExpression::evaluator: " << _flags.to_string() << "\n";
     LOGDEV_SCR_XVERBOSE_DEBUGONLY("evaluating name:\"%s\" flags:%x", d->identifier << flags());
 
     // Collect the namespaces to search.

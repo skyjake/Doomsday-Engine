@@ -475,7 +475,7 @@ public:
 
     /**
      * Looks up the record that contains the variable referred to be @a name.
-     * If @a name contains no '.' characters, this always returns this record.
+     * If @a name contains no '.' characters, always returns this record.
      *
      * @param name  Variable name.
      *
