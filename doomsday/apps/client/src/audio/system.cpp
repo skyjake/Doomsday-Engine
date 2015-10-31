@@ -100,6 +100,23 @@ static mobj_t *getListenerMob()
     return nullptr;
 }
 
+// --------------------------------------------------------------------------------------
+
+String Channel::typeAsText(Type type)  // static
+{
+    switch(type)
+    {
+    case Cd:    return "CD";
+    case Music: return "Music";
+    case Sound: return "SFX";
+
+    default: DENG2_ASSERT(!"Channel::typeAsText: Unknown Type"); break;
+    }
+    return "(unknown)";
+}
+
+// --------------------------------------------------------------------------------------
+
 String MusicSourceAsText(MusicSource source)  // static
 {
     switch(source)
@@ -154,21 +171,6 @@ String IDriver::description() const
     desc += "\n" _E(D)_E(b) "Status: " _E(.) + statusAsText();
 
     return desc;
-}
-
-// --------------------------------------------------------------------------------------
-
-String Channel::typeAsText(Type type)  // static
-{
-    switch(type)
-    {
-    case Cd:    return "CD";
-    case Music: return "Music";
-    case Sound: return "SFX";
-
-    default: DENG2_ASSERT(!"Channel::typeAsText: Unknown Type"); break;
-    }
-    return "(unknown)";
 }
 
 // --------------------------------------------------------------------------------------
@@ -254,18 +256,18 @@ DENG2_PIMPL(System)
     };
     QList<ActiveInterface> activeInterfaces;  //< Initialization order.
 
-    Record &findInterface(Channel::Type type, DotPath const &identityKey)
+    Record &findInterface(DotPath const &identityKey, Channel::Type channelType)
     {
-        if(auto *found = tryFindInterface(type, identityKey)) return *found;
+        if(auto *found = tryFindInterface(identityKey, channelType)) return *found;
         /// @throw MissingPlaybackInterfaceError  Unknown type & identity key pair specified.
         throw MissingPlaybackInterfaceError("audio::System::Instance::findInterface", "Unknown interface identity key \"" + identityKey + "\"");
     }
 
-    Record *tryFindInterface(Channel::Type type, DotPath const &identityKey)
+    Record *tryFindInterface(DotPath const &identityKey, Channel::Type channelType)
     {
-        DENG2_ASSERT(dint(type) >= 0 && dint(type) < Channel::TypeCount);
-        auto found = interfaces[dint(type)].find(identityKey.toStringRef().toLower());
-        if(found != interfaces[dint(type)].end()) return &found.value();
+        DENG2_ASSERT(dint(channelType) >= 0 && dint(channelType) < Channel::TypeCount);
+        auto found = interfaces[dint(channelType)].find(identityKey.toStringRef().toLower());
+        if(found != interfaces[dint(channelType)].end()) return &found.value();
         return nullptr;
     }
 
@@ -344,7 +346,7 @@ DENG2_PIMPL(System)
             DotPath const idKey(rec.gets("identityKey"));
             auto const channelType = Channel::Type( rec.geti("channelType") );
 
-            // Ensure the identity key for this interface is well-formed.
+            // Interface identity keys must be well-formed.
             if(idKey.segmentCount() < 2 || idKey.firstSegment() != driver->identityKey().split(';').first())
             {
                 LOGDEV_AUDIO_WARNING("Playback interface identity key \"%s\" for driver \"%s\""
@@ -354,8 +356,8 @@ DENG2_PIMPL(System)
                 continue;
             }
 
-            // Driver interface identity keys must be unique.
-            if(tryFindInterface(channelType, idKey))
+            // Interface identity keys must be unique.
+            if(tryFindInterface(idKey, channelType))
             {
                 LOGDEV_AUDIO_WARNING("A playback interface with identity key \"%s\" already"
                                      " exists (must be unique) - cannot add interface")
@@ -486,12 +488,12 @@ DENG2_PIMPL(System)
      *
      * Duplicate/unsuitable items are removed automatically.
      *
-     * @param type          Playback interface type requirement.
+     * @param channelType   Common Channel::Type identifier.
      * @param priorityList  Playback interface identity keys (delimited with ';').
      *
      * @return  Sanitized list of playback interfaces in the order given.
      */
-    QStringList parseInterfacePriority(Channel::Type type, String priorityList)
+    QStringList parseInterfacePriority(Channel::Type channelType, String priorityList)
     {
         priorityList = priorityList.lower();  // Identity keys are always lowercase.
 
@@ -515,7 +517,7 @@ DENG2_PIMPL(System)
             }
 
             // Do we know this playback interface?
-            if(Record const *foundInterface = tryFindInterface(type, idKey))
+            if(Record const *foundInterface = tryFindInterface(idKey, channelType))
             {
                 it.setValue(foundInterface->gets("identityKey"));
             }
@@ -525,8 +527,7 @@ DENG2_PIMPL(System)
                 it.remove();
 
                 LOG_AUDIO_WARNING("Unknown %s playback interface \"%s\"")
-                    << Channel::typeAsText(type)
-                    << idKey;
+                    << Channel::typeAsText(channelType) << idKey;
             }
         }
 
@@ -580,16 +581,16 @@ DENG2_PIMPL(System)
     }
 
     /**
-     * Activate all user-preferred playback interfaces of the given @a type, if they are
-     * not already activated.
+     * Activate all user-preferred playback interfaces with the given @a channelType, if
+     * they are not already activated.
      */
-    void activateInterfaces(Channel::Type type)
+    void activateInterfaces(Channel::Type channelType)
     {
-        for(DotPath const idKey : parseInterfacePriority(type, interfacePriority(type)))
+        for(DotPath const idKey : parseInterfacePriority(channelType, interfacePriority(channelType)))
         {
             try
             {
-                activateInterface(findInterface(type, idKey));
+                activateInterface(findInterface(idKey, channelType));
             }
             catch(MissingPlaybackInterfaceError const &er)
             {
@@ -600,8 +601,8 @@ DENG2_PIMPL(System)
     }
 
     /**
-     * Activate all user-preferred playback interfaces of @em all types, if they are not
-     * already activated.
+     * Activate all user-preferred playback interfaces, for @em all channel types, if they
+     * are not already activated.
      */
     void activateInterfaces()
     {
