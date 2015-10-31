@@ -517,7 +517,7 @@ void DummyDriver::deinitialize()
     d->initialized = false;
 }
 
-audio::System::IDriver::Status DummyDriver::status() const
+IDriver::Status DummyDriver::status() const
 {
     if(d->initialized) return Initialized;
     return Loaded;

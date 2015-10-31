@@ -27,7 +27,7 @@
 #endif
 
 #include "audio/channel.h"
-#include "audio/system.h"
+#include "audio/idriver.h"
 #include <doomsday/library.h>
 #include <de/LibraryFile>
 #include <de/String>
@@ -41,7 +41,7 @@ namespace audio {
 /**
  * Provides a plugin based audio driver.
  */
-class PluginDriver : public audio::System::IDriver
+class PluginDriver : public IDriver
 {
 public:
     /**

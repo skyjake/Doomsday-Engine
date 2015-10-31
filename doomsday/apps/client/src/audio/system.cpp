@@ -115,19 +115,19 @@ String MusicSourceAsText(MusicSource source)  // static
 
 // --------------------------------------------------------------------------------------
 
-String System::IDriver::statusAsText() const
+String IDriver::statusAsText() const
 {
     switch(status())
     {
     case Loaded:      return "Loaded";
     case Initialized: return "Initialized";
 
-    default: DENG2_ASSERT(!"audio::System::IDriver::statusAsText: Invalid status"); break;
+    default: DENG2_ASSERT(!"audio::IDriver::statusAsText: Invalid status"); break;
     }
     return "(invalid)";
 }
 
-String System::IDriver::description() const
+String IDriver::description() const
 {
     auto desc = String(     _E(b) "%1" _E(.)
                        "\n" _E(l) "IdentityKey: " _E(.) "%2")
@@ -156,7 +156,7 @@ String System::IDriver::description() const
     return desc;
 }
 
-String System::IDriver::playbackInterfaceTypeAsText(PlaybackInterfaceType type)  // static
+String IDriver::playbackInterfaceTypeAsText(PlaybackInterfaceType type)  // static
 {
     switch(type)
     {
@@ -2023,12 +2023,12 @@ dint System::driverCount() const
     return d->drivers.count();
 }
 
-System::IDriver const *System::tryFindDriver(String driverIdKey) const
+IDriver const *System::tryFindDriver(String driverIdKey) const
 {
     return d->tryFindDriver(driverIdKey);
 }
 
-System::IDriver const &System::findDriver(String driverIdKey) const
+IDriver const &System::findDriver(String driverIdKey) const
 {
     return d->findDriver(driverIdKey);
 }
@@ -2212,7 +2212,7 @@ D_CMD(ListDrivers)
 
     String list;
     dint numDrivers = 0;
-    System::get().forAllDrivers([&list, &numDrivers] (System::IDriver const &driver)
+    System::get().forAllDrivers([&list, &numDrivers] (IDriver const &driver)
     {
         if(!list.isEmpty()) list += "\n";
 
@@ -2242,7 +2242,7 @@ D_CMD(InspectDriver)
     LOG_AS("inspectaudiodriver (Cmd)");
 
     String const driverId(argv[1]);
-    if(System::IDriver const *driver = System::get().tryFindDriver(driverId))
+    if(IDriver const *driver = System::get().tryFindDriver(driverId))
     {
         LOG_SCR_MSG("") << driver->description();
         return true;

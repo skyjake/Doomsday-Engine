@@ -26,9 +26,8 @@
 #  error "audio" is not available in a SERVER build
 #endif
 
-#include "api_audiod_sfx.h"  ///< sfxbuffer_t @todo remove me
 #include "audio/channel.h"
-#include "audio/system.h"
+#include "audio/idriver.h"
 #include <de/String>
 #include <de/liblegacy.h>
 
@@ -37,7 +36,7 @@ namespace audio {
 /**
  * Provides an audio driver for playback usnig SDL_mixer.
  */
-class SdlMixerDriver : public audio::System::IDriver
+class SdlMixerDriver : public IDriver
 {
 public:
     SdlMixerDriver();

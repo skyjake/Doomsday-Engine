@@ -1309,7 +1309,7 @@ String PluginDriver::title() const
     return d->getPropertyAsString(AUDIOP_TITLE);
 }
 
-audio::System::IDriver::Status PluginDriver::status() const
+IDriver::Status PluginDriver::status() const
 {
     if(d->initialized) return Initialized;
     DENG2_ASSERT(d->iBase.Init != nullptr);

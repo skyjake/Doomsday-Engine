@@ -1040,7 +1040,7 @@ void SdlMixerDriver::deinitialize()
     SDL_QuitSubSystem(SDL_INIT_AUDIO);
 }
 
-audio::System::IDriver::Status SdlMixerDriver::status() const
+IDriver::Status SdlMixerDriver::status() const
 {
     if(d->initialized) return Initialized;
     return Loaded;

@@ -20,6 +20,7 @@
 #include "de_base.h"
 #include "audio/samplecache.h"
 
+#include "audio/idriver.h"
 #include "audio/mixer.h"
 #include "audio/system.h"
 
@@ -546,9 +547,9 @@ void SampleCache::maybeRunPurge()
         {
             // If an audio driver is still playing the sample we can't remove it.
             auto const stillPlaying =
-                ClientApp::audioSystem().forAllDrivers([&it] (System::IDriver const &driver)
+                ClientApp::audioSystem().forAllDrivers([&it] (IDriver const &driver)
             {
-                return driver.forAllChannels(System::IDriver::AUDIO_ISFX, [&it] (Channel const &base)
+                return driver.forAllChannels(IDriver::AUDIO_ISFX, [&it] (Channel const &base)
                 {
                     auto &ch = base.as<SoundChannel>();
                     return ch.isPlaying() && ch.samplePtr()->soundId == it->sample().soundId;

@@ -26,7 +26,7 @@
 
 #include "api_audiod_sfx.h"  ///< sfxbuffer_t @todo remove me
 #include "audio/channel.h"
-#include "audio/system.h"
+#include "audio/idriver.h"
 #include <de/String>
 #include <de/liblegacy.h>
 
@@ -35,7 +35,7 @@ namespace audio {
 /**
  * Provides a null-op audio driver.
  */
-class DummyDriver : public audio::System::IDriver
+class DummyDriver : public IDriver
 {
 public:
     DummyDriver();
