@@ -1371,7 +1371,7 @@ void PluginDriver::initInterface(String const &identityKey)
     {
         if(def.gets("identityKey") != idKey) continue;
 
-        switch(def.geti("type"))
+        switch(def.geti("channelType"))
         {
         case Channel::Cd:    d->cd   .initialize(); return;
         case Channel::Music: d->music.initialize(); return;
@@ -1389,7 +1389,7 @@ void PluginDriver::deinitInterface(String const &identityKey)
     {
         if(def.gets("identityKey") != idKey) continue;
 
-        switch(def.geti("type"))
+        switch(def.geti("channelType"))
         {
         case Channel::Cd:    d->cd   .deinitialize(); return;
         case Channel::Music: d->music.deinitialize(); return;
@@ -1411,8 +1411,8 @@ QList<Record> PluginDriver::listInterfaces() const
         if(!idKey.isEmpty())
         {
             Record rec;
-            rec.addNumber("type",        Channel::Cd);
             rec.addText  ("identityKey", DotPath(driverIdKey) / idKey);
+            rec.addNumber("channelType", Channel::Cd);
             list << rec;  // A copy is made.
         }
         else DENG2_ASSERT(!"[MUSIP_IDENTITYKEY not defined]");
@@ -1423,8 +1423,8 @@ QList<Record> PluginDriver::listInterfaces() const
         if(!idKey.isEmpty())
         {
             Record rec;
-            rec.addNumber("type",        Channel::Music);
             rec.addText  ("identityKey", DotPath(driverIdKey) / idKey);
+            rec.addNumber("channelType", Channel::Music);
             list << rec;
         }
         else DENG2_ASSERT(!"[MUSIP_IDENTITYKEY not defined]");
@@ -1435,8 +1435,8 @@ QList<Record> PluginDriver::listInterfaces() const
         if(!idKey.isEmpty())
         {
             Record rec;
-            rec.addNumber("type",        Channel::Sound);
             rec.addText  ("identityKey", DotPath(driverIdKey) / idKey);
+            rec.addNumber("channelType", Channel::Sound);
             list << rec;
         }
         else DENG2_ASSERT(!"[SFXIP_IDENTITYKEY not defined]");

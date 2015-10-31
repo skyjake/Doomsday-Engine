@@ -144,7 +144,7 @@ String IDriver::description() const
         for(Record const &rec : interfaces)
         {
             if(!pSummary.isEmpty()) pSummary += "\n" _E(0);
-            pSummary += " - " + Channel::typeAsText(Channel::Type(rec.geti("type")))
+            pSummary += " - " + Channel::typeAsText(Channel::Type(rec.geti("channelType")))
                       + ": " _E(>) + rec.gets("identityKey") + _E(<);
         }
         desc += "\n" _E(.)_E(.) + pSummary;
@@ -166,7 +166,7 @@ String Channel::typeAsText(Type type)  // static
     case Music: return "Music";
     case Sound: return "SFX";
 
-    default: DENG2_ASSERT(!"Unknown Channel::Type"); break;
+    default: DENG2_ASSERT(!"Channel::typeAsText: Unknown Type"); break;
     }
     return "(unknown)";
 }
@@ -175,9 +175,6 @@ String Channel::typeAsText(Type type)  // static
 
 /**
  * @todo Simplify architecture - load the "dummy" driver, always. -ds
- *
- * @todo The playback interface could also declare which audio formats it is capable of
- * playing (e.g., MIDI only, CD tracks only). -jk
  */
 DENG2_PIMPL(System)
 , DENG2_OBSERVES(App, GameUnload)
@@ -209,9 +206,9 @@ DENG2_PIMPL(System)
             return *_def;
         }
 
-        inline Channel::Type type() const
+        inline Channel::Type channelType() const
         {
-            return Channel::Type( def().geti("type") );
+            return Channel::Type( def().geti("channelType") );
         }
 
         void initialize()
@@ -252,7 +249,7 @@ DENG2_PIMPL(System)
             initialize();  // If we haven't already.
 
             DENG2_ASSERT(_driver);
-            return _driver->makeChannel(type());
+            return _driver->makeChannel(channelType());
         }
     };
     QList<ActiveInterface> activeInterfaces;  //< Initialization order.
@@ -274,9 +271,9 @@ DENG2_PIMPL(System)
 
     Record &addInterface(Record const &rec)
     {
-        dint type = rec.geti("type");
-        DENG2_ASSERT(type >= 0 && type < Channel::TypeCount);
-        return interfaces[type].insert(rec.gets("identityKey"), rec).value();  // a copy is made
+        dint channelType = rec.geti("channelType");
+        DENG2_ASSERT(channelType >= 0 && channelType < Channel::TypeCount);
+        return interfaces[channelType].insert(rec.gets("identityKey"), rec).value();  // a copy is made
     }
 
     bool interfaceIsActive(Record const &interfaceDef)
@@ -345,7 +342,7 @@ DENG2_PIMPL(System)
         for(Record const &rec : driver->listInterfaces())
         {
             DotPath const idKey(rec.gets("identityKey"));
-            auto const type = Channel::Type( rec.geti("type") );
+            auto const channelType = Channel::Type( rec.geti("channelType") );
 
             // Ensure the identity key for this interface is well-formed.
             if(idKey.segmentCount() < 2 || idKey.firstSegment() != driver->identityKey().split(';').first())
@@ -358,7 +355,7 @@ DENG2_PIMPL(System)
             }
 
             // Driver interface identity keys must be unique.
-            if(tryFindInterface(type, idKey))
+            if(tryFindInterface(channelType, idKey))
             {
                 LOGDEV_AUDIO_WARNING("A playback interface with identity key \"%s\" already"
                                      " exists (must be unique) - cannot add interface")
@@ -658,8 +655,8 @@ DENG2_PIMPL(System)
         for(dint i = activeInterfaces.count(); i--> 0; )
         {
             ActiveInterface &active = activeInterfaces[i];
-            if(   active.type() == Channel::Cd
-               || active.type() == Channel::Music)
+            if(   active.channelType() == Channel::Cd
+               || active.channelType() == Channel::Music)
             {
                 active.deinitialize();
             }
@@ -707,7 +704,7 @@ DENG2_PIMPL(System)
         for(dint i = activeInterfaces.count(); i--> 0; )
         {
             ActiveInterface &active = activeInterfaces[i];
-            if(active.type() == Channel::Sound)
+            if(active.channelType() == Channel::Sound)
             {
                 active.deinitialize();
             }
@@ -785,7 +782,7 @@ DENG2_PIMPL(System)
         for(dint i = activeInterfaces.count(); i--> 0; )
         {
             ActiveInterface &active = activeInterfaces[i];
-            switch(active.type())
+            switch(active.channelType())
             {
             case Channel::Cd:
             case Channel::Music:
@@ -1592,7 +1589,7 @@ String System::description() const
     for(dint i = d->activeInterfaces.count(); i--> 0; )
     {
         Instance::ActiveInterface &active = d->activeInterfaces[i];
-        os << _E(Ta) _E(l) "  " << Channel::typeAsText(active.type()) << ": "
+        os << _E(Ta) _E(l) "  " << Channel::typeAsText(active.channelType()) << ": "
            << _E(.) _E(Tb) << active.def().gets("identityKey") << "\n";
     }
 

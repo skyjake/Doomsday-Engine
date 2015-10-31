@@ -1063,7 +1063,7 @@ void SdlMixerDriver::initInterface(String const &identityKey)
     {
         if(def.gets("identityKey") != idKey) continue;
 
-        switch(def.geti("type"))
+        switch(def.geti("channelType"))
         {
         case Channel::Music: d->music.initialize(); return;
         case Channel::Sound: d->sound.initialize(); return;
@@ -1080,7 +1080,7 @@ void SdlMixerDriver::deinitInterface(String const &identityKey)
     {
         if(def.gets("identityKey") != idKey) continue;
 
-        switch(def.geti("type"))
+        switch(def.geti("channelType"))
         {
         case Channel::Music: d->music.deinitialize(); return;
         case Channel::Sound: d->sound.deinitialize(); return;
@@ -1095,14 +1095,14 @@ QList<Record> SdlMixerDriver::listInterfaces() const
     QList<Record> list;
     {
         Record rec;
-        rec.addNumber("type",        Channel::Music);
         rec.addText  ("identityKey", DotPath(identityKey()) / "music");
+        rec.addNumber("channelType", Channel::Music);
         list << rec;
     }
     {
         Record rec;
-        rec.addNumber("type",        Channel::Sound);
         rec.addText  ("identityKey", DotPath(identityKey()) / "sfx");
+        rec.addNumber("channelType", Channel::Sound);
         list << rec;
     }
     return list;

@@ -142,10 +142,14 @@ public:
      * later, though.
      *
      * Each interface record must contain at least the following required elements:
-     * - (NumberValue)"type"      : ChannelType identifier.
      *
-     * - (TextValue)"identityKey" : Driver-unique, textual, symbolic identifier for
+     * - (TextValue)"identityKey"   : Driver-unique, textual, symbolic identifier for
      *   the player interface (lowercase), for use in Config.
+     *
+     * - (NumberValue)"channelType" : Channel::Type identifier.
+     *
+     * @todo The playback interface could also declare which audio formats it is capable
+     * of playing (e.g., MIDI only, CD tracks only). -jk
      */
     virtual QList<de::Record> listInterfaces() const = 0;
 

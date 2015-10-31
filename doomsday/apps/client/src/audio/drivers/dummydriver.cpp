@@ -538,20 +538,20 @@ QList<Record> DummyDriver::listInterfaces() const
     QList<Record> list;
     {
         Record rec;
-        rec.addNumber("type",        Channel::Cd);
         rec.addText  ("identityKey", DotPath(identityKey()) / "cd");
+        rec.addNumber("channelType", Channel::Cd);
         list << rec;  // A copy is made.
     }
     {
         Record rec;
-        rec.addNumber("type",        Channel::Music);
         rec.addText  ("identityKey", DotPath(identityKey()) / "music");
+        rec.addNumber("channelType", Channel::Music);
         list << rec;
     }
     {
         Record rec;
-        rec.addNumber("type",        Channel::Sound);
         rec.addText  ("identityKey", DotPath(identityKey()) / "sfx");
+        rec.addNumber("channelType", Channel::Sound);
         list << rec;
     }
     return list;
