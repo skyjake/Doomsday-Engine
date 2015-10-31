@@ -371,9 +371,6 @@ public:  // Low-level driver/playback interfaces: ------------------------------
 
     public:  //- Playback Channels: -----------------------------------------------------
 
-        /// Referenced playback interface unknown. @ingroup errors
-        DENG2_ERROR(UnknownInterfaceError);
-
         enum PlaybackInterfaceType
         {
             AUDIO_ICD,
@@ -407,7 +404,7 @@ public:  // Low-level driver/playback interfaces: ------------------------------
         virtual void initInterface(de::String const &identityKey) {}
 
         /**
-         * Perform any deinitializaion necessary end playback before the driver is unloaded.
+         * Perform any deinitializaion necessary to end playback before the driver is unloaded.
          */
         virtual void deinitInterface(de::String const &identityKey) {}
 

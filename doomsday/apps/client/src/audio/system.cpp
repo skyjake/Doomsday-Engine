@@ -559,31 +559,23 @@ DENG2_PIMPL(System)
         if(interfaceIsActive(interfaceDef))
             return;
 
-        try
+        // If this interface belongs to a driver - ensure that the driver is initialized
+        // before activating the interface.
+        IDriver *driver = nullptr;
+        DotPath const idKey = interfaceDef.gets("identityKey");
+        if(idKey.segmentCount() > 1)
         {
-            // If this interface belongs to a driver - ensure that the driver is initialized
-            // before activating the interface.
-            IDriver *driver = nullptr;
-            DotPath const idKey = interfaceDef.gets("identityKey");
-            if(idKey.segmentCount() > 1)
+            driver = tryFindDriver(idKey.firstSegment());
+            if(driver)
             {
-                driver = tryFindDriver(idKey.firstSegment());
-                if(driver)
-                {
-                    initDriverIfNeeded(*driver);
-                    if(!driver->isInitialized())
-                        return;
-                }
+                initDriverIfNeeded(*driver);
+                if(!driver->isInitialized())
+                    return;
             }
+        }
 
-            ActiveInterface active(const_cast<Record &>(interfaceDef), driver);
-            activeInterfaces.append(active); // A copy is made.
-        }
-        catch(IDriver::UnknownInterfaceError const &er)
-        {
-            // Log but otherwise ignore this error.
-            LOG_AUDIO_ERROR("") << er.asText();
-        }
+        ActiveInterface active(const_cast<Record &>(interfaceDef), driver);
+        activeInterfaces.append(active); // A copy is made.
     }
 
     /**

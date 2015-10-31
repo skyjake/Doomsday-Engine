@@ -91,7 +91,8 @@ public:
 
     /**
      * Returns @c true if the channel supports sources with "any" sampler rate; otherwise
-     * @c false if the user is responsible the source matches the configured sampler rate.
+     * @c false if the user is responsible for ensuring the source matches the configured
+     * sampler rate.
      */
     virtual bool anyRateAccepted() const { return true; }
 };
