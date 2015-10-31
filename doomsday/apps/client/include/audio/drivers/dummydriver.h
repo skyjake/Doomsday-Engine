@@ -158,13 +158,12 @@ public:  //- Implements audio::System::IDriver: --------------------------------
 
     QList<de::Record> listInterfaces() const;
 
-    IPlayer &findPlayer   (de::String interfaceIdentityKey) const;
-    IPlayer *tryFindPlayer(de::String interfaceIdentityKey) const;
-
     Channel *makeChannel(PlaybackInterfaceType type) override;
 
     de::LoopResult forAllChannels(PlaybackInterfaceType type,
         std::function<de::LoopResult (Channel const &)> callback) const override;
+
+    void allowRefresh(bool allow) override;
 
 private:
     DENG2_PRIVATE(d)

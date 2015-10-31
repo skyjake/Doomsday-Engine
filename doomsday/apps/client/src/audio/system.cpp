@@ -190,16 +190,15 @@ DENG2_PIMPL(System)
     typedef QMap<String /*key: identity key*/, Record> PlaybackInterfaceMap;
     PlaybackInterfaceMap interfaces[IDriver::PlaybackInterfaceTypeCount];
 
-    class ActiveInterface
+    struct ActiveInterface
     {
-        Record *_def = nullptr;
+        Record *_def      = nullptr;
+        IDriver *_driver  = nullptr;
+        bool _needInit    = true;
+        bool _initialized = false;
 
-    public:
-        IDriver *driver = nullptr;
-        IPlayer *player = nullptr;
-
-        ActiveInterface(Record &def, IDriver *driver, IPlayer *player)
-            : _def(&def), driver(driver), player(player)
+        ActiveInterface(Record &def, IDriver *driver)
+            : _def(&def), _driver(driver)
         {}
 
         Record &def() const
@@ -213,36 +212,43 @@ DENG2_PIMPL(System)
             return IDriver::PlaybackInterfaceType( def().geti("type") );
         }
 
-        bool initialize()
+        void initialize()
         {
-            if(player)
+            // Been here already?
+            if(!_needInit) return;
+
+            _needInit    = false;
+            _initialized = false;
+            try
             {
-                return CPP_BOOL( player->initialize() );
+                DENG2_ASSERT(_driver);
+                _driver->initInterface(def().gets("identityKey"));
+                _initialized = true;
             }
-            return true;
+            catch(Error const &er)
+            {
+                LOG_AUDIO_WARNING("Failed initializing \"%s\": ")
+                    << def().gets("identityKey")
+                    << er.asText();
+            }
         }
 
         void deinitialize()
         {
-            if(player)
-            {
-                player->deinitialize();
-            }
+            // Been here already?
+            if(!_initialized) return;
+
+            DENG2_ASSERT(_driver);
+            _driver->deinitInterface(def().gets("identityKey"));
+            _initialized = false;
+            _needInit    = true;
         }
 
         // Note: Drivers retain ownership of channels.
         Channel *makeChannel()
         {
-            DENG2_ASSERT(driver);
-            return driver->makeChannel(type());
-        }
-        
-        void allowRefresh(bool allow)
-        {
-            if(player && type() == IDriver::AUDIO_ISFX)
-            {
-                player->as<ISoundPlayer>().allowRefresh(allow);
-            }
+            DENG2_ASSERT(_driver);
+            return _driver->makeChannel(type());
         }
     };
     QList<ActiveInterface> activeInterfaces;  //< Initialization order.
@@ -369,7 +375,7 @@ DENG2_PIMPL(System)
         QList<IDriver *> reverseInitOrder;
         for(ActiveInterface const &active : activeInterfaces)
         {
-            if(IDriver *driver = active.driver)
+            if(IDriver *driver = active._driver)
             {
                 if(!reverseInitOrder.contains(driver))
                     reverseInitOrder.prepend(driver);
@@ -528,27 +534,6 @@ DENG2_PIMPL(System)
         return list;
     }
 
-    IPlayer &getPlayer(IDriver::PlaybackInterfaceType type, DotPath const &identityKey)
-    {
-        if(identityKey.segmentCount() > 1)
-        {
-            IDriver const &driver = findDriver(identityKey.segment(0));
-            IPlayer &player = driver.findPlayer(identityKey.segment(1));
-            // Ensure this player is of the expected type.
-            if(type != IDriver::AUDIO_ISFX || player.is<ISoundPlayer>())
-            {
-                return player;
-            }
-        }
-        // Internal bookkeeping error: No such player found!
-        throw Error("audio::System::Instance::getPlayer", "Failed to locate " + IDriver::playbackInterfaceTypeAsText(type) + " player for \"" + identityKey + "\"");
-    }
-
-    inline IPlayer &getPlayerFor(Record const &ifs)
-    {
-        return getPlayer(IDriver::PlaybackInterfaceType( ifs.geti("type") ), ifs.gets("identityKey"));
-    }
-
     IDriver &initDriverIfNeeded(IDriver &driver)
     {
         if(!driver.isInitialized())
@@ -576,8 +561,6 @@ DENG2_PIMPL(System)
 
         try
         {
-            IPlayer &player = getPlayerFor(interfaceDef);
-
             // If this interface belongs to a driver - ensure that the driver is initialized
             // before activating the interface.
             IDriver *driver = nullptr;
@@ -593,7 +576,7 @@ DENG2_PIMPL(System)
                 }
             }
 
-            ActiveInterface active(const_cast<Record &>(interfaceDef), driver, &player);
+            ActiveInterface active(const_cast<Record &>(interfaceDef), driver);
             activeInterfaces.append(active); // A copy is made.
         }
         catch(IDriver::UnknownInterfaceError const &er)
@@ -656,28 +639,9 @@ DENG2_PIMPL(System)
             return;
         }
 
-        // Initialize interfaces for music playback.
-        dint initialized = 0;
-        for(dint i = activeInterfaces.count(); i--> 0; )
-        {
-            ActiveInterface &active = activeInterfaces[i];
-            if(   active.type() != IDriver::AUDIO_IMUSIC
-               && active.type() != IDriver::AUDIO_ICD)
-                continue;
-
-            if(active.initialize())
-            {
-                initialized += 1;
-            }
-            else
-            {
-                LOG_AUDIO_WARNING("Failed to initialize \"%s\" for music playback")
-                    << active.def().gets("identityKey");
-            }
-        }
-
         // Remember whether an interface for music playback initialized successfully.
-        musicAvail = initialized >= 1;
+        musicAvail = (*mixer)["music"].channelCount() >= 1;
+
         if(musicAvail)
         {
             // Tell audio drivers about our soundfont config.
@@ -726,27 +690,8 @@ DENG2_PIMPL(System)
         // (Re)Init the sample cache.
         sampleCache.clear();
 
-        // Initialize interfaces for sound playback.
-        dint initialized = 0;
-        for(dint i = activeInterfaces.count(); i--> 0; )
-        {
-            ActiveInterface &active = activeInterfaces[i];
-            if(active.type() != IDriver::AUDIO_ISFX)
-                continue;
-
-            if(active.initialize())
-            {
-                initialized += 1;
-            }
-            else
-            {
-                LOG_AUDIO_WARNING("Failed to initialize \"%s\" for sound playback")
-                    << active.def().gets("identityKey");
-            }
-        }
-
         // Remember whether an interface for sound playback initialized successfully.
-        soundAvail = initialized >= 1;
+        soundAvail = (*mixer)["fx"].channelCount() >= 1;
 
         // Disable environmental audio effects by default.
         worldStage.listener().useEnvironment(false);
@@ -1601,25 +1546,6 @@ DENG2_PIMPL(System)
         old3DMode = sfx3D;
     }
 
-    /**
-     * Returns the currently active, primary SoundPlayer.
-     */
-    ISoundPlayer &getSoundPlayer() const
-    {
-        // The primary interface is the first one.
-        for(dint i = activeInterfaces.count(); i--> 0; )
-        {
-            ActiveInterface const &active = activeInterfaces[i];
-            if(active.def().geti("type") == IDriver::AUDIO_ISFX)
-            {
-                DENG2_ASSERT(active.player);
-                return active.player->as<ISoundPlayer>();
-            }
-        }
-        /// Internal Error: No suitable sound player is available.
-        throw Error("audio::System::Instance::getSoundPlayer", "No SoundPlayer available");
-    }
-
     void aboutToUnloadGame(game::Game const &)
     {
         self.reset();
@@ -1693,17 +1619,15 @@ SampleCache &System::sampleCache() const
 dint System::upsampleFactor(dint rate) const
 {
     //LOG_AS("audio::System");
-
-    dint factor = 1;
-    if(soundPlaybackAvailable())
+    bool mustUpsample = mixer()["fx"].forAllChannels([] (Channel &ch)
     {
-        // If we need to upsample - determine the scale factor.
-        if(!d->getSoundPlayer().anyRateAccepted())
-        {
-            factor = de::max(1, ::sfxRate / rate);
-        }
+        return !ch.anyRateAccepted();
+    });
+    if(mustUpsample)
+    {
+        return de::max(1, ::sfxRate / rate);
     }
-    return factor;
+    return 1;
 }
 
 void System::resetStage(StageId stageId)
@@ -2274,9 +2198,9 @@ void System::deinitPlayback()
 
 void System::allowChannelRefresh(bool allow)
 {
-    for(dint i = d->activeInterfaces.count(); i--> 0; )
+    for(IDriver *driver : d->drivers)
     {
-        d->activeInterfaces[i].allowRefresh(allow);
+        driver->allowRefresh(allow);
     }
 }
 

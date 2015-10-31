@@ -790,6 +790,16 @@ void PluginDriver::SoundChannel::updateEnvironment()
     d->driver.iSound().gen.Listener(SFXLP_UPDATE, 0);
 }
 
+bool PluginDriver::SoundChannel::anyRateAccepted() const
+{
+    dint anyRateAccepted = 0;
+    if(d->driver.iSound().gen.Getv)
+    {
+        d->driver.iSound().gen.Getv(SFXIP_ANY_SAMPLE_RATE_ACCEPTED, &anyRateAccepted);
+    }
+    return CPP_BOOL( anyRateAccepted );
+}
+
 // --------------------------------------------------------------------------------------
 
 DENG2_PIMPL(PluginDriver)
@@ -812,6 +822,12 @@ DENG2_PIMPL(PluginDriver)
         IPlugin() { de::zapPtr(this); }
     } iBase;
 
+    struct IPlayer
+    {
+        virtual ~IPlayer() {}
+        DENG2_AS_IS_METHODS()
+    };
+
     struct CdPlayer : public IPlayer, public audiointerface_cd_t
     {
         bool initialized     = false;
@@ -824,19 +840,24 @@ DENG2_PIMPL(PluginDriver)
             Play = nullptr;
         }
 
-        dint initialize()
+        void initialize()
         {
-            if(needInit)
-            {
-                needInit = false;
-                DENG2_ASSERT(gen.Init);
-                initialized = gen.Init();
-            }
-            return initialized;
+            // Already been here?
+            if(!needInit) return;
+
+            needInit = false;
+
+            DENG2_ASSERT(gen.Init);
+            dint result = gen.Init();
+            if(result == 0)
+                throw Error("PluginDriver::initInterface", "Error #" + String::number(result));
+
+            initialized = true;
         }
 
         void deinitialize()
         {
+            // Already been here?
             if(!initialized) return;
 
             initialized = false;
@@ -862,31 +883,36 @@ DENG2_PIMPL(PluginDriver)
             PlayFile   = nullptr;
         }
 
-        dint initialize()
+        void initialize()
         {
-            if(needInit)
-            {
-                needInit = false;
-                DENG2_ASSERT(gen.Init);
-                initialized = gen.Init();
-            }
-            return initialized;
+            // Already been here?
+            if(!needInit) return;
+
+            needInit = false;
+
+            DENG2_ASSERT(gen.Init);
+            dint result = gen.Init();
+            if(result == 0)
+                throw Error("PluginDriver::initInterface", "Error #" + String::number(result));
+
+            initialized = true;
         }
 
         void deinitialize()
         {
+            // Already been here?
             if(!initialized) return;
 
-            initialized = false;
             if(gen.Shutdown)
             {
                 gen.Shutdown();
             }
-            needInit = true;
+            initialized = false;
+            needInit    = true;
         }
     } music;
 
-    struct SoundPlayer : public ISoundPlayer, public audiointerface_sfx_t
+    struct SoundPlayer : public IPlayer, public audiointerface_sfx_t
     , DENG2_OBSERVES(SampleCache, SampleRemove)
     {
         PluginDriver *driver = nullptr;
@@ -904,68 +930,43 @@ DENG2_PIMPL(PluginDriver)
 
         ~SoundPlayer() { DENG2_ASSERT(!initialized); }
 
-        /**
-         * Returns @c true if any frequency/sample rate is permitted for audio data.
-         */
-        bool anyRateAccepted() const
+        void initialize()
         {
-            dint anyRateAccepted = 0;
-            if(gen.Getv)
+            // Already been here?
+            if(!needInit) return;
+
+            needInit = false;
+
+            DENG2_ASSERT(gen.Init);
+            dint result = gen.Init();
+            if(result == 0)
+                throw Error("PluginDriver::initInterface", "Error #" + String::number(result));
+
+            audio::System::get().sampleCache().audienceForSampleRemove() += this;
+
+            if(gen.Listener && gen.Listenerv)
             {
-                gen.Getv(SFXIP_ANY_SAMPLE_RATE_ACCEPTED, &anyRateAccepted);
+                // Change the primary buffer format to match the channel format.
+                dfloat pformat[2] = { dfloat(::sfxBits), dfloat(::sfxRate) };
+                gen.Listenerv(SFXLP_PRIMARY_FORMAT, pformat);
+
+                // This is based on the scientific calculations that if the DOOM marine
+                // is 56 units tall, 60 is about two meters.
+                //// @todo Derive from the viewheight.
+                gen.Listener(SFXLP_UNITS_PER_METER, 30);
+                gen.Listener(SFXLP_DOPPLER, 1.5f);
+
+                dfloat rev[4] = { 0, 0, 0, 0 };
+                gen.Listenerv(SFXLP_REVERB, rev);
+                gen.Listener(SFXLP_UPDATE, 0);
             }
-            return CPP_BOOL( anyRateAccepted );
-        }
 
-        /**
-         * Returns @c true if manual refreshing of playback Channels is needed.
-         */
-        bool needsRefresh() const
-        {
-            if(!initialized) return false;
-            dint disableRefresh = false;
-            if(gen.Getv)
-            {
-                gen.Getv(SFXIP_DISABLE_CHANNEL_REFRESH, &disableRefresh);
-            }
-            return !disableRefresh;
-        }
-
-        dint initialize()
-        {
-            if(needInit)
-            {
-                needInit = false;
-                DENG2_ASSERT(gen.Init);
-                initialized = gen.Init();
-
-                if(initialized)
-                {
-                    if(gen.Listener && gen.Listenerv)
-                    {
-                        // Change the primary buffer format to match the channel format.
-                        dfloat pformat[2] = { dfloat(::sfxBits), dfloat(::sfxRate) };
-                        gen.Listenerv(SFXLP_PRIMARY_FORMAT, pformat);
-
-                        // This is based on the scientific calculations that if the DOOM marine
-                        // is 56 units tall, 60 is about two meters.
-                        //// @todo Derive from the viewheight.
-                        gen.Listener(SFXLP_UNITS_PER_METER, 30);
-                        gen.Listener(SFXLP_DOPPLER, 1.5f);
-
-                        dfloat rev[4] = { 0, 0, 0, 0 };
-                        gen.Listenerv(SFXLP_REVERB, rev);
-                        gen.Listener(SFXLP_UPDATE, 0);
-                    }
-
-                    audio::System::get().sampleCache().audienceForSampleRemove() += this;
-                }
-            }
-            return initialized;
+            initialized = true;
         }
 
         void deinitialize()
         {
+            // Already been here?
             if(!initialized) return;
 
             // Cancel sample cache removal notification - we intend to clear sounds.
@@ -998,19 +999,15 @@ DENG2_PIMPL(PluginDriver)
             needInit = true;
         }
 
-        void allowRefresh(bool allow)
+        bool needsRefresh() const
         {
-            if(!initialized) return;
-            if(!needsRefresh()) return;
-
-            if(allow)
+            if(!initialized) return false;
+            dint disableRefresh = false;
+            if(gen.Getv)
             {
-                resumeRefresh();
+                gen.Getv(SFXIP_DISABLE_CHANNEL_REFRESH, &disableRefresh);
             }
-            else
-            {
-                pauseRefresh();
-            }
+            return !disableRefresh;
         }
 
         /**
@@ -1367,6 +1364,42 @@ void PluginDriver::deinitialize()
     return d->library;
 }
 
+void PluginDriver::initInterface(String const &identityKey)
+{
+    String const idKey = identityKey.toLower();
+    for(Record const &def : listInterfaces())
+    {
+        if(def.gets("identityKey") != idKey) continue;
+
+        switch(def.geti("type"))
+        {
+        case AUDIO_ICD:    d->cd   .initialize(); return;
+        case AUDIO_IMUSIC: d->music.initialize(); return;
+        case AUDIO_ISFX:   d->sound.initialize(); return;
+
+        default: return;
+        }
+    }
+}
+
+void PluginDriver::deinitInterface(String const &identityKey)
+{
+    String const idKey = identityKey.toLower();
+    for(Record const &def : listInterfaces())
+    {
+        if(def.gets("identityKey") != idKey) continue;
+
+        switch(def.geti("type"))
+        {
+        case AUDIO_ICD:    d->cd   .deinitialize(); return;
+        case AUDIO_IMUSIC: d->music.deinitialize(); return;
+        case AUDIO_ISFX:   d->sound.deinitialize(); return;
+
+        default: return;
+        }
+    }
+}
+
 QList<Record> PluginDriver::listInterfaces() const
 {
     QList<Record> list;
@@ -1411,34 +1444,19 @@ QList<Record> PluginDriver::listInterfaces() const
     return list;
 }
 
-IPlayer &PluginDriver::findPlayer(String interfaceIdentityKey) const
+void PluginDriver::allowRefresh(bool allow)
 {
-    if(IPlayer *found = tryFindPlayer(interfaceIdentityKey)) return *found;
-    /// @throw UnknownInterfaceError  Unknown interface referenced.
-    throw UnknownInterfaceError("PluginDriver::findPlayer", "Unknown playback interface \"" + interfaceIdentityKey + "\"");
-}
+    if(!d->initialized) return;
+    if(!d->sound.needsRefresh()) return;
 
-IPlayer *PluginDriver::tryFindPlayer(String interfaceIdentityKey) const
-{
-    interfaceIdentityKey = interfaceIdentityKey.toLower();
-
-    if(d->cd.gen.Init != nullptr)
+    if(allow)
     {
-        if(d->getPlayerPropertyAsString(d->cd   , MUSIP_IDENTITYKEY) == interfaceIdentityKey)
-            return &d->cd;
+        d->sound.resumeRefresh();
     }
-    if(d->music.gen.Init != nullptr)
+    else
     {
-        if(d->getPlayerPropertyAsString(d->music, MUSIP_IDENTITYKEY) == interfaceIdentityKey)
-            return &d->music;
+        d->sound.pauseRefresh();
     }
-    if(d->sound.gen.Init != nullptr)
-    {
-        if(d->getPlayerPropertyAsString(d->sound, SFXIP_IDENTITYKEY) == interfaceIdentityKey)
-            return &d->sound;
-    }
-
-    return nullptr;  // Not found.
 }
 
 Channel *PluginDriver::makeChannel(PlaybackInterfaceType type)
@@ -1449,8 +1467,7 @@ Channel *PluginDriver::makeChannel(PlaybackInterfaceType type)
     switch(type)
     {
     case AUDIO_ICD:
-        // Initialize this interface now if we haven't already.
-        if(d->cd.initialize())
+        if(d->cd.initialized)
         {
             std::unique_ptr<Channel> channel(new CdChannel(*this));
             d->channels[type] << channel.get();
@@ -1459,7 +1476,7 @@ Channel *PluginDriver::makeChannel(PlaybackInterfaceType type)
         break;
 
     case AUDIO_IMUSIC:
-        if(d->music.initialize())
+        if(d->music.initialized)
         {
             std::unique_ptr<Channel> channel(new MusicChannel(*this));
             d->channels[type] << channel.get();
@@ -1468,7 +1485,7 @@ Channel *PluginDriver::makeChannel(PlaybackInterfaceType type)
         break;
 
     case AUDIO_ISFX:
-        if(d->sound.initialize())
+        if(d->sound.initialized)
         {
             std::unique_ptr<Channel> channel(new SoundChannel(*this));
             d->channels[type] << channel.get();

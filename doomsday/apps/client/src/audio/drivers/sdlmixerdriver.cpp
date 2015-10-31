@@ -747,43 +747,52 @@ void SdlMixerDriver::SoundChannel::updateEnvironment()
     // Not supported.
 }
 
+bool SdlMixerDriver::SoundChannel::anyRateAccepted() const
+{
+    // No - please upsample for us.
+    return false;
+}
+
 // --------------------------------------------------------------------------------------
 
 DENG2_PIMPL(SdlMixerDriver)
 {
     bool initialized = false;
 
-    struct MusicPlayer : public IPlayer
+    struct MusicPlayer
     {
+        bool needInit    = true;
         bool initialized = false;
 
-        dint initialize()
+        void initialize()
         {
-            if(!initialized)
-            {
+            // Already been here?
+            if(!needInit) return;
+
+            needInit = false;
 #ifdef DENG2_DEBUG
-                Mix_HookMusicFinished(musicPlaybackFinished);
+            Mix_HookMusicFinished(musicPlaybackFinished);
 #endif
-                initialized = true;
-            }
-            return initialized;
+            initialized = true;
         }
 
         void deinitialize()
         {
+            // Already been here?
             if(!initialized) return;
 
 #ifdef DENG2_DEBUG
             Mix_HookMusicFinished(nullptr);
 #endif
             initialized = false;
+            needInit    = true;
         }
     };
 
-    struct SoundPlayer : public ISoundPlayer
-    , DENG2_OBSERVES(SampleCache, SampleRemove)
+    struct SoundPlayer : DENG2_OBSERVES(SampleCache, SampleRemove)
     {
         SdlMixerDriver &driver;
+        bool needInit    = true;
         bool initialized = false;
         
         thread_t refreshThread      = nullptr;
@@ -793,18 +802,19 @@ DENG2_PIMPL(SdlMixerDriver)
         SoundPlayer(SdlMixerDriver &driver) : driver(driver) {}
         ~SoundPlayer() { DENG2_ASSERT(!initialized); }
 
-        dint initialize()
+        void initialize()
         {
-            if(!initialized)
-            {
-                audio::System::get().sampleCache().audienceForSampleRemove() += this;
-                initialized = true;
-            }
-            return true;
+            // Already been here?
+            if(!needInit) return;
+
+            needInit = false;
+            audio::System::get().sampleCache().audienceForSampleRemove() += this;
+            initialized = true;
         }
 
         void deinitialize()
         {
+            // Already been here?
             if(!initialized) return;
 
             // Cancel sample cache removal notification - we intend to clear sounds.
@@ -828,26 +838,8 @@ DENG2_PIMPL(SdlMixerDriver)
 
             qDeleteAll(driver.d->channels[AUDIO_ISFX]);
             driver.d->channels[AUDIO_ISFX].clear();
-        }
 
-        bool anyRateAccepted() const
-        {
-            // No - please upsample for us.
-            return false;
-        }
-
-        void allowRefresh(bool allow)
-        {
-            if(!initialized) return;
-
-            if(allow)
-            {
-                resumeRefresh();
-            }
-            else
-            {
-                pauseRefresh();
-            }
+            needInit = true;
         }
 
         /**
@@ -1064,6 +1056,40 @@ String SdlMixerDriver::title() const
     return "SDL_mixer";
 }
 
+void SdlMixerDriver::initInterface(String const &identityKey)
+{
+    String const idKey = identityKey.toLower();
+    for(Record const &def : listInterfaces())
+    {
+        if(def.gets("identityKey") != idKey) continue;
+
+        switch(def.geti("type"))
+        {
+        case AUDIO_IMUSIC: d->music.initialize(); return;
+        case AUDIO_ISFX:   d->sound.initialize(); return;
+
+        default: return;
+        }
+    }
+}
+
+void SdlMixerDriver::deinitInterface(String const &identityKey)
+{
+    String const idKey = identityKey.toLower();
+    for(Record const &def : listInterfaces())
+    {
+        if(def.gets("identityKey") != idKey) continue;
+
+        switch(def.geti("type"))
+        {
+        case AUDIO_IMUSIC: d->music.deinitialize(); return;
+        case AUDIO_ISFX:   d->sound.deinitialize(); return;
+
+        default: return;
+        }
+    }
+}
+
 QList<Record> SdlMixerDriver::listInterfaces() const
 {
     QList<Record> list;
@@ -1082,63 +1108,57 @@ QList<Record> SdlMixerDriver::listInterfaces() const
     return list;
 }
 
-IPlayer &SdlMixerDriver::findPlayer(String interfaceIdentityKey) const
+void SdlMixerDriver::allowRefresh(bool allow)
 {
-    if(IPlayer *found = tryFindPlayer(interfaceIdentityKey)) return *found;
-    /// @throw UnknownInterfaceError  Unknown interface referenced.
-    throw UnknownInterfaceError("SdlMixerDriver::findPlayer", "Unknown playback interface \"" + interfaceIdentityKey + "\"");
-}
+    if(!isInitialized()) return;
 
-IPlayer *SdlMixerDriver::tryFindPlayer(String interfaceIdentityKey) const
-{
-    interfaceIdentityKey = interfaceIdentityKey.toLower();
-
-    if(interfaceIdentityKey == "music") return &d->music;
-    if(interfaceIdentityKey == "sfx")   return &d->sound;
-
-    return nullptr;  // Not found.
+    if(d->sound.initialized)
+    {
+        if(allow) d->sound.resumeRefresh();
+        else      d->sound.pauseRefresh();
+    }
 }
 
 Channel *SdlMixerDriver::makeChannel(PlaybackInterfaceType type)
 {
-    if(!d->initialized)
-        return nullptr;
-
-    switch(type)
+    if(isInitialized())
     {
-    case AUDIO_IMUSIC:
-        if(d->music.initialize())
+        switch(type)
         {
-            std::unique_ptr<Channel> channel(new MusicChannel);
-            d->channels[type] << channel.get();
-            return channel.release();
-        }
-        break;
-
-    case AUDIO_ISFX:
-        if(d->sound.initialize())
-        {
-            std::unique_ptr<Channel> channel(new SoundChannel);
-            d->channels[type] << channel.get();
-            if(d->channels[type].count() == 1)
+        case AUDIO_IMUSIC:
+            if(d->music.initialized)
             {
-                // Start the sound refresh thread. It will stop on its own when it notices that
-                // the player is deinitialized.
-                d->sound.refreshing    = false;
-                d->sound.refreshPaused = false;
-
-                // Start the refresh thread.
-                d->sound.refreshThread = Sys_StartThread(Instance::SoundPlayer::RefreshThread, &d->sound);
-                if(!d->sound.refreshThread)
-                {
-                    throw Error("SdlMixerDriver::makeChannel", "Failed starting the refresh thread");
-                }
+                std::unique_ptr<Channel> channel(new MusicChannel);
+                d->channels[type] << channel.get();
+                return channel.release();
             }
-            return channel.release();
-        }
-        break;
+            break;
 
-    default: break;
+        case AUDIO_ISFX:
+            if(d->sound.initialized)
+            {
+                std::unique_ptr<Channel> channel(new SoundChannel);
+                d->channels[type] << channel.get();
+                if(d->channels[type].count() == 1)
+                {
+                    // Start the sound refresh thread. It will stop on its own when it notices that
+                    // the player is deinitialized.
+                    d->sound.refreshing    = false;
+                    d->sound.refreshPaused = false;
+
+                    // Start the refresh thread.
+                    d->sound.refreshThread = Sys_StartThread(Instance::SoundPlayer::RefreshThread, &d->sound);
+                    if(!d->sound.refreshThread)
+                    {
+                        throw Error("SdlMixerDriver::makeChannel", "Failed starting the refresh thread");
+                    }
+                }
+                return channel.release();
+            }
+            break;
+
+        default: break;
+        }
     }
     return nullptr;
 }

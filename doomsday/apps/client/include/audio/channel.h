@@ -88,6 +88,12 @@ public:
      * Change the volume factor to @a newVolume.
      */
     virtual Channel &setVolume(de::dfloat newVolume) = 0;
+
+    /**
+     * Returns @c true if the channel supports sources with "any" sampler rate; otherwise
+     * @c false if the user is responsible the source matches the configured sampler rate.
+     */
+    virtual bool anyRateAccepted() const { return true; }
 };
 
 class CdChannel : public Channel

@@ -116,6 +116,8 @@ public:  //- Playback Channels: ------------------------------------------------
 
         void updateEnvironment();
 
+        bool anyRateAccepted() const override;
+
     //private:
         SoundChannel();
         //friend class SdlMixerDriver;
@@ -134,15 +136,17 @@ public:  //- Implements audio::System::IDriver: --------------------------------
     de::String identityKey() const;
     de::String title() const;
 
-    QList<de::Record> listInterfaces() const;
+    void initInterface(de::String const &identityKey) override;
+    void deinitInterface(de::String const &identityKey) override;
 
-    IPlayer &findPlayer   (de::String interfaceIdentityKey) const;
-    IPlayer *tryFindPlayer(de::String interfaceIdentityKey) const;
+    QList<de::Record> listInterfaces() const;
 
     Channel *makeChannel(PlaybackInterfaceType type) override;
 
     de::LoopResult forAllChannels(PlaybackInterfaceType type,
         std::function<de::LoopResult (Channel const &)> callback) const override;
+
+    void allowRefresh(bool allow) override;
 
 private:
     DENG2_PRIVATE(d)

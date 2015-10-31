@@ -467,7 +467,7 @@ void DummyDriver::SoundChannel::updateEnvironment()
 
 // --------------------------------------------------------------------------------------
 
-DENG2_PIMPL(DummyDriver)
+DENG2_PIMPL_NOREF(DummyDriver)
 {
     bool initialized = false;
 
@@ -475,68 +475,6 @@ DENG2_PIMPL(DummyDriver)
     {
         ~ChannelSet() { DENG2_ASSERT(isEmpty()); }
     } channels[PlaybackInterfaceTypeCount];
-
-    struct CdPlayer : public IPlayer
-    {
-        bool initialized = false;
-
-        de::dint initialize()
-        {
-            return initialized = true;
-        }
-
-        void deinitialize()
-        {
-            initialized = false;
-        }
-    } cd;
-
-    struct MusicPlayer : public IPlayer
-    {
-        bool initialized = false;
-
-        dint initialize()
-        {
-            return initialized = true;
-        }
-
-        void deinitialize()
-        {
-            initialized = false;
-        }
-    } music;
-
-    struct SoundPlayer : public ISoundPlayer
-    {
-        bool initialized = false;
-
-        ~SoundPlayer() { DENG2_ASSERT(!initialized); }
-
-        bool anyRateAccepted() const
-        {
-            // We are not playing any audio so yeah, whatever.
-            return initialized;
-        }
-
-        dint initialize()
-        {
-            return initialized = true;
-        }
-
-        void deinitialize()
-        {
-            if(!initialized) return;
-
-            initialized = false;
-        }
-
-        void allowRefresh(bool allow)
-        {
-            // We are not playing any audio so consider it done.
-        }
-    } sound;
-
-    Instance(Public *i) : Base(i) {}
 
     ~Instance() { DENG2_ASSERT(!initialized); }
 
@@ -550,7 +488,7 @@ DENG2_PIMPL(DummyDriver)
     }
 };
 
-DummyDriver::DummyDriver() : d(new Instance(this))
+DummyDriver::DummyDriver() : d(new Instance)
 {}
 
 DummyDriver::~DummyDriver()
@@ -575,11 +513,7 @@ void DummyDriver::deinitialize()
     // Already been here?
     if(!d->initialized) return;
 
-    d->cd.deinitialize();
-    d->music.deinitialize();
-    d->sound.deinitialize();
     d->clearChannels();
-
     d->initialized = false;
 }
 
@@ -623,64 +557,31 @@ QList<Record> DummyDriver::listInterfaces() const
     return list;
 }
 
-IPlayer &DummyDriver::findPlayer(String interfaceIdentityKey) const
+void DummyDriver::allowRefresh(bool allow)
 {
-    if(IPlayer *found = tryFindPlayer(interfaceIdentityKey)) return *found;
-    /// @throw UnknownInterfaceError  Unknown interface referenced.
-    throw UnknownInterfaceError("DummyDriver::findPlayer", "Unknown playback interface \"" + interfaceIdentityKey + "\"");
-}
-
-IPlayer *DummyDriver::tryFindPlayer(String interfaceIdentityKey) const
-{
-    interfaceIdentityKey = interfaceIdentityKey.toLower();
-
-    if(interfaceIdentityKey == "cd")    return &d->cd;
-    if(interfaceIdentityKey == "music") return &d->music;
-    if(interfaceIdentityKey == "sfx")   return &d->sound;
-
-    return nullptr;  // Not found.
+    // We are not playing any audio so consider it done.
 }
 
 Channel *DummyDriver::makeChannel(PlaybackInterfaceType type)
 {
-    if(!d->initialized)
-        return nullptr;
-
-    switch(type)
+    if(isInitialized())
     {
-    case AUDIO_ICD:
-        // Initialize this interface now if we haven't already.
-        if(d->cd.initialize())
+        std::unique_ptr<Channel> channel;
+        switch(type)
         {
-            std::unique_ptr<Channel> channel(new CdChannel);
+        case AUDIO_ICD:    channel.reset(new CdChannel   ); break;
+        case AUDIO_IMUSIC: channel.reset(new MusicChannel); break;
+        case AUDIO_ISFX:   channel.reset(new SoundChannel); break;
+
+        default: break;
+        }
+
+        if(channel)
+        {
             d->channels[type] << channel.get();
             return channel.release();
         }
-        break;
-
-    case AUDIO_IMUSIC:
-        // Initialize this interface now if we haven't already.
-        if(d->music.initialize())
-        {
-            std::unique_ptr<Channel> channel(new MusicChannel);
-            d->channels[type] << channel.get();
-            return channel.release();
-        }
-        break;
-
-    case AUDIO_ISFX:
-        // Initialize this interface now if we haven't already.
-        if(d->sound.initialize())
-        {
-            std::unique_ptr<Channel> channel(new SoundChannel);
-            d->channels[type] << channel.get();
-            return channel.release();
-        }
-        break;
-
-    default: break;
     }
-
     return nullptr;
 }
 

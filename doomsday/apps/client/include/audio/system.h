@@ -402,6 +402,16 @@ public:  // Low-level driver/playback interfaces: ------------------------------
         virtual QList<de::Record> listInterfaces() const = 0;
 
         /**
+         * Perform any initialization necessary before playback can begin.
+         */
+        virtual void initInterface(de::String const &identityKey) {}
+
+        /**
+         * Perform any deinitializaion necessary end playback before the driver is unloaded.
+         */
+        virtual void deinitInterface(de::String const &identityKey) {}
+
+        /**
          * Construct a new playback Channel of the given @a type (note: ownership is retained).
          */
         virtual Channel *makeChannel(PlaybackInterfaceType type) = 0;
@@ -413,10 +423,19 @@ public:  // Low-level driver/playback interfaces: ------------------------------
         virtual de::LoopResult forAllChannels(PlaybackInterfaceType type,
             std::function<de::LoopResult (Channel const &)> callback) const = 0;
 
-        // ---
-
-        virtual IPlayer &findPlayer   (de::String interfaceIdentityKey) const = 0;
-        virtual IPlayer *tryFindPlayer(de::String interfaceIdentityKey) const = 0;
+        /**
+         * Called by the audio::System to temporarily enable/disable refreshing of sound data
+         * buffers in order to perform a critical task which operates on the current state of
+         * that data.
+         *
+         * For example, when selecting a logical audio channel on which to play a new sound
+         * it is imperative that Sound states do not change while doing so (e.g., some audio
+         * drivers make use of a background thread for paging a subset of the waveform data,
+         * for streaming purposes).
+         *
+         * @todo Belongs at channel/buffer level. -ds
+         */
+        virtual void allowRefresh(bool allow = true) = 0;
     };
 
     /**
@@ -488,47 +507,6 @@ public:  /// @todo make private:
 
 private:
     DENG2_PRIVATE(d)
-};
-
-/// @todo revise API:
-class IPlayer
-{
-public:
-    virtual ~IPlayer() {}
-    DENG2_AS_IS_METHODS()
-
-    /**
-     * Perform any initialization necessary before playback can begin.
-     * @return  Non-zero if successful (or already-initialized).
-     */
-    virtual de::dint initialize() = 0;
-
-    /**
-     * Perform any deinitializaion necessary before the driver is unloaded.
-     */
-    virtual void deinitialize() = 0;
-};
-
-class ISoundPlayer : public IPlayer
-{
-public:
-    /**
-     * Returns @c true if samples can use any sampler rate; otherwise @c false if the user
-     * is responsible for ensuring all samples use the same sampler rate.
-     */
-    virtual bool anyRateAccepted() const = 0;
-
-    /**
-     * Called by the audio::System to temporarily enable/disable refreshing of sound data
-     * buffers in order to perform a critical task which operates on the current state of
-     * that data.
-     *
-     * For example, when selecting a logical audio channel on which to play a new sound
-     * it is imperative that Sound states do not change while doing so (e.g., some audio
-     * drivers make use of a background thread for paging a subset of the waveform data,
-     * for streaming purposes).
-     */
-    virtual void allowRefresh(bool allow = true) = 0;
 };
 
 }  // namespace audio
