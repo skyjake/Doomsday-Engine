@@ -58,6 +58,18 @@ public:
         Looping          ///< Keep looping.
     };
 
+    enum Type
+    {
+        Cd,
+        Music,
+        Sound,
+
+        TypeCount
+    };
+
+    static de::String typeAsText(Type type);
+
+public:
     DENG2_AS_IS_METHODS()
 
     /**

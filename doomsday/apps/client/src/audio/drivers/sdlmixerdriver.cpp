@@ -821,7 +821,7 @@ DENG2_PIMPL(SdlMixerDriver)
             audio::System::get().sampleCache().audienceForSampleRemove() -= this;
 
             // Stop any sounds still playing (note: does not affect refresh).
-            for(Channel *channel : driver.d->channels[AUDIO_ISFX])
+            for(Channel *channel : driver.d->channels[Channel::Sound])
             {
                 channel->stop();
             }
@@ -836,8 +836,8 @@ DENG2_PIMPL(SdlMixerDriver)
                 refreshThread = nullptr;
             }
 
-            qDeleteAll(driver.d->channels[AUDIO_ISFX]);
-            driver.d->channels[AUDIO_ISFX].clear();
+            qDeleteAll(driver.d->channels[Channel::Sound]);
+            driver.d->channels[Channel::Sound].clear();
 
             needInit = true;
         }
@@ -866,7 +866,7 @@ DENG2_PIMPL(SdlMixerDriver)
                 {
                     // Do the refresh.
                     inst.refreshing = true;
-                    for(Channel *channel : inst.driver.d->channels[AUDIO_ISFX])
+                    for(Channel *channel : inst.driver.d->channels[Channel::Sound])
                     {
                         if(channel->isPlaying())
                         {
@@ -917,7 +917,7 @@ DENG2_PIMPL(SdlMixerDriver)
         void sampleCacheAboutToRemove(Sample const &sample)
         {
             pauseRefresh();
-            for(Channel *base : driver.d->channels[AUDIO_ISFX])
+            for(Channel *base : driver.d->channels[Channel::Sound])
             {
                 auto &ch = base->as<SoundChannel>();
 
@@ -939,7 +939,7 @@ DENG2_PIMPL(SdlMixerDriver)
     struct ChannelSet : public QList<Channel *>
     {
         ~ChannelSet() { DENG2_ASSERT(isEmpty()); }
-    } channels[PlaybackInterfaceTypeCount];
+    } channels[Channel::TypeCount];
 
     Instance(Public *i) : Base(i), sound(self) {}
 
@@ -1065,8 +1065,8 @@ void SdlMixerDriver::initInterface(String const &identityKey)
 
         switch(def.geti("type"))
         {
-        case AUDIO_IMUSIC: d->music.initialize(); return;
-        case AUDIO_ISFX:   d->sound.initialize(); return;
+        case Channel::Music: d->music.initialize(); return;
+        case Channel::Sound: d->sound.initialize(); return;
 
         default: return;
         }
@@ -1082,8 +1082,8 @@ void SdlMixerDriver::deinitInterface(String const &identityKey)
 
         switch(def.geti("type"))
         {
-        case AUDIO_IMUSIC: d->music.deinitialize(); return;
-        case AUDIO_ISFX:   d->sound.deinitialize(); return;
+        case Channel::Music: d->music.deinitialize(); return;
+        case Channel::Sound: d->sound.deinitialize(); return;
 
         default: return;
         }
@@ -1095,13 +1095,13 @@ QList<Record> SdlMixerDriver::listInterfaces() const
     QList<Record> list;
     {
         Record rec;
-        rec.addNumber("type",        AUDIO_IMUSIC);
+        rec.addNumber("type",        Channel::Music);
         rec.addText  ("identityKey", DotPath(identityKey()) / "music");
         list << rec;
     }
     {
         Record rec;
-        rec.addNumber("type",        AUDIO_ISFX);
+        rec.addNumber("type",        Channel::Sound);
         rec.addText  ("identityKey", DotPath(identityKey()) / "sfx");
         list << rec;
     }
@@ -1119,13 +1119,13 @@ void SdlMixerDriver::allowRefresh(bool allow)
     }
 }
 
-Channel *SdlMixerDriver::makeChannel(PlaybackInterfaceType type)
+Channel *SdlMixerDriver::makeChannel(Channel::Type type)
 {
     if(isInitialized())
     {
         switch(type)
         {
-        case AUDIO_IMUSIC:
+        case Channel::Music:
             if(d->music.initialized)
             {
                 std::unique_ptr<Channel> channel(new MusicChannel);
@@ -1134,7 +1134,7 @@ Channel *SdlMixerDriver::makeChannel(PlaybackInterfaceType type)
             }
             break;
 
-        case AUDIO_ISFX:
+        case Channel::Sound:
             if(d->sound.initialized)
             {
                 std::unique_ptr<Channel> channel(new SoundChannel);
@@ -1163,7 +1163,7 @@ Channel *SdlMixerDriver::makeChannel(PlaybackInterfaceType type)
     return nullptr;
 }
 
-LoopResult SdlMixerDriver::forAllChannels(PlaybackInterfaceType type,
+LoopResult SdlMixerDriver::forAllChannels(Channel::Type type,
     std::function<LoopResult (Channel const &)> callback) const
 {
     for(Channel const *ch : d->channels[type])

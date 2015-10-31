@@ -474,7 +474,7 @@ DENG2_PIMPL_NOREF(DummyDriver)
     struct ChannelSet : public QList<Channel *>
     {
         ~ChannelSet() { DENG2_ASSERT(isEmpty()); }
-    } channels[PlaybackInterfaceTypeCount];
+    } channels[Channel::TypeCount];
 
     ~Instance() { DENG2_ASSERT(!initialized); }
 
@@ -538,19 +538,19 @@ QList<Record> DummyDriver::listInterfaces() const
     QList<Record> list;
     {
         Record rec;
-        rec.addNumber("type",        AUDIO_ICD);
+        rec.addNumber("type",        Channel::Cd);
         rec.addText  ("identityKey", DotPath(identityKey()) / "cd");
         list << rec;  // A copy is made.
     }
     {
         Record rec;
-        rec.addNumber("type",        AUDIO_IMUSIC);
+        rec.addNumber("type",        Channel::Music);
         rec.addText  ("identityKey", DotPath(identityKey()) / "music");
         list << rec;
     }
     {
         Record rec;
-        rec.addNumber("type",        AUDIO_ISFX);
+        rec.addNumber("type",        Channel::Sound);
         rec.addText  ("identityKey", DotPath(identityKey()) / "sfx");
         list << rec;
     }
@@ -562,16 +562,16 @@ void DummyDriver::allowRefresh(bool allow)
     // We are not playing any audio so consider it done.
 }
 
-Channel *DummyDriver::makeChannel(PlaybackInterfaceType type)
+Channel *DummyDriver::makeChannel(Channel::Type type)
 {
     if(isInitialized())
     {
         std::unique_ptr<Channel> channel;
         switch(type)
         {
-        case AUDIO_ICD:    channel.reset(new CdChannel   ); break;
-        case AUDIO_IMUSIC: channel.reset(new MusicChannel); break;
-        case AUDIO_ISFX:   channel.reset(new SoundChannel); break;
+        case Channel::Cd:    channel.reset(new CdChannel   ); break;
+        case Channel::Music: channel.reset(new MusicChannel); break;
+        case Channel::Sound: channel.reset(new SoundChannel); break;
 
         default: break;
         }
@@ -585,7 +585,7 @@ Channel *DummyDriver::makeChannel(PlaybackInterfaceType type)
     return nullptr;
 }
 
-LoopResult DummyDriver::forAllChannels(PlaybackInterfaceType type,
+LoopResult DummyDriver::forAllChannels(Channel::Type type,
     std::function<LoopResult (Channel const &)> callback) const
 {
     for(Channel *ch : d->channels[type])

@@ -549,7 +549,7 @@ void SampleCache::maybeRunPurge()
             auto const stillPlaying =
                 ClientApp::audioSystem().forAllDrivers([&it] (IDriver const &driver)
             {
-                return driver.forAllChannels(IDriver::AUDIO_ISFX, [&it] (Channel const &base)
+                return driver.forAllChannels(Channel::Sound, [&it] (Channel const &base)
                 {
                     auto &ch = base.as<SoundChannel>();
                     return ch.isPlaying() && ch.samplePtr()->soundId == it->sample().soundId;

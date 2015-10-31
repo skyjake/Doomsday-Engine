@@ -144,7 +144,7 @@ String IDriver::description() const
         for(Record const &rec : interfaces)
         {
             if(!pSummary.isEmpty()) pSummary += "\n" _E(0);
-            pSummary += " - " + playbackInterfaceTypeAsText(PlaybackInterfaceType(rec.geti("type")))
+            pSummary += " - " + Channel::typeAsText(Channel::Type(rec.geti("type")))
                       + ": " _E(>) + rec.gets("identityKey") + _E(<);
         }
         desc += "\n" _E(.)_E(.) + pSummary;
@@ -156,15 +156,17 @@ String IDriver::description() const
     return desc;
 }
 
-String IDriver::playbackInterfaceTypeAsText(PlaybackInterfaceType type)  // static
+// --------------------------------------------------------------------------------------
+
+String Channel::typeAsText(Type type)  // static
 {
     switch(type)
     {
-    case AUDIO_ICD:    return "CD";
-    case AUDIO_IMUSIC: return "Music";
-    case AUDIO_ISFX:   return "SFX";
+    case Cd:    return "CD";
+    case Music: return "Music";
+    case Sound: return "SFX";
 
-    default: DENG2_ASSERT(!"Unknown PlaybackInterfaceType"); break;
+    default: DENG2_ASSERT(!"Unknown Channel::Type"); break;
     }
     return "(unknown)";
 }
@@ -188,7 +190,7 @@ DENG2_PIMPL(System)
 
     /// All indexed playback interfaces.
     typedef QMap<String /*key: identity key*/, Record> PlaybackInterfaceMap;
-    PlaybackInterfaceMap interfaces[IDriver::PlaybackInterfaceTypeCount];
+    PlaybackInterfaceMap interfaces[Channel::TypeCount];
 
     struct ActiveInterface
     {
@@ -207,9 +209,9 @@ DENG2_PIMPL(System)
             return *_def;
         }
 
-        inline IDriver::PlaybackInterfaceType type() const
+        inline Channel::Type type() const
         {
-            return IDriver::PlaybackInterfaceType( def().geti("type") );
+            return Channel::Type( def().geti("type") );
         }
 
         void initialize()
@@ -247,22 +249,24 @@ DENG2_PIMPL(System)
         // Note: Drivers retain ownership of channels.
         Channel *makeChannel()
         {
+            initialize();  // If we haven't already.
+
             DENG2_ASSERT(_driver);
             return _driver->makeChannel(type());
         }
     };
     QList<ActiveInterface> activeInterfaces;  //< Initialization order.
 
-    Record &findInterface(IDriver::PlaybackInterfaceType type, DotPath const &identityKey)
+    Record &findInterface(Channel::Type type, DotPath const &identityKey)
     {
         if(auto *found = tryFindInterface(type, identityKey)) return *found;
         /// @throw MissingPlaybackInterfaceError  Unknown type & identity key pair specified.
         throw MissingPlaybackInterfaceError("audio::System::Instance::findInterface", "Unknown interface identity key \"" + identityKey + "\"");
     }
 
-    Record *tryFindInterface(IDriver::PlaybackInterfaceType type, DotPath const &identityKey)
+    Record *tryFindInterface(Channel::Type type, DotPath const &identityKey)
     {
-        DENG2_ASSERT(dint(type) >= 0 && dint(type) < IDriver::PlaybackInterfaceTypeCount);
+        DENG2_ASSERT(dint(type) >= 0 && dint(type) < Channel::TypeCount);
         auto found = interfaces[dint(type)].find(identityKey.toStringRef().toLower());
         if(found != interfaces[dint(type)].end()) return &found.value();
         return nullptr;
@@ -271,7 +275,7 @@ DENG2_PIMPL(System)
     Record &addInterface(Record const &rec)
     {
         dint type = rec.geti("type");
-        DENG2_ASSERT(type >= 0 && type < IDriver::PlaybackInterfaceTypeCount);
+        DENG2_ASSERT(type >= 0 && type < Channel::TypeCount);
         return interfaces[type].insert(rec.gets("identityKey"), rec).value();  // a copy is made
     }
 
@@ -341,7 +345,7 @@ DENG2_PIMPL(System)
         for(Record const &rec : driver->listInterfaces())
         {
             DotPath const idKey(rec.gets("identityKey"));
-            auto const type = IDriver::PlaybackInterfaceType( rec.geti("type") );
+            auto const type = Channel::Type( rec.geti("type") );
 
             // Ensure the identity key for this interface is well-formed.
             if(idKey.segmentCount() < 2 || idKey.firstSegment() != driver->identityKey().split(';').first())
@@ -436,16 +440,16 @@ DENG2_PIMPL(System)
      *
      * @todo Actually store it persistently (in Config). -ds
      */
-    String interfacePriority(IDriver::PlaybackInterfaceType type)
+    String interfacePriority(Channel::Type type)
     {
         String list;
 
         String arg;
         switch(type)
         {
-        case IDriver::AUDIO_ICD:    arg = "-icd";    break;
-        case IDriver::AUDIO_IMUSIC: arg = "-imusic"; break;
-        case IDriver::AUDIO_ISFX:   arg = "-isfx";   break;
+        case Channel::Cd:    arg = "-icd";    break;
+        case Channel::Music: arg = "-imusic"; break;
+        case Channel::Sound: arg = "-isfx";   break;
         }
 
         CommandLine &cmdLine = App::commandLine();
@@ -490,7 +494,7 @@ DENG2_PIMPL(System)
      *
      * @return  Sanitized list of playback interfaces in the order given.
      */
-    QStringList parseInterfacePriority(IDriver::PlaybackInterfaceType type, String priorityList)
+    QStringList parseInterfacePriority(Channel::Type type, String priorityList)
     {
         priorityList = priorityList.lower();  // Identity keys are always lowercase.
 
@@ -524,7 +528,7 @@ DENG2_PIMPL(System)
                 it.remove();
 
                 LOG_AUDIO_WARNING("Unknown %s playback interface \"%s\"")
-                    << IDriver::playbackInterfaceTypeAsText(type)
+                    << Channel::typeAsText(type)
                     << idKey;
             }
         }
@@ -582,7 +586,7 @@ DENG2_PIMPL(System)
      * Activate all user-preferred playback interfaces of the given @a type, if they are
      * not already activated.
      */
-    void activateInterfaces(IDriver::PlaybackInterfaceType type)
+    void activateInterfaces(Channel::Type type)
     {
         for(DotPath const idKey : parseInterfacePriority(type, interfacePriority(type)))
         {
@@ -604,9 +608,9 @@ DENG2_PIMPL(System)
      */
     void activateInterfaces()
     {
-        for(dint i = 0; i < IDriver::PlaybackInterfaceTypeCount; ++i)
+        for(dint i = 0; i < Channel::TypeCount; ++i)
         {
-            activateInterfaces(IDriver::PlaybackInterfaceType( i ));
+            activateInterfaces(Channel::Type( i ));
         }
     }
 
@@ -654,8 +658,8 @@ DENG2_PIMPL(System)
         for(dint i = activeInterfaces.count(); i--> 0; )
         {
             ActiveInterface &active = activeInterfaces[i];
-            if(   active.type() == IDriver::AUDIO_ICD
-               || active.type() == IDriver::AUDIO_IMUSIC)
+            if(   active.type() == Channel::Cd
+               || active.type() == Channel::Music)
             {
                 active.deinitialize();
             }
@@ -703,7 +707,7 @@ DENG2_PIMPL(System)
         for(dint i = activeInterfaces.count(); i--> 0; )
         {
             ActiveInterface &active = activeInterfaces[i];
-            if(active.type() == IDriver::AUDIO_ISFX)
+            if(active.type() == Channel::Sound)
             {
                 active.deinitialize();
             }
@@ -783,12 +787,12 @@ DENG2_PIMPL(System)
             ActiveInterface &active = activeInterfaces[i];
             switch(active.type())
             {
-            case IDriver::AUDIO_ICD:
-            case IDriver::AUDIO_IMUSIC:
+            case Channel::Cd:
+            case Channel::Music:
                 (*mixer)["music"].addChannel(active.makeChannel());
                 break;
 
-            case IDriver::AUDIO_ISFX:
+            case Channel::Sound:
                 if((*mixer)["fx"].channelCount() == 0)
                 {
                     worldStage.listener().useEnvironment(sfx3D);
@@ -1588,7 +1592,7 @@ String System::description() const
     for(dint i = d->activeInterfaces.count(); i--> 0; )
     {
         Instance::ActiveInterface &active = d->activeInterfaces[i];
-        os << _E(Ta) _E(l) "  " << IDriver::playbackInterfaceTypeAsText(active.type()) << ": "
+        os << _E(Ta) _E(l) "  " << Channel::typeAsText(active.type()) << ": "
            << _E(.) _E(Tb) << active.def().gets("identityKey") << "\n";
     }
 

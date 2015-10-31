@@ -123,35 +123,6 @@ public:
      */
     virtual de::String title() const = 0;
 
-public:  //- Playback Channels: ---------------------------------------------------------
-
-    enum PlaybackInterfaceType
-    {
-        AUDIO_ICD,
-        AUDIO_IMUSIC,
-        AUDIO_ISFX,
-
-        PlaybackInterfaceTypeCount
-    };
-
-    static de::String playbackInterfaceTypeAsText(PlaybackInterfaceType type);
-
-    /**
-     * Returns a listing of the logical playback interfaces implemented by the driver.
-     * It is irrelevant whether said interfaces are presently available.
-     *
-     * Naturally, this means the driver must support interface enumeration @em before
-     * driver initialization. The driver and/or interface may still fail to initialize
-     * later, though.
-     *
-     * Each interface record must contain at least the following required elements:
-     * - (NumberValue)"type"      : PlaybackInterfaceType identifier.
-     *
-     * - (TextValue)"identityKey" : Driver-unique, textual, symbolic identifier for
-     *   the player interface (lowercase), for use in Config.
-     */
-    virtual QList<de::Record> listInterfaces() const = 0;
-
     /**
      * Perform any initialization necessary before playback can begin.
      */
@@ -163,15 +134,33 @@ public:  //- Playback Channels: ------------------------------------------------
     virtual void deinitInterface(de::String const &identityKey) {}
 
     /**
-     * Construct a new playback Channel of the given @a type (note: ownership is retained).
+     * Returns a listing of the logical playback interfaces implemented by the driver.
+     * It is irrelevant whether said interfaces are presently available.
+     *
+     * Naturally, this means the driver must support interface enumeration @em before
+     * driver initialization. The driver and/or interface may still fail to initialize
+     * later, though.
+     *
+     * Each interface record must contain at least the following required elements:
+     * - (NumberValue)"type"      : ChannelType identifier.
+     *
+     * - (TextValue)"identityKey" : Driver-unique, textual, symbolic identifier for
+     *   the player interface (lowercase), for use in Config.
      */
-    virtual Channel *makeChannel(PlaybackInterfaceType type) = 0;
+    virtual QList<de::Record> listInterfaces() const = 0;
+
+public:  //- Playback Channels: ---------------------------------------------------------
 
     /**
-     * Iterate through available playback channels of the given @a type, and execute
+     * Construct a new playback Channel of the given @a type (note: ownership is retained).
+     */
+    virtual Channel *makeChannel(Channel::Type type) = 0;
+
+    /**
+     * Iterate through available playback Channels of the given @a type, and execute
      * @a callback for each.
      */
-    virtual de::LoopResult forAllChannels(PlaybackInterfaceType type,
+    virtual de::LoopResult forAllChannels(Channel::Type type,
         std::function<de::LoopResult (Channel const &)> callback) const = 0;
 
     /**
@@ -179,10 +168,8 @@ public:  //- Playback Channels: ------------------------------------------------
      * buffers in order to perform a critical task which operates on the current state of
      * that data.
      *
-     * For example, when selecting a logical audio channel on which to play a new sound
-     * it is imperative that Sound states do not change while doing so (e.g., some audio
-     * drivers make use of a background thread for paging a subset of the waveform data,
-     * for streaming purposes).
+     * For example, when selecting a Channel on which to playback a sound it is imperative
+     * the Channel states do not change while doing so.
      *
      * @todo Belongs at channel/buffer level. -ds
      */

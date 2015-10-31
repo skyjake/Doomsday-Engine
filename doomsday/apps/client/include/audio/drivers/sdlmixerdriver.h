@@ -140,9 +140,9 @@ public:  //- Implements audio::System::IDriver: --------------------------------
 
     QList<de::Record> listInterfaces() const;
 
-    Channel *makeChannel(PlaybackInterfaceType type) override;
+    Channel *makeChannel(Channel::Type type) override;
 
-    de::LoopResult forAllChannels(PlaybackInterfaceType type,
+    de::LoopResult forAllChannels(Channel::Type type,
         std::function<de::LoopResult (Channel const &)> callback) const override;
 
     void allowRefresh(bool allow) override;
