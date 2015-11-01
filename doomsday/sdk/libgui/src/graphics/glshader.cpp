@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/GLShader"
@@ -141,9 +141,20 @@ void GLShader::compile(Type shaderType, IByteArray const &source)
     d->type = shaderType;
     d->alloc();
 
+    // Additional predefined symbols for the shader.
+    QByteArray predefs;
+    if(shaderType == Vertex)
+    {
+        predefs = QByteArray("#define DENG_VERTEX_SHADER\n");
+    }
+    else
+    {
+        predefs = QByteArray("#define DENG_FRAGMENT_SHADER\n");
+    }
+
     // Prepare the shader source. This would be the time to substitute any
     // remaining symbols in the shader source.
-    Block src = prefixToSource(source, prefix);
+    Block src = prefixToSource(source, prefix + predefs);
 
     char const *srcPtr = src.constData();
     glShaderSource(d->name, 1, &srcPtr, 0);

@@ -1,7 +1,7 @@
-model {
+model.skeletal {
     # Shader for skeletal animation and generic per-pixel lighting:
     # diffuse color, normal map, emission map, specular intensity.
-    shader skeletal.normal_specular_emission {
+    shader normal_specular_emission {
         variable uAlpha      { value = 1 }
         variable uAlphaLimit { value = 0 }
         variable uEmission   { value = 0 }
@@ -9,16 +9,13 @@ model {
         # Mapping when used with ModelDrawable.
         textureMapping <diffuse, normals, specular, emission>
         
-        include.vertex <include/skeletal.glsl,
+        include.vertex <include/tangentspace.glsl,
+                        include/skeletal.glsl,
                         include/lighting.glsl>
         vertex = "
             uniform highp mat4 uMvpMatrix;
-            uniform highp vec3 uEyePos;
 
             attribute highp vec4 aVertex;
-            attribute highp vec3 aNormal;
-            attribute highp vec3 aTangent;
-            attribute highp vec3 aBitangent;
             attribute highp vec2 aUV;
             attribute highp vec4 aBounds;   // diffuse map
             attribute highp vec4 aBounds2;  // normal map
@@ -28,33 +25,18 @@ model {
             varying highp vec2 vUV;
             varying highp vec4 vUVBounds[4];
 
-            highp vec3 transformVector(highp vec3 dir, highp mat4 matrix) 
-            {
-                return (matrix * vec4(dir, 0.0)).xyz;
-            }
-
             void main(void) 
             {
                 highp mat4 bone = vertexBoneTransform();
+                highp mat3 surface = tangentSpace(bone);
+                calculateSurfaceLighting(surface);
                     
                 // Vertex position.
                 highp vec4 modelPos = bone * aVertex;
                 gl_Position = uMvpMatrix * modelPos;
-                
-                // Tangent space.
-                highp vec3 normal       = transformVector(aNormal, bone);
-                highp vec3 tangent      = transformVector(aTangent, bone);
-                highp vec3 bitangent    = transformVector(aBitangent, bone);
-                highp mat3 tangentSpace = mat3(tangent, bitangent, normal);
-                
-                // Light direction in tangent space.
-                vLightDirs[0] = uLightDirs[0] * tangentSpace;
-                vLightDirs[1] = uLightDirs[1] * tangentSpace;
-                vLightDirs[2] = uLightDirs[2] * tangentSpace;
-                vLightDirs[3] = uLightDirs[3] * tangentSpace;
-                
+                                
                 // Eye direction in tangent space.
-                vEyeDir = (uEyePos - modelPos.xyz/modelPos.w) * tangentSpace;
+                calculateEyeDirection(modelPos, surface);
                           
                 vUV = aUV;
                 vUVBounds[0] = aBounds;

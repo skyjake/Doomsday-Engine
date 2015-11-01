@@ -23,9 +23,27 @@ uniform highp float uEmission; // factor for emissive light
 uniform highp vec4 uAmbientLight;
 uniform highp vec4 uLightIntensities[4];        
 uniform highp vec3 uLightDirs[4];
+uniform highp vec3 uEyePos;
 
 varying highp vec3 vLightDirs[4]; // tangent space
 varying highp vec3 vEyeDir;       // tangent space
+
+#ifdef DENG_VERTEX_SHADER
+
+void calculateSurfaceLighting(highp mat3 surface)
+{
+    vLightDirs[0] = uLightDirs[0] * surface;
+    vLightDirs[1] = uLightDirs[1] * surface;
+    vLightDirs[2] = uLightDirs[2] * surface;
+    vLightDirs[3] = uLightDirs[3] * surface;
+}
+
+void calculateEyeDirection(highp vec4 vertex, highp mat3 surface)
+{
+    vEyeDir = (uEyePos - vertex.xyz/vertex.w) * surface;    
+}
+
+#endif // DENG_VERTEX_SHADER
 
 highp vec4 diffuseLightContrib(int index, highp vec3 normal) 
 {
