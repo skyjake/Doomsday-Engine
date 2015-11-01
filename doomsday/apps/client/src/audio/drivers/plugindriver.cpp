@@ -820,13 +820,7 @@ DENG2_PIMPL(PluginDriver), public IChannelFactory
         IPlugin() { de::zapPtr(this); }
     } iBase;
 
-    struct IPlayer
-    {
-        virtual ~IPlayer() {}
-        DENG2_AS_IS_METHODS()
-    };
-
-    struct CdPlayer : public IPlayer, public audiointerface_cd_t
+    struct CdPlayer : public audiointerface_cd_t
     {
         bool initialized     = false;
         bool needInit        = true;
@@ -836,6 +830,17 @@ DENG2_PIMPL(PluginDriver), public IChannelFactory
         {
             de::zap(gen);
             Play = nullptr;
+        }
+
+        /**
+         * Lookup the value of property @a prop.
+         */
+        String getPropertyAsString( dint prop) const
+        {
+            char buf[256];  /// @todo This could easily overflow...
+            DENG2_ASSERT(gen.Get);
+            if(gen.Get(prop, buf)) return buf;
+            throw IDriver::ReadPropertyError("PluginDriver::CdPlayer::getPropertyAsString", "Error reading property:" + String::number(prop));
         }
 
         void initialize()
@@ -848,7 +853,7 @@ DENG2_PIMPL(PluginDriver), public IChannelFactory
             DENG2_ASSERT(gen.Init);
             dint result = gen.Init();
             if(result == 0)
-                throw Error("PluginDriver::initInterface", "Error #" + String::number(result));
+                throw Error("PluginDriver::CdPlayer::initialize", "Error #" + String::number(result));
 
             initialized = true;
         }
@@ -867,7 +872,7 @@ DENG2_PIMPL(PluginDriver), public IChannelFactory
         }
     } cd;
 
-    struct MusicPlayer : public IPlayer, public audiointerface_music_t
+    struct MusicPlayer : public audiointerface_music_t
     {
         bool initialized     = false;
         bool needInit        = true;
@@ -881,6 +886,17 @@ DENG2_PIMPL(PluginDriver), public IChannelFactory
             PlayFile   = nullptr;
         }
 
+        /**
+         * Lookup the value of property @a prop.
+         */
+        String getPropertyAsString(dint prop) const
+        {
+            char buf[256];  /// @todo This could easily overflow...
+            DENG2_ASSERT(gen.Get);
+            if(gen.Get(prop, buf)) return buf;
+            throw IDriver::ReadPropertyError("PluginDriver::MusicPlayer::getPropertyAsString", "Error reading property:" + String::number(prop));
+        }
+
         void initialize()
         {
             // Already been here?
@@ -891,7 +907,7 @@ DENG2_PIMPL(PluginDriver), public IChannelFactory
             DENG2_ASSERT(gen.Init);
             dint result = gen.Init();
             if(result == 0)
-                throw Error("PluginDriver::initInterface", "Error #" + String::number(result));
+                throw Error("PluginDriver::MusicPlayer::initialize", "Error #" + String::number(result));
 
             initialized = true;
         }
@@ -910,7 +926,7 @@ DENG2_PIMPL(PluginDriver), public IChannelFactory
         }
     } music;
 
-    struct SoundPlayer : public IPlayer, public audiointerface_sfx_t
+    struct SoundPlayer : public audiointerface_sfx_t
     , DENG2_OBSERVES(SampleCache, SampleRemove)
     {
         PluginDriver *driver = nullptr;
@@ -928,6 +944,17 @@ DENG2_PIMPL(PluginDriver), public IChannelFactory
 
         ~SoundPlayer() { DENG2_ASSERT(!initialized); }
 
+        /**
+         * Lookup the value of property @a prop.
+         */
+        String getPropertyAsString(dint prop) const
+        {
+            char buf[256];  /// @todo This could easily overflow...
+            DENG2_ASSERT(gen.Getv);
+            if(gen.Getv(prop, buf)) return buf;
+            throw IDriver::ReadPropertyError("PluginDriver::SoundPlayer::getPropertyAsString", "Error reading property:" + String::number(prop));
+        }
+
         void initialize()
         {
             // Already been here?
@@ -938,9 +965,9 @@ DENG2_PIMPL(PluginDriver), public IChannelFactory
             DENG2_ASSERT(gen.Init);
             dint result = gen.Init();
             if(result == 0)
-                throw Error("PluginDriver::initInterface", "Error #" + String::number(result));
+                throw Error("PluginDriver::SoundPlayer::initialize", "Error #" + String::number(result));
 
-            audio::System::get().sampleCache().audienceForSampleRemove() += this;
+            System::get().sampleCache().audienceForSampleRemove() += this;
 
             if(gen.Listener && gen.Listenerv)
             {
@@ -968,7 +995,7 @@ DENG2_PIMPL(PluginDriver), public IChannelFactory
             if(!initialized) return;
 
             // Cancel sample cache removal notification - we intend to clear sounds.
-            audio::System::get().sampleCache().audienceForSampleRemove() -= this;
+            System::get().sampleCache().audienceForSampleRemove() -= this;
 
             // Stop any channels still playing (note: does not affect refresh).
             for(Channel *channel : driver->d->channels[Channel::Sound])
@@ -1129,7 +1156,7 @@ DENG2_PIMPL(PluginDriver), public IChannelFactory
         }
     }
 
-    Channel *makeChannel(Channel::Type type)
+    Channel *makeChannel(Channel::Type type) override
     {
         if(!self.isInitialized())
             return nullptr;
@@ -1209,33 +1236,6 @@ DENG2_PIMPL(PluginDriver), public IChannelFactory
         }
         /// @throw ReadPropertyError  Driver returned not successful.
         throw ReadPropertyError("audio::PluginDriver::Instance::getPropertyAsString", "Error reading property:" + String::number(prop));
-    }
-
-    /**
-     * Lookup the value of @a player property @a prop.
-     */
-    String getPlayerPropertyAsString(IPlayer const &player, dint prop) const
-    {
-        char buf[256];  /// @todo This could easily overflow...
-        if(&player == &cd)
-        {
-            DENG2_ASSERT(self.iCd().gen.Get);
-            if(self.iCd().gen.Get(prop, buf)) return buf;
-            return "";
-        }
-        if(&player == &music)
-        {
-            DENG2_ASSERT(self.iMusic().gen.Get);
-            if(self.iMusic().gen.Get(prop, buf)) return buf;
-            return "";
-        }
-        if(&player == &sound)
-        {
-            DENG2_ASSERT(self.iSound().gen.Getv);
-            if(self.iSound().gen.Getv(prop, buf)) return buf;
-            return "";
-        }
-        throw ReadPropertyError("audio::PluginDriver::Instance::getPlayerPropertyAsString", "Error reading player property:" + String::number(prop));
     }
 
     void systemFrameBegins(audio::System &)
@@ -1470,7 +1470,7 @@ QList<Record> PluginDriver::listInterfaces() const
 
     if(d->cd.gen.Init != nullptr)
     {
-        String const idKey = d->getPlayerPropertyAsString(d->cd, MUSIP_IDENTITYKEY);
+        String const idKey = d->cd.getPropertyAsString(MUSIP_IDENTITYKEY);
         if(!idKey.isEmpty())
         {
             Record rec;
@@ -1482,7 +1482,7 @@ QList<Record> PluginDriver::listInterfaces() const
     }
     if(d->music.gen.Init != nullptr)
     {
-        String const idKey = d->getPlayerPropertyAsString(d->music, MUSIP_IDENTITYKEY);
+        String const idKey = d->music.getPropertyAsString(MUSIP_IDENTITYKEY);
         if(!idKey.isEmpty())
         {
             Record rec;
@@ -1494,7 +1494,7 @@ QList<Record> PluginDriver::listInterfaces() const
     }
     if(d->sound.gen.Init != nullptr)
     {
-        String const idKey = d->getPlayerPropertyAsString(d->sound, SFXIP_IDENTITYKEY);
+        String const idKey = d->sound.getPropertyAsString(SFXIP_IDENTITYKEY);
         if(!idKey.isEmpty())
         {
             Record rec;

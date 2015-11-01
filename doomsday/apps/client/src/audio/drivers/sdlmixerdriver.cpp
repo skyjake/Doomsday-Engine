@@ -953,7 +953,7 @@ DENG2_PIMPL(SdlMixerDriver), public IChannelFactory
         }
     }
 
-    Channel *makeChannel(Channel::Type type)
+    Channel *makeChannel(Channel::Type type) override
     {
         if(self.isInitialized())
         {

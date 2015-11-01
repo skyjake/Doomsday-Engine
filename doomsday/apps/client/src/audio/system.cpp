@@ -278,13 +278,13 @@ DENG2_PIMPL(System)
     {
         bool _needInit    = true;
         bool _initialized = false;
-        Record *_def      = nullptr;
-        IDriver *_driver  = nullptr;
 
-        IChannelFactory *_channelFactory = nullptr;
+        Record *_def;
+        IDriver *_driver;
+        IChannelFactory *_channelFactory;
 
         ActiveInterface(Record &def, IChannelFactory &channelFactory, IDriver *driver = nullptr)
-            : _def(&def), _channelFactory(&channelFactory), _driver(driver)
+            : _def(&def), _driver(driver), _channelFactory(&channelFactory)
         {}
 
         Record &def() const

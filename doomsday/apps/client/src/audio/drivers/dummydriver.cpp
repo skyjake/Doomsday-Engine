@@ -466,8 +466,7 @@ void DummyDriver::SoundChannel::updateEnvironment()
 
 // --------------------------------------------------------------------------------------
 
-DENG2_PIMPL_NOREF(DummyDriver)
-, public IChannelFactory
+DENG2_PIMPL_NOREF(DummyDriver), public IChannelFactory
 {
     bool initialized = false;
 
@@ -487,7 +486,7 @@ DENG2_PIMPL_NOREF(DummyDriver)
         }
     }
 
-    Channel *makeChannel(Channel::Type type)
+    Channel *makeChannel(Channel::Type type) override
     {
         if(initialized)
         {
