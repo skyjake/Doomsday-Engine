@@ -79,12 +79,10 @@ DENG2_PIMPL(Listener)
     /// @todo MapObject should produce the notification we want. -ds
     void mapObjectBspLeafChanged(mobj_t &mob)
     {
-        DENG2_ASSERT(useEnvironment);
-
         // Ignore if we aren't tracking this particular map-object.
         if(tracking != &mob) return;
 
-        observeCluster(Mobj_ClusterPtr(mob));
+        observeCluster(useEnvironment ? Mobj_ClusterPtr(mob) : nullptr);
     }
 
     /// @todo MapObject should produce the notification we actually want. -ds

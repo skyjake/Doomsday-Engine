@@ -373,7 +373,7 @@ DENG2_PIMPL(System)
     {
         if(!driver) return;
 
-        // Have we already indexed (and taken ownership of) this driver?
+        // Have we already installed (and taken ownership of) this driver?
         if(drivers.contains(driver)) return;
 
         // Reject this driver if it's identity key(s) is not unique.
@@ -399,7 +399,7 @@ DENG2_PIMPL(System)
         // Add the new driver to the collection.
         drivers << driver;
 
-        // Index (and validate) playback interfaces.
+        // Validate playback interfaces and register in the known interface db.
         for(Record const &rec : driver->listInterfaces())
         {
             DotPath const idKey(rec.gets("identityKey"));
@@ -736,7 +736,7 @@ DENG2_PIMPL(System)
     }
 
     /**
-     * Destroys and then recreates the  Mixer according to the current mode.
+     * Destroy and then recreate the Mixer according to the current config.
      */
     void initMixer()
     {
@@ -748,10 +748,10 @@ DENG2_PIMPL(System)
         mixer->makeTrack("fx"   ).setTitle("Effects");
 
         bool const noMusic = App::commandLine().has("-nomusic");
-        if(noMusic) LOG_AUDIO_NOTE("Sound effects disabled");
+        if(noMusic) LOG_AUDIO_NOTE("Music disabled");
 
         bool const noSound = App::commandLine().has("-nosfx");
-        if(noSound) LOG_AUDIO_NOTE("Music disabled");
+        if(noSound) LOG_AUDIO_NOTE("Sound effects disabled");
 
         /// @todo Defer channel construction until asked to play. Need to handle channel
         /// lifetime and positioning mode switches dynamically. -ds
@@ -807,6 +807,9 @@ DENG2_PIMPL(System)
             default: break;
             }
         }
+
+        musicAvail = (*mixer)["music"].channelCount() >= 1;
+        soundAvail = (*mixer)["fx"   ].channelCount() >= 1;
     }
 
     /**
@@ -1226,6 +1229,7 @@ DENG2_PIMPL(System)
      * @note If both @a emitter and @a origin are NULL the sound will always be played with
      * @ref SterePositioning (centered).
      *
+     * @param stageId  Unique identifier of the sound Stage to play on.
      * @param sample   Sample to play (must be stored persistently! No copy is made).
      * @param volume   Volume at which the sample should be played.
      * @param freq     Relative and modifies the sample's rate.
@@ -1235,7 +1239,7 @@ DENG2_PIMPL(System)
      *
      * @return  @c true, if a sound is started.
      */
-    bool playSound(sfxsample_t const &sample, dfloat volume, dfloat frequency,
+    bool playSound(StageId stageId, sfxsample_t const &sample, dfloat volume, dfloat frequency,
         SoundEmitter *emitter, ddouble const *origin, dint flags)
     {
         if(!soundAvail) return false;
@@ -1608,7 +1612,7 @@ void System::resetStage(StageId stageId)
 
     if(stageId == WorldStage)
     {
-        d->worldStage.removeAllSounds(); // Does nothing about playback (or refresh).
+        worldStage().removeAllSounds(); // Does nothing about playback (or refresh).
     }
 }
 
@@ -1825,7 +1829,7 @@ bool System::soundIsPlaying(StageId stageId, dint soundId, SoundEmitter *emitter
     {
         // Logical sounds tell us whether a/the referenced sound is being played currently.
         // We don't care whether it is audible or not.
-        return d->worldStage.soundIsPlaying(soundId, emitter);
+        return worldStage().soundIsPlaying(soundId, emitter);
     }
     return false;  // Not playing.
 }
@@ -1839,7 +1843,7 @@ bool System::playSound(StageId stageId, dint soundIdAndFlags, SoundEmitter *emit
     {
         // Cache the waveform resource associated with @a soundId (if necessary) so that
         // we can determine it's length.
-        if(sfxsample_t const *sample = d->sampleCache.cache(soundIdAndFlags & ~DDSF_FLAG_MASK))
+        if(sfxsample_t const *sample = sampleCache().cache(soundIdAndFlags & ~DDSF_FLAG_MASK))
         {
             // Ignore zero length waveforms.
             /// @todo Shouldn't we still stop others though? -ds
@@ -1853,7 +1857,7 @@ bool System::playSound(StageId stageId, dint soundIdAndFlags, SoundEmitter *emit
                 sound.emitter = emitter;
                 sound.looping = repeat;
                 sound.endTime = Timer_RealMilliseconds() + (repeat ? 1 : length);
-                d->worldStage.addSound(sound);  // A copy is made.
+                worldStage().addSound(sound);  // A copy is made.
             }
         }
     }
@@ -1888,13 +1892,13 @@ bool System::playSound(StageId stageId, dint soundIdAndFlags, SoundEmitter *emit
         if(!(info->flags & SF_NO_ATTENUATION) && !(soundIdAndFlags & DDSF_NO_ATTENUATION))
         {
             // If origin is too far, don't even think about playing the sound.
-            if(!d->worldStage.listener().inAudibleRangeOf(emitter ? emitter->origin : origin))
+            if(!worldStage().listener().inAudibleRangeOf(emitter ? emitter->origin : origin))
                 return false;
         }
     }
 
     // Load the sample.
-    sfxsample_t *sample = d->sampleCache.cache(soundId);
+    sfxsample_t *sample = sampleCache().cache(soundId);
     if(!sample)
     {
         if(d->soundAvail)
@@ -1930,7 +1934,7 @@ bool System::playSound(StageId stageId, dint soundIdAndFlags, SoundEmitter *emit
     flags |= (((info->flags & SF_NO_ATTENUATION) || (soundIdAndFlags & DDSF_NO_ATTENUATION)) ? SF_NO_ATTENUATION : 0);
     flags |= (repeat ? SF_REPEAT : 0);
     flags |= ((info->flags & SF_DONT_STOP) ? SF_DONT_STOP : 0);
-    return d->playSound(*sample, volume, freq, emitter, origin, flags);
+    return d->playSound(stageId, *sample, volume, freq, emitter, origin, flags);
 }
 
 void System::stopSound(StageId stageId, dint soundId, SoundEmitter *emitter, dint flags)
@@ -1985,15 +1989,15 @@ void System::stopSound(StageId stageId, dint soundId, SoundEmitter *emitter, din
         // Update logical sound bookkeeping.
         if(soundId <= 0 && !emitter)
         {
-            d->worldStage.removeAllSounds();
+            worldStage().removeAllSounds();
         }
         else if(soundId) // > 0
         {
-            d->worldStage.removeSoundsById(soundId);
+            worldStage().removeSoundsById(soundId);
         }
         else
         {
-            d->worldStage.removeSoundsWithEmitter(*emitter);
+            worldStage().removeSoundsWithEmitter(*emitter);
         }
     }
 }
@@ -2027,6 +2031,8 @@ void System::reset()
     LOG_AS("audio::System");
     LOG_AUDIO_VERBOSE("Reseting...");
 
+    stopMusic();
+
     if(d->soundAvail)
     {
         // Stop all currently playing sound channels.
@@ -2035,16 +2041,15 @@ void System::reset()
             ch.stop();
             return LoopContinue;
         });
-
-        // Force an Environment update for all channels.
-        d->worldStage.listener().setTrackedMapObject(nullptr);
-        d->worldStage.listener().setTrackedMapObject(getListenerMob());
-
-        // Clear the sample cache.
-        d->sampleCache.clear();
     }
 
-    stopMusic();
+
+    // Force an Environment update for all channels.
+    worldStage().listener().setTrackedMapObject(nullptr);
+    worldStage().listener().setTrackedMapObject(getListenerMob());
+
+    // Clear the sample cache.
+    sampleCache().clear();
 }
 
 /**
@@ -2068,11 +2073,11 @@ void System::startFrame()
         d->updateUpsampleRateIfChanged();
 
         // Should we purge the cache (to conserve memory)?
-        d->sampleCache.maybeRunPurge();
+        sampleCache().maybeRunPurge();
     }
 
-    d->worldStage.setExclusion(sfxOneSoundPerEmitter ? Stage::OnePerEmitter : Stage::DontExclude);
-    d->worldStage.maybeRunSoundPurge();
+    worldStage().setExclusion(sfxOneSoundPerEmitter ? Stage::OnePerEmitter : Stage::DontExclude);
+    worldStage().maybeRunSoundPurge();
 }
 
 void System::endFrame()
@@ -2080,11 +2085,12 @@ void System::endFrame()
     LOG_AS("audio::System");
 
     /// @todo Should observe. -ds
-    d->worldStage.listener().setTrackedMapObject(getListenerMob());
+    worldStage().listener().setTrackedMapObject(getListenerMob());
 
-    // Instruct currently playing Channels to write any effective Environment changes if
-    // necessary (from the configured Listener of the Stage they are playing on).
-    if(sfx3D && !BusyMode_Active())
+    // Instruct currently playing Channels to write any effective Environment and/or sound
+    // positioning mode changes if necessary (from the configured Listener of the Stage they
+    // are playing on).
+    if(d->soundAvail && !BusyMode_Active())
     {
         mixer()["fx"].forAllChannels([] (Channel &base)
         {
@@ -2100,7 +2106,7 @@ void System::endFrame()
 void System::worldMapChanged()
 {
     /// @todo Should observe. -ds
-    d->worldStage.listener().setTrackedMapObject(getListenerMob());
+    worldStage().listener().setTrackedMapObject(getListenerMob());
 }
 
 void System::initPlayback()
@@ -2110,7 +2116,7 @@ void System::initPlayback()
     CommandLine &cmdLine = App::commandLine();
     if(cmdLine.has("-noaudio") || cmdLine.has("-nosound"))
     {
-        LOG_AUDIO_NOTE("Music and sound effects are disabled");
+        LOG_AUDIO_NOTE("All audio playback is disabled");
         return;
     }
 
@@ -2121,28 +2127,27 @@ void System::initPlayback()
 
     d->musicAvail = false;
     d->soundAvail = false;
-
     d->musicCurrentSong = "";
     d->musicPaused      = false;
 
-    // Load all the available audio drivers and then select and initialize playback
-    // interfaces specified in Config.
+    // Load all the available audio drivers.
     d->loadDrivers();
+
+    // Activate playback interfaces specified in Config.
     d->activateInterfaces();
 
-    // (Re)Init the sample cache.
-    d->sampleCache.clear();
+    // (Re)Init the waveform data cache.
+    sampleCache().clear();
 
     // Disable environmental audio effects by default.
-    d->worldStage.listener().useEnvironment(false);
-
-    // Tell audio drivers about our soundfont config.
-    updateMusicMidiFont();
+    worldStage().listener().useEnvironment(false);
 
     // Prepare the mixer.
     d->initMixer();
-    d->musicAvail = mixer()["music"].channelCount() >= 1;
-    d->soundAvail = mixer()["fx"   ].channelCount() >= 1;
+
+    // Tell audio drivers about our soundfont config.
+    /// @todo Should be handled automatically (e.g., when a Channel is added to the Mixer). -ds
+    updateMusicMidiFont();
 
     // Print a summary of the active configuration to the log.
     LOG_AUDIO_MSG("%s") << description();
@@ -2153,7 +2158,7 @@ void System::deinitPlayback()
     LOG_AS("audio::System");
 
     // Clear the waveform data cache.
-    d->sampleCache.clear();
+    sampleCache().clear();
 
     // Deinitialize active playback interfaces.
     for(dint i = d->activeInterfaces.count(); i--> 0; )

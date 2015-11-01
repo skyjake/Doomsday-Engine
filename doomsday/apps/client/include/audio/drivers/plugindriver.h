@@ -88,6 +88,7 @@ public:  //- Playback channels: ------------------------------------------------
 
     //private:
         CdChannel(PluginDriver &driver);
+        ~CdChannel();
         //friend class PluginDriver;
 
     private:
@@ -114,6 +115,7 @@ public:  //- Playback channels: ------------------------------------------------
 
     //private:
         MusicChannel(PluginDriver &driver);
+        ~MusicChannel();
         //friend class PluginDriver;
 
     private:
@@ -167,6 +169,7 @@ public:  //- Playback channels: ------------------------------------------------
 
     //private:
         SoundChannel(PluginDriver &driver);
+        ~SoundChannel();
         //friend class PluginDriver;
 
     private:

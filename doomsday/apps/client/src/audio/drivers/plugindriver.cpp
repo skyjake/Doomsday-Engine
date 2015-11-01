@@ -48,6 +48,11 @@ PluginDriver::CdChannel::CdChannel(PluginDriver &driver)
     , _driver(&driver)
 {}
 
+PluginDriver::CdChannel::~CdChannel()
+{
+    stop();
+}
+
 Channel &PluginDriver::CdChannel::setVolume(dfloat newVolume)
 {
     DENG2_ASSERT(_driver->iCd().gen.Set);
@@ -124,6 +129,11 @@ PluginDriver::MusicChannel::MusicChannel(PluginDriver &driver)
     : audio::MusicChannel()
     , _driver(&driver)
 {}
+
+PluginDriver::MusicChannel::~MusicChannel()
+{
+    stop();
+}
 
 Channel &PluginDriver::MusicChannel::setVolume(dfloat newVolume)
 {
@@ -423,23 +433,6 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundChannel)
 
             if(listener && !noOrigin())
             {
-                // Apply listener angle based source panning?
-                if(mobj_t const *tracking = listener->trackedMapObject())
-                {
-                    dfloat angle = listener->angleFrom(emitter.origin);
-                    // We want a signed angle.
-                    if(angle > 180) angle -= 360;
-
-                    if(angle <= 90 && angle >= -90)  // Front half.
-                    {
-                        panning = -angle / 90;
-                    }
-                    else  // Back half.
-                    {
-                        panning = (angle + (angle > 0 ? -180 : 180)) / 90;
-                    }
-                }
-
                 // Apply listener distance based volume attenuation?
                 if(!emitter.noVolumeAttenuation)
                 {
@@ -463,12 +456,26 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundChannel)
                         }
                     }
                 }
-            }
 
-            if(!de::fequal(panning, 0))
-            {
-                // Dampen sounds coming from behind the listener.
-                volAtten *= (1 + (panning > 0 ? panning : -panning)) / 2;
+                // Apply listener angle based source panning?
+                if(mobj_t const *tracking = listener->trackedMapObject())
+                {
+                    dfloat angle = listener->angleFrom(emitter.origin);
+                    // We want a signed angle.
+                    if(angle > 180) angle -= 360;
+
+                    if(angle <= 90 && angle >= -90)  // Front half.
+                    {
+                        panning = -angle / 90;
+                    }
+                    else  // Back half.
+                    {
+                        panning = (angle + (angle > 0 ? -180 : 180)) / 90;
+ 
+                        // Dampen sounds coming from behind the listener.
+                        volAtten *= (1 + (panning > 0 ? panning : -panning)) / 2;
+                    }
+                }
             }
 
             driver.iSound().gen.Set(buf, SFXBP_VOLUME, volume * volAtten * System::get().soundVolume() / 255.0f);
@@ -503,6 +510,19 @@ PluginDriver::SoundChannel::SoundChannel(PluginDriver &owner)
     : audio::SoundChannel()
     , d(new Instance(owner))
 {}
+
+PluginDriver::SoundChannel::~SoundChannel()
+{
+    stop();
+    if(d->buffer.data)
+    {
+        // Cancel frame notifications - we'll soon have no buffer to update.
+        System::get().audienceForFrameEnds() -= d;
+
+        d->driver.iSound().gen.Destroy(d->buffer.data);
+        d->buffer.data = nullptr;
+    }
+}
 
 Channel::PlayingMode PluginDriver::SoundChannel::mode() const
 {
@@ -553,7 +573,7 @@ void PluginDriver::SoundChannel::play(PlayingMode mode)
         }
         else
         {
-            Ranged const &range = System::get().worldStage().listener().volumeAttenuationRange();
+            Ranged const &range = d->listener->volumeAttenuationRange();
             d->driver.iSound().gen.Set(buf, SFXBP_MIN_DISTANCE, dfloat( range.start ));
             d->driver.iSound().gen.Set(buf, SFXBP_MAX_DISTANCE, dfloat( range.end ));
         }
@@ -698,8 +718,12 @@ bool PluginDriver::SoundChannel::format(Positioning positioning, dint bytesPer, 
         d->buffer.data =
             d->driver.iSound().gen.Create(d->positioning == AbsolutePositioning ? SFXBF_3D : 0,
                                           d->buffer.sampleBytes * 8, d->buffer.sampleRate);
+
         if(d->buffer.data)
         {
+            if(d->buffer.getData().flags & SFXBF_3D)
+                d->needEnvironmentUpdate = true;
+
             // We want notification when the frame ends in order to flush deferred property writes.
             System::get().audienceForFrameEnds() += d;
         }
@@ -753,20 +777,21 @@ void PluginDriver::SoundChannel::updateEnvironment()
     // No volume means no sound.
     if(!System::get().soundVolume()) return;
 
+    if(!isPlaying()) return;
+
     LOG_AS("PluginDriver::SoundChannel");
     DENG2_ASSERT(d->driver.iSound().gen.Listener);
     DENG2_ASSERT(d->driver.iSound().gen.Listenerv);
 
-    Listener &listener = System::get().worldStage().listener();
-    if(listener.trackedMapObject())
+    if(d->listener->trackedMapObject())
     {
-        dfloat position[4]; Vector4f(listener.position().toVector3f(), 0).decompose(position);
+        dfloat position[4]; Vector4f(d->listener->position().toVector3f(), 0).decompose(position);
         d->driver.iSound().gen.Listenerv(SFXLP_POSITION, position);
 
-        dfloat orientation[2]; listener.orientation().toVector2f().decompose(orientation);
+        dfloat orientation[2]; d->listener->orientation().toVector2f().decompose(orientation);
         d->driver.iSound().gen.Listenerv(SFXLP_ORIENTATION, orientation);
 
-        dfloat velocity[4]; Vector4f(listener.velocity().toVector3f() * TICSPERSEC, 0).decompose(velocity);
+        dfloat velocity[4]; Vector4f(d->listener->velocity().toVector3f() * TICSPERSEC, 0).decompose(velocity);
         d->driver.iSound().gen.Listenerv(SFXLP_VELOCITY, velocity);
     }
 
@@ -775,7 +800,8 @@ void PluginDriver::SoundChannel::updateEnvironment()
         d->needEnvironmentUpdate = false;
 
         // Environment properties.
-        Environment const environment = listener.environment();
+        DENG2_ASSERT(d->listener);
+        Environment const environment = d->listener->environment();
         dfloat vec[NUM_REVERB_DATA];
         vec[SRD_VOLUME ] = environment.volume;
         vec[SRD_SPACE  ] = environment.space;
@@ -1419,6 +1445,7 @@ void PluginDriver::deinitialize()
     audioSystem().audienceForFrameEnds()   -= d;
     audioSystem().audienceForFrameBegins() -= d;
 
+    d->clearChannels();
     d->initialized = false;
 }
 
