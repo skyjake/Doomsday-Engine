@@ -2,19 +2,18 @@
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
- * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au> *
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small>
  */
 
@@ -804,7 +803,7 @@ DENG2_PIMPL(System)
 
         theAudioSystem = nullptr;
     }
-    
+
     String composeMusicBufferFilename(String const &ext = "")
     {
         // Switch the name of the buffered song file?
@@ -907,7 +906,7 @@ DENG2_PIMPL(System)
                 if(Timer_Ticks() - ch.startTime() < ticsToDelay)
                     return LoopContinue;
             }*/
- 
+
             count += 1;
             return LoopContinue;
         });
@@ -1026,7 +1025,7 @@ DENG2_PIMPL(System)
             auto &ch = base.as<SoundChannel>();
 
             if(!ch.isPlaying()) return LoopContinue;
-            
+
             if(   (soundId && ch.samplePtr()->soundId != soundId)
                || (emitter && ch.emitter() != emitter))
             {
@@ -1083,7 +1082,7 @@ DENG2_PIMPL(System)
 
             if(ch.isPlaying()) return LoopContinue;
 
-            if(   ch.positioning() != positioning 
+            if(   ch.positioning() != positioning
                || ch.bytes()       != bytesPer
                || ch.rate()        != rate)
             {
