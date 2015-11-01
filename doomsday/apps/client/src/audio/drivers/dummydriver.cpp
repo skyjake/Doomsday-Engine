@@ -467,6 +467,7 @@ void DummyDriver::SoundChannel::updateEnvironment()
 // --------------------------------------------------------------------------------------
 
 DENG2_PIMPL_NOREF(DummyDriver)
+, public IChannelFactory
 {
     bool initialized = false;
 
@@ -484,6 +485,29 @@ DENG2_PIMPL_NOREF(DummyDriver)
             qDeleteAll(set);
             set.clear();
         }
+    }
+
+    Channel *makeChannel(Channel::Type type)
+    {
+        if(initialized)
+        {
+            std::unique_ptr<Channel> channel;
+            switch(type)
+            {
+            case Channel::Cd:    channel.reset(new CdChannel   ); break;
+            case Channel::Music: channel.reset(new MusicChannel); break;
+            case Channel::Sound: channel.reset(new SoundChannel); break;
+
+            default: break;
+            }
+
+            if(channel)
+            {
+                channels[type] << channel.get();
+                return channel.release();
+            }
+        }
+        return nullptr;
     }
 };
 
@@ -561,27 +585,9 @@ void DummyDriver::allowRefresh(bool allow)
     // We are not playing any audio so consider it done.
 }
 
-Channel *DummyDriver::makeChannel(Channel::Type type)
+IChannelFactory &DummyDriver::channelFactory() const
 {
-    if(isInitialized())
-    {
-        std::unique_ptr<Channel> channel;
-        switch(type)
-        {
-        case Channel::Cd:    channel.reset(new CdChannel   ); break;
-        case Channel::Music: channel.reset(new MusicChannel); break;
-        case Channel::Sound: channel.reset(new SoundChannel); break;
-
-        default: break;
-        }
-
-        if(channel)
-        {
-            d->channels[type] << channel.get();
-            return channel.release();
-        }
-    }
-    return nullptr;
+    return *d;
 }
 
 LoopResult DummyDriver::forAllChannels(Channel::Type type,

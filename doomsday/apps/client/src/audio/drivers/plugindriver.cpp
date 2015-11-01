@@ -800,7 +800,7 @@ bool PluginDriver::SoundChannel::anyRateAccepted() const
 
 // --------------------------------------------------------------------------------------
 
-DENG2_PIMPL(PluginDriver)
+DENG2_PIMPL(PluginDriver), public IChannelFactory
 , DENG2_OBSERVES(audio::System, FrameBegins)
 , DENG2_OBSERVES(audio::System, FrameEnds)
 , DENG2_OBSERVES(audio::System, MidiFontChange)
@@ -1127,6 +1127,71 @@ DENG2_PIMPL(PluginDriver)
             qDeleteAll(set);
             set.clear();
         }
+    }
+
+    Channel *makeChannel(Channel::Type type)
+    {
+        if(!self.isInitialized())
+            return nullptr;
+
+        switch(type)
+        {
+        case Channel::Cd:
+            if(cd.initialized)
+            {
+                std::unique_ptr<Channel> channel(new CdChannel(self));
+                channels[type] << channel.get();
+                return channel.release();
+            }
+            break;
+
+        case Channel::Music:
+            if(music.initialized)
+            {
+                std::unique_ptr<Channel> channel(new MusicChannel(self));
+                channels[type] << channel.get();
+                return channel.release();
+            }
+            break;
+
+        case Channel::Sound:
+            if(sound.initialized)
+            {
+                std::unique_ptr<Channel> channel(new SoundChannel(self));
+                channels[type] << channel.get();
+                if(channels[type].count() == 1)
+                {
+                    if(sound.gen.Listenerv)
+                    {
+                        // Change the primary buffer format to match the channel format.
+                        dfloat pformat[2] = { dfloat(::sfxBits), dfloat(::sfxRate) };
+                        sound.gen.Listenerv(SFXLP_PRIMARY_FORMAT, pformat);
+
+                        dfloat rev[4] = { 0, 0, 0, 0 };
+                        sound.gen.Listenerv(SFXLP_REVERB, rev);
+                        sound.gen.Listener(SFXLP_UPDATE, 0);
+                    }
+
+                    // Start the channel refresh thread. It will stop on its own when it notices that
+                    // the player is deinitialized.
+                    sound.refreshing    = false;
+                    sound.refreshPaused = false;
+
+                    // Start the refresh thread.
+                    sound.refreshThread = Sys_StartThread(SoundPlayer::RefreshThread, &sound);
+                    if(!sound.refreshThread)
+                    {
+                        throw Error("PluginDriver::makeChannel", "Failed starting the refresh thread");
+                    }
+                }
+                return channel.release();
+            }
+            break;
+
+        default: break;
+        }
+
+        return nullptr;
     }
 
     /**
@@ -1457,69 +1522,9 @@ void PluginDriver::allowRefresh(bool allow)
     }
 }
 
-Channel *PluginDriver::makeChannel(Channel::Type type)
+IChannelFactory &PluginDriver::channelFactory() const
 {
-    if(!d->initialized)
-        return nullptr;
-
-    switch(type)
-    {
-    case Channel::Cd:
-        if(d->cd.initialized)
-        {
-            std::unique_ptr<Channel> channel(new CdChannel(*this));
-            d->channels[type] << channel.get();
-            return channel.release();
-        }
-        break;
-
-    case Channel::Music:
-        if(d->music.initialized)
-        {
-            std::unique_ptr<Channel> channel(new MusicChannel(*this));
-            d->channels[type] << channel.get();
-            return channel.release();
-        }
-        break;
-
-    case Channel::Sound:
-        if(d->sound.initialized)
-        {
-            std::unique_ptr<Channel> channel(new SoundChannel(*this));
-            d->channels[type] << channel.get();
-            if(d->channels[type].count() == 1)
-            {
-                if(d->sound.gen.Listenerv)
-                {
-                    // Change the primary buffer format to match the channel format.
-                    dfloat pformat[2] = { dfloat(::sfxBits), dfloat(::sfxRate) };
-                    d->sound.gen.Listenerv(SFXLP_PRIMARY_FORMAT, pformat);
-
-                    dfloat rev[4] = { 0, 0, 0, 0 };
-                    d->sound.gen.Listenerv(SFXLP_REVERB, rev);
-                    d->sound.gen.Listener(SFXLP_UPDATE, 0);
-                }
-
-                // Start the channel refresh thread. It will stop on its own when it notices that
-                // the player is deinitialized.
-                d->sound.refreshing    = false;
-                d->sound.refreshPaused = false;
-
-                // Start the refresh thread.
-                d->sound.refreshThread = Sys_StartThread(Instance::SoundPlayer::RefreshThread, &d->sound);
-                if(!d->sound.refreshThread)
-                {
-                    throw Error("PluginDriver::makeChannel", "Failed starting the refresh thread");
-                }
-            }
-            return channel.release();
-        }
-        break;
-
-    default: break;
-    }
-
-    return nullptr;
+    return *d;
 }
 
 LoopResult PluginDriver::forAllChannels(Channel::Type type,

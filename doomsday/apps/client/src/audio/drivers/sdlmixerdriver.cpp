@@ -754,7 +754,7 @@ bool SdlMixerDriver::SoundChannel::anyRateAccepted() const
 
 // --------------------------------------------------------------------------------------
 
-DENG2_PIMPL(SdlMixerDriver)
+DENG2_PIMPL(SdlMixerDriver), public IChannelFactory
 {
     bool initialized = false;
 
@@ -952,6 +952,50 @@ DENG2_PIMPL(SdlMixerDriver)
             set.clear();
         }
     }
+
+    Channel *makeChannel(Channel::Type type)
+    {
+        if(self.isInitialized())
+        {
+            switch(type)
+            {
+            case Channel::Music:
+                if(music.initialized)
+                {
+                    std::unique_ptr<Channel> channel(new MusicChannel);
+                    channels[type] << channel.get();
+                    return channel.release();
+                }
+                break;
+
+            case Channel::Sound:
+                if(sound.initialized)
+                {
+                    std::unique_ptr<Channel> channel(new SoundChannel);
+                    channels[type] << channel.get();
+                    if(channels[type].count() == 1)
+                    {
+                        // Start the sound refresh thread. It will stop on its own when it notices that
+                        // the player is deinitialized.
+                        sound.refreshing    = false;
+                        sound.refreshPaused = false;
+
+                        // Start the refresh thread.
+                        sound.refreshThread = Sys_StartThread(SoundPlayer::RefreshThread, &sound);
+                        if(!sound.refreshThread)
+                        {
+                            throw Error("SdlMixerDriver::makeChannel", "Failed starting the refresh thread");
+                        }
+                    }
+                    return channel.release();
+                }
+                break;
+
+            default: break;
+            }
+        }
+        return nullptr;
+    }
 };
 
 SdlMixerDriver::SdlMixerDriver() : d(new Instance(this))
@@ -1118,48 +1162,9 @@ void SdlMixerDriver::allowRefresh(bool allow)
     }
 }
 
-Channel *SdlMixerDriver::makeChannel(Channel::Type type)
+IChannelFactory &SdlMixerDriver::channelFactory() const
 {
-    if(isInitialized())
-    {
-        switch(type)
-        {
-        case Channel::Music:
-            if(d->music.initialized)
-            {
-                std::unique_ptr<Channel> channel(new MusicChannel);
-                d->channels[type] << channel.get();
-                return channel.release();
-            }
-            break;
-
-        case Channel::Sound:
-            if(d->sound.initialized)
-            {
-                std::unique_ptr<Channel> channel(new SoundChannel);
-                d->channels[type] << channel.get();
-                if(d->channels[type].count() == 1)
-                {
-                    // Start the sound refresh thread. It will stop on its own when it notices that
-                    // the player is deinitialized.
-                    d->sound.refreshing    = false;
-                    d->sound.refreshPaused = false;
-
-                    // Start the refresh thread.
-                    d->sound.refreshThread = Sys_StartThread(Instance::SoundPlayer::RefreshThread, &d->sound);
-                    if(!d->sound.refreshThread)
-                    {
-                        throw Error("SdlMixerDriver::makeChannel", "Failed starting the refresh thread");
-                    }
-                }
-                return channel.release();
-            }
-            break;
-
-        default: break;
-        }
-    }
-    return nullptr;
+    return *d;
 }
 
 LoopResult SdlMixerDriver::forAllChannels(Channel::Type type,

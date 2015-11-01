@@ -188,7 +188,7 @@ public:  //- Implements audio::System::IDriver: --------------------------------
 
     QList<de::Record> listInterfaces() const;
 
-    Channel *makeChannel(Channel::Type type) override;
+    IChannelFactory &channelFactory() const override;
 
     de::LoopResult forAllChannels(Channel::Type type,
         std::function<de::LoopResult (Channel const &)> callback) const override;

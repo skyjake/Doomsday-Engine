@@ -156,9 +156,9 @@ public:
 public:  //- Playback Channels: ---------------------------------------------------------
 
     /**
-     * Construct a new playback Channel of the given @a type (note: ownership is retained).
+     * Returns the factory to use when constructing Channels.
      */
-    virtual Channel *makeChannel(Channel::Type type) = 0;
+    virtual IChannelFactory &channelFactory() const = 0;
 
     /**
      * Iterate through available playback Channels of the given @a type, and execute

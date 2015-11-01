@@ -276,13 +276,15 @@ DENG2_PIMPL(System)
 
     struct ActiveInterface
     {
-        Record *_def      = nullptr;
-        IDriver *_driver  = nullptr;
         bool _needInit    = true;
         bool _initialized = false;
+        Record *_def      = nullptr;
+        IDriver *_driver  = nullptr;
 
-        ActiveInterface(Record &def, IDriver *driver)
-            : _def(&def), _driver(driver)
+        IChannelFactory *_channelFactory = nullptr;
+
+        ActiveInterface(Record &def, IChannelFactory &channelFactory, IDriver *driver = nullptr)
+            : _def(&def), _channelFactory(&channelFactory), _driver(driver)
         {}
 
         Record &def() const
@@ -305,8 +307,10 @@ DENG2_PIMPL(System)
             _initialized = false;
             try
             {
-                DENG2_ASSERT(_driver);
-                _driver->initInterface(def().gets("identityKey"));
+                if(_driver)
+                {
+                    _driver->initInterface(def().gets("identityKey"));
+                }
                 _initialized = true;
             }
             catch(Error const &er)
@@ -322,8 +326,10 @@ DENG2_PIMPL(System)
             // Been here already?
             if(!_initialized) return;
 
-            DENG2_ASSERT(_driver);
-            _driver->deinitInterface(def().gets("identityKey"));
+            if(_driver)
+            {
+                _driver->deinitInterface(def().gets("identityKey"));
+            }
             _initialized = false;
             _needInit    = true;
         }
@@ -333,8 +339,8 @@ DENG2_PIMPL(System)
         {
             initialize();  // If we haven't already.
 
-            DENG2_ASSERT(_driver);
-            return _driver->makeChannel(channelType());
+            DENG2_ASSERT(_channelFactory);
+            return _channelFactory->makeChannel(channelType());
         }
     };
 
@@ -613,6 +619,8 @@ DENG2_PIMPL(System)
         if(activeInterfaces.has(interfaceDef))
             return;
 
+        IChannelFactory *channelFactory = nullptr;
+
         // If this interface belongs to a driver - ensure that the driver is initialized
         // before activating the interface.
         IDriver *driver = nullptr;
@@ -625,10 +633,19 @@ DENG2_PIMPL(System)
                 initDriverIfNeeded(*driver);
                 if(!driver->isInitialized())
                     return;
+
+                channelFactory = &driver->channelFactory();
             }
         }
 
-        ActiveInterface active(const_cast<Record &>(interfaceDef), driver);
+        if(!channelFactory)
+        {
+            LOG_AS("audio::System");
+            LOG_AUDIO_ERROR("Failed to locate Channel factory for \"%s\" - cannot activate interface") << idKey;
+            return;
+        }
+
+        ActiveInterface active(const_cast<Record &>(interfaceDef), *channelFactory, driver);
         activeInterfaces.append(active); // A copy is made.
     }
 

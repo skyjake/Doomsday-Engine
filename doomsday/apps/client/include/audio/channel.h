@@ -109,6 +109,28 @@ public:
     virtual bool anyRateAccepted() const { return true; }
 };
 
+// --------------------------------------------------------------------------------------
+
+/**
+ * Constructs audio::Channels for the audio::System.
+ */
+class IChannelFactory
+{
+public:
+    virtual ~IChannelFactory() {}
+
+    /**
+     * Called when the audio::System needs a new playback Channel of the given @a type.
+     * This allows specialized factories to choose the concrete channel type and customize
+     * it accordingly.
+     *
+     * @note: Ownership is currently retained!
+     */
+    virtual Channel *makeChannel(Channel::Type type) = 0;
+};
+
+// --------------------------------------------------------------------------------------
+
 class CdChannel : public Channel
 {
 public:
