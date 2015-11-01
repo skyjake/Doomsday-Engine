@@ -681,106 +681,6 @@ DENG2_PIMPL(System)
         }
     }
 
-    /**
-     * Perform initialization for music playback.
-     */
-    void initMusic()
-    {
-        // Already been here?
-        if(musicAvail) return;
-
-        LOG_AUDIO_VERBOSE("Initializing music playback...");
-
-        musicAvail       = false;
-        musicCurrentSong = "";
-        musicPaused      = false;
-
-        CommandLine &cmdLine = App::commandLine();
-        if(cmdLine.has("-nomusic"))
-        {
-            LOG_AUDIO_NOTE("Music disabled");
-            return;
-        }
-
-        // Remember whether an interface for music playback initialized successfully.
-        musicAvail = (*mixer)["music"].channelCount() >= 1;
-
-        if(musicAvail)
-        {
-            // Tell audio drivers about our soundfont config.
-            self.updateMusicMidiFont();
-        }
-    }
-
-    /**
-     * Perform deinitialize for music playback.
-     */
-    void deinitMusic()
-    {
-        // Already been here?
-        if(!musicAvail) return;
-        musicAvail = false;
-
-        // Shutdown interfaces.
-        for(dint i = activeInterfaces.count(); i--> 0; )
-        {
-            ActiveInterface &active = activeInterfaces[i];
-            if(   active.channelType() == Channel::Cd
-               || active.channelType() == Channel::Music)
-            {
-                active.deinitialize();
-            }
-        }
-    }
-
-    /**
-     * Perform initialization for sound playback.
-     */
-    void initSound()
-    {
-        // Already initialized?
-        if(soundAvail) return;
-
-        // Check if sound has been disabled with a command line option.
-        if(App::commandLine().has("-nosfx"))
-        {
-            LOG_AUDIO_NOTE("Sound effects disabled");
-            return;
-        }
-
-        LOG_AUDIO_VERBOSE("Initializing sound effect playback...");
-
-        // (Re)Init the sample cache.
-        sampleCache.clear();
-
-        // Remember whether an interface for sound playback initialized successfully.
-        soundAvail = (*mixer)["fx"].channelCount() >= 1;
-
-        // Disable environmental audio effects by default.
-        worldStage.listener().useEnvironment(false);
-    }
-
-    /**
-     * Perform deinitialization for sound playback.
-     */
-    void deinitSound()
-    {
-        // Not initialized?
-        if(!soundAvail) return;
-
-        soundAvail = false;
-
-        // Shutdown active interfaces.
-        for(dint i = activeInterfaces.count(); i--> 0; )
-        {
-            ActiveInterface &active = activeInterfaces[i];
-            if(active.channelType() == Channel::Sound)
-            {
-                active.deinitialize();
-            }
-        }
-    }
-
     bool musicAvail = false;                 ///< @c true if one or more interfaces are initialized for music playback.
     bool soundAvail = false;                 ///< @c true if one or more interfaces are initialized for sound playback.
 
@@ -847,6 +747,12 @@ DENG2_PIMPL(System)
         mixer->makeTrack("music").setTitle("Music");
         mixer->makeTrack("fx"   ).setTitle("Effects");
 
+        bool const noMusic = App::commandLine().has("-nomusic");
+        if(noMusic) LOG_AUDIO_NOTE("Sound effects disabled");
+
+        bool const noSound = App::commandLine().has("-nosfx");
+        if(noSound) LOG_AUDIO_NOTE("Music disabled");
+
         /// @todo Defer channel construction until asked to play. Need to handle channel
         /// lifetime and positioning mode switches dynamically. -ds
         for(dint i = activeInterfaces.count(); i--> 0; )
@@ -856,11 +762,14 @@ DENG2_PIMPL(System)
             {
             case Channel::Cd:
             case Channel::Music:
-                (*mixer)["music"].addChannel(active.makeChannel());
+                if(!noMusic)
+                {
+                    (*mixer)["music"].addChannel(active.makeChannel());
+                }
                 break;
 
             case Channel::Sound:
-                if((*mixer)["fx"].channelCount() == 0)
+                if(!noSound && (*mixer)["fx"].channelCount() == 0)
                 {
                     worldStage.listener().useEnvironment(sfx3D);
 
@@ -2199,7 +2108,7 @@ void System::initPlayback()
     LOG_AS("audio::System");
 
     CommandLine &cmdLine = App::commandLine();
-    if(cmdLine.has("-nosound") || cmdLine.has("-noaudio"))
+    if(cmdLine.has("-noaudio") || cmdLine.has("-nosound"))
     {
         LOG_AUDIO_NOTE("Music and sound effects are disabled");
         return;
@@ -2210,33 +2119,30 @@ void System::initPlayback()
     // Disable random pitch changes?
     sfxNoRndPitch = cmdLine.has("-norndpitch");
 
+    d->musicAvail = false;
+    d->soundAvail = false;
+
+    d->musicCurrentSong = "";
+    d->musicPaused      = false;
+
     // Load all the available audio drivers and then select and initialize playback
     // interfaces specified in Config.
     d->loadDrivers();
     d->activateInterfaces();
 
-    // Initialize sound playback.
-    try
-    {
-        d->initSound();
-    }
-    catch(Error const &er)
-    {
-        LOG_AUDIO_NOTE("Failed initializing playback for sound effects:\n") << er.asText();
-    }
+    // (Re)Init the sample cache.
+    d->sampleCache.clear();
 
-    // Initialize music playback.
-    try
-    {
-        d->initMusic();
-    }
-    catch(Error const &er)
-    {
-        LOG_AUDIO_NOTE("Failed initializing playback for music:\n") << er.asText();
-    }
+    // Disable environmental audio effects by default.
+    d->worldStage.listener().useEnvironment(false);
+
+    // Tell audio drivers about our soundfont config.
+    updateMusicMidiFont();
 
     // Prepare the mixer.
     d->initMixer();
+    d->musicAvail = mixer()["music"].channelCount() >= 1;
+    d->soundAvail = mixer()["fx"   ].channelCount() >= 1;
 
     // Print a summary of the active configuration to the log.
     LOG_AUDIO_MSG("%s") << description();
@@ -2249,11 +2155,13 @@ void System::deinitPlayback()
     // Clear the waveform data cache.
     d->sampleCache.clear();
 
-    // Reset the mixer (and stop the channel refresh thread(s) if running).
-    d->mixer.reset();
-
-    d->deinitSound();
-    d->deinitMusic();
+    // Deinitialize active playback interfaces.
+    for(dint i = d->activeInterfaces.count(); i--> 0; )
+    {
+        d->activeInterfaces[i].deinitialize();
+    }
+    d->musicAvail = false;
+    d->soundAvail = false;
 
     // Finally, unload the drivers.
     d->unloadDrivers();
