@@ -24,28 +24,21 @@
 #  error "audio" is not available in a SERVER build
 #endif
 
-#include "audio/channel.h"
 #include "audio/stage.h"
 
 #include "dd_types.h"        // lumpnum_t
 #include "SettingsRegister"
 #include "world/p_object.h"
-#include <de/DotPath>
 #include <de/Error>
 #include <de/Observers>
 #include <de/Record>
 #include <de/String>
 #include <de/System>
-#include <QList>
 #include <functional>
 
 #define SFX_LOWEST_PRIORITY     ( -1000 )
 
 namespace audio {
-
-class IDriver;
-class Mixer;
-class SampleCache;
 
 /**
  * Stages provide the means for concurrent playback in logically independent contexts.
@@ -77,6 +70,10 @@ enum MusicSource
  * Provides a human-friendly, textual representation of the given music @a source.
  */
 de::String MusicSourceAsText(MusicSource source);
+
+class IDriver;
+class Mixer;
+class SampleCache;
 
 /**
  * Client audio subsystem.
@@ -124,16 +121,6 @@ public:
     de::String description() const;
 
     /**
-     * Provides access to the Channel Mixer.
-     */
-    Mixer /*const*/ &mixer() const;
-
-    /**
-     * Provides access to the sample (waveform) asset cache.
-     */
-    SampleCache &sampleCache() const;
-
-    /**
      * Determines the necessary upsample factor for the given waveform sample @a rate.
      */
     de::dint upsampleFactor(de::dint rate) const;
@@ -141,14 +128,24 @@ public:
     /**
      * Reset playback tracking in the sound Stage associated with the given @a stageId.
      */
-    void resetStage(StageId stage);
+    void resetStage(StageId stageId);
 
     /**
      * Provides access to the world sound Stage (FYI).
      */
     Stage /*const*/ &worldStage() const;
 
-public:  // Music playback: -------------------------------------------------------------
+    /**
+     * Provides access to the channel Mixer.
+     */
+    Mixer /*const*/ &mixer() const;
+
+    /**
+     * Provides access to the waveform asset cache.
+     */
+    SampleCache &sampleCache() const;
+
+public:  //- Music playback: ------------------------------------------------------------
 
     /**
      * Returns @c true if one or more interface for audible @em music playback is
@@ -212,7 +209,7 @@ public:  // Music playback: ----------------------------------------------------
      */
     void stopMusic();
 
-public:  // Sound playback: -------------------------------------------------------------
+public:  //- Sound playback: ------------------------------------------------------------
 
     /**
      * Returns @c true if one or more interface for audible @em sound playback is available
@@ -276,7 +273,7 @@ public:  // Sound playback: ----------------------------------------------------
     void stopSound(StageId stageId, de::dint soundId, SoundEmitter *emitter,
         de::dint flags = 0 /*no special stop behaviors*/);
 
-public:  // Low-level driver/playback interfaces: ---------------------------------------
+public:  //- Low-level driver interface: ------------------------------------------------
 
     /// Required/referenced audio driver is missing. @ingroup errors
     DENG2_ERROR(MissingDriverError);
@@ -315,8 +312,11 @@ public:
     void timeChanged(de::Clock const &) override;
 
 public:  /// @todo make private:
-    void startFrame();
-    void endFrame();
+    /**
+     * Stop channels (playing music and all sounds), clear the Sample data cache.
+     * @todo observe ClientApp?
+     */
+    void reset();
 
     /**
      * Perform playback intialization (both music and sounds).
@@ -331,21 +331,16 @@ public:  /// @todo make private:
     void deinitPlayback();
 
     /**
-     * Stop channels (playing music and all sounds), clear the Sample data cache.
-     * @todo observe ClientApp?
-     */
-    void reset();
-
-    /// @todo refactor away.
-    void updateMusicMidiFont();
-
-    /**
      * Enabling refresh is simple: the refresh thread(s) is resumed. When disabling refresh,
      * first make sure a new refresh doesn't begin (using allowRefresh). We still have to
      * see if a refresh is being made and wait for it to stop before we can suspend thread(s).
      */
     void allowChannelRefresh(bool allow = true);
 
+    /// @todo refactor away.
+    void startFrame();
+    void endFrame();
+    void updateMusicMidiFont();
     void worldMapChanged();
 
 private:

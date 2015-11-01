@@ -1,4 +1,4 @@
-/** @file system.cpp  Audio subsystem module.
+/** @file system.cpp  System module for audio playback.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
@@ -110,7 +110,7 @@ String Channel::typeAsText(Type type)  // static
     case Music: return "Music";
     case Sound: return "SFX";
 
-    default: DENG2_ASSERT(!"Channel::typeAsText: Unknown Type"); break;
+    default: DENG2_ASSERT(!"audio::Channel::typeAsText: Unknown Type"); break;
     }
     return "(unknown)";
 }
@@ -125,7 +125,7 @@ String MusicSourceAsText(MusicSource source)  // static
     case MUSP_EXT: return "External files";
     case MUSP_CD:  return "CD";
 
-    default: DENG2_ASSERT(!"Unknown MusicSource"); break;
+    default: DENG2_ASSERT(!"audio::MusicSourceAsText: Unknown Source"); break;
     }
     return "(invalid)";
 }
@@ -197,14 +197,14 @@ DENG2_PIMPL(System)
             QList::clear();
         }
 
-        IDriver &find(String identityKey)
+        IDriver &find(String identityKey) const
         {
             if(IDriver *driver = tryFind(identityKey)) return *driver;
-            /// @throw MissingDriverError  Unknown driver identifier specified.
-            throw MissingDriverError("audio::System::Instance::Drivers::find", "Unknown driver \"" + identityKey + "\"");
+            /// @throw System::MissingDriverError  Unknown driver identifier specified.
+            throw System::MissingDriverError("audio::System::Instance::Drivers::find", "Unknown driver \"" + identityKey + "\"");
         }
 
-        IDriver *tryFind(String identityKey)
+        IDriver *tryFind(String identityKey) const
         {
             identityKey = identityKey.toLower();  // Symbolic identity keys are lowercase.
 
@@ -219,43 +219,58 @@ DENG2_PIMPL(System)
     } drivers;
 
     /**
-     * All known (playback) interfaces (registered during driver init).
+     * All known (playback) interfaces (registered during driver install).
      */
     struct KnownInterfaces
     {
-        /// Referenced interface is unknown. @ingroup errors
-        DENG2_ERROR(UnknownInterfaceError);
+        /// The referenced interface is missing. @ingroup errors
+        DENG2_ERROR(MissingError);
 
-        /// Group the interfaces by their associated logical Channel::Type.
+        /// Interfaces are grouped by their associated logical Channel::Type.
         QMap<String /*key: identityKey*/, Record> group[Channel::TypeCount];
 
+        /**
+         * Clear the database of known playback interfaces.
+         */
         void clear()
         {
-            for(auto &set : group)
-            {
-                set.clear();
-            }
+            for(auto &set : group) { set.clear(); }
         }
 
-        Record &add(Record const &rec)
+        /**
+         * Register a playback interface by placing a copy of it's @a interfaceDef into
+         * the database.
+         *
+         * @return  The indexed copy of @a interfaceDef, for caller convenience.
+         */
+        Record &insert(Record const &interfaceDef)
         {
-            dint channelType = rec.geti("channelType");
+            dint channelType = interfaceDef.geti("channelType");
             DENG2_ASSERT(channelType >= 0 && channelType < Channel::TypeCount);
-            return group[channelType].insert(rec.gets("identityKey"), rec).value();  // a copy is made
+            return group[channelType].insert(interfaceDef.gets("identityKey"), interfaceDef).value();
         }
 
-        Record &find(DotPath const &identityKey, Channel::Type channelType)
+        /**
+         * Locate the one playback interface definition which is associated with the given
+         * @a identityKey and @a channelType identifiers.
+         */
+        Record &find(DotPath const &identityKey, Channel::Type channelType) const
         {
             if(auto *found = tryFind(identityKey, channelType)) return *found;
-            /// @throw MissingPlaybackInterfaceError  Unknown identity key & Channel::Type pair specified.
-            throw UnknownInterfaceError("audio::System::Instance::KnownInterfaces::find", "Unknown " + Channel::typeAsText(channelType) + " interface \"" + identityKey + "\"");
+            /// @throw MissingError  Unknown identity key & Channel::Type pair specified.
+            throw MissingError("audio::System::Instance::KnownInterfaces::find", "Unknown " + Channel::typeAsText(channelType) + " interface \"" + identityKey + "\"");
         }
 
-        Record *tryFind(DotPath const &identityKey, Channel::Type channelType)
+        /**
+         * Lookup the one playback interface definition which is associated with the given
+         * @a identityKey and @a channelType identifiers. @c nullptr is returned if unable
+         * to locate a definition with the reference given.
+         */
+        Record *tryFind(DotPath const &identityKey, Channel::Type channelType) const
         {
             DENG2_ASSERT(dint(channelType) >= 0 && dint(channelType) < Channel::TypeCount);
             auto found = group[dint(channelType)].find(identityKey.toStringRef().toLower());
-            if(found != group[dint(channelType)].end()) return &found.value();
+            if(found != group[dint(channelType)].end()) return const_cast<Record *>(&found.value());
             return nullptr;
         }
     } interfaces;
@@ -346,8 +361,8 @@ DENG2_PIMPL(System)
      * If successful @a driver is added to the collection of loaded @var drivers and the
      * playback interfaces it provides are registered into the db of known @var interfaces.
      *
-     * If driver cannot be installed it will simply be deleted (it's of no use to us) and
-     * no other action is taken.
+     * If @a driver cannot be installed it will simply be deleted (it's of no use to us)
+     * and no further action is taken.
      */
     void installDriver(IDriver *driver)
     {
@@ -405,7 +420,7 @@ DENG2_PIMPL(System)
             }
 
             // Seems legit...
-            interfaces.add(rec);  // A copy is made.
+            interfaces.insert(rec);  // A copy is made.
         }
     }
 
@@ -630,7 +645,7 @@ DENG2_PIMPL(System)
             {
                 activateInterface(interfaces.find(idKey, channelType));
             }
-            catch(KnownInterfaces::UnknownInterfaceError const &er)
+            catch(KnownInterfaces::MissingError const &er)
             {
                 // Log but otherwise ignore this error.
                 LOG_AUDIO_ERROR("") << er.asText();
@@ -2493,7 +2508,7 @@ void System::consoleRegister()  // static
 
 using namespace audio;
 
-// Music: ---------------------------------------------------------------------------
+//- Music: ------------------------------------------------------------------------------
 
 void S_PauseMusic(dd_bool paused)
 {
@@ -2529,7 +2544,7 @@ dd_bool S_StartMusic(char const *musicId, dd_bool looped)
     return S_StartMusicNum(idx, looped);
 }
 
-// Sounds: ------------------------------------------------------------------------------
+//- Sound: ------------------------------------------------------------------------------
 
 dd_bool S_SoundIsPlaying(dint soundId, mobj_t *emitter)
 {
