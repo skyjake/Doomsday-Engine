@@ -181,15 +181,84 @@ String IDriver::description() const
 DENG2_PIMPL(System)
 , DENG2_OBSERVES(App, GameUnload)
 {
-    /// Required/referenced playback interface is missing. @ingroup errors
-    DENG2_ERROR(MissingPlaybackInterfaceError);
-
+    /// Configuration settings for this module.
     SettingsRegister settings;
-    QList<IDriver *> drivers;  //< All loaded audio drivers.
 
-    /// All indexed playback interfaces.
-    typedef QMap<String /*key: identity key*/, Record> PlaybackInterfaceMap;
-    PlaybackInterfaceMap interfaces[Channel::TypeCount];
+    /**
+     * All loaded audio drivers (if a driver can't be loaded it will be discarded).
+     */
+    struct Drivers : public QList<IDriver *>
+    {
+        ~Drivers() { DENG2_ASSERT(isEmpty()); }
+
+        void clear()  // Shadow QList::clear()
+        {
+            qDeleteAll(*this);
+            QList::clear();
+        }
+
+        IDriver &find(String identityKey)
+        {
+            if(IDriver *driver = tryFind(identityKey)) return *driver;
+            /// @throw MissingDriverError  Unknown driver identifier specified.
+            throw MissingDriverError("audio::System::Instance::Drivers::find", "Unknown driver \"" + identityKey + "\"");
+        }
+
+        IDriver *tryFind(String identityKey)
+        {
+            identityKey = identityKey.toLower();  // Symbolic identity keys are lowercase.
+
+            for(IDriver *driver : (*this))
+            for(QString const &idKey : driver->identityKey().split(';'))
+            {
+                if(idKey == identityKey)
+                    return driver;
+            }
+            return nullptr;
+        }
+    } drivers;
+
+    /**
+     * All known (playback) interfaces (registered during driver init).
+     */
+    struct KnownInterfaces
+    {
+        /// Referenced interface is unknown. @ingroup errors
+        DENG2_ERROR(UnknownInterfaceError);
+
+        /// Group the interfaces by their associated logical Channel::Type.
+        QMap<String /*key: identityKey*/, Record> group[Channel::TypeCount];
+
+        void clear()
+        {
+            for(auto &set : group)
+            {
+                set.clear();
+            }
+        }
+
+        Record &add(Record const &rec)
+        {
+            dint channelType = rec.geti("channelType");
+            DENG2_ASSERT(channelType >= 0 && channelType < Channel::TypeCount);
+            return group[channelType].insert(rec.gets("identityKey"), rec).value();  // a copy is made
+        }
+
+        Record &find(DotPath const &identityKey, Channel::Type channelType)
+        {
+            if(auto *found = tryFind(identityKey, channelType)) return *found;
+            /// @throw MissingPlaybackInterfaceError  Unknown identity key & Channel::Type pair specified.
+            throw UnknownInterfaceError("audio::System::Instance::KnownInterfaces::find", "Unknown " + Channel::typeAsText(channelType) + " interface \"" + identityKey + "\"");
+        }
+
+        Record *tryFind(DotPath const &identityKey, Channel::Type channelType)
+        {
+            DENG2_ASSERT(dint(channelType) >= 0 && dint(channelType) < Channel::TypeCount);
+            auto found = group[dint(channelType)].find(identityKey.toStringRef().toLower());
+            if(found != group[dint(channelType)].end()) return &found.value();
+            return nullptr;
+        }
+    } interfaces;
 
     struct ActiveInterface
     {
@@ -254,63 +323,33 @@ DENG2_PIMPL(System)
             return _driver->makeChannel(channelType());
         }
     };
-    QList<ActiveInterface> activeInterfaces;  //< Initialization order.
 
-    Record &findInterface(DotPath const &identityKey, Channel::Type channelType)
+    struct ActiveInterfaces : public QList<ActiveInterface>
     {
-        if(auto *found = tryFindInterface(identityKey, channelType)) return *found;
-        /// @throw MissingPlaybackInterfaceError  Unknown type & identity key pair specified.
-        throw MissingPlaybackInterfaceError("audio::System::Instance::findInterface", "Unknown interface identity key \"" + identityKey + "\"");
-    }
+        ~ActiveInterfaces() { DENG2_ASSERT(isEmpty()); }
 
-    Record *tryFindInterface(DotPath const &identityKey, Channel::Type channelType)
-    {
-        DENG2_ASSERT(dint(channelType) >= 0 && dint(channelType) < Channel::TypeCount);
-        auto found = interfaces[dint(channelType)].find(identityKey.toStringRef().toLower());
-        if(found != interfaces[dint(channelType)].end()) return &found.value();
-        return nullptr;
-    }
-
-    Record &addInterface(Record const &rec)
-    {
-        dint channelType = rec.geti("channelType");
-        DENG2_ASSERT(channelType >= 0 && channelType < Channel::TypeCount);
-        return interfaces[channelType].insert(rec.gets("identityKey"), rec).value();  // a copy is made
-    }
-
-    bool interfaceIsActive(Record const &interfaceDef)
-    {
-        for(ActiveInterface const &active : activeInterfaces)
+        bool has(Record const &interfaceDef)
         {
-            if(&active.def() == &interfaceDef) return true;
+            for(ActiveInterface const &active : (*this))
+            {
+                if(&active.def() == &interfaceDef) return true;
+            }
+            return false;
         }
-        return false;
-    }
-
-    IDriver &findDriver(String driverIdKey)
-    {
-        if(IDriver *driver = tryFindDriver(driverIdKey)) return *driver;
-        /// @throw MissingDriverError  Unknown driver identifier specified.
-        throw MissingDriverError("audio::System::findDriver", "Unknown audio driver '" + driverIdKey + "'");
-    }
-
-    IDriver *tryFindDriver(String driverIdKey)
-    {
-        driverIdKey = driverIdKey.toLower();  // Symbolic identity keys are lowercase.
-
-        for(IDriver *driver : drivers)
-        for(QString const &idKey : driver->identityKey().split(';'))
-        {
-            if(idKey == driverIdKey)
-                return driver;
-        }
-        return nullptr;
-    }
+    } activeInterfaces;  //< Initialization order.
 
     /**
-     * @param driver  Audio driver to add. Ownership is given.
+     * Attempt to "install" the given audio @a driver (ownership is given), by first
+     * validating it to ensure the metadata is well-formed and then ensuring the driver
+     * is compatibile with any preexisting (logging any issues detected in the process).
+     *
+     * If successful @a driver is added to the collection of loaded @var drivers and the
+     * playback interfaces it provides are registered into the db of known @var interfaces.
+     *
+     * If driver cannot be installed it will simply be deleted (it's of no use to us) and
+     * no other action is taken.
      */
-    void addDriver(IDriver *driver)
+    void installDriver(IDriver *driver)
     {
         if(!driver) return;
 
@@ -326,7 +365,7 @@ DENG2_PIMPL(System)
                 if(otherIdKey == idKey)
                 {
                     LOGDEV_AUDIO_WARNING("Audio driver \"%s\" is already attributed with the"
-                                         " identity key \"%s\" (must be unique) - cannot add driver \"%s\"")
+                                         " identity key \"%s\" (must be unique) - cannot install driver \"%s\"")
                         << other->title()
                         << otherIdKey
                         << driver->title();
@@ -351,22 +390,22 @@ DENG2_PIMPL(System)
             {
                 LOGDEV_AUDIO_WARNING("Playback interface identity key \"%s\" for driver \"%s\""
                                      " is malformed (expected \"<driverIdentityKey>.<interfaceIdentityKey>\")"
-                                     " - cannot add interface")
+                                     " - cannot register interface")
                     << idKey << driver->identityKey();
                 continue;
             }
 
             // Interface identity keys must be unique.
-            if(tryFindInterface(idKey, channelType))
+            if(interfaces.tryFind(idKey, channelType))
             {
                 LOGDEV_AUDIO_WARNING("A playback interface with identity key \"%s\" already"
-                                     " exists (must be unique) - cannot add interface")
+                                     " exists (must be unique) - cannot register interface")
                     << idKey;
                 continue;
             }
 
             // Seems legit...
-            addInterface(rec);  // A copy is made.
+            interfaces.add(rec);  // A copy is made.
         }
     }
 
@@ -391,11 +430,10 @@ DENG2_PIMPL(System)
         }
         activeInterfaces.clear();
 
-        // Clear the interface database.
-        for(auto &interfaceMap : interfaces) { interfaceMap.clear(); }
+        // Clear the known interface database.
+        interfaces.clear();
 
         // Finally, unload all the drivers.
-        qDeleteAll(drivers);
         drivers.clear();
     }
 
@@ -406,9 +444,9 @@ DENG2_PIMPL(System)
         DENG2_ASSERT(!App::commandLine().has("-nosound"));
 
         // Firstly - built-in drivers.
-        addDriver(new DummyDriver);
+        installDriver(new DummyDriver);
 #ifndef DENG_DISABLE_SDLMIXER
-        addDriver(new SdlMixerDriver);
+        installDriver(new SdlMixerDriver);
 #endif
 
         // Secondly - plugin drivers.
@@ -418,7 +456,7 @@ DENG2_PIMPL(System)
             {
                 if(auto *driver = PluginDriver::interpretFile(&libFile))
                 {
-                    addDriver(driver);  // Takes ownership.
+                    installDriver(driver);  // Takes ownership.
                 }
                 else
                 {
@@ -509,7 +547,7 @@ DENG2_PIMPL(System)
             // Resolve driver identity key aliases.
             if(idKey.segmentCount() > 1)
             {
-                if(IDriver const *driver = tryFindDriver(idKey.firstSegment()))
+                if(IDriver const *driver = drivers.tryFind(idKey.firstSegment()))
                 {
                     idKey = DotPath(driver->identityKey().split(';').first())
                           / idKey.toStringRef().mid(idKey.firstSegment().length() + 1);
@@ -517,7 +555,7 @@ DENG2_PIMPL(System)
             }
 
             // Do we know this playback interface?
-            if(Record const *foundInterface = tryFindInterface(idKey, channelType))
+            if(Record const *foundInterface = interfaces.tryFind(idKey, channelType))
             {
                 it.setValue(foundInterface->gets("identityKey"));
             }
@@ -558,7 +596,7 @@ DENG2_PIMPL(System)
     void activateInterface(Record const &interfaceDef)
     {
         // Have we already activated the associated interface?
-        if(interfaceIsActive(interfaceDef))
+        if(activeInterfaces.has(interfaceDef))
             return;
 
         // If this interface belongs to a driver - ensure that the driver is initialized
@@ -567,7 +605,7 @@ DENG2_PIMPL(System)
         DotPath const idKey = interfaceDef.gets("identityKey");
         if(idKey.segmentCount() > 1)
         {
-            driver = tryFindDriver(idKey.firstSegment());
+            driver = drivers.tryFind(idKey.firstSegment());
             if(driver)
             {
                 initDriverIfNeeded(*driver);
@@ -590,9 +628,9 @@ DENG2_PIMPL(System)
         {
             try
             {
-                activateInterface(findInterface(idKey, channelType));
+                activateInterface(interfaces.find(idKey, channelType));
             }
-            catch(MissingPlaybackInterfaceError const &er)
+            catch(KnownInterfaces::UnknownInterfaceError const &er)
             {
                 // Log but otherwise ignore this error.
                 LOG_AUDIO_ERROR("") << er.asText();
@@ -2027,12 +2065,12 @@ dint System::driverCount() const
 
 IDriver const *System::tryFindDriver(String driverIdKey) const
 {
-    return d->tryFindDriver(driverIdKey);
+    return d->drivers.tryFind(driverIdKey);
 }
 
 IDriver const &System::findDriver(String driverIdKey) const
 {
-    return d->findDriver(driverIdKey);
+    return d->drivers.find(driverIdKey);
 }
 
 LoopResult System::forAllDrivers(std::function<LoopResult (IDriver const &)> func) const
