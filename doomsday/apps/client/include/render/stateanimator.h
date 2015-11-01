@@ -20,6 +20,8 @@
 #define DENG_CLIENT_RENDER_STATEANIMATOR_H
 
 #include "render/modelrenderer.h"
+
+#include <doomsday/world/mobj.h>
 #include <de/ModelDrawable>
 #include <de/GLProgram>
 
@@ -52,7 +54,7 @@ public:
 
     void triggerByState(de::String const &stateName);
 
-    void triggerDamage(int points);
+    void triggerDamage(int points, struct mobj_s const *inflictor);
 
     void advanceTime(de::TimeDelta const &elapsed);
 

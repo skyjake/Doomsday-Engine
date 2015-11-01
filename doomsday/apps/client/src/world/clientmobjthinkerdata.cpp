@@ -296,6 +296,6 @@ void ClientMobjThinkerData::damageReceived(int damage, mobj_t const *inflictor)
 
     if(d->animator)
     {
-        d->animator->triggerDamage(damage);
+        d->animator->triggerDamage(damage, inflictor);
     }
 }

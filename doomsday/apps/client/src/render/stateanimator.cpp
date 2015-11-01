@@ -21,8 +21,11 @@
 #include "clientapp.h"
 #include "dd_loop.h"
 
+#include <doomsday/world/thinkerdata.h>
+
 #include <de/ScriptedInfo>
 #include <de/RecordValue>
+#include <de/NoneValue>
 #include <de/NativeValue>
 #include <de/GLUniform>
 
@@ -657,7 +660,7 @@ void StateAnimator::triggerByState(String const &stateName)
     }
 }
 
-void StateAnimator::triggerDamage(int points)
+void StateAnimator::triggerDamage(int points, struct mobj_s const *inflictor)
 {
     /*
      * Here we check for the onDamage() function in the asset. The ASSET
@@ -674,10 +677,12 @@ void StateAnimator::triggerDamage(int points)
          */
 
         Record ns;
-        ns.add(QStringLiteral("d")).set(new RecordValue(d->names));
+        ns.add(QStringLiteral("self")).set(new RecordValue(d->names));
         Process::scriptCall(Process::IgnoreResult, ns,
-                            QStringLiteral("d.ASSET.onDamage"),
-                            "$d", points);
+                            QStringLiteral("self.ASSET.onDamage"),
+                            "$self", points,
+                            inflictor? &THINKER_DATA(inflictor->thinker, ThinkerData).names() :
+                                       nullptr);
     }
 }
 
