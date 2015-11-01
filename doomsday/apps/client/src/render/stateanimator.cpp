@@ -659,8 +659,20 @@ void StateAnimator::triggerByState(String const &stateName)
 
 void StateAnimator::triggerDamage(int points)
 {
+    /*
+     * Here we check for the onDamage() function in the asset. The ASSET
+     * variable holds a direct pointer to the asset definition, where the
+     * function is defined.
+     */
+
     if(d->names.has(QStringLiteral("ASSET.onDamage")))
     {
+        /*
+         * We need to provide the StateAnimator instance to the script as an
+         * argument, because onDamage() is a member of the asset -- when the
+         * method is executed, "self" refers to the asset.
+         */
+
         Record ns;
         ns.add(QStringLiteral("d")).set(new RecordValue(d->names));
         Process::scriptCall(Process::IgnoreResult, ns,

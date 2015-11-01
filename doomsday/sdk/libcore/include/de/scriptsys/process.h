@@ -26,6 +26,7 @@
 #include "../Function"
 #include "../String"
 #include "../Variable"
+#include "../RecordValue"
 
 #include <list>
 
@@ -33,34 +34,105 @@ namespace de {
 
 class ArrayValue;
 
-template <typename Type>
-QString scriptArgumentAsText(Type const &arg) {
-    return QString("%1").arg(arg);
-}
+namespace internal {
+
+/**
+ * Utility for composing arguments for a script call from native code. This is
+ * used by Process:scriptCall() and is not intended to be used manually (hence
+ * it is in the de::internal namespace).
+ */
+struct DENG2_PUBLIC ScriptArgumentComposer
+{
+    QStringList args;
+    int counter = 0;
+    Record &ns;
+
+    ScriptArgumentComposer(Record &names) : ns(names) {}
+
+    ~ScriptArgumentComposer()
+    {
+        // Delete the argument variables that were created.
+        for(int i = 0; i < counter; ++i)
+        {
+            delete ns.remove(QStringLiteral("__arg%1__").arg(i));
+        }
+    }
+
+    Variable &addArgument()
+    {
+        return ns.add(QStringLiteral("__arg%1__").arg(counter++));
+    }
+
+    template <typename Type>
+    QString scriptArgumentAsText(Type const &arg)
+    {
+        return QString("%1").arg(arg);
+    }
+
+    inline void convertScriptArguments(QStringList &) {}
+
+    template <typename FirstArg, typename... Args>
+    void convertScriptArguments(QStringList &list, FirstArg const &firstArg, Args... args)
+    {
+        list << scriptArgumentAsText(firstArg);
+        convertScriptArguments(list, args...);
+    }
+};
+
 template <>
-inline QString scriptArgumentAsText(QString const &arg) {
-    if(arg.startsWith("$")) { // Verbatim?
+inline QString ScriptArgumentComposer::scriptArgumentAsText(QString const &arg)
+{
+    if(arg.startsWith("$")) // Verbatim?
+    {
         return arg.mid(1);
     }
     QString quoted(arg);
     quoted.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");
     return QString("\"%1\"").arg(quoted);
 }
+
 template <>
-inline QString scriptArgumentAsText(String const &arg) {
+inline QString ScriptArgumentComposer::scriptArgumentAsText(String const &arg)
+{
     return scriptArgumentAsText(QString(arg));
 }
+
 template <>
-inline QString scriptArgumentAsText(char const * const &utf8) {
+inline QString ScriptArgumentComposer::scriptArgumentAsText(std::nullptr_t const &)
+{
+    return QStringLiteral("None");
+}
+
+template <>
+inline QString ScriptArgumentComposer::scriptArgumentAsText(char const * const &utf8)
+{
+    if(!utf8) return QStringLiteral("None");
     return scriptArgumentAsText(QString::fromUtf8(utf8));
 }
 
-inline void convertScriptArguments(QStringList &) {}
-template <typename FirstArg, typename... Args>
-void convertScriptArguments(QStringList &list, FirstArg const &firstArg, Args... args) {
-    list << scriptArgumentAsText(firstArg);
-    convertScriptArguments(list, args...);
+template <>
+inline QString ScriptArgumentComposer::scriptArgumentAsText(Record const &record)
+{
+    Variable &arg = addArgument();
+    arg.set(new RecordValue(record));
+    return arg.name();
 }
+
+template <>
+inline QString ScriptArgumentComposer::scriptArgumentAsText(Record const * const &record)
+{
+    if(!record) return QStringLiteral("None");
+    return scriptArgumentAsText(*record);
+}
+
+template <>
+inline QString ScriptArgumentComposer::scriptArgumentAsText(Record * const &record)
+{
+    if(!record) return QStringLiteral("None");
+    return scriptArgumentAsText(*record);
+}
+
+} // namespace internal
 
 /**
  * Executes a script. The process maintains the execution environment, including things
@@ -251,6 +323,10 @@ public:
      *
      * Only non-named function arguments are supported by this method.
      *
+     * The namespace @a global may be modified if some of the argument values
+     * require variables, e.g., for refering Records. The created variables
+     * are named `__argN__`, with `N` being an increasing number.
+     *
      * @param result    What to do with the result value.
      * @param global    Global namespace where to execute the call.
      * @param function  Name of the function.
@@ -263,9 +339,9 @@ public:
     static Value *scriptCall(CallResult result, Record &globals,
                              String const &function, Args... args)
     {
-        QStringList argsList;
-        convertScriptArguments(argsList, args...);
-        Script script(QString("%1(%2)").arg(function).arg(argsList.join(',')));
+        internal::ScriptArgumentComposer composer(globals);
+        composer.convertScriptArguments(composer.args, args...);
+        Script script(QString("%1(%2)").arg(function).arg(composer.args.join(',')));
         Process proc(&globals);
         proc.run(script);
         proc.execute();
