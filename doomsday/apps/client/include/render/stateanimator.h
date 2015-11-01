@@ -42,20 +42,34 @@ public:
     Model const &model() const;
 
     /**
-     * Sets the namespace of the animator's owner. Available as "self" in animation
-     * scripts.
+     * Sets the namespace of the animator's owner. Available as a variable in
+     * animation scripts.
      *
-     * @param names  Owner's namespace.
+     * @param names    Owner's namespace.
+     * @param varName  Name of the variable that points to @a names.
      */
-    void setOwnerNamespace(de::Record &names);
+    void setOwnerNamespace(de::Record &names, de::String const &varName);
 
     void triggerByState(de::String const &stateName);
+
+    void triggerDamage(int points);
 
     void advanceTime(de::TimeDelta const &elapsed);
 
     de::ddouble currentTime(int index) const;
 
     de::ModelDrawable::Appearance const &appearance() const;
+
+    /**
+     * Returns the Doomsday Script namespace of the animator.
+     *
+     * Global constants:
+     * - `ID` (Text): asset identifier.
+     * - `ASSET` (Record): asset metadata.
+     *
+     * @return Namespace record.
+     */
+    de::Record const &names() const;
 
 private:
     DENG2_PRIVATE(d)

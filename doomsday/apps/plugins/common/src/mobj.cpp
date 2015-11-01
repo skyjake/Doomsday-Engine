@@ -29,6 +29,7 @@
 #include "mobj.h"
 
 #include <cmath>
+#include <doomsday/world/mobjthinkerdata.h>
 #include <de/mathutil.h>
 #include "dmu_lib.h"
 #include "mapstatereader.h"
@@ -1019,4 +1020,15 @@ mobj_t *Mobj_LaunchMissile(mobj_t *mob, mobj_t *missile, coord_t const targetPos
     coord_t const sourcePos[])
 {
     return Mobj_LaunchMissile2(mob, missile, targetPos, sourcePos, 0/*no extra z-momentum*/);
+}
+
+void Mobj_InflictDamage(mobj_t *mob, mobj_t const *inflictor, int damage)
+{
+    DENG_ASSERT(mob);
+
+    // Do the damage.
+    mob->health -= damage;
+
+    // Notify the engine.
+    THINKER_DATA(mob->thinker, MobjThinkerData).damageReceived(damage, inflictor);
 }

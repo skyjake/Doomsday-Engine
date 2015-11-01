@@ -33,6 +33,35 @@ namespace de {
 
 class ArrayValue;
 
+template <typename Type>
+QString scriptArgumentAsText(Type const &arg) {
+    return QString("%1").arg(arg);
+}
+template <>
+inline QString scriptArgumentAsText(QString const &arg) {
+    if(arg.startsWith("$")) { // Verbatim?
+        return arg.mid(1);
+    }
+    QString quoted(arg);
+    quoted.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");
+    return QString("\"%1\"").arg(quoted);
+}
+template <>
+inline QString scriptArgumentAsText(String const &arg) {
+    return scriptArgumentAsText(QString(arg));
+}
+template <>
+inline QString scriptArgumentAsText(char const * const &utf8) {
+    return scriptArgumentAsText(QString::fromUtf8(utf8));
+}
+
+inline void convertScriptArguments(QStringList &) {}
+template <typename FirstArg, typename... Args>
+void convertScriptArguments(QStringList &list, FirstArg const &firstArg, Args... args) {
+    list << scriptArgumentAsText(firstArg);
+    convertScriptArguments(list, args...);
+}
+
 /**
  * Executes a script. The process maintains the execution environment, including things
  * like local variables and keeping track of which statement is being executed.
@@ -209,6 +238,47 @@ public:
      * the stack.
      */
     Record &locals();
+
+public:
+    /*
+     * Utilities for calling script functions from native code.
+     */
+    enum CallResult { IgnoreResult, TakeResult };
+
+    /**
+     * Calls a script function. Native arguments are converted to script
+     * source text and then parsed into Values when the call is executed.
+     *
+     * Only non-named function arguments are supported by this method.
+     *
+     * @param result    What to do with the result value.
+     * @param global    Global namespace where to execute the call.
+     * @param function  Name of the function.
+     * @param args      Argument values for the function call.
+     *
+     * @return Depending on @a result, returns nullptr or the return value
+     * from the call. Caller gets ownership of the possibly returned Value.
+     */
+    template <typename... Args>
+    static Value *scriptCall(CallResult result, Record &globals,
+                             String const &function, Args... args)
+    {
+        QStringList argsList;
+        convertScriptArguments(argsList, args...);
+        Script script(QString("%1(%2)").arg(function).arg(argsList.join(',')));
+        Process proc(&globals);
+        proc.run(script);
+        proc.execute();
+        if(result == IgnoreResult) return nullptr;
+        // Return the result using the request value type.
+        return proc.context().evaluator().popResult();
+    }
+
+    template <typename ReturnValueType, typename... Args>
+    static ReturnValueType *scriptCall(Record &globals, String const &function, Args... args)
+    {
+        return static_cast<ReturnValueType *>(scriptCall(TakeResult, globals, function, args...));
+    }
 
 private:
     DENG2_PRIVATE(d)

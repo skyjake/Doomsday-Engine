@@ -41,9 +41,8 @@ static String const DEF_WRAP       ("wrap");
 static String const DEF_ENABLED    ("enabled");
 static String const DEF_MATERIAL   ("material");
 
-static String const VAR_SELF    ("self");
-static String const VAR_ID      ("__id__");
-static String const VAR_ASSET   ("asset");
+static String const VAR_ID      ("ID");
+static String const VAR_ASSET   ("ASSET");
 static String const VAR_ENABLED ("enabled");
 static String const VAR_MATERIAL("material");
 
@@ -211,6 +210,9 @@ DENG2_PIMPL(StateAnimator)
 
     Instance(Public *i, DotPath const &id) : Base(i)
     {
+        names.add(Record::VAR_NATIVE_SELF).set(new NativeValue(&self)).setReadOnly();
+        names.addSuperRecord(ScriptSystem::builtInClass(QStringLiteral("Render"),
+                                                        QStringLiteral("StateAnimator")));
         names.addText(VAR_ID, id).setReadOnly();
         names.add(VAR_ASSET).set(new RecordValue(App::asset(id).accessedRecord())).setReadOnly();
 
@@ -566,9 +568,9 @@ Model const &StateAnimator::model() const
     return static_cast<Model const &>(ModelDrawable::Animator::model());
 }
 
-void StateAnimator::setOwnerNamespace(Record &names)
+void StateAnimator::setOwnerNamespace(Record &names, String const &varName)
 {
-    d->names.add(VAR_SELF).set(new RecordValue(names));
+    d->names.add(varName).set(new RecordValue(names));
 }
 
 void StateAnimator::triggerByState(String const &stateName)
@@ -607,7 +609,7 @@ void StateAnimator::triggerByState(String const &stateName)
 
             int const priority = seq.def->geti(DEF_PRIORITY, ANIM_DEFAULT_PRIORITY);
 
-            // Loop up the timeline.
+            // Look up the timeline.
             Scheduler *timeline = seq.timeline;
             if(!seq.sharedTimeline.isEmpty())
             {
@@ -652,6 +654,18 @@ void StateAnimator::triggerByState(String const &stateName)
         /*LOG_GL_XVERBOSE("Mobj %i starting animation: " _E(b))
                 << d->names.geti("self.__id__") << seq.name;*/
         break;
+    }
+}
+
+void StateAnimator::triggerDamage(int points)
+{
+    if(d->names.has(QStringLiteral("ASSET.onDamage")))
+    {
+        Record ns;
+        ns.add(QStringLiteral("d")).set(new RecordValue(d->names));
+        Process::scriptCall(Process::IgnoreResult, ns,
+                            QStringLiteral("d.ASSET.onDamage"),
+                            "$d", points);
     }
 }
 
@@ -739,6 +753,11 @@ ddouble StateAnimator::currentTime(int index) const
 ModelDrawable::Appearance const &StateAnimator::appearance() const
 {
     return d->appearance;
+}
+
+Record const &StateAnimator::names() const
+{
+    return d->names;
 }
 
 } // namespace render

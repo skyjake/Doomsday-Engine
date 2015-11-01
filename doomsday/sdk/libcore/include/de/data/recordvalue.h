@@ -33,7 +33,10 @@ namespace de {
  *
  * @ingroup data
  */
-class DENG2_PUBLIC RecordValue : public Value, DENG2_OBSERVES(Record, Deletion)
+class DENG2_PUBLIC RecordValue
+        : public Value
+        , public RecordAccessor
+        , DENG2_OBSERVES(Record, Deletion)
 {
 public:
     /// Attempt to access the record after it has been deleted. @ingroup errors
@@ -51,7 +54,9 @@ public:
     enum OwnershipFlag
     {
         /// The value has ownership of the record.
-        OwnsRecord = 0x1
+        OwnsRecord = 0x1,
+
+        RecordNotOwned = 0
     };
     Q_DECLARE_FLAGS(OwnershipFlags, OwnershipFlag)
 

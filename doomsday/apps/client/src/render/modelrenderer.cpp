@@ -616,7 +616,7 @@ DENG2_PIMPL(ModelRenderer)
     void draw(Params const &p)
     {
         uTex = static_cast<AtlasTexture const *>(p.model->textures->atlas());
-        
+
         p.model->draw(&p.animator->appearance(), p.animator);
     }
 };
@@ -739,8 +739,38 @@ int ModelRenderer::identifierFromText(String const &text,
     return id;
 }
 
+//---------------------------------------------------------------------------------------
+
+static render::StateAnimator &animatorInstance(Context &ctx)
+{
+    if(auto *self = ctx.selfInstance().get(Record::VAR_NATIVE_SELF).maybeAs<NativeValue>())
+    {
+        if(auto *obj = self->nativeObject<render::StateAnimator>())
+        {
+            return *obj;
+        }
+    }
+    throw Value::IllegalError("ModelRenderer::animatorInstance",
+                              "No StateAnimator instance available");
+}
+
+static Value *Function_StateAnimator_PlayingSequences(Context &ctx, Function::ArgumentValues const &)
+{
+    render::StateAnimator &anim = animatorInstance(ctx);
+    std::unique_ptr<ArrayValue> playing(new ArrayValue);
+    for(int i = 0; i < anim.count(); ++i)
+    {
+        playing->add(new NumberValue(anim.at(i).animId));
+    }
+    return playing.release();
+}
+
 void ModelRenderer::initBindings(Binder &binder, Record &module) // static
 {
-    DENG2_UNUSED(binder);
-    DENG2_UNUSED(module);
+    // StateAnimator
+    {
+        Record &anim = module.addSubrecord("StateAnimator");
+        binder.init(anim)
+                << DENG2_FUNC_NOARG(StateAnimator_PlayingSequences, "playingSequences");
+    }
 }

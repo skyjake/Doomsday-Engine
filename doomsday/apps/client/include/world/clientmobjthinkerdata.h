@@ -83,10 +83,11 @@ public:
     ClientMobjThinkerData();
     ClientMobjThinkerData(ClientMobjThinkerData const &other);
 
-    void think();
-    IData *duplicate() const;
+    void think() override;
+    IData *duplicate() const override;
 
-    void stateChanged(state_t const *previousState);
+    void stateChanged(state_t const *previousState) override;
+    void damageReceived(int damage, mobj_t const *inflictor) override;
 
     int stateIndex() const;
 

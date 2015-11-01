@@ -26,6 +26,11 @@
 // This macro can be used to calculate a mobj-specific 'random' number.
 #define MOBJ_TO_ID(mo)          ( (long)(mo)->thinker.id * 48 + ((unsigned long)(mo)/1000) )
 
+// Game plugins define their own mobj_s/t.
+/// @todo Plugin mobjs should be derived from a class in libdoomsday, and
+/// the DD_BASE_MOBJ_ELEMENTS macros should be removed. -jk
+#ifndef LIBDOOMSDAY_CUSTOM_MOBJ
+
 // We'll use the base mobj template directly as our mobj.
 typedef struct mobj_s {
     DD_BASE_MOBJ_ELEMENTS()
@@ -33,5 +38,7 @@ typedef struct mobj_s {
     mobj_s(thinker_s::InitBehavior b) : thinker(b) {}
 #endif
 } mobj_t;
+
+#endif // LIBDOOMSDAY_CUSTOM_MOBJ
 
 #endif // LIBDOOMSDAY_MOBJ_H

@@ -150,11 +150,8 @@ bool Package::executeFunction(String const &name)
     Record &pkgInfo = d->packageInfo();
     if(pkgInfo.has(name))
     {
-        Script script(name + "()");
         // The global namespace for this function is the package's info namespace.
-        Process proc(&pkgInfo);
-        proc.run(script);
-        proc.execute();
+        Process::scriptCall(Process::IgnoreResult, pkgInfo, name);
         return true;
     }
     return false;

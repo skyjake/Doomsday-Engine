@@ -22,6 +22,7 @@
 #include "de/Version"
 #include "de/Info"
 #include "de/Log"
+#include "de/Parser"
 
 #include <QMap>
 
@@ -204,12 +205,16 @@ DENG2_PIMPL(PackageLoader)
                     // Not a loadable package.
                     qDebug() << i->first << ": Package is invalid:" << er.asText();
                 }
+                catch(Parser::SyntaxError const &er)
+                {
+                    LOG_RES_NOTE("\"%s\": Package has a Doomsday Script syntax error: %s")
+                            << i->first << er.asText();
+                }
                 catch(Info::SyntaxError const &er)
                 {
                     // Not a loadable package.
                     LOG_RES_NOTE("\"%s\": Package has a syntax error: %s")
-                            << i->first
-                            << er.asText();
+                            << i->first << er.asText();
                 }
 
                 /// @todo Store the errors so that the UI can show a list of
