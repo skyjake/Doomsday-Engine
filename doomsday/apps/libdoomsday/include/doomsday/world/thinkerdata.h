@@ -81,16 +81,14 @@ public:
 #endif
 };
 
-template <>
-inline QString de::internal::ScriptArgumentComposer::scriptArgumentAsText(ThinkerData const * const &td) {
-    if(!td) return ScriptLex::NONE;
-    return scriptArgumentAsText(td->objectNamespace());
-}
+DENG2_SCRIPT_ARGUMENT_TYPE(ThinkerData *,
+    if(!arg) return ScriptLex::NONE;
+    return scriptArgumentAsText(arg->objectNamespace());
+)
 
-template <>
-inline QString de::internal::ScriptArgumentComposer::scriptArgumentAsText(ThinkerData * const &td) {
-    if(!td) return ScriptLex::NONE;
-    return scriptArgumentAsText(td->objectNamespace());
-}
+DENG2_SCRIPT_ARGUMENT_TYPE(ThinkerData const *,
+    if(!arg) return ScriptLex::NONE;
+    return scriptArgumentAsText(arg->objectNamespace());
+)
 
 #endif // LIBDOOMSDAY_THINKERDATA_H

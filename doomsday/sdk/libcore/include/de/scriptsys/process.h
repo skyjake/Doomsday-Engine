@@ -68,7 +68,7 @@ struct DENG2_PUBLIC ScriptArgumentComposer
     template <typename Type>
     QString scriptArgumentAsText(Type const &arg)
     {
-        return QString("%1").arg(arg);
+        return QString("%1").arg(arg); // basic types
     }
 
     inline void convertScriptArguments(QStringList &) {}
@@ -139,6 +139,9 @@ inline QString ScriptArgumentComposer::scriptArgumentAsText(IObject const &objec
 {
     return scriptArgumentAsText(object.objectNamespace());
 }
+
+#define DENG2_SCRIPT_ARGUMENT_TYPE(ArgType, Method) \
+    template <> inline QString de::internal::ScriptArgumentComposer::scriptArgumentAsText(ArgType const &arg) { Method }
 
 } // namespace internal
 
