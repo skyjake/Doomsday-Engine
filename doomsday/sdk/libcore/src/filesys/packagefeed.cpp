@@ -55,9 +55,9 @@ DENG2_PIMPL(PackageFeed)
             linkToPackage(*pkg, i.key(), folder);
 
             // Also link it under its possible alias identifier (for variants).
-            if(pkg->info().has("package.alias"))
+            if(pkg->objectNamespace().has("package.alias"))
             {
-                linkToPackage(*pkg, pkg->info().gets("package.alias"), folder);
+                linkToPackage(*pkg, pkg->objectNamespace().gets("package.alias"), folder);
             }
 
             // Link each contained asset, too.

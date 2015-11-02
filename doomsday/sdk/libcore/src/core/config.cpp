@@ -14,9 +14,9 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
- 
+
 #include "de/Config"
 #include "de/App"
 #include "de/Package"
@@ -50,7 +50,7 @@ DENG2_PIMPL_NOREF(Config)
     Instance(Path const &path)
         : configPath(path)
         , refuge("modules/Config")
-        , config(&refuge.names())
+        , config(&refuge.objectNamespace())
     {}
 
     void setOldVersion(Value const &old)
@@ -76,7 +76,7 @@ DENG2_PIMPL_NOREF(Config)
 
 Config::Config(Path const &path) : RecordAccessor(0), d(new Instance(path))
 {
-    setAccessedRecord(names());
+    setAccessedRecord(objectNamespace());
 }
 
 void Config::read()
@@ -84,7 +84,7 @@ void Config::read()
     if(d->configPath.isEmpty()) return;
 
     LOG_AS("Config::read");
-    
+
     // Current version.
     Version verInfo;
     QScopedPointer<ArrayValue> version(new ArrayValue);
@@ -101,12 +101,12 @@ void Config::read()
         // If we already have a saved copy of the config, read it.
         d->refuge.read();
 
-        LOG_DEBUG("Found serialized Config:\n") << names();
-        
+        LOG_DEBUG("Found serialized Config:\n") << objectNamespace();
+
         // If the saved config is from a different version, rerun the script.
-        if(names().has("__version__"))
+        if(objectNamespace().has("__version__"))
         {
-            Value const &oldVersion = names()["__version__"].value();
+            Value const &oldVersion = objectNamespace()["__version__"].value();
             d->setOldVersion(oldVersion);
             if(oldVersion.compare(*version))
             {
@@ -163,7 +163,7 @@ void Config::read()
         // Something is wrong, maybe rerunning will fix it.
         shouldRunScript = true;
     }
-            
+
     // The version of libcore is automatically included in the namespace.
     d->config.globals().add(new Variable("__version__", version.take(),
                                          Variable::AllowArray | Variable::ReadOnly));
@@ -182,24 +182,14 @@ void Config::write() const
     d->write();
 }
 
-Record &Config::names()
+Record &Config::objectNamespace()
 {
     return d->config.globals();
 }
 
-Record const &Config::names() const
+Record const &Config::objectNamespace() const
 {
     return d->config.globals();
-}
-
-Variable &Config::operator [] (String const &name)
-{
-    return names()[name];
-}
-
-Variable const &Config::operator [] (String const &name) const
-{
-    return names()[name];
 }
 
 Version Config::upgradedFromVersion() const
@@ -209,32 +199,32 @@ Version Config::upgradedFromVersion() const
 
 Variable &Config::set(String const &name, bool value)
 {
-    return names().set(name, value);
+    return objectNamespace().set(name, value);
 }
 
 Variable &Config::set(String const &name, Value::Number const &value)
 {
-    return names().set(name, value);
+    return objectNamespace().set(name, value);
 }
 
 Variable &Config::set(String const &name, dint value)
 {
-    return names().set(name, value);
+    return objectNamespace().set(name, value);
 }
 
 Variable &Config::set(String const &name, duint value)
 {
-    return names().set(name, value);
+    return objectNamespace().set(name, value);
 }
 
 Variable &Config::set(String const &name, ArrayValue *value)
 {
-    return names().set(name, value);
+    return objectNamespace().set(name, value);
 }
 
 Variable &Config::set(String const &name, Value::Text const &value)
 {
-    return names().set(name, value);
+    return objectNamespace().set(name, value);
 }
 
 } // namespace de

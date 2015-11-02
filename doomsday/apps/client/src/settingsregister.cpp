@@ -453,7 +453,7 @@ DENG2_OBSERVES(App, GameChange)
         // Still nothing?
         addCustomProfileIfMissing();
 
-        if(App::config().names().has(confName()))
+        if(App::config().objectNamespace().has(confName()))
         {
             // Update current profile.
             current = App::config()[confName()].value().asText();

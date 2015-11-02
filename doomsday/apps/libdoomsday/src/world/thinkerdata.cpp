@@ -80,12 +80,12 @@ thinker_s const &ThinkerData::thinker() const
     return *d->think;
 }
 
-Record &ThinkerData::names()
+Record &ThinkerData::objectNamespace()
 {
     return d->names;
 }
 
-Record const &ThinkerData::names() const
+Record const &ThinkerData::objectNamespace() const
 {
     return d->names;
 }

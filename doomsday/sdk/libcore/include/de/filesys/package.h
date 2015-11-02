@@ -21,6 +21,7 @@
 
 #include "../String"
 #include "../File"
+#include "../IObject"
 
 #include <QSet>
 
@@ -41,7 +42,7 @@ class Package;
  * Package only consists of state that is relevant while the package is loaded (i.e.,
  * in active use).
  */
-class DENG2_PUBLIC Package
+class DENG2_PUBLIC Package : public IObject
 {
 public:
     /// Package's source is missing or inaccessible. @ingroup errors
@@ -96,10 +97,6 @@ public:
      */
     Folder const &root() const;
 
-    Record &info();
-
-    Record const &info() const;
-
     /**
      * Returns the unique package identifier. This is the file name of the package
      * without any file extension.
@@ -136,6 +133,10 @@ public:
      * Called by PackageLoader immediately before the package is marked as unloaded.
      */
     virtual void aboutToUnload();
+
+    // Implements IObject.
+    Record &objectNamespace();
+    Record const &objectNamespace() const;
 
 public:
     /**

@@ -667,7 +667,6 @@ void StateAnimator::triggerDamage(int points, struct mobj_s const *inflictor)
      * variable holds a direct pointer to the asset definition, where the
      * function is defined.
      */
-
     if(d->names.has(QStringLiteral("ASSET.onDamage")))
     {
         /*
@@ -675,13 +674,12 @@ void StateAnimator::triggerDamage(int points, struct mobj_s const *inflictor)
          * argument, because onDamage() is a member of the asset -- when the
          * method is executed, "self" refers to the asset.
          */
-
         Record ns;
         ns.add(QStringLiteral("self")).set(new RecordValue(d->names));
         Process::scriptCall(Process::IgnoreResult, ns,
                             QStringLiteral("self.ASSET.onDamage"),
                             "$self", points,
-                            inflictor? &THINKER_DATA(inflictor->thinker, ThinkerData).names() :
+                            inflictor? &THINKER_DATA(inflictor->thinker, ThinkerData) :
                                        nullptr);
     }
 }
@@ -772,7 +770,12 @@ ModelDrawable::Appearance const &StateAnimator::appearance() const
     return d->appearance;
 }
 
-Record const &StateAnimator::names() const
+Record &StateAnimator::objectNamespace()
+{
+    return d->names;
+}
+
+Record const &StateAnimator::objectNamespace() const
 {
     return d->names;
 }

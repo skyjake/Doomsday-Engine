@@ -22,6 +22,7 @@
 
 #include "../Value"
 #include "../Record"
+#include "../IObject"
 
 #include <QFlags>
 
@@ -75,6 +76,8 @@ public:
      * @param record     Record.
      */
     RecordValue(Record const &record);
+
+    RecordValue(IObject const &object);
 
     virtual ~RecordValue();
 

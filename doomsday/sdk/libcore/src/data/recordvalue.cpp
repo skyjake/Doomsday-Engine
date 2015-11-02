@@ -69,6 +69,16 @@ RecordValue::RecordValue(Record const &record)
     d->record->audienceForDeletion() += this;
 }
 
+RecordValue::RecordValue(IObject const &object)
+    : RecordAccessor(object.objectNamespace())
+    , d(new Instance)
+{
+    d->record = const_cast<Record *>(&object.objectNamespace());
+
+    // Someone may delete the record.
+    d->record->audienceForDeletion() += this;
+}
+
 RecordValue::~RecordValue()
 {
     setRecord(0);

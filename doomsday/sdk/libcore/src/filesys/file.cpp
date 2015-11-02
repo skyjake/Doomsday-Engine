@@ -265,12 +265,12 @@ void File::setMode(Flags const &newMode)
     }
 }
 
-Record const &File::info() const
+Record &File::objectNamespace()
 {
     return d->info;
 }
 
-Record &File::info()
+Record const &File::objectNamespace() const
 {
     return d->info;
 }

@@ -45,9 +45,9 @@ int main(int argc, char **argv)
 
         Folder &zip = app.fileSystem().find<Folder>("test.zip");
 
-        LOG_MSG("Here's test.zip's info:\n") << zip.info();
-        LOG_MSG("Root folder's info:\n") << app.rootFolder().info();
-        
+        LOG_MSG("Here's test.zip's info:\n") << zip.objectNamespace();
+        LOG_MSG("Root folder's info:\n") << app.rootFolder().objectNamespace();
+
         LOG_MSG    ("General description: %s")   << zip.description();
         LOG_VERBOSE("Verbose description: %s")   << zip.description();
         LOGDEV_MSG ("Developer description: %s") << zip.description();
@@ -55,7 +55,7 @@ int main(int argc, char **argv)
         File const &hello = zip.locate<File>("hello.txt");
         File::Status stats = hello.status();
         LOG_MSG("hello.txt size: %i bytes, modified at %s") << stats.size << Date(stats.modifiedAt);
-        
+
         String content = String::fromUtf8(Block(hello));
         LOG_MSG("The contents: \"%s\"") << content;
 
@@ -76,10 +76,10 @@ int main(int argc, char **argv)
         File &zip2 = app.homeFolder().replaceFile("test2.zip");
         zip2.setMode(File::Write | File::Truncate);
         ZipArchive arch;
-        arch.add(Path("world.txt"), content.toUtf8());        
+        arch.add(Path("world.txt"), content.toUtf8());
         Writer(zip2) << arch;
         LOG_MSG("Wrote ") << zip2.path();
-        LOG_MSG("") << zip2.info();
+        LOG_MSG("") << zip2.objectNamespace();
 
         LOG_MSG    ("General description: %s")   << zip2.description();
         LOG_VERBOSE("Verbose description: %s")   << zip2.description();
@@ -142,5 +142,5 @@ int main(int argc, char **argv)
     }
 
     qDebug() << "Exiting main()...";
-    return 0;        
+    return 0;
 }

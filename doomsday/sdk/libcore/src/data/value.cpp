@@ -29,7 +29,7 @@
 #include "de/TimeValue"
 #include "de/Reader"
 
-using namespace de;
+namespace de {
 
 Value::~Value()
 {}
@@ -246,3 +246,5 @@ Value &Value::element(dint index)
 {
     return element(NumberValue(index));
 }
+
+} // namespace de

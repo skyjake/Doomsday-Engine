@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_INFOBANK_H
@@ -22,6 +22,7 @@
 #include "../String"
 #include "../Time"
 #include "../Bank"
+#include "../IObject"
 
 namespace de {
 
@@ -41,7 +42,7 @@ class File;
  *
  * @ingroup data
  */
-class DENG2_PUBLIC InfoBank : public Bank
+class DENG2_PUBLIC InfoBank : public Bank, public IObject
 {
 public:
     InfoBank(char const *nameForLog           = "InfoBank",
@@ -53,10 +54,6 @@ public:
 
     ScriptedInfo &info();
     ScriptedInfo const &info() const;
-
-    Record &names();
-    Record const &names() const;
-    Variable const &operator [] (String const &name) const;
 
     void addFromInfoBlocks(String const &blockType);
 
@@ -75,6 +72,10 @@ public:
      * @return Path that relative paths should be resolved with.
      */
     String relativeToPath(Record const &context) const;
+
+    // Implements IObject.
+    Record &objectNamespace();
+    Record const &objectNamespace() const;
 
 protected:
     virtual ISource *newSourceFromInfo(String const &id) = 0;

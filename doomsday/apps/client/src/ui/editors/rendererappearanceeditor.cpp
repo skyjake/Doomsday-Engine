@@ -674,7 +674,7 @@ DENG2_OBSERVES(App, GameChange)
         {
             if(Group *g = child->maybeAs<Group>())
             {
-                toState.names().set(self.name() + "." + g->name() + ".open", g->isOpen());
+                toState.objectNamespace().set(self.name() + "." + g->name() + ".open", g->isOpen());
             }
         }
     }
@@ -688,10 +688,10 @@ DENG2_OBSERVES(App, GameChange)
             if(Group *g = child->maybeAs<Group>())
             {
                 String const var = self.name() + "." + g->name() + ".open";
-                if(fromState.names().has(var))
+                if(fromState.objectNamespace().has(var))
                 {
                     gotState = true;
-                    if(fromState.names().getb(var))
+                    if(fromState.objectNamespace().getb(var))
                         g->open();
                     else
                         g->close(0);

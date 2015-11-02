@@ -27,6 +27,8 @@
 #include "../String"
 #include "../Variable"
 #include "../RecordValue"
+#include "../IObject"
+#include "../ScriptLex"
 
 #include <list>
 
@@ -100,13 +102,13 @@ inline QString ScriptArgumentComposer::scriptArgumentAsText(String const &arg)
 template <>
 inline QString ScriptArgumentComposer::scriptArgumentAsText(std::nullptr_t const &)
 {
-    return QStringLiteral("None");
+    return ScriptLex::NONE;
 }
 
 template <>
 inline QString ScriptArgumentComposer::scriptArgumentAsText(char const * const &utf8)
 {
-    if(!utf8) return QStringLiteral("None");
+    if(!utf8) return ScriptLex::NONE;
     return scriptArgumentAsText(QString::fromUtf8(utf8));
 }
 
@@ -121,15 +123,21 @@ inline QString ScriptArgumentComposer::scriptArgumentAsText(Record const &record
 template <>
 inline QString ScriptArgumentComposer::scriptArgumentAsText(Record const * const &record)
 {
-    if(!record) return QStringLiteral("None");
+    if(!record) return ScriptLex::NONE;
     return scriptArgumentAsText(*record);
 }
 
 template <>
-inline QString ScriptArgumentComposer::scriptArgumentAsText(Record * const &record)
+inline QString ScriptArgumentComposer::scriptArgumentAsText(IObject const * const &object)
 {
-    if(!record) return QStringLiteral("None");
-    return scriptArgumentAsText(*record);
+    if(!object) return ScriptLex::NONE;
+    return scriptArgumentAsText(object->objectNamespace());
+}
+
+template <>
+inline QString ScriptArgumentComposer::scriptArgumentAsText(IObject const &object)
+{
+    return scriptArgumentAsText(object.objectNamespace());
 }
 
 } // namespace internal

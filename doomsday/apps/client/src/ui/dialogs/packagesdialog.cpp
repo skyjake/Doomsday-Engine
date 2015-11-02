@@ -44,7 +44,7 @@ DENG_GUI_PIMPL(PackagesDialog)
 
         PackageItem(File const &packFile)
             : file(&packFile)
-            , info(&file->info().subrecord("package"))
+            , info(&file->objectNamespace().subrecord("package"))
         {
             setData(QString(info->gets("ID")));
         }
@@ -52,7 +52,7 @@ DENG_GUI_PIMPL(PackagesDialog)
         void setFile(File const &packFile)
         {
             file = &packFile;
-            info = &file->info().subrecord("package");
+            info = &file->objectNamespace().subrecord("package");
             notifyChange();
         }
     };
@@ -271,7 +271,7 @@ DENG_GUI_PIMPL(PackagesDialog)
             if(Package::tags(pack).contains("core")) continue;
 
             // Is this already in the list?
-            ui::DataPos pos = menu->items().findData(pack.info().gets("package.ID"));
+            ui::DataPos pos = menu->items().findData(pack.objectNamespace().gets("package.ID"));
             if(pos != ui::Data::InvalidPos)
             {
                 menu->items().at(pos).as<PackageItem>().setFile(pack);

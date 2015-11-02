@@ -22,15 +22,18 @@
 
 #include "thinker.h"
 
-#include <de/Record>
+#include <de/Process>
 #include <de/Id>
+#include <de/IObject>
 
 /**
  * Base class for thinker private data.
  *
  * Contains internal functionality common to all thinkers regardless of their type.
  */
-class LIBDOOMSDAY_PUBLIC ThinkerData : public Thinker::IData
+class LIBDOOMSDAY_PUBLIC ThinkerData
+        : public Thinker::IData
+        , public de::IObject
 {
 public:
     DENG2_DEFINE_AUDIENCE2(Deletion, void thinkerBeingDeleted(thinker_s &))
@@ -47,20 +50,15 @@ public:
     thinker_s const &thinker() const;
 
     /**
-     * Returns the Doomsday Script namespace of the thinker. This can be
-     * treated as an object representing the thinker in Doomsday Script.
-     */
-    de::Record &names();
-
-    /// @copydoc names()
-    de::Record const &names() const;
-
-    /**
      * Initializes Doomsday Script bindings for the thinker. This is called
      * when the thinker is added to the world, so mobjs have been assigned
      * their IDs.
      */
     virtual void initBindings();
+
+    // Implements IObject.
+    de::Record &objectNamespace();
+    de::Record const &objectNamespace() const;
 
 private:
     DENG2_PRIVATE(d)
@@ -82,5 +80,17 @@ public:
     };
 #endif
 };
+
+template <>
+inline QString de::internal::ScriptArgumentComposer::scriptArgumentAsText(ThinkerData const * const &td) {
+    if(!td) return ScriptLex::NONE;
+    return scriptArgumentAsText(td->objectNamespace());
+}
+
+template <>
+inline QString de::internal::ScriptArgumentComposer::scriptArgumentAsText(ThinkerData * const &td) {
+    if(!td) return ScriptLex::NONE;
+    return scriptArgumentAsText(td->objectNamespace());
+}
 
 #endif // LIBDOOMSDAY_THINKERDATA_H
