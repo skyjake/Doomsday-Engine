@@ -19,7 +19,7 @@
 
 #include "audio/drivers/dummydriver.h"
 
-#include "audio/channel.h"
+#include "audio/sound.h"
 #include "world/thinkers.h"
 #include <de/Log>
 #include <de/Observers>
@@ -57,7 +57,7 @@ void DummyDriver::CdChannel::resume()
 void DummyDriver::CdChannel::stop()
 {}
 
-Channel::PlayingMode DummyDriver::CdChannel::mode() const
+PlayingMode DummyDriver::CdChannel::mode() const
 {
     return _mode;
 }
@@ -104,7 +104,7 @@ void DummyDriver::MusicChannel::resume()
 void DummyDriver::MusicChannel::stop()
 {}
 
-Channel::PlayingMode DummyDriver::MusicChannel::mode() const
+PlayingMode DummyDriver::MusicChannel::mode() const
 {
     return _mode;
 }
@@ -153,27 +153,7 @@ DENG2_PIMPL_NOREF(DummyDriver::SoundChannel)
     dfloat frequency = 1;      ///< {0..1} Frequency/pitch adjustment factor.
     dfloat volume    = 1;      ///< {0..1} Volume adjustment factor.
 
-    struct EmitterData
-    {
-        bool noOrigin            = true;     ///< @c true if the originator is some mystical emitter.
-        bool noVolumeAttenuation = true;     ///< @c true if (distance based) volume attenuation is disabled.
-        SoundEmitter *tracking   = nullptr;  ///< Emitter to track, if any (not owned).
-        Vector3d origin;                     ///< Emit from here (synced with emitter).
-
-        void updateOriginIfNeeded()
-        {
-            // Only if we are tracking an emitter.
-            if(!tracking) return;
-
-            origin = Vector3d(tracking->origin);
-
-            // When tracking a map-object set the Z axis position to the object's center.
-            if(Thinker_IsMobjFunc(tracking->thinker.function))
-            {
-                origin.z += ((mobj_t *)tracking)->height / 2;
-            }
-        }
-    } emitter;
+    ::audio::Sound *sound = nullptr;    ///< Logical Sound currently being played (if any, not owned).
 
     struct Buffer
     {
@@ -226,6 +206,12 @@ DENG2_PIMPL_NOREF(DummyDriver::SoundChannel)
         System::get().audienceForFrameEnds() -= this;
     }
 
+    inline ::audio::Sound &getSound() const
+    {
+        DENG2_ASSERT(sound != nullptr);
+        return *sound;
+    }
+
     /**
      * Writes deferred Listener and/or Environment changes to the audio driver.
      *
@@ -241,7 +227,7 @@ DENG2_PIMPL_NOREF(DummyDriver::SoundChannel)
         if(playingMode != NotPlaying || force)
         {
             // When tracking an emitter we need the latest origin coordinates.
-            emitter.updateOriginIfNeeded();
+            getSound().updateOriginFromEmitter();
         }
     }
 
@@ -256,7 +242,7 @@ DummyDriver::SoundChannel::SoundChannel()
     , d(new Instance)
 {}
 
-Channel::PlayingMode DummyDriver::SoundChannel::mode() const
+PlayingMode DummyDriver::SoundChannel::mode() const
 {
     return d->playingMode;
 }
@@ -318,19 +304,14 @@ void DummyDriver::SoundChannel::suspend()
     d->noUpdate = true;
 }
 
-SoundEmitter *DummyDriver::SoundChannel::emitter() const
+::audio::Sound *DummyDriver::SoundChannel::sound() const
 {
-    return d->emitter.tracking;
+    return isPlaying() ? &d->getSound() : nullptr;
 }
 
 dfloat DummyDriver::SoundChannel::frequency() const
 {
     return d->frequency;
-}
-
-Vector3d DummyDriver::SoundChannel::origin() const
-{
-    return d->emitter.origin;
 }
 
 Positioning DummyDriver::SoundChannel::positioning() const
@@ -343,21 +324,9 @@ dfloat DummyDriver::SoundChannel::volume() const
     return d->volume;
 }
 
-audio::SoundChannel &DummyDriver::SoundChannel::setEmitter(SoundEmitter *newEmitter)
-{
-    d->emitter.tracking = newEmitter;
-    return *this;
-}
-
 audio::SoundChannel &DummyDriver::SoundChannel::setFrequency(dfloat newFrequency)
 {
     d->frequency = newFrequency;
-    return *this;
-}
-
-audio::SoundChannel &DummyDriver::SoundChannel::setOrigin(Vector3d const &newOrigin)
-{
-    d->emitter.origin = newOrigin;
     return *this;
 }
 
@@ -365,20 +334,6 @@ Channel &DummyDriver::SoundChannel::setVolume(dfloat newVolume)
 {
     d->volume = newVolume;
     return *this;
-}
-
-dint DummyDriver::SoundChannel::flags() const
-{
-    dint flags = 0;
-    if(d->emitter.noOrigin)            flags |= SFXCF_NO_ORIGIN;
-    if(d->emitter.noVolumeAttenuation) flags |= SFXCF_NO_ATTENUATION;
-    return flags;
-}
-
-void DummyDriver::SoundChannel::setFlags(dint flags)
-{
-    d->emitter.noOrigin            = CPP_BOOL(flags & SFXCF_NO_ORIGIN);
-    d->emitter.noVolumeAttenuation = CPP_BOOL(flags & SFXCF_NO_ATTENUATION);
 }
 
 void DummyDriver::SoundChannel::update()

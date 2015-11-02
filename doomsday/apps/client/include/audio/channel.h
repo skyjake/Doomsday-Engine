@@ -34,6 +34,17 @@
 namespace audio {
 
 /**
+ * Playback behaviors.
+ */
+enum PlayingMode
+{
+    NotPlaying,
+    Once,            ///< Play once only.
+    OnceDontDelete,  ///< Play once then suspend (without stopping).
+    Looping          ///< Play again when the end is reached (without stopping).
+};
+
+/**
  * Positioning modes for sound stage environment effects.
  */
 enum Positioning
@@ -50,13 +61,6 @@ enum Positioning
 class Channel : public de::Deletable
 {
 public:
-    enum PlayingMode {
-        NotPlaying,
-        Once,            ///< Play once and then discard the loaded data / stream.
-        OnceDontDelete,  ///< Play once then pause.
-        Looping          ///< Keep looping.
-    };
-
     enum Type
     {
         Cd,
@@ -148,23 +152,23 @@ public:
     virtual void bindFile(de::String const &filename) = 0;
 };
 
+class Sound;
+
 class SoundChannel : public Channel
 {
 public:  //- Sound properties: ----------------------------------------------------------
 
-    virtual SoundEmitter *emitter() const = 0;
     virtual de::dfloat frequency() const = 0;
-    virtual de::Vector3d origin() const = 0;
     virtual Positioning positioning() const = 0;
     virtual de::dfloat volume() const = 0;
 
-    virtual SoundChannel &setEmitter(SoundEmitter *newEmitter) = 0;
     virtual SoundChannel &setFrequency(de::dfloat newFrequency) = 0;
-    virtual SoundChannel &setOrigin(de::Vector3d const &newOrigin) = 0;
 
 public:
-    virtual de::dint flags() const = 0;
-    virtual void setFlags(de::dint newFlags) = 0;
+    /**
+     * Returns the logical Sound being played if currently playing (may return @c nullptr).
+     */
+    virtual ::audio::Sound *sound() const = 0;
 
     /**
      * Perform a channel update. Can be used for filling the channel with waveform data
@@ -182,7 +186,7 @@ public:
     virtual void reset() = 0;
 
     /**
-     * Suspend further updates to the channel if playing and wait until further notice.
+     * Suspend updates to the channel if playing and wait until further notice.
      */
     virtual void suspend() = 0;
 

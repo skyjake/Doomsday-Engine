@@ -757,11 +757,11 @@ bool WorldSystem::changeMap(de::Uri const &mapUri)
         {
             auto &ch = base.as<::audio::SoundChannel>();
 
-            if(ch.emitter() && &Thinker_Map(ch.emitter()->thinker) == d->map)
+            if(ch.isPlaying() && ch.sound()->emitter() &&
+               &Thinker_Map(ch.sound()->emitter()->thinker) == d->map)
             {
                 // This channel must be stopped!
                 ch.stop();
-                ch.setEmitter(nullptr);
             }
             return LoopContinue;
         });

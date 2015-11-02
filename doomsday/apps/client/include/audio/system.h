@@ -36,8 +36,6 @@
 #include <de/System>
 #include <functional>
 
-#define SFX_LOWEST_PRIORITY     ( -1000 )
-
 namespace audio {
 
 /**
@@ -234,33 +232,32 @@ public:  //- Sound playback: ---------------------------------------------------
      * If @a emitter and @a origin are both @c nullptr, the sound will be played with stereo
      * positioning (centered).
      *
-     * @param stageId          Unique identifier of the sound Stage on which to play.
-     * @param soundIdAndFlags  ID of the sound to play. Flags can be included (DDSF_*).
-     * @param emitter          Soundstage SoundEmitter (originator). May be @c nullptr.
-     * @param origin           Soundstage space coordinates where the sound originates.
-     *                         May be @c nullptr.
-     * @param volume           Volume for the sound [0...1] (not final; will be affected
-     *                         by the global @ref soundVolume() factor and if applicable,
-     *                         attenuated according to @ref distanceToWorldStageListener()).
+     * @param stageId   Unique identifier of the sound Stage on which to play.
+     * @param effectId  Identifier of the sound-effect to play.
+     * @param emitter   Soundstage SoundEmitter (originator). May be @c nullptr.
+     * @param origin    Soundstage space coordinates where the sound originates (if used).
+     * @param volume    Volume modifier [0...1] (not final; will be affected by the global
+     *                  @ref soundVolume() factor and if applicable, attenuated according
+     *                  to it's distance from the soundstage Listener).
      *
-     * @return  @c true if a sound was started.
+     * @return  @c true if playback was started and the sound is actually audible.
      *
      * @see soundIsPlaying(), stopSound()
      */
-    bool playSound(StageId stageId, de::dint soundIdAndFlags, SoundEmitter *emitter,
-        de::ddouble const *origin, de::dfloat volume = 1 /*max volume*/);
+    bool playSound(StageId stageId, de::dint effectId, SoundFlags flags, SoundEmitter *emitter,
+        de::Vector3d const &origin, de::dfloat volume = 1 /*max volume*/);
 
     /**
      * Stop playing sound(s) in the specified @a soundStage.
      *
-     * @param stageId  Unique identifier of the sound Stage on which to stop sounds.
-     * @param soundId  Unique identifier of the sound(s) to stop.
-     * @param emitter  Soundstage SoundEmitter (originator). May be @c nullptr.
-     * @param flags    @ref soundStopFlags.
+     * @param stageId   Unique identifier of the sound Stage on which to stop sounds.
+     * @param effectId  Unique identifier of the sound-effect(s) to stop.
+     * @param emitter   Soundstage SoundEmitter (originator). May be @c nullptr.
+     * @param flags     @ref soundStopFlags.
      *
      * @see soundIsPlaying(), stopSound()
      */
-    void stopSound(StageId stageId, de::dint soundId, SoundEmitter *emitter,
+    void stopSound(StageId stageId, de::dint effectId, SoundEmitter *emitter,
         de::dint flags = 0 /*no special stop behaviors*/);
 
 public:  //- Low-level driver interface: ------------------------------------------------

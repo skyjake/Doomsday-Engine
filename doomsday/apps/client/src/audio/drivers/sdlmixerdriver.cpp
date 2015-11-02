@@ -23,6 +23,7 @@
 
 #include "audio/listener.h"
 #include "audio/samplecache.h"
+#include "audio/sound.h"
 
 #include "world/thinkers.h"  // Thinker_IsMobjFunc()
 #include "sys_system.h"      // Sys_Sleep()
@@ -126,7 +127,7 @@ void SdlMixerDriver::MusicChannel::stop()
     Mix_HaltMusic();
 }
 
-Channel::PlayingMode SdlMixerDriver::MusicChannel::mode() const
+PlayingMode SdlMixerDriver::MusicChannel::mode() const
 {
     if(!Mix_PlayingMusic())
         return NotPlaying;
@@ -199,16 +200,14 @@ void SdlMixerDriver::MusicChannel::bindFile(String const &sourcePath)
 DENG2_PIMPL_NOREF(SdlMixerDriver::SoundChannel)
 , DENG2_OBSERVES(System, FrameEnds)
 {
-    dint flags = 0;                   ///< SFXCF_* flags.
-
     bool noUpdate  = false;           ///< @c true if skipping updates (when stopped, before deletion).
     dint startTime = 0;               ///< When the assigned sound sample was last started (Ticks).
 
     dfloat frequency = 1;             ///< Frequency adjustment: 1.0 is normal.
     dfloat volume    = 1;             ///< Sound volume: 1.0 is max.
 
-    SoundEmitter *emitter = nullptr;  ///< SoundEmitter for the sound, if any (not owned).
-    Vector3d origin;                  ///< Emit from here (synced with emitter).
+    ::audio::Sound *sound = nullptr;    ///< Logical Sound currently being played (if any, not owned).
+    Listener *listener = nullptr;  ///< Listener for the sound, if any (not owned).
 
     sfxbuffer_t buffer;
     bool valid = false;               ///< Set to @c true when in the valid state.
@@ -233,27 +232,43 @@ DENG2_PIMPL_NOREF(SdlMixerDriver::SoundChannel)
         System::get().audienceForFrameEnds() -= this;
     }
 
-    void updateOriginIfNeeded()
+    inline Listener &getListener() const
     {
-        // Updating is only necessary if we are tracking an emitter.
-        if(!emitter) return;
+        DENG2_ASSERT(listener != nullptr);
+        return *listener;
+    }
 
-        origin = Vector3d(emitter->origin);
-        // If this is a map object, center the Z pos.
-        if(Thinker_IsMobjFunc(emitter->thinker.function))
-        {
-            origin.z += ((mobj_t *)emitter)->height / 2;
-        }
+    inline ::audio::Sound &getSound() const
+    {
+        DENG2_ASSERT(sound != nullptr);
+        return *sound;
     }
 
     /**
-     * Flushes property changes to the assigned data buffer.
-     *
-     * @param force  Usually updates are only necessary during playback. Use
-     *               @c true= to override this check and write the properties
-     *               regardless.
+     * Determines whether the channel is configured such that the emitter *is* the listener.
      */
-    void updateBuffer(bool force = false)
+    bool emitterIsListener() const
+    {
+        return listener
+               && getSound().emitter()
+               && getSound().emitter() == (ddmobj_base_t const *)listener->trackedMapObject();
+    }
+
+    /**
+     * Determines whether the channel is configured to play an "originless" sound.
+     */
+    bool noOrigin() const
+    {
+        return getSound().flags().testFlag(SoundFlag::NoOrigin) || emitterIsListener();
+    }
+
+    /**
+     * Writes deferred Listener and/or Environment changes to the audio driver.
+     *
+     * @param force  Usually updates are only necessary during playback. Use @c true to
+     * override this check and write the changes regardless.
+     */
+    void writeDeferredProperties(bool force = false)
     {
         DENG2_ASSERT(valid);
 
@@ -264,119 +279,75 @@ DENG2_PIMPL_NOREF(SdlMixerDriver::SoundChannel)
         if(!isPlaying(buffer) && !force) return;
 
         // When tracking an emitter we need the latest origin coordinates.
-        updateOriginIfNeeded();
+        getSound().updateOriginFromEmitter();
 
-        // Frequency is common to both 2D and 3D sounds.
-        setFrequency(buffer, frequency);
-
+        // Use Absolute/Relative-Positioning (in 3D)?
         if(buffer.flags & SFXBF_3D)
         {
             // Volume is affected only by maxvol.
             setVolume(buffer, volume * System::get().soundVolume() / 255.0f);
-            if(emitter && emitter == (ddmobj_base_t const *)System::get().worldStage().listener().trackedMapObject())
-            {
-                // Emitted by the listener object. Go to relative position mode
-                // and set the position to (0,0,0).
-                setPositioning(buffer, true/*head-relative*/);
-                setOrigin(buffer, Vector3d());
-            }
-            else
-            {
-                // Use the channel's map space origin.
-                setPositioning(buffer, false/*absolute*/);
-                setOrigin(buffer, origin);
-            }
-
-            // If the sound is emitted by the listener, speed is zero.
-            if(emitter && emitter != (ddmobj_base_t const *)System::get().worldStage().listener().trackedMapObject() &&
-               Thinker_IsMobjFunc(emitter->thinker.function))
-            {
-                setVelocity(buffer, Vector3d(((mobj_t *)emitter)->mom)* TICSPERSEC);
-            }
-            else
-            {
-                // Not moving.
-                setVelocity(buffer, Vector3d());
-            }
         }
+        // Use StereoPositioning.
         else
         {
-            dfloat dist = 0;
-            dfloat finalPan = 0;
+            dfloat volAtten = 1;  // No attenuation.
+            dfloat panning  = 0;  // No panning.
 
-            // This is a 2D buffer.
-            if((flags & SFXCF_NO_ORIGIN) ||
-               (emitter && emitter == (ddmobj_base_t const *)System::get().worldStage().listener().trackedMapObject()))
+            if(listener && !noOrigin())
             {
-                dist = 1;
-                finalPan = 0;
-            }
-            else
-            {
-                // Calculate roll-off attenuation. [.125/(.125+x), x=0..1]
-                Ranged const attenRange = System::get().worldStage().listener().volumeAttenuationRange();
-
-                dist = System::get().worldStage().listener().distanceFrom(origin);
-
-                if(dist < attenRange.start || (flags & SFXCF_NO_ATTENUATION))
+                // Apply listener distance based volume attenuation?
+                if(!getSound().flags().testFlag(SoundFlag::NoVolumeAttenuation))
                 {
-                    // No distance attenuation.
-                    dist = 1;
-                }
-                else if(dist > attenRange.end)
-                {
-                    // Can't be heard.
-                    dist = 0;
-                }
-                else
-                {
-                    ddouble const normdist = (dist - attenRange.start) / attenRange.size();
+                    ddouble const dist      = getListener().distanceFrom(getSound().origin());
+                    Ranged const attenRange = getListener().volumeAttenuationRange();
 
-                    // Apply the linear factor so that at max distance there
-                    // really is silence.
-                    dist = .125f / (.125f + normdist) * (1 - normdist);
+                    if(dist >= attenRange.start)
+                    {
+                        if(dist > attenRange.end)
+                        {
+                            // Won't be heard.
+                            volAtten = 0;
+                        }
+                        else
+                        {
+                            // Calculate roll-off attenuation [.125/(.125+x), x=0..1]
+                            // Apply a linear factor to ensure absolute silence at the
+                            // maximum distance.
+                            ddouble ip = (dist - attenRange.start) / attenRange.size();
+                            volAtten = de::clamp<dfloat>(0, .125f / (.125f + ip) * (1 - ip), 1);
+                        }
+                    }
                 }
 
-                // And pan, too. Calculate angle from listener to emitter.
-                if(mobj_t const *tracking = System::get().worldStage().listener().trackedMapObject())
+                // Apply listener angle based source panning?
+                if(mobj_t const *tracking = getListener().trackedMapObject())
                 {
-                    dfloat angle = (M_PointXYToAngle2(tracking->origin[0], tracking->origin[1],
-                                                      origin.x, origin.y)
-                                        - tracking->angle)
-                                 / (dfloat) ANGLE_MAX * 360;
-
+                    dfloat angle = getListener().angleFrom(getSound().origin());
                     // We want a signed angle.
-                    if(angle > 180)
-                        angle -= 360;
+                    if(angle > 180) angle -= 360;
 
-                    // Front half.
-                    if(angle <= 90 && angle >= -90)
+                    if(angle <= 90 && angle >= -90)  // Front half.
                     {
-                        finalPan = -angle / 90;
+                        panning = -angle / 90;
                     }
-                    else
+                    else  // Back half.
                     {
-                        // Back half.
-                        finalPan = (angle + (angle > 0 ? -180 : 180)) / 90;
-                        // Dampen sounds coming from behind.
-                        dist *= (1 + (finalPan > 0 ? finalPan : -finalPan)) / 2;
+                        panning = (angle + (angle > 0 ? -180 : 180)) / 90;
+ 
+                        // Dampen sounds coming from behind the listener.
+                        volAtten *= (1 + (panning > 0 ? panning : -panning)) / 2;
                     }
-                }
-                else
-                {
-                    // No listener mobj? Can't pan, then.
-                    finalPan = 0;
                 }
             }
 
-            setVolume(buffer, volume * dist * System::get().soundVolume() / 255.0f);
-            setPan(buffer, finalPan);
+            setVolume(buffer, volume * volAtten * System::get().soundVolume() / 255.0f);
+            setPan(buffer, panning);
         }
     }
 
     void systemFrameEnds(System &)
     {
-        updateBuffer();
+        writeDeferredProperties();
     }
 
     void load(sfxbuffer_t &buf, sfxsample_t *sample)
@@ -524,14 +495,6 @@ DENG2_PIMPL_NOREF(SdlMixerDriver::SoundChannel)
         buf.written = duint( newVolume * MIX_MAX_VOLUME );
         Mix_Volume(buf.cursor, buf.written);
     }
-
-    // Unsupported sound buffer property manipulation:
-
-    void setFrequency(sfxbuffer_t &, dfloat) {}
-    void setOrigin(sfxbuffer_t &, Vector3d const &) {}
-    void setPositioning(sfxbuffer_t &, bool) {}
-    void setVelocity(sfxbuffer_t &, Vector3d const &) {}
-    void setVolumeAttenuationRange(sfxbuffer_t &, Ranged const &) {}
 };
 
 SdlMixerDriver::SoundChannel::SoundChannel()
@@ -541,7 +504,7 @@ SdlMixerDriver::SoundChannel::SoundChannel()
     format(StereoPositioning, 1, 11025);
 }
 
-Channel::PlayingMode SdlMixerDriver::SoundChannel::mode() const
+PlayingMode SdlMixerDriver::SoundChannel::mode() const
 {
     if(!d->isPlaying(d->buffer))          return NotPlaying;
     if(d->buffer.flags & SFXBF_REPEAT)    return Looping;
@@ -566,23 +529,29 @@ void SdlMixerDriver::SoundChannel::play(PlayingMode mode)
     // Updating the channel should resume (presumably).
     d->noUpdate = false;
 
-    // Flush deferred property value changes to the assigned data buffer.
-    d->updateBuffer(true/*force*/);
+    // When playing on a sound stage with a Listener, we may need to update the channel
+    // dynamically during playback.
+    d->listener = &System::get().worldStage().listener();
 
+    // Flush deferred property value changes to the assigned data buffer.
+    d->writeDeferredProperties(true/*force*/);
+
+#if 0
     // 3D sounds need a few extra properties set up.
     if(d->buffer.flags & SFXBF_3D)
     {
         // Configure the attentuation distances.
         // This is only done once, when the sound is first played (i.e., here).
-        if(d->flags & SFXCF_NO_ATTENUATION)
+        if(d->getSound().flags().testFlag(SoundFlag::NoVolumeAttenuation))
         {
             d->setVolumeAttenuationRange(d->buffer, Ranged(10000, 20000));
         }
         else
         {
-            d->setVolumeAttenuationRange(d->buffer, System::get().worldStage().listener().volumeAttenuationRange());
+            d->setVolumeAttenuationRange(d->buffer, d->getListener().volumeAttenuationRange());
         }
     }
+#endif
 
     d->play(d->buffer);
     d->startTime = Timer_Ticks();  // Note the current time.
@@ -617,14 +586,9 @@ void SdlMixerDriver::SoundChannel::suspend()
     d->noUpdate = true;
 }
 
-SoundEmitter *SdlMixerDriver::SoundChannel::emitter() const
+::audio::Sound *SdlMixerDriver::SoundChannel::sound() const
 {
-    return d->emitter;
-}
-
-Vector3d SdlMixerDriver::SoundChannel::origin() const
-{
-    return d->origin;
+    return isPlaying() ? &d->getSound() : nullptr;
 }
 
 dfloat SdlMixerDriver::SoundChannel::frequency() const
@@ -642,21 +606,9 @@ dfloat SdlMixerDriver::SoundChannel::volume() const
     return d->volume;
 }
 
-audio::SoundChannel &SdlMixerDriver::SoundChannel::setEmitter(SoundEmitter *newEmitter)
-{
-    d->emitter = newEmitter;
-    return *this;
-}
-
 audio::SoundChannel &SdlMixerDriver::SoundChannel::setFrequency(dfloat newFrequency)
 {
     d->frequency = newFrequency;
-    return *this;
-}
-
-audio::SoundChannel &SdlMixerDriver::SoundChannel::setOrigin(Vector3d const &newOrigin)
-{
-    d->origin = newOrigin;
     return *this;
 }
 
@@ -664,16 +616,6 @@ Channel &SdlMixerDriver::SoundChannel::setVolume(dfloat newVolume)
 {
     d->volume = newVolume;
     return *this;
-}
-
-dint SdlMixerDriver::SoundChannel::flags() const
-{
-    return d->flags;
-}
-
-void SdlMixerDriver::SoundChannel::setFlags(dint newFlags)
-{
-    d->flags = newFlags;
 }
 
 void SdlMixerDriver::SoundChannel::update()

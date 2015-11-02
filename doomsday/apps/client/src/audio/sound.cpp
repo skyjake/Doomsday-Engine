@@ -21,6 +21,7 @@
 
 #include "world/p_object.h"
 #include "world/thinkers.h"
+#include <de/timer.h>
 
 using namespace de;
 
@@ -30,7 +31,7 @@ DENG2_PIMPL_NOREF(Sound)
 {
     // Properties:
     SoundFlags flags;
-    dint soundId;
+    dint effectId;
     SoundEmitter *emitter;
     Vector3d origin;
 
@@ -39,18 +40,18 @@ DENG2_PIMPL_NOREF(Sound)
 
     Instance()
         : flags(DefaultSoundFlags)
-        , soundId(0)
-        , emitter(nullptr)
-        , endTime(0)
+        , effectId(0)
+        , emitter (nullptr)
+        , endTime (0)
     {}
 
     Instance(Instance const &other)
         : de::IPrivate()
-        , flags  (other.flags)
-        , soundId(other.soundId)
-        , emitter(other.emitter)
-        , origin (other.origin)
-        , endTime(other.endTime)
+        , flags   (other.flags)
+        , effectId(other.effectId)
+        , emitter (other.emitter)
+        , origin  (other.origin)
+        , endTime (other.endTime)
     {}
 
 private:
@@ -60,14 +61,14 @@ private:
 Sound::Sound() : d(new Instance)
 {}
 
-Sound::Sound(SoundFlags flags, dint soundId, Vector3d const &origin, duint endTime, SoundEmitter *emitter)
+Sound::Sound(SoundFlags flags, dint effectId, Vector3d const &origin, duint endTime, SoundEmitter *emitter)
     : d(new Instance)
 {
-    d->flags   = flags;
-    d->soundId = soundId;
-    d->emitter = emitter;
-    d->origin  = origin;
-    d->endTime = endTime;
+    d->flags    = flags;
+    d->effectId = effectId;
+    d->emitter  = emitter;
+    if(!d->flags.testFlag(NoOrigin)) d->origin = origin;
+    d->endTime  = endTime;
 }
 
 Sound::Sound(Sound const &other) : d(new Instance(*other.d))
@@ -75,12 +76,37 @@ Sound::Sound(Sound const &other) : d(new Instance(*other.d))
 
 bool Sound::isPlaying(duint nowTime) const
 {
-    return (d->flags.testFlag(Looping) || d->endTime > nowTime);
+    return (d->flags.testFlag(Repeat) || d->endTime > nowTime);
 }
 
-dint Sound::soundId() const
+SoundFlags Sound::flags() const
 {
-    return d->soundId;
+    return d->flags;
+}
+
+dint Sound::effectId() const
+{
+    return d->effectId;
+}
+
+Vector3d Sound::origin() const
+{
+    return d->origin;
+}
+
+Vector3d Sound::velocity() const
+{
+    // We don't track velocity because it is meaningless to us.
+    if(emitter() && Thinker_IsMobjFunc(emitter()->thinker.function))
+    {
+        return Vector3d(((mobj_t *)emitter())->mom) * TICSPERSEC;
+    }
+    return Vector3d();  // Not moving.
+}
+
+bool Sound::emitterIsMoving() const
+{
+    return emitter() && Thinker_IsMobjFunc(emitter()->thinker.function);
 }
 
 SoundEmitter *Sound::emitter() const
@@ -90,6 +116,8 @@ SoundEmitter *Sound::emitter() const
 
 void Sound::updateOriginFromEmitter()
 {
+    if(d->flags.testFlag(NoOrigin)) return;
+
     // Only if we are tracking an emitter.
     if(!emitter()) return;
 

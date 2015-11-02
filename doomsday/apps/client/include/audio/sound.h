@@ -29,7 +29,7 @@ namespace audio {
 
 enum SoundFlag
 {
-    Looping             = 0x1,
+    Repeat              = 0x1,
     NoOrigin            = 0x2,  ///< Originator is some mystical emitter.
     NoVolumeAttenuation = 0x4,  ///< Distance based volume attenuation is disabled.
 
@@ -47,7 +47,7 @@ class Sound
 {
 public:
     Sound();
-    Sound(SoundFlags flags, de::dint soundId, de::Vector3d const &origin, de::duint endTime,
+    Sound(SoundFlags flags, de::dint effectId, de::Vector3d const &origin, de::duint endTime,
           SoundEmitter *emitter = nullptr);
 
     Sound(Sound const &other);
@@ -65,10 +65,21 @@ public:
      */
     bool isPlaying(de::duint nowTime) const;
 
+    SoundFlags flags() const;
+
     /**
-     * Returns the attributed sound @em definition identifier.
+     * Returns the attributed sound effect (i.e., Sound definition) identifier.
      */
-    de::dint soundId() const;
+    de::dint effectId() const;
+
+    de::Vector3d origin() const;
+
+    de::Vector3d velocity() const;
+
+    /**
+     * Returns @c true if this is a moveable sound (i.e., the emitter is a map-object).
+     */
+    bool emitterIsMoving() const;
 
     /**
      * Returns the attributed soundstage emitter, if any (may return @c nullptr).

@@ -22,10 +22,13 @@
 
 #include "audio/environment.h"
 
+#include "audio/sound.h"
 #include "world/p_object.h"  // mobj_s
 #include <de/Observers>
 #include <de/Range>
 #include <de/Vector>
+
+#define SFX_LOWEST_PRIORITY     ( -1000 )
 
 namespace audio {
 
@@ -97,8 +100,8 @@ public:
      * used to determine which currently playing Channel(s) can be overridden with new
      * sounds. Zero is the lowest priority.
      */
-    de::dfloat rateSoundPriority(de::dfloat volume, SoundEmitter const *emitter,
-        de::ddouble const *origin, de::dint startTime);
+    de::dfloat rateSoundPriority(de::dint startTime, de::dfloat volume, SoundFlags flags,
+        de::Vector3d const &origin);
 
     /**
      * Returns the orientation of the listener in world space as a 2D vector (0:yaw, 1:pitch),

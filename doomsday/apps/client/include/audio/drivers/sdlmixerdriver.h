@@ -82,19 +82,14 @@ public:  //- Playback Channels: ------------------------------------------------
         void pause() override;
         void resume() override;
 
-        SoundEmitter *emitter() const;
+        ::audio::Sound *sound() const override;
+
         de::dfloat frequency() const;
-        de::Vector3d origin() const;
         Positioning positioning() const;
         de::dfloat volume() const;
 
-        audio::SoundChannel &setEmitter(SoundEmitter *newEmitter);
         audio::SoundChannel &setFrequency(de::dfloat newFrequency);
-        audio::SoundChannel &setOrigin(de::Vector3d const &newOrigin);
         Channel             &setVolume(de::dfloat newVolume) override;
-
-        de::dint flags() const;
-        void setFlags(de::dint newFlags);
 
         void update();
         void reset();

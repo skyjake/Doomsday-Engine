@@ -277,17 +277,18 @@ void UI_AudioMixerDrawer()
     mixer["fx"].forAllChannels([&lh, &idx] (Channel &base)
     {
         auto &ch = base.as<SoundChannel>();
+        Sound *sound = ch.isPlaying() ? ch.sound() : nullptr;
 
         FR_SetColor(1, 1, ch.isPlaying() ? 1 : 0);
 
         char buf[200];
         sprintf(buf, "%02i: %c%c%c v=%3.1f f=%3.3f st=%i et=%u mobj=%i",
                 idx,
-                !(ch.flags() & SFXCF_NO_ORIGIN     ) ? 'O' : '.',
-                !(ch.flags() & SFXCF_NO_ATTENUATION) ? 'A' : '.',
-                ch.emitter() ? 'E' : '.',
+                !(sound && sound->flags().testFlag(SoundFlag::NoOrigin))            ? 'O' : '.',
+                !(sound && sound->flags().testFlag(SoundFlag::NoVolumeAttenuation)) ? 'A' : '.',
+                (sound && sound->emitter())                                         ? 'E' : '.',
                 ch.volume(), ch.frequency(), ch.startTime(), ch.endTime(),
-                ch.emitter() ? ch.emitter()->thinker.id : 0);
+                (sound && sound->emitter()) ? sound->emitter()->thinker.id : 0);
         FR_DrawTextXY(buf, 5, lh * (1 + idx * 2));
 
         if(ch.isValid())
@@ -302,7 +303,7 @@ void UI_AudioMixerDrawer()
 
             sprintf(buf, "    %c%c%c id=%03i/%-8s ln=%05i b=%i rt=%2i",// bs=%05i (C%05i/W%05i)"
                     ch.isPlaying()                        ? 'P' : '.',
-                    ch.mode() == audio::Channel::Looping  ? 'L' : '.',
+                    ch.mode() == PlayingMode::Looping     ? 'L' : '.',
                     ch.positioning() == StereoPositioning ? 'S' : '3',
                     sample ? sample->soundId : 0, soundDefId.constData(),
                     sample ? sample->size : 0,

@@ -104,11 +104,10 @@ bool Stage::soundIsPlaying(dint soundId, SoundEmitter *emitter) const
     return false;  // Not playing.
 }
 
-void Stage::addSound(Sound const &sound)
+Sound &Stage::addSound(Sound const &sound)
 {
-    // Reject sounds with an invalid sound ID.
-    DENG2_ASSERT(sound.soundId() > 0);
-    if(sound.soundId() <= 0) return;
+    // Reject sounds with an invalid effect ID.
+    DENG2_ASSERT(sound.effectId() > 0);
 
     LOG_AS("audio::Stage");
 
@@ -128,7 +127,7 @@ void Stage::addSound(Sound const &sound)
         }
     }
 
-    d->sounds.insert(sound.soundId(), sound);  // A copy is made.
+    return d->sounds.insert(sound.effectId(), sound).value();  // A copy is made.
 }
 
 void Stage::removeAllSounds()

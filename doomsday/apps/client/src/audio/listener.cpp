@@ -203,21 +203,21 @@ ddouble Listener::distanceFrom(Vector3d const &point) const
     return 0;
 }
 
-dfloat Listener::rateSoundPriority(dfloat volume, SoundEmitter const *emitter, ddouble const *origin,
-    dint startTime)
+dfloat Listener::rateSoundPriority(dint startTime, dfloat volume, SoundFlags flags,
+    Vector3d const &origin)
 {
     // Deminish the rating over five seconds from the start time until zero.
     dfloat const timeoff = 1000 * (Timer_Ticks() - startTime) / (5.0f * TICSPERSEC);
 
     // Rate sounds without an origin simply by playback volume.
-    if(!d->tracking || (!emitter && !origin))
+    if(!d->tracking || flags.testFlag(SoundFlag::NoOrigin))
     {
         return 1000 * volume - timeoff;
     }
     // Rate sounds with an origin by both distance and playback volume.
     else
     {
-        return 1000 * volume - distanceFrom(emitter ? emitter->origin : origin) / 2 - timeoff;
+        return 1000 * volume - distanceFrom(origin) / 2 - timeoff;
     }
 }
 

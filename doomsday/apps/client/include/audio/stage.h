@@ -86,11 +86,12 @@ public:
     /**
      * Start a new sound in the sound stage.
      *
-     * @param sound  Logical sound to start if the @ref Exclusion policy permits.
+     * @param sound  Logical sound to start.
+     * @return  The indexed copy of the newly started Sound.
      *
      * @see exclusion()
      */
-    void addSound(Sound const &sound);
+    Sound &addSound(Sound const &sound);
 
     /**
      * @see removeSoundsWById(), removeSoundsWithEmitter()
