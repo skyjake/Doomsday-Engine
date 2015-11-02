@@ -21,10 +21,10 @@
 
 #include "audio/drivers/sdlmixerdriver.h"
 
+#include "audio/listener.h"
 #include "audio/samplecache.h"
 
 #include "world/thinkers.h"  // Thinker_IsMobjFunc()
-#include "def_main.h"        // SF_* flags, remove me
 #include "sys_system.h"      // Sys_Sleep()
 
 #include <de/Log>

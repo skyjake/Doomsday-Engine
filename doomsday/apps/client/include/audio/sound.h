@@ -21,8 +21,8 @@
 #ifndef CLIENT_AUDIO_SOUND_H
 #define CLIENT_AUDIO_SOUND_H
 
-#include "dd_share.h"    // SoundEmitter
-#include <de/libcore.h>
+#include "dd_share.h"  // SF_* flags, SoundEmitter
+#include <de/Vector>
 
 namespace audio {
 
@@ -34,8 +34,10 @@ struct Sound
 {
     // Properties:
     bool looping          = false;
+    bool noOrigin         = false;
     de::dint id           = 0;        ///< Not a valid id.
     SoundEmitter *emitter = nullptr;
+    de::Vector3d origin;
 
     // State:
     de::duint endTime = 0;

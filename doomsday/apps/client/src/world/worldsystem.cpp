@@ -51,6 +51,7 @@
 
 #  include "gl/gl_main.h"
 
+#  include "audio/listener.h"
 #  include "audio/mixer.h"
 
 #  include "render/viewports.h"  // R_ResetViewer

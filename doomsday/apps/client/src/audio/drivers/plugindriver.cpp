@@ -22,11 +22,11 @@
 #include "api_audiod.h"      // AUDIOP_* flags
 #include "api_audiod_mus.h"
 #include "api_audiod_sfx.h"
+#include "audio/listener.h"
 #include "audio/samplecache.h"
 
 #include "world/thinkers.h"
 
-#include "def_main.h"    // SF_* flags, remove me
 #include "sys_system.h"  // Sys_Sleep()
 
 #include <de/Error>

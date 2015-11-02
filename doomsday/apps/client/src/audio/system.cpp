@@ -25,6 +25,7 @@
 #include "audio/drivers/dummydriver.h"
 #include "audio/drivers/plugindriver.h"
 #include "audio/drivers/sdlmixerdriver.h"
+#include "audio/listener.h"
 #include "audio/mixer.h"
 #include "audio/mus.h"
 #include "audio/samplecache.h"
@@ -37,7 +38,6 @@
 #include "Sector"
 
 #include "dd_main.h"   // App_*System()
-#include "dd_share.h"  // SF_* flags
 #include "def_main.h"  // ::defs
 
 #include <doomsday/console/cmd.h>
@@ -1841,10 +1841,12 @@ bool System::playSound(StageId stageId, dint soundIdAndFlags, SoundEmitter *emit
             bool const repeat = (soundIdAndFlags & DDSF_REPEAT) || Def_SoundIsRepeating(sample->soundId);
 
             Sound sound;
-            sound.id      = sample->soundId;
-            sound.emitter = emitter;
-            sound.looping = repeat;
-            sound.endTime = Timer_RealMilliseconds() + (repeat ? 1 : length);
+            sound.id       = sample->soundId;
+            sound.looping  = repeat;
+            sound.noOrigin = (origin == nullptr);
+            sound.emitter  = emitter;
+            sound.origin   = (origin ? Vector3d(origin) : Vector3d());
+            sound.endTime  = Timer_RealMilliseconds() + (repeat ? 1 : length);
             stage(stageId).addSound(sound);  // A copy is made.
         }
     }

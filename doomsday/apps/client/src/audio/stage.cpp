@@ -19,7 +19,7 @@
 
 #include "audio/stage.h"
 
-#include "audio/sound.h"
+#include "audio/listener.h"
 
 #include "world/p_object.h"
 #include <de/Log>

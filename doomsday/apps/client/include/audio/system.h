@@ -138,9 +138,9 @@ public:
     SampleCache &sampleCache() const;
 
     /**
-     * Provides access to the sound Stages (FYI).
+     * Provides access to the soundstages (FYI).
      *
-     * @param stageId  Unique identifier of the soundstage to locate.
+     * @param stageId  Unique identifier of the Stage to locate.
      */
     Stage /*const*/ &stage(StageId stageId) const;
 

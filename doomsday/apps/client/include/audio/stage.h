@@ -20,12 +20,11 @@
 #ifndef CLIENT_AUDIO_STAGE_H
 #define CLIENT_AUDIO_STAGE_H
 
-#include "dd_share.h"  // SoundEmitter
-
-#include "audio/listener.h"
 #include "audio/sound.h"
 
 namespace audio {
+
+class Listener;
 
 /**
  * Model of a logically independent audio context (or sound "stage").
