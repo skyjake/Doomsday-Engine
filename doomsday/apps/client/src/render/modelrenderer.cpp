@@ -70,6 +70,7 @@ DENG2_PIMPL(ModelRenderer)
     struct Program : public GLProgram
     {
         String shaderName;
+        Record const *def = nullptr;
         int useCount = 1; ///< Number of models using the program.
     };
 
@@ -217,6 +218,7 @@ DENG2_PIMPL(ModelRenderer)
 
         std::unique_ptr<Program> prog(new Program);
         prog->shaderName = name;
+        prog->def = &ClientApp::shaders()[name].valueAsRecord(); // for lookups later
 
         LOG_RES_VERBOSE("Loading model shader \"%s\"") << name;
 
@@ -720,6 +722,16 @@ void ModelRenderer::render(vispsprite_t const &pspr)
 
     /// @todo Something is interfering with the cull setting elsewhere (remove this).
     GLState::current().setCull(gl::Back).apply();
+}
+
+String ModelRenderer::shaderName(GLProgram const &program) const
+{
+    return static_cast<Instance::Program const &>(program).shaderName;
+}
+
+Record const &ModelRenderer::shaderDefinition(GLProgram const &program) const
+{
+    return *static_cast<Instance::Program const &>(program).def;
 }
 
 int ModelRenderer::identifierFromText(String const &text,

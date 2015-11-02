@@ -126,6 +126,8 @@ DENG2_PIMPL(StateAnimator)
     Record names; ///< Local context for scripts, i.e., per-object model state.
 
     ModelDrawable::Appearance appearance;
+
+    // Lookups used when drawing or updating state:
     QHash<String, int> indexForPassName;
     QHash<Variable *, int> passForMaterialVariable;
 
@@ -221,7 +223,7 @@ DENG2_PIMPL(StateAnimator)
 
         initVariables();
 
-        // Set up the appearance.
+        // Set up the model drawing parameters.
         if(!self.model().passes.isEmpty())
         {
             appearance.drawPasses = &self.model().passes;
@@ -258,7 +260,10 @@ DENG2_PIMPL(StateAnimator)
         }
         else
         {
-            for(int i = 0; i < passCount; ++i) appearance.passMaterial << 0;
+            for(int i = 0; i < passCount; ++i)
+            {
+                appearance.passMaterial << 0;
+            }
         }
         appearance.passMask.resize(passCount);
 
@@ -500,6 +505,18 @@ DENG2_PIMPL(StateAnimator)
     }
 
     /**
+     * Checks if a shader definition has a declaration for a variable.
+     *
+     * @param program  Shader definition.
+     * @param uniform  Uniform.
+     * @return @c true, if a variable exists matching @a uniform.
+     */
+    static bool hasDeclaredVariable(Record const &shaderDef, GLUniform const &uniform)
+    {
+        return shaderDef.hasMember(String::fromUtf8(uniform.name()));
+    }
+
+    /**
      * Binds or unbinds uniforms that apply to all rendering passes.
      *
      * @param program    Program where bindings are made.
@@ -522,11 +539,17 @@ DENG2_PIMPL(StateAnimator)
                           de::String const &passName,
                           BindOperation operation) const
     {
+        auto const &modelRenderer = ClientApp::renderSystem().modelRenderer();
+
         auto const vars = passVars.constFind(passName);
         if(vars != passVars.constEnd())
         {
             for(auto i : vars.value())
             {
+                if(!hasDeclaredVariable(modelRenderer.shaderDefinition(program),
+                                        *i->uniform))
+                    continue;
+
                 if(operation == Bind)
                 {
                     i->updateUniform();
