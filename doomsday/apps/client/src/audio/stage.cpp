@@ -37,7 +37,7 @@ DENG2_PIMPL_NOREF(Stage)
 {
     Exclusion exclusion { Exclusion::DontExclude };
 
-    // A "listener" is the "ears" of the user within the sound stage.
+    // A "listener" is the "ears" of the user within the soundstage.
     Listener listener;
 
     /**

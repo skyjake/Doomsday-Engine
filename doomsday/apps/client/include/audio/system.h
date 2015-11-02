@@ -53,7 +53,9 @@ enum StageId
     /// The "local" sound stage is a simpler context intended for playing sounds with
     /// no emitters, no volume attenuation, or most other features implemented for the
     /// WorldStage. This context is primarily intended for playing UI sounds.
-    LocalStage
+    LocalStage,
+
+    StageCount
 };
 
 /**
@@ -126,16 +128,6 @@ public:
     de::dint upsampleFactor(de::dint rate) const;
 
     /**
-     * Reset playback tracking in the sound Stage associated with the given @a stageId.
-     */
-    void resetStage(StageId stageId);
-
-    /**
-     * Provides access to the world sound Stage (FYI).
-     */
-    Stage /*const*/ &worldStage() const;
-
-    /**
      * Provides access to the channel Mixer.
      */
     Mixer /*const*/ &mixer() const;
@@ -144,6 +136,16 @@ public:
      * Provides access to the waveform asset cache.
      */
     SampleCache &sampleCache() const;
+
+    /**
+     * Provides access to the sound Stages (FYI).
+     *
+     * @param stageId  Unique identifier of the soundstage to locate.
+     */
+    Stage /*const*/ &stage(StageId stageId) const;
+
+    inline Stage /*const*/ &localStage() const { return stage(LocalStage); }
+    inline Stage /*const*/ &worldStage() const { return stage(WorldStage); }
 
 public:  //- Music playback: ------------------------------------------------------------
 
@@ -225,18 +227,6 @@ public:  //- Sound playback: ---------------------------------------------------
      * @see musicVolume()
      */
     de::dint soundVolume() const;
-
-    /**
-     * Returns true if the referenced sound is currently playing somewhere in the given
-     * @a soundStage. It does not matter if it is audible (or not).
-     *
-     * @param stageId  Unique identifier of the sound Stage to check.
-     * @param soundId  @c 0= true if sounds are playing using the specified @a emitter.
-     * @param emitter  WorldStage SoundEmitter (originator). May be @c nullptr.
-     *
-     * @see playSound(), stopSound()
-     */
-    bool soundIsPlaying(StageId stageId, de::dint soundId, SoundEmitter *emitter) const;
 
     /**
      * Start playing a sound in the specified @a soundStage.

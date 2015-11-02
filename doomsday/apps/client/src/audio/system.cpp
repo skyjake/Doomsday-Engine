@@ -688,6 +688,7 @@ DENG2_PIMPL(System)
     String musicCurrentSong;
     bool musicNeedSwitchBufferFile = false;  ///< @c true= choose a new file name for the buffered playback file when asked. */
 
+    Stage localStage;
     Stage worldStage;
 
     SampleCache sampleCache;
@@ -1250,7 +1251,7 @@ DENG2_PIMPL(System)
         sfxinfo_t const &soundDef = ::runtimeDefs.sounds[sample.soundId];
 
         // Stop all other sounds with the same emitter?
-        if(emitter && worldStage.exclusion() == Stage::OnePerEmitter)
+        if(stageId == WorldStage && emitter && worldStage.exclusion() == Stage::OnePerEmitter)
         {
             if(stopSoundChannelsWithLowerPriority(0, emitter, soundDef.priority) < 0)
             {
@@ -1519,7 +1520,7 @@ DENG2_PIMPL(System)
 
         if(old3DMode)
         {
-            // Disable environmental audio effects - we're going stereo.
+            // Disable environmental effects in the world soundstage - we're going stereo.
             worldStage.listener().useEnvironment(false);
         }
         old3DMode = sfx3D;
@@ -1584,17 +1585,6 @@ String System::description() const
 #undef TABBED
 }
 
-Mixer &System::mixer() const
-{
-    DENG2_ASSERT(d->mixer.get() != nullptr);
-    return *d->mixer;
-}
-
-SampleCache &System::sampleCache() const
-{
-    return d->sampleCache;
-}
-
 dint System::upsampleFactor(dint rate) const
 {
     //LOG_AS("audio::System");
@@ -1609,19 +1599,27 @@ dint System::upsampleFactor(dint rate) const
     return 1;
 }
 
-void System::resetStage(StageId stageId)
+Mixer &System::mixer() const
 {
-    LOG_AS("audio::System");
-
-    if(stageId == WorldStage)
-    {
-        worldStage().removeAllSounds(); // Does nothing about playback (or refresh).
-    }
+    DENG2_ASSERT(d->mixer.get() != nullptr);
+    return *d->mixer;
 }
 
-Stage /*const*/ &System::worldStage() const
+SampleCache &System::sampleCache() const
 {
-    return d->worldStage;
+    return d->sampleCache;
+}
+
+Stage /*const*/ &System::stage(StageId stageId) const
+{
+    switch(stageId)
+    {
+    case LocalStage: return d->localStage;
+    case WorldStage: return d->worldStage;
+
+    default: DENG2_ASSERT(!"audio::System::stage: Unknown StageId"); break;
+    }
+    throw Error("audio::System::stage", "Unknown sound Stage");
 }
 
 bool System::musicPlaybackAvailable() const
@@ -1826,42 +1824,28 @@ dint System::soundVolume() const
     return sfxVolume;
 }
 
-bool System::soundIsPlaying(StageId stageId, dint soundId, SoundEmitter *emitter) const
-{
-    if(stageId == WorldStage)
-    {
-        // Logical sounds tell us whether a/the referenced sound is being played currently.
-        // We don't care whether it is audible or not.
-        return worldStage().soundIsPlaying(soundId, emitter);
-    }
-    return false;  // Not playing.
-}
-
 bool System::playSound(StageId stageId, dint soundIdAndFlags, SoundEmitter *emitter,
     de::ddouble const *origin,  dfloat volume)
 {
     LOG_AS("audio::System");
 
-    if(stageId == WorldStage)
+    // Cache the waveform resource associated with @a soundId (if necessary) so that
+    // we can determine it's length.
+    if(sfxsample_t const *sample = sampleCache().cache(soundIdAndFlags & ~DDSF_FLAG_MASK))
     {
-        // Cache the waveform resource associated with @a soundId (if necessary) so that
-        // we can determine it's length.
-        if(sfxsample_t const *sample = sampleCache().cache(soundIdAndFlags & ~DDSF_FLAG_MASK))
+        // Ignore zero length waveforms.
+        /// @todo Shouldn't we still stop others though? -ds
+        duint const length = sample->milliseconds();
+        if(length > 0)
         {
-            // Ignore zero length waveforms.
-            /// @todo Shouldn't we still stop others though? -ds
-            duint const length = sample->milliseconds();
-            if(length > 0)
-            {
-                bool const repeat = (soundIdAndFlags & DDSF_REPEAT) || Def_SoundIsRepeating(sample->soundId);
+            bool const repeat = (soundIdAndFlags & DDSF_REPEAT) || Def_SoundIsRepeating(sample->soundId);
 
-                Sound sound;
-                sound.id      = sample->soundId;
-                sound.emitter = emitter;
-                sound.looping = repeat;
-                sound.endTime = Timer_RealMilliseconds() + (repeat ? 1 : length);
-                worldStage().addSound(sound);  // A copy is made.
-            }
+            Sound sound;
+            sound.id      = sample->soundId;
+            sound.emitter = emitter;
+            sound.looping = repeat;
+            sound.endTime = Timer_RealMilliseconds() + (repeat ? 1 : length);
+            stage(stageId).addSound(sound);  // A copy is made.
         }
     }
 
@@ -1890,7 +1874,7 @@ bool System::playSound(StageId stageId, dint soundIdAndFlags, SoundEmitter *emit
     bool const repeat = (soundIdAndFlags & DDSF_REPEAT) || Def_SoundIsRepeating(soundId);
 
     // Check the distance (if applicable).
-    if(emitter || origin)
+    if(stageId == WorldStage && (emitter || origin))
     {
         if(!(info->flags & SF_NO_ATTENUATION) && !(soundIdAndFlags & DDSF_NO_ATTENUATION))
         {
@@ -1987,21 +1971,18 @@ void System::stopSound(StageId stageId, dint soundId, SoundEmitter *emitter, din
     // No special stop behavior.
     d->stopSoundChannelsWithLowerPriority(soundId, emitter, -1);
 
-    if(stageId == WorldStage)
+    // Update logical sound bookkeeping.
+    if(soundId <= 0 && !emitter)
     {
-        // Update logical sound bookkeeping.
-        if(soundId <= 0 && !emitter)
-        {
-            worldStage().removeAllSounds();
-        }
-        else if(soundId) // > 0
-        {
-            worldStage().removeSoundsById(soundId);
-        }
-        else
-        {
-            worldStage().removeSoundsWithEmitter(*emitter);
-        }
+        stage(stageId).removeAllSounds();
+    }
+    else if(soundId) // > 0
+    {
+        stage(stageId).removeSoundsById(soundId);
+    }
+    else
+    {
+        stage(stageId).removeSoundsWithEmitter(*emitter);
     }
 }
 
@@ -2046,7 +2027,6 @@ void System::reset()
         });
     }
 
-
     // Force an Environment update for all channels.
     worldStage().listener().setTrackedMapObject(nullptr);
     worldStage().listener().setTrackedMapObject(getListenerMob());
@@ -2080,7 +2060,11 @@ void System::startFrame()
     }
 
     worldStage().setExclusion(sfxOneSoundPerEmitter ? Stage::OnePerEmitter : Stage::DontExclude);
-    worldStage().maybeRunSoundPurge();
+
+    for(dint i = 0; i < StageCount; ++i)
+    {
+        stage(StageId(i)).maybeRunSoundPurge();
+    }
 }
 
 void System::endFrame()
@@ -2142,7 +2126,7 @@ void System::initPlayback()
     // (Re)Init the waveform data cache.
     sampleCache().clear();
 
-    // Disable environmental audio effects by default.
+    // Disable environmental audio effects in the world soundstage by default.
     worldStage().listener().useEnvironment(false);
 
     // Prepare the mixer.
@@ -2480,7 +2464,7 @@ dd_bool S_StartMusic(char const *musicId, dd_bool looped)
 
 dd_bool S_SoundIsPlaying(dint soundId, mobj_t *emitter)
 {
-    return (dd_bool) audio::System::get().soundIsPlaying(audio::WorldStage, soundId, (SoundEmitter *)emitter);
+    return (dd_bool) audio::System::get().worldStage().soundIsPlaying(soundId, (SoundEmitter *)emitter);
 }
 
 void S_StopSound2(dint soundId, mobj_t *emitter, dint flags)

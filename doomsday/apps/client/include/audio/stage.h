@@ -74,6 +74,12 @@ public:
     Listener const &listener() const;
 
     /**
+     * Returns true if the referenced sound is currently playing somewhere in the stage.
+     * (irrespective of whether it is actually audible, or not).
+     *
+     * @param soundId  @c 0= true if sounds are playing using the specified @a emitter.
+     * @param emitter  Soundstage SoundEmitter (originator). May be @c nullptr.
+     *
      * @todo revise API. -ds
      */
     bool soundIsPlaying(de::dint soundId, SoundEmitter *emitter) const;

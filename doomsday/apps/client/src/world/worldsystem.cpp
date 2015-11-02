@@ -741,7 +741,7 @@ bool WorldSystem::changeMap(de::Uri const &mapUri)
 #ifdef __SERVER__
     ServerApp::app().clearAllLogicalSounds();
 #else
-    ClientApp::audioSystem().resetStage(::audio::WorldStage);
+    ClientApp::audioSystem().worldStage().removeAllSounds();
 
     App_ResourceSystem().purgeCacheQueue();
 
