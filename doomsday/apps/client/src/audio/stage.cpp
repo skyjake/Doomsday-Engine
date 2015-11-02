@@ -96,7 +96,7 @@ bool Stage::soundIsPlaying(dint soundId, SoundEmitter *emitter) const
             break;
 
         Sound const &sound = it.value();
-        if(sound.emitter == emitter && sound.isPlaying(nowTime))
+        if(sound.emitter() == emitter && sound.isPlaying(nowTime))
             return true;
 
         ++it;
@@ -106,14 +106,14 @@ bool Stage::soundIsPlaying(dint soundId, SoundEmitter *emitter) const
 
 void Stage::addSound(Sound const &sound)
 {
-    // Reject sounds with an invalid id.
-    DENG2_ASSERT(sound.id > 0);
-    if(sound.id <= 0) return;
+    // Reject sounds with an invalid sound ID.
+    DENG2_ASSERT(sound.soundId() > 0);
+    if(sound.soundId() <= 0) return;
 
     LOG_AS("audio::Stage");
 
     // Only one Sound per SoundEmitter?
-    if(sound.emitter && exclusion() == OnePerEmitter)
+    if(sound.emitter() && exclusion() == OnePerEmitter)
     {
         // Remove all existing (logical) Sounds emitted by it, from the sound stage.
         // Playback is stopped a little later...
@@ -121,14 +121,14 @@ void Stage::addSound(Sound const &sound)
         while(it.hasNext())
         {
             it.next();
-            if(it.value().emitter != sound.emitter)
+            if(it.value().emitter() != sound.emitter())
                 continue;
 
             it.remove();
         }
     }
 
-    d->sounds.insert(sound.id, sound);  // A copy is made.
+    d->sounds.insert(sound.soundId(), sound);  // A copy is made.
 }
 
 void Stage::removeAllSounds()
@@ -150,7 +150,7 @@ void Stage::removeSoundsWithEmitter(SoundEmitter const &emitter)
     while(it.hasNext())
     {
         it.next();
-        if(it.value().emitter != &emitter) continue;
+        if(it.value().emitter() != &emitter) continue;
 
         it.remove();
     }

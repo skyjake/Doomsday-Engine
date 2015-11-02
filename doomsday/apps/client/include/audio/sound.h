@@ -1,4 +1,4 @@
-/** @file sound.h  POD structure for logical sound.
+/** @file sound.h  Logical Sound model for the audio::System.
  * @ingroup audio
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -21,35 +21,80 @@
 #ifndef CLIENT_AUDIO_SOUND_H
 #define CLIENT_AUDIO_SOUND_H
 
-#include "dd_share.h"  // SF_* flags, SoundEmitter
+#include "dd_share.h"  // SoundEmitter
 #include <de/Vector>
+#include <QFlags>
 
 namespace audio {
 
+enum SoundFlag
+{
+    Looping             = 0x1,
+    NoOrigin            = 0x2,  ///< Originator is some mystical emitter.
+    NoVolumeAttenuation = 0x4,  ///< Distance based volume attenuation is disabled.
+
+    DefaultSoundFlags = NoOrigin
+};
+Q_DECLARE_FLAGS(SoundFlags, SoundFlag)
+Q_DECLARE_OPERATORS_FOR_FLAGS(SoundFlags)
+
 /**
- * POD structure for representing a logical sound.
+ * Logical sound playing somewhere in the soundstage.
+ *
  * @ingroup audio
  */
-struct Sound
+class Sound
 {
-    // Properties:
-    bool looping          = false;
-    bool noOrigin         = false;
-    de::dint id           = 0;        ///< Not a valid id.
-    SoundEmitter *emitter = nullptr;
-    de::Vector3d origin;
+public:
+    Sound();
+    Sound(SoundFlags flags, de::dint soundId, de::Vector3d const &origin, de::duint endTime,
+          SoundEmitter *emitter = nullptr);
 
-    // State:
-    de::duint endTime = 0;
+    Sound(Sound const &other);
+
+    inline Sound &operator = (Sound other) {
+        d.swap(other.d); return *this;
+    }
+
+    inline void swap(Sound &other) {
+        d.swap(other.d);
+    }
 
     /**
      * Returns @c true if the sound is currently playing relative to @a nowTime.
      */
-    inline bool isPlaying(de::duint nowTime) const {
-        return (looping || endTime > nowTime);
-    }
+    bool isPlaying(de::duint nowTime) const;
+
+    /**
+     * Returns the attributed sound @em definition identifier.
+     */
+    de::dint soundId() const;
+
+    /**
+     * Returns the attributed soundstage emitter, if any (may return @c nullptr).
+     */
+    SoundEmitter *emitter() const;
+
+    /**
+     * If attributed to a soundstage emitter - update the current origin coordinates of
+     * the sound with the latest coordinates from the emitter.
+     *
+     * @todo Handle this internally. -ds
+     */
+    void updateOriginFromEmitter();
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 }  // namespace audio
+
+namespace std {
+    // std::swap specialization for audio::Sound
+    template <>
+    inline void swap<audio::Sound>(audio::Sound &a, audio::Sound &b) {
+        a.swap(b);
+    }
+}
 
 #endif  // CLIENT_AUDIO_SOUND_H

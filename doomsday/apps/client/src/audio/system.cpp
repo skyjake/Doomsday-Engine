@@ -1838,16 +1838,16 @@ bool System::playSound(StageId stageId, dint soundIdAndFlags, SoundEmitter *emit
         duint const length = sample->milliseconds();
         if(length > 0)
         {
-            bool const repeat = (soundIdAndFlags & DDSF_REPEAT) || Def_SoundIsRepeating(sample->soundId);
+            bool const looping = (soundIdAndFlags & DDSF_REPEAT) || Def_SoundIsRepeating(sample->soundId);
 
-            Sound sound;
-            sound.id       = sample->soundId;
-            sound.looping  = repeat;
-            sound.noOrigin = (origin == nullptr);
-            sound.emitter  = emitter;
-            sound.origin   = (origin ? Vector3d(origin) : Vector3d());
-            sound.endTime  = Timer_RealMilliseconds() + (repeat ? 1 : length);
-            stage(stageId).addSound(sound);  // A copy is made.
+            SoundFlags flags;
+            if(looping) flags |= SoundFlag::Looping;
+            if(!origin) flags |= SoundFlag::NoOrigin;
+            if(soundIdAndFlags & DDSF_NO_ATTENUATION) flags |= SoundFlag::NoVolumeAttenuation;
+
+            stage(stageId)
+                .addSound(Sound(flags, sample->soundId, origin ? Vector3d(origin) : Vector3d(),
+                                Timer_RealMilliseconds() + (looping ? 1 : length), emitter));  // A copy is made.
         }
     }
 
