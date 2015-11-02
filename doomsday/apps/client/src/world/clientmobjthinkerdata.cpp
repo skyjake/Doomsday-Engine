@@ -18,14 +18,16 @@
  */
 
 #include "de_base.h"
-#include "world/clientmobjthinkerdata.h"
-
-#include <QFlags>
-#include "clientapp.h"
 #include "dd_loop.h"
+#include "clientapp.h"
+#include "world/generator.h"
+#include "world/clientmobjthinkerdata.h"
 #include "render/modelrenderer.h"
 #include "render/stateanimator.h"
-#include "world/generator.h"
+
+#include <de/RecordValue>
+#include <de/Process>
+#include <QFlags>
 
 using namespace de;
 
@@ -47,8 +49,7 @@ DENG2_PIMPL(ClientMobjThinkerData)
 {
     Flags flags;
     std::unique_ptr<RemoteSync> sync;
-    std::unique_ptr<StateAnimator> animator;
-    ModelRenderer::AuxiliaryData const *modelAuxData = nullptr;
+    std::unique_ptr<render::StateAnimator> animator;
     Matrix4f modelMatrix;
 
     Instance(Public *i) : Base(i)
@@ -77,9 +78,15 @@ DENG2_PIMPL(ClientMobjThinkerData)
         return Def_GetStateName(self.mobj()->state);
     }
 
+    bool isStateInCurrentSequence(state_t const *previous)
+    {
+        if(!previous) return false;
+        return Def_GetState(previous->nextState) == self.mobj()->state;
+    }
+
     String modelId() const
     {
-        return String("model.thing.%1").arg(thingName().toLower());
+        return QStringLiteral("model.thing.%1").arg(thingName().toLower());
     }
 
     static ModelBank &modelBank()
@@ -90,7 +97,6 @@ DENG2_PIMPL(ClientMobjThinkerData)
     void assetBeingDeleted(Asset &)
     {
         de::trash(animator.release());
-        modelAuxData = nullptr;
     }
 
     /**
@@ -107,20 +113,17 @@ DENG2_PIMPL(ClientMobjThinkerData)
         if(modelBank().has(modelId()))
         {
             // Prepare the animation state of the model.
-            auto loaded = modelBank().modelAndData<ModelRenderer::AuxiliaryData>(modelId());
-            ModelDrawable &model = *loaded.first;
+            auto const &model = modelBank().model<render::Model>(modelId());
             try
             {
                 model.audienceForDeletion() += this;
-                
-                animator.reset(new StateAnimator(modelId(), model));
-                animator->setOwnerNamespace(self.info());
 
-                modelAuxData = loaded.second;
+                animator.reset(new render::StateAnimator(modelId(), model));
+                animator->setOwnerNamespace(self.names(), QStringLiteral("THING"));
 
                 // Apply possible scaling operations on the model.
-                modelMatrix = modelAuxData->transformation;
-                if(modelAuxData->autoscaleToThingHeight)
+                modelMatrix = model.transformation;
+                if(model.autoscaleToThingHeight)
                 {
                     Vector3f const dims = modelMatrix * model.dimensions();
                     modelMatrix = Matrix4f::scale(self.mobj()->height / dims.y * 1.2f /*aspect correct*/) * modelMatrix;
@@ -129,7 +132,7 @@ DENG2_PIMPL(ClientMobjThinkerData)
             catch(Error const &er)
             {
                 model.audienceForDeletion() -= this;
-                
+
                 LOG_RES_ERROR("Failed to set up asset '%s' for map object %i: %s")
                     << modelId() << self.mobj()->thinker.id << er.asText();
             }
@@ -150,11 +153,16 @@ DENG2_PIMPL(ClientMobjThinkerData)
      * a less than 1.0 probability for starting. The sequence may be identified either by
      * name ("walk") or index (for example, "#3").
      */
-    void triggerStateAnimations()
+    void triggerStateAnimations(state_t const *state = nullptr)
     {
-        if(animator)
+        if(flags.testFlag(StateChanged))
         {
-            animator->triggerByState(stateName());
+            flags &= ~StateChanged;
+            if(animator)
+            {
+                animator->triggerByState(state? Def_GetStateName(state) :
+                                                stateName());
+            }
         }
     }
 
@@ -204,12 +212,10 @@ ClientMobjThinkerData::ClientMobjThinkerData(ClientMobjThinkerData const &other)
 
 void ClientMobjThinkerData::think()
 {
+    MobjThinkerData::think();
+
     d->initOnce();
-    if(d->flags.testFlag(StateChanged))
-    {
-        d->flags &= ~StateChanged;
-        d->triggerStateAnimations();
-    }
+    d->triggerStateAnimations(); // with current state
     d->triggerMovementAnimations();
     d->advanceAnimations(SECONDSPERTIC); // mobjs think only on sharp ticks
 }
@@ -238,12 +244,12 @@ ClientMobjThinkerData::RemoteSync &ClientMobjThinkerData::remoteSync()
     return *d->sync;
 }
 
-StateAnimator *ClientMobjThinkerData::animator()
+render::StateAnimator *ClientMobjThinkerData::animator()
 {
     return d->animator.get();
 }
 
-StateAnimator const *ClientMobjThinkerData::animator() const
+render::StateAnimator const *ClientMobjThinkerData::animator() const
 {
     return d->animator.get();
 }
@@ -253,11 +259,6 @@ Matrix4f const &ClientMobjThinkerData::modelTransformation() const
     return d->modelMatrix;
 }
 
-ModelRenderer::AuxiliaryData const &ClientMobjThinkerData::auxiliaryModelData() const
-{
-    return *d->modelAuxData;
-}
-
 void ClientMobjThinkerData::stateChanged(state_t const *previousState)
 {
     MobjThinkerData::stateChanged(previousState);
@@ -265,6 +266,36 @@ void ClientMobjThinkerData::stateChanged(state_t const *previousState)
     bool const justSpawned = !previousState;
 
     d->initOnce();
-    d->flags |= StateChanged; // Will trigger animations during think.
+    if(d->flags.testFlag(StateChanged) && d->isStateInCurrentSequence(previousState))
+    {
+        /*
+         * Mobj state has already been flagged as changed, but triggers for the
+         * previous state haven't fired yet. Because it's the same sequence, it
+         * might be the one that triggers an animation, so let's not miss the
+         * trigger.
+         */
+        d->triggerStateAnimations(previousState);
+    }
+    /*
+     * Trigger animations later during think(). This is done to avoid multiple
+     * state changes during a single tick from interrupting longer sequences,
+     * for instance allowing consecutive attack sequences to play as a single,
+     * long sequence (e.g., Hexen's Ettin).
+     */
+    d->flags |= StateChanged;
     d->triggerParticleGenerators(justSpawned);
+}
+
+void ClientMobjThinkerData::damageReceived(int damage, mobj_t const *inflictor)
+{
+    MobjThinkerData::damageReceived(damage, inflictor);
+
+    // How about some particles, yes?
+    // Only works when both target and inflictor are real mobjs.
+    Mobj_SpawnDamageParticleGen(mobj(), inflictor, damage);
+
+    if(d->animator)
+    {
+        d->animator->triggerDamage(damage);
+    }
 }

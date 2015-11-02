@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBAPPFW_GUIWIDGETPRIVATE_H
@@ -71,7 +71,7 @@ public:
         if(_observingAtlas)
         {
             _observingAtlas->audienceForReposition() -= this;
-            _observingAtlas->audienceForDeletion()   -= this;
+            _observingAtlas->Asset::audienceForDeletion() -= this;
             _observingAtlas = nullptr;
         }
     }
@@ -83,7 +83,7 @@ public:
             // Automatically start observing the root atlas.
             _observingAtlas = &root().atlas();
             _observingAtlas->audienceForReposition() += this;
-            _observingAtlas->audienceForDeletion()   += this;
+            _observingAtlas->Asset::audienceForDeletion() += this;
         }
     }
 
@@ -99,7 +99,7 @@ public:
     }
 
     AtlasTexture &atlas() const
-    {        
+    {
         observeRootAtlas();
         return *_observingAtlas;
     }

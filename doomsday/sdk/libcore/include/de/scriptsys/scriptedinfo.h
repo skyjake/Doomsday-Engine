@@ -230,6 +230,8 @@ public:
      */
     static StringList sortRecordsBySource(Record::Subrecords const &subrecs);
 
+    static String sourceLocation(Record const &record);
+
 public:
     static String const SCRIPT;
     static String const BLOCK_GROUP;

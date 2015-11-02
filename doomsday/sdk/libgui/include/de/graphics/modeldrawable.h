@@ -20,6 +20,7 @@
 #define LIBGUI_MODELDRAWABLE_H
 
 #include <de/Asset>
+#include <de/Deletable>
 #include <de/File>
 #include <de/GLProgram>
 #include <de/GLState>
@@ -108,7 +109,7 @@ public:
      *
      * @ingroup gl
      */
-    class LIBGUI_PUBLIC Animator
+    class LIBGUI_PUBLIC Animator : public Deletable
     {
     public:
         /**
@@ -276,7 +277,7 @@ public:
         gl::BlendOp blendOp = gl::Add;
 
         bool operator == (Pass const &other) const {
-            return name == other.name; // Passes are uniquely identified by names.                   
+            return name == other.name; // Passes are uniquely identified by names.
         }
     };
 
@@ -425,13 +426,15 @@ public:
      *
      * @param atlas  Atlas for model textures.
      */
-    void setAtlas(AtlasTexture &atlas);
+    void setAtlas(IAtlas &atlas);
 
     /**
      * Removes the model's atlas. All allocations this model has made from the atlas
      * are freed.
      */
     void unsetAtlas();
+
+    IAtlas *atlas() const;
 
     /**
      * Sets which textures are to be passed to the model shader via the GL buffer.

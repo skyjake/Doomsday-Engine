@@ -27,7 +27,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/RowAtlasAllocator"
@@ -258,15 +258,15 @@ DENG2_PIMPL(RowAtlasAllocator)
 
         void addVacant(Slot *slot)
         {
-            DENG2_ASSERT(slot->isEmpty());            
-            vacant.insert(slot);            
+            DENG2_ASSERT(slot->isEmpty());
+            vacant.insert(slot);
             DENG2_ASSERT(*vacant.find(slot) == slot);
         }
 
         void removeVacant(Slot *slot)
         {
             DENG2_ASSERT(vacant.find(slot) != vacant.end());
-            vacant.erase(slot);            
+            vacant.erase(slot);
             DENG2_ASSERT(vacant.find(slot) == vacant.end());
         }
 
@@ -508,9 +508,10 @@ void RowAtlasAllocator::clear()
     d->allocs.clear();
 }
 
-Id RowAtlasAllocator::allocate(Atlas::Size const &size, Rectanglei &rect)
+Id RowAtlasAllocator::allocate(Atlas::Size const &size, Rectanglei &rect,
+                               Id const &knownId)
 {
-    if(auto *slot = d->rows->alloc(size, rect))
+    if(auto *slot = d->rows->alloc(size, rect, knownId))
     {
         d->allocs[slot->id] = rect;
         return slot->id;

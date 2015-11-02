@@ -149,7 +149,7 @@ Thinker::Thinker(thinker_s const &podThinker, dsize sizeInBytes, AllocMethod all
 
     if(podThinker.d)
     {
-        setData(reinterpret_cast<IData *>(podThinker.d)->duplicate());        
+        setData(reinterpret_cast<IData *>(podThinker.d)->duplicate());
     }
 }
 
@@ -221,15 +221,6 @@ thinker_s *Thinker::take()
     thinker_s *th = d->base;
     d->relinquish();
     return th;
-}
-
-void Thinker::putInto(thinker_s &dest)
-{
-    delete reinterpret_cast<IData *>(dest.d);
-    memcpy(&dest, d->base, d->size);
-
-    // Not valid any more.
-    d->relinquish();
 }
 
 void Thinker::destroy(thinker_s *thinkerBase)

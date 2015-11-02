@@ -52,7 +52,7 @@
 //#define CLM_MAGIC1          0xdecafed1
 //#define CLM_MAGIC2          0xcafedeb8
 
-class StateAnimator;
+namespace render { class StateAnimator; }
 
 /**
  * Private client-side data for mobjs. This includes any per-object state for rendering
@@ -83,10 +83,11 @@ public:
     ClientMobjThinkerData();
     ClientMobjThinkerData(ClientMobjThinkerData const &other);
 
-    void think();
-    IData *duplicate() const;
+    void think() override;
+    IData *duplicate() const override;
 
-    void stateChanged(state_t const *previousState);
+    void stateChanged(state_t const *previousState) override;
+    void damageReceived(int damage, mobj_t const *inflictor) override;
 
     int stateIndex() const;
 
@@ -104,13 +105,11 @@ public:
      *
      * @return Animation state, or @c NULL if not drawn as a model.
      */
-    StateAnimator *animator();
+    render::StateAnimator *animator();
 
-    StateAnimator const *animator() const;
+    render::StateAnimator const *animator() const;
 
     de::Matrix4f const &modelTransformation() const;
-
-    ModelRenderer::AuxiliaryData const &auxiliaryModelData() const;
 
 private:
     DENG2_PRIVATE(d)

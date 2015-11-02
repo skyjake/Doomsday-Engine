@@ -42,7 +42,9 @@ namespace de {
 /// excerpt.
 int const SUBRECORD_CONTENT_EXCERPT_THRESHOLD = 100; // lines
 
-String const Record::VAR_SUPER       = "__super__";
+String const Record::VAR_SUPER = "__super__";
+String const Record::VAR_FILE  = "__file__";
+String const Record::VAR_NATIVE_SELF = "__self__";
 
 /**
  * Each record is given a unique identifier, so that serialized record
@@ -129,8 +131,15 @@ DENG2_PIMPL(Record)
         }
     }
 
+    bool isRecord(Variable const &var) const
+    {
+        RecordValue const *value = var.value().maybeAs<RecordValue>();
+        return value && value->record();
+    }
+
     bool isSubrecord(Variable const &var) const
     {
+        // Subrecords are owned by this record.
         RecordValue const *value = var.value().maybeAs<RecordValue>();
         return value && value->record() && value->hasOwnership();
     }
@@ -178,7 +187,7 @@ DENG2_PIMPL(Record)
             String subName = name.substr(0, pos);
             String remaining = name.substr(pos + 1);
             // If it is a subrecord we can descend into it.
-            if(!self.hasSubrecord(subName)) return 0;
+            if(!self.hasRecord(subName)) return 0;
             return self[subName].value<RecordValue>().dereference().d->findMemberByPath(remaining);
         }
 
@@ -211,7 +220,7 @@ DENG2_PIMPL(Record)
             if(!self.hasSubrecord(subName))
             {
                 // Create it now.
-                rec = &self.addRecord(subName);
+                rec = &self.addSubrecord(subName);
             }
             else
             {
@@ -338,11 +347,13 @@ bool Record::hasMember(String const &variableName) const
 bool Record::hasSubrecord(String const &subrecordName) const
 {
     Variable const *found = d->findMemberByPath(subrecordName);
-    if(found)
-    {
-        return d->isSubrecord(*found);
-    }
-    return false;
+    return found? d->isSubrecord(*found) : false;
+}
+
+bool Record::hasRecord(String const &recordName) const
+{
+    Variable const *found = d->findMemberByPath(recordName);
+    return found? d->isRecord(*found) : false;
 }
 
 Variable &Record::add(Variable *variable)
@@ -455,7 +466,7 @@ Record &Record::add(String const &name, Record *subrecord)
     return *subrecord;
 }
 
-Record &Record::addRecord(String const &name)
+Record &Record::addSubrecord(String const &name)
 {
     return add(name, new Record);
 }
@@ -598,11 +609,13 @@ LoopResult Record::forSubrecords(std::function<LoopResult (String const &, Recor
 
 String Record::asText(String const &prefix, List *lines) const
 {
+    /*
     // If this is a module, don't print out the entire contents.
-    if(!gets("__file__", "").isEmpty())
+    /// @todo Should only apply to actual modules. -jk
+    if(!gets(VAR_FILE, "").isEmpty())
     {
-        return QString("(Record imported from \"%1\")").arg(gets("__file__"));
-    }
+        return QString("(Record imported from \"%1\")").arg(gets(VAR_FILE));
+    }*/
 
     // Recursive calls to collect all variables in the record.
     if(lines)
@@ -680,6 +693,11 @@ void Record::addSuperRecord(Value *superValue)
         addArray(VAR_SUPER);
     }
     (*this)[VAR_SUPER].array().add(superValue);
+}
+
+void Record::addSuperRecord(Record const &superRecord)
+{
+    addSuperRecord(new RecordValue(superRecord));
 }
 
 void Record::operator >> (Writer &to) const

@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBGUI_GLUNIFORM_H
@@ -85,7 +85,7 @@ public:
     /**
      * Returns the name of the uniform as it appears in shaders.
      */
-    QLatin1String name() const;
+    Block name() const;
 
     /**
      * Returns the value type of the shader.

@@ -470,6 +470,8 @@ DENG2_PIMPL(ModelDrawable)
                     fallBackToDefaultTexture(textures, Emissive);
                 }
             }
+            // All textures loaded.
+            textureBank.atlas()->commit();
         }
 
         /**
@@ -500,8 +502,11 @@ DENG2_PIMPL(ModelDrawable)
             }
             catch(Error const &er)
             {
-                LOG_RES_WARNING("Failed to load custom model %s texture: %s")
-                        << textureMapToText(textureMapType(type)) << er.asText();
+                LOG_RES_WARNING("Failed to load user-defined %s texture for "
+                                "mesh %i (material %i): %s")
+                        << textureMapToText(textureMapType(type))
+                        << mesh.index << mesh.material
+                        << er.asText();
             }
 
             // Load the texture based on the information specified in the model's materials.
@@ -518,8 +523,10 @@ DENG2_PIMPL(ModelDrawable)
                 }
                 catch(Error const &er)
                 {
-                    LOG_RES_WARNING("Failed to load model %s texture: %s")
-                            << textureMapToText(textureMapType(type)) << er.asText();
+                    LOG_RES_WARNING("Failed to load %s texture for mesh %i "
+                                    "(material %i) based on info from model file: %s")
+                            << textureMapToText(textureMapType(type))
+                            << mesh.index << mesh.material << er.asText();
                 }
             }
         }
@@ -550,11 +557,10 @@ DENG2_PIMPL(ModelDrawable)
 
             Path const path(contentPath);
 
-            // If this image is unknown, load it now.
+            // If this image is unknown, add it now to the bank.
             if(!textureBank.has(path))
             {
                 textureBank.add(path, new TextureSource(contentPath, this));
-                textureBank.load(path);
             }
 
             qDebug() << "material:" << mesh.material
@@ -1442,9 +1448,8 @@ bool ModelDrawable::nodeExists(String const &name) const
     return d->nodeNameToPtr.contains(name);
 }
 
-void ModelDrawable::setAtlas(AtlasTexture &atlas)
+void ModelDrawable::setAtlas(IAtlas &atlas)
 {
-    //d->glData.atlas = &atlas;
     d->glData.textureBank.setAtlas(&atlas);
 }
 
@@ -1452,6 +1457,11 @@ void ModelDrawable::unsetAtlas()
 {
     d->glData.releaseTexturesFromAtlas();
     d->glData.textureBank.setAtlas(nullptr);
+}
+
+IAtlas *ModelDrawable::atlas() const
+{
+    return d->glData.textureBank.atlas();
 }
 
 ModelDrawable::Mapping ModelDrawable::diffuseNormalsSpecularEmission() // static

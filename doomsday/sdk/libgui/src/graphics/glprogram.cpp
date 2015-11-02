@@ -26,8 +26,10 @@
 #include <de/Block>
 #include <de/Log>
 
-#include <QSet>
 #include <QList>
+#include <QSet>
+#include <QHash>
+#include <QStack>
 
 namespace de {
 
@@ -39,13 +41,17 @@ using namespace internal;
 DENG2_PIMPL(GLProgram)
 , DENG2_OBSERVES(GLUniform, ValueChange)
 , DENG2_OBSERVES(GLUniform, Deletion)
-, DENG2_OBSERVES(GuiApp, GLContextChange)
 {
     typedef QSet<GLUniform const *>  Uniforms;
     typedef QList<GLUniform const *> UniformList;
     typedef QSet<GLShader const *>   Shaders;
 
-    Uniforms bound;
+    /// For each uniform name, there is a stack of bindings. The top binding
+    /// in each stack is the active one at any given time.
+    QHash<Block, QStack<GLUniform const *>> stacks;
+
+    Uniforms allBound;
+    Uniforms active; ///< Currently active bindings.
     Uniforms changed;
     UniformList textures;
     bool texturesChanged;
@@ -62,25 +68,11 @@ DENG2_PIMPL(GLProgram)
         , name(0)
         , inUse(false)
         , needRebuild(false)
-    {
-        //DENG2_GUI_APP->audienceForGLContextChange += this;
-    }
+    {}
 
     ~Instance()
     {
-        //DENG2_GUI_APP->audienceForGLContextChange -= this;
         release();
-    }
-
-    void appGLContextChanged()
-    {
-        /*
-        if(name && !needRebuild)
-        {
-            qDebug() << "rebuild program" << name << "before use";
-            self.rebuildBeforeNextUse();
-        }
-        */
     }
 
     void alloc()
@@ -142,15 +134,17 @@ DENG2_PIMPL(GLProgram)
 
     void unbindAll()
     {
-        foreach(GLUniform const *u, bound)
+        for(GLUniform const *u : allBound)
         {
             u->audienceForValueChange() -= this;
             u->audienceForDeletion() -= this;
         }
-        texturesChanged = false;
-        bound.clear();
-        textures.clear();
+        allBound.clear();
+        stacks.clear();
+        active.clear();
         changed.clear();
+        textures.clear();
+        texturesChanged = false;
     }
 
     /**
@@ -229,7 +223,7 @@ DENG2_PIMPL(GLProgram)
 
     void markAllBoundUniformsChanged()
     {
-        foreach(GLUniform const *u, bound)
+        foreach(GLUniform const *u, active)
         {
             changed.insert(u);
         }
@@ -242,6 +236,7 @@ DENG2_PIMPL(GLProgram)
         // Apply the uniform values in this program.
         foreach(GLUniform const *u, changed)
         {
+            DENG2_ASSERT(active.contains(changed));
             if(u->type() != GLUniform::Sampler2D)
             {
                 u->applyInProgram(self);
@@ -253,7 +248,7 @@ DENG2_PIMPL(GLProgram)
             // Update the sampler uniforms.
             for(int unit = 0; unit < textures.size(); ++unit)
             {
-                int loc = self.glUniformLocation(textures[unit]->name().latin1());
+                int loc = self.glUniformLocation(textures[unit]->name());
                 if(loc >= 0)
                 {
                     glUniform1i(loc, unit);
@@ -281,8 +276,6 @@ DENG2_PIMPL(GLProgram)
 
     void rebuild()
     {
-        //qDebug() << "Rebuilding GL program" << name;
-
         if(name)
         {
             glDeleteProgram(name);
@@ -303,12 +296,82 @@ DENG2_PIMPL(GLProgram)
 
     void uniformValueChanged(GLUniform &uniform)
     {
-        changed.insert(&uniform);
+        if(active.contains(&uniform))
+        {
+            changed.insert(&uniform);
+        }
     }
 
     void uniformDeleted(GLUniform &uniform)
     {
         self.unbind(uniform);
+    }
+
+    void addBinding(GLUniform const *uniform)
+    {
+        allBound.insert(uniform);
+        uniform->audienceForValueChange() += this;
+        uniform->audienceForDeletion() += this;
+
+        auto &stack = stacks[uniform->name()];
+        if(!stack.isEmpty())
+        {
+            // The old binding is no longer active.
+            active.remove(stack.top());
+            changed.remove(stack.top());
+        }
+        stack.push(uniform);
+
+        active.insert(uniform);
+        changed.insert(uniform);
+
+        if(uniform->type() == GLUniform::Sampler2D)
+        {
+            textures << uniform;
+            texturesChanged = true;
+        }
+    }
+
+    void removeBinding(GLUniform const *uniform)
+    {
+        allBound.remove(uniform);
+        uniform->audienceForValueChange() -= this;
+        uniform->audienceForDeletion() -= this;
+
+        active.remove(uniform);
+        changed.remove(uniform);
+
+        auto &stack = stacks[uniform->name()];
+        if(stack.top() == uniform)
+        {
+            stack.pop();
+            if(!stack.isEmpty())
+            {
+                // The new topmost binding becomes active.
+                active.insert(stack.top());
+                changed.insert(stack.top());
+            }
+        }
+        else
+        {
+            // It might be deeper in the stack.
+            //stack.removeAll(uniform); // added in Qt 5.4
+            int found = stack.indexOf(uniform);
+            if(found >= 0)
+            {
+                stack.remove(found);
+            }
+        }
+        if(stack.isEmpty())
+        {
+            stacks.remove(uniform->name());
+        }
+
+        if(uniform->type() == GLUniform::Sampler2D)
+        {
+            textures.removeAll(uniform);
+            texturesChanged = true;
+        }
     }
 };
 
@@ -364,38 +427,18 @@ GLProgram &GLProgram::operator << (GLUniform const &uniform)
 
 GLProgram &GLProgram::bind(GLUniform const &uniform)
 {
-    if(!d->bound.contains(&uniform))
+    if(!d->allBound.contains(&uniform))
     {
-        d->bound.insert(&uniform);
-        d->changed.insert(&uniform);
-
-        uniform.audienceForValueChange() += d;
-        uniform.audienceForDeletion() += d;
-
-        if(uniform.type() == GLUniform::Sampler2D)
-        {
-            d->textures << &uniform;
-            d->texturesChanged = true;
-        }
+        d->addBinding(&uniform);
     }
     return *this;
 }
 
 GLProgram &GLProgram::unbind(GLUniform const &uniform)
 {
-    if(d->bound.contains(&uniform))
+    if(d->allBound.contains(&uniform))
     {
-        d->bound.remove(&uniform);
-        d->changed.remove(&uniform);
-
-        uniform.audienceForValueChange() -= d.get();
-        uniform.audienceForDeletion() -= d.get();
-
-        if(uniform.type() == GLUniform::Sampler2D)
-        {
-            d->textures.removeOne(&uniform);
-            d->texturesChanged = true;
-        }
+        d->removeBinding(&uniform);
     }
     return *this;
 }

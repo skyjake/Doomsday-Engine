@@ -187,15 +187,7 @@ void Process::run(Script const &script)
     d->run(script.firstStatement());
 
     // Set up the automatic variables.
-    Record &ns = globals();
-    if(ns.has("__file__"))
-    {
-        ns["__file__"].set(TextValue(script.path()));
-    }
-    else
-    {
-        ns.add(new Variable("__file__", new TextValue(script.path()), Variable::AllowText));
-    }
+    globals().set(Record::VAR_FILE, script.path());
 }
 
 void Process::suspend(bool suspended)
@@ -287,7 +279,7 @@ void Process::execute()
             else
             {
                 // Exception uncaught by all contexts, script execution stops.
-                LOG_SCR_NOTE("Stopping process: ") << err.asText();
+                LOG_SCR_ERROR("Stopping process: ") << err.asText();
                 stop();
             }
         }

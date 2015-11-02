@@ -36,22 +36,22 @@ int main(int argc, char **argv)
     {
         TextApp app(argc, argv);
         app.initSubsystems(App::DisablePlugins);
-        
+
         Record rec;
-        
+
         LOG_MSG("Empty record:\n") << rec;
-        
+
         rec.add(new Variable("hello", new TextValue("World!")));
         LOG_MSG("With one variable:\n") << rec;
-        
+
         rec.add(new Variable("size", new NumberValue(1024)));
         LOG_MSG("With two variables:\n") << rec;
-        
+
         Record rec2;
         Block b;
         Writer(b) << rec;
         LOG_MSG("Serialized record to ") << b.size() << " bytes.";
-        
+
         String str;
         QTextStream os(&str);
         for(duint i = 0; i < b.size(); ++i)
@@ -59,12 +59,12 @@ int main(int argc, char **argv)
             os << dint(b.data()[i]) << " ";
         }
         LOG_MSG(str);
-        
-        Reader(b) >> rec2;        
+
+        Reader(b) >> rec2;
         LOG_MSG("After being deserialized:\n") << rec2;
 
         Record before;
-        before.addRecord("subrecord");
+        before.addSubrecord("subrecord");
         before.subrecord("subrecord").set("value", true);
         DENG2_ASSERT(before.hasSubrecord("subrecord"));
         LOG_MSG("Before copying:\n") << before;
@@ -79,5 +79,5 @@ int main(int argc, char **argv)
     }
 
     qDebug() << "Exiting main()...";
-    return 0;        
+    return 0;
 }

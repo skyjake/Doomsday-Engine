@@ -127,7 +127,7 @@ public:
     class LIBDOOMSDAY_PUBLIC IData
     {
     public:
-        virtual ~IData() {}        
+        virtual ~IData() {}
         virtual void setThinker(thinker_s *thinker) = 0;
         virtual void think() = 0;
         virtual IData *duplicate() const = 0;
@@ -205,17 +205,6 @@ public:
      * sizeof(thinker_s).
      */
     struct thinker_s *take();
-
-    /**
-     * Transfers the contents of the Thinker into the designated existing POD thinker.
-     * Any memory owned by @a dest is released before the copy. The destination is
-     * assumed to have the same size as this Thinker.
-     *
-     * After the operation, this Thinker becomes invalid.
-     *
-     * @param dest  Destination thinker.
-     */
-    void putInto(struct thinker_s &dest);
 
     IData &data();
     IData const &data() const;
@@ -295,8 +284,6 @@ public:
     operator Type const & () const { return base(); }
 
     Type *take() { return reinterpret_cast<Type *>(Thinker::take()); }
-
-    void putInto(Type &dest) { Thinker::putInto(reinterpret_cast<thinker_s &>(dest)); }
 
     static void destroy(Type *thinker) { Thinker::destroy(reinterpret_cast<thinker_s *>(thinker)); }
 

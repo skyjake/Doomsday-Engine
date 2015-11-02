@@ -46,8 +46,21 @@ public:
     thinker_s &thinker();
     thinker_s const &thinker() const;
 
-    de::Record &info();
-    de::Record const &info() const;
+    /**
+     * Returns the Doomsday Script namespace of the thinker. This can be
+     * treated as an object representing the thinker in Doomsday Script.
+     */
+    de::Record &names();
+
+    /// @copydoc names()
+    de::Record const &names() const;
+
+    /**
+     * Initializes Doomsday Script bindings for the thinker. This is called
+     * when the thinker is added to the world, so mobjs have been assigned
+     * their IDs.
+     */
+    virtual void initBindings();
 
 private:
     DENG2_PRIVATE(d)

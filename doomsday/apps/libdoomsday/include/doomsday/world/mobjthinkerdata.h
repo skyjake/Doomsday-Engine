@@ -35,10 +35,12 @@ public:
     MobjThinkerData();
     MobjThinkerData(MobjThinkerData const &other);
 
-    IData *duplicate() const;
+    IData *duplicate() const override;
 
     mobj_t *mobj();
     mobj_t const *mobj() const;
+
+    void initBindings() override;
 
     /**
      * Called whenever the current state of the mobj has changed.
@@ -46,6 +48,15 @@ public:
      * @param previousState  Previous state of the object.
      */
     virtual void stateChanged(state_t const *previousState);
+
+    /**
+     * Called whenever the mobj receives damage. This is a notification of
+     * damage already received.
+     *
+     * @param points     Amount of damage.
+     * @param direction  If not @c nullptr, identifies the source of the damage.
+     */
+    virtual void damageReceived(int points, mobj_t const *inflictor);
 
 private:
     DENG2_PRIVATE(d)

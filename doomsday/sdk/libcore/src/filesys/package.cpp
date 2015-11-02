@@ -150,11 +150,8 @@ bool Package::executeFunction(String const &name)
     Record &pkgInfo = d->packageInfo();
     if(pkgInfo.has(name))
     {
-        Script script(name + "()");
         // The global namespace for this function is the package's info namespace.
-        Process proc(&pkgInfo);
-        proc.run(script);
-        proc.execute();
+        Process::scriptCall(Process::IgnoreResult, pkgInfo, name);
         return true;
     }
     return false;
@@ -203,7 +200,7 @@ void Package::parseMetadata(File &packageFile) // static
         // The package's information is stored in a subrecord.
         if(!packageFile.info().has(PACKAGE))
         {
-            packageFile.info().addRecord(PACKAGE);
+            packageFile.info().addSubrecord(PACKAGE);
         }
 
         Record &metadata        = packageFile.info().subrecord(PACKAGE);

@@ -24,14 +24,14 @@ using namespace de;
 DENG2_PIMPL(ThinkerData)
 {
     thinker_s *think;
-    Record info;
+    Record names;
 
     Instance(Public *i) : Base(i), think(0) {}
 
     Instance(Public *i, Instance const &other)
         : Base(i)
         , think(other.think)
-        , info(other.info)
+        , names(other.names)
     {}
 
     ~Instance()
@@ -80,15 +80,18 @@ thinker_s const &ThinkerData::thinker() const
     return *d->think;
 }
 
-Record &ThinkerData::info()
+Record &ThinkerData::names()
 {
-    return d->info;
+    return d->names;
 }
 
-Record const &ThinkerData::info() const
+Record const &ThinkerData::names() const
 {
-    return d->info;
+    return d->names;
 }
+
+void ThinkerData::initBindings()
+{}
 
 #ifdef DENG2_DEBUG
 duint32 ThinkerData::DebugCounter::total = 0;

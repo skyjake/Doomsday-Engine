@@ -90,6 +90,12 @@ public:
          */
         void advanceTime(TimeDelta const &elapsed);
 
+        /**
+         * Checks if there are no more scheduled sheduler is out of scheduled scripts.
+         * @return
+         */
+        bool isFinished() const;
+
     private:
         DENG2_PRIVATE(d)
     };

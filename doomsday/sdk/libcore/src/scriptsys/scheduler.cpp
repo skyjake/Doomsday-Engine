@@ -115,12 +115,12 @@ void Scheduler::addFromInfo(Record const &timelineRecord)
         {
             addScript(def.getd("at", 0.0),
                       def.gets(ScriptedInfo::SCRIPT),
-                      def.gets(ScriptedInfo::VAR_SOURCE, ""));
+                      ScriptedInfo::sourceLocation(def));
         }
         catch(Error const &er)
         {
             LOG_RES_ERROR("%s: Error in timeline script: %s")
-                    << def.gets(ScriptedInfo::VAR_SOURCE)
+                    << ScriptedInfo::sourceLocation(def)
                     << er.asText();
         }
     }
@@ -194,6 +194,11 @@ void Scheduler::Clock::rewind(TimeDelta const &toTime)
 void Scheduler::Clock::advanceTime(TimeDelta const &elapsed)
 {
     d->advanceTime(elapsed);
+}
+
+bool Scheduler::Clock::isFinished() const
+{
+    return d->events.empty();
 }
 
 } // namespace de

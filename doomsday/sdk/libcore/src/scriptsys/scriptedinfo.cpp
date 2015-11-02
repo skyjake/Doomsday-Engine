@@ -21,6 +21,7 @@
 #include "de/Process"
 #include "de/ArrayValue"
 #include "de/RecordValue"
+#include "de/NumberValue"
 #include "de/App"
 
 #include <algorithm>
@@ -114,7 +115,7 @@ DENG2_PIMPL(ScriptedInfo)
                 if(!ns.has(varName))
                 {
                     // If it doesn't exist yet, make sure it does.
-                    ns.addRecord(varName);
+                    ns.addSubrecord(varName);
                 }
                 ns.add("self") = new RecordValue(ns.subrecord(varName));
                 needRemoveSelf = true;
@@ -294,7 +295,9 @@ DENG2_PIMPL(ScriptedInfo)
                     // Reset to the global namespace.
                     currentNamespace = "";
                 }
-                LOG_SCR_XVERBOSE("Namespace set to '%s' on line %i") << currentNamespace << block.lineNumber();
+                LOG_SCR_XVERBOSE("%s: Namespace set to '%s'")
+                        << block.sourceLocation()
+                        << currentNamespace;
             }
             else if(!block.name().isEmpty() || isScriptBlock)
             {
@@ -316,7 +319,7 @@ DENG2_PIMPL(ScriptedInfo)
                 // Create the block record if it doesn't exist.
                 if(!ns.has(varName))
                 {
-                    ns.addRecord(varName);
+                    ns.addSubrecord(varName);
                 }
                 Record &blockRecord = ns[varName];
 
@@ -324,7 +327,8 @@ DENG2_PIMPL(ScriptedInfo)
                 blockRecord.addText(VAR_BLOCK_TYPE, block.blockType());
 
                 // Also store source location in a special variable.
-                blockRecord.addText(VAR_SOURCE, block.sourceLocation());
+                blockRecord.addNumber(VAR_SOURCE, block.sourceLineId())
+                        .value<NumberValue>().setSemanticHints(NumberValue::Hex);
 
                 if(!isScriptBlock)
                 {
@@ -557,12 +561,9 @@ String ScriptedInfo::absolutePathInContext(Record const &context, String const &
 {
     if(context.has(VAR_SOURCE))
     {
-        String src = context[VAR_SOURCE].value<TextValue>();
-        // Exclude the possible line number following a colon.
-        int pos = src.lastIndexOf(':');
-        if(pos < 0) return src / relativePath;
-        src.truncate(pos);
-        return src.fileNamePath() / relativePath;
+        auto const sourceLocation = Info::sourceLineTable().sourcePathAndLineNumber(
+                    context.getui(VAR_SOURCE));
+        return sourceLocation.first.fileNamePath() / relativePath;
     }
     return relativePath;
 }
@@ -644,22 +645,23 @@ StringList ScriptedInfo::sortRecordsBySource(Record::Subrecords const &subrecs)
 
     std::sort(keys.begin(), keys.end(),
               [&subrecs] (String const &a, String const &b) -> bool {
-        String src1 = subrecs[a]->gets(VAR_SOURCE, ":0");
-        String src2 = subrecs[b]->gets(VAR_SOURCE, ":0");
-        DENG2_ASSERT(src1.contains(':'));
-        DENG2_ASSERT(src2.contains(':'));
-        QStringList parts1 = src1.split(':');
-        QStringList parts2 = src2.split(':');
-        if(!String(parts1.at(0)).compareWithoutCase(parts2.at(0)))
+        auto const src1 = Info::sourceLineTable().sourcePathAndLineNumber(subrecs[a]->getui(VAR_SOURCE, 0));
+        auto const src2 = Info::sourceLineTable().sourcePathAndLineNumber(subrecs[b]->getui(VAR_SOURCE, 0));
+        if(!String(src1.first).compareWithoutCase(src2.first))
         {
             // Path is the same, compare line numbers.
-            return parts1.at(1).toInt() < parts2.at(1).toInt();
+            return src1.second < src2.second;
         }
         // Just compare paths.
-        return String(parts1.at(0)).compareWithoutCase(parts2.at(0)) < 0;
+        return String(src1.first).compareWithoutCase(src2.first) < 0;
     });
 
     return keys;
+}
+
+String ScriptedInfo::sourceLocation(Record const &record)
+{
+    return Info::sourceLocation(record.getui(VAR_SOURCE, 0));
 }
 
 } // namespace de

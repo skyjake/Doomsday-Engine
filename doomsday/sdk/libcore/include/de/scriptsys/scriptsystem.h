@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_SCRIPTSYSTEM_H
@@ -101,14 +101,28 @@ public:
      * @param name       Name of the module to look for.
      * @param localPath  Which absolute path to use as the local folder (as import path "").
      *
-     * @return
+     * @return Found source file.
      */
     File const &findModuleSource(String const &name, String const &localPath = "");
 
     void timeChanged(Clock const &);
 
 public:
+    /**
+     * Returns a built-in Doomsday Script class from the Core module.
+     * @param name  Name of the class.
+     * @return Class record.
+     */
     static Record &builtInClass(String const &name);
+
+    /**
+     * Returns a built-in Doomsday Script class from the specified module.
+     * @param nativeModuleName  Name of the module where the class is located.
+     * @param className         Name of the class.
+     * @return Class record.
+     */
+    static Record &builtInClass(String const &nativeModuleName,
+                                String const &className);
 
     static ScriptSystem &get();
 

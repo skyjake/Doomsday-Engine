@@ -25,6 +25,8 @@
 class ClientPlayer;
 struct state_s;
 
+namespace render {
+
 /**
  * Animates the player weapon model.
  *
@@ -44,7 +46,7 @@ public:
      */
     bool hasModel() const;
 
-    de::ModelDrawable const *model() const;
+    Model const *model() const;
 
     StateAnimator &animator();
 
@@ -55,6 +57,8 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
+
+} // namespace render
 
 #endif // CLIENT_RENDER_PLAYERWEAPONANIMATOR_H
 

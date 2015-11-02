@@ -23,6 +23,8 @@
 #include <de/ModelDrawable>
 #include <de/GLProgram>
 
+namespace render {
+
 /**
  * State-based object animator for `ModelDrawable`s.
  *
@@ -35,17 +37,22 @@ public:
     DENG2_ERROR(DefinitionError);
 
 public:
-    StateAnimator(de::DotPath const &id, de::ModelDrawable const &model);
+    StateAnimator(de::DotPath const &id, Model const &model);
+
+    Model const &model() const;
 
     /**
-     * Sets the namespace of the animator's owner. Available as "self" in animation
-     * scripts.
+     * Sets the namespace of the animator's owner. Available as a variable in
+     * animation scripts.
      *
-     * @param names  Owner's namespace.
+     * @param names    Owner's namespace.
+     * @param varName  Name of the variable that points to @a names.
      */
-    void setOwnerNamespace(de::Record &names);
+    void setOwnerNamespace(de::Record &names, de::String const &varName);
 
     void triggerByState(de::String const &stateName);
+
+    void triggerDamage(int points);
 
     void advanceTime(de::TimeDelta const &elapsed);
 
@@ -53,30 +60,21 @@ public:
 
     de::ModelDrawable::Appearance const &appearance() const;
 
-    enum BindOperation { Bind, Unbind };
-
     /**
-     * Binds or unbinds uniforms that apply to all rendering passes.
+     * Returns the Doomsday Script namespace of the animator.
      *
-     * @param program    Program where bindings are made.
-     * @param operation  Bind or unbind.
-     */
-    void bindUniforms(de::GLProgram &program, BindOperation operation) const;
-
-    /**
-     * Binds or unbinds uniforms that apply to a single rendering pass.
+     * Global constants:
+     * - `ID` (Text): asset identifier.
+     * - `ASSET` (Record): asset metadata.
      *
-     * @param program    Program where bindings are made.
-     * @param passName   Name of the rendering pass. The render variables are
-     *                   named, e.g., "render.(passName).uName".
-     * @param operation  Bind or unbind.
+     * @return Namespace record.
      */
-    void bindPassUniforms(de::GLProgram &program,
-                          de::String const &passName,
-                          BindOperation operation) const;
+    de::Record const &names() const;
 
 private:
     DENG2_PRIVATE(d)
 };
+
+} // namespace render
 
 #endif // DENG_CLIENT_RENDER_STATEANIMATOR_H

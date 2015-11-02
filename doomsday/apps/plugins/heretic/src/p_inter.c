@@ -1566,12 +1566,8 @@ int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         ST_HUDUnHide(player - players, HUE_ON_DAMAGE);
     }
 
-    // How about some particles, yes?
-    // Only works when both target and inflictor are real mobjs.
-    Mobj_SpawnDamageParticleGen(target, inflictor, damage);
+    Mobj_InflictDamage(target, inflictor, damage);
 
-    // Do the damage.
-    target->health -= damage;
     if(target->health > 0)
     {
         // Still alive, phew!

@@ -115,16 +115,13 @@ struct ThinkerList
     }
 };
 
-typedef QHash<thid_t, mobj_t *> MobjHash;
-
 DENG2_PIMPL(Thinkers)
 {
     dint idtable[2048];     ///< 65536 bits telling which IDs are in use.
     dushort iddealer = 0;
 
     QList<ThinkerList *> lists;
-
-    MobjHash mobjIdLookup;  ///< public only
+    QHash<thid_t, mobj_t *> mobjIdLookup;  ///< public only
 
     bool inited = false;
 
@@ -208,7 +205,7 @@ void Thinkers::setMobjId(thid_t id, bool inUse)
 
 struct mobj_s *Thinkers::mobjById(dint id)
 {
-    MobjHash::const_iterator found = d->mobjIdLookup.constFind(id);
+    auto found = d->mobjIdLookup.constFind(id);
     if(found != d->mobjIdLookup.constEnd())
     {
         return found.value();
@@ -432,7 +429,12 @@ void Thinker_InitPrivateData(thinker_t *th)
         th->d = new ThinkerData;
     }
 
-    if(th->d) THINKER_DATA(*th, ThinkerData).setThinker(th);
+    if(th->d)
+    {
+        auto &thinkerData = THINKER_DATA(*th, ThinkerData);
+        thinkerData.setThinker(th);
+        thinkerData.initBindings();
+    }
 }
 
 /**

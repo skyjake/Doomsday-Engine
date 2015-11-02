@@ -352,7 +352,7 @@ void Mobj_SpawnParticleGen(mobj_t *source, ded_ptcgen_t const *def)
 }
 
 #undef Mobj_SpawnDamageParticleGen
-DENG_EXTERN_C void Mobj_SpawnDamageParticleGen(mobj_t *mo, mobj_t *inflictor, int amount)
+DENG_EXTERN_C void Mobj_SpawnDamageParticleGen(mobj_t const *mo, mobj_t const *inflictor, int amount)
 {
 #ifdef __CLIENT__
     if(!mo || !inflictor || amount <= 0) return;

@@ -17,7 +17,7 @@
  */
 
 #include "de/RecordAccessor"
-#include "de/Record"
+#include "de/RecordValue"
 
 namespace de {
 
@@ -117,6 +117,11 @@ String RecordAccessor::gets(String const &name, String const &defaultValue) cons
 ArrayValue const &RecordAccessor::geta(String const &name) const
 {
     return getAs<ArrayValue>(name);
+}
+
+RecordValue const &RecordAccessor::getr(String const &name) const
+{
+    return getAs<RecordValue>(name);
 }
 
 Record const &RecordAccessor::subrecord(String const &name) const

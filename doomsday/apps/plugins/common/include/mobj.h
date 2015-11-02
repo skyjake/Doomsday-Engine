@@ -214,6 +214,8 @@ mobj_t *Mobj_LaunchMissileAtAngle (mobj_t *mob, mobj_t *missile, angle_t angle, 
 mobj_t *Mobj_LaunchMissile2(mobj_t *mob, mobj_t *missile, coord_t const targetPos[3], coord_t const sourcePos[3], coord_t extraMomZ);
 mobj_t *Mobj_LaunchMissile (mobj_t *mob, mobj_t *missile, coord_t const targetPos[3], coord_t const sourcePos[3]/*, coord_t extraMomZ = 0*/);
 
+void Mobj_InflictDamage(mobj_t *mob, mobj_t const *inflictor, int damage);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif

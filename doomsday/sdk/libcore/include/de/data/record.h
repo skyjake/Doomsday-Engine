@@ -70,6 +70,11 @@ public:
     /// Name of the special variable that specifies super records.
     static String const VAR_SUPER;
 
+    /// Name of the special variable that identifies the source file.
+    static String const VAR_FILE;
+
+    static String const VAR_NATIVE_SELF;
+
     typedef QMap<String, Variable *> Members;
     typedef QMap<String, Record *> Subrecords;
     typedef std::pair<String, String> KeyValue;
@@ -156,8 +161,20 @@ public:
 
     /**
      * Determines if the record contains a subrecord named @a subrecordName.
+     * Subrecords are owned by this record.
      */
     bool hasSubrecord(String const &subrecordName) const;
+
+    /**
+     * Determines if the record contains a variable @a recordName that
+     * references or owns a record. Records can be descended into with the
+     * member (.) notation.
+     *
+     * @param recordName  Variable name.
+     *
+     * @return @c true if the variable points to a record.
+     */
+    bool hasRecord(String const &recordName) const;
 
     /**
      * Adds a new variable to the record.
@@ -300,7 +317,7 @@ public:
      *
      * @return  The new subrecord.
      */
-    Record &addRecord(String const &name);
+    Record &addSubrecord(String const &name);
 
     /**
      * Removes a subrecord from the record.
@@ -450,6 +467,14 @@ public:
     void addSuperRecord(Value *superValue);
 
     /**
+     * Adds a new record to be used as a superclass of this record.
+     *
+     * @param superRecord  Record to use as super record. A new RecordValue is
+     *                     created to refer to this record.
+     */
+    void addSuperRecord(Record const &superRecord);
+
+    /**
      * Adds a new native function to the record according to the specification.
      *
      * @param spec  Native function specification.
@@ -460,7 +485,7 @@ public:
 
     /**
      * Looks up the record that contains the variable referred to be @a name.
-     * If @a name contains no '.' characters, this always returns this record.
+     * If @a name contains no '.' characters, always returns this record.
      *
      * @param name  Variable name.
      *

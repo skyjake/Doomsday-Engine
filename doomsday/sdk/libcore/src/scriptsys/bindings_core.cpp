@@ -151,7 +151,7 @@ void initCoreModule(Binder &binder, Record &coreModule)
 {
     // Dictionary
     {
-        Record &dict = coreModule.addRecord("Dictionary");
+        Record &dict = coreModule.addSubrecord("Dictionary");
         binder.init(dict)
                 << DENG2_FUNC_NOARG(Dictionary_Keys, "keys")
                 << DENG2_FUNC_NOARG(Dictionary_Values, "values");
@@ -159,7 +159,7 @@ void initCoreModule(Binder &binder, Record &coreModule)
 
     // String
     {
-        Record &str = coreModule.addRecord("String");
+        Record &str = coreModule.addSubrecord("String");
         binder.init(str)
                 << DENG2_FUNC_NOARG(String_Upper, "upper")
                 << DENG2_FUNC_NOARG(String_Lower, "lower")
@@ -171,14 +171,14 @@ void initCoreModule(Binder &binder, Record &coreModule)
 
     // Path
     {
-        Record &path = coreModule.addRecord("Path");
+        Record &path = coreModule.addSubrecord("Path");
         binder.init(path)
                 << DENG2_FUNC(Path_WithoutFileName, "withoutFileName", "path");
     }
 
     // File
     {
-        Record &file = coreModule.addRecord("File");
+        Record &file = coreModule.addSubrecord("File");
         binder.init(file)
                 << DENG2_FUNC      (File_Locate, "locate", "relativePath")
                 << DENG2_FUNC_NOARG(File_Read, "read")
@@ -194,7 +194,7 @@ void initCoreModule(Binder &binder, Record &coreModule)
         Function::Defaults setValueFromArgs;
         setValueFromArgs["delay"] = new NumberValue(0.0);
 
-        Record &anim = coreModule.addRecord("Animation");
+        Record &anim = coreModule.addSubrecord("Animation");
         binder.init(anim)
                 << DENG2_FUNC_NOARG(Animation_Value, "value")
                 << DENG2_FUNC_NOARG(Animation_Target, "target")

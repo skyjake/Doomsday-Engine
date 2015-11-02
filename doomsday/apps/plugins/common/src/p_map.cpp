@@ -2671,7 +2671,7 @@ static int PIT_ChangeSector(mobj_t *thing, void *context)
         // Likely a remote object we don't know enough about.
         return false;
     }
-    
+
     // Skip mobjs that aren't blocklinked (supposedly immaterial).
     if(thing->info->flags & MF_NOBLOCKMAP)
     {
@@ -2895,6 +2895,24 @@ struct pit_checkonmobjz_params_t
     mobj_t *mountMobj;
 };
 
+struct SavedPhysicalState
+{
+    coord_t origin[3];
+    coord_t mom[3];
+
+    SavedPhysicalState(mobj_t const *mo)
+    {
+        memcpy(origin, mo->origin, sizeof(origin));
+        memcpy(mom, mo->mom, sizeof(mom));
+    }
+
+    void restore(mobj_t *mo) const
+    {
+        memcpy(mo->origin, origin, sizeof(origin));
+        memcpy(mo->mom, mom, sizeof(mom));
+    }
+};
+
 /// @return  @c false= Continue iteration.
 static int PIT_CheckOnMobjZ(mobj_t *cand, void *context)
 {
@@ -2957,12 +2975,8 @@ mobj_t *P_CheckOnMobj(mobj_t *mo)
     // will interact with (cl)mobjs.
     if(Mobj_IsPlayerClMobj(mo)) return 0;
 
-    /**
-     * Fake the zmovement so that we can check if a move is legal.
-     *
-     * @todo Do this properly! Consolidate with how jDoom/jHeretic do on-mobj checks?
-     */
-    ThinkerT<mobj_t> oldMo(*mo); // Save the old mobj before the fake z movement.
+    // Save physical state so we can undo afterwards -- this is only a check.
+    SavedPhysicalState savedState(mo);
 
     // Adjust Z-origin.
     mo->origin[VZ] += mo->mom[MZ];
@@ -3080,16 +3094,12 @@ mobj_t *P_CheckOnMobj(mobj_t *mo)
         VALIDCOUNT++;
         if(Mobj_BoxIterator(&aaBox, PIT_CheckOnMobjZ, &parm))
         {
-            // Restore the mobj back to its previous state.
-            oldMo.putInto(*mo);
-
+            savedState.restore(mo);
             return parm.mountMobj;
         }
     }
 
-    // Restore the mobj back to its previous state.
-    oldMo.putInto(*mo);
-
+    savedState.restore(mo);
     return 0;
 }
 

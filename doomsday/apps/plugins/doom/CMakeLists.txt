@@ -7,7 +7,10 @@ set (DENG_ENABLE_PK3S ON) # uses the legacy libdoom.pk3
 include (../PluginConfig.cmake)
 include (../common/Common.cmake)
 
-add_definitions (-D__JDOOM__)
+add_definitions (
+    -D__JDOOM__
+    -DLIBDOOMSDAY_CUSTOM_MOBJ
+)
 
 include_directories (include)
 file (GLOB_RECURSE SOURCES src/*.c src/*.cpp include/*.h)

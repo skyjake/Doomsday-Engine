@@ -67,22 +67,21 @@ void X_DestroyLUTs(void)
 void C_DECL A_PotteryExplode(mobj_t* actor)
 {
     int i, maxBits = (P_Random() & 3) + 3;
+    mobj_t* potteryBit;
 
     for(i = 0; i < maxBits; ++i)
     {
-        mobj_t* mo;
-
-        if((mo = P_SpawnMobj(MT_POTTERYBIT1, actor->origin, P_Random() << 24, 0)))
+        if((potteryBit = P_SpawnMobj(MT_POTTERYBIT1, actor->origin, P_Random() << 24, 0)))
         {
-            P_MobjChangeState(mo, P_GetState(mo->type, SN_SPAWN) + (P_Random() % 5));
+            P_MobjChangeState(potteryBit, P_GetState(potteryBit->type, SN_SPAWN) + (P_Random() % 5));
 
-            mo->mom[MZ] = FIX2FLT(((P_Random() & 7) + 5) * (3 * FRACUNIT / 4));
-            mo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 10);
-            mo->mom[MY] = FIX2FLT((P_Random() - P_Random()) << 10);
+            potteryBit->mom[MZ] = FIX2FLT(((P_Random() & 7) + 5) * (3 * FRACUNIT / 4));
+            potteryBit->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 10);
+            potteryBit->mom[MY] = FIX2FLT((P_Random() - P_Random()) << 10);
         }
     }
 
-    S_StartSound(SFX_POTTERY_EXPLODE, actor);
+    S_StartSound(SFX_POTTERY_EXPLODE, potteryBit);
 
     if(actor->args[0])
     {
@@ -826,10 +825,10 @@ void C_DECL A_ThrustImpale(mobj_t *actor)
 void C_DECL A_SoAExplode(mobj_t* actor)
 {
     int i;
+    mobj_t* chunk = NULL;
 
     for(i = 0; i < 10; ++i)
     {
-        mobj_t* mo;
         coord_t pos[3];
 
         pos[VX] = actor->origin[VX];
@@ -840,13 +839,13 @@ void C_DECL A_SoAExplode(mobj_t* actor)
         pos[VY] += FIX2FLT((P_Random() - 128) << 12);
         pos[VZ] += FIX2FLT(P_Random() * FLT2FIX(actor->height) / 256);
 
-        if((mo = P_SpawnMobj(MT_ZARMORCHUNK, pos, P_Random() << 24, 0)))
+        if((chunk = P_SpawnMobj(MT_ZARMORCHUNK, pos, P_Random() << 24, 0)))
         {
-            P_MobjChangeState(mo, P_GetState(mo->type, SN_SPAWN) + i);
+            P_MobjChangeState(chunk, P_GetState(chunk->type, SN_SPAWN) + i);
 
-            mo->mom[MZ] = ((P_Random() & 7) + 5);
-            mo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 10);
-            mo->mom[MY] = FIX2FLT((P_Random() - P_Random()) << 10);
+            chunk->mom[MZ] = ((P_Random() & 7) + 5);
+            chunk->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 10);
+            chunk->mom[MY] = FIX2FLT((P_Random() - P_Random()) << 10);
         }
     }
 
@@ -863,7 +862,7 @@ void C_DECL A_SoAExplode(mobj_t* actor)
         }
     }
 
-    S_StartSound(SFX_SUITOFARMOR_BREAK, actor);
+    S_StartSound(SFX_SUITOFARMOR_BREAK, chunk);
     P_MobjRemove(actor, false);
 }
 #if MSVC
