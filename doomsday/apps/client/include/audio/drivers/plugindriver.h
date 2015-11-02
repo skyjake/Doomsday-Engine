@@ -150,6 +150,7 @@ public:  //- Playback channels: ------------------------------------------------
 
         void update();
         void reset();
+        void suspend() override;
 
         bool format(Positioning positioning, de::dint bytesPer, de::dint rate);
         bool isValid() const;

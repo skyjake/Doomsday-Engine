@@ -30,7 +30,6 @@
 // Playback flags.
 #define SFXCF_NO_ORIGIN         ( 0x1 )  ///< The originator is a mystical emitter.
 #define SFXCF_NO_ATTENUATION    ( 0x2 )  ///< Play it very, very loud.
-#define SFXCF_NO_UPDATE         ( 0x4 )  ///< Channel update is skipped.
 
 namespace audio {
 
@@ -181,6 +180,11 @@ public:
      * @todo Logically distinct from @ref stop() ? -ds
      */
     virtual void reset() = 0;
+
+    /**
+     * Suspend further updates to the channel if playing and wait until further notice.
+     */
+    virtual void suspend() = 0;
 
     /**
      * @return  @c true if the (re)format completed successfully (equivalent to calling

@@ -969,7 +969,8 @@ DENG2_PIMPL(System)
             {
                 // The emitter might get destroyed...
                 ch.setEmitter(nullptr);
-                ch.setFlags(ch.flags() | (SFXCF_NO_UPDATE | SFXCF_NO_ORIGIN));
+                ch.setFlags(ch.flags() | SFXCF_NO_ORIGIN);
+                ch.suspend();
                 return LoopContinue;
             }
 
@@ -1416,7 +1417,7 @@ DENG2_PIMPL(System)
 
         // The sound may need to be reformatted.
         channel.format(positioning, sample.bytesPer, sample.rate);
-        channel.setFlags(channel.flags() & ~(SFXCF_NO_ORIGIN | SFXCF_NO_ATTENUATION | SFXCF_NO_UPDATE));
+        channel.setFlags(channel.flags() & ~(SFXCF_NO_ORIGIN | SFXCF_NO_ATTENUATION));
         channel.setVolume(volume);
         channel.setFrequency(frequency);
         if(!emitter && !origin)

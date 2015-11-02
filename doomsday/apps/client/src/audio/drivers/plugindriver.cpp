@@ -548,6 +548,9 @@ void PluginDriver::SoundChannel::play(PlayingMode mode)
     default: break;
     }
 
+    // Updating the channel should resume (presumably).
+    d->noUpdate = false;
+
     // When playing on a sound stage with a Listener, we may need to update the channel
     // dynamically during playback.
     d->observeListener(&System::get().worldStage().listener());
@@ -607,6 +610,12 @@ void PluginDriver::SoundChannel::resume()
     // Never paused...
 }
 
+void PluginDriver::SoundChannel::suspend()
+{
+    if(!isPlaying()) return;
+    d->noUpdate = true;
+}
+
 SoundEmitter *PluginDriver::SoundChannel::emitter() const
 {
     return d->emitter.tracking;
@@ -659,12 +668,8 @@ Channel &PluginDriver::SoundChannel::setVolume(dfloat newVolume)
 dint PluginDriver::SoundChannel::flags() const
 {
     dint flags = 0;
-
     if(d->emitter.noOrigin)            flags |= SFXCF_NO_ORIGIN;
     if(d->emitter.noVolumeAttenuation) flags |= SFXCF_NO_ATTENUATION;
-
-    if(d->noUpdate) flags |= SFXCF_NO_UPDATE;
-
     return flags;
 }
 
@@ -672,8 +677,6 @@ void PluginDriver::SoundChannel::setFlags(dint flags)
 {
     d->emitter.noOrigin            = CPP_BOOL(flags & SFXCF_NO_ORIGIN);
     d->emitter.noVolumeAttenuation = CPP_BOOL(flags & SFXCF_NO_ATTENUATION);
-
-    d->noUpdate = CPP_BOOL(flags & SFXCF_NO_UPDATE);
 }
 
 void PluginDriver::SoundChannel::update()

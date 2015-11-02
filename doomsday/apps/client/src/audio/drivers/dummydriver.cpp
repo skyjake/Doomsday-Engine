@@ -274,6 +274,9 @@ void DummyDriver::SoundChannel::play(PlayingMode mode)
         throw Error("DummyDriver::SoundChannel", "No sample is bound");
     }
 
+    // Updating the channel should resume (presumably).
+    d->noUpdate = false;
+
     // Flush deferred property value changes to the assigned data buffer.
     d->writeDeferredProperties(true/*force*/);
 
@@ -307,6 +310,12 @@ void DummyDriver::SoundChannel::pause()
 void DummyDriver::SoundChannel::resume()
 {
     // Never paused...
+}
+
+void DummyDriver::SoundChannel::suspend()
+{
+    if(!isPlaying()) return;
+    d->noUpdate = true;
 }
 
 SoundEmitter *DummyDriver::SoundChannel::emitter() const
@@ -361,12 +370,8 @@ Channel &DummyDriver::SoundChannel::setVolume(dfloat newVolume)
 dint DummyDriver::SoundChannel::flags() const
 {
     dint flags = 0;
-
     if(d->emitter.noOrigin)            flags |= SFXCF_NO_ORIGIN;
     if(d->emitter.noVolumeAttenuation) flags |= SFXCF_NO_ATTENUATION;
-
-    if(d->noUpdate) flags |= SFXCF_NO_UPDATE;
-
     return flags;
 }
 
@@ -374,8 +379,6 @@ void DummyDriver::SoundChannel::setFlags(dint flags)
 {
     d->emitter.noOrigin            = CPP_BOOL(flags & SFXCF_NO_ORIGIN);
     d->emitter.noVolumeAttenuation = CPP_BOOL(flags & SFXCF_NO_ATTENUATION);
-
-    d->noUpdate = CPP_BOOL(flags & SFXCF_NO_UPDATE);
 }
 
 void DummyDriver::SoundChannel::update()

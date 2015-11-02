@@ -200,13 +200,15 @@ DENG2_PIMPL_NOREF(SdlMixerDriver::SoundChannel)
 , DENG2_OBSERVES(System, FrameEnds)
 {
     dint flags = 0;                   ///< SFXCF_* flags.
-    dfloat frequency = 0;             ///< Frequency adjustment: 1.0 is normal.
-    dfloat volume = 0;                ///< Sound volume: 1.0 is max.
+
+    bool noUpdate  = false;           ///< @c true if skipping updates (when stopped, before deletion).
+    dint startTime = 0;               ///< When the assigned sound sample was last started (Ticks).
+
+    dfloat frequency = 1;             ///< Frequency adjustment: 1.0 is normal.
+    dfloat volume    = 1;             ///< Sound volume: 1.0 is max.
 
     SoundEmitter *emitter = nullptr;  ///< SoundEmitter for the sound, if any (not owned).
     Vector3d origin;                  ///< Emit from here (synced with emitter).
-
-    dint startTime = 0;               ///< When the assigned sound sample was last started (Ticks).
 
     sfxbuffer_t buffer;
     bool valid = false;               ///< Set to @c true when in the valid state.
@@ -256,7 +258,7 @@ DENG2_PIMPL_NOREF(SdlMixerDriver::SoundChannel)
         DENG2_ASSERT(valid);
 
         // Disabled?
-        if(flags & SFXCF_NO_UPDATE) return;
+        if(noUpdate) return;
 
         // Updates are only necessary during playback.
         if(!isPlaying(buffer) && !force) return;
@@ -561,6 +563,9 @@ void SdlMixerDriver::SoundChannel::play(PlayingMode mode)
     default: break;
     }
 
+    // Updating the channel should resume (presumably).
+    d->noUpdate = false;
+
     // Flush deferred property value changes to the assigned data buffer.
     d->updateBuffer(true/*force*/);
 
@@ -604,6 +609,12 @@ void SdlMixerDriver::SoundChannel::resume()
 {
     if(!isPlaying()) return;
     Mix_Resume(d->buffer.cursor);
+}
+
+void SdlMixerDriver::SoundChannel::suspend()
+{
+    if(!isPlaying()) return;
+    d->noUpdate = true;
 }
 
 SoundEmitter *SdlMixerDriver::SoundChannel::emitter() const
