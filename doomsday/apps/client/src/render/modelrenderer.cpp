@@ -54,7 +54,7 @@ static String const DEF_BLENDFUNC   ("blendFunc");
 static String const DEF_BLENDOP     ("blendOp");
 static String const DEF_TIMELINE    ("timeline");
 
-static String const SHADER_DEFAULT  ("model.skeletal.normal_specular_emission");
+static String const SHADER_DEFAULT  ("model.skeletal.generic");
 static String const MATERIAL_DEFAULT("default");
 
 static Atlas::Size const MAX_ATLAS_SIZE(8192, 8192);
