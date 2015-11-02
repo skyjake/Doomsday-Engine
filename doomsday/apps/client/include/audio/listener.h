@@ -93,6 +93,14 @@ public:
     };
 
     /**
+     * The priority of a sound is affected by distance, volume and age. These points are
+     * used to determine which currently playing Channel(s) can be overridden with new
+     * sounds. Zero is the lowest priority.
+     */
+    de::dfloat rateSoundPriority(de::dfloat volume, SoundEmitter const *emitter,
+        de::ddouble const *origin, de::dint startTime);
+
+    /**
      * Returns the orientation of the listener in world space as a 2D vector (0:yaw, 1:pitch),
      * where (0, 0) yields front=(1, 0, 0) and up=(0, 0, 1).
      *

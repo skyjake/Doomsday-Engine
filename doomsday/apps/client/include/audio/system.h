@@ -246,8 +246,8 @@ public:  //- Sound playback: ---------------------------------------------------
      *
      * @param stageId          Unique identifier of the sound Stage on which to play.
      * @param soundIdAndFlags  ID of the sound to play. Flags can be included (DDSF_*).
-     * @param emitter          WorldStage SoundEmitter (originator). May be @c nullptr.
-     * @param origin           WorldStage space coordinates where the sound originates.
+     * @param emitter          Soundstage SoundEmitter (originator). May be @c nullptr.
+     * @param origin           Soundstage space coordinates where the sound originates.
      *                         May be @c nullptr.
      * @param volume           Volume for the sound [0...1] (not final; will be affected
      *                         by the global @ref soundVolume() factor and if applicable,
@@ -258,14 +258,14 @@ public:  //- Sound playback: ---------------------------------------------------
      * @see soundIsPlaying(), stopSound()
      */
     bool playSound(StageId stageId, de::dint soundIdAndFlags, SoundEmitter *emitter,
-        coord_t const *origin, de::dfloat volume = 1 /*max volume*/);
+        de::ddouble const *origin, de::dfloat volume = 1 /*max volume*/);
 
     /**
      * Stop playing sound(s) in the specified @a soundStage.
      *
      * @param stageId  Unique identifier of the sound Stage on which to stop sounds.
      * @param soundId  Unique identifier of the sound(s) to stop.
-     * @param emitter  WorldStage SoundEmitter (originator). May be @c nullptr.
+     * @param emitter  Soundstage SoundEmitter (originator). May be @c nullptr.
      * @param flags    @ref soundStopFlags.
      *
      * @see soundIsPlaying(), stopSound()
@@ -349,6 +349,6 @@ private:
 
 }  // namespace audio
 
-extern int sfxBits, sfxRate;
+extern de::dint sfxBits, sfxRate;
 
 #endif  // CLIENT_AUDIO_SYSTEM_H

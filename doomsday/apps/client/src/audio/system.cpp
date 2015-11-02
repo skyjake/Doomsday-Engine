@@ -842,10 +842,10 @@ DENG2_PIMPL(System)
         return count;
     }
 
-    void getSoundChannelPriorities(Listener *listener, QList<dfloat> &prios) const
+    void getSoundChannelPriorities(QList<dfloat> &prios) const
     {
         dint idx = 0;
-        (*mixer)["fx"].forAllChannels([&listener, &prios] (Channel &base)
+        (*mixer)["fx"].forAllChannels([this, &prios] (Channel &base)
         {
             auto &ch = base.as<SoundChannel>();
             if(!ch.isPlaying())
@@ -861,8 +861,10 @@ DENG2_PIMPL(System)
                     origin = vec;
                 }
 
-                prios.append(Sound::ratePriority(ch.volume(), nullptr/*emitter*/, origin,
-                                                 ch.startTime(), listener));
+                /// @todo Use Listener of the Channel. -ds
+                Listener &listener = self.worldStage().listener();
+                prios.append(listener.rateSoundPriority(ch.volume(), nullptr/*emitter*/,
+                                                        origin, ch.startTime()));
             }
             return LoopContinue;
         });
@@ -1261,10 +1263,11 @@ DENG2_PIMPL(System)
             }
         }
 
+        Listener &listener = worldStage.listener();
+
         // Determine the final attributes of the sound to be played.
         Positioning const positioning = (sfx3D && (emitter || origin)) ? AbsolutePositioning : StereoPositioning;
-        dfloat const priority         = Sound::ratePriority(volume, emitter, origin,
-                                                            Timer_Ticks(), &worldStage.listener());
+        dfloat const priority         = listener.rateSoundPriority(volume, emitter, origin, Timer_Ticks());
 
         dfloat lowPrio = 0;
 
@@ -1275,7 +1278,7 @@ DENG2_PIMPL(System)
         if(soundDef.channels > 0)
         {
             // The decision to stop channels is based on priorities.
-            getSoundChannelPriorities(&worldStage.listener(), channelPrios);
+            getSoundChannelPriorities(channelPrios);
 
             dint count = countSoundChannelsPlaying(sample.soundId);
             while(count >= soundDef.channels)
@@ -1354,7 +1357,7 @@ DENG2_PIMPL(System)
 
             if(channelPrios.isEmpty())
             {
-                getSoundChannelPriorities(&worldStage.listener(), channelPrios);
+                getSoundChannelPriorities(channelPrios);
             }
 
             // All channels with a priority less than or equal to ours can be stopped.
@@ -1835,7 +1838,7 @@ bool System::soundIsPlaying(StageId stageId, dint soundId, SoundEmitter *emitter
 }
 
 bool System::playSound(StageId stageId, dint soundIdAndFlags, SoundEmitter *emitter,
-    coord_t const *origin,  dfloat volume)
+    de::ddouble const *origin,  dfloat volume)
 {
     LOG_AS("audio::System");
 

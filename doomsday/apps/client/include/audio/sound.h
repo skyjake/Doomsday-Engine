@@ -26,8 +26,6 @@
 
 namespace audio {
 
-class Listener;
-
 /**
  * POD structure for representing a logical sound.
  * @ingroup audio
@@ -45,18 +43,9 @@ struct Sound
     /**
      * Returns @c true if the sound is currently playing relative to @a nowTime.
      */
-    inline bool isPlaying(de::duint nowTime) const
-    {
+    inline bool isPlaying(de::duint nowTime) const {
         return (looping || endTime > nowTime);
     }
-
-    /**
-     * The priority of a sound is affected by distance, volume and age. These points are
-     * used to determine which currently playing Channel(s) can be overridden with new
-     * sounds. Zero is the lowest priority.
-     */
-    static de::dfloat ratePriority(de::dfloat volume, SoundEmitter const *emitter,
-        de::ddouble const *origin, de::dint startTime, Listener *listener = nullptr);
 };
 
 }  // namespace audio
