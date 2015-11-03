@@ -100,9 +100,46 @@ public:
     virtual void resume() = 0;
 
     /**
-     * Change the volume factor to @a newVolume.
+     * Change the frequency/pitch modifier (factor) to @a newVolume. Normally 1.0
+     *
+     * @note Not all audio libraries support changing the frequency dynamically, in which
+     * case any changes will be ignored.
+     */
+    virtual Channel &setFrequency(de::dfloat newFrequency) = 0;
+
+    /**
+     * Change the current Positioning model to @a newPositioning.
+     *
+     * @note Not all positioning models will make sense for all channels. For example, if
+     * a Channel is specialized for playing music it may not be possible to play it with
+     * 3D positioing and/or Environment effects.
+     *
+     * @note Some audio libraries use different playback buffers that are specialized for
+     * a certain model, in which case it may be necessary to reallocate/replace the backing
+     * buffer in order to effect this change (e.g., Direct Sound). Consequently the user
+     * should try to avoid changing the models dynamically, when/where possible.
+     */
+    //virtual Channel &setPositioning(Positioning newPositioning) = 0;
+
+    /**
+     * Change the volume modifier (factor) to @a newVolume. Maximum is 1.0
      */
     virtual Channel &setVolume(de::dfloat newVolume) = 0;
+
+    /**
+     * Returns the current frequency modifier (factor).
+     */
+    virtual de::dfloat frequency() const = 0;
+
+    /**
+     * Returns the current Positioning model.
+     */
+    virtual Positioning positioning() const = 0;
+
+    /**
+     * Returns the current volume modifier (factor).
+     */
+    virtual de::dfloat volume() const = 0;
 
     /**
      * Returns @c true if the channel supports sources with "any" sampler rate; otherwise
@@ -156,14 +193,6 @@ class Sound;
 
 class SoundChannel : public Channel
 {
-public:  //- Sound properties: ----------------------------------------------------------
-
-    virtual de::dfloat frequency() const = 0;
-    virtual Positioning positioning() const = 0;
-    virtual de::dfloat volume() const = 0;
-
-    virtual SoundChannel &setFrequency(de::dfloat newFrequency) = 0;
-
 public:
     /**
      * Returns the logical Sound being played if currently playing (may return @c nullptr).

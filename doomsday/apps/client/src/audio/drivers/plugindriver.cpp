@@ -54,11 +54,36 @@ PluginDriver::CdChannel::~CdChannel()
     stop();
 }
 
-Channel &PluginDriver::CdChannel::setVolume(dfloat newVolume)
+PlayingMode PluginDriver::CdChannel::mode() const
 {
-    DENG2_ASSERT(_driver->iCd().gen.Set);
-    _driver->iCd().gen.Set(MUSIP_VOLUME, newVolume);
-    return *this;
+    DENG2_ASSERT(_driver->iCd().gen.Get);
+    if(!_driver->iCd().gen.Get(MUSIP_PLAYING, nullptr/*unused*/))
+        return NotPlaying;
+    return _mode;
+}
+
+void PluginDriver::CdChannel::play(PlayingMode mode)
+{
+    if(isPlaying()) return;
+    if(mode == NotPlaying) return;
+
+    if(_track >= 0)
+    {
+        DENG2_ASSERT(_driver->iCd().Play);
+        if(_driver->iCd().Play(_track, dint(mode == Looping)))
+        {
+            _mode = mode;
+            return;
+        }
+        throw Error("PluginDriver::CdChannel::play", "Failed playing track #" + String::number(_track));
+    }
+    throw Error("PluginDriver::CdChannel::play", "No track bound");
+}
+
+void PluginDriver::CdChannel::stop()
+{
+    DENG2_ASSERT(_driver->iCd().gen.Stop);
+    _driver->iCd().gen.Stop();
 }
 
 bool PluginDriver::CdChannel::isPaused() const
@@ -87,36 +112,39 @@ void PluginDriver::CdChannel::resume()
     _driver->iCd().gen.Pause(false);
 }
 
-void PluginDriver::CdChannel::stop()
+Channel &PluginDriver::CdChannel::setFrequency(dfloat newFrequency)
 {
-    DENG2_ASSERT(_driver->iCd().gen.Stop);
-    _driver->iCd().gen.Stop();
+    // Not supported.
+    return *this;
 }
 
-PlayingMode PluginDriver::CdChannel::mode() const
+Channel &PluginDriver::CdChannel::setVolume(dfloat newVolume)
+{
+    DENG2_ASSERT(_driver->iCd().gen.Set);
+    _driver->iCd().gen.Set(MUSIP_VOLUME, newVolume);
+    return *this;
+}
+
+dfloat PluginDriver::CdChannel::frequency() const
+{
+    return 1;  // Always.
+}
+
+Positioning PluginDriver::CdChannel::positioning() const
+{
+    return StereoPositioning;  // Always.
+}
+
+dfloat PluginDriver::CdChannel::volume() const
 {
     DENG2_ASSERT(_driver->iCd().gen.Get);
-    if(!_driver->iCd().gen.Get(MUSIP_PLAYING, nullptr/*unused*/))
-        return NotPlaying;
-    return _mode;
-}
-
-void PluginDriver::CdChannel::play(PlayingMode mode)
-{
-    if(isPlaying()) return;
-    if(mode == NotPlaying) return;
-
-    if(_track >= 0)
+    dfloat newVolume = 0;
+    if(_driver->iCd().gen.Get(MUSIP_VOLUME, &newVolume))
     {
-        DENG2_ASSERT(_driver->iCd().Play);
-        if(_driver->iCd().Play(_track, dint(mode == Looping)))
-        {
-            _mode = mode;
-            return;
-        }
-        throw Error("PluginDriver::CdChannel::play", "Failed playing track #" + String::number(_track));
+        return de::clamp<dfloat>(0, newVolume, 1);
     }
-    throw Error("PluginDriver::CdChannel::play", "No track bound");
+    LOGDEV_AUDIO_WARNING("PluginDriver::CdChannel::volume: Failed querying volume - returning 1.0");
+    return 1;
 }
 
 void PluginDriver::CdChannel::bindTrack(dint track)
@@ -134,46 +162,6 @@ PluginDriver::MusicChannel::MusicChannel(PluginDriver &driver)
 PluginDriver::MusicChannel::~MusicChannel()
 {
     stop();
-}
-
-Channel &PluginDriver::MusicChannel::setVolume(dfloat newVolume)
-{
-    DENG2_ASSERT(_driver->iMusic().gen.Set);
-    _driver->iMusic().gen.Set(MUSIP_VOLUME, newVolume);
-    return *this;
-}
-
-bool PluginDriver::MusicChannel::isPaused() const
-{
-    if(isPlaying())
-    {
-        dint result = 0;
-        DENG2_ASSERT(_driver->iMusic().gen.Get);
-        if(_driver->iMusic().gen.Get(MUSIP_PAUSED, &result))
-            return CPP_BOOL( result );
-    }
-    return false;
-}
-
-void PluginDriver::MusicChannel::pause()
-{
-    if(!isPlaying()) return;
-    DENG2_ASSERT(_driver->iMusic().gen.Pause);
-    _driver->iMusic().gen.Pause(true);
-}
-
-void PluginDriver::MusicChannel::resume()
-{
-    if(!isPlaying()) return;
-    DENG2_ASSERT(_driver->iMusic().gen.Pause);
-    _driver->iMusic().gen.Pause(false);
-}
-
-void PluginDriver::MusicChannel::stop()
-{
-    if(!isPlaying()) return;
-    DENG2_ASSERT(_driver->iMusic().gen.Stop);
-    _driver->iMusic().gen.Stop();
 }
 
 PlayingMode PluginDriver::MusicChannel::mode() const
@@ -210,6 +198,74 @@ void PluginDriver::MusicChannel::play(PlayingMode mode)
         }
         throw Error("PluginDriver::MusicChannel::play", "Failed playing buffered data");
     }
+}
+
+void PluginDriver::MusicChannel::stop()
+{
+    if(!isPlaying()) return;
+    DENG2_ASSERT(_driver->iMusic().gen.Stop);
+    _driver->iMusic().gen.Stop();
+}
+
+bool PluginDriver::MusicChannel::isPaused() const
+{
+    if(isPlaying())
+    {
+        dint result = 0;
+        DENG2_ASSERT(_driver->iMusic().gen.Get);
+        if(_driver->iMusic().gen.Get(MUSIP_PAUSED, &result))
+            return CPP_BOOL( result );
+    }
+    return false;
+}
+
+void PluginDriver::MusicChannel::pause()
+{
+    if(!isPlaying()) return;
+    DENG2_ASSERT(_driver->iMusic().gen.Pause);
+    _driver->iMusic().gen.Pause(true);
+}
+
+void PluginDriver::MusicChannel::resume()
+{
+    if(!isPlaying()) return;
+    DENG2_ASSERT(_driver->iMusic().gen.Pause);
+    _driver->iMusic().gen.Pause(false);
+}
+
+Channel &PluginDriver::MusicChannel::setFrequency(dfloat newFrequency)
+{
+    // Not supported.
+    return *this;
+}
+
+Channel &PluginDriver::MusicChannel::setVolume(dfloat newVolume)
+{
+    DENG2_ASSERT(_driver->iMusic().gen.Set);
+    _driver->iMusic().gen.Set(MUSIP_VOLUME, newVolume);
+    return *this;
+}
+
+dfloat PluginDriver::MusicChannel::frequency() const
+{
+    return 1;  // Always.
+}
+
+Positioning PluginDriver::MusicChannel::positioning() const
+{
+    return StereoPositioning;  // Always.
+}
+
+dfloat PluginDriver::MusicChannel::volume() const
+{
+    DENG2_ASSERT(_driver->iMusic().gen.Get);
+    dfloat volume = 0;
+    if(_driver->iMusic().gen.Get(MUSIP_VOLUME, &volume))
+    {
+        return de::clamp<dfloat>(0, volume, 1);
+    }
+    LOGDEV_AUDIO_WARNING("PluginDriver::MusicChannel::volume: Failed querying volume - returning 1.0");
+    return 1;
 }
 
 bool PluginDriver::MusicChannel::canPlayBuffer() const
@@ -325,6 +381,17 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundChannel)
         }
     }
 
+    /**
+     * Determines whether the channel is configured such that the soundstage Listener
+     * *is* the SoundEmitter.
+     */
+    bool listenerIsSoundEmitter() const
+    {
+        return listener
+               && getSound().emitter()
+               && getSound().emitter() == (ddmobj_base_t const *)getListener().trackedMapObject();
+    }
+
     inline ::audio::Sound &getSound() const
     {
         DENG2_ASSERT(sound != nullptr);
@@ -332,21 +399,12 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundChannel)
     }
 
     /**
-     * Determines whether the channel is configured such that the emitter *is* the listener.
-     */
-    bool emitterIsListener() const
-    {
-        return listener
-               && getSound().emitter()
-               && getSound().emitter() == (ddmobj_base_t const *)getListener().trackedMapObject();
-    }
-
-    /**
      * Determines whether the channel is configured to play an "originless" sound.
      */
     bool noOrigin() const
     {
-        return getSound().flags().testFlag(SoundFlag::NoOrigin) || emitterIsListener();
+        return getSound().flags().testFlag(SoundFlag::NoOrigin)
+               || listenerIsSoundEmitter();
     }
 
     /**
@@ -378,24 +436,26 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundChannel)
             // Volume is affected only by maxvol.
             driver.iSound().gen.Set(buf, SFXBP_VOLUME, volume * System::get().soundVolume() / 255.0f);
 
-            if(emitterIsListener())
+            // Update position.
+            if(listenerIsSoundEmitter())
             {
-                // Position relative to the listener.
+                // Relative to the Listener.
                 dfloat vec[] = { 0, 0, 0 };
                 driver.iSound().gen.Set (buf, SFXBP_RELATIVE_MODE, 1/*headRelative*/);
                 driver.iSound().gen.Setv(buf, SFXBP_POSITION, vec);
             }
             else
             {
-                // Position at the origin of the emitter.
+                // Use the absolute origin of the SoundEmitter.
                 dfloat vec[3]; getSound().origin().toVector3f().decompose(vec);
                 driver.iSound().gen.Set (buf, SFXBP_RELATIVE_MODE, 0/*absolute*/);
                 driver.iSound().gen.Setv(buf, SFXBP_POSITION, vec);
             }
 
-            // Update the emitter velocity.
-            if(getSound().emitterIsMoving() && !emitterIsListener())
+            // Update velocity.
+            if(getSound().emitterIsMoving() && !listenerIsSoundEmitter())
             {
+                // From the SoundEmitter.
                 dfloat vec[3]; getSound().velocity().toVector3f().decompose(vec);
                 driver.iSound().gen.Setv(buf, SFXBP_VELOCITY, vec);
             }
@@ -597,9 +657,16 @@ void PluginDriver::SoundChannel::suspend()
     d->noUpdate = true;
 }
 
-::audio::Sound *PluginDriver::SoundChannel::sound() const
+Channel &PluginDriver::SoundChannel::setFrequency(dfloat newFrequency)
 {
-    return isPlaying() ? &d->getSound() : nullptr;
+    d->frequency = newFrequency;  // Deferred until refresh.
+    return *this;
+}
+
+Channel &PluginDriver::SoundChannel::setVolume(dfloat newVolume)
+{
+    d->volume = newVolume;  // Deferred until refresh.
+    return *this;
 }
 
 dfloat PluginDriver::SoundChannel::frequency() const
@@ -617,16 +684,9 @@ dfloat PluginDriver::SoundChannel::volume() const
     return d->volume;
 }
 
-audio::SoundChannel &PluginDriver::SoundChannel::setFrequency(dfloat newFrequency)
+::audio::Sound *PluginDriver::SoundChannel::sound() const
 {
-    d->frequency = newFrequency;
-    return *this;
-}
-
-Channel &PluginDriver::SoundChannel::setVolume(dfloat newVolume)
-{
-    d->volume = newVolume;
-    return *this;
+    return isPlaying() ? &d->getSound() : nullptr;
 }
 
 void PluginDriver::SoundChannel::update()

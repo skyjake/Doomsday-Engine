@@ -55,7 +55,11 @@ public:  //- Playback Channels: ------------------------------------------------
         bool isPaused() const override;
         void pause() override;
         void resume() override;
-        Channel &setVolume(de::dfloat value) override;
+        Channel &setFrequency(de::dfloat newFrequency) override;
+        Channel &setVolume(de::dfloat newVolume) override;
+        de::dfloat frequency() const override;
+        Positioning positioning() const override;
+        de::dfloat volume() const override;
 
         void bindTrack(de::dint track);
 
@@ -64,9 +68,11 @@ public:  //- Playback Channels: ------------------------------------------------
         //friend class DummyDriver;
 
     private:
-        PlayingMode _mode = NotPlaying;
-        bool _paused      = false;
-        de::dint _track   = -1;
+        PlayingMode _mode     = NotPlaying;
+        bool _paused          = false;
+        de::dint _track       = -1;
+        de::dfloat _frequency = 1;
+        de::dfloat _volume    = 1;
     };
 
     class MusicChannel : public audio::MusicChannel
@@ -78,7 +84,11 @@ public:  //- Playback Channels: ------------------------------------------------
         bool isPaused() const override;
         void pause() override;
         void resume() override;
-        Channel &setVolume(de::dfloat value) override;
+        Channel &setFrequency(de::dfloat newFrequency) override;
+        Channel &setVolume(de::dfloat newVolume) override;
+        de::dfloat frequency() const override;
+        Positioning positioning() const override;
+        de::dfloat volume() const override;
 
         bool canPlayBuffer() const;
         void *songBuffer(de::duint length);
@@ -93,6 +103,8 @@ public:  //- Playback Channels: ------------------------------------------------
         PlayingMode _mode      = NotPlaying;
         bool _paused           = false;
         de::String _sourcePath;
+        de::dfloat _frequency  = 1;
+        de::dfloat _volume     = 1;
     };
 
     class SoundChannel : public audio::SoundChannel
@@ -104,15 +116,13 @@ public:  //- Playback Channels: ------------------------------------------------
         bool isPaused() const override;
         void pause() override;
         void resume() override;
+        Channel &setFrequency(de::dfloat newFrequency) override;
+        Channel &setVolume(de::dfloat newVolume) override;
+        de::dfloat frequency() const override;
+        Positioning positioning() const override;
+        de::dfloat volume() const override;
 
         ::audio::Sound *sound() const override;
-
-        de::dfloat frequency() const;
-        Positioning positioning() const;
-        de::dfloat volume() const;
-
-        audio::SoundChannel &setFrequency(de::dfloat newFrequency);
-        Channel             &setVolume(de::dfloat newVolume) override;
 
         void update();
         void reset();

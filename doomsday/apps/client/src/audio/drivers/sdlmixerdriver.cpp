@@ -97,36 +97,6 @@ static void releaseChannel(dint channel)
 SdlMixerDriver::MusicChannel::MusicChannel() : audio::MusicChannel()
 {}
 
-Channel &SdlMixerDriver::MusicChannel::setVolume(dfloat newVolume)
-{
-    Mix_VolumeMusic(dint( MIX_MAX_VOLUME * newVolume ));
-    return *this;
-}
-
-bool SdlMixerDriver::MusicChannel::isPaused() const
-{
-    if(!isPlaying()) return false;
-    return CPP_BOOL( Mix_PausedMusic() );
-}
-
-void SdlMixerDriver::MusicChannel::pause()
-{
-    if(!isPlaying()) return;
-    Mix_PauseMusic();
-}
-
-void SdlMixerDriver::MusicChannel::resume()
-{
-    if(!isPlaying()) return;
-    Mix_ResumeMusic();
-}
-
-void SdlMixerDriver::MusicChannel::stop()
-{
-    if(!isPlaying()) return;
-    Mix_HaltMusic();
-}
-
 PlayingMode SdlMixerDriver::MusicChannel::mode() const
 {
     if(!Mix_PlayingMusic())
@@ -150,6 +120,57 @@ void SdlMixerDriver::MusicChannel::play(PlayingMode mode)
         throw Error("SdlMixerDriver::MusicChannel::play", "Failed to play source \"" + _sourcePath + "\"");
     }
     throw Error("SdlMixerDriver::MusicChannel::play", "No source is bound");
+}
+
+void SdlMixerDriver::MusicChannel::stop()
+{
+    if(!isPlaying()) return;
+    Mix_HaltMusic();
+}
+
+bool SdlMixerDriver::MusicChannel::isPaused() const
+{
+    if(!isPlaying()) return false;
+    return CPP_BOOL( Mix_PausedMusic() );
+}
+
+void SdlMixerDriver::MusicChannel::pause()
+{
+    if(!isPlaying()) return;
+    Mix_PauseMusic();
+}
+
+void SdlMixerDriver::MusicChannel::resume()
+{
+    if(!isPlaying()) return;
+    Mix_ResumeMusic();
+}
+
+Channel &SdlMixerDriver::MusicChannel::setFrequency(de::dfloat newFrequency)
+{
+    // Not supported.
+    return *this;
+}
+
+Channel &SdlMixerDriver::MusicChannel::setVolume(dfloat newVolume)
+{
+    Mix_VolumeMusic(dint( MIX_MAX_VOLUME * newVolume ));
+    return *this;
+}
+
+dfloat SdlMixerDriver::MusicChannel::frequency() const
+{
+    return 1; // Always.
+}
+
+Positioning SdlMixerDriver::MusicChannel::positioning() const
+{
+    return StereoPositioning;  // Always.
+}
+
+dfloat SdlMixerDriver::MusicChannel::volume() const
+{
+    return de::clamp(0, Mix_VolumeMusic(-1), MIX_MAX_VOLUME) / dfloat( MIX_MAX_VOLUME );
 }
 
 bool SdlMixerDriver::MusicChannel::canPlayBuffer() const
@@ -245,13 +266,14 @@ DENG2_PIMPL_NOREF(SdlMixerDriver::SoundChannel)
     }
 
     /**
-     * Determines whether the channel is configured such that the emitter *is* the listener.
+     * Determines whether the channel is configured such that the soundstage Listener
+     * *is* the SoundEmitter.
      */
-    bool emitterIsListener() const
+    bool listenerIsSoundEmitter() const
     {
         return listener
                && getSound().emitter()
-               && getSound().emitter() == (ddmobj_base_t const *)listener->trackedMapObject();
+               && getSound().emitter() == (ddmobj_base_t const *)getListener().trackedMapObject();
     }
 
     /**
@@ -259,7 +281,8 @@ DENG2_PIMPL_NOREF(SdlMixerDriver::SoundChannel)
      */
     bool noOrigin() const
     {
-        return getSound().flags().testFlag(SoundFlag::NoOrigin) || emitterIsListener();
+        return getSound().flags().testFlag(SoundFlag::NoOrigin)
+               || listenerIsSoundEmitter();
     }
 
     /**
@@ -586,9 +609,16 @@ void SdlMixerDriver::SoundChannel::suspend()
     d->noUpdate = true;
 }
 
-::audio::Sound *SdlMixerDriver::SoundChannel::sound() const
+Channel &SdlMixerDriver::SoundChannel::setFrequency(dfloat newFrequency)
 {
-    return isPlaying() ? &d->getSound() : nullptr;
+    d->frequency = newFrequency;  // Deferred until refresh.
+    return *this;
+}
+
+Channel &SdlMixerDriver::SoundChannel::setVolume(dfloat newVolume)
+{
+    d->volume = newVolume;  // Deferred until refresh.
+    return *this;
 }
 
 dfloat SdlMixerDriver::SoundChannel::frequency() const
@@ -606,18 +636,6 @@ dfloat SdlMixerDriver::SoundChannel::volume() const
     return d->volume;
 }
 
-audio::SoundChannel &SdlMixerDriver::SoundChannel::setFrequency(dfloat newFrequency)
-{
-    d->frequency = newFrequency;
-    return *this;
-}
-
-Channel &SdlMixerDriver::SoundChannel::setVolume(dfloat newVolume)
-{
-    d->volume = newVolume;
-    return *this;
-}
-
 void SdlMixerDriver::SoundChannel::update()
 {
     d->refresh(d->buffer);
@@ -626,6 +644,11 @@ void SdlMixerDriver::SoundChannel::update()
 void SdlMixerDriver::SoundChannel::reset()
 {
     d->reset(d->buffer);
+}
+
+::audio::Sound *SdlMixerDriver::SoundChannel::sound() const
+{
+    return isPlaying() ? &d->getSound() : nullptr;
 }
 
 void SdlMixerDriver::SoundChannel::load(sfxsample_t const &sample)
