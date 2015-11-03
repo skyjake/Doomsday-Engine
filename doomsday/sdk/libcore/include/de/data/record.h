@@ -28,7 +28,7 @@
 #include "../Log"
 #include "../RecordAccessor"
 
-#include <QMap>
+#include <QHash>
 #include <QList>
 #include <QRegExp>
 #include <functional>
@@ -75,8 +75,8 @@ public:
 
     static String const VAR_NATIVE_SELF;
 
-    typedef QMap<String, Variable *> Members;
-    typedef QMap<String, Record *> Subrecords;
+    typedef QHash<String, Variable *> Members;  // unordered
+    typedef QHash<String, Record *> Subrecords; // unordered
     typedef std::pair<String, String> KeyValue;
     typedef QList<KeyValue> List;
 

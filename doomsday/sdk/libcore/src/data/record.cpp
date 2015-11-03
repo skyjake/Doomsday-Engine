@@ -58,7 +58,7 @@ DENG2_PIMPL(Record)
     duint32 uniqueId; ///< Identifier to track serialized references.
     duint32 oldUniqueId;
 
-    typedef QMap<duint32, Record *> RefMap;
+    typedef QHash<duint32, Record *> RefMap;
 
     Instance(Public &r)
         : Base(r)
