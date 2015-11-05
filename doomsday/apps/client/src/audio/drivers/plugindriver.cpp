@@ -26,8 +26,7 @@
 #include "audio/samplecache.h"
 #include "audio/sound.h"
 
-#include "world/thinkers.h"
-
+#include "clientapp.h"
 #include "sys_system.h"  // Sys_Sleep()
 
 #include <de/Error>
@@ -45,7 +44,7 @@ using namespace de;
 namespace audio {
 
 PluginDriver::CdChannel::CdChannel(PluginDriver &driver)
-    : audio::CdChannel()
+    : ::audio::CdChannel()
     , _driver(&driver)
 {}
 
@@ -155,7 +154,7 @@ void PluginDriver::CdChannel::bindTrack(dint track)
 // --------------------------------------------------------------------------------------
 
 PluginDriver::MusicChannel::MusicChannel(PluginDriver &driver)
-    : audio::MusicChannel()
+    : ::audio::MusicChannel()
     , _driver(&driver)
 {}
 
@@ -434,7 +433,7 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundChannel)
         if(buf->flags & SFXBF_3D)
         {
             // Volume is affected only by maxvol.
-            driver.iSound().gen.Set(buf, SFXBP_VOLUME, volume * System::get().soundVolume() / 255.0f);
+            driver.iSound().gen.Set(buf, SFXBP_VOLUME, volume * ClientApp::audioSystem().soundVolume() / 255.0f);
 
             // Update position.
             if(listenerIsSoundEmitter())
@@ -519,7 +518,7 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundChannel)
                 }
             }
 
-            driver.iSound().gen.Set(buf, SFXBP_VOLUME, volume * volAtten * System::get().soundVolume() / 255.0f);
+            driver.iSound().gen.Set(buf, SFXBP_VOLUME, volume * volAtten * ClientApp::audioSystem().soundVolume() / 255.0f);
             driver.iSound().gen.Set(buf, SFXBP_PAN, panning);
         }
     }
@@ -548,7 +547,7 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundChannel)
 };
 
 PluginDriver::SoundChannel::SoundChannel(PluginDriver &owner)
-    : audio::SoundChannel()
+    : ::audio::SoundChannel()
     , d(new Instance(owner))
 {}
 
@@ -558,7 +557,7 @@ PluginDriver::SoundChannel::~SoundChannel()
     if(d->buffer.data)
     {
         // Cancel frame notifications - we'll soon have no buffer to update.
-        System::get().audienceForFrameEnds() -= d;
+        ClientApp::audioSystem().audienceForFrameEnds() -= d;
 
         d->driver.iSound().gen.Destroy(d->buffer.data);
         d->buffer.data = nullptr;
@@ -594,7 +593,7 @@ void PluginDriver::SoundChannel::play(PlayingMode mode)
 
     // When playing on a sound stage with a Listener, we may need to update the channel
     // dynamically during playback.
-    d->observeListener(&System::get().worldStage().listener());
+    d->observeListener(&ClientApp::audioSystem().worldStage().listener());
 
     // Flush deferred property value changes to the assigned data buffer.
     if(d->driver.iSound().gen.Listener)
@@ -717,7 +716,7 @@ bool PluginDriver::SoundChannel::format(Positioning positioning, dint bytesPer, 
         if(d->buffer.data)
         {
             // Cancel frame notifications - we'll soon have no buffer to update.
-            System::get().audienceForFrameEnds() -= d;
+            ClientApp::audioSystem().audienceForFrameEnds() -= d;
 
             d->driver.iSound().gen.Destroy(d->buffer.data);
             d->buffer.data = nullptr;
@@ -738,7 +737,7 @@ bool PluginDriver::SoundChannel::format(Positioning positioning, dint bytesPer, 
                 d->needEnvironmentUpdate = true;
 
             // We want notification when the frame ends in order to flush deferred property writes.
-            System::get().audienceForFrameEnds() += d;
+            ClientApp::audioSystem().audienceForFrameEnds() += d;
         }
     }
     return isValid();
@@ -784,7 +783,7 @@ duint PluginDriver::SoundChannel::endTime() const
 void PluginDriver::SoundChannel::updateEnvironment()
 {
     // No volume means no sound.
-    if(!System::get().soundVolume()) return;
+    if(!ClientApp::audioSystem().soundVolume()) return;
 
     if(!isPlaying()) return;
 
@@ -835,9 +834,9 @@ bool PluginDriver::SoundChannel::anyRateAccepted() const
 // --------------------------------------------------------------------------------------
 
 DENG2_PIMPL(PluginDriver), public IChannelFactory
-, DENG2_OBSERVES(audio::System, FrameBegins)
-, DENG2_OBSERVES(audio::System, FrameEnds)
-, DENG2_OBSERVES(audio::System, MidiFontChange)
+, DENG2_OBSERVES(System, FrameBegins)
+, DENG2_OBSERVES(System, FrameEnds)
+, DENG2_OBSERVES(System, MidiFontChange)
 {
     bool initialized   = false;
     ::Library *library = nullptr;  ///< Library instance (owned).
@@ -1272,7 +1271,7 @@ DENG2_PIMPL(PluginDriver), public IChannelFactory
         throw ReadPropertyError("audio::PluginDriver::Instance::getPropertyAsString", "Error reading property:" + String::number(prop));
     }
 
-    void systemFrameBegins(audio::System &)
+    void systemFrameBegins(System &)
     {
         DENG2_ASSERT(initialized);
         if(cd.gen.Init)    cd.gen.Update();
@@ -1280,7 +1279,7 @@ DENG2_PIMPL(PluginDriver), public IChannelFactory
         //if(sound.gen.Init) sound.gen.Update();
     }
 
-    void systemFrameEnds(audio::System &)
+    void systemFrameEnds(System &)
     {
         DENG2_ASSERT(initialized);
         iBase.Event(SFXEV_REFRESH);
@@ -1425,11 +1424,11 @@ void PluginDriver::initialize()
     if(!d->initialized) return;
 
     // We want notification at various times:
-    audioSystem().audienceForFrameBegins() += d;
-    audioSystem().audienceForFrameEnds()   += d;
+    ClientApp::audioSystem().audienceForFrameBegins() += d;
+    ClientApp::audioSystem().audienceForFrameEnds()   += d;
     if(d->iBase.Set)
     {
-        audioSystem().audienceForMidiFontChange() += d;
+        ClientApp::audioSystem().audienceForMidiFontChange() += d;
     }
 }
 
@@ -1448,10 +1447,10 @@ void PluginDriver::deinitialize()
     // Stop receiving notifications:
     if(d->iBase.Set)
     {
-        audioSystem().audienceForMidiFontChange() -= d;
+        ClientApp::audioSystem().audienceForMidiFontChange() -= d;
     }
-    audioSystem().audienceForFrameEnds()   -= d;
-    audioSystem().audienceForFrameBegins() -= d;
+    ClientApp::audioSystem().audienceForFrameEnds()   -= d;
+    ClientApp::audioSystem().audienceForFrameBegins() -= d;
 
     d->clearChannels();
     d->initialized = false;

@@ -20,7 +20,7 @@
 #include "audio/drivers/dummydriver.h"
 
 #include "audio/sound.h"
-#include "world/thinkers.h"
+#include "clientapp.h"
 #include <de/Log>
 #include <de/Observers>
 #include <de/timer.h>
@@ -31,7 +31,7 @@ using namespace de;
 
 namespace audio {
 
-DummyDriver::CdChannel::CdChannel() : audio::CdChannel()
+DummyDriver::CdChannel::CdChannel() : ::audio::CdChannel()
 {}
 
 PlayingMode DummyDriver::CdChannel::mode() const
@@ -100,7 +100,7 @@ void DummyDriver::CdChannel::bindTrack(dint track)
 
 // --------------------------------------------------------------------------------------
 
-DummyDriver::MusicChannel::MusicChannel() : audio::MusicChannel()
+DummyDriver::MusicChannel::MusicChannel() : ::audio::MusicChannel()
 {}
 
 PlayingMode DummyDriver::MusicChannel::mode() const
@@ -241,13 +241,13 @@ DENG2_PIMPL_NOREF(DummyDriver::SoundChannel)
     Instance()
     {
         // We want notification when the frame ends in order to flush deferred property writes.
-        System::get().audienceForFrameEnds() += this;
+        ClientApp::audioSystem().audienceForFrameEnds() += this;
     }
 
     ~Instance()
     {
         // Cancel frame notifications.
-        System::get().audienceForFrameEnds() -= this;
+        ClientApp::audioSystem().audienceForFrameEnds() -= this;
     }
 
     inline ::audio::Sound &getSound() const
@@ -282,7 +282,7 @@ DENG2_PIMPL_NOREF(DummyDriver::SoundChannel)
 };
 
 DummyDriver::SoundChannel::SoundChannel()
-    : audio::SoundChannel()
+    : ::audio::SoundChannel()
     , d(new Instance)
 {}
 

@@ -47,7 +47,7 @@ public:
 
 public:  //- Playback Channels: ---------------------------------------------------------
 
-    class MusicChannel : public audio::MusicChannel
+    class MusicChannel : public ::audio::MusicChannel
     {
     public:
         PlayingMode mode() const override;
@@ -76,7 +76,7 @@ public:  //- Playback Channels: ------------------------------------------------
         de::String _sourcePath;
     };
 
-    class SoundChannel : public audio::SoundChannel
+    class SoundChannel : public ::audio::SoundChannel
     {
     public:
         PlayingMode mode() const override;

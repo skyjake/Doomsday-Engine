@@ -25,7 +25,7 @@
 #include "audio/samplecache.h"
 #include "audio/sound.h"
 
-#include "world/thinkers.h"  // Thinker_IsMobjFunc()
+#include "clientapp.h"
 #include "sys_system.h"      // Sys_Sleep()
 
 #include <de/Log>
@@ -94,7 +94,7 @@ static void releaseChannel(dint channel)
 
 // --------------------------------------------------------------------------------------
 
-SdlMixerDriver::MusicChannel::MusicChannel() : audio::MusicChannel()
+SdlMixerDriver::MusicChannel::MusicChannel() : ::audio::MusicChannel()
 {}
 
 PlayingMode SdlMixerDriver::MusicChannel::mode() const
@@ -338,7 +338,7 @@ DENG2_PIMPL_NOREF(SdlMixerDriver::SoundChannel)
     Instance()
     {
         // We want notification when the frame ends in order to flush deferred property writes.
-        System::get().audienceForFrameEnds() += this;
+        ClientApp::audioSystem().audienceForFrameEnds() += this;
     }
 
     ~Instance()
@@ -347,7 +347,7 @@ DENG2_PIMPL_NOREF(SdlMixerDriver::SoundChannel)
         releaseChannel(mixChannel);
 
         // Cancel frame notifications.
-        System::get().audienceForFrameEnds() -= this;
+        ClientApp::audioSystem().audienceForFrameEnds() -= this;
     }
 
     inline Listener &getListener() const
@@ -405,7 +405,7 @@ DENG2_PIMPL_NOREF(SdlMixerDriver::SoundChannel)
         if(positioning == AbsolutePositioning)
         {
             // Volume is affected only by maxvol.
-            Mix_Volume(mixChannel, de::clamp<dfloat>(0, volume * System::get().soundVolume() / 255.0f, 1) * MIX_MAX_VOLUME);
+            Mix_Volume(mixChannel, de::clamp<dfloat>(0, volume * ClientApp::audioSystem().soundVolume() / 255.0f, 1) * MIX_MAX_VOLUME);
         }
         // Use StereoPositioning.
         else
@@ -460,7 +460,7 @@ DENG2_PIMPL_NOREF(SdlMixerDriver::SoundChannel)
                 }
             }
 
-            Mix_Volume(mixChannel, de::clamp<dfloat>(0, volume * volAtten * System::get().soundVolume() / 255.0f, 1) * MIX_MAX_VOLUME);
+            Mix_Volume(mixChannel, de::clamp<dfloat>(0, volume * volAtten * ClientApp::audioSystem().soundVolume() / 255.0f, 1) * MIX_MAX_VOLUME);
 
             auto const right = dint( (panning + 1) * 127 );
             Mix_SetPanning(mixChannel, 254 - right, right);
@@ -474,7 +474,7 @@ DENG2_PIMPL_NOREF(SdlMixerDriver::SoundChannel)
 };
 
 SdlMixerDriver::SoundChannel::SoundChannel()
-    : audio::SoundChannel()
+    : ::audio::SoundChannel()
     , d(new Instance)
 {
     format(StereoPositioning, 1, 11025);
@@ -508,7 +508,7 @@ void SdlMixerDriver::SoundChannel::play(PlayingMode mode)
 
     // When playing on a sound stage with a Listener, we may need to update the channel
     // dynamically during playback.
-    d->listener = &System::get().worldStage().listener();
+    d->listener = &ClientApp::audioSystem().worldStage().listener();
 
     // Flush deferred property value changes to the assigned data buffer.
     d->writeDeferredProperties(true/*force*/);
@@ -754,7 +754,7 @@ DENG2_PIMPL(SdlMixerDriver), public IChannelFactory
             if(!needInit) return;
 
             needInit = false;
-            audio::System::get().sampleCache().audienceForSampleRemove() += this;
+            ClientApp::audioSystem().sampleCache().audienceForSampleRemove() += this;
             initialized = true;
         }
 
@@ -764,7 +764,7 @@ DENG2_PIMPL(SdlMixerDriver), public IChannelFactory
             if(!initialized) return;
 
             // Cancel sample cache removal notification - we intend to clear sounds.
-            audio::System::get().sampleCache().audienceForSampleRemove() -= this;
+            ClientApp::audioSystem().sampleCache().audienceForSampleRemove() -= this;
 
             // Stop any sounds still playing (note: does not affect refresh).
             for(Channel *channel : driver.d->channels[Channel::Sound])

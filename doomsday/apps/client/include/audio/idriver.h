@@ -64,9 +64,6 @@ public:
 
     DENG2_AS_IS_METHODS()
 
-    /// Returns a reference to the singleton audio::System instance.
-    static inline System &audioSystem() { return System::get(); }
-
     inline bool isInitialized() const { return status() == Initialized; }
 
     /**
