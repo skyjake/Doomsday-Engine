@@ -152,8 +152,7 @@ D_CMD(TexReset);
 
 dint useBias;  ///< Shadow Bias enabled? cvar
 
-dd_bool usingFog;  ///< Is the fog in use?
-dfloat fogColor[4];
+FogParams fogParams;
 dfloat fieldOfView = 95.0f;
 dbyte smoothTexAnim = true;
 
@@ -628,7 +627,7 @@ Vector3f Rend_LuminousColor(Vector3f const &color, dfloat light)
     light = de::clamp(0.f, light, 1.f) * dynlightFactor;
 
     // In fog additive blending is used; the normal fog color is way too bright.
-    if(usingFog) light *= dynlightFogBright;
+    if(fogParams.usingFog) light *= dynlightFogBright;
 
     // Multiply light with (ambient) color.
     return color * light;
@@ -2169,7 +2168,7 @@ static bool projectShadow(Vector3d const &topLeft, Vector3d const &bottomRight,
     }
 
     dfloat shadowStrength = Mobj_ShadowStrength(mob) * ::shadowFactor;
-    if(::usingFog) shadowStrength /= 2;
+    if(fogParams.usingFog) shadowStrength /= 2;
     if(shadowStrength <= 0) return false;
 
     coord_t shadowRadius = Mobj_ShadowRadius(mob);
@@ -3814,7 +3813,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         glDepthFunc(GL_LESS);
 
         // Fog is allowed during this pass.
-        if(usingFog)
+        if(fogParams.usingFog)
         {
             glEnable(GL_FOG);
         }
@@ -3844,7 +3843,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         glDepthFunc(GL_LESS);
 
         // Fog is allowed during this pass.
-        if(usingFog)
+        if(fogParams.usingFog)
         {
             glEnable(GL_FOG);
         }
@@ -3901,7 +3900,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LEQUAL);
 
-        if(usingFog)
+        if(fogParams.usingFog)
         {
             glEnable(GL_FOG);
             glFogfv(GL_FOG_COLOR, black);
@@ -3938,7 +3937,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         // All of the surfaces are opaque.
         glDisable(GL_BLEND);
         // Fog is allowed.
-        if(usingFog)
+        if(fogParams.usingFog)
         {
             glEnable(GL_FOG);
         }
@@ -3970,10 +3969,10 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         glEnable(GL_BLEND);
         glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
         // Use fog to fade the details, if fog is enabled.
-        if(usingFog)
+        if(fogParams.usingFog)
         {
             glEnable(GL_FOG);
-            dfloat const midGray[] = { .5f, .5f, .5f, fogColor[3] };  // The alpha is probably meaningless?
+            dfloat const midGray[] = { .5f, .5f, .5f, fogParams.fogColor[3] };  // The alpha is probably meaningless?
             glFogfv(GL_FOG_COLOR, midGray);
         }
         break;
@@ -3992,10 +3991,10 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         glEnable(GL_BLEND);
         glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
         // Use fog to fade the details, if fog is enabled.
-        if(usingFog)
+        if(fogParams.usingFog)
         {
             glEnable(GL_FOG);
-            dfloat const midGray[] = { .5f, .5f, .5f, fogColor[3] };  // The alpha is probably meaningless?
+            dfloat const midGray[] = { .5f, .5f, .5f, fogParams.fogColor[3] };  // The alpha is probably meaningless?
             glFogfv(GL_FOG_COLOR, midGray);
         }
         break;
@@ -4011,10 +4010,10 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LEQUAL);
         // Set normal fog, if it's enabled.
-        if(usingFog)
+        if(fogParams.usingFog)
         {
             glEnable(GL_FOG);
-            glFogfv(GL_FOG_COLOR, fogColor);
+            glFogfv(GL_FOG_COLOR, fogParams.fogColor);
         }
         glEnable(GL_BLEND);
         GL_BlendMode(BM_NORMAL);
@@ -4029,7 +4028,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LEQUAL);
 
-        if(usingFog)
+        if(fogParams.usingFog)
         {
             // Fog makes the shininess diminish in the distance.
             glEnable(GL_FOG);
@@ -4049,7 +4048,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LEQUAL);
 
-        if(usingFog)
+        if(fogParams.usingFog)
         {
             // Fog makes the shininess diminish in the distance.
             glEnable(GL_FOG);
@@ -4082,7 +4081,7 @@ static void popGLStateForPass(DrawMode mode)
     case DM_ALL:
         glEnable(GL_ALPHA_TEST);
         glDisable(GL_DEPTH_TEST);
-        if(usingFog)
+        if(fogParams.usingFog)
         {
             glDisable(GL_FOG);
         }
@@ -4095,7 +4094,7 @@ static void popGLStateForPass(DrawMode mode)
         GL_ModulateTexture(1);
         glEnable(GL_ALPHA_TEST);
         glDisable(GL_DEPTH_TEST);
-        if(usingFog)
+        if(fogParams.usingFog)
         {
             glDisable(GL_FOG);
         }
@@ -4125,7 +4124,7 @@ static void popGLStateForPass(DrawMode mode)
 
     case DM_LIGHTS:
         glDisable(GL_DEPTH_TEST);
-        if(usingFog)
+        if(fogParams.usingFog)
         {
             glDisable(GL_FOG);
         }
@@ -4144,7 +4143,7 @@ static void popGLStateForPass(DrawMode mode)
         glEnable(GL_ALPHA_TEST);
         glDisable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
-        if(usingFog)
+        if(fogParams.usingFog)
         {
             glDisable(GL_FOG);
         }
@@ -4161,7 +4160,7 @@ static void popGLStateForPass(DrawMode mode)
         glEnable(GL_ALPHA_TEST);
         glDisable(GL_DEPTH_TEST);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        if(usingFog)
+        if(fogParams.usingFog)
         {
             glDisable(GL_FOG);
         }
@@ -4173,7 +4172,7 @@ static void popGLStateForPass(DrawMode mode)
         glEnable(GL_ALPHA_TEST);
         glDisable(GL_DEPTH_TEST);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        if(usingFog)
+        if(fogParams.usingFog)
         {
             glDisable(GL_FOG);
         }
@@ -4181,7 +4180,7 @@ static void popGLStateForPass(DrawMode mode)
 
     case DM_SHADOW:
         glDisable(GL_DEPTH_TEST);
-        if(usingFog)
+        if(fogParams.usingFog)
         {
             glDisable(GL_FOG);
         }
@@ -4190,7 +4189,7 @@ static void popGLStateForPass(DrawMode mode)
     case DM_SHINY:
         glEnable(GL_ALPHA_TEST);
         glDisable(GL_DEPTH_TEST);
-        if(usingFog)
+        if(fogParams.usingFog)
         {
             glDisable(GL_FOG);
         }
@@ -4202,7 +4201,7 @@ static void popGLStateForPass(DrawMode mode)
         GL_ModulateTexture(1);
         glEnable(GL_ALPHA_TEST);
         glDisable(GL_DEPTH_TEST);
-        if(usingFog)
+        if(fogParams.usingFog)
         {
             glDisable(GL_FOG);
         }
@@ -4582,10 +4581,10 @@ static void drawAllLists(Map &map)
     glDepthFunc(GL_LESS);
     glEnable(GL_ALPHA_TEST);
     glAlphaFunc(GL_GREATER, 0);
-    if(usingFog)
+    if(fogParams.usingFog)
     {
         glEnable(GL_FOG);
-        glFogfv(GL_FOG_COLOR, fogColor);
+        glFogfv(GL_FOG_COLOR, fogParams.fogColor);
     }
 
     // Draw masked walls, sprites and models.
@@ -4594,7 +4593,7 @@ static void drawAllLists(Map &map)
     // Draw particles.
     Rend_RenderParticles(map);
 
-    if(usingFog)
+    if(fogParams.usingFog)
     {
         glDisable(GL_FOG);
     }

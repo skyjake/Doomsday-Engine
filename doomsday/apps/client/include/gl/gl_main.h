@@ -131,6 +131,8 @@ void GL_Restore2DState(int step, viewport_t const *port, viewdata_t const *viewD
 
 void GL_ProjectionMatrix();
 
+de::Rangef GL_DepthClipRange();
+
 /**
  * Returns the projection matrix that is used for rendering the current frame's
  * 3D portions.

@@ -198,7 +198,7 @@ DENG_EXTERN_C void R_SetupFog(dfloat start, dfloat end, dfloat density, dfloat *
 DENG_EXTERN_C void R_SetupFogDefaults()
 {
     // Go with the defaults.
-    Con_Execute(CMDS_DDAY,"fog off", true, false);
+    Con_Execute(CMDS_DDAY, "fog off", true, false);
 }
 
 DENG_DECLARE_API(Rend) =

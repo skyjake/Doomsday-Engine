@@ -130,6 +130,8 @@ DENG2_PIMPL(ModelRenderer)
     GLUniform uAmbientLight     { "uAmbientLight",     GLUniform::Vec4 };
     GLUniform uLightDirs        { "uLightDirs",        GLUniform::Vec3Array, MAX_LIGHTS };
     GLUniform uLightIntensities { "uLightIntensities", GLUniform::Vec4Array, MAX_LIGHTS };
+    GLUniform uFogRange         { "uFogRange",         GLUniform::Vec4 };
+    GLUniform uFogColor         { "uFogColor",         GLUniform::Vec4 };
 
     Matrix4f inverseLocal;
     int lightCount = 0;
@@ -229,7 +231,9 @@ DENG2_PIMPL(ModelRenderer)
                 << uEyePos
                 << uAmbientLight
                 << uLightDirs
-                << uLightIntensities;
+                << uLightIntensities
+                << uFogRange
+                << uFogColor;
 
         programs[name] = prog.get();
         return prog.release();
@@ -614,9 +618,32 @@ DENG2_PIMPL(ModelRenderer)
         lightCount++;
     }
 
+    void setupFog()
+    {
+        if(fogParams.usingFog)
+        {
+            uFogColor = Vector4f(fogParams.fogColor[0],
+                                 fogParams.fogColor[1],
+                                 fogParams.fogColor[2],
+                                 1.f);
+
+            Rangef const depthPlanes = GL_DepthClipRange();
+            float const fogDepth = fogParams.fogEnd - fogParams.fogStart;
+            uFogRange = Vector4f(fogParams.fogStart,
+                                 fogDepth,
+                                 depthPlanes.start,
+                                 depthPlanes.end);
+        }
+        else
+        {
+            uFogColor = Vector4f();
+        }
+    }
+
     template <typename Params> // generic to accommodate psprites and vispsprites
     void draw(Params const &p)
     {
+        setupFog();
         uTex = static_cast<AtlasTexture const *>(p.model->textures->atlas());
 
         p.model->draw(&p.animator->appearance(), p.animator);

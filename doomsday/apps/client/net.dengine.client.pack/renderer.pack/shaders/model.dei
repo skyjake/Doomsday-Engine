@@ -46,7 +46,8 @@ model.skeletal {
             }"
 
         include.fragment <include/texture.glsl, 
-                          include/lighting.glsl>
+                          include/lighting.glsl,
+                          include/fog.glsl>
         fragment = "
             uniform highp float uAlpha;
             uniform highp float uAlphaLimit; // alpha test to discard fragments
@@ -79,6 +80,8 @@ model.skeletal {
                 gl_FragColor.a = min(1.0, diffuse.a + specular.a);
 
                 if(gl_FragColor.a < uAlphaLimit) discard;
+                    
+                applyFog();
             }"
     }
     
@@ -126,7 +129,8 @@ model.skeletal {
             }"
 
         include.fragment <include/texture.glsl, 
-                          include/lighting.glsl>
+                          include/lighting.glsl,
+                          include/fog.glsl>
         fragment = "
             uniform highp float uAlphaLimit;
             
@@ -152,6 +156,8 @@ model.skeletal {
 
                 // All accepted fragments are opaque.
                 gl_FragColor.a = 1.0;
+                
+                applyFog();
             }"        
     }    
 }

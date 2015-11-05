@@ -490,7 +490,7 @@ DENG2_PIMPL(MaterialAnimator)
                         // If fog is active, inter=0 is accepted as well. Otherwise
                         // flickering may occur if the rendering passes don't match for
                         // blended and unblended surfaces.
-                        if(!(!::usingFog && ls.inter == 0))
+                        if(!(!fogParams.usingFog && ls.inter == 0))
                         {
                             snapshot->units[TU_DETAIL_INTER] =
                                 GLTextureUnit(*tex,
@@ -565,7 +565,7 @@ DENG2_PIMPL(MaterialAnimator)
                         // If fog is active, inter=0 is accepted as well. Otherwise
                         // flickering may occur if the rendering passes don't match for
                         // blended and unblended surfaces.
-                        if(!(!usingFog && ls.inter == 0))
+                        if(!(!fogParams.usingFog && ls.inter == 0))
                         {
                             snapshot->units[TU_LAYER0_INTER + texLayerIndex] =
                                 GLTextureUnit(*tex,
