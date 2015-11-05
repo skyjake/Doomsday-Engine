@@ -890,9 +890,9 @@ DENG2_PIMPL(System)
             if(emitter && ch.sound()->emitter() != emitter)
                 return LoopContinue;
 
-            sfxsample_t const *sample = self.sampleCache().cache(ch.sound()->effectId());
-            DENG2_ASSERT(sample);
-            if(sample->group != group)
+            sfxinfo_t const *soundDef = Def_GetSoundInfo(ch.sound()->effectId());
+            DENG2_ASSERT(soundDef);
+            if(soundDef->group != group)
                 return LoopContinue;
 
             // This channel must be stopped!

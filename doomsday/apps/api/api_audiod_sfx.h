@@ -94,7 +94,6 @@ typedef struct sfxsample_s {
     int             numSamples;  ///< Number of samples.
     int             bytesPer;    ///< Bytes per sample (1 or 2).
     int             rate;        ///< Samples per second.
-    int             group;       ///< Exclusion group (0, if none).
 
 #ifdef __cplusplus
     /**

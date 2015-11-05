@@ -417,12 +417,11 @@ DENG2_PIMPL(SampleCache)
      * @param numSamples  Number of samples.
      * @param bytesPer    Bytes per sample (1 or 2).
      * @param rate        Samples per second.
-     * @param group       Exclusion group (0, if none).
      *
      * @returns  The cached sample.
      */
     CacheItem &insert(dint effectId, void const *data, duint size, dint numSamples,
-        dint bytesPer, dint rate, dint group)
+        dint bytesPer, dint rate)
     {
         std::unique_ptr<Sample> cached(new Sample);
         configureSample(*cached, data, size, numSamples, bytesPer, rate);
@@ -445,9 +444,8 @@ DENG2_PIMPL(SampleCache)
             item = &insertCacheItem(effectId);
         }
 
-        // Attribute the sample with tracking identifiers.
+        // Attribute the sample with a tracking identifier.
         cached->effectId = effectId;
-        cached->group    = group;
 
         // Perform resampling if necessary.
         resample(cached->data = M_Malloc(cached->size), cached->bytesPer, cached->rate,
@@ -597,7 +595,7 @@ void SampleCache::hit(dint soundId)
     }
 }
 
-Sample *SampleCache::cache(dint soundId)
+Sample *SampleCache::cache(dint effectId)
 {
     LOG_AS("SampleCache");
 
@@ -607,26 +605,26 @@ Sample *SampleCache::cache(dint soundId)
     if(!ClientApp::audioSystem().soundPlaybackAvailable())
         return nullptr;
 
-    // Ignore invalid sound IDs.
-    if(soundId <= 0) return nullptr;
+    // Ignore invalid sound-effect IDs.
+    if(effectId <= 0) return nullptr;
 
     // Have we already cached this?
-    if(CacheItem *existing = d->tryFind(soundId))
+    if(CacheItem *existing = d->tryFind(effectId))
         return &existing->sample();
 
     // Lookup info for this sound.
-    sfxinfo_t const *info = Def_GetSoundInfo(soundId);
+    sfxinfo_t const *info = Def_GetSoundInfo(effectId);
     if(!info)
     {
-        LOG_AUDIO_WARNING("Ignoring sound id:%i (missing sfxinfo_t)") << soundId;
+        LOG_AUDIO_WARNING("Ignoring sound id:%i (missing sfxinfo_t)") << effectId;
         return nullptr;
     }
 
     // Attempt to cache this now.
-    LOG_AUDIO_VERBOSE("Caching sample '%s' (id:%i)...") << info->id << soundId;
+    LOG_AUDIO_VERBOSE("Caching sample '%s' (id:%i)...") << info->id << effectId;
 
-    dint bytesPer = 0;
-    dint rate = 0;
+    dint bytesPer   = 0;
+    dint rate       = 0;
     dint numSamples = 0;
 
     /**
@@ -718,8 +716,8 @@ Sample *SampleCache::cache(dint soundId)
     if(data)  // Loaded!
     {
         // Insert a copy of this into the cache.
-        CacheItem &item = d->insert(soundId, data, bytesPer * numSamples, numSamples,
-                                    bytesPer, rate, info->group);
+        CacheItem &item = d->insert(effectId, data, bytesPer * numSamples, numSamples,
+                                    bytesPer, rate);
         Z_Free(data);
         return &item.sample();
     }
@@ -743,8 +741,8 @@ Sample *SampleCache::cache(dint soundId)
                 duint8 const *data = lump.cache() + 8;  // Skip the header.
 
                 // Insert a copy of this into the cache.
-                CacheItem &item = d->insert(soundId, data, bytesPer * numSamples, numSamples,
-                                           bytesPer, rate, info->group);
+                CacheItem &item = d->insert(effectId, data, bytesPer * numSamples, numSamples,
+                                            bytesPer, rate);
 
                 lump.unlock();
 
