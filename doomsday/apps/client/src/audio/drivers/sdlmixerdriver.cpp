@@ -221,33 +221,130 @@ void SdlMixerDriver::MusicChannel::bindFile(String const &sourcePath)
 DENG2_PIMPL_NOREF(SdlMixerDriver::SoundChannel)
 , DENG2_OBSERVES(System, FrameEnds)
 {
-    bool noUpdate  = false;           ///< @c true if skipping updates (when stopped, before deletion).
-    dint startTime = 0;               ///< When the assigned sound sample was last started (Ticks).
+    bool noUpdate = false;         ///< @c true if skipping updates (when stopped, before deletion).
 
-    dfloat frequency = 1;             ///< Frequency adjustment: 1.0 is normal.
-    dfloat volume    = 1;             ///< Sound volume: 1.0 is max.
+    PlayingMode playingMode = { NotPlaying };
+    dint startTime = 0;            ///< When playback last started (Ticks).
+    duint endTime  = 0;            ///< When playback last ended if not looping (Milliseconds).
+
+    Positioning positioning = { StereoPositioning };
+    dfloat frequency = 1;          ///< Frequency adjustment: 1.0 is normal.
+    dfloat volume    = 1;          ///< Sound volume: 1.0 is max.
 
     ::audio::Sound *sound = nullptr;    ///< Logical Sound currently being played (if any, not owned).
     Listener *listener = nullptr;  ///< Listener for the sound, if any (not owned).
 
-    sfxbuffer_t buffer;
-    bool valid = false;               ///< Set to @c true when in the valid state.
+    dint mixChannel = -1;          ///< Current SDL_mixer channel number (-1= not valid).
+
+    struct Buffer
+    {
+        Mix_Chunk *mixChunk = nullptr;  ///< SDL_mixer chunk handle.
+        sfxsample_t *data   = nullptr;  ///< Source sample data.
+        dint sampleBytes    = 1;        ///< Bytes per sample (1 or 2).
+        dint sampleRate     = 11025;    ///< Number of samples per second.
+
+        /**
+         * Returns the length of the buffer in milliseconds.
+         */
+        duint milliseconds(dfloat frequency) const
+        {
+            if(!data) return 0;
+            return 1000 * data->numSamples / sampleRate * frequency;
+        }
+
+        void unload()
+        {
+            data = nullptr;
+
+            // Unallocate the resources of the source.
+            Mix_FreeChunk((Mix_Chunk *) mixChunk);
+            mixChunk = nullptr;
+        }
+
+        void load(sfxsample_t *sample)
+        {
+            DENG2_ASSERT(sample != nullptr);
+
+            // Already loaded with this sample?
+            if(data)
+            {
+                // Is the same one?
+                if(data->effectId == sample->effectId)
+                    return;
+
+                // Free the existing data.
+                data = nullptr;
+                Mix_FreeChunk((Mix_Chunk *) mixChunk);
+            }
+
+            dsize const size = 8 + 4 + 8 + 16 + 8 + sample->size;
+            static char localBuf[0x40000];
+            char *conv = nullptr;
+            if(size <= sizeof(localBuf))
+            {
+                conv = localBuf;
+            }
+            else
+            {
+                conv = (char *) M_Malloc(size);
+            }
+
+            // Transfer the sample to SDL_mixer by converting it to WAVE format.
+            qstrcpy(conv, "RIFF");
+            *(Uint32 *) (conv + 4) = DD_ULONG(4 + 8 + 16 + 8 + sample->size);
+            qstrcpy(conv + 8, "WAVE");
+
+            // Format chunk.
+            qstrcpy(conv + 12, "fmt ");
+            *(Uint32 *) (conv + 16) = DD_ULONG(16);
+            /**
+             * WORD wFormatTag;         // Format category
+             * WORD wChannels;          // Number of channels
+             * uint dwSamplesPerSec;    // Sampling rate
+             * uint dwAvgBytesPerSec;   // For buffer estimation
+             * WORD wBlockAlign;        // Data block size
+             * WORD wBitsPerSample;     // Sample size
+             */
+            *(Uint16 *) (conv + 20) = DD_USHORT(1);
+            *(Uint16 *) (conv + 22) = DD_USHORT(1);
+            *(Uint32 *) (conv + 24) = DD_ULONG(sample->rate);
+            *(Uint32 *) (conv + 28) = DD_ULONG(sample->rate * sample->bytesPer);
+            *(Uint16 *) (conv + 32) = DD_USHORT(sample->bytesPer);
+            *(Uint16 *) (conv + 34) = DD_USHORT(sample->bytesPer * 8);
+
+            // Data chunk.
+            qstrcpy(conv + 36, "data");
+            *(Uint32 *) (conv + 40) = DD_ULONG(sample->size);
+            std::memcpy(conv + 44, sample->data, sample->size);
+
+            mixChunk = Mix_LoadWAV_RW(SDL_RWFromMem(conv, 44 + sample->size), 1);
+            if(!mixChunk)
+            {
+                LOG_AS("DS_SDLMixer_SFX_Load");
+                LOG_AUDIO_WARNING("Failed loading sample: %s") << Mix_GetError();
+            }
+
+            if(conv != localBuf)
+            {
+                M_Free(conv);
+            }
+
+            data = sample;
+        }
+    } buffer;
+
+    bool bufferIsValid = false;       ///< Set to @c true when in the valid state.
 
     Instance()
     {
-        de::zap(buffer);
-        // Lazy acquisition of SDLmixer channels (-1= not a valid channel).
-        buffer.cursor = -1;
-
         // We want notification when the frame ends in order to flush deferred property writes.
         System::get().audienceForFrameEnds() += this;
     }
 
     ~Instance()
     {
-        // Ensure to stop playback and release the channel, if we haven't already.
-        stop(buffer);
-        releaseChannel(dint( buffer.cursor ));
+        // Release the channel if we haven't already.
+        releaseChannel(mixChannel);
 
         // Cancel frame notifications.
         System::get().audienceForFrameEnds() -= this;
@@ -293,22 +390,22 @@ DENG2_PIMPL_NOREF(SdlMixerDriver::SoundChannel)
      */
     void writeDeferredProperties(bool force = false)
     {
-        DENG2_ASSERT(valid);
+        DENG2_ASSERT(bufferIsValid);
 
         // Disabled?
         if(noUpdate) return;
 
         // Updates are only necessary during playback.
-        if(!isPlaying(buffer) && !force) return;
+        if(playingMode == NotPlaying && !force) return;
 
         // When tracking an emitter we need the latest origin coordinates.
         getSound().updateOriginFromEmitter();
 
         // Use Absolute/Relative-Positioning (in 3D)?
-        if(buffer.flags & SFXBF_3D)
+        if(positioning == AbsolutePositioning)
         {
             // Volume is affected only by maxvol.
-            setVolume(buffer, volume * System::get().soundVolume() / 255.0f);
+            Mix_Volume(mixChannel, de::clamp<dfloat>(0, volume * System::get().soundVolume() / 255.0f, 1) * MIX_MAX_VOLUME);
         }
         // Use StereoPositioning.
         else
@@ -363,160 +460,16 @@ DENG2_PIMPL_NOREF(SdlMixerDriver::SoundChannel)
                 }
             }
 
-            setVolume(buffer, volume * volAtten * System::get().soundVolume() / 255.0f);
-            setPan(buffer, panning);
+            Mix_Volume(mixChannel, de::clamp<dfloat>(0, volume * volAtten * System::get().soundVolume() / 255.0f, 1) * MIX_MAX_VOLUME);
+
+            auto const right = dint( (panning + 1) * 127 );
+            Mix_SetPanning(mixChannel, 254 - right, right);
         }
     }
 
     void systemFrameEnds(System &)
     {
         writeDeferredProperties();
-    }
-
-    void load(sfxbuffer_t &buf, sfxsample_t *sample)
-    {
-        DENG2_ASSERT(sample != nullptr);
-
-        // Does the buffer already have a sample loaded?
-        if(buf.sample)
-        {
-            // Is the same one?
-            if(buf.sample->effectId == sample->effectId)
-                return;
-
-            // Free the existing data.
-            buf.sample = nullptr;
-            Mix_FreeChunk((Mix_Chunk *) buf.ptr);
-        }
-
-        dsize const size = 8 + 4 + 8 + 16 + 8 + sample->size;
-        static char localBuf[0x40000];
-        char *conv = nullptr;
-        if(size <= sizeof(localBuf))
-        {
-            conv = localBuf;
-        }
-        else
-        {
-            conv = (char *) M_Malloc(size);
-        }
-
-        // Transfer the sample to SDL_mixer by converting it to WAVE format.
-        qstrcpy(conv, "RIFF");
-        *(Uint32 *) (conv + 4) = DD_ULONG(4 + 8 + 16 + 8 + sample->size);
-        qstrcpy(conv + 8, "WAVE");
-
-        // Format chunk.
-        qstrcpy(conv + 12, "fmt ");
-        *(Uint32 *) (conv + 16) = DD_ULONG(16);
-        /**
-         * WORD wFormatTag;         // Format category
-         * WORD wChannels;          // Number of channels
-         * uint dwSamplesPerSec;    // Sampling rate
-         * uint dwAvgBytesPerSec;   // For buffer estimation
-         * WORD wBlockAlign;        // Data block size
-         * WORD wBitsPerSample;     // Sample size
-         */
-        *(Uint16 *) (conv + 20) = DD_USHORT(1);
-        *(Uint16 *) (conv + 22) = DD_USHORT(1);
-        *(Uint32 *) (conv + 24) = DD_ULONG(sample->rate);
-        *(Uint32 *) (conv + 28) = DD_ULONG(sample->rate * sample->bytesPer);
-        *(Uint16 *) (conv + 32) = DD_USHORT(sample->bytesPer);
-        *(Uint16 *) (conv + 34) = DD_USHORT(sample->bytesPer * 8);
-
-        // Data chunk.
-        qstrcpy(conv + 36, "data");
-        *(Uint32 *) (conv + 40) = DD_ULONG(sample->size);
-        std::memcpy(conv + 44, sample->data, sample->size);
-
-        buf.ptr = Mix_LoadWAV_RW(SDL_RWFromMem(conv, 44 + sample->size), 1);
-        if(!buf.ptr)
-        {
-            LOG_AS("DS_SDLMixer_SFX_Load");
-            LOG_AUDIO_WARNING("Failed loading sample: %s") << Mix_GetError();
-        }
-
-        if(conv != localBuf)
-        {
-            M_Free(conv);
-        }
-
-        buf.sample = sample;
-    }
-
-    void stop(sfxbuffer_t &buf)
-    {
-        if(!buf.sample) return;
-
-        Mix_HaltChannel(buf.cursor);
-        //usedChannels.setBit(buf->cursor, false);
-        buf.flags &= ~SFXBF_PLAYING;
-    }
-
-    void reset(sfxbuffer_t &buf)
-    {
-        stop(buf);
-        buf.sample = nullptr;
-
-        // Unallocate the resources of the source.
-        Mix_FreeChunk((Mix_Chunk *) buf.ptr);
-        buf.ptr = nullptr;
-    }
-
-    void refresh(sfxbuffer_t &buf)
-    {
-        // Can only be done if there is a sample and the buffer is playing.
-        if(!buf.sample || !isPlaying(buf))
-            return;
-
-        duint const nowTime = Timer_RealMilliseconds();
-
-        /**
-         * Have we passed the predicted end of sample?
-         * @note This test fails if the game has been running for about 50 days,
-         * since the millisecond counter overflows. It only affects sounds that
-         * are playing while the overflow happens, though.
-         */
-        if(!(buf.flags & SFXBF_REPEAT) && nowTime >= buf.endTime)
-        {
-            // Time for the sound to stop.
-            buf.flags &= ~SFXBF_PLAYING;
-        }
-    }
-
-    void play(sfxbuffer_t &buf)
-    {
-        // Playing is quite impossible without a sample.
-        if(!buf.sample) return;
-
-        // Update the volume at which the sample will be played.
-        Mix_Volume(buf.cursor, buf.written);
-        Mix_PlayChannel(buf.cursor, (Mix_Chunk *) buf.ptr, (buf.flags & SFXBF_REPEAT ? -1 : 0));
-
-        // Calculate the end time (milliseconds).
-        buf.endTime = Timer_RealMilliseconds() + buf.milliseconds();
-
-        // The buffer is now playing.
-        buf.flags |= SFXBF_PLAYING;
-    }
-
-    bool isPlaying(sfxbuffer_t &buf) const
-    {
-        return (buf.flags & SFXBF_PLAYING) != 0;
-    }
-
-    /// @param newPan  (-1 ... +1)
-    void setPan(sfxbuffer_t &buf, dfloat newPan)
-    {
-        auto const right = dint( (newPan + 1) * 127 );
-        Mix_SetPanning(buf.cursor, 254 - right, right);
-    }
-
-    void setVolume(sfxbuffer_t &buf, dfloat newVolume)
-    {
-        // 'written' is used for storing the volume of the channel.
-        buf.written = duint( newVolume * MIX_MAX_VOLUME );
-        Mix_Volume(buf.cursor, buf.written);
     }
 };
 
@@ -527,12 +480,15 @@ SdlMixerDriver::SoundChannel::SoundChannel()
     format(StereoPositioning, 1, 11025);
 }
 
+SdlMixerDriver::SoundChannel::~SoundChannel()
+{
+    // Ensure playback has stopped.
+    stop();
+}
+
 PlayingMode SdlMixerDriver::SoundChannel::mode() const
 {
-    if(!d->isPlaying(d->buffer))          return NotPlaying;
-    if(d->buffer.flags & SFXBF_REPEAT)    return Looping;
-    if(d->buffer.flags & SFXBF_DONT_STOP) return OnceDontDelete;
-    return Once;
+    return d->playingMode;
 }
 
 void SdlMixerDriver::SoundChannel::play(PlayingMode mode)
@@ -541,12 +497,10 @@ void SdlMixerDriver::SoundChannel::play(PlayingMode mode)
 
     if(mode == NotPlaying) return;
 
-    d->buffer.flags &= ~(SFXBF_REPEAT | SFXBF_DONT_STOP);
-    switch(mode)
+    // Playing is quite impossible without a sample.
+    if(!d->buffer.data)
     {
-    case Looping:        d->buffer.flags |= SFXBF_REPEAT;    break;
-    case OnceDontDelete: d->buffer.flags |= SFXBF_DONT_STOP; break;
-    default: break;
+        throw Error("SdlMixerDriver::SoundChannel", "No sample is bound");
     }
 
     // Updating the channel should resume (presumably).
@@ -561,46 +515,57 @@ void SdlMixerDriver::SoundChannel::play(PlayingMode mode)
 
 #if 0
     // 3D sounds need a few extra properties set up.
-    if(d->buffer.flags & SFXBF_3D)
+    if(d->positioning == AbsolutePositioning)
     {
         // Configure the attentuation distances.
         // This is only done once, when the sound is first played (i.e., here).
         if(d->getSound().flags().testFlag(SoundFlag::NoVolumeAttenuation))
         {
-            d->setVolumeAttenuationRange(d->buffer, Ranged(10000, 20000));
+            d->setVolumeAttenuationRange(d->buffer.data, Ranged(10000, 20000));
         }
         else
         {
-            d->setVolumeAttenuationRange(d->buffer, d->getListener().volumeAttenuationRange());
+            d->setVolumeAttenuationRange(d->buffer.data, d->getListener().volumeAttenuationRange());
         }
     }
 #endif
 
-    d->play(d->buffer);
-    d->startTime = Timer_Ticks();  // Note the current time.
+    // Playback begins!
+    Mix_PlayChannel(d->mixChannel, d->buffer.mixChunk, mode == Looping ? -1 : 0);
+    d->playingMode = mode;
+
+    // Remember the current time.
+    d->startTime = Timer_Ticks();
+
+    // Predict when the first/only playback cycle will end (in milliseconds).
+    d->endTime = Timer_RealMilliseconds() + d->buffer.milliseconds(d->frequency);
 }
 
 void SdlMixerDriver::SoundChannel::stop()
 {
-    d->stop(d->buffer);
+    if(!d->buffer.data) return;
+
+    Mix_HaltChannel(d->mixChannel);
+    //usedChannels.setBit(d->mixChannel, false);
+    d->playingMode = NotPlaying;
 }
 
 bool SdlMixerDriver::SoundChannel::isPaused() const
 {
     if(!isPlaying()) return false;
-    return CPP_BOOL( Mix_Paused(d->buffer.cursor) );
+    return CPP_BOOL( Mix_Paused(d->mixChannel) );
 }
 
 void SdlMixerDriver::SoundChannel::pause()
 {
     if(!isPlaying()) return;
-    Mix_Pause(d->buffer.cursor);
+    Mix_Pause(d->mixChannel);
 }
 
 void SdlMixerDriver::SoundChannel::resume()
 {
     if(!isPlaying()) return;
-    Mix_Resume(d->buffer.cursor);
+    Mix_Resume(d->mixChannel);
 }
 
 void SdlMixerDriver::SoundChannel::suspend()
@@ -628,7 +593,7 @@ dfloat SdlMixerDriver::SoundChannel::frequency() const
 
 Positioning SdlMixerDriver::SoundChannel::positioning() const
 {
-    return (d->buffer.flags & SFXBF_3D) ? AbsolutePositioning : StereoPositioning;
+    return d->positioning;
 }
 
 dfloat SdlMixerDriver::SoundChannel::volume() const
@@ -638,12 +603,24 @@ dfloat SdlMixerDriver::SoundChannel::volume() const
 
 void SdlMixerDriver::SoundChannel::update()
 {
-    d->refresh(d->buffer);
+    /**
+     * Playback of non-looping sounds must stop when the first playback cycle ends.
+     *
+     * @note This test fails if the game has been running for about 50 days, since the
+     * millisecond counter overflows. It only affects sounds that are playing while the
+     * overflow happens, though.
+     */
+    if(isPlaying() && !isPlayingLooped() && Timer_RealMilliseconds() >= d->endTime)
+    {
+        // Time for the sound to stop.
+        d->playingMode = NotPlaying;
+    }
 }
 
 void SdlMixerDriver::SoundChannel::reset()
 {
-    d->reset(d->buffer);
+    stop();
+    d->buffer.unload();
 }
 
 ::audio::Sound *SdlMixerDriver::SoundChannel::sound() const
@@ -654,52 +631,51 @@ void SdlMixerDriver::SoundChannel::reset()
 void SdlMixerDriver::SoundChannel::load(sfxsample_t const &sample)
 {
     // Don't reload if a sample with the same sound ID is already loaded.
-    if(!d->buffer.sample || d->buffer.sample->effectId != sample.effectId)
+    if(!d->buffer.data || d->buffer.data->effectId != sample.effectId)
     {
-        d->load(d->buffer, &const_cast<sfxsample_t &>(sample));
+        d->buffer.load(&const_cast<sfxsample_t &>(sample));
     }
 }
 
 bool SdlMixerDriver::SoundChannel::format(Positioning positioning, dint bytesPer, dint rate)
 {
     // Do we need to (re)configure the sample data buffer?
-    if(this->positioning() != positioning
-       || d->buffer.rate   != rate
-       || d->buffer.bytes  != bytesPer)
+    if(   d->positioning        != positioning
+       || d->buffer.sampleBytes != bytesPer
+       || d->buffer.sampleRate  != rate)
     {
         stop();
         DENG2_ASSERT(!isPlaying());
 
+        d->positioning = positioning;
+
         // Release the previously acquired channel, if any.
         /// @todo Probably unnecessary given we plan to acquire again, momentarily...
-        releaseChannel(dint( d->buffer.cursor ));
+        releaseChannel(d->mixChannel);
+        d->mixChannel = acquireChannel();
 
-        de::zap(d->buffer);
-        d->buffer.bytes  = bytesPer;
-        d->buffer.rate   = rate;
-        d->buffer.flags  = positioning == AbsolutePositioning ? SFXBF_3D : 0;
-        d->buffer.freq   = rate;  // Modified by calls to Set(SFXBP_FREQUENCY).
+        d->buffer.unload();
+        d->buffer.sampleBytes = bytesPer;
+        d->buffer.sampleRate  = rate;
 
-        // The cursor is used to keep track of the channel on which the sample is playing.
-        d->buffer.cursor = duint( acquireChannel() );
-        d->valid = true;
+        d->bufferIsValid = true;
     }
     return isValid();
 }
 
 bool SdlMixerDriver::SoundChannel::isValid() const
 {
-    return d->valid;
+    return d->bufferIsValid;
 }
 
 dint SdlMixerDriver::SoundChannel::bytes() const
 {
-    return d->buffer.bytes;
+    return d->buffer.sampleBytes;
 }
 
 dint SdlMixerDriver::SoundChannel::rate() const
 {
-    return d->buffer.rate;
+    return d->buffer.sampleRate;
 }
 
 dint SdlMixerDriver::SoundChannel::startTime() const
@@ -709,7 +685,7 @@ dint SdlMixerDriver::SoundChannel::startTime() const
 
 duint SdlMixerDriver::SoundChannel::endTime() const
 {
-    return d->buffer.endTime;
+    return d->endTime;
 }
 
 void SdlMixerDriver::SoundChannel::updateEnvironment()

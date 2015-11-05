@@ -113,6 +113,7 @@ public:  //- Playback Channels: ------------------------------------------------
 
     //private:
         SoundChannel();
+        ~SoundChannel();
         //friend class SdlMixerDriver;
 
     private:
