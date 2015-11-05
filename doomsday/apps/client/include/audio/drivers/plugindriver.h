@@ -163,8 +163,6 @@ public:  //- Playback channels: ------------------------------------------------
         de::dint startTime() const override;
         de::duint endTime() const override;
 
-        sfxsample_t const *samplePtr() const;
-
         void updateEnvironment();
 
         bool anyRateAccepted() const override;

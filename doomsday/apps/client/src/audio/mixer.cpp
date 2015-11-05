@@ -30,6 +30,7 @@
 #include "api_fontrender.h"
 #include "render/rend_font.h"
 #include "ui/ui_main.h"
+#include "clientapp.h"
 #include "def_main.h"           // ::defs
 #include <de/concurrency.h>
 
@@ -224,7 +225,7 @@ Mixer::Track &Mixer::makeTrack(String const &trackId, Channel *channel)
 
 }  // namespace audio
 
-using namespace audio;
+using namespace ::audio;
 
 // Debug visual: -----------------------------------------------------------------
 
@@ -251,7 +252,7 @@ void UI_AudioMixerDrawer()
     FR_SetColorAndAlpha(1, 1, 0, 1);
 
     dint const lh = FR_SingleLineHeight("Q");
-    if(!audio::System::get().soundPlaybackAvailable())
+    if(!ClientApp::audioSystem().soundPlaybackAvailable())
     {
         FR_DrawTextXY("Sfx disabled", 0, 0);
         glDisable(GL_TEXTURE_2D);
@@ -265,14 +266,14 @@ void UI_AudioMixerDrawer()
 
     // Sample cache information.
     duint cachesize, ccnt;
-    audio::System::get().sampleCache().info(&cachesize, &ccnt);
+    ClientApp::audioSystem().sampleCache().info(&cachesize, &ccnt);
     char buf[200]; sprintf(buf, "Cached:%i (%i)", cachesize, ccnt);
 
     FR_SetColor(1, 1, 1);
     FR_DrawTextXY(buf, 10, 0);
 
     // Print a line of info about each channel.
-    Mixer const &mixer = audio::System::get().mixer();
+    Mixer const &mixer = ClientApp::audioSystem().mixer();
     dint idx = 0;
     mixer["fx"].forAllChannels([&lh, &idx] (Channel &base)
     {
@@ -293,20 +294,21 @@ void UI_AudioMixerDrawer()
 
         if(ch.isValid())
         {
-            sfxsample_t const *sample = ch.samplePtr();
+            ::audio::Sound const *sound = ch.sound();
+            sfxsample_t const *sample   = sound ? ClientApp::audioSystem().sampleCache().cache(sound->effectId()) : nullptr;
 
             Block soundDefId;
-            if(sample)
+            if(sound)
             {
-                soundDefId = ::defs.sounds[sample->soundId].gets("id").toUtf8();
+                soundDefId = ::defs.sounds[sound->effectId()].gets("id").toUtf8();
             }
 
             sprintf(buf, "    %c%c%c id=%03i/%-8s ln=%05i b=%i rt=%2i",// bs=%05i (C%05i/W%05i)"
                     ch.isPlaying()                        ? 'P' : '.',
                     ch.mode() == PlayingMode::Looping     ? 'L' : '.',
                     ch.positioning() == StereoPositioning ? 'S' : '3',
-                    sample ? sample->soundId : 0, soundDefId.constData(),
-                    sample ? sample->size : 0,
+                    sound ? sound->effectId() : 0, soundDefId.constData(),
+                    sound ? sample->size : 0,
                     ch.bytes(), ch.rate() / 1000);/*,
                     ch.buffer().length, ch.buffer().cursor, ch.buffer().written);*/
             FR_DrawTextXY(buf, 5, lh * (2 + idx * 2));

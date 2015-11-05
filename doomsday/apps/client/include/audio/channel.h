@@ -1,7 +1,7 @@
 /** @file channel.h  Interface for an audio playback channel.
  * @ingroup audio
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -27,10 +27,6 @@
 #include <de/Observers>
 #include <de/Vector>
 
-// Playback flags.
-#define SFXCF_NO_ORIGIN         ( 0x1 )  ///< The originator is a mystical emitter.
-#define SFXCF_NO_ATTENUATION    ( 0x2 )  ///< Play it very, very loud.
-
 namespace audio {
 
 /**
@@ -45,7 +41,7 @@ enum PlayingMode
 };
 
 /**
- * Positioning modes for sound stage environment effects.
+ * Positioning models for sound stage environment effects.
  */
 enum Positioning
 {
@@ -100,7 +96,7 @@ public:
     virtual void resume() = 0;
 
     /**
-     * Change the frequency/pitch modifier (factor) to @a newVolume. Normally 1.0
+     * Change the frequency/pitch modifier (factor) to @a newFrequency. Normally 1.0
      *
      * @note Not all audio libraries support changing the frequency dynamically, in which
      * case any changes will be ignored.
@@ -112,7 +108,7 @@ public:
      *
      * @note Not all positioning models will make sense for all channels. For example, if
      * a Channel is specialized for playing music it may not be possible to play it with
-     * 3D positioing and/or Environment effects.
+     * 3D positioning and/or Environment effects.
      *
      * @note Some audio libraries use different playback buffers that are specialized for
      * a certain model, in which case it may be necessary to reallocate/replace the backing
@@ -255,8 +251,6 @@ public:
      * currently loaded.
      */
     virtual de::duint endTime() const = 0;
-
-    virtual sfxsample_t const *samplePtr() const = 0;
 
     virtual void updateEnvironment() = 0;
 };

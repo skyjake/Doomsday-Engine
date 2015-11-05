@@ -326,26 +326,26 @@ DENG2_PIMPL(SampleCache)
     ~Instance() { removeAll(); }
 
     /**
-     * Find the appropriate hash for the given @a soundId.
+     * Find the appropriate hash for the given sound @a effectId.
      */
-    Hash &hashFor(dint soundId)
+    Hash &hashFor(dint effectId)
     {
-        return hash[duint( soundId ) % CACHE_HASH_SIZE];
+        return hash[duint( effectId ) % CACHE_HASH_SIZE];
     }
 
-    Hash const &hashFor(dint soundId) const
+    Hash const &hashFor(dint effectId) const
     {
-        return const_cast<Instance *>(this)->hashFor(soundId);
+        return const_cast<Instance *>(this)->hashFor(effectId);
     }
 
     /**
-     * Lookup a CacheItem with the given @a soundId.
+     * Lookup a CacheItem with the given sound @a effectId.
      */
-    CacheItem *tryFind(dint soundId) const
+    CacheItem *tryFind(dint effectId) const
     {
-        for(CacheItem *it = hashFor(soundId).first; it; it = it->next)
+        for(CacheItem *it = hashFor(effectId).first; it; it = it->next)
         {
-            if(it->sample().soundId == soundId)
+            if(it->sample().effectId == effectId)
                 return it;
         }
         return nullptr;  // Not found.
@@ -355,11 +355,11 @@ DENG2_PIMPL(SampleCache)
      * Add a new CacheItem with the given @a soundId to the hash and return
      * it (ownership is retained).
      */
-    CacheItem &insertCacheItem(dint soundId)
+    CacheItem &insertCacheItem(dint effectId)
     {
         auto *item = new CacheItem;
 
-        Hash &hash = hashFor(soundId);
+        Hash &hash = hashFor(effectId);
         if(hash.last)
         {
             hash.last->next = item;
@@ -379,7 +379,7 @@ DENG2_PIMPL(SampleCache)
 
         notifyRemove(item);
 
-        Hash &hash = hashFor(item.sample().soundId);
+        Hash &hash = hashFor(item.sample().effectId);
 
         // Unlink the item.
         if(hash.last == &item)
@@ -411,7 +411,7 @@ DENG2_PIMPL(SampleCache)
      * Converts the sample @a data and writes it to the (M_Malloc() allocated) buffer
      * (ownership is given to the sfxsample_t).
      *
-     * @param soundId     Id number of the sound sample.
+     * @param effetId     Identifier of the sound effect.
      * @param data        Actual sample data.
      * @param size        Size in bytes.
      * @param numSamples  Number of samples.
@@ -421,14 +421,14 @@ DENG2_PIMPL(SampleCache)
      *
      * @returns  The cached sample.
      */
-    CacheItem &insert(dint soundId, void const *data, duint size, dint numSamples,
+    CacheItem &insert(dint effectId, void const *data, duint size, dint numSamples,
         dint bytesPer, dint rate, dint group)
     {
         std::unique_ptr<Sample> cached(new Sample);
         configureSample(*cached, data, size, numSamples, bytesPer, rate);
 
         // Have we already cached a comparable sample?
-        CacheItem *item = tryFind(soundId);
+        CacheItem *item = tryFind(effectId);
         if(item)
         {
             // A sample is already in the cache.
@@ -442,12 +442,12 @@ DENG2_PIMPL(SampleCache)
         }
         else
         {
-            item = &insertCacheItem(soundId);
+            item = &insertCacheItem(effectId);
         }
 
         // Attribute the sample with tracking identifiers.
-        cached->soundId = soundId;
-        cached->group   = group;
+        cached->effectId = effectId;
+        cached->group    = group;
 
         // Perform resampling if necessary.
         resample(cached->data = M_Malloc(cached->size), cached->bytesPer, cached->rate,
@@ -552,7 +552,7 @@ void SampleCache::maybeRunPurge()
                 return driver.forAllChannels(Channel::Sound, [&it] (Channel const &base)
                 {
                     auto &ch = base.as<SoundChannel>();
-                    return ch.isPlaying() && ch.samplePtr()->soundId == it->sample().soundId;
+                    return ch.isPlaying() && ch.sound()->effectId() == it->sample().effectId;
                 });
             });
             if(stillPlaying) continue;

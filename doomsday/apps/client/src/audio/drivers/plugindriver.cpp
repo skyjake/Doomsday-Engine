@@ -753,7 +753,7 @@ void PluginDriver::SoundChannel::load(sfxsample_t const &sample)
 {
     // Don't reload if a sample with the same sound ID is already loaded.
     sfxbuffer_t &buffer = d->buffer.getData();
-    if(!buffer.sample || buffer.sample->soundId != sample.soundId)
+    if(!buffer.sample || buffer.sample->effectId != sample.effectId)
     {
         DENG2_ASSERT(d->driver.iSound().gen.Load);
         d->driver.iSound().gen.Load(&buffer, &const_cast<sfxsample_t &>(sample));
@@ -780,10 +780,6 @@ duint PluginDriver::SoundChannel::endTime() const
     return isValid() && d->buffer.data ? d->buffer.getData().endTime : 0;
 }
 
-sfxsample_t const *PluginDriver::SoundChannel::samplePtr() const
-{
-    return d->buffer.data ? d->buffer.getData().sample : nullptr;
-}
 
 void PluginDriver::SoundChannel::updateEnvironment()
 {
@@ -1154,7 +1150,7 @@ DENG2_PIMPL(PluginDriver), public IChannelFactory
 
                 if(!ch.isValid()) continue;
 
-                if(ch.samplePtr() && ch.samplePtr()->soundId == sample.soundId)
+                if(ch.sound() && ch.sound()->effectId() == sample.effectId)
                 {
                     // Stop and unload.
                     ch.reset();

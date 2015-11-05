@@ -444,7 +444,7 @@ void DS_SFX_Load(sfxbuffer_t *buf, struct sfxsample_s *sample)
     if(buf->sample)
     {
         // Is the same one?
-        if(buf->sample->soundId == sample->soundId)
+        if(buf->sample->effectId == sample->effectId)
             return;  // No need to reload.
     }
 

@@ -430,7 +430,7 @@ bool DummyDriver::SoundChannel::isValid() const
 void DummyDriver::SoundChannel::load(sfxsample_t const &sample)
 {
     // Don't reload if a sample with the same sound ID is already loaded.
-    if(!d->buffer.data || d->buffer.data->soundId != sample.soundId)
+    if(!d->buffer.data || d->buffer.data->effectId != sample.effectId)
     {
         d->buffer.load(&const_cast<sfxsample_t &>(sample));
     }
@@ -444,11 +444,6 @@ dint DummyDriver::SoundChannel::bytes() const
 dint DummyDriver::SoundChannel::rate() const
 {
     return d->buffer.sampleRate;
-}
-
-sfxsample_t const *DummyDriver::SoundChannel::samplePtr() const
-{
-    return d->buffer.data;
 }
 
 dint DummyDriver::SoundChannel::startTime() const

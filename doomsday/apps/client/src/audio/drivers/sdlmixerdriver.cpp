@@ -381,7 +381,7 @@ DENG2_PIMPL_NOREF(SdlMixerDriver::SoundChannel)
         if(buf.sample)
         {
             // Is the same one?
-            if(buf.sample->soundId == sample->soundId)
+            if(buf.sample->effectId == sample->effectId)
                 return;
 
             // Free the existing data.
@@ -654,7 +654,7 @@ void SdlMixerDriver::SoundChannel::reset()
 void SdlMixerDriver::SoundChannel::load(sfxsample_t const &sample)
 {
     // Don't reload if a sample with the same sound ID is already loaded.
-    if(!d->buffer.sample || d->buffer.sample->soundId != sample.soundId)
+    if(!d->buffer.sample || d->buffer.sample->effectId != sample.effectId)
     {
         d->load(d->buffer, &const_cast<sfxsample_t &>(sample));
     }
@@ -710,11 +710,6 @@ dint SdlMixerDriver::SoundChannel::startTime() const
 duint SdlMixerDriver::SoundChannel::endTime() const
 {
     return d->buffer.endTime;
-}
-
-sfxsample_t const *SdlMixerDriver::SoundChannel::samplePtr() const
-{
-    return d->buffer.sample;
 }
 
 void SdlMixerDriver::SoundChannel::updateEnvironment()
@@ -898,7 +893,7 @@ DENG2_PIMPL(SdlMixerDriver), public IChannelFactory
 
                 if(!ch.isValid()) continue;
 
-                if(ch.samplePtr() && ch.samplePtr()->soundId == sample.soundId)
+                if(ch.sound() && ch.sound()->effectId() == sample.effectId)
                 {
                     // Stop and unload.
                     ch.reset();
