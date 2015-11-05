@@ -85,11 +85,46 @@ model.skeletal {
             }"
     }
     
+    # Variant of the generic shader that is suitable for opaque objects 
+    # with no transparency.    
+    shader opaque.generic inherits model.skeletal.generic {
+        variable uAlphaLimit { value = 0.5 }
+        fragment = "
+            uniform highp float uAlpha;
+            uniform highp float uAlphaLimit; // alpha test to discard fragments
+        
+            varying highp vec2 vUV;
+            varying highp vec4 vUVBounds[4];
+        
+            void main(void) 
+            {
+                // Calculate UV at the fragment (wrapped inside the bounds).
+                highp vec2 wrappedUV = fract(vUV);
+                highp vec2 uv         = mapToBounds(wrappedUV, vUVBounds[0]);
+                highp vec2 normalUV   = mapToBounds(wrappedUV, vUVBounds[1]);
+                highp vec2 specularUV = mapToBounds(wrappedUV, vUVBounds[2]);
+                highp vec2 emissiveUV = mapToBounds(wrappedUV, vUVBounds[3]);
+        
+                highp vec3 normal = normalVector(normalUV);
+            
+                highp vec4 diffuse = texture2D(uTex, uv);
+                if(diffuse.a < uAlphaLimit) discard;
+                diffuse.a = uAlpha;
+                    
+                gl_FragColor = diffuse * diffuseLight(normal);
+                gl_FragColor.rgb += specularLight(specularUV, normal).rgb;
+                gl_FragColor += emittedLight(emissiveUV);
+                
+                applyFog();
+            }"        
+    }
+    
     # Shader for damage/blood effects. No emissive map, and alpha 
     # output is either opaque or fully transparent. Alpha limit can 
     # be used to control how much of the effect is visible.
-    shader blood {
+    shader opaque.nonemissive {
         variable uAlphaLimit { value = 0.5 }
+        variable uAlpha { value = 1.0 }
 
         # Mapping when used with ModelDrawable.
         textureMapping <diffuse, normals, specular>
@@ -133,6 +168,7 @@ model.skeletal {
                           include/fog.glsl>
         fragment = "
             uniform highp float uAlphaLimit;
+            uniform highp float uAlpha;
             
             varying highp vec2 vUV;
             varying highp vec4 vUVBounds[3];
@@ -154,8 +190,7 @@ model.skeletal {
                 highp vec4 specular = specularLight(specularUV, normal);
                 gl_FragColor.rgb += specular.rgb;
 
-                // All accepted fragments are opaque.
-                gl_FragColor.a = 1.0;
+                gl_FragColor.a = uAlpha;
                 
                 applyFog();
             }"        
