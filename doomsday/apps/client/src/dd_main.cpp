@@ -1107,6 +1107,13 @@ static dint DD_ActivateGameWorker(void *context)
         Con_SetProgress(100);
     }
 
+    Def_Read();
+
+    if(parms.initiatedBusyMode)
+    {
+        Con_SetProgress(120);
+    }
+
     if(App_GameLoaded())
     {
         // Parse the game's main config file.
@@ -1132,13 +1139,6 @@ static dint DD_ActivateGameWorker(void *context)
         Con_ParseCommands(App_CurrentGame().bindingConfig(), CPCF_ALLOW_SAVE_BINDINGS);
 #endif
     }
-
-    if(parms.initiatedBusyMode)
-    {
-        Con_SetProgress(120);
-    }
-
-    Def_Read();
 
     if(parms.initiatedBusyMode)
     {
