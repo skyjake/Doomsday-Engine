@@ -569,39 +569,29 @@ dd_bool S_StartMusic(char const *musicId, dd_bool looped)
     return S_StartMusicNum(idx, looped);
 }
 
-dint S_StartSound(dint soundIdAndFlags, mobj_t *emitter)
+void S_StartSound(dint soundIdAndFlags, mobj_t *emitter)
 {
     // The sound is audible to everybody.
     Sv_Sound(soundIdAndFlags, emitter, SVSF_TO_ALL);
     ServerApp::app().startLogicalSound(soundIdAndFlags, emitter);
-
-    // We don't play sounds locally on server side.
-    return false;
 }
 
-dint S_StartSoundEx(dint soundIdAndFlags, mobj_t *emitter)
+void S_StartSoundEx(dint soundIdAndFlags, mobj_t *emitter)
 {
     Sv_Sound(soundIdAndFlags, emitter, SVSF_TO_ALL | SVSF_EXCLUDE_ORIGIN);
     ServerApp::app().startLogicalSound(soundIdAndFlags, emitter);
-
-    // We don't play sounds locally on server side.
-    return false;
 }
 
-dint S_StartSoundAtVolume(dint soundIdAndFlags, mobj_t *emitter, dfloat volume)
+void S_StartSoundAtVolume(dint soundIdAndFlags, mobj_t *emitter, dfloat volume)
 {
     // The sound is audible to everybody.
     Sv_SoundAtVolume(soundIdAndFlags, emitter, volume, SVSF_TO_ALL);
     ServerApp::app().startLogicalSound(soundIdAndFlags, emitter);
-
-    // We don't play sounds locally on server side.
-    return false;
 }
 
-dint S_ConsoleSound(dint soundIdAndFlags, mobj_t *emitter, dint targetConsole)
+void S_ConsoleSound(dint soundIdAndFlags, mobj_t *emitter, dint targetConsole)
 {
     Sv_Sound(soundIdAndFlags, emitter, targetConsole);
-    return true;
 }
 
 void S_StopSound2(dint soundId, mobj_t *emitter, dint flags)

@@ -68,9 +68,9 @@ DENG_EXTERN_C void UI_Shutdown();
 DENG_EXTERN_C dd_bool S_StartMusicNum(int, dd_bool);
 DENG_EXTERN_C void S_StopMusic();
 DENG_EXTERN_C void S_PauseMusic(dd_bool);
-DENG_EXTERN_C int S_LocalSoundAtVolumeFrom(int, struct mobj_s *, coord_t *, float);
-DENG_EXTERN_C int S_LocalSoundAtVolume(int soundIdAndFlags, struct mobj_s *emitter, float volume);
-DENG_EXTERN_C int S_LocalSound(int soundIdAndFlags, struct mobj_s *emitter);
-DENG_EXTERN_C int S_LocalSoundFrom(int soundIdAndFlags, coord_t *origin);
+DENG_EXTERN_C void S_LocalSoundAtVolumeFrom(int, struct mobj_s *, coord_t *, float);
+DENG_EXTERN_C void S_LocalSoundAtVolume(int soundIdAndFlags, struct mobj_s *emitter, float volume);
+DENG_EXTERN_C void S_LocalSound(int soundIdAndFlags, struct mobj_s *emitter);
+DENG_EXTERN_C void S_LocalSoundFrom(int soundIdAndFlags, coord_t *origin);
 
 #endif // SERVER_DUMMIES_H

@@ -39,6 +39,7 @@
 
 #include "dd_main.h"   // App_*System()
 #include "def_main.h"  // ::defs
+#include "clientapp.h"
 
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
@@ -83,9 +84,9 @@ static byte sfxOneSoundPerEmitter;  ///< @c false= Traditional Doomsday behavior
 static dint musVolume = 255 * 2/3;
 static char *musMidiFontPath = (char *) "";
 // When multiple sources are available this setting determines which to use (mus < ext < cd).
-static audio::MusicSource musSourcePriority = audio::MUSP_EXT;
+static MusicSource musSourcePriority = MUSP_EXT;
 
-static audio::System *theAudioSystem;
+static ::audio::System *theAudioSystem;
 
 /**
  * Usually the display player.
@@ -178,6 +179,7 @@ String IDriver::description() const
  * @todo Simplify architecture - load the "dummy" driver, always. -ds
  */
 DENG2_PIMPL(System)
+, DENG2_OBSERVES(Stage, Addition)
 , DENG2_OBSERVES(App, GameUnload)
 {
     /// Configuration settings for this module.
@@ -713,10 +715,16 @@ DENG2_PIMPL(System)
             .define(SReg::StringCVar, "music-soundfont",     "");
 
         App::app().audienceForGameUnload() += this;
+
+        localStage.audienceForAddition() += this;
+        worldStage.audienceForAddition() += this;
     }
 
     ~Instance()
     {
+        localStage.audienceForAddition() -= this;
+        worldStage.audienceForAddition() -= this;
+
         App::app().audienceForGameUnload() -= this;
 
         theAudioSystem = nullptr;
@@ -1227,54 +1235,160 @@ DENG2_PIMPL(System)
         });
     }
 
-    /**
-     * Used by the high-level sound interface to play sounds on the local system.
-     *
-     * @note If both @a emitter and @a origin are NULL the sound will always be played with
-     * @ref SterePositioning (centered).
-     *
-     * @param mode       Playback behavior.
-     * @param stageId    Unique identifier of the sound Stage to play on.
-     * @param sound      Logical Sound to be played.
-     * @param sample     Sample to play (must be stored persistently! No copy is made).
-     * @param volume     Volume factor (normal: 1.0).
-     * @param frequency  Frequency/pitch factor (normal: 1.0).
-     *
-     * @return  @c true, if a sound is started.
-     */
-    bool playSound(PlayingMode mode, StageId stageId, Sound &sound, sfxsample_t const &sample,
-        dfloat volume = 1, dfloat frequency = 1)
+    void updateMusicVolumeIfChanged()
     {
-        DENG2_ASSERT(mode != NotPlaying);
+        if(!musicAvail) return;
 
-        if(!soundAvail) return false;
-        if(sample.size == 0 || volume <= 0) return false;
-
-        sfxinfo_t const &soundDef = ::runtimeDefs.sounds[sample.effectId];
-
-        // Stop all other sounds with the same emitter?
-        if(stageId == WorldStage && sound.emitter() && worldStage.exclusion() == Stage::OnePerEmitter)
+        static dint oldMusVolume = -1;
+        if(musVolume != oldMusVolume)
         {
-            if(stopSoundChannelsWithLowerPriority(0, sound.emitter(), soundDef.priority) < 0)
-            {
-                // Something with a higher priority is playing, can't start now.
-                LOG_AUDIO_MSG("Not playing sound (id:%i emitter:%i) prio:%i because overridden")
-                    << sample.effectId << sound.emitter()->thinker.id
-                    << soundDef.priority;
+            oldMusVolume = musVolume;
 
-                return false;
+            // Set volume of all active interfaces.
+            dfloat newVolume = musVolume / 255.0f;
+            (*mixer)["music"].forAllChannels([&newVolume] (Channel &ch)
+            {
+                ch.setVolume(newVolume);
+                return LoopContinue;
+            });
+        }
+    }
+
+    void updateUpsampleRateIfChanged()
+    {
+        static dint old16Bit = false;
+        static dint oldRate  = 11025;
+
+        // Ensure the rate is valid.
+        if(sfxSampleRate != 11025 && sfxSampleRate != 22050 && sfxSampleRate != 44100)
+        {
+            LOG_AUDIO_WARNING("\"sound-rate\" corrected to 11025 from invalid value (%i)") << sfxSampleRate;
+            sfxSampleRate = 11025;
+        }
+
+        // Do we need to change the sample format?
+        if(old16Bit != sfx16Bit || oldRate != sfxSampleRate)
+        {
+            dint const newBits = sfx16Bit ? 16 : 8;
+            dint const newRate = sfxSampleRate;
+            if(::sfxBits != newBits || ::sfxRate != newRate)
+            {
+                LOG_AUDIO_VERBOSE("Switching sound rate to %iHz (%i-bit)..") << newRate << newBits;
+
+                // Set the new buffer format.
+                ::sfxBits = newBits;
+                ::sfxRate = newRate;
+                initMixer();
+
+                // The cache just became useless, clear it.
+                sampleCache.clear();
+            }
+            old16Bit = sfx16Bit;
+            oldRate  = sfxSampleRate;
+        }
+    }
+
+    void updateSoundPositioningIfChanged()
+    {
+        static dint old3DMode = false;
+
+        if(old3DMode == sfx3D) return;  // No change.
+
+        LOG_AUDIO_VERBOSE("Switching to %s sound positioning...") << (old3DMode ? "stereo" : "3D");
+
+        // Re-create the channel Mixer.
+        initMixer();
+
+        if(old3DMode)
+        {
+            // Disable environmental effects in the world soundstage - we're going stereo.
+            worldStage.listener().useEnvironment(false);
+        }
+        old3DMode = sfx3D;
+    }
+
+    /**
+     * Called whenever a new Sound is added to a soundstage.
+     * Our job is to find a suitable Channel on which to play it.
+     */
+    void stageSoundAdded(Stage &stage, Sound &sound)
+    {
+        // Playback cannot begin while in busy mode...
+        if(DoomsdayApp::app().busyMode().isActive())
+            return;
+
+        // Skip playback if it won't be heard.
+        if(sfxVolume <= 0 || sound.volume() <= 0)
+            return;
+
+        // Skip playback if this is too far from the Listener?
+        if(&stage == &worldStage
+           && !sound.flags().testFlag(SoundFlag::NoOrigin)
+           && !sound.flags().testFlag(SoundFlag::NoVolumeAttenuation))
+        {
+            if(!stage.listener().inAudibleRangeOf(sound.emitter() ? sound.emitter()->origin : sound.origin()))
+                return;
+        }
+
+        // Don't attempt to play zero-length sound resources.
+        sfxsample_t const &sample = *sampleCache.cache(sound.effectId());
+        if(sample.size == 0) return;
+
+        // Sound definitions can be used to override playback behavior/modifiers.
+        dfloat frequency = 1;
+        sfxinfo_t const &soundDef = *Def_GetSoundInfo(sound.effectId(), &frequency);
+
+        // Random frequency alteration? 
+        if(!sfxNoRndPitch)
+        {
+            // Multipliers chosen to match original sound code.
+            if(soundDef.flags & SF_RANDOM_SHIFT)
+            {
+                frequency += (RNG_RandFloat() - RNG_RandFloat()) * (7.0f / 255);
+            }
+            if(soundDef.flags & SF_RANDOM_SHIFT2)
+            {
+                frequency += (RNG_RandFloat() - RNG_RandFloat()) * (15.0f / 255);
             }
         }
 
-        Listener &listener = worldStage.listener();
+        // If the sound has an exclusion group, either all or the same emitter's iterations
+        // of this sound will stop.
+        if(soundDef.group)
+        {
+            stopSoundChannelsWithSoundGroup(soundDef.group, (soundDef.flags & SF_GLOBAL_EXCLUDE) ? nullptr : sound.emitter());
+        }
 
-        // Determine the final attributes of the sound to be played.
+        if(!soundAvail)
+            return;
+
+        // Determine playback behavior.
+        PlayingMode const mode =   sound.flags().testFlag(SoundFlag::Repeat) ? Looping
+                                 : (soundDef.flags & SF_DONT_STOP)           ? OnceDontDelete
+                                                                             : Once;
+        if(&stage == &worldStage)
+        {
+            // Stop all other sounds with the same emitter?
+            if(sound.emitter() && stage.exclusion() == Stage::OnePerEmitter)
+            {
+                if(stopSoundChannelsWithLowerPriority(0, sound.emitter(), soundDef.priority) < 0)
+                {
+                    // Something with a higher priority is playing, can't start now.
+                    LOG_AUDIO_MSG("Not playing sound (id:%i emitter:%i) prio:%i because overridden")
+                        << sample.effectId << sound.emitter()->thinker.id
+                        << soundDef.priority;
+                    return;
+                }
+            }
+        }
+
+        // Determine positioning model.
         Positioning const positioning = (sfx3D && !sound.flags().testFlag(NoOrigin)) ? AbsolutePositioning : StereoPositioning;
-        dfloat const priority         = listener.rateSoundPriority(Timer_Ticks(), volume,
-                                                                   sound.flags(), sound.origin());
+
+        dfloat const priority = worldStage.listener()
+            .rateSoundPriority(Timer_Ticks(), sound.volume(), sound.flags(), sound.origin());
 
         dfloat lowPrio = 0;
-
         QList<dfloat> channelPrios;
         channelPrios.reserve((*mixer)["fx"].channelCount());
 
@@ -1316,7 +1430,7 @@ DENG2_PIMPL(System)
                     // enough channels to accommodate the limitation.
                     LOG_AUDIO_XVERBOSE("Not playing sound id:%i because all channels are busy")
                         << sample.effectId;
-                    return false;
+                    return;
                 }
 
                 // Stop this one.
@@ -1410,102 +1524,25 @@ DENG2_PIMPL(System)
         {
             // A suitable channel was not found.
             self.allowChannelRefresh();
-            LOG_AUDIO_XVERBOSE("Failed to find suitable channel for sample id:%i") << sample.effectId;
-            return false;
+            LOG_AUDIO_XVERBOSE("Failed to find a suitable Channel for sample id:%i") << sample.effectId;
+            return;
+        }
+        SoundChannel &channel = *selCh;
+
+        // The channel may need to be reformatted.
+        {
+            channel.format(positioning, sample.bytesPer, sample.rate);
+            DENG2_ASSERT(channel.isValid());
+            channel.load(sample);
         }
 
-        SoundChannel &channel = *selCh;
-        DENG2_ASSERT(channel.isValid());
-
-        // The sound may need to be reformatted.
-        channel.format(positioning, sample.bytesPer, sample.rate);
-        channel.setVolume(volume);
-        channel.setFrequency(frequency);
-
-        // Load in the sample if needed.
-        DENG2_ASSERT(channel.isValid());
-        channel.load(sample);
-
-        // Start playing.
+        // Initialize playback modifiers and start playing.
+        channel.setFrequency(frequency)
+               .setVolume(sound.volume());
         channel.play(mode);
 
         // Streaming of playback data and channel updates may now continue.
         self.allowChannelRefresh();
-
-        // Sound successfully started.
-        return true;
-    }
-
-    void updateMusicVolumeIfChanged()
-    {
-        if(!musicAvail) return;
-
-        static dint oldMusVolume = -1;
-        if(musVolume != oldMusVolume)
-        {
-            oldMusVolume = musVolume;
-
-            // Set volume of all active interfaces.
-            dfloat newVolume = musVolume / 255.0f;
-            (*mixer)["music"].forAllChannels([&newVolume] (Channel &ch)
-            {
-                ch.setVolume(newVolume);
-                return LoopContinue;
-            });
-        }
-    }
-
-    void updateUpsampleRateIfChanged()
-    {
-        static dint old16Bit = false;
-        static dint oldRate  = 11025;
-
-        // Ensure the rate is valid.
-        if(sfxSampleRate != 11025 && sfxSampleRate != 22050 && sfxSampleRate != 44100)
-        {
-            LOG_AUDIO_WARNING("\"sound-rate\" corrected to 11025 from invalid value (%i)") << sfxSampleRate;
-            sfxSampleRate = 11025;
-        }
-
-        // Do we need to change the sample format?
-        if(old16Bit != sfx16Bit || oldRate != sfxSampleRate)
-        {
-            dint const newBits = sfx16Bit ? 16 : 8;
-            dint const newRate = sfxSampleRate;
-            if(::sfxBits != newBits || ::sfxRate != newRate)
-            {
-                LOG_AUDIO_VERBOSE("Switching sound rate to %iHz (%i-bit)..") << newRate << newBits;
-
-                // Set the new buffer format.
-                ::sfxBits = newBits;
-                ::sfxRate = newRate;
-                initMixer();
-
-                // The cache just became useless, clear it.
-                sampleCache.clear();
-            }
-            old16Bit = sfx16Bit;
-            oldRate  = sfxSampleRate;
-        }
-    }
-
-    void updateSoundPositioningIfChanged()
-    {
-        static dint old3DMode = false;
-
-        if(old3DMode == sfx3D) return;  // No change.
-
-        LOG_AUDIO_VERBOSE("Switching to %s sound positioning...") << (old3DMode ? "stereo" : "3D");
-
-        // Re-create the channel Mixer.
-        initMixer();
-
-        if(old3DMode)
-        {
-            // Disable environmental effects in the world soundstage - we're going stereo.
-            worldStage.listener().useEnvironment(false);
-        }
-        old3DMode = sfx3D;
     }
 
     void aboutToUnloadGame(game::Game const &)
@@ -1525,7 +1562,7 @@ DENG2_AUDIENCE_METHOD(System, MidiFontChange)
 System::System() : d(new Instance(this))
 {}
 
-audio::System &System::get()
+::audio::System &System::get()
 {
     DENG2_ASSERT(theAudioSystem);
     return *theAudioSystem;
@@ -1806,99 +1843,7 @@ dint System::soundVolume() const
     return sfxVolume;
 }
 
-bool System::playSound(StageId stageId, dint effectId, SoundFlags flags, SoundEmitter *emitter,
-    Vector3d const &origin, dfloat volume)
-{
-    LOG_AS("audio::System");
-    if(volume > 1)
-    {
-        LOGDEV_AUDIO_WARNING("Volume is too high (%f > 1)") << volume;
-    }
-
-    if(effectId <= 0 || effectId >= ::defs.sounds.size())
-        return false;
-
-    // Cache the waveform resource associated with @a soundId (if necessary) so that
-    // we can determine it's duration.
-    sfxsample_t const *sample = sampleCache().cache(effectId);
-    if(!sample)
-    {
-        // Perhaps an unknown effect ID?
-        if(d->soundAvail)
-        {
-            LOG_AUDIO_VERBOSE("Failed caching resource data for Sound #%i - cannot play") << effectId;
-        }
-        return false;
-    }
-
-    // Completely ignore effects whose playback duration is zero.
-    /// @todo Shouldn't we stop other currently playing Sounds, though (@ref Stage::Exclusion) ? -ds
-    duint const duration = sample->milliseconds();
-    if(duration <= 0) return false;
-
-    Stage &sstage = stage(stageId);
-    dfloat freq   = 1;
-
-    // Sound definitions can be used to override playback behavior/modifiers.
-    sfxinfo_t const *def = Def_GetSoundInfo(effectId, &freq, &volume);
-    DENG2_ASSERT(def);
-    if(def->flags & SF_REPEAT)         flags |= SoundFlag::Repeat;
-    if(def->flags & SF_NO_ATTENUATION) flags |= SoundFlag::NoVolumeAttenuation;
-
-    // Determine playback behavior.
-    PlayingMode const mode =   flags.testFlag(SoundFlag::Repeat) ? Looping
-                             : (def->flags & SF_DONT_STOP)       ? OnceDontDelete
-                                                                 : Once;
-
-    // Predict when the first/only playback cycle will end (in milliseconds).
-    /// @todo Somewhat misleading... -ds
-    duint const endTime = Timer_RealMilliseconds() + (flags.testFlag(Repeat) ? 1 : duration);
-
-    // Start a logical Sound for this sound-effect on the Stage specified.
-    Sound &sound = sstage.addSound(Sound(flags, effectId, origin, endTime, emitter));  // A copy is made.
-
-    // Playback cannot begin while in busy mode...
-    if(DoomsdayApp::app().busyMode().isActive())
-        return false;
-
-    // Skip playback if it won't be heard.
-    if(sfxVolume <= 0 || volume <= 0)
-        return false;
-
-    // Skip playback if this is too far from the Listener?
-    if(stageId == WorldStage
-       && !flags.testFlag(SoundFlag::NoOrigin)
-       && !flags.testFlag(SoundFlag::NoVolumeAttenuation))
-    {
-        if(!sstage.listener().inAudibleRangeOf(emitter ? emitter->origin : origin))
-            return false;
-    }
-
-    // Randomize frequency alteration? (Multipliers chosen to match original sound code.)
-    if(!sfxNoRndPitch)
-    {
-        if(def->flags & SF_RANDOM_SHIFT)
-        {
-            freq += (RNG_RandFloat() - RNG_RandFloat()) * (7.0f / 255);
-        }
-        if(def->flags & SF_RANDOM_SHIFT2)
-        {
-            freq += (RNG_RandFloat() - RNG_RandFloat()) * (15.0f / 255);
-        }
-    }
-
-    // If the sound has an exclusion group, either all or the same emitter's iterations
-    // of this sound will stop.
-    if(def->group)
-    {
-        d->stopSoundChannelsWithSoundGroup(def->group, (def->flags & SF_GLOBAL_EXCLUDE) ? nullptr : emitter);
-    }
-
-    // Choose a Channel and play!
-    return d->playSound(mode, stageId, sound, *sample, volume, freq);
-}
-
-void System::stopSound(StageId stageId, dint soundId, SoundEmitter *emitter, dint flags)
+void System::stopSound(StageId stageId, dint effectId, SoundEmitter *emitter, dint flags)
 {
     LOG_AS("audio::System");
 
@@ -1925,7 +1870,7 @@ void System::stopSound(StageId stageId, dint soundId, SoundEmitter *emitter, din
             // Stop sounds emitted by the Sector's emitter?
             if(flags & SSF_SECTOR)
             {
-                stopSound(stageId, soundId, emitter);
+                stopSound(stageId, effectId, emitter);
             }
 
             // Stop sounds emitted by Sector-linked (plane/wall) emitters?
@@ -1935,7 +1880,7 @@ void System::stopSound(StageId stageId, dint soundId, SoundEmitter *emitter, din
                 while((emitter = (SoundEmitter *)emitter->thinker.next))
                 {
                     // Stop sounds from this emitter.
-                    stopSound(stageId, soundId, emitter);
+                    stopSound(stageId, effectId, emitter);
                 }
             }
             return;
@@ -1943,16 +1888,16 @@ void System::stopSound(StageId stageId, dint soundId, SoundEmitter *emitter, din
     }
 
     // No special stop behavior.
-    d->stopSoundChannelsWithLowerPriority(soundId, emitter, -1);
+    d->stopSoundChannelsWithLowerPriority(effectId, emitter, -1);
 
     // Update logical sound bookkeeping.
-    if(soundId <= 0 && !emitter)
+    if(effectId <= 0 && !emitter)
     {
         stage(stageId).removeAllSounds();
     }
-    else if(soundId) // > 0
+    else if(effectId) // > 0
     {
-        stage(stageId).removeSoundsById(soundId);
+        stage(stageId).removeSoundsById(effectId);
     }
     else
     {
@@ -2396,25 +2341,25 @@ void System::consoleRegister()  // static
 
 }  // namespace audio
 
-using namespace audio;
+using namespace ::audio;
 
 //- Music: ------------------------------------------------------------------------------
 
 void S_PauseMusic(dd_bool paused)
 {
-    audio::System::get().pauseMusic(paused);
+    ClientApp::audioSystem().pauseMusic(paused);
 }
 
 void S_StopMusic()
 {
-    audio::System::get().stopMusic();
+    ClientApp::audioSystem().stopMusic();
 }
 
 dd_bool S_StartMusicNum(dint musicId, dd_bool looped)
 {
     if(musicId >= 0 && musicId < ::defs.musics.size())
     {
-        return audio::System::get().playMusic(::defs.musics[musicId], looped);
+        return ClientApp::audioSystem().playMusic(::defs.musics[musicId], looped);
     }
     return false;
 }
@@ -2438,12 +2383,12 @@ dd_bool S_StartMusic(char const *musicId, dd_bool looped)
 
 dd_bool S_SoundIsPlaying(dint soundId, mobj_t *emitter)
 {
-    return (dd_bool) audio::System::get().worldStage().soundIsPlaying(soundId, (SoundEmitter *)emitter);
+    return (dd_bool) ClientApp::audioSystem().worldStage().soundIsPlaying(soundId, (SoundEmitter *)emitter);
 }
 
 void S_StopSound2(dint soundId, mobj_t *emitter, dint flags)
 {
-    audio::System::get().stopSound(audio::WorldStage, soundId, (SoundEmitter *)emitter, flags);
+    ClientApp::audioSystem().stopSound(::audio::WorldStage, soundId, (SoundEmitter *)emitter, flags);
 }
 
 void S_StopSound(dint soundId, mobj_t *emitter)
@@ -2451,65 +2396,65 @@ void S_StopSound(dint soundId, mobj_t *emitter)
     S_StopSound2(soundId, emitter, 0/*flags*/);
 }
 
-dint S_LocalSoundAtVolumeFrom(dint soundIdAndFlags, mobj_t *emitter, coord_t *origin, dfloat volume)
+void S_LocalSoundAtVolumeFrom(dint soundIdAndFlags, mobj_t *emitter, coord_t *origin, dfloat volume)
 {
-    dint const effectId = (soundIdAndFlags & ~DDSF_FLAG_MASK);
+    SoundParams params;
+    params.effectId = (soundIdAndFlags & ~DDSF_FLAG_MASK);
+    params.origin   = origin ? Vector3d(origin) : Vector3d();
+    params.volume   = volume;
 
-    SoundFlags flags;
-    if(origin)                                flags &= ~SoundFlag::NoOrigin;
-    if(soundIdAndFlags & DDSF_REPEAT)         flags |=  SoundFlag::Repeat;
-    if(soundIdAndFlags & DDSF_NO_ATTENUATION) flags |=  SoundFlag::NoVolumeAttenuation;
+    if(origin)                                params.flags &= ~SoundFlag::NoOrigin;
+    if(soundIdAndFlags & DDSF_REPEAT)         params.flags |=  SoundFlag::Repeat;
+    if(soundIdAndFlags & DDSF_NO_ATTENUATION) params.flags |=  SoundFlag::NoVolumeAttenuation;
 
-    return audio::System::get().playSound(audio::LocalStage, effectId, flags, (SoundEmitter *)emitter,
-                                          origin ? Vector3d(origin) : Vector3d(), volume);
+    ClientApp::audioSystem().localStage().playSound(params, (SoundEmitter *)emitter);
 }
 
-dint S_LocalSoundAtVolume(dint soundIdAndFlags, mobj_t *emitter, dfloat volume)
+void S_LocalSoundAtVolume(dint soundIdAndFlags, mobj_t *emitter, dfloat volume)
 {
-    return S_LocalSoundAtVolumeFrom(soundIdAndFlags, emitter, nullptr, volume);
+    S_LocalSoundAtVolumeFrom(soundIdAndFlags, emitter, nullptr, volume);
 }
 
-dint S_LocalSoundFrom(dint soundIdAndFlags, coord_t *origin)
+void S_LocalSoundFrom(dint soundIdAndFlags, coord_t *origin)
 {
-    return S_LocalSoundAtVolumeFrom(soundIdAndFlags, nullptr, origin, 1/*max volume*/);
+    S_LocalSoundAtVolumeFrom(soundIdAndFlags, nullptr, origin, 1/*max volume*/);
 }
 
-dint S_LocalSound(dint soundIdAndFlags, mobj_t *emitter)
+void S_LocalSound(dint soundIdAndFlags, mobj_t *emitter)
 {
-    return S_LocalSoundAtVolumeFrom(soundIdAndFlags, emitter, nullptr, 1/*max volume*/);
+    S_LocalSoundAtVolumeFrom(soundIdAndFlags, emitter, nullptr, 1/*max volume*/);
 }
 
-dint S_StartSoundAtVolume(dint soundIdAndFlags, mobj_t *emitter, dfloat volume)
+void S_StartSoundAtVolume(dint soundIdAndFlags, mobj_t *emitter, dfloat volume)
 {
-    dint const effectId = (soundIdAndFlags & ~DDSF_FLAG_MASK);
+    SoundParams params;
+    params.effectId = (soundIdAndFlags & ~DDSF_FLAG_MASK);
+    params.volume   = volume;
 
-    SoundFlags flags;
-    //if(origin)                                flags &= ~SoundFlag::NoOrigin;
-    if(soundIdAndFlags & DDSF_REPEAT)         flags |=  SoundFlag::Repeat;
-    if(soundIdAndFlags & DDSF_NO_ATTENUATION) flags |=  SoundFlag::NoVolumeAttenuation;
+    //if(origin)                                params.flags &= ~SoundFlag::NoOrigin;
+    if(soundIdAndFlags & DDSF_REPEAT)         params.flags |=  SoundFlag::Repeat;
+    if(soundIdAndFlags & DDSF_NO_ATTENUATION) params.flags |=  SoundFlag::NoVolumeAttenuation;
 
-    return audio::System::get().playSound(audio::WorldStage, effectId, flags, (SoundEmitter *)emitter,
-                                          Vector3d(), volume);
+    ClientApp::audioSystem().worldStage().playSound(params, (SoundEmitter *)emitter);
 }
 
-dint S_StartSoundEx(dint soundIdAndFlags, mobj_t *emitter)
+void S_StartSoundEx(dint soundIdAndFlags, mobj_t *emitter)
 {
-    return S_StartSoundAtVolume(soundIdAndFlags, emitter, 1/*max volume*/);
+    S_StartSoundAtVolume(soundIdAndFlags, emitter, 1/*max volume*/);
 }
 
-dint S_StartSound(dint soundIdAndFlags, mobj_t *emitter)
+void S_StartSound(dint soundIdAndFlags, mobj_t *emitter)
 {
-    return S_StartSoundEx(soundIdAndFlags, emitter);
+    S_StartSoundEx(soundIdAndFlags, emitter);
 }
 
-dint S_ConsoleSound(dint soundIdAndFlags, mobj_t *emitter, dint targetConsole)
+void S_ConsoleSound(dint soundIdAndFlags, mobj_t *emitter, dint targetConsole)
 {
     // If it's for us, we can hear it.
     if(targetConsole == consolePlayer)
     {
         S_LocalSound(soundIdAndFlags, emitter);
     }
-    return true;
 }
 
 DENG_DECLARE_API(S) =

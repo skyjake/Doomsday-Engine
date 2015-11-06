@@ -19,11 +19,16 @@
 
 #include "audio/stage.h"
 
+#include "audio/system.h"
 #include "audio/listener.h"
+#include "audio/samplecache.h"
 
 #include "world/p_object.h"
+
+#include "clientapp.h"
 #include <de/Log>
 #include <de/timer.h>
+#include <QList>
 #include <QMultiHash>
 #include <QMutableHashIterator>
 
@@ -40,11 +45,6 @@ DENG2_PIMPL_NOREF(Stage)
     // A "listener" is the "ears" of the user within the soundstage.
     Listener listener;
 
-    /**
-     * (Logical) Sounds track currently-playing sounds somewhere in the stage on a purely
-     * logical level (irrespective of whether playback channels are available, or if the
-     * sound will actually be audible to anyone).
-     */
     struct SoundHash : public QMultiHash<dint /*key: soundId*/, Sound>
     {
         typedef QMutableHashIterator<dint /*key: soundId*/, Sound> MutableIterator;
@@ -53,7 +53,40 @@ DENG2_PIMPL_NOREF(Stage)
     } sounds;
 
     duint lastSoundPurge = 0;
+
+    /**
+     * @param parms  Parameters of the sound start.
+     */
+    Sound &addSound(SoundParams const &params, duint endTime, SoundEmitter *emitter)
+    {
+        // Reject sounds with an invalid effect ID.
+        DENG2_ASSERT(params.effectId > 0);
+
+        // Only one Sound per SoundEmitter?
+        if(emitter && exclusion == OnePerEmitter)
+        {
+            // Remove all existing (logical) Sounds emitted by it, from the sound stage.
+            // Playback is stopped a little later...
+            SoundHash::MutableIterator it(sounds);
+            while(it.hasNext())
+            {
+                it.next();
+                if(it.value().emitter() != emitter)
+                    continue;
+
+                it.remove();
+            }
+        }
+
+        return sounds.insert(params.effectId, Sound(params.flags, params.effectId, params.volume,
+                                                    params.origin, endTime, emitter))
+               .value();
+    }
+
+    DENG2_PIMPL_AUDIENCE(Addition)
 };
+
+DENG2_AUDIENCE_METHOD(Stage, Addition)
 
 Stage::Stage(Exclusion exclusion) : d(new Instance)
 {
@@ -104,30 +137,43 @@ bool Stage::soundIsPlaying(dint soundId, SoundEmitter *emitter) const
     return false;  // Not playing.
 }
 
-Sound &Stage::addSound(Sound const &sound)
+void Stage::playSound(SoundParams params, SoundEmitter *emitter)
 {
-    // Reject sounds with an invalid effect ID.
-    DENG2_ASSERT(sound.effectId() > 0);
-
     LOG_AS("audio::Stage");
 
-    // Only one Sound per SoundEmitter?
-    if(sound.emitter() && exclusion() == OnePerEmitter)
+    // Sound definitions can be used to override playback behavior.
+    if(sfxinfo_t const *soundDef = Def_GetSoundInfo(params.effectId, nullptr, &params.volume))
     {
-        // Remove all existing (logical) Sounds emitted by it, from the sound stage.
-        // Playback is stopped a little later...
-        Instance::SoundHash::MutableIterator it(d->sounds);
-        while(it.hasNext())
-        {
-            it.next();
-            if(it.value().emitter() != sound.emitter())
-                continue;
-
-            it.remove();
-        }
+        if(soundDef->flags & SF_REPEAT)         params.flags |= SoundFlag::Repeat;
+        if(soundDef->flags & SF_NO_ATTENUATION) params.flags |= SoundFlag::NoVolumeAttenuation;
     }
 
-    return d->sounds.insert(sound.effectId(), sound).value();  // A copy is made.
+    if(params.volume > 1) LOG_AUDIO_WARNING("Volume is too high (%f > 1)") << params.volume;
+
+    // We must know it's duration - cache the associated waveform resource (if necessary).
+    sfxsample_t const *sample = ClientApp::audioSystem().sampleCache().cache(params.effectId);
+    duint const duration      = sample ? sample->milliseconds() : 0;
+
+    // Completely ignore effects whose playback duration is zero.
+    /// @todo Shouldn't we stop other currently playing Sounds, though (@ref Exclusion) ? -ds
+    if(duration <= 0)
+    {
+        if(!sample)
+        {
+            LOG_AUDIO_VERBOSE("Failed caching resource for Sound #%i - cannot play") << params.effectId;
+        }
+        return;
+    }
+
+    // Start a logical Sound for this effect.
+    Sound &sound = d->addSound(params, Timer_RealMilliseconds() + (params.flags.testFlag(Repeat) ? 1 : duration),
+                               emitter);
+
+    // Notify interested parties.
+    DENG2_FOR_AUDIENCE2(Addition, i)
+    {
+        i->stageSoundAdded(*this, sound);
+    }
 }
 
 void Stage::removeAllSounds()
@@ -136,10 +182,10 @@ void Stage::removeAllSounds()
     d->sounds.clear();
 }
 
-void Stage::removeSoundsById(dint soundId)
+void Stage::removeSoundsById(dint effectId)
 {
     //LOG_AS("audio::Stage");
-    d->sounds.remove(soundId);
+    d->sounds.remove(effectId);
 }
 
 void Stage::removeSoundsWithEmitter(SoundEmitter const &emitter)

@@ -32,6 +32,7 @@ DENG2_PIMPL_NOREF(Sound)
     // Properties:
     SoundFlags flags;
     dint effectId;
+    dfloat volume;
     SoundEmitter *emitter;
     Vector3d origin;
 
@@ -41,6 +42,7 @@ DENG2_PIMPL_NOREF(Sound)
     Instance()
         : flags(DefaultSoundFlags)
         , effectId(0)
+        , volume  (1)
         , emitter (nullptr)
         , endTime (0)
     {}
@@ -49,6 +51,7 @@ DENG2_PIMPL_NOREF(Sound)
         : de::IPrivate()
         , flags   (other.flags)
         , effectId(other.effectId)
+        , volume  (other.volume)
         , emitter (other.emitter)
         , origin  (other.origin)
         , endTime (other.endTime)
@@ -61,11 +64,13 @@ private:
 Sound::Sound() : d(new Instance)
 {}
 
-Sound::Sound(SoundFlags flags, dint effectId, Vector3d const &origin, duint endTime, SoundEmitter *emitter)
+Sound::Sound(SoundFlags flags, dint effectId, dfloat volume, Vector3d const &origin,
+    duint endTime, SoundEmitter *emitter)
     : d(new Instance)
 {
     d->flags    = flags;
     d->effectId = effectId;
+    d->volume   = volume;
     d->emitter  = emitter;
     if(!d->flags.testFlag(NoOrigin)) d->origin = origin;
     d->endTime  = endTime;
@@ -102,6 +107,11 @@ Vector3d Sound::velocity() const
         return Vector3d(((mobj_t *)emitter())->mom) * TICSPERSEC;
     }
     return Vector3d();  // Not moving.
+}
+
+dfloat Sound::volume() const
+{
+    return d->volume;
 }
 
 bool Sound::emitterIsMoving() const

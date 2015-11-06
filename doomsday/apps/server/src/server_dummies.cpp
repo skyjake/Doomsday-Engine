@@ -30,70 +30,49 @@ DENG_DECLARE_API(Busy) =
     BusyMode_FreezeGameForBusyMode
 };
 
-void Con_TransitionTicker(timespan_t t)
-{
-    DENG_UNUSED(t);
-}
+void Con_TransitionTicker(timespan_t)
+{}
 
-void Con_SetProgress(int progress)
-{
-    DENG_UNUSED(progress);
-}
+void Con_SetProgress(int)
+{}
 
 void GL_Shutdown()
 {}
 
-void R_RenderPlayerView(int num)
-{
-    DENG_UNUSED(num);
-}
-
-void R_SetBorderGfx(Uri const *const *paths)
-{
-    DENG_UNUSED(paths);
-}
-
-void R_SkyParams(int layer, int param, void *data)
-{
-    DENG_UNUSED(layer);
-    DENG_UNUSED(param);
-    DENG_UNUSED(data);
-}
-
-void R_InitSvgs(void)
+void R_RenderPlayerView(int)
 {}
 
-void R_ShutdownSvgs(void)
+void R_SetBorderGfx(Uri const *const *)
 {}
 
-struct font_s* R_CreateFontFromDef(ded_compositefont_t* def)
+void R_SkyParams(int, int, void *)
+{}
+
+void R_InitSvgs()
+{}
+
+void R_ShutdownSvgs()
+{}
+
+struct font_s *R_CreateFontFromDef(ded_compositefont_t *)
 {
-    DENG_UNUSED(def);
-    return 0;
+    return nullptr;
 }
 
-void Rend_CacheForMobjType(int num)
-{
-    DENG_UNUSED(num);
-}
+void Rend_CacheForMobjType(int)
+{}
 
 void Rend_ConsoleInit()
 {}
 
-void Rend_ConsoleOpen(int yes)
-{
-    DENG_UNUSED(yes);
-}
+void Rend_ConsoleOpen(int)
+{}
 
-void Rend_ConsoleMove(int y)
-{
-    DENG_UNUSED(y);
-}
+void Rend_ConsoleMove(int)
+{}
 
-void Rend_ConsoleResize(int force)
-{
-    DENG_UNUSED(force);
-}
+void Rend_ConsoleResize(int)
+{}
 
 void Rend_ConsoleToggleFullscreen()
 {}
@@ -101,45 +80,32 @@ void Rend_ConsoleToggleFullscreen()
 void Rend_ConsoleCursorResetBlink()
 {}
 
-void Cl_InitPlayers(void)
+void Cl_InitPlayers()
 {}
 
-void UI_Ticker(timespan_t t)
-{
-    DENG_UNUSED(t);
-}
+void UI_Ticker(timespan_t)
+{}
 
-void Sys_MessageBox(messageboxtype_t type, const char* title, const char* msg, const char* detailedMsg)
-{
-    DENG_UNUSED(type);
-    DENG_UNUSED(title);
-    DENG_UNUSED(msg);
-    DENG_UNUSED(detailedMsg);
-}
+void Sys_MessageBox(messageboxtype_t, char const *, char const *, char const *)
+{}
 
-void Sys_MessageBox2(messageboxtype_t /*type*/, const char * /*title*/, const char * /*msg*/, const char * /*informativeMsg*/, const char * /*detailedMsg*/)
-{
-}
+void Sys_MessageBox2(messageboxtype_t, char const *, char const *, char const *, char const *)
+{}
 
-void Sys_MessageBoxf(messageboxtype_t /*type*/, const char* /*title*/, const char* /*format*/, ...)
-{
-}
+void Sys_MessageBoxf(messageboxtype_t, char const *, char const *, ...)
+{}
 
-int Sys_MessageBoxWithButtons(messageboxtype_t /*type*/, const char* /*title*/, const char* /*msg*/,
-                              const char* /*informativeMsg*/, const char** /*buttons*/)
+int Sys_MessageBoxWithButtons(messageboxtype_t, char const *, char const *, char const *, char const **)
 {
     return 0;
 }
 
-void Sys_MessageBoxWithDetailsFromFile(messageboxtype_t /*type*/, const char* /*title*/, const char* /*msg*/,
-                                       const char* /*informativeMsg*/, const char* /*detailsFileName*/)
-{
-}
+void Sys_MessageBoxWithDetailsFromFile(messageboxtype_t, char const *, char const *,
+    char const *, char const *)
+{}
 
-DENG_EXTERN_C void R_ProjectSprite(struct mobj_s *mo)
-{
-    DENG_UNUSED(mo);
-}
+DENG_EXTERN_C void R_ProjectSprite(struct mobj_s *)
+{}
 
 dd_bool S_StartMusicNum(int, dd_bool)
 {
@@ -157,26 +123,22 @@ void S_PauseMusic(dd_bool)
     // We don't play music locally on server side.
 }
 
-int S_LocalSoundAtVolumeFrom(int, struct mobj_s *, coord_t *, float)
+void S_LocalSoundAtVolumeFrom(int, struct mobj_s *, coord_t *, float)
 {
     // We don't play sounds locally on server side.
-    return false;
 }
 
-int S_LocalSoundAtVolume(int soundIdAndFlags, struct mobj_s *emitter, float volume)
+void S_LocalSoundAtVolume(int, struct mobj_s *, float)
 {
     // We don't play sounds locally on server side.
-    return false;
 }
 
-int S_LocalSound(int soundIdAndFlags, struct mobj_s *emitter)
+void S_LocalSound(int, struct mobj_s *)
 {
     // We don't play sounds locally on server side.
-    return false;
 }
 
-int S_LocalSoundFrom(int soundIdAndFlags, coord_t *origin)
+void S_LocalSoundFrom(int, coord_t *)
 {
     // We don't play sounds locally on server side.
-    return false;
 }

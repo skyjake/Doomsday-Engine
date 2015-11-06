@@ -21,6 +21,7 @@
 #define CLIENT_AUDIO_STAGE_H
 
 #include "audio/sound.h"
+#include <de/Observers>
 
 namespace audio {
 
@@ -45,6 +46,9 @@ public:
         DontExclude,   ///< All are welcome.
         OnePerEmitter  ///< Only one per SoundEmitter (others will be removed).
     };
+
+    /// Audience that is notified when a new sound is added/started.
+    DENG2_DEFINE_AUDIENCE2(Addition, void stageSoundAdded(Stage &, Sound &))
 
 public:
     Stage(Exclusion exclusion = DontExclude);
@@ -76,34 +80,33 @@ public:
      * Returns true if the referenced sound is currently playing somewhere in the stage.
      * (irrespective of whether it is actually audible, or not).
      *
-     * @param soundId  @c 0= true if sounds are playing using the specified @a emitter.
-     * @param emitter  Soundstage SoundEmitter (originator). May be @c nullptr.
-     *
-     * @todo revise API. -ds
+     * @param effectId  @c 0= true if sounds are playing using the specified @a emitter.
+     * @param emitter   Soundstage Emitter (originator). May be @c nullptr.
      */
-    bool soundIsPlaying(de::dint soundId, SoundEmitter *emitter) const;
+    bool soundIsPlaying(de::dint effectId, SoundEmitter *emitter) const;
 
     /**
-     * Start a new sound in the sound stage.
+     * Start playing a Sound in the soundstage. The Addition audience is notified whenever
+     * a Sound is added to the stage.
      *
-     * @param sound  Logical sound to start.
-     * @return  The indexed copy of the newly started Sound.
+     * @param params   Parameters of the sound-effect to play.
+     * @param emitter  Emitter to attribute the sound to, if any.
      *
-     * @see exclusion()
+     * @see soundIsPlaying()
      */
-    Sound &addSound(Sound const &sound);
+    void playSound(SoundParams params, SoundEmitter *emitter = nullptr);
 
     /**
-     * @see removeSoundsWById(), removeSoundsWithEmitter()
+     * @see removeSoundsById(), removeSoundsWithEmitter()
      */
     void removeAllSounds();
 
     /**
-     * @param soundId
+     * @param effectId
      *
      * @see removeSoundsWithEmitter(), removeAllSounds()
      */
-    void removeSoundsById(de::dint soundId);
+    void removeSoundsById(de::dint effectId);
 
     /**
      * Remove all Sounds originating from the given @a emitter. Does absolutely nothing

@@ -209,10 +209,10 @@ sfxinfo_t *Def_GetSoundInfo(dint soundId, dfloat *freq, dfloat *volume)
     sfxinfo_t *info = &::runtimeDefs.sounds[soundId];
 
     for(dint i = 0; info->link && i < 10;
-        info     = info->link,
-        *freq    = (info->linkPitch > 0    ? info->linkPitch  / 128.0f : *freq),
-        *volume += (info->linkVolume != -1 ? info->linkVolume / 127.0f : 0),
-        soundId  = ::runtimeDefs.sounds.indexOf(info),
+        info    = info->link,
+        *freq   = (info->linkPitch > 0    ? info->linkPitch  / 128.0f : *freq),
+        *volume = (info->linkVolume != -1 ? info->linkVolume / 127.0f : *volume),
+        soundId = ::runtimeDefs.sounds.indexOf(info),
        ++i)
     {}
 

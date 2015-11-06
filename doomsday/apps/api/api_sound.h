@@ -40,42 +40,32 @@ DENG_API_TYPEDEF(S)
      * @param emitter          Mobj where the sound originates. May be @c nullptr.
      * @param origin           World coordinates where the sound originate. May be @c nullptr.
      * @param volume           Volume for the sound (0...1).
-     *
-     * @return  Non-zero if a sound was started.
      */
-    int (*LocalSoundAtVolumeFrom)(int soundIdAndFlags, struct mobj_s *emitter,
+    void (*LocalSoundAtVolumeFrom)(int soundIdAndFlags, struct mobj_s *emitter,
         coord_t *origin, float volume);
 
     /**
      * Plays a sound on the local system at the given volume.
      * This is a public sound interface.
-     *
-     * @return  Non-zero if a sound was started.
      */
-    int (*LocalSoundAtVolume)(int soundId, struct mobj_s *emitter, float volume);
+    void (*LocalSoundAtVolume)(int soundId, struct mobj_s *emitter, float volume);
 
     /**
      * Plays a sound on the local system from the given @a emitter.
      * This is a public sound interface.
-     *
-     * @return  Non-zero if a sound was started.
      */
-    int (*LocalSound)(int soundId, struct mobj_s *emitter);
+    void (*LocalSound)(int soundId, struct mobj_s *emitter);
 
     /**
      * Plays a sound on the local system at the given fixed world @a origin.
      * This is a public sound interface.
-     *
-     * @return  Non-zero if a sound was started.
      */
-    int (*LocalSoundFrom)(int soundId, coord_t *origin);
+    void (*LocalSoundFrom)(int soundId, coord_t *origin);
 
     /**
      * Play a world sound. All players in the game will hear it.
-     *
-     * @return  Non-zero if a sound was started.
      */
-    int (*StartSound)(int soundId, struct mobj_s *emitter);
+    void (*StartSound)(int soundId, struct mobj_s *emitter);
 
     /**
      * Play a world sound. The sound is sent to all players except the one who
@@ -84,24 +74,18 @@ DENG_API_TYPEDEF(S)
      *
      * @param soundId  Id of the sound.
      * @param emitter  Originator for the sound.
-     *
-     * @return  Non-zero if a sound was successfully started.
      */
-    int (*StartSoundEx)(int soundId, struct mobj_s *emitter);
+    void (*StartSoundEx)(int soundId, struct mobj_s *emitter);
 
     /**
      * Play a world sound. All players in the game will hear it.
-     *
-     * @return  Non-zero if a sound was started.
      */
-    int (*StartSoundAtVolume)(int soundId, struct mobj_s *emitter, float volume);
+    void (*StartSoundAtVolume)(int soundId, struct mobj_s *emitter, float volume);
 
     /**
      * Play a player sound. Only the specified player will hear it.
-     *
-     * @return  Non-zero if a sound was started (always).
      */
-    int (*ConsoleSound)(int soundId, struct mobj_s *emitter, int targetConsole);
+    void (*ConsoleSound)(int soundId, struct mobj_s *emitter, int targetConsole);
 
     /**
      * Stop playing sound(s), either by their unique identifier or by their

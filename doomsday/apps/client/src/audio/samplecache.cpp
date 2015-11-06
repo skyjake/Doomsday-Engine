@@ -599,12 +599,6 @@ Sample *SampleCache::cache(dint effectId)
 {
     LOG_AS("SampleCache");
 
-    // If no interface for SFX playback is available there is no benefit to caching
-    // sound samples that won't be heard.
-    /// @todo audio::System should handle this by restricting access. -ds
-    if(!ClientApp::audioSystem().soundPlaybackAvailable())
-        return nullptr;
-
     // Ignore invalid sound-effect IDs.
     if(effectId <= 0) return nullptr;
 

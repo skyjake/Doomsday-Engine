@@ -26,9 +26,9 @@
 
 #include "audio/stage.h"
 
+#include "dd_share.h"        // SoundEmitter
 #include "dd_types.h"        // lumpnum_t
 #include "SettingsRegister"
-#include "world/p_object.h"
 #include <de/Error>
 #include <de/Observers>
 #include <de/Record>
@@ -227,35 +227,12 @@ public:  //- Sound playback: ---------------------------------------------------
     de::dint soundVolume() const;
 
     /**
-     * Start playing a sound in the specified @a soundStage.
-     *
-     * If @a emitter and @a origin are both @c nullptr, the sound will be played with stereo
-     * positioning (centered).
-     *
-     * @param stageId   Unique identifier of the sound Stage on which to play.
-     * @param effectId  Identifier of the sound-effect to play.
-     * @param emitter   Soundstage SoundEmitter (originator). May be @c nullptr.
-     * @param origin    Soundstage space coordinates where the sound originates (if used).
-     * @param volume    Volume modifier [0...1] (not final; will be affected by the global
-     *                  @ref soundVolume() factor and if applicable, attenuated according
-     *                  to it's distance from the soundstage Listener).
-     *
-     * @return  @c true if playback was started and the sound is actually audible.
-     *
-     * @see soundIsPlaying(), stopSound()
-     */
-    bool playSound(StageId stageId, de::dint effectId, SoundFlags flags, SoundEmitter *emitter,
-        de::Vector3d const &origin, de::dfloat volume = 1 /*max volume*/);
-
-    /**
      * Stop playing sound(s) in the specified @a soundStage.
      *
      * @param stageId   Unique identifier of the sound Stage on which to stop sounds.
      * @param effectId  Unique identifier of the sound-effect(s) to stop.
      * @param emitter   Soundstage SoundEmitter (originator). May be @c nullptr.
      * @param flags     @ref soundStopFlags.
-     *
-     * @see soundIsPlaying(), stopSound()
      */
     void stopSound(StageId stageId, de::dint effectId, SoundEmitter *emitter,
         de::dint flags = 0 /*no special stop behaviors*/);

@@ -27,6 +27,11 @@
 
 namespace audio {
 
+/**
+ * Sound behavior flags.
+ *
+ * @ingroup audio
+ */
 enum SoundFlag
 {
     Repeat              = 0x1,
@@ -39,7 +44,24 @@ Q_DECLARE_FLAGS(SoundFlags, SoundFlag)
 Q_DECLARE_OPERATORS_FOR_FLAGS(SoundFlags)
 
 /**
- * Logical sound playing somewhere in the soundstage.
+ * POD description of a sound to be played (used with audio::Stage).
+ *
+ * @ingroup audio
+ */
+struct SoundParams
+{
+    SoundFlags flags    { DefaultSoundFlags };
+    de::dint effectId   = 0;
+    de::dfloat volume   = 1;
+    de::Vector3d origin = de::Vector3d(0, 0, 0);
+};
+
+/**
+ * Model of a logical sound, playing somewhere in the soundstage.
+ *
+ * Sounds track audio events on a purely logical level (irrespective of whether or not an
+ * audio::Channel is available to play it, or if the associated effect will actually be
+ * audible to anyone).
  *
  * @ingroup audio
  */
@@ -47,8 +69,8 @@ class Sound
 {
 public:
     Sound();
-    Sound(SoundFlags flags, de::dint effectId, de::Vector3d const &origin, de::duint endTime,
-          SoundEmitter *emitter = nullptr);
+    Sound(SoundFlags flags, de::dint effectId, de::dfloat volume, de::Vector3d const &origin,
+          de::duint endTime, SoundEmitter *emitter = nullptr);
 
     Sound(Sound const &other);
 
@@ -65,6 +87,9 @@ public:
      */
     bool isPlaying(de::duint nowTime) const;
 
+    /**
+     * Returns the sound effect behavior flags.
+     */
     SoundFlags flags() const;
 
     /**
@@ -72,9 +97,20 @@ public:
      */
     de::dint effectId() const;
 
+    /**
+     * Returns the origin of the sound effect in the soundstage.
+     */
     de::Vector3d origin() const;
 
+    /**
+     * Returns the velocity of the sound effect in the soundstage.
+     */
     de::Vector3d velocity() const;
+
+    /**
+     * Returns the @em initial volume of the sound effect.
+     */
+    de::dfloat volume() const;
 
     /**
      * Returns @c true if this is a moveable sound (i.e., the emitter is a map-object).
@@ -103,7 +139,7 @@ private:
 namespace std {
     // std::swap specialization for audio::Sound
     template <>
-    inline void swap<audio::Sound>(audio::Sound &a, audio::Sound &b) {
+    inline void swap<::audio::Sound>(::audio::Sound &a, ::audio::Sound &b) {
         a.swap(b);
     }
 }
