@@ -618,8 +618,11 @@ desc = 1=Always render the sky, even if there are no sky surfaces visible.
 [rend-dev-sky]
 desc = 1=Render the sky as a solid surface.
 
+[rend-dev-sounds]
+desc = Visualize sounds in the world soundstage (for debug).
+
 [rend-dev-soundorigins]
-desc = 3-bit bitfield. Show sound origins (for debug): 0x1=Sector, 0x2=Plane, 0x4=Side.
+desc = 3-bit bitfield. Visualize sound-emitters in the world soundstage (for debug): 0x1=Sector, 0x2=Plane, 0x4=Side.
 
 [rend-dev-surface-show-vectors]
 desc = 3-bit bitfield. Show surface tangent-space vectors (red:tangent, green:bitangent, blue:normal).

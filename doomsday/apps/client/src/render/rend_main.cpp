@@ -39,6 +39,11 @@
 #include "sys_system.h"
 #include "api_fontrender.h"
 
+// For debug visual:
+#include "api_audiod_sfx.h"
+#include "audio/system.h"
+#include "audio/samplecache.h"
+
 #include "edit_bias.h"         /// @todo remove me
 #include "r_util.h"
 
@@ -277,7 +282,8 @@ dbyte devVertexIndices;          ///< @c 1= Draw vertex indices.
 dbyte devVertexBars;             ///< @c 1= Draw vertex position bars.
 
 dbyte devDrawGenerators;         ///< @c 1= Draw active generators.
-dbyte devSoundEmitters;          ///< @c 1= Draw sound emitters.
+dbyte devSounds;                 ///< @c 1= Draw Sounds in the "world" soundstage.
+dbyte devSoundEmitters;          ///< @c 1= Draw SoundEmitters in the world.
 dbyte devSurfaceVectors;         ///< @c 1= Draw tangent space vectors for surfaces.
 dbyte devNoTexFix;               ///< @c 1= Draw "missing" rather than fix materials.
 
@@ -296,6 +302,7 @@ static void drawGenerators(Map &map);
 static void drawLumobjs(Map &map);
 static void drawMobjBoundingBoxes(Map &map);
 static void drawSectors(Map &map);
+static void drawSounds(Map &map);
 static void drawSoundEmitters(Map &map);
 static void drawSurfaceTangentVectors(Map &map);
 static void drawThinkers(Map &map);
@@ -4658,6 +4665,7 @@ void Rend_RenderMap(Map &map)
     drawVertexes(map);
     drawThinkers(map);
     drawSoundEmitters(map);
+    drawSounds(map);
     drawGenerators(map);
     drawBiasEditingVisuals(map);
 
@@ -5548,6 +5556,42 @@ static void drawLumobjs(Map &map)
     glEnable(GL_DEPTH_TEST);
 }
 
+static String labelForSound(::audio::Sound &sound)
+{
+    return String("[Sound] %1 (ID: %2, emitter: %2)")
+               .arg(::defs.sounds[sound.effectId()].gets("id"))
+               .arg(sound.effectId())
+               .arg(sound.emitter() ? String::number(sound.emitter()->thinker.id) : "none");
+}
+
+/**
+ * Debugging aid for visualizing Sounds in the "world" soundstage.
+ */
+static void drawSounds(Map &)
+{
+    if(!devSounds) return;
+
+    FR_SetFont(fontFixed);
+    FR_LoadDefaultAttrib();
+    FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
+    FR_SetShadowStrength(UI_SHADOW_STRENGTH);
+
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_TEXTURE_2D);
+
+    ClientApp::audioSystem().worldStage().forAllSounds([] (::audio::Sound &sound)
+    {
+        if(!sound.flags().testFlag(::audio::SoundFlag::NoOrigin))
+        {
+            drawLabel(labelForSound(sound), sound.origin());
+        }
+        return LoopContinue;
+    });
+
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_TEXTURE_2D);
+}
+
 static String labelForLineSideSection(LineSide &side, dint sectionId)
 {
     return String("Line #%1 (%2, %3)")
@@ -5571,7 +5615,7 @@ static String labelForSectorPlane(Plane &plane)
 }
 
 /**
- * Debugging aid for visualizing sound origins.
+ * Debugging aid for visualizing sound Emitters in the "world" soundstage.
  */
 static void drawSoundEmitters(Map &map)
 {
@@ -5591,21 +5635,21 @@ static void drawSoundEmitters(Map &map)
     {
         map.forAllLines([] (Line &line)
         {
-            for(dint i = 0; i < 2; ++i)
+            return line.forAllSides([] (LineSide &side)
             {
-                LineSide &side = line.side(i);
-                if(!side.hasSections()) continue;
+                if(side.hasSections())
+                {
+                    drawLabel(labelForLineSideSection(side, LineSide::Middle)
+                              , Vector3d(side.middleSoundEmitter().origin), MAX_DISTANCE);
 
-                drawLabel(labelForLineSideSection(side, LineSide::Middle)
-                          , Vector3d(side.middleSoundEmitter().origin), MAX_DISTANCE);
+                    drawLabel(labelForLineSideSection(side, LineSide::Bottom)
+                              , Vector3d(side.bottomSoundEmitter().origin), MAX_DISTANCE);
 
-                drawLabel(labelForLineSideSection(side, LineSide::Bottom)
-                          , Vector3d(side.bottomSoundEmitter().origin), MAX_DISTANCE);
-
-                drawLabel(labelForLineSideSection(side, LineSide::Top)
-                          , Vector3d(side.topSoundEmitter   ().origin), MAX_DISTANCE);
-            }
-            return LoopContinue;
+                    drawLabel(labelForLineSideSection(side, LineSide::Top)
+                              , Vector3d(side.topSoundEmitter   ().origin), MAX_DISTANCE);
+                }
+                return LoopContinue;
+            });
         });
     }
 
@@ -6347,6 +6391,7 @@ void Rend_Register()
     C_VAR_BYTE("rend-dev-sector-show-indices", &devSectorIndices, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_INT("rend-dev-sky", &devRendSkyMode, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-sky-always", &devRendSkyAlways, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE("rend-dev-sounds", &devSounds, CVF_NO_ARCHIVE, 0, 7);
     C_VAR_BYTE("rend-dev-soundorigins", &devSoundEmitters, CVF_NO_ARCHIVE, 0, 7);
     C_VAR_BYTE("rend-dev-surface-show-vectors", &devSurfaceVectors, CVF_NO_ARCHIVE, 0, 7);
     C_VAR_BYTE("rend-dev-thinker-ids", &devThinkerIds, CVF_NO_ARCHIVE, 0, 1);
