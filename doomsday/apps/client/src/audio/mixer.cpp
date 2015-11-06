@@ -292,7 +292,7 @@ void UI_AudioMixerDrawer()
                 (sound && sound->emitter()) ? sound->emitter()->thinker.id : 0);
         FR_DrawTextXY(buf, 5, lh * (1 + idx * 2));
 
-        if(ch.isValid())
+        //if(ch.isValid())
         {
             ::audio::Sound const *sound = ch.sound();
             sfxsample_t const *sample   = sound ? ClientApp::audioSystem().sampleCache().cache(sound->effectId()) : nullptr;

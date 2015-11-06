@@ -99,10 +99,7 @@ public:  //- Playback Channels: ------------------------------------------------
         void reset();
         void suspend() override;
 
-        bool format(de::dint bytesPer, de::dint rate);
-        bool isValid() const;
-
-        void load(sfxsample_t const &sample);
+        void bindSample(sfxsample_t const &sample) override;
 
         de::dint bytes() const;
         de::dint rate() const;

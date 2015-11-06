@@ -638,22 +638,14 @@ void SdlMixerDriver::SoundChannel::reset()
     return isPlaying() ? &d->getSound() : nullptr;
 }
 
-void SdlMixerDriver::SoundChannel::load(sfxsample_t const &sample)
+void SdlMixerDriver::SoundChannel::bindSample(sfxsample_t const &sample)
 {
-    // Don't reload if a sample with the same sound ID is already loaded.
-    if(!d->buffer.data || d->buffer.data->effectId != sample.effectId)
-    {
-        d->buffer.load(&const_cast<sfxsample_t &>(sample));
-    }
-}
+    stop();
 
-bool SdlMixerDriver::SoundChannel::format(dint bytesPer, dint rate)
-{
     // Do we need to (re)configure the sample data buffer?
-    if(   d->buffer.sampleBytes != bytesPer
-       || d->buffer.sampleRate  != rate)
+    if(   d->buffer.sampleBytes != sample.bytesPer
+       || d->buffer.sampleRate  != sample.rate)
     {
-        stop();
         DENG2_ASSERT(!isPlaying());
 
         // Release the previously acquired channel, if any.
@@ -662,17 +654,17 @@ bool SdlMixerDriver::SoundChannel::format(dint bytesPer, dint rate)
         d->mixChannel = acquireChannel();
 
         d->buffer.unload();
-        d->buffer.sampleBytes = bytesPer;
-        d->buffer.sampleRate  = rate;
+        d->buffer.sampleBytes = sample.bytesPer;
+        d->buffer.sampleRate  = sample.rate;
 
         d->bufferIsValid = true;
     }
-    return isValid();
-}
 
-bool SdlMixerDriver::SoundChannel::isValid() const
-{
-    return d->bufferIsValid;
+    // Don't reload if a sample with the same sound ID is already loaded.
+    if(!d->buffer.data || d->buffer.data->effectId != sample.effectId)
+    {
+        d->buffer.load(&const_cast<sfxsample_t &>(sample));
+    }
 }
 
 dint SdlMixerDriver::SoundChannel::bytes() const
@@ -873,8 +865,6 @@ DENG2_PIMPL(SdlMixerDriver), public IChannelFactory
             for(Channel *base : driver.d->channels[Channel::Sound])
             {
                 auto &ch = base->as<SoundChannel>();
-
-                if(!ch.isValid()) continue;
 
                 if(ch.sound() && ch.sound()->effectId() == sample.effectId)
                 {

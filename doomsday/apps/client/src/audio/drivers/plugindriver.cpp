@@ -432,6 +432,28 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundChannel)
         }
     }
 
+    void bufferFormat(dint sampleBytes, dint sampleRate)
+    {
+        bufferUnload();
+
+        /// @todo Don't duplicate state! -ds
+        buffer.sampleBytes = sampleBytes;
+        buffer.sampleRate  = sampleRate;
+
+        buffer.data =
+            driver.iSound().gen.Create(positioning == AbsolutePositioning ? SFXBF_3D : 0,
+                                       buffer.sampleBytes * 8, buffer.sampleRate);
+
+        if(buffer.data)
+        {
+            if(buffer.getData().flags & SFXBF_3D)
+                needEnvironmentUpdate = true;
+
+            // We want notification when the frame ends in order to flush deferred property writes.
+            ClientApp::audioSystem().audienceForFrameEnds() += this;
+        }
+    }
+
     /**
      * Writes deferred Listener and/or Environment changes to the audio driver.
      *
@@ -696,7 +718,7 @@ Channel &PluginDriver::SoundChannel::setPositioning(Positioning newPositioning)
             /// @todo Could handle this more elegantly on the plugin's side... -ds
             LOG_AS("PluginDriver::SoundChannel");
             LOGDEV_AUDIO_MSG("Positioning model changed, reformatting...");
-            format(d->buffer.sampleBytes, d->buffer.sampleRate);
+            d->bufferFormat(d->buffer.sampleBytes, d->buffer.sampleRate);
         }
     }
     return *this;
@@ -742,43 +764,13 @@ void PluginDriver::SoundChannel::reset()
     d->driver.iSound().gen.Reset(d->buffer.data);
 }
 
-bool PluginDriver::SoundChannel::format(dint bytesPer, dint rate)
+void PluginDriver::SoundChannel::bindSample(sfxsample_t const &sample)
 {
+    stop();
+
     // We may need to replace the playback data buffer.
-    if(!d->buffer.data
-       || d->buffer.sampleBytes != bytesPer
-       || d->buffer.sampleRate  != rate)
-    {
-        stop();
-        d->bufferUnload();
+    d->bufferFormat(sample.bytesPer, sample.rate);
 
-        /// @todo Don't duplicate state! -ds
-        d->buffer.sampleBytes = bytesPer;
-        d->buffer.sampleRate  = rate;
-
-        d->buffer.data =
-            d->driver.iSound().gen.Create(d->positioning == AbsolutePositioning ? SFXBF_3D : 0,
-                                          d->buffer.sampleBytes * 8, d->buffer.sampleRate);
-
-        if(d->buffer.data)
-        {
-            if(d->buffer.getData().flags & SFXBF_3D)
-                d->needEnvironmentUpdate = true;
-
-            // We want notification when the frame ends in order to flush deferred property writes.
-            ClientApp::audioSystem().audienceForFrameEnds() += d;
-        }
-    }
-    return isValid();
-}
-
-bool PluginDriver::SoundChannel::isValid() const
-{
-    return d->buffer.data != nullptr;
-}
-
-void PluginDriver::SoundChannel::load(sfxsample_t const &sample)
-{
     // Don't reload if a sample with the same sound ID is already loaded.
     sfxbuffer_t &buffer = d->buffer.getData();
     if(!buffer.sample || buffer.sample->effectId != sample.effectId)
@@ -805,9 +797,8 @@ dint PluginDriver::SoundChannel::startTime() const
 
 duint PluginDriver::SoundChannel::endTime() const
 {
-    return isValid() && d->buffer.data ? d->buffer.getData().endTime : 0;
+    return d->buffer.data ? d->buffer.getData().endTime : 0;
 }
-
 
 void PluginDriver::SoundChannel::updateEnvironment()
 {
@@ -1175,8 +1166,6 @@ DENG2_PIMPL(PluginDriver), public IChannelFactory
             for(Channel *base : driver->d->channels[Channel::Sound])
             {
                 auto &ch = base->as<SoundChannel>();
-
-                if(!ch.isValid()) continue;
 
                 if(ch.sound() && ch.sound()->effectId() == sample.effectId)
                 {

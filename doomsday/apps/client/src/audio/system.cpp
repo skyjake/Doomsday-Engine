@@ -801,13 +801,6 @@ DENG2_PIMPL(System)
 
                         channel->as<SoundChannel>().setPositioning(positioning);
 
-                        if(!channel->as<SoundChannel>().format(sfxBits / 8, sfxRate))
-                        {
-                            LOG_AUDIO_WARNING("\"%s\" failed configuring Channel format")
-                                << active.def().gets("identityKey");
-                            break;
-                        }
-
                         // Add the new channel to the available channels for the "fx" track.
                         (*mixer)["fx"].addChannel(channel);
                     }
@@ -1492,25 +1485,22 @@ DENG2_PIMPL(System)
                 auto &ch = base.as<SoundChannel>();
                 dfloat const chPriority = channelPrios[idx++];
 
-                if(ch.isValid())
+                // Sample buffer must be configured for the right mode.
+                if(positioning == ch.positioning())
                 {
-                    // Sample buffer must be configured for the right mode.
-                    if(positioning == ch.positioning())
+                    if(!ch.isPlaying())
                     {
-                        if(!ch.isPlaying())
-                        {
-                            // This channel is not playing, we'll take it!
-                            selCh = &ch;
-                            return LoopAbort;
-                        }
+                        // This channel is not playing, we'll take it!
+                        selCh = &ch;
+                        return LoopAbort;
+                    }
 
-                        // Are we more important than this sound?
-                        // We want to choose the lowest priority sound.
-                        if(priority >= chPriority && (!prioCh || chPriority <= lowPrio))
-                        {
-                            prioCh  = &ch;
-                            lowPrio = chPriority;
-                        }
+                    // Are we more important than this sound?
+                    // We want to choose the lowest priority sound.
+                    if(priority >= chPriority && (!prioCh || chPriority <= lowPrio))
+                    {
+                        prioCh  = &ch;
+                        lowPrio = chPriority;
                     }
                 }
 
@@ -1534,18 +1524,12 @@ DENG2_PIMPL(System)
         }
         SoundChannel &channel = *selCh;
 
-        channel.stop();
-        channel.setPositioning(positioning);
-
-        // The channel may need to be reformatted.
-        {
-            channel.format(sample.bytesPer, sample.rate);
-            DENG2_ASSERT(channel.isValid());
-            channel.load(sample);
-        }
+        // (Re)load if necessary and bind this sample.
+        channel.bindSample(sample);
 
         // Initialize playback modifiers and start playing.
         channel.setFrequency(frequency)
+               .setPositioning(positioning)
                .setVolume(sound.volume());
         channel.play(mode);
 

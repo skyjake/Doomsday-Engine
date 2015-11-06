@@ -248,8 +248,6 @@ DENG2_PIMPL_NOREF(DummyDriver::SoundChannel)
         }
     } buffer;
 
-    bool bufferIsValid = true;  ///< @c true when @var buffer matches the last requested format.
-
     Instance()
     {
         // We want notification when the frame ends in order to flush deferred property writes.
@@ -393,11 +391,6 @@ dfloat DummyDriver::SoundChannel::volume() const
     return d->volume;
 }
 
-void DummyDriver::SoundChannel::setSound(::audio::Sound *sound)
-{
-    d->sound = sound;
-}
-
 ::audio::Sound *DummyDriver::SoundChannel::sound() const
 {
     return isPlaying() ? &d->getSound() : nullptr;
@@ -424,31 +417,20 @@ void DummyDriver::SoundChannel::reset()
     d->buffer.unload();
 }
 
-bool DummyDriver::SoundChannel::format(dint bytesPer, dint rate)
+void DummyDriver::SoundChannel::bindSample(sfxsample_t const &sample)
 {
-    // Do we need to (re)configure the sample data buffer?
-    if(   d->buffer.sampleBytes != bytesPer
-       || d->buffer.sampleRate  != rate)
+    stop();
+
+    // Do we need to (re)configure the data buffer?
+    if(   d->buffer.sampleBytes != sample.bytesPer
+       || d->buffer.sampleRate  != sample.rate)
     {
-        stop();
         DENG2_ASSERT(!isPlaying());
-
         d->buffer.unload();
-        d->buffer.sampleBytes = bytesPer;
-        d->buffer.sampleRate  = rate;
-
-        d->bufferIsValid = true;
+        d->buffer.sampleBytes = sample.bytesPer;
+        d->buffer.sampleRate  = sample.rate;
     }
-    return isValid();
-}
 
-bool DummyDriver::SoundChannel::isValid() const
-{
-    return d->bufferIsValid;
-}
-
-void DummyDriver::SoundChannel::load(sfxsample_t const &sample)
-{
     // Don't reload if a sample with the same sound ID is already loaded.
     if(!d->buffer.data || d->buffer.data->effectId != sample.effectId)
     {

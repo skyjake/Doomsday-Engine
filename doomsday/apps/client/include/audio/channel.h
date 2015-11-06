@@ -216,18 +216,6 @@ public:
     virtual void suspend() = 0;
 
     /**
-     * @return  @c true if the (re)format completed successfully (equivalent to calling
-     * @ref isValid() after this), for caller convenience.
-     */
-    virtual bool format(de::dint bytesPer, de::dint rate) = 0;
-
-    /**
-     * Returns @c true if the channel is in valid state (i.e., the previous @ref format()
-     * completed successfully and it is ready to receive a sample of that format).
-     */
-    virtual bool isValid() const = 0;
-
-    /**
      * Prepare the buffer for playing a sample by filling the buffer with as much sample
      * data as fits. The pointer to sample is saved, so the caller mustn't free it while
      * the sample is loaded.
@@ -235,7 +223,7 @@ public:
      * @note The sample is not reloaded if the buffer is already loaded with data with the
      * same sound ID.
      */
-    virtual void load(sfxsample_t const &sample) = 0;
+    virtual void bindSample(sfxsample_t const &sample) = 0;
 
     virtual de::dint bytes() const = 0;
     virtual de::dint rate() const = 0;
