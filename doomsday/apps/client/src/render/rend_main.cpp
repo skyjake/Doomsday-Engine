@@ -4710,10 +4710,13 @@ static void drawLabel(String const &label, Vector3d const &origin, dfloat scale,
     glPopMatrix();
 }
 
-static void drawLabel(String const &label, Vector3d const &origin)
+static void drawLabel(String const &label, Vector3d const &origin, ddouble maxDistance = 2000)
 {
     ddouble const distToEye = (Rend_EyeOrigin().xzy() - origin).length();
-    drawLabel(label, origin, distToEye / (DENG_GAMEVIEW_WIDTH / 2), 1 - distToEye / 2000);
+    if(distToEye < maxDistance)
+    {
+        drawLabel(label, origin, distToEye / (DENG_GAMEVIEW_WIDTH / 2), 1 - distToEye / maxDistance);
+    }
 }
 
 /*
@@ -5544,16 +5547,26 @@ static void drawLumobjs(Map &map)
     glEnable(GL_DEPTH_TEST);
 }
 
-static void drawSoundEmitter(String const &label, Vector3d const &origin)
+static String labelForLineSideSection(LineSide &side, dint sectionId)
 {
-    static ddouble const MAX_DISTANCE = 384;
+    return String("Line #%1 (%2, %3)")
+               .arg(side.line().indexInMap())
+               .arg(side.isFront() ? "front" : "back")
+               .arg(  sectionId == LineSide::Middle ? "middle"
+                    : sectionId == LineSide::Bottom ? "bottom"
+                                                    : "top");
+}
 
-    ddouble const distToEye = (eyeOrigin - origin).length();
-    if(distToEye < MAX_DISTANCE)
-    {
-        drawLabel(label, origin, distToEye / (DENG_GAMEVIEW_WIDTH / 2)
-                  , 1 - distToEye / MAX_DISTANCE);
-    }
+static String labelForSector(Sector &sector)
+{
+    return String("Sector #%1").arg(sector.indexInMap());
+}
+
+static String labelForSectorPlane(Plane &plane)
+{
+    return String("Sector #%1 (pln:%2)")
+               .arg(plane.sector().indexInMap())
+               .arg(plane.indexInSector());
 }
 
 /**
@@ -5561,6 +5574,8 @@ static void drawSoundEmitter(String const &label, Vector3d const &origin)
  */
 static void drawSoundEmitters(Map &map)
 {
+    static ddouble const MAX_DISTANCE = 384;
+
     if(!devSoundEmitters) return;
 
     FR_SetFont(fontFixed);
@@ -5580,20 +5595,14 @@ static void drawSoundEmitters(Map &map)
                 LineSide &side = line.side(i);
                 if(!side.hasSections()) continue;
 
-                drawSoundEmitter(String("Line #%1 (%2, middle)")
-                                     .arg(line.indexInMap())
-                                     .arg(i? "back" : "front")
-                                 , Vector3d(side.middleSoundEmitter().origin));
+                drawLabel(labelForLineSideSection(side, LineSide::Middle)
+                          , Vector3d(side.middleSoundEmitter().origin), MAX_DISTANCE);
 
-                drawSoundEmitter(String("Line #%1 (%2, bottom)")
-                                     .arg(line.indexInMap())
-                                     .arg(i? "back" : "front")
-                                 , Vector3d(side.bottomSoundEmitter().origin));
+                drawLabel(labelForLineSideSection(side, LineSide::Bottom)
+                          , Vector3d(side.bottomSoundEmitter().origin), MAX_DISTANCE);
 
-                drawSoundEmitter(String("Line #%1 (%2, top)")
-                                     .arg(line.indexInMap())
-                                     .arg(i? "back" : "front")
-                                 , Vector3d(side.topSoundEmitter().origin));
+                drawLabel(labelForLineSideSection(side, LineSide::Top)
+                          , Vector3d(side.topSoundEmitter   ().origin), MAX_DISTANCE);
             }
             return LoopContinue;
         });
@@ -5607,18 +5616,16 @@ static void drawSoundEmitters(Map &map)
             {
                 sector.forAllPlanes([] (Plane &plane)
                 {
-                    drawSoundEmitter(String("Sector #%1 (pln:%2)")
-                                         .arg(plane.sector().indexInMap())
-                                         .arg(plane.indexInSector())
-                                     , Vector3d(plane.soundEmitter().origin));
+                    drawLabel(labelForSectorPlane(plane)
+                              , Vector3d(plane.soundEmitter().origin), MAX_DISTANCE);
                     return LoopContinue;
                 });
             }
 
             if(devSoundEmitters & SOF_SECTOR)
             {
-                drawSoundEmitter(String("Sector #%1").arg(sector.indexInMap())
-                                 , Vector3d(sector.soundEmitter().origin));
+                drawLabel(labelForSector(sector)
+                          , Vector3d(sector.soundEmitter().origin), MAX_DISTANCE);
             }
             return LoopContinue;
         });
