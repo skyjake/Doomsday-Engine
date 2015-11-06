@@ -2094,7 +2094,7 @@ D_CMD(ListDrivers)
     DENG2_UNUSED3(src, argc, argv);
     LOG_AS("listaudiodrivers (Cmd)");
 
-    if(System::get().driverCount() <= 0)
+    if(ClientApp::audioSystem().driverCount() <= 0)
     {
         LOG_SCR_MSG("No audio drivers are currently loaded");
         return true;
@@ -2102,7 +2102,7 @@ D_CMD(ListDrivers)
 
     String list;
     dint numDrivers = 0;
-    System::get().forAllDrivers([&list, &numDrivers] (IDriver const &driver)
+    ClientApp::audioSystem().forAllDrivers([&list, &numDrivers] (IDriver const &driver)
     {
         if(!list.isEmpty()) list += "\n";
 
@@ -2116,7 +2116,6 @@ D_CMD(ListDrivers)
         numDrivers += 1;
         return LoopContinue;
     });
-
     LOG_SCR_MSG(_E(b) "Loaded Audio Drivers (%i):") << numDrivers;
     LOG_SCR_MSG(_E(R) "\n");
     LOG_SCR_MSG("") << list;
@@ -2132,11 +2131,12 @@ D_CMD(InspectDriver)
     LOG_AS("inspectaudiodriver (Cmd)");
 
     String const driverId(argv[1]);
-    if(IDriver const *driver = System::get().tryFindDriver(driverId))
+    if(IDriver const *driver = ClientApp::audioSystem().tryFindDriver(driverId))
     {
         LOG_SCR_MSG("") << driver->description();
         return true;
     }
+
     LOG_SCR_WARNING("Unknown audio driver \"%s\"") << driverId;
     return false;
 }
@@ -2149,14 +2149,6 @@ D_CMD(PlaySound)
     DENG2_UNUSED(src);
     LOG_AS("playsound (Cmd)");
 
-#ifndef DENG2_DEBUG
-    if(!System::get().soundPlaybackAvailable())
-    {
-        LOG_SCR_ERROR("Sound playback is not available");
-        return false;
-    }
-#endif
-
     if(argc < 2)
     {
         LOG_SCR_NOTE("Usage: %s (id) (volume) at (x) (y) (z)") << argv[0];
@@ -2165,22 +2157,22 @@ D_CMD(PlaySound)
         LOG_SCR_MSG("The sound is always played locally");
         return true;
     }
-    dint p = 0;
 
-    // The sound ID is always first.
-    String const soundId(argv[1]);
-    dint const soundNum = ::defs.getSoundNum(soundId);
-    if(soundNum <= 0)
+    SoundParams params;
+
+    // The first argument is the sound ID.
+    params.effectId = ::defs.getSoundNum(String(argv[1]));
+    if(params.effectId <= 0)
     {
-        LOG_SCR_WARNING("Unknown sound \"%s\"") << soundId;
-        return true;
+        LOG_SCR_WARNING("Unknown sound \"%s\"") << String(argv[1]);
+        return false;
     }
 
-    // The second argument may be a volume.
-    dfloat volume = 1;
+    // The next argument may be a volume.
+    dint p = 0;
     if(argc >= 3 && String(argv[2]).compareWithoutCase("at"))
     {
-        volume = String(argv[2]).toFloat();
+        params.volume = de::clamp<dfloat>(0, String(argv[2]).toFloat(), 1);
         p = 3;
     }
     else
@@ -2188,29 +2180,16 @@ D_CMD(PlaySound)
         p = 2;
     }
 
-    bool useFixedPos = false;
-    coord_t fixedPos[3];
+    // The next argument may be soundstage coordinates.
     if(argc >= p + 4 && !String(argv[p]).compareWithoutCase("at"))
     {
-        useFixedPos = true;
-        fixedPos[0] = String(argv[p + 1]).toDouble();
-        fixedPos[1] = String(argv[p + 2]).toDouble();
-        fixedPos[2] = String(argv[p + 3]).toDouble();
+        params.flags &= ~SoundFlag::NoOrigin;
+        params.origin = Vector3d(String(argv[p + 1]).toDouble(),
+                                 String(argv[p + 2]).toDouble(),
+                                 String(argv[p + 3]).toDouble());
     }
 
-    // Check that the volume is valid.
-    volume = de::clamp(0.f, volume, 1.f);
-    if(de::fequal(volume, 0)) return true;
-
-    if(useFixedPos)
-    {
-        _api_S.LocalSoundAtVolumeFrom(soundNum, nullptr, fixedPos, volume);
-    }
-    else
-    {
-        _api_S.LocalSoundAtVolume(soundNum, nullptr, volume);
-    }
-
+    ClientApp::audioSystem().localStage().playSound(params);
     return true;
 }
 
@@ -2223,7 +2202,7 @@ D_CMD(PlayMusic)
     LOG_AS("playmusic (Cmd)");
 
 #ifndef DENG2_DEBUG
-    if(!System::get().musicPlaybackAvailable())
+    if(!ClientApp::audioSystem().musicPlaybackAvailable())
     {
         LOG_SCR_ERROR("Music playback is not available");
         return false;
@@ -2237,7 +2216,7 @@ D_CMD(PlayMusic)
         // Play a file associated with the referenced music definition.
         if(Record const *definition = ::defs.musics.tryFind("id", argv[1]))
         {
-            return System::get().playMusic(*definition, looped);
+            return ClientApp::audioSystem().playMusic(*definition, looped);
         }
         LOG_SCR_WARNING("Music '%s' not defined") << argv[1];
         return false;
@@ -2248,15 +2227,15 @@ D_CMD(PlayMusic)
         // Play a file referenced directly.
         if(!qstricmp(argv[1], "lump"))
         {
-            return System::get().playMusicLump(App_FileSystem().lumpNumForName(argv[2]), looped);
+            return ClientApp::audioSystem().playMusicLump(App_FileSystem().lumpNumForName(argv[2]), looped);
         }
         else if(!qstricmp(argv[1], "file"))
         {
-            return System::get().playMusicFile(argv[2], looped);
+            return ClientApp::audioSystem().playMusicFile(argv[2], looped);
         }
         else if(!qstricmp(argv[1], "cd"))
         {
-            return System::get().playMusicCDTrack(String(argv[2]).toInt(), looped);
+            return ClientApp::audioSystem().playMusicCDTrack(String(argv[2]).toInt(), looped);
         }
     }
 
@@ -2270,14 +2249,14 @@ D_CMD(PlayMusic)
 D_CMD(StopMusic)
 {
     DENG2_UNUSED3(src, argc, argv);
-    System::get().stopMusic();
+    ClientApp::audioSystem().stopMusic();
     return true;
 }
 
 D_CMD(PauseMusic)
 {
     DENG2_UNUSED3(src, argc, argv);
-    System::get().pauseMusic(!System::get().musicIsPaused());
+    ClientApp::audioSystem().pauseMusic(!ClientApp::audioSystem().musicIsPaused());
     return true;
 }
 
@@ -2285,7 +2264,7 @@ D_CMD(PauseMusic)
 D_CMD(InspectMixer)
 {
     DENG2_UNUSED3(src, argc, argv);
-    Mixer &mixer = System::get().mixer();
+    Mixer &mixer = ClientApp::audioSystem().mixer();
     LOG_MSG(_E(b) "Mixer (%i tracks):") << mixer.trackCount();
     LOG_MSG(_E(R) "\n");
     mixer.forAllTracks([] (Mixer::Track &track)
@@ -2300,7 +2279,7 @@ D_CMD(InspectMixer)
 
 static void musicMidiFontChanged()
 {
-    System::get().updateMusicMidiFont();
+    ClientApp::audioSystem().updateMusicMidiFont();
 }
 
 void System::consoleRegister()  // static
@@ -2355,105 +2334,105 @@ void S_StopMusic()
     ClientApp::audioSystem().stopMusic();
 }
 
-dd_bool S_StartMusicNum(dint musicId, dd_bool looped)
+dd_bool S_StartMusicNum(dint songId, dd_bool looped)
 {
-    if(musicId >= 0 && musicId < ::defs.musics.size())
+    if(songId >= 0 && songId < ::defs.musics.size())
     {
-        return ClientApp::audioSystem().playMusic(::defs.musics[musicId], looped);
+        return ClientApp::audioSystem().playMusic(::defs.musics[songId], looped);
     }
     return false;
 }
 
 dd_bool S_StartMusic(char const *musicId, dd_bool looped)
 {
-    dint idx = ::defs.getMusicNum(musicId);
-    if(idx < 0)
+    dint songId = ::defs.getMusicNum(musicId);
+    if(songId < 0)
     {
-        if(musicId && !String(musicId).isEmpty())
+        if(songId && !String(musicId).isEmpty())
         {
             LOG_AS("S_StartMusic");
             LOG_AUDIO_WARNING("Music \"%s\" not defined, cannot start playback") << musicId;
         }
         return false;
     }
-    return S_StartMusicNum(idx, looped);
+    return S_StartMusicNum(songId, looped);
 }
 
 //- Sound: ------------------------------------------------------------------------------
 
-dd_bool S_SoundIsPlaying(dint soundId, mobj_t *emitter)
+dd_bool S_SoundIsPlaying(dint effectId, mobj_t *emitter)
 {
-    return (dd_bool) ClientApp::audioSystem().worldStage().soundIsPlaying(soundId, (SoundEmitter *)emitter);
+    return (dd_bool) ClientApp::audioSystem().worldStage().soundIsPlaying(effectId, (SoundEmitter *)emitter);
 }
 
-void S_StopSound2(dint soundId, mobj_t *emitter, dint flags)
+void S_StopSound2(dint effectId, mobj_t *emitter, dint flags)
 {
-    ClientApp::audioSystem().stopSound(::audio::WorldStage, soundId, (SoundEmitter *)emitter, flags);
+    ClientApp::audioSystem().stopSound(::audio::WorldStage, effectId, (SoundEmitter *)emitter, flags);
 }
 
-void S_StopSound(dint soundId, mobj_t *emitter)
+void S_StopSound(dint effectId, mobj_t *emitter)
 {
-    S_StopSound2(soundId, emitter, 0/*flags*/);
+    S_StopSound2(effectId, emitter, 0/*flags*/);
 }
 
-void S_LocalSoundAtVolumeFrom(dint soundIdAndFlags, mobj_t *emitter, coord_t *origin, dfloat volume)
+void S_LocalSoundAtVolumeFrom(dint effectIdAndFlags, mobj_t *emitter, coord_t *origin, dfloat volume)
 {
     SoundParams params;
-    params.effectId = (soundIdAndFlags & ~DDSF_FLAG_MASK);
+    params.effectId = (effectIdAndFlags & ~DDSF_FLAG_MASK);
     params.origin   = origin ? Vector3d(origin) : Vector3d();
     params.volume   = volume;
 
-    if(origin)                                params.flags &= ~SoundFlag::NoOrigin;
-    if(soundIdAndFlags & DDSF_REPEAT)         params.flags |=  SoundFlag::Repeat;
-    if(soundIdAndFlags & DDSF_NO_ATTENUATION) params.flags |=  SoundFlag::NoVolumeAttenuation;
+    if(origin)                                 params.flags &= ~SoundFlag::NoOrigin;
+    if(effectIdAndFlags & DDSF_REPEAT)         params.flags |=  SoundFlag::Repeat;
+    if(effectIdAndFlags & DDSF_NO_ATTENUATION) params.flags |=  SoundFlag::NoVolumeAttenuation;
 
     ClientApp::audioSystem().localStage().playSound(params, (SoundEmitter *)emitter);
 }
 
-void S_LocalSoundAtVolume(dint soundIdAndFlags, mobj_t *emitter, dfloat volume)
+void S_LocalSoundAtVolume(dint effectIdAndFlags, mobj_t *emitter, dfloat volume)
 {
-    S_LocalSoundAtVolumeFrom(soundIdAndFlags, emitter, nullptr, volume);
+    S_LocalSoundAtVolumeFrom(effectIdAndFlags, emitter, nullptr, volume);
 }
 
-void S_LocalSoundFrom(dint soundIdAndFlags, coord_t *origin)
+void S_LocalSoundFrom(dint effectIdAndFlags, coord_t *origin)
 {
-    S_LocalSoundAtVolumeFrom(soundIdAndFlags, nullptr, origin, 1/*max volume*/);
+    S_LocalSoundAtVolumeFrom(effectIdAndFlags, nullptr, origin, 1/*max volume*/);
 }
 
-void S_LocalSound(dint soundIdAndFlags, mobj_t *emitter)
+void S_LocalSound(dint effectIdAndFlags, mobj_t *emitter)
 {
-    S_LocalSoundAtVolumeFrom(soundIdAndFlags, emitter, nullptr, 1/*max volume*/);
+    S_LocalSoundAtVolumeFrom(effectIdAndFlags, emitter, nullptr, 1/*max volume*/);
 }
 
-void S_StartSoundAtVolume(dint soundIdAndFlags, mobj_t *emitter, dfloat volume)
+void S_StartSoundAtVolume(dint effectIdAndFlags, mobj_t *emitter, dfloat volume)
 {
     SoundParams params;
-    params.effectId = (soundIdAndFlags & ~DDSF_FLAG_MASK);
+    params.effectId = (effectIdAndFlags & ~DDSF_FLAG_MASK);
     params.volume   = volume;
 
     //if(origin)                                params.flags &= ~SoundFlag::NoOrigin;
-    if(soundIdAndFlags & DDSF_REPEAT)         params.flags |=  SoundFlag::Repeat;
-    if(soundIdAndFlags & DDSF_NO_ATTENUATION) params.flags |=  SoundFlag::NoVolumeAttenuation;
+    if(effectIdAndFlags & DDSF_REPEAT)         params.flags |=  SoundFlag::Repeat;
+    if(effectIdAndFlags & DDSF_NO_ATTENUATION) params.flags |=  SoundFlag::NoVolumeAttenuation;
 
     ClientApp::audioSystem().worldStage().playSound(params, (SoundEmitter *)emitter);
 }
 
-void S_StartSoundEx(dint soundIdAndFlags, mobj_t *emitter)
+void S_StartSoundEx(dint effectIdAndFlags, mobj_t *emitter)
 {
-    S_StartSoundAtVolume(soundIdAndFlags, emitter, 1/*max volume*/);
+    S_StartSoundAtVolume(effectIdAndFlags, emitter, 1/*max volume*/);
 }
 
-void S_StartSound(dint soundIdAndFlags, mobj_t *emitter)
+void S_StartSound(dint effectIdAndFlags, mobj_t *emitter)
 {
-    S_StartSoundEx(soundIdAndFlags, emitter);
+    S_StartSoundEx(effectIdAndFlags, emitter);
 }
 
-void S_ConsoleSound(dint soundIdAndFlags, mobj_t *emitter, dint targetConsole)
+void S_ConsoleSound(dint effectIdAndFlags, mobj_t *emitter, dint targetConsole)
 {
     // If it's for us, we can hear it.
     if(targetConsole == consolePlayer)
     {
-        S_LocalSound(soundIdAndFlags, emitter);
+        S_LocalSound(effectIdAndFlags, emitter);
     }
 }
 

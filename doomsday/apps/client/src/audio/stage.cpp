@@ -55,7 +55,9 @@ DENG2_PIMPL_NOREF(Stage)
     duint lastSoundPurge = 0;
 
     /**
-     * @param parms  Parameters of the sound start.
+     * @param params   Description of the Sound to be added.
+     * @param endTime  Time in milliseconds when the first/only playback cycle will end.
+     * @param emitter  Soundstage emitter to attribute the sound to (if any).
      */
     Sound &addSound(SoundParams const &params, duint endTime, SoundEmitter *emitter)
     {
