@@ -44,6 +44,8 @@ struct ParticleInfo
     BspLeaf *bspLeaf;  ///< Updated when needed.
     Line *contact;     ///< Updated when lines hit/avoided.
     ushort yaw, pitch; ///< Rotation angles (0-65536 => 0-360).
+
+    de::Vector3d originAsVector3d() const;
 };
 
 /**

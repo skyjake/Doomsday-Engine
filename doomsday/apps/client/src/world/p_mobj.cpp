@@ -146,7 +146,7 @@ mobj_t *P_MobjCreate(thinkfunc_t function, Vector3d const &origin, angle_t angle
 #undef Mobj_Destroy
 DENG_EXTERN_C void Mobj_Destroy(mobj_t *mo)
 {
-#ifdef _DEBUG
+#ifdef DENG2_DEBUG
     if(mo->ddFlags & DDMF_MISSILE)
     {
         LOG_AS("Mobj_Destroy");

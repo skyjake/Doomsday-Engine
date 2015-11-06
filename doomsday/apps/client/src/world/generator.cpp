@@ -94,6 +94,11 @@ static void uncertainPosition(fixed_t *pos, fixed_t low, fixed_t high)
     }
 }
 
+Vector3d ParticleInfo::originAsVector3d() const
+{ 
+    return Vector3d(FIX2FLT(origin[0]), FIX2FLT(origin[1]), FIX2FLT(origin[2]));
+}
+
 Map &Generator::map() const
 {
     return Thinker_Map(thinker);
@@ -251,20 +256,19 @@ static void setParticleAngles(ParticleInfo *pinfo, int flags)
         pinfo->pitch = RNG_RandFloat() * 65536;
 }
 
-static void particleSound(fixed_t pos[3], ded_embsound_t *sound)
+static void particleSound(ded_embsound_t const &soundDef, Vector3d const &origin)
 {
-    DENG2_ASSERT(pos != 0 && sound != 0);
+    if(!soundDef.id) return;  // Huh?
 
-    // Is there any sound to play?
-    if(!sound->id || sound->volume <= 0) return;
+    ::audio::SoundParams sound;
+    sound.flags &= ~::audio::SoundFlag::NoOrigin;
+    if(soundDef.id & DDSF_REPEAT)         sound.flags |= ::audio::SoundFlag::Repeat;
+    if(soundDef.id & DDSF_NO_ATTENUATION) sound.flags |= ::audio::SoundFlag::NoVolumeAttenuation;
+    sound.effectId = (soundDef.id & ~DDSF_FLAG_MASK);
+    sound.origin   = origin;
+    sound.volume   = soundDef.volume;
 
-    coord_t orig[3];
-    for(int i = 0; i < 3; ++i)
-    {
-        orig[i] = FIX2FLT(pos[i]);
-    }
-
-    S_LocalSoundAtVolumeFrom(sound->id, NULL, orig, sound->volume);
+    ClientApp::audioSystem().worldStage().playSound(sound);
 }
 
 int Generator::newParticle()
@@ -504,16 +508,14 @@ int Generator::newParticle()
     // Initial angles for the particle.
     setParticleAngles(pinfo, def->stages[pinfo->stage].flags);
 
-    // The other place where this gets updated is after moving over
-    // a two-sided line.
+    // The other place where this gets updated is after moving over a two-sided line.
     /*if(plane)
     {
         pinfo->sector = &plane->sector();
     }
     else*/
     {
-        Vector2d ptOrigin(FIX2FLT(pinfo->origin[VX]), FIX2FLT(pinfo->origin[VY]));
-        pinfo->bspLeaf = &map().bspLeafAt(ptOrigin);
+        pinfo->bspLeaf = &map().bspLeafAt(pinfo->originAsVector3d());
 
         // A BSP leaf with no geometry is not a suitable place for a particle.
         if(!pinfo->bspLeaf->hasSubspace())
@@ -524,7 +526,7 @@ int Generator::newParticle()
     }
 
     // Play a stage sound?
-    particleSound(pinfo->origin, &def->stages[pinfo->stage].sound);
+    particleSound(def->stages[pinfo->stage].sound, pinfo->originAsVector3d());
 
     return newParticleIdx;
 #else  // !__CLIENT__
@@ -567,8 +569,10 @@ static int newGeneratorParticlesWorker(mobj_t *cmo, void *context)
 static int touchParticle(ParticleInfo *pinfo, Generator::ParticleStage *stage,
     ded_ptcstage_t *stageDef, bool touchWall)
 {
+    DENG2_ASSERT(pinfo && stage && stageDef);
+
     // Play a hit sound.
-    particleSound(pinfo->origin, &stageDef->hitSound);
+    particleSound(stageDef->hitSound, pinfo->originAsVector3d());
 
     if(stage->flags.testFlag(Generator::ParticleStage::DieTouch))
     {
@@ -1108,7 +1112,7 @@ void Generator::runTick()
             setParticleAngles(pinfo, def->stages[pinfo->stage].flags);
 
             // Play a sound?
-            particleSound(pinfo->origin, &def->stages[pinfo->stage].sound);
+            particleSound(def->stages[pinfo->stage].sound, pinfo->originAsVector3d());
         }
 
         // Try to move.

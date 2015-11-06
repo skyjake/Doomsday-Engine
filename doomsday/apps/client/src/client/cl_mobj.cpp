@@ -34,8 +34,7 @@
 #include "world/map.h"
 #include "world/p_players.h"
 
-#include "api_sound.h"
-
+#include "clientapp.h"
 #include <de/timer.h>
 #include <de/vector1.h>
 #include <cmath>
@@ -253,34 +252,42 @@ ClientMobjThinkerData::RemoteSync *ClMobj_GetInfo(mobj_t *mob)
 
 dd_bool ClMobj_Reveal(mobj_t *mob)
 {
+    DENG2_ASSERT(mob);
     LOG_AS("ClMobj_Reveal");
 
     ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(mob);
+    DENG2_ASSERT(info);
 
     CL_ASSERT_CLMOBJ(mob);
 
     // Check that we know enough about the clmobj.
-    if(mob->dPlayer != &DD_Player(consolePlayer)->publicData() &&
-       (!(info->flags & CLMF_KNOWN_X) ||
-        !(info->flags & CLMF_KNOWN_Y) ||
-        //!(info->flags & CLMF_KNOWN_Z) ||
-        !(info->flags & CLMF_KNOWN_STATE)))
+    if(mob->dPlayer != &DD_Player(consolePlayer)->publicData()
+       && (   !(info->flags & CLMF_KNOWN_X)
+           || !(info->flags & CLMF_KNOWN_Y)
+         //|| !(info->flags & CLMF_KNOWN_Z)
+           || !(info->flags & CLMF_KNOWN_STATE)))
     {
         // Don't reveal just yet. We lack a vital piece of information.
         return false;
     }
 
-    LOG_MAP_XVERBOSE("clmobj %i 'Hidden' status lifted (z=%f)") << mob->thinker.id << mob->origin[VZ];
+    LOG_MAP_XVERBOSE("clmobj %i 'Hidden' status lifted (z=%f)") << mob->thinker.id << mob->origin[2];
 
     info->flags &= ~CLMF_HIDDEN;
 
-    // Start a sound that has been queued for playing at the time
-    // of unhiding. Sounds are queued if a sound delta arrives for an
-    // object ID we don't know (yet).
+    // Start a sound that has been queued for playing at the time of unhiding. Sounds are
+    // queued if a sound delta arrives for an object ID we don't know (yet).
     if(info->flags & CLMF_SOUND)
     {
         info->flags &= ~CLMF_SOUND;
-        S_StartSoundAtVolume(info->sound, mob, info->volume);
+
+        ::audio::SoundParams sound;
+        sound.effectId = (info->sound & ~DDSF_FLAG_MASK);
+        sound.volume   = info->volume;
+        if(info->sound & DDSF_REPEAT)         sound.flags |=  ::audio::SoundFlag::Repeat;
+        if(info->sound & DDSF_NO_ATTENUATION) sound.flags |=  ::audio::SoundFlag::NoVolumeAttenuation;
+
+        ClientApp::audioSystem().worldStage().playSound(sound, (SoundEmitter *)mob);
     }
 
     LOGDEV_MAP_XVERBOSE("Revealing id %i, state %p (%i)")
