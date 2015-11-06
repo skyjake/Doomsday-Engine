@@ -203,6 +203,15 @@ void Stage::removeSoundsWithEmitter(SoundEmitter const &emitter)
     }
 }
 
+LoopResult Stage::forAllSounds(std::function<LoopResult (Sound &)> callback) const
+{
+    for(Sound &sound : d->sounds)
+    {
+        if(auto result = callback(sound)) return result;
+    }
+    return LoopContinue;
+}
+
 void Stage::maybeRunSoundPurge()
 {
     // Too soon?

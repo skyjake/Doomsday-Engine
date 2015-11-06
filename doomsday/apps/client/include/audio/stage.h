@@ -22,6 +22,7 @@
 
 #include "audio/sound.h"
 #include <de/Observers>
+#include <functional>
 
 namespace audio {
 
@@ -118,6 +119,11 @@ public:
      * @note Performance: O(1)
      */
     void removeSoundsWithEmitter(SoundEmitter const &emitter);
+
+    /**
+     * Iterate through the Sounds, executing @a callback for each.
+     */
+    de::LoopResult forAllSounds(std::function<de::LoopResult (Sound &)> callback) const;
 
     /**
      * Remove stopped (logical) Sounds @em if a purge is due.
