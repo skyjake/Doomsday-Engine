@@ -4692,12 +4692,9 @@ static void drawStar(Vector3d const &origin, dfloat size, Vector4f const &color)
     glEnd();
 }
 
-static void drawLabel(Vector3d const &origin, String const &label, dfloat scale, dfloat alpha)
+static void drawLabel(String const &label, Vector3d const &origin, dfloat scale, dfloat opacity)
 {
     if(label.isEmpty()) return;
-
-    glDisable(GL_DEPTH_TEST);
-    glEnable(GL_TEXTURE_2D);
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -4706,25 +4703,17 @@ static void drawLabel(Vector3d const &origin, String const &label, dfloat scale,
     glRotatef(vpitch, 1, 0, 0);
     glScalef(-scale, -scale, 1);
 
-    FR_SetFont(fontFixed);
-    FR_LoadDefaultAttrib();
-    FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
-    FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-
     Point2Raw offset(2, 2);
-    UI_TextOutEx(label.toUtf8().constData(), &offset, UI_Color(UIC_TITLE), alpha);
+    UI_TextOutEx(label.toUtf8().constData(), &offset, UI_Color(UIC_TITLE), opacity);
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
-
-    glEnable(GL_DEPTH_TEST);
-    glDisable(GL_TEXTURE_2D);
 }
 
-static void drawLabel(Vector3d const &origin, String const &label)
+static void drawLabel(String const &label, Vector3d const &origin)
 {
-    ddouble distToEye = (Rend_EyeOrigin().xzy() - origin).length();
-    drawLabel(origin, label, distToEye / (DENG_GAMEVIEW_WIDTH / 2), 1 - distToEye / 2000);
+    ddouble const distToEye = (Rend_EyeOrigin().xzy() - origin).length();
+    drawLabel(label, origin, distToEye / (DENG_GAMEVIEW_WIDTH / 2), 1 - distToEye / 2000);
 }
 
 /*
@@ -4746,7 +4735,14 @@ static void drawSource(BiasSource *s)
 
     drawStar(s->origin(), 25 + s->evaluateIntensity() / 20,
              Vector4f(s->color(), 1.0f / de::max(float((distToEye - 100) / 1000), 1.f)));
-    drawLabel(s->origin(), labelForSource(s));
+
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_TEXTURE_2D);
+
+    drawLabel(labelForSource(s), s->origin());
+
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_TEXTURE_2D);
 }
 
 static void drawLock(Vector3d const &origin, ddouble unit, ddouble t)
@@ -4839,9 +4835,19 @@ static void drawBiasEditingVisuals(Map &map)
                       .9f + sin(t) * .3f,
                       .8f - sin(t) * .2f));
 
-    glDisable(GL_DEPTH_TEST);
+    FR_SetFont(fontFixed);
+    FR_LoadDefaultAttrib();
+    FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
+    FR_SetShadowStrength(UI_SHADOW_STRENGTH);
 
-    drawLabel(nearSource->origin(), labelForSource(nearSource));
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_TEXTURE_2D);
+
+    drawLabel(labelForSource(nearSource), nearSource->origin());
+
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_TEXTURE_2D);
+
     if(nearSource->isLocked())
         drawLock(nearSource->origin(), 2 + (nearSource->origin() - eyeOrigin).length() / 100, t);
 
@@ -4854,7 +4860,14 @@ static void drawBiasEditingVisuals(Map &map)
             continue;
 
         drawStar(s->origin(), 10000, grabbedColor);
-        drawLabel(s->origin(), labelForSource(s));
+
+        glDisable(GL_DEPTH_TEST);
+        glEnable(GL_TEXTURE_2D);
+
+        drawLabel(labelForSource(s), s->origin());
+
+        glEnable(GL_DEPTH_TEST);
+        glDisable(GL_TEXTURE_2D);
 
         if(s->isLocked())
             drawLock(s->origin(), 2 + (s->origin() - eyeOrigin).length() / 100, t);
@@ -4864,7 +4877,12 @@ static void drawBiasEditingVisuals(Map &map)
     if(s && !hand.hasGrabbed(*s))
     {
         glDisable(GL_DEPTH_TEST);
-        drawLabel(s->origin(), labelForSource(s));
+        glEnable(GL_TEXTURE_2D);
+
+        drawLabel(labelForSource(s), s->origin());
+
+        glEnable(GL_DEPTH_TEST);
+        glDisable(GL_TEXTURE_2D);
     }*/
 
     // Show all sources?
@@ -5526,20 +5544,16 @@ static void drawLumobjs(Map &map)
     glEnable(GL_DEPTH_TEST);
 }
 
-static void drawSoundEmitter(SoundEmitter &emitter, String const &label)
+static void drawSoundEmitter(String const &label, Vector3d const &origin)
 {
-#define MAX_SOUNDORIGIN_DIST  384
+    static ddouble const MAX_DISTANCE = 384;
 
-    Vector3d const &origin(emitter.origin);
     ddouble const distToEye = (eyeOrigin - origin).length();
-    if(distToEye < MAX_SOUNDORIGIN_DIST)
+    if(distToEye < MAX_DISTANCE)
     {
-        drawLabel(origin, label,
-                  distToEye / (DENG_GAMEVIEW_WIDTH / 2),
-                  1 - distToEye / MAX_SOUNDORIGIN_DIST);
+        drawLabel(label, origin, distToEye / (DENG_GAMEVIEW_WIDTH / 2)
+                  , 1 - distToEye / MAX_DISTANCE);
     }
-
-#undef MAX_SOUNDORIGIN_DIST
 }
 
 /**
@@ -5548,6 +5562,14 @@ static void drawSoundEmitter(SoundEmitter &emitter, String const &label)
 static void drawSoundEmitters(Map &map)
 {
     if(!devSoundEmitters) return;
+
+    FR_SetFont(fontFixed);
+    FR_LoadDefaultAttrib();
+    FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
+    FR_SetShadowStrength(UI_SHADOW_STRENGTH);
+
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_TEXTURE_2D);
 
     if(devSoundEmitters & SOF_SIDE)
     {
@@ -5558,20 +5580,20 @@ static void drawSoundEmitters(Map &map)
                 LineSide &side = line.side(i);
                 if(!side.hasSections()) continue;
 
-                drawSoundEmitter(side.middleSoundEmitter(),
-                                 String("Line #%1 (%2, middle)")
+                drawSoundEmitter(String("Line #%1 (%2, middle)")
                                      .arg(line.indexInMap())
-                                     .arg(i? "back" : "front"));
+                                     .arg(i? "back" : "front")
+                                 , Vector3d(side.middleSoundEmitter().origin));
 
-                drawSoundEmitter(side.bottomSoundEmitter(),
-                                 String("Line #%1 (%2, bottom)")
+                drawSoundEmitter(String("Line #%1 (%2, bottom)")
                                      .arg(line.indexInMap())
-                                     .arg(i? "back" : "front"));
+                                     .arg(i? "back" : "front")
+                                 , Vector3d(side.bottomSoundEmitter().origin));
 
-                drawSoundEmitter(side.topSoundEmitter(),
-                                 String("Line #%1 (%2, top)")
+                drawSoundEmitter(String("Line #%1 (%2, top)")
                                      .arg(line.indexInMap())
-                                     .arg(i? "back" : "front"));
+                                     .arg(i? "back" : "front")
+                                 , Vector3d(side.topSoundEmitter().origin));
             }
             return LoopContinue;
         });
@@ -5585,22 +5607,25 @@ static void drawSoundEmitters(Map &map)
             {
                 sector.forAllPlanes([] (Plane &plane)
                 {
-                    drawSoundEmitter(plane.soundEmitter(),
-                                     String("Sector #%1 (pln:%2)")
+                    drawSoundEmitter(String("Sector #%1 (pln:%2)")
                                          .arg(plane.sector().indexInMap())
-                                         .arg(plane.indexInSector()));
+                                         .arg(plane.indexInSector())
+                                     , Vector3d(plane.soundEmitter().origin));
                     return LoopContinue;
                 });
             }
 
             if(devSoundEmitters & SOF_SECTOR)
             {
-                drawSoundEmitter(sector.soundEmitter(),
-                                 String("Sector #%1").arg(sector.indexInMap()));
+                drawSoundEmitter(String("Sector #%1").arg(sector.indexInMap())
+                                 , Vector3d(sector.soundEmitter().origin));
             }
             return LoopContinue;
         });
     }
+
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_TEXTURE_2D);
 }
 
 void Rend_DrawVectorLight(VectorLightData const &vlight, dfloat alpha)
@@ -5631,9 +5656,8 @@ static void drawGenerator(Generator const &gen)
         ddouble const distToEye = (eyeOrigin - origin).length();
         if(distToEye < MAX_GENERATOR_DIST)
         {
-            drawLabel(origin, labelForGenerator(gen),
-                      distToEye / (DENG_GAMEVIEW_WIDTH / 2),
-                      1 - distToEye / MAX_GENERATOR_DIST);
+            drawLabel(labelForGenerator(gen), origin, distToEye / (DENG_GAMEVIEW_WIDTH / 2)
+                      , 1 - distToEye / MAX_GENERATOR_DIST);
         }
     }
 }
@@ -5645,11 +5669,22 @@ static void drawGenerators(Map &map)
 {
     if(!devDrawGenerators) return;
 
+    FR_SetFont(fontFixed);
+    FR_LoadDefaultAttrib();
+    FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
+    FR_SetShadowStrength(UI_SHADOW_STRENGTH);
+
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_TEXTURE_2D);
+
     map.forAllGenerators([] (Generator &gen)
     {
         drawGenerator(gen);
         return LoopContinue;
     });
+
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_TEXTURE_2D);
 }
 
 static void drawBar(Vector3d const &origin, coord_t height, dfloat opacity)
@@ -5721,8 +5756,13 @@ static void drawVertexVisual(Vertex const &vertex, ddouble minHeight, ddouble ma
     }
     if(parms.drawLabel)
     {
-        drawLabel(origin, labelForVertex(&vertex),
-                  distToEye / (DENG_GAMEVIEW_WIDTH / 2), opacity);
+        glDisable(GL_DEPTH_TEST);
+        glEnable(GL_TEXTURE_2D);
+
+        drawLabel(labelForVertex(&vertex), origin, distToEye / (DENG_GAMEVIEW_WIDTH / 2), opacity);
+
+        glEnable(GL_DEPTH_TEST);
+        glDisable(GL_TEXTURE_2D);
     }
 }
 
@@ -5831,6 +5871,11 @@ static void drawVertexes(Map &map)
     parms.maxDistance = MAX_DISTANCE;
     parms.drawnVerts  = &drawnVerts;
 
+    FR_SetFont(fontFixed);
+    FR_LoadDefaultAttrib();
+    FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
+    FR_SetShadowStrength(UI_SHADOW_STRENGTH);
+
     if(devVertexBars)
     {
         glDisable(GL_DEPTH_TEST);
@@ -5935,6 +5980,14 @@ static void drawSectors(Map &map)
 
     if(!devSectorIndices) return;
 
+    FR_SetFont(fontFixed);
+    FR_LoadDefaultAttrib();
+    FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
+    FR_SetShadowStrength(UI_SHADOW_STRENGTH);
+
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_TEXTURE_2D);
+
     // Draw per-cluster sector labels:
     map.forAllClusters([] (SectorCluster &cluster)
     {
@@ -5942,12 +5995,14 @@ static void drawSectors(Map &map)
         ddouble const distToEye = (eyeOrigin - origin).length();
         if(distToEye < MAX_LABEL_DIST)
         {
-            drawLabel(origin, labelForCluster(cluster),
-                      distToEye / (DENG_GAMEVIEW_WIDTH / 2),
-                      1 - distToEye / MAX_LABEL_DIST);
+            drawLabel(labelForCluster(cluster), origin, distToEye / (DENG_GAMEVIEW_WIDTH / 2)
+                      , 1 - distToEye / MAX_LABEL_DIST);
         }
         return LoopContinue;
     });
+
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_TEXTURE_2D);
 }
 
 static String labelForThinker(thinker_t *thinker)
@@ -5961,9 +6016,17 @@ static String labelForThinker(thinker_t *thinker)
  */
 static void drawThinkers(Map &map)
 {
-    static coord_t const MAX_THINKER_DIST = 2048;
+    static ddouble const MAX_THINKER_DIST = 2048;
 
     if(!devThinkerIds) return;
+
+    FR_SetFont(fontFixed);
+    FR_LoadDefaultAttrib();
+    FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
+    FR_SetShadowStrength(UI_SHADOW_STRENGTH);
+
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_TEXTURE_2D);
 
     map.thinkers().forAll(0x1 | 0x2, [] (thinker_t *th)
     {
@@ -5974,13 +6037,15 @@ static void drawThinkers(Map &map)
             ddouble const distToEye = (eyeOrigin - origin).length();
             if(distToEye < MAX_THINKER_DIST)
             {
-                drawLabel(origin, labelForThinker(th),
-                          distToEye / (DENG_GAMEVIEW_WIDTH / 2),
-                          1 - distToEye / MAX_THINKER_DIST);
+                drawLabel(labelForThinker(th), origin,  distToEye / (DENG_GAMEVIEW_WIDTH / 2)
+                          , 1 - distToEye / MAX_THINKER_DIST);
             }
         }
         return LoopContinue;
     });
+
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_TEXTURE_2D);
 }
 
 void Rend_LightGridVisual(LightGrid &lg)
