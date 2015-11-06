@@ -798,7 +798,10 @@ DENG2_PIMPL(System)
                                                      : "unavailable");
                             break;
                         }
-                        if(!channel->as<SoundChannel>().format(positioning, sfxBits / 8, sfxRate))
+
+                        channel->as<SoundChannel>().setPositioning(positioning);
+
+                        if(!channel->as<SoundChannel>().format(sfxBits / 8, sfxRate))
                         {
                             LOG_AUDIO_WARNING("\"%s\" failed configuring Channel format")
                                 << active.def().gets("identityKey");
@@ -947,18 +950,18 @@ DENG2_PIMPL(System)
 #endif
 
     /**
-     * Stop all sound channels currently playing a/the sound with a lower priority rating.
+     * Stop all Channels currently playing a/the Sound with a lower priority rating.
      *
-     * @param effectId     If > 0, the currently playing sound must be associated with
-     * this identifier; otherwise @em all sounds are stopped.
+     * @param effectId     If > 0 the associated sound-effect identifier of the currently#
+     * playing Sound must match; otherwise @em all channels are stopped.
      *
-     * @param emitter      If not @c nullptr the referenced sound's emitter must match.
+     * @param emitter      If not @c nullptr the Emitter of the currently playing Sound must match.
      *
-     * @param defPriority  If >= 0, the currently playing sound must have a lower priority
+     * @param defPriority  If >= 0, the currently playing Sound must have a lower priority
      * than this to be stopped. Returns -1 if the sound @a id has a lower priority than
      * a currently playing sound.
      *
-     * @return  Number of channels stopped.
+     * @return  Number of Channels stopped.
      */
     dint stopSoundChannelsWithLowerPriority(dint effectId, SoundEmitter *emitter, dint defPriority)
     {
@@ -968,6 +971,8 @@ DENG2_PIMPL(System)
             auto &ch = base.as<SoundChannel>();
 
             if(!ch.isPlaying()) return LoopContinue;
+
+            DENG2_ASSERT(ch.sound());
 
             if(   (effectId && ch.sound()->effectId() != effectId)
                || (emitter  && ch.sound()->emitter()  != emitter))
@@ -1529,9 +1534,12 @@ DENG2_PIMPL(System)
         }
         SoundChannel &channel = *selCh;
 
+        channel.stop();
+        channel.setPositioning(positioning);
+
         // The channel may need to be reformatted.
         {
-            channel.format(positioning, sample.bytesPer, sample.rate);
+            channel.format(sample.bytesPer, sample.rate);
             DENG2_ASSERT(channel.isValid());
             channel.load(sample);
         }

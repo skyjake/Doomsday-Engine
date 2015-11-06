@@ -72,6 +72,12 @@ Channel &DummyDriver::CdChannel::setFrequency(de::dfloat newFrequency)
     return *this;
 }
 
+Channel &DummyDriver::CdChannel::setPositioning(Positioning)
+{
+    // Not supported.
+    return *this;
+}
+
 Channel &DummyDriver::CdChannel::setVolume(de::dfloat newVolume)
 {
     _volume = newVolume;
@@ -138,6 +144,12 @@ void DummyDriver::MusicChannel::resume()
 Channel &DummyDriver::MusicChannel::setFrequency(de::dfloat newFrequency)
 {
     _frequency = newFrequency;
+    return *this;
+}
+
+Channel &DummyDriver::MusicChannel::setPositioning(Positioning)
+{
+    // Not supported.
     return *this;
 }
 
@@ -354,6 +366,12 @@ Channel &DummyDriver::SoundChannel::setFrequency(dfloat newFrequency)
     return *this;
 }
 
+Channel &DummyDriver::SoundChannel::setPositioning(Positioning newPositioning)
+{
+    d->positioning = newPositioning;
+    return *this;
+}
+
 Channel &DummyDriver::SoundChannel::setVolume(dfloat newVolume)
 {
     d->volume = newVolume;
@@ -373,6 +391,11 @@ Positioning DummyDriver::SoundChannel::positioning() const
 dfloat DummyDriver::SoundChannel::volume() const
 {
     return d->volume;
+}
+
+void DummyDriver::SoundChannel::setSound(::audio::Sound *sound)
+{
+    d->sound = sound;
 }
 
 ::audio::Sound *DummyDriver::SoundChannel::sound() const
@@ -401,17 +424,14 @@ void DummyDriver::SoundChannel::reset()
     d->buffer.unload();
 }
 
-bool DummyDriver::SoundChannel::format(Positioning positioning, dint bytesPer, dint rate)
+bool DummyDriver::SoundChannel::format(dint bytesPer, dint rate)
 {
     // Do we need to (re)configure the sample data buffer?
-    if(   d->positioning        != positioning
-       || d->buffer.sampleBytes != bytesPer
+    if(   d->buffer.sampleBytes != bytesPer
        || d->buffer.sampleRate  != rate)
     {
         stop();
         DENG2_ASSERT(!isPlaying());
-
-        d->positioning = positioning;
 
         d->buffer.unload();
         d->buffer.sampleBytes = bytesPer;

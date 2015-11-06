@@ -111,7 +111,13 @@ void PluginDriver::CdChannel::resume()
     _driver->iCd().gen.Pause(false);
 }
 
-Channel &PluginDriver::CdChannel::setFrequency(dfloat newFrequency)
+Channel &PluginDriver::CdChannel::setFrequency(dfloat)
+{
+    // Not supported.
+    return *this;
+}
+
+Channel &PluginDriver::CdChannel::setPositioning(Positioning)
 {
     // Not supported.
     return *this;
@@ -232,7 +238,13 @@ void PluginDriver::MusicChannel::resume()
     _driver->iMusic().gen.Pause(false);
 }
 
-Channel &PluginDriver::MusicChannel::setFrequency(dfloat newFrequency)
+Channel &PluginDriver::MusicChannel::setFrequency(dfloat)
+{
+    // Not supported.
+    return *this;
+}
+
+Channel &PluginDriver::MusicChannel::setPositioning(Positioning)
 {
     // Not supported.
     return *this;
@@ -406,6 +418,20 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundChannel)
                || listenerIsSoundEmitter();
     }
 
+    void bufferUnload()
+    {
+        if(buffer.data)
+        {
+            DENG2_ASSERT(!(buffer.data->flags & SFXBF_PLAYING));
+
+            // Cancel frame notifications - we'll soon have no buffer to update.
+            ClientApp::audioSystem().audienceForFrameEnds() -= this;
+
+            driver.iSound().gen.Destroy(buffer.data);
+            buffer.data = nullptr;
+        }
+    }
+
     /**
      * Writes deferred Listener and/or Environment changes to the audio driver.
      *
@@ -554,14 +580,7 @@ PluginDriver::SoundChannel::SoundChannel(PluginDriver &owner)
 PluginDriver::SoundChannel::~SoundChannel()
 {
     stop();
-    if(d->buffer.data)
-    {
-        // Cancel frame notifications - we'll soon have no buffer to update.
-        ClientApp::audioSystem().audienceForFrameEnds() -= d;
-
-        d->driver.iSound().gen.Destroy(d->buffer.data);
-        d->buffer.data = nullptr;
-    }
+    d->bufferUnload();
 }
 
 PlayingMode PluginDriver::SoundChannel::mode() const
@@ -662,6 +681,27 @@ Channel &PluginDriver::SoundChannel::setFrequency(dfloat newFrequency)
     return *this;
 }
 
+Channel &PluginDriver::SoundChannel::setPositioning(Positioning newPositioning)
+{
+    if(d->positioning != newPositioning)
+    {
+        bool const mustFormat = isPlaying();
+
+        stop();
+        d->bufferUnload();
+
+        d->positioning = newPositioning;
+        if(mustFormat)
+        {
+            /// @todo Could handle this more elegantly on the plugin's side... -ds
+            LOG_AS("PluginDriver::SoundChannel");
+            LOGDEV_AUDIO_MSG("Positioning model changed, reformatting...");
+            format(d->buffer.sampleBytes, d->buffer.sampleRate);
+        }
+    }
+    return *this;
+}
+
 Channel &PluginDriver::SoundChannel::setVolume(dfloat newVolume)
 {
     d->volume = newVolume;  // Deferred until refresh.
@@ -702,28 +742,17 @@ void PluginDriver::SoundChannel::reset()
     d->driver.iSound().gen.Reset(d->buffer.data);
 }
 
-bool PluginDriver::SoundChannel::format(Positioning positioning, dint bytesPer, dint rate)
+bool PluginDriver::SoundChannel::format(dint bytesPer, dint rate)
 {
     // We may need to replace the playback data buffer.
     if(!d->buffer.data
-       || d->positioning        != positioning
        || d->buffer.sampleBytes != bytesPer
        || d->buffer.sampleRate  != rate)
     {
         stop();
-
-        DENG2_ASSERT(!isPlaying());
-        if(d->buffer.data)
-        {
-            // Cancel frame notifications - we'll soon have no buffer to update.
-            ClientApp::audioSystem().audienceForFrameEnds() -= d;
-
-            d->driver.iSound().gen.Destroy(d->buffer.data);
-            d->buffer.data = nullptr;
-        }
+        d->bufferUnload();
 
         /// @todo Don't duplicate state! -ds
-        d->positioning        = positioning;
         d->buffer.sampleBytes = bytesPer;
         d->buffer.sampleRate  = rate;
 

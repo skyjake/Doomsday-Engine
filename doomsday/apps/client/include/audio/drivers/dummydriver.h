@@ -46,7 +46,7 @@ public:
 
 public:  //- Playback Channels: ---------------------------------------------------------
 
-    class CdChannel : public audio::CdChannel
+    class CdChannel : public ::audio::CdChannel
     {
     public:
         PlayingMode mode() const override;
@@ -56,6 +56,7 @@ public:  //- Playback Channels: ------------------------------------------------
         void pause() override;
         void resume() override;
         Channel &setFrequency(de::dfloat newFrequency) override;
+        Channel &setPositioning(Positioning newPositioning) override;
         Channel &setVolume(de::dfloat newVolume) override;
         de::dfloat frequency() const override;
         Positioning positioning() const override;
@@ -75,7 +76,7 @@ public:  //- Playback Channels: ------------------------------------------------
         de::dfloat _volume    = 1;
     };
 
-    class MusicChannel : public audio::MusicChannel
+    class MusicChannel : public ::audio::MusicChannel
     {
     public:
         PlayingMode mode() const override;
@@ -85,6 +86,7 @@ public:  //- Playback Channels: ------------------------------------------------
         void pause() override;
         void resume() override;
         Channel &setFrequency(de::dfloat newFrequency) override;
+        Channel &setPositioning(Positioning newPositioning) override;
         Channel &setVolume(de::dfloat newVolume) override;
         de::dfloat frequency() const override;
         Positioning positioning() const override;
@@ -107,7 +109,7 @@ public:  //- Playback Channels: ------------------------------------------------
         de::dfloat _volume     = 1;
     };
 
-    class SoundChannel : public audio::SoundChannel
+    class SoundChannel : public ::audio::SoundChannel
     {
     public:
         PlayingMode mode() const override;
@@ -117,6 +119,7 @@ public:  //- Playback Channels: ------------------------------------------------
         void pause() override;
         void resume() override;
         Channel &setFrequency(de::dfloat newFrequency) override;
+        Channel &setPositioning(Positioning newPositioning) override;
         Channel &setVolume(de::dfloat newVolume) override;
         de::dfloat frequency() const override;
         Positioning positioning() const override;
@@ -128,7 +131,7 @@ public:  //- Playback Channels: ------------------------------------------------
         void reset();
         void suspend() override;
 
-        bool format(Positioning positioning, de::dint bytesPer, de::dint rate);
+        bool format(de::dint bytesPer, de::dint rate);
         bool isValid() const;
 
         void load(sfxsample_t const &sample);

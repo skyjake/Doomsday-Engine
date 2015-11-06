@@ -115,7 +115,7 @@ public:
      * buffer in order to effect this change (e.g., Direct Sound). Consequently the user
      * should try to avoid changing the models dynamically, when/where possible.
      */
-    //virtual Channel &setPositioning(Positioning newPositioning) = 0;
+    virtual Channel &setPositioning(Positioning newPositioning) = 0;
 
     /**
      * Change the volume modifier (factor) to @a newVolume. Maximum is 1.0
@@ -219,7 +219,7 @@ public:
      * @return  @c true if the (re)format completed successfully (equivalent to calling
      * @ref isValid() after this), for caller convenience.
      */
-    virtual bool format(Positioning positioning, de::dint bytesPer, de::dint rate) = 0;
+    virtual bool format(de::dint bytesPer, de::dint rate) = 0;
 
     /**
      * Returns @c true if the channel is in valid state (i.e., the previous @ref format()

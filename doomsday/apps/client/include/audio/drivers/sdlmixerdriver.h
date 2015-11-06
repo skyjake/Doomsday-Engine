@@ -57,6 +57,7 @@ public:  //- Playback Channels: ------------------------------------------------
         void pause() override;
         void resume() override;
         Channel &setFrequency(de::dfloat newFrequency) override;
+        Channel &setPositioning(Positioning newPositioning) override;
         Channel &setVolume(de::dfloat newVolume) override;
         de::dfloat frequency() const override;
         Positioning positioning() const override;
@@ -86,6 +87,7 @@ public:  //- Playback Channels: ------------------------------------------------
         void pause() override;
         void resume() override;
         Channel &setFrequency(de::dfloat newFrequency) override;
+        Channel &setPositioning(Positioning newPositioning) override;
         Channel &setVolume(de::dfloat newVolume) override;
         de::dfloat frequency() const override;
         Positioning positioning() const override;
@@ -97,7 +99,7 @@ public:  //- Playback Channels: ------------------------------------------------
         void reset();
         void suspend() override;
 
-        bool format(Positioning positioning, de::dint bytesPer, de::dint rate);
+        bool format(de::dint bytesPer, de::dint rate);
         bool isValid() const;
 
         void load(sfxsample_t const &sample);

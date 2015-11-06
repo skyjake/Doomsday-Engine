@@ -146,7 +146,13 @@ void SdlMixerDriver::MusicChannel::resume()
     Mix_ResumeMusic();
 }
 
-Channel &SdlMixerDriver::MusicChannel::setFrequency(de::dfloat newFrequency)
+Channel &SdlMixerDriver::MusicChannel::setFrequency(dfloat)
+{
+    // Not supported.
+    return *this;
+}
+
+Channel &SdlMixerDriver::MusicChannel::setPositioning(Positioning)
 {
     // Not supported.
     return *this;
@@ -476,9 +482,7 @@ DENG2_PIMPL_NOREF(SdlMixerDriver::SoundChannel)
 SdlMixerDriver::SoundChannel::SoundChannel()
     : ::audio::SoundChannel()
     , d(new Instance)
-{
-    format(StereoPositioning, 1, 11025);
-}
+{}
 
 SdlMixerDriver::SoundChannel::~SoundChannel()
 {
@@ -580,6 +584,12 @@ Channel &SdlMixerDriver::SoundChannel::setFrequency(dfloat newFrequency)
     return *this;
 }
 
+Channel &SdlMixerDriver::SoundChannel::setPositioning(Positioning newPositioning)
+{
+    d->positioning = newPositioning;  // Deferred until refresh.
+    return *this;
+}
+
 Channel &SdlMixerDriver::SoundChannel::setVolume(dfloat newVolume)
 {
     d->volume = newVolume;  // Deferred until refresh.
@@ -637,17 +647,14 @@ void SdlMixerDriver::SoundChannel::load(sfxsample_t const &sample)
     }
 }
 
-bool SdlMixerDriver::SoundChannel::format(Positioning positioning, dint bytesPer, dint rate)
+bool SdlMixerDriver::SoundChannel::format(dint bytesPer, dint rate)
 {
     // Do we need to (re)configure the sample data buffer?
-    if(   d->positioning        != positioning
-       || d->buffer.sampleBytes != bytesPer
+    if(   d->buffer.sampleBytes != bytesPer
        || d->buffer.sampleRate  != rate)
     {
         stop();
         DENG2_ASSERT(!isPlaying());
-
-        d->positioning = positioning;
 
         // Release the previously acquired channel, if any.
         /// @todo Probably unnecessary given we plan to acquire again, momentarily...
