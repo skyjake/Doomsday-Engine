@@ -43,9 +43,6 @@
 #include "m_nodepile.h"
 
 #include "api_console.h"
-#ifdef __CLIENT__
-#  include "api_sound.h"
-#endif
 
 #include "world/bsp/partitioner.h"
 #include "world/worldsystem.h"  // ddMapSetup, validCount

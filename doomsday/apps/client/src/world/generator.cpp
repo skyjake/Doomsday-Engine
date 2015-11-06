@@ -37,8 +37,6 @@
 #include "render/rend_model.h"
 #include "render/rend_particle.h"
 
-#include "api_sound.h"
-
 #include <doomsday/console/var.h>
 #include <de/String>
 #include <de/Time>

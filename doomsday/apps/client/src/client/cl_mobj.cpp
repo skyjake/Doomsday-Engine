@@ -284,8 +284,8 @@ dd_bool ClMobj_Reveal(mobj_t *mob)
         ::audio::SoundParams sound;
         sound.effectId = (info->sound & ~DDSF_FLAG_MASK);
         sound.volume   = info->volume;
-        if(info->sound & DDSF_REPEAT)         sound.flags |=  ::audio::SoundFlag::Repeat;
-        if(info->sound & DDSF_NO_ATTENUATION) sound.flags |=  ::audio::SoundFlag::NoVolumeAttenuation;
+        if(info->sound & DDSF_REPEAT)         sound.flags |= ::audio::SoundFlag::Repeat;
+        if(info->sound & DDSF_NO_ATTENUATION) sound.flags |= ::audio::SoundFlag::NoVolumeAttenuation;
 
         ClientApp::audioSystem().worldStage().playSound(sound, (SoundEmitter *)mob);
     }
