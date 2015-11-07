@@ -23,30 +23,15 @@ using namespace de;
 
 namespace world {
 
-DENG2_PIMPL(Map)
+DENG2_PIMPL_NOREF(Map)
 {
     res::MapManifest *manifest = nullptr;  ///< Not owned, may be @c nullptr.
-
-    Instance(Public *i) : Base(i)
-    {}
-
-    ~Instance()
-    {
-        DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->mapBeingDeleted(self);
-    }
-
-    DENG2_PIMPL_AUDIENCE(Deletion)
 };
 
-DENG2_AUDIENCE_METHOD(Map, Deletion)
-
-Map::Map(res::MapManifest *manifest) : d(new Instance(this))
+Map::Map(res::MapManifest *manifest) : d(new Instance)
 {
     setManifest(manifest);
 }
-
-Map::~Map()
-{}
 
 bool Map::hasManifest() const
 {

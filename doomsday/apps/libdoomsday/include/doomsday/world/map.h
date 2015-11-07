@@ -21,6 +21,7 @@
 
 #include "../libdoomsday.h"
 #include "../resource/mapmanifest.h"
+#include <de/Deletable>
 #include <de/Error>
 #include <de/Observers>
 
@@ -29,7 +30,7 @@ namespace world {
 /**
  * Base class for world maps.
  */
-class LIBDOOMSDAY_PUBLIC Map
+class LIBDOOMSDAY_PUBLIC Map : public de::Deletable
 {
 public:
     /// No resource manifest is associated with the map.
@@ -40,7 +41,6 @@ public:
      * @param manifest  Resource manifest for the map (Can be set later, @ref setDef).
      */
     explicit Map(res::MapManifest *manifest = nullptr);
-    virtual ~Map();
 
     /**
      * Returns @c true if a resource manifest is associated with the map.
@@ -62,10 +62,6 @@ public:
      * @see hasManifest(), manifest()
      */
     void setManifest(res::MapManifest *newManifest);
-
-public:
-    /// Notified when the map is about to be deleted.
-    DENG2_DEFINE_AUDIENCE2(Deletion, void mapBeingDeleted(Map const &map))
 
 private:
     DENG2_PRIVATE(d)

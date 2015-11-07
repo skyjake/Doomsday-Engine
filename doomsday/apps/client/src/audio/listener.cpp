@@ -39,7 +39,7 @@ static dfloat reverbStrength = 0.5f;  ///< cvar
 
 DENG2_PIMPL(Listener)
 , DENG2_OBSERVES(Map,           MapObjectBspLeafChange)
-, DENG2_OBSERVES(world::Map,    Deletion)
+, DENG2_OBSERVES(Deletable,     Deletion)
 , DENG2_OBSERVES(SectorCluster, AudioEnvironmentChange)
 , DENG2_OBSERVES(SectorCluster, Deletion)
 {
@@ -88,7 +88,7 @@ DENG2_PIMPL(Listener)
     }
 
     /// @todo MapObject should produce the notification we actually want. -ds
-    void mapBeingDeleted(world::Map const &)
+    void objectWasDeleted(Deletable *)
     {
         if(tracking)
         {
@@ -238,7 +238,7 @@ void Listener::setTrackedMapObject(mobj_t *mapObjectToTrack)
 
     if(d->tracking)
     {
-        Mob_Map(*d->tracking).audienceForDeletion() -= d;
+        Mob_Map(*d->tracking).audienceForDeletion -= d;
         if(d->useEnvironment)
         {
             Mob_Map(*d->tracking).audienceForMapObjectBspLeafChange() -= d;
@@ -253,7 +253,7 @@ void Listener::setTrackedMapObject(mobj_t *mapObjectToTrack)
         {
             Mob_Map(*d->tracking).audienceForMapObjectBspLeafChange() += d;
         }
-        Mob_Map(*d->tracking).audienceForDeletion() += d;
+        Mob_Map(*d->tracking).audienceForDeletion += d;
     }
 
     d->observeCluster(d->useEnvironment && d->tracking ? Mobj_ClusterPtr(*d->tracking) : nullptr);

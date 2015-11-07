@@ -113,9 +113,9 @@ static inline RenderSystem &rendSys()
  * @todo Consolidate with the missing material reporting done elsewhere -ds
  */
 class MapConversionReporter
-: DENG2_OBSERVES(Map, UnclosedSectorFound)
-, DENG2_OBSERVES(Map, OneWayWindowFound)
-, DENG2_OBSERVES(world::Map, Deletion)
+: DENG2_OBSERVES(Map,       UnclosedSectorFound)
+, DENG2_OBSERVES(Map,       OneWayWindowFound)
+, DENG2_OBSERVES(Deletable, Deletion)
 {
     /// Record "unclosed sectors".
     /// Sector index => world point relatively near to the problem area.
@@ -233,10 +233,10 @@ protected:
     }
 
     /// Observes Map Deletion.
-    void mapBeingDeleted(world::Map const &map)
+    void objectWasDeleted(Deletable *deleted)
     {
-        DENG2_ASSERT(&map == _map);  // sanity check.
-        DENG2_UNUSED(map);
+        DENG2_ASSERT(deleted == _map);  // sanity check.
+        DENG2_UNUSED(deleted);
         _map = nullptr;
     }
 
@@ -259,13 +259,13 @@ private:
 
         if(yes)
         {
-            _map->audienceForDeletion()          += this;
+            _map->audienceForDeletion            += this;
             _map->audienceForOneWayWindowFound   += this;
             _map->audienceForUnclosedSectorFound += this;
         }
         else
         {
-            _map->audienceForDeletion()          -= this;
+            _map->audienceForDeletion            -= this;
             _map->audienceForOneWayWindowFound   -= this;
             _map->audienceForUnclosedSectorFound -= this;
         }
