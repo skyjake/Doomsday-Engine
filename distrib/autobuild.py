@@ -452,20 +452,10 @@ def generate_apidoc():
     system_command('doxygen sdk-qch.doxy >/dev/null 2>doxyissues-qch.txt')
     system_command('wc -l doxyissues-qch.txt')
 
-    print >> sys.stderr, "\nPublic API 2.0 docs..."
-    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/sdk/libcore'))    
-    system_command('doxygen api2.doxy >/dev/null 2>../../doxyissues-api2.txt')
-    system_command('wc -l ../../doxyissues-api2.txt')
-    
     print >> sys.stderr, "\nPublic API docs..."
     os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/apps/client'))    
     system_command('doxygen api.doxy >/dev/null 2>../../doxyissues-api.txt')
     system_command('wc -l ../../doxyissues-api.txt')
-
-    print >> sys.stderr, "\nlibshell docs..."
-    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/sdk/libshell'))
-    system_command('doxygen shell.doxy >/dev/null 2>../../doxyissues-shell.txt')
-    system_command('wc -l ../../doxyissues-shell.txt')
 
     print >> sys.stderr, "\nInternal Win32 docs..."
     os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/apps/client'))
