@@ -101,7 +101,7 @@ public:
      * sounds. Zero is the lowest priority.
      */
     de::dfloat rateSoundPriority(de::dint startTime, de::dfloat volume, SoundFlags flags,
-        de::Vector3d const &origin);
+        de::Vector3d const &origin) const;
 
     /**
      * Returns the orientation of the listener in world space as a 2D vector (0:yaw, 1:pitch),

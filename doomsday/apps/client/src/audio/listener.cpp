@@ -204,7 +204,7 @@ ddouble Listener::distanceFrom(Vector3d const &point) const
 }
 
 dfloat Listener::rateSoundPriority(dint startTime, dfloat volume, SoundFlags flags,
-    Vector3d const &origin)
+    Vector3d const &origin) const
 {
     // Deminish the rating over five seconds from the start time until zero.
     dfloat const timeoff = 1000 * (Timer_Ticks() - startTime) / (5.0f * TICSPERSEC);

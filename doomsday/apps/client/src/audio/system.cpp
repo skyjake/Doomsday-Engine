@@ -690,8 +690,7 @@ DENG2_PIMPL(System)
     String musicCurrentSong;
     bool musicNeedSwitchBufferFile = false;  ///< @c true= choose a new file name for the buffered playback file when asked. */
 
-    Stage localStage;
-    Stage worldStage;
+    std::unique_ptr<Stage> context[StageCount];
 
     SampleCache sampleCache;
     std::unique_ptr<Mixer> mixer;
@@ -715,16 +714,10 @@ DENG2_PIMPL(System)
             .define(SReg::StringCVar, "music-soundfont",     "");
 
         App::app().audienceForGameUnload() += this;
-
-        localStage.audienceForAddition() += this;
-        worldStage.audienceForAddition() += this;
     }
 
     ~Instance()
     {
-        localStage.audienceForAddition() -= this;
-        worldStage.audienceForAddition() -= this;
-
         App::app().audienceForGameUnload() -= this;
 
         theAudioSystem = nullptr;
@@ -780,7 +773,7 @@ DENG2_PIMPL(System)
             case Channel::Sound:
                 if(!noSound && (*mixer)["fx"].channelCount() == 0)
                 {
-                    worldStage.listener().useEnvironment(sfx3D);
+                    context[WorldStage]->listener().useEnvironment(sfx3D);
 
                     dint const maxChannels = de::clamp(1, maxSoundChannels(), CHANNEL_COUNT_MAX);
                     dint numStereo = sfx3D ? CHANNEL_2DCOUNT : maxChannels;  // The rest will be 3D.
@@ -863,7 +856,8 @@ DENG2_PIMPL(System)
                 Sound const &sound = *ch.sound();
 
                 /// @todo Use Listener of the Channel. -ds
-                Listener &listener = self.worldStage().listener();
+                Listener const &listener = context[WorldStage]->listener();
+
                 prios.append(listener.rateSoundPriority(ch.startTime(), ch.volume(),
                                                         sound.flags(), sound.origin()));
             }
@@ -1300,7 +1294,10 @@ DENG2_PIMPL(System)
         if(old3DMode)
         {
             // Disable environmental effects in the world soundstage - we're going stereo.
-            worldStage.listener().useEnvironment(false);
+            if(context[WorldStage])
+            {
+                context[WorldStage]->listener().useEnvironment(false);
+            }
         }
         old3DMode = sfx3D;
     }
@@ -1320,7 +1317,7 @@ DENG2_PIMPL(System)
             return;
 
         // Skip playback if this is too far from the Listener?
-        if(&stage == &worldStage
+        if(&stage == context[WorldStage].get()
            && !sound.flags().testFlag(SoundFlag::NoOrigin)
            && !sound.flags().testFlag(SoundFlag::NoVolumeAttenuation))
         {
@@ -1364,7 +1361,7 @@ DENG2_PIMPL(System)
         PlayingMode const mode =   sound.flags().testFlag(SoundFlag::Repeat) ? Looping
                                  : (soundDef.flags & SF_DONT_STOP)           ? OnceDontDelete
                                                                              : Once;
-        if(&stage == &worldStage)
+        if(&stage == context[WorldStage].get())
         {
             // Stop all other sounds with the same emitter?
             if(sound.emitter() && stage.exclusion() == Stage::OnePerEmitter)
@@ -1383,7 +1380,7 @@ DENG2_PIMPL(System)
         // Determine positioning model.
         Positioning const positioning = (sfx3D && !sound.flags().testFlag(NoOrigin)) ? AbsolutePositioning : StereoPositioning;
 
-        dfloat const priority = worldStage.listener()
+        dfloat const priority = context[WorldStage]->listener()
             .rateSoundPriority(Timer_Ticks(), sound.volume(), sound.flags(), sound.origin());
 
         dfloat lowPrio = 0;
@@ -1515,23 +1512,25 @@ DENG2_PIMPL(System)
             }
         }
 
-        if(!selCh)
+        // Did we find a suitable Channel?
+        if(selCh)
+        {
+            SoundChannel &channel = *selCh;
+
+            // (Re)load if necessary and bind this sample.
+            channel.bindSample(sample);
+
+            // Initialize playback modifiers and start playing.
+            channel.setFrequency(frequency)
+                   .setPositioning(positioning)
+                   .setVolume(sound.volume());
+            channel.play(mode);
+        }
+        else
         {
             // A suitable channel was not found.
-            self.allowChannelRefresh();
             LOG_AUDIO_XVERBOSE("Failed to find a suitable Channel for sample id:%i") << sample.effectId;
-            return;
         }
-        SoundChannel &channel = *selCh;
-
-        // (Re)load if necessary and bind this sample.
-        channel.bindSample(sample);
-
-        // Initialize playback modifiers and start playing.
-        channel.setFrequency(frequency)
-               .setPositioning(positioning)
-               .setVolume(sound.volume());
-        channel.play(mode);
 
         // Streaming of playback data and channel updates may now continue.
         self.allowChannelRefresh();
@@ -1623,14 +1622,7 @@ SampleCache &System::sampleCache() const
 
 Stage /*const*/ &System::stage(StageId stageId) const
 {
-    switch(stageId)
-    {
-    case LocalStage: return d->localStage;
-    case WorldStage: return d->worldStage;
-
-    default: DENG2_ASSERT(!"audio::System::stage: Unknown StageId"); break;
-    }
-    throw Error("audio::System::stage", "Unknown sound Stage");
+    return *d->context[stageId];
 }
 
 bool System::musicPlaybackAvailable() const
@@ -1939,8 +1931,11 @@ void System::reset()
     }
 
     // Force an Environment update for all channels.
-    worldStage().listener().setTrackedMapObject(nullptr);
-    worldStage().listener().setTrackedMapObject(getListenerMob());
+    if(d->context[WorldStage])
+    {
+        d->context[WorldStage]->listener().setTrackedMapObject(nullptr);
+        d->context[WorldStage]->listener().setTrackedMapObject(getListenerMob());
+    }
 
     // Clear the sample cache.
     sampleCache().clear();
@@ -1970,11 +1965,14 @@ void System::startFrame()
         sampleCache().maybeRunPurge();
     }
 
-    worldStage().setExclusion(sfxOneSoundPerEmitter ? Stage::OnePerEmitter : Stage::DontExclude);
-
-    for(dint i = 0; i < StageCount; ++i)
+    if(d->context[WorldStage])
     {
-        stage(StageId(i)).maybeRunSoundPurge();
+        d->context[WorldStage]->setExclusion(sfxOneSoundPerEmitter ? Stage::OnePerEmitter : Stage::DontExclude);
+    }
+
+    for(std::unique_ptr<Stage> &stage : d->context)
+    {
+        if(stage) stage->maybeRunSoundPurge();
     }
 }
 
@@ -1983,7 +1981,10 @@ void System::endFrame()
     LOG_AS("audio::System");
 
     /// @todo Should observe. -ds
-    worldStage().listener().setTrackedMapObject(getListenerMob());
+    if(d->context[WorldStage])
+    {
+        d->context[WorldStage]->listener().setTrackedMapObject(getListenerMob());
+    }
 
     // Instruct currently playing Channels to write any effective Environment and/or sound
     // positioning mode changes if necessary (from the configured Listener of the Stage they
@@ -2004,7 +2005,10 @@ void System::endFrame()
 void System::worldMapChanged()
 {
     /// @todo Should observe. -ds
-    worldStage().listener().setTrackedMapObject(getListenerMob());
+    if(d->context[WorldStage])
+    {
+        d->context[WorldStage]->listener().setTrackedMapObject(getListenerMob());
+    }
 }
 
 void System::initPlayback()
@@ -2037,10 +2041,24 @@ void System::initPlayback()
     // (Re)Init the waveform data cache.
     sampleCache().clear();
 
-    // Disable environmental audio effects in the world soundstage by default.
-    worldStage().listener().useEnvironment(false);
+    // Initialize playback contexts.
+    {
+        std::unique_ptr<Stage> stage(new Stage);
+        stage->audienceForAddition() += d;
+        d->context[LocalStage].reset(stage.get());
+        stage.release();
+    }
+    {
+        std::unique_ptr<Stage> stage(new Stage);
+        stage->audienceForAddition() += d;
+        // Disable environmental audio effects in the world soundstage by default.
+        stage->listener().useEnvironment(false);
+        d->context[WorldStage].reset(stage.get());
+        stage.release();
+    }
 
     // Prepare the mixer.
+    /// @todo Do this earlier. -ds
     d->initMixer();
 
     // Tell audio drivers about our soundfont config.
@@ -2065,6 +2083,12 @@ void System::deinitPlayback()
     }
     d->musicAvail = false;
     d->soundAvail = false;
+
+    // Deinitialize playback contexts.
+    for(std::unique_ptr<Stage> &stage : d->context)
+    {
+        stage.release();
+    }
 
     // Finally, unload the drivers.
     d->unloadDrivers();
