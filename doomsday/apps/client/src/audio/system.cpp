@@ -1004,10 +1004,10 @@ DENG2_PIMPL(System)
      * @param effectId     If > 0, the channel must currently be loaded with a/the sound
      * associated with this identifier.
      */
-    SoundChannel *vacantSoundChannel(Positioning positioning, dint bytesPer, dint rate,
+    Channel *vacantSoundChannel(Positioning positioning, dint bytesPer, dint rate,
         dint effectId) const
     {
-        SoundChannel *found = nullptr;  // None suitable.
+        Channel *found = nullptr;  // None suitable.
         (*mixer)["fx"].forAllChannels([&positioning, &bytesPer, &rate, &effectId, &found]
                                       (Channel &base)
         {
@@ -1325,10 +1325,6 @@ DENG2_PIMPL(System)
                 return;
         }
 
-        // Don't attempt to play zero-length sound resources.
-        sfxsample_t const &sample = *sampleCache.cache(sound.effectId());
-        if(sample.size == 0) return;
-
         // Sound definitions can be used to override playback behavior/modifiers.
         dfloat frequency = 1;
         sfxinfo_t const &soundDef = *Def_GetSoundInfo(sound.effectId(), &frequency);
@@ -1369,8 +1365,8 @@ DENG2_PIMPL(System)
                 if(stopSoundChannelsWithLowerPriority(0, sound.emitter(), soundDef.priority) < 0)
                 {
                     // Something with a higher priority is playing, can't start now.
-                    LOG_AUDIO_MSG("Not playing sound (id:%i emitter:%i) prio:%i because overridden")
-                        << sample.effectId << sound.emitter()->thinker.id
+                    LOG_AUDIO_MSG("Not playing Sound #%i (emitter: %i, prio: %i) because overridden")
+                        << sound.effectId() << sound.emitter()->thinker.id
                         << soundDef.priority;
                     return;
                 }
@@ -1393,14 +1389,14 @@ DENG2_PIMPL(System)
             // The decision to stop channels is based on priorities.
             getSoundChannelPriorities(channelPrios);
 
-            dint count = countSoundChannelsPlaying(sample.effectId);
+            dint count = countSoundChannelsPlaying(sound.effectId());
             while(count >= soundDef.channels)
             {
                 // Stop the lowest priority sound of the playing instances, again noting
                 // sounds that are more important than us.
                 dint idx = 0;
-                SoundChannel *selCh = nullptr;
-                (*mixer)["fx"].forAllChannels([&sample, &priority, &channelPrios, &selCh,
+                Channel *stoppable = nullptr;
+                (*mixer)["fx"].forAllChannels([&sound, &priority, &channelPrios, &stoppable,
                                                &lowPrio, &idx] (Channel &base)
                 {
                     auto &ch = base.as<SoundChannel>();
@@ -1408,31 +1404,35 @@ DENG2_PIMPL(System)
 
                     if(ch.isPlaying())
                     {
-                        if(   ch.sound()->effectId() == sample.effectId
-                           && (priority >= chPriority && (!selCh || chPriority <= lowPrio)))
+                        if(   ch.sound()->effectId() == sound.effectId()
+                           && (priority >= chPriority && (!stoppable || chPriority <= lowPrio)))
                         {
-                            selCh   = &ch;
-                            lowPrio = chPriority;
+                            stoppable = &ch;
+                            lowPrio   = chPriority;
                         }
                     }
 
                     return LoopContinue;
                 });
 
-                if(!selCh)
+                if(!stoppable)
                 {
                     // The new sound can't be played because we were unable to stop
                     // enough channels to accommodate the limitation.
-                    LOG_AUDIO_XVERBOSE("Not playing sound id:%i because all channels are busy")
-                        << sample.effectId;
+                    LOG_AUDIO_XVERBOSE("Not playing Sound #%i because all channels are busy")
+                        << sound.effectId();
                     return;
                 }
 
                 // Stop this one.
                 count--;
-                selCh->stop();
+                stoppable->stop();
             }
         }
+
+        // Don't attempt to play zero-length sound resources.
+        sfxsample_t const &sample = *sampleCache.cache(sound.effectId());
+        if(sample.size == 0) return;
 
         // Hit count tells how many times the cached sound has been used.
         sampleCache.hit(sample.effectId);
@@ -1446,38 +1446,38 @@ DENG2_PIMPL(System)
 
         // First look through the stopped channels. At this stage we're very picky: only
         // the perfect choice will be good enough.
-        SoundChannel *selCh = vacantSoundChannel(positioning, sample.bytesPer,
-                                                 sample.rate, sample.effectId);
+        Channel *found = vacantSoundChannel(positioning, sample.bytesPer, sample.rate, sample.effectId);
 
-        if(!selCh)
+        if(!found)
         {
             // Perhaps there is a vacant channel (with any sample, but preferably one with
             // no sample already loaded).
-            selCh = vacantSoundChannel(positioning, sample.bytesPer, sample.rate, 0);
+            found = vacantSoundChannel(positioning, sample.bytesPer, sample.rate, 0);
         }
 
-        if(!selCh)
+        if(!found)
         {
             // Try any non-playing channel in the correct format.
-            selCh = vacantSoundChannel(positioning, sample.bytesPer, sample.rate, -1);
+            found = vacantSoundChannel(positioning, sample.bytesPer, sample.rate, -1);
         }
 
-        if(!selCh)
+        if(!found)
         {
             // A perfect channel could not be found.
-            // We must use a channel with the wrong format or decide which one of the playing
-            // ones gets stopped.
+            // We must use a channel with the wrong format or decide which one of the
+            // playing ones gets stopped.
 
             if(channelPrios.isEmpty())
             {
                 getSoundChannelPriorities(channelPrios);
             }
 
-            // All channels with a priority less than or equal to ours can be stopped.
-            SoundChannel *prioCh = nullptr;
+            // Channels currently playing a Sound with a lower or equal priority can be
+            // stopped to make way for this newer Sound.
+            Channel *stoppable = nullptr;
             dint idx = 0;
             (*mixer)["fx"].forAllChannels([&positioning, &priority, &channelPrios,
-                                           &selCh, &prioCh, &lowPrio, &idx] (Channel &base)
+                                           &found, &stoppable, &lowPrio, &idx] (Channel &base)
             {
                 auto &ch = base.as<SoundChannel>();
                 dfloat const chPriority = channelPrios[idx++];
@@ -1488,48 +1488,51 @@ DENG2_PIMPL(System)
                     if(!ch.isPlaying())
                     {
                         // This channel is not playing, we'll take it!
-                        selCh = &ch;
+                        found = &ch;
                         return LoopAbort;
                     }
 
                     // Are we more important than this sound?
                     // We want to choose the lowest priority sound.
-                    if(priority >= chPriority && (!prioCh || chPriority <= lowPrio))
+                    if(priority >= chPriority && (!stoppable || chPriority <= lowPrio))
                     {
-                        prioCh  = &ch;
-                        lowPrio = chPriority;
+                        stoppable = &ch;
+                        lowPrio   = chPriority;
                     }
                 }
 
                 return LoopContinue;
             });
 
-            // If a good low-priority channel was found, use it.
-            if(prioCh)
+            // If a stoppable Channel was found - use it.
+            if(stoppable)
             {
-                selCh = prioCh;
-                selCh->stop();
+                found = stoppable;
+                found->stop();
             }
         }
 
         // Did we find a suitable Channel?
-        if(selCh)
+        if(found)
         {
-            SoundChannel &channel = *selCh;
+            Channel &channel = *found;
 
             // (Re)load if necessary and bind this sample.
-            channel.bindSample(sample);
+            channel.as<SoundChannel>().bindSample(sample);
 
-            // Initialize playback modifiers and start playing.
+            // Initialize playback modifiers.
             channel.setFrequency(frequency)
                    .setPositioning(positioning)
                    .setVolume(sound.volume());
+
+            // Finally, start playing!
             channel.play(mode);
         }
         else
         {
-            // A suitable channel was not found.
-            LOG_AUDIO_XVERBOSE("Failed to find a suitable Channel for sample id:%i") << sample.effectId;
+            // No suitable Channel found.
+            LOG_AUDIO_XVERBOSE("Not playing Sound #%i because no suitable Channel available")
+                << sound.effectId();
         }
 
         // Streaming of playback data and channel updates may now continue.
