@@ -216,7 +216,7 @@ function outputCommitLogHTML(&$build)
     if($commitCount)
     {
         $groups = array();
-        groupBuildCommits($build, &$groups);
+        groupBuildCommits($build, $groups);
 
         $groupCount = count($groups);
         if($groupCount > 1)
