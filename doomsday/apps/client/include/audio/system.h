@@ -26,7 +26,6 @@
 
 #include "audio/stage.h"
 
-#include "dd_share.h"        // SoundEmitter
 #include "dd_types.h"        // lumpnum_t
 #include "SettingsRegister"
 #include <de/Error>
@@ -37,24 +36,6 @@
 #include <functional>
 
 namespace audio {
-
-/**
- * Logically independent playback contexts (soundstages).
- */
-enum Context
-{
-    /// The "world" context supports playing sounds that originate from world/map
-    /// space SoundEmitters, with (optional) distance based volume attenuation and/or
-    /// environmental audio effects.
-    World,
-
-    /// The "local" context is simpler, intended for playing sounds with no emitters,
-    /// no volume attenuation, or most other features implemented for the World context.
-    /// This context is primarily intended for playing UI sounds.
-    Local,
-
-    ContextCount
-};
 
 /**
  * Symbolic music source identifiers.
@@ -92,6 +73,22 @@ public:
     /// Notified whenever a MIDI font change occurs.
     DENG2_DEFINE_AUDIENCE2(MidiFontChange, void systemMidiFontChanged(de::String const &newMidiFontPath))
 
+    /**
+     * Logically independent playback contexts (soundstages).
+     */
+    enum Context
+    {
+        /// The "world" context supports playing sound-effects that appear to emanate from
+        /// world/map-space Emitters, with (optional) Listener-distance based volume attenuation
+        /// and/or spacial Environment effects.
+        World,
+
+        /// The "local" context is simpler, intended for playing sound-effects from fixed
+        /// points (without emitters), no volume attenuation, or most other features implemented
+        /// for the World context. This context is primarily intended for UI sounds.
+        Local
+    };
+
 public:
     /**
      * Instantiate the singleton audio::System instance.
@@ -121,11 +118,6 @@ public:
     de::String description() const;
 
     /**
-     * Determines the necessary upsample factor for the given waveform sample @a rate.
-     */
-    de::dint upsampleFactor(de::dint rate) const;
-
-    /**
      * Returns @c true if one or more interface for audible @em music playback is
      * available on the local system.
      *
@@ -149,11 +141,16 @@ public:
     de::dint musicVolume() const;
 
     /**
-     * Convenient method returning the current sound effect playback volume.
+     * Convenient method returning the current sound-effect playback volume.
      *
      * @see musicVolume()
      */
     de::dint soundVolume() const;
+
+    /**
+     * Determines the necessary upsample factor for the given waveform sample @a rate.
+     */
+    de::dint upsampleFactor(de::dint rate) const;
 
     /**
      * Provides access to the channel Mixer.
@@ -166,14 +163,17 @@ public:
     SampleCache &sampleCache() const;
 
     /**
-     * Provides access to the soundstages (FYI).
+     * Locate the sound Stage for the given playback @a context.
      *
-     * @param context  Unique identifier associated with the Stage to locate.
+     * @see local(), world()
      */
-    Stage /*const*/ &stage(Context context) const;
+    Stage &stage(Context context) const;
 
-    inline Stage /*const*/ &local() const { return stage(Local); }
-    inline Stage /*const*/ &world() const { return stage(World); }
+    /// Locate the sound Stage for the Local context.
+    inline Stage &local() const { return stage(Local); }
+
+    /// Locate the sound Stage for the World context.
+    inline Stage &world() const { return stage(World); }
 
 public:  //- Music playback: ------------------------------------------------------------
 
@@ -294,6 +294,7 @@ public:  /// @todo make private:
     void updateMusicMidiFont();
     void worldMapChanged();
     de::dint stopSoundChannels(de::dint effectId, SoundEmitter *emitter);
+    void stopAllSounds();
 
 private:
     DENG2_PRIVATE(d)

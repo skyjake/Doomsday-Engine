@@ -691,7 +691,7 @@ DENG2_PIMPL(System)
     String musicCurrentSong;
     bool musicNeedSwitchBufferFile = false;  ///< @c true= choose a new file name for the buffered playback file when asked. */
 
-    std::unique_ptr<Stage> context[ContextCount];
+    std::unique_ptr<Stage> context[2 /*0: World, 1:Local*/];
 
     SampleCache sampleCache;
     std::unique_ptr<Mixer> mixer;
@@ -2047,6 +2047,14 @@ void System::allowChannelRefresh(bool allow)
 dint System::stopSoundChannels(dint effectId, SoundEmitter *emitter)
 {
     return d->stopSoundChannelsWithLowerPriority(effectId, emitter, -1);
+}
+
+void System::stopAllSounds()
+{
+    for(std::unique_ptr<Stage> &stage : d->context)
+    {
+        if(stage) stage->stopAllSounds();
+    }
 }
 
 /**

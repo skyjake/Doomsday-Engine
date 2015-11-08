@@ -1419,10 +1419,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
         App_ResourceSystem().clearAllColorPalettes();
 
 #ifdef __CLIENT__
-        for(dint i = 0; i < ::audio::ContextCount; ++i)
-        {
-            ClientApp::audioSystem().stage(::audio::Context(i)).stopAllSounds();
-        }
+        ClientApp::audioSystem().stopAllSounds();
 #else
         ServerApp::app().clearAllLogicalSounds();
 #endif
