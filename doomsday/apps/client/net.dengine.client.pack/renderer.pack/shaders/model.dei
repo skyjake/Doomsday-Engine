@@ -2,9 +2,11 @@ model.skeletal {
     # Shader for skeletal animation and generic per-pixel lighting:
     # diffuse color, normal map, emissive map, specular intensity.
     shader generic {
-        variable uAlpha      { value = 1 }
         variable uAlphaLimit { value = 0 }
+        variable uAlpha      { value = 1 }
+        variable uColor      { value <1, 1, 1> }
         variable uEmission   { value = 0 }
+        variable uOffsetUV   { value <0, 0> }
         
         # Mapping when used with ModelDrawable.
         textureMapping <diffuse, normals, specular, emission>
@@ -49,8 +51,10 @@ model.skeletal {
                           include/lighting.glsl,
                           include/fog.glsl>
         fragment = "
-            uniform highp float uAlpha;
+            uniform highp vec3 uColor;       // diffuse color multiplier
+            uniform highp float uAlpha;      // diffuse alpha multiplier
             uniform highp float uAlphaLimit; // alpha test to discard fragments
+            uniform highp vec2 uOffsetUV;
             
             varying highp vec2 vUV;
             varying highp vec4 vUVBounds[4];
@@ -58,7 +62,7 @@ model.skeletal {
             void main(void) 
             {
                 // Calculate UV at the fragment (wrapped inside the bounds).
-                highp vec2 wrappedUV = fract(vUV);
+                highp vec2 wrappedUV = fract(vUV + uOffsetUV);
                 highp vec2 uv         = mapToBounds(wrappedUV, vUVBounds[0]);
                 highp vec2 normalUV   = mapToBounds(wrappedUV, vUVBounds[1]);
                 highp vec2 specularUV = mapToBounds(wrappedUV, vUVBounds[2]);
@@ -67,6 +71,7 @@ model.skeletal {
                 highp vec3 normal = normalVector(normalUV);
                 
                 highp vec4 diffuse = texture2D(uTex, uv);
+                diffuse.rgb *= uColor;
                 diffuse.a *= uAlpha;
                         
                 gl_FragColor = diffuse * diffuseLight(normal);
@@ -90,8 +95,10 @@ model.skeletal {
     shader opaque.generic inherits model.skeletal.generic {
         variable uAlphaLimit { value = 0.5 }
         fragment = "
+            uniform highp vec3 uColor;       // diffuse color multiplier
             uniform highp float uAlpha;
             uniform highp float uAlphaLimit; // alpha test to discard fragments
+            uniform highp vec2 uOffsetUV;
         
             varying highp vec2 vUV;
             varying highp vec4 vUVBounds[4];
@@ -99,7 +106,7 @@ model.skeletal {
             void main(void) 
             {
                 // Calculate UV at the fragment (wrapped inside the bounds).
-                highp vec2 wrappedUV = fract(vUV);
+                highp vec2 wrappedUV = fract(vUV + uOffsetUV);
                 highp vec2 uv         = mapToBounds(wrappedUV, vUVBounds[0]);
                 highp vec2 normalUV   = mapToBounds(wrappedUV, vUVBounds[1]);
                 highp vec2 specularUV = mapToBounds(wrappedUV, vUVBounds[2]);
@@ -109,6 +116,8 @@ model.skeletal {
             
                 highp vec4 diffuse = texture2D(uTex, uv);
                 if(diffuse.a < uAlphaLimit) discard;
+
+                diffuse.rgb *= uColor;
                 diffuse.a = uAlpha;
                     
                 gl_FragColor = diffuse * diffuseLight(normal);
@@ -124,7 +133,9 @@ model.skeletal {
     # be used to control how much of the effect is visible.
     shader opaque.nonemissive {
         variable uAlphaLimit { value = 0.5 }
-        variable uAlpha { value = 1.0 }
+        variable uAlpha      { value = 1.0 }
+        variable uColor      { value <1, 1, 1> }
+        variable uOffsetUV   { value <0, 0> }
 
         # Mapping when used with ModelDrawable.
         textureMapping <diffuse, normals, specular>
@@ -169,6 +180,8 @@ model.skeletal {
         fragment = "
             uniform highp float uAlphaLimit;
             uniform highp float uAlpha;
+            uniform highp vec3 uColor;       // diffuse color multiplier
+            uniform highp vec2 uOffsetUV;
             
             varying highp vec2 vUV;
             varying highp vec4 vUVBounds[3];
@@ -176,13 +189,14 @@ model.skeletal {
             void main(void) 
             {
                 // Calculate UV at the fragment (wrapped inside the bounds).
-                highp vec2 wrappedUV = fract(vUV);
+                highp vec2 wrappedUV = fract(vUV + uOffsetUV);
                 highp vec2 uv         = mapToBounds(wrappedUV, vUVBounds[0]);
                 highp vec2 normalUV   = mapToBounds(wrappedUV, vUVBounds[1]);
                 highp vec2 specularUV = mapToBounds(wrappedUV, vUVBounds[2]);
             
                 highp vec4 diffuse = texture2D(uTex, uv);
                 if(diffuse.a < uAlphaLimit) discard;
+                diffuse.rgb *= uColor;
                 
                 highp vec3 normal = normalVector(normalUV);                
                 gl_FragColor = diffuse * diffuseLight(normal);
