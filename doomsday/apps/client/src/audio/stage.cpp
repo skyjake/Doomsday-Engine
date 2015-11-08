@@ -59,6 +59,32 @@ DENG2_PIMPL_NOREF(Stage)
         return ClientApp::audioSystem().sampleCache();
     }
 
+    void removeSoundsById(dint effectId)
+    {
+        sounds.remove(effectId);
+    }
+
+    /**
+     * Remove all Sounds originating from the given @a emitter. Does absolutely nothing
+     * about playback (or refresh), as that is handled at another (lower) level.
+     *
+     * @param emitter
+     *
+     * @see removeSoundsById(), removeAllSounds()
+     * @note Performance: O(1)
+     */
+    void removeSoundsWithEmitter(SoundEmitter const &emitter)
+    {
+        SoundHash::MutableIterator it(sounds);
+        while(it.hasNext())
+        {
+            it.next();
+            if(it.value().emitter() != &emitter) continue;
+
+            it.remove();
+        }
+    }
+
     /**
      * @param params   Description of the Sound to be added.
      * @param endTime  Time in milliseconds when the first/only playback cycle will end.
@@ -123,7 +149,7 @@ Stage::Stage(Exclusion exclusion) : d(new Instance)
 
 Stage::~Stage()
 {
-    removeAllSounds();
+    stopAllSounds();
 }
 
 Stage::Exclusion Stage::exclusion() const
@@ -212,41 +238,21 @@ void Stage::stopSound(dint effectId, SoundEmitter *emitter)
     // Update logical sound bookkeeping.
     if(effectId <= 0 && !emitter)
     {
-        removeAllSounds();
+        stopAllSounds();
     }
     else if(effectId) // > 0
     {
-        removeSoundsById(effectId);
+        d->removeSoundsById(effectId);
     }
     else
     {
-        removeSoundsWithEmitter(*emitter);
+        d->removeSoundsWithEmitter(*emitter);
     }
 }
 
-void Stage::removeAllSounds()
+void Stage::stopAllSounds()
 {
-    //LOG_AS("audio::Stage");
     d->sounds.clear();
-}
-
-void Stage::removeSoundsById(dint effectId)
-{
-    //LOG_AS("audio::Stage");
-    d->sounds.remove(effectId);
-}
-
-void Stage::removeSoundsWithEmitter(SoundEmitter const &emitter)
-{
-    //LOG_AS("audio::Stage");
-    Instance::SoundHash::MutableIterator it(d->sounds);
-    while(it.hasNext())
-    {
-        it.next();
-        if(it.value().emitter() != &emitter) continue;
-
-        it.remove();
-    }
 }
 
 LoopResult Stage::forAllSounds(std::function<LoopResult (Sound &)> callback) const

@@ -169,8 +169,6 @@ public:
      * Provides access to the soundstages (FYI).
      *
      * @param context  Unique identifier associated with the Stage to locate.
-     *
-     * @see operator []()
      */
     Stage /*const*/ &stage(Context context) const;
 

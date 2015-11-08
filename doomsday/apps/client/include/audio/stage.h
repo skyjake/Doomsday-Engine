@@ -80,13 +80,15 @@ public:
     Listener const &listener() const;
 
     /**
-     * Returns true if the referenced sound is currently playing somewhere in the stage.
-     * (irrespective of whether it is actually audible, or not).
+     * Returns true if the referenced sound-effect is currently playing somewhere in the
+     * soundstage (irrespective of whether it is actually audible, or not).
      *
-     * @param effectId  @c 0= true if sounds are playing using the specified @a emitter.
-     * @param emitter   Soundstage Emitter (originator). May be @c nullptr.
+     * @param effectId  @c 0= true if Sounds are playing using the specified @a emitter.
+     * @param emitter   Emitter (originator) of the Sound(s) must match this.
+     *
+     * @see playSound()
      */
-    bool soundIsPlaying(de::dint effectId, SoundEmitter *emitter) const;
+    bool soundIsPlaying(de::dint effectId, SoundEmitter *emitter = nullptr) const;
 
     /**
      * Start playing a Sound in the soundstage. The Addition audience is notified whenever
@@ -103,32 +105,18 @@ public:
      * Stop playing Sound(s) in the soundstage.
      *
      * @param effectId  Unique identifier of the sound-effect(s) to stop.
-     * @param emitter   Emitter (originator) of the Sounds to stop. May be @c nullptr.
+     * @param emitter   Emitter (originator) of the Sound(s) must match this.
+     *
+     * @see stopAllSounds()
      */
-    void stopSound(de::dint effectId, SoundEmitter *emitter);
+    void stopSound(de::dint effectId, SoundEmitter *emitter = nullptr);
 
     /**
-     * @see removeSoundsById(), removeSoundsWithEmitter()
-     */
-    void removeAllSounds();
-
-    /**
-     * @param effectId
+     * Stop @em all playing Sound(s) in the soundstage.
      *
-     * @see removeSoundsWithEmitter(), removeAllSounds()
+     * @see stopSound()
      */
-    void removeSoundsById(de::dint effectId);
-
-    /**
-     * Remove all Sounds originating from the given @a emitter. Does absolutely nothing
-     * about playback (or refresh), as that is handled at another (lower) level.
-     *
-     * @param emitter
-     *
-     * @see removeSoundsById(), removeAllSounds()
-     * @note Performance: O(1)
-     */
-    void removeSoundsWithEmitter(SoundEmitter const &emitter);
+    void stopAllSounds();
 
     /**
      * Iterate through the Sounds, executing @a callback for each.
