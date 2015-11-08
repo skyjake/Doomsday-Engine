@@ -691,7 +691,7 @@ DENG2_PIMPL(System)
     String musicCurrentSong;
     bool musicNeedSwitchBufferFile = false;  ///< @c true= choose a new file name for the buffered playback file when asked. */
 
-    std::unique_ptr<Stage> context[2 /*0: World, 1:Local*/];
+    std::unique_ptr<Stage> context[2 /*0:World, 1:Local*/];
 
     SampleCache sampleCache;
     std::unique_ptr<Mixer> mixer;
@@ -818,20 +818,22 @@ DENG2_PIMPL(System)
     dint countSoundChannelsPlaying(dint effectId, SoundEmitter *emitter = nullptr) const
     {
         dint count = 0;
-        (*mixer)["fx"].forAllChannels([&effectId, &emitter, &count] (Channel &base)
+        (*mixer)["fx"].forAllChannels([&effectId, &emitter, &count] (Channel &channel)
         {
-            auto &ch = base.as<SoundChannel>();
+            if(!channel.isPlaying()) return LoopContinue;
 
-            if(!ch.isPlaying()) return LoopContinue;
-            if(emitter  && ch.sound()->emitter()  != emitter)  return LoopContinue;
-            if(effectId && ch.sound()->effectId() != effectId) return LoopContinue;
+            Sound *sound = channel.as<SoundChannel>().sound();
+            DENG2_ASSERT(sound);
+
+            if(emitter  && sound->emitter()  != emitter)  return LoopContinue;
+            if(effectId && sound->effectId() != effectId) return LoopContinue;
 
             // Once playing, repeating sounds don't stop.
-            /*if(ch.playingMode() == Looping)
+            /*if(channel.isPlayingLooped())
             {
                 // Check time. The flag is updated after a slight delay (only at refresh).
-                dint const ticsToDelay = ch.sound()->numSamples / dfloat( ch.buffer().freq ) * TICSPERSEC;
-                if(Timer_Ticks() - ch.startTime() < ticsToDelay)
+                dint const ticsToDelay = sound->numSamples / dfloat( channel.sampleRate() ) * TICSPERSEC;
+                if(Timer_Ticks() - channel.as<SoundChannel>().startTime() < ticsToDelay)
                     return LoopContinue;
             }*/
 
@@ -878,24 +880,24 @@ DENG2_PIMPL(System)
     dint stopSoundChannelsWithSoundGroup(dint group, SoundEmitter *emitter)
     {
         dint stopCount = 0;
-        (*mixer)["fx"].forAllChannels([this, &group, &emitter, &stopCount] (Channel &base)
+        (*mixer)["fx"].forAllChannels([this, &group, &emitter, &stopCount] (Channel &channel)
         {
-            auto &ch = base.as<SoundChannel>();
-
-            if(!ch.isPlaying())
+            if(!channel.isPlaying())
                 return LoopContinue;
 
-            DENG2_ASSERT(ch.sound());
-            if(emitter && ch.sound()->emitter() != emitter)
+            Sound *sound = channel.as<SoundChannel>().sound();
+            DENG2_ASSERT(sound);
+
+            if(emitter && sound->emitter() != emitter)
                 return LoopContinue;
 
-            sfxinfo_t const *soundDef = Def_GetSoundInfo(ch.sound()->effectId());
+            sfxinfo_t const *soundDef = Def_GetSoundInfo(sound->effectId());
             DENG2_ASSERT(soundDef);
             if(soundDef->group != group)
                 return LoopContinue;
 
             // This channel must be stopped!
-            ch.stop();
+            channel.stop();
             stopCount += 1;
             return LoopContinue;
         });
@@ -917,18 +919,17 @@ DENG2_PIMPL(System)
     dint stopSoundChannelsWithEmitter(SoundEmitter *emitter = nullptr)
     {
         dint stopCount = 0;
-        (*mixer)["fx"].forAllChannels([&emitter, &stopCount] (Channel &base)
+        (*mixer)["fx"].forAllChannels([&emitter, &stopCount] (Channel &channel)
         {
-            auto &ch = base.as<SoundChannel>();
+            if(!channel.isPlaying()) return LoopContinue;
 
-            if(!ch.isPlaying()) return LoopContinue;
+            Sound *sound = channel.as<SoundChannel>().sound();
+            DENG2_ASSERT(sound);
 
-            DENG2_ASSERT(ch.sound());
-            Sound &sound = *ch.sound();
-            if(!sound.emitter() || (!emitter || sound.emitter() == emitter))
+            if(!sound->emitter() || (!emitter || sound->emitter() == emitter))
             {
                 // This channel must be stopped!.
-                ch.stop();
+                channel.stop();
                 stopCount += 1;
             }
             return LoopContinue;
@@ -954,31 +955,30 @@ DENG2_PIMPL(System)
     dint stopSoundChannelsWithLowerPriority(dint effectId, SoundEmitter *emitter, dint defPriority)
     {
         dint stopCount = 0;
-        (*mixer)["fx"].forAllChannels([&effectId, &emitter, &defPriority, &stopCount] (Channel &base)
+        (*mixer)["fx"].forAllChannels([&effectId, &emitter, &defPriority, &stopCount] (Channel &channel)
         {
-            auto &ch = base.as<SoundChannel>();
+            if(!channel.isPlaying()) return LoopContinue;
 
-            if(!ch.isPlaying()) return LoopContinue;
+            Sound *sound = channel.as<SoundChannel>().sound();
+            DENG2_ASSERT(sound);
 
-            DENG2_ASSERT(ch.sound());
-
-            if(   (effectId && ch.sound()->effectId() != effectId)
-               || (emitter  && ch.sound()->emitter()  != emitter))
+            if(   (effectId && sound->effectId() != effectId)
+               || (emitter  && sound->emitter()  != emitter))
             {
                 return LoopContinue;
             }
 
             // Can it be stopped?
-            if(ch.mode() == OnceDontDelete)
+            if(channel.mode() == OnceDontDelete)
             {
-                ch.suspend();
+                channel.as<SoundChannel>().suspend();
                 return LoopContinue;
             }
 
             // Check the priority.
             if(defPriority >= 0)
             {
-                dint oldPrio = ::defs.sounds[ch.sound()->effectId()].geti("priority");
+                dint oldPrio = ::defs.sounds[sound->effectId()].geti("priority");
                 if(oldPrio < defPriority)  // Old is more important.
                 {
                     stopCount = -1;
@@ -987,7 +987,7 @@ DENG2_PIMPL(System)
             }
 
             // This channel must be stopped!
-            ch.stop();
+            channel.stop();
             stopCount += 1;
             return LoopContinue;
         });
@@ -1322,8 +1322,8 @@ DENG2_PIMPL(System)
             return;
 
         // Sound definitions can be used to override playback behavior/modifiers.
-        dfloat frequency = 1;
-        sfxinfo_t const &soundDef = *Def_GetSoundInfo(sound.effectId(), &frequency);
+        dfloat soundFrequency = 1;
+        sfxinfo_t const &soundDef = *Def_GetSoundInfo(sound.effectId(), &soundFrequency);
 
         // Random frequency alteration? 
         if(!sfxNoRndPitch)
@@ -1331,11 +1331,11 @@ DENG2_PIMPL(System)
             // Multipliers chosen to match original sound code.
             if(soundDef.flags & SF_RANDOM_SHIFT)
             {
-                frequency += (RNG_RandFloat() - RNG_RandFloat()) * (7.0f / 255);
+                soundFrequency += (RNG_RandFloat() - RNG_RandFloat()) * (7.0f / 255);
             }
             if(soundDef.flags & SF_RANDOM_SHIFT2)
             {
-                frequency += (RNG_RandFloat() - RNG_RandFloat()) * (15.0f / 255);
+                soundFrequency += (RNG_RandFloat() - RNG_RandFloat()) * (15.0f / 255);
             }
         }
 
@@ -1370,9 +1370,9 @@ DENG2_PIMPL(System)
         }
 
         // Determine positioning model.
-        Positioning const positioning = (sfx3D && !sound.flags().testFlag(NoOrigin)) ? AbsolutePositioning : StereoPositioning;
-
-        dfloat const priority = stage.listener().rateSoundPriority(Timer_Ticks(), sound.volume(), sound.flags(), sound.origin());
+        Positioning const soundPositioning = (sfx3D && !sound.flags().testFlag(NoOrigin)) ? AbsolutePositioning : StereoPositioning;
+        dfloat const soundPriority =
+            stage.listener().rateSoundPriority(Timer_Ticks(), sound.volume(), sound.flags(), sound.origin());
 
         dfloat lowPrio = 0;
         QList<dfloat> channelPrios;
@@ -1391,19 +1391,19 @@ DENG2_PIMPL(System)
                 // sounds that are more important than us.
                 dint idx = 0;
                 Channel *stoppable = nullptr;
-                (*mixer)["fx"].forAllChannels([&sound, &priority, &channelPrios, &stoppable,
-                                               &lowPrio, &idx] (Channel &base)
+                (*mixer)["fx"].forAllChannels([&sound, &soundPriority, &channelPrios, &stoppable,
+                                               &lowPrio, &idx] (Channel &channel)
                 {
-                    auto &ch = base.as<SoundChannel>();
-                    dfloat const chPriority = channelPrios[idx++];
+                    dfloat const channelPriority = channelPrios[idx++];
 
-                    if(ch.isPlaying())
+                    if(channel.isPlaying())
                     {
-                        if(   ch.sound()->effectId() == sound.effectId()
-                           && (priority >= chPriority && (!stoppable || chPriority <= lowPrio)))
+                        if(channel.as<SoundChannel>().sound()->effectId() == sound.effectId()
+                           && (soundPriority >= channelPriority
+                               && (!stoppable || channelPriority <= lowPrio)))
                         {
-                            stoppable = &ch;
-                            lowPrio   = chPriority;
+                            stoppable = &channel;
+                            lowPrio   = channelPriority;
                         }
                     }
 
@@ -1441,19 +1441,19 @@ DENG2_PIMPL(System)
 
         // First look through the stopped channels. At this stage we're very picky: only
         // the perfect choice will be good enough.
-        Channel *found = vacantSoundChannel(positioning, sample.bytesPer, sample.rate, sample.effectId);
+        Channel *found = vacantSoundChannel(soundPositioning, sample.bytesPer, sample.rate, sample.effectId);
 
         if(!found)
         {
             // Perhaps there is a vacant channel (with any sample, but preferably one with
             // no sample already loaded).
-            found = vacantSoundChannel(positioning, sample.bytesPer, sample.rate, 0);
+            found = vacantSoundChannel(soundPositioning, sample.bytesPer, sample.rate, 0);
         }
 
         if(!found)
         {
             // Try any non-playing channel in the correct format.
-            found = vacantSoundChannel(positioning, sample.bytesPer, sample.rate, -1);
+            found = vacantSoundChannel(soundPositioning, sample.bytesPer, sample.rate, -1);
         }
 
         if(!found)
@@ -1471,28 +1471,28 @@ DENG2_PIMPL(System)
             // stopped to make way for this newer Sound.
             Channel *stoppable = nullptr;
             dint idx = 0;
-            (*mixer)["fx"].forAllChannels([&positioning, &priority, &channelPrios,
-                                           &found, &stoppable, &lowPrio, &idx] (Channel &base)
+            (*mixer)["fx"].forAllChannels([&soundPositioning, &soundPriority, &channelPrios,
+                                           &found, &stoppable, &lowPrio, &idx] (Channel &channel)
             {
-                auto &ch = base.as<SoundChannel>();
-                dfloat const chPriority = channelPrios[idx++];
+                dfloat const channelPriority = channelPrios[idx++];
 
                 // Sample buffer must be configured for the right mode.
-                if(positioning == ch.positioning())
+                if(soundPositioning == channel.positioning())
                 {
-                    if(!ch.isPlaying())
+                    if(!channel.isPlaying())
                     {
                         // This channel is not playing, we'll take it!
-                        found = &ch;
+                        found = &channel;
                         return LoopAbort;
                     }
 
                     // Are we more important than this sound?
                     // We want to choose the lowest priority sound.
-                    if(priority >= chPriority && (!stoppable || chPriority <= lowPrio))
+                    if(soundPriority >= channelPriority
+                       && (!stoppable || channelPriority <= lowPrio))
                     {
-                        stoppable = &ch;
-                        lowPrio   = chPriority;
+                        stoppable = &channel;
+                        lowPrio   = channelPriority;
                     }
                 }
 
@@ -1516,9 +1516,9 @@ DENG2_PIMPL(System)
             channel.as<SoundChannel>().bindSample(sample);
 
             // Initialize playback modifiers.
-            channel.setFrequency(frequency)
-                   .setPositioning(positioning)
-                   .setVolume(sound.volume());
+            channel.setFrequency  (soundFrequency)
+                   .setPositioning(soundPositioning)
+                   .setVolume     (sound.volume());
 
             // Finally, start playing!
             channel.play(mode);
@@ -1925,9 +1925,9 @@ void System::endFrame()
     // are playing on).
     if(d->soundAvail && !BusyMode_Active())
     {
-        mixer()["fx"].forAllChannels([] (Channel &base)
+        mixer()["fx"].forAllChannels([] (Channel &channel)
         {
-            base.as<SoundChannel>().updateEnvironment();
+            channel.as<SoundChannel>().updateEnvironment();
             return LoopContinue;
         });
     }

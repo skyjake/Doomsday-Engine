@@ -310,13 +310,13 @@ void PluginDriver::MusicChannel::bindFile(String const &path)
 // --------------------------------------------------------------------------------------
 
 /**
- * @note Loading must be done prior to setting properties, because the driver might defer
+ * @note Loading must be done prior to setting properties because the driver might defer
  * creation of the actual data buffer.
  */
 DENG2_PIMPL_NOREF(PluginDriver::SoundChannel)
 , DENG2_OBSERVES(Listener,  EnvironmentChange)
-, DENG2_OBSERVES(Deletable, Deletion)
 , DENG2_OBSERVES(System,    FrameEnds)
+, DENG2_OBSERVES(Deletable, Deletion)
 {
     PluginDriver &driver;          ///< Owning driver.
     bool noUpdate    = false;      ///< @c true if skipping updates (when stopped, before deletion).
