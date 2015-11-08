@@ -203,7 +203,7 @@ void Cl_ReadSoundDelta(deltatype_t type)
             emitter = (SoundEmitter *)DD_Player(consolePlayer)->publicData().mo;
         }
 
-        ClientApp::audioSystem().worldStage().playSound(sound, emitter);
+        ClientApp::audioSystem().world().playSound(sound, emitter);
     }
     else if(sound.effectId >= 0)
     {
@@ -211,7 +211,7 @@ void Cl_ReadSoundDelta(deltatype_t type)
         // specific sources.
         if(emitter)
         {
-            ClientApp::audioSystem().stopSound(::audio::World, sound.effectId, emitter);
+            ClientApp::audioSystem().world().stopSound(sound.effectId, emitter);
         }
     }
 }
@@ -278,5 +278,5 @@ void Cl_Sound()
         LOGDEV_NET_VERBOSE("Unknown emitter for Sound #%i") << sound.effectId;
     }
 
-    ClientApp::audioSystem().worldStage().playSound(sound, emitter);
+    ClientApp::audioSystem().world().playSound(sound, emitter);
 }

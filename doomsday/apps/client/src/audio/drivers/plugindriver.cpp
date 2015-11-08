@@ -634,7 +634,7 @@ void PluginDriver::SoundChannel::play(PlayingMode mode)
 
     // When playing on a sound stage with a Listener, we may need to update the channel
     // dynamically during playback.
-    d->observeListener(&ClientApp::audioSystem().worldStage().listener());
+    d->observeListener(&ClientApp::audioSystem().world().listener());
 
     // Flush deferred property value changes to the assigned data buffer.
     if(d->driver.iSound().gen.Listener)

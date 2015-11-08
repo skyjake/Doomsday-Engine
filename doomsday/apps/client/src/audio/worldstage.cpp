@@ -22,6 +22,8 @@
 
 #include "world/worldsystem.h"
 #include "world/map.h"
+#include "world/p_object.h"
+#include "world/sector.h"
 
 #include "clientapp.h"
 
@@ -67,5 +69,44 @@ WorldStage::WorldStage(Exclusion exclusion)
     : Stage(exclusion)
     , d(new Instance(this))
 {}
+
+void WorldStage::stopSound(dint effectId, SoundEmitter *emitter, dint flags)
+{
+    // Are we performing any special stop behaviors?
+    if(emitter && flags)
+    {
+        // Sector-based sound stopping.
+        if(emitter->thinker.id)
+        {
+            /// @var emitter is a map-object.
+            emitter = &Mobj_Sector((mobj_t *)emitter)->soundEmitter();
+        }
+        else
+        {
+            // The head of the chain is the sector. Find it.
+            while(emitter->thinker.prev)
+            {
+                emitter = (SoundEmitter *)emitter->thinker.prev;
+            }
+        }
+    }
+
+    // Stop Sounds emitted by the Sector's Emitter?
+    if(!emitter || (flags & SSF_SECTOR))
+    {
+        Stage::stopSound(effectId, emitter);
+    }
+
+    // Also stop Sounds emitted by Sector-linked (plane/wall) Emitters?
+    if(emitter && (flags & SSF_SECTOR_LINKED_SURFACES))
+    {
+        // Process the rest of the emitter chain.
+        while((emitter = (SoundEmitter *)emitter->thinker.next))
+        {
+            // Stop sounds from this emitter, also.
+            Stage::stopSound(effectId, emitter);
+        }
+    }
+}
 
 }  // namespace audio

@@ -5579,7 +5579,7 @@ static void drawSounds(Map &)
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
 
-    ClientApp::audioSystem().worldStage().forAllSounds([] (::audio::Sound &sound)
+    ClientApp::audioSystem().world().forAllSounds([] (::audio::Sound &sound)
     {
         if(!sound.flags().testFlag(::audio::SoundFlag::NoOrigin))
         {

@@ -126,6 +126,36 @@ public:
     de::dint upsampleFactor(de::dint rate) const;
 
     /**
+     * Returns @c true if one or more interface for audible @em music playback is
+     * available on the local system.
+     *
+     * @see soundPlaybackAvailable()
+     */
+    bool musicPlaybackAvailable() const;
+
+    /**
+     * Returns @c true if one or more interface for audible @em sound playback is available
+     * on the local system.
+     *
+     * @see musicPlaybackAvailable()
+     */
+    bool soundPlaybackAvailable() const;
+
+    /**
+     * Convenient method returning the current music playback volume.
+     *
+     * @see soundVolume()
+     */
+    de::dint musicVolume() const;
+
+    /**
+     * Convenient method returning the current sound effect playback volume.
+     *
+     * @see musicVolume()
+     */
+    de::dint soundVolume() const;
+
+    /**
      * Provides access to the channel Mixer.
      */
     Mixer /*const*/ &mixer() const;
@@ -139,28 +169,15 @@ public:
      * Provides access to the soundstages (FYI).
      *
      * @param context  Unique identifier associated with the Stage to locate.
+     *
+     * @see operator []()
      */
     Stage /*const*/ &stage(Context context) const;
 
-    inline Stage /*const*/ &localStage() const { return stage(Local); }
-    inline Stage /*const*/ &worldStage() const { return stage(World); }
+    inline Stage /*const*/ &local() const { return stage(Local); }
+    inline Stage /*const*/ &world() const { return stage(World); }
 
 public:  //- Music playback: ------------------------------------------------------------
-
-    /**
-     * Returns @c true if one or more interface for audible @em music playback is
-     * available on the local system.
-     *
-     * @see soundPlaybackAvailable()
-     */
-    bool musicPlaybackAvailable() const;
-
-    /**
-     * Convenient method returning the current music playback volume.
-     *
-     * @see soundVolume()
-     */
-    de::dint musicVolume() const;
 
     /**
      * Returns true if @em music is currently playing (on any music interface). It does
@@ -208,34 +225,6 @@ public:  //- Music playback: ---------------------------------------------------
      * @see musicIsPlaying(), pauseMusic(),
      */
     void stopMusic();
-
-public:  //- Sound playback: ------------------------------------------------------------
-
-    /**
-     * Returns @c true if one or more interface for audible @em sound playback is available
-     * on the local system.
-     *
-     * @see musicPlaybackAvailable()
-     */
-    bool soundPlaybackAvailable() const;
-
-    /**
-     * Convenient method returning the current sound effect playback volume.
-     *
-     * @see musicVolume()
-     */
-    de::dint soundVolume() const;
-
-    /**
-     * Stop playing sound(s) in the specified @a soundStage.
-     *
-     * @param stageId   Unique identifier of the playback contexta on which to stop sounds.
-     * @param effectId  Unique identifier of the sound-effect(s) to stop.
-     * @param emitter   Soundstage SoundEmitter (originator). May be @c nullptr.
-     * @param flags     @ref soundStopFlags.
-     */
-    void stopSound(Context context, de::dint effectId, SoundEmitter *emitter,
-        de::dint flags = 0 /*no special stop behaviors*/);
 
 public:  //- Low-level driver interface: ------------------------------------------------
 
@@ -306,6 +295,7 @@ public:  /// @todo make private:
     void endFrame();
     void updateMusicMidiFont();
     void worldMapChanged();
+    de::dint stopSoundChannels(de::dint effectId, SoundEmitter *emitter);
 
 private:
     DENG2_PRIVATE(d)

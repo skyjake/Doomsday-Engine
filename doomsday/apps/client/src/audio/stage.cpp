@@ -29,7 +29,6 @@
 #include "clientapp.h"
 #include <de/Log>
 #include <de/timer.h>
-#include <QList>
 #include <QMultiHash>
 #include <QMutableHashIterator>
 
@@ -54,6 +53,11 @@ DENG2_PIMPL_NOREF(Stage)
     } sounds;
 
     duint lastSoundPurge = 0;
+
+    static inline SampleCache &soundBank()
+    {
+        return ClientApp::audioSystem().sampleCache();
+    }
 
     /**
      * @param params   Description of the Sound to be added.
@@ -84,6 +88,27 @@ DENG2_PIMPL_NOREF(Stage)
         return sounds.insert(params.effectId, Sound(params.flags, params.effectId, params.volume,
                                                     params.origin, endTime, emitter))
                .value();
+    }
+
+    void runSoundPurge(duint nowTime)
+    {
+        //LOG_AS("audio::Stage");
+        //LOGDEV_AUDIO_XVERBOSE("Purging logical sounds...");
+
+        // Check all sounds in the hash.
+        SoundHash::MutableIterator it(sounds);
+        while(it.hasNext())
+        {
+            it.next();
+            if(!it.value().isPlaying(nowTime))
+            {
+                // This has stopped.
+                it.remove();
+            }
+        }
+
+        // Purge completed.
+        lastSoundPurge = nowTime;
     }
 
     DENG2_PIMPL_AUDIENCE(Addition)
@@ -154,7 +179,7 @@ void Stage::playSound(SoundParams params, SoundEmitter *emitter)
     if(params.volume > 1) LOG_AUDIO_WARNING("Volume is too high (%f > 1)") << params.volume;
 
     // We must know it's duration - cache the associated waveform resource (if necessary).
-    sfxsample_t const *sample = ClientApp::audioSystem().sampleCache().cache(params.effectId);
+    sfxsample_t const *sample = d->soundBank().cache(params.effectId);
     duint const duration      = sample ? sample->milliseconds() : 0;
 
     // Completely ignore effects whose playback duration is zero.
@@ -176,6 +201,26 @@ void Stage::playSound(SoundParams params, SoundEmitter *emitter)
     DENG2_FOR_AUDIENCE2(Addition, i)
     {
         i->stageSoundAdded(*this, sound);
+    }
+}
+
+void Stage::stopSound(dint effectId, SoundEmitter *emitter)
+{
+    /// @todo Could be a side effect of Sound deletion. -ds
+    ClientApp::audioSystem().stopSoundChannels(effectId, emitter);
+
+    // Update logical sound bookkeeping.
+    if(effectId <= 0 && !emitter)
+    {
+        removeAllSounds();
+    }
+    else if(effectId) // > 0
+    {
+        removeSoundsById(effectId);
+    }
+    else
+    {
+        removeSoundsWithEmitter(*emitter);
     }
 }
 
@@ -217,26 +262,9 @@ void Stage::maybeRunSoundPurge()
 {
     // Too soon?
     duint const nowTime = Timer_RealMilliseconds();
-    if(nowTime - d->lastSoundPurge < SOUND_PURGE_INTERVAL)
-        return;
+    if(nowTime - d->lastSoundPurge < SOUND_PURGE_INTERVAL) return;
 
-    //LOG_AS("audio::Stage");
-    //LOGDEV_AUDIO_XVERBOSE("Purging logical sounds...");
-
-    // Check all sounds in the hash.
-    Instance::SoundHash::MutableIterator it(d->sounds);
-    while(it.hasNext())
-    {
-        it.next();
-        if(!it.value().isPlaying(nowTime))
-        {
-            // This has stopped.
-            it.remove();
-        }
-    }
-
-    // Purge completed.
-    d->lastSoundPurge = nowTime;
+    d->runSoundPurge(nowTime);
 }
 
 }  // namespace audio

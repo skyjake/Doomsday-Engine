@@ -1831,68 +1831,6 @@ dint System::soundVolume() const
     return sfxVolume;
 }
 
-void System::stopSound(Context context, dint effectId, SoundEmitter *emitter, dint flags)
-{
-    LOG_AS("audio::System");
-
-    // Are we performing any special stop behaviors?
-    if(context == World)
-    {
-        if(emitter && flags)
-        {
-            // Sector-based sound stopping.
-            if(emitter->thinker.id)
-            {
-                /// @var emitter is a map-object.
-                emitter = &Mobj_Sector((mobj_t *)emitter)->soundEmitter();
-            }
-            else
-            {
-                // The head of the chain is the sector. Find it.
-                while(emitter->thinker.prev)
-                {
-                    emitter = (SoundEmitter *)emitter->thinker.prev;
-                }
-            }
-
-            // Stop sounds emitted by the Sector's emitter?
-            if(flags & SSF_SECTOR)
-            {
-                stopSound(context, effectId, emitter);
-            }
-
-            // Stop sounds emitted by Sector-linked (plane/wall) emitters?
-            if(flags & SSF_SECTOR_LINKED_SURFACES)
-            {
-                // Process the rest of the emitter chain.
-                while((emitter = (SoundEmitter *)emitter->thinker.next))
-                {
-                    // Stop sounds from this emitter.
-                    stopSound(context, effectId, emitter);
-                }
-            }
-            return;
-        }
-    }
-
-    // No special stop behavior.
-    d->stopSoundChannelsWithLowerPriority(effectId, emitter, -1);
-
-    // Update logical sound bookkeeping.
-    if(effectId <= 0 && !emitter)
-    {
-        stage(context).removeAllSounds();
-    }
-    else if(effectId) // > 0
-    {
-        stage(context).removeSoundsById(effectId);
-    }
-    else
-    {
-        stage(context).removeSoundsWithEmitter(*emitter);
-    }
-}
-
 dint System::driverCount() const
 {
     return d->drivers.count();
@@ -2106,6 +2044,11 @@ void System::allowChannelRefresh(bool allow)
     }
 }
 
+dint System::stopSoundChannels(dint effectId, SoundEmitter *emitter)
+{
+    return d->stopSoundChannelsWithLowerPriority(effectId, emitter, -1);
+}
+
 /**
  * Console command for logging a summary of the loaded audio drivers.
  */
@@ -2209,7 +2152,7 @@ D_CMD(PlaySound)
                                  String(argv[p + 3]).toDouble());
     }
 
-    ClientApp::audioSystem().localStage().playSound(params);
+    ClientApp::audioSystem().local().playSound(params);
     return true;
 }
 
@@ -2382,12 +2325,12 @@ dd_bool S_StartMusic(char const *musicId, dd_bool looped)
 
 dd_bool S_SoundIsPlaying(dint effectId, mobj_t *emitter)
 {
-    return (dd_bool) ClientApp::audioSystem().worldStage().soundIsPlaying(effectId, (SoundEmitter *)emitter);
+    return (dd_bool) ClientApp::audioSystem().world().soundIsPlaying(effectId, (SoundEmitter *)emitter);
 }
 
 void S_StopSound2(dint effectId, mobj_t *emitter, dint flags)
 {
-    ClientApp::audioSystem().stopSound(::audio::World, effectId, (SoundEmitter *)emitter, flags);
+    ClientApp::audioSystem().world().as<WorldStage>().stopSound(effectId, (SoundEmitter *)emitter, flags);
 }
 
 void S_StopSound(dint effectId, mobj_t *emitter)
@@ -2397,16 +2340,16 @@ void S_StopSound(dint effectId, mobj_t *emitter)
 
 void S_LocalSoundAtVolumeFrom(dint effectIdAndFlags, mobj_t *emitter, coord_t *origin, dfloat volume)
 {
-    SoundParams params;
-    params.effectId = (effectIdAndFlags & ~DDSF_FLAG_MASK);
-    params.origin   = origin ? Vector3d(origin) : Vector3d();
-    params.volume   = volume;
+    SoundParams sound;
+    sound.effectId = (effectIdAndFlags & ~DDSF_FLAG_MASK);
+    sound.origin   = origin ? Vector3d(origin) : Vector3d();
+    sound.volume   = volume;
 
-    if(origin)                                 params.flags &= ~SoundFlag::NoOrigin;
-    if(effectIdAndFlags & DDSF_REPEAT)         params.flags |=  SoundFlag::Repeat;
-    if(effectIdAndFlags & DDSF_NO_ATTENUATION) params.flags |=  SoundFlag::NoVolumeAttenuation;
+    if(origin)                                 sound.flags &= ~SoundFlag::NoOrigin;
+    if(effectIdAndFlags & DDSF_REPEAT)         sound.flags |=  SoundFlag::Repeat;
+    if(effectIdAndFlags & DDSF_NO_ATTENUATION) sound.flags |=  SoundFlag::NoVolumeAttenuation;
 
-    ClientApp::audioSystem().localStage().playSound(params, (SoundEmitter *)emitter);
+    ClientApp::audioSystem().local().playSound(sound, (SoundEmitter *)emitter);
 }
 
 void S_LocalSoundAtVolume(dint effectIdAndFlags, mobj_t *emitter, dfloat volume)
@@ -2426,15 +2369,15 @@ void S_LocalSound(dint effectIdAndFlags, mobj_t *emitter)
 
 void S_StartSoundAtVolume(dint effectIdAndFlags, mobj_t *emitter, dfloat volume)
 {
-    SoundParams params;
-    params.effectId = (effectIdAndFlags & ~DDSF_FLAG_MASK);
-    params.volume   = volume;
+    SoundParams sound;
+    sound.effectId = (effectIdAndFlags & ~DDSF_FLAG_MASK);
+    sound.volume   = volume;
 
-    //if(origin)                                params.flags &= ~SoundFlag::NoOrigin;
-    if(effectIdAndFlags & DDSF_REPEAT)         params.flags |=  SoundFlag::Repeat;
-    if(effectIdAndFlags & DDSF_NO_ATTENUATION) params.flags |=  SoundFlag::NoVolumeAttenuation;
+    //if(origin)                                sound.flags &= ~SoundFlag::NoOrigin;
+    if(effectIdAndFlags & DDSF_REPEAT)         sound.flags |=  SoundFlag::Repeat;
+    if(effectIdAndFlags & DDSF_NO_ATTENUATION) sound.flags |=  SoundFlag::NoVolumeAttenuation;
 
-    ClientApp::audioSystem().worldStage().playSound(params, (SoundEmitter *)emitter);
+    ClientApp::audioSystem().world().playSound(sound, (SoundEmitter *)emitter);
 }
 
 void S_StartSoundEx(dint effectIdAndFlags, mobj_t *emitter)

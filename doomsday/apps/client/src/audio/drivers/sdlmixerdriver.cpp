@@ -512,7 +512,7 @@ void SdlMixerDriver::SoundChannel::play(PlayingMode mode)
 
     // When playing on a sound stage with a Listener, we may need to update the channel
     // dynamically during playback.
-    d->listener = &ClientApp::audioSystem().worldStage().listener();
+    d->listener = &ClientApp::audioSystem().world().listener();
 
     // Flush deferred property value changes to the assigned data buffer.
     d->writeDeferredProperties(true/*force*/);

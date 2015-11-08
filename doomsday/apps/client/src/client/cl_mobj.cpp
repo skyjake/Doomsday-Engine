@@ -287,7 +287,7 @@ dd_bool ClMobj_Reveal(mobj_t *mob)
         if(info->sound & DDSF_REPEAT)         sound.flags |= ::audio::SoundFlag::Repeat;
         if(info->sound & DDSF_NO_ATTENUATION) sound.flags |= ::audio::SoundFlag::NoVolumeAttenuation;
 
-        ClientApp::audioSystem().worldStage().playSound(sound, (SoundEmitter *)mob);
+        ClientApp::audioSystem().world().playSound(sound, (SoundEmitter *)mob);
     }
 
     LOGDEV_MAP_XVERBOSE("Revealing id %i, state %p (%i)")

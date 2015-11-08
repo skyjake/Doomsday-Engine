@@ -266,7 +266,7 @@ static void particleSound(ded_embsound_t const &soundDef, Vector3d const &origin
     sound.origin   = origin;
     sound.volume   = soundDef.volume;
 
-    ClientApp::audioSystem().worldStage().playSound(sound);
+    ClientApp::audioSystem().world().playSound(sound);
 }
 
 int Generator::newParticle()

@@ -36,6 +36,14 @@ class WorldStage : public Stage
 public:
     WorldStage(Exclusion exclusion = DontExclude);
 
+    /**
+     * Stop playing Sound(s) in the soundstage.
+     *
+     * @param effectId  Unique identifier of the sound-effect(s) to stop.
+     * @param emitter   Emitter (originator) of the Sounds to stop. May be @c nullptr.
+     */
+    void stopSound(de::dint effectId, SoundEmitter *emitter, de::dint flags = 0);
+
 private:
     DENG2_PRIVATE(d)
 };

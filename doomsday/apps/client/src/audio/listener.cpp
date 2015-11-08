@@ -280,7 +280,7 @@ static void reverbStrengthChanged()
     if(ClientApp::hasAudioSystem())
     {
         /// @todo Fixme: Listener should handle this internally. -ds
-        ClientApp::audioSystem().worldStage().listener().requestEnvironmentUpdate();
+        ClientApp::audioSystem().world().listener().requestEnvironmentUpdate();
     }
 }
 

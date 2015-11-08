@@ -55,6 +55,8 @@ public:
     Stage(Exclusion exclusion = DontExclude);
     virtual ~Stage();
 
+    DENG2_AS_IS_METHODS()
+
     /**
      * Returns the current Sound exclusion policy.
      *
@@ -96,6 +98,14 @@ public:
      * @see soundIsPlaying()
      */
     void playSound(SoundParams params, SoundEmitter *emitter = nullptr);
+
+    /**
+     * Stop playing Sound(s) in the soundstage.
+     *
+     * @param effectId  Unique identifier of the sound-effect(s) to stop.
+     * @param emitter   Emitter (originator) of the Sounds to stop. May be @c nullptr.
+     */
+    void stopSound(de::dint effectId, SoundEmitter *emitter);
 
     /**
      * @see removeSoundsById(), removeSoundsWithEmitter()
