@@ -30,6 +30,102 @@
 
 namespace audio {
 
+class DummyCdChannel : public CdChannel
+{
+public:
+    DummyCdChannel();
+
+    PlayingMode mode() const override;
+    void play(PlayingMode mode) override;
+    void stop() override;
+    bool isPaused() const override;
+    void pause() override;
+    void resume() override;
+    Channel &setFrequency(de::dfloat newFrequency) override;
+    Channel &setPositioning(Positioning newPositioning) override;
+    Channel &setVolume(de::dfloat newVolume) override;
+    de::dfloat frequency() const override;
+    Positioning positioning() const override;
+    de::dfloat volume() const override;
+
+    void bindTrack(de::dint track);
+
+private:
+    PlayingMode _mode     = NotPlaying;
+    bool _paused          = false;
+    de::dint _track       = -1;
+    de::dfloat _frequency = 1;
+    de::dfloat _volume    = 1;
+};
+
+class DummyMusicChannel : public MusicChannel
+{
+public:
+    DummyMusicChannel();
+
+    PlayingMode mode() const override;
+    void play(PlayingMode mode) override;
+    void stop() override;
+    bool isPaused() const override;
+    void pause() override;
+    void resume() override;
+    Channel &setFrequency(de::dfloat newFrequency) override;
+    Channel &setPositioning(Positioning newPositioning) override;
+    Channel &setVolume(de::dfloat newVolume) override;
+    de::dfloat frequency() const override;
+    Positioning positioning() const override;
+    de::dfloat volume() const override;
+
+    bool canPlayBuffer() const;
+    void *songBuffer(de::duint length);
+    bool canPlayFile() const;
+    void bindFile(de::String const &sourcePath);
+
+private:
+    PlayingMode _mode      = NotPlaying;
+    bool _paused           = false;
+    de::String _sourcePath;
+    de::dfloat _frequency  = 1;
+    de::dfloat _volume     = 1;
+};
+
+class DummySoundChannel : public SoundChannel
+{
+public:
+    DummySoundChannel();
+
+    PlayingMode mode() const override;
+    void play(PlayingMode mode) override;
+    void stop() override;
+    bool isPaused() const override;
+    void pause() override;
+    void resume() override;
+    Channel &setFrequency(de::dfloat newFrequency) override;
+    Channel &setPositioning(Positioning newPositioning) override;
+    Channel &setVolume(de::dfloat newVolume) override;
+    de::dfloat frequency() const override;
+    Positioning positioning() const override;
+    de::dfloat volume() const override;
+
+    ::audio::Sound *sound() const override;
+
+    void update();
+    void reset();
+    void suspend() override;
+
+    void bindSample(sfxsample_t const &sample) override;
+
+    de::dint bytes() const;
+    de::dint rate() const;
+    de::dint startTime() const override;
+    de::duint endTime() const override;
+
+    void updateEnvironment();
+
+private:
+    DENG2_PRIVATE(d)
+};
+
 /**
  * Provides a null-op audio driver.
  */
@@ -37,118 +133,7 @@ class DummyDriver : public IDriver
 {
 public:
     DummyDriver();
-
-    /**
-     * If the driver is still initialized it will be automatically deinitialized
-     * when this is called.
-     */
     virtual ~DummyDriver();
-
-public:  //- Playback Channels: ---------------------------------------------------------
-
-    class CdChannel : public ::audio::CdChannel
-    {
-    public:
-        PlayingMode mode() const override;
-        void play(PlayingMode mode) override;
-        void stop() override;
-        bool isPaused() const override;
-        void pause() override;
-        void resume() override;
-        Channel &setFrequency(de::dfloat newFrequency) override;
-        Channel &setPositioning(Positioning newPositioning) override;
-        Channel &setVolume(de::dfloat newVolume) override;
-        de::dfloat frequency() const override;
-        Positioning positioning() const override;
-        de::dfloat volume() const override;
-
-        void bindTrack(de::dint track);
-
-    //private:
-        CdChannel();
-        //friend class DummyDriver;
-
-    private:
-        PlayingMode _mode     = NotPlaying;
-        bool _paused          = false;
-        de::dint _track       = -1;
-        de::dfloat _frequency = 1;
-        de::dfloat _volume    = 1;
-    };
-
-    class MusicChannel : public ::audio::MusicChannel
-    {
-    public:
-        PlayingMode mode() const override;
-        void play(PlayingMode mode) override;
-        void stop() override;
-        bool isPaused() const override;
-        void pause() override;
-        void resume() override;
-        Channel &setFrequency(de::dfloat newFrequency) override;
-        Channel &setPositioning(Positioning newPositioning) override;
-        Channel &setVolume(de::dfloat newVolume) override;
-        de::dfloat frequency() const override;
-        Positioning positioning() const override;
-        de::dfloat volume() const override;
-
-        bool canPlayBuffer() const;
-        void *songBuffer(de::duint length);
-        bool canPlayFile() const;
-        void bindFile(de::String const &sourcePath);
-
-    //private:
-        MusicChannel();
-        //friend class DummyDriver;
-
-    private:
-        PlayingMode _mode      = NotPlaying;
-        bool _paused           = false;
-        de::String _sourcePath;
-        de::dfloat _frequency  = 1;
-        de::dfloat _volume     = 1;
-    };
-
-    class SoundChannel : public ::audio::SoundChannel
-    {
-    public:
-        PlayingMode mode() const override;
-        void play(PlayingMode mode) override;
-        void stop() override;
-        bool isPaused() const override;
-        void pause() override;
-        void resume() override;
-        Channel &setFrequency(de::dfloat newFrequency) override;
-        Channel &setPositioning(Positioning newPositioning) override;
-        Channel &setVolume(de::dfloat newVolume) override;
-        de::dfloat frequency() const override;
-        Positioning positioning() const override;
-        de::dfloat volume() const override;
-
-        ::audio::Sound *sound() const override;
-
-        void update();
-        void reset();
-        void suspend() override;
-
-        void bindSample(sfxsample_t const &sample) override;
-
-        de::dint bytes() const;
-        de::dint rate() const;
-        de::dint startTime() const override;
-        de::duint endTime() const override;
-
-        void updateEnvironment();
-
-    //private:
-        SoundChannel();
-        //friend class DummyDriver;
-
-    private:
-        DENG2_PRIVATE(d)
-    };
-
-public:  //- Implements audio::System::IDriver: -----------------------------------------
 
     void initialize();
     void deinitialize();

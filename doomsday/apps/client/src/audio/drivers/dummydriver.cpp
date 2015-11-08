@@ -31,172 +31,172 @@ using namespace de;
 
 namespace audio {
 
-DummyDriver::CdChannel::CdChannel() : ::audio::CdChannel()
+DummyCdChannel::DummyCdChannel() : CdChannel()
 {}
 
-PlayingMode DummyDriver::CdChannel::mode() const
+PlayingMode DummyCdChannel::mode() const
 {
     return _mode;
 }
 
-void DummyDriver::CdChannel::play(PlayingMode mode)
+void DummyCdChannel::play(PlayingMode mode)
 {
     if(isPlaying()) return;
     if(mode == NotPlaying) return;
 
-    if(_track < 0) Error("DummyDriver::CdChannel::play", "No track is bound");
+    if(_track < 0) Error("DummyCdChannel::play", "No track is bound");
     _mode = mode;
 }
 
-void DummyDriver::CdChannel::stop()
+void DummyCdChannel::stop()
 {}
 
-bool DummyDriver::CdChannel::isPaused() const
+bool DummyCdChannel::isPaused() const
 {
     return _paused;
 }
 
-void DummyDriver::CdChannel::pause()
+void DummyCdChannel::pause()
 {
     _paused = true;
 }
 
-void DummyDriver::CdChannel::resume()
+void DummyCdChannel::resume()
 {
     _paused = false;
 }
 
-Channel &DummyDriver::CdChannel::setFrequency(de::dfloat newFrequency)
+Channel &DummyCdChannel::setFrequency(de::dfloat newFrequency)
 {
     _frequency = newFrequency;
     return *this;
 }
 
-Channel &DummyDriver::CdChannel::setPositioning(Positioning)
+Channel &DummyCdChannel::setPositioning(Positioning)
 {
     // Not supported.
     return *this;
 }
 
-Channel &DummyDriver::CdChannel::setVolume(de::dfloat newVolume)
+Channel &DummyCdChannel::setVolume(de::dfloat newVolume)
 {
     _volume = newVolume;
     return *this;
 }
 
-dfloat DummyDriver::CdChannel::frequency() const
+dfloat DummyCdChannel::frequency() const
 {
     return _frequency;
 }
 
-Positioning DummyDriver::CdChannel::positioning() const
+Positioning DummyCdChannel::positioning() const
 {
     return StereoPositioning;  // Always.
 }
 
-dfloat DummyDriver::CdChannel::volume() const
+dfloat DummyCdChannel::volume() const
 {
     return _volume;
 }
 
-void DummyDriver::CdChannel::bindTrack(dint track)
+void DummyCdChannel::bindTrack(dint track)
 {
     _track = de::max(-1, track);
 }
 
 // --------------------------------------------------------------------------------------
 
-DummyDriver::MusicChannel::MusicChannel() : ::audio::MusicChannel()
+DummyMusicChannel::DummyMusicChannel() : MusicChannel()
 {}
 
-PlayingMode DummyDriver::MusicChannel::mode() const
+PlayingMode DummyMusicChannel::mode() const
 {
     return _mode;
 }
 
-void DummyDriver::MusicChannel::play(PlayingMode mode)
+void DummyMusicChannel::play(PlayingMode mode)
 {
     if(isPlaying()) return;
     if(mode == NotPlaying) return;
 
-    if(_sourcePath.isEmpty()) Error("DummyDriver::MusicChannel::play", "No track is bound");
+    if(_sourcePath.isEmpty()) Error("DummyMusicChannel::play", "No track is bound");
     _mode = mode;
 }
 
-void DummyDriver::MusicChannel::stop()
+void DummyMusicChannel::stop()
 {}
 
-bool DummyDriver::MusicChannel::isPaused() const
+bool DummyMusicChannel::isPaused() const
 {
     return _paused;
 }
 
-void DummyDriver::MusicChannel::pause()
+void DummyMusicChannel::pause()
 {
     _paused = true;
 }
 
-void DummyDriver::MusicChannel::resume()
+void DummyMusicChannel::resume()
 {
     _paused = false;
 }
 
-Channel &DummyDriver::MusicChannel::setFrequency(de::dfloat newFrequency)
+Channel &DummyMusicChannel::setFrequency(de::dfloat newFrequency)
 {
     _frequency = newFrequency;
     return *this;
 }
 
-Channel &DummyDriver::MusicChannel::setPositioning(Positioning)
+Channel &DummyMusicChannel::setPositioning(Positioning)
 {
     // Not supported.
     return *this;
 }
 
-Channel &DummyDriver::MusicChannel::setVolume(de::dfloat newVolume)
+Channel &DummyMusicChannel::setVolume(de::dfloat newVolume)
 {
     _volume = newVolume;
     return *this;
 }
 
-dfloat DummyDriver::MusicChannel::frequency() const
+dfloat DummyMusicChannel::frequency() const
 {
     return _frequency;
 }
 
-Positioning DummyDriver::MusicChannel::positioning() const
+Positioning DummyMusicChannel::positioning() const
 {
     return StereoPositioning;  // Always.
 }
 
-dfloat DummyDriver::MusicChannel::volume() const
+dfloat DummyMusicChannel::volume() const
 {
     return _volume;
 }
 
-bool DummyDriver::MusicChannel::canPlayBuffer() const
+bool DummyMusicChannel::canPlayBuffer() const
 {
     return false;  /// @todo Should support this...
 }
 
-void *DummyDriver::MusicChannel::songBuffer(duint)
+void *DummyMusicChannel::songBuffer(duint)
 {
     return nullptr;
 }
 
-bool DummyDriver::MusicChannel::canPlayFile() const
+bool DummyMusicChannel::canPlayFile() const
 {
     return true;
 }
 
-void DummyDriver::MusicChannel::bindFile(String const &sourcePath)
+void DummyMusicChannel::bindFile(String const &sourcePath)
 {
     _sourcePath = sourcePath;
 }
 
 // --------------------------------------------------------------------------------------
 
-DENG2_PIMPL_NOREF(DummyDriver::SoundChannel)
+DENG2_PIMPL_NOREF(DummySoundChannel)
 , DENG2_OBSERVES(System, FrameEnds)
 {
     bool noUpdate    = false;  ///< @c true if skipping updates (when stopped, before deletion).
@@ -291,17 +291,17 @@ DENG2_PIMPL_NOREF(DummyDriver::SoundChannel)
     }
 };
 
-DummyDriver::SoundChannel::SoundChannel()
-    : ::audio::SoundChannel()
+DummySoundChannel::DummySoundChannel()
+    : SoundChannel()
     , d(new Instance)
 {}
 
-PlayingMode DummyDriver::SoundChannel::mode() const
+PlayingMode DummySoundChannel::mode() const
 {
     return d->playingMode;
 }
 
-void DummyDriver::SoundChannel::play(PlayingMode mode)
+void DummySoundChannel::play(PlayingMode mode)
 {
     if(isPlaying()) return;
 
@@ -311,7 +311,7 @@ void DummyDriver::SoundChannel::play(PlayingMode mode)
     // Playing is quite impossible without a loaded sample.
     if(!d->buffer.data)
     {
-        throw Error("DummyDriver::SoundChannel", "No sample is bound");
+        throw Error("DummySoundChannel", "No sample is bound");
     }
 
     // Updating the channel should resume (presumably).
@@ -330,73 +330,73 @@ void DummyDriver::SoundChannel::play(PlayingMode mode)
     d->endTime = Timer_RealMilliseconds() + d->buffer.milliseconds(d->frequency);
 }
 
-void DummyDriver::SoundChannel::stop()
+void DummySoundChannel::stop()
 {
     // Playback ends forthwith!
     d->playingMode = NotPlaying;
     d->buffer.needReloadData = true;  // If subsequently started again.
 }
 
-bool DummyDriver::SoundChannel::isPaused() const
+bool DummySoundChannel::isPaused() const
 {
     return false;  // Never...
 }
 
-void DummyDriver::SoundChannel::pause()
+void DummySoundChannel::pause()
 {
     // Never paused...
 }
 
-void DummyDriver::SoundChannel::resume()
+void DummySoundChannel::resume()
 {
     // Never paused...
 }
 
-void DummyDriver::SoundChannel::suspend()
+void DummySoundChannel::suspend()
 {
     if(!isPlaying()) return;
     d->noUpdate = true;
 }
 
-Channel &DummyDriver::SoundChannel::setFrequency(dfloat newFrequency)
+Channel &DummySoundChannel::setFrequency(dfloat newFrequency)
 {
     d->frequency = newFrequency;
     return *this;
 }
 
-Channel &DummyDriver::SoundChannel::setPositioning(Positioning newPositioning)
+Channel &DummySoundChannel::setPositioning(Positioning newPositioning)
 {
     d->positioning = newPositioning;
     return *this;
 }
 
-Channel &DummyDriver::SoundChannel::setVolume(dfloat newVolume)
+Channel &DummySoundChannel::setVolume(dfloat newVolume)
 {
     d->volume = newVolume;
     return *this;
 }
 
-dfloat DummyDriver::SoundChannel::frequency() const
+dfloat DummySoundChannel::frequency() const
 {
     return d->frequency;
 }
 
-Positioning DummyDriver::SoundChannel::positioning() const
+Positioning DummySoundChannel::positioning() const
 {
     return d->positioning;
 }
 
-dfloat DummyDriver::SoundChannel::volume() const
+dfloat DummySoundChannel::volume() const
 {
     return d->volume;
 }
 
-::audio::Sound *DummyDriver::SoundChannel::sound() const
+::audio::Sound *DummySoundChannel::sound() const
 {
     return isPlaying() ? &d->getSound() : nullptr;
 }
 
-void DummyDriver::SoundChannel::update()
+void DummySoundChannel::update()
 {
     /**
      * Playback of non-looping sounds must stop when the first playback cycle ends.
@@ -411,13 +411,13 @@ void DummyDriver::SoundChannel::update()
     }
 }
 
-void DummyDriver::SoundChannel::reset()
+void DummySoundChannel::reset()
 {
     stop();
     d->buffer.unload();
 }
 
-void DummyDriver::SoundChannel::bindSample(sfxsample_t const &sample)
+void DummySoundChannel::bindSample(sfxsample_t const &sample)
 {
     stop();
 
@@ -438,27 +438,27 @@ void DummyDriver::SoundChannel::bindSample(sfxsample_t const &sample)
     }
 }
 
-dint DummyDriver::SoundChannel::bytes() const
+dint DummySoundChannel::bytes() const
 {
     return d->buffer.sampleBytes;
 }
 
-dint DummyDriver::SoundChannel::rate() const
+dint DummySoundChannel::rate() const
 {
     return d->buffer.sampleRate;
 }
 
-dint DummyDriver::SoundChannel::startTime() const
+dint DummySoundChannel::startTime() const
 {
     return d->startTime;
 }
 
-duint DummyDriver::SoundChannel::endTime() const
+duint DummySoundChannel::endTime() const
 {
     return d->endTime;
 }
 
-void DummyDriver::SoundChannel::updateEnvironment()
+void DummySoundChannel::updateEnvironment()
 {
     // Not supported.
 }
@@ -492,9 +492,9 @@ DENG2_PIMPL_NOREF(DummyDriver), public IChannelFactory
             std::unique_ptr<Channel> channel;
             switch(type)
             {
-            case Channel::Cd:    channel.reset(new CdChannel   ); break;
-            case Channel::Music: channel.reset(new MusicChannel); break;
-            case Channel::Sound: channel.reset(new SoundChannel); break;
+            case Channel::Cd:    channel.reset(new DummyCdChannel   ); break;
+            case Channel::Music: channel.reset(new DummyMusicChannel); break;
+            case Channel::Sound: channel.reset(new DummySoundChannel); break;
 
             default: break;
             }

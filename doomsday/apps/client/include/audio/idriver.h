@@ -58,7 +58,7 @@ public:
 
     /**
      * Implementers of this interface are expected to automatically @ref deinitialize()
-     * before this is called.
+     * when this is called.
      */
     virtual ~IDriver() {}
 
