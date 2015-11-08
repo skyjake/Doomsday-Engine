@@ -294,7 +294,7 @@ def write_html_page(outPath, title, content):
     print >> f, '<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">'
     print >> f, "<title>%s</title>" % title
     print >> f, "<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,300,700' rel='stylesheet' type='text/css'>"
-    print >> f, "<link href='http://code.iki.fi/build.css' rel='stylesheet' type='text/css'>"
+    print >> f, "<link href='http://files.dengine.net/build.css' rel='stylesheet' type='text/css'>"
     print >> f, "</head><body><div id='content-outer'><div id='content-inner'>"
     print >> f, "<h1>%s</h1>" % title
     print >> f, content
@@ -361,7 +361,7 @@ def update_feed():
             versions[eventVersion].append(ev)
         else:
             versions[eventVersion] = [ev]
-        text += '<div class="build %s"><a href="http://code.iki.fi/builds/build%i"><div class="buildnumber">%i</div><div class="builddate">%s</div><div class="buildversion">%s</div></a></div>' % (ev.release_type(), ev.number(), ev.number(),
+        text += '<div class="build %s"><a href="http://files.dengine.net/builds/build%i"><div class="buildnumber">%i</div><div class="builddate">%s</div><div class="buildversion">%s</div></a></div>' % (ev.release_type(), ev.number(), ev.number(),
             time.strftime('%b %d', time.gmtime(timestamp)), ev.version())
     text += '</div>'
     
@@ -370,7 +370,7 @@ def update_feed():
         text += '<h3>%s</h3>' % version
         text += '<div class="buildlist">'    
         for ev in versions[version]:
-            text += '<div class="build %s"><a href="http://code.iki.fi/builds/build%i"><div class="buildnumber">%i</div><div class="builddate">%s</div><div class="buildversion">%s</div></a></div>' % (ev.release_type(), ev.number(), ev.number(),
+            text += '<div class="build %s"><a href="http://files.dengine.net/builds/build%i"><div class="buildnumber">%i</div><div class="builddate">%s</div><div class="buildversion">%s</div></a></div>' % (ev.release_type(), ev.number(), ev.number(),
                 time.strftime('%b %d', time.gmtime(ev.timestamp())), ev.version())
         text += '</div>'
             
