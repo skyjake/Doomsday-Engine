@@ -20,33 +20,32 @@
 #ifndef CLIENT_AUDIO_LISTENER_H
 #define CLIENT_AUDIO_LISTENER_H
 
-#include "audio/environment.h"
-
 #include "audio/sound.h"
-#include "world/p_object.h"  // mobj_s
+#include <de/Deletable>
 #include <de/Observers>
 #include <de/Range>
 #include <de/Vector>
 
-#define SFX_LOWEST_PRIORITY     ( -1000 )
+struct mobj_s;
 
 namespace audio {
+
+struct Environment;
 
 /**
  * @ingroup audio
  */
-class Listener
+class Listener : public de::Deletable
 {
 public:
-    /// Audience to be notified when the listener is about to be deleted.
-    DENG2_DEFINE_AUDIENCE2(Deletion, void listenerBeingDeleted(Listener const &))
-
     /// Audience to be notified whenever the effective Environment changes.
     DENG2_DEFINE_AUDIENCE2(EnvironmentChange, void listenerEnvironmentChanged(Listener &));
 
+    static de::dfloat const PRIORITY_MIN;  // -1
+    static de::dfloat const PRIORITY_MAX;  // 1000
+
 public:
     Listener();
-    virtual ~Listener();
 
     /**
      * Register the console commands and variables of this module.
@@ -140,7 +139,7 @@ public:
      * at zero). Any sounds nearer than the start of the attenuated range will be played
      * at full volume.
      *
-     * @see inVolumeAttenuationRangeOf()
+     * @see inAudibleRangeOf()
      */
     de::Ranged volumeAttenuationRange() const;
 

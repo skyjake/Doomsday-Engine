@@ -34,12 +34,12 @@
 #include "audio/worldstage.h"
 
 #include "api_map.h"
+#include "world/p_object.h"
 #include "world/p_players.h"  // consolePlayer
 #include "world/thinkers.h"
 #include "Sector"
 
-#include "dd_main.h"   // App_*System()
-#include "def_main.h"  // ::defs
+#include "def_main.h"   // ::defs
 #include "clientapp.h"
 
 #include <doomsday/console/cmd.h>
@@ -94,7 +94,7 @@ static ::audio::System *theAudioSystem;
  */
 static mobj_t *getListenerMob()
 {
-    if(App_WorldSystem().hasMap())
+    if(ClientApp::worldSystem().hasMap())
     {
         return DD_Player(::displayPlayer)->publicData().mo;
     }
@@ -849,7 +849,7 @@ DENG2_PIMPL(System)
             auto &ch = base.as<SoundChannel>();
             if(!ch.isPlaying())
             {
-                prios.append(SFX_LOWEST_PRIORITY);
+                prios.append(Listener::PRIORITY_MIN);
             }
             else
             {
@@ -1737,7 +1737,7 @@ dint System::playMusic(Record const &definition, bool looped)
             break;
 
         case MUSP_EXT:
-            if(d->playMusicFile(App_ResourceSystem().tryFindMusicFile(definition), looped))
+            if(d->playMusicFile(ClientApp::resourceSystem().tryFindMusicFile(definition), looped))
                 return true;
 
             // Next, try non-MUS lumps.

@@ -25,6 +25,8 @@
 #include "audio/samplecache.h"
 #include "audio/sound.h"
 
+#include "world/p_object.h"
+
 #include "clientapp.h"
 #include "sys_system.h"      // Sys_Sleep()
 

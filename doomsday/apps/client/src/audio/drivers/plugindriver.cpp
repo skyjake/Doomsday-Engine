@@ -22,9 +22,12 @@
 #include "api_audiod.h"      // AUDIOP_* flags
 #include "api_audiod_mus.h"
 #include "api_audiod_sfx.h"
+#include "audio/environment.h"
 #include "audio/listener.h"
 #include "audio/samplecache.h"
 #include "audio/sound.h"
+
+#include "world/p_object.h"
 
 #include "clientapp.h"
 #include "sys_system.h"  // Sys_Sleep()
@@ -311,9 +314,9 @@ void PluginDriver::MusicChannel::bindFile(String const &path)
  * creation of the actual data buffer.
  */
 DENG2_PIMPL_NOREF(PluginDriver::SoundChannel)
-, DENG2_OBSERVES(Listener, EnvironmentChange)
-, DENG2_OBSERVES(Listener, Deletion)
-, DENG2_OBSERVES(System,   FrameEnds)
+, DENG2_OBSERVES(Listener,  EnvironmentChange)
+, DENG2_OBSERVES(Deletable, Deletion)
+, DENG2_OBSERVES(System,    FrameEnds)
 {
     PluginDriver &driver;          ///< Owning driver.
     bool noUpdate    = false;      ///< @c true if skipping updates (when stopped, before deletion).
@@ -379,7 +382,7 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundChannel)
         if(listener)
         {
            listener->audienceForEnvironmentChange() -= this;
-           listener->audienceForDeletion()          -= this;
+           listener->audienceForDeletion            -= this;
         }
 
         listener = newListener;
@@ -387,7 +390,7 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundChannel)
 
         if(listener)
         {
-            listener->audienceForDeletion()          += this;
+            listener->audienceForDeletion            += this;
             listener->audienceForEnvironmentChange() += this;
         }
     }
@@ -579,10 +582,10 @@ DENG2_PIMPL_NOREF(PluginDriver::SoundChannel)
         needEnvironmentUpdate = true;
     }
 
-    void listenerBeingDeleted(Listener const &deleting)
+    void objectWasDeleted(Deletable *deleted)
     {
-        DENG2_ASSERT(&deleting == listener);
-        DENG2_UNUSED(deleting);
+        DENG2_ASSERT(deleted == listener);
+        DENG2_UNUSED(deleted);
         // Defer until the end of the frame.
         needEnvironmentUpdate = true;
         listener = nullptr;

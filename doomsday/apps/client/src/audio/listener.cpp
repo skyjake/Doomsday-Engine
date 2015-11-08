@@ -116,21 +116,16 @@ DENG2_PIMPL(Listener)
         observeCluster(nullptr);
     }
 
-    DENG2_PIMPL_AUDIENCE(Deletion)
     DENG2_PIMPL_AUDIENCE(EnvironmentChange)
 };
 
-DENG2_AUDIENCE_METHOD(Listener, Deletion)
+dfloat const Listener::PRIORITY_MIN = -1;    // static
+dfloat const Listener::PRIORITY_MAX = 1000;  // static
+
 DENG2_AUDIENCE_METHOD(Listener, EnvironmentChange)
 
 Listener::Listener() : d(new Instance(this))
 {}
-
-Listener::~Listener()
-{
-    // Notify interested parties.
-    DENG2_FOR_AUDIENCE2(Deletion, i) i->listenerBeingDeleted(*this);
-}
 
 Environment Listener::environment()
 {
