@@ -82,9 +82,9 @@ DENG2_PIMPL(Package)
     StringList importPaths() const
     {
         StringList paths;
-        if(self.info().has(PACKAGE_IMPORT_PATH))
+        if(self.objectNamespace().has(PACKAGE_IMPORT_PATH))
         {
-            ArrayValue const &imp = self.info().geta(PACKAGE_IMPORT_PATH);
+            ArrayValue const &imp = self.objectNamespace().geta(PACKAGE_IMPORT_PATH);
             DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, imp.elements())
             {
                 Path importPath = (*i)->asText();
@@ -101,7 +101,7 @@ DENG2_PIMPL(Package)
 
     Record &packageInfo()
     {
-        return self.info().subrecord(PACKAGE);
+        return self.objectNamespace().subrecord(PACKAGE);
     }
 };
 
@@ -123,15 +123,15 @@ Folder const &Package::root() const
     return d->file->as<Folder>();
 }
 
-Record &Package::info()
+Record &Package::objectNamespace()
 {
     d->verifyFile();
-    return const_cast<File *>(d->file)->info();
+    return const_cast<File *>(d->file)->objectNamespace();
 }
 
-Record const &Package::info() const
+Record const &Package::objectNamespace() const
 {
-    return const_cast<Package *>(this)->info();
+    return const_cast<Package *>(this)->objectNamespace();
 }
 
 String Package::identifier() const
@@ -159,12 +159,12 @@ bool Package::executeFunction(String const &name)
 
 void Package::setOrder(int ordinal)
 {
-    info().set(PACKAGE_ORDER, ordinal);
+    objectNamespace().set(PACKAGE_ORDER, ordinal);
 }
 
 int Package::order() const
 {
-    return info().geti(PACKAGE_ORDER);
+    return objectNamespace().geti(PACKAGE_ORDER);
 }
 
 void Package::didLoad()
@@ -188,7 +188,7 @@ void Package::aboutToUnload()
     }
 
     // Not loaded any more, so doesn't have an ordinal.
-    delete info().remove(PACKAGE_ORDER);
+    delete objectNamespace().remove(PACKAGE_ORDER);
 }
 
 void Package::parseMetadata(File &packageFile) // static
@@ -198,12 +198,12 @@ void Package::parseMetadata(File &packageFile) // static
     if(Folder *folder = packageFile.maybeAs<Folder>())
     {
         // The package's information is stored in a subrecord.
-        if(!packageFile.info().has(PACKAGE))
+        if(!packageFile.objectNamespace().has(PACKAGE))
         {
-            packageFile.info().addSubrecord(PACKAGE);
+            packageFile.objectNamespace().addSubrecord(PACKAGE);
         }
 
-        Record &metadata        = packageFile.info().subrecord(PACKAGE);
+        Record &metadata        = packageFile.objectNamespace().subrecord(PACKAGE);
         File *initializerScript = folder->tryLocateFile("__init__.de");
         File *metadataInfo      = folder->tryLocateFile("Info.dei");
         if(!metadataInfo) metadataInfo = folder->tryLocateFile("Info"); // alternate name
@@ -259,7 +259,7 @@ void Package::parseMetadata(File &packageFile) // static
 
         LOGDEV_RES_MSG("Parsed metadata of '%s':\n" _E(m))
                 << identifierForFile(packageFile)
-                << packageFile.info().asText();
+                << packageFile.objectNamespace().asText();
     }
 }
 
@@ -305,7 +305,8 @@ void Package::validateMetadata(Record const &packageInfo)
 
 QStringList Package::tags(File const &packageFile)
 {
-    return packageFile.info().gets("package.tags").split(' ', QString::SkipEmptyParts);
+    return packageFile.objectNamespace().gets("package.tags")
+            .split(' ', QString::SkipEmptyParts);
 }
 
 static String stripAfterFirstUnderscore(String str)

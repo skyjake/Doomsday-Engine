@@ -514,12 +514,12 @@ bool ConsoleWidget::handleEvent(Event const &event)
 
 void ConsoleWidget::operator >> (PersistentState &toState) const
 {
-    toState.names().set("console.width", d->width->value());
+    toState.objectNamespace().set("console.width", d->width->value());
 }
 
 void ConsoleWidget::operator << (PersistentState const &fromState)
 {
-    d->width->set(fromState.names()["console.width"]);
+    d->width->set(fromState["console.width"]);
 
     if(!d->opened)
     {

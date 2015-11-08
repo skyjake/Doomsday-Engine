@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Folder"
@@ -38,11 +38,11 @@ DENG2_PIMPL_NOREF(Folder)
 Folder::Folder(String const &name) : File(name), d(new Instance)
 {
     setStatus(Status::FOLDER);
-    
+
     // Standard info.
-    info().add(new Variable("contentSize",
-                            new Accessor(*this, Accessor::CONTENT_SIZE),
-                            Accessor::VARIABLE_MODE));
+    objectNamespace().add(new Variable("contentSize",
+                                       new Accessor(*this, Accessor::CONTENT_SIZE),
+                                       Accessor::VARIABLE_MODE));
 }
 
 Folder::~Folder()
@@ -51,12 +51,12 @@ Folder::~Folder()
 
     DENG2_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
     audienceForDeletion().clear();
-    
+
     deindex();
-    
+
     // Empty the contents.
     clear();
-    
+
     // Destroy all feeds that remain.
     for(Feeds::reverse_iterator i = d->feeds.rbegin(); i != d->feeds.rend(); ++i)
     {
@@ -126,7 +126,7 @@ void Folder::clear()
     DENG2_GUARD(this);
 
     if(d->contents.empty()) return;
-    
+
     // Destroy all the file objects.
     for(Contents::iterator i = d->contents.begin(); i != d->contents.end(); ++i)
     {
@@ -141,7 +141,7 @@ void Folder::populate(PopulationBehavior behavior)
     DENG2_GUARD(this);
 
     LOG_AS("Folder");
-    
+
     // Prune the existing files first.
     for(Contents::iterator i = d->contents.begin(); i != d->contents.end(); )
     {
@@ -151,7 +151,7 @@ void Folder::populate(PopulationBehavior behavior)
         bool mustPrune = false;
 
         File *file = i->second;
-        
+
         // If the file has a designated feed, ask it about pruning.
         if(file->originFeed() && file->originFeed()->prune(*file))
         {
@@ -186,13 +186,13 @@ void Folder::populate(PopulationBehavior behavior)
             ++i;
         }
     }
-    
+
     // Populate with new/updated ones.
     for(Feeds::reverse_iterator i = d->feeds.rbegin(); i != d->feeds.rend(); ++i)
     {
         (*i)->populate(*this);
     }
-    
+
     if(behavior == PopulateFullTree)
     {
         // Call populate on subfolders.
@@ -223,7 +223,7 @@ File &Folder::newFile(String const &newPath, FileCreationBehavior behavior)
         // Locate the folder where the file will be created in.
         return locate<Folder>(path).newFile(newPath.fileName(), behavior);
     }
-    
+
     verifyWriteAccess();
 
     if(behavior == ReplaceExisting && has(newPath))
@@ -238,7 +238,7 @@ File &Folder::newFile(String const &newPath, FileCreationBehavior behavior)
                     << newPath << er.asText();
         }
     }
-    
+
     // The first feed able to create a file will get the honors.
     for(Feeds::iterator i = d->feeds.begin(); i != d->feeds.end(); ++i)
     {
@@ -247,7 +247,7 @@ File &Folder::newFile(String const &newPath, FileCreationBehavior behavior)
         {
             // Allow writing to the new file.
             file->setMode(Write);
-            
+
             add(file);
             fileSystem().index(*file);
             return *file;
@@ -255,7 +255,7 @@ File &Folder::newFile(String const &newPath, FileCreationBehavior behavior)
     }
 
     /// @throw NewFileError All feeds of this folder failed to create a file.
-    throw NewFileError("Folder::newFile", "Unable to create new file '" + newPath + 
+    throw NewFileError("Folder::newFile", "Unable to create new file '" + newPath +
                        "' in " + description());
 }
 
@@ -274,21 +274,21 @@ void Folder::removeFile(String const &removePath)
         // Locate the folder where the file will be removed.
         return locate<Folder>(path).removeFile(removePath.fileName());
     }
-    
+
     verifyWriteAccess();
-    
+
     // It should now be in this folder.
     File *file = &locate<File>(removePath);
     Feed *originFeed = file->originFeed();
 
     // This'll close it and remove it from the index.
     delete file;
-    
+
     // The origin feed will remove the original data of the file (e.g., the native file).
     if(originFeed)
     {
         originFeed->removeFile(removePath);
-    }    
+    }
 }
 
 bool Folder::has(String const &name) const
@@ -350,7 +350,7 @@ File *Folder::remove(File &file)
             d->contents.erase(i);
             break;
         }
-    }    
+    }
     file.setParent(0);
     return &file;
 }
@@ -442,13 +442,13 @@ void Folder::Accessor::update() const
 
     // We need to alter the value content.
     Accessor *nonConst = const_cast<Accessor *>(this);
-    
+
     switch(_prop)
     {
     case CONTENT_SIZE:
         nonConst->setValue(QString::number(_owner.d->contents.size()));
         break;
-    }    
+    }
 }
 
 Value *Folder::Accessor::duplicateContent() const

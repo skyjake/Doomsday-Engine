@@ -175,7 +175,7 @@ DENG2_PIMPL(LogSettingsDialog)
         logf.setAllowDev(LogEntry::AllDomains, allowDev);
 
         // Update the variables (UI updated automatically).
-        logf.write(cfg.names().subrecord("log.filter"));
+        logf.write(cfg.objectNamespace().subrecord("log.filter"));
         for(uint i = 0; i < NUM_DOMAINS; ++i)
         {
             char const *name = domainText[i].name;
@@ -209,7 +209,7 @@ DENG2_PIMPL(LogSettingsDialog)
 
     void applyFilterFromConfig()
     {
-        App::logFilter().read(App::config().names().subrecord("log.filter"));
+        App::logFilter().read(App::config().subrecord("log.filter"));
     }
 };
 

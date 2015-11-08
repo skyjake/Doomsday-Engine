@@ -494,13 +494,12 @@ GLuint GLProgram::glName() const
 
 int GLProgram::glUniformLocation(char const *uniformName) const
 {
-    GLint loc = glGetUniformLocation(d->name, uniformName);
-    if(loc < 0)
-    {
-        LOG_AS("GLProgram");
-        LOGDEV_GL_WARNING("Could not find uniform '%s'") << uniformName;
-    }
-    return loc;
+    return glGetUniformLocation(d->name, uniformName);
+}
+
+bool GLProgram::glHasUniform(char const *uniformName) const
+{
+    return glUniformLocation(uniformName) >= 0;
 }
 
 int GLProgram::attributeLocation(AttribSpec::Semantic semantic) const

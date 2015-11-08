@@ -173,7 +173,7 @@ void Rend_Draw2DPlayerSprites()
     if(ddpl.flags & DDPF_CAMERA  ) return;
     if(ddpl.flags & DDPF_CHASECAM) return;
 
-    if(usingFog)
+    if(fogParams.usingFog)
     {
         glEnable(GL_FOG);
     }
@@ -201,7 +201,7 @@ void Rend_Draw2DPlayerSprites()
         }
     }
 
-    if(usingFog)
+    if(fogParams.usingFog)
     {
         glDisable(GL_FOG);
     }

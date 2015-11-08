@@ -2247,7 +2247,7 @@ void DD_UpdateEngineState()
     }
 
 #ifdef __CLIENT__
-    dd_bool hadFog = usingFog;
+    dd_bool hadFog = fogParams.usingFog;
 
     GL_TotalReset();
     GL_TotalRestore(); // Bring GL back online.

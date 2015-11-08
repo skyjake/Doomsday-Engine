@@ -537,19 +537,14 @@ Value *ScriptedInfo::evaluate(String const &source)
     return d->evaluate(source, 0);
 }
 
-Record &ScriptedInfo::names()
+Record &ScriptedInfo::objectNamespace()
 {
     return d->process.globals();
 }
 
-Record const &ScriptedInfo::names() const
+Record const &ScriptedInfo::objectNamespace() const
 {
     return d->process.globals();
-}
-
-Variable const &ScriptedInfo::operator [] (String const &name) const
-{
-    return names()[name];
 }
 
 ScriptedInfo::Paths ScriptedInfo::allBlocksOfType(String const &blockType) const

@@ -21,8 +21,11 @@
 #include "clientapp.h"
 #include "dd_loop.h"
 
+#include <doomsday/world/thinkerdata.h>
+
 #include <de/ScriptedInfo>
 #include <de/RecordValue>
+#include <de/NoneValue>
 #include <de/NativeValue>
 #include <de/GLUniform>
 
@@ -123,6 +126,8 @@ DENG2_PIMPL(StateAnimator)
     Record names; ///< Local context for scripts, i.e., per-object model state.
 
     ModelDrawable::Appearance appearance;
+
+    // Lookups used when drawing or updating state:
     QHash<String, int> indexForPassName;
     QHash<Variable *, int> passForMaterialVariable;
 
@@ -218,7 +223,7 @@ DENG2_PIMPL(StateAnimator)
 
         initVariables();
 
-        // Set up the appearance.
+        // Set up the model drawing parameters.
         if(!self.model().passes.isEmpty())
         {
             appearance.drawPasses = &self.model().passes;
@@ -255,7 +260,10 @@ DENG2_PIMPL(StateAnimator)
         }
         else
         {
-            for(int i = 0; i < passCount; ++i) appearance.passMaterial << 0;
+            for(int i = 0; i < passCount; ++i)
+            {
+                appearance.passMaterial << 0;
+            }
         }
         appearance.passMask.resize(passCount);
 
@@ -497,6 +505,18 @@ DENG2_PIMPL(StateAnimator)
     }
 
     /**
+     * Checks if a shader definition has a declaration for a variable.
+     *
+     * @param program  Shader definition.
+     * @param uniform  Uniform.
+     * @return @c true, if a variable exists matching @a uniform.
+     */
+    static bool hasDeclaredVariable(Record const &shaderDef, GLUniform const &uniform)
+    {
+        return shaderDef.hasMember(String::fromUtf8(uniform.name()));
+    }
+
+    /**
      * Binds or unbinds uniforms that apply to all rendering passes.
      *
      * @param program    Program where bindings are made.
@@ -519,11 +539,17 @@ DENG2_PIMPL(StateAnimator)
                           de::String const &passName,
                           BindOperation operation) const
     {
+        auto const &modelRenderer = ClientApp::renderSystem().modelRenderer();
+
         auto const vars = passVars.constFind(passName);
         if(vars != passVars.constEnd())
         {
             for(auto i : vars.value())
             {
+                if(!hasDeclaredVariable(modelRenderer.shaderDefinition(program),
+                                        *i->uniform))
+                    continue;
+
                 if(operation == Bind)
                 {
                     i->updateUniform();
@@ -657,15 +683,27 @@ void StateAnimator::triggerByState(String const &stateName)
     }
 }
 
-void StateAnimator::triggerDamage(int points)
+void StateAnimator::triggerDamage(int points, struct mobj_s const *inflictor)
 {
+    /*
+     * Here we check for the onDamage() function in the asset. The ASSET
+     * variable holds a direct pointer to the asset definition, where the
+     * function is defined.
+     */
     if(d->names.has(QStringLiteral("ASSET.onDamage")))
     {
+        /*
+         * We need to provide the StateAnimator instance to the script as an
+         * argument, because onDamage() is a member of the asset -- when the
+         * method is executed, "self" refers to the asset.
+         */
         Record ns;
-        ns.add(QStringLiteral("d")).set(new RecordValue(d->names));
+        ns.add(QStringLiteral("self")).set(new RecordValue(d->names));
         Process::scriptCall(Process::IgnoreResult, ns,
-                            QStringLiteral("d.ASSET.onDamage"),
-                            "$d", points);
+                            QStringLiteral("self.ASSET.onDamage"),
+                            "$self", points,
+                            inflictor? &THINKER_DATA(inflictor->thinker, ThinkerData) :
+                                       nullptr);
     }
 }
 
@@ -755,7 +793,12 @@ ModelDrawable::Appearance const &StateAnimator::appearance() const
     return d->appearance;
 }
 
-Record const &StateAnimator::names() const
+Record &StateAnimator::objectNamespace()
+{
+    return d->names;
+}
+
+Record const &StateAnimator::objectNamespace() const
 {
     return d->names;
 }

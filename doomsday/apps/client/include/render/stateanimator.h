@@ -20,8 +20,11 @@
 #define DENG_CLIENT_RENDER_STATEANIMATOR_H
 
 #include "render/modelrenderer.h"
+
+#include <doomsday/world/mobj.h>
 #include <de/ModelDrawable>
 #include <de/GLProgram>
+#include <de/IObject>
 
 namespace render {
 
@@ -30,8 +33,15 @@ namespace render {
  *
  * Used for both mobjs and psprites. The state and movement of the object
  * determine which animation sequences are started.
+ *
+ * @par Scripting
+ *
+ * The script object has the following constants:
+ * - `ID` (Text): asset identifier.
+ * - `ASSET` (Record): asset metadata.
  */
-class StateAnimator : public de::ModelDrawable::Animator
+class StateAnimator : public de::ModelDrawable::Animator,
+                      public de::IObject
 {
 public:
     DENG2_ERROR(DefinitionError);
@@ -52,24 +62,17 @@ public:
 
     void triggerByState(de::String const &stateName);
 
-    void triggerDamage(int points);
+    void triggerDamage(int points, struct mobj_s const *inflictor);
 
-    void advanceTime(de::TimeDelta const &elapsed);
+    void advanceTime(de::TimeDelta const &elapsed) override;
 
-    de::ddouble currentTime(int index) const;
+    de::ddouble currentTime(int index) const override;
 
     de::ModelDrawable::Appearance const &appearance() const;
 
-    /**
-     * Returns the Doomsday Script namespace of the animator.
-     *
-     * Global constants:
-     * - `ID` (Text): asset identifier.
-     * - `ASSET` (Record): asset metadata.
-     *
-     * @return Namespace record.
-     */
-    de::Record const &names() const;
+    // Implements IObject.
+    de::Record &objectNamespace() override;
+    de::Record const &objectNamespace() const override;
 
 private:
     DENG2_PRIVATE(d)

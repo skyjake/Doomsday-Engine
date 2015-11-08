@@ -89,7 +89,7 @@ static Value *Function_File_Locate(Context &ctx, Function::ArgumentValues const 
 
     if(File const *found = fileInstance(ctx).tryFollowPath(relativePath)->maybeAs<File>())
     {
-        return new RecordValue(found->info());
+        return new RecordValue(found->objectNamespace());
     }
 
     // Wasn't there, result is None.

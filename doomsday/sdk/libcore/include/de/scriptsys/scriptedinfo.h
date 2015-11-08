@@ -21,6 +21,7 @@
 
 #include "../Info"
 #include "../File"
+#include "../IObject"
 
 #include <QSet>
 
@@ -120,7 +121,7 @@ namespace de {
  * }</pre>
  * Here B and C would both inherit from A.
  */
-class DENG2_PUBLIC ScriptedInfo
+class DENG2_PUBLIC ScriptedInfo : public IObject
 {
 public:
     typedef QSet<String> Paths;
@@ -155,12 +156,6 @@ public:
      */
     Value *evaluate(String const &source);
 
-    Record &names();
-
-    Record const &names() const;
-
-    Variable const &operator [] (String const &name) const;
-
     /**
      * Finds all the blocks of a given type in the processed namespace.
      * The block type has been stored as a member called __type__ in each
@@ -169,10 +164,15 @@ public:
      * @param blockType  Type of Info block to locate.
      *
      * @return Set of paths to all the located records of the correct type.
-     * The records can be accessed via names().
+     * The records can be accessed via objectNamespace().
      */
     Paths allBlocksOfType(String const &blockType) const;
 
+    // Implements IObject.
+    Record &objectNamespace();
+    Record const &objectNamespace() const;
+
+public:
     /**
      * Checks if the context has a "__source__", and resolves @a relativePath in
      * relation to it.
@@ -205,7 +205,6 @@ public:
     static bool isTrue(RecordAccessor const &rec, String const &name,
                        bool defaultValue = false /* assume false if missing */);
 
-public:
     static String blockType(Record const &block);
 
     static Paths allBlocksOfType(String const &blockType, Record const &root);

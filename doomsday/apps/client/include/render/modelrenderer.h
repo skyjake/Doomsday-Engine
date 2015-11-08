@@ -87,6 +87,24 @@ public:
      */
     void render(vispsprite_t const &pspr);
 
+    /**
+     * Looks up the name of a shader based on a GLProgram instance.
+     *
+     * @param program  Shader program. Must be a shader program
+     *                 created and owned by ModelRenderer.
+     * @return Name of the shader (in the shader bank).
+     */
+    de::String shaderName(de::GLProgram const &program) const;
+
+    /**
+     * Looks up the definition of a shader based on a GLProgram instance.
+     *
+     * @param program  Shader program. Must be a shader program
+     *                 created and owned by ModelRenderer.
+     * @return Shader definition record.
+     */
+    de::Record const &shaderDefinition(de::GLProgram const &program) const;
+
 public:
     static void initBindings(de::Binder &binder, de::Record &module);
 

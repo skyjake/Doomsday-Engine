@@ -60,8 +60,8 @@ DENG2_PIMPL(PackageLoader)
     static int ascendingPackagesByLatest(File const *a, File const *b)
     {
         // The version must be specified using a format understood by Version.
-        Version const aVer(a->info().gets("package.version"));
-        Version const bVer(b->info().gets("package.version"));
+        Version const aVer(a->objectNamespace().gets("package.version"));
+        Version const bVer(b->objectNamespace().gets("package.version"));
 
         if(aVer == bVer)
         {
@@ -117,7 +117,7 @@ DENG2_PIMPL(PackageLoader)
     static void checkPackage(File &packFile)
     {
         Package::parseMetadata(packFile);
-        Package::validateMetadata(packFile.info().subrecord("package"));
+        Package::validateMetadata(packFile.objectNamespace().subrecord("package"));
     }
 
     /**
@@ -158,7 +158,7 @@ DENG2_PIMPL(PackageLoader)
         {
             throw AlreadyLoadedError("PackageLoader::load",
                                      "Package '" + packageId + "' is already loaded from \"" +
-                                     loaded[packageId]->info().gets("path") + "\"");
+                                     loaded[packageId]->objectNamespace().gets("path") + "\"");
         }
 
         Package *pkg = new Package(source);

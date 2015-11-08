@@ -183,7 +183,7 @@ void GameFilterWidget::update()
 
 void GameFilterWidget::operator >> (PersistentState &toState) const
 {
-    Record &st = toState.names();
+    Record &st = toState.objectNamespace();
     if(d->filterMode != Permanent)
     {
         st.set(d->persistId("filter"), dint(filter()));
@@ -193,7 +193,7 @@ void GameFilterWidget::operator >> (PersistentState &toState) const
 
 void GameFilterWidget::operator << (PersistentState const &fromState)
 {
-    Record const &st = fromState.names();
+    Record const &st = fromState.objectNamespace();
     if(d->filterMode != Permanent)
     {
         d->tabs->setCurrent(d->tabs->items().findData(int(st[d->persistId("filter")])));

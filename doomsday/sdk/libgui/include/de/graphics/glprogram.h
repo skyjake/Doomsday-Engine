@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBGUI_GLPROGRAM_H
@@ -105,6 +105,8 @@ public:
     GLuint glName() const;
 
     int glUniformLocation(char const *uniformName) const;
+
+    bool glHasUniform(char const *uniformName) const;
 
     /**
      * Determines which attribute location is used for a particular attribute semantic.

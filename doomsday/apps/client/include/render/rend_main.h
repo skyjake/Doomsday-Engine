@@ -44,12 +44,12 @@ class LightGrid;
 }
 
 // Multiplicative blending for dynamic lights?
-#define IS_MUL              (dynlightBlend != 1 && !usingFog)
+#define IS_MUL              (dynlightBlend != 1 && !fogParams.usingFog)
 
 #define MTEX_DETAILS_ENABLED (r_detail && useMultiTexDetails && \
                               defs.details.size() > 0)
 #define IS_MTEX_DETAILS     (MTEX_DETAILS_ENABLED && numTexUnits > 1)
-#define IS_MTEX_LIGHTS      (!IS_MTEX_DETAILS && !usingFog && useMultiTexLights \
+#define IS_MTEX_LIGHTS      (!IS_MTEX_DETAILS && !fogParams.usingFog && useMultiTexLights \
                              && numTexUnits > 1 && envModAdd)
 
 #define GLOW_HEIGHT_MAX                     (1024.f) /// Absolute maximum
@@ -61,10 +61,18 @@ class LightGrid;
 DENG_EXTERN_C de::Vector3d vOrigin; // Y/Z swizzled for drawing
 DENG_EXTERN_C float vang, vpitch, yfov;
 DENG_EXTERN_C float viewsidex, viewsidey;
-DENG_EXTERN_C float fogColor[4];
+
+struct FogParams
+{
+    bool usingFog;
+    float fogColor[4];
+    float fogStart;
+    float fogEnd;
+};
+
+extern FogParams fogParams;
 
 DENG_EXTERN_C byte smoothTexAnim, devMobjVLights;
-DENG_EXTERN_C dd_bool usingFog;
 
 DENG_EXTERN_C int renderTextures; /// @c 0= no textures, @c 1= normal mode, @c 2= lighting debug
 DENG_EXTERN_C int renderWireframe;
