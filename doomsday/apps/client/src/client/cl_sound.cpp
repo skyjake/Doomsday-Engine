@@ -211,7 +211,7 @@ void Cl_ReadSoundDelta(deltatype_t type)
         // specific sources.
         if(emitter)
         {
-            ClientApp::audioSystem().stopSound(::audio::WorldStage, sound.effectId, emitter);
+            ClientApp::audioSystem().stopSound(::audio::World, sound.effectId, emitter);
         }
     }
 }

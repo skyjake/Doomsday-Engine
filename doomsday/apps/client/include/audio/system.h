@@ -39,21 +39,21 @@
 namespace audio {
 
 /**
- * Stages provide the means for concurrent playback in logically independent contexts.
+ * Logically independent playback contexts (soundstages).
  */
-enum StageId
+enum Context
 {
-    /// The "world" sound stage supports playing sounds that originate from world/map
+    /// The "world" context supports playing sounds that originate from world/map
     /// space SoundEmitters, with (optional) distance based volume attenuation and/or
     /// environmental audio effects.
-    WorldStage,
+    World,
 
-    /// The "local" sound stage is a simpler context intended for playing sounds with
-    /// no emitters, no volume attenuation, or most other features implemented for the
-    /// WorldStage. This context is primarily intended for playing UI sounds.
-    LocalStage,
+    /// The "local" context is simpler, intended for playing sounds with no emitters,
+    /// no volume attenuation, or most other features implemented for the World context.
+    /// This context is primarily intended for playing UI sounds.
+    Local,
 
-    StageCount
+    ContextCount
 };
 
 /**
@@ -138,12 +138,12 @@ public:
     /**
      * Provides access to the soundstages (FYI).
      *
-     * @param stageId  Unique identifier of the Stage to locate.
+     * @param context  Unique identifier associated with the Stage to locate.
      */
-    Stage /*const*/ &stage(StageId stageId) const;
+    Stage /*const*/ &stage(Context context) const;
 
-    inline Stage /*const*/ &localStage() const { return stage(LocalStage); }
-    inline Stage /*const*/ &worldStage() const { return stage(WorldStage); }
+    inline Stage /*const*/ &localStage() const { return stage(Local); }
+    inline Stage /*const*/ &worldStage() const { return stage(World); }
 
 public:  //- Music playback: ------------------------------------------------------------
 
@@ -229,12 +229,12 @@ public:  //- Sound playback: ---------------------------------------------------
     /**
      * Stop playing sound(s) in the specified @a soundStage.
      *
-     * @param stageId   Unique identifier of the sound Stage on which to stop sounds.
+     * @param stageId   Unique identifier of the playback contexta on which to stop sounds.
      * @param effectId  Unique identifier of the sound-effect(s) to stop.
      * @param emitter   Soundstage SoundEmitter (originator). May be @c nullptr.
      * @param flags     @ref soundStopFlags.
      */
-    void stopSound(StageId stageId, de::dint effectId, SoundEmitter *emitter,
+    void stopSound(Context context, de::dint effectId, SoundEmitter *emitter,
         de::dint flags = 0 /*no special stop behaviors*/);
 
 public:  //- Low-level driver interface: ------------------------------------------------

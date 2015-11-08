@@ -31,6 +31,7 @@
 #include "audio/samplecache.h"
 #include "audio/sound.h"
 #include "audio/stage.h"
+#include "audio/worldstage.h"
 
 #include "api_map.h"
 #include "world/p_players.h"  // consolePlayer
@@ -690,7 +691,7 @@ DENG2_PIMPL(System)
     String musicCurrentSong;
     bool musicNeedSwitchBufferFile = false;  ///< @c true= choose a new file name for the buffered playback file when asked. */
 
-    std::unique_ptr<Stage> context[StageCount];
+    std::unique_ptr<Stage> context[ContextCount];
 
     SampleCache sampleCache;
     std::unique_ptr<Mixer> mixer;
@@ -773,7 +774,7 @@ DENG2_PIMPL(System)
             case Channel::Sound:
                 if(!noSound && (*mixer)["fx"].channelCount() == 0)
                 {
-                    context[WorldStage]->listener().useEnvironment(sfx3D);
+                    context[World]->listener().useEnvironment(sfx3D);
 
                     dint const maxChannels = de::clamp(1, maxSoundChannels(), CHANNEL_COUNT_MAX);
                     dint numStereo = sfx3D ? CHANNEL_2DCOUNT : maxChannels;  // The rest will be 3D.
@@ -856,7 +857,7 @@ DENG2_PIMPL(System)
                 Sound const &sound = *ch.sound();
 
                 /// @todo Use Listener of the Channel. -ds
-                Listener const &listener = context[WorldStage]->listener();
+                Listener const &listener = context[World]->listener();
 
                 prios.append(listener.rateSoundPriority(ch.startTime(), ch.volume(),
                                                         sound.flags(), sound.origin()));
@@ -1294,9 +1295,9 @@ DENG2_PIMPL(System)
         if(old3DMode)
         {
             // Disable environmental effects in the world soundstage - we're going stereo.
-            if(context[WorldStage])
+            if(context[World])
             {
-                context[WorldStage]->listener().useEnvironment(false);
+                context[World]->listener().useEnvironment(false);
             }
         }
         old3DMode = sfx3D;
@@ -1317,7 +1318,7 @@ DENG2_PIMPL(System)
             return;
 
         // Skip playback if this is too far from the Listener?
-        if(&stage == context[WorldStage].get()
+        if(&stage == context[World].get()
            && !sound.flags().testFlag(SoundFlag::NoOrigin)
            && !sound.flags().testFlag(SoundFlag::NoVolumeAttenuation))
         {
@@ -1357,7 +1358,7 @@ DENG2_PIMPL(System)
         PlayingMode const mode =   sound.flags().testFlag(SoundFlag::Repeat) ? Looping
                                  : (soundDef.flags & SF_DONT_STOP)           ? OnceDontDelete
                                                                              : Once;
-        if(&stage == context[WorldStage].get())
+        if(&stage == context[World].get())
         {
             // Stop all other sounds with the same emitter?
             if(sound.emitter() && stage.exclusion() == Stage::OnePerEmitter)
@@ -1376,7 +1377,7 @@ DENG2_PIMPL(System)
         // Determine positioning model.
         Positioning const positioning = (sfx3D && !sound.flags().testFlag(NoOrigin)) ? AbsolutePositioning : StereoPositioning;
 
-        dfloat const priority = context[WorldStage]->listener()
+        dfloat const priority = context[World]->listener()
             .rateSoundPriority(Timer_Ticks(), sound.volume(), sound.flags(), sound.origin());
 
         dfloat lowPrio = 0;
@@ -1623,9 +1624,9 @@ SampleCache &System::sampleCache() const
     return d->sampleCache;
 }
 
-Stage /*const*/ &System::stage(StageId stageId) const
+Stage /*const*/ &System::stage(Context context) const
 {
-    return *d->context[stageId];
+    return *d->context[context];
 }
 
 bool System::musicPlaybackAvailable() const
@@ -1830,12 +1831,12 @@ dint System::soundVolume() const
     return sfxVolume;
 }
 
-void System::stopSound(StageId stageId, dint effectId, SoundEmitter *emitter, dint flags)
+void System::stopSound(Context context, dint effectId, SoundEmitter *emitter, dint flags)
 {
     LOG_AS("audio::System");
 
     // Are we performing any special stop behaviors?
-    if(stageId == WorldStage)
+    if(context == World)
     {
         if(emitter && flags)
         {
@@ -1857,7 +1858,7 @@ void System::stopSound(StageId stageId, dint effectId, SoundEmitter *emitter, di
             // Stop sounds emitted by the Sector's emitter?
             if(flags & SSF_SECTOR)
             {
-                stopSound(stageId, effectId, emitter);
+                stopSound(context, effectId, emitter);
             }
 
             // Stop sounds emitted by Sector-linked (plane/wall) emitters?
@@ -1867,7 +1868,7 @@ void System::stopSound(StageId stageId, dint effectId, SoundEmitter *emitter, di
                 while((emitter = (SoundEmitter *)emitter->thinker.next))
                 {
                     // Stop sounds from this emitter.
-                    stopSound(stageId, effectId, emitter);
+                    stopSound(context, effectId, emitter);
                 }
             }
             return;
@@ -1880,15 +1881,15 @@ void System::stopSound(StageId stageId, dint effectId, SoundEmitter *emitter, di
     // Update logical sound bookkeeping.
     if(effectId <= 0 && !emitter)
     {
-        stage(stageId).removeAllSounds();
+        stage(context).removeAllSounds();
     }
     else if(effectId) // > 0
     {
-        stage(stageId).removeSoundsById(effectId);
+        stage(context).removeSoundsById(effectId);
     }
     else
     {
-        stage(stageId).removeSoundsWithEmitter(*emitter);
+        stage(context).removeSoundsWithEmitter(*emitter);
     }
 }
 
@@ -1934,10 +1935,10 @@ void System::reset()
     }
 
     // Force an Environment update for all channels.
-    if(d->context[WorldStage])
+    if(d->context[World])
     {
-        d->context[WorldStage]->listener().setTrackedMapObject(nullptr);
-        d->context[WorldStage]->listener().setTrackedMapObject(getListenerMob());
+        d->context[World]->listener().setTrackedMapObject(nullptr);
+        d->context[World]->listener().setTrackedMapObject(getListenerMob());
     }
 
     // Clear the sample cache.
@@ -1968,9 +1969,9 @@ void System::startFrame()
         sampleCache().maybeRunPurge();
     }
 
-    if(d->context[WorldStage])
+    if(d->context[World])
     {
-        d->context[WorldStage]->setExclusion(sfxOneSoundPerEmitter ? Stage::OnePerEmitter : Stage::DontExclude);
+        d->context[World]->setExclusion(sfxOneSoundPerEmitter ? Stage::OnePerEmitter : Stage::DontExclude);
     }
 
     for(std::unique_ptr<Stage> &stage : d->context)
@@ -1984,9 +1985,9 @@ void System::endFrame()
     LOG_AS("audio::System");
 
     /// @todo Should observe. -ds
-    if(d->context[WorldStage])
+    if(d->context[World])
     {
-        d->context[WorldStage]->listener().setTrackedMapObject(getListenerMob());
+        d->context[World]->listener().setTrackedMapObject(getListenerMob());
     }
 
     // Instruct currently playing Channels to write any effective Environment and/or sound
@@ -2008,9 +2009,9 @@ void System::endFrame()
 void System::worldMapChanged()
 {
     /// @todo Should observe. -ds
-    if(d->context[WorldStage])
+    if(d->context[World])
     {
-        d->context[WorldStage]->listener().setTrackedMapObject(getListenerMob());
+        d->context[World]->listener().setTrackedMapObject(getListenerMob());
     }
 }
 
@@ -2048,15 +2049,15 @@ void System::initPlayback()
     {
         std::unique_ptr<Stage> stage(new Stage);
         stage->audienceForAddition() += d;
-        d->context[LocalStage].reset(stage.get());
+        d->context[Local].reset(stage.get());
         stage.release();
     }
     {
-        std::unique_ptr<Stage> stage(new Stage);
+        std::unique_ptr<Stage> stage(new WorldStage);
         stage->audienceForAddition() += d;
         // Disable environmental audio effects in the world soundstage by default.
         stage->listener().useEnvironment(false);
-        d->context[WorldStage].reset(stage.get());
+        d->context[World].reset(stage.get());
         stage.release();
     }
 
@@ -2386,7 +2387,7 @@ dd_bool S_SoundIsPlaying(dint effectId, mobj_t *emitter)
 
 void S_StopSound2(dint effectId, mobj_t *emitter, dint flags)
 {
-    ClientApp::audioSystem().stopSound(::audio::WorldStage, effectId, (SoundEmitter *)emitter, flags);
+    ClientApp::audioSystem().stopSound(::audio::World, effectId, (SoundEmitter *)emitter, flags);
 }
 
 void S_StopSound(dint effectId, mobj_t *emitter)
