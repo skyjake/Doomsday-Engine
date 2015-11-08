@@ -1,0 +1,71 @@
+/** @file worldstage.cpp  audio::Stage specialized for the world context.
+ *
+ * @authors Copyright © 2015 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small>
+ */
+
+#include "audio/worldstage.h"
+
+#include "audio/listener.h"
+
+#include "world/worldsystem.h"
+#include "world/map.h"
+
+#include "clientapp.h"
+
+using namespace de;
+
+namespace audio {
+
+DENG2_PIMPL(WorldStage)
+, DENG2_OBSERVES(WorldSystem, MapChange)
+, DENG2_OBSERVES(Deletable,   Deletion)
+{
+    Instance(Public *i) : Base(i)
+    {
+        ClientApp::worldSystem().audienceForMapChange() += this;
+    }
+
+    ~Instance()
+    {
+        ClientApp::worldSystem().audienceForMapChange() -= this;
+    }
+
+    void worldSystemMapChanged()
+    {
+        self.listener().setTrackedMapObject(nullptr);
+
+        if(ClientApp::worldSystem().hasMap())
+        {
+            ClientApp::worldSystem().map().audienceForDeletion += this;
+        }
+    }
+
+    void objectWasDeleted(Deletable *)
+    {
+        self.removeAllSounds();
+
+        // Instruct the Listener to forget the map-object being tracked.
+        /// @todo Should observe MapObject deletion. -ds
+        self.listener().setTrackedMapObject(nullptr);
+    }
+};
+
+WorldStage::WorldStage(Exclusion exclusion)
+    : Stage(exclusion)
+    , d(new Instance(this))
+{}
+
+}  // namespace audio
