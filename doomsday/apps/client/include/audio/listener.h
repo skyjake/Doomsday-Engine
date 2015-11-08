@@ -85,15 +85,24 @@ public:
     de::ddouble distanceFrom(de::Vector3d const &point) const;
 
     /**
-     * Convenient method for determining whether the given @a point is within the audible
-     * range of the listener (@ref volumeAttenuationRange()). If no map-object is currently
-     * being tracked then @c true is always returned.
+     * Determines whether the given @a point is within the audible range of the listener
+     * (@ref volumeAttenuationRange()). If no map-object is currently being tracked then
+     * @c true is always returned.
      *
      * @see distanceFrom()
      */
-    inline bool inAudibleRangeOf(de::Vector3d const &point) const {
-        return distanceFrom(point) < volumeAttenuationRange().end;
-    };
+    bool inAudibleRangeOf(de::Vector3d const &point) const;
+
+    /**
+     * Determines whether the given @a sound is within the audible range of the listener
+     * (@ref volumeAttenuationRange()). If the Sound has @ref SoundFlag::NoOrigin or
+     * @ref SoundFlag::NoVolumeAttenuation then @c true is always returned. If no map-object
+     * is currently being tracked then @c true is always returned.
+     *
+     * @see distanceFrom()
+     * @overload
+     */
+    bool inAudibleRangeOf(Sound const &sound) const;
 
     /**
      * The priority of a sound is affected by distance, volume and age. These points are

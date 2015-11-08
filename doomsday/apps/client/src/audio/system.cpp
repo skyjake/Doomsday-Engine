@@ -1317,14 +1317,9 @@ DENG2_PIMPL(System)
         if(sfxVolume <= 0 || sound.volume() <= 0)
             return;
 
-        // Skip playback if this is too far from the Listener?
-        if(&stage == context[World].get()
-           && !sound.flags().testFlag(SoundFlag::NoOrigin)
-           && !sound.flags().testFlag(SoundFlag::NoVolumeAttenuation))
-        {
-            if(!stage.listener().inAudibleRangeOf(sound.emitter() ? sound.emitter()->origin : sound.origin()))
-                return;
-        }
+        // Skip playback if this is too far from the Listener.
+        if(!stage.listener().inAudibleRangeOf(sound))
+            return;
 
         // Sound definitions can be used to override playback behavior/modifiers.
         dfloat frequency = 1;
@@ -1377,8 +1372,7 @@ DENG2_PIMPL(System)
         // Determine positioning model.
         Positioning const positioning = (sfx3D && !sound.flags().testFlag(NoOrigin)) ? AbsolutePositioning : StereoPositioning;
 
-        dfloat const priority = context[World]->listener()
-            .rateSoundPriority(Timer_Ticks(), sound.volume(), sound.flags(), sound.origin());
+        dfloat const priority = stage.listener().rateSoundPriority(Timer_Ticks(), sound.volume(), sound.flags(), sound.origin());
 
         dfloat lowPrio = 0;
         QList<dfloat> channelPrios;
@@ -1897,8 +1891,6 @@ void System::startFrame()
 
     if(soundPlaybackAvailable())
     {
-        // Update all channels (freq, 2D:pan,volume, 3D:position,velocity).
-
         // Have there been changes to the cvar settings?
         d->updateSoundPositioningIfChanged();
         d->updateUpsampleRateIfChanged();
@@ -2101,14 +2093,13 @@ D_CMD(InspectDriver)
     DENG2_UNUSED2(src, argc);
     LOG_AS("inspectaudiodriver (Cmd)");
 
-    String const driverId(argv[1]);
-    if(IDriver const *driver = ClientApp::audioSystem().tryFindDriver(driverId))
+    if(IDriver const *driver = ClientApp::audioSystem().tryFindDriver(argv[1]))
     {
         LOG_SCR_MSG("") << driver->description();
         return true;
     }
 
-    LOG_SCR_WARNING("Unknown audio driver \"%s\"") << driverId;
+    LOG_SCR_WARNING("Unknown audio driver \"%s\"") << argv[1];
     return false;
 }
 
@@ -2129,13 +2120,13 @@ D_CMD(PlaySound)
         return true;
     }
 
-    SoundParams params;
+    SoundParams sound;
 
     // The first argument is the sound ID.
-    params.effectId = ::defs.getSoundNum(String(argv[1]));
-    if(params.effectId <= 0)
+    sound.effectId = ::defs.getSoundNum(argv[1]);
+    if(sound.effectId <= 0)
     {
-        LOG_SCR_WARNING("Unknown sound \"%s\"") << String(argv[1]);
+        LOG_SCR_WARNING("Unknown sound \"%s\"") << argv[1];
         return false;
     }
 
@@ -2143,7 +2134,7 @@ D_CMD(PlaySound)
     dint p = 0;
     if(argc >= 3 && String(argv[2]).compareWithoutCase("at"))
     {
-        params.volume = de::clamp<dfloat>(0, String(argv[2]).toFloat(), 1);
+        sound.volume = de::clamp<dfloat>(0, String(argv[2]).toFloat(), 1);
         p = 3;
     }
     else
@@ -2154,13 +2145,13 @@ D_CMD(PlaySound)
     // The next argument may be soundstage coordinates.
     if(argc >= p + 4 && !String(argv[p]).compareWithoutCase("at"))
     {
-        params.flags &= ~SoundFlag::NoOrigin;
-        params.origin = Vector3d(String(argv[p + 1]).toDouble(),
-                                 String(argv[p + 2]).toDouble(),
-                                 String(argv[p + 3]).toDouble());
+        sound.flags &= ~SoundFlag::NoOrigin;
+        sound.origin = Vector3d(String(argv[p + 1]).toDouble()
+                                , String(argv[p + 2]).toDouble()
+                                , String(argv[p + 3]).toDouble());
     }
 
-    ClientApp::audioSystem().local().playSound(params);
+    ClientApp::audioSystem().local().playSound(sound);
     return true;
 }
 

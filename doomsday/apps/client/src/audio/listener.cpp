@@ -203,6 +203,18 @@ ddouble Listener::distanceFrom(Vector3d const &point) const
     return 0;
 }
 
+bool Listener::inAudibleRangeOf(Vector3d const &point) const
+{
+    return distanceFrom(point) < volumeAttenuationRange().end;
+};
+
+bool Listener::inAudibleRangeOf(Sound const &sound) const
+{
+    if(sound.flags().testFlag(SoundFlag::NoOrigin)) return true;
+    if(sound.flags().testFlag(SoundFlag::NoVolumeAttenuation)) return true;
+    return inAudibleRangeOf(sound.emitter() ? sound.emitter()->origin : sound.origin());
+}
+
 dfloat Listener::rateSoundPriority(dint startTime, dfloat volume, SoundFlags flags,
     Vector3d const &origin) const
 {
