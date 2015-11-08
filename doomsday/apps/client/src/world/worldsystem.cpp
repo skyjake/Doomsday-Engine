@@ -742,8 +742,6 @@ bool WorldSystem::changeMap(de::Uri const &mapUri)
 #ifdef __SERVER__
     ServerApp::app().clearAllLogicalSounds();
 #else
-    ClientApp::audioSystem().worldStage().removeAllSounds();
-
     App_ResourceSystem().purgeCacheQueue();
 
     if(d->map)
@@ -751,8 +749,7 @@ bool WorldSystem::changeMap(de::Uri const &mapUri)
         /// Remove the current map from our audiences. @todo Map should handle this. -ds
         audienceForFrameBegin() -= d->map;
 
-        // Map objects are about to be destroyed.
-        /// - Stop all channels using one as emitter.
+        // Stop all audio::Channels using a map-object as an Emitter.
         ClientApp::audioSystem().mixer()["fx"].forAllChannels([this] (::audio::Channel &base)
         {
             auto &ch = base.as<::audio::SoundChannel>();
@@ -765,9 +762,6 @@ bool WorldSystem::changeMap(de::Uri const &mapUri)
             }
             return LoopContinue;
         });
-        /// - Instruct the Listener to forget the map-object being tracked.
-        /// @todo Should observe MapObject deletion. -ds
-        ClientApp::audioSystem().worldStage().listener().setTrackedMapObject(nullptr);
     }
 
     // As the memory zone does not provide the mechanisms to prepare another map in parallel

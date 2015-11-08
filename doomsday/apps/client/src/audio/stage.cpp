@@ -23,6 +23,8 @@
 #include "audio/listener.h"
 #include "audio/samplecache.h"
 
+#include "world/worldsystem.h"
+#include "world/map.h"
 #include "world/p_object.h"
 
 #include "clientapp.h"
@@ -39,6 +41,8 @@ namespace audio {
 static duint const SOUND_PURGE_INTERVAL = 2000;  ///< 2 seconds
 
 DENG2_PIMPL_NOREF(Stage)
+, DENG2_OBSERVES(WorldSystem, MapChange)
+, DENG2_OBSERVES(Deletable,   Deletion)
 {
     Exclusion exclusion { Exclusion::DontExclude };
 
@@ -53,6 +57,16 @@ DENG2_PIMPL_NOREF(Stage)
     } sounds;
 
     duint lastSoundPurge = 0;
+
+    Instance()
+    {
+        ClientApp::worldSystem().audienceForMapChange() += this;
+    }
+
+    ~Instance()
+    {
+        ClientApp::worldSystem().audienceForMapChange() -= this;
+    }
 
     /**
      * @param params   Description of the Sound to be added.
@@ -83,6 +97,25 @@ DENG2_PIMPL_NOREF(Stage)
         return sounds.insert(params.effectId, Sound(params.flags, params.effectId, params.volume,
                                                     params.origin, endTime, emitter))
                .value();
+    }
+
+    void worldSystemMapChanged()
+    {
+        listener.setTrackedMapObject(nullptr);
+
+        if(ClientApp::worldSystem().hasMap())
+        {
+            ClientApp::worldSystem().map().audienceForDeletion += this;
+        }
+    }
+
+    void objectWasDeleted(Deletable *deleted)
+    {
+        sounds.clear();
+
+        // Instruct the Listener to forget the map-object being tracked.
+        /// @todo Should observe MapObject deletion. -ds
+        listener.setTrackedMapObject(nullptr);
     }
 
     DENG2_PIMPL_AUDIENCE(Addition)

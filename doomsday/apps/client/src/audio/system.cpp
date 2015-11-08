@@ -1419,7 +1419,7 @@ DENG2_PIMPL(System)
                 {
                     // The new sound can't be played because we were unable to stop
                     // enough channels to accommodate the limitation.
-                    LOG_AUDIO_XVERBOSE("Not playing Sound #%i because all channels are busy")
+                    LOG_AUDIO_XVERBOSE("Not playing Sound #%i because all Channels are busy")
                         << sound.effectId();
                     return;
                 }
