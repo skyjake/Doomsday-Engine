@@ -173,7 +173,7 @@ DENG2_PIMPL(App)
             // Update the log filter in the persistent configuration.
             Record *filter = new Record;
             logFilter.write(*filter);
-            config->names().add("log.filter", filter);
+            config->objectNamespace().add("log.filter", filter);
 
             delete config;
         }
@@ -324,11 +324,11 @@ DENG2_PIMPL(App)
 
         // Find the record that has this asset's metadata.
         String const ns = "package." + identifier;
-        if(pkg->info().has(ns))
+        if(pkg->objectNamespace().has(ns))
         {
-            return &pkg->info()[ns].valueAsRecord();
+            return &(*pkg)[ns].valueAsRecord();
         }
-        return 0;
+        return nullptr;
     }
 
     DENG2_PIMPL_AUDIENCE(StartupComplete)
@@ -640,7 +640,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
 
     // The configuration.
     d->config = new Config(d->configPath);
-    d->scriptSys.addNativeModule("Config", d->config->names());
+    d->scriptSys.addNativeModule("Config", d->config->objectNamespace());
 
     d->config->read();
 
@@ -684,7 +684,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
     try
     {
         // The level of enabled messages.
-        d->logFilter.read(d->config->names().subrecord("log.filter"));
+        d->logFilter.read(d->config->objectNamespace().subrecord("log.filter"));
     }
     catch(Error const &er)
     {

@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Variable"
@@ -82,7 +82,7 @@ Variable::Variable(String const &name, Value *initial, Flags const &m)
     d->value = v.release();
 }
 
-Variable::Variable(Variable const &other) 
+Variable::Variable(Variable const &other)
     : ISerializable()
     , d(new Instance(*other.d))
 {}
@@ -115,7 +115,7 @@ Variable &Variable::set(Value *v)
 
     QScopedPointer<Value> oldValue(d->value); // old value deleted afterwards
     d->value = val.take();
-    
+
     // We'll only determine if actual change occurred if someone is interested.
     if(!audienceForChange().isEmpty() || !audienceForChangeFrom().isEmpty())
     {
@@ -186,7 +186,7 @@ ArrayValue &Variable::array()
 {
     return value<ArrayValue>();
 }
-    
+
 Variable::operator Record & ()
 {
     return valueAsRecord();
@@ -250,7 +250,7 @@ void Variable::verifyValid(Value const &v) const
     if(!isValid(v))
     {
         /// @throw InvalidError  Value @a v is not allowed by the variable.
-        throw InvalidError("Variable::verifyValid", 
+        throw InvalidError("Variable::verifyValid",
             "Value type is not allowed by the variable '" + d->name + "'");
     }
 }
@@ -259,7 +259,8 @@ void Variable::verifyWritable(Value const &attemptedNewValue)
 {
     if(d->mode & ReadOnly)
     {
-        if(d->value && typeid(*d->value) == typeid(attemptedNewValue) &&
+        Value const &currentValue = *d->value;
+        if(d->value && typeid(currentValue) == typeid(attemptedNewValue) &&
            !d->value->compare(attemptedNewValue))
         {
             // This is ok: the value doesn't change.
@@ -267,7 +268,7 @@ void Variable::verifyWritable(Value const &attemptedNewValue)
         }
 
         /// @throw ReadOnlyError  The variable is in read-only mode.
-        throw ReadOnlyError("Variable::verifyWritable", 
+        throw ReadOnlyError("Variable::verifyWritable",
             "Variable '" + d->name + "' is in read-only mode");
     }
 }
@@ -304,7 +305,7 @@ void Variable::operator << (Reader &from)
         // Always need to have a value.
         d->value = new NoneValue();
         throw;
-    }    
+    }
 }
 
 } // namespace de

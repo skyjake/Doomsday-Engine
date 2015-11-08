@@ -47,7 +47,7 @@ int getWeaponAmmo[NUM_WEAPON_TYPES] = { 0, 25, 10, 30, 50, 2, 50, 0 };
 static dd_bool giveOneAmmo(player_t *plr, ammotype_t ammoType, int numRounds)
 {
     DENG_ASSERT(plr != 0);
-    DENG_ASSERT((ammoType >= 0 && ammoType < NUM_AMMO_TYPES) || ammoType == AT_NOAMMO);
+    DENG_ASSERT(((int)ammoType >= 0 && ammoType < NUM_AMMO_TYPES) || ammoType == AT_NOAMMO);
 
     // Giving the special 'unlimited ammo' type always succeeds.
     if(ammoType == AT_NOAMMO)

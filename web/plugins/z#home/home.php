@@ -265,7 +265,7 @@ $(document).ready(function () {
 
 $(document).ready(function () {
     $('#recentbuilds').interpretFeed({
-        feedUri: 'http://code.iki.fi/builds/events.rss',
+        feedUri: 'http://files.dengine.net/builds/events.rss',
         dataType: 'xml',
         maxItems: 3,
         generateItemHtml : function(n, t) {
@@ -280,7 +280,7 @@ $(document).ready(function () {
     });
 
     /*$('#column1').interpretFeed({
-        feedUri: 'http://dl.dropboxusercontent.com/u/11948701/builds/events.rss',
+        feedUri: 'http://files.dengine.net/builds/events.rss',
         dataType: 'xml',
         maxItems: 3,
         clearOnSuccess: false,

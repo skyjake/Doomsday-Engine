@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Style"
@@ -64,10 +64,10 @@ DENG2_PIMPL(Style)
         images.addFromInfo(pack.root().locate<File>("images.dei"));
 
         // Update the subrecords of the native module.
-        module.add(new Variable("rules",  new RecordValue(rules.names()),  Variable::AllowRecord));
-        module.add(new Variable("fonts",  new RecordValue(fonts.names()),  Variable::AllowRecord));
-        module.add(new Variable("colors", new RecordValue(colors.names()), Variable::AllowRecord));
-        module.add(new Variable("images", new RecordValue(images.names()), Variable::AllowRecord));
+        module.add(new Variable("rules",  new RecordValue(rules),  Variable::AllowRecord));
+        module.add(new Variable("fonts",  new RecordValue(fonts),  Variable::AllowRecord));
+        module.add(new Variable("colors", new RecordValue(colors), Variable::AllowRecord));
+        module.add(new Variable("images", new RecordValue(images), Variable::AllowRecord));
     }
 };
 

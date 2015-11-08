@@ -89,12 +89,12 @@ ScriptedInfo const &InfoBank::info() const
     return d->info;
 }
 
-Record &InfoBank::names()
+Record &InfoBank::objectNamespace()
 {
     return d->names;
 }
 
-Record const &InfoBank::names() const
+Record const &InfoBank::objectNamespace() const
 {
     return d->names;
 }
@@ -103,7 +103,7 @@ void InfoBank::addFromInfoBlocks(String const &blockType)
 {
     foreach(String id, d->info.allBlocksOfType(blockType))
     {
-        Record &rec = names()[id];
+        Record &rec = d->names[id];
         if(!rec.has(VAR_NOT_IN_BANK))
         {
             // Already added, from the looks of it.
@@ -131,11 +131,6 @@ String InfoBank::relativeToPath(Record const &context) const
     String const root = ScriptedInfo::absolutePathInContext(context, "");
     if(root.isEmpty()) return bankRootPath();
     return root;
-}
-
-Variable const &InfoBank::operator [] (String const &name) const
-{
-    return d->info[name];
 }
 
 } // namespace de

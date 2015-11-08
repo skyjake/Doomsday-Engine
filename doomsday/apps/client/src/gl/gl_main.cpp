@@ -379,18 +379,18 @@ void GL_Init2DState()
     glOrtho(0, 320, 200, 0, -1, 1);
 
     // Default state for the white fog is off.
-    usingFog = false;
+    fogParams.usingFog = false;
     glDisable(GL_FOG);
     glFogi(GL_FOG_MODE, (fogModeDefault == 0 ? GL_LINEAR :
                          fogModeDefault == 1 ? GL_EXP    : GL_EXP2));
     glFogf(GL_FOG_START, DEFAULT_FOG_START);
     glFogf(GL_FOG_END, DEFAULT_FOG_END);
     glFogf(GL_FOG_DENSITY, DEFAULT_FOG_DENSITY);
-    fogColor[0] = DEFAULT_FOG_COLOR_RED;
-    fogColor[1] = DEFAULT_FOG_COLOR_GREEN;
-    fogColor[2] = DEFAULT_FOG_COLOR_BLUE;
-    fogColor[3] = 1;
-    glFogfv(GL_FOG_COLOR, fogColor);
+    fogParams.fogColor[0] = DEFAULT_FOG_COLOR_RED;
+    fogParams.fogColor[1] = DEFAULT_FOG_COLOR_GREEN;
+    fogParams.fogColor[2] = DEFAULT_FOG_COLOR_BLUE;
+    fogParams.fogColor[3] = 1;
+    glFogfv(GL_FOG_COLOR, fogParams.fogColor);
 }
 
 void GL_SwitchTo3DState(dd_bool push_state, viewport_t const *port, viewdata_t const *viewData)
@@ -499,6 +499,11 @@ void GL_Restore2DState(dint step, viewport_t const *port, viewdata_t const *view
     }
 }
 
+Rangef GL_DepthClipRange()
+{
+    return Rangef(glNearClip, glFarClip);
+}
+
 Matrix4f GL_GetProjectionMatrix()
 {
     dfloat const fov = Rend_FieldOfView();
@@ -553,7 +558,7 @@ void GL_SetupFogFromMapInfo(Record const *mapInfo)
 #undef GL_UseFog
 DENG_EXTERN_C void GL_UseFog(dint yes)
 {
-    usingFog = yes;
+    fogParams.usingFog = yes;
 }
 
 void GL_SelectTexUnits(dint count)
@@ -1547,23 +1552,26 @@ D_CMD(Fog)
     {
         for(dint i = 0; i < 3; ++i)
         {
-            fogColor[i] = strtol(argv[2 + i], nullptr, 0) / 255.0f;
+            fogParams.fogColor[i] = strtol(argv[2 + i], nullptr, 0) / 255.0f;
         }
-        fogColor[3] = 1;
+        fogParams.fogColor[3] = 1;
 
-        glFogfv(GL_FOG_COLOR, fogColor);
+        glFogfv(GL_FOG_COLOR, fogParams.fogColor);
         LOG_GL_VERBOSE("Fog color set");
         return true;
     }
     if(!stricmp(argv[1], "start") && argc == 3)
     {
-        glFogf(GL_FOG_START, (GLfloat) strtod(argv[2], nullptr));
+        fogParams.fogStart = (GLfloat) strtod(argv[2], nullptr);
+
+        glFogf(GL_FOG_START, fogParams.fogStart);
         LOG_GL_VERBOSE("Fog start distance set");
         return true;
     }
     if(!stricmp(argv[1], "end") && argc == 3)
     {
-        glFogf(GL_FOG_END, (GLfloat) strtod(argv[2], nullptr));
+        fogParams.fogEnd = (GLfloat) strtod(argv[2], nullptr);
+        glFogf(GL_FOG_END, fogParams.fogEnd);
         LOG_GL_VERBOSE("Fog end distance set");
         return true;
     }

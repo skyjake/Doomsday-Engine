@@ -8,8 +8,8 @@ def get_arg(label):
     return None
 
 BUILD_AUTHOR_NAME = "skyjake"
-BUILD_AUTHOR_EMAIL = "skyjake@users.sourceforge.net"
-BUILD_URI = "http://code.iki.fi/builds"
+BUILD_AUTHOR_EMAIL = "skyjake@dengine.net"
+BUILD_URI = "http://files.dengine.net/builds"
 RFC_TIME = "%a, %d %b %Y %H:%M:%S +0000"
 if 'HOME' in os.environ:
     EVENT_DIR = os.path.join(os.environ['HOME'], 'BuildMaster')

@@ -20,6 +20,7 @@
 #define LIBDENG2_REFUGE_H
 
 #include "../Record"
+#include "../IObject"
 
 namespace de {
 
@@ -30,7 +31,7 @@ namespace de {
  *
  * @ingroup data
  */
-class DENG2_PUBLIC Refuge
+class DENG2_PUBLIC Refuge : public IObject
 {
 public:
     /**
@@ -64,9 +65,9 @@ public:
 
     Time lastWrittenAt() const;
 
-    Record &names();
-
-    Record const &names() const;
+    // Implements IObject.
+    Record &objectNamespace();
+    Record const &objectNamespace() const;
 
 private:
     DENG2_PRIVATE(d)

@@ -677,12 +677,12 @@ void SkyDrawable::draw(Animator const *animator) const
     // Only drawn when at least one layer is active.
     if(d->firstActiveLayer < 0) return;
 
-    if(usingFog) glEnable(GL_FOG);
+    if(fogParams.usingFog) glEnable(GL_FOG);
 
     d->drawSphere();
     d->drawModels(animator);
 
-    if(usingFog) glDisable(GL_FOG);
+    if(fogParams.usingFog) glDisable(GL_FOG);
 }
 
 MaterialVariantSpec const &SkyDrawable::layerMaterialSpec(bool masked) // static

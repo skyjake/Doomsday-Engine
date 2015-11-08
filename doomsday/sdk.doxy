@@ -6,11 +6,11 @@ PROJECT_NUMBER          = 2.0
 PROJECT_BRIEF           = "Core engine library and supporting libraries"
 OUTPUT_DIRECTORY        = apidoc/sdk/
 
-INPUT                   = sdk/libcore/include sdk/libgui/include sdk/libappfw/include sdk/libshell/include \
-                          sdk/libcore/src     sdk/libgui/src     sdk/libappfw/src     sdk/libshell/src 
+INPUT                   = sdk/libcore/include sdk/libgui/include sdk/libappfw/include sdk/libshell/include sdk/liblegacy/include \
+                          sdk/libcore/src     sdk/libgui/src     sdk/libappfw/src     sdk/libshell/src     sdk/liblegacy/src
 FILE_PATTERNS           = *
 EXCLUDE_PATTERNS        = .DS_Store
-PREDEFINED              = __cplusplus __DENG2__ __LIBGUI__ __LIBSHELL__ __LIBAPPFW__ \
+PREDEFINED              = __cplusplus __DENG2__ __LIBGUI__ __LIBSHELL__ __LIBAPPFW__ __DENG__ \
                           "DENG2_PIMPL(ClassName)=typedef ClassName Public; struct ClassName::Instance : public de::Private<ClassName>" \
                           "DENG2_PIMPL_NOREF(C)=struct C::Instance : public de::IPrivate" \
                           "DENG2_PRIVATE(Var)=struct Instance; Instance *Var;" \

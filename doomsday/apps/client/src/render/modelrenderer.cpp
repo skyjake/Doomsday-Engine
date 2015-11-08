@@ -54,7 +54,7 @@ static String const DEF_BLENDFUNC   ("blendFunc");
 static String const DEF_BLENDOP     ("blendOp");
 static String const DEF_TIMELINE    ("timeline");
 
-static String const SHADER_DEFAULT  ("model.skeletal.normal_specular_emission");
+static String const SHADER_DEFAULT  ("model.skeletal.generic");
 static String const MATERIAL_DEFAULT("default");
 
 static Atlas::Size const MAX_ATLAS_SIZE(8192, 8192);
@@ -70,6 +70,7 @@ DENG2_PIMPL(ModelRenderer)
     struct Program : public GLProgram
     {
         String shaderName;
+        Record const *def = nullptr;
         int useCount = 1; ///< Number of models using the program.
     };
 
@@ -129,6 +130,8 @@ DENG2_PIMPL(ModelRenderer)
     GLUniform uAmbientLight     { "uAmbientLight",     GLUniform::Vec4 };
     GLUniform uLightDirs        { "uLightDirs",        GLUniform::Vec3Array, MAX_LIGHTS };
     GLUniform uLightIntensities { "uLightIntensities", GLUniform::Vec4Array, MAX_LIGHTS };
+    GLUniform uFogRange         { "uFogRange",         GLUniform::Vec4 };
+    GLUniform uFogColor         { "uFogColor",         GLUniform::Vec4 };
 
     Matrix4f inverseLocal;
     int lightCount = 0;
@@ -217,6 +220,7 @@ DENG2_PIMPL(ModelRenderer)
 
         std::unique_ptr<Program> prog(new Program);
         prog->shaderName = name;
+        prog->def = &ClientApp::shaders()[name].valueAsRecord(); // for lookups later
 
         LOG_RES_VERBOSE("Loading model shader \"%s\"") << name;
 
@@ -227,7 +231,9 @@ DENG2_PIMPL(ModelRenderer)
                 << uEyePos
                 << uAmbientLight
                 << uLightDirs
-                << uLightIntensities;
+                << uLightIntensities
+                << uFogRange
+                << uFogColor;
 
         programs[name] = prog.get();
         return prog.release();
@@ -612,9 +618,32 @@ DENG2_PIMPL(ModelRenderer)
         lightCount++;
     }
 
+    void setupFog()
+    {
+        if(fogParams.usingFog)
+        {
+            uFogColor = Vector4f(fogParams.fogColor[0],
+                                 fogParams.fogColor[1],
+                                 fogParams.fogColor[2],
+                                 1.f);
+
+            Rangef const depthPlanes = GL_DepthClipRange();
+            float const fogDepth = fogParams.fogEnd - fogParams.fogStart;
+            uFogRange = Vector4f(fogParams.fogStart,
+                                 fogDepth,
+                                 depthPlanes.start,
+                                 depthPlanes.end);
+        }
+        else
+        {
+            uFogColor = Vector4f();
+        }
+    }
+
     template <typename Params> // generic to accommodate psprites and vispsprites
     void draw(Params const &p)
     {
+        setupFog();
         uTex = static_cast<AtlasTexture const *>(p.model->textures->atlas());
 
         p.model->draw(&p.animator->appearance(), p.animator);
@@ -720,6 +749,16 @@ void ModelRenderer::render(vispsprite_t const &pspr)
 
     /// @todo Something is interfering with the cull setting elsewhere (remove this).
     GLState::current().setCull(gl::Back).apply();
+}
+
+String ModelRenderer::shaderName(GLProgram const &program) const
+{
+    return static_cast<Instance::Program const &>(program).shaderName;
+}
+
+Record const &ModelRenderer::shaderDefinition(GLProgram const &program) const
+{
+    return *static_cast<Instance::Program const &>(program).def;
 }
 
 int ModelRenderer::identifierFromText(String const &text,

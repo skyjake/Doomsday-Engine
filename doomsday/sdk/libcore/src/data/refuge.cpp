@@ -90,12 +90,12 @@ Time Refuge::lastWrittenAt() const
     return Time::invalidTime();
 }
 
-Record &Refuge::names()
+Record &Refuge::objectNamespace()
 {
     return d->names;
 }
 
-Record const &Refuge::names() const
+Record const &Refuge::objectNamespace() const
 {
     return d->names;
 }

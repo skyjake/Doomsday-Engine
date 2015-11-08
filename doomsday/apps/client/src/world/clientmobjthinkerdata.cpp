@@ -119,7 +119,7 @@ DENG2_PIMPL(ClientMobjThinkerData)
                 model.audienceForDeletion() += this;
 
                 animator.reset(new render::StateAnimator(modelId(), model));
-                animator->setOwnerNamespace(self.names(), QStringLiteral("THING"));
+                animator->setOwnerNamespace(self.objectNamespace(), QStringLiteral("THING"));
 
                 // Apply possible scaling operations on the model.
                 modelMatrix = model.transformation;
@@ -296,6 +296,6 @@ void ClientMobjThinkerData::damageReceived(int damage, mobj_t const *inflictor)
 
     if(d->animator)
     {
-        d->animator->triggerDamage(damage);
+        d->animator->triggerDamage(damage, inflictor);
     }
 }

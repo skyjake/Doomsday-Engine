@@ -154,12 +154,12 @@ a[class ="link-definition"]:after {
 
 a[class ="link-external"] {
     padding-right: 18px;
-    background: transparent url(http://dl.dropboxusercontent.com/u/11948701/dengine.net/images/Icon_External_Link.png) no-repeat center right;
+    background: transparent url(http://dengine.net/images/Icon_External_Link.png) no-repeat center right;
 }
 
 a[class ="link-rss"] {
     padding-right: 18px;
-    background: transparent url(http://dl.dropboxusercontent.com/u/11948701/dengine.net/images/rssicon.png) no-repeat center right;
+    background: transparent url(http://dengine.net/images/rssicon.png) no-repeat center right;
     background-size: 13px 12px;
 }
 
@@ -1587,23 +1587,23 @@ span.port {
 }
 
 .game_badge_doom {
-    background: url(http://dl.dropboxusercontent.com/u/11948701/dengine.net/images/doom_badge.png) no-repeat;
+    background: url(http://dengine.net/images/doom_badge.png) no-repeat;
 }
 
 .game_badge_heretic {
-    background: url(http://dl.dropboxusercontent.com/u/11948701/dengine.net/images/heretic_badge.png) no-repeat;
+    background: url(http://dengine.net/images/heretic_badge.png) no-repeat;
 }
 
 .game_badge_hexen {
-    background: url(http://dl.dropboxusercontent.com/u/11948701/dengine.net/images/hexen_badge.png) no-repeat;
+    background: url(http://dengine.net/images/hexen_badge.png) no-repeat;
 }
 
 .game_badge_hacx {
-    background: url(http://dl.dropboxusercontent.com/u/11948701/dengine.net/images/hacx_badge.png) no-repeat;
+    background: url(http://dengine.net/images/hacx_badge.png) no-repeat;
 }
 
 .game_badge_chex {
-    background: url(http://dl.dropboxusercontent.com/u/11948701/dengine.net/images/chex_badge.png) no-repeat;
+    background: url(http://dengine.net/images/chex_badge.png) no-repeat;
 }
 
 /*---------------- Platform Pages -----------------*/
@@ -1630,7 +1630,7 @@ span.port {
 
 .package_badge {
     background-color: transparent;
-    background: url(http://dl.dropboxusercontent.com/u/11948701/dengine.net/images/download_badge.png) no-repeat;
+    background: url(http://dengine.net/images/download_badge.png) no-repeat;
     height: 60px;
     min-width: 320px;
     padding-top: 1.5em;

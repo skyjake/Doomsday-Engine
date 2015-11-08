@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_FILE_H
@@ -25,6 +25,7 @@
 #include "../Time"
 #include "../Record"
 #include "../AccessorValue"
+#include "../IObject"
 #include "../Audience"
 #include "../filesys/Node"
 
@@ -77,7 +78,7 @@ class Feed;
  * lock themselves as appropriate. A user may lock the file manually if long-term
  * exclusive access is required.
  */
-class DENG2_PUBLIC File : public filesys::Node, public IIOStream
+class DENG2_PUBLIC File : public filesys::Node, public IIOStream, public IObject
 {
 public:
     // Mode flags.
@@ -302,12 +303,6 @@ public:
      */
     virtual void setMode(Flags const &newMode);
 
-    /// Returns the file information (const).
-    Record const &info() const;
-
-    /// Returns the file information.
-    Record &info();
-
     /**
      * Makes sure that the file has write access.
      */
@@ -335,6 +330,10 @@ public:
     IOStream &operator << (IByteArray const &bytes);
     IIStream &operator >> (IByteArray &bytes);
     IIStream const &operator >> (IByteArray &bytes) const;
+
+    // Implements IObject.
+    Record &objectNamespace();
+    Record const &objectNamespace() const;
 
     // Standard casting methods.
     DENG2_AS_IS_METHODS()

@@ -54,7 +54,7 @@ static dd_bool giveOneAmmo(player_t *plr, ammotype_t ammoType, int numClips)
     int numRounds = 0;
 
     DENG_ASSERT(plr != 0);
-    DENG_ASSERT((ammoType >= 0 && ammoType < NUM_AMMO_TYPES) || ammoType == AT_NOAMMO);
+    DENG_ASSERT(((int)ammoType >= 0 && ammoType < NUM_AMMO_TYPES) || ammoType == AT_NOAMMO);
 
     // Giving the special 'unlimited ammo' type always succeeds.
     if(ammoType == AT_NOAMMO)

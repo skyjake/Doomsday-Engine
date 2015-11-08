@@ -425,7 +425,7 @@ void GameSelectionWidget::update()
 
 void GameSelectionWidget::operator >> (PersistentState &toState) const
 {
-    Record &st = toState.names();
+    Record &st = toState.objectNamespace();
     foreach(Instance::SubsetWidget *s, d->subsets)
     {
         // Save the fold open/closed state.
@@ -435,7 +435,7 @@ void GameSelectionWidget::operator >> (PersistentState &toState) const
 
 void GameSelectionWidget::operator << (PersistentState const &fromState)
 {
-    Record const &st = fromState.names();
+    Record const &st = fromState.objectNamespace();
     foreach(Instance::SubsetWidget *s, d->subsets)
     {
         // Restore the fold open/closed state.

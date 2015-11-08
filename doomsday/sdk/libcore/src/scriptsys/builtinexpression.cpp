@@ -184,7 +184,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
                                       "Expected exactly one argument for AS_FILE");
         }
         // The only argument is an absolute path of the file.
-        return new RecordValue(App::rootFolder().locate<File>(args.at(1).asText()).info());
+        return new RecordValue(App::rootFolder().locate<File>(args.at(1).asText()).objectNamespace());
     }
 
     case AS_NUMBER:

@@ -14,9 +14,9 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
- 
+
 #ifndef LIBDENG2_CONFIG_H
 #define LIBDENG2_CONFIG_H
 
@@ -25,6 +25,7 @@
 #include "../Path"
 #include "../Version"
 #include "../Record"
+#include "../IObject"
 
 namespace de {
 
@@ -48,7 +49,7 @@ class ArrayValue;
  *
  * @ingroup core
  */
-class DENG2_PUBLIC Config : public RecordAccessor
+class DENG2_PUBLIC Config : public RecordAccessor, public IObject
 {
 public:
     /**
@@ -95,44 +96,14 @@ public:
     Variable &set(String const &name, ArrayValue *value);
 
     /**
-     * Returns the configuration namespace.
-     */
-    Record &names();
-
-    /**
-     * Returns the configuration namespace (immutable).
-     */
-    Record const &names() const;
-
-    /**
-     * Looks up a variable in the Config. Variables in subrecords can be accessed
-     * using the member notation: <code>subrecord-name.variable-name</code>
-     *
-     * If the variable does not exist, a Record::NotFoundError is thrown.
-     *
-     * @param name  Variable name.
-     *
-     * @return  Variable.
-     */
-    Variable &operator [] (String const &name);
-
-    /**
-     * Looks up a variable in the record. Variables in subrecords can be accessed
-     * using the member notation: <code>subrecord-name.variable-name</code>
-     *
-     * If the variable does not exist, an Record::NotFoundError is thrown.
-     *
-     * @param name  Variable name.
-     *
-     * @return  Variable (non-modifiable).
-     */
-    Variable const &operator [] (String const &name) const;
-
-    /**
      * Returns the old version, when a new installed version has been detected.
      * If no upgrade has occurred, returns the current version.
      */
     Version upgradedFromVersion() const;
+
+    // Implements IObject.
+    Record &objectNamespace();
+    Record const &objectNamespace() const;
 
 private:
     DENG2_PRIVATE(d)

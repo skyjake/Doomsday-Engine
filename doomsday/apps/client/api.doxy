@@ -6,8 +6,8 @@ PROJECT_NUMBER          = 2.0
 PROJECT_BRIEF           = "Public API"
 OUTPUT_DIRECTORY        = ../../apidoc/api/
 
-INPUT                   = ../api ../../sdk/liblegacy/include
-PREDEFINED              = __DOOMSDAY__ __DENG__ \
+INPUT                   = ../api
+PREDEFINED              = __DOOMSDAY__ \
                           "DENG_API_TYPEDEF(Name)=typedef struct de_api_##Name##_s" \
                           "DENG_API_T(Name)=de_api_##Name##_t" \
                           "DENG_DECLARE_API(Name)=DENG_API_T(Name) _api_##Name"

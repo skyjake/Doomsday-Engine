@@ -144,12 +144,12 @@ Action *ManualConnectionDialog::makeAction(const ui::Item &item)
 
 void ManualConnectionDialog::operator >> (PersistentState &toState) const
 {
-    toState.names().set(name() + ".address", d->usedAddress);
+    toState.objectNamespace().set(name() + ".address", d->usedAddress);
 }
 
 void ManualConnectionDialog::operator << (PersistentState const &fromState)
 {
-    d->usedAddress = fromState.names()[name() + ".address"];
+    d->usedAddress = fromState[name() + ".address"];
     editor().setText(d->usedAddress);
     validate();
 }
@@ -166,7 +166,7 @@ void ManualConnectionDialog::queryOrConnect()
     {
         // Automatically connect if there is a single choice.
         if(d->joinWhenEnterPressed)
-        {  
+        {
             emit selected(&d->games->items().at(0));
             serverSelected(&d->games->items().at(0));
             return;
