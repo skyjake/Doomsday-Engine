@@ -68,9 +68,6 @@ DENG2_PIMPL_NOREF(Stage)
      * Remove all Sounds originating from the given @a emitter. Does absolutely nothing
      * about playback (or refresh), as that is handled at another (lower) level.
      *
-     * @param emitter
-     *
-     * @see removeSoundsById(), removeAllSounds()
      * @note Performance: O(1)
      */
     void removeSoundsWithEmitter(SoundEmitter const &emitter)
@@ -238,7 +235,7 @@ void Stage::stopSound(dint effectId, SoundEmitter *emitter)
     // Update logical sound bookkeeping.
     if(effectId <= 0 && !emitter)
     {
-        stopAllSounds();
+        d->sounds.clear();
     }
     else if(effectId) // > 0
     {
@@ -252,7 +249,7 @@ void Stage::stopSound(dint effectId, SoundEmitter *emitter)
 
 void Stage::stopAllSounds()
 {
-    d->sounds.clear();
+    stopSound(-1);
 }
 
 LoopResult Stage::forAllSounds(std::function<LoopResult (Sound &)> callback) const

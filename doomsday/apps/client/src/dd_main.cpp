@@ -1421,7 +1421,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
 #ifdef __CLIENT__
         for(dint i = 0; i < ::audio::ContextCount; ++i)
         {
-            ClientApp::audioSystem().stage(::audio::Context(i)).removeAllSounds();
+            ClientApp::audioSystem().stage(::audio::Context(i)).stopAllSounds();
         }
 #else
         ServerApp::app().clearAllLogicalSounds();

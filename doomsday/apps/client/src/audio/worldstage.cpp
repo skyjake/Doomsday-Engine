@@ -57,7 +57,7 @@ DENG2_PIMPL(WorldStage)
 
     void objectWasDeleted(Deletable *)
     {
-        self.removeAllSounds();
+        self.stopAllSounds();
 
         // Instruct the Listener to forget the map-object being tracked.
         /// @todo Should observe MapObject deletion. -ds

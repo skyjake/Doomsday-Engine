@@ -31,8 +31,8 @@ class Listener;
 /**
  * Model of a logically independent audio context (or sound "stage").
  *
- * Marshalls concurrent playback on a purely logical level, providing tracking of all the
- * currently playing sounds and enforcing start/stop/etc.. behaviors and polices.
+ * Marshalls concurrent playback on a purely logical level, providing tracking of the
+ * playing Sounds and enforcing play/stop/etc.. behaviors and polices.
  *
  * @ingroup audio
  */
@@ -94,12 +94,12 @@ public:
      * Start playing a Sound in the soundstage. The Addition audience is notified whenever
      * a Sound is added to the stage.
      *
-     * @param params   Parameters of the sound-effect to play.
+     * @param sound    Parameters of the sound-effect to play.
      * @param emitter  Emitter to attribute the sound to, if any.
      *
      * @see soundIsPlaying()
      */
-    void playSound(SoundParams params, SoundEmitter *emitter = nullptr);
+    void playSound(SoundParams sound, SoundEmitter *emitter = nullptr);
 
     /**
      * Stop playing Sound(s) in the soundstage.

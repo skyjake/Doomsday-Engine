@@ -25,9 +25,9 @@
 namespace audio {
 
 /**
- * Specialized audio::Stage (soundstage) for the "world" playback context.
+ * Specialized Stage (soundstage) for the "world" playback context.
  *
- * Automatically clears all logical Sounds from the stage when the current map changes.
+ * Automatically clears all logical Sounds when the current world::Map changes.
  *
  * @ingroup audio
  */
@@ -41,8 +41,9 @@ public:
      *
      * @param effectId  Unique identifier of the sound-effect(s) to stop.
      * @param emitter   Emitter (originator) of the Sounds to stop. May be @c nullptr.
+     * @param flags     @ref soundStopFlags.
      */
-    void stopSound(de::dint effectId, SoundEmitter *emitter, de::dint flags = 0);
+    void stopSound(de::dint effectId, SoundEmitter *emitter = nullptr, de::dint flags = 0);
 
 private:
     DENG2_PRIVATE(d)
