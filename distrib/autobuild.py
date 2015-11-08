@@ -352,7 +352,7 @@ def update_feed():
     
     # Write a index page for all the builds.
     versions = {}
-    text = '<p class="links"><a href="events.rss">RSS Feed</a> | <a href="events.xml">XML Feed</a> | <a href="apt">Apt Repository</a></p>'
+    text = '<p class="links"><a href="events.rss">RSS Feed</a> | <a href="events.xml">XML Feed</a></p>'
     text += '<h2>Latest Builds</h2>'
     text += '<div class="buildlist">'    
     for timestamp, ev in allEvents:
