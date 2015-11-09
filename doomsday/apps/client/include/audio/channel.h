@@ -49,7 +49,7 @@ enum PlayingMode
 enum Positioning
 {
     StereoPositioning,   ///< Simple 2D stereo, not 3D.
-    AbsolutePositioning  ///< Originates from a fixed point in the sound stage.
+    AbsolutePositioning  ///< Originates from a fixed point in the soundstage.
 };
 
 /**
@@ -144,42 +144,6 @@ public:
      * sampler rate.
      */
     virtual bool anyRateAccepted() const { return true; }
-};
-
-// --------------------------------------------------------------------------------------
-
-/**
- * Constructs audio::Channels for the audio::System.
- */
-class IChannelFactory
-{
-public:
-    virtual ~IChannelFactory() {}
-
-    /**
-     * Returns a set of configuration Records describing the Channel formats that the
-     * factory is capable of producing.
-     *
-     * Each record must contain at least the following required Values:
-     *
-     * - "identityKey" (Text)   : Unique textual, symbolic identifier (lowercase) for
-     * "this" configuration, used in Config.
-     *
-     * - "channelType" (Number) : Logical channel-type identifier.
-     *
-     * @todo This configuration could also declare which audio formats it is capable of
-     * playing (e.g., MIDI only, CD tracks only). -jk
-     */
-    virtual QList<de::Record> listInterfaces() const = 0;
-
-    /**
-     * Called when the audio::System needs a new playback Channel of the given @a type.
-     * This allows specialized factories to choose the concrete channel type and customize
-     * it accordingly.
-     *
-     * @note: Ownership is currently retained!
-     */
-    virtual Channel *makeChannel(Channel::Type type) = 0;
 };
 
 // --------------------------------------------------------------------------------------

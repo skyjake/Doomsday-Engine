@@ -25,8 +25,8 @@
 #  error "audio" is not available in a SERVER build
 #endif
 
-#include "audio/system.h"
 #include "audio/channel.h"
+#include "audio/ichannelfactory.h"
 #include <de/Error>
 #include <de/Record>
 #include <de/String>

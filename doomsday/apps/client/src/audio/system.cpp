@@ -27,6 +27,7 @@
 #include "audio/dummycdchannel.h"
 #include "audio/dummymusicchannel.h"
 #include "audio/dummysoundchannel.h"
+#include "audio/ichannelfactory.h"
 #include "audio/listener.h"
 #include "audio/mixer.h"
 #include "audio/mus.h"
