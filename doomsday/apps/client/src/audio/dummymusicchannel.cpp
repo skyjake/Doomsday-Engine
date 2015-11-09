@@ -25,12 +25,21 @@ using namespace de;
 
 namespace audio {
 
-DummyMusicChannel::DummyMusicChannel() : MusicChannel()
+DENG2_PIMPL_NOREF(DummyMusicChannel)
+{
+    bool paused       = false;
+    PlayingMode mode  = NotPlaying;
+    dfloat frequency  = 1;
+    dfloat volume     = 1;
+    String sourcePath;
+};
+
+DummyMusicChannel::DummyMusicChannel() : MusicChannel(), d(new Instance)
 {}
 
 PlayingMode DummyMusicChannel::mode() const
 {
-    return _mode;
+    return d->mode;
 }
 
 void DummyMusicChannel::play(PlayingMode mode)
@@ -38,31 +47,33 @@ void DummyMusicChannel::play(PlayingMode mode)
     if(isPlaying()) return;
     if(mode == NotPlaying) return;
 
-    if(_sourcePath.isEmpty()) Error("DummyMusicChannel::play", "No track is bound");
-    _mode = mode;
+    if(d->sourcePath.isEmpty()) Error("DummyMusicChannel::play", "No track is bound");
+    d->mode = mode;
 }
 
 void DummyMusicChannel::stop()
-{}
+{
+    // Nothing to do.
+}
 
 bool DummyMusicChannel::isPaused() const
 {
-    return _paused;
+    return d->paused;
 }
 
 void DummyMusicChannel::pause()
 {
-    _paused = true;
+    d->paused = true;
 }
 
 void DummyMusicChannel::resume()
 {
-    _paused = false;
+    d->paused = false;
 }
 
-Channel &DummyMusicChannel::setFrequency(de::dfloat newFrequency)
+Channel &DummyMusicChannel::setFrequency(dfloat newFrequency)
 {
-    _frequency = newFrequency;
+    d->frequency = newFrequency;
     return *this;
 }
 
@@ -72,15 +83,15 @@ Channel &DummyMusicChannel::setPositioning(Positioning)
     return *this;
 }
 
-Channel &DummyMusicChannel::setVolume(de::dfloat newVolume)
+Channel &DummyMusicChannel::setVolume(dfloat newVolume)
 {
-    _volume = newVolume;
+    d->volume = newVolume;
     return *this;
 }
 
 dfloat DummyMusicChannel::frequency() const
 {
-    return _frequency;
+    return d->frequency;
 }
 
 Positioning DummyMusicChannel::positioning() const
@@ -90,7 +101,7 @@ Positioning DummyMusicChannel::positioning() const
 
 dfloat DummyMusicChannel::volume() const
 {
-    return _volume;
+    return d->volume;
 }
 
 bool DummyMusicChannel::canPlayBuffer() const
@@ -110,7 +121,7 @@ bool DummyMusicChannel::canPlayFile() const
 
 void DummyMusicChannel::bindFile(String const &sourcePath)
 {
-    _sourcePath = sourcePath;
+    d->sourcePath = sourcePath;
 }
 
 }  // namespace audio

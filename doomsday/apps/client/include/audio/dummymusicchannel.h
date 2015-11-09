@@ -53,11 +53,7 @@ public:
     void bindFile(de::String const &sourcePath);
 
 private:
-    PlayingMode _mode      = NotPlaying;
-    bool _paused           = false;
-    de::String _sourcePath;
-    de::dfloat _frequency  = 1;
-    de::dfloat _volume     = 1;
+    DENG2_PRIVATE(d)
 };
 
 }  // namespace audio

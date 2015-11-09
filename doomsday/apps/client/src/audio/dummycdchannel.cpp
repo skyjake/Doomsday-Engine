@@ -25,12 +25,21 @@ using namespace de;
 
 namespace audio {
 
-DummyCdChannel::DummyCdChannel() : CdChannel()
+DENG2_PIMPL_NOREF(DummyCdChannel)
+{
+    PlayingMode mode = NotPlaying;
+    bool paused      = false;
+    dint track       = -1;
+    dfloat frequency = 1;
+    dfloat volume    = 1;
+};
+
+DummyCdChannel::DummyCdChannel() : CdChannel(), d(new Instance)
 {}
 
 PlayingMode DummyCdChannel::mode() const
 {
-    return _mode;
+    return d->mode;
 }
 
 void DummyCdChannel::play(PlayingMode mode)
@@ -38,31 +47,33 @@ void DummyCdChannel::play(PlayingMode mode)
     if(isPlaying()) return;
     if(mode == NotPlaying) return;
 
-    if(_track < 0) Error("DummyCdChannel::play", "No track is bound");
-    _mode = mode;
+    if(d->track < 0) Error("DummyCdChannel::play", "No track is bound");
+    d->mode = mode;
 }
 
 void DummyCdChannel::stop()
-{}
+{
+    // Nothing to do.
+}
 
 bool DummyCdChannel::isPaused() const
 {
-    return _paused;
+    return d->paused;
 }
 
 void DummyCdChannel::pause()
 {
-    _paused = true;
+    d->paused = true;
 }
 
 void DummyCdChannel::resume()
 {
-    _paused = false;
+    d->paused = false;
 }
 
 Channel &DummyCdChannel::setFrequency(de::dfloat newFrequency)
 {
-    _frequency = newFrequency;
+    d->frequency = newFrequency;
     return *this;
 }
 
@@ -74,13 +85,13 @@ Channel &DummyCdChannel::setPositioning(Positioning)
 
 Channel &DummyCdChannel::setVolume(de::dfloat newVolume)
 {
-    _volume = newVolume;
+    d->volume = newVolume;
     return *this;
 }
 
 dfloat DummyCdChannel::frequency() const
 {
-    return _frequency;
+    return d->frequency;
 }
 
 Positioning DummyCdChannel::positioning() const
@@ -90,12 +101,12 @@ Positioning DummyCdChannel::positioning() const
 
 dfloat DummyCdChannel::volume() const
 {
-    return _volume;
+    return d->volume;
 }
 
 void DummyCdChannel::bindTrack(dint track)
 {
-    _track = de::max(-1, track);
+    d->track = de::max(-1, track);
 }
 
 }  // namespace audio

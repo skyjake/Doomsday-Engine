@@ -50,11 +50,7 @@ public:
     void bindTrack(de::dint track);
 
 private:
-    PlayingMode _mode     = NotPlaying;
-    bool _paused          = false;
-    de::dint _track       = -1;
-    de::dfloat _frequency = 1;
-    de::dfloat _volume    = 1;
+    DENG2_PRIVATE(d)
 };
 
 }  // namespace audio
