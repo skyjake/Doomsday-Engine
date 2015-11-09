@@ -141,7 +141,7 @@ inline QString ScriptArgumentComposer::scriptArgumentAsText(IObject const &objec
 }
 
 #define DENG2_SCRIPT_ARGUMENT_TYPE(ArgType, Method) \
-    template <> inline QString de::internal::ScriptArgumentComposer::scriptArgumentAsText(ArgType const &arg) { Method }
+    namespace de { namespace internal { template <> inline QString ScriptArgumentComposer::scriptArgumentAsText(ArgType const &arg) { Method } } }
 
 } // namespace internal
 
