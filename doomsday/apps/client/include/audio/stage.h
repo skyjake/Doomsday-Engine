@@ -20,6 +20,10 @@
 #ifndef CLIENT_AUDIO_STAGE_H
 #define CLIENT_AUDIO_STAGE_H
 
+#ifdef __SERVER__
+#  error "audio" is not available in a SERVER build
+#endif
+
 #include "audio/sound.h"
 #include <de/Observers>
 #include <functional>
@@ -33,8 +37,6 @@ class Listener;
  *
  * Marshalls concurrent playback on a purely logical level, providing tracking of the
  * playing Sounds and enforcing play/stop/etc.. behaviors and polices.
- *
- * @ingroup audio
  */
 class Stage
 {

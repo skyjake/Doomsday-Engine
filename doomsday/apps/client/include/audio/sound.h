@@ -21,6 +21,10 @@
 #ifndef CLIENT_AUDIO_SOUND_H
 #define CLIENT_AUDIO_SOUND_H
 
+#ifdef __SERVER__
+#  error "audio" is not available in a SERVER build
+#endif
+
 #include "dd_share.h"  // SoundEmitter
 #include <de/Vector>
 #include <QFlags>
@@ -29,8 +33,6 @@ namespace audio {
 
 /**
  * Sound behavior flags.
- *
- * @ingroup audio
  */
 enum SoundFlag
 {
@@ -45,8 +47,6 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(SoundFlags)
 
 /**
  * POD description of a sound to be played (used with audio::Stage).
- *
- * @ingroup audio
  */
 struct SoundParams
 {
@@ -62,8 +62,6 @@ struct SoundParams
  * Sounds track audio events on a purely logical level (irrespective of whether or not an
  * audio::Channel is available to play it, or if the associated effect will actually be
  * audible to anyone).
- *
- * @ingroup audio
  */
 class Sound
 {

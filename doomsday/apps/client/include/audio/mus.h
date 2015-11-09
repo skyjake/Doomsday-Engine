@@ -21,6 +21,10 @@
 #ifndef AUDIO_DATA_MUS_H
 #define AUDIO_DATA_MUS_H
 
+#ifdef __SERVER__
+#  error "audio" is not available in a SERVER build
+#endif
+
 #include <doomsday/filesys/file.h>
 
 /**

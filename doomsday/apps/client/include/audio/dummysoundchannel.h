@@ -1,4 +1,5 @@
 /** @file dummysoundchannel.cpp  Dummy audio::Channel for simulating sound playback.
+ * @ingroup audio
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
@@ -29,6 +30,9 @@
 
 namespace audio {
 
+/**
+ * Specialized audio::Channel for simulating sound playback.
+ */
 class DummySoundChannel : public SoundChannel
 {
 public:

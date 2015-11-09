@@ -20,6 +20,10 @@
 #ifndef CLIENT_AUDIO_MIXER_H
 #define CLIENT_AUDIO_MIXER_H
 
+#ifdef __SERVER__
+#  error "audio" is not available in a SERVER build
+#endif
+
 #include "audio/channel.h"
 #include <de/Error>
 #include <de/Observers>
@@ -32,8 +36,6 @@ namespace audio {
  * High-level logical audio mixer.
  *
  * A Mixer manages a set of Tracks mapped to playback Channels.
- *
- * @ingroup audio
  */
 class Mixer
 {

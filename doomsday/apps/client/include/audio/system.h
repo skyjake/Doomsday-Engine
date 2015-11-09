@@ -1,4 +1,5 @@
 /** @file audio/system.h  System module for audio playback.
+ * @ingroup audio
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
@@ -57,9 +58,7 @@ class Mixer;
 class SampleCache;
 
 /**
- * Client audio subsystem.
- *
- * @ingroup audio
+ * System module for audio playback (Client only).
  */
 class System : public de::System
 {

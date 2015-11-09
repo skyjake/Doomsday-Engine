@@ -1,4 +1,4 @@
-/** @file channel.h  Interface for an audio playback channel.
+/** @file channel.h  Logical audio playback "channel".
  * @ingroup audio
  *
  * @authors Copyright © 2003-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -21,11 +21,14 @@
 #ifndef CLIENT_AUDIO_CHANNEL_H
 #define CLIENT_AUDIO_CHANNEL_H
 
-#include "dd_share.h"        // SoundEmitter
+#ifdef __SERVER__
+#  error "audio" is not available in a SERVER build
+#endif
+
 #include "api_audiod_sfx.h"  // sfxsample_t
 #include <de/Deletable>
-#include <de/Observers>
 #include <de/Vector>
+#include <QList>
 
 namespace audio {
 
@@ -41,7 +44,7 @@ enum PlayingMode
 };
 
 /**
- * Positioning models for sound stage environment effects.
+ * Positioning models for spacial audio effects.
  */
 enum Positioning
 {
@@ -50,9 +53,7 @@ enum Positioning
 };
 
 /**
- * Interface model for a playback channel.
- *
- * @ingroup audio
+ * Abstract base class for any component which provides a logical playback "channel".
  */
 class Channel : public de::Deletable
 {
@@ -159,12 +160,12 @@ public:
      * Returns a set of configuration Records describing the Channel formats that the
      * factory is capable of producing.
      *
-     * Each record must contain at least the following required elements:
+     * Each record must contain at least the following required Values:
      *
-     * - (TextValue)"identityKey"   : Unique textual, symbolic identifier (lowercase) for
+     * - "identityKey" (Text)   : Unique textual, symbolic identifier (lowercase) for
      * "this" configuration, used in Config.
      *
-     * - (NumberValue)"channelType" : Logical channel-type identifier.
+     * - "channelType" (Number) : Logical channel-type identifier.
      *
      * @todo This configuration could also declare which audio formats it is capable of
      * playing (e.g., MIDI only, CD tracks only). -jk

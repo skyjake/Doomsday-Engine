@@ -20,6 +20,10 @@
 #ifndef CLIENT_AUDIO_WORLDSTAGE_H
 #define CLIENT_AUDIO_WORLDSTAGE_H
 
+#ifdef __SERVER__
+#  error "audio" is not available in a SERVER build
+#endif
+
 #include "audio/stage.h"
 
 namespace audio {
@@ -28,8 +32,6 @@ namespace audio {
  * Specialized Stage (soundstage) for the "world" playback context.
  *
  * Automatically clears all logical Sounds when the current world::Map changes.
- *
- * @ingroup audio
  */
 class WorldStage : public Stage
 {

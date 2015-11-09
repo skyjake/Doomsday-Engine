@@ -21,6 +21,10 @@
 #ifndef CLIENT_AUDIO_ENVIRONMENT_H
 #define CLIENT_AUDIO_ENVIRONMENT_H
 
+#ifdef __SERVER__
+#  error "audio" is not available in a SERVER build
+#endif
+
 namespace audio {
 
 /**

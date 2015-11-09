@@ -1,4 +1,5 @@
 /** @file idriver.cpp  Interface for audio playback (a "driver").
+ * @ingroup audio
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
@@ -35,8 +36,6 @@ namespace audio {
 
 /**
  * Interface for an audio component which provides audio playback on the local system.
- *
- * @ingroup audio
  */
 class IDriver
 {

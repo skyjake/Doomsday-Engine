@@ -20,6 +20,10 @@
 #ifndef CLIENT_AUDIO_LISTENER_H
 #define CLIENT_AUDIO_LISTENER_H
 
+#ifdef __SERVER__
+#  error "audio" is not available in a SERVER build
+#endif
+
 #include "audio/sound.h"
 #include <de/Deletable>
 #include <de/Observers>
@@ -33,7 +37,7 @@ namespace audio {
 struct Environment;
 
 /**
- * @ingroup audio
+ * Embodies the actual human listener as an entity in the audio soundstage.
  */
 class Listener : public de::Deletable
 {
