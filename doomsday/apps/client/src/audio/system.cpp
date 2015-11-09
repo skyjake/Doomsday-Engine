@@ -437,10 +437,10 @@ DENG2_PIMPL(System)
         if(idKey.segmentCount() < 2
            || (!driver || idKey.firstSegment() != driver->identityKey().split(';').first()))
         {
-            LOGDEV_AUDIO_WARNING("Playback interface identity key \"%s\" %s"
+            LOGDEV_AUDIO_WARNING("Playback interface identity key \"%s\"%s"
                                  " is malformed (expected \"<driverIdentityKey>.<interfaceIdentityKey>\")"
                                  " - cannot register interface")
-                << idKey << (driver ? String("for driver \"%1\"").arg(driver->identityKey()) : "");
+                << idKey << (driver ? String(" for driver \"%1\"").arg(driver->identityKey()) : "");
             return;
         }
 

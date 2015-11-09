@@ -1,4 +1,4 @@
-/** @file stage.h  Logically independent audio context (a sound "stage").
+/** @file stage.h  Logically independent audio context (a.k.a., "soundstage").
  * @ingroup audio
  *
  * @authors Copyright © 2015 Daniel Swanson <danij@dengine.net>
@@ -33,10 +33,11 @@ namespace audio {
 class Listener;
 
 /**
- * Model of a logically independent audio context (or sound "stage").
+ * Context for logically independent concurrent audio playback (a.k.a., soundstage).
  *
- * Marshalls concurrent playback on a purely logical level, providing tracking of the
- * playing Sounds and enforcing play/stop/etc.. behaviors and polices.
+ * Marshalls Sound playback within the context on a purely logical level and enforces
+ * specific play/stop/etc.. behaviors. Provides indexing and tracking facilities for
+ * monitoring currently playing sounds.
  */
 class Stage
 {

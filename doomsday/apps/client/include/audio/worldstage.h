@@ -1,4 +1,4 @@
-/** @file worldstage.h  audio::Stage specialized for the world context.
+/** @file worldstage.h  Specialized audio::Stage for the world playback context.
  * @ingroup audio
  *
  * @authors Copyright © 2015 Daniel Swanson <danij@dengine.net>

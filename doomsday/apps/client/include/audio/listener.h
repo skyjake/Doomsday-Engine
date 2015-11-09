@@ -1,4 +1,4 @@
-/** @file listener.h  Logical model of "listener" in an audio sound "stage".
+/** @file listener.h  Logical model of a "listener" in an audio soundstage.
  * @ingroup audio
  *
  * @authors Copyright © 2015 Daniel Swanson <danij@dengine.net>
@@ -37,7 +37,7 @@ namespace audio {
 struct Environment;
 
 /**
- * Embodies the actual human listener as an entity in the audio soundstage.
+ * Embodies the actual human listener as an entity in an audio soundstage.
  */
 class Listener : public de::Deletable
 {

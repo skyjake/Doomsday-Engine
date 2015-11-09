@@ -38,6 +38,10 @@
 
 namespace audio {
 
+class IDriver;
+class Mixer;
+class SampleCache;
+
 /**
  * Symbolic music source identifiers.
  */
@@ -52,10 +56,6 @@ enum MusicSource
  * Provides a human-friendly, textual representation of the given music @a source.
  */
 de::String MusicSourceAsText(MusicSource source);
-
-class IDriver;
-class Mixer;
-class SampleCache;
 
 /**
  * System module for audio playback (Client only).

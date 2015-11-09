@@ -29,7 +29,6 @@ namespace audio {
 
 /**
  * POD structure for representing effective environmental audio characteristics.
- * @ingroup audio
  */
 struct Environment
 {

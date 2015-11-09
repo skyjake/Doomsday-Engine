@@ -199,7 +199,7 @@ private:
 
 }  // namespace audio
 
-// Debug visual: ------------------------------------------------------------------------
+//- Debug visual: -----------------------------------------------------------------------
 
 extern int showMixerInfo;
 //extern byte refMonitor;
