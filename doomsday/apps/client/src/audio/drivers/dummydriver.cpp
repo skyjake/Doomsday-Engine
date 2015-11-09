@@ -465,6 +465,8 @@ void DummySoundChannel::updateEnvironment()
 
 // --------------------------------------------------------------------------------------
 
+static String const IDENTITY_KEY("dummy");
+
 DENG2_PIMPL_NOREF(DummyDriver), public IChannelFactory
 {
     bool initialized = false;
@@ -483,6 +485,30 @@ DENG2_PIMPL_NOREF(DummyDriver), public IChannelFactory
             qDeleteAll(set);
             set.clear();
         }
+    }
+
+    QList<Record> listInterfaces() const
+    {
+        QList<Record> list;
+        {
+            Record rec;
+            rec.addText  ("identityKey", DotPath(IDENTITY_KEY) / "cd");
+            rec.addNumber("channelType", Channel::Cd);
+            list << rec;  // A copy is made.
+        }
+        {
+            Record rec;
+            rec.addText  ("identityKey", DotPath(IDENTITY_KEY) / "music");
+            rec.addNumber("channelType", Channel::Music);
+            list << rec;
+        }
+        {
+            Record rec;
+            rec.addText  ("identityKey", DotPath(IDENTITY_KEY) / "sfx");
+            rec.addNumber("channelType", Channel::Sound);
+            list << rec;
+        }
+        return list;
     }
 
     Channel *makeChannel(Channel::Type type) override
@@ -546,36 +572,12 @@ IDriver::Status DummyDriver::status() const
 
 String DummyDriver::identityKey() const
 {
-    return "dummy";
+    return IDENTITY_KEY;
 }
 
 String DummyDriver::title() const
 {
     return "Dummy Driver";
-}
-
-QList<Record> DummyDriver::listInterfaces() const
-{
-    QList<Record> list;
-    {
-        Record rec;
-        rec.addText  ("identityKey", DotPath(identityKey()) / "cd");
-        rec.addNumber("channelType", Channel::Cd);
-        list << rec;  // A copy is made.
-    }
-    {
-        Record rec;
-        rec.addText  ("identityKey", DotPath(identityKey()) / "music");
-        rec.addNumber("channelType", Channel::Music);
-        list << rec;
-    }
-    {
-        Record rec;
-        rec.addText  ("identityKey", DotPath(identityKey()) / "sfx");
-        rec.addNumber("channelType", Channel::Sound);
-        list << rec;
-    }
-    return list;
 }
 
 void DummyDriver::allowRefresh(bool allow)

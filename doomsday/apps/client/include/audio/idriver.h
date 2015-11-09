@@ -130,26 +130,6 @@ public:
      */
     virtual void deinitInterface(de::String const &identityKey) {}
 
-    /**
-     * Returns a listing of the logical playback interfaces implemented by the driver.
-     * It is irrelevant whether said interfaces are presently available.
-     *
-     * Naturally, this means the driver must support interface enumeration @em before
-     * driver initialization. The driver and/or interface may still fail to initialize
-     * later, though.
-     *
-     * Each interface record must contain at least the following required elements:
-     *
-     * - (TextValue)"identityKey"   : Driver-unique, textual, symbolic identifier for
-     *   the player interface (lowercase), for use in Config.
-     *
-     * - (NumberValue)"channelType" : Channel::Type identifier.
-     *
-     * @todo The playback interface could also declare which audio formats it is capable
-     * of playing (e.g., MIDI only, CD tracks only). -jk
-     */
-    virtual QList<de::Record> listInterfaces() const = 0;
-
 public:  //- Playback Channels: ---------------------------------------------------------
 
     /**

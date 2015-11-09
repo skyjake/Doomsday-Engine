@@ -132,8 +132,6 @@ public:  //- Implements audio::System::IDriver: --------------------------------
     void initInterface(de::String const &identityKey) override;
     void deinitInterface(de::String const &identityKey) override;
 
-    QList<de::Record> listInterfaces() const;
-
     IChannelFactory &channelFactory() const override;
 
     de::LoopResult forAllChannels(Channel::Type type,

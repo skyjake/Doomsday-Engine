@@ -702,6 +702,8 @@ bool SdlMixerDriver::SoundChannel::anyRateAccepted() const
 
 // --------------------------------------------------------------------------------------
 
+static String const IDENTITY_KEY = "sdlmixer";
+
 DENG2_PIMPL(SdlMixerDriver), public IChannelFactory
 {
     bool initialized = false;
@@ -899,6 +901,24 @@ DENG2_PIMPL(SdlMixerDriver), public IChannelFactory
         }
     }
 
+    QList<Record> listInterfaces() const
+    {
+        QList<Record> list;
+        {
+            Record rec;
+            rec.addText  ("identityKey", DotPath(IDENTITY_KEY) / "music");
+            rec.addNumber("channelType", Channel::Music);
+            list << rec;
+        }
+        {
+            Record rec;
+            rec.addText  ("identityKey", DotPath(IDENTITY_KEY) / "sfx");
+            rec.addNumber("channelType", Channel::Sound);
+            list << rec;
+        }
+        return list;
+    }
+
     Channel *makeChannel(Channel::Type type) override
     {
         if(self.isInitialized())
@@ -1037,7 +1057,7 @@ IDriver::Status SdlMixerDriver::status() const
 
 String SdlMixerDriver::identityKey() const
 {
-    return "sdlmixer";
+    return IDENTITY_KEY;
 }
 
 String SdlMixerDriver::title() const
@@ -1048,7 +1068,7 @@ String SdlMixerDriver::title() const
 void SdlMixerDriver::initInterface(String const &identityKey)
 {
     String const idKey = identityKey.toLower();
-    for(Record const &def : listInterfaces())
+    for(Record const &def : d->listInterfaces())
     {
         if(def.gets("identityKey") != idKey) continue;
 
@@ -1065,7 +1085,7 @@ void SdlMixerDriver::initInterface(String const &identityKey)
 void SdlMixerDriver::deinitInterface(String const &identityKey)
 {
     String const idKey = identityKey.toLower();
-    for(Record const &def : listInterfaces())
+    for(Record const &def : d->listInterfaces())
     {
         if(def.gets("identityKey") != idKey) continue;
 
@@ -1077,24 +1097,6 @@ void SdlMixerDriver::deinitInterface(String const &identityKey)
         default: return;
         }
     }
-}
-
-QList<Record> SdlMixerDriver::listInterfaces() const
-{
-    QList<Record> list;
-    {
-        Record rec;
-        rec.addText  ("identityKey", DotPath(identityKey()) / "music");
-        rec.addNumber("channelType", Channel::Music);
-        list << rec;
-    }
-    {
-        Record rec;
-        rec.addText  ("identityKey", DotPath(identityKey()) / "sfx");
-        rec.addNumber("channelType", Channel::Sound);
-        list << rec;
-    }
-    return list;
 }
 
 void SdlMixerDriver::allowRefresh(bool allow)

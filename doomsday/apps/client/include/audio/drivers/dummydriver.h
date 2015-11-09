@@ -143,8 +143,6 @@ public:
     de::String identityKey() const;
     de::String title() const;
 
-    QList<de::Record> listInterfaces() const;
-
     IChannelFactory &channelFactory() const override;
 
     de::LoopResult forAllChannels(Channel::Type type,

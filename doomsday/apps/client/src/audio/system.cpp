@@ -153,7 +153,7 @@ String IDriver::description() const
                   .arg(identityKey().replace(';', " | "));
 
     // Summarize playback interfaces.
-    QList<Record> const interfaces = listInterfaces();
+    QList<Record> const interfaces = channelFactory().listInterfaces();
     if(!interfaces.isEmpty())
     {
         desc += "\n" _E(D)_E(b) "Playback interfaces:";
@@ -403,7 +403,7 @@ DENG2_PIMPL(System)
         drivers << driver;
 
         // Validate playback interfaces and register in the known interface db.
-        for(Record const &rec : driver->listInterfaces())
+        for(Record const &rec : driver->channelFactory().listInterfaces())
         {
             DotPath const idKey(rec.gets("identityKey"));
             auto const channelType = Channel::Type( rec.geti("channelType") );

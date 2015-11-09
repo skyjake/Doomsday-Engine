@@ -1210,6 +1210,50 @@ DENG2_PIMPL(PluginDriver), public IChannelFactory
         }
     }
 
+    QList<Record> listInterfaces() const
+    {
+        QList<Record> list;
+        String const driverIdKey = self.identityKey().split(';').first();
+
+        if(cd.gen.Init != nullptr)
+        {
+            String const idKey = cd.getPropertyAsString(MUSIP_IDENTITYKEY);
+            if(!idKey.isEmpty())
+            {
+                Record rec;
+                rec.addText  ("identityKey", DotPath(driverIdKey) / idKey);
+                rec.addNumber("channelType", Channel::Cd);
+                list << rec;  // A copy is made.
+            }
+            else DENG2_ASSERT(!"[MUSIP_IDENTITYKEY not defined]");
+        }
+        if(music.gen.Init != nullptr)
+        {
+            String const idKey = music.getPropertyAsString(MUSIP_IDENTITYKEY);
+            if(!idKey.isEmpty())
+            {
+                Record rec;
+                rec.addText  ("identityKey", DotPath(driverIdKey) / idKey);
+                rec.addNumber("channelType", Channel::Music);
+                list << rec;
+            }
+            else DENG2_ASSERT(!"[MUSIP_IDENTITYKEY not defined]");
+        }
+        if(sound.gen.Init != nullptr)
+        {
+            String const idKey = sound.getPropertyAsString(SFXIP_IDENTITYKEY);
+            if(!idKey.isEmpty())
+            {
+                Record rec;
+                rec.addText  ("identityKey", DotPath(driverIdKey) / idKey);
+                rec.addNumber("channelType", Channel::Sound);
+                list << rec;
+            }
+            else DENG2_ASSERT(!"[SFXIP_IDENTITYKEY not defined]");
+        }
+        return list;
+    }
+
     Channel *makeChannel(Channel::Type type) override
     {
         if(!self.isInitialized())
@@ -1485,7 +1529,7 @@ void PluginDriver::deinitialize()
 void PluginDriver::initInterface(String const &identityKey)
 {
     String const idKey = identityKey.toLower();
-    for(Record const &def : listInterfaces())
+    for(Record const &def : d->listInterfaces())
     {
         if(def.gets("identityKey") != idKey) continue;
 
@@ -1503,7 +1547,7 @@ void PluginDriver::initInterface(String const &identityKey)
 void PluginDriver::deinitInterface(String const &identityKey)
 {
     String const idKey = identityKey.toLower();
-    for(Record const &def : listInterfaces())
+    for(Record const &def : d->listInterfaces())
     {
         if(def.gets("identityKey") != idKey) continue;
 
@@ -1516,50 +1560,6 @@ void PluginDriver::deinitInterface(String const &identityKey)
         default: return;
         }
     }
-}
-
-QList<Record> PluginDriver::listInterfaces() const
-{
-    QList<Record> list;
-    String const driverIdKey = identityKey().split(';').first();
-
-    if(d->cd.gen.Init != nullptr)
-    {
-        String const idKey = d->cd.getPropertyAsString(MUSIP_IDENTITYKEY);
-        if(!idKey.isEmpty())
-        {
-            Record rec;
-            rec.addText  ("identityKey", DotPath(driverIdKey) / idKey);
-            rec.addNumber("channelType", Channel::Cd);
-            list << rec;  // A copy is made.
-        }
-        else DENG2_ASSERT(!"[MUSIP_IDENTITYKEY not defined]");
-    }
-    if(d->music.gen.Init != nullptr)
-    {
-        String const idKey = d->music.getPropertyAsString(MUSIP_IDENTITYKEY);
-        if(!idKey.isEmpty())
-        {
-            Record rec;
-            rec.addText  ("identityKey", DotPath(driverIdKey) / idKey);
-            rec.addNumber("channelType", Channel::Music);
-            list << rec;
-        }
-        else DENG2_ASSERT(!"[MUSIP_IDENTITYKEY not defined]");
-    }
-    if(d->sound.gen.Init != nullptr)
-    {
-        String const idKey = d->sound.getPropertyAsString(SFXIP_IDENTITYKEY);
-        if(!idKey.isEmpty())
-        {
-            Record rec;
-            rec.addText  ("identityKey", DotPath(driverIdKey) / idKey);
-            rec.addNumber("channelType", Channel::Sound);
-            list << rec;
-        }
-        else DENG2_ASSERT(!"[SFXIP_IDENTITYKEY not defined]");
-    }
-    return list;
 }
 
 void PluginDriver::allowRefresh(bool allow)
