@@ -25,7 +25,6 @@
 #endif
 
 #include "audio/channel.h"
-#include "audio/idriver.h"
 #include <de/String>
 
 namespace audio {
@@ -121,34 +120,6 @@ public:
     de::duint endTime() const override;
 
     void updateEnvironment();
-
-private:
-    DENG2_PRIVATE(d)
-};
-
-/**
- * Provides a null-op audio driver.
- */
-class DummyDriver : public IDriver
-{
-public:
-    DummyDriver();
-    virtual ~DummyDriver();
-
-    void initialize();
-    void deinitialize();
-
-    Status status() const;
-
-    de::String identityKey() const;
-    de::String title() const;
-
-    IChannelFactory &channelFactory() const override;
-
-    de::LoopResult forAllChannels(Channel::Type type,
-        std::function<de::LoopResult (Channel const &)> callback) const override;
-
-    void allowRefresh(bool allow) override;
 
 private:
     DENG2_PRIVATE(d)

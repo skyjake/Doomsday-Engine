@@ -177,8 +177,72 @@ String IDriver::description() const
 // --------------------------------------------------------------------------------------
 
 /**
- * @todo Simplify architecture - load the "dummy" driver, always. -ds
+ * Produces "dummy" Channels for the audio::System
  */
+struct DummyChannelFactory : public IChannelFactory
+{
+    struct ChannelSet : public QList<Channel *>
+    {
+        ~ChannelSet() { DENG2_ASSERT(isEmpty()); }
+    } channels[Channel::TypeCount];
+
+    void clearChannels()
+    {
+        for(ChannelSet &set : channels)
+        {
+            qDeleteAll(set);
+            set.clear();
+        }
+    }
+
+    QList<Record> listInterfaces() const override
+    {
+        static String const IDENTITY_KEY("dummy");
+
+        QList<Record> list;
+        {
+            Record rec;
+            rec.addText  ("identityKey", DotPath(IDENTITY_KEY) / "cd");
+            rec.addNumber("channelType", Channel::Cd);
+            list << rec;  // A copy is made.
+        }
+        {
+            Record rec;
+            rec.addText  ("identityKey", DotPath(IDENTITY_KEY) / "music");
+            rec.addNumber("channelType", Channel::Music);
+            list << rec;
+        }
+        {
+            Record rec;
+            rec.addText  ("identityKey", DotPath(IDENTITY_KEY) / "sfx");
+            rec.addNumber("channelType", Channel::Sound);
+            list << rec;
+        }
+        return list;
+    }
+
+    Channel *makeChannel(Channel::Type type) override
+    {
+        std::unique_ptr<Channel> channel;
+        switch(type)
+        {
+        case Channel::Cd:    channel.reset(new DummyCdChannel   ); break;
+        case Channel::Music: channel.reset(new DummyMusicChannel); break;
+        case Channel::Sound: channel.reset(new DummySoundChannel); break;
+
+        default: break;
+        }
+
+        if(channel)
+        {
+            channels[type] << channel.get();
+            return channel.release();
+        }
+        return nullptr;
+    }
+};
+static DummyChannelFactory dummyChannelFactory;
+
 DENG2_PIMPL(System)
 , DENG2_OBSERVES(Stage, Addition)
 , DENG2_OBSERVES(App, GameUnload)
@@ -361,6 +425,35 @@ DENG2_PIMPL(System)
         }
     } activeInterfaces;  //< Initialization order.
 
+    void registerInterface(Record const &rec, IDriver *driver = nullptr)
+    {
+        DotPath const idKey(rec.gets("identityKey"));
+        auto const channelType = Channel::Type( rec.geti("channelType") );
+
+        // Interface identity keys must be well-formed.
+        if(idKey.segmentCount() < 2
+           || (!driver || idKey.firstSegment() != driver->identityKey().split(';').first()))
+        {
+            LOGDEV_AUDIO_WARNING("Playback interface identity key \"%s\" %s"
+                                 " is malformed (expected \"<driverIdentityKey>.<interfaceIdentityKey>\")"
+                                 " - cannot register interface")
+                << idKey << (driver ? String("for driver \"%1\"").arg(driver->identityKey()) : "");
+            return;
+        }
+
+        // Interface identity keys must be unique.
+        if(interfaces.tryFind(idKey, channelType))
+        {
+            LOGDEV_AUDIO_WARNING("A playback interface with identity key \"%s\" already"
+                                 " exists (must be unique) - cannot register interface")
+                << idKey;
+            return;
+        }
+
+        // Seems legit...
+        interfaces.insert(rec);  // A copy is made.
+    }
+
     /**
      * Attempt to "install" the given audio @a driver (ownership is given), by first
      * validating it to ensure the metadata is well-formed and then ensuring the driver
@@ -405,30 +498,7 @@ DENG2_PIMPL(System)
         // Validate playback interfaces and register in the known interface db.
         for(Record const &rec : driver->channelFactory().listInterfaces())
         {
-            DotPath const idKey(rec.gets("identityKey"));
-            auto const channelType = Channel::Type( rec.geti("channelType") );
-
-            // Interface identity keys must be well-formed.
-            if(idKey.segmentCount() < 2 || idKey.firstSegment() != driver->identityKey().split(';').first())
-            {
-                LOGDEV_AUDIO_WARNING("Playback interface identity key \"%s\" for driver \"%s\""
-                                     " is malformed (expected \"<driverIdentityKey>.<interfaceIdentityKey>\")"
-                                     " - cannot register interface")
-                    << idKey << driver->identityKey();
-                continue;
-            }
-
-            // Interface identity keys must be unique.
-            if(interfaces.tryFind(idKey, channelType))
-            {
-                LOGDEV_AUDIO_WARNING("A playback interface with identity key \"%s\" already"
-                                     " exists (must be unique) - cannot register interface")
-                    << idKey;
-                continue;
-            }
-
-            // Seems legit...
-            interfaces.insert(rec);  // A copy is made.
+            registerInterface(rec, driver);
         }
     }
 
@@ -467,7 +537,6 @@ DENG2_PIMPL(System)
         DENG2_ASSERT(!App::commandLine().has("-nosound"));
 
         // Firstly - built-in drivers.
-        installDriver(new DummyDriver);
 #ifndef DENG_DISABLE_SDLMIXER
         installDriver(new SdlMixerDriver);
 #endif
@@ -1966,7 +2035,13 @@ void System::initPlayback()
     d->musicCurrentSong = "";
     d->musicPaused      = false;
 
-    // Load all the available audio drivers.
+    // Register the dummy channel factory.
+    for(Record const &rec : dummyChannelFactory.listInterfaces())
+    {
+        d->registerInterface(rec);
+    }
+
+    // Load all available audio drivers.
     d->loadDrivers();
 
     // Activate playback interfaces specified in Config.
@@ -2024,8 +2099,9 @@ void System::deinitPlayback()
         stage.release();
     }
 
-    // Finally, unload the drivers.
     d->unloadDrivers();
+
+    dummyChannelFactory.clearChannels();
 }
 
 void System::allowChannelRefresh(bool allow)
