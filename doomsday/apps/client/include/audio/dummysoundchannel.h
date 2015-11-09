@@ -1,4 +1,4 @@
-/** @file dummydriver.cpp  Dummy audio driver for simulating playback.
+/** @file dummysoundchannel.cpp  Dummy audio::Channel for simulating sound playback.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_AUDIO_DUMMYDRIVER_H
-#define CLIENT_AUDIO_DUMMYDRIVER_H
+#ifndef CLIENT_AUDIO_DUMMYSOUNDCHANNEL_H
+#define CLIENT_AUDIO_DUMMYSOUNDCHANNEL_H
 
 #ifdef __SERVER__
 #  error "audio" is not available in a SERVER build
@@ -28,65 +28,6 @@
 #include <de/String>
 
 namespace audio {
-
-class DummyCdChannel : public CdChannel
-{
-public:
-    DummyCdChannel();
-
-    PlayingMode mode() const override;
-    void play(PlayingMode mode) override;
-    void stop() override;
-    bool isPaused() const override;
-    void pause() override;
-    void resume() override;
-    Channel &setFrequency(de::dfloat newFrequency) override;
-    Channel &setPositioning(Positioning newPositioning) override;
-    Channel &setVolume(de::dfloat newVolume) override;
-    de::dfloat frequency() const override;
-    Positioning positioning() const override;
-    de::dfloat volume() const override;
-
-    void bindTrack(de::dint track);
-
-private:
-    PlayingMode _mode     = NotPlaying;
-    bool _paused          = false;
-    de::dint _track       = -1;
-    de::dfloat _frequency = 1;
-    de::dfloat _volume    = 1;
-};
-
-class DummyMusicChannel : public MusicChannel
-{
-public:
-    DummyMusicChannel();
-
-    PlayingMode mode() const override;
-    void play(PlayingMode mode) override;
-    void stop() override;
-    bool isPaused() const override;
-    void pause() override;
-    void resume() override;
-    Channel &setFrequency(de::dfloat newFrequency) override;
-    Channel &setPositioning(Positioning newPositioning) override;
-    Channel &setVolume(de::dfloat newVolume) override;
-    de::dfloat frequency() const override;
-    Positioning positioning() const override;
-    de::dfloat volume() const override;
-
-    bool canPlayBuffer() const;
-    void *songBuffer(de::duint length);
-    bool canPlayFile() const;
-    void bindFile(de::String const &sourcePath);
-
-private:
-    PlayingMode _mode      = NotPlaying;
-    bool _paused           = false;
-    de::String _sourcePath;
-    de::dfloat _frequency  = 1;
-    de::dfloat _volume     = 1;
-};
 
 class DummySoundChannel : public SoundChannel
 {
@@ -127,4 +68,4 @@ private:
 
 }  // namespace audio
 
-#endif  // CLIENT_AUDIO_DUMMYDRIVER_H
+#endif  // CLIENT_AUDIO_DUMMYSOUNDCHANNEL_H

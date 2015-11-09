@@ -22,9 +22,11 @@
 #include "audio/system.h"
 
 #include "api_sound.h"
-#include "audio/drivers/dummydriver.h"
 #include "audio/drivers/plugindriver.h"
 #include "audio/drivers/sdlmixerdriver.h"
+#include "audio/dummycdchannel.h"
+#include "audio/dummymusicchannel.h"
+#include "audio/dummysoundchannel.h"
 #include "audio/listener.h"
 #include "audio/mixer.h"
 #include "audio/mus.h"

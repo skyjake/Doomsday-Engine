@@ -1,4 +1,4 @@
-/** @file dummydriver.cpp  Dummy audio driver.
+/** @file dummysoundchannel.cpp  Dummy audio::Channel for simulating sound playback.
  *
  * @authors Copyright © 2003-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "audio/drivers/dummydriver.h"
+#include "audio/dummysoundchannel.h"
 
 #include "audio/sound.h"
 #include "clientapp.h"
@@ -30,171 +30,6 @@
 using namespace de;
 
 namespace audio {
-
-DummyCdChannel::DummyCdChannel() : CdChannel()
-{}
-
-PlayingMode DummyCdChannel::mode() const
-{
-    return _mode;
-}
-
-void DummyCdChannel::play(PlayingMode mode)
-{
-    if(isPlaying()) return;
-    if(mode == NotPlaying) return;
-
-    if(_track < 0) Error("DummyCdChannel::play", "No track is bound");
-    _mode = mode;
-}
-
-void DummyCdChannel::stop()
-{}
-
-bool DummyCdChannel::isPaused() const
-{
-    return _paused;
-}
-
-void DummyCdChannel::pause()
-{
-    _paused = true;
-}
-
-void DummyCdChannel::resume()
-{
-    _paused = false;
-}
-
-Channel &DummyCdChannel::setFrequency(de::dfloat newFrequency)
-{
-    _frequency = newFrequency;
-    return *this;
-}
-
-Channel &DummyCdChannel::setPositioning(Positioning)
-{
-    // Not supported.
-    return *this;
-}
-
-Channel &DummyCdChannel::setVolume(de::dfloat newVolume)
-{
-    _volume = newVolume;
-    return *this;
-}
-
-dfloat DummyCdChannel::frequency() const
-{
-    return _frequency;
-}
-
-Positioning DummyCdChannel::positioning() const
-{
-    return StereoPositioning;  // Always.
-}
-
-dfloat DummyCdChannel::volume() const
-{
-    return _volume;
-}
-
-void DummyCdChannel::bindTrack(dint track)
-{
-    _track = de::max(-1, track);
-}
-
-// --------------------------------------------------------------------------------------
-
-DummyMusicChannel::DummyMusicChannel() : MusicChannel()
-{}
-
-PlayingMode DummyMusicChannel::mode() const
-{
-    return _mode;
-}
-
-void DummyMusicChannel::play(PlayingMode mode)
-{
-    if(isPlaying()) return;
-    if(mode == NotPlaying) return;
-
-    if(_sourcePath.isEmpty()) Error("DummyMusicChannel::play", "No track is bound");
-    _mode = mode;
-}
-
-void DummyMusicChannel::stop()
-{}
-
-bool DummyMusicChannel::isPaused() const
-{
-    return _paused;
-}
-
-void DummyMusicChannel::pause()
-{
-    _paused = true;
-}
-
-void DummyMusicChannel::resume()
-{
-    _paused = false;
-}
-
-Channel &DummyMusicChannel::setFrequency(de::dfloat newFrequency)
-{
-    _frequency = newFrequency;
-    return *this;
-}
-
-Channel &DummyMusicChannel::setPositioning(Positioning)
-{
-    // Not supported.
-    return *this;
-}
-
-Channel &DummyMusicChannel::setVolume(de::dfloat newVolume)
-{
-    _volume = newVolume;
-    return *this;
-}
-
-dfloat DummyMusicChannel::frequency() const
-{
-    return _frequency;
-}
-
-Positioning DummyMusicChannel::positioning() const
-{
-    return StereoPositioning;  // Always.
-}
-
-dfloat DummyMusicChannel::volume() const
-{
-    return _volume;
-}
-
-bool DummyMusicChannel::canPlayBuffer() const
-{
-    return false;  /// @todo Should support this...
-}
-
-void *DummyMusicChannel::songBuffer(duint)
-{
-    return nullptr;
-}
-
-bool DummyMusicChannel::canPlayFile() const
-{
-    return true;
-}
-
-void DummyMusicChannel::bindFile(String const &sourcePath)
-{
-    _sourcePath = sourcePath;
-}
-
-// --------------------------------------------------------------------------------------
 
 DENG2_PIMPL_NOREF(DummySoundChannel)
 , DENG2_OBSERVES(System, FrameEnds)
