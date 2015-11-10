@@ -366,8 +366,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         // we don't need to do this too often (cache everything!).
         try
         {
-            //$cachedLogXml = 
-FrontController::contentCache()->retrieve($logCacheName);
+            //$cachedLogXml = FrontController::contentCache()->retrieve($logCacheName);
 
             $path = nativePath("/home/skyjake/files/builds/events.xml");
             $stream = fopen($path, 'r');
