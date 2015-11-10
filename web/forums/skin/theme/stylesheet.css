@@ -1057,6 +1057,17 @@ fieldset.polls dd div {
     margin-top: .6em;
 }
 
+.postprofile .profile-icons li { padding-left: 0; }
+
+.postprofile .profile-icons li a {
+    display: block;
+    width: 20px;
+    height: 20px;
+    overflow: hidden;
+}
+
+.postprofile .profile-icons li a span { display: none; }
+
 .avatar {
     border: none;
     margin-bottom: 3px;
@@ -1085,6 +1096,10 @@ dl.pmlist dt textarea {
 dl.pmlist dd {
     margin-left: 61% !important;
     margin-bottom: 2px;
+}
+
+.pmlist li dt {
+    padding-left: 3em;
 }
 
 /* Rollover buttons
@@ -1255,8 +1270,14 @@ ul.profile-icons li.m-locked-icon    { width: {IMG_ICON_POST_LOCKED_WIDTH}px; he
 }
 
 #cp-main .panel li.row {
-    border-bottom: 1px solid #cbcbcb;
-    border-top: 1px solid #F9F9F9;
+    border-color: #333;
+    border-style: solid;
+    border-width: 2px;
+    border-radius: 4px;
+}
+
+#cp-main .panel li.row:hover {
+    border-color: #666;
 }
 
 ul.cplist {
@@ -1294,6 +1315,12 @@ ul.cplist {
     background-color: #FFFFFF;
     width: auto;
     float: none;
+}
+
+#cp-main .panel.pm-panel-message {
+    margin-left: -1px;
+    padding-left: 10px;
+    margin-top: 10px;
 }
 
 .pm-message h2 {
@@ -2112,10 +2139,10 @@ a.unsubscribe { background-image: url("{T_THEME_PATH}/images/icon_unsubscribe.gi
     border-color: #B0B1B3;
 }
 
-#cp-main .panel li.row {
+/*#cp-main .panel li.row {
     border-bottom-color: #BFC0C1;
     border-top-color: #F9F9F9;
-}
+}*/
 
 ul.cplist {
     border-top-color: #BFC0C1;

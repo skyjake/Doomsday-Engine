@@ -686,7 +686,9 @@ ol.jumplist li {
 }
 
 #menu a, span.paddle_left_select,
-#menu a, span.paddle_right_select {
+#menu a, span.paddle_right_select,
+a.paddle_left_select,
+a.paddle_right_select {
     position:inherit;
     padding-top: 19px;
     padding-bottom: 19px;
@@ -695,7 +697,8 @@ ol.jumplist li {
     color: white;
 }
 
-span.paddle_left_select, span.paddle_right_select {
+span.paddle_left_select, span.paddle_right_select,
+a.paddle_left_select, a.paddle_right_select {
     border-bottom: 2px solid white;
 }
 
