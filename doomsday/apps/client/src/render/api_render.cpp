@@ -183,7 +183,7 @@ DENG_EXTERN_C scalemode_t R_ChooseScaleMode2(dint width, dint height, dint avail
 DENG_EXTERN_C scalemode_t R_ChooseScaleMode(dint width, dint height, dint availWidth, dint availHeight, scalemode_t overrideMode);
 
 #undef R_SetupFog
-DENG_EXTERN_C void R_SetupFog(dfloat start, dfloat end, dfloat density, dfloat *rgb)
+DENG_EXTERN_C void R_SetupFog(dfloat start, dfloat end, dfloat density, dfloat const *rgb)
 {
     DENG2_ASSERT(rgb);
     Con_Execute(CMDS_DDAY, "fog on", true, false);
