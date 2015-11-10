@@ -330,7 +330,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
      */
     private function constructBuilds(&$builds)
     {
-        $buildLogUri = self::XML_FEED_URI;
+/*        $buildLogUri = self::XML_FEED_URI;
 
         // Is it time to update our cached copy of the build log?
         $logCacheName = 'buildrepository/events.xml';
@@ -360,13 +360,19 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                 // Touch our cached copy so we don't try again too soon.
                 FrontController::contentCache()->touch($logCacheName);
             }
-        }
+        }*/
 
         // Re-parse our locally cached copy of the log, hopefully
         // we don't need to do this too often (cache everything!).
         try
         {
-            $cachedLogXml = FrontController::contentCache()->retrieve($logCacheName);
+            //$cachedLogXml = 
+FrontController::contentCache()->retrieve($logCacheName);
+
+            $path = nativePath("/home/skyjake/files/builds/events.xml");
+            $stream = fopen($path, 'r');
+            $cachedLogXml = stream_get_contents($stream);
+            fclose($stream);
             BuildLogParser::parse($cachedLogXml, $builds);
             return TRUE;
         }
