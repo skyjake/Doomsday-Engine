@@ -30,6 +30,7 @@
 #include "../Error"
 #include "../ISerializable"
 #include "../Writer"
+#include "../ByteRefArray"
 #include "../Reader"
 #include "../String"
 #include "../NumberValue"
@@ -126,6 +127,12 @@ public:
     }
     int size() const {
         return 2;
+    }
+    ByteRefArray const data() const {
+        return ByteRefArray(&x, size() * sizeof(ValueType));
+    }
+    ByteRefArray data() {
+        return ByteRefArray(&x, size() * sizeof(ValueType));
     }
     Type &operator [] (int index) {
         DENG2_ASSERT(index >= 0 && index <= 1);
@@ -326,6 +333,12 @@ public:
     }
     int size() const {
         return 3;
+    }
+    ByteRefArray const data() const {
+        return ByteRefArray(&this->Vector2<Type>::x, size() * sizeof(Type));
+    }
+    ByteRefArray data() {
+        return ByteRefArray(&this->Vector2<Type>::x, size() * sizeof(Type));
     }
     Type &operator [] (int index) {
         DENG2_ASSERT(index >= 0 && index <= 2);
@@ -550,6 +563,12 @@ public:
     }
     int size() const {
         return 4;
+    }
+    ByteRefArray const data() const {
+        return ByteRefArray(&this->Vector2<Type>::x, size() * sizeof(Type));
+    }
+    ByteRefArray data() {
+        return ByteRefArray(&this->Vector2<Type>::x, size() * sizeof(Type));
     }
     Type &operator [] (int index) {
         DENG2_ASSERT(index >= 0 && index <= 3);
