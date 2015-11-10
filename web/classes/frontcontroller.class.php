@@ -386,21 +386,23 @@ class FrontController
                 $tab = $tabs[$i];
 
                 $result .= '<li>';
+                $tabClassName = NULL;
 
                 if(!is_null($page) && !strcasecmp($page, substr($tab['page'], 1)))
                 {
-                    $result .= '<span ';
                     if(isset($selectClassName))
-                        $result .= "class=\"$selectClassName\" ";
-                    $result .= '>'.$tab['label'].'</span>';
+                        $tabClassName = $selectClassName;
                 }
                 else
                 {
-                    $result .= '<a ';
                     if(isset($normalClassName))
-                        $result .= "class=\"$normalClassName\" ";
-                    $result .= 'href="'.$tab['page'].'" title="'.$tab['tooltip'].'">'.$tab['label'].'</a>';
+                        $tabClassName = $normalClassName; 
                 }
+
+                $result .= '<a ';
+                if(isset($tabClassName))
+                    $result .= "class=\"$tabClassName\" ";
+                $result .= 'href="'.$tab['page'].'" title="'.$tab['tooltip'].'">'.$tab['label'].'</a>';
 
                 $result .= '</li>';
             }
