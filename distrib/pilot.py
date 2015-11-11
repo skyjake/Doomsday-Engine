@@ -432,6 +432,10 @@ def doTask(task):
         msg("GENERATE API DOCUMENTATION")
         return autobuild('apidoc')
         
+    elif task == 'mirror_files':
+        msg("MIRROR TO FILES.DENGINE.NET")
+        systemCommand('mirror-builds-to-dengine.sh')
+        
     elif task == 'mirror':
         msg("MIRROR")
         systemCommand('mirror-buildmaster-to-idisk.sh')
@@ -481,6 +485,7 @@ def handleCompletedTasks():
             
         elif task == 'update_feed':
             newTask('mirror', forClient='master')
+            newTask('mirror_files', forClient='ubuntu-32bit')
     
     
 def autobuild(cmd):
