@@ -268,6 +268,13 @@ hr.dashed {
 
 .block a:hover { color: #FFCB0F; }
 
+.block p + p, .block section + p {
+    margin-top: 1em;
+}
+
+.block h1 + p, .block h2, .block h3 { margin-top: 1em; }
+.block h2:first-child, .block h3:first-child { margin-top: 0; }
+
 .major_issue { background-color:#ff4444; /* red */ }
 .minor_issue { background-color:#ffee00; /* yellow */ }
 .no_issue    { background-color:#00ee00; /* green */ }
@@ -813,7 +820,7 @@ div.clear {
 #main footer {
     width: 100%;
     font-size: xx-small;
-    font-family: Verdana, Arial, Helvetica, sans-serif;
+    font-family: "Open Sans", sans-serif;
     text-align: center;
     margin-top: 1em;
     margin-bottom: 1em;
@@ -886,13 +893,13 @@ div.clear {
 
 .asidebox {
     display: block;
-    font-family: Verdana, Arial, Helvetica, sans-serif;
+    font-family: "Open Sans", sans-serif;
     margin:.8em;
 }
 
 #downloadbox, #socialbookmarkbox {
     text-align: center;
-    margin-top: 2.4em;
+    margin-top: 2em;
     margin-bottom: 2.4em;
     overflow: hidden;
 }
@@ -949,18 +956,31 @@ div.clear {
     background-position: 0 0;
 }
 
-.getitnow-label {
+.download-button {
     font-size: x-large;
-    text-align:center;
+    text-align: center;
+    margin-top: 1ex;
+    margin-bottom: 1.3em;
+    font-weight: 300;
 }
 
-.getitnow-label a, a:hover, a:visited:hover {
+.download-button a {
+    border: 1px solid white;
+    border-radius: 0.5ex;
+    padding: 0.4ex 1ex;
+    margin: 1ex;    
+}
+
+.download-button a:hover {
+    border: 1px solid #FFCB0F;
+}
+
+.download-button .downarrow {
+    text-weight: bold;
+}
+
+.download-button a, a:hover, a:visited:hover {
     text-decoration: none;
-}
-
-.getitnow-label span.free-label {
-    font-style: italic;
-    font-size: medium;
 }
 
 #socialbookmarkbox .hnav {

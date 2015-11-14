@@ -415,7 +415,7 @@ class FrontController
         $leftTabs = array();
         $leftTabs[] = array('page'=>'/engine',  'label'=>'Engine',   'tooltip'=>'About the Doomsday Engine');
         $leftTabs[] = array('page'=>'/games',   'label'=>'Games',    'tooltip'=>'Games playable with the Doomsday Engine');
-        $leftTabs[] = array('page'=>'/dew',     'label'=>'Wiki',     'tooltip'=>'Doomsday Engine wiki (documentation)');
+        $leftTabs[] = array('page'=>'http://wiki.dengine.net', 'label'=>'Wiki',     'tooltip'=>'Doomsday Engine wiki (documentation)');
 
         $rightTabs = array();
         $rightTabs[] = array('page'=>'/addons',       'label'=>'Add-ons', 'tooltip'=>'Add-ons for games playable with the Doomsday Engine');
