@@ -273,6 +273,7 @@ hr.dashed {
 }
 
 .block h1 + p, .block h2, .block h3 { margin-top: 1em; }
+.block header h1 + p { margin-top: 0; }
 .block h2:first-child, .block h3:first-child { margin-top: 0; }
 
 .major_issue { background-color:#ff4444; /* red */ }
