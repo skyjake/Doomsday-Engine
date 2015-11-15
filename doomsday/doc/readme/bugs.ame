@@ -6,10 +6,8 @@ that will be addressed in the future.
 @deflist{
 
 @item{Bugs and Features} The official place to report new bugs, submit feature 
-requests and browse the existing reports is the @link{Deng Team's own Issue Tracker}{http://tracker.skyjake.fi/}.
+requests and browse the existing reports is the @link{Deng Team's own Issue Tracker}{http://tracker.dengine.net/}.
 
-@item{Multiplayer Issues} There is a to-do list of known @link{multiplayer
-issues and needed enhancements}{http://dengine.net/multiplayer_issues}
-maintained by skyjake.
+@item{Multiplayer Issues} The Issue Tracker has a list of known @link{multiplayer issues and needed enhancements}{http://tracker.dengine.net/projects/deng/issues?query_id=10}.
 
 }
