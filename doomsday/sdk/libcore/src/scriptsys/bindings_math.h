@@ -1,4 +1,4 @@
-/** @file bindings_core.h  Core module bindings (private header).
+/** @file bindings_math.h  Built-in Math module (private header).
  *
  * @authors Copyright (c) 2015 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,14 +16,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_BINDINGS_CORE_H
-#define LIBDENG2_BINDINGS_CORE_H
+#ifndef LIBDENG2_BINDINGS_MATH_H
+#define LIBDENG2_BINDINGS_MATH_H
 
 #include "de/Binder"
 
 namespace de {
 
-void initCoreModule(Binder &binder, Record &coreModule);
+void initMathModule(Binder &binder, Record &mathModule);
 
 } // namespace de
 

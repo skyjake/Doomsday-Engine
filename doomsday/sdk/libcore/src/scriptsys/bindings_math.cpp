@@ -1,4 +1,4 @@
-/** @file bindings_core.h  Core module bindings (private header).
+/** @file bindings_math.cpp  Built-in Math module.
  *
  * @authors Copyright (c) 2015 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,16 +16,29 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_BINDINGS_CORE_H
-#define LIBDENG2_BINDINGS_CORE_H
+#include "bindings_math.h"
+#include "de/math.h"
 
-#include "de/Binder"
+#include <de/NumberValue>
 
 namespace de {
 
-void initCoreModule(Binder &binder, Record &coreModule);
+static Value *Function_Math_Random(Context &, Function::ArgumentValues const &)
+{
+    return new NumberValue(frand());
+}
+
+static Value *Function_Math_RandInt(Context &, Function::ArgumentValues const &args)
+{
+    Rangei range(args.at(0)->asInt(), args.at(1)->asInt() + 1);
+    return new NumberValue(range.random());
+}
+
+void initMathModule(Binder &binder, Record &mathModule)
+{
+    binder.init(mathModule)
+            << DENG2_FUNC_NOARG(Math_Random, "random")
+            << DENG2_FUNC      (Math_RandInt, "randInt", "low" << "high");
+}
 
 } // namespace de
-
-#endif // LIBDENG2_BINDINGS_CORE_H
-
