@@ -2017,6 +2017,17 @@ ul.topiclist li.row dt a.subforum.unread {
     background-image: url("{IMG_SUBFORUM_UNREAD_SRC}");
 }
 
+.topiclist li.forumrow.sticky {
+    padding-left: 48px;
+    background-image: url(/forums/styles/Deng/imageset/sticky.png);
+    background-repeat: no-repeat;
+    background-position: 9px 15px;
+}
+
+.topiclist li.forumrow.sticky header.expcol {
+    margin-right: -11px;
+}
+
 /* Forum list column styles */
 ul.topiclist dd.searchextra {
     color: #333;
