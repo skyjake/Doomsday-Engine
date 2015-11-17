@@ -436,10 +436,6 @@ def doTask(task):
         msg("MIRROR TO FILES.DENGINE.NET")
         systemCommand('mirror-builds-to-dengine.sh')
         
-    elif task == 'mirror':
-        msg("MIRROR")
-        systemCommand('mirror-buildmaster-to-idisk.sh')
-
     return True
     
 
@@ -476,7 +472,6 @@ def handleCompletedTasks():
 
         elif task == 'sign':
             newTask('publish', forClient='master')
-            newTask('apt_refresh', forClient='ubuntu-32bit')
             # After the build we can switch to the master again.
             newTask('branch_master', allClients=True)
             
@@ -484,7 +479,6 @@ def handleCompletedTasks():
             newTask('update_feed', forClient='master')
             
         elif task == 'update_feed':
-            newTask('mirror', forClient='master')
             newTask('mirror_files', forClient='ubuntu-32bit')
     
     
