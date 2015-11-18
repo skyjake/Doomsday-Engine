@@ -31,6 +31,7 @@
 #include "de/math.h"
 
 #include "bindings_core.h"
+#include "bindings_math.h"
 
 #include <QMap>
 
@@ -47,8 +48,9 @@ DENG2_PIMPL(ScriptSystem)
     /// parsed from any script.
     typedef QMap<String, Record *> NativeModules;
     NativeModules nativeModules; // not owned
-    Record coreModule;  // Script: built-in script classes and functions.
-    Record versionModule; // Version: information about the platform and build
+    Record coreModule;    ///< Script: built-in script classes and functions.
+    Record mathModule;    ///< Math: math related functions.
+    Record versionModule; ///< Version: information about the platform and build
 
     /// Resident modules.
     typedef QMap<String, Module *> Modules; // owned
@@ -59,6 +61,8 @@ DENG2_PIMPL(ScriptSystem)
     Instance(Public *i) : Base(*i)
     {
         initCoreModule();
+        initMathModule(binder, mathModule);
+        addNativeModule("Math", mathModule);
 
         // Setup the Version module.
         {

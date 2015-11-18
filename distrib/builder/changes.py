@@ -25,7 +25,7 @@ def xmlEncodedText(logText):
             result += u'<![CDATA[<]]>'
         elif c == '>': 
             result += u'<![CDATA[>]]>'
-        else:
+        elif c in unicode(string.whitespace) or c > u' ':
             result += c
     return result
 

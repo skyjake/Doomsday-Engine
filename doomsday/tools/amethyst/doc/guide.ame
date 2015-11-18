@@ -37,29 +37,34 @@ Before you grab a copy of the sources you should make sure you have the
 following software installed on your system:
 
 @list/thin{
-    @item Mercurial client.
+    @item Git.
     @item Qt libraries.
-    @item qmake and/or Qt Creator.
+    @item CMake.
 }
 
-The Amethyst source code is in a Mercurial repository hosted at SourceForge:
+The Amethyst source code is included in the Doomsday Engine Git repository:
 
-@ind{@url{http://deng.hg.sourceforge.net:8000/hgroot/deng/amethyst}}
+@ind{@url{http://github.com/skyjake/Doomsday-Engine/tree/master/doomsday/tools/amethyst}}
 
 @section{Installation}
 
-If you are using Qt Creator:
+Even though Amethyst is part of the Doomsday @file{tools} subdirectory, it can
+be built independently from the rest of the CMake projects.
 
 @list/enum{ 
-    @item Open @file{amethyst.pro} in Qt Creator. 
+    @item Create a build directory. This should be outside the Doomsday source 
+    tree.
     
-    @item Build the project.
+    @item Run CMake to configure the build. For example:
+    
+    @samp{@pre{# cmake ../doomsday/tools/amethyst}}
+    
+    @item Compile.
 
-    @item Run the @dquote{install} rule defined in the project file. You can
-    do this as a Deploy step in Qt Creator. On a Unix this will install
-    @file{amethyst} and @stdlib into the appropriate directories. On Windows
-    the installation is done to a subdirectory called @file{inst} under the
-    Amethyst source directory. 
+    @item Run the @dquote{install} rule defined in the project file. On a Unix
+    this will install @file{amethyst} and @stdlib into the appropriate directories. 
+    On Windows the installation is done to a subdirectory called @file{inst} 
+    under the Amethyst source directory. 
 }
 
 @section{Generating documents}

@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_BITFIELD_H
@@ -30,8 +30,17 @@ namespace de {
 /**
  * Array of integer values packed tightly together.
  *
- * Before a BitField can be used, its elements must be defined with
- * BitField::setElements().
+ * You should think of BitField as a dynamic version of the C bit field
+ * structs.
+ *
+ * Before a BitField can be used, its element layout must be defined with a
+ * call to BitField::setElements(). The data types of the elements are
+ * restricted to signed/unsigned integers so that they can be trivially stored
+ * as bits in the BitField.
+ *
+ * BitField has been designed for efficient comparisons between two BitField
+ * instances. The BitField::delta() method can be used to determine which
+ * elements have different values.
  *
  * @ingroup data
  */

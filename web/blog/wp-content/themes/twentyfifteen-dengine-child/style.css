@@ -1,0 +1,204 @@
+/*
+ Theme Name:   Twenty Fifteen - dengine
+ Theme URI:    http://dengine.net/blog/
+ Description:  Twenty Fifteen Child Theme for dengine.net
+ Author:       Jaakko Keränen
+ Author URI:   http://skyjake.fi
+ Template:     twentyfifteen
+ Version:      1.0.0
+ License:      GNU General Public License v2 or later
+ License URI:  http://www.gnu.org/licenses/gpl-2.0.html
+ Tags:         light, dark, two-columns, right-sidebar, responsive-layout, accessibility-ready
+ Text Domain:  twenty-fifteen-dengine-child
+*/
+
+@import 
+url(http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,700italic,400,700,300);
+
+body {
+  font-family: "Open Sans", sans-serif !important;
+  font-size: 17px;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+}
+
+#sidebar, body::before, .secondary.toggled-on {
+  background-color: #141615;
+  color: white;
+}
+
+body {
+  background: #282D2B url(http://dengine.net/panoramarotator) no-repeat fixed;
+  background-position: center 100%;
+  background-size: 200% 200%;
+}
+
+#sidebar input {
+  background-color: #141615;
+  color: rgb(197, 154, 87);
+  font-family: "Open Sans";
+  font-size: 16px;
+  border: 1px solid rgb(197, 154, 87);
+  border-radius: 4px;
+}
+
+#sidebar a {
+  font-size: 16px;
+}
+
+#sidebar h2,
+.post-navigation .meta-nav {
+  color: rgb(197, 154, 87);
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.nav-previous + .nav-next {
+  border-top: 1px solid #282D2B !important;
+}
+
+.taxonomy-description {
+  color: rgb(100, 105, 100);
+  font-style: italic;
+}
+
+@media screen and (min-width: 59.6875em) {
+  .site-content {
+    max-width: 900px;
+  }
+}
+
+@media screen and (max-width: 59.6875em) {
+  .site-header {
+    background: #282D2B url(http://dengine.net/panoramarotator) no-repeat;
+    background-size: 1300px 201%; /*564px;*/
+    background-position: center 0;
+    height: 270px;
+    padding-top: 200px;
+    padding-left: 2em;
+    padding-right: 2em;
+    border-bottom: 2px solid #282D2B;
+  }
+}
+
+@media screen and (min-width: 38.75em) {
+  .hentry, .page-header, .page-content, .pagination, .navigation {
+    margin-left: 2em;
+    margin-right: 2em;
+  }
+}
+
+.hentry + .hentry, .page-header + .hentry, .page-header + .page-content,
+.navigation {
+  margin-top: 2em;
+}
+
+.site-main {
+  padding-top: 2em;
+  padding-bottom: 2em;
+}
+
+.page-header {
+  border: 0;
+}
+
+.site-main article.post,
+header.page-header,
+nav.navigation {
+  background-color: rgba(0, 0, 0, 0.7);
+  color: rgb(167, 162, 156);
+  box-shadow: 0 0 24px -8px rgb(110, 110, 110);
+}
+
+.pagination .next, .pagination .prev,
+.pagination .next:hover, .pagination .prev:hover {
+  background-color: transparent;
+  color: rgb(197, 154, 87);
+}
+
+a, .entry-content a {
+  border-bottom: 0;
+  color: rgb(197, 154, 87);
+}
+
+.entry-content {
+  padding-bottom: 7%;
+}
+
+.entry-content pre {
+  border: 1px solid #282D2B;
+  background-color: #282D2B;
+  color: rgb(160, 200, 170);
+}
+
+article footer.entry-footer {
+  background-color: rgba(160, 200, 170, 0.15);
+  color: rgb(160, 200, 170);
+  padding-top: 2em;
+  padding-bottom: 2em;
+  font-style: italic;
+}
+
+article footer.entry-footer a {
+  color: rgb(160, 200, 170);
+}
+
+.nav-links a, 
+span.page-numbers.dots,
+.search-field::-webkit-input-placeholder {
+  color: rgb(197, 154, 87) !important;
+}
+
+span.page-numbers.current {
+  color: white !important;
+}
+
+a:hover {
+  color: rgb(255, 203, 15) !important;
+}
+
+h1, h2.entry-title, h2 a, .site-title a {
+  font-family: "Open Sans" !important;
+  font-weight: 300 !important;
+  color: white;
+}
+
+.navigation .post-title {
+  font-family: "Open Sans" !important;
+  font-size: 200% !important;
+  font-weight: 300 !important;
+}
+
+.site-title a {
+  font-size: 32px !important;
+}
+
+.site-branding .site-title {
+}
+
+p.yarpp-related {
+  font-weight: 400;
+  margin-top: 4em;
+}
+
+.yarpp-related a,
+.yarpp-related small {
+  font-weight: 300 !important;
+}
+
+button.secondary-toggle {
+  background-color: rgba(255, 255, 255, 0.25);
+}
+
+button.secondary-toggle:hover {
+  background-color: white;
+}
+
+.site-info, .site-footer {
+  display: none;
+}
+
+#comments {
+  display: none;
+}

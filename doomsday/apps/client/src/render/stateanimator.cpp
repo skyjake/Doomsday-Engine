@@ -597,6 +597,16 @@ Model const &StateAnimator::model() const
 void StateAnimator::setOwnerNamespace(Record &names, String const &varName)
 {
     d->names.add(varName).set(new RecordValue(names));
+
+    // Call the onInit() function if there is one.
+    if(d->names.has(QStringLiteral("ASSET.onInit")))
+    {
+        Record ns;
+        ns.add(QStringLiteral("self")).set(new RecordValue(d->names));
+        Process::scriptCall(Process::IgnoreResult, ns,
+                            QStringLiteral("self.ASSET.onInit"),
+                            "$self");
+    }
 }
 
 void StateAnimator::triggerByState(String const &stateName)

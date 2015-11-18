@@ -526,15 +526,20 @@ void GL_ProjectionMatrix()
 
 void GL_SetupFogFromMapInfo(Record const *mapInfo)
 {
-    if(!mapInfo || !(mapInfo->geti("flags") & MIF_FOG))
+    if(mapInfo)
     {
-        R_SetupFogDefaults();
+        R_SetupFog(mapInfo->getf("fogStart"), mapInfo->getf("fogEnd"),
+                   mapInfo->getf("fogDensity"),
+                   Vector3f(mapInfo->get("fogColor")).data().baseAs<float>());
     }
     else
     {
-        dfloat fogColor[3];
-        Vector3f(mapInfo->get("fogColor")).decompose(fogColor);
-        R_SetupFog(mapInfo->getf("fogStart"), mapInfo->getf("fogEnd"), mapInfo->getf("fogDensity"), fogColor);
+        R_SetupFogDefaults();
+    }
+
+    if(!(mapInfo->geti("flags") & MIF_FOG))
+    {
+        GL_UseFog(false);
     }
 
     String fadeTable = (mapInfo? mapInfo->gets("fadeTable") : "");

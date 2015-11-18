@@ -111,9 +111,11 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
         }
 
         ArrayValue *keys = new ArrayValue;
-        DENG2_FOR_EACH_CONST(Record::Members, i, ns->members())
+        auto names = ns->members().keys();
+        qSort(names);
+        for(auto const &name : names)
         {
-            *keys << new TextValue(i.key());
+            *keys << new TextValue(name);
         }
         return keys;
     }

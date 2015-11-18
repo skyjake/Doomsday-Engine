@@ -19,7 +19,7 @@
 #ifndef LIBDENG2_BINDINGS_CORE_H
 #define LIBDENG2_BINDINGS_CORE_H
 
-#include "de/Record"
+#include "de/Binder"
 
 namespace de {
 

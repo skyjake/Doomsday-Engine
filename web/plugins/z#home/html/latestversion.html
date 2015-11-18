@@ -16,7 +16,18 @@ var deferred = $.ajax({
         if(ob)
         {
             ob.empty();
-            var html = '<h1><a href="http://sourceforge.net/project/platformdownload.php?group_id=74815" title="Download Doomsday Engine ' + json.version + ' (latest stable) for my platform">' + json.version + '</a></h1>';
+            // Omit zeroes in the end.
+            var components = json.version.split('.');
+            while(components.length > 2)
+            {
+                if(components[components.length - 1] == '0')
+                {
+                    components.length--;
+                }
+                else break;
+            }
+            var cleanVersion = components.join('.');
+            var html = '<h1><a href="http://sourceforge.net/project/platformdownload.php?group_id=74815" title="Download Doomsday Engine ' + cleanVersion + ' (latest stable) for my platform">' + cleanVersion + '</a></h1>';
             ob.append(html);
         }
     }

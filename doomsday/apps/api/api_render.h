@@ -29,7 +29,7 @@ DENG_API_TYPEDEF(Rend)
     de_api_t api;
 
     void (*SetupFogDefaults)(void);
-    void (*SetupFog)(float start, float end, float density, float* rgb);
+    void (*SetupFog)(float start, float end, float density, float const *rgb);
 
     /**
      * Prepare all texture resources for the specified mobjtype.

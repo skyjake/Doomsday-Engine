@@ -330,7 +330,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
      */
     private function constructBuilds(&$builds)
     {
-        $buildLogUri = self::XML_FEED_URI;
+/*        $buildLogUri = self::XML_FEED_URI;
 
         // Is it time to update our cached copy of the build log?
         $logCacheName = 'buildrepository/events.xml';
@@ -360,13 +360,18 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                 // Touch our cached copy so we don't try again too soon.
                 FrontController::contentCache()->touch($logCacheName);
             }
-        }
+        }*/
 
         // Re-parse our locally cached copy of the log, hopefully
         // we don't need to do this too often (cache everything!).
         try
         {
-            $cachedLogXml = FrontController::contentCache()->retrieve($logCacheName);
+            //$cachedLogXml = FrontController::contentCache()->retrieve($logCacheName);
+
+            $path = nativePath("/home/skyjake/files/builds/events.xml");
+            $stream = fopen($path, 'r');
+            $cachedLogXml = stream_get_contents($stream);
+            fclose($stream);
             BuildLogParser::parse($cachedLogXml, $builds);
             return TRUE;
         }
@@ -1428,13 +1433,6 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             if($pack instanceof AbstractPackage && mb_strlen($pack->compileLogUri()))
             {
                 $logUri = $pack->compileLogUri();
-
-                /// @todo Temporary kludge to patch the build log URIs
-                /// while code.iki.fi is offline. Remove me.
-                {
-                    $logUri = str_replace("code.iki.fi", "dl.dropboxusercontent.com/u/11948701", $logUri);
-                }
-                ///< Kludge end.
 
 ?><a href="<?php echo $logUri; ?>" title="Download build logs for <?php echo htmlspecialchars($pack->composeFullTitle()); ?>">txt.gz</a><?php
 

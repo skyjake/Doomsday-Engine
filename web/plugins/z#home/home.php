@@ -321,20 +321,20 @@ $(document).ready(function () {
     });
 
     $('#column2').interpretFeed({
-        feedUri: 'http://dengine.net/forums/rss.php?f=24',
+        feedUri: 'http://dengine.net/blog/category/dev/feed', 
         dataType: 'json',
         clearOnSuccess: false,
         useGoogleApi: true,
         maxItems: 1,
         generateItemHtml: function (n, t) {
-            var html = '<div class="block"><article class="blogpost content"><header><h1><a href="' + t.link + '" title="&#39;' + t.title + '&#39; (full article in the user forums)">' + t.title + '</a></h1>';
+            var html = '<div class="block"><article class="blogpost content"><header><h1><a href="' + t.link + '" title="&#39;' + t.title + '&#39; (full article in the blog)">' + t.title + '</a></h1>';
 
             var d = new Date(t.publishedDate);
             var niceDate = $.datepicker.formatDate('MM d, yy', d);
             html += '<p><time datetime="' + d.toISOString() + '" pubdate>' + niceDate + '</time></p>';
 
             html += '</header><br />';
-            html += t.content;
+            html += '<div class="articlecontent">' + t.content + '</div>';
             html += '</article>';
             html += '<div class="links"><a href="' + n.feedUri + '" class="link-rss" title="Doomsday Engine development blog via RSS">All blogs</a></div></div>';
             return '<li>' + html + '</li>';
