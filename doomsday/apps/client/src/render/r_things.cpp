@@ -443,7 +443,8 @@ void R_ProjectSprite(mobj_t &mob)
         Vector4f ambientColor;
         duint vLightListIdx = 0;
         evaluateLighting(vis->pose.origin, subspace, vis->pose.distance,
-                         fullbright, ambientColor, &vLightListIdx);
+                         fullbright && !animator, // GL2 models lit with more granularity
+                         ambientColor, &vLightListIdx);
 
         // Apply uniform alpha (overwritting intensity factor).
         ambientColor.w = alpha;
