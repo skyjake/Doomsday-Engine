@@ -121,10 +121,12 @@
 #  include <strings.h> // strcasecmp etc.
 #endif
 
-/*
- * The DENG2_PUBLIC macro is used for declaring exported symbols. It must be
- * applied in all exported classes and functions. DEF files are not used for
- * exporting symbols out of libcore.
+/**
+ * @def DENG2_PUBLIC
+ *
+ * Used for declaring exported symbols. It must be applied in all exported 
+ * classes and functions. DEF files are not used for exporting symbols out
+ * of libcore.
  */
 #if defined(_WIN32) && defined(_MSC_VER)
 #  ifdef __DENG2__

@@ -18,6 +18,6 @@ DISABLE_INDEX           = YES
 GENERATE_TREEVIEW       = NO
 
 # General cleanup
-HTML_STYLESHEET         = qhelp.css
+HTML_STYLESHEET         = doxygen.css
 INCLUDED_BY_GRAPH       = NO
 HAVE_DOT                = NO

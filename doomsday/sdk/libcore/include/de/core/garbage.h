@@ -65,7 +65,7 @@ DENG2_PUBLIC int Garbage_IsTrashed(void const *ptr);
 
 /**
  * Removes a region from the current thread's collector, if it is still there.
- * @warning Do not call this if there is a chance that the pointer has already
+ * @attention Do not call this if there is a chance that the pointer has already
  * been freed.
  *
  * @param ptr  Pointer to memory previously put in the trash.

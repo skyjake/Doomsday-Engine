@@ -4,18 +4,20 @@
 PROJECT_NAME            = "Doomsday SDK"
 PROJECT_NUMBER          = 2.0
 PROJECT_BRIEF           = "Core engine library and supporting libraries"
+PROJECT_LOGO            = doc/apidoc-logo.png
 OUTPUT_DIRECTORY        = apidoc/sdk/
 
 INPUT                   = sdk/libcore/include sdk/libgui/include sdk/libappfw/include sdk/libshell/include sdk/liblegacy/include \
                           sdk/libcore/src     sdk/libgui/src     sdk/libappfw/src     sdk/libshell/src     sdk/liblegacy/src
 FILE_PATTERNS           = *
-EXCLUDE_PATTERNS        = .DS_Store
 PREDEFINED              = __cplusplus __DENG2__ __LIBGUI__ __LIBSHELL__ __LIBAPPFW__ __DENG__ \
                           "DENG2_PIMPL(ClassName)=typedef ClassName Public; struct ClassName::Instance : public de::Private<ClassName>" \
                           "DENG2_PIMPL_NOREF(C)=struct C::Instance : public de::IPrivate" \
+                          "DENG_GUI_PIMPL(C)=struct C::public de::GuiWidgetPrivate<C>" \
                           "DENG2_PRIVATE(Var)=struct Instance; Instance *Var;" \
                           "DENG2_ERROR(N)=class N : public de::Error {};" \
-                          "DENG2_SUB_ERROR(B,N)=class N : public B {};"                           
+                          "DENG2_SUB_ERROR(B,N)=class N : public B {};" \
+                          "DENG2_OBSERVES(C,A)=public C::I##Audience##Observer"             
 
 INCLUDED_BY_GRAPH       = NO
 COLLABORATION_GRAPH     = NO
@@ -24,3 +26,4 @@ OPTIMIZE_OUTPUT_FOR_C   = NO
 MACRO_EXPANSION         = YES
 EXPAND_ONLY_PREDEF      = NO
 INTERNAL_DOCS           = NO
+EXTRACT_PRIVATE         = NO

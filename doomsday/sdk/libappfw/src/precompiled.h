@@ -1,4 +1,4 @@
-/** @file precompiled.h  Precompiled headers for libappfw.
+/** @file libappfw/src/precompiled.h  Precompiled headers for libappfw.
  *
  * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

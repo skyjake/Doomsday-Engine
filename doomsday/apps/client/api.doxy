@@ -4,6 +4,8 @@
 PROJECT_NAME            = "Doomsday and liblegacy"
 PROJECT_NUMBER          = 2.0
 PROJECT_BRIEF           = "Public API"
+PROJECT_LOGO            = ../../doc/apidoc-logo.png
+HTML_STYLESHEET         = ../../doxygen.css
 OUTPUT_DIRECTORY        = ../../apidoc/api/
 
 INPUT                   = ../api
@@ -17,3 +19,5 @@ REFERENCED_BY_RELATION  = NO
 OPTIMIZE_OUTPUT_FOR_C   = NO
 MACRO_EXPANSION         = YES
 EXPAND_ONLY_PREDEF      = YES
+EXTRACT_PRIVATE         = NO
+INTERNAL_DOCS           = NO

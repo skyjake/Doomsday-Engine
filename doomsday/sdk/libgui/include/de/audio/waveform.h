@@ -25,7 +25,7 @@
 
 namespace de {
 
-namespace audio ///< Namespace for audio related enumerations and constants.
+namespace audio /// Namespace for audio related enumerations and constants.
 {
     enum Format {
         PCMLittleEndian,

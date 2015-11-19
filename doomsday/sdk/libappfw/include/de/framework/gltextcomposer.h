@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBAPPFW_GLTEXTCOMPOSER_H
@@ -116,7 +116,7 @@ public:
      * tabbed lines are used in the text. This is because text segments are aligned
      * with tab stops only during makeVertices().
      *
-     * @todo Ideally tap stop alignment should be done in FontLineWrapping, so that the
+     * @todo Ideally tab stop alignment should be done in FontLineWrapping, so that the
      * maximum width would be known prior to generating the vertices.
      *
      * @return Maximum width of the generated vertices.

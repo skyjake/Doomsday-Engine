@@ -1,4 +1,4 @@
-/** @file precompiled.h  Precompiled headers for libcore.
+/** @file libcore/src/precompiled.h  Precompiled headers for libcore.
  *
  * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
