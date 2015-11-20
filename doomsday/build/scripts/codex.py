@@ -10,13 +10,21 @@ import os, sys, time, string, base64
 OUT_DIR = 'codex'
 TITLE = 'Doomsday Codex'
 
+AUTHOR_ALIASES = {
+    u'Jaakko Keränen': u'skyjake',
+    u'Jaakko Keränen':u'skyjake'
+}
+
 if sys.argv > 1:
     OUT_DIR = sys.argv[1]
 
 class Commit:
     def __init__(self, subject, author, date, link, hash):
         self.subject = subject
-        self.author = author
+        if author in AUTHOR_ALIASES:
+            self.author = AUTHOR_ALIASES[author]
+        else:
+            self.author = author
         self.date = date
         self.link = link
         self.hash = hash
