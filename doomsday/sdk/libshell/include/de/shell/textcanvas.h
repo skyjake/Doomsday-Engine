@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBSHELL_TEXTCANVAS_H
@@ -30,6 +30,7 @@ namespace shell {
 
 /**
  * Flags for specifying alignment.
+ * @ingroup textUi
  */
 enum AlignmentFlag
 {
@@ -48,6 +49,8 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(Alignment)
  * get marked dirty. When a surface is drawn on screen, only the dirty
  * characters need to be drawn, as they are the only ones that have changed
  * relative to the previous state.
+ *
+ * @ingroup textUi
  */
 class LIBSHELL_PUBLIC TextCanvas
 {
@@ -129,7 +132,7 @@ public:
     TextCanvas(Size const &size = Size(1, 1));
     virtual ~TextCanvas();
 
-    Size size() const;    
+    Size size() const;
     int width() const;
     int height() const;
     Rectanglei rect() const;

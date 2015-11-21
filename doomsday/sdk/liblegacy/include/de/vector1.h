@@ -1,5 +1,4 @@
 /** @file vector1.h Vector math (2D, 3D, 4D).
- * @ingroup math
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -31,7 +30,7 @@ extern "C" {
 
 /**
  * @defgroup vec2 2D Vectors
- * @ingroup math
+ * @ingroup legacyMath
  * @{
  */
 
@@ -347,7 +346,7 @@ DENG_PUBLIC void V2d_CopyBox(arvec2d_t dest, const_arvec2d_t src);
 
 /**
  * @defgroup vec3 3D Vectors
- * @ingroup math
+ * @ingroup legacyMath
  * @{
  */
 
@@ -583,7 +582,7 @@ DENG_PUBLIC void V3d_BuildTangents(pvec3d_t tangent, pvec3d_t bitangent, const_p
 
 /**
  * @defgroup vec4 4D Vectors
- * @ingroup math
+ * @ingroup legacyMath
  * @{
  */
 

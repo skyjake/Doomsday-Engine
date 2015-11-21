@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBGUI_MOUSEEVENT_H
@@ -27,7 +27,7 @@
 namespace de {
 
 /**
- * Input event from a mouse. @ingroup ui
+ * Input event from a mouse. @ingroup gui
  */
 class LIBGUI_PUBLIC MouseEvent : public Event
 {

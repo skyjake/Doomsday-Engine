@@ -1,6 +1,6 @@
 /**
  * @file memoryzone_private.h
- * Memory zone (internal header). @ingroup memzone
+ * Memory zone (internal header).
  *
  * This header file is separate from the public one because it defines the data
  * structures used internally by the memory zone module. The private data

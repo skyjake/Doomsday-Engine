@@ -1,6 +1,6 @@
 /**
  * @file memoryzone.h
- * Memory zone. @ingroup memzone
+ * Memory zone.
  *
  * @par Build Options
  * Define the macro @c LIBDENG_FAKE_MEMORY_ZONE to force all memory blocks to be
@@ -30,7 +30,7 @@
 
 /**
  * @defgroup memzone Memory Zone
- * @ingroup base
+ * @ingroup legacy
  */
 
 #include <de/liblegacy.h>

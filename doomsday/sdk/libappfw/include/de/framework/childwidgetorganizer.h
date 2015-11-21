@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBAPPFW_CHILDWIDGETORGANIZER_H
@@ -39,6 +39,8 @@ namespace de {
  * are represented by widgets on screen at the same time. In contexts with
  * large numbers of items, virtualization should be applied to keep only a
  * subset/range of items present as widgets.
+ *
+ * @ingroup appfw
  */
 class LIBAPPFW_PUBLIC ChildWidgetOrganizer
 {
@@ -96,22 +98,6 @@ public:
                                     ui::Data::Pos pos) const = 0;
     };
 
-    /**
-     * Notified when the organizer creates a widget for a context item. Allows
-     * third parties to customize the widget as needed.
-     */
-    DENG2_DEFINE_AUDIENCE2(WidgetCreation,
-                          void widgetCreatedForItem(GuiWidget &widget,
-                                                    ui::Item const &item))
-
-    /**
-     * Notified when the organizer updates a widget for a changed context item.
-     * Allows third parties to customize the widget as needed.
-     */
-    DENG2_DEFINE_AUDIENCE2(WidgetUpdate,
-                          void widgetUpdatedForItem(GuiWidget &widget,
-                                                    ui::Item const &item))
-
 public:
     ChildWidgetOrganizer(GuiWidget &container);
 
@@ -151,6 +137,23 @@ public:
     GuiWidget *itemWidget(de::String const &label) const;
 
     ui::Item const *findItemForWidget(GuiWidget const &widget) const;
+
+public:
+    /**
+     * Notified when the organizer creates a widget for a context item. Allows
+     * third parties to customize the widget as needed.
+     */
+    DENG2_DEFINE_AUDIENCE2(WidgetCreation,
+                          void widgetCreatedForItem(GuiWidget &widget,
+                                                    ui::Item const &item))
+
+    /**
+     * Notified when the organizer updates a widget for a changed context item.
+     * Allows third parties to customize the widget as needed.
+     */
+    DENG2_DEFINE_AUDIENCE2(WidgetUpdate,
+                          void widgetUpdatedForItem(GuiWidget &widget,
+                                                    ui::Item const &item))
 
 private:
     DENG2_PRIVATE(d)

@@ -37,6 +37,8 @@ class Style;
  * Note that GuiWidgetPrivate automatically observes the root widget's atlas
  * content repositioning, so derived private implementations can just override
  * the observer method if necessary.
+ *
+ * @ingroup appfw
  */
 template <typename PublicType>
 class GuiWidgetPrivate : public Private<PublicType>,

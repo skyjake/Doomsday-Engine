@@ -30,6 +30,8 @@ namespace de {
  * and an anchor graphic.
  *
  * Initially a popup widget is in a hidden state.
+ *
+ * @ingroup guiWidgets
  */
 class LIBAPPFW_PUBLIC PopupWidget : public PanelWidget
 {

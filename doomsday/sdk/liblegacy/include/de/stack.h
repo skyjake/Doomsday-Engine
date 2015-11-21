@@ -1,5 +1,4 @@
 /** @file stack.h Stack of void* elements.
- * @ingroup data
  *
  * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -26,6 +25,9 @@
 extern "C" {
 #endif
 
+/// @addtogroup legacyData
+/// @{
+
 struct ddstack_s; // opaque
 
 typedef struct ddstack_s ddstack_t;
@@ -39,6 +41,8 @@ DENG_PUBLIC size_t Stack_Height(ddstack_t *stack);
 DENG_PUBLIC void Stack_Push(ddstack_t *stack, void *data);
 
 DENG_PUBLIC void *Stack_Pop(ddstack_t *stack);
+
+/// @}
 
 #ifdef __cplusplus
 } // extern "C"

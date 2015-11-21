@@ -1,6 +1,6 @@
 /**
  * @file src/reader.c
- * Deserializer for reading values and data from a byte array. @ingroup base
+ * Deserializer for reading values and data from a byte array.
  *
  * @authors Copyright &copy; 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

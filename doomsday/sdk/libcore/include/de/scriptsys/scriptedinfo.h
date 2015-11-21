@@ -29,7 +29,7 @@ namespace de {
 
 /**
  * Info document tree with a script context and built-in support for handling
- * expressions and embedded scripts.
+ * expressions and embedded scripts. @ingroup script
  *
  * Analogous to an XML document with embedded JavaScript: Info acts as the
  * generic, declarative, structured document and Doomsday Script is the
@@ -185,11 +185,12 @@ public:
     static String absolutePathInContext(Record const &context, String const &relativePath);
 
     /**
-     * Determines if a value should be considered False. Use this when interpreting
-     * contents of Info documents where boolean values are expected.
+     * Determines if a value should be considered False. Use this when
+     * interpreting contents of Info documents where boolean values are
+     * expected.
      *
-     * This is different from `!Value::isTrue()` in that it allows for more relaxed
-     * interpretation of the value.
+     * This is different from <pre>!de::Value::isTrue()</pre> in that it allows
+     * for more relaxed interpretation of the value.
      *
      * @param value  Value to check.
      *
@@ -210,8 +211,8 @@ public:
     static Paths allBlocksOfType(String const &blockType, Record const &root);
 
     /**
-     * Finds all the subrecords with a given __type__. Only the subrecords immediately
-     * under @a record are checked.
+     * Finds all the subrecords with a given __type__. Only the subrecords
+     * immediately under @a record are checked.
      *
      * @param blockType  Type of Info block to locate.
      * @param record     Namespace to look in.
@@ -221,7 +222,8 @@ public:
     static Record::Subrecords subrecordsOfType(String const &blockType, Record const &record);
 
     /**
-     * Gives a set of subrecords, sorts them by source path and line number (ascending).
+     * Gives a set of subrecords, sorts them by source path and line number
+     * (ascending).
      *
      * @param subrecs  Subrecords to sort.
      *

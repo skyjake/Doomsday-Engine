@@ -1,6 +1,6 @@
 /**
  * @file memoryzone.c
- * Memory zone implementation. @ingroup memzone
+ * Memory zone implementation.
  *
  * The zone is composed of multiple memory volumes. New volumes get created on
  * the fly when needed. This guarantees that all allocation requests will
@@ -1057,7 +1057,7 @@ void Garbage_Trash(void *ptr)
  * Allocate a new block of memory to be used for linear object allocations.
  * A "zblock" (its from the zone).
  *
- * @param zblockset_t * Block set into which the new block is added.
+ * @param set   Block set into which the new block is added.
  */
 static void addBlockToSet(zblockset_t *set)
 {

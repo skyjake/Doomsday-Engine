@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBSHELL_KEYEVENT_H
@@ -29,6 +29,8 @@ namespace shell {
 
 /**
  * Key press event generated when the user presses a key on the keyboard.
+ *
+ * @ingroup textUi
  */
 class LIBSHELL_PUBLIC KeyEvent : public Event
 {

@@ -28,6 +28,8 @@ namespace ui {
 
 /**
  * UI context item that contains items for a submenu.
+ *
+ * @ingroup uidata
  */
 class LIBAPPFW_PUBLIC SubmenuItem : public ImageItem
 {

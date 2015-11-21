@@ -28,40 +28,40 @@
  * @defgroup core  Core
  *
  * @defgroup data  Data Types and Structures
- * Classes related to accessing, storing, and processing of data.
- *
- * @defgroup input  Input Subsystem
+ * Classes related to accessing, storing, and processing of data. @ingroup core
  *
  * @defgroup net  Network
- * Classes responsible for network communications.
- *
- * @defgroup resource  Resources
- *
- * @defgroup render  Renderer
- *
- * @defgroup GL  Graphics Library
+ * Classes responsible for network communications. @ingroup core
  *
  * @defgroup math  Math Utilities
+ * @ingroup core
  *
  * @defgroup types  Basic Types
- * Basic data types.
+ * Basic data types. @ingroup core
  */
 
 /**
- * @mainpage Doomsday SDK
+ * @mainpage Doomsday 2 SDK
  *
- * This documentation covers all the functions and data that Doomsday 2 makes
- * available for games and other plugins.
+ * <p>This documentation covers all the functions and data that Doomsday 2 makes
+ * available for games and other plugins.</p>
  *
  * @section Overview
- * The documentation has been organized into <a href="modules.html">modules</a>.
- * The primary ones are listed below:
+ *
+ * <p>The SDK is composed of a set of shared libraries. The Core library is the
+ * only required one as it provides the foundation classes. GUI-dependent
+ * functionality (libgui and libappfw) are kept separate so that server-only
+ * builds can use the non-GUI ones.</p>
+ *
+ * <p>The documentation has been organized into <a href="modules.html">modules</a>.
+ * The primary ones are listed below:</p>
+ *
  * - @ref core
  * - @ref data
- * - @ref input
+ * - @ref script
+ * - @ref fs
  * - @ref net
- * - @ref resource
- * - @ref render
+ * - @ref appfw
  */
 
 #ifdef __cplusplus
@@ -124,7 +124,7 @@
 /**
  * @def DENG2_PUBLIC
  *
- * Used for declaring exported symbols. It must be applied in all exported 
+ * Used for declaring exported symbols. It must be applied in all exported
  * classes and functions. DEF files are not used for exporting symbols out
  * of libcore.
  */

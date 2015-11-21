@@ -26,7 +26,7 @@ namespace de {
 /**
  * Relays drawing and events to another widget.
  *
- * @ingroup gui
+ * @ingroup guiWidgets
  */
 class RelayWidget : public GuiWidget
 {
@@ -52,7 +52,7 @@ public:
     bool handleEvent(Event const &event);
     bool hitTest(Vector2i const &pos) const;
     void drawContent();
-    
+
 public:
     /**
      * Notified when the target of the relay is about to be deleted. The target

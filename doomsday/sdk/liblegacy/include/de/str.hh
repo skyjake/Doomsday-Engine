@@ -1,6 +1,6 @@
 /**
  * @file str.hh
- * C++ wrapper for Str (ddstring_t). @ingroup base
+ * C++ wrapper for Str (ddstring_t).
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -28,7 +28,7 @@
 namespace de {
 
 /**
- * Minimal C++ wrapper for ddstring_t.
+ * Minimal C++ wrapper for ddstring_t. @ingroup legacyData
  */
 class Str {
 public:

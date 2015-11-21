@@ -67,7 +67,7 @@ namespace de {
  * Observing the asset state allows others to determine when the label is ready
  * to be drawn/laid out with the final dimensions.
  *
- * @ingroup gui
+ * @ingroup guiWidgets
  */
 class LIBAPPFW_PUBLIC LabelWidget : public GuiWidget, public AssetGroup
 {

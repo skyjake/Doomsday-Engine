@@ -1,5 +1,4 @@
 /** @file mathutil.c Math utilities.
- * @ingroup math
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>

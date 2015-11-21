@@ -1,5 +1,4 @@
 /** @file findfile_unix.c Win32-style native file finding.
- * @ingroup system
  *
  * @author Copyright &copy; 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -238,7 +237,7 @@ void _splitpath(const char* path, char* drive, char* dir, char* name, char* ext)
             strcpy(name, lastSlash + 1);
         else if(lastPeriod)
             strzncpy(name, path, lastPeriod - path);
-        else 
+        else
             strcpy(name, path);
     }
 

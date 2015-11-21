@@ -1,7 +1,6 @@
 /**
  * @file animator.c
  * Moves a value gradually from a start value to a target value.
- * @ingroup math
  *
  * The value transition is carried out in a fixed number of steps.
  *

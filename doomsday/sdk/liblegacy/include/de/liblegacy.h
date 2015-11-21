@@ -20,6 +20,28 @@
 #ifndef LIBLEGACY_H
 #define LIBLEGACY_H
 
+/**
+ * @defgroup legacy Legacy Support
+ *
+ * Common functionality for supporting old, mostly C based code tracing back to
+ * the original id Software and Raven Software code bases.
+ */
+
+/**
+ * @defgroup legacyMath Legacy Math Utilities
+ * Math utilities for C based code. @ingroup legacy
+ */
+
+/**
+ * @defgroup legacyData Legacy Data Types
+ * Data types and structures for C based code. @ingroup legacy
+ */
+
+/**
+ * @defgroup legacyFlags Flags
+ * @ingroup legacy
+ */
+
 #if defined(__cplusplus) && !defined(DENG_NO_QT)
 #  define DENG_USE_QT
 #endif

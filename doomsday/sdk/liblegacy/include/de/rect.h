@@ -1,6 +1,6 @@
 /**
  * @file rect.h
- * Rectangles. @ingroup math
+ * Rectangles.
  *
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
@@ -28,6 +28,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/// @addtogroup legacyMath
+/// @{
 
 /**
  * Integer rectangle. Intended as a handy POD structure for manipulation
@@ -170,6 +173,8 @@ DENG_PUBLIC dd_bool Rectf_Equality(Rectf const *rect, Rectf const *other);
  */
 DENG_PUBLIC RectRawf *Rectf_Normalized(Rectf const *rect, RectRawf *normalized);
 DENG_PUBLIC RectRawf *Rectf_United(Rectf const *rect, Rectf const *other, RectRawf *united);
+
+/// @}
 
 #ifdef __cplusplus
 } // extern "C"

@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBAPPFW_MENUWIDGET_H
@@ -45,6 +45,8 @@ namespace de {
  * MenuWidget uses a ChildWidgetOrganizer to create widgets based on the
  * provided menu items. The organizer can be queried to find widgets matching
  * specific items.
+ *
+ * @ingroup guiWidgets
  */
 class LIBAPPFW_PUBLIC MenuWidget : public ScrollAreaWidget
 {

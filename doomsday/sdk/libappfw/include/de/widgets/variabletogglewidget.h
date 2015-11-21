@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBAPPFW_VARIABLETOGGLEWIDGET_H
@@ -27,6 +27,8 @@ namespace de {
 
 /**
  * Widget for toggling the value of a variable.
+ *
+ * @ingroup guiWidgets
  */
 class LIBAPPFW_PUBLIC VariableToggleWidget : public ToggleWidget
 {

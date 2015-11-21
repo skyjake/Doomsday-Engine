@@ -30,6 +30,8 @@ namespace de {
 
 /**
  * App subsystem for running scripts.
+ *
+ * @ingroup script
  */
 class DENG2_PUBLIC ScriptSystem : public System
 {

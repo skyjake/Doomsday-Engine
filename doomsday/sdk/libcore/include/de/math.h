@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_MATH_H
@@ -32,6 +32,11 @@
 #endif
 
 namespace de {
+
+/**
+ * @addtogroup math
+ * @{
+ */
 
 //#undef PI
 ddouble const PI = 3.1415926535897932384626433832795028841971693993751;
@@ -208,6 +213,8 @@ inline Type lerp(Type const &start, Type const &end, float pos) {
  * @return Random floating-point value in the range [0, 1].
  */
 inline float frand() { return float(qrand()) / float(RAND_MAX); }
+
+/** @} */
 
 } // namespace de
 

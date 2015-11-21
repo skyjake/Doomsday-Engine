@@ -13,11 +13,32 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBAPPFW_MAIN_H
 #define LIBAPPFW_MAIN_H
+
+/** @namespace de::ui User interface. */
+
+/** @defgroup appfw Application Framework
+ * Graphical UI framework based on a tree of widgets. Input events get passed
+ * down the tree until handled. Uses Rule objects to calculate positioning of
+ * widgets in the view. @ingroup gui */
+
+/** @defgroup guiWidgets GUI Widgets
+ * GUI widgets based on the Core library's @ref widgets.
+ * @ingroup appfw */
+
+/** @defgroup dialogs Dialogs
+ * Widgets for modal or nonmodal dialogs. @ingroup appfw */
+
+/** @defgroup uidata Data Model
+ * Data model and general purpose items for representing data in widgets.
+ * @ingroup appfw */
+
+/** @defgroup vr Virtual Reality
+ * @ingroup gui */
 
 /*
  * The LIBAPPFW_PUBLIC macro is used for declaring exported symbols. It must be
@@ -35,9 +56,5 @@
 // No need to use any special declarators.
 #  define LIBAPPFW_PUBLIC
 #endif
-
-namespace de {
-
-} // namespace de
 
 #endif // LIBAPPFW_MAIN_H

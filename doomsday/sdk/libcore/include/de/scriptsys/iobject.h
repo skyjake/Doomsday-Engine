@@ -1,4 +1,4 @@
-/** @file Interface for a Doomsday Script object.
+/** @file iobject.h  Interface for a Doomsday Script object.
  *
  * @authors Copyright (c) 2015 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -29,10 +29,12 @@ class Variable;
  * Interface for a Doomsday Script object.
  *
  * Classes that implement this interface can be manipulated in scripts as
- * objects, because they have a Record corresponding the native instance.
+ * objects, because they have a Record that corresponds the native instance.
  *
  * Objects that implement IObject can be passed as arguments in
  * Process::scriptCall().
+ *
+ * @ingroup script
  */
 class DENG2_PUBLIC IObject
 {
@@ -44,7 +46,7 @@ public:
      */
     virtual Record &objectNamespace() = 0;
 
-    /// @copydoc names()
+    /// @copydoc objectNamespace()
     virtual Record const &objectNamespace() const = 0;
 
     /**

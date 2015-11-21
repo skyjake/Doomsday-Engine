@@ -26,6 +26,8 @@ namespace de {
 
 /**
  * Popup widget that contains a menu.
+ *
+ * @ingroup guiWidgets
  */
 class LIBAPPFW_PUBLIC PopupMenuWidget : public PopupWidget
 {

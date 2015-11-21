@@ -27,6 +27,8 @@ namespace ui {
 
 /**
  * UI context item that represents a user action.
+ *
+ * @ingroup uidata
  */
 class LIBAPPFW_PUBLIC ImageItem : public Item
 {

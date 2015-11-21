@@ -1,5 +1,4 @@
 /** @file de/mathutil.h Math utilities.
- * @ingroup math
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -26,6 +25,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/// @addtogroup legacyMath
+/// @{
 
 /**
  * Calculate CRC-32 for an arbitrary data buffer. @ingroup math
@@ -148,6 +150,8 @@ DENG_PUBLIC void M_JoinBoxes(float box[4], const float other[4]);
 DENG_PUBLIC byte RNG_RandByte(void);
 DENG_PUBLIC float RNG_RandFloat(void);
 DENG_PUBLIC void RNG_Reset(void);
+
+/// @}
 
 #ifdef __cplusplus
 } // extern "C"

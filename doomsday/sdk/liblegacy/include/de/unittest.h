@@ -23,6 +23,9 @@
 #ifndef LIBDENG_UNIT_TEST_H
 #define LIBDENG_UNIT_TEST_H
 
+/// @addtogroup legacy
+/// @{
+
 #ifdef _DEBUG
 #  define LIBDENG_RUN_UNITTEST(Name)    int testResult_##Name = UNITTEST_##Name();
 #else
@@ -30,5 +33,7 @@
 #endif
 
 #define LIBDENG_DEFINE_UNITTEST(Name)   static int UNITTEST_##Name(void)
+
+/// @}
 
 #endif // LIBDENG_UNIT_TEST_H

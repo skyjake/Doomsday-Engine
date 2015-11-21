@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBSHELL_EDITORHISTORY_H
@@ -27,6 +27,8 @@ namespace shell {
 /**
  * History buffer for a text editor. Remembers past entries entered into the
  * editor and allows navigation in them (bash-style).
+ *
+ * @ingroup abstractUi
  */
 class LIBSHELL_PUBLIC EditorHistory
 {

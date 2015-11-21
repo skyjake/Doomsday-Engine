@@ -64,7 +64,9 @@ public:
         /**
          * Makes a new pending allocation.
          *
-         * @param image  Image content.
+         * @param image    Image content.
+         * @param knownId  Previously chosen Id for the image (if any).
+         *
          * @return Id of the new allocation. This Id will be used for final
          * committed allocation, too.
          */

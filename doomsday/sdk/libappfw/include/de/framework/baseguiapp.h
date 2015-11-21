@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBAPPFW_BASEGUIAPP_H
@@ -39,6 +39,8 @@ class VRConfig;
  * Base class for GUI applications.
  *
  * Contains all the shared resources and other data that is needed by the UI framework.
+ *
+ * @ingroup appfw
  */
 class LIBAPPFW_PUBLIC BaseGuiApp : public GuiApp
 {

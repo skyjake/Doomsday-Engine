@@ -1,6 +1,6 @@
 /**
  * @file point.c
- * 2D points. @ingroup math
+ * 2D points.
  *
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *

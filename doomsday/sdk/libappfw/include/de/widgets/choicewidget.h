@@ -32,6 +32,8 @@ namespace de {
  * from ActionItem/ChoiceItem.
  *
  * The default opening direction for the popup is to the right.
+ *
+ * @ingroup guiWidgets
  */
 class LIBAPPFW_PUBLIC ChoiceWidget : public PopupButtonWidget
 {

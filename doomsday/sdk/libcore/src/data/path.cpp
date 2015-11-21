@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Path"
@@ -249,7 +249,7 @@ Path::Path(String const &path, QChar sep)
     : LogEntry::Arg::Base(), d(new Instance(path, sep))
 {}
 
-Path::Path(const QString &str)
+Path::Path(QString const &str)
     : LogEntry::Arg::Base(), d(new Instance(str, '/'))
 {}
 
@@ -257,7 +257,7 @@ Path::Path(char const *nullTerminatedCStr, char sep)
     : LogEntry::Arg::Base(), d(new Instance(QString::fromUtf8(nullTerminatedCStr), sep))
 {}
 
-Path::Path(const char *nullTerminatedCStr)
+Path::Path(char const *nullTerminatedCStr)
     : LogEntry::Arg::Base(), d(new Instance(QString::fromUtf8(nullTerminatedCStr), '/'))
 {
 }
@@ -277,7 +277,7 @@ Path Path::operator + (QString const &str) const
     return Path(d->path + str, d->separator);
 }
 
-Path Path::operator + (const char *nullTerminatedCStr) const
+Path Path::operator + (char const *nullTerminatedCStr) const
 {
     return Path(d->path + QString(nullTerminatedCStr), d->separator);
 }

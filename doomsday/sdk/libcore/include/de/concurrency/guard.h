@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_GUARD_H
@@ -70,7 +70,7 @@ class ReadWriteLockable;
  * unlocking: if an exception occurs while the target is locked, unlocking will
  * be taken care of automatically when the Guard goes out of scope.
  *
- * @ingroup data
+ * @ingroup concurrency
  */
 class DENG2_PUBLIC Guard
 {

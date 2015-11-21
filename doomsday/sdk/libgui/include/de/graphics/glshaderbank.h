@@ -34,6 +34,8 @@ class GLProgram;
  * fragment shader(s) to use for the program).
  *
  * Shaders and programs cannot be accessed until OpenGL is ready.
+ *
+ * @ingroup gl
  */
 class LIBGUI_PUBLIC GLShaderBank : public InfoBank
 {

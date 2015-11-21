@@ -25,6 +25,11 @@
 
 namespace de {
 
+/**
+ * ProceduralImage that draws an image from a Style.
+ *
+ * @ingroup appfw
+ */
 class StyleProceduralImage : public ProceduralImage
 {
 public:

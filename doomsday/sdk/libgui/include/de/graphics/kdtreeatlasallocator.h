@@ -29,6 +29,8 @@ namespace de {
  * Allocations are done using 2D binary space partitioning.
  *
  * @see Atlas
+ *
+ * @ingroup gl
  */
 class LIBGUI_PUBLIC KdTreeAtlasAllocator : public Atlas::IAllocator
 {

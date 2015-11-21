@@ -27,6 +27,11 @@ namespace filesys {
 
 /**
  * File interpreter interface.
+ *
+ * Interpreters produce specialized File instances that convert raw file
+ * contents to domain-specific representations (e.g., image content).
+ *
+ * @ingroup fs
  */
 class IInterpreter
 {

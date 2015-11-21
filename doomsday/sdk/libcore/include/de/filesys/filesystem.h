@@ -57,6 +57,8 @@
  * just like native files, and the containing archives will be updated as
  * needed.
  * @see de::ArchiveEntryFile, de::ArchiveFeed, and de::FileSystem::interpret()
+ *
+ * @ingroup core
  */
 
 namespace de {

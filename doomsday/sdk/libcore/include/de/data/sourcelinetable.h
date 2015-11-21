@@ -27,6 +27,13 @@ namespace de {
 
 /**
  * Generates unique identifiers for lines in source files.
+ *
+ * Every Record that has been parsed from a ScriptedInfo document has a special
+ * variable that determines the source code location of the data. To store this
+ * information with less overhead, its value is generated using
+ * SourceLineTable.
+ *
+ * @ingroup data
  */
 class SourceLineTable
 {

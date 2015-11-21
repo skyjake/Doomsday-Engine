@@ -27,6 +27,8 @@ namespace de {
 
 /**
  * Widget for changing the value of a Variable using a slider.
+ *
+ * @ingroup guiWidgets
  */
 class LIBAPPFW_PUBLIC VariableSliderWidget : public SliderWidget
 {

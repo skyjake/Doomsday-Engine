@@ -40,6 +40,8 @@ class File;
  * support drawing (via QPainter).
  *
  * @todo Merge image_t and the related Image_* routines into here.
+ *
+ * @ingroup gl
  */
 class LIBGUI_PUBLIC Image : public ISerializable
 {

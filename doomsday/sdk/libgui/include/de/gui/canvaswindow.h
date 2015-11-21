@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBGUI_CANVASWINDOW_H
@@ -36,7 +36,7 @@
 namespace de {
 
 /**
- * Top-level window that contains an OpenGL drawing canvas. @ingroup base
+ * Top-level window that contains an OpenGL drawing canvas. @ingroup gui
  *
  * CanvasWindow is the window frame and Canvas is the drawing surface. These
  * two are in separate classes as the former is a top-level window and the

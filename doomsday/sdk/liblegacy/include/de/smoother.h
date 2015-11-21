@@ -1,6 +1,6 @@
 /**
  * @file smoother.h
- * Interpolator for smoothing out a movement curve. @ingroup math
+ * Interpolator for smoothing out a movement curve.
  *
  * The original movement path is composed out of discrete 3D points. Smoother
  * calculates the points in between.
@@ -31,6 +31,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/// @addtogroup legacyMath
+/// @{
 
 #define SMOOTHER_MOVE_EPSILON           .001
 
@@ -142,6 +145,8 @@ DENG_PUBLIC dd_bool Smoother_IsMoving(Smoother const *sm);
 DENG_PUBLIC void Smoother_Advance(Smoother *sm, float period);
 
 void Smoother_Debug(Smoother const *sm);
+
+/// @}
 
 #ifdef __cplusplus
 } // extern "C"

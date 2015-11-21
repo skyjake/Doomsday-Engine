@@ -1,6 +1,6 @@
 /**
  * @file stringarray.cpp
- * Array of text strings implementation. @ingroup base
+ * Array of text strings implementation.
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

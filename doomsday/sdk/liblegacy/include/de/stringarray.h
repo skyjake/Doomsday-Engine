@@ -1,6 +1,6 @@
 /**
  * @file stringarray.h
- * Array of text strings. @ingroup base
+ * Array of text strings.
  *
  * Dynamic, indexable array of text strings. The functionality of this class is
  * comparable to QStringList, however with a pure C API.
@@ -33,6 +33,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/// @addtogroup legacyData
+/// @{
 
 struct stringarray_s; // opaque
 
@@ -182,6 +185,8 @@ DENG_PUBLIC void StringArray_Write(StringArray const *ar, Writer *writer);
  * @param reader  Reader instance.
  */
 DENG_PUBLIC void StringArray_Read(StringArray *ar, Reader *reader);
+
+/// @}
 
 #ifdef __cplusplus
 } // extern "C"

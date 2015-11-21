@@ -28,9 +28,12 @@ namespace de {
 /**
  * Height map.
  *
+ * Operations related to height maps, such as conversion from grayscale height
+ * map to normal map, and determining the height at a specific point.
+ *
  * @ingroup gl
  */
-class HeightMap        
+class HeightMap
 {
 public:
     HeightMap();

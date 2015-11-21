@@ -29,7 +29,7 @@ class File;
 /**
  * Bank containing Waveform instances loaded from files.
  *
- * @ingroup data
+ * @ingroup audio
  */
 class LIBGUI_PUBLIC WaveformBank : public InfoBank
 {

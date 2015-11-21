@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBSHELL_TEXTWIDGET_H
@@ -43,6 +43,8 @@ class Action;
  * derived from TextRootWidget.
  *
  * QObject is a base class for the signals and slots capabilities.
+ *
+ * @ingroup textUi
  */
 class LIBSHELL_PUBLIC TextWidget : public QObject, public Widget
 {

@@ -1,7 +1,5 @@
 /** @file widget.h Base class for widgets.
  *
- * @defgroup widgets  Widget Framework
- *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
@@ -20,6 +18,9 @@
 
 #ifndef LIBDENG2_WIDGET_H
 #define LIBDENG2_WIDGET_H
+
+/** @defgroup widgets  Widget Framework
+ * @ingroup core */
 
 #include "../String"
 #include "../Event"

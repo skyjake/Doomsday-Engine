@@ -25,6 +25,11 @@
 
 namespace de {
 
+/**
+ * OpenGL hardware and driver capabilities.
+ *
+ * @ingroup gl
+ */
 class LIBGUI_PUBLIC GLInfo
 {
 public:

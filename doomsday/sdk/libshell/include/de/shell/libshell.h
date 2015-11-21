@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBSHELL_MAIN_H
@@ -21,6 +21,16 @@
 
 #include <de/String>
 #include <de/Range>
+
+/** @defgroup shell Shell Access */
+
+/**
+ * @defgroup abstractUi Abstract UI
+ * Base classes for both text-based and graphical widgets. @ingroup shell
+ */
+
+/** @defgroup textUi Text-Mode UI
+ * @ingroup shell */
 
 /*
  * The LIBSHELL_PUBLIC macro is used for declaring exported symbols. It must be

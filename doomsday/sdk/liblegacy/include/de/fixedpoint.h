@@ -1,5 +1,4 @@
 /** @file fixedpoint.h Fixed-point math.
- * @ingroup math
  *
  * @par Build Options
  * Define DENG_NO_FIXED_ASM to disable the assembler fixed-point routines.
@@ -25,6 +24,9 @@
 #define LIBDENG_FIXED_POINT_MATH_H
 
 #include "liblegacy.h"
+
+/// @addtogroup legacyMath
+/// @{
 
 #define FRACBITS        16
 #define FRACUNIT        (1 << FRACBITS)
@@ -81,6 +83,8 @@ DENG_PUBLIC fixed_t FixedDiv2(fixed_t a, fixed_t b);
 #endif // DENG_NO_FIXED_ASM
 
 DENG_PUBLIC fixed_t FixedDiv(fixed_t a, fixed_t b);
+
+/// @}
 
 #ifdef __cplusplus
 } // extern "C"

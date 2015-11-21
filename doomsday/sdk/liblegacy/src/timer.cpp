@@ -1,6 +1,6 @@
 /**
  * @file timer.cpp
- * Timing subsystem. @ingroup system
+ * Timing subsystem.
  *
  * @note Under WIN32, uses Win32 multimedia timing routines.
  *

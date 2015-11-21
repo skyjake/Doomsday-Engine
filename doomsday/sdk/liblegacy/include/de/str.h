@@ -1,6 +1,6 @@
 /** @file str.h Dynamic text string.
  *
- * Dynamic string management and other text utilities. @ingroup base
+ * Dynamic string management and other text utilities.
  *
  * Uses @ref memzone or standard malloc for memory allocation, chosen during
  * initialization of a string. The string instance itself is always allocated
@@ -47,6 +47,19 @@
 #include "reader.h"
 #include "writer.h"
 #include <stdarg.h>
+
+/**
+ * @defgroup copyDelimiterFlags Copy Delimiter Flags
+ * Flags for Str_CopyDelim2().
+ * @ingroup legacyFlags
+ * @{
+ */
+#define CDF_OMIT_DELIMITER      0x1 ///< Do not copy delimiters into the dest path.
+#define CDF_OMIT_WHITESPACE     0x2 ///< Do not copy whitespace into the dest path.
+/** @} */
+
+/// @addtogroup legacyData
+/// @{
 
 #define DENG_LAST_CHAR(strNullTerminated)  (strNullTerminated[strlen(strNullTerminated) - 1])
 
@@ -332,14 +345,6 @@ DENG_PUBLIC dd_bool Str_EndsWith(Str const *ds, char const *text);
 DENG_PUBLIC char const *Str_GetLine(Str *ds, char const *src);
 
 /**
- * @defgroup copyDelimiterFlags Copy Delimiter Flags
- */
-/*@{*/
-#define CDF_OMIT_DELIMITER      0x1 // Do not copy delimiters into the dest path.
-#define CDF_OMIT_WHITESPACE     0x2 // Do not copy whitespace into the dest path.
-/*@}*/
-
-/**
  * Copies characters from @a src to @a dest until a @a delimiter character is encountered.
  *
  * @param dest          Destination string.
@@ -472,6 +477,8 @@ DENG_PUBLIC AutoStr *AutoStr_FromTextStd(char const *text);
  * having been taken out of the garbage.
  */
 DENG_PUBLIC Str *Str_FromAutoStr(AutoStr *as);
+
+/// @}
 
 #ifdef __cplusplus
 } // extern "C"

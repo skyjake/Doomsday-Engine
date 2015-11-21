@@ -1,6 +1,6 @@
 /**
  * @file concurrency.h
- * Concurrency: threads, mutexes, semaphores. @ingroup system
+ * Concurrency: threads, mutexes, semaphores.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -25,6 +25,9 @@
 #define LIBDENG_SYSTEM_CONCURRENCY_H
 
 #include <de/liblegacy.h>
+
+/// @addtogroup legacy
+/// @{
 
 typedef void *thread_t;
 typedef void *mutex_t;
@@ -156,6 +159,8 @@ void Sem_V(sem_t semaphore);
  */
 
 void Sys_MarkAsMainThread(void);
+
+/// @}
 
 #ifdef __cplusplus
 } // extern "C"

@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBAPPFW_SCROLLAREAWIDGET_H
@@ -26,6 +26,8 @@ namespace de {
 /**
  * Scrollable area.
  *
+ * Provides a RuleRectangle where child widgets can be placedBase class for widgets
+ *
  * ScrollAreaWidget does not control its own position or size. The user must
  * define its rectangle. The content rule rectangle is defined in relation to
  * the widget's rectangle.
@@ -36,6 +38,8 @@ namespace de {
  * However, the default behavior is that the user must call
  * glMakeScrollIndicatorGeometry() to include the indicator geometry as part of
  * the derived/owner widget.
+ *
+ * @ingroup guiWidgets
  */
 class LIBAPPFW_PUBLIC ScrollAreaWidget : public GuiWidget
 {

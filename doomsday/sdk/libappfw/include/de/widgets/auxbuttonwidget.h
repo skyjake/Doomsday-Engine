@@ -25,6 +25,8 @@ namespace de {
 
 /**
  * Button with another small auxiliary button inside.
+ *
+ * @ingroup guiWidgets
  */
 class LIBAPPFW_PUBLIC AuxButtonWidget : public ButtonWidget
 {

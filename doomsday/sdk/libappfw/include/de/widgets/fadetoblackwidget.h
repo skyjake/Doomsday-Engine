@@ -26,6 +26,8 @@ namespace de {
 
 /**
  * Fade to/from black.
+ *
+ * @ingroup guiWidgets
  */
 class LIBAPPFW_PUBLIC FadeToBlackWidget : public LabelWidget
 {

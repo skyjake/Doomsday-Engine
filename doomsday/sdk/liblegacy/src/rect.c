@@ -1,6 +1,6 @@
 /**
  * @file rect.c
- * Rectangles. @ingroup math
+ * Rectangles.
  *
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *

@@ -1,5 +1,7 @@
 /** @file ui/defs.h  Common de::ui namespace definitions.
  *
+ * @ingroup uidata
+ *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License

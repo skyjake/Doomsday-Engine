@@ -1,5 +1,4 @@
 /** @file stack.c Stack of void* elements.
- * @ingroup data
  *
  * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
  *

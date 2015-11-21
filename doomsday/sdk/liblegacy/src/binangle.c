@@ -1,5 +1,4 @@
 /** @file binangle.c Binary angle mathematics.
- * @ingroup math
  *
  * Trigonometric functions.
  *

@@ -1,6 +1,6 @@
 /**
  * @file point.h
- * 2D points. @ingroup math
+ * 2D points.
  *
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
@@ -28,9 +28,12 @@
 extern "C" {
 #endif
 
+/// @addtogroup legacyMath
+/// @{
+
 /**
  * 2D point with integer values. A handy POD structure for easy manipulation of
- * two dimensional plane points. @ingroup math
+ * two dimensional plane points.
  */
 typedef struct Point2Raw_s {
     union {
@@ -84,7 +87,6 @@ DENG_PUBLIC dd_bool Point2_Equality(Point2 const *point, Point2 const *other);
 /**
  * 2D point with floating point values. A handy POD structure for easy
  * manipulation of two dimensional plane points.
- * @ingroup math
  */
 typedef struct Point2Rawf_s {
     union {
@@ -136,7 +138,7 @@ DENG_PUBLIC dd_bool Point2f_Equality(Point2f const *point, Point2f const *other)
 
 /**
  * 3D point with integer values. A handy POD structure for easy manipulation of
- * three dimensional space points. @ingroup math
+ * three dimensional space points.
  */
 typedef struct Point3Raw_s {
     union {
@@ -190,7 +192,6 @@ DENG_PUBLIC dd_bool Point3_Equality(Point3 const *point, Point3 const *other);
 /**
  * 3D point with floating point values. A handy POD structure for easy
  * manipulation of three dimensional space points.
- * @ingroup math
  */
 typedef struct Point3Rawf_s {
     union {
@@ -240,6 +241,8 @@ DENG_PUBLIC void Point3f_TranslateZ(Point3f *point, double z);
 DENG_PUBLIC void Point3f_Sum(Point3f *point, Point3f const *other);
 
 DENG_PUBLIC dd_bool Point3f_Equality(Point3f const *point, Point3f const *other);
+
+/// @}
 
 #ifdef __cplusplus
 } // extern "C"

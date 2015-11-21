@@ -33,6 +33,8 @@ class GridLayout;
  * column aligned to the right.
  *
  * Used for instance in the settings dialogs.
+ *
+ * @ingroup guiWidgets
  */
 class LIBAPPFW_PUBLIC GridPopupWidget : public PopupWidget
 {

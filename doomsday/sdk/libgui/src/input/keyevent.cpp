@@ -1,5 +1,4 @@
 /** @file keyevent.cpp  Input event from a keyboard.
- * @ingroup input
  *
  * Depends on Qt GUI.
  *
@@ -16,7 +15,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifdef WIN32
@@ -352,17 +351,17 @@ static int x11ScancodeToDDKey(int scancode)
 {
     int symCount;
     KeySym *syms = XGetKeyboardMapping(QX11Info::display(), scancode, 1, &symCount);
-    if(!symCount) 
+    if(!symCount)
     {
         XFree(syms);
         return 0;
     }
     KeySym sym = syms[0];
-    XFree(syms); 
+    XFree(syms);
     syms = nullptr;
 
     if(sym == NoSymbol) return 0;
-    
+
     unsigned int ucs4 = X11_KeySymToUcs4(sym);
     if(ucs4)
     {

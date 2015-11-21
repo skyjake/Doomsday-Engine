@@ -25,6 +25,9 @@
 
 #include <de/liblegacy.h>
 
+/// @addtogroup legacyData
+/// @{
+
 enum {
     VX = 0,
     VY = 1,
@@ -177,6 +180,8 @@ typedef int32_t         int_from_pointer_t;
 #define DDMININT    ((int32_t)0x80000000)   ///< Min negative 32-bit integer
 #define DDMINLONG   ((int32_t)0x80000000)
 #define DDMINFLOAT  ((float)-(1E+37))
+
+/// @}
 
 #endif // RC_INVOKED
 

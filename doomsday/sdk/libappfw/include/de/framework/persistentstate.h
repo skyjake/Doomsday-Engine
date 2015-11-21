@@ -29,6 +29,8 @@ class IPersistent;
 
 /**
  * Stores and recalls persistent state across running sessions.
+ *
+ * @ingroup appfw
  */
 class LIBAPPFW_PUBLIC PersistentState : public Refuge
 {

@@ -1,7 +1,6 @@
 /**
  * @file animator.h
  * Moves a value gradually from a start value to a target value.
- * @ingroup math
  *
  * The value transition is carried out in a fixed number of steps.
  *
@@ -28,8 +27,8 @@
 
 #include "liblegacy.h"
 
-/// @addtogroup math
-///@{
+/// @addtogroup legacyMath
+/// @{
 
 #ifdef __cplusplus
 extern "C" {
@@ -79,6 +78,6 @@ DENG_PUBLIC void AnimatorVector4_Think(animatorvector4_t v);
 } // extern "C"
 #endif
 
-///@}
+/// @}
 
 #endif /* LIBDENG_ANIMATOR_H */

@@ -28,6 +28,8 @@ namespace de {
  * Utility for untrapping the mouse. The mouse is untrapped from the specified window for
  * the lifetime of the Untrapper instance. When Untrapper is destroyed, mouse is
  * automatically trapped if it originally was trapped.
+ *
+ * @ingroup appfw
  */
 class LIBAPPFW_PUBLIC Untrapper
 {

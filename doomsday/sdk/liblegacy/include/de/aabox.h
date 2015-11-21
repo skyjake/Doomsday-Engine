@@ -1,5 +1,4 @@
 /** @file aabox.h Axis-aligned bounding box.
- * @ingroup math
  *
  * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright &copy; 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -25,8 +24,10 @@
 #include "types.h"
 
 /**
- * Axis-aligned bounding box with integer precision.
- * Handy POD structure for manipulation of bounding boxes. @ingroup world
+ * Axis-aligned bounding box with integer precision. Handy POD structure for
+ * manipulation of bounding boxes.
+ *
+ * @ingroup legacyMath
  */
 typedef struct aabox_s {
     union {
@@ -71,7 +72,9 @@ typedef struct aabox_s {
 
 /**
  * Axis-aligned bounding box with floating-point precision.
- * Handy POD structure for manipulation of bounding boxes. @ingroup world
+ * Handy POD structure for manipulation of bounding boxes.
+ *
+ * @ingroup legacyMath
  */
 typedef struct aaboxf_s {
     union {
@@ -116,7 +119,9 @@ typedef struct aaboxf_s {
 
 /**
  * Axis-aligned bounding box with double floating-point precision.
- * Handy POD structure for manipulation of bounding boxes. @ingroup world
+ * Handy POD structure for manipulation of bounding boxes.
+ *
+ * @ingroup legacyMath
  */
 typedef struct aaboxd_s {
     union {

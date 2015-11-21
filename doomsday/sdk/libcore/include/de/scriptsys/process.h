@@ -339,7 +339,7 @@ public:
      * are named `__argN__`, with `N` being an increasing number.
      *
      * @param result    What to do with the result value.
-     * @param global    Global namespace where to execute the call.
+     * @param globals   Global namespace where to execute the call.
      * @param function  Name of the function.
      * @param args      Argument values for the function call.
      *

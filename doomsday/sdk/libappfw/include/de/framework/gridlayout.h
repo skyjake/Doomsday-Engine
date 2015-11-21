@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBAPPFW_GRIDLAYOUT_H
@@ -30,6 +30,8 @@ namespace de {
  * Layouts are utilities that modify the placement of widgets. The layout
  * instance itself does not need to remain in memory -- widget rules are
  * modified immediately as the widgets are added to the layout.
+ *
+ * @ingroup appfw
  */
 class LIBAPPFW_PUBLIC GridLayout
 {

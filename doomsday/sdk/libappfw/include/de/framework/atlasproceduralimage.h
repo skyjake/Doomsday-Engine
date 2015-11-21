@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBAPPFW_ATLASPROCEDURALIMAGE_H
@@ -32,6 +32,8 @@ namespace de {
 
 /**
  * Procedural image that draws a simple 2D texture stored on an atlas.
+ *
+ * @ingroup appfw
  */
 class LIBAPPFW_PUBLIC AtlasProceduralImage : public ProceduralImage
 {

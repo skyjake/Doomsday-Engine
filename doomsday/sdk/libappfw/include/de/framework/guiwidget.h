@@ -81,7 +81,7 @@ class BlurWidget;
  * @note Always use GuiWidget::destroy() to delete any GUI widget. It will
  * ensure that the widget is properly deinitialized before destruction.
  *
- * @ingroup gui
+ * @ingroup appfw
  */
 class LIBAPPFW_PUBLIC GuiWidget : public QObject, public Widget
 {

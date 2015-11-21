@@ -1,6 +1,6 @@
 /**
  * @file size.h
- * 2D sizes. @ingroup math
+ * 2D sizes.
  *
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
@@ -27,6 +27,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/// @addtogroup legacyMath
+/// @{
 
 /**
  * Integer width and height. Intended as a handy POD structure for easy
@@ -111,6 +114,8 @@ DENG_PUBLIC void Size2f_SetWidthHeight(Size2f *size, double width, double height
 DENG_PUBLIC void Size2f_Sum(Size2f *size, Size2f const *other);
 
 DENG_PUBLIC dd_bool Size2f_Equality(Size2f const *size, Size2f const *other);
+
+/// @}
 
 #ifdef __cplusplus
 } // extern "C"

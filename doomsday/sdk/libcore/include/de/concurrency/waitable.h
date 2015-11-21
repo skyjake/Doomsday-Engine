@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_WAITABLE_H
@@ -30,7 +30,7 @@ namespace de {
 /**
  * Semaphore that allows objects to be waited on.
  *
- * @ingroup data
+ * @ingroup concurrency
  */
 class DENG2_PUBLIC Waitable
 {

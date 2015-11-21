@@ -27,6 +27,8 @@ namespace de {
 
 /**
  * Widget for editing the value of a text variable.
+ *
+ * @ingroup guiWidgets
  */
 class LIBAPPFW_PUBLIC VariableLineEditWidget : public LineEditWidget
 {

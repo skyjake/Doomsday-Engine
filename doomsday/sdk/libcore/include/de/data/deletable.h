@@ -25,6 +25,8 @@ namespace de {
 
 /**
  * Object whose deletion can be observed.
+ *
+ * @ingroup data
  */
 class DENG2_PUBLIC Deletable
 {

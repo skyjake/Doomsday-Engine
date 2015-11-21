@@ -30,6 +30,8 @@ class PersistentState;
  *
  * GuiWidget instances that implement IPersistent will automatically be saved and
  * restored when the widget is (de)initialized.
+ *
+ * @ingroup appfw
  */
 class LIBAPPFW_PUBLIC IPersistent
 {

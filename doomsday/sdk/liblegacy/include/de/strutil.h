@@ -1,5 +1,4 @@
 /** @file strutil.h String and text utilities.
- * @ingroup base
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -23,6 +22,9 @@
 
 #include "types.h"
 #include <stdarg.h>
+
+/// @addtogroup legacyData
+/// @{
 
 #ifdef __cplusplus
 extern "C" {
@@ -113,6 +115,8 @@ DENG_PUBLIC dd_bool M_IsStringValidByte(const char* str);
 
 /// @return  @c true if @a string can be interpreted as a valid floating-point value.
 DENG_PUBLIC dd_bool M_IsStringValidFloat(const char* str);
+
+/// @}
 
 #ifdef __cplusplus
 } // extern "C"

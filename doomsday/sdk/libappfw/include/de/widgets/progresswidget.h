@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBAPPFW_PROGRESSWIDGET_H
@@ -39,6 +39,8 @@ namespace de {
  *
  * @todo Needs a bit of cleanup: the visual style (large gear, small gear, dots)
  * and the range setup should be separate concepts.
+ *
+ * @ingroup guiWidgets
  */
 class LIBAPPFW_PUBLIC ProgressWidget : public LabelWidget
 {

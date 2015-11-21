@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_GAME_H
@@ -25,7 +25,7 @@ namespace de {
 namespace game {
 
 /**
- * Base class for games.
+ * Base class for games. @ingroup game
  *
  * Represents a specific playable game that runs on top of Doomsday. There can
  * be only one game loaded at a time. Examples of games are "Doom II" and

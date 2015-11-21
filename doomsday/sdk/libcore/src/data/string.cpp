@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/App"
@@ -210,7 +210,7 @@ String String::lower() const
 }
 
 String String::upper() const
-{    
+{
     return toUpper();
 }
 
@@ -235,8 +235,8 @@ std::wstring String::stringToWide(String const &str)
     while(input < inputEnd)
     {
         d = *input++;
-        
-        if(d < 0x80) 
+
+        if(d < 0x80)
         {
             c = d;
             trailing = 0;
@@ -264,7 +264,7 @@ std::wstring String::stringToWide(String const &str)
         {
             throw ConversionError("String::stringToWide", "Bad input");
         }
-        
+
         for(; trailing; trailing--)
         {
             if((input >= inputEnd) || (((d = *input++) & 0xc0) != 0x80))
@@ -274,7 +274,7 @@ std::wstring String::stringToWide(String const &str)
             c <<= 6;
             c |= d & 0x3f;
         }
-        
+
         if(c < 0x10000)
         {
             output.push_back(wchar_t(c));
@@ -303,7 +303,7 @@ String String::wideToString(std::wstring const &str)
     duint c;
     duint d;
     dint bits;
-    
+
     while(input < inputEnd)
     {
         c = *input++;
@@ -318,10 +318,10 @@ String String::wideToString(std::wstring const &str)
             }
             else
             {
-                throw ConversionError("String::wideToString", "Bad input"); 
+                throw ConversionError("String::wideToString", "Bad input");
             }
         }
-        
+
         if(c < 0x80)
         {
             output += dchar(c);
@@ -337,12 +337,12 @@ String String::wideToString(std::wstring const &str)
             output += dchar((c >> 12) | 0xe0);
             bits = 6;
         }
-        else 
+        else
         {
             output += dchar((c >> 18) | 0xf0);
             bits = 12;
         }
-        
+
         for(; bits > 0; bits -= 6)
         {
             output += dchar((c >> bits) & 0x3f);
@@ -414,7 +414,7 @@ dint String::compareWithoutCase(String const &str) const
     return compare(str, Qt::CaseInsensitive);
 }
 
-dint String::compareWithoutCase(const String &str, int n) const
+dint String::compareWithoutCase(String const &str, int n) const
 {
     return leftRef(n).compare(str.leftRef(n), Qt::CaseInsensitive);
 }
@@ -494,12 +494,12 @@ void String::advanceFormat(String::const_iterator &i, String::const_iterator con
     ++i;
     if(i == end)
     {
-        throw IllegalPatternError("String::advanceFormat", 
+        throw IllegalPatternError("String::advanceFormat",
             "Incomplete formatting instructions");
     }
 }
 
-String String::patternFormat(String::const_iterator &formatIter, 
+String String::patternFormat(String::const_iterator &formatIter,
                              String::const_iterator const &formatEnd,
                              IPatternArg const &arg)
 {
@@ -542,14 +542,14 @@ String String::patternFormat(String::const_iterator &formatIter,
         }
         maxWidth = String(k, formatIter).toInt();
     }
-    
+
     // Finally, the type formatting.
     switch((*formatIter).toLatin1())
     {
     case 's':
         output << arg.asText();
         break;
-        
+
     case 'b':
         output << (int(arg.asNumber())? "true" : "false");
         break;
@@ -566,7 +566,7 @@ String String::patternFormat(String::const_iterator &formatIter,
     case 'u':
         output << duint64(arg.asNumber());
         break;
-    
+
     case 'X':
         output << uppercasedigits;
     case 'x':
@@ -576,20 +576,20 @@ String String::patternFormat(String::const_iterator &formatIter,
     case 'p':
         output << "0x" << hex << dintptr(arg.asNumber()) << dec;
         break;
-        
+
     case 'f':
         // Max width is interpreted as the number of decimal places.
         output << fixed << qSetRealNumberPrecision(maxWidth? maxWidth : 3) << arg.asNumber();
         maxWidth = 0;
         break;
-        
+
     default:
-        throw IllegalPatternError("Log::Entry::str", 
+        throw IllegalPatternError("Log::Entry::str",
             "Unknown format character '" + String(1, *formatIter) + "'");
     }
 
     output.flush();
-    
+
     // Align and fit.
     if(maxWidth && result.size() > maxWidth)
     {

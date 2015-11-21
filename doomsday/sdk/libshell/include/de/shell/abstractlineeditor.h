@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBSHELL_ABSTRACTLINEEDITOR_H
@@ -39,6 +39,8 @@ class Lexicon;
  * The width of the editor is assumed to stay constant. A concrete
  * implementation will provide the current width via
  * AbstractLineEditor::maximumWidth().
+ *
+ * @ingroup abstractUi
  */
 class LIBSHELL_PUBLIC AbstractLineEditor : public ITextEditor
 {

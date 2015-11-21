@@ -1,5 +1,4 @@
 /** @file de/findfile.h Win32-style native file finding.
- * @ingroup system
  *
  * @author Copyright &copy; 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>
@@ -28,6 +27,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/// @addtogroup legacy
+/// @{
 
 // File attributes.
 #define A_SUBDIR                0x1
@@ -63,7 +65,7 @@ typedef struct finddata_s {
 DENG_PUBLIC int FindFile_FindFirst(FindData *findData, char const *pattern);
 
 /**
- * Finds the next matching file. Directory names end in a directory 
+ * Finds the next matching file. Directory names end in a directory
  * separator character.
  *
  * @param findData  File finder.
@@ -108,6 +110,8 @@ DENG_PUBLIC char* _fullpath(char* full, const char* original, int len);
 DENG_PUBLIC void _splitpath(const char* path, char* drive, char* dir, char* name, char* ext);
 
 #endif // UNIX
+
+/// @}
 
 #ifdef __cplusplus
 } // extern "C"

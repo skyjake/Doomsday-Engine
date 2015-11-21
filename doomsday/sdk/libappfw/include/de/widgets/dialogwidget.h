@@ -59,6 +59,8 @@ class DialogContentStylist;
  * Scrolling is set up so that the dialog height doesn't surpass the view
  * rectangle's height. Contents of the "area" widget scroll while the other
  * elements remain static in relation to the container.
+ *
+ * @ingroup guiWidgets
  */
 class LIBAPPFW_PUBLIC DialogWidget : public PopupWidget
 {

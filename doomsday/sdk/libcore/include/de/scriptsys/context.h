@@ -144,8 +144,8 @@ public:
      * functions and it is comparable to the "self" variable that gets added to
      * script contexts.
      *
-     * @param scope  Value that specifies the instance whose scope the context
-     *               is being evaluated in. Ownership taken.
+     * @param nativeSelf  Value that specifies the instance whose scope the
+     *                    context is being evaluated in. Ownership taken.
      */
     void setNativeSelf(Value *nativeSelf);
 

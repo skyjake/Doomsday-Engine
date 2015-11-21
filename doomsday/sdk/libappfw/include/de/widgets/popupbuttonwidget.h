@@ -31,6 +31,8 @@ namespace de {
  *
  * Unlike a regular button, ensures that if the popup is open when the button is
  * clicked, the popup will just close and not be immediately opened again.
+ *
+ * @ingroup guiWidgets
  */
 class LIBAPPFW_PUBLIC PopupButtonWidget : public ButtonWidget
 {

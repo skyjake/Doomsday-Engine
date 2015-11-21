@@ -1,6 +1,6 @@
 /**
  * @file memory.h
- * Memory allocations. @ingroup system
+ * Memory allocations.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -29,6 +29,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/// @addtogroup legacy
+/// @{
 
 DENG_PUBLIC void *M_Malloc(size_t size);
 
@@ -59,6 +62,8 @@ DENG_PUBLIC void *M_MemDup(void const *ptr, size_t size);
 DENG_PUBLIC void M_Free(void *ptr);
 
 DENG_PUBLIC char *M_StrDup(char const *str);
+
+/// @}
 
 #ifdef __cplusplus
 } // extern "C"

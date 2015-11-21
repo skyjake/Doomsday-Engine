@@ -35,6 +35,8 @@ namespace de {
  *
  * Relies on a pre-existing FontLineWrapping where the text content has been
  * wrapped onto multiple lines and laid out appropriately.
+ *
+ * @ingroup appfw
  */
 class LIBAPPFW_PUBLIC GLTextComposer : public Asset
 {

@@ -1,6 +1,6 @@
 /**
  * @file size.c
- * 2D sizes. @ingroup math
+ * 2D sizes.
  *
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *

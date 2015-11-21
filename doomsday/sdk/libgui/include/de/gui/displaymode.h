@@ -1,6 +1,6 @@
 /**
  * @file displaymode.h
- * Changing and enumerating available display modes. @ingroup gl
+ * Changing and enumerating available display modes. @ingroup gui
  *
  * High-level logic for enumerating, selecting, and changing display modes. See
  * displaymode_native.h for the platform-specific low-level routines.
@@ -21,7 +21,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBGUI_DISPLAYMODE_H

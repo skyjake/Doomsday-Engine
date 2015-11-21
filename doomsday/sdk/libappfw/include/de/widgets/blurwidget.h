@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBAPPFW_BLURWIDGET_H
@@ -27,6 +27,8 @@ namespace de {
  * Utility widget for drawing blurred widget backgrounds. Many widgets can
  * share the same blurred background texture, assuming they don't overlap each
  * other.
+ *
+ * @ingroup guiWidgets
  */
 class LIBAPPFW_PUBLIC BlurWidget : public GuiWidget
 {

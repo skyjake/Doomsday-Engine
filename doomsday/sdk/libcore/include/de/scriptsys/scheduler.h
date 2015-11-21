@@ -34,6 +34,8 @@ class Record;
  * Scheduler owns the parsed scripts, but does not execute them. Use Scheduler::Clock
  * to execute scripts. There can be any number of Scheduler::Clock instances operating
  * on a single schedule.
+ *
+ * @ingroup script
  */
 class DENG2_PUBLIC Scheduler
 {

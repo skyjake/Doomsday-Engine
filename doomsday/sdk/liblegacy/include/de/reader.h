@@ -1,6 +1,6 @@
 /**
  * @file de/reader.h
- * Deserializer for reading values and data from a byte array. @ingroup base
+ * Deserializer for reading values and data from a byte array.
  *
  * Reader instances assume that all values stored in the source array are in
  * little-endian (Intel) byte order. All read operations are checked against
@@ -41,6 +41,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/// @addtogroup legacy
+/// @{
 
 struct reader_s; // The reader instance (opaque).
 
@@ -130,6 +133,8 @@ DENG_PUBLIC void Reader_Read(Reader *reader, void *buffer, size_t len);
 DENG_PUBLIC uint16_t Reader_ReadPackedUInt16(Reader *reader);
 
 DENG_PUBLIC uint32_t Reader_ReadPackedUInt32(Reader *reader);
+
+/// @}
 
 #ifdef __cplusplus
 } // extern "C"

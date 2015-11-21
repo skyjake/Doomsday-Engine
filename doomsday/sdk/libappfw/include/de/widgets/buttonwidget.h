@@ -29,7 +29,7 @@ namespace de {
 /**
  * Clickable button widget.
  *
- * @ingroup gui
+ * @ingroup guiWidgets
  */
 class LIBAPPFW_PUBLIC ButtonWidget : public LabelWidget
 {

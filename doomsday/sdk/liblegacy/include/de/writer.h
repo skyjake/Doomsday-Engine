@@ -2,8 +2,6 @@
  * @file de/writer.h
  * Serializer for writing values and data into a byte array.
  *
- * @ingroup base
- *
  * Writer instances ensure that all values written into the array are stored in
  * little-endian (Intel) byte order. All write operations are also checked
  * against the buffer boundaries; writing too much data into the buffer results
@@ -42,6 +40,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/// @addtogroup legacy
+/// @{
 
 #ifdef DENG_WRITER_TYPECHECK
 // Writer Type Check Codes.
@@ -162,6 +163,8 @@ DENG_PUBLIC void Writer_Write(Writer *writer, void const *buffer, size_t len);
 DENG_PUBLIC void Writer_WritePackedUInt16(Writer *writer, uint16_t v);
 
 DENG_PUBLIC void Writer_WritePackedUInt32(Writer *writer, uint32_t v);
+
+/// @}
 
 #ifdef __cplusplus
 } // extern "C"

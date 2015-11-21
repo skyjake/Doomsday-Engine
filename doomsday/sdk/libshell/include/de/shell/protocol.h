@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBSHELL_PROTOCOL_H
@@ -31,6 +31,7 @@ namespace shell {
 
 /**
  * Password challenge.
+ * @ingroup shell
  */
 class LIBSHELL_PUBLIC ChallengePacket : public Packet
 {
@@ -41,6 +42,7 @@ public:
 
 /**
  * Packet with one or more log entries.
+ * @ingroup shell
  */
 class LIBSHELL_PUBLIC LogEntryPacket : public Packet
 {
@@ -51,7 +53,7 @@ public:
     LogEntryPacket();
     ~LogEntryPacket();
 
-    void clear();   
+    void clear();
     bool isEmpty() const;
 
     /**
@@ -79,7 +81,7 @@ private:
 
 /**
  * Packet containing information about the players' current positions, colors,
- * and names.
+ * and names. @ingroup shell
  */
 class LIBSHELL_PUBLIC PlayerInfoPacket : public Packet
 {
@@ -126,7 +128,7 @@ private:
 };
 
 /**
- * Packet containing an outline of a map's lines.
+ * Packet containing an outline of a map's lines. @ingroup shell
  *
  * The contained information is not intended to be a 100% accurate or complete
  * representation of a map. It is only meant to be used as an informative
@@ -176,7 +178,7 @@ private:
 };
 
 /**
- * Network protocol for communicating with a server.
+ * Network protocol for communicating with a server. @ingroup shell
  */
 class LIBSHELL_PUBLIC Protocol : public de::Protocol
 {

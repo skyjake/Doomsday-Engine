@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBAPPFW_OCULUSRIFT_H
@@ -28,6 +28,8 @@ namespace de {
 
 /**
  * Oculus Rift configuration and head tracking.
+ *
+ * @ingroup vr
  */
 class LIBAPPFW_PUBLIC OculusRift
 {
@@ -97,7 +99,7 @@ public:
      * yaw angles, in radians. If no head tracking is available, the returned values are
      * not valid.
      */
-    Vector3f headOrientation() const;      
+    Vector3f headOrientation() const;
 
     /**
      * Returns the current real-world head position.

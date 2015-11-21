@@ -13,14 +13,16 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_CHARSYMBOLS_H
 #define LIBDENG2_CHARSYMBOLS_H
 
-/*
- * Unicode key symbols.
+/**
+ * @defgroup unicodeSymbols Unicode Symbols
+ * Unicode key symbols. @ingroup types
+ * @{
  */
 #ifdef MACOSX
 #  define DENG2_CHAR_MAC_COMMAND_KEY     "\u2318"
@@ -52,5 +54,6 @@
 #  define DENG2_CHAR_RIGHT_DOUBLEARROW   "=>"
 #  define DENG2_CHAR_MDASH               "-"
 #endif
+/** @} */
 
 #endif // LIBDENG2_CHARSYMBOLS_H

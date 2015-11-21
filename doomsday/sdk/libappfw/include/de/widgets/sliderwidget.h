@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBAPPFW_SLIDERWIDGET_H
@@ -29,6 +29,8 @@ namespace de {
  * Slider to pick a value within a range.
  *
  * The value can also be entered as text by right clicking on the slider.
+ *
+ * @ingroup guiWidgets
  */
 class LIBAPPFW_PUBLIC SliderWidget : public GuiWidget
 {

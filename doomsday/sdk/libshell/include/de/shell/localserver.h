@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBSHELL_LOCALSERVER_H
@@ -29,6 +29,8 @@ namespace shell {
 
 /**
  * Utility for starting and stopping local servers.
+ *
+ * @ingroup shell
  */
 class LIBSHELL_PUBLIC LocalServer
 {

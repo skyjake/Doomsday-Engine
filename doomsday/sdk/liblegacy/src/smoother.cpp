@@ -1,6 +1,6 @@
 /**
  * @file smoother.cpp
- * Interpolator for smoothing out a movement curve. @ingroup math
+ * Interpolator for smoothing out a movement curve.
  *
  * The original movement path is composed out of discrete 3D points. Smoother
  * calculates the points in between.

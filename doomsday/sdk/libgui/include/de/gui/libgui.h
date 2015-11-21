@@ -13,13 +13,22 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBGUI_MAIN_H
 #define LIBGUI_MAIN_H
 
 #include <de/c_wrapper.h>
+
+/** @defgroup gui GUI
+ * Graphical user interface. */
+
+/** @defgroup gl  Graphics Library
+ * @ingroup gui */
+
+/** @defgroup audio Audio
+ * Audio data and playback. @ingroup gui */
 
 /*
  * The LIBGUI_PUBLIC macro is used for declaring exported symbols. It must be

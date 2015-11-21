@@ -1,6 +1,6 @@
 /**
  * @file timer.h
- * Timing subsystem. @ingroup system
+ * Timing subsystem.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -27,6 +27,9 @@
 #define TICRATE             35 // Number of tics / second.
 #define TICSPERSEC          35
 #define SECONDSPERTIC       (1.0f/TICSPERSEC)
+
+/// @addtogroup legacy
+/// @{
 
 #ifdef __cplusplus
 extern "C" {
@@ -82,6 +85,8 @@ DENG_PUBLIC void Timer_SetTicksPerSecond(float num);
  * Returns the current number of ticks per second (default: 35).
  */
 DENG_PUBLIC float Timer_TicksPerSecond(void);
+
+/// @}
 
 #ifdef __cplusplus
 } // extern "C"

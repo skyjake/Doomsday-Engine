@@ -39,6 +39,8 @@ class Data;
  * in different ways by different widgets/contexts.
  *
  * @see ui::Data
+ *
+ * @ingroup uidata
  */
 class LIBAPPFW_PUBLIC Item
 {

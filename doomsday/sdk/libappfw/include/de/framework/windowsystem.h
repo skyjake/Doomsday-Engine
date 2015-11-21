@@ -41,7 +41,7 @@ namespace de {
  * The window system processes events produced by the input drivers. In
  * practice, the events are passed to the widgets in the windows.
  *
- * @ingroup gui
+ * @ingroup appfw
  */
 class LIBAPPFW_PUBLIC WindowSystem : public System
 {

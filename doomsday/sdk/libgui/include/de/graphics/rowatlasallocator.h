@@ -30,6 +30,8 @@ namespace de {
  * fragments/words.
  *
  * @see Atlas
+ *
+ * @ingroup gl
  */
 class LIBGUI_PUBLIC RowAtlasAllocator : public Atlas::IAllocator
 {

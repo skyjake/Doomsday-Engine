@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBAPPFW_BASEWINDOW_H
@@ -36,6 +36,8 @@ class WindowTransform;
  * additionally specify a content transformation using a WindowTransform object, which
  * will override the built-in transformation. The built-in transformation specifies an
  * "identity" transformation that doesn't differ from the logical layout.
+ *
+ * @ingroup appfw
  */
 class LIBAPPFW_PUBLIC BaseWindow : public PersistentCanvasWindow
 {

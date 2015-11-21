@@ -26,13 +26,15 @@
 namespace de {
 
 /**
- * Reference to a native object. Only stores a pointer, and observes the deletion of the
- * referenced object.
+ * Reference to a native object. Only stores a pointer, and observes the
+ * deletion of the referenced object.
  *
- * The referenced objects must be derived from Deletable, because scripts may duplicate
- * values and the values may get copied into any Variable. All NativeValue instances
- * referencing a native object must be changed to point to @c nullptr if the native
- * object gets deleted.
+ * The referenced objects must be derived from Deletable, because scripts may
+ * duplicate values and the values may get copied into any Variable. All
+ * NativeValue instances referencing a native object must be changed to point
+ * to @c nullptr if the native object gets deleted.
+ *
+ * @ingroup data
  */
 class DENG2_PUBLIC NativeValue : public Value
 {
