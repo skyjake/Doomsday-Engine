@@ -25,6 +25,10 @@
 #include <de/NativeFont>
 #include <QFontDatabase>
 
+#ifdef WIN32
+#  include <d2d1.h>
+#endif
+
 namespace de {
 
 static Value *Function_App_LoadFont(Context &, Function::ArgumentValues const &args)
@@ -89,6 +93,24 @@ DENG2_PIMPL_NOREF(BaseGuiApp)
     WaveformBank waveforms;
     VRConfig vr;
     double dpiFactor = 1.0;
+
+#ifdef WIN32
+    Instance()
+    {
+        // Use the Direct2D API to find out the desktop DPI factor.
+        ID2D1Factory *d2dFactory = nullptr;
+        HRESULT hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &d2dFactory);
+        if(SUCCEEDED(hr))
+        {
+            FLOAT dpiX = 96;
+            FLOAT dpiY = 96;
+            d2dFactory->GetDesktopDpi(&dpiX, &dpiY);
+            dpiFactor = dpiX / 96.0;
+            d2dFactory->Release();
+            d2dFactory = nullptr;
+        }
+    }
+#endif
 };
 
 BaseGuiApp::BaseGuiApp(int &argc, char **argv)
@@ -110,15 +132,13 @@ double BaseGuiApp::dpiFactor() const
 void BaseGuiApp::initSubsystems(SubsystemInitFlags flags)
 {
     GuiApp::initSubsystems(flags);
-    
-#ifdef DENG2_QT_5_0_OR_NEWER
-# ifdef WIN32
-    d->dpiFactor = primaryScreen()->logicalDotsPerInch() / 96.0;
-# else
+
+#ifndef WIN32
+#  ifdef DENG2_QT_5_0_OR_NEWER
     d->dpiFactor = devicePixelRatio();
-# endif
-#else
+#  else
     d->dpiFactor = 1.0;
+#  endif
 #endif
 
     // The "-dpi" option overrides the detected DPI factor.

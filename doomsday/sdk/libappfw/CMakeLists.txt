@@ -20,13 +20,17 @@ file (GLOB_RECURSE SOURCES src/*.cpp src/*.h)
 
 deng_add_library (libappfw ${SOURCES} ${HEADERS})
 
-target_link_libraries (libappfw 
+target_link_libraries (libappfw
     PUBLIC Deng::libcore Deng::libgui Deng::libshell
     PRIVATE opengl
 )
 deng_target_link_qt (libappfw PUBLIC Widgets OpenGL)
 if (TARGET LibOVR)
     target_link_libraries (libappfw PRIVATE LibOVR)
+endif ()
+if (WIN32)
+    # Direct2D is used for DPI information.
+    target_link_libraries (libappfw PRIVATE d2d1.lib)
 endif ()
 
 deng_deploy_library (libappfw DengAppfw)
