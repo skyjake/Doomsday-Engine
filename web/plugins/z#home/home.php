@@ -300,20 +300,20 @@ $(document).ready(function () {
     });*/
 
     $('#column1').interpretFeed({
-        feedUri: 'http://dengine.net/forums/rss.php?mode=news',
+        feedUri: 'http://dengine.net/blog/category/news/feed',
         dataType: 'json',
         clearOnSuccess: false,
         useGoogleApi: true,
         maxItems: 1,
         generateItemHtml: function (n, t) {
-            var html = '<div class="block"><article class="newspost content"><header><h1><a href="' + t.link + '" title="&#39;' + t.title + '&#39; (full article in the user forums)">' + t.title + '</a></h1>';
+            var html = '<div class="block"><article class="newspost content"><header><h1><a href="' + t.link + '" title="&#39;' + t.title + '&#39; (full article in the blog)">' + t.title + '</a></h1>';
 
             var d = new Date(t.publishedDate);
             var niceDate = $.datepicker.formatDate('MM d, yy', d);
             html += '<p><time datetime="' + d.toISOString() + '" pubdate>' + niceDate + '</time></p>';
 
             html += '</header><br />';
-            html += t.content;
+            html += '<div class="articlecontent">' + t.content + '</div>';
             html += '</article>';
             html += '<div class="links"><a href="' + n.feedUri + '" class="link-rss" title="Doomsday Engine news via RSS">All news</a></div></div>';
             return '<li>' + html + '</li>';
