@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_MATRIX_H
@@ -304,6 +304,14 @@ public:
                 m.at(i, j) = at(j, i);
         return m;
     }
+    Matrix4 withoutTranslation() const {
+        Matrix4 m(*this);
+        m[12] = 0;
+        m[13] = 0;
+        m[14] = 0;
+        return m;
+    }
+
     String asText() const {
         String str;
         QTextStream s(&str);

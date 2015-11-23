@@ -55,7 +55,10 @@ struct Model : public de::ModelDrawable
     std::unique_ptr<de::MultiAtlas::AllocGroup> textures;
 
     bool autoscaleToThingHeight = true;
+
+    /// Combined scaling, translation and rotation of the model.
     de::Matrix4f transformation;
+
     de::gl::Cull cull = de::gl::Back;
 
     QHash<de::String, de::duint> materialIndexForName;

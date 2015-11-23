@@ -43,6 +43,7 @@ static String const DEF_UP_VECTOR   ("up");
 static String const DEF_FRONT_VECTOR("front");
 static String const DEF_AUTOSCALE   ("autoscale");
 static String const DEF_MIRROR      ("mirror");
+static String const DEF_WORLD_OFFSET("worldOffset");
 static String const DEF_STATE       ("state");
 static String const DEF_SEQUENCE    ("sequence");
 static String const DEF_RENDER      ("render");
@@ -133,7 +134,7 @@ DENG2_PIMPL(ModelRenderer)
     GLUniform uFogRange         { "uFogRange",         GLUniform::Vec4 };
     GLUniform uFogColor         { "uFogColor",         GLUniform::Vec4 };
 
-    Matrix4f inverseLocal;
+    Matrix4f inverseLocal; ///< Translation ignored, this is used for light vectors.
     int lightCount = 0;
 
     Instance(Public *i) : Base(i)
@@ -373,6 +374,13 @@ DENG2_PIMPL(ModelRenderer)
         // Assimp's coordinate system uses different handedness than Doomsday,
         // so mirroring is needed.
         model.transformation = Matrix4f::unnormalizedFrame(front, up, !mirror);
+        if(asset.has(DEF_WORLD_OFFSET))
+        {
+            model.transformation =
+                    Matrix4f::translate(vectorFromValue<Vector3f>
+                                        (asset.get(DEF_WORLD_OFFSET)))
+                    * model.transformation;
+        }
         model.autoscaleToThingHeight = !ScriptedInfo::isFalse(asset, DEF_AUTOSCALE, false);
 
         // Custom texture maps and additional materials.
@@ -568,7 +576,7 @@ DENG2_PIMPL(ModelRenderer)
                            Matrix4f const &localToView)
     {
         uMvpMatrix   = localToView * modelToLocal;
-        inverseLocal = modelToLocal.inverse();
+        inverseLocal = modelToLocal.withoutTranslation().inverse();
         uEyePos      = inverseLocal * relativeEyePos;
     }
 
@@ -736,7 +744,7 @@ void ModelRenderer::render(vispsprite_t const &pspr)
 
     Matrix4f localToView = GL_GetProjectionMatrix() * Matrix4f::translate(Vector3f(0, -10, 11));
     d->setEyeSpaceTransformation(modelToLocal,
-                                 modelToLocal.inverse() *
+                                 modelToLocal.withoutTranslation().inverse() *
                                  Matrix4f::rotate(vpitch, Vector3f(1, 0, 0)) *
                                  Matrix4f::rotate(vang,   Vector3f(0, 1, 0)),
                                  localToView);
