@@ -23,7 +23,7 @@
 /**
  * @defgroup script Script Runtime
  *
- * The script engine parses and executes scripts. @ingroup core
+ * The script runtime parses and executes scripts. @ingroup core
  */
 
 #include "../Compound"
