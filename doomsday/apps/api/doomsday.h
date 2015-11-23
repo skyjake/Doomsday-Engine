@@ -21,23 +21,6 @@
  * 02110-1301 USA</small>
  */
 
-/**
- * @mainpage libdeng API
- *
- * This documentation covers all the functions and data that Doomsday makes
- * available for games and other plugins.
- *
- * @section Overview
- * The documentation has been organized into <a href="modules.html">modules</a>.
- * The primary ones are listed below:
- * - @ref base
- * - @ref console
- * - @ref input
- * - @ref network
- * - @ref resource
- * - @ref render
- */
-
 #ifndef DOOMSDAY_PUBLIC_API_H
 #define DOOMSDAY_PUBLIC_API_H
 

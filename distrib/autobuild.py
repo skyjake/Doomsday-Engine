@@ -453,7 +453,7 @@ def generate_apidoc():
     system_command('wc -l doxyissues-qch.txt')
 
     print >> sys.stderr, "\nPublic API docs..."
-    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/apps/client'))    
+    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/apps/libdoomsday'))    
     system_command('doxygen api.doxy >/dev/null 2>../../doxyissues-api.txt')
     system_command('wc -l ../../doxyissues-api.txt')
 
