@@ -205,7 +205,6 @@
 
     <!-- IF not S_SHOW_DRAFTS and not $SIG_EDIT eq 1 -->
     <div class="panel bg3" id="options-panel">
-
         <fieldset class="fields1">
             <!-- IF S_BBCODE_ALLOWED -->
                 <div><label for="disable_bbcode"><input type="checkbox" name="disable_bbcode" id="disable_bbcode"{S_BBCODE_CHECKED} /> {L_DISABLE_BBCODE}</label></div>
@@ -255,6 +254,7 @@
             </dl>
             <!-- ENDIF -->
         </fieldset>
-        <!-- ENDIF -->
+        <!-- IF not S_PRIVMSGS --></div><!-- ENDIF -->
+    <!-- ENDIF -->
 
 <!-- ENDIF -->
