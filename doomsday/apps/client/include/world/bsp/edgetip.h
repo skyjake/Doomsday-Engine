@@ -130,9 +130,8 @@ public:
 
     /**
      * Insert a copy of @a tip into the set, in it's rightful place according to
-     * an anti-clockwise (increasing angle) order.
-     *
-     * @param epsilon  Angle equivalence threshold (in degrees).
+     * an anti-clockwise (increasing angle) order. @a epsilon is the angle
+     * equivalence threshold (in degrees).
      */
     void insert(EdgeTip const &tip, ddouble epsilon = 1.0 / 128) {
         Tips::reverse_iterator after = _tips.rbegin();
@@ -158,7 +157,7 @@ public:
     }
 
     /**
-     * @param epsilon  Angle equivalence threshold (in degrees).
+     * @a epsilon is the angle equivalence threshold (in degrees).
      */
     EdgeTip const *at(ddouble angle, ddouble epsilon = 1.0 / 128) const {
         for(EdgeTip const &tip : _tips)
@@ -173,7 +172,7 @@ public:
     }
 
     /**
-     * @param epsilon  Angle equivalence threshold (in degrees).
+     * @a epsilon is the angle equivalence threshold (in degrees).
      */
     EdgeTip const *after(ddouble angle, ddouble epsilon = 1.0 / 128) const {
         for(EdgeTip const &tip : _tips)

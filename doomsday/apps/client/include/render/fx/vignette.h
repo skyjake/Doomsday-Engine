@@ -37,8 +37,6 @@ public:
 
     /**
      * Renders the vignette for the player's view.
-     *
-     * @param viewRect  View window where to draw the vignette.
      */
     void draw();
 

@@ -286,7 +286,7 @@ public:
          * Change the line segment block tree node to which "this" side of the
          * line segment is associated.
          *
-         * @param newBMapBlock  New blockmap block. Use @c nullptr to clear.
+         * @param newNode  New tree node. Use @c nullptr to clear.
          */
         void setBlockTreeNode(/*LineSegmentBlockTreeNode*/ void *newNode);
 

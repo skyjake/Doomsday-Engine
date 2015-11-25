@@ -56,7 +56,7 @@
 
 using namespace de;
 
-/// Development utility: on sharp tics, print player 0 movement state.
+// Development utility: on sharp tics, print player 0 movement state.
 //#define LIBDENG_PLAYER0_MOVEMENT_ANALYSIS
 
 /**
@@ -135,7 +135,7 @@ dd_bool DD_IsFrameTimeAdvancing()
     return ::tickFrame || ::netGame;
 }
 
-void DD_CheckSharpTick(timespan_t time)
+static void checkSharpTick(timespan_t time)
 {
     // Sharp ticks are the ones that occur 35 per second. The rest are
     // interpolated (smoothed) somewhere in between.
@@ -143,8 +143,8 @@ void DD_CheckSharpTick(timespan_t time)
 
     if(DD_IsFrameTimeAdvancing())
     {
-        /// @var realFrameTimePos will be reduced when new sharp world positions are
-        /// calculated, so that @var frameTime always stays within the range 0..1.
+        // @var realFrameTimePos will be reduced when new sharp world positions are
+        // calculated, so that @var frameTime always stays within the range 0..1.
         ::realFrameTimePos += time * TICSPERSEC;
 
         // When one full tick has passed, it is time to do a sharp tick.
@@ -415,7 +415,7 @@ void Loop_RunTics()
         elapsedTime -= ::ticLength;
 
         // Will this be a sharp tick?
-        DD_CheckSharpTick(::ticLength);
+        checkSharpTick(::ticLength);
 
 #ifdef __CLIENT__
         // Process input events.

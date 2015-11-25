@@ -256,11 +256,9 @@ public:
      * defined by @a other and the length of the resultant vector(s) are then
      * determined.
      *
-     * @param other     Other line segment to determine vertex distances to.
-     *
-     * Return values:
-     * @param fromDist  Perpendicular distance from the "from" vertex. Can be @c nullptr.
-     * @param toDist    Perpendicular distance from the "to" vertex. Can be @c nullptr.
+     * @param lineSegment  Other line segment to determine vertex distances to.
+     * @param fromDist  (Returned) Perpendicular distance from the "from" vertex. Can be @c nullptr.
+     * @param toDist    (Returned) Perpendicular distance from the "to" vertex. Can be @c nullptr.
      */
     void distance(LineSegmentSide const &lineSegment, coord_t *fromDist = nullptr,
                   coord_t *toDist = nullptr) const;
@@ -271,10 +269,8 @@ public:
      * the line segment are calculated (and optionally returned).
      *
      * @param lineSegment  Line segment to determine relationship to.
-     *
-     * Return values:
-     * @param fromDist  Perpendicular distance from the "from" vertex. Can be @c nullptr.
-     * @param toDist    Perpendicular distance from the "to" vertex. Can be @c nullptr.
+     * @param retFromDist  (Returned) Perpendicular distance from the "from" vertex. Can be @c nullptr.
+     * @param retToDist    (Returned) Perpendicular distance from the "to" vertex. Can be @c nullptr.
      *
      * @return LineRelationship between the partition line and the line segment.
      */

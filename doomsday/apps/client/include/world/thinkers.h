@@ -68,7 +68,7 @@ public:
      * Iterate the list of thinkers making a callback for each.
      *
      * @param flags     Thinker filter flags.
-     * @param callback  Callback to make for each thinker_t.
+     * @param func      Callback to make for each thinker_t.
      */
     de::LoopResult forAll(dbyte flags, std::function<de::LoopResult (thinker_t *th)> func) const;
 
@@ -77,7 +77,7 @@ public:
      *
      * @param thinkFunc  Only make a callback for thinkers whose function matches this.
      * @param flags      Thinker filter flags.
-     * @param callback   Callback to make for each thinker_t.
+     * @param func       Callback to make for each thinker_t.
      *
      * @overload
      */
