@@ -24,7 +24,7 @@ attribute highp vec3 aBitangent;
 
 highp vec3 transformVector(highp vec3 dir, highp mat4 matrix) 
 {
-    return (matrix * vec4(dir, 0.0)).xyz;
+    return normalize((matrix * vec4(dir, 0.0)).xyz);
 }
 
 highp mat3 tangentSpace(highp mat4 modelSpace)
