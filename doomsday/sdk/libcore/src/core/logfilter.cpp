@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/LogFilter"
@@ -102,7 +102,15 @@ DENG2_PIMPL_NOREF(LogFilter)
             {
                 if((md & LogEntry::Dev) && !ftr.allowDev) continue; // No devs.
                 if(ftr.minLevel <= int(md & LogEntry::LevelMask))
+                {
+                    // Pass due to entry level being enabled.
                     return true;
+                }
+                if((md & LogEntry::Interactive) && i == ScriptFilter)
+                {
+                    // Interactive script entries pass.
+                    return true;
+                }
             }
         }
         return false;

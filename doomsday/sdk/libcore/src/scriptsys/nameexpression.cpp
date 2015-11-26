@@ -129,7 +129,7 @@ String const &NameExpression::identifier() const
 Value *NameExpression::evaluate(Evaluator &evaluator) const
 {
     //LOG_AS("NameExpression::evaluate");
-    LOGDEV_SCR_XVERBOSE_DEBUGONLY("evaluating name:\"%s\" flags:%x", d->identifier << flags());
+    //LOGDEV_SCR_XVERBOSE_DEBUGONLY("evaluating name:\"%s\" flags:%x", d->identifier << flags());
 
     // Collect the namespaces to search.
     Evaluator::Namespaces spaces;

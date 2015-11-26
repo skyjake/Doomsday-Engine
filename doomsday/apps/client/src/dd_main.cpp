@@ -2939,21 +2939,21 @@ D_CMD(Version)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    LOG_NOTE(_E(D) DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_FULLTEXT);
-    LOG_MSG(_E(l) "Homepage: " _E(.) _E(i) DOOMSDAY_HOMEURL _E(.)
+    LOG_SCR_NOTE(_E(D) DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_FULLTEXT);
+    LOG_SCR_MSG(_E(l) "Homepage: " _E(.) _E(i) DOOMSDAY_HOMEURL _E(.)
             "\n" _E(l) "Project: " _E(.) _E(i) DENGPROJECT_HOMEURL);
 
     // Print the version info of the current game if loaded.
     if(App_GameLoaded())
     {
-        LOG_MSG(_E(l) "Game: " _E(.) "%s") << (char const *) gx.GetVariable(DD_PLUGIN_VERSION_LONG);
+        LOG_SCR_MSG(_E(l) "Game: " _E(.) "%s") << (char const *) gx.GetVariable(DD_PLUGIN_VERSION_LONG);
     }
 
     // Additional information for developers.
     Version const ver;
     if(!ver.gitDescription.isEmpty())
     {
-        LOGDEV_MSG(_E(l) "Git revision: " _E(.) "%s") << ver.gitDescription;
+        LOGDEV_SCR_MSG(_E(l) "Git revision: " _E(.) "%s") << ver.gitDescription;
     }
     return true;
 }

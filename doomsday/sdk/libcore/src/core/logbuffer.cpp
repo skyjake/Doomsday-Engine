@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/LogBuffer"
@@ -127,7 +127,7 @@ DENG2_PIMPL_NOREF(LogBuffer)
 
 LogBuffer *LogBuffer::_appBuffer = 0;
 
-LogBuffer::LogBuffer(duint maxEntryCount) 
+LogBuffer::LogBuffer(duint maxEntryCount)
     : d(new Instance(maxEntryCount))
 {
     d->autoFlushTimer = new QTimer(this);
@@ -194,7 +194,10 @@ bool LogBuffer::isEnabled(duint32 entryMetadata) const
 {
     DENG2_ASSERT(d->entryFilter != 0);
     DENG2_ASSERT(entryMetadata & LogEntry::DomainMask); // must have a domain
-    if(entryMetadata & LogEntry::Privileged) return true; // always passes
+    if(entryMetadata & LogEntry::Privileged)
+    {
+        return true; // always passes
+    }
     return d->entryFilter->isLogEntryAllowed(entryMetadata);
 }
 
@@ -204,7 +207,7 @@ void LogBuffer::setMaxEntryCount(duint maxEntryCount)
 }
 
 void LogBuffer::add(LogEntry *entry)
-{       
+{
     DENG2_GUARD(this);
 
     // We will not flush the new entry as it likely has not yet been given
@@ -342,7 +345,7 @@ void LogBuffer::fileBeingDeleted(File const &file)
 
     flush();
     d->disposeFileLogSink();
-    d->outputFile = 0;   
+    d->outputFile = 0;
 }
 
 void LogBuffer::setAppBuffer(LogBuffer &appBuffer)

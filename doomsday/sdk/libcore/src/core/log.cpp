@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Log"
@@ -318,7 +318,7 @@ LogEntry::~LogEntry()
     DENG2_GUARD(this);
 
     // Put the arguments back to the shared pool.
-    for(Args::iterator i = _args.begin(); i != _args.end(); ++i) 
+    for(Args::iterator i = _args.begin(); i != _args.end(); ++i)
     {
         Arg::returnToPool(*i);
     }
@@ -343,13 +343,13 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
     {
         flags |= Simple;
     }
-    
+
     // In simple mode, skip the metadata.
     if(!flags.testFlag(Simple))
-    {    
+    {
         // Begin with the timestamp.
         if(flags.testFlag(Styled)) output << TEXT_STYLE_LOG_TIME;
-    
+
         output << _when.asText(Date::BuildNumberAndSecondsSinceStart) << " ";
 
         if(!flags.testFlag(OmitDomain))
@@ -499,7 +499,7 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
                    level() <= LogEntry::Verbose? TEXT_STYLE_MINOR_MESSAGE :
                                                  TEXT_STYLE_MESSAGE);
     }
-    
+
     // Message text with the arguments formatted.
     if(_args.empty())
     {
@@ -511,7 +511,7 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
         DENG2_FOR_EACH_CONST(Args, i, _args) patArgs << *i;
         output << _format % patArgs;
     }
-        
+
     return result;
 }
 
@@ -560,11 +560,11 @@ QTextStream &operator << (QTextStream &stream, LogEntry::Arg const &arg)
     case LogEntry::Arg::IntegerArgument:
         stream << arg.intValue();
         break;
-        
+
     case LogEntry::Arg::FloatingPointArgument:
         stream << arg.floatValue();
         break;
-        
+
     case LogEntry::Arg::StringArgument:
         stream << arg.stringValue();
         break;
@@ -588,6 +588,7 @@ DENG2_PIMPL_NOREF(Log)
     SectionStack sectionStack;
     LogEntry *throwawayEntry;
     duint32 currentEntryMedata; ///< Applies to the current entry being staged in the thread.
+    int interactive = 0;
 
     Instance()
         : throwawayEntry(new LogEntry) ///< A disabled LogEntry, so doesn't accept arguments.
@@ -634,6 +635,22 @@ void Log::endSection(char const *DENG2_DEBUG_ONLY(name))
     d->sectionStack.takeLast();
 }
 
+void Log::beginInteractive()
+{
+    d->interactive++;
+}
+
+void Log::endInteractive()
+{
+    d->interactive--;
+    DENG2_ASSERT(d->interactive >= 0);
+}
+
+bool Log::isInteractive() const
+{
+    return d->interactive > 0;
+}
+
 LogEntry &Log::enter(String const &format, LogEntry::Args arguments)
 {
     return enter(LogEntry::Message, format, arguments);
@@ -644,6 +661,12 @@ LogEntry &Log::enter(duint32 metadata, String const &format, LogEntry::Args argu
     // Staging done.
     d->currentEntryMedata = 0;
 
+    if(isInteractive())
+    {
+        // Ensure the Interactive flag is set.
+        metadata |= LogEntry::Interactive;
+    }
+
     if(!LogBuffer::get().isEnabled(metadata))
     {
         DENG2_ASSERT(arguments.isEmpty());
@@ -651,7 +674,7 @@ LogEntry &Log::enter(duint32 metadata, String const &format, LogEntry::Args argu
         // If the level is disabled, no messages are entered into it.
         return *d->throwawayEntry;
     }
-    
+
     // Collect the sections.
     String context;
     String latest;
@@ -674,10 +697,10 @@ LogEntry &Log::enter(duint32 metadata, String const &format, LogEntry::Args argu
 
     // Make a new entry.
     LogEntry *entry = new LogEntry(metadata, context, depth, format, arguments);
-    
+
     // Add it to the application's buffer. The buffer gets ownership.
     LogBuffer::get().add(entry);
-    
+
     return *entry;
 }
 
@@ -730,20 +753,34 @@ void Log::disposeThreadLog()
 LogEntryStager::LogEntryStager(duint32 metadata, String const &format)
     : _metadata(metadata)
 {
-    // Automatically set the Generic domain.
-    if(!(_metadata & LogEntry::DomainMask))
+    if(!LogBuffer::appBufferExists())
     {
-        _metadata |= LogEntry::Generic;
+        _disabled = true;
     }
-
-    _disabled = !LogBuffer::appBufferExists() ||
-                !LogBuffer::get().isEnabled(_metadata);
-
-    if(!_disabled)
+    else
     {
-        _format = format;
+        auto &log = LOG();
 
-        LOG().setCurrentEntryMetadata(_metadata);
+        // Automatically set the Generic domain.
+        if(!(_metadata & LogEntry::DomainMask))
+        {
+            _metadata |= LogEntry::Generic;
+        }
+
+        // Flag interactive messages.
+        if(log.isInteractive())
+        {
+            _metadata |= LogEntry::Interactive;
+        }
+
+        _disabled = !LogBuffer::get().isEnabled(_metadata);
+
+        if(!_disabled)
+        {
+            _format = format;
+
+            log.setCurrentEntryMetadata(_metadata);
+        }
     }
 }
 

@@ -37,6 +37,8 @@
 #include <de/game/Game>
 #include <de/LogBuffer>
 #include <de/Time>
+#include <de/Log>
+#include "doomsday/doomsdayapp.h"
 #include "doomsday/console/knownword.h"
 #include "doomsday/console/cmd.h"
 #include "doomsday/console/var.h"
@@ -368,45 +370,45 @@ static dd_bool Con_CheckExecBuffer(void)
 {
 #define BUFFSIZE 1024 /// @todo Rewrite all of this; use de::String. -jk
 
-//    dd_bool allDone;
     dd_bool ret = true;
-    int     i; //, count = 0;
+    int     i;
     char    storage[BUFFSIZE];
 
     storage[255] = 0;
 
-//    do                          // We'll keep checking until all is done.
+    TimeDelta const now = TimeDelta::sinceStartOfProcess();
+
+    // Execute the commands whose time has come.
+    for(i = 0; i < exBuffSize; ++i)
     {
-        //allDone = true;
+        execbuff_t *ptr = exBuff + i;
 
-        TimeDelta const now = TimeDelta::sinceStartOfProcess();
+        if(!ptr->used || ptr->when > now)
+            continue;
 
-        // Execute the commands whose time has come.
-        for(i = 0; i < exBuffSize; ++i)
+        // We'll now execute this command.
+        curExec = ptr;
+        ptr->used = false;
+        strncpy(storage, ptr->subCmd, BUFFSIZE - 1);
+
+        bool const isInteractive =
+                (ptr->source == CMDS_CONSOLE ||
+                 ptr->source == CMDS_CMDLINE);
+        if(isInteractive)
         {
-            execbuff_t *ptr = exBuff + i;
-
-            if(!ptr->used || ptr->when > now)
-                continue;
-
-            // We'll now execute this command.
-            curExec = ptr;
-            ptr->used = false;
-            strncpy(storage, ptr->subCmd, BUFFSIZE-1);
-
-            if(!executeSubCmd(storage, ptr->source, ptr->isNetCmd))
-                ret = false;
-            //allDone = false;
+            Log::threadLog().beginInteractive();
         }
 
-//        if(count++ > 100) break; // Don't hang here.
-/*        {
-            DENG_ASSERT(!"Execution buffer overflow");
-            LOG_SCR_ERROR("Console execution buffer overflow! Everything canceled!");
-            Con_ClearExecBuffer();
-            break;
-        }*/
-    } //while(!allDone);
+        if(!executeSubCmd(storage, ptr->source, ptr->isNetCmd))
+        {
+            ret = false;
+        }
+
+        if(isInteractive)
+        {
+            Log::threadLog().endInteractive();
+        }
+    }
 
     return ret;
 #undef BUFFSIZE
@@ -483,30 +485,6 @@ static int executeSubCmd(const char *subCmd, byte src, dd_bool isNetCmd)
     PrepareCmdArgs(&args, subCmd);
     if(!args.argc)
         return true;
-
-    /*
-    if(args.argc == 1)  // Possibly a control command?
-    {
-        if(P_ControlExecute(args.argv[0]))
-        {
-            // It was a control command.  No further processing is
-            // necessary.
-            return true;
-        }
-    }
-     */
-
-#if 0
-#ifdef __CLIENT__
-    // If logged in, send command to server at this point.
-    if(!isServer && netLoggedIn)
-    {
-        // We have logged in on the server. Send the command there.
-        Con_Send(subCmd, src, ConsoleSilent);
-        return true;
-    }
-#endif
-#endif
 
     // Try to find a matching console command.
     ccmd = Con_FindCommandMatchArgs(&args);
@@ -854,17 +832,18 @@ static void Con_SplitIntoSubCommands(const char *command,
 
 int Con_Execute(byte src, const char *command, int silent, dd_bool netCmd)
 {
-    int             ret;
-
     if(silent)
+    {
         ConsoleSilent = true;
+    }
 
     Con_SplitIntoSubCommands(command, 0, src, netCmd);
-    ret = Con_CheckExecBuffer();
+    int ret = Con_CheckExecBuffer();
 
     if(silent)
+    {
         ConsoleSilent = false;
-
+    }
     return ret;
 }
 

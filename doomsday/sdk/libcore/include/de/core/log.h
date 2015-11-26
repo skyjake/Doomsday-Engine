@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_LOG_H
@@ -50,8 +50,7 @@
  * is valid.
  */
 #define LOG_AS_STRING(str) \
-    de::String __logSectionName = str; \
-    de::Block __logSectionUtf8 = __logSectionName.toUtf8(); \
+    de::Block __logSectionUtf8 { de::String(str).toUtf8() }; \
     LOG_AS(__logSectionUtf8.constData());
 
 /*
@@ -297,6 +296,8 @@ public:
                                              regardless of log filtering, in a separate overlay.
                                              Use this for whatever you are currently working on
                                              (so there is no need to rely on qDebug). */
+        Interactive = 0x02000000,       /**< Output from a command entered manually by the user.
+                                             Typically these should never be filtered. */
 
         AllDomains  = 0x00ff0000,
         DomainMask  = AllDomains,
@@ -382,7 +383,7 @@ public:
         LowestLogLevel  = XVerbose,
         HighestLogLevel = Critical,
         LevelMask       = 0x7
-    };   
+    };
 
     static String levelToText(duint32 level)
     {
@@ -599,7 +600,7 @@ public:
      *
      * @return Composed textual representation of the entry.
      */
-    String asText(Flags const &flags = 0, int shortenSection = 0) const;    
+    String asText(Flags const &flags = 0, int shortenSection = 0) const;
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;
@@ -693,6 +694,21 @@ public:
      * @param name  Name of the topmost section.
      */
     void endSection(char const *name);
+
+    /**
+     * Begins an interactive section. All entries added while interactive get
+     * flagged as such. You must call endInteractive() to end the section.
+     * Interactive sections can be nested.
+     */
+    void beginInteractive();
+
+    /**
+     * Ends an interactive section. The number of endInteractive() calls must
+     * match the number of beginInteractive() calls.
+     */
+    void endInteractive();
+
+    bool isInteractive() const;
 
     /**
      * Creates a new log entry with the default (Message) level, targeted to the end-user.
