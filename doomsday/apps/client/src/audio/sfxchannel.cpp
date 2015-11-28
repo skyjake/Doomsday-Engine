@@ -54,6 +54,35 @@ DENG2_PIMPL_NOREF(SfxChannel)
     dint startTime = 0;             ///< When the assigned sound sample was last started.
 
     Instance() { zap(origin); }
+
+    Vector3d findOrigin() const
+    {
+        // Originless sounds have no fixed/moveable emission point.
+        if(flags & SFXCF_NO_ORIGIN)
+        {
+            return Vector3d();
+        }
+
+        // When tracking an emitter - use it's origin.
+        if(emitter)
+        {
+            Vector3d point(emitter->origin);
+
+            // Position on the Z axis at the map-object's center?
+            if(Thinker_IsMobjFunc(emitter->thinker.function))
+                point.z += emitter->height / 2;
+
+            return point;
+        }
+
+        // Use the fixed origin.
+        return Vector3d(origin);
+    }
+
+    inline void updateOrigin()
+    {
+        findOrigin().decompose(origin);
+    }
 };
 
 SfxChannel::SfxChannel() : d(new Instance)
@@ -140,6 +169,11 @@ void SfxChannel::setFixedOrigin(Vector3d const &newOrigin)
     d->origin[2] = newOrigin.z;
 }
 
+Vector3d SfxChannel::origin() const
+{
+    return d->origin;
+}
+
 dfloat SfxChannel::priority() const
 {
     if(!d->buffer || !(d->buffer->flags & SFXBF_PLAYING))
@@ -162,19 +196,10 @@ void SfxChannel::updatePriority()
     // Disabled?
     if(d->flags & SFXCF_NO_UPDATE) return;
 
-    // If we know the emitter update our origin info.
-    if(mobj_t *emitter = d->emitter)
+    // Update the sound origin if needed.
+    if(d->emitter)
     {
-        d->origin[0] = emitter->origin[0];
-        d->origin[1] = emitter->origin[1];
-        d->origin[2] = emitter->origin[2];
-
-        // If this is a mobj, center the Z pos.
-        if(Thinker_IsMobjFunc(emitter->thinker.function))
-        {
-            // Sounds originate from the center.
-            d->origin[2] += emitter->height / 2;
-        }
+        d->updateOrigin();
     }
 
     // Frequency is common to both 2D and 3D sounds.
@@ -466,15 +491,23 @@ void Sfx_ChannelDrawer()
             FR_SetColor(1, 1, 0);
         }
 
+        Block emitterText;
+        if(ch.emitter())
+        {
+            emitterText = (  " mobj:" + String::number(ch.emitter()->thinker.id)
+                           + " pos:"  + ch.origin().asText()
+                          ).toLatin1();
+        }
+
         char buf[200];
-        sprintf(buf, "%02i: %c%c%c v=%3.1f f=%3.3f st=%i et=%u mobj=%i",
+        sprintf(buf, "%02i: %c%c%c v=%3.1f f=%3.3f st=%i et=%u%s",
                 idx,
                 !(ch.flags() & SFXCF_NO_ORIGIN     ) ? 'O' : '.',
                 !(ch.flags() & SFXCF_NO_ATTENUATION) ? 'A' : '.',
                 ch.emitter() ? 'E' : '.',
                 ch.volume(), ch.frequency(), ch.startTime(),
                 ch.hasBuffer() ? ch.buffer().endTime : 0,
-                ch.emitter()   ? ch.emitter()->thinker.id : 0);
+                emitterText.constData());
         FR_DrawTextXY(buf, 5, lh * (1 + idx * 2));
 
         if(ch.hasBuffer())

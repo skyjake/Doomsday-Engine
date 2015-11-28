@@ -94,16 +94,21 @@ public:
     void setFixedOrigin(de::Vector3d const &newOrigin);
 
     /**
-     * Calculate priority points for a sound playing on the channel. They are used
-     * to determine which sounds can be cancelled by new sounds. Zero is the lowest
-     * priority.
+     * Returns the @em effective origin point in the soundstage for the channel. This point
+     * is used to apply positional audio effects during playback (both 3D and stereo models).
+     */
+    de::Vector3d origin() const;
+
+    /**
+     * Calculate priority points for a sound playing on the channel. They are used to determine
+     * which sounds can be cancelled by new sounds. Zero is the lowest priority.
      */
     float priority() const;
 
     /**
-     * Updates the channel properties based on 2D/3D position calculations. Listener
-     * may be @c nullptr. Sounds emitted from the listener object are considered to
-     * be inside the listener's head.
+     * Updates the channel properties based on 2D/3D position calculations. Listener may be
+     * @c nullptr. Sounds emitted from the listener object are considered to be inside the
+     * listener's head.
      */
     void updatePriority();
 

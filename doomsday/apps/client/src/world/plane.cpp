@@ -430,9 +430,10 @@ dint Plane::property(DmuArgs &args) const
 {
     switch(args.prop)
     {
-    case DMU_EMITTER:
-        args.setValue(DMT_PLANE_EMITTER, d->soundEmitter, 0);
-        break;
+    case DMU_EMITTER: {
+        SoundEmitter const *emitterPtr = &soundEmitter();
+        args.setValue(DMT_PLANE_EMITTER, &emitterPtr, 0);
+        break; }
     case DMU_SECTOR: {
         Sector const *secPtr = &sector();
         args.setValue(DMT_PLANE_SECTOR, &secPtr, 0);
