@@ -381,7 +381,7 @@ DENG2_PIMPL(ModelRenderer)
                                         (asset.get(DEF_WORLD_OFFSET)))
                     * model.transformation;
         }
-        model.autoscaleToThingHeight = !ScriptedInfo::isFalse(asset, DEF_AUTOSCALE, false);
+        model.autoscaleToThingHeight = ScriptedInfo::isTrue(asset, DEF_AUTOSCALE);
 
         // Custom texture maps and additional materials.
         model.materialIndexForName.insert(MATERIAL_DEFAULT, 0);
