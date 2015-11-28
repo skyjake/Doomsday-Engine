@@ -50,7 +50,7 @@ DENG2_PIMPL(AudioDriver)
         zap(iCd);
     }
 
-    static LibraryFile *findAudioPlugin(String const &name)
+    static LibraryFile *tryFindAudioPlugin(String const &name)
     {
         if(!name.isEmpty())
         {
@@ -213,14 +213,23 @@ void AudioDriver::load(String const &identifier)
 #endif
 
     // Perhaps a plugin audio driver?
-    if(LibraryFile *plugin = Instance::findAudioPlugin(identifier))
+    LibraryFile *plugin = Instance::tryFindAudioPlugin(identifier);
+    if(!plugin)
     {
-        d->importInterfaces(*plugin);
-        return;
+        /// @throw LoadError  Unknown driver specified.
+        throw LoadError("AudioDriver::load", "Unknown driver \"" + identifier + "\"");
     }
 
-    /// @throw LoadError  Unknown driver specified.
-    throw LoadError("AudioDriver::load", "Unknown driver \"" + identifier + "\"");
+    try
+    {
+        // Exchange entrypoints.
+        d->importInterfaces(*plugin);
+    }
+    catch(de::Library::SymbolMissingError const &er)
+    {
+        /// @throw LoadError  One or more missing symbol.
+        throw LoadError("AudioDriver::load", "Failed exchanging entrypoints:\n" + er.asText());
+    }
 }
 
 void AudioDriver::unload()
