@@ -130,6 +130,8 @@ if (DENG_FLUIDSYNTH_EMBEDDED)
     if (APPLE)        
         deng_bundle_install_names (${tgt} ${GLIB_LIBRARIES})
     endif ()
+else ()
+    target_link_libraries (${tgt} PRIVATE ${FLUIDSYNTH_LIBRARIES})
 endif ()
 
 # win32 {
@@ -138,5 +140,3 @@ endif ()
 #     QMAKE_LFLAGS += /DEF:\"$$PWD/api/dsfluidsynth.def\"
 #     OTHER_FILES += api/dsfluidsynth.def
 # }
-
-
