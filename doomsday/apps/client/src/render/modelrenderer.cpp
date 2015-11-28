@@ -58,6 +58,8 @@ static String const DEF_TIMELINE    ("timeline");
 static String const SHADER_DEFAULT  ("model.skeletal.generic");
 static String const MATERIAL_DEFAULT("default");
 
+static String const VAR_U_MAP_TIME  ("uMapTime");
+
 static Atlas::Size const MAX_ATLAS_SIZE(8192, 8192);
 
 DENG2_PIMPL(ModelRenderer)
@@ -235,6 +237,12 @@ DENG2_PIMPL(ModelRenderer)
                 << uLightIntensities
                 << uFogRange
                 << uFogColor;
+
+        // Built-in special uniforms.
+        if(prog->def->hasMember(VAR_U_MAP_TIME))
+        {
+            *prog << ClientApp::renderSystem().uMapTime();
+        }
 
         programs[name] = prog.get();
         return prog.release();

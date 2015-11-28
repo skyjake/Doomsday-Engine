@@ -24,6 +24,7 @@
 #include <de/memoryzone.h>
 #include <de/ScriptedInfo>
 #include <de/Function>
+#include <de/GLUniform>
 #include "clientapp.h"
 #include "render/rend_main.h"
 #include "render/rend_halo.h"
@@ -31,6 +32,7 @@
 #include "render/modelrenderer.h"
 #include "render/skydrawable.h"
 #include "render/store.h"
+#include "world/worldsystem.h"
 
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
@@ -59,6 +61,8 @@ DENG2_PIMPL(RenderSystem)
 
     Store buffer;
     DrawLists drawLists;
+
+    GLUniform uMapTime { "uMapTime", GLUniform::Float };
 
     // Texture => world surface projection lists.
     struct ProjectionLists
@@ -379,6 +383,11 @@ ImageBank &RenderSystem::images()
     return d->images;
 }
 
+GLUniform const &RenderSystem::uMapTime() const
+{
+    return d->uMapTime;
+}
+
 ModelRenderer &RenderSystem::modelRenderer()
 {
     return d->models;
@@ -391,7 +400,8 @@ SkyDrawable &RenderSystem::sky()
 
 void RenderSystem::timeChanged(Clock const &)
 {
-    // Nothing to do.
+    // Update the current map time for shaders.
+    d->uMapTime = ClientApp::worldSystem().time();
 }
 
 SettingsRegister &RenderSystem::settings()
