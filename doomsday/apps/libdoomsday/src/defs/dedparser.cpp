@@ -1238,7 +1238,7 @@ DENG2_PIMPL(DEDParser)
                     RV_STR_ELEM("Raise state",   (*mo)["states"], SN_RAISE)
                         
                     RV_STR_ELEM("See sound",    (*mo)["sounds"], SDN_SEE)
-                    RV_STR_ELEM("Attack sound", (*mo)["sounds"], SDN_ACTIVE)
+                    RV_STR_ELEM("Attack sound", (*mo)["sounds"], SDN_ATTACK)
                     RV_STR_ELEM("Pain sound",   (*mo)["sounds"], SDN_PAIN)
                     RV_STR_ELEM("Death sound",  (*mo)["sounds"], SDN_DEATH)
                     RV_STR_ELEM("Active sound", (*mo)["sounds"], SDN_ACTIVE)
