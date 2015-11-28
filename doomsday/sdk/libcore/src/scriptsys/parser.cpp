@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Parser"
@@ -46,7 +46,6 @@
 
 #include <sstream>
 
-using std::auto_ptr;
 using namespace de;
 
 Parser::Parser()
@@ -59,7 +58,7 @@ void Parser::parse(String const &input, Script &output)
 {
     // Lexical analyzer for Haw scripts.
     _analyzer = ScriptLex(input);
-    
+
     // Get the tokens of the first statement.
     if(nextStatement() > 0)
     {
@@ -74,18 +73,18 @@ void Parser::parse(String const &input, Script &output)
 duint Parser::nextStatement()
 {
     duint result = _analyzer.getStatement(_tokens);
-    
+
     // Begin with the whole thing.
     _statementRange = TokenRange(_tokens);
 
     //std::cout << "Next statement: '" << _statementRange.asText() << "'\n";
-    
+
     return result;
 }
 
 void Parser::parseCompound(Compound &compound)
 {
-    while(_statementRange.size() > 0) 
+    while(_statementRange.size() > 0)
     {
         if(_statementRange.firstToken().equals(ScriptLex::ELSIF) ||
            _statementRange.firstToken().equals(ScriptLex::ELSE) ||
@@ -95,7 +94,7 @@ void Parser::parseCompound(Compound &compound)
             // End of compound.
             break;
         }
-        
+
         // We have a list of tokens, which form a statement.
         // Figure out what it is and generate the correct statement(s)
         // and expressions.
@@ -106,7 +105,7 @@ void Parser::parseCompound(Compound &compound)
 void Parser::parseStatement(Compound &compound)
 {
     DENG2_ASSERT(!_statementRange.empty());
-    
+
     Token const &firstToken = _statementRange.firstToken();
 
     // Statements with a compound: if, for, while, def.
@@ -135,7 +134,7 @@ void Parser::parseStatement(Compound &compound)
         parseTryCatchSequence(compound);
         return;
     }
-    
+
     // Statements without a compound (must advance to next statement manually).
     if(firstToken.equals(ScriptLex::IMPORT))
     {
@@ -197,7 +196,7 @@ void Parser::parseStatement(Compound &compound)
     {
         compound.add(parseExpressionStatement());
     }
-    
+
     // We've fully parsed the current set of tokens, get the next statement.
     nextStatement();
 }
@@ -206,29 +205,29 @@ IfStatement *Parser::parseIfStatement()
 {
     // The "end" keyword is necessary in the full form.
     bool expectEnd = !_statementRange.hasBracketless(Token::COLON);
-    
-    auto_ptr<IfStatement> statement(new IfStatement());
+
+    std::unique_ptr<IfStatement> statement(new IfStatement());
     statement->newBranch();
     statement->setBranchCondition(
-        parseConditionalCompound(statement->branchCompound(), 
+        parseConditionalCompound(statement->branchCompound(),
             HasCondition | StayAtClosingStatement));
-    
+
     while(_statementRange.beginsWith(ScriptLex::ELSIF))
     {
         expectEnd = !_statementRange.hasBracketless(Token::COLON);
         statement->newBranch();
         statement->setBranchCondition(
-            parseConditionalCompound(statement->branchCompound(), 
+            parseConditionalCompound(statement->branchCompound(),
                 HasCondition | StayAtClosingStatement));
     }
-    
+
     if(_statementRange.beginsWith(ScriptLex::ELSE))
     {
         expectEnd = !_statementRange.has(Token::COLON);
         parseConditionalCompound(statement->elseCompound(), StayAtClosingStatement);
     }
-    
-    if(expectEnd) 
+
+    if(expectEnd)
     {
         if(_statementRange.size() != 1 || !_statementRange.firstToken().equals(ScriptLex::END))
         {
@@ -238,15 +237,15 @@ IfStatement *Parser::parseIfStatement()
         nextStatement();
     }
 
-    return statement.release(); 
+    return statement.release();
 }
 
 WhileStatement *Parser::parseWhileStatement()
 {
     // "while" expr ":" statement
     // "while" expr "\n" compound
-    
-    auto_ptr<WhileStatement> statement(new WhileStatement());
+
+    std::unique_ptr<WhileStatement> statement(new WhileStatement());
     statement->setCondition(parseConditionalCompound(statement->compound(), HasCondition));
     return statement.release();
 }
@@ -255,7 +254,7 @@ ForStatement *Parser::parseForStatement()
 {
     // "for" by-ref-expr "in" expr ":" statement
     // "for" by-ref-expr "in" expr "\n" compound
-    
+
     dint colonPos = _statementRange.find(Token::COLON);
     dint inPos = _statementRange.find(ScriptLex::IN);
     if(inPos < 0 || (colonPos > 0 && inPos > colonPos))
@@ -263,23 +262,23 @@ ForStatement *Parser::parseForStatement()
         throw MissingTokenError("Parser::parseForStatement",
             "Expected 'in' to follow " + _statementRange.firstToken().asText());
     }
-    
-    auto_ptr<Expression> iter(parseExpression(_statementRange.between(1, inPos),
+
+    std::unique_ptr<Expression> iter(parseExpression(_statementRange.between(1, inPos),
         Expression::ByReference | Expression::NewVariable | Expression::LocalOnly));
     Expression *iterable = parseExpression(_statementRange.between(inPos + 1, colonPos));
-    
-    auto_ptr<ForStatement> statement(new ForStatement(iter.release(), iterable));
+
+    std::unique_ptr<ForStatement> statement(new ForStatement(iter.release(), iterable));
 
     // Parse the statements of the method.
     parseConditionalCompound(statement->compound(), IgnoreExtraBeforeColon);
-    
+
     return statement.release();
 }
 
 ExpressionStatement *Parser::parseImportStatement()
 {
     // "import" ["record"] name-expr ["," name-expr]*
- 
+
     if(_statementRange.size() < 2)
     {
         throw MissingTokenError("Parser::parseImportStatement",
@@ -322,7 +321,7 @@ Statement *Parser::parseDeclarationStatement()
     {
         throw MissingTokenError("Parser::parseDeclarationStatement",
             "Expected identifier to follow " + _statementRange.firstToken().asText());
-    }    
+    }
 
     // Is this a class record declaration?
     dint pos = _statementRange.find(Token::PARENTHESIS_OPEN);
@@ -348,12 +347,12 @@ Statement *Parser::parseDeclarationStatement()
 DeleteStatement *Parser::parseDeleteStatement()
 {
     // "del" name-expr ["," name-expr]*
-    
+
     if(_statementRange.size() < 2)
     {
         throw MissingTokenError("Parser::parseDeleteStatement",
             "Expected identifier to follow " + _statementRange.firstToken().asText());
-    }    
+    }
     return new DeleteStatement(parseList(_statementRange.startingFrom(1), Token::COMMA,
                                          Expression::LocalOnly | Expression::ByReference));
 }
@@ -370,8 +369,8 @@ FunctionStatement *Parser::parseFunctionStatement()
     }
 
     // The function must have a name that is not already in use in the scope.
-    auto_ptr<FunctionStatement> statement(new FunctionStatement(
-        parseExpression(_statementRange.between(1, pos), 
+    std::unique_ptr<FunctionStatement> statement(new FunctionStatement(
+        parseExpression(_statementRange.between(1, pos),
                         Expression::LocalOnly   | Expression::ByReference |
                         Expression::NewVariable | Expression::NotInScope)));
 
@@ -388,7 +387,7 @@ FunctionStatement *Parser::parseFunctionStatement()
                 // Just the name of the argument.
                 statement->addArgument(delim.firstToken().str());
             }
-            else if(delim.size() >= 3 && 
+            else if(delim.size() >= 3 &&
                 delim.token(0).type() == Token::IDENTIFIER &&
                 delim.token(1).equals(ScriptLex::ASSIGN))
             {
@@ -407,7 +406,7 @@ FunctionStatement *Parser::parseFunctionStatement()
 
     // Parse the statements of the function.
     parseConditionalCompound(statement->compound(), IgnoreExtraBeforeColon);
-    
+
     return statement.release();
 }
 
@@ -415,8 +414,8 @@ void Parser::parseTryCatchSequence(Compound &compound)
 {
     // "try" cond-compound catch-compound [catch-compound]*
     // catch-compound: "catch" name-expr ["," ref-name-expr] cond-compound
-    
-    auto_ptr<TryStatement> tryStat(new TryStatement);
+
+    std::unique_ptr<TryStatement> tryStat(new TryStatement);
     parseConditionalCompound(tryStat->compound(), StayAtClosingStatement);
     compound.add(tryStat.release());
 
@@ -434,7 +433,7 @@ void Parser::parseTryCatchSequence(Compound &compound)
         expectEnd = (colon < 0);
 
         // Parse the arguments.
-        auto_ptr<ArrayExpression> args;
+        std::unique_ptr<ArrayExpression> args;
         if(_statementRange.size() > 1)
         {
             TokenRange argRange;
@@ -450,7 +449,7 @@ void Parser::parseTryCatchSequence(Compound &compound)
                 Expression::ByReference | Expression::LocalOnly | Expression::NewVariable));
         }
 
-        auto_ptr<CatchStatement> catchStat(new CatchStatement(args.release()));
+        std::unique_ptr<CatchStatement> catchStat(new CatchStatement(args.release()));
         parseConditionalCompound(catchStat->compound(),
             StayAtClosingStatement | IgnoreExtraBeforeColon);
 
@@ -459,7 +458,7 @@ void Parser::parseTryCatchSequence(Compound &compound)
 
         // Add it to the compound.
         compound.add(catchStat.release());
-    }    
+    }
     finalCatch->flags |= CatchStatement::FinalCompound;
     if(expectEnd)
     {
@@ -473,7 +472,7 @@ void Parser::parseTryCatchSequence(Compound &compound)
 }
 
 PrintStatement *Parser::parsePrintStatement()
-{    
+{
     ArrayExpression *args = 0;
     if(_statementRange.size() == 1) // Just the keyword.
     {
@@ -484,13 +483,13 @@ PrintStatement *Parser::parsePrintStatement()
         // Parse the arguments of the print statement.
         args = parseList(_statementRange.startingFrom(1));
     }
-    return new PrintStatement(args);    
+    return new PrintStatement(args);
 }
 
 AssignStatement *Parser::parseAssignStatement()
 {
     Expression::Flags flags = Expression::NewVariable | Expression::ByReference | Expression::LocalOnly;
-    
+
     /// "export" will export the newly assigned variable.
     if(_statementRange.firstToken().equals(ScriptLex::EXPORT))
     {
@@ -504,7 +503,7 @@ AssignStatement *Parser::parseAssignStatement()
         flags |= Expression::ReadOnly;
         _statementRange = _statementRange.startingFrom(1);
     }
-    
+
     dint pos = _statementRange.find(ScriptLex::ASSIGN);
     if(pos < 0)
     {
@@ -517,7 +516,7 @@ AssignStatement *Parser::parseAssignStatement()
             flags |= Expression::ThrowawayIfInScope;
         }
     }
-    
+
     // Has indices been specified?
     AssignStatement::Indices indices;
     dint nameEndPos = pos;
@@ -533,7 +532,7 @@ AssignStatement *Parser::parseAssignStatement()
             indices.push_back(indexExpr);
             bracketPos = nameEndPos - 1;
         }
-        
+
         if(indices.size() > 0 && (flags & Expression::ThrowawayIfInScope))
         {
             throw SyntaxError("Parser::parseAssignStatement",
@@ -547,7 +546,7 @@ AssignStatement *Parser::parseAssignStatement()
 
         lValue.take();
         rValue.take();
-        
+
         return st;
     }
     catch(Error const &)
@@ -570,12 +569,12 @@ Expression *Parser::parseConditionalCompound(Compound &compound, CompoundFlags c
 {
     // keyword [expr] ":" statement
     // keyword [expr] "\n" compound
-    
+
     TokenRange range = _statementRange;
-    
+
     // See if there is a colon on this line.
     dint colon = range.findBracketless(Token::COLON);
-    
+
     QScopedPointer<Expression> condition;
     if(flags.testFlag(HasCondition))
     {
@@ -595,7 +594,7 @@ Expression *Parser::parseConditionalCompound(Compound &compound, CompoundFlags c
         throw UnexpectedTokenError("Parser::parseConditionalCompound",
             range.token(1).asText() + " was unexpected");
     }
-    
+
     if(colon > 0)
     {
         if(colon == dint(range.size()) - 1)
@@ -643,13 +642,13 @@ Expression *Parser::parseExpression(TokenRange const &fullRange, Expression::Fla
 
     LOG_AS("parseExpression");
     LOGDEV_SCR_XVERBOSE_DEBUGONLY("%s (flags:%x)", range.asText() << flags);
-    
+
     if(!range.size())
     {
         // Empty expression yields a None value.
         return ConstantExpression::None();
     }
-    
+
     // We can ignore extra parenthesis around the range.
     while(range.firstToken().equals(Token::PARENTHESIS_OPEN) && range.closingBracket(0) == range.size() - 1)
     {
@@ -673,10 +672,10 @@ Expression *Parser::parseExpression(TokenRange const &fullRange, Expression::Fla
 
     TokenRange leftSide = range.between(0, 0);
     TokenRange rightSide = leftSide;
-    
+
     // Locate the lowest-ranking operator.
     Operator op = findLowestOperator(range, leftSide, rightSide);
-    
+
     if(op == NONE)
     {
         // This is a constant or a variable reference.
@@ -695,7 +694,7 @@ Expression *Parser::parseExpression(TokenRange const &fullRange, Expression::Fla
         return parseCallExpression(leftSide, rightSide);
     }
     else
-    {       
+    {
         // Left side is empty with unary operators.
         // The right side inherits the flags of the expression (e.g., name-by-reference).
         return parseOperatorExpression(op, leftSide, rightSide, flags);
@@ -708,9 +707,9 @@ ArrayExpression *Parser::parseArrayExpression(TokenRange const &range)
         range.closingBracket(0) != range.size() - 1)
     {
         throw MissingTokenError("Parser::parseArrayExpression",
-            "Expected brackets for the array expression beginning at " + 
+            "Expected brackets for the array expression beginning at " +
             range.firstToken().asText());
-    }    
+    }
     return parseList(range.shrink(1));
 }
 
@@ -720,12 +719,12 @@ DictionaryExpression *Parser::parseDictionaryExpression(TokenRange const &range)
         range.closingBracket(0) != range.size() - 1)
     {
         throw MissingTokenError("Parser::parseDictionaryExpression",
-            "Expected brackets for the dictionary expression beginning at " + 
+            "Expected brackets for the dictionary expression beginning at " +
             range.firstToken().asText());
     }
     TokenRange shrunk = range.shrink(1);
-    
-    auto_ptr<DictionaryExpression> exp(new DictionaryExpression);
+
+    std::unique_ptr<DictionaryExpression> exp(new DictionaryExpression);
     if(shrunk.size() > 0)
     {
         // The arguments are comma-separated.
@@ -739,7 +738,7 @@ DictionaryExpression *Parser::parseDictionaryExpression(TokenRange const &range)
                     "Colon is missing from '" + delim.asText() + "' at " +
                     delim.firstToken().asText());
             }
-            
+
             QScopedPointer<Expression> key(parseExpression(delim.endingTo(colonPos)));
             Expression *value = parseExpression(delim.startingFrom(colonPos + 1));
             exp->add(key.take(), value);
@@ -752,22 +751,22 @@ Expression *Parser::parseCallExpression(TokenRange const &nameRange, TokenRange 
 {
     //std::cerr << "call name: " << nameRange.asText() << "\n";
     //std::cerr << "call args: " << argumentRange.asText() << "\n";
-    
+
     if(!argumentRange.firstToken().equals(Token::PARENTHESIS_OPEN) ||
          argumentRange.closingBracket(0) < argumentRange.size() - 1)
     {
         throw SyntaxError("Parser::parseCallExpression",
-            "Call arguments must be enclosed in parenthesis for " + 
+            "Call arguments must be enclosed in parenthesis for " +
             argumentRange.firstToken().asText());
     }
-    
+
     // Parse the arguments, with possible labels included.
     // The named arguments are evaluated by a dictionary which is always
     // included as the first expression in the array.
     QScopedPointer<ArrayExpression> args(new ArrayExpression);
     DictionaryExpression *namedArgs = new DictionaryExpression;
     args->add(namedArgs);
-    
+
     TokenRange argsRange = argumentRange.shrink(1);
     if(!argsRange.empty())
     {
@@ -778,7 +777,7 @@ Expression *Parser::parseCallExpression(TokenRange const &nameRange, TokenRange 
             if(delim.has(ScriptLex::ASSIGN))
             {
                 // A label is included.
-                if(delim.size() < 3 || 
+                if(delim.size() < 3 ||
                     delim.firstToken().type() != Token::IDENTIFIER ||
                     !delim.token(1).equals(ScriptLex::ASSIGN))
                 {
@@ -796,7 +795,7 @@ Expression *Parser::parseCallExpression(TokenRange const &nameRange, TokenRange 
             }
         }
     }
-    
+
     // Check for some built-in methods, which are usable everywhere.
     if(nameRange.size() == 1)
     {
@@ -810,11 +809,11 @@ Expression *Parser::parseCallExpression(TokenRange const &nameRange, TokenRange 
     return new OperatorExpression(CALL, identifier.take(), args.take());
 }
 
-OperatorExpression *Parser::parseOperatorExpression(Operator op, TokenRange const &leftSide, 
+OperatorExpression *Parser::parseOperatorExpression(Operator op, TokenRange const &leftSide,
     TokenRange const &rightSide, Expression::Flags const &rightFlags)
 {
     //std::cerr << "left: " << leftSide.asText() << ", right: " << rightSide.asText() << "\n";
-    
+
     if(leftSide.empty())
     {
         // Must be unary.
@@ -909,7 +908,7 @@ Expression *Parser::parseTokenExpression(TokenRange const &range, Expression::Fl
         }
         else
         {
-            throw UnexpectedTokenError("Parser::parseTokenExpression", 
+            throw UnexpectedTokenError("Parser::parseTokenExpression",
                 "Unexpected token " + range.token(1).asText());
         }
 
@@ -922,7 +921,7 @@ Expression *Parser::parseTokenExpression(TokenRange const &range, Expression::Fl
     case Token::LITERAL_NUMBER:
         return new ConstantExpression(
             new NumberValue(ScriptLex::tokenToNumber(token)));
-        
+
     default:
         throw UnexpectedTokenError("Parser::parseTokenExpression",
             "Unexpected " + token.asText() + " which was identified as " +
@@ -955,20 +954,20 @@ Operator Parser::findLowestOperator(TokenRange const &range, TokenRange &leftSid
     for(duint i = 0, continueFrom = 0; i < range.size(); i = continueFrom)
     {
         continueFrom = i + 1;
-        
+
         int rank = MAX_RANK;
         Operator op = NONE;
         Direction direction = LEFT_TO_RIGHT;
-        
+
         Token const &token = range.token(i);
-        
+
         if(token.equals(Token::PARENTHESIS_OPEN))
         {
             continueFrom = range.closingBracket(i) + 1;
             if((previousOp == NONE || previousOp == INDEX || previousOp == SLICE ||
                 previousOp == PARENTHESIS || previousOp == CALL) && i > 0)
             {
-                // The previous token was not an operator, but there 
+                // The previous token was not an operator, but there
                 // was something before this one. It must be a function
                 // call.
                 op = CALL;
@@ -1040,8 +1039,8 @@ Operator Parser::findLowestOperator(TokenRange const &range, TokenRange &leftSid
                 { "%",      MODULO,             10,         LEFT_TO_RIGHT },
                 { ".",      DOT,                RANK_DOT,   LEFT_TO_RIGHT },
                 { 0,        NONE,               MAX_RANK,   LEFT_TO_RIGHT }
-            };            
-            
+            };
+
             // Operator precedence:
             // .
             // function call
@@ -1052,13 +1051,13 @@ Operator Parser::findLowestOperator(TokenRange const &range, TokenRange &leftSid
             // + -
             // & | ^
             // << >>
-            // < > <= >= 
+            // < > <= >=
             // == !=
             // in
             // not
             // and
             // or
-         
+
             // Check the rankings table.
             for(int k = 0; rankings[k].token; ++k)
             {
@@ -1067,7 +1066,7 @@ Operator Parser::findLowestOperator(TokenRange const &range, TokenRange &leftSid
                     op = rankings[k].op;
                     rank = rankings[k].rank;
                     direction = rankings[k].direction;
-                    
+
                     if(op == DOT) // && previousOp == NONE)
                     {
                         op = MEMBER;
@@ -1090,8 +1089,8 @@ Operator Parser::findLowestOperator(TokenRange const &range, TokenRange &leftSid
                 }
             }
         }
-        
-        if(op != NONE && 
+
+        if(op != NONE &&
             ((direction == LEFT_TO_RIGHT && rank <= lowestRank) ||
              (direction == RIGHT_TO_LEFT && rank < lowestRank)))
         {
@@ -1104,13 +1103,13 @@ Operator Parser::findLowestOperator(TokenRange const &range, TokenRange &leftSid
             }
             else
             {
-                rightSide = range.startingFrom(op == CALL || op == ARRAY || 
+                rightSide = range.startingFrom(op == CALL || op == ARRAY ||
                     op == DICTIONARY? i : i + 1);
             }
         }
-        
-        previousOp = op;       
+
+        previousOp = op;
     }
-    
+
     return lowestOp;
 }

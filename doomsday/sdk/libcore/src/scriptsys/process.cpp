@@ -28,8 +28,6 @@
 
 #include <sstream>
 
-using std::auto_ptr;
-
 namespace de {
 
 DENG2_PIMPL(Process)
@@ -319,7 +317,7 @@ void Process::finish(Value *returnValue)
     if(depth() > 1)
     {
         // Finish the topmost context.
-        std::auto_ptr<Context> topmost(popContext());
+        std::unique_ptr<Context> topmost(popContext());
         if(topmost->type() == Context::FunctionCall)
         {
             // Return value to the new topmost level.

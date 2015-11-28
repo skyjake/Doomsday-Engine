@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/OperatorExpression"
@@ -34,7 +34,7 @@ namespace de {
 
 /// Used for popping a result and checking if it's True.
 static OperatorExpression isResultTrue(RESULT_TRUE, nullptr);
-    
+
 OperatorExpression::OperatorExpression() : _op(NONE), _leftOperand(0), _rightOperand(0)
 {}
 
@@ -67,11 +67,11 @@ OperatorExpression::~OperatorExpression()
 void OperatorExpression::push(Evaluator &evaluator, Value *scope) const
 {
     Expression::push(evaluator);
-    
+
     if(_op == MEMBER)
     {
         // The MEMBER operator works a bit differently. Just push the left side
-        // now. We'll push the other side when we've found out what is the 
+        // now. We'll push the other side when we've found out what is the
         // scope defined by the result of the left side.
         _leftOperand->push(evaluator, scope);
     }
@@ -146,7 +146,7 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
         case PLUS_ASSIGN:
             verifyAssignable(leftValue);
             leftValue->sum(*rightValue);
-            break;    
+            break;
 
         case MINUS:
             if(leftValue)
@@ -163,7 +163,7 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
         case MINUS_ASSIGN:
             verifyAssignable(leftValue);
             leftValue->subtract(*rightValue);
-            break;    
+            break;
 
         case DIVIDE:
             leftValue->divide(*rightValue);
@@ -172,7 +172,7 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
         case DIVIDE_ASSIGN:
             verifyAssignable(leftValue);
             leftValue->divide(*rightValue);
-            break;    
+            break;
 
         case MULTIPLY:
             leftValue->multiply(*rightValue);
@@ -181,7 +181,7 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
         case MULTIPLY_ASSIGN:
             verifyAssignable(leftValue);
             leftValue->multiply(*rightValue);
-            break;    
+            break;
 
         case MODULO:
             leftValue->modulo(*rightValue);
@@ -190,12 +190,12 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
         case MODULO_ASSIGN:
             verifyAssignable(leftValue);
             leftValue->modulo(*rightValue);
-            break;    
+            break;
 
         case NOT:
             result = newBooleanValue(rightValue->isFalse());
             break;
-                
+
         case RESULT_TRUE:
             result = newBooleanValue(rightValue->isTrue());
             break;
@@ -284,11 +284,11 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
             break;
         }
 
-        case SLICE:            
+        case SLICE:
             result = performSlice(*leftValue, *rightValue);
             break;
 
-        case MEMBER: 
+        case MEMBER:
         {
             Record *scope = (leftValue? leftValue->memberScope() : 0);
             if(!scope)
@@ -297,22 +297,22 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
                     "Left side of " + operatorToText(_op) + " does not have members [" +
                                  DENG2_TYPE_NAME(*leftValue) + "]");
             }
-            
+
             // Now that we know what the scope is, push the rest of the expression
             // for evaluation (in this specific scope).
             _rightOperand->push(evaluator, leftValue);
-            
+
             // Cleanup.
             //delete leftValue;
             DENG2_ASSERT(rightValue == NULL);
 
-            // The MEMBER operator does not evaluate to any result. 
+            // The MEMBER operator does not evaluate to any result.
             // Whatever is on the right side will be the result.
             return nullptr;
         }
 
         default:
-            throw Error("OperatorExpression::evaluate", 
+            throw Error("OperatorExpression::evaluate",
                 "Operator " + operatorToText(_op) + " not implemented");
         }
     }
@@ -326,7 +326,7 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
     // Delete the unnecessary values.
     if(result != rightValue) delete rightValue;
     if(result != leftValue) delete leftValue;
-    
+
     return result;
 }
 
@@ -358,7 +358,7 @@ void OperatorExpression::operator << (Reader &from)
     from >> id;
     if(id != OPERATOR)
     {
-        /// @throw DeserializationError The identifier that species the type of the 
+        /// @throw DeserializationError The identifier that species the type of the
         /// serialized expression was invalid.
         throw DeserializationError("OperatorExpression::operator <<", "Invalid ID");
     }
@@ -373,7 +373,7 @@ void OperatorExpression::operator << (Reader &from)
     delete _rightOperand;
     _leftOperand = 0;
     _rightOperand = 0;
-    
+
     _rightOperand = Expression::constructFrom(from);
     if(header & HAS_LEFT_OPERAND)
     {
@@ -423,7 +423,7 @@ Value *OperatorExpression::performSlice(Value &leftValue, Value &rightValue) con
     DENG2_ASSERT(args != NULL); // Parser makes sure.
 
     // The resulting slice of leftValue's elements.
-    std::auto_ptr<SliceTarget> slice;
+    std::unique_ptr<SliceTarget> slice;
     if(dynamic_cast<TextValue *>(&leftValue))
     {
         slice.reset(new TextSliceTarget);

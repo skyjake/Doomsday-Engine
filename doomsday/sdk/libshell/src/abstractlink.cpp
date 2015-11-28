@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/shell/AbstractLink"
@@ -33,7 +33,7 @@ DENG2_PIMPL(AbstractLink)
     Time startedTryingAt;
     TimeDelta timeout;
     Address peerAddress;
-    std::auto_ptr<Socket> socket;
+    std::unique_ptr<Socket> socket;
     Status status;
     Time connectedAt;
 
@@ -150,7 +150,7 @@ Packet *AbstractLink::nextPacket()
 {
     if(!d->socket->hasIncoming()) return 0;
 
-    std::auto_ptr<Message> data(d->socket->receive());
+    std::unique_ptr<Message> data(d->socket->receive());
     Packet *packet = interpret(*data.get());
     if(packet) packet->setFrom(data->address());
     return packet;

@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Archive"
@@ -168,7 +168,7 @@ Block const &Archive::entryBlock(Path const &path) const
             // Got it.
             return *entry.data;
         }
-        std::auto_ptr<Block> cached(new Block);
+        std::unique_ptr<Block> cached(new Block);
         d->readEntry(path, *cached.get());
         entry.data = cached.release();
         return *entry.data;
@@ -188,14 +188,14 @@ Block &Archive::entryBlock(Path const &path)
     }
 
     Block const &block = const_cast<Archive const *>(this)->entryBlock(path);
-    
+
     // Mark for recompression.
     Entry &entry = static_cast<Entry &>(d->index->find(path, PathTree::MatchFull | PathTree::NoBranch));
     entry.maybeChanged = true;
     entry.modifiedAt   = Time();
 
     d->modified = true;
-    
+
     return const_cast<Block &>(block);
 }
 

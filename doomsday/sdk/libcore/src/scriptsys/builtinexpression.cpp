@@ -57,7 +57,7 @@ void BuiltInExpression::push(Evaluator &evaluator, Value *scope) const
 
 Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
 {
-    std::auto_ptr<Value> value(evaluator.popResult());
+    std::unique_ptr<Value> value(evaluator.popResult());
     ArrayValue const &args = value.get()->as<ArrayValue>();
 
     switch(_type)
@@ -271,7 +271,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "Expected exactly one argument for SERIALIZE");
         }
-        std::auto_ptr<BlockValue> data(new BlockValue);
+        std::unique_ptr<BlockValue> data(new BlockValue);
         Writer(*data.get()) << args.at(1);
         return data.release();
     }

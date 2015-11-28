@@ -41,7 +41,7 @@ public:
      *
      * @param elementType  DMU element type of the objects to be indexed.
      */
-    ArchiveIndex() : _indexBase(-1), _lut(0)
+    ArchiveIndex() : _indexBase(-1)
     {}
 
     /**
@@ -152,7 +152,7 @@ private:
     typedef std::vector<MapElementPtr> ElementLut;
 
     int _indexBase;
-    std::auto_ptr<ElementLut> _lut;
+    std::unique_ptr<ElementLut> _lut;
 };
 
 ///@{

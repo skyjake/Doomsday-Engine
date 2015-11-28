@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/DirectoryFeed"
@@ -110,7 +110,7 @@ void DirectoryFeed::populateFile(Folder &folder, String const &entryName)
     NativePath entryPath = _nativePath / entryName;
 
     // Open the native file.
-    std::auto_ptr<NativeFile> nativeFile(new NativeFile(entryName, entryPath));
+    std::unique_ptr<NativeFile> nativeFile(new NativeFile(entryName, entryPath));
     nativeFile->setStatus(fileStatus(entryPath));
     if(_mode & AllowWrite)
     {

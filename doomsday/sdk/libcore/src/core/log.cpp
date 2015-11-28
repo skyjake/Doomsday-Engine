@@ -61,7 +61,7 @@ public:
 } // namespace internal
 
 /// The logs table contains the log of each thread that uses logging.
-static std::auto_ptr<internal::Logs> logsPtr;
+static std::unique_ptr<internal::Logs> logsPtr;
 
 /// Unused entry arguments are stored here in the pool.
 static FIFO<LogEntry::Arg> argPool;
