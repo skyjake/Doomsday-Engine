@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/OculusRift"
@@ -390,7 +390,7 @@ DENG2_PIMPL(OculusRift)
         if(screen == HMDScreen)
         {
             if(isWindowOnHMD()) return; // Nothing further to do.
-#ifdef WIN32            
+#ifdef WIN32
             oldGeometry = window->geometry();
             window->setGeometry(screenGeometry(HMDScreen));
             window->showFullScreen();
@@ -542,6 +542,15 @@ DENG2_PIMPL(OculusRift)
 OculusRift::OculusRift() : d(new Instance(this))
 {}
 
+bool OculusRift::isEnabled() const
+{
+#ifdef DENG_HAVE_OCULUS_API
+    return true;
+#else
+    return false;
+#endif
+}
+
 void OculusRift::glPreInit()
 {
 #ifdef DENG_HAVE_OCULUS_API
@@ -574,7 +583,7 @@ void OculusRift::deinit()
 
 void OculusRift::beginFrame()
 {
-#ifdef DENG_HAVE_OCULUS_API    
+#ifdef DENG_HAVE_OCULUS_API
     if(!isReady() || !d->inited || d->frameOngoing) return;
 
     // Begin the frame and acquire timing information.

@@ -63,8 +63,12 @@ DENG_GUI_PIMPL(VRSettingsDialog)
                 << new ChoiceItem(tr("Side-by-side"),             VRConfig::SideBySide)
                 << new ChoiceItem(tr("Parallel"),                 VRConfig::Parallel)
                 << new ChoiceItem(tr("Cross-eye"),                VRConfig::CrossEye)
-                << new ChoiceItem(tr("Oculus Rift"),              VRConfig::OculusRift)
                 << new ChoiceItem(tr("Hardware stereo"),          VRConfig::QuadBuffered);
+
+        if(vrCfg().oculusRift().isEnabled())
+        {
+            mode->items() << new ChoiceItem(tr("Oculus Rift"), VRConfig::OculusRift);
+        }
 
         area.add(swapEyes    = new CVarToggleWidget("rend-vr-swap-eyes", tr("Swap Eyes")));
         area.add(dominantEye = new CVarSliderWidget("rend-vr-dominant-eye"));
@@ -111,6 +115,7 @@ VRSettingsDialog::VRSettingsDialog(String const &name)
     : DialogWidget(name, WithHeading), d(new Instance(this))
 {
     heading().setText(tr("3D & VR Settings"));
+    heading().setImage(style().images().image("vr"));
 
     LabelWidget *modeLabel     = LabelWidget::newWithText(tr("Stereo Mode:"), &area());
     LabelWidget *heightLabel   = LabelWidget::newWithText(tr("Height (m):"), &area());
