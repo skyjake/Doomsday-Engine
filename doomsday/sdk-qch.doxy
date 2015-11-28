@@ -5,8 +5,8 @@ OUTPUT_DIRECTORY        = apidoc-qch/
 # Also generate help files for Qt Creator
 GENERATE_QHP            = YES
 QCH_FILE                = "doomsday.qch"
-QHP_NAMESPACE           = "net.dengine.sdk.1155"
-QHP_VIRTUAL_FOLDER      = "doomsday-1.15.5"
+QHP_NAMESPACE           = "net.dengine.sdk.1156"
+QHP_VIRTUAL_FOLDER      = "doomsday-1.15.6"
 QHG_LOCATION            = "../build/scripts/qhelp.py"
 
 # Dynamic HTML doesn't work inside Qt Creator
