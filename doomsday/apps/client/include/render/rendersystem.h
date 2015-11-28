@@ -21,6 +21,7 @@
 
 #include <functional>
 #include <de/GLShaderBank>
+#include <de/GLUniform>
 #include <de/ImageBank>
 #include <de/Vector>
 #include <de/System>
@@ -51,6 +52,7 @@ public:
 
     de::GLShaderBank &shaders();
     de::ImageBank &images();
+    de::GLUniform const &uMapTime() const;
 
     SettingsRegister &settings();
     SettingsRegister &appearanceSettings();

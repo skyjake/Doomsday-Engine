@@ -279,9 +279,11 @@ Bank::IData *GLShaderBank::loadFromSource(ISource &source)
         std::unique_ptr<GLUniform> uniform;
         Block const uName = i.key().toLatin1();
 
+        if(!i.value()->has(QStringLiteral("value"))) continue;
+
         // Initialize the appropriate type of value animation and uniform,
         // depending on the "value" key in the definition.
-        Value const &valueDef = i.value()->get("value");
+        Value const &valueDef = i.value()->get(QStringLiteral("value"));
         if(auto const *array = valueDef.maybeAs<ArrayValue>())
         {
             switch(array->size())
