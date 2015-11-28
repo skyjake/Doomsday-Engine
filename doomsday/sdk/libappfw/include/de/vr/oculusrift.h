@@ -40,6 +40,12 @@ public:
 public:
     OculusRift();
 
+    /**
+     * Checks if the Oculus Rift functionality is available. This returns
+     * @c true if LibOVR is enabled in the build.
+     */
+    bool isEnabled() const;
+
     void glPreInit();
 
     /**
