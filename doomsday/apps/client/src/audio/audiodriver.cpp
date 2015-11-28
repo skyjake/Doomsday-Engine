@@ -101,13 +101,18 @@ DENG2_PIMPL(AudioDriver)
     {
         DENG2_ASSERT(!initialized);
 
-        library = Library_New(libFile.path().toUtf8().constData());
         zap(iBase);
         zap(iSfx);
         zap(iMusic);
         zap(iCd);
 
-        if(!library) return;
+        library = Library_New(libFile.path().toUtf8().constData());
+        if(!library)
+        {
+            throw LoadError("AudioDriver::importInterfaces",
+                            "Failed to load " + libFile.description());
+        }
+
         de::Library &lib = libFile.library();
 
         lib.setSymbolPtr( iBase.Init,        "DS_Init");
