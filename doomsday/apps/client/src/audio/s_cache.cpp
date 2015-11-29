@@ -62,6 +62,8 @@ static dint upsampleFactor(dint rate)
     {
         factor = de::max(1, ::sfxRate / rate);
     }
+#else
+    DENG2_UNUSED(rate);
 #endif
     return factor;
 }
@@ -112,7 +114,7 @@ static void resample(void *dst, dint dstBytesPer, dint dstRate, void const *src,
     if(dstRate == 2 * srcRate)
     {
         if(dstBytesPer == 1)
-        {   
+        {
             // The source has a byte per sample as well.
             duchar const *sp = (duchar const *) src;
             duchar *dp       = (duchar *) dst;
@@ -246,12 +248,15 @@ static void resample(void *dst, dint dstBytesPer, dint dstRate, void const *src,
 void configureSample(sfxsample_t &smp, void const *data, duint size,
     dint numSamples, dint bytesPer, dint rate)
 {
+    DENG2_UNUSED(data);
+    DENG2_UNUSED(size);
+
     zap(smp);
     smp.bytesPer   = bytesPer;
     smp.size       = numSamples * bytesPer;
     smp.rate       = rate;
     smp.numSamples = numSamples;
-        
+
     // Apply the upsample factor.
     dint const rsfactor = upsampleFactor(rate);
     smp.rate       *= rsfactor;

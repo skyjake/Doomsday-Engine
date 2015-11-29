@@ -14,9 +14,14 @@ set (ASSIMP_LIB_INSTALL_DIR ${DENG_INSTALL_PLUGIN_DIR}
     CACHE PATH "libassimp install directory" FORCE
 )
 set (BUILD_SHARED_LIBS OFF CACHE BOOL "Assimp: Shared library" FORCE)
+set (CMAKE_AUTOMOC OFF)
+set (oldCFlags ${CMAKE_C_FLAGS})
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-incompatible-pointer-types")
 add_subdirectory (../../external/assimp assimp)
 set_property (TARGET assimp PROPERTY FOLDER Libraries)
+set (CMAKE_C_FLAGS ${oldCFlags})
 
+# Apply Doomsday's configuration.
 include (../../cmake/Config.cmake)
 
 if (APPLE)
