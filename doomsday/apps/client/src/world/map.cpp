@@ -1968,6 +1968,9 @@ void Map::initRadio()
             if(!side.hasSector()) continue;
             if(!side.hasSections()) continue;
 
+            // Skip sides which share one or more edge with malformed geometry.
+            if(!side.leftHEdge() || !side.rightHEdge()) continue;
+
             Vertex const &vtx0   = line->vertex(i);
             Vertex const &vtx1   = line->vertex(i ^ 1);
             LineOwner const &vo0 = line->vertexOwner(i)->next();
