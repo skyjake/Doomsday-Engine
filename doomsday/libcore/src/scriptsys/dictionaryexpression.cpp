@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/DictionaryExpression"
@@ -55,7 +55,7 @@ void DictionaryExpression::add(Expression *key, Expression *value)
 void DictionaryExpression::push(Evaluator &evaluator, Value *scope) const
 {
     Expression::push(evaluator, scope);
-    
+
     // The arguments in reverse order (so they are evaluated in
     // natural order, i.e., the same order they are in the source).
     for(Arguments::const_reverse_iterator i = _arguments.rbegin();
@@ -63,15 +63,15 @@ void DictionaryExpression::push(Evaluator &evaluator, Value *scope) const
     {
         i->second->push(evaluator);
         i->first->push(evaluator);
-    }    
+    }
 }
 
 Value *DictionaryExpression::evaluate(Evaluator &evaluator) const
 {
-    std::auto_ptr<DictionaryValue> dict(new DictionaryValue);
-    
+    std::unique_ptr<DictionaryValue> dict(new DictionaryValue);
+
     std::list<Value *> keys, values;
-    
+
     // Collect the right number of results into the array.
     for(Arguments::const_reverse_iterator i = _arguments.rbegin();
         i != _arguments.rend(); ++i)
@@ -88,7 +88,7 @@ Value *DictionaryExpression::evaluate(Evaluator &evaluator) const
     {
         dict->add(*key, *value);
     }
-    
+
     return dict.release();
 }
 
@@ -111,7 +111,7 @@ void DictionaryExpression::operator << (Reader &from)
     from >> id;
     if(id != DICTIONARY)
     {
-        /// @throw DeserializationError The identifier that species the type of the 
+        /// @throw DeserializationError The identifier that species the type of the
         /// serialized expression was invalid.
         throw DeserializationError("DictionaryExpression::operator <<", "Invalid ID");
     }

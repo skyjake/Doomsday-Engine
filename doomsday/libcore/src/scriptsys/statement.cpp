@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Statement"
@@ -46,14 +46,14 @@ Statement *Statement::constructFrom(Reader &reader)
     reader.mark();
     reader >> id;
     reader.rewind();
-    
-    std::auto_ptr<Statement> result;
+
+    std::unique_ptr<Statement> result;
     switch(id)
     {
     case ASSIGN:
         result.reset(new AssignStatement);
         break;
-        
+
     case CATCH:
         result.reset(new CatchStatement);
         break;
@@ -65,31 +65,31 @@ Statement *Statement::constructFrom(Reader &reader)
     case EXPRESSION:
         result.reset(new ExpressionStatement);
         break;
-        
+
     case FLOW:
         result.reset(new FlowStatement);
         break;
-        
+
     case FOR:
         result.reset(new ForStatement);
         break;
-        
+
     case FUNCTION:
         result.reset(new FunctionStatement);
         break;
-        
+
     case IF:
         result.reset(new IfStatement);
         break;
-        
+
     case PRINT:
         result.reset(new PrintStatement);
         break;
-        
+
     case TRY:
         result.reset(new TryStatement);
-        break;    
-        
+        break;
+
     case WHILE:
         result.reset(new WhileStatement);
         break;
@@ -97,14 +97,14 @@ Statement *Statement::constructFrom(Reader &reader)
     case SCOPE:
         result.reset(new ScopeStatement);
         break;
-                
+
     default:
-        /// @throw DeserializationError The identifier that species the type of the 
+        /// @throw DeserializationError The identifier that species the type of the
         /// serialized statement was invalid.
         throw DeserializationError("Statement::constructFrom", "Invalid statement identifier");
     }
 
     // Deserialize it.
     reader >> *result.get();
-    return result.release();    
+    return result.release();
 }

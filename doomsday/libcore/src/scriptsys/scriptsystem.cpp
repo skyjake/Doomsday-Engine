@@ -292,7 +292,7 @@ namespace internal {
 File const *ScriptSystem::tryFindModuleSource(String const &name, String const &localPath)
 {
     // Fall back on the default if the config hasn't been imported yet.
-    std::auto_ptr<ArrayValue> defaultImportPath(new ArrayValue);
+    std::unique_ptr<ArrayValue> defaultImportPath(new ArrayValue);
     defaultImportPath->add("");
     defaultImportPath->add("*"); // Newest module with a matching name.
     ArrayValue const *importPath = defaultImportPath.get();

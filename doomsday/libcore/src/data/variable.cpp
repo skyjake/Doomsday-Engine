@@ -72,7 +72,7 @@ Variable::Variable(String const &name, Value *initial, Flags const &m)
     d->name = name;
     d->mode = m;
 
-    std::auto_ptr<Value> v(initial);
+    std::unique_ptr<Value> v(initial);
     if(!initial)
     {
         v.reset(new NoneValue);

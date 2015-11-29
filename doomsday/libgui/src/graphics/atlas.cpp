@@ -31,7 +31,7 @@ DENG2_PIMPL(Atlas)
     Size totalSize;
     int margin;
     int border;
-    std::auto_ptr<IAllocator> allocator;
+    std::unique_ptr<IAllocator> allocator;
     Image backing;
     bool needCommit;
     bool needFullCommit;

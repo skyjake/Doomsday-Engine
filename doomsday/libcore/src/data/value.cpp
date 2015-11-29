@@ -187,7 +187,7 @@ Value *Value::constructFrom(Reader &reader)
     reader >> id;
     reader.rewind();
     
-    std::auto_ptr<Value> result;
+    std::unique_ptr<Value> result;
     switch(id)
     {
     case NONE:

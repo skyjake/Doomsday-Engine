@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Expression"
@@ -47,22 +47,22 @@ Expression *Expression::constructFrom(Reader &reader)
     reader.mark();
     reader >> id;
     reader.rewind();
-    
-    std::auto_ptr<Expression> result;
+
+    std::unique_ptr<Expression> result;
     switch(id)
     {
     case ARRAY:
         result.reset(new ArrayExpression());
         break;
-        
+
     case BUILT_IN:
         result.reset(new BuiltInExpression());
         break;
-        
+
     case CONSTANT:
         result.reset(new ConstantExpression());
         break;
-        
+
     case DICTIONARY:
         result.reset(new DictionaryExpression());
         break;
@@ -74,16 +74,16 @@ Expression *Expression::constructFrom(Reader &reader)
     case OPERATOR:
         result.reset(new OperatorExpression());
         break;
-                
+
     default:
-        /// @throw DeserializationError The identifier that species the type of the 
+        /// @throw DeserializationError The identifier that species the type of the
         /// serialized expression was invalid.
         throw DeserializationError("Expression::constructFrom", "Invalid expression identifier");
     }
 
     // Deserialize it.
     reader >> *result.get();
-    return result.release();    
+    return result.release();
 }
 
 Expression::Flags const &Expression::flags () const

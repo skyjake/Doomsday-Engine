@@ -340,7 +340,7 @@ struct IPrivate {
 };
 
 /**
- * Pointer to the private implementation. Behaves like std::auto_ptr, but with
+ * Pointer to the private implementation. Behaves like std::unique_ptr, but with
  * the additional requirement that the pointed/owned instance must be derived
  * from de::IPrivate.
  */

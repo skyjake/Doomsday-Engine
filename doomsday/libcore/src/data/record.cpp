@@ -328,7 +328,7 @@ bool Record::hasSubrecord(String const &subrecordName) const
 
 Variable &Record::add(Variable *variable)
 {
-    std::auto_ptr<Variable> var(variable);
+    std::unique_ptr<Variable> var(variable);
     if(variable->name().empty())
     {
         /// @throw UnnamedError All variables in a record must have a name.
@@ -429,7 +429,7 @@ Variable &Record::addFunction(const String &name, Function *func)
     
 Record &Record::add(String const &name, Record *subrecord)
 {
-    std::auto_ptr<Record> sub(subrecord);
+    std::unique_ptr<Record> sub(subrecord);
     d->parentRecordByPath(name)
             .add(new Variable(Instance::memberNameFromPath(name),
                               new RecordValue(sub.release(), RecordValue::OwnsRecord)));

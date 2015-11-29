@@ -154,7 +154,7 @@ File *FileSystem::interpret(File *sourceData)
             try
             {
                 // It is a ZIP archive: we will represent it as a folder.
-                std::auto_ptr<ArchiveFolder> package;
+                std::unique_ptr<ArchiveFolder> package;
 
                 if(sourceData->name().fileNameExtension() == ".save")
                 {
