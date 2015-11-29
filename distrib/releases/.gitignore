@@ -1,4 +1,5 @@
 *.exe
+*.msi
 *.dmg
 *.deb
 *.zip
