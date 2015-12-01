@@ -120,9 +120,9 @@
     </games>
 </addon>
 <addon>
-    <downloadUri>http://torrage.com/torrent/584A6DDB49940C73753CB6B425B4301E6137E945.torrent</downloadUri>
+    <downloadUri>http://files.dengine.net/packs/jhrp+psy-20100928.pk3</downloadUri>
     <title>Heretic Resource Pack (jHRP)</title>
-    <version>2009.07.03</version>
+    <version>2010.09.28+psy</version>
     <description>3D models, high-resolution user interface and textures.</description>
     <notes><![CDATA[Move this pack into the Snowberry addon folder]]></notes>
     <games>
