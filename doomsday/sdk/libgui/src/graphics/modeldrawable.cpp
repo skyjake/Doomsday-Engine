@@ -178,6 +178,7 @@ static int const MAX_TEXTURES = 4;
 struct ModelVertex
 {
     Vector3f pos;
+    Vector4f color;
     Vector4f boneIds;
     Vector4f boneWeights;
     Vector3f normal;
@@ -186,23 +187,24 @@ struct ModelVertex
     Vector2f texCoord;
     Vector4f texBounds[4];
 
-    LIBGUI_DECLARE_VERTEX_FORMAT(11)
+    LIBGUI_DECLARE_VERTEX_FORMAT(12)
 };
 
-AttribSpec const ModelVertex::_spec[11] = {
-    { AttribSpec::Position,    3, GL_FLOAT, false, sizeof(ModelVertex), 0 },
-    { AttribSpec::BoneIDs,     4, GL_FLOAT, false, sizeof(ModelVertex), 3 * sizeof(float) },
-    { AttribSpec::BoneWeights, 4, GL_FLOAT, false, sizeof(ModelVertex), 7 * sizeof(float) },
-    { AttribSpec::Normal,      3, GL_FLOAT, false, sizeof(ModelVertex), 11 * sizeof(float) },
-    { AttribSpec::Tangent,     3, GL_FLOAT, false, sizeof(ModelVertex), 14 * sizeof(float) },
-    { AttribSpec::Bitangent,   3, GL_FLOAT, false, sizeof(ModelVertex), 17 * sizeof(float) },
-    { AttribSpec::TexCoord0,   2, GL_FLOAT, false, sizeof(ModelVertex), 20 * sizeof(float) },
-    { AttribSpec::TexBounds0,  4, GL_FLOAT, false, sizeof(ModelVertex), 22 * sizeof(float) },
-    { AttribSpec::TexBounds1,  4, GL_FLOAT, false, sizeof(ModelVertex), 26 * sizeof(float) },
-    { AttribSpec::TexBounds2,  4, GL_FLOAT, false, sizeof(ModelVertex), 30 * sizeof(float) },
-    { AttribSpec::TexBounds3,  4, GL_FLOAT, false, sizeof(ModelVertex), 34 * sizeof(float) }
+AttribSpec const ModelVertex::_spec[12] = {
+    { AttribSpec::Position,    3, GL_FLOAT, false, sizeof(ModelVertex),  0 },
+    { AttribSpec::Color,       4, GL_FLOAT, false, sizeof(ModelVertex),  3 * sizeof(float) },
+    { AttribSpec::BoneIDs,     4, GL_FLOAT, false, sizeof(ModelVertex),  7 * sizeof(float) },
+    { AttribSpec::BoneWeights, 4, GL_FLOAT, false, sizeof(ModelVertex), 11 * sizeof(float) },
+    { AttribSpec::Normal,      3, GL_FLOAT, false, sizeof(ModelVertex), 15 * sizeof(float) },
+    { AttribSpec::Tangent,     3, GL_FLOAT, false, sizeof(ModelVertex), 18 * sizeof(float) },
+    { AttribSpec::Bitangent,   3, GL_FLOAT, false, sizeof(ModelVertex), 21 * sizeof(float) },
+    { AttribSpec::TexCoord0,   2, GL_FLOAT, false, sizeof(ModelVertex), 24 * sizeof(float) },
+    { AttribSpec::TexBounds0,  4, GL_FLOAT, false, sizeof(ModelVertex), 26 * sizeof(float) },
+    { AttribSpec::TexBounds1,  4, GL_FLOAT, false, sizeof(ModelVertex), 30 * sizeof(float) },
+    { AttribSpec::TexBounds2,  4, GL_FLOAT, false, sizeof(ModelVertex), 34 * sizeof(float) },
+    { AttribSpec::TexBounds3,  4, GL_FLOAT, false, sizeof(ModelVertex), 38 * sizeof(float) },
 };
-LIBGUI_VERTEX_FORMAT_SPEC(ModelVertex, 38 * sizeof(float))
+LIBGUI_VERTEX_FORMAT_SPEC(ModelVertex, 42 * sizeof(float))
 
 static Matrix4f convertMatrix(aiMatrix4x4 const &aiMat)
 {
@@ -360,7 +362,7 @@ DENG2_PIMPL(ModelDrawable)
 
         void initMaterials()
         {
-            DENG2_ASSERT(materials.isEmpty());
+            deinitMaterials();
             addMaterial(); // default is at index zero
         }
 
@@ -935,6 +937,7 @@ DENG2_PIMPL(ModelDrawable)
         VBuf::Indices indx;
 
         aiVector3D const zero(0, 0, 0);
+        aiColor4D const white(1, 1, 1, 1);
 
         int base = 0;
         meshIndexRanges.clear();
@@ -949,6 +952,7 @@ DENG2_PIMPL(ModelDrawable)
             for(duint i = 0; i < mesh.mNumVertices; ++i)
             {
                 aiVector3D const *pos      = &mesh.mVertices[i];
+                aiColor4D  const *color    = (mesh.HasVertexColors(0)? &mesh.mColors[0][i] : &white);
                 aiVector3D const *normal   = (mesh.HasNormals()? &mesh.mNormals[i] : &zero);
                 aiVector3D const *texCoord = (mesh.HasTextureCoords(0)? &mesh.mTextureCoords[0][i] : &zero);
                 aiVector3D const *tangent  = (mesh.HasTangentsAndBitangents()? &mesh.mTangents[i] : &zero);
@@ -957,6 +961,7 @@ DENG2_PIMPL(ModelDrawable)
                 VBuf::Type v;
 
                 v.pos       = Vector3f(pos->x, pos->y, pos->z);
+                v.color     = Vector4f(color->r, color->g, color->b, color->a);
 
                 v.normal    = Vector3f(normal ->x, normal ->y, normal ->z);
                 v.tangent   = Vector3f(tangent->x, tangent->y, tangent->z);
@@ -1252,8 +1257,8 @@ DENG2_PIMPL(ModelDrawable)
 
     void draw(Appearance const *appearance, Animator const *animation)
     {
-        Passes const *passes = appearance->drawPasses? appearance->drawPasses :
-                                                       &defaultPasses;
+        Passes const *passes = appearance && appearance->drawPasses?
+                    appearance->drawPasses : &defaultPasses;
         preDraw(animation);
 
         try
