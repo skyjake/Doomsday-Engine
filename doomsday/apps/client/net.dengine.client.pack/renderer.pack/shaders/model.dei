@@ -18,12 +18,14 @@ model.skeletal {
             uniform highp mat4 uMvpMatrix;
 
             attribute highp vec4 aVertex;
+            attribute highp vec4 aColor;
             attribute highp vec2 aUV;
             attribute highp vec4 aBounds;   // diffuse map
             attribute highp vec4 aBounds2;  // normal map
             attribute highp vec4 aBounds3;  // specular map
             attribute highp vec4 aBounds4;  // emission map
 
+            varying highp vec4 vColor;
             varying highp vec2 vUV;
             varying highp vec4 vUVBounds[4];
 
@@ -45,6 +47,8 @@ model.skeletal {
                 vUVBounds[1] = aBounds2;
                 vUVBounds[2] = aBounds3;
                 vUVBounds[3] = aBounds4;
+                
+                vColor = aColor;
             }"
 
         include.fragment <include/texture.glsl, 
@@ -56,6 +60,7 @@ model.skeletal {
             uniform highp float uAlphaLimit; // alpha test to discard fragments
             uniform highp vec2 uOffsetUV;
             
+            varying highp vec4 vColor;
             varying highp vec2 vUV;
             varying highp vec4 vUVBounds[4];
             
@@ -70,7 +75,7 @@ model.skeletal {
             
                 highp vec3 normal = normalVector(normalUV);
                 
-                highp vec4 diffuse = texture2D(uTex, uv);
+                highp vec4 diffuse = vColor * texture2D(uTex, uv);
                 diffuse.rgb *= uColor;
                 diffuse.a *= uAlpha;
                         
@@ -100,6 +105,7 @@ model.skeletal {
             uniform highp float uAlphaLimit; // alpha test to discard fragments
             uniform highp vec2 uOffsetUV;
         
+            varying highp vec4 vColor;
             varying highp vec2 vUV;
             varying highp vec4 vUVBounds[4];
         
@@ -114,7 +120,7 @@ model.skeletal {
         
                 highp vec3 normal = normalVector(normalUV);
             
-                highp vec4 diffuse = texture2D(uTex, uv);
+                highp vec4 diffuse = vColor * texture2D(uTex, uv);
                 if(diffuse.a < uAlphaLimit) discard;
 
                 diffuse.rgb *= uColor;
@@ -147,11 +153,13 @@ model.skeletal {
             uniform highp mat4 uMvpMatrix;
 
             attribute highp vec4 aVertex;
+            attribute highp vec4 aColor;
             attribute highp vec2 aUV;
             attribute highp vec4 aBounds;   // diffuse map
             attribute highp vec4 aBounds2;  // normal map
             attribute highp vec4 aBounds3;  // specular map
 
+            varying highp vec4 vColor;
             varying highp vec2 vUV;
             varying highp vec4 vUVBounds[3];
 
@@ -172,6 +180,8 @@ model.skeletal {
                 vUVBounds[0] = aBounds;
                 vUVBounds[1] = aBounds2;
                 vUVBounds[2] = aBounds3;
+                
+                vColor = aColor;
             }"
 
         include.fragment <include/texture.glsl, 
@@ -183,6 +193,7 @@ model.skeletal {
             uniform highp vec3 uColor;       // diffuse color multiplier
             uniform highp vec2 uOffsetUV;
             
+            varying highp vec4 vColor;
             varying highp vec2 vUV;
             varying highp vec4 vUVBounds[3];
             
@@ -194,7 +205,7 @@ model.skeletal {
                 highp vec2 normalUV   = mapToBounds(wrappedUV, vUVBounds[1]);
                 highp vec2 specularUV = mapToBounds(wrappedUV, vUVBounds[2]);
             
-                highp vec4 diffuse = texture2D(uTex, uv);
+                highp vec4 diffuse = vColor * texture2D(uTex, uv);
                 if(diffuse.a < uAlphaLimit) discard;
                 diffuse.rgb *= uColor;
                 
