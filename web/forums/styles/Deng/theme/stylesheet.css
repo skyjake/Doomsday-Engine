@@ -275,6 +275,10 @@ li.pagination {
     vertical-align: middle;
 }
 
+strong.pagination + h2 {
+    margin-top: 0;
+}
+
 /* Pagination in viewforum for multipage topics */
 .row .pagination {
     display: block;
