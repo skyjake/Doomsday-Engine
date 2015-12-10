@@ -25,6 +25,7 @@ namespace de {
 
 class Record;
 class RecordValue;
+class DictionaryValue;
 
 /**
  * Utility class with convenient get*() methods. While Record is designed to be used
@@ -65,6 +66,7 @@ public:
     String gets(String const &name) const;
     String gets(String const &name, String const &defaultValue) const;
     ArrayValue const &geta(String const &name) const;
+    DictionaryValue const &getdt(String const &name) const;
     RecordValue const &getr(String const &name) const;
 
     Record const &subrecord(String const &name) const;

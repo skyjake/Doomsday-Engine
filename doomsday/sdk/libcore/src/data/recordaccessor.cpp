@@ -18,6 +18,7 @@
 
 #include "de/RecordAccessor"
 #include "de/RecordValue"
+#include "de/DictionaryValue"
 
 namespace de {
 
@@ -117,6 +118,11 @@ String RecordAccessor::gets(String const &name, String const &defaultValue) cons
 ArrayValue const &RecordAccessor::geta(String const &name) const
 {
     return getAs<ArrayValue>(name);
+}
+
+DictionaryValue const &RecordAccessor::getdt(String const &name) const
+{
+    return getAs<DictionaryValue>(name);
 }
 
 RecordValue const &RecordAccessor::getr(String const &name) const
