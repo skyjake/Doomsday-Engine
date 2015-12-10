@@ -25,6 +25,7 @@
 #include <de/ScriptedInfo>
 #include <de/ArrayValue>
 #include <de/ByteArrayFile>
+#include <de/DictionaryValue>
 #include <de/math.h>
 
 #include <QMap>
@@ -64,6 +65,14 @@ DENG2_PIMPL(GLShaderBank)
                 source += "\n";
                 Block combo = GLShader::prefixToSource(source.toLatin1(),
                         Block(App::rootFolder().locate<File const>(path)));
+                source = String::fromLatin1(combo);
+            }
+
+            void insertDefinition(String const &macroName, String const &content)
+            {
+                convertToSourceText();
+                Block combo = GLShader::prefixToSource(source.toLatin1(),
+                        Block(String("#define %1 %2\n").arg(macroName).arg(content).toLatin1()));
                 source = String::fromLatin1(combo);
             }
         };
@@ -260,6 +269,18 @@ Bank::ISource *GLShaderBank::newSourceFromInfo(String const &id)
         for(int i = incs.size() - 1; i >= 0; --i)
         {
             frag.insertFromFile(relativeToPath(def) / incs.at(i)->asText());
+        }
+    }
+
+    if(def.has("defines"))
+    {
+        DictionaryValue const &dict = def.getdt("defines");
+        for(auto i : dict.elements())
+        {
+            String const macroName = i.first.value->asText();
+            String const content   = i.second->asText();
+            vtx .insertDefinition(macroName, content);
+            frag.insertDefinition(macroName, content);
         }
     }
 
