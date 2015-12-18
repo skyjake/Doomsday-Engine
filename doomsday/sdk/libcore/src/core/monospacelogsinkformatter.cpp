@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/MonospaceLogSinkFormatter"
@@ -225,11 +225,11 @@ nextStop:;
 };
 
 MonospaceLogSinkFormatter::MonospaceLogSinkFormatter()
-    : _maxLength(89), _minimumIndent(0), _sectionDepthOfPreviousLine(0)
+    : _maxLength(100), _minimumIndent(0), _sectionDepthOfPreviousLine(0)
 {
 #ifdef DENG2_DEBUG
     // Debug builds include a timestamp and msg type indicator.
-    _maxLength = 110;
+    _maxLength = 130;
     _minimumIndent = 21;
 #endif
 }
@@ -354,10 +354,12 @@ QList<String> MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &ent
 
                 // Indent to colons automatically (but not too deeply).
                 if(lineText[w] == ':' && w < lineText.size() - 1 && lineText[w + 1].isSpace())
-                    firstNonSpace = (w < int(_maxLength)*2/3? -1 : _minimumIndent);
+                {
+                    firstNonSpace = (w < _minimumIndent + 30? -1 : _minimumIndent);
+                }
             }
 
-            nextWrapIndent = qMax(_minimumIndent, firstNonSpace);
+            nextWrapIndent = qMax(_minimumIndent + 4, firstNonSpace);
         }
 
         // Check for formatting symbols.

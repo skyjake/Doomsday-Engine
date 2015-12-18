@@ -38,7 +38,7 @@ char const *MAIN_SECTION = "";
 
 /// If the section is longer than this, it will be alone on one line while
 /// the rest of the entry continues after a break.
-static int const LINE_BREAKING_SECTION_LENGTH = 35;
+static int const LINE_BREAKING_SECTION_LENGTH = 30;
 
 namespace internal {
 
@@ -475,13 +475,17 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
 
         if(flags.testFlag(SectionSameAsBefore))
         {
-            if(!shortenSection || sect.isEmpty())
+            int visibleSectLen = (!sect.isEmpty() && shortenSection? sect.size() : 0);
+            int fillLen = de::max(shortenSection, _section.size()) - visibleSectLen;
+            if(fillLen > LINE_BREAKING_SECTION_LENGTH) fillLen = 2;
+            output << String(fillLen, QChar(' '));
+            if(visibleSectLen)
             {
-                output << "^ : ";
+                output << sect << ": ";
             }
             else
             {
-                output << "^" << sect << ": ";
+                output << "  ";
             }
         }
         else
