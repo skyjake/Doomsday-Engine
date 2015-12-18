@@ -1,12 +1,15 @@
 model.skeletal {
     # Shader for skeletal animation and generic per-pixel lighting:
     # diffuse color, normal map, emissive map, specular intensity.
+    # Also supports uMapTime and a custom UV macro.
     shader generic {
         variable uAlphaLimit { value = 0 }
         variable uAlpha      { value = 1 }
         variable uColor      { value <1, 1, 1> }
         variable uEmission   { value = 0 }
         variable uOffsetUV   { value <0, 0> }
+
+        variable uMapTime {}
         
         # Mapping when used with ModelDrawable.
         textureMapping <diffuse, normals, specular, emission>
@@ -51,6 +54,8 @@ model.skeletal {
                 vColor = aColor;
             }"
 
+        defines $= {'PREDEF_TRANSFORM_UV(uv)': ''}
+        
         include.fragment <include/texture.glsl, 
                           include/lighting.glsl,
                           include/fog.glsl>
@@ -59,6 +64,7 @@ model.skeletal {
             uniform highp float uAlpha;      // diffuse alpha multiplier
             uniform highp float uAlphaLimit; // alpha test to discard fragments
             uniform highp vec2 uOffsetUV;
+            uniform highp float uMapTime;
             
             varying highp vec4 vColor;
             varying highp vec2 vUV;
@@ -67,7 +73,9 @@ model.skeletal {
             void main(void) 
             {
                 // Calculate UV at the fragment (wrapped inside the bounds).
-                highp vec2 wrappedUV = fract(vUV + uOffsetUV);
+                highp vec2 wrappedUV = vUV + uOffsetUV;
+                PREDEF_TRANSFORM_UV(wrappedUV);
+                wrappedUV = fract(wrappedUV);
                 highp vec2 uv         = mapToBounds(wrappedUV, vUVBounds[0]);
                 highp vec2 normalUV   = mapToBounds(wrappedUV, vUVBounds[1]);
                 highp vec2 specularUV = mapToBounds(wrappedUV, vUVBounds[2]);
