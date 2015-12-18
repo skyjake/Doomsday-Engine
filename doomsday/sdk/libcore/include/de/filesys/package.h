@@ -21,6 +21,7 @@
 
 #include "../String"
 #include "../File"
+#include "../FileIndex"
 #include "../IObject"
 
 #include <QSet>
@@ -123,6 +124,8 @@ public:
     void setOrder(int ordinal);
 
     int order() const;
+
+    void findPartialPath(String const &path, FileIndex::FoundFiles &found) const;
 
     /**
      * Called by PackageLoader after the package has been marked as loaded.

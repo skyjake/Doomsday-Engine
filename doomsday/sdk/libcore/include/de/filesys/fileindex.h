@@ -28,6 +28,8 @@
 namespace de {
 
 class File;
+class Folder;
+class Package;
 
 /**
  * Indexes files for quick access.
@@ -93,6 +95,31 @@ public:
 
     void findPartialPath(String const &path, FoundFiles &found,
                          Behavior behavior = FindInEntireIndex) const;
+
+    /**
+     * Finds partial paths that reside somewhere inside a specific folder
+     * or one of its subfolders.
+     *
+     * @param rootFolder  Folder under which to confine the search.
+     * @param path        Partial path to locate.
+     * @param found       All matching files.
+     * @param behavior    Search behavior.
+     */
+    void findPartialPath(Folder const &rootFolder,
+                         String const &path,
+                         FoundFiles &found,
+                         Behavior behavior = FindInEntireIndex) const;
+
+    /**
+     * Finds partial paths that reside in a specific package.
+     *
+     * @param packageId  Package whose contents to search.
+     * @param path       Partial path to find.
+     * @param found      All matching files.
+     */
+    void findPartialPath(String const &packageId,
+                         String const &path,
+                         FoundFiles &found) const;
 
     /**
      * Finds all instances of a (partial) path within the index. The results are sorted

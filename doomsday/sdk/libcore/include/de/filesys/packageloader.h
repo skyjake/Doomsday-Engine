@@ -45,8 +45,14 @@ namespace de {
 class DENG2_PUBLIC PackageLoader
 {
 public:
-    /// Notified when a package is loaded or unloaded.
+    /// Notified when any package is loaded or unloaded.
     DENG2_DEFINE_AUDIENCE2(Activity, void setOfLoadedPackagesChanged())
+
+    /// Notified when a package is loaded.
+    DENG2_DEFINE_AUDIENCE2(Load, void packageLoaded(String const &packageId))
+
+    /// Notified when a package is unloaded.
+    DENG2_DEFINE_AUDIENCE2(Unload, void aboutToUnloadPackage(String const &packageId))
 
     /// Requested package was not found. @ingroup errors
     DENG2_ERROR(NotFoundError);

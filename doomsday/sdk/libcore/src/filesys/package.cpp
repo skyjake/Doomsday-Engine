@@ -167,6 +167,11 @@ int Package::order() const
     return objectNamespace().geti(PACKAGE_ORDER);
 }
 
+void Package::findPartialPath(String const &path, FileIndex::FoundFiles &found) const
+{
+    App::fileSystem().nameIndex().findPartialPath(identifier(), path, found);
+}
+
 void Package::didLoad()
 {
     // The package's own import paths come into effect when loaded.

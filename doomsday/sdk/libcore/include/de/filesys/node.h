@@ -51,6 +51,11 @@ public:
     void setParent(Node *parent);
 
     /**
+     * Determines if @a possibleAncestor is one of the ancestors of this node.
+     */
+    bool hasAncestor(Node const &possibleAncestor) const;
+
+    /**
      * Returns the parent node. May be NULL.
      */
     Node *parent() const;

@@ -224,9 +224,13 @@ DENG2_PIMPL(PackageLoader)
     }
 
     DENG2_PIMPL_AUDIENCE(Activity)
+    DENG2_PIMPL_AUDIENCE(Load)
+    DENG2_PIMPL_AUDIENCE(Unload)
 };
 
 DENG2_AUDIENCE_METHOD(PackageLoader, Activity)
+DENG2_AUDIENCE_METHOD(PackageLoader, Load)
+DENG2_AUDIENCE_METHOD(PackageLoader, Unload)
 
 PackageLoader::PackageLoader() : d(new Instance(this))
 {}
@@ -244,6 +248,10 @@ Package const &PackageLoader::load(String const &packageId)
 
     d->load(packageId, *packFile);
 
+    DENG2_FOR_AUDIENCE2(Load, i)
+    {
+        i->packageLoaded(packageId);
+    }
     DENG2_FOR_AUDIENCE2(Activity, i)
     {
         i->setOfLoadedPackagesChanged();
@@ -254,8 +262,15 @@ Package const &PackageLoader::load(String const &packageId)
 
 void PackageLoader::unload(String const &packageId)
 {
-    if(d->unload(packageId))
+    if(isLoaded(packageId))
     {
+        DENG2_FOR_AUDIENCE2(Unload, i)
+        {
+            i->aboutToUnloadPackage(packageId);
+        }
+
+        d->unload(packageId);
+
         DENG2_FOR_AUDIENCE2(Activity, i)
         {
             i->setOfLoadedPackagesChanged();

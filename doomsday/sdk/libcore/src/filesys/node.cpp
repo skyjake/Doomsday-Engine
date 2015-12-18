@@ -50,6 +50,15 @@ void Node::setParent(Node *parent)
     d->parent = parent;
 }
 
+bool Node::hasAncestor(Node const &possibleAncestor) const
+{
+    for(Node const *iter = parent(); iter; iter = iter->parent())
+    {
+        if(iter == &possibleAncestor) return true;
+    }
+    return false;
+}
+
 Node *Node::parent() const
 {
     DENG2_GUARD(this);

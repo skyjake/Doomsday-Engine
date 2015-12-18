@@ -96,7 +96,7 @@ public:
     };
 
 public:
-    Folder(String const &name = "");
+    explicit Folder(String const &name = "");
 
     virtual ~Folder();
 

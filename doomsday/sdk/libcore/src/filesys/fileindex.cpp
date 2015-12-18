@@ -157,6 +157,29 @@ void FileIndex::findPartialPath(String const &path, FoundFiles &found, Behavior 
     }
 }
 
+void FileIndex::findPartialPath(Folder const &rootFolder, String const &path,
+                                FoundFiles &found, Behavior behavior) const
+{
+    findPartialPath(path, found, behavior);
+
+    // Remove any matches outside the given root.
+    found.remove_if([&rootFolder] (File *file) {
+        return !file->hasAncestor(rootFolder);
+    });
+}
+
+void FileIndex::findPartialPath(String const &packageId, String const &path,
+                                FoundFiles &found) const
+{
+    findPartialPath(App::packageLoader().package(packageId).root(),
+                    path, found, FindInEntireIndex);
+
+    // Remove any matches not in the given package.
+    found.remove_if([&packageId] (File *file) {
+        return Package::identifierForContainerOfFile(*file) != packageId;
+    });
+}
+
 int FileIndex::findPartialPathInPackageOrder(String const &path, FoundFiles &found, Behavior behavior) const
 {
     findPartialPath(path, found, behavior);
