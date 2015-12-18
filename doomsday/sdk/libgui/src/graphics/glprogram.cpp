@@ -429,7 +429,12 @@ GLProgram &GLProgram::bind(GLUniform const &uniform)
 {
     if(!d->allBound.contains(&uniform))
     {
-        d->addBinding(&uniform);
+        // If the program is already linked, we can check which uniforms it
+        // actually has.
+        if(!isReady() || glHasUniform(uniform.name()))
+        {
+            d->addBinding(&uniform);
+        }
     }
     return *this;
 }
