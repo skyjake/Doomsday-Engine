@@ -47,6 +47,8 @@
 using namespace de;
 
 DENG2_PIMPL(RenderSystem)
+, DENG2_OBSERVES(PackageLoader, Load)
+, DENG2_OBSERVES(PackageLoader, Unload)
 {
     Binder binder;
     Record renderModule;
@@ -214,11 +216,14 @@ DENG2_PIMPL(RenderSystem)
         ModelRenderer::initBindings(binder, renderModule);
         ClientApp::scriptSystem().addNativeModule("Render", renderModule);
 
+        // Packages are checked for shaders when (un)loaded.
+        App::packageLoader().audienceForLoad() += this;
+        App::packageLoader().audienceForUnload() += this;
+
         // Load the required packages.
         App::packageLoader().load("net.dengine.client.renderer");
         App::packageLoader().load("net.dengine.client.renderer.lensflares");
 
-        loadAllShaders();
         loadImages();
 
         typedef SettingsRegister SReg;
@@ -330,6 +335,28 @@ DENG2_PIMPL(RenderSystem)
                 .define(SReg::FloatCVar, "rend-sky-distance", 1600);
     }
 
+    ~Instance()
+    {
+        App::packageLoader().audienceForLoad()   -= this;
+        App::packageLoader().audienceForUnload() -= this;
+    }
+
+    void packageLoaded(String const &packageId)
+    {
+        FS::FoundFiles found;
+        App::packageLoader().package(packageId).findPartialPath("shaders.dei", found);
+        DENG2_FOR_EACH(FS::FoundFiles, i, found)
+        {
+            // Load new shaders.
+            loadShaders(**i);
+        }
+    }
+
+    void aboutToUnloadPackage(String const &packageId)
+    {
+        ClientApp::shaders().removeAllFromPackage(packageId);
+    }
+
     /**
      * Reads all shader definitions and sets up a Bank where the actual
      * compiled shaders are stored once they're needed.
@@ -344,9 +371,14 @@ DENG2_PIMPL(RenderSystem)
         App::findInPackages("shaders.dei", found);
         DENG2_FOR_EACH(FS::FoundFiles, i, found)
         {
-            LOG_MSG("Loading shader definitions from %s") << (*i)->description();
-            ClientApp::shaders().addFromInfo(**i);
+            loadShaders(**i);
         }
+    }
+
+    void loadShaders(File const &defs)
+    {
+        LOG_MSG("Loading shader definitions from %s") << defs.description();
+        ClientApp::shaders().addFromInfo(defs);
     }
 
     /**
