@@ -233,6 +233,8 @@ public:
 
     static String sourceLocation(Record const &record);
 
+    static SourceLineTable::PathAndLine sourcePathAndLine(Record const &record);
+
 public:
     static String const SCRIPT;
     static String const BLOCK_GROUP;

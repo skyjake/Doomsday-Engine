@@ -659,4 +659,9 @@ String ScriptedInfo::sourceLocation(Record const &record)
     return Info::sourceLocation(record.getui(VAR_SOURCE, 0));
 }
 
+SourceLineTable::PathAndLine ScriptedInfo::sourcePathAndLine(Record const &record)
+{
+    return Info::sourceLineTable().sourcePathAndLineNumber(record.getui(VAR_SOURCE, 0));
+}
+
 } // namespace de

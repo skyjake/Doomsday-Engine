@@ -146,7 +146,8 @@ DENG2_PIMPL(Record)
 
     LoopResult forSubrecords(std::function<LoopResult (String const &, Record &)> func) const
     {
-        DENG2_FOR_EACH_CONST(Members, i, members)
+        Members const unmodifiedMembers = members; // In case a callback removes members.
+        DENG2_FOR_EACH_CONST(Members, i, unmodifiedMembers)
         {
             Variable const &member = *i.value();
             if(isSubrecord(member))

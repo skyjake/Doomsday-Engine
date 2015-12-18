@@ -37,8 +37,8 @@ class File;
  * InfoBank handles the common plumbing of parsing an Info file and iterating
  * through it for creating bank sources.
  *
- * InfoBank has its own namespace where ScriptedInfo will store all variables from
- * all parsed sources.
+ * InfoBank has its own namespace where ScriptedInfo will store all variables
+ * from all parsed sources.
  *
  * @ingroup data
  */
@@ -49,13 +49,44 @@ public:
              Bank::Flags const &flags         = Bank::DefaultFlags,
              String const &hotStorageLocation = "/home/cache");
 
+    /**
+     * Parses definitions directly from Info source. This will erase the
+     * previously parsed ScriptedInfo elements, but keep the existing
+     * definitions kept in the IObject namespace.
+     *
+     * @param infoSource  Source text in Info syntax.
+     */
     void parse(String const &infoSource);
+
+    /**
+     * Parses definitions from a file. This will erase the previously parsed
+     * ScriptedInfo elements, but keep the existing definitions kept in the
+     * IObject namespace.
+     *
+     * @param infoFile  File that uses Info syntax.
+     */
     void parse(File const &infoFile);
 
     ScriptedInfo &info();
     ScriptedInfo const &info() const;
 
     void addFromInfoBlocks(String const &blockType);
+
+    /**
+     * Removes all bank items read from a matching source path. The check is
+     * based on the special "__source__" variables in the object namespace.
+     *
+     * @param rootPath  Root path to look for.
+     */
+    void removeAllWithRootPath(String const &rootPath);
+
+    /**
+     * Removes all bank items whose source path can be identified as belonging
+     * to a given package.
+     *
+     * @param packageId  Package identifier.
+     */
+    void removeAllFromPackage(String const &packageId);
 
     Time sourceModifiedAt() const;
     String bankRootPath() const;

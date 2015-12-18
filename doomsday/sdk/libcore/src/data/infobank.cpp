@@ -20,12 +20,13 @@
 #include "de/ScriptedInfo"
 #include "de/File"
 #include "de/App"
+#include "de/Package"
 
 namespace de {
 
 static String const VAR_NOT_IN_BANK("__notInBank__");
 
-DENG2_PIMPL_NOREF(InfoBank)
+DENG2_PIMPL(InfoBank)
 , DENG2_OBSERVES(ScriptedInfo, NamedBlock)
 {
     Record names; ///< All parsed sources will be stored here.
@@ -33,7 +34,7 @@ DENG2_PIMPL_NOREF(InfoBank)
     Time modTime;
     String relativeToPath;
 
-    Instance()
+    Instance(Public *i) : Base(i)
     {
         info.audienceForNamedBlock() += this;
     }
@@ -45,10 +46,39 @@ DENG2_PIMPL_NOREF(InfoBank)
             block.addBoolean(VAR_NOT_IN_BANK, true);
         }
     }
+
+    /**
+     * Checks the contents of @a group and removes all blocks that return
+     * @c true from @a shouldRemove. The removal is done both from the Bank and
+     * the script namespace. Subgroups are checked recursively.
+     */
+    void removeFromGroup(Record &group,
+                         std::function<bool (String const &, Record const &)> shouldRemove,
+                         String identifierBase = "")
+    {
+        group.forSubrecords([this, &group, &shouldRemove, &identifierBase]
+                            (String const &name, Record &sub)
+        {
+            String fullIdentifier = identifierBase.concatenateMember(name);
+            if(ScriptedInfo::blockType(sub) == ScriptedInfo::BLOCK_GROUP)
+            {
+                removeFromGroup(sub, shouldRemove, fullIdentifier);
+            }
+            else if(shouldRemove(name, sub))
+            {
+                qDebug() << "[InfoBank] Removing" << fullIdentifier
+                         << "from" << ScriptedInfo::sourceLocation(sub);
+                self.remove(fullIdentifier);
+                delete group.remove(name);
+            }
+            return LoopContinue;
+        });
+    }
 };
 
 InfoBank::InfoBank(char const *nameForLog, Bank::Flags const &flags, String const &hotStorageLocation)
-    : Bank(nameForLog, flags, hotStorageLocation), d(new Instance)
+    : Bank(nameForLog, flags, hotStorageLocation)
+    , d(new Instance(this))
 {}
 
 void InfoBank::parse(String const &source)
@@ -114,6 +144,22 @@ void InfoBank::addFromInfoBlocks(String const &blockType)
 
         delete &rec[VAR_NOT_IN_BANK];
     }
+}
+
+void InfoBank::removeAllWithRootPath(String const &rootPath)
+{
+    d->removeFromGroup(d->names, [&rootPath] (String const &, Record const &rec) {
+        return ScriptedInfo::sourceLocation(rec).startsWith(rootPath);
+    });
+}
+
+void InfoBank::removeAllFromPackage(String const &packageId)
+{
+    d->removeFromGroup(d->names, [&packageId] (String const &, Record const &rec) {
+        auto const loc = ScriptedInfo::sourcePathAndLine(rec);
+        File const &file = App::rootFolder().locate<File const>(loc.first);
+        return Package::identifierForContainerOfFile(file) == packageId;
+    });
 }
 
 Time InfoBank::sourceModifiedAt() const

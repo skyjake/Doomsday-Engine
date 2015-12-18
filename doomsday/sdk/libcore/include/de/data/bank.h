@@ -248,8 +248,7 @@ public:
 
     /**
      * Removes all items and their source information from the bank. This is
-     * not the same as unloading the data to a lower cache level. The data in
-     * the hot storage is unaffected.
+     * not the same as unloading the data to a lower cache level.
      */
     void clear();
 
