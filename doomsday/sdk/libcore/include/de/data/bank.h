@@ -207,6 +207,7 @@ public:
 
     virtual ~Bank();
 
+    char const *nameForLog() const;
     Flags flags() const;
 
     /**

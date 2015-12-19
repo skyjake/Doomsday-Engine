@@ -66,8 +66,10 @@ DENG2_PIMPL(InfoBank)
             }
             else if(shouldRemove(name, sub))
             {
-                qDebug() << "[InfoBank] Removing" << fullIdentifier
-                         << "from" << ScriptedInfo::sourceLocation(sub);
+                LOG_RES_VERBOSE("Removing '%s' that was read from \"%s\"")
+                        << fullIdentifier
+                        << ScriptedInfo::sourceLocation(sub);
+
                 self.remove(fullIdentifier);
                 delete group.remove(name);
             }
@@ -148,6 +150,7 @@ void InfoBank::addFromInfoBlocks(String const &blockType)
 
 void InfoBank::removeAllWithRootPath(String const &rootPath)
 {
+    LOG_AS(nameForLog());
     d->removeFromGroup(d->names, [&rootPath] (String const &, Record const &rec) {
         return ScriptedInfo::sourceLocation(rec).startsWith(rootPath);
     });
@@ -155,6 +158,7 @@ void InfoBank::removeAllWithRootPath(String const &rootPath)
 
 void InfoBank::removeAllFromPackage(String const &packageId)
 {
+    LOG_AS(nameForLog());
     d->removeFromGroup(d->names, [&packageId] (String const &, Record const &rec) {
         auto const loc = ScriptedInfo::sourcePathAndLine(rec);
         File const &file = App::rootFolder().locate<File const>(loc.first);

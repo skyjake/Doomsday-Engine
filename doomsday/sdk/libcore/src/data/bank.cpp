@@ -738,6 +738,11 @@ Bank::~Bank()
     clear();
 }
 
+char const *Bank::nameForLog() const
+{
+    return d->nameForLog;
+}
+
 Bank::Flags Bank::flags() const
 {
     return d->flags;

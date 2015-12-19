@@ -161,7 +161,7 @@ DENG_GUI_PIMPL(PanelWidget)
             {
                 *pendingShow += *asset;
 
-                LOGDEV_VERBOSE("Found " _E(m) "NotReady" _E(.) " asset %s (%p)")
+                LOGDEV_XVERBOSE("Found " _E(m) "NotReady" _E(.) " asset %s (%p)")
                         << widget->path() << widget;
             }
         }
@@ -178,7 +178,7 @@ DENG_GUI_PIMPL(PanelWidget)
 
         pendingShow.reset(new AssetGroup);
 
-        LOGDEV_VERBOSE("Checking for assets that need waiting for...");
+        LOGDEV_XVERBOSE("Checking for assets that need waiting for...");
         findAssets(content);
 
         if(pendingShow->isEmpty())
@@ -201,7 +201,7 @@ DENG_GUI_PIMPL(PanelWidget)
         // All of the assets in the pending show group are now ready, let's open!
         if(pendingShow->isReady())
         {
-            LOGDEV_VERBOSE("All assets ready, resuming animation");
+            LOGDEV_XVERBOSE("All assets ready, resuming animation");
 
             openingRule->resume();
             pendingShow.reset();

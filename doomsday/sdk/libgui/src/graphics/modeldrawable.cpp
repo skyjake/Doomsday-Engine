@@ -131,7 +131,7 @@ struct ImpLogger : public Assimp::LogStream
 {
     void write(char const *message)
     {
-        LOG_RES_VERBOSE("[ai] %s") << message;
+        LOG_GL_VERBOSE("[ai] %s") << message;
     }
 
     static void registerLogger()
@@ -410,8 +410,8 @@ DENG2_PIMPL(ModelDrawable)
             Path texPath = textureBank.sourcePathForAtlasId(id);
             DENG2_ASSERT(!texPath.isEmpty());
 
-            qDebug() << "Releasing model texture" << id.asText()
-                     << "path:" << texPath;
+            LOGDEV_GL_VERBOSE("Releasing model texture '%s' path: \"%s\"")
+                    << id.asText() << texPath;
             textureBank.unload(texPath);
         }
 
@@ -498,14 +498,14 @@ DENG2_PIMPL(ModelDrawable)
                 // Custom override path?
                 if(meshTextures.customPaths.contains(map))
                 {
-                    qDebug() << "loading custom path" << meshTextures.customPaths[map];
+                    LOG_GL_VERBOSE("Loading custom path \"%s\"") << meshTextures.customPaths[map];
                     return setTexture(mesh, map, meshTextures.customPaths[map]);
                 }
             }
             catch(Error const &er)
             {
-                LOG_RES_WARNING("Failed to load user-defined %s texture for "
-                                "mesh %i (material %i): %s")
+                LOG_GL_WARNING("Failed to load user-defined %s texture for "
+                               "mesh %i (material %i): %s")
                         << textureMapToText(textureMapType(type))
                         << mesh.index << mesh.material
                         << er.asText();
@@ -525,8 +525,8 @@ DENG2_PIMPL(ModelDrawable)
                 }
                 catch(Error const &er)
                 {
-                    LOG_RES_WARNING("Failed to load %s texture for mesh %i "
-                                    "(material %i) based on info from model file: %s")
+                    LOG_GL_WARNING("Failed to load %s texture for mesh %i "
+                                   "(material %i) based on info from model file: %s")
                             << textureMapToText(textureMapType(type))
                             << mesh.index << mesh.material << er.asText();
                 }
@@ -565,10 +565,11 @@ DENG2_PIMPL(ModelDrawable)
                 textureBank.add(path, new TextureSource(contentPath, this));
             }
 
-            qDebug() << "material:" << mesh.material
-                     << "mesh:" << mesh.index
-                     << textureMapToText(map)
-                     << "file:" << contentPath;
+            LOGDEV_GL_VERBOSE("material: %i mesh: %i file: \"%s\"")
+                    << mesh.material
+                    << mesh.index
+                    << textureMapToText(map)
+                    << contentPath;
 
             destId = textureBank.texture(path);
 
@@ -627,7 +628,7 @@ DENG2_PIMPL(ModelDrawable)
 
     void import(File const &file)
     {
-        LOG_RES_MSG("Loading model from %s") << file.description();
+        LOG_GL_MSG("Loading model from %s") << file.description();
 
         /*
          * MD5: Multiple animation sequences are supported via multiple .md5anim files.
@@ -653,7 +654,7 @@ DENG2_PIMPL(ModelDrawable)
         sourcePath = file.path();
 
         // Read the model file and apply suitable postprocessing to clean up the data.
-        if(!importer.ReadFile(sourcePath.toLatin1(),
+        if(!importer.ReadFile(sourcePath.toUtf8(),
                               aiProcess_CalcTangentSpace |
                               aiProcess_GenSmoothNormals |
                               aiProcess_JoinIdenticalVertices |
@@ -685,14 +686,17 @@ DENG2_PIMPL(ModelDrawable)
         }
 
         // Print some information.
-        qDebug() << "total bones:" << boneCount();
+        LOG_GL_VERBOSE("Bone count: %i\n"
+                       "Animation count: %i")
+                << boneCount()
+                << scene->mNumAnimations;
 
         // Animations.
         animNameToIndex.clear();
-        //qDebug() << "animations:" << scene->mNumAnimations;
         for(duint i = 0; i < scene->mNumAnimations; ++i)
         {
-            //qDebug() << "  anim #" << i << "name:" << scene->mAnimations[i]->mName.C_Str();
+            LOG_GL_VERBOSE("Animation #%i name:%s") << i << scene->mAnimations[i]->mName.C_Str();
+
             String const name = scene->mAnimations[i]->mName.C_Str();
             if(!name.isEmpty())
             {
@@ -909,8 +913,8 @@ DENG2_PIMPL(ModelDrawable)
         {
             aiMesh const &mesh = *scene->mMeshes[i];
 
-            qDebug() << "initializing bones for mesh:" << mesh.mName.C_Str();
-            qDebug() << "  bones:" << mesh.mNumBones;
+            LOGDEV_GL_VERBOSE("Initializing %i bones for mesh #%i %s")
+                    << mesh.mNumBones << i << mesh.mName.C_Str();
 
             initMeshBones(mesh, base);
             base += mesh.mNumVertices;
