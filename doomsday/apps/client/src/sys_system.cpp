@@ -131,6 +131,10 @@ void Sys_Shutdown()
     if(App_GameLoaded())
         Con_Execute(CMDS_DDAY, "unload", true, false);
 
+    // Unload all loaded packages.
+    de::App::packageLoader().unloadAll();
+
+    // Deinitialize all subsystems.
     Net_Shutdown();
 
 #ifdef __CLIENT__

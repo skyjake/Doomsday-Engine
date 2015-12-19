@@ -278,6 +278,17 @@ void PackageLoader::unload(String const &packageId)
     }
 }
 
+void PackageLoader::unloadAll()
+{
+    LOG_AS("PackageLoader");
+    LOG_RES_MSG("Unloading %i packages") << d->loaded.size();
+
+    while(!d->loaded.isEmpty())
+    {
+        unload(d->loaded.firstKey());
+    }
+}
+
 bool PackageLoader::isLoaded(String const &packageId) const
 {
     return d->loaded.contains(packageId);

@@ -69,6 +69,8 @@ public:
 
     void unload(String const &packageId);
 
+    void unloadAll();
+
     bool isLoaded(String const &packageId) const;
 
     bool isLoaded(File const &file) const;
