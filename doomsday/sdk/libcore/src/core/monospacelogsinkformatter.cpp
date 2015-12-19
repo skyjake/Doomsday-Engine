@@ -345,8 +345,9 @@ QList<String> MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &ent
         }
 
         // The wrap indent for this paragraph depends on the first line's content.
+        bool const lineStartsWithSpace = lineText.isEmpty() || lineText[0].isSpace();
         int firstNonSpace = -1;
-        if(nextWrapIndent < 0 && !lineText.isEmpty() && !lineText[0].isSpace())
+        if(nextWrapIndent < 0 && !lineStartsWithSpace)
         {
             int w = _minimumIndent;
             int firstBracket = -1;

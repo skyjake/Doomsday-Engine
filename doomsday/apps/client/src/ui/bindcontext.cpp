@@ -321,8 +321,8 @@ Record *BindContext::bindCommand(char const *eventDesc, char const *command)
         bind.configure(eventDesc, command); // Assign a new unique identifier.
         d->commandBinds.prepend(newBind.release());
 
-        LOG_INPUT_VERBOSE("Command " _E(b) "\"%s\"" _E(.) " now bound to " _E(b) "\"%s\"" _E(.) " in " _E(b) "'%s'" _E(.)
-                          " with binding Id " _E(b) "%i")
+        LOG_INPUT_VERBOSE("Command " _E(b) "\"%s\"" _E(.) " now bound to "
+                          _E(b) "\"%s\"" _E(.) " in " _E(b) "'%s'" _E(.) " (id %i)")
                 << command << bind.composeDescriptor() << d->name << bind.geti("id");
 
         /// @todo: In interactive binding mode, should ask the user if the
@@ -353,7 +353,7 @@ Record *BindContext::bindImpulse(char const *ctrlDesc, PlayerImpulse const &impu
         d->impulseBinds[localPlayer].append(newBind.release());
 
         LOG_INPUT_VERBOSE("Impulse " _E(b) "'%s'" _E(.) " of player%i now bound to \"%s\" in " _E(b) "'%s'" _E(.)
-                          " with binding Id " _E(b) "%i")
+                          " (id %i)")
                 << impulse.name << (localPlayer + 1) << bind.composeDescriptor() << d->name << bind.geti("id");
 
         /// @todo: In interactive binding mode, should ask the user if the
