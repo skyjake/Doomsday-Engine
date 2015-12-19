@@ -85,44 +85,24 @@ DENG2_PIMPL(ModelRenderer)
     {
         ~Programs()
         {
-            // Everything should have been unloaded.
+#ifdef DENG2_DEBUG
+            for(auto i = constBegin(); i != constEnd(); ++i)
+            {
+                qDebug() << i.key() << i.value();
+                DENG2_ASSERT(i.value());
+                qWarning() << "ModelRenderer: Program" << i.key()
+                           << "still has" << i.value()->useCount << "users";
+            }
+#endif
+
+            // Everything should have been unloaded, because all models
+            // have been destroyed at this point.
             DENG2_ASSERT(empty());
         }
     };
     Programs programs;
 
     MultiAtlas atlasPool { *this };
-
-    /*struct DefaultTextures
-    {
-        Id diffuse  { Id::None };
-        Id normals  { Id::None };
-        Id emission { Id::None };
-        Id specular { Id::None };
-
-        void alloc(Atlas &atlas)
-        {
-            DENG2_ASSERT(diffuse.isNone());
-
-            // Fallback diffuse map (solid black).
-            QImage img(QSize(1, 1), QImage::Format_ARGB32);
-            img.fill(qRgba(0, 0, 0, 255));
-            diffuse = atlas.alloc(img);
-
-            // Fallback normal map for models who don't provide one.
-            img.fill(qRgba(127, 127, 255, 255)); // z+
-            normals = atlas.alloc(img);
-
-            // Fallback emission map for models who don't have one.
-            img.fill(qRgba(0, 0, 0, 0));
-            emission = atlas.alloc(img);
-
-            // Fallback specular map (no specular reflections).
-            img.fill(qRgba(0, 0, 0, 0));
-            specular = atlas.alloc(img);
-        }
-    };
-    QHash<Atlas const *, DefaultTextures> defaultTextures;*/
 
     filesys::AssetObserver observer { "model\\..*" };
     ModelBank bank { [] () -> ModelDrawable * { return new render::Model; } };
@@ -158,7 +138,6 @@ DENG2_PIMPL(ModelRenderer)
         bank.unloadAll(Bank::ImmediatelyInCurrentThread);
 
         atlasPool.clear();
-        //defaultTextures.clear();
         unloadProgram(*programs[SHADER_DEFAULT]);
     }
 
@@ -170,9 +149,6 @@ DENG2_PIMPL(ModelRenderer)
                     GLTexture::maximumSize().min(MAX_ATLAS_SIZE));
         atlas->setBorderSize(1);
         atlas->setMarginSize(0);
-
-        // The default textures are present on each atlas.
-        //defaultTextures[atlas].alloc(*atlas);
 
         return atlas;
     }
@@ -193,12 +169,24 @@ DENG2_PIMPL(ModelRenderer)
         }
         else
         {
-            // Unload additional resources associated with the model.
             auto const &model = bank.model<render::Model const>(identifier);
+
+            // Unload programs used by the various rendering passes.
             for(auto const &pass : model.passes)
             {
                 DENG2_ASSERT(pass.program);
                 unloadProgram(*static_cast<Program *>(pass.program));
+            }
+
+            // Alternatively, the entire model may be using a single program.
+            if(model.passes.isEmpty())
+            {
+                DENG2_ASSERT(model.program());
+                unloadProgram(*static_cast<Program *>(model.program()));
+            }
+            else
+            {
+                DENG2_ASSERT(!model.program());
             }
 
             bank.remove(identifier);
@@ -261,6 +249,7 @@ DENG2_PIMPL(ModelRenderer)
             String name = program.shaderName;
             LOG_RES_VERBOSE("Model shader \"%s\" unloaded (no more users)") << name;
             delete &program;
+            DENG2_ASSERT(programs.contains(name));
             programs.remove(name);
         }
     }
@@ -270,14 +259,6 @@ DENG2_PIMPL(ModelRenderer)
         auto &model = static_cast<render::Model &>(drawable);
 
         model.setAtlas(*model.textures);
-
-        /*DENG2_ASSERT(defaultTextures.contains(model.textures->atlas()));
-
-        DefaultTextures &defaults = defaultTextures[model.textures->atlas()];
-        model.setDefaultTexture(ModelDrawable::Diffuse,  defaults.diffuse);
-        model.setDefaultTexture(ModelDrawable::Normals,  defaults.normals);
-        model.setDefaultTexture(ModelDrawable::Emissive, defaults.emission);
-        model.setDefaultTexture(ModelDrawable::Specular, defaults.specular);*/
     }
 
     static gl::Blend textToBlendFunc(String const &text)
@@ -504,8 +485,7 @@ DENG2_PIMPL(ModelRenderer)
         {
             try
             {
-                // Use the default shader (use count not incremented).
-                model.setProgram(programs[modelShader]);
+                model.setProgram(loadProgram(modelShader));
                 composeTextureMappings(textureMapping,
                                        ClientApp::shaders()[modelShader]);
             }
