@@ -481,18 +481,18 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
             output << String(fillLen, QChar(' '));
             if(visibleSectLen)
             {
-                output << sect << ": ";
+                output << "[" << sect << "] ";
             }
             else
             {
-                output << "  ";
+                output << "   ";
             }
         }
         else
         {
             // If the section is very long, it's clearer to break the line here.
-            char const *separator = (sect.size() > LINE_BREAKING_SECTION_LENGTH? ":\n    " : ": ");
-            output << sect << separator;
+            char const *separator = (sect.size() > LINE_BREAKING_SECTION_LENGTH? "\n    " : " ");
+            output << "[" << sect << "]" << separator;
         }
     }
 

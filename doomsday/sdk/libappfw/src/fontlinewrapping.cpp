@@ -17,10 +17,11 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/FontLineWrapping"
+#include "de/BaseGuiApp"
 
 #include <QMap>
 
@@ -297,7 +298,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
     Lines wrapRange(Rangei const &rangeToWrap, int maxWidth, int subsequentMaxWidth = 0,
                     int initialIndent = 0)
     {
-        int const MIN_LINE_WIDTH = 150;
+        int const MIN_LINE_WIDTH = 150 * DENG2_BASE_GUI_APP->dpiFactor();
         bool const isTabbed = (subsequentMaxWidth > 0);
 
         indent    = initialIndent;
@@ -712,7 +713,7 @@ int FontLineWrapping::maximumWidth() const
 }
 
 Vector2i FontLineWrapping::charTopLeftInPixels(int line, int charIndex)
-{    
+{
     DENG2_GUARD(this);
 
     if(line >= height()) return Vector2i();

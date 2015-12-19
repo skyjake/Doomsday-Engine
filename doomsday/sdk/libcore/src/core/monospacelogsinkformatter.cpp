@@ -336,6 +336,8 @@ QList<String> MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &ent
         // Crop this line's text out of the entire message.
         String lineText = message.substr(pos, lineLen);
 
+        //qDebug() << "[formatting]" << wrapIndent << lineText;
+
         // For lines other than the first one, print an indentation.
         if(pos > 0)
         {
@@ -343,24 +345,40 @@ QList<String> MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &ent
         }
 
         // The wrap indent for this paragraph depends on the first line's content.
-        if(nextWrapIndent < 0)
+        int firstNonSpace = -1;
+        if(nextWrapIndent < 0 && !lineText.isEmpty() && !lineText[0].isSpace())
         {
             int w = _minimumIndent;
-            int firstNonSpace = -1;
+            int firstBracket = -1;
             for(; w < lineText.size(); ++w)
             {
-                if(firstNonSpace < 0 && !lineText[w].isSpace())
-                    firstNonSpace = w;
-
                 // Indent to colons automatically (but not too deeply).
-                if(lineText[w] == ':' && w < lineText.size() - 1 && lineText[w + 1].isSpace())
+                if(w < lineText.size() - 1 && lineText[w + 1].isSpace())
                 {
-                    firstNonSpace = (w < _minimumIndent + 30? -1 : _minimumIndent);
+                    if(firstBracket == -1 && lineText[w] == ']') firstBracket = w;
                 }
+
+                if(firstNonSpace == -1 && !lineText[w].isSpace())
+                    firstNonSpace = w;
             }
 
-            nextWrapIndent = qMax(_minimumIndent + 4, firstNonSpace);
+            if(firstBracket > 0)
+            {
+                nextWrapIndent = firstBracket + 2;
+            }
+            else if(firstNonSpace > 0)
+            {
+                nextWrapIndent = firstNonSpace;
+            }
+            else
+            {
+                nextWrapIndent = _minimumIndent;
+            }
+
+            //qDebug() << "min" << _minimumIndent << "nsp" << firstNonSpace
+            //         << "bct" << firstBracket;
         }
+        if(firstNonSpace < 0) firstNonSpace = _minimumIndent;
 
         // Check for formatting symbols.
         lineText.replace(DENG2_ESC("R"), String(maxLen - _minimumIndent, '-'));
@@ -375,8 +393,8 @@ QList<String> MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &ent
             // At a forced newline, reset the wrap indentation.
             if(message[pos] == '\n')
             {
-                nextWrapIndent = -1;
-                wrapIndent = _minimumIndent;
+                //nextWrapIndent = -1;
+                //wrapIndent = firstNonSpace;
             }
             pos++; // Skip whitespace.
         }
