@@ -30,7 +30,7 @@ namespace de {
 
 static QString const WHITESPACE = " \t\r\n";
 static QString const WHITESPACE_OR_COMMENT = " \t\r\n#";
-static QString const TOKEN_BREAKING_CHARS = "#:=$(){}<>,\"" + WHITESPACE;
+static QString const TOKEN_BREAKING_CHARS = "#:=$(){}<>,;\"" + WHITESPACE;
 static QString const INCLUDE_TOKEN = "@include";
 static QString const SCRIPT_TOKEN = "script";
 
@@ -323,6 +323,8 @@ DENG2_PIMPL(Info)
      * first token of the value. Values come in different flavours:
      * - single token
      * - string literal (can be split)
+     *
+     * An optional semicolon may follow a value.
      */
     InfoValue parseValue()
     {
@@ -347,8 +349,12 @@ DENG2_PIMPL(Info)
         else
         {
             // Then it must be a single token.
-            value = peekToken();
-            nextToken();
+            if(peekToken() != ";")
+            {
+                value = peekToken();
+                nextToken();
+                if(peekToken() == ";") nextToken(); // Ignore the semicolon.
+            }
         }
         return value;
     }
