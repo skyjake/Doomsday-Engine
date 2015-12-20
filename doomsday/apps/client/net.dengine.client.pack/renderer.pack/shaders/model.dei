@@ -227,5 +227,68 @@ model.skeletal {
                 
                 applyFog();
             }"        
-    }    
+    }
+    
+    # Shader for special effects. Only uses a diffuse texture map.
+    # No external lighting.
+    shader unlit.diffuse {
+        variable uAlphaLimit { value = 0 }
+        variable uAlpha      { value = 1.0 }
+        variable uColor      { value <1, 1, 1> }
+        variable uOffsetUV   { value <0, 0> }
+
+        # Mapping when used with ModelDrawable.
+        textureMapping <diffuse>
+        
+        include.vertex <include/skeletal.glsl>
+        vertex = "
+            uniform highp mat4 uMvpMatrix;
+
+            attribute highp vec4 aVertex;
+            attribute highp vec4 aColor;
+            attribute highp vec2 aUV;
+            attribute highp vec4 aBounds;   // diffuse map
+
+            varying highp vec4 vColor;
+            varying highp vec2 vUV;
+            varying highp vec4 vUVBounds;
+
+            void main(void) 
+            {
+                highp mat4 bone = vertexBoneTransform();
+                    
+                // Vertex position.
+                highp vec4 modelPos = bone * aVertex;
+                gl_Position = uMvpMatrix * modelPos;
+                                                          
+                vColor = aColor;
+                vUV = aUV;
+                vUVBounds = aBounds;
+            }"
+
+        include.fragment <include/texture.glsl>
+        fragment = "
+            uniform highp float uAlphaLimit;
+            uniform highp float uAlpha;
+            uniform highp vec3 uColor;       // diffuse color multiplier
+            uniform highp vec2 uOffsetUV;
+            
+            varying highp vec4 vColor;
+            varying highp vec2 vUV;
+            varying highp vec4 vUVBounds;
+            
+            void main(void) 
+            {
+                // Calculate UV at the fragment (wrapped inside the bounds).
+                highp vec2 wrappedUV = fract(vUV + uOffsetUV);
+                highp vec2 uv = mapToBounds(wrappedUV, vUVBounds);
+            
+                highp vec4 diffuse = vColor * texture2D(uTex, uv);
+                if(diffuse.a < uAlphaLimit) discard;
+                diffuse.rgb *= uColor;
+                diffuse.a   *= uAlpha;
+                
+                gl_FragColor = diffuse;
+            }"        
+    }        
 }
