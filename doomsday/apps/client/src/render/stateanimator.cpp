@@ -37,6 +37,7 @@ static String const DEF_PROBABILITY("prob");
 static String const DEF_ROOT_NODE  ("node");
 static String const DEF_LOOPING    ("looping");
 static String const DEF_PRIORITY   ("priority");
+static String const DEF_ALWAYS_TRIGGER("alwaysTrigger");
 static String const DEF_RENDER     ("render");
 static String const DEF_PASS       ("pass");
 static String const DEF_VARIABLE   ("variable");
@@ -638,10 +639,14 @@ void StateAnimator::triggerByState(String const &stateName)
             String const node = seq.def->gets(DEF_ROOT_NODE, "");
             int animId = d->animationId(seq.name);
 
-            // Do not restart running sequences.
-            /// @todo Only restart the animation if the current state is not the expected
-            /// one (checking the state cycle).
-            if(isRunning(animId, node)) continue;
+            bool const alwaysTrigger = ScriptedInfo::isTrue(*seq.def, DEF_ALWAYS_TRIGGER, false);
+            if(!alwaysTrigger)
+            {
+                // Do not restart running sequences.
+                /// @todo Only restart the animation if the current state is not the expected
+                /// one (checking the state cycle).
+                if(isRunning(animId, node)) continue;
+            }
 
             int const priority = seq.def->geti(DEF_PRIORITY, ANIM_DEFAULT_PRIORITY);
 
