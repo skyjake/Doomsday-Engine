@@ -53,6 +53,8 @@ static String const DEF_PASS        ("pass");
 static String const DEF_MESHES      ("meshes");
 static String const DEF_BLENDFUNC   ("blendFunc");
 static String const DEF_BLENDOP     ("blendOp");
+static String const DEF_DEPTHFUNC   ("depthFunc");
+static String const DEF_DEPTHWRITE  ("depthWrite");
 static String const DEF_TIMELINE    ("timeline");
 
 static String const SHADER_DEFAULT  ("model.skeletal.generic");
@@ -261,6 +263,29 @@ DENG2_PIMPL(ModelRenderer)
         model.setAtlas(*model.textures);
     }
 
+    static gl::Comparison textToComparison(String const &text)
+    {
+        static struct { char const *txt; gl::Comparison comp; } const cs[] = {
+            { "Never",          gl::Never },
+            { "Always",         gl::Always },
+            { "Equal",          gl::Equal },
+            { "NotEqual",       gl::NotEqual },
+            { "Less",           gl::Less },
+            { "Greater",        gl::Greater },
+            { "LessOrEqual",    gl::LessOrEqual },
+            { "GreaterOrEqual", gl::GreaterOrEqual }
+        };
+        for(auto const &p : cs)
+        {
+            if(text == p.txt)
+            {
+                return p.comp;
+            }
+        }
+        throw DefinitionError("ModelRenderer::textToComparison",
+                              QString("Invalid comparison function \"%1\"").arg(text));
+    }
+
     static gl::Blend textToBlendFunc(String const &text)
     {
         static struct { char const *txt; gl::Blend blend; } const bs[] = {
@@ -455,6 +480,7 @@ DENG2_PIMPL(ModelRenderer)
                         pass.meshes.setBit(meshId, true);
                     }
 
+                    // GL state parameters.
                     if(def.has(DEF_BLENDFUNC))
                     {
                         ArrayValue const &blendDef = def.geta(DEF_BLENDFUNC);
@@ -462,6 +488,8 @@ DENG2_PIMPL(ModelRenderer)
                         pass.blendFunc.second = textToBlendFunc(blendDef.at(1).asText());
                     }
                     pass.blendOp = textToBlendOp(def.gets(DEF_BLENDOP, "Add"));
+                    pass.depthFunc = textToComparison(def.gets(DEF_DEPTHFUNC, "Less"));
+                    pass.depthWrite = ScriptedInfo::isTrue(def, DEF_DEPTHWRITE, true);
 
                     String const passShader = def.gets(DEF_SHADER, modelShader);
                     pass.program = loadProgram(passShader);

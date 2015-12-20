@@ -1303,8 +1303,11 @@ DENG2_PIMPL(ModelDrawable)
                 initRanges(ranges, pass.meshes);
 
                 GLState::push()
-                        .setBlendFunc(pass.blendFunc)
-                        .setBlendOp  (pass.blendOp)
+                        .setBlendFunc (pass.blendFunc)
+                        .setBlendOp   (pass.blendOp)
+                        .setDepthTest (pass.depthFunc != gl::Always)
+                        .setDepthFunc (pass.depthFunc)
+                        .setDepthWrite(pass.depthWrite)
                         .apply();
                 {
                     drawProgram->beginUse();

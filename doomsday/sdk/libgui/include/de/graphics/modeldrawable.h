@@ -275,6 +275,8 @@ public:
         GLProgram *program = nullptr; ///< Shading program.
         gl::BlendFunc blendFunc { gl::SrcAlpha, gl::OneMinusSrcAlpha };
         gl::BlendOp blendOp = gl::Add;
+        bool depthWrite = true;
+        gl::Comparison depthFunc = gl::Less;
 
         bool operator == (Pass const &other) const {
             return name == other.name; // Passes are uniquely identified by names.
