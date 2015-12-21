@@ -363,8 +363,12 @@ void GL_Init2DState()
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Here we configure the OpenGL state and set the projection matrix.
-    glDisable(GL_CULL_FACE);
-    glDisable(GL_DEPTH_TEST);
+    //glDisable(GL_CULL_FACE);
+    //glDisable(GL_DEPTH_TEST);
+    GLState::current()
+            .setCull(gl::None)
+            .setDepthTest(false)
+            .apply();
 
     glDisable(GL_TEXTURE_1D);
     glDisable(GL_TEXTURE_2D);
@@ -408,8 +412,12 @@ void GL_SwitchTo3DState(dd_bool push_state, viewport_t const *port, viewdata_t c
         glPushMatrix();
     }
 
-    glEnable(GL_CULL_FACE);
-    glEnable(GL_DEPTH_TEST);
+    //glEnable(GL_CULL_FACE);
+    //glEnable(GL_DEPTH_TEST);
+    GLState::current()
+            .setCull(gl::Back)
+            .setDepthTest(true)
+            .apply();
 
     std::memcpy(&currentView, port, sizeof(currentView));
 
@@ -480,7 +488,8 @@ void GL_Restore2DState(dint step, viewport_t const *port, viewdata_t const *view
 
         // Depth testing must be disabled so that psprite 1 will be drawn
         // on top of psprite 0 (Doom plasma rifle fire).
-        glDisable(GL_DEPTH_TEST);
+        //glDisable(GL_DEPTH_TEST);
+        GLState::current().setDepthTest(false).apply();
         break; }
 
     case 2: // After Restore Step 2 we're back in 2D rendering mode.
@@ -489,8 +498,12 @@ void GL_Restore2DState(dint step, viewport_t const *port, viewdata_t const *view
         glPopMatrix();
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();
-        glDisable(GL_CULL_FACE);
-        glDisable(GL_DEPTH_TEST);
+        //glDisable(GL_CULL_FACE);
+        //glDisable(GL_DEPTH_TEST);
+        GLState::current()
+                .setCull(gl::None)
+                .setDepthTest(false)
+                .apply();
         break;
 
     default:

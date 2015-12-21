@@ -27,6 +27,7 @@
 #include "world/p_players.h"
 
 #include <de/concurrency.h>
+#include <de/GLState>
 #include <doomsday/console/var.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/doomsdayapp.h>
@@ -98,15 +99,23 @@ void H_SetupState(bool dosetup)
 
     if(dosetup)
     {
-        glDepthMask(GL_FALSE);
-        glDisable(GL_DEPTH_TEST);
+        //glDepthMask(GL_FALSE);
+        //glDisable(GL_DEPTH_TEST);
+        GLState::current()
+                .setDepthWrite(false)
+                .setDepthTest(false)
+                .apply();
         GL_BlendMode(BM_ADD);
     }
     else
     {
         GL_BlendMode(BM_NORMAL);
-        glEnable(GL_DEPTH_TEST);
-        glDepthMask(GL_TRUE);
+        //glEnable(GL_DEPTH_TEST);
+        //glDepthMask(GL_TRUE);
+        GLState::current()
+                .setDepthWrite(true)
+                .setDepthTest(true)
+                .apply();
     }
 }
 

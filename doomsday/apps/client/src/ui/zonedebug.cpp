@@ -1,4 +1,4 @@
-/** @file zonedebug.cpp  Memory zone debug visualization. 
+/** @file zonedebug.cpp  Memory zone debug visualization.
  *
  * Shows the contents of the memory zone as on-screen visualization. This is
  * only available in debug builds and provides a view to the layout of the
@@ -27,6 +27,7 @@
 #ifdef DENG_DEBUG
 
 #include <cmath>
+#include <de/GLState>
 #include <de/concurrency.h>
 #include <de/Rectangle>
 #include <de/Vector>
@@ -142,8 +143,12 @@ void Z_DebugDrawer(void)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glDisable(GL_CULL_FACE);
-    glDisable(GL_DEPTH_TEST);
+    //glDisable(GL_CULL_FACE);
+    //glDisable(GL_DEPTH_TEST);
+    GLState::push()
+            .setCull(gl::None)
+            .setDepthTest(false)
+            .apply();
 
     // Go into screen projection mode.
     glMatrixMode(GL_PROJECTION);
@@ -179,6 +184,8 @@ void Z_DebugDrawer(void)
     }
 
     pd.unlock();
+
+    GLState::pop().apply();
 
     // Cleanup.
     glMatrixMode(GL_MODELVIEW);

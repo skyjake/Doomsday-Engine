@@ -294,10 +294,14 @@ void Sys_GLConfigureDefaultState(void)
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glFrontFace(GL_CW);
-    glDisable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-    glDisable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
+    //glDisable(GL_CULL_FACE);
+    //glCullFace(GL_BACK);
+    //glDisable(GL_DEPTH_TEST);
+    //glDepthFunc(GL_LESS);
+    de::GLState::current()
+            .setCull(de::gl::None)
+            .setDepthTest(false)
+            .setDepthFunc(de::gl::Less);
 
     glDisable(GL_TEXTURE_1D);
     glDisable(GL_TEXTURE_2D);
@@ -357,7 +361,9 @@ void Sys_GLConfigureDefaultState(void)
     glHint(GL_TEXTURE_COMPRESSION_HINT, GL_NICEST);
 
     // Configure the default GLState (bottom of the stack).
-    de::GLState::current().setBlendFunc(de::gl::SrcAlpha, de::gl::OneMinusSrcAlpha);
+    de::GLState::current()
+            .setBlendFunc(de::gl::SrcAlpha, de::gl::OneMinusSrcAlpha)
+            .apply();
 }
 
 static de::String omitGLPrefix(de::String str)

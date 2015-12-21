@@ -422,11 +422,16 @@ DENG2_PIMPL(SkyDrawable)
         if(haveModels && !alwaysDrawSphere) return;
 
         // We don't want anything written in the depth buffer.
-        glDisable(GL_DEPTH_TEST);
-        glDepthMask(GL_FALSE);
+        //glDisable(GL_DEPTH_TEST);
+        //glDepthMask(GL_FALSE);
 
         // Disable culling, all triangles face the viewer.
-        glDisable(GL_CULL_FACE);
+        //glDisable(GL_CULL_FACE);
+        GLState::push()
+                .setCull(gl::None)
+                .setDepthTest(false)
+                .setDepthWrite(false)
+                .apply();
 
         // Setup a proper matrix.
         glMatrixMode(GL_MODELVIEW);
@@ -442,10 +447,10 @@ DENG2_PIMPL(SkyDrawable)
         glPopMatrix();
 
         // Restore assumed default GL state.
-        glEnable(GL_CULL_FACE);
-
-        glDepthMask(GL_TRUE);
-        glEnable(GL_DEPTH_TEST);
+        //glEnable(GL_CULL_FACE);
+        //glDepthMask(GL_TRUE);
+        //glEnable(GL_DEPTH_TEST);
+        GLState::pop().apply();
     }
 
     void drawModels(Animator const *animator) const
@@ -453,8 +458,12 @@ DENG2_PIMPL(SkyDrawable)
         if(!haveModels) return;
 
         // Sky models use depth testing, but they won't interfere with world geometry.
-        glEnable(GL_DEPTH_TEST);
-        glDepthMask(GL_TRUE);
+        //glEnable(GL_DEPTH_TEST);
+        //glDepthMask(GL_TRUE);
+        GLState::current()
+                .setDepthTest(true)
+                .setDepthWrite(true)
+                .apply();
         glClear(GL_DEPTH_BUFFER_BIT);
 
         glMatrixMode(GL_MODELVIEW);

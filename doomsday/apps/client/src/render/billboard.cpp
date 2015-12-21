@@ -570,7 +570,8 @@ void Rend_DrawSprite(vissprite_t const &spr)
        !(parm.blendMode == BM_NORMAL || parm.blendMode == BM_ZEROALPHA))
     {
         restoreZ = true;
-        glDepthMask(GL_FALSE);
+        //glDepthMask(GL_FALSE);
+        GLState::current().setDepthWrite(false).apply();
     }
 
     dgl_vertex_t vs[4], *v = vs;
@@ -615,8 +616,12 @@ void Rend_DrawSprite(vissprite_t const &spr)
     if(devMobjVLights && spr.light.vLightListIdx)
     {
         // Draw the vlight vectors, for debug.
-        glDisable(GL_DEPTH_TEST);
-        glDisable(GL_CULL_FACE);
+        //glDisable(GL_DEPTH_TEST);
+        //glDisable(GL_CULL_FACE);
+        GLState::push()
+                .setDepthTest(false)
+                .setCull(gl::None)
+                .apply();
 
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
@@ -636,8 +641,9 @@ void Rend_DrawSprite(vissprite_t const &spr)
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();
 
-        glEnable(GL_CULL_FACE);
-        glEnable(GL_DEPTH_TEST);
+        //glEnable(GL_CULL_FACE);
+        //glEnable(GL_DEPTH_TEST);
+        GLState::pop().apply();
     }
 
     // Need to restore the original modelview matrix?
@@ -655,7 +661,8 @@ void Rend_DrawSprite(vissprite_t const &spr)
     // Enable Z-writing again?
     if(restoreZ)
     {
-        glDepthMask(GL_TRUE);
+        //glDepthMask(GL_TRUE);
+        GLState::current().setDepthWrite(true).apply();
     }
 }
 

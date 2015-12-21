@@ -744,15 +744,7 @@ void ModelRenderer::render(vissprite_t const &spr)
 
     // Draw the model using the current animation state.
     d->draw(p);
-    GLState::pop();
-
-    /// @todo Something is interfering with the GL state elsewhere (remove this).
-    GLState::current()
-            .setCull(gl::Back)
-            .setDepthTest(true)
-            .setDepthFunc(gl::Less)
-            .setDepthWrite(true)
-            .apply();
+    GLState::pop().apply();
 }
 
 void ModelRenderer::render(vispsprite_t const &pspr)
@@ -774,15 +766,7 @@ void ModelRenderer::render(vispsprite_t const &pspr)
 
     GLState::push().setCull(p.model->cull);
     d->draw(p);
-    GLState::pop();
-
-    /// @todo Something is interfering with the GL state elsewhere (remove this).
-    GLState::current()
-            .setCull(gl::Back)
-            .setDepthTest(true)
-            .setDepthFunc(gl::Less)
-            .setDepthWrite(true)
-            .apply();
+    GLState::pop().apply();
 }
 
 String ModelRenderer::shaderName(GLProgram const &program) const
