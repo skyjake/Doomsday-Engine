@@ -746,8 +746,13 @@ void ModelRenderer::render(vissprite_t const &spr)
     d->draw(p);
     GLState::pop();
 
-    /// @todo Something is interfering with the cull setting elsewhere (remove this).
-    GLState::current().setCull(gl::Back).apply();
+    /// @todo Something is interfering with the GL state elsewhere (remove this).
+    GLState::current()
+            .setCull(gl::Back)
+            .setDepthTest(true)
+            .setDepthFunc(gl::Less)
+            .setDepthWrite(true)
+            .apply();
 }
 
 void ModelRenderer::render(vispsprite_t const &pspr)
@@ -771,8 +776,13 @@ void ModelRenderer::render(vispsprite_t const &pspr)
     d->draw(p);
     GLState::pop();
 
-    /// @todo Something is interfering with the cull setting elsewhere (remove this).
-    GLState::current().setCull(gl::Back).apply();
+    /// @todo Something is interfering with the GL state elsewhere (remove this).
+    GLState::current()
+            .setCull(gl::Back)
+            .setDepthTest(true)
+            .setDepthFunc(gl::Less)
+            .setDepthWrite(true)
+            .apply();
 }
 
 String ModelRenderer::shaderName(GLProgram const &program) const
