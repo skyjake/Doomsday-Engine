@@ -114,6 +114,8 @@ public:
     GLState &setDepthTest(bool enable);
     GLState &setDepthFunc(gl::Comparison func);
     GLState &setDepthWrite(bool enable);
+    GLState &setAlphaTest(bool enable);
+    GLState &setAlphaLimit(float greaterThanValue);
     GLState &setBlend(bool enable);
     GLState &setBlendFunc(gl::Blend src, gl::Blend dest);
     GLState &setBlendFunc(gl::BlendFunc func);
@@ -149,6 +151,8 @@ public:
     bool depthTest() const;
     gl::Comparison depthFunc() const;
     bool depthWrite() const;
+    bool alphaTest() const;
+    float alphaLimit() const;
     bool blend() const;
     gl::Blend srcBlendFunc() const;
     gl::Blend destBlendFunc() const;

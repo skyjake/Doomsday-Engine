@@ -17,7 +17,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/GLState"
@@ -34,6 +34,8 @@ namespace internal
         DepthTest,
         DepthFunc,
         DepthWrite,
+        AlphaTest,
+        AlphaLimit,
         Blend,
         BlendFuncSrc,
         BlendFuncDest,
@@ -56,6 +58,8 @@ namespace internal
         { DepthTest,      1  },
         { DepthFunc,      3  },
         { DepthWrite,     1  },
+        { AlphaTest,      1  },
+        { AlphaLimit,     8  },
         { Blend,          1  },
         { BlendFuncSrc,   4  },
         { BlendFuncDest,  4  },
@@ -238,6 +242,17 @@ DENG2_PIMPL(GLState)
                 glDepthMask(GL_FALSE);
             break;
 
+        case AlphaTest:
+            if(self.alphaTest())
+                glEnable(GL_ALPHA_TEST);
+            else
+                glDisable(GL_ALPHA_TEST);
+            break;
+
+        case AlphaLimit:
+            glAlphaFunc(GL_GREATER, self.alphaLimit());
+            break;
+
         case Blend:
             if(self.blend())
                 glEnable(GL_BLEND);
@@ -361,6 +376,8 @@ GLState::GLState() : d(new Instance(this))
     setDepthTest (false);
     setDepthFunc (gl::Less);
     setDepthWrite(true);
+    setAlphaTest (true);
+    setAlphaLimit(0);
     setBlend     (true);
     setBlendFunc (gl::One, gl::Zero);
     setBlendOp   (gl::Add);
@@ -399,6 +416,18 @@ GLState &GLState::setDepthFunc(gl::Comparison func)
 GLState &GLState::setDepthWrite(bool enable)
 {
     d->props.set(DepthWrite, enable);
+    return *this;
+}
+
+GLState &GLState::setAlphaTest(bool enable)
+{
+    d->props.set(AlphaTest, enable);
+    return *this;
+}
+
+GLState &GLState::setAlphaLimit(float greaterThanValue)
+{
+    d->props.set(AlphaLimit, unsigned(clamp(0.f, greaterThanValue, 1.f) * 255));
     return *this;
 }
 
@@ -528,6 +557,16 @@ gl::Comparison GLState::depthFunc() const
 bool GLState::depthWrite() const
 {
     return d->props.asBool(DepthWrite);
+}
+
+bool GLState::alphaTest() const
+{
+    return d->props.asBool(AlphaTest);
+}
+
+float GLState::alphaLimit() const
+{
+    return float(d->props.asUInt(AlphaLimit)) / 255.f;
 }
 
 bool GLState::blend() const
