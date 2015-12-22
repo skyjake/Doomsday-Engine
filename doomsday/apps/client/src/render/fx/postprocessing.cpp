@@ -69,7 +69,7 @@ DENG2_PIMPL(PostProcessing)
 
 #if 0
     Vector2ui consoleSize() const
-    {        
+    {
         /**
          * @todo The offscreen target should simply use the viewport area, not
          * the full canvas size. This way the shader could, for instance,
@@ -183,7 +183,7 @@ DENG2_PIMPL(PostProcessing)
         if(!isActive()) return;
 
         glEnable(GL_TEXTURE_2D);
-        glDisable(GL_ALPHA_TEST);
+        //glDisable(GL_ALPHA_TEST);
 
         Rectanglef const vp = GLState::current().viewport();
         Vector2f targetSize = GLState::current().target().size();
@@ -196,6 +196,7 @@ DENG2_PIMPL(PostProcessing)
         uFadeInOut = fade * opacity;
 
         GLState::push()
+                .setAlphaTest(false)
                 .setBlend(false)
                 .setDepthTest(false)
                 .apply();
@@ -204,7 +205,7 @@ DENG2_PIMPL(PostProcessing)
 
         GLState::pop().apply();
 
-        glEnable(GL_ALPHA_TEST);
+        //glEnable(GL_ALPHA_TEST);
         glDisable(GL_TEXTURE_2D);
         glEnable(GL_BLEND);
     }

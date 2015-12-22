@@ -1,4 +1,4 @@
-/** @file busyvisual.cpp  Busy Mode visualizer. 
+/** @file busyvisual.cpp  Busy Mode visualizer.
  *
  * @authors Copyright © 2007-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
@@ -25,6 +25,7 @@
 #include <cmath>
 #include <de/concurrency.h>
 #include <de/timer.h>
+#include <de/GLState>
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/console/var.h>
 #include "gl/gl_main.h"
@@ -166,7 +167,8 @@ void Con_DrawTransition(void)
 
     GL_BindTextureUnmanaged(texScreenshot, gl::ClampToEdge, gl::ClampToEdge);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glDisable(GL_ALPHA_TEST);
+    //glDisable(GL_ALPHA_TEST);
+    GLState::push().setAlphaTest(false).apply();
     glEnable(GL_TEXTURE_2D);
 
     switch(transition.style)
@@ -246,7 +248,8 @@ void Con_DrawTransition(void)
     }
 
     GL_SetNoTexture();
-    glEnable(GL_ALPHA_TEST);
+    //glEnable(GL_ALPHA_TEST);
+    GLState::pop().apply();
 
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();

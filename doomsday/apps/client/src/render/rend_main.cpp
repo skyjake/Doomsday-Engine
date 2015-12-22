@@ -3792,7 +3792,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
     {
     case DM_SKYMASK:
         GL_SelectTexUnits(0);
-        glDisable(GL_ALPHA_TEST);
+        GLState::current().setAlphaTest(false).apply();
         GLState::current().setDepthWrite(true).apply();
         GLState::current().setDepthTest(true).apply();
         GLState::current().setDepthFunc(gl::Less).apply();
@@ -3807,7 +3807,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         // The first texture unit is used for the main texture.
         texUnitMap[0] = AttributeSpec::TexCoord0;
         texUnitMap[1] = AttributeSpec::TexCoord1;
-        glDisable(GL_ALPHA_TEST);
+        GLState::current().setAlphaTest(false).apply();
         GLState::current().setDepthWrite(true).apply();
         GLState::current().setDepthTest(true).apply();
         GLState::current().setDepthFunc(gl::Less).apply();
@@ -3837,7 +3837,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
             texUnitMap[1] = AttributeSpec::ModTexCoord;
             GL_ModulateTexture(5);  // Texture + light.
         }
-        glDisable(GL_ALPHA_TEST);
+        GLState::current().setAlphaTest(false).apply();
         GLState::current().setDepthWrite(true).apply();
         GLState::current().setDepthTest(true).apply();
         GLState::current().setDepthFunc(gl::Less).apply();
@@ -3856,7 +3856,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         GL_SelectTexUnits(1);
         texUnitMap[0] = AttributeSpec::ModTexCoord;
         GL_ModulateTexture(6);
-        glDisable(GL_ALPHA_TEST);
+        GLState::current().setAlphaTest(false).apply();
         GLState::current().setDepthWrite(true).apply();
         GLState::current().setDepthTest(true).apply();
         GLState::current().setDepthFunc(gl::Less).apply();
@@ -3869,8 +3869,8 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         GL_SelectTexUnits(1);
         texUnitMap[0] = AttributeSpec::ModTexCoord;
         GL_ModulateTexture(7);  // Add light, no color.
-        glEnable(GL_ALPHA_TEST);
-        glAlphaFunc(GL_GREATER, 1 / 255.0f);
+        GLState::current().setAlphaTest(true).apply();
+        GLState::current().setAlphaLimit(1 / 255.0f).apply();
         GLState::current().setDepthWrite(false).apply();
         GLState::current().setDepthTest(true).apply();
         GLState::current().setDepthFunc(gl::LessOrEqual).apply();
@@ -3882,7 +3882,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
     case DM_WITHOUT_TEXTURE:
         GL_SelectTexUnits(0);
         GL_ModulateTexture(1);
-        glDisable(GL_ALPHA_TEST);
+        GLState::current().setAlphaTest(false).apply();
         GLState::current().setDepthWrite(true).apply();
         GLState::current().setDepthTest(true).apply();
         GLState::current().setDepthFunc(gl::Less).apply();
@@ -3894,8 +3894,8 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         GL_SelectTexUnits(1);
         texUnitMap[0] = AttributeSpec::TexCoord0;
         GL_ModulateTexture(1);
-        glEnable(GL_ALPHA_TEST);
-        glAlphaFunc(GL_GREATER, 1 / 255.0f);
+        GLState::current().setAlphaTest(true).apply();
+        GLState::current().setAlphaLimit(1 / 255.0f).apply();
         GLState::current().setDepthWrite(false).apply();
         GLState::current().setDepthTest(true).apply();
         GLState::current().setDepthFunc(gl::LessOrEqual).apply();
@@ -3916,7 +3916,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         // The first texture unit is used for the main texture.
         texUnitMap[0] = AttributeSpec::TexCoord0;
         texUnitMap[1] = AttributeSpec::TexCoord1;
-        glDisable(GL_ALPHA_TEST);
+        GLState::current().setAlphaTest(false).apply();
         GLState::current().setDepthWrite(false).apply();
         GLState::current().setDepthTest(true).apply();
         GLState::current().setDepthFunc(gl::LessOrEqual).apply();
@@ -3929,7 +3929,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
     case DM_UNBLENDED_TEXTURE_AND_DETAIL:
         texUnitMap[0] = AttributeSpec::TexCoord0;
         texUnitMap[1] = AttributeSpec::TexCoord0;
-        glDisable(GL_ALPHA_TEST);
+        GLState::current().setAlphaTest(false).apply();
         GLState::current().setDepthWrite(true).apply();
         GLState::current().setDepthTest(true).apply();
         GLState::current().setDepthFunc(gl::Less).apply();
@@ -3946,7 +3946,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
     case DM_UNBLENDED_MOD_TEXTURE_AND_DETAIL:
         texUnitMap[0] = AttributeSpec::TexCoord0;
         texUnitMap[1] = AttributeSpec::TexCoord0;
-        glDisable(GL_ALPHA_TEST);
+        GLState::current().setAlphaTest(false).apply();
         GLState::current().setDepthWrite(false).apply();
         GLState::current().setDepthTest(true).apply();
         GLState::current().setDepthFunc(gl::LessOrEqual).apply();
@@ -3960,7 +3960,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         GL_SelectTexUnits(1);
         texUnitMap[0] = AttributeSpec::TexCoord0;
         GL_ModulateTexture(0);
-        glDisable(GL_ALPHA_TEST);
+        GLState::current().setAlphaTest(false).apply();
         GLState::current().setDepthWrite(false).apply();
         GLState::current().setDepthTest(true).apply();
         GLState::current().setDepthFunc(gl::LessOrEqual).apply();
@@ -3982,7 +3982,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         texUnitMap[0] = AttributeSpec::TexCoord0;
         texUnitMap[1] = AttributeSpec::TexCoord1;
         GL_ModulateTexture(3);
-        glDisable(GL_ALPHA_TEST);
+        GLState::current().setAlphaTest(false).apply();
         GLState::current().setDepthWrite(false).apply();
         GLState::current().setDepthTest(true).apply();
         GLState::current().setDepthFunc(gl::LessOrEqual).apply();
@@ -4004,8 +4004,8 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         GL_SelectTexUnits(1);
         texUnitMap[0] = AttributeSpec::TexCoord0;
         GL_ModulateTexture(1);
-        glEnable(GL_ALPHA_TEST);
-        glAlphaFunc(GL_GREATER, 1 / 255.0f);
+        GLState::current().setAlphaTest(true).apply();
+        GLState::current().setAlphaLimit(1 / 255.0f).apply();
         GLState::current().setDepthWrite(false).apply();
         GLState::current().setDepthTest(true).apply();
         GLState::current().setDepthFunc(gl::LessOrEqual).apply();
@@ -4023,7 +4023,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         GL_SelectTexUnits(1);
         texUnitMap[0] = AttributeSpec::TexCoord0;
         GL_ModulateTexture(1);  // 8 for multitexture
-        glDisable(GL_ALPHA_TEST);
+        GLState::current().setAlphaTest(false).apply();
         GLState::current().setDepthWrite(false).apply();
         GLState::current().setDepthTest(true).apply();
         GLState::current().setDepthFunc(gl::LessOrEqual).apply();
@@ -4043,7 +4043,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         texUnitMap[0] = AttributeSpec::TexCoord0;
         texUnitMap[1] = AttributeSpec::TexCoord1;  // the mask
         GL_ModulateTexture(8);  // same as with details
-        glDisable(GL_ALPHA_TEST);
+        GLState::current().setAlphaTest(false).apply();
         GLState::current().setDepthWrite(false).apply();
         GLState::current().setDepthTest(true).apply();
         GLState::current().setDepthFunc(gl::LessOrEqual).apply();
@@ -4070,7 +4070,7 @@ static void popGLStateForPass(DrawMode mode)
 
     case DM_SKYMASK:
         GL_SelectTexUnits(1);
-        glEnable(GL_ALPHA_TEST);
+        GLState::current().setAlphaTest(true).apply();
         GLState::current().setDepthTest(false).apply();
         break;
 
@@ -4079,7 +4079,7 @@ static void popGLStateForPass(DrawMode mode)
 
         // Intentional fall-through.
     case DM_ALL:
-        glEnable(GL_ALPHA_TEST);
+        GLState::current().setAlphaTest(true).apply();
         GLState::current().setDepthTest(false).apply();
         if(fogParams.usingFog)
         {
@@ -4092,7 +4092,7 @@ static void popGLStateForPass(DrawMode mode)
     case DM_TEXTURE_PLUS_LIGHT:
         GL_SelectTexUnits(1);
         GL_ModulateTexture(1);
-        glEnable(GL_ALPHA_TEST);
+        GLState::current().setAlphaTest(true).apply();
         GLState::current().setDepthTest(false).apply();
         if(fogParams.usingFog)
         {
@@ -4103,7 +4103,7 @@ static void popGLStateForPass(DrawMode mode)
 
     case DM_FIRST_LIGHT:
         GL_ModulateTexture(1);
-        glEnable(GL_ALPHA_TEST);
+        GLState::current().setAlphaTest(true).apply();
         GLState::current().setDepthTest(false).apply();
         glEnable(GL_BLEND);
         break;
@@ -4117,7 +4117,7 @@ static void popGLStateForPass(DrawMode mode)
     case DM_WITHOUT_TEXTURE:
         GL_SelectTexUnits(1);
         GL_ModulateTexture(1);
-        glEnable(GL_ALPHA_TEST);
+        GLState::current().setAlphaTest(true).apply();
         GLState::current().setDepthTest(false).apply();
         glEnable(GL_BLEND);
         break;
@@ -4134,13 +4134,13 @@ static void popGLStateForPass(DrawMode mode)
     case DM_MOD_TEXTURE:
     case DM_MOD_TEXTURE_MANY_LIGHTS:
     case DM_BLENDED_MOD_TEXTURE:
-        glEnable(GL_ALPHA_TEST);
+        GLState::current().setAlphaTest(true).apply();
         GLState::current().setDepthTest(false).apply();
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         break;
 
     case DM_UNBLENDED_TEXTURE_AND_DETAIL:
-        glEnable(GL_ALPHA_TEST);
+        GLState::current().setAlphaTest(true).apply();
         GLState::current().setDepthTest(false).apply();
         glEnable(GL_BLEND);
         if(fogParams.usingFog)
@@ -4150,14 +4150,14 @@ static void popGLStateForPass(DrawMode mode)
         break;
 
     case DM_UNBLENDED_MOD_TEXTURE_AND_DETAIL:
-        glEnable(GL_ALPHA_TEST);
+        GLState::current().setAlphaTest(true).apply();
         GLState::current().setDepthTest(false).apply();
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         break;
 
     case DM_ALL_DETAILS:
         GL_ModulateTexture(1);
-        glEnable(GL_ALPHA_TEST);
+        GLState::current().setAlphaTest(true).apply();
         GLState::current().setDepthTest(false).apply();
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         if(fogParams.usingFog)
@@ -4169,7 +4169,7 @@ static void popGLStateForPass(DrawMode mode)
     case DM_BLENDED_DETAILS:
         GL_SelectTexUnits(1);
         GL_ModulateTexture(1);
-        glEnable(GL_ALPHA_TEST);
+        GLState::current().setAlphaTest(true).apply();
         GLState::current().setDepthTest(false).apply();
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         if(fogParams.usingFog)
@@ -4187,7 +4187,7 @@ static void popGLStateForPass(DrawMode mode)
         break;
 
     case DM_SHINY:
-        glEnable(GL_ALPHA_TEST);
+        GLState::current().setAlphaTest(true).apply();
         GLState::current().setDepthTest(false).apply();
         if(fogParams.usingFog)
         {
@@ -4199,7 +4199,7 @@ static void popGLStateForPass(DrawMode mode)
     case DM_MASKED_SHINY:
         GL_SelectTexUnits(1);
         GL_ModulateTexture(1);
-        glEnable(GL_ALPHA_TEST);
+        GLState::current().setAlphaTest(true).apply();
         GLState::current().setDepthTest(false).apply();
         if(fogParams.usingFog)
         {
@@ -4579,8 +4579,8 @@ static void drawAllLists(Map &map)
     GLState::current().setDepthWrite(true).apply();
     GLState::current().setDepthTest(true).apply();
     GLState::current().setDepthFunc(gl::Less).apply();
-    glEnable(GL_ALPHA_TEST);
-    glAlphaFunc(GL_GREATER, 0);
+    GLState::current().setAlphaTest(true).apply();
+    GLState::current().setAlphaLimit(0).apply();
     if(fogParams.usingFog)
     {
         glEnable(GL_FOG);

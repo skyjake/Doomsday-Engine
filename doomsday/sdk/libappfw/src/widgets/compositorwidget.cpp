@@ -178,7 +178,6 @@ void CompositorWidget::drawComposite()
 {
     if(!d->shouldBeDrawn()) return;
 
-    glDisable(GL_ALPHA_TEST); /// @todo remove this
     glEnable(GL_TEXTURE_2D);
 
     DENG2_ASSERT(d->nextBufIndex > 0);
@@ -186,6 +185,7 @@ void CompositorWidget::drawComposite()
     Instance::Buffer *buf = d->buffers[d->nextBufIndex - 1];
 
     GLState::push()
+            .setAlphaTest(false)
             .setBlend(true)
             .setBlendFunc(gl::One, gl::OneMinusSrcAlpha)
             .setDepthTest(false);

@@ -58,14 +58,14 @@ DENG2_PIMPL(Resize)
         {
             // Config variables.
             pixelDensity = &App::config("render.pixelDensity");
-            resizeFactor = &App::config("render.fx.resize.factor");  
+            resizeFactor = &App::config("render.fx.resize.factor");
         }
     }
 
     float factor() const
     {
         getConfig();
-    
+
         double const rf = (*resizeFactor > 0? 1.0 / *resizeFactor : 1.0);
         return FACTOR_RANGE.clamp(*pixelDensity * rf);
     }
@@ -79,9 +79,9 @@ DENG2_PIMPL(Resize)
 
         return !fequal(factor(), 1.f);
     }
-    
+
     void glInit()
-    {    
+    {
         framebuf.glInit();
 
         uFrame = framebuf.colorTexture();
@@ -137,7 +137,7 @@ DENG2_PIMPL(Resize)
         if(!isActive()) return;
 
         glEnable(GL_TEXTURE_2D);
-        glDisable(GL_ALPHA_TEST);
+        //glDisable(GL_ALPHA_TEST);
 
         Rectanglef const vp = GLState::current().viewport();
         Vector2f targetSize = GLState::current().target().size();
@@ -148,6 +148,7 @@ DENG2_PIMPL(Resize)
                                      vp.bottom() / targetSize.y);
 
         GLState::push()
+                .setAlphaTest(false)
                 .setBlend(false)
                 .setDepthTest(false)
                 .apply();
@@ -156,7 +157,7 @@ DENG2_PIMPL(Resize)
 
         GLState::pop().apply();
 
-        glEnable(GL_ALPHA_TEST);
+        //glEnable(GL_ALPHA_TEST);
         glDisable(GL_TEXTURE_2D);
         glEnable(GL_BLEND);
     }

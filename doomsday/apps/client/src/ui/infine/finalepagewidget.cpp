@@ -25,6 +25,7 @@
 #include "Material"
 
 #ifdef __CLIENT__
+#  include <de/GLState>
 #  include "gl/gl_draw.h"
 #  include "gl/gl_main.h"
 #  include "render/rend_main.h" // renderWireframe
@@ -156,7 +157,8 @@ void FinalePageWidget::draw() const
 
     if(renderWireframe > 1)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glEnable(GL_ALPHA_TEST);
+    //glEnable(GL_ALPHA_TEST);
+    GLState::push().setAlphaTest(true).apply();
 
     Vector3f worldOrigin(/*-SCREENWIDTH/2*/ - d->offset[VX].value,
                          /*-SCREENHEIGHT/2*/ - d->offset[VY].value,
@@ -168,7 +170,8 @@ void FinalePageWidget::draw() const
     }
 
     // Restore original matrices and state: back to normal 2D.
-    glDisable(GL_ALPHA_TEST);
+    //glDisable(GL_ALPHA_TEST);
+    GLState::pop().apply();
     // Back from wireframe mode?
     if(renderWireframe > 1)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);

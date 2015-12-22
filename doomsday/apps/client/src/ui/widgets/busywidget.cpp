@@ -134,9 +134,8 @@ void BusyWidget::drawContent()
 
     if(d->haveTransitionFrame())
     {
-        GLState::current().apply();
-
-        glDisable(GL_ALPHA_TEST); /// @todo get rid of these
+        //glDisable(GL_ALPHA_TEST); /// @todo get rid of these
+        GLState::push().setAlphaTest(false).apply();
         glDisable(GL_BLEND);
         glEnable(GL_TEXTURE_2D);
 
@@ -147,7 +146,9 @@ void BusyWidget::drawContent()
                 Matrix4f::scaleThenTranslate(pos.size(), pos.topLeft);
         d->drawable.draw();
 
-        glEnable(GL_ALPHA_TEST);
+        GLState::pop().apply();
+
+        //glEnable(GL_ALPHA_TEST);
         glEnable(GL_BLEND);
         glDisable(GL_TEXTURE_2D);
     }
