@@ -101,23 +101,36 @@ private:
     size_t _pos;
 };
 
-/// Adapter between FS2 and Assimp.
+/**
+ * Adapter between FS2 and Assimp. Each ModelDrawable instance has its own
+ * instance of this class.
+ */
 struct ImpIOSystem : public Assimp::IOSystem
 {
+    /// Reference for resolving relative paths. This is the folder of the
+    /// model currently being imported.
+    String referencePath;
+
     ImpIOSystem() {}
     ~ImpIOSystem() {}
 
     char getOsSeparator() const { return '/'; }
 
+    Path resolvePath(char const *fn) const
+    {
+        Path path(fn);
+        if(path.isAbsolute()) return path;
+        return referencePath / path;
+    }
+
     bool Exists(char const *pFile) const
     {
-        return App::rootFolder().has(pFile);
+        return App::rootFolder().has(resolvePath(pFile));
     }
 
     Assimp::IOStream *Open(char const *pFile, char const *)
     {
-        String const path = pFile;
-        DENG2_ASSERT(!path.contains("\\"));
+        Path const path = resolvePath(pFile);
         return new ImpIOStream(App::rootFolder().locate<ByteArrayFile const>(path));
     }
 
@@ -279,6 +292,7 @@ DENG2_PIMPL(ModelDrawable)
 
     Asset modelAsset;
     String sourcePath;
+    ImpIOSystem *importerIoSystem; // not owned
     Assimp::Importer importer;
     aiScene const *scene { nullptr };
 
@@ -615,7 +629,7 @@ DENG2_PIMPL(ModelDrawable)
     Instance(Public *i) : Base(i)
     {
         // Use FS2 for file access.
-        importer.SetIOHandler(new ImpIOSystem);
+        importer.SetIOHandler(importerIoSystem = new ImpIOSystem);
 
         // Get most kinds of log output.
         ImpLogger::registerLogger();
@@ -652,6 +666,7 @@ DENG2_PIMPL(ModelDrawable)
 
         scene = glData.scene = nullptr;
         sourcePath = file.path();
+        importerIoSystem->referencePath = sourcePath.fileNamePath();
 
         // Read the model file and apply suitable postprocessing to clean up the data.
         if(!importer.ReadFile(sourcePath.toUtf8(),
@@ -663,7 +678,7 @@ DENG2_PIMPL(ModelDrawable)
                               aiProcess_FlipUVs |
                               aiProcess_SortByPType))
         {
-            throw LoadError("ModelDrawable::import", String("Failed to load model from %s: %s")
+            throw LoadError("ModelDrawable::import", String("Failed to load model from %1: %2")
                             .arg(file.description()).arg(importer.GetErrorString()));
         }
 
