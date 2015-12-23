@@ -21,6 +21,7 @@
 #include "ui/ui_main.h"
 
 #include <cmath>
+#include <de/GLState>
 #include <doomsday/console/cmd.h>
 #include <doomsday/filesys/fs_util.h>
 #include "clientapp.h"
@@ -363,6 +364,8 @@ void UI_DrawDDBackground(Point2Raw const &origin, Size2Raw const &dimensions, fl
     GL_BindTexture(&ms.texture(MTU_PRIMARY));
     */
 
+    GLState::push();
+
     glDisable(GL_TEXTURE_2D);
     if(alpha < 1.0)
     {
@@ -370,7 +373,8 @@ void UI_DrawDDBackground(Point2Raw const &origin, Size2Raw const &dimensions, fl
     }
     else
     {
-        glDisable(GL_BLEND);
+        //glDisable(GL_BLEND);
+        GLState::current().setBlend(false).apply();
     }
 
     glColor4f(0, 0, 0, alpha);
@@ -390,7 +394,8 @@ void UI_DrawDDBackground(Point2Raw const &origin, Size2Raw const &dimensions, fl
         glVertex2f(0, origin.y + dimensions.height);
     glEnd();
 
-    glEnable(GL_BLEND);
+    //glEnable(GL_BLEND);
+    GLState::pop().apply();
     glDisable(GL_TEXTURE_2D);
 }
 

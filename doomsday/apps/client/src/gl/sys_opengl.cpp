@@ -303,7 +303,7 @@ void Sys_GLConfigureDefaultState(void)
             .setDepthTest(false)
             .setDepthFunc(de::gl::Less);
 
-    glDisable(GL_TEXTURE_1D);
+    //glDisable(GL_TEXTURE_1D);
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_TEXTURE_CUBE_MAP);
 
@@ -340,8 +340,8 @@ void Sys_GLConfigureDefaultState(void)
 #endif
 
     // Alpha blending is a go!
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //glEnable(GL_BLEND);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     //glEnable(GL_ALPHA_TEST);
     //glAlphaFunc(GL_GREATER, 0);
 

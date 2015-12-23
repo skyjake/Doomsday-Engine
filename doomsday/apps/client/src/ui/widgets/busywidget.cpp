@@ -135,8 +135,11 @@ void BusyWidget::drawContent()
     if(d->haveTransitionFrame())
     {
         //glDisable(GL_ALPHA_TEST); /// @todo get rid of these
-        GLState::push().setAlphaTest(false).apply();
-        glDisable(GL_BLEND);
+        //glDisable(GL_BLEND);
+        GLState::push()
+                .setAlphaTest(false)
+                .setBlend(false)
+                .apply();
         glEnable(GL_TEXTURE_2D);
 
         // Draw the texture.
@@ -149,7 +152,7 @@ void BusyWidget::drawContent()
         GLState::pop().apply();
 
         //glEnable(GL_ALPHA_TEST);
-        glEnable(GL_BLEND);
+        //glEnable(GL_BLEND);
         glDisable(GL_TEXTURE_2D);
     }
 }

@@ -134,14 +134,16 @@ void FinalePageWidget::draw() const
             }
             else
             {
-                glDisable(GL_BLEND);
+                //glDisable(GL_BLEND);
+                GLState::current().setBlend(false).apply();
             }
 
             GL_DrawRectf2TextureColor(0, 0, SCREENWIDTH, SCREENHEIGHT, 64, 64,
                                       topColor, topAlpha, bottomColor, bottomAlpha);
 
             GL_SetNoTexture();
-            glEnable(GL_BLEND);
+            //glEnable(GL_BLEND);
+            GLState::current().setBlend(true).apply();
         }
     }
 

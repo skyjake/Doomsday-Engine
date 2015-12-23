@@ -159,7 +159,7 @@ DENG2_PIMPL(Resize)
 
         //glEnable(GL_ALPHA_TEST);
         glDisable(GL_TEXTURE_2D);
-        glEnable(GL_BLEND);
+        //glEnable(GL_BLEND);
     }
 };
 

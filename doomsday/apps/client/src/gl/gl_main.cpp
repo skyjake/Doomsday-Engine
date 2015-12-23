@@ -370,7 +370,7 @@ void GL_Init2DState()
             .setDepthTest(false)
             .apply();
 
-    glDisable(GL_TEXTURE_1D);
+    //glDisable(GL_TEXTURE_1D);
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_TEXTURE_CUBE_MAP);
 
@@ -397,13 +397,13 @@ void GL_Init2DState()
     glFogfv(GL_FOG_COLOR, fogParams.fogColor);
 }
 
-void GL_SwitchTo3DState(dd_bool push_state, viewport_t const *port, viewdata_t const *viewData)
+void GL_SwitchTo3DState(dd_bool pushState, viewport_t const *port, viewdata_t const *viewData)
 {
     DENG2_ASSERT(port && viewData);
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    if(push_state)
+    if(pushState)
     {
         // Push the 2D matrices on the stack.
         glMatrixMode(GL_PROJECTION);

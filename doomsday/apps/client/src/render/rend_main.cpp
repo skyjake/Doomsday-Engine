@@ -3818,7 +3818,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
             glEnable(GL_FOG);
         }
         // All of the surfaces are opaque.
-        glDisable(GL_BLEND);
+        GLState::current().setBlend(false).apply();
         break;
 
     case DM_LIGHT_MOD_TEXTURE:
@@ -3848,7 +3848,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
             glEnable(GL_FOG);
         }
         // All of the surfaces are opaque.
-        glDisable(GL_BLEND);
+        GLState::current().setBlend(false).apply();
         break;
 
     case DM_FIRST_LIGHT:
@@ -3861,7 +3861,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         GLState::current().setDepthTest(true).apply();
         GLState::current().setDepthFunc(gl::Less).apply();
         // All of the surfaces are opaque.
-        glDisable(GL_BLEND);
+        GLState::current().setBlend(false).apply();
         break;
 
     case DM_BLENDED_FIRST_LIGHT:
@@ -3875,8 +3875,8 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         GLState::current().setDepthTest(true).apply();
         GLState::current().setDepthFunc(gl::LessOrEqual).apply();
         // All of the surfaces are opaque.
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_ONE, GL_ONE);
+        GLState::current().setBlend(true).apply();
+        GLState::current().setBlendFunc(gl::One, gl::One).apply();
         break;
 
     case DM_WITHOUT_TEXTURE:
@@ -3887,7 +3887,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         GLState::current().setDepthTest(true).apply();
         GLState::current().setDepthFunc(gl::Less).apply();
         // All of the surfaces are opaque.
-        glDisable(GL_BLEND);
+        GLState::current().setBlend(false).apply();
         break;
 
     case DM_LIGHTS:
@@ -3906,7 +3906,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
             glFogfv(GL_FOG_COLOR, black);
         }
 
-        glEnable(GL_BLEND);
+        GLState::current().setBlend(true).apply();
         GL_BlendMode(BM_ADD);
         break;
 
@@ -3922,8 +3922,9 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         GLState::current().setDepthFunc(gl::LessOrEqual).apply();
 
         // All of the surfaces are opaque.
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_DST_COLOR, GL_ZERO);
+        GLState::current().setBlend(true).apply();
+        //glBlendFunc(GL_DST_COLOR, GL_ZERO);
+        GLState::current().setBlendFunc(gl::DestColor, gl::Zero).apply();
         break;
 
     case DM_UNBLENDED_TEXTURE_AND_DETAIL:
@@ -3935,7 +3936,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         GLState::current().setDepthFunc(gl::Less).apply();
 
         // All of the surfaces are opaque.
-        glDisable(GL_BLEND);
+        GLState::current().setBlend(false).apply();
         // Fog is allowed.
         if(fogParams.usingFog)
         {
@@ -3952,8 +3953,9 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         GLState::current().setDepthFunc(gl::LessOrEqual).apply();
 
         // All of the surfaces are opaque.
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_DST_COLOR, GL_ZERO);
+        GLState::current().setBlend(true).apply();
+        //glBlendFunc(GL_DST_COLOR, GL_ZERO);
+        GLState::current().setBlendFunc(gl::DestColor, gl::Zero).apply();
         break;
 
     case DM_ALL_DETAILS:
@@ -3966,8 +3968,9 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         GLState::current().setDepthFunc(gl::LessOrEqual).apply();
 
         // All of the surfaces are opaque.
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
+        GLState::current().setBlend(true).apply();
+        //glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
+        GLState::current().setBlendFunc(gl::DestColor, gl::SrcColor).apply();
         // Use fog to fade the details, if fog is enabled.
         if(fogParams.usingFog)
         {
@@ -3988,8 +3991,9 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         GLState::current().setDepthFunc(gl::LessOrEqual).apply();
 
         // All of the surfaces are opaque.
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
+        GLState::current().setBlend(true).apply();
+        //glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
+        GLState::current().setBlendFunc(gl::DestColor, gl::SrcColor).apply();
         // Use fog to fade the details, if fog is enabled.
         if(fogParams.usingFog)
         {
@@ -4015,7 +4019,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
             glEnable(GL_FOG);
             glFogfv(GL_FOG_COLOR, fogParams.fogColor);
         }
-        glEnable(GL_BLEND);
+        GLState::current().setBlend(true).apply();
         GL_BlendMode(BM_NORMAL);
         break;
 
@@ -4034,7 +4038,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
             glEnable(GL_FOG);
             glFogfv(GL_FOG_COLOR, black);
         }
-        glEnable(GL_BLEND);
+        GLState::current().setBlend(true).apply();
         GL_BlendMode(BM_ADD);  // Purely additive.
         break;
 
@@ -4054,7 +4058,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
             glEnable(GL_FOG);
             glFogfv(GL_FOG_COLOR, black);
         }
-        glEnable(GL_BLEND);
+        GLState::current().setBlend(true).apply();
         GL_BlendMode(BM_ADD);  // Purely additive.
         break;
 
@@ -4085,7 +4089,7 @@ static void popGLStateForPass(DrawMode mode)
         {
             glDisable(GL_FOG);
         }
-        glEnable(GL_BLEND);
+        GLState::current().setBlend(true).apply();
         break;
 
     case DM_LIGHT_MOD_TEXTURE:
@@ -4098,20 +4102,20 @@ static void popGLStateForPass(DrawMode mode)
         {
             glDisable(GL_FOG);
         }
-        glEnable(GL_BLEND);
+        GLState::current().setBlend(true).apply();
         break;
 
     case DM_FIRST_LIGHT:
         GL_ModulateTexture(1);
         GLState::current().setAlphaTest(true).apply();
         GLState::current().setDepthTest(false).apply();
-        glEnable(GL_BLEND);
+        GLState::current().setBlend(true).apply();
         break;
 
     case DM_BLENDED_FIRST_LIGHT:
         GL_ModulateTexture(1);
         GLState::current().setDepthTest(false).apply();
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        GLState::current().setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha).apply();
         break;
 
     case DM_WITHOUT_TEXTURE:
@@ -4119,7 +4123,7 @@ static void popGLStateForPass(DrawMode mode)
         GL_ModulateTexture(1);
         GLState::current().setAlphaTest(true).apply();
         GLState::current().setDepthTest(false).apply();
-        glEnable(GL_BLEND);
+        GLState::current().setBlend(true).apply();
         break;
 
     case DM_LIGHTS:
@@ -4136,13 +4140,13 @@ static void popGLStateForPass(DrawMode mode)
     case DM_BLENDED_MOD_TEXTURE:
         GLState::current().setAlphaTest(true).apply();
         GLState::current().setDepthTest(false).apply();
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        GLState::current().setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha).apply();
         break;
 
     case DM_UNBLENDED_TEXTURE_AND_DETAIL:
         GLState::current().setAlphaTest(true).apply();
         GLState::current().setDepthTest(false).apply();
-        glEnable(GL_BLEND);
+        GLState::current().setBlend(true).apply();
         if(fogParams.usingFog)
         {
             glDisable(GL_FOG);
@@ -4152,14 +4156,14 @@ static void popGLStateForPass(DrawMode mode)
     case DM_UNBLENDED_MOD_TEXTURE_AND_DETAIL:
         GLState::current().setAlphaTest(true).apply();
         GLState::current().setDepthTest(false).apply();
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        GLState::current().setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha).apply();
         break;
 
     case DM_ALL_DETAILS:
         GL_ModulateTexture(1);
         GLState::current().setAlphaTest(true).apply();
         GLState::current().setDepthTest(false).apply();
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        GLState::current().setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha).apply();
         if(fogParams.usingFog)
         {
             glDisable(GL_FOG);
@@ -4171,7 +4175,7 @@ static void popGLStateForPass(DrawMode mode)
         GL_ModulateTexture(1);
         GLState::current().setAlphaTest(true).apply();
         GLState::current().setDepthTest(false).apply();
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        GLState::current().setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha).apply();
         if(fogParams.usingFog)
         {
             glDisable(GL_FOG);
@@ -4575,7 +4579,7 @@ static void drawAllLists(Map &map)
     glDisable(GL_TEXTURE_2D);
 
     // The draw lists do not modify these states -ds
-    glEnable(GL_BLEND);
+    GLState::current().setBlend(true).apply();
     GLState::current().setDepthWrite(true).apply();
     GLState::current().setDepthTest(true).apply();
     GLState::current().setDepthFunc(gl::Less).apply();
