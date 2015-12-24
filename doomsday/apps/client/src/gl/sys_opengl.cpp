@@ -34,6 +34,7 @@
 #   define GETPROC(Type, x)   x = de::function_cast<Type>(wglGetProcAddress(#x))
 #elif defined(UNIX) && !defined(MACOSX)
 #   include <GL/glx.h>
+#   undef None
 #   define GETPROC(Type, x)   x = de::function_cast<Type>(glXGetProcAddress((GLubyte const *)#x))
 #endif
 
