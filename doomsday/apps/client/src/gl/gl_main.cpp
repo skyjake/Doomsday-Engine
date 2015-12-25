@@ -550,7 +550,7 @@ void GL_SetupFogFromMapInfo(Record const *mapInfo)
         R_SetupFogDefaults();
     }
 
-    if(!(mapInfo->geti("flags") & MIF_FOG))
+    if(mapInfo && !(mapInfo->geti("flags") & MIF_FOG))
     {
         GL_UseFog(false);
     }
