@@ -1,6 +1,6 @@
 /** @file world.cpp  Base for world maps.
  *
- * @authors Copyright © 2014-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright ï¿½ 2014-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -24,6 +24,7 @@ using namespace de;
 namespace world {
 
 DENG2_PIMPL(Map)
+, DENG2_OBSERVES(Record, Deletion)
 {
     res::MapManifest *manifest = nullptr;  ///< Not owned, may be @c nullptr.
 
@@ -33,6 +34,15 @@ DENG2_PIMPL(Map)
     ~Instance()
     {
         DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->mapBeingDeleted(self);
+    }
+    
+    void recordBeingDeleted(Record &record)
+    {
+        // The manifest is not owned by us, it may be deleted by others.
+        if(manifest == &record)
+        {
+            manifest = nullptr;
+        }
     }
 
     DENG2_PIMPL_AUDIENCE(Deletion)
@@ -66,7 +76,11 @@ res::MapManifest &Map::manifest() const
 
 void Map::setManifest(res::MapManifest *newManifest)
 {
+    if(d->manifest) d->manifest->audienceForDeletion() -= d;
+
     d->manifest = newManifest;
+    
+    if(d->manifest) d->manifest->audienceForDeletion() += d;
 }
 
 }  // namespace world
