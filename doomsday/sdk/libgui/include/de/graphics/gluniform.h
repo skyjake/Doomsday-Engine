@@ -62,6 +62,7 @@ public:
         Mat3,
         Mat4,
         Sampler2D,
+        SamplerCube,
         Vec3Array,
         Vec4Array,
         Mat4Array
@@ -91,6 +92,8 @@ public:
      * Returns the value type of the shader.
      */
     Type type() const;
+
+    bool isSampler() const;
 
     GLUniform &operator = (dint value);
     GLUniform &operator = (duint value);

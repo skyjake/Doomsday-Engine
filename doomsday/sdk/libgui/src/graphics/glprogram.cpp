@@ -237,7 +237,7 @@ DENG2_PIMPL(GLProgram)
         foreach(GLUniform const *u, changed)
         {
             DENG2_ASSERT(active.contains(changed));
-            if(u->type() != GLUniform::Sampler2D)
+            if(!u->isSampler())
             {
                 u->applyInProgram(self);
             }
@@ -325,7 +325,7 @@ DENG2_PIMPL(GLProgram)
         active.insert(uniform);
         changed.insert(uniform);
 
-        if(uniform->type() == GLUniform::Sampler2D)
+        if(uniform->isSampler())
         {
             textures << uniform;
             texturesChanged = true;
@@ -367,7 +367,7 @@ DENG2_PIMPL(GLProgram)
             stacks.remove(uniform->name());
         }
 
-        if(uniform->type() == GLUniform::Sampler2D)
+        if(uniform->isSampler())
         {
             textures.removeAll(uniform);
             texturesChanged = true;

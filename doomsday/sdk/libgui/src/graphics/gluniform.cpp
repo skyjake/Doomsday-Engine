@@ -123,6 +123,7 @@ DENG2_PIMPL(GLUniform)
             break;
 
         case Sampler2D:
+        case SamplerCube:
             if(value.tex) value.tex->audienceForDeletion() -= this;
             break;
 
@@ -182,7 +183,7 @@ DENG2_PIMPL(GLUniform)
 
     void assetBeingDeleted(Asset &asset)
     {
-        if(type == Sampler2D)
+        if(self.isSampler())
         {
             if(value.tex == &asset)
             {
@@ -217,6 +218,11 @@ Block GLUniform::name() const
 GLUniform::Type GLUniform::type() const
 {
     return d->type;
+}
+
+bool GLUniform::isSampler() const
+{
+    return d->type == Sampler2D || d->type == SamplerCube;
 }
 
 GLUniform &GLUniform::operator = (dint value)
@@ -314,7 +320,8 @@ GLUniform &GLUniform::operator = (GLTexture const &texture)
 
 GLUniform &GLUniform::operator = (GLTexture const *texture)
 {
-    DENG2_ASSERT(d->type == Sampler2D);
+    DENG2_ASSERT(d->type != Sampler2D   || !texture->isCubeMap());
+    DENG2_ASSERT(d->type != SamplerCube ||  texture->isCubeMap());
 
     if(d->value.tex != texture)
     {
@@ -458,7 +465,7 @@ Matrix4f const &GLUniform::toMatrix4f() const
 
 GLTexture const *GLUniform::texture() const
 {
-    DENG2_ASSERT(d->type == Sampler2D);
+    DENG2_ASSERT(isSampler());
     return d->value.tex;
 }
 
