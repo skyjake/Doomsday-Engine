@@ -21,6 +21,7 @@
 #include "guishellapp.h"
 #include <de/libcore.h>
 #include <de/Socket>
+#include <de/CommandLine>
 #include <de/shell/DoomsdayInfo>
 #include <QVBoxLayout>
 #include <QDialogButtonBox>
@@ -226,7 +227,15 @@ QStringList LocalServerDialog::additionalOptions() const
     QStringList opts;
     opts << "-cmd" << QString("server-password \"%1\"").arg(d->password->text());
     opts << "-cmd" << QString("server-public %1").arg(d->announce->isChecked()? 1 : 0);
-    opts << d->options->toPlainText().split(' ', QString::SkipEmptyParts);
+
+    // Parse the provided options using libcore so quotes and other special
+    // behavior matches Doomsday.
+    CommandLine cmdLine;
+    cmdLine.parse(d->options->toPlainText());
+    for(int i = 0; i < cmdLine.count(); ++i)
+    {
+        opts << cmdLine.at(i);
+    }
     return opts;
 }
 
@@ -241,7 +250,7 @@ void LocalServerDialog::portChanged()
 }
 
 void LocalServerDialog::configureGameOptions()
-{    
+{
 }
 
 void LocalServerDialog::saveState()
