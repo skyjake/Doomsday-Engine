@@ -102,6 +102,7 @@ inline Type clamp(Type const &value, Type const &lowHighLimit) {
 /// Wrap value within range [low, high).
 template <typename Type>
 Type wrap(Type value, Type const &low, Type const &high) {
+    DENG2_ASSERT(high > low);
     Type const range = high - low;
     while(value < low) value += range;
     while(value >= high) value -= range;
