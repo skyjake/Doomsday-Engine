@@ -125,7 +125,7 @@ namespace internal
 
         if(angle < 0 || angle > MAX_ANGLES)
             return -1;
- 
+
         if(angle == 0) return 0;
 
         if(angle <= MAX_ANGLES / 2)
@@ -1643,7 +1643,7 @@ DENG2_PIMPL(ResourceSystem)
 
         if(!numFoundSkins)
         {
-            LOG_RES_WARNING("Model \"%s\" will be rendered without a skin (none found)")
+            LOG_RES_MSG("No skins found for model \"%s\" (it may use a custom skin specified in a DED)")
                 << NativePath(modelFilePath).pretty();
         }
 
@@ -3530,7 +3530,7 @@ static QMap<dint, Record> buildSprites(QMultiMap<dint, SpriteFrameDef> const &fr
             }
         }
     }
-    
+
     return frames;
 }
 
