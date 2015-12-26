@@ -1697,7 +1697,7 @@ DENG2_PIMPL(ResourceSystem)
 
         if(!numFoundSkins)
         {
-            LOG_RES_WARNING("Model \"%s\" will be rendered without a skin (none found)")
+            LOG_RES_MSG("No skins found for model \"%s\" (it may use a custom skin specified in a DED)")
                 << NativePath(modelFilePath).pretty();
         }
 
