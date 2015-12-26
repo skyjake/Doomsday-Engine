@@ -110,7 +110,9 @@ DENG2_PIMPL(ModelRenderer)
     ModelBank bank { [] () -> ModelDrawable * { return new render::Model; } };
 
     GLUniform uMvpMatrix        { "uMvpMatrix",        GLUniform::Mat4 };
+    GLUniform uReflectionMatrix { "uReflectionMatrix", GLUniform::Mat4 };
     GLUniform uTex              { "uTex",              GLUniform::Sampler2D };
+    GLUniform uReflectionTex    { "uReflectionTex",    GLUniform::SamplerCube };
     GLUniform uEyePos           { "uEyePos",           GLUniform::Vec3 };
     GLUniform uAmbientLight     { "uAmbientLight",     GLUniform::Vec4 };
     GLUniform uLightDirs        { "uLightDirs",        GLUniform::Vec3Array, MAX_LIGHTS };
@@ -118,6 +120,7 @@ DENG2_PIMPL(ModelRenderer)
     GLUniform uFogRange         { "uFogRange",         GLUniform::Vec4 };
     GLUniform uFogColor         { "uFogColor",         GLUniform::Vec4 };
 
+    GLTexture reflectionCube;
     Matrix4f inverseLocal; ///< Translation ignored, this is used for light vectors.
     int lightCount = 0;
 
@@ -141,6 +144,8 @@ DENG2_PIMPL(ModelRenderer)
 
         atlasPool.clear();
         unloadProgram(*programs[SHADER_DEFAULT]);
+
+        reflectionCube.clear();
     }
 
     Atlas *makeAtlas(MultiAtlas &) override
@@ -220,7 +225,9 @@ DENG2_PIMPL(ModelRenderer)
         // Bind the mandatory common state.
         ClientApp::shaders().build(*prog, name)
                 << uMvpMatrix
+                << uReflectionMatrix
                 << uTex
+                << uReflectionTex
                 << uEyePos
                 << uAmbientLight
                 << uLightDirs
