@@ -18,6 +18,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
+varying highp vec3 vTSNormal;
+varying highp vec3 vTSTangent;
+varying highp vec3 vTSBitangent;
+
+#ifdef DENG_VERTEX_SHADER
+
 attribute highp vec3 aNormal;
 attribute highp vec3 aTangent;
 attribute highp vec3 aBitangent;
@@ -32,5 +38,21 @@ highp mat3 tangentSpace(highp mat4 modelSpace)
     highp vec3 normal    = transformVector(aNormal, modelSpace);
     highp vec3 tangent   = transformVector(aTangent, modelSpace);
     highp vec3 bitangent = transformVector(aBitangent, modelSpace);
+    
+    vTSNormal = normal;
+    vTSTangent = tangent;
+    vTSBitangent = bitangent;
+    
     return mat3(tangent, bitangent, normal);    
 }
+
+#endif // DENG_VERTEX_SHADER
+
+#ifdef DENG_FRAGMENT_SHADER
+
+highp mat3 fragmentTangentSpace()
+{
+    return mat3(vTSTangent, vTSBitangent, vTSNormal);
+}
+
+#endif // DENG_FRAGMENT_SHADER

@@ -27,6 +27,7 @@ uniform highp vec3 uEyePos;
 
 varying highp vec3 vLightDirs[4]; // tangent space
 varying highp vec3 vEyeDir;       // tangent space
+varying highp vec3 vRelativeEyePos;
 
 #ifdef DENG_VERTEX_SHADER
 
@@ -40,7 +41,8 @@ void calculateSurfaceLighting(highp mat3 surface)
 
 void calculateEyeDirection(highp vec4 vertex, highp mat3 surface)
 {
-    vEyeDir = (uEyePos - vertex.xyz/vertex.w) * surface;    
+    vRelativeEyePos = uEyePos - vertex.xyz/vertex.w;
+    vEyeDir = vRelativeEyePos * surface;    
 }
 
 #endif // DENG_VERTEX_SHADER
