@@ -72,10 +72,11 @@ typedef enum {
     doom2_plut,
     doom2_tnt,
     doom2_hacx,
+    doom2_freedm,
     NUM_GAME_MODES
 } gamemode_t;
 
-// Game mode bits for the above.
+// Game mode bits for the above (must match the enum order).
 #define GM_DOOM_SHAREWARE   0x1
 #define GM_DOOM             0x2
 #define GM_DOOM_ULTIMATE    0x4
@@ -84,9 +85,10 @@ typedef enum {
 #define GM_DOOM2_PLUT       0x20
 #define GM_DOOM2_TNT        0x40
 #define GM_DOOM2_HACX       0x80
+#define GM_DOOM2_FREEDM     0x100
 
 #define GM_ANY_DOOM         (GM_DOOM|GM_DOOM_SHAREWARE|GM_DOOM_ULTIMATE|GM_DOOM_CHEX)
-#define GM_ANY_DOOM2        (GM_DOOM2|GM_DOOM2_PLUT|GM_DOOM2_TNT|GM_DOOM2_HACX)
+#define GM_ANY_DOOM2        (GM_DOOM2|GM_DOOM2_PLUT|GM_DOOM2_TNT|GM_DOOM2_HACX|GM_DOOM2_FREEDM)
 #define GM_ANY              (GM_ANY_DOOM|GM_ANY_DOOM2)
 
 #define SCREENWIDTH         320

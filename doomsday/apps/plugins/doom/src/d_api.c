@@ -99,6 +99,12 @@ int G_RegisterGames(int hookType, int param, void *data)
         LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
         "$(App.DataPath)/$(GamePlugin.Name)/doom2.mapinfo"
     };
+    GameDef const freeDMDef = {
+        "doom2-freedm", "doom",
+        "FreeDM", "Freedoom Project",
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
+        "$(App.DataPath)/$(GamePlugin.Name)/doom2-freedm.mapinfo"
+    };
     GameDef const doomUltimateDef = {
         "doom1-ultimate", "doom",
         "Ultimate DOOM", "id Software",
@@ -144,6 +150,12 @@ int G_RegisterGames(int hookType, int param, void *data)
     DD_AddGameResource(GID(doom2_plut), RC_PACKAGE, FF_STARTUP, "plutonia.wad", "_DEUTEX_;MAP01;MAP25;MC5;MC11;MC16;MC20");
     DD_AddGameResource(GID(doom2_plut), RC_DEFINITION, 0, "doom2-plut.ded", 0);
 
+    /* DOOM2 - FreeDM */
+    gameIds[doom2_freedm] = DD_DefineGame(&freeDMDef);
+    DD_AddGameResource(GID(doom2_freedm), RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
+    DD_AddGameResource(GID(doom2_freedm), RC_PACKAGE, FF_STARTUP, "freedm.wad", "MAP01");
+    DD_AddGameResource(GID(doom2_freedm), RC_DEFINITION, 0, "doom2-freedm.ded", 0);
+
     /* DOOM2 */
     gameIds[doom2] = DD_DefineGame(&doom2Def);
     DD_AddGameResource(GID(doom2), RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
@@ -186,6 +198,7 @@ void DP_Load(void)
     gameIds[doom2_tnt]      = DD_GameIdForKey("doom2-tnt");
     gameIds[doom2_plut]     = DD_GameIdForKey("doom2-plut");
     gameIds[doom2_hacx]     = DD_GameIdForKey("hacx");
+    gameIds[doom2_freedm]   = DD_GameIdForKey("doom2-freedm");
 
     Plug_AddHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
 }
