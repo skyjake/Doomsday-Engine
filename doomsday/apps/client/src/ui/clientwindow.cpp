@@ -369,7 +369,6 @@ DENG2_PIMPL(ClientWindow)
     {
         if(newGame.isNull())
         {
-            //game->hide();
             background->show();
             showGameSelectionMenu(true);
 
@@ -377,7 +376,6 @@ DENG2_PIMPL(ClientWindow)
         }
         else
         {
-            //game->show();
             background->hide();
             showGameSelectionMenu(false);
 
