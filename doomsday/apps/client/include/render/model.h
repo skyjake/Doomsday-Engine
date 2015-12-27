@@ -56,8 +56,10 @@ struct Model : public de::ModelDrawable
 
     bool autoscaleToThingHeight = true;
 
-    /// Combined scaling, translation and rotation of the model.
+    /// Combined scaling and rotation of the model.
     de::Matrix4f transformation;
+
+    de::Vector3f offset;
 
     de::gl::Cull cull = de::gl::Back;
 

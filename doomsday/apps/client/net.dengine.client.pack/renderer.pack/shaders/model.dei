@@ -58,13 +58,15 @@ model.skeletal {
         
         include.fragment <include/texture.glsl, 
                           include/lighting.glsl,
+                          include/tangentspace.glsl,
+                          include/reflection.glsl,
                           include/fog.glsl>
         fragment = "
             uniform highp vec3 uColor;       // diffuse color multiplier
             uniform highp float uAlpha;      // diffuse alpha multiplier
             uniform highp float uAlphaLimit; // alpha test to discard fragments
             uniform highp vec2 uOffsetUV;
-            uniform highp float uMapTime;
+            uniform highp float uMapTime;            
             
             varying highp vec4 vColor;
             varying highp vec2 vUV;

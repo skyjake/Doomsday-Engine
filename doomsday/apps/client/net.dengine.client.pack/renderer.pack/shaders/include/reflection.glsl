@@ -39,6 +39,9 @@ highp vec3 reflectedColor(highp vec3 surfaceNormal)
     highp vec3 reflectedDir = 
         reflect(normalize(vRelativeEyePos), 
                 fragmentTangentSpace() * surfaceNormal);
+    
+    reflectedDir = (uReflectionMatrix * vec4(reflectedDir, 0.0)).xyz;
+        
     // Match world space directions.
     reflectedDir.y = -reflectedDir.y;
     return textureCube(uReflectionTex, reflectedDir).rgb;

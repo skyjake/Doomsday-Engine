@@ -31,6 +31,7 @@
 #include <de/ScriptedInfo>
 #include <de/NativeValue>
 #include <de/MultiAtlas>
+#include <de/ImageFile>
 
 #include <QHash>
 
@@ -43,7 +44,7 @@ static String const DEF_UP_VECTOR   ("up");
 static String const DEF_FRONT_VECTOR("front");
 static String const DEF_AUTOSCALE   ("autoscale");
 static String const DEF_MIRROR      ("mirror");
-static String const DEF_WORLD_OFFSET("worldOffset");
+static String const DEF_OFFSET      ("offset");
 static String const DEF_STATE       ("state");
 static String const DEF_SEQUENCE    ("sequence");
 static String const DEF_RENDER      ("render");
@@ -135,6 +136,36 @@ DENG2_PIMPL(ModelRenderer)
         // The default shader is used whenever a model does not specifically
         // request another one.
         loadProgram(SHADER_DEFAULT);
+
+        // Prepare a generic reflection cube map.
+#if 0
+        Image img = App::rootFolder().locate<ImageFile const>("/home/reflection6.jpg").image();
+        Image::Size size(img.width() / 6, img.height());
+        reflectionCube.setAutoGenMips(true);
+        reflectionCube.setImage(gl::NegativeX, img.subImage(Rectanglei(0*size.x, 0, size.x, size.y)));
+        reflectionCube.setImage(gl::PositiveZ, img.subImage(Rectanglei(1*size.x, 0, size.x, size.y)));
+        reflectionCube.setImage(gl::PositiveX, img.subImage(Rectanglei(2*size.x, 0, size.x, size.y)));
+        reflectionCube.setImage(gl::NegativeZ, img.subImage(Rectanglei(3*size.x, 0, size.x, size.y)));
+        reflectionCube.setImage(gl::NegativeY, img.subImage(Rectanglei(4*size.x, 0, size.x, size.y)));
+        reflectionCube.setImage(gl::PositiveY, img.subImage(Rectanglei(5*size.x, 0, size.x, size.y)));
+#endif
+#if 0
+        QImage img(QSize(256, 256), QImage::Format_ARGB32);
+        img.fill(Qt::red);
+        reflectionCube.setImage(gl::NegativeX, img);
+        img.fill(Qt::green);
+        reflectionCube.setImage(gl::PositiveZ, img);
+        img.fill(Qt::magenta);
+        reflectionCube.setImage(gl::PositiveX, img);
+        img.fill(Qt::cyan);
+        reflectionCube.setImage(gl::NegativeZ, img);
+        img.fill(Qt::yellow);
+        reflectionCube.setImage(gl::NegativeY, img);
+        img.fill(Qt::blue);
+        reflectionCube.setImage(gl::PositiveY, img);
+#endif
+
+        uReflectionTex = reflectionCube;
     }
 
     void deinit()
@@ -394,13 +425,10 @@ DENG2_PIMPL(ModelRenderer)
         model.cull = mirror? gl::Back : gl::Front;
         // Assimp's coordinate system uses different handedness than Doomsday,
         // so mirroring is needed.
-        model.transformation = Matrix4f::unnormalizedFrame(front, up, !mirror);
-        if(asset.has(DEF_WORLD_OFFSET))
+        model.transformation = Matrix4f::frame(front, up, !mirror);
+        if(asset.has(DEF_OFFSET))
         {
-            model.transformation =
-                    Matrix4f::translate(vectorFromValue<Vector3f>
-                                        (asset.get(DEF_WORLD_OFFSET)))
-                    * model.transformation;
+            model.offset = vectorFromValue<Vector3f>(asset.get(DEF_OFFSET));
         }
         model.autoscaleToThingHeight = ScriptedInfo::isTrue(asset, DEF_AUTOSCALE);
 
@@ -586,42 +614,6 @@ DENG2_PIMPL(ModelRenderer)
         });
     }
 
-    /**
-     * Sets up the transformation matrices.
-     *
-     * @param relativeEyePos  Position of the eye in relation to object (in world space).
-     * @param modelToLocal    Transformation from model space to the object's local space
-     *                        (object's local frame in world space).
-     * @param localToView     Transformation from local space to projected view space.
-     */
-    void setTransformation(Vector3f const &relativeEyePos,
-                           Matrix4f const &modelToLocal,
-                           Matrix4f const &localToView)
-    {
-        uMvpMatrix   = localToView * modelToLocal;
-        inverseLocal = modelToLocal.withoutTranslation().inverse();
-        uEyePos      = inverseLocal * relativeEyePos;
-    }
-
-    /**
-     * Sets up the transformation matrices for an eye-space view. The eye position is
-     * at (0, 0, 0).
-     *
-     * @param modelToLocal  Transformation from model space to the object's local space
-     *                      (object's local frame in world space).
-     * @param inverseLocal  Transformation from local space to model space, taking
-     *                      the object's rotation in world space into account.
-     * @param localToView   Transformation from local space to projected view space.
-     */
-    void setEyeSpaceTransformation(Matrix4f const &modelToLocal,
-                                   Matrix4f const &inverseLocalMat,
-                                   Matrix4f const &localToView)
-    {
-        uMvpMatrix   = localToView * modelToLocal;
-        inverseLocal = inverseLocalMat;
-        uEyePos      = inverseLocal * Vector3f();
-    }
-
     void setAmbientLight(Vector3f const &ambientIntensity)
     {
         uAmbientLight = Vector4f(ambientIntensity, 1.f);
@@ -669,6 +661,55 @@ DENG2_PIMPL(ModelRenderer)
         {
             uFogColor = Vector4f();
         }
+    }
+
+    void setupPose(Vector3d const &modelWorldOrigin,
+                   Vector3f const &modelOffset,
+                   float yawAngle,
+                   float pitchAngle,
+                   Matrix4f const *preModelToLocal = nullptr)
+    {
+        Vector3f const aspectCorrect(1.0f, 1.0f/1.2f, 1.0f);
+        Vector3d origin = modelWorldOrigin + modelOffset * aspectCorrect;
+
+        Matrix4f modelToLocal =
+                Matrix4f::rotate(-90 + yawAngle, Vector3f(0, 1, 0) /* vertical axis for yaw */) *
+                Matrix4f::rotate(pitchAngle,     Vector3f(1, 0, 0));
+
+        Vector3f relativePos = Rend_EyeOrigin() - origin;
+
+        uReflectionMatrix = Matrix4f::rotate(-yawAngle,  Vector3f(0, 1, 0)) *
+                            Matrix4f::rotate(pitchAngle, Vector3f(0, 0, 1));
+
+        if(preModelToLocal)
+        {
+            modelToLocal = modelToLocal * (*preModelToLocal);
+        }
+
+        Matrix4f localToView =
+                Viewer_Matrix() *
+                Matrix4f::translate(origin) *
+                Matrix4f::scale(aspectCorrect); // Inverse aspect correction.
+
+        // Set up a suitable matrix for the pose.
+        setTransformation(relativePos, modelToLocal, localToView);
+    }
+
+    /**
+     * Sets up the transformation matrices.
+     *
+     * @param relativeEyePos  Position of the eye in relation to object (in world space).
+     * @param modelToLocal    Transformation from model space to the object's local space
+     *                        (object's local frame in world space).
+     * @param localToView     Transformation from local space to projected view space.
+     */
+    void setTransformation(Vector3f const &relativeEyePos,
+                           Matrix4f const &modelToLocal,
+                           Matrix4f const &localToView)
+    {
+        uMvpMatrix   = localToView * modelToLocal;
+        inverseLocal = modelToLocal.inverse();
+        uEyePos      = inverseLocal * relativeEyePos;
     }
 
     template <typename Params> // generic to accommodate psprites and vispsprites
@@ -721,35 +762,21 @@ void ModelRenderer::render(vissprite_t const &spr)
      */
 
     drawmodel2params_t const &p = spr.data.model2;
-    gl::Cull culling = gl::Back;
 
-    Vector3d const modelWorldOrigin = (spr.pose.origin + spr.pose.srvo).xzy();
+    auto const *mobjData = (p.object? &THINKER_DATA(p.object->thinker, ClientMobjThinkerData) :
+                                      nullptr);
 
-    Matrix4f modelToLocal =
-            Matrix4f::rotate(-90 + (spr.pose.viewAligned? spr.pose.yawAngleOffset :
-                                                          spr.pose.yaw),
-                             Vector3f(0, 1, 0) /* vertical axis for yaw */);
-    Matrix4f localToView =
-            Viewer_Matrix() *
-            Matrix4f::translate(modelWorldOrigin) *
-            Matrix4f::scale(Vector3f(1.0f, 1.0f/1.2f, 1.0f)); // Inverse aspect correction.
-
-    if(p.object)
-    {
-        auto const &mobjData = THINKER_DATA(p.object->thinker, ClientMobjThinkerData);
-        modelToLocal = modelToLocal * mobjData.modelTransformation();
-        culling = p.model->cull;
-    }
-
-    GLState::push().setCull(culling);
-
-    // Set up a suitable matrix for the pose.
-    d->setTransformation(Rend_EyeOrigin() - modelWorldOrigin, modelToLocal, localToView);
+    d->setupPose((spr.pose.origin + spr.pose.srvo).xzy(),
+                 p.model->offset,
+                 spr.pose.viewAligned? spr.pose.yawAngleOffset : spr.pose.yaw,
+                 0 /* pitch */,
+                 mobjData? &mobjData->modelTransformation() : nullptr);
 
     // Ambient color and lighting vectors.
     d->setupLighting(spr.light);
 
     // Draw the model using the current animation state.
+    GLState::push().setCull(p.model->cull);
     d->draw(p);
     GLState::pop().apply();
 }
@@ -758,16 +785,15 @@ void ModelRenderer::render(vispsprite_t const &pspr)
 {
     auto const &p = pspr.data.model2;
 
-    Matrix4f modelToLocal =
-            Matrix4f::rotate(180, Vector3f(0, 1, 0)) *
-            p.model->transformation;
+    Matrix4f eyeSpace =
+            Matrix4f::rotate(180 - vang, Vector3f(0, 1, 0)) *
+            Matrix4f::rotate(vpitch, Vector3f(1, 0, 0));
 
-    Matrix4f localToView = GL_GetProjectionMatrix() * Matrix4f::translate(Vector3f(0, -10, 11));
-    d->setEyeSpaceTransformation(modelToLocal,
-                                 modelToLocal.withoutTranslation().inverse() *
-                                 Matrix4f::rotate(vpitch, Vector3f(1, 0, 0)) *
-                                 Matrix4f::rotate(vang,   Vector3f(0, 1, 0)),
-                                 localToView);
+    Matrix4f xform = p.model->transformation;
+
+    d->setupPose(Rend_EyeOrigin(), eyeSpace * p.model->offset,
+                 -90 - vang, vpitch,
+                 &xform);
 
     d->setupLighting(pspr.light);
 
