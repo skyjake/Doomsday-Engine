@@ -105,6 +105,11 @@ highp vec4 specularLight(highp vec2 specularUV, highp vec3 normal)
            specularLightContrib(specularUV, 3, normal);
 }
 
+highp vec4 specularGloss(highp vec2 specularUV)
+{
+    return texture2D(uTex, specularUV);
+}
+
 highp vec4 emittedLight(highp vec2 emissiveUV)
 {
     highp vec4 emission = uEmission * texture2D(uTex, emissiveUV);        

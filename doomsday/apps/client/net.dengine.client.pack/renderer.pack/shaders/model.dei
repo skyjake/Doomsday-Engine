@@ -84,17 +84,25 @@ model.skeletal {
                 highp vec2 emissiveUV = mapToBounds(wrappedUV, vUVBounds[3]);
             
                 highp vec3 normal = normalVector(normalUV);
-                
+                                        
+                // Reflection.
+                highp vec4 specGloss = specularGloss(specularUV);
+                highp float gloss = max(0.0, (0.9 - specGloss.a) * 6.0);
+                highp vec3 reflection = reflectedColorBiased(normal, gloss);
+                gl_FragColor.a = 0.0;
+                gl_FragColor.rgb = reflection.rgb * specGloss.rgb;
+
+                // Diffuse light.
                 highp vec4 diffuse = vColor * texture2D(uTex, uv);
                 diffuse.rgb *= uColor;
                 diffuse.a *= uAlpha;
-                        
-                gl_FragColor = diffuse * diffuseLight(normal);
+                gl_FragColor += diffuse * diffuseLight(normal) * vec4(1.0 - specGloss.rgb, 1.0);
 
+                // Specular light from light sources.
                 highp vec4 specular = specularLight(specularUV, normal);
                 gl_FragColor.rgb += specular.rgb;
 
-                gl_FragColor += emittedLight(emissiveUV);
+                gl_FragColor += emittedLight(emissiveUV);            
 
                 // Specular reflections show up on transparent surfaces.
                 gl_FragColor.a = min(1.0, diffuse.a + specular.a);

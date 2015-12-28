@@ -30,9 +30,10 @@ uniform highp mat4 uReflectionMatrix;
 /*
  * Given the tangent space @a surfaceNormal, determines the reflection 
  * direction in local space. The normal is transformed to local space using
- * the fragment's tangent space matrix.
+ * the fragment's tangent space matrix. @a bias is the mipmap bias for the 
+ * reflection.
  */
-highp vec3 reflectedColor(highp vec3 surfaceNormal)
+highp vec3 reflectedColorBiased(highp vec3 surfaceNormal, float bias)
 {
     // The reflection cube exists in local space, so we will use vectors
     // relative to the object's origin.
@@ -44,5 +45,10 @@ highp vec3 reflectedColor(highp vec3 surfaceNormal)
         
     // Match world space directions.
     reflectedDir.y = -reflectedDir.y;
-    return textureCube(uReflectionTex, reflectedDir).rgb;
+    return textureCube(uReflectionTex, reflectedDir, bias).rgb;
+}
+
+highp vec3 reflectedColor(highp vec3 surfaceNormal)
+{
+    return reflectedColorBiased(surfaceNormal, 0.0);
 }
