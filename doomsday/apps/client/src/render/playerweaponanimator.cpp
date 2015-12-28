@@ -25,7 +25,9 @@
 #include "def_main.h"
 #include "render/r_main.h"
 
+#include <de/timer.h>
 #include <de/Garbage>
+#include <de/AnimationVector>
 
 using namespace de;
 
@@ -36,6 +38,7 @@ DENG2_PIMPL_NOREF(PlayerWeaponAnimator)
 {
     ClientPlayer *player;
     std::unique_ptr<StateAnimator> animator;
+    AnimationVector2 angleOffset { Animation::Linear };
 
     Instance(ClientPlayer *plr)
         : player(plr)
@@ -43,6 +46,8 @@ DENG2_PIMPL_NOREF(PlayerWeaponAnimator)
 
     void setupAsset(String const &identifier)
     {
+        angleOffset = Vector2f();
+
         if(animator)
         {
             animator->model().audienceForDeletion() -= this;
@@ -105,9 +110,19 @@ void PlayerWeaponAnimator::setupVisPSprite(vispsprite_t &spr) const
     spr.data.model2.model = model();
     spr.data.model2.animator = d->animator.get();
 
-    spr.data.model2.yawAngleOffset = spr.psp->pos[0] * weaponOffsetScale;
-    spr.data.model2.pitchAngleOffset = (32 - spr.psp->pos[1]) * weaponOffsetScale
-            * weaponOffsetScaleY / 1000.0f;
+    // Use the plain bob values.
+    float bob[2] = { *(float *) gx.GetVariable(DD_PSPRITE_BOB_X),
+                     *(float *) gx.GetVariable(DD_PSPRITE_BOB_Y) };
+
+    Vector2f angles(
+    /* yaw: */   bob[0] * weaponOffsetScale,
+    /* pitch: */ (32 - bob[1]) * weaponOffsetScale * weaponOffsetScaleY / 1000.0f);
+
+    TimeDelta const span = 1.0 / Timer_TicksPerSecond();
+    d->angleOffset.setValueIfDifferentTarget(angles, span);
+
+    spr.data.model2.yawAngleOffset   = d->angleOffset.x;
+    spr.data.model2.pitchAngleOffset = d->angleOffset.y;
 }
 
 void PlayerWeaponAnimator::advanceTime(TimeDelta const &elapsed)

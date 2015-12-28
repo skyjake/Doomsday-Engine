@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_ANIMATIONVECTOR_H
@@ -40,10 +40,22 @@ public:
         return *this;
     }
 
-    void setValue(Vector2f const &vector, float transitionSpan = 0.f)
+    void setValue(Vector2f const &vector, TimeDelta transitionSpan = 0.0)
     {
         x.setValue(vector.x, transitionSpan);
         y.setValue(vector.y, transitionSpan);
+    }
+
+    void setValueIfDifferentTarget(Vector2f const &vector, TimeDelta transitionSpan = 0.0)
+    {
+        if(!fequal(x.target(), vector.x))
+        {
+            x.setValue(vector.x, transitionSpan);
+        }
+        if(!fequal(y.target(), vector.y))
+        {
+            y.setValue(vector.y, transitionSpan);
+        }
     }
 
     void setStyle(Animation::Style s)
