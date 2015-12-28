@@ -139,15 +139,18 @@ DENG2_PIMPL(ModelRenderer)
 
         // Prepare a generic reflection cube map.
 #if 0
-        Image img = App::rootFolder().locate<ImageFile const>("/home/reflection6.jpg").image();
+        Image img = App::rootFolder().locate<ImageFile const>("/home/evening6.jpg").image();
         Image::Size size(img.width() / 6, img.height());
-        reflectionCube.setAutoGenMips(true);
+        //reflectionCube.setAutoGenMips(true);
+        reflectionCube.setMinFilter(gl::Linear, gl::MipLinear);
+        reflectionCube.setWrap(gl::ClampToEdge, gl::ClampToEdge);
         reflectionCube.setImage(gl::NegativeX, img.subImage(Rectanglei(0*size.x, 0, size.x, size.y)));
         reflectionCube.setImage(gl::PositiveZ, img.subImage(Rectanglei(1*size.x, 0, size.x, size.y)));
         reflectionCube.setImage(gl::PositiveX, img.subImage(Rectanglei(2*size.x, 0, size.x, size.y)));
         reflectionCube.setImage(gl::NegativeZ, img.subImage(Rectanglei(3*size.x, 0, size.x, size.y)));
         reflectionCube.setImage(gl::NegativeY, img.subImage(Rectanglei(4*size.x, 0, size.x, size.y)));
         reflectionCube.setImage(gl::PositiveY, img.subImage(Rectanglei(5*size.x, 0, size.x, size.y)));
+        reflectionCube.generateMipmap();
 #endif
 #if 0
         QImage img(QSize(256, 256), QImage::Format_ARGB32);
@@ -769,7 +772,7 @@ void ModelRenderer::render(vissprite_t const &spr)
     d->setupPose((spr.pose.origin + spr.pose.srvo).xzy(),
                  p.model->offset,
                  spr.pose.viewAligned? spr.pose.yawAngleOffset : spr.pose.yaw,
-                 0 /* pitch */,
+                 0 /*Timer_RealSeconds()*50*/ /* pitch */,
                  mobjData? &mobjData->modelTransformation() : nullptr);
 
     // Ambient color and lighting vectors.
@@ -785,14 +788,18 @@ void ModelRenderer::render(vispsprite_t const &pspr)
 {
     auto const &p = pspr.data.model2;
 
+    // Walk bobbing is specified using angle offsets.
+    float yaw   = vang + p.yawAngleOffset;
+    float pitch = vpitch + p.pitchAngleOffset;
+
     Matrix4f eyeSpace =
-            Matrix4f::rotate(180 - vang, Vector3f(0, 1, 0)) *
-            Matrix4f::rotate(vpitch, Vector3f(1, 0, 0));
+            Matrix4f::rotate(180 - yaw, Vector3f(0, 1, 0)) *
+            Matrix4f::rotate(pitch, Vector3f(1, 0, 0));
 
     Matrix4f xform = p.model->transformation;
 
     d->setupPose(Rend_EyeOrigin(), eyeSpace * p.model->offset,
-                 -90 - vang, vpitch,
+                 -90 - yaw, pitch,
                  &xform);
 
     d->setupLighting(pspr.light);

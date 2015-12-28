@@ -21,7 +21,9 @@
 #include "render/vissprite.h"
 #include "clientplayer.h"
 #include "clientapp.h"
+#include "client/cl_def.h"
 #include "def_main.h"
+#include "render/r_main.h"
 
 #include <de/Garbage>
 
@@ -102,10 +104,16 @@ void PlayerWeaponAnimator::setupVisPSprite(vispsprite_t &spr) const
     spr.type = VPSPR_MODEL2;
     spr.data.model2.model = model();
     spr.data.model2.animator = d->animator.get();
+
+    spr.data.model2.yawAngleOffset = spr.psp->pos[0] * weaponOffsetScale;
+    spr.data.model2.pitchAngleOffset = (32 - spr.psp->pos[1]) * weaponOffsetScale
+            * weaponOffsetScaleY / 1000.0f;
 }
 
-void PlayerWeaponAnimator::advanceTime(const TimeDelta &elapsed)
+void PlayerWeaponAnimator::advanceTime(TimeDelta const &elapsed)
 {
+    if(clientPaused) return;
+
     if(d->animator)
     {
         d->animator->advanceTime(elapsed);

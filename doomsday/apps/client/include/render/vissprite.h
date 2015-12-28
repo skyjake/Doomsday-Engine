@@ -194,6 +194,8 @@ struct vispsprite_t
         struct vispsprite_model2_s {
             render::Model const *model;
             render::StateAnimator const *animator;
+            de::dfloat pitchAngleOffset;
+            de::dfloat yawAngleOffset;
         } model2;
     } data;
 };
