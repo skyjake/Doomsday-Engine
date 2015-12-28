@@ -138,19 +138,23 @@ DENG2_PIMPL(ModelRenderer)
         loadProgram(SHADER_DEFAULT);
 
         // Prepare a generic reflection cube map.
-#if 0
-        Image img = App::rootFolder().locate<ImageFile const>("/home/evening6.jpg").image();
-        Image::Size size(img.width() / 6, img.height());
-        //reflectionCube.setAutoGenMips(true);
-        reflectionCube.setMinFilter(gl::Linear, gl::MipLinear);
-        reflectionCube.setWrap(gl::ClampToEdge, gl::ClampToEdge);
-        reflectionCube.setImage(gl::NegativeX, img.subImage(Rectanglei(0*size.x, 0, size.x, size.y)));
-        reflectionCube.setImage(gl::PositiveZ, img.subImage(Rectanglei(1*size.x, 0, size.x, size.y)));
-        reflectionCube.setImage(gl::PositiveX, img.subImage(Rectanglei(2*size.x, 0, size.x, size.y)));
-        reflectionCube.setImage(gl::NegativeZ, img.subImage(Rectanglei(3*size.x, 0, size.x, size.y)));
-        reflectionCube.setImage(gl::NegativeY, img.subImage(Rectanglei(4*size.x, 0, size.x, size.y)));
-        reflectionCube.setImage(gl::PositiveY, img.subImage(Rectanglei(5*size.x, 0, size.x, size.y)));
-        reflectionCube.generateMipmap();
+#if 1
+        /// @todo Use assets for getting the cubemap.
+        String const cubePath = "/home/cubemap.jpg";
+        if(App::rootFolder().has(cubePath))
+        {
+            Image img = App::rootFolder().locate<ImageFile const>(cubePath).image();
+            Image::Size size(img.width() / 6, img.height());
+            reflectionCube.setMinFilter(gl::Linear, gl::MipLinear);
+            reflectionCube.setWrap(gl::ClampToEdge, gl::ClampToEdge);
+            reflectionCube.setImage(gl::NegativeX, img.subImage(Rectanglei(0*size.x, 0, size.x, size.y)));
+            reflectionCube.setImage(gl::PositiveZ, img.subImage(Rectanglei(1*size.x, 0, size.x, size.y)));
+            reflectionCube.setImage(gl::PositiveX, img.subImage(Rectanglei(2*size.x, 0, size.x, size.y)));
+            reflectionCube.setImage(gl::NegativeZ, img.subImage(Rectanglei(3*size.x, 0, size.x, size.y)));
+            reflectionCube.setImage(gl::NegativeY, img.subImage(Rectanglei(4*size.x, 0, size.x, size.y)));
+            reflectionCube.setImage(gl::PositiveY, img.subImage(Rectanglei(5*size.x, 0, size.x, size.y)));
+            reflectionCube.generateMipmap();
+        }
 #endif
 #if 0
         QImage img(QSize(256, 256), QImage::Format_ARGB32);
