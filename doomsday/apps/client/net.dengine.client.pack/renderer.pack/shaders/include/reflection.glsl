@@ -52,3 +52,20 @@ highp vec3 reflectedColor(highp vec3 surfaceNormal)
 {
     return reflectedColorBiased(surfaceNormal, 0.0);
 }
+
+highp vec4 diffuseAndReflectedLight(highp vec4 diffuseFactor, highp vec2 diffuseUV,
+                                    highp vec2 specularUV, highp vec3 surfaceNormal)
+{
+    highp vec4 specGloss = specularGloss(specularUV); // from lighting.glsl
+    highp float mipBias = max(0.0, (0.9 - specGloss.a) * 6.0);
+
+    // Reflection.
+    highp vec3 reflection = reflectedColorBiased(surfaceNormal, mipBias);
+    highp vec4 color = vec4(reflection.rgb * specGloss.rgb, 0.0);
+    
+    // Diffuse.
+    highp vec4 diffuse = diffuseFactor * texture2D(uTex, diffuseUV);
+    color += (diffuse * diffuseLight(surfaceNormal) * // from lighting.glsl
+              vec4(1.0 - specGloss.rgb, 1.0));
+    return color;
+}
