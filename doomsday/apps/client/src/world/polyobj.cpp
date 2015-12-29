@@ -27,7 +27,7 @@
 #include <de/vector1.h>
 
 #include "dd_main.h"
-#include "world/worldsystem.h"  // validCount
+#include "world/clientserverworld.h"  // validCount
 #include "world/blockmap.h"
 #include "world/map.h"
 #include "world/p_object.h"
@@ -175,7 +175,7 @@ void Polyobj::setCollisionCallback(void (*func) (mobj_t *mob, void *line, void *
 Map &Polyobj::map() const
 {
     /// @todo Do not assume the CURRENT map.
-    return App_WorldSystem().map();
+    return App_World().map();
 }
 
 Mesh &Polyobj::mesh() const

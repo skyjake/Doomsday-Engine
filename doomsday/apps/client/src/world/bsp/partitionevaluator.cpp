@@ -27,7 +27,7 @@
 #include <de/Task>
 #include <de/TaskPool>
 #include "world/bsp/partitioner.h"
-#include "world/worldsystem.h" // validCount
+#include "world/clientserverworld.h" // validCount
 
 namespace de {
 namespace bsp {

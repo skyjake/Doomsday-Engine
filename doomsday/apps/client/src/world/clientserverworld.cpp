@@ -18,7 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "world/worldsystem.h"
+#include "world/clientserverworld.h"
 
 #include <map>
 #include <utility>
@@ -299,7 +299,7 @@ static String cacheIdForMap(String const &sourcePath)
     return String("%1").arg(id, 4, 16);
 }
 
-DENG2_PIMPL(WorldSystem)
+DENG2_PIMPL(ClientServerWorld)
 {
     Binder binder;               ///< Doomsday Script bindings for the World.
     Record worldModule;
@@ -428,7 +428,7 @@ DENG2_PIMPL(WorldSystem)
      */
     Map *loadMap(res::MapManifest &mapManifest, MapConversionReporter *reporter = nullptr)
     {
-        LOG_AS("WorldSystem::loadMap");
+        LOG_AS("ClientServerWorld::loadMap");
 
         /*if(mapManifest.lastLoadAttemptFailed && !forceRetry)
             return nullptr;
@@ -762,28 +762,28 @@ DENG2_PIMPL(WorldSystem)
 };
 
 #ifdef __CLIENT__
-DENG2_AUDIENCE_METHOD(WorldSystem, FrameBegin)
-DENG2_AUDIENCE_METHOD(WorldSystem, FrameEnd)
+DENG2_AUDIENCE_METHOD(ClientServerWorld, FrameBegin)
+DENG2_AUDIENCE_METHOD(ClientServerWorld, FrameEnd)
 #endif
 
-WorldSystem::WorldSystem()
-    : world::System()
+ClientServerWorld::ClientServerWorld()
+    : World()
     , d(new Instance(this))
 {}
 
-bool WorldSystem::hasMap() const
+bool ClientServerWorld::hasMap() const
 {
     return d->map != nullptr;
 }
 
-Map &WorldSystem::map() const
+Map &ClientServerWorld::map() const
 {
     if(d->map) return *d->map;
     /// @throw MapError Attempted with no map loaded.
-    throw MapError("WorldSystem::map", "No map is currently loaded");
+    throw MapError("ClientServerWorld::map", "No map is currently loaded");
 }
 
-bool WorldSystem::changeMap(de::Uri const &mapUri)
+bool ClientServerWorld::changeMap(de::Uri const &mapUri)
 {
     res::MapManifest *mapDef = nullptr;
 
@@ -809,7 +809,7 @@ bool WorldSystem::changeMap(de::Uri const &mapUri)
     }
 }
 
-void WorldSystem::reset()
+void ClientServerWorld::reset()
 {
     DoomsdayApp::players().forAll([] (Player &plr)
     {
@@ -843,7 +843,7 @@ void WorldSystem::reset()
     unloadMap();
 }
 
-void WorldSystem::update()
+void ClientServerWorld::update()
 {
     DoomsdayApp::players().forAll([] (Player &plr)
     {
@@ -862,7 +862,7 @@ void WorldSystem::update()
     }
 }
 
-Record const &WorldSystem::mapInfoForMapUri(de::Uri const &mapUri) const
+Record const &ClientServerWorld::mapInfoForMapUri(de::Uri const &mapUri) const
 {
     // Is there a MapInfo definition for the given URI?
     if(Record const *def = ::defs.mapInfos.tryFind("id", mapUri.compose()))
@@ -878,7 +878,7 @@ Record const &WorldSystem::mapInfoForMapUri(de::Uri const &mapUri) const
     return d->fallbackMapInfo;
 }
 
-void WorldSystem::advanceTime(timespan_t delta)
+void ClientServerWorld::advanceTime(timespan_t delta)
 {
 #ifdef __CLIENT__
     if(::clientPaused) return;
@@ -886,12 +886,12 @@ void WorldSystem::advanceTime(timespan_t delta)
     d->time += delta;
 }
 
-timespan_t WorldSystem::time() const
+timespan_t ClientServerWorld::time() const
 {
     return d->time;
 }
 
-void WorldSystem::tick(timespan_t elapsed)
+void ClientServerWorld::tick(timespan_t elapsed)
 {
 #ifdef __CLIENT__
     if(d->map)
@@ -913,7 +913,7 @@ void WorldSystem::tick(timespan_t elapsed)
 }
 
 #ifdef __CLIENT__
-Hand &WorldSystem::hand(coord_t *distance) const
+Hand &ClientServerWorld::hand(coord_t *distance) const
 {
     // Time to create the hand?
     if(!d->hand)
@@ -932,13 +932,13 @@ Hand &WorldSystem::hand(coord_t *distance) const
     return *d->hand;
 }
 
-void WorldSystem::beginFrame(bool resetNextViewer)
+void ClientServerWorld::beginFrame(bool resetNextViewer)
 {
     // Notify interested parties that a new frame has begun.
     DENG2_FOR_AUDIENCE2(FrameBegin, i) i->worldSystemFrameBegins(resetNextViewer);
 }
 
-void WorldSystem::endFrame()
+void ClientServerWorld::endFrame()
 {
     if(d->map && d->hand)
     {
@@ -958,7 +958,7 @@ void WorldSystem::endFrame()
 
 #endif  // __CLIENT__
 
-void WorldSystem::consoleRegister()  // static
+void ClientServerWorld::consoleRegister()  // static
 {
     //C_VAR_BYTE ("map-cache", &mapCache, 0, 0, 1);
 #ifdef __CLIENT__

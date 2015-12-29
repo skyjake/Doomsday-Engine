@@ -161,7 +161,7 @@ void Sv_GetInfo(serverinfo_t *info)
 
     de::zapPtr(info);
 
-    Map &map = App_WorldSystem().map();
+    Map &map = App_World().map();
 
     // Let's figure out what we want to tell about ourselves.
     info->version = DOOMSDAY_VERSION;

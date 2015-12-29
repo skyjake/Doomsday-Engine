@@ -634,7 +634,7 @@ void GL_TotalRestore()
     //Con_Resize();
 
     // Restore the fog settings.
-    Map const *map = App_WorldSystem().mapPtr();
+    Map const *map = App_World().mapPtr();
     GL_SetupFogFromMapInfo(map? &map->mapInfo() : nullptr);
 
 #if _DEBUG

@@ -26,7 +26,7 @@
 
 #include "world/map.h"
 #include "world/thinkers.h"
-#include "world/worldsystem.h"  // ddMapSetup
+#include "world/clientserverworld.h"  // ddMapSetup
 #include "Surface"
 #include "Sector"
 

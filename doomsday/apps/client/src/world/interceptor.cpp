@@ -26,7 +26,7 @@
 #include "world/blockmap.h"
 #include "world/lineblockmap.h"
 #include "world/p_object.h"
-#include "world/worldsystem.h" // validCount
+#include "world/clientserverworld.h" // validCount
 
 using namespace de;
 

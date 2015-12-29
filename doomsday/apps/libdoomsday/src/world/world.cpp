@@ -1,4 +1,4 @@
-/** @file system.cpp  World subsystem module.
+/** @file world.cpp  World base class.
  *
  * @authors Copyright © 2015 Daniel Swanson <danij@dengine.net>
  *
@@ -16,49 +16,45 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "doomsday/world/system.h"
+#include "doomsday/world/world.h"
 
 #include <de/App>
 
 using namespace de;
 
-namespace world {
+static World *theWorld = nullptr;
 
-static world::System *theWorldSystem = nullptr;
-
-DENG2_PIMPL(System)
+DENG2_PIMPL(World)
 {
     Instance(Public *i) : Base(i)
     {
-        theWorldSystem = thisPublic;
+        theWorld = thisPublic;
     }
     ~Instance()
     {
-        theWorldSystem = nullptr;
+        theWorld = nullptr;
     }
 
     DENG2_PIMPL_AUDIENCE(MapChange)
 };
 
-DENG2_AUDIENCE_METHOD(System, MapChange)
+DENG2_AUDIENCE_METHOD(World, MapChange)
 
-System::System() : d(new Instance(this))
+World::World() : d(new Instance(this))
 {}
 
-void System::timeChanged(Clock const &)
+void World::timeChanged(Clock const &)
 {
     // Nothing to do.
 }
 
-world::System &System::get()
+World &World::get()
 {
-    DENG2_ASSERT(theWorldSystem);
-    return *theWorldSystem;
+    DENG2_ASSERT(theWorld);
+    return *theWorld;
 }
 
-void System::notifyMapChange()
+void World::notifyMapChange()
 {
-    DENG2_FOR_AUDIENCE2(MapChange, i) i->worldSystemMapChanged();
+    DENG2_FOR_AUDIENCE2(MapChange, i) i->worldMapChanged();
 }
-
-}  // namespace world

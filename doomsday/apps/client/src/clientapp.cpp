@@ -134,7 +134,7 @@ DENG2_PIMPL(ClientApp)
     ClientWindowSystem *winSys;
     InFineSystem infineSys; // instantiated at construction time
     ServerLink *svLink;
-    WorldSystem *worldSys;
+    ClientServerWorld *world;
 
     /**
      * Log entry sink that passes warning messages to the main window's alert
@@ -169,9 +169,9 @@ DENG2_PIMPL(ClientApp)
                 // We don't want to raise alerts about problems in id/Raven WADs,
                 // since these just have to be accepted by the user.
                 if((entry.metadata() & LogEntry::Map) &&
-                   ClientApp::worldSystem().hasMap())
+                   ClientApp::world().hasMap())
                 {
-                    Map const &map = ClientApp::worldSystem().map();
+                    Map const &map = ClientApp::world().map();
                     if(map.hasManifest() && !map.manifest().sourceFile()->hasCustom())
                     {
                         return *this;
@@ -207,7 +207,7 @@ DENG2_PIMPL(ClientApp)
         , winSys     (0)
         //, infineSys  (0)
         , svLink     (0)
-        , worldSys   (0)
+        , world      (0)
     {
         clientAppSingleton = thisPublic;
 
@@ -235,7 +235,7 @@ DENG2_PIMPL(ClientApp)
         }
 
         updater.reset();
-        delete worldSys;
+        delete world;
         //delete infineSys;
         delete winSys;
         delete svLink;
@@ -478,8 +478,8 @@ void ClientApp::initialize()
     //addSystem(*d->infineSys);
 
     // Create the world system.
-    d->worldSys = new WorldSystem;
-    addSystem(*d->worldSys);
+    d->world = new ClientServerWorld;
+    addSystem(*d->world);
 
     // Finally, run the bootstrap script.
     scriptSystem().importModule("bootstrap");
@@ -631,11 +631,11 @@ ClientWindowSystem &ClientApp::windowSystem()
     return *a.d->winSys;
 }
 
-WorldSystem &ClientApp::worldSystem()
+ClientServerWorld &ClientApp::world()
 {
     ClientApp &a = ClientApp::app();
-    DENG2_ASSERT(a.d->worldSys != 0);
-    return *a.d->worldSys;
+    DENG2_ASSERT(a.d->world != 0);
+    return *a.d->world;
 }
 
 void ClientApp::openHomepageInBrowser()

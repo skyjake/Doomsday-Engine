@@ -25,7 +25,7 @@
 #include <de/vector1.h>
 #include <de/Log>
 #include <doomsday/console/cmd.h>
-#include "dd_main.h"  // App_WorldSystem()
+#include "dd_main.h"  // App_World()
 
 #include "world/map.h"
 #include "world/p_object.h"
@@ -549,7 +549,7 @@ D_CMD(InspectSector)
         return true;
     }
 
-    if(!App_WorldSystem().hasMap())
+    if(!App_World().hasMap())
     {
         LOG_SCR_ERROR("No map is currently loaded");
         return false;
@@ -557,7 +557,7 @@ D_CMD(InspectSector)
 
     // Find the sector.
     dint const index  = String(argv[1]).toInt();
-    Sector const *sec = App_WorldSystem().map().sectorPtr(index);
+    Sector const *sec = App_World().map().sectorPtr(index);
     if(!sec)
     {
         LOG_SCR_ERROR("Sector #%i not found") << index;

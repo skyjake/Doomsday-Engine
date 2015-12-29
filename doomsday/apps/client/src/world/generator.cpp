@@ -26,7 +26,7 @@
 #include "dd_def.h"
 #include "Face"
 
-#include "world/worldsystem.h" // validCount
+#include "world/clientserverworld.h" // validCount
 #include "world/thinkers.h"
 #include "client/cl_mobj.h"
 #include "BspLeaf"

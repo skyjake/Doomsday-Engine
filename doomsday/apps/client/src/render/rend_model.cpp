@@ -26,7 +26,7 @@
 
 #include "clientapp.h"
 #include "dd_def.h"
-#include "dd_main.h" // App_WorldSystem()
+#include "dd_main.h" // App_World()
 
 #include "world/p_players.h"
 #include "world/clientmobjthinkerdata.h"
@@ -635,7 +635,7 @@ static int chooseSkin(ModelDef &mf, int submodel, int id, int selector, int tmap
         }
         else
         {
-            offset = SECONDS_TO_TICKS(App_WorldSystem().time()) / mf.skinTics;
+            offset = SECONDS_TO_TICKS(App_World().time()) / mf.skinTics;
         }
 
         skin += offset % smf.skinRange;

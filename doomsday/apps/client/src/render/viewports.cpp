@@ -102,11 +102,6 @@ static inline RenderSystem &rendSys()
     return ClientApp::renderSystem();
 }
 
-static inline WorldSystem &worldSys()
-{
-    return ClientApp::worldSystem();
-}
-
 dint R_FrameCount()
 {
     return frameCount;
@@ -515,9 +510,9 @@ void R_NewSharpWorld()
         R_CheckViewerLimits(vd->lastSharp, &sharpView);
     }
 
-    if(worldSys().hasMap())
+    if(ClientApp::world().hasMap())
     {
-        Map &map = worldSys().map();
+        Map &map = ClientApp::world().map();
         map.updateTrackedPlanes();
         map.updateScrollingSurfaces();
     }
@@ -898,8 +893,8 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
     setupPlayerSprites();
 
     if(ClientApp::vr().mode() == VRConfig::OculusRift &&
-       worldSys().hasMap() &&
-       worldSys().map().isPointInVoid(Rend_EyeOrigin().xzy()))
+       ClientApp::world().hasMap() &&
+       ClientApp::world().map().isPointInVoid(Rend_EyeOrigin().xzy()))
     {
         // Putting one's head in the wall will cause a blank screen.
         GLState::current().target().clear(GLTarget::Color);
@@ -923,9 +918,9 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
     // GL is in 3D transformation state only during the frame.
     GL_SwitchTo3DState(true, currentViewport, vd);
 
-    if(worldSys().hasMap())
+    if(ClientApp::world().hasMap())
     {
-        Rend_RenderMap(worldSys().map());
+        Rend_RenderMap(ClientApp::world().map());
     }
 
     // Orthogonal projection to the view window.
@@ -1037,7 +1032,7 @@ static void clearViewPorts()
             if(!plr->publicData().inGame || !(plr->publicData().flags & DDPF_LOCAL))
                 continue;
 
-            if(P_IsInVoid(plr) || !worldSys().hasMap())
+            if(P_IsInVoid(plr) || !ClientApp::world().hasMap())
             {
                 bits |= GL_COLOR_BUFFER_BIT;
                 break;
@@ -1151,13 +1146,13 @@ void R_ClearViewData()
 DENG_EXTERN_C void R_SkyParams(dint layerIndex, dint param, void * /*data*/)
 {
     LOG_AS("R_SkyParams");
-    if(!worldSys().hasMap())
+    if(!ClientApp::world().hasMap())
     {
         LOG_GL_WARNING("No map currently loaded, ignoring");
         return;
     }
 
-    Sky &sky = worldSys().map().sky();
+    Sky &sky = ClientApp::world().map().sky();
     if(layerIndex >= 0 && layerIndex < sky.layerCount())
     {
         SkyLayer *layer = sky.layer(layerIndex);
@@ -1201,7 +1196,7 @@ void R_ViewerGeneratorMarkVisible(Generator const &generator, bool yes)
 ddouble R_ViewerLumobjDistance(dint idx)
 {
     /// @todo Do not assume the current map.
-    if(idx >= 0 && idx < worldSys().map().lumobjCount())
+    if(idx >= 0 && idx < ClientApp::world().map().lumobjCount())
     {
         return luminousDist[idx];
     }
@@ -1214,7 +1209,7 @@ bool R_ViewerLumobjIsClipped(dint idx)
     if(!luminousClipped) return true;
 
     /// @todo Do not assume the current map.
-    if(idx >= 0 && idx < worldSys().map().lumobjCount())
+    if(idx >= 0 && idx < ClientApp::world().map().lumobjCount())
     {
         return CPP_BOOL(luminousClipped[idx]);
     }
@@ -1227,7 +1222,7 @@ bool R_ViewerLumobjIsHidden(dint idx)
     if(!luminousClipped) return true;
 
     /// @todo Do not assume the current map.
-    if(idx >= 0 && idx < worldSys().map().lumobjCount())
+    if(idx >= 0 && idx < ClientApp::world().map().lumobjCount())
     {
         return luminousClipped[idx] == 2;
     }
@@ -1253,7 +1248,7 @@ static dint lumobjSorter(void const *e1, void const *e2)
 
 void R_BeginFrame()
 {
-    Map &map = worldSys().map();
+    Map &map = ClientApp::world().map();
 
     subspacesVisible.resize(map.subspaceCount());
     subspacesVisible.fill(false);

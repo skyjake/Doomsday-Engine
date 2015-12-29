@@ -21,7 +21,7 @@
 #define DENG_WORLD_HAND_H
 
 #include "Grabbable"
-#include "world/worldsystem.h"
+#include "world/clientserverworld.h"
 
 #include <de/Observers>
 #include <de/Vector>
@@ -46,7 +46,7 @@ namespace internal {
  *
  * @ingroup world
  */
-class Hand : DENG2_OBSERVES(WorldSystem, FrameEnd)
+class Hand : DENG2_OBSERVES(ClientServerWorld, FrameEnd)
 {
     DENG2_NO_COPY  (Hand)
     DENG2_NO_ASSIGN(Hand)

@@ -31,7 +31,7 @@
 
 #include "audio/system.h"
 #include "resource/resourcesystem.h"
-#include "world/worldsystem.h"
+#include "world/clientserverworld.h"
 #include "ui/infine/infinesystem.h"
 
 namespace de {
@@ -70,7 +70,7 @@ InFineSystem &App_InFineSystem();
 ResourceSystem &App_ResourceSystem();
 
 /// Returns the application's global WorldSystem.
-WorldSystem &App_WorldSystem();
+ClientServerWorld &App_World();
 
 #undef Con_Open
 

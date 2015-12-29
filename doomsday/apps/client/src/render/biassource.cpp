@@ -19,7 +19,7 @@
 
 #include "de_base.h"
 
-#include "world/worldsystem.h"
+#include "world/clientserverworld.h"
 #include "world/map.h"
 #include "BspLeaf"
 #include "ConvexSubspace"
@@ -91,7 +91,7 @@ DENG2_PIMPL(BiasSource)
     {
         if(bspLeaf) return;
         /// @todo Do not assume the current map.
-        bspLeaf = &App_WorldSystem().map().bspLeafAt(origin);
+        bspLeaf = &App_World().map().bspLeafAt(origin);
 
         bool newInVoidState = !(bspLeaf->hasSubspace() && bspLeaf->subspace().contains(origin));
         if(inVoid != newInVoidState)

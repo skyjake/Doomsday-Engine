@@ -17,7 +17,7 @@
  */
 
 #include "world/bindings_world.h"
-#include "world/worldsystem.h"
+#include "world/clientserverworld.h"
 #include "world/map.h"
 #include "world/thinkers.h"
 #include "dd_main.h"
@@ -33,7 +33,7 @@ static mobj_t &instanceMobj(Context const &ctx)
 {
     /// @todo Not necessarily always the current map. -jk
     int const id = ctx.selfInstance().geti(QStringLiteral("__id__"), 0);
-    mobj_t *mo = App_WorldSystem().map().thinkers().mobjById(id);
+    mobj_t *mo = App_World().map().thinkers().mobjById(id);
     if(!mo)
     {
         throw ::Map::MissingObjectError("instanceMobj", QString("Mobj %1 does not exist").arg(id));

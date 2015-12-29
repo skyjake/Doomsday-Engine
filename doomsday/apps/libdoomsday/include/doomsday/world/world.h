@@ -1,6 +1,7 @@
-/** @file system.h  World subsystem.
+/** @file world.h  The game world.
  *
  * @authors Copyright © 2014-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2015 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -16,34 +17,32 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_WORLD_SYSTEM_H
-#define LIBDOOMSDAY_WORLD_SYSTEM_H
+#ifndef LIBDOOMSDAY_WORLD_H
+#define LIBDOOMSDAY_WORLD_H
 
 #include "../libdoomsday.h"
 #include <de/Observers>
 #include <de/System>
 
-namespace world {
-
 /**
- * Base class for the world management subsystem.
+ * Base class for the game world.
  *
- * Singleton: there can only be one instance of the world system at a time.
+ * Singleton: there can only be one instance of the world at a time.
  */
-class LIBDOOMSDAY_PUBLIC System : public de::System
+class LIBDOOMSDAY_PUBLIC World : public de::System
 {
 public:
-    static System &get();
+    static World &get();
 
 public:
-    System();
+    World();
 
     // Systems observe the passage of time.
     void timeChanged(de::Clock const &) override;
 
 public:
     /// Notified whenever the "current" map changes.
-    DENG2_DEFINE_AUDIENCE2(MapChange, void worldSystemMapChanged())
+    DENG2_DEFINE_AUDIENCE2(MapChange, void worldMapChanged())
 
 public:  /// @todo make private:
     void notifyMapChange();
@@ -52,6 +51,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-}  // namespace world
-
-#endif  // LIBDOOMSDAY_WORLD_SYSTEM_H
+#endif  // LIBDOOMSDAY_WORLD_H

@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de_platform.h"
@@ -58,7 +58,7 @@ DENG2_PIMPL(ServerApp)
     QScopedPointer<ServerSystem> serverSystem;
     QScopedPointer<ResourceSystem> resourceSys;
     QScopedPointer<::audio::System> audioSys;
-    WorldSystem worldSys;
+    ClientServerWorld world;
     InFineSystem infineSys;
 
     Instance(Public *i)
@@ -106,7 +106,7 @@ ServerApp::ServerApp(int &argc, char **argv)
     : TextApp(argc, argv)
     , DoomsdayApp([] () -> Player * { return new ServerPlayer; })
     , d(new Instance(this))
-{   
+{
     novideo = true;
 
     // Override the system locale (affects number/time formatting).
@@ -130,7 +130,7 @@ ServerApp::ServerApp(int &argc, char **argv)
     d->audioSys.reset(new ::audio::System);
     addSystem(*d->audioSys);
 
-    addSystem(d->worldSys);
+    addSystem(d->world);
     //addSystem(d->infineSys);
 
     // We must presently set the current game manually (the collection is global).
@@ -219,7 +219,7 @@ ResourceSystem &ServerApp::resourceSystem()
     return *app().d->resourceSys;
 }
 
-WorldSystem &ServerApp::worldSystem()
+ClientServerWorld &ServerApp::world()
 {
-    return app().d->worldSys;
+    return app().d->world;
 }

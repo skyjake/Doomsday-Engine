@@ -60,11 +60,6 @@ static inline ResourceSystem &resSys()
     return ClientApp::resourceSystem();
 }
 
-static inline WorldSystem &worldSys()
-{
-    return ClientApp::worldSystem();
-}
-
 static MaterialVariantSpec const &pspriteMaterialSpec()
 {
     return resSys().materialSpec(PSpriteContext, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
@@ -119,7 +114,7 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs
     else
     {
         DENG2_ASSERT(vs.bspLeaf);
-        Map const &map = worldSys().map();
+        Map const &map = ClientApp::world().map();
 
         if(useBias && map.hasLightGrid())
         {

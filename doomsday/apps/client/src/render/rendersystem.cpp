@@ -32,7 +32,7 @@
 #include "render/modelrenderer.h"
 #include "render/skydrawable.h"
 #include "render/store.h"
-#include "world/worldsystem.h"
+#include "world/clientserverworld.h"
 
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
@@ -433,7 +433,7 @@ SkyDrawable &RenderSystem::sky()
 void RenderSystem::timeChanged(Clock const &)
 {
     // Update the current map time for shaders.
-    d->uMapTime = ClientApp::worldSystem().time();
+    d->uMapTime = ClientApp::world().time();
 }
 
 SettingsRegister &RenderSystem::settings()

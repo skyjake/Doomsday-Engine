@@ -48,7 +48,7 @@ dd_bool Thinker_IsMobjFunc(thinkfunc_t func)
 de::Map &Thinker_Map(thinker_t const & /*th*/)
 {
     /// @todo Do not assume the current map.
-    return App_WorldSystem().map();
+    return App_World().map();
 }
 
 namespace de {
@@ -444,25 +444,25 @@ void Thinker_InitPrivateData(thinker_t *th)
 DENG_EXTERN_C struct mobj_s *Mobj_ById(dint id)
 {
     /// @todo fixme: Do not assume the current map.
-    if(!App_WorldSystem().hasMap()) return nullptr;
-    return App_WorldSystem().map().thinkers().mobjById(id);
+    if(!App_World().hasMap()) return nullptr;
+    return App_World().map().thinkers().mobjById(id);
 }
 
 #undef Thinker_Init
 void Thinker_Init()
 {
     /// @todo fixme: Do not assume the current map.
-    if(!App_WorldSystem().hasMap()) return;
-    App_WorldSystem().map().thinkers().initLists(0x1);  // Init the public thinker lists.
+    if(!App_World().hasMap()) return;
+    App_World().map().thinkers().initLists(0x1);  // Init the public thinker lists.
 }
 
 #undef Thinker_Run
 void Thinker_Run()
 {
     /// @todo fixme: Do not assume the current map.
-    if(!App_WorldSystem().hasMap()) return;
+    if(!App_World().hasMap()) return;
 
-    App_WorldSystem().map().thinkers().forAll(0x1 | 0x2, [] (thinker_t *th)
+    App_World().map().thinkers().forAll(0x1 | 0x2, [] (thinker_t *th)
     {
         if(Thinker_InStasis(th)) return LoopContinue; // Skip.
 
@@ -514,9 +514,9 @@ void Thinker_Remove(thinker_t *th)
 #undef Thinker_Iterate
 dint Thinker_Iterate(thinkfunc_t func, dint (*callback) (thinker_t *, void *), void *context)
 {
-    if(!App_WorldSystem().hasMap()) return false;  // Continue iteration.
+    if(!App_World().hasMap()) return false;  // Continue iteration.
 
-    return App_WorldSystem().map().thinkers().forAll(func, 0x1, [&callback, &context] (thinker_t *th)
+    return App_World().map().thinkers().forAll(func, 0x1, [&callback, &context] (thinker_t *th)
     {
         return callback(th, context);
     });

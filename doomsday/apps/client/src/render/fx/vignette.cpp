@@ -102,7 +102,7 @@ Vignette::Vignette(int console) : ConsoleEffect(console)
 
 void Vignette::draw()
 {
-    if(!ClientApp::worldSystem().hasMap())
+    if(!ClientApp::world().hasMap())
     {
         return;
     }

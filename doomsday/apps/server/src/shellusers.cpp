@@ -74,7 +74,7 @@ int ShellUsers::count() const
     return d->users.size();
 }
 
-void ShellUsers::worldSystemMapChanged()
+void ShellUsers::worldMapChanged()
 {
     foreach(ShellUser *user, d->users)
     {

@@ -23,14 +23,14 @@
 
 #include <QObject>
 #include <QSet>
-#include <doomsday/world/system.h>
+#include <doomsday/world/world.h>
 #include "shelluser.h"
 
 /**
  * All remote shell users.
  */
 class ShellUsers : public QObject
-, DENG2_OBSERVES(world::System, MapChange)
+, DENG2_OBSERVES(World, MapChange)
 {
     Q_OBJECT
 
@@ -50,8 +50,7 @@ public:
 
     int count() const;
 
-    /// Observes world::System MapChange.
-    void worldSystemMapChanged();
+    void worldMapChanged();
 
 public slots:
     void sendPlayerInfoToAll();

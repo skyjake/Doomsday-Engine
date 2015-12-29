@@ -25,7 +25,7 @@
 #include <de/Error>
 #include <de/Observers>
 #include <de/Vector>
-#include <doomsday/world/system.h>
+#include <doomsday/world/world.h>
 #include <doomsday/uri.h>
 
 #ifdef __CLIENT__
@@ -46,7 +46,7 @@ namespace de { class Map; }
  *
  * @ingroup world
  */
-class WorldSystem : public world::System
+class ClientServerWorld : public World
 {
 public:
     /// No map is currently loaded. @ingroup errors
@@ -64,7 +64,7 @@ public:
     /**
      * Construct a new world system (no map is loaded by default).
      */
-    WorldSystem();
+    ClientServerWorld();
 
     /**
      * To be called to reset the world back to the initial state. Any currently

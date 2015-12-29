@@ -170,7 +170,7 @@ void R_SortVisSprites()
 void VisEntityLighting::setupLighting(de::Vector3d const &origin, coord_t distance,
                                       BspLeaf const &bspLeaf)
 {
-    Map &map = ClientApp::worldSystem().map();
+    Map &map = ClientApp::world().map();
 
     if(useBias && map.hasLightGrid())
     {

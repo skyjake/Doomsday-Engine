@@ -48,7 +48,7 @@
 #endif
 
 #include "world/bsp/partitioner.h"
-#include "world/worldsystem.h"  // ddMapSetup, validCount
+#include "world/clientserverworld.h"  // ddMapSetup, validCount
 #include "world/blockmap.h"
 #include "world/lineblockmap.h"
 #include "world/entitydatabase.h"
@@ -93,16 +93,6 @@ static int lgMXSample  = 1;  ///< 5 samples per block. Cvar.
 /// status should be removed fairly quickly.
 #define CLMOBJ_TIMEOUT  4000
 #endif
-
-namespace internal
-{
-    static inline WorldSystem &worldSys()
-    {
-        return App_WorldSystem();
-    }
-
-}  // namespace internal
-using namespace internal;
 
 namespace de {
 
@@ -345,7 +335,7 @@ DENG2_PIMPL(Map)
         }
         qDeleteAll(lines);
 
-#ifdef __CLIENT__        
+#ifdef __CLIENT__
         // Stop observing client mobjs.
         for(mobj_t *mo : clMobjHash)
         {
@@ -1313,7 +1303,7 @@ DENG2_PIMPL(Map)
                 continue;
 
             // Are we still spawning using this generator?
-            if(genDef->spawnAge > 0 && worldSys().time() > genDef->spawnAge)
+            if(genDef->spawnAge > 0 && App_World().time() > genDef->spawnAge)
                 continue;
 
             Generator *gen = self.newGenerator();
@@ -1543,7 +1533,7 @@ Map::Map(res::MapManifest *manifest)
 
 Record const &Map::mapInfo() const
 {
-    return worldSys().mapInfoForMapUri(hasManifest() ? manifest().composeUri() : de::Uri("Maps:", RC_NULL));
+    return App_World().mapInfoForMapUri(hasManifest() ? manifest().composeUri() : de::Uri("Maps:", RC_NULL));
 }
 
 Mesh const &Map::mesh() const
@@ -3240,7 +3230,7 @@ void Map::update()
 #ifdef __CLIENT__
 void Map::worldSystemFrameBegins(bool resetNextViewer)
 {
-    DENG2_ASSERT(&worldSys().map() == this); // Sanity check.
+    DENG2_ASSERT(&App_World().map() == this); // Sanity check.
 
     // Interpolate the map ready for drawing view(s) of it.
     d->lerpTrackedPlanes(resetNextViewer);
@@ -3394,13 +3384,13 @@ D_CMD(InspectMap)
 
     LOG_AS("inspectmap (Cmd)");
 
-    if(!App_WorldSystem().hasMap())
+    if(!App_World().hasMap())
     {
         LOG_SCR_WARNING("No map is currently loaded");
         return false;
     }
 
-    Map &map = App_WorldSystem().map();
+    Map &map = App_World().map();
 
     LOG_SCR_NOTE(_E(b) "%s - %s")
             << Con_GetString("map-name")

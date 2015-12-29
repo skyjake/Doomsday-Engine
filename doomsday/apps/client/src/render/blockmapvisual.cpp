@@ -506,8 +506,8 @@ void Rend_BlockmapDebug()
     // Disabled?
     if(!bmapShowDebug || bmapShowDebug > 4) return;
 
-    if(!App_WorldSystem().hasMap()) return;
-    Map &map = App_WorldSystem().map();
+    if(!App_World().hasMap()) return;
+    Map &map = App_World().map();
 
     Blockmap const *blockmap;
     int (*cellDrawer) (Blockmap const &, BlockmapCell const &, void *);

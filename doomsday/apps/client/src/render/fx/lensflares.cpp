@@ -497,7 +497,7 @@ void fx::LensFlares::beginFrame()
 
 void LensFlares::draw()
 {
-    if(!ClientApp::worldSystem().hasMap())
+    if(!ClientApp::world().hasMap())
     {
         // Flares are not visbile unless a map is loaded.
         return;

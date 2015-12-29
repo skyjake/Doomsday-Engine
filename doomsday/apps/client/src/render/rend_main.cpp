@@ -317,11 +317,6 @@ static inline ResourceSystem &resSys()
     return ClientApp::resourceSystem();
 }
 
-static inline WorldSystem &worldSys()
-{
-    return ClientApp::worldSystem();
-}
-
 static void reportWallDrawn(Line &line)
 {
     // Already been here?
@@ -341,12 +336,12 @@ static void reportWallDrawn(Line &line)
 
 static void scheduleFullLightGridUpdate()
 {
-    if(!worldSys().hasMap()) return;
+    if(!ClientApp::world().hasMap()) return;
 
     // Schedule a LightGrid update.
-    if(worldSys().map().hasLightGrid())
+    if(ClientApp::world().map().hasLightGrid())
     {
-        worldSys().map().lightGrid().scheduleFullUpdate();
+        ClientApp::world().map().lightGrid().scheduleFullUpdate();
     }
 }
 
@@ -354,9 +349,9 @@ static void scheduleFullLightGridUpdate()
 void Rend_Reset()
 {
     R_ClearViewData();
-    if(App_WorldSystem().hasMap())
+    if(App_World().hasMap())
     {
-        App_WorldSystem().map().removeAllLumobjs();
+        App_World().map().removeAllLumobjs();
     }
     if(dlBBox)
     {
@@ -573,9 +568,9 @@ bool Rend_SkyLightIsEnabled()
 
 Vector3f Rend_SkyLightColor()
 {
-    if(Rend_SkyLightIsEnabled() && ClientApp::worldSystem().hasMap())
+    if(Rend_SkyLightIsEnabled() && ClientApp::world().hasMap())
     {
-        Sky &sky = ClientApp::worldSystem().map().sky();
+        Sky &sky = ClientApp::world().map().sky();
         Vector3f const &ambientColor = sky.ambientColor();
 
         if(rendSkyLight != oldRendSkyLight ||
@@ -4273,7 +4268,7 @@ static void drawSky()
     glStencilFunc(GL_EQUAL, 1, 0xffffffff);
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
-    rendSys().sky().draw(&worldSys().map().skyAnimator());
+    rendSys().sky().draw(&ClientApp::world().map().skyAnimator());
 
     if(!devRendSkyAlways)
     {
@@ -4731,7 +4726,7 @@ static String labelForSource(BiasSource *s)
 {
     if(!s || !editShowIndices) return String();
     /// @todo Don't assume the current map.
-    return String::number(App_WorldSystem().map().indexOf(*s));
+    return String::number(App_World().map().indexOf(*s));
 }
 
 static void drawSource(BiasSource *s)
@@ -4818,7 +4813,7 @@ static void drawBiasEditingVisuals(Map &map)
     }
 
     coord_t handDistance;
-    Hand &hand = App_WorldSystem().hand(&handDistance);
+    Hand &hand = App_World().hand(&handDistance);
 
     // Grabbed sources blink yellow.
     Vector4f grabbedColor;
@@ -4916,13 +4911,13 @@ void Rend_UpdateLightModMatrix()
 
     de::zap(lightModRange);
 
-    if(!App_WorldSystem().hasMap())
+    if(!App_World().hasMap())
     {
         rAmbient = 0;
         return;
     }
 
-    dint mapAmbient = App_WorldSystem().map().ambientLightLevel();
+    dint mapAmbient = App_World().map().ambientLightLevel();
     if(mapAmbient > ambientLight)
     {
         rAmbient = mapAmbient;
@@ -6271,10 +6266,10 @@ static void texQualityChanged()
 
 static void useDynlightsChanged()
 {
-    if(!worldSys().hasMap()) return;
+    if(!ClientApp::world().hasMap()) return;
 
     // Unlink luminous objects.
-    worldSys().map().thinkers()
+    ClientApp::world().map().thinkers()
         .forAll(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1, [](thinker_t *th)
     {
         Mobj_UnlinkLumobjs(reinterpret_cast<mobj_t *>(th));

@@ -1527,7 +1527,7 @@ D_CMD(InspectLine)
         return true;
     }
 
-    if(!App_WorldSystem().hasMap())
+    if(!App_World().hasMap())
     {
         LOG_SCR_ERROR("No map is currently loaded");
         return false;
@@ -1535,7 +1535,7 @@ D_CMD(InspectLine)
 
     // Find the line.
     dint const index = String(argv[1]).toInt();
-    Line const *line = App_WorldSystem().map().linePtr(index);
+    Line const *line = App_World().map().linePtr(index);
     if(!line)
     {
         LOG_SCR_ERROR("Line #%i not found") << index;

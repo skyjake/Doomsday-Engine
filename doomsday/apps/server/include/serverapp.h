@@ -27,7 +27,7 @@
 #include "ui/infine/infinesystem.h"
 #include "audio/system.h"
 #include "resource/resourcesystem.h"
-#include "world/worldsystem.h"
+#include "world/clientserverworld.h"
 
 /**
  * The server application.
@@ -50,7 +50,7 @@ public:
     static InFineSystem &infineSystem();
     static ::audio::System &audioSystem();
     static ResourceSystem &resourceSystem();
-    static WorldSystem &worldSystem();
+    static ClientServerWorld &world();
 
 private:
     DENG2_PRIVATE(d)

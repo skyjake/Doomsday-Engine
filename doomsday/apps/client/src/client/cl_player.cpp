@@ -283,7 +283,7 @@ void ClPlayer_ReadDelta()
     LOG_AS("ClPlayer_ReadDelta2");
 
     /// @todo Do not assume the CURRENT map.
-    Map &map = App_WorldSystem().map();
+    Map &map = App_World().map();
 
     int df = 0;
     ushort num;

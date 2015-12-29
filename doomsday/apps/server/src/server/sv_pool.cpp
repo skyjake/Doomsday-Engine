@@ -94,9 +94,9 @@ static dfloat deltaBaseScores[NUM_DELTA_TYPES];
 // the mobj being compared.
 static ThinkerT<dt_mobj_t> dummyZeroMobj;
 
-static inline WorldSystem &worldSys()
+static inline ClientServerWorld &worldSys()
 {
-    return App_WorldSystem();
+    return App_World();
 }
 
 /**
@@ -137,7 +137,7 @@ void Sv_InitPools()
     for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
         pool_t &pool = *Sv_GetPool(i);
-        
+
         pool.owner         = i;
         pool.resendDealer  = 1;
         de::zap(pool.hash);

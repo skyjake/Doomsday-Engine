@@ -30,7 +30,7 @@
 #include "Sector"
 #include "world/bsp/linesegment.h"
 
-#include "world/worldsystem.h" /// validCount @todo Remove me
+#include "world/clientserverworld.h" /// validCount @todo Remove me
 
 #include <de/Log>
 #include <QHash>

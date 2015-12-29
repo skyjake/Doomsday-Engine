@@ -28,7 +28,7 @@
 
 #include "Face"
 
-#include "world/worldsystem.h"  /// For validCount, @todo Remove me.
+#include "world/clientserverworld.h"  /// For validCount, @todo Remove me.
 #include "BspLeaf"
 #include "BspNode"
 #include "ConvexSubspace"

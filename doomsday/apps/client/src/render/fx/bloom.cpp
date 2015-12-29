@@ -55,7 +55,7 @@ DENG2_PIMPL(Bloom)
         , uBlurStep ("uBlurStep",  GLUniform::Vec2)
         , uWindow   ("uWindow",    GLUniform::Vec4)
         , uThreshold("uThreshold", GLUniform::Float)
-        , uIntensity("uIntensity", GLUniform::Float)       
+        , uIntensity("uIntensity", GLUniform::Float)
     {}
 
     void glInit()
@@ -234,7 +234,7 @@ void Bloom::glDeinit()
 
 void Bloom::draw()
 {
-    if(!ClientApp::worldSystem().hasMap())
+    if(!ClientApp::world().hasMap())
     {
         return;
     }

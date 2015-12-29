@@ -43,7 +43,7 @@ void P_Ticker(timespan_t elapsed)
     });
 #endif
 
-    App_WorldSystem().tick(elapsed);
+    App_World().tick(elapsed);
 
     // Internal ticking for all players.
     DoomsdayApp::players().forAll([&elapsed] (Player &plr) {

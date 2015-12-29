@@ -331,7 +331,7 @@ static dd_bool ClMobj_IsStuckInsideLocalPlayer(mobj_t *mo)
 void ClMobj_ReadDelta()
 {
     /// @todo Do not assume the CURRENT map.
-    Map &map = App_WorldSystem().map();
+    Map &map = App_World().map();
 
     thid_t const id = Reader_ReadUInt16(msgReader); // Read the ID.
     int const df    = Reader_ReadUInt16(msgReader); // Flags.
@@ -581,7 +581,7 @@ void ClMobj_ReadNullDelta()
     LOG_AS("ClMobj_ReadNullDelta");
 
     /// @todo Do not assume the CURRENT map.
-    Map &map = App_WorldSystem().map();
+    Map &map = App_World().map();
 
     // The delta only contains an ID.
     thid_t id = Reader_ReadUInt16(msgReader);
@@ -619,10 +619,10 @@ void ClMobj_ReadNullDelta()
 #undef ClMobj_Find
 mobj_t *ClMobj_Find(thid_t id)
 {
-    if(!App_WorldSystem().hasMap()) return nullptr;
+    if(!App_World().hasMap()) return nullptr;
     
     /// @todo Do not assume the CURRENT map.
-    return App_WorldSystem().map().clMobjFor(id);
+    return App_World().map().clMobjFor(id);
 }
 
 // cl_player.c

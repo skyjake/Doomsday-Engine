@@ -120,9 +120,9 @@ void ShellUser::sendGameState()
     // Check the map's information.
     String mapId;
     String mapTitle;
-    if(App_WorldSystem().hasMap())
+    if(App_World().hasMap())
     {
-        Map &map = App_WorldSystem().map();
+        Map &map = App_World().map();
 
         mapId = (map.hasManifest() ? map.manifest().composeUri().path() : "(unknown map)");
 
@@ -137,11 +137,11 @@ void ShellUser::sendGameState()
 
 void ShellUser::sendMapOutline()
 {
-    if(!App_WorldSystem().hasMap()) return;
+    if(!App_World().hasMap()) return;
 
     std::unique_ptr<shell::MapOutlinePacket> packet(new shell::MapOutlinePacket);
 
-    App_WorldSystem().map().forAllLines([&packet] (Line &line)
+    App_World().map().forAllLines([&packet] (Line &line)
     {
         packet->addLine(Vector2i(line.fromOrigin().x, line.fromOrigin().y),
                         Vector2i(line.toOrigin().x, line.toOrigin().y),
@@ -155,7 +155,7 @@ void ShellUser::sendMapOutline()
 
 void ShellUser::sendPlayerInfo()
 {
-    if(!App_WorldSystem().hasMap()) return;
+    if(!App_World().hasMap()) return;
 
     QScopedPointer<shell::PlayerInfoPacket> packet(new shell::PlayerInfoPacket);
 

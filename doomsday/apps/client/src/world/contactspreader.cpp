@@ -32,7 +32,7 @@
 #include "SectorCluster"
 #include "Surface"
 
-#include "world/worldsystem.h"  // validCount
+#include "world/clientserverworld.h"  // validCount
 
 #include "render/rend_main.h"  // Rend_mapSurfaceMaterialSpec
 #include "MaterialAnimator"

@@ -28,7 +28,7 @@
 #include <doomsday/defs/sprite.h>
 
 #include "clientapp.h"
-#include "dd_main.h"  // App_WorldSystem()
+#include "dd_main.h"  // App_World()
 #include "dd_loop.h"  // frameTimePos
 #include "def_main.h"  // states
 #include "r_util.h"
@@ -331,7 +331,7 @@ void R_ProjectSprite(mobj_t &mob)
         }
         else if(mf->testSubFlag(0, MFF_SPIN))
         {
-            yaw = modelSpinSpeed * 70 * App_WorldSystem().time() + MOBJ_TO_ID(&mob) % 360;
+            yaw = modelSpinSpeed * 70 * App_World().time() + MOBJ_TO_ID(&mob) % 360;
         }
         else if(mf->testSubFlag(0, MFF_MOVEMENT_YAW))
         {

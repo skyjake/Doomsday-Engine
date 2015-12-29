@@ -115,7 +115,7 @@ set (SHARED_WITH_CLIENT
     ${src}/include/world/surface.h
     ${src}/include/world/thinkers.h
     ${src}/include/world/vertex.h
-    ${src}/include/world/worldsystem.h
+    ${src}/include/world/clientserverworld.h
 
     ${src}/src/api_console.cpp
     ${src}/src/api_filesys.cpp
@@ -211,7 +211,7 @@ set (SHARED_WITH_CLIENT
     ${src}/src/world/surface.cpp
     ${src}/src/world/thinkers.cpp
     ${src}/src/world/vertex.cpp
-    ${src}/src/world/worldsystem.cpp
+    ${src}/src/world/clientserverworld.cpp
 )
 
 if (WIN32)

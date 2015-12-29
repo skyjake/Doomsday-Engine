@@ -101,7 +101,7 @@ void Cl_CleanUp()
     App_AudioSystem().aboutToUnloadMap();
 
     // Reset the local world state.
-    App_WorldSystem().reset();
+    App_World().reset();
 
     // Discard the translation tables for the server we've just left.
     Cl_ResetTransTables();
@@ -470,9 +470,9 @@ void Cl_Ticker(timespan_t ticLength)
 #endif
     }
 
-    if(App_WorldSystem().hasMap())
+    if(App_World().hasMap())
     {
-        App_WorldSystem().map().expireClMobjs();
+        App_World().map().expireClMobjs();
     }
 }
 

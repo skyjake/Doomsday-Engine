@@ -54,7 +54,7 @@
 #  include "render/billboard.h"
 #endif
 
-#include "world/worldsystem.h" // validCount
+#include "world/clientserverworld.h" // validCount
 #include "world/p_object.h"
 #include "world/p_players.h"
 #include "world/thinkers.h"
@@ -691,7 +691,7 @@ ModelDef *Mobj_ModelDef(mobj_t const &mo, ModelDef **retNextModef, float *retInt
             offset = M_CycleIntoRange(MOBJ_TO_ID(&mo), duration);
         }
 
-        interp = M_CycleIntoRange(App_WorldSystem().time() / duration + offset, 1);
+        interp = M_CycleIntoRange(App_World().time() / duration + offset, 1);
         worldTime = true;
     }
     else
@@ -848,7 +848,7 @@ coord_t Mobj_BobOffset(mobj_t const &mob)
 {
     if(mob.ddFlags & DDMF_BOB)
     {
-        return (sin(MOBJ_TO_ID(&mob) + App_WorldSystem().time() / 1.8286 * 2 * PI) * 8);
+        return (sin(MOBJ_TO_ID(&mob) + App_World().time() / 1.8286 * 2 * PI) * 8);
     }
     return 0;
 }
@@ -943,7 +943,7 @@ D_CMD(InspectMobj)
     // Get the ID.
     auto const id = thid_t( String(argv[1]).toInt() );
     // Find the map-object.
-    mobj_t *mob   = App_WorldSystem().map().thinkers().mobjById(id);
+    mobj_t *mob   = App_World().map().thinkers().mobjById(id);
     if(!mob)
     {
         LOG_MAP_ERROR("Mobj with id %i not found") << id;

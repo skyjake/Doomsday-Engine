@@ -42,7 +42,7 @@
 #  include "client/clplanemover.h"
 #  include "client/clpolymover.h"
 
-#  include "world/worldsystem.h"
+#  include "world/clientserverworld.h"
 #  include "Generator"
 
 #  include "BiasSource"
@@ -80,7 +80,7 @@ class Thinkers;
  */
 class Map : public world::Map
 #ifdef __CLIENT__
-, DENG2_OBSERVES(WorldSystem, FrameBegin)
+, DENG2_OBSERVES(ClientServerWorld, FrameBegin)
 #endif
 {
     DENG2_NO_COPY  (Map)
@@ -585,7 +585,7 @@ public:  // Subspaces ----------------------------------------------------------
      * Returns @c true if the given @a point is outside all map subspaces.
      */
     bool isPointInVoid(de::Vector3d const &pos) const;
- 
+
     /**
      * Returns the total number of subspaces in the map.
      */

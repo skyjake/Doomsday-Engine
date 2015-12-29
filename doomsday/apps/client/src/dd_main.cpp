@@ -77,7 +77,7 @@
 #include "edit_bias.h"
 #include "gl/svg.h"
 
-#include "world/worldsystem.h"
+#include "world/clientserverworld.h"
 #include "world/entitydef.h"
 #include "world/map.h"
 #include "world/p_players.h"
@@ -590,9 +590,9 @@ ResourceSystem &App_ResourceSystem()
     return static_cast<ResourceSystem &>(res::System::get());
 }
 
-WorldSystem &App_WorldSystem()
+ClientServerWorld &App_World()
 {
-    return static_cast<WorldSystem &>(world::System::get());
+    return static_cast<ClientServerWorld &>(World::get());
 }
 
 InFineSystem &App_InFineSystem()
@@ -1422,7 +1422,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
         ClientApp::inputSystem().initialContextActivations();
 #endif
         // Reset the world back to it's initial state (unload the map, reset players, etc...).
-        App_WorldSystem().reset();
+        App_World().reset();
 
         Z_FreeTags(PU_GAMESTATIC, PU_PURGELEVEL - 1);
 
@@ -2194,7 +2194,7 @@ static dint DD_UpdateEngineStateWorker(void *context)
     //
     // Update misc subsystems.
     //
-    App_WorldSystem().update();
+    App_World().update();
 
 #ifdef __CLIENT__
     // Recalculate the light range mod matrix.
@@ -2400,9 +2400,9 @@ dint DD_GetInteger(dint ddvalue)
         return ::defs.things.size();
 
     case DD_MAP_MUSIC:
-        if(App_WorldSystem().hasMap())
+        if(App_World().hasMap())
         {
-            Record const &mapInfo = App_WorldSystem().map().mapInfo();
+            Record const &mapInfo = App_World().map().mapInfo();
             return ::defs.getMusicNum(mapInfo.gets("music").toUtf8().constData());
         }
         return -1;
@@ -2455,30 +2455,30 @@ void *DD_GetVariable(dint ddvalue)
         return &gx;
 
     case DD_POLYOBJ_COUNT:
-        value = App_WorldSystem().hasMap()? App_WorldSystem().map().polyobjCount() : 0;
+        value = App_World().hasMap()? App_World().map().polyobjCount() : 0;
         return &value;
 
     case DD_MAP_MIN_X:
-        valueD = App_WorldSystem().hasMap()? App_WorldSystem().map().bounds().minX : 0;
+        valueD = App_World().hasMap()? App_World().map().bounds().minX : 0;
         return &valueD;
 
     case DD_MAP_MIN_Y:
-        valueD = App_WorldSystem().hasMap()? App_WorldSystem().map().bounds().minY : 0;
+        valueD = App_World().hasMap()? App_World().map().bounds().minY : 0;
         return &valueD;
 
     case DD_MAP_MAX_X:
-        valueD = App_WorldSystem().hasMap()? App_WorldSystem().map().bounds().maxX : 0;
+        valueD = App_World().hasMap()? App_World().map().bounds().maxX : 0;
         return &valueD;
 
     case DD_MAP_MAX_Y:
-        valueD = App_WorldSystem().hasMap()? App_WorldSystem().map().bounds().maxY : 0;
+        valueD = App_World().hasMap()? App_World().map().bounds().maxY : 0;
         return &valueD;
 
     /*case DD_CPLAYER_THRUST_MUL:
         return &cplrThrustMul;*/
 
     case DD_GRAVITY:
-        valueD = App_WorldSystem().hasMap()? App_WorldSystem().map().gravity() : 0;
+        valueD = App_World().hasMap()? App_World().map().gravity() : 0;
         return &valueD;
 
 #ifdef __CLIENT__
@@ -2545,8 +2545,8 @@ void DD_SetVariable(dint ddvalue, void *parm)
             return;*/
 
         case DD_GRAVITY:
-            if(App_WorldSystem().hasMap())
-                App_WorldSystem().map().setGravity(*(coord_t*) parm);
+            if(App_World().hasMap())
+                App_World().map().setGravity(*(coord_t*) parm);
             return;
 
 #ifdef __CLIENT__
@@ -3181,7 +3181,7 @@ static void consoleRegister()
 
     ResourceSystem::consoleRegister();
     Net_Register();
-    WorldSystem::consoleRegister();
+    ClientServerWorld::consoleRegister();
     InFineSystem::consoleRegister();
 }
 
@@ -3196,11 +3196,11 @@ DENG_EXTERN_C void R_SetupMap(dint mode, dint flags)
 {
     DENG2_UNUSED2(mode, flags);
 
-    if(!App_WorldSystem().hasMap()) return; // Huh?
+    if(!App_World().hasMap()) return; // Huh?
 
     // Perform map setup again. Its possible that after loading we now
     // have more HOMs to fix, etc..
-    Map &map = App_WorldSystem().map();
+    Map &map = App_World().map();
 
 #ifdef __CLIENT__
     map.initSkyFix();

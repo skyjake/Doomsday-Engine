@@ -69,7 +69,7 @@ DENG2_PIMPL_NOREF(BiasTracker)
 
                 // Remember the current time (used for interpolation).
                 /// @todo Do not assume the 'current' map.
-                lastSourceDeletion = App_WorldSystem().map().biasCurrentTime();
+                lastSourceDeletion = App_World().map().biasCurrentTime();
                 break;
             }
         }
@@ -238,7 +238,7 @@ void BiasTracker::applyChanges(BiasDigest &changes)
         /// sources by unique in-map index, and 2) re-index source references
         /// here upon deletion. The assumption being that affection changes
         /// occur far more frequently.
-        if(changes.isSourceChanged(App_WorldSystem().map().indexOf(*ctbr->source)))
+        if(changes.isSourceChanged(App_World().map().indexOf(*ctbr->source)))
         {
             d->changedContributions |= 1 << i;
         }

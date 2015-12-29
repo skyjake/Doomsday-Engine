@@ -36,7 +36,7 @@
 #include "MaterialManifest"
 #include "TextureManifest"
 
-#include "world/worldsystem.h" // ddMapSetup
+#include "world/clientserverworld.h" // ddMapSetup
 #include "world/map.h"
 #include "Plane"
 
