@@ -168,7 +168,7 @@ DENG2_PIMPL(PackageLoader)
         return *pkg;
     }
 
-    bool unload(String const &identifier)
+    bool unload(String identifier)
     {
         LoadedPackages::iterator found = loaded.find(identifier);
         if(found == loaded.end()) return false;
