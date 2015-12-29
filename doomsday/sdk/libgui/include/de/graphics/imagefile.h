@@ -41,7 +41,7 @@ namespace de {
  * deleted if the original is deleted, and they can only be accessed via the
  * subfolder notation -- only the original image resides in the parent folder.
  */
-class ImageFile : public File
+class LIBGUI_PUBLIC ImageFile : public File
 {
 public:
     enum BuiltInFilter {
