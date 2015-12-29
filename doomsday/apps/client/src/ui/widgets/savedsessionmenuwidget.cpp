@@ -38,7 +38,6 @@ using de::game::SavedSession;
 DENG_GUI_PIMPL(SavedSessionMenuWidget)
 , DENG2_OBSERVES(Games,               Readiness)
 , DENG2_OBSERVES(Session::SavedIndex, AvailabilityUpdate)
-, DENG2_OBSERVES(Loop,                Iteration) // deferred refresh
 {
     /**
      * Action for loading a saved session.
@@ -170,6 +169,8 @@ DENG_GUI_PIMPL(SavedSessionMenuWidget)
         }
     };
 
+    LoopCallback mainCall;
+
     Instance(Public *i) : Base(i)
     {
         App_Games().audienceForReadiness() += this;
@@ -178,7 +179,6 @@ DENG_GUI_PIMPL(SavedSessionMenuWidget)
 
     ~Instance()
     {
-        Loop::get().audienceForIteration() -= this;
         App_Games().audienceForReadiness() -= this;
         game::Session::savedIndex().audienceForAvailabilityUpdate() -= this;
     }
@@ -277,24 +277,7 @@ DENG_GUI_PIMPL(SavedSessionMenuWidget)
 
     void savedIndexAvailabilityUpdate(Session::SavedIndex const &)
     {
-        if(!App::inMainThread())
-        {
-            // We'll have to defer the update for now.
-            deferUpdate();
-            return;
-        }
-        updateItemsFromSavedIndex();
-    }
-
-    void deferUpdate()
-    {
-        Loop::get().audienceForIteration() += this;
-    }
-
-    void loopIteration()
-    {
-        Loop::get().audienceForIteration() -= this;
-        updateItemsFromSavedIndex();
+        mainCall.enqueue([this] () { updateItemsFromSavedIndex(); });
     }
 };
 

@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Loop"
@@ -116,6 +116,37 @@ void Loop::nextLoopIteration()
         // This is called from Qt's event loop, we mustn't let exceptions
         // out of here uncaught.
         App::app().handleUncaughtException("Uncaught exception during loop iteration:\n" + er.asText());
+    }
+}
+
+LoopCallback::LoopCallback()
+{}
+
+LoopCallback::~LoopCallback()
+{
+    Loop::get().audienceForIteration() -= this;
+}
+
+void LoopCallback::enqueue(Callback func)
+{
+    DENG2_GUARD(this);
+
+    _funcs << func;
+    Loop::get().audienceForIteration() += this;
+}
+
+void LoopCallback::loopIteration()
+{
+    DENG2_GUARD(this);
+
+    Loop::get().audienceForIteration() -= this;
+
+    // Make a copy of the list if new callbacks get enqueued in the callback.
+    QList<Callback> const funcs = _funcs;
+    _funcs.clear();
+    for(Callback const &cb : funcs)
+    {
+        cb();
     }
 }
 

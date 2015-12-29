@@ -30,7 +30,6 @@ using namespace de;
 DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
 , DENG2_OBSERVES(Games, Addition)
 , DENG2_OBSERVES(Games, Readiness)
-, DENG2_OBSERVES(Loop, Iteration) // deferred updates
 , DENG2_OBSERVES(App, GameChange)
 {
     /// ActionItem with a Game member, for loading a particular game.
@@ -66,6 +65,7 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
 
     Mode mode;
     FIFO<Game> pendingGames;
+    LoopCallback mainCall;
 
     Instance(Public *i) : Base(i)
     {
@@ -76,8 +76,6 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
 
     ~Instance()
     {
-        Loop::get().audienceForIteration() -= this;
-
         App_Games().audienceForAddition() -= this;
         App_Games().audienceForReadiness() -= this;
         App::app().audienceForGameChange() -= this;
@@ -89,7 +87,10 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
         pendingGames.put(&game);
 
         // Update from main thread later.
-        Loop::get().audienceForIteration() += this;
+        mainCall.enqueue([this] () {
+            addPendingGames();
+            updateGameAvailability();
+        });
     }
 
     void addExistingGames()
@@ -105,13 +106,6 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
         bool const isReady = game.allStartupFilesFound();
         return ((mode == ShowAvailableGames && isReady) ||
                 (mode == ShowGamesWithMissingResources && !isReady));
-    }
-
-    void loopIteration()
-    {
-        Loop::get().audienceForIteration() -= this;
-        addPendingGames();
-        updateGameAvailability();
     }
 
     void addPendingGames()
@@ -178,7 +172,7 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
 
     void currentGameChanged(game::Game const &)
     {
-        Loop::get().audienceForIteration() += this;
+        mainCall.enqueue([this] () { updateGameAvailability(); });
     }
 };
 

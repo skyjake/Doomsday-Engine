@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de_platform.h"
@@ -49,7 +49,6 @@ enum LinkState
 };
 
 DENG2_PIMPL(ServerLink)
-, DENG2_OBSERVES(Loop, Iteration)
 {
     shell::ServerFinder finder; ///< Finding local servers.
     LinkState state;
@@ -57,17 +56,13 @@ DENG2_PIMPL(ServerLink)
     typedef QMap<Address, serverinfo_t> Servers;
     Servers discovered;
     Servers fromMaster;
+    LoopCallback mainCall;
 
     Instance(Public *i)
         : Base(i)
         , state(None)
         , fetching(false)
     {}
-
-    ~Instance()
-    {
-        Loop::get().audienceForIteration() -= this;
-    }
 
     void notifyDiscoveryUpdate()
     {
@@ -183,17 +178,16 @@ DENG2_PIMPL(ServerLink)
         fetching = true;
         N_MAPost(MAC_REQUEST);
         N_MAPost(MAC_WAIT);
-        Loop::get().audienceForIteration() += this;
+        mainCall.enqueue([this] () { checkMasterReply(); });
     }
 
-    void loopIteration()
+    void checkMasterReply()
     {
         DENG2_ASSERT(fetching);
 
         if(N_MADone())
         {
             fetching = false;
-            Loop::get().audienceForIteration() -= this;
 
             fromMaster.clear();
             int const count = N_MasterGet(0, 0);
@@ -205,6 +199,11 @@ DENG2_PIMPL(ServerLink)
             }
 
             notifyDiscoveryUpdate();
+        }
+        else
+        {
+            // Check again later.
+            mainCall.enqueue([this] () { checkMasterReply(); });
         }
     }
 

@@ -2196,6 +2196,8 @@ DENG2_PIMPL(ResourceSystem)
 
     void loopIteration()
     {
+        /// @todo Refactor: TaskPool has a signal (or audience) when all tasks are complete.
+        /// No need to check on every loop iteration.
         if(convertSavegameTasks.isDone())
         {
             LOG_AS("ResourceSystem");

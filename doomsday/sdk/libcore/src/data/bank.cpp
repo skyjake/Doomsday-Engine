@@ -111,8 +111,7 @@ private:
 
 } // namespace internal
 
-DENG2_PIMPL(Bank),
-DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via main Loop
+DENG2_PIMPL(Bank)
 {
     /**
      * Data item. Has ownership of the in-memory cached data and the source
@@ -535,6 +534,7 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
     DataTree items;
     TaskPool jobs;
     NotifyQueue notifications;
+    LoopCallback mainCall;
 
     Instance(Public *i, char const *name, Flags const &flg)
         : Base(i)
@@ -550,7 +550,6 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
 
     ~Instance()
     {
-        Loop::get().audienceForIteration() -= this;
         destroySerialCache();
     }
 
@@ -674,14 +673,8 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
         notifications.put(new Notification(notif));
         if(isThreaded())
         {
-            Loop::get().audienceForIteration() += this;
+            mainCall.enqueue([this] () { performNotifications(); });
         }
-    }
-
-    void loopIteration()
-    {
-        Loop::get().audienceForIteration() -= this;
-        performNotifications();
     }
 
     void performNotifications()
