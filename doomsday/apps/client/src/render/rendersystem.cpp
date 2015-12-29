@@ -26,6 +26,7 @@
 #include <de/Function>
 #include <de/GLUniform>
 #include "clientapp.h"
+#include "render/environ.h"
 #include "render/rend_main.h"
 #include "render/rend_halo.h"
 #include "render/angleclipper.h"
@@ -53,6 +54,7 @@ DENG2_PIMPL(RenderSystem)
     Binder binder;
     Record renderModule;
 
+    render::Environment environ;
     ModelRenderer models;
     SkyDrawable sky;
     SettingsRegister settings;
@@ -418,6 +420,11 @@ ImageBank &RenderSystem::images()
 GLUniform const &RenderSystem::uMapTime() const
 {
     return d->uMapTime;
+}
+
+render::Environment &RenderSystem::environment()
+{
+    return d->environ;
 }
 
 ModelRenderer &RenderSystem::modelRenderer()

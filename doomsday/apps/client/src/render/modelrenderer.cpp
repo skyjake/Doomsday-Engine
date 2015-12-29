@@ -20,6 +20,7 @@
 #include "render/stateanimator.h"
 #include "render/rend_main.h"
 #include "render/vissprite.h"
+#include "render/environ.h"
 #include "gl/gl_main.h"
 #include "world/p_players.h"
 #include "world/clientmobjthinkerdata.h"
@@ -31,7 +32,6 @@
 #include <de/ScriptedInfo>
 #include <de/NativeValue>
 #include <de/MultiAtlas>
-#include <de/ImageFile>
 
 #include <QHash>
 
@@ -121,7 +121,6 @@ DENG2_PIMPL(ModelRenderer)
     GLUniform uFogRange         { "uFogRange",         GLUniform::Vec4 };
     GLUniform uFogColor         { "uFogColor",         GLUniform::Vec4 };
 
-    GLTexture reflectionCube;
     Matrix4f inverseLocal; ///< Translation ignored, this is used for light vectors.
     int lightCount = 0;
 
@@ -136,43 +135,6 @@ DENG2_PIMPL(ModelRenderer)
         // The default shader is used whenever a model does not specifically
         // request another one.
         loadProgram(SHADER_DEFAULT);
-
-        // Prepare a generic reflection cube map.
-#if 1
-        /// @todo Use assets for getting the cubemap.
-        String const cubePath = "/home/cubemap.jpg";
-        if(App::rootFolder().has(cubePath))
-        {
-            Image img = App::rootFolder().locate<ImageFile const>(cubePath).image();
-            Image::Size size(img.width() / 6, img.height());
-            reflectionCube.setMinFilter(gl::Linear, gl::MipLinear);
-            reflectionCube.setWrap(gl::ClampToEdge, gl::ClampToEdge);
-            reflectionCube.setImage(gl::NegativeX, img.subImage(Rectanglei(0*size.x, 0, size.x, size.y)));
-            reflectionCube.setImage(gl::PositiveZ, img.subImage(Rectanglei(1*size.x, 0, size.x, size.y)));
-            reflectionCube.setImage(gl::PositiveX, img.subImage(Rectanglei(2*size.x, 0, size.x, size.y)));
-            reflectionCube.setImage(gl::NegativeZ, img.subImage(Rectanglei(3*size.x, 0, size.x, size.y)));
-            reflectionCube.setImage(gl::NegativeY, img.subImage(Rectanglei(4*size.x, 0, size.x, size.y)));
-            reflectionCube.setImage(gl::PositiveY, img.subImage(Rectanglei(5*size.x, 0, size.x, size.y)));
-            reflectionCube.generateMipmap();
-        }
-#endif
-#if 0
-        QImage img(QSize(256, 256), QImage::Format_ARGB32);
-        img.fill(Qt::red);
-        reflectionCube.setImage(gl::NegativeX, img);
-        img.fill(Qt::green);
-        reflectionCube.setImage(gl::PositiveZ, img);
-        img.fill(Qt::magenta);
-        reflectionCube.setImage(gl::PositiveX, img);
-        img.fill(Qt::cyan);
-        reflectionCube.setImage(gl::NegativeZ, img);
-        img.fill(Qt::yellow);
-        reflectionCube.setImage(gl::NegativeY, img);
-        img.fill(Qt::blue);
-        reflectionCube.setImage(gl::PositiveY, img);
-#endif
-
-        uReflectionTex = reflectionCube;
     }
 
     void deinit()
@@ -183,7 +145,7 @@ DENG2_PIMPL(ModelRenderer)
         atlasPool.clear();
         unloadProgram(*programs[SHADER_DEFAULT]);
 
-        reflectionCube.clear();
+        //reflectionCube.clear();
     }
 
     Atlas *makeAtlas(MultiAtlas &) override
@@ -719,6 +681,24 @@ DENG2_PIMPL(ModelRenderer)
         uEyePos      = inverseLocal * relativeEyePos;
     }
 
+    void setReflectionForBspLeaf(BspLeaf const *bspLeaf)
+    {
+        uReflectionTex = ClientApp::renderSystem().environment().
+                         reflectionInBspLeaf(bspLeaf);
+    }
+
+    void setReflectionForObject(mobj_t const *object)
+    {
+        if(object)
+        {
+            setReflectionForBspLeaf(&Mobj_BspLeafAtOrigin(*object));
+        }
+        else
+        {
+            uReflectionTex = ClientApp::renderSystem().environment().defaultReflection();
+        }
+    }
+
     template <typename Params> // generic to accommodate psprites and vispsprites
     void draw(Params const &p)
     {
@@ -773,6 +753,9 @@ void ModelRenderer::render(vissprite_t const &spr)
     auto const *mobjData = (p.object? &THINKER_DATA(p.object->thinker, ClientMobjThinkerData) :
                                       nullptr);
 
+    // Use the reflection cube map appropriate for the object's location.
+    d->setReflectionForObject(p.object);
+
     d->setupPose((spr.pose.origin + spr.pose.srvo).xzy(),
                  p.model->offset,
                  spr.pose.viewAligned? spr.pose.yawAngleOffset : spr.pose.yaw,
@@ -791,6 +774,8 @@ void ModelRenderer::render(vissprite_t const &spr)
 void ModelRenderer::render(vispsprite_t const &pspr)
 {
     auto const &p = pspr.data.model2;
+
+    d->setReflectionForBspLeaf(pspr.bspLeaf);
 
     // Walk bobbing is specified using angle offsets.
     float yaw   = vang + p.yawAngleOffset;

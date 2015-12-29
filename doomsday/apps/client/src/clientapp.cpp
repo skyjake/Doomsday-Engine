@@ -235,14 +235,14 @@ DENG2_PIMPL(ClientApp)
         }
 
         updater.reset();
-        delete world;
         //delete infineSys;
-        delete winSys;
-        delete svLink;
-        delete rendSys;
-        delete audioSys;
-        delete resourceSys;
         delete inputSys;
+        delete resourceSys;
+        delete winSys;
+        delete audioSys;
+        delete rendSys;
+        delete world;
+        delete svLink;
         delete menuBar;
         clientAppSingleton = 0;
     }
@@ -443,6 +443,10 @@ void ClientApp::initialize()
     }
 #endif
 
+    // Create the world system.
+    d->world = new ClientServerWorld;
+    addSystem(*d->world);
+
     // Create the render system.
     d->rendSys = new RenderSystem;
     addSystem(*d->rendSys);
@@ -476,10 +480,6 @@ void ClientApp::initialize()
 
     //d->infineSys = new InFineSystem;
     //addSystem(*d->infineSys);
-
-    // Create the world system.
-    d->world = new ClientServerWorld;
-    addSystem(*d->world);
 
     // Finally, run the bootstrap script.
     scriptSystem().importModule("bootstrap");

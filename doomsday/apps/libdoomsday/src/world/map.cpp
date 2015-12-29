@@ -36,7 +36,7 @@ DENG2_PIMPL(Map)
         if(manifest) manifest->audienceForDeletion() -= this;
         DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->mapBeingDeleted(self);
     }
-    
+
     void recordBeingDeleted(Record &record)
     {
         // The manifest is not owned by us, it may be deleted by others.
@@ -59,6 +59,12 @@ Map::Map(res::MapManifest *manifest) : d(new Instance(this))
 Map::~Map()
 {}
 
+String Map::id() const
+{
+    if(!hasManifest()) return "";
+    return manifest().gets("id");
+}
+
 bool Map::hasManifest() const
 {
     return d->manifest != nullptr;
@@ -80,7 +86,7 @@ void Map::setManifest(res::MapManifest *newManifest)
     if(d->manifest) d->manifest->audienceForDeletion() -= d;
 
     d->manifest = newManifest;
-    
+
     if(d->manifest) d->manifest->audienceForDeletion() += d;
 }
 

@@ -35,6 +35,7 @@
 class AngleClipper;
 class ModelRenderer;
 class SkyDrawable;
+namespace render { class Environment; }
 
 /**
  * Renderer subsystems, draw lists, etc... @ingroup render
@@ -47,21 +48,19 @@ public:
     // System.
     void timeChanged(de::Clock const &);
 
+    SettingsRegister &settings();
+    SettingsRegister &appearanceSettings();
+
     void glInit();
     void glDeinit();
 
     de::GLShaderBank &shaders();
     de::ImageBank &images();
     de::GLUniform const &uMapTime() const;
-
-    SettingsRegister &settings();
-    SettingsRegister &appearanceSettings();
-
-    AngleClipper &angleClipper() const;
-
+    render::Environment &environment();
     ModelRenderer &modelRenderer();
-
     SkyDrawable &sky();
+    AngleClipper &angleClipper() const;
 
     /**
      * Provides access to the central map geometry buffer.

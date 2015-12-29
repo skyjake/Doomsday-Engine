@@ -42,6 +42,8 @@ public:
     explicit Map(res::MapManifest *manifest = nullptr);
     virtual ~Map();
 
+    de::String id() const;
+
     /**
      * Returns @c true if a resource manifest is associated with the map.
      *
