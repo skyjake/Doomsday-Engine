@@ -320,8 +320,11 @@ GLUniform &GLUniform::operator = (GLTexture const &texture)
 
 GLUniform &GLUniform::operator = (GLTexture const *texture)
 {
-    DENG2_ASSERT(d->type != Sampler2D   || !texture->isCubeMap());
-    DENG2_ASSERT(d->type != SamplerCube ||  texture->isCubeMap());
+    if(texture && texture->isReady())
+    {
+        DENG2_ASSERT(d->type != Sampler2D   || !texture->isCubeMap());
+        DENG2_ASSERT(d->type != SamplerCube ||  texture->isCubeMap());
+    }
 
     if(d->value.tex != texture)
     {
