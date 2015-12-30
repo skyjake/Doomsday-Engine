@@ -33,17 +33,11 @@ highp vec3 transformVector(highp vec3 dir, highp mat4 matrix)
     return normalize((matrix * vec4(dir, 0.0)).xyz);
 }
 
-highp mat3 tangentSpace(highp mat4 modelSpace)
+void setTangentSpace(highp mat4 modelSpace)
 {
-    highp vec3 normal    = transformVector(aNormal, modelSpace);
-    highp vec3 tangent   = transformVector(aTangent, modelSpace);
-    highp vec3 bitangent = transformVector(aBitangent, modelSpace);
-    
-    vTSNormal = normal;
-    vTSTangent = tangent;
-    vTSBitangent = bitangent;
-    
-    return mat3(tangent, bitangent, normal);    
+    vTSNormal    = transformVector(aNormal, modelSpace);
+    vTSTangent   = transformVector(aTangent, modelSpace);
+    vTSBitangent = transformVector(aBitangent, modelSpace);
 }
 
 #endif // DENG_VERTEX_SHADER
@@ -52,7 +46,12 @@ highp mat3 tangentSpace(highp mat4 modelSpace)
 
 highp mat3 fragmentTangentSpace()
 {
-    return mat3(vTSTangent, vTSBitangent, vTSNormal);
+    return mat3(normalize(vTSTangent), normalize(vTSBitangent), normalize(vTSNormal));
+}
+
+highp vec3 modelSpaceNormalVector(highp vec2 uv)
+{
+    return fragmentTangentSpace() * normalVector(uv);
 }
 
 #endif // DENG_FRAGMENT_SHADER

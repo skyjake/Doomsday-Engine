@@ -24,8 +24,11 @@
 
 #define DENG_HAVE_UREFLECTIONTEX
 
+#define MAX_REFLECTION_BIAS 5.0
+
 uniform samplerCube uReflectionTex;
 uniform highp mat4 uReflectionMatrix;
+uniform highp float uReflectionBlur;
 
 /*
  * Given the tangent space @a surfaceNormal, determines the reflection 
@@ -33,39 +36,33 @@ uniform highp mat4 uReflectionMatrix;
  * the fragment's tangent space matrix. @a bias is the mipmap bias for the 
  * reflection.
  */
-highp vec3 reflectedColorBiased(highp vec3 surfaceNormal, float bias)
+highp vec3 reflectedColorBiased(highp vec3 msNormal, float bias)
 {
     // The reflection cube exists in local space, so we will use vectors
     // relative to the object's origin.
-    highp vec3 reflectedDir = 
-        reflect(normalize(vRelativeEyePos), 
-                fragmentTangentSpace() * surfaceNormal);
+    highp vec3 reflectedDir = reflect(normalize(vEyeDir), msNormal);
     
     reflectedDir = (uReflectionMatrix * vec4(reflectedDir, 0.0)).xyz;
         
     // Match world space directions.
     reflectedDir.y = -reflectedDir.y;
-    return textureCube(uReflectionTex, reflectedDir, bias).rgb;
+    return textureCube(uReflectionTex, reflectedDir, min(bias, MAX_REFLECTION_BIAS)).rgb;
 }
 
-highp vec3 reflectedColor(highp vec3 surfaceNormal)
+highp vec3 reflectedColor(highp vec3 msNormal)
 {
-    return reflectedColorBiased(surfaceNormal, 0.0);
+    return reflectedColorBiased(msNormal, 0.0);
 }
 
 highp vec4 diffuseAndReflectedLight(highp vec4 diffuseFactor, highp vec2 diffuseUV,
-                                    highp vec2 specularUV, highp vec3 surfaceNormal)
+                                    highp vec4 specGloss, highp vec3 msNormal)
 {
-    highp vec4 specGloss = specularGloss(specularUV); // from lighting.glsl
-    highp float mipBias = max(0.0, (0.9 - specGloss.a) * 6.0);
-
     // Reflection.
-    highp vec3 reflection = reflectedColorBiased(surfaceNormal, mipBias);
-    highp vec4 color = vec4(reflection.rgb * specGloss.rgb, 0.0);
+    highp float mipBias = uReflectionBlur * (1.0 - specGloss.a);
+    highp vec3 reflection = specGloss.rgb * reflectedColorBiased(msNormal, mipBias);
     
-    // Diffuse.
-    highp vec4 diffuse = diffuseFactor * texture2D(uTex, diffuseUV);
-    color += (diffuse * diffuseLight(surfaceNormal) * // from lighting.glsl
-              vec4(1.0 - specGloss.rgb, 1.0));
-    return color;
+    // Diffuse. Surface opacity is also determined here.
+    highp vec4 color = diffuseFactor * vec4(diffuseLight(msNormal), 1.0) * 
+                       texture2D(uTex, diffuseUV);
+    return color + vec4(reflection, 0.0);
 }

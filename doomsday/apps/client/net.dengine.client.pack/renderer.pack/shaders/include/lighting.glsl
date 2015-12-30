@@ -19,90 +19,60 @@
  */
 
 uniform highp float uEmission; // factor for emissive light
+uniform highp float uGlossiness;
 
 uniform highp vec4 uAmbientLight;
-uniform highp vec4 uLightIntensities[4];        
-uniform highp vec3 uLightDirs[4];
-uniform highp vec3 uEyePos;
+uniform highp vec4 uLightIntensities[4]; // colored
+uniform highp vec3 uLightDirs[4]; // model space
+uniform highp vec3 uEyePos; // model space
 
-varying highp vec3 vLightDirs[4]; // tangent space
-varying highp vec3 vEyeDir;       // tangent space
-varying highp vec3 vRelativeEyePos;
+varying highp vec3 vEyeDir; // from vertex, in model space
 
 #ifdef DENG_VERTEX_SHADER
 
-void calculateSurfaceLighting(highp mat3 surface)
+void calculateEyeDirection(highp vec4 vertex) 
 {
-    vLightDirs[0] = uLightDirs[0] * surface;
-    vLightDirs[1] = uLightDirs[1] * surface;
-    vLightDirs[2] = uLightDirs[2] * surface;
-    vLightDirs[3] = uLightDirs[3] * surface;
-}
-
-void calculateEyeDirection(highp vec4 vertex, highp mat3 surface)
-{
-    vRelativeEyePos = uEyePos - vertex.xyz/vertex.w;
-    vEyeDir = vRelativeEyePos * surface;    
+    vEyeDir = uEyePos - vertex.xyz/vertex.w;
 }
 
 #endif // DENG_VERTEX_SHADER
 
-highp vec4 diffuseLightContrib(int index, highp vec3 normal) 
+highp vec3 diffuseLightContrib(int index, highp vec3 msNormal) 
 {
     if(uLightIntensities[index].a <= 0.001) 
     {
-        return vec4(0.0); // too dim
+        return vec3(0.0); // too dim
     }
-    highp float d = dot(normal, normalize(vLightDirs[index]));
-    return max(d * uLightIntensities[index], vec4(0.0));
+    highp float d = dot(msNormal, uLightDirs[index]);
+    return max(d, 0.0) * uLightIntensities[index].rgb;
 }
 
-highp vec4 diffuseLight(highp vec3 normal)
+highp vec3 diffuseLight(highp vec3 msNormal)
 {
-    return (uAmbientLight + 
-                      diffuseLightContrib(0, normal) + 
-                      diffuseLightContrib(1, normal) + 
-                      diffuseLightContrib(2, normal) + 
-                      diffuseLightContrib(3, normal));
+    return (uAmbientLight.rgb + 
+            diffuseLightContrib(0, msNormal) + 
+            diffuseLightContrib(1, msNormal) + 
+            diffuseLightContrib(2, msNormal) + 
+            diffuseLightContrib(3, msNormal));
 }
 
 #ifdef DENG_HAVE_UTEX
 
-highp vec4 specularLightContrib(highp vec2 specularUV, int index, highp vec3 normal) 
+highp vec3 specularLightContrib(highp vec4 specGloss, int index, highp vec3 msNormal) 
 {
-    if(uLightIntensities[index].a <= 0.001) 
+    if(uLightIntensities[index].a <= 0.001) // a == max of rgb
     {
-        return vec4(0.0); // too dim
+        return vec3(0.0); // Too dim.
     }
-
-    // Is the surface facing the light direction?
-    highp float facing = smoothstep(0.0, 0.2, dot(vLightDirs[index], normal));
-    if(facing <= 0.0)
-    {
-        return vec4(0.0); // wrong way
+    highp vec3 reflectedDir = reflect(-uLightDirs[index], msNormal);
+    highp float refDot = dot(normalize(vEyeDir), reflectedDir);
+    if(refDot < 0.0)
+    {        
+        return vec3(0.0); // Wrong way.
     }
-    
-    highp vec3 reflected = reflect(-vLightDirs[index], normal);
-    
-    // Check the specular texture for parameters.
-    highp vec4 specular = texture2D(uTex, specularUV);
-    highp float shininess = max(1.0, specular.a * 7.0);
-    
-    highp float d =  
-        facing * 
-        dot(normalize(vEyeDir), reflected) * 
-        shininess - max(0.0, shininess - 1.0);
-    return max(0.0, d) * 
-        uLightIntensities[index] * 
-        vec4(specular.rgb * 2.0, max(max(specular.r, specular.g), specular.b));
-}
-
-highp vec4 specularLight(highp vec2 specularUV, highp vec3 normal)
-{
-    return specularLightContrib(specularUV, 0, normal) +
-           specularLightContrib(specularUV, 1, normal) +
-           specularLightContrib(specularUV, 2, normal) +
-           specularLightContrib(specularUV, 3, normal);
+    highp float gloss = uGlossiness * (1.0 - specGloss.a);
+    highp float specPower = pow(refDot, gloss);            
+    return uLightIntensities[index].rgb * specPower * specGloss.rgb;
 }
 
 highp vec4 specularGloss(highp vec2 specularUV)
@@ -110,9 +80,17 @@ highp vec4 specularGloss(highp vec2 specularUV)
     return texture2D(uTex, specularUV);
 }
 
+highp vec3 specularLight(highp vec4 specGloss, highp vec3 msNormal)
+{
+    return specularLightContrib(specGloss, 0, msNormal) +
+           specularLightContrib(specGloss, 1, msNormal) +
+           specularLightContrib(specGloss, 2, msNormal) +
+           specularLightContrib(specGloss, 3, msNormal);
+}
+
 highp vec4 emittedLight(highp vec2 emissiveUV)
 {
-    highp vec4 emission = uEmission * texture2D(uTex, emissiveUV);        
+    highp vec4 emission = uEmission * texture2D(uTex, emissiveUV);
     emission.a = 0.0; // Does not contribute to alpha.
     return emission;
 }
