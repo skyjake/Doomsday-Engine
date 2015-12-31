@@ -18,6 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
+uniform highp float uSpecular; // factor for specular lights
 uniform highp float uEmission; // factor for emissive light
 uniform highp float uGlossiness;
 
@@ -66,13 +67,13 @@ highp vec3 specularLightContrib(highp vec4 specGloss, int index, highp vec3 msNo
     }
     highp vec3 reflectedDir = reflect(-uLightDirs[index], msNormal);
     highp float refDot = dot(normalize(vEyeDir), reflectedDir);
-    if(refDot < 0.0)
+    if(refDot <= 0.0)
     {        
         return vec3(0.0); // Wrong way.
     }
-    highp float gloss = uGlossiness * (1.0 - specGloss.a);
-    highp float specPower = pow(refDot, gloss);            
-    return uLightIntensities[index].rgb * specPower * specGloss.rgb;
+    highp float gloss = max(1.0, uGlossiness * specGloss.a);
+    highp float specPower = pow(refDot, gloss);
+    return uSpecular * uLightIntensities[index].rgb * specPower * specGloss.rgb;
 }
 
 highp vec4 specularGloss(highp vec2 specularUV)

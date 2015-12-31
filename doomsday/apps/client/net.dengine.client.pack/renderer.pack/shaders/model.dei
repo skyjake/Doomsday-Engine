@@ -7,6 +7,7 @@ model.skeletal {
         variable uAlpha          { value = 1 }
         variable uColor          { value <1, 1, 1> }
         variable uOffsetUV       { value <0, 0> }
+        variable uSpecular       { value = 3 }
         variable uEmission       { value = 0 }
         variable uGlossiness     { value = 100 }
         variable uReflectionBlur { value = 10 }
@@ -143,6 +144,7 @@ model.skeletal {
         variable uAlpha          { value = 1.0 }
         variable uColor          { value <1, 1, 1> }
         variable uOffsetUV       { value <0, 0> }
+        variable uSpecular       { value = 3 }
         variable uGlossiness     { value = 100 }
         variable uReflectionBlur { value = 10 }
 
