@@ -40,10 +40,6 @@ public:
     void operator >> (de::PersistentState &toState) const;
     void operator << (de::PersistentState const &fromState);
 
-public slots:
-    void foldAll();
-    void unfoldAll();
-
 protected:
     void preparePanelForOpening();
     void panelDismissed();

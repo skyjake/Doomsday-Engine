@@ -17,6 +17,7 @@
  */
 
 #include "ui/editors/rendererappearanceeditor.h"
+#include "ui/editors/variablegroupeditor.h"
 #include "ui/dialogs/renderersettingsdialog.h"
 #include "ui/widgets/profilepickerwidget.h"
 #include "ui/widgets/cvarchoicewidget.h"
@@ -38,217 +39,10 @@ using namespace ui;
 
 DENG_GUI_PIMPL(RendererAppearanceEditor),
 DENG2_OBSERVES(SettingsRegister, ProfileChange),
-DENG2_OBSERVES(App, GameChange)
+DENG2_OBSERVES(App, GameChange),
+public VariableGroupEditor::IOwner
 {
-    /**
-     * Opens a popup menu for folding/unfolding all settings groups.
-     */
-    struct RightClickHandler : public GuiWidget::IEventHandler
-    {
-        Instance *d;
-
-        RightClickHandler(Instance *inst) : d(inst) {}
-
-        bool handleEvent(GuiWidget &widget, Event const &event)
-        {
-            switch(widget.handleMouseClick(event, MouseEvent::Right))
-            {
-            case MouseClickFinished: {
-                PopupMenuWidget *pop = new PopupMenuWidget;
-                pop->setDeleteAfterDismissed(true);
-                d->self.add(pop);
-                pop->setAnchorAndOpeningDirection(widget.rule(), ui::Left);
-                pop->items()
-                        << new ActionItem(tr("Fold All"),   new SignalAction(&d->self, SLOT(foldAll())))
-                        << new ActionItem(tr("Unfold All"), new SignalAction(&d->self, SLOT(unfoldAll())));
-                pop->open();
-                return true; }
-
-            case MouseClickUnrelated:
-                return false;
-
-            default:
-                return true;
-            }
-        }
-    };
-
-    /**
-     * Foldable group of settings.
-     */
-    class Group : public FoldPanelWidget
-    {
-        /// Action for reseting the group's settings to defaults.
-        struct ResetAction : public Action {
-            Group *group;
-            ResetAction(Group *groupToReset) : group(groupToReset) {}
-            void trigger() {
-                Action::trigger();
-                group->resetToDefaults();
-            }
-        };
-
-    public:
-        Group(RendererAppearanceEditor::Instance *inst, String const &name, String const &titleText)
-            : FoldPanelWidget(name), d(inst), _firstColumnWidth(0)
-        {
-            _group = new GuiWidget;
-            setContent(_group);
-            makeTitle(titleText);
-
-            // Set up a context menu for right-clicking.
-            title().addEventHandler(new RightClickHandler(d));
-
-            // We want the first column of all groups to be aligned with each other.
-            _layout.setColumnFixedWidth(0, *d->firstColumnWidth);
-
-            _layout.setGridSize(2, 0);
-            _layout.setColumnAlignment(0, AlignRight);
-            _layout.setLeftTop(_group->rule().left(), _group->rule().top());
-
-            // Button for reseting this group to defaults.
-            _resetButton = new ButtonWidget;
-            _resetButton->setText(tr("Reset"));
-            _resetButton->setAction(new ResetAction(this));
-            _resetButton->rule()
-                    .setInput(Rule::Right,   d->container->contentRule().right())
-                    .setInput(Rule::AnchorY, title().rule().top() + title().rule().height() / 2)
-                    .setAnchorPoint(Vector2f(0, .5f));
-            _resetButton->disable();
-
-            d->container->add(&title());
-            d->container->add(_resetButton);
-            d->container->add(this);
-        }
-
-        ~Group()
-        {
-            releaseRef(_firstColumnWidth);
-        }
-
-        ButtonWidget &resetButton() { return *_resetButton; }
-
-        void preparePanelForOpening()
-        {
-            FoldPanelWidget::preparePanelForOpening();
-            if(!d->settings.isReadOnlyProfile(d->settings.currentProfile()))
-            {
-                _resetButton->enable();
-            }
-        }
-
-        void panelClosing()
-        {
-            FoldPanelWidget::panelClosing();
-            _resetButton->disable();
-        }
-
-        void addSpace()
-        {
-            _layout << Const(0);
-        }
-
-        void addLabel(String const &text)
-        {
-            _layout << *LabelWidget::newWithText(text, _group);
-        }
-
-        CVarToggleWidget *addToggle(char const *cvar, String const &label)
-        {
-            CVarToggleWidget *w = new CVarToggleWidget(cvar, label);
-            _group->add(w);
-            _layout << *w;
-            return w;
-        }
-
-        CVarChoiceWidget *addChoice(char const *cvar, ui::Direction opening = ui::Up)
-        {
-            CVarChoiceWidget *w = new CVarChoiceWidget(cvar);
-            w->setOpeningDirection(opening);
-            w->popup().useInfoStyle();
-            _group->add(w);
-            _layout << *w;
-            return w;
-        }
-
-        CVarSliderWidget *addSlider(char const *cvar)
-        {
-            auto *w = new CVarSliderWidget(cvar);
-            _group->add(w);
-            _layout << *w;
-            return w;
-        }
-
-        CVarSliderWidget *addSlider(char const *cvar, Ranged const &range, double step, int precision)
-        {
-            auto *w = addSlider(cvar);
-            w->setRange(range, step);
-            w->setPrecision(precision);
-            return w;
-        }
-
-        VariableSliderWidget *addSlider(Variable &var, Ranged const &range, double step, int precision)
-        {
-            auto *w = new VariableSliderWidget(var, range, step);
-            w->setPrecision(precision);
-            _group->add(w);
-            _layout << *w;
-            return w;
-        }
-
-        void commit()
-        {
-            _group->rule().setSize(_layout.width(), _layout.height());
-
-            // Extend the title all the way to the button.
-            title().rule().setInput(Rule::Right, _resetButton->rule().left());
-
-            // Calculate the maximum rule for the first column items.
-            for(int i = 0; i < _layout.gridSize().y; ++i)
-            {
-                GuiWidget *w = _layout.at(Vector2i(0, i));
-                if(w)
-                {
-                    changeRef(_firstColumnWidth, OperatorRule::maximum(w->rule().width(), _firstColumnWidth));
-                }
-            }
-        }
-
-        void fetch()
-        {
-            foreach(Widget *child, _group->childWidgets())
-            {
-                if(ICVarWidget *w = child->maybeAs<ICVarWidget>())
-                {
-                    w->updateFromCVar();
-                }
-            }
-        }
-
-        void resetToDefaults()
-        {
-            foreach(Widget *child, _group->childWidgets())
-            {
-                if(ICVarWidget *w = child->maybeAs<ICVarWidget>())
-                {
-                    d->settings.resetSettingToDefaults(w->cvarPath());
-                    w->updateFromCVar();
-                }
-            }
-        }
-
-        Rule const &firstColumnWidth() const
-        {
-            return *_firstColumnWidth;
-        }
-
-    private:
-        RendererAppearanceEditor::Instance *d;
-        ButtonWidget *_resetButton;
-        GuiWidget *_group;
-        GridLayout _layout;
-        Rule const *_firstColumnWidth;
-    };
+    using Group = VariableGroupEditor;
 
     SettingsRegister &settings;
     DialogContentStylist stylist;
@@ -602,6 +396,21 @@ DENG2_OBSERVES(App, GameChange)
         releaseRef(firstColumnWidth);
     }
 
+    void resetToDefaults(String const &settingName)
+    {
+        settings.resetSettingToDefaults(settingName);
+    }
+
+    Rule const &firstColumnWidthRule() const
+    {
+        return *firstColumnWidth;
+    }
+
+    ScrollAreaWidget &containerWidget()
+    {
+        return *container;
+    }
+
     void currentGameChanged(game::Game const &newGame)
     {
         if(newGame.isNull())
@@ -638,8 +447,8 @@ DENG2_OBSERVES(App, GameChange)
         {
             if(Group *g = child->maybeAs<Group>())
             {
+                g->setResetable(!isReadOnly);
                 g->fetch();
-
                 g->resetButton().enable(!isReadOnly && g->isOpen());
 
                 // Enable or disable settings based on read-onlyness.
@@ -650,20 +459,6 @@ DENG2_OBSERVES(App, GameChange)
                         st->enable(!isReadOnly);
                     }
                 }
-            }
-        }
-    }
-
-    void foldAll(bool fold)
-    {
-        foreach(Widget *child, container->childWidgets())
-        {
-            if(Group *g = child->maybeAs<Group>())
-            {
-                if(fold)
-                    g->close(0);
-                else
-                    g->open();
             }
         }
     }
@@ -708,7 +503,8 @@ DENG2_OBSERVES(App, GameChange)
 };
 
 RendererAppearanceEditor::RendererAppearanceEditor()
-    : PanelWidget("rendererappearanceeditor"), d(new Instance(this))
+    : PanelWidget("rendererappearanceeditor")
+    , d(new Instance(this))
 {
     setSizePolicy(Fixed);
     setOpeningDirection(Left);
@@ -767,16 +563,6 @@ RendererAppearanceEditor::RendererAppearanceEditor()
 
     // Install the editor.
     ClientWindow::main().setSidebar(ClientWindow::RightEdge, this);
-}
-
-void RendererAppearanceEditor::foldAll()
-{
-    d->foldAll(true);
-}
-
-void RendererAppearanceEditor::unfoldAll()
-{
-    d->foldAll(false);
 }
 
 void RendererAppearanceEditor::operator >> (PersistentState &toState) const

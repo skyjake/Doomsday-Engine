@@ -40,6 +40,7 @@ DENG2_PIMPL_NOREF(NativeValue)
 
     void objectWasDeleted(Deletable *obj)
     {
+        DENG2_UNUSED(obj);
         DENG2_ASSERT(object == obj);
         object = nullptr;
     }
