@@ -144,8 +144,6 @@ DENG2_PIMPL(ModelRenderer)
 
         atlasPool.clear();
         unloadProgram(*programs[SHADER_DEFAULT]);
-
-        //reflectionCube.clear();
     }
 
     Atlas *makeAtlas(MultiAtlas &) override
@@ -572,7 +570,7 @@ DENG2_PIMPL(ModelRenderer)
     void setupLighting(VisEntityLighting const &lighting)
     {
         // Ambient color and lighting vectors.
-        setAmbientLight(lighting.ambientColor * .8f);
+        setAmbientLight(lighting.ambientColor * .6f);
         clearLights();
         ClientApp::renderSystem().forAllVectorLights(lighting.vLightListIdx,
                                                      [this] (VectorLightData const &vlight)
@@ -758,7 +756,7 @@ void ModelRenderer::render(vissprite_t const &spr)
 
     d->setupPose((spr.pose.origin + spr.pose.srvo).xzy(),
                  p.model->offset,
-                 spr.pose.viewAligned? spr.pose.yawAngleOffset : spr.pose.yaw,
+                 /*Timer_RealSeconds()*20 +*/ (spr.pose.viewAligned? spr.pose.yawAngleOffset : spr.pose.yaw),
                  0 /*Timer_RealSeconds()*50*/ /* pitch */,
                  mobjData? &mobjData->modelTransformation() : nullptr);
 
