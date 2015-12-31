@@ -161,6 +161,12 @@ void Thread_SetCallback(thread_t thread, void (*terminationFunc)(systhreadexitst
 
 int Sys_WaitThread(thread_t handle, int timeoutMs, systhreadexitstatus_t *exitStatus)
 {
+    if(!handle)
+    {
+        if(exitStatus) *exitStatus = DENG_THREAD_STOPPED_NORMALLY;
+        return 0;
+    }
+
     CallbackThread *t = reinterpret_cast<CallbackThread *>(handle);
     assert(static_cast<QThread *>(t) != QThread::currentThread());
     t->wait(timeoutMs);
