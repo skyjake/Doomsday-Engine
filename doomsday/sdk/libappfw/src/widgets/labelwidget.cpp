@@ -719,7 +719,7 @@ void LabelWidget::setMaximumTextWidth(int pixels)
     setMaximumTextWidth(Const(pixels));
 }
 
-void de::LabelWidget::setMaximumTextWidth(Rule const &pixels)
+void LabelWidget::setMaximumTextWidth(Rule const &pixels)
 {
     changeRef(d->maxTextWidth, pixels);
     requestGeometry();

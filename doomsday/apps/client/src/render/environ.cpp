@@ -166,7 +166,7 @@ DENG2_PIMPL(Environment)
         if(found != maps.constEnd())
         {
             EnvMaps const &env = found.value();
-            DENG2_ASSERT(env.interior.isEmpty() && env.exterior.isEmpty());
+            DENG2_ASSERT(!(env.interior.isEmpty() && env.exterior.isEmpty()));
 
             if(!env.exterior.isEmpty())
             {

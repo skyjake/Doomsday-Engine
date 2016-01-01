@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/GLTexture"
@@ -146,8 +146,7 @@ DENG2_PIMPL(GLTexture)
 
     void glBind() const
     {
-        DENG2_ASSERT(name != 0);
-
+        //DENG2_ASSERT(name != 0);
         glBindTexture(texTarget, name); LIBGUI_ASSERT_GL_OK();
     }
 
@@ -161,7 +160,7 @@ DENG2_PIMPL(GLTexture)
      * calling.
      */
     void glUpdateParamsOfBoundTexture()
-    {        
+    {
         glTexParameteri(texTarget, GL_TEXTURE_WRAP_S,     glWrap(wrap.x));
         glTexParameteri(texTarget, GL_TEXTURE_WRAP_T,     glWrap(wrap.y));
         glTexParameteri(texTarget, GL_TEXTURE_MAG_FILTER, magFilter == Nearest? GL_NEAREST : GL_LINEAR);
