@@ -97,6 +97,7 @@
 #include "render/vr.h"
 
 #include "ui/editors/rendererappearanceeditor.h"
+#include "ui/editors/modelasseteditor.h"
 #include "ui/ui_main.h"
 
 using namespace de;
@@ -6172,6 +6173,24 @@ D_CMD(OpenRendererAppearanceEditor)
     return true;
 }
 
+D_CMD(OpenModelAssetEditor)
+{
+    DENG2_UNUSED3(src, argc, argv);
+
+    if(!App_GameLoaded())
+    {
+        LOG_ERROR("A game must be loaded before the Model Asset editor can be opened");
+        return false;
+    }
+
+    if(!ClientWindow::main().hasSidebar())
+    {
+        ModelAssetEditor *editor = new ModelAssetEditor;
+        editor->open();
+    }
+    return true;
+}
+
 D_CMD(LowRes)
 {
     DENG2_UNUSED3(src, argv, argc);
@@ -6361,6 +6380,7 @@ void Rend_Register()
     C_VAR_BYTE("rend-dev-vertex-show-indices", &devVertexIndices, CVF_NO_ARCHIVE, 0, 1);
 
     C_CMD("rendedit", "", OpenRendererAppearanceEditor);
+    C_CMD("modeledit", "", OpenModelAssetEditor);
 
     C_CMD_FLAGS("lowres", "", LowRes, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("mipmap", "i", MipMap, CMDF_NO_DEDICATED);

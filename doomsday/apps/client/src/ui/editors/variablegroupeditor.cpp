@@ -61,7 +61,7 @@ DENG2_PIMPL(VariableGroupEditor)
 {
     IOwner *owner;
     bool resetable = false;
-    ButtonWidget *resetButton;
+    SafeWidgetPtr<ButtonWidget> resetButton;
     GuiWidget *group;
     GridLayout layout;
     Rule const *firstColumnWidth;
@@ -111,7 +111,7 @@ VariableGroupEditor::VariableGroupEditor(IOwner *owner, String const &name, Stri
     d->layout.setLeftTop(d->group->rule().left(), d->group->rule().top());
 
     // Button for reseting this group to defaults.
-    d->resetButton = new ButtonWidget;
+    d->resetButton.reset(new ButtonWidget);
     d->resetButton->setText(tr("Reset"));
     d->resetButton->setAction(new SignalAction(this, SLOT(resetToDefaults())));
     d->resetButton->rule()
@@ -123,6 +123,12 @@ VariableGroupEditor::VariableGroupEditor(IOwner *owner, String const &name, Stri
     d->owner->containerWidget().add(&title());
     d->owner->containerWidget().add(d->resetButton);
     d->owner->containerWidget().add(this);
+}
+
+void VariableGroupEditor::destroyAssociatedWidgets()
+{
+    GuiWidget::destroy(d->resetButton);
+    GuiWidget::destroy(&title());
 }
 
 void VariableGroupEditor::setResetable(bool resetable)
@@ -199,12 +205,29 @@ CVarSliderWidget *VariableGroupEditor::addSlider(char const *cvar, Ranged const 
     return w;
 }
 
+VariableToggleWidget *VariableGroupEditor::addToggle(Variable &var, String const &label)
+{
+    auto *w = new VariableToggleWidget(label, var);
+    d->group->add(w);
+    d->layout << *w;
+    return w;
+}
+
 VariableSliderWidget *VariableGroupEditor::addSlider(Variable &var, Ranged const &range, double step, int precision)
 {
     auto *w = new VariableSliderWidget(var, range, step);
     w->setPrecision(precision);
     d->group->add(w);
     d->layout << *w;
+    return w;
+}
+
+VariableLineEditWidget *VariableGroupEditor::addLineEdit(Variable &var)
+{
+    auto *w = new VariableLineEditWidget(var);
+    d->group->add(w);
+    d->layout << *w;
+    w->rule().setInput(Rule::Width, style().rules().rule("slider.width"));
     return w;
 }
 

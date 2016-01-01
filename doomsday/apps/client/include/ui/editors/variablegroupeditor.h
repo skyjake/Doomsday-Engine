@@ -32,6 +32,11 @@
 
 /**
  * Editor for adjusting a group of variables.
+ *
+ * This widget has an unusual ownership for a couple of its subwidgets.
+ * Ownership of both the title widget (created by the base class) and the reset
+ * button (created by VariableGroupEditor) is given to the IOwner's container
+ * widget. Call destroyAssociatedWidgets() to destroy these widgets manually.
  */
 class VariableGroupEditor : public de::FoldPanelWidget
 {
@@ -49,6 +54,12 @@ public:
 public:
     VariableGroupEditor(IOwner *owner, de::String const &name, de::String const &titleText);
 
+    /**
+     * Destroys the title widget and the reset button, which are not owned
+     * by this widget.
+     */
+    void destroyAssociatedWidgets();
+
     void setResetable(bool resetable);
 
     IOwner &owner();
@@ -63,7 +74,9 @@ public:
     CVarSliderWidget *addSlider(char const *cvar);
     CVarSliderWidget *addSlider(char const *cvar, de::Ranged const &range, double step, int precision);
 
+    de::VariableToggleWidget *addToggle(de::Variable &var, de::String const &label);
     de::VariableSliderWidget *addSlider(de::Variable &var, de::Ranged const &range, double step, int precision);
+    de::VariableLineEditWidget *addLineEdit(de::Variable &var);
 
     /**
      * Commit all added widgets to the group. This finalizes the layout of the
