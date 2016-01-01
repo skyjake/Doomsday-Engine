@@ -120,7 +120,7 @@ public:
 
     virtual void sort(SortMethod method = Ascending);
 
-    typedef bool (*LessThanFunc)(Item const &, Item const &);
+    typedef std::function<bool (Item const &, Item const &)> LessThanFunc;
 
     virtual void sort(LessThanFunc func) = 0;
 
@@ -130,6 +130,8 @@ public:
      * Returns the total number of items in the data context.
      */
     virtual dsize size() const = 0;
+
+    LoopResult forAll(std::function<LoopResult (Item &)> func);
 
     LoopResult forAll(std::function<LoopResult (Item const &)> func) const;
 

@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/ui/Data"
@@ -26,16 +26,6 @@ namespace de {
 namespace ui {
 
 dsize const Data::InvalidPos = dsize(-1);
-
-static bool itemLessThan(Item const &a, Item const &b)
-{
-    return a.sortKey().compareWithoutCase(b.sortKey()) < 0;
-}
-
-static bool itemGreaterThan(Item const &a, Item const &b)
-{
-    return a.sortKey().compareWithoutCase(b.sortKey()) > 0;
-}
 
 DENG2_PIMPL_NOREF(Data)
 {
@@ -56,13 +46,27 @@ void Data::sort(SortMethod method)
     switch(method)
     {
     case Ascending:
-        sort(itemLessThan);
+        sort([] (Item const &a, Item const &b) {
+            return a.sortKey().compareWithoutCase(b.sortKey()) < 0;
+        });
         break;
 
     case Descending:
-        sort(itemGreaterThan);
+        sort([] (Item const &a, Item const &b) {
+            return a.sortKey().compareWithoutCase(b.sortKey()) > 0;
+        });
         break;
     }
+}
+
+LoopResult Data::forAll(std::function<LoopResult (Item &)> func)
+{
+    for(DataPos pos = 0; pos < size(); ++pos)
+    {
+        if(auto result = func(at(pos)))
+            return result;
+    }
+    return LoopContinue;
 }
 
 LoopResult Data::forAll(std::function<LoopResult (Item const &)> func) const
