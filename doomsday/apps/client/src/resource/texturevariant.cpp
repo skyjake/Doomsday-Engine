@@ -565,17 +565,17 @@ uint Texture::Variant::prepare()
     gl::UploadMethod uploadMethod = GL_ChooseUploadMethod(&c);
     GL_UploadTextureContent(c, uploadMethod);
 
-    LOGDEV_RES_VERBOSE("Prepared \"%s\" variant (glName:%u)%s")
+    LOGDEV_RES_XVERBOSE("Prepared \"%s\" variant (glName:%u)%s")
         << d->texture.manifest().composeUri() << uint(d->glTexName)
         << (uploadMethod == gl::Immediate? " while not busy!" : "");
-    LOGDEV_RES_VERBOSE("  Content: %s") << Image_Description(image);
-    LOGDEV_RES_VERBOSE("  Specification %p: %s") << &d->spec << d->spec.asText();
+    LOGDEV_RES_XVERBOSE("  Content: %s") << Image_Description(image);
+    LOGDEV_RES_XVERBOSE("  Specification %p: %s") << &d->spec << d->spec.asText();
 
     // Are we setting the logical dimensions to the pixel dimensions
     // of the source image?
     if(d->texture.width() == 0 && d->texture.height() == 0)
     {
-        LOG_RES_VERBOSE("World dimensions for \"%s\" taken from image pixels %s")
+        LOG_RES_XVERBOSE("World dimensions for \"%s\" taken from image pixels %s")
             << d->texture.manifest().composeUri() << image.size.asText();
 
         d->texture.setDimensions(image.size.toVector2i());
