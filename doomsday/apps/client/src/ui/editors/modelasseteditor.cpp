@@ -285,7 +285,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
             {
                 render::StateAnimator const *anim = mobjData->animator();
 
-                if(anim && (*anim)[QStringLiteral("ID")] == assetId)
+                if(anim && (*anim)["ID"] == assetId)
                 {
                     instChoice->items() << new ChoiceItem(mobjItemLabel(th->id), th->id);
                 }
