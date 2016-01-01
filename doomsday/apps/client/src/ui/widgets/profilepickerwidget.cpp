@@ -34,6 +34,7 @@ DENG_GUI_PIMPL(ProfilePickerWidget)
     SettingsRegister &settings;
     String description;
     PopupButtonWidget *button;
+    bool invertedPopups = false;
 
     Instance(Public *i, SettingsRegister& reg)
         : Base(i)
@@ -96,6 +97,12 @@ ButtonWidget &ProfilePickerWidget::button()
     return *d->button;
 }
 
+void ProfilePickerWidget::useInvertedStyleForPopups()
+{
+    d->invertedPopups = true;
+    popup().useInfoStyle();
+}
+
 void ProfilePickerWidget::updateStyle()
 {
     ChoiceWidget::updateStyle();
@@ -110,6 +117,7 @@ void ProfilePickerWidget::openMenu()
     auto *menu = new PopupMenuWidget;
     menu->setAllowDirectionFlip(false);
     menu->setDeleteAfterDismissed(true);
+    if(d->invertedPopups) menu->useInfoStyle();
     d->button->setPopup(*menu, ui::Down);
     menu->items()
             << new ActionItem(tr("Edit"), new SignalAction(this, SLOT(edit())))

@@ -71,6 +71,7 @@ public VariableGroupEditor::IOwner
 
         // The contents of the editor will scroll.
         container->add(profile = new ProfilePickerWidget(settings, tr("appearance")));
+        profile->useInvertedStyleForPopups();
 
         // Sky settings.
         skyGroup = new Group(this, "sky", tr("Sky"));

@@ -47,6 +47,8 @@ public:
 
     ButtonWidget &button();
 
+    void useInvertedStyleForPopups();
+
 signals:
     void profileChanged();
     void profileEditorRequested();
