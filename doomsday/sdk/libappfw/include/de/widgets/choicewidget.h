@@ -76,6 +76,7 @@ public:
 
     void setSelected(ui::Data::Pos pos);
 
+    bool isValidSelection() const;
     ui::Data::Pos selected() const;
     ui::Item const &selectedItem() const;
 

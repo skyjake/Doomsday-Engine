@@ -234,6 +234,11 @@ void ChoiceWidget::setSelected(Data::Pos pos)
     }
 }
 
+bool ChoiceWidget::isValidSelection() const
+{
+    return d->isValidSelection();
+}
+
 Data::Pos ChoiceWidget::selected() const
 {
     return d->selected;
