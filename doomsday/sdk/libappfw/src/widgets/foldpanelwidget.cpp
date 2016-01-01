@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/FoldPanelWidget"
@@ -94,14 +94,14 @@ DENG2_PIMPL_NOREF(FoldPanelWidget)
         }
     };
 
-    ButtonWidget *title  = nullptr; // not owned
+    SafeWidgetPtr<ButtonWidget> title;
     GuiWidget *container = nullptr; ///< Held here while not part of the widget tree.
-    DialogContentStylist stylist;    
-    
+    DialogContentStylist stylist;
+
     ~Instance()
     {
         stylist.clear(); // References the container.
-        
+
         // We have ownership of the content when the fold is closed.
         delete container;
     }
@@ -112,7 +112,7 @@ FoldPanelWidget::FoldPanelWidget(String const &name) : PanelWidget(name), d(new 
 
 ButtonWidget *FoldPanelWidget::makeTitle(String const &text)
 {
-    d->title = new ButtonWidget;
+    d->title.reset(new ButtonWidget);
 
     d->title->setSizePolicy(Expand, Expand);
     d->title->setText(text);
@@ -133,7 +133,7 @@ ButtonWidget *FoldPanelWidget::makeTitle(String const &text)
 
 ButtonWidget &FoldPanelWidget::title()
 {
-    DENG2_ASSERT(d->title != 0);
+    DENG2_ASSERT(d->title != nullptr);
     return *d->title;
 }
 

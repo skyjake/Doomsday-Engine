@@ -208,9 +208,11 @@ DENG_GUI_PIMPL(PanelWidget)
         }
     }
 
+    DENG2_PIMPL_AUDIENCE(AboutToOpen)
     DENG2_PIMPL_AUDIENCE(Close)
 };
 
+DENG2_AUDIENCE_METHOD(PanelWidget, AboutToOpen)
 DENG2_AUDIENCE_METHOD(PanelWidget, Close)
 
 PanelWidget::PanelWidget(String const &name) : GuiWidget(name), d(new Instance(this))
@@ -336,6 +338,11 @@ bool PanelWidget::handleEvent(Event const &event)
 void PanelWidget::open()
 {
     if(d->opened) return;
+
+    DENG2_FOR_AUDIENCE2(AboutToOpen, i)
+    {
+        i->panelAboutToOpen(*this);
+    }
 
     d->dismissTimer.stop();
 

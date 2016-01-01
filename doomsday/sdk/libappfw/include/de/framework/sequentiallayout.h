@@ -42,6 +42,8 @@ public:
 
     void clear();
 
+    void setStartY(Rule const &startY);
+
     /**
      * Sets the direction of the layout. The direction can only be changed
      * when the layout is empty.

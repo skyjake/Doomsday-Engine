@@ -42,6 +42,8 @@ class LIBAPPFW_PUBLIC PanelWidget : public GuiWidget
     Q_OBJECT
 
 public:
+    DENG2_DEFINE_AUDIENCE2(AboutToOpen, void panelAboutToOpen(PanelWidget &))
+
     /**
      * Audience to be notified when the panel is closing.
      */
