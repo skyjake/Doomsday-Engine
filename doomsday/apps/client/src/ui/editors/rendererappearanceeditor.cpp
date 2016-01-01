@@ -45,10 +45,6 @@ public VariableGroupEditor::IOwner
     using Group = VariableGroupEditor;
 
     SettingsRegister &settings;
-    DialogContentStylist stylist;
-    ScrollAreaWidget *container;
-    IndirectRule *firstColumnWidth; ///< Shared by all groups.
-    ButtonWidget *close;
     ProfilePickerWidget *profile;
 
     Group *skyGroup;
@@ -66,25 +62,15 @@ public VariableGroupEditor::IOwner
     Instance(Public *i)
         : Base(i)
         , settings(ClientApp::renderSystem().appearanceSettings())
-        , firstColumnWidth(new IndirectRule)
     {
         // The editor will close automatically when going to Ring Zero.
         App::app().audienceForGameChange() += this;
-
         settings.audienceForProfileChange += this;
 
+        GuiWidget *container = &self.containerWidget();
+
         // The contents of the editor will scroll.
-        container = new ScrollAreaWidget;
-        container->enableIndicatorDraw(true);
-        stylist.setContainer(*container);
-
-        container->add(close   = new ButtonWidget);
         container->add(profile = new ProfilePickerWidget(settings, tr("appearance")));
-
-        close->setImage(style().images().image("close.ringless"));
-        close->setImageColor(style().colors().colorf("altaccent"));
-        close->setOverrideImageSize(style().fonts().font("title").height().valuei());
-        close->setAction(new SignalAction(thisPublic, SLOT(close())));
 
         // Sky settings.
         skyGroup = new Group(this, "sky", tr("Sky"));
@@ -384,31 +370,27 @@ public VariableGroupEditor::IOwner
         partGroup->addSlider("rend-particle-visible-near", Ranged(0, 1000), 1, 0)->setMinLabel(tr("None"));
 
         partGroup->commit();
-
-        // Now we can define the first column width.
-        firstColumnWidth->setSource(maximumOfAllGroupFirstColumns());
     }
 
     ~Instance()
     {
         App::app().audienceForGameChange() -= this;
         settings.audienceForProfileChange -= this;
-        releaseRef(firstColumnWidth);
+    }
+
+    Rule const &firstColumnWidthRule() const
+    {
+        return self.firstColumnWidth();
+    }
+
+    ScrollAreaWidget &containerWidget()
+    {
+        return self.containerWidget();
     }
 
     void resetToDefaults(String const &settingName)
     {
         settings.resetSettingToDefaults(settingName);
-    }
-
-    Rule const &firstColumnWidthRule() const
-    {
-        return *firstColumnWidth;
-    }
-
-    ScrollAreaWidget &containerWidget()
-    {
-        return *container;
     }
 
     void currentGameChanged(game::Game const &newGame)
@@ -426,24 +408,11 @@ public VariableGroupEditor::IOwner
         fetch();
     }
 
-    Rule const &maximumOfAllGroupFirstColumns()
-    {
-        Rule const *max = 0;
-        foreach(Widget *child, container->childWidgets())
-        {
-            if(Group *g = child->maybeAs<Group>())
-            {
-                changeRef(max, OperatorRule::maximum(g->firstColumnWidth(), max));
-            }
-        }
-        return *refless(max);
-    }
-
     void fetch()
     {
         bool const isReadOnly = settings.isReadOnlyProfile(settings.currentProfile());
 
-        foreach(Widget *child, container->childWidgets())
+        foreach(Widget *child, self.containerWidget().childWidgets())
         {
             if(Group *g = child->maybeAs<Group>())
             {
@@ -465,11 +434,12 @@ public VariableGroupEditor::IOwner
 
     void saveFoldState(PersistentState &toState)
     {
-        foreach(Widget *child, container->childWidgets())
+        foreach(Widget *child, self.containerWidget().childWidgets())
         {
             if(Group *g = child->maybeAs<Group>())
             {
-                toState.objectNamespace().set(self.name() + "." + g->name() + ".open", g->isOpen());
+                toState.objectNamespace().set(self.name() + "." + g->name() + ".open",
+                                              g->isOpen());
             }
         }
     }
@@ -478,7 +448,7 @@ public VariableGroupEditor::IOwner
     {
         bool gotState = false;
 
-        foreach(Widget *child, container->childWidgets())
+        foreach(Widget *child, self.containerWidget().childWidgets())
         {
             if(Group *g = child->maybeAs<Group>())
             {
@@ -503,66 +473,36 @@ public VariableGroupEditor::IOwner
 };
 
 RendererAppearanceEditor::RendererAppearanceEditor()
-    : PanelWidget("rendererappearanceeditor")
+    : SidebarWidget(tr("Renderer Appearance"), "rendererappearanceeditor")
     , d(new Instance(this))
 {
-    setSizePolicy(Fixed);
-    setOpeningDirection(Left);
-    set(Background(style().colors().colorf("background")).withSolidFillOpacity(1));
-
     d->profile->setOpeningDirection(Down);
 
-    // Set up the editor UI.
-    LabelWidget *title = LabelWidget::newWithText("Renderer Appearance", d->container);
-    title->setFont("title");
-    title->setTextColor("accent");
-
-    LabelWidget *profLabel = LabelWidget::newWithText(tr("Profile:"), d->container);
+    LabelWidget *profLabel = LabelWidget::newWithText(tr("Profile:"), &containerWidget());
 
     // Layout.
-    RuleRectangle const &area = d->container->contentRule();
-    title->rule()
-            .setInput(Rule::Top,  area.top())
-            .setInput(Rule::Left, area.left());
-    d->close->rule()
-            .setInput(Rule::Right,  area.right())
-            .setInput(Rule::Bottom, title->rule().bottom());
-
-    SequentialLayout layout(area.left(), title->rule().bottom(), Down);
-
-    layout.append(*profLabel, SequentialLayout::IgnoreMinorAxis);
+    layout().append(*profLabel, SequentialLayout::IgnoreMinorAxis);
     d->profile->rule()
             .setInput(Rule::Left, profLabel->rule().right())
             .setInput(Rule::Top,  profLabel->rule().top());
 
-    layout << d->lightGroup->title()    << *d->lightGroup
-           << d->volLightGroup->title() << *d->volLightGroup
-           << d->glowGroup->title()     << *d->glowGroup
-           << d->shadowGroup->title()   << *d->shadowGroup
-           << d->lensGroup->title()     << *d->lensGroup
-           << d->matGroup->title()      << *d->matGroup
-           << d->objectGroup->title()   << *d->objectGroup
-           << d->modelGroup->title()    << *d->modelGroup
-           << d->spriteGroup->title()   << *d->spriteGroup
-           << d->partGroup->title()     << *d->partGroup
-           << d->skyGroup->title()      << *d->skyGroup;
+    layout() << d->lightGroup->title()    << *d->lightGroup
+             << d->volLightGroup->title() << *d->volLightGroup
+             << d->glowGroup->title()     << *d->glowGroup
+             << d->shadowGroup->title()   << *d->shadowGroup
+             << d->lensGroup->title()     << *d->lensGroup
+             << d->matGroup->title()      << *d->matGroup
+             << d->objectGroup->title()   << *d->objectGroup
+             << d->modelGroup->title()    << *d->modelGroup
+             << d->spriteGroup->title()   << *d->spriteGroup
+             << d->partGroup->title()     << *d->partGroup
+             << d->skyGroup->title()      << *d->skyGroup;
 
-    // Update container size.
-    d->container->setContentSize(OperatorRule::maximum(layout.width(),
-                                                       profLabel->rule().width() +
-                                                       d->profile->rule().width() +
-                                                       d->profile->button().rule().width(),
-                                                       style().rules().rule("rendererappearance.width")),
-                                 title->rule().height() + layout.height());
-    d->container->rule().setSize(d->container->contentRule().width() +
-                                 d->container->margins().width(),
-                                 rule().height());
-    setContent(d->container);
+    updateSidebarLayout(profLabel->rule().width() +
+                        d->profile->rule().width() +
+                        d->profile->button().rule().width());
 
     d->fetch();
-
-    // Install the editor.
-    ClientWindow::main().setSidebar(ClientWindow::RightEdge, this);
 }
 
 void RendererAppearanceEditor::operator >> (PersistentState &toState) const
@@ -573,16 +513,4 @@ void RendererAppearanceEditor::operator >> (PersistentState &toState) const
 void RendererAppearanceEditor::operator << (PersistentState const &fromState)
 {
     d->restoreFoldState(fromState);
-}
-
-void RendererAppearanceEditor::preparePanelForOpening()
-{
-    PanelWidget::preparePanelForOpening();
-}
-
-void RendererAppearanceEditor::panelDismissed()
-{
-    PanelWidget::panelDismissed();
-
-    ClientWindow::main().unsetSidebar(ClientWindow::RightEdge);
 }

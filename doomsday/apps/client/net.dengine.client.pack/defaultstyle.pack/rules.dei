@@ -80,6 +80,6 @@ coloradjustment {
     rule slider { constant $= slider.width.constant * 1.36 }
 }
 
-rendererappearance {
+sidebar {
     rule width { constant $= UNIT * 100 }
 }

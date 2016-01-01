@@ -53,10 +53,7 @@ public:
 
     IOwner &owner();
     de::ButtonWidget &resetButton();
-
     de::Rule const &firstColumnWidth() const;
-    void preparePanelForOpening();
-    void panelClosing();
 
     void addSpace();
     void addLabel(de::String const &text);
@@ -75,6 +72,10 @@ public:
     void commit();
 
     void fetch();
+
+    // PanelWidget.
+    void preparePanelForOpening();
+    void panelClosing();
 
 public slots:
     virtual void resetToDefaults();

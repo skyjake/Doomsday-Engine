@@ -19,8 +19,8 @@
 #ifndef DENG_CLIENT_RENDERERAPPEARANCEEDITOR_H
 #define DENG_CLIENT_RENDERERAPPEARANCEEDITOR_H
 
-#include <de/PanelWidget>
 #include <de/IPersistent>
+#include "ui/widgets/sidebarwidget.h"
 
 /**
  * Editor for modifying the settings for the renderer's visual appearance.
@@ -29,8 +29,8 @@
  *
  * @see ClientApp::rendererAppearanceSettings()
  */
-class RendererAppearanceEditor : public de::PanelWidget,
-                                 public de::IPersistent
+class RendererAppearanceEditor : public SidebarWidget
+                               , public de::IPersistent
 {
     Q_OBJECT
 
@@ -39,10 +39,6 @@ public:
 
     void operator >> (de::PersistentState &toState) const;
     void operator << (de::PersistentState const &fromState);
-
-protected:
-    void preparePanelForOpening();
-    void panelDismissed();
 
 private:
     DENG2_PRIVATE(d)
