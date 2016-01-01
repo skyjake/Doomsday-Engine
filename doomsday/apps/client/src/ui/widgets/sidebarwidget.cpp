@@ -35,7 +35,7 @@ DENG_GUI_PIMPL(SidebarWidget)
     IndirectRule *firstColumnWidth; ///< Shared by all groups.
     LabelWidget *title;
     ButtonWidget *close;
-    SequentialLayout *layout;
+    std::unique_ptr<SequentialLayout> layout;
 
     Instance(Public *i)
         : Base(i)
@@ -82,7 +82,7 @@ SidebarWidget::SidebarWidget(String const &titleText, String const &name)
             .setInput(Rule::Right,  area.right())
             .setInput(Rule::Bottom, d->title->rule().bottom());
 
-    d->layout = new SequentialLayout(area.left(), d->title->rule().bottom(), Down);
+    d->layout.reset(new SequentialLayout(area.left(), d->title->rule().bottom(), Down));
 
     // Update container size.
     // Now we can define the first column width.
