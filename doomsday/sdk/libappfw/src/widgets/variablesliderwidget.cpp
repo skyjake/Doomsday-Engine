@@ -19,6 +19,8 @@
 #include "de/VariableSliderWidget"
 
 #include <de/NumberValue>
+#include <de/NativeValue>
+#include <de/Animation>
 
 namespace de {
 
@@ -26,6 +28,7 @@ DENG2_PIMPL(VariableSliderWidget)
 , DENG2_OBSERVES(Variable, Deletion)
 , DENG2_OBSERVES(Variable, Change  )
 {
+    ValueType valueType = VariableSliderWidget::Number;
     Variable *var;
 
     Instance(Public *i, Variable &variable) : Base(i), var(&variable)
@@ -43,11 +46,27 @@ DENG2_PIMPL(VariableSliderWidget)
         }
     }
 
+    void init()
+    {
+        self.updateFromVariable();
+        QObject::connect(thisPublic, SIGNAL(valueChangedByUser(double)),
+                         thisPublic, SLOT(setVariableFromWidget()));
+    }
+
     void updateFromVariable()
     {
         if(!var) return;
 
-        self.setValue(var->value<NumberValue>().asNumber());
+        switch(valueType)
+        {
+        case VariableSliderWidget::Number:
+            self.setValue(var->value<NumberValue>().asNumber());
+            break;
+
+        case VariableSliderWidget::Animation:
+            self.setValue(var->value<NativeValue>().nativeObject<de::Animation>()->target());
+            break;
+        }
     }
 
     void setVariableFromWidget()
@@ -55,7 +74,16 @@ DENG2_PIMPL(VariableSliderWidget)
         if(!var) return;
 
         var->audienceForChange() -= this;
-        var->set(NumberValue(self.value()));
+        switch(valueType)
+        {
+        case VariableSliderWidget::Number:
+            var->set(NumberValue(self.value()));
+            break;
+
+        case VariableSliderWidget::Animation:
+            var->value<NativeValue>().nativeObject<de::Animation>()->setValue(float(self.value()));
+            break;
+        }
         var->audienceForChange() += this;
     }
 
@@ -73,13 +101,26 @@ DENG2_PIMPL(VariableSliderWidget)
 
 VariableSliderWidget::VariableSliderWidget(Variable &variable, Ranged const &range,
                                            ddouble step, String const &name)
-    : SliderWidget(name), d(new Instance(this, variable))
+    : SliderWidget(name)
+    , d(new Instance(this, variable))
 {
+    if(!variable.value().is<NumberValue>())
+    {
+        d->valueType = VariableSliderWidget::Animation;
+    }
     setRange(range, step);
-    updateFromVariable();
+    d->init();
+}
 
-    connect(this, SIGNAL(valueChangedByUser(double)),
-            this, SLOT(setVariableFromWidget()));
+VariableSliderWidget::VariableSliderWidget(ValueType valueType,
+                                           Variable &variable, Ranged const &range,
+                                           ddouble step, String const &name)
+    : SliderWidget(name)
+    , d(new Instance(this, variable))
+{
+    d->valueType = valueType;
+    setRange(range, step);
+    d->init();
 }
 
 Variable &VariableSliderWidget::variable() const

@@ -38,8 +38,18 @@ public:
     /// Thrown when the variable is gone and someone tries to access it. @ingroup errors
     DENG2_ERROR(VariableMissingError);
 
+    enum ValueType
+    {
+        Number,
+        Animation
+    };
+
 public:
     VariableSliderWidget(Variable &variable, Ranged const &range, ddouble step = 0,
+                         String const &name = "");
+
+    VariableSliderWidget(ValueType valueType, Variable &variable,
+                         Ranged const &range, ddouble step = 0,
                          String const &name = "");
 
     Variable &variable() const;
