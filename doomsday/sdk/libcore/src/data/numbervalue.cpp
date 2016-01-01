@@ -194,4 +194,9 @@ Value::Text NumberValue::typeId() const
     return "Number";
 }
 
+NumberValue::SemanticHints NumberValue::semanticHints() const
+{
+    return _semantic;
+}
+
 } // namespace de

@@ -61,6 +61,7 @@ public:
     NumberValue(bool initialBoolean);
 
     void setSemanticHints(SemanticHints hints);
+    SemanticHints semanticHints() const;
 
     /**
      * Conversion template that forces a cast to another type.
