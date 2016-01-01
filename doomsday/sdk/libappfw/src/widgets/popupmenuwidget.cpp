@@ -61,7 +61,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
         void alloc()
         {
             _id = root().solidWhitePixel();
-            setSize(Vector2f(1, 1)); //root().atlas().imageRect(_id).size());
+            setSize(Vector2f(1, 1));
         }
 
         void glInit()
@@ -286,6 +286,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
             // Pad buttons according to their image size.
             if(ButtonWidget *button = widget.maybeAs<ButtonWidget>())
             {
+                updateImageColor(*button);
                 if(useExtraPadding)
                 {
                     Rule const *padRule = holdRef(padding);
@@ -307,11 +308,14 @@ DENG_GUI_PIMPL(PopupMenuWidget)
         }
     }
 
+    void updateImageColor(ButtonWidget &button, bool invert = false)
+    {
+        button.setImageColor(style().colors().colorf(invert ^ infoStyle? "inverted.text" : "text"));
+    }
+
     void buttonStateChanged(ButtonWidget &button, ButtonWidget::State state)
     {
-        button.setImageColor(style().colors().colorf
-                             ((state != ButtonWidget::Up) ^ infoStyle? "inverted.text" :
-                                                                       "text"));
+        updateImageColor(button, state != ButtonWidget::Up);
 
         // Position item highlight.
         if(&button == hover && state == ButtonWidget::Up)
@@ -459,7 +463,8 @@ void PopupMenuWidget::panelClosing()
         auto &btn = *d->hover;
         d->hover = 0;
         d->setButtonColors(btn);
-        btn.setImageColor(style().colors().colorf(!d->infoStyle? "text" : "inverted.text"));
+        d->updateImageColor(btn);
+        //btn.setImageColor(style().colors().colorf(!d->infoStyle? "text" : "inverted.text"));
         requestGeometry();
     }
 
