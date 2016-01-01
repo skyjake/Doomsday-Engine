@@ -603,7 +603,7 @@ DENG2_PIMPL(ModelRenderer)
 
         int idx = lightCount;
         uLightDirs       .set(idx, (inverseLocal * direction).normalize());
-        uLightIntensities.set(idx, Vector4f(intensity, intensity.max()));
+        uLightIntensities.set(idx, Vector4f(intensity, intensity.max()) * 2);
 
         lightCount++;
     }
