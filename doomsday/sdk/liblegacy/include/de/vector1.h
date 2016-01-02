@@ -587,7 +587,7 @@ DENG_PUBLIC void V3d_BuildTangents(pvec3d_t tangent, pvec3d_t bitangent, const_p
  */
 
 typedef vectorcompf_t vec4f_t[4];
-typedef float const const_pvec4f_t[4];
+typedef float const *const_pvec4f_t;
 typedef vectorcompf_t* pvec4f_t;
 typedef vec4f_t* arvec4f_t;
 
@@ -646,7 +646,7 @@ DENG_PUBLIC dd_bool V4f_IsZero(const_pvec4f_t vec);
 DENG_PUBLIC void V4f_Lerp(pvec4f_t dest, const_pvec4f_t a, const_pvec4f_t b, float c);
 
 typedef vectorcompd_t vec4d_t[4];
-typedef double const const_pvec4d_t[4];
+typedef double const *const_pvec4d_t;
 typedef vectorcompd_t *pvec4d_t;
 typedef vec4d_t *arvec4d_t;
 
