@@ -100,5 +100,6 @@ byte M_Random(void)
  */
 void M_ResetRandom(void)
 {
-    rndIndex = prndIndex = 0;
+    prndIndex = 0; // Always repeat the same sequence deterministically.
+    rndIndex = rand() & 0xff;
 }

@@ -535,7 +535,7 @@ mapspot_t const *P_ChooseRandomMaceSpot()
     /*
      * Pass 2: Choose and locate the chosen spot.
      */
-    uint chosenQualifyingSpotIdx = P_Random() % numQualifyingSpots;
+    uint chosenQualifyingSpotIdx = M_Random() % numQualifyingSpots;
     uint qualifyingSpotIdx = 0;
     for(uint i = 0; i < maceSpotCount; ++i)
     {
@@ -631,10 +631,11 @@ static void spawnMapObjects()
 
 #if __JHERETIC__
     // Spawn a Firemace?
+    App_Log(DE2_DEV_MAP_VERBOSE, "spawnMapObjects: %i Firemace spot(s)", maceSpotCount);
     if(!IS_CLIENT && maceSpotCount)
     {
         // Sometimes the Firemace doesn't show up if not in deathmatch.
-        if(!(!COMMON_GAMESESSION->rules().deathmatch && P_Random() < 64))
+        if(COMMON_GAMESESSION->rules().deathmatch || M_Random() >= 64)
         {
             if(mapspot_t const *spot = P_ChooseRandomMaceSpot())
             {
