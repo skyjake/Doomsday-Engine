@@ -501,7 +501,7 @@ RendererAppearanceEditor::RendererAppearanceEditor()
 
     updateSidebarLayout(profLabel->rule().width() +
                         d->profile->rule().width() +
-                        d->profile->button().rule().width());
+                        d->profile->button().rule().width(), Const(0));
 
     d->fetch();
 }

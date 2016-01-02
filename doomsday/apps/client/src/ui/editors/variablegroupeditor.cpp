@@ -20,6 +20,7 @@
 
 #include <de/PopupMenuWidget>
 #include <de/SignalAction>
+#include <de/SequentialLayout>
 
 using namespace de;
 
@@ -62,7 +63,8 @@ DENG2_PIMPL(VariableGroupEditor)
     IOwner *owner;
     bool resetable = false;
     SafeWidgetPtr<ButtonWidget> resetButton;
-    GuiWidget *group;
+    GuiWidget *content;
+    GuiWidget *header;
     GridLayout layout;
     Rule const *firstColumnWidth;
 
@@ -92,25 +94,45 @@ DENG2_PIMPL(VariableGroupEditor)
     }
 };
 
-VariableGroupEditor::VariableGroupEditor(IOwner *owner, String const &name, String const &titleText)
+VariableGroupEditor::VariableGroupEditor(IOwner *owner, String const &name,
+                                         String const &titleText, GuiWidget *header)
     : FoldPanelWidget(name)
     , d(new Instance(this, owner))
 {
-    d->group = new GuiWidget;
-    setContent(d->group);
+    d->content = new GuiWidget;
+    setContent(d->content);
+
     makeTitle(titleText);
 
     // Set up a context menu for right-clicking.
     title().addEventHandler(new RightClickHandler(this));
+
+    d->header = header;
+    if(header)
+    {
+        d->content->add(header);
+        header->rule()
+                .setInput(Rule::Left,  d->content->rule().left())
+                .setInput(Rule::Top,   d->content->rule().top())
+                .setInput(Rule::Width, d->layout.width());
+    }
 
     // We want the first column of all groups to be aligned with each other.
     d->layout.setColumnFixedWidth(0, owner->firstColumnWidthRule());
 
     d->layout.setGridSize(2, 0);
     d->layout.setColumnAlignment(0, ui::AlignRight);
-    d->layout.setLeftTop(d->group->rule().left(), d->group->rule().top());
+    if(header)
+    {
+        d->layout.setLeftTop(d->content->rule().left(),
+                             d->content->rule().top() + header->rule().height());
+    }
+    else
+    {
+        d->layout.setLeftTop(d->content->rule().left(), d->content->rule().top());
+    }
 
-    // Button for reseting this group to defaults.
+    // Button for reseting this content to defaults.
     d->resetButton.reset(new ButtonWidget);
     d->resetButton->setText(tr("Reset"));
     d->resetButton->setAction(new SignalAction(this, SLOT(resetToDefaults())));
@@ -134,6 +156,11 @@ void VariableGroupEditor::destroyAssociatedWidgets()
 void VariableGroupEditor::setResetable(bool resetable)
 {
     d->resetable = resetable;
+}
+
+GuiWidget *VariableGroupEditor::header() const
+{
+    return d->header;
 }
 
 ButtonWidget &VariableGroupEditor::resetButton()
@@ -166,15 +193,25 @@ void VariableGroupEditor::addSpace()
     d->layout << Const(0);
 }
 
-void VariableGroupEditor::addLabel(String const &text)
+LabelWidget *VariableGroupEditor::addLabel(String const &text, LabelType labelType)
 {
-    d->layout << *LabelWidget::newWithText(text, d->group);
+    LabelWidget *w = LabelWidget::newWithText(text, d->content);
+    if(labelType == SingleCell)
+    {
+        d->layout << *w;
+    }
+    else
+    {
+        d->layout.setCellAlignment(Vector2i(0, d->layout.gridSize().y), ui::AlignLeft);
+        d->layout.append(*w, 2);
+    }
+    return w;
 }
 
 CVarToggleWidget *VariableGroupEditor::addToggle(char const *cvar, String const &label)
 {
     CVarToggleWidget *w = new CVarToggleWidget(cvar, label);
-    d->group->add(w);
+    d->content->add(w);
     d->layout << *w;
     return w;
 }
@@ -184,7 +221,7 @@ CVarChoiceWidget *VariableGroupEditor::addChoice(char const *cvar, ui::Direction
     CVarChoiceWidget *w = new CVarChoiceWidget(cvar);
     w->setOpeningDirection(opening);
     w->popup().useInfoStyle();
-    d->group->add(w);
+    d->content->add(w);
     d->layout << *w;
     return w;
 }
@@ -192,7 +229,7 @@ CVarChoiceWidget *VariableGroupEditor::addChoice(char const *cvar, ui::Direction
 CVarSliderWidget *VariableGroupEditor::addSlider(char const *cvar)
 {
     auto *w = new CVarSliderWidget(cvar);
-    d->group->add(w);
+    d->content->add(w);
     d->layout << *w;
     return w;
 }
@@ -208,7 +245,7 @@ CVarSliderWidget *VariableGroupEditor::addSlider(char const *cvar, Ranged const 
 VariableToggleWidget *VariableGroupEditor::addToggle(Variable &var, String const &label)
 {
     auto *w = new VariableToggleWidget(label, var);
-    d->group->add(w);
+    d->content->add(w);
     d->layout << *w;
     return w;
 }
@@ -217,7 +254,7 @@ VariableSliderWidget *VariableGroupEditor::addSlider(Variable &var, Ranged const
 {
     auto *w = new VariableSliderWidget(var, range, step);
     w->setPrecision(precision);
-    d->group->add(w);
+    d->content->add(w);
     d->layout << *w;
     return w;
 }
@@ -225,7 +262,7 @@ VariableSliderWidget *VariableGroupEditor::addSlider(Variable &var, Ranged const
 VariableLineEditWidget *VariableGroupEditor::addLineEdit(Variable &var)
 {
     auto *w = new VariableLineEditWidget(var);
-    d->group->add(w);
+    d->content->add(w);
     d->layout << *w;
     w->rule().setInput(Rule::Width, style().rules().rule("slider.width"));
     return w;
@@ -233,7 +270,8 @@ VariableLineEditWidget *VariableGroupEditor::addLineEdit(Variable &var)
 
 void VariableGroupEditor::commit()
 {
-    d->group->rule().setSize(d->layout.width(), d->layout.height());
+    d->content->rule().setSize(d->layout.width(), d->layout.height() +
+                               (d->header? d->header->rule().height() : Const(0)));
 
     // Extend the title all the way to the button.
     title().rule().setInput(Rule::Right, d->resetButton->rule().left());
@@ -241,8 +279,8 @@ void VariableGroupEditor::commit()
     // Calculate the maximum rule for the first column items.
     for(int i = 0; i < d->layout.gridSize().y; ++i)
     {
-        GuiWidget *w = d->layout.at(Vector2i(0, i));
-        if(w)
+        GuiWidget const *w = d->layout.at(Vector2i(0, i));
+        if(w && d->layout.widgetCellSpan(*w) == 1)
         {
             changeRef(d->firstColumnWidth,
                       OperatorRule::maximum(w->rule().width(), d->firstColumnWidth));
@@ -252,7 +290,7 @@ void VariableGroupEditor::commit()
 
 void VariableGroupEditor::fetch()
 {
-    foreach(Widget *child, d->group->childWidgets())
+    foreach(Widget *child, d->content->childWidgets())
     {
         if(ICVarWidget *w = child->maybeAs<ICVarWidget>())
         {
@@ -263,7 +301,7 @@ void VariableGroupEditor::fetch()
 
 void VariableGroupEditor::resetToDefaults()
 {
-    foreach(Widget *child, d->group->childWidgets())
+    foreach(Widget *child, d->content->childWidgets())
     {
         if(ICVarWidget *w = child->maybeAs<ICVarWidget>())
         {

@@ -22,6 +22,7 @@
 #include <de/PanelWidget>
 #include <de/ScrollAreaWidget>
 #include <de/SequentialLayout>
+#include <de/LabelWidget>
 
 /**
  * Editor for changing model asset parameters.
@@ -34,12 +35,18 @@ public:
     SidebarWidget(de::String const &title, de::String const &name = "");
 
     de::SequentialLayout &layout();
+    de::LabelWidget &title();
     de::ScrollAreaWidget &containerWidget();
     de::IndirectRule &firstColumnWidth();
     de::Rule const &maximumOfAllGroupFirstColumns() const;
 
 protected:
-    void updateSidebarLayout(de::Rule const &minWidth);
+    /**
+     * @param minWidth     Minimum width.
+     * @param extraHeight  Height in addition to title and layout.
+     */
+    void updateSidebarLayout(de::Rule const &minWidth,
+                             de::Rule const &extraHeight);
 
     void preparePanelForOpening();
     void panelDismissed();

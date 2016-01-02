@@ -27,12 +27,13 @@
 #include "render/rend_main.h"
 #include "render/stateanimator.h"
 
-#include <de/NumberValue>
-#include <de/NativeValue>
+#include <de/App>
 #include <de/DialogContentStylist>
+#include <de/NativeValue>
+#include <de/NumberValue>
+#include <de/ScriptedInfo>
 #include <de/SequentialLayout>
 #include <de/SignalAction>
-#include <de/App>
 
 using namespace de;
 using namespace de::ui;
@@ -64,9 +65,6 @@ DENG_GUI_PIMPL(ModelAssetEditor)
         assetChoice->popup().useInfoStyle();
 
         container->add(info = new LabelWidget);
-        info->setFont("small");
-        info->setTextColor("altaccent");
-
         container->add(instChoice = new ChoiceWidget);
         instChoice->popup().useInfoStyle();
         instChoice->popup().audienceForAboutToOpen() += this;
@@ -100,11 +98,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
 
         instChoice->items().clear();
 
-        info->setSizePolicy(ui::Fixed, ui::Expand);
-        info->setAlignment(ui::AlignLeft);
-        Rule const &maxWidth = style().rules().rule("sidebar.width");
-        info->rule().setInput(Rule::Width, maxWidth);
-        info->setMaximumTextWidth(maxWidth);
+        setInfoLabelParams(*info);
         info->setText(QString(_E(Ta)_E(l) "Path: " _E(.)_E(Tb) "%1\n"
                               _E(Ta)_E(l) "Autoscale: " _E(.)_E(Tb) "%2")
                       .arg(asset.absolutePath("path"))
@@ -120,6 +114,19 @@ DENG_GUI_PIMPL(ModelAssetEditor)
 
         makeGroups();
         redoLayout();
+    }
+
+    void setInfoLabelParams(LabelWidget &label)
+    {
+        label.setFont("small");
+        label.setTextColor("altaccent");
+        label.setSizePolicy(ui::Fixed, ui::Expand);
+        label.setAlignment(ui::AlignLeft);
+        label.set(GuiWidget::Background(style().colors().colorf("altaccent") *
+                                        Vector4f(1, 1, 1, .2f)));
+        Rule const &maxWidth = style().rules().rule("sidebar.width");
+        label.rule().setInput(Rule::Width, maxWidth);
+        label.setMaximumTextWidth(maxWidth);
     }
 
     void clearGroups()
@@ -149,15 +156,15 @@ DENG_GUI_PIMPL(ModelAssetEditor)
             DENG2_ASSERT(anim);
             Record &ns = anim->objectNamespace();
 
-            Group *g = makeGroup(ns, tr("Variables"));
+            Group *g = makeGroup(*anim, ns, tr("Variables"));
             g->open();
             groups << g;
 
             // Make a variable group for each subrecord.
             QMap<String, Group *> orderedGroups;
-            ns.forSubrecords([this, &orderedGroups] (String const &name, Record &rec)
+            ns.forSubrecords([this, anim, &orderedGroups] (String const &name, Record &rec)
             {
-                orderedGroups.insert(name, makeGroup(rec, name));
+                orderedGroups.insert(name, makeGroup(*anim, rec, name, true));
                 return LoopContinue;
             });
             for(auto *g : orderedGroups.values())
@@ -188,17 +195,14 @@ DENG_GUI_PIMPL(ModelAssetEditor)
         return -1;
     }
 
-    Group *makeGroup(Record &rec, String const &titleText)
+    void populateGroup(Group *g, Record &rec, bool descend, String const &namePrefix = "")
     {
-        Group *g = new Group(this, "", titleText);
-        g->setResetable(false);
-
         StringList names = rec.members().keys();
         qSort(names);
 
         for(String const &name : names)
         {
-            if(name.startsWith("__") || name == "ID" || name == "uMapTime")
+            if(name.startsWith("__") || name == "ASSET" || name == "ID" || name == "uMapTime")
                 continue;
 
             Variable &var = rec[name];
@@ -215,7 +219,6 @@ DENG_GUI_PIMPL(ModelAssetEditor)
             }
             if(name == "uReflectionBlur")
             {
-
                 range = Ranged(0, 40);
                 step = .1;
                 precision = 1;
@@ -227,48 +230,93 @@ DENG_GUI_PIMPL(ModelAssetEditor)
                 precision = 1;
             }
 
+            String label = namePrefix.concatenateMember(name);
+
             if(NumberValue const *num = var.value().maybeAs<NumberValue>())
             {
                 if(num->semanticHints().testFlag(NumberValue::Boolean))
                 {
                     g->addSpace();
-                    g->addToggle(var, _E(m) + name);
+                    g->addToggle(var, _E(m) + label);
                 }
                 else
                 {
-                    g->addLabel(varLabel(name));
+                    g->addLabel(varLabel(label));
                     g->addSlider(var, range, step, precision);
                 }
             }
             else if(var.value().is<TextValue>())
             {
-                g->addLabel(varLabel(name));
+                g->addLabel(varLabel(label));
                 g->addLineEdit(var);
             }
             else if(var.value().is<NativeValue>())
             {
-                g->addLabel(varLabel(name));
+                g->addLabel(varLabel(label));
                 g->addSlider(var, range, step, precision);
             }
+            else if(descend && var.value().is<RecordValue>())
+            {
+                populateGroup(g, var.valueAsRecord(), descend, label);
+            }
+        }
+    }
+
+    Group *makeGroup(render::StateAnimator &animator, Record &rec,
+                     String const &titleText, bool descend = false)
+    {
+        LabelWidget *info = nullptr;
+
+        // Check for a rendering pass.
+        int passIndex = animator.model().passes.findName(titleText);
+        if(passIndex >= 0)
+        {
+            // Look up the shader.
+            auto const &pass = animator.model().passes.at(passIndex);
+            String shaderName = ClientApp::renderSystem().modelRenderer()
+                    .shaderName(*pass.program);
+            Record const &shaderDef = ClientApp::renderSystem().modelRenderer()
+                    .shaderDefinition(*pass.program);
+
+            // Check the variable declarations.
+            auto vars = ScriptedInfo::subrecordsOfType(QStringLiteral("variable"), shaderDef);
+            QStringList names;
+            for(String const &n : vars.keys()) names << n;
+
+            String msg = QString(_E(Ta)_E(l) "Shader: " _E(.)_E(Tb) "%1\n"
+                                 _E(Ta)_E(l) "Variables: " _E(.)_E(Tb) "%2")
+                    .arg(shaderName)
+                    .arg(names.join(", "));
+
+            info = new LabelWidget;
+            info->setText(msg);
         }
 
+        std::unique_ptr<Group> g(new Group(this, "", titleText, info));
+        g->setResetable(false);
+        populateGroup(g.get(), rec, descend);
         g->commit();
-        return g;
+        if(info)
+        {
+            setInfoLabelParams(*info);
+        }
+        return g.release();
     }
 
     void redoLayout()
     {
         SequentialLayout &layout = self.layout();
         layout.clear();
-        layout << *info;
-        layout << *instLabel;
+        layout << *info
+               << *instLabel;
         foreach(Group *g, groups)
         {
             layout << g->title() << *g;
         }
 
         self.updateSidebarLayout(assetLabel->rule().width() +
-                                 assetChoice->rule().width());
+                                 assetChoice->rule().width(),
+                                 assetChoice->rule().height());
     }
 
     void updateInstanceList()
@@ -342,20 +390,23 @@ DENG_GUI_PIMPL(ModelAssetEditor)
 };
 
 ModelAssetEditor::ModelAssetEditor()
-    : SidebarWidget(tr("Model Asset"), "modelasseteditor")
+    : SidebarWidget(tr("Edit 3D Model"), "modelasseteditor")
     , d(new Instance(this))
 {
     d->assetLabel = LabelWidget::newWithText(tr("Asset:"), &containerWidget());
 
     // Layout.
-    layout().append(*d->assetLabel, SequentialLayout::IgnoreMinorAxis);
+    d->assetLabel->rule()
+            .setInput(Rule::Left, containerWidget().contentRule().left())
+            .setInput(Rule::Top,  title().rule().bottom());
     d->assetChoice->rule()
             .setInput(Rule::Left, d->assetLabel->rule().right())
             .setInput(Rule::Top,  d->assetLabel->rule().top());
 
     // Update container size.
     updateSidebarLayout(d->assetLabel->rule().width() +
-                        d->assetChoice->rule().width());
+                        d->assetChoice->rule().width(),
+                        d->assetChoice->rule().height());
     layout().setStartY(d->assetChoice->rule().bottom());
 
     d->updateAssetsList();

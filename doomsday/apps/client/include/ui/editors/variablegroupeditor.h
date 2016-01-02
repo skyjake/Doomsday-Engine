@@ -52,7 +52,15 @@ public:
     };
 
 public:
-    VariableGroupEditor(IOwner *owner, de::String const &name, de::String const &titleText);
+    /**
+     * Constructs a variable group editor.
+     * @param owner      Owner (e.g., a sidebar).
+     * @param name       Widget name.
+     * @param titleText  Title for the group.
+     * @param header     Widget to place above the variables. Takes ownership.
+     */
+    VariableGroupEditor(IOwner *owner, de::String const &name, de::String const &titleText,
+                        GuiWidget *header = 0);
 
     /**
      * Destroys the title widget and the reset button, which are not owned
@@ -63,11 +71,14 @@ public:
     void setResetable(bool resetable);
 
     IOwner &owner();
+    de::GuiWidget *header() const;
     de::ButtonWidget &resetButton();
     de::Rule const &firstColumnWidth() const;
 
+    enum LabelType { SingleCell, EntireRow };
+
     void addSpace();
-    void addLabel(de::String const &text);
+    de::LabelWidget *addLabel(de::String const &text, LabelType labelType = SingleCell);
 
     CVarToggleWidget *addToggle(char const *cvar, de::String const &label);
     CVarChoiceWidget *addChoice(char const *cvar, de::ui::Direction opening = de::ui::Up);

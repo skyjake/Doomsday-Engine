@@ -109,6 +109,11 @@ SequentialLayout &SidebarWidget::layout()
     return *d->layout;
 }
 
+LabelWidget &SidebarWidget::title()
+{
+    return *d->title;
+}
+
 Rule const &SidebarWidget::maximumOfAllGroupFirstColumns() const
 {
     Rule const *max = 0;
@@ -143,12 +148,15 @@ void SidebarWidget::panelDismissed()
     ClientWindow::main().unsetSidebar(ClientWindow::RightEdge);
 }
 
-void SidebarWidget::updateSidebarLayout(de::Rule const &minWidth)
+void SidebarWidget::updateSidebarLayout(de::Rule const &minWidth,
+                                        de::Rule const &extraHeight)
 {
     d->firstColumnWidth->setSource(maximumOfAllGroupFirstColumns());
 
     d->container->setContentSize(OperatorRule::maximum(minWidth,
                                                        d->layout->width(),
                                                        style().rules().rule("sidebar.width")),
-                                 d->title->rule().height() + d->layout->height());
+                                 d->title->rule().height() +
+                                 d->layout->height() +
+                                 extraHeight);
 }
