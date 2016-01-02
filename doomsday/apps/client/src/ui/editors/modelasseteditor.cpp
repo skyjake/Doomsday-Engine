@@ -66,6 +66,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
 
         container->add(info = new LabelWidget);
         container->add(instChoice = new ChoiceWidget);
+        instChoice->setNoSelectionHint(_E(l) + tr("Click to select"));
         instChoice->popup().useInfoStyle();
         instChoice->popup().audienceForAboutToOpen() += this;
         instLabel = LabelWidget::newWithText(tr("Instance:"), container);
@@ -91,19 +92,61 @@ DENG_GUI_PIMPL(ModelAssetEditor)
     void resetToDefaults(String const &/*settingName*/)
     {}
 
+    static char const *pluralSuffix(int count, char const *suffix = "s")
+    {
+        return count != 1? suffix : "";
+    }
+
     void setAsset(String id)
     {
         assetId = id;
         asset = App::asset(id);
 
-        instChoice->items().clear();
+        // Collect some information about the model asset.
+        render::Model const &model = ClientApp::renderSystem().modelRenderer()
+                .bank().model<render::Model>(id);
+
+        QStringList animNames;
+        for(int i = 0; i < model.animationCount(); ++i)
+        {
+            animNames << model.animationName(i);
+        }
+
+        QStringList meshNames;
+        for(int i = 0; i < model.meshCount(); ++i)
+        {
+            meshNames << model.meshName(i);
+        }
+
+        QStringList materialNames;
+        for(String n : model.materialIndexForName.keys())
+        {
+            materialNames << n;
+        }
 
         setInfoLabelParams(*info);
-        info->setText(QString(_E(Ta)_E(l) "Path: " _E(.)_E(Tb) "%1\n"
-                              _E(Ta)_E(l) "Autoscale: " _E(.)_E(Tb) "%2")
-                      .arg(asset.absolutePath("path"))
-                      .arg(asset.gets("autoscale", "False")));
+        String msg = QString(_E(Ta)_E(l) "Path: " _E(.)_E(Tb) "%1\n"
+                             _E(Ta)_E(l) "%2 Mesh%3: " _E(.)_E(Tb) "%4\n"
+                             _E(Ta)_E(l) "%5 Material%6: " _E(.)_E(Tb) "%7")
+                .arg(asset.absolutePath("path"))
+                .arg(model.meshCount())
+                .arg(pluralSuffix(model.meshCount(), "es"))
+                .arg(meshNames.join(", "))
+                .arg(materialNames.size())
+                .arg(pluralSuffix(materialNames.size()))
+                .arg(materialNames.join(", "));
+        if(!animNames.isEmpty())
+        {
+            msg += QString(_E(Ta)_E(l) "\n%1 Animation%2: " _E(.)_E(Tb) "%3")
+                    .arg(model.animationCount())
+                    .arg(pluralSuffix(model.animationCount()))
+                    .arg(animNames.join(", "));
+        }
+        msg += QString(_E(Ta)_E(l) "\nAutoscale: " _E(.)_E(Tb) "%1")
+                .arg(asset.gets("autoscale", "False"));
+        info->setText(msg);
 
+        instChoice->items().clear();
         clearGroups();
         updateInstanceList();
 
@@ -263,7 +306,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
     }
 
     Group *makeGroup(render::StateAnimator &animator, Record &rec,
-                     String const &titleText, bool descend = false)
+                     String titleText, bool descend = false)
     {
         LabelWidget *info = nullptr;
 
@@ -271,6 +314,8 @@ DENG_GUI_PIMPL(ModelAssetEditor)
         int passIndex = animator.model().passes.findName(titleText);
         if(passIndex >= 0)
         {
+            titleText = QString("Render Pass \"%1\"").arg(titleText);
+
             // Look up the shader.
             auto const &pass = animator.model().passes.at(passIndex);
             String shaderName = ClientApp::renderSystem().modelRenderer()
