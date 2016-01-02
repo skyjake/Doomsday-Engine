@@ -398,6 +398,8 @@ public:
      */
     int animationIdForName(String const &name) const;
 
+    String animationName(int id) const;
+
     int animationCount() const;
 
     int meshCount() const;
@@ -410,6 +412,8 @@ public:
      * @return Mesh id, or -1 if no mesh with that name exists.
      */
     int meshId(String const &name) const;
+
+    String meshName(int id) const;
 
     /**
      * Locates a material specified in the model by its name.

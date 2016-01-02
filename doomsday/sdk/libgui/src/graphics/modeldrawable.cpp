@@ -1445,6 +1445,20 @@ int ModelDrawable::animationIdForName(String const &name) const
     return -1;
 }
 
+String ModelDrawable::animationName(int id) const
+{
+    if(!d->scene || id < 0 || id >= int(d->scene->mNumAnimations))
+    {
+        return "";
+    }
+    String const name = d->scene->mAnimations[id]->mName.C_Str();
+    if(name.isEmpty())
+    {
+        return QString("@%1").arg(id);
+    }
+    return name;
+}
+
 int ModelDrawable::animationCount() const
 {
     if(!d->scene) return 0;
@@ -1468,6 +1482,20 @@ int ModelDrawable::meshId(String const &name) const
         }
     }
     return -1;
+}
+
+String ModelDrawable::meshName(int id) const
+{
+    if(!d->scene || id < 0 || id >= int(d->scene->mNumMeshes))
+    {
+        return "";
+    }
+    String const name = d->scene->mMeshes[id]->mName.C_Str();
+    if(name.isEmpty())
+    {
+        return QString("@%1").arg(id);
+    }
+    return name;
 }
 
 bool ModelDrawable::nodeExists(String const &name) const
