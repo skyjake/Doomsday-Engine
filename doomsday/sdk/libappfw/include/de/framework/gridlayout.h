@@ -123,6 +123,8 @@ public:
 
     GuiWidget *at(Vector2i const &cell) const;
 
+    int widgetCellSpan(GuiWidget const &widget) const;
+
     Rule const &width() const;
     Rule const &height() const;
     Rule const &columnLeft(int col) const;

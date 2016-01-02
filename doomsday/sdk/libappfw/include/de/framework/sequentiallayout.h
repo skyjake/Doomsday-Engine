@@ -42,6 +42,7 @@ public:
 
     void clear();
 
+    void setStartX(Rule const &startX);
     void setStartY(Rule const &startY);
 
     /**
@@ -75,7 +76,7 @@ public:
 
     enum AppendMode {
         UpdateMinorAxis,    ///< Layout total length on the minor axis is updated.
-        IgnoreMinorAxis     ///< Does not affect layou total length on the minor axis.
+        IgnoreMinorAxis     ///< Does not affect layout total length on the minor axis.
     };
 
     SequentialLayout &append(GuiWidget &widget, AppendMode mode = UpdateMinorAxis);

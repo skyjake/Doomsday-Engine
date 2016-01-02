@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/GridLayout"
@@ -39,6 +39,7 @@ DENG2_PIMPL(GridLayout)
     Rule const *fixedCellWidth;
     Rule const *fixedCellHeight;
     QMap<int, Rule const *> fixedColWidths;
+    QMap<GuiWidget const *, int> widgetMultiCellCount; ///< Only multicell widgets.
     CellAlignments cellAlignment;
     Rule const *colPad;
     Rule const *rowPad;
@@ -137,6 +138,7 @@ DENG2_PIMPL(GridLayout)
         needTotalUpdate = true;
 
         widgets.clear();
+        widgetMultiCellCount.clear();
         setup(maxCols, maxRows);
     }
 
@@ -214,7 +216,7 @@ DENG2_PIMPL(GridLayout)
 
         DENG2_ASSERT(list[index] != nullptr);
         if(!list[index]) return;
-        
+
         Metric &metric = *list[index];
         if(!metric.fixedLength)
         {
@@ -362,6 +364,11 @@ DENG2_PIMPL(GridLayout)
         Rule const *pad = (mode == ColumnFirst? colPad : rowPad);
 
         widgets << widget; // NULLs included.
+
+        if(cellSpan > 1)
+        {
+            widgetMultiCellCount.insert(widget, cellSpan);
+        }
 
         if(widget)
         {
@@ -675,6 +682,16 @@ GuiWidget *GridLayout::at(Vector2i const &cell) const
         }
     }
     return 0;
+}
+
+int GridLayout::widgetCellSpan(GuiWidget const &widget) const
+{
+    auto found = d->widgetMultiCellCount.constFind(&widget);
+    if(found != d->widgetMultiCellCount.constEnd())
+    {
+        return found.value();
+    }
+    return 1;
 }
 
 Rule const &GridLayout::width() const

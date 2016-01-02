@@ -177,6 +177,11 @@ void SequentialLayout::clear()
     d->clear();
 }
 
+void SequentialLayout::setStartX(Rule const &startX)
+{
+    changeRef(d->initialX, startX);
+}
+
 void SequentialLayout::setStartY(Rule const &startY)
 {
     changeRef(d->initialY, startY);
