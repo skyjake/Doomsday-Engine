@@ -279,10 +279,17 @@ DENG_GUI_PIMPL(ModelAssetEditor)
                     .shaderDefinition(*pass.program);
 
             // Check the variable declarations.
-            auto vars = ScriptedInfo::subrecordsOfType(QStringLiteral("variable"), shaderDef);
+            auto vars = ScriptedInfo::subrecordsOfType(QStringLiteral("variable"), shaderDef).keys();
+            qSort(vars);
             QStringList names;
-            for(String const &n : vars.keys()) names << n;
-
+            for(String const &n : vars)
+            {
+                // Used variables are shown in bold.
+                if(rec.has(n))
+                    names << _E(b) + n + _E(.);
+                else
+                    names << n;
+            }
             String msg = QString(_E(Ta)_E(l) "Shader: " _E(.)_E(Tb) "%1\n"
                                  _E(Ta)_E(l) "Variables: " _E(.)_E(Tb) "%2")
                     .arg(shaderName)
