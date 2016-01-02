@@ -286,6 +286,12 @@ void VariableGroupEditor::commit()
                       OperatorRule::maximum(w->rule().width(), d->firstColumnWidth));
         }
     }
+    if(d->header)
+    {
+        // Make sure the editor is wide enough to fit the entire header.
+        d->content->rule().setInput(Rule::Width,
+                OperatorRule::maximum(d->layout.width(), d->header->rule().width()));
+    }
 }
 
 void VariableGroupEditor::fetch()

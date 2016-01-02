@@ -84,17 +84,6 @@ SidebarWidget::SidebarWidget(String const &titleText, String const &name)
 
     d->layout.reset(new SequentialLayout(area.left(), d->title->rule().bottom(), Down));
 
-    // Update container size.
-    // Now we can define the first column width.
-#if 0
-    d->container->setContentSize(OperatorRule::maximum(d->layout->width(),
-                                                       /*profLabel->rule().width() +
-                                                       d->profile->rule().width() +
-                                                       d->profile->button().rule().width(),*/
-                                                       style().rules().rule("sidebar.width")),
-                                 title->rule().height() + d->layout->height());
-#endif
-
     d->container->rule().setSize(d->container->contentRule().width() +
                                  d->container->margins().width(),
                                  rule().height());
