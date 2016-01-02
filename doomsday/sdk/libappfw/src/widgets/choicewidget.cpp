@@ -58,6 +58,7 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
     PopupMenuWidget *choices;
     IndirectRule *maxWidth;
     Data::Pos selected; ///< One item is always selected.
+    String noSelectionHint;
 
     Instance(Public *i) : Base(i), selected(Data::InvalidPos)
     {
@@ -204,7 +205,7 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
         else
         {
             // No valid selection.
-            self.setText("");
+            self.setText(noSelectionHint);
             self.setImage(Image());
         }
 
@@ -270,6 +271,11 @@ void ChoiceWidget::setItems(Data const &items)
 {
     popup().menu().setItems(items);
     d->updateMaximumWidth();
+}
+
+void ChoiceWidget::setNoSelectionHint(String const &hint)
+{
+    d->noSelectionHint = hint;
 }
 
 void ChoiceWidget::useDefaultItems()

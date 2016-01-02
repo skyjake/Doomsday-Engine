@@ -70,6 +70,8 @@ public:
      */
     void setItems(ui::Data const &items);
 
+    void setNoSelectionHint(String const &hint);
+
     void useDefaultItems();
 
     PopupMenuWidget &popup();
