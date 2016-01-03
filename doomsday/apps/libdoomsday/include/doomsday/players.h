@@ -49,6 +49,8 @@ public:
 
     Player &at(int index) const;
 
+    int count() const;
+
     de::LoopResult forAll(std::function<de::LoopResult (Player &)> func) const;
 
     /**

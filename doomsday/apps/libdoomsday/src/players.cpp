@@ -47,6 +47,11 @@ Player &Players::at(int index) const
     return *d->players[index];
 }
 
+int Players::count() const
+{
+    return DDMAXPLAYERS;
+}
+
 LoopResult Players::forAll(std::function<LoopResult (Player &)> func) const
 {
     for(auto &plr : d->players)

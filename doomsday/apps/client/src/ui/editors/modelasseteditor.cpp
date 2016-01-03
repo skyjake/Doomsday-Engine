@@ -24,8 +24,10 @@
 #include "world/map.h"
 #include "world/thinkers.h"
 #include "world/clientmobjthinkerdata.h"
+#include "clientplayer.h"
 #include "render/rend_main.h"
 #include "render/stateanimator.h"
+#include "render/playerweaponanimator.h"
 
 #include <de/App>
 #include <de/DialogContentStylist>
@@ -105,6 +107,11 @@ DENG_GUI_PIMPL(ModelAssetEditor)
     static char const *pluralSuffix(int count, char const *suffix = "s")
     {
         return count != 1? suffix : "";
+    }
+
+    bool isWeaponAsset() const
+    {
+        return assetId.startsWith("model.weapon.");
     }
 
     /**
@@ -204,13 +211,29 @@ DENG_GUI_PIMPL(ModelAssetEditor)
 
         if(instChoice->items().isEmpty()) return;
 
-        int const mobjId = instChoice->selectedItem().data().toInt();
-        mobj_t const *mo = ClientApp::world().map().thinkers().mobjById(mobjId);
-        if(mo)
+        int const idNum = instChoice->selectedItem().data().toInt();
+        mobj_t const *mo = nullptr;
+        render::StateAnimator *anim = nullptr;
+
+        if(isWeaponAsset())
         {
-            auto &mobjData = THINKER_DATA(mo->thinker, ClientMobjThinkerData);
-            render::StateAnimator *anim = mobjData.animator();
-            DENG2_ASSERT(anim);
+            auto &weaponAnim = ClientApp::players().at(idNum).as<ClientPlayer>().playerWeaponAnimator();
+            if(weaponAnim.hasModel())
+            {
+                anim = &weaponAnim.animator();
+            }
+        }
+        else
+        {
+            if((mo = ClientApp::world().map().thinkers().mobjById(idNum)) != nullptr)
+            {
+                auto &mobjData = THINKER_DATA(mo->thinker, ClientMobjThinkerData);
+                anim = mobjData.animator();
+            }
+        }
+
+        if(anim)
+        {
             Record &ns = anim->objectNamespace();
 
             // Manual animation controls.
@@ -222,7 +245,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
             for(int i = 0; i < model.animationCount(); ++i)
             {
                 QVariant var;
-                var.setValue(PlayData(mobjId, i));
+                var.setValue(PlayData(idNum, i));
                 animChoice->items() << new ChoiceItem(model.animationName(i), var);
             }
             g->addWidget(animChoice);
@@ -410,26 +433,46 @@ DENG_GUI_PIMPL(ModelAssetEditor)
         if(!ClientApp::world().hasMap())
             return;
 
-        ClientApp::world().map().thinkers().forAll(0x1 /* public */, [this] (thinker_t *th)
+        if(isWeaponAsset())
         {
-            auto const *mobjData = THINKER_DATA_MAYBE(*th, ClientMobjThinkerData);
-            if(mobjData && mobjData->animator())
+            for(int idx = 0; idx < ClientApp::players().count(); ++idx)
             {
-                render::StateAnimator const *anim = mobjData->animator();
-
-                if(anim && (*anim)["ID"] == assetId)
+                auto &client = ClientApp::players().at(idx).as<ClientPlayer>();
+                auto &anim = client.playerWeaponAnimator();
+                if(anim.hasModel())
                 {
-                    instChoice->items() << new ChoiceItem(mobjItemLabel(th->id), th->id);
+                    if(anim.animator()["ID"] == assetId)
+                    {
+                        instChoice->items()
+                                << new ChoiceItem(QString("Player %1").arg(idx), idx);
+                    }
                 }
             }
-            return LoopContinue;
-        });
-        sortInstancesByDistance(false);
+        }
+        else
+        {
+            ClientApp::world().map().thinkers().forAll(0x1 /* public */, [this] (thinker_t *th)
+            {
+                auto const *mobjData = THINKER_DATA_MAYBE(*th, ClientMobjThinkerData);
+                if(mobjData && mobjData->animator())
+                {
+                    render::StateAnimator const *anim = mobjData->animator();
+
+                    if(anim && (*anim)["ID"] == assetId)
+                    {
+                        instChoice->items() << new ChoiceItem(mobjItemLabel(th->id), th->id);
+                    }
+                }
+                return LoopContinue;
+            });
+            sortInstancesByDistance(false);
+        }
     }
 
     void sortInstancesByDistance(bool rememberSelection)
     {
-        if(instChoice->items().isEmpty()) return;
+        if(isWeaponAsset() || instChoice->items().isEmpty())
+            return;
 
         int selId = (instChoice->isValidSelection()?
                      instChoice->selectedItem().data().toInt() : 0);
@@ -440,7 +483,6 @@ DENG_GUI_PIMPL(ModelAssetEditor)
             a.as<ChoiceItem>().setLabel(mobjItemLabel(a.data().toInt()));
             return LoopContinue;
         });
-
         instChoice->items().sort([this] (Item const &a, Item const &b)
         {
             return distanceToMobj(a.data().toInt()) < distanceToMobj(b.data().toInt());
@@ -463,7 +505,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
 
         for(auto i : App::rootFolder().locate<Folder const>("/packs").contents())
         {
-            QRegExp regex("asset\\.(model\\.(thing\\..*))");
+            QRegExp regex("asset\\.(model\\.((thing|weapon)\\..*))");
             if(regex.exactMatch(i.first))
             {
                 assetChoice->items() << new ChoiceItem(regex.cap(2), regex.cap(1));
@@ -477,17 +519,28 @@ DENG_GUI_PIMPL(ModelAssetEditor)
             return;
 
         PlayData const data = animChoice->selectedItem().data().value<PlayData>();
+        render::StateAnimator *animator = nullptr;
 
-        if(mobj_t const *mo = Mobj_ById(data.mobjId))
+        if(isWeaponAsset())
         {
-            if(auto *thinker = THINKER_DATA_MAYBE(mo->thinker, ClientMobjThinkerData))
+            auto &weapon = ClientApp::players().at(data.mobjId).as<ClientPlayer>().playerWeaponAnimator();
+            if(weapon.hasModel()) animator = &weapon.animator();
+        }
+        else
+        {
+            if(mobj_t const *mo = Mobj_ById(data.mobjId))
             {
-                if(render::StateAnimator *animator = thinker->animator())
+                if(auto *thinker = THINKER_DATA_MAYBE(mo->thinker, ClientMobjThinkerData))
                 {
-                    qDebug() << "starting" << data.animationId << "on" << data.mobjId;
-                    animator->startSequence(data.animationId, 10, false);
+                    animator = thinker->animator();
                 }
             }
+        }
+
+        if(animator)
+        {
+            qDebug() << "starting" << data.animationId << "on" << data.mobjId;
+            animator->startSequence(data.animationId, 10, false);
         }
     }
 };
