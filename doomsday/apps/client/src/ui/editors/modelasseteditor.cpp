@@ -265,6 +265,41 @@ DENG_GUI_PIMPL(ModelAssetEditor)
                              thisPublic, SLOT(playAnimation()));
             g->commit();
 
+            // Positioning.
+            g = new Group(this, "", tr("Position"));
+            groups << g;
+            {
+                // Sliders for the offset vector.
+                offsetX.reset(new SliderWidget);
+                offsetY.reset(new SliderWidget);
+                offsetZ.reset(new SliderWidget);
+
+                g->addLabel("Offset X:");
+                g->addWidget(offsetX);
+                g->addLabel("Offset Y:");
+                g->addWidget(offsetY);
+                g->addLabel("Offset Z:");
+                g->addWidget(offsetZ);
+
+                offsetX->setRange(Ranged(-50, 50), .1);
+                offsetY->setRange(Ranged(-50, 50), .1);
+                offsetZ->setRange(Ranged(-50, 50), .1);
+                offsetX->setPrecision(1);
+                offsetY->setPrecision(1);
+                offsetZ->setPrecision(1);
+                offsetX->setValue(anim->model().offset.x);
+                offsetY->setValue(anim->model().offset.y);
+                offsetZ->setValue(anim->model().offset.z);
+
+                QObject::connect(offsetX.get(), SIGNAL(valueChangedByUser(double)),
+                                 thisPublic, SLOT(updateOffsetVector()));
+                QObject::connect(offsetY.get(), SIGNAL(valueChangedByUser(double)),
+                                 thisPublic, SLOT(updateOffsetVector()));
+                QObject::connect(offsetZ.get(), SIGNAL(valueChangedByUser(double)),
+                                 thisPublic, SLOT(updateOffsetVector()));
+            }
+            g->commit();
+
             // Animator variables.
             g = makeGroup(*anim, ns, tr("Variables"));
             g->open();
@@ -415,39 +450,6 @@ DENG_GUI_PIMPL(ModelAssetEditor)
         std::unique_ptr<Group> g(new Group(this, "", titleText, info));
         g->setResetable(false);
         populateGroup(g.get(), rec, descend);
-
-        if(passIndex < 0)
-        {
-            // Sliders for the offset vector.
-            offsetX.reset(new SliderWidget);
-            offsetY.reset(new SliderWidget);
-            offsetZ.reset(new SliderWidget);
-
-            g->addLabel("Offset X:");
-            g->addWidget(offsetX);
-            g->addLabel("Offset Y:");
-            g->addWidget(offsetY);
-            g->addLabel("Offset Z:");
-            g->addWidget(offsetZ);
-
-            offsetX->setRange(Ranged(-50, 50), .1);
-            offsetY->setRange(Ranged(-50, 50), .1);
-            offsetZ->setRange(Ranged(-50, 50), .1);
-            offsetX->setPrecision(1);
-            offsetY->setPrecision(1);
-            offsetZ->setPrecision(1);
-            offsetX->setValue(animator.model().offset.x);
-            offsetY->setValue(animator.model().offset.y);
-            offsetZ->setValue(animator.model().offset.z);
-
-            QObject::connect(offsetX.get(), SIGNAL(valueChangedByUser(double)),
-                             thisPublic, SLOT(updateOffsetVector()));
-            QObject::connect(offsetY.get(), SIGNAL(valueChangedByUser(double)),
-                             thisPublic, SLOT(updateOffsetVector()));
-            QObject::connect(offsetZ.get(), SIGNAL(valueChangedByUser(double)),
-                             thisPublic, SLOT(updateOffsetVector()));
-        }
-
         g->commit();
         if(info)
         {
