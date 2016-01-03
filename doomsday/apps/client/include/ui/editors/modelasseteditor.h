@@ -35,6 +35,7 @@ protected slots:
     void setSelectedAsset(uint pos);
     void setSelectedInstance(uint pos);
     void playAnimation();
+    void updateOffsetVector();
 
 private:
     DENG2_PRIVATE(d)

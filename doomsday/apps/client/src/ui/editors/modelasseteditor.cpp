@@ -65,6 +65,9 @@ DENG_GUI_PIMPL(ModelAssetEditor)
     ChoiceWidget *instChoice;
     QList<Group *> groups; ///< Generated based on asset subrecords.
     SafeWidgetPtr<ChoiceWidget> animChoice;
+    SafeWidgetPtr<SliderWidget> offsetX;
+    SafeWidgetPtr<SliderWidget> offsetY;
+    SafeWidgetPtr<SliderWidget> offsetZ;
 
     Instance(Public *i) : Base(i)
     {
@@ -205,34 +208,43 @@ DENG_GUI_PIMPL(ModelAssetEditor)
         groups.clear();
     }
 
-    void makeGroups()
+    int idNumber()
     {
-        clearGroups();
+        return instChoice->selectedItem().data().toInt();
+    }
 
-        if(instChoice->items().isEmpty()) return;
+    render::StateAnimator *assetAnimator()
+    {
+        if(instChoice->items().isEmpty())
+        {
+            return nullptr;
+        }
 
-        int const idNum = instChoice->selectedItem().data().toInt();
-        mobj_t const *mo = nullptr;
-        render::StateAnimator *anim = nullptr;
-
+        int const idNum = idNumber();
         if(isWeaponAsset())
         {
             auto &weaponAnim = ClientApp::players().at(idNum).as<ClientPlayer>().playerWeaponAnimator();
             if(weaponAnim.hasModel())
             {
-                anim = &weaponAnim.animator();
+                return &weaponAnim.animator();
             }
         }
         else
         {
-            if((mo = ClientApp::world().map().thinkers().mobjById(idNum)) != nullptr)
+            if(mobj_t const *mo = ClientApp::world().map().thinkers().mobjById(idNum))
             {
                 auto &mobjData = THINKER_DATA(mo->thinker, ClientMobjThinkerData);
-                anim = mobjData.animator();
+                return mobjData.animator();
             }
         }
+        return nullptr;
+    }
 
-        if(anim)
+    void makeGroups()
+    {
+        clearGroups();
+
+        if(render::StateAnimator *anim = assetAnimator())
         {
             Record &ns = anim->objectNamespace();
 
@@ -245,7 +257,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
             for(int i = 0; i < model.animationCount(); ++i)
             {
                 QVariant var;
-                var.setValue(PlayData(idNum, i));
+                var.setValue(PlayData(idNumber(), i));
                 animChoice->items() << new ChoiceItem(model.animationName(i), var);
             }
             g->addWidget(animChoice);
@@ -403,6 +415,39 @@ DENG_GUI_PIMPL(ModelAssetEditor)
         std::unique_ptr<Group> g(new Group(this, "", titleText, info));
         g->setResetable(false);
         populateGroup(g.get(), rec, descend);
+
+        if(passIndex < 0)
+        {
+            // Sliders for the offset vector.
+            offsetX.reset(new SliderWidget);
+            offsetY.reset(new SliderWidget);
+            offsetZ.reset(new SliderWidget);
+
+            g->addLabel("Offset X:");
+            g->addWidget(offsetX);
+            g->addLabel("Offset Y:");
+            g->addWidget(offsetY);
+            g->addLabel("Offset Z:");
+            g->addWidget(offsetZ);
+
+            offsetX->setRange(Ranged(-50, 50), .1);
+            offsetY->setRange(Ranged(-50, 50), .1);
+            offsetZ->setRange(Ranged(-50, 50), .1);
+            offsetX->setPrecision(1);
+            offsetY->setPrecision(1);
+            offsetZ->setPrecision(1);
+            offsetX->setValue(animator.model().offset.x);
+            offsetY->setValue(animator.model().offset.y);
+            offsetZ->setValue(animator.model().offset.z);
+
+            QObject::connect(offsetX.get(), SIGNAL(valueChangedByUser(double)),
+                             thisPublic, SLOT(updateOffsetVector()));
+            QObject::connect(offsetY.get(), SIGNAL(valueChangedByUser(double)),
+                             thisPublic, SLOT(updateOffsetVector()));
+            QObject::connect(offsetZ.get(), SIGNAL(valueChangedByUser(double)),
+                             thisPublic, SLOT(updateOffsetVector()));
+        }
+
         g->commit();
         if(info)
         {
@@ -539,8 +584,17 @@ DENG_GUI_PIMPL(ModelAssetEditor)
 
         if(animator)
         {
-            qDebug() << "starting" << data.animationId << "on" << data.mobjId;
             animator->startSequence(data.animationId, 10, false);
+        }
+    }
+
+    void updateOffsetVector()
+    {
+        if(!offsetX) return;
+        if(render::StateAnimator *anim = assetAnimator())
+        {
+            render::Model *model = const_cast<render::Model *>(&anim->model());
+            model->offset = Vector3f(offsetX->value(), offsetY->value(), offsetZ->value());
         }
     }
 };
@@ -585,4 +639,9 @@ void ModelAssetEditor::setSelectedInstance(uint /*pos*/)
 void ModelAssetEditor::playAnimation()
 {
     d->playSelectedAnimation();
+}
+
+void ModelAssetEditor::updateOffsetVector()
+{
+    d->updateOffsetVector();
 }
