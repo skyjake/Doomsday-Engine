@@ -64,6 +64,9 @@ public:
 
     void triggerDamage(int points, struct mobj_s const *inflictor);
 
+    void startSequence(int animationId, int priority, bool looping,
+                       de::String const &node = "");
+
     void advanceTime(de::TimeDelta const &elapsed) override;
 
     de::ddouble currentTime(int index) const override;

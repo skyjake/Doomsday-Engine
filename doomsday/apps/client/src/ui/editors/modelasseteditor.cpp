@@ -38,6 +38,15 @@
 using namespace de;
 using namespace de::ui;
 
+struct PlayData
+{
+    int mobjId;
+    int animationId;
+
+    PlayData(int mobj = 0, int seq = 0) : mobjId(mobj), animationId(seq) {}
+};
+Q_DECLARE_METATYPE(PlayData)
+
 DENG_GUI_PIMPL(ModelAssetEditor)
 , DENG2_OBSERVES(PackageLoader, Activity)
 , DENG2_OBSERVES(PanelWidget, AboutToOpen)
@@ -53,6 +62,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
     LabelWidget *instLabel;
     ChoiceWidget *instChoice;
     QList<Group *> groups; ///< Generated based on asset subrecords.
+    SafeWidgetPtr<ChoiceWidget> animChoice;
 
     Instance(Public *i) : Base(i)
     {
@@ -97,6 +107,10 @@ DENG_GUI_PIMPL(ModelAssetEditor)
         return count != 1? suffix : "";
     }
 
+    /**
+     * Sets the currently active model asset.
+     * @param id  Asset identifier.
+     */
     void setAsset(String id)
     {
         assetId = id;
@@ -199,7 +213,25 @@ DENG_GUI_PIMPL(ModelAssetEditor)
             DENG2_ASSERT(anim);
             Record &ns = anim->objectNamespace();
 
-            Group *g = makeGroup(*anim, ns, tr("Variables"));
+            // Manual animation controls.
+            Group *g = new Group(this, "", tr("Animations"));
+            groups << g;
+            g->addLabel(tr("Play:"));
+            animChoice.reset(new ChoiceWidget);
+            render::Model const &model = anim->model();
+            for(int i = 0; i < model.animationCount(); ++i)
+            {
+                QVariant var;
+                var.setValue(PlayData(mobjId, i));
+                animChoice->items() << new ChoiceItem(model.animationName(i), var);
+            }
+            g->addWidget(animChoice);
+            QObject::connect(animChoice.get(), SIGNAL(selectionChangedByUser(uint)),
+                             thisPublic, SLOT(playAnimation()));
+            g->commit();
+
+            // Animator variables.
+            g = makeGroup(*anim, ns, tr("Variables"));
             g->open();
             groups << g;
 
@@ -324,7 +356,8 @@ DENG_GUI_PIMPL(ModelAssetEditor)
                     .shaderDefinition(*pass.program);
 
             // Check the variable declarations.
-            auto vars = ScriptedInfo::subrecordsOfType(QStringLiteral("variable"), shaderDef).keys();
+            auto vars = ScriptedInfo::subrecordsOfType(QStringLiteral("variable"),
+                                                       shaderDef).keys();
             qSort(vars);
             QStringList names;
             for(String const &n : vars)
@@ -365,7 +398,6 @@ DENG_GUI_PIMPL(ModelAssetEditor)
         {
             layout << g->title() << *g;
         }
-
         self.updateSidebarLayout(assetLabel->rule().width() +
                                  assetChoice->rule().width(),
                                  assetChoice->rule().height());
@@ -392,7 +424,6 @@ DENG_GUI_PIMPL(ModelAssetEditor)
             }
             return LoopContinue;
         });
-
         sortInstancesByDistance(false);
     }
 
@@ -439,6 +470,26 @@ DENG_GUI_PIMPL(ModelAssetEditor)
             }
         }
     }
+
+    void playSelectedAnimation()
+    {
+        if(!animChoice || !animChoice->isValidSelection())
+            return;
+
+        PlayData const data = animChoice->selectedItem().data().value<PlayData>();
+
+        if(mobj_t const *mo = Mobj_ById(data.mobjId))
+        {
+            if(auto *thinker = THINKER_DATA_MAYBE(mo->thinker, ClientMobjThinkerData))
+            {
+                if(render::StateAnimator *animator = thinker->animator())
+                {
+                    qDebug() << "starting" << data.animationId << "on" << data.mobjId;
+                    animator->startSequence(data.animationId, 10, false);
+                }
+            }
+        }
+    }
 };
 
 ModelAssetEditor::ModelAssetEditor()
@@ -476,4 +527,9 @@ void ModelAssetEditor::setSelectedInstance(uint /*pos*/)
 {
     d->makeGroups();
     d->redoLayout();
+}
+
+void ModelAssetEditor::playAnimation()
+{
+    d->playSelectedAnimation();
 }

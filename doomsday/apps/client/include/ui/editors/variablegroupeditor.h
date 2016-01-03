@@ -89,6 +89,8 @@ public:
     de::VariableSliderWidget *addSlider(de::Variable &var, de::Ranged const &range, double step, int precision);
     de::VariableLineEditWidget *addLineEdit(de::Variable &var);
 
+    void addWidget(GuiWidget *widget);
+
     /**
      * Commit all added widgets to the group. This finalizes the layout of the
      * added widgets.

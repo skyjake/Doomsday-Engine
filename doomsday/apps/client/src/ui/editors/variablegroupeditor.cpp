@@ -268,6 +268,12 @@ VariableLineEditWidget *VariableGroupEditor::addLineEdit(Variable &var)
     return w;
 }
 
+void VariableGroupEditor::addWidget(GuiWidget *widget)
+{
+    d->content->add(widget);
+    d->layout << *widget;
+}
+
 void VariableGroupEditor::commit()
 {
     d->content->rule().setSize(d->layout.width(), d->layout.height() +

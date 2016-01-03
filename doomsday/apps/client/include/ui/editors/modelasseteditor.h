@@ -34,6 +34,7 @@ public:
 protected slots:
     void setSelectedAsset(uint pos);
     void setSelectedInstance(uint pos);
+    void playAnimation();
 
 private:
     DENG2_PRIVATE(d)

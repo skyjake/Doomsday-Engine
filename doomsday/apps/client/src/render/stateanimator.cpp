@@ -722,6 +722,14 @@ void StateAnimator::triggerDamage(int points, struct mobj_s const *inflictor)
     }
 }
 
+void StateAnimator::startSequence(int animationId, int priority, bool looping,
+                                  String const &node)
+{
+    using Seq = Instance::Sequence;
+    d->start(Seq(animationId, node, looping? Seq::Looping : Seq::NotLooping,
+                 priority));
+}
+
 void StateAnimator::advanceTime(TimeDelta const &elapsed)
 {
     ModelDrawable::Animator::advanceTime(elapsed);
