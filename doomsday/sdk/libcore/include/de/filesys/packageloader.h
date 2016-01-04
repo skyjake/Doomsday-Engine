@@ -60,6 +60,9 @@ public:
     /// Package is already loaded. @ingroup errors
     DENG2_ERROR(AlreadyLoadedError);
 
+    /// Errors during reactions to loading a package. @ingroup errors
+    DENG2_ERROR(PostLoadError);
+
     typedef QMap<String, Package *> LoadedPackages;
 
 public:

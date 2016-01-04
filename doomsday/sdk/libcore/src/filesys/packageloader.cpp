@@ -248,13 +248,24 @@ Package const &PackageLoader::load(String const &packageId)
 
     d->load(packageId, *packFile);
 
-    DENG2_FOR_AUDIENCE2(Load, i)
+    try
     {
-        i->packageLoaded(packageId);
+        DENG2_FOR_AUDIENCE2(Load, i)
+        {
+            i->packageLoaded(packageId);
+        }
+        DENG2_FOR_AUDIENCE2(Activity, i)
+        {
+            i->setOfLoadedPackagesChanged();
+        }
     }
-    DENG2_FOR_AUDIENCE2(Activity, i)
+    catch(Error const &er)
     {
-        i->setOfLoadedPackagesChanged();
+        // Someone took issue with the loaded package; cancel the load.
+        unload(packageId);
+        throw PostLoadError("PackageLoader::load",
+                            "Error during post-load actions of package \"" +
+                            packageId + "\": " + er.asText());
     }
 
     return package(packageId);

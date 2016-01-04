@@ -81,7 +81,15 @@ DENG_GUI_PIMPL(PackagesDialog)
                 }
                 else
                 {
-                    loader.load(owner.packageId());
+                    try
+                    {
+                        loader.load(owner.packageId());
+                    }
+                    catch(Error const &er)
+                    {
+                        LOG_RES_ERROR("Package \"" + owner.packageId() +
+                                      "\" could not be loaded: " + er.asText());
+                    }
                 }
                 owner.updateContents();
             }
