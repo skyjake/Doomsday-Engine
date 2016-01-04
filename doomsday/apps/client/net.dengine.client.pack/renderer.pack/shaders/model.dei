@@ -115,7 +115,9 @@ model.skeletal {
             void main(void) 
             {
                 // Calculate UV at the fragment (wrapped inside the bounds).
-                highp vec2 wrappedUV = fract(vUV + uOffsetUV);
+                highp vec2 wrappedUV = vUV + uOffsetUV;
+                PREDEF_TRANSFORM_UV(wrappedUV);
+                wrappedUV = fract(wrappedUV);
                 highp vec2 uv         = mapToBounds(wrappedUV, vUVBounds[0]);
                 highp vec2 normalUV   = mapToBounds(wrappedUV, vUVBounds[1]);
                 highp vec2 specularUV = mapToBounds(wrappedUV, vUVBounds[2]);
@@ -150,6 +152,8 @@ model.skeletal {
 
         # Mapping when used with ModelDrawable.
         textureMapping <diffuse, normals, specular>
+
+        defines $= {'PREDEF_TRANSFORM_UV(uv)': ''}
         
         include.vertex <include/tangentspace.glsl,
                         include/skeletal.glsl,
@@ -204,7 +208,9 @@ model.skeletal {
             void main(void) 
             {
                 // Calculate UV at the fragment (wrapped inside the bounds).
-                highp vec2 wrappedUV = fract(vUV + uOffsetUV);
+                highp vec2 wrappedUV = vUV + uOffsetUV;
+                PREDEF_TRANSFORM_UV(wrappedUV);
+                wrappedUV = fract(wrappedUV);
                 highp vec2 uv         = mapToBounds(wrappedUV, vUVBounds[0]);
                 highp vec2 normalUV   = mapToBounds(wrappedUV, vUVBounds[1]);
                 highp vec2 specularUV = mapToBounds(wrappedUV, vUVBounds[2]);
@@ -234,6 +240,8 @@ model.skeletal {
 
         # Mapping when used with ModelDrawable.
         textureMapping <diffuse>
+
+        defines $= {'PREDEF_TRANSFORM_UV(uv)': ''}
         
         include.vertex <include/skeletal.glsl>
         vertex = "
@@ -275,7 +283,9 @@ model.skeletal {
             void main(void) 
             {
                 // Calculate UV at the fragment (wrapped inside the bounds).
-                highp vec2 wrappedUV = fract(vUV + uOffsetUV);
+                highp vec2 wrappedUV = vUV + uOffsetUV;
+                PREDEF_TRANSFORM_UV(wrappedUV);
+                wrappedUV = fract(wrappedUV);
                 highp vec2 uv = mapToBounds(wrappedUV, vUVBounds);
             
                 highp vec4 diffuse = vColor * texture2D(uTex, uv);
