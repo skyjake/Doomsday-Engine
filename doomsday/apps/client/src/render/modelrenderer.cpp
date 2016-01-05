@@ -124,8 +124,12 @@ DENG2_PIMPL(ModelRenderer)
     Matrix4f inverseLocal; ///< Translation ignored, this is used for light vectors.
     int lightCount = 0;
 
+    Variable lightIntensityFactor;
+
     Instance(Public *i) : Base(i)
     {
+        lightIntensityFactor.set(NumberValue(1.75));
+
         observer.audienceForAvailability() += this;
         bank.audienceForLoad() += this;
     }
@@ -603,7 +607,7 @@ DENG2_PIMPL(ModelRenderer)
 
         int idx = lightCount;
         uLightDirs       .set(idx, (inverseLocal * direction).normalize());
-        uLightIntensities.set(idx, Vector4f(intensity, intensity.max()) * 2);
+        uLightIntensities.set(idx, Vector4f(intensity, intensity.max()) * lightIntensityFactor);
 
         lightCount++;
     }
