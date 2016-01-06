@@ -57,30 +57,6 @@ DENG2_PIMPL(PackageLoader)
         return false;
     }
 
-    static int ascendingPackagesByLatest(File const *a, File const *b)
-    {
-        // The version must be specified using a format understood by Version.
-        Version const aVer(a->objectNamespace().gets("package.version"));
-        Version const bVer(b->objectNamespace().gets("package.version"));
-
-        if(aVer == bVer)
-        {
-            // Identifical versions are prioritized by modification time.
-            return de::cmp(a->status().modifiedAt, b->status().modifiedAt);
-        }
-        return aVer < bVer? -1 : 1;
-    }
-
-    struct PackageIdentifierDoesNotMatch
-    {
-        String matchId;
-
-        PackageIdentifierDoesNotMatch(String const &id) : matchId(id) {}
-        bool operator () (File *file) const {
-            return Package::identifierForFile(*file) != matchId;
-        }
-    };
-
     int findAllVariants(String const &packageId, FS::FoundFiles &found) const
     {
         QStringList const components = packageId.split('.');
@@ -99,7 +75,9 @@ DENG2_PIMPL(PackageLoader)
                                              << DENG2_TYPE_NAME(ArchiveFolder),
                                              id + ".pack", files);
 
-            files.remove_if(PackageIdentifierDoesNotMatch(packageId));
+            files.remove_if([&packageId] (File *file) {
+                return Package::identifierForFile(*file) != packageId;
+            });
 
             std::copy(files.begin(), files.end(), std::back_inserter(found));
         }
@@ -145,7 +123,19 @@ DENG2_PIMPL(PackageLoader)
             checkPackage(**i);
         }
 
-        found.sort(ascendingPackagesByLatest);
+        found.sort([] (File const *a, File const *b) -> bool
+        {
+            // The version must be specified using a format understood by Version.
+            Version const aVer(a->objectNamespace().gets("package.version"));
+            Version const bVer(b->objectNamespace().gets("package.version"));
+
+            if(aVer == bVer)
+            {
+                // Identifical versions are prioritized by modification time.
+                return de::cmp(a->status().modifiedAt, b->status().modifiedAt) < 0;
+            }
+            return aVer < bVer;
+        });
 
         LOG_RES_VERBOSE("Selected '%s': %s") << packageId << found.back()->description();
 
