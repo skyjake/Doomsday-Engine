@@ -190,8 +190,10 @@ DENG2_PIMPL(ModelRenderer)
             // Alternatively, the entire model may be using a single program.
             if(model.passes.isEmpty())
             {
-                DENG2_ASSERT(model.program());
-                unloadProgram(*static_cast<Program *>(model.program()));
+                if(model.program())
+                {
+                    unloadProgram(*static_cast<Program *>(model.program()));
+                }
             }
             else
             {
