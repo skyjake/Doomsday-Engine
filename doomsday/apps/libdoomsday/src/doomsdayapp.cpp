@@ -13,12 +13,13 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "doomsday/doomsdayapp.h"
 #include "doomsday/filesys/sys_direc.h"
 #include "doomsday/filesys/fs_util.h"
+#include "doomsday/filesys/datafile.h"
 #include "doomsday/paths.h"
 
 #include <de/App>
@@ -173,6 +174,9 @@ DoomsdayApp::DoomsdayApp(Players::Constructor playerConstructor)
 {
     DENG2_ASSERT(!theDoomsdayApp);
     theDoomsdayApp = this;
+
+    static DataFile::Interpreter intrpDataFile;
+    App::fileSystem().addInterpreter(intrpDataFile);
 }
 
 void DoomsdayApp::determineGlobalPaths()

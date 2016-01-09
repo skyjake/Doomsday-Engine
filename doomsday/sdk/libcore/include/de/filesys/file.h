@@ -64,7 +64,7 @@ class Feed;
  *
  * Subclasses have some special requirements for their destructors:
  * - deindex() must be called in all subclass destructors so that the instances indexed
- *   under the subclasses' type are removed from the file system's index also.
+ *   under the subclasses' type are removed from the file system's index, too.
  * - The file must be automatically flushed before it gets destroyed (see flush()).
  * - The deletion audience must be notified and @c audienceForDeletion must be cleared
  *   afterwards.

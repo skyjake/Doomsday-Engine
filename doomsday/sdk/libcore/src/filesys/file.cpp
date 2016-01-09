@@ -145,7 +145,7 @@ String File::description() const
     {
         if(parent())
         {
-            desc += " [path \"" + path() + "\"]";
+            desc += " (path \"" + path() + "\")";
         }
     }
 
@@ -161,7 +161,7 @@ String File::description() const
     {
         if(source() != this)
         {
-            desc += " (data sourced from " + source()->description() + ")";
+            desc += "; data sourced from " + source()->description();
         }
     }
 
