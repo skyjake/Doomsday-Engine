@@ -20,6 +20,8 @@
 #include "de/ui/ListData"
 #include "de/MenuWidget"
 
+#include <de/ScalarRule>
+
 Q_DECLARE_METATYPE(de::ui::Item const *)
 
 namespace de {
@@ -35,6 +37,8 @@ DENG_GUI_PIMPL(TabWidget)
     bool needUpdate = false;
     bool invertedStyle = false;
     LabelWidget *selected = nullptr;
+    ScalarRule *selLeft = nullptr;
+    ScalarRule *selWidth = nullptr;
 
     Instance(Public *i) : Base(i)
     {
@@ -52,8 +56,15 @@ DENG_GUI_PIMPL(TabWidget)
                 .setInput(Rule::AnchorX, self.rule().left() + self.rule().width() / 2)
                 .setInput(Rule::Top, self.rule().top())
                 .setAnchorPoint(Vector2f(.5f, 0));
-        
+
+        // Selection highlight.
         self.add(selected = new LabelWidget);
+    }
+
+    ~Instance()
+    {
+        releaseRef(selLeft);
+        releaseRef(selWidth);
     }
 
     void widgetCreatedForItem(GuiWidget &widget, ui::Item const &)
@@ -69,7 +80,7 @@ DENG_GUI_PIMPL(TabWidget)
     }
 
     void buttonPressed(ButtonWidget &button)
-    {        
+    {
         self.setCurrent(buttons->items().find(*buttons->organizer().findItemForWidget(button)));
     }
 
@@ -96,7 +107,7 @@ DENG_GUI_PIMPL(TabWidget)
     void updateSelected()
     {
         selected->set(Background(style().colors().colorf(invertedStyle? "tab.inverted.selected" : "tab.selected")));
-        
+
         for(ui::Data::Pos i = 0; i < buttons->items().size(); ++i)
         {
             bool const sel = (i == current);
@@ -115,10 +126,24 @@ DENG_GUI_PIMPL(TabWidget)
             }
             if(sel)
             {
+                TimeDelta span = .2;
+                if(!selLeft)
+                {
+                    // Initialize the animated rules for positioning the
+                    // selection highlight.
+                    selLeft  = new ScalarRule(0);
+                    selWidth = new ScalarRule(0);
+                    selected->rule()
+                        .setInput(Rule::Width,  *selWidth)
+                        .setInput(Rule::Left,   *selLeft);
+                    span = 0;
+                }
+                // Animate to new position.
+                selLeft ->set(w.rule().left(),  span);
+                selWidth->set(w.rule().width(), span);
+
                 selected->rule()
-                    .setInput(Rule::Width,  w.rule().width())
                     .setInput(Rule::Height, style().rules().rule("halfunit"))
-                    .setInput(Rule::Left,   w.rule().left())
                     .setInput(Rule::Top,    w.rule().bottom());
             }
         }
