@@ -1,4 +1,4 @@
-/** @file datafile.h  Classic data files: LMP, DED, DEH.
+/** @file datafolder.cpp  Classic data files: PK3, WAD.
  *
  * @authors Copyright (c) 2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,25 +16,37 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_DATAFILE_H
-#define LIBDOOMSDAY_DATAFILE_H
+#include "doomsday/filesys/datafolder.h"
 
-#include "databundle.h"
-#include <de/ByteArrayFile>
+#include <de/ArchiveFeed>
 
-/**
- * FS2 File for for classic data files: LMP, DED, DEH.
- */
-class LIBDOOMSDAY_PUBLIC DataFile : public de::ByteArrayFile, public DataBundle
+using namespace de;
+
+DataFolder::DataFolder(Format format, File &sourceFile)
+    : Folder(sourceFile.name())
+    , DataBundle(format, sourceFile)
 {
-public:
-    DataFile(Format format, File &sourceFile);
-    ~DataFile();
+    setSource(&sourceFile);
+    attach(new ArchiveFeed(sourceFile));
+}
 
-    de::String describe() const;
+DataFolder::~DataFolder()
+{
+    DENG2_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
+    audienceForDeletion().clear();
+    deindex();
+}
 
-    void get(Offset at, Byte *values, Size count) const;
-    void set(Offset at, Byte const *values, Size count);
-};
+String DataFolder::describe() const
+{
+    String desc = DataBundle::description();
 
-#endif // LIBDOOMSDAY_DATAFILE_H
+    // The folder contents (if any) are produced by feeds.
+    String const feedDesc = describeFeeds();
+    if(!feedDesc.isEmpty())
+    {
+        desc += String(" (%1)").arg(feedDesc);
+    }
+
+    return desc;
+}

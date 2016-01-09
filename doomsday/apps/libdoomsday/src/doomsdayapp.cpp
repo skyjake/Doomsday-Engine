@@ -19,7 +19,7 @@
 #include "doomsday/doomsdayapp.h"
 #include "doomsday/filesys/sys_direc.h"
 #include "doomsday/filesys/fs_util.h"
-#include "doomsday/filesys/datafile.h"
+#include "doomsday/filesys/databundle.h"
 #include "doomsday/paths.h"
 
 #include <de/App>
@@ -175,8 +175,8 @@ DoomsdayApp::DoomsdayApp(Players::Constructor playerConstructor)
     DENG2_ASSERT(!theDoomsdayApp);
     theDoomsdayApp = this;
 
-    static DataFile::Interpreter intrpDataFile;
-    App::fileSystem().addInterpreter(intrpDataFile);
+    static DataBundle::Interpreter intrpDataBundle;
+    App::fileSystem().addInterpreter(intrpDataBundle);
 }
 
 void DoomsdayApp::determineGlobalPaths()

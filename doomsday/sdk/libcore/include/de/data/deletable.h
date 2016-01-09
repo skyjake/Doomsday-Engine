@@ -36,6 +36,48 @@ public:
     DENG2_DEFINE_AUDIENCE(Deletion, void objectWasDeleted(Deletable *))
 };
 
+/**
+ * Auto-nulled pointer to a Deletable object. Does not own the target object.
+ */
+template <typename Type>
+class SafePtr : DENG2_OBSERVES(Deletable, Deletion)
+{
+public:
+    SafePtr(Type *ptr = nullptr) {
+        reset(ptr);
+    }
+    ~SafePtr() {
+        reset(nullptr);
+    }
+    void reset(Type *ptr = nullptr) {
+        if(_ptr) _ptr->Deletable::audienceForDeletion -= this;
+        _ptr = ptr;
+        if(_ptr) _ptr->Deletable::audienceForDeletion += this;
+    }
+    Type *operator -> () const {
+        return _ptr;
+    }
+    operator Type const * () const {
+        return _ptr;
+    }
+    operator Type * () {
+        return _ptr;
+    }
+    Type *get() const {
+        return _ptr;
+    }
+    explicit operator bool() const {
+        return _ptr != nullptr;
+    }
+    void objectWasDeleted(Deletable *obj) {
+        if(obj == _ptr) {
+            _ptr = nullptr;
+        }
+    }
+private:
+    Type *_ptr = nullptr;
+};
+
 } // namespace de
 
 #endif // LIBDENG2_DELETABLE_H

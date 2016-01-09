@@ -1,4 +1,4 @@
-/** @file datafile.cpp  FS2 File for classic data files: PK3, WAD, LMP, DED, DEH.
+/** @file datafile.cpp  Classic data files: LMP, DED, DEH.
  *
  * @authors Copyright (c) 2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -20,30 +20,12 @@
 
 using namespace de;
 
-namespace internal
+DataFile::DataFile(Format format, File &sourceFile)
+    : ByteArrayFile(sourceFile.name())
+    , DataBundle(format, sourceFile)
 {
-    static char const *formatDescriptions[] =
-    {
-        "PK3 archive",
-        "WAD file",
-        "data lump",
-        "DED definitions",
-        "DeHackEd patch"
-    };
+    setSource(&sourceFile);
 }
-
-DENG2_PIMPL(DataFile)
-{
-    Format format;
-
-    Instance(Public *i, Format fmt) : Base(i), format(fmt)
-    {}
-};
-
-DataFile::DataFile(Format format, String const &name)
-    : ByteArrayFile(name)
-    , d(new Instance(this, format))
-{}
 
 DataFile::~DataFile()
 {
@@ -54,54 +36,15 @@ DataFile::~DataFile()
 
 String DataFile::describe() const
 {
-    return QString("%1 \"%2\"")
-            .arg(internal::formatDescriptions[d->format])
-            .arg(name().fileNameWithoutExtension());
-}
-
-IByteArray::Size DataFile::size() const
-{
-    DENG2_ASSERT(source());
-    return source()->size();
+    return DataBundle::description();
 }
 
 void DataFile::get(Offset at, Byte *values, Size count) const
 {
-    DENG2_ASSERT(source());
-    source()->as<ByteArrayFile>().get(at, values, count);
+    DataBundle::get(at, values, count);
 }
 
 void DataFile::set(Offset at, Byte const *values, Size count)
 {
-    DENG2_ASSERT(source());
-    source()->as<ByteArrayFile>().set(at, values, count);
-}
-
-File *DataFile::Interpreter::interpretFile(File *sourceData) const
-{
-    // Naive check using the file extension.
-    static struct { String str; Format format; } formats[] = {
-        { ".pk3", Pk3 },
-        { ".wad", Wad },
-        { ".lmp", Lump },
-        { ".ded", Ded },
-        { ".deh", Dehacked }
-    };
-    String const ext = sourceData->name().fileNameExtension();
-    for(auto const &fmt : formats)
-    {
-        if(ext == fmt.str)
-        {
-            LOG_RES_VERBOSE("Interpreted ") << sourceData->description()
-                                            << " as "
-                                            << internal::formatDescriptions[fmt.format];
-
-            auto *data = new DataFile(fmt.format, sourceData->name());
-            data->setSource(sourceData);
-            return data;
-        }
-    }
-
-    // Was not interpreted.
-    return nullptr;
+    DataBundle::set(at, values, count);
 }

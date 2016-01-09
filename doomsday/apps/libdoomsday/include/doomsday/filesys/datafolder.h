@@ -1,4 +1,4 @@
-/** @file datafile.h  Classic data files: LMP, DED, DEH.
+/** @file datafolder.h  Classic data files: PK3, WAD.
  *
  * @authors Copyright (c) 2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,25 +16,25 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_DATAFILE_H
-#define LIBDOOMSDAY_DATAFILE_H
+#ifndef LIBDOOMSDAY_DATAFOLDER_H
+#define LIBDOOMSDAY_DATAFOLDER_H
 
 #include "databundle.h"
-#include <de/ByteArrayFile>
+#include <de/Folder>
 
 /**
- * FS2 File for for classic data files: LMP, DED, DEH.
+ * FS2 file for classic container-like data files: PK3 and WAD.
+ *
+ * Containers are represented as folders so that their contents can be
+ * accessed via the file tree.
  */
-class LIBDOOMSDAY_PUBLIC DataFile : public de::ByteArrayFile, public DataBundle
+class LIBDOOMSDAY_PUBLIC DataFolder : public de::Folder, public DataBundle
 {
 public:
-    DataFile(Format format, File &sourceFile);
-    ~DataFile();
+    DataFolder(Format format, de::File &sourceFile);
+    ~DataFolder();
 
     de::String describe() const;
-
-    void get(Offset at, Byte *values, Size count) const;
-    void set(Offset at, Byte const *values, Size count);
 };
 
-#endif // LIBDOOMSDAY_DATAFILE_H
+#endif // LIBDOOMSDAY_DATABUNDLE_H

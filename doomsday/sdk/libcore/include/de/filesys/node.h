@@ -22,6 +22,7 @@
 #include "../String"
 #include "../Path"
 #include "../Lockable"
+#include "../Deletable"
 
 namespace de {
 namespace filesys {
@@ -37,7 +38,7 @@ namespace filesys {
  * lock themselves as appropriate. A user may lock the node manually if long-term
  * exclusive access is required.
  */
-class DENG2_PUBLIC Node : public Lockable
+class DENG2_PUBLIC Node : public Lockable, public Deletable
 {
 public:
     virtual ~Node();
