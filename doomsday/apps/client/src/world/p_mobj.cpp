@@ -68,6 +68,8 @@
 
 using namespace de;
 
+static String const VAR_MATERIAL("material");
+
 static mobj_t *unusedMobjs;
 
 /*
@@ -477,7 +479,7 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
     if(!sprite.hasView(0)) return;
 
     // Lookup the Material for the Sprite and prepare the animator.
-    Material *mat = resSys().materialPtr(de::Uri(sprite.view(0).gets("material"), RC_NULL));
+    Material *mat = resSys().materialPtr(de::Uri(sprite.view(0).gets(VAR_MATERIAL), RC_NULL));
     if(!mat) return;
     MaterialAnimator &matAnimator = mat->getAnimator(Rend_SpriteMaterialSpec());
     matAnimator.prepare();  // Ensure we have up-to-date info.
@@ -613,7 +615,7 @@ dfloat Mobj_ShadowStrength(mobj_t const &mob)
         ambientLightLevel = cluster.lightSourceIntensity();
     }
     Rend_ApplyLightAdaptation(ambientLightLevel);
-
+    
     // Sprites have their own shadow strength factor.
     dfloat strength = .65f;  ///< Default.
     if(!::useModels || !Mobj_ModelDef(mob))
@@ -623,7 +625,7 @@ dfloat Mobj_ShadowStrength(mobj_t const &mob)
             defn::Sprite sprite(*spriteRec);
             if(sprite.hasView(0))  // Always use the front view for lighting.
             {
-                if(Material *mat = resSys().materialPtr(de::Uri(sprite.view(0).gets("material"), RC_NULL)))
+                if(Material *mat = resSys().materialPtr(de::Uri(sprite.view(0).gets(VAR_MATERIAL), RC_NULL)))
                 {
                     MaterialAnimator &matAnimator = mat->getAnimator(Rend_SpriteMaterialSpec());
                     matAnimator.prepare();  // Ensure we have up-to-date info.

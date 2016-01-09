@@ -2581,21 +2581,31 @@ MaterialManifest &ResourceSystem::toMaterialManifest(materialid_t id) const
     throw UnknownMaterialIdError("ResourceSystem::toMaterialManifest", "Invalid material ID " + String::number(id) + ", valid range " + Rangei(1, d->materialManifestCount + 1).asText());
 }
 
+Material *ResourceSystem::materialPtr(de::Uri const &path)
+{
+    if(auto *manifest = materialManifestPtr(path)) return manifest->materialPtr();
+    return nullptr;
+}
+
 bool ResourceSystem::hasMaterialManifest(de::Uri const &path) const
 {
-    try
-    {
-        materialManifest(path);
-        return true;
-    }
-    catch(MissingResourceManifestError const &)
-    {}  // Ignore this error.
-    return false;
+    return materialManifestPtr(path) != nullptr;
 }
 
 MaterialManifest &ResourceSystem::materialManifest(de::Uri const &uri) const
 {
-    LOG_AS("ResourceSystem::materialManifest");
+    if(auto *mm = materialManifestPtr(uri))
+    {
+        return *mm;
+    }
+    /// @throw MissingResourceManifestError  Failed to locate a matching manifest.
+    throw MissingResourceManifestError("ResourceSystem::materialManifest",
+                                       "Failed to locate a manifest matching \"" + uri.asText() + "\"");
+}
+
+MaterialManifest *ResourceSystem::materialManifestPtr(de::Uri const &uri) const
+{
+    LOG_AS("ResourceSystem::materialManifestPtr");
 
     // Does the user want a manifest in a specific scheme?
     if(!uri.scheme().isEmpty())
@@ -2603,7 +2613,7 @@ MaterialManifest &ResourceSystem::materialManifest(de::Uri const &uri) const
         MaterialScheme &specifiedScheme = materialScheme(uri.scheme());
         if(specifiedScheme.has(uri.path()))
         {
-            return specifiedScheme.find(uri.path());
+            return &specifiedScheme.find(uri.path());
         }
     }
     else
@@ -2613,13 +2623,11 @@ MaterialManifest &ResourceSystem::materialManifest(de::Uri const &uri) const
         {
             if(scheme->has(uri.path()))
             {
-                return scheme->find(uri.path());
+                return &scheme->find(uri.path());
             }
         }
     }
-
-    /// @throw MissingResourceManifestError  Failed to locate a matching manifest.
-    throw MissingResourceManifestError("ResourceSystem::materialManifest", "Failed to locate a manifest matching \"" + uri.asText() + "\"");
+    return nullptr;
 }
 
 dint ResourceSystem::materialCount() const

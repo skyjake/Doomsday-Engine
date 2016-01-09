@@ -36,6 +36,8 @@ DENG2_PIMPL_NOREF(PathTree::Node)
     /// Unique identifier for the path fragment this node represents,
     /// in the owning PathTree.
     PathTree::SegmentId segmentId;
+    
+    String const *segmentText = nullptr; // owned by the PathTree
 
     Instance(PathTree &_tree, bool isLeaf, PathTree::SegmentId _segmentId,
              PathTree::Node *_parent)
@@ -120,7 +122,14 @@ void PathTree::Node::removeChild(PathTree::Node &node)
 
 String const &PathTree::Node::name() const
 {
-    return tree().segmentName(d->segmentId);
+    if(!d->segmentText)
+    {
+        // Cache the string, because PathTree::segmentName() locks the tree and that has
+        // performance implications. The segment text string will not change while the
+        // node exists.
+        d->segmentText = &tree().segmentName(d->segmentId);
+    }
+    return *d->segmentText;
 }
 
 Path::hash_type PathTree::Node::hash() const
@@ -183,7 +192,7 @@ int PathTree::Node::comparePath(de::Path const &searchPattern, ComparisonFlags f
         PathTree::Node const *node = this;
         for(int i = 0; i < pathNodeCount; ++i)
         {
-            bool const snameIsWild = !snode->toStringRef().compare("*");
+            bool const snameIsWild = !snode->toStringRef().compare(QStringLiteral("*"));
             if(!snameIsWild)
             {
                 // If the hashes don't match it can't possibly be this.

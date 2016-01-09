@@ -33,6 +33,12 @@
 
 using namespace de;
 
+static String const VAR_ID        ("id");
+static String const VAR_TYPE      ("type");
+static String const VAR_TEST      ("test");
+static String const VAR_DEVICE_ID ("deviceId");
+static String const VAR_CONTROL_ID("controlId");
+
 DENG2_PIMPL(BindContext)
 {
     bool active  = false;  ///< @c true= Bindings are active.
@@ -86,12 +92,12 @@ DENG2_PIMPL(BindContext)
         {
             CommandBinding bind(*rec);
 
-            if(matchCmd && matchCmd.geti("id") != rec->geti("id"))
+            if(matchCmd && matchCmd.geti(VAR_ID) != rec->geti(VAR_ID))
             {
-                if(matchCmd.geti("type")      == bind.geti("type") &&
-                   matchCmd.geti("test")      == bind.geti("test") &&
-                   matchCmd.geti("deviceId")  == bind.geti("deviceId") &&
-                   matchCmd.geti("controlId") == bind.geti("controlId") &&
+                if(matchCmd.geti(VAR_TYPE)       == bind.geti(VAR_TYPE) &&
+                   matchCmd.geti(VAR_TEST)       == bind.geti(VAR_TEST) &&
+                   matchCmd.geti(VAR_DEVICE_ID)  == bind.geti(VAR_DEVICE_ID) &&
+                   matchCmd.geti(VAR_CONTROL_ID) == bind.geti(VAR_CONTROL_ID) &&
                    matchCmd.equalConditions(bind))
                 {
                     *cmdResult = const_cast<Record *>(rec);
@@ -100,9 +106,9 @@ DENG2_PIMPL(BindContext)
             }
             if(matchImp)
             {
-                if(matchImp.geti("type")      == bind.geti("type") &&
-                   matchImp.geti("deviceId")  == bind.geti("deviceId") &&
-                   matchImp.geti("controlId") == bind.geti("controlId") &&
+                if(matchImp.geti(VAR_TYPE)       == bind.geti(VAR_TYPE) &&
+                   matchImp.geti(VAR_DEVICE_ID)  == bind.geti(VAR_DEVICE_ID) &&
+                   matchImp.geti(VAR_CONTROL_ID) == bind.geti(VAR_CONTROL_ID) &&
                    matchImp.equalConditions(bind))
                 {
                     *cmdResult = const_cast<Record *>(rec);
@@ -118,9 +124,9 @@ DENG2_PIMPL(BindContext)
 
             if(matchCmd)
             {
-                if(matchCmd.geti("type")      == bind.geti("type") &&
-                   matchCmd.geti("deviceId")  == bind.geti("deviceId") &&
-                   matchCmd.geti("controlId") == bind.geti("controlId") &&
+                if(matchCmd.geti(VAR_TYPE)       == bind.geti(VAR_TYPE) &&
+                   matchCmd.geti(VAR_DEVICE_ID)  == bind.geti(VAR_DEVICE_ID) &&
+                   matchCmd.geti(VAR_CONTROL_ID) == bind.geti(VAR_CONTROL_ID) &&
                    matchCmd.equalConditions(bind))
                 {
                     *impResult = const_cast<Record *>(rec);
@@ -128,11 +134,11 @@ DENG2_PIMPL(BindContext)
                 }
             }
 
-            if(matchImp && matchImp.geti("id") != bind.geti("id"))
+            if(matchImp && matchImp.geti(VAR_ID) != bind.geti(VAR_ID))
             {
-                if(matchImp.geti("type")      == bind.geti("type") &&
-                   matchImp.geti("deviceId")  == bind.geti("deviceId") &&
-                   matchImp.geti("controlId") == bind.geti("controlId") &&
+                if(matchImp.geti(VAR_TYPE)       == bind.geti(VAR_TYPE) &&
+                   matchImp.geti(VAR_DEVICE_ID)  == bind.geti(VAR_DEVICE_ID) &&
+                   matchImp.geti(VAR_CONTROL_ID) == bind.geti(VAR_CONTROL_ID) &&
                    matchImp.equalConditions(bind))
                 {
                     *impResult = const_cast<Record *>(rec);
@@ -156,11 +162,11 @@ DENG2_PIMPL(BindContext)
         while(findMatchingBinding(cmdBinding, impBinding, &foundCmd, &foundImp))
         {
             // Only either foundCmd or foundImp is returned as non-NULL.
-            int bindId = (foundCmd? foundCmd->geti("id") : (foundImp? foundImp->geti("id") : 0));
+            int bindId = (foundCmd? foundCmd->geti(VAR_ID) : (foundImp? foundImp->geti(VAR_ID) : 0));
             if(bindId)
             {
                 LOG_INPUT_VERBOSE("Deleting binding %i, it has been overridden by binding %i")
-                        << bindId << (cmdBinding? cmdBinding->geti("id") : impBinding->geti("id"));
+                        << bindId << (cmdBinding? cmdBinding->geti(VAR_ID) : impBinding->geti(VAR_ID));
                 self.deleteBinding(bindId);
             }
         }
@@ -288,17 +294,17 @@ void BindContext::clearBindingsForDevice(int deviceId)
     QSet<int> ids;
     forAllCommandBindings([&ids, &deviceId] (Record const &bind)
     {
-        if(bind.geti("deviceId") == deviceId)
+        if(bind.geti(VAR_DEVICE_ID) == deviceId)
         {
-            ids.insert(bind.geti("id"));
+            ids.insert(bind.geti(VAR_ID));
         }
         return LoopContinue;
     });
     forAllImpulseBindings([&ids, &deviceId] (Record const &bind)
     {
-        if(bind.geti("deviceId") == deviceId)
+        if(bind.geti(VAR_DEVICE_ID) == deviceId)
         {
-            ids.insert(bind.geti("id"));
+            ids.insert(bind.geti(VAR_ID));
         }
         return LoopContinue;
     });
@@ -323,7 +329,7 @@ Record *BindContext::bindCommand(char const *eventDesc, char const *command)
 
         LOG_INPUT_VERBOSE("Command " _E(b) "\"%s\"" _E(.) " now bound to "
                           _E(b) "\"%s\"" _E(.) " in " _E(b) "'%s'" _E(.) " (id %i)")
-                << command << bind.composeDescriptor() << d->name << bind.geti("id");
+                << command << bind.composeDescriptor() << d->name << bind.geti(VAR_ID);
 
         /// @todo: In interactive binding mode, should ask the user if the
         /// replacement is ok. For now, just delete the other bindings.
@@ -354,7 +360,7 @@ Record *BindContext::bindImpulse(char const *ctrlDesc, PlayerImpulse const &impu
 
         LOG_INPUT_VERBOSE("Impulse " _E(b) "'%s'" _E(.) " of player%i now bound to \"%s\" in " _E(b) "'%s'" _E(.)
                           " (id %i)")
-                << impulse.name << (localPlayer + 1) << bind.composeDescriptor() << d->name << bind.geti("id");
+                << impulse.name << (localPlayer + 1) << bind.composeDescriptor() << d->name << bind.geti(VAR_ID);
 
         /// @todo: In interactive binding mode, should ask the user if the
         /// replacement is ok. For now, just delete the other bindings.
@@ -379,7 +385,7 @@ Record *BindContext::findCommandBinding(char const *command, int deviceId) const
             CommandBinding bind(*rec);
             if(bind.gets("command").compareWithoutCase(command)) continue;
 
-            if((deviceId < 0 || deviceId >= NUM_INPUT_DEVICES) || bind.geti("deviceId") == deviceId)
+            if((deviceId < 0 || deviceId >= NUM_INPUT_DEVICES) || bind.geti(VAR_DEVICE_ID) == deviceId)
             {
                 return const_cast<Record *>(rec);
             }
@@ -394,9 +400,9 @@ Record *BindContext::findImpulseBinding(int deviceId, ibcontroltype_t bindType, 
     for(Record const *rec : d->impulseBinds[i])
     {
         ImpulseBinding bind(*rec);
-        if(bind.geti("type")      == bindType &&
-           bind.geti("deviceId")  == deviceId &&
-           bind.geti("controlId") == controlId)
+        if(bind.geti(VAR_TYPE)       == bindType &&
+           bind.geti(VAR_DEVICE_ID)  == deviceId &&
+           bind.geti(VAR_CONTROL_ID) == controlId)
         {
             return const_cast<Record *>(rec);
         }
@@ -410,7 +416,7 @@ bool BindContext::deleteBinding(int id)
     for(int i = 0; i < d->commandBinds.count(); ++i)
     {
         Record *rec = d->commandBinds.at(i);
-        if(rec->geti("id") == id)
+        if(rec->geti(VAR_ID) == id)
         {
             d->commandBinds.removeAt(i);
             delete rec;
@@ -423,7 +429,7 @@ bool BindContext::deleteBinding(int id)
     for(int k = 0; k < d->impulseBinds[i].count(); ++k)
     {
         Record *rec = d->impulseBinds[i].at(k);
-        if(rec->geti("id") == id)
+        if(rec->geti(VAR_ID) == id)
         {
             d->impulseBinds[i].removeAt(k);
             delete rec;

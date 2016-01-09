@@ -136,7 +136,7 @@ struct PathTree::Instance
      */
     PathTree::Node *buildNodesForPath(Path const &path)
     {
-        bool const hasLeaf = !path.toStringRef().endsWith("/");
+        bool const hasLeaf = !path.toStringRef().endsWith(QStringLiteral("/"));
 
         PathTree::Node *node = 0, *parent = &rootNode;
         for(int i = 0; i < path.segmentCount() - (hasLeaf? 1 : 0); ++i)

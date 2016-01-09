@@ -191,10 +191,7 @@ public:
      *
      * @see hasMaterialManifest(), MaterialManifest::materialPtr()
      */
-    inline Material *materialPtr(de::Uri const &path) {
-        if(hasMaterialManifest(path)) return materialManifest(path).materialPtr();
-        return nullptr;
-    }
+    Material *materialPtr(de::Uri const &path);
 
     /**
      * Determines if a manifest exists for a material on @a path.
@@ -204,12 +201,20 @@ public:
     bool hasMaterialManifest(de::Uri const &path) const;
 
     /**
-     * Lookup a material manifest by it's unique resource @a path.
+     * Look up a material manifest by its unique resource @a path.
      *
      * @param path  The path to search for.
      * @return  Found material manifest.
      */
     MaterialManifest &materialManifest(de::Uri const &path) const;
+
+    /**
+     * Look up a material manifest by its unique resource @a path.
+     *
+     * @param path  The path to search for.
+     * @return  Found material manifest, or nullptr if not found.
+     */
+    MaterialManifest *materialManifestPtr(de::Uri const &path) const;
 
     /**
      * Lookup a manifest by unique identifier.
