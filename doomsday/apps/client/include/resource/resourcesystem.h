@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef RESOURCESYSTEM_H
@@ -32,7 +32,7 @@
 #include <doomsday/filesys/zip.h>
 #include <doomsday/uri.h>
 #include <doomsday/resource/mapmanifest.h>
-#include <doomsday/resource/system.h>
+#include <doomsday/resource/resources.h>
 
 #include "resource/animgroup.h"
 #include "resource/colorpalette.h"
@@ -84,7 +84,7 @@
  *
  * @ingroup resource
  */
-class ResourceSystem : public res::System
+class ResourceSystem : public Resources
 {
 public:
     /// An unknown resource scheme was referenced. @ingroup errors

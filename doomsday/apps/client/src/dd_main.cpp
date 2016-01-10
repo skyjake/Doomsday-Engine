@@ -587,7 +587,7 @@ void App_AbnormalShutdown(char const *message)
 
 ResourceSystem &App_ResourceSystem()
 {
-    return static_cast<ResourceSystem &>(res::System::get());
+    return static_cast<ResourceSystem &>(Resources::get());
 }
 
 ClientServerWorld &App_World()

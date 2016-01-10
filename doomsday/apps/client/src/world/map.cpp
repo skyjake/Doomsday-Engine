@@ -1411,7 +1411,7 @@ DENG2_PIMPL(Map)
                 }
                 catch(MaterialManifest::MissingMaterialError const &)
                 {}  // Ignore this error.
-                catch(res::System::MissingResourceManifestError const &)
+                catch(Resources::MissingResourceManifestError const &)
                 {}  // Ignore this error.
             }
 

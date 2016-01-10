@@ -22,7 +22,7 @@
 #include "doomsday/console/cmd.h"
 #include "doomsday/filesys/file.h"
 #include "doomsday/resource/manifest.h"
-#include "doomsday/resource/system.h"
+#include "doomsday/resource/resources.h"
 #include "doomsday/doomsdayapp.h"
 
 #include <de/App>
@@ -186,7 +186,7 @@ String Game::legacySavegameNameExp() const
 
 String Game::legacySavegamePath() const
 {
-    NativePath nativeSavePath = res::System::get().nativeSavePath();
+    NativePath nativeSavePath = Resources::get().nativeSavePath();
 
     if(nativeSavePath.isEmpty()) return "";
     if(isNull()) return "";

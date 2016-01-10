@@ -99,7 +99,7 @@ static Material *findRecordMaterial(Records &records, SerialId id)
         {
             material = &App_ResourceSystem().material(Uri(records.stringRef(id), RC_NULL));
         }
-        catch(res::System::MissingResourceManifestError const &)
+        catch(Resources::MissingResourceManifestError const &)
         {}  // Ignore this error.
 
         records.setUserPointer(id, material);

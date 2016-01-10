@@ -1,7 +1,7 @@
 /** @file api_material.cpp  Material API.
  *
- * @authors Copyright © 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright Â© 2014 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ * @authors Copyright Â© 2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -45,7 +45,7 @@ DENG_EXTERN_C Material *DD_MaterialForTextureUri(uri_s const *textureUri)
         // Log but otherwise ignore this error.
         LOG_RES_WARNING(er.asText() + ", ignoring.");
     }
-    catch(res::System::MissingResourceManifestError const &)
+    catch(Resources::MissingResourceManifestError const &)
     {}  // Ignore this error.
 
     return nullptr;  // Not found.
@@ -65,7 +65,7 @@ DENG_EXTERN_C materialid_t Materials_ResolveUri(struct uri_s const *uri)
     {
         return App_ResourceSystem().materialManifest(*reinterpret_cast<de::Uri const *>(uri)).id();
     }
-    catch(res::System::MissingResourceManifestError const &)
+    catch(Resources::MissingResourceManifestError const &)
     {}  // Ignore this error.
     return NOMATERIALID;
 }
@@ -79,7 +79,7 @@ DENG_EXTERN_C materialid_t Materials_ResolveUriCString(char const *uriCString)
         {
             return App_ResourceSystem().materialManifest(de::Uri(uriCString, RC_NULL)).id();
         }
-        catch(res::System::MissingResourceManifestError const &)
+        catch(Resources::MissingResourceManifestError const &)
         {}  // Ignore this error.
     }
     return NOMATERIALID;

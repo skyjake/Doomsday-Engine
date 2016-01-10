@@ -19,7 +19,7 @@
  */
 
 #include "doomsday/resource/manifest.h"
-#include "doomsday/resource/system.h"
+#include "doomsday/resource/resources.h"
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/filesys/lumpindex.h"
 #include "doomsday/filesys/wad.h"
@@ -259,7 +259,7 @@ void ResourceManifest::locateFile()
     for(QStringList::const_iterator i = d->names.constBegin(); i != d->names.constEnd(); ++i, ++nameIndex)
     {
         StringList candidates;
-        
+
         // Attempt to resolve a path to the named resource using FS1.
         try
         {
@@ -282,7 +282,7 @@ void ResourceManifest::locateFile()
             }
             return LoopContinue;
         });
-        
+
         for(String foundPath : candidates)
         {
             // Perform identity validation.

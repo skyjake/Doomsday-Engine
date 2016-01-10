@@ -40,7 +40,7 @@ DENG_EXTERN_C int Textures_UniqueId2(uri_s const *_uri, dd_bool quiet)
     {
         return App_ResourceSystem().textureManifest(uri).uniqueId();
     }
-    catch(res::System::MissingResourceManifestError const &)
+    catch(Resources::MissingResourceManifestError const &)
     {
         // Log but otherwise ignore this error.
         if(!quiet)
@@ -82,7 +82,7 @@ DENG_EXTERN_C void R_AddAnimGroupFrame(int groupId, uri_s const *textureUri_, in
             LOG_DEBUG("Unknown anim group #%i, ignoring.") << groupId;
         }
     }
-    catch(res::System::MissingResourceManifestError const &er)
+    catch(Resources::MissingResourceManifestError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_RES_WARNING(er.asText() + ". Failed adding texture \"%s\" to group #%i, ignoring.")

@@ -1,4 +1,4 @@
-/** @file resource/system.h
+/** @file resource/resources.h
  *
  * @authors Copyright © 2013-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_RESOURCE_SYSTEM_H
-#define LIBDOOMSDAY_RESOURCE_SYSTEM_H
+#ifndef LIBDOOMSDAY_RESOURCES_H
+#define LIBDOOMSDAY_RESOURCES_H
 
 #include "resourceclass.h"
 #include "mapmanifest.h"
@@ -27,14 +27,12 @@
 #include <de/System>
 #include <de/libcore.h>
 
-namespace res {
-
 /**
  * Base class for the resource management subsystem.
  *
  * Singleton: there can only be one instance of the resource system at a time.
  */
-class LIBDOOMSDAY_PUBLIC System : public de::System
+class LIBDOOMSDAY_PUBLIC Resources : public de::System
 {
 public:
     /// An unknown resource class identifier was specified. @ingroup errors
@@ -43,12 +41,12 @@ public:
     /// The referenced manifest was not found. @ingroup errors
     DENG2_ERROR(MissingResourceManifestError);
 
-    static System &get();
+    static Resources &get();
 
-    typedef de::PathTreeT<MapManifest> MapManifests;
+    typedef de::PathTreeT<res::MapManifest> MapManifests;
 
 public:
-    System();
+    Resources();
 
     // Systems observe the passage of time.
     void timeChanged(de::Clock const &) override;
@@ -85,14 +83,14 @@ public:  // Resource manifests: ------------------------------------------------
     /**
      * Locate the map resource manifest associated with the given, unique @a mapUri.
      */
-    MapManifest &findMapManifest(de::Uri const &mapUri) const;
+    res::MapManifest &findMapManifest(de::Uri const &mapUri) const;
 
     /**
      * Lookup the map resource manifest associated with the given, unique @a mapUri.
      *
      * @return  MapManifest associated with @a mapUri if found; otherwise @c nullptr.
      */
-    MapManifest *tryFindMapManifest(de::Uri const &mapUri) const;
+    res::MapManifest *tryFindMapManifest(de::Uri const &mapUri) const;
 
     /**
      * Returns the total number of map resource manifests in the system.
@@ -108,8 +106,6 @@ private:
     DENG2_PRIVATE(d)
 };
 
-}  // namespace res
-
 /**
  * Convenient method of returning a resource class from the application's global
  * resource system.
@@ -121,5 +117,5 @@ LIBDOOMSDAY_PUBLIC ResourceClass &App_ResourceClass(de::String className);
 /// @overload
 LIBDOOMSDAY_PUBLIC ResourceClass &App_ResourceClass(resourceclassid_t classId);
 
-#endif // LIBDOOMSDAY_RESOURCE_SYSTEM_H
+#endif // LIBDOOMSDAY_RESOURCES_H
 

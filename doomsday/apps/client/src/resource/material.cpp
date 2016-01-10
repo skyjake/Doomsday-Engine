@@ -240,7 +240,7 @@ DENG2_PIMPL(Material)
                 }
                 catch(TextureManifest::MissingTextureError &)
                 {}
-                catch(res::System::MissingResourceManifestError &)
+                catch(Resources::MissingResourceManifestError &)
                 {}
             }
         }
@@ -597,7 +597,7 @@ D_CMD(InspectMaterial)
         }
         return true;
     }
-    catch(res::System::MissingResourceManifestError const &er)
+    catch(Resources::MissingResourceManifestError const &er)
     {
         LOG_SCR_WARNING("%s") << er.asText();
     }

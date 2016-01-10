@@ -106,7 +106,7 @@ void Def_Init()
 
     // Make the definitions visible in the global namespace.
     App::app().scriptSystem().addNativeModule("Defs", defs.names);
-    
+
     // Constants for definitions.
     DENG2_ADD_NUMBER_CONSTANT(defs.names, SN_SPAWN);
     DENG2_ADD_NUMBER_CONSTANT(defs.names, SN_SEE);
@@ -822,7 +822,7 @@ static void redecorateMaterial(Material &material, Record const &def)
                     }
                 }
             }
-            catch(res::System::MissingResourceManifestError const &)
+            catch(Resources::MissingResourceManifestError const &)
             {}  // Ignore this error
         }
 
@@ -1015,7 +1015,7 @@ static void configureMaterial(Material &mat, Record const &definition)
                             dstage0.variance = stage0.variance;
                         }
                     }
-                    catch(res::System::MissingResourceManifestError const &)
+                    catch(Resources::MissingResourceManifestError const &)
                     {}  // Ignore this error.
                 }
             }
@@ -1053,7 +1053,7 @@ static void configureMaterial(Material &mat, Record const &definition)
                                 maskTexture = &resSys().textureScheme("Masks")
                                                    .findByResourceUri(*shineDef->stage.maskTexture);
                             }
-                            catch(res::System::MissingResourceManifestError const &)
+                            catch(Resources::MissingResourceManifestError const &)
                             {}  // Ignore this error.
                         }
 
@@ -1073,7 +1073,7 @@ static void configureMaterial(Material &mat, Record const &definition)
                             sstage0.variance = stage0.variance;
                         }
                     }
-                    catch(res::System::MissingResourceManifestError const &)
+                    catch(Resources::MissingResourceManifestError const &)
                     {}  // Ignore this error.
                 }
             }
@@ -1115,7 +1115,7 @@ static void interpretMaterialDef(Record const &definition)
                         manifest->setFlags(MaterialManifest::Custom);
                     }
                 }
-                catch(res::System::MissingResourceManifestError const &er)
+                catch(Resources::MissingResourceManifestError const &er)
                 {
                     // Log but otherwise ignore this error.
                     LOG_RES_WARNING("Ignoring unknown texture \"%s\" in Material \"%s\" (layer 0 stage 0): %s")
@@ -1244,7 +1244,7 @@ void Def_Read()
     for(dint i = 0; i < runtimeDefs.mobjInfo.size(); ++i)
     {
         Record *dmo = &defs.things[i];
-        
+
         // Make sure duplicate defs overwrite the earliest.
         mobjinfo_t *mo = &runtimeDefs.mobjInfo[defs.getMobjNum(dmo->gets("id"))];
 
@@ -1264,18 +1264,18 @@ void Def_Read()
 
         auto const &states = dmo->geta("states");
         auto const &sounds = dmo->geta("sounds");
-        
+
         for(dint k = 0; k < STATENAMES_COUNT; ++k)
         {
             mo->states[k] = Def_StateForMobj(states[k].asText());
         }
-        
+
         mo->seeSound     = defs.getSoundNum(sounds[SDN_SEE].asText());
         mo->attackSound  = defs.getSoundNum(sounds[SDN_ATTACK].asText());
         mo->painSound    = defs.getSoundNum(sounds[SDN_PAIN].asText());
         mo->deathSound   = defs.getSoundNum(sounds[SDN_DEATH].asText());
         mo->activeSound  = defs.getSoundNum(sounds[SDN_ACTIVE].asText());
-        
+
         for(dint k = 0; k < NUM_MOBJ_MISC; ++k)
         {
             mo->misc[k] = dmo->geta("misc")[k].asInt();
@@ -1576,7 +1576,7 @@ static void initMaterialGroup(ded_group_t &def)
             }
 #endif
         }
-        catch(res::System::MissingResourceManifestError const &er)
+        catch(Resources::MissingResourceManifestError const &er)
         {
             // Log but otherwise ignore this error.
             LOG_RES_WARNING("Unknown material \"%s\" in group def %i: %s")
@@ -1730,7 +1730,7 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
         {
             l->actMaterial = resSys().materialManifest(*def->actMaterial).id();
         }
-        catch(res::System::MissingResourceManifestError const &)
+        catch(Resources::MissingResourceManifestError const &)
         {}  // Ignore this error.
     }
 
@@ -1740,7 +1740,7 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
         {
             l->deactMaterial = resSys().materialManifest(*def->deactMaterial).id();
         }
-        catch(res::System::MissingResourceManifestError const &)
+        catch(Resources::MissingResourceManifestError const &)
         {}  // Ignore this error.
     }
 
@@ -1779,7 +1779,7 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
                     {
                         l->iparm[k] = resSys().materialManifest(de::Uri(def->iparmStr[k], RC_NULL)).id();
                     }
-                    catch(res::System::MissingResourceManifestError const &)
+                    catch(Resources::MissingResourceManifestError const &)
                     {}  // Ignore this error.
                 }
             }

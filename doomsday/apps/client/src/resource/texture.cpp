@@ -401,7 +401,7 @@ D_CMD(InspectTexture)
         }
         return true;
     }
-    catch(res::System::MissingResourceManifestError const &er)
+    catch(Resources::MissingResourceManifestError const &er)
     {
         LOG_RES_WARNING("%s.") << er.asText();
     }

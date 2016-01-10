@@ -3939,7 +3939,7 @@ static bool comparePathTreeNodePathsAscending(PathTreeNodeType const *a, PathTre
  */
 static dint printMapsIndex2(Path const &like, de::Uri::ComposeAsTextFlags composeUriFlags)
 {
-    res::System::MapManifests::FoundNodes found;
+    Resources::MapManifests::FoundNodes found;
     App_ResourceSystem().allMapManifests().findAll(found, pathBeginsWithComparator, const_cast<Path *>(&like));
     if(found.isEmpty()) return 0;
 

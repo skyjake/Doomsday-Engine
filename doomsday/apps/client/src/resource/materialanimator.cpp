@@ -260,7 +260,7 @@ static Texture *findTextureForAnimationStage(MaterialTextureLayer::AnimationStag
     }
     catch(TextureManifest::MissingTextureError &)
     {}
-    catch(res::System::MissingResourceManifestError &)
+    catch(Resources::MissingResourceManifestError &)
     {}
     return nullptr;
 }

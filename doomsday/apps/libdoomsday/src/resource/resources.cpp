@@ -1,4 +1,4 @@
-/** @file resource/system.cpp
+/** @file resource/resources.cpp
  *
  * @authors Copyright (c) 2015 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,32 +16,28 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "doomsday/resource/system.h"
+#include "doomsday/resource/resources.h"
 #include "doomsday/filesys/fs_main.h"
 
 #include <de/App>
 
 using namespace de;
 
-namespace res {
+static Resources *theResources = nullptr;
 
-static res::System *theResSystem = nullptr;
-
-DENG2_PIMPL(System)
+DENG2_PIMPL(Resources)
 {
     typedef QList<ResourceClass *> ResourceClasses;
     ResourceClasses resClasses;
     NullResourceClass nullResourceClass;
-
     NativePath nativeSavePath;
-
     MapManifests mapManifests;
 
     Instance(Public *i)
         : Base(i)
         , nativeSavePath(App::app().nativeHomePath() / "savegames") // default
     {
-        theResSystem = thisPublic;
+        theResources = thisPublic;
 
         resClasses.append(new ResourceClass("RC_PACKAGE",    "Packages"));
         resClasses.append(new ResourceClass("RC_DEFINITION", "Defs"));
@@ -65,25 +61,25 @@ DENG2_PIMPL(System)
         self.clearMapManifests();
         qDeleteAll(resClasses);
 
-        theResSystem = nullptr;
+        theResources = nullptr;
     }
 };
 
-System::System() : d(new Instance(this))
+Resources::Resources() : d(new Instance(this))
 {}
 
-void System::timeChanged(Clock const &)
+void Resources::timeChanged(Clock const &)
 {
     // Nothing to do.
 }
 
-res::System &System::get()
+Resources &Resources::get()
 {
-    DENG2_ASSERT(theResSystem);
-    return *theResSystem;
+    DENG2_ASSERT(theResources);
+    return *theResources;
 }
 
-ResourceClass &System::resClass(String name)
+ResourceClass &Resources::resClass(String name)
 {
     if(!name.isEmpty())
     {
@@ -96,7 +92,7 @@ ResourceClass &System::resClass(String name)
     return d->nullResourceClass; // Not found.
 }
 
-ResourceClass &System::resClass(resourceclassid_t id)
+ResourceClass &Resources::resClass(resourceclassid_t id)
 {
     if(id == RC_NULL) return d->nullResourceClass;
     if(VALID_RESOURCECLASSID(id))
@@ -104,10 +100,10 @@ ResourceClass &System::resClass(resourceclassid_t id)
         return *d->resClasses.at(uint(id));
     }
     /// @throw UnknownResourceClass Attempted with an unknown id.
-    throw UnknownResourceClassError("ResourceSystem::toClass", QString("Invalid id '%1'").arg(int(id)));
+    throw UnknownResourceClassError("ResourceResources::toClass", QString("Invalid id '%1'").arg(int(id)));
 }
 
-void System::updateOverrideIWADPathFromConfig()
+void Resources::updateOverrideIWADPathFromConfig()
 {
     String path = App::config().gets("resource.iwadFolder", "");
     if(!path.isEmpty())
@@ -121,36 +117,37 @@ void System::updateOverrideIWADPathFromConfig()
     }
 }
 
-NativePath System::nativeSavePath() const
+NativePath Resources::nativeSavePath() const
 {
     return d->nativeSavePath;
 }
 
-MapManifest &System::findMapManifest(de::Uri const &mapUri) const
+res::MapManifest &Resources::findMapManifest(de::Uri const &mapUri) const
 {
     // Only one resource scheme is known for maps.
     if(!mapUri.scheme().compareWithoutCase("Maps"))
     {
-       if(MapManifest *found = d->mapManifests.tryFind(mapUri.path(), PathTree::MatchFull | PathTree::NoBranch))
+       if(res::MapManifest *found = d->mapManifests.tryFind(
+                   mapUri.path(), PathTree::MatchFull | PathTree::NoBranch))
            return *found;
     }
     /// @throw MissingResourceManifestError  An unknown map URI was specified.
-    throw MissingResourceManifestError("res::System::findMapManifest", "Failed to locate a manifest for \"" + mapUri.asText() + "\"");
+    throw MissingResourceManifestError("Resources::findMapManifest", "Failed to locate a manifest for \"" + mapUri.asText() + "\"");
 }
 
-MapManifest *System::tryFindMapManifest(de::Uri const &mapUri) const
+res::MapManifest *Resources::tryFindMapManifest(de::Uri const &mapUri) const
 {
     // Only one resource scheme is known for maps.
     if(mapUri.scheme().compareWithoutCase("Maps")) return nullptr;
     return d->mapManifests.tryFind(mapUri.path(), PathTree::MatchFull | PathTree::NoBranch);
 }
 
-dint System::mapManifestCount() const
+dint Resources::mapManifestCount() const
 {
     return d->mapManifests.count();
 }
 
-void System::initMapManifests()
+void Resources::initMapManifests()
 {
     clearMapManifests();
 
@@ -168,7 +165,7 @@ void System::initMapManifests()
             File1 *sourceFile  = recognizer->sourceFile();
             String const mapId = recognizer->id();
 
-            MapManifest &manifest = d->mapManifests.insert(mapId);
+            res::MapManifest &manifest = d->mapManifests.insert(mapId);
             manifest.set("id", mapId);
             manifest.setSourceFile(sourceFile)
                     .setRecognizer(recognizer.release());
@@ -176,25 +173,23 @@ void System::initMapManifests()
     }
 }
 
-void System::clearMapManifests()
+void Resources::clearMapManifests()
 {
     d->mapManifests.clear();
 }
 
-System::MapManifests const &System::allMapManifests() const
+Resources::MapManifests const &Resources::allMapManifests() const
 {
     return d->mapManifests;
 }
 
-} // namespace res
-
 ResourceClass &App_ResourceClass(String className)
 {
-    return res::System::get().resClass(className);
+    return Resources::get().resClass(className);
 }
 
 ResourceClass &App_ResourceClass(resourceclassid_t classId)
 {
-    return res::System::get().resClass(classId);
+    return Resources::get().resClass(classId);
 }
 
