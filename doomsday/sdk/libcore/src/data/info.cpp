@@ -341,6 +341,7 @@ DENG2_PIMPL(Info)
         // The value will be composed of any number of sub-strings.
         if(peekToken() == "\"")
         {
+            value.flags |= InfoValue::StringLiteral;
             while(peekToken() == "\"")
             {
                 value.text += parseString();

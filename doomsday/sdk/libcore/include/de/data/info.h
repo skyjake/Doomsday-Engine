@@ -65,7 +65,8 @@ public:
         /// Value of a key/list element.
         struct Value {
             enum Flag {
-                Script = 0x1,       ///< Assigned with $= (to be parsed as script).
+                Script = 0x1,           ///< Assigned with $= (to be parsed as script).
+                StringLiteral = 0x2,    ///< Quoted string literal (otherwise a plain token).
                 DefaultFlags = 0
             };
             Q_DECLARE_FLAGS(Flags, Flag)
