@@ -38,14 +38,14 @@ namespace internal
 
 DENG2_PIMPL(DataBundle)
 {
-    SafePtr<File const> source;
+    SafePtr<File> source;
     Format format;
 
     Instance(Public *i, Format fmt) : Base(i), format(fmt)
     {}
 };
 
-DataBundle::DataBundle(Format format, File const &source)
+DataBundle::DataBundle(Format format, File &source)
     : d(new Instance(this, format))
 {
     d->source.reset(&source);

@@ -44,7 +44,7 @@ public:
     };
 
 public:
-    DataBundle(Format format, de::File const &source);
+    DataBundle(Format format, de::File &source);
     ~DataBundle();
 
     Format format() const;

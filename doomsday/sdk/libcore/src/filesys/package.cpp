@@ -295,8 +295,8 @@ void Package::validateMetadata(Record const &packageInfo)
                               .arg(packageInfo.gets("path")));
     }
 
-    static char const *required[] = { "title", "version", "license", "tags" };
-    for(char const *req : required)
+    static String const required[] = { "title", "version", "license", "tags" };
+    for(auto const &req : required)
     {
         if(!packageInfo.has(req))
         {
