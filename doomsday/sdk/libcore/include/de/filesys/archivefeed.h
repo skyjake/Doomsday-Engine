@@ -38,7 +38,7 @@ class Archive;
  *
  * @ingroup fs
  */
-class ArchiveFeed : public Feed
+class DENG2_PUBLIC ArchiveFeed : public Feed
 {
 public:
     /// Provided source file cannot be used as a feed source. @ingroup errors
