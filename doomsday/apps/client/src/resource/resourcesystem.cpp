@@ -589,7 +589,7 @@ DENG2_PIMPL(ResourceSystem)
         App::fileSystem().makeFolder("/home/savegames");
 
         // Create the legacy savegame folder.
-        App::fileSystem().makeFolder("/legacysavegames");
+        App::fileSystem().makeFolder("/sys/legacysavegames");
 
         App::packageLoader().loadFromCommandLine();
     }
@@ -2223,7 +2223,7 @@ DENG2_PIMPL(ResourceSystem)
     void locateLegacySavegames(String const &gameId)
     {
         LOG_AS("ResourceSystem");
-        String const legacySavePath = String("/legacysavegames") / gameId;
+        String const legacySavePath = String("/sys/legacysavegames") / gameId;
         if(Folder *oldSaveFolder = App::rootFolder().tryLocate<Folder>(legacySavePath))
         {
             // Add any new legacy savegames which may have appeared in this folder.
@@ -2233,7 +2233,7 @@ DENG2_PIMPL(ResourceSystem)
         {
             try
             {
-                // Make and setup a feed for the /legacysavegames/<gameId> subfolder if the game
+                // Make and setup a feed for the /sys/legacysavegames/<gameId> subfolder if the game
                 // might have legacy savegames we may need to convert later.
                 NativePath const oldSavePath = App_Games().byIdentityKey(gameId).legacySavegamePath();
                 if(oldSavePath.exists() && oldSavePath.isReadable())
@@ -3820,14 +3820,14 @@ bool ResourceSystem::convertLegacySavegames(String const &gameId, String const &
     // A converter plugin is required.
     if(!Plug_CheckForHook(HOOK_SAVEGAME_CONVERT)) return false;
 
-    // Populate /legacysavegames/<gameId> with new savegames which may have appeared.
+    // Populate /sys/legacysavegames/<gameId> with new savegames which may have appeared.
     d->locateLegacySavegames(gameId);
 
     bool didSchedule = false;
     if(sourcePath.isEmpty())
     {
         // Process all legacy savegames.
-        if(Folder const *saveFolder = App::rootFolder().tryLocate<Folder>(String("legacysavegames") / gameId))
+        if(Folder const *saveFolder = App::rootFolder().tryLocate<Folder>(String("sys/legacysavegames") / gameId))
         {
             /// @todo File name pattern matching should not be done here. This is to prevent
             /// attempting to convert Hexen's map state side car files separately when this
