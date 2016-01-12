@@ -16,7 +16,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_VERSION_H
@@ -62,6 +62,12 @@ public:
      * @param buildNumber  Build number.
      */
     Version(String const &version, int buildNumber = 0);
+
+    /**
+     * Determines if the version is valid, i.e., it contains something other
+     * than all zeroes and empty strings.
+     */
+    bool isValid() const;
 
     /**
      * Forms a version string in the form "x.y.z". If a release label is

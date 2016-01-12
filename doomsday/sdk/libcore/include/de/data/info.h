@@ -182,6 +182,8 @@ public:
          */
         bool isRootBlock() const { return _blockType.isEmpty(); }
 
+        bool isEmpty() const { return _contents.empty(); }
+
         Info &info() const { return _info; }
 
         String const &blockType() const { return _blockType; }
@@ -281,16 +283,6 @@ public:
     Info();
 
     /**
-     * Sets the finder for included documents. By default, attempts to locate Info files
-     * by treating the name of the included file as an absolute path.
-     *
-     * @param finder  Include finder object. Info does not take ownership.
-     */
-    void setFinder(IIncludeFinder const &finder);
-
-    void useDefaultFinder();
-
-    /**
      * Parses a string of text as Info source.
      *
      * @param source  Info source text.
@@ -305,6 +297,16 @@ public:
     Info(File const &file);
 
     Info(String const &source, IIncludeFinder const &finder);
+
+    /**
+     * Sets the finder for included documents. By default, attempts to locate Info files
+     * by treating the name of the included file as an absolute path.
+     *
+     * @param finder  Include finder object. Info does not take ownership.
+     */
+    void setFinder(IIncludeFinder const &finder);
+
+    void useDefaultFinder();
 
     /**
      * Sets all the block types whose content is parsed using a script parser.
@@ -389,6 +391,8 @@ public:
      * false, the key was not found and @a value is not changed.
      */
     bool findValueForKey(String const &key, String &value) const;
+
+    bool isEmpty() const;
 
     static String sourceLocation(duint32 lineId);
     static SourceLineTable const &sourceLineTable();

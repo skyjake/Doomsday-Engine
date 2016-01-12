@@ -16,7 +16,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Version"
@@ -35,15 +35,21 @@ Version::Version() : build(Time().asBuildNumber())
 #endif
 
     label = LIBDENG2_RELEASE_LABEL;
-	
+
 #ifdef LIBDENG2_GIT_DESCRIPTION
-	gitDescription = LIBDENG2_GIT_DESCRIPTION;
+    gitDescription = LIBDENG2_GIT_DESCRIPTION;
 #endif
 }
 
 Version::Version(String const &version, int buildNumber) : build(buildNumber)
 {
     parseVersionString(version);
+}
+
+bool Version::isValid() const
+{
+    return major || minor || patch || build ||
+           !label.isEmpty() || !gitDescription.isEmpty();
 }
 
 String Version::base() const

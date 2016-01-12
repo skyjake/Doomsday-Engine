@@ -22,6 +22,7 @@
 #include "../String"
 #include "../File"
 #include "../FileIndex"
+#include "../Version"
 #include "../IObject"
 
 #include <QSet>
@@ -158,6 +159,16 @@ public:
     static void validateMetadata(Record const &packageInfo);
 
     static QStringList tags(File const &packageFile);
+
+    /**
+     * Splits a string containing a package identifier and version. The
+     * expected format of the string is `{packageId}_{version}`.
+     *
+     * @param identifier_version  Identifier and version.
+     *
+     * @return The split components.
+     */
+    static std::pair<String, Version> split(String const &identifier_version);
 
     static String identifierForFile(File const &file);
 

@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Block"
@@ -105,6 +105,11 @@ void Block::copyFrom(IByteArray const &array, Offset at, Size count)
 void Block::resize(Size size)
 {
     QByteArray::resize(size);
+}
+
+IByteArray::Byte const *Block::dataConst() const
+{
+    return reinterpret_cast<Byte const *>(QByteArray::constData());
 }
 
 Block::Byte *Block::data()

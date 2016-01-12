@@ -326,6 +326,22 @@ static String extractIdentifier(String str)
     return stripAfterFirstUnderscore(str.fileNameWithoutExtension());
 }
 
+std::pair<String, Version> Package::split(String const &identifier_version)
+{
+    std::pair<String, Version> idVer;
+    if(identifier_version.contains(QChar('_')))
+    {
+        idVer.first  = stripAfterFirstUnderscore(identifier_version);
+        idVer.second = Version(identifier_version.substr(idVer.first.size() + 1));
+    }
+    else
+    {
+        idVer.first  = identifier_version;
+        idVer.second = Version("");
+    }
+    return idVer;
+}
+
 String Package::identifierForFile(File const &file)
 {
     // Form the prefix if there are enclosing packs as parents.

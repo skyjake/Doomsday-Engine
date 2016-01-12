@@ -892,6 +892,11 @@ bool Info::findValueForKey(String const &key, String &value) const
     return false;
 }
 
+bool Info::isEmpty() const
+{
+    return d->rootBlock.isEmpty();
+}
+
 String Info::sourceLocation(duint32 lineId) // static
 {
     return de::sourceLineTable.sourceLocation(lineId);

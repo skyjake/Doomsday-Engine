@@ -102,6 +102,8 @@ public:
     LoopCallback();
     ~LoopCallback();
 
+    bool isEmpty() const;
+
     void enqueue(Callback func);
     void loopIteration();
 
