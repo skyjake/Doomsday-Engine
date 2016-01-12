@@ -1,4 +1,4 @@
-/** @file datafile.cpp  Classic data files: LMP, DED, DEH.
+/** @file datafile.cpp  Classic data files: WAD, LMP, DED, DEH.
  *
  * @authors Copyright (c) 2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -18,6 +18,8 @@
 
 #include "doomsday/filesys/datafile.h"
 
+#include <de/Reader>
+
 using namespace de;
 
 DataFile::DataFile(Format format, File &sourceFile)
@@ -25,6 +27,15 @@ DataFile::DataFile(Format format, File &sourceFile)
     , DataBundle(format, sourceFile)
 {
     setSource(&sourceFile);
+
+    if(format == Iwad || format == Pwad)
+    {
+        // Automatically set the correct format.
+        Block fileType;
+        fileType.resize(4);
+        get(0, fileType.data(), fileType.size());
+        setFormat(fileType == "IWAD"? Iwad : Pwad);
+    }
 }
 
 DataFile::~DataFile()

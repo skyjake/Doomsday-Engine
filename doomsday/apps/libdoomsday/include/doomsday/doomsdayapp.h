@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDOOMSDAY_DOOMSDAYAPP_H
@@ -26,7 +26,10 @@
 #include "players.h"
 
 #include <de/NativePath>
+#include <de/Info>
 #include <string>
+
+namespace res { class Bundles; }
 
 /**
  * Common application-level state and components.
@@ -38,6 +41,13 @@ class LIBDOOMSDAY_PUBLIC DoomsdayApp
 {
 public:
     DoomsdayApp(Players::Constructor playerConstructor);
+
+    /**
+     * Initialize application state.
+     */
+    void initialize();
+
+    void identifyDataBundles();
 
     void determineGlobalPaths();
 
@@ -54,11 +64,13 @@ public:
 
 public:
     static DoomsdayApp &app();
+    static res::Bundles &bundles();
     static Plugins &plugins();
     static Games &games();
     static Players &players();
     static Game &currentGame();
     static BusyMode &busyMode();
+    static de::NativePath steamBasePath();
 
 private:
     DENG2_PRIVATE(d)

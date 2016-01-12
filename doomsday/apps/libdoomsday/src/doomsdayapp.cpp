@@ -19,20 +19,31 @@
 #include "doomsday/doomsdayapp.h"
 #include "doomsday/filesys/sys_direc.h"
 #include "doomsday/filesys/fs_util.h"
-#include "doomsday/filesys/databundle.h"
+#include "doomsday/resource/bundles.h"
+#include "doomsday/filesys/datafile.h"
+#include "doomsday/filesys/datafolder.h"
 #include "doomsday/paths.h"
 
 #include <de/App>
+#include <de/Loop>
+#include <de/Folder>
+#include <de/DirectoryFeed>
 #include <de/strutil.h>
 
+#include <QSettings>
 #include <QDir>
 
 #ifdef WIN32
 #  define WIN32_LEAN_AND_MEAN
 #  include <windows.h>
+#  define ENV_PATH_SEP_CHAR ';'
+#else
+#  define ENV_PATH_SEP_CHAR ':'
 #endif
 
 using namespace de;
+
+static String const PATH_LOCAL_WADS("/local/wads");
 
 static DoomsdayApp *theDoomsdayApp = nullptr;
 
@@ -41,10 +52,12 @@ DENG2_PIMPL_NOREF(DoomsdayApp)
     std::string ddBasePath; // Doomsday root directory is at...?
     std::string ddRuntimePath;
 
+    bool initialized = false;
     Plugins plugins;
     Games games;
     BusyMode busyMode;
     Players players;
+    res::Bundles dataBundles;
 
     /// @c true = We are using a custom user dir specified on the command line.
     bool usingUserDir = false;
@@ -71,6 +84,112 @@ DENG2_PIMPL_NOREF(DoomsdayApp)
     ~Instance()
     {
         theDoomsdayApp = nullptr;
+    }
+
+    void attachWadFeed(String const &description, NativePath const &path)
+    {
+        if(!path.isEmpty())
+        {
+            if(path.exists())
+            {
+                LOG_RES_NOTE("Using %s WAD folder: %s") << description << path.pretty();
+                App::rootFolder().locate<Folder>(PATH_LOCAL_WADS).attach(new DirectoryFeed(path));
+            }
+            else
+            {
+                LOG_RES_NOTE("Ignoring non-existent %s WAD folder: %s")
+                        << description << path.pretty();
+            }
+        }
+    }
+
+    /**
+     * Doomsday can locate WAD files from various places. This method attaches
+     * a set of feeds to /local/wads/ so that all the native folders where the
+     * user keeps WAD files are available in the tree.
+     */
+    void initWadFolders()
+    {
+        // "/local" is for various files on the local computer.
+        Folder &wads = App::fileSystem().makeFolder(PATH_LOCAL_WADS, FS::DontInheritFeeds);
+        wads.clear();
+        wads.clearFeeds();
+
+        CommandLine &cmdLine = App::commandLine();
+        NativePath const startupPath = cmdLine.startupPath();
+
+        // Feeds are added in ascending priority.
+
+        // Check for games installed using Steam.
+        NativePath const steamBase = steamBasePath();
+        if(steamBase.exists())
+        {
+            NativePath steamPath = steamBase / "SteamApps/common/";
+            LOG_RES_NOTE("Detected SteamApps path: %s") << steamPath.pretty();
+
+            static String const appDirs[] = {
+                "DOOM 2/base",
+                "Final DOOM/base",
+                "Heretic Shadow of the Serpent Riders/base",
+                "Hexen/base",
+                "Hexen Deathkings of the Dark Citadel/base",
+                "Ultimate Doom/base",
+                "DOOM 3 BFG Edition/base/wads"
+            };
+
+            for(auto const &appDir : appDirs)
+            {
+                NativePath const p = steamPath / appDir;
+                if(p.exists())
+                {
+                    attachWadFeed("Steam", p);
+                }
+            }
+        }
+
+        // Add all paths from the DOOMWADPATH environment variable.
+        if(getenv("DOOMWADPATH"))
+        {
+            // Interpreted similarly to the PATH variable.
+            QStringList paths = String(getenv("DOOMWADPATH"))
+                    .split(ENV_PATH_SEP_CHAR, String::SkipEmptyParts);
+            while(!paths.isEmpty())
+            {
+                attachWadFeed(_E(m) "DOOMWADPATH" _E(.), startupPath / paths.takeLast());
+            }
+        }
+
+        // Add the path from the DOOMWADDIR environment variable.
+        if(getenv("DOOMWADDIR"))
+        {
+            attachWadFeed(_E(m) "DOOMWADDIR" _E(.), startupPath / getenv("DOOMWADDIR"));
+        }
+
+#ifdef UNIX
+        // There may be an iwaddir specified in a system-level config file.
+        filename_t fn;
+        if(UnixInfo_GetConfigValue("paths", "iwaddir", fn, FILENAME_T_MAXLEN))
+        {
+            attachWadFeed("UnixInfo " _E(i) "paths.iwaddir" _E(.), startupPath / fn);
+        }
+#endif
+
+        // Command line paths.
+        if(auto arg = cmdLine.check("-iwad", 1)) // has at least one parameter
+        {
+            for(dint p = arg.pos + 1; p < cmdLine.count(); ++p)
+            {
+                if(cmdLine.isOption(p)) break;
+
+                cmdLine.makeAbsolutePath(p);
+                attachWadFeed("command-line", cmdLine.at(p));
+            }
+        }
+
+        // Configured via GUI.
+        attachWadFeed("user-selected", App::config().gets("resource.iwadFolder", ""));
+
+        wads.populate();
     }
 
 #ifdef UNIX
@@ -175,8 +294,23 @@ DoomsdayApp::DoomsdayApp(Players::Constructor playerConstructor)
     DENG2_ASSERT(!theDoomsdayApp);
     theDoomsdayApp = this;
 
+    App::app().addInitPackage("net.dengine.base");
+
     static DataBundle::Interpreter intrpDataBundle;
     App::fileSystem().addInterpreter(intrpDataBundle);
+}
+
+void DoomsdayApp::initialize()
+{
+    d->initWadFolders();
+
+    // "/sys/bundles" has package-like links to files that are not in Doomsday 2
+    // format but can be loaded as packages.
+    App::fileSystem().makeFolder("/sys/bundles", FS::DontInheritFeeds);
+
+    d->initialized = true;
+
+    d->dataBundles.identify();
 }
 
 void DoomsdayApp::determineGlobalPaths()
@@ -188,6 +322,11 @@ DoomsdayApp &DoomsdayApp::app()
 {
     DENG2_ASSERT(theDoomsdayApp);
     return *theDoomsdayApp;
+}
+
+res::Bundles &DoomsdayApp::bundles()
+{
+    return DoomsdayApp::app().d->dataBundles;
 }
 
 Plugins &DoomsdayApp::plugins()
@@ -215,6 +354,27 @@ BusyMode &DoomsdayApp::busyMode()
     return DoomsdayApp::app().d->busyMode;
 }
 
+NativePath DoomsdayApp::steamBasePath()
+{
+#ifdef WIN32
+    // The path to Steam can be queried from the registry.
+    {
+        QSettings st("HKEY_CURRENT_USER\\Software\\Valve\\Steam\\", QSettings::NativeFormat);
+        String path = st.value("SteamPath").toString();
+        if(!path.isEmpty()) return path;
+    }
+    {
+        QSettings st("HKEY_LOCAL_MACHINE\\Software\\Valve\\Steam\\", QSettings::NativeFormat);
+        String path = st.value("InstallPath").toString();
+        if(!path.isEmpty()) return path;
+    }
+#elif MACOSX
+    return NativePath(QDir::homePath()) / "Library/Application Support/Steam/";
+#endif
+    /// @todo Where are Steam apps located on Linux?
+    return "";
+}
+
 bool DoomsdayApp::isUsingUserDir() const
 {
     return d->usingUserDir;
@@ -225,7 +385,7 @@ std::string const &DoomsdayApp::doomsdayBasePath() const
     return d->ddBasePath;
 }
 
-void DoomsdayApp::setDoomsdayBasePath(de::NativePath const &path)
+void DoomsdayApp::setDoomsdayBasePath(NativePath const &path)
 {
     /// @todo Unfortunately Dir/fs_util assumes fixed-size strings, so we
     /// can't take advantage of std::string. -jk
@@ -246,7 +406,7 @@ std::string const &DoomsdayApp::doomsdayRuntimePath() const
     return d->ddRuntimePath;
 }
 
-void DoomsdayApp::setDoomsdayRuntimePath(de::NativePath const &path)
+void DoomsdayApp::setDoomsdayRuntimePath(NativePath const &path)
 {
     d->ddRuntimePath = path.toUtf8().constData();
 }

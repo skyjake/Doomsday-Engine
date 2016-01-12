@@ -20,11 +20,15 @@
 #define LIBDOOMSDAY_DATABUNDLE_H
 
 #include "../libdoomsday.h"
+#include "lumpdirectory.h"
 #include <de/filesys/IInterpreter>
 #include <de/Folder>
 
 /**
  * Abstract base class for classic data files: PK3, WAD, LMP, DED, DEH.
+ *
+ * Specialized libcore Files representing loadable data files should be derived
+ * from DataBundle.
  *
  * Generates Doomsday 2 compatible metadata for data files, allowing them to
  * be treated as packages at runtime.
@@ -37,7 +41,9 @@
 class LIBDOOMSDAY_PUBLIC DataBundle : public de::IByteArray
 {
 public:
-    enum Format { Pk3, Wad, Lump, Ded, Dehacked };
+    enum Format { Unknown, Pk3, Wad, Iwad, Pwad, Lump, Ded, Dehacked };
+
+    DENG2_ERROR(FormatError);
 
     struct LIBDOOMSDAY_PUBLIC Interpreter : public de::filesys::IInterpreter {
         de::File *interpretFile(de::File *sourceData) const override;
@@ -50,10 +56,38 @@ public:
     Format format() const;
     de::String description() const;
 
+    /**
+     * Generates appropriate packages accoding to the contents of the data bundle.
+     */
+    void identifyPackages() const;
+
+    /**
+     * Determines if the bundle is nested inside another bundle.
+     */
+    bool isNested() const;
+
+    /**
+     * Finds the bundle that contains this bundle, if this bundle is a
+     * nested one.
+     *
+     * @return DataBundle that contains this bundle, or @c nullptr if not
+     * nested. Ownership not transferred.
+     */
+    DataBundle const *containerBundle() const;
+
+    /**
+     * Returns the WAD file lump directory.
+     * @return LumpDirectory for WADs; @c nullptr for non-WAD formats.
+     */
+    res::LumpDirectory const *lumpDirectory() const;
+
     // Implements IByteArray.
     Size size() const;
     void get(Offset at, Byte *values, Size count) const;
     void set(Offset at, Byte const *values, Size count);
+
+protected:
+    void setFormat(Format format);
 
 private:
     DENG2_PRIVATE(d)

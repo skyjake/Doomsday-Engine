@@ -1,4 +1,4 @@
-/** @file datafolder.cpp  Classic data files: PK3, WAD.
+/** @file datafolder.cpp  Classic data files: PK3.
  *
  * @authors Copyright (c) 2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

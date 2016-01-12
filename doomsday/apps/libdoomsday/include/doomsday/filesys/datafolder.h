@@ -1,4 +1,4 @@
-/** @file datafolder.h  Classic data files: PK3, WAD.
+/** @file datafolder.h  Classic data files: PK3.
  *
  * @authors Copyright (c) 2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -19,14 +19,16 @@
 #ifndef LIBDOOMSDAY_DATAFOLDER_H
 #define LIBDOOMSDAY_DATAFOLDER_H
 
-#include "databundle.h"
+#include "../resource/databundle.h"
 #include <de/Folder>
 
 /**
- * FS2 file for classic container-like data files: PK3 and WAD.
+ * FS2 file for classic container-like data files: PK3.
  *
  * Containers are represented as folders so that their contents can be
  * accessed via the file tree.
+ *
+ * @todo WAD files should use DataFolder.
  */
 class LIBDOOMSDAY_PUBLIC DataFolder : public de::Folder, public DataBundle
 {

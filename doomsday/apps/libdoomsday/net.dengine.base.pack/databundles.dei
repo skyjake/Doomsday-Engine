@@ -1,0 +1,283 @@
+# Data Bundle Identification
+#
+# This file contains the identification criteria for common known data
+# files from the original games. Each data file is represented by a
+# package with the given identifier and version.
+#
+# When Doomsday locates a WAD file, the lump directory CRC32 and other
+# information is printed in the log. These can be used when adding new
+# entries to this list.
+#
+# In addition to this list, data file metadata can be stored in PK3
+# Info files and .manifest files.
+
+package "com.idsoftware.doom_1.9" {
+    format: IWAD
+    fileName: doom.wad
+    lumps <E2M1, E2M2, E2M3, E2M4, E2M5, E2M6, E2M7, E2M8, E2M9, E3M1, E3M2, E3M3, E3M4, E3M5, E3M6, E3M7, E3M8, E3M9, CYBRE1, CYBRD8, FLOOR7_2>
+    info {
+        title: DOOM Registered
+        author: id Software
+        license: All rights reserved
+        tags: doom vanilla
+    }
+}
+
+package "com.idsoftware.doom.shareware_1.9" {
+    format: IWAD 
+    fileName: doom1.wad
+    fileSize: 4196020 
+    lumps <E1M1, E1M2, E1M3, E1M4, E1M5, E1M6, E1M7, E1M8, E1M9, D_E1M1, FLOOR4_8, FLOOR7_2>
+    lumpDirCRC32: b3950597
+    info {
+        title: Ultimate DOOM
+        author: id Software
+        license: All rights reserved
+        tags: doom vanilla
+    }
+}
+
+package "com.idsoftware.doom.ultimate_1.9" {
+    format: IWAD 
+    fileName <doomu.wad, doom.wad>
+    fileSize: 12408292 
+    lumps <E4M1, E4M2, E4M3, E4M4, E4M5, E4M6, E4M7, E4M8, E4M9, M_EPI4>
+    lumpDirCRC32: a990524d
+    info {
+        title: Ultimate DOOM
+        author: id Software
+        license: All rights reserved
+        tags: doom vanilla
+    }
+}
+
+package "com.idsoftware.doom2_1.666" {
+    format: IWAD 
+    fileName: doom2.wad
+    fileSize: 14943400 
+    lumpDirCRC32: b0b547e0
+    info {
+        title: DOOM 2: Hell on Earth
+        author: id Software
+        license: All rights reserved
+        tags: doom vanilla
+    }
+}
+
+package "com.idsoftware.doom2_1.9" {
+    format: IWAD
+    fileName <doom2f.wad, doom2.wad>
+    fileSize: 14604584 
+    lumps <MAP01, MAP02, MAP03, MAP04, MAP10, MAP20, MAP25, MAP30, VILEN1, VILEO1, VILEQ1, GRNROCK>
+    lumpDirCRC32: 687126dc
+    info {
+        title: DOOM 2: Hell on Earth
+        author: id Software
+        license: All rights reserved
+        tags: doom vanilla
+    }
+}
+
+package "com.idsoftware.finaldoom.plutonia" {
+    format: IWAD 
+    fileName: plutonia.wad
+    fileSize: 17420824 
+    lumps <_DEUTEX_, MAP01, MAP25, MC5, MC11, MC16, MC20>
+    lumpDirCRC32: d926b798
+    info {
+        title: Final DOOM: The Plutonia Experiment
+        author: Dario Casali and Milo Casali
+        license: All rights reserved
+        tags: doom2 mod
+    }
+}
+
+package "com.idsoftware.finaldoom.tnt" {
+    format: IWAD 
+    fileName: tnt.wad
+    fileSize: 18195736 
+    lumps <CAVERN5, CAVERN7, STONEW1>
+    lumpDirCRC32: 5d08a3ea
+    info {
+        title: Final DOOM: TNT: Evilution
+        author: Team TNT
+        license: All rights reserved
+        tags: doom2 mod
+    }
+}
+
+package "banjo.hacx" {
+    format: IWAD
+    fileName: hacx.wad
+    lumps <HACX-R, PLAYPAL>
+    info {
+        title: HACX - Twitch 'n Kill
+        author: Banjo Software
+        license: All rights reserved
+        tags: doom2 mod
+    }
+}
+
+package "digitalcafe.chexquest" {
+    format: IWAD
+    fileName: chex.wad
+    lumps <E1M1, E4M1, _DEUTEX_, POSSH0M0>
+    info {
+        title: Chex(R) Quest
+        author: Digital Cafe
+        license: All rights reserved
+        tags: doom2 mod
+    }
+}
+
+package "kaiser.doom64" {
+    format: IWAD 
+    fileName: doom64.wad
+    fileSize: 47458247 
+    lumps <MAP01, MAP20, MAP33, F_SUCK>
+    lumpDirCRC32: c3f5ef4a
+    info {
+        title: DOOM 64: Absolution
+        author: Kaiser et al.
+        license: All rights reserved
+        tags: doom64 mod
+    }
+}
+
+package "freedoom.freedm_0.10.1" {
+    format: IWAD 
+    fileName: freedm.wad
+    fileSize: 19127900 
+    lumps <MAP01>
+    lumpDirCRC32: c3be5175
+    info {
+        title: Freedoom Deathmatch
+        author: Freedoom Projcet
+        license: BSD
+        tags: doom2 mod multiplayer
+    }
+}
+
+package "com.ravensoftware.heretic" {
+    format: IWAD
+    fileName: heretic.wad
+    lumps <E2M2, E3M6, MUMSIT, WIZACT, MUS_CPTD, CHKNC5, SPAXA1A5>
+    info {
+        title: Heretic Registered
+        author: Raven Software
+        license: All rights reserved
+        tags: heretic vanilla
+    }    
+}
+
+package "com.ravensoftware.heretic.shareware" {
+    format: IWAD 
+    fileName: heretic1.wad
+    fileSize: 5120920 
+    lumps <E1M1, MUMSIT, WIZACT, MUS_CPTD, CHKNC5, SPAXA1A5>
+    lumpDirCRC32: c3aefe95
+    info {
+        title: Heretic Shareware
+        author: Raven Software
+        license: All rights reserved
+        tags: heretic vanilla    
+    }
+}
+
+package "com.ravensoftware.heretic.extended" {
+    format: IWAD 
+    fileName: heretic.wad
+    fileSize: 14189976 
+    lumps <EXTENDED, E5M2, E5M7, E6M2, MUMSIT, WIZACT, MUS_CPTD, CHKNC5, SPAXA1A5>
+    lumpDirCRC32: 515ab4d9
+    info {
+        title: Heretic: Shadow of the Serpent Riders
+        author: Raven Software
+        license: All rights reserved
+        tags: heretic vanilla expansion
+    }
+}
+
+package "com.ravensoftware.hexen.deathkings_1.1" {
+    format: IWAD 
+    fileName: hexdd.wad
+    fileSize: 4429700 
+    lumps <MAP59, MAP60>
+    lumpDirCRC32: b0b096be
+    info {
+        title: Hexen: Deathkings of the Dark Citadel (Expansion)
+        author: Raven Software
+        license: All rights reserved
+        tags: hexen vanilla expansion
+        required <com.ravensoftware.hexen>
+    }
+}
+
+package "com.ravensoftware.hexen_1.0" {
+    format: IWAD 
+    fileName: hexen.wad
+    fileSize: 20128392 
+    lumps <MAP08, MAP22, MAP41, TINTTAB, FOGMAP, DARTA1, ARTIPORK, SKYFOG, GROVER>
+    lumpDirCRC32: 37edddfd
+    info {
+        title: Hexen
+        author: Raven Software
+        license: All rights reserved
+        tags: hexen vanilla        
+    }
+}
+
+package "com.ravensoftware.hexen_1.1" {
+    format: IWAD 
+    fileName: hexen.wad
+    fileSize: 20083672 
+    lumps <MAP08, MAP22, TINTTAB, FOGMAP, TRANTBLA, DARTA1, ARTIPORK, SKYFOG, TALLYTOP, GROVER>
+    lumpDirCRC32: d334ff57
+    info {
+        title: Hexen
+        author: Raven Software
+        license: All rights reserved
+        tags: hexen vanilla        
+    }
+}
+
+package "com.ravensoftware.hexen.beta" {
+    format: IWAD 
+    fileName <hexen.wad, hexenbeta.wad>
+    fileSize: 10615976 
+    lumps <MAP01, MAP04, TINTTAB, FOGMAP, DARTA1, ARTIPORK, AFLYA0, "DEMO3==13866">
+    lumpDirCRC32: 2f99489f
+    info {
+        title: Hexen (Beta)
+        author: Raven Software
+        license: All rights reserved
+        tags: hexen vanilla prerelease
+    }
+}
+
+package "com.ravensoftware.hexen.demo" {
+    format: IWAD 
+    fileName <hexen.wad, hexendemo.wad>
+    fileSize: 10644136
+    lumps <MAP01, MAP04, TINTTAB, FOGMAP, DARTA1, ARTIPORK, "DEMO3==18150">
+    lumpDirCRC32: 96c03af2
+    info {
+        title: Hexen (Demo)
+        author: Raven Software
+        license: All rights reserved
+        tags: hexen vanilla prerelease
+    }
+}
+
+package "com.ravensoftware.hexen.macdemo" {
+    format: IWAD 
+    fileName <hexen.wad, machexendemo.wad>
+    fileSize: 13596228 
+    lumpDirCRC32: 4b8db35c
+    info {
+        title: Hexen (Macintosh Demo)
+        author: Raven Software
+        license: All rights reserved
+        tags: hexen vanilla prerelease
+    }
+}

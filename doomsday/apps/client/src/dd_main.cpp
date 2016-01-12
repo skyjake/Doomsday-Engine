@@ -325,7 +325,7 @@ static void createPackagesScheme()
     // Add paths to games bought with/using Steam.
     if(!CommandLine_Check("-nosteamapps"))
     {
-        NativePath steamBase = Sys_SteamBasePath();
+        NativePath steamBase = DoomsdayApp::steamBasePath();
         if(!steamBase.isEmpty())
         {
             NativePath steamPath = steamBase / "SteamApps/common/";

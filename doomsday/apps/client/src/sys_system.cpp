@@ -268,28 +268,6 @@ void Sys_HideMouseCursor()
 #endif
 }
 
-de::NativePath Sys_SteamBasePath()
-{
-#ifdef WIN32
-    // The path to Steam can be queried from the registry.
-    {
-    QSettings st("HKEY_CURRENT_USER\\Software\\Valve\\Steam\\", QSettings::NativeFormat);
-    de::String path = st.value("SteamPath").toString();
-    if(!path.isEmpty()) return path;
-    }
-
-    {
-    QSettings st("HKEY_LOCAL_MACHINE\\Software\\Valve\\Steam\\", QSettings::NativeFormat);
-    de::String path = st.value("InstallPath").toString();
-    if(!path.isEmpty()) return path;
-    }
-#elif MACOSX
-    return de::NativePath(QDir::homePath()) / "Library/Application Support/Steam/";
-#endif
-    /// @todo Where are steam apps located on Ubuntu?
-    return "";
-}
-
 /**
  * Called when Doomsday should quit (will be deferred until convenient).
  */

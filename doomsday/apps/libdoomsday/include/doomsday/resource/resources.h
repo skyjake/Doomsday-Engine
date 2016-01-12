@@ -25,7 +25,7 @@
 #include <de/NativePath>
 #include <de/PathTree>
 #include <de/System>
-#include <de/libcore.h>
+#include <de/Info>
 
 /**
  * Base class for the resource management subsystem.

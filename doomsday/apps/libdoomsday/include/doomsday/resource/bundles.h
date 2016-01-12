@@ -1,4 +1,4 @@
-/** @file datafile.h  Classic data files: WAD, LMP, DED, DEH.
+/** @file bundles.h   Data bundle indexing.
  *
  * @authors Copyright (c) 2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,25 +16,41 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_DATAFILE_H
-#define LIBDOOMSDAY_DATAFILE_H
+#ifndef LIBDOOMSDAY_RESOURCE_BUNDLES_H
+#define LIBDOOMSDAY_RESOURCE_BUNDLES_H
 
-#include "../resource/databundle.h"
-#include <de/ByteArrayFile>
+#include "databundle.h"
+#include <de/Info>
+
+namespace res {
 
 /**
- * FS2 File for for classic data files: LMP, DED, DEH.
+ * Index for data bundles.
  */
-class LIBDOOMSDAY_PUBLIC DataFile : public de::ByteArrayFile, public DataBundle
+class Bundles
 {
 public:
-    DataFile(Format format, File &sourceFile);
-    ~DataFile();
+    typedef QList<de::Info::BlockElement const *> BlockElements;
 
-    de::String describe() const;
+    DENG2_ERROR(InvalidError);
 
-    void get(Offset at, Byte *values, Size count) const;
-    void set(Offset at, Byte const *values, Size count);
+public:
+    Bundles();
+
+    /**
+     * Returns the collection of information for identifying known data files.
+     * @return Info document.
+     */
+    de::Info const &identityRegistry() const;
+
+    BlockElements formatEntries(DataBundle::Format format) const;
+
+    void identify();
+
+private:
+    DENG2_PRIVATE(d)
 };
 
-#endif // LIBDOOMSDAY_DATAFILE_H
+} // namespace res
+
+#endif // LIBDOOMSDAY_RESOURCE_BUNDLES_H

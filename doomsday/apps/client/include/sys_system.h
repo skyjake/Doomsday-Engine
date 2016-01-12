@@ -40,8 +40,6 @@ DENG_EXTERN_C void Sys_Quit();
 
 void Sys_HideMouseCursor();
 
-de::NativePath Sys_SteamBasePath();
-
 void Sys_Sleep(de::dint millisecs);
 
 /**

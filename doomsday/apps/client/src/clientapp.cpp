@@ -418,9 +418,9 @@ void ClientApp::initialize()
     // Initialize definitions before the files are indexed.
     Def_Init();
 
-    addInitPackage("net.dengine.base");
     addInitPackage("net.dengine.client");
     initSubsystems(); // loads Config
+    DoomsdayApp::initialize();
 
     // Set up the log alerts (observes Config variables).
     d->logAlarm.alertMask.init();

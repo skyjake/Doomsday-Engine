@@ -172,8 +172,8 @@ void ServerApp::initialize()
     Def_Init();
 
     // Load the server's packages.
-    addInitPackage("net.dengine.base");
     initSubsystems();
+    DoomsdayApp::initialize();
 
     // Initialize.
 #if WIN32
