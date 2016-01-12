@@ -1656,7 +1656,7 @@ float M_BoundingBoxDiff(const float in[4], const float out[4])
            out[BOXTOP]    - in[BOXTOP];
 }
 
-uint M_CRC32(byte *data, uint length)
+uint M_CRC32(byte const *data, uint length)
 {
 /* ====================================================================== */
 /*  COPYRIGHT (C) 1986 Gary S. Brown.  You may use this program, or       */

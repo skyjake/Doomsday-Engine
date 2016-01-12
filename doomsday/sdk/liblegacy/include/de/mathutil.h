@@ -32,7 +32,7 @@ extern "C" {
 /**
  * Calculate CRC-32 for an arbitrary data buffer. @ingroup math
  */
-DENG_PUBLIC uint M_CRC32(byte *data, uint length);
+DENG_PUBLIC uint M_CRC32(byte const *data, uint length);
 
 /**
  * Gives an estimation of distance (not exact).

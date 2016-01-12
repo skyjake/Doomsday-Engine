@@ -21,7 +21,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_C_WRAPPER_H
@@ -247,21 +247,21 @@ DENG2_PUBLIC int UnixInfo_GetConfigValue(char const *configFile, char const *key
 /*
  * ByteOrder
  */
-DENG2_PUBLIC dint16 LittleEndianByteOrder_ToForeignInt16(dint16 value);
-DENG2_PUBLIC dint32 LittleEndianByteOrder_ToForeignInt32(dint32 value);
-DENG2_PUBLIC dint64 LittleEndianByteOrder_ToForeignInt64(dint64 value);
+DENG2_PUBLIC dint16  LittleEndianByteOrder_ToForeignInt16(dint16 value);
+DENG2_PUBLIC dint32  LittleEndianByteOrder_ToForeignInt32(dint32 value);
+DENG2_PUBLIC dint64  LittleEndianByteOrder_ToForeignInt64(dint64 value);
 DENG2_PUBLIC duint16 LittleEndianByteOrder_ToForeignUInt16(duint16 value);
 DENG2_PUBLIC duint32 LittleEndianByteOrder_ToForeignUInt32(duint32 value);
 DENG2_PUBLIC duint64 LittleEndianByteOrder_ToForeignUInt64(duint64 value);
-DENG2_PUBLIC dfloat LittleEndianByteOrder_ToForeignFloat(dfloat value);
+DENG2_PUBLIC dfloat  LittleEndianByteOrder_ToForeignFloat(dfloat value);
 DENG2_PUBLIC ddouble LittleEndianByteOrder_ToForeignDouble(ddouble value);
-DENG2_PUBLIC dint16 LittleEndianByteOrder_ToNativeInt16(dint16 value);
-DENG2_PUBLIC dint32 LittleEndianByteOrder_ToNativeInt32(dint32 value);
-DENG2_PUBLIC dint64 LittleEndianByteOrder_ToNativeInt64(dint64 value);
+DENG2_PUBLIC dint16  LittleEndianByteOrder_ToNativeInt16(dint16 value);
+DENG2_PUBLIC dint32  LittleEndianByteOrder_ToNativeInt32(dint32 value);
+DENG2_PUBLIC dint64  LittleEndianByteOrder_ToNativeInt64(dint64 value);
 DENG2_PUBLIC duint16 LittleEndianByteOrder_ToNativeUInt16(duint16 value);
 DENG2_PUBLIC duint32 LittleEndianByteOrder_ToNativeUInt32(duint32 value);
 DENG2_PUBLIC duint64 LittleEndianByteOrder_ToNativeUInt64(duint64 value);
-DENG2_PUBLIC dfloat LittleEndianByteOrder_ToNativeFloat(dfloat value);
+DENG2_PUBLIC dfloat  LittleEndianByteOrder_ToNativeFloat(dfloat value);
 DENG2_PUBLIC ddouble LittleEndianByteOrder_ToNativeDouble(ddouble value);
 
 /*
