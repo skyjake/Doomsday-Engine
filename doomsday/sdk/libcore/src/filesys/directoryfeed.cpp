@@ -86,7 +86,10 @@ void DirectoryFeed::populateSubFolder(Folder &folder, String const &entryName)
     if(entryName != "." && entryName != "..")
     {
         Folder &subFolder = folder.fileSystem()
-                .makeFolder(folder.path() / entryName, FS::InheritPrimaryFeed);
+                .makeFolderWithFeed(folder.path() / entryName,
+                                    newSubFeed(entryName),
+                                    Folder::PopulateFullTree,
+                                    FS::DontInheritFeeds);
 
         if(_mode & AllowWrite)
         {

@@ -29,6 +29,8 @@
 #include "de/LogBuffer"
 #include "de/Guard"
 
+#include <QHash>
+
 namespace de {
 
 static FileIndex const emptyIndex; // never contains any files
@@ -42,7 +44,7 @@ DENG2_PIMPL_NOREF(FileSystem)
 
     /// Index of file types. Each entry in the index is another index of names
     /// to file instances.
-    typedef QMap<String, FileIndex *> TypeIndex; // owned
+    typedef QHash<String, FileIndex *> TypeIndex; // owned
     TypeIndex typeIndex;
 
     QSet<FileIndex *> userIndices; // not owned
@@ -54,6 +56,16 @@ DENG2_PIMPL_NOREF(FileSystem)
     {
         qDeleteAll(typeIndex.values());
         typeIndex.clear();
+    }
+
+    FileIndex &getTypeIndex(String const &typeName)
+    {
+        FileIndex *&idx = typeIndex[typeName];
+        if(!idx)
+        {
+            idx = new FileIndex;
+        }
+        return *idx;
     }
 };
 
@@ -236,12 +248,7 @@ void FileSystem::index(File &file)
     d->index.maybeAdd(file);
 
     // Also make an entry in the type index.
-    String const typeName = DENG2_TYPE_NAME(file);
-    if(!d->typeIndex.contains(typeName))
-    {
-        d->typeIndex.insert(typeName, new FileIndex);
-    }
-    d->typeIndex[typeName]->maybeAdd(file);
+    d->getTypeIndex(DENG2_TYPE_NAME(file)).maybeAdd(file);
 
     // Also offer to custom indices.
     foreach(FileIndex *user, d->userIndices)
@@ -253,12 +260,7 @@ void FileSystem::index(File &file)
 void FileSystem::deindex(File &file)
 {
     d->index.remove(file);
-
-    String const typeName = DENG2_TYPE_NAME(file);
-    if(d->typeIndex.contains(typeName))
-    {
-        d->typeIndex[typeName]->remove(file);
-    }
+    d->getTypeIndex(DENG2_TYPE_NAME(file)).remove(file);
 
     // Also remove from any custom indices.
     foreach(FileIndex *user, d->userIndices)
@@ -298,12 +300,7 @@ void FileSystem::timeChanged(Clock const &)
 
 FileIndex const &FileSystem::indexFor(String const &typeName) const
 {
-    Instance::TypeIndex::const_iterator found = d->typeIndex.constFind(typeName);
-    if(found != d->typeIndex.constEnd())
-    {
-        return *found.value();
-    }
-    return emptyIndex;
+    return d->getTypeIndex(typeName);
 }
 
 void FileSystem::addUserIndex(FileIndex &userIndex)
