@@ -20,7 +20,7 @@
 #ifndef LIBDENG2_MATH_H
 #define LIBDENG2_MATH_H
 
-#include <de/libcore.h>
+#include "de/IByteArray"
 #include <cmath>
 
 #ifdef min
@@ -216,6 +216,11 @@ inline Type lerp(Type const &start, Type const &end, float pos) {
 inline float frand() { return float(qrand()) / float(RAND_MAX); }
 
 /** @} */
+
+/**
+ * Calculates the CRC32 checksum of the contents of byte array @a bytes.
+ */
+DENG2_PUBLIC duint32 crc32(IByteArray const &bytes);
 
 } // namespace de
 
