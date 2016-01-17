@@ -137,7 +137,9 @@ function populatePackages()
     for(var i in packages)
     {
         var record = packages[i];
-        genPackageBadgeHTML(record['json'], record['downloadUri']).appendTo(record['packageListElementId']);
+        var json = record['json'];
+        if(json.title === undefined) continue;
+        genPackageBadgeHTML(json, record['downloadUri']).appendTo(record['packageListElementId']);
     }
 }
 
