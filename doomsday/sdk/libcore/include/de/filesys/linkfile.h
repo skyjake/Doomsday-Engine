@@ -35,7 +35,7 @@ namespace de {
  *
  * @ingroup fs
  */
-class LinkFile : public File
+class DENG2_PUBLIC LinkFile : public File
 {
 public:
     LinkFile(String const &name = "");
