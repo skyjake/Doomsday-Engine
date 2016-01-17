@@ -211,7 +211,7 @@ DENG2_PIMPL(System)
         // No audio output?
         if(::isDedicated)
             return AUDIOD_DUMMY;
-    
+
         if(cmdLine.has("-dummy"))
             return AUDIOD_DUMMY;
 
@@ -1410,12 +1410,18 @@ String System::description() const
 
     os << _E(b) "Audio configuration:\n" _E(.);
 
+#if 0
+    /// @todo When a game is loaded, these could be included under an additional
+    /// "Music preferences" heading. -jk
     os << TABBED("Music volume:",  musVolume);
 #ifdef __CLIENT__
     String const midiFontPath(musMidiFontPath);
     os << TABBED("Music sound font:", midiFontPath.isEmpty() ? "None" : midiFontPath);
     os << TABBED("Music source preference:", musicSourceAsText(musSourcePreference));
+#endif
+#endif
 
+#ifdef __CLIENT__
     // Include an active playback interface itemization.
     for(dint i = d->activeInterfaces.count(); i--> 0; )
     {
@@ -1600,7 +1606,7 @@ void System::deinitPlayback()
     d->unloadDrivers();
 }
 
-String System::musicSourceAsText(MusicSource source)  // static 
+String System::musicSourceAsText(MusicSource source)  // static
 {
     static char const *sourceNames[3] = {
         /* MUSP_MUS */ "MUS lumps",
@@ -2204,7 +2210,7 @@ dint System::playSound(sfxsample_t *sample, dfloat volume, dfloat freq, mobj_t *
     }
 
     if(flags & SF_NO_ATTENUATION)
-    {   
+    {
         // The sound can be heard from any distance.
         selCh->setFlags(selCh->flags() | SFXCF_NO_ATTENUATION);
     }
