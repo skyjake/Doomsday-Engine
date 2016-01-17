@@ -36,19 +36,21 @@
 #define DENG_NO_API_MACROS_URI
 
 #include "doomsday/defs/dedparser.h"
+#include "doomsday/doomsdayapp.h"
+#include "doomsday/game.h"
 
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <cctype>
 
+#include <de/c_wrapper.h>
 #include <de/memory.h>
 #include <de/vector1.h>
 #include <de/App>
 #include <de/NativePath>
 #include <de/ArrayValue>
 #include <de/RecordValue>
-#include <de/game/Game>
 
 #include "doomsday/defs/decoration.h"
 #include "doomsday/defs/ded.h"
@@ -788,10 +790,10 @@ DENG2_PIMPL(DEDParser)
             // A command line option.
             value = (CommandLine_Check(token) != 0);
         }
-        else if(isalnum(cond[0]) && !App::game().isNull())
+        else if(isalnum(cond[0]) && !DoomsdayApp::game().isNull())
         {
             // A game mode.
-            value = !String(cond).compareWithoutCase(App::game().id());
+            value = !String(cond).compareWithoutCase(DoomsdayApp::game().id());
         }
 
         return value == expected;
@@ -1226,7 +1228,7 @@ DENG2_PIMPL(DEDParser)
                     }
                     else RV_INT("DoomEd number", (*mo)["doomEdNum"])
                     RV_STR("Name", (*mo)["name"])
-                        
+
                     RV_STR_ELEM("Spawn state",   (*mo)["states"], SN_SPAWN)
                     RV_STR_ELEM("See state",     (*mo)["states"], SN_SEE)
                     RV_STR_ELEM("Pain state",    (*mo)["states"], SN_PAIN)
@@ -1236,13 +1238,13 @@ DENG2_PIMPL(DEDParser)
                     RV_STR_ELEM("Death state",   (*mo)["states"], SN_DEATH)
                     RV_STR_ELEM("Xdeath state",  (*mo)["states"], SN_XDEATH)
                     RV_STR_ELEM("Raise state",   (*mo)["states"], SN_RAISE)
-                        
+
                     RV_STR_ELEM("See sound",    (*mo)["sounds"], SDN_SEE)
                     RV_STR_ELEM("Attack sound", (*mo)["sounds"], SDN_ATTACK)
                     RV_STR_ELEM("Pain sound",   (*mo)["sounds"], SDN_PAIN)
                     RV_STR_ELEM("Death sound",  (*mo)["sounds"], SDN_DEATH)
                     RV_STR_ELEM("Active sound", (*mo)["sounds"], SDN_ACTIVE)
-                        
+
                     RV_INT("Reaction time", (*mo)["reactionTime"])
                     RV_INT("Pain chance", (*mo)["painChance"])
                     RV_INT("Spawn health", (*mo)["spawnHealth"])

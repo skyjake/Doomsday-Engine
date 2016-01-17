@@ -30,8 +30,6 @@
 #include <de/ArrayValue>
 #include <de/ByteRefArray>
 #include <de/DirectoryFeed>
-#include <de/game/SavedSession>
-#include <de/game/Session>
 #include <de/Log>
 #include <de/Loop>
 #include <de/Module>
@@ -53,6 +51,8 @@
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/filesys/fs_util.h>
 #include <doomsday/filesys/lumpindex.h>
+#include <doomsday/SavedSession>
+#include <doomsday/Session>
 
 #ifdef __CLIENT__
 #  include "clientapp.h"
@@ -4409,10 +4409,10 @@ D_CMD(InspectSavegame)
     // If a game is loaded assume the user is referring to those savegames if not specified.
     if(savePath.fileNamePath().isEmpty() && App_GameLoaded())
     {
-        savePath = game::Session::savePath() / savePath;
+        savePath = Session::savePath() / savePath;
     }
 
-    if(game::SavedSession const *saved = App::rootFolder().tryLocate<game::SavedSession>(savePath))
+    if(SavedSession const *saved = App::rootFolder().tryLocate<SavedSession>(savePath))
     {
         LOG_SCR_MSG("%s") << saved->metadata().asStyledText();
         LOG_SCR_MSG(_E(D) "Resource: " _E(.)_E(i) "\"%s\"") << saved->path();

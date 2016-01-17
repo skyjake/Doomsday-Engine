@@ -25,15 +25,13 @@
 #include "dd_main.h"
 
 #include <doomsday/console/exec.h>
-#include <de/game/Session>
+#include <doomsday/Session>
 #include <de/SignalAction>
 #include <de/SequentialLayout>
 #include <de/DocumentPopupWidget>
 #include <de/ui/SubwidgetItem>
 
 using namespace de;
-using de::game::Session;
-using de::game::SavedSession;
 
 DENG_GUI_PIMPL(SavedSessionMenuWidget)
 , DENG2_OBSERVES(Games,               Readiness)
@@ -174,13 +172,13 @@ DENG_GUI_PIMPL(SavedSessionMenuWidget)
     Instance(Public *i) : Base(i)
     {
         App_Games().audienceForReadiness() += this;
-        game::Session::savedIndex().audienceForAvailabilityUpdate() += this;
+        Session::savedIndex().audienceForAvailabilityUpdate() += this;
     }
 
     ~Instance()
     {
         App_Games().audienceForReadiness() -= this;
-        game::Session::savedIndex().audienceForAvailabilityUpdate() -= this;
+        Session::savedIndex().audienceForAvailabilityUpdate() -= this;
     }
 
     void gameReadinessUpdated()

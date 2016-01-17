@@ -38,6 +38,7 @@
 #include <de/LogWidget>
 #include <de/PersistentState>
 #include <de/NativeFile>
+#include <doomsday/doomsdayapp.h>
 #include <QCursor>
 #include <QClipboard>
 
@@ -45,8 +46,9 @@ using namespace de;
 
 static TimeDelta const LOG_OPEN_CLOSE_SPAN = 0.2;
 
-DENG_GUI_PIMPL(ConsoleWidget),
-DENG2_OBSERVES(Variable, Change)
+DENG_GUI_PIMPL(ConsoleWidget)
+, DENG2_OBSERVES(Variable, Change)
+, DENG2_OBSERVES(DoomsdayApp, GameChange)
 {
     GuiWidget *buttons = nullptr;
     PopupButtonWidget *button = nullptr;
@@ -82,15 +84,22 @@ DENG2_OBSERVES(Variable, Change)
         grabWidth  = style().rules().rule("gap").valuei();
 
         App::config("console.script").audienceForChange() += this;
+        DoomsdayApp::app().audienceForGameChange() += this;
     }
 
     ~Instance()
     {
+        DoomsdayApp::app().audienceForGameChange() -= this;
         App::config("console.script").audienceForChange() -= this;
 
         releaseRef(horizShift);
         releaseRef(width);
         releaseRef(height);
+    }
+
+    void currentGameChanged(Game const &)
+    {
+        scriptCmd->updateCompletion();
     }
 
     void expandLog(int delta, bool useOffsetAnimation)

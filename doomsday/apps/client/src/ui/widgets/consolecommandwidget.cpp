@@ -30,18 +30,18 @@ using namespace de;
 
 DENG_GUI_PIMPL(ConsoleCommandWidget),
 DENG2_OBSERVES(App, StartupComplete),
-DENG2_OBSERVES(App, GameChange)
+DENG2_OBSERVES(DoomsdayApp, GameChange)
 {
     Instance(Public *i) : Base(i)
     {
         App::app().audienceForStartupComplete() += this;
-        App::app().audienceForGameChange() += this;
+        DoomsdayApp::app().audienceForGameChange() += this;
     }
 
     ~Instance()
     {
         App::app().audienceForStartupComplete() -= this;
-        App::app().audienceForGameChange() -= this;
+        DoomsdayApp::app().audienceForGameChange() -= this;
     }
 
     void appStartupCompleted()
@@ -49,7 +49,7 @@ DENG2_OBSERVES(App, GameChange)
         updateLexicon();
     }
 
-    void currentGameChanged(game::Game const &)
+    void currentGameChanged(Game const &)
     {
         updateLexicon();
     }

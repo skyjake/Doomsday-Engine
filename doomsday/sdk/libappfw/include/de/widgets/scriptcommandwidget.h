@@ -45,6 +45,11 @@ public:
 
     bool handleEvent(Event const &event);
 
+    /**
+     * Checks the native script modules and shell Lexicon for known words.
+     */
+    void updateCompletion();
+
 protected:
     bool isAcceptedAsCommand(String const &text);
     void executeCommand(String const &text);

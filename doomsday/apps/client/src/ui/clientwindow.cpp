@@ -71,11 +71,11 @@ static inline InputSystem &inputSys()
 static ClientWindow *mainWindow = nullptr; // The main window, set after fully constructed.
 
 DENG2_PIMPL(ClientWindow)
-, DENG2_OBSERVES(MouseEventSource, MouseStateChange)
-, DENG2_OBSERVES(Canvas,   FocusChange)
-, DENG2_OBSERVES(App,      GameChange)
 , DENG2_OBSERVES(App,      StartupComplete)
 , DENG2_OBSERVES(Games,    Readiness)
+, DENG2_OBSERVES(DoomsdayApp, GameChange)
+, DENG2_OBSERVES(MouseEventSource, MouseStateChange)
+, DENG2_OBSERVES(Canvas,   FocusChange)
 , DENG2_OBSERVES(Variable, Change)
 {
     bool needMainInit       = true;
@@ -125,7 +125,7 @@ DENG2_PIMPL(ClientWindow)
         /// @todo The decision whether to receive input notifications from the
         /// canvas is really a concern for the input drivers.
 
-        App::app().audienceForGameChange() += this;
+        DoomsdayApp::app().audienceForGameChange() += this;
         App::app().audienceForStartupComplete() += this;
         App_Games().audienceForReadiness() += this;
 
@@ -145,7 +145,7 @@ DENG2_PIMPL(ClientWindow)
             App::config(s).audienceForChange() -= this;
         }
 
-        App::app().audienceForGameChange() -= this;
+        DoomsdayApp::app().audienceForGameChange() -= this;
         App::app().audienceForStartupComplete() -= this;
         App_Games().audienceForReadiness() -= this;
 
@@ -365,7 +365,7 @@ DENG2_PIMPL(ClientWindow)
         }
     }
 
-    void currentGameChanged(game::Game const &newGame)
+    void currentGameChanged(Game const &newGame)
     {
         if(newGame.isNull())
         {

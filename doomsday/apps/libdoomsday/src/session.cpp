@@ -16,14 +16,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/game/session.h"
-#include "de/App"
-#include "de/game/SavedSession"
-#include "de/Log"
-#include "de/Writer"
+#include "doomsday/Session"
+#include "doomsday/SavedSession"
 
-namespace de {
-namespace game {
+#include <de/App>
+#include <de/Log>
+#include <de/Writer>
+
+using namespace de;
 
 static Session::Profile currentProfile;
 static Session::SavedIndex sharedSavedIndex;
@@ -127,6 +127,3 @@ Session::SavedIndex &Session::savedIndex() //static
 {
     return sharedSavedIndex;
 }
-
-} // namespace game
-} // namespace de

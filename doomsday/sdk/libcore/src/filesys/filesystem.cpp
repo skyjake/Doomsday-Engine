@@ -21,7 +21,6 @@
 #include "de/LibraryFile"
 #include "de/DirectoryFeed"
 #include "de/ArchiveFeed"
-#include "de/game/SavedSession"
 #include "de/NativePath"
 #include "de/ArchiveFolder"
 #include "de/ZipArchive"

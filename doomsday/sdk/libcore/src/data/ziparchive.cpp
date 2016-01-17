@@ -31,7 +31,6 @@
 #include "de/Zeroed"
 
 // Interpretations:
-#include "de/game/SavedSession"
 #include "de/ArchiveFolder"
 
 #include <cstring>
@@ -643,19 +642,9 @@ File *ZipArchive::Interpreter::interpretFile(File *sourceData) const
         try
         {
             // It is a ZIP archive: we will represent it as a folder.
-            std::unique_ptr<ArchiveFolder> package;
+            LOG_RES_VERBOSE("Interpreted %s as a ZIP format archive") << sourceData->description();
 
-            if(sourceData->name().fileNameExtension() == ".save")
-            {
-                /// @todo fixme: Don't assume this is a save package.
-                LOG_RES_VERBOSE("Interpreted %s as a SavedSession") << sourceData->description();
-                package.reset(new game::SavedSession(*sourceData, sourceData->name()));
-            }
-            else
-            {
-                LOG_RES_VERBOSE("Interpreted %s as a ZIP format archive") << sourceData->description();
-                package.reset(new ArchiveFolder(*sourceData, sourceData->name()));
-            }
+            std::unique_ptr<ArchiveFolder> package(new ArchiveFolder(*sourceData, sourceData->name()));
 
             // Archive opened successfully, give ownership of the source to the folder.
             package->setSource(sourceData);

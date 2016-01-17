@@ -16,25 +16,27 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/game/savedsession.h"
+#include "doomsday/savedsession.h"
+#include "doomsday/Session"
 
-#include "de/App"
-#include "de/ArrayValue"
-#include "de/game/Session"
-#include "de/Info"
-#include "de/Log"
-#include "de/NumberValue"
-#include "de/NativePath"
-#include "de/ArchiveFolder"
-#include "de/Writer"
+#include <de/App>
+#include <de/ArrayValue>
+#include <de/Info>
+#include <de/Log>
+#include <de/NumberValue>
+#include <de/NativePath>
+#include <de/ArchiveFolder>
+#include <de/ZipArchive>
+#include <de/Writer>
 
-namespace de {
-namespace game {
+using namespace de;
 
 static String const BLOCK_GROUP    = "group";
 static String const BLOCK_GAMERULE = "gamerule";
 
-static Value *makeValueFromInfoValue(Info::Element::Value const &v)
+/// @todo Refactor this to use ScriptedInfo. -jk
+
+static Value *makeValueFromInfoValue(de::Info::Element::Value const &v)
 {
     String const text = v;
     if(!text.compareWithoutCase("True"))
@@ -383,5 +385,33 @@ String SavedSession::stateFilePath(String const &path) //static
     return "";
 }
 
-} // namespace game
-} // namespace de
+File *SavedSession::Interpreter::interpretFile(File *sourceData) const
+{
+    try
+    {
+        if(ZipArchive::recognize(*sourceData))
+        {
+            // It is a ZIP archive: we will represent it as a folder.
+            if(sourceData->name().fileNameExtension() == ".save")
+            {
+                /// @todo fixme: Don't assume this is a save package.
+                LOG_RES_VERBOSE("Interpreted %s as a SavedSession") << sourceData->description();
+                std::unique_ptr<ArchiveFolder> package;
+                package.reset(new SavedSession(*sourceData, sourceData->name()));
+
+                // Archive opened successfully, give ownership of the source to the folder.
+                package->setSource(sourceData);
+                return package.release();
+            }
+        }
+    }
+    catch(Error const &er)
+    {
+        // Even though it was recognized as an archive, the file
+        // contents may still prove to be corrupted.
+        LOG_RES_WARNING("Failed to read archive in %s: %s")
+                << sourceData->description()
+                << er.asText();
+    }
+    return nullptr;
+}

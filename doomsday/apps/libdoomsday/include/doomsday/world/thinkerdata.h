@@ -67,7 +67,7 @@ private:
 public:
     struct DebugCounter {
         de::Id id;
-        static duint32 total;
+        static de::duint32 total;
 
         DebugCounter()  { total++; }
         ~DebugCounter() { total--; }

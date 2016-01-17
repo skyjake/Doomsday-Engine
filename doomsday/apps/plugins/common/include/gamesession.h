@@ -20,8 +20,8 @@
 #ifndef LIBCOMMON_GAMESESSION_H
 #define LIBCOMMON_GAMESESSION_H
 
-#include <de/game/Session>
 #include <de/String>
+#include <doomsday/Session>
 #include <doomsday/uri.h>
 #include "doomsday.h"
 #include "acs/system.h"
@@ -47,7 +47,7 @@ namespace common {
  *
  * @ingroup libcommon
  */
-class GameSession : public de::game::Session
+class GameSession : public Session
 {
 public:
     typedef QList<de::Uri> VisitedMaps;

@@ -23,11 +23,14 @@
 #include "doomsday/filesys/datafile.h"
 #include "doomsday/filesys/datafolder.h"
 #include "doomsday/paths.h"
+#include "doomsday/SavedSession"
 
 #include <de/App>
 #include <de/Loop>
 #include <de/Folder>
 #include <de/DirectoryFeed>
+#include <de/DictionaryValue>
+#include <de/c_wrapper.h>
 #include <de/strutil.h>
 
 #include <QSettings>
@@ -55,6 +58,7 @@ DENG2_PIMPL_NOREF(DoomsdayApp)
     bool initialized = false;
     Plugins plugins;
     Games games;
+    Game *currentGame = nullptr;
     BusyMode busyMode;
     Players players;
     res::Bundles dataBundles;
@@ -73,9 +77,30 @@ DENG2_PIMPL_NOREF(DoomsdayApp)
     HINSTANCE hInstance = NULL;
 #endif
 
+    /**
+     * Delegates game change notifications to scripts.
+     */
+    class GameChangeScriptAudience : DENG2_OBSERVES(DoomsdayApp, GameChange)
+    {
+    public:
+        void currentGameChanged(Game const &newGame)
+        {
+            ArrayValue args;
+            args << DictionaryValue() << TextValue(newGame.id());
+            App::scriptSystem().nativeModule("App")["audienceForGameChange"]
+                    .array().callElements(args);
+        }
+    };
+
+    GameChangeScriptAudience scriptAudienceForGameChange;
+
     Instance(Players::Constructor playerConstructor)
         : players(playerConstructor)
     {
+        Record &appModule = App::scriptSystem().nativeModule("App");
+        appModule.addArray("audienceForGameChange"); // game change observers
+        audienceForGameChange += scriptAudienceForGameChange;
+
 #ifdef WIN32
         hInstance = GetModuleHandle(NULL);
 #endif
@@ -286,7 +311,13 @@ DENG2_PIMPL_NOREF(DoomsdayApp)
         }
     }
 #endif // WIN32
+
+    DENG2_PIMPL_AUDIENCE(GameUnload)
+    DENG2_PIMPL_AUDIENCE(GameChange)
 };
+
+DENG2_AUDIENCE_METHOD(DoomsdayApp, GameUnload)
+DENG2_AUDIENCE_METHOD(DoomsdayApp, GameChange)
 
 DoomsdayApp::DoomsdayApp(Players::Constructor playerConstructor)
     : d(new Instance(playerConstructor))
@@ -296,7 +327,10 @@ DoomsdayApp::DoomsdayApp(Players::Constructor playerConstructor)
 
     App::app().addInitPackage("net.dengine.base");
 
-    static DataBundle::Interpreter intrpDataBundle;
+    static SavedSession::Interpreter intrpSavedSession;
+    static DataBundle::Interpreter   intrpDataBundle;
+
+    App::fileSystem().addInterpreter(intrpSavedSession);
     App::fileSystem().addInterpreter(intrpDataBundle);
 }
 
@@ -304,8 +338,8 @@ void DoomsdayApp::initialize()
 {
     d->initWadFolders();
 
-    // "/sys/bundles" has package-like links to files that are not in Doomsday 2
-    // format but can be loaded as packages.
+    // "/sys/bundles" has package-like symlinks to files that are not in
+    // Doomsday 2 format but can be loaded as packages.
     App::fileSystem().makeFolder("/sys/bundles", FS::DontInheritFeeds);
 
     d->initialized = true;
@@ -346,7 +380,7 @@ Players &DoomsdayApp::players()
 
 Game &DoomsdayApp::currentGame()
 {
-    return App::game().as<Game>();
+    return game();
 }
 
 BusyMode &DoomsdayApp::busyMode()
@@ -417,6 +451,17 @@ void *DoomsdayApp::moduleHandle() const
     return d->hInstance;
 }
 #endif
+
+Game &DoomsdayApp::game()
+{
+    DENG2_ASSERT(app().d->currentGame != 0);
+    return *app().d->currentGame;
+}
+
+void DoomsdayApp::setGame(Game &game)
+{
+    app().d->currentGame = &game;
+}
 
 bool App_GameLoaded()
 {

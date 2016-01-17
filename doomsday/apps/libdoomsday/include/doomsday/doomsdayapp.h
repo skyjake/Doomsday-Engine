@@ -40,6 +40,17 @@ namespace res { class Bundles; }
 class LIBDOOMSDAY_PUBLIC DoomsdayApp
 {
 public:
+    /**
+     * Notified before the current game is unloaded.
+     */
+    DENG2_DEFINE_AUDIENCE2(GameUnload, void aboutToUnloadGame(Game const &gameBeingUnloaded))
+
+    /**
+     * Notified after the current game has been changed.
+     */
+    DENG2_DEFINE_AUDIENCE2(GameChange, void currentGameChanged(Game const &newGame))
+
+public:
     DoomsdayApp(Players::Constructor playerConstructor);
 
     /**
@@ -71,6 +82,20 @@ public:
     static Game &currentGame();
     static BusyMode &busyMode();
     static de::NativePath steamBasePath();
+
+    /**
+     * Sets the currently active game. DoomsdayApp does not take ownership of
+     * the provided Game instance.
+     *
+     * @param game  Game instance. Must not be deleted until another Game is
+     *              used as the current one.
+     */
+    static void setGame(Game &game);
+
+    /**
+     * Returns the currently active game.
+     */
+    static Game &game();
 
 private:
     DENG2_PRIVATE(d)

@@ -16,16 +16,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_SESSION_H
-#define LIBDENG2_SESSION_H
+#ifndef LIBDOOMSDAY_SESSION_H
+#define LIBDOOMSDAY_SESSION_H
 
-#include "../Error"
-#include "../Observers"
-#include "../String"
+#include <de/Error>
+#include <de/Observers>
+#include <de/String>
 #include <QMap>
-
-namespace de {
-namespace game {
 
 class SavedSession;
 
@@ -52,7 +49,7 @@ public:
     struct Profile
     {
         // Unique identifier of the game this profile is used with.
-        String gameId;
+        de::String gameId;
 
         // List of resource files (specified via the command line or in a cfg, or found using
         // the default search algorithm (e.g., /auto and DOOMWADDIR)).
@@ -65,10 +62,10 @@ public:
     static Profile &profile();
 
     /// Convenient method of looking up the game identity key from the game session profile.
-    static inline String gameId()   { return profile().gameId; }
+    static inline de::String gameId()   { return profile().gameId; }
 
     /// Compose the absolute path of the @em user saved session folder for the game session.
-    static inline String savePath() { return String("/home/savegames") / profile().gameId; }
+    static inline de::String savePath() { return de::String("/home/savegames") / profile().gameId; }
 
     /**
      * Determines whether the currently configured game session is in progress. Usually this
@@ -93,14 +90,14 @@ public:
      * @param userDescription  Textual description of the current game state provided either
      *                         by the user or possibly generated automatically.
      */
-    virtual void save(String const &saveName, String const &userDescription) = 0;
+    virtual void save(de::String const &saveName, de::String const &userDescription) = 0;
 
     /**
      * Load the game state from the @em user saved session specified.
      *
      * @param saveName  Name of the saved session to be loaded.
      */
-    virtual void load(String const &saveName) = 0;
+    virtual void load(de::String const &saveName) = 0;
 
 protected:  // Saved session management: ---------------------------------------------------
 
@@ -110,35 +107,35 @@ protected:  // Saved session management: ---------------------------------------
      * @param destPath    Path for the new/replaced saved session.
      * @param sourcePath  Path for the saved session to be copied.
      */
-    static void copySaved(String const &destPath, String const &sourcePath);
+    static void copySaved(de::String const &destPath, de::String const &sourcePath);
 
     /**
      * Removes the saved session at @a path.
      */
-    static void removeSaved(String const &path);
+    static void removeSaved(de::String const &path);
 
 public:  // Saved session index: -----------------------------------------------------------
 
-    /// @todo Integrate this functionality into the filesystem.
+    /// @todo Take advantage of FileIndex. -jk
     class DENG2_PUBLIC SavedIndex
     {
     public:
         /// Notified whenever a saved session is added/removed from the index.
         DENG2_DEFINE_AUDIENCE2(AvailabilityUpdate, void savedIndexAvailabilityUpdate(SavedIndex const &index))
 
-        typedef QMap<String, SavedSession *> All;
+        typedef QMap<de::String, SavedSession *> All;
 
     public:
         SavedIndex();
 
         /// Lookup a SavedSession by absolute @a path.
-        SavedSession *find(String path) const;
+        SavedSession *find(de::String path) const;
 
         /// Add an entry for the saved @a session, replacing any existing one.
         void add(SavedSession &session);
 
         /// Remove the entry for the saved session with absolute @a path (if present).
-        void remove(String path);
+        void remove(de::String path);
 
         void clear();
 
@@ -155,7 +152,4 @@ public:  // Saved session index: -----------------------------------------------
     static SavedIndex &savedIndex();
 };
 
-} // namespace game
-} // namespace de
-
-#endif // LIBDENG2_SESSION_H
+#endif // LIBDOOMSDAY_SESSION_H

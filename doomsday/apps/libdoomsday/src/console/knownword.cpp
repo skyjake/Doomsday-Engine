@@ -27,8 +27,8 @@
 #include "doomsday/console/alias.h"
 #include "doomsday/console/cmd.h"
 #include "doomsday/help.h"
+#include "doomsday/game.h"
 #include <de/memory.h>
-#include <de/game/Game>
 #include <de/c_wrapper.h>
 #include <de/strutil.h>
 #include <QList>
@@ -61,7 +61,7 @@ static bool compareKnownWordByName(knownword_t const &a, knownword_t const &b)
     case WT_CALIAS:   textA = AutoStr_FromTextStd(((calias_t *)wA->data)->name); break;
     case WT_CCMD:     textA = AutoStr_FromTextStd(((ccmd_t *)wA->data)->name); break;
     case WT_CVAR:     textA = CVar_ComposePath((cvar_t *)wA->data); break;
-    case WT_GAME:     textA = AutoStr_FromTextStd(reinterpret_cast<game::Game const *>(wA->data)->id().toUtf8().constData()); break;
+    case WT_GAME:     textA = AutoStr_FromTextStd(reinterpret_cast<Game const *>(wA->data)->id().toUtf8().constData()); break;
 
     default:
         App_FatalError("compareKnownWordByName: Invalid type %i for word A.", wA->type);
@@ -73,7 +73,7 @@ static bool compareKnownWordByName(knownword_t const &a, knownword_t const &b)
     case WT_CALIAS:   textB = AutoStr_FromTextStd(((calias_t *)wB->data)->name); break;
     case WT_CCMD:     textB = AutoStr_FromTextStd(((ccmd_t *)wB->data)->name); break;
     case WT_CVAR:     textB = CVar_ComposePath((cvar_t *)wB->data); break;
-    case WT_GAME:     textB = AutoStr_FromTextStd(reinterpret_cast<game::Game const *>(wB->data)->id().toUtf8().constData()); break;
+    case WT_GAME:     textB = AutoStr_FromTextStd(reinterpret_cast<Game const *>(wB->data)->id().toUtf8().constData()); break;
 
     default:
         App_FatalError("compareKnownWordByName: Invalid type %i for word B.", wB->type);
@@ -95,7 +95,7 @@ static AutoStr *textForKnownWord(knownword_t const *word)
     case WT_CALIAS:   text = AutoStr_FromTextStd(((calias_t *)word->data)->name); break;
     case WT_CCMD:     text = AutoStr_FromTextStd(((ccmd_t *)word->data)->name); break;
     case WT_CVAR:     text = CVar_ComposePath((cvar_t *)word->data); break;
-    case WT_GAME:     text = AutoStr_FromTextStd(reinterpret_cast<game::Game const *>(word->data)->id().toUtf8().constData()); break;
+    case WT_GAME:     text = AutoStr_FromTextStd(reinterpret_cast<Game const *>(word->data)->id().toUtf8().constData()); break;
 
     default:
         App_FatalError("textForKnownWord: Invalid type %i for word.", word->type);
@@ -322,7 +322,7 @@ static int aproposPrinter(knownword_t const *word, void *matching)
         }
         else if(word->type == WT_GAME)
         {
-            tmp = reinterpret_cast<game::Game const *>(word->data)->title();
+            tmp = reinterpret_cast<Game const *>(word->data)->title();
         }
 
         os << tmp;
@@ -383,7 +383,7 @@ static int annotateMatchedWordCallback(knownword_t const *word, void *parameters
         break;
 
     case WT_GAME:
-        found = Con_GameAsStyledText(reinterpret_cast<game::Game const *>(word->data));
+        found = Con_GameAsStyledText(reinterpret_cast<Game const *>(word->data));
         break;
 
     default:

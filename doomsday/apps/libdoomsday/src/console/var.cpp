@@ -22,6 +22,7 @@
 #include "doomsday/console/knownword.h"
 #include "doomsday/uri.h"
 
+#include <de/c_wrapper.h>
 #include <de/memory.h>
 #include <de/PathTree>
 #include <de/Function>

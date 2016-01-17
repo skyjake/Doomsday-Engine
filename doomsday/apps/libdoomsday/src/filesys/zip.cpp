@@ -22,12 +22,13 @@
 #include "doomsday/filesys/zip.h"
 #include "doomsday/filesys/lumpcache.h"
 #include "doomsday/filesys/fs_main.h"
+#include "doomsday/game.h"
+#include "doomsday/doomsdayapp.h"
 
 #include <zlib.h>
 #include <vector>
 
 #include <de/App>
-#include <de/game/Game>
 #include <de/ByteOrder>
 #include <de/NativePath>
 #include <de/Log>
@@ -477,7 +478,7 @@ Zip::Zip(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
                 compressedSize = DD_ULONG(header->size);
             }
 
-            if(!App::game().isNull())
+            if(!DoomsdayApp::game().isNull())
             {
                 // In some cases the path to the file is mapped to some
                 // other location in the virtual file system.

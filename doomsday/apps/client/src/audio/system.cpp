@@ -54,6 +54,7 @@
 #endif
 #include <de/App>
 #include <de/timer.h>
+#include <de/c_wrapper.h>
 #ifdef __CLIENT__
 #  include <de/concurrency.h>
 #  include <de/memory.h>
@@ -188,7 +189,7 @@ static bool recognizeMus(de::File1 &file)
 
 DENG2_PIMPL(System)
 #ifdef __CLIENT__
-, DENG2_OBSERVES(App, GameUnload)
+, DENG2_OBSERVES(DoomsdayApp, GameUnload)
 , DENG2_OBSERVES(SfxSampleCache, SampleRemove)
 #endif
 {
@@ -597,7 +598,7 @@ DENG2_PIMPL(System)
         theAudioSystem = thisPublic;
 
 #ifdef __CLIENT__
-        App::app().audienceForGameUnload() += this;
+        DoomsdayApp::app().audienceForGameUnload() += this;
         sfxSampleCache.audienceForSampleRemove() += this;
 #endif
     }
@@ -607,7 +608,7 @@ DENG2_PIMPL(System)
         sfxClearLogical();
 #ifdef __CLIENT__
         sfxSampleCache.audienceForSampleRemove() -= this;
-        App::app().audienceForGameUnload() -= this;
+        DoomsdayApp::app().audienceForGameUnload() -= this;
 #endif
 
         theAudioSystem = nullptr;
@@ -1379,7 +1380,7 @@ DENG2_PIMPL(System)
         unloadSoundID(sample.id);
     }
 
-    void aboutToUnloadGame(game::Game const &)
+    void aboutToUnloadGame(Game const &)
     {
         self.reset();
     }

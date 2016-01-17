@@ -257,7 +257,7 @@ de::duint Rend_CollectAffectingLights(de::Vector3d const &point,
     de::Vector3f const &ambientColor = de::Vector3f(1, 1, 1), ConvexSubspace *subspace = nullptr,
     bool starkLight = false);
 
-void Rend_DrawVectorLight(VectorLightData const &vlight, dfloat alpha);
+void Rend_DrawVectorLight(VectorLightData const &vlight, de::dfloat alpha);
 
 /**
  * Returns the radius of the given @a sprite, as it would visually appear to be.

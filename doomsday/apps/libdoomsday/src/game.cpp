@@ -24,10 +24,10 @@
 #include "doomsday/resource/manifest.h"
 #include "doomsday/resource/resources.h"
 #include "doomsday/doomsdayapp.h"
+#include "doomsday/SavedSession"
 
 #include <de/App>
 #include <de/Error>
-#include <de/game/SavedSession>
 #include <de/Log>
 #include <de/charsymbols.h>
 #include <QtAlgorithms>
@@ -69,7 +69,7 @@ DENG2_PIMPL(Game)
 
 Game::Game(String const &identityKey, Path const &configDir, String const &title, String const &author,
     String const &legacySavegameNameExp_, String const &legacySavegameSubfolder, String const &mainMapInfo)
-    : game::Game(identityKey)
+    : AbstractGame(identityKey)
     , d(new Instance(*this, identityKey, configDir, title, author))
 {
     d->legacySavegameNameExp   = legacySavegameNameExp_;

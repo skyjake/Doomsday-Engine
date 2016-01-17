@@ -56,12 +56,12 @@ typedef struct gamedef_s {
 
 #ifdef __cplusplus
 
+#include <doomsday/AbstractGame>
 #include <doomsday/plugins.h>
 #include <doomsday/resource/resourceclass.h>
 #include <de/Error>
 #include <de/Path>
 #include <de/String>
-#include <de/game/Game>
 #include <QMultiMap>
 
 class ResourceManifest;
@@ -72,7 +72,7 @@ namespace de { class File1; }
  *
  * @ingroup core
  */
-class LIBDOOMSDAY_PUBLIC Game : public de::game::Game
+class LIBDOOMSDAY_PUBLIC Game : public AbstractGame
 {
 public:
     /// Logical game status:

@@ -40,7 +40,7 @@
 using namespace de;
 
 DENG_GUI_PIMPL(GameSelectionWidget)
-, DENG2_OBSERVES(App, GameChange)
+, DENG2_OBSERVES(DoomsdayApp, GameChange)
 {
     /**
      * Foldable group of games.
@@ -224,14 +224,14 @@ DENG_GUI_PIMPL(GameSelectionWidget)
 
         updateSubsetLayout();
 
-        App::app().audienceForGameChange() += this;
+        DoomsdayApp::app().audienceForGameChange() += this;
     }
 
     ~Instance()
     {
         foreach(SubsetWidget *sub, subsets) sub->menu->setFilter(0);
 
-        App::app().audienceForGameChange() -= this;
+        DoomsdayApp::app().audienceForGameChange() -= this;
     }
 
     /**
@@ -317,7 +317,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         self.setContentSize(superLayout.width(), superLayout.height());
     }
 
-    void currentGameChanged(game::Game const &)
+    void currentGameChanged(Game const &)
     {
         updateSubsetLayout();
     }

@@ -21,6 +21,7 @@
 #define LIBDOOMSDAY_THINKER_H
 
 #include "../libdoomsday.h"
+#include <de/libcore.h>
 #include <de/types.h>
 
 struct thinker_s;

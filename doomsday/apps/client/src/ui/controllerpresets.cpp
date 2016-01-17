@@ -35,7 +35,7 @@ using namespace de;
 static String VAR_CONTROLLER_PRESETS("controllerPresets");
 
 DENG2_PIMPL_NOREF(ControllerPresets)
-, DENG2_OBSERVES(App, GameChange)
+, DENG2_OBSERVES(DoomsdayApp, GameChange)
 {
     Record &inputModule;
     char const *presetCVarPath = nullptr;
@@ -45,12 +45,12 @@ DENG2_PIMPL_NOREF(ControllerPresets)
         : inputModule(App::scriptSystem().nativeModule("Input"))
     {
         inputModule.addDictionary(VAR_CONTROLLER_PRESETS);
-        App::app().audienceForGameChange() += this;
+        DoomsdayApp::app().audienceForGameChange() += this;
     }
 
     ~Instance()
     {
-        App::app().audienceForGameChange() -= this;
+        DoomsdayApp::app().audienceForGameChange() -= this;
     }
 
     DictionaryValue const &presets() const
@@ -116,7 +116,7 @@ DENG2_PIMPL_NOREF(ControllerPresets)
         return Con_FindVariable(presetCVarPath);
     }
 
-    void currentGameChanged(game::Game const &newGame)
+    void currentGameChanged(Game const &newGame)
     {
         String const currentScheme = CVar_String(presetCVar());
 

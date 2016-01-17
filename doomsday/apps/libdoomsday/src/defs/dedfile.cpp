@@ -26,6 +26,8 @@
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/filesys/fs_util.h"
 
+#include <de/c_wrapper.h>
+
 using namespace de;
 
 static char dedReadError[512];

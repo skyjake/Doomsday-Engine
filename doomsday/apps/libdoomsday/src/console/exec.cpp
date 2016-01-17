@@ -34,11 +34,11 @@
 #include <de/memory.h>
 #include <de/charsymbols.h>
 #include <de/App>
-#include <de/game/Game>
 #include <de/LogBuffer>
 #include <de/Time>
 #include <de/Log>
 #include "doomsday/doomsdayapp.h"
+#include "doomsday/game.h"
 #include "doomsday/console/knownword.h"
 #include "doomsday/console/cmd.h"
 #include "doomsday/console/var.h"
@@ -495,7 +495,7 @@ static int executeSubCmd(const char *subCmd, byte src, dd_bool isNetCmd)
 
         // Trying to issue a command requiring a loaded game?
         // dj: This should be considered a short-term solution. Ideally we want some namespacing mechanics.
-        if((ccmd->flags & CMDF_NO_NULLGAME) && App::game().isNull())
+        if((ccmd->flags & CMDF_NO_NULLGAME) && DoomsdayApp::game().isNull())
         {
             LOG_SCR_ERROR("Execution of command '%s' is only allowed when a game is loaded") << ccmd->name;
             return true;
@@ -1294,7 +1294,7 @@ void Con_ShutdownDatabases(void)
     inited = false;
 }
 
-String Con_GameAsStyledText(de::game::Game const *game)
+String Con_GameAsStyledText(Game const *game)
 {
     DENG2_ASSERT(game != 0);
     return String(_E(1)) + game->id() + _E(.);
@@ -1330,7 +1330,7 @@ static int printKnownWordWorker(knownword_t const *word, void *parameters)
         break;
 
     case WT_GAME:
-        LOG_SCR_MSG("%s") << Con_GameAsStyledText((game::Game const *) word->data);
+        LOG_SCR_MSG("%s") << Con_GameAsStyledText((Game const *) word->data);
         break;
 
     default:

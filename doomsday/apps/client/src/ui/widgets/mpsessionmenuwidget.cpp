@@ -35,7 +35,7 @@
 using namespace de;
 
 DENG_GUI_PIMPL(MPSessionMenuWidget)
-, DENG2_OBSERVES(App, GameChange)
+, DENG2_OBSERVES(DoomsdayApp, GameChange)
 , DENG2_OBSERVES(Games, Readiness)
 , DENG2_OBSERVES(ServerLink, DiscoveryUpdate)
 {
@@ -185,7 +185,7 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
         , mask(ServerLink::Any)
     {
         link().audienceForDiscoveryUpdate += this;
-        App::app().audienceForGameChange() += this;
+        DoomsdayApp::app().audienceForGameChange() += this;
         App_Games().audienceForReadiness() += this;
     }
 
@@ -193,7 +193,7 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
     {
         releaseRef(maxHeightRule);
         link().audienceForDiscoveryUpdate -= this;
-        App::app().audienceForGameChange() -= this;
+        DoomsdayApp::app().audienceForGameChange() -= this;
         App_Games().audienceForReadiness() -= this;
     }
 
@@ -278,7 +278,7 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
         }
     }
 
-    void currentGameChanged(game::Game const &newGame)
+    void currentGameChanged(Game const &newGame)
     {
         if(newGame.isNull() && mode == DiscoverUsingMaster)
         {

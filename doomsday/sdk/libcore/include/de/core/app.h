@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_APP_H
@@ -76,16 +76,6 @@ public:
      * Notified when application startup has been fully completed.
      */
     DENG2_DEFINE_AUDIENCE2(StartupComplete, void appStartupCompleted())
-
-    /**
-     * Notified before the current game is unloaded.
-     */
-    DENG2_DEFINE_AUDIENCE2(GameUnload, void aboutToUnloadGame(game::Game const &gameBeingUnloaded))
-
-    /**
-     * Notified after the current game has been changed.
-     */
-    DENG2_DEFINE_AUDIENCE2(GameChange, void currentGameChanged(game::Game const &newGame))
 
 public:
     /**
@@ -245,13 +235,13 @@ public:
     static Archive const &persistentData();
 
     /**
-     * Returns the persistent data as a mutable archive. Accessing the entries in 
+     * Returns the persistent data as a mutable archive. Accessing the entries in
      * a mutable archive will automatically update their timestamps.
      *
      * @return Persistent data archive (allowing changes).
      */
     static Archive &mutablePersistentData();
-    
+
     static bool hasPersistentData();
 
     /**
@@ -382,20 +372,6 @@ public:
      * automatically called by the application clock when time changes.
      */
     void timeChanged(Clock const &);
-
-    /**
-     * Sets the currently active game. App does not take ownership of the
-     * provided Game instance.
-     *
-     * @param game  Game instance. Must not be deleted until another Game is
-     *              used as the current one.
-     */
-    void setGame(game::Game &game);
-
-    /**
-     * Returns the currently active game.
-     */
-    static game::Game &game();
 
 public:
     /**

@@ -26,7 +26,9 @@
 #include <sstream>
 #include <map>
 #include <QMultiMap>
-#include <de/game/game.h>
+
+#include <doomsday/Game>
+#include <doomsday/doomsdayapp.h>
 #include <de/App>
 #include <de/Error>
 #include <de/Record>
@@ -39,7 +41,7 @@ namespace internal {
 
     static inline String defaultSkyMaterial()
     {
-        String const gameIdKey = DENG2_APP->game().id();
+        String const gameIdKey = DoomsdayApp::game().id();
         if(gameIdKey == "hexen-demo" || gameIdKey == "hexen-betademo")
         {
             return "Textures:SKY2";
@@ -53,7 +55,7 @@ namespace internal {
      */
     static bool interpretHubNumberAsEpisodeId()
     {
-        String const gameIdKey = DENG2_APP->game().id();
+        String const gameIdKey = DoomsdayApp::game().id();
         return (gameIdKey.beginsWith("doom1") || gameIdKey.beginsWith("heretic") ||
                 gameIdKey.beginsWith("chex"));
     }
@@ -219,7 +221,7 @@ namespace internal {
 
     static de::Uri composeMapUri(uint episode, uint map)
     {
-        String const gameIdKey = DENG2_APP->game().id();
+        String const gameIdKey = DoomsdayApp::game().id();
         if(gameIdKey.beginsWith("doom1") || gameIdKey.beginsWith("heretic"))
         {
             return de::Uri(String("Maps:E%1M%2").arg(episode+1).arg(map+1), RC_NULL);

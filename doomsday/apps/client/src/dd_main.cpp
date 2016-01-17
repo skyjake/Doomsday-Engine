@@ -45,12 +45,12 @@
 #include <de/timer.h>
 #include <de/ArrayValue>
 #include <de/DictionaryValue>
-#include <de/game/Session>
 #include <de/Log>
 #include <de/NativePath>
 #ifdef __CLIENT__
 #  include <de/DisplayMode>
 #endif
+#include <doomsday/Session>
 #include <doomsday/console/alias.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/exec.h>
@@ -1041,7 +1041,7 @@ static dint DD_LoadAddonResourcesWorker(void *context)
         /**
          * Phase 3: Add real files from the Auto directory.
          */
-        game::Session::Profile &prof = game::Session::profile();
+        Session::Profile &prof = Session::profile();
 
         FS1::PathList found;
         findAllGameDataPaths(found);
@@ -1221,7 +1221,7 @@ Games &App_Games()
 void App_ClearGames()
 {
     App_Games().clear();
-    App::app().setGame(App_Games().nullGame());
+    DoomsdayApp::setGame(App_Games().nullGame());
 }
 
 static void populateGameInfo(GameInfo &info, Game &game)
@@ -1356,9 +1356,10 @@ bool App_ChangeGame(Game &game, bool allowReload)
     }
 
     // The current game will be gone very soon.
-    DENG2_FOR_EACH_OBSERVER(App::GameUnloadAudience, i, App::app().audienceForGameUnload())
+    DENG2_FOR_EACH_OBSERVER(DoomsdayApp::GameUnloadAudience, i,
+                            DoomsdayApp::app().audienceForGameUnload())
     {
-        i->aboutToUnloadGame(App::game());
+        i->aboutToUnloadGame(DoomsdayApp::game());
     }
 
     // Quit netGame if one is in progress.
@@ -1448,10 +1449,10 @@ bool App_ChangeGame(Game &game, bool allowReload)
         }
 
         // We do not want to load session resources specified on the command line again.
-        game::Session::profile().resourceFiles.clear();
+        Session::profile().resourceFiles.clear();
 
         // The current game is now the special "null-game".
-        App::app().setGame(App_Games().nullGame());
+        DoomsdayApp::setGame(App_Games().nullGame());
 
         Con_InitDatabases();
         consoleRegister();
@@ -1517,8 +1518,8 @@ bool App_ChangeGame(Game &game, bool allowReload)
     }
 
     // This is now the current game.
-    App::app().setGame(game);
-    game::Session::profile().gameId = game.id();
+    DoomsdayApp::setGame(game);
+    Session::profile().gameId = game.id();
 
 #ifdef __CLIENT__
     ClientWindow::main().setWindowTitle(DD_ComposeMainWindowTitle());
@@ -1620,9 +1621,10 @@ bool App_ChangeGame(Game &game, bool allowReload)
 #endif
 
     // Game change is complete.
-    DENG2_FOR_EACH_OBSERVER(App::GameChangeAudience, i, App::app().audienceForGameChange())
+    DENG2_FOR_EACH_OBSERVER(DoomsdayApp::GameChangeAudience, i,
+                            DoomsdayApp::app().audienceForGameChange())
     {
-        i->currentGameChanged(App::game());
+        i->currentGameChanged(DoomsdayApp::game());
     }
 
     return true;
@@ -1820,7 +1822,7 @@ static void initialize()
             // An implicit game session profile has been defined.
             // Add all resources specified using -file options on the command line
             // to the list for the session.
-            game::Session::Profile &prof = game::Session::profile();
+            Session::Profile &prof = Session::profile();
 
             for(dint p = 0; p < CommandLine_Count(); ++p)
             {

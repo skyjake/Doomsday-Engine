@@ -28,6 +28,7 @@
 
 #include "../libdoomsday.h"
 #include <de/types.h>
+#include <stdio.h>
 
 namespace de {
 

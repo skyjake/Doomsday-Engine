@@ -26,17 +26,17 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
-#include <de/game/SavedSession>
+#include <doomsday/SavedSession>
 
 /**
  * Heretic ver 1.3 saved game map state reader.
  *
  * @ingroup libheretic
  */
-class HereticV13MapStateReader : public de::game::SavedSession::MapStateReader
+class HereticV13MapStateReader : public SavedSession::MapStateReader
 {
 public:
-    HereticV13MapStateReader(de::game::SavedSession const &session);
+    HereticV13MapStateReader(SavedSession const &session);
     ~HereticV13MapStateReader();
 
     void read(de::String const &mapUriStr);

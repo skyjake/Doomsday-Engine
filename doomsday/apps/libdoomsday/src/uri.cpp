@@ -20,18 +20,20 @@
  */
 
 #include "doomsday/uri.h"
+#include "doomsday/filesys/fs_main.h"
+#include "doomsday/dualstring.h"
+#include "doomsday/game.h"
+#include "doomsday/doomsdayapp.h"
+
 #include <de/str.h>
 #include <de/unittest.h>
 #include <de/NativePath>
 #include <de/Reader>
 #include <de/Writer>
+#include <de/App>
+
 #include <QDebug>
 #include <QList>
-
-#include "doomsday/filesys/fs_main.h"
-#include "doomsday/dualstring.h"
-#include <de/game/Game>
-#include <de/App>
 
 namespace de {
 
@@ -364,7 +366,7 @@ String Uri::resolved() const
 
 String const &Uri::resolvedRef() const
 {
-    void *currentGame = (void *) (!App::appExists() || App::game().isNull()? 0 : &App::game());
+    void *currentGame = (void *) (!App::appExists() || DoomsdayApp::game().isNull()? 0 : &DoomsdayApp::game());
 
 #ifndef LIBDENG_DISABLE_URI_RESOLVE_CACHING
     if(d->resolvedForGame && d->resolvedForGame == currentGame)

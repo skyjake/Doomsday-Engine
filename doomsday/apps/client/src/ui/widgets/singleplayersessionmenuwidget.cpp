@@ -30,7 +30,7 @@ using namespace de;
 DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
 , DENG2_OBSERVES(Games, Addition)
 , DENG2_OBSERVES(Games, Readiness)
-, DENG2_OBSERVES(App, GameChange)
+, DENG2_OBSERVES(DoomsdayApp, GameChange)
 {
     /// ActionItem with a Game member, for loading a particular game.
     struct GameItem : public ui::ImageItem,
@@ -71,14 +71,14 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
     {
         App_Games().audienceForAddition() += this;
         App_Games().audienceForReadiness() += this;
-        App::app().audienceForGameChange() += this;
+        DoomsdayApp::app().audienceForGameChange() += this;
     }
 
     ~Instance()
     {
         App_Games().audienceForAddition() -= this;
         App_Games().audienceForReadiness() -= this;
-        App::app().audienceForGameChange() -= this;
+        DoomsdayApp::app().audienceForGameChange() -= this;
     }
 
     void gameAdded(Game &game)
@@ -170,7 +170,7 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
         updateGameAvailability();
     }
 
-    void currentGameChanged(game::Game const &)
+    void currentGameChanged(Game const &)
     {
         mainCall.enqueue([this] () { updateGameAvailability(); });
     }

@@ -20,6 +20,8 @@
 
 #include <de/memoryzone.h>
 
+using namespace de;
+
 ProjectionList::Node *ProjectionList::firstNode = nullptr;
 ProjectionList::Node *ProjectionList::cursorNode = nullptr;
 

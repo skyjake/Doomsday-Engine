@@ -21,9 +21,9 @@
 #define LIBDOOMSDAY_CONSOLE_KNOWNWORD_H
 
 #include "../libdoomsday.h"
+#include "../game.h"
 #include "dd_share.h"
 #include "dd_types.h"
-#include <de/game/Game>
 #include <de/shell/Lexicon>
 
 typedef enum {

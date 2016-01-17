@@ -212,7 +212,7 @@ void Games::locateStartupResources(Game &game)
     if(oldCurrentGame != &game)
     {
         /// @attention Kludge: Temporarily switch Game.
-        App::app().setGame(game);
+        DoomsdayApp::setGame(game);
         DoomsdayApp::plugins().exchangeGameEntryPoints(game.pluginId());
 
         // Re-init the filesystem subspace schemes using the search paths of this Game.
@@ -231,7 +231,7 @@ void Games::locateStartupResources(Game &game)
     if(oldCurrentGame != &game)
     {
         // Kludge end - Restore the old Game.
-        App::app().setGame(*oldCurrentGame);
+        DoomsdayApp::setGame(*oldCurrentGame);
         DoomsdayApp::plugins().exchangeGameEntryPoints(oldCurrentGame->pluginId());
 
         // Re-init the filesystem subspace schemes using the search paths of this Game.

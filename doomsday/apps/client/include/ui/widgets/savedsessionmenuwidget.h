@@ -21,7 +21,7 @@
 #define DENG_CLIENT_SAVEDSESSIONMENUWIDGET_H
 
 #include "sessionmenuwidget.h"
-#include <de/game/SavedSession>
+#include <doomsday/SavedSession>
 
 /**
  * Menu that populates itself with available saved game sessions.

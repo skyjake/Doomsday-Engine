@@ -82,7 +82,7 @@ enum MenuItemPositions
 };
 
 DENG_GUI_PIMPL(TaskBarWidget)
-, DENG2_OBSERVES(App, GameChange)
+, DENG2_OBSERVES(DoomsdayApp, GameChange)
 , DENG2_OBSERVES(ServerLink, Join)
 , DENG2_OBSERVES(ServerLink, Leave)
 {
@@ -137,7 +137,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
 
         vertShift = new ScalarRule(0);
 
-        App::app().audienceForGameChange() += this;
+        DoomsdayApp::app().audienceForGameChange() += this;
         ClientApp::serverLink().audienceForJoin += this;
         ClientApp::serverLink().audienceForLeave += this;
 
@@ -146,7 +146,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
 
     ~Instance()
     {
-        App::app().audienceForGameChange() -= this;
+        DoomsdayApp::app().audienceForGameChange() -= this;
         ClientApp::serverLink().audienceForJoin -= this;
         ClientApp::serverLink().audienceForLeave -= this;
 
@@ -289,7 +289,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
         }
     }
 
-    void currentGameChanged(game::Game const &)
+    void currentGameChanged(Game const &)
     {
         updateStatus();
         showOrHideMenuItems();

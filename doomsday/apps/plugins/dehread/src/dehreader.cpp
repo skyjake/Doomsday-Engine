@@ -31,16 +31,17 @@
 #include <QStringList>
 
 #include <de/memory.h>
+#include <doomsday/doomsdayapp.h>
 #include <doomsday/filesys/lumpindex.h>
 #include <doomsday/defs/thing.h>
 #include <doomsday/defs/state.h>
+#include <doomsday/game.h>
 #include <de/App>
 #include <de/ArrayValue>
 #include <de/Block>
 #include <de/Error>
 #include <de/Log>
 #include <de/String>
-#include <de/game/Game>
 
 #include "dehread.h"
 #include "dehreader_util.h"
@@ -449,7 +450,7 @@ public:
                     }
                     else if(line.beginsWith("Cheat", Qt::CaseInsensitive))
                     {
-                        if(!(!patchIsCustom && App::game().id() == "hacx"))
+                        if(!(!patchIsCustom && DoomsdayApp::game().id() == "hacx"))
                         {
                             LOG_WARNING("DeHackEd [Cheat] patches are not supported");
                         }

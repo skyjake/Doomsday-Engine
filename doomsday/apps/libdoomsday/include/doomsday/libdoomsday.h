@@ -28,8 +28,6 @@
  * for plugins to access at runtime.
  */
 
-#include <de/c_wrapper.h>
-
 /*
  * The LIBDOOMSDAY_PUBLIC macro is used for declaring exported symbols. It must be
  * applied in all exported classes and functions. DEF files are not used for

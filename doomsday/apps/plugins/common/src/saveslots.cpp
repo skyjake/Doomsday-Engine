@@ -38,8 +38,6 @@ using namespace de;
 using namespace common;
 using namespace menu;
 
-using de::game::SavedSession;
-
 DENG2_PIMPL_NOREF(SaveSlots::Slot)
 , DENG2_OBSERVES(SavedSession, MetadataChange)
 {

@@ -19,14 +19,14 @@
 #ifndef LIBDENG2_SAVEDSESSION_H
 #define LIBDENG2_SAVEDSESSION_H
 
-#include "../Error"
-#include "../Observers"
-#include "../ArchiveFolder"
-#include "../Record"
-#include "../String"
+#include "libdoomsday.h"
 
-namespace de {
-namespace game {
+#include <de/Error>
+#include <de/Observers>
+#include <de/ArchiveFolder>
+#include <de/Record>
+#include <de/String>
+#include <de/filesys/IInterpreter>
 
 /**
  * Specialized ArchiveFolder that hosts a serialized game session.
@@ -36,7 +36,7 @@ namespace game {
  *
  * @ingroup game
  */
-class DENG2_PUBLIC SavedSession : public ArchiveFolder
+class LIBDOOMSDAY_PUBLIC SavedSession : public de::ArchiveFolder
 {
 public:
     /// Notified whenever the cached metadata of the saved session changes.
@@ -45,24 +45,24 @@ public:
     /**
      * Session metadata.
      */
-    class DENG2_PUBLIC Metadata : public Record
+    class DENG2_PUBLIC Metadata : public de::Record
     {
     public:
         /**
          * Parses metadata in Info syntax from @a source.
          */
-        void parse(String const &source);
+        void parse(de::String const &source);
 
         /**
          * Composes a human-friendly, styled, textual representation suitable for use in user
          * facing contexts (e.g., GUI widgets).
          */
-        String asStyledText() const;
+        de::String asStyledText() const;
 
         /**
          * Generates a textual representation of the session metadata with Info syntax.
          */
-        String asTextWithInfoSyntax() const;
+        de::String asTextWithInfoSyntax() const;
     };
 
     /**
@@ -98,7 +98,7 @@ public:
          *
          * @param mapUriStr  Unique identifier of the map state to deserialize.
          */
-        virtual void read(String const &mapUriStr) = 0;
+        virtual void read(de::String const &mapUriStr) = 0;
 
     private:
         DENG2_PRIVATE(d)
@@ -123,11 +123,11 @@ public:
          * if recognized. Ownership is given to the caller.
          */
         virtual MapStateReader *makeMapStateReader(
-                SavedSession const &session, String const &mapUriStr) = 0;
+                SavedSession const &session, de::String const &mapUriStr) = 0;
     };
 
 public:
-    SavedSession(File &sourceArchiveFile, String const &name = "");
+    SavedSession(File &sourceArchiveFile, de::String const &name = "");
 
     virtual ~SavedSession();
 
@@ -161,7 +161,7 @@ public:
      *
      * @param path  Of the state data to check for. Not case sensitive.
      */
-    inline bool hasState(String const &path) const {
+    inline bool hasState(de::String const &path) const {
         return has(stateFilePath(path));
     }
 
@@ -173,12 +173,12 @@ public:
      *
      * @return  The located file, or @c NULL if the path was not found.
      */
-    inline File *tryLocateStateFile(String const &path) const {
+    inline File *tryLocateStateFile(de::String const &path) const {
         return tryLocateFile(stateFilePath(path));
     }
 
     template <typename Type>
-    Type *tryLocateState(String const &path) const {
+    Type *tryLocateState(de::String const &path) const {
         return tryLocate<Type>(stateFilePath(path));
     }
 
@@ -191,7 +191,7 @@ public:
      * @return  The found file.
      */
     template <typename Type>
-    Type &locateState(String const &path) const {
+    Type &locateState(de::String const &path) const {
         return locate<Type>(stateFilePath(path));
     }
 
@@ -201,15 +201,16 @@ public:
      *
      * @param path  Path to and symbolic name of the state data.
      */
-    static String stateFilePath(String const &path);
+    static de::String stateFilePath(de::String const &path);
+
+    struct Interpreter : public de::filesys::IInterpreter {
+        de::File *interpretFile(de::File *file) const;
+    };
 
 private:
     DENG2_PRIVATE(d)
 };
 
 typedef SavedSession::Metadata SessionMetadata;
-
-} // namespace game
-} // namespace de
 
 #endif // LIBDENG2_SAVEDSESSION_H

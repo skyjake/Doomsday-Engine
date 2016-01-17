@@ -22,8 +22,8 @@
 #define LIBCOMMON_MAPSTATEREADER_H
 
 #include <de/reader.h>
-#include <de/game/SavedSession>
 #include <de/String>
+#include <doomsday/SavedSession>
 #include "common.h"
 #include "thingarchive.h"
 
@@ -33,10 +33,10 @@
  * @ingroup libcommon
  * @see MapStateWriter
  */
-class MapStateReader : public de::game::SavedSession::MapStateReader
+class MapStateReader : public SavedSession::MapStateReader
 {
 public:
-    MapStateReader(de::game::SavedSession const &session);
+    MapStateReader(SavedSession const &session);
     virtual ~MapStateReader();
 
     /**

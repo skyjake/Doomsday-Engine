@@ -26,7 +26,7 @@
 #include <de/RecordValue>
 #include <de/Time>
 #include <de/ZipArchive>
-#include <de/game/SavedSession>
+#include <doomsday/SavedSession>
 #include <doomsday/defs/episode.h>
 #include "api_gl.h"
 #include "d_netsv.h"
@@ -53,8 +53,6 @@
 #endif
 
 using namespace de;
-using de::game::SavedSession;
-using de::game::SessionMetadata;
 
 namespace common {
 

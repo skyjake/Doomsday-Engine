@@ -13,14 +13,14 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/ScriptCommandWidget"
 #include "de/PopupWidget"
 
 #include <de/charsymbols.h>
-#include <de/game/Game>
+//#include <de/game/Game>
 #include <de/shell/Lexicon>
 #include <de/App>
 #include <de/Script>
@@ -35,7 +35,6 @@ namespace de {
 
 DENG2_PIMPL(ScriptCommandWidget)
 , DENG2_OBSERVES(App, StartupComplete)
-, DENG2_OBSERVES(App, GameChange)
 {
     Script script;
     Process process;
@@ -43,26 +42,18 @@ DENG2_PIMPL(ScriptCommandWidget)
     Instance(Public *i) : Base(i)
     {
         App::app().audienceForStartupComplete() += this;
-        App::app().audienceForGameChange() += this;
     }
 
     ~Instance()
     {
         App::app().audienceForStartupComplete() -= this;
-        App::app().audienceForGameChange() -= this;
     }
 
     void appStartupCompleted()
     {
-        importNativeModules();
-        updateLexicon();
+        self.updateCompletion();
     }
 
-    void currentGameChanged(game::Game const &)
-    {
-        importNativeModules();
-        updateLexicon();
-    }
 
     void importNativeModules()
     {
@@ -128,6 +119,12 @@ bool ScriptCommandWidget::handleEvent(Event const &event)
         closeAutocompletionPopup();
     }
     return eaten;
+}
+
+void ScriptCommandWidget::updateCompletion()
+{
+    d->importNativeModules();
+    d->updateLexicon();
 }
 
 bool ScriptCommandWidget::isAcceptedAsCommand(String const &text)

@@ -21,9 +21,9 @@
 #define LIBDOOMSDAY_CONSOLE_EXEC_H
 
 #include "../libdoomsday.h"
+#include "../game.h"
 #include "dd_share.h"
 #include "dd_types.h"
-#include <de/game/Game>
 #include <de/Path>
 
 #include <de/shell/Lexicon> // known words
@@ -78,7 +78,7 @@ LIBDOOMSDAY_PUBLIC dd_bool Con_Parse(de::Path const &fileName, dd_bool silently)
 
 #ifdef __cplusplus
 
-LIBDOOMSDAY_PUBLIC de::String Con_GameAsStyledText(de::game::Game const *game);
+LIBDOOMSDAY_PUBLIC de::String Con_GameAsStyledText(Game const *game);
 
 #endif // __cplusplus
 

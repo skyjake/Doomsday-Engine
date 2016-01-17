@@ -40,7 +40,6 @@
 #include "de/Version"
 #include "de/Writer"
 #include "de/ZipArchive"
-#include "de/game/Game"
 #include "de/math.h"
 
 #include <QDir>
@@ -92,8 +91,6 @@ DENG2_PIMPL(App)
     Path configPath;
     Config *config;
 
-    game::Game *currentGame;
-
     StringList packagesToLoadAtInit;
     PackageLoader packageLoader;
 
@@ -101,23 +98,6 @@ DENG2_PIMPL(App)
 
     /// Optional sink for warnings and errors (set with "-errors").
     QScopedPointer<FileLogSink> errorSink;
-
-    /**
-     * Delegates game change notifications to scripts.
-     */
-    class GameChangeScriptAudience : DENG2_OBSERVES(App, GameChange)
-    {
-    public:
-        void currentGameChanged(game::Game const &newGame)
-        {
-            ArrayValue args;
-            args << DictionaryValue() << TextValue(newGame.id());
-            App::scriptSystem().nativeModule("App")["audienceForGameChange"]
-                    .array().callElements(args);
-        }
-    };
-
-    GameChangeScriptAudience scriptAudienceForGameChange;
 
     Instance(Public *a, QStringList args)
         : Base(a)
@@ -127,7 +107,6 @@ DENG2_PIMPL(App)
         , persistentData(0)
         , configPath("/packs/net.dengine.stdlib/modules/Config.de")
         , config(0)
-        , currentGame(0)
         , terminateFunc(0)
     {
         packagesToLoadAtInit << "net.dengine.stdlib";
@@ -151,10 +130,7 @@ DENG2_PIMPL(App)
         fs.addInterpreter(intrpZipArchive);
 
         // Native App module.
-        appModule.addArray("audienceForGameChange"); // game change observers
         scriptSys.addNativeModule("App", appModule);
-
-        audienceForGameChange += scriptAudienceForGameChange;
     }
 
     ~Instance()
@@ -332,13 +308,9 @@ DENG2_PIMPL(App)
     }
 
     DENG2_PIMPL_AUDIENCE(StartupComplete)
-    DENG2_PIMPL_AUDIENCE(GameUnload)
-    DENG2_PIMPL_AUDIENCE(GameChange)
 };
 
 DENG2_AUDIENCE_METHOD(App, StartupComplete)
-DENG2_AUDIENCE_METHOD(App, GameUnload)
-DENG2_AUDIENCE_METHOD(App, GameChange)
 
 App::App(NativePath const &appFilePath, QStringList args)
     : d(new Instance(this, args))
@@ -460,17 +432,6 @@ void App::timeChanged(Clock const &clock)
             sys->timeChanged(clock);
         }
     }
-}
-
-game::Game &App::game()
-{
-    DENG2_ASSERT(app().d->currentGame != 0);
-    return *app().d->currentGame;
-}
-
-void App::setGame(game::Game &game)
-{
-    d->currentGame = &game;
 }
 
 bool App::inMainThread()

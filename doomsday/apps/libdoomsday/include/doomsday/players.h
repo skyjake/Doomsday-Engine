@@ -25,6 +25,7 @@
 #ifdef __cplusplus
 
 #include "libdoomsday.h"
+#include <de/libcore.h>
 #include <functional>
 
 class Player;

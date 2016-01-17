@@ -1,6 +1,6 @@
 /** @file game.cpp  Base class for games.
  *
- * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -13,15 +13,14 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
-#include "de/game/Game"
+#include "doomsday/AbstractGame"
 
-namespace de {
-namespace game {
+using namespace de;
 
-DENG2_PIMPL(Game)
+DENG2_PIMPL(AbstractGame)
 {
     String id;
     String variantOf;
@@ -30,31 +29,28 @@ DENG2_PIMPL(Game)
     {}
 };
 
-Game::Game(String const &gameId) : d(new Instance(this, gameId))
+AbstractGame::AbstractGame(String const &gameId) : d(new Instance(this, gameId))
 {}
 
-Game::~Game()
+AbstractGame::~AbstractGame()
 {}
 
-void Game::setVariantOf(String const &gameId)
+void AbstractGame::setVariantOf(String const &gameId)
 {
     d->variantOf = gameId;
 }
 
-bool Game::isNull() const
+bool AbstractGame::isNull() const
 {
     return d->id.isEmpty();
 }
 
-String Game::id() const
+String AbstractGame::id() const
 {
     return d->id;
 }
 
-String Game::variantOf() const
+String AbstractGame::variantOf() const
 {
     return d->variantOf;
 }
-
-} // namespace game
-} // namespace de

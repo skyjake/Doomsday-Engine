@@ -1,6 +1,6 @@
-/** @file de/game/game.h  Base class for games.
+/** @file abstractgame.h  Abstact base class for games.
  *
- * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -16,16 +16,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_GAME_H
-#define LIBDENG2_GAME_H
+#ifndef LIBDOOMSDAY_ABSTRACTGAME_H
+#define LIBDOOMSDAY_ABSTRACTGAME_H
 
-#include "../String"
-
-namespace de {
-namespace game {
+#include <de/String>
 
 /**
- * Base class for games. @ingroup game
+ * Abstract base class for games. @ingroup game
  *
  * Represents a specific playable game that runs on top of Doomsday. There can
  * be only one game loaded at a time. Examples of games are "Doom II" and
@@ -34,14 +31,13 @@ namespace game {
  * The 'load' command can be used to load a game based on its identifier:
  * <pre>load doom2</pre>
  *
- * @todo The 'game' namespace can be removed once the client/server apps don't
- * declare their own Game classes any more.
+ * @todo Merge this into the Game class. -jk
  */
-class DENG2_PUBLIC Game
+class DENG2_PUBLIC AbstractGame
 {
 public:
-    Game(String const &gameId);
-    virtual ~Game();
+    AbstractGame(de::String const &gameId);
+    virtual ~AbstractGame();
 
     /**
      * Sets the game that this game is a variant of. For instance, "Final Doom:
@@ -52,13 +48,13 @@ public:
      *
      * @param gameId  Identifier of a game.
      */
-    void setVariantOf(String const &gameId);
+    void setVariantOf(de::String const &gameId);
 
     bool isNull() const;
-    String id() const;
-    String variantOf() const;
+    de::String id() const;
+    de::String variantOf() const;
 
-    virtual String title() const = 0;
+    virtual de::String title() const = 0;
 
     DENG2_AS_IS_METHODS()
 
@@ -66,7 +62,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace game
-} // namespace de
-
-#endif // LIBDENG2_GAME_H
+#endif // LIBDOOMSDAY_ABSTRACTGAME_H

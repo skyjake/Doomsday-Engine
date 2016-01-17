@@ -28,6 +28,7 @@
 #include <QMap>
 #include <QTextStream>
 #include <de/findfile.h>
+#include <de/c_wrapper.h>
 #include <de/App>
 #include <de/NativePath>
 #include <de/RecordValue>

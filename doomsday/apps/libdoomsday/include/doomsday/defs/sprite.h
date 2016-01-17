@@ -27,7 +27,7 @@
 
 namespace defn {
 
-typedef duint32 angle_t;
+typedef de::duint32 angle_t;
 
 /**
  * Utility for handling sprite definitions.

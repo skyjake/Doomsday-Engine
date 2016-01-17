@@ -21,13 +21,15 @@
 #include "api_console.h"
 
 #include <de/App>
-#include <de/game/Game>
 #include <de/Script>
 #include <de/Process>
 #include <de/RecordValue>
 #include <de/NumberValue>
 #include <de/ZipArchive>
 #include <de/Info>
+
+#include <doomsday/doomsdayapp.h>
+#include <doomsday/Game>
 
 #include <QMap>
 #include <QList>
@@ -38,8 +40,8 @@ using namespace de;
 static String const CUSTOM_PROFILE = "Custom";
 
 DENG2_PIMPL(SettingsRegister),
-DENG2_OBSERVES(App, GameUnload),
-DENG2_OBSERVES(App, GameChange)
+DENG2_OBSERVES(DoomsdayApp, GameUnload),
+DENG2_OBSERVES(DoomsdayApp, GameChange)
 {
     struct Setting
     {
@@ -106,16 +108,16 @@ DENG2_OBSERVES(App, GameChange)
 
     Instance(Public *i) : Base(i), current(CUSTOM_PROFILE)
     {
-        App::app().audienceForGameUnload() += this;
-        App::app().audienceForGameChange() += this;
+        DoomsdayApp::app().audienceForGameUnload() += this;
+        DoomsdayApp::app().audienceForGameChange() += this;
 
         addProfile(current);
     }
 
     ~Instance()
     {
-        App::app().audienceForGameUnload() -= this;
-        App::app().audienceForGameChange() -= this;
+        DoomsdayApp::app().audienceForGameUnload() -= this;
+        DoomsdayApp::app().audienceForGameChange() -= this;
 
         clearProfiles();
     }
@@ -407,7 +409,7 @@ DENG2_OBSERVES(App, GameChange)
      *
      * @param newGame  New current game.
      */
-    void currentGameChanged(game::Game const &newGame)
+    void currentGameChanged(Game const &newGame)
     {
         if(persistentName.isEmpty() || newGame.isNull()) return;
 
@@ -486,7 +488,7 @@ DENG2_OBSERVES(App, GameChange)
      *
      * @param gameBeingUnloaded  Current game.
      */
-    void aboutToUnloadGame(game::Game const &gameBeingUnloaded)
+    void aboutToUnloadGame(Game const &gameBeingUnloaded)
     {
         if(persistentName.isEmpty() || gameBeingUnloaded.isNull()) return;
 

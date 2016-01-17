@@ -21,11 +21,12 @@
 #include <de/App>
 #include <de/PopupButtonWidget>
 #include <de/DocumentPopupWidget>
+#include <doomsday/doomsdayapp.h>
 
 using namespace de;
 
 DENG2_PIMPL(GameSessionWidget)
-, DENG2_OBSERVES(App, GameUnload)
+, DENG2_OBSERVES(DoomsdayApp, GameUnload)
 {
     PopupStyle popupStyle;
     ButtonWidget *load;
@@ -72,18 +73,18 @@ DENG2_PIMPL(GameSessionWidget)
             funcs->setPopup(*menu, ui::Right);
         }
 
-        App::app().audienceForGameUnload() += this;
+        DoomsdayApp::app().audienceForGameUnload() += this;
     }
 
     ~Instance()
     {
-        App::app().audienceForGameUnload() -= this;
+        DoomsdayApp::app().audienceForGameUnload() -= this;
 
         if(menu) menu->dismiss();
         doc->dismiss();
     }
 
-    void aboutToUnloadGame(game::Game const &)
+    void aboutToUnloadGame(Game const &)
     {
         doc->close(0);
         if(menu) menu->close(0);

@@ -21,6 +21,7 @@
 #include "world/dmuargs.h"
 
 #include <de/Log>
+#include <de/c_wrapper.h>
 #include "dd_share.h"
 
 using namespace de;

@@ -23,9 +23,9 @@
 #include <QStringList>
 #include <de/Error>
 #include <de/Block>
-#include <de/game/SavedSession>
 #include <de/Path>
 #include <de/String>
+#include <doomsday/SavedSession>
 
 /**
  * Base class for .save package formatters.
@@ -33,9 +33,6 @@
 class PackageFormatter
 {
 public:
-    typedef de::game::SavedSession SavedSession;
-    typedef de::game::SessionMetadata SessionMetadata;
-
     /// An error occured when attempting to open the source file. @ingroup errors
     DENG2_ERROR(FileOpenError);
 
