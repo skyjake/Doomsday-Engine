@@ -19,6 +19,7 @@
 #ifndef LIBDOOMSDAY_SESSION_H
 #define LIBDOOMSDAY_SESSION_H
 
+#include "libdoomsday.h"
 #include <de/Error>
 #include <de/Observers>
 #include <de/String>
@@ -34,7 +35,7 @@ class SavedSession;
  * job of the derived class is to ensure that the current game state remains valid and provide
  * a mechanism for saving player progress.
  */
-class DENG2_PUBLIC Session
+class LIBDOOMSDAY_PUBLIC Session
 {
 public:
     /// Current in-progress state does not match that expected. @ingroup errors
@@ -117,7 +118,7 @@ protected:  // Saved session management: ---------------------------------------
 public:  // Saved session index: -----------------------------------------------------------
 
     /// @todo Take advantage of FileIndex. -jk
-    class DENG2_PUBLIC SavedIndex
+    class LIBDOOMSDAY_PUBLIC SavedIndex
     {
     public:
         /// Notified whenever a saved session is added/removed from the index.

@@ -19,6 +19,7 @@
 #ifndef LIBDOOMSDAY_ABSTRACTGAME_H
 #define LIBDOOMSDAY_ABSTRACTGAME_H
 
+#include "libdoomsday.h"
 #include <de/String>
 
 /**
@@ -33,7 +34,7 @@
  *
  * @todo Merge this into the Game class. -jk
  */
-class DENG2_PUBLIC AbstractGame
+class LIBDOOMSDAY_PUBLIC AbstractGame
 {
 public:
     AbstractGame(de::String const &gameId);

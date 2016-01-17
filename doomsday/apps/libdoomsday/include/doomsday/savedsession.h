@@ -45,7 +45,7 @@ public:
     /**
      * Session metadata.
      */
-    class DENG2_PUBLIC Metadata : public de::Record
+    class LIBDOOMSDAY_PUBLIC Metadata : public de::Record
     {
     public:
         /**
@@ -68,7 +68,7 @@ public:
     /**
      * Abstract base class for serialized, map state readers.
      */
-    class DENG2_PUBLIC MapStateReader
+    class LIBDOOMSDAY_PUBLIC MapStateReader
     {
     public:
         /// Base class for read errors. @ingroup errors
