@@ -33,6 +33,7 @@ static QString const WHITESPACE_OR_COMMENT = " \t\r\n#";
 static QString const TOKEN_BREAKING_CHARS = "#:=$(){}<>,;\"" + WHITESPACE;
 static QString const INCLUDE_TOKEN = "@include";
 static QString const SCRIPT_TOKEN = "script";
+static String const GROUP_TOKEN = "group";
 
 static SourceLineTable sourceLineTable;
 
@@ -54,28 +55,24 @@ DENG2_PIMPL(Info)
 
     QStringList scriptBlockTypes;
     QStringList allowDuplicateBlocksOfType;
-    String implicitBlockType;
+    String implicitBlockType = GROUP_TOKEN;
 
     String sourcePath; ///< May be unknown (empty).
     String content;
-    int currentLine;
-    int cursor; ///< Index of the next character from the source.
+    int currentLine = 0;
+    int cursor = 0; ///< Index of the next character from the source.
     QChar currentChar;
-    int tokenStartOffset;
+    int tokenStartOffset = 0;
     String currentToken;
     BlockElement rootBlock;
     DefaultIncludeFinder defaultFinder;
-    IIncludeFinder const *finder;
+    IIncludeFinder const *finder = &defaultFinder;
 
-    typedef Info::Element::Value InfoValue;
+    using InfoValue = Info::Element::Value;
 
     Instance(Public *i)
         : Base(i)
-        , currentLine(0)
-        , cursor(0)
-        , tokenStartOffset(0)
         , rootBlock("", "", *i)
-        , finder(&defaultFinder)
     {
         scriptBlockTypes << SCRIPT_TOKEN;
     }
@@ -740,7 +737,7 @@ Info::Element *Info::BlockElement::find(String const &name) const
 
 Info::Element::Value Info::BlockElement::keyValue(String const &name) const
 {
-    Element *e = find(name);
+    Element *e = findByPath(name);
     if(!e || !e->isKey()) return Value();
     return e->as<KeyElement>().value();
 }

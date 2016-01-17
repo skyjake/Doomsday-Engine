@@ -215,10 +215,14 @@ public:
         }
 
         /**
-         * Finds the value of a key inside the block. If the element is not a
-         * key element, returns an empty string.
+         * Finds the value of a key inside the block.
          *
-         * @param name  Name of a key element in the block.
+         * @param name  Name of a key element in the block. This may also be
+         *              a path where a color ':' is used for separating
+         *              element names.
+         *
+         * @return Value of the key element. If the located element is not a
+         * key element, returns an empty string.
          */
         Value keyValue(String const &name) const;
 
