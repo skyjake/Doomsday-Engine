@@ -157,13 +157,15 @@ String File::description() const
         desc += " from " + originFeed()->description();
     }
 
-    if(verbosity >= 2)
+#ifdef DENG2_DEBUG
+    // Describing the source file is usually redundant (or even misleading),
+    // so only do that in debug builds so that developers can see that a
+    // file interpretation is being applied.
+    if(source() != this)
     {
-        if(source() != this)
-        {
-            desc += "; data sourced from " + source()->description();
-        }
+        desc += " (data sourced from " + source()->description() + ")";
     }
+#endif
 
     return desc;
 }
