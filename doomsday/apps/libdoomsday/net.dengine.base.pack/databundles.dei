@@ -11,6 +11,61 @@
 # In addition to this list, data file metadata can be stored in PK3
 # Info files and .manifest files.
 
+package "net.dengine.legacy.base_2" {
+    format: PK3
+    fileName = doomsday.pk3
+    info {
+        title: Legacy Data for Doomsday
+        author: Deng Team
+        license: GPLv3
+        tags: core
+    }
+}
+
+package "net.dengine.legacy.doom_2" {
+    format: PK3
+    fileName = libdoom.pk3
+    info {
+        title: Legacy Data for the Doom Plugin
+        author: Deng Team
+        license: GPLv3
+        tags: core doom
+    }
+}
+
+package "net.dengine.legacy.doom64_2" {
+    format: PK3
+    fileName = libdoom64.pk3
+    info {
+        title: Legacy Data for the Doom64 Plugin
+        author: Deng Team
+        license: GPLv3
+        tags: core doom64
+    }
+}
+
+package "net.dengine.legacy.heretic_2" {
+    format: PK3
+    fileName = libheretic.pk3
+    info {
+        title: Legacy Data for the Heretic Plugin
+        author: Deng Team
+        license: GPLv3
+        tags: core heretic
+    }
+}
+
+package "net.dengine.legacy.hexen_2" {
+    format: PK3
+    fileName = libhexen.pk3
+    info {
+        title: Legacy Data for the Hexen Plugin
+        author: Deng Team
+        license: GPLv3
+        tags: core hexen
+    }
+}
+
 package "com.idsoftware.doom_1.9" {
     format: IWAD
     fileName: doom.wad

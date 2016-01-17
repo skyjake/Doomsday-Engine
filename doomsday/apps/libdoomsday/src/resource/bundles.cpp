@@ -59,17 +59,11 @@ DENG2_PIMPL(Bundles)
         DENG2_ASSERT(App::rootFolder().has("/sys/bundles"));
 
         LOG_RES_MSG("Identifying %i data bundles") << bundlesToIdentify.size();
-
         for(DataBundle const *bundle : bundlesToIdentify)
         {
             DENG2_ASSERT(bundle);
-
-            File const *f = dynamic_cast<File const *>(bundle);
-            qDebug() << bundle->description() << f->path();
-
             bundle->identifyPackages();
         }
-
         bundlesToIdentify.clear();
     }
 
@@ -127,7 +121,7 @@ de::Info const &Bundles::identityRegistry() const
     return d->identityRegistry;
 }
 
-res::Bundles::BlockElements Bundles::formatEntries(DataBundle::Format format) const
+Bundles::BlockElements Bundles::formatEntries(DataBundle::Format format) const
 {
     d->parseRegistry();
     return d->formatEntries[format];
@@ -136,6 +130,127 @@ res::Bundles::BlockElements Bundles::formatEntries(DataBundle::Format format) co
 void Bundles::identify()
 {
     d->identifyAddedDataBundles();
+}
+
+Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
+{
+    using Info = de::Info;
+
+    MatchResult match;
+    File const &source = bundle.asFile();
+
+    // Find the best match from the registry.
+    for(auto const *def : formatEntries(bundle.format()))
+    {
+        int score = 0;
+
+        // Match the file name.
+        if(auto const *fileName = def->find(QStringLiteral("fileName")))
+        {
+            if(fileName->isKey() &&
+               fileName->as<Info::KeyElement>().value()
+                    .text.compareWithoutCase(source.name()) == 0)
+            {
+                ++score;
+            }
+            else if(fileName->isList())
+            {
+                // Any of the provided alternatives will be accepted.
+                for(auto const &cand : fileName->as<Info::ListElement>().values())
+                {
+                    if(!cand.text.compareWithoutCase(source.name()))
+                    {
+                        ++score;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Match the file size.
+        String fileSize = def->keyValue(QStringLiteral("fileSize"));
+        if(!fileSize.isEmpty() && fileSize.toUInt() == source.size())
+        {
+            ++score;
+        }
+
+        bool crcMismatch = false;
+
+        // Additional criteria for recognizing WADs.
+        if(bundle.format() == DataBundle::Iwad ||
+           bundle.format() == DataBundle::Pwad)
+        {
+            String lumpDirCRC32 = def->keyValue(QStringLiteral("lumpDirCRC32"));
+            if(!lumpDirCRC32.isEmpty())
+            {
+                if(lumpDirCRC32.toUInt(nullptr, 16) == bundle.lumpDirectory()->crc32())
+                {
+                    // Low probability of a false negative => more significant.
+                    score += 2;
+                }
+                else
+                {
+                    crcMismatch = true;
+                }
+            }
+
+            if(auto const *lumps = def->find(QStringLiteral("lumps"))->maybeAs<Info::ListElement>())
+            {
+                ++score; // will be subtracted if not matched
+
+                for(auto const &val : lumps->values())
+                {
+                    QRegExp const sizeCondition("(.*)==([0-9]+)");
+                    Block lumpName;
+                    int requiredSize = 0;
+
+                    if(sizeCondition.exactMatch(val))
+                    {
+                        lumpName     = sizeCondition.cap(1).toUtf8();
+                        requiredSize = sizeCondition.cap(2).toInt();
+                    }
+                    else
+                    {
+                        lumpName     = val.text.toUtf8();
+                        requiredSize = -1;
+                    }
+
+                    if(!bundle.lumpDirectory()->has(lumpName))
+                    {
+                        --score;
+                        break;
+                    }
+
+                    if(requiredSize >= 0 &&
+                       bundle.lumpDirectory()->lumpSize(lumpName) != duint32(requiredSize))
+                    {
+                        --score;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if(score > 0 && score >= match.bestScore)
+        {
+            match.bestMatch = def;
+            match.bestScore = score;
+
+            auto const idVer = Package::split(def->name());
+
+            match.packageId = idVer.first;
+            // If the specified CRC32 doesn't match, we can't be certain of
+            // which version this actually is.
+            match.packageVersion = (!crcMismatch? idVer.second : Version(""));
+        }
+    }
+
+    qDebug() << "[res::Bundles] Matched:" << match.packageId
+             << match.packageVersion.asText()
+             << bundle.description()
+             << "score:" << match.bestScore;
+
+    return match;
 }
 
 } // namespace res

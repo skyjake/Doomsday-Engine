@@ -28,17 +28,22 @@
  * Abstract base class for classic data files: PK3, WAD, LMP, DED, DEH.
  *
  * Specialized libcore Files representing loadable data files should be derived
- * from DataBundle.
+ * from DataBundle. The class provides general functionality suitable for
+ * dealing with all types of data files.
  *
  * Generates Doomsday 2 compatible metadata for data files, allowing them to
  * be treated as packages at runtime.
  *
- * As packages, DataFile makes sure that the data gets loaded and unloaded
- * when games are loaded (and in the right order). The data is actually loaded
- * using the resource subsystem. To facilitate that, data file contents are
- * available as plain byte arrays.
+ * When loaded as a package, DataBundle-based files make sure that the data
+ * gets loaded and unloaded when games are loaded (and in the right order). In
+ * practice, the data is loaded using the resource subsystem. To facilitate
+ * that, DataBundle contents are available as plain byte arrays.
+ *
+ * DataBundle is derived from IObject; the object namespace maps to the file's
+ * "package" subrecord.
  */
 class LIBDOOMSDAY_PUBLIC DataBundle : public de::IByteArray
+                                    , public de::IObject
 {
 public:
     enum Format { Unknown, Pk3, Wad, Iwad, Pwad, Lump, Ded, Dehacked };
@@ -55,6 +60,8 @@ public:
 
     Format format() const;
     de::String description() const;
+    de::File &asFile();
+    de::File const &asFile() const;
 
     /**
      * Generates appropriate packages accoding to the contents of the data bundle.
@@ -76,6 +83,14 @@ public:
     DataBundle const *containerBundle() const;
 
     /**
+     * Finds the Package that contains this bunle, if this bundle is inside
+     * a package.
+     *
+     * @return Package identifier, or an empty string.
+     */
+    de::String containerPackageId() const;
+
+    /**
      * Returns the WAD file lump directory.
      * @return LumpDirectory for WADs; @c nullptr for non-WAD formats.
      */
@@ -85,6 +100,10 @@ public:
     Size size() const;
     void get(Offset at, Byte *values, Size count) const;
     void set(Offset at, Byte const *values, Size count);
+
+    // Implements IObject.
+    virtual de::Record &objectNamespace();
+    virtual de::Record const &objectNamespace() const;
 
 protected:
     void setFormat(Format format);

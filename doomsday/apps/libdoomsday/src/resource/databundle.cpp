@@ -24,9 +24,10 @@
 #include "doomsday/resource/lumpdirectory.h"
 #include "doomsday/doomsdayapp.h"
 
+#include <de/App>
 #include <de/ArchiveFeed>
-//#include <de/File>
 #include <de/Info>
+#include <de/LinkFile>
 #include <de/Package>
 #include <QRegExp>
 
@@ -53,22 +54,29 @@ DENG2_PIMPL(DataBundle)
     Format format;
     String packageId; // linked under /sys/bundles/
     std::unique_ptr<res::LumpDirectory> lumpDir;
+    SafePtr<LinkFile> pkgLink;
 
     Instance(Public *i, Format fmt) : Base(i), format(fmt)
     {}
 
+    ~Instance()
+    {
+        delete pkgLink.get();
+    }
+
+    Folder &bundleFolder()
+    {
+        return App::rootFolder().locate<Folder>("/sys/bundles");
+    }
+
     void identify()
     {
-        using Info = de::Info;
-
         DENG2_ASSERT(packageId.isEmpty()); // should be only called once
         if(!packageId.isEmpty()) return;
 
         // Load the lump directory of WAD files.
         if(format == Wad || format == Pwad || format == Iwad)
         {
-            qDebug() << "[DataBundle] Checking" << source->description();
-
             lumpDir.reset(new res::LumpDirectory(source->as<ByteArrayFile>()));
             if(!lumpDir->isValid())
             {
@@ -79,134 +87,139 @@ DENG2_PIMPL(DataBundle)
 
             format = (lumpDir->type() == res::LumpDirectory::Pwad? Pwad : Iwad);
 
-            qDebug() << "format:" << (lumpDir->type()==res::LumpDirectory::Pwad? "PWAD" : "IWAD")
+            /*qDebug() << "format:" << (lumpDir->type()==res::LumpDirectory::Pwad? "PWAD" : "IWAD")
                      << "\nfileName:" << source->name()
                      << "\nfileSize:" << source->size()
-                     << "\nlumpDirCRC32:" << QString::number(lumpDir->crc32(), 16).toLatin1();
+                     << "\nlumpDirCRC32:" << QString::number(lumpDir->crc32(), 16).toLatin1();*/
+        }
+        else if(self.isNested())
+        {
+            /*qDebug() << "[DataBundle]" << source->description().toLatin1().constData()
+                     << "is nested, no package will be generated";*/
+            return;
         }
 
-        Info::BlockElement const *bestMatch = nullptr;
-        String packageId;
-        Version packageVersion;
-        int bestScore = 0;
+        // Search for known data files in the bundle registry.
+        res::Bundles::MatchResult matched = DoomsdayApp::bundles().match(self);
 
-        // Find the best match from the registry.
-        for(auto const *def : DoomsdayApp::bundles().formatEntries(format))
+        if(matched)
         {
-            int score = 0;
-
-            // Match the file name.
-            if(auto const *fileName = def->find(QStringLiteral("fileName")))
-            {
-                if(fileName->isKey() &&
-                   fileName->as<Info::KeyElement>().value()
-                        .text.compareWithoutCase(source->name()) == 0)
-                {
-                    ++score;
-                }
-                else if(fileName->isList())
-                {
-                    // Any of the provided alternatives will be accepted.
-                    for(auto const &cand : fileName->as<Info::ListElement>().values())
-                    {
-                        if(!cand.text.compareWithoutCase(source->name()))
-                        {
-                            ++score;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            // Match the file size.
-            String fileSize = def->keyValue(QStringLiteral("fileSize")).text;
-            if(!fileSize.isEmpty() && fileSize.toUInt() == source->size())
-            {
-                ++score;
-            }
-
-            bool crcMismatch = false;
-
-            // Additional criteria for recognizing WADs.
-            if(format == Iwad || format == Pwad)
-            {
-                String lumpDirCRC32 = def->keyValue(QStringLiteral("lumpDirCRC32")).text;
-                if(!lumpDirCRC32.isEmpty())
-                {
-                    if(lumpDirCRC32.toUInt(nullptr, 16) == lumpDir->crc32())
-                    {
-                        // Low probability of a false negative => more significant.
-                        score += 2;
-                    }
-                    else
-                    {
-                        crcMismatch = true;
-                    }
-                }
-
-                if(auto const *lumps = def->find(QStringLiteral("lumps"))->maybeAs<Info::ListElement>())
-                {
-                    ++score; // will be subtracted if not matched
-
-                    for(auto const &val : lumps->values())
-                    {
-                        QRegExp const sizeCondition("(.*)==([0-9]+)");
-                        Block lumpName;
-                        int requiredSize = 0;
-
-                        if(sizeCondition.exactMatch(val.text))
-                        {
-                            lumpName     = sizeCondition.cap(1).toUtf8();
-                            requiredSize = sizeCondition.cap(2).toInt();
-                        }
-                        else
-                        {
-                            lumpName     = val.text.toUtf8();
-                            requiredSize = -1;
-                        }
-
-                        if(!lumpDir->has(lumpName))
-                        {
-                            --score;
-                            break;
-                        }
-
-                        if(requiredSize >= 0 && lumpDir->lumpSize(lumpName) != duint32(requiredSize))
-                        {
-                            --score;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            if(score > 0 && score >= bestScore)
-            {
-                bestMatch = def;
-                bestScore = score;
-
-                auto idVer = Package::split(def->name());
-                packageId = idVer.first;
-                // If the specified CRC32 doesn't match, we can't be certain of
-                // which version this actually is.
-                packageVersion = (!crcMismatch? idVer.second : Version(""));
-            }
-        }
-
-        qDebug() << "\n" << dynamic_cast<File *>(thisPublic)->path();
-
-        if(bestMatch)
-        {
-            qDebug() << "  " << packageId
-                     << packageVersion.asText()
-                     << internal::formatDescriptions[format]
-                     << "score:" << bestScore;
+            packageId = matched.packageId;
         }
         else
         {
-            qDebug() << "  Not matched!";
+            // Generate an identifier based on the information we have.
+            static String const formatDomains[] = {
+                "file.local",
+                "file.pk3",
+                "file.wad",
+                "file.iwad",
+                "file.pwad",
+                "file.lump",
+                "file.defs",
+                "file.dehacked"
+            };
+            String cleanName = source->name().fileNameWithoutExtension().toLower();
+            cleanName.replace('.', "-"); // periods have meaning for packages
+            packageId = formatDomains[format] + "." + cleanName;
         }
-        qDebug() << "\n";
+
+        qDebug() << "[DataBundle] Identified:" << packageId
+                 << matched.packageVersion.asText()
+                 << ::internal::formatDescriptions[format]
+                 << "score:" << matched.bestScore;
+        /*
+         * Set up the package metadata according to the best matched known
+         * information or autogenerated entries.
+         */
+        File &dataFile = self.asFile();
+
+        // Finally, make a link that represents the package.
+        for(int attempt = 0; attempt < 3; ++attempt)
+        {
+            String linkPath = packageId;
+            String version = (matched.packageVersion.isValid()? matched.packageVersion.asText() : "");
+
+            // Try a few different ways to generate a locally unique version number.
+            switch(attempt)
+            {
+            case 0: // unmodified
+                break;
+
+            case 1: // parent folder as version label
+                if(dataFile.path().fileNamePath() != "/local/wads")
+                {
+                    if(version.isEmpty()) version = "0";
+                    Path const filePath(dataFile.path());
+                    if(filePath.segmentCount() >= 2)
+                    {
+                        version += "-" + filePath.segment(filePath.segmentCount() - 2).toString().toLower();
+                    }
+                }
+                break;
+
+            case 2: // status
+                version = version.concatenateMember(dataFile.status().modifiedAt
+                                                    .asDateTime().toString("yyMMdd.hhmmss"));
+                break;
+            }
+
+            if(!version.isEmpty())
+            {
+                linkPath += QString("_%1.pack").arg(version);
+            }
+            else
+            {
+                linkPath += QStringLiteral(".pack");
+            }
+
+            qDebug() << "[DataBundle] Trying" << linkPath;
+
+            // Each link must have a unique name.
+            if(!bundleFolder().has(linkPath))
+            {
+                qDebug() << "[DataBundle] Linking" << dataFile.path() << "as" << linkPath;
+
+                pkgLink.reset(&bundleFolder().add(LinkFile::newLinkToFile(dataFile, linkPath)));
+
+                // Set up package metadata in the link.
+                Record &metadata = Package::initializeMetadata(*pkgLink, packageId);
+                metadata.set("path", dataFile.path());
+                metadata.set("version", !version.isEmpty()? version : "0.0");
+                if(lumpDir)
+                {
+                    metadata.set("lumpDirCRC32", lumpDir->crc32())
+                            .value().as<NumberValue>().setSemanticHints(NumberValue::Hex);
+                }
+                metadata.set("bundleScore", matched.bestScore);
+
+                // Get the rest of the metadata.
+                if(matched)
+                {
+                    metadata.set("title",  matched.bestMatch->keyValue("info:title"));
+                    metadata.set("tags",   matched.bestMatch->keyValue("info:tags"));
+                    metadata.set("author", matched.bestMatch->keyValue("info:author"));
+
+                    String license = matched.bestMatch->keyValue("info:license");
+                    if(license.isEmpty()) license = "Unknown";
+                    metadata.set("license", license);
+                }
+                else
+                {
+                    metadata.set("title", dataFile.name());
+                    metadata.set("author", "Unknown");
+                    metadata.set("license", "Unknown");
+                    metadata.set("tags", "generated");
+                }
+
+                qDebug() << "[DataBundle] Generated package:";
+                qDebug() << metadata.asText().toLatin1();
+
+                App::fileSystem().index(*pkgLink);
+
+                break; // No further attempts needed.
+            }
+        }
     }
 };
 
@@ -219,6 +232,11 @@ DataBundle::DataBundle(Format format, File &source)
 DataBundle::~DataBundle()
 {}
 
+DataBundle::Format DataBundle::format() const
+{
+    return d->format;
+}
+
 String DataBundle::description() const
 {
     if(!d->source)
@@ -226,8 +244,18 @@ String DataBundle::description() const
         return "invalid data bundle";
     }
     return QString("%1 \"%2\"")
-            .arg(internal::formatDescriptions[d->format])
+            .arg(::internal::formatDescriptions[d->format])
             .arg(d->source->name().fileNameWithoutExtension());
+}
+
+File &DataBundle::asFile()
+{
+    return *dynamic_cast<File *>(this);
+}
+
+File const &DataBundle::asFile() const
+{
+    return *dynamic_cast<File const *>(this);
 }
 
 IByteArray::Size DataBundle::size() const
@@ -253,6 +281,18 @@ void DataBundle::set(Offset, Byte const *, Size)
     throw File::OutputError("DataBundle::set", "Classic data formats are read-only");
 }
 
+Record &DataBundle::objectNamespace()
+{
+    DENG2_ASSERT(dynamic_cast<File *>(this) != nullptr);
+    return dynamic_cast<File *>(this)->objectNamespace().subrecord(QStringLiteral("package"));
+}
+
+Record const &DataBundle::objectNamespace() const
+{
+    DENG2_ASSERT(dynamic_cast<File const *>(this) != nullptr);
+    return dynamic_cast<File const *>(this)->objectNamespace().subrecord(QStringLiteral("package"));
+}
+
 void DataBundle::setFormat(Format format)
 {
     d->format = format;
@@ -265,7 +305,7 @@ void DataBundle::identifyPackages() const
 
 bool DataBundle::isNested() const
 {
-    return containerBundle() != nullptr;
+    return containerBundle() != nullptr || !containerPackageId().isEmpty();
 }
 
 DataBundle const *DataBundle::containerBundle() const
@@ -279,6 +319,14 @@ DataBundle const *DataBundle::containerBundle() const
             return data;
     }
     return nullptr;
+}
+
+String DataBundle::containerPackageId() const
+{
+    auto const *file = dynamic_cast<File const *>(this);
+    DENG2_ASSERT(file != nullptr);
+
+    return Package::identifierForContainerOfFile(*file);
 }
 
 res::LumpDirectory const *DataBundle::lumpDirectory() const
@@ -303,7 +351,7 @@ File *DataBundle::Interpreter::interpretFile(File *sourceData) const
         {
             LOG_RES_VERBOSE("Interpreted ") << sourceData->description()
                                             << " as "
-                                            << internal::formatDescriptions[fmt.format];
+                                            << ::internal::formatDescriptions[fmt.format];
 
             switch(fmt.format)
             {

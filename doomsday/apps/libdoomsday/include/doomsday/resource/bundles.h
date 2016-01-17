@@ -21,18 +21,36 @@
 
 #include "databundle.h"
 #include <de/Info>
+#include <de/Version>
 
 namespace res {
 
 /**
  * Index for data bundles.
+ *
+ * Parses the "databundles.dei" Info file that specifies identification
+ * criteria for known data files. The res::Bundles::match() method can can
+ * called on an arbitary data bundle to try finding a matching record in the
+ * registry of known data files.
+ *
+ * @see res::DataBundle
  */
-class Bundles
+class LIBDOOMSDAY_PUBLIC Bundles
 {
 public:
     typedef QList<de::Info::BlockElement const *> BlockElements;
 
     DENG2_ERROR(InvalidError);
+
+    struct LIBDOOMSDAY_PUBLIC MatchResult
+    {
+        de::Info::BlockElement const *bestMatch = nullptr;
+        de::dint bestScore = 0;
+        de::String packageId;
+        de::Version packageVersion = de::Version("");
+
+        operator bool() const { return bestMatch != nullptr; }
+    };
 
 public:
     Bundles();
@@ -45,7 +63,22 @@ public:
 
     BlockElements formatEntries(DataBundle::Format format) const;
 
+    /**
+     * Tries to identify of the data files that have been indexed since the
+     * previous call of this method. Recognized data files are linked as
+     * packages under the /sys/bundles folder.
+     *
+     * @see res::DataBundle::identifyPackages()
+     */
     void identify();
+
+    /**
+     * Finds a matching entry in the registry for a given data bundle.
+     * @param bundle  Data bundle whose information to look for.
+     *
+     * @return Best match.
+     */
+    MatchResult match(DataBundle const &bundle) const;
 
 private:
     DENG2_PRIVATE(d)
