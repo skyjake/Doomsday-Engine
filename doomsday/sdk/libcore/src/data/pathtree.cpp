@@ -212,8 +212,6 @@ struct PathTree::Instance
 
     void clearPathHash(PathTree::Nodes &ph)
     {
-        LOG_AS("PathTree::clearPathHash");
-
         DENG2_FOR_EACH(PathTree::Nodes, i, ph)
         {
             PathTree::Node *node = *i;
