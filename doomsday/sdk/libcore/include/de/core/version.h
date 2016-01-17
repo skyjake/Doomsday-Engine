@@ -30,13 +30,14 @@
 namespace de {
 
 /**
- * Version information about libcore. The version numbers are defined in libcore.pro.
+ * Version information.
  *
- * @note For the time being, this is separate from the project version number. libcore
- * versioning starts from 2.0.0. When the project as a whole switches to major version 2,
- * libcore version will be synced with the rest of the project. Also note that unlike in
- * the past, there is only ever three components in the version (or four, counting the
- * build number).
+ * The format of a version as text is: "x.y.z-label". x, y and z must be
+ * numbers, while the label can be any text string.
+ *
+ * The build's version is specified using preprocessor defines
+ * LIBDENG2_MAJOR_VERSION, LIBDENG2_MINOR_VERSION, LIBDENG2_PATCHLEVEL,
+ * LIBDENG2_BUILD_TEXT, LIBDENG2_RELEASE_LABEL, and LIBDENG2_GIT_DESCRIPTION.
  *
  * @ingroup core
  */
@@ -58,7 +59,10 @@ public:
     /**
      * Version information.
      *
-     * @param version      Version number in the form "x.y.z".
+     * This constructor sets the Git description to a blank string.
+     *
+     * @param version      Version number in the form "x.y.z". The label may
+     *                     be optionally suffixed after a dash "x.y.z-label".
      * @param buildNumber  Build number.
      */
     Version(String const &version, int buildNumber = 0);
@@ -70,8 +74,8 @@ public:
     bool isValid() const;
 
     /**
-     * Forms a version string in the form "x.y.z". If a release label is
-     * defined, it will be included, too: "x.y.z (label)".
+     * Forms a version string in the form "x.y.z". If a release
+     * label is defined, it will be included, too: "x.y.z-label".
      */
     String base() const;
 
@@ -84,9 +88,9 @@ public:
     /**
      * Converts a textual version and updates the Version instance with the
      * values. The version has the following format: (major).(minor).(patch).
-     * The release label is never part of the version string.
+     * The release label can be suffixed after a dash: "-label".
      *
-     * @param version  Version string. Cannot include a label.
+     * @param version  Version string.
      */
     void parseVersionString(String const &version);
 

@@ -55,7 +55,7 @@ bool Version::isValid() const
 String Version::base() const
 {
     String v = String("%1.%2.%3").arg(major).arg(minor).arg(patch);
-    if(!label.isEmpty()) v += String(" (%1)").arg(label);
+    if(!label.isEmpty()) v += String("-%1").arg(label);
     return v;
 }
 
@@ -65,20 +65,23 @@ String Version::asText() const
     return base() + String(" Build %1").arg(build);
 }
 
-/**
- * The version is has the following format: (major).(minor).(patch). The
- * release label is never part of the version.
- *
- * @param version  Version string.
- */
 void Version::parseVersionString(String const &version)
 {
-    major = minor = patch = 0;
+    major = minor = patch = build = 0;
+    label.clear();
+    gitDescription.clear();
 
-    QStringList parts = version.split('.');
+    int dashPos = version.indexOf('-');
+
+    QStringList parts = version.left(dashPos).split('.');
     if(parts.size() >= 1) major = parts[0].toInt();
     if(parts.size() >= 2) minor = parts[1].toInt();
     if(parts.size() >= 3) patch = parts[2].toInt();
+
+    if(dashPos >= 0 && dashPos < version.size() - 1)
+    {
+        label = version.substr(dashPos + 1);
+    }
 }
 
 bool Version::operator < (Version const &other) const
