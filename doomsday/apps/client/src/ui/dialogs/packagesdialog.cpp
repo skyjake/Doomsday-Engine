@@ -44,7 +44,7 @@ DENG_GUI_PIMPL(PackagesDialog)
 
         PackageItem(File const &packFile)
             : file(&packFile)
-            , info(&file->objectNamespace().subrecord("package"))
+            , info(&file->objectNamespace().subrecord(Package::VAR_PACKAGE))
         {
             setData(QString(info->gets("ID")));
         }
@@ -52,7 +52,7 @@ DENG_GUI_PIMPL(PackagesDialog)
         void setFile(File const &packFile)
         {
             file = &packFile;
-            info = &file->objectNamespace().subrecord("package");
+            info = &file->objectNamespace().subrecord(Package::VAR_PACKAGE);
             notifyChange();
         }
     };
@@ -273,7 +273,7 @@ DENG_GUI_PIMPL(PackagesDialog)
         // Add/update the listed packages.
         for(String const &path : packages)
         {
-            Folder const &pack = App::rootFolder().locate<Folder>(path);
+            File const &pack = App::rootFolder().locate<File>(path);
 
             // Core packages are mandatory and thus omitted.
             if(Package::tags(pack).contains("core")) continue;
