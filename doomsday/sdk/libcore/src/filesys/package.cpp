@@ -27,11 +27,13 @@
 
 namespace de {
 
-static String const PACKAGE("package");
+String const Package::VAR_PACKAGE("package");
+
 static String const PACKAGE_ORDER("package.__order__");
 static String const PACKAGE_IMPORT_PATH("package.importPath");
 
 static String const VAR_ID("ID");
+static String const VAR_PATH("path");
 
 Package::Asset::Asset(Record const &rec) : RecordAccessor(rec) {}
 
@@ -101,7 +103,7 @@ DENG2_PIMPL(Package)
 
     Record &packageInfo()
     {
-        return self.objectNamespace().subrecord(PACKAGE);
+        return self.objectNamespace().subrecord(VAR_PACKAGE);
     }
 };
 
@@ -202,13 +204,6 @@ void Package::parseMetadata(File &packageFile) // static
 
     if(Folder *folder = packageFile.maybeAs<Folder>())
     {
-        // The package's information is stored in a subrecord.
-        if(!packageFile.objectNamespace().has(PACKAGE))
-        {
-            packageFile.objectNamespace().addSubrecord(PACKAGE);
-        }
-
-        Record &metadata        = packageFile.objectNamespace().subrecord(PACKAGE);
         File *initializerScript = folder->tryLocateFile("__init__.de");
         File *metadataInfo      = folder->tryLocateFile("Info.dei");
         if(!metadataInfo) metadataInfo = folder->tryLocateFile("Info"); // alternate name
@@ -217,25 +212,29 @@ void Package::parseMetadata(File &packageFile) // static
 
         if(!metadataInfo && !initializerScript) return; // Nothing to do.
 
-        if(metadata.has(TIMESTAMP))
+        // If the metadata has already been parsed, we may not need to do much.
+        // The package's information is stored in a subrecord.
+        if(packageFile.objectNamespace().has(VAR_PACKAGE))
         {
-            // Already parsed.
-            needParse = false;
-
-            // Only parse if the source has changed.
-            if(TimeValue const *time = metadata.get(TIMESTAMP).maybeAs<TimeValue>())
+            Record &metadata = packageFile.objectNamespace().subrecord(VAR_PACKAGE);
+            if(metadata.has(TIMESTAMP))
             {
-                needParse =
-                        (metadataInfo      && metadataInfo->status().modifiedAt      > time->time()) ||
-                        (initializerScript && initializerScript->status().modifiedAt > time->time());
+                // Already parsed.
+                needParse = false;
+
+                // Only parse if the source has changed.
+                if(TimeValue const *time = metadata.get(TIMESTAMP).maybeAs<TimeValue>())
+                {
+                    needParse =
+                            (metadataInfo      && metadataInfo->status().modifiedAt      > time->time()) ||
+                            (initializerScript && initializerScript->status().modifiedAt > time->time());
+                }
             }
+            if(!needParse) return;
         }
 
-        if(!needParse) return;
-
         // The package identifier and path are automatically set.
-        metadata.set(VAR_ID, identifierForFile(packageFile));
-        metadata.set("path", packageFile.path());
+        Record &metadata = initializeMetadata(packageFile);
 
         // Check for a ScriptedInfo source.
         if(metadataInfo)
@@ -286,7 +285,8 @@ void Package::validateMetadata(Record const &packageInfo)
     }
 
     String const &topLevelDomain = ident.segment(0).toString();
-    if(topLevelDomain == "feature" || topLevelDomain == "asset")
+    if(topLevelDomain == QStringLiteral("feature") ||
+       topLevelDomain == QStringLiteral("asset"))
     {
         // Functional top-level domains cannot be used as package identifiers (only aliases).
         throw ValidationError("Package::validateMetadata",
@@ -306,6 +306,19 @@ void Package::validateMetadata(Record const &packageInfo)
                                           .arg(req));
         }
     }
+}
+
+Record &Package::initializeMetadata(File &packageFile, String const &id)
+{
+    if(!packageFile.objectNamespace().has(VAR_PACKAGE))
+    {
+        packageFile.objectNamespace().addSubrecord(VAR_PACKAGE);
+    }
+
+    Record &metadata = packageFile.objectNamespace().subrecord(VAR_PACKAGE);
+    metadata.set(VAR_ID,   id.isEmpty()? identifierForFile(packageFile) : id);
+    metadata.set(VAR_PATH, packageFile.path());
+    return metadata;
 }
 
 QStringList Package::tags(File const &packageFile)

@@ -158,6 +158,8 @@ public:
      */
     static void validateMetadata(Record const &packageInfo);
 
+    static Record &initializeMetadata(File &packageFile, String const &id = String());
+
     static QStringList tags(File const &packageFile);
 
     /**
@@ -193,6 +195,8 @@ public:
      * @return Modification time of file or package.
      */
     static Time containerOfFileModifiedAt(File const &file);
+
+    static String const VAR_PACKAGE;
 
 private:
     DENG2_PRIVATE(d)
