@@ -23,6 +23,8 @@
 #include "de/Info"
 #include "de/Log"
 #include "de/Parser"
+#include "de/LinkFile"
+#include "de/PackageFeed"
 
 #include <QMap>
 
@@ -57,6 +59,16 @@ DENG2_PIMPL(PackageLoader)
         return false;
     }
 
+    static bool shouldIgnoreFile(File const &packageFile)
+    {
+        if(Feed const *feed = packageFile.originFeed())
+        {
+            // PackageFeed generates links to loaded packages.
+            if(feed->is<PackageFeed>()) return true;
+        }
+        return false;
+    }
+
     int findAllVariants(String const &packageId, FS::FoundFiles &found) const
     {
         QStringList const components = packageId.split('.');
@@ -72,10 +84,12 @@ DENG2_PIMPL(PackageLoader)
             FS::FoundFiles files;
             App::fileSystem().findAllOfTypes(StringList()
                                              << DENG2_TYPE_NAME(Folder)
-                                             << DENG2_TYPE_NAME(ArchiveFolder),
+                                             << DENG2_TYPE_NAME(ArchiveFolder)
+                                             << DENG2_TYPE_NAME(LinkFile),
                                              id + ".pack", files);
 
             files.remove_if([&packageId] (File *file) {
+                if(shouldIgnoreFile(*file)) return true;
                 return Package::identifierForFile(*file) != packageId;
             });
 
@@ -87,14 +101,21 @@ DENG2_PIMPL(PackageLoader)
 
     /**
      * Parses or updates the metadata of a package, and checks it for validity.
-     * A ValidationError is thrown if the package metadata does not comply with the
-     * minimum requirements.
+     * A Package::ValidationError is thrown if the package metadata does not
+     * comply with the minimum requirements.
      *
      * @param packFile  Package file (".pack" folder).
      */
     static void checkPackage(File &packFile)
     {
         Package::parseMetadata(packFile);
+
+        if(!packFile.objectNamespace().has(Package::VAR_PACKAGE))
+        {
+            throw Package::ValidationError("PackageLoader::checkPackage",
+                                           packFile.description() + " is not a package");
+        }
+
         Package::validateMetadata(packFile.objectNamespace().subrecord("package"));
     }
 
@@ -175,6 +196,8 @@ DENG2_PIMPL(PackageLoader)
     {
         for(auto i = index.begin(); i != index.end(); ++i)
         {
+            if(shouldIgnoreFile(*i->second)) continue;
+
             if(i->first.fileNameExtension() == ".pack")
             {
                 try
@@ -377,6 +400,7 @@ StringList PackageLoader::findAllPackages() const
     StringList all;
     d->listPackagesInIndex(App::fileSystem().indexFor(DENG2_TYPE_NAME(Folder)), all);
     d->listPackagesInIndex(App::fileSystem().indexFor(DENG2_TYPE_NAME(ArchiveFolder)), all);
+    d->listPackagesInIndex(App::fileSystem().indexFor(DENG2_TYPE_NAME(LinkFile)), all);
     return all;
 }
 
