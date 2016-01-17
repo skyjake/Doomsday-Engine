@@ -71,7 +71,7 @@ Value::Text NumberValue::asText() const
     }
     else if(_semantic.testFlag(Hex))
     {
-        s << "0x" << QString::number(int(_value), 16);
+        s << "0x" << QString::number(duint32(_value), 16);
     }
     else
     {
