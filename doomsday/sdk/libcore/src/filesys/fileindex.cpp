@@ -171,13 +171,17 @@ void FileIndex::findPartialPath(Folder const &rootFolder, String const &path,
 void FileIndex::findPartialPath(String const &packageId, String const &path,
                                 FoundFiles &found) const
 {
-    findPartialPath(App::packageLoader().package(packageId).root(),
-                    path, found, FindInEntireIndex);
+    // We can only look in Folder-like packages.
+    Package const &pkg = App::packageLoader().package(packageId);
+    if(pkg.file().is<Folder>())
+    {
+        findPartialPath(pkg.root(), path, found, FindInEntireIndex);
 
-    // Remove any matches not in the given package.
-    found.remove_if([&packageId] (File *file) {
-        return Package::identifierForContainerOfFile(*file) != packageId;
-    });
+        // Remove any matches not in the given package.
+        found.remove_if([&packageId](File *file) {
+            return Package::identifierForContainerOfFile(*file) != packageId;
+        });
+    }
 }
 
 int FileIndex::findPartialPathInPackageOrder(String const &path, FoundFiles &found, Behavior behavior) const
