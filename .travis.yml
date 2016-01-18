@@ -1,0 +1,10 @@
+# Configuration for Travis CI
+language: cpp
+os: linux
+before_install:
+    - sudo apt-get -qq update
+    - sudo apt-get install cmake
+before_script:
+    - mkdir build-travis
+script:
+    - cd build-travis && cmake ../doomsday && make
