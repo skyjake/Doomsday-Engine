@@ -67,11 +67,12 @@ public:
     void startSequence(int animationId, int priority, bool looping,
                        de::String const &node = "");
 
-    void advanceTime(de::TimeDelta const &elapsed) override;
-
-    de::ddouble currentTime(int index) const override;
-
     de::ModelDrawable::Appearance const &appearance() const;
+
+    // ModelDrawable::Animator
+    void advanceTime(de::TimeDelta const &elapsed) override;
+    de::ddouble currentTime(int index) const override;
+    de::Vector4f extraRotationForNode(de::String const &nodeName) const override;
 
     // Implements IObject.
     de::Record &objectNamespace() override;

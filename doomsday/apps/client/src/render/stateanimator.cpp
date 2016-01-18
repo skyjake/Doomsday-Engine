@@ -33,25 +33,29 @@ using namespace de;
 
 namespace render {
 
-static String const DEF_PROBABILITY("prob");
-static String const DEF_ROOT_NODE  ("node");
-static String const DEF_LOOPING    ("looping");
-static String const DEF_PRIORITY   ("priority");
+static String const DEF_PROBABILITY   ("prob");
+static String const DEF_NODE          ("node");
+static String const DEF_LOOPING       ("looping");
+static String const DEF_PRIORITY      ("priority");
 static String const DEF_ALWAYS_TRIGGER("alwaysTrigger");
-static String const DEF_RENDER     ("render");
-static String const DEF_PASS       ("pass");
-static String const DEF_VARIABLE   ("variable");
-static String const DEF_WRAP       ("wrap");
-static String const DEF_ENABLED    ("enabled");
-static String const DEF_MATERIAL   ("material");
+static String const DEF_RENDER        ("render");
+static String const DEF_PASS          ("pass");
+static String const DEF_VARIABLE      ("variable");
+static String const DEF_WRAP          ("wrap");
+static String const DEF_ENABLED       ("enabled");
+static String const DEF_MATERIAL      ("material");
+static String const DEF_ANIMATION     ("animation");
+static String const DEF_SPEED         ("speed");
+static String const DEF_ANGLE         ("angle");
+static String const DEF_AXIS          ("axis");
 
-static String const VAR_ID      ("ID");
-static String const VAR_ASSET   ("ASSET");
-static String const VAR_ENABLED ("enabled");
-static String const VAR_MATERIAL("material");
+static String const VAR_ID            ("ID");
+static String const VAR_ASSET         ("ASSET");
+static String const VAR_ENABLED       ("enabled");
+static String const VAR_MATERIAL      ("material");
 
-static String const PASS_GLOBAL("");
-static String const DEFAULT_MATERIAL("default");
+static String const PASS_GLOBAL       ("");
+static String const DEFAULT_MATERIAL  ("default");
 
 static int const ANIM_DEFAULT_PRIORITY = 1;
 
@@ -214,6 +218,16 @@ DENG2_PIMPL(StateAnimator)
     typedef QHash<String, RenderVar *> RenderVars;
     QHash<String, RenderVars> passVars;
 
+    struct AnimVar
+    {
+        Animation angle { 0, Animation::Linear };
+        /// Units per second; added to value independently of its animation.
+        Animation speed { 0, Animation::Linear };
+        Vector3f axis;
+    };
+    typedef QHash<String, AnimVar *> AnimVars;
+    AnimVars animVars;
+
     Instance(Public *i, DotPath const &id) : Base(i)
     {
         names.add(Record::VAR_NATIVE_SELF).set(new NativeValue(&self)).setReadOnly();
@@ -298,6 +312,15 @@ DENG2_PIMPL(StateAnimator)
             }
         }
 
+        if(def.has(DEF_ANIMATION))
+        {
+            auto varDefs = ScriptedInfo::subrecordsOfType(DEF_VARIABLE, def.subrecord(DEF_ANIMATION));
+            for(String varName : varDefs.keys())
+            {
+                initAnimationVariable(varName, *varDefs[varName]);
+            }
+        }
+
         DENG2_ASSERT(passIndex == passCount);
         DENG2_ASSERT(indexForPassName.size() == passCount);
 
@@ -322,13 +345,36 @@ DENG2_PIMPL(StateAnimator)
         auto vars = ScriptedInfo::subrecordsOfType(DEF_VARIABLE, block);
         for(auto i = vars.constBegin(); i != vars.constEnd(); ++i)
         {
-            initVariable(i.key(), *i.value(), passName);
+            initRenderVariable(i.key(), *i.value(), passName);
         }
     }
 
-    void initVariable(String const &variableName,
-                      Record const &valueDef,
-                      String const &passName)
+    void initAnimationVariable(String const &variableName,
+                               Record const &variableDef)
+    {
+        try
+        {
+            std::unique_ptr<AnimVar> var(new AnimVar);
+            var->angle = variableDef.getf(DEF_ANGLE, 0.f);
+            var->speed = variableDef.getf(DEF_SPEED, 0.f);
+            var->axis  = vectorFromValue<Vector3f>(variableDef.get(DEF_AXIS));
+
+            addBinding(variableName.concatenateMember(DEF_ANGLE), var->angle);
+            addBinding(variableName.concatenateMember(DEF_SPEED), var->speed);
+
+            animVars.insert(variableDef.gets(DEF_NODE), var.get());
+            var.release();
+        }
+        catch(Error const &er)
+        {
+            LOG_GL_WARNING("%s: %s") << ScriptedInfo::sourceLocation(variableDef)
+                                     << er.asText();
+        }
+    }
+
+    void initRenderVariable(String const &variableName,
+                            Record const &valueDef,
+                            String const &passName)
     {
         static char const *componentNames[] = { "x", "y", "z", "w" };
 
@@ -415,12 +461,18 @@ DENG2_PIMPL(StateAnimator)
 
     void deinitVariables()
     {
+        appearance.passMaterial.clear();
+
+        // Shader variables.
         for(RenderVars const &vars : passVars.values())
         {
             qDeleteAll(vars.values());
         }
         passVars.clear();
-        appearance.passMaterial.clear();
+
+        // Animator variables.
+        qDeleteAll(animVars.values());
+        animVars.clear();
     }
 
     Variable const &materialVariableForPass(duint passIndex) const
@@ -636,7 +688,7 @@ void StateAnimator::triggerByState(String const &stateName)
 
             // Start the animation on the specified node (defaults to root),
             // unless it is already running.
-            String const node = seq.def->gets(DEF_ROOT_NODE, "");
+            String const node = seq.def->gets(DEF_NODE, "");
             int animId = d->animationId(seq.name);
 
             bool const alwaysTrigger = ScriptedInfo::isTrue(*seq.def, DEF_ALWAYS_TRIGGER, false);
@@ -737,6 +789,17 @@ void StateAnimator::advanceTime(TimeDelta const &elapsed)
     using Sequence = Instance::Sequence;
     bool retrigger = false;
 
+    // Update animation variables values.
+    for(auto *var : d->animVars.values())
+    {
+        var->angle.shift(var->speed * elapsed);
+
+        // Keep the angle in the 0..360 range.
+        float varAngle = var->angle;
+        if(varAngle > 360)    var->angle.shift(-360);
+        else if(varAngle < 0) var->angle.shift(+360);
+    }
+
     for(int i = 0; i < count(); ++i)
     {
         auto &anim = at(i).as<Sequence>();
@@ -809,6 +872,17 @@ ddouble StateAnimator::currentTime(int index) const
     // Mobjs think on sharp ticks only, however we need to ensure time advances on
     // every frame for smooth animation.
     return ModelDrawable::Animator::currentTime(index); // + frameTimePos;
+}
+
+Vector4f StateAnimator::extraRotationForNode(String const &nodeName) const
+{
+    auto found = d->animVars.constFind(nodeName);
+    if(found != d->animVars.constEnd())
+    {
+        Instance::AnimVar const &var = *found.value();
+        return Vector4f(var.axis, var.angle);
+    }
+    return Vector4f();
 }
 
 ModelDrawable::Appearance const &StateAnimator::appearance() const
