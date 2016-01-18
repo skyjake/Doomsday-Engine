@@ -4,6 +4,8 @@ This is the source code for Doomsday Engine: a portable, enhanced source port of
 
 For [compilation instructions](http://dengine.net/dew/index.php?title=Compilation) and other details, see the documentation wiki: http://dengine.net/dew/
 
+[![Linux Build Status](https://travis-ci.org/skyjake/Doomsday-Engine.png)](https://travis-ci.org/skyjake/Doomsday-Engine)
+
 ## Libraries
 
 **libcore** is the core of Doomsday 2. It is a C++ class framework containing functionality such as the file system, plugin loading, Doomsday Script, network communications, and generic data structures. Almost everything relies or will rely on this core library.
