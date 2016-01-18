@@ -1,10 +1,12 @@
 # Configuration for Travis CI
 language: cpp
 os: linux
+sudo: required
+dist: trusty
 before_install:
-    - sudo add-apt-repository ppa:george-edison55/precise-backports -y
+#    - sudo add-apt-repository ppa:george-edison55/precise-backports -y
     - sudo apt-get -qq update
-    - sudo apt-get install cmake cmake-data
+    - sudo apt-get install cmake
 before_script:
     - mkdir build-travis
 script:
