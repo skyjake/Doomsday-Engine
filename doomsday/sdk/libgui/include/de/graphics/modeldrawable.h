@@ -26,6 +26,7 @@
 #include <de/GLState>
 #include <de/AtlasTexture>
 #include <de/Vector>
+#include <de/Animation>
 
 #include <QBitArray>
 #include <QVariant>
@@ -236,6 +237,16 @@ public:
          * @return Time in the model's animation sequence.
          */
         virtual ddouble currentTime(int index) const;
+
+        /**
+         * Determines an additional rotation angle for a given node. This is
+         * called for each node when setting up the bone transformations.
+         *
+         * @param nodeName  Node name.
+         *
+         * @return Rotation axis (xyz) and angle (w; degrees).
+         */
+        virtual Vector4f extraRotationForNode(String const &nodeName) const;
 
     private:
         DENG2_PRIVATE(d)

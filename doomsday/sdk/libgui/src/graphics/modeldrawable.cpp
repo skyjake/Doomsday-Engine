@@ -28,6 +28,7 @@
 #include <de/GLState>
 #include <de/GLUniform>
 #include <de/TextureBank>
+#include <de/Animation>
 
 #include <assimp/IOStream.hpp>
 #include <assimp/IOSystem.hpp>
@@ -1051,12 +1052,14 @@ DENG2_PIMPL(ModelDrawable)
 
     struct AccumData
     {
+        Animator const &animator;
         ddouble time;
         aiAnimation const *anim;
         QVector<Matrix4f> finalTransforms;
 
-        AccumData(int boneCount)
-            : time(0)
+        AccumData(Animator const &animator, int boneCount)
+            : animator(animator)
+            , time(0)
             , anim(0)
             , finalTransforms(boneCount)
         {}
@@ -1075,13 +1078,14 @@ DENG2_PIMPL(ModelDrawable)
         }
     };
 
-    void accumulateAnimationTransforms(ddouble time,
-                                       aiAnimation const &anim,
+    void accumulateAnimationTransforms(Animator const &animator,
+                                       ddouble time,
+                                       aiAnimation const &animSeq,
                                        aiNode const &rootNode) const
     {
-        AccumData data(boneCount());
-        data.anim = &anim;
-        data.time = std::fmod(secondsToTicks(time, anim), anim.mDuration); // wrap animation
+        AccumData data(animator, boneCount());
+        data.anim = &animSeq;
+        data.time = std::fmod(secondsToTicks(time, animSeq), animSeq.mDuration); // wrap animation
 
         accumulateTransforms(rootNode, data);
 
@@ -1102,7 +1106,14 @@ DENG2_PIMPL(ModelDrawable)
             // Interpolate for this point in time.
             Matrix4f const translation = Matrix4f::translate(interpolatePosition(data.time, *anim));
             Matrix4f const scaling     = Matrix4f::scale(interpolateScaling(data.time, *anim));
-            Matrix4f const rotation    = convertMatrix(aiMatrix4x4(interpolateRotation(data.time, *anim).GetMatrix()));
+            Matrix4f       rotation    = convertMatrix(aiMatrix4x4(interpolateRotation(data.time, *anim).GetMatrix()));
+
+            // Check for an additional rotation.
+            Vector4f const axisAngle = data.animator.extraRotationForNode(node.mName.C_Str());
+            if(!fequal(axisAngle.w, 0))
+            {
+                rotation = Matrix4f::rotate(axisAngle.w, axisAngle) * rotation;
+            }
 
             nodeTransform = translation * rotation * scaling;
         }
@@ -1154,7 +1165,7 @@ DENG2_PIMPL(ModelDrawable)
             return anim.mRotationKeys[0].mValue;
         }
 
-        aiQuatKey const *key = anim.mRotationKeys + findAnimKey(time, anim.mRotationKeys, anim.mNumRotationKeys);;
+        aiQuatKey const *key = anim.mRotationKeys + findAnimKey(time, anim.mRotationKeys, anim.mNumRotationKeys);
 
         aiQuaternion interp;
         aiQuaternion::Interpolate(interp, key[0].mValue, key[1].mValue,
@@ -1185,20 +1196,21 @@ DENG2_PIMPL(ModelDrawable)
                                                 anim.mNumPositionKeys));
     }
 
-    void updateMatricesFromAnimation(Animator const *animation) const
+    void updateMatricesFromAnimation(Animator const *animator) const
     {
-        if(!scene->HasAnimations() || !animation) return;
+        if(!scene->HasAnimations() || !animator) return;
 
         // Apply all current animations.
-        for(int i = 0; i < animation->count(); ++i)
+        for(int i = 0; i < animator->count(); ++i)
         {
-            auto const &animSeq = animation->at(i);
+            auto const &animSeq = animator->at(i);
 
             // The animation has been validated earlier.
             DENG2_ASSERT(duint(animSeq.animId) < scene->mNumAnimations);
             DENG2_ASSERT(nodeNameToPtr.contains(animSeq.node));
 
-            accumulateAnimationTransforms(animation->currentTime(i),
+            accumulateAnimationTransforms(*animator,
+                                          animator->currentTime(i),
                                           *scene->mAnimations[animSeq.animId],
                                           *nodeNameToPtr[animSeq.node]);
         }
@@ -1853,6 +1865,11 @@ ddouble ModelDrawable::Animator::currentTime(int index) const
         t = min(t, anim.duration - de::FLOAT_EPSILON);
     }
     return t;
+}
+
+Vector4f ModelDrawable::Animator::extraRotationForNode(String const &) const
+{
+    return Vector4f();
 }
 
 void ModelDrawable::Animator::OngoingSequence::initialize()
