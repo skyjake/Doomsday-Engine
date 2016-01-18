@@ -248,6 +248,11 @@ DENG2_AUDIENCE_METHOD(PackageLoader, Unload)
 PackageLoader::PackageLoader() : d(new Instance(this))
 {}
 
+bool PackageLoader::isAvailable(String const &packageId) const
+{
+    return d->selectPackage(packageId) != nullptr;
+}
+
 Package const &PackageLoader::load(String const &packageId)
 {
     LOG_AS("PackageLoader");

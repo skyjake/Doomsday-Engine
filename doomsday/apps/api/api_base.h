@@ -64,17 +64,7 @@ DENG_API_TYPEDEF(Base) // v2
      * @note Game registration order defines the order of the automatic game
      * identification/selection logic.
      */
-    gameid_t (*DefineGame)(GameDef const *definition);
-
-    /**
-     * Retrieves the game identifier for a previously defined game.
-     * @see DD_DefineGame().
-     *
-     * @param identityKey  Identity key of the game.
-     *
-     * @return Game identifier.
-     */
-    gameid_t (*GameIdForKey)(char const *identityKey);
+    //gameid_t (*DefineGame)(GameDef const *definition);
 
     /**
      * Adds a new resource to the list for the identified @a game.
@@ -95,8 +85,8 @@ DENG_API_TYPEDEF(Base) // v2
      *                  For package resources this may be C-String containing a
      *                  semicolon delimited list of identity keys.
      */
-    void (*AddGameResource)(gameid_t game, resourceclassid_t classId, int fFlags,
-                            char const *names, void *params);
+    //void (*AddGameResource)(gameid_t game, resourceclassid_t classId, int fFlags,
+    //                        char const *names, void const *params);
 
     /**
      * Retrieve extended info about the current game.
@@ -105,7 +95,7 @@ DENG_API_TYPEDEF(Base) // v2
      *
      * @return          @c true if successful else @c false (i.e., no game loaded).
      */
-    dd_bool (*gameInfo)(GameInfo *info);
+    dd_bool (*GameInfo_)(GameInfo *info);
 
     /**
      * Determines whether the current run of the thinkers should be considered a
@@ -145,10 +135,10 @@ DENG_API_T(Base);
 #define DD_SetInteger             _api_Base.SetInteger
 #define DD_GetVariable            _api_Base.GetVariable
 #define DD_SetVariable            _api_Base.SetVariable
-#define DD_DefineGame             _api_Base.DefineGame
-#define DD_GameIdForKey           _api_Base.GameIdForKey
-#define DD_AddGameResource        _api_Base.AddGameResource
-#define DD_GameInfo               _api_Base.gameInfo
+//#define DD_DefineGame             _api_Base.DefineGame
+//#define DD_GameIdForKey           _api_Base.GameIdForKey
+//#define DD_AddGameResource        _api_Base.AddGameResource
+#define DD_GameInfo               _api_Base.GameInfo_
 #define DD_IsSharpTick            _api_Base.IsSharpTick
 #define Net_SendPacket            _api_Base.SendPacket
 #define R_SetupMap                _api_Base.SetupMap

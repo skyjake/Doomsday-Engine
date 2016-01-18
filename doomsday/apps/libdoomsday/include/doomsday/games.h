@@ -22,6 +22,7 @@
 #define LIBDOOMSDAY_GAMES_H
 
 #include "game.h"
+
 #include <de/types.h>
 #include <de/str.h>
 #include <de/Observers>
@@ -79,24 +80,11 @@ public:
     int numPlayable() const;
 
     /**
-     * @param game  Game instance.
-     * @return Unique identifier associated with @a game.
-     */
-    gameid_t id(Game const &game) const;
-
-    /**
      * @return  Game associated with @a identityKey.
      *
      * @throws NotFoundError if no game is associated with @a identityKey.
      */
     Game &byIdentityKey(de::String identityKey) const;
-
-    /**
-     * @return  Game associated with @a gameId.
-     *
-     * @throws NotFoundError if no game is associated with @a gameId.
-     */
-    Game &byId(gameid_t gameId) const;
 
     /**
      * @return  Game associated with unique index @a idx.
@@ -106,6 +94,18 @@ public:
     Game &byIndex(int idx) const;
 
     void clear();
+
+    /**
+     * Register a new game.
+     *
+     * @param def  GameDef structure defining the new game.
+     *
+     * @return  Unique identifier/name assigned to resultant game.
+     *
+     * @note Game registration order defines the order of the automatic game
+     * identification/selection logic.
+     */
+    Game &defineGame(GameDef const *def);
 
     /**
      * Add a new Game to this collection. If @a game is already present in the

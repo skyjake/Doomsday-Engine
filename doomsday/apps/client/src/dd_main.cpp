@@ -1113,7 +1113,7 @@ static dint DD_ActivateGameWorker(void *context)
             DENG2_ASSERT(App_CurrentGame().pluginId() != 0);
 
             plugins.setActivePluginId(App_CurrentGame().pluginId());
-            gx.PreInit(App_Games().id(App_CurrentGame()));
+            gx.PreInit(App_CurrentGame().id().toUtf8());
             plugins.setActivePluginId(0);
         }
     }
@@ -1248,80 +1248,6 @@ dd_bool DD_GameInfo(GameInfo *info)
 
     LOGDEV_WARNING("No game currently loaded");
     return false;
-}
-
-#undef DD_AddGameResource
-void DD_AddGameResource(gameid_t gameId, resourceclassid_t classId, dint rflags,
-    char const *names, void *params)
-{
-    if(!VALID_RESOURCECLASSID(classId))
-        App_Error("DD_AddGameResource: Unknown resource class %i.", (dint)classId);
-
-    if(!names || !names[0])
-        App_Error("DD_AddGameResource: Invalid name argument.");
-
-    // Construct and attach the new resource record.
-    Game &game = App_Games().byId(gameId);
-    ResourceManifest *manifest = new ResourceManifest(classId, rflags);
-    game.addManifest(*manifest);
-
-    // Add the name list to the resource record.
-    QStringList nameList = String(names).split(";", QString::SkipEmptyParts);
-    foreach(QString const &nameRef, nameList)
-    {
-        manifest->addName(nameRef);
-    }
-
-    if(params && classId == RC_PACKAGE)
-    {
-        // Add the identityKey list to the resource record.
-        QStringList idKeys = String((char const *) params).split(";", QString::SkipEmptyParts);
-        foreach(QString const &idKeyRef, idKeys)
-        {
-            manifest->addIdentityKey(idKeyRef);
-        }
-    }
-}
-
-#undef DD_DefineGame
-gameid_t DD_DefineGame(GameDef const *def)
-{
-    LOG_AS("DD_DefineGame");
-    if(!def) return 0; // Invalid id.
-
-    // Game mode identity keys must be unique. Ensure that is the case.
-    try
-    {
-        /*Game &game =*/ App_Games().byIdentityKey(def->identityKey);
-        LOGDEV_WARNING("Ignored new game \"%s\", identity key '%s' already in use")
-                << def->defaultTitle << def->identityKey;
-        return 0; // Invalid id.
-    }
-    catch(Games::NotFoundError const &)
-    {} // Ignore the error.
-
-    Game *game = Game::fromDef(*def);
-    if(!game) return 0; // Invalid def.
-
-    // Add this game to our records.
-    game->setPluginId(DoomsdayApp::plugins().activePluginId());
-    App_Games().add(*game);
-    return App_Games().id(*game);
-}
-
-#undef DD_GameIdForKey
-gameid_t DD_GameIdForKey(char const *identityKey)
-{
-    try
-    {
-        return App_Games().id(App_Games().byIdentityKey(identityKey));
-    }
-    catch(Games::NotFoundError const &)
-    {
-        LOG_AS("DD_GameIdForKey");
-        LOGDEV_WARNING("Game \"%s\" is not defined, returning 0.") << identityKey;
-    }
-    return 0; // Invalid id.
 }
 
 Game &App_CurrentGame()
@@ -3242,9 +3168,6 @@ DENG_DECLARE_API(Base) =
     DD_SetInteger,
     DD_GetVariable,
     DD_SetVariable,
-    DD_DefineGame,
-    DD_GameIdForKey,
-    DD_AddGameResource,
     DD_GameInfo,
     DD_IsSharpTick,
     Net_SendPacket,

@@ -1,6 +1,6 @@
 /** @file game.h  Game mode configuration (metadata, resource files, etc...).
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -102,6 +102,20 @@ public:
          de::String const &mainMapInfo             = "");
 
     virtual ~Game();
+
+    /**
+     * Sets the packages required for loading the game.
+     *
+     * All these packages are loaded when the game is loaded.
+     *
+     * @param packageIds  List of package IDs.
+     */
+    void setRequiredPackages(de::StringList const &packageIds);
+
+    /**
+     * Returns the list of required package IDs for loading the game.
+     */
+    de::StringList requiredPackages() const;
 
     /**
      * Determines the status of the game.
@@ -211,6 +225,28 @@ public:
      * @return  @c true iff @a file is required by this game.
      */
     bool isRequiredFile(de::File1 &file);
+
+    /**
+     * Adds a new resource to the list for the identified @a game.
+     *
+     * @note Resource order defines the load order of resources (among those of
+     * the same type). Resources are loaded from most recently added to least
+     * recent.
+     *
+     * @param game      Unique identifier/name of the game.
+     * @param classId   Class of resource being defined.
+     * @param fFlags    File flags (see @ref fileFlags).
+     * @param names     One or more known potential names, seperated by semicolon
+     *                  (e.g., <pre> "name1;name2" </pre>). Valid names include
+     *                  absolute or relative file paths, possibly with encoded
+     *                  symbolic tokens, or predefined symbols into the virtual
+     *                  file system.
+     * @param params    Additional parameters. Usage depends on resource type.
+     *                  For package resources this may be C-String containing a
+     *                  semicolon delimited list of identity keys.
+     */
+    void addResource(resourceclassid_t classId, de::dint rflags,
+                     char const *names, void const *params);
 
 public:
     /**

@@ -17,6 +17,7 @@
  */
 
 #include "doomsday/doomsdayapp.h"
+#include "doomsday/games.h"
 #include "doomsday/filesys/sys_direc.h"
 #include "doomsday/filesys/fs_util.h"
 #include "doomsday/resource/bundles.h"
@@ -171,6 +172,14 @@ DENG2_PIMPL_NOREF(DoomsdayApp)
                 }
             }
         }
+
+#ifdef UNIX
+        NativePath const systemWads("/usr/share/games/doom");
+        if(systemWads.exists())
+        {
+            attachWadFeed("system", systemWads);
+        }
+#endif
 
         // Add all paths from the DOOMWADPATH environment variable.
         if(getenv("DOOMWADPATH"))

@@ -68,6 +68,17 @@ public:
 public:
     PackageLoader();
 
+    /**
+     * Checks if a specific package is available. There may be multiple
+     * versions of the package.
+     *
+     * @param packageId  Package identifier.
+     *
+     * @return @c true, if the package is availalbe. Loading the package
+     * should be successful.
+     */
+    bool isAvailable(String const &packageId) const;
+
     Package const &load(String const &packageId);
 
     void unload(String const &packageId);

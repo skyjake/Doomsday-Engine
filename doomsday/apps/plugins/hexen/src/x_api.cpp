@@ -28,6 +28,8 @@
 
 #include <assert.h>
 #include <string.h>
+#include <doomsday/doomsdayapp.h>
+#include <doomsday/games.h>
 
 #include "doomsday.h"
 
@@ -44,27 +46,30 @@
 #include "p_map.h"
 #include "polyobjs.h"
 
-#define GID(v)          (toGameId(v))
+using namespace de;
 
 // The interface to the Doomsday engine.
 game_export_t gx;
 
 // Identifiers given to the games we register during startup.
-static gameid_t gameIds[NUM_GAME_MODES];
-
-static __inline gameid_t toGameId(int gamemode)
+static char const *gameIds[NUM_GAME_MODES] =
 {
-    assert(gamemode >= 0 && gamemode < NUM_GAME_MODES);
-    return gameIds[(gamemode_t) gamemode];
-}
+    "hexen-demo",
+    "hexen",
+    "hexen-dk",
+    "hexen-betademo",
+    "hexen-v10",
+};
 
 /**
  * Register the game modes supported by this plugin.
  */
 int G_RegisterGames(int hookType, int param, void* data)
 {
+    Games &games = DoomsdayApp::games();
+
 #define CONFIGDIR               "hexen"
-#define STARTUPPK3              PLUGIN_NAMETEXT2 ".pk3"
+#define STARTUPPK3              "libhexen.pk3"
 #define LEGACYSAVEGAMENAMEEXP   "^(?:hex)[0-9]{1,1}(?:.hxs)"
 #define LEGACYSAVEGAMESUBFOLDER "hexndata"
 
@@ -102,35 +107,35 @@ int G_RegisterGames(int hookType, int param, void* data)
     DENG_UNUSED(hookType); DENG_UNUSED(param); DENG_UNUSED(data);
 
     /* Hexen (Death Kings) */
-    gameIds[hexen_deathkings] = DD_DefineGame(&deathkingsDef);
-    DD_AddGameResource(GID(hexen_deathkings), RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
-    DD_AddGameResource(GID(hexen_deathkings), RC_PACKAGE, FF_STARTUP, "hexdd.wad", "MAP59;MAP60");
-    DD_AddGameResource(GID(hexen_deathkings), RC_PACKAGE, FF_STARTUP, "hexen.wad", "MAP08;MAP22;TINTTAB;FOGMAP;TRANTBLA;DARTA1;ARTIPORK;SKYFOG;TALLYTOP;GROVER");
-    DD_AddGameResource(GID(hexen_deathkings), RC_DEFINITION, 0, "hexen-dk.ded", 0);
+    Game &deathkings = games.defineGame(&deathkingsDef);
+    deathkings.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
+    deathkings.addResource(RC_PACKAGE, FF_STARTUP, "hexdd.wad", "MAP59;MAP60");
+    deathkings.addResource(RC_PACKAGE, FF_STARTUP, "hexen.wad", "MAP08;MAP22;TINTTAB;FOGMAP;TRANTBLA;DARTA1;ARTIPORK;SKYFOG;TALLYTOP;GROVER");
+    deathkings.addResource(RC_DEFINITION, 0, "hexen-dk.ded", 0);
 
     /* Hexen */
-    gameIds[hexen] = DD_DefineGame(&hexenDef);
-    DD_AddGameResource(GID(hexen), RC_PACKAGE, FF_STARTUP, "hexen.wad", "MAP08;MAP22;TINTTAB;FOGMAP;TRANTBLA;DARTA1;ARTIPORK;SKYFOG;TALLYTOP;GROVER");
-    DD_AddGameResource(GID(hexen), RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
-    DD_AddGameResource(GID(hexen), RC_DEFINITION, 0, "hexen.ded", 0);
+    Game &hexen = games.defineGame(&hexenDef);
+    hexen.addResource(RC_PACKAGE, FF_STARTUP, "hexen.wad", "MAP08;MAP22;TINTTAB;FOGMAP;TRANTBLA;DARTA1;ARTIPORK;SKYFOG;TALLYTOP;GROVER");
+    hexen.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
+    hexen.addResource(RC_DEFINITION, 0, "hexen.ded", 0);
 
     /* Hexen (v1.0) */
-    gameIds[hexen_v10] = DD_DefineGame(&hexenV10Def);
-    DD_AddGameResource(GID(hexen_v10), RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
-    DD_AddGameResource(GID(hexen_v10), RC_PACKAGE, FF_STARTUP, "hexen.wad", "MAP08;MAP22;MAP41;TINTTAB;FOGMAP;DARTA1;ARTIPORK;SKYFOG;GROVER");
-    DD_AddGameResource(GID(hexen_v10), RC_DEFINITION, 0, "hexen-v10.ded", 0);
+    Game &hexen10 = games.defineGame(&hexenV10Def);
+    hexen10.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
+    hexen10.addResource(RC_PACKAGE, FF_STARTUP, "hexen.wad", "MAP08;MAP22;MAP41;TINTTAB;FOGMAP;DARTA1;ARTIPORK;SKYFOG;GROVER");
+    hexen10.addResource(RC_DEFINITION, 0, "hexen-v10.ded", 0);
 
     /* Hexen (Demo) */
-    gameIds[hexen_demo] = DD_DefineGame(&hexenDemoDef);
-    DD_AddGameResource(GID(hexen_demo), RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
-    DD_AddGameResource(GID(hexen_demo), RC_PACKAGE, FF_STARTUP, "hexendemo.wad;machexendemo.wad;hexen.wad", "MAP01;MAP04;TINTTAB;FOGMAP;DARTA1;ARTIPORK;DEMO3==18150");
-    DD_AddGameResource(GID(hexen_demo), RC_DEFINITION, 0, "hexen-demo.ded", 0);
+    Game &demo = games.defineGame(&hexenDemoDef);
+    demo.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
+    demo.addResource(RC_PACKAGE, FF_STARTUP, "hexendemo.wad;machexendemo.wad;hexen.wad", "MAP01;MAP04;TINTTAB;FOGMAP;DARTA1;ARTIPORK;DEMO3==18150");
+    demo.addResource(RC_DEFINITION, 0, "hexen-demo.ded", 0);
 
     /* Hexen (Beta Demo) */
-    gameIds[hexen_betademo] = DD_DefineGame(&hexenBetaDemoDef);
-    DD_AddGameResource(GID(hexen_betademo), RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
-    DD_AddGameResource(GID(hexen_betademo), RC_PACKAGE, FF_STARTUP, "hexendemo.wad;machexendemo.wad;hexenbeta.wad;hexen.wad", "MAP01;MAP04;TINTTAB;FOGMAP;DARTA1;ARTIPORK;AFLYA0;DEMO3==13866");
-    DD_AddGameResource(GID(hexen_betademo), RC_DEFINITION, 0, "hexen-demo.ded", 0);
+    Game &beta = games.defineGame(&hexenBetaDemoDef);
+    beta.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
+    beta.addResource(RC_PACKAGE, FF_STARTUP, "hexendemo.wad;machexendemo.wad;hexenbeta.wad;hexen.wad", "MAP01;MAP04;TINTTAB;FOGMAP;DARTA1;ARTIPORK;AFLYA0;DEMO3==13866");
+    beta.addResource(RC_DEFINITION, 0, "hexen-demo.ded", 0);
 
     return true;
 
@@ -143,13 +148,6 @@ int G_RegisterGames(int hookType, int param, void* data)
  */
 void DP_Load(void)
 {
-    // We might've been freed from memory, so refresh the game ids.
-    gameIds[hexen_deathkings] = DD_GameIdForKey("hexen-dk");
-    gameIds[hexen]            = DD_GameIdForKey("hexen");
-    gameIds[hexen_v10]        = DD_GameIdForKey("hexen-v10");
-    gameIds[hexen_demo]       = DD_GameIdForKey("hexen-demo");
-    gameIds[hexen_betademo]   = DD_GameIdForKey("hexen-betademo");
-
     Plug_AddHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
 }
 
@@ -161,12 +159,12 @@ void DP_Unload(void)
     Plug_RemoveHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
 }
 
-void G_PreInit(gameid_t gameId)
+void G_PreInit(char const *gameId)
 {
     /// \todo Refactor me away.
     { size_t i;
     for(i = 0; i < NUM_GAME_MODES; ++i)
-        if(gameIds[i] == gameId)
+        if(!strcmp(gameIds[i], gameId))
         {
             gameMode = (gamemode_t) i;
             gameModeBits = 1 << gameMode;

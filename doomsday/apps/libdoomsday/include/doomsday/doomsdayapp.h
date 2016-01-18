@@ -20,7 +20,6 @@
 #define LIBDOOMSDAY_DOOMSDAYAPP_H
 
 #include "plugins.h"
-#include "games.h"
 #include "busymode.h"
 #include "gameapi.h"
 #include "players.h"
@@ -30,6 +29,9 @@
 #include <string>
 
 namespace res { class Bundles; }
+
+class Games;
+class Game;
 
 /**
  * Common application-level state and components.

@@ -1,4 +1,4 @@
-/**\file d_api.c
+/**\file h_api.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,15 +23,17 @@
  */
 
 /**
- * Doomsday API setup and interaction - Doom64 specific.
+ * Doomsday API exchange - jHeretic specific.
  */
 
 #include <assert.h>
 #include <string.h>
+#include <doomsday/doomsdayapp.h>
+#include <doomsday/games.h>
 
 #include "doomsday.h"
 
-#include "jdoom64.h"
+#include "jheretic.h"
 
 #include "d_netsv.h"
 #include "d_net.h"
@@ -44,41 +46,69 @@
 #include "p_map.h"
 #include "polyobjs.h"
 
-#define GID(v)          (toGameId(v))
+using namespace de;
 
 // The interface to the Doomsday engine.
 game_export_t gx;
 
 // Identifiers given to the games we register during startup.
-static gameid_t gameIds[NUM_GAME_MODES];
-
-static __inline gameid_t toGameId(int gamemode)
+static char const *gameIds[NUM_GAME_MODES] =
 {
-    assert(gamemode >= 0 && gamemode < NUM_GAME_MODES);
-    return gameIds[(gamemode_t) gamemode];
-}
+    "heretic-share",
+    "heretic",
+    "heretic-ext",
+};
 
 /**
  * Register the game modes supported by this plugin.
  */
 int G_RegisterGames(int hookType, int param, void* data)
 {
-#define CONFIGDIR       "doom64"
-#define STARTUPPK3      PLUGIN_NAMETEXT2 ".pk3"
+    Games &games = DoomsdayApp::games();
 
-    GameDef const doom64Def = {
-        "doom64", CONFIGDIR,
-        "Doom 64: Absolution", "Kaiser et al.",
-        "", "",
-        "$(App.DataPath)/$(GamePlugin.Name)/doom64.mapinfo"
+#define CONFIGDIR               "heretic"
+#define STARTUPPK3              "libheretic.pk3"
+#define LEGACYSAVEGAMENAMEEXP   "^(?:HticSav)[0-9]{1,1}(?:.hsg)"
+#define LEGACYSAVEGAMESUBFOLDER "savegame"
+
+    GameDef const hereticExtDef = {
+        "heretic-ext", CONFIGDIR,
+        "Heretic: Shadow of the Serpent Riders", "Raven Software",
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
+        "$(App.DataPath)/$(GamePlugin.Name)/heretic-ext.mapinfo"
+    };
+    GameDef const hereticDef = {
+        "heretic", CONFIGDIR,
+        "Heretic Registered", "Raven Software",
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
+        "$(App.DataPath)/$(GamePlugin.Name)/heretic.mapinfo"
+    };
+    GameDef const hereticShareDef = {
+        "heretic-share", CONFIGDIR,
+        "Heretic Shareware", "Raven Software",
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
+        "$(App.DataPath)/$(GamePlugin.Name)/heretic-share.mapinfo"
     };
 
     DENG_UNUSED(hookType); DENG_UNUSED(param); DENG_UNUSED(data);
 
-    gameIds[doom64] = DD_DefineGame(&doom64Def);
-    DD_AddGameResource(GID(doom64), RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
-    DD_AddGameResource(GID(doom64), RC_PACKAGE, FF_STARTUP, "doom64.wad", "MAP01;MAP20;MAP33;F_SUCK");
-    DD_AddGameResource(GID(doom64), RC_DEFINITION, 0, PLUGIN_NAMETEXT ".ded", 0);
+    /* Heretic (Extended) */
+    Game &extended = games.defineGame(&hereticExtDef);
+    extended.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
+    extended.addResource(RC_PACKAGE, FF_STARTUP, "heretic.wad", "EXTENDED;E5M2;E5M7;E6M2;MUMSIT;WIZACT;MUS_CPTD;CHKNC5;SPAXA1A5");
+    extended.addResource(RC_DEFINITION, 0, "heretic-ext.ded", 0);
+
+    /* Heretic */
+    Game &heretic = games.defineGame(&hereticDef);
+    heretic.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
+    heretic.addResource(RC_PACKAGE, FF_STARTUP, "heretic.wad", "E2M2;E3M6;MUMSIT;WIZACT;MUS_CPTD;CHKNC5;SPAXA1A5");
+    heretic.addResource(RC_DEFINITION, 0, "heretic.ded", 0);
+
+    /* Heretic (Shareware) */
+    Game &shareware = games.defineGame(&hereticShareDef);
+    shareware.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
+    shareware.addResource(RC_PACKAGE, FF_STARTUP, "heretic1.wad", "E1M1;MUMSIT;WIZACT;MUS_CPTD;CHKNC5;SPAXA1A5");
+    shareware.addResource(RC_DEFINITION, 0, "heretic-share.ded", 0);
     return true;
 
 #undef STARTUPPK3
@@ -90,9 +120,6 @@ int G_RegisterGames(int hookType, int param, void* data)
  */
 void DP_Load(void)
 {
-    // We might've been freed from memory, so refresh the game ids.
-    gameIds[doom64] = DD_GameIdForKey("doom64");
-
     Plug_AddHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
 }
 
@@ -104,12 +131,12 @@ void DP_Unload(void)
     Plug_RemoveHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
 }
 
-void G_PreInit(gameid_t gameId)
+void G_PreInit(char const *gameId)
 {
     /// \todo Refactor me away.
     { size_t i;
     for(i = 0; i < NUM_GAME_MODES; ++i)
-        if(gameIds[i] == gameId)
+        if(!strcmp(gameIds[i], gameId))
         {
             gameMode = (gamemode_t) i;
             gameModeBits = 1 << gameMode;
@@ -119,7 +146,7 @@ void G_PreInit(gameid_t gameId)
         Con_Error("Failed gamemode lookup for id %i.", gameId);
     }
 
-    D_PreInit();
+    H_PreInit();
 }
 
 /**
@@ -143,24 +170,25 @@ game_export_t* GetGameAPI(void)
     // Fill in the data for the exports.
     gx.apiSize = sizeof(gx);
     gx.PreInit = G_PreInit;
-    gx.PostInit = D_PostInit;
-    gx.Shutdown = D_Shutdown;
+    gx.PostInit = H_PostInit;
     gx.TryShutdown = G_TryShutdown;
+    gx.Shutdown = H_Shutdown;
     gx.Ticker = G_Ticker;
     gx.DrawViewPort = G_DrawViewPort;
-    gx.DrawWindow = D_DrawWindow;
+    gx.DrawWindow = H_DrawWindow;
     gx.FinaleResponder = FI_PrivilegedResponder;
     gx.PrivilegedResponder = G_PrivilegedResponder;
     gx.Responder = G_Responder;
-    gx.EndFrame = D_EndFrame;
+    gx.EndFrame = H_EndFrame;
     gx.MobjThinker = P_MobjThinker;
     gx.MobjFriction = Mobj_Friction;
     gx.MobjCheckPositionXYZ = P_CheckPositionXYZ;
     gx.MobjTryMoveXYZ = P_TryMoveXYZ;
     gx.SectorHeightChangeNotification = P_HandleSectorHeightChange;
     gx.UpdateState = G_UpdateState;
-    gx.GetInteger = D_GetInteger;
-    gx.GetVariable = D_GetVariable;
+
+    gx.GetInteger = H_GetInteger;
+    gx.GetVariable = H_GetVariable;
 
     gx.NetServerStart = D_NetServerStarted;
     gx.NetServerStop = D_NetServerClose;
@@ -187,7 +215,7 @@ game_export_t* GetGameAPI(void)
  * This function is called automatically when the plugin is loaded.
  * We let the engine know what we'd like to do.
  */
-void DP_Initialize()
+void DP_Initialize(void)
 {
     Plug_AddHook(HOOK_STARTUP, G_RegisterGames);
 }

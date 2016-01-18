@@ -1,6 +1,6 @@
 /** @file game.cpp  Game mode configuration (metadata, resource files, etc...).
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -19,6 +19,7 @@
  */
 
 #include "doomsday/game.h"
+#include "doomsday/games.h"
 #include "doomsday/console/cmd.h"
 #include "doomsday/filesys/file.h"
 #include "doomsday/resource/manifest.h"
@@ -37,8 +38,9 @@ using namespace de;
 DENG2_PIMPL(Game)
 {
     pluginid_t pluginId; ///< Unique identifier of the registering plugin.
-    Manifests manifests; ///< Required resource files (e.g., doomu.wad).
     String identityKey;  ///< Unique game mode identifier (e.g., "doom1-ultimate").
+    Manifests manifests; ///< Required resource files (e.g., doomu.wad).
+    StringList requiredPackages; ///< Packages required for starting the game.
 
     String title;        ///< Formatted default title, suitable for printing (e.g., "The Ultimate DOOM").
     String author;       ///< Formatted default author suitable for printing (e.g., "id Software").
@@ -80,6 +82,16 @@ Game::Game(String const &identityKey, Path const &configDir, String const &title
 Game::~Game()
 {}
 
+void Game::setRequiredPackages(StringList const &packageIds)
+{
+    d->requiredPackages = packageIds;
+}
+
+StringList Game::requiredPackages() const
+{
+    return d->requiredPackages;
+}
+
 void Game::addManifest(ResourceManifest &manifest)
 {
     // Ensure we don't add duplicates.
@@ -92,6 +104,12 @@ void Game::addManifest(ResourceManifest &manifest)
 
 bool Game::allStartupFilesFound() const
 {
+    for(String const &pkg : d->requiredPackages)
+    {
+        if(!App::packageLoader().isAvailable(pkg))
+            return false;
+    }
+
     foreach(ResourceManifest *manifest, d->manifests)
     {
         int const flags = manifest->fileFlags();
@@ -261,6 +279,42 @@ bool Game::isRequiredFile(File1 &file)
     }
 
     return isRequired;
+}
+
+void Game::addResource(resourceclassid_t classId, dint rflags,
+                       char const *names, void const *params)
+{
+    if(!VALID_RESOURCECLASSID(classId))
+    {
+        throw Error("Game::addResource",
+                    "Unknown resource class " + QString::number(classId));
+    }
+
+    if(!names || !names[0])
+    {
+        throw Error("Game::addResource", "Invalid name argument");
+    }
+
+    // Construct and attach the new resource record.
+    ResourceManifest *manifest = new ResourceManifest(classId, rflags);
+    addManifest(*manifest);
+
+    // Add the name list to the resource record.
+    QStringList nameList = String(names).split(";", QString::SkipEmptyParts);
+    foreach(QString const &nameRef, nameList)
+    {
+        manifest->addName(nameRef);
+    }
+
+    if(params && classId == RC_PACKAGE)
+    {
+        // Add the identityKey list to the resource record.
+        QStringList idKeys = String((char const *) params).split(";", QString::SkipEmptyParts);
+        foreach(QString const &idKeyRef, idKeys)
+        {
+            manifest->addIdentityKey(idKeyRef);
+        }
+    }
 }
 
 Game *Game::fromDef(GameDef const &def)

@@ -1,9 +1,9 @@
-/**\file d_api.c
+/** @file d_api.cpp
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -29,6 +29,10 @@
 #include <assert.h>
 #include <string.h>
 
+#include <de/String>
+#include <doomsday/doomsdayapp.h>
+#include <doomsday/games.h>
+
 #include "doomsday.h"
 
 #include "jdoom.h"
@@ -46,26 +50,33 @@
 #include "p_tick.h"
 #include "polyobjs.h"
 
-#define GID(v)          (toGameId(v))
+using namespace de;
 
 // The interface to the Doomsday engine.
 game_export_t gx;
 
 // Identifiers given to the games we register during startup.
-static gameid_t gameIds[NUM_GAME_MODES];
-
-static __inline gameid_t toGameId(int gamemode)
+static char const *gameIds[NUM_GAME_MODES] =
 {
-    assert(gamemode >= 0 && gamemode < NUM_GAME_MODES);
-    return gameIds[(gamemode_t) gamemode];
-}
+    "doom1-share",
+    "doom1",
+    "doom1-ultimate",
+    "chex",
+    "doom2",
+    "doom2-plut",
+    "doom2-tnt",
+    "hacx"
+    "doom2-freedm",
+};
 
 /**
  * Register the game modes supported by this plugin.
  */
 int G_RegisterGames(int hookType, int param, void *data)
 {
-#define STARTUPPK3              PLUGIN_NAMETEXT2 ".pk3"
+    Games &games = DoomsdayApp::games();
+
+#define STARTUPPK3              "libdoom.pk3"
 #define LEGACYSAVEGAMENAMEEXP   "^(?:DoomSav)[0-9]{1,1}(?:.dsg)"
 #define LEGACYSAVEGAMESUBFOLDER "savegame"
 
@@ -127,58 +138,58 @@ int G_RegisterGames(int hookType, int param, void *data)
     DENG_UNUSED(hookType); DENG_UNUSED(param); DENG_UNUSED(data);
 
     /* HacX */
-    gameIds[doom2_hacx] = DD_DefineGame(&hacxDef);
-    DD_AddGameResource(GID(doom2_hacx), RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
-    DD_AddGameResource(GID(doom2_hacx), RC_PACKAGE, FF_STARTUP, "hacx.wad", "HACX-R;PLAYPAL");
-    DD_AddGameResource(GID(doom2_hacx), RC_DEFINITION, 0, "hacx.ded", 0);
+    Game &hacx = games.defineGame(&hacxDef);
+    hacx.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
+    hacx.addResource(RC_PACKAGE, FF_STARTUP, "hacx.wad", "HACX-R;PLAYPAL");
+    hacx.addResource(RC_DEFINITION, 0, "hacx.ded", 0);
 
     /* Chex Quest */
-    gameIds[doom_chex] = DD_DefineGame(&chexDef);
-    DD_AddGameResource(GID(doom_chex), RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
-    DD_AddGameResource(GID(doom_chex), RC_PACKAGE, FF_STARTUP, "chex.wad", "E1M1;E4M1;_DEUTEX_;POSSH0M0");
-    DD_AddGameResource(GID(doom_chex), RC_DEFINITION, 0, "chex.ded", 0);
+    Game &chex = games.defineGame(&chexDef);
+    chex.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
+    chex.addResource(RC_PACKAGE, FF_STARTUP, "chex.wad", "E1M1;E4M1;_DEUTEX_;POSSH0M0");
+    chex.addResource(RC_DEFINITION, 0, "chex.ded", 0);
 
     /* DOOM2 (TNT) */
-    gameIds[doom2_tnt] = DD_DefineGame(&doom2TntDef);
-    DD_AddGameResource(GID(doom2_tnt), RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
-    DD_AddGameResource(GID(doom2_tnt), RC_PACKAGE, FF_STARTUP, "tnt.wad", "CAVERN5;CAVERN7;STONEW1");
-    DD_AddGameResource(GID(doom2_tnt), RC_DEFINITION, 0, "doom2-tnt.ded", 0);
+    Game &tnt = games.defineGame(&doom2TntDef);
+    tnt.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
+    tnt.addResource(RC_PACKAGE, FF_STARTUP, "tnt.wad", "CAVERN5;CAVERN7;STONEW1");
+    tnt.addResource(RC_DEFINITION, 0, "doom2-tnt.ded", 0);
 
     /* DOOM2 (Plutonia) */
-    gameIds[doom2_plut] = DD_DefineGame(&doom2PlutDef);
-    DD_AddGameResource(GID(doom2_plut), RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
-    DD_AddGameResource(GID(doom2_plut), RC_PACKAGE, FF_STARTUP, "plutonia.wad", "_DEUTEX_;MAP01;MAP25;MC5;MC11;MC16;MC20");
-    DD_AddGameResource(GID(doom2_plut), RC_DEFINITION, 0, "doom2-plut.ded", 0);
+    Game &plut = games.defineGame(&doom2PlutDef);
+    plut.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
+    plut.addResource(RC_PACKAGE, FF_STARTUP, "plutonia.wad", "_DEUTEX_;MAP01;MAP25;MC5;MC11;MC16;MC20");
+    plut.addResource(RC_DEFINITION, 0, "doom2-plut.ded", 0);
 
     /* DOOM2 - FreeDM */
-    gameIds[doom2_freedm] = DD_DefineGame(&freeDMDef);
-    DD_AddGameResource(GID(doom2_freedm), RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
-    DD_AddGameResource(GID(doom2_freedm), RC_PACKAGE, FF_STARTUP, "freedm.wad", "MAP01");
-    DD_AddGameResource(GID(doom2_freedm), RC_DEFINITION, 0, "doom2-freedm.ded", 0);
+    Game &freedm = games.defineGame(&freeDMDef);
+    freedm.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
+    freedm.addResource(RC_PACKAGE, FF_STARTUP, "freedm.wad", "MAP01");
+    freedm.addResource(RC_DEFINITION, 0, "doom2-freedm.ded", 0);
 
     /* DOOM2 */
-    gameIds[doom2] = DD_DefineGame(&doom2Def);
-    DD_AddGameResource(GID(doom2), RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
-    DD_AddGameResource(GID(doom2), RC_PACKAGE, FF_STARTUP, "doom2f.wad;doom2.wad", "MAP01;MAP02;MAP03;MAP04;MAP10;MAP20;MAP25;MAP30;VILEN1;VILEO1;VILEQ1;GRNROCK");
-    DD_AddGameResource(GID(doom2), RC_DEFINITION, 0, "doom2.ded", 0);
+    Game &doom2 = games.defineGame(&doom2Def);
+    doom2.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
+    doom2.addResource(RC_PACKAGE, FF_STARTUP, "doom2f.wad;doom2.wad", "MAP01;MAP02;MAP03;MAP04;MAP10;MAP20;MAP25;MAP30;VILEN1;VILEO1;VILEQ1;GRNROCK");
+    doom2.addResource(RC_DEFINITION, 0, "doom2.ded", 0);
 
     /* DOOM (Ultimate) */
-    gameIds[doom_ultimate] = DD_DefineGame(&doomUltimateDef);
-    DD_AddGameResource(GID(doom_ultimate), RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
-    DD_AddGameResource(GID(doom_ultimate), RC_PACKAGE, FF_STARTUP, "doomu.wad;doom.wad", "E4M1;E4M2;E4M3;E4M4;E4M5;E4M6;E4M7;E4M8;E4M9;M_EPI4");
-    DD_AddGameResource(GID(doom_ultimate), RC_DEFINITION, 0, "doom1-ultimate.ded", 0);
+    Game &ultimate = games.defineGame(&doomUltimateDef);
+    ultimate.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
+    ultimate.addResource(RC_PACKAGE, FF_STARTUP, "doomu.wad;doom.wad", "E4M1;E4M2;E4M3;E4M4;E4M5;E4M6;E4M7;E4M8;E4M9;M_EPI4");
+    ultimate.addResource(RC_DEFINITION, 0, "doom1-ultimate.ded", 0);
 
     /* DOOM */
-    gameIds[doom] = DD_DefineGame(&doomDef);
-    DD_AddGameResource(GID(doom), RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
-    DD_AddGameResource(GID(doom), RC_PACKAGE, FF_STARTUP, "doom.wad", "E2M1;E2M2;E2M3;E2M4;E2M5;E2M6;E2M7;E2M8;E2M9;E3M1;E3M2;E3M3;E3M4;E3M5;E3M6;E3M7;E3M8;E3M9;CYBRE1;CYBRD8;FLOOR7_2");
-    DD_AddGameResource(GID(doom), RC_DEFINITION, 0, "doom1.ded", 0);
+    Game &doom = games.defineGame(&doomDef);
+    doom.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
+    doom.addResource(RC_PACKAGE, FF_STARTUP, "doom.wad", "E2M1;E2M2;E2M3;E2M4;E2M5;E2M6;E2M7;E2M8;E2M9;E3M1;E3M2;E3M3;E3M4;E3M5;E3M6;E3M7;E3M8;E3M9;CYBRE1;CYBRD8;FLOOR7_2");
+    doom.addResource(RC_DEFINITION, 0, "doom1.ded", 0);
 
     /* DOOM (Shareware) */
-    gameIds[doom_shareware] = DD_DefineGame(&doomShareDef);
-    DD_AddGameResource(GID(doom_shareware), RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
-    DD_AddGameResource(GID(doom_shareware), RC_PACKAGE, FF_STARTUP, "doom1.wad", "E1M1;E1M2;E1M3;E1M4;E1M5;E1M6;E1M7;E1M8;E1M9;D_E1M1;FLOOR4_8;FLOOR7_2");
-    DD_AddGameResource(GID(doom_shareware), RC_DEFINITION, 0, "doom1-share.ded", 0);
+    Game &shareware = games.defineGame(&doomShareDef);
+    shareware.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
+    shareware.addResource(RC_PACKAGE, FF_STARTUP, "doom1.wad", "E1M1;E1M2;E1M3;E1M4;E1M5;E1M6;E1M7;E1M8;E1M9;D_E1M1;FLOOR4_8;FLOOR7_2");
+    shareware.addResource(RC_DEFINITION, 0, "doom1-share.ded", 0);
     return true;
 
 #undef STARTUPPK3
@@ -189,17 +200,6 @@ int G_RegisterGames(int hookType, int param, void *data)
  */
 void DP_Load(void)
 {
-    // We might've been freed from memory, so refresh the game ids.
-    gameIds[doom_shareware] = DD_GameIdForKey("doom1-share");
-    gameIds[doom]           = DD_GameIdForKey("doom1");
-    gameIds[doom_ultimate]  = DD_GameIdForKey("doom1-ultimate");
-    gameIds[doom_chex]      = DD_GameIdForKey("chex");
-    gameIds[doom2]          = DD_GameIdForKey("doom2");
-    gameIds[doom2_tnt]      = DD_GameIdForKey("doom2-tnt");
-    gameIds[doom2_plut]     = DD_GameIdForKey("doom2-plut");
-    gameIds[doom2_hacx]     = DD_GameIdForKey("hacx");
-    gameIds[doom2_freedm]   = DD_GameIdForKey("doom2-freedm");
-
     Plug_AddHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
 }
 
@@ -211,12 +211,12 @@ void DP_Unload(void)
     Plug_RemoveHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
 }
 
-void G_PreInit(gameid_t gameId)
+void G_PreInit(char const *gameId)
 {
     /// \todo Refactor me away.
     { size_t i;
     for(i = 0; i < NUM_GAME_MODES; ++i)
-        if(gameIds[i] == gameId)
+        if(!strcmp(gameIds[i], gameId))
         {
             gameMode = (gamemode_t) i;
             gameModeBits = 1 << gameMode;

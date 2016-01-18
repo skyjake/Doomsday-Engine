@@ -126,28 +126,6 @@ Game *Games::firstPlayable() const
     return NULL;
 }
 
-gameid_t Games::id(Game const &game) const
-{
-    if(&game == d->nullGame) return 0; // Invalid id.
-    int idx = d->games.indexOf(const_cast<Game *>(&game));
-    if(idx < 0)
-    {
-        /// @throw NotFoundError  The specified @a game is not a member of the collection.
-        throw NotFoundError("Games::id", QString("Game %p is not a member of the collection").arg(de::dintptr(&game)));
-    }
-    return gameid_t(idx+1);
-}
-
-Game &Games::byId(gameid_t gameId) const
-{
-    if(gameId <= 0 || gameId > d->games.count())
-    {
-        /// @throw NotFoundError  The specified @a gameId is out of range.
-        throw NotFoundError("Games::byId", QString("There is no Game with id %i").arg(gameId));
-    }
-    return *d->games[gameId-1];
-}
-
 Game &Games::byIdentityKey(String identityKey) const
 {
     if(!identityKey.isEmpty())
@@ -190,6 +168,38 @@ int Games::collectAll(GameList &collected)
         collected.push_back(GameListItem(game));
     }
     return collected.count() - numFoundSoFar;
+}
+
+Game &Games::defineGame(GameDef const *def)
+{
+    if(!def)
+    {
+        throw Error("Games::defineGame", "Game definition not provided");
+    }
+
+    LOG_AS("Games");
+
+    // Game mode identity keys must be unique. Ensure that is the case.
+    try
+    {
+        /*Game &game =*/ byIdentityKey(def->identityKey);
+        LOGDEV_WARNING("Ignored new game \"%s\", identity key '%s' already in use")
+                << def->defaultTitle << def->identityKey;
+        throw Error("Games::defineGame", String("Duplicate game ID: ") + def->identityKey);
+    }
+    catch(Games::NotFoundError const &)
+    {} // Ignore the error.
+
+    Game *game = Game::fromDef(*def);
+    if(!game)
+    {
+        throw Error("Games::defineGame", "Invalid game definition");
+    }
+
+    // Add this game to our records.
+    game->setPluginId(DoomsdayApp::plugins().activePluginId());
+    add(*game);
+    return *game;
 }
 
 void Games::add(Game &game)
@@ -365,3 +375,4 @@ void Games::consoleRegister() //static
 
     Game::consoleRegister();
 }
+
