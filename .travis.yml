@@ -7,7 +7,7 @@ before_install:
     - sudo add-apt-repository ppa:zoogie/sdl2-snapshots -y
 #    - sudo add-apt-repository ppa:george-edison55/precise-backports -y
     - sudo apt-get -qq update
-    - sudo apt-get install cmake libsdl2-dev libsdl2-mixer-dev libxrandr-dev libxxf86vm-dev libfluidsynth-dev ncurses-dev qt5-default libqt5x11extras5-dev 
+    - sudo apt-get -y install cmake libsdl2-dev libsdl2-mixer-dev libxrandr-dev libxxf86vm-dev libfluidsynth-dev ncurses-dev qt5-default libqt5x11extras5-dev 
 before_script:
     - mkdir build-travis
 script:
