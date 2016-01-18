@@ -2,9 +2,9 @@
 
 This is the source code for Doomsday Engine: a portable, enhanced source port of id Software's Doom I/II and Raven Software's Heretic and Hexen. The sources are under the GNU General Public license (see doomsday/gpl-3.0.txt), with the exception of the Doomsday 2 libraries that are under the GNU Lesser General Public License (see doomsday/lgpl-3.0.txt).
 
-For [compilation instructions](http://dengine.net/dew/index.php?title=Compilation) and other details, see the documentation wiki: http://dengine.net/dew/
+For [compilation instructions](http://wiki.dengine.net/w/Compilation) and other details, see the documentation wiki: http://wiki.dengine.net/
 
-[![Linux Build Status](https://travis-ci.org/skyjake/Doomsday-Engine.png)](https://travis-ci.org/skyjake/Doomsday-Engine)
+[![Linux Build Status](https://travis-ci.org/skyjake/Doomsday-Engine.svg)](https://travis-ci.org/skyjake/Doomsday-Engine)
 
 ## Libraries
 
@@ -26,7 +26,7 @@ Doomsday is compiled using [CMake](http://cmake.org/). Version 3.1 or later is r
 
 ### Qt
 
-Using the latest version of Qt 5 is recommended. The minimum required version is Qt 4.8. See [Supported platforms](http://dengine.net/dew/index.php?title=Supported_platforms) in the wiki for details about which version is being used on which platform.
+Using the latest version of Qt 5 is recommended. The minimum required version is Qt 4.8. See [Supported platforms](http://wiki.dengine.net/w/Supported_platforms) in the wiki for details about which version is being used on which platform.
 
 ### Open Asset Import Library
 
