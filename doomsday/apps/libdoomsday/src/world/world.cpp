@@ -17,6 +17,9 @@
  */
 
 #include "doomsday/world/world.h"
+#include "doomsday/doomsdayapp.h"
+#include "doomsday/player.h"
+#include "api_player.h"
 
 #include <de/App>
 
@@ -42,6 +45,29 @@ DENG2_AUDIENCE_METHOD(World, MapChange)
 
 World::World() : d(new Instance(this))
 {}
+
+void World::reset()
+{
+    DoomsdayApp::players().forAll([] (Player &plr)
+    {
+        ddplayer_t &ddpl = plr.publicData();
+
+        // Mobjs go down with the map.
+        ddpl.mo            = nullptr;
+        ddpl.extraLight    = 0;
+        ddpl.fixedColorMap = 0;
+        //ddpl.inGame        = false;
+        ddpl.flags         &= ~DDPF_CAMERA;
+
+        // States have changed, the state pointers are unknown.
+        for(ddpsprite_t &pspr : ddpl.pSprites)
+        {
+            pspr.statePtr = nullptr;
+        }
+
+        return LoopContinue;
+    });
+}
 
 void World::timeChanged(Clock const &)
 {

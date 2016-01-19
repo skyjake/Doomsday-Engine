@@ -69,8 +69,13 @@ DENG2_PIMPL(PackageLoader)
         return false;
     }
 
-    int findAllVariants(String const &packageId, FS::FoundFiles &found) const
+    int findAllVariants(String const &packageIdVer, FS::FoundFiles &found) const
     {
+        // The version may be provided optionally, to set the preferred version.
+        auto idVer = Package::split(packageIdVer);
+
+        String const packageId = idVer.first;
+        qDebug() << "looking for" << packageId;
         QStringList const components = packageId.split('.');
 
         String id;
@@ -89,6 +94,7 @@ DENG2_PIMPL(PackageLoader)
                                              id + ".pack", files);
 
             files.remove_if([&packageId] (File *file) {
+                qDebug() << "found:" << file->path();
                 if(shouldIgnoreFile(*file)) return true;
                 return Package::identifierForFile(*file) != packageId;
             });

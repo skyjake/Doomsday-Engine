@@ -1264,14 +1264,9 @@ Game &App_CurrentGame()
     return DoomsdayApp::currentGame();
 }
 
+/// @todo => DoomsdayApp::changeGame()
 bool App_ChangeGame(Game &game, bool allowReload)
 {
-#ifdef __CLIENT__
-    DENG_ASSERT(ClientWindow::mainExists());
-#endif
-
-    //LOG_AS("App_ChangeGame");
-
     bool isReload = false;
 
     // Ignore attempts to re-load the current game?
@@ -1281,8 +1276,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
         {
             if(App_GameLoaded())
             {
-                LOG_NOTE("%s (%s) is already loaded")
-                        << game.title() << game.id();
+                LOG_NOTE("%s (%s) is already loaded") << game.title() << game.id();
             }
             return true;
         }
@@ -1297,75 +1291,17 @@ bool App_ChangeGame(Game &game, bool allowReload)
         i->aboutToUnloadGame(DoomsdayApp::game());
     }
 
-    // Quit netGame if one is in progress.
-#ifdef __SERVER__
-    if(netGame && isServer)
-    {
-        N_ServerClose();
-    }
-#else
-    if(netGame)
-    {
-        Con_Execute(CMDS_DDAY, "net disconnect", true, false);
-    }
-#endif
-
-#ifdef __CLIENT__
-    Demo_StopPlayback();
-
-    GL_PurgeDeferredTasks();
-
-    //if(!Sys_IsShuttingDown())
-    {
-        App_ResourceSystem().releaseAllGLTextures();
-        App_ResourceSystem().pruneUnusedTextureSpecs();
-        GL_LoadLightingSystemTextures();
-        GL_LoadFlareTextures();
-        Rend_ParticleLoadSystemTextures();
-    }
-
-    GL_ResetViewEffects();
-
-    if(!game.isNull())
-    {
-        ClientWindow &mainWin = ClientWindow::main();
-        mainWin.taskBar().close();
-
-        // Trap the mouse automatically when loading a game in fullscreen.
-        if(mainWin.isFullScreen())
-        {
-            mainWin.canvas().trapMouse();
-        }
-    }
-#endif
+    // Notify about which game will be loaded.
+    DoomsdayApp::app().aboutToChangeGame(game);
 
     // If a game is presently loaded; unload it.
     if(App_GameLoaded())
     {
-        if(gx.Shutdown)
-        {
-            gx.Shutdown();
-        }
-        Con_SaveDefaults();
-
-#ifdef __CLIENT__
-        R_ClearViewData();
-        R_DestroyContactLists();
-        P_ClearPlayerImpulses();
-
-        Con_Execute(CMDS_DDAY, "clearbindings", true, false);
-        ClientApp::inputSystem().bindDefaults();
-        ClientApp::inputSystem().initialContextActivations();
-#endif
-        // Reset the world back to it's initial state (unload the map, reset players, etc...).
-        App_World().reset();
-
-        Z_FreeTags(PU_GAMESTATIC, PU_PURGELEVEL - 1);
+        DoomsdayApp::app().reset();
 
         P_ShutdownMapEntityDefs();
 
         R_ShutdownSvgs();
-
         App_ResourceSystem().clearAllRuntimeResources();
         App_ResourceSystem().clearAllAnimGroups();
         App_ResourceSystem().clearAllColorPalettes();
@@ -1373,15 +1309,6 @@ bool App_ChangeGame(Game &game, bool allowReload)
         App_AudioSystem().clearLogical();
 
         Con_ClearDatabases();
-
-        { // Tell the plugin it is being unloaded.
-            auto &plugins = DoomsdayApp::plugins();
-            void *unloader = plugins.findEntryPoint(App_CurrentGame().pluginId(), "DP_Unload");
-            LOGDEV_MSG("Calling DP_Unload %p") << unloader;
-            plugins.setActivePluginId(App_CurrentGame().pluginId());
-            if(unloader) ((pluginfunc_t)unloader)();
-            plugins.setActivePluginId(0);
-        }
 
         // We do not want to load session resources specified on the command line again.
         Session::profile().resourceFiles.clear();
@@ -1415,16 +1342,13 @@ bool App_ChangeGame(Game &game, bool allowReload)
     }
 
     App_InFineSystem().reset();
-#ifdef __CLIENT__
-    App_InFineSystem().deinitBindingContext();
-#endif
 
     /// @todo The entire material collection should not be destroyed during a reload.
     App_ResourceSystem().clearAllMaterialSchemes();
 
     if(!game.isNull())
     {
-        LOG_MSG("Selecting game '%s'...") << game.id();
+        LOG_MSG("Loading game '%s'...") << game.id();
     }
     else if(!isReload)
     {
@@ -1463,10 +1387,6 @@ bool App_ChangeGame(Game &game, bool allowReload)
      */
     if(!DD_IsShuttingDown())
     {
-#ifdef __CLIENT__
-        App_InFineSystem().initBindingContext();
-#endif
-
         /*
          * The bulk of this we can do in busy mode unless we are already busy
          * (which can happen if a fatal error occurs during game load and we must
@@ -1513,44 +1433,13 @@ bool App_ChangeGame(Game &game, bool allowReload)
 
         BusyMode_RunTasks(gameChangeTasks, sizeof(gameChangeTasks)/sizeof(gameChangeTasks[0]));
 
-#ifdef __CLIENT__
-        // Process any GL-related tasks we couldn't while Busy.
-        Rend_ParticleLoadExtraTextures();
-#endif
-
         if(App_GameLoaded())
         {
             Game::printBanner(App_CurrentGame());
         }
-        /*else
-        {
-            // Lets play a nice title animation.
-            DD_StartTitle();
-        }*/
     }
 
     DENG_ASSERT(DoomsdayApp::plugins().activePluginId() == 0);
-
-#ifdef __CLIENT__
-    if(!Sys_IsShuttingDown())
-    {
-        /**
-         * Clear any input events we may have accumulated during this process.
-         * @note Only necessary here because we might not have been able to use
-         *       busy mode (which would normally do this for us on end).
-         */
-        ClientApp::inputSystem().clearEvents();
-
-        if(!App_GameLoaded())
-        {
-            ClientWindow::main().taskBar().open();
-        }
-        else
-        {
-            ClientWindow::main().console().zeroLogHeight();
-        }
-    }
-#endif
 
     // Game change is complete.
     DENG2_FOR_EACH_OBSERVER(DoomsdayApp::GameChangeAudience, i,

@@ -29,13 +29,14 @@
 #include <de/Garbage>
 
 #include "serverapp.h"
+#include "serverplayer.h"
 #include "dd_main.h"
 #include "dd_def.h"
 #include "dd_loop.h"
 #include "sys_system.h"
 #include "def_main.h"
-
-#include "serverplayer.h"
+#include "con_config.h"
+#include "network/net_main.h"
 
 #if WIN32
 #  include "dd_winit.h"
@@ -54,10 +55,11 @@ static void handleAppTerminate(char const *msg)
 
 DENG2_PIMPL(ServerApp)
 , DENG2_OBSERVES(Plugins, PublishAPI)
+, DENG2_OBSERVES(DoomsdayApp, GameUnload)
 {
     QScopedPointer<ServerSystem> serverSystem;
     QScopedPointer<ResourceSystem> resourceSys;
-    QScopedPointer<::audio::System> audioSys;
+    QScopedPointer<audio::System> audioSys;
     ClientServerWorld world;
     InFineSystem infineSys;
 
@@ -67,10 +69,13 @@ DENG2_PIMPL(ServerApp)
         serverAppSingleton = thisPublic;
 
         DoomsdayApp::plugins().audienceForPublishAPI() += this;
+        self.audienceForGameUnload() += this;
     }
 
     ~Instance()
     {
+        self.audienceForGameUnload() -= this;
+
         Sys_Shutdown();
         DD_Shutdown();
     }
@@ -78,6 +83,19 @@ DENG2_PIMPL(ServerApp)
     void publishAPIToPlugin(::Library *plugin)
     {
         DD_PublishAPIs(plugin);
+    }
+
+    void aboutToUnloadGame(Game const &/*gameBeingUnloaded*/)
+    {
+        if(netGame && isServer)
+        {
+            N_ServerClose();
+        }
+
+        if(App_GameLoaded())
+        {
+            Con_SaveDefaults();
+        }
     }
 
 #ifdef UNIX
@@ -222,4 +240,9 @@ ResourceSystem &ServerApp::resourceSystem()
 ClientServerWorld &ServerApp::world()
 {
     return app().d->world;
+}
+
+void ServerApp::reset()
+{
+    DoomsdayApp::reset();
 }

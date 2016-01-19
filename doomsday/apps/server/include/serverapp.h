@@ -48,9 +48,12 @@ public:
     static ServerApp &app();
     static ServerSystem &serverSystem();
     static InFineSystem &infineSystem();
-    static ::audio::System &audioSystem();
+    static audio::System &audioSystem();
     static ResourceSystem &resourceSystem();
     static ClientServerWorld &world();
+
+protected:
+    void reset() override;
 
 private:
     DENG2_PRIVATE(d)

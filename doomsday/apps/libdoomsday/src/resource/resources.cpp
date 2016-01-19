@@ -54,9 +54,6 @@ DENG2_PIMPL(Resources)
             App::commandLine().makeAbsolutePath(arg.pos + 1);
             nativeSavePath = App::commandLine().at(arg.pos + 1);
         }
-
-        // The legacy base package is still needed for all games (doomsday.pk3).
-        App::packageLoader().load("net.dengine.legacy.base");
     }
 
     ~Instance()

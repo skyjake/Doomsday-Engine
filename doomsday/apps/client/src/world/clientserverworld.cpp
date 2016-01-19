@@ -811,25 +811,7 @@ bool ClientServerWorld::changeMap(de::Uri const &mapUri)
 
 void ClientServerWorld::reset()
 {
-    DoomsdayApp::players().forAll([] (Player &plr)
-    {
-        ddplayer_t &ddpl = plr.publicData();
-
-        // Mobjs go down with the map.
-        ddpl.mo            = nullptr;
-        ddpl.extraLight    = 0;
-        ddpl.fixedColorMap = 0;
-        //ddpl.inGame        = false;
-        ddpl.flags         &= ~DDPF_CAMERA;
-
-        // States have changed, the state pointers are unknown.
-        for(ddpsprite_t &pspr : ddpl.pSprites)
-        {
-            pspr.statePtr = nullptr;
-        }
-
-        return LoopContinue;
-    });
+    World::reset();
 
 #ifdef __CLIENT__
     if(isClient)

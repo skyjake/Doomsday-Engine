@@ -102,6 +102,10 @@ public slots:
      */
     void endNativeUIMode();
 
+protected:
+    void aboutToChangeGame(Game const &upcomingGame) override;
+    void reset() override;
+
 private:
     DENG2_PRIVATE(d)
 };

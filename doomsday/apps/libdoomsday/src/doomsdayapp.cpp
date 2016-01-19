@@ -24,6 +24,7 @@
 #include "doomsday/filesys/datafile.h"
 #include "doomsday/filesys/datafolder.h"
 #include "doomsday/paths.h"
+#include "doomsday/world/world.h"
 #include "doomsday/SavedSession"
 
 #include <de/App>
@@ -33,6 +34,7 @@
 #include <de/DictionaryValue>
 #include <de/c_wrapper.h>
 #include <de/strutil.h>
+#include <de/memoryzone.h>
 
 #include <QSettings>
 #include <QDir>
@@ -465,6 +467,34 @@ Game &DoomsdayApp::game()
 {
     DENG2_ASSERT(app().d->currentGame != 0);
     return *app().d->currentGame;
+}
+
+void DoomsdayApp::aboutToChangeGame(Game const &)
+{
+    auto &gx = plugins().gameExports();
+
+    if(App_GameLoaded())
+    {
+        if(gx.Shutdown)
+        {
+            gx.Shutdown();
+        }
+
+        // Tell the plugin it is being unloaded.
+        void *unloader = plugins().findEntryPoint(game().pluginId(), "DP_Unload");
+        LOGDEV_MSG("Calling DP_Unload %p") << unloader;
+        plugins().setActivePluginId(game().pluginId());
+        if(unloader) ((pluginfunc_t)unloader)();
+        plugins().setActivePluginId(0);
+    }
+}
+
+void DoomsdayApp::reset()
+{
+    // Reset the world back to it's initial state (unload the map, reset players, etc...).
+    World::get().reset();
+
+    Z_FreeTags(PU_GAMESTATIC, PU_PURGELEVEL - 1);
 }
 
 void DoomsdayApp::setGame(Game &game)

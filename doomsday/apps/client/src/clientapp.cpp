@@ -40,6 +40,8 @@
 #include <de/NativeFont>
 #include <de/VRConfig>
 
+#include <doomsday/console/exec.h>
+
 #include "clientplayer.h"
 #include "alertmask.h"
 #include "dd_main.h"
@@ -47,13 +49,17 @@
 #include "dd_loop.h"
 #include "def_main.h"
 #include "sys_system.h"
+#include "con_config.h"
 
 #include "audio/system.h"
 
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
+#include "gl/gl_defer.h"
 
 #include "world/map.h"
+#include "world/contact.h"
+#include "world/p_players.h"
 
 #include "ui/inputsystem.h"
 #include "ui/b_main.h"
@@ -64,7 +70,8 @@
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/dialogs/alertdialog.h"
 #include "ui/styledlogsinkformatter.h"
-
+#include "render/rend_particle.h"
+#include "network/net_demo.h"
 #include "updater.h"
 #include "updater/downloaddialog.h"
 
@@ -119,6 +126,8 @@ DENG2_PIMPL(ClientApp)
 , DENG2_OBSERVES(Plugins, PublishAPI)
 , DENG2_OBSERVES(Plugins, Notification)
 , DENG2_OBSERVES(Games, Progress)
+, DENG2_OBSERVES(DoomsdayApp, GameChange)
+, DENG2_OBSERVES(DoomsdayApp, GameUnload)
 {
     Binder binder;
     QScopedPointer<Updater> updater;
@@ -214,11 +223,16 @@ DENG2_PIMPL(ClientApp)
         LogBuffer::get().addSink(logAlarm);
         DoomsdayApp::plugins().audienceForPublishAPI() += this;
         DoomsdayApp::plugins().audienceForNotification() += this;
+        self.audienceForGameChange() += this;
+        self.audienceForGameUnload() += this;
         self.games().audienceForProgress() += this;
     }
 
     ~Instance()
     {
+        self.audienceForGameChange() -= this;
+        self.audienceForGameUnload() -= this;
+
         try
         {
             LogBuffer::get().removeSink(logAlarm);
@@ -293,6 +307,70 @@ DENG2_PIMPL(ClientApp)
     void gameWorkerProgress(int progress)
     {
         Con_SetProgress(progress);
+    }
+
+    void aboutToUnloadGame(Game const &/*gameBeingUnloaded*/)
+    {
+        DENG_ASSERT(ClientWindow::mainExists());
+
+        // Quit netGame if one is in progress.
+        if(netGame)
+        {
+            Con_Execute(CMDS_DDAY, "net disconnect", true, false);
+        }
+
+        Demo_StopPlayback();
+        GL_PurgeDeferredTasks();
+
+        App_ResourceSystem().releaseAllGLTextures();
+        App_ResourceSystem().pruneUnusedTextureSpecs();
+        GL_LoadLightingSystemTextures();
+        GL_LoadFlareTextures();
+        Rend_ParticleLoadSystemTextures();
+
+        GL_ResetViewEffects();
+
+        if(App_GameLoaded())
+        {
+            // Write cvars and bindings to .cfg files.
+            Con_SaveDefaults();
+
+            R_ClearViewData();
+            R_DestroyContactLists();
+            P_ClearPlayerImpulses();
+
+            Con_Execute(CMDS_DDAY, "clearbindings", true, false);
+            inputSys->bindDefaults();
+            inputSys->initialContextActivations();
+        }
+
+        infineSys.deinitBindingContext();
+    }
+
+    void currentGameChanged(Game const &)
+    {
+        if(Sys_IsShuttingDown()) return;
+
+        infineSys.initBindingContext();
+
+        // Process any GL-related tasks we couldn't while Busy.
+        Rend_ParticleLoadExtraTextures();
+
+        /**
+         * Clear any input events we may have accumulated during this process.
+         * @note Only necessary here because we might not have been able to use
+         *       busy mode (which would normally do this for us on end).
+         */
+        inputSys->clearEvents();
+
+        if(!App_GameLoaded())
+        {
+            ClientWindow::main().taskBar().open();
+        }
+        else
+        {
+            ClientWindow::main().console().zeroLogHeight();
+        }
     }
 
     /**
@@ -675,4 +753,28 @@ void ClientApp::endNativeUIMode()
 #ifndef MACOSX
     ClientWindow::main().restoreState();
 #endif
+}
+
+void ClientApp::aboutToChangeGame(Game const &upcomingGame)
+{
+    DoomsdayApp::aboutToChangeGame(upcomingGame);
+
+    if(!upcomingGame.isNull())
+    {
+        ClientWindow &mainWin = ClientWindow::main();
+        mainWin.taskBar().close();
+
+        // Trap the mouse automatically when loading a game in fullscreen.
+        if(mainWin.isFullScreen())
+        {
+            mainWin.canvas().trapMouse();
+        }
+    }
+}
+
+void ClientApp::reset()
+{
+    DoomsdayApp::reset();
+
+
 }

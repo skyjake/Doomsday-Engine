@@ -99,6 +99,21 @@ public:
      */
     static Game &game();
 
+//protected:
+    /**
+     * Called just before a game change is about to begin. The GameUnload
+     * audience has already been notified.
+     *
+     * @param upcomingGame  Upcoming game that we will be changing to.
+     */
+    virtual void aboutToChangeGame(Game const &upcomingGame);
+
+    /**
+     * Clears all allocated resources and subsystems. This is called when
+     * a game is being unloaded.
+     */
+    virtual void reset();
+
 private:
     DENG2_PRIVATE(d)
 };

@@ -37,6 +37,8 @@ public:
 public:
     World();
 
+    virtual void reset();
+
     // Systems observe the passage of time.
     void timeChanged(de::Clock const &) override;
 
