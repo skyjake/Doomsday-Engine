@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_STRING_H
@@ -349,6 +349,10 @@ public:
 size_t qchar_strlen(QChar const *str);
 
 typedef QList<String> StringList;
+
+inline String operator / (char const *utf8CStr, String const &str) {
+    return String(utf8CStr) / str;
+}
 
 } // namespace de
 
