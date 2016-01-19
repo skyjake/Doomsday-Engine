@@ -39,13 +39,13 @@ DENG2_PIMPL(Resources)
     {
         theResources = thisPublic;
 
-        resClasses.append(new ResourceClass("RC_PACKAGE",    "Packages"));
-        resClasses.append(new ResourceClass("RC_DEFINITION", "Defs"));
-        resClasses.append(new ResourceClass("RC_GRAPHIC",    "Graphics"));
-        resClasses.append(new ResourceClass("RC_MODEL",      "Models"));
-        resClasses.append(new ResourceClass("RC_SOUND",      "Sfx"));
-        resClasses.append(new ResourceClass("RC_MUSIC",      "Music"));
-        resClasses.append(new ResourceClass("RC_FONT",       "Fonts"));
+        resClasses << new ResourceClass("RC_PACKAGE",    "Packages")
+                   << new ResourceClass("RC_DEFINITION", "Defs")
+                   << new ResourceClass("RC_GRAPHIC",    "Graphics")
+                   << new ResourceClass("RC_MODEL",      "Models")
+                   << new ResourceClass("RC_SOUND",      "Sfx")
+                   << new ResourceClass("RC_MUSIC",      "Music")
+                   << new ResourceClass("RC_FONT",       "Fonts");
 
         // Determine the root directory of the saved session repository.
         if(auto arg = App::commandLine().check("-savedir", 1))
@@ -54,6 +54,9 @@ DENG2_PIMPL(Resources)
             App::commandLine().makeAbsolutePath(arg.pos + 1);
             nativeSavePath = App::commandLine().at(arg.pos + 1);
         }
+
+        // The legacy base package is still needed for all games (doomsday.pk3).
+        App::packageLoader().load("net.dengine.legacy.base");
     }
 
     ~Instance()

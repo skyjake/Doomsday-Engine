@@ -1396,9 +1396,6 @@ bool App_ChangeGame(Game &game, bool allowReload)
 
 #ifdef __CLIENT__
         ClientApp::inputSystem().initAllDevices();
-#endif
-
-#ifdef __CLIENT__
         R_InitViewWindow();
 #endif
 
