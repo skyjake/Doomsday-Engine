@@ -504,6 +504,25 @@ public:
     // Observes Variable deletion.
     void variableBeingDeleted(Variable &variable);
 
+    /*
+     * Utility template for initializing a Record with an arbitrary number of
+     * members and values.
+     */
+    Record &setMembers() { return *this; }
+
+    template <typename NameType, typename ValueType, typename... Args>
+    Record &setMembers(NameType const &name, ValueType const &valueType, Args... args)
+    {
+        set(name, valueType);
+        return setMembers(args...);
+    }
+
+    template <typename... Args>
+    static Record withMembers(Args... args)
+    {
+        return Record().setMembers(args...);
+    }
+
 private:
     DENG2_PRIVATE(d)
 };
