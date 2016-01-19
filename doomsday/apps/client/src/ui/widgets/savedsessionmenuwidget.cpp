@@ -59,7 +59,7 @@ DENG_GUI_PIMPL(SavedSessionMenuWidget)
             BusyMode_FreezeGameForBusyMode();
             ClientWindow::main().taskBar().close();
 
-            App_ChangeGame(App_Games().byIdentityKey(gameId), false /*no reload*/);
+            App_ChangeGame(App_Games()[gameId], false /*no reload*/);
             Con_Execute(CMDS_DDAY, cmd.toLatin1(), false, false);
         }
     };
@@ -130,7 +130,7 @@ DENG_GUI_PIMPL(SavedSessionMenuWidget)
             {
                 SavedSession const &session = item.savedSession();
 
-                Game const &sGame = App_Games().byIdentityKey(item.gameIdentityKey());
+                Game const &sGame = App_Games()[item.gameIdentityKey()];
                 if(style().images().has(sGame.logoImageId()))
                 {
                     loadButton().setImage(style().images().image(sGame.logoImageId()));
@@ -139,7 +139,7 @@ DENG_GUI_PIMPL(SavedSessionMenuWidget)
                 loadButton().disable(sGame.status() == Game::Incomplete);
 
                 loadButton().setText(String("%2\n" _E(l)_E(F) "%3 %1")
-                                         .arg(sGame.identityKey())
+                                         .arg(sGame.id())
                                          .arg(item.title())
                                          .arg(tr("saved in")));
 

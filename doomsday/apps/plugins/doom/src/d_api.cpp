@@ -65,7 +65,7 @@ static char const *gameIds[NUM_GAME_MODES] =
     "doom2",
     "doom2-plut",
     "doom2-tnt",
-    "hacx"
+    "hacx",
     "doom2-freedm",
 };
 
@@ -80,113 +80,112 @@ int G_RegisterGames(int hookType, int param, void *data)
 #define LEGACYSAVEGAMENAMEEXP   "^(?:DoomSav)[0-9]{1,1}(?:.dsg)"
 #define LEGACYSAVEGAMESUBFOLDER "savegame"
 
-    GameDef const hacxDef = {
-        "hacx", "hacx",
-        "HACX - Twitch 'n Kill", "Banjo Software",
-        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
-        "$(App.DataPath)/$(GamePlugin.Name)/hacx.mapinfo"
-    };
-    GameDef const chexDef = {
-        "chex", "chex",
-        "Chex(R) Quest", "Digital Cafe",
-        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
-        "$(App.DataPath)/$(GamePlugin.Name)/chex.mapinfo"
-    };
-    GameDef const doom2TntDef = {
-        "doom2-tnt", "doom",
-        "Final DOOM: TNT: Evilution", "Team TNT",
-        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
-        "$(App.DataPath)/$(GamePlugin.Name)/doom2-tnt.mapinfo"
-    };
-    GameDef const doom2PlutDef = {
-        "doom2-plut", "doom",
-        "Final DOOM: The Plutonia Experiment", "Dario Casali and Milo Casali",
-        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
-        "$(App.DataPath)/$(GamePlugin.Name)/doom2-plut.mapinfo"
-    };
-    GameDef const doom2Def = {
-        "doom2", "doom",
-        "DOOM 2: Hell on Earth", "id Software",
-        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
-        "$(App.DataPath)/$(GamePlugin.Name)/doom2.mapinfo"
-    };
-    GameDef const freeDMDef = {
-        "doom2-freedm", "doom",
-        "FreeDM", "Freedoom Project",
-        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
-        "$(App.DataPath)/$(GamePlugin.Name)/doom2-freedm.mapinfo"
-    };
-    GameDef const doomUltimateDef = {
-        "doom1-ultimate", "doom",
-        "Ultimate DOOM", "id Software",
-        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
-        "$(App.DataPath)/$(GamePlugin.Name)/doom1-ultimate.mapinfo"
-    };
-    GameDef const doomDef = {
-        "doom1", "doom",
-        "DOOM Registered", "id Software",
-        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
-        "$(App.DataPath)/$(GamePlugin.Name)/doom1.mapinfo"
-    };
-    GameDef const doomShareDef = {
-        "doom1-share", "doom",
-        "DOOM Shareware", "id Software",
-        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
-        "$(App.DataPath)/$(GamePlugin.Name)/doom1-share.mapinfo"
-    };
-
     DENG_UNUSED(hookType); DENG_UNUSED(param); DENG_UNUSED(data);
 
     /* HacX */
-    Game &hacx = games.defineGame(&hacxDef);
+    Game &hacx = games.defineGame(gameIds[doom2_hacx],
+        Record::withMembers(Game::DEF_CONFIG_DIR, "hacx",
+                            Game::DEF_TITLE, "HACX - Twitch 'n Kill",
+                            Game::DEF_AUTHOR, "Banjo Software",
+                            Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
+                            Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
+                            Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/hacx.mapinfo"));
     hacx.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
     hacx.addResource(RC_PACKAGE, FF_STARTUP, "hacx.wad", "HACX-R;PLAYPAL");
     hacx.addResource(RC_DEFINITION, 0, "hacx.ded", 0);
 
     /* Chex Quest */
-    Game &chex = games.defineGame(&chexDef);
+    Game &chex = games.defineGame(gameIds[doom_chex],
+        Record::withMembers(Game::DEF_CONFIG_DIR, "chex",
+                            Game::DEF_TITLE, "Chex(R) Quest",
+                            Game::DEF_AUTHOR, "Digital Cafe",
+                            Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
+                            Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
+                            Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/chex.mapinfo"));
     chex.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
     chex.addResource(RC_PACKAGE, FF_STARTUP, "chex.wad", "E1M1;E4M1;_DEUTEX_;POSSH0M0");
     chex.addResource(RC_DEFINITION, 0, "chex.ded", 0);
 
     /* DOOM2 (TNT) */
-    Game &tnt = games.defineGame(&doom2TntDef);
+    Game &tnt = games.defineGame(gameIds[doom2_tnt],
+        Record::withMembers(Game::DEF_CONFIG_DIR, "doom",
+                            Game::DEF_TITLE, "Final DOOM: TNT: Evilution",
+                            Game::DEF_AUTHOR, "Team TNT",
+                            Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
+                            Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
+                            Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/doom2-tnt.mapinfo"));
     tnt.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
     tnt.addResource(RC_PACKAGE, FF_STARTUP, "tnt.wad", "CAVERN5;CAVERN7;STONEW1");
     tnt.addResource(RC_DEFINITION, 0, "doom2-tnt.ded", 0);
 
     /* DOOM2 (Plutonia) */
-    Game &plut = games.defineGame(&doom2PlutDef);
+    Game &plut = games.defineGame(gameIds[doom2_plut],
+        Record::withMembers(Game::DEF_CONFIG_DIR, "doom",
+                            Game::DEF_TITLE, "Final DOOM: The Plutonia Experiment",
+                            Game::DEF_AUTHOR, "Dario Casali and Milo Casali",
+                            Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
+                            Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
+                            Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/doom2-plut.mapinfo"));
     plut.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
     plut.addResource(RC_PACKAGE, FF_STARTUP, "plutonia.wad", "_DEUTEX_;MAP01;MAP25;MC5;MC11;MC16;MC20");
     plut.addResource(RC_DEFINITION, 0, "doom2-plut.ded", 0);
 
     /* DOOM2 - FreeDM */
-    Game &freedm = games.defineGame(&freeDMDef);
+    Game &freedm = games.defineGame(gameIds[doom2_freedm],
+        Record::withMembers(Game::DEF_CONFIG_DIR, "doom",
+                            Game::DEF_TITLE, "FreeDM",
+                            Game::DEF_AUTHOR, "Freedoom Project",
+                            Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
+                            Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
+                            Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/doom2-freedm.mapinfo"));
     freedm.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
     freedm.addResource(RC_PACKAGE, FF_STARTUP, "freedm.wad", "MAP01");
     freedm.addResource(RC_DEFINITION, 0, "doom2-freedm.ded", 0);
 
     /* DOOM2 */
-    Game &doom2 = games.defineGame(&doom2Def);
-    doom2.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
-    doom2.addResource(RC_PACKAGE, FF_STARTUP, "doom2f.wad;doom2.wad", "MAP01;MAP02;MAP03;MAP04;MAP10;MAP20;MAP25;MAP30;VILEN1;VILEO1;VILEQ1;GRNROCK");
-    doom2.addResource(RC_DEFINITION, 0, "doom2.ded", 0);
+    Game &d2 = games.defineGame(gameIds[doom2],
+        Record::withMembers(Game::DEF_CONFIG_DIR, "doom",
+                            Game::DEF_TITLE, "DOOM 2: Hell on Earth",
+                            Game::DEF_AUTHOR, "id Software",
+                            Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
+                            Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
+                            Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/doom2.mapinfo"));
+    d2.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
+    d2.addResource(RC_PACKAGE, FF_STARTUP, "doom2f.wad;doom2.wad", "MAP01;MAP02;MAP03;MAP04;MAP10;MAP20;MAP25;MAP30;VILEN1;VILEO1;VILEQ1;GRNROCK");
+    d2.addResource(RC_DEFINITION, 0, "doom2.ded", 0);
 
     /* DOOM (Ultimate) */
-    Game &ultimate = games.defineGame(&doomUltimateDef);
+    Game &ultimate = games.defineGame(gameIds[doom_ultimate],
+        Record::withMembers(Game::DEF_CONFIG_DIR, "doom",
+                            Game::DEF_TITLE, "Ultimate DOOM",
+                            Game::DEF_AUTHOR, "id Software",
+                            Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
+                            Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
+                            Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/doom1-ultimate.mapinfo"));
     ultimate.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
     ultimate.addResource(RC_PACKAGE, FF_STARTUP, "doomu.wad;doom.wad", "E4M1;E4M2;E4M3;E4M4;E4M5;E4M6;E4M7;E4M8;E4M9;M_EPI4");
     ultimate.addResource(RC_DEFINITION, 0, "doom1-ultimate.ded", 0);
 
     /* DOOM */
-    Game &doom = games.defineGame(&doomDef);
-    doom.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
-    doom.addResource(RC_PACKAGE, FF_STARTUP, "doom.wad", "E2M1;E2M2;E2M3;E2M4;E2M5;E2M6;E2M7;E2M8;E2M9;E3M1;E3M2;E3M3;E3M4;E3M5;E3M6;E3M7;E3M8;E3M9;CYBRE1;CYBRD8;FLOOR7_2");
-    doom.addResource(RC_DEFINITION, 0, "doom1.ded", 0);
+    Game &d1 = games.defineGame(gameIds[doom],
+        Record::withMembers(Game::DEF_CONFIG_DIR, "doom",
+                            Game::DEF_TITLE, "DOOM Registered",
+                            Game::DEF_AUTHOR, "id Software",
+                            Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
+                            Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
+                            Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/doom1.mapinfo"));
+    d1.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
+    d1.addResource(RC_PACKAGE, FF_STARTUP, "doom.wad", "E2M1;E2M2;E2M3;E2M4;E2M5;E2M6;E2M7;E2M8;E2M9;E3M1;E3M2;E3M3;E3M4;E3M5;E3M6;E3M7;E3M8;E3M9;CYBRE1;CYBRD8;FLOOR7_2");
+    d1.addResource(RC_DEFINITION, 0, "doom1.ded", 0);
 
     /* DOOM (Shareware) */
-    Game &shareware = games.defineGame(&doomShareDef);
+    Game &shareware = games.defineGame(gameIds[doom_shareware],
+        Record::withMembers(Game::DEF_CONFIG_DIR, "doom",
+                            Game::DEF_TITLE, "DOOM Shareware",
+                            Game::DEF_AUTHOR, "id Software",
+                            Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
+                            Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
+                            Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/doom1-share.mapinfo"));
     shareware.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
     shareware.addResource(RC_PACKAGE, FF_STARTUP, "doom1.wad", "E1M1;E1M2;E1M3;E1M4;E1M5;E1M6;E1M7;E1M8;E1M9;D_E1M1;FLOOR4_8;FLOOR7_2");
     shareware.addResource(RC_DEFINITION, 0, "doom1-share.ded", 0);

@@ -311,7 +311,7 @@ static bool SBE_Save(char const *name = nullptr)
 
     // Since there can be quite a lot of these, make sure we'll skip
     // the ones that are definitely not suitable.
-    fprintf(file, "\n\nSkipIf Not %s", App_CurrentGame().identityKey().toUtf8().constData());
+    fprintf(file, "\n\nSkipIf Not %s", App_CurrentGame().id().toUtf8().constData());
 
     map.forAllBiasSources([&file, &uid] (BiasSource &bsrc)
     {

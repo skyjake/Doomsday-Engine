@@ -2169,7 +2169,7 @@ DENG2_PIMPL(ResourceSystem)
         ConvertSavegameTask(String const &sourcePath, String const &gameId)
         {
             // Ensure the game is defined (sanity check).
-            /*Game &game = */ App_Games().byIdentityKey(gameId);
+            /*Game &game = */ App_Games()[gameId];
 
             // Ensure the output folder exists if it doesn't already.
             String const outputPath = String("/home/savegames") / gameId;
@@ -2235,7 +2235,7 @@ DENG2_PIMPL(ResourceSystem)
             {
                 // Make and setup a feed for the /sys/legacysavegames/<gameId> subfolder if the game
                 // might have legacy savegames we may need to convert later.
-                NativePath const oldSavePath = App_Games().byIdentityKey(gameId).legacySavegamePath();
+                NativePath const oldSavePath = App_Games()[gameId].legacySavegamePath();
                 if(oldSavePath.exists() && oldSavePath.isReadable())
                 {
                     App::fileSystem().makeFolderWithFeed(legacySavePath,
@@ -3827,12 +3827,12 @@ bool ResourceSystem::convertLegacySavegames(String const &gameId, String const &
     if(sourcePath.isEmpty())
     {
         // Process all legacy savegames.
-        if(Folder const *saveFolder = App::rootFolder().tryLocate<Folder>(String("sys/legacysavegames") / gameId))
+        if(Folder const *saveFolder = App::rootFolder().tryLocate<Folder>(String("sys/legacysavegames")/gameId))
         {
             /// @todo File name pattern matching should not be done here. This is to prevent
             /// attempting to convert Hexen's map state side car files separately when this
             /// is called from Doomsday Script (in bootstrap.de).
-            Game const &game = App_Games().byIdentityKey(gameId);
+            Game const &game = App_Games()[gameId];
             QRegExp namePattern(game.legacySavegameNameExp(), Qt::CaseInsensitive);
             if(namePattern.isValid() && !namePattern.isEmpty())
             {
@@ -4474,7 +4474,7 @@ String ResourceSystem::resolveSymbol(String const &symbol) // static
             throw de::Uri::ResolveSymbolError("ResourceSystem::resolveSymbol",
                     "Symbol 'Game' did not resolve (no game loaded)");
         }
-        return App_CurrentGame().identityKey();
+        return App_CurrentGame().id();
     }
     else if(!symbol.compare("GamePlugin.Name", Qt::CaseInsensitive))
     {

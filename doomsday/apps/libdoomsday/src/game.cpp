@@ -35,33 +35,52 @@
 
 using namespace de;
 
+static String const DEF_ID("ID");
+
+String const Game::DEF_VARIANT_OF("variantOf");
+String const Game::DEF_CONFIG_DIR("configDir");
+String const Game::DEF_CONFIG_MAIN_PATH("mainConfig");
+String const Game::DEF_CONFIG_BINDINGS_PATH("bindingsConfig");
+String const Game::DEF_TITLE("title");
+String const Game::DEF_AUTHOR("author");
+String const Game::DEF_LEGACYSAVEGAME_NAME_EXP("legacySavegame.nameExp");
+String const Game::DEF_LEGACYSAVEGAME_SUBFOLDER("legacySavegame.subfolder");
+String const Game::DEF_MAPINFO_PATH("mapInfoPath");
+
 DENG2_PIMPL(Game)
 {
-    pluginid_t pluginId; ///< Unique identifier of the registering plugin.
-    String identityKey;  ///< Unique game mode identifier (e.g., "doom1-ultimate").
-    Manifests manifests; ///< Required resource files (e.g., doomu.wad).
+    pluginid_t pluginId = 0; ///< Unique identifier of the registering plugin.
+    Record params;
     StringList requiredPackages; ///< Packages required for starting the game.
 
-    String title;        ///< Formatted default title, suitable for printing (e.g., "The Ultimate DOOM").
-    String author;       ///< Formatted default author suitable for printing (e.g., "id Software").
+    Manifests manifests; ///< Required resource files (e.g., doomu.wad).
 
-    Path mainConfig;     ///< Config file name (e.g., "configs/doom/game.cfg").
-    Path bindingConfig;  ///< Control binding file name (set automatically).
-    Path mainMapInfo;    ///< Base relative path to the main MAPINFO definition data.
+    //String title;        ///< Formatted default title, suitable for printing (e.g., "The Ultimate DOOM").
+    //String author;       ///< Formatted default author suitable for printing (e.g., "id Software").
 
-    String legacySavegameNameExp;
-    String legacySavegameSubfolder;
+    //Path mainConfig;     ///< Config file name (e.g., "configs/doom/game.cfg").
+    //Path bindingConfig;  ///< Control binding file name (set automatically).
+    //Path mainMapInfo;    ///< Base relative path to the main MAPINFO definition data.
 
-    Instance(Public &a, String const &identityKey, Path const &configDir,
-             String const &title, String const &author)
-        : Base(a)
-        , pluginId     (0) // Not yet assigned.
-        , identityKey  (identityKey)
-        , title        (title)
-        , author       (author)
-        , mainConfig   (Path("configs") / configDir / "game.cfg")
-        , bindingConfig(Path("configs") / configDir / "player/bindings.cfg")
-    {}
+    //String legacySavegameNameExp;
+    //String legacySavegameSubfolder;
+
+    Instance(Public *i, Record const &parms)
+        : Base(i)
+        , params(parms)
+    {
+        // Define the optional parameters if needed.
+        if(!params.has(DEF_CONFIG_MAIN_PATH))
+        {
+            params.set(DEF_CONFIG_MAIN_PATH, String("configs")/params.gets(DEF_CONFIG_DIR)/"game.cfg");
+        }
+        if(!params.has(DEF_CONFIG_BINDINGS_PATH))
+        {
+            params.set(DEF_CONFIG_BINDINGS_PATH, String("configs")/params.gets(DEF_CONFIG_DIR)/"player/bindings.cfg");
+        }
+
+        params.set(DEF_CONFIG_DIR, NativePath(params.gets(DEF_CONFIG_DIR)).expand().withSeparators('/'));
+    }
 
     ~Instance()
     {
@@ -69,14 +88,12 @@ DENG2_PIMPL(Game)
     }
 };
 
-Game::Game(String const &identityKey, Path const &configDir, String const &title, String const &author,
-    String const &legacySavegameNameExp_, String const &legacySavegameSubfolder, String const &mainMapInfo)
-    : AbstractGame(identityKey)
-    , d(new Instance(*this, identityKey, configDir, title, author))
+Game::Game(String const &id, Record const &params)
+    : AbstractGame(id)
+    , d(new Instance(this, params))
 {
-    d->legacySavegameNameExp   = legacySavegameNameExp_;
-    d->legacySavegameSubfolder = legacySavegameSubfolder;
-    d->mainMapInfo             = mainMapInfo;
+    d->params.set(DEF_ID, id);
+    setVariantOf(params.gets(DEF_VARIANT_OF, ""));
 }
 
 Game::~Game()
@@ -153,7 +170,7 @@ String Game::description() const
                   _E(D)_E(b) "Status: " _E(.) "%7")
             .arg(title())
             .arg(author())
-            .arg(identityKey())
+            .arg(id())
             .arg(int(pluginId()))
             .arg(filesAsText(FF_STARTUP))
             .arg(filesAsText(0, false))
@@ -170,14 +187,9 @@ void Game::setPluginId(pluginid_t newId)
     d->pluginId = newId;
 }
 
-String const &Game::identityKey() const
-{
-    return d->identityKey;
-}
-
 String Game::logoImageId() const
 {
-    String idKey = identityKey();
+    String idKey = id();
 
     /// @todo The name of the plugin should be accessible via the plugin loader.
     String plugName;
@@ -199,13 +211,12 @@ String Game::logoImageId() const
 
 String Game::legacySavegameNameExp() const
 {
-    return d->legacySavegameNameExp;
+    return d->params[DEF_LEGACYSAVEGAME_NAME_EXP];
 }
 
 String Game::legacySavegamePath() const
 {
     NativePath nativeSavePath = Resources::get().nativeSavePath();
-
     if(nativeSavePath.isEmpty()) return "";
     if(isNull()) return "";
 
@@ -216,37 +227,37 @@ String Game::legacySavegamePath() const
     }
 
     // The default save path. The savegames are in a game-specific folder.
-    if(!d->legacySavegameSubfolder.isEmpty())
+    if(!d->params.gets(DEF_LEGACYSAVEGAME_SUBFOLDER, "").isEmpty())
     {
-        return App::app().nativeHomePath() / d->legacySavegameSubfolder / identityKey();
+        return App::app().nativeHomePath() / d->params.gets(DEF_LEGACYSAVEGAME_SUBFOLDER) / id();
     }
 
     return "";
 }
 
-Path const &Game::mainConfig() const
+Path Game::mainConfig() const
 {
-    return d->mainConfig;
+    return d->params.gets(DEF_CONFIG_MAIN_PATH);
 }
 
-Path const &Game::bindingConfig() const
+Path Game::bindingConfig() const
 {
-    return d->bindingConfig;
+    return d->params.gets(DEF_CONFIG_BINDINGS_PATH);
 }
 
-Path const &Game::mainMapInfo() const
+Path Game::mainMapInfo() const
 {
-    return d->mainMapInfo;
+    return d->params.gets(DEF_MAPINFO_PATH);
 }
 
 String Game::title() const
 {
-    return d->title;
+    return d->params.gets(DEF_TITLE);
 }
 
-String const &Game::author() const
+String Game::author() const
 {
-    return d->author;
+    return d->params.gets(DEF_AUTHOR);
 }
 
 Game::Manifests const &Game::manifests() const
@@ -317,12 +328,14 @@ void Game::addResource(resourceclassid_t classId, dint rflags,
     }
 }
 
-Game *Game::fromDef(GameDef const &def)
+Record const &Game::objectNamespace() const
 {
-    return new Game(def.identityKey, NativePath(def.configDir).expand().withSeparators('/'),
-                    def.defaultTitle, def.defaultAuthor,
-                    def.legacySavegameNameExp, def.legacySavegameSubfolder,
-                    def.mainMapInfo);
+    return d->params;
+}
+
+Record &Game::objectNamespace()
+{
+    return d->params;
 }
 
 void Game::printBanner(Game const &game)
@@ -396,7 +409,7 @@ D_CMD(InspectGame)
         // No game identity key was specified - assume the current game.
         if(!App_GameLoaded())
         {
-            LOG_WARNING("No game is currently loaded.\nPlease specify the identity-key of the game to inspect.");
+            LOG_WARNING("No game is currently loaded.\nPlease specify the identifier of the game to inspect.");
             return false;
         }
         game = &DoomsdayApp::currentGame();
@@ -406,7 +419,7 @@ D_CMD(InspectGame)
         String idKey = argv[1];
         try
         {
-            game = &DoomsdayApp::games().byIdentityKey(idKey);
+            game = &DoomsdayApp::games()[idKey];
         }
         catch(Games::NotFoundError const &)
         {
@@ -443,5 +456,8 @@ void Game::consoleRegister() //static
     C_CMD("inspectgame", "s", InspectGame);
 }
 
-NullGame::NullGame() : Game("" /*null*/, "doomsday", "null-game", "null-game")
+NullGame::NullGame()
+    : Game("" /*null*/, Record::withMembers(DEF_CONFIG_DIR, "doomsday",
+                                            DEF_TITLE,      "null-game",
+                                            DEF_AUTHOR,     "null-game"))
 {}

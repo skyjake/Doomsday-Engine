@@ -44,7 +44,7 @@ String MapManifest::composeUniqueId(Game const &currentGame) const
               .arg(gets("id").fileNameWithoutExtension())
               .arg(sourceFile()->name().fileNameWithoutExtension())
               .arg(sourceFile()->hasCustom()? "pwad" : "iwad")
-              .arg(currentGame.identityKey())
+              .arg(currentGame.id())
               .toLower();
 }
 

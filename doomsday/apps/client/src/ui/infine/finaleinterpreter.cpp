@@ -1522,7 +1522,7 @@ DEFFC(If)
     else if(!qstrnicmp(token, "mode:", 5))
     {
         if(App_GameLoaded())
-            val = !String(token + 5).compareWithoutCase(App_CurrentGame().identityKey());
+            val = !String(token + 5).compareWithoutCase(App_CurrentGame().id());
         else
             val = 0;
     }

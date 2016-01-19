@@ -84,7 +84,7 @@ public:
      *
      * @throws NotFoundError if no game is associated with @a identityKey.
      */
-    Game &byIdentityKey(de::String identityKey) const;
+    Game &operator [] (de::String const &id) const;
 
     /**
      * @return  Game associated with unique index @a idx.
@@ -98,22 +98,15 @@ public:
     /**
      * Register a new game.
      *
-     * @param def  GameDef structure defining the new game.
-     *
-     * @return  Unique identifier/name assigned to resultant game.
-     *
      * @note Game registration order defines the order of the automatic game
      * identification/selection logic.
-     */
-    Game &defineGame(GameDef const *def);
-
-    /**
-     * Add a new Game to this collection. If @a game is already present in the
-     * collection this is no-op.
      *
-     * @param game  Game to be added.
+     * @param id          Game identifiet.
+     * @param parameters  Game parameters.
+     *
+     * @return The created Game instance.
      */
-    void add(Game &game);
+    Game &defineGame(de::String const &id, de::Record const &parameters);
 
     /**
      * Returns a list of all the Game instances in the collection.

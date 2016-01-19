@@ -21,6 +21,7 @@
 #ifndef LIBDOOMSDAY_GAME_H
 #define LIBDOOMSDAY_GAME_H
 
+#if 0
 /**
  * Defines the high-level properties of a logical game component. Note that this
  * is POD; no construction or destruction is needed.
@@ -53,6 +54,7 @@ typedef struct gamedef_s {
     /// Primary MAPINFO definition dat, if any (translated during game init).
     char const *mainMapInfo;
 } GameDef;
+#endif
 
 #ifdef __cplusplus
 
@@ -72,7 +74,7 @@ namespace de { class File1; }
  *
  * @ingroup core
  */
-class LIBDOOMSDAY_PUBLIC Game : public AbstractGame
+class LIBDOOMSDAY_PUBLIC Game : public AbstractGame, public de::IObject
 {
 public:
     /// Logical game status:
@@ -84,22 +86,24 @@ public:
 
     typedef QMultiMap<resourceclassid_t, ResourceManifest *> Manifests;
 
+    static de::String const DEF_VARIANT_OF;   ///< ID of another game that this is a variant of.
+    static de::String const DEF_CONFIG_DIR;   ///< Name of the config directory.
+    static de::String const DEF_CONFIG_MAIN_PATH; ///< Optional: Path of the main config file.
+    static de::String const DEF_CONFIG_BINDINGS_PATH; ///< Optional: Path of the bindings config file.
+    static de::String const DEF_TITLE;        ///< Title for the game (intended for humans).
+    static de::String const DEF_AUTHOR;       ///< Author of the game (intended for humans).
+    static de::String const DEF_LEGACYSAVEGAME_NAME_EXP;  ///< Regular expression used for matching legacy savegame names.
+    static de::String const DEF_LEGACYSAVEGAME_SUBFOLDER; ///< Game-specific subdirectory of /home for legacy savegames.
+    static de::String const DEF_MAPINFO_PATH; ///< Base relative path to the main MAPINFO definition data.
+
 public:
     /**
-     * @param identityKey  Unique game mode key/identifier, 16 chars max (e.g., "doom1-ultimate").
-     * @param configDir  Name of the config directory.
-     * @param title  Textual title for the game mode (intended for humans).
-     * @param author  Textual author for the game mode (intended for humans).
-     * @param legacySavegameNameExp  Regular expression used for matching legacy savegame names.
-     * @param legacySavegameSubfoler  Game-specific subdirectory of /home for legacy savegames.
-     * @param mapMapInfo  Base relative path to the main MAPINFO definition data.
+     * Constructs a new game.
+     *
+     * @param id      Identifier. Unique game mode key/identifier, 16 chars max (e.g., "doom1-ultimate").
+     * @param params  Parameters.
      */
-    Game(de::String const &identityKey, de::Path const &configDir,
-         de::String const &title                   = "Unnamed",
-         de::String const &author                  = "Unknown",
-         de::String const &legacySavegameNameExp   = "",
-         de::String const &legacySavegameSubfolder = "",
-         de::String const &mainMapInfo             = "");
+    Game(de::String const &id, de::Record const &params);
 
     virtual ~Game();
 
@@ -149,11 +153,6 @@ public:
     void setPluginId(pluginid_t newId);
 
     /**
-     * Returns the unique identity key of the game.
-     */
-    de::String const &identityKey() const;
-
-    /**
      * Returns the title of the game, as text.
      */
     de::String title() const;
@@ -161,22 +160,22 @@ public:
     /**
      * Returns the author of the game, as text.
      */
-    de::String const &author() const;
+    de::String author() const;
 
     /**
      * Returns the name of the main config file for the game.
      */
-    de::Path const &mainConfig() const;
+    de::Path mainConfig() const;
 
     /**
      * Returns the name of the binding config file for the game.
      */
-    de::Path const &bindingConfig() const;
+    de::Path bindingConfig() const;
 
     /**
      * Returns the base relative path of the main MAPINFO definition data for the game (if any).
      */
-    de::Path const &mainMapInfo() const;
+    de::Path mainMapInfo() const;
 
     /**
      * Returns the identifier of the Style logo image to represent this game.
@@ -248,14 +247,11 @@ public:
     void addResource(resourceclassid_t classId, de::dint rflags,
                      char const *names, void const *params);
 
-public:
-    /**
-     * Construct a new Game instance from the specified definition @a def.
-     *
-     * @note May fail if the definition is incomplete or invalid (@c NULL is returned).
-     */
-    static Game *fromDef(GameDef const &def);
+    // IObject.
+    de::Record const &objectNamespace() const;
+    de::Record &objectNamespace();
 
+public:
     /**
      * Print a game mode banner with rulers.
      *

@@ -52,7 +52,7 @@ static void printUsage()
     LOG_INFO(  "Usage: %s [options] savegame-path ..."
              "\nOptions:"
              "\n--help, -h, -?  Show usage information."
-             "\n-idKey   Fallback game identity key. Used to resolve ambigous savegame formats."
+             "\n-idKey   Fallback game ID. Used to resolve ambigous savegame formats."
              "\n-output  Redirect .save output to this directory (default is the working directory).")
             << DENG2_TEXT_APP->commandLine().at(0);
 }
@@ -90,9 +90,9 @@ Folder &outputFolder()
 static PackageFormatter *saveFormatForGameIdentityKey(String const &idKey)
 {
     foreach(PackageFormatter *fmt, translators)
-    foreach(QString const &baseIdentityKey, fmt->baseGameIdKeys)
+    foreach(QString const &baseId, fmt->baseGameIds)
     {
-        if(idKey.beginsWith(baseIdentityKey)) return fmt;
+        if(idKey.beginsWith(baseId)) return fmt;
     }
     return 0; // Not found.
 }
@@ -138,7 +138,7 @@ static void convertSavegame(Path inputPath)
         // Unknown magic
         if(!fallbackGameId.isEmpty())
         {
-            // Use whichever format is applicable for the specified identity key.
+            // Use whichever format is applicable for the specified game ID.
             knownTranslator = saveFormatForGameIdentityKey(fallbackGameId);
         }
         else if(!inputPath.toString().fileNameExtension().isEmpty())
@@ -193,7 +193,7 @@ int main(int argc, char **argv)
             {
                 if(args.isOption(i))
                 {
-                    // Was a fallback game identity key specified?
+                    // Was a fallback game ID specified?
                     if(i + 1 < args.count() && !args.at(i).compareWithoutCase("-idkey"))
                     {
                         fallbackGameId = args.at(i + 1).strip().toLower();

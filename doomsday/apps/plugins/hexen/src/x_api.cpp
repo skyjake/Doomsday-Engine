@@ -73,66 +73,66 @@ int G_RegisterGames(int hookType, int param, void* data)
 #define LEGACYSAVEGAMENAMEEXP   "^(?:hex)[0-9]{1,1}(?:.hxs)"
 #define LEGACYSAVEGAMESUBFOLDER "hexndata"
 
-    GameDef const deathkingsDef = {
-        "hexen-dk", CONFIGDIR,
-        "Hexen: Deathkings of the Dark Citadel", "Raven Software",
-        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
-        "$(App.DataPath)/$(GamePlugin.Name)/hexen-dk.mapinfo"
-    };
-    GameDef const hexenDef = {
-        "hexen", CONFIGDIR,
-        "Hexen", "Raven Software",
-        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
-        "$(App.DataPath)/$(GamePlugin.Name)/hexen.mapinfo"
-    };
-    GameDef const hexenDemoDef = {
-        "hexen-demo", CONFIGDIR,
-        "Hexen 4-map Demo", "Raven Software",
-        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
-        "$(App.DataPath)/$(GamePlugin.Name)/hexen.mapinfo"
-    };
-    GameDef const hexenBetaDemoDef = {
-        "hexen-betademo", CONFIGDIR,
-        "Hexen 4-map Beta Demo", "Raven Software",
-        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
-        "$(App.DataPath)/$(GamePlugin.Name)/hexen.mapinfo"
-    };
-    GameDef const hexenV10Def = {
-        "hexen-v10", CONFIGDIR,
-        "Hexen v1.0", "Raven Software",
-        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
-        "$(App.DataPath)/$(GamePlugin.Name)/hexen.mapinfo"
-    };
-
     DENG_UNUSED(hookType); DENG_UNUSED(param); DENG_UNUSED(data);
 
     /* Hexen (Death Kings) */
-    Game &deathkings = games.defineGame(&deathkingsDef);
+    Game &deathkings = games.defineGame(gameIds[hexen_deathkings],
+        Record::withMembers(Game::DEF_CONFIG_DIR, CONFIGDIR,
+                            Game::DEF_TITLE, "Hexen: Deathkings of the Dark Citadel",
+                            Game::DEF_AUTHOR, "Raven Software",
+                            Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
+                            Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
+                            Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/hexen-dk.mapinfo"));
+
     deathkings.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
     deathkings.addResource(RC_PACKAGE, FF_STARTUP, "hexdd.wad", "MAP59;MAP60");
     deathkings.addResource(RC_PACKAGE, FF_STARTUP, "hexen.wad", "MAP08;MAP22;TINTTAB;FOGMAP;TRANTBLA;DARTA1;ARTIPORK;SKYFOG;TALLYTOP;GROVER");
     deathkings.addResource(RC_DEFINITION, 0, "hexen-dk.ded", 0);
 
     /* Hexen */
-    Game &hexen = games.defineGame(&hexenDef);
-    hexen.addResource(RC_PACKAGE, FF_STARTUP, "hexen.wad", "MAP08;MAP22;TINTTAB;FOGMAP;TRANTBLA;DARTA1;ARTIPORK;SKYFOG;TALLYTOP;GROVER");
-    hexen.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
-    hexen.addResource(RC_DEFINITION, 0, "hexen.ded", 0);
+    Game &hxn = games.defineGame(gameIds[hexen],
+        Record::withMembers(Game::DEF_CONFIG_DIR, CONFIGDIR,
+                            Game::DEF_TITLE, "Hexen",
+                            Game::DEF_AUTHOR, "Raven Software",
+                            Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
+                            Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
+                            Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/hexen.mapinfo"));
+    hxn.addResource(RC_PACKAGE, FF_STARTUP, "hexen.wad", "MAP08;MAP22;TINTTAB;FOGMAP;TRANTBLA;DARTA1;ARTIPORK;SKYFOG;TALLYTOP;GROVER");
+    hxn.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
+    hxn.addResource(RC_DEFINITION, 0, "hexen.ded", 0);
 
     /* Hexen (v1.0) */
-    Game &hexen10 = games.defineGame(&hexenV10Def);
+    Game &hexen10 = games.defineGame(gameIds[hexen_v10],
+        Record::withMembers(Game::DEF_CONFIG_DIR, CONFIGDIR,
+                            Game::DEF_TITLE, "Hexen v1.0",
+                            Game::DEF_AUTHOR, "Raven Software",
+                            Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
+                            Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
+                            Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/hexen.mapinfo"));
     hexen10.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
     hexen10.addResource(RC_PACKAGE, FF_STARTUP, "hexen.wad", "MAP08;MAP22;MAP41;TINTTAB;FOGMAP;DARTA1;ARTIPORK;SKYFOG;GROVER");
     hexen10.addResource(RC_DEFINITION, 0, "hexen-v10.ded", 0);
 
     /* Hexen (Demo) */
-    Game &demo = games.defineGame(&hexenDemoDef);
+    Game &demo = games.defineGame(gameIds[hexen_demo],
+        Record::withMembers(Game::DEF_CONFIG_DIR, CONFIGDIR,
+                            Game::DEF_TITLE, "Hexen 4-map Demo",
+                            Game::DEF_AUTHOR, "Raven Software",
+                            Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
+                            Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
+                            Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/hexen.mapinfo"));
     demo.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
     demo.addResource(RC_PACKAGE, FF_STARTUP, "hexendemo.wad;machexendemo.wad;hexen.wad", "MAP01;MAP04;TINTTAB;FOGMAP;DARTA1;ARTIPORK;DEMO3==18150");
     demo.addResource(RC_DEFINITION, 0, "hexen-demo.ded", 0);
 
     /* Hexen (Beta Demo) */
-    Game &beta = games.defineGame(&hexenBetaDemoDef);
+    Game &beta = games.defineGame(gameIds[hexen_betademo],
+        Record::withMembers(Game::DEF_CONFIG_DIR, CONFIGDIR,
+                            Game::DEF_TITLE, "Hexen 4-map Beta Demo",
+                            Game::DEF_AUTHOR, "Raven Software",
+                            Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
+                            Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
+                            Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/hexen.mapinfo"));
     beta.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
     beta.addResource(RC_PACKAGE, FF_STARTUP, "hexendemo.wad;machexendemo.wad;hexenbeta.wad;hexen.wad", "MAP01;MAP04;TINTTAB;FOGMAP;DARTA1;ARTIPORK;AFLYA0;DEMO3==13866");
     beta.addResource(RC_DEFINITION, 0, "hexen-demo.ded", 0);

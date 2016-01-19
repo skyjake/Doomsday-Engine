@@ -166,7 +166,7 @@ void Sv_GetInfo(serverinfo_t *info)
     // Let's figure out what we want to tell about ourselves.
     info->version = DOOMSDAY_VERSION;
     dd_snprintf(info->plugin, sizeof(info->plugin) - 1, "%s %s", (char *) gx.GetVariable(DD_PLUGIN_NAME), (char *) gx.GetVariable(DD_PLUGIN_VERSION_SHORT));
-    strncpy(info->gameIdentityKey, App_CurrentGame().identityKey().toUtf8().constData(), sizeof(info->gameIdentityKey) - 1);
+    strncpy(info->gameIdentityKey, App_CurrentGame().id().toUtf8().constData(), sizeof(info->gameIdentityKey) - 1);
     strncpy(info->gameConfig,      (char const *) gx.GetVariable(DD_GAME_CONFIG), sizeof(info->gameConfig) - 1);
     strncpy(info->name,            serverName, sizeof(info->name) - 1);
     strncpy(info->description,     serverInfo, sizeof(info->description) - 1);
@@ -381,7 +381,7 @@ void Sv_HandlePacket()
         {
             // Check the game mode (max 16 chars).
             char buf[17]; Reader_Read(::msgReader, buf, 16);
-            if(strnicmp(buf, App_CurrentGame().identityKey().toUtf8().constData(), 16))
+            if(strnicmp(buf, App_CurrentGame().id().toUtf8().constData(), 16))
             {
                 LOG_NET_ERROR("Client's game ID is incompatible: %-.16s") << buf;
                 N_TerminateClient(from);

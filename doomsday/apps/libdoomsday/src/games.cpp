@@ -87,6 +87,16 @@ DENG2_PIMPL(Games)
         games.clear();
     }
 
+    void add(Game &game)
+    {
+        games.push_back(&game);
+
+        DENG2_FOR_PUBLIC_AUDIENCE2(Addition, i)
+        {
+            i->gameAdded(game);
+        }
+    }
+
     DENG2_PIMPL_AUDIENCE(Addition)
     DENG2_PIMPL_AUDIENCE(Readiness)
     DENG2_PIMPL_AUDIENCE(Progress)
@@ -126,18 +136,17 @@ Game *Games::firstPlayable() const
     return NULL;
 }
 
-Game &Games::byIdentityKey(String identityKey) const
+Game &Games::operator [] (String const &id) const
 {
-    if(!identityKey.isEmpty())
+    /// @todo Use a hash. -jk
+    foreach(Game *game, d->games)
     {
-        foreach(Game *game, d->games)
-        {
-            if(!game->identityKey().compareWithoutCase(identityKey))
-                return *game;
-        }
+        if(!game->id().compareWithoutCase(id))
+            return *game;
     }
+
     /// @throw NotFoundError  The specified @a identityKey string is not associated with a game in the collection.
-    throw NotFoundError("Games::byIdentityKey", "No game exists with identity key '" + identityKey + "'");
+    throw NotFoundError("Games::operator []", "No game exists with ID '" + id + "'");
 }
 
 Game &Games::byIndex(int idx) const
@@ -170,49 +179,27 @@ int Games::collectAll(GameList &collected)
     return collected.count() - numFoundSoFar;
 }
 
-Game &Games::defineGame(GameDef const *def)
+Game &Games::defineGame(String const &id, Record const &parameters)
 {
-    if(!def)
-    {
-        throw Error("Games::defineGame", "Game definition not provided");
-    }
-
     LOG_AS("Games");
 
-    // Game mode identity keys must be unique. Ensure that is the case.
+    // Game IDs must be unique. Ensure that is the case.
     try
     {
-        /*Game &game =*/ byIdentityKey(def->identityKey);
-        LOGDEV_WARNING("Ignored new game \"%s\", identity key '%s' already in use")
-                << def->defaultTitle << def->identityKey;
-        throw Error("Games::defineGame", String("Duplicate game ID: ") + def->identityKey);
+        /// @todo Check a hash. -jk
+        /*Game &game =*/ (*this)[id];
+        LOGDEV_WARNING("Ignored new game \"%s\", ID'%s' already in use")
+                << parameters.gets(Game::DEF_TITLE) << id;
+        throw Error("Games::defineGame", String("Duplicate game ID: ") + id);
     }
     catch(Games::NotFoundError const &)
     {} // Ignore the error.
 
-    Game *game = Game::fromDef(*def);
-    if(!game)
-    {
-        throw Error("Games::defineGame", "Invalid game definition");
-    }
-
     // Add this game to our records.
+    Game *game = new Game(id, parameters);
     game->setPluginId(DoomsdayApp::plugins().activePluginId());
-    add(*game);
+    d->add(*game);
     return *game;
-}
-
-void Games::add(Game &game)
-{
-    // Already a member of the collection?
-    if(d->games.indexOf(&game) >= 0) return;
-
-    d->games.push_back(&game);
-
-    DENG2_FOR_AUDIENCE2(Addition, i)
-    {
-        i->gameAdded(game);
-    }
 }
 
 void Games::locateStartupResources(Game &game)
@@ -281,7 +268,7 @@ void Games::locateAllResources()
             }
 
             LOG_RES_VERBOSE(_E(l) "  Game: " _E(.)_E(>) "%s - %s") << game.title() << game.author();
-            LOG_RES_VERBOSE(_E(l) "  IdentityKey: " _E(.)_E(>)) << game.identityKey();
+            LOG_RES_VERBOSE(_E(l) "  IdentityKey: " _E(.)_E(>)) << game.id();
             Game::printFiles(game, FF_STARTUP);
 
             LOG_RES_MSG(" " DENG2_CHAR_RIGHT_DOUBLEARROW " ") << game.statusAsText();
@@ -351,7 +338,7 @@ D_CMD(ListGames)
                 .arg(isCurrent? _E(B) _E(b) :
                      !game->allStartupFilesFound()? _E(D) : "")
                 .arg(isCurrent? "*" : !game->allStartupFilesFound()? "!" : " ")
-                .arg(game->identityKey())
+                .arg(game->id())
                 .arg(game->title())
                 .arg(game->author());
 

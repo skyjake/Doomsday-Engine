@@ -71,41 +71,40 @@ int G_RegisterGames(int hookType, int param, void* data)
 #define LEGACYSAVEGAMENAMEEXP   "^(?:HticSav)[0-9]{1,1}(?:.hsg)"
 #define LEGACYSAVEGAMESUBFOLDER "savegame"
 
-    GameDef const hereticExtDef = {
-        "heretic-ext", CONFIGDIR,
-        "Heretic: Shadow of the Serpent Riders", "Raven Software",
-        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
-        "$(App.DataPath)/$(GamePlugin.Name)/heretic-ext.mapinfo"
-    };
-    GameDef const hereticDef = {
-        "heretic", CONFIGDIR,
-        "Heretic Registered", "Raven Software",
-        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
-        "$(App.DataPath)/$(GamePlugin.Name)/heretic.mapinfo"
-    };
-    GameDef const hereticShareDef = {
-        "heretic-share", CONFIGDIR,
-        "Heretic Shareware", "Raven Software",
-        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
-        "$(App.DataPath)/$(GamePlugin.Name)/heretic-share.mapinfo"
-    };
-
     DENG_UNUSED(hookType); DENG_UNUSED(param); DENG_UNUSED(data);
 
     /* Heretic (Extended) */
-    Game &extended = games.defineGame(&hereticExtDef);
+    Game &extended = games.defineGame(gameIds[heretic_extended],
+        Record::withMembers(Game::DEF_CONFIG_DIR, CONFIGDIR,
+                            Game::DEF_TITLE, "Heretic: Shadow of the Serpent Riders",
+                            Game::DEF_AUTHOR, "Raven Software",
+                            Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
+                            Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
+                            Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/heretic-ext.mapinfo"));
     extended.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
     extended.addResource(RC_PACKAGE, FF_STARTUP, "heretic.wad", "EXTENDED;E5M2;E5M7;E6M2;MUMSIT;WIZACT;MUS_CPTD;CHKNC5;SPAXA1A5");
     extended.addResource(RC_DEFINITION, 0, "heretic-ext.ded", 0);
 
     /* Heretic */
-    Game &heretic = games.defineGame(&hereticDef);
-    heretic.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
-    heretic.addResource(RC_PACKAGE, FF_STARTUP, "heretic.wad", "E2M2;E3M6;MUMSIT;WIZACT;MUS_CPTD;CHKNC5;SPAXA1A5");
-    heretic.addResource(RC_DEFINITION, 0, "heretic.ded", 0);
+    Game &htc = games.defineGame(gameIds[heretic],
+        Record::withMembers(Game::DEF_CONFIG_DIR, CONFIGDIR,
+                            Game::DEF_TITLE, "Heretic Registered",
+                            Game::DEF_AUTHOR, "Raven Software",
+                            Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
+                            Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
+                            Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/heretic.mapinfo"));
+    htc.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
+    htc.addResource(RC_PACKAGE, FF_STARTUP, "heretic.wad", "E2M2;E3M6;MUMSIT;WIZACT;MUS_CPTD;CHKNC5;SPAXA1A5");
+    htc.addResource(RC_DEFINITION, 0, "heretic.ded", 0);
 
     /* Heretic (Shareware) */
-    Game &shareware = games.defineGame(&hereticShareDef);
+    Game &shareware = games.defineGame(gameIds[heretic_shareware],
+        Record::withMembers(Game::DEF_CONFIG_DIR, CONFIGDIR,
+                            Game::DEF_TITLE, "Heretic Shareware",
+                            Game::DEF_AUTHOR, "Raven Software",
+                            Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
+                            Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
+                            Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/heretic-share.mapinfo"));
     shareware.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
     shareware.addResource(RC_PACKAGE, FF_STARTUP, "heretic1.wad", "E1M1;MUMSIT;WIZACT;MUS_CPTD;CHKNC5;SPAXA1A5");
     shareware.addResource(RC_DEFINITION, 0, "heretic-share.ded", 0);

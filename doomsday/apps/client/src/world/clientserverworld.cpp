@@ -336,7 +336,7 @@ DENG2_PIMPL(ClientServerWorld)
         if(sourcePath.isEmpty()) return String();
 
         // Compose the final path.
-        return mapCacheDir + App_CurrentGame().identityKey()
+        return mapCacheDir + App_CurrentGame().id()
                / sourcePath.fileNameWithoutExtension()
                + '-' + cacheIdForMap(sourcePath);
     }

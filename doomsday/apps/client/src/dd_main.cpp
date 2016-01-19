@@ -1235,7 +1235,7 @@ void App_ClearGames()
 
 static void populateGameInfo(GameInfo &info, Game &game)
 {
-    info.identityKey = AutoStr_FromTextStd(game.identityKey().toUtf8().constData());
+    info.identityKey = AutoStr_FromTextStd(game.id().toUtf8().constData());
     info.title       = AutoStr_FromTextStd(game.title().toUtf8().constData());
     info.author      = AutoStr_FromTextStd(game.author().toUtf8().constData());
 }
@@ -1282,7 +1282,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
             if(App_GameLoaded())
             {
                 LOG_NOTE("%s (%s) is already loaded")
-                        << game.title() << game.identityKey();
+                        << game.title() << game.id();
             }
             return true;
         }
@@ -1598,7 +1598,7 @@ Game *DD_AutoselectGame()
         char const *identityKey = CommandLine_Next();
         try
         {
-            Game &game = App_Games().byIdentityKey(identityKey);
+            Game &game = App_Games()[identityKey];
             if(game.allStartupFilesFound())
             {
                 return &game;
@@ -2620,13 +2620,13 @@ D_CMD(Load)
     // Are we loading a game?
     try
     {
-        Game &game = App_Games().byIdentityKey(Str_Text(searchPath));
+        Game &game = App_Games()[Str_Text(searchPath)];
         if(!game.allStartupFilesFound())
         {
             LOG_WARNING("Failed to locate all required startup resources:");
             Game::printFiles(game, FF_STARTUP);
             LOG_MSG("%s (%s) cannot be loaded.")
-                    << game.title() << game.identityKey();
+                    << game.title() << game.id();
             return true;
         }
 
@@ -2772,13 +2772,13 @@ D_CMD(Unload)
     {
         try
         {
-            Game &game = App_Games().byIdentityKey(Str_Text(searchPath));
+            Game &game = App_Games()[Str_Text(searchPath)];
             if(App_GameLoaded())
             {
                 return App_ChangeGame(App_Games().nullGame());
             }
 
-            LOG_MSG("%s is not currently loaded.") << game.identityKey();
+            LOG_MSG("%s is not currently loaded.") << game.id();
             return true;
         }
         catch(Games::NotFoundError const &)
@@ -3022,15 +3022,15 @@ static void printHelpAbout(char const *query)
     // Perhaps a game?
     try
     {
-        Game &game = App_Games().byIdentityKey(query);
-        LOG_SCR_MSG(_E(b) "%s" _E(.) " (IdentityKey)") << game.identityKey();
+        Game &game = App_Games()[query];
+        LOG_SCR_MSG(_E(b) "%s" _E(.) " (IdentityKey)") << game.id();
 
         LOG_SCR_MSG("Unique identifier of the " _E(b) "%s" _E(.) " game mode.") << game.title();
         LOG_SCR_MSG("An 'IdentityKey' is used when referencing a game unambiguously from the console and on the command line.");
         LOG_SCR_MSG(_E(D) "Related commands:");
-        LOG_SCR_MSG("  " _E(>) "Enter " _E(b) "inspectgame %s" _E(.) " for information and status of this game") << game.identityKey();
+        LOG_SCR_MSG("  " _E(>) "Enter " _E(b) "inspectgame %s" _E(.) " for information and status of this game") << game.id();
         LOG_SCR_MSG("  " _E(>) "Enter " _E(b) "listgames" _E(.) " to list all installed games and their status");
-        LOG_SCR_MSG("  " _E(>) "Enter " _E(b) "load %s" _E(.) " to load the " _E(l) "%s" _E(.) " game mode") << game.identityKey() << game.title();
+        LOG_SCR_MSG("  " _E(>) "Enter " _E(b) "load %s" _E(.) " to load the " _E(l) "%s" _E(.) " game mode") << game.id() << game.title();
         return;
     }
     catch(Games::NotFoundError const &)

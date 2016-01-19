@@ -46,7 +46,7 @@
 #include "p_map.h"
 #include "polyobjs.h"
 
-#define GID(v)          (toGameId(v))
+using namespace de;
 
 // The interface to the Doomsday engine.
 game_export_t gx;
@@ -62,26 +62,17 @@ static char const *gameIds[NUM_GAME_MODES] =
  */
 int G_RegisterGames(int hookType, int param, void* data)
 {
-#define CONFIGDIR       "doom64"
-#define STARTUPPK3      "libdoom64.pk3"
-
-    GameDef const doom64Def = {
-        "doom64", CONFIGDIR,
-        "Doom 64: Absolution", "Kaiser et al.",
-        "", "",
-        "$(App.DataPath)/$(GamePlugin.Name)/doom64.mapinfo"
-    };
-
     DENG_UNUSED(hookType); DENG_UNUSED(param); DENG_UNUSED(data);
 
-    Game &game = DoomsdayApp::games().defineGame(&doom64Def);
-    game.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
+    Game &game = DoomsdayApp::games().defineGame(gameIds[doom64],
+        Record::withMembers(Game::DEF_CONFIG_DIR, "doom64",
+                            Game::DEF_TITLE, "Doom 64: Absolution",
+                            Game::DEF_AUTHOR, "Kaiser et al.",
+                            Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/doom64.mapinfo"));
+    game.addResource(RC_PACKAGE, FF_STARTUP, "libdoom64.pk3", 0);
     game.addResource(RC_PACKAGE, FF_STARTUP, "doom64.wad", "MAP01;MAP20;MAP33;F_SUCK");
     game.addResource(RC_DEFINITION, 0, PLUGIN_NAMETEXT ".ded", 0);
     return true;
-
-#undef STARTUPPK3
-#undef CONFIGDIR
 }
 
 /**
