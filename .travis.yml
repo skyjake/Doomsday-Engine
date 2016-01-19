@@ -10,6 +10,6 @@ before_install:
 before_script:
     - mkdir build-travis
 script:
-    - cd build-travis && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DDENG_ENABLE_TESTS=ON ../doomsday && make
+    - cd build-travis && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DDENG_ENABLE_TESTS=ON ../doomsday && make -j2
 notifications:
     slack: dengteam:A4Hl4awsyxNxQG61rrWgDuHo
