@@ -357,6 +357,15 @@ static void createPackagesScheme()
         }
     }
 
+#ifdef UNIX
+    NativePath systemWads("/usr/share/games/doom");
+    if(systemWads.exists())
+    {
+        scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(systemWads),
+                                        SearchPath::NoDescend));
+    }
+#endif
+
     // Add the path from the DOOMWADDIR environment variable.
     if(!CommandLine_Check("-nodoomwaddir") && getenv("DOOMWADDIR"))
     {
