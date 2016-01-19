@@ -32,6 +32,8 @@ extern "C" {
 struct event_s;
 
 /// General constants (not to be used with Get/Set).
+/// @note Many of these have become unused as better APIs are introduced for
+/// sharing information.
 enum {
     DD_DISABLE,
     DD_ENABLE,
@@ -135,7 +137,7 @@ typedef struct {
     size_t apiSize; ///< sizeof(game_export_t)
 
     // Base-level.
-    void          (*PreInit) (gameid_t gameId);
+    void          (*PreInit) (char const *gameId);
     void          (*PostInit) (void);
     dd_bool       (*TryShutdown) (void);
     void          (*Shutdown) (void);

@@ -96,8 +96,7 @@ void ShellUser::sendInitialUpdate()
 
 void ShellUser::sendGameState()
 {
-    Game &game = App_CurrentGame();
-    String mode = (App_GameLoaded()? game.identityKey() : "");
+    String mode = App_CurrentGame().id();
 
     /**
      * @todo The server is not the right place to compose a packet about

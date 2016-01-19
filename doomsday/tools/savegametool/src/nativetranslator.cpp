@@ -219,15 +219,15 @@ DENG2_PIMPL(NativeTranslator)
             gamemode = oldGamemodes[gamemode];
 
             // Older versions did not differentiate between versions of Doom2, meaning we cannot
-            // determine the game identity key unambigously, without some assistance.
+            // determine the game ID unambigously, without some assistance.
             if(gamemode == 4 /*doom2*/)
             {
                 if(!fallbackGameId.isEmpty())
                 {
                     return fallbackGameId;
                 }
-                /// @throw Error Game identity key could not be determined unambiguously.
-                throw AmbigousGameIdError("translateGamemode", "Game identity key is ambiguous");
+                /// @throw Error Game ID could not be determined unambiguously.
+                throw AmbigousGameIdError("translateGamemode", "Game ID is ambiguous");
             }
         }
         if(id == Heretic && saveVersion < 8)

@@ -105,7 +105,6 @@ typedef unsigned char   byte;
 typedef int32_t         fixed_t;
 typedef uint32_t        angle_t;
 typedef uint32_t        ident_t;
-typedef int32_t         gameid_t;
 
 typedef uint32_t        fontid_t;
 typedef uint32_t        materialid_t;

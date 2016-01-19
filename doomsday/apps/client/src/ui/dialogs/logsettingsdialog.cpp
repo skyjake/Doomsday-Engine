@@ -217,6 +217,7 @@ LogSettingsDialog::LogSettingsDialog(String const &name)
     : DialogWidget(name, WithHeading), d(new Instance(this))
 {
     heading().setText(tr("Log Filter & Alerts"));
+    heading().setImage(style().images().image("log"));
 
     // Layout.
     GridLayout layout(area().contentRule().left(), area().contentRule().top());

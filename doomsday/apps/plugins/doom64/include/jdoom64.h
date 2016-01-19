@@ -31,7 +31,7 @@
 #define __JDOOM64_CONVENIENCE_H__
 
 #include "../../doom64/include/acfnlink.h"
-#include "../../doom64/include/d_api.h"
+#include "../../doom64/include/d64_api.h"
 #include "../../doom64/include/d_config.h"
 #include "../../doom64/include/d_console.h"
 #include "../../doom64/include/d_main.h"

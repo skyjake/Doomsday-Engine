@@ -43,14 +43,14 @@ public:
     DENG2_SUB_ERROR(ReadError, UnknownFormatError);
 
     QStringList knownExtensions;
-    QStringList baseGameIdKeys;
+    QStringList baseGameIds;
 
 public:
     /**
      * @param knownExtensions  List of known file extensions for the format.
-     * @param baseGameIdKeys   List of supported base game identity keys for the format.
+     * @param baseGameIdKeys   List of supported base game IDs for the format.
      */
-    PackageFormatter(QStringList knownExtensions, QStringList baseGameIdKeys);
+    PackageFormatter(QStringList knownExtensions, QStringList baseGameIds);
 
     virtual ~PackageFormatter();
 

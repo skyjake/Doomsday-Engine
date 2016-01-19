@@ -1,9 +1,9 @@
-/**\file d_api.h
+/** @file d_api.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify

@@ -47,7 +47,7 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
         {}
 
         String title() const { return game.title(); }
-        String gameIdentityKey() const { return game.identityKey(); }
+        String gameIdentityKey() const { return game.id(); }
     };
 
     struct GameWidget : public GameSessionWidget
@@ -126,7 +126,7 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
 
     ui::Item *makeItemForGame(Game &game)
     {
-        String const idKey = game.identityKey();
+        String const idKey = game.id();
 
         String label = String(_E(b) "%1" _E(.) "\n" _E(l)_E(D) "%2")
                 .arg(game.title())

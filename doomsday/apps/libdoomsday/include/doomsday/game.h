@@ -1,6 +1,6 @@
 /** @file game.h  Game mode configuration (metadata, resource files, etc...).
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -21,6 +21,7 @@
 #ifndef LIBDOOMSDAY_GAME_H
 #define LIBDOOMSDAY_GAME_H
 
+#if 0
 /**
  * Defines the high-level properties of a logical game component. Note that this
  * is POD; no construction or destruction is needed.
@@ -53,6 +54,7 @@ typedef struct gamedef_s {
     /// Primary MAPINFO definition dat, if any (translated during game init).
     char const *mainMapInfo;
 } GameDef;
+#endif
 
 #ifdef __cplusplus
 
@@ -72,7 +74,7 @@ namespace de { class File1; }
  *
  * @ingroup core
  */
-class LIBDOOMSDAY_PUBLIC Game : public AbstractGame
+class LIBDOOMSDAY_PUBLIC Game : public AbstractGame, public de::IObject
 {
 public:
     /// Logical game status:
@@ -84,24 +86,40 @@ public:
 
     typedef QMultiMap<resourceclassid_t, ResourceManifest *> Manifests;
 
+    static de::String const DEF_VARIANT_OF;   ///< ID of another game that this is a variant of.
+    static de::String const DEF_CONFIG_DIR;   ///< Name of the config directory.
+    static de::String const DEF_CONFIG_MAIN_PATH; ///< Optional: Path of the main config file.
+    static de::String const DEF_CONFIG_BINDINGS_PATH; ///< Optional: Path of the bindings config file.
+    static de::String const DEF_TITLE;        ///< Title for the game (intended for humans).
+    static de::String const DEF_AUTHOR;       ///< Author of the game (intended for humans).
+    static de::String const DEF_LEGACYSAVEGAME_NAME_EXP;  ///< Regular expression used for matching legacy savegame names.
+    static de::String const DEF_LEGACYSAVEGAME_SUBFOLDER; ///< Game-specific subdirectory of /home for legacy savegames.
+    static de::String const DEF_MAPINFO_PATH; ///< Base relative path to the main MAPINFO definition data.
+
 public:
     /**
-     * @param identityKey  Unique game mode key/identifier, 16 chars max (e.g., "doom1-ultimate").
-     * @param configDir  Name of the config directory.
-     * @param title  Textual title for the game mode (intended for humans).
-     * @param author  Textual author for the game mode (intended for humans).
-     * @param legacySavegameNameExp  Regular expression used for matching legacy savegame names.
-     * @param legacySavegameSubfoler  Game-specific subdirectory of /home for legacy savegames.
-     * @param mapMapInfo  Base relative path to the main MAPINFO definition data.
+     * Constructs a new game.
+     *
+     * @param id      Identifier. Unique game mode key/identifier, 16 chars max (e.g., "doom1-ultimate").
+     * @param params  Parameters.
      */
-    Game(de::String const &identityKey, de::Path const &configDir,
-         de::String const &title                   = "Unnamed",
-         de::String const &author                  = "Unknown",
-         de::String const &legacySavegameNameExp   = "",
-         de::String const &legacySavegameSubfolder = "",
-         de::String const &mainMapInfo             = "");
+    Game(de::String const &id, de::Record const &params);
 
     virtual ~Game();
+
+    /**
+     * Sets the packages required for loading the game.
+     *
+     * All these packages are loaded when the game is loaded.
+     *
+     * @param packageIds  List of package IDs.
+     */
+    void setRequiredPackages(de::StringList const &packageIds);
+
+    /**
+     * Returns the list of required package IDs for loading the game.
+     */
+    de::StringList requiredPackages() const;
 
     /**
      * Determines the status of the game.
@@ -135,11 +153,6 @@ public:
     void setPluginId(pluginid_t newId);
 
     /**
-     * Returns the unique identity key of the game.
-     */
-    de::String const &identityKey() const;
-
-    /**
      * Returns the title of the game, as text.
      */
     de::String title() const;
@@ -147,22 +160,22 @@ public:
     /**
      * Returns the author of the game, as text.
      */
-    de::String const &author() const;
+    de::String author() const;
 
     /**
      * Returns the name of the main config file for the game.
      */
-    de::Path const &mainConfig() const;
+    de::Path mainConfig() const;
 
     /**
      * Returns the name of the binding config file for the game.
      */
-    de::Path const &bindingConfig() const;
+    de::Path bindingConfig() const;
 
     /**
      * Returns the base relative path of the main MAPINFO definition data for the game (if any).
      */
-    de::Path const &mainMapInfo() const;
+    de::Path mainMapInfo() const;
 
     /**
      * Returns the identifier of the Style logo image to represent this game.
@@ -212,14 +225,33 @@ public:
      */
     bool isRequiredFile(de::File1 &file);
 
-public:
     /**
-     * Construct a new Game instance from the specified definition @a def.
+     * Adds a new resource to the list for the identified @a game.
      *
-     * @note May fail if the definition is incomplete or invalid (@c NULL is returned).
+     * @note Resource order defines the load order of resources (among those of
+     * the same type). Resources are loaded from most recently added to least
+     * recent.
+     *
+     * @param game      Unique identifier/name of the game.
+     * @param classId   Class of resource being defined.
+     * @param fFlags    File flags (see @ref fileFlags).
+     * @param names     One or more known potential names, seperated by semicolon
+     *                  (e.g., <pre> "name1;name2" </pre>). Valid names include
+     *                  absolute or relative file paths, possibly with encoded
+     *                  symbolic tokens, or predefined symbols into the virtual
+     *                  file system.
+     * @param params    Additional parameters. Usage depends on resource type.
+     *                  For package resources this may be C-String containing a
+     *                  semicolon delimited list of identity keys.
      */
-    static Game *fromDef(GameDef const &def);
+    void addResource(resourceclassid_t classId, de::dint rflags,
+                     char const *names, void const *params);
 
+    // IObject.
+    de::Record const &objectNamespace() const;
+    de::Record &objectNamespace();
+
+public:
     /**
      * Print a game mode banner with rulers.
      *

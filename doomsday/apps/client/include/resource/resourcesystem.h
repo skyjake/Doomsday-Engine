@@ -841,7 +841,7 @@ public:
     /**
      * Utility for scheduling legacy savegame conversion(s) (delegated to background Tasks).
      *
-     * @param gameId      Identity key of the game and corresponding subfolder name within
+     * @param gameId      Identifier of the game and corresponding subfolder name within
      *                    save repository to output the converted savegame to. Also used for
      *                    resolving ambiguous savegame formats.
      * @param sourcePath  If a zero-length string then @em all legacy savegames located for

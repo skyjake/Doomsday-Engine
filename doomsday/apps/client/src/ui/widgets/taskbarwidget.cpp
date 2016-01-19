@@ -312,7 +312,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
     {
         if(App_GameLoaded())
         {
-            status->setText(App_CurrentGame().identityKey());
+            status->setText(App_CurrentGame().id());
         }
         else
         {

@@ -72,7 +72,7 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
                 ClientApp::serverLink().disconnect();
             }
 
-            App_ChangeGame(App_Games().byIdentityKey(gameId), false /*no reload*/);
+            App_ChangeGame(App_Games()[gameId], false /*no reload*/);
             Con_Execute(CMDS_DDAY, cmd.toLatin1(), false, false);
         }
     };
@@ -130,7 +130,7 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
         Game const *game() const
         {
             if(!svItem) return nullptr;
-            return &App_Games().byIdentityKey(svItem->info().gameIdentityKey);
+            return &App_Games()[svItem->info().gameIdentityKey];
         }
 
         void updateFromItem(ServerListItem const &item)

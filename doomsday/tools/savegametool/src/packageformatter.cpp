@@ -26,9 +26,9 @@ using namespace de;
 
 extern String versionText();
 
-PackageFormatter::PackageFormatter(QStringList knownExtensions, QStringList baseGameIdKeys)
+PackageFormatter::PackageFormatter(QStringList knownExtensions, QStringList baseGameIds)
     : knownExtensions(knownExtensions)
-    , baseGameIdKeys (baseGameIdKeys)
+    , baseGameIds (baseGameIds)
 {}
 
 PackageFormatter::~PackageFormatter() // virtual
