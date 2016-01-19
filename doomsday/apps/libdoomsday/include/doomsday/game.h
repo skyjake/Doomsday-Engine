@@ -21,44 +21,8 @@
 #ifndef LIBDOOMSDAY_GAME_H
 #define LIBDOOMSDAY_GAME_H
 
-#if 0
-/**
- * Defines the high-level properties of a logical game component. Note that this
- * is POD; no construction or destruction is needed.
- * @see DD_DefineGame() @ingroup game
- */
-typedef struct gamedef_s {
-   /*
-    * Unique game mode key/identifier, 16 chars max (e.g., "doom1-ultimate").
-    * - Used during resource location for mode-specific assets.
-    * - Sent out in netgames (a client can't connect unless mode strings match).
-    */
-    char const *identityKey;
-
-    /// Name of the config directory.
-    char const *configDir;
-
-    /// Default title. May be overridden later.
-    char const *defaultTitle;
-
-    /// Default author. May be overridden later.
-    /// Used for (e.g.) the map author name if not specified in a Map Info definition.
-    char const *defaultAuthor;
-
-    /*
-     * Used when converting legacy savegames:
-     */
-    char const *legacySavegameNameExp;
-    char const *legacySavegameSubfolder;
-
-    /// Primary MAPINFO definition dat, if any (translated during game init).
-    char const *mainMapInfo;
-} GameDef;
-#endif
-
 #ifdef __cplusplus
 
-#include <doomsday/AbstractGame>
 #include <doomsday/plugins.h>
 #include <doomsday/resource/resourceclass.h>
 #include <de/Error>
@@ -70,11 +34,14 @@ class ResourceManifest;
 namespace de { class File1; }
 
 /**
- * Records top-level game configurations registered by the loaded game plugin(s).
+ * Represents a specific playable game that runs on top of Doomsday. There can
+ * be only one game loaded at a time. Examples of games are "Doom II" and
+ * "Ultimate Doom".
  *
- * @ingroup core
+ * The 'load' command can be used to load a game based on its identifier:
+ * <pre>load doom2</pre>
  */
-class LIBDOOMSDAY_PUBLIC Game : public AbstractGame, public de::IObject
+class LIBDOOMSDAY_PUBLIC Game : public de::IObject
 {
 public:
     /// Logical game status:
@@ -86,7 +53,14 @@ public:
 
     typedef QMultiMap<resourceclassid_t, ResourceManifest *> Manifests;
 
-    static de::String const DEF_VARIANT_OF;   ///< ID of another game that this is a variant of.
+    /**
+     * Specifies the game that this game is a variant of. For instance, "Final
+     * Doom: Plutonia Experiment" (doom2-plut) is a variant of "Doom II"
+     * (doom2). The base game can be used as a fallback for resources,
+     * configurations, and other data.
+     */
+    static de::String const DEF_VARIANT_OF;
+
     static de::String const DEF_CONFIG_DIR;   ///< Name of the config directory.
     static de::String const DEF_CONFIG_MAIN_PATH; ///< Optional: Path of the main config file.
     static de::String const DEF_CONFIG_BINDINGS_PATH; ///< Optional: Path of the bindings config file.
@@ -106,6 +80,10 @@ public:
     Game(de::String const &id, de::Record const &params);
 
     virtual ~Game();
+
+    bool isNull() const;
+    de::String id() const;
+    de::String variantOf() const;
 
     /**
      * Sets the packages required for loading the game.

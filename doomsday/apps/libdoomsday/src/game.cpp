@@ -55,16 +55,6 @@ DENG2_PIMPL(Game)
 
     Manifests manifests; ///< Required resource files (e.g., doomu.wad).
 
-    //String title;        ///< Formatted default title, suitable for printing (e.g., "The Ultimate DOOM").
-    //String author;       ///< Formatted default author suitable for printing (e.g., "id Software").
-
-    //Path mainConfig;     ///< Config file name (e.g., "configs/doom/game.cfg").
-    //Path bindingConfig;  ///< Control binding file name (set automatically).
-    //Path mainMapInfo;    ///< Base relative path to the main MAPINFO definition data.
-
-    //String legacySavegameNameExp;
-    //String legacySavegameSubfolder;
-
     Instance(Public *i, Record const &parms)
         : Base(i)
         , params(parms)
@@ -89,15 +79,29 @@ DENG2_PIMPL(Game)
 };
 
 Game::Game(String const &id, Record const &params)
-    : AbstractGame(id)
-    , d(new Instance(this, params))
+    : d(new Instance(this, params))
 {
     d->params.set(DEF_ID, id);
-    setVariantOf(params.gets(DEF_VARIANT_OF, ""));
+    d->params.set(DEF_VARIANT_OF, params.gets(DEF_VARIANT_OF, ""));
 }
 
 Game::~Game()
 {}
+
+bool Game::isNull() const
+{
+    return id().isEmpty();
+}
+
+String Game::id() const
+{
+    return d->params.gets(DEF_ID);
+}
+
+String Game::variantOf() const
+{
+    return d->params.gets(DEF_VARIANT_OF);
+}
 
 void Game::setRequiredPackages(StringList const &packageIds)
 {
@@ -431,21 +435,6 @@ D_CMD(InspectGame)
     DENG2_ASSERT(!game->isNull());
 
     LOG_MSG("") << game->description();
-
-/*
-    LOG_MSG(_E(b) "%s - %s") << game->title() << game->author();
-    LOG_MSG(_E(l) "IdentityKey: " _E(.) _E(i) "%s " _E(.)
-            _E(l) "PluginId: "    _E(.) _E(i) "%s")
-        << game->identityKey() << int(game->pluginId());
-
-    LOG_MSG(_E(D) "Startup resources:");
-    Game::printFiles(*game, FF_STARTUP);
-
-    LOG_MSG(_E(D) "Other resources:");
-    Game::printFiles(*game, 0, false);
-
-    LOG_MSG(_E(D) "Status: " _E(.) _E(b)) << game->statusAsText();
-    */
 
     return true;
 }
