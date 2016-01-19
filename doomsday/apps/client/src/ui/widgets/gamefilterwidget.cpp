@@ -70,8 +70,8 @@ DENG_GUI_PIMPL(GameFilterWidget)
         sortBy->setFont("small");
         sortBy->setOpeningDirection(ui::Down);
         sortBy->items()
-                << new ChoiceItem(tr("Title"),        SortByTitle)
-                << new ChoiceItem(tr("ID"), SortByIdentityKey);
+                << new ChoiceItem(tr("Title"), SortByTitle)
+                << new ChoiceItem(tr("ID"),    SortByIdentifier);
 
         SequentialLayout layout(self.rule().left(),
                                 self.rule().midY() - sortBy->rule().height()/2,

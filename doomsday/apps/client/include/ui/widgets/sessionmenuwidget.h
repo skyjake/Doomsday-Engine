@@ -36,7 +36,7 @@ public:
         virtual de::String title() const = 0;
 
         /// Returns the game for sorting.
-        virtual de::String gameIdentityKey() const = 0;
+        virtual de::String gameId() const = 0;
 
         virtual de::String sortKey() const;
 

@@ -88,7 +88,7 @@ DENG_GUI_PIMPL(SavedSessionMenuWidget)
             return savedSession().metadata().gets("userDescription");
         }
 
-        String gameIdentityKey() const
+        String gameId() const
         {
             return savedSession().metadata().gets("gameIdentityKey");
         }
@@ -130,7 +130,7 @@ DENG_GUI_PIMPL(SavedSessionMenuWidget)
             {
                 SavedSession const &session = item.savedSession();
 
-                Game const &sGame = App_Games()[item.gameIdentityKey()];
+                Game const &sGame = App_Games()[item.gameId()];
                 if(style().images().has(sGame.logoImageId()))
                 {
                     loadButton().setImage(style().images().image(sGame.logoImageId()));

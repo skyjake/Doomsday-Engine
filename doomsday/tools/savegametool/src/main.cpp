@@ -87,7 +87,7 @@ Folder &outputFolder()
     return DENG2_TEXT_APP->rootFolder().locate<Folder>("output");
 }
 
-static PackageFormatter *saveFormatForGameIdentityKey(String const &idKey)
+static PackageFormatter *saveFormatForGameId(String const &idKey)
 {
     foreach(PackageFormatter *fmt, translators)
     foreach(QString const &baseId, fmt->baseGameIds)
@@ -139,7 +139,7 @@ static void convertSavegame(Path inputPath)
         if(!fallbackGameId.isEmpty())
         {
             // Use whichever format is applicable for the specified game ID.
-            knownTranslator = saveFormatForGameIdentityKey(fallbackGameId);
+            knownTranslator = saveFormatForGameId(fallbackGameId);
         }
         else if(!inputPath.toString().fileNameExtension().isEmpty())
         {

@@ -62,11 +62,11 @@ DENG2_PIMPL(Game)
         // Define the optional parameters if needed.
         if(!params.has(DEF_CONFIG_MAIN_PATH))
         {
-            params.set(DEF_CONFIG_MAIN_PATH, String("configs")/params.gets(DEF_CONFIG_DIR)/"game.cfg");
+            params.set(DEF_CONFIG_MAIN_PATH, "configs"/params.gets(DEF_CONFIG_DIR)/"game.cfg");
         }
         if(!params.has(DEF_CONFIG_BINDINGS_PATH))
         {
-            params.set(DEF_CONFIG_BINDINGS_PATH, String("configs")/params.gets(DEF_CONFIG_DIR)/"player/bindings.cfg");
+            params.set(DEF_CONFIG_BINDINGS_PATH, "configs"/params.gets(DEF_CONFIG_DIR)/"player/bindings.cfg");
         }
 
         params.set(DEF_CONFIG_DIR, NativePath(params.gets(DEF_CONFIG_DIR)).expand().withSeparators('/'));
@@ -167,7 +167,7 @@ String const &Game::statusAsText() const
 String Game::description() const
 {
     return String(_E(b) "%1 - %2\n" _E(.)
-                  _E(l) "IdentityKey: " _E(.) "%3 "
+                  _E(l) "ID: " _E(.) "%3 "
                   _E(l) "PluginId: "    _E(.) "%4\n"
                   _E(D)_E(b) "Startup resources:\n" _E(.)_E(.) "%5\n"
                   _E(D)_E(b) "Other resources:\n" _E(.)_E(.) "%6\n"

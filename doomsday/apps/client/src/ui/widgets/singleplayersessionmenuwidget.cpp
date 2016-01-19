@@ -47,7 +47,7 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
         {}
 
         String title() const { return game.title(); }
-        String gameIdentityKey() const { return game.id(); }
+        String gameId() const { return game.id(); }
     };
 
     struct GameWidget : public GameSessionWidget
@@ -192,7 +192,7 @@ SingleplayerSessionMenuWidget::Mode SingleplayerSessionMenuWidget::mode() const
 
 Action *SingleplayerSessionMenuWidget::makeAction(ui::Item const &item)
 {
-    return new CommandAction("load " + item.as<Instance::GameItem>().gameIdentityKey());
+    return new CommandAction("load " + item.as<Instance::GameItem>().gameId());
 }
 
 GuiWidget *SingleplayerSessionMenuWidget::makeItemWidget(ui::Item const &, GuiWidget const *)

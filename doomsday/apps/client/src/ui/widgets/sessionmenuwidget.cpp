@@ -147,8 +147,8 @@ String SessionMenuWidget::SessionItem::sortKey() const
     case GameFilterWidget::SortByTitle:
         return title();
 
-    case GameFilterWidget::SortByIdentityKey:
-        return gameIdentityKey();
+    case GameFilterWidget::SortByIdentifier:
+        return gameId();
     }
     return "";
 }

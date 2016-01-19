@@ -52,7 +52,7 @@ public:
     enum SortOrder
     {
         SortByTitle,
-        SortByIdentityKey
+        SortByIdentifier
     };
 
 public:

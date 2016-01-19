@@ -106,7 +106,7 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
             return _info.name;
         }
 
-        String gameIdentityKey() const
+        String gameId() const
         {
             return _info.gameIdentityKey;
         }
