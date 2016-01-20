@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Garbage"
@@ -52,7 +52,9 @@ struct Garbage : public Lockable
 
         if(allocs.empty()) return;
 
-        LOG_TRACE("Recycling %i allocations/instances") << allocs.size();
+#ifdef DENG2_DEBUG
+        qDebug() << "[Garbage] Recycling" << allocs.size() << "allocs/objects";
+#endif
 
         for(Allocs::iterator i = allocs.begin(); i != allocs.end(); )
         {
