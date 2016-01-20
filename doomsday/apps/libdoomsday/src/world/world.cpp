@@ -29,10 +29,13 @@ static World *theWorld = nullptr;
 
 DENG2_PIMPL(World)
 {
+    world::Map *map = nullptr;
+
     Instance(Public *i) : Base(i)
     {
         theWorld = thisPublic;
     }
+
     ~Instance()
     {
         theWorld = nullptr;
@@ -72,6 +75,22 @@ void World::reset()
 void World::timeChanged(Clock const &)
 {
     // Nothing to do.
+}
+
+void World::setMap(world::Map *map)
+{
+    d->map = map;
+}
+
+bool World::hasMap() const
+{
+    return d->map != nullptr;
+}
+
+world::Map &World::map() const
+{
+    DENG2_ASSERT(hasMap());
+    return *d->map;
 }
 
 World &World::get()

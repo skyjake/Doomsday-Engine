@@ -92,8 +92,6 @@ set (SHARED_WITH_CLIENT
     ${src}/include/world/bspleaf.h
     ${src}/include/world/bspnode.h
     ${src}/include/world/convexsubspace.h
-    ${src}/include/world/entitydatabase.h
-    ${src}/include/world/entitydef.h
     ${src}/include/world/impulseaccumulator.h
     ${src}/include/world/interceptor.h
     ${src}/include/world/line.h
@@ -108,7 +106,6 @@ set (SHARED_WITH_CLIENT
     ${src}/include/world/plane.h
     ${src}/include/world/polyobj.h
     ${src}/include/world/polyobjdata.h
-    ${src}/include/world/propertyvalue.h
     ${src}/include/world/reject.h
     ${src}/include/world/sector.h
     ${src}/include/world/sky.h
@@ -187,8 +184,6 @@ set (SHARED_WITH_CLIENT
     ${src}/src/world/bspnode.cpp
     ${src}/src/world/convexsubspace.cpp
     ${src}/src/world/dmuargs.cpp
-    ${src}/src/world/entitydatabase.cpp
-    ${src}/src/world/entitydef.cpp
     ${src}/src/world/impulseaccumulator.cpp
     ${src}/src/world/interceptor.cpp
     ${src}/src/world/line.cpp
@@ -203,7 +198,6 @@ set (SHARED_WITH_CLIENT
     ${src}/src/world/plane.cpp
     ${src}/src/world/polyobj.cpp
     ${src}/src/world/polyobjdata.cpp
-    ${src}/src/world/propertyvalue.cpp
     ${src}/src/world/reject.cpp
     ${src}/src/world/sector.cpp
     ${src}/src/world/sectorcluster.cpp

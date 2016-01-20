@@ -67,7 +67,6 @@ class BiasTracker;
 namespace de {
 
 class Blockmap;
-class EntityDatabase;
 #ifdef __CLIENT__
 class LightGrid;
 #endif
@@ -625,11 +624,6 @@ public:  // Vertexs ------------------------------------------------------------
     LoopResult forAllVertexs(std::function<LoopResult (Vertex &)> func) const;
 
 public:  // Data structures -------------------------------------------------------
-
-    /**
-     * Provides access to the entity database.
-     */
-    EntityDatabase &entityDatabase() const;
 
     /**
      * Provides access to the primary @ref Mesh geometry owned by the map. Note that

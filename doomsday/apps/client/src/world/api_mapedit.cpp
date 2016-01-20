@@ -25,15 +25,15 @@
 #include <de/Error>
 #include <de/Log>
 #include <de/StringPool>
-#include "dd_main.h"
+#include <doomsday/world/entitydef.h>
+#include <doomsday/EntityDatabase>
 
-#include "world/entitydatabase.h"
+#include "dd_main.h"
 #include "world/map.h"
 #include "world/polyobjdata.h"
 #include "Plane"
 #include "Sector"
 #include "Surface"
-
 #include "edit_map.h"
 
 using namespace de;

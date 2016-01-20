@@ -303,8 +303,6 @@ DENG2_PIMPL(ClientServerWorld)
 {
     Binder binder;               ///< Doomsday Script bindings for the World.
     Record worldModule;
-
-    Map *map = nullptr;          ///< Current map.
     Record fallbackMapInfo;      ///< Used when no effective MapInfo definition.
 
     timespan_t time = 0;         ///< World-wide time.
@@ -452,10 +450,10 @@ DENG2_PIMPL(ClientServerWorld)
     /**
      * Replace the current map with @a map.
      */
-    void makeCurrent(Map *newMap)
+    void makeCurrent(Map *map)
     {
         // This is now the current map (if any).
-        map = newMap;
+        self.setMap(map);
         if(!map) return;
 
         // We cannot make an editable map current.
@@ -688,6 +686,8 @@ DENG2_PIMPL(ClientServerWorld)
     /// @todo Split this into subtasks (load, make current, cache assets).
     bool changeMap(res::MapManifest *mapManifest = nullptr)
     {
+        Map *map = self.mapPtr();
+
 #ifdef __CLIENT__
         if(map)
         {
@@ -706,7 +706,9 @@ DENG2_PIMPL(ClientServerWorld)
 #ifdef __CLIENT__
         R_DestroyContactLists();
 #endif
-        delete map; map = nullptr;
+        delete map;
+        self.setMap(nullptr);
+
         Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
 
         // Are we just unloading the current map?
@@ -744,13 +746,13 @@ DENG2_PIMPL(ClientServerWorld)
         // Output a human-readable report of any issues encountered during conversion.
         reporter.writeLog();
 
-        return map != nullptr;
+        return self.hasMap();
     }
 
 #ifdef __CLIENT__
     void updateHandOrigin()
     {
-        DENG2_ASSERT(hand != nullptr && map != nullptr);
+        DENG2_ASSERT(hand != nullptr && self.hasMap());
 
         viewdata_t const *viewData = &::viewPlayer->viewport();
         hand->setOrigin(viewData->current.origin + viewData->frontVec.xzy() * handDistance);
@@ -771,16 +773,14 @@ ClientServerWorld::ClientServerWorld()
     , d(new Instance(this))
 {}
 
-bool ClientServerWorld::hasMap() const
-{
-    return d->map != nullptr;
-}
-
 Map &ClientServerWorld::map() const
 {
-    if(d->map) return *d->map;
-    /// @throw MapError Attempted with no map loaded.
-    throw MapError("ClientServerWorld::map", "No map is currently loaded");
+    if(!hasMap())
+    {
+        /// @throw MapError Attempted with no map loaded.
+        throw MapError("ClientServerWorld::map", "No map is currently loaded");
+    }
+    return World::map().as<de::Map>();
 }
 
 bool ClientServerWorld::changeMap(de::Uri const &mapUri)
@@ -838,9 +838,9 @@ void ClientServerWorld::update()
     });
 
     // Update the current map, also.
-    if(d->map)
+    if(hasMap())
     {
-        d->map->update();
+        map().update();
     }
 }
 
@@ -876,13 +876,13 @@ timespan_t ClientServerWorld::time() const
 void ClientServerWorld::tick(timespan_t elapsed)
 {
 #ifdef __CLIENT__
-    if(d->map)
+    if(hasMap())
     {
-        d->map->skyAnimator().advanceTime(elapsed);
+        map().skyAnimator().advanceTime(elapsed);
 
         if(DD_IsSharpTick())
         {
-            d->map->thinkers().forAll(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1, [] (thinker_t *th)
+            map().thinkers().forAll(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1, [] (thinker_t *th)
             {
                 Mobj_AnimateHaloOcclussion(*reinterpret_cast<mobj_t *>(th));
                 return LoopContinue;
@@ -902,7 +902,7 @@ Hand &ClientServerWorld::hand(coord_t *distance) const
     {
         d->hand.reset(new Hand());
         audienceForFrameEnd() += *d->hand;
-        if(d->map)
+        if(hasMap())
         {
             d->updateHandOrigin();
         }
@@ -922,7 +922,7 @@ void ClientServerWorld::beginFrame(bool resetNextViewer)
 
 void ClientServerWorld::endFrame()
 {
-    if(d->map && d->hand)
+    if(hasMap() && d->hand)
     {
         d->updateHandOrigin();
 

@@ -1,4 +1,4 @@
-/** @file
+/** @file m_nodepile.h  Specialized Node Allocation
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
@@ -15,10 +15,6 @@
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small>
- */
-
-/*
- * m_nodepile.h: Specialized Node Allocation
  */
 
 #ifndef __DOOMSDAY_NODEPILE_H__

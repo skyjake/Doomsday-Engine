@@ -18,6 +18,7 @@
  */
 
 #include "doomsday/world/map.h"
+#include "doomsday/EntityDatabase"
 
 using namespace de;
 
@@ -26,6 +27,7 @@ namespace world {
 DENG2_PIMPL(Map)
 , DENG2_OBSERVES(Record, Deletion)
 {
+    EntityDatabase entityDatabase;
     res::MapManifest *manifest = nullptr;  ///< Not owned, may be @c nullptr.
 
     Instance(Public *i) : Base(i)
@@ -88,6 +90,11 @@ void Map::setManifest(res::MapManifest *newManifest)
     d->manifest = newManifest;
 
     if(d->manifest) d->manifest->audienceForDeletion() += d;
+}
+
+EntityDatabase &Map::entityDatabase() const
+{
+    return d->entityDatabase;
 }
 
 }  // namespace world

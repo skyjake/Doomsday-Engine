@@ -1,4 +1,4 @@
-/** @file propertyvalue.cpp Data types for representing property values.
+/** @file propertyvalue.cpp  Data types for representing property values.
  * @ingroup data
  *
  * @authors Copyright &copy; 2013 Daniel Swanson <danij@dengine.net>
@@ -18,9 +18,9 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/Error>
+#include "doomsday/world/propertyvalue.h"
 
-#include "world/propertyvalue.h"
+#include <de/Error>
 
 using namespace de;
 

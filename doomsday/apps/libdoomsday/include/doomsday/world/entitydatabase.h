@@ -17,17 +17,15 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_ENTITYDATABASE_H
-#define DENG_WORLD_ENTITYDATABASE_H
+#ifndef LIBDOOMSDAY_WORLD_ENTITYDATABASE_H
+#define LIBDOOMSDAY_WORLD_ENTITYDATABASE_H
 
 #include <de/libcore.h>
 #include <de/Error>
 
-#include "api_mapedit.h" // valuetype_t
-#include "world/entitydef.h"
-#include "world/propertyvalue.h"
-
-namespace de {
+#include "valuetype.h"
+#include "entitydef.h"
+#include "propertyvalue.h"
 
 /**
  * An EntityDatabase is used in the process of transferring mobj spawn spot
@@ -87,6 +85,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace de
-
-#endif // DENG_WORLD_ENTITYDATABASE_H
+#endif // LIBDOOMSDAY_WORLD_ENTITYDATABASE_H

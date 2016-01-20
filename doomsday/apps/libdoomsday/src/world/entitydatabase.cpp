@@ -18,11 +18,12 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
-#include "world/entitydatabase.h"
+#include "doomsday/world/entitydatabase.h"
 
 #include <de/Log>
 #include <map>
+
+using namespace de;
 
 // An entity is a set of one or more properties.
 // Key is the unique identifier of said property in the
@@ -34,8 +35,6 @@ typedef std::map<int, Entity> Entities;
 
 // Entities are grouped in sets by their unique identifier.
 typedef std::map<int, Entities> EntitySet;
-
-namespace de {
 
 DENG2_PIMPL(EntityDatabase)
 {
@@ -142,5 +141,3 @@ void EntityDatabase::setProperty(MapEntityPropertyDef const *def, int elementInd
     // Add a new record.
     entity->insert(std::pair<int, PropertyValue *>(def->id, value));
 }
-
-} // namespace de

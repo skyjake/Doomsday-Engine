@@ -24,6 +24,8 @@
 #include <de/Error>
 #include <de/Observers>
 
+class EntityDatabase;
+
 namespace world {
 
 /**
@@ -64,6 +66,13 @@ public:
      * @see hasManifest(), manifest()
      */
     void setManifest(res::MapManifest *newManifest);
+
+    /**
+     * Provides access to the entity database.
+     */
+    EntityDatabase &entityDatabase() const;
+
+    DENG2_AS_IS_METHODS()
 
 public:
     /// Notified when the map is about to be deleted.

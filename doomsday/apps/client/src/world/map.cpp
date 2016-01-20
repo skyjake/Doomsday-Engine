@@ -35,6 +35,7 @@
 #include <de/Rectangle>
 #include <doomsday/defs/mapinfo.h>
 #include <doomsday/defs/sky.h>
+#include <doomsday/EntityDatabase>
 
 #ifdef __CLIENT__
 #  include "clientapp.h"
@@ -51,7 +52,6 @@
 #include "world/clientserverworld.h"  // ddMapSetup, validCount
 #include "world/blockmap.h"
 #include "world/lineblockmap.h"
-#include "world/entitydatabase.h"
 #include "world/lineowner.h"
 #include "world/p_object.h"
 #include "world/polyobjdata.h"
@@ -164,7 +164,6 @@ DENG2_PIMPL(Map)
     //
     std::unique_ptr<Thinkers> thinkers;
     Sky sky;
-    EntityDatabase entityDatabase;
 
     std::unique_ptr<Blockmap> mobjBlockmap;
     std::unique_ptr<Blockmap> polyobjBlockmap;
@@ -2393,11 +2392,6 @@ bool Map::identifySoundEmitter(SoundEmitter const &emitter, Sector **sector,
     }
 
     return (*sector != 0 || *poly != 0|| *plane != 0|| *surface != 0);
-}
-
-EntityDatabase &Map::entityDatabase() const
-{
-    return d->entityDatabase;
 }
 
 void Map::initNodePiles()

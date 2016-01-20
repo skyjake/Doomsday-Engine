@@ -30,12 +30,12 @@
 #include <de/memoryzone.h>
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/resource/mapmanifest.h>
+#include <doomsday/EntityDatabase>
 
 #include "network/net_main.h"
 
 #include "world/blockmap.h"
 #include "world/dmuargs.h"
-#include "world/entitydatabase.h"
 #include "world/linesighttest.h"
 #include "world/maputil.h"
 #include "world/p_players.h"

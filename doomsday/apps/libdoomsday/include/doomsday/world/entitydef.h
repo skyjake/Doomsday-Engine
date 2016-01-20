@@ -18,12 +18,11 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_ENTITYDEF_H
-#define DENG_WORLD_ENTITYDEF_H
+#ifndef LIBDOOMSDAY_WORLD_ENTITYDEF_H
+#define LIBDOOMSDAY_WORLD_ENTITYDEF_H
 
 #include "dd_share.h"
 #include "api_mapedit.h"
-#include "m_nodepile.h"
 #include <de/binangle.h>
 #include <de/vector1.h>
 
@@ -130,4 +129,4 @@ void P_ShutdownMapEntityDefs();
 } // extern "C"
 #endif
 
-#endif // DENG_WORLD_ENTITYDEF_H
+#endif // LIBDOOMSDAY_WORLD_ENTITYDEF_H

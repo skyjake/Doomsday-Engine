@@ -22,10 +22,12 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_DATA_PROPERTYVALUE_H
-#define DENG_DATA_PROPERTYVALUE_H
+#ifndef LIBDOOMSDAY_WORLD_PROPERTYVALUE_H
+#define LIBDOOMSDAY_WORLD_PROPERTYVALUE_H
 
-#include "de_base.h"
+#include "valuetype.h"
+#include <de/types.h>
+#include <de/fixedpoint.h>
 
 class PropertyValue
 {
@@ -179,4 +181,4 @@ private:
  */
 PropertyValue* BuildPropertyValue(valuetype_t type, void* valueAdr);
 
-#endif // DENG_DATA_PROPERTYVALUE_H
+#endif // LIBDOOMSDAY_WORLD_PROPERTYVALUE_H

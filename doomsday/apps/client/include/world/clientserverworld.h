@@ -80,14 +80,7 @@ public:
     void update();
 
     /**
-     * Returns @c true if a map is currently loaded.
-     */
-    bool hasMap() const;
-
-    /**
      * Provides access to the currently loaded map.
-     *
-     * @see hasMap()
      */
     de::Map &map() const;
 

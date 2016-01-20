@@ -24,6 +24,8 @@
 #include <de/Observers>
 #include <de/System>
 
+namespace world { class Map; }
+
 /**
  * Base class for the game world.
  *
@@ -39,8 +41,23 @@ public:
 
     virtual void reset();
 
+    /**
+     * Returns @c true if a map is currently loaded.
+     */
+    bool hasMap() const;
+
+    /**
+     * Provides access to the currently loaded map.
+     *
+     * @see hasMap()
+     */
+    world::Map &map() const;
+
     // Systems observe the passage of time.
     void timeChanged(de::Clock const &) override;
+
+protected:
+    void setMap(world::Map *map);
 
 public:
     /// Notified whenever the "current" map changes.

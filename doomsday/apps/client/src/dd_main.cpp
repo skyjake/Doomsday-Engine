@@ -62,6 +62,7 @@
 #include <doomsday/help.h>
 #include <doomsday/paths.h>
 #include <doomsday/library.h>
+#include <doomsday/world/entitydef.h>
 
 #ifdef __CLIENT__
 #  include "clientapp.h"
@@ -78,7 +79,6 @@
 #include "gl/svg.h"
 
 #include "world/clientserverworld.h"
-#include "world/entitydef.h"
 #include "world/map.h"
 #include "world/p_players.h"
 
