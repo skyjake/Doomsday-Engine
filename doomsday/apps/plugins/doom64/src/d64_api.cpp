@@ -72,7 +72,9 @@ int G_RegisterGames(int hookType, int param, void* data)
     game.addResource(RC_PACKAGE, FF_STARTUP, "libdoom64.pk3", 0);
     game.addResource(RC_PACKAGE, FF_STARTUP, "doom64.wad", "MAP01;MAP20;MAP33;F_SUCK");
     game.addResource(RC_DEFINITION, 0, PLUGIN_NAMETEXT ".ded", 0);
-    game.setRequiredPackages(StringList() << "net.dengine.legacy.doom64_2");
+    game.setRequiredPackages(StringList()
+                             << "net.dengine.legacy.doom64_2"
+                             << "kaiser.doom64");
     return true;
 }
 

@@ -130,6 +130,8 @@ Bundles::BlockElements Bundles::formatEntries(DataBundle::Format format) const
 void Bundles::identify()
 {
     d->identifyAddedDataBundles();
+
+    //qDebug() << App::rootFolder().locate<Folder const>("/sys/bundles").contentsAsText();
 }
 
 Bundles::MatchResult Bundles::match(DataBundle const &bundle) const

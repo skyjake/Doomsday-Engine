@@ -108,6 +108,11 @@ void Game::setRequiredPackages(StringList const &packageIds)
     d->requiredPackages = packageIds;
 }
 
+void Game::addRequiredPackage(String const &packageId)
+{
+    d->requiredPackages.append(packageId);
+}
+
 StringList Game::requiredPackages() const
 {
     return d->requiredPackages;
@@ -169,13 +174,15 @@ String Game::description() const
     return String(_E(b) "%1 - %2\n" _E(.)
                   _E(l) "ID: " _E(.) "%3 "
                   _E(l) "PluginId: "    _E(.) "%4\n"
-                  _E(D)_E(b) "Startup resources:\n" _E(.)_E(.) "%5\n"
-                  _E(D)_E(b) "Other resources:\n" _E(.)_E(.) "%6\n"
-                  _E(D)_E(b) "Status: " _E(.) "%7")
+                  _E(D)_E(b) "Packages:\n" _E(.)_E(.) "%5\n"
+                  _E(D)_E(b) "Startup resources:\n" _E(.)_E(.) "%6\n"
+                  _E(D)_E(b) "Other resources:\n" _E(.)_E(.) "%7\n"
+                  _E(D)_E(b) "Status: " _E(.) "%8")
             .arg(title())
             .arg(author())
             .arg(id())
             .arg(int(pluginId()))
+            .arg(" - " _E(>) + String::join(d->requiredPackages, _E(<) "\n - " _E(>)) + _E(<))
             .arg(filesAsText(FF_STARTUP))
             .arg(filesAsText(0, false))
             .arg(statusAsText());

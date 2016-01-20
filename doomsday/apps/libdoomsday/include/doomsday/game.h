@@ -94,6 +94,8 @@ public:
      */
     void setRequiredPackages(de::StringList const &packageIds);
 
+    void addRequiredPackage(de::String const &packageId);
+
     /**
      * Returns the list of required package IDs for loading the game.
      */
