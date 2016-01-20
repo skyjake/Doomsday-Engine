@@ -499,6 +499,18 @@ void String::advanceFormat(String::const_iterator &i, String::const_iterator con
     }
 }
 
+String String::join(QList<String> const &stringList, String const &sep)
+{
+    String joined;
+    QTextStream os(&joined);
+    os << stringList.at(0);
+    for(int i = 1; i < stringList.size(); ++i)
+    {
+        os << sep << stringList.at(i);
+    }
+    return joined;
+}
+
 String String::patternFormat(String::const_iterator &formatIter,
                              String::const_iterator const &formatEnd,
                              IPatternArg const &arg)

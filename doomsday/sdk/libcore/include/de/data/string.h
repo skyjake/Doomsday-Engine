@@ -339,6 +339,8 @@ public:
 
     static void advanceFormat(String::const_iterator &i,
                               String::const_iterator const &end);
+
+    static String join(QList<String> const &stringList, String const &sep = String());
 };
 
 /**
