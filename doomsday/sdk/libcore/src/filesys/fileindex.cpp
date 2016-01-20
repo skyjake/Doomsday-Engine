@@ -35,7 +35,15 @@ DENG2_PIMPL(FileIndex), public ReadWriteLockable
 
     static String indexedName(File const &file)
     {
-        return file.name().lower();
+        String name = file.name().lower();
+
+        // Ignore the package version in the indexed names.
+        if(name.endsWith(".pack"))
+        {
+            name = Package::split(name.fileNameWithoutExtension()).first + ".pack";
+        }
+
+        return name;
     }
 
     void add(File const &file)

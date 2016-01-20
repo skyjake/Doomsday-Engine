@@ -27,6 +27,7 @@
 #include "de/RecordValue"
 #include "de/Guard"
 #include "de/DirectoryFeed"
+#include "de/LinkFile"
 
 namespace de {
 
@@ -378,6 +379,19 @@ String File::fileListAsText(QList<File const *> files)
                 .arg(f->size(), 9)
                 .arg(f->status().modifiedAt.asText())
                 .arg(f->name());
+
+        // Link target.
+        if(LinkFile const *link = f->maybeAs<LinkFile>())
+        {
+            if(!link->isBroken())
+            {
+                txt += QString(" -> %1").arg(link->target().path());
+            }
+            else
+            {
+                txt += " (broken link)";
+            }
+        }
     }
     return txt;
 }

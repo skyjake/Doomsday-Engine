@@ -75,7 +75,6 @@ DENG2_PIMPL(PackageLoader)
         auto idVer = Package::split(packageIdVer);
 
         String const packageId = idVer.first;
-        qDebug() << "looking for" << packageId;
         QStringList const components = packageId.split('.');
 
         String id;
@@ -94,7 +93,6 @@ DENG2_PIMPL(PackageLoader)
                                              id + ".pack", files);
 
             files.remove_if([&packageId] (File *file) {
-                qDebug() << "found:" << file->path();
                 if(shouldIgnoreFile(*file)) return true;
                 return Package::identifierForFile(*file) != packageId;
             });
@@ -141,7 +139,7 @@ DENG2_PIMPL(PackageLoader)
         if(!findAllVariants(packageId, found))
         {
             // None found.
-            return 0;
+            return nullptr;
         }
 
         // Each must have a version specified.
