@@ -27,6 +27,7 @@
 #include "de/PackageFeed"
 
 #include <QMap>
+#include <QRegExp>
 
 namespace de {
 
@@ -123,6 +124,16 @@ DENG2_PIMPL(PackageLoader)
         Package::validateMetadata(packFile.objectNamespace().subrecord("package"));
     }
 
+    File const *selectPackage(IdentifierList const &idList) const
+    {
+        for(auto const &id : idList)
+        {
+            if(File const *f = selectPackage(id))
+                return f;
+        }
+        return nullptr;
+    }
+
     /**
      * Given a package identifier, pick one of the available versions of the package
      * based on predefined criteria.
@@ -148,6 +159,17 @@ DENG2_PIMPL(PackageLoader)
             checkPackage(**i);
         }
 
+        // If the identifier includes a version, only accept that specific version.
+        auto idVer = Package::split(packageId);
+        if(idVer.second.isValid())
+        {
+            std::remove_if(found.begin(), found.end(), [&idVer] (File *f) {
+                Version const pkgVer = f->objectNamespace().gets("package.version");
+                return (pkgVer != idVer.second); // Ignore other versions.
+            });
+        }
+
+        // Sorted descending by version.
         found.sort([] (File const *a, File const *b) -> bool
         {
             // The version must be specified using a format understood by Version.
@@ -254,7 +276,7 @@ PackageLoader::PackageLoader() : d(new Instance(this))
 
 bool PackageLoader::isAvailable(String const &packageId) const
 {
-    return d->selectPackage(packageId) != nullptr;
+    return d->selectPackage(IdentifierList(packageId)) != nullptr;
 }
 
 Package const &PackageLoader::load(String const &packageId)
@@ -411,6 +433,15 @@ StringList PackageLoader::findAllPackages() const
     d->listPackagesInIndex(App::fileSystem().indexFor(DENG2_TYPE_NAME(ArchiveFolder)), all);
     d->listPackagesInIndex(App::fileSystem().indexFor(DENG2_TYPE_NAME(LinkFile)), all);
     return all;
+}
+
+PackageLoader::IdentifierList::IdentifierList(String const &spaceSeparatedIds)
+{
+    static QRegExp anySpace("\\s");
+    for(auto const &qs : spaceSeparatedIds.split(anySpace, String::SkipEmptyParts))
+    {
+        append(qs);
+    }
 }
 
 } // namespace de

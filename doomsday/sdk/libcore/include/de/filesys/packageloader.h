@@ -65,6 +65,14 @@ public:
 
     typedef QMap<String, Package *> LoadedPackages;
 
+    /**
+     * Utility for dealing with space-separated lists of identifiers.
+     */
+    struct DENG2_PUBLIC IdentifierList : public StringList
+    {
+        IdentifierList(String const &spaceSeparatedIds);
+    };
+
 public:
     PackageLoader();
 
