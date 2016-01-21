@@ -70,6 +70,7 @@
 #ifdef __CLIENT__
 #  include "gl/gl_tex.h"
 #  include "gl/gl_texmanager.h"
+#  include "gl/svg.h"
 #  include "render/rend_model.h"
 #  include "render/rend_particle.h"  // Rend_ParticleReleaseSystemTextures
 
@@ -2251,6 +2252,18 @@ DENG2_PIMPL(ResourceSystem)
 
 ResourceSystem::ResourceSystem() : d(new Instance(this))
 {}
+
+void ResourceSystem::clear()
+{
+    Resources::clear();
+
+#ifdef __CLIENT__
+    R_ShutdownSvgs();
+#endif
+    clearAllRuntimeResources();
+    clearAllAnimGroups();
+    clearAllColorPalettes();
+}
 
 void ResourceSystem::clearAllResources()
 {

@@ -25,6 +25,7 @@
 #include "doomsday/filesys/datafolder.h"
 #include "doomsday/paths.h"
 #include "doomsday/world/world.h"
+#include "doomsday/world/entitydef.h"
 #include "doomsday/SavedSession"
 
 #include <de/App>
@@ -495,6 +496,8 @@ void DoomsdayApp::reset()
     World::get().reset();
 
     Z_FreeTags(PU_GAMESTATIC, PU_PURGELEVEL - 1);
+
+    P_ShutdownMapEntityDefs();
 }
 
 void DoomsdayApp::setGame(Game &game)

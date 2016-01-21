@@ -52,6 +52,11 @@ public:
     void timeChanged(de::Clock const &) override;
 
     /**
+     * Release all allocations, returning to the initial state.
+     */
+    virtual void clear();
+
+    /**
      * Lookup a ResourceClass by symbolic @a name.
      */
     ResourceClass &resClass(de::String name);

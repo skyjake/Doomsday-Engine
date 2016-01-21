@@ -73,6 +73,9 @@ void Resources::timeChanged(Clock const &)
     // Nothing to do.
 }
 
+void Resources::clear()
+{}
+
 Resources &Resources::get()
 {
     DENG2_ASSERT(theResources);

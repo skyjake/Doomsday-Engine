@@ -128,6 +128,8 @@ public:
      */
     ResourceSystem();
 
+    void clear() override;
+
     void clearAllResources();
     void clearAllRuntimeResources();
     void clearAllSystemResources();

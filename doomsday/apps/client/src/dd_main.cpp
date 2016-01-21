@@ -1298,13 +1298,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
     if(App_GameLoaded())
     {
         DoomsdayApp::app().reset();
-
-        P_ShutdownMapEntityDefs();
-
-        R_ShutdownSvgs();
-        App_ResourceSystem().clearAllRuntimeResources();
-        App_ResourceSystem().clearAllAnimGroups();
-        App_ResourceSystem().clearAllColorPalettes();
+        Resources::get().clear();
 
         App_AudioSystem().clearLogical();
 
