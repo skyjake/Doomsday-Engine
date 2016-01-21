@@ -1,6 +1,6 @@
 # Build configuration for AppVeyor CI Windows builds
-platform: x86
-configuration: Release
+#platform: x86
+#configuration: Release
 os: Visual Studio 2013
 environment:
     DENG_DEPEND_PATH: c:\projects\doomsday-engine\deps
