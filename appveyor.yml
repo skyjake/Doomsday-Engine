@@ -2,8 +2,12 @@
 platform: x86
 configuration: Release
 os: Visual Studio 2013
+environment:
+    DENG_DEPEND_PATH: c:\projects\doomsday-engine\deps
 before_build:
     - git submodule update --init
+    - ps: Start-FileDownload 'https://dl.dropboxusercontent.com/u/11948701/appveyor/deps.7z'
+    - 7z x deps.7z
     - md build-ci
     - cd build-ci
     - cmake -G "Visual Studio 12 2013" -DQMAKE=C:\Qt\5.5\msvc2013\bin\qmake.exe ..\doomsday
