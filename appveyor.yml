@@ -13,4 +13,4 @@ before_build:
     - cmake -G "Visual Studio 12 2013" -DQMAKE=C:\Qt\5.5\msvc2013\bin\qmake.exe ..\doomsday
 build:
     parallel: true
-    project: build-ci\Doomsday.sln
+    project: c:\projects\doomsday-engine\build-ci\Doomsday.sln
