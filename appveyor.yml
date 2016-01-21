@@ -3,6 +3,7 @@ platform: x86
 configuration: Release
 os: Visual Studio 2013
 before_build:
+    - git submodule update --init
     - md build-ci
     - cd build-ci
     - cmake -G "Visual Studio 12 2013" -DQMAKE=C:\Qt\5.5\msvc2013\bin\qmake.exe ..\doomsday
