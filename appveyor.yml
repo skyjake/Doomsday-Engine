@@ -10,7 +10,7 @@ before_build:
     - 7z x deps.7z
     - md build-ci
     - cd build-ci
-    - cmake -G "Visual Studio 12 2013" -DQMAKE=C:\Qt\5.5\msvc2013\bin\qmake.exe ..\doomsday
+    - cmake -G "Visual Studio 12 2013" -DQMAKE=C:\Qt\5.5\msvc2013\bin\qmake.exe -DDENG_ENABLE_TESTS=ON ..\doomsday
 build:
     parallel: true
     project: c:\projects\doomsday-engine\build-ci\Doomsday.sln
