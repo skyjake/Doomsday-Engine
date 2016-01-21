@@ -4,7 +4,7 @@ This is the source code for Doomsday Engine: a portable, enhanced source port of
 
 For [compilation instructions](http://wiki.dengine.net/w/Compilation) and other details, see the documentation wiki: http://wiki.dengine.net/
 
-[![Linux Build Status](https://travis-ci.org/skyjake/Doomsday-Engine.svg)](https://travis-ci.org/skyjake/Doomsday-Engine)
+Linux 64-bit [![Linux Build Status](https://travis-ci.org/skyjake/Doomsday-Engine.svg)](https://travis-ci.org/skyjake/Doomsday-Engine) Windows 32-bit [![Windows Build Status](https://ci.appveyor.com/api/projects/status/79h7egw7q225gj2h?svg=true)](https://ci.appveyor.com/project/skyjake/doomsday-engine)
 
 ## Libraries
 
