@@ -118,14 +118,14 @@ DENG2_PIMPL_NOREF(ControllerPresets)
 
     void currentGameChanged(Game const &newGame)
     {
-        String const currentScheme = CVar_String(presetCVar());
-
         DENG2_ASSERT(deviceId == IDEV_JOY1); /// @todo Expand for other devices as needed. -jk
 
         // When loading a game, automatically apply the control scheme matching
         // the connected game controller (unless a specific scheme is already set).
         if(!newGame.isNull() && !Joystick_Name().isEmpty())
         {
+            String const currentScheme = CVar_String(presetCVar());
+
             if(auto const *gamepad = findMatching(Joystick_Name()))
             {
                 if(currentScheme.isEmpty())

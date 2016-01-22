@@ -48,6 +48,8 @@ extern de::dint symbolicEchoMode;
 de::dint DD_EarlyInit();
 void DD_FinishInitializationAfterWindowReady();
 
+void DD_ConsoleRegister();
+
 /**
  * Returns @c true if shutdown is in progress.
  */

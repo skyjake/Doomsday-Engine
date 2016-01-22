@@ -56,6 +56,7 @@ static void handleAppTerminate(char const *msg)
 DENG2_PIMPL(ServerApp)
 , DENG2_OBSERVES(Plugins, PublishAPI)
 , DENG2_OBSERVES(DoomsdayApp, GameUnload)
+, DENG2_OBSERVES(DoomsdayApp, ConsoleRegistration)
 {
     QScopedPointer<ServerSystem> serverSystem;
     QScopedPointer<ResourceSystem> resourceSys;
@@ -70,11 +71,13 @@ DENG2_PIMPL(ServerApp)
 
         DoomsdayApp::plugins().audienceForPublishAPI() += this;
         self.audienceForGameUnload() += this;
+        self.audienceForConsoleRegistration() += this;
     }
 
     ~Instance()
     {
         self.audienceForGameUnload() -= this;
+        self.audienceForConsoleRegistration() -= this;
 
         Sys_Shutdown();
         DD_Shutdown();
@@ -85,12 +88,19 @@ DENG2_PIMPL(ServerApp)
         DD_PublishAPIs(plugin);
     }
 
+    void consoleRegistration()
+    {
+        DD_ConsoleRegister();
+    }
+
     void aboutToUnloadGame(Game const &/*gameBeingUnloaded*/)
     {
         if(netGame && isServer)
         {
             N_ServerClose();
         }
+
+        infineSystem().reset();
 
         if(App_GameLoaded())
         {
@@ -211,11 +221,9 @@ void ServerApp::initialize()
     DD_FinishInitializationAfterWindowReady();
 }
 
-void ServerApp::aboutToChangeGame(Game const &upcomingGame)
+void ServerApp::unloadGame(Game const &upcomingGame)
 {
-    DoomsdayApp::aboutToChangeGame(upcomingGame);
-
-    infineSystem().reset();
+    DoomsdayApp::unloadGame(upcomingGame);
 }
 
 ServerApp &ServerApp::app()

@@ -52,6 +52,11 @@ public:
      */
     DENG2_DEFINE_AUDIENCE2(GameChange, void currentGameChanged(Game const &newGame))
 
+    /**
+     * Notified when console variables and commands should be registered.
+     */
+    DENG2_DEFINE_AUDIENCE2(ConsoleRegistration, void consoleRegistration())
+
 public:
     DoomsdayApp(Players::Constructor playerConstructor);
 
@@ -99,14 +104,16 @@ public:
      */
     static Game &game();
 
-//protected:
+//protected: // TODO: after changeGame() is moved here, make protected again
     /**
      * Called just before a game change is about to begin. The GameUnload
      * audience has already been notified.
      *
      * @param upcomingGame  Upcoming game that we will be changing to.
      */
-    virtual void aboutToChangeGame(Game const &upcomingGame);
+    virtual void unloadGame(Game const &upcomingGame);
+
+    virtual void makeGameCurrent(Game &newGame);
 
     /**
      * Clears all allocated resources and subsystems. This is called when

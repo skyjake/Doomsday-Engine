@@ -166,8 +166,6 @@ public:
     }
 };
 
-static void consoleRegister();
-static void initPathMappings();
 static dint DD_StartupWorker(void *context);
 static dint DD_DummyWorker(void *context);
 static void DD_AutoLoad();
@@ -808,7 +806,7 @@ static dint DD_LoadGameStartupResourcesWorker(void *context)
 
     // Reset file Ids so previously seen files can be processed again.
     App_FileSystem().resetFileIds();
-    initPathMappings();
+    FS_InitVirtualPathMappings();
     App_FileSystem().resetAllSchemes();
 
     if(parms.initiatedBusyMode)
@@ -930,7 +928,7 @@ static dint DD_LoadAddonResourcesWorker(void *context)
         Con_SetProgress(180);
     }
 
-    initPathLumpMappings();
+    FS_InitPathLumpMappings();
 
     // Re-initialize the resource locator as there are now new resources to be found
     // on existing search paths (probably that is).
@@ -1135,53 +1133,17 @@ bool App_ChangeGame(Game &game, bool allowReload)
         isReload = true;
     }
 
-    // The current game will be gone very soon.
+    // The current game now be unloaded.
     DENG2_FOR_EACH_OBSERVER(DoomsdayApp::GameUnloadAudience, i,
                             DoomsdayApp::app().audienceForGameUnload())
     {
         i->aboutToUnloadGame(DoomsdayApp::game());
     }
 
-    // Notify about which game will be loaded.
-    DoomsdayApp::app().aboutToChangeGame(game);
+    DoomsdayApp::app().unloadGame(game);
 
-    // If a game is presently loaded; unload it.
-    if(App_GameLoaded())
-    {
-        /// @todo Use an audience? -jk
-        consoleRegister();
-    }
-
-    if(!game.isNull())
-    {
-        LOG_MSG("Loading game '%s'...") << game.id();
-    }
-    else if(!isReload)
-    {
-        LOG_MSG("Unloaded game");
-    }
-
-    Library_ReleaseGames();
-
-    if(!DD_IsShuttingDown())
-    {
-        // Re-initialize subsystems needed even when in ringzero.
-        if(!DoomsdayApp::plugins().exchangeGameEntryPoints(game.pluginId()))
-        {
-            LOG_WARNING("Game plugin for '%s' is invalid") << game.id();
-            LOGDEV_WARNING("Failed exchanging entrypoints with plugin %i")
-                    << dint(game.pluginId());
-            return false;
-        }
-    }
-
-    // This is now the current game.
-    DoomsdayApp::setGame(game);
-    Session::profile().gameId = game.id();
-
-#ifdef __CLIENT__
-    ClientWindow::main().setWindowTitle(DD_ComposeMainWindowTitle());
-#endif
+    // Do the switch.
+    DoomsdayApp::app().makeGameCurrent(game);
 
     /*
      * If we aren't shutting down then we are either loading a game or switching
@@ -1322,7 +1284,7 @@ dint DD_EarlyInit()
     Con_InitDatabases();
 
     // Register the engine's console commands and variables.
-    consoleRegister();
+    DD_ConsoleRegister();
 
     return true;
 }
@@ -1477,7 +1439,7 @@ static void initialize()
 #endif
     }
 
-    initPathLumpMappings();
+    FS_InitPathLumpMappings();
 
     // Re-initialize the filesystem subspace schemes as there are now new
     // resources to be found on existing search paths (probably that is).
@@ -1580,8 +1542,8 @@ static void initialize()
         // Lets get most of everything else initialized.
         // Reset file IDs so previously seen files can be processed again.
         App_FileSystem().resetFileIds();
-        initPathLumpMappings();
-        initPathMappings();
+        FS_InitPathLumpMappings();
+        FS_InitVirtualPathMappings();
         App_FileSystem().resetAllSchemes();
 
         App_ResourceSystem().initTextures();
@@ -1668,7 +1630,7 @@ static dint DD_StartupWorker(void * /*context*/)
         LOG_WARNING("User directory not found (check -userdir)");
     }
 
-    initPathMappings();
+    FS_InitVirtualPathMappings();
     App_FileSystem().resetAllSchemes();
 
     Con_SetProgress(40);
@@ -1856,8 +1818,8 @@ void DD_UpdateEngineState()
     //App_FileSystem().resetFileIds();
 
     // Update the dir/WAD translations.
-    initPathLumpMappings();
-    initPathMappings();
+    FS_InitPathLumpMappings();
+    FS_InitVirtualPathMappings();
     // Re-build the filesystem subspace schemes as there may be new resources to be found.
     App_FileSystem().resetAllSchemes();
 
@@ -2749,7 +2711,7 @@ D_CMD(Clear)
 }
 #endif
 
-static void consoleRegister()
+void DD_ConsoleRegister()
 {
     C_VAR_CHARPTR("file-startup", &startupFiles, 0, 0, 0);
 

@@ -103,7 +103,8 @@ public slots:
     void endNativeUIMode();
 
 protected:
-    void aboutToChangeGame(Game const &upcomingGame) override;
+    void unloadGame(Game const &upcomingGame) override;
+    void makeGameCurrent(Game &newGame) override;
     void reset() override;
 
 private:

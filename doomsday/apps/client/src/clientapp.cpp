@@ -56,6 +56,7 @@
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
 #include "gl/gl_defer.h"
+#include "gl/svg.h"
 
 #include "world/map.h"
 #include "world/contact.h"
@@ -129,6 +130,7 @@ DENG2_PIMPL(ClientApp)
 , DENG2_OBSERVES(Games, Progress)
 , DENG2_OBSERVES(DoomsdayApp, GameChange)
 , DENG2_OBSERVES(DoomsdayApp, GameUnload)
+, DENG2_OBSERVES(DoomsdayApp, ConsoleRegistration)
 {
     Binder binder;
     QScopedPointer<Updater> updater;
@@ -226,6 +228,7 @@ DENG2_PIMPL(ClientApp)
         DoomsdayApp::plugins().audienceForNotification() += this;
         self.audienceForGameChange() += this;
         self.audienceForGameUnload() += this;
+        self.audienceForConsoleRegistration() += this;
         self.games().audienceForProgress() += this;
     }
 
@@ -233,6 +236,7 @@ DENG2_PIMPL(ClientApp)
     {
         self.audienceForGameChange() -= this;
         self.audienceForGameUnload() -= this;
+        self.audienceForConsoleRegistration() -= this;
 
         try
         {
@@ -310,6 +314,11 @@ DENG2_PIMPL(ClientApp)
         Con_SetProgress(progress);
     }
 
+    void consoleRegistration()
+    {
+        DD_ConsoleRegister();
+    }
+
     void aboutToUnloadGame(Game const &/*gameBeingUnloaded*/)
     {
         DENG_ASSERT(ClientWindow::mainExists());
@@ -328,8 +337,9 @@ DENG2_PIMPL(ClientApp)
         GL_LoadLightingSystemTextures();
         GL_LoadFlareTextures();
         Rend_ParticleLoadSystemTextures();
-
         GL_ResetViewEffects();
+
+        infineSystem().reset();
 
         if(App_GameLoaded())
         {
@@ -756,9 +766,9 @@ void ClientApp::endNativeUIMode()
 #endif
 }
 
-void ClientApp::aboutToChangeGame(Game const &upcomingGame)
+void ClientApp::unloadGame(Game const &upcomingGame)
 {
-    DoomsdayApp::aboutToChangeGame(upcomingGame);
+    DoomsdayApp::unloadGame(upcomingGame);
 
     // Game has been set to null, update window.
     ClientWindow::main().setWindowTitle(DD_ComposeMainWindowTitle());
@@ -775,16 +785,24 @@ void ClientApp::aboutToChangeGame(Game const &upcomingGame)
         }
     }
 
-    d->inputSys->initAllDevices();
     R_InitViewWindow();
     R_InitSvgs();
+}
 
-    infineSystem().reset();
+void ClientApp::makeGameCurrent(Game &newGame)
+{
+    DoomsdayApp::makeGameCurrent(newGame);
+
+    // Game has been changed, update window.
+    ClientWindow::main().setWindowTitle(DD_ComposeMainWindowTitle());
 }
 
 void ClientApp::reset()
 {
     DoomsdayApp::reset();
 
-
+    if(App_GameLoaded())
+    {
+        d->inputSys->initAllDevices();
+    }
 }

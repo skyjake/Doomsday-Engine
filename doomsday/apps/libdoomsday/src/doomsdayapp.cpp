@@ -23,8 +23,10 @@
 #include "doomsday/filesys/fs_util.h"
 #include "doomsday/resource/resources.h"
 #include "doomsday/resource/bundles.h"
+#include "doomsday/filesys/fs_main.h"
 #include "doomsday/filesys/datafile.h"
 #include "doomsday/filesys/datafolder.h"
+#include "doomsday/filesys/virtualmappings.h"
 #include "doomsday/paths.h"
 #include "doomsday/world/world.h"
 #include "doomsday/world/entitydef.h"
@@ -329,10 +331,12 @@ DENG2_PIMPL_NOREF(DoomsdayApp)
 
     DENG2_PIMPL_AUDIENCE(GameUnload)
     DENG2_PIMPL_AUDIENCE(GameChange)
+    DENG2_PIMPL_AUDIENCE(ConsoleRegistration)
 };
 
 DENG2_AUDIENCE_METHOD(DoomsdayApp, GameUnload)
 DENG2_AUDIENCE_METHOD(DoomsdayApp, GameChange)
+DENG2_AUDIENCE_METHOD(DoomsdayApp, ConsoleRegistration)
 
 DoomsdayApp::DoomsdayApp(Players::Constructor playerConstructor)
     : d(new Instance(playerConstructor))
@@ -473,12 +477,14 @@ Game &DoomsdayApp::game()
     return *app().d->currentGame;
 }
 
-void DoomsdayApp::aboutToChangeGame(Game const &)
+void DoomsdayApp::unloadGame(Game const &)
 {
     auto &gx = plugins().gameExports();
 
     if(App_GameLoaded())
     {
+        LOG_MSG("Unloading game...");
+
         if(gx.Shutdown)
         {
             gx.Shutdown();
@@ -531,13 +537,44 @@ void DoomsdayApp::reset()
 
     P_ShutdownMapEntityDefs();
 
+    // Reinitialize the console.
     Con_ClearDatabases();
     Con_InitDatabases();
+    DENG2_FOR_AUDIENCE2(ConsoleRegistration, i)
+    {
+        i->consoleRegistration();
+    }
 }
 
 void DoomsdayApp::setGame(Game &game)
 {
     app().d->currentGame = &game;
+}
+
+void DoomsdayApp::makeGameCurrent(Game &newGame)
+{
+    if(!newGame.isNull())
+    {
+        LOG_MSG("Loading game '%s'...") << newGame.id();
+    }
+
+    Library_ReleaseGames();
+
+    //if(!DD_IsShuttingDown())
+    {
+        // Re-initialize subsystems needed even when in ringzero.
+        if(!plugins().exchangeGameEntryPoints(newGame.pluginId()))
+        {
+            LOG_WARNING("Game plugin for '%s' is invalid") << newGame.id();
+            LOGDEV_WARNING("Failed exchanging entrypoints with plugin %i")
+                    << dint(newGame.pluginId());
+            return false;
+        }
+    }
+
+    // This is now the current game.
+    setGame(newGame);
+    Session::profile().gameId = newGame.id();
 }
 
 bool App_GameLoaded()
