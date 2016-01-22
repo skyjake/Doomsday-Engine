@@ -1,0 +1,21 @@
+# Build configuration for AppVeyor CI Windows builds
+configuration: Release
+platform: Win32
+os: Visual Studio 2013
+environment:
+    DENG_DEPEND_PATH: c:\projects\doomsday-engine\deps
+before_build:
+    - git submodule update --init
+    - ps: Start-FileDownload 'https://dl.dropboxusercontent.com/u/11948701/appveyor/deps.7z'
+    - 7z x deps.7z
+    - md build-ci
+    - cd build-ci
+    - cmake -G "Visual Studio 12 2013" -DQMAKE=C:\Qt\5.5\msvc2013\bin\qmake.exe -DDENG_ENABLE_TESTS=ON ..\doomsday
+build:
+    parallel: true
+    project: c:\projects\doomsday-engine\build-ci\Doomsday.sln
+notifications:
+    - provider: Slack
+      auth_token:
+          secure: cVmSV0WdxBPgKCSkUk0msgcLa6VlQNY/3paX0CZoR+km2SLJC0lZGsLzgonkPztxQtKmy72nwUJXqN8dCx1elQ==
+      channel: autobuilder
