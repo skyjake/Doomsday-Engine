@@ -60,9 +60,6 @@ void R_SkyParams(int layer, int param, void *data)
     DENG_UNUSED(data);
 }
 
-void R_InitSvgs(void)
-{}
-
 void R_ShutdownSvgs(void)
 {}
 

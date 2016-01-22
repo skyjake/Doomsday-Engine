@@ -4506,3 +4506,12 @@ String ResourceSystem::resolveSymbol(String const &symbol) // static
                                           "Symbol '" + symbol + "' is unknown");
     }
 }
+
+void ResourceSystem::clearAllMaterialSchemes()
+{
+    forAllMaterialSchemes([] (MaterialScheme &scheme) {
+        scheme.clear();
+        return LoopContinue;
+    });
+    DENG2_ASSERT(materialCount() == 0); // sanity check
+}

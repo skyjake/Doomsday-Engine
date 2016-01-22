@@ -71,6 +71,7 @@
 #include "ui/dialogs/alertdialog.h"
 #include "ui/styledlogsinkformatter.h"
 #include "render/rend_particle.h"
+#include "render/r_draw.h"
 #include "network/net_demo.h"
 #include "updater.h"
 #include "updater/downloaddialog.h"
@@ -759,6 +760,9 @@ void ClientApp::aboutToChangeGame(Game const &upcomingGame)
 {
     DoomsdayApp::aboutToChangeGame(upcomingGame);
 
+    // Game has been set to null, update window.
+    ClientWindow::main().setWindowTitle(DD_ComposeMainWindowTitle());
+
     if(!upcomingGame.isNull())
     {
         ClientWindow &mainWin = ClientWindow::main();
@@ -770,6 +774,12 @@ void ClientApp::aboutToChangeGame(Game const &upcomingGame)
             mainWin.canvas().trapMouse();
         }
     }
+
+    d->inputSys->initAllDevices();
+    R_InitViewWindow();
+    R_InitSvgs();
+
+    infineSystem().reset();
 }
 
 void ClientApp::reset()

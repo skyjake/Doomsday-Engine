@@ -58,6 +58,7 @@
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/filesys/fs_util.h>
 #include <doomsday/filesys/sys_direc.h>
+#include <doomsday/filesys/virtualmappings.h>
 #include <doomsday/resource/manifest.h>
 #include <doomsday/help.h>
 #include <doomsday/paths.h>
@@ -877,156 +878,6 @@ static dint addListFiles(QStringList const &list, FileType const &ftype)
     return numAdded;
 }
 
-/**
- * (Re-)Initialize the VFS path mappings.
- */
-static void initPathMappings()
-{
-    App_FileSystem().clearPathMappings();
-
-    if(DD_IsShuttingDown()) return;
-
-    // Create virtual directory mappings by processing all -vdmap options.
-    dint argC = CommandLine_Count();
-    for(dint i = 0; i < argC; ++i)
-    {
-        if(strnicmp("-vdmap", CommandLine_At(i), 6))
-        {
-            continue;
-        }
-
-        if(i < argC - 1 && !CommandLine_IsOption(i + 1) && !CommandLine_IsOption(i + 2))
-        {
-            String source      = NativePath(CommandLine_PathAt(i + 1)).expand().withSeparators('/');
-            String destination = NativePath(CommandLine_PathAt(i + 2)).expand().withSeparators('/');
-            App_FileSystem().addPathMapping(source, destination);
-            i += 2;
-        }
-    }
-}
-
-/// Skip all whitespace except newlines.
-static inline char const *skipSpace(char const *ptr)
-{
-    DENG2_ASSERT(ptr != 0);
-    while(*ptr && *ptr != '\n' && isspace(*ptr))
-    { ptr++; }
-    return ptr;
-}
-
-static bool parsePathLumpMapping(char lumpName[9/*LUMPNAME_T_MAXLEN*/], ddstring_t *path, char const *buffer)
-{
-    DENG2_ASSERT(lumpName != 0 && path != 0);
-
-    // Find the start of the lump name.
-    char const *ptr = skipSpace(buffer);
-
-    // Just whitespace?
-    if(!*ptr || *ptr == '\n') return false;
-
-    // Find the end of the lump name.
-    char const *end = (char const *)M_FindWhite((char *)ptr);
-    if(!*end || *end == '\n') return false;
-
-    size_t len = end - ptr;
-    // Invalid lump name?
-    if(len > 8) return false;
-
-    memset(lumpName, 0, 9/*LUMPNAME_T_MAXLEN*/);
-    strncpy(lumpName, ptr, len);
-    strupr(lumpName);
-
-    // Find the start of the file path.
-    ptr = skipSpace(end);
-    if(!*ptr || *ptr == '\n') return false; // Missing file path.
-
-    // We're at the file path.
-    Str_Set(path, ptr);
-    // Get rid of any extra whitespace on the end.
-    Str_StripRight(path);
-    F_FixSlashes(path, path);
-    return true;
-}
-
-/**
- * <pre> LUMPNAM0 \\Path\\In\\The\\Base.ext
- * LUMPNAM1 Path\\In\\The\\RuntimeDir.ext
- *  :</pre>
- */
-static bool parsePathLumpMappings(char const *buffer)
-{
-    DENG2_ASSERT(buffer != 0);
-
-    bool successful = false;
-    ddstring_t path; Str_Init(&path);
-    ddstring_t line; Str_Init(&line);
-
-    char const *ch = buffer;
-    char lumpName[9/*LUMPNAME_T_MAXLEN*/];
-    do
-    {
-        ch = Str_GetLine(&line, ch);
-        if(!parsePathLumpMapping(lumpName, &path, Str_Text(&line)))
-        {
-            // Failure parsing the mapping.
-            // Ignore errors in individual mappings and continue parsing.
-            //goto parseEnded;
-        }
-        else
-        {
-            String destination = NativePath(Str_Text(&path)).expand().withSeparators('/');
-            App_FileSystem().addPathLumpMapping(lumpName, destination);
-        }
-    } while(*ch);
-
-    // Success.
-    successful = true;
-
-//parseEnded:
-    Str_Free(&line);
-    Str_Free(&path);
-    return successful;
-}
-
-/**
- * (Re-)Initialize the path => lump mappings.
- * @note Should be called after WADs have been processed.
- */
-static void initPathLumpMappings()
-{
-    // Free old paths, if any.
-    App_FileSystem().clearPathLumpMappings();
-
-    if(DD_IsShuttingDown()) return;
-
-    size_t bufSize = 0;
-    uint8_t *buf = 0;
-
-    // Add the contents of all DD_DIREC lumps.
-    /// @todo fixme: Enforce scope to the containing package!
-    LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
-    LumpIndex::FoundIndices foundDirecs;
-    lumpIndex.findAll("DD_DIREC.lmp", foundDirecs);
-    DENG2_FOR_EACH_CONST(LumpIndex::FoundIndices, i, foundDirecs) // in load order
-    {
-        File1 &lump          = lumpIndex[*i];
-        FileInfo const &lumpInfo = lump.info();
-
-        // Make a copy of it so we can ensure it ends in a null.
-        if(bufSize < lumpInfo.size + 1)
-        {
-            bufSize = lumpInfo.size + 1;
-            buf = (uint8_t *) M_Realloc(buf, bufSize);
-        }
-
-        lump.read(buf, 0, lumpInfo.size);
-        buf[lumpInfo.size] = 0;
-        parsePathLumpMappings(reinterpret_cast<char const *>(buf));
-    }
-
-    M_Free(buf);
-}
-
 static dint DD_LoadAddonResourcesWorker(void *context)
 {
     ddgamechange_params_t &parms = *static_cast<ddgamechange_params_t *>(context);
@@ -1297,48 +1148,9 @@ bool App_ChangeGame(Game &game, bool allowReload)
     // If a game is presently loaded; unload it.
     if(App_GameLoaded())
     {
-        DoomsdayApp::app().reset();
-        Resources::get().clear();
-
-        App_AudioSystem().clearLogical();
-
-        Con_ClearDatabases();
-
-        // We do not want to load session resources specified on the command line again.
-        Session::profile().resourceFiles.clear();
-
-        // The current game is now the special "null-game".
-        DoomsdayApp::setGame(App_Games().nullGame());
-
-        Con_InitDatabases();
+        /// @todo Use an audience? -jk
         consoleRegister();
-
-        R_InitSvgs();
-
-#ifdef __CLIENT__
-        ClientApp::inputSystem().initAllDevices();
-        R_InitViewWindow();
-#endif
-
-        App_FileSystem().unloadAllNonStartupFiles();
-
-        // Reset file IDs so previously seen files can be processed again.
-        /// @todo this releases the IDs of startup files too but given the
-        /// only startup file is doomsday.pk3 which we never attempt to load
-        /// again post engine startup, this isn't an immediate problem.
-        App_FileSystem().resetFileIds();
-
-        // Update the dir/WAD translations.
-        initPathLumpMappings();
-        initPathMappings();
-
-        App_FileSystem().resetAllSchemes();
     }
-
-    App_InFineSystem().reset();
-
-    /// @todo The entire material collection should not be destroyed during a reload.
-    App_ResourceSystem().clearAllMaterialSchemes();
 
     if(!game.isNull())
     {
@@ -1350,10 +1162,6 @@ bool App_ChangeGame(Game &game, bool allowReload)
     }
 
     Library_ReleaseGames();
-
-#ifdef __CLIENT__
-    ClientWindow::main().setWindowTitle(DD_ComposeMainWindowTitle());
-#endif
 
     if(!DD_IsShuttingDown())
     {
@@ -1913,9 +1721,7 @@ static dint DD_StartupWorker(void * /*context*/)
     R_BuildTexGammaLut();
 #ifdef __CLIENT__
     UI_LoadFonts();
-#endif
     R_InitSvgs();
-#ifdef __CLIENT__
     R_InitViewWindow();
     R_ResetFrameCount();
 #endif

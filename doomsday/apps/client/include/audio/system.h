@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef CLIENT_AUDIO_SYSTEM_H
@@ -220,7 +220,7 @@ public:  // Low-level driver interfaces: ---------------------------------------
      * SFX playback is @em not available.
      */
     audiointerface_sfx_generic_t *sfx() const;
-    
+
     /**
      * Returns the currently active, primary CD playback interface. @c nullptr is returned
      * if CD playback is @em not available.
@@ -242,9 +242,6 @@ public:  /// @todo make private:
 #ifdef __CLIENT__
     void worldMapChanged();
 #endif
-
-    /// @todo refactor away.
-    void clearLogical();
 
     /**
      * Provides mutable access to the sound sample cache (waveforms).

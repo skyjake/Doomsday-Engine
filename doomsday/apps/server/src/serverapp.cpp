@@ -211,6 +211,13 @@ void ServerApp::initialize()
     DD_FinishInitializationAfterWindowReady();
 }
 
+void ServerApp::aboutToChangeGame(Game const &upcomingGame)
+{
+    DoomsdayApp::aboutToChangeGame(upcomingGame);
+
+    infineSystem().reset();
+}
+
 ServerApp &ServerApp::app()
 {
     DENG2_ASSERT(serverAppSingleton != 0);

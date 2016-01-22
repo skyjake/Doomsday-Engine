@@ -18,14 +18,17 @@
 
 #include "doomsday/doomsdayapp.h"
 #include "doomsday/games.h"
+#include "doomsday/console/exec.h"
 #include "doomsday/filesys/sys_direc.h"
 #include "doomsday/filesys/fs_util.h"
+#include "doomsday/resource/resources.h"
 #include "doomsday/resource/bundles.h"
 #include "doomsday/filesys/datafile.h"
 #include "doomsday/filesys/datafolder.h"
 #include "doomsday/paths.h"
 #include "doomsday/world/world.h"
 #include "doomsday/world/entitydef.h"
+#include "doomsday/Session"
 #include "doomsday/SavedSession"
 
 #include <de/App>
@@ -482,12 +485,41 @@ void DoomsdayApp::aboutToChangeGame(Game const &)
         }
 
         // Tell the plugin it is being unloaded.
-        void *unloader = plugins().findEntryPoint(game().pluginId(), "DP_Unload");
-        LOGDEV_MSG("Calling DP_Unload %p") << unloader;
-        plugins().setActivePluginId(game().pluginId());
-        if(unloader) ((pluginfunc_t)unloader)();
-        plugins().setActivePluginId(0);
+        {
+            void *unloader = plugins().findEntryPoint(game().pluginId(), "DP_Unload");
+            LOGDEV_MSG("Calling DP_Unload %p") << unloader;
+            plugins().setActivePluginId(game().pluginId());
+            if(unloader) ((pluginfunc_t)unloader)();
+            plugins().setActivePluginId(0);
+        }
+
+        // Clear application and subsystem state.
+        reset();
+        Resources::get().clear();
+
+        // We do not want to load session resources specified on the command line again.
+        Session::profile().resourceFiles.clear();
+
+        // The current game is now the special "null-game".
+        setGame(games().nullGame());
+
+        App_FileSystem().unloadAllNonStartupFiles();
+
+        // Reset file IDs so previously seen files can be processed again.
+        /// @todo this releases the IDs of startup files too but given the
+        /// only startup file is doomsday.pk3 which we never attempt to load
+        /// again post engine startup, this isn't an immediate problem.
+        App_FileSystem().resetFileIds();
+
+        // Update the dir/WAD translations.
+        FS_InitPathLumpMappings();
+        FS_InitVirtualPathMappings();
+
+        App_FileSystem().resetAllSchemes();
     }
+
+    /// @todo The entire material collection should not be destroyed during a reload.
+    Resources::get().clearAllMaterialSchemes();
 }
 
 void DoomsdayApp::reset()
@@ -498,6 +530,9 @@ void DoomsdayApp::reset()
     Z_FreeTags(PU_GAMESTATIC, PU_PURGELEVEL - 1);
 
     P_ShutdownMapEntityDefs();
+
+    Con_ClearDatabases();
+    Con_InitDatabases();
 }
 
 void DoomsdayApp::setGame(Game &game)

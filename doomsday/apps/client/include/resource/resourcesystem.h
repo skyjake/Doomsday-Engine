@@ -267,13 +267,7 @@ public:
      *
      * @see forAllMaterialSchemes(), MaterialScheme::clear().
      */
-    inline void clearAllMaterialSchemes() {
-        forAllMaterialSchemes([] (de::MaterialScheme &scheme) {
-            scheme.clear();
-            return de::LoopContinue;
-        });
-        DENG2_ASSERT(materialCount() == 0); // sanity check
-    }
+    void clearAllMaterialSchemes() override;
 
     /**
      * Lookup a material manifest group by unique @a number.

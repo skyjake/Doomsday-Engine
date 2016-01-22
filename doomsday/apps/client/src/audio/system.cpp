@@ -188,8 +188,8 @@ static bool recognizeMus(de::File1 &file)
 #endif
 
 DENG2_PIMPL(System)
-#ifdef __CLIENT__
 , DENG2_OBSERVES(DoomsdayApp, GameUnload)
+#ifdef __CLIENT__
 , DENG2_OBSERVES(SfxSampleCache, SampleRemove)
 #endif
 {
@@ -1379,13 +1379,15 @@ DENG2_PIMPL(System)
         // this sample (the sample data will be gone soon).
         unloadSoundID(sample.id);
     }
+#endif  // __CLIENT__
 
     void aboutToUnloadGame(Game const &)
     {
+#ifdef __CLIENT__
         self.reset();
+#endif
+        sfxClearLogical();
     }
-
-#endif  // __CLIENT__
 };
 
 System::System() : d(new Instance(this))
@@ -2363,11 +2365,6 @@ void System::requestSfxListenerUpdate()
 }
 
 #endif  // __CLIENT__
-
-void System::clearLogical()
-{
-    d->sfxClearLogical();
-}
 
 void System::startLogical(dint soundIdAndFlags, mobj_t *emitter)
 {
