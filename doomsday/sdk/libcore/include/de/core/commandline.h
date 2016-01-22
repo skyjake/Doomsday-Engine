@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_COMMANDLINE_H
@@ -47,14 +47,14 @@ public:
     /// Execution of the command line failed. @ingroup errors
     DENG2_ERROR(ExecuteError);
 
-    struct ArgWithParams {
+    struct DENG2_PUBLIC ArgWithParams {
         dint pos; ///< Position of the argument.
         String arg;
-        QList<String> params;
+        StringList params;
 
-        ArgWithParams() : pos(0) {}
-        operator dint () const { return pos; }
-        dint size() const { return params.size(); }
+        ArgWithParams();
+        operator dint () const;
+        dint size() const;
     };
 
 public:

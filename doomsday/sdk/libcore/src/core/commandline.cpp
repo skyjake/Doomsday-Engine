@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/CommandLine"
@@ -184,7 +184,7 @@ CommandLine::ArgWithParams CommandLine::check(String const &arg, dint numParams)
     // Do a search for arg.
     Instance::Arguments::const_iterator i = d->arguments.begin();
     for(; i != d->arguments.end() && !matches(arg, *i); ++i) {}
-    
+
     if(i == d->arguments.end())
     {
         // Not found.
@@ -223,7 +223,7 @@ bool CommandLine::getParameter(String const &arg, String &param) const
 dint CommandLine::has(String const &arg) const
 {
     dint howMany = 0;
-    
+
     DENG2_FOR_EACH_CONST(Instance::Arguments, i, d->arguments)
     {
         if(matches(arg, *i))
@@ -330,7 +330,7 @@ void CommandLine::parse(String const &cmdLine)
     {
         // Skip initial whitespace.
         String::skipSpace(i, cmdLine.end());
-        
+
         // Check for response files.
         bool isResponse = false;
         if(*i == '@')
@@ -375,7 +375,7 @@ void CommandLine::parse(String const &cmdLine)
             {
                 word.push_back(*i);
             }
-            
+
             i++;
         }
 
@@ -407,7 +407,7 @@ bool CommandLine::matches(String const &full, String const &fullOrAlias) const
         // They are, in fact, the same.
         return true;
     }
-    
+
     Instance::Aliases::const_iterator found = d->aliases.find(full.toStdString());
     if(found != d->aliases.end())
     {
@@ -419,7 +419,7 @@ bool CommandLine::matches(String const &full, String const &fullOrAlias) const
                 return true;
             }
         }
-    }    
+    }
     return false;
 }
 
@@ -467,4 +467,17 @@ bool CommandLine::executeAndWait(String *output) const
     }
 
     return result;
+}
+
+CommandLine::ArgWithParams::ArgWithParams() : pos(0)
+{}
+
+CommandLine::ArgWithParams::operator dint () const
+{
+    return pos;
+}
+
+dint CommandLine::ArgWithParams::size() const
+{
+    return params.size();
 }

@@ -126,7 +126,7 @@ DENG2_PIMPL(PackageLoader)
 
     File const *selectPackage(IdentifierList const &idList) const
     {
-        for(auto const &id : idList)
+        for(auto const &id : idList.ids)
         {
             if(File const *f = selectPackage(id))
                 return f;
@@ -440,7 +440,7 @@ PackageLoader::IdentifierList::IdentifierList(String const &spaceSeparatedIds)
     static QRegExp anySpace("\\s");
     for(auto const &qs : spaceSeparatedIds.split(anySpace, String::SkipEmptyParts))
     {
-        append(qs);
+        ids.append(qs);
     }
 }
 

@@ -68,8 +68,10 @@ public:
     /**
      * Utility for dealing with space-separated lists of identifiers.
      */
-    struct DENG2_PUBLIC IdentifierList : public StringList
+    struct DENG2_PUBLIC IdentifierList
     {
+        StringList ids;
+
         IdentifierList(String const &spaceSeparatedIds);
     };
 
