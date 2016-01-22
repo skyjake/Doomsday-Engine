@@ -1116,11 +1116,10 @@ Game &App_CurrentGame()
 /// @todo => DoomsdayApp::changeGame()
 bool App_ChangeGame(Game &game, bool allowReload)
 {
-    bool isReload = false;
-
-    // Ignore attempts to re-load the current game?
+    // Ignore attempts to reload the current game?
     if(&App_CurrentGame() == &game)
     {
+        // We are reloading.
         if(!allowReload)
         {
             if(App_GameLoaded())
@@ -1129,11 +1128,9 @@ bool App_ChangeGame(Game &game, bool allowReload)
             }
             return true;
         }
-        // We are re-loading.
-        isReload = true;
     }
 
-    // The current game now be unloaded.
+    // The current game will now be unloaded.
     DENG2_FOR_EACH_OBSERVER(DoomsdayApp::GameUnloadAudience, i,
                             DoomsdayApp::app().audienceForGameUnload())
     {

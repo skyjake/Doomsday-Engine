@@ -20,6 +20,8 @@
 
 #include "jdoom.h"
 
+#include <doomsday/world/entitydef.h>
+
 /**
  * Called during pre-init.
  * Register the map object data types we want to Doomsday to make public via
