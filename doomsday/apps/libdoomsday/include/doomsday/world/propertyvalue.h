@@ -25,11 +25,12 @@
 #ifndef LIBDOOMSDAY_WORLD_PROPERTYVALUE_H
 #define LIBDOOMSDAY_WORLD_PROPERTYVALUE_H
 
+#include "../libdoomsday.h"
 #include "valuetype.h"
 #include <de/types.h>
 #include <de/fixedpoint.h>
 
-class PropertyValue
+class LIBDOOMSDAY_PUBLIC PropertyValue
 {
 public:
     virtual ~PropertyValue() {}
@@ -45,7 +46,7 @@ public:
     virtual float   asFloat() const = 0;
 };
 
-class PropertyByteValue : public PropertyValue
+class LIBDOOMSDAY_PUBLIC PropertyByteValue : public PropertyValue
 {
 public:
     PropertyByteValue(byte value) : PropertyValue(), value_(value) {}
@@ -66,7 +67,7 @@ private:
     byte value_;
 };
 
-class PropertyInt16Value : public PropertyValue
+class LIBDOOMSDAY_PUBLIC PropertyInt16Value : public PropertyValue
 {
 public:
     PropertyInt16Value(int16_t value) : PropertyValue(), value_(value) {}
@@ -87,7 +88,7 @@ private:
     int16_t value_;
 };
 
-class PropertyInt32Value : public PropertyValue
+class LIBDOOMSDAY_PUBLIC PropertyInt32Value : public PropertyValue
 {
 public:
     PropertyInt32Value(int32_t value) : PropertyValue(), value_(value) {}
@@ -108,7 +109,7 @@ private:
     int32_t value_;
 };
 
-class PropertyFixedValue : public PropertyValue
+class LIBDOOMSDAY_PUBLIC PropertyFixedValue : public PropertyValue
 {
 public:
     PropertyFixedValue(fixed_t value) : PropertyValue(), value_(value) {}
@@ -129,7 +130,7 @@ private:
     fixed_t value_;
 };
 
-class PropertyAngleValue : public PropertyValue
+class LIBDOOMSDAY_PUBLIC PropertyAngleValue : public PropertyValue
 {
 public:
     PropertyAngleValue(angle_t value) : PropertyValue(), value_(value) {}
@@ -150,7 +151,7 @@ private:
     angle_t value_;
 };
 
-class PropertyFloatValue : public PropertyValue
+class LIBDOOMSDAY_PUBLIC PropertyFloatValue : public PropertyValue
 {
 public:
     PropertyFloatValue(float value) : PropertyValue(), value_(value) {}
@@ -179,6 +180,6 @@ private:
  *
  * @return Newly constructed PropertyValue-derived instance.
  */
-PropertyValue* BuildPropertyValue(valuetype_t type, void* valueAdr);
+LIBDOOMSDAY_PUBLIC PropertyValue *BuildPropertyValue(valuetype_t type, void *valueAdr);
 
 #endif // LIBDOOMSDAY_WORLD_PROPERTYVALUE_H

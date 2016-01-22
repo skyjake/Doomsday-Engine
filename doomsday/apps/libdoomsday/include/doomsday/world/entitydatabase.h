@@ -40,7 +40,7 @@
  * @todo C++ allows making this more generic: a set/map of polymorphic objects
  * e.g., QVariant.
  */
-class EntityDatabase
+class LIBDOOMSDAY_PUBLIC EntityDatabase
 {
 public:
     EntityDatabase();

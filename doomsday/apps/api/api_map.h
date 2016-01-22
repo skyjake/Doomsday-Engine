@@ -598,12 +598,6 @@ DENG_API_TYPEDEF(Map)
 
     // Map Entities
     uint            (*CountMapObjs)(int entityId);
-    byte            (*GetGMOByte)(int entityId, int elementIndex, int propertyId);
-    short           (*GetGMOShort)(int entityId, int elementIndex, int propertyId);
-    int             (*GetGMOInt)(int entityId, int elementIndex, int propertyId);
-    fixed_t         (*GetGMOFixed)(int entityId, int elementIndex, int propertyId);
-    angle_t         (*GetGMOAngle)(int entityId, int elementIndex, int propertyId);
-    float           (*GetGMOFloat)(int entityId, int elementIndex, int propertyId);
 
     /* index-based write functions */
     void            (*SetBool)(int type, int index, uint prop, dd_bool param);
@@ -748,12 +742,6 @@ DENG_API_T(Map);
 #define P_IsDummy                           _api_Map.IsDummy
 #define P_DummyExtraData                    _api_Map.DummyExtraData
 #define P_CountMapObjs                      _api_Map.CountMapObjs
-#define P_GetGMOByte                        _api_Map.GetGMOByte
-#define P_GetGMOShort                       _api_Map.GetGMOShort
-#define P_GetGMOInt                         _api_Map.GetGMOInt
-#define P_GetGMOFixed                       _api_Map.GetGMOFixed
-#define P_GetGMOAngle                       _api_Map.GetGMOAngle
-#define P_GetGMOFloat                       _api_Map.GetGMOFloat
 #define P_SetBool                           _api_Map.SetBool
 #define P_SetByte                           _api_Map.SetByte
 #define P_SetInt                            _api_Map.SetInt

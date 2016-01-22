@@ -245,13 +245,11 @@ static MapEntityDef *findMapEntityDef(int identifier, char const *entityName,
     return def;
 }
 
-#undef P_RegisterMapObj
 DENG_EXTERN_C dd_bool P_RegisterMapObj(int identifier, char const *name)
 {
     return findMapEntityDef(identifier, name, true /*do create*/) != 0;
 }
 
-#undef P_RegisterMapObjProperty
 DENG_EXTERN_C dd_bool P_RegisterMapObjProperty(int entityId, int propertyId,
                                                char const *propertyName, valuetype_t type)
 {
@@ -312,7 +310,6 @@ static void setValue(void *dst, valuetype_t dstType, PropertyValue const &pvalue
     }
 }
 
-#undef P_GetGMOByte
 DENG_EXTERN_C byte P_GetGMOByte(int entityId, int elementIndex, int propertyId)
 {
     byte returnVal = 0;
@@ -333,7 +330,6 @@ DENG_EXTERN_C byte P_GetGMOByte(int entityId, int elementIndex, int propertyId)
     return returnVal;
 }
 
-#undef P_GetGMOShort
 DENG_EXTERN_C short P_GetGMOShort(int entityId, int elementIndex, int propertyId)
 {
     short returnVal = 0;
@@ -354,7 +350,6 @@ DENG_EXTERN_C short P_GetGMOShort(int entityId, int elementIndex, int propertyId
     return returnVal;
 }
 
-#undef P_GetGMOInt
 DENG_EXTERN_C int P_GetGMOInt(int entityId, int elementIndex, int propertyId)
 {
     int returnVal = 0;
@@ -375,7 +370,6 @@ DENG_EXTERN_C int P_GetGMOInt(int entityId, int elementIndex, int propertyId)
     return returnVal;
 }
 
-#undef P_GetGMOFixed
 DENG_EXTERN_C fixed_t P_GetGMOFixed(int entityId, int elementIndex, int propertyId)
 {
     fixed_t returnVal = 0;
@@ -396,7 +390,6 @@ DENG_EXTERN_C fixed_t P_GetGMOFixed(int entityId, int elementIndex, int property
     return returnVal;
 }
 
-#undef P_GetGMOAngle
 DENG_EXTERN_C angle_t P_GetGMOAngle(int entityId, int elementIndex, int propertyId)
 {
     angle_t returnVal = 0;
@@ -417,7 +410,6 @@ DENG_EXTERN_C angle_t P_GetGMOAngle(int entityId, int elementIndex, int property
     return returnVal;
 }
 
-#undef P_GetGMOFloat
 DENG_EXTERN_C float P_GetGMOFloat(int entityId, int elementIndex, int propertyId)
 {
     float returnVal = 0;

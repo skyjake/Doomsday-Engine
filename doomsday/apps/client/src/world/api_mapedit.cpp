@@ -410,19 +410,10 @@ dd_bool MPE_GameObjProperty(char const *entityName, int elementIndex,
     return false;
 }
 
-// p_data.cpp
-#undef P_RegisterMapObj
-DENG_EXTERN_C dd_bool P_RegisterMapObj(int identifier, char const *name);
-
-#undef P_RegisterMapObjProperty
-DENG_EXTERN_C dd_bool P_RegisterMapObjProperty(int entityId, int propertyId, char const *propertyName, valuetype_t type);
-
 DENG_DECLARE_API(MPE) =
 {
     { DE_API_MAP_EDIT },
 
-    P_RegisterMapObj,
-    P_RegisterMapObjProperty,
     MPE_Begin,
     MPE_End,
     MPE_VertexCreate,

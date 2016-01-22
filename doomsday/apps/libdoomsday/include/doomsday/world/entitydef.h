@@ -45,7 +45,7 @@ typedef struct mapentitypropertydef_s {
 /**
  * @ingroup world
  */
-typedef struct mapentitydef_s {
+typedef struct LIBDOOMSDAY_PUBLIC mapentitydef_s {
     /// Unique identifier associated with this entity.
     int id;
 
@@ -62,6 +62,7 @@ typedef struct mapentitydef_s {
 extern "C" {
 #endif
 
+#ifdef __cplusplus
 /**
  * Lookup a defined property by identifier.
  *
@@ -72,8 +73,8 @@ extern "C" {
  *
  * @return Logical index of the found property (zero-based) else @c -1 if not found.
  */
-int MapEntityDef_Property2(MapEntityDef *def, int propertyId,
-                           MapEntityPropertyDef **retDef = 0);
+LIBDOOMSDAY_PUBLIC int MapEntityDef_Property2(MapEntityDef *def, int propertyId,
+                                              MapEntityPropertyDef **retDef = 0);
 
 /**
  * Lookup a defined property by name.
@@ -85,8 +86,9 @@ int MapEntityDef_Property2(MapEntityDef *def, int propertyId,
  *
  * @return Logical index of the found property (zero-based) else @c -1 if not found.
  */
-int MapEntityDef_PropertyByName(MapEntityDef *def, char const *propertyName,
-                                MapEntityPropertyDef **retDef = 0);
+LIBDOOMSDAY_PUBLIC int MapEntityDef_PropertyByName(MapEntityDef *def, char const *propertyName,
+                                                   MapEntityPropertyDef **retDef = 0);
+#endif // __cplusplus
 
 /**
  * Lookup a MapEntityDef by unique identfier @a id.
@@ -95,7 +97,7 @@ int MapEntityDef_PropertyByName(MapEntityDef *def, char const *propertyName,
  *
  * @return Found MapEntityDef else @c NULL.
  */
-MapEntityDef *P_MapEntityDef(int id);
+LIBDOOMSDAY_PUBLIC MapEntityDef *P_MapEntityDef(int id);
 
 /**
  * Lookup a MapEntityDef by unique name.
@@ -104,7 +106,7 @@ MapEntityDef *P_MapEntityDef(int id);
  *
  * @return Found MapEntityDef else @c NULL.
  */
-MapEntityDef *P_MapEntityDefByName(char const *name);
+LIBDOOMSDAY_PUBLIC MapEntityDef *P_MapEntityDefByName(char const *name);
 
 /**
  * Lookup the unique name associated with MapEntityDef @a def.
@@ -113,17 +115,27 @@ MapEntityDef *P_MapEntityDefByName(char const *name);
  *
  * @return Unique name associated with @a def if found, else a zero-length string.
  */
-AutoStr *P_NameForMapEntityDef(MapEntityDef *def);
+LIBDOOMSDAY_PUBLIC AutoStr *P_NameForMapEntityDef(MapEntityDef *def);
 
 /**
  * To be called to initialize the game map object defs.
  */
-void P_InitMapEntityDefs();
+LIBDOOMSDAY_PUBLIC void P_InitMapEntityDefs();
 
 /**
  * To be called to free all memory allocated for the map obj defs.
  */
-void P_ShutdownMapEntityDefs();
+LIBDOOMSDAY_PUBLIC void P_ShutdownMapEntityDefs();
+
+LIBDOOMSDAY_PUBLIC dd_bool P_RegisterMapObj(int identifier, char const *name);
+LIBDOOMSDAY_PUBLIC dd_bool P_RegisterMapObjProperty(int entityId, int propertyId,
+                                                    char const *propertyName, valuetype_t type);
+LIBDOOMSDAY_PUBLIC byte P_GetGMOByte(int entityId, int elementIndex, int propertyId);
+LIBDOOMSDAY_PUBLIC short P_GetGMOShort(int entityId, int elementIndex, int propertyId);
+LIBDOOMSDAY_PUBLIC int P_GetGMOInt(int entityId, int elementIndex, int propertyId);
+LIBDOOMSDAY_PUBLIC fixed_t P_GetGMOFixed(int entityId, int elementIndex, int propertyId);
+LIBDOOMSDAY_PUBLIC angle_t P_GetGMOAngle(int entityId, int elementIndex, int propertyId);
+LIBDOOMSDAY_PUBLIC float P_GetGMOFloat(int entityId, int elementIndex, int propertyId);
 
 #ifdef __cplusplus
 } // extern "C"

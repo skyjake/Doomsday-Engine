@@ -1540,14 +1540,6 @@ DENG_EXTERN_C uint P_CountMapObjs(int entityId)
     return entities.entityCount(P_MapEntityDef(entityId));
 }
 
-// entitydef.cpp
-DENG_EXTERN_C byte P_GetGMOByte(int entityId, int elementIndex, int propertyId);
-DENG_EXTERN_C short P_GetGMOShort(int entityId, int elementIndex, int propertyId);
-DENG_EXTERN_C int P_GetGMOInt(int entityId, int elementIndex, int propertyId);
-DENG_EXTERN_C fixed_t P_GetGMOFixed(int entityId, int elementIndex, int propertyId);
-DENG_EXTERN_C angle_t P_GetGMOAngle(int entityId, int elementIndex, int propertyId);
-DENG_EXTERN_C float P_GetGMOFloat(int entityId, int elementIndex, int propertyId);
-
 #undef Mobj_Link
 DENG_EXTERN_C void Mobj_Link(mobj_t *mobj, int flags)
 {
@@ -1981,12 +1973,6 @@ DENG_DECLARE_API(Map) =
     P_IsDummy,
     P_DummyExtraData,
     P_CountMapObjs,
-    P_GetGMOByte,
-    P_GetGMOShort,
-    P_GetGMOInt,
-    P_GetGMOFixed,
-    P_GetGMOAngle,
-    P_GetGMOFloat,
     P_SetBool,
     P_SetByte,
     P_SetInt,

@@ -22,6 +22,7 @@
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/filesys/fs_util.h"
 #include "doomsday/filesys/lumpindex.h"
+#include "doomsday/filesys/virtualmappings.h"
 
 #include <de/memory.h>
 #include <de/c_wrapper.h>

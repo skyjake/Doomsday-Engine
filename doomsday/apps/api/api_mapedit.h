@@ -38,13 +38,13 @@ DENG_API_TYPEDEF(MPE)
      * Called by the game to register the map object types it wishes us to make
      * public via the MPE interface.
      */
-    dd_bool         (*RegisterMapObj)(int identifier, char const *name);
+    //dd_bool         (*RegisterMapObj)(int identifier, char const *name);
 
     /**
      * Called by the game to add a new property to a previously registered
      * map object type definition.
      */
-    dd_bool         (*RegisterMapObjProperty)(int identifier, int propIdentifier, char const *propName, valuetype_t type);
+    //dd_bool         (*RegisterMapObjProperty)(int identifier, int propIdentifier, char const *propName, valuetype_t type);
 
     /**
      * To be called to begin the map building process.
@@ -108,8 +108,8 @@ DENG_API_TYPEDEF(MPE)
 DENG_API_T(MPE);
 
 #ifndef DENG_NO_API_MACROS_MAP_EDIT
-#define P_RegisterMapObj    _api_MPE.RegisterMapObj
-#define P_RegisterMapObjProperty _api_MPE.RegisterMapObjProperty
+//#define P_RegisterMapObj    _api_MPE.RegisterMapObj
+//#define P_RegisterMapObjProperty _api_MPE.RegisterMapObjProperty
 #define MPE_Begin           _api_MPE.Begin
 #define MPE_End             _api_MPE.End
 #define MPE_VertexCreate    _api_MPE.VertexCreate

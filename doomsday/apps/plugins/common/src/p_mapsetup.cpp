@@ -23,6 +23,8 @@
 #include "common.h"
 #include "p_mapsetup.h"
 
+#include <doomsday/world/entitydef.h>
+
 #include <cmath>
 #include <cctype>  // isspace
 #include <cstring>
