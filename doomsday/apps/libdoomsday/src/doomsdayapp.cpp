@@ -565,10 +565,9 @@ void DoomsdayApp::makeGameCurrent(Game &newGame)
         // Re-initialize subsystems needed even when in ringzero.
         if(!plugins().exchangeGameEntryPoints(newGame.pluginId()))
         {
-            LOG_WARNING("Game plugin for '%s' is invalid") << newGame.id();
-            LOGDEV_WARNING("Failed exchanging entrypoints with plugin %i")
-                    << dint(newGame.pluginId());
-            return false;
+            throw Plugins::EntryPointError("DoomsdayApp::makeGameCurrent",
+                                           "Failed to exchange entrypoints with plugin " +
+                                           QString::number(newGame.pluginId()));
         }
     }
 

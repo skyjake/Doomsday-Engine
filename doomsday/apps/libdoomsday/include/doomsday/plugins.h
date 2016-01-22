@@ -120,6 +120,8 @@ public:
     DENG2_DEFINE_AUDIENCE2(PublishAPI,   void publishAPIToPlugin(Library *))
     DENG2_DEFINE_AUDIENCE2(Notification, void pluginSentNotification(int id, void *data))
 
+    DENG2_ERROR(EntryPointError);
+
 public:
     Plugins();
 
