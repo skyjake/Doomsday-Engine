@@ -30,7 +30,7 @@
 /// Busy mode worker function.
 typedef int (*busyworkerfunc_t) (void *parm);
 
-/// POD structure for defining a task processable in busy mode.
+/// Defines a task processable in busy mode.
 struct LIBDOOMSDAY_PUBLIC BusyTask
 {
     std::function<int (void *)> worker; ///< Worker thread that does processing while in busy mode.

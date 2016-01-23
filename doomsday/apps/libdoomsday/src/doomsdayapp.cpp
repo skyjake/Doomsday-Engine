@@ -28,6 +28,7 @@
 #include "doomsday/filesys/datafolder.h"
 #include "doomsday/filesys/virtualmappings.h"
 #include "doomsday/paths.h"
+#include "doomsday/busymode.h"
 #include "doomsday/world/world.h"
 #include "doomsday/world/entitydef.h"
 #include "doomsday/Session"
@@ -65,6 +66,7 @@ DENG2_PIMPL_NOREF(DoomsdayApp)
     std::string ddRuntimePath;
 
     bool initialized = false;
+    bool shuttingDown = false;
     Plugins plugins;
     Games games;
     Game *currentGame = nullptr;
@@ -433,6 +435,16 @@ bool DoomsdayApp::isUsingUserDir() const
     return d->usingUserDir;
 }
 
+bool DoomsdayApp::isShuttingDown() const
+{
+    return d->shuttingDown;
+}
+
+void DoomsdayApp::setShuttingDown(bool shuttingDown)
+{
+    d->shuttingDown = shuttingDown;
+}
+
 std::string const &DoomsdayApp::doomsdayBasePath() const
 {
     return d->ddBasePath;
@@ -475,6 +487,11 @@ Game &DoomsdayApp::game()
 {
     DENG2_ASSERT(app().d->currentGame != 0);
     return *app().d->currentGame;
+}
+
+bool DoomsdayApp::isGameLoaded()
+{
+    return App::appExists() && !DoomsdayApp::currentGame().isNull();
 }
 
 void DoomsdayApp::unloadGame(Game const &)
@@ -560,7 +577,7 @@ void DoomsdayApp::makeGameCurrent(Game &newGame)
 
     Library_ReleaseGames();
 
-    //if(!DD_IsShuttingDown())
+    if(!isShuttingDown())
     {
         // Re-initialize subsystems needed even when in ringzero.
         if(!plugins().exchangeGameEntryPoints(newGame.pluginId()))
@@ -576,7 +593,109 @@ void DoomsdayApp::makeGameCurrent(Game &newGame)
     Session::profile().gameId = newGame.id();
 }
 
+// from game_init.cpp
+extern int beginGameChangeBusyWorker(void *context);
+extern int loadGameStartupResourcesBusyWorker(void *context);
+extern int loadAddonResourcesBusyWorker(void *context);
+
+bool DoomsdayApp::changeGame(Game &newGame,
+                             std::function<int (void *)> gameActivationFunc,
+                             Behaviors behaviors)
+{
+    // Ignore attempts to reload the current game?
+    if(game().id() == newGame.id())
+    {
+        // We are reloading.
+        if(!behaviors.testFlag(AllowReload))
+        {
+            if(isGameLoaded())
+            {
+                LOG_NOTE("%s (%s) is already loaded") << newGame.title() << newGame.id();
+            }
+            return true;
+        }
+    }
+
+    // The current game will now be unloaded.
+    DENG2_FOR_AUDIENCE2(GameUnload, i)
+    {
+        i->aboutToUnloadGame(game());
+    }
+
+    unloadGame(newGame);
+
+    // Do the switch.
+    makeGameCurrent(newGame);
+
+    /*
+     * If we aren't shutting down then we are either loading a game or switching
+     * to ringzero (the current game will have already been unloaded).
+     */
+    if(!isShuttingDown())
+    {
+        /*
+         * The bulk of this we can do in busy mode unless we are already busy
+         * (which can happen if a fatal error occurs during game load and we must
+         * shutdown immediately; Sys_Shutdown will call back to load the special
+         * "null-game" game).
+         */
+        dint const busyMode = BUSYF_PROGRESS_BAR; //  | (verbose? BUSYF_CONSOLE_OUTPUT : 0);
+        GameChangeParameters p;
+        BusyTask gameChangeTasks[] =
+        {
+            // Phase 1: Initialization.
+            { beginGameChangeBusyWorker,          &p, busyMode, "Loading game...",   200, 0.0f, 0.1f },
+
+            // Phase 2: Loading "startup" resources.
+            { loadGameStartupResourcesBusyWorker, &p, busyMode, nullptr,             200, 0.1f, 0.3f },
+
+            // Phase 3: Loading "add-on" resources.
+            { loadAddonResourcesBusyWorker,       &p, busyMode, "Loading add-ons...", 200, 0.3f, 0.7f },
+
+            // Phase 4: Game activation.
+            { gameActivationFunc,                 &p, busyMode, "Starting game...",  200, 0.7f, 1.0f }
+        };
+
+        p.initiatedBusyMode = !BusyMode_Active();
+
+        if(isGameLoaded())
+        {
+            // Tell the plugin it is being loaded.
+            /// @todo Must this be done in the main thread?
+            void *loader = plugins().findEntryPoint(game().pluginId(), "DP_Load");
+            LOGDEV_MSG("Calling DP_Load %p") << loader;
+            plugins().setActivePluginId(game().pluginId());
+            if(loader) ((pluginfunc_t)loader)();
+            plugins().setActivePluginId(0);
+        }
+
+        /// @todo Kludge: Use more appropriate task names when unloading a game.
+        if(newGame.isNull())
+        {
+            gameChangeTasks[0].name = "Unloading game...";
+            gameChangeTasks[3].name = "Switching to ringzero...";
+        }
+        // kludge end
+
+        BusyMode_RunTasks(gameChangeTasks, sizeof(gameChangeTasks)/sizeof(gameChangeTasks[0]));
+
+        if(isGameLoaded())
+        {
+            Game::printBanner(game());
+        }
+    }
+
+    DENG_ASSERT(plugins().activePluginId() == 0);
+
+    // Game change is complete.
+    DENG2_FOR_AUDIENCE2(GameChange, i)
+    {
+        i->currentGameChanged(game());
+    }
+    return true;
+}
+
 bool App_GameLoaded()
 {
-    return App::appExists() && !DoomsdayApp::currentGame().isNull();
+    return DoomsdayApp::isGameLoaded();
 }

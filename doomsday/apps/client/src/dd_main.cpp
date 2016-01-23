@@ -168,7 +168,6 @@ public:
 
 static dint DD_StartupWorker(void *context);
 static dint DD_DummyWorker(void *context);
-static void DD_AutoLoad();
 
 dint isDedicated;
 dint verbose;                      ///< For debug messages (-verbose).
@@ -617,27 +616,6 @@ InFineSystem &App_InFineSystem()
     throw Error("App_InFineSystem", "App not yet initialized");
 }
 
-static File1 *tryLoadFile(de::Uri const &path, size_t baseOffset = 0);
-
-static void parseStartupFilePathsAndAddFiles(char const *pathString)
-{
-    static char const *ATWSEPS = ",; \t";
-
-    if(!pathString || !pathString[0]) return;
-
-    size_t len = strlen(pathString);
-    char *buffer = (char *) M_Malloc(len + 1);
-
-    strcpy(buffer, pathString);
-    char *token = strtok(buffer, ATWSEPS);
-    while(token)
-    {
-        tryLoadFile(de::Uri(token, RC_NULL));
-        token = strtok(nullptr, ATWSEPS);
-    }
-    M_Free(buffer);
-}
-
 #undef Con_Open
 void Con_Open(dint yes)
 {
@@ -709,242 +687,9 @@ D_CMD(Tutorial)
 
 #endif // __CLIENT__
 
-/**
- * Find all game data file paths in the auto directory with the extensions
- * wad, lmp, pk3, zip and deh.
- *
- * @param found  List of paths to be populated.
- *
- * @return  Number of paths added to @a found.
- */
-static dint findAllGameDataPaths(FS1::PathList &found)
+int DD_ActivateGameWorker(void *context)
 {
-    static String const extensions[] = {
-        "wad", "lmp", "pk3", "zip", "deh"
-#ifdef UNIX
-        "WAD", "LMP", "PK3", "ZIP", "DEH" // upper case alternatives
-#endif
-    };
-    dint const numFoundSoFar = found.count();
-    for(String const &ext : extensions)
-    {
-        DENG2_ASSERT(!ext.isEmpty());
-        String const searchPath = de::Uri(Path("$(App.DataPath)/$(GamePlugin.Name)/auto/*." + ext)).resolved();
-        App_FileSystem().findAllPaths(searchPath, 0, found);
-    }
-    return found.count() - numFoundSoFar;
-}
-
-/**
- * Find and try to load all game data file paths in auto directory.
- *
- * @return Number of new files that were loaded.
- */
-static dint loadFilesFromDataGameAuto()
-{
-    FS1::PathList found;
-    findAllGameDataPaths(found);
-
-    dint numLoaded = 0;
-    DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
-    {
-        // Ignore directories.
-        if(i->attrib & A_SUBDIR) continue;
-
-        if(tryLoadFile(de::Uri(i->path, RC_NULL)))
-        {
-            numLoaded += 1;
-        }
-    }
-    return numLoaded;
-}
-
-static void loadResource(ResourceManifest &manifest)
-{
-    DENG2_ASSERT(manifest.resourceClass() == RC_PACKAGE);
-
-    de::Uri path(manifest.resolvedPath(false/*do not locate resource*/), RC_NULL);
-    if(path.isEmpty()) return;
-
-    if(File1 *file = tryLoadFile(path))
-    {
-        // Mark this as an original game resource.
-        file->setCustom(false);
-
-        // Print the 'CRC' number of IWADs, so they can be identified.
-        if(Wad *wad = file->maybeAs<Wad>())
-        {
-            LOG_RES_MSG("IWAD identification: %08x") << wad->calculateCRC();
-        }
-    }
-}
-
-struct ddgamechange_params_t
-{
-    /// @c true iff caller (i.e., App_ChangeGame) initiated busy mode.
-    dd_bool initiatedBusyMode;
-};
-
-static dint DD_BeginGameChangeWorker(void *context)
-{
-    ddgamechange_params_t &parms = *static_cast<ddgamechange_params_t *>(context);
-
-    Map::initDummies();
-    P_InitMapEntityDefs();
-
-    if(parms.initiatedBusyMode)
-    {
-        Con_SetProgress(200);
-    }
-
-    return 0;
-}
-
-static dint DD_LoadGameStartupResourcesWorker(void *context)
-{
-    ddgamechange_params_t &parms = *static_cast<ddgamechange_params_t *>(context);
-
-    // Reset file Ids so previously seen files can be processed again.
-    App_FileSystem().resetFileIds();
-    FS_InitVirtualPathMappings();
-    App_FileSystem().resetAllSchemes();
-
-    if(parms.initiatedBusyMode)
-    {
-        Con_SetProgress(50);
-    }
-
-    if(App_GameLoaded())
-    {
-        // Create default Auto mappings in the runtime directory.
-
-        // Data class resources.
-        App_FileSystem().addPathMapping("auto/", de::Uri("$(App.DataPath)/$(GamePlugin.Name)/auto/", RC_NULL).resolved());
-
-        // Definition class resources.
-        App_FileSystem().addPathMapping("auto/", de::Uri("$(App.DefsPath)/$(GamePlugin.Name)/auto/", RC_NULL).resolved());
-    }
-
-    /**
-     * Open all the files, load headers, count lumps, etc, etc...
-     * @note  Duplicate processing of the same file is automatically guarded
-     *        against by the virtual file system layer.
-     */
-    GameManifests const &gameManifests = App_CurrentGame().manifests();
-    dint const numPackages = gameManifests.count(RC_PACKAGE);
-    if(numPackages)
-    {
-        LOG_RES_MSG("Loading game resources") << (verbose >= 1? ":" : "...");
-
-        dint packageIdx = 0;
-        for(GameManifests::const_iterator i = gameManifests.find(RC_PACKAGE);
-            i != gameManifests.end() && i.key() == RC_PACKAGE; ++i, ++packageIdx)
-        {
-            loadResource(**i);
-
-            // Update our progress.
-            if(parms.initiatedBusyMode)
-            {
-                Con_SetProgress((packageIdx + 1) * (200 - 50) / numPackages - 1);
-            }
-        }
-    }
-
-    if(parms.initiatedBusyMode)
-    {
-        Con_SetProgress(200);
-    }
-
-    return 0;
-}
-
-static dint addListFiles(QStringList const &list, FileType const &ftype)
-{
-    dint numAdded = 0;
-    foreach(QString const &path, list)
-    {
-        if(&ftype != &DD_GuessFileTypeFromFileName(path))
-        {
-            continue;
-        }
-
-        if(tryLoadFile(de::Uri(path, RC_NULL)))
-        {
-            numAdded += 1;
-        }
-    }
-    return numAdded;
-}
-
-static dint DD_LoadAddonResourcesWorker(void *context)
-{
-    ddgamechange_params_t &parms = *static_cast<ddgamechange_params_t *>(context);
-
-    /**
-     * Add additional game-startup files.
-     * @note These must take precedence over Auto but not game-resource files.
-     */
-    if(startupFiles && startupFiles[0])
-    {
-        parseStartupFilePathsAndAddFiles(startupFiles);
-    }
-
-    if(parms.initiatedBusyMode)
-    {
-        Con_SetProgress(50);
-    }
-
-    if(App_GameLoaded())
-    {
-        /**
-         * Phase 3: Add real files from the Auto directory.
-         */
-        Session::Profile &prof = Session::profile();
-
-        FS1::PathList found;
-        findAllGameDataPaths(found);
-        DENG2_FOR_EACH_CONST(FS1::PathList, i, found)
-        {
-            // Ignore directories.
-            if(i->attrib & A_SUBDIR) continue;
-
-            /// @todo Is expansion of symbolics still necessary here?
-            prof.resourceFiles << NativePath(i->path).expand().withSeparators('/');
-        }
-
-        if(!prof.resourceFiles.isEmpty())
-        {
-            // First ZIPs then WADs (they may contain WAD files).
-            addListFiles(prof.resourceFiles, DD_FileTypeByName("FT_ZIP"));
-            addListFiles(prof.resourceFiles, DD_FileTypeByName("FT_WAD"));
-        }
-
-        // Final autoload round.
-        DD_AutoLoad();
-    }
-
-    if(parms.initiatedBusyMode)
-    {
-        Con_SetProgress(180);
-    }
-
-    FS_InitPathLumpMappings();
-
-    // Re-initialize the resource locator as there are now new resources to be found
-    // on existing search paths (probably that is).
-    App_FileSystem().resetAllSchemes();
-
-    if(parms.initiatedBusyMode)
-    {
-        Con_SetProgress(200);
-    }
-
-    return 0;
-}
-
-static dint DD_ActivateGameWorker(void *context)
-{
-    ddgamechange_params_t &parms = *static_cast<ddgamechange_params_t *>(context);
+    DoomsdayApp::GameChangeParameters &parms = *(DoomsdayApp::GameChangeParameters *) context;
 
     auto &plugins = DoomsdayApp::plugins();
     ResourceSystem &resSys = App_ResourceSystem();
@@ -1111,126 +856,6 @@ dd_bool DD_GameInfo(GameInfo *info)
 Game &App_CurrentGame()
 {
     return DoomsdayApp::currentGame();
-}
-
-/// @todo => DoomsdayApp::changeGame()
-bool App_ChangeGame(Game &game, bool allowReload)
-{
-    // Ignore attempts to reload the current game?
-    if(&App_CurrentGame() == &game)
-    {
-        // We are reloading.
-        if(!allowReload)
-        {
-            if(App_GameLoaded())
-            {
-                LOG_NOTE("%s (%s) is already loaded") << game.title() << game.id();
-            }
-            return true;
-        }
-    }
-
-    // The current game will now be unloaded.
-    DENG2_FOR_EACH_OBSERVER(DoomsdayApp::GameUnloadAudience, i,
-                            DoomsdayApp::app().audienceForGameUnload())
-    {
-        i->aboutToUnloadGame(DoomsdayApp::game());
-    }
-
-    DoomsdayApp::app().unloadGame(game);
-
-    // Do the switch.
-    DoomsdayApp::app().makeGameCurrent(game);
-
-    /*
-     * If we aren't shutting down then we are either loading a game or switching
-     * to ringzero (the current game will have already been unloaded).
-     */
-    if(!DD_IsShuttingDown())
-    {
-        /*
-         * The bulk of this we can do in busy mode unless we are already busy
-         * (which can happen if a fatal error occurs during game load and we must
-         * shutdown immediately; Sys_Shutdown will call back to load the special
-         * "null-game" game).
-         */
-        dint const busyMode = BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0);
-        ddgamechange_params_t p;
-        BusyTask gameChangeTasks[] = {
-            // Phase 1: Initialization.
-            { DD_BeginGameChangeWorker,          &p, busyMode, "Loading game...",   200, 0.0f, 0.1f },
-
-            // Phase 2: Loading "startup" resources.
-            { DD_LoadGameStartupResourcesWorker, &p, busyMode, nullptr,             200, 0.1f, 0.3f },
-
-            // Phase 3: Loading "add-on" resources.
-            { DD_LoadAddonResourcesWorker,       &p, busyMode, "Loading add-ons...", 200, 0.3f, 0.7f },
-
-            // Phase 4: Game activation.
-            { DD_ActivateGameWorker,             &p, busyMode, "Starting game...",  200, 0.7f, 1.0f }
-        };
-
-        p.initiatedBusyMode = !BusyMode_Active();
-
-        if(App_GameLoaded())
-        {
-            // Tell the plugin it is being loaded.
-            /// @todo Must this be done in the main thread?
-            auto &plugins = DoomsdayApp::plugins();
-            void *loader = plugins.findEntryPoint(App_CurrentGame().pluginId(), "DP_Load");
-            LOGDEV_MSG("Calling DP_Load %p") << loader;
-            plugins.setActivePluginId(App_CurrentGame().pluginId());
-            if(loader) ((pluginfunc_t)loader)();
-            plugins.setActivePluginId(0);
-        }
-
-        /// @todo Kludge: Use more appropriate task names when unloading a game.
-        if(game.isNull())
-        {
-            gameChangeTasks[0].name = "Unloading game...";
-            gameChangeTasks[3].name = "Switching to ringzero...";
-        }
-        // kludge end
-
-        BusyMode_RunTasks(gameChangeTasks, sizeof(gameChangeTasks)/sizeof(gameChangeTasks[0]));
-
-        if(App_GameLoaded())
-        {
-            Game::printBanner(App_CurrentGame());
-        }
-    }
-
-    DENG_ASSERT(DoomsdayApp::plugins().activePluginId() == 0);
-
-    // Game change is complete.
-    DENG2_FOR_EACH_OBSERVER(DoomsdayApp::GameChangeAudience, i,
-                            DoomsdayApp::app().audienceForGameChange())
-    {
-        i->currentGameChanged(DoomsdayApp::game());
-    }
-
-    return true;
-}
-
-bool DD_IsShuttingDown()
-{
-    return Sys_IsShuttingDown();
-}
-
-/**
- * Looks for new files to autoload from the auto-load data directory.
- */
-static void DD_AutoLoad()
-{
-    /**
-     * Keep loading files if any are found because virtual files may now
-     * exist in the auto-load directory.
-     */
-    dint numNewFiles;
-    while((numNewFiles = loadFilesFromDataGameAuto()) > 0)
-    {
-        LOG_RES_VERBOSE("Autoload round completed with %i new files") << numNewFiles;
-    }
 }
 
 /**
@@ -1422,7 +1047,7 @@ static void initialize()
             }
 
             // Begin the game session.
-            App_ChangeGame(*game);
+            DoomsdayApp::app().changeGame(*game, DD_ActivateGameWorker);
         }
 #ifdef __SERVER__
         else
@@ -1658,7 +1283,7 @@ static dint DD_StartupWorker(void * /*context*/)
     String foundPath = App_FileSystem().findPath(de::Uri("doomsday.pk3", RC_PACKAGE),
                                                  RLF_DEFAULT, App_ResourceClass(RC_PACKAGE));
     foundPath = App_BasePath() / foundPath;  // Ensure the path is absolute.
-    File1 *loadedFile = tryLoadFile(de::Uri(foundPath, RC_NULL));
+    File1 *loadedFile = File1::tryLoad(de::Uri(foundPath, RC_NULL));
     DENG2_ASSERT(loadedFile);
     DENG2_UNUSED(loadedFile);
 
@@ -2277,7 +1902,7 @@ D_CMD(Load)
 
         BusyMode_FreezeGameForBusyMode();
 
-        if(!App_ChangeGame(game))
+        if(!DoomsdayApp::app().changeGame(game, DD_ActivateGameWorker))
         {
             return false;
         }
@@ -2297,7 +1922,7 @@ D_CMD(Load)
                                                          RLF_MATCH_EXTENSION, App_ResourceClass(RC_PACKAGE));
             foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
 
-            if(tryLoadFile(de::Uri(foundPath, RC_NULL)))
+            if(File1::tryLoad(de::Uri(foundPath, RC_NULL)))
             {
                 didLoadResource = true;
             }
@@ -2312,39 +1937,6 @@ D_CMD(Load)
     }
 
     return didLoadGame || didLoadResource;
-}
-
-/**
- * Attempt to load the (logical) resource indicated by the @a search term.
- *
- * @param path        Path to the resource to be loaded. Either a "real" file in
- *                    the local file system, or a "virtual" file.
- * @param baseOffset  Offset from the start of the file in bytes to begin.
- *
- * @return  @c true if the referenced resource was loaded.
- */
-static File1 *tryLoadFile(de::Uri const &search, size_t baseOffset)
-{
-    try
-    {
-        FileHandle &hndl = App_FileSystem().openFile(search.path(), "rb", baseOffset, false /* no duplicates */);
-
-        de::Uri foundFileUri = hndl.file().composeUri();
-        LOG_VERBOSE("Loading \"%s\"...") << NativePath(foundFileUri.asText()).pretty().toUtf8().constData();
-
-        App_FileSystem().index(hndl.file());
-
-        return &hndl.file();
-    }
-    catch(FS1::NotFoundError const&)
-    {
-        if(App_FileSystem().accessFile(search))
-        {
-            // Must already be loaded.
-            LOG_RES_XVERBOSE("\"%s\" already loaded") << NativePath(search.asText()).pretty();
-        }
-    }
-    return nullptr;
 }
 
 /**
@@ -2395,7 +1987,7 @@ D_CMD(Unload)
             LOG_MSG("No game is currently loaded.");
             return true;
         }
-        return App_ChangeGame(App_Games().nullGame());
+        return DoomsdayApp::app().changeGame(App_Games().nullGame(), DD_ActivateGameWorker);
     }
 
     AutoStr *searchPath = AutoStr_NewStd();
@@ -2420,7 +2012,8 @@ D_CMD(Unload)
             Game &game = App_Games()[Str_Text(searchPath)];
             if(App_GameLoaded())
             {
-                return App_ChangeGame(App_Games().nullGame());
+                return DoomsdayApp::app().changeGame(App_Games().nullGame(),
+                                                     DD_ActivateGameWorker);
             }
 
             LOG_MSG("%s is not currently loaded.") << game.id();
@@ -2475,7 +2068,8 @@ D_CMD(ReloadGame)
         LOG_MSG("No game is presently loaded.");
         return true;
     }
-    App_ChangeGame(App_CurrentGame(), true/* allow reload */);
+    DoomsdayApp::app().changeGame(DoomsdayApp::game(), DD_ActivateGameWorker,
+                                  DoomsdayApp::AllowReload);
     return true;
 }
 

@@ -787,6 +787,8 @@ void ClientApp::unloadGame(Game const &upcomingGame)
 
     R_InitViewWindow();
     R_InitSvgs();
+
+    Map::initDummies();
 }
 
 void ClientApp::makeGameCurrent(Game &newGame)

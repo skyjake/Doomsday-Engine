@@ -60,8 +60,6 @@
 
 int novideo;                // if true, stay in text mode for debugging
 
-static dd_bool appShutdown = false; ///< Set to true when we should exit (normally).
-
 #ifdef DENG_CATCH_SIGNALS
 /**
  * Borrowed from Lee Killough.
@@ -116,7 +114,7 @@ void Sys_Init()
 
 bool Sys_IsShuttingDown()
 {
-    return CPP_BOOL(appShutdown);
+    return DoomsdayApp::app().isShuttingDown();
 }
 
 /**
@@ -125,7 +123,7 @@ bool Sys_IsShuttingDown()
 void Sys_Shutdown()
 {
     // We are now shutting down.
-    appShutdown = true;
+    DoomsdayApp::app().setShuttingDown(true);
 
     // Time to unload *everything*.
     if(App_GameLoaded())
@@ -282,7 +280,7 @@ DENG_EXTERN_C void Sys_Quit(void)
         return;
     }
 
-    appShutdown = true;
+    DoomsdayApp::app().setShuttingDown(true);
 
     // It's time to stop the main loop.
     DENG2_APP->stopLoop(DD_GameLoopExitCode());

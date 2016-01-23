@@ -23,6 +23,7 @@
 #include "doomsday/filesys/fs_util.h"
 #include "doomsday/filesys/lumpindex.h"
 #include "doomsday/filesys/virtualmappings.h"
+#include "doomsday/doomsdayapp.h"
 
 #include <de/memory.h>
 #include <de/c_wrapper.h>
@@ -33,7 +34,7 @@ void FS_InitVirtualPathMappings()
 {
     App_FileSystem().clearPathMappings();
 
-    //if(DD_IsShuttingDown()) return;
+    if(DoomsdayApp::app().isShuttingDown()) return;
 
     // Create virtual directory mappings by processing all -vdmap options.
     dint argC = CommandLine_Count();
@@ -142,7 +143,7 @@ void FS_InitPathLumpMappings()
     // Free old paths, if any.
     App_FileSystem().clearPathLumpMappings();
 
-    //if(DD_IsShuttingDown()) return;
+    if(DoomsdayApp::app().isShuttingDown()) return;
 
     size_t bufSize = 0;
     uint8_t *buf = 0;

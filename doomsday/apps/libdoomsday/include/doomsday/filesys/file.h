@@ -217,6 +217,18 @@ public:
      */
     virtual File1 &clearCache(bool *retCleared = 0);
 
+public:
+    /**
+     * Attempt to load the (logical) resource indicated by the @a search term.
+     *
+     * @param path        Path to the resource to be loaded. Either a "real" file in
+     *                    the local file system, or a "virtual" file.
+     * @param baseOffset  Offset from the start of the file in bytes to begin.
+     *
+     * @return  @c true if the referenced resource was loaded.
+     */
+    static File1 *tryLoad(Uri const &search, size_t baseOffset = 0);
+
 protected:
     /// File stream handle.
     FileHandle *handle_;

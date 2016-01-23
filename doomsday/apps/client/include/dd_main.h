@@ -51,11 +51,6 @@ void DD_FinishInitializationAfterWindowReady();
 void DD_ConsoleRegister();
 
 /**
- * Returns @c true if shutdown is in progress.
- */
-bool DD_IsShuttingDown();
-
-/**
  * Print an error message and quit.
  */
 void App_Error(char const *error, ...);
@@ -89,10 +84,7 @@ void DD_UpdateEngineState();
 // Game modules -------------------------------------------------------------------
 //
 
-/**
- * Switch to/activate the specified game.
- */
-bool App_ChangeGame(Game &game, bool allowReload = false);
+int DD_ActivateGameWorker(void *context);
 
 /**
  * Returns the application's global Games (collection).

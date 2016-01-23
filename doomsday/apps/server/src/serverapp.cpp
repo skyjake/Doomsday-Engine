@@ -37,6 +37,7 @@
 #include "def_main.h"
 #include "con_config.h"
 #include "network/net_main.h"
+#include "world/map.h"
 
 #if WIN32
 #  include "dd_winit.h"
@@ -224,6 +225,8 @@ void ServerApp::initialize()
 void ServerApp::unloadGame(Game const &upcomingGame)
 {
     DoomsdayApp::unloadGame(upcomingGame);
+
+    Map::initDummies();
 }
 
 ServerApp &ServerApp::app()

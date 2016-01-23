@@ -26,6 +26,8 @@
 
 #include <de/NativePath>
 #include <de/Info>
+
+#include <QFlags>
 #include <string>
 
 namespace res { class Bundles; }
@@ -57,6 +59,12 @@ public:
      */
     DENG2_DEFINE_AUDIENCE2(ConsoleRegistration, void consoleRegistration())
 
+    struct GameChangeParameters
+    {
+        /// @c true iff caller (i.e., App_ChangeGame) initiated busy mode.
+        bool initiatedBusyMode;
+    };
+
 public:
     DoomsdayApp(Players::Constructor playerConstructor);
 
@@ -69,7 +77,28 @@ public:
 
     void determineGlobalPaths();
 
+    enum Behavior
+    {
+        AllowReload = 0x1,
+        DefaultBehavior = 0,
+    };
+    Q_DECLARE_FLAGS(Behaviors, Behavior)
+
+    /**
+     * Switch to/activate the specified game.
+     *
+     * @param newGame    Game to change to.
+     * @param gameActivationFunc  Callback to call after the new game has
+     *                   been made current.
+     * @param behaviors  Change behavior flags.
+     */
+    bool changeGame(Game &newGame, std::function<int (void *)> gameActivationFunc,
+                    Behaviors behaviors = DefaultBehavior);
+
     bool isUsingUserDir() const;
+
+    bool isShuttingDown() const;
+    void setShuttingDown(bool shuttingDown);
 
 #ifdef WIN32
     void *moduleHandle() const;
@@ -104,7 +133,9 @@ public:
      */
     static Game &game();
 
-//protected: // TODO: after changeGame() is moved here, make protected again
+    static bool isGameLoaded();
+
+protected:
     /**
      * Called just before a game change is about to begin. The GameUnload
      * audience has already been notified.
@@ -129,5 +160,7 @@ private:
  * Returns @c true if a game module is presently loaded.
  */
 LIBDOOMSDAY_PUBLIC bool App_GameLoaded();
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(DoomsdayApp::Behaviors)
 
 #endif // LIBDOOMSDAY_DOOMSDAYAPP_H
