@@ -1019,7 +1019,7 @@ static void initialize()
 #ifdef __CLIENT__
     Con_InitProgress2(200, .25f, 1); // Second half.
 #endif
-    App_Games().locateAllResources();
+    App_Games().checkReadiness();
 
     // Attempt automatic game selection.
     if(!CommandLine_Exists("-noautoselect") || isDedicated)

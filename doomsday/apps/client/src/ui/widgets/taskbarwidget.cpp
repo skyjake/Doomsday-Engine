@@ -744,8 +744,7 @@ void TaskBarWidget::chooseIWADFolder()
         ClientWindow::main().console().closeLogAndUnfocusCommandLine();
 
         Con_InitProgress(200);
-        App_Games().forgetAllResources();
-        App_Games().locateAllResources();
+        App_Games().checkReadiness();
     }
 }
 
