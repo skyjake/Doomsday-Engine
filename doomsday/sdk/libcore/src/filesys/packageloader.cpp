@@ -138,7 +138,8 @@ DENG2_PIMPL(PackageLoader)
      * Given a package identifier, pick one of the available versions of the package
      * based on predefined criteria.
      *
-     * @param packageId  Package identifier.
+     * @param packageId  Package identifier. This may optionally include the
+     *                   required version number.
      *
      * @return Selected package, or @c NULL if a version could not be selected.
      */
@@ -184,7 +185,7 @@ DENG2_PIMPL(PackageLoader)
             return aVer < bVer;
         });
 
-        LOG_RES_VERBOSE("Selected '%s': %s") << packageId << found.back()->description();
+        LOG_RES_XVERBOSE("Selected '%s': %s") << packageId << found.back()->description();
 
         return found.back();
     }
@@ -290,13 +291,14 @@ Package const &PackageLoader::load(String const &packageId)
                             "Package \"" + packageId + "\" is not available");
     }
 
-    d->load(packageId, *packFile);
+    String id = Package::split(packageId).first;
+    d->load(id, *packFile);
 
     try
     {
         DENG2_FOR_AUDIENCE2(Load, i)
         {
-            i->packageLoaded(packageId);
+            i->packageLoaded(id);
         }
         DENG2_FOR_AUDIENCE2(Activity, i)
         {
@@ -306,25 +308,27 @@ Package const &PackageLoader::load(String const &packageId)
     catch(Error const &er)
     {
         // Someone took issue with the loaded package; cancel the load.
-        unload(packageId);
+        unload(id);
         throw PostLoadError("PackageLoader::load",
                             "Error during post-load actions of package \"" +
-                            packageId + "\": " + er.asText());
+                            id + "\": " + er.asText());
     }
 
-    return package(packageId);
+    return package(id);
 }
 
 void PackageLoader::unload(String const &packageId)
 {
-    if(isLoaded(packageId))
+    String id = Package::split(packageId).first;
+
+    if(isLoaded(id))
     {
         DENG2_FOR_AUDIENCE2(Unload, i)
         {
-            i->aboutToUnloadPackage(packageId);
+            i->aboutToUnloadPackage(id);
         }
 
-        d->unload(packageId);
+        d->unload(id);
 
         DENG2_FOR_AUDIENCE2(Activity, i)
         {
@@ -359,6 +363,19 @@ PackageLoader::LoadedPackages const &PackageLoader::loadedPackages() const
     return d->loaded;
 }
 
+FS::FoundFiles PackageLoader::loadedPackagesAsFilesInPackageOrder() const
+{
+    QMap<int, File *> files; // sorted in package order
+    for(Package const *pkg : loadedPackages().values())
+    {
+        files.insert(pkg->order(),
+                     &App::rootFolder().locate<File>(pkg->objectNamespace().gets("package.path")));
+    }
+    FS::FoundFiles sorted;
+    for(auto i : files) sorted.push_back(i);
+    return sorted;
+}
+
 Package const &PackageLoader::package(String const &packageId) const
 {
     if(!isLoaded(packageId))
@@ -368,19 +385,10 @@ Package const &PackageLoader::package(String const &packageId) const
     return *d->loaded[packageId];
 }
 
-namespace internal
+void PackageLoader::sortInPackageOrder(FS::FoundFiles &filesToSort) const
 {
     typedef std::pair<File *, int> FileAndOrder;
 
-    static bool packageOrderLessThan(FileAndOrder const &a, FileAndOrder const &b) {
-        return a.second < b.second;
-    }
-}
-
-using namespace internal;
-
-void PackageLoader::sortInPackageOrder(FS::FoundFiles &filesToSort) const
-{
     // Find the packages for files.
     QList<FileAndOrder> all;
     DENG2_FOR_EACH_CONST(FS::FoundFiles, i, filesToSort)
@@ -395,7 +403,9 @@ void PackageLoader::sortInPackageOrder(FS::FoundFiles &filesToSort) const
     }
 
     // Sort by package order.
-    std::sort(all.begin(), all.end(), packageOrderLessThan);
+    std::sort(all.begin(), all.end(), [] (FileAndOrder const &a, FileAndOrder const &b) {
+        return a.second < b.second;
+    });
 
     // Put the results back in the given array.
     filesToSort.clear();

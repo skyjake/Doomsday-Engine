@@ -104,6 +104,8 @@ public:
      */
     LoadedPackages const &loadedPackages() const;
 
+    FileSystem::FoundFiles loadedPackagesAsFilesInPackageOrder() const;
+
     /**
      * Retrieves a specific loaded package. The package must already be loaded
      * using load().
