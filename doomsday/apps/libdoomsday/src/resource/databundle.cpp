@@ -258,6 +258,11 @@ File const &DataBundle::asFile() const
     return *dynamic_cast<File const *>(this);
 }
 
+File const &DataBundle::sourceFile() const
+{
+    return *asFile().source();
+}
+
 IByteArray::Size DataBundle::size() const
 {
     if(d->source)

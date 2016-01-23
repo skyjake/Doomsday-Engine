@@ -21,6 +21,7 @@
 #include "doomsday/filesys/datafolder.h"
 
 #include <de/App>
+#include <de/LinkFile>
 #include <de/Loop>
 
 #include <QList>
@@ -253,6 +254,22 @@ Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
              << "score:" << match.bestScore;
 
     return match;
+}
+
+QList<DataBundle const *> Bundles::loaded() const
+{
+    QList<DataBundle const *> loadedBundles;
+
+    // Check all the loaded packages to see which ones are data bundles.
+    for(auto *f : App::packageLoader().loadedPackagesAsFilesInPackageOrder())
+    {
+        if(DataBundle const *bundle = f->maybeAs<DataBundle>())
+        {
+            loadedBundles << bundle;
+        }
+    }
+
+    return loadedBundles;
 }
 
 } // namespace res

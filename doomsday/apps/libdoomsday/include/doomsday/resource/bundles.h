@@ -80,6 +80,15 @@ public:
      */
     MatchResult match(DataBundle const &bundle) const;
 
+    /**
+     * Compiles a list of all data bundles that have been loaded via
+     * PackageLoader. The order of the list reflects the order in which
+     * PackageLoader::load() was called on the packges.
+     *
+     * @return List of bundles.
+     */
+    QList<DataBundle const *> loaded() const;
+
 private:
     DENG2_PRIVATE(d)
 };

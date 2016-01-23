@@ -116,14 +116,14 @@ public:
     de::LoopResult forAll(std::function<de::LoopResult (Game &)> callback) const;
 
     /**
-     * Try to locate all startup resources for all registered games.
+     * Notify observers to update the readiness of games.
      */
-    void locateAllResources();
+    void checkReadiness();
 
     /**
      * Forgets the previously located resources of all registered games.
      */
-    void forgetAllResources();
+    //void forgetAllResources();
 
     /**
      * Collects all games.
@@ -142,7 +142,7 @@ public:
     /**
      * Try to locate all startup resources for @a game.
      */
-    void locateStartupResources(Game &game);
+    //void locateStartupResources(Game &game);
 
 public:
     /// Register the console commands, variables, etc..., of this module.

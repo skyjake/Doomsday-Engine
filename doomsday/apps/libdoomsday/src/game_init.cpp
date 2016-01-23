@@ -25,9 +25,11 @@
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/filesys/virtualmappings.h"
 #include "doomsday/filesys/wad.h"
+#include "doomsday/resource/bundles.h"
 #include "doomsday/resource/manifest.h"
 #include "doomsday/world/entitydef.h"
 
+#include <de/NativeFile>
 #include <de/findfile.h>
 #include <de/memory.h>
 
@@ -164,6 +166,26 @@ int loadGameStartupResourcesBusyWorker(void *context)
 
         // Definition class resources.
         App_FileSystem().addPathMapping("auto/", de::Uri("$(App.DefsPath)/$(GamePlugin.Name)/auto/", RC_NULL).resolved());
+    }
+
+    // Load data files.
+    for(DataBundle const *bundle : DoomsdayApp::bundles().loaded())
+    {
+        LOG_RES_NOTE("Loading %s from %s") << bundle->description()
+                                           << bundle->sourceFile().description();
+
+        if(NativeFile const *nativeFile = bundle->sourceFile().maybeAs<NativeFile>())
+        {
+            if(File1 *file = File1::tryLoad(de::Uri::fromNativePath(nativeFile->nativePath())))
+            {
+                file->setCustom(false);
+                LOG_RES_VERBOSE("%s: ok") << nativeFile->nativePath();
+            }
+            else
+            {
+                LOG_RES_WARNING("%s: could not load file") << nativeFile->nativePath();
+            }
+        }
     }
 
     /**

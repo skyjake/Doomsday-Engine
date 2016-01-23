@@ -494,7 +494,7 @@ bool DoomsdayApp::isGameLoaded()
     return App::appExists() && !DoomsdayApp::currentGame().isNull();
 }
 
-void DoomsdayApp::unloadGame(Game const &)
+void DoomsdayApp::unloadGame(Game const &/*upcomingGame*/)
 {
     auto &gx = plugins().gameExports();
 
@@ -515,6 +515,8 @@ void DoomsdayApp::unloadGame(Game const &)
             if(unloader) ((pluginfunc_t)unloader)();
             plugins().setActivePluginId(0);
         }
+
+        game().unloadPackages();
 
         // Clear application and subsystem state.
         reset();
@@ -591,6 +593,9 @@ void DoomsdayApp::makeGameCurrent(Game &newGame)
     // This is now the current game.
     setGame(newGame);
     Session::profile().gameId = newGame.id();
+
+    // Load the game's packages.
+    newGame.loadPackages();
 }
 
 // from game_init.cpp

@@ -202,6 +202,7 @@ Game &Games::defineGame(String const &id, Record const &parameters)
     return *game;
 }
 
+/*
 void Games::locateStartupResources(Game &game)
 {
     Game *oldCurrentGame = &DoomsdayApp::currentGame();
@@ -235,6 +236,7 @@ void Games::locateStartupResources(Game &game)
         App_FileSystem().resetAllSchemes();
     }
 }
+*/
 
 LoopResult Games::forAll(std::function<LoopResult (Game &)> callback) const
 {
@@ -248,8 +250,9 @@ LoopResult Games::forAll(std::function<LoopResult (Game &)> callback) const
     return LoopContinue;
 }
 
-void Games::locateAllResources()
+void Games::checkReadiness()
 {
+    /*
     int n = 1;
     DoomsdayApp::busyMode().runNewTaskWithName(
                 BUSYF_STARTUP | BUSYF_PROGRESS_BAR,
@@ -278,6 +281,7 @@ void Games::locateAllResources()
         });
         return LoopContinue;
     });
+*/
 
     DENG2_FOR_AUDIENCE2(Readiness, i)
     {
@@ -285,7 +289,7 @@ void Games::locateAllResources()
     }
 }
 
-void Games::forgetAllResources()
+/*void Games::forgetAllResources()
 {
     foreach(Game *game, d->games)
     {
@@ -297,7 +301,7 @@ void Games::forgetAllResources()
             }
         }
     }
-}
+}*/
 
 D_CMD(ListGames)
 {

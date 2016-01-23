@@ -227,6 +227,10 @@ public:
     void addResource(resourceclassid_t classId, de::dint rflags,
                      char const *names, void const *params);
 
+    void loadPackages() const;
+
+    void unloadPackages() const;
+
     // IObject.
     de::Record const &objectNamespace() const;
     de::Record &objectNamespace();

@@ -339,6 +339,22 @@ void Game::addResource(resourceclassid_t classId, dint rflags,
     }
 }
 
+void Game::loadPackages() const
+{
+    for(String const &id : d->requiredPackages)
+    {
+        App::packageLoader().load(id);
+    }
+}
+
+void Game::unloadPackages() const
+{
+    for(int i = d->requiredPackages.size() - 1; i >= 0; --i)
+    {
+        App::packageLoader().unload(d->requiredPackages.at(i));
+    }
+}
+
 Record const &Game::objectNamespace() const
 {
     return d->params;

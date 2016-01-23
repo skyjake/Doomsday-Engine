@@ -62,6 +62,7 @@ public:
     de::String description() const;
     de::File &asFile();
     de::File const &asFile() const;
+    de::File const &sourceFile() const;
 
     /**
      * Generates appropriate packages accoding to the contents of the data bundle.
