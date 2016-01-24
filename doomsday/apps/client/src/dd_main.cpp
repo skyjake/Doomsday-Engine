@@ -170,7 +170,7 @@ public:
 };
 
 static dint DD_StartupWorker(void *context);
-//static dint DD_DummyWorker(void *context);
+static dint DD_DummyWorker(void *context);
 
 dint isDedicated;
 dint verbose;                      ///< For debug messages (-verbose).
@@ -965,12 +965,10 @@ static void initialize()
     FR_Init();
 
     // Enter busy mode until startup complete.
-    //Con_InitProgress2(200, 0, .25f); // First half.
+    Con_InitProgress(200); 
 #endif
-    /*BusyMode_RunNewTaskWithName(BUSYF_NO_UPLOADS | BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                DD_StartupWorker, 0, "Starting up...");*/
-
-    DD_StartupWorker(nullptr);
+    BusyMode_RunNewTaskWithName(BUSYF_NO_UPLOADS | BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                                DD_StartupWorker, 0, "Starting up...");
 
     // Engine initialization is complete. Now finish up with the GL.
 #ifdef __CLIENT__
@@ -983,11 +981,10 @@ static void initialize()
 
 #ifdef __CLIENT__
     // Do deferred uploads.
-    //Con_InitProgress2(200, .25f, .25f); // Stop here for a while.
+    Con_SetProgress(100);
 #endif
-    //BusyMode_RunNewTaskWithName(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-    //                            DD_DummyWorker, 0, "Buffering...");
-    //DD_DummyWorker(nullptr);
+    BusyMode_RunNewTaskWithName(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                                DD_DummyWorker, 0, "Buffering...");
 
 #if 0
     // Add resource paths specified using -iwad on the command line.
@@ -1024,7 +1021,7 @@ static void initialize()
     // Try to locate all required data files for all registered games.
     //
 #ifdef __CLIENT__
-    //Con_InitProgress2(200, .25f, 1); // Second half.
+    Con_SetProgress(200);
 #endif
     App_Games().checkReadiness();
 
@@ -1349,7 +1346,7 @@ static dint DD_StartupWorker(void * /*context*/)
     return 0;
 }
 
-#if 0
+#if 1
 /**
  * This only exists so we have something to call while the deferred uploads of the
  * startup are processed.

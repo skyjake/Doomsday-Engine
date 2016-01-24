@@ -324,8 +324,6 @@ DENG2_PIMPL(ClientWindow)
 
     void appStartupCompleted()
     {
-        setupFadeFromBlack(2);
-
         // Allow the background image to show.
         background->setImageColor(Vector4f(1, 1, 1, 1));
         taskBar->show();
