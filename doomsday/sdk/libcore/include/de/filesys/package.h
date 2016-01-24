@@ -94,8 +94,14 @@ public:
     File const &file() const;
 
     /**
-     * Returns the package's root folder, if it has one. Returns @c NULL if the package
-     * is "flat" and comes with no folder structure.
+     * Returns the original source file of the package, where the package's
+     * contents are being sourced from. This is usually the file referenced
+     * by the "path" member in the package metadata.
+     */
+    File const &sourceFile() const;
+
+    /**
+     * Returns the package's root folder.
      */
     Folder const &root() const;
 

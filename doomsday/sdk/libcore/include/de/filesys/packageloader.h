@@ -82,12 +82,21 @@ public:
      * Checks if a specific package is available. There may be multiple
      * versions of the package.
      *
-     * @param packageId  Package identifier.
+     * @param packageId  Package identifier(s), with optional versions.
      *
      * @return @c true, if the package is availalbe. Loading the package
      * should be successful.
      */
     bool isAvailable(String const &packageId) const;
+
+    /**
+     * Finds the file that would be loaded when loading with @a packageId.
+     *
+     * @param packageId  Package identifier(s), with optional versions.
+     *
+     * @return File representing the package, or @c nullptr if none found.
+     */
+    File const *select(String const &packageId) const;
 
     Package const &load(String const &packageId);
 

@@ -119,10 +119,15 @@ File const &Package::file() const
     return *d->file;
 }
 
+File const &Package::sourceFile() const
+{
+    return App::rootFolder().locate<File const>(objectNamespace().gets("package.path"));
+}
+
 Folder const &Package::root() const
 {
     d->verifyFile();
-    return d->file->as<Folder>();
+    return d->file->expectedAs<Folder>();
 }
 
 Record &Package::objectNamespace()

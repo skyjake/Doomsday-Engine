@@ -164,10 +164,12 @@ DENG2_PIMPL(PackageLoader)
         auto idVer = Package::split(packageId);
         if(idVer.second.isValid())
         {
-            std::remove_if(found.begin(), found.end(), [&idVer] (File *f) {
+            found.remove_if([&idVer] (File *f) {
                 Version const pkgVer = f->objectNamespace().gets("package.version");
                 return (pkgVer != idVer.second); // Ignore other versions.
             });
+            // Did we run out of candidates?
+            if(found.empty()) return nullptr;
         }
 
         // Sorted descending by version.
@@ -280,18 +282,25 @@ bool PackageLoader::isAvailable(String const &packageId) const
     return d->selectPackage(IdentifierList(packageId)) != nullptr;
 }
 
+File const *PackageLoader::select(String const &packageId) const
+{
+    return d->selectPackage(IdentifierList(packageId));
+}
+
 Package const &PackageLoader::load(String const &packageId)
 {
     LOG_AS("PackageLoader");
 
-    File const *packFile = d->selectPackage(packageId);
+    File const *packFile = d->selectPackage(IdentifierList(packageId));
     if(!packFile)
     {
         throw NotFoundError("PackageLoader::load",
                             "Package \"" + packageId + "\" is not available");
     }
 
-    String id = Package::split(packageId).first;
+    // Use the identifier computed from the file because @a packageId may
+    // actually list multiple alternatives.
+    String const id = Package::identifierForFile(*packFile);
     d->load(id, *packFile);
 
     try
@@ -365,14 +374,13 @@ PackageLoader::LoadedPackages const &PackageLoader::loadedPackages() const
 
 FS::FoundFiles PackageLoader::loadedPackagesAsFilesInPackageOrder() const
 {
-    QMap<int, File *> files; // sorted in package order
+    QMap<int, File const *> files; // sorted in package order
     for(Package const *pkg : loadedPackages().values())
     {
-        files.insert(pkg->order(),
-                     &App::rootFolder().locate<File>(pkg->objectNamespace().gets("package.path")));
+        files.insert(pkg->order(), &pkg->sourceFile());
     }
     FS::FoundFiles sorted;
-    for(auto i : files) sorted.push_back(i);
+    for(auto i : files) sorted.push_back(const_cast<File *>(i));
     return sorted;
 }
 
