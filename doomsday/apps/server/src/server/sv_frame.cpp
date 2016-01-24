@@ -749,6 +749,7 @@ writeDeltaLength:
  */
 dsize Sv_GetMaxFrameSize(dint playerNumber)
 {
+    DENG2_UNUSED(playerNumber);
     DENG2_ASSERT(playerNumber >= 0 && playerNumber < DDMAXPLAYERS);
     dsize size = MINIMUM_FRAME_SIZE + FRAME_SIZE_FACTOR * 40 /* BWR_DEFAULT */;
 

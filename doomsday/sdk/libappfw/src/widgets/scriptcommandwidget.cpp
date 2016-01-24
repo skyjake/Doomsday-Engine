@@ -54,7 +54,6 @@ DENG2_PIMPL(ScriptCommandWidget)
         self.updateCompletion();
     }
 
-
     void importNativeModules()
     {
         // Automatically import all native modules into the interactive process.

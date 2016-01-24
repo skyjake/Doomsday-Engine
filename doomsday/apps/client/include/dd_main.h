@@ -34,9 +34,7 @@
 #include "world/clientserverworld.h"
 #include "ui/infine/infinesystem.h"
 
-namespace de {
-class File1;
-}
+namespace de { class File1; }
 
 extern de::dint verbose;
 extern de::dint isDedicated;
