@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_DIRECTORYFEED_H
@@ -53,7 +53,13 @@ public:
         AllowWrite = 0x1,
 
         /// Creates the native directory if not does not exist.
-        CreateIfMissing = 0x2
+        CreateIfMissing = 0x2,
+
+        /// When populating the contents of the folder, descend to native
+        /// subfolders.
+        PopulateNativeSubfolders = 0x4,
+
+        OnlyThisFolder = 0,
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
@@ -64,7 +70,8 @@ public:
      * @param nativePath  Path of the native directory.
      * @param mode        Feed mode.
      */
-    DirectoryFeed(NativePath const &nativePath, Flags const &mode = 0);
+    DirectoryFeed(NativePath const &nativePath,
+                  Flags const &mode = PopulateNativeSubfolders);
 
     virtual ~DirectoryFeed();
 

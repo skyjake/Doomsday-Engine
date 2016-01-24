@@ -65,8 +65,12 @@ void DirectoryFeed::populate(Folder &folder)
     }
     QStringList nameFilters;
     nameFilters << "*";
-    foreach(QFileInfo entry,
-            dir.entryInfoList(nameFilters, QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot))
+    QDir::Filters dirFlags = QDir::Files | QDir::NoDotAndDotDot;
+    if(_mode.testFlag(PopulateNativeSubfolders))
+    {
+        dirFlags |= QDir::Dirs;
+    }
+    foreach(QFileInfo entry, dir.entryInfoList(nameFilters, dirFlags))
     {
         if(entry.isDir())
         {
@@ -113,30 +117,40 @@ void DirectoryFeed::populateSubFolder(Folder &folder, String const &entryName)
 
 void DirectoryFeed::populateFile(Folder &folder, String const &entryName)
 {
-    if(folder.has(entryName))
+    try
     {
-        // Already has an entry for this, skip it (wasn't pruned so it's OK).
-        return;
+        if(folder.has(entryName))
+        {
+            // Already has an entry for this, skip it (wasn't pruned so it's OK).
+            return;
+        }
+
+        NativePath entryPath = _nativePath / entryName;
+
+        // Open the native file.
+        std::unique_ptr<NativeFile> nativeFile(new NativeFile(entryName, entryPath));
+        nativeFile->setStatus(fileStatus(entryPath));
+        if(_mode & AllowWrite)
+        {
+            nativeFile->setMode(File::Write);
+        }
+
+        File *file = folder.fileSystem().interpret(nativeFile.release());
+        folder.add(file);
+
+        // We will decide on pruning this.
+        file->setOriginFeed(this);
+
+        // Include files in the main index.
+        folder.fileSystem().index(*file);
     }
-
-    NativePath entryPath = _nativePath / entryName;
-
-    // Open the native file.
-    std::unique_ptr<NativeFile> nativeFile(new NativeFile(entryName, entryPath));
-    nativeFile->setStatus(fileStatus(entryPath));
-    if(_mode & AllowWrite)
+    catch(StatusError const &er)
     {
-        nativeFile->setMode(File::Write);
+        LOG_WARNING("Error with \"%s\" in %s: %s")
+                << entryName
+                << folder.description()
+                << er.asText();
     }
-
-    File *file = folder.fileSystem().interpret(nativeFile.release());
-    folder.add(file);
-
-    // We will decide on pruning this.
-    file->setOriginFeed(this);
-
-    // Include files in the main index.
-    folder.fileSystem().index(*file);
 }
 
 bool DirectoryFeed::prune(File &file) const
