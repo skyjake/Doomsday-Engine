@@ -188,7 +188,7 @@ int G_RegisterGames(int hookType, int param, void *data)
                             Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
                             Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/doom1.mapinfo"));
     setCommonParameters(d1);
-    d1.addRequiredPackage("com.idsoftware.doom");
+    d1.addRequiredPackage("com.idsoftware.doom  com.idsoftware.doom.ultimate");
     //d1.addResource(RC_PACKAGE, FF_STARTUP, "doom.wad", "E2M1;E2M2;E2M3;E2M4;E2M5;E2M6;E2M7;E2M8;E2M9;E3M1;E3M2;E3M3;E3M4;E3M5;E3M6;E3M7;E3M8;E3M9;CYBRE1;CYBRD8;FLOOR7_2");
     d1.addResource(RC_DEFINITION, 0, "doom1.ded", 0);
 

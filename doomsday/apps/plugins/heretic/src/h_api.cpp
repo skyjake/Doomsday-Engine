@@ -99,7 +99,7 @@ int G_RegisterGames(int hookType, int param, void* data)
     //htc.addResource(RC_PACKAGE, FF_STARTUP, "heretic.wad", "E2M2;E3M6;MUMSIT;WIZACT;MUS_CPTD;CHKNC5;SPAXA1A5");
     htc.addResource(RC_DEFINITION, 0, "heretic.ded", 0);
     htc.setRequiredPackages(StringList() << "net.dengine.legacy.heretic_2"
-                                         << "com.ravensoftware.heretic");
+                                         << "com.ravensoftware.heretic  com.ravensoftware.heretic.extended");
 
     /* Heretic (Shareware) */
     Game &shareware = games.defineGame(gameIds[heretic_shareware],
