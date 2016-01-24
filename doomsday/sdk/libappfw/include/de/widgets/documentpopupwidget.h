@@ -20,6 +20,7 @@
 #define LIBAPPFW_DOCUMENTPOPUPWIDGET_H
 
 #include "../DocumentWidget"
+#include "../ButtonWidget"
 #include "../PopupWidget"
 
 namespace de {
@@ -35,9 +36,12 @@ class LIBAPPFW_PUBLIC DocumentPopupWidget : public PopupWidget
 
 public:
     DocumentPopupWidget(String const &name = "");
+    DocumentPopupWidget(ButtonWidget *actionButton, String const &name = "");
 
     DocumentWidget &document();
     DocumentWidget const &document() const;
+
+    ButtonWidget *button();
 
 private:
     DENG2_PRIVATE(d)
