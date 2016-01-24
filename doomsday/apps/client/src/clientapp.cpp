@@ -27,6 +27,7 @@
 #include <QFontDatabase>
 #include <QMenuBar>
 #include <QNetworkProxyFactory>
+#include <QSplashScreen>
 
 #include <de/c_wrapper.h>
 #include <de/ArrayValue>
@@ -84,6 +85,8 @@
 #endif
 
 #include <de/timer.h>
+
+#include "ui/splash.xpm"
 
 using namespace de;
 
@@ -478,6 +481,16 @@ ClientApp::ClientApp(int &argc, char **argv)
     d->binder.init(scriptSystem().nativeModule("App"))
             << DENG2_FUNC_NOARG (App_GamePlugin, "gamePlugin")
             << DENG2_FUNC_NOARG (App_Quit,       "quit");
+
+    /// @todo Remove the splash screen when file system indexing can be done as
+    /// a background task and the main window can be opened instantly. -jk
+    QPixmap const pixmap(doomsdaySplashXpm);
+    QSplashScreen *splash = new QSplashScreen(pixmap);
+    splash->show();
+    splash->showMessage(Version().asText(), Qt::AlignHCenter | Qt::AlignBottom,
+                        QColor(90, 110, 95));
+    processEvents();
+    splash->deleteLater();
 }
 
 void ClientApp::initialize()

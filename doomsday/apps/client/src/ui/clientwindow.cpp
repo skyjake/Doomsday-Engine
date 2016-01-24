@@ -76,6 +76,8 @@ DENG2_PIMPL(ClientWindow)
 , DENG2_OBSERVES(DoomsdayApp, GameChange)
 , DENG2_OBSERVES(MouseEventSource, MouseStateChange)
 , DENG2_OBSERVES(Canvas,   FocusChange)
+, DENG2_OBSERVES(Canvas,   GLInit)
+, DENG2_OBSERVES(Canvas,   GLResize)
 , DENG2_OBSERVES(Variable, Change)
 {
     bool needMainInit       = true;
@@ -322,6 +324,8 @@ DENG2_PIMPL(ClientWindow)
 
     void appStartupCompleted()
     {
+        setupFadeFromBlack(2);
+
         // Allow the background image to show.
         background->setImageColor(Vector4f(1, 1, 1, 1));
         taskBar->show();
@@ -347,7 +351,8 @@ DENG2_PIMPL(ClientWindow)
 
     void showGameSelectionMenu(bool show)
     {
-        bool gotPlayable = App_Games().numPlayable();
+        bool gotPlayable = App_Games().numPlayable() > 0;
+
         if(show && gotPlayable)
         {
             gameSelMenu->show();
@@ -441,6 +446,24 @@ DENG2_PIMPL(ClientWindow)
         }
 
         mode = newMode;
+    }
+
+    void canvasGLInit(Canvas &)
+    {
+        Sys_GLConfigureDefaultState();
+        GL_Init2DState();
+    }
+
+    void canvasGLResized(Canvas &canvas)
+    {
+        LOG_AS("ClientWindow");
+
+        Canvas::Size size = canvas.size();
+        LOG_TRACE("Canvas resized to ") << size.asText();
+
+        GLState::current().setViewport(Rectangleui(0, 0, size.x, size.y));
+
+        updateRootSize();
     }
 
     /**
@@ -851,8 +874,8 @@ ClientWindow::ClientWindow(String const &id)
     : BaseWindow(id)
     , d(new Instance(this))
 {
-    canvas().audienceForGLResize() += this;
-    canvas().audienceForGLInit() += this;
+    canvas().audienceForGLResize() += d;
+    canvas().audienceForGLInit() += d;
 
 #ifdef WIN32
     // Set an icon for the window.
@@ -971,11 +994,6 @@ void ClientWindow::canvasGLReady(Canvas &canvas)
     }
 }
 
-void ClientWindow::canvasGLInit(Canvas &)
-{
-    Sys_GLConfigureDefaultState();
-    GL_Init2DState();
-}
 
 void ClientWindow::preDraw()
 {
@@ -1021,18 +1039,6 @@ void ClientWindow::postDraw()
     ClientApp::app().postFrame(); /// @todo what about multiwindow?
     d->updateFpsNotification(frameRate());
     d->completeFade();
-}
-
-void ClientWindow::canvasGLResized(Canvas &canvas)
-{
-    LOG_AS("ClientWindow");
-
-    Canvas::Size size = canvas.size();
-    LOG_TRACE("Canvas resized to ") << size.asText();
-
-    GLState::current().setViewport(Rectangleui(0, 0, size.x, size.y));
-
-    d->updateRootSize();
 }
 
 bool ClientWindow::setDefaultGLFormat() // static

@@ -185,7 +185,10 @@ BusyRunner::Result BusyRunner::runTask(BusyTask *task)
     BusyVisual_PrepareResources();
 
     de::ProgressWidget &prog = ClientWindow::main().busy().progress();
-    prog.show();
+    if(!(task->mode & BUSYF_STARTUP))
+    {
+        prog.show();
+    }
     prog.setText(task->name);
     prog.setMode(task->mode & BUSYF_ACTIVITY? de::ProgressWidget::Indefinite :
                                               de::ProgressWidget::Ranged);

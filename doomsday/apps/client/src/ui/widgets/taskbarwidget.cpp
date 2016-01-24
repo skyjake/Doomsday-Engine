@@ -740,11 +740,9 @@ void TaskBarWidget::chooseIWADFolder()
     // Reload packages and recheck for game availability.
     if(reload)
     {
-        ClientApp::resourceSystem().updateOverrideIWADPathFromConfig();
         ClientWindow::main().console().closeLogAndUnfocusCommandLine();
 
-        Con_InitProgress(200);
-        App_Games().checkReadiness();
+        DoomsdayApp::app().initWadFolders();
     }
 }
 

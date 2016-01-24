@@ -44,6 +44,8 @@
 #include <de/memory.h>
 #include <de/timer.h>
 #include <de/ArrayValue>
+#include <de/NativeFile>
+#include <de/LinkFile>
 #include <de/DictionaryValue>
 #include <de/Log>
 #include <de/NativePath>
@@ -59,6 +61,7 @@
 #include <doomsday/filesys/fs_util.h>
 #include <doomsday/filesys/sys_direc.h>
 #include <doomsday/filesys/virtualmappings.h>
+#include <doomsday/resource/databundle.h>
 #include <doomsday/resource/manifest.h>
 #include <doomsday/help.h>
 #include <doomsday/paths.h>
@@ -167,7 +170,7 @@ public:
 };
 
 static dint DD_StartupWorker(void *context);
-static dint DD_DummyWorker(void *context);
+//static dint DD_DummyWorker(void *context);
 
 dint isDedicated;
 dint verbose;                      ///< For debug messages (-verbose).
@@ -962,10 +965,12 @@ static void initialize()
     FR_Init();
 
     // Enter busy mode until startup complete.
-    Con_InitProgress2(200, 0, .25f); // First half.
+    //Con_InitProgress2(200, 0, .25f); // First half.
 #endif
-    BusyMode_RunNewTaskWithName(BUSYF_NO_UPLOADS | BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                DD_StartupWorker, 0, "Starting up...");
+    /*BusyMode_RunNewTaskWithName(BUSYF_NO_UPLOADS | BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                                DD_StartupWorker, 0, "Starting up...");*/
+
+    DD_StartupWorker(nullptr);
 
     // Engine initialization is complete. Now finish up with the GL.
 #ifdef __CLIENT__
@@ -978,11 +983,13 @@ static void initialize()
 
 #ifdef __CLIENT__
     // Do deferred uploads.
-    Con_InitProgress2(200, .25f, .25f); // Stop here for a while.
+    //Con_InitProgress2(200, .25f, .25f); // Stop here for a while.
 #endif
-    BusyMode_RunNewTaskWithName(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                DD_DummyWorker, 0, "Buffering...");
+    //BusyMode_RunNewTaskWithName(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+    //                            DD_DummyWorker, 0, "Buffering...");
+    //DD_DummyWorker(nullptr);
 
+#if 0
     // Add resource paths specified using -iwad on the command line.
     FS1::Scheme &scheme = App_FileSystem().scheme(App_ResourceClass("RC_PACKAGE").defaultScheme());
     for(dint p = 0; p < CommandLine_Count(); ++p)
@@ -1012,12 +1019,12 @@ static void initialize()
     }
 
     App_ResourceSystem().updateOverrideIWADPathFromConfig();
-
+#endif
     //
     // Try to locate all required data files for all registered games.
     //
 #ifdef __CLIENT__
-    Con_InitProgress2(200, .25f, 1); // Second half.
+    //Con_InitProgress2(200, .25f, 1); // Second half.
 #endif
     App_Games().checkReadiness();
 
@@ -1217,12 +1224,7 @@ void DD_FinishInitializationAfterWindowReady()
     try
     {
         initialize();
-
-        /// @todo This notification should be done from the app.
-        DENG2_FOR_EACH_OBSERVER(App::StartupCompleteAudience, i, App::app().audienceForStartupComplete())
-        {
-            i->appStartupCompleted();
-        }
+        App::app().notifyStartupComplete();
         return;
     }
     catch(Error const &er)
@@ -1240,11 +1242,11 @@ static dint DD_StartupWorker(void * /*context*/)
     // Initialize COM for this thread (needed for DirectInput).
     CoInitialize(nullptr);
 #endif
-    Con_SetProgress(10);
+    //Con_SetProgress(10);
 
     // Any startup hooks?
     DoomsdayApp::plugins().callAllHooks(HOOK_STARTUP);
-    Con_SetProgress(20);
+    //Con_SetProgress(20);
 
     // Was the change to userdir OK?
     if(CommandLine_CheckWith("-userdir", 1) && !DoomsdayApp::app().isUsingUserDir())
@@ -1255,7 +1257,7 @@ static dint DD_StartupWorker(void * /*context*/)
     FS_InitVirtualPathMappings();
     App_FileSystem().resetAllSchemes();
 
-    Con_SetProgress(40);
+    //Con_SetProgress(40);
 
     Net_Init();
     Sys_HideMouseCursor();
@@ -1280,19 +1282,29 @@ static dint DD_StartupWorker(void * /*context*/)
     //
     // Add required engine resource files.
     //
-    String foundPath = App_FileSystem().findPath(de::Uri("doomsday.pk3", RC_PACKAGE),
+    /*String foundPath = App_FileSystem().findPath(de::Uri("doomsday.pk3", RC_PACKAGE),
                                                  RLF_DEFAULT, App_ResourceClass(RC_PACKAGE));
     foundPath = App_BasePath() / foundPath;  // Ensure the path is absolute.
     File1 *loadedFile = File1::tryLoad(de::Uri(foundPath, RC_NULL));
     DENG2_ASSERT(loadedFile);
-    DENG2_UNUSED(loadedFile);
+    DENG2_UNUSED(loadedFile);*/
+
+    // It is assumed that doomsday.pk3 is currently stored in a native file.
+    if(File const *basePack = App::packageLoader().select("net.dengine.legacy.base"))
+    {
+        // The returned file is a symlink to the actual data file.
+        // Since we're loading with FS1, we need to look up the native path.
+        // The data file is an interpreter in /local/wads, whose source is the native file.
+        File1::tryLoad(de::Uri::fromNativePath(basePack->as<LinkFile>().target()
+                                               .source()->as<NativeFile>().nativePath()));
+    }
 
     // No more files or packages will be loaded in "startup mode" after this point.
     App_FileSystem().endStartup();
 
     // Load engine help resources.
     DD_InitHelp();
-    Con_SetProgress(60);
+    //Con_SetProgress(60);
 
     // Execute the startup script (Startup.cfg).
     char const *startupConfig = "startup.cfg";
@@ -1300,7 +1312,7 @@ static dint DD_StartupWorker(void * /*context*/)
     {
         Con_ParseCommands(startupConfig);
     }
-    Con_SetProgress(90);
+    //Con_SetProgress(90);
 
     R_BuildTexGammaLut();
 #ifdef __CLIENT__
@@ -1309,13 +1321,13 @@ static dint DD_StartupWorker(void * /*context*/)
     R_InitViewWindow();
     R_ResetFrameCount();
 #endif
-    Con_SetProgress(165);
+    //Con_SetProgress(165);
 
     Net_InitGame();
 #ifdef __CLIENT__
     Demo_Init();
 #endif
-    Con_SetProgress(190);
+    //Con_SetProgress(190);
 
     // In dedicated mode the console must be opened, so all input events
     // will be handled by it.
@@ -1323,11 +1335,11 @@ static dint DD_StartupWorker(void * /*context*/)
     {
         Con_Open(true);
     }
-    Con_SetProgress(199);
+    //Con_SetProgress(199);
 
     // Any initialization hooks?
     DoomsdayApp::plugins().callAllHooks(HOOK_INIT);
-    Con_SetProgress(200);
+    //Con_SetProgress(200);
 
 #ifdef WIN32
     // This thread has finished using COM.
@@ -1337,6 +1349,7 @@ static dint DD_StartupWorker(void * /*context*/)
     return 0;
 }
 
+#if 0
 /**
  * This only exists so we have something to call while the deferred uploads of the
  * startup are processed.
@@ -1346,6 +1359,7 @@ static dint DD_DummyWorker(void * /*context*/)
     Con_SetProgress(200);
     return 0;
 }
+#endif
 
 void DD_CheckTimeDemo()
 {
