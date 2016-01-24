@@ -17,11 +17,16 @@
  */
 
 #include "ui/widgets/gamesessionwidget.h"
+#include "ui/clientwindow.h"
+#include "clientapp.h"
 
 #include <de/App>
 #include <de/PopupButtonWidget>
 #include <de/DocumentPopupWidget>
+#include <de/SignalAction>
 #include <doomsday/doomsdayapp.h>
+
+#include <QFileDialog>
 
 using namespace de;
 
@@ -59,7 +64,17 @@ DENG2_PIMPL(GameSessionWidget)
         info->setText(_E(s)_E(B) + tr("..."));
 
         // Set up the info/actions popup widget.
-        self.add(doc = new DocumentPopupWidget);
+        if(popupStyle == PopupWithDataFileButton)
+        {
+            ButtonWidget *actionButton = new ButtonWidget;
+            actionButton->setText(tr("Data Files..."));
+            actionButton->setAction(new SignalAction(thisPublic, SLOT(browseDataFiles())));
+            self.add(doc = new DocumentPopupWidget(actionButton));
+        }
+        else
+        {
+            self.add(doc = new DocumentPopupWidget);
+        }
         doc->document().setMaximumLineWidth(doc->style().rules().rule("document.popup.width").valuei());
         info->setPopup(*doc, popupOpeningDirection);
         info->setOpener([this] (PopupWidget *) {
@@ -157,6 +172,32 @@ PopupMenuWidget &GameSessionWidget::menu()
 }
 
 void GameSessionWidget::updateInfoContent()
+{
+    // overridden by derived classes
+}
+
+void GameSessionWidget::browseDataFiles()
+{
+    ClientApp::app().beginNativeUIMode();
+
+    QFileDialog dlg(&ClientWindow::main(),
+                    tr("Select Additional Data Files"));
+    dlg.setReadOnly(true);
+    dlg.setFileMode(QFileDialog::ExistingFiles);
+    dlg.setNameFilter("Data files (*.wad *.deh *.ded *.lmp *.pk3)");
+    dlg.setLabelText(QFileDialog::Accept, tr("Select"));
+    if(dlg.exec())
+    {
+        StringList paths;
+        for(QString const &p : dlg.selectedFiles()) paths << p;
+        setDataFiles(paths);
+    }
+
+    ClientApp::app().endNativeUIMode();
+    d->info->popup()->close();
+}
+
+void GameSessionWidget::setDataFiles(StringList const &/*paths*/)
 {
     // overridden by derived classes
 }

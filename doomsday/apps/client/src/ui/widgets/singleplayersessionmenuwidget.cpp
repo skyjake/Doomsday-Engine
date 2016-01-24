@@ -36,9 +36,9 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
     struct GameItem : public ui::ImageItem,
                       public SessionItem
     {
-        Game const &game;
+        Game &game;
 
-        GameItem(Game const &gameRef,
+        GameItem(Game &gameRef,
                  de::String const &label,
                  SingleplayerSessionMenuWidget &owner)
             : ui::ImageItem(ShownAsButton, label)
@@ -52,14 +52,21 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
 
     struct GameWidget : public GameSessionWidget
     {
-        Game const *game;
+        SingleplayerSessionMenuWidget::Instance *owner;
+        Game *game = nullptr;
 
-        GameWidget() : game(0) {}
+        GameWidget() : GameSessionWidget(PopupWithDataFileButton) {}
 
         void updateInfoContent()
         {
             DENG2_ASSERT(game != 0);
             document().setText(game->description());
+        }
+
+        void setDataFiles(StringList const &paths)
+        {
+            game->setUserFiles(paths);
+            owner->updateItemLabels();
         }
     };
 
@@ -124,15 +131,22 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
         emit self.availabilityChanged();
     }
 
-    ui::Item *makeItemForGame(Game &game)
+    String labelForGame(Game const &game)
     {
-        String const idKey = game.id();
-
         String label = String(_E(b) "%1" _E(.) "\n" _E(l)_E(D) "%2")
                 .arg(game.title())
-                .arg(idKey);
+                .arg(game.id());
 
-        GameItem *item = new GameItem(game, label, self);
+        if(!game.userFiles().isEmpty())
+        {
+            label += _E(b) " +" + QString::number(game.userFiles().size());
+        }
+        return label;
+    }
+
+    ui::Item *makeItemForGame(Game &game)
+    {
+        GameItem *item = new GameItem(game, labelForGame(game), self);
 
         if(style().images().has(game.logoImageId()))
         {
@@ -140,6 +154,15 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
         }
 
         return item;
+    }
+
+    void updateItemLabels()
+    {
+        for(uint i = 0; i < self.items().size(); ++i)
+        {
+            GameItem &item = self.items().at(i).as<GameItem>();
+            item.setLabel(labelForGame(item.game));
+        }
     }
 
     void updateWidgetWithGameStatus(ui::Item const &menuItem)
@@ -197,7 +220,9 @@ Action *SingleplayerSessionMenuWidget::makeAction(ui::Item const &item)
 
 GuiWidget *SingleplayerSessionMenuWidget::makeItemWidget(ui::Item const &, GuiWidget const *)
 {
-    return new Instance::GameWidget;
+    auto *gw = new Instance::GameWidget;
+    gw->owner = d;
+    return gw;
 }
 
 void SingleplayerSessionMenuWidget::updateItemWidget(GuiWidget &widget, de::ui::Item const &item)

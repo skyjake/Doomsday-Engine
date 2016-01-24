@@ -31,8 +31,10 @@
  */
 class GameSessionWidget : public de::GuiWidget
 {
+    Q_OBJECT
+
 public:
-    enum PopupStyle { PopupDocument, PopupMenu };
+    enum PopupStyle { PopupDocument, PopupMenu, PopupWithDataFileButton };
 
 public:
     GameSessionWidget(PopupStyle popupStyle = PopupDocument,
@@ -51,6 +53,11 @@ public:
      * Called immediately before the Info button is pressed.
      */
     virtual void updateInfoContent();
+
+    virtual void setDataFiles(de::StringList const &paths);
+
+public slots:
+    void browseDataFiles();
 
 private:
     DENG2_PRIVATE(d)
