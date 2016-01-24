@@ -177,6 +177,8 @@ public:
      */
     void removeSystem(System &system);
 
+    void notifyStartupComplete();
+
     /**
      * Determines if an instance of App currently exists.
      */

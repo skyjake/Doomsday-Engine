@@ -674,7 +674,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
 #endif
     }
 
-    LOG_VERBOSE("libcore::App %s subsystems initialized.") << Version().asText();
+    LOG_VERBOSE("libcore::App %s subsystems initialized") << Version().asText();
 }
 
 void App::addSystem(System &system)
@@ -686,6 +686,14 @@ void App::addSystem(System &system)
 void App::removeSystem(System &system)
 {
     d->systems.removeAll(&system);
+}
+
+void App::notifyStartupComplete()
+{
+    DENG2_FOR_AUDIENCE2(StartupComplete, i)
+    {
+        i->appStartupCompleted();
+    }
 }
 
 bool App::appExists()

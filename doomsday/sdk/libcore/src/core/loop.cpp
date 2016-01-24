@@ -142,13 +142,18 @@ void LoopCallback::enqueue(Callback func)
 
 void LoopCallback::loopIteration()
 {
-    DENG2_GUARD(this);
+    QList<Callback> funcs;
 
-    Loop::get().audienceForIteration() -= this;
+    // Lock while modifying but not during the callbacks themselves.
+    {
+        DENG2_GUARD(this);
+        Loop::get().audienceForIteration() -= this;
 
-    // Make a copy of the list if new callbacks get enqueued in the callback.
-    QList<Callback> const funcs = _funcs;
-    _funcs.clear();
+        // Make a copy of the list if new callbacks get enqueued in the callback.
+        funcs = _funcs;
+        _funcs.clear();
+    }
+
     for(Callback const &cb : funcs)
     {
         cb();

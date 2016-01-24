@@ -74,9 +74,9 @@ void Version::parseVersionString(String const &version)
     int dashPos = version.indexOf('-');
 
     QStringList parts = version.left(dashPos).split('.');
-    if(parts.size() >= 1) major = parts[0].toInt();
-    if(parts.size() >= 2) minor = parts[1].toInt();
-    if(parts.size() >= 3) patch = parts[2].toInt();
+    if(parts.size() >= 1) major = String(parts[0]).toInt();
+    if(parts.size() >= 2) minor = String(parts[1]).toInt();
+    if(parts.size() >= 3) patch = String(parts[2]).toInt();
 
     if(dashPos >= 0 && dashPos < version.size() - 1)
     {
