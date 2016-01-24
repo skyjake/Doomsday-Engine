@@ -73,6 +73,12 @@ public:
      */
     void initialize();
 
+    /**
+     * Initializes the /local/wads folder that contains all the WAD files that
+     * Doomsday will access.
+     */
+    void initWadFolders();
+
     void identifyDataBundles();
 
     void determineGlobalPaths();

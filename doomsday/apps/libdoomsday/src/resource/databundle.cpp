@@ -305,7 +305,14 @@ void DataBundle::setFormat(Format format)
 
 void DataBundle::identifyPackages() const
 {
-    d->identify();
+    try
+    {
+        d->identify();
+    }
+    catch(Error const &er)
+    {
+        LOG_RES_WARNING("Failed to identify %s") << description();
+    }
 }
 
 bool DataBundle::isNested() const

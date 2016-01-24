@@ -129,7 +129,8 @@ DENG2_PIMPL_NOREF(DoomsdayApp)
             if(path.exists())
             {
                 LOG_RES_NOTE("Using %s WAD folder: %s") << description << path.pretty();
-                App::rootFolder().locate<Folder>(PATH_LOCAL_WADS).attach(new DirectoryFeed(path));
+                App::rootFolder().locate<Folder>(PATH_LOCAL_WADS).attach(
+                            new DirectoryFeed(path, DirectoryFeed::OnlyThisFolder));
             }
             else
             {
@@ -366,6 +367,17 @@ void DoomsdayApp::initialize()
     d->initialized = true;
 
     d->dataBundles.identify();
+}
+
+void DoomsdayApp::initWadFolders()
+{
+    d->initWadFolders();
+    d->dataBundles.identify();
+
+    if(d->initialized)
+    {
+        games().checkReadiness();
+    }
 }
 
 void DoomsdayApp::determineGlobalPaths()
