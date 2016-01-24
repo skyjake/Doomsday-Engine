@@ -52,6 +52,7 @@ DENG2_PIMPL(Game)
     pluginid_t pluginId = 0; ///< Unique identifier of the registering plugin.
     Record params;
     StringList requiredPackages; ///< Packages required for starting the game.
+    StringList userFiles;
 
     Manifests manifests; ///< Required resource files (e.g., doomu.wad).
 
@@ -111,6 +112,16 @@ void Game::setRequiredPackages(StringList const &packageIds)
 void Game::addRequiredPackage(String const &packageId)
 {
     d->requiredPackages.append(packageId);
+}
+
+void Game::setUserFiles(StringList const &nativePaths)
+{
+    d->userFiles = nativePaths;
+}
+
+StringList const &Game::userFiles() const
+{
+    return d->userFiles;
 }
 
 StringList Game::requiredPackages() const
@@ -175,15 +186,15 @@ String Game::description() const
                   _E(l) "ID: " _E(.) "%3 "
                   _E(l) "PluginId: "    _E(.) "%4\n"
                   _E(D)_E(b) "Packages:\n" _E(.)_E(.) "%5\n"
-                  _E(D)_E(b) "Startup resources:\n" _E(.)_E(.) "%6\n"
-                  _E(D)_E(b) "Other resources:\n" _E(.)_E(.) "%7\n"
+                  //_E(D)_E(b) "Startup resources:\n" _E(.)_E(.) "%6\n"
+                  _E(D)_E(b) "Custom resources:\n" _E(.)_E(.) "%7\n"
                   _E(D)_E(b) "Status: " _E(.) "%8")
             .arg(title())
             .arg(author())
             .arg(id())
             .arg(int(pluginId()))
             .arg(" - " _E(>) + String::join(d->requiredPackages, _E(<) "\n - " _E(>)) + _E(<))
-            .arg(filesAsText(FF_STARTUP))
+            //.arg(filesAsText(FF_STARTUP))
             .arg(filesAsText(0, false))
             .arg(statusAsText());
 }

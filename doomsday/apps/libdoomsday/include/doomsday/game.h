@@ -96,6 +96,10 @@ public:
 
     void addRequiredPackage(de::String const &packageId);
 
+    void setUserFiles(de::StringList const &nativePaths);
+
+    de::StringList const &userFiles() const;
+
     /**
      * Returns the list of required package IDs for loading the game.
      */
