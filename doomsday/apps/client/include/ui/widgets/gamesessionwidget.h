@@ -49,6 +49,9 @@ public:
     de::DocumentWidget &document();
     de::PopupMenuWidget &menu();
 
+    enum DataFileAction { Select, Clear };
+    void setDataFileAction(DataFileAction action);
+
     /**
      * Called immediately before the Info button is pressed.
      */
@@ -58,6 +61,7 @@ public:
 
 public slots:
     void browseDataFiles();
+    void clearDataFiles();
 
 private:
     DENG2_PRIVATE(d)

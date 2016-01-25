@@ -39,6 +39,7 @@ DENG2_PIMPL(GameSessionWidget)
     PopupButtonWidget *funcs = nullptr;
     DocumentPopupWidget *doc = nullptr;
     PopupMenuWidget *menu = nullptr;
+    ButtonWidget *actionButton = nullptr;
 
     Instance(Public *i, PopupStyle ps, ui::Direction popupOpeningDirection)
         : Base(i)
@@ -66,9 +67,7 @@ DENG2_PIMPL(GameSessionWidget)
         // Set up the info/actions popup widget.
         if(popupStyle == PopupWithDataFileButton)
         {
-            ButtonWidget *actionButton = new ButtonWidget;
-            actionButton->setText(tr("Data Files..."));
-            actionButton->setAction(new SignalAction(thisPublic, SLOT(browseDataFiles())));
+            actionButton = new ButtonWidget;
             self.add(doc = new DocumentPopupWidget(actionButton));
         }
         else
@@ -171,6 +170,20 @@ PopupMenuWidget &GameSessionWidget::menu()
     return *d->menu;
 }
 
+void GameSessionWidget::setDataFileAction(DataFileAction action)
+{
+    if(action == Select)
+    {
+        d->actionButton->setText(tr("Data Files..."));
+        d->actionButton->setAction(new SignalAction(this, SLOT(browseDataFiles())));
+    }
+    else
+    {
+        d->actionButton->setText(tr("Reset"));
+        d->actionButton->setAction(new SignalAction(this, SLOT(clearDataFiles())));
+    }
+}
+
 void GameSessionWidget::updateInfoContent()
 {
     // overridden by derived classes
@@ -195,6 +208,11 @@ void GameSessionWidget::browseDataFiles()
 
     ClientApp::app().endNativeUIMode();
     d->info->popup()->close();
+}
+
+void GameSessionWidget::clearDataFiles()
+{
+    setDataFiles(StringList());
 }
 
 void GameSessionWidget::setDataFiles(StringList const &/*paths*/)

@@ -162,7 +162,15 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
         {
             GameItem &item = self.items().at(i).as<GameItem>();
             item.setLabel(labelForGame(item.game));
+            updateWidgetAction(item);
         }
+    }
+
+    void updateWidgetAction(GameItem const &item)
+    {
+        self.itemWidget<GameSessionWidget>(item).
+                setDataFileAction(item.game.userFiles().isEmpty()? GameSessionWidget::Select :
+                                                                   GameSessionWidget::Clear);
     }
 
     void updateWidgetWithGameStatus(ui::Item const &menuItem)
@@ -176,6 +184,8 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
 
         // Can be loaded?
         w.loadButton().enable(item.game.allStartupFilesFound() && !isCurrentLoadedGame);
+
+        updateWidgetAction(item);
     }
 
     void updateGameAvailability()
