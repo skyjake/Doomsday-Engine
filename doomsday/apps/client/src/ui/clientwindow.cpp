@@ -53,6 +53,7 @@
 #include "ui/widgets/consolewidget.h"
 #include "ui/widgets/gameselectionwidget.h"
 #include "ui/widgets/privilegedlogwidget.h"
+#include "ui/home/homewidget.h"
 #include "ui/dialogs/coloradjustmentdialog.h"
 #include "ui/dialogs/alertdialog.h"
 #include "ui/inputdevice.h"
@@ -99,6 +100,7 @@ DENG2_PIMPL(ClientWindow)
     LabelWidget *background = nullptr;
     GuiWidget *iwadNotice = nullptr;
     GameSelectionWidget *gameSelMenu = nullptr;
+    HomeWidget *home = nullptr;
     SafeWidgetPtr<FadeToBlackWidget> fader;
     BusyWidget *busy = nullptr;
     GuiWidget *sidebar = nullptr;
@@ -256,6 +258,10 @@ DENG2_PIMPL(ClientWindow)
             iwadNotice->hide();
             container().add(iwadNotice);
         }
+
+        home = new HomeWidget;
+        home->rule().setRect(root.viewRule());
+        container().add(home);
 
         // Common notification area.
         notifications = new NotificationAreaWidget;
