@@ -18,6 +18,7 @@
 
 #include "ui/home/homewidget.h"
 #include "ui/home/columnwidget.h"
+#include "ui/home/nogamescolumnwidget.h"
 
 #include <de/LabelWidget>
 #include <de/SequentialLayout>
@@ -29,8 +30,9 @@ static TimeDelta const SCROLL_SPAN = .5;
 
 DENG_GUI_PIMPL(HomeWidget)
 {
-    int visibleColumnCount = 2;
+    int visibleColumnCount = 3;
     int columnCount = 7;
+    QList<ColumnWidget *> columns; // not owned
     IndirectRule *columnWidth;
     LabelWidget *tabsBackground;
     TabWidget *tabs;
@@ -44,8 +46,8 @@ DENG_GUI_PIMPL(HomeWidget)
         scrollOffset->setStyle(Animation::EaseBoth);
 
         tabs = new TabWidget;
-        tabsBackground = new LabelWidget;
 
+        tabsBackground = new LabelWidget;
         tabsBackground->set(Background(Vector4f(1, 1, 1, 1), Background::Blurred));
     }
 
@@ -55,12 +57,14 @@ DENG_GUI_PIMPL(HomeWidget)
         releaseRef(scrollOffset);
     }
 
-    void addColumn(GuiWidget *col)
+    void addColumn(ColumnWidget *col)
     {
         col->rule()
                 .setInput(Rule::Width,  *columnWidth)
                 .setInput(Rule::Height, self.rule().height());
         self.add(col);
+
+        columns << col;
     }
 
     void updateLayout()
@@ -70,13 +74,23 @@ DENG_GUI_PIMPL(HomeWidget)
         // Lay out the columns from left to right.
         SequentialLayout layout(self.rule().left() - *scrollOffset,
                                 self.rule().top(), ui::Right);
-        for(Widget *w : self.childWidgets())
+        for(ColumnWidget *column : columns)
         {
-            if(w->isHidden()) continue;
-            if(ColumnWidget *column = w->maybeAs<ColumnWidget>())
-            {
-                layout << *column;
-            }
+            if(column->isHidden()) continue;
+            layout << *column;
+        }
+    }
+
+    void switchTab(int dir)
+    {
+        auto pos = tabs->current();
+        if(dir < 0 && pos > 0)
+        {
+            tabs->setCurrent(pos - 1);
+        }
+        else if(dir > 0 && pos < tabs->items().size() - 1)
+        {
+            tabs->setCurrent(pos + 1);
         }
     }
 
@@ -100,6 +114,14 @@ DENG_GUI_PIMPL(HomeWidget)
         }
         scrollOffset->set(*columnWidth * currentOffsetTab, span);
     }
+
+    void updateHighlightedTab()
+    {
+        for(int pos = 0; pos < columns.size(); ++pos)
+        {
+            columns[pos]->setHighlighted(tabs->currentItem().data().toInt() == pos);
+        }
+    }
 };
 
 HomeWidget::HomeWidget()
@@ -110,7 +132,7 @@ HomeWidget::HomeWidget()
 
     // Create the columns.
 
-    column = new ColumnWidget("nogames-column");
+    column = new NoGamesColumnWidget();
     d->addColumn(column);
 
     column = new ColumnWidget("doom-column");
@@ -140,6 +162,7 @@ HomeWidget::HomeWidget()
             << new TabItem(tr("Multiplayer"), 5)
             << new TabItem(tr("Packages")   , 6);
     d->tabs->setCurrent(0);
+    d->updateHighlightedTab();
 
     // Tabs on top.
     add(d->tabsBackground);
@@ -177,12 +200,22 @@ bool HomeWidget::handleEvent(Event const &event)
         KeyEvent const &key = event.as<KeyEvent>();
         if(key.qtKey() == Qt::Key_Left)
         {
-            //d->scrollToTab(d->currentOffsetTab - 1, SCROLL_SPAN);
+            d->switchTab(-1);
             return true;
         }
         else if(key.qtKey() == Qt::Key_Right)
         {
-            //d->scrollToTab(d->currentOffsetTab + 1, SCROLL_SPAN);
+            d->switchTab(+1);
+            return true;
+        }
+        else if(key.qtKey() == Qt::Key_Home)
+        {
+            d->tabs->setCurrent(0);
+            return true;
+        }
+        else if(key.qtKey() == Qt::Key_End)
+        {
+            d->tabs->setCurrent(d->tabs->items().size() - 1);
             return true;
         }
     }
@@ -197,4 +230,5 @@ bool HomeWidget::handleEvent(Event const &event)
 void HomeWidget::tabChanged()
 {
     d->scrollToTab(d->tabs->currentItem().data().toInt(), SCROLL_SPAN);
+    d->updateHighlightedTab();
 }

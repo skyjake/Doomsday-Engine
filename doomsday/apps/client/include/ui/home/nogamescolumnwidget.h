@@ -1,4 +1,4 @@
-/** @file columnwidget.h  Home column.
+/** @file nogamescolumnwidget.h
  *
  * @authors Copyright (c) 2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,28 +16,20 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_UI_COLUMNWIDGET_H
-#define DENG_CLIENT_UI_COLUMNWIDGET_H
+#ifndef DENG_CLIENT_UI_HOME_NOGAMESCOLUMNWIDGET_H
+#define DENG_CLIENT_UI_HOME_NOGAMESCOLUMNWIDGET_H
 
-#include <de/GuiWidget>
+#include "columnwidget.h"
 
-/**
- * Home column.
- *
- * Columns have a background, header, and content. ColumnWidth is responsible
- * for switching between active and deactive visual styles.
- */
-class ColumnWidget : public de::GuiWidget
+class NoGamesColumnWidget : public ColumnWidget
 {
+    Q_OBJECT
+
 public:
-    ColumnWidget(de::String const &name = "");
+    NoGamesColumnWidget();
 
-    de::Rule const &maximumContentWidth() const;
-
-    void setHighlighted(bool highlighted);
-
-private:
-    DENG2_PRIVATE(d)
+public slots:
+    void browseForDataFiles();
 };
 
-#endif // DENG_CLIENT_UI_COLUMNWIDGET_H
+#endif // DENG_CLIENT_UI_HOME_NOGAMESCOLUMNWIDGET_H

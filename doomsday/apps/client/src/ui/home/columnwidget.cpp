@@ -20,21 +20,53 @@
 
 #include <de/LabelWidget>
 #include <de/Range>
+#include <de/math.h>
+
+#include <QColor>
 
 using namespace de;
 
 DENG_GUI_PIMPL(ColumnWidget)
 {
+    bool highlighted;
+    LabelWidget *back;
+    Vector4f bgColor;
+    Rule const *maxContentWidth = nullptr;
+
     Instance(Public *i) : Base(i)
-    {}
+    {
+        back = new LabelWidget;
+
+        QColor bg;
+        bg.setHsvF(de::frand(), .9, .5);
+        bgColor = Vector4f(bg.redF(), bg.greenF(), bg.blueF(), 1);
+    }
+
+    ~Instance()
+    {
+        releaseRef(maxContentWidth);
+    }
 };
 
 ColumnWidget::ColumnWidget(String const &name)
     : GuiWidget(name)
     , d(new Instance(this))
 {
-    LabelWidget *back = new LabelWidget;
-    back->set(Background(Vector4f(0, Rangef(0, .5f).random(), Rangef(0, .5f).random(), 1)));
-    back->rule().setRect(rule());
-    add(back);
+    changeRef(d->maxContentWidth, rule().width() - style().rules().rule("gap") * 2);
+
+    d->back->rule().setRect(rule());
+    add(d->back);
+}
+
+Rule const &ColumnWidget::maximumContentWidth() const
+{
+    return *d->maxContentWidth;
+}
+
+void ColumnWidget::setHighlighted(bool highlighted)
+{
+    d->highlighted = highlighted;
+
+    d->back->set(Background(highlighted? d->bgColor :
+                                        (d->bgColor * Vector4f(.5f, .5f, .5f, 1.f))));
 }

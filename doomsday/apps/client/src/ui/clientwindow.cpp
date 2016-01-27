@@ -372,6 +372,8 @@ DENG2_PIMPL(ClientWindow)
             gameSelMenu->hide();
             iwadNotice->hide();
         }
+
+        gameSelMenu->hide(); // devel
     }
 
     void currentGameChanged(Game const &newGame)
