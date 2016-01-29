@@ -26,7 +26,7 @@ namespace de {
 /**
  * Scrollable area.
  *
- * Provides a RuleRectangle where child widgets can be placedBase class for widgets
+ * Provides a RuleRectangle where child widgets can be placed.
  *
  * ScrollAreaWidget does not control its own position or size. The user must
  * define its rectangle. The content rule rectangle is defined in relation to
