@@ -30,12 +30,14 @@ DENG_GUI_PIMPL(ColumnWidget)
 {
     bool highlighted;
     LabelWidget *back;
+    ScrollAreaWidget *scrollArea;
     Vector4f bgColor;
     Rule const *maxContentWidth = nullptr;
 
     Instance(Public *i) : Base(i)
     {
         back = new LabelWidget;
+        scrollArea = new ScrollAreaWidget;
 
         QColor bg;
         bg.setHsvF(de::frand(), .9, .5);
@@ -54,8 +56,21 @@ ColumnWidget::ColumnWidget(String const &name)
 {
     changeRef(d->maxContentWidth, rule().width() - style().rules().rule("gap") * 2);
 
+    AutoRef<Rule> contentMargin = (rule().width() - *d->maxContentWidth) / 2;
+    d->scrollArea->margins()
+            .setLeft(contentMargin)
+            .setRight(contentMargin);
+
+    d->scrollArea->rule().setRect(rule());
     d->back->rule().setRect(rule());
+
     add(d->back);
+    add(d->scrollArea);
+}
+
+ScrollAreaWidget &ColumnWidget::scrollArea()
+{
+    return *d->scrollArea;
 }
 
 Rule const &ColumnWidget::maximumContentWidth() const
@@ -68,5 +83,21 @@ void ColumnWidget::setHighlighted(bool highlighted)
     d->highlighted = highlighted;
 
     d->back->set(Background(highlighted? d->bgColor :
-                                        (d->bgColor * Vector4f(.5f, .5f, .5f, 1.f))));
+                                         (d->bgColor * Vector4f(.5f, .5f, .5f, 1.f))));
+}
+
+bool ColumnWidget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event const &))
+{
+    // Observe mouse clicks occurring in the column.
+    if(event.isMouse() && event.type() == Event::MouseButton)
+    {
+        MouseEvent const &mouse = event.as<MouseEvent>();
+        if(mouse.state() == MouseEvent::Pressed &&
+           d->scrollArea->contentRect().contains(mouse.pos()))
+        {
+            emit mouseActivity(this);
+        }
+    }
+
+    return GuiWidget::dispatchEvent(event, memberFunc);
 }

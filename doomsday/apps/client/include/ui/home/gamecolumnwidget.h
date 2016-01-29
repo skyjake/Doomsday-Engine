@@ -1,4 +1,4 @@
-/** @file homewidget.h  Root widget for the Home UI.
+/** @file gamecolumnwidget.h
  *
  * @authors Copyright (c) 2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,33 +16,23 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_UI_HOMEWIDGET_H
-#define DENG_CLIENT_UI_HOMEWIDGET_H
+#ifndef DENG_CLIENT_UI_HOME_GAMECOLUMNWIDGET_H
+#define DENG_CLIENT_UI_HOME_GAMECOLUMNWIDGET_H
 
-#include <de/GuiWidget>
+#include "columnwidget.h"
 
-/**
- * Root widget for the Home UI.
- *
- * Lays out children in horizontal columns, fitting a suitable number on
- * screen at once.
- */
-class HomeWidget : public de::GuiWidget
+class GameColumnWidget : public ColumnWidget
 {
-    Q_OBJECT
-
 public:
-    HomeWidget();
+    GameColumnWidget(de::String const &name,
+                     de::String const &author,
+                     de::String const &gameTitle,
+                     de::DotPath const &logoId);
 
-    void viewResized();
-    bool handleEvent(de::Event const &event);
-
-public slots:
-    void tabChanged();
-    void mouseActivityInColumn(QObject const *);
+    void setHighlighted(bool highlighted) override;
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_UI_HOMEWIDGET_H
+#endif // DENG_CLIENT_UI_HOME_GAMECOLUMNWIDGET_H

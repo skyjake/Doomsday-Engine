@@ -19,6 +19,10 @@
 #include "ui/home/homewidget.h"
 #include "ui/home/columnwidget.h"
 #include "ui/home/nogamescolumnwidget.h"
+#include "ui/home/gamecolumnwidget.h"
+
+#include <doomsday/doomsdayapp.h>
+#include <doomsday/games.h>
 
 #include <de/LabelWidget>
 #include <de/SequentialLayout>
@@ -29,10 +33,11 @@ using namespace de;
 static TimeDelta const SCROLL_SPAN = .5;
 
 DENG_GUI_PIMPL(HomeWidget)
+, DENG2_OBSERVES(Games, Readiness)
 {
-    int visibleColumnCount = 3;
-    int columnCount = 7;
-    QList<ColumnWidget *> columns; // not owned
+    dsize visibleColumnCount = 3; ///< Target.
+    QList<ColumnWidget *> allColumns; // not owned
+    QList<ColumnWidget *> columns; // Only the visible ones (not owned).
     IndirectRule *columnWidth;
     LabelWidget *tabsBackground;
     TabWidget *tabs;
@@ -41,9 +46,11 @@ DENG_GUI_PIMPL(HomeWidget)
 
     Instance(Public *i) : Base(i)
     {
+        DoomsdayApp::games().audienceForReadiness() += this;
+
         columnWidth  = new IndirectRule;
         scrollOffset = new ScalarRule(0);
-        scrollOffset->setStyle(Animation::EaseBoth);
+        scrollOffset->setStyle(Animation::EaseOut);
 
         tabs = new TabWidget;
 
@@ -53,31 +60,83 @@ DENG_GUI_PIMPL(HomeWidget)
 
     ~Instance()
     {
+        DoomsdayApp::games().audienceForReadiness() -= this;
+
         releaseRef(columnWidth);
         releaseRef(scrollOffset);
     }
 
+    void updateTabItems()
+    {
+        int index = 0;
+        bool const gotGames = DoomsdayApp::games().numPlayable() > 0;
+
+        tabs->items().clear();
+
+        // Show columns depending on whether there are playable games.
+        allColumns.at(0)->show(!gotGames);
+        for(int i = 1; i < 6; ++i)
+        {
+            allColumns.at(i)->show(gotGames);
+        }
+
+        if(gotGames)
+        {
+            tabs->items()
+                << new TabItem(   "Doom"        , index)
+                << new TabItem(   "Heretic"     , index + 1)
+                << new TabItem(   "Hexen"       , index + 2)
+                << new TabItem(tr("Other")      , index + 3)
+                << new TabItem(tr("Multiplayer"), index + 4);
+            index += 5;
+        }
+        else
+        {
+            tabs->items() << new TabItem(tr("Data Files?"), index++);
+        }
+
+        tabs->items() << new TabItem(tr("Packages"), index++);
+    }
+
+    void gameReadinessUpdated()
+    {
+        updateTabItems();
+        updateLayout();
+    }
+
     void addColumn(ColumnWidget *col)
     {
+        QObject::connect(col, SIGNAL(mouseActivity(QObject const *)),
+                         thisPublic, SLOT(mouseActivityInColumn(QObject const *)));
+
+        col->scrollArea().margins().setTop(tabsBackground->rule().height());
         col->rule()
                 .setInput(Rule::Width,  *columnWidth)
                 .setInput(Rule::Height, self.rule().height());
         self.add(col);
-
-        columns << col;
+        allColumns << col;
     }
 
     void updateLayout()
     {
-        columnWidth->setSource(self.rule().width() / visibleColumnCount);
+        columns.clear();
+        columnWidth->setSource(self.rule().width() / de::min(visibleColumnCount,
+                                                             tabs->items().size()));
 
         // Lay out the columns from left to right.
         SequentialLayout layout(self.rule().left() - *scrollOffset,
                                 self.rule().top(), ui::Right);
-        for(ColumnWidget *column : columns)
+        for(Widget *widget : self.childWidgets())
         {
-            if(column->isHidden()) continue;
-            layout << *column;
+            if(widget->isHidden())
+            {
+                continue;
+            }
+            if(ColumnWidget *column = widget->maybeAs<ColumnWidget>())
+            {
+                layout << *column;
+                columns << column;
+            }
         }
     }
 
@@ -96,7 +155,7 @@ DENG_GUI_PIMPL(HomeWidget)
 
     void scrollToTab(int pos, TimeDelta const &span)
     {
-        pos = de::clamp(0, pos, columnCount - 1);
+        pos = de::clamp(0, pos, columns.size() - 1);
 
         Rangei const visible(currentOffsetTab, currentOffsetTab + visibleColumnCount);
         if(visible.contains(pos))
@@ -135,16 +194,19 @@ HomeWidget::HomeWidget()
     column = new NoGamesColumnWidget();
     d->addColumn(column);
 
-    column = new ColumnWidget("doom-column");
+    column = new GameColumnWidget("doom-column", "id Software", "DOOM",
+                                  "logo.game.doom");
     d->addColumn(column);
 
-    column = new ColumnWidget("heretic-column");
+    column = new GameColumnWidget("heretic-column", "Raven Software", "Heretic",
+                                  "logo.game.heretic");
     d->addColumn(column);
 
-    column = new ColumnWidget("hexen-column");
+    column = new GameColumnWidget("hexen-column", "Raven Software", "Hexen",
+                                  "logo.game.hexen");
     d->addColumn(column);
 
-    column = new ColumnWidget("other-column");
+    column = new GameColumnWidget("other-column", "", "Other Games", "");
     d->addColumn(column);
 
     column = new ColumnWidget("multiplayer-column");
@@ -153,16 +215,8 @@ HomeWidget::HomeWidget()
     column = new ColumnWidget("packages-column");
     d->addColumn(column);
 
-    d->tabs->items()
-            << new TabItem(tr("Data Files?"), 0)
-            << new TabItem(   "Doom"        , 1)
-            << new TabItem(   "Heretic"     , 2)
-            << new TabItem(   "Hexen"       , 3)
-            << new TabItem(tr("Other")      , 4)
-            << new TabItem(tr("Multiplayer"), 5)
-            << new TabItem(tr("Packages")   , 6);
+    d->updateTabItems();
     d->tabs->setCurrent(0);
-    d->updateHighlightedTab();
 
     // Tabs on top.
     add(d->tabsBackground);
@@ -181,6 +235,7 @@ HomeWidget::HomeWidget()
             .setInput(Rule::Left,   rule().left());
 
     d->updateLayout();
+    d->updateHighlightedTab();
 
     // Connections.
     connect(d->tabs, SIGNAL(currentTabChanged()), this, SLOT(tabChanged()));
@@ -197,6 +252,7 @@ bool HomeWidget::handleEvent(Event const &event)
 {
     if(event.isKeyDown())
     {
+        // Keyboard navigation between tabs.
         KeyEvent const &key = event.as<KeyEvent>();
         if(key.qtKey() == Qt::Key_Left)
         {
@@ -231,4 +287,15 @@ void HomeWidget::tabChanged()
 {
     d->scrollToTab(d->tabs->currentItem().data().toInt(), SCROLL_SPAN);
     d->updateHighlightedTab();
+}
+
+void HomeWidget::mouseActivityInColumn(QObject const *columnWidget)
+{
+    for(int i = 0; i < d->columns.size(); ++i)
+    {
+        if(d->columns.at(i) == columnWidget)
+        {
+            d->tabs->setCurrent(i);
+        }
+    }
 }

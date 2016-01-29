@@ -19,7 +19,7 @@
 #ifndef DENG_CLIENT_UI_COLUMNWIDGET_H
 #define DENG_CLIENT_UI_COLUMNWIDGET_H
 
-#include <de/GuiWidget>
+#include <de/ScrollAreaWidget>
 
 /**
  * Home column.
@@ -29,12 +29,22 @@
  */
 class ColumnWidget : public de::GuiWidget
 {
+    Q_OBJECT
+
 public:
     ColumnWidget(de::String const &name = "");
 
+    de::ScrollAreaWidget &scrollArea();
     de::Rule const &maximumContentWidth() const;
 
-    void setHighlighted(bool highlighted);
+    virtual void setHighlighted(bool highlighted);
+
+    // Events.
+    bool dispatchEvent(de::Event const &event,
+                       bool (de::Widget::*memberFunc)(de::Event const &)) override;
+
+signals:
+    void mouseActivity(QObject const *columnWidget);
 
 private:
     DENG2_PRIVATE(d)

@@ -19,7 +19,7 @@
 #ifndef DENG_CLIENT_UI_HEADERWIDGET_H
 #define DENG_CLIENT_UI_HEADERWIDGET_H
 
-#include <de/GuiWidget>
+#include <de/LabelWidget>
 
 /**
  * Home column header.
@@ -28,6 +28,12 @@ class HeaderWidget : public de::GuiWidget
 {
 public:
     HeaderWidget();
+
+    de::LabelWidget &logo();
+    de::LabelWidget &title();
+    de::LabelWidget &info();
+
+    void setLogoImage(de::DotPath const &imageId);
 
 private:
     DENG2_PRIVATE(d)
