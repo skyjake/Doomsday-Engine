@@ -169,6 +169,13 @@ inline OperatorRule &operator / (Rule const &left, int right) {
     return OperatorRule::floor(*refless(new OperatorRule(OperatorRule::Divide, left, Const(right))));
 }
 
+inline OperatorRule &operator / (Rule const &left, dsize right) {
+    if(right == 2) {
+        return OperatorRule::floor(*refless(new OperatorRule(OperatorRule::Half, left)));
+    }
+    return OperatorRule::floor(*refless(new OperatorRule(OperatorRule::Divide, left, Const(right))));
+}
+
 inline OperatorRule &operator / (Rule const &left, float right) {
     return *refless(new OperatorRule(OperatorRule::Divide, left, Constf(right)));
 }

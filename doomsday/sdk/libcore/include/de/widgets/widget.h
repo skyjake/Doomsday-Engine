@@ -259,7 +259,7 @@ public:
     NotifyArgs::Result notifyTree(NotifyArgs const &args);
     NotifyArgs::Result notifySelfAndTree(NotifyArgs const &args);
     void notifyTreeReversed(NotifyArgs const &args);
-    bool dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event const &));
+    virtual bool dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event const &));
 
     // Events.
     virtual void initialize();
