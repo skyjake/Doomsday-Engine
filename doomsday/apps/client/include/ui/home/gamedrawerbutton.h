@@ -1,4 +1,4 @@
-/** @file headerwidget.h  Home column header.
+/** @file gamedrawerbutton.h  Drawer button for games.
  *
  * @authors Copyright (c) 2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,28 +16,23 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_UI_HEADERWIDGET_H
-#define DENG_CLIENT_UI_HEADERWIDGET_H
+#ifndef DENG_CLIENT_UI_HOME_GAMEDRAWERBUTTON_H
+#define DENG_CLIENT_UI_HOME_GAMEDRAWERBUTTON_H
 
-#include <de/LabelWidget>
+#include "drawerbuttonwidget.h"
+
+#include <doomsday/game.h>
 
 /**
- * Home column header.
+ * Drawer button for a particular game. Also shows the list of saved games.
  */
-class HeaderWidget : public de::GuiWidget
+class GameDrawerButton : public DrawerButtonWidget
 {
 public:
-    HeaderWidget();
-
-    de::LabelWidget &logo();
-    de::LabelWidget &title();
-    de::LabelWidget &info();
-
-    void setLogoImage(de::DotPath const &imageId);
-    void setLogoBackground(de::DotPath const &imageId);
+    GameDrawerButton(Game const &game);
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_UI_HEADERWIDGET_H
+#endif // DENG_CLIENT_UI_HOME_GAMEDRAWERBUTTON_H

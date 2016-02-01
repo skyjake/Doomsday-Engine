@@ -31,17 +31,19 @@ DENG_GUI_PIMPL(ColumnWidget)
     bool highlighted;
     LabelWidget *back;
     ScrollAreaWidget *scrollArea;
-    Vector4f bgColor;
+    //Vector4f bgColor;
     Rule const *maxContentWidth = nullptr;
 
     Instance(Public *i) : Base(i)
     {
         back = new LabelWidget;
+        back->margins().setZero();
+
         scrollArea = new ScrollAreaWidget;
 
-        QColor bg;
-        bg.setHsvF(de::frand(), .9, .5);
-        bgColor = Vector4f(bg.redF(), bg.greenF(), bg.blueF(), 1);
+        //QColor bg;
+        //bg.setHsvF(de::frand(), .9, .5);
+        //bgColor = Vector4f(bg.redF(), bg.greenF(), bg.blueF(), 1);
     }
 
     ~Instance()
@@ -61,11 +63,20 @@ ColumnWidget::ColumnWidget(String const &name)
             .setLeft(contentMargin)
             .setRight(contentMargin);
 
-    d->scrollArea->rule().setRect(rule());
     d->back->rule().setRect(rule());
+    d->scrollArea->rule().setRect(rule());
 
     add(d->back);
     add(d->scrollArea);
+
+    setBackgroundImage(style().images().image("window.background"));
+}
+
+void ColumnWidget::setBackgroundImage(Image const &image)
+{
+    d->back->setImage(image);
+    d->back->setImageFit(ui::FitToSize);
+    d->back->setSizePolicy(ui::Filled, ui::Filled);
 }
 
 ScrollAreaWidget &ColumnWidget::scrollArea()
@@ -82,8 +93,8 @@ void ColumnWidget::setHighlighted(bool highlighted)
 {
     d->highlighted = highlighted;
 
-    d->back->set(Background(highlighted? d->bgColor :
-                                         (d->bgColor * Vector4f(.5f, .5f, .5f, 1.f))));
+/*    d->back->set(Background(highlighted? d->bgColor :
+                                         (d->bgColor * Vector4f(.5f, .5f, .5f, 1.f))));*/
 }
 
 bool ColumnWidget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event const &))

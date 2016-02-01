@@ -19,7 +19,9 @@
 #ifndef DENG_CLIENT_UI_DRAWERBUTTONWIDGET_H
 #define DENG_CLIENT_UI_DRAWERBUTTONWIDGET_H
 
-#include <de/GuiWidget>
+#include <de/LabelWidget>
+#include <de/ButtonWidget>
+#include <de/PanelWidget>
 
 /**
  * Button with an extensible drawer.
@@ -28,6 +30,10 @@ class DrawerButtonWidget : public de::GuiWidget
 {
 public:
     DrawerButtonWidget();
+
+    de::LabelWidget &icon();
+    de::LabelWidget &label();
+    de::PanelWidget &drawer();
 
 private:
     DENG2_PRIVATE(d)

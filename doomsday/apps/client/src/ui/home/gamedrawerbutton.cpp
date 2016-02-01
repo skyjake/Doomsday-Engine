@@ -1,4 +1,4 @@
-/** @file headerwidget.h  Home column header.
+/** @file gamedrawerbutton.cpp  Button for
  *
  * @authors Copyright (c) 2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,28 +16,22 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_UI_HEADERWIDGET_H
-#define DENG_CLIENT_UI_HEADERWIDGET_H
+#include "ui/home/gamedrawerbutton.h"
 
-#include <de/LabelWidget>
+using namespace de;
 
-/**
- * Home column header.
- */
-class HeaderWidget : public de::GuiWidget
+DENG2_PIMPL(GameDrawerButton)
 {
-public:
-    HeaderWidget();
+    Game const &game;
 
-    de::LabelWidget &logo();
-    de::LabelWidget &title();
-    de::LabelWidget &info();
-
-    void setLogoImage(de::DotPath const &imageId);
-    void setLogoBackground(de::DotPath const &imageId);
-
-private:
-    DENG2_PRIVATE(d)
+    Instance(Public *i, Game const &game)
+        : Base(i)
+        , game(game)
+    {}
 };
 
-#endif // DENG_CLIENT_UI_HEADERWIDGET_H
+GameDrawerButton::GameDrawerButton(Game const &game)
+    : d(new Instance(this, game))
+{
+
+}

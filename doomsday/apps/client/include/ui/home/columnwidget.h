@@ -34,6 +34,8 @@ class ColumnWidget : public de::GuiWidget
 public:
     ColumnWidget(de::String const &name = "");
 
+    void setBackgroundImage(de::Image const &image);
+
     de::ScrollAreaWidget &scrollArea();
     de::Rule const &maximumContentWidth() const;
 

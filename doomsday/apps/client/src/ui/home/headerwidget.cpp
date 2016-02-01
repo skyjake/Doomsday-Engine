@@ -22,12 +22,14 @@
 #include <de/ButtonWidget>
 #include <de/PanelWidget>
 #include <de/CallbackAction>
+#include <de/StyleProceduralImage>
 
 using namespace de;
 
 DENG_GUI_PIMPL(HeaderWidget)
 {
     LabelWidget *logo;
+    LabelWidget *logoBg; /// @todo Backgrounds should support ProceduralImages. -jk
     LabelWidget *title;
     PanelWidget *infoPanel;
     LabelWidget *info;
@@ -35,8 +37,9 @@ DENG_GUI_PIMPL(HeaderWidget)
 
     Instance(Public *i) : Base(i)
     {
-        self.add(logo  = new LabelWidget);
-        self.add(title = new LabelWidget);
+        self.add(logoBg    = new LabelWidget);
+        self.add(logo      = new LabelWidget);
+        self.add(title     = new LabelWidget);
         self.add(infoPanel = new PanelWidget);
         info  = new LabelWidget;
         infoPanel->setContent(info);
@@ -59,14 +62,18 @@ HeaderWidget::HeaderWidget()
 
     d->logo->setSizePolicy(ui::Filled, ui::Filled);
     d->logo->setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
-    d->logo->set(Background(Vector4f(0, 0, 0, 1)));
+    //d->logo->set(Background(Vector4f(0, 0, 0, 1)));
 
-    d->info->setFont("small");
+    d->logoBg->setSizePolicy(ui::Filled, ui::Filled);
+    d->logoBg->setImageFit(ui::FitToSize);
+    d->logoBg->margins().setZero();
+
+    //d->info->setFont("small");
     d->info->setAlignment(ui::AlignLeft);
     d->info->setTextLineAlignment(ui::AlignLeft);
     d->info->setMaximumTextWidth(rule().width());
     d->info->setSizePolicy(ui::Fixed, ui::Expand);
-    d->info->margins().setLeft("").setRight("");
+    d->info->margins().setZero().setTop("gap");
 
     d->menuButton->setSizePolicy(ui::Expand, ui::Expand);
     d->menuButton->setFont("small");
@@ -84,6 +91,7 @@ HeaderWidget::HeaderWidget()
         }
     }));
 
+    d->logoBg->rule().setRect(d->logo->rule());
     d->logo->rule()
             .setInput(Rule::Height, logoHeight)
             .setInput(Rule::Width,  Const(0))
@@ -124,7 +132,12 @@ LabelWidget &HeaderWidget::info()
 
 void HeaderWidget::setLogoImage(const DotPath &imageId)
 {
-    d->logo->setImage(style().images().image(imageId));
+    d->logo->setImage(new StyleProceduralImage(imageId, *d->logo));
     d->logo->rule().setInput(Rule::Width, Const(2 * 160));
     d->title->margins().setLeft("gap");
+}
+
+void HeaderWidget::setLogoBackground(const DotPath &imageId)
+{
+    d->logoBg->setImage(new StyleProceduralImage(imageId, *d->logoBg));
 }

@@ -24,10 +24,7 @@
 class GameColumnWidget : public ColumnWidget
 {
 public:
-    GameColumnWidget(de::String const &name,
-                     de::String const &author,
-                     de::String const &gameTitle,
-                     de::DotPath const &logoId);
+    GameColumnWidget(de::String const &gameFamily);
 
     void setHighlighted(bool highlighted) override;
 

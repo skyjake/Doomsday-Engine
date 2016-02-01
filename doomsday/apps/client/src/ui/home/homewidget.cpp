@@ -194,19 +194,16 @@ HomeWidget::HomeWidget()
     column = new NoGamesColumnWidget();
     d->addColumn(column);
 
-    column = new GameColumnWidget("doom-column", "id Software", "DOOM",
-                                  "logo.game.doom");
+    column = new GameColumnWidget("DOOM");
     d->addColumn(column);
 
-    column = new GameColumnWidget("heretic-column", "Raven Software", "Heretic",
-                                  "logo.game.heretic");
+    column = new GameColumnWidget("Heretic");
     d->addColumn(column);
 
-    column = new GameColumnWidget("hexen-column", "Raven Software", "Hexen",
-                                  "logo.game.hexen");
+    column = new GameColumnWidget("Hexen");
     d->addColumn(column);
 
-    column = new GameColumnWidget("other-column", "", "Other Games", "");
+    column = new GameColumnWidget("");
     d->addColumn(column);
 
     column = new ColumnWidget("multiplayer-column");
