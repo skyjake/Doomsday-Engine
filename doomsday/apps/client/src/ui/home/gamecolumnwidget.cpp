@@ -131,6 +131,11 @@ DENG_GUI_PIMPL(GameColumnWidget)
                 menu->items().remove(i);
             }
         }
+
+        menu->items().sort([] (ui::Item const &a, ui::Item const &b) {
+            return a.as<MenuItem>().game.releaseDate().year() <
+                   b.as<MenuItem>().game.releaseDate().year();
+        });
     }
 
     void gameReadinessUpdated()
@@ -176,7 +181,8 @@ GameColumnWidget::GameColumnWidget(String const &gameFamily)
         d->bgImage = style().images().image("home.background." + d->gameFamily);
     }
 
-    /// @todo Get these from the game family defs.
+    /// @todo Get these description from the game family defs.
+    {
     if(name() == "doom-column")
     {
         d->header->info().setText("id Software released DOOM for MS-DOS in 1993. "
@@ -213,6 +219,7 @@ GameColumnWidget::GameColumnWidget(String const &gameFamily)
         d->header->info().setText("Thanks to its excellent modding support, DOOM has "
                                   "been used as a basis for many games and community "
                                   "projects.");
+    }
     }
 }
 
