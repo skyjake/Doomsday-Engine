@@ -27,6 +27,7 @@
 #include <doomsday/resource/resourceclass.h>
 #include <de/Error>
 #include <de/Path>
+#include <de/Date>
 #include <de/String>
 #include <QMultiMap>
 
@@ -61,11 +62,13 @@ public:
      */
     static de::String const DEF_VARIANT_OF;
 
+    static de::String const DEF_FAMILY;       ///< Game family.
     static de::String const DEF_CONFIG_DIR;   ///< Name of the config directory.
     static de::String const DEF_CONFIG_MAIN_PATH; ///< Optional: Path of the main config file.
     static de::String const DEF_CONFIG_BINDINGS_PATH; ///< Optional: Path of the bindings config file.
     static de::String const DEF_TITLE;        ///< Title for the game (intended for humans).
     static de::String const DEF_AUTHOR;       ///< Author of the game (intended for humans).
+    static de::String const DEF_RELEASE_DATE;
     static de::String const DEF_LEGACYSAVEGAME_NAME_EXP;  ///< Regular expression used for matching legacy savegame names.
     static de::String const DEF_LEGACYSAVEGAME_SUBFOLDER; ///< Game-specific subdirectory of /home for legacy savegames.
     static de::String const DEF_MAPINFO_PATH; ///< Base relative path to the main MAPINFO definition data.
@@ -84,6 +87,7 @@ public:
     bool isNull() const;
     de::String id() const;
     de::String variantOf() const;
+    de::String family() const;
 
     /**
      * Sets the packages required for loading the game.
@@ -146,6 +150,8 @@ public:
      */
     de::String author() const;
 
+    de::Date releaseDate() const;
+
     /**
      * Returns the name of the main config file for the game.
      */
@@ -189,6 +195,8 @@ public:
     virtual void addManifest(ResourceManifest &manifest);
 
     bool allStartupFilesFound() const;
+
+    bool isPlayable() const;
 
     /**
      * Provides access to the manifests for efficent traversals.

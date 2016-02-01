@@ -38,11 +38,13 @@ using namespace de;
 static String const DEF_ID("ID");
 
 String const Game::DEF_VARIANT_OF("variantOf");
+String const Game::DEF_FAMILY("family");
 String const Game::DEF_CONFIG_DIR("configDir");
 String const Game::DEF_CONFIG_MAIN_PATH("mainConfig");
 String const Game::DEF_CONFIG_BINDINGS_PATH("bindingsConfig");
 String const Game::DEF_TITLE("title");
 String const Game::DEF_AUTHOR("author");
+String const Game::DEF_RELEASE_DATE("releaseDate");
 String const Game::DEF_LEGACYSAVEGAME_NAME_EXP("legacySavegame.nameExp");
 String const Game::DEF_LEGACYSAVEGAME_SUBFOLDER("legacySavegame.subfolder");
 String const Game::DEF_MAPINFO_PATH("mapInfoPath");
@@ -104,6 +106,19 @@ String Game::variantOf() const
     return d->params.gets(DEF_VARIANT_OF);
 }
 
+String Game::family() const
+{
+    if(d->params.has(DEF_FAMILY))
+    {
+        return d->params.gets(DEF_FAMILY);
+    }
+    // We can make a guess...
+    if(id().contains("doom"))    return "doom";
+    if(id().contains("heretic")) return "heretic";
+    if(id().contains("hexen"))   return "hexen";
+    return "";
+}
+
 void Game::setRequiredPackages(StringList const &packageIds)
 {
     d->requiredPackages = packageIds;
@@ -155,6 +170,11 @@ bool Game::allStartupFilesFound() const
             return false;
     }
     return true;
+}
+
+bool Game::isPlayable() const
+{
+    return allStartupFilesFound();
 }
 
 Game::Status Game::status() const
@@ -280,6 +300,11 @@ String Game::title() const
 String Game::author() const
 {
     return d->params.gets(DEF_AUTHOR);
+}
+
+Date Game::releaseDate() const
+{
+    return Date::fromText(d->params.gets(DEF_RELEASE_DATE, ""));
 }
 
 Game::Manifests const &Game::manifests() const
