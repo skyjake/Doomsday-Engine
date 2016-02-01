@@ -204,6 +204,11 @@ Margins &Margins::setAll(Margins const &margins)
     return *this;
 }
 
+Margins &Margins::setZero()
+{
+    return set("");
+}
+
 Margins &Margins::setLeft(Rule const &rule)
 {
     return set(ui::Left, rule);

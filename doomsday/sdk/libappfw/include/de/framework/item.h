@@ -106,7 +106,7 @@ protected:
     /**
      * Notifies the Change audience of a changed property.
      */
-    void notifyChange();
+    void notifyChange() const;
 
 private:
     DENG2_PRIVATE(d)

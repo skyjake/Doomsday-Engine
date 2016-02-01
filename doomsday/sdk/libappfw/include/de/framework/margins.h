@@ -58,6 +58,8 @@ public:
     Margins &set      (Rule const &rule);
     Margins &setAll   (Margins const &margins);
 
+    Margins &setZero();
+
     Rule const &left() const;
     Rule const &right() const;
     Rule const &top() const;
