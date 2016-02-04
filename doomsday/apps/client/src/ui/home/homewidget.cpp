@@ -20,6 +20,7 @@
 #include "ui/home/columnwidget.h"
 #include "ui/home/nogamescolumnwidget.h"
 #include "ui/home/gamecolumnwidget.h"
+#include "ui/savedsessionlistdata.h"
 
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/games.h>
@@ -35,6 +36,8 @@ static TimeDelta const SCROLL_SPAN = .5;
 DENG_GUI_PIMPL(HomeWidget)
 , DENG2_OBSERVES(Games, Readiness)
 {
+    SavedSessionListData saveItems; ///< All the available save games as items.
+
     dsize visibleColumnCount = 3; ///< Target.
     QList<ColumnWidget *> allColumns; // not owned
     QList<ColumnWidget *> columns; // Only the visible ones (not owned).
