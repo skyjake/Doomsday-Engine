@@ -60,6 +60,8 @@ public:
         PopulateNativeSubfolders = 0x4,
 
         OnlyThisFolder = 0,
+
+        DefaultFlags = PopulateNativeSubfolders
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
@@ -71,7 +73,7 @@ public:
      * @param mode        Feed mode.
      */
     DirectoryFeed(NativePath const &nativePath,
-                  Flags const &mode = PopulateNativeSubfolders);
+                  Flags const &mode = DefaultFlags);
 
     virtual ~DirectoryFeed();
 

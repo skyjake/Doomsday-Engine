@@ -447,9 +447,12 @@ void PackageLoader::loadFromCommandLine()
 StringList PackageLoader::findAllPackages() const
 {
     StringList all;
-    d->listPackagesInIndex(App::fileSystem().indexFor(DENG2_TYPE_NAME(Folder)), all);
-    d->listPackagesInIndex(App::fileSystem().indexFor(DENG2_TYPE_NAME(ArchiveFolder)), all);
-    d->listPackagesInIndex(App::fileSystem().indexFor(DENG2_TYPE_NAME(LinkFile)), all);
+    for(QString typeName : QStringList({ DENG2_TYPE_NAME(Folder),
+                                         DENG2_TYPE_NAME(ArchiveFolder),
+                                         DENG2_TYPE_NAME(LinkFile) }))
+    {
+        d->listPackagesInIndex(App::fileSystem().indexFor(typeName), all);
+    }
     return all;
 }
 

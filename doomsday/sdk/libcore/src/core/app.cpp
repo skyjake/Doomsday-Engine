@@ -217,7 +217,7 @@ DENG2_PIMPL(App)
 
         // User's home folder.
         fs.makeFolder("/home", FS::DontInheritFeeds).attach(new DirectoryFeed(self.nativeHomePath(),
-                DirectoryFeed::AllowWrite | DirectoryFeed::CreateIfMissing));
+                DirectoryFeed::AllowWrite | DirectoryFeed::CreateIfMissing | DirectoryFeed::DefaultFlags));
 
         fs.makeFolder("/packs").attach(new PackageFeed(packageLoader));
 
