@@ -30,13 +30,13 @@ attribute highp vec3 aBitangent;
 
 highp vec3 transformVector(highp vec3 dir, highp mat4 matrix) 
 {
-    return normalize((matrix * vec4(dir, 0.0)).xyz);
+    return (matrix * vec4(dir, 0.0)).xyz;
 }
 
 void setTangentSpace(highp mat4 modelSpace)
 {
-    vTSNormal    = transformVector(aNormal, modelSpace);
-    vTSTangent   = transformVector(aTangent, modelSpace);
+    vTSNormal    = transformVector(aNormal,    modelSpace);
+    vTSTangent   = transformVector(aTangent,   modelSpace);
     vTSBitangent = transformVector(aBitangent, modelSpace);
 }
 

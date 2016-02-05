@@ -19,7 +19,6 @@
 
 #include "de/FS"
 #include "de/LibraryFile"
-#include "de/DirectoryFeed"
 #include "de/ArchiveFeed"
 #include "de/NativePath"
 #include "de/ArchiveFolder"
