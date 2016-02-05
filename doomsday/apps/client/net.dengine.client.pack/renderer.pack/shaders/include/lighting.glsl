@@ -72,7 +72,7 @@ highp vec3 specularLightContrib(highp vec4 specGloss, int index, highp vec3 msNo
         return vec3(0.0); // Wrong way.
     }
     highp float gloss = max(1.0, uGlossiness * specGloss.a);
-    highp float specPower = pow(refDot, gloss);
+    highp float specPower = min(pow(refDot, gloss), 1.0);
     return uSpecular * uLightIntensities[index].rgb * specPower * specGloss.rgb;
 }
 
