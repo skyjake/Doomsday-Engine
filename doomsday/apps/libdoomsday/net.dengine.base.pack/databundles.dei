@@ -85,7 +85,7 @@ package "com.idsoftware.doom.shareware_1.9" {
     lumps <E1M1, E1M2, E1M3, E1M4, E1M5, E1M6, E1M7, E1M8, E1M9, D_E1M1, FLOOR4_8, FLOOR7_2>
     lumpDirCRC32: b3950597
     info {
-        title: Ultimate DOOM
+        title: DOOM Shareware (Episode 1)
         author: id Software
         license: All rights reserved
         tags: doom vanilla
