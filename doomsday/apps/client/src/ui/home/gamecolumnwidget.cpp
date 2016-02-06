@@ -71,7 +71,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
         menu->enablePageKeys(false);
         menu->setGridSize(1, ui::Filled, 0, ui::Expand);
         menu->organizer().setWidgetFactory(*this);
-        menu->layout().setRowPadding(style().rules().rule("gap")*2);
+        menu->layout().setRowPadding(style().rules().rule("gap"));
 
         menu->rule()
                 .setInput(Rule::Width, area.contentRule().width())
