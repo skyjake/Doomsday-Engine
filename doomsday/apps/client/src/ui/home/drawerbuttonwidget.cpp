@@ -32,8 +32,8 @@ DENG_GUI_PIMPL(DrawerButtonWidget)
 
     Instance(Public *i) : Base(i)
     {
-        self.add(icon  = new LabelWidget);
-        self.add(label = new LabelWidget);
+        self.add(icon   = new LabelWidget);
+        self.add(label  = new LabelWidget);
         self.add(drawer = new PanelWidget);
 
         label->setSizePolicy(ui::Fixed, ui::Expand);
@@ -41,6 +41,8 @@ DENG_GUI_PIMPL(DrawerButtonWidget)
         label->setAlignment(ui::AlignLeft);
 
         icon->set(Background(style().colors().colorf("text")));
+
+        drawer->set(Background(Vector4f(0, 0, 0, .4f)));
     }
 };
 
@@ -63,7 +65,8 @@ DrawerButtonWidget::DrawerButtonWidget()
             .setInput(Rule::Top,  d->label->rule().bottom())
             .setInput(Rule::Left, rule().left());
 
-    rule().setInput(Rule::Height, d->label->rule().height());
+    rule().setInput(Rule::Height, d->label->rule().height() +
+                                  d->drawer->rule().height());
 }
 
 LabelWidget &DrawerButtonWidget::icon()
@@ -79,4 +82,45 @@ LabelWidget &DrawerButtonWidget::label()
 PanelWidget &DrawerButtonWidget::drawer()
 {
     return *d->drawer;
+}
+
+void DrawerButtonWidget::setSelected(bool selected)
+{
+    if(selected)
+    {
+        d->label->set(Background(style().colors().colorf("background")));
+        d->drawer->open();
+    }
+    else
+    {
+        d->label->set(Background());
+        d->drawer->close(0);
+    }
+}
+
+bool DrawerButtonWidget::isSelected() const
+{
+    return d->drawer->isOpen();
+}
+
+bool DrawerButtonWidget::handleEvent(Event const &event)
+{
+    if(event.isMouse())
+    {
+        //MouseEvent const &mouse = event.as<MouseEvent>();
+        switch(handleMouseClick(event))
+        {
+        case MouseClickUnrelated:
+            return false;
+
+        case MouseClickStarted:
+        case MouseClickAborted:
+            return true;
+
+        case MouseClickFinished:
+            emit clicked();
+            return true;
+        }
+    }
+    return false;
 }

@@ -21,12 +21,20 @@
 
 #include "columnwidget.h"
 
+class SavedSessionListData;
+
 class GameColumnWidget : public ColumnWidget
 {
+    Q_OBJECT
+
 public:
-    GameColumnWidget(de::String const &gameFamily);
+    GameColumnWidget(de::String const &gameFamily,
+                     SavedSessionListData const &savedItems);
 
     void setHighlighted(bool highlighted) override;
+
+protected slots:
+    void itemClicked();
 
 private:
     DENG2_PRIVATE(d)

@@ -36,7 +36,7 @@ static TimeDelta const SCROLL_SPAN = .5;
 DENG_GUI_PIMPL(HomeWidget)
 , DENG2_OBSERVES(Games, Readiness)
 {
-    SavedSessionListData saveItems; ///< All the available save games as items.
+    SavedSessionListData savedItems; ///< All the available save games as items.
 
     dsize visibleColumnCount = 3; ///< Target.
     QList<ColumnWidget *> allColumns; // not owned
@@ -197,16 +197,16 @@ HomeWidget::HomeWidget()
     column = new NoGamesColumnWidget();
     d->addColumn(column);
 
-    column = new GameColumnWidget("DOOM");
+    column = new GameColumnWidget("DOOM", d->savedItems);
     d->addColumn(column);
 
-    column = new GameColumnWidget("Heretic");
+    column = new GameColumnWidget("Heretic", d->savedItems);
     d->addColumn(column);
 
-    column = new GameColumnWidget("Hexen");
+    column = new GameColumnWidget("Hexen", d->savedItems);
     d->addColumn(column);
 
-    column = new GameColumnWidget("");
+    column = new GameColumnWidget("", d->savedItems);
     d->addColumn(column);
 
     column = new ColumnWidget("multiplayer-column");

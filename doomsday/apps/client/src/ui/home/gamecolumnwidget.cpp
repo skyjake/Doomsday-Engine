@@ -37,26 +37,25 @@ DENG_GUI_PIMPL(GameColumnWidget)
     {
         Game const &game;
 
-        MenuItem(Game const &game) : game(game)
-        {
-            setData(game.id());
-        }
-
+        MenuItem(Game const &game) : game(game) { setData(game.id()); }
         String gameId() const { return data().toString(); }
-
         void update() const { notifyChange(); }
 
         DENG2_AS_IS_METHODS()
     };
 
     String gameFamily;
+    SavedSessionListData const &savedItems;
     HeaderWidget *header;
     MenuWidget *menu;
     Image bgImage;
 
-    Instance(Public *i, String const &gameFamily)
+    Instance(Public *i,
+             String const &gameFamily,
+             SavedSessionListData const &savedItems)
         : Base(i)
         , gameFamily(gameFamily)
+        , savedItems(savedItems)
     {
         ScrollAreaWidget &area = self.scrollArea();
 
@@ -147,7 +146,9 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
     GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *)
     {
-        return new GameDrawerButton(item.as<MenuItem>().game);
+        auto *button = new GameDrawerButton(item.as<MenuItem>().game, savedItems);
+        QObject::connect(button, SIGNAL(clicked()), thisPublic, SLOT(itemClicked()));
+        return button;
     }
 
     void updateItemWidget(GuiWidget &widget, ui::Item const &item)
@@ -161,9 +162,10 @@ DENG_GUI_PIMPL(GameColumnWidget)
     }
 };
 
-GameColumnWidget::GameColumnWidget(String const &gameFamily)
+GameColumnWidget::GameColumnWidget(String const &gameFamily,
+                                   SavedSessionListData const &savedItems)
     : ColumnWidget(gameFamily.toLower() + "-column")
-    , d(new Instance(this, gameFamily.toLower()))
+    , d(new Instance(this, gameFamily.toLower(), savedItems))
 {
     scrollArea().setContentSize(maximumContentWidth(),
                                 d->header->rule().height() +
@@ -179,6 +181,7 @@ GameColumnWidget::GameColumnWidget(String const &gameFamily)
         d->header->setLogoImage("logo.game." + gameFamily.toLower());
         d->header->setLogoBackground("home.background." + d->gameFamily);
         d->bgImage = style().images().image("home.background." + d->gameFamily);
+        setBackgroundImage(d->bgImage);
     }
 
     /// @todo Get these description from the game family defs.
@@ -227,7 +230,7 @@ void GameColumnWidget::setHighlighted(bool highlighted)
 {
     ColumnWidget::setHighlighted(highlighted);
 
-    if(highlighted)
+    /*if(highlighted)
     {
         setBackgroundImage(d->bgImage);
     }
@@ -235,8 +238,22 @@ void GameColumnWidget::setHighlighted(bool highlighted)
     {
         setBackgroundImage(Image::solidColor(Image::Color(0, 0, 0, 255),
                                              Image::Size(4, 4)));
-    }
+    }*/
 
     //d->header->setOpacity(highlighted? 1 : .7, .5);
     //d->menu->setOpacity  (highlighted? 1 : .7, .5);
+}
+
+void GameColumnWidget::itemClicked()
+{
+    auto *clickedButton = dynamic_cast<GameDrawerButton *>(sender());
+
+    // Other buttons should be deselected.
+    for(auto *w : d->menu->childWidgets())
+    {
+        if(auto *button = w->maybeAs<GameDrawerButton>())
+        {
+            button->setSelected(button == clickedButton);
+        }
+    }
 }

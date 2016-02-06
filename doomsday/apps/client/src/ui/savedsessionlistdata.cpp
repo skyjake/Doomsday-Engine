@@ -18,6 +18,8 @@
 
 #include "ui/savedsessionlistdata.h"
 
+#include <doomsday/doomsdayapp.h>
+#include <doomsday/games.h>
 #include <doomsday/Session>
 #include <de/Loop>
 
@@ -80,9 +82,17 @@ SavedSessionListData::SavedSessionListData()
 // SaveItem -------------------------------------------------------------------
 
 SavedSessionListData::SaveItem::SaveItem(SavedSession const &session)
-    : session(&session)
+    : ImageItem(ShownAsButton)
+    , session(&session)
 {
     session.audienceForDeletion() += this;
+    setLabel(title());
+
+    Games &games = DoomsdayApp::games();
+    if(games.contains(gameId()))
+    {
+        setImage(Style::get().images().image(games[gameId()].logoImageId()));
+    }
 }
 
 SavedSessionListData::SaveItem::~SaveItem()

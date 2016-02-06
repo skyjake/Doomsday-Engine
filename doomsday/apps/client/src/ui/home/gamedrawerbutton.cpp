@@ -17,21 +17,46 @@
  */
 
 #include "ui/home/gamedrawerbutton.h"
+#include "ui/home/savelistwidget.h"
+#include "ui/savedsessionlistdata.h"
+
+#include <de/ChildWidgetOrganizer>
 
 using namespace de;
 
 DENG2_PIMPL(GameDrawerButton)
+, public ChildWidgetOrganizer::IFilter
 {
     Game const &game;
+    SavedSessionListData const &savedItems;
+    SaveListWidget *saves;
 
-    Instance(Public *i, Game const &game)
+    Instance(Public *i, Game const &game, SavedSessionListData const &savedItems)
         : Base(i)
         , game(game)
-    {}
+        , savedItems(savedItems)
+    {
+        saves = new SaveListWidget;
+        saves->rule().setInput(Rule::Width, self.rule().width() - self.margins().width());
+        saves->organizer().setFilter(*this);
+        saves->setItems(savedItems);
+
+        self.drawer().setContent(saves);
+    }
+
+//- ChildWidgetOrganizer::IFilter ---------------------------------------------
+
+    bool isItemAccepted(ChildWidgetOrganizer const &organizer,
+                        ui::Data const &data, ui::Data::Pos pos) const
+    {
+        // Only saved sessions for this game are to be included.
+        auto const &item = data.at(pos).as<SavedSessionListData::SaveItem>();
+        return item.gameId() == game.id();
+    }
 };
 
-GameDrawerButton::GameDrawerButton(Game const &game)
-    : d(new Instance(this, game))
+GameDrawerButton::GameDrawerButton(Game const &game, SavedSessionListData const &savedItems)
+    : d(new Instance(this, game, savedItems))
 {
-
+    //if(d->saves->childCount() > 0) drawer().open();
 }

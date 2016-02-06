@@ -40,6 +40,7 @@ DENG_GUI_PIMPL(ColumnWidget)
         back->margins().setZero();
 
         scrollArea = new ScrollAreaWidget;
+        scrollArea->enableIndicatorDraw(true);
 
         //QColor bg;
         //bg.setHsvF(de::frand(), .9, .5);

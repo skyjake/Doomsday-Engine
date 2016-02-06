@@ -28,12 +28,23 @@
  */
 class DrawerButtonWidget : public de::GuiWidget
 {
+    Q_OBJECT
+
 public:
     DrawerButtonWidget();
 
     de::LabelWidget &icon();
     de::LabelWidget &label();
     de::PanelWidget &drawer();
+
+    void setSelected(bool selected);
+    bool isSelected() const;
+
+    // Events.
+    bool handleEvent(de::Event const &event);
+
+signals:
+    void clicked();
 
 private:
     DENG2_PRIVATE(d)

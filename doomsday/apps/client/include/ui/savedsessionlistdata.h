@@ -20,6 +20,7 @@
 #define DENG_CLIENT_UI_SAVEDSESSIONLISTDATA_H
 
 #include <de/ui/ListData>
+#include <de/ui/ImageItem>
 #include <doomsday/SavedSession>
 
 /**
@@ -28,7 +29,7 @@
 class SavedSessionListData : public de::ui::ListData
 {
 public:
-    struct SaveItem : public de::ui::Item,
+    struct SaveItem : public de::ui::ImageItem,
                       DENG2_OBSERVES(de::File, Deletion)
     {
         SavedSession const *session;
