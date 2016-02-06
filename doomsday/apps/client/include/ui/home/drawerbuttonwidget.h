@@ -37,7 +37,7 @@ public:
     de::LabelWidget &label();
     de::PanelWidget &drawer();
 
-    void setSelected(bool selected);
+    virtual void setSelected(bool selected);
     bool isSelected() const;
 
     // Events.

@@ -38,7 +38,7 @@ DENG_GUI_PIMPL(HomeWidget)
 {
     SavedSessionListData savedItems; ///< All the available save games as items.
 
-    dsize visibleColumnCount = 3; ///< Target.
+    dsize visibleColumnCount = 2; //3; ///< Target.
     QList<ColumnWidget *> allColumns; // not owned
     QList<ColumnWidget *> columns; // Only the visible ones (not owned).
     IndirectRule *columnWidth;

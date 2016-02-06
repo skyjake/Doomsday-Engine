@@ -71,9 +71,10 @@ DENG_GUI_PIMPL(GameColumnWidget)
         menu->enablePageKeys(false);
         menu->setGridSize(1, ui::Filled, 0, ui::Expand);
         menu->organizer().setWidgetFactory(*this);
+        menu->layout().setRowPadding(style().rules().rule("gap")*2);
 
         menu->rule()
-                .setInput(Rule::Width, area.rule().width())
+                .setInput(Rule::Width, area.contentRule().width())
                 .setInput(Rule::Left,  area.contentRule().left())
                 .setInput(Rule::Top,   header->rule().bottom() +
                                        style().rules().rule("gap")*2);
@@ -155,10 +156,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
     {
         MenuItem const &menuItem = item.as<MenuItem>();
         auto &drawer = widget.as<GameDrawerButton>();
-        drawer.enable(menuItem.game.isPlayable());
-        drawer.label().setText(String("%1\n" _E(l) "%2")
-                               .arg(menuItem.game.title())
-                               .arg(menuItem.game.releaseDate().year()));
+        drawer.updateContent();
     }
 };
 
@@ -254,6 +252,7 @@ void GameColumnWidget::itemClicked()
         if(auto *button = w->maybeAs<GameDrawerButton>())
         {
             button->setSelected(button == clickedButton);
+            button->updateContent();
         }
     }
 }

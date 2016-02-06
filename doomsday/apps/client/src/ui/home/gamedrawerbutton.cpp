@@ -37,11 +37,13 @@ DENG2_PIMPL(GameDrawerButton)
         , savedItems(savedItems)
     {
         saves = new SaveListWidget;
-        saves->rule().setInput(Rule::Width, self.rule().width() - self.margins().width());
+        saves->rule().setInput(Rule::Width, self.rule().width()); // - self.margins().width());
         saves->organizer().setFilter(*this);
         saves->setItems(savedItems);
+        saves->margins().setZero().setLeft(self.icon().rule().width());
 
         self.drawer().setContent(saves);
+        self.drawer().open();
     }
 
 //- ChildWidgetOrganizer::IFilter ---------------------------------------------
@@ -59,4 +61,23 @@ GameDrawerButton::GameDrawerButton(Game const &game, SavedSessionListData const 
     : d(new Instance(this, game, savedItems))
 {
     //if(d->saves->childCount() > 0) drawer().open();
+}
+
+void GameDrawerButton::updateContent()
+{
+    enable(d->game.isPlayable());
+
+    String meta;
+    if(isSelected())
+    {
+        meta = String("%1 saved games").arg(d->saves->childCount());
+    }
+    else
+    {
+        meta = String::number(d->game.releaseDate().year());
+    }
+
+    label().setText(String("%1\n" _E(l) "%2")
+                    .arg(d->game.title())
+                    .arg(meta));
 }

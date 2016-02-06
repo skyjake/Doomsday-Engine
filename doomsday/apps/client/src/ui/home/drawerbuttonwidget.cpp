@@ -29,6 +29,7 @@ DENG_GUI_PIMPL(DrawerButtonWidget)
     LabelWidget *label;
     PanelWidget *drawer;
     QList<ButtonWidget *> buttons;
+    bool selected = false;
 
     Instance(Public *i) : Base(i)
     {
@@ -42,14 +43,15 @@ DENG_GUI_PIMPL(DrawerButtonWidget)
 
         icon->set(Background(style().colors().colorf("text")));
 
-        drawer->set(Background(Vector4f(0, 0, 0, .4f)));
+        drawer->set(Background(Vector4f(0, 0, 0, .3f)));
+        //drawer->margins().setZero();
     }
 };
 
 DrawerButtonWidget::DrawerButtonWidget()
     : d(new Instance(this))
 {
-    AutoRef<Rule> iconSize(new ConstantRule(2 * 50));
+    Rule const &iconSize = d->label->rule().height();
 
     d->icon->rule()
             .setSize(iconSize, iconSize)
@@ -86,41 +88,36 @@ PanelWidget &DrawerButtonWidget::drawer()
 
 void DrawerButtonWidget::setSelected(bool selected)
 {
+    d->selected = selected;
     if(selected)
     {
         d->label->set(Background(style().colors().colorf("background")));
-        d->drawer->open();
     }
     else
     {
         d->label->set(Background());
-        d->drawer->close(0);
     }
 }
 
 bool DrawerButtonWidget::isSelected() const
 {
-    return d->drawer->isOpen();
+    return d->selected;
 }
 
 bool DrawerButtonWidget::handleEvent(Event const &event)
 {
-    if(event.isMouse())
+    switch(handleMouseClick(event))
     {
-        //MouseEvent const &mouse = event.as<MouseEvent>();
-        switch(handleMouseClick(event))
-        {
-        case MouseClickUnrelated:
-            return false;
+    case MouseClickUnrelated:
+        return false;
 
-        case MouseClickStarted:
-        case MouseClickAborted:
-            return true;
+    case MouseClickStarted:
+    case MouseClickAborted:
+        return true;
 
-        case MouseClickFinished:
-            emit clicked();
-            return true;
-        }
+    case MouseClickFinished:
+        emit clicked();
+        return true;
     }
     return false;
 }

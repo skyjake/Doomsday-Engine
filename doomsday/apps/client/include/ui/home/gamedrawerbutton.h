@@ -34,6 +34,8 @@ public:
     GameDrawerButton(Game const &game,
                      SavedSessionListData const &savedItems);
 
+    void updateContent();
+
 private:
     DENG2_PRIVATE(d)
 };
