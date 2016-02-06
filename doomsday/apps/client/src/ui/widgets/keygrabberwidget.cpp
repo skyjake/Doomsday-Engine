@@ -50,6 +50,7 @@ DENG_GUI_PIMPL(KeyGrabberWidget)
 KeyGrabberWidget::KeyGrabberWidget(String const &name)
     : LabelWidget(name), d(new Instance(this))
 {
+    setBehavior(Focusable);
     setTextLineAlignment(AlignLeft);
     setText(tr("Click to focus"));
 }

@@ -21,6 +21,7 @@
 #include "de/BaseGuiApp"
 #include "de/Style"
 #include "de/BaseWindow"
+#include "de/FocusWidget"
 
 #include <de/CanvasWindow>
 #include <de/TextureBank>
@@ -47,6 +48,7 @@ static DotPath const ID_DOT                = "GuiRootWidget.dot";
 
 DENG2_PIMPL(GuiRootWidget)
 , DENG2_OBSERVES(Widget, ChildAddition)
+, DENG2_OBSERVES(RootWidget, FocusChange)
 {
     /*
      * Built-in runtime-generated images:
@@ -105,6 +107,7 @@ DENG2_PIMPL(GuiRootWidget)
     GLUniform uTexAtlas;
     TextureBank texBank; ///< Bank for the atlas contents.
     bool noFramesDrawnYet;
+    FocusWidget *focusIndicator;
 
     Instance(Public *i, CanvasWindow *win)
         : Base(i)
@@ -114,6 +117,10 @@ DENG2_PIMPL(GuiRootWidget)
         , noFramesDrawnYet(true)
     {
         self.audienceForChildAddition() += this;
+        self.audienceForFocusChange() += this;
+
+        focusIndicator = new FocusWidget;
+        self.add(focusIndicator);
     }
 
     ~Instance()
@@ -167,6 +174,23 @@ DENG2_PIMPL(GuiRootWidget)
         // Make sure newly added children know the view size.
         child.viewResized();
         child.notifyTree(&Widget::viewResized);
+
+        // Keep the focus at the top.
+        self.moveChildToLast(*focusIndicator);
+    }
+
+    void focusedWidgetChanged(Widget *focused)
+    {
+        if(GuiWidget *w = focused->maybeAs<GuiWidget>())
+        {
+            qDebug() << "focus set" << w->name();
+            focusIndicator->rule().setRect(w->rule());
+            focusIndicator->startFlashing();
+        }
+        else
+        {
+            focusIndicator->stopFlashing();
+        }
     }
 };
 

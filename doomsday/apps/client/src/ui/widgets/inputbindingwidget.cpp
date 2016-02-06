@@ -174,6 +174,7 @@ DENG_GUI_PIMPL(InputBindingWidget)
 
 InputBindingWidget::InputBindingWidget() : d(new Instance(this))
 {
+    setBehavior(Focusable);
     auxiliary().hide();
 }
 

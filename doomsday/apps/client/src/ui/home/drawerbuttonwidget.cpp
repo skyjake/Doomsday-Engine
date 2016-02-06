@@ -51,6 +51,8 @@ DENG_GUI_PIMPL(DrawerButtonWidget)
 DrawerButtonWidget::DrawerButtonWidget()
     : d(new Instance(this))
 {
+    setBehavior(Focusable);
+
     Rule const &iconSize = d->label->rule().height();
 
     d->icon->rule()
@@ -106,18 +108,22 @@ bool DrawerButtonWidget::isSelected() const
 
 bool DrawerButtonWidget::handleEvent(Event const &event)
 {
-    switch(handleMouseClick(event))
+    if(event.isMouse())
     {
-    case MouseClickUnrelated:
-        return false;
+        switch(handleMouseClick(event))
+        {
+        case MouseClickUnrelated:
+            return false;
 
-    case MouseClickStarted:
-    case MouseClickAborted:
-        return true;
+        case MouseClickStarted:
+        case MouseClickAborted:
+            return true;
 
-    case MouseClickFinished:
-        emit clicked();
-        return true;
+        case MouseClickFinished:
+            root().setFocus(this);
+            emit clicked();
+            return true;
+        }
     }
     return false;
 }

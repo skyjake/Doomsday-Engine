@@ -77,6 +77,9 @@ public:
         /// Children of the widget should be clipped when drawing.
         ChildVisibilityClipping = 0x100,
 
+        /// Widget can receive input focus.
+        Focusable = 0x200,
+
         DefaultBehavior = 0
     };
     Q_DECLARE_FLAGS(Behaviors, Behavior)

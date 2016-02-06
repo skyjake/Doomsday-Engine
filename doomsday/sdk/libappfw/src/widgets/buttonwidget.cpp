@@ -199,7 +199,9 @@ DENG2_AUDIENCE_METHOD(ButtonWidget, Press)
 DENG2_AUDIENCE_METHOD(ButtonWidget, Triggered)
 
 ButtonWidget::ButtonWidget(String const &name) : LabelWidget(name), d(new Instance(this))
-{}
+{
+    setBehavior(Focusable);
+}
 
 void ButtonWidget::useInfoStyle(bool yes)
 {
@@ -269,6 +271,11 @@ Action const *ButtonWidget::action() const
 
 void ButtonWidget::trigger()
 {
+    if(behavior().testFlag(Focusable))
+    {
+        root().setFocus(this);
+    }
+
     // Hold an extra ref so the action isn't deleted by triggering.
     AutoRef<Action> held = holdRef(d->action);
 
