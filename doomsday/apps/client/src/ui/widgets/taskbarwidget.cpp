@@ -534,13 +534,13 @@ bool TaskBarWidget::handleEvent(Event const &event)
         MouseEvent const &mouse = event.as<MouseEvent>();
         if(mouse.state() == MouseEvent::Released && !hitTest(mouse.pos()))
         {
-            if(root().focus())
+            /*if(root().focus())
             {
                 // First click will remove UI focus, allowing GameWidget
                 // to receive events.
                 root().setFocus(0);
                 return true;
-            }
+            }*/
 
             if(App_GameLoaded())
             {

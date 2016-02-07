@@ -42,6 +42,7 @@ close {
     image ringless { path = "graphics/close-ringless.png" }
 }
 image alert    { path = "graphics/alert.png" }
+image play     { path = "graphics/play.png" }
 
 # Subsystems:
 image log      { path = "graphics/log.png" }

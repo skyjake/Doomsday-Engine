@@ -20,19 +20,26 @@
 
 #include <de/PanelWidget>
 #include <de/ButtonWidget>
+#include <de/SequentialLayout>
 
 using namespace de;
 
 DENG_GUI_PIMPL(DrawerButtonWidget)
 {
+    LabelWidget *background;
     LabelWidget *icon;
     LabelWidget *label;
     PanelWidget *drawer;
     QList<ButtonWidget *> buttons;
+    ScalarRule *labelRight;
+    Rule const *buttonsWidth = nullptr;
     bool selected = false;
 
     Instance(Public *i) : Base(i)
     {
+        labelRight = new ScalarRule(0);
+
+        self.add(background = new LabelWidget);
         self.add(icon   = new LabelWidget);
         self.add(label  = new LabelWidget);
         self.add(drawer = new PanelWidget);
@@ -46,6 +53,38 @@ DENG_GUI_PIMPL(DrawerButtonWidget)
         drawer->set(Background(Vector4f(0, 0, 0, .3f)));
         //drawer->margins().setZero();
     }
+
+    ~Instance()
+    {
+        releaseRef(labelRight);
+        releaseRef(buttonsWidth);
+    }
+
+    void updateButtonLayout()
+    {
+        SequentialLayout layout(*labelRight, label->rule().top(), ui::Right);
+        for(auto *button : buttons)
+        {
+            layout << *button;
+            button->rule().setMidAnchorY(label->rule().midY());
+        }
+        changeRef(buttonsWidth, layout.width() + label->margins().right());
+    }
+
+    void showButtons(bool show)
+    {
+        if(!buttonsWidth) return;
+
+        TimeDelta const SPAN = .5;
+        if(show)
+        {
+            labelRight->set(self.rule().right() - *buttonsWidth, SPAN);
+        }
+        else
+        {
+            labelRight->set(self.rule().right(), SPAN);
+        }
+    }
 };
 
 DrawerButtonWidget::DrawerButtonWidget()
@@ -55,15 +94,22 @@ DrawerButtonWidget::DrawerButtonWidget()
 
     Rule const &iconSize = d->label->rule().height();
 
+    d->background->rule()
+            .setInput(Rule::Top,    rule().top())
+            .setInput(Rule::Left,   d->icon->rule().right())
+            .setInput(Rule::Right,  rule().right())
+            .setInput(Rule::Bottom, d->label->rule().bottom());
+
     d->icon->rule()
             .setSize(iconSize, iconSize)
             .setInput(Rule::Left, rule().left())
             .setInput(Rule::Top,  rule().top());
 
+    d->labelRight->set(rule().right());
     d->label->rule()
             .setInput(Rule::Top,   rule().top())
             .setInput(Rule::Left,  d->icon->rule().right())
-            .setInput(Rule::Right, rule().right()); // adjust when buttons added
+            .setInput(Rule::Right, *d->labelRight);
 
     d->drawer->rule()
             .setInput(Rule::Top,  d->label->rule().bottom())
@@ -93,11 +139,13 @@ void DrawerButtonWidget::setSelected(bool selected)
     d->selected = selected;
     if(selected)
     {
-        d->label->set(Background(style().colors().colorf("background")));
+        d->background->set(Background(style().colors().colorf("background")));
+        d->showButtons(true);
     }
     else
     {
-        d->label->set(Background());
+        d->background->set(Background());
+        d->showButtons(false);
     }
 }
 
@@ -106,7 +154,14 @@ bool DrawerButtonWidget::isSelected() const
     return d->selected;
 }
 
-bool DrawerButtonWidget::handleEvent(Event const &event)
+void DrawerButtonWidget::addButton(ButtonWidget *button)
+{
+    d->buttons << button;
+    add(button);
+    d->updateButtonLayout();
+}
+
+/*bool DrawerButtonWidget::handleEvent(Event const &event)
 {
     if(event.isMouse())
     {
@@ -117,13 +172,30 @@ bool DrawerButtonWidget::handleEvent(Event const &event)
 
         case MouseClickStarted:
         case MouseClickAborted:
-            return true;
+            return false;
 
         case MouseClickFinished:
             root().setFocus(this);
             emit clicked();
-            return true;
+            return false;
         }
     }
     return false;
+}*/
+
+bool DrawerButtonWidget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event const &))
+{
+    // Observe mouse clicks occurring in the column.
+    if(isEnabled() && event.isMouse() && event.type() == Event::MouseButton)
+    {
+        MouseEvent const &mouse = event.as<MouseEvent>();
+        if(mouse.state() == MouseEvent::Pressed &&
+           contentRect().contains(mouse.pos()))
+        {
+            root().setFocus(d->background);
+            emit mouseActivity();
+        }
+    }
+
+    return GuiWidget::dispatchEvent(event, memberFunc);
 }

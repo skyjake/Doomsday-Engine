@@ -24,18 +24,34 @@
 
 using namespace de;
 
-DENG2_PIMPL(GameDrawerButton)
+DENG_GUI_PIMPL(GameDrawerButton)
 , public ChildWidgetOrganizer::IFilter
 {
     Game const &game;
     SavedSessionListData const &savedItems;
     SaveListWidget *saves;
+    ButtonWidget *playButton;
 
     Instance(Public *i, Game const &game, SavedSessionListData const &savedItems)
         : Base(i)
         , game(game)
         , savedItems(savedItems)
     {
+        ButtonWidget *packages = new ButtonWidget;
+        packages->setImage(style().images().image("package"));
+        packages->setOverrideImageSize(style().fonts().font("default").height().value());
+        packages->setSizePolicy(ui::Expand, ui::Expand);
+        self.addButton(packages);
+
+        playButton = new ButtonWidget;
+        playButton->useInfoStyle();
+        playButton->setImage(style().images().image("play"));
+        playButton->setImageColor(style().colors().colorf("inverted.text"));
+        playButton->setOverrideImageSize(style().fonts().font("default").height().value());
+        playButton->setSizePolicy(ui::Expand, ui::Expand);
+        self.addButton(playButton);
+
+        // List of saved games.
         saves = new SaveListWidget;
         saves->rule().setInput(Rule::Width, self.rule().width()); // - self.margins().width());
         saves->organizer().setFilter(*this);
@@ -70,6 +86,7 @@ void GameDrawerButton::updateContent()
     String meta;
     if(isSelected())
     {
+        //root().setFocus(d->playButton);
         meta = String("%1 saved games").arg(d->saves->childCount());
     }
     else
@@ -77,7 +94,12 @@ void GameDrawerButton::updateContent()
         meta = String::number(d->game.releaseDate().year());
     }
 
-    label().setText(String("%1\n" _E(l) "%2")
+    label().setText(String(_E(b) "%1\n" _E(l) "%2")
                     .arg(d->game.title())
                     .arg(meta));
+}
+
+ButtonWidget &GameDrawerButton::playButton()
+{
+    return *d->playButton;
 }

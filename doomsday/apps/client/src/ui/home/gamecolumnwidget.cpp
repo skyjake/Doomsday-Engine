@@ -70,6 +70,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
         menu->enableScrolling(false);
         menu->enablePageKeys(false);
         menu->setGridSize(1, ui::Filled, 0, ui::Expand);
+        menu->margins().setLeftRight("");
         menu->organizer().setWidgetFactory(*this);
         menu->layout().setRowPadding(style().rules().rule("gap"));
 
@@ -148,7 +149,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
     GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *)
     {
         auto *button = new GameDrawerButton(item.as<MenuItem>().game, savedItems);
-        QObject::connect(button, SIGNAL(clicked()), thisPublic, SLOT(itemClicked()));
+        QObject::connect(button, SIGNAL(mouseActivity()), thisPublic, SLOT(itemClicked()));
         return button;
     }
 

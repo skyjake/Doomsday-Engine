@@ -36,6 +36,8 @@ public:
 
     void updateContent();
 
+    de::ButtonWidget &playButton();
+
 private:
     DENG2_PRIVATE(d)
 };
