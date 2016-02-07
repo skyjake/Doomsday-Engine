@@ -143,8 +143,19 @@ DENG_GUI_PIMPL(HomeWidget)
         }
     }
 
-    void switchTab(int dir)
+    Rangei visibleTabRange() const
     {
+        return Rangei(currentOffsetTab, currentOffsetTab + visibleColumnCount);
+    }
+
+    void switchTab(int dir, bool scrollInstantly = false)
+    {
+        if(scrollInstantly && dir)
+        {
+            Rangei const vis = visibleTabRange();
+            tabs->setCurrent(dir < 0? vis.start : vis.end - 1);
+        }
+
         auto pos = tabs->current();
         if(dir < 0 && pos > 0)
         {
@@ -160,8 +171,7 @@ DENG_GUI_PIMPL(HomeWidget)
     {
         pos = de::clamp(0, pos, columns.size() - 1);
 
-        Rangei const visible(currentOffsetTab, currentOffsetTab + visibleColumnCount);
-        if(visible.contains(pos))
+        if(visibleTabRange().contains(pos))
         {
             // No need to scroll anywhere, the requested tab is already visible.
             return;
@@ -276,11 +286,27 @@ bool HomeWidget::handleEvent(Event const &event)
         }
     }
 
-    if(event.isMouse())
-    {
-        return true;
-    }
     return false;
+}
+
+bool HomeWidget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(const Event &))
+{
+    if(event.type() == Event::MouseWheel)
+    {
+        if(event.isMouse())
+        {
+            MouseEvent const &mouse = event.as<MouseEvent>();
+            if(event.type() == Event::MouseWheel &&
+               mouse.wheelMotion() == MouseEvent::Step)
+            {
+                if(abs(mouse.wheel().x) > abs(mouse.wheel().y))
+                {
+                    d->switchTab(-de::sign(mouse.wheel().x), true /*instant*/);
+                }
+            }
+        }
+    }
+    return GuiWidget::dispatchEvent(event, memberFunc);
 }
 
 void HomeWidget::tabChanged()

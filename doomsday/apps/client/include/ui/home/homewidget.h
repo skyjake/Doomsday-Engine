@@ -34,8 +34,10 @@ class HomeWidget : public de::GuiWidget
 public:
     HomeWidget();
 
-    void viewResized();
-    bool handleEvent(de::Event const &event);
+    void viewResized() override;
+    bool handleEvent(de::Event const &event) override;
+    bool dispatchEvent(de::Event const &event,
+                       bool (de::Widget::*memberFunc)(de::Event const &)) override;
 
 public slots:
     void tabChanged();
