@@ -105,6 +105,8 @@ void RootWidget::setViewSize(Size const &size)
 
 void RootWidget::setFocus(Widget *widget)
 {
+    if(widget == d->focus) return; // No change.
+
     Widget *oldFocus = d->focus;
 
     d->focus = 0;

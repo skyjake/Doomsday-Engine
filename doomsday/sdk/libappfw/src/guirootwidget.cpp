@@ -183,7 +183,6 @@ DENG2_PIMPL(GuiRootWidget)
     {
         if(GuiWidget *w = focused->maybeAs<GuiWidget>())
         {
-            qDebug() << "focus set" << w->name();
             focusIndicator->rule().setRect(w->rule());
             focusIndicator->startFlashing();
         }
@@ -284,11 +283,9 @@ Matrix4f GuiRootWidget::projMatrix2D() const
 
 void GuiRootWidget::routeMouse(Widget *routeTo)
 {
-    setEventRouting(QList<int>()
-                    << Event::MouseButton
-                    << Event::MouseMotion
-                    << Event::MousePosition
-                    << Event::MouseWheel, routeTo);
+    setEventRouting(QList<int>({ Event::MouseButton,   Event::MouseMotion,
+                                 Event::MousePosition, Event::MouseWheel }),
+                    routeTo);
 }
 
 void GuiRootWidget::dispatchLatestMousePosition()

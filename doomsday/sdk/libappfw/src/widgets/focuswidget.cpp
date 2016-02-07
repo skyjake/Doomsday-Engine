@@ -63,9 +63,12 @@ FocusWidget::FocusWidget(String const &name)
 
 void FocusWidget::startFlashing()
 {
-    setOpacity(0);
-    show();
-    d->flashing.start();
+    if(!d->flashing.isActive())
+    {
+        setOpacity(0);
+        show();
+        d->flashing.start();
+    }
 }
 
 void FocusWidget::stopFlashing()
