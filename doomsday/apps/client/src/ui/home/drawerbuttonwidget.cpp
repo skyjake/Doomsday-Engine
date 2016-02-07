@@ -26,6 +26,28 @@ using namespace de;
 
 DENG_GUI_PIMPL(DrawerButtonWidget)
 {
+    struct ClickHandler : public GuiWidget::IEventHandler
+    {
+        DrawerButtonWidget &owner;
+
+        ClickHandler(DrawerButtonWidget &owner)
+            : owner(owner) {}
+
+        bool handleEvent(GuiWidget &, Event const &event)
+        {
+            if(event.type() == Event::MouseButton)
+            {
+                MouseEvent const &mouse = event.as<MouseEvent>();
+                if(owner.hitTest(event) && mouse.state() == MouseEvent::Pressed)
+                {
+                    owner.root().setFocus(owner.d->background);
+                    emit owner.mouseActivity();
+                }
+            }
+            return false;
+        }
+    };
+
     LabelWidget *background;
     LabelWidget *icon;
     LabelWidget *label;
@@ -50,8 +72,11 @@ DENG_GUI_PIMPL(DrawerButtonWidget)
 
         icon->set(Background(style().colors().colorf("text")));
 
-        drawer->set(Background(Vector4f(0, 0, 0, .3f)));
+        drawer->set(Background(Vector4f(0, 0, 0, .15f)));
         //drawer->margins().setZero();
+
+        background->setBehavior(Focusable);
+        background->addEventHandler(new ClickHandler(self));
     }
 
     ~Instance()
@@ -139,11 +164,13 @@ void DrawerButtonWidget::setSelected(bool selected)
     d->selected = selected;
     if(selected)
     {
+        d->drawer->set(Background(Vector4f(0, 0, 0, .4f)));
         d->background->set(Background(style().colors().colorf("background")));
         d->showButtons(true);
     }
     else
     {
+        d->drawer->set(Background(Vector4f(0, 0, 0, .15f)));
         d->background->set(Background());
         d->showButtons(false);
     }
@@ -182,14 +209,14 @@ void DrawerButtonWidget::addButton(ButtonWidget *button)
     }
     return false;
 }*/
-
+/*
 bool DrawerButtonWidget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event const &))
 {
     // Observe mouse clicks occurring in the column.
     if(isEnabled() && event.isMouse() && event.type() == Event::MouseButton)
     {
         MouseEvent const &mouse = event.as<MouseEvent>();
-        if(mouse.state() == MouseEvent::Pressed &&
+        if(mouse.state() == MouseEvent::Released &&
            contentRect().contains(mouse.pos()))
         {
             root().setFocus(d->background);
@@ -199,3 +226,4 @@ bool DrawerButtonWidget::dispatchEvent(Event const &event, bool (Widget::*member
 
     return GuiWidget::dispatchEvent(event, memberFunc);
 }
+*/

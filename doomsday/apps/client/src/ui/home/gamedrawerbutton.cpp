@@ -52,7 +52,7 @@ DENG_GUI_PIMPL(GameDrawerButton)
         self.addButton(playButton);
 
         // List of saved games.
-        saves = new SaveListWidget;
+        saves = new SaveListWidget(self);
         saves->rule().setInput(Rule::Width, self.rule().width()); // - self.margins().width());
         saves->organizer().setFilter(*this);
         saves->setItems(savedItems);

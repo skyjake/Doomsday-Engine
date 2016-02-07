@@ -21,12 +21,12 @@
 
 #include <de/MenuWidget>
 
-class SavedSessionListData;
+class GameDrawerButton;
 
 class SaveListWidget : public de::MenuWidget
 {
 public:
-    SaveListWidget();
+    SaveListWidget(GameDrawerButton &owner);
 
 private:
     DENG2_PRIVATE(d)

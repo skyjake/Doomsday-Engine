@@ -44,7 +44,7 @@ public:
 
     // Events.
     //bool handleEvent(de::Event const &event);
-    bool dispatchEvent(de::Event const &event, bool (de::Widget::*memberFunc)(de::Event const &));
+    //bool dispatchEvent(de::Event const &event, bool (de::Widget::*memberFunc)(de::Event const &));
 
 signals:
     void mouseActivity();

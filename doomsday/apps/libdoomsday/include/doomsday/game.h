@@ -271,6 +271,8 @@ public:
     /// Register the console commands, variables, etc..., of this module.
     static void consoleRegister();
 
+    static de::String logoImageForId(de::String const &id);
+
 private:
     DENG2_PRIVATE(d)
 };

@@ -17,14 +17,21 @@
  */
 
 #include "ui/home/savelistwidget.h"
+#include "ui/home/gamedrawerbutton.h"
 #include "ui/savedsessionlistdata.h"
+
+#include <doomsday/game.h>
+
+#include <de/CallbackAction>
 
 using namespace de;
 
 DENG_GUI_PIMPL(SaveListWidget)
 , DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
 {
-    Instance(Public *i) : Base(i)
+    GameDrawerButton &owner;
+
+    Instance(Public *i, GameDrawerButton &owner) : Base(i), owner(owner)
     {
         self.organizer().audienceForWidgetUpdate() += this;
     }
@@ -40,13 +47,28 @@ DENG_GUI_PIMPL(SaveListWidget)
         button.margins().set("dialog.gap");
         button.set(Background(Vector4f()));
 
+        button.setAction(new CallbackAction([this, &button] ()
+        {
+            if(button.isUsingInfoStyle())
+            {
+                button.useNormalStyle();
+                button.set(Background());
+            }
+            else
+            {
+                button.useInfoStyle();
+                button.set(Background(style().colors().colorf("inverted.background")));
+            }
+            emit owner.mouseActivity();
+        }));
+
         auto const &saveItem = item.as<SavedSessionListData::SaveItem>();
-        button.setImage(style().images().image("logo.game.libdoom")); //saveItem.image());
+        button.setImage(style().images().image(Game::logoImageForId(saveItem.gameId())));
     }
 };
 
-SaveListWidget::SaveListWidget()
-    : d(new Instance(this))
+SaveListWidget::SaveListWidget(GameDrawerButton &owner)
+    : d(new Instance(this, owner))
 {
     setGridSize(1, ui::Filled, 0, ui::Expand);
     enableScrolling(false);

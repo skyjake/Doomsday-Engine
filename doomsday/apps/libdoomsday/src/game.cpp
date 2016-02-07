@@ -231,15 +231,18 @@ void Game::setPluginId(pluginid_t newId)
 
 String Game::logoImageId() const
 {
-    String idKey = id();
+    return logoImageForId(id());
+}
 
+String Game::logoImageForId(String const &id)
+{
     /// @todo The name of the plugin should be accessible via the plugin loader.
     String plugName;
-    if(idKey.contains("heretic"))
+    if(id.contains("heretic"))
     {
         plugName = "libheretic";
     }
-    else if(idKey.contains("hexen"))
+    else if(id.contains("hexen"))
     {
         plugName = "libhexen";
     }
