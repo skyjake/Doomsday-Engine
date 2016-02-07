@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Widget"
@@ -314,7 +314,7 @@ Widget &Widget::add(Widget *child)
 }
 
 Widget &Widget::insertBefore(Widget *child, Widget const &otherChild)
-{    
+{
     DENG2_ASSERT(child != &otherChild);
 
     add(child);
@@ -349,7 +349,7 @@ Widget *Widget::remove(Widget &child)
 
     return &child;
 }
-    
+
 void Widget::orphan()
 {
     if(d->parent)
@@ -565,7 +565,8 @@ bool Widget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event 
         return d->routing[event.type()]->dispatchEvent(event, memberFunc);
     }
 
-    bool const thisHasFocus = (hasRoot() && root().focus() == this);
+    // Focus only affects key events.
+    bool const thisHasFocus = (hasRoot() && root().focus() == this && event.isKey());
 
     if(d->behavior.testFlag(HandleEventsOnlyWhenFocused) && !thisHasFocus)
     {

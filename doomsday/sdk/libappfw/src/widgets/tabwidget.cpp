@@ -75,6 +75,7 @@ DENG_GUI_PIMPL(TabWidget)
         btn.setFont("tab.label");
         btn.margins().set("dialog.gap");
         btn.set(Background());
+        btn.setBehavior(Focusable, UnsetFlags);
 
         btn.audienceForPress() += this;
     }
