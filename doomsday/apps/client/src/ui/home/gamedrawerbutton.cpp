@@ -76,22 +76,31 @@ DENG_GUI_PIMPL(GameDrawerButton)
 GameDrawerButton::GameDrawerButton(Game const &game, SavedSessionListData const &savedItems)
     : d(new Instance(this, game, savedItems))
 {
-    //if(d->saves->childCount() > 0) drawer().open();
+    connect(d->saves, SIGNAL(selectionChanged(uint)), this, SLOT(saveSelected(uint)));
 }
 
 void GameDrawerButton::updateContent()
 {
     enable(d->game.isPlayable());
 
-    String meta;
+    String meta = String::number(d->game.releaseDate().year());
+
     if(isSelected())
     {
-        //root().setFocus(d->playButton);
-        meta = String("%1 saved games").arg(d->saves->childCount());
-    }
-    else
-    {
-        meta = String::number(d->game.releaseDate().year());
+        if(d->saves->selectedPos() != ui::Data::InvalidPos)
+        {
+            meta = tr("Restore saved game");
+        }
+        else if(d->saves->childCount() > 0)
+        {
+            meta = tr("%1 saved game%2")
+                    .arg(d->saves->childCount())
+                    .arg(d->saves->childCount() != 1? "s" : "");
+        }
+        else
+        {
+            meta = tr("Start new session");
+        }
     }
 
     label().setText(String(_E(b) "%1\n" _E(l) "%2")
@@ -99,7 +108,17 @@ void GameDrawerButton::updateContent()
                     .arg(meta));
 }
 
+void GameDrawerButton::unselectSave()
+{
+    d->saves->clearSelection();
+}
+
 ButtonWidget &GameDrawerButton::playButton()
 {
     return *d->playButton;
+}
+
+void GameDrawerButton::saveSelected(unsigned int pos)
+{
+    updateContent();
 }

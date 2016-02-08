@@ -285,7 +285,6 @@ bool HomeWidget::handleEvent(Event const &event)
             return true;
         }
     }
-
     return false;
 }
 
@@ -295,6 +294,7 @@ bool HomeWidget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(co
     {
         if(event.isMouse())
         {
+#if 0
             MouseEvent const &mouse = event.as<MouseEvent>();
             if(event.type() == Event::MouseWheel &&
                mouse.wheelMotion() == MouseEvent::Step)
@@ -304,6 +304,7 @@ bool HomeWidget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(co
                     d->switchTab(-de::sign(mouse.wheel().x), true /*instant*/);
                 }
             }
+#endif
         }
     }
     return GuiWidget::dispatchEvent(event, memberFunc);

@@ -30,13 +30,19 @@ class SavedSessionListData;
  */
 class GameDrawerButton : public DrawerButtonWidget
 {
+    Q_OBJECT
+
 public:
     GameDrawerButton(Game const &game,
                      SavedSessionListData const &savedItems);
 
     void updateContent();
+    void unselectSave();
 
     de::ButtonWidget &playButton();
+
+protected slots:
+    void saveSelected(unsigned int index);
 
 private:
     DENG2_PRIVATE(d)

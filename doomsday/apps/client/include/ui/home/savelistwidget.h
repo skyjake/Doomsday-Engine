@@ -20,13 +20,28 @@
 #define DENG_CLIENT_UI_HOME_SAVELISTWIDGET_H
 
 #include <de/MenuWidget>
+#include <de/ui/Data>
 
 class GameDrawerButton;
 
 class SaveListWidget : public de::MenuWidget
 {
+    Q_OBJECT
+
 public:
     SaveListWidget(GameDrawerButton &owner);
+
+    de::ui::DataPos selectedPos() const;
+    void clearSelection();
+
+signals:
+    /**
+     * Emitted when the selected item changes.
+     *
+     * @param pos  Position of the selected item in the shared saved sessions
+     *             list data model.
+     */
+    void selectionChanged(unsigned int pos);
 
 private:
     DENG2_PRIVATE(d)

@@ -241,6 +241,20 @@ void GameColumnWidget::setHighlighted(bool highlighted)
 
     //d->header->setOpacity(highlighted? 1 : .7, .5);
     //d->menu->setOpacity  (highlighted? 1 : .7, .5);
+
+    if(!highlighted)
+    {
+        // Unselect all buttons.
+        for(auto *w : d->menu->childWidgets())
+        {
+            if(auto *button = w->maybeAs<GameDrawerButton>())
+            {
+                button->unselectSave();
+                button->setSelected(false);
+                button->updateContent();
+            }
+        }
+    }
 }
 
 void GameColumnWidget::itemClicked()
@@ -253,6 +267,10 @@ void GameColumnWidget::itemClicked()
         if(auto *button = w->maybeAs<GameDrawerButton>())
         {
             button->setSelected(button == clickedButton);
+            if(button != clickedButton)
+            {
+                button->unselectSave();
+            }
             button->updateContent();
         }
     }

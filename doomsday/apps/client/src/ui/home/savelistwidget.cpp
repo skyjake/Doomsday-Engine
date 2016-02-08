@@ -30,6 +30,7 @@ DENG_GUI_PIMPL(SaveListWidget)
 , DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
 {
     GameDrawerButton &owner;
+    ui::DataPos selected = ui::Data::InvalidPos;
 
     Instance(Public *i, GameDrawerButton &owner) : Base(i), owner(owner)
     {
@@ -49,21 +50,52 @@ DENG_GUI_PIMPL(SaveListWidget)
 
         button.setAction(new CallbackAction([this, &button] ()
         {
-            if(button.isUsingInfoStyle())
-            {
-                button.useNormalStyle();
-                button.set(Background());
-            }
-            else
-            {
-                button.useInfoStyle();
-                button.set(Background(style().colors().colorf("inverted.background")));
-            }
+            //ui::DataPos index = self.items().find(*self.organizer().findItemForWidget(button));
+            toggleSelectedItem(button);
             emit owner.mouseActivity();
         }));
 
         auto const &saveItem = item.as<SavedSessionListData::SaveItem>();
         button.setImage(style().images().image(Game::logoImageForId(saveItem.gameId())));
+    }
+
+    void toggleSelectedItem(ButtonWidget &button)
+    {
+        auto const buttonItemPos = self.items().find(*self.organizer().findItemForWidget(button));
+
+        if(selected == buttonItemPos)
+        {
+            // Unselect.
+            selected = ui::Data::InvalidPos;
+            updateItemHighlights(nullptr);
+        }
+        else
+        {
+            selected = buttonItemPos;
+            updateItemHighlights(&button);
+        }
+
+        emit self.selectionChanged(selected);
+    }
+
+    void updateItemHighlights(ButtonWidget *selectedButton)
+    {
+        for(auto *w : self.childWidgets())
+        {
+            if(auto *bw = w->maybeAs<ButtonWidget>())
+            {
+                if(selectedButton == bw)
+                {
+                    bw->useInfoStyle();
+                    bw->set(Background(style().colors().colorf("inverted.background")));
+                }
+                else
+                {
+                    bw->useNormalStyle();
+                    bw->set(Background());
+                }
+            }
+        }
     }
 };
 
@@ -73,4 +105,19 @@ SaveListWidget::SaveListWidget(GameDrawerButton &owner)
     setGridSize(1, ui::Filled, 0, ui::Expand);
     enableScrolling(false);
     enablePageKeys(false);
+}
+
+ui::DataPos SaveListWidget::selectedPos() const
+{
+    return d->selected;
+}
+
+void SaveListWidget::clearSelection()
+{
+    if(d->selected != ui::Data::InvalidPos)
+    {
+        d->selected = ui::Data::InvalidPos;
+        d->updateItemHighlights(nullptr);
+        emit selectionChanged(d->selected);
+    }
 }
