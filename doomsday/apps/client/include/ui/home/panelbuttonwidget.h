@@ -48,6 +48,7 @@ public:
 
 signals:
     void mouseActivity();
+    void doubleClicked();
 
 private:
     DENG2_PRIVATE(d)

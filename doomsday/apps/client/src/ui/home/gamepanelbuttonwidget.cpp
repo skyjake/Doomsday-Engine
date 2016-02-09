@@ -19,7 +19,10 @@
 #include "ui/home/gamepanelbuttonwidget.h"
 #include "ui/home/savelistwidget.h"
 #include "ui/savedsessionlistdata.h"
+#include "dd_main.h"
 
+#include <doomsday/console/exec.h>
+#include <de/CallbackAction>
 #include <de/ChildWidgetOrganizer>
 
 using namespace de;
@@ -49,17 +52,36 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         playButton->setImageColor(style().colors().colorf("inverted.text"));
         playButton->setOverrideImageSize(style().fonts().font("default").height().value());
         playButton->setSizePolicy(ui::Expand, ui::Expand);
+        playButton->setAction(new CallbackAction([this] () { playButtonPressed(); }));
         self.addButton(playButton);
 
         // List of saved games.
         saves = new SaveListWidget(self);
-        saves->rule().setInput(Rule::Width, self.rule().width()); // - self.margins().width());
+        saves->rule().setInput(Rule::Width, self.rule().width());
         saves->organizer().setFilter(*this);
         saves->setItems(savedItems);
         saves->margins().setZero().setLeft(self.icon().rule().width());
 
         self.panel().setContent(saves);
         self.panel().open();
+    }
+
+    void playButtonPressed()
+    {
+        BusyMode_FreezeGameForBusyMode();
+        //ClientWindow::main().taskBar().close();
+        // TODO: Emit a signal that hides the Home and closes the taskbar.
+
+        // Switch the game.
+        DoomsdayApp::app().changeGame(game, DD_ActivateGameWorker);
+
+        if(saves->selectedPos() != ui::Data::InvalidPos)
+        {
+            // Load a saved game.
+            auto const &saveItem = savedItems.at(saves->selectedPos());
+            Con_Execute(CMDS_DDAY, ("loadgame " + saveItem.name() + " confirm").toLatin1(),
+                        false, false);
+        }
     }
 
 //- ChildWidgetOrganizer::IFilter ---------------------------------------------
@@ -77,11 +99,14 @@ GamePanelButtonWidget::GamePanelButtonWidget(Game const &game, SavedSessionListD
     : d(new Instance(this, game, savedItems))
 {
     connect(d->saves, SIGNAL(selectionChanged(uint)), this, SLOT(saveSelected(uint)));
+    connect(d->saves, SIGNAL(doubleClicked(uint)), this, SLOT(saveDoubleClicked(uint)));
+    connect(this, SIGNAL(doubleClicked()), this, SLOT(play()));
 }
 
 void GamePanelButtonWidget::updateContent()
 {
     enable(d->game.isPlayable());
+    d->playButton->enable(isSelected());
 
     String meta = String::number(d->game.releaseDate().year());
 
@@ -118,7 +143,18 @@ ButtonWidget &GamePanelButtonWidget::playButton()
     return *d->playButton;
 }
 
-void GamePanelButtonWidget::saveSelected(unsigned int pos)
+void GamePanelButtonWidget::play()
+{
+    d->playButtonPressed();
+}
+
+void GamePanelButtonWidget::saveSelected(unsigned int /*savePos*/)
 {
     updateContent();
+}
+
+void GamePanelButtonWidget::saveDoubleClicked(unsigned int savePos)
+{
+    d->saves->setSelectedPos(savePos);
+    play();
 }

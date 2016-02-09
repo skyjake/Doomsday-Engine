@@ -35,6 +35,8 @@ static TimeDelta const SCROLL_SPAN = .5;
 
 DENG_GUI_PIMPL(HomeWidget)
 , DENG2_OBSERVES(Games, Readiness)
+, DENG2_OBSERVES(DoomsdayApp, GameUnload)
+, DENG2_OBSERVES(DoomsdayApp, GameChange)
 {
     SavedSessionListData savedItems; ///< All the available save games as items.
 
@@ -50,6 +52,8 @@ DENG_GUI_PIMPL(HomeWidget)
     Instance(Public *i) : Base(i)
     {
         DoomsdayApp::games().audienceForReadiness() += this;
+        DoomsdayApp::app().audienceForGameChange() += this;
+        DoomsdayApp::app().audienceForGameUnload() += this;
 
         columnWidth  = new IndirectRule;
         scrollOffset = new ScalarRule(0);
@@ -64,6 +68,8 @@ DENG_GUI_PIMPL(HomeWidget)
     ~Instance()
     {
         DoomsdayApp::games().audienceForReadiness() -= this;
+        DoomsdayApp::app().audienceForGameChange() -= this;
+        DoomsdayApp::app().audienceForGameUnload() -= this;
 
         releaseRef(columnWidth);
         releaseRef(scrollOffset);
@@ -105,6 +111,26 @@ DENG_GUI_PIMPL(HomeWidget)
     {
         updateTabItems();
         updateLayout();
+    }
+
+    void currentGameChanged(Game const &newGame)
+    {
+        if(newGame.isNull())
+        {
+            self.show();
+        }
+        else
+        {
+            self.hide();
+        }
+    }
+
+    void aboutToUnloadGame(Game const &gameBeingUnloaded)
+    {
+        if(gameBeingUnloaded.isNull())
+        {
+            self.hide();
+        }
     }
 
     void addColumn(ColumnWidget *col)

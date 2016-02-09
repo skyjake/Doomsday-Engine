@@ -32,6 +32,7 @@ public:
     SaveListWidget(GamePanelButtonWidget &owner);
 
     de::ui::DataPos selectedPos() const;
+    void setSelectedPos(de::ui::DataPos pos);
     void clearSelection();
 
 signals:
@@ -42,6 +43,8 @@ signals:
      *             list data model.
      */
     void selectionChanged(unsigned int pos);
+
+    void doubleClicked(unsigned int pos);
 
 private:
     DENG2_PRIVATE(d)

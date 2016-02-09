@@ -38,10 +38,19 @@ DENG_GUI_PIMPL(PanelButtonWidget)
             if(event.type() == Event::MouseButton)
             {
                 MouseEvent const &mouse = event.as<MouseEvent>();
-                if(owner.hitTest(event) && mouse.state() == MouseEvent::Pressed)
+                if(owner.hitTest(event))
                 {
-                    owner.root().setFocus(owner.d->background);
-                    emit owner.mouseActivity();
+                    if(mouse.state() == MouseEvent::Pressed ||
+                       mouse.state() == MouseEvent::DoubleClick)
+                    {
+                        owner.root().setFocus(owner.d->background);
+                        emit owner.mouseActivity();
+                    }
+                    if(mouse.state() == MouseEvent::DoubleClick)
+                    {
+                        emit owner.doubleClicked();
+                        return true;
+                    }
                 }
             }
             return false;

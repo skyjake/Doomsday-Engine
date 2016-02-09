@@ -29,6 +29,31 @@ using namespace de;
 DENG_GUI_PIMPL(SaveListWidget)
 , DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
 {
+    /**
+     * Handles mouse button doubleclicks on the save items.
+     */
+    struct DoubleClickHandler : public GuiWidget::IEventHandler
+    {
+        SaveListWidget::Instance *d;
+
+        DoubleClickHandler(SaveListWidget::Instance *d) : d(d) {}
+
+        bool handleEvent(GuiWidget &button, Event const &event)
+        {
+            if(event.type() == Event::MouseButton)
+            {
+                MouseEvent const &mouse = event.as<MouseEvent>();
+                if(button.hitTest(mouse) && mouse.state() == MouseEvent::DoubleClick)
+                {
+                    emit d->self.doubleClicked(d->self.items().find(
+                            *d->self.organizer().findItemForWidget(button)));
+                    return true;
+                }
+            }
+            return false;
+        }
+    };
+
     GamePanelButtonWidget &owner;
     ui::DataPos selected = ui::Data::InvalidPos;
 
@@ -48,12 +73,11 @@ DENG_GUI_PIMPL(SaveListWidget)
         button.margins().set("dialog.gap");
         button.set(Background(Vector4f()));
 
-        button.setAction(new CallbackAction([this, &button] ()
-        {
-            //ui::DataPos index = self.items().find(*self.organizer().findItemForWidget(button));
+        button.setAction(new CallbackAction([this, &button] () {
             toggleSelectedItem(button);
             emit owner.mouseActivity();
         }));
+        button.addEventHandler(new DoubleClickHandler(this));
 
         auto const &saveItem = item.as<SavedSessionListData::SaveItem>();
         button.setImage(style().images().image(Game::logoImageForId(saveItem.gameId())));
@@ -110,6 +134,16 @@ SaveListWidget::SaveListWidget(GamePanelButtonWidget &owner)
 ui::DataPos SaveListWidget::selectedPos() const
 {
     return d->selected;
+}
+
+void SaveListWidget::setSelectedPos(ui::DataPos pos)
+{
+    if(d->selected != pos)
+    {
+        d->selected = pos;
+        d->updateItemHighlights(&itemWidget<ButtonWidget>(items().at(pos)));
+        emit selectionChanged(d->selected);
+    }
 }
 
 void SaveListWidget::clearSelection()
