@@ -1,4 +1,4 @@
-/** @file drawerbuttonwidget.cpp  Button with an extensible drawer.
+/** @file panelbuttonwidget.cpp  Button with an extensible drawer.
  *
  * @authors Copyright (c) 2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/home/drawerbuttonwidget.h"
+#include "ui/home/panelbuttonwidget.h"
 
 #include <de/PanelWidget>
 #include <de/ButtonWidget>
@@ -24,13 +24,13 @@
 
 using namespace de;
 
-DENG_GUI_PIMPL(DrawerButtonWidget)
+DENG_GUI_PIMPL(PanelButtonWidget)
 {
     struct ClickHandler : public GuiWidget::IEventHandler
     {
-        DrawerButtonWidget &owner;
+        PanelButtonWidget &owner;
 
-        ClickHandler(DrawerButtonWidget &owner)
+        ClickHandler(PanelButtonWidget &owner)
             : owner(owner) {}
 
         bool handleEvent(GuiWidget &, Event const &event)
@@ -112,7 +112,7 @@ DENG_GUI_PIMPL(DrawerButtonWidget)
     }
 };
 
-DrawerButtonWidget::DrawerButtonWidget()
+PanelButtonWidget::PanelButtonWidget()
     : d(new Instance(this))
 {
     setBehavior(Focusable);
@@ -144,22 +144,22 @@ DrawerButtonWidget::DrawerButtonWidget()
                                   d->drawer->rule().height());
 }
 
-LabelWidget &DrawerButtonWidget::icon()
+LabelWidget &PanelButtonWidget::icon()
 {
     return *d->icon;
 }
 
-LabelWidget &DrawerButtonWidget::label()
+LabelWidget &PanelButtonWidget::label()
 {
     return *d->label;
 }
 
-PanelWidget &DrawerButtonWidget::drawer()
+PanelWidget &PanelButtonWidget::panel()
 {
     return *d->drawer;
 }
 
-void DrawerButtonWidget::setSelected(bool selected)
+void PanelButtonWidget::setSelected(bool selected)
 {
     d->selected = selected;
     if(selected)
@@ -176,12 +176,12 @@ void DrawerButtonWidget::setSelected(bool selected)
     }
 }
 
-bool DrawerButtonWidget::isSelected() const
+bool PanelButtonWidget::isSelected() const
 {
     return d->selected;
 }
 
-void DrawerButtonWidget::addButton(ButtonWidget *button)
+void PanelButtonWidget::addButton(ButtonWidget *button)
 {
     d->buttons << button;
     add(button);

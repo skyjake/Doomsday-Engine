@@ -1,4 +1,4 @@
-/** @file gamedrawerbutton.cpp  Button for
+/** @file gamepanelbuttonwidget.cpp  Panel button for games.
  *
  * @authors Copyright (c) 2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/home/gamedrawerbutton.h"
+#include "ui/home/gamepanelbuttonwidget.h"
 #include "ui/home/savelistwidget.h"
 #include "ui/savedsessionlistdata.h"
 
@@ -24,7 +24,7 @@
 
 using namespace de;
 
-DENG_GUI_PIMPL(GameDrawerButton)
+DENG_GUI_PIMPL(GamePanelButtonWidget)
 , public ChildWidgetOrganizer::IFilter
 {
     Game const &game;
@@ -58,8 +58,8 @@ DENG_GUI_PIMPL(GameDrawerButton)
         saves->setItems(savedItems);
         saves->margins().setZero().setLeft(self.icon().rule().width());
 
-        self.drawer().setContent(saves);
-        self.drawer().open();
+        self.panel().setContent(saves);
+        self.panel().open();
     }
 
 //- ChildWidgetOrganizer::IFilter ---------------------------------------------
@@ -73,13 +73,13 @@ DENG_GUI_PIMPL(GameDrawerButton)
     }
 };
 
-GameDrawerButton::GameDrawerButton(Game const &game, SavedSessionListData const &savedItems)
+GamePanelButtonWidget::GamePanelButtonWidget(Game const &game, SavedSessionListData const &savedItems)
     : d(new Instance(this, game, savedItems))
 {
     connect(d->saves, SIGNAL(selectionChanged(uint)), this, SLOT(saveSelected(uint)));
 }
 
-void GameDrawerButton::updateContent()
+void GamePanelButtonWidget::updateContent()
 {
     enable(d->game.isPlayable());
 
@@ -108,17 +108,17 @@ void GameDrawerButton::updateContent()
                     .arg(meta));
 }
 
-void GameDrawerButton::unselectSave()
+void GamePanelButtonWidget::unselectSave()
 {
     d->saves->clearSelection();
 }
 
-ButtonWidget &GameDrawerButton::playButton()
+ButtonWidget &GamePanelButtonWidget::playButton()
 {
     return *d->playButton;
 }
 
-void GameDrawerButton::saveSelected(unsigned int pos)
+void GamePanelButtonWidget::saveSelected(unsigned int pos)
 {
     updateContent();
 }

@@ -18,7 +18,7 @@
 
 #include "ui/home/gamecolumnwidget.h"
 #include "ui/home/headerwidget.h"
-#include "ui/home/gamedrawerbutton.h"
+#include "ui/home/gamepanelbuttonwidget.h"
 
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/games.h>
@@ -95,10 +95,10 @@ DENG_GUI_PIMPL(GameColumnWidget)
         return &menu->items().at(pos);
     }
 
-    GameDrawerButton &widgetForItem(ui::Item const &item) const
+    GamePanelButtonWidget &widgetForItem(ui::Item const &item) const
     {
         DENG2_ASSERT(menu->items().find(item) != ui::Data::InvalidPos);
-        return menu->itemWidget<GameDrawerButton>(item);
+        return menu->itemWidget<GamePanelButtonWidget>(item);
     }
 
     void populateItems()
@@ -148,15 +148,14 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
     GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *)
     {
-        auto *button = new GameDrawerButton(item.as<MenuItem>().game, savedItems);
+        auto *button = new GamePanelButtonWidget(item.as<MenuItem>().game, savedItems);
         QObject::connect(button, SIGNAL(mouseActivity()), thisPublic, SLOT(itemClicked()));
         return button;
     }
 
-    void updateItemWidget(GuiWidget &widget, ui::Item const &item)
+    void updateItemWidget(GuiWidget &widget, ui::Item const &/*item*/)
     {
-        MenuItem const &menuItem = item.as<MenuItem>();
-        auto &drawer = widget.as<GameDrawerButton>();
+        auto &drawer = widget.as<GamePanelButtonWidget>();
         drawer.updateContent();
     }
 };
@@ -247,7 +246,7 @@ void GameColumnWidget::setHighlighted(bool highlighted)
         // Unselect all buttons.
         for(auto *w : d->menu->childWidgets())
         {
-            if(auto *button = w->maybeAs<GameDrawerButton>())
+            if(auto *button = w->maybeAs<GamePanelButtonWidget>())
             {
                 button->unselectSave();
                 button->setSelected(false);
@@ -259,12 +258,12 @@ void GameColumnWidget::setHighlighted(bool highlighted)
 
 void GameColumnWidget::itemClicked()
 {
-    auto *clickedButton = dynamic_cast<GameDrawerButton *>(sender());
+    auto *clickedButton = dynamic_cast<GamePanelButtonWidget *>(sender());
 
     // Other buttons should be deselected.
     for(auto *w : d->menu->childWidgets())
     {
-        if(auto *button = w->maybeAs<GameDrawerButton>())
+        if(auto *button = w->maybeAs<GamePanelButtonWidget>())
         {
             button->setSelected(button == clickedButton);
             if(button != clickedButton)

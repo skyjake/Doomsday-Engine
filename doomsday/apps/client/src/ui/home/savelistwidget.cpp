@@ -17,7 +17,7 @@
  */
 
 #include "ui/home/savelistwidget.h"
-#include "ui/home/gamedrawerbutton.h"
+#include "ui/home/gamepanelbuttonwidget.h"
 #include "ui/savedsessionlistdata.h"
 
 #include <doomsday/game.h>
@@ -29,10 +29,10 @@ using namespace de;
 DENG_GUI_PIMPL(SaveListWidget)
 , DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
 {
-    GameDrawerButton &owner;
+    GamePanelButtonWidget &owner;
     ui::DataPos selected = ui::Data::InvalidPos;
 
-    Instance(Public *i, GameDrawerButton &owner) : Base(i), owner(owner)
+    Instance(Public *i, GamePanelButtonWidget &owner) : Base(i), owner(owner)
     {
         self.organizer().audienceForWidgetUpdate() += this;
     }
@@ -99,7 +99,7 @@ DENG_GUI_PIMPL(SaveListWidget)
     }
 };
 
-SaveListWidget::SaveListWidget(GameDrawerButton &owner)
+SaveListWidget::SaveListWidget(GamePanelButtonWidget &owner)
     : d(new Instance(this, owner))
 {
     setGridSize(1, ui::Filled, 0, ui::Expand);

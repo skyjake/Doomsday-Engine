@@ -22,14 +22,14 @@
 #include <de/MenuWidget>
 #include <de/ui/Data>
 
-class GameDrawerButton;
+class GamePanelButtonWidget;
 
 class SaveListWidget : public de::MenuWidget
 {
     Q_OBJECT
 
 public:
-    SaveListWidget(GameDrawerButton &owner);
+    SaveListWidget(GamePanelButtonWidget &owner);
 
     de::ui::DataPos selectedPos() const;
     void clearSelection();
