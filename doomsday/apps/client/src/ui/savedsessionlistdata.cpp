@@ -54,7 +54,7 @@ DENG2_PIMPL(SavedSessionListData)
         // Add new entries.
         DENG2_FOR_EACH_CONST(Session::SavedIndex::All, i, Session::savedIndex().all())
         {
-            ui::Data::Pos found = self.findData(i.key());
+            ui::Data::Pos found = self.findData(i.key()); // savePath
             if(found == ui::Data::InvalidPos)
             {
                 SavedSession &session = *i.value();
@@ -86,6 +86,8 @@ SavedSessionListData::SaveItem::SaveItem(SavedSession const &session)
     , session(&session)
 {
     session.audienceForDeletion() += this;
+
+    setData(savePath()); // for looking it up later
     setLabel(title());
 
     Games &games = DoomsdayApp::games();
@@ -132,7 +134,26 @@ String SavedSessionListData::SaveItem::savePath() const
     return "";
 }
 
+String SavedSessionListData::SaveItem::name() const
+{
+    if(session)
+    {
+        return session->name().fileNameWithoutExtension();
+    }
+    return "";
+}
+
 void SavedSessionListData::SaveItem::fileBeingDeleted(File const &)
 {
     session = nullptr;
+}
+
+SavedSessionListData::SaveItem &SavedSessionListData::at(Pos pos)
+{
+    return ListData::at(pos).as<SaveItem>();
+}
+
+SavedSessionListData::SaveItem const &SavedSessionListData::at(Pos pos) const
+{
+    return ListData::at(pos).as<SaveItem>();
 }

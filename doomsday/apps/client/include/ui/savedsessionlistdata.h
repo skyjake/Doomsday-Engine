@@ -41,12 +41,16 @@ public:
         de::String title() const;
         de::String gameId() const;
         de::String savePath() const;
+        de::String name() const;
 
         void fileBeingDeleted(de::File const &);
     };
 
 public:
     SavedSessionListData();
+
+    SaveItem &at(Pos pos) override;
+    SaveItem const &at(Pos pos) const override;
 
 private:
     DENG2_PRIVATE(d)
