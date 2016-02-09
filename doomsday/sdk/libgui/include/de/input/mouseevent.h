@@ -52,7 +52,8 @@ public:
     enum ButtonState
     {
         Released,       ///< Released button.
-        Pressed         ///< Pressed button.
+        Pressed,        ///< Pressed button.
+        DoubleClick
     };
 
     enum WheelMotion
