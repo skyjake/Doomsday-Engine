@@ -267,7 +267,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
 
     void showOrHideMenuItems()
     {
-        Game &game = App_CurrentGame();
+        Game const &game = App_CurrentGame();
 
         itemWidget(mainMenu, POS_GAMES)            .show(!game.isNull());
         itemWidget(mainMenu, POS_UNLOAD)           .show(!game.isNull());

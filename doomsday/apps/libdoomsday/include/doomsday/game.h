@@ -215,7 +215,7 @@ public:
      *
      * @return  @c true iff @a file is required by this game.
      */
-    bool isRequiredFile(de::File1 &file);
+    bool isRequiredFile(de::File1 &file) const;
 
     /**
      * Adds a new resource to the list for the identified @a game.

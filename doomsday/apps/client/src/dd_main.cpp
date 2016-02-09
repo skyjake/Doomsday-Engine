@@ -830,7 +830,7 @@ void App_ClearGames()
     DoomsdayApp::setGame(App_Games().nullGame());
 }
 
-static void populateGameInfo(GameInfo &info, Game &game)
+static void populateGameInfo(GameInfo &info, Game const &game)
 {
     info.identityKey = AutoStr_FromTextStd(game.id().toUtf8().constData());
     info.title       = AutoStr_FromTextStd(game.title().toUtf8().constData());
@@ -856,7 +856,7 @@ dd_bool DD_GameInfo(GameInfo *info)
     return false;
 }
 
-Game &App_CurrentGame()
+Game const &App_CurrentGame()
 {
     return DoomsdayApp::currentGame();
 }
@@ -965,7 +965,7 @@ static void initialize()
     FR_Init();
 
     // Enter busy mode until startup complete.
-    Con_InitProgress(200); 
+    Con_InitProgress(200);
 #endif
     BusyMode_RunNewTaskWithName(BUSYF_NO_UPLOADS | BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
                                 DD_StartupWorker, 0, "Starting up...");

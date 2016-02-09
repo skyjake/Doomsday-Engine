@@ -804,7 +804,7 @@ void ClientApp::unloadGame(Game const &upcomingGame)
     Map::initDummies();
 }
 
-void ClientApp::makeGameCurrent(Game &newGame)
+void ClientApp::makeGameCurrent(Game const &newGame)
 {
     DoomsdayApp::makeGameCurrent(newGame);
 

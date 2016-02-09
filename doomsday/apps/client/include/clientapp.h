@@ -104,7 +104,7 @@ public slots:
 
 protected:
     void unloadGame(Game const &upcomingGame) override;
-    void makeGameCurrent(Game &newGame) override;
+    void makeGameCurrent(Game const &newGame) override;
     void reset() override;
 
 private:

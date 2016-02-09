@@ -533,7 +533,7 @@ static void readAllDefinitions()
 
     if(App_GameLoaded())
     {
-        Game &game = App_CurrentGame();
+        Game const &game = App_CurrentGame();
 
         // Some games use definitions that are translated to DED.
         QStringList mapInfoUrns = allMapInfoUrns();

@@ -98,7 +98,8 @@ public:
      *                   been made current.
      * @param behaviors  Change behavior flags.
      */
-    bool changeGame(Game &newGame, std::function<int (void *)> gameActivationFunc,
+    bool changeGame(Game const &newGame,
+                    std::function<int (void *)> gameActivationFunc,
                     Behaviors behaviors = DefaultBehavior);
 
     bool isUsingUserDir() const;
@@ -121,7 +122,6 @@ public:
     static Plugins &plugins();
     static Games &games();
     static Players &players();
-    static Game &currentGame();
     static BusyMode &busyMode();
     static de::NativePath steamBasePath();
 
@@ -132,12 +132,14 @@ public:
      * @param game  Game instance. Must not be deleted until another Game is
      *              used as the current one.
      */
-    static void setGame(Game &game);
+    static void setGame(Game const &game);
 
     /**
      * Returns the currently active game.
      */
-    static Game &game();
+    static Game const &game();
+
+    static Game const &currentGame(); // alias, remove?
 
     static bool isGameLoaded();
 
@@ -150,7 +152,7 @@ protected:
      */
     virtual void unloadGame(Game const &upcomingGame);
 
-    virtual void makeGameCurrent(Game &newGame);
+    virtual void makeGameCurrent(Game const &newGame);
 
     /**
      * Clears all allocated resources and subsystems. This is called when

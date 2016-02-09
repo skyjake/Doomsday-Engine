@@ -92,7 +92,7 @@ Games &App_Games();
 /**
  * Returns the current game from the application's global collection.
  */
-Game &App_CurrentGame();
+Game const &App_CurrentGame();
 
 /**
  * Frees the info structures for all registered games.

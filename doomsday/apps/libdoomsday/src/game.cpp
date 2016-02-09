@@ -315,7 +315,7 @@ Game::Manifests const &Game::manifests() const
     return d->manifests;
 }
 
-bool Game::isRequiredFile(File1 &file)
+bool Game::isRequiredFile(File1 &file) const
 {
     // If this resource is from a container we must use the path of the
     // root file container instead.
@@ -469,7 +469,7 @@ D_CMD(InspectGame)
 {
     DENG2_UNUSED(src);
 
-    Game *game = 0;
+    Game const *game = 0;
     if(argc < 2)
     {
         // No game identity key was specified - assume the current game.

@@ -411,7 +411,7 @@ Players &DoomsdayApp::players()
     return DoomsdayApp::app().d->players;
 }
 
-Game &DoomsdayApp::currentGame()
+Game const &DoomsdayApp::currentGame()
 {
     return game();
 }
@@ -495,7 +495,7 @@ void *DoomsdayApp::moduleHandle() const
 }
 #endif
 
-Game &DoomsdayApp::game()
+Game const &DoomsdayApp::game()
 {
     DENG2_ASSERT(app().d->currentGame != 0);
     return *app().d->currentGame;
@@ -577,12 +577,12 @@ void DoomsdayApp::reset()
     }
 }
 
-void DoomsdayApp::setGame(Game &game)
+void DoomsdayApp::setGame(Game const &game)
 {
-    app().d->currentGame = &game;
+    app().d->currentGame = const_cast<Game *>(&game);
 }
 
-void DoomsdayApp::makeGameCurrent(Game &newGame)
+void DoomsdayApp::makeGameCurrent(Game const &newGame)
 {
     if(!newGame.isNull())
     {
@@ -615,7 +615,7 @@ extern int beginGameChangeBusyWorker(void *context);
 extern int loadGameStartupResourcesBusyWorker(void *context);
 extern int loadAddonResourcesBusyWorker(void *context);
 
-bool DoomsdayApp::changeGame(Game &newGame,
+bool DoomsdayApp::changeGame(Game const &newGame,
                              std::function<int (void *)> gameActivationFunc,
                              Behaviors behaviors)
 {
