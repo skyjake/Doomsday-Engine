@@ -54,8 +54,11 @@ public:
     /**
      * Queries all the available modes in the display configuration.
      */
-    RRInfo() : _numSizes(0)
+    RRInfo() : _conf(NULL), _numSizes(0)
     {
+        int dummy;
+        if (!XRRQueryExtension(QX11Info::display(), &dummy, &dummy)) return; // Not available.
+
         _conf = XRRGetScreenInfo(QX11Info::display(), QX11Info::appRootWindow());
         if(!_conf) return; // Not available.
 
