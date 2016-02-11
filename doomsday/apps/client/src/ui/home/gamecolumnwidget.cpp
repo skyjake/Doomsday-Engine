@@ -46,7 +46,6 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
     String gameFamily;
     SavedSessionListData const &savedItems;
-    HeaderWidget *header;
     MenuWidget *menu;
     Image bgImage;
 
@@ -59,13 +58,6 @@ DENG_GUI_PIMPL(GameColumnWidget)
     {
         ScrollAreaWidget &area = self.scrollArea();
 
-        area.add(header = new HeaderWidget);
-
-        header->rule()
-                .setInput(Rule::Left,  area.contentRule().left())
-                .setInput(Rule::Top,   area.contentRule().top())
-                .setInput(Rule::Width, area.contentRule().width());
-
         area.add(menu = new MenuWidget);
         menu->enableScrolling(false);
         menu->enablePageKeys(false);
@@ -77,7 +69,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
         menu->rule()
                 .setInput(Rule::Width, area.contentRule().width())
                 .setInput(Rule::Left,  area.contentRule().left())
-                .setInput(Rule::Top,   header->rule().bottom() +
+                .setInput(Rule::Top,   self.header().rule().bottom() +
                                        style().rules().rule("gap")*2);
 
         DoomsdayApp::games().audienceForReadiness() += this;
@@ -166,18 +158,18 @@ GameColumnWidget::GameColumnWidget(String const &gameFamily,
     , d(new Instance(this, gameFamily.toLower(), savedItems))
 {
     scrollArea().setContentSize(maximumContentWidth(),
-                                d->header->rule().height() +
+                                header().rule().height() +
                                 style().rules().rule("gap") +
                                 d->menu->rule().height());
 
-    d->header->title().setText(String(_E(s) "%1\n" _E(.)_E(w) "%2")
-                               .arg( gameFamily == "DOOM"? "id Software" :
-                                    !gameFamily.isEmpty()? "Raven Software" : "")
-                               .arg(!gameFamily.isEmpty()? QString(gameFamily) : tr("Other Games")));
+    header().title().setText(String(_E(s) "%1\n" _E(.)_E(w) "%2")
+                             .arg( gameFamily == "DOOM"? "id Software" :
+                                  !gameFamily.isEmpty()? "Raven Software" : "")
+                             .arg(!gameFamily.isEmpty()? QString(gameFamily) : tr("Other Games")));
     if(!gameFamily.isEmpty())
     {
-        d->header->setLogoImage("logo.game." + gameFamily.toLower());
-        d->header->setLogoBackground("home.background." + d->gameFamily);
+        header().setLogoImage("logo.game." + gameFamily.toLower());
+        header().setLogoBackground("home.background." + d->gameFamily);
         d->bgImage = style().images().image("home.background." + d->gameFamily);
         setBackgroundImage(d->bgImage);
     }
@@ -186,40 +178,40 @@ GameColumnWidget::GameColumnWidget(String const &gameFamily,
     {
     if(name() == "doom-column")
     {
-        d->header->info().setText("id Software released DOOM for MS-DOS in 1993. "
-                                  "It soon became a massive hit and is regarded as "
-                                  "the game that popularized the first-person shooter "
-                                  "genre. Since then the franchise has been continued "
-                                  "in several sequels, starting with DOOM II: Hell on "
-                                  "Earth in 1994. DOOM and many of its follow-ups "
-                                  "have been ported to numerous other platforms, and "
-                                  "to this day remains a favorite among gamers.");
+        header().info().setText("id Software released DOOM for MS-DOS in 1993. "
+                                "It soon became a massive hit and is regarded as "
+                                "the game that popularized the first-person shooter "
+                                "genre. Since then the franchise has been continued "
+                                "in several sequels, starting with DOOM II: Hell on "
+                                "Earth in 1994. DOOM and many of its follow-ups "
+                                "have been ported to numerous other platforms, and "
+                                "to this day remains a favorite among gamers.");
     }
     else if(name() == "heretic-column")
     {
-        d->header->info().setText("Raven Software released Heretic in 1994. It used "
-                                  "a modified version of id Software's DOOM engine. "
-                                  "The game featured such enhancements as inventory "
-                                  "management and the ability to look up and down. "
-                                  "Ambient sound effects were used to improve the "
-                                  "atmosphere of the game world.");
+        header().info().setText("Raven Software released Heretic in 1994. It used "
+                                "a modified version of id Software's DOOM engine. "
+                                "The game featured such enhancements as inventory "
+                                "management and the ability to look up and down. "
+                                "Ambient sound effects were used to improve the "
+                                "atmosphere of the game world.");
     }
     else if(name() == "hexen-column")
     {
-        d->header->info().setText("Raven Software released Hexen in 1996. The "
-                                  "company had continued making heavy modifications "
-                                  "to the DOOM engine, and Hexen introduced such "
-                                  "sophisticated features as a scripting language "
-                                  "for game events. The maps were well-designed and "
-                                  "interconnected with each other, resulting in a "
-                                  "more intriguing game world and more complex "
-                                  "puzzles to solve.");
+        header().info().setText("Raven Software released Hexen in 1996. The "
+                                "company had continued making heavy modifications "
+                                "to the DOOM engine, and Hexen introduced such "
+                                "sophisticated features as a scripting language "
+                                "for game events. The maps were well-designed and "
+                                "interconnected with each other, resulting in a "
+                                "more intriguing game world and more complex "
+                                "puzzles to solve.");
     }
     else
     {
-        d->header->info().setText("Thanks to its excellent modding support, DOOM has "
-                                  "been used as a basis for many games and community "
-                                  "projects.");
+        header().info().setText("Thanks to its excellent modding support, DOOM has "
+                                "been used as a basis for many games and community "
+                                "projects.");
     }
     }
 }
@@ -238,7 +230,7 @@ void GameColumnWidget::setHighlighted(bool highlighted)
                                              Image::Size(4, 4)));
     }*/
 
-    //d->header->setOpacity(highlighted? 1 : .7, .5);
+    //header().setOpacity(highlighted? 1 : .7, .5);
     //d->menu->setOpacity  (highlighted? 1 : .7, .5);
 
     if(!highlighted)

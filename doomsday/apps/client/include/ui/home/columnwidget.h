@@ -19,6 +19,7 @@
 #ifndef DENG_CLIENT_UI_COLUMNWIDGET_H
 #define DENG_CLIENT_UI_COLUMNWIDGET_H
 
+#include "headerwidget.h"
 #include <de/ScrollAreaWidget>
 
 /**
@@ -37,6 +38,7 @@ public:
     void setBackgroundImage(de::Image const &image);
 
     de::ScrollAreaWidget &scrollArea();
+    HeaderWidget &header();
     de::Rule const &maximumContentWidth() const;
 
     virtual void setHighlighted(bool highlighted);

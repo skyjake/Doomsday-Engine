@@ -31,6 +31,7 @@ DENG_GUI_PIMPL(ColumnWidget)
     bool highlighted;
     LabelWidget *back;
     ScrollAreaWidget *scrollArea;
+    HeaderWidget *header;
     //Vector4f bgColor;
     Rule const *maxContentWidth = nullptr;
 
@@ -41,6 +42,14 @@ DENG_GUI_PIMPL(ColumnWidget)
 
         scrollArea = new ScrollAreaWidget;
         scrollArea->enableIndicatorDraw(true);
+
+        header = new HeaderWidget;
+        scrollArea->add(header);
+
+        header->rule()
+                .setInput(Rule::Left,  scrollArea->contentRule().left())
+                .setInput(Rule::Top,   scrollArea->contentRule().top())
+                .setInput(Rule::Width, scrollArea->contentRule().width());
 
         //QColor bg;
         //bg.setHsvF(de::frand(), .9, .5);
@@ -83,6 +92,11 @@ void ColumnWidget::setBackgroundImage(Image const &image)
 ScrollAreaWidget &ColumnWidget::scrollArea()
 {
     return *d->scrollArea;
+}
+
+HeaderWidget &ColumnWidget::header()
+{
+    return *d->header;
 }
 
 Rule const &ColumnWidget::maximumContentWidth() const

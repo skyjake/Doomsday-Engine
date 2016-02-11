@@ -116,12 +116,12 @@ void GamePanelButtonWidget::updateContent()
         {
             meta = tr("Restore saved game");
         }
-        else if(d->saves->childCount() > 0)
+        /*else if(d->saves->childCount() > 0)
         {
             meta = tr("%1 saved game%2")
                     .arg(d->saves->childCount())
                     .arg(d->saves->childCount() != 1? "s" : "");
-        }
+        }*/
         else
         {
             meta = tr("Start new session");
