@@ -36,6 +36,8 @@ public:
     GamePanelButtonWidget(Game const &game,
                      SavedSessionListData const &savedItems);
 
+    void setSelected(bool selected) override;
+
     void updateContent();
     void unselectSave();
 

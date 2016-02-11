@@ -33,9 +33,6 @@ public:
 
     void setHighlighted(bool highlighted) override;
 
-protected slots:
-    void itemClicked();
-
 private:
     DENG2_PRIVATE(d)
 };

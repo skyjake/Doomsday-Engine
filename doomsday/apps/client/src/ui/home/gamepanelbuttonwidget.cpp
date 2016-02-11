@@ -103,10 +103,22 @@ GamePanelButtonWidget::GamePanelButtonWidget(Game const &game, SavedSessionListD
     connect(this, SIGNAL(doubleClicked()), this, SLOT(play()));
 }
 
+void GamePanelButtonWidget::setSelected(bool selected)
+{
+    PanelButtonWidget::setSelected(selected);
+
+    d->playButton->enable(selected);
+
+    if(!selected)
+    {
+        unselectSave();
+        updateContent();
+    }
+}
+
 void GamePanelButtonWidget::updateContent()
 {
     enable(d->game.isPlayable());
-    d->playButton->enable(isSelected());
 
     String meta = String::number(d->game.releaseDate().year());
 

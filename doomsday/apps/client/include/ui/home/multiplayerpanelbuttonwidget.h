@@ -21,10 +21,14 @@
 
 #include "panelbuttonwidget.h"
 
+struct serverinfo_s;
+
 class MultiplayerPanelButtonWidget : public PanelButtonWidget
 {
 public:
     MultiplayerPanelButtonWidget();
+
+    void updateContent(serverinfo_s const &info);
 
 private:
     DENG2_PRIVATE(d)

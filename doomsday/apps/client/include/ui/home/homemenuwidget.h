@@ -1,4 +1,4 @@
-/** @file multiplayerpanelbuttonwidget.cpp
+/** @file homemenuwidget.h  Menu for the Home.
  *
  * @authors Copyright (c) 2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,22 +16,30 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/home/multiplayerpanelbuttonwidget.h"
-#include "dd_share.h" // serverinfo_s
+#ifndef DENG_CLIENT_UI_HOME_HOMEMENUWIDGET_H
+#define DENG_CLIENT_UI_HOME_HOMEMENUWIDGET_H
 
-using namespace de;
+#include <de/MenuWidget>
 
-DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
+/**
+ * Menu for items in Home columns.
+ *
+ * Handles common selection and focusing logic.
+ */
+class HomeMenuWidget : public de::MenuWidget
 {
-    Instance(Public *i) : Base(i)
-    {}
+    Q_OBJECT
+
+public:
+    HomeMenuWidget(de::String const &name = "");
+
+    void unselectAll();
+
+protected slots:
+    void mouseActivityInItem();
+
+private:
+    DENG2_PRIVATE(d)
 };
 
-MultiplayerPanelButtonWidget::MultiplayerPanelButtonWidget()
-    : d(new Instance(this))
-{}
-
-void MultiplayerPanelButtonWidget::updateContent(serverinfo_s const &info)
-{
-    label().setText(info.name);
-}
+#endif // DENG_CLIENT_UI_HOME_HOMEMENUWIDGET_H

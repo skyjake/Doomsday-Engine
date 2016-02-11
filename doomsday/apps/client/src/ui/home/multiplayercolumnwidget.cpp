@@ -18,6 +18,7 @@
 
 #include "ui/home/multiplayercolumnwidget.h"
 #include "ui/home/multiplayerpanelbuttonwidget.h"
+#include "ui/home/homemenuwidget.h"
 #include "ui/home/headerwidget.h"
 #include "network/serverlink.h"
 #include "clientapp.h"
@@ -80,7 +81,7 @@ DENG_GUI_PIMPL(MultiplayerColumnWidget)
 
     DiscoveryMode mode = NoDiscovery;
     ServerLink::FoundMask mask = ServerLink::Any;
-    MenuWidget *menu;
+    HomeMenuWidget *menu;
 
     Instance(Public *i) : Base(i)
     {
@@ -90,13 +91,8 @@ DENG_GUI_PIMPL(MultiplayerColumnWidget)
 
         // Set up the widgets.
         ScrollAreaWidget &area = self.scrollArea();
-        area.add(menu = new MenuWidget);
-        menu->enableScrolling(false);
-        menu->enablePageKeys(false);
-        menu->setGridSize(1, ui::Filled, 0, ui::Expand);
-        menu->margins().setLeftRight("");
+        area.add(menu = new HomeMenuWidget);
         menu->organizer().setWidgetFactory(*this);
-        menu->layout().setRowPadding(style().rules().rule("gap"));
 
         menu->rule()
                 .setInput(Rule::Width, area.contentRule().width())
@@ -174,28 +170,39 @@ DENG_GUI_PIMPL(MultiplayerColumnWidget)
     {
         foreach(Widget *w, menu->childWidgets())
         {
-            /*if(ServerWidget *sw = w->maybeAs<ServerWidget>())
-            {
-                sw->updateAvailability();
-            }*/
+            updateAvailability(w->as<GuiWidget>());
         }
     }
 
 //- ChildWidgetOrganizer::IWidgetFactory --------------------------------------
 
-    GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *)
+    GuiWidget *makeItemWidget(ui::Item const &, GuiWidget const *)
     {
-        //auto *button = new MultiplayerPanelButtonWidget(item.as<MenuItem>().game, savedItems);
-        //QObject::connect(button, SIGNAL(mouseActivity()), thisPublic, SLOT(itemClicked()));
-        //return button;
-        return new LabelWidget;
+        return new MultiplayerPanelButtonWidget;
     }
 
     void updateItemWidget(GuiWidget &widget, ui::Item const &item)
     {
-        //auto &drawer = widget.as<GamePanelButtonWidget>();
-        //drawer.updateContent();
-        widget.as<LabelWidget>().setText(item.label());
+        auto const &serverItem = item.as<ServerListItem>();
+
+        widget.as<MultiplayerPanelButtonWidget>()
+                .updateContent(serverItem.info());
+
+        // Is it playable?
+        updateAvailability(widget);
+    }
+
+    void updateAvailability(GuiWidget &menuItemWidget)
+    {
+        auto const &item = menu->organizer().findItemForWidget(menuItemWidget)->as<ServerListItem>();
+
+        bool playable = false;
+        String gameId = item.gameId();
+        if(DoomsdayApp::games().contains(gameId))
+        {
+            playable = DoomsdayApp::games()[gameId].isPlayable();
+        }
+        menuItemWidget.enable(playable);
     }
 };
 
@@ -211,6 +218,15 @@ MultiplayerColumnWidget::MultiplayerColumnWidget()
     header().title().setText(_E(s) "dengine.net\n" _E(.)_E(w) + tr("Multiplayer Games"));
 }
 
+void MultiplayerColumnWidget::setHighlighted(bool highlighted)
+{
+    ColumnWidget::setHighlighted(highlighted);
+
+    if(!highlighted)
+    {
+        d->menu->unselectAll();
+    }
+}
 
 #if 0
 DENG_GUI_PIMPL(MPSessionMenuWidget)

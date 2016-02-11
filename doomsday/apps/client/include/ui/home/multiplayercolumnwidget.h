@@ -32,6 +32,8 @@ public:
 
     MultiplayerColumnWidget();
 
+    void setHighlighted(bool highlighted) override;
+
 private:
     DENG2_PRIVATE(d)
 };

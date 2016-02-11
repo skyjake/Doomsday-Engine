@@ -19,6 +19,7 @@
 #include "ui/home/gamecolumnwidget.h"
 #include "ui/home/headerwidget.h"
 #include "ui/home/gamepanelbuttonwidget.h"
+#include "ui/home/homemenuwidget.h"
 
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/games.h>
@@ -46,7 +47,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
     String gameFamily;
     SavedSessionListData const &savedItems;
-    MenuWidget *menu;
+    HomeMenuWidget *menu;
     Image bgImage;
 
     Instance(Public *i,
@@ -58,13 +59,8 @@ DENG_GUI_PIMPL(GameColumnWidget)
     {
         ScrollAreaWidget &area = self.scrollArea();
 
-        area.add(menu = new MenuWidget);
-        menu->enableScrolling(false);
-        menu->enablePageKeys(false);
-        menu->setGridSize(1, ui::Filled, 0, ui::Expand);
-        menu->margins().setLeftRight("");
+        area.add(menu = new HomeMenuWidget);
         menu->organizer().setWidgetFactory(*this);
-        menu->layout().setRowPadding(style().rules().rule("gap"));
 
         menu->rule()
                 .setInput(Rule::Width, area.contentRule().width())
@@ -141,7 +137,6 @@ DENG_GUI_PIMPL(GameColumnWidget)
     GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *)
     {
         auto *button = new GamePanelButtonWidget(item.as<MenuItem>().game, savedItems);
-        QObject::connect(button, SIGNAL(mouseActivity()), thisPublic, SLOT(itemClicked()));
         return button;
     }
 
@@ -220,49 +215,8 @@ void GameColumnWidget::setHighlighted(bool highlighted)
 {
     ColumnWidget::setHighlighted(highlighted);
 
-    /*if(highlighted)
-    {
-        setBackgroundImage(d->bgImage);
-    }
-    else
-    {
-        setBackgroundImage(Image::solidColor(Image::Color(0, 0, 0, 255),
-                                             Image::Size(4, 4)));
-    }*/
-
-    //header().setOpacity(highlighted? 1 : .7, .5);
-    //d->menu->setOpacity  (highlighted? 1 : .7, .5);
-
     if(!highlighted)
     {
-        // Unselect all buttons.
-        for(auto *w : d->menu->childWidgets())
-        {
-            if(auto *button = w->maybeAs<GamePanelButtonWidget>())
-            {
-                button->unselectSave();
-                button->setSelected(false);
-                button->updateContent();
-            }
-        }
-    }
-}
-
-void GameColumnWidget::itemClicked()
-{
-    auto *clickedButton = dynamic_cast<GamePanelButtonWidget *>(sender());
-
-    // Other buttons should be deselected.
-    for(auto *w : d->menu->childWidgets())
-    {
-        if(auto *button = w->maybeAs<GamePanelButtonWidget>())
-        {
-            button->setSelected(button == clickedButton);
-            if(button != clickedButton)
-            {
-                button->unselectSave();
-            }
-            button->updateContent();
-        }
+        d->menu->unselectAll();
     }
 }
