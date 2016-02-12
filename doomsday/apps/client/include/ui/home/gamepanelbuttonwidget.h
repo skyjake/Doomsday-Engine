@@ -47,8 +47,8 @@ public slots:
     void play();
 
 protected slots:
-    void saveSelected(unsigned int savePos);
-    void saveDoubleClicked(unsigned int savePos);
+    void saveSelected(de::ui::DataPos savePos);
+    void saveDoubleClicked(de::ui::DataPos savePos);
 
 private:
     DENG2_PRIVATE(d)

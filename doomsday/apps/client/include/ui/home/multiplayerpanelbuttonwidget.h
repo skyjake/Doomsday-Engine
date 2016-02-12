@@ -28,6 +28,8 @@ class MultiplayerPanelButtonWidget : public PanelButtonWidget
 public:
     MultiplayerPanelButtonWidget();
 
+    void setSelected(bool selected) override;
+
     void updateContent(serverinfo_s const &info);
 
 private:

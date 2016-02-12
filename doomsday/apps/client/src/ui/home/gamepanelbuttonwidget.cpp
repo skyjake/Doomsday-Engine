@@ -24,6 +24,8 @@
 #include <doomsday/console/exec.h>
 #include <de/CallbackAction>
 #include <de/ChildWidgetOrganizer>
+#include <de/PopupMenuWidget>
+#include <de/App>
 
 using namespace de;
 
@@ -34,6 +36,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
     SavedSessionListData const &savedItems;
     SaveListWidget *saves;
     ButtonWidget *playButton;
+    ButtonWidget *deleteSaveButton;
 
     Instance(Public *i, Game const &game, SavedSessionListData const &savedItems)
         : Base(i)
@@ -62,6 +65,15 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         saves->organizer().setFilter(*this);
         saves->setItems(savedItems);
 
+        deleteSaveButton = new ButtonWidget;
+        deleteSaveButton->setImage(style().images().image("close.ring"));
+        deleteSaveButton->setOverrideImageSize(style().fonts().font("default").height().value());
+        deleteSaveButton->setSizePolicy(ui::Expand, ui::Expand);
+        deleteSaveButton->set(Background());
+        deleteSaveButton->hide();
+        deleteSaveButton->setAction(new CallbackAction([this] () { deleteButtonPressed(); }));
+        self.panel().add(deleteSaveButton);
+
         self.panel().setContent(saves);
         self.panel().open();
     }
@@ -84,6 +96,43 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         }
     }
 
+    /// Action that deletes a savegame folder.
+    struct DeleteAction : public Action {
+        GamePanelButtonWidget *widget;
+        String savePath;
+        DeleteAction(GamePanelButtonWidget *wgt, String const &path)
+            : widget(wgt), savePath(path) {}
+        void trigger() {
+            widget->unselectSave();
+            App::rootFolder().removeFile(savePath);
+            App::fileSystem().refresh();
+        }
+    };
+
+    void deleteButtonPressed()
+    {
+        DENG2_ASSERT(saves->selectedPos() != ui::Data::InvalidPos);
+
+        // Popup to make sure.
+        PopupMenuWidget *pop = new PopupMenuWidget;
+        pop->setDeleteAfterDismissed(true);
+        pop->setAnchorAndOpeningDirection(deleteSaveButton->rule(), ui::Down);
+        pop->items()
+                << new ui::Item(ui::Item::Separator, tr("Are you sure?"))
+                << new ui::ActionItem(tr("Delete Savegame"),
+                                      new CallbackAction([this] ()
+                {
+                    // Delete the savegame file; the UI will be automatically updated.
+                    String const path = savedItems.at(saves->selectedPos()).savePath();
+                    self.unselectSave();
+                    App::rootFolder().removeFile(path);
+                    App::fileSystem().refresh();
+                }))
+                << new ui::ActionItem(tr("Cancel"), new Action);
+        self.add(pop);
+        pop->open();
+    }
+
 //- ChildWidgetOrganizer::IFilter ---------------------------------------------
 
     bool isItemAccepted(ChildWidgetOrganizer const &,
@@ -98,8 +147,8 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
 GamePanelButtonWidget::GamePanelButtonWidget(Game const &game, SavedSessionListData const &savedItems)
     : d(new Instance(this, game, savedItems))
 {
-    connect(d->saves, SIGNAL(selectionChanged(uint)), this, SLOT(saveSelected(uint)));
-    connect(d->saves, SIGNAL(doubleClicked(uint)), this, SLOT(saveDoubleClicked(uint)));
+    connect(d->saves, SIGNAL(selectionChanged(de::ui::DataPos)), this, SLOT(saveSelected(de::ui::DataPos)));
+    connect(d->saves, SIGNAL(doubleClicked(de::ui::DataPos)), this, SLOT(saveDoubleClicked(de::ui::DataPos)));
     connect(this, SIGNAL(doubleClicked()), this, SLOT(play()));
 }
 
@@ -160,12 +209,26 @@ void GamePanelButtonWidget::play()
     d->playButtonPressed();
 }
 
-void GamePanelButtonWidget::saveSelected(unsigned int /*savePos*/)
+void GamePanelButtonWidget::saveSelected(de::ui::DataPos savePos)
 {
+    if(savePos != ui::Data::InvalidPos)
+    {
+        // Position the save deletion button.
+        GuiWidget &widget = d->saves->itemWidget<GuiWidget>(d->savedItems.at(savePos));
+        d->deleteSaveButton->rule()
+                .setMidAnchorY(widget.rule().midY())
+                .setInput(Rule::Right, widget.rule().left());
+        d->deleteSaveButton->show();
+    }
+    else
+    {
+        d->deleteSaveButton->hide();
+    }
+
     updateContent();
 }
 
-void GamePanelButtonWidget::saveDoubleClicked(unsigned int savePos)
+void GamePanelButtonWidget::saveDoubleClicked(de::ui::DataPos savePos)
 {
     d->saves->setSelectedPos(savePos);
     play();

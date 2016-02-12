@@ -42,9 +42,9 @@ signals:
      * @param pos  Position of the selected item in the shared saved sessions
      *             list data model.
      */
-    void selectionChanged(unsigned int pos);
+    void selectionChanged(de::ui::DataPos pos);
 
-    void doubleClicked(unsigned int pos);
+    void doubleClicked(de::ui::DataPos pos);
 
 private:
     DENG2_PRIVATE(d)
