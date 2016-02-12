@@ -98,7 +98,7 @@ DENG_GUI_PIMPL(MultiplayerColumnWidget)
                 .setInput(Rule::Width, area.contentRule().width())
                 .setInput(Rule::Left,  area.contentRule().left())
                 .setInput(Rule::Top,   self.header().rule().bottom() +
-                                       style().rules().rule("gap")*2);
+                                       style().rules().rule("gap") * 2);
     }
 
     ~Instance()
@@ -147,12 +147,20 @@ DENG_GUI_PIMPL(MultiplayerColumnWidget)
 
         if(changed)
         {
-            //updateItemMaxHeight();
-            items.sort();
+            items.sort([] (ui::Item const &a, ui::Item const &b)
+            {
+                auto const &first  = a.as<ServerListItem>();
+                auto const &second = b.as<ServerListItem>();
 
-            // Let others know that one or more games have appeared or disappeared
-            // from the menu.
-            //emit self.availabilityChanged();
+                // Primarily sort by number of players.
+                if(first.info().numPlayers > second.info().numPlayers)
+                {
+                    return true;
+                }
+                // Secondarily by game ID.
+                return qstrcmp(first.info().gameIdentityKey,
+                               second.info().gameIdentityKey) < 0;
+            });
         }
     }
 

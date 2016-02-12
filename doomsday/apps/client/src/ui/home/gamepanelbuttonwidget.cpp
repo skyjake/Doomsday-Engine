@@ -58,9 +58,9 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         // List of saved games.
         saves = new SaveListWidget(self);
         saves->rule().setInput(Rule::Width, self.rule().width());
+        saves->margins().setZero().setLeft(self.icon().rule().width());
         saves->organizer().setFilter(*this);
         saves->setItems(savedItems);
-        saves->margins().setZero().setLeft(self.icon().rule().width());
 
         self.panel().setContent(saves);
         self.panel().open();
@@ -86,7 +86,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
 
 //- ChildWidgetOrganizer::IFilter ---------------------------------------------
 
-    bool isItemAccepted(ChildWidgetOrganizer const &organizer,
+    bool isItemAccepted(ChildWidgetOrganizer const &,
                         ui::Data const &data, ui::Data::Pos pos) const
     {
         // Only saved sessions for this game are to be included.

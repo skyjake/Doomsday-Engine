@@ -62,13 +62,13 @@ DENG_GUI_PIMPL(PanelButtonWidget)
     LabelWidget *label;
     PanelWidget *drawer;
     QList<ButtonWidget *> buttons;
-    ScalarRule *labelRight;
+    ScalarRule *labelRightMargin;
     Rule const *buttonsWidth = nullptr;
     bool selected = false;
 
     Instance(Public *i) : Base(i)
     {
-        labelRight = new ScalarRule(0);
+        labelRightMargin = new ScalarRule(0);
 
         self.add(background = new LabelWidget);
         self.add(icon   = new LabelWidget);
@@ -78,8 +78,9 @@ DENG_GUI_PIMPL(PanelButtonWidget)
         label->setSizePolicy(ui::Fixed, ui::Expand);
         label->setTextLineAlignment(ui::AlignLeft);
         label->setAlignment(ui::AlignLeft);
+        label->setBehavior(ChildVisibilityClipping);
 
-        icon->set(Background(style().colors().colorf("text")));
+        //icon->set(Background(style().colors().colorf("text")));
 
         drawer->set(Background(Vector4f(0, 0, 0, .15f)));
         //drawer->margins().setZero();
@@ -90,19 +91,20 @@ DENG_GUI_PIMPL(PanelButtonWidget)
 
     ~Instance()
     {
-        releaseRef(labelRight);
+        releaseRef(labelRightMargin);
         releaseRef(buttonsWidth);
     }
 
     void updateButtonLayout()
     {
-        SequentialLayout layout(*labelRight, label->rule().top(), ui::Right);
+        SequentialLayout layout(label->rule().right() - *labelRightMargin,
+                                label->rule().top(), ui::Right);
         for(auto *button : buttons)
         {
             layout << *button;
             button->rule().setMidAnchorY(label->rule().midY());
         }
-        changeRef(buttonsWidth, layout.width() + label->margins().right());
+        changeRef(buttonsWidth, layout.width() + style().rules().rule("gap"));
     }
 
     void showButtons(bool show)
@@ -112,11 +114,11 @@ DENG_GUI_PIMPL(PanelButtonWidget)
         TimeDelta const SPAN = .5;
         if(show)
         {
-            labelRight->set(self.rule().right() - *buttonsWidth, SPAN);
+            labelRightMargin->set(*buttonsWidth, SPAN);
         }
         else
         {
-            labelRight->set(self.rule().right(), SPAN);
+            labelRightMargin->set(0, SPAN);
         }
     }
 };
@@ -138,12 +140,14 @@ PanelButtonWidget::PanelButtonWidget()
             .setSize(iconSize, iconSize)
             .setInput(Rule::Left, rule().left())
             .setInput(Rule::Top,  rule().top());
+    d->icon->set(Background(Background::BorderGlow,
+                            style().colors().colorf("home.icon.shadow"), 20));
 
-    d->labelRight->set(rule().right());
     d->label->rule()
             .setInput(Rule::Top,   rule().top())
             .setInput(Rule::Left,  d->icon->rule().right())
-            .setInput(Rule::Right, *d->labelRight);
+            .setInput(Rule::Right, rule().right());
+    d->label->margins().setRight(*d->labelRightMargin + style().rules().rule("gap"));
 
     d->drawer->rule()
             .setInput(Rule::Top,  d->label->rule().bottom())
@@ -193,7 +197,7 @@ bool PanelButtonWidget::isSelected() const
 void PanelButtonWidget::addButton(ButtonWidget *button)
 {
     d->buttons << button;
-    add(button);
+    d->label->add(button);
     d->updateButtonLayout();
 }
 

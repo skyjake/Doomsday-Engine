@@ -41,6 +41,7 @@ DENG_GUI_PIMPL(ColumnWidget)
         back->margins().setZero();
 
         scrollArea = new ScrollAreaWidget;
+        scrollArea->setBehavior(ChildVisibilityClipping, UnsetFlags);
         scrollArea->enableIndicatorDraw(true);
 
         header = new HeaderWidget;

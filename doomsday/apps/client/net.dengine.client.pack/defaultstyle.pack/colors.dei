@@ -103,3 +103,11 @@ document {
 gamefilter {
     color background { rgb <0.5, 0.5, 0.5> }
 }
+
+#
+# HOME COLORS
+#
+
+home {
+    color icon.shadow { rgb $= label.shadow.rgb }
+}
