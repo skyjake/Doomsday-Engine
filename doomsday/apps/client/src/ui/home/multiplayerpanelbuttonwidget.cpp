@@ -41,10 +41,11 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
     Instance(Public *i) : Base(i)
     {
         joinButton = new ButtonWidget;
+        joinButton->setText(tr("Join"));
         joinButton->useInfoStyle();
-        joinButton->setImage(style().images().image("play"));
-        joinButton->setImageColor(style().colors().colorf("inverted.text"));
-        joinButton->setOverrideImageSize(style().fonts().font("default").height().value());
+        //joinButton->setImage(style().images().image("play"));
+        //joinButton->setImageColor(style().colors().colorf("inverted.text"));
+        //joinButton->setOverrideImageSize(style().fonts().font("default").height().value());
         joinButton->setSizePolicy(ui::Expand, ui::Expand);
         joinButton->setAction(new CallbackAction([this] () { joinButtonPressed(); }));
         self.addButton(joinButton);
@@ -85,6 +86,12 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
 MultiplayerPanelButtonWidget::MultiplayerPanelButtonWidget()
     : d(new Instance(this))
 {}
+
+void MultiplayerPanelButtonWidget::setSelected(bool selected)
+{
+    PanelButtonWidget::setSelected(selected);
+    d->extra->show(selected);
+}
 
 void MultiplayerPanelButtonWidget::updateContent(serverinfo_s const &info)
 {
