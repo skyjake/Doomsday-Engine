@@ -136,6 +136,8 @@ void CompositorWidget::viewResized()
 
 void CompositorWidget::preDrawChildren()
 {
+    GuiWidget::preDrawChildren();
+
     if(!d->shouldBeDrawn()) return;
 
     //qDebug() << "entering compositor" << d->nextBufIndex;
@@ -152,6 +154,8 @@ void CompositorWidget::preDrawChildren()
 
 void CompositorWidget::postDrawChildren()
 {
+    GuiWidget::postDrawChildren();
+
     if(!d->shouldBeDrawn()) return;
 
     // Restore original rendering target.

@@ -322,12 +322,14 @@ public:
     void restoreState();
 
     // Events.
-    void initialize();
-    void deinitialize();
-    void viewResized();
-    void update();
-    void draw() final;
-    bool handleEvent(Event const &event);
+    void initialize() override;
+    void deinitialize() override;
+    void viewResized() override;
+    void update() override;
+    void draw() override final;
+    void preDrawChildren() override;
+    void postDrawChildren() override;
+    bool handleEvent(Event const &event) override;
 
     /**
      * Determines if the widget occupies on-screen position @a pos.

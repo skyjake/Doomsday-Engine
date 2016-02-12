@@ -16,7 +16,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/ScrollAreaWidget"
@@ -569,22 +569,6 @@ void ScrollAreaWidget::drawContent()
         d->drawable.buffer<DefaultVertexBuf>().setVertices(gl::TriangleStrip, verts, gl::Dynamic);
 
         d->drawable.draw();
-    }
-}
-
-void ScrollAreaWidget::preDrawChildren()
-{
-    if(behavior().testFlag(ChildVisibilityClipping))
-    {
-        GLState::push().setNormalizedScissor(normalizedRect());
-    }
-}
-
-void ScrollAreaWidget::postDrawChildren()
-{
-    if(behavior().testFlag(ChildVisibilityClipping))
-    {
-        GLState::pop();
     }
 }
 

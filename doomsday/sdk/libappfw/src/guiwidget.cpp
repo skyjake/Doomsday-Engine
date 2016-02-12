@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/GuiWidget"
@@ -101,7 +101,7 @@ DENG2_PIMPL(GuiWidget)
     }
 
     ~Instance()
-    {        
+    {
         qDeleteAll(eventHandlers);
 
         // The base class will delete all children, but we need to deinitialize
@@ -397,7 +397,7 @@ GuiRootWidget &GuiWidget::root() const
 {
     return static_cast<GuiRootWidget &>(Widget::root());
 }
-    
+
 Widget::Children GuiWidget::childWidgets() const
 {
     return Widget::children();
@@ -935,5 +935,21 @@ bool GuiWidget::hasChangedPlace(Rectanglei &currentPlace)
 
 void GuiWidget::updateStyle()
 {}
+
+void GuiWidget::preDrawChildren()
+{
+    if(behavior().testFlag(ChildVisibilityClipping))
+    {
+        GLState::push().setNormalizedScissor(normalizedRect());
+    }
+}
+
+void GuiWidget::postDrawChildren()
+{
+    if(behavior().testFlag(ChildVisibilityClipping))
+    {
+        GLState::pop();
+    }
+}
 
 } // namespace de

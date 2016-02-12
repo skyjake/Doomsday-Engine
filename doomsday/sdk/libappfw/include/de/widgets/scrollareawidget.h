@@ -144,12 +144,10 @@ public:
                                        Vector2f const &origin = Vector2f(0, 0));
 
     // Events.
-    void viewResized();
-    void update();
-    void drawContent();
-    void preDrawChildren();
-    void postDrawChildren();
-    bool handleEvent(Event const &event);
+    void viewResized() override;
+    void update() override;
+    void drawContent() override;
+    bool handleEvent(Event const &event) override;
 
 public slots:
     void scrollToTop(TimeDelta span = .3f);
@@ -163,8 +161,8 @@ public slots:
     void scrollToRight(TimeDelta span = .3f);
 
 protected:
-    void glInit();
-    void glDeinit();
+    void glInit() override;
+    void glDeinit() override;
 
 private:
     DENG2_PRIVATE(d)

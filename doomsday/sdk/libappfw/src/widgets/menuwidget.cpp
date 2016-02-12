@@ -388,7 +388,9 @@ DENG2_PIMPL(MenuWidget)
 
 MenuWidget::MenuWidget(String const &name)
     : ScrollAreaWidget(name), d(new Instance(this))
-{}
+{
+    setBehavior(ChildVisibilityClipping, UnsetFlags);
+}
 
 void MenuWidget::setGridSize(int columns, ui::SizePolicy columnPolicy,
                              int rows, ui::SizePolicy rowPolicy,
