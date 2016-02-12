@@ -27,7 +27,7 @@ namespace de {
 DENG2_PIMPL_NOREF(RootWidget)
 {
     RuleRectangle *viewRect;
-    Widget *focus;
+    SafeWidgetPtr<Widget> focus;
 
     Instance() : focus(0)
     {
@@ -109,12 +109,12 @@ void RootWidget::setFocus(Widget *widget)
 
     Widget *oldFocus = d->focus;
 
-    d->focus = 0;
+    d->focus.reset();
     if(oldFocus) oldFocus->focusLost();
 
     if(widget && widget->behavior().testFlag(Focusable))
     {
-        d->focus = widget;
+        d->focus.reset(widget);
         if(d->focus) d->focus->focusGained();
     }
 
