@@ -21,6 +21,7 @@
 #include "ui/home/nogamescolumnwidget.h"
 #include "ui/home/gamecolumnwidget.h"
 #include "ui/home/multiplayercolumnwidget.h"
+#include "ui/home/packagescolumnwidget.h"
 #include "ui/savedsessionlistdata.h"
 
 #include <doomsday/doomsdayapp.h>
@@ -249,7 +250,7 @@ HomeWidget::HomeWidget()
     column = new MultiplayerColumnWidget();
     d->addColumn(column);
 
-    column = new ColumnWidget("packages-column");
+    column = new PackagesColumnWidget();
     d->addColumn(column);
 
     d->updateTabItems();
