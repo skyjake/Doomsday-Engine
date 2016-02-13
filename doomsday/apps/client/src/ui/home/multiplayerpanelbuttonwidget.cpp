@@ -17,10 +17,15 @@
  */
 
 #include "ui/home/multiplayerpanelbuttonwidget.h"
+#include "ui/widgets/taskbarwidget.h"
+#include "ui/clientwindow.h"
+#include "clientapp.h"
 #include "dd_share.h" // serverinfo_s
+#include "dd_main.h"
 
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/games.h>
+#include <doomsday/console/exec.h>
 #include <de/charsymbols.h>
 #include <de/CallbackAction>
 #include <de/PopupButtonWidget>
@@ -32,6 +37,7 @@ using namespace de;
 
 DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
 {
+    serverinfo_t serverInfo;
     ButtonWidget *joinButton;
     String gameConfig;
     LabelWidget *info;
@@ -43,9 +49,6 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
         joinButton = new ButtonWidget;
         joinButton->setText(tr("Join"));
         joinButton->useInfoStyle();
-        //joinButton->setImage(style().images().image("play"));
-        //joinButton->setImageColor(style().colors().colorf("inverted.text"));
-        //joinButton->setOverrideImageSize(style().fonts().font("default").height().value());
         joinButton->setSizePolicy(ui::Expand, ui::Expand);
         joinButton->setAction(new CallbackAction([this] () { joinButtonPressed(); }));
         self.addButton(joinButton);
@@ -59,6 +62,7 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
 
         // Menu for additional functions.
         extra = new PopupButtonWidget;
+        extra->hide();
         extra->setSizePolicy(ui::Expand, ui::Expand);
         extra->setText("...");
         extra->setFont("small");
@@ -72,9 +76,24 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
         self.panel().open();
     }
 
-    void joinButtonPressed()
+    void joinButtonPressed() const
     {
+        // Switch locally to the game running on the server.
+        BusyMode_FreezeGameForBusyMode();
+        ClientWindow::main().taskBar().close();
 
+        // Automatically leave the current MP game.
+        if(netGame && isClient)
+        {
+            ClientApp::serverLink().disconnect();
+        }
+
+        DoomsdayApp::app().changeGame(
+                    DoomsdayApp::games()[serverInfo.gameIdentityKey],
+                    DD_ActivateGameWorker);
+        Con_Execute(CMDS_DDAY, String("connect %1 %2")
+                    .arg(serverInfo.address).arg(serverInfo.port).toLatin1(),
+                    false, false);
     }
 
     bool hasConfig(String const &token) const
@@ -95,6 +114,7 @@ void MultiplayerPanelButtonWidget::setSelected(bool selected)
 
 void MultiplayerPanelButtonWidget::updateContent(serverinfo_s const &info)
 {
+    d->serverInfo = info;
     d->gameConfig = info.gameConfig;
 
     //label().setText(info.name);
@@ -119,10 +139,12 @@ void MultiplayerPanelButtonWidget::updateContent(serverinfo_s const &info)
     if(DoomsdayApp::games().contains(info.gameIdentityKey))
     {
         infoText += DoomsdayApp::games()[info.gameIdentityKey].title();
+        d->joinButton->enable();
     }
     else
     {
         infoText += tr("Unknown game");
+        d->joinButton->disable();
     }
     infoText += "\n" _E(C) + String(info.description);
 

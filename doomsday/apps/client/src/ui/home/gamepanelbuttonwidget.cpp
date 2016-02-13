@@ -128,7 +128,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
                     App::rootFolder().removeFile(path);
                     App::fileSystem().refresh();
                 }))
-                << new ui::ActionItem(tr("Cancel"), new Action);
+                << new ui::ActionItem(tr("Cancel"), new Action /* nop */);
         self.add(pop);
         pop->open();
     }
