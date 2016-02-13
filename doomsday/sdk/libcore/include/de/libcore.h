@@ -333,7 +333,6 @@
  * </pre>
  */
 #define DENG2_PIMPL(ClassName) \
-    typedef ClassName Public; \
     struct ClassName::Instance : public de::Private<ClassName>
 
 /**
@@ -433,7 +432,8 @@ private:
  */
 template <typename PublicType>
 struct Private : public IPrivate {
-    PublicType &self;
+    using Public = PublicType;
+    Public &self;
 #define thisPublic (&self)      // To be used inside private implementations.
 
     typedef Private<PublicType> Base;
