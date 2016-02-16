@@ -1,4 +1,4 @@
-/** @file panelbuttonwidget.h  Button with an extensible drawer.
+/** @file homeitemwidget.h  Label with action buttons and an icon.
  *
  * @authors Copyright (c) 2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,29 +16,36 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_UI_PANELBUTTONWIDGET_H
-#define DENG_CLIENT_UI_PANELBUTTONWIDGET_H
+#ifndef DENG_CLIENT_UI_HOME_HOMEITEMWIDGET_H
+#define DENG_CLIENT_UI_HOME_HOMEITEMWIDGET_H
 
-#include "homeitemwidget.h"
-
-#include <de/PanelWidget>
+#include <de/ButtonWidget>
 
 /**
- * Home item with an extensible panel for additional widgets.
+ * Label with action buttons and an icon. The item can be in either selected
+ * or non-selected state.
  */
-class PanelButtonWidget : public HomeItemWidget
+class HomeItemWidget : public de::GuiWidget
 {
     Q_OBJECT
 
 public:
-    PanelButtonWidget(de::String const &name = "");
+    HomeItemWidget(de::String const &name = "");
 
-    de::PanelWidget &panel();
+    de::LabelWidget &icon();
+    de::LabelWidget &label();
 
-    void setSelected(bool selected) override;
+    void addButton(de::ButtonWidget *button);
+
+    virtual void setSelected(bool selected);
+    bool isSelected() const;
+
+signals:
+    void mouseActivity();
+    void doubleClicked();
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_UI_PANELBUTTONWIDGET_H
+#endif // DENG_CLIENT_UI_HOME_HOMEITEMWIDGET_H

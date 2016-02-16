@@ -54,7 +54,6 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         playButton->setImage(style().images().image("play"));
         playButton->setImageColor(style().colors().colorf("inverted.text"));
         playButton->setOverrideImageSize(style().fonts().font("default").height().value());
-        playButton->setSizePolicy(ui::Expand, ui::Expand);
         playButton->setAction(new CallbackAction([this] () { playButtonPressed(); }));
         self.addButton(playButton);
 

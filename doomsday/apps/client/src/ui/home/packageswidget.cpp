@@ -17,13 +17,15 @@
  */
 
 #include "ui/home/packageswidget.h"
+#include "ui/home/homeitemwidget.h"
+#include "ui/home/homemenuwidget.h"
 #include "clientapp.h"
 
 #include <de/FileSystem>
-#include <de/MenuWidget>
-#include <de/LineEditWidget>
 #include <de/ChildWidgetOrganizer>
 #include <de/SequentialLayout>
+#include <de/MenuWidget>
+#include <de/LineEditWidget>
 #include <de/DocumentPopupWidget>
 #include <de/PopupButtonWidget>
 #include <de/SignalAction>
@@ -35,7 +37,7 @@ DENG_GUI_PIMPL(PackagesWidget)
 , public ChildWidgetOrganizer::IWidgetFactory
 {
     LineEditWidget *search;
-    MenuWidget *menu;
+    HomeMenuWidget *menu;
 
     /**
      * Information about an available package.
@@ -64,15 +66,15 @@ DENG_GUI_PIMPL(PackagesWidget)
      * Widget showing information about a package and containing buttons for manipulating
      * the package.
      */
-    class ItemWidget : public GuiWidget
+    class PackageListWidget : public HomeItemWidget
     {
     private:
         /// Action to load or unload a package.
-        struct LoadAction : public Action
+        /*struct LoadAction : public Action
         {
-            ItemWidget &owner;
+            PackageListWidget &owner;
 
-            LoadAction(ItemWidget &widget) : owner(widget) {}
+            LoadAction(PackageListWidget &widget) : owner(widget) {}
 
             void trigger()
             {
@@ -96,13 +98,15 @@ DENG_GUI_PIMPL(PackagesWidget)
                 }
                 owner.updateContents();
             }
-        };
+        };*/
 
     public:
-        ItemWidget(PackageItem const &item)
+        PackageListWidget(PackageItem const &item)
             : _item(&item)
         {
-            add(_title = new LabelWidget);
+
+
+            /*add(_title = new LabelWidget);
             _title->setSizePolicy(ui::Fixed, ui::Expand);
             _title->setAlignment(ui::AlignLeft);
             _title->setTextLineAlignment(ui::AlignLeft);
@@ -125,15 +129,15 @@ DENG_GUI_PIMPL(PackagesWidget)
             _infoButton->setText(_E(s)_E(B) + tr("..."));
             _infoButton->setPopup([this] (PopupButtonWidget const &) {
                 return makeInfoPopup();
-            }, ui::Left);
+            }, ui::Left);*/
 
             createTagButtons();
 
-            AutoRef<Rule> titleWidth(rule().width() -
+            /*AutoRef<Rule> titleWidth(rule().width() -
                                      _loadButton->rule().width() -
-                                     _infoButton->rule().width());
+                                     _infoButton->rule().width());*/
 
-            _title->rule()
+            /*_title->rule()
                     .setInput(Rule::Width, titleWidth)
                     .setInput(Rule::Left,  rule().left())
                     .setInput(Rule::Top,   rule().top());
@@ -152,12 +156,12 @@ DENG_GUI_PIMPL(PackagesWidget)
 
             rule().setInput(Rule::Width,  style().rules().rule("dialog.packages.width"))
                   .setInput(Rule::Height, _title->rule().height() +
-                            _subtitle->rule().height() + _tags.at(0)->rule().height());
+                            _subtitle->rule().height() + _tags.at(0)->rule().height());*/
         }
 
         void createTagButtons()
         {
-            SequentialLayout layout(_subtitle->rule().left(),
+            /*SequentialLayout layout(_subtitle->rule().left(),
                                     _subtitle->rule().bottom(), ui::Right);
 
             for(QString tag : Package::tags(*_item->file))
@@ -173,7 +177,7 @@ DENG_GUI_PIMPL(PackagesWidget)
 
                 layout << *btn;
                 _tags.append(btn);
-            }
+            }*/
         }
 
         void updateTagButtonStyle(ButtonWidget *tag, String const &color)
@@ -185,12 +189,14 @@ DENG_GUI_PIMPL(PackagesWidget)
 
         void updateContents()
         {
-            _title->setText(_item->info->gets("title"));
-            _subtitle->setText(packageId());
+            /*_title->setText(_item->info->gets("title"));
+            _subtitle->setText(packageId());*/
+
+            label().setText(_item->info->gets("title"));
 
             String auxColor = "accent";
 
-            if(isLoaded())
+            /*if(isLoaded())
             {
                 _loadButton->setText(tr("Unload"));
                 _loadButton->setTextColor("altaccent");
@@ -204,9 +210,9 @@ DENG_GUI_PIMPL(PackagesWidget)
                 _loadButton->setTextColor("text");
                 _loadButton->setBorderColor("text");
                 _title->setFont("default");
-            }
+            }*/
 
-            _subtitle->setTextColor(auxColor);
+            //_subtitle->setTextColor(auxColor);
             for(ButtonWidget *b : _tags)
             {
                 updateTagButtonStyle(b, auxColor);
@@ -240,8 +246,8 @@ DENG_GUI_PIMPL(PackagesWidget)
 
     private:
         PackageItem const *_item;
-        LabelWidget *_title;
-        LabelWidget *_subtitle;
+        //LabelWidget *_title;
+        //LabelWidget *_subtitle;
         QList<ButtonWidget *> _tags;
         ButtonWidget *_loadButton;
         PopupButtonWidget *_infoButton;
@@ -256,10 +262,7 @@ DENG_GUI_PIMPL(PackagesWidget)
                 .setInput(Rule::Top,   self.rule().top());
         search->setEmptyContentHint(tr("Search packages"));
 
-        self.add(menu = new MenuWidget);
-        menu->enableScrolling(false);
-        menu->enablePageKeys(false);
-        menu->setGridSize(1, ui::Expand, 0, ui::Expand);
+        self.add(menu = new HomeMenuWidget);
         menu->rule()
                 .setInput(Rule::Left,  self.rule().left())
                 .setInput(Rule::Right, self.rule().right())
@@ -304,12 +307,12 @@ DENG_GUI_PIMPL(PackagesWidget)
 
     GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *)
     {
-        return new ItemWidget(item.as<PackageItem>());
+        return new PackageListWidget(item.as<PackageItem>());
     }
 
     void updateItemWidget(GuiWidget &widget, ui::Item const &)
     {
-        widget.as<ItemWidget>().updateContents();
+        widget.as<PackageListWidget>().updateContents();
     }
 };
 
