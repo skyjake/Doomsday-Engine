@@ -28,6 +28,7 @@
 
 using namespace de;
 
+static String const ID_DEFAULT       ("default");
 static String const DEF_PATH         ("path");
 static String const DEF_INTERIOR_PATH("interior.path");
 static String const DEF_EXTERIOR_PATH("exterior.path");
@@ -165,16 +166,27 @@ DENG2_PIMPL(Environment)
         auto found = maps.constFind(mapId);
         if(found != maps.constEnd())
         {
-            EnvMaps const &env = found.value();
-            DENG2_ASSERT(!(env.interior.isEmpty() && env.exterior.isEmpty()));
-
-            if(!env.exterior.isEmpty())
-            {
-                loadCubeMap(reflectionTextures[Exterior], env.exterior);
-            }
-
-            loadCubeMap(reflectionTextures[Interior], env.interior);
+            loadEnvMaps(found.value());
         }
+        else
+        {
+            // Maybe the default maps, then?
+            found = maps.constFind(ID_DEFAULT);
+            if(found != maps.constEnd())
+            {
+                loadEnvMaps(found.value());
+            }
+        }
+    }
+
+    void loadEnvMaps(EnvMaps const &env)
+    {
+        DENG2_ASSERT(!(env.interior.isEmpty() && env.exterior.isEmpty()));
+        if(!env.exterior.isEmpty())
+        {
+            loadCubeMap(reflectionTextures[Exterior], env.exterior);
+        }
+        loadCubeMap(reflectionTextures[Interior], env.interior);
     }
 };
 
