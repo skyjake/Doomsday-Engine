@@ -49,26 +49,26 @@ HomeMenuWidget::HomeMenuWidget(String const &name)
 
 void HomeMenuWidget::unselectAll()
 {
-    // Unselect all buttons.
+    // Unselect all items.
     for(auto *w : childWidgets())
     {
-        if(auto *button = w->maybeAs<PanelButtonWidget>())
+        if(auto *item = w->maybeAs<HomeItemWidget>())
         {
-            button->setSelected(false);
+            item->setSelected(false);
         }
     }
 }
 
 void HomeMenuWidget::mouseActivityInItem()
 {
-    auto *clickedButton = dynamic_cast<PanelButtonWidget *>(sender());
+    auto *clickedItem = dynamic_cast<HomeItemWidget *>(sender());
 
-    // Radio button behavior: other buttons should be deselected.
+    // Radio button behavior: other items will be deselected.
     for(auto *w : childWidgets())
     {
-        if(auto *button = w->maybeAs<PanelButtonWidget>())
+        if(auto *item = w->maybeAs<HomeItemWidget>())
         {
-            button->setSelected(button == clickedButton);
+            item->setSelected(item == clickedItem);
         }
     }
 }

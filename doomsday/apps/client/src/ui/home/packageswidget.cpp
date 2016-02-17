@@ -30,6 +30,7 @@
 #include <de/PopupButtonWidget>
 #include <de/SignalAction>
 #include <de/CallbackAction>
+#include <de/StyleProceduralImage>
 
 using namespace de;
 
@@ -104,7 +105,40 @@ DENG_GUI_PIMPL(PackagesWidget)
         PackageListWidget(PackageItem const &item)
             : _item(&item)
         {
+            icon().set(Background());
+            icon().setImage(new StyleProceduralImage("package", *this));
+            Rule const &height = style().fonts().font("default").height();
+            icon().setOverrideImageSize(height.value());
+            icon().rule().setInput(Rule::Width, height + label().margins().height());
 
+            _loadButton = new ButtonWidget;
+            _loadButton->setFont("small");
+            _loadButton->margins().setTopBottom("unit");
+            _loadButton->setAction(new CallbackAction([this] ()
+            {
+                auto &loader = App::packageLoader();
+                if(loader.isLoaded(packageId()))
+                {
+                    loader.unload(packageId());
+                }
+                else
+                {
+                    try
+                    {
+                        loader.load(packageId());
+                    }
+                    catch(Error const &er)
+                    {
+                        LOG_RES_ERROR("Package \"" + packageId() +
+                                      "\" could not be loaded: " + er.asText());
+                    }
+                }
+                updateContents();
+            }));
+            connect(this, &HomeItemWidget::doubleClicked, [this] () {
+                _loadButton->trigger();
+            });
+            addButton(_loadButton);
 
             /*add(_title = new LabelWidget);
             _title->setSizePolicy(ui::Fixed, ui::Expand);
@@ -192,25 +226,32 @@ DENG_GUI_PIMPL(PackagesWidget)
             /*_title->setText(_item->info->gets("title"));
             _subtitle->setText(packageId());*/
 
-            label().setText(_item->info->gets("title"));
+            //label().setFont("small");
+            label().setText(String(_E(b) "%1\n" _E(l) "%2")
+                            .arg(_item->info->gets("title"))
+                            .arg(packageId()));
 
             String auxColor = "accent";
 
-            /*if(isLoaded())
+            if(isLoaded())
             {
                 _loadButton->setText(tr("Unload"));
-                _loadButton->setTextColor("altaccent");
-                _loadButton->setBorderColor("altaccent");
-                _title->setFont("choice.selected");
-                auxColor = "altaccent";
+                _loadButton->useNormalStyle();
+                useInvertedStyle();
+                //_loadButton->setTextColor("altaccent");
+                //_loadButton->setBorderColor("altaccent");
+                //_title->setFont("choice.selected");
+                //auxColor = "altaccent";
             }
             else
             {
                 _loadButton->setText(tr("Load"));
-                _loadButton->setTextColor("text");
-                _loadButton->setBorderColor("text");
-                _title->setFont("default");
-            }*/
+                _loadButton->useInfoStyle();
+                useNormalStyle();
+                //_loadButton->setTextColor("text");
+                //_loadButton->setBorderColor("text");
+                //_title->setFont("default");
+            }
 
             //_subtitle->setTextColor(auxColor);
             for(ButtonWidget *b : _tags)
@@ -263,6 +304,7 @@ DENG_GUI_PIMPL(PackagesWidget)
         search->setEmptyContentHint(tr("Search packages"));
 
         self.add(menu = new HomeMenuWidget);
+        menu->layout().setRowPadding(Const(0));
         menu->rule()
                 .setInput(Rule::Left,  self.rule().left())
                 .setInput(Rule::Right, self.rule().right())

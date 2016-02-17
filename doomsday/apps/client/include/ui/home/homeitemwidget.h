@@ -40,6 +40,9 @@ public:
     virtual void setSelected(bool selected);
     bool isSelected() const;
 
+    void useInvertedStyle();
+    void useNormalStyle();
+
 signals:
     void mouseActivity();
     void doubleClicked();

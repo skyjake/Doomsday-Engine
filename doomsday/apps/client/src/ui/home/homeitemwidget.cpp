@@ -62,6 +62,10 @@ DENG_GUI_PIMPL(HomeItemWidget)
     ScalarRule *labelRightMargin;
     Rule const *buttonsWidth = nullptr;
     bool selected = false;
+    DotPath bgColor           { "transparent" };
+    DotPath selectedBgColor   { "background" };
+    DotPath textColor         { "text" };
+    DotPath selectedTextColor { "text" };
 
     Instance(Public *i) : Base(i)
     {
@@ -112,6 +116,12 @@ DENG_GUI_PIMPL(HomeItemWidget)
             labelRightMargin->set(0, SPAN);
         }
     }
+
+    void updateColors()
+    {
+        background->set(Background(style().colors().colorf(selected? selectedBgColor : bgColor)));
+        label->setTextColor(selected? selectedTextColor : textColor);
+    }
 };
 
 HomeItemWidget::HomeItemWidget(String const &name)
@@ -120,7 +130,9 @@ HomeItemWidget::HomeItemWidget(String const &name)
 {
     setBehavior(Focusable);
 
-    Rule const &iconSize = d->label->rule().height();
+    Rule const &iconSize = d->label->margins().height() +
+                           style().fonts().font("default").height() +
+                           style().fonts().font("default").lineSpacing();
 
     d->background->rule()
             .setInput(Rule::Top,    rule().top())
@@ -129,7 +141,7 @@ HomeItemWidget::HomeItemWidget(String const &name)
             .setInput(Rule::Bottom, d->label->rule().bottom());
 
     d->icon->rule()
-            .setSize(iconSize, iconSize)
+            .setSize(iconSize,    d->label->rule().height())
             .setInput(Rule::Left, rule().left())
             .setInput(Rule::Top,  rule().top());
     d->icon->set(Background(Background::BorderGlow,
@@ -160,19 +172,36 @@ void HomeItemWidget::setSelected(bool selected)
     d->selected = selected;
     if(selected)
     {
-        d->background->set(Background(style().colors().colorf("background")));
         d->showButtons(true);
     }
     else
     {
-        d->background->set(Background());
         d->showButtons(false);
     }
+    d->updateColors();
 }
 
 bool HomeItemWidget::isSelected() const
 {
     return d->selected;
+}
+
+void HomeItemWidget::useInvertedStyle()
+{
+    d->bgColor           = "accent";
+    d->textColor         = "inverted.accent";
+    d->selectedBgColor   = "inverted.background";
+    d->selectedTextColor = "inverted.text";
+    d->updateColors();
+}
+
+void HomeItemWidget::useNormalStyle()
+{
+    d->bgColor           = "transparent";
+    d->textColor         = "text";
+    d->selectedBgColor   = "background";
+    d->selectedTextColor = "text";
+    d->updateColors();
 }
 
 void HomeItemWidget::addButton(ButtonWidget *button)

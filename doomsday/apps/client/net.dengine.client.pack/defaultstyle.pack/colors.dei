@@ -6,6 +6,7 @@ script { import gui, Version }
 # THE BASIC COLOR PALETTE
 #
 
+color transparent { rgb <0.0, 0.0, 0.0, 0.0> }
 color text        { rgb <1.0, 1.0, 1.0> }
 color background  { rgb <0.0, 0.0, 0.0, 0.75> }
 color accent      { rgb <1.0, 0.8, 0.4> }
