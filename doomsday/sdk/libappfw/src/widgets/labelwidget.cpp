@@ -623,6 +623,11 @@ void LabelWidget::setImage(ProceduralImage *procImage)
     d->image.reset(procImage);
 }
 
+ProceduralImage *LabelWidget::image() const
+{
+    return d->image.data();
+}
+
 void LabelWidget::setOverlayImage(ProceduralImage *overlayProcImage, ui::Alignment const &alignment)
 {
     d->overlayImage.reset(overlayProcImage);

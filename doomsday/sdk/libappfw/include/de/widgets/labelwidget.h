@@ -84,6 +84,8 @@ public:
      */
     void setImage(ProceduralImage *procImage);
 
+    ProceduralImage *image() const;
+
     /**
      * Sets an overlay image that gets drawn over the label contents.
      *

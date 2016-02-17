@@ -63,6 +63,8 @@ public:
     virtual void glDeinit();
     virtual void glMakeGeometry(DefaultVertexBuf::Builder &verts, Rectanglef const &rect) = 0;
 
+    DENG2_AS_IS_METHODS()
+
 private:
     Size _size;
     Color _color;
