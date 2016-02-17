@@ -158,7 +158,7 @@ DENG_GUI_PIMPL(MultiplayerColumnWidget)
                     return true;
                 }
                 // Secondarily by game ID.
-                return qstrcmp(first.info().gameIdentityKey,
+                return qstrcmp(first .info().gameIdentityKey,
                                second.info().gameIdentityKey) < 0;
             });
         }

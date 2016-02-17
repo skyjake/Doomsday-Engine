@@ -68,6 +68,7 @@ progress {
 # Home:
 home {
     background {
+        image column  { path = "graphics/home-background.jpg" }
         image doom    { path = "graphics/doom/background.jpg" }
         image heretic { path = "graphics/heretic/background.jpg" }
         image hexen   { path = "graphics/hexen/background.jpg" }

@@ -48,7 +48,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
     String gameFamily;
     SavedSessionListData const &savedItems;
     HomeMenuWidget *menu;
-    Image bgImage;
+    //Image bgImage;
 
     Instance(Public *i,
              String const &gameFamily,
@@ -165,8 +165,7 @@ GameColumnWidget::GameColumnWidget(String const &gameFamily,
     {
         header().setLogoImage("logo.game." + gameFamily.toLower());
         header().setLogoBackground("home.background." + d->gameFamily);
-        d->bgImage = style().images().image("home.background." + d->gameFamily);
-        setBackgroundImage(d->bgImage);
+        setBackgroundImage("home.background." + d->gameFamily);
     }
 
     /// @todo Get these description from the game family defs.

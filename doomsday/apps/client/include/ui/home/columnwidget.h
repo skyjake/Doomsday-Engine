@@ -35,7 +35,7 @@ class ColumnWidget : public de::GuiWidget
 public:
     ColumnWidget(de::String const &name = "");
 
-    void setBackgroundImage(de::Image const &image);
+    void setBackgroundImage(de::DotPath const &imageId);
 
     de::ScrollAreaWidget &scrollArea();
     HeaderWidget &header();

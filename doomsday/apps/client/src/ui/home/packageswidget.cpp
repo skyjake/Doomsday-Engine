@@ -112,8 +112,8 @@ DENG_GUI_PIMPL(PackagesWidget)
             icon().rule().setInput(Rule::Width, height + label().margins().height());
 
             _loadButton = new ButtonWidget;
-            _loadButton->setFont("small");
-            _loadButton->margins().setTopBottom("unit");
+            //_loadButton->setFont("small");
+            //_loadButton->margins().setTopBottom("unit");
             _loadButton->setAction(new CallbackAction([this] ()
             {
                 auto &loader = App::packageLoader();
@@ -237,6 +237,7 @@ DENG_GUI_PIMPL(PackagesWidget)
             {
                 _loadButton->setText(tr("Unload"));
                 _loadButton->useNormalStyle();
+                icon().setImageColor(style().colors().colorf("accent"));
                 useInvertedStyle();
                 //_loadButton->setTextColor("altaccent");
                 //_loadButton->setBorderColor("altaccent");
@@ -247,6 +248,7 @@ DENG_GUI_PIMPL(PackagesWidget)
             {
                 _loadButton->setText(tr("Load"));
                 _loadButton->useInfoStyle();
+                icon().setImageColor(style().colors().colorf("text"));
                 useNormalStyle();
                 //_loadButton->setTextColor("text");
                 //_loadButton->setBorderColor("text");

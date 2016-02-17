@@ -97,7 +97,7 @@ DENG2_PIMPL(ClientWindow)
     NotificationAreaWidget *notifications = nullptr;
     AlertDialog *alerts = nullptr;
     ColorAdjustmentDialog *colorAdjust = nullptr;
-    LabelWidget *background = nullptr;
+    //LabelWidget *background = nullptr;
     GuiWidget *iwadNotice = nullptr;
     GameSelectionWidget *gameSelMenu = nullptr;
     HomeWidget *home = nullptr;
@@ -186,14 +186,14 @@ DENG2_PIMPL(ClientWindow)
         Style &style = ClientApp::windowSystem().style();
 
         // Background for Ring Zero.
-        background = new LabelWidget("background");
+        /*background = new LabelWidget("background");
         background->setImageColor(Vector4f(0, 0, 0, 1));
         background->setImage(style.images().image("window.background"));
         background->setImageFit(ui::OriginalAspectRatio | ui::FitToSize | ui::CoverArea);
         background->setSizePolicy(ui::Filled, ui::Filled);
         background->margins().set("");
         background->rule().setRect(root.viewRule());
-        root.add(background);
+        root.add(background);*/
 
         game = new GameWidget;
         game->rule().setRect(root.viewRule());
@@ -331,7 +331,7 @@ DENG2_PIMPL(ClientWindow)
     void appStartupCompleted()
     {
         // Allow the background image to show.
-        background->setImageColor(Vector4f(1, 1, 1, 1));
+        //background->setImageColor(Vector4f(1, 1, 1, 1));
         taskBar->show();
 
         // Show the tutorial if it hasn't been automatically shown yet.
@@ -380,14 +380,14 @@ DENG2_PIMPL(ClientWindow)
     {
         if(newGame.isNull())
         {
-            background->show();
+            //background->show();
             showGameSelectionMenu(true);
 
             gameSelMenu->restoreState();
         }
         else
         {
-            background->hide();
+            //background->hide();
             showGameSelectionMenu(false);
 
             gameSelMenu->saveState();

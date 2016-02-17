@@ -113,7 +113,7 @@ DENG_GUI_PIMPL(HomeItemWidget)
         }
         else
         {
-            labelRightMargin->set(0, SPAN);
+            labelRightMargin->set(-style().rules().rule("halfunit"), SPAN);
         }
     }
 
@@ -190,7 +190,7 @@ void HomeItemWidget::useInvertedStyle()
 {
     d->bgColor           = "accent";
     d->textColor         = "inverted.accent";
-    d->selectedBgColor   = "inverted.background";
+    d->selectedBgColor   = "accent";
     d->selectedTextColor = "inverted.text";
     d->updateColors();
 }

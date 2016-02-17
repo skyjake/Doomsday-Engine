@@ -19,6 +19,7 @@
 #include "ui/home/columnwidget.h"
 
 #include <de/LabelWidget>
+#include <de/StyleProceduralImage>
 #include <de/Range>
 #include <de/math.h>
 
@@ -28,11 +29,53 @@ using namespace de;
 
 DENG_GUI_PIMPL(ColumnWidget)
 {
+    struct BackgroundImage : public StyleProceduralImage
+    {
+        Animation colorAnim { 0, Animation::Linear };
+
+        BackgroundImage(DotPath const &styleImageId, ColumnWidget &owner)
+            : StyleProceduralImage(styleImageId, owner)
+        {}
+
+        void setColor(Color const &color)
+        {
+            StyleProceduralImage::setColor(color);
+            colorAnim.setValue(color.x, 0.5);
+        }
+
+        bool update() override
+        {
+            StyleProceduralImage::update();
+            Size const newSize = owner().rule().size();
+            if(newSize != size())
+            {
+                setSize(newSize);
+                return true;
+            }
+            return !colorAnim.done();
+        }
+
+        void glMakeGeometry(DefaultVertexBuf::Builder &verts, Rectanglef const &rect) override
+        {
+            if(!allocId().isNone())
+            {
+                Rectanglef uv = root().atlas().imageRectf(allocId());
+                Vector2f const reduction(uv.width() / 40, uv.height() / 40);
+                uv = uv.adjusted(reduction, -reduction);
+
+                Rectanglef const norm = owner().normalizedRect();
+                verts.makeQuad(rect,
+                               Vector4f(colorAnim, colorAnim, colorAnim, 1.f),
+                               Rectanglef(uv.topLeft + norm.topLeft     * uv.size(),
+                                          uv.topLeft + norm.bottomRight * uv.size()));
+            }
+        }
+    };
+
     bool highlighted;
     LabelWidget *back;
     ScrollAreaWidget *scrollArea;
     HeaderWidget *header;
-    //Vector4f bgColor;
     Rule const *maxContentWidth = nullptr;
 
     Instance(Public *i) : Base(i)
@@ -51,10 +94,6 @@ DENG_GUI_PIMPL(ColumnWidget)
                 .setInput(Rule::Left,  scrollArea->contentRule().left())
                 .setInput(Rule::Top,   scrollArea->contentRule().top())
                 .setInput(Rule::Width, scrollArea->contentRule().width());
-
-        //QColor bg;
-        //bg.setHsvF(de::frand(), .9, .5);
-        //bgColor = Vector4f(bg.redF(), bg.greenF(), bg.blueF(), 1);
     }
 
     ~Instance()
@@ -80,14 +119,14 @@ ColumnWidget::ColumnWidget(String const &name)
     add(d->back);
     add(d->scrollArea);
 
-    setBackgroundImage(style().images().image("window.background"));
+    setBackgroundImage("home.background.column");
 }
 
-void ColumnWidget::setBackgroundImage(Image const &image)
+void ColumnWidget::setBackgroundImage(DotPath const &imageId)
 {
-    d->back->setImage(image);
-    d->back->setImageFit(ui::FitToSize);
-    d->back->setSizePolicy(ui::Filled, ui::Filled);
+    d->back->setImage(new Instance::BackgroundImage(imageId, *this));
+    //d->back->setImageFit(ui::FitToSize);
+    //d->back->setSizePolicy(ui::Filled, ui::Filled);
 }
 
 ScrollAreaWidget &ColumnWidget::scrollArea()
@@ -109,8 +148,8 @@ void ColumnWidget::setHighlighted(bool highlighted)
 {
     d->highlighted = highlighted;
 
-/*    d->back->set(Background(highlighted? d->bgColor :
-                                         (d->bgColor * Vector4f(.5f, .5f, .5f, 1.f))));*/
+    auto &img = d->back->image()->as<Instance::BackgroundImage>();
+    img.setColor(highlighted? Vector4f(1, 1, 1, 1) : Vector4f(.5f, .5f, .5f, 1.f));
 }
 
 bool ColumnWidget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event const &))
