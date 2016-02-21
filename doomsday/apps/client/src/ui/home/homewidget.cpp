@@ -174,7 +174,9 @@ DENG_GUI_PIMPL(HomeWidget)
                 layout << *column;
                 columns << column;
             }
+
         }
+        updateHighlightedTab();
     }
 
     Rangei visibleTabRange() const
@@ -279,7 +281,6 @@ HomeWidget::HomeWidget()
             .setInput(Rule::Left,   rule().left());
 
     d->updateLayout();
-    d->updateHighlightedTab();
 
     // Connections.
     connect(d->tabs, SIGNAL(currentTabChanged()), this, SLOT(tabChanged()));

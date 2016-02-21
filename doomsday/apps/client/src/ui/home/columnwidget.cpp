@@ -32,6 +32,7 @@ DENG_GUI_PIMPL(ColumnWidget)
     struct BackgroundImage : public StyleProceduralImage
     {
         Animation colorAnim { 0, Animation::Linear };
+        bool needUpdate = false;
 
         BackgroundImage(DotPath const &styleImageId, ColumnWidget &owner)
             : StyleProceduralImage(styleImageId, owner)
@@ -52,7 +53,10 @@ DENG_GUI_PIMPL(ColumnWidget)
                 setSize(newSize);
                 return true;
             }
-            return !colorAnim.done();
+            bool update = !colorAnim.done() || needUpdate;
+            // Make sure one more update happens after the animation is done.
+            if(!colorAnim.done()) needUpdate = true;
+            return update;
         }
 
         void glMakeGeometry(DefaultVertexBuf::Builder &verts, Rectanglef const &rect) override
