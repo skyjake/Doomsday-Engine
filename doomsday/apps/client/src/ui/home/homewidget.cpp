@@ -42,7 +42,7 @@ DENG_GUI_PIMPL(HomeWidget)
 {
     SavedSessionListData savedItems; ///< All the available save games as items.
 
-    dsize visibleColumnCount = 2; //3; ///< Target.
+    dsize visibleColumnCount = 2;
     QList<ColumnWidget *> allColumns; // not owned
     QList<ColumnWidget *> columns; // Only the visible ones (not owned).
     IndirectRule *columnWidth;
@@ -146,6 +146,12 @@ DENG_GUI_PIMPL(HomeWidget)
                 .setInput(Rule::Height, self.rule().height());
         self.add(col);
         allColumns << col;
+    }
+
+    void calculateColumnCount()
+    {
+        visibleColumnCount = de::max(1.f, self.rule().width().value() /
+                                     style().rules().rule("home.column.width").value());
     }
 
     void updateLayout()
@@ -281,8 +287,7 @@ HomeWidget::HomeWidget()
 
 void HomeWidget::viewResized()
 {
-    // Calculate appropriate number of columns.
-
+    d->calculateColumnCount();
     d->updateLayout();
 }
 

@@ -71,6 +71,10 @@ console {
     }
 }
 
+home {
+    rule column.width { constant $= UNIT * 125 }
+}
+
 gameselection {
     rule max.width  { constant $= UNIT * 270 }
     rule max.height { constant $= UNIT * 215 }
