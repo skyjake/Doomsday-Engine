@@ -30,6 +30,8 @@
 #include <de/LabelWidget>
 #include <de/SequentialLayout>
 #include <de/TabWidget>
+#include <de/PopupMenuWidget>
+#include <de/App>
 
 using namespace de;
 
@@ -236,9 +238,8 @@ HomeWidget::HomeWidget()
     : GuiWidget("home")
     , d(new Instance(this))
 {
-    ColumnWidget *column;
-
     // Create the columns.
+    ColumnWidget *column;
 
     column = new NoGamesColumnWidget();
     d->addColumn(column);
@@ -320,6 +321,21 @@ bool HomeWidget::handleEvent(Event const &event)
         }
     }
     return false;
+}
+
+PopupWidget *HomeWidget::makeSettingsPopup()
+{
+    PopupMenuWidget *menu = new PopupMenuWidget;
+    menu->items()
+            << new ui::VariableToggleItem(tr("Show Unplayable"), App::config("home.showUnplayableGames"))
+            << new ui::Item(ui::Item::Separator)
+            << new ui::Item(ui::Item::Separator, tr("Columns"))
+            << new ui::VariableToggleItem(tr("Doom"), App::config("home.columns.doom"))
+            << new ui::VariableToggleItem(tr("Heretic"), App::config("home.columns.heretic"))
+            << new ui::VariableToggleItem(tr("Hexen"), App::config("home.columns.hexen"))
+            << new ui::VariableToggleItem(tr("Other Games"), App::config("home.columns.otherGames"))
+            << new ui::VariableToggleItem(tr("Multiplayer"), App::config("home.columns.multiplayer"));
+    return menu;
 }
 
 bool HomeWidget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(const Event &))

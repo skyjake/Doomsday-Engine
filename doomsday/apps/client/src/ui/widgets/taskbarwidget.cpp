@@ -20,6 +20,7 @@
 #include "ui/widgets/consolecommandwidget.h"
 #include "ui/widgets/multiplayermenuwidget.h"
 #include "ui/widgets/tutorialwidget.h"
+#include "ui/home/homewidget.h"
 #include "ui/dialogs/aboutdialog.h"
 #include "ui/dialogs/videosettingsdialog.h"
 #include "ui/dialogs/audiosettingsdialog.h"
@@ -73,12 +74,13 @@ enum MenuItemPositions
     POS_IWAD_FOLDER       = 8,
 
     // Config menu:
-    POS_RENDERER_SETTINGS = 0,
-    POS_VR_SETTINGS       = 1,
-    POS_CONFIG_SEPARATOR  = 3,
+    POS_HOME_SETTINGS     = 0,
+    POS_RENDERER_SETTINGS = 1,
+    POS_VR_SETTINGS       = 2,
+    POS_CONFIG_SEPARATOR  = 4,
 
-    POS_AUDIO_SETTINGS    = 5,
-    POS_INPUT_SETTINGS    = 6
+    POS_AUDIO_SETTINGS    = 6,
+    POS_INPUT_SETTINGS    = 7,
 };
 
 DENG_GUI_PIMPL(TaskBarWidget)
@@ -276,9 +278,10 @@ DENG_GUI_PIMPL(TaskBarWidget)
         itemWidget(mainMenu, POS_MULTIPLAYER)      .show(!game.isNull());
         itemWidget(mainMenu, POS_CONNECT)          .show(game.isNull());
 
+        itemWidget(configMenu, POS_HOME_SETTINGS)    .show(game.isNull());
         itemWidget(configMenu, POS_RENDERER_SETTINGS).show(!game.isNull());
         itemWidget(configMenu, POS_VR_SETTINGS)      .show(!game.isNull());
-        itemWidget(configMenu, POS_CONFIG_SEPARATOR) .show(!game.isNull());
+        //itemWidget(configMenu, POS_CONFIG_SEPARATOR) .show(!game.isNull());
         itemWidget(configMenu, POS_AUDIO_SETTINGS)   .show(!game.isNull());
         itemWidget(configMenu, POS_INPUT_SETTINGS)   .show(!game.isNull());
 
@@ -427,6 +430,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
      * depending on whether a game is loaded.
      */
     d->configMenu->items()
+            << new ui::SubwidgetItem(style().images().image("package"),  tr("Home"),     ui::Left, HomeWidget::makeSettingsPopup)
             << new ui::SubwidgetItem(style().images().image("renderer"), tr("Renderer"), ui::Left, makePopup<RendererSettingsDialog>)
             << new ui::SubwidgetItem(style().images().image("vr"),       tr("3D & VR"),  ui::Left, makePopup<VRSettingsDialog>)
             << new ui::SubwidgetItem(style().images().image("package"),  tr("Packages"), ui::Left, makePopup<PackagesDialog>)

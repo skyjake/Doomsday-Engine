@@ -19,7 +19,7 @@
 #ifndef DENG_CLIENT_UI_HOMEWIDGET_H
 #define DENG_CLIENT_UI_HOMEWIDGET_H
 
-#include <de/GuiWidget>
+#include <de/PopupWidget>
 
 /**
  * Root widget for the Home UI.
@@ -38,6 +38,8 @@ public:
     bool handleEvent(de::Event const &event) override;
     bool dispatchEvent(de::Event const &event,
                        bool (de::Widget::*memberFunc)(de::Event const &)) override;
+
+    static de::PopupWidget *makeSettingsPopup();
 
 public slots:
     void tabChanged();

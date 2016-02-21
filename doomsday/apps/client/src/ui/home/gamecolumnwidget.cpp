@@ -26,11 +26,13 @@
 
 #include <de/ChildWidgetOrganizer>
 #include <de/MenuWidget>
+#include <de/App>
 
 using namespace de;
 
 DENG_GUI_PIMPL(GameColumnWidget)
 , DENG2_OBSERVES(Games, Readiness)
+, DENG2_OBSERVES(Variable, Change)
 , public ChildWidgetOrganizer::IWidgetFactory
 {
     // Item for a particular loadable game.
@@ -69,11 +71,13 @@ DENG_GUI_PIMPL(GameColumnWidget)
                                        style().rules().rule("gap")*2);
 
         DoomsdayApp::games().audienceForReadiness() += this;
+        App::config("home.showUnplayableGames").audienceForChange() += this;
     }
 
     ~Instance()
     {
         DoomsdayApp::games().audienceForReadiness() -= this;
+        App::config("home.showUnplayableGames").audienceForChange() -= this;
     }
 
     ui::Item const *findItem(String const &id) const
@@ -132,6 +136,12 @@ DENG_GUI_PIMPL(GameColumnWidget)
         populateItems();
     }
 
+    void variableValueChanged(Variable &var, Value const &)
+    {
+        qDebug() << var.name() << "changed";
+        populateItems();
+    }
+
 //- ChildWidgetOrganizer::IWidgetFactory --------------------------------------
 
     GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *)
@@ -140,10 +150,19 @@ DENG_GUI_PIMPL(GameColumnWidget)
         return button;
     }
 
-    void updateItemWidget(GuiWidget &widget, ui::Item const &/*item*/)
+    void updateItemWidget(GuiWidget &widget, ui::Item const &item)
     {
         auto &drawer = widget.as<GamePanelButtonWidget>();
         drawer.updateContent();
+
+        if(!App::config().getb("home.showUnplayableGames"))
+        {
+            drawer.show(item.as<MenuItem>().game.isPlayable());
+        }
+        else
+        {
+            drawer.show();
+        }
     }
 };
 
