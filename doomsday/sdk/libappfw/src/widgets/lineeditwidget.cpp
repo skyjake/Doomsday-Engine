@@ -236,6 +236,7 @@ LineEditWidget::LineEditWidget(String const &name)
       d(new Instance(this))
 {
     setBehavior(ContentClipping | Focusable);
+    setAttribute(FocusHidden);
 
     // The widget's height is tied to the number of lines.
     rule().setInput(Rule::Height, *d->height);

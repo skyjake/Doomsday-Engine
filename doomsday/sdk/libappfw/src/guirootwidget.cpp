@@ -185,6 +185,10 @@ DENG2_PIMPL(GuiRootWidget)
         {
             focusIndicator->rule().setRect(w->rule());
             focusIndicator->startFlashing();
+            if(w->attributes().testFlag(GuiWidget::FocusHidden))
+            {
+                focusIndicator->hide();
+            }
         }
         else
         {

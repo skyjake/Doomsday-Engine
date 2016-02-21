@@ -63,10 +63,10 @@ FocusWidget::FocusWidget(String const &name)
 
 void FocusWidget::startFlashing()
 {
+    show();
     if(!d->flashing.isActive())
     {
         setOpacity(0);
-        show();
         d->flashing.start();
     }
 }

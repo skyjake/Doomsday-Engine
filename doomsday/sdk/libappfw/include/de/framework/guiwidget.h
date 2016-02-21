@@ -170,30 +170,37 @@ public:
     enum Attribute
     {
         /**
-         * Enables or disables automatic state serialization for widgets derived from
-         * IPersistent. State serialization occurs when the widget is gl(De)Init'd.
+         * Enables or disables automatic state serialization for widgets
+         * derived from IPersistent. State serialization occurs when the widget
+         * is gl(De)Init'd.
          */
         RetainStatePersistently = 0x1,
 
         AnimateOpacityWhenEnabledOrDisabled = 0x2,
 
         /**
-         * Widget will not automatically change opacity depending on state (e.g., when
-         * disabled).
+         * Widget will not automatically change opacity depending on state
+         * (e.g., when disabled).
          */
         ManualOpacity = 0x10,
 
         /**
-         * Prevents the drawing of the widget contents even if it visible. The texture
-         * containing the blurred background is updated regardless.
+         * Prevents the drawing of the widget contents even if it visible. The
+         * texture containing the blurred background is updated regardless.
          */
         DontDrawContent = 0x4,
 
         /**
-         * Visible opacity determined solely by the widget itself, not affected by
-         * ancestors.
+         * Visible opacity determined solely by the widget itself, not affected
+         * by ancestors.
          */
         IndependentOpacity = 0x8,
+
+        /**
+         * When focused, don't show the normal focus indicator. The assumption
+         * is that the widget will indicate focused state on its own.
+         */
+        FocusHidden = 0x20,
 
         DefaultAttributes = RetainStatePersistently | AnimateOpacityWhenEnabledOrDisabled
     };
