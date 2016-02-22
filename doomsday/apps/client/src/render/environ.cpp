@@ -18,8 +18,7 @@
 
 #include "render/environ.h"
 #include "world/map.h"
-#include "world/bspleaf.h"
-#include "world/convexsubspace.h"
+#include "world/sectorcluster.h"
 #include "clientapp.h"
 
 #include <de/ImageFile>
@@ -199,15 +198,13 @@ GLTexture const &Environment::defaultReflection() const
     return d->reflectionTextures[Instance::Interior];
 }
 
-GLTexture const &Environment::reflectionInBspLeaf(BspLeaf const *bspLeaf) const
+GLTexture const &Environment::reflectionInCluster(SectorCluster const *cluster) const
 {
-    if(!bspLeaf || !bspLeaf->hasSubspace())
+    if(!cluster)
     {
         return defaultReflection();
     }
-
-    Sector const &sector = bspLeaf->subspace().sector();
-    if(sector.hasSkyMaskedPlane())
+    if(cluster->hasSkyMaskedPlane())
     {
         return d->reflectionTextures[Instance::Exterior];
     }
