@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_VARIABLE_H
@@ -23,6 +23,7 @@
 #include "../ISerializable"
 #include "../String"
 #include "../Audience"
+#include "../Deletable"
 
 #include <QFlags>
 
@@ -31,14 +32,14 @@ namespace de {
 class Value;
 class ArrayValue;
 class Record;
-    
+
 /**
  * Stores a value and name identifier. Variables are typically stored in a Record.
  * A variable's behavior is defined by its mode flags.
  *
  * @ingroup data
  */
-class DENG2_PUBLIC Variable : public ISerializable
+class DENG2_PUBLIC Variable : public Deletable, public ISerializable
 {
 public:
     /// There was an attempt to change the value of a read-only variable. @ingroup errors
@@ -200,14 +201,14 @@ public:
     Record const &valueAsRecord() const;
 
     Record &valueAsRecord();
-    
+
     /**
      * Returns the value of the variable as an ArrayValue.
      */
     ArrayValue const &array() const;
-    
+
     ArrayValue &array();
-    
+
     operator Record & ();
 
     operator Record const & () const;
