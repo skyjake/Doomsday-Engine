@@ -28,6 +28,7 @@
 #include "Plane"
 #include "Surface"
 #ifdef __CLIENT__
+#  include "world/audioenvironment.h"
 #  include "world/blockmap.h"
 #endif
 #include "world/map.h"
@@ -87,13 +88,14 @@ DENG2_PIMPL(SectorCluster)
 , DENG2_OBSERVES(Sector, LightLevelChange)
 #endif
 {
-    bool needClassify; ///< @c true= (Re)classification is necessary.
-    ClusterFlags flags;
+    bool needClassify = true;  ///< @c true= (Re)classification is necessary.
+
+    ClusterFlags flags = 0;
     Subspaces subspaces;
     QScopedPointer<AABoxd> aaBox;
 
-    SectorCluster *mappedVisFloor;
-    SectorCluster *mappedVisCeiling;
+    SectorCluster *mappedVisFloor   = nullptr;
+    SectorCluster *mappedVisCeiling = nullptr;
 
     struct BoundaryData
     {
@@ -128,25 +130,13 @@ DENG2_PIMPL(SectorCluster)
     typedef QSet<ConvexSubspace *> ReverbSubspaces;
     ReverbSubspaces reverbSubspaces;
 
-    /// Final environmental audio characteristics.
-    AudioEnvironmentFactors reverb;
-    bool needReverbUpdate;
+    /// Environmental audio config.
+    AudioEnvironment reverb;
+    bool needReverbUpdate = true;
 #endif
 
-    Instance(Public *i)
-        : Base            (i)
-        , needClassify    (true)
-        , flags           (0)
-        , mappedVisFloor  (0)
-        , mappedVisCeiling(0)
-#ifdef __CLIENT__
-        , needReverbUpdate(true)
-#endif
-    {
-#ifdef __CLIENT__
-        de::zap(reverb);
-#endif
-    }
+    Instance(Public *i) : Base(i)
+    {}
 
     ~Instance()
     {
@@ -878,72 +868,73 @@ DENG2_PIMPL(SectorCluster)
         uint spaceVolume = int((self.visCeiling().height() - self.visFloor().height())
                          * self.roughArea());
 
-        reverb[SRD_SPACE] = reverb[SRD_VOLUME] =
-            reverb[SRD_DECAY] = reverb[SRD_DAMPING] = 0;
+        reverb.reset();
 
         for(ConvexSubspace *subspace : reverbSubspaces)
         {
             if(subspace->updateAudioEnvironment())
             {
-                auto const &subReverb = subspace->audioEnvironmentData().reverb;
+                auto const &aenv = subspace->audioEnvironment();
 
-                reverb[SRD_SPACE]   += subReverb[SRD_SPACE];
+                reverb.space   += aenv.space;
 
-                reverb[SRD_VOLUME]  += subReverb[SRD_VOLUME]  / 255.0f * subReverb[SRD_SPACE];
-                reverb[SRD_DECAY]   += subReverb[SRD_DECAY]   / 255.0f * subReverb[SRD_SPACE];
-                reverb[SRD_DAMPING] += subReverb[SRD_DAMPING] / 255.0f * subReverb[SRD_SPACE];
+                reverb.volume  += aenv.volume  / 255.0f * aenv.space;
+                reverb.decay   += aenv.decay   / 255.0f * aenv.space;
+                reverb.damping += aenv.damping / 255.0f * aenv.space;
             }
         }
 
         float spaceScatter;
-        if(reverb[SRD_SPACE])
+
+        if(reverb.space)
         {
-            spaceScatter = spaceVolume / reverb[SRD_SPACE];
+            spaceScatter = spaceVolume / reverb.space;
+
             // These three are weighted by the space.
-            reverb[SRD_VOLUME]  /= reverb[SRD_SPACE];
-            reverb[SRD_DECAY]   /= reverb[SRD_SPACE];
-            reverb[SRD_DAMPING] /= reverb[SRD_SPACE];
+            reverb.volume  /= reverb.space;
+            reverb.decay   /= reverb.space;
+            reverb.damping /= reverb.space;
         }
         else
         {
             spaceScatter = 0;
-            reverb[SRD_VOLUME]  = .2f;
-            reverb[SRD_DECAY]   = .4f;
-            reverb[SRD_DAMPING] = 1;
+
+            reverb.volume  = .2f;
+            reverb.decay   = .4f;
+            reverb.damping = 1;
         }
 
         // If the space is scattered, the reverb effect lessens.
-        reverb[SRD_SPACE] /= (spaceScatter > .8 ? 10 : spaceScatter > .6 ? 4 : 1);
+        reverb.space /= (spaceScatter > .8 ? 10 : spaceScatter > .6 ? 4 : 1);
 
         // Normalize the reverb space [0..1]
         //   0= very small
         // .99= very large
         // 1.0= only for open areas (special case).
-        reverb[SRD_SPACE] /= 120e6;
-        if(reverb[SRD_SPACE] > .99)
-            reverb[SRD_SPACE] = .99f;
+        reverb.space /= 120e6;
+        if(reverb.space > .99)
+            reverb.space = .99f;
 
-        if(self.visCeiling().surface().hasSkyMaskedMaterial() ||
-           self.visFloor().surface().hasSkyMaskedMaterial())
+        if(self.hasSkyMaskedPlane())
         {
-            // An "open" sector.
+            // An "exterior" space.
             // It can still be small, in which case; reverb is diminished a bit.
-            if(reverb[SRD_SPACE] > .5)
-                reverb[SRD_VOLUME] = 1; // Full volume.
+            if(reverb.space > .5)
+                reverb.volume = 1;    // Full volume.
             else
-                reverb[SRD_VOLUME] = .5f; // Small, but still open.
+                reverb.volume = .5f;  // Small, but still open.
 
-            reverb[SRD_SPACE] = 1;
+            reverb.space = 1;
         }
         else
         {
-            // A "closed" sector.
+            // An "interior" space.
             // Large spaces have automatically a bit more audible reverb.
-            reverb[SRD_VOLUME] += reverb[SRD_SPACE] / 4;
+            reverb.volume += reverb.space / 4;
         }
 
-        if(reverb[SRD_VOLUME] > 1)
-            reverb[SRD_VOLUME] = 1;
+        if(reverb.volume > 1)
+            reverb.volume = 1;
     }
 
     /// Observes Plane HeightSmoothedChange.
@@ -1159,7 +1150,7 @@ void SectorCluster::markReverbDirty(bool yes)
     d->needReverbUpdate = yes;
 }
 
-AudioEnvironmentFactors const &SectorCluster::reverb() const
+SectorCluster::AudioEnvironment const &SectorCluster::reverb() const
 {
     // Perform any scheduled update now.
     if(d->needReverbUpdate)

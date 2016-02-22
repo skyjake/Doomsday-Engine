@@ -23,6 +23,9 @@
 #include <QSet>
 #include <QtAlgorithms>
 #include <de/Log>
+#ifdef __CLIENT__
+#  include "world/audioenvironment.h"
+#endif
 #include "BspLeaf"
 #include "Face"
 #include "Polyobj"
@@ -68,7 +71,7 @@ DENG2_PIMPL(ConvexSubspace)
     HEdge *fanBase = nullptr;              ///< Trifan base Half-edge (otherwise the center point is used).
     bool needUpdateFanBase = true;         ///< @c true= need to rechoose a fan base half-edge.
 
-    AudioEnvironmentData aenv;             ///< Cached audio environment characteristics.
+    world::AudioEnvironment audioEnvironment;  ///< Cached audio characteristics.
 
     int lastSpriteProjectFrame = 0;        ///< Frame number of last R_AddSprites.
 #endif
@@ -415,74 +418,71 @@ static void accumReverbForWallSections(HEdge const *hedge,
 
 bool ConvexSubspace::updateAudioEnvironment()
 {
+    world::AudioEnvironment &env = d->audioEnvironment;
+
     if(!hasCluster())
     {
-        d->aenv.reverb[SRD_SPACE] = d->aenv.reverb[SRD_VOLUME] =
-            d->aenv.reverb[SRD_DECAY] = d->aenv.reverb[SRD_DAMPING] = 0;
+        env.reset();
         return false;
     }
 
-    float envSpaceAccum[NUM_AUDIO_ENVIRONMENTS];
-    de::zap(envSpaceAccum);
+    float contrib[NUM_AUDIO_ENVIRONMENTS]; de::zap(contrib);
 
     // Space is the rough volume of the BSP leaf (bounding box).
     AABoxd const &aaBox = poly().aaBox();
-    d->aenv.reverb[SRD_SPACE] = int(cluster().ceiling().height() - cluster().floor().height())
-                         * (aaBox.maxX - aaBox.minX) * (aaBox.maxY - aaBox.minY);
+    env.space = int(cluster().ceiling().height() - cluster().floor().height())
+              * ((aaBox.maxX - aaBox.minX) * (aaBox.maxY - aaBox.minY));
 
     // The other reverb properties can be found out by taking a look at the
     // materials of all surfaces in the BSP leaf.
-    float total  = 0;
-    HEdge *base  = poly().hedge();
-    HEdge *hedge = base;
+    float coverage = 0;
+    HEdge *base    = poly().hedge();
+    HEdge *hedge   = base;
     do
     {
-        accumReverbForWallSections(hedge, envSpaceAccum, total);
+        accumReverbForWallSections(hedge, contrib, coverage);
     } while((hedge = &hedge->next()) != base);
 
     for(Mesh *mesh : d->extraMeshes)
     for(HEdge *hedge : mesh->hedges())
     {
-        accumReverbForWallSections(hedge, envSpaceAccum, total);
+        accumReverbForWallSections(hedge, contrib, coverage);
     }
 
-    if(!total)
+    if(!coverage)
     {
         // Huh?
-        d->aenv.reverb[SRD_VOLUME] = d->aenv.reverb[SRD_DECAY] = d->aenv.reverb[SRD_DAMPING] = 0;
+        env.reset();
         return false;
     }
 
     // Average the results.
     for(int i = AE_FIRST; i < NUM_AUDIO_ENVIRONMENTS; ++i)
     {
-        envSpaceAccum[i] /= total;
+        contrib[i] /= coverage;
     }
 
-    // Accumulate and clamp the final characteristics
-    int accum[NUM_REVERB_DATA]; zap(accum);
+    // Accumulate contributions and clamp the results.
+    int volume  = 0;
+    int decay   = 0;
+    int damping = 0;
     for(int i = AE_FIRST; i < NUM_AUDIO_ENVIRONMENTS; ++i)
     {
-        AudioEnvironment const &envInfo = S_AudioEnvironment(AudioEnvironmentId(i));
-        // Volume.
-        accum[SRD_VOLUME]  += envSpaceAccum[i] * envInfo.volumeMul;
-
-        // Decay time.
-        accum[SRD_DECAY]   += envSpaceAccum[i] * envInfo.decayMul;
-
-        // High frequency damping.
-        accum[SRD_DAMPING] += envSpaceAccum[i] * envInfo.dampingMul;
+        AudioEnvironment const &envDef = S_AudioEnvironment(AudioEnvironmentId(i));
+        volume  += envDef.volume  * contrib[i];
+        decay   += envDef.decay   * contrib[i];
+        damping += envDef.damping * contrib[i];
     }
-    d->aenv.reverb[SRD_VOLUME]  = de::min(accum[SRD_VOLUME],  255);
-    d->aenv.reverb[SRD_DECAY]   = de::min(accum[SRD_DECAY],   255);
-    d->aenv.reverb[SRD_DAMPING] = de::min(accum[SRD_DAMPING], 255);
+    env.volume  = de::min(volume,  255);
+    env.decay   = de::min(decay,   255);
+    env.damping = de::min(damping, 255);
 
     return true;
 }
 
-ConvexSubspace::AudioEnvironmentData const &ConvexSubspace::audioEnvironmentData() const
+world::AudioEnvironment const &ConvexSubspace::audioEnvironment() const
 {
-    return d->aenv;
+    return d->audioEnvironment;
 }
 
-#endif // __CLIENT__
+#endif  // __CLIENT__
