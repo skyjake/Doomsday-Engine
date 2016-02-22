@@ -73,10 +73,10 @@ DENG_GUI_PIMPL(SaveListWidget)
         button.margins().set("dialog.gap");
         button.set(Background(Vector4f()));
 
-        button.setAction(new CallbackAction([this, &button] () {
+        button.setAction([this, &button] () {
             toggleSelectedItem(button);
             emit owner.mouseActivity();
-        }));
+        });
         button.addEventHandler(new DoubleClickHandler(this));
 
         auto const &saveItem = item.as<SavedSessionListData::SaveItem>();

@@ -21,6 +21,7 @@
 
 #include <de/Action>
 #include <de/Observers>
+#include <functional>
 
 #include "../LabelWidget"
 
@@ -94,6 +95,14 @@ public:
      * @param action  Action instance. Widget holds a reference.
      */
     void setAction(RefArg<Action> action);
+
+    /**
+     * Sets the action of the button using a callback function. It gets called
+     * when the button is pressed.
+     *
+     * @param callback  Callback function.
+     */
+    void setAction(std::function<void ()> callback);
 
     Action const *action() const;
 

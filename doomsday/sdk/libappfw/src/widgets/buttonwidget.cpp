@@ -18,6 +18,7 @@
 
 #include "de/ButtonWidget"
 #include "de/GuiRootWidget"
+#include "de/CallbackAction"
 
 #include <de/MouseEvent>
 #include <de/Animation>
@@ -262,6 +263,11 @@ void ButtonWidget::setAction(RefArg<Action> action)
     {
         action->audienceForTriggered() += d;
     }
+}
+
+void ButtonWidget::setAction(std::function<void ()> callback)
+{
+    setAction(new CallbackAction(callback));
 }
 
 Action const *ButtonWidget::action() const
