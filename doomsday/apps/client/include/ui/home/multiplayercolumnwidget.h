@@ -32,6 +32,8 @@ public:
 
     MultiplayerColumnWidget();
 
+    de::String tabHeading() const override;
+    de::String configVariableName() const override;
     void setHighlighted(bool highlighted) override;
 
 private:

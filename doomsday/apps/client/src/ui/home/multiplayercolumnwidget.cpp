@@ -226,6 +226,16 @@ MultiplayerColumnWidget::MultiplayerColumnWidget()
     header().title().setText(_E(s) "dengine.net\n" _E(.)_E(w) + tr("Multiplayer Games"));
 }
 
+String MultiplayerColumnWidget::tabHeading() const
+{
+    return tr("Multiplayer");
+}
+
+String MultiplayerColumnWidget::configVariableName() const
+{
+    return "home.columns.multiplayer";
+}
+
 void MultiplayerColumnWidget::setHighlighted(bool highlighted)
 {
     ColumnWidget::setHighlighted(highlighted);

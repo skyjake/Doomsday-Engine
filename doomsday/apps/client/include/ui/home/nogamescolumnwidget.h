@@ -28,6 +28,8 @@ class NoGamesColumnWidget : public ColumnWidget
 public:
     NoGamesColumnWidget();
 
+    de::String tabHeading() const override;
+
 public slots:
     void browseForDataFiles();
 };

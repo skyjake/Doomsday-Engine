@@ -21,6 +21,7 @@
 #include <de/LabelWidget>
 #include <de/StyleProceduralImage>
 #include <de/Range>
+#include <de/App>
 #include <de/math.h>
 
 #include <QColor>
@@ -146,6 +147,18 @@ HeaderWidget &ColumnWidget::header()
 Rule const &ColumnWidget::maximumContentWidth() const
 {
     return *d->maxContentWidth;
+}
+
+String ColumnWidget::configVariableName() const
+{
+    return ""; // Defaults to none.
+}
+
+Variable *ColumnWidget::configVariable() const
+{
+    String name = configVariableName();
+    if(name.isEmpty()) return nullptr;
+    return &App::config(name);
 }
 
 void ColumnWidget::setHighlighted(bool highlighted)

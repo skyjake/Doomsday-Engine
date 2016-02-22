@@ -49,6 +49,11 @@ NoGamesColumnWidget::NoGamesColumnWidget()
     add(chooseIwad);
 }
 
+String NoGamesColumnWidget::tabHeading() const
+{
+    return tr("Data Files?");
+}
+
 void NoGamesColumnWidget::browseForDataFiles()
 {
     ClientWindow::main().taskBar().chooseIWADFolder();

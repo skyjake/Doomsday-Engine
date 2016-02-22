@@ -31,6 +31,8 @@ public:
     GameColumnWidget(de::String const &gameFamily,
                      SavedSessionListData const &savedItems);
 
+    de::String tabHeading() const override;
+    de::String configVariableName() const override;
     void setHighlighted(bool highlighted) override;
 
 private:

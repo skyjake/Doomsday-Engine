@@ -40,7 +40,10 @@ public:
     de::ScrollAreaWidget &scrollArea();
     HeaderWidget &header();
     de::Rule const &maximumContentWidth() const;
+    de::Variable *configVariable() const;
 
+    virtual de::String tabHeading() const = 0;
+    virtual de::String configVariableName() const;
     virtual void setHighlighted(bool highlighted);
 
     // Events.

@@ -26,6 +26,8 @@ class PackagesColumnWidget : public ColumnWidget
 public:
     PackagesColumnWidget();
 
+    de::String tabHeading() const override;
+
 private:
     DENG2_PRIVATE(d)
 };

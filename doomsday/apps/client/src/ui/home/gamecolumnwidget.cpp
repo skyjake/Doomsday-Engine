@@ -229,6 +229,17 @@ GameColumnWidget::GameColumnWidget(String const &gameFamily,
     }
 }
 
+String GameColumnWidget::tabHeading() const
+{
+    if(d->gameFamily.isEmpty()) return tr("Other");
+    return d->gameFamily.at(0).toUpper() + d->gameFamily.mid(1);
+}
+
+String GameColumnWidget::configVariableName() const
+{
+    return "home.columns." + (!d->gameFamily.isEmpty()? d->gameFamily : String("otherGames"));
+}
+
 void GameColumnWidget::setHighlighted(bool highlighted)
 {
     ColumnWidget::setHighlighted(highlighted);

@@ -41,11 +41,18 @@ DENG_GUI_PIMPL(HomeWidget)
 , DENG2_OBSERVES(Games, Readiness)
 , DENG2_OBSERVES(DoomsdayApp, GameUnload)
 , DENG2_OBSERVES(DoomsdayApp, GameChange)
+, DENG2_OBSERVES(Variable, Change)
 {
+    struct Column {
+        ColumnWidget *widget;
+        SafePtr<Variable> configVar;
+        Column(ColumnWidget *w, Variable *var) : widget(w), configVar(var) {}
+    };
+
     SavedSessionListData savedItems; ///< All the available save games as items.
 
     dsize visibleColumnCount = 2;
-    QList<ColumnWidget *> allColumns; // not owned
+    QList<Column> allColumns; // not owned
     QList<ColumnWidget *> columns; // Only the visible ones (not owned).
     IndirectRule *columnWidth;
     LabelWidget *tabsBackground;
@@ -71,6 +78,14 @@ DENG_GUI_PIMPL(HomeWidget)
 
     ~Instance()
     {
+        for(Column const &col : allColumns)
+        {
+            if(col.configVar)
+            {
+                col.configVar->audienceForChange() -= this;
+            }
+        }
+
         DoomsdayApp::games().audienceForReadiness() -= this;
         DoomsdayApp::app().audienceForGameChange() -= this;
         DoomsdayApp::app().audienceForGameUnload() -= this;
@@ -79,41 +94,34 @@ DENG_GUI_PIMPL(HomeWidget)
         releaseRef(scrollOffset);
     }
 
-    void updateTabItems()
+    void updateVisibleColumnsAndTabs()
     {
-        int index = 0;
         bool const gotGames = DoomsdayApp::games().numPlayable() > 0;
 
         tabs->items().clear();
 
         // Show columns depending on whether there are playable games.
-        allColumns.at(0)->show(!gotGames);
+        allColumns.at(0).widget->show(!gotGames);
         for(int i = 1; i < 6; ++i)
         {
-            allColumns.at(i)->show(gotGames);
+            Column const &col = allColumns.at(i);
+            col.widget->show(gotGames && col.configVar->value().isTrue());
         }
 
-        if(gotGames)
+        // Tab headings for visible columns.
+        int index = 0;
+        for(Column const &col : allColumns)
         {
-            tabs->items()
-                << new TabItem(   "Doom"        , index)
-                << new TabItem(   "Heretic"     , index + 1)
-                << new TabItem(   "Hexen"       , index + 2)
-                << new TabItem(tr("Other")      , index + 3)
-                << new TabItem(tr("Multiplayer"), index + 4);
-            index += 5;
+            if(col.widget->isVisible())
+            {
+                tabs->items() << new TabItem(col.widget->tabHeading(), index++);
+            }
         }
-        else
-        {
-            tabs->items() << new TabItem(tr("Data Files?"), index++);
-        }
-
-        tabs->items() << new TabItem(tr("Packages"), index++);
     }
 
     void gameReadinessUpdated()
     {
-        updateTabItems();
+        updateVisibleColumnsAndTabs();
         updateLayout();
     }
 
@@ -137,6 +145,12 @@ DENG_GUI_PIMPL(HomeWidget)
         }
     }
 
+    void variableValueChanged(Variable &, Value const &)
+    {
+        updateVisibleColumnsAndTabs();
+        updateLayout();
+    }
+
     void addColumn(ColumnWidget *col)
     {
         QObject::connect(col, SIGNAL(mouseActivity(QObject const *)),
@@ -147,7 +161,13 @@ DENG_GUI_PIMPL(HomeWidget)
                 .setInput(Rule::Width,  *columnWidth)
                 .setInput(Rule::Height, self.rule().height());
         self.add(col);
-        allColumns << col;
+
+        Variable *conf = col->configVariable();
+        if(conf)
+        {
+            conf->audienceForChange() += this;
+        }
+        allColumns << Column(col, conf);
     }
 
     void calculateColumnCount()
@@ -262,7 +282,7 @@ HomeWidget::HomeWidget()
     column = new PackagesColumnWidget();
     d->addColumn(column);
 
-    d->updateTabItems();
+    d->updateVisibleColumnsAndTabs();
     d->tabs->setCurrent(0);
 
     // Tabs on top.

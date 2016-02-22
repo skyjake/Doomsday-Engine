@@ -48,3 +48,8 @@ PackagesColumnWidget::PackagesColumnWidget()
                                 style().rules().rule("gap") +
                                 d->packages->rule().height());
 }
+
+String PackagesColumnWidget::tabHeading() const
+{
+    return tr("Packages");
+}
