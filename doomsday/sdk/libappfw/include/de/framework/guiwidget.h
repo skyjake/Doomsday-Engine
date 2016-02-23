@@ -217,8 +217,8 @@ public:
     static void destroy(GuiWidget *widget);
 
     /**
-     * Deletes a widget at a later point in time. However, the widget is immediately
-     * deinitialized.
+     * Deletes a widget at a later point in time. However, the widget is
+     * immediately deinitialized.
      *
      * @param widget  Widget to deinitialize now and destroy layer.
      */
@@ -228,6 +228,12 @@ public:
     Widget::Children childWidgets() const;
     Widget *parentWidget() const;
     Style const &style() const;
+
+    /**
+     * Shortcut for accessing individual rules in the active UI style.
+     * @param path  Identifier of the rule.
+     * @return Rule from the Style.
+     */
     Rule const &rule(DotPath const &path) const;
 
     /**
