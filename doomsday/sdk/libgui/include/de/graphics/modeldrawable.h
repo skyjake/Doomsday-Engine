@@ -164,6 +164,18 @@ public:
         /// Referenced node or animation was not found in the model. @ingroup errors
         DENG2_ERROR(InvalidError);
 
+        enum Flag
+        {
+            /**
+             * Node transformations always done, even when there are no
+             * animation sequences.
+             */
+            AlwaysTransformNodes = 0x1,
+
+            DefaultFlags = 0
+        };
+        Q_DECLARE_FLAGS(Flags, Flag)
+
     public:
         Animator(Constructor sequenceConstructor = OngoingSequence::make);
         Animator(ModelDrawable const &model,
@@ -172,6 +184,10 @@ public:
         virtual ~Animator() {}
 
         void setModel(ModelDrawable const &model);
+
+        void setFlags(Flags const &flags, FlagOp op = SetFlags);
+
+        Flags flags() const;
 
         /**
          * Returns the model with which this animation is being used.
@@ -278,6 +294,9 @@ public:
     /**
      * Rendering pass. When no rendering passes are specified, all the meshes
      * of the model are rendered in one pass with regular alpha blending.
+     *
+     * @todo Use GLState instead of than having individual GL parameters?
+     * The state must be set up to not touch viewport, clipping, etc., though.
      */
     struct LIBGUI_PUBLIC Pass
     {
@@ -559,8 +578,9 @@ private:
     DENG2_PRIVATE(d)
 };
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(ModelDrawable::Appearance::Flags)
+Q_DECLARE_OPERATORS_FOR_FLAGS(ModelDrawable::Animator::Flags)
 Q_DECLARE_OPERATORS_FOR_FLAGS(ModelDrawable::Animator::OngoingSequence::Flags)
+Q_DECLARE_OPERATORS_FOR_FLAGS(ModelDrawable::Appearance::Flags)
 
 } // namespace de
 
