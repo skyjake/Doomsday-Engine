@@ -97,8 +97,8 @@ DENG_GUI_PIMPL(MultiplayerColumnWidget)
         menu->rule()
                 .setInput(Rule::Width, area.contentRule().width())
                 .setInput(Rule::Left,  area.contentRule().left())
-                .setInput(Rule::Top,   self.header().rule().bottom() +
-                                       style().rules().rule("gap") * 2);
+                .setInput(Rule::Top,   self.header().rule().bottom()/* +
+                                       style().rules().rule("gap")*/);
     }
 
     ~Instance()
@@ -224,6 +224,7 @@ MultiplayerColumnWidget::MultiplayerColumnWidget()
                                 d->menu->rule().height());
 
     header().title().setText(_E(s) "dengine.net\n" _E(.)_E(w) + tr("Multiplayer Games"));
+    header().info().setText(tr("Multiplayer servers are located via the dengine.net master server and broadcasting on the local network."));
 }
 
 String MultiplayerColumnWidget::tabHeading() const

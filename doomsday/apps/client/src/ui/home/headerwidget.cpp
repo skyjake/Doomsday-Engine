@@ -43,6 +43,7 @@ DENG_GUI_PIMPL(HeaderWidget)
         self.add(infoPanel = new PanelWidget);
         info  = new LabelWidget;
         infoPanel->setContent(info);
+        infoPanel->open();
         self.add(menuButton = new ButtonWidget);
     }
 };
@@ -79,7 +80,7 @@ HeaderWidget::HeaderWidget()
     d->menuButton->setFont("small");
     d->menuButton->setText("...");
     d->menuButton->margins().setTopBottom("unit");
-    d->menuButton->setAction(new CallbackAction([this] ()
+    /*d->menuButton->setAction(new CallbackAction([this] ()
     {
         if(d->infoPanel->isOpen())
         {
@@ -89,7 +90,7 @@ HeaderWidget::HeaderWidget()
         {
             d->infoPanel->open();
         }
-    }));
+    }));*/
 
     d->logoBg->rule().setRect(d->logo->rule());
     d->logo->rule()
@@ -112,7 +113,8 @@ HeaderWidget::HeaderWidget()
     d->info->rule()
             .setInput(Rule::Width,  rule().width());
 
-    rule().setInput(Rule::Height, logoHeight + d->infoPanel->rule().height());
+    rule().setInput(Rule::Height, logoHeight + d->infoPanel->rule().height() +
+                    margins().height());
 }
 
 LabelWidget &HeaderWidget::logo()

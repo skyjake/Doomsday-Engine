@@ -67,8 +67,8 @@ DENG_GUI_PIMPL(GameColumnWidget)
         menu->rule()
                 .setInput(Rule::Width, area.contentRule().width())
                 .setInput(Rule::Left,  area.contentRule().left())
-                .setInput(Rule::Top,   self.header().rule().bottom() +
-                                       style().rules().rule("gap")*2);
+                .setInput(Rule::Top,   self.header().rule().bottom()/* +
+                                       style().rules().rule("gap")*/);
 
         DoomsdayApp::games().audienceForReadiness() += this;
         App::config("home.showUnplayableGames").audienceForChange() += this;

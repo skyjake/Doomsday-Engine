@@ -28,6 +28,8 @@ using namespace de;
 NoGamesColumnWidget::NoGamesColumnWidget()
     : ColumnWidget("nogames-column")
 {
+    header().hide();
+
     LabelWidget *notice = LabelWidget::newWithText(
                 _E(b) + tr("No playable games were found.\n") + _E(.) +
                 tr("Please select the folder where you have one or more game WAD files."),
