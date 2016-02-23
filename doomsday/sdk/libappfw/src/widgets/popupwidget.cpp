@@ -51,7 +51,7 @@ DENG_GUI_PIMPL(PopupWidget)
     Instance(Public *i) : Base(i)
     {
         // Style.
-        marker = &style().rules().rule("gap");
+        marker = &rule("gap");
     }
 
     ~Instance()
@@ -360,7 +360,7 @@ GuiWidget::Background PopupWidget::infoStyleBackground() const
     return Background(style().colors().colorf("popup.info.background"),
                       Background::BorderGlow,
                       style().colors().colorf("popup.info.glow"),
-                      style().rules().rule("glow").valuei());
+                      rule("glow").valuei());
 }
 
 bool PopupWidget::handleEvent(Event const &event)

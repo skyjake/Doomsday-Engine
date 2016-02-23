@@ -34,7 +34,7 @@ DENG_GUI_PIMPL(AuxButtonWidget)
         aux->setFont("small");
         aux->setTextColor("text");
         aux->setSizePolicy(ui::Expand, ui::Fixed);
-        Rule const &unit = style().rules().rule("unit");
+        Rule const &unit = rule("unit");
         aux->rule()
                 .setInput(Rule::Right,  self.rule().right()  - unit)
                 .setInput(Rule::Top,    self.rule().top()    + unit)
@@ -43,7 +43,7 @@ DENG_GUI_PIMPL(AuxButtonWidget)
         aux->audienceForStateChange() += this;
 
         self.margins().set("dialog.gap").setLeft("gap");
-        self.margins().setRight(aux->rule().width() + style().rules().rule("gap"));
+        self.margins().setRight(aux->rule().width() + rule("gap"));
     }
 
     void setAuxBorderColorf(Vector4f const &colorf)

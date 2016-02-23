@@ -122,6 +122,11 @@ public:
         return Base::self.style();
     }
 
+    Rule const &rule(DotPath const &path) const
+    {
+        return Base::self.rule(path);
+    }
+
     void atlasContentRepositioned(Atlas &atlas)
     {
         if(_observingAtlas == &atlas)

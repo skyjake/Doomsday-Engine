@@ -156,8 +156,8 @@ public ChildWidgetOrganizer::IFilter
             heading->setFont("heading");
             heading->margins()
                     .setBottom("")
-                    .setTop (style().rules().rule("gap") + style().rules().rule("dialog.gap"))
-                    .setLeft(style().rules().rule("gap") + style().rules().rule("dialog.gap"));
+                    .setTop (rule("gap") + rule("dialog.gap"))
+                    .setLeft(rule("gap") + rule("dialog.gap"));
             heading->setSizePolicy(ui::Filled, ui::Expand);
             heading->setTextColor("accent");
             heading->setImageColor(style().colors().colorf("accent"));
@@ -220,7 +220,7 @@ public ChildWidgetOrganizer::IFilter
         Rule const *maxHeight = holdRef(root().viewHeight());
         if(self.openingDirection() == ui::Down)
         {
-            changeRef(maxHeight, *maxHeight - self.anchor().top() - style().rules().rule("gap"));
+            changeRef(maxHeight, *maxHeight - self.anchor().top() - rule("gap"));
         }
 
         // The container's height is limited by the height of the view. Normally

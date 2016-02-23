@@ -62,7 +62,7 @@ DENG_GUI_PIMPL(MessageDialog)
         // Simple vertical layout.
         SequentialLayout layout(area.contentRule().left(),
                                 area.contentRule().top());
-        layout.setOverrideWidth(style().rules().rule("dialog.message.width"));
+        layout.setOverrideWidth(rule("dialog.message.width"));
 
         // Put all the widgets into the layout.
         foreach(Widget *w, area.childWidgets())

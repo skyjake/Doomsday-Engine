@@ -257,8 +257,8 @@ DENG_GUI_PIMPL(PopupMenuWidget)
     {
         bool const useExtraPadding = hasButtonsWithImages();
 
-        auto const &padding = style().rules().rule("popup.menu.paddedmargin");
-        auto const &none    = style().rules().rule("popup.menu.margin");
+        auto const &padding = rule("popup.menu.paddedmargin");
+        auto const &none    = rule("popup.menu.margin");
 
         foreach(Widget *child, self.menu().childWidgets())
         {
@@ -295,7 +295,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
                         LabelWidget::ContentLayout layout;
                         button->contentLayout(layout);
                         sumInto(padRule, -Const(layout.image.width()) -
-                                style().rules().rule(button->textGap()));
+                                rule(button->textGap()));
                     }
                     widget.margins().setLeft(*padRule);
                     releaseRef(padRule);

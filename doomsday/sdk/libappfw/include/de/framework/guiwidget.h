@@ -228,6 +228,7 @@ public:
     Widget::Children childWidgets() const;
     Widget *parentWidget() const;
     Style const &style() const;
+    Rule const &rule(DotPath const &path) const;
 
     /**
      * Returns the rule rectangle that defines the placement of the widget on

@@ -61,7 +61,7 @@ DENG_GUI_PIMPL(NotificationAreaWidget)
 
     void updateChildLayout()
     {
-        Rule const &gap = style().rules().rule("unit");
+        Rule const &gap = rule("unit");
 
         // The children are laid out simply in a row from right to left.
         SequentialLayout layout(self.rule().right(), self.rule().top(), ui::Left);
@@ -93,7 +93,7 @@ DENG_GUI_PIMPL(NotificationAreaWidget)
 
     void hide(TimeDelta const &span = ANIM_SPAN)
     {
-        shift->set(self.rule().height() + style().rules().rule("gap"), span);
+        shift->set(self.rule().height() + rule("gap"), span);
         shift->setStyle(Animation::EaseIn);
     }
 
@@ -154,14 +154,14 @@ NotificationAreaWidget::NotificationAreaWidget(String const &name)
     // Initially the widget is empty.
     rule().setSize(Const(0), Const(0));
     d->shift->set(style().fonts().font("default").height().valuei() +
-                  style().rules().rule("gap").valuei() * 3);
+                  rule("gap").valuei() * 3);
     hide();
 }
 
 void NotificationAreaWidget::useDefaultPlacement(RuleRectangle const &area)
 {
-    rule().setInput(Rule::Top,   area.top() + style().rules().rule("gap") - shift())
-          .setInput(Rule::Right, area.right() - style().rules().rule("gap"));
+    rule().setInput(Rule::Top,   area.top() + rule("gap") - shift())
+          .setInput(Rule::Right, area.right() - rule("gap"));
 }
 
 Rule const &NotificationAreaWidget::shift()

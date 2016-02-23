@@ -413,6 +413,11 @@ Style const &GuiWidget::style() const
     return Style::get();
 }
 
+Rule const &GuiWidget::rule(DotPath const &path) const
+{
+    return style().rules().rule(path);
+}
+
 Font const &GuiWidget::font() const
 {
     return style().fonts().font(d->fontId);

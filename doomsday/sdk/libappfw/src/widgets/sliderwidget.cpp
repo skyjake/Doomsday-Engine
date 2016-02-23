@@ -42,7 +42,7 @@ public:
         _edit->setSignalOnEnter(true);
         connect(_edit, SIGNAL(enterPressed(QString)), &slider, SLOT(setValueFromText(QString)));
         connect(_edit, SIGNAL(enterPressed(QString)), this, SLOT(close()));
-        _edit->rule().setInput(Rule::Width, slider.style().rules().rule("slider.editor"));
+        _edit->rule().setInput(Rule::Width, slider.rule("slider.editor"));
 
         _edit->setText(QString::number(slider.value() * slider.displayFactor(), 'f',
                                        slider.precision()));
@@ -133,7 +133,7 @@ DENG_GUI_PIMPL(SliderWidget)
         textColor    = style().colors().colorf("text");
         invTextColor = style().colors().colorf("inverted.text");
 
-        endLabelSize = style().rules().rule("slider.label").valuei();
+        endLabelSize = rule("slider.label").valuei();
 
         for(int i = 0; i < int(NUM_LABELS); ++i)
         {
@@ -453,7 +453,7 @@ SliderWidget::SliderWidget(String const &name)
     : GuiWidget(name), d(new Instance(this))
 {
     // Default size.
-    rule().setInput(Rule::Width,  style().rules().rule("slider.width"))
+    rule().setInput(Rule::Width,  rule("slider.width"))
           .setInput(Rule::Height, OperatorRule::maximum(
                         style().fonts().font("default").height(),
                         font().height()) + margins().height());

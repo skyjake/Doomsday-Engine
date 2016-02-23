@@ -144,7 +144,7 @@ DENG_GUI_PIMPL(TabWidget)
                 selWidth->set(w.rule().width(), span);
 
                 selected->rule()
-                    .setInput(Rule::Height, style().rules().rule("halfunit"))
+                    .setInput(Rule::Height, rule("halfunit"))
                     .setInput(Rule::Top,    w.rule().bottom());
             }
         }
