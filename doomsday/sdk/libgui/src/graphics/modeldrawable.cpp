@@ -737,6 +737,7 @@ DENG2_PIMPL(ModelDrawable)
     void buildNodeLookup(aiNode const &node)
     {
         String const name = node.mName.C_Str();
+        qDebug() << "Node:" << name;
         if(!name.isEmpty())
         {
             nodeNameToPtr.insert(name, &node);
@@ -1053,19 +1054,18 @@ DENG2_PIMPL(ModelDrawable)
     struct AccumData
     {
         Animator const &animator;
-        ddouble time;
-        aiAnimation const *anim;
+        ddouble time = 0.0;
+        aiAnimation const *anim = nullptr;
         QVector<Matrix4f> finalTransforms;
 
         AccumData(Animator const &animator, int boneCount)
             : animator(animator)
-            , time(0)
-            , anim(0)
             , finalTransforms(boneCount)
         {}
 
         aiNodeAnim const *findNodeAnim(aiNode const &node) const
         {
+            if(!anim) return nullptr;
             for(duint i = 0; i < anim->mNumChannels; ++i)
             {
                 aiNodeAnim const *na = anim->mChannels[i];
@@ -1074,18 +1074,19 @@ DENG2_PIMPL(ModelDrawable)
                     return na;
                 }
             }
-            return 0;
+            return nullptr;
         }
     };
 
     void accumulateAnimationTransforms(Animator const &animator,
                                        ddouble time,
-                                       aiAnimation const &animSeq,
+                                       aiAnimation const *animSeq,
                                        aiNode const &rootNode) const
     {
         AccumData data(animator, boneCount());
-        data.anim = &animSeq;
-        data.time = std::fmod(secondsToTicks(time, animSeq), animSeq.mDuration); // wrap animation
+        data.anim = animSeq;
+        // Wrap animation time.
+        data.time = animSeq? std::fmod(secondsToTicks(time, *animSeq), animSeq->mDuration) : time;
 
         accumulateTransforms(rootNode, data);
 
@@ -1101,6 +1102,10 @@ DENG2_PIMPL(ModelDrawable)
     {
         Matrix4f nodeTransform = convertMatrix(node.mTransformation);
 
+        // Additional rotation?
+        Vector4f const axisAngle = data.animator.extraRotationForNode(node.mName.C_Str());
+
+        // Transform according to the animation sequence.
         if(aiNodeAnim const *anim = data.findNodeAnim(node))
         {
             // Interpolate for this point in time.
@@ -1108,14 +1113,22 @@ DENG2_PIMPL(ModelDrawable)
             Matrix4f const scaling     = Matrix4f::scale(interpolateScaling(data.time, *anim));
             Matrix4f       rotation    = convertMatrix(aiMatrix4x4(interpolateRotation(data.time, *anim).GetMatrix()));
 
-            // Check for an additional rotation.
-            Vector4f const axisAngle = data.animator.extraRotationForNode(node.mName.C_Str());
             if(!fequal(axisAngle.w, 0))
             {
+                // Include the custom extra rotation.
                 rotation = Matrix4f::rotate(axisAngle.w, axisAngle) * rotation;
             }
 
             nodeTransform = translation * rotation * scaling;
+        }
+        else
+        {
+            // Model does not specify animation information for this node.
+            // Only apply the possible additional rotation.
+            if(!fequal(axisAngle.w, 0))
+            {
+                nodeTransform = Matrix4f::rotate(axisAngle.w, axisAngle) * nodeTransform;
+            }
         }
 
         Matrix4f globalTransform = parentTransform * nodeTransform;
@@ -1198,7 +1211,19 @@ DENG2_PIMPL(ModelDrawable)
 
     void updateMatricesFromAnimation(Animator const *animator) const
     {
-        if(!scene->HasAnimations() || !animator) return;
+        // Cannot do anything without an Animator.
+        if(!animator) return;
+
+        if(!scene->HasAnimations() || !animator->count())
+        {
+            // If requested, run through the bone transformations even when
+            // no animations are active.
+            if(animator->flags().testFlag(Animator::AlwaysTransformNodes))
+            {
+                accumulateAnimationTransforms(*animator, 0, nullptr, *scene->mRootNode);
+                return;
+            }
+        }
 
         // Apply all current animations.
         for(int i = 0; i < animator->count(); ++i)
@@ -1211,7 +1236,7 @@ DENG2_PIMPL(ModelDrawable)
 
             accumulateAnimationTransforms(*animator,
                                           animator->currentTime(i),
-                                          *scene->mAnimations[animSeq.animId],
+                                          scene->mAnimations[animSeq.animId],
                                           *nodeNameToPtr[animSeq.node]);
         }
     }
@@ -1669,6 +1694,7 @@ DENG2_PIMPL_NOREF(ModelDrawable::Animator)
     Constructor constructor;
     ModelDrawable const *model = nullptr;
     QList<OngoingSequence *> anims;
+    Flags flags = DefaultFlags;
 
     Instance(Constructor ctr, ModelDrawable const *mdl = 0)
         : constructor(ctr)
@@ -1766,6 +1792,16 @@ ModelDrawable::Animator::Animator(ModelDrawable const &model, Constructor constr
 void ModelDrawable::Animator::setModel(ModelDrawable const &model)
 {
     d->setModel(&model);
+}
+
+void ModelDrawable::Animator::setFlags(Flags const &flags, FlagOp op)
+{
+    applyFlagOperation(d->flags, flags, op);
+}
+
+ModelDrawable::Animator::Flags ModelDrawable::Animator::flags() const
+{
+    return d->flags;
 }
 
 ModelDrawable const &ModelDrawable::Animator::model() const
