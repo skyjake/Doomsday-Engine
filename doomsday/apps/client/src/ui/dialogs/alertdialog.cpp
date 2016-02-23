@@ -206,7 +206,7 @@ DENG_GUI_PIMPL(AlertDialog)
         // of the alert.
         label.setBehavior(ContentClipping); // allow clip-culling
         label.setTextStyle(&styling);
-        label.setMaximumTextWidth(style().rules().rule("alerts.width").valuei());
+        label.setMaximumTextWidth(rule("alerts.width").valuei());
         label.setSizePolicy(ui::Expand, ui::Expand);
         label.setAppearanceAnimation(LabelWidget::AppearGrowVertically, 0.5);
         label.setAlignment(ui::AlignBottom);

@@ -173,7 +173,7 @@ DENG_GUI_PIMPL(HomeWidget)
     void calculateColumnCount()
     {
         visibleColumnCount = de::max(1.f, self.rule().width().value() /
-                                     style().rules().rule("home.column.width").value());
+                                     rule("home.column.width").value());
     }
 
     void updateLayout()
@@ -290,7 +290,7 @@ HomeWidget::HomeWidget()
     add(d->tabs);
 
     // Define widget layout.
-    Rule const &gap = style().rules().rule("gap");
+    Rule const &gap = rule("gap");
     d->tabsBackground->rule()
             .setInput(Rule::Left,   rule().left())
             .setInput(Rule::Top,    rule().top())

@@ -44,7 +44,7 @@ HomeMenuWidget::HomeMenuWidget(String const &name)
     enablePageKeys(false);
     setGridSize(1, ui::Filled, 0, ui::Expand);
     margins().setLeftRight("");
-    layout().setRowPadding(style().rules().rule("gap"));
+    layout().setRowPadding(rule("gap"));
 }
 
 void HomeMenuWidget::unselectAll()

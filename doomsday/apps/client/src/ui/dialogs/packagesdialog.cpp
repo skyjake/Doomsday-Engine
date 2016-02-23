@@ -147,7 +147,7 @@ DENG_GUI_PIMPL(PackagesDialog)
                     .setInput(Rule::Height, _loadButton->rule().height())
                     .setMidAnchorY(rule().midY());
 
-            rule().setInput(Rule::Width,  style().rules().rule("dialog.packages.width"))
+            rule().setInput(Rule::Width,  rule("dialog.packages.width"))
                   .setInput(Rule::Height, _title->rule().height() +
                             _subtitle->rule().height() + _tags.at(0)->rule().height());
         }

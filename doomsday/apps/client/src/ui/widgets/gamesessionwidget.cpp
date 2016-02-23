@@ -74,7 +74,7 @@ DENG2_PIMPL(GameSessionWidget)
         {
             self.add(doc = new DocumentPopupWidget);
         }
-        doc->document().setMaximumLineWidth(doc->style().rules().rule("document.popup.width").valuei());
+        doc->document().setMaximumLineWidth(doc->rule("document.popup.width").valuei());
         info->setPopup(*doc, popupOpeningDirection);
         info->setOpener([this] (PopupWidget *) {
             self.updateInfoContent();

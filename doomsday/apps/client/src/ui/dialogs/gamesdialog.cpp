@@ -141,6 +141,6 @@ void GamesDialog::preparePanelForOpening()
 
     d->gameSel->rule()
             .setInput(Rule::Width,  OperatorRule::minimum(
-                          style().rules().rule("gameselection.max.width"),
+                          rule("gameselection.max.width"),
                           root().viewWidth() - margins().width()));
 }

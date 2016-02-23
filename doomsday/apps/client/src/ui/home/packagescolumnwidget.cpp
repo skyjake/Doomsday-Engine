@@ -32,7 +32,7 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
         packages->rule()
                 .setInput(Rule::Width, area.contentRule().width())
                 .setInput(Rule::Top,   self.header().rule().bottom() +
-                                       style().rules().rule("gap"))
+                                       rule("gap"))
                 .setInput(Rule::Left,  area.contentRule().left());
     }
 };
@@ -46,7 +46,7 @@ PackagesColumnWidget::PackagesColumnWidget()
 
     scrollArea().setContentSize(maximumContentWidth(),
                                 header().rule().height() +
-                                style().rules().rule("gap") +
+                                rule("gap") +
                                 d->packages->rule().height());
 }
 

@@ -207,7 +207,7 @@ InputSettingsDialog::InputSettingsDialog(String const &name)
             << *d->mouseFilterX  << *d->mouseFilterY
             << *d->mouseDisableX << *d->mouseDisableY;
 
-    applyNote->setMaximumTextWidth(layout2.width() - style().rules().rule("dialog.gap"));
+    applyNote->setMaximumTextWidth(layout2.width() - rule("dialog.gap"));
 
     area().setContentSize(OperatorRule::maximum(layout.width(), layout2.width()),
                           layout.height() + layout2.height());

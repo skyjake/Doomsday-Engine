@@ -77,9 +77,7 @@ DENG_GUI_PIMPL(PackagesWidget)
             icon().setImage(new StyleProceduralImage("package", *this));
             Rule const &height = style().fonts().font("default").height();
             icon().setOverrideImageSize(height.value());
-            icon().rule().setInput(Rule::Width, height + label().margins().height());
-
-            label().margins().setBottom(style().fonts().font("default").lineSpacing());
+            icon().rule().setInput(Rule::Width, height + rule("gap")*2);
 
             _loadButton = new ButtonWidget;
             //_loadButton->setFont("small");
@@ -158,7 +156,7 @@ DENG_GUI_PIMPL(PackagesWidget)
                     .setInput(Rule::Height, _loadButton->rule().height())
                     .setMidAnchorY(rule().midY());
 
-            rule().setInput(Rule::Width,  style().rules().rule("dialog.packages.width"))
+            rule().setInput(Rule::Width,  rule("dialog.packages.width"))
                   .setInput(Rule::Height, _title->rule().height() +
                             _subtitle->rule().height() + _tags.at(0)->rule().height());*/
         }
@@ -183,10 +181,13 @@ DENG_GUI_PIMPL(PackagesWidget)
                 _tags.append(btn);
             }
 
-            /*if(!_tags.isEmpty())
+            if(!_tags.isEmpty())
             {
-                rule().setInput(Rule::Height, label().rule().height());
-            }*/
+                //rule().setInput(Rule::Height, label().rule().height());
+                label().margins().setBottom(rule("unit")*2 +
+                                            style().fonts().font("small").height() +
+                                            rule("gap"));
+            }
         }
 
         void updateTagButtonStyle(ButtonWidget *tag, String const &color)
@@ -217,7 +218,7 @@ DENG_GUI_PIMPL(PackagesWidget)
                 //_loadButton->setTextColor("altaccent");
                 //_loadButton->setBorderColor("altaccent");
                 //_title->setFont("choice.selected");
-                //auxColor = "altaccent";
+                auxColor = "background";
             }
             else
             {

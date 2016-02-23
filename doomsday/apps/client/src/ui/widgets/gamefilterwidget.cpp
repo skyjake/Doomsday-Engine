@@ -155,8 +155,8 @@ void GameFilterWidget::enableBackground(Rule const &scrollPositionRule)
     d->background->rule()
             .setInput(Rule::Left,   root().viewLeft())
             .setInput(Rule::Right,  root().viewRight())
-            .setInput(Rule::Top,    d->tabs->rule().top()    - style().rules().rule("gap"))
-            .setInput(Rule::Bottom, d->tabs->rule().bottom() + style().rules().rule("gap"));
+            .setInput(Rule::Top,    d->tabs->rule().top()    - rule("gap"))
+            .setInput(Rule::Bottom, d->tabs->rule().bottom() + rule("gap"));
 
     d->background->show();
 }

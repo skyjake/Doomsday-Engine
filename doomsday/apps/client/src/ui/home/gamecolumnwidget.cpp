@@ -68,7 +68,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
                 .setInput(Rule::Width, area.contentRule().width())
                 .setInput(Rule::Left,  area.contentRule().left())
                 .setInput(Rule::Top,   self.header().rule().bottom()/* +
-                                       style().rules().rule("gap")*/);
+                                       rule("gap")*/);
 
         DoomsdayApp::games().audienceForReadiness() += this;
         App::config("home.showUnplayableGames").audienceForChange() += this;
@@ -173,7 +173,7 @@ GameColumnWidget::GameColumnWidget(String const &gameFamily,
 {
     scrollArea().setContentSize(maximumContentWidth(),
                                 header().rule().height() +
-                                style().rules().rule("gap") +
+                                rule("gap") +
                                 d->menu->rule().height());
 
     header().title().setText(String(_E(s) "%1\n" _E(.)_E(w) "%2")

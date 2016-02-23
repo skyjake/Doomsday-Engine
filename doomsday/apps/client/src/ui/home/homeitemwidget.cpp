@@ -99,7 +99,7 @@ DENG_GUI_PIMPL(HomeItemWidget)
             layout << *button;
             button->rule().setMidAnchorY(label->rule().midY());
         }
-        changeRef(buttonsWidth, layout.width() + style().rules().rule("gap"));
+        changeRef(buttonsWidth, layout.width() + rule("gap"));
     }
 
     void showButtons(bool show)
@@ -113,7 +113,7 @@ DENG_GUI_PIMPL(HomeItemWidget)
         }
         else
         {
-            labelRightMargin->set(-style().rules().rule("halfunit"), SPAN);
+            labelRightMargin->set(-rule("halfunit"), SPAN);
         }
     }
 
@@ -152,7 +152,7 @@ HomeItemWidget::HomeItemWidget(String const &name)
             .setInput(Rule::Left,  d->icon->rule().right())
             .setInput(Rule::Right, rule().right());
     d->label->margins().setRight(*d->labelRightMargin +
-                                 style().rules().rule("gap"));
+                                 rule("gap"));
 
     rule().setInput(Rule::Height, d->label->rule().height());
 }

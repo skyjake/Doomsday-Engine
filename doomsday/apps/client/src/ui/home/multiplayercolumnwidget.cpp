@@ -98,7 +98,7 @@ DENG_GUI_PIMPL(MultiplayerColumnWidget)
                 .setInput(Rule::Width, area.contentRule().width())
                 .setInput(Rule::Left,  area.contentRule().left())
                 .setInput(Rule::Top,   self.header().rule().bottom()/* +
-                                       style().rules().rule("gap")*/);
+                                       rule("gap")*/);
     }
 
     ~Instance()
@@ -220,7 +220,7 @@ MultiplayerColumnWidget::MultiplayerColumnWidget()
 {
     scrollArea().setContentSize(maximumContentWidth(),
                                 header().rule().height() +
-                                style().rules().rule("gap") +
+                                rule("gap") +
                                 d->menu->rule().height());
 
     header().title().setText(_E(s) "dengine.net\n" _E(.)_E(w) + tr("Multiplayer Games"));

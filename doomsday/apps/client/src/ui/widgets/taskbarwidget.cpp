@@ -157,8 +157,8 @@ DENG_GUI_PIMPL(TaskBarWidget)
 
     void updateStyle()
     {
-        minSpace = style().rules().rule("console.commandline.width.min").valuei();
-        maxSpace = style().rules().rule("console.commandline.width.max").valuei();
+        minSpace = rule("console.commandline.width.min").valuei();
+        maxSpace = rule("console.commandline.width.max").valuei();
     }
 
     void updateLayoutMode()
@@ -339,7 +339,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     Background bg(style().colors().colorf("background"));
 #endif
 
-    Rule const &gap = style().rules().rule("gap");
+    Rule const &gap = rule("gap");
 
     d->backBlur = new LabelWidget;
     d->backBlur->rule()
@@ -669,7 +669,7 @@ void TaskBarWidget::close()
 
         // Slide the task bar down.
         d->vertShift->set(rule().height().valuei() +
-                          style().rules().rule("unit").valuei(), OPEN_CLOSE_SPAN);
+                          rule("unit").valuei(), OPEN_CLOSE_SPAN);
         setOpacity(0, OPEN_CLOSE_SPAN);
 
         d->console->closeLog();

@@ -144,7 +144,7 @@ void SidebarWidget::updateSidebarLayout(de::Rule const &minWidth,
 
     d->container->setContentSize(OperatorRule::maximum(minWidth,
                                                        d->layout->width(),
-                                                       style().rules().rule("sidebar.width")),
+                                                       rule("sidebar.width")),
                                  d->title->rule().height() +
                                  d->layout->height() +
                                  extraHeight);

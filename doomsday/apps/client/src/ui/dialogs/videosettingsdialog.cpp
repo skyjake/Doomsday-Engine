@@ -238,12 +238,12 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
     d->windowButton->setAction(new SignalAction(this, SLOT(showWindowMenu())));
 
     // Layout all widgets.
-    Rule const &gap = style().rules().rule("dialog.gap");
+    Rule const &gap = rule("dialog.gap");
 
     GridLayout layout(area().contentRule().left(),
                       area().contentRule().top(), GridLayout::RowFirst);
     layout.setGridSize(2, 3);
-    layout.setColumnPadding(style().rules().rule("unit"));
+    layout.setColumnPadding(rule("unit"));
     layout << *d->showFps
            << *d->fsaa
            << *d->vsync

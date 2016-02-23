@@ -347,7 +347,7 @@ DENG_GUI_PIMPL(TutorialWidget)
             }
             dlg->message().setText(msg);
             dlg->setAnchor(win.taskBar().console().commandLine().rule().left() +
-                           style().rules().rule("gap"),
+                           rule("gap"),
                            win.taskBar().rule().top());
             dlg->setOpeningDirection(ui::Up);
             dlg->updateLayout();
