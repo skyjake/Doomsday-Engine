@@ -364,6 +364,10 @@ DENG2_PIMPL(StateAnimator)
 
             animVars.insert(variableDef.gets(DEF_NODE), var.get());
             var.release();
+
+            // The model should now be transformed even without active
+            // animation sequences so that the variables are applied.
+            self.setFlags(AlwaysTransformNodes);
         }
         catch(Error const &er)
         {
