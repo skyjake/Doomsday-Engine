@@ -69,38 +69,6 @@ DENG_GUI_PIMPL(PackagesWidget)
      */
     class PackageListWidget : public HomeItemWidget
     {
-    private:
-        /// Action to load or unload a package.
-        /*struct LoadAction : public Action
-        {
-            PackageListWidget &owner;
-
-            LoadAction(PackageListWidget &widget) : owner(widget) {}
-
-            void trigger()
-            {
-                Action::trigger();
-                auto &loader = App::packageLoader();
-                if(loader.isLoaded(owner.packageId()))
-                {
-                    loader.unload(owner.packageId());
-                }
-                else
-                {
-                    try
-                    {
-                        loader.load(owner.packageId());
-                    }
-                    catch(Error const &er)
-                    {
-                        LOG_RES_ERROR("Package \"" + owner.packageId() +
-                                      "\" could not be loaded: " + er.asText());
-                    }
-                }
-                owner.updateContents();
-            }
-        };*/
-
     public:
         PackageListWidget(PackageItem const &item)
             : _item(&item)
@@ -111,10 +79,12 @@ DENG_GUI_PIMPL(PackagesWidget)
             icon().setOverrideImageSize(height.value());
             icon().rule().setInput(Rule::Width, height + label().margins().height());
 
+            label().margins().setBottom(style().fonts().font("default").lineSpacing());
+
             _loadButton = new ButtonWidget;
             //_loadButton->setFont("small");
             //_loadButton->margins().setTopBottom("unit");
-            _loadButton->setAction(new CallbackAction([this] ()
+            _loadButton->setAction([this] ()
             {
                 auto &loader = App::packageLoader();
                 if(loader.isLoaded(packageId()))
@@ -134,7 +104,7 @@ DENG_GUI_PIMPL(PackagesWidget)
                     }
                 }
                 updateContents();
-            }));
+            });
             connect(this, &HomeItemWidget::doubleClicked, [this] () {
                 _loadButton->trigger();
             });
@@ -195,8 +165,8 @@ DENG_GUI_PIMPL(PackagesWidget)
 
         void createTagButtons()
         {
-            /*SequentialLayout layout(_subtitle->rule().left(),
-                                    _subtitle->rule().bottom(), ui::Right);
+            SequentialLayout layout(label().rule().left() + label().margins().left(),
+                                    label().rule().bottom() - label().margins().bottom(), ui::Right);
 
             for(QString tag : Package::tags(*_item->file))
             {
@@ -211,6 +181,11 @@ DENG_GUI_PIMPL(PackagesWidget)
 
                 layout << *btn;
                 _tags.append(btn);
+            }
+
+            /*if(!_tags.isEmpty())
+            {
+                rule().setInput(Rule::Height, label().rule().height());
             }*/
         }
 
@@ -312,12 +287,17 @@ DENG_GUI_PIMPL(PackagesWidget)
                 .setInput(Rule::Right, self.rule().right())
                 .setInput(Rule::Top,   search->rule().bottom());
         menu->organizer().setWidgetFactory(*this);
+
+        QObject::connect(search, &LineEditWidget::editorContentChanged,
+                         [this] () { updateSearchTerms(); });
+        QObject::connect(search, &LineEditWidget::enterPressed,
+                         [this] () { focusFirstListedPackge(); });
     }
 
     void populate()
     {
         StringList packages = App::packageLoader().findAllPackages();
-        qSort(packages);
+        //qSort(packages);
 
         // Remove from the list those packages that are no longer listed.
         for(ui::DataPos i = 0; i < menu->items().size(); ++i)
@@ -334,7 +314,8 @@ DENG_GUI_PIMPL(PackagesWidget)
             File const &pack = App::rootFolder().locate<File>(path);
 
             // Core packages are mandatory and thus omitted.
-            if(Package::tags(pack).contains("core")) continue;
+            auto const tags = Package::tags(pack);
+            if(tags.contains("core") || tags.contains("gamedata")) continue;
 
             // Is this already in the list?
             ui::DataPos pos = menu->items().findData(pack.objectNamespace().gets("package.ID"));
@@ -348,6 +329,18 @@ DENG_GUI_PIMPL(PackagesWidget)
             }
         }
     }
+
+    void updateSearchTerms()
+    {
+        qDebug() << "begin searching for" << search->text();
+    }
+
+    void focusFirstListedPackge()
+    {
+        //if(menu-)
+    }
+
+//- ChildWidgetOrganizer::IWidgetFactory --------------------------------------
 
     GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *)
     {
