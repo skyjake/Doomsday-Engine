@@ -245,7 +245,8 @@ String GameColumnWidget::tabHeading() const
 
 String GameColumnWidget::configVariableName() const
 {
-    return "home.columns." + (!d->gameFamily.isEmpty()? d->gameFamily : String("otherGames"));
+    return "home.columns." + (!d->gameFamily.isEmpty()? d->gameFamily
+                                                      : String("otherGames"));
 }
 
 void GameColumnWidget::setHighlighted(bool highlighted)

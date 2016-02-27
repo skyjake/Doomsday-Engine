@@ -444,6 +444,22 @@ PackagesWidget::PackagesWidget(String const &name)
     refreshPackages();
 }
 
+void PackagesWidget::operator >> (PersistentState &toState) const
+{
+    if(name().isEmpty()) return;
+
+    Record &rec = toState.objectNamespace();
+    rec.set(name().concatenateMember("search"), d->search->text());
+}
+
+void PackagesWidget::operator << (PersistentState const &fromState)
+{
+    if(name().isEmpty()) return;
+
+    Record const &rec = fromState.objectNamespace();
+    d->search->setText(rec.gets(name().concatenateMember("search"), ""));
+}
+
 void PackagesWidget::refreshPackages()
 {
     App::fileSystem().refresh();

@@ -20,16 +20,21 @@
 #define DENG_CLIENT_UI_HOME_PACKAGESWIDGET_H
 
 #include <de/GuiWidget>
+#include <de/IPersistent>
 
 /**
  * Listing of packages with search and filtering options.
  *
  * Controls its own height; other position rules must be set by the owner.
  */
-class PackagesWidget : public de::GuiWidget
+class PackagesWidget : public de::GuiWidget, public de::IPersistent
 {
 public:
     PackagesWidget(de::String const &name = "");
+
+    // Implements IPersistent.
+    void operator >> (de::PersistentState &toState) const;
+    void operator << (de::PersistentState const &fromState);
 
 public slots:
     void refreshPackages();

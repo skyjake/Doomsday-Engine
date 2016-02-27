@@ -76,8 +76,10 @@ void HomeMenuWidget::setSelectedIndex(int index)
     if(index >= 0 && index < childWidgets().size())
     {
         unselectAll();
-        childWidgets().at(index)->as<HomeItemWidget>().setSelected(true);
         d->selectedIndex = index;
+
+        HomeItemWidget &widget = childWidgets().at(index)->as<HomeItemWidget>();
+        widget.setSelected(true);
     }
 }
 

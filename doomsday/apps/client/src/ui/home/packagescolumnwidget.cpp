@@ -28,7 +28,7 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
     Instance(Public *i) : Base(i)
     {
         ScrollAreaWidget &area = self.scrollArea();
-        area.add(packages = new PackagesWidget);
+        area.add(packages = new PackagesWidget("home-packages"));
         packages->rule()
                 .setInput(Rule::Width, area.contentRule().width())
                 .setInput(Rule::Top,   self.header().rule().bottom() +
