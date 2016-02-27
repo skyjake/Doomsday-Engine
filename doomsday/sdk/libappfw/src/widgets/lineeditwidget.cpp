@@ -242,6 +242,23 @@ LineEditWidget::LineEditWidget(String const &name)
     rule().setInput(Rule::Height, *d->height);
 }
 
+void LineEditWidget::setText(String const &lineText)
+{
+    shell::AbstractLineEditor::setText(lineText);
+
+    if(d->hint)
+    {
+        if(d->showingHint())
+        {
+            d->hint->setOpacity(1, .5);
+        }
+        else
+        {
+            d->hint->setOpacity(0);
+        }
+    }
+}
+
 void LineEditWidget::setEmptyContentHint(String const &hintText)
 {
     if(!d->hint)
