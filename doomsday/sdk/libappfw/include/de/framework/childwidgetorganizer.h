@@ -138,6 +138,12 @@ public:
 
     ui::Item const *findItemForWidget(GuiWidget const &widget) const;
 
+    /**
+     * Filters all items according to the defined IFilter. Widgets are
+     * created and removed as needed according to the filter.
+     */
+    void refilter();
+
 public:
     /**
      * Notified when the organizer creates a widget for a context item. Allows

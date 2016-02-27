@@ -32,9 +32,11 @@ namespace de {
 using namespace ui;
 
 DENG2_PIMPL(MenuWidget)
-, DENG2_OBSERVES(Data, Addition)    // for layout update
-, DENG2_OBSERVES(Data, Removal)     // for layout update
-, DENG2_OBSERVES(Data, OrderChange) // for layout update
+, DENG2_OBSERVES(Data, Addition)        // for layout update
+, DENG2_OBSERVES(Data, Removal)         // for layout update
+, DENG2_OBSERVES(Data, OrderChange)     // for layout update
+, DENG2_OBSERVES(Widget, ChildAddition) // for layout update
+, DENG2_OBSERVES(Widget, ChildRemoval)  // for layout update
 , DENG2_OBSERVES(PopupWidget, Close)
 , DENG2_OBSERVES(Widget, Deletion)
 , public ChildWidgetOrganizer::IWidgetFactory
@@ -141,33 +143,35 @@ DENG2_PIMPL(MenuWidget)
         ui::SubwidgetItem const &_item;
     };
 
-    bool needLayout;
+    bool needLayout = false;
     GridLayout layout;
     ListData defaultItems;
-    Data const *items;
+    Data const *items = nullptr;
     ChildWidgetOrganizer organizer;
     QSet<PanelWidget *> openSubs;
 
-    SizePolicy colPolicy;
-    SizePolicy rowPolicy;
+    SizePolicy colPolicy = Fixed;
+    SizePolicy rowPolicy = Fixed;
 
     Instance(Public *i)
         : Base(i),
-          needLayout(false),
-          items(0),
-          organizer(self),
-          colPolicy(Fixed),
-          rowPolicy(Fixed)
+          organizer(self)
     {
         // We will create widgets ourselves.
         organizer.setWidgetFactory(*this);
 
         // The default context is empty.
         setContext(&defaultItems);
+
+        self.audienceForChildAddition() += this;
+        self.audienceForChildRemoval()  += this;
     }
 
     ~Instance()
     {
+        self.audienceForChildAddition() -= this;
+        self.audienceForChildRemoval()  -= this;
+
         // Clear the data model first, so possible sub-widgets are deleted at the right time.
         // Note that we can't clear an external data model.
         defaultItems.clear();
@@ -208,6 +212,20 @@ DENG2_PIMPL(MenuWidget)
     void dataItemOrderChanged()
     {
         // Make sure we determine the layout for the new order.
+        needLayout = true;
+    }
+
+    void widgetChildAdded(Widget &)
+    {
+        // Make sure we redo the layout with the new child. This occurs
+        // when filtered items are accepted again as widgets.
+        needLayout = true;
+    }
+
+    void widgetChildRemoved(Widget &)
+    {
+        // Make sure we redo the layout without this child. This occurs
+        // when filtered items are removed from the menu.
         needLayout = true;
     }
 
