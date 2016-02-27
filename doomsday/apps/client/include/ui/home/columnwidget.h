@@ -45,6 +45,7 @@ public:
     virtual de::String tabHeading() const = 0;
     virtual de::String configVariableName() const;
     virtual void setHighlighted(bool highlighted);
+    bool isHighlighted() const;
 
     // Events.
     bool dispatchEvent(de::Event const &event,

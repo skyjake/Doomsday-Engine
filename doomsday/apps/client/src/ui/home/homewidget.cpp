@@ -31,6 +31,7 @@
 #include <de/SequentialLayout>
 #include <de/TabWidget>
 #include <de/PopupMenuWidget>
+#include <de/PersistentState>
 #include <de/App>
 
 using namespace de;
@@ -59,6 +60,9 @@ DENG_GUI_PIMPL(HomeWidget)
     TabWidget *tabs;
     int currentOffsetTab = 0;
     ScalarRule *scrollOffset;
+
+    int restoredOffsetTab = -1;
+    int restoredActiveTab = -1;
 
     Instance(Public *i) : Base(i)
     {
@@ -123,6 +127,17 @@ DENG_GUI_PIMPL(HomeWidget)
     {
         updateVisibleColumnsAndTabs();
         updateLayout();
+
+        // Restore previous state?
+        if(restoredActiveTab >= 0)
+        {
+            currentOffsetTab = restoredOffsetTab;
+            setScrollOffset(currentOffsetTab, 0.0);
+            tabs->setCurrent(restoredActiveTab);
+
+            restoredActiveTab = -1;
+            restoredOffsetTab = -1;
+        }
     }
 
     void currentGameChanged(Game const &newGame)
@@ -242,7 +257,12 @@ DENG_GUI_PIMPL(HomeWidget)
         {
             currentOffsetTab = pos - visibleColumnCount + 1;
         }
-        scrollOffset->set(*columnWidth * currentOffsetTab, span);
+        setScrollOffset(currentOffsetTab, span);
+    }
+
+    void setScrollOffset(int tab, TimeDelta const &span)
+    {
+        scrollOffset->set(*columnWidth * tab, span);
     }
 
     void updateHighlightedTab()
@@ -251,6 +271,18 @@ DENG_GUI_PIMPL(HomeWidget)
         {
             columns[pos]->setHighlighted(tabs->currentItem().data().toInt() == pos);
         }
+    }
+
+    int highlightedTab() const
+    {
+        for(int pos = 0; pos < columns.size(); ++pos)
+        {
+            if(columns[pos]->isHighlighted())
+            {
+                return pos;
+            }
+        }
+        return -1;
     }
 };
 
@@ -395,4 +427,18 @@ void HomeWidget::mouseActivityInColumn(QObject const *columnWidget)
             d->tabs->setCurrent(i);
         }
     }
+}
+
+void HomeWidget::operator >> (PersistentState &toState) const
+{
+    Record &rec = toState.objectNamespace();
+    rec.set(name().concatenateMember("firstTab"),  d->currentOffsetTab);
+    rec.set(name().concatenateMember("activeTab"), d->highlightedTab());
+}
+
+void HomeWidget::operator << (PersistentState const &fromState)
+{
+    Record const &rec = fromState.objectNamespace();
+    d->restoredOffsetTab = rec.geti(name().concatenateMember("firstTab"), -1);
+    d->restoredActiveTab = rec.geti(name().concatenateMember("activeTab"), -1);
 }

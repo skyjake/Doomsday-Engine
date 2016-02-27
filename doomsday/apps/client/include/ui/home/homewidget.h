@@ -20,6 +20,7 @@
 #define DENG_CLIENT_UI_HOMEWIDGET_H
 
 #include <de/PopupWidget>
+#include <de/IPersistent>
 
 /**
  * Root widget for the Home UI.
@@ -27,7 +28,7 @@
  * Lays out children in horizontal columns, fitting a suitable number on
  * screen at once.
  */
-class HomeWidget : public de::GuiWidget
+class HomeWidget : public de::GuiWidget, public de::IPersistent
 {
     Q_OBJECT
 
@@ -38,6 +39,10 @@ public:
     bool handleEvent(de::Event const &event) override;
     bool dispatchEvent(de::Event const &event,
                        bool (de::Widget::*memberFunc)(de::Event const &)) override;
+
+    // Implements IPersistent.
+    void operator >> (de::PersistentState &toState) const;
+    void operator << (de::PersistentState const &fromState);
 
     static de::PopupWidget *makeSettingsPopup();
 

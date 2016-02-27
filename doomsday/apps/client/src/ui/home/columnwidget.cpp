@@ -172,6 +172,11 @@ void ColumnWidget::setHighlighted(bool highlighted)
     img.setColor(highlighted? Vector4f(1, 1, 1, 1) : Vector4f(.5f, .5f, .5f, 1.f));
 }
 
+bool ColumnWidget::isHighlighted() const
+{
+    return d->highlighted;
+}
+
 bool ColumnWidget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event const &))
 {
     // Observe mouse clicks occurring in the column.
