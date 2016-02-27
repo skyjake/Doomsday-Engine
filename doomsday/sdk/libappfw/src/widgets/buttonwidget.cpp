@@ -265,7 +265,7 @@ void ButtonWidget::setAction(RefArg<Action> action)
     }
 }
 
-void ButtonWidget::setAction(std::function<void ()> callback)
+void ButtonWidget::setActionFn(std::function<void ()> callback)
 {
     setAction(new CallbackAction(callback));
 }

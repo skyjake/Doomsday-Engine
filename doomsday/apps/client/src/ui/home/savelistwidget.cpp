@@ -73,7 +73,7 @@ DENG_GUI_PIMPL(SaveListWidget)
         button.margins().set("dialog.gap");
         button.set(Background(Vector4f()));
 
-        button.setAction([this, &button] () {
+        button.setActionFn([this, &button] () {
             toggleSelectedItem(button);
             emit owner.mouseActivity();
         });

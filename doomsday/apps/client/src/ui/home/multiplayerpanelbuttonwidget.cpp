@@ -50,7 +50,7 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
         joinButton->setText(tr("Join"));
         joinButton->useInfoStyle();
         joinButton->setSizePolicy(ui::Expand, ui::Expand);
-        joinButton->setAction([this] () { joinButtonPressed(); });
+        joinButton->setActionFn([this] () { joinButtonPressed(); });
         self.addButton(joinButton);
 
         info = new LabelWidget;

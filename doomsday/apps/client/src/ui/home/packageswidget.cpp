@@ -89,7 +89,7 @@ DENG_GUI_PIMPL(PackagesWidget)
             _loadButton = new ButtonWidget;
             //_loadButton->setFont("small");
             //_loadButton->margins().setTopBottom("unit");
-            _loadButton->setAction([this] ()
+            _loadButton->setActionFn([this] ()
             {
                 auto &loader = App::packageLoader();
                 if(loader.isLoaded(packageId()))
@@ -177,7 +177,7 @@ DENG_GUI_PIMPL(PackagesWidget)
             {
                 auto *btn = new ButtonWidget;
                 btn->setText(_E(l) + tag.toLower());
-                btn->setAction([this, tag] ()
+                btn->setActionFn([this, tag] ()
                 {
                     String terms = _owner.d->search->text();
                     if(!terms.isEmpty() && !terms.last().isSpace()) terms += " ";
@@ -305,7 +305,7 @@ DENG_GUI_PIMPL(PackagesWidget)
         clearSearch->rule()
                 .setInput(Rule::Right, search->rule().left())
                 .setMidAnchorY(search->rule().midY());
-        clearSearch->setAction([this] () {
+        clearSearch->setActionFn([this] () {
             search->setText("");
             root().setFocus(search);
         });

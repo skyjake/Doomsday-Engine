@@ -101,8 +101,11 @@ public:
      * when the button is pressed.
      *
      * @param callback  Callback function.
+     *
+     * @todo Rename back to setAction() when MSVC can understand that Action *
+     * cannot be used to initialize a std::function<void ()>.
      */
-    void setAction(std::function<void ()> callback);
+    void setActionFn(std::function<void ()> callback);
 
     Action const *action() const;
 

@@ -55,7 +55,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         playButton->setImage(new StyleProceduralImage("play", self));
         playButton->setImageColor(style().colors().colorf("inverted.text"));
         playButton->setOverrideImageSize(style().fonts().font("default").height().value());
-        playButton->setAction([this] () { playButtonPressed(); });
+        playButton->setActionFn([this] () { playButtonPressed(); });
         self.addButton(playButton);
 
         // List of saved games.
@@ -71,7 +71,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         deleteSaveButton->setSizePolicy(ui::Expand, ui::Expand);
         deleteSaveButton->set(Background());
         deleteSaveButton->hide();
-        deleteSaveButton->setAction([this] () { deleteButtonPressed(); });
+        deleteSaveButton->setActionFn([this] () { deleteButtonPressed(); });
         self.panel().add(deleteSaveButton);
 
         self.panel().setContent(saves);
