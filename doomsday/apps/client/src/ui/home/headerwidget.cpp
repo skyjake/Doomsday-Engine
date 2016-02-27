@@ -132,6 +132,11 @@ LabelWidget &HeaderWidget::info()
     return *d->info;
 }
 
+PanelWidget &HeaderWidget::infoPanel()
+{
+    return *d->infoPanel;
+}
+
 void HeaderWidget::setLogoImage(const DotPath &imageId)
 {
     d->logo->setImage(new StyleProceduralImage(imageId, *d->logo));

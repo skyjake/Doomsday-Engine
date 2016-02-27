@@ -20,6 +20,7 @@
 #define DENG_CLIENT_UI_HEADERWIDGET_H
 
 #include <de/LabelWidget>
+#include <de/PanelWidget>
 
 /**
  * Home column header.
@@ -32,6 +33,7 @@ public:
     de::LabelWidget &logo();
     de::LabelWidget &title();
     de::LabelWidget &info();
+    de::PanelWidget &infoPanel();
 
     void setLogoImage(de::DotPath const &imageId);
     void setLogoBackground(de::DotPath const &imageId);

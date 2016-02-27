@@ -305,7 +305,10 @@ DENG_GUI_PIMPL(PackagesWidget)
         clearSearch->rule()
                 .setInput(Rule::Right, search->rule().left())
                 .setMidAnchorY(search->rule().midY());
-        clearSearch->setAction([this] () { search->setText(""); });
+        clearSearch->setAction([this] () {
+            search->setText("");
+            root().setFocus(search);
+        });
 
         // Filtered list of packages.
         self.add(menu = new HomeMenuWidget);

@@ -43,6 +43,7 @@ PackagesColumnWidget::PackagesColumnWidget()
 {
     header().title().setText(_E(s) "\n" _E(.) + tr("Packages"));
     header().info().setText(tr("Browse available packages and install new ones."));
+    header().infoPanel().close(0);
 
     scrollArea().setContentSize(maximumContentWidth(),
                                 header().rule().height() +
