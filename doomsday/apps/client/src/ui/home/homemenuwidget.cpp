@@ -24,6 +24,8 @@ using namespace de;
 DENG_GUI_PIMPL(HomeMenuWidget)
 , DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
 {
+    int selectedIndex = -1;
+
     Instance(Public *i) : Base(i)
     {
         self.organizer().audienceForWidgetCreation() += this;
@@ -49,13 +51,33 @@ HomeMenuWidget::HomeMenuWidget(String const &name)
 
 void HomeMenuWidget::unselectAll()
 {
-    // Unselect all items.
-    for(auto *w : childWidgets())
+    if(d->selectedIndex >= 0)
     {
-        if(auto *item = w->maybeAs<HomeItemWidget>())
+        d->selectedIndex = -1;
+
+        // Unselect all items.
+        for(auto *w : childWidgets())
         {
-            item->setSelected(false);
+            if(auto *item = w->maybeAs<HomeItemWidget>())
+            {
+                item->setSelected(false);
+            }
         }
+    }
+}
+
+int HomeMenuWidget::selectedIndex() const
+{
+    return d->selectedIndex;
+}
+
+void HomeMenuWidget::setSelectedIndex(int index)
+{
+    if(index >= 0 && index < childWidgets().size())
+    {
+        unselectAll();
+        childWidgets().at(index)->as<HomeItemWidget>().setSelected(true);
+        d->selectedIndex = index;
     }
 }
 
@@ -64,11 +86,16 @@ void HomeMenuWidget::mouseActivityInItem()
     auto *clickedItem = dynamic_cast<HomeItemWidget *>(sender());
 
     // Radio button behavior: other items will be deselected.
-    for(auto *w : childWidgets())
+    for(int i = 0; i < childWidgets().size(); ++i)
     {
-        if(auto *item = w->maybeAs<HomeItemWidget>())
+        if(auto *item = childWidgets().at(i)->maybeAs<HomeItemWidget>())
         {
             item->setSelected(item == clickedItem);
+
+            if(item == clickedItem)
+            {
+                d->selectedIndex = i;
+            }
         }
     }
 }

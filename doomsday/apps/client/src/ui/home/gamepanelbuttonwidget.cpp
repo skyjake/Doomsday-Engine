@@ -22,10 +22,11 @@
 #include "dd_main.h"
 
 #include <doomsday/console/exec.h>
+#include <de/App>
 #include <de/CallbackAction>
 #include <de/ChildWidgetOrganizer>
 #include <de/PopupMenuWidget>
-#include <de/App>
+#include <de/StyleProceduralImage>
 
 using namespace de;
 
@@ -44,14 +45,14 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         , savedItems(savedItems)
     {
         ButtonWidget *packages = new ButtonWidget;
-        packages->setImage(style().images().image("package"));
+        packages->setImage(new StyleProceduralImage("package", self));
         packages->setOverrideImageSize(style().fonts().font("default").height().value());
         packages->setSizePolicy(ui::Expand, ui::Expand);
         self.addButton(packages);
 
         playButton = new ButtonWidget;
         playButton->useInfoStyle();
-        playButton->setImage(style().images().image("play"));
+        playButton->setImage(new StyleProceduralImage("play", self));
         playButton->setImageColor(style().colors().colorf("inverted.text"));
         playButton->setOverrideImageSize(style().fonts().font("default").height().value());
         playButton->setAction([this] () { playButtonPressed(); });
@@ -65,7 +66,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         saves->setItems(savedItems);
 
         deleteSaveButton = new ButtonWidget;
-        deleteSaveButton->setImage(style().images().image("close.ring"));
+        deleteSaveButton->setImage(new StyleProceduralImage("close.ring", self));
         deleteSaveButton->setOverrideImageSize(style().fonts().font("default").height().value());
         deleteSaveButton->setSizePolicy(ui::Expand, ui::Expand);
         deleteSaveButton->set(Background());

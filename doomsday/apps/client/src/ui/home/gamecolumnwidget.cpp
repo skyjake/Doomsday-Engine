@@ -26,6 +26,7 @@
 
 #include <de/ChildWidgetOrganizer>
 #include <de/MenuWidget>
+#include <de/PersistentState>
 #include <de/App>
 
 using namespace de;
@@ -50,7 +51,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
     String gameFamily;
     SavedSessionListData const &savedItems;
     HomeMenuWidget *menu;
-    //Image bgImage;
+    int restoredSelected = -1;
 
     Instance(Public *i,
              String const &gameFamily,
@@ -67,8 +68,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
         menu->rule()
                 .setInput(Rule::Width, area.contentRule().width())
                 .setInput(Rule::Left,  area.contentRule().left())
-                .setInput(Rule::Top,   self.header().rule().bottom()/* +
-                                       rule("gap")*/);
+                .setInput(Rule::Top,   self.header().rule().bottom());
 
         DoomsdayApp::games().audienceForReadiness() += this;
         App::config("home.showUnplayableGames").audienceForChange() += this;
@@ -134,11 +134,17 @@ DENG_GUI_PIMPL(GameColumnWidget)
     void gameReadinessUpdated()
     {
         populateItems();
+
+        // Restore earlier selection?
+        if(restoredSelected >= 0)
+        {
+            menu->setSelectedIndex(restoredSelected);
+            restoredSelected = -1;
+        }
     }
 
-    void variableValueChanged(Variable &var, Value const &)
+    void variableValueChanged(Variable &, Value const &)
     {
-        qDebug() << var.name() << "changed";
         populateItems();
     }
 
@@ -168,7 +174,8 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
 GameColumnWidget::GameColumnWidget(String const &gameFamily,
                                    SavedSessionListData const &savedItems)
-    : ColumnWidget(gameFamily.toLower() + "-column")
+    : ColumnWidget(gameFamily.isEmpty()? "other-column"
+                                       : (gameFamily.toLower() + "-column"))
     , d(new Instance(this, gameFamily.toLower(), savedItems))
 {
     scrollArea().setContentSize(maximumContentWidth(),
@@ -179,7 +186,8 @@ GameColumnWidget::GameColumnWidget(String const &gameFamily,
     header().title().setText(String(_E(s) "%1\n" _E(.)_E(w) "%2")
                              .arg( gameFamily == "DOOM"? "id Software" :
                                   !gameFamily.isEmpty()? "Raven Software" : "")
-                             .arg(!gameFamily.isEmpty()? QString(gameFamily) : tr("Other Games")));
+                             .arg(!gameFamily.isEmpty()? QString(gameFamily)
+                                                       : tr("Other Games")));
     if(!gameFamily.isEmpty())
     {
         header().setLogoImage("logo.game." + gameFamily.toLower());
@@ -248,4 +256,16 @@ void GameColumnWidget::setHighlighted(bool highlighted)
     {
         d->menu->unselectAll();
     }
+}
+
+void GameColumnWidget::operator >> (PersistentState &toState) const
+{
+    Record &rec = toState.objectNamespace();
+    rec.set(name().concatenateMember("selected"), d->menu->selectedIndex());
+}
+
+void GameColumnWidget::operator << (PersistentState const &fromState)
+{
+    Record const &rec = fromState.objectNamespace();
+    d->restoredSelected = rec.geti(name().concatenateMember("selected"), -1);
 }

@@ -35,6 +35,13 @@ public:
 
     void unselectAll();
 
+    /**
+     * Returns the selected widget's index number in the list of menu children.
+     */
+    int selectedIndex() const;
+
+    void setSelectedIndex(int index);
+
 protected slots:
     void mouseActivityInItem();
 

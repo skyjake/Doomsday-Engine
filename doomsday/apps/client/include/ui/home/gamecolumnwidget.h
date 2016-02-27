@@ -21,9 +21,11 @@
 
 #include "columnwidget.h"
 
+#include <de/IPersistent>
+
 class SavedSessionListData;
 
-class GameColumnWidget : public ColumnWidget
+class GameColumnWidget : public ColumnWidget, public de::IPersistent
 {
     Q_OBJECT
 
@@ -34,6 +36,10 @@ public:
     de::String tabHeading() const override;
     de::String configVariableName() const override;
     void setHighlighted(bool highlighted) override;
+
+    // Implements IPersistent.
+    void operator >> (de::PersistentState &toState) const;
+    void operator << (de::PersistentState const &fromState);
 
 private:
     DENG2_PRIVATE(d)
