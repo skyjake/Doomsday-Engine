@@ -42,6 +42,7 @@ DENG_GUI_PIMPL(PackagesWidget)
 , public ChildWidgetOrganizer::IWidgetFactory
 {
     LineEditWidget *search;
+    ButtonWidget *clearSearch;
     HomeMenuWidget *menu;
     QStringList filterTerms;
 
@@ -176,8 +177,12 @@ DENG_GUI_PIMPL(PackagesWidget)
             {
                 auto *btn = new ButtonWidget;
                 btn->setText(_E(l) + tag.toLower());
-                btn->setAction([this, tag] () {
-                    _owner.d->search->setText(tag.toLower());
+                btn->setAction([this, tag] ()
+                {
+                    String terms = _owner.d->search->text();
+                    if(!terms.isEmpty() && !terms.last().isSpace()) terms += " ";
+                    terms += tag.toLower();
+                    _owner.d->search->setText(terms);
                 });
                 updateTagButtonStyle(btn, "accent");
                 btn->setSizePolicy(ui::Expand, ui::Expand);
@@ -284,6 +289,7 @@ DENG_GUI_PIMPL(PackagesWidget)
 
     Instance(Public *i) : Base(i)
     {
+        // Search/filter terms.
         self.add(search = new LineEditWidget);
         search->rule()
                 .setInput(Rule::Left,  self.rule().left())
@@ -291,6 +297,17 @@ DENG_GUI_PIMPL(PackagesWidget)
                 .setInput(Rule::Top,   self.rule().top());
         search->setEmptyContentHint(tr("Search packages"));
 
+        self.add(clearSearch = new ButtonWidget);
+        clearSearch->set(Background());
+        clearSearch->setImage(new StyleProceduralImage("close.ring", self));
+        clearSearch->setOverrideImageSize(style().fonts().font("default").height().value());
+        clearSearch->setSizePolicy(ui::Expand, ui::Expand);
+        clearSearch->rule()
+                .setInput(Rule::Right, search->rule().left())
+                .setMidAnchorY(search->rule().midY());
+        clearSearch->setAction([this] () { search->setText(""); });
+
+        // Filtered list of packages.
         self.add(menu = new HomeMenuWidget);
         menu->layout().setRowPadding(Const(0));
         menu->rule()
@@ -352,6 +369,7 @@ DENG_GUI_PIMPL(PackagesWidget)
     {
         filterTerms = terms;
         menu->organizer().refilter();
+        clearSearch->show(!terms.isEmpty());
     }
 
     void focusFirstListedPackge()
