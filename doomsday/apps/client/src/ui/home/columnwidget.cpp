@@ -30,6 +30,9 @@ using namespace de;
 
 DENG_GUI_PIMPL(ColumnWidget)
 {
+    /**
+     * Procedural image for drawing the background of a column.
+     */
     struct BackgroundImage : public StyleProceduralImage
     {
         Animation colorAnim { 0, Animation::Linear };
@@ -172,11 +175,12 @@ void ColumnWidget::setHighlighted(bool highlighted)
 bool ColumnWidget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event const &))
 {
     // Observe mouse clicks occurring in the column.
-    if(event.isMouse() && event.type() == Event::MouseButton)
+    if(event.type() == Event::MouseButton ||
+       event.type() == Event::MouseWheel)
     {
         MouseEvent const &mouse = event.as<MouseEvent>();
-        if(mouse.state() == MouseEvent::Pressed &&
-           d->scrollArea->contentRect().contains(mouse.pos()))
+        if((mouse.motion() == MouseEvent::Wheel || mouse.state() == MouseEvent::Pressed) &&
+           rule().recti().contains(mouse.pos()))
         {
             emit mouseActivity(this);
         }
