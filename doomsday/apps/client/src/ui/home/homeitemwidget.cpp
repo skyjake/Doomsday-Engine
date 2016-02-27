@@ -19,6 +19,7 @@
 #include "ui/home/homeitemwidget.h"
 
 #include <de/SequentialLayout>
+#include <QTimer>
 
 using namespace de;
 
@@ -66,6 +67,7 @@ DENG_GUI_PIMPL(HomeItemWidget)
     DotPath selectedBgColor   { "background" };
     DotPath textColor         { "text" };
     DotPath selectedTextColor { "text" };
+    QTimer buttonHideTimer;
 
     Instance(Public *i) : Base(i)
     {
@@ -82,6 +84,12 @@ DENG_GUI_PIMPL(HomeItemWidget)
 
         background->setBehavior(Focusable);
         background->addEventHandler(new ClickHandler(self));
+
+        buttonHideTimer.setSingleShot(true);
+        QObject::connect(&buttonHideTimer, &QTimer::timeout, [this] ()
+        {
+            for(auto *btn : buttons) btn->hide();
+        });
     }
 
     ~Instance()
@@ -106,6 +114,12 @@ DENG_GUI_PIMPL(HomeItemWidget)
     {
         if(!buttonsWidth) return;
 
+        if(show)
+        {
+            buttonHideTimer.stop();
+            for(auto *button : buttons) button->show();
+        }
+
         TimeDelta const SPAN = .5;
         if(show)
         {
@@ -114,6 +128,8 @@ DENG_GUI_PIMPL(HomeItemWidget)
         else
         {
             labelRightMargin->set(-rule("halfunit"), SPAN);
+            buttonHideTimer.setInterval(SPAN.asMilliSeconds());
+            buttonHideTimer.start();
         }
     }
 
@@ -169,16 +185,19 @@ LabelWidget &HomeItemWidget::label()
 
 void HomeItemWidget::setSelected(bool selected)
 {
-    d->selected = selected;
-    if(selected)
+    if(d->selected != selected)
     {
-        d->showButtons(true);
+        d->selected = selected;
+        if(selected)
+        {
+            d->showButtons(true);
+        }
+        else
+        {
+            d->showButtons(false);
+        }
+        d->updateColors();
     }
-    else
-    {
-        d->showButtons(false);
-    }
-    d->updateColors();
 }
 
 bool HomeItemWidget::isSelected() const
@@ -211,5 +230,6 @@ void HomeItemWidget::addButton(ButtonWidget *button)
 
     d->buttons << button;
     d->label->add(button);
+    button->hide();
     d->updateButtonLayout();
 }
