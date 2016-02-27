@@ -34,11 +34,16 @@
 
 using namespace de;
 
+static String const VAR_TITLE("title");
+static String const VAR_TAGS ("tags");
+
 DENG_GUI_PIMPL(PackagesWidget)
+, public ChildWidgetOrganizer::IFilter
 , public ChildWidgetOrganizer::IWidgetFactory
 {
     LineEditWidget *search;
     HomeMenuWidget *menu;
+    QStringList filterTerms;
 
     /**
      * Information about an available package.
@@ -70,8 +75,9 @@ DENG_GUI_PIMPL(PackagesWidget)
     class PackageListWidget : public HomeItemWidget
     {
     public:
-        PackageListWidget(PackageItem const &item)
-            : _item(&item)
+        PackageListWidget(PackageItem const &item, PackagesWidget &owner)
+            : _owner(owner)
+            , _item(&item)
         {
             icon().set(Background());
             icon().setImage(new StyleProceduralImage("package", *this));
@@ -170,6 +176,9 @@ DENG_GUI_PIMPL(PackagesWidget)
             {
                 auto *btn = new ButtonWidget;
                 btn->setText(_E(l) + tag.toLower());
+                btn->setAction([this, tag] () {
+                    _owner.d->search->setText(tag.toLower());
+                });
                 updateTagButtonStyle(btn, "accent");
                 btn->setSizePolicy(ui::Expand, ui::Expand);
                 btn->margins()
@@ -264,6 +273,7 @@ DENG_GUI_PIMPL(PackagesWidget)
         }
 
     private:
+        PackagesWidget &_owner;
         PackageItem const *_item;
         //LabelWidget *_title;
         //LabelWidget *_subtitle;
@@ -288,9 +298,10 @@ DENG_GUI_PIMPL(PackagesWidget)
                 .setInput(Rule::Right, self.rule().right())
                 .setInput(Rule::Top,   search->rule().bottom());
         menu->organizer().setWidgetFactory(*this);
+        menu->organizer().setFilter(*this);
 
         QObject::connect(search, &LineEditWidget::editorContentChanged,
-                         [this] () { updateSearchTerms(); });
+                         [this] () { updateFilterTerms(); });
         QObject::connect(search, &LineEditWidget::enterPressed,
                          [this] () { focusFirstListedPackge(); });
     }
@@ -331,9 +342,16 @@ DENG_GUI_PIMPL(PackagesWidget)
         }
     }
 
-    void updateSearchTerms()
+    void updateFilterTerms()
     {
-        qDebug() << "begin searching for" << search->text();
+        /// @todo Parse quoted terms. -jk
+        setFilterTerms(search->text().strip().split(QRegExp("\\s"), QString::SkipEmptyParts));
+    }
+
+    void setFilterTerms(QStringList const &terms)
+    {
+        filterTerms = terms;
+        menu->organizer().refilter();
     }
 
     void focusFirstListedPackge()
@@ -341,11 +359,41 @@ DENG_GUI_PIMPL(PackagesWidget)
         //if(menu-)
     }
 
+//- ChildWidgetOrganizer::IFilter ---------------------------------------------
+
+    bool checkTerms(String const &text) const
+    {
+        for(QString const &filterTerm : filterTerms)
+        {
+            if(!text.contains(filterTerm, Qt::CaseInsensitive))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    bool isItemAccepted(ChildWidgetOrganizer const &,
+                        ui::Data const &data, ui::Data::Pos pos) const
+    {
+        auto &item = data.at(pos).as<PackageItem>();
+
+        // The terms are looked in:
+        // - title
+        // - identifier
+        // - tags
+
+        return filterTerms.isEmpty() ||
+               checkTerms(item.data().toString()) || // ID
+               checkTerms(item.info->gets(VAR_TITLE)) ||
+               checkTerms(item.info->gets(VAR_TAGS));
+    }
+
 //- ChildWidgetOrganizer::IWidgetFactory --------------------------------------
 
     GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *)
     {
-        return new PackageListWidget(item.as<PackageItem>());
+        return new PackageListWidget(item.as<PackageItem>(), self);
     }
 
     void updateItemWidget(GuiWidget &widget, ui::Item const &)
