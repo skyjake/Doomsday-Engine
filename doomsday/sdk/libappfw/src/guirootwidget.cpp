@@ -184,10 +184,13 @@ DENG2_PIMPL(GuiRootWidget)
         if(GuiWidget *w = focused->maybeAs<GuiWidget>())
         {
             focusIndicator->rule().setRect(w->rule());
-            focusIndicator->startFlashing();
-            if(w->attributes().testFlag(GuiWidget::FocusHidden))
+            if(!w->attributes().testFlag(GuiWidget::FocusHidden))
             {
-                focusIndicator->hide();
+                focusIndicator->startFlashing(w);
+            }
+            else
+            {
+                focusIndicator->stopFlashing();
             }
         }
         else

@@ -36,7 +36,7 @@ class LIBAPPFW_PUBLIC FocusWidget : public LabelWidget
 public:
     FocusWidget(de::String const &name = "focus");
 
-    void startFlashing();
+    void startFlashing(GuiWidget const *reference = nullptr);
     void stopFlashing();
 
 protected slots:

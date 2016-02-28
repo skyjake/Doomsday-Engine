@@ -27,6 +27,7 @@ static TimeDelta FLASH_SPAN = .3;
 DENG2_PIMPL(FocusWidget)
 {
     QTimer flashing;
+    SafeWidgetPtr<GuiWidget const> reference;
 
     Instance(Public *i) : Base(i)
     {
@@ -39,17 +40,24 @@ DENG2_PIMPL(FocusWidget)
 
     void flash()
     {
+        // Flashing depends on the reference widget's visibility.
+        float const maxOpacity = (reference? reference->visibleOpacity() : 1.f);
+        if(reference)
+        {
+            self.show(reference->isVisible());
+        }
+
         if(self.opacity().target() == 0)
         {
-            self.setOpacity(.8f, FLASH_SPAN + .1, .1);
+            self.setOpacity(.8f * maxOpacity, FLASH_SPAN + .1, .1);
         }
         else if(self.opacity().target() > .5f)
         {
-            self.setOpacity(.2f, FLASH_SPAN);
+            self.setOpacity(.2f * maxOpacity, FLASH_SPAN);
         }
         else
         {
-            self.setOpacity(.8f, FLASH_SPAN);
+            self.setOpacity(.8f * maxOpacity, FLASH_SPAN);
         }
     }
 };
@@ -61,8 +69,9 @@ FocusWidget::FocusWidget(String const &name)
     connect(&d->flashing, SIGNAL(timeout()), this, SLOT(updateFlash()));
 }
 
-void FocusWidget::startFlashing()
+void FocusWidget::startFlashing(GuiWidget const *reference)
 {
+    d->reference.reset(reference);
     show();
     if(!d->flashing.isActive())
     {
