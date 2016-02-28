@@ -57,8 +57,8 @@ DENG2_PIMPL(RenderSystem)
     render::Environment environ;
     ModelRenderer models;
     SkyDrawable sky;
-    SettingsRegister settings;
-    SettingsRegister appearanceSettings;
+    ConfigProfiles settings;
+    ConfigProfiles appearanceSettings;
     ImageBank images;
 
     AngleClipper clipper;
@@ -228,7 +228,7 @@ DENG2_PIMPL(RenderSystem)
 
         loadImages();
 
-        typedef SettingsRegister SReg;
+        typedef ConfigProfiles SReg;
 
         // Initialize settings.
         settings.define(SReg::FloatCVar,      "rend-camera-fov", 95.f)
@@ -443,12 +443,12 @@ void RenderSystem::timeChanged(Clock const &)
     d->uMapTime = ClientApp::world().time();
 }
 
-SettingsRegister &RenderSystem::settings()
+ConfigProfiles &RenderSystem::settings()
 {
     return d->settings;
 }
 
-SettingsRegister &RenderSystem::appearanceSettings()
+ConfigProfiles &RenderSystem::appearanceSettings()
 {
     return d->appearanceSettings;
 }

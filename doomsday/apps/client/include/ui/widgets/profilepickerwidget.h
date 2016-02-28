@@ -20,7 +20,7 @@
 #define DENG_CLIENT_PROFILEPICKERWIDGET_H
 
 #include <de/ChoiceWidget>
-#include "SettingsRegister"
+#include "ConfigProfiles"
 
 /**
  * Widget for selecting/manipulating settings profiles.
@@ -42,7 +42,7 @@ public:
      *                     "appearance". Appears in the UI dialogs.
      * @param name         Name for the widget.
      */
-    ProfilePickerWidget(SettingsRegister &settings, de::String const &description,
+    ProfilePickerWidget(ConfigProfiles &settings, de::String const &description,
                         de::String const &name = "");
 
     ButtonWidget &button();

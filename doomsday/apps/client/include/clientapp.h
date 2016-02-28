@@ -23,7 +23,7 @@
 #include <de/BaseGuiApp>
 #include <doomsday/doomsdayapp.h>
 
-#include "settingsregister.h"
+#include "ConfigProfiles"
 #include "network/serverlink.h"
 #include "audio/system.h"
 #include "ui/inputsystem.h"
@@ -67,9 +67,9 @@ public:
     static ClientApp &app();
     static BusyRunner &busyRunner();
     static Updater &updater();
-    static SettingsRegister &logSettings();
-    static SettingsRegister &networkSettings();
-    static SettingsRegister &audioSettings();    ///< @todo Belongs in AudioSystem.
+    static ConfigProfiles &logSettings();
+    static ConfigProfiles &networkSettings();
+    static ConfigProfiles &audioSettings();    ///< @todo Belongs in AudioSystem.
     static ServerLink &serverLink();
     static InFineSystem &infineSystem();
     static InputSystem &inputSystem();

@@ -26,7 +26,7 @@ using namespace de;
 
 DENG2_PIMPL(ClientWindowSystem)
 {
-    SettingsRegister settings;
+    ConfigProfiles settings;
 
     struct ClientStyle : public Style {
         bool isBlurringAllowed() const {
@@ -44,7 +44,7 @@ DENG2_PIMPL(ClientWindowSystem)
         self.setStyle(new ClientStyle);
         self.style().load(App::packageLoader().load("net.dengine.client.defaultstyle"));
 
-        using SReg = SettingsRegister;
+        using SReg = ConfigProfiles;
         settings.define(SReg::ConfigVariable, "window.main.showFps")
                 .define(SReg::ConfigVariable, "window.main.fsaa")
                 .define(SReg::ConfigVariable, "window.main.vsync")
@@ -62,7 +62,7 @@ ClientWindowSystem::ClientWindowSystem()
     ClientWindow::setDefaultGLFormat();
 }
 
-SettingsRegister &ClientWindowSystem::settings()
+ConfigProfiles &ClientWindowSystem::settings()
 {
     return d->settings;
 }

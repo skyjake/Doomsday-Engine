@@ -20,7 +20,7 @@
 #define DENG_CLIENTWINDOWSYSTEM_H
 
 #include <de/WindowSystem>
-#include "SettingsRegister"
+#include "ConfigProfiles"
 
 #undef main
 
@@ -34,7 +34,7 @@ class ClientWindowSystem : public de::WindowSystem
 public:
     ClientWindowSystem();
 
-    SettingsRegister &settings();
+    ConfigProfiles &settings();
 
     /**
      * Constructs a new window using the default configuration. Note that the

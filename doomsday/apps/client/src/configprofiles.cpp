@@ -1,6 +1,6 @@
-/** @file settingsregister.cpp  Register of settings profiles.
+/** @file configprofiles.cpp  Configuration setting profiles.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2013-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,8 +17,8 @@
  */
 
 #include "de_platform.h"
-#include "settingsregister.h"
 #include "api_console.h"
+#include "ConfigProfiles"
 
 #include <de/App>
 #include <de/Script>
@@ -39,9 +39,9 @@ using namespace de;
 
 static String const CUSTOM_PROFILE = "Custom";
 
-DENG2_PIMPL(SettingsRegister),
-DENG2_OBSERVES(DoomsdayApp, GameUnload),
-DENG2_OBSERVES(DoomsdayApp, GameChange)
+DENG2_PIMPL(ConfigProfiles)
+, DENG2_OBSERVES(DoomsdayApp, GameUnload)
+, DENG2_OBSERVES(DoomsdayApp, GameChange)
 {
     struct Setting
     {
@@ -89,21 +89,32 @@ DENG2_OBSERVES(DoomsdayApp, GameChange)
     typedef QMap<String, Setting> Settings;
     Settings settings;
 
-    struct Profile
+    struct Profile : public Profiles::AbstractProfile
     {
-        bool readOnly; ///< Profile has been loaded from a read-only file, won't be serialized.
+        bool readOnly = false; ///< Profile has been loaded from a read-only file, won't be serialized.
 
         typedef QMap<String, QVariant> Values;
         Values values;
 
-        Profile() : readOnly(false) {}
+        ConfigProfiles &owner()
+        {
+            return static_cast<ConfigProfiles &>(AbstractProfile::owner());
+        }
+
+        bool isReadOnly() const override { return readOnly; }
+
+        bool resetToDefaults() override
+        {
+            if(!isReadOnly())
+            {
+                values = owner().d->defaults.values;
+                return true;
+            }
+            return false;
+        }
     };
 
-    typedef QMap<String, Profile *> Profiles;
-    Profiles profiles;
     Profile defaults;
-
-    String persistentName;
     String current;
 
     Instance(Public *i) : Base(i), current(CUSTOM_PROFILE)
@@ -118,32 +129,30 @@ DENG2_OBSERVES(DoomsdayApp, GameChange)
     {
         DoomsdayApp::app().audienceForGameUnload() -= this;
         DoomsdayApp::app().audienceForGameChange() -= this;
-
-        clearProfiles();
     }
 
     Profile *addProfile(String const &name)
     {
-        if(profiles.contains(name))
-        {
-            delete profiles[name];
-        }
-
-        Profile *p = new Profile;
-        profiles.insert(name, p);
-        return p;
+        Profile *prof = new Profile;
+        prof->setName(name);
+        self.add(prof);
+        return prof;
     }
 
-    void clearProfiles()
+    Profile *tryFind(String const &name) const
     {
-        qDeleteAll(profiles.values());
-        profiles.clear();
+        if(auto *prof = self.tryFind(name))
+        {
+            return &prof->as<Profile>();
+        }
+        return nullptr;
     }
 
     Profile &currentProfile() const
     {
-        DENG2_ASSERT(profiles.contains(current));
-        return *profiles[current];
+        auto *prof = tryFind(current);
+        DENG2_ASSERT(prof);
+        return *prof;
     }
 
     QVariant getDefaultFromConfig(String const &name)
@@ -187,9 +196,9 @@ DENG2_OBSERVES(DoomsdayApp, GameChange)
      */
     void fetch(String const &profileName)
     {
-        DENG2_ASSERT(profiles.contains(profileName));
+        DENG2_ASSERT(tryFind(profileName));
 
-        Profile &prof = *profiles[profileName];
+        Profile &prof = *tryFind(profileName);
         if(prof.readOnly) return;
 
         foreach(Setting const &st, settings.values())
@@ -231,7 +240,7 @@ DENG2_OBSERVES(DoomsdayApp, GameChange)
     {
         current = name;
 
-        if(!persistentName.isEmpty())
+        if(!self.persistentName().isEmpty())
         {
             App::config().set(confName(), name);
         }
@@ -239,26 +248,26 @@ DENG2_OBSERVES(DoomsdayApp, GameChange)
 
     void apply(String const &profileName)
     {
-        DENG2_ASSERT(profiles.contains(profileName));
+        Profile *profile = tryFind(profileName);
+        DENG2_ASSERT(profile);
 
-        Profile const &prof = *profiles[profileName];
         foreach(Setting const &st, settings.values())
         {
-            QVariant const &val = prof.values[st.name];
+            QVariant const &val = profile->values[st.name];
             st.setValue(val);
         }
     }
 
     void changeTo(String const &profileName)
     {
-        LOG_AS("SettingsRegister");
-        DENG2_ASSERT(profiles.contains(profileName));
+        LOG_AS("ConfigProfiles");
+        DENG2_ASSERT(tryFind(profileName));
 
         if(current == profileName) return;
 
-        if(!persistentName.isEmpty())
+        if(!self.persistentName().isEmpty())
         {
-            LOG_MSG("Changing %s profile to '%s'") << persistentName << profileName;
+            LOG_MSG("Changing %s profile to '%s'") << self.persistentName() << profileName;
         }
 
         // First update the old profile.
@@ -276,9 +285,8 @@ DENG2_OBSERVES(DoomsdayApp, GameChange)
 
     void reset()
     {
-        if(!currentProfile().readOnly)
+        if(currentProfile().resetToDefaults())
         {
-            currentProfile().values = defaults.values;
             apply(current);
         }
     }
@@ -297,8 +305,8 @@ DENG2_OBSERVES(DoomsdayApp, GameChange)
      */
     String confName() const
     {
-        if(persistentName.isEmpty()) return "";
-        return persistentName + ".profile";
+        if(self.persistentName().isEmpty()) return "";
+        return self.persistentName().concatenateMember("profile");
     }
 
     /**
@@ -307,8 +315,8 @@ DENG2_OBSERVES(DoomsdayApp, GameChange)
      */
     String fileName() const
     {
-        if(persistentName.isEmpty()) return "";
-        return String("/home/configs/%1.dei").arg(persistentName);
+        if(self.persistentName().isEmpty()) return "";
+        return String("/home/configs/%1.dei").arg(self.persistentName());
     }
 
     QVariant textToSettingValue(String const &text, String const &settingName) const
@@ -355,7 +363,8 @@ DENG2_OBSERVES(DoomsdayApp, GameChange)
 
                 // There may be multiple profiles in the file.
                 de::Info::BlockElement const &profBlock = elem->as<de::Info::BlockElement>();
-                if(profBlock.blockType() == "profile")
+                if(profBlock.blockType() == "group" &&
+                   profBlock.name()      == "profile")
                 {
                     String profileName = profBlock.keyValue("name").text;
                     if(profileName.isEmpty()) continue; // Skip this one...
@@ -392,7 +401,7 @@ DENG2_OBSERVES(DoomsdayApp, GameChange)
 
     bool addCustomProfileIfMissing()
     {
-        if(!profiles.contains(CUSTOM_PROFILE))
+        if(!tryFind(CUSTOM_PROFILE))
         {
             addProfile(CUSTOM_PROFILE);
 
@@ -411,16 +420,16 @@ DENG2_OBSERVES(DoomsdayApp, GameChange)
      */
     void currentGameChanged(Game const &newGame)
     {
-        if(persistentName.isEmpty() || newGame.isNull()) return;
+        if(self.persistentName().isEmpty() || newGame.isNull()) return;
 
-        LOG_AS("SettingsRegister");
-        LOG_DEBUG("Game has been loaded, deserializing %s profiles") << persistentName;
+        LOG_AS("ConfigProfiles");
+        LOG_DEBUG("Game has been loaded, deserializing %s profiles") << self.persistentName();
 
-        clearProfiles();
+        self.clear();
 
         // Read all fixed profiles from */profiles/(persistentName)/
         FS::FoundFiles folders;
-        App::fileSystem().findAll(String("profiles") / persistentName, folders);
+        App::fileSystem().findAll("profiles" / self.persistentName(), folders);
         DENG2_FOR_EACH(FS::FoundFiles, i, folders)
         {
             if(Folder const *folder = (*i)->maybeAs<Folder>())
@@ -461,16 +470,16 @@ DENG2_OBSERVES(DoomsdayApp, GameChange)
             current = App::config()[confName()].value().asText();
         }
 
-        if(!profiles.contains(current))
+        if(!tryFind(current))
         {
             // Fall back to the one profile we know is available.
-            if(profiles.contains(CUSTOM_PROFILE))
+            if(tryFind(CUSTOM_PROFILE))
             {
                 current = CUSTOM_PROFILE;
             }
             else
             {
-                current = profiles.keys().first();
+                current = self.profiles().first();
             }
         }
 
@@ -490,10 +499,10 @@ DENG2_OBSERVES(DoomsdayApp, GameChange)
      */
     void aboutToUnloadGame(Game const &gameBeingUnloaded)
     {
-        if(persistentName.isEmpty() || gameBeingUnloaded.isNull()) return;
+        if(self.persistentName().isEmpty() || gameBeingUnloaded.isNull()) return;
 
-        LOG_AS("SettingsRegister");
-        LOG_DEBUG("Game being unloaded, serializing %s profiles") << persistentName;
+        LOG_AS("ConfigProfiles");
+        LOG_DEBUG("Game being unloaded, serializing %s profiles") << self.persistentName();
 
         // Update the current profile.
         fetch(current);
@@ -506,19 +515,20 @@ DENG2_OBSERVES(DoomsdayApp, GameChange)
         QTextStream os(&info);
         os.setCodec("UTF-8");
 
-        os << "# Autogenerated Info file based on " << persistentName << " settings\n";
+        os << "# Autogenerated Info file based on " << self.persistentName() << " settings\n";
 
         // Write /home/configs/(persistentName).dei with all non-readonly profiles.
         int count = 0;
-        DENG2_FOR_EACH_CONST(Profiles, i, profiles)
+        self.forAll([this, &os, &count] (AbstractProfile &prof)
         {
-            if(i.value()->readOnly) continue;
+            Profile &profile = prof.as<Profile>();
+            if(profile.readOnly) return LoopContinue;
 
             ++count;
 
-            os << "\nprofile {\n    name: " << i.key() << "\n";
-
-            DENG2_FOR_EACH_CONST(Profile::Values, val, i.value()->values)
+            os << "\nprofile {\n    name: " << prof.name()
+               << "\n";
+            DENG2_FOR_EACH_CONST(Profile::Values, val, profile.values)
             {
                 DENG2_ASSERT(settings.contains(val.key()));
 
@@ -540,9 +550,10 @@ DENG2_OBSERVES(DoomsdayApp, GameChange)
                    << "        value: " << valueText << "\n"
                    << "    }\n";
             }
-
             os << "}\n";
-        }
+
+            return LoopContinue;
+        });
 
         // Create the pack and update the file system.
         File &outFile = App::rootFolder().replaceFile(fileName());
@@ -553,17 +564,12 @@ DENG2_OBSERVES(DoomsdayApp, GameChange)
     }
 };
 
-SettingsRegister::SettingsRegister() : d(new Instance(this))
+ConfigProfiles::ConfigProfiles() : d(new Instance(this))
 {}
 
-void SettingsRegister::setPersistentName(String const &name)
-{
-    d->persistentName = name;
-}
-
-SettingsRegister &SettingsRegister::define(SettingType type,
-                                           String const &settingName,
-                                           QVariant const &defaultValue)
+ConfigProfiles &ConfigProfiles::define(SettingType type,
+                                       String const &settingName,
+                                       QVariant const &defaultValue)
 {
     d->settings.insert(settingName, Instance::Setting(type, settingName));
 
@@ -581,24 +587,14 @@ SettingsRegister &SettingsRegister::define(SettingType type,
     return *this;
 }
 
-String SettingsRegister::currentProfile() const
+String ConfigProfiles::currentProfile() const
 {
     return d->current;
 }
 
-bool SettingsRegister::isReadOnlyProfile(String const &name) const
+bool ConfigProfiles::saveAsProfile(String const &name)
 {
-    if(d->profiles.contains(name))
-    {
-        return d->profiles[name]->readOnly;
-    }
-    DENG2_ASSERT(false);
-    return false;
-}
-
-bool SettingsRegister::saveAsProfile(String const &name)
-{
-    if(!d->profiles.contains(name) && !name.isEmpty())
+    if(!tryFind(name) && !name.isEmpty())
     {
         d->addProfile(name);
         d->fetch(name);
@@ -607,12 +603,12 @@ bool SettingsRegister::saveAsProfile(String const &name)
     return false;
 }
 
-void SettingsRegister::setProfile(String const &name)
+void ConfigProfiles::setProfile(String const &name)
 {
     d->changeTo(name);
 }
 
-void SettingsRegister::resetToDefaults()
+void ConfigProfiles::resetToDefaults()
 {
     d->reset();
 
@@ -622,17 +618,15 @@ void SettingsRegister::resetToDefaults()
     }
 }
 
-void SettingsRegister::resetSettingToDefaults(String const &settingName)
+void ConfigProfiles::resetSettingToDefaults(String const &settingName)
 {
     d->resetSetting(settingName);
 }
 
-bool SettingsRegister::rename(String const &name)
+bool ConfigProfiles::rename(String const &name)
 {
-    if(!d->profiles.contains(name) && !name.isEmpty())
+    if(d->currentProfile().setName(name))
     {
-        Instance::Profile *p = d->profiles.take(d->current);
-        d->profiles.insert(name, p);
         d->setCurrent(name);
 
         DENG2_FOR_AUDIENCE(ProfileChange, i)
@@ -644,20 +638,14 @@ bool SettingsRegister::rename(String const &name)
     return false;
 }
 
-void SettingsRegister::deleteProfile(String const &name)
+void ConfigProfiles::deleteProfile(String const &name)
 {
     // Can't delete the current profile.
     if(name == d->current) return;
 
-    delete d->profiles.take(name);
-}
-
-QList<String> SettingsRegister::profiles() const
-{
-    return d->profiles.keys();
-}
-
-int SettingsRegister::profileCount() const
-{
-    return d->profiles.size();
+    if(auto *prof = tryFind(name))
+    {
+        remove(*prof);
+        delete prof;
+    }
 }

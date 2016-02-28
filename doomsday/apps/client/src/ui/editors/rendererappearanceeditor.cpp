@@ -38,13 +38,13 @@ using namespace de;
 using namespace ui;
 
 DENG_GUI_PIMPL(RendererAppearanceEditor),
-DENG2_OBSERVES(SettingsRegister, ProfileChange),
+DENG2_OBSERVES(ConfigProfiles, ProfileChange),
 DENG2_OBSERVES(DoomsdayApp, GameChange),
 public VariableGroupEditor::IOwner
 {
     using Group = VariableGroupEditor;
 
-    SettingsRegister &settings;
+    ConfigProfiles &settings;
     ProfilePickerWidget *profile;
 
     Group *skyGroup;
@@ -411,7 +411,7 @@ public VariableGroupEditor::IOwner
 
     void fetch()
     {
-        bool const isReadOnly = settings.isReadOnlyProfile(settings.currentProfile());
+        bool const isReadOnly = settings.find(settings.currentProfile()).isReadOnly();
 
         foreach(Widget *child, self.containerWidget().childWidgets())
         {
