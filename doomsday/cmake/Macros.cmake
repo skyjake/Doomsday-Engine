@@ -640,8 +640,11 @@ function (deng_install_deployqt target)
         endif ()
         install (CODE "
             message (STATUS \"Running macdeployqt on ${_outName}.app...\")
+            if (\"\${CMAKE_INSTALL_CONFIG_NAME}\" MATCHES \"([Dd][Ee][Bb])\")
+                set (deployQtOptions -no-strip)
+            endif ()
             execute_process (COMMAND ${MACDEPLOYQT_COMMAND} 
-                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app\"                
+                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app\" \${deployQtOptions}
                 OUTPUT_QUIET ERROR_QUIET)
             ")        
     elseif (WIN32)
