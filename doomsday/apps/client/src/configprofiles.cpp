@@ -91,17 +91,19 @@ DENG2_PIMPL(ConfigProfiles)
 
     struct Profile : public Profiles::AbstractProfile
     {
-        bool readOnly = false; ///< Profile has been loaded from a read-only file, won't be serialized.
-
         typedef QMap<String, QVariant> Values;
         Values values;
+        bool readOnly = false; ///< Profile has been loaded from a read-only file, won't be serialized.
 
         ConfigProfiles &owner()
         {
             return static_cast<ConfigProfiles &>(AbstractProfile::owner());
         }
 
-        bool isReadOnly() const override { return readOnly; }
+        bool isReadOnly() const override
+        {
+            return readOnly;
+        }
 
         bool resetToDefaults() override
         {
@@ -141,18 +143,12 @@ DENG2_PIMPL(ConfigProfiles)
 
     Profile *tryFind(String const &name) const
     {
-        if(auto *prof = self.tryFind(name))
-        {
-            return &prof->as<Profile>();
-        }
-        return nullptr;
+        return self.tryFind(name)->maybeAs<Profile>();
     }
 
     Profile &currentProfile() const
     {
-        auto *prof = tryFind(current);
-        DENG2_ASSERT(prof);
-        return *prof;
+        return self.find(current).as<Profile>();
     }
 
     QVariant getDefaultFromConfig(String const &name)
@@ -196,9 +192,7 @@ DENG2_PIMPL(ConfigProfiles)
      */
     void fetch(String const &profileName)
     {
-        DENG2_ASSERT(tryFind(profileName));
-
-        Profile &prof = *tryFind(profileName);
+        Profile &prof = self.find(profileName).as<Profile>();
         if(prof.readOnly) return;
 
         foreach(Setting const &st, settings.values())
@@ -248,12 +242,11 @@ DENG2_PIMPL(ConfigProfiles)
 
     void apply(String const &profileName)
     {
-        Profile *profile = tryFind(profileName);
-        DENG2_ASSERT(profile);
+        Profile &profile = self.find(profileName).as<Profile>();
 
         foreach(Setting const &st, settings.values())
         {
-            QVariant const &val = profile->values[st.name];
+            QVariant const &val = profile.values[st.name];
             st.setValue(val);
         }
     }
