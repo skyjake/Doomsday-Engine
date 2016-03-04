@@ -20,6 +20,7 @@
 #define DENG2_PROFILES_H
 
 #include <de/String>
+#include <de/Info>
 
 namespace de {
 
@@ -76,9 +77,17 @@ public:
          *
          * @return @c true, if the profile is read-only.
          */
-        virtual bool isReadOnly() const = 0;
+        bool isReadOnly() const;
+
+        void setReadOnly(bool readOnly);
 
         virtual bool resetToDefaults() = 0;
+
+        /**
+         * Serializes the contents of the profile to a text string using Info
+         * source syntax.
+         */
+        virtual String toInfoSource() const = 0;
 
         DENG2_AS_IS_METHODS()
 
@@ -105,6 +114,8 @@ public:
     void setPersistentName(String const &name);
 
     String persistentName() const;
+
+    bool isPersistent() const;
 
     /**
      * Lists the names of all the existing profiles.
@@ -141,6 +152,24 @@ public:
      * @param profile  Profile to remove. Ownership given to caller.
      */
     void remove(AbstractProfile &profile);
+
+    /**
+     * Serializes all the profiles to /home/configs/(persistentName).dei. Only
+     * non-readonly profiles are written. Nothing happens
+     */
+    void serialize() const;
+
+    /**
+     * Deserializes all the profiles from /profiles/(persistentName).dei and
+     * /home/configs/(persistentName).dei.
+     *
+     * All existing profiles in the collection are deleted beforehand.
+     */
+    void deserialize();
+
+protected:
+    virtual AbstractProfile *profileFromInfoBlock(
+            de::Info::BlockElement const &block) = 0;
 
 private:
     DENG2_PRIVATE(d)

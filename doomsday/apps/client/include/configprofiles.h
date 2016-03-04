@@ -125,6 +125,10 @@ public:
      */
     void deleteProfile(de::String const &name);
 
+protected:
+    AbstractProfile *profileFromInfoBlock(
+            de::Info::BlockElement const &block) override;
+
 private:
     DENG2_PRIVATE(d)
 };

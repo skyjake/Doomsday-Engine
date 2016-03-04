@@ -93,16 +93,15 @@ DENG2_PIMPL(ConfigProfiles)
     {
         typedef QMap<String, QVariant> Values;
         Values values;
-        bool readOnly = false; ///< Profile has been loaded from a read-only file, won't be serialized.
 
         ConfigProfiles &owner()
         {
             return static_cast<ConfigProfiles &>(AbstractProfile::owner());
         }
 
-        bool isReadOnly() const override
+        ConfigProfiles const &owner() const
         {
-            return readOnly;
+            return static_cast<ConfigProfiles const &>(AbstractProfile::owner());
         }
 
         bool resetToDefaults() override
@@ -113,6 +112,64 @@ DENG2_PIMPL(ConfigProfiles)
                 return true;
             }
             return false;
+        }
+
+        String toInfoSource() const
+        {
+            auto const &settings = owner().d->settings;
+
+            String info;
+            QTextStream os(&info);
+            os.setCodec("UTF-8");
+
+            DENG2_FOR_EACH_CONST(Values, val, values)
+            {
+                DENG2_ASSERT(settings.contains(val.key()));
+
+                Setting const &st = settings[val.key()];
+
+                String valueText;
+                switch(st.type)
+                {
+                case IntCVar:
+                case FloatCVar:
+                case StringCVar:
+                case ConfigVariable:
+                    // QVariant can handle this.
+                    valueText = val.value().toString();
+                    break;
+                }
+
+                os << "setting \"" << st.name << "\" {\n"
+                   << "    value: " << valueText << "\n"
+                   << "}";
+            }
+
+            return info;
+        }
+
+        void initializeFromInfoBlock(ConfigProfiles const &profs,
+                                     de::Info::BlockElement const &block)
+        {
+            // Use the default settings for anything not defined in the file.
+            values = profs.d->defaults.values;
+
+            // Read all the setting values from the profile block.
+            foreach(auto const *element, block.contentsInOrder())
+            {
+                if(!element->isBlock()) continue;
+
+                de::Info::BlockElement const &setBlock = element->as<de::Info::BlockElement>();
+
+                // Only process known settings.
+                if(setBlock.blockType() == "setting" &&
+                   profs.d->settings.contains(setBlock.name()))
+                {
+                    values[setBlock.name()] =
+                            profs.d->textToSettingValue(setBlock.keyValue("value").text,
+                                                        setBlock.name());
+                }
+            }
         }
     };
 
@@ -193,7 +250,7 @@ DENG2_PIMPL(ConfigProfiles)
     void fetch(String const &profileName)
     {
         Profile &prof = self.find(profileName).as<Profile>();
-        if(prof.readOnly) return;
+        if(prof.isReadOnly()) return;
 
         foreach(Setting const &st, settings.values())
         {
@@ -302,16 +359,6 @@ DENG2_PIMPL(ConfigProfiles)
         return self.persistentName().concatenateMember("profile");
     }
 
-    /**
-     * For a persistent register, determines the file name of the Info file
-     * where all the profile values are written to and read from.
-     */
-    String fileName() const
-    {
-        if(self.persistentName().isEmpty()) return "";
-        return String("/home/configs/%1.dei").arg(self.persistentName());
-    }
-
     QVariant textToSettingValue(String const &text, String const &settingName) const
     {
         DENG2_ASSERT(settings.contains(settingName));
@@ -337,6 +384,7 @@ DENG2_PIMPL(ConfigProfiles)
         return QVariant();
     }
 
+#if 0
     void loadProfilesFromInfo(File const &file, bool markReadOnly)
     {
         try
@@ -365,7 +413,7 @@ DENG2_PIMPL(ConfigProfiles)
                     LOG_VERBOSE("Reading profile '%s'") << profileName;
 
                     Profile *prof = addProfile(profileName);
-                    if(markReadOnly) prof->readOnly = true;
+                    if(markReadOnly) prof->setReadOnly(true);
 
                     // Use the default settings for anything not defined in the file.
                     prof->values = defaults.values;
@@ -391,6 +439,7 @@ DENG2_PIMPL(ConfigProfiles)
                     << file.description() << er.asText();
         }
     }
+#endif
 
     bool addCustomProfileIfMissing()
     {
@@ -413,11 +462,14 @@ DENG2_PIMPL(ConfigProfiles)
      */
     void currentGameChanged(Game const &newGame)
     {
-        if(self.persistentName().isEmpty() || newGame.isNull()) return;
+        if(!self.isPersistent() || newGame.isNull()) return;
 
         LOG_AS("ConfigProfiles");
         LOG_DEBUG("Game has been loaded, deserializing %s profiles") << self.persistentName();
 
+        self.deserialize();
+
+#if 0
         self.clear();
 
         // Read all fixed profiles from */profiles/(persistentName)/
@@ -445,14 +497,17 @@ DENG2_PIMPL(ConfigProfiles)
             loadProfilesFromInfo(*file, false /* modifiable */);
         }
         else
+#endif
+        //{
+
+        // Settings haven't previously been created -- make sure we at least
+        // have the Custom profile.
+        if(addCustomProfileIfMissing())
         {
-            // Settings haven't previously been created -- make sure we at least
-            // have the Custom profile.
-            if(addCustomProfileIfMissing())
-            {
-                current = CUSTOM_PROFILE;
-            }
+            current = CUSTOM_PROFILE;
         }
+
+        //}
 
         // Still nothing?
         addCustomProfileIfMissing();
@@ -492,7 +547,7 @@ DENG2_PIMPL(ConfigProfiles)
      */
     void aboutToUnloadGame(Game const &gameBeingUnloaded)
     {
-        if(self.persistentName().isEmpty() || gameBeingUnloaded.isNull()) return;
+        if(!self.isPersistent() || gameBeingUnloaded.isNull()) return;
 
         LOG_AS("ConfigProfiles");
         LOG_DEBUG("Game being unloaded, serializing %s profiles") << self.persistentName();
@@ -503,8 +558,10 @@ DENG2_PIMPL(ConfigProfiles)
         // Remember which profile is the current one.
         App::config().set(confName(), current);
 
+        self.serialize();
+
         // We will write one Info file with all the profiles.
-        String info;
+        /*String info;
         QTextStream os(&info);
         os.setCodec("UTF-8");
 
@@ -515,7 +572,7 @@ DENG2_PIMPL(ConfigProfiles)
         self.forAll([this, &os, &count] (AbstractProfile &prof)
         {
             Profile &profile = prof.as<Profile>();
-            if(profile.readOnly) return LoopContinue;
+            if(profile.isReadOnly()) return LoopContinue;
 
             ++count;
 
@@ -554,6 +611,7 @@ DENG2_PIMPL(ConfigProfiles)
         outFile.flush(); // we're done
 
         LOG_VERBOSE("Wrote \"%s\" with %i profile%s") << fileName() << count << (count != 1? "s" : "");
+        */
     }
 };
 
@@ -641,4 +699,12 @@ void ConfigProfiles::deleteProfile(String const &name)
         remove(*prof);
         delete prof;
     }
+}
+
+Profiles::AbstractProfile *
+ConfigProfiles::profileFromInfoBlock(de::Info::BlockElement const &block)
+{
+    std::unique_ptr<Instance::Profile> prof(new Instance::Profile);
+    prof->initializeFromInfoBlock(*this, block);
+    return prof.release();
 }
