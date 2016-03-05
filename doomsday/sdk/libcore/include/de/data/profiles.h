@@ -155,7 +155,7 @@ public:
 
     /**
      * Serializes all the profiles to /home/configs/(persistentName).dei. Only
-     * non-readonly profiles are written. Nothing happens
+     * non-readonly profiles are written.
      */
     void serialize() const;
 
