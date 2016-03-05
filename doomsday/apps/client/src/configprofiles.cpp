@@ -293,7 +293,7 @@ DENG2_PIMPL(ConfigProfiles)
 
         if(!self.persistentName().isEmpty())
         {
-            App::config().set(confName(), name);
+            App::config().set(configVarName(), name);
         }
     }
 
@@ -353,7 +353,7 @@ DENG2_PIMPL(ConfigProfiles)
      * For a persistent register, determines the name of the Config variable
      * that stores the name of the currently selected profile.
      */
-    String confName() const
+    String configVarName() const
     {
         if(self.persistentName().isEmpty()) return "";
         return self.persistentName().concatenateMember("profile");
@@ -419,14 +419,8 @@ DENG2_PIMPL(ConfigProfiles)
             current = CUSTOM_PROFILE;
         }
 
-        // Still nothing?
-        addCustomProfileIfMissing();
-
-        if(App::config().objectNamespace().has(confName()))
-        {
-            // Update current profile.
-            current = App::config()[confName()].value().asText();
-        }
+        // Update current profile.
+        current = App::config().gets(configVarName(), current);
 
         if(!tryFind(current))
         {
@@ -444,7 +438,7 @@ DENG2_PIMPL(ConfigProfiles)
         // Make sure these are the values now in use.
         apply(current);
 
-        App::config().set(confName(), current);
+        App::config().set(configVarName(), current);
     }
 
     /**
@@ -466,7 +460,7 @@ DENG2_PIMPL(ConfigProfiles)
         fetch(current);
 
         // Remember which profile is the current one.
-        App::config().set(confName(), current);
+        App::config().set(configVarName(), current);
 
         self.serialize();
     }

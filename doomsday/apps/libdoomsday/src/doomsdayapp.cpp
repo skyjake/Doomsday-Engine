@@ -18,6 +18,7 @@
 
 #include "doomsday/doomsdayapp.h"
 #include "doomsday/games.h"
+#include "doomsday/gameprofiles.h"
 #include "doomsday/console/exec.h"
 #include "doomsday/filesys/sys_direc.h"
 #include "doomsday/filesys/fs_util.h"
@@ -70,6 +71,7 @@ DENG2_PIMPL_NOREF(DoomsdayApp)
     Plugins plugins;
     Games games;
     Game *currentGame = nullptr;
+    GameProfiles gameProfiles;
     BusyMode busyMode;
     Players players;
     res::Bundles dataBundles;
@@ -119,6 +121,9 @@ DENG2_PIMPL_NOREF(DoomsdayApp)
 
     ~Instance()
     {
+        // Save any changes to the game profiles.
+        gameProfiles.serialize();
+
         theDoomsdayApp = nullptr;
     }
 
@@ -367,6 +372,7 @@ void DoomsdayApp::initialize()
     d->initialized = true;
 
     d->dataBundles.identify();
+    d->gameProfiles.deserialize();
 }
 
 void DoomsdayApp::initWadFolders()
