@@ -25,6 +25,11 @@
 
 namespace de {
 
+static String nameToKey(String const &name)
+{
+    return name.toLower();
+}
+
 DENG2_PIMPL(Profiles)
 {
     typedef QMap<String, AbstractProfile *> Profiles;
@@ -41,11 +46,12 @@ DENG2_PIMPL(Profiles)
 
     void add(AbstractProfile *profile)
     {
-        if(profiles.contains(profile->name()))
+        String const key = nameToKey(profile->name());
+        if(profiles.contains(nameToKey(key)))
         {
-            delete profiles[profile->name()];
+            delete profiles[key];
         }
-        profiles.insert(profile->name(), profile);
+        profiles.insert(key, profile);
         profile->setOwner(thisPublic);
     }
 
@@ -112,7 +118,9 @@ Profiles::Profiles()
 
 StringList Profiles::profiles() const
 {
-    return d->profiles.keys();
+    StringList names;
+    for(auto const *p : d->profiles.values()) names << p->name();
+    return names;
 }
 
 int Profiles::count() const
@@ -122,7 +130,7 @@ int Profiles::count() const
 
 Profiles::AbstractProfile *Profiles::tryFind(String const &name) const
 {
-    auto found = d->profiles.constFind(name);
+    auto found = d->profiles.constFind(nameToKey(name));
     if(found != d->profiles.constEnd())
     {
         return found.value();
@@ -180,7 +188,7 @@ void Profiles::remove(AbstractProfile &profile)
 {
     DENG2_ASSERT(&profile.owner() == this);
 
-    d->profiles.remove(profile.name());
+    d->profiles.remove(nameToKey(profile.name()));
     profile.setOwner(nullptr);
 }
 
