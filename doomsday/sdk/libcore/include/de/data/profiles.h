@@ -21,6 +21,7 @@
 
 #include <de/String>
 #include <de/Info>
+#include <functional>
 
 namespace de {
 
