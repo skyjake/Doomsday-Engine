@@ -32,8 +32,9 @@
 
 namespace res { class Bundles; }
 
-class Games;
 class Game;
+class Games;
+class GameProfiles;
 
 /**
  * Common application-level state and components.
@@ -121,6 +122,7 @@ public:
     static res::Bundles &bundles();
     static Plugins &plugins();
     static Games &games();
+    static GameProfiles &gameProfiles();
     static Players &players();
     static BusyMode &busyMode();
     static de::NativePath steamBasePath();

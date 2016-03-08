@@ -61,7 +61,7 @@ static String const PATH_LOCAL_WADS("/local/wads");
 
 static DoomsdayApp *theDoomsdayApp = nullptr;
 
-DENG2_PIMPL_NOREF(DoomsdayApp)
+DENG2_PIMPL(DoomsdayApp)
 {
     std::string ddBasePath; // Doomsday root directory is at...?
     std::string ddRuntimePath;
@@ -107,12 +107,15 @@ DENG2_PIMPL_NOREF(DoomsdayApp)
 
     GameChangeScriptAudience scriptAudienceForGameChange;
 
-    Instance(Players::Constructor playerConstructor)
-        : players(playerConstructor)
+    Instance(Public *i, Players::Constructor playerConstructor)
+        : Base(i)
+        , players(playerConstructor)
     {
         Record &appModule = App::scriptSystem().nativeModule("App");
         appModule.addArray("audienceForGameChange"); // game change observers
         audienceForGameChange += scriptAudienceForGameChange;
+
+        gameProfiles.setGames(games);
 
 #ifdef WIN32
         hInstance = GetModuleHandle(NULL);
@@ -347,7 +350,7 @@ DENG2_AUDIENCE_METHOD(DoomsdayApp, GameChange)
 DENG2_AUDIENCE_METHOD(DoomsdayApp, ConsoleRegistration)
 
 DoomsdayApp::DoomsdayApp(Players::Constructor playerConstructor)
-    : d(new Instance(playerConstructor))
+    : d(new Instance(this, playerConstructor))
 {
     DENG2_ASSERT(!theDoomsdayApp);
     theDoomsdayApp = this;
@@ -410,6 +413,11 @@ Plugins &DoomsdayApp::plugins()
 Games &DoomsdayApp::games()
 {
     return DoomsdayApp::app().d->games;
+}
+
+GameProfiles &DoomsdayApp::gameProfiles()
+{
+    return DoomsdayApp::app().d->gameProfiles;
 }
 
 Players &DoomsdayApp::players()

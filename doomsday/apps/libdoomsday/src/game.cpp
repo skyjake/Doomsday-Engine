@@ -20,12 +20,13 @@
 
 #include "doomsday/game.h"
 #include "doomsday/games.h"
+#include "doomsday/doomsdayapp.h"
+#include "doomsday/GameProfiles"
+#include "doomsday/SavedSession"
 #include "doomsday/console/cmd.h"
 #include "doomsday/filesys/file.h"
 #include "doomsday/resource/manifest.h"
 #include "doomsday/resource/resources.h"
-#include "doomsday/doomsdayapp.h"
-#include "doomsday/SavedSession"
 
 #include <de/App>
 #include <de/Error>
@@ -54,7 +55,6 @@ DENG2_PIMPL(Game)
     pluginid_t pluginId = 0; ///< Unique identifier of the registering plugin.
     Record params;
     StringList requiredPackages; ///< Packages required for starting the game.
-    StringList userFiles;
 
     Manifests manifests; ///< Required resource files (e.g., doomu.wad).
 
@@ -78,6 +78,15 @@ DENG2_PIMPL(Game)
     ~Instance()
     {
         qDeleteAll(manifests);
+    }
+
+    StringList packagesFromProfile() const
+    {
+        auto const *profile = DoomsdayApp::gameProfiles().tryFind(self.title())->maybeAs<GameProfiles::Profile>();
+        if(profile)
+        {
+            return profile->packages();
+        }
     }
 };
 
@@ -129,16 +138,6 @@ void Game::addRequiredPackage(String const &packageId)
     d->requiredPackages.append(packageId);
 }
 
-void Game::setUserFiles(StringList const &nativePaths)
-{
-    d->userFiles = nativePaths;
-}
-
-StringList const &Game::userFiles() const
-{
-    return d->userFiles;
-}
-
 StringList Game::requiredPackages() const
 {
     return d->requiredPackages;
@@ -156,7 +155,7 @@ void Game::addManifest(ResourceManifest &manifest)
 
 bool Game::allStartupFilesFound() const
 {
-    for(String const &pkg : d->requiredPackages)
+    for(String const &pkg : d->requiredPackages + d->packagesFromProfile())
     {
         if(!App::packageLoader().isAvailable(pkg))
             return false;

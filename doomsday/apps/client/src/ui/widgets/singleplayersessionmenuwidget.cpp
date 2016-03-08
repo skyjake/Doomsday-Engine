@@ -65,7 +65,7 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
 
         void setDataFiles(StringList const &paths)
         {
-            game->setUserFiles(paths);
+            //game->setUserFiles(paths);
             owner->updateItemLabels();
         }
     };
@@ -137,10 +137,10 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
                 .arg(game.title())
                 .arg(game.id());
 
-        if(!game.userFiles().isEmpty())
+        /*if(!game.userFiles().isEmpty())
         {
             label += _E(b) " +" + QString::number(game.userFiles().size());
-        }
+        }*/
         return label;
     }
 
@@ -168,9 +168,9 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
 
     void updateWidgetAction(GameItem const &item)
     {
-        self.itemWidget<GameSessionWidget>(item).
+        /*self.itemWidget<GameSessionWidget>(item).
                 setDataFileAction(item.game.userFiles().isEmpty()? GameSessionWidget::Select :
-                                                                   GameSessionWidget::Clear);
+                                                                   GameSessionWidget::Clear);*/
     }
 
     void updateWidgetWithGameStatus(ui::Item const &menuItem)

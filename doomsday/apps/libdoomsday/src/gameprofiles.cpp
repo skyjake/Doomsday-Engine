@@ -16,7 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "doomsday/gameprofiles.h"
+#include "doomsday/GameProfiles"
+#include "doomsday/Games"
+#include "doomsday/DoomsdayApp"
 
 #include <de/Record>
 
@@ -27,9 +29,36 @@ using namespace de;
 static String const VAR_GAME    ("game");
 static String const VAR_PACKAGES("packages");
 
+DENG2_PIMPL(GameProfiles)
+, DENG2_OBSERVES(Games, Addition)
+{
+    Instance(Public *i) : Base(i) {}
+
+    void gameAdded(Game &game)
+    {
+        /*
+         * Make sure there is a profile matching this game's title. The session
+         * configuration for each game is persistently stored using these profiles.
+         * (User-created profiles must use different names.)
+         */
+        if(!self.tryFind(game.title()))
+        {
+            auto *prof = new Profile(game.title());
+            prof->setGame(game.id());
+            self.add(prof);
+        }
+    }
+};
+
 GameProfiles::GameProfiles()
+    : d(new Instance(this))
 {
     setPersistentName("game");
+}
+
+void GameProfiles::setGames(Games &games)
+{
+    games.audienceForAddition() += d;
 }
 
 Profiles::AbstractProfile *GameProfiles::profileFromInfoBlock(Info::BlockElement const &block)
@@ -56,8 +85,10 @@ DENG2_PIMPL_NOREF(GameProfiles::Profile)
     StringList packages;
 };
 
-GameProfiles::Profile::Profile() : d(new Instance)
-{}
+GameProfiles::Profile::Profile(String const &name) : d(new Instance)
+{
+    setName(name);
+}
 
 void GameProfiles::Profile::setGame(String const &id)
 {

@@ -23,6 +23,8 @@
 
 #include <de/Profiles>
 
+class Games;
+
 /**
  * Game configuration profiles.
  */
@@ -35,7 +37,7 @@ public:
     class LIBDOOMSDAY_PUBLIC Profile : public AbstractProfile
     {
     public:
-        Profile();
+        Profile(de::String const &name = "");
 
         void setGame(de::String const &id);
         void setPackages(de::StringList const &packagesInOrder);
@@ -53,8 +55,19 @@ public:
 public:
     GameProfiles();
 
+    /**
+     * Sets the games collection associated with these profiles. Each of the games
+     * will get their own matching profile.
+     *
+     * @param games  Games.
+     */
+    void setGames(Games &games);
+
 protected:
     AbstractProfile *profileFromInfoBlock(de::Info::BlockElement const &block);
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 #endif // LIBDOOMSDAY_GAMEPROFILES_H
