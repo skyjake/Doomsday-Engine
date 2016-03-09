@@ -63,11 +63,15 @@ public:
      */
     void setGames(Games &games);
 
+    de::LoopResult forAll(std::function<de::LoopResult (Profile &)> func);
+
 protected:
     AbstractProfile *profileFromInfoBlock(de::Info::BlockElement const &block);
 
 private:
     DENG2_PRIVATE(d)
 };
+
+typedef GameProfiles::Profile GameProfile;
 
 #endif // LIBDOOMSDAY_GAMEPROFILES_H

@@ -61,6 +61,18 @@ void GameProfiles::setGames(Games &games)
     games.audienceForAddition() += d;
 }
 
+LoopResult GameProfiles::forAll(std::function<LoopResult (Profile &)> func)
+{
+    return Profiles::forAll([&func] (AbstractProfile &prof) -> LoopResult
+    {
+        if(auto result = func(prof.as<Profile>()))
+        {
+            return result;
+        }
+        return LoopContinue;
+    });
+}
+
 Profiles::AbstractProfile *GameProfiles::profileFromInfoBlock(Info::BlockElement const &block)
 {
     std::unique_ptr<Profile> prof(new Profile);

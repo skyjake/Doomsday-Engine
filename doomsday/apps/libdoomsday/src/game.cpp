@@ -87,6 +87,7 @@ DENG2_PIMPL(Game)
         {
             return profile->packages();
         }
+        return StringList();
     }
 };
 
