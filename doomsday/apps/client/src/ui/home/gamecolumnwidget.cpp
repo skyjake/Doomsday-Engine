@@ -21,33 +21,69 @@
 #include "ui/home/gamepanelbuttonwidget.h"
 #include "ui/home/homemenuwidget.h"
 
-#include <doomsday/doomsdayapp.h>
-#include <doomsday/games.h>
+#include <doomsday/DoomsdayApp>
+#include <doomsday/Games>
+#include <doomsday/GameProfiles>
 
 #include <de/ChildWidgetOrganizer>
 #include <de/MenuWidget>
 #include <de/PersistentState>
+#include <de/Loop>
 #include <de/App>
 
 using namespace de;
 
 DENG_GUI_PIMPL(GameColumnWidget)
 , DENG2_OBSERVES(Games, Readiness)
+, DENG2_OBSERVES(Profiles, Addition)
 , DENG2_OBSERVES(Variable, Change)
 , public ChildWidgetOrganizer::IWidgetFactory
 {
     // Item for a particular loadable game.
-    struct MenuItem : public ui::Item
+    struct MenuItem
+            : public ui::Item
+            , DENG2_OBSERVES(Deletable, Deletion)
     {
-        Game const &game;
+        GameColumnWidget::Instance *d;
+        GameProfile const *profile;
 
-        MenuItem(Game const &game) : game(game) { setData(game.id()); }
+        MenuItem(GameColumnWidget::Instance *d, GameProfile const &gameProfile)
+            : d(d)
+            , profile(&gameProfile)
+        {
+            setData(game().id());
+            profile->audienceForDeletion += this;
+        }
+
+        ~MenuItem()
+        {
+            if(profile) profile->audienceForDeletion -= this;
+        }
+
+        Game const &game() const
+        {
+            DENG2_ASSERT(profile != nullptr);
+            return DoomsdayApp::games()[profile->game()];
+        }
+
         String gameId() const { return data().toString(); }
+
         void update() const { notifyChange(); }
+
+        void objectWasDeleted(Deletable *obj)
+        {
+            DENG2_ASSERT(static_cast<GameProfile *>(obj) == profile);
+
+            profile = nullptr;
+
+            auto &items = d->menu->items();
+            items.remove(items.find(*this)); // item deleted
+        }
 
         DENG2_AS_IS_METHODS()
     };
 
+    LoopCallback mainCall;
     String gameFamily;
     SavedSessionListData const &savedItems;
     HomeMenuWidget *menu;
@@ -71,12 +107,14 @@ DENG_GUI_PIMPL(GameColumnWidget)
                 .setInput(Rule::Top,   self.header().rule().bottom());
 
         DoomsdayApp::games().audienceForReadiness() += this;
+        DoomsdayApp::gameProfiles().audienceForAddition() += this;
         App::config("home.showUnplayableGames").audienceForChange() += this;
     }
 
     ~Instance()
     {
         DoomsdayApp::games().audienceForReadiness() -= this;
+        DoomsdayApp::gameProfiles().audienceForAddition() -= this;
         App::config("home.showUnplayableGames").audienceForChange() -= this;
     }
 
@@ -93,47 +131,60 @@ DENG_GUI_PIMPL(GameColumnWidget)
         return menu->itemWidget<GamePanelButtonWidget>(item);
     }
 
+    void addItemForProfile(GameProfile const &profile)
+    {
+        if(DoomsdayApp::games()[profile.game()].family() == gameFamily)
+        {
+            menu->items() << new MenuItem(this, profile);
+        }
+    }
+
+    void profileAdded(Profiles::AbstractProfile &prof)
+    {
+        // This may be called from another thread.
+        mainCall.enqueue([this, &prof] ()
+        {
+            addItemForProfile(prof.as<GameProfile>());
+            sortItems();
+        });
+    }
+
+    /**
+     * Populates the game items using the currently available game profiles.
+     */
     void populateItems()
     {
-        Games const &games = DoomsdayApp::games();
-
-        // Add games not already in the list.
-        for(int i = 0; i < games.count(); ++i)
+        menu->items().clear();
+        DoomsdayApp::gameProfiles().forAll([this] (GameProfile &profile)
         {
-            Game const &game = games.byIndex(i);
-            if(game.family() == gameFamily)
-            {
-                if(auto const *item = findItem(game.id()))
-                {
-                    item->as<MenuItem>().update();
-                }
-                else
-                {
-                    menu->items() << new MenuItem(game);
-                }
-            }
-        }
+            addItemForProfile(profile);
+            return LoopContinue;
+        });
+        sortItems();
+    }
 
-        // Remove items no longer available.
-        for(ui::DataPos i = menu->items().size() - 1; i < menu->items().size(); --i)
+    void sortItems()
+    {
+        menu->items().sort([] (ui::Item const &a, ui::Item const &b)
         {
-            MenuItem const &item = menu->items().at(i).as<MenuItem>();
-            if(!games.contains(item.gameId()))
-            {
-                // Time to remove this one.
-                menu->items().remove(i);
-            }
-        }
+            // Sorting by game release date.
+            return a.as<MenuItem>().game().releaseDate().year() <
+                   b.as<MenuItem>().game().releaseDate().year();
+        });
+    }
 
-        menu->items().sort([] (ui::Item const &a, ui::Item const &b) {
-            return a.as<MenuItem>().game.releaseDate().year() <
-                   b.as<MenuItem>().game.releaseDate().year();
+    void updateItems()
+    {
+        menu->items().forAll([] (ui::Item const &item)
+        {
+            item.as<MenuItem>().update();
+            return LoopContinue;
         });
     }
 
     void gameReadinessUpdated()
     {
-        populateItems();
+        updateItems();
 
         // Restore earlier selection?
         if(restoredSelected >= 0)
@@ -145,14 +196,14 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
     void variableValueChanged(Variable &, Value const &)
     {
-        populateItems();
+        updateItems();
     }
 
-//- ChildWidgetOrganizer::IWidgetFactory --------------------------------------
+//- ChildWidgetOrganizer::IWidgetFactory ------------------------------------------------
 
     GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *)
     {
-        auto *button = new GamePanelButtonWidget(item.as<MenuItem>().game, savedItems);
+        auto *button = new GamePanelButtonWidget(item.as<MenuItem>().game(), savedItems);
         return button;
     }
 
@@ -163,7 +214,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
         if(!App::config().getb("home.showUnplayableGames"))
         {
-            drawer.show(item.as<MenuItem>().game.isPlayable());
+            drawer.show(item.as<MenuItem>().game().isPlayable());
         }
         else
         {
@@ -235,6 +286,8 @@ GameColumnWidget::GameColumnWidget(String const &gameFamily,
                                 "projects.");
     }
     }
+
+    d->populateItems();
 }
 
 String GameColumnWidget::tabHeading() const
