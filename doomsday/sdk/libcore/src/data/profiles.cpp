@@ -31,6 +31,7 @@ static String nameToKey(String const &name)
 }
 
 DENG2_PIMPL(Profiles)
+, DENG2_OBSERVES(Deletable, Deletion)
 {
     typedef QMap<String, AbstractProfile *> Profiles;
     Profiles profiles;
@@ -53,10 +54,48 @@ DENG2_PIMPL(Profiles)
         }
         profiles.insert(key, profile);
         profile->setOwner(thisPublic);
+        profile->audienceForDeletion += this;
+
+        DENG2_FOR_PUBLIC_AUDIENCE2(Addition, i)
+        {
+            i->profileAdded(*profile);
+        }
+    }
+
+    void remove(AbstractProfile &profile)
+    {
+        profile.audienceForDeletion -= this;
+        profile.setOwner(nullptr);
+        profiles.remove(nameToKey(profile.name()));
+
+        DENG2_FOR_PUBLIC_AUDIENCE2(Removal, i)
+        {
+            i->profileRemoved(profile);
+        }
+    }
+
+    void objectWasDeleted(Deletable *obj)
+    {
+        // At this point the AbstractProfile itself is already deleted.
+        QMutableMapIterator<String, AbstractProfile *> iter(profiles);
+        while(iter.hasNext())
+        {
+            iter.next();
+            if(iter.value() == obj)
+            {
+                iter.remove();
+                break;
+            }
+        }
     }
 
     void clear()
     {
+        for(auto *prof : profiles)
+        {
+            prof->audienceForDeletion -= this;
+            prof->setOwner(nullptr);
+        }
         qDeleteAll(profiles.values());
         profiles.clear();
     }
@@ -110,7 +149,12 @@ DENG2_PIMPL(Profiles)
                     << file.description() << er.asText();
         }
     }
+    DENG2_PIMPL_AUDIENCE(Addition)
+    DENG2_PIMPL_AUDIENCE(Removal)
 };
+
+DENG2_AUDIENCE_METHOD(Profiles, Addition)
+DENG2_AUDIENCE_METHOD(Profiles, Removal)
 
 Profiles::Profiles()
     : d(new Instance(this))
@@ -188,8 +232,7 @@ void Profiles::remove(AbstractProfile &profile)
 {
     DENG2_ASSERT(&profile.owner() == this);
 
-    d->profiles.remove(nameToKey(profile.name()));
-    profile.setOwner(nullptr);
+    d->remove(profile);
 }
 
 void Profiles::serialize() const
@@ -277,7 +320,13 @@ DENG2_PIMPL(Profiles::AbstractProfile)
 
     Instance(Public *i) : Base(i) {}
 
-    ~Instance() {}
+    ~Instance()
+    {
+        if(owner)
+        {
+            owner->remove(self);
+        }
+    }
 };
 
 Profiles::AbstractProfile::AbstractProfile()
@@ -289,7 +338,7 @@ Profiles::AbstractProfile::~AbstractProfile()
 
 void Profiles::AbstractProfile::setOwner(Profiles *owner)
 {
-    DENG2_ASSERT(d->owner == nullptr);
+    DENG2_ASSERT(d->owner != owner);
     d->owner = owner;
 }
 

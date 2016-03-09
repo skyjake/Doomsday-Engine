@@ -21,6 +21,7 @@
 
 #include <de/String>
 #include <de/Info>
+#include <de/Deletable>
 #include <functional>
 
 namespace de {
@@ -42,7 +43,7 @@ public:
      * Base class for profiles. The derived class implements this with the
      * appropriate contents and serialization. @ingroup data
      */
-    class DENG2_PUBLIC AbstractProfile
+    class DENG2_PUBLIC AbstractProfile : public Deletable
     {
     public:
         AbstractProfile();
@@ -97,6 +98,9 @@ public:
     };
 
     DENG2_ERROR(NotFoundError);
+
+    DENG2_DEFINE_AUDIENCE2(Addition, void profileAdded  (AbstractProfile &prof))
+    DENG2_DEFINE_AUDIENCE2(Removal,  void profileRemoved(AbstractProfile &prof))
 
 public:
     Profiles();
