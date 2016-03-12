@@ -19,6 +19,7 @@
 #include "ui/home/gamepanelbuttonwidget.h"
 #include "ui/home/savelistwidget.h"
 #include "ui/savedsessionlistdata.h"
+#include "ui/dialogs/packagesdialog.h"
 #include "dd_main.h"
 
 #include <doomsday/console/exec.h>
@@ -36,6 +37,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
     Game const &game;
     SavedSessionListData const &savedItems;
     SaveListWidget *saves;
+    ButtonWidget *packagesButton;
     ButtonWidget *playButton;
     ButtonWidget *deleteSaveButton;
 
@@ -44,11 +46,12 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         , game(game)
         , savedItems(savedItems)
     {
-        ButtonWidget *packages = new ButtonWidget;
-        packages->setImage(new StyleProceduralImage("package", self));
-        packages->setOverrideImageSize(style().fonts().font("default").height().value());
-        packages->setSizePolicy(ui::Expand, ui::Expand);
-        self.addButton(packages);
+        packagesButton = new ButtonWidget;
+        packagesButton->setImage(new StyleProceduralImage("package", self));
+        packagesButton->setOverrideImageSize(style().fonts().font("default").height().value());
+        packagesButton->setSizePolicy(ui::Expand, ui::Expand);
+        packagesButton->setActionFn([this] () { packagesButtonPressed(); });
+        self.addButton(packagesButton);
 
         playButton = new ButtonWidget;
         playButton->useInfoStyle();
@@ -76,6 +79,24 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
 
         self.panel().setContent(saves);
         self.panel().open();
+    }
+
+    void packagesButtonPressed()
+    {
+        // The Packages dialog allows selecting which packages are loaded, and in
+        // which order. One can also browse the available packages.
+        auto *dlg = new PackagesDialog;
+        dlg->setDeleteAfterDismissed(true);
+        if(self.rule().midX().value() < root().viewWidth().value()/2)
+        {
+            dlg->setAnchorAndOpeningDirection(packagesButton->rule(), ui::Right);
+        }
+        else
+        {
+            dlg->setAnchorAndOpeningDirection(packagesButton->rule(), ui::Left);
+        }
+        root().addOnTop(dlg);
+        dlg->open();
     }
 
     void playButtonPressed()
