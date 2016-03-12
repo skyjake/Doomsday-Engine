@@ -32,6 +32,7 @@ String const ScriptedInfo::SCRIPT         = "script";
 String const ScriptedInfo::BLOCK_GROUP    = "group";
 String const ScriptedInfo::VAR_SOURCE     = "__source__";
 String const ScriptedInfo::VAR_BLOCK_TYPE = "__type__";
+String const ScriptedInfo::VAR_INHERITED_SOURCES = "__inheritedSources__"; // array
 
 static String const BLOCK_NAMESPACE = "namespace";
 static String const BLOCK_SCRIPT    = ScriptedInfo::SCRIPT;
@@ -167,9 +168,20 @@ DENG2_PIMPL(ScriptedInfo)
             DENG2_ASSERT(!targetName.isEmpty());
 
             // Copy all present members of the target record.
-            ns.subrecord(varName)
-                    .copyMembersFrom(ns[targetName].value<RecordValue>().dereference(),
-                                     Record::IgnoreDoubleUnderscoreMembers);
+            Record const &src = ns[targetName].value<RecordValue>().dereference();
+            Record &dest = ns.subrecord(varName);
+            dest.copyMembersFrom(src, Record::IgnoreDoubleUnderscoreMembers);
+
+            // Append the inherited source location.
+            if(src.hasMember(VAR_SOURCE))
+            {
+                if(!dest.hasMember(VAR_INHERITED_SOURCES))
+                {
+                    dest.addArray(VAR_INHERITED_SOURCES);
+                }
+                dest[VAR_INHERITED_SOURCES].value<ArrayValue>()
+                        .add(new TextValue(ScriptedInfo::sourcePathAndLine(src).first));
+            }
         }
     }
 
@@ -558,8 +570,29 @@ String ScriptedInfo::absolutePathInContext(Record const &context, String const &
     {
         auto const sourceLocation = Info::sourceLineTable().sourcePathAndLineNumber(
                     context.getui(VAR_SOURCE));
-        return sourceLocation.first.fileNamePath() / relativePath;
+
+        String absPath = sourceLocation.first.fileNamePath() / relativePath;
+        if(!App::rootFolder().has(absPath))
+        {
+            // As a fallback, look for possible inherited locations.
+            if(context.has(VAR_INHERITED_SOURCES))
+            {
+                // Look in reverse so the latest inherited locations are checked first.
+                auto const &elems = context.geta(VAR_INHERITED_SOURCES);
+                for(int i = elems.size() - 1; i >= 0; --i)
+                {
+                    String inheritedPath = elems.at(i).asText().fileNamePath() / relativePath;
+                    if(App::rootFolder().has(inheritedPath))
+                    {
+                        return inheritedPath;
+                    }
+                }
+            }
+        }
+        return absPath;
     }
+
+    // The relation is unknown.
     return relativePath;
 }
 
