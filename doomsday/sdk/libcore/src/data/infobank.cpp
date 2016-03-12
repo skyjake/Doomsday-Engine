@@ -176,11 +176,20 @@ String InfoBank::bankRootPath() const
     return d->relativeToPath;
 }
 
-String InfoBank::relativeToPath(Record const &context) const
+String InfoBank::absolutePathInContext(Record const &context, String const &relativePath) const
 {
-    String const root = ScriptedInfo::absolutePathInContext(context, "");
-    if(root.isEmpty()) return bankRootPath();
-    return root;
+    if(Path(relativePath).isAbsolute())
+    {
+        // Already absolute.
+        return relativePath;
+    }
+
+    String const path = ScriptedInfo::absolutePathInContext(context, relativePath);
+    if(path == relativePath)
+    {
+        return bankRootPath() / relativePath;
+    }
+    return path;
 }
 
 } // namespace de

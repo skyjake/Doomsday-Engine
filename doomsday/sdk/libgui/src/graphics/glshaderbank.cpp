@@ -137,8 +137,6 @@ DENG2_PIMPL(GLShaderBank)
     typedef QMap<String, GLShader *> Shaders; // path -> shader
     Shaders shaders;
 
-    //String relativeToPath;
-
     Instance(Public *i) : Base(i)
     {}
 
@@ -180,7 +178,6 @@ GLShaderBank::GLShaderBank() : InfoBank("GLShaderBank"), d(new Instance(this))
 void GLShaderBank::addFromInfo(File const &file)
 {
     LOG_AS("GLShaderBank");
-    //d->relativeToPath = file.path().fileNamePath();
     parse(file);
     addFromInfoBlocks("shader");
 }
@@ -231,11 +228,11 @@ Bank::ISource *GLShaderBank::newSourceFromInfo(String const &id)
     }
     else if(def.has("path.vertex"))
     {
-        vtx = ShaderSource(relativeToPath(def) / def["path.vertex"], ShaderSource::FilePath);
+        vtx = ShaderSource(absolutePathInContext(def, def["path.vertex"]), ShaderSource::FilePath);
     }
     else if(def.has("path"))
     {
-        vtx = ShaderSource(relativeToPath(def) / def["path"] + ".vsh", ShaderSource::FilePath);
+        vtx = ShaderSource(absolutePathInContext(def, def.gets("path") + ".vsh"), ShaderSource::FilePath);
     }
 
     // Fragment shader definition.
@@ -245,11 +242,11 @@ Bank::ISource *GLShaderBank::newSourceFromInfo(String const &id)
     }
     else if(def.has("path.fragment"))
     {
-        frag = ShaderSource(relativeToPath(def) / def["path.fragment"], ShaderSource::FilePath);
+        frag = ShaderSource(absolutePathInContext(def, def["path.fragment"]), ShaderSource::FilePath);
     }
     else if(def.has("path"))
     {
-        frag = ShaderSource(relativeToPath(def) / def["path"] + ".fsh", ShaderSource::FilePath);
+        frag = ShaderSource(absolutePathInContext(def, def.gets("path") + ".fsh"), ShaderSource::FilePath);
     }
 
     // Additional shaders to append to the main source.
@@ -259,7 +256,7 @@ Bank::ISource *GLShaderBank::newSourceFromInfo(String const &id)
         auto const &incs = def["include.vertex"].value().as<ArrayValue>().elements();
         for(int i = incs.size() - 1; i >= 0; --i)
         {
-            vtx.insertFromFile(relativeToPath(def) / incs.at(i)->asText());
+            vtx.insertFromFile(absolutePathInContext(def, incs.at(i)->asText()));
         }
     }
     if(def.has("include.fragment"))
@@ -268,7 +265,7 @@ Bank::ISource *GLShaderBank::newSourceFromInfo(String const &id)
         auto const &incs = def["include.fragment"].value().as<ArrayValue>().elements();
         for(int i = incs.size() - 1; i >= 0; --i)
         {
-            frag.insertFromFile(relativeToPath(def) / incs.at(i)->asText());
+            frag.insertFromFile(absolutePathInContext(def, incs.at(i)->asText()));
         }
     }
 

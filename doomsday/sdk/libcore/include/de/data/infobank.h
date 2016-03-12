@@ -92,17 +92,19 @@ public:
     String bankRootPath() const;
 
     /**
-     * Determines what relatives paths should be relative to, given a specific context.
-     * This should be used when resolving paths in ScriptedInfo records.
+     * Resolves a relative path into an absoluate path in the context of @a context.
+     * This should be used when processing paths in ScriptedInfo records.
      *
-     * In practice, checks if the context has a "__source__" specified; if not, returns
-     * the root path of the bank.
+     * In practice, first checks if the context has a "__source__" specified. If the
+     * relative path cannot be found, also checks the possible inherited source locations.
+     * If source information is not specified, uses the the root path of the bank.
      *
-     * @param context  Namespace to use as context.
+     * @param context       Namespace to use as context.
+     * @param relativePath  Relative path to resolve.
      *
-     * @return Path that relative paths should be resolved with.
+     * @return Absolute path.
      */
-    String relativeToPath(Record const &context) const;
+    String absolutePathInContext(Record const &context, String const &relativePath) const;
 
     // Implements IObject.
     Record &objectNamespace();

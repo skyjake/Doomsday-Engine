@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/ImageBank"
@@ -86,7 +86,7 @@ Image const &ImageBank::image(DotPath const &path) const
 Bank::ISource *ImageBank::newSourceFromInfo(String const &id)
 {
     Record const &def = info()[id];
-    return new Instance::ImageSource(relativeToPath(def) / def["path"]);
+    return new Instance::ImageSource(absolutePathInContext(def, def["path"]));
 }
 
 Bank::IData *ImageBank::loadFromSource(ISource &source)

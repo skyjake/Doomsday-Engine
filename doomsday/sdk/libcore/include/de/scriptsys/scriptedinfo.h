@@ -245,6 +245,8 @@ public:
     /// Name of a special variable where the block type is stored.
     static String const VAR_BLOCK_TYPE;
 
+    static String const VAR_INHERITED_SOURCES;
+
 private:
     DENG2_PRIVATE(d)
 };
