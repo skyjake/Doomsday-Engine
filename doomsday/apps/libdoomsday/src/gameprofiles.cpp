@@ -95,6 +95,7 @@ DENG2_PIMPL_NOREF(GameProfiles::Profile)
 {
     String gameId;
     StringList packages;
+    bool userCreated = false;
 };
 
 GameProfiles::Profile::Profile(String const &name) : d(new Instance)
@@ -112,6 +113,11 @@ void GameProfiles::Profile::setPackages(StringList const &packagesInOrder)
     d->packages = packagesInOrder;
 }
 
+void GameProfiles::Profile::setUserCreated(bool userCreated)
+{
+    d->userCreated = userCreated;
+}
+
 String GameProfiles::Profile::game() const
 {
     return d->gameId;
@@ -120,6 +126,11 @@ String GameProfiles::Profile::game() const
 StringList GameProfiles::Profile::packages() const
 {
     return d->packages;
+}
+
+bool GameProfiles::Profile::isUserCreated() const
+{
+    return d->userCreated;
 }
 
 bool GameProfiles::Profile::resetToDefaults()

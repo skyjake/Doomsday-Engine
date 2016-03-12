@@ -41,9 +41,11 @@ public:
 
         void setGame(de::String const &id);
         void setPackages(de::StringList const &packagesInOrder);
+        void setUserCreated(bool userCreated);
 
         de::String game() const;
         de::StringList packages() const;
+        bool isUserCreated() const;
 
         virtual bool resetToDefaults();
         virtual de::String toInfoSource() const;
