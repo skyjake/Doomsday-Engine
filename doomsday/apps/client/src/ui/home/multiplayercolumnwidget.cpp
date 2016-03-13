@@ -218,6 +218,9 @@ MultiplayerColumnWidget::MultiplayerColumnWidget()
     : ColumnWidget("multiplayer-column")
     , d(new Instance(this))
 {
+    d->mode = DiscoverUsingMaster;
+    d->link().discoverUsingMaster();
+
     scrollArea().setContentSize(maximumContentWidth(),
                                 header().rule().height() +
                                 rule("gap") +

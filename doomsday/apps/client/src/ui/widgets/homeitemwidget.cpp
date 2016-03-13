@@ -205,21 +205,45 @@ bool HomeItemWidget::isSelected() const
     return d->selected;
 }
 
-void HomeItemWidget::useInvertedStyle()
-{
-    d->bgColor           = "accent";
-    d->textColor         = "inverted.accent";
-    d->selectedBgColor   = "accent";
-    d->selectedTextColor = "inverted.text";
-    d->updateColors();
-}
-
 void HomeItemWidget::useNormalStyle()
 {
-    d->bgColor           = "transparent";
-    d->textColor         = "text";
-    d->selectedBgColor   = "background";
-    d->selectedTextColor = "text";
+    useColorTheme(Normal);
+}
+
+void HomeItemWidget::useInvertedStyle()
+{
+    useColorTheme(Inverted);
+}
+
+void HomeItemWidget::useColorTheme(ColorTheme style)
+{
+    useColorTheme(style, style);
+}
+
+void HomeItemWidget::useColorTheme(ColorTheme unselected, ColorTheme selected)
+{
+    if(unselected == Inverted)
+    {
+        d->bgColor   = "accent";
+        d->textColor = "inverted.accent";
+    }
+    else
+    {
+        d->bgColor   = "transparent";
+        d->textColor = "text";
+    }
+
+    if(selected == Inverted)
+    {
+        d->selectedBgColor   = "accent";
+        d->selectedTextColor = "inverted.text";
+    }
+    else
+    {
+        d->selectedBgColor   = "background";
+        d->selectedTextColor = "text";
+    }
+
     d->updateColors();
 }
 

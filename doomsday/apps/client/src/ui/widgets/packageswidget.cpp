@@ -45,6 +45,10 @@ DENG_GUI_PIMPL(PackagesWidget)
     ButtonWidget *clearSearch;
     HomeMenuWidget *menu;
     QStringList filterTerms;
+    GuiWidget::ColorTheme unselectedItem       = GuiWidget::Normal;
+    GuiWidget::ColorTheme selectedItem         = GuiWidget::Normal;
+    GuiWidget::ColorTheme loadedUnselectedItem = GuiWidget::Inverted;
+    GuiWidget::ColorTheme loadedSelectedItem   = GuiWidget::Inverted;
 
     /**
      * Information about an available package.
@@ -228,7 +232,8 @@ DENG_GUI_PIMPL(PackagesWidget)
                 _loadButton->setText(tr("Unload"));
                 _loadButton->useNormalStyle();
                 icon().setImageColor(style().colors().colorf("accent"));
-                useInvertedStyle();
+                //useInvertedStyle();
+                useColorTheme(_owner.d->loadedUnselectedItem, _owner.d->loadedSelectedItem);
                 //_loadButton->setTextColor("altaccent");
                 //_loadButton->setBorderColor("altaccent");
                 //_title->setFont("choice.selected");
@@ -239,7 +244,8 @@ DENG_GUI_PIMPL(PackagesWidget)
                 _loadButton->setText(tr("Load"));
                 _loadButton->useInfoStyle();
                 icon().setImageColor(style().colors().colorf("text"));
-                useNormalStyle();
+                //useNormalStyle();
+                useColorTheme(_owner.d->unselectedItem, _owner.d->selectedItem);
                 //_loadButton->setTextColor("text");
                 //_loadButton->setBorderColor("text");
                 //_title->setFont("default");
@@ -444,6 +450,17 @@ PackagesWidget::PackagesWidget(String const &name)
                     d->menu->rule().height());
 
     refreshPackages();
+}
+
+void PackagesWidget::setColorTheme(ColorTheme unselectedItem, ColorTheme selectedItem,
+                                   ColorTheme loadedUnselectedItem, ColorTheme loadedSelectedItem)
+{
+    d->unselectedItem       = unselectedItem;
+    d->selectedItem         = selectedItem;
+    d->loadedUnselectedItem = loadedUnselectedItem;
+    d->loadedSelectedItem   = loadedSelectedItem;
+
+    d->populate();
 }
 
 void PackagesWidget::operator >> (PersistentState &toState) const

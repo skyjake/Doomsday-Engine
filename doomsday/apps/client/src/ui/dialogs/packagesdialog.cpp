@@ -18,6 +18,8 @@
 
 #include "ui/dialogs/packagesdialog.h"
 #include "ui/widgets/packageswidget.h"
+#include "ui/widgets/homeitemwidget.h"
+#include "ui/widgets/homemenuwidget.h"
 #include "clientapp.h"
 
 #include <de/FileSystem>
@@ -26,18 +28,21 @@
 #include <de/SequentialLayout>
 #include <de/DocumentPopupWidget>
 #include <de/PopupButtonWidget>
+#include <de/PopupMenuWidget>
+#include <de/CallbackAction>
 #include <de/SignalAction>
+#include <de/ui/SubwidgetItem>
 
 using namespace de;
 
 DENG_GUI_PIMPL(PackagesDialog)
 , public ChildWidgetOrganizer::IWidgetFactory
 {
-    MenuWidget *menu;
+    HomeMenuWidget *menu;
     PackagesWidget *browser;
 
     /**
-     * Information about an available package.
+     * Information about a selected package.
      */
     struct PackageItem : public ui::Item
     {
@@ -51,6 +56,11 @@ DENG_GUI_PIMPL(PackagesDialog)
             setData(QString(info->gets("ID")));
         }
 
+        String packageId() const
+        {
+            return data().toString();
+        }
+
         void setFile(File const &packFile)
         {
             file = &packFile;
@@ -60,47 +70,34 @@ DENG_GUI_PIMPL(PackagesDialog)
     };
 
     /**
-     * Widget showing information about a package and containing buttons for manipulating
-     * the package.
+     * Widget showing information about a selected package, with a button for dragging
+     * the item up and down.
      */
-    class Widget : public GuiWidget
+    class Widget : public HomeItemWidget
     {
-    private:
-        /// Action to load or unload a package.
-        struct LoadAction : public Action
-        {
-            Widget &owner;
-
-            LoadAction(Widget &widget) : owner(widget) {}
-
-            void trigger()
-            {
-                Action::trigger();
-                auto &loader = App::packageLoader();
-                if(loader.isLoaded(owner.packageId()))
-                {
-                    loader.unload(owner.packageId());
-                }
-                else
-                {
-                    try
-                    {
-                        loader.load(owner.packageId());
-                    }
-                    catch(Error const &er)
-                    {
-                        LOG_RES_ERROR("Package \"" + owner.packageId() +
-                                      "\" could not be loaded: " + er.asText());
-                    }
-                }
-                owner.updateContents();
-            }
-        };
-
     public:
         Widget(PackageItem const &item)
             : _item(&item)
         {
+            useColorTheme(Normal, Inverted);
+
+            _infoButton = new PopupButtonWidget;
+            _infoButton->setText(tr("..."));
+            _infoButton->setFont("small");
+            _infoButton->margins().setTopBottom("unit");
+            _infoButton->setPopup([this] (PopupButtonWidget const &)
+            {
+                auto *pop = new PopupMenuWidget;
+                pop->useInfoStyle();
+                pop->items() << new ui::SubwidgetItem(
+                                    tr("Info"), ui::Down,
+                                    [this] () -> PopupWidget * { return makeInfoPopup(); });
+                return pop;
+            }
+            , ui::Down);
+            addButton(_infoButton);
+
+            /*
             add(_title = new LabelWidget);
             _title->setSizePolicy(ui::Fixed, ui::Expand);
             _title->setAlignment(ui::AlignLeft);
@@ -152,8 +149,9 @@ DENG_GUI_PIMPL(PackagesDialog)
             rule().setInput(Rule::Width,  rule("dialog.packages.width"))
                   .setInput(Rule::Height, _title->rule().height() +
                             _subtitle->rule().height() + _tags.at(0)->rule().height());
+                            */
         }
-
+/*
         void createTagButtons()
         {
             SequentialLayout layout(_subtitle->rule().left(),
@@ -180,11 +178,13 @@ DENG_GUI_PIMPL(PackagesDialog)
             tag->setFont("small");
             tag->setTextColor(color);
             tag->set(Background(Background::Rounded, style().colors().colorf(color), 6));
-        }
+        }*/
 
         void updateContents()
         {
-            _title->setText(_item->info->gets("title"));
+            label().setText(_item->info->gets("title"));
+
+            /*
             _subtitle->setText(packageId());
 
             String auxColor = "accent";
@@ -209,17 +209,12 @@ DENG_GUI_PIMPL(PackagesDialog)
             for(ButtonWidget *b : _tags)
             {
                 updateTagButtonStyle(b, auxColor);
-            }
-        }
-
-        bool isLoaded() const
-        {
-            return App::packageLoader().isLoaded(packageId());
+            }*/
         }
 
         String packageId() const
         {
-            return _item->info->gets("ID");
+            return _item->packageId();
         }
 
         PopupWidget *makeInfoPopup() const
@@ -239,65 +234,46 @@ DENG_GUI_PIMPL(PackagesDialog)
 
     private:
         PackageItem const *_item;
-        LabelWidget *_title;
-        LabelWidget *_subtitle;
-        QList<ButtonWidget *> _tags;
-        ButtonWidget *_loadButton;
+        //LabelWidget *_title;
+        //LabelWidget *_subtitle;
+        //QList<ButtonWidget *> _tags;
         PopupButtonWidget *_infoButton;
+        //ButtonWidget *_loadButton;
+        //PopupButtonWidget *_infoButton;
     };
 
     Instance(Public *i) : Base(i)
     {
         // Currently selected packages.
-        self.leftArea().add(menu = new MenuWidget);
-        menu->enableScrolling(false); // dialog content already scrolls
-        menu->enablePageKeys(false);
-        menu->setGridSize(1, ui::Expand, 0, ui::Expand);
+        self.leftArea().add(menu = new HomeMenuWidget);
+        menu->layout().setRowPadding(Const(0));
         menu->rule()
-                .setInput(Rule::Left, self.leftArea().contentRule().left())
-                .setInput(Rule::Top,  self.leftArea().contentRule().top());
+                .setInput(Rule::Left,  self.leftArea().contentRule().left())
+                .setInput(Rule::Top,   self.leftArea().contentRule().top())
+                .setInput(Rule::Width, rule("dialog.packages.width"));
         menu->organizer().setWidgetFactory(*this);
+        self.leftArea().enableIndicatorDraw(true);
 
         // Package browser.
         self.rightArea().add(browser = new PackagesWidget);
+        browser->setColorTheme(Normal, Inverted, Normal, Inverted);
         browser->rule()
                 .setInput(Rule::Left,  self.rightArea().contentRule().left())
                 .setInput(Rule::Top,   self.rightArea().contentRule().top())
                 .setInput(Rule::Width, menu->rule().width());
+        self.rightArea().enableIndicatorDraw(true);
     }
 
     void populate()
     {
-        StringList packages = App::packageLoader().findAllPackages();
-        qSort(packages);
+        menu->items().clear();
+
+        auto loaded = App::packageLoader().loadedPackagesAsFilesInPackageOrder();
 
         // Remove from the list those packages that are no longer listed.
-        for(ui::DataPos i = 0; i < menu->items().size(); ++i)
+        for(File const *packFile : loaded)
         {
-            if(!packages.contains(menu->items().at(i).data().toString()))
-            {
-                menu->items().remove(i--);
-            }
-        }
-
-        // Add/update the listed packages.
-        for(String const &path : packages)
-        {
-            File const &pack = App::rootFolder().locate<File>(path);
-
-            // Core packages are mandatory and thus omitted.
-            if(Package::tags(pack).contains("core")) continue;
-
-            // Is this already in the list?
-            ui::DataPos pos = menu->items().findData(pack.objectNamespace().gets("package.ID"));
-            if(pos != ui::Data::InvalidPos)
-            {
-                menu->items().at(pos).as<PackageItem>().setFile(pack);
-            }
-            else
-            {
-                menu->items() << new PackageItem(pack);
-            }
+            menu->items() << new PackageItem(*packFile);
         }
     }
 

@@ -32,6 +32,9 @@ class PackagesWidget : public de::GuiWidget, public de::IPersistent
 public:
     PackagesWidget(de::String const &name = "");
 
+    void setColorTheme(ColorTheme unselectedItem, ColorTheme selectedItem,
+                       ColorTheme loadedUnselectedItem, ColorTheme loadedSelectedItem);
+
     // Implements IPersistent.
     void operator >> (de::PersistentState &toState) const;
     void operator << (de::PersistentState const &fromState);

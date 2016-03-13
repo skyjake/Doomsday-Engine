@@ -40,8 +40,10 @@ public:
     virtual void setSelected(bool selected);
     bool isSelected() const;
 
-    void useInvertedStyle();
     void useNormalStyle();
+    void useInvertedStyle();
+    void useColorTheme(ColorTheme style);
+    void useColorTheme(ColorTheme unselected, ColorTheme selected);
 
 signals:
     void mouseActivity();
