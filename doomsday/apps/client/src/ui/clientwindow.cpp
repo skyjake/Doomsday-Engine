@@ -73,7 +73,7 @@ static ClientWindow *mainWindow = nullptr; // The main window, set after fully c
 
 DENG2_PIMPL(ClientWindow)
 , DENG2_OBSERVES(App,      StartupComplete)
-, DENG2_OBSERVES(Games,    Readiness)
+//, DENG2_OBSERVES(Games,    Readiness)
 , DENG2_OBSERVES(DoomsdayApp, GameChange)
 , DENG2_OBSERVES(MouseEventSource, MouseStateChange)
 , DENG2_OBSERVES(Canvas,   FocusChange)
@@ -98,8 +98,8 @@ DENG2_PIMPL(ClientWindow)
     AlertDialog *alerts = nullptr;
     ColorAdjustmentDialog *colorAdjust = nullptr;
     //LabelWidget *background = nullptr;
-    GuiWidget *iwadNotice = nullptr;
-    GameSelectionWidget *gameSelMenu = nullptr;
+    //GuiWidget *iwadNotice = nullptr;
+    //GameSelectionWidget *gameSelMenu = nullptr;
     HomeWidget *home = nullptr;
     SafeWidgetPtr<FadeToBlackWidget> fader;
     BusyWidget *busy = nullptr;
@@ -131,7 +131,7 @@ DENG2_PIMPL(ClientWindow)
 
         DoomsdayApp::app().audienceForGameChange() += this;
         App::app().audienceForStartupComplete() += this;
-        App_Games().audienceForReadiness() += this;
+        //App_Games().audienceForReadiness() += this;
 
         // Listen to input.
         self.canvas().audienceForMouseStateChange() += this;
@@ -151,7 +151,7 @@ DENG2_PIMPL(ClientWindow)
 
         DoomsdayApp::app().audienceForGameChange() -= this;
         App::app().audienceForStartupComplete() -= this;
-        App_Games().audienceForReadiness() -= this;
+        //App_Games().audienceForReadiness() -= this;
 
         self.canvas().audienceForFocusChange() -= this;
         self.canvas().audienceForMouseStateChange() -= this;
@@ -207,12 +207,17 @@ DENG2_PIMPL(ClientWindow)
         gameUI->disable();
         container().add(gameUI);
 
+        home = new HomeWidget;
+        home->rule().setRect(root.viewRule());
+        container().add(home);
+
         // Busy widget shows progress indicator and frozen game content.
         busy = new BusyWidget;
         busy->hide(); // normally hidden
         busy->rule().setRect(root.viewRule());
         root.add(busy);
 
+#if 0
         // Game selection.
         gameSelMenu = new GameSelectionWidget;
         gameSelMenu->enableActionOnSelection(true);
@@ -258,10 +263,7 @@ DENG2_PIMPL(ClientWindow)
             iwadNotice->hide();
             container().add(iwadNotice);
         }
-
-        home = new HomeWidget;
-        home->rule().setRect(root.viewRule());
-        container().add(home);
+#endif
 
         // Common notification area.
         notifications = new NotificationAreaWidget;
@@ -292,12 +294,14 @@ DENG2_PIMPL(ClientWindow)
                 .setInput(Rule::Width,  root.viewWidth());
         container().add(taskBar);
 
+#if 0
         // The game selection's height depends on the taskbar.
         AutoRef<Rule> availHeight = taskBar->rule().top() - gameSelMenu->filter().rule().height();
         gameSelMenu->rule()
                 .setInput(Rule::AnchorY, gameSelMenu->filter().rule().height() + availHeight / 2)
                 .setInput(Rule::Height,  OperatorRule::minimum(availHeight,
                         gameSelMenu->contentRule().height() + gameSelMenu->margins().height()));
+#endif
 
         // Privileged work-in-progress log.
         privLog = new PrivilegedLogWidget;
@@ -313,7 +317,7 @@ DENG2_PIMPL(ClientWindow)
         taskBar->hide();
 
         // Task bar provides the IWAD selection feature.
-        chooseIwad->setAction(new SignalAction(taskBar, SLOT(chooseIWADFolder())));
+        //chooseIwad->setAction(new SignalAction(taskBar, SLOT(chooseIWADFolder())));
 
         // Mouse cursor is used with transformed content.
         cursor = new LabelWidget;
@@ -347,6 +351,7 @@ DENG2_PIMPL(ClientWindow)
         }
     }
 
+#if 0
     void gameReadinessUpdated()
     {
         DENG2_ASSERT(!App_GameLoaded());
@@ -375,9 +380,11 @@ DENG2_PIMPL(ClientWindow)
 
         gameSelMenu->hide(); // devel
     }
+#endif
 
     void currentGameChanged(Game const &newGame)
     {
+        /*
         if(newGame.isNull())
         {
             //background->show();
@@ -391,7 +398,7 @@ DENG2_PIMPL(ClientWindow)
             showGameSelectionMenu(false);
 
             gameSelMenu->saveState();
-        }
+        }*/
 
         // Check with Style if blurring is allowed.
         taskBar->console().enableBlur(taskBar->style().isBlurringAllowed());
@@ -430,7 +437,7 @@ DENG2_PIMPL(ClientWindow)
             game->disable();
             gameUI->hide();
             gameUI->disable();
-            showGameSelectionMenu(false);
+            //showGameSelectionMenu(false);
             taskBar->disable();
 
             busy->show();
@@ -446,7 +453,7 @@ DENG2_PIMPL(ClientWindow)
             game->enable();
             gameUI->show();
             gameUI->enable();
-            if(!App_GameLoaded()) showGameSelectionMenu(true);
+            //if(!App_GameLoaded()) showGameSelectionMenu(true);
             taskBar->enable();
             break;
         }
@@ -721,8 +728,9 @@ DENG2_PIMPL(ClientWindow)
 
         // All the children of the compositor need to be relocated.
         container().remove(*gameUI);
-        container().remove(*gameSelMenu);
-        container().remove(*iwadNotice);
+        //container().remove(*gameSelMenu);
+        container().remove(*home);
+        //container().remove(*iwadNotice);
         if(sidebar) container().remove(*sidebar);
         container().remove(*notifications);
         container().remove(*taskBarBlur);
@@ -770,8 +778,9 @@ DENG2_PIMPL(ClientWindow)
             container().moveChildBefore(gameUI, *busy);
         }
 
-        container().add(gameSelMenu);
-        container().add(iwadNotice);
+        container().add(home);
+        //container().add(gameSelMenu);
+        //container().add(iwadNotice);
         if(sidebar) container().add(sidebar);
         container().add(notifications);
         container().add(taskBarBlur);
@@ -1160,7 +1169,7 @@ void ClientWindow::drawGameContent()
 
     GLState::current().target().clear(GLTarget::ColorDepthStencil);
 
-    d->root.drawUntil(*d->gameSelMenu);
+    d->root.drawUntil(*d->notifications);
 }
 
 void ClientWindow::fadeInTaskBarBlur(TimeDelta span)

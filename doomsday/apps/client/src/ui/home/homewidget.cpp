@@ -23,6 +23,7 @@
 #include "ui/home/multiplayercolumnwidget.h"
 #include "ui/home/packagescolumnwidget.h"
 #include "ui/savedsessionlistdata.h"
+#include "ui/clientwindow.h"
 
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/games.h>
@@ -32,6 +33,7 @@
 #include <de/TabWidget>
 #include <de/PopupMenuWidget>
 #include <de/PersistentState>
+#include <de/FadeToBlackWidget>
 #include <de/App>
 
 using namespace de;
@@ -58,6 +60,7 @@ DENG_GUI_PIMPL(HomeWidget)
     IndirectRule *columnWidth;
     LabelWidget *tabsBackground;
     TabWidget *tabs;
+    SafeWidgetPtr<FadeToBlackWidget> blanker;
     int currentOffsetTab = 0;
     ScalarRule *scrollOffset;
 
@@ -125,6 +128,8 @@ DENG_GUI_PIMPL(HomeWidget)
 
     void gameReadinessUpdated()
     {
+        blanker->guiDeleteLater();
+
         updateVisibleColumnsAndTabs();
         updateLayout();
 
@@ -321,6 +326,12 @@ HomeWidget::HomeWidget()
     add(d->tabsBackground);
     add(d->tabs);
 
+    // Hide content until first update.
+    d->blanker.reset(new FadeToBlackWidget);
+    d->blanker->rule().setRect(rule());
+    d->blanker->initFadeFromBlack(0);
+    add(d->blanker);
+
     // Define widget layout.
     Rule const &gap = rule("gap");
     d->tabsBackground->rule()
@@ -382,11 +393,11 @@ PopupWidget *HomeWidget::makeSettingsPopup()
             << new ui::VariableToggleItem(tr("Show Unplayable"), App::config("home.showUnplayableGames"))
             << new ui::Item(ui::Item::Separator)
             << new ui::Item(ui::Item::Separator, tr("Columns"))
-            << new ui::VariableToggleItem(tr("Doom"), App::config("home.columns.doom"))
-            << new ui::VariableToggleItem(tr("Heretic"), App::config("home.columns.heretic"))
-            << new ui::VariableToggleItem(tr("Hexen"), App::config("home.columns.hexen"))
-            << new ui::VariableToggleItem(tr("Other Games"), App::config("home.columns.otherGames"))
-            << new ui::VariableToggleItem(tr("Multiplayer"), App::config("home.columns.multiplayer"));
+            << new ui::VariableToggleItem(tr("Doom"),            App::config("home.columns.doom"))
+            << new ui::VariableToggleItem(tr("Heretic"),         App::config("home.columns.heretic"))
+            << new ui::VariableToggleItem(tr("Hexen"),           App::config("home.columns.hexen"))
+            << new ui::VariableToggleItem(tr("Other Games"),     App::config("home.columns.otherGames"))
+            << new ui::VariableToggleItem(tr("Multiplayer"),     App::config("home.columns.multiplayer"));
     return menu;
 }
 
