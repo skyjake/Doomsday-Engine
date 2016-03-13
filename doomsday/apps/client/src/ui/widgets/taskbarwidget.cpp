@@ -77,10 +77,10 @@ enum MenuItemPositions
     POS_HOME_SETTINGS     = 0,
     POS_RENDERER_SETTINGS = 1,
     POS_VR_SETTINGS       = 2,
-    POS_CONFIG_SEPARATOR  = 4,
+    POS_CONFIG_SEPARATOR  = 3,
 
-    POS_AUDIO_SETTINGS    = 6,
-    POS_INPUT_SETTINGS    = 7,
+    POS_AUDIO_SETTINGS    = 5,
+    POS_INPUT_SETTINGS    = 6,
 };
 
 DENG_GUI_PIMPL(TaskBarWidget)
@@ -433,7 +433,6 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << new ui::SubwidgetItem(style().images().image("package"),  tr("Home"),     ui::Left, HomeWidget::makeSettingsPopup)
             << new ui::SubwidgetItem(style().images().image("renderer"), tr("Renderer"), ui::Left, makePopup<RendererSettingsDialog>)
             << new ui::SubwidgetItem(style().images().image("vr"),       tr("3D & VR"),  ui::Left, makePopup<VRSettingsDialog>)
-            << new ui::SubwidgetItem(style().images().image("package"),  tr("Packages"), ui::Left, makePopup<PackagesDialog>)
             << new ui::Item(ui::Item::Separator)
             << new ui::SubwidgetItem(style().images().image("display"),  tr("Video"),    ui::Left, makePopup<VideoSettingsDialog>)
             << new ui::SubwidgetItem(style().images().image("audio"),    tr("Audio"),    ui::Left, makePopup<AudioSettingsDialog>)
