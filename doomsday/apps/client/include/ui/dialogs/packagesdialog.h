@@ -22,14 +22,14 @@
 #include <de/DialogWidget>
 
 /**
- * Package management UI.
+ * Package selection UI.
  */
 class PackagesDialog : public de::DialogWidget
 {
     Q_OBJECT
 
 public:
-    PackagesDialog();
+    PackagesDialog(de::String const &titleText = "");
 
 public slots:
     void refreshPackages();

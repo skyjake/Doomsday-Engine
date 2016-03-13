@@ -18,7 +18,7 @@
 
 #include "ui/home/multiplayercolumnwidget.h"
 #include "ui/home/multiplayerpanelbuttonwidget.h"
-#include "ui/home/homemenuwidget.h"
+#include "ui/widgets/homemenuwidget.h"
 #include "ui/home/headerwidget.h"
 #include "network/serverlink.h"
 #include "clientapp.h"

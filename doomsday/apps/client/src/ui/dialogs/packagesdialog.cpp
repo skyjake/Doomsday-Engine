@@ -17,6 +17,7 @@
  */
 
 #include "ui/dialogs/packagesdialog.h"
+#include "ui/widgets/packageswidget.h"
 #include "clientapp.h"
 
 #include <de/FileSystem>
@@ -33,6 +34,7 @@ DENG_GUI_PIMPL(PackagesDialog)
 , public ChildWidgetOrganizer::IWidgetFactory
 {
     MenuWidget *menu;
+    PackagesWidget *browser;
 
     /**
      * Information about an available package.
@@ -246,14 +248,22 @@ DENG_GUI_PIMPL(PackagesDialog)
 
     Instance(Public *i) : Base(i)
     {
-        self.area().add(menu = new MenuWidget);
+        // Currently selected packages.
+        self.leftArea().add(menu = new MenuWidget);
         menu->enableScrolling(false); // dialog content already scrolls
         menu->enablePageKeys(false);
         menu->setGridSize(1, ui::Expand, 0, ui::Expand);
         menu->rule()
-                .setInput(Rule::Left, self.area().contentRule().left())
-                .setInput(Rule::Top,  self.area().contentRule().top());
+                .setInput(Rule::Left, self.leftArea().contentRule().left())
+                .setInput(Rule::Top,  self.leftArea().contentRule().top());
         menu->organizer().setWidgetFactory(*this);
+
+        // Package browser.
+        self.rightArea().add(browser = new PackagesWidget);
+        browser->rule()
+                .setInput(Rule::Left,  self.rightArea().contentRule().left())
+                .setInput(Rule::Top,   self.rightArea().contentRule().top())
+                .setInput(Rule::Width, menu->rule().width());
     }
 
     void populate()
@@ -302,18 +312,27 @@ DENG_GUI_PIMPL(PackagesDialog)
     }
 };
 
-PackagesDialog::PackagesDialog()
+PackagesDialog::PackagesDialog(String const &titleText)
     : DialogWidget("packages", WithHeading)
     , d(new Instance(this))
 {
-    heading().setText(tr("Packages"));
+    if(titleText.isEmpty())
+    {
+        heading().setText(tr("Packages"));
+    }
+    else
+    {
+        heading().setText(tr("Packages: %1").arg(titleText));
+    }
     heading().setImage(style().images().image("package"));
     buttons()
             << new DialogButtonItem(Default | Accept, tr("Close"))
             << new DialogButtonItem(Action, style().images().image("refresh"),
                                     new SignalAction(this, SLOT(refreshPackages())));
 
-    area().setContentSize(d->menu->rule().width(), d->menu->rule().height());
+    // The individual menus will be scrolling independently.
+    leftArea() .setContentSize(d->menu->rule().width(),    d->menu->rule().height());
+    rightArea().setContentSize(d->browser->rule().width(), d->browser->rule().height());
 
     refreshPackages();
 }

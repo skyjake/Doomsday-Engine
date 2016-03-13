@@ -85,16 +85,16 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
     {
         // The Packages dialog allows selecting which packages are loaded, and in
         // which order. One can also browse the available packages.
-        auto *dlg = new PackagesDialog;
+        auto *dlg = new PackagesDialog(game.title());
         dlg->setDeleteAfterDismissed(true);
-        if(self.rule().midX().value() < root().viewWidth().value()/2)
+        /*if(self.rule().midX().value() < root().viewWidth().value()/2)
         {
             dlg->setAnchorAndOpeningDirection(packagesButton->rule(), ui::Right);
         }
         else
         {
             dlg->setAnchorAndOpeningDirection(packagesButton->rule(), ui::Left);
-        }
+        }*/
         root().addOnTop(dlg);
         dlg->open();
     }

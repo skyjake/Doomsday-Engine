@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/home/homeitemwidget.h"
+#include "ui/widgets/homeitemwidget.h"
 
 #include <de/SequentialLayout>
 #include <QTimer>

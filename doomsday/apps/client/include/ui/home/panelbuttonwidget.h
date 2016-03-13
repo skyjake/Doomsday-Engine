@@ -19,7 +19,7 @@
 #ifndef DENG_CLIENT_UI_PANELBUTTONWIDGET_H
 #define DENG_CLIENT_UI_PANELBUTTONWIDGET_H
 
-#include "homeitemwidget.h"
+#include "ui/widgets/homeitemwidget.h"
 
 #include <de/PanelWidget>
 

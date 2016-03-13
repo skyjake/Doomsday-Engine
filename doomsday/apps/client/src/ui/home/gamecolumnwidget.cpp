@@ -19,7 +19,7 @@
 #include "ui/home/gamecolumnwidget.h"
 #include "ui/home/headerwidget.h"
 #include "ui/home/gamepanelbuttonwidget.h"
-#include "ui/home/homemenuwidget.h"
+#include "ui/widgets/homemenuwidget.h"
 
 #include <doomsday/DoomsdayApp>
 #include <doomsday/Games>

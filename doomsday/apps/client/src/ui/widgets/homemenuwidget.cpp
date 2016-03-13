@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/home/homemenuwidget.h"
-#include "ui/home/panelbuttonwidget.h"
+#include "ui/widgets/homemenuwidget.h"
+#include "ui/widgets/homeitemwidget.h"
 
 using namespace de;
 

@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/home/packageswidget.h"
-#include "ui/home/homeitemwidget.h"
-#include "ui/home/homemenuwidget.h"
+#include "ui/widgets/packageswidget.h"
+#include "ui/widgets/homeitemwidget.h"
+#include "ui/widgets/homemenuwidget.h"
 #include "clientapp.h"
 
 #include <de/FileSystem>
@@ -296,6 +296,8 @@ DENG_GUI_PIMPL(PackagesWidget)
                 .setInput(Rule::Right, self.rule().right())
                 .setInput(Rule::Top,   self.rule().top());
         search->setEmptyContentHint(tr("Search packages"));
+        search->margins().setRight(style().fonts().font("default").height() +
+                                   rule("gap"));
 
         self.add(clearSearch = new ButtonWidget);
         clearSearch->set(Background());
@@ -303,7 +305,7 @@ DENG_GUI_PIMPL(PackagesWidget)
         clearSearch->setOverrideImageSize(style().fonts().font("default").height().value());
         clearSearch->setSizePolicy(ui::Expand, ui::Expand);
         clearSearch->rule()
-                .setInput(Rule::Right, search->rule().left())
+                .setInput(Rule::Right, search->rule().right())
                 .setMidAnchorY(search->rule().midY());
         clearSearch->setActionFn([this] () {
             search->setText("");

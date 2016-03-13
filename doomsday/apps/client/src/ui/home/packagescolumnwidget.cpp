@@ -17,7 +17,7 @@
  */
 
 #include "ui/home/packagescolumnwidget.h"
-#include "ui/home/packageswidget.h"
+#include "ui/widgets/packageswidget.h"
 
 using namespace de;
 
