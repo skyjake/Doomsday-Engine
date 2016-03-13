@@ -85,7 +85,8 @@ public ChildWidgetOrganizer::IFilter
 {
     Modality modality;
     Flags flags;
-    ScrollAreaWidget *area;
+    ScrollAreaWidget *area = nullptr;
+    ScrollAreaWidget *rightArea = nullptr;
     LabelWidget *heading;
     MenuWidget *buttons;
     MenuWidget *extraButtons;
@@ -145,8 +146,8 @@ public ChildWidgetOrganizer::IFilter
         extraButtons->setGridSize(0, ui::Expand, 1, ui::Expand);
 
         area->rule()
-                .setInput(Rule::Left, self.rule().left())
-                .setInput(Rule::Top, self.rule().top())
+                .setInput(Rule::Left,  self.rule().left())
+                .setInput(Rule::Top,   self.rule().top())
                 .setInput(Rule::Width, area->contentRule().width() + area->margins().width());
 
         // Will a title be included?
@@ -176,8 +177,7 @@ public ChildWidgetOrganizer::IFilter
             area->rule().setInput(Rule::Top, heading->rule().bottom());
         }
 
-        area->rule().setInput(Rule::Height, container->rule().height() -
-                              buttons->rule().height() /*+ area->margins().height()*/);
+        area->rule().setInput(Rule::Height, container->rule().height() - buttons->rule().height());
 
         // Buttons below the area.
         buttons->rule()
@@ -198,8 +198,7 @@ public ChildWidgetOrganizer::IFilter
             area->rule().setInput(Rule::Height,
                                   container->rule().height()
                                   - heading->rule().height()
-                                  - buttons->rule().height()/*
-                                  + area->margins().bottom()*/);
+                                  - buttons->rule().height());
         }
 
         container->add(area);
@@ -214,6 +213,35 @@ public ChildWidgetOrganizer::IFilter
         releaseRef(acceptAction);
     }
 
+    void setupForTwoColumns()
+    {
+        // Create an additional content area.
+        if(!rightArea)
+        {
+            rightArea = new ScrollAreaWidget("rightArea");
+            self.content().add(rightArea);
+
+            rightArea->rule()
+                    .setInput(Rule::Top,    area->rule().top())
+                    .setInput(Rule::Left,   area->rule().right())
+                    .setInput(Rule::Height, area->rule().height())
+                    .setInput(Rule::Width,  rightArea->contentRule().width() + rightArea->margins().width());
+
+            if(heading)
+            {
+                heading->rule().setInput(Rule::Right, rightArea->rule().right());
+            }
+
+            // Content size is now wider.
+            self.content().rule().setInput(Rule::Width, OperatorRule::maximum(
+                                           area->rule().width() + rightArea->rule().width(),
+                                           buttons->rule().width() + extraButtons->rule().width(),
+                                           *minWidth));
+
+            if(self.isOpen()) updateContentHeight();
+        }
+    }
+
     void updateContentHeight()
     {
         // Determine suitable maximum height.
@@ -223,24 +251,26 @@ public ChildWidgetOrganizer::IFilter
             changeRef(maxHeight, *maxHeight - self.anchor().top() - rule("gap"));
         }
 
+        // Scrollable area content height.
+        AutoRef<Rule> areaContentHeight = area->contentRule().height() + area->margins().height();
+        if(rightArea)
+        {
+            areaContentHeight.reset(OperatorRule::maximum(areaContentHeight,
+                    rightArea->contentRule().height() + rightArea->margins().height()));
+        }
+
         // The container's height is limited by the height of the view. Normally
         // the dialog tries to show the full height of the content area.
         if(!flags.testFlag(WithHeading))
         {
             self.content().rule().setInput(Rule::Height,
-                                           OperatorRule::minimum(*maxHeight,
-                                                                 area->contentRule().height() +
-                                                                 area->margins().height() +
-                                                                 buttons->rule().height()));
+                    OperatorRule::minimum(*maxHeight, areaContentHeight + buttons->rule().height()));
         }
         else
         {
             self.content().rule().setInput(Rule::Height,
-                                           OperatorRule::minimum(*maxHeight,
-                                                                 heading->rule().height() +
-                                                                 area->contentRule().height() +
-                                                                 area->margins().height() +
-                                                                 buttons->rule().height()));
+                    OperatorRule::minimum(*maxHeight, heading->rule().height() +
+                                                      areaContentHeight + buttons->rule().height()));
         }
 
         releaseRef(maxHeight);
@@ -441,6 +471,18 @@ LabelWidget &DialogWidget::heading()
 ScrollAreaWidget &DialogWidget::area()
 {
     return *d->area;
+}
+
+ScrollAreaWidget &DialogWidget::leftArea()
+{
+    d->setupForTwoColumns();
+    return *d->area;
+}
+
+ScrollAreaWidget &DialogWidget::rightArea()
+{
+    d->setupForTwoColumns();
+    return *d->rightArea;
 }
 
 void DialogWidget::setMinimumContentWidth(Rule const &minWidth)

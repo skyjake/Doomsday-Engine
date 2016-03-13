@@ -60,6 +60,8 @@ class DialogContentStylist;
  * rectangle's height. Contents of the "area" widget scroll while the other
  * elements remain static in relation to the container.
  *
+ * The dialog can optionally have two scrollable content areas side-by-side.
+ *
  * @ingroup guiWidgets
  */
 class LIBAPPFW_PUBLIC DialogWidget : public PopupWidget
@@ -155,6 +157,18 @@ public:
     LabelWidget &heading();
 
     ScrollAreaWidget &area();
+
+    /**
+     * Returns the left content area. The first time this is called, the dialog
+     * layout is configured for two column areas.
+     */
+    ScrollAreaWidget &leftArea();
+
+    /**
+     * Returns the right content area. The first time this is called, the dialog
+     * layout is configured for two column areas.
+     */
+    ScrollAreaWidget &rightArea();
 
     /**
      * Sets the rule for the minimum width of the dialog. The default is that the
