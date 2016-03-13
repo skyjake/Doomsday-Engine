@@ -941,6 +941,11 @@ bool GuiWidget::hasChangedPlace(Rectanglei &currentPlace)
 void GuiWidget::updateStyle()
 {}
 
+Animation &GuiWidget::opacityAnimation()
+{
+    return d->opacity;
+}
+
 void GuiWidget::preDrawChildren()
 {
     if(behavior().testFlag(ChildVisibilityClipping))

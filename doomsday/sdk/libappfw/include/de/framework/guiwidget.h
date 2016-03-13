@@ -206,6 +206,8 @@ public:
     };
     Q_DECLARE_FLAGS(Attributes, Attribute)
 
+    enum ColorTheme { Normal, Inverted };
+
 public:
     GuiWidget(String const &name = "");
 
@@ -498,6 +500,11 @@ protected:
      * been marked as changed.
      */
     virtual void updateStyle();
+
+    /**
+     * Returns the opacity animation of the widget.
+     */
+    Animation &opacityAnimation();
 
 private:
     DENG2_PRIVATE(d)
