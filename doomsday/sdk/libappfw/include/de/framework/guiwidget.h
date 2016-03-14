@@ -437,6 +437,8 @@ public:
                        typename Vector2::ValueType(toDevicePixels(type.y)));
     }
 
+    static ColorTheme invertColorTheme(ColorTheme theme);
+
     /**
      * Immediately deletes all the widgets in the garbage. This is useful to
      * avoid double deletion in case a trashed widget's parent is deleted

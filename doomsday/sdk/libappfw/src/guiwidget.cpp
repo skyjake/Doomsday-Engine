@@ -527,6 +527,11 @@ void GuiWidget::guiDeleteLater()
     Garbage_TrashInstance(this, deleteGuiWidget);
 }
 
+GuiWidget::ColorTheme GuiWidget::invertColorTheme(ColorTheme theme)
+{
+    return theme == Inverted? Normal : Inverted;
+}
+
 void GuiWidget::recycleTrashedWidgets()
 {
     Garbage_RecycleAllWithDestructor(deleteGuiWidget);
