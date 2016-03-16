@@ -35,7 +35,7 @@ DENG_GUI_PIMPL(PopupWidget)
 , DENG2_OBSERVES(Widget, Deletion)
 {
     bool flexibleDir = true;
-    bool useInfoStyle = false;
+    ColorTheme colorTheme = Normal;
     bool deleteAfterDismiss = false;
     bool clickToClose = true;
     bool outsideClickOngoing = false;
@@ -204,7 +204,7 @@ DENG_GUI_PIMPL(PopupWidget)
         Style const &st = style();
         bool const opaqueBackground = (self.levelOfNesting() > 0);
 
-        if(useInfoStyle)
+        if(colorTheme == Inverted)
         {
             self.set(self.infoStyleBackground());
         }
@@ -346,13 +346,18 @@ void PopupWidget::setClickToClose(bool clickCloses)
 
 void PopupWidget::useInfoStyle(bool yes)
 {
-    d->useInfoStyle = yes;
-    d->updateStyle();
+    setColorTheme(yes? Inverted : Normal);
 }
 
 bool PopupWidget::isUsingInfoStyle()
 {
-    return d->useInfoStyle;
+    return d->colorTheme == Inverted;
+}
+
+void PopupWidget::setColorTheme(ColorTheme theme)
+{
+    d->colorTheme = theme;
+    d->updateStyle();
 }
 
 GuiWidget::Background PopupWidget::infoStyleBackground() const

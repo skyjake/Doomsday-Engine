@@ -66,6 +66,7 @@ FocusWidget::FocusWidget(String const &name)
     : LabelWidget(name)
     , d(new Instance(this))
 {
+    hide();
     connect(&d->flashing, SIGNAL(timeout()), this, SLOT(updateFlash()));
 }
 
