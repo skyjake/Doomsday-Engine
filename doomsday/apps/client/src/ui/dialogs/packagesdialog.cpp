@@ -37,23 +37,29 @@ using namespace de;
 
 DENG_GUI_PIMPL(PackagesDialog)
 , public ChildWidgetOrganizer::IWidgetFactory
+, public PackagesWidget::IPackageStatus
 {
+    StringList selectedPackages;
+    LabelWidget *nothingSelected;
     HomeMenuWidget *menu;
     PackagesWidget *browser;
 
     /**
-     * Information about a selected package.
+     * Information about a selected package. If the package file is not found, only
+     * the ID is known.
      */
-    struct PackageItem : public ui::Item
+    class SelectedPackageItem : public ui::Item
     {
-        File const *file;
-        Record const *info;
-
-        PackageItem(File const &packFile)
-            : file(&packFile)
-            , info(&file->objectNamespace().subrecord(Package::VAR_PACKAGE))
+    public:
+        SelectedPackageItem(String const &packageId)
         {
-            setData(QString(info->gets("ID")));
+            setData(packageId);
+
+            _file = App::packageLoader().select(packageId);
+            if(_file)
+            {
+                _info = &_file->objectNamespace().subrecord(Package::VAR_PACKAGE);
+            }
         }
 
         String packageId() const
@@ -61,22 +67,36 @@ DENG_GUI_PIMPL(PackagesDialog)
             return data().toString();
         }
 
-        void setFile(File const &packFile)
+        Record const *info() const
+        {
+            return _info;
+        }
+
+        File const *packageFile() const
+        {
+            return _file;
+        }
+
+        /*void setFile(File const &packFile)
         {
             file = &packFile;
             info = &file->objectNamespace().subrecord(Package::VAR_PACKAGE);
             notifyChange();
-        }
+        }*/
+
+    private:
+        File   const *_file = nullptr;
+        Record const *_info = nullptr;
     };
 
     /**
      * Widget showing information about a selected package, with a button for dragging
      * the item up and down.
      */
-    class Widget : public HomeItemWidget
+    class SelectedPackageWidget : public HomeItemWidget
     {
     public:
-        Widget(PackageItem const &item)
+        SelectedPackageWidget(SelectedPackageItem const &item)
             : _item(&item)
         {
             useColorTheme(Normal, Inverted);
@@ -88,7 +108,7 @@ DENG_GUI_PIMPL(PackagesDialog)
             _infoButton->setPopup([this] (PopupButtonWidget const &)
             {
                 auto *pop = new PopupMenuWidget;
-                pop->useInfoStyle();
+                pop->setColorTheme(Inverted);
                 pop->items() << new ui::SubwidgetItem(
                                     tr("Info"), ui::Down,
                                     [this] () -> PopupWidget * { return makeInfoPopup(); });
@@ -182,7 +202,14 @@ DENG_GUI_PIMPL(PackagesDialog)
 
         void updateContents()
         {
-            label().setText(_item->info->gets("title"));
+            if(_item->info())
+            {
+                label().setText(_item->info()->gets("title"));
+            }
+            else
+            {
+                label().setText(_item->packageId());
+            }
 
             /*
             _subtitle->setText(packageId());
@@ -220,20 +247,27 @@ DENG_GUI_PIMPL(PackagesDialog)
         PopupWidget *makeInfoPopup() const
         {
             auto *pop = new DocumentPopupWidget;
-            pop->document().setText(QString(_E(1) "%1" _E(.) "\n%2\n"
-                                            _E(l) "Version: " _E(.) "%3\n"
-                                            _E(l) "License: " _E(.)_E(>) "%4" _E(<)
-                                            _E(l) "\nFile: " _E(.)_E(>)_E(C) "%5")
-                                    .arg(_item->info->gets("title"))
-                                    .arg(packageId())
-                                    .arg(_item->info->gets("version"))
-                                    .arg(_item->info->gets("license"))
-                                    .arg(_item->file->description()));
+            if(auto const *info = _item->info())
+            {
+                pop->document().setText(QString(_E(1) "%1" _E(.) "\n%2\n"
+                                                _E(l) "Version: " _E(.) "%3\n"
+                                                _E(l) "License: " _E(.)_E(>) "%4" _E(<)
+                                                _E(l) "\nFile: " _E(.)_E(>)_E(C) "%5")
+                                        .arg(info->gets("title"))
+                                        .arg(packageId())
+                                        .arg(info->gets("version"))
+                                        .arg(info->gets("license"))
+                                        .arg(_item->packageFile()->description()));
+            }
+            else
+            {
+                pop->document().setText(packageId());
+            }
             return pop;
         }
 
     private:
-        PackageItem const *_item;
+        SelectedPackageItem const *_item;
         //LabelWidget *_title;
         //LabelWidget *_subtitle;
         //QList<ButtonWidget *> _tags;
@@ -244,6 +278,13 @@ DENG_GUI_PIMPL(PackagesDialog)
 
     Instance(Public *i) : Base(i)
     {
+        nothingSelected = new LabelWidget;
+        nothingSelected->setText(_E(b) + tr("Nothing Selected"));
+        nothingSelected->setFont("heading");
+        nothingSelected->setOpacity(0.5f);
+        nothingSelected->rule().setRect(self.leftArea().rule());
+        self.leftArea().add(nothingSelected);
+
         // Currently selected packages.
         self.leftArea().add(menu = new HomeMenuWidget);
         menu->layout().setRowPadding(Const(0));
@@ -256,7 +297,8 @@ DENG_GUI_PIMPL(PackagesDialog)
 
         // Package browser.
         self.rightArea().add(browser = new PackagesWidget);
-        browser->setColorTheme(Normal, Inverted, Normal, Inverted);
+        browser->setPackageStatus(*this);
+        browser->setColorTheme(Normal, Normal, Normal, Normal);
         browser->rule()
                 .setInput(Rule::Left,  self.rightArea().contentRule().left())
                 .setInput(Rule::Top,   self.rightArea().contentRule().top())
@@ -268,23 +310,28 @@ DENG_GUI_PIMPL(PackagesDialog)
     {
         menu->items().clear();
 
-        auto loaded = App::packageLoader().loadedPackagesAsFilesInPackageOrder();
-
         // Remove from the list those packages that are no longer listed.
-        for(File const *packFile : loaded)
+        for(String packageId : selectedPackages)
         {
-            menu->items() << new PackageItem(*packFile);
+            menu->items() << new SelectedPackageItem(packageId);
         }
+
+        nothingSelected->setOpacity(menu->items().isEmpty()? .5f : 0.f, 0.4);
     }
 
     GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *)
     {
-        return new Widget(item.as<PackageItem>());
+        return new SelectedPackageWidget(item.as<SelectedPackageItem>());
     }
 
     void updateItemWidget(GuiWidget &widget, ui::Item const &)
     {
-        widget.as<Widget>().updateContents();
+        widget.as<SelectedPackageWidget>().updateContents();
+    }
+
+    bool isPackageHighlighted(String const &packageId) const
+    {
+        return selectedPackages.contains(packageId);
     }
 };
 
