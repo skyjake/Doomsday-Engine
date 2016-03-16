@@ -18,17 +18,20 @@
 
 #include "de/ImageFile"
 #include "de/HeightMap"
+#include <de/App>
 
 #include <QHash>
 
 namespace de {
 
+static String const MULTIPLY            ("Multiply:");
 static String const HEIGHTMAP_TO_NORMALS("HeightMap.toNormals");
 
 DENG2_PIMPL(ImageFile)
 {
     BuiltInFilter filter = NoFilter;
     QHash<BuiltInFilter, ImageFile *> filtered; // owned
+    String filterParameter;
 
     Instance(Public *i) : Base(i) {}
 
@@ -45,7 +48,7 @@ DENG2_PIMPL(ImageFile)
         {
             return found.value();
         }
-        if(filter == HeightMapToNormals)
+        if(filter == HeightMapToNormals || filter == Multiply)
         {
             ImageFile *sub = new ImageFile(filter, self);
             filtered.insert(filter, sub);
@@ -65,6 +68,9 @@ DENG2_PIMPL(ImageFile)
         {
         case HeightMapToNormals:
             return HEIGHTMAP_TO_NORMALS;
+
+        case Multiply:
+            return MULTIPLY;
 
         default:
             break;
@@ -107,6 +113,10 @@ String ImageFile::describe() const
         desc += " (filter: heightfield to normals)";
         break;
 
+    case Multiply:
+        desc += " (filter: multiplied with " + d->filterParameter + ")";
+        break;
+
     default:
         break;
     }
@@ -124,6 +134,22 @@ Image ImageFile::image() const
             HeightMap heightMap;
             heightMap.loadGrayscale(img);
             img = heightMap.makeNormalMap();
+        }
+        else if(d->filter == Multiply)
+        {
+            String const refPath = d->filterSource().path().fileNamePath();
+            Image factorImg = App::rootFolder().locate<ImageFile const>
+                    (refPath / d->filterParameter).image();
+
+            if(img.size() != factorImg.size())
+            {
+                throw FilterError("ImageFile::image",
+                                  String("Cannot multiply %1 and %2 due to different sizes")
+                                  .arg(d->filterSource().path())
+                                  .arg(refPath / d->filterParameter));
+            }
+
+            img = img.multiply(factorImg);
         }
         return img;
     }
@@ -145,6 +171,12 @@ filesys::Node const *ImageFile::tryGetChild(String const &name) const
     if(!name.compareWithoutCase(HEIGHTMAP_TO_NORMALS))
     {
         return d->makeOrGetFiltered(HeightMapToNormals);
+    }
+    else if(name.startsWith(MULTIPLY, Qt::CaseInsensitive))
+    {
+        ImageFile *filtered = d->makeOrGetFiltered(Multiply);
+        filtered->d->filterParameter = name.substr(MULTIPLY.size());
+        return filtered;
     }
     return nullptr;
 }
