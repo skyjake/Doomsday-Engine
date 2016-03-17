@@ -174,9 +174,18 @@ filesys::Node const *ImageFile::tryGetChild(String const &name) const
     }
     else if(name.startsWith(MULTIPLY, Qt::CaseInsensitive))
     {
+        /// @bug Different filter parameters should be saved as unique ImageFiles,
+        /// or otherwise the latest accessed parameter is in effect for all multiplied
+        /// instances. -jk
         ImageFile *filtered = d->makeOrGetFiltered(Multiply);
         filtered->d->filterParameter = name.substr(MULTIPLY.size());
         return filtered;
+    }
+    else if(d->filter == Multiply)
+    {
+        // Append to filter parameter path.
+        d->filterParameter = d->filterParameter / name;
+        return this;
     }
     return nullptr;
 }
