@@ -75,6 +75,15 @@ enum {
     SFXLP_REVERB ///< Use SRD_* for indices.
 };
 
+/// Listener audio environment properties.
+enum {
+    SFXLP_REVERB_VOLUME,
+    SFXLP_REVERB_SPACE,
+    SFXLP_REVERB_DECAY,
+    SFXLP_REVERB_DAMPING,
+    NUM_REVERB_DATA
+};
+
 typedef struct sfxsample_s {
     int             id;         ///< Id number of the sound sample.
     void*           data;       ///< Actual sample data.

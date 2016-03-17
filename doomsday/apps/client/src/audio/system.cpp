@@ -33,13 +33,16 @@
 #  include "server/sv_sound.h"
 #endif
 
-#include "audio/s_cache.h"
 #ifdef __CLIENT__
 #  include "audio/m_mus2midi.h"
 #  include "audio/sfxchannel.h"
 #endif
+#include "audio/s_cache.h"
 
 #include "api_map.h"
+#ifdef __CLIENT__
+#  include "world/audioenvironment.h"
+#endif
 #include "world/p_players.h"
 #include "world/thinkers.h"
 #include "Sector"
@@ -1305,14 +1308,15 @@ DENG2_PIMPL(System)
                 sfxListenerCluster = newCluster;
 
                 // It may be necessary to recalculate the reverb properties...
-                AudioEnvironmentFactors const &envFactors = sfxListenerCluster->reverb();
-                dfloat vec[NUM_REVERB_DATA];
-                for(dint i = 0; i < NUM_REVERB_DATA; ++i)
-                {
-                    vec[i] = envFactors[i];
-                }
-                vec[SRD_VOLUME] *= sfxReverbStrength;
-                self.sfx()->Listenerv(SFXLP_REVERB, vec);
+                SectorCluster::AudioEnvironment const &aenv = sfxListenerCluster->reverb();
+
+                dfloat args[NUM_REVERB_DATA];
+                args[SFXLP_REVERB_VOLUME ] = aenv.volume * sfxReverbStrength;
+                args[SFXLP_REVERB_SPACE  ] = aenv.space;
+                args[SFXLP_REVERB_DECAY  ] = aenv.decay;
+                args[SFXLP_REVERB_DAMPING] = aenv.damping;
+
+                self.sfx()->Listenerv(SFXLP_REVERB, args);
             }
         }
 
