@@ -23,7 +23,7 @@
 #if _DEBUG
 
 static uint monitor[256];
-static uint monitoredBytes;
+static size_t monitoredBytes;
 static uint monitoredPackets;
 static size_t monitorMaxSize;
 
