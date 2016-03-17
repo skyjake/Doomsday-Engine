@@ -30,7 +30,18 @@
 class PackagesWidget : public de::GuiWidget, public de::IPersistent
 {
 public:
+    /// Determines whether an item should be shown as highlighted or not.
+    class IPackageStatus
+    {
+    public:
+        virtual ~IPackageStatus() {}
+        virtual bool isPackageHighlighted(de::String const &packageId) const = 0;
+    };
+
+public:
     PackagesWidget(de::String const &name = "");
+
+    void setPackageStatus(IPackageStatus const &packageStatus);
 
     void setColorTheme(ColorTheme unselectedItem, ColorTheme selectedItem,
                        ColorTheme loadedUnselectedItem, ColorTheme loadedSelectedItem);

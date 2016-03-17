@@ -643,6 +643,15 @@ void Image::drawPartial(Image const &image, Rectanglei const &part, Vector2i con
                       QRect(part.left(), part.top(), part.width(), part.height()));
 }
 
+Image Image::multiply(Image const &factorImage)
+{
+    QImage multiplied = toQImage();
+    QPainter painter(&multiplied);
+    painter.setCompositionMode(QPainter::CompositionMode_Multiply);
+    painter.drawImage(0, 0, factorImage.toQImage());
+    return multiplied;
+}
+
 void Image::operator >> (Writer &to) const
 {
     to << duint8(d->format);

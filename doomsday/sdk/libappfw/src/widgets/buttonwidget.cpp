@@ -28,30 +28,20 @@ namespace de {
 DENG_GUI_PIMPL(ButtonWidget),
 DENG2_OBSERVES(Action, Triggered)
 {
-    State state;
+    State state                   = Up;
+    DotPath bgColorId             { "background" };
+    DotPath borderColorId         { "text" };
+    HoverColorMode hoverColorMode = ReplaceColor;
+    ColorTheme colorTheme         = Normal;
+    Action *action                = nullptr;
+    Animation scale               { 1.f };
+    Animation frameOpacity        { .08f, Animation::Linear };
+    bool animating                = false;
     DotPath hoverTextColor;
     DotPath originalTextColor;
     Vector4f originalTextModColor;
-    DotPath bgColorId;
-    DotPath borderColorId;
-    HoverColorMode hoverColorMode;
-    bool infoStyle;
-    Action *action;
-    Animation scale;
-    Animation frameOpacity;
-    bool animating;
 
-    Instance(Public *i)
-        : Base(i)
-        , state(Up)
-        , bgColorId("background")
-        , borderColorId("text")
-        , hoverColorMode(ReplaceColor)
-        , infoStyle(false)
-        , action(0)
-        , scale(1.f)
-        , frameOpacity(.08f, Animation::Linear)
-        , animating(false)
+    Instance(Public *i) : Base(i)
     {
         setDefaultBackground();
     }
@@ -206,8 +196,18 @@ ButtonWidget::ButtonWidget(String const &name) : LabelWidget(name), d(new Instan
 
 void ButtonWidget::useInfoStyle(bool yes)
 {
-    d->infoStyle = yes;
-    if(yes)
+    setColorTheme(yes? Inverted : Normal);
+}
+
+bool ButtonWidget::isUsingInfoStyle() const
+{
+    return d->colorTheme == Inverted;
+}
+
+void ButtonWidget::setColorTheme(ColorTheme theme)
+{
+    d->colorTheme = theme;
+    if(theme == Inverted)
     {
         d->originalTextColor = "inverted.text";
         setHoverTextColor("inverted.text", ReplaceColor);
@@ -227,9 +227,9 @@ void ButtonWidget::useInfoStyle(bool yes)
     updateStyle();
 }
 
-bool ButtonWidget::isUsingInfoStyle() const
+GuiWidget::ColorTheme ButtonWidget::colorTheme() const
 {
-    return d->infoStyle;
+    return d->colorTheme;
 }
 
 void ButtonWidget::setHoverTextColor(DotPath const &hoverTextId, HoverColorMode mode)

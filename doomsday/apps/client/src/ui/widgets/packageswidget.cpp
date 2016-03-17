@@ -37,6 +37,16 @@ using namespace de;
 static String const VAR_TITLE("title");
 static String const VAR_TAGS ("tags");
 
+struct PackageLoadStatus : public PackagesWidget::IPackageStatus
+{
+    bool isPackageHighlighted(String const &packageId) const
+    {
+        return App::packageLoader().isLoaded(packageId);
+    }
+};
+
+static PackageLoadStatus isPackageLoaded;
+
 DENG_GUI_PIMPL(PackagesWidget)
 , public ChildWidgetOrganizer::IFilter
 , public ChildWidgetOrganizer::IWidgetFactory
@@ -45,6 +55,7 @@ DENG_GUI_PIMPL(PackagesWidget)
     ButtonWidget *clearSearch;
     HomeMenuWidget *menu;
     QStringList filterTerms;
+    IPackageStatus const *packageStatus = &isPackageLoaded;
     GuiWidget::ColorTheme unselectedItem       = GuiWidget::Normal;
     GuiWidget::ColorTheme selectedItem         = GuiWidget::Normal;
     GuiWidget::ColorTheme loadedUnselectedItem = GuiWidget::Inverted;
@@ -227,31 +238,22 @@ DENG_GUI_PIMPL(PackagesWidget)
 
             String auxColor = "accent";
 
-            if(isLoaded())
+            if(_owner.d->packageStatus->isPackageHighlighted(packageId()))
             {
                 _loadButton->setText(tr("Unload"));
-                _loadButton->useNormalStyle();
+                _loadButton->setColorTheme(invertColorTheme(_owner.d->loadedSelectedItem));
                 icon().setImageColor(style().colors().colorf("accent"));
-                //useInvertedStyle();
                 useColorTheme(_owner.d->loadedUnselectedItem, _owner.d->loadedSelectedItem);
-                //_loadButton->setTextColor("altaccent");
-                //_loadButton->setBorderColor("altaccent");
-                //_title->setFont("choice.selected");
                 auxColor = "background";
             }
             else
             {
                 _loadButton->setText(tr("Load"));
-                _loadButton->useInfoStyle();
+                _loadButton->setColorTheme(invertColorTheme(_owner.d->selectedItem));
                 icon().setImageColor(style().colors().colorf("text"));
-                //useNormalStyle();
                 useColorTheme(_owner.d->unselectedItem, _owner.d->selectedItem);
-                //_loadButton->setTextColor("text");
-                //_loadButton->setBorderColor("text");
-                //_title->setFont("default");
             }
 
-            //_subtitle->setTextColor(auxColor);
             for(ButtonWidget *b : _tags)
             {
                 updateTagButtonStyle(b, auxColor);
@@ -450,6 +452,11 @@ PackagesWidget::PackagesWidget(String const &name)
                     d->menu->rule().height());
 
     refreshPackages();
+}
+
+void PackagesWidget::setPackageStatus(IPackageStatus const &packageStatus)
+{
+    d->packageStatus = &packageStatus;
 }
 
 void PackagesWidget::setColorTheme(ColorTheme unselectedItem, ColorTheme selectedItem,

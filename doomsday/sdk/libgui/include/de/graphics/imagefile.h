@@ -46,8 +46,11 @@ class LIBGUI_PUBLIC ImageFile : public File
 public:
     enum BuiltInFilter {
         NoFilter,
+        Multiply,
         HeightMapToNormals
     };
+
+    DENG2_ERROR(FilterError);
 
 public:
     /**

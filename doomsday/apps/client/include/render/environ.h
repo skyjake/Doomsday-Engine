@@ -21,7 +21,7 @@
 
 #include <de/GLTexture>
 
-class BspLeaf;
+class SectorCluster;
 
 namespace render {
 
@@ -39,11 +39,11 @@ public:
      * Determines the reflection cube map suitable for an object at a particular
      * position in the current map.
      *
-     * @param sector  Sector.
+     * @param cluster  Subspace cluster.
      *
      * @return Reflection cube map.
      */
-    de::GLTexture const &reflectionInBspLeaf(BspLeaf const *bspLeaf) const;
+    de::GLTexture const &reflectionInCluster(SectorCluster const *cluster) const;
 
 private:
     DENG2_PRIVATE(d)

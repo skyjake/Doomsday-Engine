@@ -89,7 +89,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
         Id _id;
     };
 
-    bool infoStyle = false;
+    ColorTheme colorTheme = Normal;
     ButtonWidget *hover;
     int oldScrollY;
     Rule const *widestItem;
@@ -206,8 +206,8 @@ DENG_GUI_PIMPL(PopupMenuWidget)
     void setButtonColors(ButtonWidget &button)
     {
         bool const hovering = (hover == &button);
-        button.setTextColor(!hovering ^ infoStyle? "text" : "inverted.text");
-        button.setHoverTextColor(!hovering ^ infoStyle? "inverted.text" : "text",
+        button.setTextColor(!hovering ^ (colorTheme == Inverted)? "text" : "inverted.text");
+        button.setHoverTextColor(!hovering ^ (colorTheme == Inverted)? "inverted.text" : "text",
                                  ButtonWidget::ReplaceColor);
     }
 
@@ -310,7 +310,8 @@ DENG_GUI_PIMPL(PopupMenuWidget)
 
     void updateImageColor(ButtonWidget &button, bool invert = false)
     {
-        button.setImageColor(style().colors().colorf(invert ^ infoStyle? "inverted.text" : "text"));
+        button.setImageColor(style().colors().colorf(invert ^ (colorTheme == Inverted)? "inverted.text"
+                                                                                      : "text"));
     }
 
     void buttonStateChanged(ButtonWidget &button, ButtonWidget::State state)
@@ -419,8 +420,13 @@ MenuWidget &PopupMenuWidget::menu() const
 
 void PopupMenuWidget::useInfoStyle(bool yes)
 {
-    PopupWidget::useInfoStyle(yes);
-    d->infoStyle = yes;
+    setColorTheme(yes? Inverted : Normal);
+}
+
+void PopupMenuWidget::setColorTheme(ColorTheme theme)
+{
+    PopupWidget::setColorTheme(theme);
+    d->colorTheme = theme;
     d->updateButtonColors();
 }
 
@@ -438,8 +444,8 @@ void PopupMenuWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
     {
         verts.makeQuad(d->highlightRect(),
                        d->hover->state() == ButtonWidget::Hover?
-                           style().colors().colorf(!d->infoStyle? "inverted.background" : "background") :
-                           style().colors().colorf(!d->infoStyle? "accent" : "inverted.accent"),
+                           style().colors().colorf(d->colorTheme == Normal? "inverted.background" : "background") :
+                           style().colors().colorf(d->colorTheme == Normal? "accent" : "inverted.accent"),
                        root().atlas().imageRectf(root().solidWhitePixel()).middle());
     }
 }

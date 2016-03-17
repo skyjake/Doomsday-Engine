@@ -39,6 +39,7 @@ public:
     ui::Data &items() { return menu().items(); }
 
     void useInfoStyle(bool yes = true);
+    void setColorTheme(ColorTheme theme);
 
     // Events.
     void update();

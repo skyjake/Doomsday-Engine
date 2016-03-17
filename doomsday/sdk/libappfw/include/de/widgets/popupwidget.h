@@ -98,6 +98,8 @@ public:
 
     Background infoStyleBackground() const;
 
+    void setColorTheme(ColorTheme theme);
+
     // Events.
     bool handleEvent(Event const &event);
 

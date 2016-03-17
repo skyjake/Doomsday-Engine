@@ -70,10 +70,11 @@ public:
     };
 
     void useInfoStyle(bool yes = true);
-
     void useNormalStyle() { useInfoStyle(false); }
-
     bool isUsingInfoStyle() const;
+
+    void setColorTheme(ColorTheme theme);
+    ColorTheme colorTheme() const;
 
     /**
      * Text color to use in the Hover state. The default is to use the normal text

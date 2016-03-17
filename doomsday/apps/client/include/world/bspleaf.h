@@ -1,6 +1,6 @@
 /** @file bspleaf.h  World map BSP leaf half-space.
  *
- * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2014-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -54,14 +54,14 @@ public:
     explicit BspLeaf(Sector *sector = nullptr);
 
     /**
-     * Determines whether a subspace geometry is attributed to the BSP leaf half-space.
+     * Returns @c true if subspace geometry is attributed to the BSP leaf.
      *
      * @see subspace(), setSubspace()
      */
     bool hasSubspace() const;
 
     /**
-     * Returns the subspace attributed to the BSP leaf half-space.
+     * Returns the subspace attributed to the BSP leaf.
      *
      * @see hasSubspace()
      */
@@ -69,7 +69,7 @@ public:
 
     /**
      * Convenient method returning a pointer to the ConvexSubspace attributed to
-     * the BSP leaf half-space; otherwise @c 0 if no subspace is assigned.
+     * the BSP leaf; otherwise @c nullptr if no subspace is assigned.
      *
      * @see subspace(), hasSubspace()
      */
@@ -80,8 +80,8 @@ public:
     /**
      * Change the subspace geometry attributed to the BSP leaf.
      *
-     * @param newSubspace New subspace to attribute to the BSP leaf. Ownership
-     *                    is unaffected. Use @c 0 to clear the attribution.
+     * @param newSubspace New subspace to attribute to the BSP leaf (@c nullptr
+     *                    will clear). Ownership is unaffected.
      *
      * @see hasSubspace(), subspace()
      */
@@ -94,7 +94,7 @@ public:
      * Note that this does @em not necessarily mean there is a subspace at this
      * leaf. Usually one should resolve the sector from the subspace. This method
      * is primarily intended for legacy compatibility logics which don't care if
-     * subspace exists at the leaf or not.
+     * a subspace exists at the leaf, or not.
      */
     Sector *sectorPtr();
 
@@ -108,4 +108,4 @@ private:
     ConvexSubspace *_subspace;
 };
 
-#endif // DENG_WORLD_BSPLEAF_H
+#endif  // DENG_WORLD_BSPLEAF_H

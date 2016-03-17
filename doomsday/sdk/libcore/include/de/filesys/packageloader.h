@@ -63,7 +63,7 @@ public:
     /// Errors during reactions to loading a package. @ingroup errors
     DENG2_ERROR(PostLoadError);
 
-    typedef QMap<String, Package *> LoadedPackages;
+    typedef QHash<String, Package *> LoadedPackages;
 
     /**
      * Utility for dealing with space-separated lists of identifiers.

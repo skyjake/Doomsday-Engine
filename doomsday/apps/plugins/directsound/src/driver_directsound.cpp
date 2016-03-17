@@ -1197,8 +1197,8 @@ static void listenerEnvironment(float* rev)
     if(!propertySet)
         return;
 
-    val = rev[SRD_SPACE];
-    if(rev[SRD_DECAY] > .5)
+    val = rev[SFXLP_REVERB_SPACE];
+    if(rev[SFXLP_REVERB_DECAY] > .5)
     {
         // This much decay needs at least the Generic environment.
         if(val < .2)
@@ -1221,15 +1221,15 @@ static void listenerEnvironment(float* rev)
     setEAXdw(DSPROPERTY_EAXLISTENER_ENVIRONMENT, eaxVal);
 
     // General reverb volume adjustment.
-    setEAXdw(DSPROPERTY_EAXLISTENER_ROOM, volLinearToLog(rev[SRD_VOLUME]));
+    setEAXdw(DSPROPERTY_EAXLISTENER_ROOM, volLinearToLog(rev[SFXLP_REVERB_VOLUME]));
 
     // Reverb decay.
-    val = (rev[SRD_DECAY] - .5f) * 1.5f + 1;
+    val = (rev[SFXLP_REVERB_DECAY] - .5f) * 1.5f + 1;
     mulEAXf(DSPROPERTY_EAXLISTENER_DECAYTIME, val, EAXLISTENER_MINDECAYTIME,
                EAXLISTENER_MAXDECAYTIME);
 
     // Damping.
-    val = 1.1f * (1.2f - rev[SRD_DAMPING]);
+    val = 1.1f * (1.2f - rev[SFXLP_REVERB_DAMPING]);
     if(val < .1)
         val = .1f;
     mulEAXdw(DSPROPERTY_EAXLISTENER_ROOMHF, val);

@@ -604,8 +604,8 @@ static void updateListenerEnvironmentSettings(float* reverb)
                  reverb[2] << " " << reverb[3]);
 
     // No reverb?
-    if(reverb[SRD_VOLUME] == 0 && reverb[SRD_SPACE]   == 0 &&
-       reverb[SRD_DECAY]  == 0 && reverb[SRD_DAMPING] == 0)
+    if(reverb[SFXLP_REVERB_VOLUME] == 0 && reverb[SFXLP_REVERB_SPACE]   == 0 &&
+       reverb[SFXLP_REVERB_DECAY]  == 0 && reverb[SFXLP_REVERB_DAMPING] == 0)
     {
         FMOD_REVERB_PROPERTIES noReverb = FMOD_PRESET_OFF;
         fmodSystem->setReverbAmbientProperties(&noReverb);
@@ -619,8 +619,8 @@ static void updateListenerEnvironmentSettings(float* reverb)
     const static FMOD_REVERB_PROPERTIES presetGeneric     = FMOD_PRESET_GENERIC;
     const static FMOD_REVERB_PROPERTIES presetRoom        = FMOD_PRESET_ROOM;
 
-    float space = reverb[SRD_SPACE];
-    if(reverb[SRD_DECAY] > .5)
+    float space = reverb[SFXLP_REVERB_SPACE];
+    if(reverb[SFXLP_REVERB_DECAY] > .5)
     {
         // This much decay needs at least the Generic environment.
         if(space < .2)
@@ -643,16 +643,16 @@ static void updateListenerEnvironmentSettings(float* reverb)
         props = presetRoom;
 
     // Overall reverb volume adjustment.
-    props.Room = linearToLog(reverb[SRD_VOLUME]);
-    //setEAXdw(DSPROPERTY_EAXLISTENER_ROOM, volLinearToLog(rev[SRD_VOLUME]));
+    props.Room = linearToLog(reverb[SFXLP_REVERB_VOLUME]);
+    //setEAXdw(DSPROPERTY_EAXLISTENER_ROOM, volLinearToLog(rev[SFXLP_REVERB_VOLUME]));
 
     // Reverb decay.
-    float decay = (reverb[SRD_DECAY] - .5f) * 1.5f + 1;
+    float decay = (reverb[SFXLP_REVERB_DECAY] - .5f) * 1.5f + 1;
     props.DecayTime = std::min(std::max(0.1f, props.DecayTime * decay), 20.f);
     //mulEAXf(DSPROPERTY_EAXLISTENER_DECAYTIME, val, EAXLISTENER_MINDECAYTIME, EAXLISTENER_MAXDECAYTIME);
 
     // Damping.
-    float damping = std::max(.1f, 1.1f * (1.2f - reverb[SRD_DAMPING]));
+    float damping = std::max(.1f, 1.1f * (1.2f - reverb[SFXLP_REVERB_DAMPING]));
     props.RoomHF = linearToLog(std::pow(10.f, props.RoomHF / 2000.f) * damping);
     //mulEAXdw(DSPROPERTY_EAXLISTENER_ROOMHF, val);
 

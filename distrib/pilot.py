@@ -458,14 +458,11 @@ def handleCompletedTasks():
             newTask('tag_build', forClient='master')
         
         elif task == 'tag_build':
-            newTask('deb_changes', forClient='ubuntu-32bit')
-        
-        elif task == 'deb_changes':
             newTask('build', allClients=True)
             newTask('generate_wiki', forClient='master')
         
         elif task == 'build':
-            newTask('source', forClient='ubuntu-64bit')
+            newTask('source', forClient='ubuntu')
 
         elif task == 'source':
             newTask('sign', forClient='master')
@@ -479,7 +476,7 @@ def handleCompletedTasks():
             newTask('update_feed', forClient='master')
             
         elif task == 'update_feed':
-            newTask('mirror_files', forClient='ubuntu-32bit')
+            newTask('mirror_files', forClient='ubuntu')
     
     
 def autobuild(cmd):

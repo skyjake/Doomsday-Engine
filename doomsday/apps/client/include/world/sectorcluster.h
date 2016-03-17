@@ -25,10 +25,11 @@
 #include <de/aabox.h>
 #include <QList>
 
-#include "dd_share.h" // AudioEnvironmentFactors
-
 #include "HEdge"
 
+#ifdef __CLIENT__
+#  include "world/audioenvironment.h"
+#endif
 #include "MapElement"
 #include "Line"
 #include "Plane"
@@ -219,12 +220,21 @@ public:
      */
     void markReverbDirty(bool yes = true);
 
+    struct AudioEnvironment
+    {
+        de::dfloat volume  = 0;
+        de::dfloat space   = 0;
+        de::dfloat decay   = 0;
+        de::dfloat damping = 0;
+
+        void reset() { volume = space = decay = damping = 0; }
+    };
+
     /**
-     * Returns the final environmental audio characteristics (reverb) of the
-     * cluster. Note that if a reverb update is scheduled it will be done at
-     * this time (@ref markReverbDirty()).
+     * Returns the environmental audio config for the cluster. Note that if a reverb
+     * update is scheduled it will be done at this time (@ref markReverbDirty()).
      */
-    AudioEnvironmentFactors const &reverb() const;
+    AudioEnvironment const &reverb() const;
 
     /**
      * Returns the unique identifier of the light source.

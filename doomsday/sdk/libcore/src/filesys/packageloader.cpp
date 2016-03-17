@@ -353,7 +353,7 @@ void PackageLoader::unloadAll()
 
     while(!d->loaded.isEmpty())
     {
-        unload(d->loaded.firstKey());
+        unload(d->loaded.begin().key());
     }
 }
 
