@@ -1,7 +1,7 @@
-/** @file convexsubspace.cpp  World map convex subspace.
+/** @file convexsubspace.cpp  Map convex subspace.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,9 +20,6 @@
 
 #include "world/convexsubspace.h"
 
-#include <QSet>
-#include <QtAlgorithms>
-#include <de/Log>
 #ifdef __CLIENT__
 #  include "world/audioenvironment.h"
 #endif
@@ -31,6 +28,9 @@
 #include "Polyobj"
 #include "SectorCluster"
 #include "Surface"
+#include <de/Log>
+#include <QSet>
+#include <QtAlgorithms>
 
 using namespace de;
 
@@ -45,6 +45,8 @@ ddouble triangleArea(Vector2d const &v1, Vector2d const &v2, Vector2d const &v3)
 }
 
 #endif // __CLIENT__
+
+namespace world {
 
 DENG2_PIMPL(ConvexSubspace)
 {
@@ -71,12 +73,12 @@ DENG2_PIMPL(ConvexSubspace)
     HEdge *fanBase = nullptr;              ///< Trifan base Half-edge (otherwise the center point is used).
     bool needUpdateFanBase = true;         ///< @c true= need to rechoose a fan base half-edge.
 
-    world::AudioEnvironment audioEnvironment;  ///< Cached audio characteristics.
+    AudioEnvironment audioEnvironment;     ///< Cached audio characteristics.
 
-    int lastSpriteProjectFrame = 0;        ///< Frame number of last R_AddSprites.
+    dint lastSpriteProjectFrame = 0;       ///< Frame number of last R_AddSprites.
 #endif
 
-    int validCount = 0;                    ///< Used to prevent repeated processing.
+    dint validCount = 0;                   ///< Used to prevent repeated processing.
 
     Instance(Public *i) : Base(i) {}
     ~Instance() { qDeleteAll(extraMeshes); }
@@ -157,6 +159,7 @@ DENG2_PIMPL(ConvexSubspace)
 
 #undef MIN_TRIANGLE_EPSILON
     }
+
 #endif // __CLIENT__
 };
 
@@ -226,7 +229,7 @@ void ConvexSubspace::assignExtraMesh(Mesh &newMesh)
 {
     LOG_AS("ConvexSubspace");
 
-    int const sizeBefore = d->extraMeshes.size();
+    dint const sizeBefore = d->extraMeshes.size();
 
     d->extraMeshes.insert(&newMesh);
 
@@ -251,7 +254,7 @@ LoopResult ConvexSubspace::forAllExtraMeshes(std::function<LoopResult (Mesh &)> 
     return LoopContinue;
 }
 
-int ConvexSubspace::polyobjCount() const
+dint ConvexSubspace::polyobjCount() const
 {
     return d->polyobjs.count();
 }
@@ -299,12 +302,12 @@ void ConvexSubspace::setCluster(SectorCluster *newCluster)
     d->cluster = newCluster;
 }
 
-int ConvexSubspace::validCount() const
+dint ConvexSubspace::validCount() const
 {
     return d->validCount;
 }
 
-void ConvexSubspace::setValidCount(int newValidCount)
+void ConvexSubspace::setValidCount(dint newValidCount)
 {
     d->validCount = newValidCount;
 }
@@ -315,7 +318,7 @@ Vector2d const &ConvexSubspace::worldGridOffset() const
     return d->worldGridOffset;
 }
 
-int ConvexSubspace::shadowLineCount() const
+dint ConvexSubspace::shadowLineCount() const
 {
     return d->shadowLines.count();
 }
@@ -339,7 +342,7 @@ LoopResult ConvexSubspace::forAllShadowLines(std::function<LoopResult (LineSide 
     return LoopContinue;
 }
 
-int ConvexSubspace::lumobjCount() const
+dint ConvexSubspace::lumobjCount() const
 {
     return d->lumobjs.count();
 }
@@ -368,12 +371,12 @@ void ConvexSubspace::link(Lumobj &lumobj)
     d->lumobjs.insert(&lumobj);
 }
 
-int ConvexSubspace::lastSpriteProjectFrame() const
+dint ConvexSubspace::lastSpriteProjectFrame() const
 {
     return d->lastSpriteProjectFrame;
 }
 
-void ConvexSubspace::setLastSpriteProjectFrame(int newFrameNumber)
+void ConvexSubspace::setLastSpriteProjectFrame(dint newFrameNumber)
 {
     d->lastSpriteProjectFrame = newFrameNumber;
 }
@@ -387,14 +390,14 @@ HEdge *ConvexSubspace::fanBase() const
     return d->fanBase;
 }
 
-int ConvexSubspace::fanVertexCount() const
+dint ConvexSubspace::fanVertexCount() const
 {
     // Are we to use one of the half-edge vertexes as the fan base?
     return poly().hedgeCount() + (fanBase()? 0 : 2);
 }
 
 static void accumReverbForWallSections(HEdge const *hedge,
-    float envSpaceAccum[NUM_AUDIO_ENVIRONMENTS], float &total)
+    dfloat envSpaceAccum[NUM_AUDIO_ENVIRONMENTS], dfloat &total)
 {
     // Edges with no map line segment implicitly have no surfaces.
     if(!hedge || !hedge->hasMapElement())
@@ -426,16 +429,16 @@ bool ConvexSubspace::updateAudioEnvironment()
         return false;
     }
 
-    float contrib[NUM_AUDIO_ENVIRONMENTS]; de::zap(contrib);
+    dfloat contrib[NUM_AUDIO_ENVIRONMENTS]; de::zap(contrib);
 
     // Space is the rough volume of the BSP leaf (bounding box).
     AABoxd const &aaBox = poly().aaBox();
-    env.space = int(cluster().ceiling().height() - cluster().floor().height())
+    env.space = dint(cluster().ceiling().height() - cluster().floor().height())
               * ((aaBox.maxX - aaBox.minX) * (aaBox.maxY - aaBox.minY));
 
     // The other reverb properties can be found out by taking a look at the
     // materials of all surfaces in the BSP leaf.
-    float coverage = 0;
+    dfloat coverage = 0;
     HEdge *base    = poly().hedge();
     HEdge *hedge   = base;
     do
@@ -457,18 +460,18 @@ bool ConvexSubspace::updateAudioEnvironment()
     }
 
     // Average the results.
-    for(int i = AE_FIRST; i < NUM_AUDIO_ENVIRONMENTS; ++i)
+    for(dint i = AE_FIRST; i < NUM_AUDIO_ENVIRONMENTS; ++i)
     {
         contrib[i] /= coverage;
     }
 
     // Accumulate contributions and clamp the results.
-    int volume  = 0;
-    int decay   = 0;
-    int damping = 0;
-    for(int i = AE_FIRST; i < NUM_AUDIO_ENVIRONMENTS; ++i)
+    dint volume  = 0;
+    dint decay   = 0;
+    dint damping = 0;
+    for(dint i = AE_FIRST; i < NUM_AUDIO_ENVIRONMENTS; ++i)
     {
-        AudioEnvironment const &envDef = S_AudioEnvironment(AudioEnvironmentId(i));
+        ::AudioEnvironment const &envDef = S_AudioEnvironment(AudioEnvironmentId(i));
         volume  += envDef.volume  * contrib[i];
         decay   += envDef.decay   * contrib[i];
         damping += envDef.damping * contrib[i];
@@ -480,9 +483,11 @@ bool ConvexSubspace::updateAudioEnvironment()
     return true;
 }
 
-world::AudioEnvironment const &ConvexSubspace::audioEnvironment() const
+AudioEnvironment const &ConvexSubspace::audioEnvironment() const
 {
     return d->audioEnvironment;
 }
 
 #endif  // __CLIENT__
+
+}  // namespace world

@@ -28,7 +28,7 @@
 #include <doomsday/world/thinker.h>
 
 #ifdef __DOOMSDAY__
-namespace de {
+namespace world {
 class Map;
 }
 #endif

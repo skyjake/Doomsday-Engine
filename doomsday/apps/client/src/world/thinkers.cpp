@@ -45,7 +45,7 @@ dd_bool Thinker_IsMobjFunc(thinkfunc_t func)
     return (func && func == reinterpret_cast<thinkfunc_t>(gx.MobjThinker));
 }
 
-de::Map &Thinker_Map(thinker_t const & /*th*/)
+world::Map &Thinker_Map(thinker_t const & /*th*/)
 {
     /// @todo Do not assume the current map.
     return App_World().map();

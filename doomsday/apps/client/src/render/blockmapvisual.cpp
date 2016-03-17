@@ -42,9 +42,10 @@
 #include "ui/ui_main.h"
 
 using namespace de;
+using namespace world;
 
 byte bmapShowDebug; // 1 = mobjs, 2 = lines, 3 = BSP leafs, 4 = polyobjs. cvar
-float bmapDebugSize = 1.5f; // cvar
+dfloat bmapDebugSize = 1.5f; // cvar
 
 static void drawMobj(mobj_t const &mobj)
 {
@@ -64,8 +65,8 @@ static void drawLine(Line const &line)
 
 static void drawSubspace(ConvexSubspace const &subspace)
 {
-    float const scale = de::max(bmapDebugSize, 1.f);
-    float const width = (DENG_GAMEVIEW_WIDTH / 16) / scale;
+    dfloat const scale = de::max(bmapDebugSize, 1.f);
+    dfloat const width = (DENG_GAMEVIEW_WIDTH / 16) / scale;
 
     Face const &poly = subspace.poly();
     HEdge *base = poly.hedge();

@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef CLIENT_RENDER_DECORATION_H
-#define CLIENT_RENDER_DECORATION_H
+#ifndef DENG_CLIENT_RENDER_DECORATION_H
+#define DENG_CLIENT_RENDER_DECORATION_H
 
 #include <de/Error>
 #include <de/Vector>
@@ -36,7 +36,7 @@ class Surface;
  * World surface decoration.
  * @ingroup render
  */
-class Decoration : public de::MapObject
+class Decoration : public world::MapObject
 {
 public:
     /// Required surface is missing. @ingroup errors
@@ -84,4 +84,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-#endif  // CLIENT_RENDER_DECORATION_H
+#endif  // DENG_CLIENT_RENDER_DECORATION_H

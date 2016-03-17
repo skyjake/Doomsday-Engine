@@ -1,7 +1,8 @@
-/** @file mapelement.h  Base class for all world map elements.
+/** @file mapelement.h  Base class for all map elements.
+ * @ingroup world
  *
- * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,24 +22,21 @@
 #define DENG_WORLD_MAPELEMENT_H
 
 #include "dd_share.h"
-#include "world/dmuargs.h"
+#include "api_map.h"
 #include <de/Error>
 
-namespace de {
+namespace world {
 
 class Map;
 
 /**
- * Base class for all elements of a map. Provides runtime type information and
- * safe dynamic casting to various derived types.
+ * Base class for all elements of a map. Provides runtime type information and safe dynamic
+ * casting to various derived types.
  *
  * Maps are composed out of vertices, lines, sectors, etc.
  *
- * Abstract handling of map elements is particularly helpful in the public Map
- * Update (DMU) API, where objects can be referenced either by type and index
- * or by an opaque pointer.
- *
- * @ingroup world
+ * Abstract handling of map elements is particularly helpful in the public Map Update (DMU)
+ * API, where objects can be referenced either by type and index or by an opaque pointer.
  */
 class MapElement
 {
@@ -71,14 +69,14 @@ public:
      * @param type    DMU type identifier.
      * @param parent  Parent map element (if any).
      */
-    explicit MapElement(int t = DMU_NONE, MapElement *parent = 0);
+    explicit MapElement(de::dint t = DMU_NONE, MapElement *parent = nullptr);
 
     virtual ~MapElement();
 
     /**
      * Returns the DMU_* type of the object.
      */
-    int type() const;
+    de::dint type() const;
 
     DENG2_AS_IS_METHODS()
 
@@ -94,45 +92,44 @@ public:
      *
      * @see hasParent(), setParent()
      */
-    MapElement &parent();
-
-    /// @copydoc parent()
+    MapElement       &parent();
     MapElement const &parent() const;
 
     /**
      * Change the parent of the map element.
      *
-     * @param newParent  New parent to attribute to the map element. Ownership
-     *                   is unaffected. Can be @c 0 (to clear the attribution).
+     * @param newParent  MapElement to attribute as the new parent (use @c nullptr to clear).
+     * Ownership is unaffected..
      *
      * @see hasParent(), parent()
      */
     void setParent(MapElement *newParent);
 
     /**
-     * Returns @c true iff a map is attributed to the map element. Note that
-     * if the map element has a @em parent that this state is delegated to the
-     * parent map element.
+     * Returns @c true iff a map is attributed to the map element. Note that if the map
+     * element has a @em parent that this state is delegated to the parent map element.
      *
-     * @see map(), setMap(), hasParent()
+     * @see map(), setMap(), mapPtr()
      */
     bool hasMap() const;
 
     /**
-     * Returns the map attributed to the map element. Note that if the map
-     * element has a @em parent that this property comes from the parent map
-     * element (delegation).
+     * Returns the map attributed to the map element. Note that if the map element has a
+     * @em parent that this property comes from the parent map element (delegation).
      *
-     * @see hasMap(), setMap(), hasParent()
+     * @see hasMap(), setMap(), mapPtr()
      */
     Map &map() const;
 
-    inline Map *mapPtr() const { return hasMap()? &map() : nullptr; }
+    /**
+     * Returns a pointer to the attributed world::Map or @c nullptr if not attributed.
+     */
+    inline Map *mapPtr() const { return hasMap() ? &map() : nullptr; }
 
     /**
-     * Change the map attributed to the map element. Note that if the map
-     * element has a @em parent that attempting to change the map property of
-     * "this" map element is an error (delegation).
+     * Change the map attributed to the map element. Note that if the map element has a
+     * @em parent that attempting to change the map property of "this" map element is an
+     * error (delegation).
      *
      * @param newMap
      *
@@ -143,66 +140,65 @@ public:
     /**
      * Returns the "in-map" index attributed to the map element.
      */
-    int indexInMap() const;
+    de::dint indexInMap() const;
 
     /**
      * Change the "in-map" index attributed to the map element.
      *
-     * @param newIndex  New index to attribute to the map element. @c NoIndex
-     *                  clears the attribution (not a valid index).
+     * @param newIndex  New index to attribute to the map element. @c NoIndex clears the
+     * attribution (not a valid index).
      */
-    void setIndexInMap(int newIndex = NoIndex);
+    void setIndexInMap(de::dint newIndex = NoIndex);
 
     /**
-     * Returns the archive index for the map element. The archive index is the
-     * position of the relevant data or definition in the archived map. For
-     * example, in the case of a DMU_SIDE element that is produced from an id
-     * Tech 1 format map, this should be the index of the definition in the
-     * SIDEDEFS data lump.
+     * Returns the archive index for the map element. The archive index is the position of
+     * the relevant data or definition in the archived map. For example, in the case of a
+     * DMU_SIDE element that is produced from an id Tech 1 format map, this should be the
+     * index of the definition in the SIDEDEFS data lump.
      *
      * @see setIndexInArchive()
      */
-    int indexInArchive() const;
+    de::dint indexInArchive() const;
 
     /**
      * Change the "archive index" of the map element to @a newIndex.
      *
      * @see indexInArchive()
      */
-    void setIndexInArchive(int newIndex = NoIndex);
+    void setIndexInArchive(de::dint newIndex = NoIndex);
 
     /**
      * Get a property value, selected by DMU_* name.
      *
-     * Derived classes can override this to implement read access for additional
-     * DMU properties. MapElement::property() must be called from an overridding
-     * method if the named property is unknown/not handled, returning the result.
-     * If the property is known and the read access is handled the overriding
-     * method should return @c false.
+     * Derived classes can override this to implement read access for additional DMU
+     * properties. @ref property() must be called from an overridding method if the named
+     * property is unknown/not handled, returning the result. If the property is known
+     * and the read access is handled the overriding method should return @c false.
      *
      * @param args  Property arguments.
+     *
      * @return  Always @c 0 (can be used as an iterator).
      */
-    virtual int property(DmuArgs &args) const;
+    virtual de::dint property(de::DmuArgs &args) const;
 
     /**
      * Update a property value, selected by DMU_* name.
      *
-     * Derived classes can override this to implement write access for additional
-     * DMU properties. MapElement::setProperty() must be called from an overridding
-     * method if the named property is unknown/not handled, returning the result.
-     * If the property is known and the write access is handled the overriding
-     * method should return @c false.
+     * Derived classes can override this to implement write access for additional DMU
+     * properties. @ref setProperty() must be called from an overridding method if the
+     * named property is unknown/not handled, returning the result. If the property is
+     * known and the write access is handled the overriding method should return @c false.
      *
      * @param args  Property arguments.
+
      * @return  Always @c 0 (can be used as an iterator).
      */
-    virtual int setProperty(DmuArgs const &args);
+    virtual de::dint setProperty(de::DmuArgs const &args);
 
 private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace de
+}  // namespace world
 
-#endif // DENG_WORLD_MAPELEMENT_H
+#endif  // DENG_WORLD_MAPELEMENT_H

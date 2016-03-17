@@ -117,7 +117,7 @@ private:
 }  // namespace de
 
 dd_bool Thinker_IsMobjFunc(thinkfunc_t func);
-de::Map &Thinker_Map(thinker_t const &th);
+world::Map &Thinker_Map(thinker_t const &th);
 
 /**
  * Initializes the private data object of a thinker. The type of private data is chosen

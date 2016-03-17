@@ -1,7 +1,7 @@
-/** @file biassource.h Shadow Bias (light) source.
+/** @file biassource.h  Shadow Bias (light) source.
  *
  * @authors Copyright © 2005-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_RENDER_SHADOWBIAS_SOURCE_H
-#define DENG_RENDER_SHADOWBIAS_SOURCE_H
+#ifndef DENG_CLIENT_RENDER_SHADOWBIAS_SOURCE_H
+#define DENG_CLIENT_RENDER_SHADOWBIAS_SOURCE_H
 
 #include <de/ISerializable>
 #include <de/Observers>
@@ -28,9 +28,8 @@
 
 #include "Grabbable"
 
-class BiasDigest;
-class BspLeaf;
-struct ded_light_s; // def_data.h
+struct ded_light_s;  // def_data.h
+namespace world { class BspLeaf; }
 
 /**
  * Infinite point light source in the Shadow Bias lighting model.
@@ -40,23 +39,14 @@ struct ded_light_s; // def_data.h
 class BiasSource : public Grabbable, public de::ISerializable
 {
 public:
-    /*
-     * Notified when the bias source is about to be deleted.
-     */
-    DENG2_DEFINE_AUDIENCE(Deletion, void biasSourceBeingDeleted(BiasSource const &biasSource))
+    /// Notified when the BiasSource is about to be deleted.
+    DENG2_DEFINE_AUDIENCE(Deletion,        void biasSourceBeingDeleted(BiasSource const &biasSource))
 
-    /*
-     * Notified when the bias source intensity changes.
-     */
-    DENG2_DEFINE_AUDIENCE(IntensityChange,
-        void biasSourceIntensityChanged(BiasSource &biasSource, float oldIntensity))
+    /// Notified whenever the intensity is changed.
+    DENG2_DEFINE_AUDIENCE(IntensityChange, void biasSourceIntensityChanged(BiasSource &biasSource, de::dfloat oldIntensity))
 
-    /*
-     * Notified when the bias source color changes.
-     */
-    DENG2_DEFINE_AUDIENCE(ColorChange,
-        void biasSourceColorChanged(BiasSource &biasSource, de::Vector3f const &oldColor,
-                                    int changedComponents /*bit-field (0x1=Red, 0x2=Green, 0x4=Blue)*/))
+    /// Notified whenever the color is changed.
+    DENG2_DEFINE_AUDIENCE(ColorChange,     void biasSourceColorChanged(BiasSource &biasSource, de::Vector3f const &oldColor, de::dint changedComponents /*bit-field (0x1=Red, 0x2=Green, 0x4=Blue)*/))
 
 public:
     /**
@@ -69,10 +59,8 @@ public:
      * @param maxLight   Maximum ambient light level [0..1].
      */
     BiasSource(de::Vector3d const &origin = de::Vector3d(),
-               float intensity            = 200,
-               de::Vector3f const &color  = de::Vector3f(1, 1, 1),
-               float minLight             = 0,
-               float maxLight             = 0);
+        de::dfloat intensity = 200, de::Vector3f const &color = de::Vector3f(1, 1, 1),
+        de::dfloat minLight = 0, de::dfloat maxLight = 0);
 
     /**
      * Construct a new bias light source by duplicating @a other.
@@ -109,7 +97,7 @@ public:
     /**
      * Returns the map BSP leaf at the origin of the source (result cached).
      */
-    BspLeaf &bspLeafAtOrigin() const;
+    world::BspLeaf &bspLeafAtOrigin() const;
 
     /**
      * Returns the "primary" light intensity multiplier for the source. The
@@ -117,7 +105,7 @@ public:
      *
      * @see setIntensity()
      */
-    float intensity() const;
+    de::dfloat intensity() const;
 
     /**
      * Change the light intensity multiplier for the source. If changed the
@@ -129,13 +117,13 @@ public:
      *
      * @see intensity()
      */
-    BiasSource &setIntensity(float newIntensity);
+    BiasSource &setIntensity(de::dfloat newIntensity);
 
     /**
      * Determine the effective light intensity for the source and factoring in
      * sector light level multipliers/scale-factors.
      */
-    float evaluateIntensity() const;
+    de::dfloat evaluateIntensity() const;
 
     /**
      * Returns the light color strength factors for the source. The ColorChange
@@ -167,7 +155,7 @@ public:
      *
      * @see setLightLevels()
      */
-    void lightLevels(float &minLight, float &maxLight) const;
+    void lightLevels(de::dfloat &minLight, de::dfloat &maxLight) const;
 
     /**
      * Change the ambient light level threshold for the source. Note that both
@@ -178,12 +166,12 @@ public:
      *
      * @see lightLevels()
      */
-    BiasSource &setLightLevels(float newMinLight, float newMaxLight);
+    BiasSource &setLightLevels(de::dfloat newMinLight, de::dfloat newMaxLight);
 
     /**
      * Returns the time in milliseconds when the source was last updated.
      */
-    uint lastUpdateTime() const;
+    de::duint lastUpdateTime() const;
 
     /**
      * Manually mark the source as needing a full update. Note that the actual
@@ -206,7 +194,7 @@ public:
      *
      * @see BiasTracker
      */
-    bool trackChanges(BiasDigest &changes, uint digestIndex, uint currentTime);
+    bool trackChanges(QBitArray &changes, de::duint digestIndex, de::duint currentTime);
 
     // Implements ISerializable.
     void operator >> (de::Writer &to) const;
@@ -216,4 +204,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_RENDER_SHADOWBIAS_SOURCE_H
+#endif  // DENG_CLIENT_RENDER_SHADOWBIAS_SOURCE_H

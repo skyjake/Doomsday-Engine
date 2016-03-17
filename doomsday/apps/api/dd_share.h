@@ -389,7 +389,7 @@ enum { /* Do NOT change the numerical values of the constants. */
 #define DD_BASE_DDMOBJ_ELEMENTS() \
     thinker_t       thinker;   /* thinker node */ \
     coord_t         origin[3]; /* origin [x,y,z] */ \
-    BspLeaf        *_bspLeaf;  /* BSP leaf in which this resides (if known) */
+    void           *_bspLeaf;  /* BSP leaf in which this resides (if known) */
 
 /**
  * All map think-able objects must use this as a base. Also used for sound

@@ -1,7 +1,8 @@
-/** @file blockmap.h  World map element blockmap.
+/** @file blockmap.h  Map element blockmap.
+ * @ingroup world
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -30,15 +31,12 @@
 #  undef min
 #endif
 
-namespace de {
+namespace world {
 
-/**
- * @ingroup world
- */
 class Blockmap
 {
 public:
-    typedef Vector2ui Cell;
+    typedef de::Vector2ui Cell;
 
     /**
      * POD structure for representing an inclusive-exclusive rectangular range
@@ -60,14 +58,14 @@ public:
      * @param bounds    Map space boundary.
      * @param cellSize  Width and height of a cell in map space units.
      */
-    Blockmap(AABoxd const &bounds, uint cellSize = 128);
+    Blockmap(AABoxd const &bounds, de::duint cellSize = 128);
 
     virtual ~Blockmap();
 
     /**
      * Returns the origin of the blockmap in map space.
      */
-    Vector2d origin() const;
+    de::Vector2d origin() const;
 
     /**
      * Returns the bounds of the blockmap in map space.
@@ -82,12 +80,12 @@ public:
     /**
      * Returns the width of the blockmap in cells.
      */
-    inline uint width() const { return dimensions().x; }
+    inline de::duint width() const { return dimensions().x; }
 
     /**
      * Returns the height of the blockmap in cells.
      */
-    inline uint height() const { return dimensions().y; }
+    inline de::duint height() const { return dimensions().y; }
 
     /**
      * Returns @c true iff the blockmap is of zero-area.
@@ -97,17 +95,17 @@ public:
     /**
      * Returns the size of a cell (width and height) in map space units.
      */
-    uint cellSize() const;
+    de::duint cellSize() const;
 
     /**
      * Utility function which returns the dimensions of a cell in map space units.
      */
-    Vector2d cellDimensions() const { return Vector2d(cellSize(), cellSize()); }
+    de::Vector2d cellDimensions() const { return de::Vector2d(cellSize(), cellSize()); }
 
     /**
      * Utility function which returns the linear index of the specified cell.
      */
-    int toCellIndex(uint cellX, uint cellY) const;
+    de::dint toCellIndex(de::duint cellX, de::duint cellY) const;
 
     /**
      * Given map space XY coordinates @a pos, output the blockmap cell[x, y] it
@@ -117,7 +115,7 @@ public:
      * @param point    Map coordinate space point to be translated.
      * @param didClip  Set to @c true iff clamping was necessary.
      */
-    Cell toCell(Vector2d const &point, bool *didClip = 0) const;
+    Cell toCell(de::Vector2d const &point, bool *didClip = 0) const;
 
     /**
      * Given map space box XY coordinates @a box, output the blockmap cells[x, y]
@@ -136,7 +134,7 @@ public:
      *
      * @return  Number of unique objects linked into the cell, or @c 0 if invalid.
      */
-    int cellElementCount(Cell const &cell) const;
+    de::dint cellElementCount(Cell const &cell) const;
 
     bool link(Cell const &cell, void *elem);
 
@@ -151,13 +149,13 @@ public:
     /**
      * Iterate through all objects in the given @a cell.
      */
-    LoopResult forAllInCell(Cell const &cell, std::function<LoopResult (void *object)> func) const;
+    de::LoopResult forAllInCell(Cell const &cell, std::function<de::LoopResult (void *object)> func) const;
 
     /**
      * Iterate through all objects in all cells which intercept the given map
      * space, axis-aligned bounding @a box.
      */
-    LoopResult forAllInBox(AABoxd const &box, std::function<LoopResult (void *object)> func) const;
+    de::LoopResult forAllInBox(AABoxd const &box, std::function<de::LoopResult (void *object)> func) const;
 
     /**
      * Iterate over all objects in cells which intercept the line specified by
@@ -169,8 +167,8 @@ public:
      * @param from  Map space point defining the origin of the line.
      * @param to    Map space point defining the destination of the line.
      */
-    LoopResult forAllInPath(Vector2d const &from, Vector2d const &to,
-                            std::function<LoopResult (void *object)> func) const;
+    de::LoopResult forAllInPath(de::Vector2d const &from, de::Vector2d const &to,
+                                std::function<de::LoopResult (void *object)> func) const;
 
     /**
      * Render a visual for this gridmap to assist in debugging (etc...).
@@ -193,6 +191,6 @@ private:
 typedef Blockmap::Cell BlockmapCell;
 typedef Blockmap::CellBlock BlockmapCellBlock;
 
-} //namespace de
+}  // namespace world
 
-#endif // DENG_WORLD_BLOCKMAP_H
+#endif  // DENG_WORLD_BLOCKMAP_H

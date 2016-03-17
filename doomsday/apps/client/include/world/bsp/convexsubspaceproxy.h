@@ -1,6 +1,6 @@
-/** @file convexsubspaceproxy.h  BSP builder convex subspace proxy.
+/** @file convexsubspaceproxy.h  (World BSP) Convex subspace proxy.
  *
- * @authors Copyright © 2013-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -22,18 +22,14 @@
 
 #include <QList>
 #include <de/Error>
-#ifdef DENG2_DEBUG
-#  include <de/Log>
-#endif
+#include <de/Log>
 #include "world/bsp/linesegment.h"
 
-class BspLeaf;
 class Sector;
 
-namespace de {
+namespace de { class Mesh; }
 
-class Mesh;
-
+namespace world {
 namespace bsp {
 
 /**
@@ -42,24 +38,24 @@ namespace bsp {
 struct OrderedSegment
 {
     LineSegmentSide *segment;
-    ddouble fromAngle;
-    ddouble toAngle;
+    de::ddouble fromAngle;
+    de::ddouble toAngle;
 
     bool operator == (OrderedSegment const &other) const
     {
-        return de::fequal(fromAngle, other.fromAngle) &&
-               de::fequal(toAngle, other.toAngle);
+        return    de::fequal(fromAngle, other.fromAngle)
+               && de::fequal(toAngle  , other.toAngle);
     }
 
 #ifdef DENG2_DEBUG
     void debugPrint() const
     {
         LOGDEV_MAP_MSG("%p Angle: %1.6f %s -> Angle: %1.6f %s")
-                << this
-                << fromAngle
-                << (segment? segment->from().origin().asText() : "(null)")
-                << toAngle
-                << (segment? segment->to().origin().asText() : "(null)");
+            << this
+            << fromAngle
+            << (segment ? segment->from().origin().asText() : "(null)")
+            << toAngle
+            << (segment ? segment->to().origin().asText() : "(null)");
     }
 #endif
 };
@@ -111,7 +107,7 @@ public:
     /**
      * Returns the total number of segments in the subspace.
      */
-    int segmentCount() const;
+    de::dint segmentCount() const;
 
     /**
      * Returns @c true iff the subspace is "empty", which is to say there are
@@ -171,7 +167,7 @@ public:
      * @param bspLeaf  BSP leaf to build geometry for.
      * @param mesh     Mesh from which to assign geometry.
      */
-    void buildGeometry(BspLeaf &bspLeaf, Mesh &mesh) const;
+    void buildGeometry(BspLeaf &bspLeaf, de::Mesh &mesh) const;
 
     /**
      * The BspLeaf to which the subspace has been attributed if any.
@@ -203,7 +199,7 @@ private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace bsp
-} // namespace de
+}  // namespace bsp
+}  // namespace world
 
-#endif // DENG_WORLD_BSP_CONVEXSUBSPACEPROXY_H
+#endif  // DENG_WORLD_BSP_CONVEXSUBSPACEPROXY_H

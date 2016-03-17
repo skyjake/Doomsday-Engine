@@ -1,7 +1,8 @@
-/** @file map.h  World map.
+/** @file map.h  World Map.
+ * @ingroup world
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,44 +19,41 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef WORLD_MAP_H
-#define WORLD_MAP_H
+#ifndef DENG_WORLD_MAP_H
+#define DENG_WORLD_MAP_H
 
 #include <functional>
-#include <QList>
 #include <QHash>
+#include <QList>
 #include <QSet>
+#include <doomsday/BspNode>
 #include <doomsday/world/map.h>
 #include <doomsday/uri.h>
 #include <de/BinaryTree>
 #include <de/Observers>
 #include <de/Vector>
 
-#include "Mesh"
-
-#include "BspNode"
-#include "Line"
-#include "Polyobj"
-
 #ifdef __CLIENT__
-#  include "world/p_object.h"
 #  include "client/clplanemover.h"
 #  include "client/clpolymover.h"
+#endif
 
+#include "Mesh"
+#include "Line"
+#include "Polyobj"
+#include "world/bspleaf.h"
+#include "world/p_object.h"
+
+#ifdef __CLIENT__
 #  include "world/clientserverworld.h"
 #  include "Generator"
-
 #  include "BiasSource"
 #  include "Lumobj"
 #  include "render/skydrawable.h"
 #endif
 
-class BspLeaf;
-class ConvexSubspace;
-class LineBlockmap;
 class Plane;
 class Sector;
-class SectorCluster;
 class Sky;
 class Surface;
 class Vertex;
@@ -65,19 +63,23 @@ class BiasTracker;
 #endif
 
 namespace de {
-
-class Blockmap;
+class Thinkers;
 #ifdef __CLIENT__
 class LightGrid;
 #endif
-class Thinkers;
+}
+
+namespace world {
+
+class Blockmap;
+class ConvexSubspace;
+class LineBlockmap;
+class SectorCluster;
 
 /**
  * World map.
- *
- * @ingroup world
  */
-class Map : public world::Map
+class Map : public world::BaseMap
 #ifdef __CLIENT__
 , DENG2_OBSERVES(ClientServerWorld, FrameBegin)
 #endif
@@ -116,37 +118,33 @@ public:
     DENG2_DEFINE_AUDIENCE(OneWayWindowFound, void oneWayWindowFound(Line &line, Sector &backFacingSector))
 
     /// Notified when an unclosed sector is first found.
-    DENG2_DEFINE_AUDIENCE(UnclosedSectorFound, void unclosedSectorFound(Sector &sector, Vector2d const &nearPoint))
+    DENG2_DEFINE_AUDIENCE(UnclosedSectorFound, void unclosedSectorFound(Sector &sector, de::Vector2d const &nearPoint))
 
     /*
      * Constants:
      */
 #ifdef __CLIENT__
-    static dint const MAX_BIAS_SOURCES = 8 * 32;  // Hard limit due to change tracking.
+    static de::dint const MAX_BIAS_SOURCES = 8 * 32;  // Hard limit due to change tracking.
 
     /// Maximum number of generators per map.
-    static dint const MAX_GENERATORS = 512;
-#endif
+    static de::dint const MAX_GENERATORS = 512;
 
-    typedef de::BinaryTree<BspElement *> BspTree;
-
-#ifdef __CLIENT__
     typedef QSet<Plane *> PlaneSet;
     typedef QSet<Surface *> SurfaceSet;
     typedef QHash<thid_t, struct mobj_s *> ClMobjHash;
 #endif
 
 public:  /// @todo make private:
-    coord_t _globalGravity    = 0;  ///< The defined gravity for this map.
-    coord_t _effectiveGravity = 0;  ///< The effective gravity for this map.
-    dint _ambientLightLevel   = 0;  ///< Ambient lightlevel for the current map.
+    de::ddouble _globalGravity    = 0;  ///< The defined gravity for this map.
+    de::ddouble _effectiveGravity = 0;  ///< The effective gravity for this map.
+    de::dint _ambientLightLevel   = 0;  ///< Ambient lightlevel for the current map.
 
 public:
     /**
-     * Construct a new map initially configured in an editable state. Whilst
-     * editable new map elements can be added, thereby allowing the map to be
-     * constructed dynamically. When done editing @ref endEditing() should be
-     * called to switch the map into a non-editable (i.e., playable) state.
+     * Construct a new map initially configured in an editable state. Whilst editable new
+     * map elements can be added, thereby allowing the map to be constructed dynamically.
+     * When done editing @ref endEditing() should be called to switch the map into a
+     * non-editable (i.e., playable) state.
      *
      * @param manifest  Resource manifest for the map, if any (Can be set later).
      */
@@ -160,36 +158,36 @@ public:
     de::Record const &mapInfo() const;
 
     /**
-     * Returns the points which describe the boundary of the map coordinate
-     * space, which, are defined by the minimal and maximal vertex coordinates
-     * of the non-editable, non-polyobj line geometries).
+     * Returns the points which describe the boundary of the map coordinate space, which,
+     * are defined by the minimal and maximal vertex coordinates of the non-editable,
+     * non-polyobj line geometries).
      */
     AABoxd const &bounds() const;
 
-    inline Vector2d origin() const {
-        return Vector2d(bounds().min);
+    inline de::Vector2d origin    () const {
+        return de::Vector2d(bounds().min);
     }
 
-    inline Vector2d dimensions() const {
-        return Vector2d(bounds().max) - Vector2d(bounds().min);
+    inline de::Vector2d dimensions() const {
+        return de::Vector2d(bounds().max) - de::Vector2d(bounds().min);
     }
 
     /**
      * Returns the minimum ambient light level for the whole map.
      */
-    dint ambientLightLevel() const;
+    de::dint ambientLightLevel() const;
 
     /**
      * Returns the currently effective gravity multiplier for the map.
      */
-    coord_t gravity() const;
+    de::ddouble gravity() const;
 
     /**
      * Change the effective gravity multiplier for the map.
      *
      * @param newGravity  New gravity multiplier.
      */
-    void setGravity(coord_t newGravity);
+    void setGravity(de::ddouble newGravity);
 
     /**
      * To be called following an engine reset to update the map state.
@@ -197,12 +195,13 @@ public:
     void update();
 
 #ifdef __CLIENT__
-public:  // Light sources ---------------------------------------------------------
+
+public:  //- Light sources --------------------------------------------------------------
 
     /**
      * Returns the total number of BiasSources in the map.
      */
-    dint biasSourceCount() const;
+    de::dint biasSourceCount() const;
 
     /**
      * Attempt to add a new bias light source to the map (a copy is made).
@@ -221,7 +220,7 @@ public:  // Light sources ------------------------------------------------------
      *
      * @see removeAllBiasSources()
      */
-    void removeBiasSource(dint which);
+    void removeBiasSource(de::dint which);
 
     /**
      * Remove all bias sources from the map.
@@ -233,46 +232,46 @@ public:  // Light sources ------------------------------------------------------
     /**
      * Lookup a BiasSource by it's unique @a index.
      */
-    BiasSource &biasSource(dint index) const;
-    BiasSource *biasSourcePtr(dint index) const;
+    BiasSource &biasSource   (de::dint index) const;
+    BiasSource *biasSourcePtr(de::dint index) const;
 
     /**
      * Finds the bias source nearest to the specified map space @a point.
      *
      * @note This result is not cached. May return @c 0 if no bias sources exist.
      */
-    BiasSource *biasSourceNear(Vector3d const &point) const;
+    BiasSource *biasSourceNear(de::Vector3d const &point) const;
 
     /**
-     * Iterate through the BiasSources of the map.
+     * Iterate the BiasSources in the map, making a function @a callback for each.
      *
-     * @param func  Callback to make for each BiasSource.
+     * @param callback  Function to call for each BiasSource.
      */
-    LoopResult forAllBiasSources(std::function<LoopResult (BiasSource &)> func) const;
+    de::LoopResult forAllBiasSources(std::function<de::LoopResult (BiasSource &)> callback) const;
 
     /**
      * Lookup the unique index for the given bias @a source.
      */
-    dint indexOf(BiasSource const &source) const;
+    de::dint indexOf(BiasSource const &source) const;
 
     /**
-     * Returns the time in milliseconds when the current render frame began. Used
-     * for interpolation purposes.
+     * Returns the time in milliseconds when the current render frame began. Used for
+     * interpolation purposes.
      */
-    duint biasCurrentTime() const;
+    de::duint biasCurrentTime() const;
 
     /**
-     * Returns the frameCount of the current render frame. Used for tracking changes
-     * to bias sources/surfaces.
+     * Returns the frameCount of the current render frame. Used for tracking changes to
+     * bias sources/surfaces.
      */
-    duint biasLastChangeOnFrame() const;
+    de::duint biasLastChangeOnFrame() const;
 
-    // Luminous-objects -----------------------------------------------------------
+    //- Luminous-objects ----------------------------------------------------------------
 
     /**
      * Returns the total number of lumobjs in the map.
      */
-    dint lumobjCount() const;
+    de::dint lumobjCount() const;
 
     /**
      * Add a new lumobj to the map (a copy is made).
@@ -286,7 +285,7 @@ public:  // Light sources ------------------------------------------------------
      *
      * @see removeAllLumobjs()
      */
-    void removeLumobj(dint which);
+    void removeLumobj(de::dint which);
 
     /**
      * Remove all lumobjs from the map.
@@ -298,84 +297,88 @@ public:  // Light sources ------------------------------------------------------
     /**
      * Lookup a Lumobj in the map by it's unique @a index.
      */
-    Lumobj &lumobj(dint index) const;
-    Lumobj *lumobjPtr(dint index) const;
+    Lumobj &lumobj   (de::dint index) const;
+    Lumobj *lumobjPtr(de::dint index) const;
 
     /**
-     * Iterate through the Lumpobjs of the map.
+     * Iterate Lumobjs in the map, making a function @a callback for each.
      *
-     * @param func  Callback to make for each Lumobj.
+     * @param callback  Function to call for each Lumobj.
      */
-    LoopResult forAllLumobjs(std::function<LoopResult (Lumobj &)> func) const;
+    de::LoopResult forAllLumobjs(std::function<de::LoopResult (Lumobj &)> callback) const;
 
 #endif  // __CLIENT__
 
-public:  // Lines & Line-Sides ----------------------------------------------------
+public:  //- Lines (and Sides) ----------------------------------------------------------
 
     /**
      * Returns the total number of Lines in the map.
      */
-    dint lineCount() const;
+    de::dint lineCount() const;
 
     /**
      * Lookup a Line in the map by it's unique @a index.
      */
-    Line &line(dint index) const;
-    Line *linePtr(dint index) const;
+    Line &line   (de::dint index) const;
+    Line *linePtr(de::dint index) const;
 
     /**
-     * Iterate through the Lines of the map.
+     * Iterate Lines in the map, making a function @a callback for each.
      *
-     * @param func  Callback to make for each Line.
+     * @param callback  Function to call for each Line.
      */
-    LoopResult forAllLines(std::function<LoopResult (Line &)> func) const;
+    de::LoopResult forAllLines(std::function<de::LoopResult (Line &)> callback) const;
 
     /**
      * Lines and Polyobj lines (note polyobj lines are iterated first).
      *
-     * @note validCount should be incremented before calling this to begin a new
-     * logical traversal. Otherwise Lines marked with a validCount equal to this will
-     * be skipped over (can be used to avoid processing a line multiple times during
-     * complex / non-linear traversals.
+     * @note validCount should be incremented before calling this to begin a new logical
+     * traversal. Otherwise Lines marked with a validCount equal to this will be skipped
+     * over (can be used to avoid processing a line multiple times during complex and/or
+     * non-linear traversals.
      *
-     * @param box    Axis-aligned bounding box in which Lines must be Blockmap-linked.
-     * @param flags  @ref lineIteratorFlags
-     * @param func   Callback to make for each Line.
+     * @param box       Axis-aligned bounding box in which Lines must be Blockmap-linked.
+     * @param flags     @ref lineIteratorFlags
+     * @param callback  Function to call for each Line.
      */
-    LoopResult forAllLinesInBox(AABoxd const &box, dint flags, std::function<LoopResult (Line &)> func) const;
+    de::LoopResult forAllLinesInBox(AABoxd const &box, de::dint flags,
+        std::function<de::LoopResult (Line &)> callback) const;
 
     /**
      * @overload
      */
-    inline LoopResult forAllLinesInBox(AABoxd const &box, std::function<LoopResult (Line &)> func) const
-    {
-        return forAllLinesInBox(box, LIF_ALL, func);
+    inline de::LoopResult forAllLinesInBox(AABoxd const &box,
+        std::function<de::LoopResult (Line &)> callback) const {
+        return forAllLinesInBox(box, LIF_ALL, callback);
     }
 
     /**
-     * The callback function will be called once for each line that crosses the object.
+     * The callback function will be called once for each Line that crosses the object.
      * This means all the lines will be two-sided.
+     *
+     * @param callback  Function to call for each Line.
      */
-    LoopResult forAllLinesTouchingMobj(struct mobj_s &mob, std::function<LoopResult (Line &)> func) const;
+    de::LoopResult forAllLinesTouchingMobj(struct mobj_s &mob,
+        std::function<de::LoopResult (Line &)> callback) const;
 
     // ---
 
     /**
      * Returns the total number of Line::Sides in the map.
      */
-    inline dint sideCount() const { return lineCount() * 2; }
+    inline de::dint sideCount() const { return lineCount() * 2; }
 
     /**
      * Lookup a LineSide in the map by it's unique @a index.
      *
      * @see toSideIndex()
      */
-    LineSide &side(dint index) const;
-    LineSide *sidePtr(dint index) const;
+    LineSide &side   (de::dint index) const;
+    LineSide *sidePtr(de::dint index) const;
 
     /**
-     * Helper function which returns the relevant side index given a @a lineIndex
-     * and @a side identifier.
+     * Helper function which returns the relevant side index given a @a lineIndex and a
+     * @a side identifier.
      *
      * Indices are produced as follows:
      * @code
@@ -387,175 +390,178 @@ public:  // Lines & Line-Sides -------------------------------------------------
      *
      * @return  Unique index for the identified side.
      */
-    static dint toSideIndex(dint lineIndex, dint side);
+    static de::dint toSideIndex(de::dint lineIndex, de::dint side);
 
-public:  // Map-objects -----------------------------------------------------------
+public:  //- Map-objects ----------------------------------------------------------------
 
-    LoopResult forAllMobjsTouchingLine(Line &line, std::function<LoopResult (struct mobj_s &)> func) const;
-
-    /**
-     * Increment validCount before using this. 'func' is called for each mobj
-     * that is (even partly) inside the sector. This is not a 3D test, the
-     * mobjs may actually be above or under the sector.
-     *
-     * (Lovely name; actually this is a combination of SectorMobjs and
-     * a bunch of LineMobjs iterations.)
-     */
-    LoopResult forAllMobjsTouchingSector(Sector &sector, std::function<LoopResult (struct mobj_s &)> func) const;
+    de::LoopResult forAllMobjsTouchingLine(Line &line, std::function<de::LoopResult (struct mobj_s &)> callback) const;
 
     /**
-     * Links a mobj into both a block and a BSP leaf based on it's (x,y).
-     * Sets mobj->bspLeaf properly. Calling with flags==0 only updates
-     * the BspLeaf pointer. Can be called without unlinking first.
-     * Should be called AFTER mobj translation to (re-)insert the mobj.
+     * @important Increment validCount before calling this!
+     *
+     * Iterate mobj_ts in the map that are "inside" the specified sector (even partially)
+     * on the X|Y plane (mobj_t Z origin and Plane heights not considered).
+     *
+     * @param sector    Sector requirement (only consider map-objects "touching" this).
+     * @param callback  Function to call for each mobj_t.
      */
-    void link(struct mobj_s &mobj, dint flags);
+    de::LoopResult forAllMobjsTouchingSector(Sector &sector, std::function<de::LoopResult (struct mobj_s &)> callback) const;
 
     /**
-     * Unlinks a mobj from everything it has been linked to. Should be called
-     * BEFORE mobj translation to extract the mobj.
-     *
-     * @param mobj  Mobj to be unlinked.
-     *
-     * @return  DDLINK_* flags denoting what the mobj was unlinked from
-     * (in case we need to re-link).
+     * Links a mobj into both a block and a BSP leaf based on it's (x,y). Sets mobj->bspLeaf
+     * properly. Calling with flags==0 only updates the BspLeaf pointer. Can be called without
+     * unlinking first. Should be called AFTER mobj translation to (re-)insert the mobj.
      */
-    dint unlink(struct mobj_s &mobj);
+    void link(struct mobj_s &mobj, de::dint flags);
+
+    /**
+     * Unlinks a map-object from everything it has been linked to. Should be called BEFORE
+     * mobj translation to extract the mobj.
+     *
+     * @param mob  Map-object to be unlinked.
+     *
+     * @return  DDLINK_* flags denoting what the mobj was unlinked from (in case we need
+     * to re-link).
+     */
+    de::dint unlink(struct mobj_s &mob);
 
 #ifdef __CLIENT__
-public:  // Particle generators -------------------------------------------------------
+
+public:  //- Particle generators --------------------------------------------------------
 
     /**
      * Returns the total number of @em active generators in the map.
      */
-    dint generatorCount() const;
+    de::dint generatorCount() const;
 
     /**
-     * Attempt to spawn a new (particle) generator for the map. If no free identifier
-     * is available then @c nullptr is returned.
+     * Attempt to spawn a new (particle) generator for the map. If no free identifier is
+     * available then @c nullptr is returned.
      */
     Generator *newGenerator();
 
     /**
-     * Iterate over all generators in the map making a callback for each.
+     * Iterate Generators in the map, making a function @a callback for each.
      *
-     * @param func  Callback to make for each Generator.
+     * @param callback  Function to call for each Generator.
      */
-    LoopResult forAllGenerators(std::function<LoopResult (Generator &)> func) const;
+    de::LoopResult forAllGenerators(std::function<de::LoopResult (Generator &)> callback) const;
 
     /**
-     * Iterate over all generators in the map which are present in the identified
-     * sector making a callback for each.
+     * Iterate Generators linked in the specified @a sector, making a function @a callback
+     * for each.
      *
-     * @param sector  Sector containing the generators to process.
-     * @param func    Callback to make for each Generator.
+     * @param sector    Sector requirement (only linked @em Generators will be processed).
+     * @param callback  Function to call for each Generator.
      */
-    LoopResult forAllGeneratorsInSector(Sector const &sector, std::function<LoopResult (Generator &)> func) const;
+    de::LoopResult forAllGeneratorsInSector(Sector const &sector, std::function<de::LoopResult (Generator &)> callback) const;
 
     void unlink(Generator &generator);
 
-#endif // __CLIENT__
+#endif  // __CLIENT__
 
-public:  // Poly-objects ----------------------------------------------------------
+public:  //- Polyobjects ----------------------------------------------------------------
 
     /**
      * Returns the total number of Polyobjs in the map.
      */
-    dint polyobjCount() const;
+    de::dint polyobjCount() const;
 
     /**
      * Lookup a Polyobj in the map by it's unique @a index.
      */
-    Polyobj &polyobj(dint index) const;
-    Polyobj *polyobjPtr(dint index) const;
+    Polyobj &polyobj   (de::dint index) const;
+    Polyobj *polyobjPtr(de::dint index) const;
 
     /**
-     * Iterate through the Polyobjs of the map.
+     * Iterate Polyobjs in the map, making a function @a callback for each.
      *
-     * @param func  Callback to make for each Polyobj.
+     * @param callback  Function to call for each Polyobj.
      */
-    LoopResult forAllPolyobjs(std::function<LoopResult (Polyobj &)> func) const;
+    de::LoopResult forAllPolyobjs(std::function<de::LoopResult (Polyobj &)> callback) const;
 
     /**
-     * Link the specified @a polyobj in any internal data structures for
-     * bookkeeping purposes. Should be called AFTER Polyobj rotation and/or
-     * translation to (re-)insert the polyobj.
+     * Link the specified @a polyobj in any internal data structures for bookkeeping purposes.
+     * Should be called AFTER Polyobj rotation and/or translation to (re-)insert the polyobj.
      *
      * @param polyobj  Poly-object to be linked.
      */
     void link(Polyobj &polyobj);
 
     /**
-     * Unlink the specified @a polyobj from any internal data structures for
-     * bookkeeping purposes. Should be called BEFORE Polyobj rotation and/or
-     * translation to extract the polyobj.
+     * Unlink the specified @a polyobj from any internal data structures for bookkeeping
+     * purposes. Should be called BEFORE Polyobj rotation and/or translation to extract
+     * the polyobj.
      *
      * @param polyobj  Poly-object to be unlinked.
      */
     void unlink(Polyobj &polyobj);
 
-public:  // Sectors ---------------------------------------------------------------
+public:  //- Sectors --------------------------------------------------------------------
 
     /**
      * Returns the total number of Sectors in the map.
      */
-    dint sectorCount() const;
+    de::dint sectorCount() const;
 
     /**
      * Lookup a Sector in the map by it's unique @a index.
      */
-    Sector &sector(dint index) const;
-    Sector *sectorPtr(dint index) const;
+    Sector &sector   (de::dint index) const;
+    Sector *sectorPtr(de::dint index) const;
 
     /**
-     * Iterate through the Sectors of the map.
+     * Iterate Sectors in the map, making a function @a callback for each.
      *
-     * @param func  Callback to make for each Sector.
+     * @param callback  Function to call for each Sector.
      */
-    LoopResult forAllSectors(std::function<LoopResult (Sector &)> func) const;
+    de::LoopResult forAllSectors(std::function<de::LoopResult (Sector &)> callback) const;
 
     /**
-     * Increment validCount before calling this routine. The callback function
-     * will be called once for each sector the mobj is touching (totally or
-     * partly inside). This is not a 3D check; the mobj may actually reside
-     * above or under the sector.
+     * Increment validCount before calling this routine. The callback function will be called
+     * once for each sector the mobj is touching (totally or partly inside). This is not
+     * a 3D check; the mobj may actually reside above or under the sector.
+     *
+     * @param mob       Map-object to iterate the "touched" Sectors of.
+     * @param callback  Function to call for each Sector.
      */
-    LoopResult forAllSectorsTouchingMobj(struct mobj_s &mob, std::function<LoopResult (Sector &)> func) const;
+    de::LoopResult forAllSectorsTouchingMobj(struct mobj_s &mob, std::function<de::LoopResult (Sector &)> callback) const;
 
-public:  // Sector clusters -------------------------------------------------------
+public:  //- SectorClusters -------------------------------------------------------------
 
     /**
      * Returns the total number of SectorClusters in the map.
      */
-    dint clusterCount() const;
+    de::dint clusterCount() const;
 
     /**
-     * Determine the SectorCluster which contains @a point and which is on the
-     * back side of the BS partition that lies in front of @a point.
+     * Determine the SectorCluster which contains @a point and which is on the back side
+     * of the BS partition that lies in front of @a point.
      *
      * @param point  Map space coordinates to determine the BSP leaf for.
      *
-     * @return  SectorCluster containing the specified point if any or @c nullptr
-     * if the clusters have not yet been built.
+     * @return  SectorCluster containing the specified point if any or @c nullptr if the
+     * clusters have not yet been built.
      */
-    SectorCluster *clusterAt(Vector2d const &point) const;
+    SectorCluster *clusterAt(de::Vector2d const &point) const;
 
     /**
-     * Iterate through the SectorClusters of the map.
+     * Iterate SectorClusters in the map, making a function @a callback for each.
      *
-     * @param sector  If not @c nullptr, traverse the clusters of this Sector only.
-     * @param func    Callback to make for each SectorCluster.
+     * @param callback  Function to call for each SectorCluster.
      */
-    LoopResult forAllClusters(Sector *sector, std::function<LoopResult (SectorCluster &)> func);
+    de::LoopResult forAllClusters(std::function<de::LoopResult (SectorCluster &)> callback);
 
     /**
-     * @overload
+     * Iterate SectorClusters in the map which are attributed to the given @a sector,
+     * making a function @a callback for each.
+     *
+     * @param sector    Sector requirement (only attributed clusters will be processed).
+     * @param callback  Function to call for each SectorCluster.
      */
-    inline LoopResult forAllClusters(std::function<LoopResult (SectorCluster &)> func) {
-        return forAllClusters(nullptr, func);
-    }
+    de::LoopResult forAllClustersOfSector(Sector &sector, std::function<de::LoopResult (SectorCluster &)> callback);
 
-public:  // Skies -----------------------------------------------------------------
+public:  //- Skies ----------------------------------------------------------------------
 
     /**
      * Returns the logical sky for the map.
@@ -563,75 +569,80 @@ public:  // Skies --------------------------------------------------------------
     Sky &sky() const;
 
 #ifdef __CLIENT__
-    coord_t skyFix(bool ceiling) const;
 
-    inline coord_t skyFixFloor() const   { return skyFix(false /*the floor*/); }
-    inline coord_t skyFixCeiling() const { return skyFix(true /*the ceiling*/); }
+    SkyDrawable::Animator &skyAnimator() const;
 
-    void setSkyFix(bool ceiling, coord_t newHeight);
+    de::ddouble skyFix(bool ceiling) const;
 
-    inline void setSkyFixFloor(coord_t newHeight) {
+    inline de::ddouble skyFixFloor  () const { return skyFix(false /*the floor*/);   }
+    inline de::ddouble skyFixCeiling() const { return skyFix(true  /*the ceiling*/); }
+
+    void setSkyFix(bool ceiling, de::ddouble newHeight);
+
+    inline void setSkyFixFloor(de::ddouble newHeight) {
         setSkyFix(false /*the floor*/, newHeight);
     }
-    inline void setSkyFixCeiling(coord_t newHeight) {
+
+    inline void setSkyFixCeiling(de::ddouble newHeight) {
         setSkyFix(true /*the ceiling*/, newHeight);
     }
+
 #endif
 
-public:  // Subspaces -------------------------------------------------------------
+public:  //- Subspaces ------------------------------------------------------------------
 
     /**
-     * Returns @c true if the given @a point is outside all map subspaces.
+     * Returns @c true if the given @a point is in the void (outside all map subspaces).
      */
     bool isPointInVoid(de::Vector3d const &pos) const;
 
     /**
      * Returns the total number of subspaces in the map.
      */
-    dint subspaceCount() const;
+    de::dint subspaceCount() const;
 
     /**
      * Lookup a Subspace in the map by it's unique @a index.
      */
-    ConvexSubspace &subspace(dint index) const;
-    ConvexSubspace *subspacePtr(dint index) const;
+    ConvexSubspace &subspace   (de::dint index) const;
+    ConvexSubspace *subspacePtr(de::dint index) const;
 
     /**
-     * Iterate through the ConvexSubspaces of the map.
+     * Iterate ConvexSubspaces in the map, making a function @a callback for each.
      *
-     * @param func  Callback to make for each ConvexSubspace.
+     * @param callback  Function to call for each ConvexSubspace.
      */
-    LoopResult forAllSubspaces(std::function<LoopResult (ConvexSubspace &)> func) const;
+    de::LoopResult forAllSubspaces(std::function<de::LoopResult (ConvexSubspace &)> callback) const;
 
-public:  // Vertexs ---------------------------------------------------------------
+public:  //- Vertexs --------------------------------------------------------------------
 
     /**
      * Returns the total number of Vertexs in the map.
      */
-    dint vertexCount() const;
+    de::dint vertexCount() const;
 
     /**
      * Lookup a Vertex in the map by it's unique @a index.
      */
-    Vertex &vertex(dint index) const;
-    Vertex *vertexPtr(dint index) const;
+    Vertex &vertex   (de::dint index) const;
+    Vertex *vertexPtr(de::dint index) const;
 
     /**
-     * Iterate through the Vertexs of the map.
+     * Iterate Vertexs in the map, making a function @a callback for each.
      *
-     * @param func  Callback to make for each Vertex.
+     * @param callback  Function to call for each Vertex.
      */
-    LoopResult forAllVertexs(std::function<LoopResult (Vertex &)> func) const;
+    de::LoopResult forAllVertexs(std::function<de::LoopResult (Vertex &)> callback) const;
 
-public:  // Data structures -------------------------------------------------------
+public:  //- Data structures ------------------------------------------------------------
 
     /**
-     * Provides access to the primary @ref Mesh geometry owned by the map. Note that
-     * further meshes may be assigned to individual elements of the map should their
-     * geometries not be representable as a manifold with the primary mesh (e.g.,
-     * polyobjs and BSP leaf "extra" meshes).
+     * Provides access to the primary @ref Mesh geometry owned by the map. Note that further
+     * meshes may be assigned to individual elements of the map should their geometries
+     * not be representable as a manifold with the primary mesh (e.g., Polyobjs and BspLeaf
+     * "extra" meshes).
      */
-    Mesh const &mesh() const;
+    de::Mesh const &mesh() const;
 
     /**
      * Provides access to the line blockmap.
@@ -656,7 +667,7 @@ public:  // Data structures ----------------------------------------------------
     /**
      * Provides access to the thinker lists for the map.
      */
-    Thinkers /*const*/ &thinkers() const;
+    de::Thinkers /*const*/ &thinkers() const;
 
     /**
      * Returns @c true iff a BSP tree is available for the map.
@@ -669,30 +680,29 @@ public:  // Data structures ----------------------------------------------------
     BspTree const &bspTree() const;
 
     /**
-     * Determine the BSP leaf on the back side of the BS partition that lies
-     * in front of the specified point within the map's coordinate space.
+     * Determine the BSP leaf on the back side of the BS partition that lies in front of
+     * the specified point within the map's coordinate space.
      *
-     * @note Always returns a valid BspLeaf although the point may not actually
-     * lay within it (however it is on the same side of the space partition)!
+     * @note Always returns a valid BspLeaf although the point may not actually lay within
+     * it (however it is on the same side of the space partition)!
      *
      * @param point  Map space coordinates to determine the BSP leaf for.
      *
      * @return  BspLeaf instance for that BSP node's leaf.
      */
-    BspLeaf &bspLeafAt(Vector2d const &point) const;
+    BspLeaf &bspLeafAt(de::Vector2d const &point) const;
 
     /**
      * @copydoc bspLeafAt()
      *
-     * The test is carried out using fixed-point math for behavior compatible
-     * with vanilla DOOM. Note that this means there is a maximum size for the
-     * point: it cannot exceed the fixed-point 16.16 range (about 65k units).
+     * The test is carried out using fixed-point math for behavior compatible with vanilla
+     * DOOM. Note that this means there is a maximum size for the point: it cannot exceed
+     * the fixed-point 16.16 range (about 65k units).
      */
-    BspLeaf &bspLeafAt_FixedPrecision(Vector2d const &point) const;
+    BspLeaf &bspLeafAt_FixedPrecision(de::Vector2d const &point) const;
 
     /**
-     * Given an @a emitter origin, attempt to identify the map element
-     * to which it belongs.
+     * Given an @a emitter origin, attempt to identify the map element to which it belongs.
      *
      * @param emitter  The sound emitter to be identified.
      * @param sector   The identified sector if found is written here.
@@ -707,8 +717,6 @@ public:  // Data structures ----------------------------------------------------
 
 #ifdef __CLIENT__
 
-    SkyDrawable::Animator &skyAnimator() const;
-
     /**
      * Returns @c true if a LightGrid has been initialized for the map.
      *
@@ -721,39 +729,37 @@ public:  // Data structures ----------------------------------------------------
      *
      * @see hasLightGrid()
      */
-    LightGrid       &lightGrid();
-    LightGrid const &lightGrid() const;
+    de::LightGrid       &lightGrid();
+    de::LightGrid const &lightGrid() const;
 
     /**
      * (Re)-initialize the light grid used for smoothed sector lighting.
      *
-     * If the grid has not yet been initialized block light sources are determined
-     * at this time (SectorClusters must be built for this).
+     * If the grid has not yet been initialized block light sources are determined at this
+     * time (SectorClusters must be built for this).
      *
      * If the grid has already been initialized calling this will perform a full update.
      *
-     * @note Initialization may take some time depending on the complexity of the
-     * map (physial dimensions, number of sectors) and should therefore be done
-     * "off-line".
+     * @note Initialization may take some time depending on the complexity of the map
+     * (physical dimensions, number of sectors) and should therefore be done "off-line".
      */
     void initLightGrid();
 
     /**
-     * Link the given @a surface in all material lists and surface sets which
-     * the map maintains to improve performance. Only surfaces attributed to
-     * the map will be linked (alien surfaces are ignored).
+     * Link the given @a surface in all material lists and surface sets which the map maintains
+     * to improve performance. Only surfaces attributed to the map will be linked (alien
+     * surfaces are ignored).
      *
      * @param surface  The surface to be linked.
      */
     void linkInMaterialLists(Surface *surface);
 
     /**
-     * Unlink the given @a surface in all material lists and surface sets which
-     * the map maintains to improve performance.
+     * Unlink the given @a surface in all material lists and surface sets which the map
+     * maintains to improve performance.
      *
-     * @note The material currently attributed to the surface does not matter
-     * for unlinking purposes and the surface will be unlinked from all lists
-     * regardless.
+     * @note The material currently attributed to the surface does not matter for unlinking
+     * purposes and the surface will be unlinked from all lists regardless.
      *
      * @param surface  The surface to be unlinked.
      */
@@ -789,16 +795,14 @@ public:  // Data structures ----------------------------------------------------
 public:
 
     /**
-     * Returns a rich formatted, textual summary of the map's elements, suitable
-     * for logging.
+     * Returns a rich formatted, textual summary of the map's elements, suitable for logging.
      */
-    String elementSummaryAsStyledText() const;
+    de::String elementSummaryAsStyledText() const;
 
     /**
-     * Returns a rich formatted, textual summary of the map's objects, suitable
-     * for logging.
+     * Returns a rich formatted, textual summary of the map's objects, suitable for logging.
      */
-    String objectSummaryAsStyledText() const;
+    de::String objectSummaryAsStyledText() const;
 
     /**
      * To be called to register the commands and variables of this module.
@@ -806,8 +810,8 @@ public:
     static void consoleRegister();
 
     /**
-     * To be called to initialize the dummy element arrays (which are used with
-     * the DMU API), with a fixed number of @em shared dummies.
+     * To be called to initialize the dummy element arrays (which are used with the DMU API),
+     * with a fixed number of @em shared dummies.
      */
     static void initDummies();
 
@@ -824,23 +828,21 @@ public:  /// @todo Most of the following should be private:
     void initPolyobjs();
 
 #ifdef __CLIENT__
+
     /**
-     * Fixing the sky means that for adjacent sky sectors the lower sky
-     * ceiling is lifted to match the upper sky. The raising only affects
-     * rendering, it has no bearing on gameplay.
+     * Fixing the sky means that for adjacent sky sectors the lower sky ceiling is lifted
+     * to match the upper sky. The raising only affects rendering, it has no bearing on gameplay.
      */
     void initSkyFix();
 
     /**
-     * Rebuild the surface material lists. To be called when a full update is
-     * necessary.
+     * Rebuild the surface material lists. To be called when a full update is necessary.
      */
     void buildMaterialLists();
 
     /**
-     * Initializes bias lighting for the map. New light sources are initialized
-     * from the loaded Light definitions. Map surfaces are prepared for tracking
-     * rays.
+     * Initializes bias lighting for the map. New light sources are initialized from the
+     * loaded Light definitions. Map surfaces are prepared for tracking rays.
      *
      * Must be called before rendering a frame with bias lighting enabled.
      */
@@ -857,35 +859,34 @@ public:  /// @todo Most of the following should be private:
     void initRadio();
 
     /**
-     * Spawn all generators for the map which should be initialized automatically
-     * during map setup.
+     * Spawn all generators for the map which should be initialized automatically during
+     * map setup.
      */
     void initGenerators();
 
     /**
-     * Attempt to spawn all flat-triggered particle generators for the map.
-     * To be called after map setup is completed.
+     * Attempt to spawn all flat-triggered particle generators for the map. To be called
+     * after map setup is completed.
      *
-     * @note Cannot presently be done in @ref initGenerators() as this is called
-     *       during initial Map load and before any saved game has been loaded.
+     * @note  Cannot presently be done in @ref initGenerators() as this is called during
+     * initial Map load and before any saved game has been loaded.
      */
     void spawnPlaneParticleGens();
 
     /**
-     * Destroys all clientside clmobjs in the map. To be called when a network
-     * game ends.
+     * Destroys all clientside clmobjs in the map. To be called when a network game ends.
      */
     void clearClMobjs();
 
     /**
-     * Deletes hidden, unpredictable or nulled mobjs for which we have not received
-     * updates in a while.
+     * Deletes hidden, unpredictable or nulled mobjs for which we have not received updates
+     * in a while.
      */
     void expireClMobjs();
 
     /**
-     * Find/create a client mobj with the unique identifier @a id. Client mobjs are
-     * just like normal mobjs, except they have additional network state.
+     * Find/create a client mobj with the unique identifier @a id. Client mobjs are just
+     * like normal mobjs, except they have additional network state.
      *
      * To check whether a given mobj is a client mobj, use Cl_IsClientMobj(). The network
      * state can then be accessed with ClMobj_GetInfo().
@@ -899,7 +900,7 @@ public:  /// @todo Most of the following should be private:
     struct mobj_s *clMobjFor(thid_t id, bool canCreate = false) const;
 
     /**
-     * Iterate all client mobjs, making a callback for each. Iteration ends if a
+     * Iterate client-mobjs, making a function @c callback for each. Iteration ends if a
      * callback returns a non-zero value.
      *
      * @param callback  Function to callback for each client mobj.
@@ -907,7 +908,7 @@ public:  /// @todo Most of the following should be private:
      *
      * @return  @c 0 if all callbacks return @c 0; otherwise the result of the last.
      */
-    dint clMobjIterator(dint (*callback) (struct mobj_s *, void *), void *context = nullptr);
+    de::dint clMobjIterator(de::dint (*callback) (struct mobj_s *, void *), void *context = nullptr);
 
     /**
      * Provides readonly access to the client mobj hash.
@@ -915,12 +916,13 @@ public:  /// @todo Most of the following should be private:
     ClMobjHash const &clMobjHash() const;
 
 protected:
+
     /// Observes WorldSystem FrameBegin
     void worldSystemFrameBegins(bool resetNextViewer);
 
 #endif  // __CLIENT__
 
-public:  // Editing ---------------------------------------------------------------
+public:  //- Editing --------------------------------------------------------------------
 
     /**
      * Returns @c true iff the map is currently in an editable state.
@@ -928,8 +930,8 @@ public:  // Editing ------------------------------------------------------------
     bool isEditable() const;
 
     /**
-     * Switch the map from editable to non-editable (i.e., playable) state,
-     * incorporating any new map elements, (re)building the BSP, etc...
+     * Switch the map from editable to non-editable (i.e., playable) state, incorporating
+     * any new map elements, (re)building the BSP, etc...
      *
      * @return  @c true= mode switch was completed successfully.
      */
@@ -938,26 +940,26 @@ public:  // Editing ------------------------------------------------------------
     /**
      * @see isEditable()
      */
-    Vertex *createVertex(Vector2d const &origin,
-                         dint archiveIndex = MapElement::NoIndex);
+    Vertex *createVertex(de::Vector2d const &origin,
+                         de::dint archiveIndex = MapElement::NoIndex);
 
     /**
      * @see isEditable()
      */
-    Line *createLine(Vertex &v1, Vertex &v2, dint flags = 0,
+    Line *createLine(Vertex &v1, Vertex &v2, de::dint flags = 0,
                      Sector *frontSector = nullptr, Sector *backSector = nullptr,
-                     dint archiveIndex = MapElement::NoIndex);
+                     de::dint archiveIndex = MapElement::NoIndex);
 
     /**
      * @see isEditable()
      */
-    Polyobj *createPolyobj(Vector2d const &origin);
+    Polyobj *createPolyobj(de::Vector2d const &origin);
 
     /**
      * @see isEditable()
      */
-    Sector *createSector(dfloat lightLevel, Vector3f const &lightColor,
-                         dint archiveIndex = MapElement::NoIndex);
+    Sector *createSector(de::dfloat lightLevel, de::Vector3f const &lightColor,
+                         de::dint archiveIndex = MapElement::NoIndex);
 
     /**
      * Provides a list of all the editable lines in the map.
@@ -977,16 +979,14 @@ public:  // Editing ------------------------------------------------------------
     typedef QList<Sector *> Sectors;
     Sectors const &editableSectors() const;
 
-    inline dint editableLineCount() const    { return editableLines().count(); }
-
-    inline dint editablePolyobjCount() const { return editablePolyobjs().count(); }
-
-    inline dint editableSectorCount() const  { return editableSectors().count(); }
+    inline de::dint editableLineCount   () const { return editableLines   ().count(); }
+    inline de::dint editablePolyobjCount() const { return editablePolyobjs().count(); }
+    inline de::dint editableSectorCount () const { return editableSectors ().count(); }
 
 private:
     DENG2_PRIVATE(d)
 };
 
-}  // namespace de
+}  // namespace world
 
-#endif  // WORLD_MAP_H
+#endif  // DENG_WORLD_MAP_H

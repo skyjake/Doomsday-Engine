@@ -1,7 +1,7 @@
 /** @file vissprite.cpp  Projected visible sprite ("vissprite") management.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2016 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  * @authors Copyright © 1993-1996 by id Software, Inc.
  *
@@ -20,13 +20,15 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
 #include "render/vissprite.h"
+
+#include "clientapp.h"
+
 #include "render/lightgrid.h"
+
 #include "world/map.h"
 #include "world/bspleaf.h"
 #include "world/convexsubspace.h"
-#include "clientapp.h"
 
 using namespace de;
 
@@ -66,7 +68,7 @@ vissprite_t *R_NewVisSprite(visspritetype_t type)
 void VisSprite_SetupSprite(vissprite_t *spr, VisEntityPose const &pose, VisEntityLighting const &light,
     dfloat /*secFloor*/, dfloat /*secCeil*/, dfloat /*floorClip*/, dfloat /*top*/,
     Material &material, bool matFlipS, bool matFlipT, blendmode_t blendMode,
-    dint tClass, dint tMap, BspLeaf *bspLeafAtOrigin,
+    dint tClass, dint tMap, world::BspLeaf *bspLeafAtOrigin,
     bool /*floorAdjust*/, bool /*fitTop*/, bool /*fitBottom*/)
 {
     drawspriteparams_t &p = *VS_SPRITE(spr);
@@ -92,7 +94,7 @@ void VisSprite_SetupSprite(vissprite_t *spr, VisEntityPose const &pose, VisEntit
 
 void VisSprite_SetupModel(vissprite_t *spr, VisEntityPose const &pose, VisEntityLighting const &light,
     ModelDef *mf, ModelDef *nextMF, dfloat inter,
-    dint id, dint selector, BspLeaf * /*bspLeafAtOrigin*/, dint mobjDDFlags, dint tmap,
+    dint id, dint selector, world::BspLeaf * /*bspLeafAtOrigin*/, dint mobjDDFlags, dint tmap,
     bool /*fullBright*/, bool alwaysInterpolate)
 {
     drawmodelparams_t &p = *VS_MODEL(spr);
@@ -148,7 +150,7 @@ void R_SortVisSprites()
     vissprite_t *best = nullptr;
     for(dint i = 0; i < count; ++i)
     {
-        coord_t bestdist = 0;
+        ddouble bestdist = 0;
         for(vissprite_t *ds = unsorted.next; ds != &unsorted; ds = ds->next)
         {
             if(ds->pose.distance >= bestdist)
@@ -167,10 +169,10 @@ void R_SortVisSprites()
     }
 }
 
-void VisEntityLighting::setupLighting(de::Vector3d const &origin, coord_t distance,
-                                      BspLeaf const &bspLeaf)
+void VisEntityLighting::setupLighting(Vector3d const &origin, ddouble distance,
+    world::BspLeaf const &bspLeaf)
 {
-    Map &map = ClientApp::world().map();
+    world::Map &map = ClientApp::world().map();
 
     if(useBias && map.hasLightGrid())
     {

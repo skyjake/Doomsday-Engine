@@ -32,11 +32,11 @@ namespace world {
 static mobj_t &instanceMobj(Context const &ctx)
 {
     /// @todo Not necessarily always the current map. -jk
-    int const id = ctx.selfInstance().geti(QStringLiteral("__id__"), 0);
+    dint const id = ctx.selfInstance().geti(QStringLiteral("__id__"), 0);
     mobj_t *mo = App_World().map().thinkers().mobjById(id);
     if(!mo)
     {
-        throw ::Map::MissingObjectError("instanceMobj", QString("Mobj %1 does not exist").arg(id));
+        throw Map::MissingObjectError("instanceMobj", QString("Mobj %1 does not exist").arg(id));
     }
     return *mo;
 }
@@ -56,4 +56,4 @@ void initBindings(Binder &binder, Record &worldModule)
     }
 }
 
-} // namespace world
+}  // namespace world

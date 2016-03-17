@@ -1,6 +1,6 @@
 /** @file partitionevaluator.h  Evaluator for a would-be BSP.
  *
- * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2014-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -22,7 +22,7 @@
 
 #include "world/bsp/superblockmap.h"
 
-namespace de {
+namespace world {
 namespace bsp {
 
 /**
@@ -51,7 +51,7 @@ private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace bsp
-} // namespace de
+}  // namespace bsp
+}  // namespace world
 
-#endif // DENG_WORLD_BSP_PARTITIONEVALUATOR_H
+#endif  // DENG_WORLD_BSP_PARTITIONEVALUATOR_H

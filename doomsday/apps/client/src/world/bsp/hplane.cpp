@@ -3,7 +3,7 @@
  * Originally based on glBSP 2.24 (in turn, based on BSP 2.3)
  * @see http://sourceforge.net/projects/glbsp/
  *
- * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2016 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  * @authors Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
  * @authors Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
@@ -28,7 +28,7 @@
 #include <memory>
 #include <QtAlgorithms>
 #include <de/mathutil.h> // M_InverseAngle
-#include <de/vector1.h> // remove me
+#include <de/vector1.h>  // remove me
 #include <de/Error>
 #include <de/Log>
 
@@ -40,16 +40,17 @@
 #include "world/bsp/linesegment.h"
 #include "world/bsp/partitioner.h"
 
-namespace de {
+using namespace de;
+
+namespace world {
 namespace bsp {
 
-HPlane::Intercept::Intercept(ddouble distance, LineSegmentSide &lineSeg, int edge)
-    : _before  (nullptr)
-    , _after   (nullptr)
-    , _distance(distance)
-    , _lineSeg (&lineSeg)
-    , _edge    (edge)
-{}
+HPlane::Intercept::Intercept(ddouble distance, LineSegmentSide &lineSeg, dint edge)
+{
+    _distance = distance;
+    _lineSeg  = &lineSeg;
+    _edge     = edge;
+}
 
 LineSegmentSide &HPlane::Intercept::lineSegment() const
 {
@@ -57,7 +58,7 @@ LineSegmentSide &HPlane::Intercept::lineSegment() const
     return *_lineSeg;
 }
 
-int HPlane::Intercept::lineSegmentEdge() const
+dint HPlane::Intercept::lineSegmentEdge() const
 {
     return _edge;
 }
@@ -86,27 +87,27 @@ LineSegmentSide *HPlane::Intercept::afterLineSegment() const
 void HPlane::Intercept::debugPrint() const
 {
     LOGDEV_MAP_MSG("Vertex #%i %s beforeSector: #%d afterSector: #%d %s")
-            << vertex().indexInMap()
-            << vertex().origin().asText()
-            << (_before && _before->hasSector()? _before->sector().indexInArchive() : -1)
-            << (_after  && _after->hasSector() ? _after-> sector().indexInArchive() : -1);
+        << vertex().indexInMap()
+        << vertex().origin().asText()
+        << (_before && _before->hasSector() ? _before->sector().indexInArchive() : -1)
+        << (_after  && _after->hasSector()  ? _after-> sector().indexInArchive() : -1);
 }
 #endif
 
 DENG2_PIMPL(HPlane)
 {
     Partition partition;          ///< The partition line.
-    coord_t length;               ///< Direction vector length.
-    coord_t angle;                ///< Cartesian world angle.
+    ddouble length;               ///< Direction vector length.
+    ddouble angle;                ///< Cartesian world angle.
     slopetype_t slopeType;        ///< Logical world angle classification.
 
-    coord_t perp;                 ///< Perpendicular scale factor.
-    coord_t para;                 ///< Parallel scale factor.
+    ddouble perp;                 ///< Perpendicular scale factor.
+    ddouble para;                 ///< Parallel scale factor.
 
-    LineSegmentSide *lineSegment; ///< Source of the partition (if any, not owned).
+    LineSegmentSide *lineSegment = nullptr;  ///< Source of the partition (if any, not owned).
 
-    Intercepts intercepts;        ///< Points along the half-plane.
-    bool needSortIntercepts;      ///< @c true= @var intercepts requires sorting.
+    Intercepts intercepts;                   ///< Points along the half-plane.
+    bool needSortIntercepts = false;         ///< @c true= @var intercepts requires sorting.
 
     Instance(Public *i, Partition const &partition)
         : Base(i)
@@ -116,7 +117,6 @@ DENG2_PIMPL(HPlane)
         , slopeType  (M_SlopeTypeXY(partition.direction.x, partition.direction.y))
         , perp       ( partition.origin.y * partition.direction.x - partition.origin.x * partition.direction.y)
         , para       (-partition.origin.x * partition.direction.x - partition.origin.y * partition.direction.y)
-        , lineSegment(nullptr)
         , needSortIntercepts(false)
     {}
 
@@ -130,13 +130,13 @@ DENG2_PIMPL(HPlane)
             if(&icpt.vertex() == &vertex)
                 return const_cast<Intercept *>(&icpt);
         }
-        return 0;
+        return nullptr;
     }
 
     /**
      * Merges @a next into @a cur.
      */
-    static void mergeIntercepts(HPlane::Intercept &cur, HPlane::Intercept const &next)
+    static void mergeIntercepts(Intercept &cur, Intercept const &next)
     {
         /*
         LOG_AS("HPlane::mergeIntercepts");
@@ -410,5 +410,5 @@ void HPlane::printIntercepts() const
 }
 #endif
 
-} // namespace bsp
-} // namespace de
+}  // namespace bsp
+}  // namespace world

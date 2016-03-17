@@ -28,12 +28,12 @@
  *
  * @see MPE_TakeMap()
  */
-de::Map *MPE_Map();
+world::Map *MPE_Map();
 
 /**
  * Take ownership of the last map built with the runtime map editing interface.
  * May return @c 0 if no such map exists.
  */
-de::Map *MPE_TakeMap();
+world::Map *MPE_TakeMap();
 
-#endif // DENG_WORLD_EDITMAP_H
+#endif  // DENG_WORLD_EDITMAP_H

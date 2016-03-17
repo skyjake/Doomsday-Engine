@@ -1,6 +1,7 @@
-/** @file sectorcluster.h  World map sector cluster.
+/** @file sectorcluster.h  Map sector cluster.
+ * @ingroup world
  *
- * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,13 +18,14 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef WORLD_SECTORCLUSTER_H
-#define WORLD_SECTORCLUSTER_H
+#ifndef DENG_WORLD_SECTORCLUSTER_H
+#define DENG_WORLD_SECTORCLUSTER_H
 
+#include <QBitArray>
+#include <QList>
+#include <de/aabox.h>
 #include <de/Observers>
 #include <de/Vector>
-#include <de/aabox.h>
-#include <QList>
 
 #include "HEdge"
 
@@ -39,18 +41,16 @@
 #  include "render/lightgrid.h"
 #endif
 
-class ConvexSubspace;
 #ifdef __CLIENT__
-class BiasDigest;
 class Shard;
 #endif
+
+namespace world {
 
 /**
  * Adjacent subspaces in the sector (i.e., those which share one or more common
  * edge) are grouped into a "cluster". Clusters are never empty and will always
  * contain at least one subspace.
- *
- * @ingroup world
  */
 class SectorCluster
 #ifdef __CLIENT__
@@ -209,7 +209,7 @@ public:
      * Returns a rough approximation of the total combined area of the geometry
      * for all the subspaces which define the cluster (map units squared).
      */
-    coord_t roughArea() const;
+    de::ddouble roughArea() const;
 
     /**
      * Request re-calculation of environmental audio (reverb) characteristics for
@@ -271,13 +271,13 @@ public:
      * Returns the geometry Shard for the specified @a mapElement and geometry
      * group identifier @a geomId; otherwise @c 0.
      */
-    Shard *findShard(de::MapElement &mapElement, de::dint geomId);
+    Shard *findShard(MapElement &mapElement, de::dint geomId);
 
     /**
      * Generate/locate the geometry Shard for the specified @a mapElement and
      * geometry group identifier @a geomId.
      */
-    Shard &shard(de::MapElement &mapElement, de::dint geomId);
+    Shard &shard(MapElement &mapElement, de::dint geomId);
 
     /**
      * Shards owned by the SectorCluster should call this periodically to update
@@ -294,7 +294,7 @@ public:
      *
      * @param changes  Digest of lighting changes to be applied.
      */
-    void applyBiasDigest(BiasDigest &changes);
+    void applyBiasChanges(QBitArray &changes);
 
     /**
      * Convenient method of determining the frameCount of the current bias render
@@ -424,4 +424,6 @@ private:
     SectorCluster *_cluster;
 };
 
-#endif  // WORLD_SECTORCLUSTER_H
+}  // namespace world
+
+#endif  // DENG_WORLD_SECTORCLUSTER_H

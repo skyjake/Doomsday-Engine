@@ -1,7 +1,8 @@
-/** @file surface.h  World map surface.
+/** @file surface.h  Map surface.
+ * @ingroup world
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef WORLD_SURFACE_H
-#define WORLD_SURFACE_H
+#ifndef DENG_WORLD_SURFACE_H
+#define DENG_WORLD_SURFACE_H
 
 #include <functional>
 #include <de/Error>
@@ -38,10 +39,8 @@ class Decoration;
 /**
  * Models a "boundless" but otherwise geometric map surface. Boundless in the
  * sense that a surface has no edges.
- *
- * @ingroup world
  */
-class Surface : public de::MapElement
+class Surface : public world::MapElement
 {
     DENG2_NO_COPY  (Surface)
     DENG2_NO_ASSIGN(Surface)
@@ -73,7 +72,7 @@ public:
      * @param opacity    Default opacity strength (@c 1= fully opaque).
      * @param tintColor  Default tint color.
      */
-    Surface(de::MapElement &owner,
+    Surface(world::MapElement &owner,
             de::dfloat opacity            = 1,
             de::Vector3f const &tintColor = de::Vector3f(1, 1, 1));
 
@@ -136,7 +135,7 @@ public:
      */
     de::dfloat glow(de::Vector3f &color) const;
 
-public:  // Decorations -----------------------------------------------------------
+public:  //- Decorations ----------------------------------------------------------------
 
     /**
      * Clear all surface decorations.
@@ -171,7 +170,7 @@ public:  // Decorations --------------------------------------------------------
     bool needsDecorationUpdate() const;
 #endif  // __CLIENT__
 
-public:  // Material --------------------------------------------------------------
+public:  //- Material -------------------------------------------------------------------
 
     /**
      * Returns @c true iff a material is bound to the surface.
@@ -257,7 +256,7 @@ public:  // Material -----------------------------------------------------------
     de::Uri composeMaterialUri() const;
 
 #ifdef __CLIENT__
-public:  // Material origin animation/smoothing -----------------------------------
+public:  //- Material positioning -------------------------------------------------------
 
     /**
      * Returns the current smoothed (interpolated) material origin for the
@@ -297,11 +296,11 @@ public:  // Material origin animation/smoothing --------------------------------
 #endif // __CLIENT__
 
 protected:
-    de::dint property(DmuArgs &args) const;
-    de::dint setProperty(DmuArgs const &args);
+    de::dint property(de::DmuArgs &args) const;
+    de::dint setProperty(de::DmuArgs const &args);
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif  // WORLD_SURFACE_H
+#endif  // DENG_WORLD_SURFACE_H

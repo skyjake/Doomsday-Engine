@@ -65,6 +65,7 @@
 #include "ui/widgets/gameuiwidget.h"
 
 using namespace de;
+using namespace world;
 
 #ifdef LIBDENG_CAMERA_MOVEMENT_ANALYSIS
 dfloat devCameraMovementStartTime;          ///< sysTime

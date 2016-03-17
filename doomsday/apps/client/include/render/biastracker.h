@@ -17,16 +17,15 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_RENDER_SHADOWBIAS_TRACKER_H
-#define DENG_RENDER_SHADOWBIAS_TRACKER_H
+#ifndef DENG_CLIENT_RENDER_SHADOWBIAS_TRACKER_H
+#define DENG_CLIENT_RENDER_SHADOWBIAS_TRACKER_H
 
+#include <QBitArray>
 #include <de/Error>
 #include <de/Vector>
 
+#include "BiasSource"
 #include "BiasIllum"
-
-class BiasDigest;
-class BiasSource;
 
 /**
  * Map point illumination tracker for the Shadow Bias lighting model.
@@ -40,7 +39,7 @@ public:
     DENG2_ERROR(UnknownContributorError);
 
     /// Maximum number of light contributors.
-    static int const MAX_CONTRIBUTORS = BiasIllum::MAX_CONTRIBUTORS;
+    static de::dint const MAX_CONTRIBUTORS = BiasIllum::MAX_CONTRIBUTORS;
 
 public:
     /**
@@ -82,14 +81,14 @@ public:
      * @return  Index of the contributor otherwise @c -1 (if rejected). Note
      * that this index may be subsequently reassigned (see above notes).
      */
-    int addContributor(BiasSource *source, float intensity);
+    de::dint addContributor(BiasSource *source, de::dfloat intensity);
 
     /**
      * Returns the source of a light contributor by @a index.
      *
      * @see addContributor()
      */
-    BiasSource &contributor(int index) const;
+    BiasSource &contributor(de::dint index) const;
 
     /**
      * Determine the earliest time in milliseconds that an affecting source
@@ -97,7 +96,7 @@ public:
      *
      * @see applyChanges()
      */
-    uint timeOfLatestContributorUpdate() const;
+    de::duint timeOfLatestContributorUpdate() const;
 
     /**
      * Interpret the bias change digest and schedule illumination updates as
@@ -105,12 +104,12 @@ public:
      *
      * @param changes  Digest of all changes to apply in the tracker.
      */
-    void applyChanges(BiasDigest &changes);
+    void applyChanges(QBitArray &changes);
 
-public: /// @todo The following API should be replaced -------------------------
+public:  ///- @todo The following API should be replaced --------------------------------
 
-    byte activeContributors() const;
-    byte changedContributions() const;
+    QBitArray const &activeContributors() const;
+    QBitArray const &changedContributions() const;
     void updateAllContributors();
     void markIllumUpdateCompleted();
 
@@ -118,4 +117,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_RENDER_SHADOWBIAS_TRACKER_H
+#endif  // DENG_CLIENT_RENDER_SHADOWBIAS_TRACKER_H

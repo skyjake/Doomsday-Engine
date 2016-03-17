@@ -587,7 +587,7 @@ DENG2_PIMPL(System)
 
     bool sfxAvail = false;              ///< @c true if a sound driver is initialized for sound effect playback.
     mobj_t *sfxListener = nullptr;
-    SectorCluster *sfxListenerCluster = nullptr;
+    world::SectorCluster *sfxListenerCluster = nullptr;
     std::unique_ptr<SfxChannels> sfxChannels;
 #endif
 
@@ -1302,13 +1302,13 @@ DENG2_PIMPL(System)
             }
 
             // Reverb effects. Has the current sector cluster changed?
-            SectorCluster *newCluster = Mobj_ClusterPtr(*sfxListener);
+            world::SectorCluster *newCluster = Mobj_ClusterPtr(*sfxListener);
             if(newCluster && (!sfxListenerCluster || sfxListenerCluster != newCluster))
             {
                 sfxListenerCluster = newCluster;
 
                 // It may be necessary to recalculate the reverb properties...
-                SectorCluster::AudioEnvironment const &aenv = sfxListenerCluster->reverb();
+                world::SectorCluster::AudioEnvironment const &aenv = sfxListenerCluster->reverb();
 
                 dfloat args[NUM_REVERB_DATA];
                 args[SFXLP_REVERB_VOLUME ] = aenv.volume * sfxReverbStrength;

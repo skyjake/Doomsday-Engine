@@ -55,9 +55,6 @@ typedef unsigned int nodeid_t;
 /// @todo Should be a public typedef of a type defined by de::LumpIndex.
 typedef int32_t lumpnum_t;
 
-// Forward declarations for map data types.
-struct polyobj_s;
-
 #include <de/str.h>
 #include <de/strutil.h>
 #include <de/fixedpoint.h>

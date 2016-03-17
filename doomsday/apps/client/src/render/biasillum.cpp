@@ -19,18 +19,22 @@
 
 #include "de_base.h"
 #include "render/biasillum.h"
+
 #include "world/map.h"
 #include "world/linesighttest.h"
 #include "BspLeaf"
 #include "ConvexSubspace"
 #include "SectorCluster"
 #include "Surface"
+
 #include "BiasTracker"
 
 #include <QScopedPointer>
 #include <doomsday/console/var.h>
+#include <doomsday/BspNode>
 
 using namespace de;
+using namespace world;
 
 static int lightSpeed        = 130;  //cvar
 static int devUseSightCheck  = true; //cvar
@@ -70,24 +74,25 @@ DENG2_PIMPL_NOREF(BiasIllum)
      * @param activeContributors  Bit field denoting the active contributors.
      * @param biasTime            Time in milliseconds of the last bias frame update.
      */
-    void applyLightingChanges(byte activeContributors, uint biasTime)
+    void applyLightingChanges(QBitArray const &activeContributors, duint biasTime)
     {
 #define COLOR_CHANGE_THRESHOLD  0.1f // Ignore small variations for perf
 
-        DENG_ASSERT(tracker != 0);
+        DENG2_ASSERT(tracker);
+        dint const activeContributorCount = activeContributors.count(true);
 
         // Determine the new color (initially, black).
         Vector3f newColor;
 
         // Do we need to re-accumulate light contributions?
-        if(activeContributors)
+        if(activeContributorCount)
         {
             // Maximum accumulated color strength.
             static Vector3f const saturated(1, 1, 1);
 
-            for(int i = 0; i < MAX_CONTRIBUTORS; ++i)
+            for(dint i = 0; i < activeContributors.size(); ++i)
             {
-                if(activeContributors & (1 << i))
+                if(activeContributors.testBit(i))
                 {
                     newColor += contribution(i);
 
@@ -104,7 +109,7 @@ DENG2_PIMPL_NOREF(BiasIllum)
         // Is there a new destination?
         Vector3f const &currentColor = lerpInfo.isNull()? color : lerpInfo->dest;
 
-        if(!activeContributors ||
+        if(!activeContributorCount ||
            (!de::fequal(currentColor.x, newColor.x, COLOR_CHANGE_THRESHOLD) ||
             !de::fequal(currentColor.y, newColor.y, COLOR_CHANGE_THRESHOLD) ||
             !de::fequal(currentColor.z, newColor.z, COLOR_CHANGE_THRESHOLD)))
@@ -137,7 +142,7 @@ DENG2_PIMPL_NOREF(BiasIllum)
      * @param bspRoot        Root BSP element for the map.
      */
     void updateContribution(int index, Vector3d const &point,
-        Vector3f const &normalAtPoint, Map::BspTree const &bspRoot)
+        Vector3f const &normalAtPoint, BspTree const &bspRoot)
     {
         DENG_ASSERT(tracker != 0);
 
@@ -235,10 +240,7 @@ bool BiasIllum::hasTracker() const
 
 BiasTracker &BiasIllum::tracker() const
 {
-    if(d->tracker != 0)
-    {
-        return *d->tracker;
-    }
+    if(d->tracker) *d->tracker;
     /// @throw MissingTrackerError  Attempted with no tracker assigned.
     throw MissingTrackerError("BiasIllum::tracker", "No tracker is assigned");
 }
@@ -249,36 +251,34 @@ void BiasIllum::setTracker(BiasTracker *newTracker)
 }
 
 Vector3f BiasIllum::evaluate(Vector3d const &point, Vector3f const &normalAtPoint,
-                             uint biasTime)
+    duint biasTime)
 {
-    if(d->tracker)
+    if(hasTracker())
     {
         // Does the tracker have any lighting changes to apply?
-        byte activeContributors   = d->tracker->activeContributors();
-        byte changedContributions = d->tracker->changedContributions();
+        QBitArray const &active  = tracker().activeContributors();
+        QBitArray const &changed = tracker().changedContributions();
 
-        if(changedContributions)
+        if(changed.count(true))
         {
-            if(activeContributors & changedContributions)
-            {
-                /// @todo Do not assume the current map.
-                Map &map = App_World().map();
+            /// @todo Do not assume the current map.
+            Map &map = App_World().map();
 
-                /*
-                 * Recalculate the contribution for each changed light source.
-                 * Continue using the previously calculated value otherwise.
-                 */
-                for(int i = 0; i < MAX_CONTRIBUTORS; ++i)
+            /*
+             * Recalculate the contribution for each changed light source.
+             * Continue using the previously calculated value otherwise.
+             */
+            QBitArray const activeAndChanged = (active & changed);
+            for(dint i = 0; i < active.size(); ++i)
+            {
+                if(activeAndChanged.testBit(i))
                 {
-                    if(activeContributors & changedContributions & (1 << i))
-                    {
-                        d->updateContribution(i, point, normalAtPoint, map.bspTree());
-                    }
+                    d->updateContribution(i, point, normalAtPoint, map.bspTree());
                 }
             }
 
             // Accumulate light contributions and initiate interpolation.
-            d->applyLightingChanges(activeContributors, biasTime);
+            d->applyLightingChanges(tracker().activeContributors(), biasTime);
         }
     }
 

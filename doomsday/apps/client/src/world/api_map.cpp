@@ -35,7 +35,6 @@
 #include "network/net_main.h"
 
 #include "world/blockmap.h"
-#include "world/dmuargs.h"
 #include "world/linesighttest.h"
 #include "world/maputil.h"
 #include "world/p_players.h"
@@ -51,8 +50,9 @@
 #endif
 
 using namespace de;
+using namespace world;
 
-// Converting a public void* pointer to an internal de::MapElement.
+// Converting a public void* pointer to an internal world::MapElement.
 #define IN_ELEM(p)          reinterpret_cast<MapElement *>(p)
 #define IN_ELEM_CONST(p)    reinterpret_cast<MapElement const *>(p)
 
@@ -1640,12 +1640,12 @@ DENG_EXTERN_C int Polyobj_BoxIterator(AABoxd const *box,
     LoopResult result = LoopContinue;
     if(App_World().hasMap())
     {
-        Map const &map            = App_World().map();
-        int const localValidCount = validCount;
+        Map const &map             = App_World().map();
+        dint const localValidCount = validCount;
 
         result = map.polyobjBlockmap().forAllInBox(*box, [&callback, &context, &localValidCount] (void *object)
         {
-            Polyobj &pob = *(Polyobj *)object;
+            auto &pob = *(Polyobj *)object;
             if(pob.validCount != localValidCount) // not yet processed
             {
                 pob.validCount = localValidCount;
@@ -1662,87 +1662,72 @@ DENG_EXTERN_C int Line_BoxIterator(AABoxd const *box, int flags,
     int (*callback) (Line *, void *), void *context)
 {
     DENG2_ASSERT(box && callback);
+    if(!App_World().hasMap()) return LoopContinue;
 
-    LoopResult result = LoopContinue;
-    if(App_World().hasMap())
+    return App_World().map().forAllLinesInBox(*box, flags, [&callback, &context] (Line &line)
     {
-        Map const &map = App_World().map();
-        result = map.forAllLinesInBox(*box, flags, [&callback, &context] (Line &line)
-        {
-            return LoopResult( callback(&line, context) );
-        });
-    }
-    return result;
+        return LoopResult( callback(&line, context) );
+    });
 }
 
 #undef Subspace_BoxIterator
 DENG_EXTERN_C int Subspace_BoxIterator(AABoxd const *box,
-    int (*callback) (ConvexSubspace *, void *), void *context)
+    int (*callback) (struct convexsubspace_s *, void *), void *context)
 {
     DENG2_ASSERT(box && callback);
+    if(!App_World().hasMap()) return LoopContinue;
 
-    LoopResult result = LoopContinue;
-    if(App_World().hasMap())
+    dint const localValidCount = validCount;
+
+    return App_World().map().subspaceBlockmap()
+        .forAllInBox(*box, [&box, &callback, &context, &localValidCount] (void *object)
     {
-        Map const &map            = App_World().map();
-        int const localValidCount = validCount;
-
-        result = map.subspaceBlockmap().forAllInBox(*box, [&box, &callback, &context, &localValidCount] (void *object)
+        auto &sub = *(ConvexSubspace *)object;
+        if(sub.validCount() != localValidCount) // not yet processed
         {
-            ConvexSubspace &sub = *(ConvexSubspace *)object;
-            if(sub.validCount() != localValidCount) // not yet processed
+            sub.setValidCount(localValidCount);
+            // Check the bounds.
+            AABoxd const &polyBox = sub.poly().aaBox();
+            if(!(polyBox.maxX < box->minX ||
+                    polyBox.minX > box->maxX ||
+                    polyBox.minY > box->maxY ||
+                    polyBox.maxY < box->minY))
             {
-                sub.setValidCount(localValidCount);
-                // Check the bounds.
-                AABoxd const &polyBox = sub.poly().aaBox();
-                if(!(polyBox.maxX < box->minX ||
-                     polyBox.minX > box->maxX ||
-                     polyBox.minY > box->maxY ||
-                     polyBox.maxY < box->minY))
-                {
-                    return LoopResult( callback(&sub, context) );
-                }
+                return LoopResult( callback((convexsubspace_s *) &sub, context) );
             }
-            return LoopResult(); // continue
-        });
-    }
-    return result;
+        }
+        return LoopResult(); // continue
+    });
 }
 
 #undef P_PathTraverse2
 DENG_EXTERN_C int P_PathTraverse2(const_pvec2d_t from, const_pvec2d_t to,
     int flags, traverser_t callback, void *context)
 {
-    if(App_World().hasMap())
-    {
-        Map &map = App_World().map();
-        return Interceptor(callback, from, to, flags, context).trace(map);
-    }
-    return false; // Continue iteration.
+    if(!App_World().hasMap()) return false;  // Continue iteration.
+
+    return Interceptor(callback, from, to, flags, context)
+                .trace(App_World().map());
 }
 
 #undef P_PathTraverse
 DENG_EXTERN_C int P_PathTraverse(const_pvec2d_t from, const_pvec2d_t to,
     traverser_t callback, void *context)
 {
-    if(App_World().hasMap())
-    {
-        Map &map = App_World().map();
-        return Interceptor(callback, from, to, PTF_ALL, context).trace(map);
-    }
-    return false; // Continue iteration.
+    if(!App_World().hasMap()) return false;  // Continue iteration.
+
+    return Interceptor(callback, from, to, PTF_ALL, context)
+                .trace(App_World().map());
 }
 
 #undef P_CheckLineSight
 DENG_EXTERN_C dd_bool P_CheckLineSight(const_pvec3d_t from, const_pvec3d_t to, coord_t bottomSlope,
     coord_t topSlope, int flags)
 {
-    if(App_World().hasMap())
-    {
-        Map &map = App_World().map();
-        return LineSightTest(from, to, bottomSlope, topSlope, flags).trace(map.bspTree());
-    }
-    return false; // Continue iteration.
+    if(!App_World().hasMap()) return false;  // Continue iteration.
+
+    return LineSightTest(from, to, bottomSlope, topSlope, flags)
+                .trace(App_World().map().bspTree());
 }
 
 #undef Interceptor_Origin

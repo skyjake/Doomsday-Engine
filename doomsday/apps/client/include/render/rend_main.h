@@ -35,12 +35,11 @@
 
 class Lumobj;
 class Sector;
-class SectorCluster;
 struct VectorLightData;
-
-namespace de {
-class Map;
-class LightGrid;
+namespace de { class LightGrid; }
+namespace world {
+class ConvexSubspace;
+class SectorCluster;
 }
 
 // Multiplicative blending for dynamic lights?
@@ -148,7 +147,7 @@ bool Rend_IsMTexLights();
 /// @return @c true iff multitexturing is currently enabled for detail textures.
 bool Rend_IsMTexDetails();
 
-void Rend_RenderMap(de::Map &map);
+void Rend_RenderMap(world::Map &map);
 
 float Rend_FieldOfView();
 
@@ -254,7 +253,7 @@ coord_t Rend_PlaneGlowHeight(de::dfloat intensity);
  * @todo Does not belong here.
  */
 de::duint Rend_CollectAffectingLights(de::Vector3d const &point,
-    de::Vector3f const &ambientColor = de::Vector3f(1, 1, 1), ConvexSubspace *subspace = nullptr,
+    de::Vector3f const &ambientColor = de::Vector3f(1, 1, 1), world::ConvexSubspace *subspace = nullptr,
     bool starkLight = false);
 
 void Rend_DrawVectorLight(VectorLightData const &vlight, de::dfloat alpha);

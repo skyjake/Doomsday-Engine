@@ -22,50 +22,51 @@
 
 #include "dd_main.h"
 #include "world/map.h"
-#include "BiasDigest"
 #include "BiasSource"
 #include <de/Observers>
+#include <array>
 
 using namespace de;
 
+namespace internal {
+
 struct Contributor
 {
-    BiasSource *source;
-    float influence;
+    BiasSource *source = nullptr;
+    dfloat influence   = 0;
 };
 
+typedef std::array<Contributor, BiasTracker::MAX_CONTRIBUTORS> Contributors;
+
+}  // namespace internal
+using namespace ::internal;
+
 /**
- * @todo Do not observe source deletion. A better solution would represent any
- * source deletions in BiasDigest.
+ * @todo Do not observe source deletion. A better solution would represent any source
+ * deletions in the change digest itself.
  */
 DENG2_PIMPL_NOREF(BiasTracker)
 , DENG2_OBSERVES(BiasSource, Deletion)
 {
-    Contributor contributors[MAX_CONTRIBUTORS];
-    byte activeContributors;
-    byte changedContributions;
+    Contributors contributors;
 
-    uint lastSourceDeletion; // Milliseconds.
+    QBitArray activeContributors   = QBitArray(MAX_CONTRIBUTORS);
+    QBitArray changedContributions = QBitArray(MAX_CONTRIBUTORS);
 
-    Instance()
-        : activeContributors(0)
-        , changedContributions(0)
-        , lastSourceDeletion(0)
-    {
-        de::zap(contributors);
-    }
+    duint lastSourceDeletion = 0;  // Milliseconds.
 
     /// Observes BiasSource Deletion
     void biasSourceBeingDeleted(BiasSource const &source)
     {
-        Contributor *ctbr = contributors;
-        for(int i = 0; i < MAX_CONTRIBUTORS; ++i, ctbr++)
+        for(Contributors::size_type i = 0; i < contributors.size(); ++i)
         {
-            if(ctbr->source == &source)
+            Contributor &ctbr = contributors[i];
+
+            if(ctbr.source == &source)
             {
-                ctbr->source = 0;
-                activeContributors &= ~(1 << i);
-                changedContributions |= 1 << i;
+                ctbr.source = nullptr;
+                activeContributors.clearBit(i);
+                changedContributions.setBit(i);
 
                 // Remember the current time (used for interpolation).
                 /// @todo Do not assume the 'current' map.
@@ -81,10 +82,10 @@ BiasTracker::BiasTracker() : d(new Instance())
 
 void BiasTracker::clearContributors()
 {
-    d->activeContributors = 0;
+    d->activeContributors.fill(0);
 }
 
-int BiasTracker::addContributor(BiasSource *source, float intensity)
+int BiasTracker::addContributor(BiasSource *source, dfloat intensity)
 {
     if(!source) return -1;
 
@@ -92,21 +93,21 @@ int BiasTracker::addContributor(BiasSource *source, float intensity)
     if(intensity < BiasIllum::MIN_INTENSITY)
         return -1;
 
-    int firstUnusedSlot = -1;
-    int slot = -1;
+    dint firstUnusedSlot = -1;
+    dint slot = -1;
 
     // Do we have a latent contribution or an unused slot?
-    Contributor *ctbr = d->contributors;
-    for(int i = 0; i < MAX_CONTRIBUTORS; ++i, ctbr++)
+    for(Contributors::size_type i = 0; i < d->contributors.size(); ++i)
     {
-        if(!ctbr->source)
+        Contributor const &ctbr = d->contributors[i];
+        if(!ctbr.source)
         {
             // Remember the first unused slot.
             if(firstUnusedSlot == -1)
                 firstUnusedSlot = i;
         }
         // A latent contribution?
-        else if(ctbr->source == source)
+        else if(ctbr.source == source)
         {
             slot = i;
             break;
@@ -122,130 +123,127 @@ int BiasTracker::addContributor(BiasSource *source, float intensity)
         else
         {
             // Dang, we'll need to drop the weakest.
-            int weakest = -1;
-            Contributor *ctbr = d->contributors;
-            for(int i = 0; i < MAX_CONTRIBUTORS; ++i, ctbr++)
+            dint weakest = -1;
+            for(Contributors::size_type i = 0; i < d->contributors.size(); ++i)
             {
-                DENG_ASSERT(ctbr->source != 0);
+                Contributor *ctbr = &d->contributors[i];
+                DENG2_ASSERT(ctbr->source);
                 if(i == 0 || ctbr->influence < d->contributors[weakest].influence)
                 {
                     weakest = i;
                 }
             }
+            Contributor *ctbr = &d->contributors[weakest];
 
-            if(intensity <= d->contributors[weakest].influence)
+            if(intensity <= ctbr->influence)
                 return - 1;
 
             slot = weakest;
             ctbr->source->audienceForDeletion -= d;
-            ctbr->source = 0;
+            ctbr->source = nullptr;
         }
     }
 
-    DENG_ASSERT(slot >= 0 && slot < MAX_CONTRIBUTORS);
-    ctbr = &d->contributors[slot];
+    Contributor *ctbr = &d->contributors[slot];
 
     // When reactivating a latent contribution if the intensity has not
     // changed we don't need to force an update.
     if(!(ctbr->source == source && de::fequal(ctbr->influence, intensity)))
-        d->changedContributions |= (1 << slot);
+        d->changedContributions.setBit(slot);
 
     if(!ctbr->source)
         source->audienceForDeletion += d;
 
-    ctbr->source = source;
+    ctbr->source    = source;
     ctbr->influence = intensity;
 
     // (Re)activate this contributor.
-    d->activeContributors |= 1 << slot;
+    d->activeContributors.setBit(slot);
 
     return slot;
 }
 
-BiasSource &BiasTracker::contributor(int index) const
+BiasSource &BiasTracker::contributor(dint index) const
 {
-    if(index >= 0 && index < MAX_CONTRIBUTORS &&
-       (d->activeContributors & (1 << index)))
+    if(index >= 0 && index < d->activeContributors.size() &&
+       d->activeContributors.testBit(index))
     {
-        DENG_ASSERT(d->contributors[index].source != 0);
+        DENG2_ASSERT(d->contributors[index].source);
         return *d->contributors[index].source;
     }
     /// @throw UnknownContributorError An invalid contributor index was specified.
     throw UnknownContributorError("BiasTracker::lightContributor", QString("Index %1 invalid/out of range").arg(index));
 }
 
-uint BiasTracker::timeOfLatestContributorUpdate() const
+duint BiasTracker::timeOfLatestContributorUpdate() const
 {
-    uint latest = 0;
+    duint latest = 0;
 
-    if(d->changedContributions)
+    for(Contributors::size_type i = 0; i < d->contributors.size(); ++i)
     {
-        Contributor const *ctbr = d->contributors;
-        for(int i = 0; i < MAX_CONTRIBUTORS; ++i, ctbr++)
-        {
-            if(!(d->changedContributions & (1 << i)))
-                continue;
+        Contributor const &ctbr = d->contributors[i];
 
-            if(!ctbr->source && !(d->activeContributors & (1 << i)))
-            {
-                // The source of the contribution was deleted.
-                if(latest < d->lastSourceDeletion)
-                    latest = d->lastSourceDeletion;
-            }
-            else if(latest < ctbr->source->lastUpdateTime())
-            {
-                latest = ctbr->source->lastUpdateTime();
-            }
+        if(!d->changedContributions.testBit(i))
+            continue;
+
+        if(!ctbr.source && !d->activeContributors.testBit(i))
+        {
+            // The source of the contribution was deleted.
+            if(latest < d->lastSourceDeletion)
+                latest = d->lastSourceDeletion;
+        }
+        else if(latest < ctbr.source->lastUpdateTime())
+        {
+            latest = ctbr.source->lastUpdateTime();
         }
     }
 
     return latest;
 }
 
-byte BiasTracker::activeContributors() const
+QBitArray const &BiasTracker::activeContributors() const
 {
     return d->activeContributors;
 }
 
-byte BiasTracker::changedContributions() const
+QBitArray const &BiasTracker::changedContributions() const
 {
     return d->changedContributions;
 }
 
 void BiasTracker::updateAllContributors()
 {
-    Contributor *ctbr = d->contributors;
-    for(int i = 0; i < MAX_CONTRIBUTORS; ++i, ctbr++)
+    for(Contributor &ctbr : d->contributors)
     {
-        if(ctbr->source)
+        if(ctbr.source)
         {
-            ctbr->source->forceUpdate();
+            ctbr.source->forceUpdate();
         }
     }
 }
 
-void BiasTracker::applyChanges(BiasDigest &changes)
+void BiasTracker::applyChanges(QBitArray &changes)
 {
     // All contributions from changed sources will need to be updated.
 
-    Contributor *ctbr = d->contributors;
-    for(int i = 0; i < MAX_CONTRIBUTORS; ++i, ctbr++)
+    for(Contributors::size_type i = 0; i < MAX_CONTRIBUTORS; ++i)
     {
-        if(!ctbr->source)
-            continue;
+        Contributor &ctbr = d->contributors[i];
+
+        if(!ctbr.source) continue;
 
         /// @todo optimize: This O(n) lookup can be avoided if we 1) reference
         /// sources by unique in-map index, and 2) re-index source references
         /// here upon deletion. The assumption being that affection changes
         /// occur far more frequently.
-        if(changes.isSourceChanged(App_World().map().indexOf(*ctbr->source)))
+        if(changes.testBit(App_World().map().indexOf(*ctbr.source)))
         {
-            d->changedContributions |= 1 << i;
+            d->changedContributions.setBit(i);
         }
     }
 }
 
 void BiasTracker::markIllumUpdateCompleted()
 {
-    d->changedContributions = 0;
+    d->changedContributions.fill(0);
 }

@@ -1,6 +1,6 @@
 /** @file partitionevaluator.cpp  Evaluator for a would-be BSP.
  *
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2016 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  * @authors Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
@@ -22,14 +22,18 @@
  */
 
 #include "world/bsp/partitionevaluator.h"
+
 #include <QList>
 #include <de/Log>
+#include <de/String>
 #include <de/Task>
 #include <de/TaskPool>
 #include "world/bsp/partitioner.h"
 #include "world/clientserverworld.h" // validCount
 
-namespace de {
+using namespace de;
+
+namespace world {
 namespace bsp {
 
 namespace internal
@@ -494,5 +498,5 @@ LineSegmentSide *PartitionEvaluator::choose(LineSegmentBlockTreeNode &node)
     return best;
 }
 
-} // namespace bsp
-} // namespace de
+}  // namespace bsp
+}  // namespace world

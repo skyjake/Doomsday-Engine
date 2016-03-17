@@ -1,7 +1,8 @@
-/** @file sector.h  World map sector.
+/** @file sector.h  Map sector.
+ * @ingroup world
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef WORLD_SECTOR_H
-#define WORLD_SECTOR_H
+#ifndef DENG_WORLD_SECTOR_H
+#define DENG_WORLD_SECTOR_H
 
 #include <functional>
 #ifdef __CLIENT__
@@ -38,10 +39,8 @@ class Surface;
 
 /**
  * World map sector.
- *
- * @ingroup world
  */
-class Sector : public de::MapElement
+class Sector : public world::MapElement
 {
     DENG2_NO_COPY  (Sector)
     DENG2_NO_ASSIGN(Sector)
@@ -108,29 +107,26 @@ public:
     Plane *addPlane(de::Vector3f const &normal, coord_t height);
 
     /**
-     * Iterate through the Planes of the sector.
+     * Iterate Planes of the sector.
      *
-     * @param func  Callback to make for each Plane.
+     * @param callback  Function to call for each Plane.
      */
     de::LoopResult forAllPlanes(std::function<de::LoopResult (Plane &)> func) const;
 
     /**
-     * Convenient accessor method for returning the surface of the specified
-     * plane of the sector.
+     * Convenient accessor method for returning the surface of the specified plane of the sector.
      */
     inline Surface       &planeSurface(de::dint planeIndex)       { return plane(planeIndex).surface(); }
     inline Surface const &planeSurface(de::dint planeIndex) const { return plane(planeIndex).surface(); }
 
     /**
-     * Convenient accessor method for returning the surface of the floor plane
-     * of the sector.
+     * Convenient accessor method for returning the surface of the floor plane of the sector.
      */
     inline Surface       &floorSurface()       { return floor().surface(); }
     inline Surface const &floorSurface() const { return floor().surface(); }
 
     /**
-     * Convenient accessor method for returning the surface of the ceiling plane
-     * of the sector.
+     * Convenient accessor method for returning the surface of the ceiling plane of the sector.
      */
     inline Surface       &ceilingSurface()       { return ceiling().surface(); }
     inline Surface const &ceilingSurface() const { return ceiling().surface(); }
@@ -141,55 +137,55 @@ public:
     de::dint sideCount() const;
 
     /**
-     * Iterate through the Line::Sides of the sector.
+     * Iterate Line::Sides of the sector.
      *
-     * @param func  Callback to make for each Line::Side.
+     * @param callback  Function to call for each Line::Side.
      */
     de::LoopResult forAllSides(std::function<de::LoopResult (LineSide &)> func) const;
 
     /**
      * (Re)Build the side list for the sector.
      *
-     * @note In the special case of self-referencing line, only the front side
-     * reference is added to this list.
+     * @note In the special case of self-referencing line, only the front side reference
+     * is added to this list.
      *
-     * @attention The behavior of some algorithms used in the DOOM game logic
-     * is dependant upon the order of this list. For example, EV_DoFloor and
-     * EV_BuildStairs. That same order is used here, for compatibility.
+     * @attention The behavior of some algorithms used in the DOOM game logic is dependant
+     * upon the order of this list. For example, EV_DoFloor and EV_BuildStairs. That same
+     * order is used here, for compatibility.
      *
      * Order: Original @em line index, ascending.
      */
     void buildSides();
 
     /**
-     * Returns the primary sound emitter for the sector. Other emitters in the
-     * sector are linked to this, forming a chain which can be traversed using
-     * the 'next' pointer of the emitter's thinker_t.
+     * Returns the primary sound emitter for the sector. Other emitters in the sector are
+     * linked to this, forming a chain which can be traversed using the 'next' pointer of
+     * the emitter's thinker_t.
      */
     SoundEmitter       &soundEmitter();
     SoundEmitter const &soundEmitter() const;
 
     /**
-     * (Re)Build the sound emitter chains for the sector. These chains are used
-     * for efficiently traversing all sound emitters in the sector (e.g., when
-     * stopping all sounds emitted in the sector). To be called during map load
-     * once planes and sides have been initialized.
+     * (Re)Build the sound emitter chains for the sector. These chains are used for
+     * efficiently traversing all sound emitters in the sector (e.g., when stopping all
+     * sounds emitted in the sector). To be called during map load once planes and sides
+     * have been initialized.
      *
      * @see addPlane(), buildSides()
      */
     void chainSoundEmitters();
 
     /**
-     * Returns the ambient light level in the sector. The LightLevelChange
-     * audience is notified whenever the light level changes.
+     * Returns the ambient light level in the sector. The LightLevelChange audience is
+     * notified whenever the light level changes.
      *
      * @see setLightLevel()
      */
     de::dfloat lightLevel() const;
 
     /**
-     * Change the ambient light level in the sector. The LightLevelChange
-     * audience is notified whenever the light level changes.
+     * Change the ambient light level in the sector. The LightLevelChange audience is
+     * notified whenever the light level changes.
      *
      * @param newLightLevel  New ambient light level.
      *
@@ -198,16 +194,16 @@ public:
     void setLightLevel(de::dfloat newLightLevel);
 
     /**
-     * Returns the ambient light color in the sector. The LightColorChange
-     * audience is notified whenever the light color changes.
+     * Returns the ambient light color in the sector. The LightColorChange audience is
+     * notified whenever the light color changes.
      *
      * @see setLightColor()
      */
     de::Vector3f const &lightColor() const;
 
     /**
-     * Change the ambient light color in the sector. The LightColorChange
-     * audience is notified whenever the light color changes.
+     * Change the ambient light color in the sector. The LightColorChange audience is
+     * notified whenever the light color changes.
      *
      * @param newLightColor  New ambient light color.
      *
@@ -228,18 +224,18 @@ public:
     void unlink(struct mobj_s *mob);
 
     /**
-     * Link the mobj to the head of the list of mobjs "in" the sector. Note that
-     * mobjs in this list may not actually be inside the sector. This is because
-     * the sector is determined by interpreting the BSP leaf as a half-space and
-     * not a closed convex subspace (@ref de::Map::link()).
+     * Link the mobj to the head of the list of mobjs "in" the sector. Note that mobjs in
+     * this list may not actually be inside the sector. This is because the sector is
+     * determined by interpreting the BSP leaf as a half-space and not a closed convex
+     * subspace (@ref world::Map::link()).
      *
      * @param mob  Mobj to be linked.
      */
     void link(struct mobj_s *mob);
 
     /**
-     * Returns the @em validCount of the sector. Used by some legacy iteration
-     * algorithms for marking sectors as processed/visited.
+     * Returns the @em validCount of the sector. Used by some legacy iteration algorithms
+     * for marking sectors as processed/visited.
      *
      * @todo Refactor away.
      */
@@ -251,24 +247,23 @@ public:
 #ifdef __CLIENT__
 
     /**
-     * Returns the axis-aligned bounding box which encompases the geometry of
-     * all BSP leafs attributed to the sector (map units squared). Note that if
-     * no BSP leafs reference the sector the bounding box will be invalid (has
-     * negative dimensions).
+     * Returns the axis-aligned bounding box which encompases the geometry of all BSP leafs
+     * attributed to the sector (map units squared). Note that if no BSP leafs reference
+     * the sector the bounding box will be invalid (has negative dimensions).
      *
      * @todo Refactor away (still used by light decoration and particle systems).
      */
     AABoxd const &aaBox() const;
 
     /**
-     * Returns a rough approximation of the total combined area of the geometry
-     * for all BSP leafs attributed to the sector (map units squared).
+     * Returns a rough approximation of the total combined area of the geometry for all
+     * BSP leafs attributed to the sector (map units squared).
      *
      * @todo Refactor away (still used by the particle system).
      */
     coord_t roughArea() const;
 
-#endif // __CLIENT__
+#endif  // __CLIENT__
 
 public:
     /**
@@ -277,11 +272,11 @@ public:
     static void consoleRegister();
 
 protected:
-    de::dint property(DmuArgs &args) const;
-    de::dint setProperty(DmuArgs const &args);
+    de::dint property(de::DmuArgs &args) const;
+    de::dint setProperty(de::DmuArgs const &args);
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif  // WORLD_SECTOR_H
+#endif  // DENG_WORLD_SECTOR_H

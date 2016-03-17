@@ -198,7 +198,7 @@ GLTexture const &Environment::defaultReflection() const
     return d->reflectionTextures[Instance::Interior];
 }
 
-GLTexture const &Environment::reflectionInCluster(SectorCluster const *cluster) const
+GLTexture const &Environment::reflectionInCluster(world::SectorCluster const *cluster) const
 {
     if(!cluster)
     {
@@ -211,4 +211,4 @@ GLTexture const &Environment::reflectionInCluster(SectorCluster const *cluster) 
     return d->reflectionTextures[Instance::Interior];
 }
 
-} // namespace render
+}  // namespace render

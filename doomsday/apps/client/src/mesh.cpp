@@ -27,43 +27,37 @@
 
 namespace de {
 
-DENG2_PIMPL_NOREF(Mesh::Element)
+Mesh::Element::Element(Mesh &owner)
 {
-    Mesh *mesh = nullptr;              ///< Owner of the element.
-    MapElement *mapElement = nullptr;  ///< Attributed MapElement if any (not owned).
-};
-
-Mesh::Element::Element(Mesh &mesh) : d(new Instance)
-{
-    d->mesh = &mesh;
+    _owner = &owner;
 }
 
 Mesh &Mesh::Element::mesh() const
 {
-    DENG2_ASSERT(d->mesh);
-    return *d->mesh;
+    DENG2_ASSERT(_owner != nullptr);
+    return *_owner;
 }
 
 bool Mesh::Element::hasMapElement() const
 {
-    return d->mapElement != nullptr;
+    return _mapElement != nullptr;
 }
 
-MapElement &Mesh::Element::mapElement()
+world::MapElement &Mesh::Element::mapElement()
 {
-    if(d->mapElement) return *d->mapElement;
+    if(_mapElement) return *_mapElement;
     /// @throw MissingMapElement  Attempted with no map element attributed.
     throw MissingMapElementError("Mesh::Element::mapElement", "No map element is attributed");
 }
 
-MapElement const &Mesh::Element::mapElement() const
+world::MapElement const &Mesh::Element::mapElement() const
 {
     return const_cast<Mesh::Element *>(this)->mapElement();
 }
 
-void Mesh::Element::setMapElement(MapElement *newMapElement)
+void Mesh::Element::setMapElement(world::MapElement *newMapElement)
 {
-    d->mapElement = newMapElement;
+    _mapElement = newMapElement;
 }
 
 DENG2_PIMPL_NOREF(Mesh)

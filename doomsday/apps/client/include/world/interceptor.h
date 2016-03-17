@@ -1,6 +1,7 @@
-/** @file interceptor.h  World map element/object ray trace interceptor.
+/** @file interceptor.h  Map element/object ray trace interceptor.
+ * @ingroup world
  *
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -28,8 +29,6 @@
  *
  * Note: For technical reasons it is not presently possible to nest one or more
  * interceptor traces.
- *
- * @ingroup world
  */
 class Interceptor
 {
@@ -46,18 +45,18 @@ public:
     Interceptor(traverser_t callback,
                 de::Vector2d const &from = de::Vector2d(),
                 de::Vector2d const &to   = de::Vector2d(),
-                int flags                = PTF_ALL,
-                void *context            = 0);
+                de::dint flags           = PTF_ALL,
+                void *context            = nullptr);
 
     /**
      * Provides read-only access to the map space origin of the trace.
      */
-    coord_t const *origin() const;
+    de::ddouble const *origin() const;
 
     /**
      * Provides read-only access to the map space direction of the trace.
      */
-    coord_t const *direction() const;
+    de::ddouble const *direction() const;
 
     /**
      * Provides read-only access to the current map space opening of the trace.
@@ -81,10 +80,10 @@ public:
      *
      * @return  Callback return value.
      */
-    int trace(de::Map const &map);
+    de::dint trace(world::Map const &map);
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_WORLD_MAP_INTERCEPTOR_H
+#endif  // DENG_WORLD_MAP_INTERCEPTOR_H

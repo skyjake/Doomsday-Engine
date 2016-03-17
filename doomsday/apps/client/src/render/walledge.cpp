@@ -36,6 +36,7 @@
 #include "render/rend_main.h"  /// devRendSkyMode @todo remove me
 
 using namespace de;
+using namespace world;
 
 /**
  * Determines whether normal smoothing should be performed for the given pair of
@@ -135,9 +136,9 @@ DENG2_PIMPL(WallEdge), public IHPlane
         bool const unpegBottom = (line.flags() & DDLF_DONTPEGBOTTOM) != 0;
         bool const unpegTop    = (line.flags() & DDLF_DONTPEGTOP)    != 0;
 
-        SectorCluster const *cluster =
-            (line.definesPolyobj()? &line.polyobj().bspLeaf().subspace()
-                                  : &wallHEdge->face().mapElementAs<ConvexSubspace>())->clusterPtr();
+        world::SectorCluster const *cluster =
+            (line.definesPolyobj() ? &line.polyobj().bspLeaf().subspace()
+                                   : &wallHEdge->face().mapElementAs<world::ConvexSubspace>())->clusterPtr();
 
         if(seg.lineSide().considerOneSided() ||
            // Mapping errors may result in a line segment missing a back face.
@@ -162,9 +163,9 @@ DENG2_PIMPL(WallEdge), public IHPlane
         else
         {
             // Two sided.
-            SectorCluster const *backCluster =
-                line.definesPolyobj()? cluster
-                                     : wallHEdge->twin().face().mapElementAs<ConvexSubspace>().clusterPtr();
+            world::SectorCluster const *backCluster =
+                line.definesPolyobj() ? cluster
+                                      : wallHEdge->twin().face().mapElementAs<world::ConvexSubspace>().clusterPtr();
 
             Plane const *ffloor = &cluster->visFloor();
             Plane const *fceil  = &cluster->visCeiling();

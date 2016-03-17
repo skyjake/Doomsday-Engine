@@ -31,12 +31,12 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef CLIENT_RENDER_FAKERADIO
-#define CLIENT_RENDER_FAKERADIO
+#ifndef DENG_CLIENT_RENDER_FAKERADIO
+#define DENG_CLIENT_RENDER_FAKERADIO
 
 #include "WallEdge"
 
-class ConvexSubspace;
+namespace world { class ConvexSubspace; }
 class Plane;
 
 /**
@@ -81,11 +81,11 @@ void Rend_DrawWallRadio(de::WallEdge const &leftEdge, de::WallEdge const &rightE
  * Render FakeRadio for the given subspace. Draws all shadow geometry linked to the ConvexSubspace,
  * that has not already been rendered.
  */
-void Rend_DrawFlatRadio(ConvexSubspace const &subspace);
+void Rend_DrawFlatRadio(world::ConvexSubspace const &subspace);
 
 /**
  * Register the console commands, variables, etc..., of this module.
  */
 void Rend_RadioRegister();
 
-#endif  // CLIENT_RENDER_FAKERADIO
+#endif  // DENG_CLIENT_RENDER_FAKERADIO

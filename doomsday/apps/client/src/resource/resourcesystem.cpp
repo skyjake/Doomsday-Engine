@@ -3721,7 +3721,7 @@ void ResourceSystem::cacheForCurrentMap()
     // Don't precache when playing a demo (why not? -ds).
     if(playback) return;
 
-    Map &map = App_World().map();
+    world::Map &map = App_World().map();
 
     if(precacheMapMaterials)
     {

@@ -1,7 +1,7 @@
 /** @file clpolymover.h  Clientside polyobj mover (thinker).
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,9 +20,9 @@
 #ifndef DENG_CLIENT_POLYMOVER_H
 #define DENG_CLIENT_POLYMOVER_H
 
+#include <doomsday/world/thinkerdata.h>
 #include "api_thinker.h"
 #include "Polyobj"
-#include <doomsday/world/thinkerdata.h>
 
 /**
  * Polyobj movement thinker.
@@ -44,4 +44,4 @@ public:
     static thinker_s *newThinker(Polyobj &polyobj, bool moving, bool rotating);
 };
 
-#endif // DENG_CLIENT_POLYMOVER_H
+#endif  // DENG_CLIENT_POLYMOVER_H

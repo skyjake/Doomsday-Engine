@@ -45,6 +45,7 @@
 #include "render/store.h"
 
 using namespace de;
+using namespace world;
 
 enum WallShadow
 {

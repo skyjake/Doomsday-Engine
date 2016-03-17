@@ -186,7 +186,7 @@ DENG2_PIMPL(ClientApp)
                 if((entry.metadata() & LogEntry::Map) &&
                    ClientApp::world().hasMap())
                 {
-                    Map const &map = ClientApp::world().map();
+                    world::Map const &map = ClientApp::world().map();
                     if(map.hasManifest() && !map.manifest().sourceFile()->hasCustom())
                     {
                         return *this;
@@ -801,7 +801,7 @@ void ClientApp::unloadGame(Game const &upcomingGame)
     R_InitViewWindow();
     R_InitSvgs();
 
-    Map::initDummies();
+    world::Map::initDummies();
 }
 
 void ClientApp::makeGameCurrent(Game &newGame)

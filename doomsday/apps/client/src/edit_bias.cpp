@@ -41,6 +41,7 @@
 #include "ui/clientwindow.h"
 
 using namespace de;
+using namespace world;
 
 D_CMD(BLEditor);
 
@@ -172,7 +173,7 @@ static BiasSource *SBE_New()
     DENG_ASSERT(editActive);
     try
     {
-        Hand &hand = App_World().hand();
+        Hand &hand         = App_World().hand();
         BiasSource &source = App_World().map().addBiasSource(hand.origin());
 
         // Update the edit properties.
@@ -187,14 +188,14 @@ static BiasSource *SBE_New()
         return &source;
     }
     catch(Map::FullError const &)
-    {} // Ignore this error.
+    {}  // Ignore this error.
 
-    return 0;
+    return nullptr;
 }
 
 static BiasSource *SBE_Dupe(BiasSource const &other)
 {
-    DENG_ASSERT(editActive);
+    DENG2_ASSERT(editActive);
     try
     {
         Hand &hand = App_World().hand();
@@ -214,9 +215,9 @@ static BiasSource *SBE_Dupe(BiasSource const &other)
         return &source;
     }
     catch(Map::FullError const &)
-    {} // Ignore this error.
+    {}  // Ignore this error.
 
-    return 0;
+    return nullptr;
 }
 
 static void SBE_Grab(int which)
@@ -339,7 +340,7 @@ static bool SBE_Save(char const *name = nullptr)
  */
 D_CMD(BLEditor)
 {
-    DENG_UNUSED(src);
+    DENG2_UNUSED(src);
 
     char *cmd = argv[0] + 2;
 
@@ -380,7 +381,7 @@ D_CMD(BLEditor)
     }
 
     Map &map = App_World().map();
-    coord_t handDistance;
+    ddouble handDistance;
     Hand &hand = App_World().hand(&handDistance);
 
     if(!qstricmp(cmd, "new"))
@@ -428,7 +429,7 @@ D_CMD(BLEditor)
     }
 
     // Has a source index been given as an argument?
-    int which = -1;
+    dint which = -1;
     if(!hand.isEmpty())
     {
         which = map.indexOf(hand.grabbed().first()->as<BiasSource>());
@@ -462,7 +463,7 @@ D_CMD(BLEditor)
 
     if(!qstricmp(cmd, "levels"))
     {
-        float minLight = 0, maxLight = 0;
+        dfloat minLight = 0, maxLight = 0;
         if(argc >= 2)
         {
             minLight = strtod(argv[1], 0) / 255.0f;
@@ -576,9 +577,9 @@ static void drawInfoBox(BiasSource *s, int rightX, String const title, float alp
     glDisable(GL_TEXTURE_2D);
 }
 
-static void drawLightGauge(Vector2i const &origin, int height = 255)
+static void drawLightGauge(Vector2i const &origin, dint height = 255)
 {
-    static float minLevel = 0, maxLevel = 0;
+    static dfloat minLevel = 0, maxLevel = 0;
     static SectorCluster *lastCluster = 0;
 
     Hand &hand = App_World().hand();
@@ -671,7 +672,7 @@ static void drawLightGauge(Vector2i const &origin, int height = 255)
 
 void SBE_DrawGui()
 {
-    float const opacity = .8f;
+    dfloat const opacity = .8f;
 
     if(!editActive || editHidden) return;
 
@@ -703,7 +704,7 @@ void SBE_DrawGui()
 
     Vector2i size(FR_TextWidth(text.toUtf8().constData()) + 16,
                   FR_SingleLineHeight(text.toUtf8().constData()) + 16);
-    int top = DENG_GAMEVIEW_HEIGHT - 10 - size.y;
+    dint top = DENG_GAMEVIEW_HEIGHT - 10 - size.y;
 
     Vector2i origin(10, top);
     drawBoxBackground(origin, size, 0);

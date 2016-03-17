@@ -35,17 +35,19 @@
 #include "MaterialAnimator"
 #include "WallEdge"
 
+using namespace world;
+
 namespace de {
 
 DENG2_PIMPL_NOREF(ShadowEdge)
 {
-    HEdge const *leftMostHEdge;
-    dint edge;
+    HEdge const *leftMostHEdge = nullptr;
+    dint edge = 0;
 
     Vector3d inner;
     Vector3d outer;
-    dfloat sectorOpenness;
-    dfloat openness;
+    dfloat sectorOpenness = 0;
+    dfloat openness = 0;
 };
 
 ShadowEdge::ShadowEdge() : d(new Instance)

@@ -24,12 +24,13 @@
 #include <de/App>
 
 using namespace de;
+using namespace world;
 
 static World *theWorld = nullptr;
 
 DENG2_PIMPL(World)
 {
-    world::Map *map = nullptr;
+    BaseMap *map = nullptr;
 
     Instance(Public *i) : Base(i)
     {
@@ -77,7 +78,7 @@ void World::timeChanged(Clock const &)
     // Nothing to do.
 }
 
-void World::setMap(world::Map *map)
+void World::setMap(BaseMap *map)
 {
     d->map = map;
 }
@@ -87,7 +88,7 @@ bool World::hasMap() const
     return d->map != nullptr;
 }
 
-world::Map &World::map() const
+BaseMap &World::map() const
 {
     DENG2_ASSERT(hasMap());
     return *d->map;

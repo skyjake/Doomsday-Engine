@@ -20,7 +20,6 @@
 
 #include "world/plane.h"
 
-#include <de/Log>
 #include "dd_loop.h"  // frameTimePos
 #include "dd_main.h"  // App_ResourceSystem()
 
@@ -35,32 +34,34 @@
 #  include "render/rend_main.h"
 #endif
 
+#include <de/Log>
+#include <array>
+
 using namespace de;
+using namespace world;
 
 DENG2_PIMPL(Plane)
 {
     Surface surface;
     ThinkerT<SoundEmitter> soundEmitter;
 
-    dint indexInSector = -1;          ///< Index in the owning sector.
+    dint indexInSector = -1;           ///< Index in the owning sector.
 
-    coord_t height = 0;               ///< Current @em sharp height.
-    coord_t targetHeight = 0;         ///< Target @em sharp height.
-    coord_t speed = 0;                ///< Movement speed (map space units per tic).
+    ddouble height = 0;                ///< Current @em sharp height.
+    ddouble heightTarget = 0;          ///< Target @em sharp height.
+    ddouble speed = 0;                 ///< Movement speed (map space units per tic).
 
 #ifdef __CLIENT__
-    coord_t oldHeight[2];             ///< @em sharp height change tracking buffer (for smoothing).
-    coord_t heightSmoothed = 0;       ///< @ref height (smoothed).
-    coord_t heightSmoothedDelta = 0;  ///< Delta between the current @em sharp height and the visual height.
-    ClPlaneMover *mover = nullptr;    ///< The current mover.
+    std::array<ddouble, 2> oldHeight;  ///< @em sharp height change tracking buffer (for smoothing).
+    ddouble heightSmoothed = 0;        ///< @ref height (smoothed).
+    ddouble heightSmoothedDelta = 0;   ///< Delta between the current @em sharp height and the visual height.
+    ClPlaneMover *mover = nullptr;     ///< The current mover.
 #endif
 
-    Instance(Public *i) : Base(i), surface(dynamic_cast<MapElement &>(*i))
-    {
-#ifdef __CLIENT__
-        de::zap(oldHeight);
-#endif
-    }
+    Instance(Public *i)
+        : Base(i)
+        , surface(dynamic_cast<MapElement &>(*i))
+    {}
 
     ~Instance()
     {
@@ -74,9 +75,9 @@ DENG2_PIMPL(Plane)
 
     inline Map &map() const { return self.map(); }
 
-    void setHeight(coord_t newHeight)
+    void setHeight(ddouble newHeight)
     {
-        height = targetHeight = newHeight;
+        height = heightTarget = newHeight;
 
 #ifdef __CLIENT__
         heightSmoothed = newHeight;
@@ -84,7 +85,7 @@ DENG2_PIMPL(Plane)
 #endif
     }
 
-    void applySharpHeightChange(coord_t newHeight)
+    void applySharpHeightChange(ddouble newHeight)
     {
         // No change?
         if(de::fequal(newHeight, height))
@@ -160,7 +161,7 @@ DENG2_AUDIENCE_METHOD(Plane, HeightChange)
 DENG2_AUDIENCE_METHOD(Plane, HeightSmoothedChange)
 #endif
 
-Plane::Plane(Sector &sector, Vector3f const &normal, coord_t height)
+Plane::Plane(Sector &sector, Vector3f const &normal, ddouble height)
     : MapElement(DMU_PLANE, &sector)
     , d(new Instance(this))
 {
@@ -222,7 +223,7 @@ Surface const &Plane::surface() const
 
 void Plane::setNormal(Vector3f const &newNormal)
 {
-    d->surface.setNormal(newNormal); // will normalize
+    d->surface.setNormal(newNormal);  // will normalize
 }
 
 SoundEmitter &Plane::soundEmitter()
@@ -244,29 +245,29 @@ void Plane::updateSoundEmitterOrigin()
     d->soundEmitter->origin[2] = d->height;
 }
 
-coord_t Plane::height() const
+ddouble Plane::height() const
 {
     return d->height;
 }
 
-coord_t Plane::targetHeight() const
+ddouble Plane::heightTarget() const
 {
-    return d->targetHeight;
+    return d->heightTarget;
 }
 
-coord_t Plane::speed() const
+ddouble Plane::speed() const
 {
     return d->speed;
 }
 
 #ifdef __CLIENT__
 
-coord_t Plane::heightSmoothed() const
+ddouble Plane::heightSmoothed() const
 {
     return d->heightSmoothed;
 }
 
-coord_t Plane::heightSmoothedDelta() const
+ddouble Plane::heightSmoothedDelta() const
 {
     return d->heightSmoothedDelta;
 }
@@ -277,7 +278,7 @@ void Plane::lerpSmoothedHeight()
     d->heightSmoothedDelta = d->oldHeight[0] * (1 - frameTimePos)
                            + d->height * frameTimePos - d->height;
 
-    coord_t newHeightSmoothed = d->height + d->heightSmoothedDelta;
+    ddouble newHeightSmoothed = d->height + d->heightSmoothedDelta;
     if(!de::fequal(d->heightSmoothed, newHeightSmoothed))
     {
         d->heightSmoothed = newHeightSmoothed;
@@ -291,7 +292,7 @@ void Plane::resetSmoothedHeight()
     // Reset interpolation.
     d->heightSmoothedDelta = 0;
 
-    coord_t newHeightSmoothed = d->oldHeight[0] = d->oldHeight[1] = d->height;
+    ddouble newHeightSmoothed = d->oldHeight[0] = d->oldHeight[1] = d->height;
     if(!de::fequal(d->heightSmoothed, newHeightSmoothed))
     {
         d->heightSmoothed = newHeightSmoothed;
@@ -442,7 +443,7 @@ dint Plane::property(DmuArgs &args) const
         args.setValue(DMT_PLANE_HEIGHT, &d->height, 0);
         break;
     case DMU_TARGET_HEIGHT:
-        args.setValue(DMT_PLANE_TARGET, &d->targetHeight, 0);
+        args.setValue(DMT_PLANE_TARGET, &d->heightTarget, 0);
         break;
     case DMU_SPEED:
         args.setValue(DMT_PLANE_SPEED, &d->speed, 0);
@@ -459,12 +460,12 @@ dint Plane::setProperty(DmuArgs const &args)
     switch(args.prop)
     {
     case DMU_HEIGHT: {
-        coord_t newHeight = d->height;
+        ddouble newHeight = d->height;
         args.value(DMT_PLANE_HEIGHT, &newHeight, 0);
         d->applySharpHeightChange(newHeight);
         break; }
     case DMU_TARGET_HEIGHT:
-        args.value(DMT_PLANE_TARGET, &d->targetHeight, 0);
+        args.value(DMT_PLANE_TARGET, &d->heightTarget, 0);
         break;
     case DMU_SPEED:
         args.value(DMT_PLANE_SPEED, &d->speed, 0);

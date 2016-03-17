@@ -275,7 +275,7 @@ static bool particlePVisible(ParticleInfo const &pinfo)
 /**
  * @return  @c true if there are particles to be drawn.
  */
-static dint listVisibleParticles(Map &map)
+static dint listVisibleParticles(world::Map &map)
 {
     ::hasPoints = ::hasModels = ::hasLines = false;
     ::hasAdditive = ::hasNoBlend = false;
@@ -425,7 +425,7 @@ static void setupModelParamsForParticle(vissprite_t &spr, ParticleInfo const *pi
     }
     else
     {
-        Map &map = pinfo->bspLeaf->subspace().sector().map();
+        world::Map &map = pinfo->bspLeaf->subspace().sector().map();
 
         if(useBias && map.hasLightGrid())
         {
@@ -478,7 +478,7 @@ static void setupModelParamsForParticle(vissprite_t &spr, ParticleInfo const *pi
  */
 static Vector2f lineUnitVector(Line const &line)
 {
-    coord_t len = M_ApproxDistance(line.direction().x, line.direction().y);
+    ddouble len = M_ApproxDistance(line.direction().x, line.direction().y);
     if(len)
     {
         return line.direction() / len;
@@ -620,7 +620,7 @@ static void drawParticles(dint rtype, bool withBlend)
         {
             // This is a simplified version of sectorlight (no distance
             // attenuation or range compression).
-            if(ConvexSubspace *subspace = pinfo->bspLeaf->subspacePtr())
+            if(world::ConvexSubspace *subspace = pinfo->bspLeaf->subspacePtr())
             {
                 dfloat const intensity = subspace->cluster().lightSourceIntensity();
                 color *= Vector4f(intensity, intensity, intensity, 1);
@@ -656,9 +656,9 @@ static void drawParticles(dint rtype, bool withBlend)
         bool const nearWall = (pinfo->contact && !pinfo->mov[0] && !pinfo->mov[1]);
 
         bool nearPlane = false;
-        if(ConvexSubspace *subspace = pinfo->bspLeaf->subspacePtr())
+        if(world::ConvexSubspace *subspace = pinfo->bspLeaf->subspacePtr())
         {
-            SectorCluster &cluster = subspace->cluster();
+            world::SectorCluster &cluster = subspace->cluster();
             if(FLT2FIX(cluster.  visFloor().heightSmoothed()) + 2 * FRACUNIT >= pinfo->origin[2] ||
                FLT2FIX(cluster.visCeiling().heightSmoothed()) - 2 * FRACUNIT <= pinfo->origin[2])
             {
@@ -856,7 +856,7 @@ static void renderPass(bool useBlending)
     DENG2_ASSERT(!Sys_GLCheckError());
 }
 
-void Rend_RenderParticles(Map &map)
+void Rend_RenderParticles(world::Map &map)
 {
     if(!useParticles) return;
 

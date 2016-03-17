@@ -4,7 +4,7 @@
  * introduction of new abstractions / collections.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -24,24 +24,10 @@
 #include "de_base.h"
 #include "world/map.h"
 
-#include <array>
-#include <QBitArray>
-#include <QMultiMap>
-#include <QVarLengthArray>
-
-#include <de/aabox.h>
-#include <de/vector1.h>
-#include <de/timer.h>
-#include <de/Rectangle>
-#include <doomsday/defs/mapinfo.h>
-#include <doomsday/defs/sky.h>
-#include <doomsday/EntityDatabase>
-
 #ifdef __CLIENT__
 #  include "clientapp.h"
 #  include "client/cl_mobj.h"
 #endif
-#include "m_nodepile.h"
 
 #include "api_console.h"
 #ifdef __CLIENT__
@@ -53,12 +39,12 @@
 #include "world/blockmap.h"
 #include "world/lineblockmap.h"
 #include "world/lineowner.h"
+#include "m_nodepile.h"
 #include "world/p_object.h"
 #include "world/polyobjdata.h"
 #include "world/sky.h"
 #include "world/thinkers.h"
 #include "BspLeaf"
-#include "BspNode"
 #include "ConvexSubspace"
 #include "Face"
 #include "Line"
@@ -67,13 +53,12 @@
 #include "SectorCluster"
 #include "Surface"
 #include "Vertex"
+
 #ifdef __CLIENT__
 #  include "Contact"
 #  include "ContactSpreader"
-#endif
 
-#ifdef __CLIENT__
-#  include "BiasDigest"
+#  include "BiasTracker"
 #  include "LightDecoration"
 #  include "Lumobj"
 #  include "SurfaceDecorator"
@@ -83,10 +68,28 @@
 #  include "render/rend_particle.h"
 #endif
 
-static int bspSplitFactor = 7;  ///< cvar
+#include <doomsday/defs/mapinfo.h>
+#include <doomsday/defs/sky.h>
+#include <doomsday/EntityDatabase>
+#include <doomsday/BspNode>
+
+#include <de/Rectangle>
+
+#include <de/aabox.h>
+#include <de/vector1.h>
+#include <de/timer.h>
+
+#include <array>
+#include <QBitArray>
+#include <QMultiMap>
+#include <QVarLengthArray>
+
+using namespace de;
+
+static dint bspSplitFactor = 7;  ///< cvar
 
 #ifdef __CLIENT__
-static int lgMXSample  = 1;  ///< 5 samples per block. Cvar.
+static dint lgMXSample = 1;  ///< 5 samples per block.
 
 /// Milliseconds it takes for Unpredictable and Hidden mobjs to be
 /// removed from the hash. Under normal circumstances, the special
@@ -94,7 +97,7 @@ static int lgMXSample  = 1;  ///< 5 samples per block. Cvar.
 #define CLMOBJ_TIMEOUT  4000
 #endif
 
-namespace de {
+namespace world {
 
 struct EditableElements
 {
@@ -1187,7 +1190,7 @@ DENG2_PIMPL(Map)
 
         // Check which sources have changed and update the trackers for any
         // affected surfaces.
-        BiasDigest allChanges;
+        QBitArray allChanges(BiasTracker::MAX_CONTRIBUTORS);
         bool needUpdateSurfaces = false;
 
         for(dint i = 0; i < bias.sources.count(); ++i)
@@ -1207,7 +1210,7 @@ DENG2_PIMPL(Map)
         bias.lastChangeOnFrame = R_FrameCount();
         for(SectorCluster *cluster : clusters)
         {
-            cluster->applyBiasDigest(allChanges);
+            cluster->applyBiasChanges(allChanges);
         }
     }
 
@@ -1526,7 +1529,7 @@ DENG2_PIMPL(Map)
 };
 
 Map::Map(res::MapManifest *manifest)
-    : world::Map(manifest)
+    : BaseMap(manifest)
     , d(new Instance(this))
 {}
 
@@ -1545,7 +1548,7 @@ bool Map::hasBspTree() const
     return d->bsp.tree != nullptr;
 }
 
-Map::BspTree const &Map::bspTree() const
+BspTree const &Map::bspTree() const
 {
     if(d->bsp.tree)
     {
@@ -2275,20 +2278,20 @@ dint Map::clusterCount() const
     return d->clusters.count();
 }
 
-LoopResult Map::forAllClusters(Sector *sector, std::function<LoopResult (SectorCluster &)> func)
+LoopResult Map::forAllClusters(std::function<LoopResult (SectorCluster &)> callback)
 {
-    if(sector)
-    {
-        for(auto it = d->clusters.constFind(sector); it != d->clusters.end() && it.key() == sector; ++it)
-        {
-            if(auto result = func(**it)) return result;
-        }
-        return LoopContinue;
-    }
-
     for(SectorCluster *cluster : d->clusters)
     {
-        if(auto result = func(*cluster)) return result;
+        if(auto result = callback(*cluster)) return result;
+    }
+    return LoopContinue;
+}
+
+LoopResult Map::forAllClustersOfSector(Sector &sector, std::function<LoopResult (SectorCluster &)> callback)
+{
+    for(auto it = d->clusters.constFind(&sector); it != d->clusters.end() && it.key() == &sector; ++it)
+    {
+        if(auto result = callback(**it)) return result;
     }
     return LoopContinue;
 }
@@ -2751,7 +2754,7 @@ BspLeaf &Map::bspLeafAt(Vector2d const &point) const
     while(!bspTree->isLeaf())
     {
         auto &bspNode = bspTree->userData()->as<BspNode>();
-        dint side     = bspNode.partition().pointOnSide(point) < 0;
+        dint side     = bspNode.pointOnSide(point) < 0;
 
         // Descend to the child subspace on "this" side.
         bspTree = bspTree->childPtr(BspTree::ChildId(side));
@@ -2773,10 +2776,9 @@ BspLeaf &Map::bspLeafAt_FixedPrecision(Vector2d const &point) const
     while(!bspTree->isLeaf())
     {
         auto const &bspNode = bspTree->userData()->as<BspNode>();
-        Partition const &partition = bspNode.partition();
 
-        fixed_t lineOriginX[2]    = { DBL2FIX(partition.origin.x),    DBL2FIX(partition.origin.y) };
-        fixed_t lineDirectionX[2] = { DBL2FIX(partition.direction.x), DBL2FIX(partition.direction.y) };
+        fixed_t lineOriginX[2]    = { DBL2FIX(bspNode.origin.x),    DBL2FIX(bspNode.origin.y) };
+        fixed_t lineDirectionX[2] = { DBL2FIX(bspNode.direction.x), DBL2FIX(bspNode.direction.y) };
         dint side = V2x_PointOnLineSide(pointX, lineOriginX, lineDirectionX);
 
         // Decend to the child subspace on "this" side.
@@ -4093,4 +4095,4 @@ Map::Polyobjs const &Map::editablePolyobjs() const
     return d->editable.polyobjs;
 }
 
-} // namespace de
+}  // namespace world

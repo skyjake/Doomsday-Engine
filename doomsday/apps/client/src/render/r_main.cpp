@@ -114,7 +114,7 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs
     else
     {
         DENG2_ASSERT(vs.bspLeaf);
-        Map const &map = ClientApp::world().map();
+        world::Map const &map = ClientApp::world().map();
 
         if(useBias && map.hasLightGrid())
         {

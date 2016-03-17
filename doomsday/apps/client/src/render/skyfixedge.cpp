@@ -17,23 +17,22 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
+#include "render/skyfixedge.h"
 
 #include "Face"
 
+#include "world/map.h"
+#include "world/maputil.h" // R_SideBackClosed, remove me
+#include "world/p_players.h"
 #include "ConvexSubspace"
 #include "Plane"
 #include "Sector"
 #include "SectorCluster"
 #include "Surface"
 
-#include "world/map.h"
-#include "world/maputil.h" // R_SideBackClosed, remove me
-#include "world/p_players.h"
-
 #include "render/rend_main.h"
 
-#include "render/skyfixedge.h"
+using namespace world;
 
 namespace de {
 

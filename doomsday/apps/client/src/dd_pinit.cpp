@@ -48,6 +48,7 @@
 #include "api_def.h"
 #include "api_filesys.h"
 #include "api_fontrender.h"
+#include "api_mapedit.h"
 #include "api_material.h"
 #include "api_materialarchive.h"
 #include "api_render.h"

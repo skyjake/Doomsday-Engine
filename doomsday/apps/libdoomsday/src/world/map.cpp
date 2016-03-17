@@ -24,7 +24,7 @@ using namespace de;
 
 namespace world {
 
-DENG2_PIMPL(Map)
+DENG2_PIMPL(BaseMap)
 , DENG2_OBSERVES(Record, Deletion)
 {
     EntityDatabase entityDatabase;
@@ -51,28 +51,28 @@ DENG2_PIMPL(Map)
     DENG2_PIMPL_AUDIENCE(Deletion)
 };
 
-DENG2_AUDIENCE_METHOD(Map, Deletion)
+DENG2_AUDIENCE_METHOD(BaseMap, Deletion)
 
-Map::Map(res::MapManifest *manifest) : d(new Instance(this))
+BaseMap::BaseMap(res::MapManifest *manifest) : d(new Instance(this))
 {
     setManifest(manifest);
 }
 
-Map::~Map()
+BaseMap::~BaseMap()
 {}
 
-String Map::id() const
+String BaseMap::id() const
 {
     if(!hasManifest()) return "";
     return manifest().gets("id");
 }
 
-bool Map::hasManifest() const
+bool BaseMap::hasManifest() const
 {
     return d->manifest != nullptr;
 }
 
-res::MapManifest &Map::manifest() const
+res::MapManifest &BaseMap::manifest() const
 {
     if(hasManifest())
     {
@@ -83,7 +83,7 @@ res::MapManifest &Map::manifest() const
     throw MissingResourceManifestError("world::Map", "No associated resource manifest");
 }
 
-void Map::setManifest(res::MapManifest *newManifest)
+void BaseMap::setManifest(res::MapManifest *newManifest)
 {
     if(d->manifest) d->manifest->audienceForDeletion() -= d;
 
@@ -92,7 +92,7 @@ void Map::setManifest(res::MapManifest *newManifest)
     if(d->manifest) d->manifest->audienceForDeletion() += d;
 }
 
-EntityDatabase &Map::entityDatabase() const
+EntityDatabase &BaseMap::entityDatabase() const
 {
     return d->entityDatabase;
 }

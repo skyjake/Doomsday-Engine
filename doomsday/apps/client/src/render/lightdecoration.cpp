@@ -33,23 +33,24 @@
 #include "render/rend_main.h" // Rend_ApplyLightAdaptation
 
 using namespace de;
+using namespace world;
 
-static float angleFadeFactor = .1f; ///< cvar
-static float brightFactor    = 1;   ///< cvar
+static dfloat angleFadeFactor = .1f; ///< cvar
+static dfloat brightFactor    = 1;   ///< cvar
 
 LightDecoration::LightDecoration(MaterialAnimator::Decoration const &source, Vector3d const &origin)
     : Decoration(source, origin)
     , Source()
 {}
 
-float LightDecoration::occlusion(Vector3d const &eye) const
+dfloat LightDecoration::occlusion(Vector3d const &eye) const
 {
     // Halo brightness drops as the angle gets too big.
     if(source().elevation() < 2 && ::angleFadeFactor > 0) // Close the surface?
     {
         Vector3d const vecFromOriginToEye = (origin() - eye).normalize();
 
-        float dot = float( -surface().normal().dot(vecFromOriginToEye) );
+        dfloat dot = float( -surface().normal().dot(vecFromOriginToEye) );
         if(dot < ::angleFadeFactor / 2)
         {
             return 0;
@@ -65,11 +66,11 @@ float LightDecoration::occlusion(Vector3d const &eye) const
 /**
  * @return  @c > 0 if @a lightlevel passes the min max limit condition.
  */
-static float checkLightLevel(float lightlevel, float min, float max)
+static dfloat checkLightLevel(dfloat lightlevel, dfloat min, dfloat max)
 {
     // Has a limit been set?
     if(de::fequal(min, max)) return 1;
-    return de::clamp(0.f, (lightlevel - min) / float(max - min), 1.f);
+    return de::clamp(0.f, (lightlevel - min) / dfloat(max - min), 1.f);
 }
 
 Lumobj *LightDecoration::generateLumobj() const
@@ -82,10 +83,10 @@ Lumobj *LightDecoration::generateLumobj() const
     if(!subspace) return nullptr;
 
     // Does it pass the ambient light limitation?
-    float intensity = subspace->cluster().lightSourceIntensity();
+    dfloat intensity = subspace->cluster().lightSourceIntensity();
     Rend_ApplyLightAdaptation(intensity);
 
-    float lightLevels[2];
+    dfloat lightLevels[2];
     source().lightLevels(lightLevels[0], lightLevels[1]);
 
     intensity = checkLightLevel(intensity, lightLevels[0], lightLevels[1]);
@@ -93,7 +94,7 @@ Lumobj *LightDecoration::generateLumobj() const
         return nullptr;
 
     // Apply the brightness factor (was calculated using sector lightlevel).
-    float fadeMul = intensity * ::brightFactor;
+    dfloat fadeMul = intensity * ::brightFactor;
     if(fadeMul <= 0)
         return nullptr;
 
@@ -117,12 +118,12 @@ void LightDecoration::consoleRegister() // static
     C_VAR_FLOAT("rend-light-decor-bright", &::brightFactor,    0, 0, 10);
 }
 
-float LightDecoration::angleFadeFactor() // static
+dfloat LightDecoration::angleFadeFactor() // static
 {
     return ::angleFadeFactor;
 }
 
-float LightDecoration::brightFactor() // static
+dfloat LightDecoration::brightFactor() // static
 {
     return ::brightFactor;
 }

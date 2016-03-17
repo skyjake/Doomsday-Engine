@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef CLIENT_RENDER_VISSPRITE_H
-#define CLIENT_RENDER_VISSPRITE_H
+#ifndef DENG_CLIENT_RENDER_VISSPRITE_H
+#define DENG_CLIENT_RENDER_VISSPRITE_H
 
 #include <de/Vector>
 #include <de/GLState>
@@ -28,6 +28,8 @@
 #include "rend_model.h"
 
 #define MAXVISSPRITES   8192
+
+namespace world { class BspLeaf; }
 
 /**
  * These constants are used as the type of vissprite.
@@ -94,16 +96,16 @@ struct VisEntityPose
 struct VisEntityLighting
 {
     de::Vector4f ambientColor;
-    de::duint vLightListIdx;
+    de::duint vLightListIdx = 0;
 
-    VisEntityLighting() { de::zap(*this); }
+    VisEntityLighting() {}
 
     VisEntityLighting(de::Vector4f const &ambientColor, de::duint lightListIndex)
         : ambientColor(ambientColor)
         , vLightListIdx(lightListIndex)
     {}
 
-    void setupLighting(de::Vector3d const &origin, coord_t distance, BspLeaf const &bspLeaf);
+    void setupLighting(de::Vector3d const &origin, de::ddouble distance, world::BspLeaf const &bspLeaf);
 };
 
 /**
@@ -138,12 +140,12 @@ struct vissprite_t
 void VisSprite_SetupSprite(vissprite_t *spr, VisEntityPose const &pose, VisEntityLighting const &light,
     de::dfloat secFloor, de::dfloat secCeil, de::dfloat floorClip, de::dfloat top,
     Material &material, bool matFlipS, bool matFlipT, blendmode_t blendMode,
-    de::dint tClass, de::dint tMap, BspLeaf *bspLeafAtOrigin,
+    de::dint tClass, de::dint tMap, world::BspLeaf *bspLeafAtOrigin,
     bool floorAdjust, bool fitTop, bool fitBottom);
 
 void VisSprite_SetupModel(vissprite_t *spr, VisEntityPose const &pose, VisEntityLighting const &light,
     ModelDef *mf, ModelDef *nextMF, de::dfloat inter,
-    de::dint id, de::dint selector, BspLeaf *bspLeafAtOrigin, de::dint mobjDDFlags, de::dint tmap,
+    de::dint id, de::dint selector, world::BspLeaf *bspLeafAtOrigin, de::dint mobjDDFlags, de::dint tmap,
     bool fullBright, bool alwaysInterpolate);
 
 /// @ingroup render
@@ -160,7 +162,7 @@ struct vispsprite_t
     vispspritetype_t type;
     ddpsprite_t *psp;
     de::Vector3d origin;
-    BspLeaf const *bspLeaf;
+    world::BspLeaf const *bspLeaf;
     VisEntityLighting light;
 
     union vispsprite_data_u {
@@ -211,4 +213,4 @@ vissprite_t *R_NewVisSprite(visspritetype_t type);
 
 void R_SortVisSprites();
 
-#endif  // CLIENT_RENDER_VISSPRITE_H
+#endif  // DENG_CLIENT_RENDER_VISSPRITE_H

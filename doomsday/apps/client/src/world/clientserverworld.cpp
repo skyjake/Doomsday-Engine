@@ -59,6 +59,7 @@
 
 #include "network/net_main.h"
 
+#include "api_mapedit.h"
 #include "world/p_players.h"
 #include "world/p_ticker.h"
 #include "world/sky.h"
@@ -86,6 +87,7 @@
 #endif
 
 using namespace de;
+using namespace world;
 
 dint validCount = 1;  // Increment every time a check is made.
 
@@ -113,9 +115,9 @@ static inline RenderSystem &rendSys()
  * @todo Consolidate with the missing material reporting done elsewhere -ds
  */
 class MapConversionReporter
-: DENG2_OBSERVES(Map, UnclosedSectorFound)
-, DENG2_OBSERVES(Map, OneWayWindowFound)
-, DENG2_OBSERVES(world::Map, Deletion)
+: DENG2_OBSERVES(Map,     UnclosedSectorFound)
+, DENG2_OBSERVES(Map,     OneWayWindowFound)
+, DENG2_OBSERVES(BaseMap, Deletion)
 {
     /// Record "unclosed sectors".
     /// Sector index => world point relatively near to the problem area.
@@ -233,7 +235,7 @@ protected:
     }
 
     /// Observes Map Deletion.
-    void mapBeingDeleted(world::Map const &map)
+    void mapBeingDeleted(BaseMap const &map)
     {
         DENG2_ASSERT(&map == _map);  // sanity check.
         DENG2_UNUSED(map);
@@ -780,7 +782,7 @@ Map &ClientServerWorld::map() const
         /// @throw MapError Attempted with no map loaded.
         throw MapError("ClientServerWorld::map", "No map is currently loaded");
     }
-    return World::map().as<de::Map>();
+    return World::map().as<Map>();
 }
 
 bool ClientServerWorld::changeMap(de::Uri const &mapUri)

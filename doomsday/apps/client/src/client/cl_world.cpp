@@ -151,24 +151,24 @@ int Cl_LocalMobjState(int serverMobjState)
     return xlatMobjState[serverMobjState];
 }
 
-void Cl_ReadSectorDelta(int /*deltaType*/)
+void Cl_ReadSectorDelta(dint /*deltaType*/)
 {
     /// @todo Do not assume the CURRENT map.
-    Map &map = App_World().map();
+    world::Map &map = App_World().map();
 
 #define PLN_FLOOR   0
 #define PLN_CEILING 1
 
-    float height[2] = { 0, 0 };
-    float target[2] = { 0, 0 };
-    float speed[2]  = { 0, 0 };
+    dfloat height[2] = { 0, 0 };
+    dfloat target[2] = { 0, 0 };
+    dfloat speed[2]  = { 0, 0 };
 
     // Sector index number.
     Sector *sec = map.sectorPtr(Reader_ReadUInt16(msgReader));
     DENG2_ASSERT(sec);
 
     // Flags.
-    int df = Reader_ReadPackedUInt32(msgReader);
+    dint df = Reader_ReadPackedUInt32(msgReader);
 
     if(df & SDF_FLOOR_MATERIAL)
     {
@@ -258,39 +258,39 @@ void Cl_ReadSectorDelta(int /*deltaType*/)
 #undef PLN_FLOOR
 }
 
-void Cl_ReadSideDelta(int /*deltaType*/)
+void Cl_ReadSideDelta(dint /*deltaType*/)
 {
     /// @todo Do not assume the CURRENT map.
-    Map &map = App_World().map();
+    world::Map &map = App_World().map();
 
-    int const index = Reader_ReadUInt16(msgReader);
-    int const df    = Reader_ReadPackedUInt32(msgReader); // Flags.
+    dint const index = Reader_ReadUInt16(msgReader);
+    dint const df    = Reader_ReadPackedUInt32(msgReader); // Flags.
 
     LineSide *side = map.sidePtr(index);
     DENG2_ASSERT(side != 0);
 
     if(df & SIDF_TOP_MATERIAL)
     {
-        int matIndex = Reader_ReadPackedUInt16(msgReader);
+        dint matIndex = Reader_ReadPackedUInt16(msgReader);
         side->top().setMaterial(Cl_LocalMaterial(matIndex));
     }
 
     if(df & SIDF_MID_MATERIAL)
     {
-        int matIndex = Reader_ReadPackedUInt16(msgReader);
+        dint matIndex = Reader_ReadPackedUInt16(msgReader);
         side->middle().setMaterial(Cl_LocalMaterial(matIndex));
     }
 
     if(df & SIDF_BOTTOM_MATERIAL)
     {
-        int matIndex = Reader_ReadPackedUInt16(msgReader);
+        dint matIndex = Reader_ReadPackedUInt16(msgReader);
         side->bottom().setMaterial(Cl_LocalMaterial(matIndex));
     }
 
     if(df & SIDF_LINE_FLAGS)
     {
         // The delta includes the entire lowest byte.
-        int lineFlags = Reader_ReadByte(msgReader);
+        dint lineFlags = Reader_ReadByte(msgReader);
         Line &line = side->line();
         line.setFlags((line.flags() & ~0xff) | lineFlags, de::ReplaceFlags);
     }
@@ -343,7 +343,7 @@ void Cl_ReadSideDelta(int /*deltaType*/)
     if(df & SIDF_FLAGS)
     {
         // The delta includes the entire lowest byte.
-        int sideFlags = Reader_ReadByte(msgReader);
+        dint sideFlags = Reader_ReadByte(msgReader);
         side->setFlags((side->flags() & ~0xff) | sideFlags, de::ReplaceFlags);
     }
 }
@@ -351,10 +351,10 @@ void Cl_ReadSideDelta(int /*deltaType*/)
 void Cl_ReadPolyDelta()
 {
     /// @todo Do not assume the CURRENT map.
-    Map &map     = App_World().map();
-    Polyobj &pob = map.polyobj(Reader_ReadPackedUInt16(msgReader));
+    world::Map &map = App_World().map();
+    Polyobj &pob    = map.polyobj(Reader_ReadPackedUInt16(msgReader));
 
-    int const df = Reader_ReadByte(msgReader); // Flags.
+    dint const df = Reader_ReadByte(msgReader); // Flags.
     if(df & PODF_DEST_X)
     {
         pob.dest[VX] = Reader_ReadFloat(msgReader);

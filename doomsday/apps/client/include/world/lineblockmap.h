@@ -1,7 +1,8 @@
-/** @file lineblockmap.h Specialized world map line blockmap.
+/** @file lineblockmap.h  Specialized Blockmap, for map Lines.
+ * @ingroup world
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,25 +22,24 @@
 #ifndef DENG_WORLD_LINEBLOCKMAP_H
 #define DENG_WORLD_LINEBLOCKMAP_H
 
-#include <QList>
-
 #include "world/blockmap.h"
 #include "Line"
+#include <QList>
+
+namespace world {
 
 /**
  * Specializes Blockmap for use with map Lines, implementing a linkage algorithm
  * that replicates the quirky behavior of doom.exe
- *
- * @ingroup world
  */
-class LineBlockmap : public de::Blockmap
+class LineBlockmap : public Blockmap
 {
 public:
     /**
      * @param bounds    Map space boundary.
      * @param cellSize  Width and height of a cell in map space units.
      */
-    LineBlockmap(AABoxd const &bounds, uint cellSize = 128);
+    LineBlockmap(AABoxd const &bounds, de::duint cellSize = 128);
 
     /// @note Assumes @a line is not yet linked!
     void link(Line &line);
@@ -48,4 +48,6 @@ public:
     void link(QList<Line *> const &lines);
 };
 
-#endif // DENG_WORLD_LINEBLOCKMAP_H
+}  // namespace world
+
+#endif  // DENG_WORLD_LINEBLOCKMAP_H

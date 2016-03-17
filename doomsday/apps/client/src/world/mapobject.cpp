@@ -1,7 +1,7 @@
 /** @file mapobject.cpp  Base class for all map objects.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,19 +18,20 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
 #include "world/mapobject.h"
 
 #include "world/map.h"
 
 using namespace de;
 
+namespace world {
+
 DENG2_PIMPL_NOREF(MapObject)
 {
     Map *map = nullptr;
     dint indexInMap = NoIndex;
-    Vector3d origin;             ///< Position in map space.
     BspLeaf *bspLeaf = nullptr;  ///< BSP leaf at @ref origin in the map (not owned).
+    Vector3d origin;             ///< Position in map space.
 };
 
 MapObject::MapObject(Vector3d const &origin) : d(new Instance)
@@ -102,3 +103,5 @@ void MapObject::setIndexInMap(dint newIndex)
 {
     d->indexInMap = newIndex;
 }
+
+}  // namespace world

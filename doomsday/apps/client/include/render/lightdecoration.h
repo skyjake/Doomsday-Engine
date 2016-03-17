@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef CLIENT_RENDER_LIGHTDECORATION_H
-#define CLIENT_RENDER_LIGHTDECORATION_H
+#ifndef DENG_CLIENT_RENDER_LIGHTDECORATION_H
+#define DENG_CLIENT_RENDER_LIGHTDECORATION_H
 
 #include "Decoration"
 #include "Lumobj"
@@ -48,12 +48,12 @@ public:
     /**
      * Returns the current angle fade factor (user configurable).
      */
-    static float angleFadeFactor();
+    static de::dfloat angleFadeFactor();
 
     /**
      * Returns the current brightness scale factor (user configurable).
      */
-    static float brightFactor();
+    static de::dfloat brightFactor();
 
     /**
      * Calculates an occlusion factor for the light source. Determined by the
@@ -64,7 +64,7 @@ public:
      * @return  Occlusion factor in the range [0..1], where @c 0 is fully
      * occluded and @c 1 is fully visible.
      */
-    float occlusion(de::Vector3d const &eye) const;
+    de::dfloat occlusion(de::Vector3d const &eye) const;
 
     /**
      * Generates a new lumobj for the light decoration. A map surface must be
@@ -75,4 +75,4 @@ public:
     Lumobj *generateLumobj() const;
 };
 
-#endif  // CLIENT_RENDER_LIGHTDECORATION_H
+#endif  // DENG_CLIENT_RENDER_LIGHTDECORATION_H

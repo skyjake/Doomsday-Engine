@@ -1,7 +1,7 @@
 /** @file rend_particle.h  Particle effect rendering.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,10 +18,10 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef CLIENT_RENDER_PARTICLE_H
-#define CLIENT_RENDER_PARTICLE_H
+#ifndef DENG_CLIENT_RENDER_PARTICLE_H
+#define DENG_CLIENT_RENDER_PARTICLE_H
 
-#include "world/map.h"
+namespace world { class Map; }
 
 // Maximum number of particle textures (not instances).
 #define MAX_PTC_TEXTURES        300
@@ -66,6 +66,6 @@ void Rend_ParticleReleaseExtraTextures();
  * particles from one generator will obscure particles from another.
  * This would be especially bad with smoke trails.
  */
-void Rend_RenderParticles(de::Map &map);
+void Rend_RenderParticles(world::Map &map);
 
-#endif  // CLIENT_RENDER_PARTICLE_H
+#endif  // DENG_CLIENT_RENDER_PARTICLE_H

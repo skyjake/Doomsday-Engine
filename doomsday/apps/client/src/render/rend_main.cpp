@@ -34,6 +34,7 @@
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
 #include <doomsday/defs/sprite.h>
+#include <doomsday/BspNode>
 
 #include "clientapp.h"
 #include "sys_system.h"
@@ -55,7 +56,6 @@
 #include "world/sky.h"
 #include "world/thinkers.h"
 #include "BspLeaf"
-#include "BspNode"
 #include "Contact"
 #include "ConvexSubspace"
 #include "Hand"
@@ -101,6 +101,7 @@
 #include "ui/ui_main.h"
 
 using namespace de;
+using namespace world;
 
 /**
  * POD structure used to transport vertex data refs as a logical unit.
@@ -3663,7 +3664,7 @@ static void makeCurrent(ConvexSubspace &subspace)
     }
 }
 
-static void traverseBspTreeAndDrawSubspaces(Map::BspTree const *bspTree)
+static void traverseBspTreeAndDrawSubspaces(BspTree const *bspTree)
 {
     DENG2_ASSERT(bspTree);
     AngleClipper const &clipper = rendSys().angleClipper();
@@ -3673,10 +3674,10 @@ static void traverseBspTreeAndDrawSubspaces(Map::BspTree const *bspTree)
         // Descend deeper into the nodes.
         auto const &bspNode = bspTree->userData()->as<BspNode>();
         // Decide which side the view point is on.
-        dint const eyeSide  = bspNode.partition().pointOnSide(eyeOrigin) < 0;
+        dint const eyeSide  = bspNode.pointOnSide(eyeOrigin) < 0;
 
         // Recursively divide front space.
-        traverseBspTreeAndDrawSubspaces(bspTree->childPtr(Map::BspTree::ChildId(eyeSide)));
+        traverseBspTreeAndDrawSubspaces(bspTree->childPtr(BspTree::ChildId(eyeSide)));
 
         // If the clipper is full we're pretty much done. This means no geometry
         // will be visible in the distance because every direction has already
@@ -3685,7 +3686,7 @@ static void traverseBspTreeAndDrawSubspaces(Map::BspTree const *bspTree)
             return;
 
         // ...and back space.
-        bspTree = bspTree->childPtr(Map::BspTree::ChildId(eyeSide ^ 1));
+        bspTree = bspTree->childPtr(BspTree::ChildId(eyeSide ^ 1));
     }
     // We've arrived at a leaf.
 

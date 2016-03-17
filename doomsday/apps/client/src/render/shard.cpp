@@ -26,17 +26,16 @@
 
 using namespace de;
 
-static int devUpdateBiasContributors = true; //cvar
+static dint devUpdateBiasContributors = true;  //cvar
 
 DENG2_PIMPL_NOREF(Shard)
 {
-    SectorCluster *owner;
+    world::SectorCluster *owner = nullptr;
     typedef QVector<BiasIllum *> BiasIllums;
     BiasIllums biasIllums;
     BiasTracker biasTracker;
-    uint biasLastUpdateFrame;
+    duint biasLastUpdateFrame = 0;
 
-    Instance() : owner(0), biasLastUpdateFrame(0) {}
     ~Instance() { qDeleteAll(biasIllums); }
 
     /**
@@ -51,7 +50,7 @@ DENG2_PIMPL_NOREF(Shard)
         if(!owner) return false;
 
         // If the data is already up to date, nothing needs to be done.
-        uint lastChangeFrame = owner->biasLastChangeOnFrame();
+        duint lastChangeFrame = owner->biasLastChangeOnFrame();
         if(biasLastUpdateFrame == lastChangeFrame) return false;
 
         // Mark the data as having been updated (it will be soon).
@@ -60,13 +59,13 @@ DENG2_PIMPL_NOREF(Shard)
     }
 };
 
-Shard::Shard(int numBiasIllums, SectorCluster *owner) : d(new Instance)
+Shard::Shard(dint numBiasIllums, world::SectorCluster *owner) : d(new Instance)
 {
     setCluster(owner);
     if(numBiasIllums)
     {
         d->biasIllums.reserve(numBiasIllums);
-        for(int i = 0; i < numBiasIllums; ++i)
+        for(dint i = 0; i < numBiasIllums; ++i)
         {
             d->biasIllums << new BiasIllum(&d->biasTracker);
         }
@@ -74,9 +73,9 @@ Shard::Shard(int numBiasIllums, SectorCluster *owner) : d(new Instance)
 }
 
 void Shard::lightWithBiasSources(Vector3f const *posCoords, Vector4f *colorCoords,
-    Matrix3f const &tangentMatrix, uint biasTime)
+    Matrix3f const &tangentMatrix, duint biasTime)
 {
-    DENG2_ASSERT(posCoords != 0 && colorCoords != 0);
+    DENG2_ASSERT(posCoords && colorCoords);
     Vector3f const sufNormal = tangentMatrix.column(2);
 
     if(d->biasIllums.isEmpty()) return;
@@ -92,7 +91,7 @@ void Shard::lightWithBiasSources(Vector3f const *posCoords, Vector4f *colorCoord
     // Light the given geometry.
     Vector3f const *posIt    = posCoords;
     Vector4f *colorIt        = colorCoords;
-    for(int i = 0; i < d->biasIllums.count(); ++i, posIt++, colorIt++)
+    for(dint i = 0; i < d->biasIllums.count(); ++i, posIt++, colorIt++)
     {
         *colorIt += d->biasIllums[i]->evaluate(*posIt, sufNormal, biasTime);
     }
@@ -104,12 +103,12 @@ void Shard::lightWithBiasSources(Vector3f const *posCoords, Vector4f *colorCoord
     }
 }
 
-SectorCluster *Shard::cluster() const
+world::SectorCluster *Shard::cluster() const
 {
     return d->owner;
 }
 
-void Shard::setCluster(SectorCluster *newOwner)
+void Shard::setCluster(world::SectorCluster *newOwner)
 {
     d->owner = newOwner;
 }

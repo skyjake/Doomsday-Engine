@@ -1,7 +1,8 @@
-/** @file mapobject.h  Base class for all world map objects.
+/** @file mapobject.h  Base class for all map objects.
+ * @ingroup world
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -23,10 +24,9 @@
 #include <de/Error>
 #include <de/Vector>
 
+namespace world {
+
 class BspLeaf;
-
-namespace de {
-
 class Map;
 
 /**
@@ -37,8 +37,6 @@ class Map;
  *
  * The lifetime of a map object may vary massively between instances and range
  * from only a few milliseconds to a few hours or longer.
- *
- * @ingroup world
  */
 class MapObject
 {
@@ -139,6 +137,6 @@ private:
     DENG2_PRIVATE(d)
 };
 
-}  // namespace de
+}  // namespace world
 
 #endif  // DENG_WORLD_MAPOBJECT_H

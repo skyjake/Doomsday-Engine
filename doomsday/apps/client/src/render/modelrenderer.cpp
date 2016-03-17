@@ -687,10 +687,10 @@ DENG2_PIMPL(ModelRenderer)
         uEyePos      = inverseLocal * relativeEyePos;
     }
 
-    void setReflectionForCluster(SectorCluster const *cluster)
+    void setReflectionForCluster(world::SectorCluster const *cluster)
     {
-        uReflectionTex = ClientApp::renderSystem().environment().
-                         reflectionInCluster(cluster);
+        uReflectionTex = ClientApp::renderSystem()
+                            .environment().reflectionInCluster(cluster);
     }
 
     void setReflectionForObject(mobj_t const *object)
@@ -701,7 +701,8 @@ DENG2_PIMPL(ModelRenderer)
         }
         else
         {
-            uReflectionTex = ClientApp::renderSystem().environment().defaultReflection();
+            uReflectionTex = ClientApp::renderSystem()
+                                 .environment().defaultReflection();
         }
     }
 
@@ -780,13 +781,13 @@ void ModelRenderer::render(vissprite_t const &spr)
 void ModelRenderer::render(vispsprite_t const &pspr)
 {
     auto const &p = pspr.data.model2;
-    ConvexSubspace const *sub = pspr.bspLeaf ? pspr.bspLeaf->subspacePtr() : nullptr;
+    world::ConvexSubspace const *sub = pspr.bspLeaf ? pspr.bspLeaf->subspacePtr() : nullptr;
 
     d->setReflectionForCluster(sub ? sub->clusterPtr() : nullptr);
 
     // Walk bobbing is specified using angle offsets.
-    float yaw   = vang   + p.yawAngleOffset;
-    float pitch = vpitch + p.pitchAngleOffset;
+    dfloat yaw   = vang   + p.yawAngleOffset;
+    dfloat pitch = vpitch + p.pitchAngleOffset;
 
     Matrix4f eyeSpace = Matrix4f::rotate(180 - yaw, Vector3f(0, 1, 0))
                       * Matrix4f::rotate(pitch    , Vector3f(1, 0, 0));

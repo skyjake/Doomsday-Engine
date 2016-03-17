@@ -81,10 +81,8 @@ public:
          *
          * @see hasMapElement()
          */
-        MapElement &mapElement();
-
-        /// @copydoc mapElement()
-        MapElement const &mapElement() const;
+        world::MapElement       &mapElement();
+        world::MapElement const &mapElement() const;
 
         template <class MapElementType>
         MapElementType &mapElementAs() {
@@ -104,10 +102,11 @@ public:
          *
          * @see mapElement()
          */
-        void setMapElement(MapElement *newMapElement);
+        void setMapElement(world::MapElement *newMapElement);
 
     private:
-        DENG2_PRIVATE(d)
+        Mesh *_owner = nullptr;
+        world::MapElement *_mapElement = nullptr;  ///< Attributed MapElement (not owned).
     };
 
 public:

@@ -23,7 +23,7 @@
 #include <de/Vector>
 
 class BiasTracker;
-class SectorCluster;
+namespace world { class SectorCluster; }
 
 /**
  * 3D map geometry fragment.
@@ -41,7 +41,7 @@ public:
      * @param numBiasIllums  Number of bias illumination points for the geometry.
      * @param owner          SectorCluster which owns the shard (if any).
      */
-    Shard(int numBiasIllums, SectorCluster *owner = 0);
+    Shard(de::dint numBiasIllums, world::SectorCluster *owner = nullptr);
 
     /**
      * Perform bias lighting for the supplied vertex geometry.
@@ -60,17 +60,17 @@ public:
      *                       used for interpolation.
      */
     void lightWithBiasSources(de::Vector3f const *posCoords, de::Vector4f *colorCoords,
-                              de::Matrix3f const &tangentMatrix, uint biasTime);
+                              de::Matrix3f const &tangentMatrix, de::duint biasTime);
 
     /**
      * Returns a pointer to the SectorCluster which owns the shard (if any).
      */
-    SectorCluster *cluster() const;
+    world::SectorCluster *cluster() const;
 
     /**
      * Change SectorCluster which owns the shard to @a newOwner.
      */
-    void setCluster(SectorCluster *newOwner);
+    void setCluster(world::SectorCluster *newOwner);
 
     /**
      * Returns the BiasTracker for the shard.
@@ -91,4 +91,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_RENDER_SHARD_H
+#endif  // DENG_CLIENT_RENDER_SHARD_H

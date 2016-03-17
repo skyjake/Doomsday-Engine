@@ -46,6 +46,7 @@
 #endif
 
 using namespace de;
+using namespace world;
 
 DENG2_PIMPL(Surface)
 {

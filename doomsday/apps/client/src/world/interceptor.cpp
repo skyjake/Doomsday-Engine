@@ -37,7 +37,7 @@ struct ListNode
 
     intercepttype_t type;
     void *object;
-    float distance;
+    dfloat distance;
 
     template <class ObjectType>
     ObjectType &objectAs() const {
@@ -62,9 +62,9 @@ DENG2_PIMPL_NOREF(Interceptor)
     void *context;
     Vector2d from;
     Vector2d to;
-    int flags; ///< @ref pathTraverseFlags
+    dint flags; ///< @ref pathTraverseFlags
 
-    Map *map = nullptr;
+    world::Map *map = nullptr;
     LineOpening opening;
 
     // Array representation for ray geometry (used with legacy code).
@@ -72,7 +72,7 @@ DENG2_PIMPL_NOREF(Interceptor)
     vec2d_t directionV1;
 
     Instance(traverser_t callback, Vector2d const &from, Vector2d const &to,
-             int flags, void *context)
+             dint flags, void *context)
         : callback(callback)
         , context (context)
         , from    (from)
@@ -138,7 +138,7 @@ DENG2_PIMPL_NOREF(Interceptor)
      * @param distance  Distance along the trace vector that the interception occured [0...1].
      * @param object    Object being intercepted.
      */
-    void addIntercept(intercepttype_t type, float distance, void *object)
+    void addIntercept(intercepttype_t type, dfloat distance, void *object)
     {
         DENG2_ASSERT(object);
 
@@ -197,18 +197,18 @@ DENG2_PIMPL_NOREF(Interceptor)
 
         // Is this line crossed?
         // Avoid precision problems with two routines.
-        int s1, s2;
-        if(direction[VX] >  FRACUNIT * 16 || direction[VY] >  FRACUNIT * 16 ||
-           direction[VX] < -FRACUNIT * 16 || direction[VY] < -FRACUNIT * 16)
+        dint s1, s2;
+        if(direction[0] >  FRACUNIT * 16 || direction[1] >  FRACUNIT * 16 ||
+           direction[0] < -FRACUNIT * 16 || direction[1] < -FRACUNIT * 16)
         {
             s1 = V2x_PointOnLineSide(lineFromX, origin, direction);
             s2 = V2x_PointOnLineSide(lineToX,   origin, direction);
         }
         else
         {
-            s1 = line.pointOnSide(Vector2d(FIX2FLT(origin[VX]), FIX2FLT(origin[VY]))) < 0;
-            s2 = line.pointOnSide(Vector2d(FIX2FLT(origin[VX] + direction[VX]),
-                                           FIX2FLT(origin[VY] + direction[VY]))) < 0;
+            s1 = line.pointOnSide(Vector2d(FIX2FLT(origin[0]), FIX2FLT(origin[1]))) < 0;
+            s2 = line.pointOnSide(Vector2d(FIX2FLT(origin[0] + direction[0]),
+                                           FIX2FLT(origin[1] + direction[1]))) < 0;
         }
 
         // Is this line crossed?
@@ -216,7 +216,7 @@ DENG2_PIMPL_NOREF(Interceptor)
 
         // Calculate interception point.
         fixed_t lineDirectionX[2] = { DBL2FIX(line.direction().x), DBL2FIX(line.direction().y) };
-        float distance = FIX2FLT(V2x_Intersection(lineFromX, lineDirectionX, origin, direction));
+        dfloat distance = FIX2FLT(V2x_Intersection(lineFromX, lineDirectionX, origin, direction));
 
         // On the correct side of the trace origin?
         if(distance >= 0)
@@ -238,7 +238,7 @@ DENG2_PIMPL_NOREF(Interceptor)
         AABoxd const aaBox = Mobj_AABox(mobj);
 
         fixed_t icptFrom[2], icptTo[2];
-        if((direction[VX] ^ direction[VY]) > 0)
+        if((direction[0] ^ direction[1]) > 0)
         {
             // \ Slope
             V2x_Set(icptFrom, DBL2FIX(aaBox.minX), DBL2FIX(aaBox.maxY));
@@ -257,8 +257,8 @@ DENG2_PIMPL_NOREF(Interceptor)
             return;
 
         // Calculate interception point.
-        fixed_t icptDirection[2] = { icptTo[VX] - icptFrom[VX], icptTo[VY] - icptFrom[VY] };
-        float distance = FIX2FLT(V2x_Intersection(icptFrom, icptDirection, origin, direction));
+        fixed_t icptDirection[2] = { icptTo[0] - icptFrom[0], icptTo[1] - icptFrom[1] };
+        dfloat distance = FIX2FLT(V2x_Intersection(icptFrom, icptDirection, origin, direction));
 
         // On the correct side of the trace origin?
         if(distance >= 0)
@@ -270,7 +270,7 @@ DENG2_PIMPL_NOREF(Interceptor)
     void runTrace()
     {
         clearIntercepts();
-        int const localValidCount = ++validCount;
+        dint const localValidCount = ++validCount;
 
         if(flags & PTF_LINE)
         {
@@ -279,7 +279,7 @@ DENG2_PIMPL_NOREF(Interceptor)
             {
                 map->polyobjBlockmap().forAllInPath(from, to, [this, &localValidCount] (void *object)
                 {
-                    Polyobj &pob = *(Polyobj *)object;
+                    auto &pob = *(Polyobj *)object;
                     if(pob.validCount != localValidCount)  // not yet processed
                     {
                         pob.validCount = localValidCount;
@@ -299,7 +299,7 @@ DENG2_PIMPL_NOREF(Interceptor)
             // Process sector lines.
             map->lineBlockmap().forAllInPath(from, to, [this, &localValidCount] (void *object)
             {
-                Line &line = *(Line *)object;
+                auto &line = *(Line *)object;
                 if(line.validCount() != localValidCount)  // not yet processed
                 {
                     line.setValidCount(localValidCount);
@@ -314,7 +314,7 @@ DENG2_PIMPL_NOREF(Interceptor)
             // Process map objects.
             map->mobjBlockmap().forAllInPath(from, to, [this, &localValidCount] (void *object)
             {
-                mobj_t &mob = *(mobj_t *)object;
+                auto &mob = *(mobj_t *)object;
                 if(mob.validCount != localValidCount)  // not yet processed
                 {
                     mob.validCount = localValidCount;
@@ -327,16 +327,16 @@ DENG2_PIMPL_NOREF(Interceptor)
 };
 
 Interceptor::Interceptor(traverser_t callback, Vector2d const &from,
-    Vector2d const &to, int flags, void *context)
+    Vector2d const &to, dint flags, void *context)
     : d(new Instance(callback, from, to, flags, context))
 {}
 
-coord_t const *Interceptor::origin() const
+ddouble const *Interceptor::origin() const
 {
     return d->fromV1;
 }
 
-coord_t const *Interceptor::direction() const
+ddouble const *Interceptor::direction() const
 {
     return d->directionV1;
 }
@@ -363,10 +363,10 @@ bool Interceptor::adjustOpening(Line const *line)
     return d->opening.range > 0;
 }
 
-int Interceptor::trace(Map const &map)
+dint Interceptor::trace(world::Map const &map)
 {
     // Step #1: Collect and sort intercepts.
-    d->map = const_cast<Map *>(&map);
+    d->map = const_cast<world::Map *>(&map);
     d->runTrace();
 
     // Step #2: Process intercepts.

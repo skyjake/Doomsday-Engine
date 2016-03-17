@@ -3,7 +3,7 @@
  * Originally based on glBSP 2.24 (in turn, based on BSP 2.3)
  * @see http://sourceforge.net/projects/glbsp/
  *
- * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2016 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  * @authors Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
  * @authors Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
@@ -37,7 +37,7 @@
 class Sector;
 class Vertex;
 
-namespace de {
+namespace world {
 namespace bsp {
 
 class EdgeTips;
@@ -64,7 +64,7 @@ public:
          * @param edge          Relative edge of the line segment nearest to the
          *                      interception point.
          */
-        Intercept(double distance, LineSegmentSide &lineSeg, int edge);
+        Intercept(de::ddouble distance, LineSegmentSide &lineSeg, de::dint edge);
 
         bool operator < (Intercept const &other) const {
             return _distance < other._distance;
@@ -73,14 +73,14 @@ public:
         /**
          * Determine the distance between "this" and the @a other intercept.
          */
-        double operator - (Intercept const &other) const {
+        de::ddouble operator - (Intercept const &other) const {
             return _distance - other._distance;
         }
 
         /**
          * Returns distance along the half-plane relative to the origin.
          */
-        double distance() const { return _distance; }
+        de::ddouble distance() const { return _distance; }
 
         /**
          * Returns the intercepted line segment.
@@ -96,7 +96,7 @@ public:
          * Returns the identifier for the relevant edge of the intercepted
          * line segment.
          */
-        int lineSegmentEdge() const;
+        de::dint lineSegmentEdge() const;
 
         /**
          * Returns the relative vertex from the intercepted line segment.
@@ -111,7 +111,7 @@ public:
         Sector *after() const;
 
         LineSegmentSide *beforeLineSegment() const;
-        LineSegmentSide *afterLineSegment() const;
+        LineSegmentSide *afterLineSegment () const;
 
 #ifdef DENG2_DEBUG
         void debugPrint() const;
@@ -123,15 +123,15 @@ public:
         /// Sector on each side of the vertex (along the partition), or @c 0
         /// if that direction is "closed" (i.e., the intercept point is along
         /// a map line that has no Sector on the relevant side).
-        LineSegmentSide *_before;
-        LineSegmentSide *_after;
+        LineSegmentSide *_before = nullptr;
+        LineSegmentSide *_after  = nullptr;
 
         /// Distance along the half-plane relative to the origin.
-        double _distance;
+        de::ddouble _distance = 0;
 
         // The intercepted line segment and edge identifier.
-        LineSegmentSide *_lineSeg;
-        int _edge;
+        LineSegmentSide *_lineSeg = nullptr;
+        de::dint _edge = 0;
     };
 
     typedef QList<Intercept> Intercepts;
@@ -140,7 +140,7 @@ public:
     /**
      * Construct a new half-plane from the given @a partition line.
      */
-    explicit HPlane(Partition const &partition = Partition());
+    explicit HPlane(de::Partition const &partition = de::Partition());
 
     /**
      * Reconfigure the half-plane according to the given line segment.
@@ -161,7 +161,7 @@ public:
      * @return  Distance to intersection point along the half-plane (relative
      *          to the origin).
      */
-    double intersect(LineSegmentSide const &lineSeg, int edge);
+    de::ddouble intersect(LineSegmentSide const &lineSeg, de::dint edge);
 
     /**
      * Perform intersection of the half-plane with the specified @a lineSeg.
@@ -179,7 +179,7 @@ public:
      *
      * @return  The resultant new intercept; otherwise @c nullptr.
      */
-    Intercept *intercept(LineSegmentSide const &lineSeg, int edge,
+    Intercept *intercept(LineSegmentSide const &lineSeg, de::dint edge,
                          EdgeTips const &edgeTips);
 
     /**
@@ -215,7 +215,7 @@ public:
      *
      * @see configure()
      */
-    Partition const &partition() const;
+    de::Partition const &partition() const;
 
     /**
      * Returns the world angle of the partition line (which, is derived from the
@@ -223,14 +223,14 @@ public:
      *
      * @see inverseAngle(), Partition::direction
      */
-    coord_t angle() const;
+    de::ddouble angle() const;
 
     /**
      * Returns the inverted world angle for the partition line (i.e., rotated 180 degrees).
      *
      * @see angle()
      */
-    coord_t inverseAngle() const;
+    de::ddouble inverseAngle() const;
 
     /**
      * Returns the logical @em slopetype for the partition line (which, is determined
@@ -260,8 +260,8 @@ public:
      * @param fromDist  (Returned) Perpendicular distance from the "from" vertex. Can be @c nullptr.
      * @param toDist    (Returned) Perpendicular distance from the "to" vertex. Can be @c nullptr.
      */
-    void distance(LineSegmentSide const &lineSegment, coord_t *fromDist = nullptr,
-                  coord_t *toDist = nullptr) const;
+    void distance(LineSegmentSide const &lineSegment, de::ddouble *fromDist = nullptr,
+                  de::ddouble *toDist = nullptr) const;
 
     /**
      * Determine the logical relationship between the partition line and the given
@@ -275,8 +275,8 @@ public:
      * @return LineRelationship between the partition line and the line segment.
      */
     LineRelationship relationship(LineSegmentSide const &lineSegment,
-                                  coord_t *retFromDist = nullptr,
-                                  coord_t *retToDist   = nullptr) const;
+                                  de::ddouble *retFromDist = nullptr,
+                                  de::ddouble *retToDist   = nullptr) const;
 
     /**
      * Returns the list of intercepts for the half-plane for efficient traversal.
@@ -291,7 +291,7 @@ public:
     /**
      * Returns the current number of half-plane intercepts.
      */
-    inline int interceptCount() const { return intercepts().count(); }
+    inline de::dint interceptCount() const { return intercepts().count(); }
 
 private:
     DENG2_PRIVATE(d)
@@ -299,7 +299,7 @@ private:
 
 typedef HPlane::Intercept HPlaneIntercept;
 
-} // namespace bsp
-} // namespace de
+}  // namespace bsp
+}  // namespace world
 
-#endif // DENG_WORLD_BSP_HPLANE_H
+#endif  // DENG_WORLD_BSP_HPLANE_H

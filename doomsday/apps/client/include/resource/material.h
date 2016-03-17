@@ -1,6 +1,6 @@
 /** @file material.h  Logical material resource.
  *
- * @authors Copyright © 2009-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2009-2016 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
@@ -28,7 +28,6 @@
 #include <de/Vector>
 #include "audio/s_environ.h"
 #include "MapElement"
-#include "world/dmuargs.h"
 #ifdef __CLIENT__
 #  include "MaterialVariantSpec"
 #endif
@@ -43,13 +42,13 @@ class MaterialAnimator;
  * Logical material resource.
  *
  * @par Dimensions
- * Material dimensions are interpreted relative to the coordinate space in which
- * the material is used. For example, the dimensions of a Material in the map-surface
- * usage context are thought to be in "map/world space" units.
+ * Material dimensions are interpreted relative to the coordinate space in which the material
+ * is used. For example, the dimensions of a Material in the map-surface usage context are
+ * thought to be in "map/world space" units.
  *
  * @ingroup resource
  */
-class Material : public de::MapElement
+class Material : public world::MapElement
 {
 public:
     /// Notified when the material is about to be deleted.
@@ -144,7 +143,7 @@ public:
      */
     void setAudioEnvironment(AudioEnvironmentId newEnvironment);
 
-public:  // Layers --------------------------------------------------------------------
+public:  //- Layers ---------------------------------------------------------------------
 
     /// The referenced layer does not exist. @ingroup errors
     DENG2_ERROR(MissingLayerError);
@@ -255,7 +254,8 @@ public:  // Layers -------------------------------------------------------------
     void clearAllLayers();
 
 #ifdef __CLIENT__
-public:  // Decorations ---------------------------------------------------------------
+
+public:  //- Decorations ----------------------------------------------------------------
 
     /// The referenced decoration does not exist. @ingroup errors
     DENG2_ERROR(MissingDecorationError);
@@ -407,7 +407,7 @@ public:  // Decorations --------------------------------------------------------
      */
     void clearAllDecorations();
 
-public:  // Animators -----------------------------------------------------------------
+public:  //- Animators ------------------------------------------------------------------
 
     /**
      * Returns the total number of MaterialAnimators for the material.
@@ -440,10 +440,10 @@ public:  // Animators ----------------------------------------------------------
      */
     void clearAllAnimators();
 
-#endif // __CLIENT__
+#endif  // __CLIENT__
 
 protected:
-    int property(DmuArgs &args) const;
+    int property(de::DmuArgs &args) const;
 
 public:
     /// Register the console commands and variables of this module.

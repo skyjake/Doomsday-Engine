@@ -2387,7 +2387,7 @@ DENG_EXTERN_C void R_SetupMap(dint mode, dint flags)
 
     // Perform map setup again. Its possible that after loading we now
     // have more HOMs to fix, etc..
-    Map &map = App_World().map();
+    world::Map &map = App_World().map();
 
 #ifdef __CLIENT__
     map.initSkyFix();

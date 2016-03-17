@@ -29,7 +29,7 @@
 #include <list>
 #include "world/bsp/linesegment.h"
 
-namespace de {
+namespace world {
 namespace bsp {
 
 /**
@@ -51,7 +51,7 @@ public:
         , _back(side.back().hasSector()? &side.back() : nullptr)
     {}
 
-    coord_t angle() const { return _angle; }
+    de::ddouble angle() const { return _angle; }
 
     void setAngle(coord_t newAngle) {
         _angle = newAngle;
@@ -62,7 +62,7 @@ public:
     }
 
     inline bool hasFront() const { return hasSide(Front); }
-    inline bool hasBack() const  { return hasSide(Back); }
+    inline bool hasBack() const  { return hasSide(Back ); }
 
     LineSegmentSide &side(Side sid) const {
         if(sid == Front)
@@ -78,10 +78,10 @@ public:
     }
 
     inline LineSegmentSide &front() const { return side(Front); }
-    inline LineSegmentSide &back() const  { return side(Back); }
+    inline LineSegmentSide &back () const { return side(Back ); }
 
-    inline LineSegmentSide *frontPtr() const { return hasFront()? &front() : nullptr; }
-    inline LineSegmentSide *backPtr() const  { return hasBack() ? &back()  : nullptr; }
+    inline LineSegmentSide *frontPtr() const { return hasFront() ? &front() : nullptr; }
+    inline LineSegmentSide *backPtr () const { return hasBack()  ? &back () : nullptr; }
 
     void setSide(Side sid, LineSegmentSide *lineSeg) {
         if(sid == Front)
@@ -95,11 +95,11 @@ public:
     }
 
     inline void setFront(LineSegmentSide *lineSeg) { setSide(Front, lineSeg); }
-    inline void setBack(LineSegmentSide *lineSeg)  { setSide(Back, lineSeg); }
+    inline void setBack (LineSegmentSide *lineSeg) { setSide(Back , lineSeg); }
 
 private:
     /// Angle that line makes at vertex (degrees; 0 is E, 90 is N).
-    coord_t _angle = 0;
+    de::ddouble _angle = 0;
 
     /// Line segments on each side of the tip. Front is the side of increasing
     /// angles, back is the side of decreasing angles. Either may be @c nullptr.
@@ -133,7 +133,7 @@ public:
      * an anti-clockwise (increasing angle) order. @a epsilon is the angle
      * equivalence threshold (in degrees).
      */
-    void insert(EdgeTip const &tip, ddouble epsilon = 1.0 / 128) {
+    void insert(EdgeTip const &tip, de::ddouble epsilon = 1.0 / 128) {
         Tips::reverse_iterator after = _tips.rbegin();
         while(after != _tips.rend() && tip.angle() + epsilon < (*after).angle())
         {
@@ -159,10 +159,10 @@ public:
     /**
      * @a epsilon is the angle equivalence threshold (in degrees).
      */
-    EdgeTip const *at(ddouble angle, ddouble epsilon = 1.0 / 128) const {
+    EdgeTip const *at(de::ddouble angle, de::ddouble epsilon = 1.0 / 128) const {
         for(EdgeTip const &tip : _tips)
         {
-            coord_t delta = de::abs(tip.angle() - angle);
+            de::ddouble delta = de::abs(tip.angle() - angle);
             if(delta < epsilon || delta > (360.0 - epsilon))
             {
                 return &tip;
@@ -174,7 +174,7 @@ public:
     /**
      * @a epsilon is the angle equivalence threshold (in degrees).
      */
-    EdgeTip const *after(ddouble angle, ddouble epsilon = 1.0 / 128) const {
+    EdgeTip const *after(de::ddouble angle, de::ddouble epsilon = 1.0 / 128) const {
         for(EdgeTip const &tip : _tips)
         {
             if(angle + epsilon < tip.angle())
@@ -216,7 +216,7 @@ private:
     Tips _tips;
 };
 
-} // namespace bsp
-} // namespace de
+}  // namespace bsp
+}  // namespace world
 
-#endif // DENG_WORLD_BSP_EDGETIP_H
+#endif  // DENG_WORLD_BSP_EDGETIP_H

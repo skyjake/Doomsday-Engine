@@ -26,9 +26,10 @@
 #include <de/Vector>
 
 #include "world/map.h"
+#include "world/bspleaf.h"
 
+namespace world { class ConvexSubspace; }
 struct Contact;
-class ConvexSubspace;
 class Lumobj;
 
 enum ContactType
@@ -76,7 +77,7 @@ struct Contact
     /**
      * Returns the BSP leaf at the linked object's origin in map space.
      */
-    BspLeaf &objectBspLeafAtOrigin() const;
+    world::BspLeaf &objectBspLeafAtOrigin() const;
 };
 
 struct ContactList
@@ -105,20 +106,20 @@ private:
  * This is necessary because the lists are allocated from the Zone using a
  * >= PU_MAP purge level and access to them is handled with global pointers.
  *
- * @todo Encapsulate allocation of and access to the lists in de::Map
+ * @todo Encapsulate allocation of and access to the lists in world::Map
  */
 void R_DestroyContactLists();
 
 /**
  * Initialize contact lists for the current map.
  */
-void R_InitContactLists(de::Map &map);
+void R_InitContactLists(world::Map &map);
 
 /**
  * To be called at the beginning of a render frame to clear all contact lists
  * ready for the new frame.
  */
-void R_ClearContactLists(de::Map &map);
+void R_ClearContactLists(world::Map &map);
 
 /**
  * Add a new contact for the specified mobj, for spreading purposes.
@@ -133,7 +134,7 @@ void R_AddContact(Lumobj &lumobj);
 /**
  * Returns the contact list for the specified @a subspace and contact @a type.
  */
-ContactList &R_ContactList(ConvexSubspace &subspace, ContactType type);
+ContactList &R_ContactList(world::ConvexSubspace &subspace, ContactType type);
 /**
  * Traverse the list of @em all contacts for the current render frame.
  */
@@ -143,13 +144,13 @@ de::LoopResult R_ForAllContacts(std::function<de::LoopResult (Contact const &)> 
  * Traverse the list of mobj contacts linked directly to the specified @a subspace,
  * for the current render frame.
  */
-de::LoopResult R_ForAllSubspaceMobContacts(ConvexSubspace &subspace, std::function<de::LoopResult (struct mobj_s &)> func);
+de::LoopResult R_ForAllSubspaceMobContacts(world::ConvexSubspace &subspace, std::function<de::LoopResult (struct mobj_s &)> func);
 
 /**
  * Traverse the list of lumobj contacts linked directly to the specified @a subspace,
  * for the current render frame.
  */
-de::LoopResult R_ForAllSubspaceLumContacts(ConvexSubspace &subspace, std::function<de::LoopResult (Lumobj &)> func);
+de::LoopResult R_ForAllSubspaceLumContacts(world::ConvexSubspace &subspace, std::function<de::LoopResult (Lumobj &)> func);
 
 #endif  // DENG_CLIENT_WORLD_CONTACT_H
 #endif  // __CLIENT__

@@ -1,4 +1,5 @@
-/** @file convexsubspace.h  World map convex subspace.
+/** @file convexsubspace.h  Map convex subspace.
+ * @ingroup world
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2016 Daniel Swanson <danij@dengine.net>
@@ -29,21 +30,21 @@
 #include "Line"
 #include "SectorCluster"
 
-struct polyobj_s;
 #ifdef __CLIENT__
 class Lumobj;
+#endif
 
-namespace world { class AudioEnvironment; }
+namespace world {
 
+#ifdef __CLIENT__
+class AudioEnvironment;
 #endif
 
 /**
  * On client side a convex subspace also provides / links to various geometry data assets
  * and properties used to visualize the subspace.
- *
- * @ingroup world
  */
-class ConvexSubspace : public de::MapElement
+class ConvexSubspace : public MapElement
 {
 public:
 
@@ -144,8 +145,8 @@ public:
      *
      * @todo Refactor away.
      */
-    int validCount() const;
-    void setValidCount(int newValidCount);
+    de::dint validCount() const;
+    void setValidCount(de::dint newValidCount);
 
 #ifdef __CLIENT__
 
@@ -172,14 +173,14 @@ public:
      *
      * @see fanBase()
      */
-    int fanVertexCount() const;
+    de::dint fanVertexCount() const;
 
     /**
      * Returns the frame number of the last time mobj sprite projection was performed for
      * the subspace.
      */
-    int lastSpriteProjectFrame() const;
-    void setLastSpriteProjectFrame(int newFrameNumber);
+    de::dint lastSpriteProjectFrame() const;
+    void setLastSpriteProjectFrame(de::dint newFrameNumber);
 
 public:  //- Audio Environment (reverb) --------------------------------------------------
 
@@ -192,14 +193,14 @@ public:  //- Audio Environment (reverb) ----------------------------------------
      * Provides access to the cached audio environment characteristics of the subspace for
      * efficient accumulation.
      */
-    world::AudioEnvironment const &audioEnvironment() const;
+    AudioEnvironment const &audioEnvironment() const;
 
 public:  //- Luminous objects -----------------------------------------------------------
 
     /**
      * Returns the total number of Lumobjs linked to the subspace.
      */
-    int lumobjCount() const;
+    de::dint lumobjCount() const;
 
     /**
      * Iterate all Lumobjs linked in the subspace.
@@ -234,7 +235,7 @@ public:  //- Poly objects ------------------------------------------------------
     /**
      * Returns the total number of Polyobjs linked to the subspace.
      */
-    int polyobjCount() const;
+    de::dint polyobjCount() const;
 
     /**
      * Iterate all Polyobjs linked in the subspace.
@@ -264,7 +265,7 @@ public:  //- Fakeradio ---------------------------------------------------------
     /**
      * Returns the total number of shadow line sides linked in the subspace.
      */
-    int shadowLineCount() const;
+    de::dint shadowLineCount() const;
 
     /**
      * Clear the list of fake radio shadow line sides for the subspace.
@@ -293,5 +294,7 @@ private:
 
     DENG2_PRIVATE(d)
 };
+
+}  // namespace world
 
 #endif  // DENG_WORLD_CONVEXSUBSPACE_H

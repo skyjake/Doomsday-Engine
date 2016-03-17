@@ -1,4 +1,5 @@
-/** @file bspleaf.h  World map BSP leaf half-space.
+/** @file bspleaf.h  Map BSP half-space (leaf).
+ * @ingroup world
  *
  * @authors Copyright © 2014-2016 Daniel Swanson <danij@dengine.net>
  *
@@ -21,24 +22,25 @@
 #define DENG_WORLD_BSPLEAF_H
 
 #include <de/Error>
-#include "MapElement"
-#include "BspNode"
+#include <doomsday/BspNode>
 
-class ConvexSubspace;
 class Sector;
 
+namespace world {
+
+class ConvexSubspace;
+class SectorCluster;
+
 /**
- * Represents a leaf in the map's binary space partition (BSP) tree. Each leaf
- * defines a half-space of the parent space (a node, or the whole map space).
+ * Represents a leaf in the map's binary space partition (BSP) tree. Each leaf defines a
+ * half-space of the parent space (a node, or the whole map space).
  *
  * A leaf may be attributed to a two-dimensioned ConvexSubspace geometry.
  *
- * Each leaf is attributed to a @ref Sector in the map regardless of whether a
- * convex geometry exists at the leaf.
+ * Each leaf is attributed to a @ref Sector in the map regardless of whether a convex
+ * geometry exists at the leaf.
  *
  * @see http://en.wikipedia.org/wiki/Binary_space_partitioning
- *
- * @ingroup world
  */
 class BspLeaf : public BspElement
 {
@@ -48,8 +50,7 @@ public:
 
 public:
     /**
-     * Construct a new BSP leaf and optionally attribute it to @a sector.
-     * Ownership is unaffected.
+     * Construct a new BSP leaf and optionally attribute it to @a sector. Ownership is unaffected.
      */
     explicit BspLeaf(Sector *sector = nullptr);
 
@@ -65,47 +66,40 @@ public:
      *
      * @see hasSubspace()
      */
-    ConvexSubspace &subspace() const;
-
-    /**
-     * Convenient method returning a pointer to the ConvexSubspace attributed to
-     * the BSP leaf; otherwise @c nullptr if no subspace is assigned.
-     *
-     * @see subspace(), hasSubspace()
-     */
-    inline ConvexSubspace *subspacePtr() const {
-        return hasSubspace()? &subspace() : nullptr;
-    }
+    ConvexSubspace &subspace   () const;
+    ConvexSubspace *subspacePtr() const;
 
     /**
      * Change the subspace geometry attributed to the BSP leaf.
      *
-     * @param newSubspace New subspace to attribute to the BSP leaf (@c nullptr
-     *                    will clear). Ownership is unaffected.
+     * @param newSubspace   Subspace to attribute to the BSP leaf (use @c nullptr to clear).
+     * Ownership is unaffected.
      *
      * @see hasSubspace(), subspace()
      */
     void setSubspace(ConvexSubspace *newSubspace);
 
     /**
-     * Convenient method returning a pointer to the Sector attributed to the BSP
-     * leaf half-space.
+     * Convenient method returning a pointer to the Sector attributed to the BSP leaf.
      *
-     * Note that this does @em not necessarily mean there is a subspace at this
-     * leaf. Usually one should resolve the sector from the subspace. This method
-     * is primarily intended for legacy compatibility logics which don't care if
-     * a subspace exists at the leaf, or not.
+     * Note that this does @em not necessarily mean there is a subspace at this leaf.
+     * Usually one should resolve the sector from the subspace. This method is primarily
+     * intended for legacy compatibility logics which don't care if a subspace exists at
+     * the leaf, or not.
      */
-    Sector *sectorPtr();
-
-    /// @copydoc sectorPtr()
+    Sector       *sectorPtr();
     Sector const *sectorPtr() const;
 
+    /**
+     * Attribute this BSP leaf to the given world @a sector.
+     */
     void setSector(Sector *newSector);
 
 private:
-    Sector *_sector;
-    ConvexSubspace *_subspace;
+    Sector *_sector = nullptr;
+    ConvexSubspace *_subspace = nullptr;
 };
+
+}  // namespace world
 
 #endif  // DENG_WORLD_BSPLEAF_H

@@ -1,7 +1,7 @@
 /** @file linesighttest.cpp  World map line of sight testing.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -25,18 +25,20 @@
 #include <de/aabox.h>
 #include <de/fixedpoint.h>
 #include <de/vector1.h>
+#include <doomsday/BspNode>
 
 #include "Face"
 
 #include "world/clientserverworld.h"  /// For validCount, @todo Remove me.
 #include "BspLeaf"
-#include "BspNode"
 #include "ConvexSubspace"
 #include "Line"
 #include "Polyobj"
 #include "Sector"
 
 using namespace de;
+
+namespace world {
 
 DENG2_PIMPL_NOREF(LineSightTest)
 {
@@ -282,12 +284,12 @@ DENG2_PIMPL_NOREF(LineSightTest)
         while(!bspTree->isLeaf())
         {
             DENG2_ASSERT(bspTree->userData());
-            BspNode const &bspNode = bspTree->userData()->as<BspNode>();
+            auto const &bspNode = bspTree->userData()->as<BspNode>();
 
             // Does the ray intersect the partition?
             /// @todo Optionally use the fixed precision version -ds
-            dint const fromSide = bspNode.partition().pointOnSide(Vector2d(from.x, from.y)) < 0;
-            dint const toSide   = bspNode.partition().pointOnSide(Vector2d(to.x, to.y)) < 0;
+            dint const fromSide = bspNode.pointOnSide(Vector2d(from.x, from.y)) < 0;
+            dint const toSide   = bspNode.pointOnSide(Vector2d(to.x, to.y)) < 0;
             if(fromSide != toSide)
             {
                 // Yes.
@@ -332,3 +334,5 @@ bool LineSightTest::trace(BspTree const &bspRoot)
 
     return d->crossBspNode(&bspRoot);
 }
+
+}  // namespace world

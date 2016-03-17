@@ -67,6 +67,7 @@
 #endif
 
 using namespace de;
+using namespace world;
 
 static String const VAR_MATERIAL("material");
 
@@ -274,7 +275,7 @@ DENG_EXTERN_C void Mobj_OriginSmoothed(mobj_t *mo, coord_t origin[3])
 #endif
 }
 
-de::Map &Mobj_Map(mobj_t const &mobj)
+world::Map &Mobj_Map(mobj_t const &mobj)
 {
     return Thinker_Map(mobj.thinker);
 }
@@ -288,7 +289,7 @@ BspLeaf &Mobj_BspLeafAtOrigin(mobj_t const &mobj)
 {
     if(Mobj_IsLinked(mobj))
     {
-        return *mobj._bspLeaf;
+        return *(BspLeaf *)mobj._bspLeaf;
     }
     throw Error("Mobj_BspLeafAtOrigin", "Mobj is not yet linked");
 }

@@ -17,20 +17,19 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
 #include "world/bspleaf.h"
-#ifdef __CLIENT__
-#  include "world/map.h"
-#endif
+
 #include "ConvexSubspace"
 #include "Sector"
 
 using namespace de;
 
+namespace world {
+
 BspLeaf::BspLeaf(Sector *sector)
-    : _sector  (sector)
-    , _subspace(nullptr)
-{}
+{
+    _sector = sector;
+}
 
 bool BspLeaf::hasSubspace() const
 {
@@ -39,12 +38,14 @@ bool BspLeaf::hasSubspace() const
 
 ConvexSubspace &BspLeaf::subspace() const
 {
-    if(hasSubspace())
-    {
-        return *_subspace;
-    }
+    if(hasSubspace()) return *_subspace;
     /// @throw MissingSubspaceError Attempted with no subspace attributed.
     throw MissingSubspaceError("BspLeaf::subspace", "No subspace is attributed");
+}
+
+ConvexSubspace *BspLeaf::subspacePtr() const
+{
+    return hasSubspace() ? &subspace() : nullptr;
 }
 
 void BspLeaf::setSubspace(ConvexSubspace *newSubspace)
@@ -78,3 +79,5 @@ void BspLeaf::setSector(Sector *newSector)
 {
     _sector = newSector;
 }
+
+}  // namespace world

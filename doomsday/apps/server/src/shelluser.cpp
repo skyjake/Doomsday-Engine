@@ -121,7 +121,7 @@ void ShellUser::sendGameState()
     String mapTitle;
     if(App_World().hasMap())
     {
-        Map &map = App_World().map();
+        world::Map &map = App_World().map();
 
         mapId = (map.hasManifest() ? map.manifest().composeUri().path() : "(unknown map)");
 

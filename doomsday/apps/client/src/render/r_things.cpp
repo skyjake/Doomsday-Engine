@@ -54,6 +54,7 @@
 #include "SectorCluster"
 
 using namespace de;
+using namespace world;
 
 static inline RenderSystem &rendSys()
 {

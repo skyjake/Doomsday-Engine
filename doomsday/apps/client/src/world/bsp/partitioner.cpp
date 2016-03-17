@@ -30,9 +30,9 @@
 #include <QtAlgorithms>
 #include <de/vector1.h>
 #include <de/Log>
+#include <doomsday/BspNode>
 
 #include "BspLeaf"
-#include "BspNode"
 #include "Line"
 #include "Sector"
 #include "Vertex"
@@ -44,7 +44,9 @@
 #include "world/bsp/partitionevaluator.h"
 #include "world/bsp/superblockmap.h"
 
-namespace de {
+using namespace de;
+
+namespace world {
 
 using namespace bsp;
 
@@ -910,8 +912,8 @@ DENG2_PIMPL(Partitioner)
 
             // Take a copy of the geometry bounds for each child/sub space
             // - we'll need this for any BspNode we produce later.
-            AABoxd rightBounds = segmentBounds(rightTree);
-            AABoxd leftBounds  = segmentBounds(leftTree);
+            //AABoxd rightBounds = segmentBounds(rightTree);
+            //AABoxd leftBounds  = segmentBounds(leftTree);
 
             // Recurse on each suspace, first the right space then left.
             rightBspTree = partitionSpace(rightTree);
@@ -922,7 +924,7 @@ DENG2_PIMPL(Partitioner)
                 return rightBspTree? rightBspTree : leftBspTree;
 
             // Make a new BSP node.
-            bspElement = new BspNode(partition, rightBounds, leftBounds);
+            bspElement = new BspNode(partition);
         }
         else
         {
@@ -946,7 +948,7 @@ DENG2_PIMPL(Partitioner)
 
             // Make a new BSP leaf.
             /// @todo Defer until necessary.
-            BspLeaf *leaf = new BspLeaf;
+            auto *leaf = new BspLeaf;
 
             // Attribute the leaf to the convex subspace.
             convexSet.setBspLeaf(leaf);
@@ -955,7 +957,7 @@ DENG2_PIMPL(Partitioner)
         }
 
         // Make a new BSP subtree and link up the children.
-        BspTree *subtree = new BspTree(bspElement, nullptr/*no parent*/, rightBspTree, leftBspTree);
+        auto *subtree = new BspTree(bspElement, nullptr/*no parent*/, rightBspTree, leftBspTree);
         if(rightBspTree) rightBspTree->setParent(subtree);
         if(leftBspTree)  leftBspTree->setParent(subtree);
 
@@ -1131,7 +1133,7 @@ static bool lineIndexLessThan(Line const *a, Line const *b)
      return a->indexInMap() < b->indexInMap();
 }
 
-Partitioner::BspTree *Partitioner::makeBspTree(LineSet const &lines, Mesh &mesh)
+BspTree *Partitioner::makeBspTree(QSet<Line *> const &lines, Mesh &mesh)
 {
     d->clear();
 
@@ -1186,4 +1188,4 @@ int Partitioner::vertexCount()
     return d->vertexCount;
 }
 
-} // namespace de
+}  // namespace world

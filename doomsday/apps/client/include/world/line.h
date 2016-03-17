@@ -1,7 +1,8 @@
-/** @file line.h  World map line.
+/** @file line.h  Map line.
+ * @ingroup world
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef WORLD_LINE_H
-#define WORLD_LINE_H
+#ifndef DENG_WORLD_LINE_H
+#define DENG_WORLD_LINE_H
 
 #include <functional>
 #include <QFlags>
@@ -39,7 +40,6 @@ class Sector;
 class Surface;
 
 #ifdef __CLIENT__
-class BiasDigest;
 struct edgespan_t;
 struct shadowcorner_t;
 #endif
@@ -60,10 +60,8 @@ struct shadowcorner_t;
  * computational geometry.
  *
  * @see http://en.wikipedia.org/wiki/Arrangement_of_lines
- *
- * @ingroup world
  */
-class Line : public de::MapElement
+class Line : public world::MapElement
 {
     DENG2_NO_COPY  (Line)
     DENG2_NO_ASSIGN(Line)
@@ -90,7 +88,7 @@ public:
     /**
      * Logical side of which there are always two (a front and a back).
      */
-    class Side : public de::MapElement
+    class Side : public world::MapElement
     {
         DENG2_NO_COPY  (Side)
         DENG2_NO_ASSIGN(Side)
@@ -118,7 +116,7 @@ public:
         /**
          * Side geometry segment on the XY plane.
          */
-        class Segment : public de::MapElement
+        class Segment : public world::MapElement
         {
             DENG2_NO_COPY  (Segment)
             DENG2_NO_ASSIGN(Segment)
@@ -161,19 +159,19 @@ public:
              *
              * @see lineSide()
              */
-            coord_t lineSideOffset() const;
+            de::ddouble lineSideOffset() const;
 
             /// @todo Refactor away.
-            void setLineSideOffset(coord_t newOffset);
+            void setLineSideOffset(de::ddouble newOffset);
 
             /**
              * Returns the accurate length of the segment, from the 'from'
              * vertex to the 'to' vertex in map coordinate space units.
              */
-            coord_t length() const;
+            de::ddouble length() const;
 
             /// @todo Refactor away.
-            void setLength(coord_t newLength);
+            void setLength(de::ddouble newLength);
 
             /**
              * Returns @c true iff the segment is marked as "front facing".
@@ -514,8 +512,8 @@ public:
 #endif  // __CLIENT__
 
     protected:
-        de::dint property(DmuArgs &args) const;
-        de::dint setProperty(DmuArgs const &args);
+        de::dint property(de::DmuArgs &args) const;
+        de::dint setProperty(de::DmuArgs const &args);
 
     private:
         DENG2_PRIVATE(d)
@@ -732,7 +730,7 @@ public:
     /**
      * Returns the accurate length of the line from Start to End vertex.
      */
-    coord_t length() const;
+    de::ddouble length() const;
 
     /**
      * Returns @c true iff the line has a length equivalent to zero.
@@ -781,7 +779,7 @@ public:
     /**
      * @param offset  Returns the position of the nearest point along the line [0..1].
      */
-    coord_t pointDistance(de::Vector2d const &point, coord_t *offset = nullptr) const;
+    de::ddouble pointDistance(de::Vector2d const &point, de::ddouble *offset = nullptr) const;
 
     /**
      * Where does the given @a point lie relative to the line? Note that the line is considered
@@ -793,7 +791,7 @@ public:
      *         @c =0 Point lies directly on/incident with the line.
      *         @c >0 Point is to the right of the line.
      */
-    coord_t pointOnSide(de::Vector2d const &point) const;
+    de::ddouble pointOnSide(de::Vector2d const &point) const;
 
     /**
      * Returns @c true iff the line defines a section of some Polyobj.
@@ -889,8 +887,8 @@ public:
 #endif
 
 protected:
-    de::dint property(DmuArgs &args) const;
-    de::dint setProperty(DmuArgs const &args);
+    de::dint property(de::DmuArgs &args) const;
+    de::dint setProperty(de::DmuArgs const &args);
 
 public:
     /**
@@ -941,4 +939,4 @@ typedef Line::Side::Segment LineSideSegment;
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Line::Side::SectionFlags)
 
-#endif  // WORLD_LINE_H
+#endif  // DENG_WORLD_LINE_H

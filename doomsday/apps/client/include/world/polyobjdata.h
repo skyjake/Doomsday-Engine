@@ -1,7 +1,7 @@
 /** @file polyobjdata.h  Private data for a polyobj
  *
  * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,12 +20,12 @@
 #ifndef DENG_WORLD_POLYOBJDATA_H
 #define DENG_WORLD_POLYOBJDATA_H
 
-#include "Polyobj"
-#include "world/map.h"
+#include <QList>
+#include <QVector>
+#include <de/Vector>
 #include <doomsday/world/thinker.h>
 
-#include <QVector>
-#include <QList>
+#include "Polyobj"
 
 #ifdef __CLIENT__
 class ClPolyMover;
@@ -57,19 +57,20 @@ public:
 #endif
 
 public:
-    int indexInMap;
-    de::Mesh *mesh;
-    Polyobj::Lines lines;
-    Polyobj::Vertexes uniqueVertexes;
-    VertexCoords originalPts;  // Used as the base for the rotations.
-    VertexCoords prevPts;      // Use to restore the old point values.
-    uint origIndex;
+    de::dint indexInMap = world::MapElement::NoIndex;
+    de::duint origIndex = world::MapElement::NoIndex;
+
+    de::Mesh *mesh = nullptr;
+    QList<Line *> lines;
+    QList<Vertex *> uniqueVertexes;
+    VertexCoords originalPts;  ///< Used as the base for the rotations.
+    VertexCoords prevPts;      ///< Use to restore the old point values.
 
 private:
-    polyobj_s *_polyobj;
+    polyobj_s *_polyobj = nullptr;
 #ifdef __CLIENT__
-    ClPolyMover *_mover;
+    ClPolyMover *_mover = nullptr;
 #endif
 };
 
-#endif // DENG_WORLD_POLYOBJDATA_H
+#endif  // DENG_WORLD_POLYOBJDATA_H

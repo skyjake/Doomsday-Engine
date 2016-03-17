@@ -1,7 +1,8 @@
-/** @file contactspreader.h World object => BSP leaf "contact" spreader.
+/** @file contactspreader.h  Map object => BSP leaf "contact" spreader.
+ * @ingroup world
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -25,14 +26,14 @@
 #include <QBitArray>
 #include "world/blockmap.h"
 
-namespace de {
+namespace world {
 
 /**
  * Performs contact spreading for the specified @a blockmap.
  */
 void spreadContacts(Blockmap const &blockmap, AABoxd const &region, QBitArray *spreadBlocks = 0);
 
-}
+}  // namespace world
 
-#endif // DENG_CLIENT_WORLD_CONTACTSPREADER_H
-#endif // __CLIENT__
+#endif  // DENG_CLIENT_WORLD_CONTACTSPREADER_H
+#endif  // __CLIENT__

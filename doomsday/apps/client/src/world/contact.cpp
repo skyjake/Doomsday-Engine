@@ -28,6 +28,7 @@
 #include "ConvexSubspace"
 
 using namespace de;
+using namespace world;
 
 ContactType Contact::type() const
 {

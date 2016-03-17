@@ -25,7 +25,7 @@
 #include <doomsday/defs/dedtypes.h>
 #include "map.h"
 
-class BspLeaf;
+namespace world { class BspLeaf; }
 class Line;
 class Plane;
 struct mobj_s;
@@ -37,13 +37,13 @@ struct mobj_s;
  */
 struct ParticleInfo
 {
-    int stage;         ///< -1 => particle doesn't exist
-    short tics;
-    fixed_t origin[3]; ///< Coordinates.
-    fixed_t mov[3];    ///< Momentum.
-    BspLeaf *bspLeaf;  ///< Updated when needed.
-    Line *contact;     ///< Updated when lines hit/avoided.
-    ushort yaw, pitch; ///< Rotation angles (0-65536 => 0-360).
+    de::dint stage;           ///< -1 => particle doesn't exist
+    de::dshort tics;
+    fixed_t origin[3];        ///< Coordinates.
+    fixed_t mov[3];           ///< Momentum.
+    world::BspLeaf *bspLeaf;  ///< Updated when needed.
+    Line *contact;            ///< Updated when lines hit/avoided.
+    de::dushort yaw, pitch;   ///< Rotation angles (0-65536 => 0-360).
 };
 
 /**
@@ -130,7 +130,7 @@ public:
      *
      * @see Thinker_Map()
      */
-    de::Map &map() const;
+    world::Map &map() const;
 
     /**
      * Returns the unique identifier of the generator. The identifier is 1-based.

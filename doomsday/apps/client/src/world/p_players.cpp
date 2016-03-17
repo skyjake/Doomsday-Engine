@@ -174,18 +174,18 @@ bool P_IsInVoid(player_t *player)
 
         if(!Mobj_HasSubspace(*mo))
             return true;
-        SectorCluster &cluster = Mobj_Cluster(*mo);
+        world::SectorCluster &cluster = Mobj_Cluster(*mo);
 
 #ifdef __CLIENT__
         if(cluster.visCeiling().surface().hasSkyMaskedMaterial())
         {
-            coord_t const skyCeil = cluster.sector().map().skyFixCeiling();
-            if(skyCeil < DDMAXFLOAT && mo->origin[VZ] > skyCeil - 4)
+            ddouble const skyCeil = cluster.sector().map().skyFixCeiling();
+            if(skyCeil < DDMAXFLOAT && mo->origin[2] > skyCeil - 4)
                 return true;
         }
-        else if(mo->origin[VZ] > cluster.visCeiling().heightSmoothed() - 4)
+        else if(mo->origin[2] > cluster.visCeiling().heightSmoothed() - 4)
 #else
-        if(mo->origin[VZ] > cluster.ceiling().height() - 4)
+        if(mo->origin[2] > cluster.ceiling().height() - 4)
 #endif
         {
             return true;
@@ -194,13 +194,13 @@ bool P_IsInVoid(player_t *player)
 #ifdef __CLIENT__
         if(cluster.visFloor().surface().hasSkyMaskedMaterial())
         {
-            coord_t const skyFloor = cluster.sector().map().skyFixFloor();
-            if(skyFloor > DDMINFLOAT && mo->origin[VZ] < skyFloor + 4)
+            ddouble const skyFloor = cluster.sector().map().skyFixFloor();
+            if(skyFloor > DDMINFLOAT && mo->origin[2] < skyFloor + 4)
                 return true;
         }
-        else if(mo->origin[VZ] < cluster.visFloor().heightSmoothed() + 4)
+        else if(mo->origin[2] < cluster.visFloor().heightSmoothed() + 4)
 #else
-        if(mo->origin[VZ] < cluster.floor().height() + 4)
+        if(mo->origin[2] < cluster.floor().height() + 4)
 #endif
         {
             return true;
@@ -212,7 +212,7 @@ bool P_IsInVoid(player_t *player)
 
 void P_ClearPlayerImpulses()
 {
-    for(int i = 0; i < DDMAXPLAYERS; ++i)
+    for(dint i = 0; i < DDMAXPLAYERS; ++i)
     {
         qDeleteAll(accumulators[i]);
         accumulators[i].clear();
@@ -222,7 +222,7 @@ void P_ClearPlayerImpulses()
     impulsesByName.clear();
 }
 
-PlayerImpulse *P_PlayerImpulsePtr(int id)
+PlayerImpulse *P_PlayerImpulsePtr(dint id)
 {
     auto found = impulses.find(id);
     if(found != impulses.end()) return *found;

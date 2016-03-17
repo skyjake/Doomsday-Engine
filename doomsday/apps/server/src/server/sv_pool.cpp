@@ -427,7 +427,7 @@ void Sv_RegisterSector(dt_sector_t *reg, dint number)
 
         // Plane properties
         reg->planes[i].height = plane.height();
-        reg->planes[i].target = plane.targetHeight();
+        reg->planes[i].target = plane.heightTarget();
         reg->planes[i].speed  = plane.speed();
 
         // Surface properties.
@@ -685,7 +685,7 @@ dd_bool Sv_RegisterCompareSector(cregister_t *reg, dint number, sectordelta_t *d
     }
 
     // Check planes, too.
-    if(!fequal(r->planes[PLN_FLOOR].target, s.floor().targetHeight()))
+    if(!fequal(r->planes[PLN_FLOOR].target, s.floor().heightTarget()))
     {
         // Target and speed are always sent together.
         df |= SDF_FLOOR_TARGET | SDF_FLOOR_SPEED;
@@ -695,7 +695,7 @@ dd_bool Sv_RegisterCompareSector(cregister_t *reg, dint number, sectordelta_t *d
         // Target and speed are always sent together.
         df |= SDF_FLOOR_SPEED | SDF_FLOOR_TARGET;
     }
-    if(!fequal(r->planes[PLN_CEILING].target, s.ceiling().targetHeight()))
+    if(!fequal(r->planes[PLN_CEILING].target, s.ceiling().heightTarget()))
     {
         // Target and speed are always sent together.
         df |= SDF_CEILING_TARGET | SDF_CEILING_SPEED;
@@ -710,7 +710,7 @@ dd_bool Sv_RegisterCompareSector(cregister_t *reg, dint number, sectordelta_t *d
     if(df & (SDF_CEILING_HEIGHT | SDF_CEILING_SPEED | SDF_CEILING_TARGET))
     {
         LOGDEV_NET_XVERBOSE("Sector %i: ceiling state change noted (target = %f)")
-            << number << s.ceiling().targetHeight();
+            << number << s.ceiling().heightTarget();
     }
 #endif
 
@@ -940,7 +940,7 @@ void Sv_RegisterWorld(cregister_t *reg, dd_bool isInitial)
 {
     DENG2_ASSERT(reg);
 
-    Map &map = worldSys().map();
+    world::Map &map = worldSys().map();
 
     de::zapPtr(reg);
     reg->gametic = SECONDS_TO_TICKS(gameTime);
@@ -2227,7 +2227,7 @@ void Sv_NewSideDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
     static uint numShifts = 2, shift = 0;
 
     /// @todo fixme: Do not assume the current map.
-    Map &map = worldSys().map();
+    world::Map &map = worldSys().map();
 
     // When comparing against an initial register, always compare all
     // sides (since the comparing is only done once, not continuously).

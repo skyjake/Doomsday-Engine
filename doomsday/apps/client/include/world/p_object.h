@@ -32,15 +32,17 @@
 #include <doomsday/world/thinker.h>
 #include <doomsday/world/mobj.h>
 
+#include "world/bspleaf.h"
 #include "api_map.h"
 #include "dd_def.h"
 #ifdef __CLIENT__
 #  include "ModelDef"
 #endif
 
-class BspLeaf;
-class Plane;
+namespace world {
 class SectorCluster;
+}
+class Plane;
 
 #define MOBJ_SIZE               gx.mobjSize
 
@@ -80,7 +82,7 @@ void P_MobjRecycle(mobj_t *mob);
  *
  * @see Thinker_Map()
  */
-de::Map &Mobj_Map(mobj_t const &mob);
+world::Map &Mobj_Map(mobj_t const &mob);
 
 /**
  * Returns @c true if the map-object has been linked into the map. The only time this is
@@ -120,7 +122,7 @@ dd_bool Mobj_SetOrigin(mobj_t *mob, coord_t x, coord_t y, coord_t z);
  *
  * @see Mobj_IsLinked(), Mobj_SetOrigin()
  */
-BspLeaf &Mobj_BspLeafAtOrigin(mobj_t const &mob);
+world::BspLeaf &Mobj_BspLeafAtOrigin(mobj_t const &mob);
 
 /**
  * Returns @c true iff the BSP leaf at the map-object's origin is known (i.e., it has been
@@ -137,7 +139,7 @@ bool Mobj_HasSubspace(mobj_t const &mob);
  *
  * @see Mobj_HasSubspace()
  */
-SectorCluster &Mobj_Cluster(mobj_t const &mob);
+world::SectorCluster &Mobj_Cluster(mobj_t const &mob);
 
 /**
  * Returns a pointer to sector cluster in which the mobj currently resides, or @c nullptr
@@ -147,7 +149,7 @@ SectorCluster &Mobj_Cluster(mobj_t const &mob);
  *
  * @see Mobj_HasCluster()
  */
-SectorCluster *Mobj_ClusterPtr(mobj_t const &mob);
+world::SectorCluster *Mobj_ClusterPtr(mobj_t const &mob);
 
 /**
  * Creates a new map-object triggered particle generator based on the given definition.

@@ -1,5 +1,5 @@
-/** @file audioenvironent.h  World audio environment.
- * @ingroup audio
+/** @file audioenvironent.h  Audio environment.
+ * @ingroup world
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2016 Daniel Swanson <danij@dengine.net>
@@ -22,8 +22,7 @@
 #ifndef DENG_CLIENT_WORLD_AUDIOENVIRONMENT_H_
 #define DENG_CLIENT_WORLD_AUDIOENVIRONMENT_H_
 
-namespace world
-{
+namespace world {
 
 /**
  * Environmental audio characteristics.

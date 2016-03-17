@@ -32,7 +32,7 @@
 class Hand;
 #endif
 
-namespace de { class Map; }
+namespace world { class Map; }
 
 /**
  * Ideas for improvement:
@@ -82,12 +82,12 @@ public:
     /**
      * Provides access to the currently loaded map.
      */
-    de::Map &map() const;
+    world::Map &map() const;
 
     /**
      * Returns a pointer to the currently loaded map, if any.
      */
-    inline de::Map *mapPtr() const { return hasMap()? &map() : nullptr; }
+    inline world::Map *mapPtr() const { return hasMap() ? &map() : nullptr; }
 
     /**
      * @param uri  Universal resource identifier (URI) for the map to change to.

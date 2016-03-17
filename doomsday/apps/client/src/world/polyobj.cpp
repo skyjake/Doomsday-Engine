@@ -1,7 +1,7 @@
 /** @file polyobj.h  World map polyobj.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -43,6 +43,7 @@
 #endif
 
 using namespace de;
+using namespace world;
 
 // Function to be called when the polyobj collides with some map element.
 static void (*collisionCallback) (mobj_t *mobj, void *line, void *polyobj);
@@ -192,9 +193,9 @@ void Polyobj::unlink()
 {
     if(_bspLeaf)
     {
-        if(_bspLeaf->hasSubspace())
+        if(((BspLeaf *)_bspLeaf)->hasSubspace())
         {
-            _bspLeaf->subspace().unlink(*this);
+            ((BspLeaf *)_bspLeaf)->subspace().unlink(*this);
         }
         _bspLeaf = nullptr;
 
@@ -218,9 +219,9 @@ void Polyobj::link()
 
         // Given the center point determine in which BSP leaf the polyobj resides.
         _bspLeaf = &map().bspLeafAt(avg);
-        if(_bspLeaf->hasSubspace())
+        if(((BspLeaf *)_bspLeaf)->hasSubspace())
         {
-            _bspLeaf->subspace().link(*this);
+            ((BspLeaf *)_bspLeaf)->subspace().link(*this);
         }
     }
 }
@@ -232,7 +233,7 @@ bool Polyobj::hasBspLeaf() const
 
 BspLeaf &Polyobj::bspLeaf() const
 {
-    if(hasBspLeaf()) return *_bspLeaf;
+    if(hasBspLeaf()) return *(BspLeaf *)_bspLeaf;
     /// @throw Polyobj::NotLinkedError Attempted while the polyobj is not linked to the BSP.
     throw Polyobj::NotLinkedError("Polyobj::bspLeaf", "Polyobj is not presently linked in the BSP");
 }
@@ -249,7 +250,7 @@ Sector &Polyobj::sector() const
 
 Sector *Polyobj::sectorPtr() const
 {
-    return hasBspLeaf()? bspLeaf().sectorPtr() : nullptr;
+    return hasBspLeaf() ? bspLeaf().sectorPtr() : nullptr;
 }
 
 SoundEmitter &Polyobj::soundEmitter()
@@ -262,12 +263,12 @@ SoundEmitter const &Polyobj::soundEmitter() const
     return const_cast<SoundEmitter const &>(const_cast<Polyobj &>(*this).soundEmitter());
 }
 
-Polyobj::Lines const &Polyobj::lines() const
+QList<Line *> const &Polyobj::lines() const
 {
     return data().lines;
 }
 
-Polyobj::Vertexes const &Polyobj::uniqueVertexes() const
+QList<Vertex *> const &Polyobj::uniqueVertexes() const
 {
     return data().uniqueVertexes;
 }
@@ -281,7 +282,7 @@ void Polyobj::buildUniqueVertexes()
         vertexSet.insert(&line->to());
     }
 
-    Vertexes &uniqueVertexes = data().uniqueVertexes;
+    QList<Vertex *> &uniqueVertexes = data().uniqueVertexes;
     uniqueVertexes = vertexSet.toList();
 
     // Resize the coordinate vectors as they are implicitly linked to the unique vertexes.
@@ -400,8 +401,8 @@ bool Polyobj::move(Vector2d const &delta)
  */
 static void rotatePoint2d(Vector2d &point, Vector2d const &about, duint fineAngle)
 {
-    coord_t const c = FIX2DBL(fineCosine[fineAngle]);
-    coord_t const s = FIX2DBL(finesine[fineAngle]);
+    ddouble const c = FIX2DBL(fineCosine[fineAngle]);
+    ddouble const s = FIX2DBL(finesine[fineAngle]);
 
     Vector2d orig = point;
 

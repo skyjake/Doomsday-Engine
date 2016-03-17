@@ -3,7 +3,7 @@
  * Originally based on glBSP 2.24 (in turn, based on BSP 2.3)
  * @see http://sourceforge.net/projects/glbsp/
  *
- * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2016 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  * @authors Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
  * @authors Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
@@ -31,7 +31,7 @@
 #include <de/BinaryTree>
 #include "world/bsp/linesegment.h"
 
-namespace de {
+namespace world {
 namespace bsp {
 
 /**
@@ -88,7 +88,7 @@ private:
 
 typedef de::BinaryTree<LineSegmentBlock *> LineSegmentBlockTreeNode;
 
-} // namespace bsp
-} // namespace de
+}  // namespace bsp
+}  // namespace world
 
-#endif // DENG_WORLD_BSP_LINESEGMENTBLOCK_H
+#endif  // DENG_WORLD_BSP_LINESEGMENTBLOCK_H

@@ -1,6 +1,6 @@
 /** @file superblockmap.cpp  BSP line segment blockmap block.
  *
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2016 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  * @authors Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
@@ -25,7 +25,9 @@
 #include <de/vector1.h>
 
 using namespace de;
-using namespace de::bsp;
+
+namespace world {
+namespace bsp {
 
 DENG2_PIMPL_NOREF(LineSegmentBlock)
 {
@@ -92,3 +94,6 @@ LineSegmentBlock::All const &LineSegmentBlock::all() const
 {
     return d->segments;
 }
+
+}  // namespace bsp
+}  // namespace world

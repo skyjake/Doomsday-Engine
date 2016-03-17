@@ -38,9 +38,9 @@
 #include "MaterialAnimator"
 #include "WallEdge"
 
-namespace de {
+using namespace de;
 
-namespace internal {
+namespace world {
 
 /**
  * On which side of the half-edge does the specified @a point lie?
@@ -52,7 +52,7 @@ namespace internal {
  *         @c =0 Point lies directly on the segment.
  *         @c >0 Point is to the right/front of the segment.
  */
-static coord_t pointOnHEdgeSide(HEdge const &hedge, Vector2d const &point)
+static ddouble pointOnHEdgeSide(HEdge const &hedge, Vector2d const &point)
 {
     Vector2d const direction = hedge.twin().origin() - hedge.origin();
 
@@ -64,21 +64,21 @@ static coord_t pointOnHEdgeSide(HEdge const &hedge, Vector2d const &point)
 
 struct ContactSpreader
 {
-    Blockmap const &_blockmap;
-    QBitArray *_spreadBlocks;
+    world::Blockmap const &_blockmap;
+    QBitArray *_spreadBlocks = nullptr;
 
     struct SpreadState
     {
-        Contact *contact;
+        Contact *contact = nullptr;
         AABoxd contactAABox;
-
-        SpreadState() : contact(0) {}
     };
     SpreadState _spread;
 
-    ContactSpreader(Blockmap const &blockmap, QBitArray *spreadBlocks = 0)
-        : _blockmap(blockmap), _spreadBlocks(spreadBlocks)
-    {}
+    ContactSpreader(world::Blockmap const &blockmap, QBitArray *spreadBlocks = nullptr)
+        : _blockmap(blockmap)
+    {
+        _spreadBlocks = spreadBlocks;
+    }
 
     /**
      * Spread contacts in the blockmap to any touched neighbors.
@@ -140,15 +140,15 @@ private:
 
         if(!hedge) return;
 
-        ConvexSubspace &subspace = hedge->face().mapElementAs<ConvexSubspace>();
-        SectorCluster &cluster   = subspace.cluster();
+        auto &subspace         = hedge->face().mapElementAs<ConvexSubspace>();
+        SectorCluster &cluster = subspace.cluster();
 
         // There must be a back BSP leaf to spread to.
         if(!hedge->hasTwin() || !hedge->twin().hasFace() || !hedge->twin().face().hasMapElement())
             return;
 
-        ConvexSubspace &backSubspace = hedge->twin().face().mapElementAs<ConvexSubspace>();
-        SectorCluster &backCluster   = backSubspace.cluster();
+        auto &backSubspace         = hedge->twin().face().mapElementAs<ConvexSubspace>();
+        SectorCluster &backCluster = backSubspace.cluster();
 
         // Which way does the spread go?
         if(!(subspace.validCount() == validCount &&
@@ -266,12 +266,10 @@ private:
     }
 };
 
-} // internal
-
 void spreadContacts(Blockmap const &blockmap, AABoxd const &region,
     QBitArray *spreadBlocks)
 {
-    internal::ContactSpreader(blockmap, spreadBlocks).spread(region);
+    ContactSpreader(blockmap, spreadBlocks).spread(region);
 }
 
-} // namespace de
+}  // namespace world

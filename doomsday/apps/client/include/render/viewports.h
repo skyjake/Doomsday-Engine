@@ -28,7 +28,8 @@
 #include <de/Matrix>
 #include <de/rect.h>
 
-class ConvexSubspace;
+namespace world { class ConvexSubspace; }
+
 struct Generator;
 class Lumobj;
 
@@ -154,14 +155,14 @@ void R_NewSharpWorld();
  *
  * @see R_ViewerSubspaceMarkVisible()
  */
-bool R_ViewerSubspaceIsVisible(ConvexSubspace const &subspace);
+bool R_ViewerSubspaceIsVisible(world::ConvexSubspace const &subspace);
 
 /**
  * Mark the subspace as visible for the current frame.
  *
  * @see R_ViewerSubspaceIsVisible()
  */
-void R_ViewerSubspaceMarkVisible(ConvexSubspace const &subspace, bool yes = true);
+void R_ViewerSubspaceMarkVisible(world::ConvexSubspace const &subspace, bool yes = true);
 
 /**
  * Returns @c true iff the (particle) generator is marked as visible for the current frame.
@@ -194,7 +195,7 @@ bool R_ViewerLumobjIsHidden(int idx);
  */
 void R_ViewerClipLumobj(Lumobj *lum);
 
-void R_ViewerClipLumobjBySight(Lumobj *lum, ConvexSubspace *subspace);
+void R_ViewerClipLumobjBySight(Lumobj *lum, world::ConvexSubspace *subspace);
 
 /**
  * Attempt to set up a view grid and calculate the viewports. Set 'numCols' and

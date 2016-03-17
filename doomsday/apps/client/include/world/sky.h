@@ -1,7 +1,8 @@
-/** @file sky.h  Sky behavior logic for the world system.
+/** @file sky.h  Sky behavior.
+ * @ingroup world
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -36,17 +37,15 @@
 
 /**
  * Behavior logic for a sky in the world system.
- *
- * @ingroup world
  */
-class Sky : public de::MapElement
+class Sky : public world::MapElement
 {
 public:
     /// Notified when the sky is about to be deleted.
-    DENG2_DEFINE_AUDIENCE2(Deletion, void skyBeingDeleted(Sky const &sky))
+    DENG2_DEFINE_AUDIENCE2(Deletion,            void skyBeingDeleted(Sky const &sky))
 
     /// Notified whenever the height changes.
-    DENG2_DEFINE_AUDIENCE2(HeightChange, void skyHeightChanged(Sky &sky))
+    DENG2_DEFINE_AUDIENCE2(HeightChange,        void skyHeightChanged(Sky &sky))
 
     /// Notified whenever the horizon offset changes.
     DENG2_DEFINE_AUDIENCE2(HorizonOffsetChange, void skyHorizonOffsetChanged(Sky &sky))
@@ -58,10 +57,10 @@ public:
     {
     public:
         /// Notified whenever the active-state changes.
-        DENG2_DEFINE_AUDIENCE2(ActiveChange, void skyLayerActiveChanged(Layer &layer))
+        DENG2_DEFINE_AUDIENCE2(ActiveChange,   void skyLayerActiveChanged(Layer &layer))
 
         /// Notified whenever the masked-state changes.
-        DENG2_DEFINE_AUDIENCE2(MaskedChange, void skyLayerMaskedChanged(Layer &layer))
+        DENG2_DEFINE_AUDIENCE2(MaskedChange,   void skyLayerMaskedChanged(Layer &layer))
 
         /// Notified whenever the layer material changes.
         DENG2_DEFINE_AUDIENCE2(MaterialChange, void skyLayerMaterialChanged(Layer &layer))
@@ -85,14 +84,14 @@ public:
         bool isActive() const;
 
         /**
-         * Change the 'active' state of the layer. The ActiveChange audience is
-         * notified whenever the 'active' state changes.
+         * Change the 'active' state of the layer. The ActiveChange audience is notified
+         * whenever the 'active' state changes.
          *
          * @see isActive()
          */
         void setActive(bool yes);
 
-        inline void enable()  { setActive(true);  }
+        inline void enable () { setActive(true);  }
         inline void disable() { setActive(false); }
 
         /**
@@ -103,8 +102,8 @@ public:
         bool isMasked() const;
 
         /**
-         * Change the 'masked' state of the layer. The MaskedChange audience is
-         * notified whenever the 'masked' state changes.
+         * Change the 'masked' state of the layer. The MaskedChange audience is notified
+         * whenever the 'masked' state changes.
          *
          * @see isMasked()
          */
@@ -155,8 +154,8 @@ public:
     explicit Sky(defn::Sky const *definition = nullptr);
 
     /**
-     * Reconfigure according to the specified @a definition if not @c NULL,
-     * otherwise, reconfigure using the default values.
+     * Reconfigure according to the specified @a definition if not @c nullptr, otherwise,
+     * reconfigure using the default values.
      *
      * @see configureDefault()
      */
@@ -224,10 +223,10 @@ public:
 #ifdef __CLIENT__
 
     /**
-     * Returns the ambient color of the sky. The ambient color is automatically
-     * calculated by averaging the color information in the configured layer
-     * material textures. Alternatively, this color can be overridden manually
-     * by calling @ref setAmbientColor().
+     * Returns the ambient color of the sky. The ambient color is automatically calculated
+     * by averaging the color information in the configured layer material textures.
+     *
+     * Alternatively, this color can be overridden manually by calling @ref setAmbientColor().
      */
     de::Vector3f const &ambientColor() const;
 
@@ -240,11 +239,11 @@ public:
      */
     void setAmbientColor(de::Vector3f const &newColor);
 
-#endif // __CLIENT__
+#endif  // __CLIENT__
 
 protected:
-    int property(DmuArgs &args) const;
-    int setProperty(DmuArgs const &args);
+    int property(de::DmuArgs &args) const;
+    int setProperty(de::DmuArgs const &args);
 
 private:
     DENG2_PRIVATE(d)
@@ -252,4 +251,4 @@ private:
 
 typedef Sky::Layer SkyLayer;
 
-#endif // DENG_WORLD_SKY_H
+#endif  // DENG_WORLD_SKY_H

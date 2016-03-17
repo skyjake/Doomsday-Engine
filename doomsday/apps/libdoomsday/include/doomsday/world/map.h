@@ -1,6 +1,7 @@
 /** @file map.h  Base for world maps.
+ * @ingroup world
  *
- * @authors Copyright © 2014-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2014-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -31,7 +32,7 @@ namespace world {
 /**
  * Base class for world maps.
  */
-class LIBDOOMSDAY_PUBLIC Map
+class LIBDOOMSDAY_PUBLIC BaseMap
 {
 public:
     /// No resource manifest is associated with the map.
@@ -41,8 +42,8 @@ public:
     /**
      * @param manifest  Resource manifest for the map (Can be set later, @ref setDef).
      */
-    explicit Map(res::MapManifest *manifest = nullptr);
-    virtual ~Map();
+    explicit BaseMap(res::MapManifest *manifest = nullptr);
+    virtual ~BaseMap();
 
     de::String id() const;
 
@@ -76,7 +77,7 @@ public:
 
 public:
     /// Notified when the map is about to be deleted.
-    DENG2_DEFINE_AUDIENCE2(Deletion, void mapBeingDeleted(Map const &map))
+    DENG2_DEFINE_AUDIENCE2(Deletion, void mapBeingDeleted(BaseMap const &map))
 
 private:
     DENG2_PRIVATE(d)

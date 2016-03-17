@@ -36,7 +36,7 @@
  * recreating light source information on each frame, when it can be kept in the
  * thinker/map data for the lifetime of the owner. -jk
  */
-class Lumobj : public de::MapObject
+class Lumobj : public world::MapObject
 {
 public:
     /// Identifiers for attributing lightmaps (used during projection).

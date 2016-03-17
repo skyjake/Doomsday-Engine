@@ -17,7 +17,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de_base.h"
+#include "render/biassource.h"
+
+#include "dd_main.h"  // App_World()
 
 #include "world/clientserverworld.h"
 #include "world/map.h"
@@ -25,11 +27,8 @@
 #include "ConvexSubspace"
 #include "SectorCluster"
 
-#include "BiasDigest"
-
-#include "render/biassource.h"
-
 using namespace de;
+using namespace world;
 
 DENG2_PIMPL(BiasSource)
 {
@@ -41,25 +40,25 @@ DENG2_PIMPL(BiasSource)
     bool inVoid; ///< Set to @c true if the origin is in the void.
 
     /// Intensity of the emitted light.
-    float primaryIntensity;
+    dfloat primaryIntensity;
 
     /// Effective intensity of the light scaled by the ambient level threshold.
-    float intensity;
+    dfloat intensity;
 
     /// Color strength factors of the emitted light.
     Vector3f color;
 
     /// Ambient light level threshold.
-    float minLight, maxLight;
+    dfloat minLight, maxLight;
 
     /// Time in milliseconds of the last update.
-    uint lastUpdateTime;
+    duint lastUpdateTime;
 
     /// Flags:
     bool changed;
 
-    Instance(Public *i, Vector3d const &origin, float intensity,
-             Vector3f const &color, float minLight, float maxLight)
+    Instance(Public *i, Vector3d const &origin, dfloat intensity,
+             Vector3f const &color, dfloat minLight, dfloat maxLight)
         : Base(i)
         , origin          (origin)
         , bspLeaf         (0)
@@ -116,7 +115,7 @@ DENG2_PIMPL(BiasSource)
         }
     }
 
-    void notifyIntensityChanged(float oldIntensity)
+    void notifyIntensityChanged(dfloat oldIntensity)
     {
         DENG2_FOR_PUBLIC_AUDIENCE(IntensityChange, i)
         {
@@ -127,8 +126,8 @@ DENG2_PIMPL(BiasSource)
     void notifyColorChanged(Vector3f const &oldColor)
     {
         // Predetermine which components have changed.
-        int changedComponents = 0;
-        for(int i = 0; i < 3; ++i)
+        dint changedComponents = 0;
+        for(dint i = 0; i < 3; ++i)
         {
             if(!de::fequal(color[i], oldColor[i]))
                 changedComponents |= (1 << i);
@@ -141,15 +140,17 @@ DENG2_PIMPL(BiasSource)
     }
 };
 
-BiasSource::BiasSource(Vector3d const &origin, float intensity, Vector3f const &color,
-    float minLight, float maxLight)
-    : Grabbable(), ISerializable(),
-      d(new Instance(this, origin, intensity, color, minLight, maxLight))
+BiasSource::BiasSource(Vector3d const &origin, dfloat intensity, Vector3f const &color,
+    dfloat minLight, dfloat maxLight)
+    : Grabbable()
+    , ISerializable()
+    , d(new Instance(this, origin, intensity, color, minLight, maxLight))
 {}
 
 BiasSource::BiasSource(BiasSource const &other)
-    : Grabbable() /*grabbable state is not copied*/, ISerializable(),
-      d(new Instance(this, *other.d))
+    : Grabbable() /*grabbable state is not copied*/
+    , ISerializable()
+    , d(new Instance(this, *other.d))
 {}
 
 BiasSource BiasSource::fromDef(ded_light_t const &def) //static
@@ -187,16 +188,16 @@ BspLeaf &BiasSource::bspLeafAtOrigin() const
     return *d->bspLeaf;
 }
 
-void BiasSource::lightLevels(float &minLight, float &maxLight) const
+void BiasSource::lightLevels(dfloat &minLight, dfloat &maxLight) const
 {
     minLight = d->minLight;
     maxLight = d->maxLight;
 }
 
-BiasSource &BiasSource::setLightLevels(float newMinLight, float newMaxLight)
+BiasSource &BiasSource::setLightLevels(dfloat newMinLight, dfloat newMaxLight)
 {
-    float newMinLightClamped = de::clamp(0.f, newMinLight, 1.f);
-    float newMaxLightClamped = de::clamp(0.f, newMaxLight, 1.f);
+    dfloat newMinLightClamped = de::clamp(0.f, newMinLight, 1.f);
+    dfloat newMaxLightClamped = de::clamp(0.f, newMaxLight, 1.f);
     if(!de::fequal(d->minLight, newMinLightClamped))
     {
         d->minLight = newMinLightClamped;
@@ -218,11 +219,11 @@ Vector3f const &BiasSource::color() const
 BiasSource &BiasSource::setColor(Vector3f const &newColor)
 {
     // Amplify the new color (but replace black with white).
-    float largest = newColor[newColor.maxAxis()];
+    dfloat largest = newColor[newColor.maxAxis()];
     Vector3f newColorAmplified = (largest > 0? newColor / largest : Vector3f(1, 1, 1));
 
     // Clamp.
-    for(int i = 0; i < 3; ++i)
+    for(dint i = 0; i < 3; ++i)
     {
         newColorAmplified[i] = de::clamp(0.f, newColorAmplified[i], 1.f);
     }
@@ -240,16 +241,16 @@ BiasSource &BiasSource::setColor(Vector3f const &newColor)
     return *this;
 }
 
-float BiasSource::intensity() const
+dfloat BiasSource::intensity() const
 {
     return d->primaryIntensity;
 }
 
-BiasSource &BiasSource::setIntensity(float newIntensity)
+BiasSource &BiasSource::setIntensity(dfloat newIntensity)
 {
     if(!de::fequal(d->primaryIntensity, newIntensity))
     {
-        float oldIntensity = d->primaryIntensity;
+        dfloat oldIntensity = d->primaryIntensity;
 
         d->primaryIntensity = newIntensity;
 
@@ -265,19 +266,19 @@ BiasSource &BiasSource::setIntensity(float newIntensity)
     return *this;
 }
 
-float BiasSource::evaluateIntensity() const
+dfloat BiasSource::evaluateIntensity() const
 {
     return d->intensity;
 }
 
-bool BiasSource::trackChanges(BiasDigest &changes, uint digestIndex, uint currentTime)
+bool BiasSource::trackChanges(QBitArray &changes, duint digestIndex, duint currentTime)
 {
     if(d->needToObserveSectorLightLevelChanges())
     {
         /// @todo Should observe Sector::LightLevelChange
 
-        float const oldIntensity = intensity();
-        float newIntensity = 0;
+        dfloat const oldIntensity = intensity();
+        dfloat newIntensity = 0;
 
         if(ConvexSubspace *subspace = d->bspLeaf->subspacePtr())
         {
@@ -308,12 +309,12 @@ bool BiasSource::trackChanges(BiasDigest &changes, uint digestIndex, uint curren
     d->changed = false;
     d->lastUpdateTime = currentTime; // Used for interpolation.
 
-    changes.markSourceChanged(digestIndex);
+    changes.setBit(digestIndex);
 
-    return true; // Changes were applied.
+    return true;  // Changes were applied.
 }
 
-uint BiasSource::lastUpdateTime() const
+duint BiasSource::lastUpdateTime() const
 {
     return d->lastUpdateTime;
 }
@@ -333,12 +334,12 @@ void BiasSource::operator << (de::Reader &from)
     Vector3d newOrigin; from >> newOrigin;
     setOrigin(newOrigin);
 
-    float newIntensity; from >> newIntensity;
+    dfloat newIntensity; from >> newIntensity;
     setIntensity(newIntensity);
 
     Vector3f newColor; from >> newColor;
     setColor(newColor);
 
-    float minLight, maxLight; from >> minLight >> maxLight;
+    dfloat minLight, maxLight; from >> minLight >> maxLight;
     setLightLevels(minLight, maxLight);
 }

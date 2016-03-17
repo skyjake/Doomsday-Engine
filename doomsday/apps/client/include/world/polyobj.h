@@ -1,7 +1,8 @@
-/** @file polyobj.h  World map polyobj.
+/** @file polyobj.h  Map polyobj.
+ * @ingroup world
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,34 +22,33 @@
 #ifndef DENG_WORLD_POLYOBJ_H
 #define DENG_WORLD_POLYOBJ_H
 
-#include "dd_share.h"
+#include "dd_share.h"  // SoundEmitter
+
+#include <QList>
+#include <de/Error>
+#include <de/Vector>
 
 #include "Mesh"
 
-#include <de/Vector>
-#include <QList>
-
+namespace world {
 class BspLeaf;
+class Map;
+}
 class Line;
-class Vertex;
 class PolyobjData;
+class Vertex;
 
 /// Storage needed for a polyobj_s instance, plus the user data section (if any).
 #define POLYOBJ_SIZE        gx.polyobjSize
 
 /**
  * World polyobj. Moveable Polygonal Map-Object (Polyobj).
- *
- * @ingroup world
  */
 typedef struct polyobj_s
 {
 public:
     /// The polyobj is not presently linked in the BSP. @ingroup errors
     DENG2_ERROR(NotLinkedError);
-
-    typedef QList<Line *> Lines;
-    typedef QList<Vertex *> Vertexes;
 
     static void setCollisionCallback(void (*func) (struct mobj_s *mobj, void *line, void *polyobj));
 
@@ -67,7 +67,7 @@ public:
     /**
      * Returns the map in which the polyobj exists.
      */
-    de::Map &map() const;
+    world::Map &map() const;
 
     /**
      * Provides access to the mesh owned by the polyobj.
@@ -108,7 +108,7 @@ public:
      *
      * @see isLinked();
      */
-    BspLeaf &bspLeaf() const;
+    world::BspLeaf &bspLeaf() const;
 
     /**
      * Convenience accessor which determines whether a BspLeaf with an attributed
@@ -130,7 +130,7 @@ public:
      * Convenience accessor which returns a pointer to the Sector of the BspLeaf
      * linked to the polyobj.
      *
-     * @return  Sector attributed to the linked BspLeaf; otherwise @c 0.
+     * @return  Sector attributed to the linked BspLeaf; otherwise @c nullptr.
      *
      * @see hasBspLeaf(), BspLeaf::sectorPtr()
      */
@@ -139,20 +139,18 @@ public:
     /**
      * Returns the sound emitter for the polyobj.
      */
-    SoundEmitter &soundEmitter();
-
-    /// @copydoc soundEmitter()
+    SoundEmitter       &soundEmitter();
     SoundEmitter const &soundEmitter() const;
 
     /**
      * Provides access to the list of Lines for the polyobj.
      */
-    Lines const &lines() const;
+    QList<Line *> const &lines() const;
 
     /**
      * Returns the total number of Lines for the polyobj.
      */
-    inline uint lineCount() const { return lines().count(); }
+    inline de::duint lineCount() const { return lines().count(); }
 
     /**
      * To be called once all Lines have been added in order to compile the list
@@ -166,14 +164,14 @@ public:
      *
      * @see buildUniqueVertex()
      */
-    Vertexes const &uniqueVertexes() const;
+    QList<Vertex *> const &uniqueVertexes() const;
 
     /**
      * Returns the total number of unique Vertexes for the polyobj.
      *
      * @see buildUniqueVertexes()
      */
-    inline uint uniqueVertexCount() const { return uniqueVertexes().count(); }
+    inline de::duint uniqueVertexCount() const { return uniqueVertexes().count(); }
 
     /**
      * Update the original coordinates of all vertexes using the current coordinate
@@ -195,7 +193,7 @@ public:
     /**
      * @overload
      */
-    inline bool move(coord_t x, coord_t y) {
+    inline bool move(de::ddouble x, de::ddouble y) {
         return move(de::Vector2d(x, y));
     }
 
@@ -225,26 +223,26 @@ public:
      *
      * @param newTag  New tag.
      */
-    void setTag(int newTag);
+    void setTag(de::dint newTag);
 
     /**
      * Change the associated sequence type of the polyobj.
      *
      * @param newType  New sequence type.
      */
-    void setSequenceType(int newType);
+    void setSequenceType(de::dint newType);
 
     /**
      * Returns the original index of the polyobj.
      */
-    int indexInMap() const;
+    de::dint indexInMap() const;
 
     /**
      * Change the original index of the polyobj.
      *
      * @param newIndex  New original index.
      */
-    void setIndexInMap(int newIndex);
+    void setIndexInMap(de::dint newIndex);
 
 private:
     /**
@@ -258,4 +256,4 @@ private:
     
 } Polyobj;
 
-#endif // DENG_WORLD_POLYOBJ_H
+#endif  // DENG_WORLD_POLYOBJ_H

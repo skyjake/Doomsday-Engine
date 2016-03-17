@@ -1,4 +1,5 @@
-/** @file plane.h  World map plane.
+/** @file plane.h  Map plane.
+ * @ingroup world
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
@@ -18,12 +19,10 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef WORLD_PLANE_H
-#define WORLD_PLANE_H
+#ifndef DENG_WORLD_PLANE_H
+#define DENG_WORLD_PLANE_H
 
-#ifdef __CLIENT__
-#  include <de/Error>
-#endif
+#include <de/Error>
 #include <de/Observers>
 #include <de/String>
 #include <de/Vector>
@@ -43,10 +42,8 @@ class ClPlaneMover;
 
 /**
  * World map sector plane.
- *
- * @ingroup world
  */
-class Plane : public de::MapElement
+class Plane : public world::MapElement
 {
     DENG2_NO_COPY  (Plane)
     DENG2_NO_ASSIGN(Plane)
@@ -83,7 +80,7 @@ public:
      */
     Plane(Sector &sector,
           de::Vector3f const &normal = de::Vector3f(0, 0, 1),
-          coord_t height             = 0);
+          de::ddouble height         = 0);
 
     /**
      * Composes a human-friendly, styled, textual description of the plane.
@@ -146,30 +143,29 @@ public:
     void updateSoundEmitterOrigin();
 
     /**
-     * Returns the current @em sharp height of the plane relative to @c 0 on the
+     * Returns the @em current sharp height of the plane relative to @c 0 on the
      * map up axis. The HeightChange audience is notified whenever the height
      * changes.
      */
-    coord_t height() const;
+    de::ddouble height() const;
 
     /**
-     * Returns the target height of the plane in the map coordinate space.
-     * The target height is the destination height following a successful move.
-     * Note that this may be the same as @ref height(), in which case the plane
-     * is not currently moving. The HeightChange audience is notified whenever
-     * the current @em sharp height changes.
+     * Returns the @em target sharp height of the plane in world map units. The target
+     * height is the destination height following a successful move. Note that this may
+     * be the same as @ref height(), in which case the plane is not currently moving.
+     * The HeightChange audience is notified whenever the current @em sharp height changes.
      *
      * @see speed(), height()
      */
-    coord_t targetHeight() const;
+    de::ddouble heightTarget() const;
 
     /**
      * Returns the rate at which the plane height will be updated (units per tic)
      * when moving to the target height in the map coordinate space.
      *
-     * @see targetHeight(), height()
+     * @see heightTarget(), height()
      */
-    coord_t speed() const;
+    de::ddouble speed() const;
 
 #ifdef __CLIENT__
 
@@ -177,36 +173,36 @@ public:
      * Returns the current smoothed height of the plane (interpolated) in the
      * map coordinate space.
      *
-     * @see targetHeight(), height()
+     * @see heightTarget(), height()
      */
-    coord_t heightSmoothed() const;
+    de::ddouble heightSmoothed() const;
 
     /**
      * Returns the delta between current height and the smoothed height of the
      * plane in the map coordinate space.
      *
-     * @see heightSmoothed(), targetHeight()
+     * @see heightSmoothed(), heightTarget()
      */
-    coord_t heightSmoothedDelta() const;
+    de::ddouble heightSmoothedDelta() const;
 
     /**
      * Perform smoothed height interpolation.
      *
-     * @see heightSmoothed(), targetHeight()
+     * @see heightSmoothed(), heightTarget()
      */
     void lerpSmoothedHeight();
 
     /**
      * Reset the plane's height tracking buffer (for smoothing).
      *
-     * @see heightSmoothed(), targetHeight()
+     * @see heightSmoothed(), heightTarget()
      */
     void resetSmoothedHeight();
 
     /**
      * Roll the plane's height tracking buffer.
      *
-     * @see targetHeight()
+     * @see heightTarget()
      */
     void updateHeightTracking();
 
@@ -247,11 +243,11 @@ public:
 #endif  // __CLIENT__
 
 protected:
-    de::dint property(DmuArgs &args) const;
-    de::dint setProperty(DmuArgs const &args);
+    de::dint property(de::DmuArgs &args) const;
+    de::dint setProperty(de::DmuArgs const &args);
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif  // WORLD_PLANE_H
+#endif  // DENG_WORLD_PLANE_H

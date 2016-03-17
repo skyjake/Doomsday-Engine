@@ -41,6 +41,7 @@
 #include <cmath>
 
 using namespace de;
+using namespace world;
 
 /// Convert 8.8/10.6 fixed point to 16.16.
 #define UNFIXED8_8(x)   (((x) << 16) / 256)
@@ -331,10 +332,10 @@ static dd_bool ClMobj_IsStuckInsideLocalPlayer(mobj_t *mo)
 void ClMobj_ReadDelta()
 {
     /// @todo Do not assume the CURRENT map.
-    Map &map = App_World().map();
+    world::Map &map = App_World().map();
 
     thid_t const id = Reader_ReadUInt16(msgReader); // Read the ID.
-    int const df    = Reader_ReadUInt16(msgReader); // Flags.
+    dint const df   = Reader_ReadUInt16(msgReader); // Flags.
 
     // More flags?
     byte moreFlags = 0, fastMom = false;

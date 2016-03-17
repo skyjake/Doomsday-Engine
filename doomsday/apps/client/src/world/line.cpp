@@ -54,14 +54,15 @@
 #endif
 
 using namespace de;
+using namespace world;
 
 DENG2_PIMPL_NOREF(Line::Side::Segment)
 {
-    HEdge *hedge = nullptr;      ///< Half-edge attributed to the line segment (not owned).
+    HEdge *hedge = nullptr;          ///< Half-edge attributed to the line segment (not owned).
 
 #ifdef __CLIENT__
-    coord_t length = 0;          ///< Accurate length of the segment.
-    coord_t lineSideOffset = 0;  ///< Distance along the attributed map line at which the half-edge vertex occurs.
+    ddouble length = 0;          ///< Accurate length of the segment.
+    ddouble lineSideOffset = 0;  ///< Distance along the attributed map line at which the half-edge vertex occurs.
     bool frontFacing = false;
 #endif
 };
@@ -81,22 +82,22 @@ HEdge &Line::Side::Segment::hedge() const
 
 #ifdef __CLIENT__
 
-coord_t Line::Side::Segment::lineSideOffset() const
+ddouble Line::Side::Segment::lineSideOffset() const
 {
     return d->lineSideOffset;
 }
 
-void Line::Side::Segment::setLineSideOffset(coord_t newOffset)
+void Line::Side::Segment::setLineSideOffset(ddouble newOffset)
 {
     d->lineSideOffset = newOffset;
 }
 
-coord_t Line::Side::Segment::length() const
+ddouble Line::Side::Segment::length() const
 {
     return d->length;
 }
 
-void Line::Side::Segment::setLength(coord_t newLength)
+void Line::Side::Segment::setLength(ddouble newLength)
 {
     d->length = newLength;
 }
@@ -198,7 +199,7 @@ DENG2_PIMPL_NOREF(Line::Side)
             return;
 
         // We'll use a QMap for sorting the segments.
-        QMap<coord_t, Segment *> sortedSegs;
+        QMap<ddouble, Segment *> sortedSegs;
         for(Segment *seg : segments)
         {
             sortedSegs.insert((seg->hedge().origin() - lineSideOrigin).length(), seg);
@@ -469,8 +470,8 @@ void Line::Side::updateSoundEmitterOrigin(dint sectionId)
     emitter.origin[1] = lineCenter.y;
 
     DENG2_ASSERT(d->sector);
-    coord_t const ffloor = d->sector->floor().height();
-    coord_t const fceil  = d->sector->ceiling().height();
+    ddouble const ffloor = d->sector->floor().height();
+    ddouble const fceil  = d->sector->ceiling().height();
 
     /// @todo fixme what if considered one-sided?
     switch(sectionId)
@@ -894,10 +895,10 @@ static void scanNeighbor(LineSide const &side, bool top, bool right, edge_t &edg
 
     ClockDirection const direction = (right ? Anticlockwise : Clockwise);
     Sector const *startSector = side.sectorPtr();
-    coord_t const fFloor      = side.sector().floor  ().heightSmoothed();
-    coord_t const fCeil       = side.sector().ceiling().heightSmoothed();
+    ddouble const fFloor      = side.sector().floor  ().heightSmoothed();
+    ddouble const fCeil       = side.sector().ceiling().heightSmoothed();
 
-    coord_t gap    = 0;
+    ddouble gap    = 0;
     LineOwner *own = side.line().vertexOwner(side.vertex(dint(right)));
     forever
     {
@@ -919,11 +920,11 @@ static void scanNeighbor(LineSide const &side, bool top, bool right, edge_t &edg
         Sector const *scanSector = scanSide.sectorPtr();
 
         // Select plane heights for relative offset comparison.
-        coord_t const iFFloor = iter->frontSector().floor  ().heightSmoothed();
-        coord_t const iFCeil  = iter->frontSector().ceiling().heightSmoothed();
+        ddouble const iFFloor = iter->frontSector().floor  ().heightSmoothed();
+        ddouble const iFCeil  = iter->frontSector().ceiling().heightSmoothed();
         Sector const *bsec    = iter->backSectorPtr();
-        coord_t const iBFloor = (bsec ? bsec->floor  ().heightSmoothed() : 0);
-        coord_t const iBCeil  = (bsec ? bsec->ceiling().heightSmoothed() : 0);
+        ddouble const iBFloor = (bsec ? bsec->floor  ().heightSmoothed() : 0);
+        ddouble const iBCeil  = (bsec ? bsec->ceiling().heightSmoothed() : 0);
 
         // Determine whether the relative back sector is closed.
         bool closed = false;
@@ -939,7 +940,7 @@ static void scanNeighbor(LineSide const &side, bool top, bool right, edge_t &edg
 
         // Does this line's length contribute to the alignment of the texture on the
         // segment shadow edge being rendered?
-        coord_t lengthDelta = 0;
+        ddouble lengthDelta = 0;
         if(top)
         {
             if(iter->hasBackSector()
@@ -1161,7 +1162,7 @@ DENG2_PIMPL(Line)
     Vector2d direction;     ///< From start to end vertex.
     binangle_t angle;       ///< Calculated from the direction vector.
     slopetype_t slopeType;  ///< Logical line slope (i.e., world angle) classification.
-    coord_t length;         ///< Accurate length.
+    ddouble length;         ///< Accurate length.
 
     ///< Map space bounding box encompassing both vertexes.
     AABoxd aaBox;
@@ -1300,7 +1301,7 @@ void Line::updateAABox()
     V2d_AddToBoxXY(d->aaBox.arvec2, toOrigin().x, toOrigin().y);
 }
 
-coord_t Line::length() const
+ddouble Line::length() const
 {
     return d->length;
 }
@@ -1329,8 +1330,8 @@ binangle_t Line::angle() const
 
 dint Line::boxOnSide(AABoxd const &box) const
 {
-    coord_t fromOriginV1[2] = { fromOrigin().x, fromOrigin().y };
-    coord_t directionV1[2]  = { direction().x, direction().y };
+    ddouble fromOriginV1[2] = { fromOrigin().x, fromOrigin().y };
+    ddouble directionV1[2]  = { direction().x, direction().y };
     return M_BoxOnLineSide(&box, fromOriginV1, directionV1);
 }
 
@@ -1342,7 +1343,7 @@ int Line::boxOnSide_FixedPrecision(AABoxd const &box) const
     /// somewhere in the vicinity of the line. The offset is floored to integers
     /// so we won't change the discretization of the fractional part into 16-bit
     /// precision.
-    coord_t offset[2] = { std::floor(d->from->origin().x + d->direction.x/2.0),
+    ddouble offset[2] = { std::floor(d->from->origin().x + d->direction.x/2.0),
                           std::floor(d->from->origin().y + d->direction.y/2.0) };
 
     fixed_t boxx[4];
@@ -1360,10 +1361,10 @@ int Line::boxOnSide_FixedPrecision(AABoxd const &box) const
     return M_BoxOnLineSide_FixedPrecision(boxx, pos, delta);
 }
 
-coord_t Line::pointDistance(Vector2d const &point, coord_t *offset) const
+ddouble Line::pointDistance(Vector2d const &point, ddouble *offset) const
 {
     Vector2d lineVec = d->direction - fromOrigin();
-    coord_t len = lineVec.length();
+    ddouble len = lineVec.length();
     if(len == 0)
     {
         if(offset) *offset = 0;
@@ -1380,7 +1381,7 @@ coord_t Line::pointDistance(Vector2d const &point, coord_t *offset) const
     return (delta.y * lineVec.x - delta.x * lineVec.y) / len;
 }
 
-coord_t Line::pointOnSide(Vector2d const &point) const
+ddouble Line::pointOnSide(Vector2d const &point) const
 {
     Vector2d delta = fromOrigin() - point;
     return delta.y * d->direction.x - delta.x * d->direction.y;

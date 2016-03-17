@@ -3,7 +3,7 @@
  * Originally based on glBSP 2.24 (in turn, based on BSP 2.3)
  * @see http://sourceforge.net/projects/glbsp/
  *
- * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2016 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  * @authors Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
  * @authors Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
@@ -27,11 +27,14 @@
 
 #include <de/vector1.h> /// @todo remove me
 #include <de/Observers>
+#include <de/Vector>
 #include "world/bsp/convexsubspaceproxy.h"
 #include "world/bsp/superblockmap.h"
 #include "m_misc.h" // M_BoxOnLineSide2
 
-namespace de {
+using namespace de;
+
+namespace world {
 namespace bsp {
 
 DENG2_PIMPL_NOREF(LineSegment::Side)
@@ -76,7 +79,7 @@ DENG2_PIMPL_NOREF(LineSegment::Side)
     HEdge *hedge = nullptr;
 
     inline LineSegment::Side **neighborAdr(int edge) {
-        return edge? &rightNeighbor : &leftNeighbor;
+        return edge ? &rightNeighbor : &leftNeighbor;
     }
 };
 
@@ -415,5 +418,5 @@ void LineSegment::replaceVertex(int to, Vertex &newVertex)
     d->replaceVertex(to, newVertex);
 }
 
-} // namespace bsp
-} // namespace de
+}  // namespace bsp
+}  // namespace world

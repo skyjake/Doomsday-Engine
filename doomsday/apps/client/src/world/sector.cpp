@@ -35,6 +35,7 @@
 #include "SectorCluster"
 
 using namespace de;
+using namespace world;
 
 DENG2_PIMPL(Sector)
 , DENG2_OBSERVES(Plane, HeightChange)
@@ -76,8 +77,8 @@ DENG2_PIMPL(Sector)
     }
 
     /**
-     * Update the axis-aligned bounding box in the map coordinate space to
-     * encompass the geometry of all BSP leaf clusters of the sector.
+     * Update the axis-aligned bounding box in the map coordinate space to encompass the
+     * geometry of all BSP leaf clusters of the sector.
      */
     void updateAABoxIfNeeded()
     {
@@ -87,7 +88,7 @@ DENG2_PIMPL(Sector)
         aaBox.clear();
         bool haveGeometry = false;
 
-        self.map().forAllClusters(thisPublic, [this, &haveGeometry] (SectorCluster &cluster)
+        self.map().forAllClustersOfSector(self, [this, &haveGeometry] (SectorCluster &cluster)
         {
             if(haveGeometry)
             {
@@ -115,19 +116,21 @@ DENG2_PIMPL(Sector)
     }
 
 #ifdef __CLIENT__
+
     void updateRoughAreaIfNeeded()
     {
         if(!needRoughAreaUpdate) return;
         needRoughAreaUpdate = false;
 
         roughArea = 0;
-        self.map().forAllClusters(thisPublic, [&] (SectorCluster &cluster)
+        self.map().forAllClustersOfSector(self, [&] (SectorCluster &cluster)
         {
             roughArea += cluster.roughArea();
             return LoopContinue;
         });
     }
-#endif // __CLIENT__
+
+#endif  // __CLIENT__
 
     /**
      * To be called to update sound emitter origins for all dependent surfaces.

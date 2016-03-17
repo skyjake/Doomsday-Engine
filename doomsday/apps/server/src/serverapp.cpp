@@ -226,7 +226,7 @@ void ServerApp::unloadGame(Game const &upcomingGame)
 {
     DoomsdayApp::unloadGame(upcomingGame);
 
-    Map::initDummies();
+    world::Map::initDummies();
 }
 
 ServerApp &ServerApp::app()

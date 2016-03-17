@@ -18,11 +18,10 @@
  * 02110-1301 USA</small>
  */
 
-#include "world/dmuargs.h"
-
+#include "world/mapelement.h"
+#include "dd_share.h"
 #include <de/Log>
 #include <de/c_wrapper.h>
-#include "dd_share.h"
 
 using namespace de;
 

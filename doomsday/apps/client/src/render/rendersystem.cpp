@@ -476,7 +476,7 @@ DrawLists &RenderSystem::drawLists()
     return d->drawLists;
 }
 
-void RenderSystem::worldSystemMapChanged(de::Map &)
+void RenderSystem::worldSystemMapChanged(world::Map &)
 {
     d->projector.init();
     d->vlights.init();

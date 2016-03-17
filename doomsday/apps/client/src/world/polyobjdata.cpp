@@ -18,16 +18,18 @@
  */
 
 #include "world/polyobjdata.h"
+
+#ifdef __CLIENT__
+#  include "client/clpolymover.h"
+#endif
+
+#include "world/map.h"
 #include "world/thinkers.h"
 
 using namespace de;
+using namespace world;
 
 PolyobjData::PolyobjData()
-    : origIndex(MapElement::NoIndex)
-    , _polyobj(0)
-#ifdef __CLIENT__
-    , _mover(0)
-#endif
 {
     mesh       = new Mesh;
     indexInMap = MapElement::NoIndex;

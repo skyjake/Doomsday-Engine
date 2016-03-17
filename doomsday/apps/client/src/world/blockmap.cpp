@@ -1,7 +1,7 @@
-/** @file blockmap.cpp  World map element blockmap.
+/** @file blockmap.cpp  Map element/object blockmap.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2016 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 1993-1996 by id Software, Inc.
  *
  * @par License
@@ -19,18 +19,20 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
 #include "world/blockmap.h"
+
 #ifdef __CLIENT__
 #  include "gl/sys_opengl.h"
 #endif
 
-#include <cmath>
+#include <de/Vector>
 #include <de/memoryzone.h>
 #include <de/vector1.h>
-#include <de/Vector>
+#include <cmath>
 
-namespace de {
+using namespace de;
+
+namespace world {
 
 struct RingNode
 {
@@ -42,7 +44,7 @@ struct RingNode
 struct CellData
 {
     RingNode *ringNodes;
-    int elemCount; ///< Total number of linked elements.
+    dint elemCount; ///< Total number of linked elements.
 
     bool unlink(void *elem)
     {
@@ -71,16 +73,18 @@ struct CellData
 private:
     RingNode &newNode()
     {
-        RingNode *node = 0;
+        RingNode *node = nullptr;
 
         if(!ringNodes)
         {
             // Create a new root node.
-            node = (RingNode *) Z_Malloc(sizeof(*node), PU_MAP, 0);
-            node->next = 0;
-            node->prev = 0;
-            node->elem = 0;
+            node = (RingNode *) Z_Malloc(sizeof(*node), PU_MAP, nullptr);
+            node->next = nullptr;
+            node->prev = nullptr;
+            node->elem = nullptr;
+
             ringNodes = node;
+
             return *node;
         }
 
@@ -95,35 +99,37 @@ private:
         }
 
         // Add a new node to the ring.
-        node->next = (RingNode *) Z_Malloc(sizeof(*node), PU_MAP, 0);
-        node->next->next = 0;
+        node->next = (RingNode *) Z_Malloc(sizeof(*node), PU_MAP, nullptr);
+        node->next->next = nullptr;
         node->next->prev = node;
-        node->next->elem = 0;
+        node->next->elem = nullptr;
+
         return *node->next;
     }
 
     RingNode *findNode(void *elem)
     {
-        if(!elem) return 0;
-
-        for(RingNode *found = ringNodes; found; found = found->next)
+        if(elem)
         {
-            if(found->elem == elem) return found;
+            for(RingNode *found = ringNodes; found; found = found->next)
+            {
+                if(found->elem == elem) return found;
+            }
         }
-        return 0;
+        return nullptr;
     }
 
     void clearElement(RingNode &node)
     {
         if(!node.elem) return;
 
-        node.elem = 0;
+        node.elem = nullptr;
         elemCount--;
     }
 
     void addElement(RingNode &node, void *elem)
     {
-        DENG2_ASSERT(node.elem == 0);
+        DENG2_ASSERT(node.elem == nullptr);
         node.elem = elem;
         elemCount++;
     }
@@ -145,11 +151,11 @@ DENG2_PIMPL(Blockmap)
             BottomRight
         };
 
-        Cell cell; ///< Cell coordinates for this node.
-        uint size; ///< Size of the cell at this node (width=height).
+        Cell cell;   ///< Cell coordinates for this node.
+        duint size;  ///< Size of the cell at this node (width=height).
         union {
-            Node *children[4]; ///< One per quadrant (if any, not owned).
-            CellData *leafData; ///< Data associated with the leaf cell.
+            Node *children[4];   ///< One per quadrant (if any, not owned).
+            CellData *leafData;  ///< Data associated with the leaf cell.
         };
 
         /**
@@ -158,17 +164,16 @@ DENG2_PIMPL(Blockmap)
          * @param cell  Cell coordinates for the node.
          * @param size  Size of the cell.
          */
-        Node(Cell const &cell, uint size) : cell(cell), size(size)
+        Node(Cell const &cell, duint size)
+            : cell(cell)
+            , size(size)
         {
             zap(children);
         }
 
         ~Node()
         {
-            if(isLeaf())
-            {
-                Z_Free(leafData);
-            }
+            if(isLeaf()) Z_Free(leafData);
         }
 
         /**
@@ -182,7 +187,7 @@ DENG2_PIMPL(Blockmap)
          */
         Quadrant quadrant(Cell const &point) const
         {
-            uint const subSize = size >> 1;
+            duint const subSize = size >> 1;
             if(point.x < cell.x + subSize)
             {
                 return (point.y < cell.y + subSize)? TopLeft  : BottomLeft;
@@ -196,25 +201,25 @@ DENG2_PIMPL(Blockmap)
     typedef QList<Node> Nodes;
 
     AABoxd bounds;    ///< Map space units.
-    uint cellSize;    ///< Map space units.
+    duint cellSize;   ///< Map space units.
     Cell dimensions;  ///< Dimensions of the indexed space, in cells.
 
     Nodes nodes;      ///< Quadtree nodes. The first being the root.
 
-    Instance(Public *i, AABoxd const &bounds, uint cellSize)
-        : Base(i),
-          bounds(bounds),
-          cellSize(cellSize),
-          dimensions(Vector2ui(de::ceil((bounds.maxX - bounds.minX) / cellSize),
+    Instance(Public *i, AABoxd const &bounds, duint cellSize)
+        : Base(i)
+        , bounds    (bounds)
+        , cellSize  (cellSize)
+        , dimensions(Vector2ui(de::ceil((bounds.maxX - bounds.minX) / cellSize),
                                de::ceil((bounds.maxY - bounds.minY) / cellSize)))
     {
         // Quadtree must subdivide the space equally into 1x1 unit cells.
         newNode(Cell(0, 0), ceilPow2(de::max(dimensions.x, dimensions.y)));
     }
 
-    inline int toCellIndex(uint cellX, uint cellY)
+    inline dint toCellIndex(duint cellX, duint cellY)
     {
-        return int(cellY * dimensions.x + cellX);
+        return dint(cellY * dimensions.x + cellX);
     }
 
     /**
@@ -227,7 +232,7 @@ DENG2_PIMPL(Blockmap)
      *
      * @return  Translated blockmap cell X coordinate.
      */
-    uint toCellX(coord_t x, bool &didClip)
+    duint toCellX(ddouble x, bool &didClip)
     {
         didClip = false;
         if(x < bounds.minX)
@@ -240,7 +245,7 @@ DENG2_PIMPL(Blockmap)
             x = bounds.maxX - 1;
             didClip = true;
         }
-        return uint((x - bounds.minX) / cellSize);
+        return duint((x - bounds.minX) / cellSize);
     }
 
     /**
@@ -253,7 +258,7 @@ DENG2_PIMPL(Blockmap)
      *
      * @return  Translated blockmap cell Y coordinate.
      */
-    uint toCellY(coord_t y, bool &didClip)
+    duint toCellY(ddouble y, bool &didClip)
     {
         didClip = false;
         if(y < bounds.minY)
@@ -301,7 +306,7 @@ DENG2_PIMPL(Blockmap)
         return didClipMin | didClipMax;
     }
 
-    Node *newNode(Cell const &at, uint size)
+    Node *newNode(Cell const &at, duint size)
     {
         nodes.append(Node(at, size));
         return &nodes.last();
@@ -318,10 +323,10 @@ DENG2_PIMPL(Blockmap)
         Node **childAdr = &node->children[q];
         if(!*childAdr)
         {
-            if(!canSubdivide) return 0;
+            if(!canSubdivide) return nullptr;
 
             // Subdivide the space.
-            uint const subSize = node->size >> 1;
+            duint const subSize = node->size >> 1;
             switch(q)
             {
             case Node::TopLeft:
@@ -364,7 +369,7 @@ DENG2_PIMPL(Blockmap)
         // Outside our boundary?
         if(cell.x >= dimensions.x || cell.y >= dimensions.y)
         {
-            return 0;
+            return nullptr;
         }
 
         // Try to locate this leaf (may fail if not present and we are
@@ -377,16 +382,16 @@ DENG2_PIMPL(Blockmap)
                 // Can we allocate new user data?
                 if(canCreate)
                 {
-                    node->leafData = (CellData *)Z_Calloc(sizeof(CellData), PU_MAPSTATIC, 0);
+                    node->leafData = (CellData *)Z_Calloc(sizeof(CellData), PU_MAPSTATIC, nullptr);
                 }
             }
             return node->leafData;
         }
-        return 0;
+        return nullptr;
     }
 };
 
-Blockmap::Blockmap(AABoxd const &bounds, uint cellSize)
+Blockmap::Blockmap(AABoxd const &bounds, duint cellSize)
     : d(new Instance(this, bounds, cellSize))
 {}
 
@@ -408,12 +413,12 @@ BlockmapCell const &Blockmap::dimensions() const
     return d->dimensions;
 }
 
-uint Blockmap::cellSize() const
+duint Blockmap::cellSize() const
 {
     return d->cellSize;
 }
 
-int Blockmap::toCellIndex(uint cellX, uint cellY) const
+dint Blockmap::toCellIndex(duint cellX, duint cellY) const
 {
     return d->toCellIndex(cellX, cellY);
 }
@@ -521,7 +526,7 @@ void Blockmap::unlinkAll()
     }
 }
 
-int Blockmap::cellElementCount(Cell const &cell) const
+dint Blockmap::cellElementCount(Cell const &cell) const
 {
     if(auto *cellData = d->cellData(cell))
     {
@@ -591,8 +596,8 @@ LoopResult Blockmap::forAllInPath(Vector2d const &from_, Vector2d const &to_,
      * side of the axis parallel line. Note that the same logic is applied to all
      * of the blockmaps and not just the line blockmap.
      */
-    coord_t const epsilon = FIX2FLT(FRACUNIT);
-    coord_t const offset  = FIX2FLT(FRACUNIT);
+    ddouble const epsilon = FIX2FLT(FRACUNIT);
+    ddouble const offset  = FIX2FLT(FRACUNIT);
 
     Vector2d const delta = (to - origin()) / d->cellSize;
     if(de::fequal(delta.x, 0, epsilon)) to.x += offset;
@@ -608,7 +613,7 @@ LoopResult Blockmap::forAllInPath(Vector2d const &from_, Vector2d const &to_,
     {
         // 'to' is outside the blockmap.
         vec2d_t fromV1, toV1, bmapBounds[4], point;
-        coord_t ab;
+        ddouble ab;
 
         V2d_Set(fromV1, from.x, from.y);
         V2d_Set(toV1, to.x, to.y);
@@ -713,7 +718,7 @@ LoopResult Blockmap::forAllInPath(Vector2d const &from_, Vector2d const &to_,
     return LoopContinue;
 }
 
-// Debug visual ----------------------------------------------------------------
+//- Debug visual ------------------------------------------------------------------------
 
 #ifdef __CLIENT__
 
@@ -771,6 +776,6 @@ void Blockmap::drawDebugVisual() const
 
 #undef UNIT_SIZE
 }
-#endif // __CLIENT__
+#endif  // __CLIENT__
 
-} // namespace de
+}  // namespace world

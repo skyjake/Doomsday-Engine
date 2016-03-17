@@ -83,7 +83,7 @@ public:
     /**
      * @todo Use a de::Observers based mechanism.
      */
-    void worldSystemMapChanged(de::Map &map);
+    void worldSystemMapChanged(world::Map &map);
 
     /**
      * @todo Use a de::Observers based mechanism.

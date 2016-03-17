@@ -1,6 +1,6 @@
 /** @file convexsubspaceproxy.cpp  BSP builder convex subspace proxy.
  *
- * @authors Copyright © 2013-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -38,7 +38,9 @@
 #include <QVarLengthArray>
 #include <QtAlgorithms>
 
-namespace de {
+using namespace de;
+
+namespace world {
 namespace bsp {
 
 typedef QList<LineSegmentSide *> SegmentList;
@@ -616,5 +618,5 @@ void ConvexSubspaceProxy::setBspLeaf(BspLeaf *newBspLeaf)
     d->bspLeaf = newBspLeaf;
 }
 
-} // namespace bsp
-} // namespace de
+}  // namespace bsp
+}  // namespace world

@@ -32,6 +32,50 @@
 #include <de/str.h>
 #include <doomsday/world/thinker.h>
 
+#if defined __cplusplus
+
+namespace de {
+
+/**
+ * Encapsulates the arguments used when routing DMU API calls to map elements.
+ */
+class DmuArgs
+{
+public: /// @todo make private
+    int type;
+    uint prop;
+    int modifiers; /// Property modifiers (e.g., line of sector)
+    valuetype_t valueType;
+    dd_bool *booleanValues;
+    byte *byteValues;
+    int *intValues;
+    fixed_t *fixedValues;
+    float *floatValues;
+    double *doubleValues;
+    angle_t *angleValues;
+    void **ptrValues;
+
+    DmuArgs(int type, uint prop);
+
+    /**
+     * Read the value of an argument. Does some basic type checking so that
+     * incompatible types are not assigned. Simple conversions are also done,
+     * e.g., float to fixed.
+     */
+    void value(valuetype_t valueType, void *dst, uint index) const;
+
+    /**
+     * Change the value of an argument. Does some basic type checking so that
+     * incompatible types are not assigned. Simple conversions are also done,
+     * e.g., float to fixed.
+     */
+    void setValue(valuetype_t valueType, void const *src, uint index);
+};
+
+}  // namespace de
+
+#endif  // __cplusplus
+
 #define DMT_ARCHIVE_INDEX DDVT_INT
 
 #define DMT_VERTEX_ORIGIN DDVT_DOUBLE
@@ -96,41 +140,35 @@
 #if !defined __DOOMSDAY__ && !defined DENG_INTERNAL_DATA_ACCESS
 
 // Opaque types for public use.
-struct bspleaf_s;
 struct convexsubspace_s;
-struct bspnode_s;
-struct segment_s;
+struct interceptor_s;
 struct line_s;
 struct mobj_s;
-struct plane_s;
-struct sector_s;
-struct side_s;
-struct sky_s;
-struct vertex_s;
 struct material_s;
-struct interceptor_s;
+struct plane_s;
+struct side_s;
+struct sector_s;
+struct vertex_s;
 
-typedef struct bspleaf_s        BspLeaf;
 typedef struct convexsubspace_s ConvexSubspace;
-typedef struct bspnode_s        BspNode;
-typedef struct line_s           Line;
-typedef struct plane_s          Plane;
-typedef struct sector_s         Sector;
-typedef struct side_s           Side;
-typedef struct vertex_s         Vertex;
-typedef struct material_s       Material;
 typedef struct interceptor_s    Interceptor;
+typedef struct line_s           Line;
+typedef struct material_s       Material;
+typedef struct plane_s          Plane;
+typedef struct side_s           Side;
+typedef struct sector_s         Sector;
+typedef struct vertex_s         Vertex;
 
 #elif defined __cplusplus
 
 // Foward declarations.
-class BspLeaf;
-class ConvexSubspace;
+namespace world { class ConvexSubspace; }
 class Interceptor;
 class Line;
+class Plane;
 class Material;
 class Sector;
-class Sky;
+class Vertex;
 
 #endif
 
@@ -440,7 +478,7 @@ DENG_API_TYPEDEF(Map)
      * to this will be skipped over (can be used to avoid processing a polyobj
      * multiple times during a complex and/or non-linear traversal.
      */
-    int             (*SS_BoxIterator)(AABoxd const *box, int (*callback) (ConvexSubspace *, void *), void *context);
+    int             (*SS_BoxIterator)(AABoxd const *box, int (*callback) (struct convexsubspace_s *, void *), void *context);
 
     // Traversers
 

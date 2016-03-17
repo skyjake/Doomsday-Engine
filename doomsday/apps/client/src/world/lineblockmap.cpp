@@ -1,7 +1,7 @@
-/** @file lineblockmap.cpp Specialized world map line blockmap.
+/** @file lineblockmap.cpp  Specialized Blockmap, for map Lines.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -22,7 +22,10 @@
 
 using namespace de;
 
-LineBlockmap::LineBlockmap(AABoxd const &bounds, uint cellSize)
+namespace world
+{
+
+LineBlockmap::LineBlockmap(AABoxd const &bounds, duint cellSize)
     : Blockmap(bounds, cellSize)
 {}
 
@@ -70,8 +73,7 @@ void LineBlockmap::link(Line &line)
 
 void LineBlockmap::link(QList<Line *> const &lines)
 {
-    foreach(Line *line, lines)
-    {
-        link(*line);
-    }
+    for(Line *line : lines) link(*line);
 }
+
+}  // namespace world

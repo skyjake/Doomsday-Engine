@@ -21,11 +21,6 @@
 
 #include "render/surfacedecorator.h"
 
-#include <QMap>
-#include <QSet>
-#include <de/Observers>
-#include <de/Vector>
-
 #include "world/map.h"
 #include "BspLeaf"
 #include "ConvexSubspace"
@@ -37,7 +32,13 @@
 #include "LightDecoration"
 #include "WallEdge"
 
+#include <de/Observers>
+#include <de/Vector>
+#include <QMap>
+#include <QSet>
+
 using namespace de;
+using namespace world;
 
 typedef QSet<Surface *> SurfaceSet;
 typedef QMap<Material *, SurfaceSet> MaterialSurfaceMap;
@@ -79,7 +80,7 @@ DENG2_PIMPL_NOREF(SurfaceDecorator)
         if(de::fequal(delta.length(), 0)) return;
 
         Material &material = matAnimator.material();
-        int const axis = suf.normal().maxAxis();
+        dint const axis = suf.normal().maxAxis();
 
         Vector2d sufDimensions;
         if(axis == 0 || axis == 1)
@@ -97,7 +98,7 @@ DENG2_PIMPL_NOREF(SurfaceDecorator)
         if(sufDimensions.y < 0) sufDimensions.y = -sufDimensions.y;
 
         // Generate a number of decorations.
-        int decorIndex = 0;
+        dint decorIndex = 0;
 
         material.forAllDecorations([&suf, &matAnimator, &materialOrigin
                                    , &topLeft, &bottomRight, &containingSector
@@ -117,21 +118,21 @@ DENG2_PIMPL_NOREF(SurfaceDecorator)
 
             Vector3d origin = topLeft + suf.normal() * decorSS.elevation();
 
-            float s = de::wrap(decorSS.origin().x - matDimensions.x * decor.patternOffset().x + materialOrigin.x,
-                               0.f, repeat.x);
+            dfloat s = de::wrap(decorSS.origin().x - matDimensions.x * decor.patternOffset().x + materialOrigin.x,
+                                0.f, repeat.x);
 
             // Plot decorations.
             for(; s < sufDimensions.x; s += repeat.x)
             {
                 // Determine the topmost point for this row.
-                float t = de::wrap(decorSS.origin().y - matDimensions.y * decor.patternOffset().y + materialOrigin.y,
-                                   0.f, repeat.y);
+                dfloat t = de::wrap(decorSS.origin().y - matDimensions.y * decor.patternOffset().y + materialOrigin.y,
+                                    0.f, repeat.y);
 
                 for(; t < sufDimensions.y; t += repeat.y)
                 {
-                    float const offS = s / sufDimensions.x;
-                    float const offT = t / sufDimensions.y;
-                    Vector3d patternOffset(offS, axis == VZ? offT : offS, axis == VZ? offS : offT);
+                    dfloat const offS = s / sufDimensions.x;
+                    dfloat const offT = t / sufDimensions.y;
+                    Vector3d patternOffset(offS, axis == 2 ? offT : offS, axis == 2 ? offS : offT);
 
                     Vector3d decorOrigin     = origin + delta * patternOffset;
                     ConvexSubspace *subspace = suf.map().bspLeafAt(decorOrigin).subspacePtr();

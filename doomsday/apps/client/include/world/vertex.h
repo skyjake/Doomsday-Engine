@@ -1,7 +1,8 @@
 /** @file vertex.h  World map vertex.
+ * @ingroup world
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -31,14 +32,12 @@ class Line;
 class LineOwner;
 
 /**
- * World map geometry vertex.
+ * Map geometry vertex.
  *
  * An @em owner in this context is any line whose start or end points are
  * defined as the vertex.
- *
- * @ingroup world
  */
-class Vertex : public de::MapElement, public de::MeshElement
+class Vertex : public world::MapElement, public de::MeshElement
 {
     DENG2_NO_COPY  (Vertex)
     DENG2_NO_ASSIGN(Vertex)
@@ -101,7 +100,7 @@ public:
     void updateShadowOffsets();
 #endif
 
-public:  // Deprecated ---------------------------------------------------------------------
+public:  //- Deprecated -----------------------------------------------------------------
 
     /**
      * Returns the total number of Line owners for the vertex.
@@ -136,7 +135,7 @@ public:  // Deprecated ---------------------------------------------------------
     LineOwner *firstLineOwner() const;
 
 protected:
-    int property(DmuArgs &args) const;
+    int property(de::DmuArgs &args) const;
 
 private:
     de::Vector2d _origin;  ///< Map-space coordinates.

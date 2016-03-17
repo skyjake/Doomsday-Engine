@@ -3,7 +3,7 @@
  * Originally based on glBSP 2.24 (in turn, based on BSP 2.3)
  * @see http://sourceforge.net/projects/glbsp/
  *
- * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2016 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  * @authors Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
  * @authors Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
@@ -36,7 +36,7 @@
 /// Rounding threshold within which two points are considered as co-incident.
 #define LINESEGMENT_INCIDENT_DISTANCE_EPSILON       1.0 / 128
 
-namespace de {
+namespace world {
 namespace bsp {
 
 class ConvexSubspaceProxy;
@@ -309,7 +309,7 @@ public:
          *
          * @see hasSector()
          */
-        inline Sector *sectorPtr() const { return hasSector()? &sector() : nullptr; }
+        inline Sector *sectorPtr() const { return hasSector() ? &sector() : nullptr; }
 
         /**
          * Change the sector attributed to "this" side of the line segment.
@@ -323,7 +323,7 @@ public:
          * Returns a direction vector for "this" side of the line segment,
          * from the From/Start vertex origin to the To/End vertex origin.
          */
-        Vector2d const &direction() const;
+        de::Vector2d const &direction() const;
 
         /**
          * Returns the logical @em slopetype for "this" side of the line
@@ -355,7 +355,7 @@ public:
          *
          * @return  Distance to the point expressed as a fraction/scale factor.
          */
-        coord_t distance(Vector2d point) const;
+        coord_t distance(de::Vector2d point) const;
 
         /**
          * Calculate @em perpendicular distances from one or both of the
@@ -420,7 +420,7 @@ public:
          *
          * @see hasHEdge()
          */
-        HEdge &hedge() const;
+        de::HEdge &hedge() const;
 
         /**
          * Returns a pointer to the built half-edge linked to "this" side of
@@ -428,7 +428,7 @@ public:
          *
          * @see hasHEdge()
          */
-        inline HEdge *hedgePtr() const { return hasHEdge()? &hedge() : nullptr; }
+        inline de::HEdge *hedgePtr() const { return hasHEdge()? &hedge() : nullptr; }
 
         /**
          * Change the built half-edge linked to "this" side of the line segment.
@@ -437,7 +437,7 @@ public:
          *
          * @see hedge()
          */
-        void setHEdge(HEdge *newHEdge);
+        void setHEdge(de::HEdge *newHEdge);
 
         /**
          * Returns a pointer to the ConvexSubspaceProxy to which "this" side of the
@@ -475,26 +475,20 @@ public:
      *
      * @param back  If not @c nullptr return the Back side; otherwise the Front side.
      */
-    Side &side(int back);
-
-    /// @copydoc side()
+    Side       &side(int back);
     Side const &side(int back) const;
 
     /**
      * Returns the logical Front side of the line segment.
      */
-    inline Side &front() { return side(Front); }
-
-    /// @copydoc front()
+    inline Side       &front()       { return side(Front); }
     inline Side const &front() const { return side(Front); }
 
     /**
      * Returns the logical Back side of the line segment.
      */
-    inline Side &back() { return side(Back); }
-
-    /// @copydoc back()
-    inline Side const &back() const { return side(Back); }
+    inline Side       &back()        { return side(Back); }
+    inline Side const &back() const  { return side(Back); }
 
     /**
      * Returns the specified edge vertex of the line segment.
@@ -509,7 +503,7 @@ public:
      *
      * @see vertex()
      */
-    inline Vector2d const &vertexOrigin(int to) const {
+    inline de::Vector2d const &vertexOrigin(int to) const {
         return vertex(to).origin();
     }
 
@@ -524,7 +518,7 @@ public:
      *
      * @see from()
      */
-    inline Vector2d const &fromOrigin() const { return from().origin(); }
+    inline de::Vector2d const &fromOrigin() const { return from().origin(); }
 
     /**
      * Returns the To/End vertex for the line segment.
@@ -537,7 +531,7 @@ public:
      *
      * @see to()
      */
-    inline Vector2d const &toOrigin() const { return to().origin(); }
+    inline de::Vector2d const &toOrigin() const { return to().origin(); }
 
     /**
      * Returns the axis-aligned bounding box of the line segment (derived from
@@ -556,7 +550,7 @@ public:
     void replaceVertex(int to, Vertex &newVertex);
 
     inline void replaceFrom(Vertex &newVertex) { replaceVertex(From, newVertex); }
-    inline void replaceTo(Vertex &newVertex)   { replaceVertex(To, newVertex); }
+    inline void replaceTo  (Vertex &newVertex) { replaceVertex(To  , newVertex); }
 
 private:
     DENG2_PRIVATE(d)
@@ -564,7 +558,7 @@ private:
 
 typedef LineSegment::Side LineSegmentSide;
 
-} // namespace bsp
-} // namespace de
+}  // namespace bsp
+}  // namespace world
 
-#endif // DENG_WORLD_BSP_LINESEGMENT_H
+#endif  // DENG_WORLD_BSP_LINESEGMENT_H

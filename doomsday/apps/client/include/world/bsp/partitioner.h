@@ -1,6 +1,6 @@
 /** @file partitioner.h  World map binary space partitioner.
  *
- * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2016 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  * @authors Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
  * @authors Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
@@ -32,17 +32,16 @@
 class Line;
 class Sector;
 
-namespace de {
+namespace de { class Mesh; }
 
-class Mesh;
-
+namespace world {
 namespace bsp {
 
 /// Minimum length of a half-edge post partitioning. Used in cost evaluation.
-static coord_t const SHORT_HEDGE_EPSILON = 4.0;
+static de::ddouble const SHORT_HEDGE_EPSILON = 4.0;
 
 /// Smallest distance between two points before being considered equal.
-static coord_t const DIST_EPSILON        = 1.0 / 128.0;
+static de::ddouble const DIST_EPSILON        = 1.0 / 128.0;
 
 /**
  * World map binary space partitioner (BSP).
@@ -55,14 +54,8 @@ static coord_t const DIST_EPSILON        = 1.0 / 128.0;
 class Partitioner
 {
 public:
-    /*
-     * Observers to be notified when an unclosed sector is found.
-     */
-    DENG2_DEFINE_AUDIENCE(UnclosedSectorFound,
-        void unclosedSectorFound(Sector &sector, Vector2d const &nearPoint))
-
-    typedef Map::BspTree BspTree;
-    typedef QSet<Line *> LineSet;
+    /// Notified when an unclosed sector is first found.
+    DENG2_DEFINE_AUDIENCE(UnclosedSectorFound, void unclosedSectorFound(Sector &sector, de::Vector2d const &nearPoint))
 
 public:
     /**
@@ -70,52 +63,50 @@ public:
      *
      * @param splitCostFactor  Cost factor attributed to splitting a half-edge.
      */
-    Partitioner(int splitCostFactor = 7);
+    Partitioner(de::dint splitCostFactor = 7);
 
     /**
      * Set the cost factor associated with splitting an existing half-edge.
      *
      * @param newFactor  New split cost factor.
      */
-    void setSplitCostFactor(int newFactor);
+    void setSplitCostFactor(de::dint newFactor);
 
     /**
      * Build a new BspTree for the given geometry.
      *
-     * @param lines  Set of lines to construct a BSP for. A copy of the set is
-     *               made however the caller must ensure that line data remains
-     *               accessible until the build process has completed (ownership
-     *               is unaffected).
+     * @param lines  Set of lines to construct a BSP for. A copy of the set is made however
+     * the caller must ensure that line data remains accessible until the build process has
+     * completed (ownership is unaffected).
      *
-     * @param mesh   Mesh from which to assign new geometries. The caller must
-     *               ensure that the mesh remains accessible until the build
-     *               process has completed (ownership is unaffected).
+     * @param mesh   Mesh from which to assign new geometries. The caller must ensure that
+     * the mesh remains accessible until the build process has completed (ownership is
+     * unaffected).
      *
-     * @return  Root tree node of the resultant BSP; otherwise @c nullptr if no
-     *          usable tree data was produced.
+     * @return  Root tree node of the resultant BSP; otherwise @c nullptr if no usable tree
+     * data was produced.
      */
-    BspTree *makeBspTree(LineSet const &lines, Mesh &mesh);
+    BspTree *makeBspTree(QSet<Line *> const &lines, de::Mesh &mesh);
 
     /**
-     * Retrieve the number of Segments owned by the partitioner. When the build
-     * completes this number will be the total number of line segments that were
-     * produced during that process. Note that as BspLeaf ownership is claimed
-     * this number will decrease respectively.
+     * Retrieve the number of Segments owned by the partitioner. When the build completes
+     * this number will be the total number of line segments that were produced during that
+     * process. Note that as BspLeaf ownership is claimed this number will decrease respectively.
      *
      * @return  Current number of Segments owned by the partitioner.
      */
-    int segmentCount();
+    de::dint segmentCount();
 
     /**
      * Retrieve the total number of Vertexes produced during the build process.
      */
-    int vertexCount();
+    de::dint vertexCount();
 
 private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace bsp
-} // namespace de
+}  // namespace bsp
+}  // namespace world
 
-#endif // DENG_WORLD_BSP_PARTITIONER_H
+#endif  // DENG_WORLD_BSP_PARTITIONER_H

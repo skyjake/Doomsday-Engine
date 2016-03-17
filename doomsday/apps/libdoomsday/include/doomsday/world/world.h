@@ -24,7 +24,7 @@
 #include <de/Observers>
 #include <de/System>
 
-namespace world { class Map; }
+namespace world { class BaseMap; }
 
 /**
  * Base class for the game world.
@@ -51,13 +51,13 @@ public:
      *
      * @see hasMap()
      */
-    world::Map &map() const;
+    world::BaseMap &map() const;
 
     // Systems observe the passage of time.
     void timeChanged(de::Clock const &) override;
 
 protected:
-    void setMap(world::Map *map);
+    void setMap(world::BaseMap *map);
 
 public:
     /// Notified whenever the "current" map changes.

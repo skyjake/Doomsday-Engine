@@ -37,6 +37,7 @@
 #include "edit_map.h"
 
 using namespace de;
+using namespace world;
 
 #define ERROR_IF_NOT_INITIALIZED() { \
 if(!editMapInited) \

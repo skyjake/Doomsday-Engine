@@ -283,9 +283,9 @@ void ClPlayer_ReadDelta()
     LOG_AS("ClPlayer_ReadDelta2");
 
     /// @todo Do not assume the CURRENT map.
-    Map &map = App_World().map();
+    world::Map &map = App_World().map();
 
-    int df = 0;
+    dint df = 0;
     ushort num;
 
     // The first byte consists of a player number and some flags.

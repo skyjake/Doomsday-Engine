@@ -18,15 +18,15 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef CLIENT_RENDER_BILLBOARD_H
-#define CLIENT_RENDER_BILLBOARD_H
+#ifndef DENG_CLIENT_RENDER_BILLBOARD_H
+#define DENG_CLIENT_RENDER_BILLBOARD_H
 
 #include "dd_types.h"
 #include "Material"
 #include "MaterialAnimator"
 #include "MaterialVariantSpec"
 
-class BspLeaf;
+namespace world { class BspLeaf; }
 struct vissprite_t;
 
 /**
@@ -87,7 +87,7 @@ struct drawspriteparams_t
     blendmode_t blendMode;
     MaterialAnimator *matAnimator;
     dd_bool matFlip[2];             ///< [S, T] Flip along the specified axis.
-    BspLeaf *bspLeaf;
+    world::BspLeaf *bspLeaf;
 };
 
 void Rend_DrawSprite(vissprite_t const &spr);

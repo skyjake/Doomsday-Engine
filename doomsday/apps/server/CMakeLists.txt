@@ -79,7 +79,6 @@ set (SHARED_WITH_CLIENT
     ${src}/include/ui/infine/finalepagewidget.h
     ${src}/include/ui/infine/finaletextwidget.h
     ${src}/include/ui/infine/finalewidget.h
-    ${src}/include/world/dmuargs.h
     ${src}/include/world/bindings_world.h
     ${src}/include/world/blockmap.h
     ${src}/include/world/bsp/convexsubspaceproxy.h
@@ -90,7 +89,6 @@ set (SHARED_WITH_CLIENT
     ${src}/include/world/bsp/partitionevaluator.h
     ${src}/include/world/bsp/superblockmap.h
     ${src}/include/world/bspleaf.h
-    ${src}/include/world/bspnode.h
     ${src}/include/world/convexsubspace.h
     ${src}/include/world/impulseaccumulator.h
     ${src}/include/world/interceptor.h
@@ -181,7 +179,6 @@ set (SHARED_WITH_CLIENT
     ${src}/src/world/bsp/partitionevaluator.cpp
     ${src}/src/world/bsp/superblockmap.cpp
     ${src}/src/world/bspleaf.cpp
-    ${src}/src/world/bspnode.cpp
     ${src}/src/world/convexsubspace.cpp
     ${src}/src/world/dmuargs.cpp
     ${src}/src/world/impulseaccumulator.cpp

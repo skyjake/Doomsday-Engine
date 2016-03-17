@@ -1,7 +1,7 @@
 /** @file mapelement.cpp  Base class for all map elements.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -25,38 +25,36 @@
 
 using namespace de;
 
+namespace world {
+
 DENG2_PIMPL_NOREF(MapElement)
 {
-    int type;
-    MapElement *parent;
-    Map *map;
-    int indexInMap;
-    int indexInArchive;
+    dint type;
+    MapElement *parent  = nullptr;
+    Map *map            = nullptr;
+    dint indexInMap     = NoIndex;
+    dint indexInArchive = NoIndex;
 
-    Instance(int type, MapElement *parent)
-        : type(type)
-        , parent(parent)
-        , map(0)
-        , indexInMap(NoIndex)
-        , indexInArchive(NoIndex)
-    {}
+    Instance(dint type) : type(type) {}
 };
 
-MapElement::MapElement(int type, MapElement *parent)
-    : d(new Instance(type, parent))
-{}
+MapElement::MapElement(dint type, MapElement *parent)
+    : d(new Instance(type))
+{
+    setParent(parent);
+}
 
 MapElement::~MapElement()
 {}
 
-int MapElement::type() const
+dint MapElement::type() const
 {
     return d->type;
 }
 
 bool MapElement::hasParent() const
 {
-    return d->parent != 0;
+    return d->parent != nullptr;
 }
 
 MapElement &MapElement::parent()
@@ -66,10 +64,7 @@ MapElement &MapElement::parent()
 
 MapElement const &MapElement::parent() const
 {
-    if(d->parent)
-    {
-        return *d->parent;
-    }
+    if(d->parent) return *d->parent;
     /// @throw MissingParentError  Attempted with no parent element is attributed.
     throw MissingParentError("MapElement::parent", "No parent map element is attributed");
 }
@@ -92,7 +87,7 @@ bool MapElement::hasMap() const
     {
         return d->parent->hasMap();
     }
-    return d->map != 0;
+    return d->map != nullptr;
 }
 
 Map &MapElement::map() const
@@ -122,27 +117,27 @@ void MapElement::setMap(Map *newMap)
     throw WritePropertyError("MapElement::setMap", "The 'map' property has been delegated");
 }
 
-int MapElement::indexInMap() const
+dint MapElement::indexInMap() const
 {
     return d->indexInMap;
 }
 
-void MapElement::setIndexInMap(int newIndex)
+void MapElement::setIndexInMap(dint newIndex)
 {
     d->indexInMap = newIndex;
 }
 
-int MapElement::indexInArchive() const
+dint MapElement::indexInArchive() const
 {
     return d->indexInArchive;
 }
 
-void MapElement::setIndexInArchive(int newIndex)
+void MapElement::setIndexInArchive(dint newIndex)
 {
     d->indexInArchive = newIndex;
 }
 
-int MapElement::property(DmuArgs &args) const
+dint MapElement::property(DmuArgs &args) const
 {
     switch(args.prop)
     {
@@ -159,9 +154,11 @@ int MapElement::property(DmuArgs &args) const
     return false; // Continue iteration.
 }
 
-int MapElement::setProperty(DmuArgs const &args)
+dint MapElement::setProperty(DmuArgs const &args)
 {
     /// @throw WritePropertyError  The requested property is not writable.
     throw WritePropertyError(QString("%1::setProperty").arg(DMU_Str(d->type)),
                              QString("'%1' is unknown/not writable").arg(DMU_Str(args.prop)));
 }
+
+}  // namespace world

@@ -21,7 +21,7 @@
 
 #include <de/GLTexture>
 
-class SectorCluster;
+namespace world { class SectorCluster; }
 
 namespace render {
 
@@ -43,7 +43,7 @@ public:
      *
      * @return Reflection cube map.
      */
-    de::GLTexture const &reflectionInCluster(SectorCluster const *cluster) const;
+    de::GLTexture const &reflectionInCluster(world::SectorCluster const *cluster) const;
 
 private:
     DENG2_PRIVATE(d)
