@@ -54,7 +54,7 @@ DENG2_PIMPL(RenderSystem)
     Binder binder;
     Record renderModule;
 
-    render::Environment environ;
+    render::Environment environment;
     ModelRenderer models;
     SkyDrawable sky;
     ConfigProfiles settings;
@@ -424,7 +424,7 @@ GLUniform const &RenderSystem::uMapTime() const
 
 render::Environment &RenderSystem::environment()
 {
-    return d->environ;
+    return d->environment;
 }
 
 ModelRenderer &RenderSystem::modelRenderer()

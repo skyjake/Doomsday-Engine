@@ -169,7 +169,7 @@ struct ModelDef
 
     uint subCount() const
     {
-        return _sub.size();
+        return uint(_sub.size());
     }
 
     bool testSubFlag(unsigned int subnum, int flag) const

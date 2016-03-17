@@ -144,7 +144,7 @@ DENG2_PIMPL(RowAtlasAllocator)
             }
 
             struct SortByWidth {
-                bool operator () (Slot const *a, Slot const *b) {
+                bool operator () (Slot const *a, Slot const *b) const {
                     if(a->width == b->width) return a < b;
                     return a->width > b->width;
                 }

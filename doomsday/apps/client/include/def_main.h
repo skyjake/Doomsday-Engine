@@ -40,7 +40,7 @@ struct Array : public std::vector<PODType>
         return !size();
     }
     int size() const {
-        return std::vector<PODType>::size();
+        return (int) std::vector<PODType>::size();
     }
     void clear() {
         _elements = nullptr;

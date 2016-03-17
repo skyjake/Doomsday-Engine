@@ -1,8 +1,8 @@
-if (WIN32)
+if (WIN32 AND (DENG_ARCH EQUAL 32))
     set (_oldPath ${EAX2_LIBRARY})
-    find_library (EAX2_LIBRARY eax 
+    find_library (EAX2_LIBRARY eax
         PATHS ${EAX2_DIR} ENV DENG_DEPEND_PATH
-        PATH_SUFFIXES Libs "EAX 2.0 SDK/Libs"        
+        PATH_SUFFIXES Libs "EAX 2.0 SDK/Libs"
     )
     mark_as_advanced (EAX2_LIBRARY)
     if (NOT _oldPath STREQUAL EAX2_LIBRARY)
@@ -12,7 +12,7 @@ if (WIN32)
             message (STATUS "Looking for EAX 2 - not found (set the EAX2_DIR variable)")
         endif ()
     endif ()
-    
+
     if (EAX2_LIBRARY AND NOT TARGET EAX2)
         add_library (EAX2 INTERFACE)
         get_filename_component (_libDir ${EAX2_LIBRARY} DIRECTORY)

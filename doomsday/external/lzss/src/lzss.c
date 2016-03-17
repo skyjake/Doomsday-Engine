@@ -52,7 +52,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
+#ifdef UNIX
+#  include <unistd.h>
+#endif
+#ifdef WIN32
+#  include <io.h>
+#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -69,11 +74,21 @@
 #define O_BINARY 0
 #endif
 
+#ifdef UNIX
 #define FILE_OPEN(filename, handle)             handle = open(filename, O_RDONLY | O_BINARY)
 #define FILE_CREATE(filename, handle)           handle = open(filename, O_WRONLY | O_BINARY | O_CREAT | O_TRUNC, 0664)
 #define FILE_CLOSE(handle)                      close(handle)
 #define FILE_READ(handle, buf, size, sz)        sz = read(handle, buf, size)
 #define FILE_WRITE(handle, buf, size, sz)       sz = write(handle, buf, size)
+#endif
+#ifdef WIN32
+#define lseek _lseek
+#define FILE_OPEN(filename, handle)             handle = _open(filename, O_RDONLY | O_BINARY)
+#define FILE_CREATE(filename, handle)           handle = _open(filename, O_WRONLY | O_BINARY | O_CREAT | O_TRUNC, 0664)
+#define FILE_CLOSE(handle)                      _close(handle)
+#define FILE_READ(handle, buf, size, sz)        sz = _read(handle, buf, size)
+#define FILE_WRITE(handle, buf, size, sz)       sz = _write(handle, buf, size)
+#endif
 #define FILE_SEARCH_STRUCT                      FindData
 #define FILE_FINDFIRST(filename, attrib, dta)   FindFile_FindFirst(dta, filename)
 #define FILE_FINDNEXT(dta)                      FindFile_FindNext(dta)
@@ -888,15 +903,14 @@ LZFILE *lzOpen(char const *filename, char const *mode)
             /* read a 'real' file */
             f->parent = NULL;
             f->pack_data = NULL;
-            errno =
-                FILE_FINDFIRST(filename, A_RDONLY | A_HIDDEN | A_ARCH, &dta);
+            errno = FILE_FINDFIRST(filename, A_RDONLY | A_HIDDEN | A_ARCH, &dta);
             if(errno != 0)
             {
                 FILE_FINDCLOSE(&dta);
                 free(f);
                 return NULL;
             }
-            f->todo = dta.FILE_SIZE;
+            f->todo = (long) dta.FILE_SIZE;
             FILE_FINDCLOSE(&dta);
 
             FILE_OPEN(filename, f->hndl);

@@ -40,7 +40,9 @@
 #include <windows.h>
 #include <mmsystem.h>
 #include <dsound.h>
-#include <eax.h>
+#ifdef DENG_HAVE_EAX2
+#  include <eax.h>
+#endif
 
 #pragma warning (disable: 4035 4244)
 
@@ -154,6 +156,7 @@ static IDirectSound3DBuffer8* get3DBuffer(IDirectSoundBuffer8* buf8)
     return buf3d;
 }
 
+#ifdef DENG_HAVE_EAX2
 /**
  * Does the EAX implementation support getting/setting of a propertry.
  *
@@ -162,7 +165,7 @@ static IDirectSound3DBuffer8* get3DBuffer(IDirectSoundBuffer8* buf8)
  */
 static dd_bool queryEAXSupport(int prop)
 {
-#define EAXSUP          (KSPROPERTY_SUPPORT_GET | KSPROPERTY_SUPPORT_SET)
+#  define EAXSUP          (KSPROPERTY_SUPPORT_GET | KSPROPERTY_SUPPORT_SET)
 
     if(propertySet)
     {
@@ -176,8 +179,9 @@ static dd_bool queryEAXSupport(int prop)
 
     return false;
 
-#undef EAXSUP
+#  undef EAXSUP
 }
+#endif
 
 /**
  * Init DirectSound, start playing the primary buffer.
@@ -189,6 +193,7 @@ int DS_Init(void)
 #define NUMBUFFERS_HW_3D ((uint) dsoundCaps.dwFreeHw3DStreamingBuffers)
 #define NUMBUFFERS_HW_2D ((uint) dsoundCaps.dwFreeHwMixingStreamingBuffers)
 
+#ifdef DENG_HAVE_EAX2
     typedef struct eaxproperty_s {
         DSPROPERTY_EAX_LISTENERPROPERTY prop;
         char*           name;
@@ -202,6 +207,7 @@ int DS_Init(void)
         { DSPROPERTY_EAXLISTENER_ROOMROLLOFFFACTOR, "Room roll-off factor" },
         { DSPROPERTY_EAXLISTENER_NONE, NULL } // terminate.
     };
+#endif
 
     DSBUFFERDESC        desc;
     DSCAPS              dsoundCaps;
@@ -230,6 +236,7 @@ int DS_Init(void)
 
     // First try to create the DirectSound8 object with EAX support.
     hr = DSERR_GENERIC;
+#ifdef DENG_HAVE_EAX2
     if(useEAX)
     {
         if((hr = EAXDirectSoundCreate8(NULL, &dsound, NULL)) == DS_OK)
@@ -242,6 +249,7 @@ int DS_Init(void)
             App_Log(DE2_AUDIO_VERBOSE, "[DirectSound] EAX could not be initialized (0x%x)", hr);
         }
     }
+#endif
 
     // Try plain old DS, then.
     if(!haveInstance)
@@ -372,6 +380,7 @@ int DS_Init(void)
         if(!(dummy3d = get3DBuffer(dummy)))
             return false;
 
+#ifdef DENG_HAVE_EAX2
         // Query the property set interface
         dummy3d->QueryInterface(IID_IKsPropertySet, (LPVOID*) &propertySet);
         if(propertySet)
@@ -398,6 +407,7 @@ int DS_Init(void)
             }
         }
         else
+#endif
         {
             useEAX = false;
 
@@ -416,6 +426,7 @@ int DS_Init(void)
         LogBuffer_Printf(DE2_LOG_AUDIO, " (%s)", useEAX? "enabled" : "disabled");
     LogBuffer_Printf(DE2_LOG_AUDIO, "\n");
 
+#ifdef DENG_HAVE_EAX2
     if(eaxAvailable)
     {
         App_Log(DE2_LOG_AUDIO, "  EAX Listner Environment:");
@@ -427,6 +438,7 @@ int DS_Init(void)
                     queryEAXSupport(p->prop)? "Present" : "Not available");
         }
     }
+#endif
 
     // Success!
     App_Log(DE2_LOG_AUDIO | DE2_LOG_VERBOSE | DE2_LOG_DEV,
@@ -989,6 +1001,8 @@ static void listenerOrientation(float yaw, float pitch)
                                up[VX], up[VY], up[VZ], DS3D_DEFERRED);
 }
 
+#if DENG_HAVE_EAX2
+
 /**
  * Set the property as 'failed'. No more errors are reported for it.
  */
@@ -1115,6 +1129,8 @@ static void mulEAXf(DWORD prop, float mul, float min, float max)
     setEAXf(prop, value);
 }
 
+#endif 
+
 /**
  * Set a property of a listener.
  *
@@ -1139,7 +1155,9 @@ Con_Error("dsDS9::DS_DSoundListener: Unknown prop %i.", prop);
     case SFXLP_UPDATE:
         // Commit any deferred settings.
         dsListener->CommitDeferredSettings();
+#ifdef DENG_HAVE_EAX2
         commitEAXDeferred();
+#endif
         break;
 
     case SFXLP_UNITS_PER_METER:
@@ -1152,6 +1170,7 @@ Con_Error("dsDS9::DS_DSoundListener: Unknown prop %i.", prop);
     }
 }
 
+#ifdef DENG_HAVE_EAX2
 static void commitEAXDeferred(void)
 {
     if(!propertySet)
@@ -1218,6 +1237,7 @@ static void listenerEnvironment(float* rev)
     // A slightly increased roll-off.
     setEAXf(DSPROPERTY_EAXLISTENER_ROOMROLLOFFFACTOR, 1.3f);
 }
+#endif
 
 /**
  * Call SFXLP_UPDATE at the end of every channel update.
@@ -1255,9 +1275,11 @@ void DS_SFX_Listenerv(int prop, float* values)
         break;
 
     case SFXLP_REVERB:
+#ifdef DENG_HAVE_EAX2
         if(!dsListener)
             return;
         listenerEnvironment(values);
+#endif
         break;
 
     default:
