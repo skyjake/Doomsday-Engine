@@ -6,6 +6,7 @@ import sys
 import os
 import platform
 import shutil
+import string
 import time
 import glob
 import build_version
@@ -81,7 +82,7 @@ def find_version():
     DOOMSDAY_VERSION_MAJOR = build_version.DOOMSDAY_VERSION_MAJOR
     DOOMSDAY_VERSION_MINOR = build_version.DOOMSDAY_VERSION_MINOR
     DOOMSDAY_VERSION_REVISION = build_version.DOOMSDAY_VERSION_REVISION
-    
+
     print 'Build:', DOOMSDAY_BUILD, 'on', TIMESTAMP
     print 'Version:', DOOMSDAY_VERSION_FULL_PLAIN, DOOMSDAY_RELEASE_TYPE
 
@@ -94,8 +95,8 @@ def prepare_work_dir():
 def mac_os_version():
     """Determines the Mac OS version."""
     return builder.utils.mac_os_version()
-    
-    
+
+
 def mac_os_8_or_later():
     return mac_os_version() in ['10.8', '10.9', '10.10', '10.11']
 
@@ -104,8 +105,8 @@ def mac_target_ext():
     if mac_os_8_or_later(): return '.dmg'
     if mac_os_version() == '10.6': return '_mac10_6.dmg'
     return '_32bit.dmg'
-    
-    
+
+
 def mac_osx_suffix():
     if mac_os_8_or_later(): return 'macx8'
     if mac_os_version() == '10.6': return 'macx6'
@@ -118,13 +119,13 @@ def output_filename(ext='', extra=''):
         return 'doomsday_' + extra + DOOMSDAY_VERSION_FULL + ext
     else:
         return 'doomsday_' + extra + DOOMSDAY_VERSION_FULL + "_" + DOOMSDAY_BUILD + ext
-        
-        
+
+
 def cmake_options_path():
-    import pilot    
+    import pilot
     return 'cmake.%s.rsp' % pilot.currentBranch()
-        
-        
+
+
 def cmake_options():
     """Reads the contents of the CMake options file that determines which flags are used
     when building a release."""
@@ -133,26 +134,27 @@ def cmake_options():
         opts += ' ' + open(os.path.join(LAUNCH_DIR, cmake_options_path()), 'rt').read().replace('\n', ' ')
     except:
         print("No additional options provided for CMake (%s missing)" % cmake_options_path())
-    return opts
-    
-    
+    return map(string.strip, opts.split('-----'))
+
+
 def cmake_release(makeOptions, outputGlobs):
     """Runs cmake in the work directory and copies the output files to OUTPUT_DIR."""
-    remkdir(WORK_DIR)
-    os.chdir(WORK_DIR)
-            
-    if os.system('cmake %s ../../doomsday' % cmake_options()):
-        raise Exception("Failed to configure the build.")
-    if os.system('cmake --build . --config Release' + (' -- %s' % makeOptions if makeOptions else '')):
-        raise Exception("Build failed!")
+    for currentOptions in cmake_options():
+        remkdir(WORK_DIR)
+        os.chdir(WORK_DIR)
 
-    # Use CPack to create the package.
-    if os.system('cmake --build . --config Release --target package'):
-        raise Exception("Failed to package the binaries.") 
-    for outputGlob in outputGlobs:
-        for fn in glob.glob(outputGlob):
-            shutil.copy(fn, OUTPUT_DIR)    
-        
+        if os.system('cmake %s ../../doomsday' % currentOptions):
+            raise Exception("Failed to configure the build.")
+        if os.system('cmake --build . --config Release' + (' -- %s' % makeOptions if makeOptions else '')):
+            raise Exception("Build failed!")
+
+        # Use CPack to create the package.
+        if os.system('cmake --build . --config Release --target package'):
+            raise Exception("Failed to package the binaries.")
+        for outputGlob in outputGlobs:
+            for fn in glob.glob(outputGlob):
+                shutil.copy(fn, OUTPUT_DIR)
+
 
 def mac_release():
     cmake_release('-j4', ['*.dmg'])
@@ -160,15 +162,15 @@ def mac_release():
 
 def win_release():
     cmake_release('/m', ['*.msi'])
-    
+
 
 def linux_release():
     cmake_release('-j`nproc`', ['*.deb', '*.rpm'])
-    
+
 
 def linux_release_dpkg():
     """Use `dpkg-buildpackage` to build a binary Debian package."""
-    
+
     os.chdir(LAUNCH_DIR)
 
     # Check that the changelog exists.
@@ -192,7 +194,7 @@ def linux_release_dpkg():
     if os.system('LD_LIBRARY_PATH=`pwd`/../builddir/libcore:`pwd`/../builddir/liblegacy dpkg-buildpackage -b > fmod-out-%s 2> fmod-err-%s' % (logSuffix, logSuffix)):
         raise Exception("Failure to build dsFMOD from source.")
     shutil.copy(glob.glob('../doomsday-fmod*.deb')[0], OUTPUT_DIR)
-    shutil.copy(glob.glob('../doomsday-fmod*.changes')[0], OUTPUT_DIR)    
+    shutil.copy(glob.glob('../doomsday-fmod*.changes')[0], OUTPUT_DIR)
     os.chdir('..')
 
     # Place the result in the output directory.
