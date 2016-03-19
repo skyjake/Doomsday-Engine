@@ -1,4 +1,4 @@
-if (WIN32 AND (DENG_ARCH EQUAL 32))
+if (WIN32 AND (ARCH_BITS EQUAL 32))
     set (_oldPath ${EAX2_LIBRARY})
     find_library (EAX2_LIBRARY eax
         PATHS ${EAX2_DIR} ENV DENG_DEPEND_PATH
