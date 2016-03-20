@@ -44,8 +44,10 @@
 #include <de/strutil.h>
 #include <de/memoryzone.h>
 
-#include <QSettings>
 #include <QDir>
+#include <QSettings>
+#include <QStandardPaths>
+#include <QCoreApplication>
 
 #ifdef WIN32
 #  define WIN32_LEAN_AND_MEAN
@@ -368,9 +370,21 @@ void DoomsdayApp::initialize()
 {
     d->initWadFolders();
 
+    auto &fs = App::fileSystem();
+
+    // Folder for temporary native files.
+    NativePath tmpPath = NativePath(QStandardPaths::writableLocation(QStandardPaths::TempLocation))
+            / ("doomsday-" + QString::number(qApp->applicationPid()));
+    Folder &tmpFolder = fs.makeFolder("/tmp");
+    tmpFolder.attach(new DirectoryFeed(tmpPath,
+                                       DirectoryFeed::AllowWrite |
+                                       DirectoryFeed::CreateIfMissing |
+                                       DirectoryFeed::OnlyThisFolder));
+    tmpFolder.populate(Folder::PopulateOnlyThisFolder);
+
     // "/sys/bundles" has package-like symlinks to files that are not in
     // Doomsday 2 format but can be loaded as packages.
-    App::fileSystem().makeFolder("/sys/bundles", FS::DontInheritFeeds);
+    fs.makeFolder("/sys/bundles", FS::DontInheritFeeds);
 
     d->initialized = true;
 
