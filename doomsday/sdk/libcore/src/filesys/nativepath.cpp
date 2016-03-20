@@ -73,8 +73,7 @@ NativePath::NativePath(QString const &qstr) : Path(toNative(qstr), DIR_SEPARATOR
 
 NativePath::NativePath(char const *nullTerminatedCStr)
     : Path(toNative(nullTerminatedCStr), DIR_SEPARATOR)
-{
-}
+{}
 
 NativePath::NativePath(char const *cStr, dsize length)
     : Path(toNative(String(cStr, length)), DIR_SEPARATOR)

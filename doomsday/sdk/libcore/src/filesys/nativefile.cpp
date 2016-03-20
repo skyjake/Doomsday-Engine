@@ -18,6 +18,7 @@
  */
 
 #include "de/NativeFile"
+#include "de/DirectoryFeed"
 #include "de/Guard"
 #include "de/math.h"
 
@@ -230,6 +231,17 @@ void NativeFile::set(Offset at, Byte const *values, Size count)
     st.size = max(st.size, at + count);
     st.modifiedAt = Time();
     setStatus(st);
+}
+
+NativeFile *NativeFile::newStandalone(NativePath const &nativePath)
+{
+    std::unique_ptr<NativeFile> file(new NativeFile(nativePath.fileName(), nativePath));
+    if(nativePath.exists())
+    {
+        // Sync status with the real status.
+        file->setStatus(DirectoryFeed::fileStatus(nativePath));
+    }
+    return file.release();
 }
 
 void NativeFile::setMode(Flags const &newMode)

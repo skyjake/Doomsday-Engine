@@ -181,8 +181,7 @@ DENG2_PIMPL(App)
             // As a special case, if the base path points to a resource pack,
             // use the contents of the pack as the root of the file system.
             // The pack itself does not appear in the file system.
-            basePackFile.reset(new NativeFile(self.nativeBasePath().fileName(), self.nativeBasePath()));
-            basePackFile->setStatus(DirectoryFeed::fileStatus(self.nativeBasePath()));
+            basePackFile.reset(NativeFile::newStandalone(self.nativeBasePath()));
             fs.root().attach(new ArchiveFeed(*basePackFile));
         }
         else
