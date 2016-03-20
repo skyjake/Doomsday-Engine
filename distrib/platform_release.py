@@ -44,7 +44,16 @@ def mkdir(n):
 
 
 def remkdir(n):
-    builder.utils.remkdir(n)
+    attempts = 10
+    while attempts > 0:
+        try:
+            builder.utils.remkdir(n)
+            return
+        except:
+            pass
+        attempts -= 1
+        time.sleep(5)
+    raise Exception("Failed to clear directory: " + n)
 
 
 def remove(n):
