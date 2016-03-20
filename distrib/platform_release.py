@@ -140,6 +140,7 @@ def cmake_options():
 def cmake_release(makeOptions, outputGlobs):
     """Runs cmake in the work directory and copies the output files to OUTPUT_DIR."""
     for currentOptions in cmake_options():
+        os.chdir(LAUNCH_DIR)
         remkdir(WORK_DIR)
         os.chdir(WORK_DIR)
 
