@@ -737,7 +737,9 @@ DENG2_PIMPL(ModelDrawable)
     void buildNodeLookup(aiNode const &node)
     {
         String const name = node.mName.C_Str();
+#ifdef DENG2_DEBUG
         qDebug() << "Node:" << name;
+#endif
         if(!name.isEmpty())
         {
             nodeNameToPtr.insert(name, &node);

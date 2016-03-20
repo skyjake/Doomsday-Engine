@@ -15,7 +15,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/CanvasWindow"
@@ -187,8 +187,10 @@ void CanvasWindow::recreateCanvas()
     LIBGUI_ASSERT_GL_OK();
 
     LOGDEV_GL_MSG("Canvas recreated, old one still exists");
+#ifdef DENG2_DEBUG
     qDebug() << "old Canvas" << &canvas();
     qDebug() << "new Canvas" << d->recreated;
+#endif
 }
 
 bool CanvasWindow::isRecreationInProgress() const
