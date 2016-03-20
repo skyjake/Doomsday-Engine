@@ -202,6 +202,7 @@ def update_debian_changelog():
 
 def build_source_package():
     """Builds the source tarball and a Debian source package."""
+    update_debian_changelog()
     git_pull()
     ev = builder.Event(latestAvailable=True)
     print "Creating source tarball for build %i." % ev.number()
@@ -235,7 +236,7 @@ def build_source_package():
     os.rename(fn[:-7], pkgDir + '.orig')
 
     origName = pkgName + '_%s' % ev.version_base() + '.orig.tar.gz'
-    print "Symlink to", origName 
+    print "Symlink to", origName
     system_command('ln %s %s' % (fn, origName))
 
     print "Extracting", fn
@@ -243,7 +244,7 @@ def build_source_package():
     print "Renaming", fn[:-7], 'to', pkgDir
     os.rename(fn[:-7], pkgDir)
     os.chdir(pkgDir)
-    system_command('echo "" | dh_make -s -c gpl2 --file ../%s' % fn)
+    system_command('echo "" | dh_make --yes -s -c gpl2 --file ../%s' % fn)
     os.chdir('debian')
     for fn in os.listdir('.'):
         if fn[-3:].lower() == '.ex': os.remove(fn)
