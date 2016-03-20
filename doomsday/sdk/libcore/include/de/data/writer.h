@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_WRITER_H
@@ -134,8 +134,25 @@ public:
     Writer &operator << (ddouble const &value);
     //@}
 
-    /// Write a string to the destination buffer.
+    /**
+     * Writes a string and its size to the destination buffer.
+     *
+     * The text is written as UTF-8 and is prefixed by the 32-bit size of the text. This
+     * is intended for use when writing binary content.
+     *
+     * @param text  Text string.
+     */
     Writer &operator << (String const &text);
+
+    /**
+     * Writes a string to the destination buffer.
+     *
+     * The text is written as UTF-8 and is @em NOT prefixed by the size. This is intended
+     * for writing text content.
+     *
+     * @param text  Text string.
+     */
+    Writer &writeText(String const &text);
 
     /**
      * Writes a sequence bytes to the destination buffer. The size of the byte
