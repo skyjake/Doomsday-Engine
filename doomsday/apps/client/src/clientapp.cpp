@@ -237,10 +237,6 @@ DENG2_PIMPL(ClientApp)
 
     ~Instance()
     {
-        self.audienceForGameChange() -= this;
-        self.audienceForGameUnload() -= this;
-        self.audienceForConsoleRegistration() -= this;
-
         try
         {
             LogBuffer::get().removeSink(logAlarm);
@@ -255,6 +251,10 @@ DENG2_PIMPL(ClientApp)
             qWarning() << "Exception during ~ClientApp:" << er.asText();
             DENG2_ASSERT(!"Unclean shutdown: exception in ~ClientApp");
         }
+
+        self.audienceForGameChange() -= this;
+        self.audienceForGameUnload() -= this;
+        self.audienceForConsoleRegistration() -= this;
 
         updater.reset();
         //delete infineSys;

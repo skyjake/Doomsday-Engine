@@ -22,6 +22,12 @@
 #include <cctype>
 #include <de/Log>
 #include <de/Path>
+#include <de/Writer>
+#include <de/App>
+#include <de/NativeFile>
+#include <de/DirectoryFeed>
+#include <de/c_wrapper.h>
+
 #include <doomsday/help.h>
 #include <doomsday/console/exec.h>
 #include <doomsday/console/var.h>
@@ -50,28 +56,30 @@ using namespace de;
 static Path cfgFile;
 static int flagsAllow;
 
-static void writeHeaderComment(FILE *file)
+static String const STR_COMMENT = "# ";
+
+static void writeHeaderComment(de::Writer &out)
 {
     if(!App_GameLoaded())
     {
-        fprintf(file, "# " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "\n");
+        out.writeText("# " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "\n");
     }
     else
     {
-        fprintf(file, "# %s %s / " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "\n",
-                (char *) gx.GetVariable(DD_PLUGIN_NAME),
-                (char *) gx.GetVariable(DD_PLUGIN_VERSION_SHORT));
+        out.writeText(String::format("# %s %s / " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "\n",
+                (char const *) gx.GetVariable(DD_PLUGIN_NAME),
+                (char const *) gx.GetVariable(DD_PLUGIN_VERSION_SHORT)));
     }
 
-    fprintf(file, "# This configuration file is generated automatically. Each line is a\n");
-    fprintf(file, "# console command. Lines beginning with # are comments. Use autoexec.cfg\n");
-    fprintf(file, "# for your own startup commands.\n\n");
+    out.writeText("# This configuration file is generated automatically. Each line is a\n"
+                  "# console command. Lines beginning with # are comments. Use autoexec.cfg\n"
+                  "# for your own startup commands.\n\n");
 }
 
 static int writeVariableToFileWorker(knownword_t const *word, void *context)
 {
-    FILE *file = (FILE *)context;
-    DENG_ASSERT(file != 0);
+    de::Writer *out = reinterpret_cast<de::Writer *>(context);
+    DENG_ASSERT(out != 0);
 
     cvar_t *var = (cvar_t *)word->data;
     DENG2_ASSERT(var != 0);
@@ -85,69 +93,67 @@ static int writeVariableToFileWorker(knownword_t const *word, void *context)
     // First print the comment (help text).
     if(char const *str = DH_GetString(DH_Find(Str_Text(path)), HST_DESCRIPTION))
     {
-        M_WriteCommented(file, str);
+        out->writeText(String(str).addLinePrefix(STR_COMMENT) + "\n");
     }
 
-    fprintf(file, "%s ", Str_Text(path));
-    if(var->flags & CVF_PROTECTED)
-        fprintf(file, "force ");
+    out->writeText(String::format("%s %s", Str_Text(path),
+                                  var->flags & CVF_PROTECTED? "force " : ""));
 
     switch(var->type)
     {
-    case CVT_BYTE:  fprintf(file, "%d", *(byte *) var->ptr); break;
-    case CVT_INT:   fprintf(file, "%d", *(int *) var->ptr); break;
-    case CVT_FLOAT: fprintf(file, "%s", M_TrimmedFloat(*(float *) var->ptr)); break;
+    case CVT_BYTE:  out->writeText(String::format("%d", *(byte *) var->ptr)); break;
+    case CVT_INT:   out->writeText(String::format("%d", *(int *) var->ptr)); break;
+    case CVT_FLOAT: out->writeText(String::format("%s", M_TrimmedFloat(*(float *) var->ptr))); break;
 
     case CVT_CHARPTR:
-        fprintf(file, "\"");
+        out->writeText("\"");
         if(CV_CHARPTR(var))
         {
-            M_WriteTextEsc(file, CV_CHARPTR(var));
+            out->writeText(String(CV_CHARPTR(var)).escaped());
         }
-        fprintf(file, "\"");
+        out->writeText("\"");
         break;
 
     case CVT_URIPTR:
-        fprintf(file, "\"");
+        out->writeText("\"");
         if(CV_URIPTR(var))
         {
-            fprintf(file, "%s", CV_URIPTR(var)->compose().toUtf8().constData());
+            out->writeText(CV_URIPTR(var)->compose().escaped());
         }
-        fprintf(file, "\"");
+        out->writeText("\"");
         break;
 
-    default: break;
+    default:
+        break;
     }
-    fprintf(file, "\n\n");
+    out->writeText("\n\n");
 
     return 0; // Continue iteration.
 }
 
-static void writeVariablesToFile(FILE *file)
+static void writeVariablesToFile(de::Writer &out)
 {
-    Con_IterateKnownWords(0, WT_CVAR, writeVariableToFileWorker, file);
+    Con_IterateKnownWords(0, WT_CVAR, writeVariableToFileWorker, &out);
 }
 
 static int writeAliasToFileWorker(knownword_t const *word, void *context)
 {
-    FILE *file = (FILE *) context;
-    DENG2_ASSERT(file != 0);
+    de::Writer *out = reinterpret_cast<de::Writer *>(context);
+    DENG2_ASSERT(out != 0);
 
     calias_t *cal = (calias_t *) word->data;
     DENG2_ASSERT(cal != 0);
 
-    fprintf(file, "alias \"");
-    M_WriteTextEsc(file, cal->name);
-    fprintf(file, "\" \"");
-    M_WriteTextEsc(file, cal->command);
-    fprintf(file, "\"\n");
+    out->writeText(String::format("alias \"%s\" \"%s\"\n",
+                                  String(cal->name).escaped().toUtf8().constData(),
+                                  String(cal->command).escaped().toUtf8().constData()));
 
     return 0; // Continue iteration.
 }
 
-static void writeAliasesToFile(FILE *file)
+static void writeAliasesToFile(de::Writer &out)
 {
-    Con_IterateKnownWords(0, WT_CALIAS, writeAliasToFileWorker, file);
+    Con_IterateKnownWords(0, WT_CALIAS, writeAliasToFileWorker, &out);
 }
 
 static bool writeConsoleState(Path const &filePath)
@@ -158,28 +164,32 @@ static bool writeConsoleState(Path const &filePath)
     String fileDir = filePath.toString().fileNamePath();
     if(!fileDir.isEmpty())
     {
-        F_MakePath(fileDir.toUtf8().constData());
+        F_MakePath(fileDir.toUtf8());
     }
 
-    if(FILE *file = fopen(filePath.toUtf8().constData(), "wt"))
+    try
     {
-        LOG_SCR_VERBOSE("Writing state to \"%s\"...")
-                << NativePath(filePath).pretty();
+        File &file = App::rootFolder().replaceFile(filePath);
+        de::Writer out(file);
 
-        writeHeaderComment(file);
-        fprintf(file, "#\n# CONSOLE VARIABLES\n#\n\n");
-        writeVariablesToFile(file);
+        LOG_SCR_VERBOSE("Writing console state to %s...") << file.description();
 
-        fprintf(file, "\n#\n# ALIASES\n#\n\n");
-        writeAliasesToFile(file);
-        fclose(file);
-        return true;
+        writeHeaderComment(out);
+        out.writeText("#\n# CONSOLE VARIABLES\n#\n\n");
+        writeVariablesToFile(out);
+
+        out.writeText("\n#\n# ALIASES\n#\n\n");
+        writeAliasesToFile(out);
+
+        file.flush();
     }
-
-    LOG_SCR_WARNING("Failed opening \"%s\" for writing")
-            << NativePath(filePath).pretty();
-
-    return false;
+    catch(Error const &er)
+    {
+        LOG_SCR_WARNING("Failed to open \"%s\" for writing: %s")
+                << filePath << er.asText();
+        return false;
+    }
+    return true;
 }
 
 #ifdef __CLIENT__
@@ -191,58 +201,61 @@ static bool writeBindingsState(Path const &filePath)
     String fileDir = filePath.toString().fileNamePath();
     if(!fileDir.isEmpty())
     {
-        F_MakePath(fileDir.toUtf8().constData());
+        F_MakePath(fileDir.toUtf8());
     }
 
-    if(FILE *file = fopen(filePath.toUtf8().constData(), "wt"))
+    try
     {
+        File &file = App::rootFolder().replaceFile(filePath);
+        de::Writer out(file);
+
         InputSystem &isys = ClientApp::inputSystem();
 
-        LOG_SCR_VERBOSE("Writing bindings to \"%s\"...")
-                << NativePath(filePath).pretty();
+        LOG_SCR_VERBOSE("Writing input bindings to %s...") << file.description();
 
-        writeHeaderComment(file);
+        writeHeaderComment(out);
 
         // Start with a clean slate when restoring the bindings.
-        fprintf(file, "clearbindings\n\n");
+        out.writeText("clearbindings\n\n");
 
-        isys.forAllContexts([&isys, &file] (BindContext &context)
+        isys.forAllContexts([&isys, &out] (BindContext &context)
         {
             // Commands.
-            context.forAllCommandBindings([&file, &context] (Record &rec)
+            context.forAllCommandBindings([&out, &context] (Record &rec)
             {
                 CommandBinding bind(rec);
-                fprintf(file, "bindevent \"%s:%s\" \"", context.name().toUtf8().constData(),
-                               bind.composeDescriptor().toUtf8().constData());
-                M_WriteTextEsc(file, bind.gets("command").toUtf8().constData());
-                fprintf(file, "\"\n");
+                out.writeText(String::format("bindevent \"%s:%s\" \"",
+                                             context.name().toUtf8().constData(),
+                                             bind.composeDescriptor().toUtf8().constData()) +
+                              bind.gets("command").escaped() + "\"\n");
                 return LoopContinue;
             });
 
             // Impulses.
-            context.forAllImpulseBindings([&file, &context] (Record &rec)
+            context.forAllImpulseBindings([&out, &context] (Record &rec)
             {
                 ImpulseBinding bind(rec);
                 PlayerImpulse const *impulse = P_PlayerImpulsePtr(bind.geti("impulseId"));
                 DENG2_ASSERT(impulse);
 
-                fprintf(file, "bindcontrol local%i-%s \"%s\"\n",
+                out.writeText(String::format("bindcontrol local%i-%s \"%s\"\n",
                               bind.geti("localPlayer") + 1,
                               impulse->name.toUtf8().constData(),
-                              bind.composeDescriptor().toUtf8().constData());
+                              bind.composeDescriptor().toUtf8().constData()));
                 return LoopContinue;
             });
 
             return LoopContinue;
         });
 
-        fclose(file);
+        file.flush();
         return true;
     }
-
-    LOG_SCR_WARNING("Failed opening \"%s\" for writing")
-            << NativePath(filePath).pretty();
-
+    catch(Error const &er)
+    {
+        LOG_SCR_WARNING("Failed opening \"%s\" for writing: %s")
+                << filePath << er.asText();
+    }
     return false;
 }
 #endif // __CLIENT__
@@ -265,37 +278,53 @@ static bool writeState(Path const &filePath, Path const &bindingsFileName = "")
     return true;
 }
 
-bool Con_ParseCommands(Path const &fileName, int flags)
+bool Con_ParseCommands(File const &file, int flags)
 {
-    bool const setDefault = (flags & CPCF_SET_DEFAULT) != 0;
-
-    // Is this supposed to be the default?
-    if(setDefault)
-    {
-        cfgFile = fileName;
-    }
-
     // Update the allowed operations.
     flagsAllow |= flags & (CPCF_ALLOW_SAVE_STATE | CPCF_ALLOW_SAVE_BINDINGS);
 
-    LOG_SCR_VERBOSE("Parsing \"%s\" (setdef:%b)")
-            << NativePath(fileName).pretty()
-            << setDefault;
+    LOG_SCR_MSG("Parsing console commands in %s...") << file.description();
 
-    return Con_Parse(fileName, setDefault /* => silently */);
+    return Con_Parse(file, (flags & CPCF_SILENT) != 0);
+}
+
+bool Con_ParseCommands(NativePath const &nativePath, int flags)
+{
+    if(nativePath.exists())
+    {
+        std::unique_ptr<File> file(NativeFile::newStandalone(nativePath));
+        return Con_ParseCommands(*file, flags);
+    }
+    return false;
+}
+
+void Con_SetDefaultPath(Path const &path)
+{
+    cfgFile = path;
 }
 
 void Con_SaveDefaults()
 {
-    writeState(cfgFile, (!isDedicated && App_GameLoaded()?
+    Path path;
+
+    if(CommandLine_CheckWith("-config", 1))
+    {
+        path = App::fileSystem().accessNativeLocation(CommandLine_NextAsPath(), File::Write);
+    }
+    else
+    {
+        path = cfgFile;
+    }
+
+    writeState(path, (!isDedicated && App_GameLoaded()?
                              App_CurrentGame().bindingConfig() : ""));
 }
 
 D_CMD(WriteConsole)
 {
     DENG2_UNUSED2(src, argc);
-    Path filePath = Path(NativePath(argv[1]).expand().withSeparators('/'));
 
+    Path filePath(argv[1]);
     LOG_SCR_MSG("Writing to \"%s\"...") << filePath;
     return !writeState(filePath);
 }

@@ -59,7 +59,7 @@ struct demopacket_header_t
 
 extern dfloat netConnectTime;
 
-filename_t demoPath = "demo/";
+filename_t demoPath = "/home/demo/";
 
 LZFILE *playdemo;
 dint playback;
@@ -78,7 +78,7 @@ void Demo_WriteLocalCamera(dint plrNum);
 void Demo_Init()
 {
     // Make sure the demo path is there.
-    F_MakePath(demoPath);
+    //F_MakePath(demoPath);
 }
 
 /**
@@ -668,7 +668,7 @@ D_CMD(StopDemo)
         << (DD_Player(plnum)->recording ? "recording" : "playback") << plnum;
 
     if(::playback)
-    {   
+    {
         // Aborted.
         Demo_StopPlayback();
         // Any interested parties?

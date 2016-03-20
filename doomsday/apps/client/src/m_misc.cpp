@@ -435,7 +435,7 @@ DENG_EXTERN_C dd_bool M_WriteFile(const char* name, const char* source, size_t l
     return (count >= length);
 }
 
-void M_WriteCommented(FILE *file, const char* text)
+/*AutoStr *M_WriteCommented(const char* text)
 {
     char *buff = (char *) M_Malloc(strlen(text) + 1), *line;
 
@@ -447,12 +447,12 @@ void M_WriteCommented(FILE *file, const char* text)
         line = strtok(NULL, "\n");
     }
     M_Free(buff);
-}
+}*/
 
-/**
+/*
  * The caller must provide the opening and closing quotes.
  */
-void M_WriteTextEsc(FILE* file, const char* text)
+/*void M_WriteTextEsc(FILE* file, const char* text)
 {
     DENG_ASSERT(file && text);
 
@@ -463,7 +463,7 @@ void M_WriteTextEsc(FILE* file, const char* text)
             fprintf(file, "\\");
         fprintf(file, "%c", text[i]);
     }
-}
+}*/
 
 DENG_EXTERN_C int M_ScreenShot(char const *name, int bits)
 {

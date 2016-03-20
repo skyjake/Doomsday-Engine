@@ -48,10 +48,6 @@ struct aaboxd_s;
  */
 void M_ReadBits(uint numBits, const uint8_t** src, uint8_t* cb, uint8_t* out);
 
-// Text utilities.
-void M_WriteCommented(FILE* file, const char* text);
-void M_WriteTextEsc(FILE* file, const char* text);
-
 /**
  * Check the spatial relationship between the given box and a partitioning line.
  *

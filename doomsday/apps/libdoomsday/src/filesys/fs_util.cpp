@@ -48,6 +48,7 @@
 
 #include <de/Log>
 #include <de/NativePath>
+#include <de/App>
 #include <de/findfile.h>
 
 using namespace de;
@@ -94,6 +95,18 @@ uint F_GetLastModified(char const *path)
 
 dd_bool F_MakePath(char const *path)
 {
+    try
+    {
+        App::fileSystem().makeFolder(path);
+        return true;
+    }
+    catch(Error const &er)
+    {
+        LOG_WARNING("Failed to create path \"%s\": %s") << path << er.asText();
+        return false;
+    }
+
+    /*
 #if !defined(WIN32) && !defined(UNIX)
 #  error F_MakePath has no implementation for this platform.
 #endif
@@ -140,7 +153,7 @@ dd_bool F_MakePath(char const *path)
     result = (0 == access(Str_Text(&full), 0));
     Str_Free(&buf);
     Str_Free(&full);
-    return result;
+    return result;*/
 }
 
 dd_bool F_FixSlashes(ddstring_t* dstStr, const ddstring_t* srcStr)

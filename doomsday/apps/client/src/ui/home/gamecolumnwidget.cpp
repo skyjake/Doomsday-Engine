@@ -133,9 +133,13 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
     void addItemForProfile(GameProfile const &profile)
     {
-        if(DoomsdayApp::games()[profile.game()].family() == gameFamily)
+        auto const &games = DoomsdayApp::games();
+        if(games.contains(profile.game()))
         {
-            menu->items() << new MenuItem(this, profile);
+            if(games[profile.game()].family() == gameFamily)
+            {
+                menu->items() << new MenuItem(this, profile);
+            }
         }
     }
 
@@ -180,11 +184,13 @@ DENG_GUI_PIMPL(GameColumnWidget)
             item.as<MenuItem>().update();
             return LoopContinue;
         });
+        menu->updateLayout();
     }
 
     void gameReadinessUpdated()
     {
-        updateItems();
+        //updateItems();
+        populateItems();
 
         // Restore earlier selection?
         if(restoredSelected >= 0)

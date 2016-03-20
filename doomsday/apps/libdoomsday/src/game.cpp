@@ -65,11 +65,11 @@ DENG2_PIMPL(Game)
         // Define the optional parameters if needed.
         if(!params.has(DEF_CONFIG_MAIN_PATH))
         {
-            params.set(DEF_CONFIG_MAIN_PATH, "configs"/params.gets(DEF_CONFIG_DIR)/"game.cfg");
+            params.set(DEF_CONFIG_MAIN_PATH, "/home/configs"/params.gets(DEF_CONFIG_DIR)/"game.cfg");
         }
         if(!params.has(DEF_CONFIG_BINDINGS_PATH))
         {
-            params.set(DEF_CONFIG_BINDINGS_PATH, "configs"/params.gets(DEF_CONFIG_DIR)/"player/bindings.cfg");
+            params.set(DEF_CONFIG_BINDINGS_PATH, "/home/configs"/params.gets(DEF_CONFIG_DIR)/"player/bindings.cfg");
         }
 
         params.set(DEF_CONFIG_DIR, NativePath(params.gets(DEF_CONFIG_DIR)).expand().withSeparators('/'));

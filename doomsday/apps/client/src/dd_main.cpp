@@ -731,27 +731,37 @@ int DD_ActivateGameWorker(void *context)
 
     if(App_GameLoaded())
     {
+        File const *configFile;
+
         // Parse the game's main config file.
         // If a custom top-level config is specified; let it override.
-        Path configFile;
         if(CommandLine_CheckWith("-config", 1))
         {
-            configFile = NativePath(CommandLine_NextAsPath()).withSeparators('/');
+            Con_ParseCommands(NativePath(CommandLine_NextAsPath()), CPCF_ALLOW_SAVE_STATE);
         }
         else
         {
-            configFile = App_CurrentGame().mainConfig();
-        }
+            configFile = App::rootFolder().tryLocate<File const>(App_CurrentGame().mainConfig());
+            Con_SetDefaultPath(App_CurrentGame().mainConfig());
 
-        LOG_SCR_MSG("Parsing primary config \"%s\"...") << NativePath(configFile).pretty();
-        Con_ParseCommands(configFile, CPCF_SET_DEFAULT | CPCF_ALLOW_SAVE_STATE);
+            // This will be missing on the first launch.
+            if(configFile)
+            {
+                LOG_SCR_NOTE("Parsing primary config %s...") << configFile->description();
+                Con_ParseCommands(*configFile, CPCF_ALLOW_SAVE_STATE);
+            }
+        }
 
 #ifdef __CLIENT__
         // Apply default control bindings for this game.
         ClientApp::inputSystem().bindGameDefaults();
 
         // Read bindings for this game and merge with the working set.
-        Con_ParseCommands(App_CurrentGame().bindingConfig(), CPCF_ALLOW_SAVE_BINDINGS);
+        if((configFile = App::rootFolder().tryLocate<File const>(App_CurrentGame().bindingConfig()))
+                != nullptr)
+        {
+            Con_ParseCommands(*configFile, CPCF_ALLOW_SAVE_BINDINGS);
+        }
 #endif
     }
 
@@ -1096,10 +1106,7 @@ static void initialize()
     // Try to load the autoexec file. This is done here to make sure everything is
     // initialized: the user can do here anything that s/he'd be able to do in-game
     // provided a game was loaded during startup.
-    if(F_FileExists(AUTOEXEC_NAME))
-    {
-        Con_ParseCommands(AUTOEXEC_NAME);
-    }
+    Con_ParseCommands(App::app().nativeHomePath() / AUTOEXEC_NAME);
 
     // Read additional config files that should be processed post engine init.
     if(CommandLine_CheckWith("-parse", 1))
@@ -1108,11 +1115,11 @@ static void initialize()
         Time begunAt;
         forever
         {
-            char const *arg = CommandLine_Next();
+            char const *arg = CommandLine_NextAsPath();
             if(!arg || arg[0] == '-') break;
 
-            LOG_MSG("Additional (pre-init) config file \"%s\"") << NativePath(arg).pretty();
-            Con_ParseCommands(arg);
+            LOG_NOTE("Additional pre-init config file \"%s\"") << NativePath(arg).pretty();
+            Con_ParseCommands(NativePath(arg));
         }
         LOGDEV_SCR_VERBOSE("Completed in %.2f seconds") << begunAt.since();
     }
