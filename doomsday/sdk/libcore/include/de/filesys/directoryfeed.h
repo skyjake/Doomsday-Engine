@@ -44,9 +44,6 @@ public:
     /// An error occurred changing the working directory. @ingroup errors
     DENG2_ERROR(WorkingDirError);
 
-    /// Creating a directory failed. @ingroup errors
-    DENG2_ERROR(CreateDirError);
-
     enum Flag
     {
         /// Opens all files and folders in write mode.
@@ -97,22 +94,6 @@ public:
      * @param nativePath  New path to use as the working directory.
      */
     static void changeWorkingDir(NativePath const &nativePath);
-
-    /**
-     * Creates a native directory relative to the current working directory.
-     *
-     * @param nativePath  Native directory to create.
-     */
-    static void createDir(NativePath const &nativePath);
-
-    /**
-     * Determines whether a native path exists.
-     *
-     * @param nativePath  Path to check.
-     *
-     * @return @c true if the path exists, @c false otherwise.
-     */
-    static bool exists(NativePath const &nativePath);
 
     /**
      * Determines the status of a file in the directory.

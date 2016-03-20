@@ -42,6 +42,9 @@ public:
     /// An unknown user name was encounterd in the string. @ingroup errors
     DENG2_ERROR(UnknownUserError);
 
+    /// Creating a directory failed. @ingroup errors
+    DENG2_ERROR(CreateDirError);
+
 public:
     /**
      * Constructs an empty native path.
@@ -160,6 +163,22 @@ public:
      * @return  @c true iff successfully changed the current working path.
      */
     static bool setWorkPath(NativePath const &cwd);
+
+    /**
+     * Determines whether a native path exists.
+     *
+     * @param nativePath  Path to check.
+     *
+     * @return @c true if the path exists, @c false otherwise.
+     */
+    static bool exists(NativePath const &nativePath);
+
+    /**
+     * Creates a native directory relative to the current working directory.
+     *
+     * @param nativePath  Native directory to create.
+     */
+    static void createPath(NativePath const &nativePath);
 
     /**
      * Returns the native path separator character.
