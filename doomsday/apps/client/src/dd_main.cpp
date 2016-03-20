@@ -507,7 +507,7 @@ void App_Error(char const *error, ...)
     errorInProgress = true;
 
     // Get back to the directory we started from.
-    Dir_SetCurrent(DD_RuntimePath());
+    //Dir_SetCurrent(DD_RuntimePath());
 
     va_start(argptr, error);
     dd_vsnprintf(err, sizeof(err), error, argptr);
@@ -1246,10 +1246,10 @@ static dint DD_StartupWorker(void * /*context*/)
     //Con_SetProgress(20);
 
     // Was the change to userdir OK?
-    if(CommandLine_CheckWith("-userdir", 1) && !DoomsdayApp::app().isUsingUserDir())
+    /*if(CommandLine_CheckWith("-userdir", 1) && !DoomsdayApp::app().isUsingUserDir())
     {
         LOG_WARNING("User directory not found (check -userdir)");
-    }
+    }*/
 
     FS_InitVirtualPathMappings();
     App_FileSystem().resetAllSchemes();

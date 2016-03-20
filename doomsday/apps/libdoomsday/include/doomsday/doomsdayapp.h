@@ -103,7 +103,7 @@ public:
                     std::function<int (void *)> gameActivationFunc,
                     Behaviors behaviors = DefaultBehavior);
 
-    bool isUsingUserDir() const;
+    //bool isUsingUserDir() const;
 
     bool isShuttingDown() const;
     void setShuttingDown(bool shuttingDown);
@@ -113,9 +113,9 @@ public:
 #endif
 
     void setDoomsdayBasePath(de::NativePath const &path);
-    void setDoomsdayRuntimePath(de::NativePath const &path);
+    //void setDoomsdayRuntimePath(de::NativePath const &path);
     std::string const &doomsdayBasePath() const;
-    std::string const &doomsdayRuntimePath() const;
+    //std::string const &doomsdayRuntimePath() const;
 
 public:
     static DoomsdayApp &app();
