@@ -157,42 +157,6 @@ static int showCriticalMessage(char const *msg)
 
     Sys_MessageBox(MBT_WARNING, DOOMSDAY_NICENAME, msg, 0);
     return 0;
-
-#if 0
-#ifdef WIN32
-#ifdef UNICODE
-    wchar_t buf[256];
-#else
-    char buf[256];
-#endif
-    int ret;
-    Window *wnd = Window::main();
-    DENG_ASSERT(wnd != 0);
-    HWND hWnd = (HWND) wnd->nativeHandle();
-
-    if(!hWnd)
-    {
-        DD_Win32_SuspendMessagePump(true);
-        MessageBox(HWND_DESKTOP, TEXT("Sys_CriticalMessage: Main window not available."),
-                   NULL, MB_ICONERROR | MB_OK);
-        DD_Win32_SuspendMessagePump(false);
-        return false;
-    }
-
-    ShowCursor(TRUE);
-    ShowCursor(TRUE);
-    DD_Win32_SuspendMessagePump(true);
-    GetWindowText(hWnd, buf, 255);
-    ret = (MessageBox(hWnd, WIN_STRING(msg), buf, MB_OK | MB_ICONEXCLAMATION) == IDYES);
-    DD_Win32_SuspendMessagePump(false);
-    ShowCursor(FALSE);
-    ShowCursor(FALSE);
-    return ret;
-#else
-    fprintf(stderr, "--- %s\n", msg);
-    return 0;
-#endif
-#endif
 }
 
 int Sys_CriticalMessage(const char* msg)

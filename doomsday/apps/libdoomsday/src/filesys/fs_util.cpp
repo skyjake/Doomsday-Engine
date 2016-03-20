@@ -129,7 +129,7 @@ dd_bool F_MakePath(char const *path)
             // Path doesn't exist, create it.
 #ifdef WIN32
             mkdir(Str_Text(&buf));
-#elif UNIX
+#elif defined(UNIX)
             mkdir(Str_Text(&buf), 0775);
 #endif
         }
