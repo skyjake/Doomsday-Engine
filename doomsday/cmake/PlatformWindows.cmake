@@ -21,13 +21,12 @@ find_program (SIGNTOOL_COMMAND signtool)
 mark_as_advanced (SIGNTOOL_COMMAND)
 
 function (deng_signtool path)
-    install (CODE "
-        message (STATUS "\Signing ${path}...\")
-        execute_process (COMMAND ${SIGNTOOL_COMMAND}
-            /f ${DENG_SIGNTOOL_CERT}
+    install (CODE "message (STATUS \"Signing ${path}...\")
+        execute_process (COMMAND \"${SIGNTOOL_COMMAND}\" sign
+            /f \"${DENG_SIGNTOOL_CERT}\"
             /p ${DENG_SIGNTOOL_PASSPHRASE}
             /t http://timestamp.verisign.com/scripts/timstamp.dll
-            \"${path}\"
+            \"\${CMAKE_INSTALL_PREFIX}/${path}\"
         )"
     )
 endfunction ()
