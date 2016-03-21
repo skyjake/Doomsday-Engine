@@ -81,10 +81,10 @@ if (DENG_X11)
     deng_target_link_qt (libgui PRIVATE X11Extras)
     if (DENG_ENABLE_DISPLAYMODE)
         if (NOT X11_Xrandr_FOUND)
-            message (FATAL_ERROR "DisplayMode requires X11 Xrandr extension")
+            message (FATAL_ERROR "DisplayMode requires X11 Xrandr extension (enable/disable with DENG_ENABLE_DISPLAYMODE)")
         endif ()
         if (NOT X11_xf86vmode_FOUND)
-            message (FATAL_ERROR "DisplayMode requires X11 xf86vmode extension")
+            message (FATAL_ERROR "DisplayMode requires X11 xf86vmode extension (enable/disable with DENG_ENABLE_DISPLAYMODE)")
         endif ()
         target_include_directories (libgui PRIVATE
             ${X11_Xrandr_INCLUDE_PATH}
@@ -102,6 +102,9 @@ deng_deploy_library (libgui DengGui)
 # If Assimp is part of the build, ensure that it gets compiled before libgui.
 if (TARGET assimp)
     add_dependencies (libgui assimp)
+    if (MSVC)
+        target_link_libraries (libgui PRIVATE zlibstatic)   # from assimp project
+    endif ()
 endif ()
 
 deng_cotire (libgui src/precompiled.h)
