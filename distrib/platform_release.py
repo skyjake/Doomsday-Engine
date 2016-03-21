@@ -152,6 +152,11 @@ def cmake_release(makeOptions, outputGlobs):
         os.chdir(LAUNCH_DIR)
         remkdir(WORK_DIR)
         os.chdir(WORK_DIR)
+       
+        try:
+            postCommand = file(os.path.join(LAUNCH_DIR, 'postcommand.txt'), 'rt').read()
+        except:
+            postCommand = None
 
         if os.system('cmake %s ../../doomsday' % currentOptions):
             raise Exception("Failed to configure the build.")
@@ -163,6 +168,8 @@ def cmake_release(makeOptions, outputGlobs):
             raise Exception("Failed to package the binaries.")
         for outputGlob in outputGlobs:
             for fn in glob.glob(outputGlob):
+                if postCommand:
+                    os.system(postCommand % fn)
                 shutil.copy(fn, OUTPUT_DIR)
 
 

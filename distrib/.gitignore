@@ -7,4 +7,4 @@ plugins
 build*.txt
 products
 cmake.*.rsp
-
+postcommand.txt
