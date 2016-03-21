@@ -20,7 +20,7 @@ set (DENG_SIGNTOOL_PASSPHRASE "" CACHE STRING "Signing certificate passphrase.")
 find_program (SIGNTOOL_COMMAND signtool)
 mark_as_advanced (SIGNTOOL_COMMAND)
 
-function (deng_signtool path)
+function (deng_signtool path comp)
     install (CODE "message (STATUS \"Signing ${path}...\")
         execute_process (COMMAND \"${SIGNTOOL_COMMAND}\" sign
             /f \"${DENG_SIGNTOOL_CERT}\"
@@ -28,6 +28,7 @@ function (deng_signtool path)
             /t http://timestamp.verisign.com/scripts/timstamp.dll
             \"\${CMAKE_INSTALL_PREFIX}/${path}\"
         )"
+        COMPONENT ${comp}
     )
 endfunction ()
 
