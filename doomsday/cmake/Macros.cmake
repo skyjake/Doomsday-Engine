@@ -443,6 +443,10 @@ macro (deng_codesign target)
                 \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app\"
             )")
     endif ()
+    if (WIN32 AND DENG_SIGNTOOL_CERT)
+        get_property (_outName TARGET ${target} PROPERTY OUTPUT_NAME)
+        deng_signtool (${CMAKE_INSTALL_PREFIX}/bin/${_outName}.exe)
+    endif ()
 endmacro ()
 
 # Defines a new GUI application target that includes all the required Doomsday

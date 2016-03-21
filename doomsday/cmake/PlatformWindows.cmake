@@ -14,6 +14,24 @@ add_definitions (
     -D_USE_MATH_DEFINES
 )
 
+# Code signing.
+set (DENG_SIGNTOOL_CERT "" CACHE FILEPATH "Path of the certificate for signing files.")
+set (DENG_SIGNTOOL_PASSPHRASE "" CACHE STRING "Signing certificate passphrase.")
+find_program (SIGNTOOL_COMMAND signtool)
+mark_as_advanced (SIGNTOOL_COMMAND)
+
+function (deng_signtool path)
+    install (CODE "
+        message (STATUS "\Signing ${path}...\")
+        execute_process (COMMAND ${SIGNTOOL_COMMAND}
+            /f ${DENG_SIGNTOOL_CERT}
+            /p ${DENG_SIGNTOOL_PASSPHRASE}
+            /t http://timestamp.verisign.com/scripts/timstamp.dll
+            \"${path}\"
+        )"
+    )
+endfunction ()
+
 if (MSVC)
     add_definitions (
         -DMSVC

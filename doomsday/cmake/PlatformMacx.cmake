@@ -7,6 +7,7 @@ set (DENG_AMETHYST_PLATFORM MACOSX)
 set (DENG_INSTALL_DOC_DIR "Doomsday.app/Contents/Resources/doc")
 set (DENG_INSTALL_MAN_DIR ${DENG_INSTALL_DOC_DIR})
 
+# Code signing.
 set (DENG_CODESIGN_APP_CERT "" CACHE STRING "ID of the certificate for signing applications.")
 find_program (CODESIGN_COMMAND codesign)
 mark_as_advanced (CODESIGN_COMMAND)
