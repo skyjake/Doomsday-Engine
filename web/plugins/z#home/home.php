@@ -345,7 +345,7 @@ $(document).ready(function () {
 <aside role="complementary" class="block">
 <div id="status">
 <div class="twocolumn"><article>
-<header><h1><a href="/builds" title="View the complete index in the build repository">Most recent builds</a></h1>
+<header><h1><a href="http://files.dengine.net/builds/" title="View the complete index in the build repository">Most recent builds</a></h1>
 <p><script>
 <!--
 var niceDate = $.datepicker.formatDate('MM d, yy', new Date());
