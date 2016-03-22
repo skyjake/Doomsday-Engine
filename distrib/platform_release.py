@@ -138,12 +138,13 @@ def cmake_options_path():
 def cmake_options():
     """Reads the contents of the CMake options file that determines which flags are used
     when building a release."""
-    opts = '-DCMAKE_BUILD_TYPE=Release -DDENG_BUILD=%s ' % (DOOMSDAY_BUILD_NUMBER)
     try:
-        opts += ' ' + open(os.path.join(LAUNCH_DIR, cmake_options_path()), 'rt').read().replace('\n', ' ')
+        opts = open(os.path.join(LAUNCH_DIR, cmake_options_path()), 'rt').read().replace('\n', ' ')
     except:
         print("No additional options provided for CMake (%s missing)" % cmake_options_path())
-    return map(string.strip, opts.split('-----'))
+        opts = ''
+    common = ' -DCMAKE_BUILD_TYPE=Release -DDENG_BUILD=%s ' % (DOOMSDAY_BUILD_NUMBER)
+    return [o + common for o in map(string.strip, opts.split('-----'))]
 
 
 def cmake_release(makeOptions, outputGlobs):
