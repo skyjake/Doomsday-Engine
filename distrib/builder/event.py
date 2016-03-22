@@ -48,21 +48,26 @@ class Event:
                             'fmod':               'FMOD Ex Audio Plugin'}
         
         if self.num >= 816: # Added Mac OS X 10.8.
-            # Platforms:  Name                              File ext          sys_id()
-            self.oses = [('Windows (x86)',                 ('.exe', '.msi'),  'win32-32bit'),
+            # Platforms:  Name                             File ext          sys_id()
+            self.oses = [('Windows (32-bit)',              ('.exe', '.msi'), 'win32-32bit'),
+                         ('Windows (64-bit)',              'x64.msi',        'win64-64bit'),
                          ('OS X 10.8+ (x86_64)',           ('.dmg', 'macx8.dmg'), 'macx8-64bit'),
                          ('OS X 10.6+ (x86_64/i386)',      ('mac10_6.dmg', 'macx6.dmg'), 'darwin-64bit'),
                          ('OS X 10.4+ (ppc/i386)',         '32bit.dmg',      'darwin-32bit'),
-                         ('Ubuntu (x86_64)',               'amd64.deb',      'linux2-64bit'),
-                         ('Ubuntu (x86)',                  'i386.deb',       'linux2-32bit'),
+                         ('Ubuntu (64-bit)',               'amd64.deb',      'linux2-64bit'),
+                         ('Ubuntu (32-bit)',               'i386.deb',       'linux2-32bit'),
+                         ('Fedora (64-bit)',               '.rpm',           'fedora-64bit'),
                          ('Source',                        '.tar.gz',        'source')]
 
+            # Obsolete Linux versions.
+            if self.num >= 1907:
+                del self.oses[6]
             # Remove obsolete OS X versions:
             if self.has_version():
                 if utils.version_cmp(self.version_base(), '1.11') >= 0:
-                    del self.oses[3] # no more OS X 10.4
+                    del self.oses[4] # no more OS X 10.4
                 if self.num >= 1212 and utils.version_cmp(self.version_base(), '1.15') >= 0:
-                    del self.oses[2] # no more OS X 10.6
+                    del self.oses[3] # no more OS X 10.6
                 
         elif self.num >= 778: # Mac distribution naming was changed.
             # Platforms:  Name                            File ext     sys_id()
@@ -80,12 +85,14 @@ class Event:
                          ('Ubuntu (x86)',                 'i386.deb',  'linux2-32bit'),
                          ('Ubuntu (x86_64)',              'amd64.deb', 'linux2-64bit')]            
 
-        self.platId = {'win32-32bit':  'win-x86',
+        self.platId = {'win64-64bit':  'win-x64',
+                       'win32-32bit':  'win-x86',
                        'darwin-32bit': 'mac10_4-x86-ppc',
                        'darwin-64bit': 'mac10_6-x86-x86_64',
                        'macx8-64bit':  'mac10_8-x86_64',
                        'linux2-32bit': 'linux-x86',
                        'linux2-64bit': 'linux-x86_64',
+                       'fedora-64bit': 'fedora-x86_64',
                        'source':       'source'}
 
         # Prepare compiler logs present in the build dir.
@@ -124,6 +131,7 @@ class Event:
                 osx = '_osx' + n[8] + '_'
                 if osx in name:
                     found = (n, ext, ident)
+        if not found: print 'OS unknown for', name, self.oses
         return found
                 
     def version_from_filename(self, name):
