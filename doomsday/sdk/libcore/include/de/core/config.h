@@ -105,6 +105,8 @@ public:
     Record &objectNamespace();
     Record const &objectNamespace() const;
 
+    static Config &get();
+
 private:
     DENG2_PRIVATE(d)
 };

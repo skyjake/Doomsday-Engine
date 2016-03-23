@@ -21,6 +21,7 @@
 #include "de/String"
 #include "de/NativePath"
 #include "de/Log"
+#include "de/App"
 
 #include <QFile>
 #include <QDir>
@@ -467,6 +468,11 @@ bool CommandLine::executeAndWait(String *output) const
     }
 
     return result;
+}
+
+CommandLine &CommandLine::get()
+{
+    return App::commandLine();
 }
 
 CommandLine::ArgWithParams::ArgWithParams() : pos(0)
