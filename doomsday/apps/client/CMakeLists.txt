@@ -51,6 +51,12 @@ if (AMETHYST_FOUND)
         set (readme "${CMAKE_CURRENT_BINARY_DIR}/readme.txt")
         deng_add_amedoc (TXT ${readme} ${DENG_SOURCE_DIR}/doc/readme readme.ame)
         list (APPEND SOURCES ${readme})
+        if (WIN32)
+            # WIX generator requires setting this manually.
+            set_property (INSTALL "${DENG_INSTALL_DOC_DIR}/readme.txt"
+                PROPERTY CPACK_START_MENU_SHORTCUTS "Read Me"
+            )
+        endif ()
     endif ()
     # Manual page.
     if (UNIX)
@@ -100,6 +106,13 @@ if (WIN32 OR APPLE)
     set (MACOSX_BUNDLE_ICON_FILE "deng.icns")
 else ()
     set_property (TARGET client PROPERTY OUTPUT_NAME "doomsday")
+endif ()
+
+if (WIN32)
+    # WIX generator requires setting this manually.
+    set_property (INSTALL "bin/$<TARGET_FILE_NAME:client>"
+        PROPERTY CPACK_START_MENU_SHORTCUTS "Doomsday Engine"
+    )
 endif ()
 
 if (APPLE)
