@@ -240,7 +240,6 @@ Block M_Mus2Midi(Block const &musData)
 {
     Block buffer;
     Writer out(buffer, de::bigEndianByteOrder);
-    int i;
     duint32 trackSizeOffset, trackSize;
     struct mus_header const *header;
     midi_event_t ev;
@@ -251,36 +250,22 @@ Block M_Mus2Midi(Block const &musData)
     out.writeBytes(ByteRefArray::fromCStr("MThd"));
 
     // Header size.
-    /*memset(buffer, 0, 3);
-    buffer[3] = 6;
-    fwrite(buffer, 4, 1, file);*/
     out << duint32(6);
 
     // Format (single track).
-    //buffer[0] = 0;
-    //buffer[1] = 0;
     out << duint16(0);
 
     // Number of tracks.
-    //buffer[2] = 0;
-    //buffer[3] = 1;
     out << duint16(1);
 
     // Delta ticks per quarter note (140).
-    //buffer[4] = 0;
-    //buffer[5] = 140;
-    //fwrite(buffer, 6, 1, file);
     out << duint16(140);
 
     // Track header.
-    //strcpy((char*)buffer, "MTrk");
-    //fwrite(buffer, 4, 1, file);
     out.writeBytes(ByteRefArray::fromCStr("MTrk"));
 
     // Length of the track in bytes.
-    //memset(buffer, 0, 4);
-    trackSizeOffset = out.offset(); // ftell(file);
-    //fwrite(buffer, 4, 1, file); // Updated later.
+    trackSizeOffset = duint32(out.offset());
     out << duint32(0); // Updated later.
 
     // The first MIDI ev sets the tempo.
@@ -291,10 +276,9 @@ Block M_Mus2Midi(Block const &musData)
         << duint8(0xf) // Exactly one second per quarter note.
         << duint8(0x42)
         << duint8(0x40);
-    //fwrite(buffer, 7, 1, file);
 
     header = reinterpret_cast<struct mus_header const *>(musData.dataConst());
-    readPos = (dbyte const *) musData.dataConst() + bigEndianByteOrder.toNative(header->scoreStart);
+    readPos = musData.dataConst() + littleEndianByteOrder.toNative(header->scoreStart);
     readTime = 0;
 
     // Init channel volumes.
@@ -305,14 +289,12 @@ Block M_Mus2Midi(Block const &musData)
         // Delta time. Split into 7-bit segments.
         if(ev.deltaTime == 0)
         {
-            //buffer[0] = 0;
-            //fwrite(buffer, 1, 1, file);
             out << duint8(0);
         }
         else
         {
             duint8 buf[6];
-            i = -1;
+            int i = -1;
             while(ev.deltaTime > 0)
             {
                 buf[++i] = ev.deltaTime & 0x7f;
@@ -324,14 +306,11 @@ Block M_Mus2Midi(Block const &musData)
             for(; i >= 0; --i)
             {
                 out << buf[i];
-                //fwrite(&buffer[i], 1, 1, file);
             }
         }
 
         // The ev data.
-        //fwrite(&ev.command, 1, 1, file);
         out << ev.command;
-        //fwrite(&ev.parms, 1, ev.size, file);
         out.writeBytes(ByteRefArray(&ev.parms, ev.size));
     }
 
@@ -340,22 +319,12 @@ Block M_Mus2Midi(Block const &musData)
         << duint8(0xff)
         << duint8(0x2f)
         << duint8(0);
-    //fwrite(buffer, 4, 1, file);
 
     // All the MIDI data has now been written. Update the track length.
-    trackSize = out.offset() /*ftell(file)*/ - trackSizeOffset - 4;
-    //fseek(file, trackSizeOffset, SEEK_SET);
-    out.seek(trackSizeOffset);
+    trackSize = duint32(out.offset()) - trackSizeOffset - 4;
+    out.setOffset(trackSizeOffset);
 
-    /*buffer[3] = trackSize & 0xff;
-    buffer[2] = (trackSize >> 8) & 0xff;
-    buffer[1] = (trackSize >> 16) & 0xff;
-    buffer[0] = trackSize >> 24;
-    fwrite(buffer, 4, 1, file);*/
     out << trackSize;
 
-    //fclose(file);
-
-    //return true; // Success!
     return buffer;
 }

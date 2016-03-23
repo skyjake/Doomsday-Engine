@@ -27,6 +27,8 @@
 /// @addtogroup resource
 ///@{
 
+#if 0
+
 /**
  * Saves the buffer (which is formatted rgb565) to a Targa 24 image file.
  *
@@ -74,6 +76,8 @@ int TGA_Save24_rgba8888(FILE *file, int w, int h, uint8_t const *buf);
  * @return  Non-zero iff successful.
  */
 int TGA_Save16_rgb888(FILE *file, int w, int h, uint8_t const *buf);
+
+#endif
 
 /**
  * Loads a 24-bit or a 32-bit image (24-bit color + 8-bit alpha).

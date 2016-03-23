@@ -99,6 +99,8 @@ static void setLastError(char const *msg)
     strcpy(lastErrorMsg, msg);
 }
 
+
+#if 0
 static void writeByte(FILE *f, uint8_t b)
 {
     fwrite(&b, 1, 1, f);
@@ -109,6 +111,7 @@ static void writeShort(FILE *f, int16_t s)
     int16_t v = DD_SHORT(s);
     fwrite(&v, sizeof(v), 1, f);
 }
+#endif
 
 static uint8_t readByte(FileHandle &f)
 {
@@ -124,6 +127,7 @@ static int16_t readShort(FileHandle &f)
     return DD_SHORT(v);
 }
 
+#if 0
 /**
  * @param idLength      Identification field size in bytes (max 255).
  *                      @c 0 indicates no identification field.
@@ -147,6 +151,7 @@ static void writeHeader(uint8_t idLength, uint8_t colorMapType,
     writeByte(file, colorMapType? 1 : 0);
     writeByte(file, imageType);
 }
+#endif
 
 static void readHeader(tga_header_t *dst, FileHandle &file)
 {
@@ -155,6 +160,7 @@ static void readHeader(tga_header_t *dst, FileHandle &file)
     dst->imageType    = readByte(file);
 }
 
+#if 0
 /**
  * @param index         Index of first color map entry.
  * @param length        Total number of color map entries.
@@ -168,6 +174,7 @@ static void writeColorMapSpec(int16_t index, int16_t length, uint8_t entrySize,
     writeShort(file, length);
     writeByte(file, entrySize);
 }
+#endif
 
 static void readColorMapSpec(tga_colormapspec_t *dst, FileHandle &file)
 {
@@ -176,6 +183,7 @@ static void readColorMapSpec(tga_colormapspec_t *dst, FileHandle &file)
     dst->entrySize = readByte(file);
 }
 
+#if 0
 /**
  * @param xOrigin       X coordinate of lower left corner.
  * @param yOrigin       Y coordinate of lower left corner.
@@ -201,6 +209,7 @@ static void writeImageSpec(int16_t xOrigin, int16_t yOrigin, int16_t width,
      */
     writeByte(file, 0);
 }
+#endif
 
 static void readImageSpec(tga_imagespec_t *dst, FileHandle &file)
 {
@@ -223,6 +232,14 @@ static void readImageSpec(tga_imagespec_t *dst, FileHandle &file)
     dst->attributeBits = (bits & 0xf);
 }
 
+const char* TGA_LastError(void)
+{
+    if(lastErrorMsg)
+        return lastErrorMsg;
+    return 0;
+}
+
+#if 0
 int TGA_Save24_rgb565(FILE *file, int w, int h, const uint16_t *buf)
 {
     int i, k;
@@ -266,13 +283,6 @@ int TGA_Save24_rgb565(FILE *file, int w, int h, const uint16_t *buf)
     free(outBuf);
 
     return 1; // Success.
-}
-
-const char* TGA_LastError(void)
-{
-    if(lastErrorMsg)
-        return lastErrorMsg;
-    return 0;
 }
 
 int TGA_Save24_rgb888(FILE* file, int w, int h, const uint8_t* buf)
@@ -362,6 +372,7 @@ int TGA_Save16_rgb888(FILE* file, int w, int h, const uint8_t* buf)
 
     return 1; // Success.
 }
+#endif
 
 uint8_t *TGA_Load(FileHandle &file, Vector2ui &outSize, int &pixelSize)
 {
