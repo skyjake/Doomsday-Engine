@@ -50,6 +50,7 @@
 #  include "ui/clientwindow.h"
 #endif
 #include <doomsday/filesys/fs_main.h>
+#include <de/App>
 #include <de/str.h>
 #include <de/vector1.h>
 #include <cstdlib>
@@ -476,7 +477,8 @@ DENG_EXTERN_C int M_ScreenShot(char const *name, int bits)
         fullName += ".png"; // Default format.
     }
 
-    return ClientWindow::main().grabToFile(fullName)? 1 : 0;
+    // By default, place the file in the runtime folder.
+    return ClientWindow::main().grabToFile(App::app().nativeHomePath()/fullName)? 1 : 0;
 #else
     DENG2_UNUSED2(name, bits);
     return false;
