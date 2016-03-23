@@ -36,12 +36,16 @@
 
 #include <doomsday/console/exec.h>
 #include <doomsday/filesys/fs_main.h>
+#include <de/CommandLine>
+#include <de/Config>
 #include <de/timer.h>
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
 
 using namespace de;
+
+static String const VAR_NETWORK_ID("network.ID");
 
 ident_t clientID;
 bool handshakeReceived;
@@ -52,37 +56,39 @@ int clientPaused; // Set by the server.
 
 void Cl_InitID()
 {
-    if(int i = CommandLine_CheckWith("-id", 1))
+    if(auto arg = CommandLine::get().check("-id", 1))
     {
-        clientID = strtoul(CommandLine_At(i + 1), 0, 0);
-        LOG_NET_NOTE("Using custom client ID: 0x%08x") << clientID;
+        bool ok;
+        auto newId = arg.params.at(0).toUInt(&ok, 0);
+        if(ok)
+        {
+            clientID = newId;
+            LOG_NET_NOTE("Using custom client ID: 0x%08x") << clientID;
+            return;
+        }
+        else
+        {
+            LOG_NET_WARNING("Option '-id' was given invalid argument: %s")
+                    << arg.params.at(0);
+        }
+    }
+
+    auto &config = Config::get();
+
+    if(config.has(VAR_NETWORK_ID))
+    {
+        clientID = config.gets(VAR_NETWORK_ID).toUInt(nullptr, 16);
         return;
     }
 
-    // Read the client ID number file.
-    srand(time(NULL));
-    if(FILE *file = fopen("client.id", "rb"))
-    {
-        if(fread(&clientID, sizeof(clientID), 1, file))
-        {
-            clientID = DD_ULONG(clientID);
-            fclose(file);
-            return;
-        }
-        fclose(file);
-    }
-
     // Ah-ha, we need to generate a new ID.
-    clientID = (ident_t)
-        DD_ULONG(Timer_RealMilliseconds() * rand() + (rand() & 0xfff) +
-              ((rand() & 0xfff) << 12) + ((rand() & 0xff) << 24));
+    clientID = ident_t(Timer_RealMilliseconds() * rand() +
+                       (rand() & 0xfff) +
+                       ((rand() & 0xfff) << 12) +
+                       ((rand() & 0xff) << 24));
 
     // Write it to the file.
-    if(FILE *file = fopen("client.id", "wb"))
-    {
-        fwrite(&clientID, sizeof(clientID), 1, file);
-        fclose(file);
-    }
+    config.set(VAR_NETWORK_ID, String::format("%x", clientID));
 }
 
 int Cl_GameReady()
