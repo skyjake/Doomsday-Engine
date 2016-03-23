@@ -16,7 +16,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/NativePath"
@@ -73,8 +73,7 @@ NativePath::NativePath(QString const &qstr) : Path(toNative(qstr), DIR_SEPARATOR
 
 NativePath::NativePath(char const *nullTerminatedCStr)
     : Path(toNative(nullTerminatedCStr), DIR_SEPARATOR)
-{
-}
+{}
 
 NativePath::NativePath(char const *cStr, dsize length)
     : Path(toNative(String(cStr, length)), DIR_SEPARATOR)
@@ -247,7 +246,7 @@ NativePath NativePath::workPath()
     return currentNativeWorkPath;
 }
 
-bool NativePath::setWorkPath(const NativePath &cwd)
+bool NativePath::setWorkPath(NativePath const &cwd)
 {
     if(QDir::setCurrent(cwd))
     {
@@ -255,6 +254,26 @@ bool NativePath::setWorkPath(const NativePath &cwd)
         return true;
     }
     return false;
+}
+
+bool NativePath::exists(NativePath const &nativePath)
+{
+    return QDir::current().exists(nativePath);
+}
+
+void NativePath::createPath(NativePath const &nativePath)
+{
+    NativePath parentPath = nativePath.fileNamePath();
+    if(!parentPath.isEmpty() && !exists(parentPath))
+    {
+        createPath(parentPath);
+    }
+
+    if(!QDir::current().mkdir(nativePath))
+    {
+        /// @throw CreateDirError Failed to create directory @a nativePath.
+        throw CreateDirError("NativePath::createPath", "Could not create: " + nativePath);
+    }
 }
 
 QChar NativePath::separator()

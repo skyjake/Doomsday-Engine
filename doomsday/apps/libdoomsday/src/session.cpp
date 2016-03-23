@@ -82,7 +82,7 @@ void Session::SavedIndex::clear()
     d->availabilityUpdateDisabled = true;
 
     // Clear the index we're starting over.
-    qDebug() << "Clearing saved game session index";
+    LOGDEV_MSG("Clearing saved game session index");
     d->entries.clear();
 
     // Now perform the availability notifications.

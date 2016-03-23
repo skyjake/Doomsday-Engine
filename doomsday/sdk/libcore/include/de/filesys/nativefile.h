@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_NATIVEFILE_H
@@ -65,6 +65,21 @@ public:
     Size size() const;
     void get(Offset at, Byte *values, Size count) const;
     void set(Offset at, Byte const *values, Size count);
+
+public:
+    /**
+     * Constructs a native file instance to be used independently, outside of the
+     * normal folder structure. This should be used when accessing arbitrary files
+     * as requested by the user.
+     *
+     * The returned file object is not included in file system indices.
+     *
+     * @param nativePath  Native file path.
+     *
+     * @return Native file initialized with the current status of the source file.
+     * Caller gets ownership.
+     */
+    static NativeFile *newStandalone(NativePath const &nativePath);
 
 protected:
     /// Returns the input stream.

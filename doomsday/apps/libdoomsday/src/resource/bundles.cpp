@@ -139,6 +139,8 @@ Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
 {
     using Info = de::Info;
 
+    LOG_AS("res::Bundles");
+
     MatchResult match;
     File const &source = bundle.asFile();
 
@@ -248,10 +250,11 @@ Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
         }
     }
 
-    qDebug() << "[res::Bundles] Matched:" << match.packageId
-             << match.packageVersion.asText()
-             << bundle.description()
-             << "score:" << match.bestScore;
+    LOG_RES_VERBOSE("Matched: %s %s %s score: %i")
+            << match.packageId
+            << match.packageVersion.asText()
+            << bundle.description()
+            << match.bestScore;
 
     return match;
 }

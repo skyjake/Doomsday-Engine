@@ -35,6 +35,16 @@ class Feed;
  * in the file system (de::FS). This is the base class for all types of folders.
  * @ingroup fs
  *
+ * You should usually use the high-level API to manipulate files:
+ * - newFile() to create a new file
+ * - replaceFile() to create a file, always replacing the existing file
+ * - removeFile() to delete a file
+ *
+ * @par Feeds
+ *
+ * Feeds are responsible for populating the folder with files. You may attach any
+ * number of feeds to the folder.
+ *
  * The first Feed attached to a Folder is the primary feed.
  *
  * @par Deriving from Folder

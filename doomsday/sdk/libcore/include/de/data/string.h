@@ -284,6 +284,20 @@ public:
      */
     dint toInt(bool *ok = 0, int base = 10, IntConversionFlags flags = AllowOnlyWhitespace) const;
 
+    /**
+     * Adds a prefix to each line in the text.
+     *
+     * @param prefix  Prefix text.
+     *
+     * @return Prefixed text.
+     */
+    String addLinePrefix(String const &prefix) const;
+
+    /**
+     * Prefixes double quotes and backslashes with a backslash.
+     */
+    String escaped() const;
+
 public:
     /**
      * Builds a String out of an array of bytes that contains a UTF-8 string.
@@ -320,6 +334,15 @@ public:
      * @param end  End of the string. Will not advance past this.
      */
     static void skipSpace(String::const_iterator &i, String::const_iterator const &end);
+
+    /**
+     * Formats a string using standard printf() formatting. Uses UTF-8 encoding.
+     *
+     * @param format  Format string.
+     *
+     * @return Formatted output..
+     */
+    static String format(String format, ...);
 
     /**
      * Formats data according to formatting instructions. Outputs a

@@ -36,6 +36,7 @@
 #include <de/App>
 #include <de/LogBuffer>
 #include <de/Time>
+#include <de/NativeFile>
 #include <de/Log>
 #include "doomsday/doomsdayapp.h"
 #include "doomsday/game.h"
@@ -858,19 +859,15 @@ int Con_Executef(byte src, int silent, const char *command, ...)
     return Con_Execute(src, buffer, silent, false);
 }
 
-dd_bool Con_Parse(Path const &fileName, dd_bool silently)
+bool Con_Parse(File const &file, bool silently)
 {
-    // Relative paths are relative to the native working directory.
-    NativePath fn = NativePath::workPath() / NativePath(fileName).expand();
-    if(!QFile::exists(fn))
-        return false;
+    Block utf8;
+    file >> utf8;
 
-    QFile file(fn);
-    if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
-        return false;
+    String contents = String::fromUtf8(utf8);
 
     // This file is filled with console commands.
-    QTextStream in(&file);
+    QTextStream in(&contents);
     int currentLine = 1;
     while(!in.atEnd())
     {
@@ -879,12 +876,12 @@ dd_bool Con_Parse(Path const &fileName, dd_bool silently)
         if(!line.isEmpty() && line.first() != '#')
         {
             // Execute the commands silently.
-            if(!Con_Execute(CMDS_CONFIG, line.toUtf8().constData(), silently, false))
+            if(!Con_Execute(CMDS_CONFIG, line.toUtf8(), silently, false))
             {
                 if(!silently)
                 {
-                    LOG_SCR_WARNING("%s(%i): error executing command \"%s\"")
-                            << fn.pretty()
+                    LOG_SCR_WARNING("%s (line %i): error executing command \"%s\"")
+                            << file.description()
                             << currentLine
                             << line;
                 }
@@ -956,8 +953,18 @@ D_CMD(Parse)
 
     for(i = 1; i < argc; ++i)
     {
-        LOG_SCR_MSG("Parsing \"%s\"") << argv[i];
-        Con_Parse(argv[i], false /*not silent*/);
+        try
+        {
+            LOG_SCR_MSG("Parsing \"%s\"") << argv[i];
+            std::unique_ptr<NativeFile> file(
+                        NativeFile::newStandalone(App::app().nativeHomePath() / NativePath(argv[i])));
+            Con_Parse(*file, false /*not silent*/);
+        }
+        catch(Error const &er)
+        {
+            LOG_SCR_ERROR("Failed to parse \"%s\": %s")
+                    << argv[i] << er.asText();
+        }
     }
     return true;
 }

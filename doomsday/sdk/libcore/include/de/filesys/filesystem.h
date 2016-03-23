@@ -63,6 +63,8 @@
 
 namespace de {
 
+class NativePath;
+
 namespace internal {
     template <typename Type>
     inline bool cannotCastFileTo(File *file) {
@@ -340,6 +342,9 @@ public:
      */
     File &copySerialized(String const &sourcePath, String const &destinationPath,
                          CopyBehaviors behavior = DefaultCopyBehavior);
+
+    String accessNativeLocation(NativePath const &nativePath,
+                                File::Flags flags = File::ReadOnly);
 
     void timeChanged(Clock const &);
 

@@ -47,7 +47,9 @@
 #endif
 
 #if defined(__x86_64__) || defined(__x86_64) || defined(_LP64)
-#  define __64BIT__
+#  ifndef __64BIT__
+#    define __64BIT__
+#  endif
 #endif
 
 #ifdef DENG2_USE_QT

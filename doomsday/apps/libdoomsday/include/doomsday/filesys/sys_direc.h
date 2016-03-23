@@ -97,17 +97,17 @@ LIBDOOMSDAY_PUBLIC char* Dir_CurrentPath(void);
  */
 LIBDOOMSDAY_PUBLIC void Dir_MakeAbsolutePath(char* path, size_t len);
 
-/**
+/*
  * Check that the given directory exists. If it doesn't, create it.
  * @return  @c true if successful.
  */
-LIBDOOMSDAY_PUBLIC dd_bool Dir_mkpath(const char* path);
+//LIBDOOMSDAY_PUBLIC dd_bool Dir_mkpath(const char* path);
 
-/**
+/*
  * Attempt to change the current working directory to the path defined.
  * @return  @c true if the change was successful.
  */
-LIBDOOMSDAY_PUBLIC dd_bool Dir_SetCurrent(const char* path);
+//LIBDOOMSDAY_PUBLIC dd_bool Dir_SetCurrent(const char* path);
 
 #ifdef __cplusplus
 } // extern "C"

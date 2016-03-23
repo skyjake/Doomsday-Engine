@@ -44,8 +44,10 @@
 #include <de/strutil.h>
 #include <de/memoryzone.h>
 
-#include <QSettings>
 #include <QDir>
+#include <QSettings>
+#include <QStandardPaths>
+#include <QCoreApplication>
 
 #ifdef WIN32
 #  define WIN32_LEAN_AND_MEAN
@@ -64,7 +66,7 @@ static DoomsdayApp *theDoomsdayApp = nullptr;
 DENG2_PIMPL(DoomsdayApp)
 {
     std::string ddBasePath; // Doomsday root directory is at...?
-    std::string ddRuntimePath;
+    //std::string ddRuntimePath;
 
     bool initialized = false;
     bool shuttingDown = false;
@@ -76,15 +78,15 @@ DENG2_PIMPL(DoomsdayApp)
     Players players;
     res::Bundles dataBundles;
 
-    /// @c true = We are using a custom user dir specified on the command line.
-    bool usingUserDir = false;
+    // @c true = We are using a custom user dir specified on the command line.
+    //bool usingUserDir = false;
 
-#ifdef UNIX
+/*#ifdef UNIX
 # ifndef MACOSX
     /// @c true = We are using the user dir defined in the HOME environment.
     bool usingHomeDir = false;
 # endif
-#endif
+#endif*/
 
 #ifdef WIN32
     HINSTANCE hInstance = NULL;
@@ -251,6 +253,7 @@ DENG2_PIMPL(DoomsdayApp)
         // By default, make sure the working path is the home folder.
         App::setCurrentWorkPath(App::app().nativeHomePath());
 
+        /*
 # ifndef MACOSX
         if(getenv("HOME"))
         {
@@ -268,7 +271,8 @@ DENG2_PIMPL(DoomsdayApp)
             Dir_Delete(temp);
         }
 # endif
-
+        */
+/*
         // The -userdir option sets the working directory.
         if(CommandLine_CheckWith("-userdir", 1))
         {
@@ -302,7 +306,7 @@ DENG2_PIMPL(DoomsdayApp)
             directory_t* temp = Dir_NewFromCWD();
             DD_SetRuntimePath(Dir_Path(temp));
             Dir_Delete(temp);
-        }
+        }*/
 
         // libcore has determined the native base path, so let FS1 know about it.
         DD_SetBasePath(DENG2_APP->nativeBasePath().toUtf8());
@@ -312,6 +316,7 @@ DENG2_PIMPL(DoomsdayApp)
 #ifdef WIN32
     void determineGlobalPaths()
     {
+        /*
         // Change to a custom working directory?
         if(CommandLine_CheckWith("-userdir", 1))
         {
@@ -324,6 +329,7 @@ DENG2_PIMPL(DoomsdayApp)
 
         // The runtime directory is the current working directory.
         DD_SetRuntimePath((NativePath::workPath().withSeparators('/') + '/').toUtf8().constData());
+        */
 
         // Use a custom base directory?
         if(CommandLine_CheckWith("-basedir", 1))
@@ -368,9 +374,21 @@ void DoomsdayApp::initialize()
 {
     d->initWadFolders();
 
+    auto &fs = App::fileSystem();
+
+    // Folder for temporary native files.
+    NativePath tmpPath = NativePath(QStandardPaths::writableLocation(QStandardPaths::TempLocation))
+            / ("doomsday-" + QString::number(qApp->applicationPid()));
+    Folder &tmpFolder = fs.makeFolder("/tmp");
+    tmpFolder.attach(new DirectoryFeed(tmpPath,
+                                       DirectoryFeed::AllowWrite |
+                                       DirectoryFeed::CreateIfMissing |
+                                       DirectoryFeed::OnlyThisFolder));
+    tmpFolder.populate(Folder::PopulateOnlyThisFolder);
+
     // "/sys/bundles" has package-like symlinks to files that are not in
     // Doomsday 2 format but can be loaded as packages.
-    App::fileSystem().makeFolder("/sys/bundles", FS::DontInheritFeeds);
+    fs.makeFolder("/sys/bundles", FS::DontInheritFeeds);
 
     d->initialized = true;
 
@@ -456,10 +474,10 @@ NativePath DoomsdayApp::steamBasePath()
     return "";
 }
 
-bool DoomsdayApp::isUsingUserDir() const
+/*bool DoomsdayApp::isUsingUserDir() const
 {
     return d->usingUserDir;
-}
+}*/
 
 bool DoomsdayApp::isShuttingDown() const
 {
@@ -492,7 +510,7 @@ void DoomsdayApp::setDoomsdayBasePath(NativePath const &path)
     d->ddBasePath = temp;
 }
 
-std::string const &DoomsdayApp::doomsdayRuntimePath() const
+/*std::string const &DoomsdayApp::doomsdayRuntimePath() const
 {
     return d->ddRuntimePath;
 }
@@ -500,7 +518,7 @@ std::string const &DoomsdayApp::doomsdayRuntimePath() const
 void DoomsdayApp::setDoomsdayRuntimePath(NativePath const &path)
 {
     d->ddRuntimePath = path.toUtf8().constData();
-}
+}*/
 
 #ifdef WIN32
 void *DoomsdayApp::moduleHandle() const

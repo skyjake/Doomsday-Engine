@@ -177,7 +177,7 @@ public:
      *                     determines how many bytes to read.
      * @return Reference to the Reader.
      */
-    Reader &readPresetSize(IByteArray &destination);
+    Reader &readBytesFixedSize(IByteArray &destination);
 
     /// Reads a Block from the source buffer.
     Reader &operator >> (Block &block);

@@ -75,9 +75,9 @@ static void srd(reader_s *r, char *data, int len)
     if(!r) return;
     DENG2_ASSERT(reader);
     if(data)
-    {        
+    {
         de::ByteRefArray ref(data, len);
-        reader->readPresetSize(ref);
+        reader->readBytesFixedSize(ref);
     }
     else
     {
@@ -158,7 +158,7 @@ static void swd(Writer *w, char const *data, int len)
     DENG2_ASSERT(writer);
     if(data)
     {
-        writer->writePresetSize(de::ByteRefArray(data, len));
+        writer->writeBytes(de::ByteRefArray(data, len));
     }
 }
 

@@ -265,7 +265,7 @@ static QImage load(Block const &data)
         {
             int inY = (isUpperOrigin? y : (header.size.y - y - 1));
             ByteRefArray line(base + (inY * img.bytesPerLine()), header.size.x * pixelSize);
-            input.readPresetSize(line);
+            input.readBytesFixedSize(line);
         }
     }
     else if(header.imageType == Header::RleRGB)

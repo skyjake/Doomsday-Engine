@@ -323,6 +323,7 @@ static int Dir_IsAbsolutePath(const char* path)
     return false;
 }
 
+#if 0
 dd_bool Dir_mkpath(const char* path)
 {
 #if !defined(WIN32) && !defined(UNIX)
@@ -369,6 +370,7 @@ dd_bool Dir_mkpath(const char* path)
 
     return (0 == access(full, 0));
 }
+#endif
 
 void Dir_MakeAbsolutePath(char* path, size_t len)
 {
@@ -407,7 +409,7 @@ static void Dir_FixSeparators(char* path, size_t len)
     }
 }
 
-dd_bool Dir_SetCurrent(const char* path)
+/*dd_bool Dir_SetCurrent(const char* path)
 {
     LOG_AS("Dir");
 
@@ -419,3 +421,4 @@ dd_bool Dir_SetCurrent(const char* path)
     LOG_RES_VERBOSE("Changing current directory to \"%s\" %s") << path << (success? "succeeded" : "failed");
     return success;
 }
+*/

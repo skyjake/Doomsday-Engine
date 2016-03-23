@@ -52,9 +52,9 @@ void DirectoryFeed::populate(Folder &folder)
         // Automatically enable modifying the Folder.
         folder.setMode(File::Write);
     }
-    if(_mode.testFlag(CreateIfMissing) && !exists(_nativePath))
+    if(_mode.testFlag(CreateIfMissing) && !NativePath::exists(_nativePath))
     {
-        createDir(_nativePath);
+        NativePath::createPath(_nativePath);
     }
 
     QDir dir(_nativePath);
@@ -185,7 +185,7 @@ bool DirectoryFeed::prune(File &file) const
         if(subFolder->feeds().size() == 1)
         {
             DirectoryFeed *dirFeed = subFolder->feeds().front()->maybeAs<DirectoryFeed>();
-            if(dirFeed && !exists(dirFeed->_nativePath))
+            if(dirFeed && !NativePath::exists(dirFeed->_nativePath))
             {
                 LOG_RES_NOTE("Pruning \"%s\": no longer exists") << _nativePath;
                 return true;
@@ -200,7 +200,7 @@ bool DirectoryFeed::prune(File &file) const
 File *DirectoryFeed::newFile(String const &name)
 {
     NativePath newPath = _nativePath / name;
-    if(exists(newPath))
+    if(NativePath::exists(newPath))
     {
         /// @throw AlreadyExistsError  The file @a name already exists in the native directory.
         throw AlreadyExistsError("DirectoryFeed::newFile", name + ": already exists");
@@ -214,7 +214,7 @@ void DirectoryFeed::removeFile(String const &name)
 {
     NativePath path = _nativePath / name;
 
-    if(!exists(path))
+    if(!NativePath::exists(path))
     {
         // The file doesn't exist in the native file system, we can ignore this.
         return;
@@ -246,26 +246,6 @@ void DirectoryFeed::changeWorkingDir(NativePath const &nativePath)
         throw WorkingDirError("DirectoryFeed::changeWorkingDir",
                               "Failed to change to " + nativePath);
     }
-}
-
-void DirectoryFeed::createDir(NativePath const &nativePath)
-{
-    NativePath parentPath = nativePath.fileNamePath();
-    if(!parentPath.isEmpty() && !exists(parentPath))
-    {
-        createDir(parentPath);
-    }
-
-    if(!QDir::current().mkdir(nativePath))
-    {
-        /// @throw CreateDirError Failed to create directory @a nativePath.
-        throw CreateDirError("DirectoryFeed::createDir", "Could not create: " + nativePath);
-    }
-}
-
-bool DirectoryFeed::exists(NativePath const &nativePath)
-{
-    return QDir::current().exists(nativePath);
 }
 
 File::Status DirectoryFeed::fileStatus(NativePath const &nativePath)

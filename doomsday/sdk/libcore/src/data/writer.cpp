@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Writer"
@@ -26,6 +26,7 @@
 #include "de/ByteRefArray"
 #include "de/ByteArrayFile"
 #include "de/data/byteorder.h"
+
 #include <QScopedPointer>
 
 namespace de {
@@ -132,7 +133,7 @@ Writer &Writer::operator << (duchar const &byte)
 Writer &Writer::operator << (dint16 const &word)
 {
     return *this << static_cast<duint16>(word);
-}   
+}
 
 Writer &Writer::operator << (duint16 const &word)
 {
@@ -145,7 +146,7 @@ Writer &Writer::operator << (duint16 const &word)
 Writer &Writer::operator << (dint32 const &dword)
 {
     return *this << static_cast<duint32>(dword);
-}   
+}
 
 Writer &Writer::operator << (duint32 const &dword)
 {
@@ -158,7 +159,7 @@ Writer &Writer::operator << (duint32 const &dword)
 Writer &Writer::operator << (dint64 const &qword)
 {
     return *this << static_cast<duint64>(qword);
-}   
+}
 
 Writer &Writer::operator << (duint64 const &qword)
 {
@@ -183,10 +184,17 @@ Writer &Writer::operator << (String const &text)
     Block bytes = text.toUtf8();
 
     // First write the length of the text.
-    duint size = bytes.size();
+    duint32 size = bytes.size();
     *this << size;
 
     d->write(bytes.data(), size);
+    return *this;
+}
+
+Writer &Writer::writeText(String const &text)
+{
+    Block const utf8 = text.toUtf8();
+    d->write(utf8.dataConst(), utf8.size());
     return *this;
 }
 
@@ -203,7 +211,7 @@ Writer &Writer::operator << (FixedByteArray const &fixedByteArray)
      * that the source data actually exists anywhere. The object implementing
      * IByteArray could be generating it on the fly.
      */
-    
+
     // Read the entire contents of the array.
     Block copy(fixedByteArray);
     d->write(copy.data(), copy.size());
@@ -215,7 +223,7 @@ Writer &Writer::writeBytes(dsize count, IByteArray const &array)
     return *this << FixedByteArray(array, 0, count);
 }
 
-Writer &Writer::writePresetSize(IByteArray const &array)
+Writer &Writer::writeBytes(IByteArray const &array)
 {
     return *this << FixedByteArray(array);
 }

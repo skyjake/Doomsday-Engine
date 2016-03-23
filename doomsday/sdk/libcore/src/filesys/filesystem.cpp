@@ -20,6 +20,7 @@
 #include "de/FS"
 #include "de/LibraryFile"
 #include "de/ArchiveFeed"
+#include "de/DirectoryFeed"
 #include "de/NativePath"
 #include "de/ArchiveFolder"
 #include "de/ZipArchive"
@@ -326,6 +327,26 @@ void FileSystem::printIndex()
         LOG_AS_STRING(i.key());
         i.value()->print();
     }
+}
+
+String FileSystem::accessNativeLocation(NativePath const &nativePath, File::Flags flags)
+{
+    String const folders = "/sys/folders";
+
+    makeFolder(folders);
+
+    String const path = folders / nativePath.fileNamePath().fileName();
+    if(!root().has(path))
+    {
+        DirectoryFeed::Flags feedFlags = DirectoryFeed::OnlyThisFolder;
+        if(flags.testFlag(File::Write)) feedFlags |= DirectoryFeed::AllowWrite;
+        makeFolderWithFeed(path,
+                           new DirectoryFeed(nativePath.fileNamePath(), feedFlags),
+                           Folder::PopulateOnlyThisFolder,
+                           FS::DontInheritFeeds | FS::PopulateNewFolder)
+                .setMode(flags);
+    }
+    return path / nativePath.fileName();
 }
 
 Folder &FileSystem::root()

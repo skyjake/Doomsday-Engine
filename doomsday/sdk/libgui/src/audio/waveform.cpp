@@ -175,7 +175,7 @@ DENG2_PIMPL(Waveform)
             {
                 sampleCount = chunk.size / wav.blockAlign;
                 sampleData.resize(chunk.size);
-                reader.readPresetSize(sampleData); // keep it little endian
+                reader.readBytesFixedSize(sampleData); // keep it little endian
             }
             else
             {
