@@ -223,7 +223,7 @@ Writer &Writer::writeBytes(dsize count, IByteArray const &array)
     return *this << FixedByteArray(array, 0, count);
 }
 
-Writer &Writer::writePresetSize(IByteArray const &array)
+Writer &Writer::writeBytes(IByteArray const &array)
 {
     return *this << FixedByteArray(array);
 }

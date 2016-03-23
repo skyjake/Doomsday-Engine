@@ -196,7 +196,7 @@ public:
      *
      * @return Reference to the Writer.
      */
-    Writer &writePresetSize(IByteArray const &array);
+    Writer &writeBytes(IByteArray const &array);
 
     /**
      * Writes @a block into the destination buffer. Writes the size of the
