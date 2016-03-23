@@ -47,7 +47,7 @@
 #include "doomsday/paths.h"
 
 #include <de/Log>
-#include <de/NativePath>
+#include <de/NativeFile>
 #include <de/App>
 #include <de/findfile.h>
 
@@ -473,6 +473,7 @@ const char* F_PrettyPath(const char* path)
 #undef NUM_BUFS
 }
 
+/*
 dd_bool F_Dump(void const *data, size_t size, char const *path)
 {
     DENG2_ASSERT(data != 0 && path != 0);
@@ -494,17 +495,38 @@ dd_bool F_Dump(void const *data, size_t size, char const *path)
     fwrite(data, 1, size, outFile);
     fclose(outFile);
     return true;
-}
+}*/
 
 dd_bool F_DumpFile(File1 &file, char const *outputPath)
 {
-    String dumpPath = ((!outputPath || !outputPath[0])? file.name() : String(outputPath));
-    QByteArray dumpPathUtf8 = dumpPath.toUtf8();
-    bool dumpedOk = F_Dump(file.cache(), file.info().size, dumpPathUtf8.constData());
-    if(dumpedOk)
+    String dumpPath = "/home" / ((!outputPath || !outputPath[0])? file.name() : String(outputPath));
+    try
     {
-        LOG_RES_VERBOSE("%s dumped to \"%s\"") << file.name() << NativePath(dumpPath).pretty();
+        File &out = App::rootFolder().replaceFile(dumpPath);
+        out << Block(file.cache(), file.info().size);
+        out.flush();
+        file.unlock();
+        LOG_RES_VERBOSE("%s dumped to %s") << file.name() << out.description();
+        return true;
     }
-    file.unlock();
-    return dumpedOk;
+    catch(Error const &er)
+    {
+        LOG_RES_ERROR("Failed to write to \"%s\": %s") << dumpPath << er.asText();
+        return false;
+    }
+}
+
+bool F_DumpNativeFile(Block const &data, NativePath const &filePath)
+{
+    try
+    {
+        std::unique_ptr<File> file(NativeFile::newStandalone(filePath));
+        file->setMode(File::Write);
+        *file << data;
+        return true;
+    }
+    catch(Error const &er)
+    {
+        return false;
+    }
 }

@@ -35,6 +35,10 @@
 #endif
 
 #ifdef __cplusplus
+
+#include <de/Block>
+#include <de/File>
+
 extern "C" {
 #endif
 
@@ -98,19 +102,19 @@ LIBDOOMSDAY_PUBLIC char const *F_PrettyPath(char const *path);
  */
 LIBDOOMSDAY_PUBLIC dd_bool F_DumpFile(de::File1 &file, char const *outputPath);
 
+#ifdef __cplusplus
+} // extern "C"
+
 /**
- * Write data into a file.
+ * Write data into a native file.
  *
- * @param data  Data to write.
- * @param size  Size of the data in bytes.
- * @param path  Path of the file to create (existing file replaced).
+ * @param data      Data to write.
+ * @param filePath  Path of the file to create (existing file replaced).
  *
  * @return @c true if successful, otherwise @c false.
  */
-LIBDOOMSDAY_PUBLIC dd_bool F_Dump(void const *data, size_t size, char const *path);
+LIBDOOMSDAY_PUBLIC bool F_DumpNativeFile(de::Block const &data, de::NativePath const &filePath);
 
-#ifdef __cplusplus
-} // extern "C"
 #endif
 
 #endif // LIBDENG_FILESYS_UTIL_H
