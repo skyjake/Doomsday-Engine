@@ -200,6 +200,7 @@ class Event:
                 glob.glob(os.path.join(self.buildDir, '*.msi')) + \
                 glob.glob(os.path.join(self.buildDir, '*.exe')) + \
                 glob.glob(os.path.join(self.buildDir, '*.deb')) + \
+                glob.glob(os.path.join(self.buildDir, '*.rpm')) + \
                 glob.glob(os.path.join(self.buildDir, '*.tar.gz'))
             
         if self.num > 1201:
@@ -344,7 +345,7 @@ class Event:
             # Find the binaries for this OS.
             binaries = []
             for f in files:
-                if self.os_from_filename(f)[2] == osIdent:
+                if self.os_from_filename(f)[0] == osName:
                     binaries.append(f)
 
             if not binaries:
@@ -414,7 +415,7 @@ class Event:
         if self.release_type() == 'stable':
             return self.release_notes_uri(version)
         else:
-            return "http://dengine.net/" + self.name          
+            return "http://files.dengine.net/builds/" + self.name          
 
     def xml_description(self):
         msg = '<build>'
