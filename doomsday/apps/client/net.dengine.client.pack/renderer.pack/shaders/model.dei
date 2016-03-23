@@ -234,6 +234,87 @@ model.skeletal {
             }"        
     }
     
+    shader opaque.matte {
+        variable uAlphaLimit     { value = 0.5 }
+        variable uAlpha          { value = 1.0 }
+        variable uColor          { value <1, 1, 1> }
+        variable uOffsetUV       { value <0, 0> }
+
+        variable uMapTime {}
+
+        # Mapping when used with ModelDrawable.
+        textureMapping <diffuse, normals>
+
+        defines $= {'PREDEF_TRANSFORM_UV(uv)': ''}
+        
+        include.vertex <include/tangentspace.glsl,
+                        include/skeletal.glsl,
+                        include/lighting.glsl>
+        vertex = "
+            uniform highp mat4 uMvpMatrix;
+
+            attribute highp vec4 aVertex;
+            attribute highp vec4 aColor;
+            attribute highp vec2 aUV;
+            attribute highp vec4 aBounds;   // diffuse map
+            attribute highp vec4 aBounds2;  // normal map
+
+            varying highp vec4 vColor;
+            varying highp vec2 vUV;
+            varying highp vec4 vUVBounds[2];
+
+            void main(void) 
+            {
+                highp mat4 bone = vertexBoneTransform();
+                setTangentSpace(bone);
+                    
+                // Vertex position.
+                highp vec4 modelPos = bone * aVertex;
+                calculateEyeDirection(modelPos);
+
+                gl_Position = uMvpMatrix * modelPos;
+                          
+                vColor = aColor;
+                vUV = aUV;
+                vUVBounds[0] = aBounds;
+                vUVBounds[1] = aBounds2;
+            }"
+
+        include.fragment <include/texture.glsl, 
+                          include/tangentspace.glsl,
+                          include/lighting.glsl,
+                          include/fog.glsl>
+        fragment = "
+            uniform highp float uAlphaLimit;
+            uniform highp float uAlpha;
+            uniform highp vec3 uColor;       // diffuse color multiplier
+            uniform highp vec2 uOffsetUV;
+            uniform highp float uMapTime;
+            
+            varying highp vec4 vColor;
+            varying highp vec2 vUV;
+            varying highp vec4 vUVBounds[2];
+            
+            void main(void) 
+            {
+                // Calculate UV at the fragment (wrapped inside the bounds).
+                highp vec2 wrappedUV = vUV + uOffsetUV;
+                PREDEF_TRANSFORM_UV(wrappedUV);
+                wrappedUV = fract(wrappedUV);
+                highp vec2 uv         = mapToBounds(wrappedUV, vUVBounds[0]);
+                highp vec2 normalUV   = mapToBounds(wrappedUV, vUVBounds[1]);
+            
+                highp vec3 msNormal = modelSpaceNormalVector(normalUV);                
+                gl_FragColor = vColor * vec4(uColor * diffuseLight(msNormal), 1.0)
+                             * texture2D(uTex, uv);
+                if(gl_FragColor.a < uAlphaLimit) discard;
+
+                gl_FragColor.a = uAlpha;
+                
+                applyFog();
+            }"        
+    }
+    
     # Shader for special effects. Only uses a diffuse texture map.
     # No external lighting.
     shader unlit.diffuse {
