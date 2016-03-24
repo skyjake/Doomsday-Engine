@@ -16,6 +16,7 @@ set (CPACK_RPM_PACKAGE_LICENSE "GPL3, LGPL3")
 set (CPACK_RPM_PACKAGE_GROUP Amusements/Games)
 set (CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION /usr/share/man /usr/share/man/man6)
 set (CPACK_RPM_PACKAGE_REQUIRES "qt5-qtx11extras >= 5.2")
+set (CPACK_RPM_PACKAGE_AUTOREQ NO)
 
 set (CPACK_WIX_LICENSE_RTF ${DENG_SOURCE_DIR}/../distrib/win32/license.rtf)
 set (CPACK_WIX_PRODUCT_ICON ${DENG_SOURCE_DIR}/apps/client/res/windows/doomsday.ico)
