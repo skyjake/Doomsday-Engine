@@ -43,3 +43,10 @@ deng_target_link_qt (shell PUBLIC Widgets)
 deng_install_bundle_deps (shell Deng::libcore Deng::libshell)
 deng_install_deployqt (shell)
 deng_codesign (shell)
+
+if (WIN32)
+    # WIX generator requires setting this manually.
+    set_property (INSTALL "bin/$<TARGET_FILE_NAME:shell>"
+        PROPERTY CPACK_START_MENU_SHORTCUTS "Server Shell"
+    )
+endif ()

@@ -128,16 +128,16 @@ BEGIN
     BEGIN
         BLOCK "040904E4"
         BEGIN
-            VALUE "CompanyName",    "\0"
-            VALUE "FileDescription", "Doomsday Engine\0"
-            VALUE "FileVersion",    DOOMSDAY_VERSION_TEXT "\0"
-            VALUE "InternalName",   "Doomsday Engine\0"
-            VALUE "LegalCopyright", "Copyright © 2003-2012, deng Team\0"
-            VALUE "OriginalFilename", "Doomsday.exe\0"
-            VALUE "ProductName",    "Doomsday Engine\0"
-            VALUE "ProductVersion", DOOMSDAY_VERSION_TEXT "\0"
+            VALUE "CompanyName",        "Open Source Developer, Jaakko Keränen\0"
+            VALUE "FileDescription",    "Doomsday Engine\0"
+            VALUE "FileVersion",        DOOMSDAY_VERSION_TEXT "\0"
+            VALUE "InternalName",       "Doomsday Engine\0"
+            VALUE "LegalCopyright",     "Copyright © 2003-2016, deng Team\0"
+            VALUE "OriginalFilename",   "Doomsday.exe\0"
+            VALUE "ProductName",        "Doomsday Engine\0"
+            VALUE "ProductVersion",     DOOMSDAY_VERSION_TEXT "\0"
 #if !defined(_DEBUG) && !defined(DOOMSDAY_RELEASE_FULL) && defined(DOOMSDAY_RELEASE_NAME)
-            VALUE "SpecialBuild",   DOOMSDAY_RELEASE_NAME "\0"
+            VALUE "SpecialBuild",       DOOMSDAY_RELEASE_NAME "\0"
 #endif
         END
     END

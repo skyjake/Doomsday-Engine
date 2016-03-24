@@ -34,7 +34,5 @@ void applyFog()
         
         highp float fogAmount = clamp((zEye - uFogRange.x) / uFogRange.y, 0.0, 1.0);
         gl_FragColor.rgb = mix(gl_FragColor.rgb, uFogColor.rgb, fogAmount);
-        
-//        gl_FragColor.rgb = vec3(zEye, 0.0, normZ);
     }    
 }

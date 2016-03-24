@@ -44,7 +44,16 @@ def mkdir(n):
 
 
 def remkdir(n):
-    builder.utils.remkdir(n)
+    attempts = 10
+    while attempts > 0:
+        try:
+            builder.utils.remkdir(n)
+            return
+        except:
+            pass
+        attempts -= 1
+        time.sleep(5)
+    raise Exception("Failed to clear directory: " + n)
 
 
 def remove(n):
@@ -129,19 +138,26 @@ def cmake_options_path():
 def cmake_options():
     """Reads the contents of the CMake options file that determines which flags are used
     when building a release."""
-    opts = '-DCMAKE_BUILD_TYPE=Release -DDENG_BUILD=%s ' % (DOOMSDAY_BUILD_NUMBER)
     try:
-        opts += ' ' + open(os.path.join(LAUNCH_DIR, cmake_options_path()), 'rt').read().replace('\n', ' ')
+        opts = open(os.path.join(LAUNCH_DIR, cmake_options_path()), 'rt').read().replace('\n', ' ')
     except:
         print("No additional options provided for CMake (%s missing)" % cmake_options_path())
-    return map(string.strip, opts.split('-----'))
+        opts = ''
+    common = ' -DCMAKE_BUILD_TYPE=Release -DDENG_BUILD=%s ' % (DOOMSDAY_BUILD_NUMBER)
+    return [o + common for o in map(string.strip, opts.split('-----'))]
 
 
 def cmake_release(makeOptions, outputGlobs):
     """Runs cmake in the work directory and copies the output files to OUTPUT_DIR."""
     for currentOptions in cmake_options():
+        os.chdir(LAUNCH_DIR)
         remkdir(WORK_DIR)
         os.chdir(WORK_DIR)
+       
+        try:
+            postCommand = file(os.path.join(LAUNCH_DIR, 'postcommand.txt'), 'rt').read()
+        except:
+            postCommand = None
 
         if os.system('cmake %s ../../doomsday' % currentOptions):
             raise Exception("Failed to configure the build.")
@@ -153,6 +169,8 @@ def cmake_release(makeOptions, outputGlobs):
             raise Exception("Failed to package the binaries.")
         for outputGlob in outputGlobs:
             for fn in glob.glob(outputGlob):
+                if postCommand:
+                    os.system(postCommand % fn)
                 shutil.copy(fn, OUTPUT_DIR)
 
 
