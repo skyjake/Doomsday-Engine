@@ -342,7 +342,7 @@ DENG_GUI_PIMPL(PackagesDialog)
         return selectedPackages.contains(packageId);
     }
 
-    void packageButtonClicked(HomeItemWidget &, String const &packageId) override
+    void packageButtonClicked(ButtonWidget &, String const &packageId) override
     {
         if(!selectedPackages.contains(packageId))
         {
@@ -386,8 +386,25 @@ PackagesDialog::PackagesDialog(String const &titleText)
     refreshPackages();
 }
 
+void PackagesDialog::setSelectedPackages(StringList const &packages)
+{
+    d->selectedPackages = packages;
+    d->browser->populate();
+}
+
+StringList PackagesDialog::selectedPackages() const
+{
+    return d->selectedPackages;
+}
+
 void PackagesDialog::refreshPackages()
 {
     App::fileSystem().refresh();
+    d->populate();
+}
+
+void PackagesDialog::preparePanelForOpening()
+{
+    DialogWidget::preparePanelForOpening();
     d->populate();
 }

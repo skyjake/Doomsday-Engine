@@ -19,9 +19,12 @@
 #include "ui/home/packagescolumnwidget.h"
 #include "ui/widgets/packageswidget.h"
 
+#include <de/PopupMenuWidget>
+
 using namespace de;
 
 DENG_GUI_PIMPL(PackagesColumnWidget)
+, public PackagesWidget::IButtonHandler
 {
     PackagesWidget *packages;
 
@@ -29,11 +32,27 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
     {
         ScrollAreaWidget &area = self.scrollArea();
         area.add(packages = new PackagesWidget("home-packages"));
+        packages->setButtonHandler(*this);
+        packages->setButtonLabels(tr("..."), tr("..."));
         packages->rule()
                 .setInput(Rule::Width, area.contentRule().width())
                 .setInput(Rule::Top,   self.header().rule().bottom() +
                                        rule("gap"))
                 .setInput(Rule::Left,  area.contentRule().left());
+    }
+
+    void packageButtonClicked(ButtonWidget &button, de::String const &packageId) override
+    {
+        auto *popMenu = new PopupMenuWidget;
+        popMenu->setDeleteAfterDismissed(true);
+        popMenu->setColorTheme(Inverted);
+        popMenu->setAnchorAndOpeningDirection(button.rule(), ui::Down);
+        popMenu->items()
+                << new ui::ActionItem(tr("Info"))
+                << new ui::Item(ui::Item::Separator)
+                << new ui::ActionItem(style().images().image("close.ring"), tr("Uninstall..."));
+        root().addOnTop(popMenu);
+        popMenu->open();
     }
 };
 

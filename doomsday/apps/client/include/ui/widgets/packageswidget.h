@@ -19,7 +19,7 @@
 #ifndef DENG_CLIENT_UI_HOME_PACKAGESWIDGET_H
 #define DENG_CLIENT_UI_HOME_PACKAGESWIDGET_H
 
-#include <de/GuiWidget>
+#include <de/ButtonWidget>
 #include <de/IPersistent>
 
 class HomeItemWidget;
@@ -44,7 +44,7 @@ public:
     {
     public:
         virtual ~IButtonHandler();
-        virtual void packageButtonClicked(HomeItemWidget &itemWidget, de::String const &packageId) = 0;
+        virtual void packageButtonClicked(de::ButtonWidget &button, de::String const &packageId) = 0;
     };
 
 public:
@@ -57,6 +57,8 @@ public:
 
     void setColorTheme(ColorTheme unselectedItem, ColorTheme selectedItem,
                        ColorTheme loadedUnselectedItem, ColorTheme loadedSelectedItem);
+
+    void populate();
 
     // Implements IPersistent.
     void operator >> (de::PersistentState &toState) const;

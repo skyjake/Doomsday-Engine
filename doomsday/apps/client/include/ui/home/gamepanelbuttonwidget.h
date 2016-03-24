@@ -21,7 +21,7 @@
 
 #include "panelbuttonwidget.h"
 
-#include <doomsday/game.h>
+#include <doomsday/gameprofiles.h>
 
 class SavedSessionListData;
 
@@ -33,8 +33,8 @@ class GamePanelButtonWidget : public PanelButtonWidget
     Q_OBJECT
 
 public:
-    GamePanelButtonWidget(Game const &game,
-                     SavedSessionListData const &savedItems);
+    GamePanelButtonWidget(GameProfile &game,
+                          SavedSessionListData const &savedItems);
 
     void setSelected(bool selected) override;
 

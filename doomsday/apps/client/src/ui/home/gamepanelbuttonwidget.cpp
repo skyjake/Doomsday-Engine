@@ -23,6 +23,8 @@
 #include "dd_main.h"
 
 #include <doomsday/console/exec.h>
+#include <doomsday/doomsdayapp.h>
+#include <doomsday/games.h>
 #include <de/App>
 #include <de/CallbackAction>
 #include <de/ChildWidgetOrganizer>
@@ -34,6 +36,7 @@ using namespace de;
 DENG_GUI_PIMPL(GamePanelButtonWidget)
 , public ChildWidgetOrganizer::IFilter
 {
+    GameProfile &gameProfile;
     Game const &game;
     SavedSessionListData const &savedItems;
     SaveListWidget *saves;
@@ -41,16 +44,19 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
     ButtonWidget *playButton;
     ButtonWidget *deleteSaveButton;
 
-    Instance(Public *i, Game const &game, SavedSessionListData const &savedItems)
+    Instance(Public *i, GameProfile &profile, SavedSessionListData const &savedItems)
         : Base(i)
-        , game(game)
+        , gameProfile(profile)
+        , game(DoomsdayApp::games()[profile.game()])
         , savedItems(savedItems)
     {
         packagesButton = new ButtonWidget;
         packagesButton->setImage(new StyleProceduralImage("package", self));
         packagesButton->setOverrideImageSize(style().fonts().font("default").height().value());
         packagesButton->setSizePolicy(ui::Expand, ui::Expand);
+        packagesButton->setTextAlignment(ui::AlignLeft);
         packagesButton->setActionFn([this] () { packagesButtonPressed(); });
+        updatePackagesButton();
         self.addButton(packagesButton);
 
         playButton = new ButtonWidget;
@@ -87,16 +93,30 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         // which order. One can also browse the available packages.
         auto *dlg = new PackagesDialog(game.title());
         dlg->setDeleteAfterDismissed(true);
-        /*if(self.rule().midX().value() < root().viewWidth().value()/2)
+        dlg->setSelectedPackages(gameProfile.packages());
+        dlg->setAcceptanceAction(new CallbackAction([this, dlg] ()
         {
-            dlg->setAnchorAndOpeningDirection(packagesButton->rule(), ui::Right);
+            gameProfile.setPackages(dlg->selectedPackages());
+            updatePackagesButton();
+        }));
+        root().addOnTop(dlg);
+        dlg->open();
+    }
+
+    void updatePackagesButton()
+    {
+        if(gameProfile.packages().isEmpty())
+        {
+            packagesButton->setText("");
+            packagesButton->setTextColor("text");
+            packagesButton->setImageColor(style().colors().colorf("text"));
         }
         else
         {
-            dlg->setAnchorAndOpeningDirection(packagesButton->rule(), ui::Left);
-        }*/
-        root().addOnTop(dlg);
-        dlg->open();
+            packagesButton->setText(String::format("%i", gameProfile.packages().count()));
+            packagesButton->setTextColor("accent");
+            packagesButton->setImageColor(style().colors().colorf("accent"));
+        }
     }
 
     void playButtonPressed()
@@ -165,7 +185,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
     }
 };
 
-GamePanelButtonWidget::GamePanelButtonWidget(Game const &game, SavedSessionListData const &savedItems)
+GamePanelButtonWidget::GamePanelButtonWidget(GameProfile &game, SavedSessionListData const &savedItems)
     : d(new Instance(this, game, savedItems))
 {
     connect(d->saves, SIGNAL(selectionChanged(de::ui::DataPos)), this, SLOT(saveSelected(de::ui::DataPos)));

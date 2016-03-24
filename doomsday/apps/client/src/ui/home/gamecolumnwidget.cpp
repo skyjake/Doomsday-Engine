@@ -45,9 +45,9 @@ DENG_GUI_PIMPL(GameColumnWidget)
             , DENG2_OBSERVES(Deletable, Deletion)
     {
         GameColumnWidget::Instance *d;
-        GameProfile const *profile;
+        GameProfile *profile;
 
-        MenuItem(GameColumnWidget::Instance *d, GameProfile const &gameProfile)
+        MenuItem(GameColumnWidget::Instance *d, GameProfile &gameProfile)
             : d(d)
             , profile(&gameProfile)
         {
@@ -131,7 +131,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
         return menu->itemWidget<GamePanelButtonWidget>(item);
     }
 
-    void addItemForProfile(GameProfile const &profile)
+    void addItemForProfile(GameProfile &profile)
     {
         auto const &games = DoomsdayApp::games();
         if(games.contains(profile.game()))
@@ -209,7 +209,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
     GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *)
     {
-        auto *button = new GamePanelButtonWidget(item.as<MenuItem>().game(), savedItems);
+        auto *button = new GamePanelButtonWidget(*item.as<MenuItem>().profile, savedItems);
         return button;
     }
 

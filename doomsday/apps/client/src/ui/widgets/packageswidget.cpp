@@ -47,7 +47,7 @@ struct PackageLoadStatus : public PackagesWidget::IPackageStatus
 
 struct LoadOrUnloadPackage : public PackagesWidget::IButtonHandler
 {
-    void packageButtonClicked(HomeItemWidget &, de::String const &packageId)
+    void packageButtonClicked(ButtonWidget &, de::String const &packageId) override
     {
         auto &loader = App::packageLoader();
 
@@ -135,7 +135,7 @@ DENG_GUI_PIMPL(PackagesWidget)
             _loadButton = new ButtonWidget;
             _loadButton->setActionFn([this] ()
             {
-                _owner.d->buttonHandler->packageButtonClicked(*this, packageId());
+                _owner.d->buttonHandler->packageButtonClicked(*_loadButton, packageId());
                 updateContents();
             });
             connect(this, &HomeItemWidget::doubleClicked, [this] () {
@@ -487,6 +487,11 @@ void PackagesWidget::setColorTheme(ColorTheme unselectedItem, ColorTheme selecte
     d->loadedUnselectedItem = loadedUnselectedItem;
     d->loadedSelectedItem   = loadedSelectedItem;
 
+    d->populate();
+}
+
+void PackagesWidget::populate()
+{
     d->populate();
 }
 

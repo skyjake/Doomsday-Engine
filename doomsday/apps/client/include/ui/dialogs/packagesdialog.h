@@ -31,8 +31,14 @@ class PackagesDialog : public de::DialogWidget
 public:
     PackagesDialog(de::String const &titleText = "");
 
+    void setSelectedPackages(de::StringList const &packages);
+    de::StringList selectedPackages() const;
+
 public slots:
     void refreshPackages();
+
+protected:
+    void preparePanelForOpening() override;
 
 private:
     DENG2_PRIVATE(d)
