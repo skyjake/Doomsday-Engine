@@ -10,9 +10,15 @@ set (CMAKE_INSTALL_DEFAULT_COMPONENT_NAME)
 # the client component.
 set (ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL "Assimp: Build tools" FORCE)
 set (ASSIMP_BUILD_TESTS OFF CACHE BOOL "Assimp: Build tests" FORCE)
-set (ASSIMP_LIB_INSTALL_DIR ${DENG_INSTALL_LIB_DIR}
-    CACHE PATH "libassimp install directory" FORCE
-)
+if (APPLE OR WIN32)
+    set (ASSIMP_LIB_INSTALL_DIR ${DENG_INSTALL_LIB_DIR}
+        CACHE PATH "libassimp install directory" FORCE
+    )
+else ()
+    set (ASSIMP_LIB_INSTALL_DIR ${DENG_INSTALL_PLUGIN_DIR}
+        CACHE PATH "libassimp install directory" FORCE
+    )
+endif ()
 set (BUILD_SHARED_LIBS OFF CACHE BOOL "Assimp: Shared library" FORCE)
 set (CMAKE_AUTOMOC OFF)
 set (oldCFlags ${CMAKE_C_FLAGS})
