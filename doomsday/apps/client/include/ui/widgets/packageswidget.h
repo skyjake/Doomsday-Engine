@@ -22,6 +22,8 @@
 #include <de/GuiWidget>
 #include <de/IPersistent>
 
+class HomeItemWidget;
+
 /**
  * Listing of packages with search and filtering options.
  *
@@ -34,14 +36,24 @@ public:
     class IPackageStatus
     {
     public:
-        virtual ~IPackageStatus() {}
+        virtual ~IPackageStatus();
         virtual bool isPackageHighlighted(de::String const &packageId) const = 0;
+    };
+
+    class IButtonHandler
+    {
+    public:
+        virtual ~IButtonHandler();
+        virtual void packageButtonClicked(HomeItemWidget &itemWidget, de::String const &packageId) = 0;
     };
 
 public:
     PackagesWidget(de::String const &name = "");
 
     void setPackageStatus(IPackageStatus const &packageStatus);
+    void setButtonHandler(IButtonHandler &buttonHandler);
+    void setButtonLabels(de::String const &buttonLabel,
+                         de::String const &highlightedButtonLabel);
 
     void setColorTheme(ColorTheme unselectedItem, ColorTheme selectedItem,
                        ColorTheme loadedUnselectedItem, ColorTheme loadedSelectedItem);

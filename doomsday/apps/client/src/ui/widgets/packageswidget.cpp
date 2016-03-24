@@ -45,7 +45,36 @@ struct PackageLoadStatus : public PackagesWidget::IPackageStatus
     }
 };
 
+struct LoadOrUnloadPackage : public PackagesWidget::IButtonHandler
+{
+    void packageButtonClicked(HomeItemWidget &, de::String const &packageId)
+    {
+        auto &loader = App::packageLoader();
+
+        if(loader.isLoaded(packageId))
+        {
+            loader.unload(packageId);
+        }
+        else
+        {
+            try
+            {
+                loader.load(packageId);
+            }
+            catch(Error const &er)
+            {
+                LOG_RES_ERROR("Package \"" + packageId +
+                              "\" could not be loaded: " + er.asText());
+            }
+        }
+    }
+};
+
 static PackageLoadStatus isPackageLoaded;
+static LoadOrUnloadPackage loadOrUnloadPackage;
+
+PackagesWidget::IPackageStatus::~IPackageStatus() {}
+PackagesWidget::IButtonHandler::~IButtonHandler() {}
 
 DENG_GUI_PIMPL(PackagesWidget)
 , public ChildWidgetOrganizer::IFilter
@@ -55,7 +84,9 @@ DENG_GUI_PIMPL(PackagesWidget)
     ButtonWidget *clearSearch;
     HomeMenuWidget *menu;
     QStringList filterTerms;
+    String buttonLabels[2];
     IPackageStatus const *packageStatus = &isPackageLoaded;
+    IButtonHandler       *buttonHandler = &loadOrUnloadPackage;
     GuiWidget::ColorTheme unselectedItem       = GuiWidget::Normal;
     GuiWidget::ColorTheme selectedItem         = GuiWidget::Normal;
     GuiWidget::ColorTheme loadedUnselectedItem = GuiWidget::Inverted;
@@ -102,27 +133,9 @@ DENG_GUI_PIMPL(PackagesWidget)
             icon().rule().setInput(Rule::Width, height + rule("gap")*2);
 
             _loadButton = new ButtonWidget;
-            //_loadButton->setFont("small");
-            //_loadButton->margins().setTopBottom("unit");
             _loadButton->setActionFn([this] ()
             {
-                auto &loader = App::packageLoader();
-                if(loader.isLoaded(packageId()))
-                {
-                    loader.unload(packageId());
-                }
-                else
-                {
-                    try
-                    {
-                        loader.load(packageId());
-                    }
-                    catch(Error const &er)
-                    {
-                        LOG_RES_ERROR("Package \"" + packageId() +
-                                      "\" could not be loaded: " + er.asText());
-                    }
-                }
+                _owner.d->buttonHandler->packageButtonClicked(*this, packageId());
                 updateContents();
             });
             connect(this, &HomeItemWidget::doubleClicked, [this] () {
@@ -228,10 +241,6 @@ DENG_GUI_PIMPL(PackagesWidget)
 
         void updateContents()
         {
-            /*_title->setText(_item->info->gets("title"));
-            _subtitle->setText(packageId());*/
-
-            //label().setFont("small");
             label().setText(String(_E(b) "%1\n" _E(l) "%2")
                             .arg(_item->info->gets("title"))
                             .arg(packageId()));
@@ -240,7 +249,7 @@ DENG_GUI_PIMPL(PackagesWidget)
 
             if(_owner.d->packageStatus->isPackageHighlighted(packageId()))
             {
-                _loadButton->setText(tr("Unload"));
+                _loadButton->setText(_owner.d->buttonLabels[1]);
                 _loadButton->setColorTheme(invertColorTheme(_owner.d->loadedSelectedItem));
                 icon().setImageColor(style().colors().colorf("accent"));
                 useColorTheme(_owner.d->loadedUnselectedItem, _owner.d->loadedSelectedItem);
@@ -248,7 +257,7 @@ DENG_GUI_PIMPL(PackagesWidget)
             }
             else
             {
-                _loadButton->setText(tr("Load"));
+                _loadButton->setText(_owner.d->buttonLabels[0]);
                 _loadButton->setColorTheme(invertColorTheme(_owner.d->selectedItem));
                 icon().setImageColor(style().colors().colorf("text"));
                 useColorTheme(_owner.d->unselectedItem, _owner.d->selectedItem);
@@ -258,11 +267,6 @@ DENG_GUI_PIMPL(PackagesWidget)
             {
                 updateTagButtonStyle(b, auxColor);
             }
-        }
-
-        bool isLoaded() const
-        {
-            return App::packageLoader().isLoaded(packageId());
         }
 
         String packageId() const
@@ -297,6 +301,9 @@ DENG_GUI_PIMPL(PackagesWidget)
 
     Instance(Public *i) : Base(i)
     {
+        buttonLabels[0] = tr("Load");
+        buttonLabels[1] = tr("Unload");
+
         // Search/filter terms.
         self.add(search = new LineEditWidget);
         search->rule()
@@ -457,6 +464,19 @@ PackagesWidget::PackagesWidget(String const &name)
 void PackagesWidget::setPackageStatus(IPackageStatus const &packageStatus)
 {
     d->packageStatus = &packageStatus;
+}
+
+void PackagesWidget::setButtonHandler(IButtonHandler &buttonHandler)
+{
+    d->buttonHandler = &buttonHandler;
+}
+
+void PackagesWidget::setButtonLabels(String const &buttonLabel, String const &highlightedButtonLabel)
+{
+    d->buttonLabels[0] = buttonLabel;
+    d->buttonLabels[1] = highlightedButtonLabel;
+
+    d->populate();
 }
 
 void PackagesWidget::setColorTheme(ColorTheme unselectedItem, ColorTheme selectedItem,

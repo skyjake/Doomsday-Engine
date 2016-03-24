@@ -38,6 +38,7 @@ using namespace de;
 DENG_GUI_PIMPL(PackagesDialog)
 , public ChildWidgetOrganizer::IWidgetFactory
 , public PackagesWidget::IPackageStatus
+, public PackagesWidget::IButtonHandler
 {
     StringList selectedPackages;
     LabelWidget *nothingSelected;
@@ -298,7 +299,9 @@ DENG_GUI_PIMPL(PackagesDialog)
         // Package browser.
         self.rightArea().add(browser = new PackagesWidget);
         browser->setPackageStatus(*this);
-        browser->setColorTheme(Normal, Normal, Normal, Normal);
+        browser->setButtonHandler(*this);
+        browser->setButtonLabels(tr("Add"), tr("Remove"));
+        //browser->setColorTheme(Normal, Normal, Normal, Normal);
         browser->rule()
                 .setInput(Rule::Left,  self.rightArea().contentRule().left())
                 .setInput(Rule::Top,   self.rightArea().contentRule().top())
@@ -316,6 +319,11 @@ DENG_GUI_PIMPL(PackagesDialog)
             menu->items() << new SelectedPackageItem(packageId);
         }
 
+        updateNothingIndicator();
+    }
+
+    void updateNothingIndicator()
+    {
         nothingSelected->setOpacity(menu->items().isEmpty()? .5f : 0.f, 0.4);
     }
 
@@ -329,9 +337,27 @@ DENG_GUI_PIMPL(PackagesDialog)
         widget.as<SelectedPackageWidget>().updateContents();
     }
 
-    bool isPackageHighlighted(String const &packageId) const
+    bool isPackageHighlighted(String const &packageId) const override
     {
         return selectedPackages.contains(packageId);
+    }
+
+    void packageButtonClicked(HomeItemWidget &, String const &packageId) override
+    {
+        if(!selectedPackages.contains(packageId))
+        {
+            selectedPackages.append(packageId);
+            menu->items() << new SelectedPackageItem(packageId);
+        }
+        else
+        {
+            selectedPackages.removeOne(packageId);
+            auto pos = menu->items().findData(packageId);
+            DENG2_ASSERT(pos >= 0);
+            menu->items().remove(pos);
+        }
+
+        updateNothingIndicator();
     }
 };
 
