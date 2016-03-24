@@ -380,7 +380,7 @@ void Game::addResource(resourceclassid_t classId, dint rflags,
 
 void Game::loadPackages() const
 {
-    for(String const &id : d->requiredPackages)
+    for(String const &id : d->requiredPackages + d->packagesFromProfile())
     {
         App::packageLoader().load(id);
     }
@@ -388,9 +388,10 @@ void Game::loadPackages() const
 
 void Game::unloadPackages() const
 {
-    for(int i = d->requiredPackages.size() - 1; i >= 0; --i)
+    StringList const allPackages = d->requiredPackages + d->packagesFromProfile();
+    for(int i = allPackages.size() - 1; i >= 0; --i)
     {
-        App::packageLoader().unload(d->requiredPackages.at(i));
+        App::packageLoader().unload(allPackages.at(i));
     }
 }
 
