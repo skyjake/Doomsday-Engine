@@ -120,7 +120,7 @@ if (APPLE)
         Deng::libcore Deng::libshell
         Deng::libgui Deng::libappfw
         Deng::liblegacy Deng::libdoomsday
-		libassimp SDL2 SDL2_mixer
+        SDL2 SDL2_mixer
     )
 
     # Plugins are bundled inside the client app. We'll run macdeployqt on the
