@@ -454,7 +454,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << new ui::Item(ui::Item::Separator)
             << unloadMenu                           // hidden with null-game
             << new ui::Item(ui::Item::Separator)
-            << new ui::Item(ui::Item::Separator, tr("Application"))
+            << new ui::Item(ui::Item::Separator, tr("Doomsday"))
             << new ui::ActionItem(tr("IWAD Folder..."), new SignalAction(this, SLOT(chooseIWADFolder())))
             << new ui::ActionItem(tr("Check for Updates..."), new CommandAction("updateandnotify"))
             << new ui::ActionItem(tr("About Doomsday"), new SignalAction(this, SLOT(showAbout())))
