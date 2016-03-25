@@ -106,8 +106,8 @@ DENG2_PIMPL(GuiRootWidget)
     QScopedPointer<AtlasTexture> atlas; ///< Shared atlas for most UI graphics/text.
     GLUniform uTexAtlas;
     TextureBank texBank; ///< Bank for the atlas contents.
-    bool noFramesDrawnYet;
     FocusWidget *focusIndicator;
+    bool noFramesDrawnYet;
 
     Instance(Public *i, CanvasWindow *win)
         : Base(i)
