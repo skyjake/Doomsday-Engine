@@ -382,7 +382,7 @@ DENG2_PIMPL(ClientWindow)
     }
 #endif
 
-    void currentGameChanged(Game const &newGame)
+    void currentGameChanged(Game const &/*newGame*/)
     {
         /*
         if(newGame.isNull())
