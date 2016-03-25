@@ -221,41 +221,27 @@ char const *R_NameForBlendMode(blendmode_t mode)
 DENG_EXTERN_C dd_bool R_ChooseAlignModeAndScaleFactor(float *scale, int width, int height,
     int availWidth, int availHeight, scalemode_t scaleMode)
 {
-    if(SCALEMODE_STRETCH == scaleMode)
+    if(scaleMode == SCALEMODE_STRETCH)
     {
-        if(NULL != scale)
-            *scale = 1;
+        if(scale) *scale = 1;
         return true;
     }
     else
     {
-        float const availRatio = (float)availWidth / availHeight;
-        float const origRatio  = (float)width  / height;
-        float sWidth, sHeight; // Scaled dimensions.
+        float heightAspectCorrected = height * 1.2f;
 
-        if(availWidth >= availHeight)
+        // First try scaling horizontally to fit the available width.
+        float factor = float(availWidth) / float(width);
+        if(factor * heightAspectCorrected <= availHeight)
         {
-            sWidth  = availWidth;
-            sHeight = sWidth  / availRatio;
-        }
-        else
-        {
-            sHeight = availHeight;
-            sWidth  = sHeight * availRatio;
-        }
-
-        if(origRatio > availRatio)
-        {
-            if(NULL != scale)
-                *scale = sWidth / width;
+            // Fits, use letterbox.
+            if(scale) *scale = factor;
             return false;
         }
-        else
-        {
-            if(NULL != scale)
-                *scale = sHeight / height;
-            return true;
-        }
+
+        // Fit vertically instead.
+        if(scale) *scale = float(availHeight) / heightAspectCorrected;
+        return true; // Pillarbox.
     }
 }
 
@@ -263,8 +249,8 @@ DENG_EXTERN_C dd_bool R_ChooseAlignModeAndScaleFactor(float *scale, int width, i
 DENG_EXTERN_C scalemode_t R_ChooseScaleMode2(int width, int height, int availWidth, int availHeight,
     scalemode_t overrideMode, float stretchEpsilon)
 {
-    float const availRatio = (float)availWidth / availHeight;
-    float const origRatio  = (float)width / height;
+    float const availRatio = float(availWidth) / availHeight;
+    float const origRatio  = float(width) / (height * 1.2f);
 
     // Considered identical?
     if(INRANGE_OF(availRatio, origRatio, .001f))
@@ -282,5 +268,5 @@ DENG_EXTERN_C scalemode_t R_ChooseScaleMode(int width, int height, int availWidt
     scalemode_t overrideMode)
 {
     return R_ChooseScaleMode2(availWidth, availHeight, width, height, overrideMode,
-        DEFAULT_SCALEMODE_STRETCH_EPSILON);
+                              DEFAULT_SCALEMODE_STRETCH_EPSILON);
 }

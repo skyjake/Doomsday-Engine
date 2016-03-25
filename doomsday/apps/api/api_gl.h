@@ -220,7 +220,7 @@ typedef struct {
     scalemode_t scaleMode;
     int width, height;
     int availWidth, availHeight;
-    dd_bool alignHorizontal; /// @c false: align vertically instead.
+    dd_bool isPillarBoxed; /// @c false: align vertically instead.
     float scaleFactor;
 } dgl_borderedprojectionstate_t;
 
