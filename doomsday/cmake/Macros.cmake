@@ -443,7 +443,7 @@ macro (deng_codesign target)
             endforeach (fn)
             message (STATUS \"Signing ${_outName}.app using '${DENG_CODESIGN_APP_CERT}'...\")
             execute_process (COMMAND ${CODESIGN_COMMAND} --verbose
-                -s \"${DENG_CODESIGN_APP_CERT}\"
+                -s --force \"${DENG_CODESIGN_APP_CERT}\"
                 \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app\"
             )")
     endif ()
