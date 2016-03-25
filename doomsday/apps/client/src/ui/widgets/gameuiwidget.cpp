@@ -41,7 +41,8 @@ using namespace de;
 
 static void setupProjectionForFinale(dgl_borderedprojectionstate_t *bp)
 {
-    GL_ConfigureBorderedProjection(bp, BPF_OVERDRAW_CLIP,
+    GL_ConfigureBorderedProjection(bp, BPF_OVERDRAW_CLIP |
+                                   (!App_World().hasMap()? BPF_OVERDRAW_MASK : 0),
                                    SCREENWIDTH, SCREENHEIGHT,
                                    DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT,
                                    scalemode_t(Con_GetByte("rend-finale-stretch")));

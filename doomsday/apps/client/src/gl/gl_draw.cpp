@@ -352,16 +352,20 @@ DENG_EXTERN_C void GL_ConfigureBorderedProjection2(dgl_borderedprojectionstate_t
 {
     if(!bp) App_Error("GL_ConfigureBorderedProjection2: Invalid 'bp' argument.");
 
-    bp->flags  = flags;
-    bp->width  = width;
-    bp->height = height;
-    bp->availWidth  = availWidth;
+    bp->flags       = flags;
+    bp->width       = width; // draw coordinates (e.g., VGA)
+    bp->height      = height;
+    bp->availWidth  = availWidth; // screen space
     bp->availHeight = availHeight;
 
-    bp->scaleMode = R_ChooseScaleMode2(bp->width, bp->height, bp->availWidth,
-        bp->availHeight, overrideMode, stretchEpsilon);
-    bp->alignHorizontal = R_ChooseAlignModeAndScaleFactor(&bp->scaleFactor,
-        bp->width, bp->height, bp->availWidth, bp->availHeight, bp->scaleMode);
+    bp->scaleMode = R_ChooseScaleMode2(bp->width, bp->height,
+                                       bp->availWidth, bp->availHeight,
+                                       overrideMode, stretchEpsilon);
+
+    bp->isPillarBoxed = R_ChooseAlignModeAndScaleFactor(&bp->scaleFactor,
+                                                        bp->width, bp->height,
+                                                        bp->availWidth, bp->availHeight,
+                                                        bp->scaleMode);
 }
 
 #undef GL_ConfigureBorderedProjection
@@ -399,41 +403,31 @@ DENG_EXTERN_C void GL_BeginBorderedProjection(dgl_borderedprojectionstate_t* bp)
 
     GLState::push();
 
-    if(bp->alignHorizontal)
+    if(bp->isPillarBoxed)
     {
         // "Pillarbox":
+        int offset = int((bp->availWidth - bp->scaleFactor * bp->width) / 2 + .5f);
         if(bp->flags & BPF_OVERDRAW_CLIP)
         {
-            int w = .5f + (bp->availWidth - bp->width * bp->scaleFactor) / 2;
-            //bp->scissorState = DGL_GetInteger(DGL_SCISSOR_TEST);
-            //DGL_Scissor(&bp->scissorRegion);
-            DGL_SetScissor2(DENG_GAMEVIEW_X + w, DENG_GAMEVIEW_Y,
-                            bp->width * bp->scaleFactor, bp->availHeight);
-            //DGL_Enable(DGL_SCISSOR_TEST);
+            DGL_SetScissor2(DENG_GAMEVIEW_X + offset, DENG_GAMEVIEW_Y,
+                            int(bp->scaleFactor * bp->width), bp->availHeight);
         }
 
-        glTranslatef((float)bp->availWidth/2, 0, 0);
-        //glScalef(1/1.2f, 1, 1); // Aspect correction.
-        glScalef(bp->scaleFactor, bp->scaleFactor, 1);
-        glTranslatef(-bp->width/2, 0, 0);
+        glTranslatef(offset, 0, 0);
+        glScalef(bp->scaleFactor, bp->scaleFactor * 1.2f, 1);
     }
     else
     {
         // "Letterbox":
+        int offset = int((bp->availHeight - bp->scaleFactor * 1.2f * bp->height) / 2 + .5f);
         if(bp->flags & BPF_OVERDRAW_CLIP)
         {
-            int h = .5f + (bp->availHeight - bp->height * bp->scaleFactor) / 2;
-            //bp->scissorState = DGL_GetInteger(DGL_SCISSOR_TEST);
-            //DGL_Scissor(&bp->scissorRegion);
-            DGL_SetScissor2(DENG_GAMEVIEW_X, DENG_GAMEVIEW_Y + h,
-                            bp->availWidth, bp->height * bp->scaleFactor);
-            //DGL_Enable(DGL_SCISSOR_TEST);
+            DGL_SetScissor2(DENG_GAMEVIEW_X, DENG_GAMEVIEW_Y + offset,
+                            bp->availWidth, int(bp->scaleFactor * 1.2f * bp->height));
         }
 
-        glTranslatef(0, (float)bp->availHeight/2, 0);
-        //glScalef(1, 1.2f, 1); // Aspect correction.
-        glScalef(bp->scaleFactor, bp->scaleFactor, 1);
-        glTranslatef(0, -bp->height/2, 0);
+        glTranslatef(0, offset, 0);
+        glScalef(bp->scaleFactor, bp->scaleFactor * 1.2f, 1);
     }
 }
 
@@ -453,13 +447,6 @@ DENG_EXTERN_C void GL_EndBorderedProjection(dgl_borderedprojectionstate_t* bp)
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
 
-    if(bp->flags & BPF_OVERDRAW_CLIP)
-    {
-        //if(!bp->scissorState)
-        //    DGL_Disable(DGL_SCISSOR_TEST);
-        //DGL_SetScissor(&bp->scissorRegion);
-    }
-
     if(bp->flags & BPF_OVERDRAW_MASK)
     {
         // It shouldn't be necessary to bind the "not-texture" but the game
@@ -469,17 +456,17 @@ DENG_EXTERN_C void GL_EndBorderedProjection(dgl_borderedprojectionstate_t* bp)
         GL_SetNoTexture();
         glColor4f(0, 0, 0, 1);
 
-        if(bp->alignHorizontal)
+        if(bp->isPillarBoxed)
         {
             // "Pillarbox":
-            int w = .5f + (bp->availWidth  - bp->width  * bp->scaleFactor) / 2;
+            int w = int((bp->availWidth - bp->scaleFactor * bp->width) / 2 + .5f);
             GL_DrawRectf2(0, 0, w, bp->availHeight);
             GL_DrawRectf2(bp->availWidth - w, 0, w, bp->availHeight);
         }
         else
         {
             // "Letterbox":
-            int h = .5f + (bp->availHeight - bp->height * bp->scaleFactor) / 2;
+            int h = int((bp->availHeight - bp->scaleFactor * 1.2f * bp->height) / 2 + .5f);
             GL_DrawRectf2(0, 0, bp->availWidth, h);
             GL_DrawRectf2(0, bp->availHeight - h, bp->availWidth, h);
         }
