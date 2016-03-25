@@ -625,7 +625,7 @@ void DoomsdayApp::makeGameCurrent(Game const &newGame)
 
     if(!isShuttingDown())
     {
-        // Re-initialize subsystems needed even when in ringzero.
+        // Re-initialize subsystems needed even when in Home.
         if(!plugins().exchangeGameEntryPoints(newGame.pluginId()))
         {
             throw Plugins::EntryPointError("DoomsdayApp::makeGameCurrent",
@@ -678,7 +678,7 @@ bool DoomsdayApp::changeGame(Game const &newGame,
 
     /*
      * If we aren't shutting down then we are either loading a game or switching
-     * to ringzero (the current game will have already been unloaded).
+     * to Home (the current game will have already been unloaded).
      */
     if(!isShuttingDown())
     {
@@ -722,7 +722,7 @@ bool DoomsdayApp::changeGame(Game const &newGame,
         if(newGame.isNull())
         {
             gameChangeTasks[0].name = "Unloading game...";
-            gameChangeTasks[3].name = "Switching to ringzero...";
+            gameChangeTasks[3].name = "Switching to Home...";
         }
         // kludge end
 

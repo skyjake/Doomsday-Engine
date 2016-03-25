@@ -1278,13 +1278,27 @@ static void runGameAction()
 #define QUITWAIT_MILLISECONDS 1500
 
     static uint quitTime = 0;
+    static bool unloadTriggered = false;
 
     // Run the quit countdown?
     if(::quitInProgress)
     {
         if(Timer_RealMilliseconds() > quitTime + QUITWAIT_MILLISECONDS)
         {
-            Sys_Quit();
+            if(!unloadTriggered)
+            {
+                unloadTriggered = true;
+                if(CommandLine_Exists("-game"))
+                {
+                    // Launched directly into game, so quit the engine altogether.
+                    Sys_Quit();
+                }
+                else
+                {
+                    // Launched to Home, so return there.
+                    DD_Execute(true, "after 1 unload");
+                }
+            }
         }
         else
         {

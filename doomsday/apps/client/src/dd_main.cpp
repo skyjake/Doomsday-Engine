@@ -1069,7 +1069,7 @@ static void initialize()
             // A server is presently useless without a game, as shell
             // connections can only be made after a game is loaded and the
             // server mode started.
-            /// @todo Allow shell connections in ringzero mode, too.
+            /// @todo Allow shell connections in Home, too.
             App_Error("No playable games available.");
         }
 #endif

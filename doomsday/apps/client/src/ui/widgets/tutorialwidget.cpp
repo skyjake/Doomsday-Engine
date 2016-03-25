@@ -170,7 +170,7 @@ DENG_GUI_PIMPL(TutorialWidget)
         forever
         {
             bool skip = false;
-            if(!App_GameLoaded()) // in Ring Zero
+            if(!App_GameLoaded()) // in Home
             {
                 if(s == RendererAppearance) skip = true;
             }
