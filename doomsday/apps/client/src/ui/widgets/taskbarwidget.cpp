@@ -20,6 +20,7 @@
 #include "ui/widgets/consolecommandwidget.h"
 #include "ui/widgets/multiplayermenuwidget.h"
 #include "ui/widgets/tutorialwidget.h"
+#include "ui/widgets/packagessidebarwidget.h"
 #include "ui/home/homewidget.h"
 #include "ui/dialogs/aboutdialog.h"
 #include "ui/dialogs/videosettingsdialog.h"
@@ -71,7 +72,8 @@ enum MenuItemPositions
     POS_CONNECT           = 3,
     POS_GAMES_SEPARATOR   = 4,
     POS_UNLOAD            = 5,
-    POS_IWAD_FOLDER       = 8,
+    POS_PACKAGES          = 8,
+    POS_IWAD_FOLDER       = 9,
 
     // Config menu:
     POS_HOME_SETTINGS     = 0,
@@ -274,6 +276,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
         itemWidget(mainMenu, POS_GAMES)            .show(!game.isNull());
         itemWidget(mainMenu, POS_UNLOAD)           .show(!game.isNull());
         itemWidget(mainMenu, POS_GAMES_SEPARATOR)  .show(!game.isNull());
+        itemWidget(mainMenu, POS_PACKAGES)         .show(!game.isNull());
         itemWidget(mainMenu, POS_IWAD_FOLDER)      .show(game.isNull());
         itemWidget(mainMenu, POS_MULTIPLAYER)      .show(!game.isNull());
         itemWidget(mainMenu, POS_CONNECT)          .show(game.isNull());
@@ -455,6 +458,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << unloadMenu                           // hidden with null-game
             << new ui::Item(ui::Item::Separator)
             << new ui::Item(ui::Item::Separator, tr("Doomsday"))
+            << new ui::ActionItem(tr("Packages"), new SignalAction(this, SLOT(openPackagesSidebar())))
             << new ui::ActionItem(tr("IWAD Folder..."), new SignalAction(this, SLOT(chooseIWADFolder())))
             << new ui::ActionItem(tr("Check for Updates..."), new CommandAction("updateandnotify"))
             << new ui::ActionItem(tr("About Doomsday"), new SignalAction(this, SLOT(showAbout())))
@@ -817,6 +821,12 @@ void TaskBarWidget::showTutorial()
     root().addOnTop(tutorial);
     tutorial->rule().setRect(root().viewRule());
     tutorial->start();
+}
+
+void TaskBarWidget::openPackagesSidebar()
+{
+    auto *sidebar = new PackagesSidebarWidget; // ClientWindow gets ownership
+    sidebar->open();
 }
 
 void TaskBarWidget::updateCommandLineLayout()
