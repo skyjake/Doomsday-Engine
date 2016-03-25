@@ -21,7 +21,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(PackagesSidebarWidget)
+DENG_GUI_PIMPL(PackagesSidebarWidget)
 {
     PackagesWidget *browser;
 
@@ -29,6 +29,8 @@ DENG2_PIMPL(PackagesSidebarWidget)
     {
         GuiWidget *container = &self.containerWidget();
 
+        container->add(browser = new PackagesWidget);
+        browser->rule().setInput(Rule::Width, rule("sidebar.width"));
     }
 };
 
@@ -36,5 +38,7 @@ PackagesSidebarWidget::PackagesSidebarWidget()
     : SidebarWidget("Packages", "packages-sidebar")
     , d(new Instance(this))
 {
+    layout() << *d->browser;
+
     updateSidebarLayout(Const(0), Const(0));
 }

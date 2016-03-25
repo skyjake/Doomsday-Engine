@@ -21,6 +21,8 @@
 #include "ui/editors/variablegroupeditor.h"
 #include "ui/clientwindow.h"
 
+#include <doomsday/doomsdayapp.h>
+
 #include <de/DialogContentStylist>
 #include <de/SequentialLayout>
 #include <de/SignalAction>
@@ -29,6 +31,7 @@ using namespace de;
 using namespace de::ui;
 
 DENG_GUI_PIMPL(SidebarWidget)
+, DENG2_OBSERVES(DoomsdayApp, GameChange)
 {
     DialogContentStylist stylist;
     ScrollAreaWidget *container;
@@ -41,6 +44,8 @@ DENG_GUI_PIMPL(SidebarWidget)
         : Base(i)
         , firstColumnWidth(new IndirectRule)
     {
+        DoomsdayApp::app().audienceForGameChange() += this;
+
         // The contents of the editor will scroll.
         container = new ScrollAreaWidget;
         container->enableIndicatorDraw(true);
@@ -56,7 +61,17 @@ DENG_GUI_PIMPL(SidebarWidget)
 
     ~Instance()
     {
+        DoomsdayApp::app().audienceForGameChange() -= this;
         releaseRef(firstColumnWidth);
+    }
+
+    void currentGameChanged(Game const &newGame)
+    {
+        if(newGame.isNull())
+        {
+            // Back to Home -- sidebars are not expected to remain open.
+            self.close();
+        }
     }
 };
 

@@ -39,7 +39,6 @@ using namespace ui;
 
 DENG_GUI_PIMPL(RendererAppearanceEditor),
 DENG2_OBSERVES(ConfigProfiles, ProfileChange),
-DENG2_OBSERVES(DoomsdayApp, GameChange),
 public VariableGroupEditor::IOwner
 {
     using Group = VariableGroupEditor;
@@ -63,8 +62,6 @@ public VariableGroupEditor::IOwner
         : Base(i)
         , settings(ClientApp::renderSystem().appearanceSettings())
     {
-        // The editor will close automatically when going to Ring Zero.
-        DoomsdayApp::app().audienceForGameChange() += this;
         settings.audienceForProfileChange += this;
 
         GuiWidget *container = &self.containerWidget();
@@ -375,7 +372,6 @@ public VariableGroupEditor::IOwner
 
     ~Instance()
     {
-        DoomsdayApp::app().audienceForGameChange() -= this;
         settings.audienceForProfileChange -= this;
     }
 
@@ -392,15 +388,6 @@ public VariableGroupEditor::IOwner
     void resetToDefaults(String const &settingName)
     {
         settings.resetSettingToDefaults(settingName);
-    }
-
-    void currentGameChanged(Game const &newGame)
-    {
-        if(newGame.isNull())
-        {
-            // Entering Ring Zero -- persistent cvars are not available.
-            self.close();
-        }
     }
 
     void currentProfileChanged(String const &)
