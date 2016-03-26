@@ -361,7 +361,7 @@ DENG2_PIMPL(ClientApp)
         infineSys.deinitBindingContext();
     }
 
-    void currentGameChanged(Game const &)
+    void currentGameChanged(Game const &newGame)
     {
         if(Sys_IsShuttingDown()) return;
 
@@ -377,14 +377,13 @@ DENG2_PIMPL(ClientApp)
          */
         inputSys->clearEvents();
 
-        if(!App_GameLoaded())
+        if(newGame.isNull())
         {
-            ClientWindow::main().taskBar().open();
+            // The mouse is free while in the Home.
+            ClientWindow::main().canvas().trapMouse(false);
         }
-        else
-        {
-            ClientWindow::main().console().zeroLogHeight();
-        }
+
+        ClientWindow::main().console().zeroLogHeight();
     }
 
     /**
