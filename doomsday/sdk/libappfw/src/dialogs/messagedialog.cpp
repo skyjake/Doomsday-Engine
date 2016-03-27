@@ -67,7 +67,11 @@ DENG_GUI_PIMPL(MessageDialog)
         // Put all the widgets into the layout.
         foreach(Widget *w, area.childWidgets())
         {
-            layout << w->as<GuiWidget>();
+            // Individual children can be hidden to exclude them from the layout.
+            if(!w->behavior().testFlag(Widget::Hidden))
+            {
+                layout << w->as<GuiWidget>();
+            }
         }
 
         area.setContentSize(layout.width(), layout.height());
