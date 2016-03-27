@@ -10,6 +10,8 @@ endif ()
 
 add_definitions (
     -DWIN32
+    -DWINVER=0x0601
+    -D_WIN32_WINNT=0x0601
     -D_CRT_SECURE_NO_WARNINGS
     -D_USE_MATH_DEFINES
 )
