@@ -20,6 +20,7 @@
 #define DENG_CLIENT_UI_HOME_PACKAGESWIDGET_H
 
 #include <de/ButtonWidget>
+#include <de/LineEditWidget>
 #include <de/IPersistent>
 
 class HomeItemWidget;
@@ -59,6 +60,8 @@ public:
                        ColorTheme loadedUnselectedItem, ColorTheme loadedSelectedItem);
 
     void populate();
+
+    de::LineEditWidget &searchTermsEditor();
 
     // Implements IPersistent.
     void operator >> (de::PersistentState &toState) const;

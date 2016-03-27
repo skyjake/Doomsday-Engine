@@ -407,4 +407,6 @@ void PackagesDialog::preparePanelForOpening()
 {
     DialogWidget::preparePanelForOpening();
     d->populate();
+
+    root().setFocus(&d->browser->searchTermsEditor());
 }

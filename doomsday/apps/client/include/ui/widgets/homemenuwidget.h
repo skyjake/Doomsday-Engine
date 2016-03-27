@@ -40,7 +40,13 @@ public:
      */
     int selectedIndex() const;
 
-    void setSelectedIndex(int index);
+    /**
+     * @brief setSelectedIndex
+     * @param index
+     *
+     * @return The highlighted widget, if one was highlighted. Otherwise, returns nullptr.
+     */
+    void setSelectedIndex(int index, bool focus = false);
 
 protected slots:
     void mouseActivityInItem();

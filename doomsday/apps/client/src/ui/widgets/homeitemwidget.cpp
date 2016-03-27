@@ -34,7 +34,7 @@ DENG_GUI_PIMPL(HomeItemWidget)
 
         void acquireFocus()
         {
-            owner.root().setFocus(owner.d->background);
+            owner.acquireFocus();
             emit owner.mouseActivity();
         }
 
@@ -273,6 +273,11 @@ void HomeItemWidget::useColorTheme(ColorTheme unselected, ColorTheme selected)
     }
 
     d->updateColors();
+}
+
+void HomeItemWidget::acquireFocus()
+{
+    root().setFocus(d->background);
 }
 
 void HomeItemWidget::addButton(ButtonWidget *button)

@@ -45,6 +45,8 @@ public:
     void useColorTheme(ColorTheme style);
     void useColorTheme(ColorTheme unselected, ColorTheme selected);
 
+    void acquireFocus();
+
 signals:
     void mouseActivity();
     void doubleClicked();

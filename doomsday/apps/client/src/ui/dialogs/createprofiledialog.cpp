@@ -152,9 +152,10 @@ CreateProfileDialog *CreateProfileDialog::editProfile(String const &gameFamily,
     auto *dlg = new CreateProfileDialog(gameFamily);
     dlg->d->editing = true;
     dlg->d->oldName = profile.name();
-    dlg->title()  .setText(tr("Edit Profile"));
-    dlg->message().setText(tr("Game profile name:"));
+    dlg->title().setText(tr("Edit Profile"));
+    dlg->message().hide();
     dlg->buttonWidget(Id1)->setText(_E(b) + tr("OK"));
     dlg->fetchFrom(profile);
+    dlg->updateLayout();
     return dlg;
 }

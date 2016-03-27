@@ -495,6 +495,11 @@ void PackagesWidget::populate()
     d->populate();
 }
 
+LineEditWidget &PackagesWidget::searchTermsEditor()
+{
+    return *d->search;
+}
+
 void PackagesWidget::operator >> (PersistentState &toState) const
 {
     if(name().isEmpty()) return;

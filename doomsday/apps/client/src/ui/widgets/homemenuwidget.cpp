@@ -33,8 +33,11 @@ DENG_GUI_PIMPL(HomeMenuWidget)
 
     void widgetCreatedForItem(GuiWidget &widget, ui::Item const &)
     {
-        QObject::connect(&widget, SIGNAL(mouseActivity()),
-                         thisPublic, SLOT(mouseActivityInItem()));
+        if(widget.is<HomeItemWidget>())
+        {
+            QObject::connect(&widget, SIGNAL(mouseActivity()),
+                             thisPublic, SLOT(mouseActivityInItem()));
+        }
     }
 };
 
@@ -71,7 +74,7 @@ int HomeMenuWidget::selectedIndex() const
     return d->selectedIndex;
 }
 
-void HomeMenuWidget::setSelectedIndex(int index)
+void HomeMenuWidget::setSelectedIndex(int index, bool focus)
 {
     if(index >= 0 && index < childWidgets().size())
     {
@@ -81,6 +84,7 @@ void HomeMenuWidget::setSelectedIndex(int index)
         {
             d->selectedIndex = index;
             widget->setSelected(true);
+            if(focus) widget->acquireFocus();
         }
     }
 }
