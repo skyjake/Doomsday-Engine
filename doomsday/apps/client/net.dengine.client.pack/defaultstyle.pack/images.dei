@@ -41,6 +41,7 @@ close {
     image ring     { path = "graphics/close.png" }
     image ringless { path = "graphics/close-ringless.png" }
 }
+image create   { path = "graphics/create.png" }
 image alert    { path = "graphics/alert.png" }
 image play     { path = "graphics/play.png" }
 
@@ -67,6 +68,7 @@ progress {
 
 # Home:
 home {
+    image icon { path = "graphics/home.png" }
     background {
         image column  { path = "graphics/home-background.jpg" }
         image doom    { path = "graphics/doom/background.jpg" }
