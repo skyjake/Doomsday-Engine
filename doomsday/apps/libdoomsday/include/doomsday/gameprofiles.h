@@ -38,6 +38,7 @@ public:
     {
     public:
         Profile(de::String const &name = "");
+        Profile(Profile const &other);
 
         void setGame(de::String const &id);
         void setPackages(de::StringList const &packagesInOrder);

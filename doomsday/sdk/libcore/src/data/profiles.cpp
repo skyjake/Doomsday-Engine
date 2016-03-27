@@ -346,6 +346,13 @@ Profiles::AbstractProfile::AbstractProfile()
     : d(new Instance(this))
 {}
 
+Profiles::AbstractProfile::AbstractProfile(AbstractProfile const &profile)
+    : d(new Instance(this))
+{
+    d->name     = profile.name();
+    d->readOnly = profile.isReadOnly();
+}
+
 Profiles::AbstractProfile::~AbstractProfile()
 {}
 

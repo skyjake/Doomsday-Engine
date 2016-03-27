@@ -47,6 +47,7 @@ public:
     {
     public:
         AbstractProfile();
+        AbstractProfile(AbstractProfile const &profile);
 
         virtual ~AbstractProfile();
 
