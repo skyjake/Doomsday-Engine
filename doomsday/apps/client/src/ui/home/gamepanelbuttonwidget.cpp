@@ -38,7 +38,6 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
 , public ChildWidgetOrganizer::IFilter
 {
     GameProfile &gameProfile;
-    Game const &game;
     SavedSessionListData const &savedItems;
     SaveListWidget *saves;
     PackagesButtonWidget *packagesButton;
@@ -48,7 +47,6 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
     Instance(Public *i, GameProfile &profile, SavedSessionListData const &savedItems)
         : Base(i)
         , gameProfile(profile)
-        , game(DoomsdayApp::games()[profile.game()])
         , savedItems(savedItems)
     {
         packagesButton = new PackagesButtonWidget;
@@ -92,6 +90,11 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         self.panel().open();
     }
 
+    Game const &game() const
+    {
+        return DoomsdayApp::games()[gameProfile.game()];
+    }
+
     void playButtonPressed()
     {
         BusyMode_FreezeGameForBusyMode();
@@ -99,7 +102,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         // TODO: Emit a signal that hides the Home and closes the taskbar.
 
         // Switch the game.
-        DoomsdayApp::app().changeGame(game, DD_ActivateGameWorker);
+        DoomsdayApp::app().changeGame(game(), DD_ActivateGameWorker);
 
         if(saves->selectedPos() != ui::Data::InvalidPos)
         {
@@ -158,7 +161,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
 
         // Only saved sessions for this game are to be included.
         auto const &item = data.at(pos).as<SavedSessionListData::SaveItem>();
-        return item.gameId() == game.id();
+        return item.gameId() == gameProfile.game();
     }
 };
 
@@ -186,10 +189,10 @@ void GamePanelButtonWidget::setSelected(bool selected)
 
 void GamePanelButtonWidget::updateContent()
 {
-    enable(d->game.isPlayable());
+    enable(d->game().isPlayable());
 
-    String meta = !d->gameProfile.isUserCreated()? String::number(d->game.releaseDate().year())
-                                                 : d->game.title();
+    String meta = !d->gameProfile.isUserCreated()? String::number(d->game().releaseDate().year())
+                                                 : d->game().title();
 
     if(isSelected())
     {
@@ -203,7 +206,7 @@ void GamePanelButtonWidget::updateContent()
                     .arg(d->saves->childCount())
                     .arg(d->saves->childCount() != 1? "s" : "");
         }*/
-        else
+        else if(!d->gameProfile.isUserCreated())
         {
             meta = tr("Start new session");
         }

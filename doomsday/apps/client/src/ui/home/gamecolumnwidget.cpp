@@ -82,6 +82,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
             DENG2_ASSERT(static_cast<GameProfile *>(obj) == profile);
 
             profile = nullptr;
+            d->addOrRemoveSubheading();
 
             auto &items = d->menu->items();
             items.remove(items.find(*this)); // item deleted
@@ -96,6 +97,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
     HomeMenuWidget *menu;
     ButtonWidget *newProfileButton;
     int restoredSelected = -1;
+    bool gotSubheading = false;
 
     Instance(Public *i,
              String const &gameFamily,
@@ -168,6 +170,19 @@ DENG_GUI_PIMPL(GameColumnWidget)
         return menu->itemWidget<GamePanelButtonWidget>(item);
     }
 
+    int userProfileCount() const
+    {
+        int count = 0;
+        menu->items().forAll([this, &count] (ui::Item const &item) {
+            if(!item.semantics().testFlag(ui::Item::Separator)) {
+                auto const *profile = item.as<ProfileItem>().profile;
+                if(profile && profile->isUserCreated()) ++count;
+            }
+            return LoopContinue;
+        });
+        return count;
+    }
+
     void addItemForProfile(GameProfile &profile)
     {
         auto const &games = DoomsdayApp::games();
@@ -176,6 +191,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
             if(games[profile.game()].family() == gameFamily)
             {
                 menu->items() << new ProfileItem(this, profile);
+                addOrRemoveSubheading();
             }
         }
     }
@@ -188,6 +204,29 @@ DENG_GUI_PIMPL(GameColumnWidget)
             addItemForProfile(prof.as<GameProfile>());
             sortItems();
         });
+    }
+
+    void addOrRemoveSubheading()
+    {
+        int const userCount = userProfileCount();
+
+        if(userCount > 0 && !gotSubheading)
+        {
+            gotSubheading = true;
+            menu->items() << new ui::Item(ui::Item::Separator, tr("Custom Profiles"));
+        }
+        else if(!userCount && gotSubheading)
+        {
+            for(dsize pos = 0; pos < menu->items().size(); ++pos)
+            {
+                if(menu->items().at(pos).semantics().testFlag(ui::Item::Separator))
+                {
+                    menu->items().remove(pos);
+                    break;
+                }
+            }
+            gotSubheading = false;
+        }
     }
 
     /**
@@ -204,31 +243,49 @@ DENG_GUI_PIMPL(GameColumnWidget)
         sortItems();
     }
 
+    enum Section { BuiltIn, Subheading, Custom };
+
+    static Section itemSection(ui::Item const &item)
+    {
+        // The list is divided into three sections.
+        if(item.semantics().testFlag(ui::Item::Separator)) return Subheading;
+        return item.as<ProfileItem>().profile->isUserCreated()? Custom : BuiltIn;
+    }
+
     void sortItems()
     {
         menu->items().sort([] (ui::Item const &a, ui::Item const &b)
         {
-            GameProfile const &prof1 = *a.as<ProfileItem>().profile;
-            GameProfile const &prof2 = *b.as<ProfileItem>().profile;
+            Section const section1 = itemSection(a);
+            Section const section2 = itemSection(b);
 
-            // User-created profiles in the end.
-            if(prof1.isUserCreated() && !prof2.isUserCreated())
-            {
-                return false;
-            }
-            if(!prof1.isUserCreated() && prof2.isUserCreated())
+            if(section1 < section2)
             {
                 return true;
             }
-            if(prof1.isUserCreated() && prof2.isUserCreated())
+            if(section1 > section2)
+            {
+                return false;
+            }
+
+            GameProfile const &prof1 = *a.as<ProfileItem>().profile;
+            GameProfile const &prof2 = *b.as<ProfileItem>().profile;
+
+            if(section1 == Custom)
             {
                 // Sorted alphabetically.
                 return prof1.name().compareWithoutCase(prof2.name()) < 0;
             }
 
-            // Sort games by release date.
-            return a.as<ProfileItem>().game().releaseDate().year() <
-                   b.as<ProfileItem>().game().releaseDate().year();
+            // Sort built-in games by release date.
+            int year = a.as<ProfileItem>().game().releaseDate().year() -
+                       b.as<ProfileItem>().game().releaseDate().year();
+            if(!year)
+            {
+                // ...or identifier.
+                return prof1.game().compareWithoutCase(prof2.game()) < 0;
+            }
+            return year < 0;
         });
     }
 
@@ -236,7 +293,10 @@ DENG_GUI_PIMPL(GameColumnWidget)
     {
         menu->items().forAll([] (ui::Item const &item)
         {
-            item.as<ProfileItem>().update();
+            if(!item.semantics().testFlag(ui::Item::Separator))
+            {
+                item.as<ProfileItem>().update();
+            }
             return LoopContinue;
         });
         menu->updateLayout();
@@ -263,6 +323,17 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
     GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *)
     {
+        if(item.semantics().testFlag(ui::Item::Separator))
+        {
+            auto *heading = LabelWidget::newWithText(tr("Custom Profiles"));
+            heading->setSizePolicy(ui::Filled, ui::Expand);
+            heading->setFont("heading");
+            heading->setTextColor("accent");
+            heading->setAlignment(ui::AlignLeft);
+            heading->margins().setLeftRight("");
+            return heading;
+        }
+
         auto const *profileItem = &item.as<ProfileItem>();
         auto *button = new GamePanelButtonWidget(*profileItem->profile, savedItems);
 
@@ -272,7 +343,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
             auto *popup = new PopupMenuWidget;
             button->add(popup);
             popup->setDeleteAfterDismissed(true);
-            popup->setAnchorAndOpeningDirection(button->rule(), ui::Down);
+            popup->setAnchorAndOpeningDirection(button->label().rule(), ui::Down);
 
             // Items suitable for all types of profiles.
             popup->items()
@@ -302,7 +373,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
                     << new ui::ActionItem(tr("Edit..."), new CallbackAction([this, button, profileItem] ()
                     {
                         auto *dlg = CreateProfileDialog::editProfile(gameFamily, *profileItem->profile);
-                        dlg->setAnchorAndOpeningDirection(button->rule(), ui::Up);
+                        dlg->setAnchorAndOpeningDirection(button->label().rule(), ui::Up);
                         dlg->setDeleteAfterDismissed(true);
                         if(dlg->exec(root()))
                         {
@@ -320,6 +391,8 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
     void updateItemWidget(GuiWidget &widget, ui::Item const &item)
     {
+        if(item.semantics().testFlag(ui::Item::Separator)) return; // Ignore.
+
         auto &drawer = widget.as<GamePanelButtonWidget>();
         drawer.updateContent();
 

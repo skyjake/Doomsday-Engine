@@ -42,6 +42,7 @@ DENG_GUI_PIMPL(CreateProfileDialog)
     void checkValidProfileName()
     {
         bool valid = false;
+
         String const entry = self.profileName();
         if(!entry.isEmpty())
         {
@@ -60,6 +61,10 @@ DENG_GUI_PIMPL(CreateProfileDialog)
                 }) == LoopContinue;
             }
         }
+
+        // A game must be selected, too.
+        if(!gameChoice->isValidSelection()) valid = false;
+
         self.buttonWidget(Id1)->enable(valid);
     }
 };
@@ -79,7 +84,7 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
     form->add(d->gameChoice = new ChoiceWidget);
     DoomsdayApp::games().forAll([this, &gameFamily] (Game &game)
     {
-        if(game.family() == gameFamily)
+        if(game.isPlayable() && game.family() == gameFamily)
         {
             d->gameChoice->items() << new ChoiceItem(game.title(), game.id());
         }

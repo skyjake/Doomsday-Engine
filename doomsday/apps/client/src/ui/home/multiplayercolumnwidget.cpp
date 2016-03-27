@@ -153,13 +153,20 @@ DENG_GUI_PIMPL(MultiplayerColumnWidget)
                 auto const &second = b.as<ServerListItem>();
 
                 // Primarily sort by number of players.
-                if(first.info().numPlayers > second.info().numPlayers)
+                if(first.info().numPlayers == second.info().numPlayers)
                 {
-                    return true;
+                    // Secondarily by game ID.
+                    int cmp = qstrcmp(first .info().gameIdentityKey,
+                                      second.info().gameIdentityKey);
+                    if(!cmp)
+                    {
+                        // Lastly by server name.
+                        return qstricmp(first.info().name,
+                                        second.info().name) < 0;
+                    }
+                    return cmp < 0;
                 }
-                // Secondarily by game ID.
-                return qstrcmp(first .info().gameIdentityKey,
-                               second.info().gameIdentityKey) < 0;
+                return first.info().numPlayers - second.info().numPlayers > 0;
             });
         }
     }
