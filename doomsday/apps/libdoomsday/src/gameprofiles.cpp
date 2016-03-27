@@ -26,8 +26,9 @@
 
 using namespace de;
 
-static String const VAR_GAME    ("game");
-static String const VAR_PACKAGES("packages");
+static String const VAR_GAME        ("game");
+static String const VAR_PACKAGES    ("packages");
+static String const VAR_USER_CREATED("userCreated");
 
 DENG2_PIMPL(GameProfiles)
 , DENG2_OBSERVES(Games, Addition)
@@ -85,6 +86,8 @@ Profiles::AbstractProfile *GameProfiles::profileFromInfoBlock(Info::BlockElement
         for(auto const &val : pkgs->values()) ids << val.text;
         prof->setPackages(ids);
     }
+
+    prof->setUserCreated(!block.keyValue(VAR_USER_CREATED).text.compareWithoutCase("True"));
 
     return prof.release();
 }
@@ -148,7 +151,8 @@ String GameProfiles::Profile::toInfoSource() const
     os.setCodec("UTF-8");
 
     os << VAR_GAME << ": " << d->gameId << "\n"
-       << VAR_PACKAGES << " <" << String::join(d->packages, ", ") << ">";
+       << VAR_PACKAGES << " <" << String::join(d->packages, ", ") << ">\n"
+       << VAR_USER_CREATED << ": " << (d->userCreated? "True" : "False");
 
     return info;
 }
