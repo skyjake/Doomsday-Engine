@@ -94,6 +94,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
     int oldScrollY;
     Rule const *widestItem;
     IndirectRule *maxItemWidth;
+    SafeWidgetPtr<PopupWidget> parentPopup;
 
     Instance(Public *i)
         : Base(i)
@@ -351,6 +352,8 @@ DENG_GUI_PIMPL(PopupMenuWidget)
     {
         // The popup menu is closed when an action is triggered.
         self.close();
+
+        if(parentPopup) parentPopup->close();
     }
 
     void updateIfScrolled()
@@ -411,6 +414,12 @@ PopupMenuWidget::PopupMenuWidget(String const &name)
 
     menu().organizer().audienceForWidgetCreation() += d;
     menu().organizer().audienceForWidgetUpdate() += d;
+}
+
+void PopupMenuWidget::setParentPopup(PopupWidget *parentPopup)
+{
+    // The parent will be closed, too, if the submenu is closed due to activation.
+    d->parentPopup.reset(parentPopup);
 }
 
 MenuWidget &PopupMenuWidget::menu() const

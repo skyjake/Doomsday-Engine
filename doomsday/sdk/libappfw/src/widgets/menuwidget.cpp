@@ -87,6 +87,15 @@ DENG2_PIMPL(MenuWidget)
 
             Action::trigger();
 
+            if(auto *subMenu = _widget->maybeAs<PopupMenuWidget>())
+            {
+                // Parent is the anchor button, owned by a MenuWidget, possibly owned a
+                // the popup menu.
+                if(auto *parentMenu = parent().parentWidget())
+                {
+                    subMenu->setParentPopup(parentMenu->parent()->maybeAs<PopupWidget>());
+                }
+            }
             _widget->setAnchorAndOpeningDirection(parent().hitRule(), _dir);
 
             d->keepTrackOfSubWidget(_widget);

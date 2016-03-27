@@ -34,6 +34,8 @@ class LIBAPPFW_PUBLIC PopupMenuWidget : public PopupWidget
 public:
     PopupMenuWidget(String const &name = "");
 
+    void setParentPopup(PopupWidget *parentPopup);
+
     MenuWidget &menu() const;
 
     ui::Data &items() { return menu().items(); }
