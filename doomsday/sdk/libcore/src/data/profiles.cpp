@@ -74,6 +74,12 @@ DENG2_PIMPL(Profiles)
         }
     }
 
+    void changeLookupKey(AbstractProfile const &profile, String const &newName)
+    {
+        profiles.remove(nameToKey(profile.name()));
+        profiles.insert(nameToKey(newName), const_cast<AbstractProfile *>(&profile));
+    }
+
     void objectWasDeleted(Deletable *obj)
     {
         // At this point the AbstractProfile itself is already deleted.
@@ -235,6 +241,13 @@ void Profiles::remove(AbstractProfile &profile)
     d->remove(profile);
 }
 
+bool Profiles::rename(AbstractProfile const &profile, String const &newName)
+{
+    if(newName.isEmpty() || tryFind(newName)) return false;
+    d->changeLookupKey(profile, newName);
+    return true;
+}
+
 void Profiles::serialize() const
 {
     if(!isPersistent()) return;
@@ -364,21 +377,9 @@ bool Profiles::AbstractProfile::setName(String const &newName)
     if(newName.isEmpty()) return false;
 
     Profiles *owner = d->owner;
-    if(owner)
+    if(!owner || owner->rename(*this, newName))
     {
-        if(owner->tryFind(newName))
-        {
-            // This name is already in use.
-            return false;
-        }
-        owner->remove(*this);
-    }
-
-    d->name = newName;
-
-    if(owner)
-    {
-        owner->add(this);
+        d->name = newName;
     }
     return true;
 }

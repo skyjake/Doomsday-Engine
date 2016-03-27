@@ -159,6 +159,19 @@ public:
     void remove(AbstractProfile &profile);
 
     /**
+     * Checks if a profile may be renamed, and if it can, updates the internal
+     * profile indexing to reflect the new name.
+     *
+     * @param profile  Profile that is being renamed.
+     * @param newName  New name.
+     *
+     * @return @c true, if the renaming is allowed. The caller is responsible for
+     * changing the name in @a profile. Returns @c false if the name is invalid, in
+     * which case the caller should keep the existing name.
+     */
+    bool rename(AbstractProfile const &profile, String const &newName);
+
+    /**
      * Serializes all the profiles to /home/configs/(persistentName).dei. Only
      * non-readonly profiles are written.
      */
