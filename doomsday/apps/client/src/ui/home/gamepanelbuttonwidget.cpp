@@ -20,6 +20,7 @@
 #include "ui/home/savelistwidget.h"
 #include "ui/savedsessionlistdata.h"
 #include "ui/dialogs/packagesdialog.h"
+#include "ui/widgets/packagesbuttonwidget.h"
 #include "dd_main.h"
 
 #include <doomsday/console/exec.h>
@@ -40,7 +41,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
     Game const &game;
     SavedSessionListData const &savedItems;
     SaveListWidget *saves;
-    ButtonWidget *packagesButton;
+    PackagesButtonWidget *packagesButton;
     ButtonWidget *playButton;
     ButtonWidget *deleteSaveButton;
 
@@ -50,14 +51,18 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         , game(DoomsdayApp::games()[profile.game()])
         , savedItems(savedItems)
     {
-        packagesButton = new ButtonWidget;
-        packagesButton->setImage(new StyleProceduralImage("package", self));
-        packagesButton->setOverrideImageSize(style().fonts().font("default").height().value());
-        packagesButton->setSizePolicy(ui::Expand, ui::Expand);
-        packagesButton->setTextAlignment(ui::AlignLeft);
-        packagesButton->setActionFn([this] () { packagesButtonPressed(); });
-        updatePackagesButton();
+        packagesButton = new PackagesButtonWidget;
+        packagesButton->setDialogTitle(profile.name());
         self.addButton(packagesButton);
+
+        QObject::connect(packagesButton,
+                         &PackagesButtonWidget::packageSelectionChanged,
+                         [this] (QStringList ids)
+        {
+            StringList pkgs;
+            for(auto const &i : ids) pkgs << i;
+            gameProfile.setPackages(pkgs);
+        });
 
         playButton = new ButtonWidget;
         playButton->useInfoStyle();
@@ -87,38 +92,6 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         self.panel().open();
     }
 
-    void packagesButtonPressed()
-    {
-        // The Packages dialog allows selecting which packages are loaded, and in
-        // which order. One can also browse the available packages.
-        auto *dlg = new PackagesDialog(game.title());
-        dlg->setDeleteAfterDismissed(true);
-        dlg->setSelectedPackages(gameProfile.packages());
-        dlg->setAcceptanceAction(new CallbackAction([this, dlg] ()
-        {
-            gameProfile.setPackages(dlg->selectedPackages());
-            updatePackagesButton();
-        }));
-        root().addOnTop(dlg);
-        dlg->open();
-    }
-
-    void updatePackagesButton()
-    {
-        if(gameProfile.packages().isEmpty())
-        {
-            packagesButton->setText("");
-            packagesButton->setTextColor("text");
-            packagesButton->setImageColor(style().colors().colorf("text"));
-        }
-        else
-        {
-            packagesButton->setText(String::format("%i", gameProfile.packages().count()));
-            packagesButton->setTextColor("accent");
-            packagesButton->setImageColor(style().colors().colorf("accent"));
-        }
-    }
-
     void playButtonPressed()
     {
         BusyMode_FreezeGameForBusyMode();
@@ -138,7 +111,8 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
     }
 
     /// Action that deletes a savegame folder.
-    struct DeleteAction : public Action {
+    struct DeleteAction : public Action
+    {
         GamePanelButtonWidget *widget;
         String savePath;
         DeleteAction(GamePanelButtonWidget *wgt, String const &path)
@@ -179,6 +153,9 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
     bool isItemAccepted(ChildWidgetOrganizer const &,
                         ui::Data const &data, ui::Data::Pos pos) const
     {
+        // User-created profiles currently have no saves associated with them.
+        if(gameProfile.isUserCreated()) return false;
+
         // Only saved sessions for this game are to be included.
         auto const &item = data.at(pos).as<SavedSessionListData::SaveItem>();
         return item.gameId() == game.id();
@@ -202,15 +179,17 @@ void GamePanelButtonWidget::setSelected(bool selected)
     if(!selected)
     {
         unselectSave();
-        updateContent();
     }
+
+    updateContent();
 }
 
 void GamePanelButtonWidget::updateContent()
 {
     enable(d->game.isPlayable());
 
-    String meta = String::number(d->game.releaseDate().year());
+    String meta = !d->gameProfile.isUserCreated()? String::number(d->game.releaseDate().year())
+                                                 : d->game.title();
 
     if(isSelected())
     {
@@ -231,8 +210,10 @@ void GamePanelButtonWidget::updateContent()
     }
 
     label().setText(String(_E(b) "%1\n" _E(l) "%2")
-                    .arg(d->game.title())
+                    .arg(d->gameProfile.name())
                     .arg(meta));
+
+    d->packagesButton->setPackages(d->gameProfile.packages());
 }
 
 void GamePanelButtonWidget::unselectSave()

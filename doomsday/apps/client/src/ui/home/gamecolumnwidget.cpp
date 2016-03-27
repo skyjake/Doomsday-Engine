@@ -20,6 +20,7 @@
 #include "ui/home/headerwidget.h"
 #include "ui/home/gamepanelbuttonwidget.h"
 #include "ui/widgets/homemenuwidget.h"
+#include "ui/dialogs/createprofiledialog.h"
 
 #include <doomsday/DoomsdayApp>
 #include <doomsday/Games>
@@ -28,6 +29,9 @@
 #include <de/ChildWidgetOrganizer>
 #include <de/MenuWidget>
 #include <de/PersistentState>
+#include <de/CallbackAction>
+#include <de/StyleProceduralImage>
+#include <de/PopupMenuWidget>
 #include <de/Loop>
 #include <de/App>
 
@@ -37,17 +41,20 @@ DENG_GUI_PIMPL(GameColumnWidget)
 , DENG2_OBSERVES(Games, Readiness)
 , DENG2_OBSERVES(Profiles, Addition)
 , DENG2_OBSERVES(Variable, Change)
+, DENG2_OBSERVES(ButtonWidget, StateChange)
 , public ChildWidgetOrganizer::IWidgetFactory
 {
-    // Item for a particular loadable game.
-    struct MenuItem
+    /**
+     * Menu item for a game profile.
+     */
+    struct ProfileItem
             : public ui::Item
-            , DENG2_OBSERVES(Deletable, Deletion)
+            , DENG2_OBSERVES(Deletable, Deletion) // profile deletion
     {
         GameColumnWidget::Instance *d;
         GameProfile *profile;
 
-        MenuItem(GameColumnWidget::Instance *d, GameProfile &gameProfile)
+        ProfileItem(GameColumnWidget::Instance *d, GameProfile &gameProfile)
             : d(d)
             , profile(&gameProfile)
         {
@@ -55,7 +62,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
             profile->audienceForDeletion += this;
         }
 
-        ~MenuItem()
+        ~ProfileItem()
         {
             if(profile) profile->audienceForDeletion -= this;
         }
@@ -87,6 +94,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
     String gameFamily;
     SavedSessionListData const &savedItems;
     HomeMenuWidget *menu;
+    ButtonWidget *newProfileButton;
     int restoredSelected = -1;
 
     Instance(Public *i,
@@ -100,11 +108,40 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
         area.add(menu = new HomeMenuWidget);
         menu->organizer().setWidgetFactory(*this);
-
         menu->rule()
                 .setInput(Rule::Width, area.contentRule().width())
                 .setInput(Rule::Left,  area.contentRule().left())
                 .setInput(Rule::Top,   self.header().rule().bottom());
+        menu->margins().setBottom("");
+
+        area.add(newProfileButton = new ButtonWidget);
+        newProfileButton->audienceForStateChange() += this;
+        newProfileButton->setText(tr("New Profile..."));
+        newProfileButton->setImage(new StyleProceduralImage("create", *newProfileButton));
+        newProfileButton->setOverrideImageSize(style().fonts().font("default").height().value() * 1.5f);
+        newProfileButton->set(Background());
+        newProfileButton->setSizePolicy(ui::Filled, ui::Expand);
+        newProfileButton->setTextAlignment(ui::AlignRight);
+        newProfileButton->setOpacity(actionOpacity());
+        newProfileButton->setActionFn([this] ()
+        {
+            auto *dlg = new CreateProfileDialog(this->gameFamily);
+            dlg->setDeleteAfterDismissed(true);
+            dlg->setAnchorAndOpeningDirection(newProfileButton->rule(), ui::Up);
+            if(dlg->exec(root()))
+            {
+                // Adding the profile has the side effect that a widget is
+                // created for it.
+                DoomsdayApp::gameProfiles().add(dlg->makeProfile());
+
+                sortItems();
+                //menu->setSelectedIndex(menu->childCount() - 1); // depends on "New Profile" being at the end
+            }
+        });
+        newProfileButton->rule()
+                .setInput(Rule::Left,  area.contentRule().left())
+                .setInput(Rule::Width, area.contentRule().width())
+                .setInput(Rule::Top,   menu->rule().bottom());
 
         DoomsdayApp::games().audienceForReadiness() += this;
         DoomsdayApp::gameProfiles().audienceForAddition() += this;
@@ -138,7 +175,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
         {
             if(games[profile.game()].family() == gameFamily)
             {
-                menu->items() << new MenuItem(this, profile);
+                menu->items() << new ProfileItem(this, profile);
             }
         }
     }
@@ -171,9 +208,27 @@ DENG_GUI_PIMPL(GameColumnWidget)
     {
         menu->items().sort([] (ui::Item const &a, ui::Item const &b)
         {
-            // Sorting by game release date.
-            return a.as<MenuItem>().game().releaseDate().year() <
-                   b.as<MenuItem>().game().releaseDate().year();
+            GameProfile const &prof1 = *a.as<ProfileItem>().profile;
+            GameProfile const &prof2 = *b.as<ProfileItem>().profile;
+
+            // User-created profiles in the end.
+            if(prof1.isUserCreated() && !prof2.isUserCreated())
+            {
+                return false;
+            }
+            if(!prof1.isUserCreated() && prof2.isUserCreated())
+            {
+                return true;
+            }
+            if(prof1.isUserCreated() && prof2.isUserCreated())
+            {
+                // Sorted alphabetically.
+                return prof1.name().compareWithoutCase(prof2.name()) < 0;
+            }
+
+            // Sort games by release date.
+            return a.as<ProfileItem>().game().releaseDate().year() <
+                   b.as<ProfileItem>().game().releaseDate().year();
         });
     }
 
@@ -181,7 +236,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
     {
         menu->items().forAll([] (ui::Item const &item)
         {
-            item.as<MenuItem>().update();
+            item.as<ProfileItem>().update();
             return LoopContinue;
         });
         menu->updateLayout();
@@ -189,7 +244,6 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
     void gameReadinessUpdated()
     {
-        //updateItems();
         populateItems();
 
         // Restore earlier selection?
@@ -209,7 +263,58 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
     GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *)
     {
-        auto *button = new GamePanelButtonWidget(*item.as<MenuItem>().profile, savedItems);
+        auto const *profileItem = &item.as<ProfileItem>();
+        auto *button = new GamePanelButtonWidget(*profileItem->profile, savedItems);
+
+        // Right-clicking on game items shows additional functions.
+        QObject::connect(button, &HomeItemWidget::openContextMenu, [this, button, profileItem] ()
+        {
+            auto *popup = new PopupMenuWidget;
+            button->add(popup);
+            popup->setDeleteAfterDismissed(true);
+            popup->setAnchorAndOpeningDirection(button->rule(), ui::Down);
+
+            // Items suitable for all types of profiles.
+            popup->items()
+                << new ui::ActionItem(tr("Clear Packages"), new CallbackAction([this, profileItem] ()
+                {
+                    profileItem->profile->setPackages(StringList());
+                    profileItem->update();
+                }));
+
+            // Items for user profiles.
+            if(profileItem->profile->isUserCreated())
+            {
+                auto *deleteSub = new ui::SubmenuItem(style().images().image("close.ring"),
+                                                      tr("Delete"), ui::Left);
+                deleteSub->items()
+                    << new ui::Item(ui::Item::Separator, tr("Are you sure?"))
+                    << new ui::ActionItem(tr("Delete Profile"),
+                                          new CallbackAction([this, profileItem, popup] ()
+                    {
+                        popup->detachAnchor();
+                        delete profileItem->profile;
+                    }))
+                    << new ui::ActionItem(tr("Cancel"), new Action);
+
+                popup->items()
+                    << new ui::Item(ui::Item::Separator)
+                    << new ui::ActionItem(tr("Edit..."), new CallbackAction([this, button, profileItem] ()
+                    {
+                        auto *dlg = CreateProfileDialog::editProfile(gameFamily, *profileItem->profile);
+                        dlg->setAnchorAndOpeningDirection(button->rule(), ui::Up);
+                        dlg->setDeleteAfterDismissed(true);
+                        if(dlg->exec(root()))
+                        {
+                            dlg->applyTo(*profileItem->profile);
+                            profileItem->update();
+                        }
+                    }))
+                    << deleteSub;
+            }
+            popup->open();
+        });
+
         return button;
     }
 
@@ -220,12 +325,43 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
         if(!App::config().getb("home.showUnplayableGames"))
         {
-            drawer.show(item.as<MenuItem>().game().isPlayable());
+            drawer.show(item.as<ProfileItem>().game().isPlayable());
         }
         else
         {
             drawer.show();
         }
+    }
+
+//- Actions -----------------------------------------------------------------------------
+
+    float actionOpacity() const
+    {
+        return self.isHighlighted()? .4f : 0.f;
+    }
+
+    void buttonStateChanged(ButtonWidget &button, ButtonWidget::State state)
+    {
+        TimeDelta const SPAN = 0.25;
+        switch(state)
+        {
+        case ButtonWidget::Up:
+            button.setOpacity(actionOpacity(), SPAN);
+            break;
+
+        case ButtonWidget::Hover:
+            button.setOpacity(.8f, SPAN);
+            break;
+
+        case ButtonWidget::Down:
+            button.setOpacity(1);
+            break;
+        }
+    }
+
+    void showActions(bool show)
+    {
+        newProfileButton->setOpacity(show? actionOpacity() : 0, 0.6);
     }
 };
 
@@ -238,7 +374,8 @@ GameColumnWidget::GameColumnWidget(String const &gameFamily,
     scrollArea().setContentSize(maximumContentWidth(),
                                 header().rule().height() +
                                 rule("gap") +
-                                d->menu->rule().height());
+                                d->menu->rule().height() +
+                                d->newProfileButton->rule().height());
 
     header().title().setText(String(_E(s) "%1\n" _E(.)_E(w) "%2")
                              .arg( gameFamily == "DOOM"? "id Software" :
@@ -316,6 +453,7 @@ void GameColumnWidget::setHighlighted(bool highlighted)
     {
         d->menu->unselectAll();
     }
+    d->showActions(highlighted);
 }
 
 void GameColumnWidget::operator >> (PersistentState &toState) const

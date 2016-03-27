@@ -1,4 +1,4 @@
-/** @file homeitemwidget.h  Label with action buttons and an icon.
+/** @file packagesbuttonwidget.h
  *
  * @authors Copyright (c) 2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,42 +16,32 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_UI_HOME_HOMEITEMWIDGET_H
-#define DENG_CLIENT_UI_HOME_HOMEITEMWIDGET_H
+#ifndef DENG_CLIENT_UI_PACKAGESBUTTONWIDGET_H
+#define DENG_CLIENT_UI_PACKAGESBUTTONWIDGET_H
 
 #include <de/ButtonWidget>
+#include <QStringList>
 
 /**
- * Label with action buttons and an icon. The item can be in either selected
- * or non-selected state.
+ * Button for selecting packages.
  */
-class HomeItemWidget : public de::GuiWidget
+class PackagesButtonWidget : public de::ButtonWidget
 {
     Q_OBJECT
 
 public:
-    HomeItemWidget(de::String const &name = "");
+    PackagesButtonWidget();
 
-    de::LabelWidget &icon();
-    de::LabelWidget &label();
-
-    void addButton(de::ButtonWidget *button);
-
-    virtual void setSelected(bool selected);
-    bool isSelected() const;
-
-    void useNormalStyle();
-    void useInvertedStyle();
-    void useColorTheme(ColorTheme style);
-    void useColorTheme(ColorTheme unselected, ColorTheme selected);
+    void setNoneLabel(de::String const &noneLabel);
+    void setDialogTitle(de::String const &title);
+    void setPackages(de::StringList const &packageIds);
+    de::StringList packages() const;
 
 signals:
-    void mouseActivity();
-    void doubleClicked();
-    void openContextMenu();
+    void packageSelectionChanged(QStringList packageIds);
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_UI_HOME_HOMEITEMWIDGET_H
+#endif // DENG_CLIENT_UI_PACKAGESBUTTONWIDGET_H

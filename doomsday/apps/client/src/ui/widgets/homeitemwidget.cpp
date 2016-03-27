@@ -32,20 +32,48 @@ DENG_GUI_PIMPL(HomeItemWidget)
         ClickHandler(Public &owner)
             : owner(owner) {}
 
-        bool handleEvent(GuiWidget &, Event const &event)
+        void acquireFocus()
         {
+            owner.root().setFocus(owner.d->background);
+            emit owner.mouseActivity();
+        }
+
+        bool handleEvent(GuiWidget &widget, Event const &event)
+        {
+            if(widget.isDisabled()) return false;
+
             if(event.type() == Event::MouseButton)
             {
                 MouseEvent const &mouse = event.as<MouseEvent>();
                 if(owner.hitTest(event))
                 {
+                    if(mouse.button() == MouseEvent::Right)
+                    {
+                        switch(widget.handleMouseClick(event, MouseEvent::Right))
+                        {
+                        case MouseClickStarted:
+                            acquireFocus();
+                            return true;
+
+                        case MouseClickAborted:
+                            return true;
+
+                        case MouseClickFinished:
+                            emit owner.openContextMenu();
+                            return true;
+
+                        default:
+                            return false; // Ignore.
+                        }
+                    }
+
                     if(mouse.state() == MouseEvent::Pressed ||
                        mouse.state() == MouseEvent::DoubleClick)
                     {
-                        owner.root().setFocus(owner.d->background);
-                        emit owner.mouseActivity();
+                        acquireFocus();
                     }
-                    if(mouse.state() == MouseEvent::DoubleClick)
+                    if(mouse.state()  == MouseEvent::DoubleClick &&
+                       mouse.button() == MouseEvent::Left)
                     {
                         emit owner.doubleClicked();
                         return true;
