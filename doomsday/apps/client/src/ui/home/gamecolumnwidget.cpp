@@ -364,6 +364,25 @@ DENG_GUI_PIMPL(GameColumnWidget)
             popup->setDeleteAfterDismissed(true);
             popup->setAnchorAndOpeningDirection(button->label().rule(), ui::Down);
 
+            bool const isUserProfile = profileItem->profile->isUserCreated();
+
+            if(isUserProfile)
+            {
+                popup->items()
+                    << new ui::ActionItem(tr("Edit..."), new CallbackAction([this, button, profileItem] ()
+                    {
+                        auto *dlg = CreateProfileDialog::editProfile(gameFamily, *profileItem->profile);
+                        dlg->setAnchorAndOpeningDirection(button->label().rule(), ui::Up);
+                        dlg->setAnchorX(button->rule().midX()); // keep centered in column
+                        dlg->setDeleteAfterDismissed(true);
+                        if(dlg->exec(root()))
+                        {
+                            dlg->applyTo(*profileItem->profile);
+                            profileItem->update();
+                        }
+                    }));
+            }
+
             // Items suitable for all types of profiles.
             popup->items()
                 << new ui::ActionItem(tr("Clear Packages"), new CallbackAction([this, profileItem] ()
@@ -371,13 +390,27 @@ DENG_GUI_PIMPL(GameColumnWidget)
                     profileItem->profile->setPackages(StringList());
                     profileItem->update();
                 }))
-                << new ui::ActionItem(tr("Duplicate"), new CallbackAction([this] ()
+                << new ui::ActionItem(tr("Duplicate"), new CallbackAction([this, profileItem] ()
                 {
+                    GameProfile *dup = new GameProfile(*profileItem->profile);
+                    dup->setUserCreated(true);
 
+                    // Generate a unique name.
+                    for(int attempt = 1; ; ++attempt)
+                    {
+                        String newName;
+                        if(attempt > 1) newName = String("%1 (Copy %2)").arg(dup->name()).arg(attempt);
+                                   else newName = String("%1 (Copy)").arg(dup->name());
+                        if(!DoomsdayApp::gameProfiles().tryFind(newName))
+                        {
+                            dup->setName(newName);
+                            DoomsdayApp::gameProfiles().add(dup);
+                            break;
+                        }
+                    }
                 }));
 
-            // Items for user profiles.
-            if(profileItem->profile->isUserCreated())
+            if(isUserProfile)
             {
                 auto *deleteSub = new ui::SubmenuItem(style().images().image("close.ring"),
                                                       tr("Delete"), ui::Left);
@@ -398,18 +431,6 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
                 popup->items()
                     << new ui::Item(ui::Item::Separator)
-                    << new ui::ActionItem(tr("Edit..."), new CallbackAction([this, button, profileItem] ()
-                    {
-                        auto *dlg = CreateProfileDialog::editProfile(gameFamily, *profileItem->profile);
-                        dlg->setAnchorAndOpeningDirection(button->label().rule(), ui::Up);
-                        dlg->setAnchorX(button->rule().midX()); // keep centered in column
-                        dlg->setDeleteAfterDismissed(true);
-                        if(dlg->exec(root()))
-                        {
-                            dlg->applyTo(*profileItem->profile);
-                            profileItem->update();
-                        }
-                    }))
                     << deleteSub;
             }
             popup->open();
