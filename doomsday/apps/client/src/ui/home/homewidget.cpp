@@ -25,16 +25,17 @@
 #include "ui/savedsessionlistdata.h"
 #include "ui/clientwindow.h"
 
-#include <doomsday/doomsdayapp.h>
-#include <doomsday/games.h>
+#include <doomsday/DoomsdayApp>
+#include <doomsday/Games>
 
-#include <de/LabelWidget>
-#include <de/SequentialLayout>
-#include <de/TabWidget>
-#include <de/PopupMenuWidget>
-#include <de/PersistentState>
-#include <de/FadeToBlackWidget>
 #include <de/App>
+#include <de/FadeToBlackWidget>
+#include <de/LabelWidget>
+#include <de/PersistentState>
+#include <de/PopupMenuWidget>
+#include <de/SequentialLayout>
+#include <de/StyleProceduralImage>
+#include <de/TabWidget>
 
 using namespace de;
 
@@ -45,6 +46,7 @@ DENG_GUI_PIMPL(HomeWidget)
 , DENG2_OBSERVES(DoomsdayApp, GameUnload)
 , DENG2_OBSERVES(DoomsdayApp, GameChange)
 , DENG2_OBSERVES(Variable, Change)
+, DENG2_OBSERVES(ButtonWidget, StateChange)
 {
     struct Column {
         ColumnWidget *widget;
@@ -63,6 +65,8 @@ DENG_GUI_PIMPL(HomeWidget)
     SafeWidgetPtr<FadeToBlackWidget> blanker;
     int currentOffsetTab = 0;
     ScalarRule *scrollOffset;
+    ButtonWidget *moveLeft;
+    ButtonWidget *moveRight;
 
     int restoredOffsetTab = -1;
     int restoredActiveTab = -1;
@@ -81,6 +85,17 @@ DENG_GUI_PIMPL(HomeWidget)
 
         tabsBackground = new LabelWidget;
         tabsBackground->set(Background(Vector4f(1, 1, 1, 1), Background::Blurred));
+
+        // Create the column navigation buttons.
+        moveLeft  = new ButtonWidget;
+        moveRight = new ButtonWidget;
+        updateNavigationButtonStyle(*moveLeft);
+        updateNavigationButtonStyle(*moveRight);
+        moveLeft ->setImage(new StyleProceduralImage("fold", *moveLeft, 90));
+        moveRight->setImage(new StyleProceduralImage("fold", *moveLeft, -90));
+
+        moveLeft ->setActionFn([this] () { tabs->setCurrent(visibleTabRange().start - 1); });
+        moveRight->setActionFn([this] () { tabs->setCurrent(visibleTabRange().end); });
     }
 
     ~Instance()
@@ -99,6 +114,35 @@ DENG_GUI_PIMPL(HomeWidget)
 
         releaseRef(columnWidth);
         releaseRef(scrollOffset);
+    }
+
+    void updateNavigationButtonStyle(ButtonWidget &button)
+    {
+        button.set(Background(style().colors().colorf("text")));
+        button.setImageColor(style().colors().colorf("inverted.text"));
+        button.setOverrideImageSize(style().fonts().font("default").height().value() * 2);
+        button.setOpacity(0);
+        button.setBehavior(Widget::Focusable, UnsetFlags); // only for the mouse
+        button.setAttribute(EatAllMouseEvents, SetFlags);
+        button.audienceForStateChange() += this;
+
+        button.rule()
+                .setInput(Rule::Width,  style().fonts().font("default").height() * 2)
+                .setInput(Rule::Bottom, self.rule().bottom())
+                .setInput(Rule::Top,    tabs->rule().bottom());
+    }
+
+    void buttonStateChanged(ButtonWidget &button, ButtonWidget::State state)
+    {
+        // Hide navigation buttons when they are not being used.
+        if(state == ButtonWidget::Down)
+        {
+            button.setOpacity(.4f);
+        }
+        else
+        {
+            button.setOpacity(state == ButtonWidget::Up? 0 : .2f, 0.25);
+        }
     }
 
     void updateVisibleColumnsAndTabs()
@@ -245,6 +289,11 @@ DENG_GUI_PIMPL(HomeWidget)
         }
     }
 
+    /**
+     * Scrolls the view so that column @a pos is visible.
+     * @param pos   Column/tab index.
+     * @param span  Animation duration.
+     */
     void scrollToTab(int pos, TimeDelta const &span)
     {
         pos = de::clamp(0, pos, columns.size() - 1);
@@ -325,6 +374,12 @@ HomeWidget::HomeWidget()
     // Tabs on top.
     add(d->tabsBackground);
     add(d->tabs);
+
+    // Hidden navigation buttons.
+    add(d->moveLeft);
+    add(d->moveRight);
+    d->moveLeft->rule().setInput(Rule::Left, rule().left());
+    d->moveRight->rule().setInput(Rule::Right, rule().right());
 
     // Hide content until first update.
     d->blanker.reset(new FadeToBlackWidget);
