@@ -77,7 +77,6 @@ if (MSVC)
                 ${WINDOWS_KIT_REDIST_DLL_DIR}/${DENG_ARCH}/*.dll
             )
             set (VC_REDIST_LIBS ${VC_REDIST_LIBS} CACHE STRING "Visual C++/UCRT redistributable libraries")
-            message (STATUS ${VC_REDIST_LIBS})
         endif ()
         if (NOT VC_REDIST_LIBS_DEBUG)
             file (GLOB VC_REDIST_LIBS_DEBUG 
