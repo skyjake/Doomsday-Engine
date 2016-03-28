@@ -53,11 +53,6 @@ DENG2_PIMPL(MenuWidget)
             , _dir(ui::Right)
         {}
 
-        ~SubAction()
-        {
-            delete _widget.get();
-        }
-
         void setWidget(PopupWidget *w, ui::Direction openingDirection)
         {
             _widget.reset(w);
