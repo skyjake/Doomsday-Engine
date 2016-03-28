@@ -420,12 +420,17 @@ DENG_GUI_PIMPL(GameColumnWidget)
                                           new CallbackAction([this, button, profileItem, popup] ()
                     {
                         popup->detachAnchor();
+#ifdef DENG2_QT_5_4_OR_NEWER
                         // Animate the widget to fade it away.
                         TimeDelta const SPAN = 0.2;
                         button->setOpacity(0, SPAN);
                         QTimer::singleShot(SPAN.asMilliSeconds(), [profileItem] () {
                             delete profileItem->profile;
                         });
+#else
+                        // Oh well.
+                        delete profileItem->profile;
+#endif
                     }))
                     << new ui::ActionItem(tr("Cancel"), new Action);
 
