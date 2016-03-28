@@ -74,8 +74,10 @@ if (MSVC)
             file (GLOB VC_REDIST_LIBS 
                 ${VC_REDIST_DIR}/${DENG_ARCH}/Microsoft.VC140.CRT/msvc*dll
                 ${VC_REDIST_DIR}/${DENG_ARCH}/Microsoft.VC140.CRT/vcruntime*dll
+                ${WINDOWS_KIT_REDIST_DLL_DIR}/${DENG_ARCH}/*.dll
             )
-            set (VC_REDIST_LIBS ${VC_REDIST_LIBS} CACHE STRING "Visual C++ redistributable libraries")
+            set (VC_REDIST_LIBS ${VC_REDIST_LIBS} CACHE STRING "Visual C++/UCRT redistributable libraries")
+            message (STATUS ${VC_REDIST_LIBS})
         endif ()
         if (NOT VC_REDIST_LIBS_DEBUG)
             file (GLOB VC_REDIST_LIBS_DEBUG 
