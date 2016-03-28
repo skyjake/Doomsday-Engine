@@ -202,6 +202,12 @@ public:
          */
         FocusHidden = 0x20,
 
+        /**
+         * All received mouse events are eaten. Derived classes may handle the
+         * events beforehand, though.
+         */
+        EatAllMouseEvents = 0x40,
+
         DefaultAttributes = RetainStatePersistently | AnimateOpacityWhenEnabledOrDisabled
     };
     Q_DECLARE_FLAGS(Attributes, Attribute)

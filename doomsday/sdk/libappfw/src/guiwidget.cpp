@@ -731,7 +731,22 @@ bool GuiWidget::handleEvent(Event const &event)
             return true;
         }
     }
-    return Widget::handleEvent(event);
+
+    if(Widget::handleEvent(event))
+    {
+        return true;
+    }
+
+    if(d->attribs.testFlag(EatAllMouseEvents))
+    {
+        if((event.type() == Event::MouseButton ||
+            event.type() == Event::MousePosition ||
+            event.type() == Event::MouseWheel) && hitTest(event))
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool GuiWidget::hitTest(Vector2i const &pos) const
