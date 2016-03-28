@@ -24,6 +24,7 @@
 #include "ui/home/packagescolumnwidget.h"
 #include "ui/savedsessionlistdata.h"
 #include "ui/clientwindow.h"
+#include "ui/widgets/taskbarwidget.h"
 
 #include <doomsday/DoomsdayApp>
 #include <doomsday/Games>
@@ -31,6 +32,7 @@
 #include <de/App>
 #include <de/FadeToBlackWidget>
 #include <de/LabelWidget>
+#include <de/Loop>
 #include <de/PersistentState>
 #include <de/PopupMenuWidget>
 #include <de/SequentialLayout>
@@ -54,6 +56,8 @@ DENG_GUI_PIMPL(HomeWidget)
         Column(ColumnWidget *w, Variable *var) : widget(w), configVar(var) {}
     };
 
+    LoopCallback mainCall;
+
     SavedSessionListData savedItems; ///< All the available save games as items.
 
     dsize visibleColumnCount = 2;
@@ -67,6 +71,7 @@ DENG_GUI_PIMPL(HomeWidget)
     ScalarRule *scrollOffset;
     ButtonWidget *moveLeft;
     ButtonWidget *moveRight;
+    ButtonWidget *taskBarHintButton;
 
     int restoredOffsetTab = -1;
     int restoredActiveTab = -1;
@@ -95,6 +100,36 @@ DENG_GUI_PIMPL(HomeWidget)
         moveRight->setActionFn([this] () { tabs->setCurrent(visibleTabRange().end); });
         configureEdgeNavigationButton(*moveLeft);
         configureEdgeNavigationButton(*moveRight);
+
+        // Hint/shortcut button for opening the task bar.
+        taskBarHintButton = new ButtonWidget;
+        taskBarHintButton->setSizePolicy(ui::Expand, ui::Expand);
+        taskBarHintButton->margins().set("dialog.gap");
+        taskBarHintButton->setText(_E(b) "ESC" _E(.) + tr(" Task Bar"));
+        taskBarHintButton->setTextColor("altaccent");
+        taskBarHintButton->setFont("small");
+        taskBarHintButton->setOpacity(.66f);
+        taskBarHintButton->rule()
+                .setInput(Rule::Right,  self.rule().right()  - rule("dialog.gap"))
+                .setInput(Rule::Bottom, self.rule().bottom() - rule("dialog.gap"));
+        taskBarHintButton->setActionFn([this] () {
+            ClientWindow::main().taskBar().open();
+        });
+
+        // The task bar is created later, so defer the signal connects.
+        mainCall.enqueue([this] ()
+        {
+            QObject::connect(&ClientWindow::main().taskBar(), &TaskBarWidget::opened, [this] ()
+            {
+                taskBarHintButton->disable();
+                taskBarHintButton->setOpacity(0, 0.25);
+            });
+            QObject::connect(&ClientWindow::main().taskBar(), &TaskBarWidget::closed, [this] ()
+            {
+                taskBarHintButton->enable();
+                taskBarHintButton->setOpacity(.66f, 0.5);
+            });
+        });
     }
 
     ~Instance()
@@ -153,10 +188,13 @@ DENG_GUI_PIMPL(HomeWidget)
 
         // Show columns depending on whether there are playable games.
         allColumns.at(0).widget->show(!gotGames);
-        for(int i = 1; i < 6; ++i)
+        for(int i = 1; i < allColumns.size(); ++i)
         {
             Column const &col = allColumns.at(i);
-            col.widget->show(gotGames && col.configVar->value().isTrue());
+            if(col.configVar)
+            {
+                col.widget->show(gotGames && col.configVar->value().isTrue());
+            }
         }
 
         // Tab headings for visible columns.
@@ -212,6 +250,7 @@ DENG_GUI_PIMPL(HomeWidget)
     void variableValueChanged(Variable &, Value const &)
     {
         updateVisibleColumnsAndTabs();
+        calculateColumnCount();
         updateLayout();
     }
 
@@ -236,15 +275,15 @@ DENG_GUI_PIMPL(HomeWidget)
 
     void calculateColumnCount()
     {
-        visibleColumnCount = de::max(1.f, self.rule().width().value() /
-                                     rule("home.column.width").value());
+        visibleColumnCount = de::min(de::max(1, self.rule().width().valuei() /
+                                             rule("home.column.width").valuei()),
+                                     int(tabs->items().size()));
     }
 
     void updateLayout()
     {
         columns.clear();
-        columnWidth->setSource(self.rule().width() / de::min(visibleColumnCount,
-                                                             tabs->items().size()));
+        columnWidth->setSource(self.rule().width() / visibleColumnCount);
 
         // Lay out the columns from left to right.
         SequentialLayout layout(self.rule().left() - *scrollOffset,
@@ -294,11 +333,17 @@ DENG_GUI_PIMPL(HomeWidget)
      * @param pos   Column/tab index.
      * @param span  Animation duration.
      */
-    void scrollToTab(int pos, TimeDelta const &span)
+    void scrollToTab(int pos, TimeDelta span)
     {
         pos = de::clamp(0, pos, columns.size() - 1);
 
-        if(visibleTabRange().contains(pos))
+        if(currentOffsetTab + int(visibleColumnCount) > columns.size())
+        {
+            // Don't let the visible range extend outside the view.
+            currentOffsetTab = columns.size() - visibleColumnCount;
+            span = 0;
+        }
+        else if(visibleTabRange().contains(pos))
         {
             // No need to scroll anywhere, the requested tab is already visible.
             return;
@@ -321,6 +366,13 @@ DENG_GUI_PIMPL(HomeWidget)
 
     void updateHighlightedTab()
     {
+        // Are we still in a valid tab?
+        if(tabs->current() >= tabs->items().size())
+        {
+            tabs->setCurrent(tabs->items().size() - 1); // calls back here via observer
+            return;
+        }
+
         for(int pos = 0; pos < columns.size(); ++pos)
         {
             columns[pos]->setHighlighted(tabs->currentItem().data().toInt() == pos);
@@ -386,6 +438,8 @@ HomeWidget::HomeWidget()
     d->blanker->rule().setRect(rule());
     d->blanker->initFadeFromBlack(0);
     add(d->blanker);
+
+    add(d->taskBarHintButton);
 
     // Define widget layout.
     Rule const &gap = rule("gap");
