@@ -89,13 +89,12 @@ DENG_GUI_PIMPL(HomeWidget)
         // Create the column navigation buttons.
         moveLeft  = new ButtonWidget;
         moveRight = new ButtonWidget;
-        updateNavigationButtonStyle(*moveLeft);
-        updateNavigationButtonStyle(*moveRight);
         moveLeft ->setImage(new StyleProceduralImage("fold", *moveLeft, 90));
         moveRight->setImage(new StyleProceduralImage("fold", *moveLeft, -90));
-
         moveLeft ->setActionFn([this] () { tabs->setCurrent(visibleTabRange().start - 1); });
         moveRight->setActionFn([this] () { tabs->setCurrent(visibleTabRange().end); });
+        configureEdgeNavigationButton(*moveLeft);
+        configureEdgeNavigationButton(*moveRight);
     }
 
     ~Instance()
@@ -116,8 +115,9 @@ DENG_GUI_PIMPL(HomeWidget)
         releaseRef(scrollOffset);
     }
 
-    void updateNavigationButtonStyle(ButtonWidget &button)
+    void configureEdgeNavigationButton(ButtonWidget &button)
     {
+        // Edge navigation buttons are only visible when hoving on them.
         button.set(Background(style().colors().colorf("text")));
         button.setImageColor(style().colors().colorf("inverted.text"));
         button.setOverrideImageSize(style().fonts().font("default").height().value() * 2);
