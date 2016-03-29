@@ -24,9 +24,9 @@
 #include "color.h"
 #include "render/r_main.h"
 #include "resource/resourcesystem.h"
-#include "resource/colorpalette.h"
 #include "gl/sys_opengl.h"
 
+#include <doomsday/resource/colorpalette.h>
 #include <de/memory.h>
 #include <de/memoryzone.h>
 #include <de/vector1.h>
@@ -755,7 +755,7 @@ void GL_DownMipmap8(uint8_t* in, uint8_t* fadedOut, int width, int height, float
     }
 }
 
-dd_bool GL_PalettizeImage(uint8_t *out, int outformat, ColorPalette const *palette,
+dd_bool GL_PalettizeImage(uint8_t *out, int outformat, res::ColorPalette const *palette,
     dd_bool applyTexGamma, uint8_t const *in, int informat, int width, int height)
 {
     DENG2_ASSERT(in && out && palette);
@@ -800,7 +800,7 @@ dd_bool GL_PalettizeImage(uint8_t *out, int outformat, ColorPalette const *palet
     return false;
 }
 
-dd_bool GL_QuantizeImageToPalette(uint8_t *out, int outformat, ColorPalette const *palette,
+dd_bool GL_QuantizeImageToPalette(uint8_t *out, int outformat, res::ColorPalette const *palette,
     uint8_t const *in, int informat, int width, int height)
 {
     DENG2_ASSERT(out != 0 && in != 0 && palette != 0);
@@ -830,7 +830,7 @@ dd_bool GL_QuantizeImageToPalette(uint8_t *out, int outformat, ColorPalette cons
     return false;
 }
 
-void GL_DeSaturatePalettedImage(uint8_t *pixels, ColorPalette const &palette,
+void GL_DeSaturatePalettedImage(uint8_t *pixels, res::ColorPalette const &palette,
     int width, int height)
 {
     DENG2_ASSERT(pixels != 0);
@@ -874,7 +874,7 @@ void GL_DeSaturatePalettedImage(uint8_t *pixels, ColorPalette const &palette,
 }
 
 void FindAverageLineColorIdx(uint8_t const *data, int w, int h, int line,
-    ColorPalette const &palette, dd_bool hasAlpha, ColorRawf *color)
+    res::ColorPalette const &palette, dd_bool hasAlpha, ColorRawf *color)
 {
     DENG2_ASSERT(data != 0 && color != 0);
 
@@ -992,7 +992,7 @@ void FindAverageColor(const uint8_t* pixels, int width, int height,
                         avg[2] / numpels * reciprocal255);
 }
 
-void FindAverageColorIdx(uint8_t const *data, int w, int h, ColorPalette const &palette,
+void FindAverageColorIdx(uint8_t const *data, int w, int h, res::ColorPalette const &palette,
     dd_bool hasAlpha, ColorRawf *color)
 {
     DENG2_ASSERT(data != 0 && color != 0);

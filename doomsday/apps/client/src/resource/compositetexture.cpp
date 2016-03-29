@@ -28,7 +28,7 @@
 #include <de/Reader>
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/filesys/lumpindex.h>
-#include "resource/patch.h"
+#include <doomsday/resource/patch.h>
 #include "resource/patchname.h"
 
 namespace de {
@@ -231,11 +231,11 @@ CompositeTexture *CompositeTexture::constructFrom(de::Reader &reader,
 
                 // If this is a Patch - unite the geometry of the component.
                 ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
-                if(Patch::recognize(fileData))
+                if(res::Patch::recognize(fileData))
                 {
                     try
                     {
-                        Patch::Metadata info = Patch::loadMetadata(fileData);
+                        auto info = res::Patch::loadMetadata(fileData);
                         geom |= QRect(QPoint(comp.origin().x, comp.origin().y),
                                       QSize(info.dimensions.x, info.dimensions.y));
                     }

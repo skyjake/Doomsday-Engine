@@ -37,18 +37,6 @@ extern "C" {
 struct aaboxd_s;
 
 /**
- * Reads x bits from the source stream and writes them to out.
- *
- * \warning Output buffer must be large enough to hold at least @a numBits!
- *
- * @param numBits  Number of bits to be read.
- * @param src  Current position in the source stream.
- * @param cb  Current byte. Used for tracking the current byte being read.
- * @param out  Read bits are ouput here.
- */
-void M_ReadBits(uint numBits, const uint8_t** src, uint8_t* cb, uint8_t* out);
-
-/**
  * Check the spatial relationship between the given box and a partitioning line.
  *
  * @param box            Box being tested.

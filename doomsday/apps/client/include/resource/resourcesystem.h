@@ -33,9 +33,9 @@
 #include <doomsday/uri.h>
 #include <doomsday/resource/mapmanifest.h>
 #include <doomsday/resource/resources.h>
+#include <doomsday/resource/colorpalette.h>
 
 #include "resource/animgroup.h"
-#include "resource/colorpalette.h"
 #ifdef __CLIENT__
 #  include "AbstractFont"
 #  include "BitmapFont"
@@ -752,13 +752,13 @@ public:
     /**
      * Returns the ColorPalette associated with unique @a id.
      */
-    ColorPalette &colorPalette(colorpaletteid_t id) const;
+    res::ColorPalette &colorPalette(colorpaletteid_t id) const;
 
     /**
      * Returns the symbolic name of the specified color @a palette. A zero-length
      * string is returned if no name is associated.
      */
-    de::String colorPaletteName(ColorPalette &palette) const;
+    de::String colorPaletteName(res::ColorPalette &palette) const;
 
     /**
      * Returns @c true iff a ColorPalette with the specified @a name is present.
@@ -770,14 +770,14 @@ public:
      *
      * @see hasColorPalette()
      */
-    ColorPalette &colorPalette(de::String name) const;
+    res::ColorPalette &colorPalette(de::String name) const;
 
     /**
      * @param newPalette  Color palette to add. Ownership of the palette is given
      *                    to the resource system.
      * @param name        Symbolic name of the color palette.
      */
-    void addColorPalette(ColorPalette &newPalette, de::String const &name = de::String());
+    void addColorPalette(res::ColorPalette &newPalette, de::String const &name = de::String());
 
     /**
      * Returns the unique identifier of the current default color palette.
@@ -789,7 +789,7 @@ public:
      *
      * @param newDefaultPalette  The color palette to make default.
      */
-    void setDefaultColorPalette(ColorPalette *newDefaultPalette);
+    void setDefaultColorPalette(res::ColorPalette *newDefaultPalette);
 
 #ifdef __CLIENT__
 

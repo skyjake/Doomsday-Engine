@@ -18,18 +18,20 @@
  * 02110-1301 USA</small>
  */
 
-#include "resource/colorpalette.h"
+#include "doomsday/resource/colorpalette.h"
 
-#include "dd_share.h" // reciprocal255
-#include "m_misc.h" // M_ReadBits
 #include <de/Log>
 #include <de/Range>
+#include <de/reader.h>
+#include <de/mathutil.h>
 
 using namespace de;
 
-namespace internal {
+#define RGB18(r, g, b)      ((r)+((g)<<6)+((b)<<12))
 
-/**
+namespace res {
+
+/*
  * Example: "R8G8B8"
  */
 static void parseColorFormat(QString const &fmt, Vector3ui &compOrder, Vector3ui &compBits)
@@ -84,10 +86,6 @@ static void parseColorFormat(QString const &fmt, Vector3ui &compOrder, Vector3ui
         throw ColorTableReader::FormatError("parseColorFormat", "Incomplete format specification");
     }
 }
-
-} // namespace internal
-
-using namespace ::internal;
 
 typedef QVector<de::Vector3ub> ColorTable;
 
@@ -159,8 +157,6 @@ ColorTable ColorTableReader::read(String format, int colorCount,
     return colors;
 }
 
-#define RGB18(r, g, b)      ((r)+((g)<<6)+((b)<<12))
-
 DENG2_PIMPL(ColorPalette)
 {
     typedef Vector3ub Color;
@@ -173,13 +169,11 @@ DENG2_PIMPL(ColorPalette)
     /// 18-bit to 8-bit, nearest color translation table.
     typedef QVector<int> XLat18To8;
     QScopedPointer<XLat18To8> xlat18To8;
-    bool need18To8Update;
+    bool need18To8Update = false;  // Table built only when needed.
 
     Id id;
 
-    Instance(Public *i)
-        : Base(i)
-        , need18To8Update(false) // No color table yet.
+    Instance(Public *i) : Base(i)
     {
         LOG_RES_VERBOSE("New color palette %s") << id;
     }
@@ -373,3 +367,5 @@ void ColorPalette::newTranslation(String id, Translation const &mappings)
     /// @throw InvalidTranslationIdError .
     throw InvalidTranslationIdError("ColorPalette::newTranslation", "A zero-length id was specified");
 }
+
+} // namespace res

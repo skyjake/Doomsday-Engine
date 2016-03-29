@@ -108,23 +108,23 @@ DENG_EXTERN_C colorpaletteid_t R_CreateColorPalette(char const *colorFormatDescr
     try
     {
         QVector<Vector3ub> colors =
-            ColorTableReader::read(colorFormatDescriptor, colorCount, colorData);
+            res::ColorTableReader::read(colorFormatDescriptor, colorCount, colorData);
 
         // Replacing an existing palette?
         if(App_ResourceSystem().hasColorPalette(name))
         {
-            ColorPalette &palette = App_ResourceSystem().colorPalette(name);
+            res::ColorPalette &palette = App_ResourceSystem().colorPalette(name);
             palette.replaceColorTable(colors);
             return palette.id();
         }
 
         // A new palette.
-        ColorPalette *palette = new ColorPalette(colors);
+        res::ColorPalette *palette = new res::ColorPalette(colors);
         App_ResourceSystem().addColorPalette(*palette, name);
 
         return palette->id();
     }
-    catch(ColorTableReader::FormatError const &er)
+    catch(res::ColorTableReader::FormatError const &er)
     {
         LOG_RES_WARNING("Error creating/replacing color palette '%s':\n")
             << name << er.asText();
@@ -142,11 +142,11 @@ DENG_EXTERN_C void R_CreateColorPaletteTranslation(colorpaletteid_t paletteId,
 
     try
     {
-        ColorPalette &palette = App_ResourceSystem().colorPalette(paletteId);
+        res::ColorPalette &palette = App_ResourceSystem().colorPalette(paletteId);
 
         // Convert the mapping table.
         int const colorCount  = palette.colorCount();
-        ColorPaletteTranslation mappings(colorCount);
+        res::ColorPaletteTranslation mappings(colorCount);
         for(int i = 0; i < colorCount; ++i)
         {
             int const palIdx = mappings_[i];
@@ -163,7 +163,7 @@ DENG_EXTERN_C void R_CreateColorPaletteTranslation(colorpaletteid_t paletteId,
         LOG_RES_WARNING("Error creating/replacing color palette '%u' translation '%s':\n")
             << paletteId << Str_Text(translationId) << er.asText();
     }
-    catch(ColorPalette::InvalidTranslationIdError const &er)
+    catch(res::ColorPalette::InvalidTranslationIdError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_RES_WARNING("Error creating/replacing color palette '%u' translation '%s':\n")
@@ -193,7 +193,7 @@ DENG_EXTERN_C char const *R_GetColorPaletteNameForNum(colorpaletteid_t id)
     LOG_AS("R_GetColorPaletteNameForNum");
     try
     {
-        ColorPalette &palette = App_ResourceSystem().colorPalette(id);
+        res::ColorPalette &palette = App_ResourceSystem().colorPalette(id);
         return App_ResourceSystem().colorPaletteName(palette).toUtf8().constData();
     }
     catch(ResourceSystem::MissingResourceError const &er)
@@ -256,7 +256,7 @@ DENG_EXTERN_C void R_GetColorPaletteRGBf(colorpaletteid_t paletteId, int colorId
 
     try
     {
-        ColorPalette &palette = App_ResourceSystem().colorPalette(paletteId);
+        res::ColorPalette &palette = App_ResourceSystem().colorPalette(paletteId);
         if(applyTexGamma)
         {
             Vector3ub palColor = palette[colorIdx];

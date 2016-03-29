@@ -485,43 +485,6 @@ DENG_EXTERN_C int M_ScreenShot(char const *name, int bits)
 #endif
 }
 
-void M_ReadBits(uint numBits, const uint8_t** src, uint8_t* cb, uint8_t* out)
-{
-    assert(src && cb && out);
-    {
-    int offset = 0, unread = numBits;
-
-    // Read full bytes.
-    if(unread >= 8)
-    {
-        do
-        {
-            out[offset++] = **src, (*src)++;
-        } while((unread -= 8) >= 8);
-    }
-
-    if(unread != 0)
-    {   // Read remaining bits.
-        uint8_t fb = 8 - unread;
-
-        if((*cb) == 0)
-            (*cb) = 8;
-
-        do
-        {
-            (*cb)--;
-            out[offset] <<= 1;
-            out[offset] |= ((**src >> (*cb)) & 0x01);
-        } while(--unread > 0);
-
-        out[offset] <<= fb;
-
-        if((*cb) == 0)
-            (*src)++;
-    }
-    }
-}
-
 dd_bool M_RunTrigger(trigger_t *trigger, timespan_t advanceTime)
 {
     // Either use the trigger's duration, or fall back to the default.

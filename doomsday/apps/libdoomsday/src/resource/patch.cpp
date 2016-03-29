@@ -1,6 +1,6 @@
 /** @file patch.cpp Patch Image Format.
  *
- * @authors Copyright &copy; 1999-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 1999-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -18,18 +18,17 @@
  * 02110-1301 USA</small>
  */
 
+#include "doomsday/resource/patch.h"
+
 #include <QList>
 #include <QRect>
 #include <de/libcore.h>
 #include <de/Log>
-
-#include "resource/patch.h"
-
 #include <de/math.h>
 
-namespace de {
+using namespace de;
 
-namespace internal {
+namespace res {
 
 /**
  * Serialized format header.
@@ -186,7 +185,8 @@ static int calcRealHeight(Columns const &columns)
 }
 
 static Block compositeImage(Reader &reader, ColorPaletteTranslation const *xlatTable,
-    Columns const &columns, Patch::Metadata const &meta, Patch::Flags flags)
+                            Columns const &columns, Patch::Metadata const &meta,
+                            Patch::Flags flags)
 {
     bool const maskZero                = flags.testFlag(Patch::MaskZero);
     bool const clipToLogicalDimensions = flags.testFlag(Patch::ClipToLogicalDimensions);
@@ -215,7 +215,7 @@ static Block compositeImage(Reader &reader, ColorPaletteTranslation const *xlatT
     size_t const pels = w * h;
 
     // Create the output buffer and fill with default color (black) and alpha (transparent).
-    Block output    = QByteArray(2 * pels, 0);
+    Block output = QByteArray(2 * pels, 0);
 
     // Map the pixel color channels in the output buffer.
     dbyte *top      = output.data();
@@ -302,9 +302,7 @@ static Block compositeImage(Reader &reader, ColorPaletteTranslation const *xlatT
     return output;
 }
 
-} // internal
-
-static Patch::Metadata prepareMetadata(internal::Header const &hdr, int realHeight)
+static Patch::Metadata prepareMetadata(Header const &hdr, int realHeight)
 {
     Patch::Metadata meta;
     meta.dimensions         = Vector2i(hdr.dimensions[0], realHeight);
@@ -318,10 +316,10 @@ Patch::Metadata Patch::loadMetadata(IByteArray const &data)
     LOG_AS("Patch::loadMetadata");
     Reader reader = Reader(data);
 
-    internal::Header hdr; reader >> hdr;
-    internal::Columns columns = internal::readColumns(hdr.dimensions[0], reader);
+    Header hdr; reader >> hdr;
+    Columns columns = readColumns(hdr.dimensions[0], reader);
 
-    return prepareMetadata(hdr, internal::calcRealHeight(columns));
+    return prepareMetadata(hdr, calcRealHeight(columns));
 }
 
 Block Patch::load(IByteArray const &data, ColorPaletteTranslation const &xlatTable, Patch::Flags flags)
@@ -329,11 +327,11 @@ Block Patch::load(IByteArray const &data, ColorPaletteTranslation const &xlatTab
     LOG_AS("Patch::load");
     Reader reader = Reader(data);
 
-    internal::Header hdr; reader >> hdr;
-    internal::Columns columns = internal::readColumns(hdr.dimensions[0], reader);
+    Header hdr; reader >> hdr;
+    Columns columns = readColumns(hdr.dimensions[0], reader);
 
-    Metadata meta = prepareMetadata(hdr, internal::calcRealHeight(columns));
-    return internal::compositeImage(reader, &xlatTable, columns, meta, flags);
+    Metadata meta = prepareMetadata(hdr, calcRealHeight(columns));
+    return compositeImage(reader, &xlatTable, columns, meta, flags);
 }
 
 Block Patch::load(IByteArray const &data, Patch::Flags flags)
@@ -341,11 +339,11 @@ Block Patch::load(IByteArray const &data, Patch::Flags flags)
     LOG_AS("Patch::load");
     Reader reader = Reader(data);
 
-    internal::Header hdr; reader >> hdr;
-    internal::Columns columns = internal::readColumns(hdr.dimensions[0], reader);
+    Header hdr; reader >> hdr;
+    Columns columns = readColumns(hdr.dimensions[0], reader);
 
-    Metadata meta = prepareMetadata(hdr, internal::calcRealHeight(columns));
-    return internal::compositeImage(reader, 0/* no translation */, columns, meta, flags);
+    Metadata meta = prepareMetadata(hdr, calcRealHeight(columns));
+    return compositeImage(reader, 0/* no translation */, columns, meta, flags);
 }
 
 bool Patch::recognize(IByteArray const &data)
@@ -355,7 +353,7 @@ bool Patch::recognize(IByteArray const &data)
         // The format has no identification markings.
         // Instead we must rely on heuristic analyses of the column => post map.
         Reader from = Reader(data);
-        internal::Header hdr; from >> hdr;
+        Header hdr; from >> hdr;
 
         if(!hdr.dimensions[0] || !hdr.dimensions[1]) return false;
 
@@ -370,8 +368,10 @@ bool Patch::recognize(IByteArray const &data)
         return true;
     }
     catch(IByteArray::OffsetError const &)
-    {} // Ignore this error.
-    return false;
+    {
+        // Invalid!
+        return false;
+    }
 }
 
-} // namespace de
+} // namespace res

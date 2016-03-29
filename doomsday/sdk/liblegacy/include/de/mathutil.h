@@ -22,6 +22,13 @@
 
 #include "liblegacy.h"
 
+/**
+ * Used to replace /255 as *reciprocal255 is less expensive with CPU cycles.
+ * Note that this should err on the side of being < 1/255 to prevent result
+ * exceeding 255 (e.g. 255 * reciprocal255).
+ */
+#define reciprocal255   0.003921568627f
+
 #ifdef __cplusplus
 extern "C" {
 #endif
