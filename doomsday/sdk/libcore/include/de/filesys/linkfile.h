@@ -59,10 +59,10 @@ public:
      *
      * @see LinkFile
      */
-    File const &target() const;
+    File const &target() const override;
 
     /// @copydoc target() const
-    File &target();
+    File &target() override;
 
     Folder const *targetFolder() const;
 
