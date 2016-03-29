@@ -113,10 +113,7 @@ public:
      */
     virtual Pos findData(QVariant const &data) const = 0;
 
-    enum SortMethod {
-        Ascending,
-        Descending
-    };
+    enum SortMethod { Ascending, Descending };
 
     virtual void sort(SortMethod method = Ascending);
 

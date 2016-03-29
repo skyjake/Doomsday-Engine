@@ -65,7 +65,7 @@ public:
     de::File const &sourceFile() const;
 
     /**
-     * Generates appropriate packages accoding to the contents of the data bundle.
+     * Generates appropriate packages according to the contents of the data bundle.
      */
     void identifyPackages() const;
 
