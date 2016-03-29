@@ -26,12 +26,14 @@ using namespace de;
 
 namespace res {
 
+dsize const LumpDirectory::InvalidPos = dsize(-1);
+
 DENG2_PIMPL_NOREF(LumpDirectory)
 {
     Type type = Invalid;
     duint32 crc = 0;
     QList<Entry> entries;
-    QHash<QByteArray, Entry *> index; // points to entries
+    QHash<QByteArray, int> index; // points to entries
 
     void read(IByteArray const &source)
     {
@@ -67,9 +69,9 @@ DENG2_PIMPL_NOREF(LumpDirectory)
 
         // Make an index of all the lumps.
         index.clear();
-        for(Entry &entry : entries)
+        for(int i = 0; i < entries.size(); ++i)
         {
-            index.insert(entry.name, &entry);
+            index.insert(entries.at(i).name, i);
         }
     }
 };
@@ -116,7 +118,7 @@ duint32 LumpDirectory::lumpSize(Block const &lumpName) const
     auto found = d->index.constFind(lumpName);
     if(found != d->index.constEnd())
     {
-        return found.value()->size;
+        return d->entries.at(found.value()).size;
     }
     return 0;
 }
@@ -124,6 +126,16 @@ duint32 LumpDirectory::lumpSize(Block const &lumpName) const
 bool LumpDirectory::has(Block const &lumpName) const
 {
     return d->index.contains(lumpName);
+}
+
+LumpDirectory::Pos LumpDirectory::find(Block const &lumpName) const
+{
+    auto found = d->index.constFind(lumpName);
+    if(found != d->index.constEnd())
+    {
+        return found.value();
+    }
+    return InvalidPos;
 }
 
 } // namespace res

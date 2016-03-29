@@ -43,6 +43,7 @@ public:
     };
 
     typedef de::dsize Pos;
+    static de::dsize const InvalidPos;
 
     DENG2_ERROR(OffsetError);
 
@@ -72,7 +73,25 @@ public:
      */
     de::duint32 crc32() const;
 
+    /**
+     * Checks if the lump directory has a specific lump. Performance is O(1) (hashed).
+     *
+     * @param lumpName  Name of a lump.
+     *
+     * @return @c true, if the lump is in the directory.
+     */
     bool has(de::Block const &lumpName) const;
+
+    /**
+     * Finds the entry of a lump in the directory. If there are multiple lumps with
+     * the same name, this returns the last one in the directory. Performance is O(1)
+     * (hashed).
+     *
+     * @param lumpName  Name of a lump.
+     *
+     * @return Lump entry information.
+     */
+    LumpDirectory::Pos find(de::Block const &lumpName) const;
 
     de::duint32 lumpSize(de::Block const &lumpName) const;
 
