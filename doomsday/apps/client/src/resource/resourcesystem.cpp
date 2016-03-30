@@ -1353,7 +1353,7 @@ DENG2_PIMPL(ResourceSystem)
                  *
                  * @todo Always determine size from the lowres original.
                  */
-                Vector2i dimensions(64, 64);
+                Vector2ui dimensions(64, 64);
                 Vector2i origin(0, 0);
                 int const uniqueId  = lumpNum - (firstFlatMarkerLumpNum + 1);
                 de::Uri resourceUri = composeLumpIndexResourceUrn(lumpNum);
@@ -1421,7 +1421,7 @@ DENG2_PIMPL(ResourceSystem)
                 flags |= Texture::Custom;
             }
 
-            Vector2i dimensions;
+            Vector2ui dimensions;
             Vector2i origin;
 
             if(file.size())
@@ -1700,7 +1700,7 @@ DENG2_PIMPL(ResourceSystem)
         matAnimator.prepare();  // Ensure we have up-to-date info.
 
         Texture const &texture = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture->base();
-        dint off = de::max(0, -texture.origin().y - matAnimator.dimensions().y);
+        dint off = de::max(0, -texture.origin().y - int(matAnimator.dimensions().y));
 
         scaleModel(mf, matAnimator.dimensions().y, off);
     }
@@ -2348,7 +2348,7 @@ void ResourceSystem::initSystemTextures()
         de::Uri resourceUri("Graphics", Path(def.graphicName));
 
         declareTexture(de::Uri("System", Path(def.path)), Texture::Custom,
-                       Vector2i(), Vector2i(), uniqueId, &resourceUri);
+                       Vector2ui(), Vector2i(), uniqueId, &resourceUri);
     }
 
     // Define any as yet undefined system textures.
@@ -2378,7 +2378,7 @@ Texture *ResourceSystem::texture(String schemeName, de::Uri const &resourceUri)
 }
 
 Texture *ResourceSystem::defineTexture(String schemeName, de::Uri const &resourceUri,
-    Vector2i const &dimensions)
+                                       Vector2ui const &dimensions)
 {
     LOG_AS("ResourceSystem::defineTexture");
 
@@ -2451,7 +2451,7 @@ patchid_t ResourceSystem::declarePatch(String encodedName)
     Texture::Flags flags;
     if(file.container().hasCustom()) flags |= Texture::Custom;
 
-    Vector2i dimensions;
+    Vector2ui dimensions;
     Vector2i origin;
 
     // If this is a Patch (the format) read the world dimension and origin offset values.

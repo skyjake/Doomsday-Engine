@@ -261,9 +261,9 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
                 // Ensure we've up to date info about the material.
                 matAnimator.prepare();
 
-                Vector2i const &matDimensions = matAnimator.dimensions();
-                TextureVariant *tex           = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
-                int const texBorder           = tex->spec().variant.border;
+                Vector2ui const &matDimensions = matAnimator.dimensions();
+                TextureVariant *tex            = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
+                int const texBorder            = tex->spec().variant.border;
 
                 GL_BindTexture(tex);
                 glEnable(GL_TEXTURE_2D);

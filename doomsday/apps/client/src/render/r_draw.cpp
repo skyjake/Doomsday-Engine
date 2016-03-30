@@ -256,7 +256,7 @@ void R_DrawViewBorder()
         matAnimator.prepare();
 
         GL_BindTexture(matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture);
-        Vector2i const &matDimensions = matAnimator.dimensions();
+        Vector2ui const &matDimensions = matAnimator.dimensions();
         GL_DrawCutRectf2Tiled(0, 0, port->geometry.width(), port->geometry.height(),
                               matDimensions.x, matDimensions.y, 0, 0,
                               vd->window.topLeft.x - border, vd->window.topLeft.y - border,

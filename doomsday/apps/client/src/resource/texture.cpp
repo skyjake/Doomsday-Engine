@@ -50,7 +50,7 @@ DENG2_PIMPL(Texture)
     void *userData;
 
     /// World dimensions in map coordinate space units.
-    Vector2i dimensions;
+    Vector2ui dimensions;
 
     /// World origin offset in map coordinate space units.
     Vector2i origin;
@@ -120,14 +120,13 @@ void *Texture::userDataPointer() const
     return d->userData;
 }
 
-Vector2i const &Texture::dimensions() const
+Vector2ui const &Texture::dimensions() const
 {
     return d->dimensions;
 }
 
-void Texture::setDimensions(Vector2i const &_newDimensions)
+void Texture::setDimensions(Vector2ui const &newDimensions)
 {
-    Vector2i newDimensions = _newDimensions.max(Vector2i(0, 0));
     if(d->dimensions != newDimensions)
     {
         d->dimensions = newDimensions;
@@ -135,7 +134,7 @@ void Texture::setDimensions(Vector2i const &_newDimensions)
     }
 }
 
-void Texture::setWidth(int newWidth)
+void Texture::setWidth(duint newWidth)
 {
     if(d->dimensions.x != newWidth)
     {
@@ -144,7 +143,7 @@ void Texture::setWidth(int newWidth)
     }
 }
 
-void Texture::setHeight(int newHeight)
+void Texture::setHeight(duint newHeight)
 {
     if(d->dimensions.y != newHeight)
     {

@@ -438,7 +438,7 @@ public:
      * @return  Manifest for this URI.
      */
     inline de::TextureManifest &declareTexture(de::Uri const &uri,
-        de::Texture::Flags flags, de::Vector2i const &dimensions,
+        de::Texture::Flags flags, de::Vector2ui const &dimensions,
         de::Vector2i const &origin, de::dint uniqueId, de::Uri const *resourceUri = nullptr)
     {
         return textureScheme(uri.scheme())
@@ -447,7 +447,7 @@ public:
     }
 
     de::Texture *defineTexture(de::String schemeName, de::Uri const &resourceUri,
-                               de::Vector2i const &dimensions = de::Vector2i());
+                               de::Vector2ui const &dimensions = de::Vector2ui());
 
     patchid_t declarePatch(de::String encodedName);
 

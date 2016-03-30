@@ -179,7 +179,7 @@ DENG2_PIMPL(Material)
 , DENG2_OBSERVES(Texture, DimensionsChange)
 {
     MaterialManifest *manifest = nullptr;  ///< Source manifest (always valid, not owned).
-    Vector2i dimensions;                   ///< World dimensions in map coordinate space units.
+    Vector2ui dimensions;                  ///< World dimensions in map coordinate space units.
     MaterialFlags flags = DefaultFlags;
     AudioEnvironmentId audioEnvironment { AE_NONE };
 
@@ -333,17 +333,16 @@ MaterialManifest &Material::manifest() const
     return *d->manifest;
 }
 
-Vector2i const &Material::dimensions() const
+Vector2ui const &Material::dimensions() const
 {
     return d->dimensions;
 }
 
-void Material::setDimensions(Vector2i const &newDimensions)
+void Material::setDimensions(Vector2ui const &newDimensions)
 {
-    Vector2i const newDimensionsClamped = newDimensions.max(Vector2i(0, 0));
-    if(d->dimensions != newDimensionsClamped)
+    if(d->dimensions != newDimensions)
     {
-        d->dimensions = newDimensionsClamped;
+        d->dimensions = newDimensions;
         d->maybeCancelTextureDimensionsChangeNotification();
 
         // Notify interested parties.
@@ -353,12 +352,12 @@ void Material::setDimensions(Vector2i const &newDimensions)
 
 void Material::setHeight(int newHeight)
 {
-    setDimensions(Vector2i(width(), newHeight));
+    setDimensions(Vector2ui(width(), newHeight));
 }
 
 void Material::setWidth(int newWidth)
 {
-    setDimensions(Vector2i(newWidth, height()));
+    setDimensions(Vector2ui(newWidth, height()));
 }
 
 bool Material::isDrawable() const

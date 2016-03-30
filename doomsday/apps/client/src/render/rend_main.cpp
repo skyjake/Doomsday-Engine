@@ -696,7 +696,7 @@ void Rend_AddMaskedPoly(Vector3f const *rvertices, Vector4f const *rcolors,
         // Ensure we've up to date info about the material.
         matAnimator->prepare();
 
-        Vector2i const &matDimensions = matAnimator->dimensions();
+        Vector2ui const &matDimensions = matAnimator->dimensions();
 
         VS_WALL(vis)->texCoord[0][0] = VS_WALL(vis)->texOffset[0] / matDimensions.x;
         VS_WALL(vis)->texCoord[1][0] = VS_WALL(vis)->texCoord[0][0] + wallLength / matDimensions.x;

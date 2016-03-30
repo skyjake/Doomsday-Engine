@@ -526,10 +526,10 @@ static Source loadExternalTexture(image_t &image, String encodedSearchPath,
  * @todo Optimize: Should be redesigned to composite whole rows -ds
  */
 static void compositePaletted(dbyte *dst, Vector2ui const &dstDimensions,
-    IByteArray const &src, Vector2i const &srcDimensions, Vector2i const &origin)
+    IByteArray const &src, Vector2ui const &srcDimensions, Vector2i const &origin)
 {
     if(dstDimensions == Vector2ui()) return;
-    if(srcDimensions <= Vector2i()) return;
+    if(srcDimensions == Vector2ui()) return;
 
     int const       srcW = srcDimensions.x;
     int const       srcH = srcDimensions.y;

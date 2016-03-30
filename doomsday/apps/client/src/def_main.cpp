@@ -914,7 +914,7 @@ static void configureMaterial(Material &mat, Record const &definition)
     de::Uri const materialUri(matDef.gets("id"), RC_NULL);
 
     // Reconfigure basic properties.
-    mat.setDimensions(Vector2i(matDef.geta("dimensions")));
+    mat.setDimensions(Vector2ui(matDef.geta("dimensions")));
     mat.markDontDraw((matDef.geti("flags") & MATF_NO_DRAW) != 0);
     mat.markSkyMasked((matDef.geti("flags") & MATF_SKYMASK) != 0);
 
@@ -1332,7 +1332,7 @@ void Def_Read()
         if(ref->stage.maskTexture)
         {
             resSys().defineTexture("Masks", *ref->stage.maskTexture,
-                            Vector2i(ref->stage.maskWidth, ref->stage.maskHeight));
+                            Vector2ui(ref->stage.maskWidth, ref->stage.maskHeight));
         }
     }
 

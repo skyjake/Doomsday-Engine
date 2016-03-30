@@ -422,7 +422,7 @@ void Rend_DrawSprite(vissprite_t const &spr)
         tex = matAnimator->texUnit(MaterialAnimator::TU_LAYER0).texture;
         dint const texBorder = tex->spec().variant.border;
 
-        size        = matAnimator->dimensions() + Vector2i(texBorder * 2, texBorder * 2);
+        size        = matAnimator->dimensions() + Vector2ui(texBorder * 2, texBorder * 2);
         viewOffsetX = -size.x / 2 + -tex->base().origin().x;
 
         tex->glCoords(&s, &t);

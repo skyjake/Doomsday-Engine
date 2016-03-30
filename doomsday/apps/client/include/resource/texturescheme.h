@@ -97,7 +97,7 @@ public:
      *
      * @return  The (possibly newly created) manifest at @a path.
      */
-    Manifest &declare(Path const &path, Texture::Flags flags, Vector2i const &dimensions,
+    Manifest &declare(Path const &path, Texture::Flags flags, Vector2ui const &dimensions,
         Vector2i const &origin, int uniqueId, de::Uri const *resourceUri);
 
     /**

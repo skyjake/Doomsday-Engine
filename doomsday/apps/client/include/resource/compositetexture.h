@@ -101,8 +101,8 @@ public:
      * Construct a default composite texture.
      */
     explicit CompositeTexture(String const &percentEncodedName = "",
-                              de::Vector2i logicalDimensions   = de::Vector2i(),
-                              Flags flags                      = 0);
+                              de::Vector2ui const &logicalDimensions = de::Vector2ui(),
+                              Flags flags = 0);
 
     /**
      * Construct a composite texture by deserializing an archived id-tech 1
@@ -137,7 +137,7 @@ public:
     String const &percentEncodedNameRef() const;
 
     /// Returns the logical dimensions of the texture (in map space units).
-    Vector2i const &logicalDimensions() const;
+    Vector2ui const &logicalDimensions() const;
 
     /// Returns the logical width of the texture (in map space units).
     inline int logicalWidth() const { return logicalDimensions().x; }
@@ -146,7 +146,7 @@ public:
     inline int logicalHeight() const { return logicalDimensions().y; }
 
     /// Returns the pixel dimensions of the texture.
-    Vector2i const &dimensions() const;
+    Vector2ui const &dimensions() const;
 
     /// Returns the pixel width of the texture.
     inline int width() const { return dimensions().x; }

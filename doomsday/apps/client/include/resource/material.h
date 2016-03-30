@@ -73,7 +73,7 @@ public:
     /**
      * Returns the dimension metrics of the material.
      */
-    de::Vector2i const &dimensions() const;
+    de::Vector2ui const &dimensions() const;
 
     inline int height() const { return dimensions().y; }
     inline int width () const { return dimensions().x; }
@@ -81,7 +81,7 @@ public:
     /**
      * Change the world dimensions of the material to @a newDimensions.
      */
-    void setDimensions(de::Vector2i const &newDimensions);
+    void setDimensions(de::Vector2ui const &newDimensions);
 
     void setHeight(int newHeight);
     void setWidth (int newWidth);

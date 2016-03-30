@@ -236,7 +236,7 @@ struct Hemisphere
                 glMatrixMode(GL_TEXTURE);
                 glPushMatrix();
                 glLoadIdentity();
-                Vector2i const &texSize = layerTex->base().dimensions();
+                Vector2ui const &texSize = layerTex->base().dimensions();
                 if(texSize.x > 0)
                 {
                     glTranslatef(ldata.offset / texSize.x, 0, 0);

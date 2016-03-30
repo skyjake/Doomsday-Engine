@@ -76,8 +76,8 @@ DENG2_PIMPL_NOREF(CompositeTexture)
 {
     String name;                 ///< Symbolic, percent encoded.
     Flags flags;                 ///< Usage traits.
-    Vector2i logicalDimensions;  ///< In map space units.
-    Vector2i dimensions;         ///< In pixels.
+    Vector2ui logicalDimensions; ///< In map space units.
+    Vector2ui dimensions;        ///< In pixels.
     int origIndex;               ///< Determined by the original game logic.
     Components components;       ///< Images to be composited.
 
@@ -85,7 +85,7 @@ DENG2_PIMPL_NOREF(CompositeTexture)
 };
 
 CompositeTexture::CompositeTexture(String const &percentEncodedName,
-    Vector2i logicalDimensions, Flags flags)
+    Vector2ui const &logicalDimensions, Flags flags)
     : d(new Instance)
 {
     d->name              = percentEncodedName;
@@ -118,12 +118,12 @@ String const &CompositeTexture::percentEncodedNameRef() const
     return d->name;
 }
 
-Vector2i const &CompositeTexture::logicalDimensions() const
+Vector2ui const &CompositeTexture::logicalDimensions() const
 {
     return d->logicalDimensions;
 }
 
-Vector2i const &CompositeTexture::dimensions() const
+Vector2ui const &CompositeTexture::dimensions() const
 {
     return d->dimensions;
 }
@@ -175,7 +175,7 @@ CompositeTexture *CompositeTexture::constructFrom(de::Reader &reader,
     // We'll initially accept these values as logical dimensions. However
     // we may need to adjust once we've checked the patch dimensions.
     pctex->d->logicalDimensions =
-        pctex->d->dimensions = Vector2i(dimensions[0], dimensions[1]);
+        pctex->d->dimensions = Vector2ui(dimensions[0], dimensions[1]);
 
     if(format == DoomFormat)
     {
@@ -266,7 +266,7 @@ CompositeTexture *CompositeTexture::constructFrom(de::Reader &reader,
 
     // Clip and apply the final height.
     if(geom.top()  < 0) geom.setTop(0);
-    if(geom.height() > pctex->d->logicalDimensions.y)
+    if(geom.height() > int(pctex->d->logicalDimensions.y))
     {
         pctex->d->dimensions.y = geom.height();
     }
