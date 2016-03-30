@@ -6,7 +6,7 @@ extern          "C" {
 #endif
 
 #ifdef WIN32
-#	define LZSSEXPORT __stdcall
+#	define LZSSEXPORT /*__stdcall*/
 typedef short   int16_t;
 typedef int     int32_t;
 #elif defined(UNIX)

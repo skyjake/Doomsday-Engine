@@ -169,6 +169,7 @@ DENG2_PIMPL(App)
 
     void initFileSystem(bool allowPlugins)
     {
+        // Executables.
         Folder &binFolder = fs.makeFolder("/bin");
 
         // Initialize the built-in folders. This hooks up the default native

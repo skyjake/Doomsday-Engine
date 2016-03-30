@@ -36,6 +36,11 @@
 #include <de/memoryzone.h>
 #include <cstring> // memcpy
 
+#ifdef MSVC
+#  undef min
+#  undef max
+#endif
+
 namespace de {
 namespace internal {
 

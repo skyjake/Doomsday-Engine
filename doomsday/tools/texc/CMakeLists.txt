@@ -11,3 +11,9 @@ set (DOC_DIR ${DENG_INSTALL_DOC_DIR}/texc)
 deng_install_tool (texc)
 install (FILES doc/texc.txt DESTINATION ${DOC_DIR})
 install (DIRECTORY examples DESTINATION ${DOC_DIR})
+
+if (APPLE AND TARGET client)
+    # Installed to app bundle, so must be re-signed.
+    # TODO: Build this before client, so it can be bundled cleanly.
+    deng_codesign (client)
+endif ()

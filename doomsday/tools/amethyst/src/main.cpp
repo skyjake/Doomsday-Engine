@@ -58,7 +58,7 @@ void printBanner(void)
 #else
     fwprintf(stderr, L"%ls\n", L"### Amethyst (c) 2002-2011 Jaakko Keränen <jaakko.keranen@iki.fi>");
 #endif
-    qDebug() << "### "BUILD_STR;
+    qDebug() << "### " BUILD_STR;
 }
 
 void printUsage(void)

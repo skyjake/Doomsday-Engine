@@ -131,7 +131,7 @@ public:
     // Convenient lookup method for when only the size property is needed from info().
     /// @return  Size of the uncompressed resource.
     inline uint size() const {
-        return info().size;
+        return uint(info().size);
     }
 
     // Convenient lookup method for when only the is-compressed property is needed from info().

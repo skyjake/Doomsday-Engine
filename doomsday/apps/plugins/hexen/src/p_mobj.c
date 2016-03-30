@@ -952,7 +952,7 @@ void P_MobjThinker(void *thinkerPtr)
                         }
 
                         P_SpawnMobjXYZ(MT_MWANDSMOKE, mobj->origin[VX],
-                                                      mobj->origin[VY], z, P_Random() << 24, 0);
+                                                      mobj->origin[VY], z, mobj->angle, 0);
                     }
                     else if(!--mobj->special1)
                     {
@@ -1715,7 +1715,7 @@ mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest)
 
     // Destination is required for the missile; if missing, can't spawn.
     if(!dest) return NULL;
-    
+
     switch(type)
     {
     case MT_MNTRFX1: // Minotaur swing attack missile

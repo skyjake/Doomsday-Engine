@@ -96,19 +96,30 @@ static dd_bool maximizedViewWindow(int player)
               !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))); // $democam: can be set on every game tic.
 }
 
-static void calcStatusBarSize(Size2Raw* size, Size2Rawf* viewScale, int maxWidth)
+static void calcStatusBarSize(Size2Raw *size, Size2Rawf const *viewScale, int maxWidth)
 {
+    /**
+     * @todo Refactor: This information should be queried from the status bar widget. -jk
+     */
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-    float aspectScale = cfg.common.statusbarScale;
+    float factor = 1;
 
-    size->width = ST_WIDTH * viewScale->height;
-    if(size->width > maxWidth)
-        aspectScale *= (float)maxWidth/size->width;
+    float const VGA_ASPECT  = 1.f/1.2f;
+    float const aspectRatio = viewScale->width / viewScale->height;
 
-    size->width *= cfg.common.statusbarScale;
-    size->height = floor(ST_HEIGHT * 1.2f/*aspect correct*/ * aspectScale);
+    if(aspectRatio < VGA_ASPECT)
+    {
+        // We're below the VGA aspect, which means the status bar will be
+        // scaled smaller.
+        factor *= aspectRatio / VGA_ASPECT;
+    }
+
+    factor *= cfg.common.statusbarScale;
+
+    size->width  =      ST_WIDTH  * factor;
+    size->height = ceil(ST_HEIGHT * factor);
 #else
-    size->width = size->height  = 0;
+    size->width = size->height = 0;
 #endif
 }
 
@@ -120,16 +131,14 @@ void R_StatusBarSize(int player, Size2Raw *statusBarSize)
 }
 
 static void resizeViewWindow(int player, const RectRaw* newGeometry,
-    const RectRaw* oldGeometry, dd_bool interpolate)
+                             const RectRaw* oldGeometry, dd_bool interpolate)
 {
     RectRaw window;
-    assert(newGeometry);
 
-    if(player < 0 || player >= MAXPLAYERS)
-    {
-        Con_Error("resizeViewWindow: Invalid player #%i.", player);
-        exit(1); // Unreachable.
-    }
+    DENG_ASSERT(newGeometry);
+    DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
+
+    DENG_UNUSED(oldGeometry);
 
     // Calculate fixed 320x200 scale factors.
     viewScale.width  = (float)newGeometry->size.width  / SCREENWIDTH;

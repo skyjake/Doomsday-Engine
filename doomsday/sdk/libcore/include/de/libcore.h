@@ -77,7 +77,7 @@
 #  include <cstring> // memset
 #endif
 
-#if defined(__x86_64__) || defined(__x86_64) || defined(_LP64)
+#if defined(__x86_64__) || defined(__x86_64) || defined(_LP64) || defined(DENG_64BIT_HOST)
 #  define DENG2_64BIT
 #endif
 
@@ -608,7 +608,7 @@ typedef duint32 dintptr;
 /*
  * Data types for C APIs.
  */
-#ifdef _MSC_VER
+#if _MSC_VER < 1900
 typedef short           dint16;
 typedef unsigned short  duint16;
 typedef int             dint32;
@@ -616,7 +616,7 @@ typedef unsigned int    duint32;
 typedef long long       dint64;
 typedef unsigned long long duint64;
 #else
-#  include <stdint.h>
+#include <stdint.h>
 typedef int16_t         dint16;
 typedef uint16_t        duint16;
 typedef int32_t         dint32;

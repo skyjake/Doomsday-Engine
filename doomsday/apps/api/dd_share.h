@@ -561,7 +561,7 @@ typedef enum {
 /// Can the value be interpreted as a valid scale mode identifier?
 #define VALID_SCALEMODE(val)    ((val) >= SCALEMODE_FIRST && (val) <= SCALEMODE_LAST)
 
-#define DEFAULT_SCALEMODE_STRETCH_EPSILON   (.38f)
+#define DEFAULT_SCALEMODE_STRETCH_EPSILON   (.1f)
 
 //------------------------------------------------------------------------
 //
