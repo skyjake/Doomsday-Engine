@@ -150,6 +150,12 @@ bool GameProfiles::Profile::isUserCreated() const
     return d->userCreated;
 }
 
+StringList GameProfiles::Profile::allRequiredPackages() const
+{
+    return DoomsdayApp::games()[d->gameId].requiredPackages() +
+           d->packages;
+}
+
 bool GameProfiles::Profile::resetToDefaults()
 {
     if(isReadOnly()) return false;

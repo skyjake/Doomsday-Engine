@@ -48,6 +48,12 @@ public:
         de::StringList packages() const;
         bool isUserCreated() const;
 
+        /**
+         * Returns a list of the game's packages in addition to the profile's
+         * configured packages.
+         */
+        de::StringList allRequiredPackages() const;
+
         virtual bool resetToDefaults();
         virtual de::String toInfoSource() const;
 
