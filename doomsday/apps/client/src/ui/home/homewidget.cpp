@@ -154,7 +154,7 @@ DENG_GUI_PIMPL(HomeWidget)
     {
         // Edge navigation buttons are only visible when hoving on them.
         button.set(Background(style().colors().colorf("text")));
-        button.setImageColor(style().colors().colorf("inverted.text"));
+        button.setImageColor(style().colors().colorf("inverted.text") + Vector4f(0, 0, 0, 2));
         button.setOverrideImageSize(style().fonts().font("default").height().value() * 2);
         button.setOpacity(0);
         button.setBehavior(Widget::Focusable, UnsetFlags); // only for the mouse
@@ -162,7 +162,7 @@ DENG_GUI_PIMPL(HomeWidget)
         button.audienceForStateChange() += this;
 
         button.rule()
-                .setInput(Rule::Width,  style().fonts().font("default").height() * 2)
+                .setInput(Rule::Width,  style().fonts().font("default").height() * 1.5f)
                 .setInput(Rule::Bottom, self.rule().bottom())
                 .setInput(Rule::Top,    tabs->rule().bottom());
     }
@@ -172,11 +172,11 @@ DENG_GUI_PIMPL(HomeWidget)
         // Hide navigation buttons when they are not being used.
         if(state == ButtonWidget::Down)
         {
-            button.setOpacity(.4f);
+            button.setOpacity(.3f);
         }
         else
         {
-            button.setOpacity(state == ButtonWidget::Up? 0 : .2f, 0.25);
+            button.setOpacity(state == ButtonWidget::Up? 0 : .1f, 0.25);
         }
     }
 

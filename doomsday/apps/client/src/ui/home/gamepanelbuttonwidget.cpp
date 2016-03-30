@@ -21,11 +21,15 @@
 #include "ui/savedsessionlistdata.h"
 #include "ui/dialogs/packagesdialog.h"
 #include "ui/widgets/packagesbuttonwidget.h"
+#include "resource/idtech1image.h"
 #include "dd_main.h"
 
 #include <doomsday/console/exec.h>
-#include <doomsday/doomsdayapp.h>
-#include <doomsday/games.h>
+#include <doomsday/DoomsdayApp>
+#include <doomsday/Games>
+#include <doomsday/LumpCatalog>
+#include <doomsday/LumpDirectory>
+
 #include <de/App>
 #include <de/CallbackAction>
 #include <de/ChildWidgetOrganizer>
@@ -43,12 +47,16 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
     PackagesButtonWidget *packagesButton;
     ButtonWidget *playButton;
     ButtonWidget *deleteSaveButton;
+    res::LumpCatalog catalog;
 
     Instance(Public *i, GameProfile &profile, SavedSessionListData const &savedItems)
         : Base(i)
         , gameProfile(profile)
         , savedItems(savedItems)
     {
+        self.icon().setImageFit(ui::FitToHeight | ui::OriginalAspectRatio);
+        self.icon().setBehavior(ContentClipping);
+
         packagesButton = new PackagesButtonWidget;
         packagesButton->setDialogTitle(profile.name());
         self.addButton(packagesButton);
@@ -60,6 +68,10 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
             StringList pkgs;
             for(auto const &i : ids) pkgs << i;
             gameProfile.setPackages(pkgs);
+            if(catalog.setPackages(gameProfile.allRequiredPackages()))
+            {
+                updateGameTitleImage();
+            }
         });
 
         playButton = new ButtonWidget;
@@ -113,20 +125,6 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         }
     }
 
-    /// Action that deletes a savegame folder.
-    struct DeleteAction : public Action
-    {
-        GamePanelButtonWidget *widget;
-        String savePath;
-        DeleteAction(GamePanelButtonWidget *wgt, String const &path)
-            : widget(wgt), savePath(path) {}
-        void trigger() {
-            widget->unselectSave();
-            App::rootFolder().removeFile(savePath);
-            App::fileSystem().refresh();
-        }
-    };
-
     void deleteButtonPressed()
     {
         DENG2_ASSERT(saves->selectedPos() != ui::Data::InvalidPos);
@@ -149,6 +147,39 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
                 << new ui::ActionItem(tr("Cancel"), new Action /* nop */);
         self.add(pop);
         pop->open();
+    }
+
+    void updateGameTitleImage()
+    {
+        if(!game().isPlayable())
+        {
+            // Use a generic logo, some files are missing.
+            QImage img(64, 64, QImage::Format_ARGB32);
+            img.fill(Qt::white);
+            self.icon().setImage(img);
+            return;
+        }
+
+        try
+        {
+            Block const playPal  = catalog.read("PLAYPAL");
+            Block const title    = catalog.read("TITLE");
+            Block const titlePic = catalog.read("TITLEPIC");
+
+            IdTech1Image img(title.isEmpty()? titlePic : title, playPal);
+
+            // Apply VGA aspect correction while downscaling 50%.
+            self.icon().setImage(img.toQImage().scaled(img.width()/2,
+                                                       img.height()/2 * 1.2f,
+                                                       Qt::IgnoreAspectRatio,
+                                                       Qt::SmoothTransformation));
+        }
+        catch(Error const &er)
+        {
+            LOG_RES_WARNING("Failed to load title picture for game profile \"%s\": %s")
+                    << gameProfile.name()
+                    << er.asText();
+        }
     }
 
 //- ChildWidgetOrganizer::IFilter ---------------------------------------------
@@ -217,6 +248,10 @@ void GamePanelButtonWidget::updateContent()
                     .arg(meta));
 
     d->packagesButton->setPackages(d->gameProfile.packages());
+    if(d->catalog.setPackages(d->gameProfile.allRequiredPackages()))
+    {
+        d->updateGameTitleImage();
+    }
 }
 
 void GamePanelButtonWidget::unselectSave()

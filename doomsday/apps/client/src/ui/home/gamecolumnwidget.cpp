@@ -347,7 +347,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
             auto *heading = LabelWidget::newWithText(tr("Custom Profiles"));
             heading->setSizePolicy(ui::Filled, ui::Expand);
             heading->setFont("heading");
-            heading->setTextColor("accent");
+            //heading->setTextColor("accent");
             heading->setAlignment(ui::AlignLeft);
             heading->margins().setLeftRight("");
             return heading;
