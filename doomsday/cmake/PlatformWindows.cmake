@@ -42,36 +42,36 @@ if (MSVC)
 
     # Disable warnings about unreferenced formal parameters (C4100).
     append_unique (CMAKE_C_FLAGS   "-w14505 -wd4100 -wd4748")
-    append_unique (CMAKE_CXX_FLAGS "-w14505 -wd4100 -wd4748")
+    append_unique (CMAKE_CXX_FLAGS "-w14505 -wd4100 -wd4748 -Zm500")
 
     # Locate Visual Studio.
     if (MSVC14)
-        get_filename_component (VS_DIR 
+        get_filename_component (VS_DIR
             [HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\14.0\\Setup\\VS;ProductDir]
             REALPATH CACHE
         )
     elseif (MSVC12)
-        get_filename_component (VS_DIR 
+        get_filename_component (VS_DIR
             [HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\12.0\\Setup\\VS;ProductDir]
             REALPATH CACHE
         )
     elseif (MSVC11)
-        get_filename_component (VS_DIR 
+        get_filename_component (VS_DIR
             [HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\11.0\\Setup\\VS;ProductDir]
             REALPATH CACHE
         )
     elseif (MSVC10)
-        get_filename_component (VS_DIR 
+        get_filename_component (VS_DIR
             [HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\10.0\\Setup\\VS;ProductDir]
             REALPATH CACHE
         )
     endif ()
-    
+
     set (VC_REDIST_DIR ${VS_DIR}/vc/redist)
 
     if (MSVC14)
         if (NOT VC_REDIST_LIBS)
-            file (GLOB VC_REDIST_LIBS 
+            file (GLOB VC_REDIST_LIBS
                 ${VC_REDIST_DIR}/${DENG_ARCH}/Microsoft.VC140.CRT/msvc*dll
                 ${VC_REDIST_DIR}/${DENG_ARCH}/Microsoft.VC140.CRT/vcruntime*dll
                 ${WINDOWS_KIT_REDIST_DLL_DIR}/${DENG_ARCH}/*.dll
@@ -79,16 +79,16 @@ if (MSVC)
             set (VC_REDIST_LIBS ${VC_REDIST_LIBS} CACHE STRING "Visual C++/UCRT redistributable libraries")
         endif ()
         if (NOT VC_REDIST_LIBS_DEBUG)
-            file (GLOB VC_REDIST_LIBS_DEBUG 
+            file (GLOB VC_REDIST_LIBS_DEBUG
                 ${VC_REDIST_DIR}/Debug_NonRedist/${DENG_ARCH}/Microsoft.VC140.DebugCRT/msvc*
                 ${VC_REDIST_DIR}/Debug_NonRedist/${DENG_ARCH}/Microsoft.VC140.DebugCRT/vcruntime*
             )
-            set (VC_REDIST_LIBS_DEBUG ${VC_REDIST_LIBS_DEBUG} CACHE STRING 
+            set (VC_REDIST_LIBS_DEBUG ${VC_REDIST_LIBS_DEBUG} CACHE STRING
                 "Visual C++ redistributable libraries (debug builds)"
             )
-        endif ()        
+        endif ()
     endif ()
-    
+
     if (MSVC12)
         if (NOT DEFINED VC_REDIST_LIBS)
             file (GLOB VC_REDIST_LIBS ${VC_REDIST_DIR}/x86/Microsoft.VC120.CRT/msvc*)
@@ -96,7 +96,7 @@ if (MSVC)
         endif ()
         if (NOT DEFINED VC_REDIST_LIBS_DEBUG)
             file (GLOB VC_REDIST_LIBS_DEBUG ${VC_REDIST_DIR}/Debug_NonRedist/x86/Microsoft.VC120.DebugCRT/msvc*)
-            set (VC_REDIST_LIBS_DEBUG ${VC_REDIST_LIBS_DEBUG} CACHE STRING 
+            set (VC_REDIST_LIBS_DEBUG ${VC_REDIST_LIBS_DEBUG} CACHE STRING
                 "Visual C++ redistributable libraries (debug builds)"
             )
         endif ()
