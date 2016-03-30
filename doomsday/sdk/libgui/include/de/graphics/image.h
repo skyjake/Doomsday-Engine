@@ -173,6 +173,26 @@ public:
     /// @copydoc fromData()
     static Image fromData(Block const &data, String const &formatHint = "");
 
+    static Image fromIndexedData(Image::Size const &size, IByteArray const &image,
+                                 IByteArray const &palette);
+
+    /**
+     * Converts a color indexed 8-bit image to RGBA_8888.
+     *
+     * @param size       Dimensions of the image.
+     * @param imageAndMask  Image content. This is w*h 8-bit palette indices followed
+     *                   by w*h 8-bit alpha components, i.e., the alpha mask is
+     *                   stored as a separate layer following the indices.
+     * @param palette    RGB palette containing 8-bit color triplets. The size of the
+     *                   palette must be big enough to contain all the color indices
+     *                   used in the image data.
+     *
+     * @return Image in RGBA_8888 format.
+     */
+    static Image fromMaskedIndexedData(Image::Size const &size,
+                                       IByteArray const &imageAndMask,
+                                       IByteArray const &palette);
+
     /**
      * Attempts to recognize if a file contains a supported image content format.
      * @param file  File whose contents to recognize.

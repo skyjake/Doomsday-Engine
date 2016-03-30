@@ -803,6 +803,62 @@ Image Image::fromData(Block const &data, String const &formatHint)
     return QImage::fromData(data).convertToFormat(QImage::Format_ARGB32);
 }
 
+Image Image::fromIndexedData(Size const &size, IByteArray const &image, IByteArray const &palette)
+{
+    QImage rgba(size.x, size.y, QImage::Format_ARGB32);
+
+    // Process the source data by row.
+    Block color(size.x);
+    for(duint y = 0; y < size.y; ++y)
+    {
+        duint32 *dest = reinterpret_cast<duint32 *>(rgba.bits() + y * rgba.bytesPerLine());
+
+        image.get(size.x * y, color.data(), color.size());
+        auto const *srcColor = color.dataConst();
+
+        for(duint x = 0; x < size.x; ++x)
+        {
+            duint8 paletteColor[3];
+            palette.get(*srcColor++ * 3, paletteColor, 3);
+            *dest++ = qRgba(paletteColor[0], paletteColor[1], paletteColor[2], 255);
+        }
+    }
+
+    return rgba;
+}
+
+Image Image::fromMaskedIndexedData(Size const &size, IByteArray const &imageAndMask,
+                                   IByteArray const &palette)
+{
+    duint const layerSize = size.x * size.y;
+
+    QImage rgba(size.x, size.y, QImage::Format_ARGB32);
+
+    // Process the source data by row.
+    Block color(size.x);
+    Block alpha(size.x);
+
+    for(duint y = 0; y < size.y; ++y)
+    {
+        duint32 *dest = reinterpret_cast<duint32 *>(rgba.bits() + y * rgba.bytesPerLine());
+
+        imageAndMask.get(size.x * y,             color.data(), color.size());
+        imageAndMask.get(size.x * y + layerSize, alpha.data(), alpha.size());
+
+        auto const *srcColor = color.dataConst();
+        auto const *srcAlpha = color.dataConst();
+
+        for(duint x = 0; x < size.x; ++x)
+        {
+            duint8 paletteColor[3];
+            palette.get(*srcColor++ * 3, paletteColor, 3);
+            *dest++ = qRgba(paletteColor[0], paletteColor[1], paletteColor[2], *srcAlpha++);
+        }
+    }
+
+    return rgba;
+}
+
 bool Image::recognize(File const &file)
 {
     String const ext = file.name().fileNameExtension().toLower();
