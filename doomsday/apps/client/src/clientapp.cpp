@@ -350,7 +350,7 @@ DENG2_PIMPL(ClientApp)
             Con_SaveDefaults();
 
             R_ClearViewData();
-            R_DestroyContactLists();
+            world::R_DestroyContactLists();
             P_ClearPlayerImpulses();
 
             Con_Execute(CMDS_DDAY, "clearbindings", true, false);

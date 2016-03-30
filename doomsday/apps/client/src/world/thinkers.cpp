@@ -40,7 +40,9 @@
 #include <QList>
 #include <QtAlgorithms>
 
-dd_bool Thinker_IsMobjFunc(thinkfunc_t func)
+using namespace de;
+
+dd_bool Thinker_HasMobjFunc(thinkfunc_t func)
 {
     return (func && func == reinterpret_cast<thinkfunc_t>(gx.MobjThinker));
 }
@@ -51,7 +53,7 @@ world::Map &Thinker_Map(thinker_t const & /*th*/)
     return App_World().map();
 }
 
-namespace de {
+namespace world {
 
 struct ThinkerList
 {
@@ -219,7 +221,7 @@ void Thinkers::add(thinker_t &th, bool makePublic)
         throw Error("Thinkers::add", "Invalid thinker function");
 
     // Will it need an ID?
-    if(Thinker_IsMobjFunc(th.function))
+    if(Thinker_HasMobjFunc(th.function))
     {
         // It is a mobj, give it an ID (not for client mobjs, though, they
         // already have an id).
@@ -405,9 +407,8 @@ static void unlinkThinkerFromList(thinker_t *th)
     th->prev->next = th->next;
 }
 
-} // namespace de
-
-using namespace de;
+}  // namespace world
+using namespace world;
 
 void Thinker_InitPrivateData(thinker_t *th)
 {
@@ -415,7 +416,7 @@ void Thinker_InitPrivateData(thinker_t *th)
 
     /// @todo The game should be asked to create its own private data. -jk
 
-    if(Thinker_IsMobjFunc(th->function))
+    if(Thinker_HasMobjFunc(th->function))
     {
 #ifdef __CLIENT__
         th->d = new ClientMobjThinkerData;

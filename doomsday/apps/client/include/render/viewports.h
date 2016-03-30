@@ -28,9 +28,10 @@
 #include <de/Matrix>
 #include <de/rect.h>
 
-namespace world { class ConvexSubspace; }
-
+namespace world {
+class ConvexSubspace;
 struct Generator;
+}
 class Lumobj;
 
 struct viewport_t
@@ -169,14 +170,14 @@ void R_ViewerSubspaceMarkVisible(world::ConvexSubspace const &subspace, bool yes
  *
  * @see R_ViewerGeneratorMarkVisible()
  */
-bool R_ViewerGeneratorIsVisible(Generator const &generator);
+bool R_ViewerGeneratorIsVisible(world::Generator const &generator);
 
 /**
  * Mark the (particle) generator as visible for the current frame.
  *
  * @see R_ViewerGeneratorIsVisible()
  */
-void R_ViewerGeneratorMarkVisible(Generator const &generator, bool yes = true);
+void R_ViewerGeneratorMarkVisible(world::Generator const &generator, bool yes = true);
 
 /// @return  Distance in map space units between the lumobj and viewer.
 double R_ViewerLumobjDistance(int idx);

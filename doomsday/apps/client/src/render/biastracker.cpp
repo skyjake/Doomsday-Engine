@@ -27,6 +27,7 @@
 #include <array>
 
 using namespace de;
+using namespace world;
 
 namespace internal {
 
@@ -85,7 +86,7 @@ void BiasTracker::clearContributors()
     d->activeContributors.fill(0);
 }
 
-int BiasTracker::addContributor(BiasSource *source, dfloat intensity)
+dint BiasTracker::addContributor(BiasSource *source, dfloat intensity)
 {
     if(!source) return -1;
 

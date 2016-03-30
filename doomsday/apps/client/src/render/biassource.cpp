@@ -28,47 +28,34 @@
 #include "SectorCluster"
 
 using namespace de;
-using namespace world;
+
+namespace world {
 
 DENG2_PIMPL(BiasSource)
 {
-    /// Origin of the source in the map coordinate space.
-    Vector3d origin;
+    Vector3d origin;            ///< Origin of the source in the map coordinate space.
+    BspLeaf *bspLeaf;           ///< BSP leaf at the origin.
+    bool inVoid;                ///< Set to @c true if the origin is in the void.
 
-    /// BSP leaf at the origin.
-    BspLeaf *bspLeaf;
-    bool inVoid; ///< Set to @c true if the origin is in the void.
+    dfloat primaryIntensity;    ///< Intensity of the emitted light.
+    dfloat intensity;           ///< Effective intensity of the light scaled by the ambient level threshold.
+    Vector3f color;             ///< Color strength factors of the emitted light.
+    dfloat minLight, maxLight;  ///< Ambient light level threshold.
 
-    /// Intensity of the emitted light.
-    dfloat primaryIntensity;
-
-    /// Effective intensity of the light scaled by the ambient level threshold.
-    dfloat intensity;
-
-    /// Color strength factors of the emitted light.
-    Vector3f color;
-
-    /// Ambient light level threshold.
-    dfloat minLight, maxLight;
-
-    /// Time in milliseconds of the last update.
-    duint lastUpdateTime;
-
-    /// Flags:
-    bool changed;
+    duint lastUpdateTime;       ///< In milliseconds. Use @c 0 to force an update.
+    bool changed;               ///< Set to @c true to force re-evaluation.
 
     Instance(Public *i, Vector3d const &origin, dfloat intensity,
              Vector3f const &color, dfloat minLight, dfloat maxLight)
         : Base(i)
         , origin          (origin)
-        , bspLeaf         (0)
+        , bspLeaf         (nullptr)
         , inVoid          (true)
         , primaryIntensity(intensity)
         , intensity       (intensity)
         , color           (color)
         , minLight        (minLight)
         , maxLight        (maxLight)
-        , lastUpdateTime  (0) // Force an update.
         , changed         (true)
     {}
 
@@ -343,3 +330,5 @@ void BiasSource::operator << (de::Reader &from)
     dfloat minLight, maxLight; from >> minLight >> maxLight;
     setLightLevels(minLight, maxLight);
 }
+
+}  // namespace world

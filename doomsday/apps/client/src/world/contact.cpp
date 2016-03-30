@@ -28,7 +28,8 @@
 #include "ConvexSubspace"
 
 using namespace de;
-using namespace world;
+
+namespace world {
 
 ContactType Contact::type() const
 {
@@ -90,6 +91,12 @@ BspLeaf &Contact::objectBspLeafAtOrigin() const
     }
 }
 
+}  // namespace world
+
+//- ContactList -------------------------------------------------------------------------
+
+namespace world {
+
 struct ContactList::Node
 {
     Node *next;      ///< Next in the BSP leaf.
@@ -147,7 +154,7 @@ ContactList::Node *ContactList::newNode(void *object) // static
 // Separate contact lists for each BSP leaf and contact type.
 static ContactList *subspaceContactLists;
 
-ContactList &R_ContactList(ConvexSubspace &subspace, ContactType type)
+ContactList &R_ContactList(world::ConvexSubspace &subspace, ContactType type)
 {
     return subspaceContactLists[subspace.indexInMap() * ContactTypeCount + dint( type )];
 }
@@ -231,7 +238,7 @@ void R_AddContact(Lumobj &lum)
     }
 }
 
-LoopResult R_ForAllContacts(std::function<LoopResult (Contact const &)> func)
+LoopResult R_ForAllContacts(std::function<LoopResult (world::Contact const &)> func)
 {
     for(Contact *contact = contacts; contact; contact = contact->next)
     {
@@ -241,7 +248,7 @@ LoopResult R_ForAllContacts(std::function<LoopResult (Contact const &)> func)
     return LoopContinue;
 }
 
-LoopResult R_ForAllSubspaceMobContacts(ConvexSubspace &subspace, std::function<LoopResult (mobj_s &)> func)
+LoopResult R_ForAllSubspaceMobContacts(world::ConvexSubspace &subspace, std::function<LoopResult (mobj_s &)> func)
 {
     ContactList &list = R_ContactList(subspace, ContactMobj);
     for(ContactList::Node *node = list.begin(); node; node = node->next)
@@ -262,3 +269,5 @@ LoopResult R_ForAllSubspaceLumContacts(ConvexSubspace &subspace, std::function<L
     }
     return LoopContinue;
 }
+
+}  // namespace world

@@ -1468,7 +1468,7 @@ void Def_Read()
         stateinfo_t *stinfo = &::runtimeDefs.stateInfo[st];
 
         // Link the definition to the state.
-        if(pg->flags & Generator::StateChain)
+        if(pg->flags & world::Generator::StateChain)
         {
             // Add to the chain.
             pg->stateNext = stinfo->ptcGens;

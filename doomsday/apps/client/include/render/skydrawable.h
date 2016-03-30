@@ -28,8 +28,7 @@
 #include <doomsday/defs/sky.h>
 #include "MaterialVariantSpec"
 #include "ModelDef"
-
-class Sky;
+#include "world/sky.h"
 
 /**
  * Specialized drawable for Sky visualization.
@@ -55,15 +54,15 @@ public:
 
         struct LayerState
         {
-            float offset;
+            de::dfloat offset;
         };
 
         struct ModelState
         {
-            int frame;
-            int timer;
-            int maxTimer;
-            float yaw;
+            de::dint frame;
+            de::dint timer;
+            de::dint maxTimer;
+            de::dfloat yaw;
         };
 
     public:
@@ -78,31 +77,27 @@ public:
          * Determines whether the specified animation layer state @a index is valid.
          * @see layer()
          */
-        bool hasLayer(int index) const;
+        bool hasLayer(de::dint index) const;
 
         /**
          * Lookup an animation layer state by it's unique @a index.
          * @see hasLayer()
          */
-        LayerState &layer(int index);
-
-        /// @copydoc layer()
-        LayerState const &layer(int index) const;
+        LayerState       &layer(de::dint index);
+        LayerState const &layer(de::dint index) const;
 
         /**
          * Determines whether the specified animation model state @a index is valid.
          * @see model()
          */
-        bool hasModel(int index) const;
+        bool hasModel(de::dint index) const;
 
         /**
          * Lookup an animation model state by it's unique @a index.
          * @see hasModel()
          */
-        ModelState &model(int index);
-
-        /// @copydoc model()
-        ModelState const &model(int index) const;
+        ModelState       &model(de::dint index);
+        ModelState const &model(de::dint index) const;
 
         /**
          * Advances the animation state.
@@ -121,19 +116,19 @@ public:
      *
      * @param sky  Sky to visualize, if any (may be @c nullptr to configure layer).
      */
-    explicit SkyDrawable(Sky const *sky = nullptr);
+    explicit SkyDrawable(world::Sky const *sky = nullptr);
 
     /**
      * Reconfigure the drawable for visualizing the given @a sky.
      *
      * @return Reference to this drawable, for caller convenience.
      */
-    SkyDrawable &configure(Sky const *sky = nullptr);
+    SkyDrawable &configure(world::Sky const *sky = nullptr);
 
     /**
      * Returns a pointer to the configured sky, if any (may be @c nullptr).
      */
-    Sky const *sky() const;
+    world::Sky const *sky() const;
 
     /**
      * Render the sky.
@@ -150,7 +145,7 @@ public:
      *
      * @param modelIndex  Unique index of the model.
      */
-    ModelDef *modelDef(int modelIndex) const;
+    ModelDef *modelDef(de::dint modelIndex) const;
 
 public:
     static de::MaterialVariantSpec const &layerMaterialSpec(bool masked);
@@ -162,4 +157,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_RENDER_SKYDRAWABLE_H
+#endif  // DENG_CLIENT_RENDER_SKYDRAWABLE_H

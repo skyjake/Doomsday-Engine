@@ -28,11 +28,12 @@
 #include <doomsday/world/world.h>
 #include <doomsday/uri.h>
 
+namespace world {
+class Map;
 #ifdef __CLIENT__
 class Hand;
 #endif
-
-namespace world { class Map; }
+}
 
 /**
  * Ideas for improvement:
@@ -146,7 +147,7 @@ public:
      * @param distance  The current distance of the hand from the viewer will be
      *                  written here if not @c nullptr.
      */
-    Hand &hand(coord_t *distance = nullptr) const;
+    world::Hand &hand(de::ddouble *distance = nullptr) const;
 
 #endif  // __CLIENT__
 

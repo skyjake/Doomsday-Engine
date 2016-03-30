@@ -21,7 +21,9 @@
 
 using namespace de;
 
-Grabbable::Grabbable(): _grabs(0), _locked(true)
+namespace world {
+
+Grabbable::Grabbable()
 {}
 
 Grabbable::~Grabbable()
@@ -79,3 +81,5 @@ void Grabbable::setLock(bool enable)
         DENG2_FOR_AUDIENCE(LockChange, i) i->grabbableLockChanged(*this);
     }
 }
+
+}  // namespace world

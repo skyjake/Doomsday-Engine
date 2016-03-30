@@ -36,7 +36,7 @@
 class Sector;
 class Surface;
 #ifdef __CLIENT__
-struct Generator;
+namespace world { struct Generator; }
 class ClPlaneMover;
 #endif
 
@@ -218,7 +218,7 @@ public:
      *
      * @see hasGenerator()
      */
-    Generator &generator() const;
+    world::Generator &generator() const;
 
     /**
      * Creates a new flat-triggered particle generator based on the given

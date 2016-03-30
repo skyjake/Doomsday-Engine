@@ -53,16 +53,16 @@ public:
     DENG2_DEFINE_AUDIENCE2(MaterialOriginChange, void surfaceMaterialOriginChanged(Surface &surface))
 
     /// Notified whenever the normal vector changes.
-    DENG2_DEFINE_AUDIENCE2(NormalChange, void surfaceNormalChanged(Surface &surface))
+    DENG2_DEFINE_AUDIENCE2(NormalChange,         void surfaceNormalChanged(Surface &surface))
 
     /// Notified whenever the opacity changes.
-    DENG2_DEFINE_AUDIENCE2(OpacityChange, void surfaceOpacityChanged(Surface &surface))
+    DENG2_DEFINE_AUDIENCE2(OpacityChange,        void surfaceOpacityChanged(Surface &surface))
 
     /// Notified whenever the tint color changes.
-    DENG2_DEFINE_AUDIENCE2(TintColorChange, void surfaceTintColorChanged(Surface &sector))
+    DENG2_DEFINE_AUDIENCE2(TintColorChange,      void surfaceTintColorChanged(Surface &sector))
 
     /// Maximum speed for a smoothed material offset.
-    static int const MAX_SMOOTH_MATERIAL_MOVE = 8;
+    static de::dint const MAX_SMOOTH_MATERIAL_MOVE = 8;
 
 public:
     /**

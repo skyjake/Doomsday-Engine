@@ -24,6 +24,8 @@
 #include <de/Observers>
 #include <de/Vector>
 
+namespace world {
+
 /**
  * Abstract base for any class whose instances can be manipulated and/or moved
  * by proxy once "grabbed". Conceptually a grabbable is similar to a reference
@@ -55,10 +57,10 @@ public:
     DENG2_ERROR(UnlockError);
 
     /// Notified when the grabbable is about to be deleted.
-    DENG2_DEFINE_AUDIENCE(Deletion, void grabbableBeingDeleted(Grabbable &grabbable))
+    DENG2_DEFINE_AUDIENCE(Deletion,     void grabbableBeingDeleted(Grabbable &grabbable))
 
     /// Notified whenever the lock state of the grabbable changes.
-    DENG2_DEFINE_AUDIENCE(LockChange, void grabbableLockChanged(Grabbable &grabbable))
+    DENG2_DEFINE_AUDIENCE(LockChange,   void grabbableLockChanged(Grabbable &grabbable))
 
     /// Notified whenever the origin of the grabbable changes.
     DENG2_DEFINE_AUDIENCE(OriginChange, void grabbableOriginChanged(Grabbable &grabbable))
@@ -179,8 +181,10 @@ protected:
     void setLock(bool enable = true);
 
 private:
-    int _grabs;
-    bool _locked;
+    de::dint _grabs = 0;
+    bool _locked = true;
 };
+
+}  // namespace world
 
 #endif // DENG_WORLD_GRABBABLE_H

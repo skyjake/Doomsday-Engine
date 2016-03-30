@@ -81,14 +81,14 @@ public:
      * @return  Index of the contributor otherwise @c -1 (if rejected). Note
      * that this index may be subsequently reassigned (see above notes).
      */
-    de::dint addContributor(BiasSource *source, de::dfloat intensity);
+    de::dint addContributor(world::BiasSource *source, de::dfloat intensity);
 
     /**
      * Returns the source of a light contributor by @a index.
      *
      * @see addContributor()
      */
-    BiasSource &contributor(de::dint index) const;
+    world::BiasSource &contributor(de::dint index) const;
 
     /**
      * Determine the earliest time in milliseconds that an affecting source

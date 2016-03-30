@@ -27,13 +27,12 @@
 #include <de/Vector>
 #include <QList>
 
-namespace de {
+namespace world {
 namespace internal {
     template <typename Type>
     inline bool cannotCastGrabbableTo(Grabbable *gabbable) {
         return dynamic_cast<Type *>(gabbable) == NULL;
     }
-}
 }
 
 /**
@@ -53,7 +52,7 @@ class Hand : DENG2_OBSERVES(ClientServerWorld, FrameEnd)
 
 public:
     /// Notified whenever a grabbable is grabbed.
-    DENG2_DEFINE_AUDIENCE(Grabbed, void handGrabbed(Hand &hand, Grabbable &grabbable))
+    DENG2_DEFINE_AUDIENCE(Grabbed,   void handGrabbed(Hand &hand, Grabbable &grabbable))
 
     /// Notified whenever a grabbable is ungrabbed.
     DENG2_DEFINE_AUDIENCE(Ungrabbed, void handUngrabbed(Hand &hand, Grabbable &grabbable))
@@ -144,7 +143,7 @@ public:
      *
      * @see grabbed()
      */
-    inline int grabbedCount() const { return grabbed().count(); }
+    inline de::dint grabbedCount() const { return grabbed().count(); }
 
     /**
      * Provides the averaged origin coordinates (in the map coordinate space) of
@@ -155,10 +154,10 @@ public:
      */
     de::Vector3d const &grabbedOrigin() const;
 
-    float editIntensity() const;
+    de::dfloat editIntensity() const;
     de::Vector3f const &editColor() const;
 
-    void setEditIntensity(float newIntensity);
+    void setEditIntensity(de::dfloat newIntensity);
     void setEditColor(de::Vector3f const &newColor);
 
 #ifdef __CLIENT__
@@ -171,4 +170,6 @@ private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_WORLD_HAND_H
+}  // namespace world
+
+#endif  // DENG_WORLD_HAND_H

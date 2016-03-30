@@ -4859,7 +4859,7 @@ static void drawBiasEditingVisuals(Map &map)
 
     for(Grabbable *grabbable : hand.grabbed())
     {
-        if(de::internal::cannotCastGrabbableTo<BiasSource>(grabbable)) continue;
+        if(world::internal::cannotCastGrabbableTo<BiasSource>(grabbable)) continue;
         BiasSource *s = &grabbable->as<BiasSource>();
 
         if(s == nearSource)
@@ -6047,7 +6047,7 @@ static void drawThinkers(Map &map)
     map.thinkers().forAll(0x1 | 0x2, [] (thinker_t *th)
     {
         // Ignore non-mobjs.
-        if(Thinker_IsMobjFunc(th->function))
+        if(Thinker_HasMobjFunc(th->function))
         {
             Vector3d const origin   = Mobj_Center(*(mobj_t *)th);
             ddouble const distToEye = (eyeOrigin - origin).length();
@@ -6395,7 +6395,9 @@ void Rend_Register()
     SkyDrawable::consoleRegister();
     Rend_ModelRegister();
     Rend_ParticleRegister();
-    Generator::consoleRegister();
+
+    world::Generator::consoleRegister();
+
     Rend_RadioRegister();
     Rend_SpriteRegister();
     LensFx_Register();

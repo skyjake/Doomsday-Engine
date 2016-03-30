@@ -47,6 +47,7 @@
 #define MAX_MODELS  32
 
 using namespace de;
+using namespace world;
 
 namespace internal {
 
@@ -356,14 +357,14 @@ DENG2_PIMPL(SkyDrawable)
 {
     Sky const *sky = nullptr;
 
-    float height          = 1;
+    dfloat height = 1;
     bool needHeightUpdate = false;
 
-    float horizonOffset          = 0;
+    dfloat horizonOffset = 0;
     bool needHorizonOffsetUpdate = false;
 
     LayerData layers[MAX_LAYERS];
-    int firstActiveLayer = -1;  ///< @c -1= no active layers.
+    dint firstActiveLayer = -1;  ///< @c -1= no active layers.
 
     bool needBuildHemisphere = true;
 

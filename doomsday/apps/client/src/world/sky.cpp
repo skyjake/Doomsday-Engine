@@ -40,13 +40,15 @@
 
 using namespace de;
 
+namespace world {
+
 DENG2_PIMPL_NOREF(Sky::Layer)
 {
-    bool active        = false;
-    bool masked        = false;
+    bool active         = false;
+    bool masked         = false;
     Material *material = nullptr;
-    float offset       = 0;
-    float fadeOutLimit = 0;
+    dfloat offset       = 0;
+    dfloat fadeOutLimit = 0;
 
     Sky &sky;
     Instance(Sky &sky) : sky(sky) {}
@@ -112,22 +114,22 @@ void Sky::Layer::setMaterial(Material *newMaterial)
     }
 }
 
-float Sky::Layer::offset() const
+dfloat Sky::Layer::offset() const
 {
     return d->offset;
 }
 
-void Sky::Layer::setOffset(float newOffset)
+void Sky::Layer::setOffset(dfloat newOffset)
 {
     d->offset = newOffset;
 }
 
-float Sky::Layer::fadeOutLimit() const
+dfloat Sky::Layer::fadeOutLimit() const
 {
     return d->fadeOutLimit;
 }
 
-void Sky::Layer::setFadeoutLimit(float newLimit)
+void Sky::Layer::setFadeoutLimit(dfloat newLimit)
 {
     d->fadeOutLimit = newLimit;
 }
@@ -147,12 +149,12 @@ DENG2_PIMPL(Sky)
 
     Record const *def   = nullptr; ///< Sky definition.
 
-    float height        = 1;
-    float horizonOffset = 0;
+    dfloat height        = 1;
+    dfloat horizonOffset = 0;
 
     Instance(Public *i) : Base(i)
     {
-        for(int i = 0; i < NUM_LAYERS; ++i)
+        for(dint i = 0; i < NUM_LAYERS; ++i)
         {
             layers.append(new Layer(self));
 
@@ -215,8 +217,8 @@ DENG2_PIMPL(Sky)
         ambientLight.color = AmbientLightColorDefault;
 
         // Determine the first active layer.
-        int firstActiveLayer = -1; // -1 denotes 'no active layers'.
-        for(int i = 0; i < layers.count(); ++i)
+        dint firstActiveLayer = -1; // -1 denotes 'no active layers'.
+        for(dint i = 0; i < layers.count(); ++i)
         {
             if(layers[i]->isActive())
             {
@@ -232,8 +234,8 @@ DENG2_PIMPL(Sky)
         Vector3f bottomCapColor;
         Vector3f topCapColor;
 
-        int avgCount = 0;
-        for(int i = firstActiveLayer; i < layers.count(); ++i)
+        dint avgCount = 0;
+        for(dint i = firstActiveLayer; i < layers.count(); ++i)
         {
             Layer &layer = *layers[i];
 
@@ -250,12 +252,12 @@ DENG2_PIMPL(Sky)
 
             if(TextureVariant *tex = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture)
             {
-                averagecolor_analysis_t const *avgColor = reinterpret_cast<averagecolor_analysis_t const *>(tex->base().analysisDataPointer(Texture::AverageColorAnalysis));
+                auto const *avgColor = reinterpret_cast<averagecolor_analysis_t const *>(tex->base().analysisDataPointer(Texture::AverageColorAnalysis));
                 if(!avgColor) throw Error("calculateSkyAmbientColor", "Texture \"" + tex->base().manifest().composeUri().asText() + "\" has no AverageColorAnalysis");
 
                 if(i == firstActiveLayer)
                 {
-                    averagecolor_analysis_t const *avgLineColor = reinterpret_cast<averagecolor_analysis_t const *>(tex->base().analysisDataPointer(Texture::AverageTopColorAnalysis));
+                    auto const *avgLineColor = reinterpret_cast<averagecolor_analysis_t const *>(tex->base().analysisDataPointer(Texture::AverageTopColorAnalysis));
                     if(!avgLineColor) throw Error("calculateSkyAmbientColor", "Texture \"" + tex->base().manifest().composeUri().asText() + "\" has no AverageTopColorAnalysis");
 
                     topCapColor = Vector3f(avgLineColor->color.rgb);
@@ -303,7 +305,7 @@ DENG2_PIMPL(Sky)
         ambientLight.needUpdate = true;
     }
 
-#endif // __CLIENT__
+#endif  // __CLIENT__
 
     DENG2_PIMPL_AUDIENCE(Deletion)
     DENG2_PIMPL_AUDIENCE(HeightChange)
@@ -314,7 +316,9 @@ DENG2_AUDIENCE_METHOD(Sky, Deletion)
 DENG2_AUDIENCE_METHOD(Sky, HeightChange)
 DENG2_AUDIENCE_METHOD(Sky, HorizonOffsetChange)
 
-Sky::Sky(defn::Sky const *definition) : MapElement(DMU_SKY), d(new Instance(this))
+Sky::Sky(defn::Sky const *definition)
+    : MapElement(DMU_SKY)
+    , d(new Instance(this))
 {
     configure(definition);
 }
@@ -329,7 +333,7 @@ void Sky::configure(defn::Sky const *def)
     setHeight(def? def->getf("height") : DEFAULT_SKY_HEIGHT);
     setHorizonOffset(def? def->getf("horizonOffset") : DEFAULT_SKY_HORIZON_OFFSET);
 
-    for(int i = 0; i < d->layers.count(); ++i)
+    for(dint i = 0; i < d->layers.count(); ++i)
     {
         Record const *lyrDef = def? &def->layer(i) : 0;
         Layer &lyr = *d->layers[i];
@@ -384,12 +388,12 @@ Sky::Layers const &Sky::layers() const
     return d->layers;
 }
 
-float Sky::height() const
+dfloat Sky::height() const
 {
     return d->height;
 }
 
-void Sky::setHeight(float newHeight)
+void Sky::setHeight(dfloat newHeight)
 {
     newHeight = de::clamp(0.f, newHeight, 1.f);
     if(!de::fequal(d->height, newHeight))
@@ -399,12 +403,12 @@ void Sky::setHeight(float newHeight)
     }
 }
 
-float Sky::horizonOffset() const
+dfloat Sky::horizonOffset() const
 {
     return d->horizonOffset;
 }
 
-void Sky::setHorizonOffset(float newOffset)
+void Sky::setHorizonOffset(dfloat newOffset)
 {
     if(!de::fequal(d->horizonOffset, newOffset))
     {
@@ -413,14 +417,14 @@ void Sky::setHorizonOffset(float newOffset)
     }
 }
 
-int Sky::property(DmuArgs &args) const
+dint Sky::property(DmuArgs &args) const
 {
     LOG_AS("Sky");
 
     switch(args.prop)
     {
     case DMU_FLAGS: {
-        int flags = 0;
+        dint flags = 0;
         if(layer(0)->isActive()) flags |= SKYF_LAYER0_ENABLED;
         if(layer(1)->isActive()) flags |= SKYF_LAYER1_ENABLED;
 
@@ -441,14 +445,14 @@ int Sky::property(DmuArgs &args) const
     return false; // Continue iteration.
 }
 
-int Sky::setProperty(DmuArgs const &args)
+dint Sky::setProperty(DmuArgs const &args)
 {
     LOG_AS("Sky");
 
     switch(args.prop)
     {
     case DMU_FLAGS: {
-        int flags = 0;
+        dint flags = 0;
         if(layer(0)->isActive()) flags |= SKYF_LAYER0_ENABLED;
         if(layer(1)->isActive()) flags |= SKYF_LAYER1_ENABLED;
 
@@ -459,7 +463,7 @@ int Sky::setProperty(DmuArgs const &args)
         break; }
 
     case DMU_HEIGHT: {
-        float newHeight = d->height;
+        dfloat newHeight = d->height;
         args.value(DDVT_FLOAT, &newHeight, 0);
 
         setHeight(newHeight);
@@ -496,3 +500,5 @@ void Sky::setAmbientColor(Vector3f const &newColor)
 }
 
 #endif // __CLIENT__
+
+}  // namespace world

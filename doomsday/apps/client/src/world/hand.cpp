@@ -32,6 +32,8 @@ enum PropertyFlag
 Q_DECLARE_FLAGS(PropertyFlags, PropertyFlag)
 Q_DECLARE_OPERATORS_FOR_FLAGS(PropertyFlags)
 
+namespace world {
+
 DENG2_PIMPL(Hand)
 , DENG2_OBSERVES(Grabbable, Deletion)
 , DENG2_OBSERVES(Grabbable, OriginChange)
@@ -45,20 +47,14 @@ DENG2_PIMPL(Hand)
 
     /// Averaged origin of eveything currently grabbed.
     Vector3d grabOrigin;
-    bool needUpdateGrabOrigin;
+    bool needUpdateGrabOrigin = false;
 
     /// Edit properties (applied to the grabbables).
     Vector3f editColor;
-    float editIntensity;
-    PropertyFlags applyProps;
+    dfloat editIntensity = 0;
+    PropertyFlags applyProps = 0;
 
-    Instance(Public *i, Vector3d const &origin)
-        : Base(i)
-        , origin(origin)
-        , oldOrigin(origin)
-        , needUpdateGrabOrigin(false)
-        , editIntensity(0)
-        , applyProps(0)
+    Instance(Public *i) : Base(i)
     {}
 
     void notifyGrabbed(Grabbable &grabbed)
@@ -140,8 +136,10 @@ DENG2_PIMPL(Hand)
         needUpdateGrabOrigin = false;
 
         grabOrigin = Vector3d();
-        foreach(Grabbable *grabbable, grab)
+        for(Grabbable *grabbable : grab)
+        {
             grabOrigin += grabbable->origin();
+        }
         if(grab.count() > 1)
             grabOrigin /= grab.count();
 
@@ -149,8 +147,10 @@ DENG2_PIMPL(Hand)
     }
 };
 
-Hand::Hand(Vector3d const &origin) : d(new Instance(this, origin))
-{}
+Hand::Hand(Vector3d const &origin) : d(new Instance(this))
+{
+    d->oldOrigin = d->origin = origin;
+}
 
 Vector3d const &Hand::origin() const
 {
@@ -297,3 +297,5 @@ void Hand::worldSystemFrameEnds()
     // Update the hand origin tracking buffer.
     d->oldOrigin = d->origin;
 }
+
+}  // namespace world

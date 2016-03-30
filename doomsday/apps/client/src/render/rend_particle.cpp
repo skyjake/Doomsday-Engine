@@ -52,6 +52,7 @@
 #include "render/vissprite.h"
 
 using namespace de;
+using namespace world;
 
 // Point + custom textures.
 #define NUM_TEX_NAMES (MAX_PTC_TEXTURES)

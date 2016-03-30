@@ -1,7 +1,8 @@
-/** @file thinkers.h  World map thinkers.
+/** @file thinkers.h  map thinkers.
+ * @ingroup world
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -24,7 +25,7 @@
 #include <de/Error>
 #include "api_thinker.h"
 
-namespace de {
+namespace world {
 
 /**
  * World map thinker lists / collection.
@@ -49,7 +50,7 @@ public:
      * @param flags  @c 0x1 = Init public thinkers.
      *               @c 0x2 = Init private (engine-internal) thinkers.
      */
-    void initLists(dbyte flags);
+    void initLists(de::dbyte flags);
 
     /**
      * @param thinker     Thinker to be added.
@@ -70,7 +71,7 @@ public:
      * @param flags     Thinker filter flags.
      * @param func      Callback to make for each thinker_t.
      */
-    de::LoopResult forAll(dbyte flags, std::function<de::LoopResult (thinker_t *th)> func) const;
+    de::LoopResult forAll(de::dbyte flags, std::function<de::LoopResult (thinker_t *th)> func) const;
 
     /**
      * Iterate the list of thinkers making a callback for each.
@@ -81,14 +82,14 @@ public:
      *
      * @overload
      */
-    de::LoopResult forAll(thinkfunc_t thinkFunc, dbyte flags, std::function<de::LoopResult (thinker_t *th)> func) const;
+    de::LoopResult forAll(thinkfunc_t thinkFunc, de::dbyte flags, std::function<de::LoopResult (thinker_t *th)> func) const;
 
     /**
      * Locates a mobj by it's unique identifier in the map.
      *
      * @param id  Unique id of the mobj to lookup.
      */
-    struct mobj_s *mobjById(dint id);
+    struct mobj_s *mobjById(de::dint id);
 
     /**
      * @param id  Thinker id to test.
@@ -108,15 +109,15 @@ public:
      *                     be added to the current value (caller must ensure to
      *                     initialize this).
      */
-    dint count(dint *numInStasis = nullptr) const;
+    de::dint count(de::dint *numInStasis = nullptr) const;
 
 private:
     DENG2_PRIVATE(d)
 };
 
-}  // namespace de
+}  // namespace world
 
-dd_bool Thinker_IsMobjFunc(thinkfunc_t func);
+dd_bool Thinker_HasMobjFunc(thinkfunc_t func);
 world::Map &Thinker_Map(thinker_t const &th);
 
 /**
@@ -130,4 +131,4 @@ world::Map &Thinker_Map(thinker_t const &th);
  */
 void Thinker_InitPrivateData(thinker_t *th);
 
-#endif  // WORLD_THINKERS_H
+#endif  // DENG_WORLD_THINKERS_H

@@ -35,10 +35,12 @@
 
 #define DEFAULT_SKY_SPHERE_MATERIAL ( "Textures:SKY1" )
 
+namespace world {
+
 /**
  * Behavior logic for a sky in the world system.
  */
-class Sky : public world::MapElement
+class Sky : public MapElement
 {
 public:
     /// Notified when the sky is about to be deleted.
@@ -123,26 +125,26 @@ public:
         /**
          * Returns the horizontal offset for the layer.
          */
-        float offset() const;
+        de::dfloat offset() const;
 
         /**
          * Change the horizontal offset for the layer.
          *
          * @param newOffset  New offset to apply.
          */
-        void setOffset(float newOffset);
+        void setOffset(de::dfloat newOffset);
 
         /**
          * Returns the fadeout limit for the layer.
          */
-        float fadeOutLimit() const;
+        de::dfloat fadeOutLimit() const;
 
         /**
          * Change the fadeout limit for the layer.
          *
          * @param newLimit  New fadeout limit to apply.
          */
-        void setFadeoutLimit(float newLimit);
+        void setFadeoutLimit(de::dfloat newLimit);
 
     private:
         DENG2_PRIVATE(d)
@@ -181,19 +183,19 @@ public:
     /**
      * Convenient method of returning a sky layer by unique @a index.
      */
-    inline Layer *layer(int index) const { return layers().at(index); }
+    inline Layer *layer(de::dint index) const { return layers().at(index); }
 
     /**
      * Returns the total number of sky layers (both active and inactive).
      */
-    inline int layerCount() const { return layers().count(); }
+    inline de::dint layerCount() const { return layers().count(); }
 
     /**
      * Returns the height of the sky as a scale factor [0..1] (@c 1 covers the view).
      *
      * @see setHeight()
      */
-    float height() const;
+    de::dfloat height() const;
 
     /**
      * Change the height scale factor for the sky.
@@ -202,14 +204,14 @@ public:
      *
      * @see height()
      */
-    void setHeight(float newHeight);
+    void setHeight(de::dfloat newHeight);
 
     /**
      * Returns the horizon offset for the sky.
      *
      * @see setHorizonOffset()
      */
-    float horizonOffset() const;
+    de::dfloat horizonOffset() const;
 
     /**
      * Change the horizon offset for the sky.
@@ -218,7 +220,7 @@ public:
      *
      * @see horizonOffset()
      */
-    void setHorizonOffset(float newOffset);
+    void setHorizonOffset(de::dfloat newOffset);
 
 #ifdef __CLIENT__
 
@@ -242,13 +244,15 @@ public:
 #endif  // __CLIENT__
 
 protected:
-    int property(de::DmuArgs &args) const;
-    int setProperty(de::DmuArgs const &args);
+    de::dint property(de::DmuArgs &args) const;
+    de::dint setProperty(de::DmuArgs const &args);
 
 private:
     DENG2_PRIVATE(d)
 };
 
 typedef Sky::Layer SkyLayer;
+
+}  // namespace world
 
 #endif  // DENG_WORLD_SKY_H

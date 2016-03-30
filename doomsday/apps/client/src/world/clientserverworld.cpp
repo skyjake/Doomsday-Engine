@@ -897,7 +897,7 @@ void ClientServerWorld::tick(timespan_t elapsed)
 }
 
 #ifdef __CLIENT__
-Hand &ClientServerWorld::hand(coord_t *distance) const
+Hand &ClientServerWorld::hand(ddouble *distance) const
 {
     // Time to create the hand?
     if(!d->hand)

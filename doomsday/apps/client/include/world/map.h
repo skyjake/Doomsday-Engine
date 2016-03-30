@@ -54,20 +54,13 @@
 
 class Plane;
 class Sector;
-class Sky;
 class Surface;
 class Vertex;
 
 #ifdef __CLIENT__
 class BiasTracker;
+namespace de { class LightGrid; }
 #endif
-
-namespace de {
-class Thinkers;
-#ifdef __CLIENT__
-class LightGrid;
-#endif
-}
 
 namespace world {
 
@@ -75,6 +68,8 @@ class Blockmap;
 class ConvexSubspace;
 class LineBlockmap;
 class SectorCluster;
+class Sky;
+class Thinkers;
 
 /**
  * World map.
@@ -667,7 +662,7 @@ public:  //- Data structures ---------------------------------------------------
     /**
      * Provides access to the thinker lists for the map.
      */
-    de::Thinkers /*const*/ &thinkers() const;
+    Thinkers /*const*/ &thinkers() const;
 
     /**
      * Returns @c true iff a BSP tree is available for the map.

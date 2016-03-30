@@ -29,7 +29,10 @@
 #include "Grabbable"
 
 struct ded_light_s;  // def_data.h
-namespace world { class BspLeaf; }
+
+namespace world {
+
+class BspLeaf;
 
 /**
  * Infinite point light source in the Shadow Bias lighting model.
@@ -97,7 +100,7 @@ public:
     /**
      * Returns the map BSP leaf at the origin of the source (result cached).
      */
-    world::BspLeaf &bspLeafAtOrigin() const;
+    BspLeaf &bspLeafAtOrigin() const;
 
     /**
      * Returns the "primary" light intensity multiplier for the source. The
@@ -203,5 +206,7 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
+
+}  // namespace world
 
 #endif  // DENG_CLIENT_RENDER_SHADOWBIAS_SOURCE_H

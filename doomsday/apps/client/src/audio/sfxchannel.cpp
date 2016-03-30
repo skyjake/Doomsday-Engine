@@ -69,7 +69,7 @@ DENG2_PIMPL_NOREF(SfxChannel)
             Vector3d point(emitter->origin);
 
             // Position on the Z axis at the map-object's center?
-            if(Thinker_IsMobjFunc(emitter->thinker.function))
+            if(Thinker_HasMobjFunc(emitter->thinker.function))
                 point.z += emitter->height / 2;
 
             return point;
@@ -228,7 +228,7 @@ void SfxChannel::updatePriority()
 
         // If the sound is emitted by the listener, speed is zero.
         if(d->emitter && d->emitter != App_AudioSystem().sfxListener() &&
-           Thinker_IsMobjFunc(d->emitter->thinker.function))
+           Thinker_HasMobjFunc(d->emitter->thinker.function))
         {
             dfloat vec[3];
             vec[0] = d->emitter->mom[0] * TICSPERSEC;

@@ -30,6 +30,7 @@
 #include <QFlags>
 
 using namespace de;
+using namespace world;
 
 namespace internal
 {

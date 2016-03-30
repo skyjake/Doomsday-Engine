@@ -49,14 +49,13 @@
 #include <cmath>
 
 using namespace de;
-using namespace world;
 
-#define DOT2F(a,b)          ( FIX2FLT(a[VX]) * FIX2FLT(b[VX]) + FIX2FLT(a[VY]) * FIX2FLT(b[VY]) )
-#define VECMUL(a,scalar)    ( a[VX] = FixedMul(a[VX], scalar), a[VY] = FixedMul(a[VY], scalar) )
-#define VECADD(a,b)         ( a[VX] += b[VX], a[VY] += b[VY] )
-#define VECMULADD(a,scal,b) ( a[VX] += FixedMul(scal, b[VX]), a[VY] += FixedMul(scal, b[VY]) )
-#define VECSUB(a,b)         ( a[VX] -= b[VX], a[VY] -= b[VY] )
-#define VECCPY(a,b)         ( a[VX] = b[VX], a[VY] = b[VY] )
+#define DOT2F(a,b)          ( FIX2FLT(a[0]) * FIX2FLT(b[0]) + FIX2FLT(a[1]) * FIX2FLT(b[1]) )
+#define VECMUL(a,scalar)    ( a[0] = FixedMul(a[0], scalar), a[1] = FixedMul(a[1], scalar) )
+#define VECADD(a,b)         ( a[0] += b[0], a[1] += b[1] )
+#define VECMULADD(a,scal,b) ( a[0] += FixedMul(scal, b[0]), a[1] += FixedMul(scal, b[1]) )
+#define VECSUB(a,b)         ( a[0] -= b[0], a[1] -= b[1] )
+#define VECCPY(a,b)         ( a[0] = b[0], a[1] = b[1] )
 
 static float particleSpawnRate = 1; // Unmodified (cvar).
 
@@ -84,9 +83,9 @@ static void uncertainPosition(fixed_t *pos, fixed_t low, fixed_t high)
         fixed_t phi = acos(2 * (RNG_RandByte() * reciprocal255) - 1) / PI * (ANGLE_180 >> ANGLETOFINESHIFT);
 
         fixed_t vec[3];
-        vec[VX] = FixedMul(fineCosine[theta], finesine[phi]);
-        vec[VY] = FixedMul(finesine[theta], finesine[phi]);
-        vec[VZ] = FixedMul(fineCosine[phi], FLT2FIX(0.8333f));
+        vec[0] = FixedMul(fineCosine[theta], finesine[phi]);
+        vec[1] = FixedMul(finesine[theta], finesine[phi]);
+        vec[2] = FixedMul(fineCosine[phi], FLT2FIX(0.8333f));
 
         for(int i = 0; i < 3; ++i)
         {
@@ -94,6 +93,8 @@ static void uncertainPosition(fixed_t *pos, fixed_t low, fixed_t high)
         }
     }
 }
+
+namespace world {
 
 Map &Generator::map() const
 {
@@ -111,7 +112,7 @@ void Generator::setId(Id newId)
     _id = newId;
 }
 
-int Generator::age() const
+dint Generator::age() const
 {
     return _age;
 }
@@ -121,22 +122,22 @@ Vector3d Generator::origin() const
     if(source)
     {
         Vector3d origin(source->origin);
-        origin.z += -source->floorClip + FIX2FLT(originAtSpawn[VZ]);
+        origin.z += -source->floorClip + FIX2FLT(originAtSpawn[2]);
         return origin;
     }
 
-    return Vector3d(FIX2FLT(originAtSpawn[VX]), FIX2FLT(originAtSpawn[VY]), FIX2FLT(originAtSpawn[VZ]));
+    return Vector3d(FIX2FLT(originAtSpawn[0]), FIX2FLT(originAtSpawn[1]), FIX2FLT(originAtSpawn[2]));
 }
 
 void Generator::clearParticles()
 {
     Z_Free(_pinfo);
-    _pinfo = 0;
+    _pinfo = nullptr;
 }
 
 void Generator::configureFromDef(ded_ptcgen_t const *newDef)
 {
-    DENG2_ASSERT(newDef != 0);
+    DENG2_ASSERT(newDef);
 
     if(count <= 0)
         count = 1;
@@ -149,7 +150,7 @@ void Generator::configureFromDef(ded_ptcgen_t const *newDef)
     _pinfo = (ParticleInfo *) Z_Calloc(sizeof(ParticleInfo) * count, PU_MAP, 0);
     stages = (ParticleStage *) Z_Calloc(sizeof(ParticleStage) * def->stages.size(), PU_MAP, 0);
 
-    for(int i = 0; i < def->stages.size(); ++i)
+    for(dint i = 0; i < def->stages.size(); ++i)
     {
         ded_ptcstage_t const *sdef = &def->stages[i];
         ParticleStage *s = &stages[i];
@@ -163,7 +164,7 @@ void Generator::configureFromDef(ded_ptcgen_t const *newDef)
     }
 
     // Init some data.
-    for(int i = 0; i < 3; ++i)
+    for(dint i = 0; i < 3; ++i)
     {
         originAtSpawn[i] = FLT2FIX(def->center[i]);
         vector[i] = FLT2FIX(def->vector[i]);
@@ -176,14 +177,14 @@ void Generator::configureFromDef(ded_ptcgen_t const *newDef)
     }
 
     // Mark unused.
-    for(int i = 0; i < count; ++i)
+    for(dint i = 0; i < count; ++i)
     {
         ParticleInfo* pinfo = &_pinfo[i];
         pinfo->stage = -1;
     }
 }
 
-void Generator::presimulate(int tics)
+void Generator::presimulate(dint tics)
 {
     for(; tics > 0; tics--)
     {
@@ -220,10 +221,10 @@ blendmode_t Generator::blendmode() const
     return BM_NORMAL;
 }
 
-int Generator::activeParticleCount() const
+dint Generator::activeParticleCount() const
 {
-    int numActive = 0;
-    for(int i = 0; i < count; ++i)
+    dint numActive = 0;
+    for(dint i = 0; i < count; ++i)
     {
         if(_pinfo[i].stage >= 0)
         {
@@ -238,9 +239,9 @@ ParticleInfo const *Generator::particleInfo() const
     return _pinfo;
 }
 
-static void setParticleAngles(ParticleInfo *pinfo, int flags)
+static void setParticleAngles(ParticleInfo *pinfo, dint flags)
 {
-    DENG2_ASSERT(pinfo != 0);
+    DENG2_ASSERT(pinfo);
 
     if(flags & Generator::ParticleStage::ZeroYaw)
         pinfo->yaw = 0;
@@ -254,25 +255,25 @@ static void setParticleAngles(ParticleInfo *pinfo, int flags)
 
 static void particleSound(fixed_t pos[3], ded_embsound_t *sound)
 {
-    DENG2_ASSERT(pos != 0 && sound != 0);
+    DENG2_ASSERT(pos && sound);
 
     // Is there any sound to play?
     if(!sound->id || sound->volume <= 0) return;
 
-    coord_t orig[3];
-    for(int i = 0; i < 3; ++i)
+    ddouble orig[3];
+    for(dint i = 0; i < 3; ++i)
     {
         orig[i] = FIX2FLT(pos[i]);
     }
 
-    S_LocalSoundAtVolumeFrom(sound->id, NULL, orig, sound->volume);
+    S_LocalSoundAtVolumeFrom(sound->id, nullptr, orig, sound->volume);
 }
 
-int Generator::newParticle()
+dint Generator::newParticle()
 {
 #ifdef __CLIENT__
     // Check for model-only generators.
-    float inter = -1;
+    dfloat inter = -1;
     ModelDef *mf = 0, *nextmf = 0;
     if(source)
     {
@@ -288,7 +289,7 @@ int Generator::newParticle()
         _spawnCP -= count;
     }
 
-    int const newParticleIdx = _spawnCP;
+    dint const newParticleIdx = _spawnCP;
 
     // Set the particle's data.
     ParticleInfo *pinfo = &_pinfo[_spawnCP];
@@ -302,32 +303,32 @@ int Generator::newParticle()
         (1 - def->stages[pinfo->stage].variance * RNG_RandFloat());
 
     // Launch vector.
-    pinfo->mov[VX] = vector[VX];
-    pinfo->mov[VY] = vector[VY];
-    pinfo->mov[VZ] = vector[VZ];
+    pinfo->mov[0] = vector[0];
+    pinfo->mov[1] = vector[1];
+    pinfo->mov[2] = vector[2];
 
     // Apply some random variance.
-    pinfo->mov[VX] += FLT2FIX(def->vectorVariance * (RNG_RandFloat() - RNG_RandFloat()));
-    pinfo->mov[VY] += FLT2FIX(def->vectorVariance * (RNG_RandFloat() - RNG_RandFloat()));
-    pinfo->mov[VZ] += FLT2FIX(def->vectorVariance * (RNG_RandFloat() - RNG_RandFloat()));
+    pinfo->mov[0] += FLT2FIX(def->vectorVariance * (RNG_RandFloat() - RNG_RandFloat()));
+    pinfo->mov[1] += FLT2FIX(def->vectorVariance * (RNG_RandFloat() - RNG_RandFloat()));
+    pinfo->mov[2] += FLT2FIX(def->vectorVariance * (RNG_RandFloat() - RNG_RandFloat()));
 
     // Apply some aspect ratio scaling to the momentum vector.
     // This counters the 200/240 difference nearly completely.
-    pinfo->mov[VX] = FixedMul(pinfo->mov[VX], FLT2FIX(1.1f));
-    pinfo->mov[VY] = FixedMul(pinfo->mov[VY], FLT2FIX(0.95f));
-    pinfo->mov[VZ] = FixedMul(pinfo->mov[VZ], FLT2FIX(1.1f));
+    pinfo->mov[0] = FixedMul(pinfo->mov[0], FLT2FIX(1.1f));
+    pinfo->mov[1] = FixedMul(pinfo->mov[1], FLT2FIX(0.95f));
+    pinfo->mov[2] = FixedMul(pinfo->mov[2], FLT2FIX(1.1f));
 
     // Set proper speed.
     fixed_t uncertain = FLT2FIX(def->speed * (1 - def->speedVariance * RNG_RandFloat()));
 
     fixed_t len = FLT2FIX(M_ApproxDistancef(
-        M_ApproxDistancef(FIX2FLT(pinfo->mov[VX]), FIX2FLT(pinfo->mov[VY])), FIX2FLT(pinfo->mov[VZ])));
+        M_ApproxDistancef(FIX2FLT(pinfo->mov[0]), FIX2FLT(pinfo->mov[1])), FIX2FLT(pinfo->mov[2])));
     if(!len) len = FRACUNIT;
     len = FixedDiv(uncertain, len);
 
-    pinfo->mov[VX] = FixedMul(pinfo->mov[VX], len);
-    pinfo->mov[VY] = FixedMul(pinfo->mov[VY], len);
-    pinfo->mov[VZ] = FixedMul(pinfo->mov[VZ], len);
+    pinfo->mov[0] = FixedMul(pinfo->mov[0], len);
+    pinfo->mov[1] = FixedMul(pinfo->mov[1], len);
+    pinfo->mov[2] = FixedMul(pinfo->mov[2], len);
 
     // The source is a mobj?
     if(source)
@@ -335,52 +336,52 @@ int Generator::newParticle()
         if(_flags & RelativeVector)
         {
             // Rotate the vector using the source angle.
-            float temp[3];
+            dfloat temp[3];
 
-            temp[VX] = FIX2FLT(pinfo->mov[VX]);
-            temp[VY] = FIX2FLT(pinfo->mov[VY]);
-            temp[VZ] = 0;
+            temp[0] = FIX2FLT(pinfo->mov[0]);
+            temp[1] = FIX2FLT(pinfo->mov[1]);
+            temp[2] = 0;
 
             // Player visangles have some problems, let's not use them.
             M_RotateVector(temp, source->angle / (float) ANG180 * -180 + 90, 0);
 
-            pinfo->mov[VX] = FLT2FIX(temp[VX]);
-            pinfo->mov[VY] = FLT2FIX(temp[VY]);
+            pinfo->mov[0] = FLT2FIX(temp[0]);
+            pinfo->mov[1] = FLT2FIX(temp[1]);
         }
 
         if(_flags & RelativeVelocity)
         {
-            pinfo->mov[VX] += FLT2FIX(source->mom[MX]);
-            pinfo->mov[VY] += FLT2FIX(source->mom[MY]);
-            pinfo->mov[VZ] += FLT2FIX(source->mom[MZ]);
+            pinfo->mov[0] += FLT2FIX(source->mom[MX]);
+            pinfo->mov[1] += FLT2FIX(source->mom[MY]);
+            pinfo->mov[2] += FLT2FIX(source->mom[MZ]);
         }
 
         // Origin.
-        pinfo->origin[VX] = FLT2FIX(source->origin[VX]);
-        pinfo->origin[VY] = FLT2FIX(source->origin[VY]);
-        pinfo->origin[VZ] = FLT2FIX(source->origin[VZ] - source->floorClip);
+        pinfo->origin[0] = FLT2FIX(source->origin[0]);
+        pinfo->origin[1] = FLT2FIX(source->origin[1]);
+        pinfo->origin[2] = FLT2FIX(source->origin[2] - source->floorClip);
 
         uncertainPosition(pinfo->origin, FLT2FIX(def->spawnRadiusMin), FLT2FIX(def->spawnRadius));
 
         // Offset to the real center.
-        pinfo->origin[VZ] += originAtSpawn[VZ];
+        pinfo->origin[2] += originAtSpawn[2];
 
         // Include bobbing in the spawn height.
-        pinfo->origin[VZ] -= FLT2FIX(Mobj_BobOffset(*source));
+        pinfo->origin[2] -= FLT2FIX(Mobj_BobOffset(*source));
 
         // Calculate XY center with mobj angle.
-        angle_t const angle = Mobj_AngleSmoothed(source) + (fixed_t) (FIX2FLT(originAtSpawn[VY]) / 180.0f * ANG180);
-        uint const an       = angle >> ANGLETOFINESHIFT;
-        uint const an2      = (angle + ANG90) >> ANGLETOFINESHIFT;
+        angle_t const angle = Mobj_AngleSmoothed(source) + (fixed_t) (FIX2FLT(originAtSpawn[1]) / 180.0f * ANG180);
+        duint const an      = angle >> ANGLETOFINESHIFT;
+        duint const an2     = (angle + ANG90) >> ANGLETOFINESHIFT;
 
-        pinfo->origin[VX] += FixedMul(fineCosine[an], originAtSpawn[VX]);
-        pinfo->origin[VY] += FixedMul(finesine[an], originAtSpawn[VX]);
+        pinfo->origin[0] += FixedMul(fineCosine[an], originAtSpawn[0]);
+        pinfo->origin[1] += FixedMul(finesine[an], originAtSpawn[0]);
 
         // There might be an offset from the model of the mobj.
         if(mf && (mf->testSubFlag(0, MFF_PARTICLE_SUB1) || def->subModel >= 0))
         {
-            float off[3] = { 0, 0, 0 };
-            int subidx;
+            dfloat off[3] = { 0, 0, 0 };
+            dint subidx;
 
             // Select the right submodel to use as the origin.
             if(def->subModel >= 0)
@@ -391,25 +392,25 @@ int Generator::newParticle()
             // Interpolate the offset.
             if(inter > 0 && nextmf)
             {
-                off[VX] = nextmf->particleOffset(subidx)[VX] - mf->particleOffset(subidx)[VX];
-                off[VY] = nextmf->particleOffset(subidx)[VY] - mf->particleOffset(subidx)[VY];
-                off[VZ] = nextmf->particleOffset(subidx)[VZ] - mf->particleOffset(subidx)[VZ];
+                off[0] = nextmf->particleOffset(subidx)[0] - mf->particleOffset(subidx)[0];
+                off[1] = nextmf->particleOffset(subidx)[1] - mf->particleOffset(subidx)[1];
+                off[2] = nextmf->particleOffset(subidx)[2] - mf->particleOffset(subidx)[2];
 
-                off[VX] *= inter;
-                off[VY] *= inter;
-                off[VZ] *= inter;
+                off[0] *= inter;
+                off[1] *= inter;
+                off[2] *= inter;
             }
 
-            off[VX] += mf->particleOffset(subidx)[VX];
-            off[VY] += mf->particleOffset(subidx)[VY];
-            off[VZ] += mf->particleOffset(subidx)[VZ];
+            off[0] += mf->particleOffset(subidx)[0];
+            off[1] += mf->particleOffset(subidx)[1];
+            off[2] += mf->particleOffset(subidx)[2];
 
             // Apply it to the particle coords.
-            pinfo->origin[VX] += FixedMul(fineCosine[an],  FLT2FIX(off[VX]));
-            pinfo->origin[VX] += FixedMul(fineCosine[an2], FLT2FIX(off[VZ]));
-            pinfo->origin[VY] += FixedMul(finesine[an],    FLT2FIX(off[VX]));
-            pinfo->origin[VY] += FixedMul(finesine[an2],   FLT2FIX(off[VZ]));
-            pinfo->origin[VZ] += FLT2FIX(off[VY]);
+            pinfo->origin[0] += FixedMul(fineCosine[an],  FLT2FIX(off[0]));
+            pinfo->origin[0] += FixedMul(fineCosine[an2], FLT2FIX(off[2]));
+            pinfo->origin[1] += FixedMul(finesine[an],    FLT2FIX(off[0]));
+            pinfo->origin[1] += FixedMul(finesine[an2],   FLT2FIX(off[2]));
+            pinfo->origin[2] += FLT2FIX(off[1]);
         }
     }
     else if(plane)
@@ -421,7 +422,7 @@ int Generator::newParticle()
         // Choose a random spot inside the sector, on the spawn plane.
         if(_flags & SpawnSpace)
         {
-            pinfo->origin[VZ] =
+            pinfo->origin[2] =
                 FLT2FIX(sector->floor().height()) + radius +
                 FixedMul(RNG_RandByte() << 8,
                          FLT2FIX(sector->ceiling().height() -
@@ -432,12 +433,12 @@ int Generator::newParticle()
                  plane->isSectorFloor()))
         {
             // Spawn on the floor.
-            pinfo->origin[VZ] = FLT2FIX(plane->height()) + radius;
+            pinfo->origin[2] = FLT2FIX(plane->height()) + radius;
         }
         else
         {
             // Spawn on the ceiling.
-            pinfo->origin[VZ] = FLT2FIX(plane->height()) - radius;
+            pinfo->origin[2] = FLT2FIX(plane->height()) - radius;
         }
 
         /**
@@ -448,11 +449,11 @@ int Generator::newParticle()
          * walls (large diagonal subspaces!).
          */
         ConvexSubspace *subspace = 0;
-        for(int i = 0; i < 5; ++i) // Try a couple of times (max).
+        for(dint i = 0; i < 5; ++i) // Try a couple of times (max).
         {
-            float x = sector->aaBox().minX +
+            dfloat x = sector->aaBox().minX +
                 RNG_RandFloat() * (sector->aaBox().maxX - sector->aaBox().minX);
-            float y = sector->aaBox().minY +
+            dfloat y = sector->aaBox().minY +
                 RNG_RandFloat() * (sector->aaBox().maxY - sector->aaBox().minY);
 
             subspace = map().bspLeafAt(Vector2d(x, y)).subspacePtr();
@@ -471,16 +472,16 @@ int Generator::newParticle()
         AABoxd const &subAABox = subspace->poly().aaBox();
 
         // Try a couple of times to get a good random spot.
-        int tries;
+        dint tries;
         for(tries = 0; tries < 10; ++tries) // Max this many tries before giving up.
         {
-            float x = subAABox.minX +
+            dfloat x = subAABox.minX +
                 RNG_RandFloat() * (subAABox.maxX - subAABox.minX);
-            float y = subAABox.minY +
+            dfloat y = subAABox.minY +
                 RNG_RandFloat() * (subAABox.maxY - subAABox.minY);
 
-            pinfo->origin[VX] = FLT2FIX(x);
-            pinfo->origin[VY] = FLT2FIX(y);
+            pinfo->origin[0] = FLT2FIX(x);
+            pinfo->origin[1] = FLT2FIX(y);
 
             if(subspace == map().bspLeafAt(Vector2d(x, y)).subspacePtr())
                 break; // This is a good place.
@@ -495,9 +496,9 @@ int Generator::newParticle()
     else if(isUntriggered())
     {
         // The center position is the spawn origin.
-        pinfo->origin[VX] = originAtSpawn[VX];
-        pinfo->origin[VY] = originAtSpawn[VY];
-        pinfo->origin[VZ] = originAtSpawn[VZ];
+        pinfo->origin[0] = originAtSpawn[0];
+        pinfo->origin[1] = originAtSpawn[1];
+        pinfo->origin[2] = originAtSpawn[2];
         uncertainPosition(pinfo->origin, FLT2FIX(def->spawnRadiusMin),
                           FLT2FIX(def->spawnRadius));
     }
@@ -513,7 +514,7 @@ int Generator::newParticle()
     }
     else*/
     {
-        Vector2d ptOrigin(FIX2FLT(pinfo->origin[VX]), FIX2FLT(pinfo->origin[VY]));
+        Vector2d ptOrigin(FIX2FLT(pinfo->origin[0]), FIX2FLT(pinfo->origin[1]));
         pinfo->bspLeaf = &map().bspLeafAt(ptOrigin);
 
         // A BSP leaf with no geometry is not a suitable place for a particle.
@@ -538,7 +539,7 @@ int Generator::newParticle()
 /**
  * Callback for the client mobj iterator, called from P_PtcGenThinker.
  */
-static int newGeneratorParticlesWorker(mobj_t *cmo, void *context)
+static dint newGeneratorParticlesWorker(mobj_t *cmo, void *context)
 {
     Generator *gen = (Generator *) context;
     ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(cmo);
@@ -565,7 +566,7 @@ static int newGeneratorParticlesWorker(mobj_t *cmo, void *context)
 /**
  * Particle touches something solid. Returns false iff the particle dies.
  */
-static int touchParticle(ParticleInfo *pinfo, Generator::ParticleStage *stage,
+static dint touchParticle(ParticleInfo *pinfo, Generator::ParticleStage *stage,
     ded_ptcstage_t *stageDef, bool touchWall)
 {
     // Play a hit sound.
@@ -590,42 +591,42 @@ static int touchParticle(ParticleInfo *pinfo, Generator::ParticleStage *stage,
     return true;
 }
 
-float Generator::particleZ(ParticleInfo const &pinfo) const
+dfloat Generator::particleZ(ParticleInfo const &pinfo) const
 {
     SectorCluster &cluster = pinfo.bspLeaf->subspace().cluster();
-    if(pinfo.origin[VZ] == DDMAXINT)
+    if(pinfo.origin[2] == DDMAXINT)
     {
         return cluster.visCeiling().heightSmoothed() - 2;
     }
-    if(pinfo.origin[VZ] == DDMININT)
+    if(pinfo.origin[2] == DDMININT)
     {
         return (cluster.visFloor().heightSmoothed() + 2);
     }
-    return FIX2FLT(pinfo.origin[VZ]);
+    return FIX2FLT(pinfo.origin[2]);
 }
 
 Vector3f Generator::particleOrigin(ParticleInfo const &pt) const
 {
-    return Vector3f(FIX2FLT(pt.origin[VX]), FIX2FLT(pt.origin[VY]), particleZ(pt));
+    return Vector3f(FIX2FLT(pt.origin[0]), FIX2FLT(pt.origin[1]), particleZ(pt));
 }
 
 Vector3f Generator::particleMomentum(ParticleInfo const &pt) const
 {
-    return Vector3f(FIX2FLT(pt.mov[VX]), FIX2FLT(pt.mov[VY]), FIX2FLT(pt.mov[VZ]));
+    return Vector3f(FIX2FLT(pt.mov[0]), FIX2FLT(pt.mov[1]), FIX2FLT(pt.mov[2]));
 }
 
 void Generator::spinParticle(ParticleInfo &pinfo)
 {
-    static int const yawSigns[4]   = { 1,  1, -1, -1 };
-    static int const pitchSigns[4] = { 1, -1,  1, -1 };
+    static dint const yawSigns[4]   = { 1,  1, -1, -1 };
+    static dint const pitchSigns[4] = { 1, -1,  1, -1 };
 
     ded_ptcstage_t const *stDef = &def->stages[pinfo.stage];
-    uint const spinIndex        = uint(&pinfo - &_pinfo[id() / 8]) % 4;
+    duint const spinIndex        = uint(&pinfo - &_pinfo[id() / 8]) % 4;
 
-    DENG_ASSERT(spinIndex < 4);
+    DENG2_ASSERT(spinIndex < 4);
 
-    int const yawSign   =   yawSigns[spinIndex];
-    int const pitchSign = pitchSigns[spinIndex];
+    dint const yawSign   =   yawSigns[spinIndex];
+    dint const pitchSign = pitchSigns[spinIndex];
 
     if(stDef->spin[0] != 0)
     {
@@ -640,7 +641,7 @@ void Generator::spinParticle(ParticleInfo &pinfo)
     pinfo.pitch *= 1 - stDef->spinResistance[1];
 }
 
-void Generator::moveParticle(int index)
+void Generator::moveParticle(dint index)
 {
     DENG2_ASSERT(index >= 0 && index < count);
 
@@ -653,13 +654,13 @@ void Generator::moveParticle(int index)
 
     // Changes to momentum.
     /// @todo Do not assume generator is from the CURRENT map.
-    pinfo->mov[VZ] -= FixedMul(FLT2FIX(map().gravity()), st->gravity);
+    pinfo->mov[2] -= FixedMul(FLT2FIX(map().gravity()), st->gravity);
 
     // Vector force.
-    if(stDef->vectorForce[VX] != 0 || stDef->vectorForce[VY] != 0 ||
-       stDef->vectorForce[VZ] != 0)
+    if(stDef->vectorForce[0] != 0 || stDef->vectorForce[1] != 0 ||
+       stDef->vectorForce[2] != 0)
     {
-        for(int i = 0; i < 3; ++i)
+        for(dint i = 0; i < 3; ++i)
         {
             pinfo->mov[i] += FLT2FIX(stDef->vectorForce[i]);
         }
@@ -671,32 +672,32 @@ void Generator::moveParticle(int index)
     if(st->flags.testFlag(ParticleStage::SphereForce) &&
        (source || isUntriggered()))
     {
-        float delta[3];
+        dfloat delta[3];
 
         if(source)
         {
-            delta[VX] = FIX2FLT(pinfo->origin[VX]) - source->origin[VX];
-            delta[VY] = FIX2FLT(pinfo->origin[VY]) - source->origin[VY];
-            delta[VZ] = particleZ(*pinfo) - (source->origin[VZ] + FIX2FLT(originAtSpawn[VZ]));
+            delta[0] = FIX2FLT(pinfo->origin[0]) - source->origin[0];
+            delta[1] = FIX2FLT(pinfo->origin[1]) - source->origin[1];
+            delta[2] = particleZ(*pinfo) - (source->origin[2] + FIX2FLT(originAtSpawn[2]));
         }
         else
         {
-            for(int i = 0; i < 3; ++i)
+            for(dint i = 0; i < 3; ++i)
             {
                 delta[i] = FIX2FLT(pinfo->origin[i] - originAtSpawn[i]);
             }
         }
 
         // Apply the offset (to source coords).
-        for(int i = 0; i < 3; ++i)
+        for(dint i = 0; i < 3; ++i)
         {
             delta[i] -= def->forceOrigin[i];
         }
 
         // Counter the aspect ratio of old times.
-        delta[VZ] *= 1.2f;
+        delta[2] *= 1.2f;
 
-        float dist = M_ApproxDistancef(M_ApproxDistancef(delta[VX], delta[VY]), delta[VZ]);
+        dfloat dist = M_ApproxDistancef(M_ApproxDistancef(delta[0], delta[1]), delta[2]);
         if(dist != 0)
         {
             // Radial force pushes the particles on the surface of a sphere.
@@ -704,7 +705,7 @@ void Generator::moveParticle(int index)
             {
                 // Normalize delta vector, multiply with (dist - forceRadius),
                 // multiply with radial force strength.
-                for(int i = 0; i < 3; ++i)
+                for(dint i = 0; i < 3; ++i)
                 {
                     pinfo->mov[i] -= FLT2FIX(
                         ((delta[i] / dist) * (dist - def->forceRadius)) * def->force);
@@ -712,12 +713,12 @@ void Generator::moveParticle(int index)
             }
 
             // Rotate!
-            if(def->forceAxis[VX] || def->forceAxis[VY] || def->forceAxis[VZ])
+            if(def->forceAxis[0] || def->forceAxis[1] || def->forceAxis[2])
             {
-                float cross[3];
+                dfloat cross[3];
                 V3f_CrossProduct(cross, def->forceAxis, delta);
 
-                for(int i = 0; i < 3; ++i)
+                for(dint i = 0; i < 3; ++i)
                 {
                     pinfo->mov[i] += FLT2FIX(cross[i]) >> 8;
                 }
@@ -727,7 +728,7 @@ void Generator::moveParticle(int index)
 
     if(st->resistance != FRACUNIT)
     {
-        for(int i = 0; i < 3; ++i)
+        for(dint i = 0; i < 3; ++i)
         {
             pinfo->mov[i] = FixedMul(pinfo->mov[i], st->resistance);
         }
@@ -745,9 +746,9 @@ void Generator::moveParticle(int index)
     }
 
     // Check the new Z position only if not stuck to a plane.
-    fixed_t z = pinfo->origin[VZ] + pinfo->mov[VZ];
+    fixed_t z = pinfo->origin[2] + pinfo->mov[2];
     bool zBounce = false, hitFloor = false;
-    if(pinfo->origin[VZ] != DDMININT && pinfo->origin[VZ] != DDMAXINT && pinfo->bspLeaf)
+    if(pinfo->origin[2] != DDMININT && pinfo->origin[2] != DDMAXINT && pinfo->bspLeaf)
     {
         SectorCluster &cluster = pinfo->bspLeaf->subspace().cluster();
         if(z > FLT2FIX(cluster.visCeiling().heightSmoothed()) - hardRadius)
@@ -787,8 +788,8 @@ void Generator::moveParticle(int index)
 
         if(zBounce)
         {
-            pinfo->mov[VZ] = FixedMul(-pinfo->mov[VZ], st->bounce);
-            if(!pinfo->mov[VZ])
+            pinfo->mov[2] = FixedMul(-pinfo->mov[2], st->bounce);
+            if(!pinfo->mov[2])
             {
                 // The particle has stopped moving. This means its Z-movement
                 // has ceased because of the collision with a plane. Plane-flat
@@ -802,15 +803,15 @@ void Generator::moveParticle(int index)
         }
 
         // Move to the new Z coordinate.
-        pinfo->origin[VZ] = z;
+        pinfo->origin[2] = z;
     }
 
     // Now check the XY direction.
     // - Check if the movement crosses any solid lines.
     // - If it does, quit when first one contacted and apply appropriate
     //   bounce (result depends on the angle of the contacted wall).
-    fixed_t x = pinfo->origin[VX] + pinfo->mov[VX];
-    fixed_t y = pinfo->origin[VY] + pinfo->mov[VY];
+    fixed_t x = pinfo->origin[0] + pinfo->mov[0];
+    fixed_t y = pinfo->origin[1] + pinfo->mov[1];
 
     struct checklineworker_params_t
     {
@@ -824,7 +825,7 @@ void Generator::moveParticle(int index)
 
     // XY movement can be skipped if the particle is not moving on the
     // XY plane.
-    if(!pinfo->mov[VX] && !pinfo->mov[VY])
+    if(!pinfo->mov[0] && !pinfo->mov[1])
     {
         // If the particle is contacting a line, there is a chance that the
         // particle should be killed (if it's moving slowly at max).
@@ -833,7 +834,7 @@ void Generator::moveParticle(int index)
             Sector *front = pinfo->contact->frontSectorPtr();
             Sector *back  = pinfo->contact->backSectorPtr();
 
-            if(front && back && abs(pinfo->mov[VZ]) < FRACUNIT / 2)
+            if(front && back && abs(pinfo->mov[2]) < FRACUNIT / 2)
             {
                 coord_t const pz = particleZ(*pinfo);
 
@@ -878,17 +879,17 @@ void Generator::moveParticle(int index)
     // Bounding box of the movement line.
     clParm.tmpz = z;
     clParm.tmprad = hardRadius;
-    clParm.tmpx1 = pinfo->origin[VX];
+    clParm.tmpx1 = pinfo->origin[0];
     clParm.tmpx2 = x;
-    clParm.tmpy1 = pinfo->origin[VY];
+    clParm.tmpy1 = pinfo->origin[1];
     clParm.tmpy2 = y;
 
     vec2d_t point;
-    V2d_Set(point, FIX2FLT(MIN_OF(x, pinfo->origin[VX]) - st->radius),
-                   FIX2FLT(MIN_OF(y, pinfo->origin[VY]) - st->radius));
+    V2d_Set(point, FIX2FLT(MIN_OF(x, pinfo->origin[0]) - st->radius),
+                   FIX2FLT(MIN_OF(y, pinfo->origin[1]) - st->radius));
     V2d_InitBox(clParm.box.arvec2, point);
-    V2d_Set(point, FIX2FLT(MAX_OF(x, pinfo->origin[VX]) + st->radius),
-                   FIX2FLT(MAX_OF(y, pinfo->origin[VY]) + st->radius));
+    V2d_Set(point, FIX2FLT(MAX_OF(x, pinfo->origin[0]) + st->radius),
+                   FIX2FLT(MAX_OF(y, pinfo->origin[1]) + st->radius));
     V2d_AddToBox(clParm.box.arvec2, point);
 
     // Iterate the lines in the contacted blocks.
@@ -976,10 +977,10 @@ void Generator::moveParticle(int index)
         // - Multiply with bounce.
 
         // Calculate the normal.
-        normal[VX] = -FLT2FIX(clParm.ptcHitLine->direction().x);
-        normal[VY] = -FLT2FIX(clParm.ptcHitLine->direction().y);
+        normal[0] = -FLT2FIX(clParm.ptcHitLine->direction().x);
+        normal[1] = -FLT2FIX(clParm.ptcHitLine->direction().y);
 
-        if(!normal[VX] && !normal[VY])
+        if(!normal[0] && !normal[1])
             goto quit_iteration;
 
         // Calculate as floating point so we don't overflow.
@@ -990,8 +991,8 @@ void Generator::moveParticle(int index)
         VECMUL(pinfo->mov, st->bounce);
 
         // Continue from the old position.
-        x = pinfo->origin[VX];
-        y = pinfo->origin[VY];
+        x = pinfo->origin[0];
+        y = pinfo->origin[1];
         clParm.tmcross = false; // Sector can't change if XY doesn't.
 
         // This line is the latest contacted line.
@@ -1001,8 +1002,8 @@ void Generator::moveParticle(int index)
 
   quit_iteration:
     // The move is now OK.
-    pinfo->origin[VX] = x;
-    pinfo->origin[VY] = y;
+    pinfo->origin[0] = x;
+    pinfo->origin[1] = y;
 
     // Should we update the sector pointer?
     if(clParm.tmcross)
@@ -1137,3 +1138,5 @@ void Generator_Thinker(Generator *gen)
     DENG2_ASSERT(gen != 0);
     gen->runTick();
 }
+
+}  // namespace world
