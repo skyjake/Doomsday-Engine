@@ -504,7 +504,7 @@ void applyFlagOperation(FlagsType &flags, FlagsCompatibleType const &newFlags, F
 }
 
 /**
- * Logical clock-wise direction identifiers.
+ * Clock-wise direction identifiers.
  */
 enum ClockDirection {
     Anticlockwise = 0,
