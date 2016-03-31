@@ -43,7 +43,7 @@ namespace res {
  * to "overdraw" posts - the wall column drawer is working with post pixel
  * ranges rather than the "logical" height declared in the header.
  */
-class Patch
+class LIBDOOMSDAY_PUBLIC Patch
 {
 public:
     /**

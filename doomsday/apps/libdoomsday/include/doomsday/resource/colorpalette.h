@@ -20,6 +20,7 @@
 #ifndef LIBDOOMSDAY_RESOURCE_COLORPALETTE_H
 #define LIBDOOMSDAY_RESOURCE_COLORPALETTE_H
 
+#include "../libdoomsday.h"
 #include <de/Error>
 #include <de/Id>
 #include <de/Observers>
@@ -34,7 +35,7 @@ namespace res {
  * Converts a sequence of bytes, given a color format descriptor, into a table
  * of colors (usable with ColorPalette).
  */
-class ColorTableReader
+class LIBDOOMSDAY_PUBLIC ColorTableReader
 {
 public:
     /// Base class for color-format-related errors. @ingroup errors
@@ -61,7 +62,7 @@ public:
  *
  * @ingroup resource
  */
-class ColorPalette
+class LIBDOOMSDAY_PUBLIC ColorPalette
 {
 public:
     /// An invalid translation id was specified. @ingroup errors
