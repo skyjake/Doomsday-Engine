@@ -30,6 +30,7 @@
 
 #include <QDataStream>
 #include <QPainter>
+#include <QColor>
 
 namespace de {
 
@@ -643,13 +644,41 @@ void Image::drawPartial(Image const &image, Rectanglei const &part, Vector2i con
                       QRect(part.left(), part.top(), part.width(), part.height()));
 }
 
-Image Image::multiply(Image const &factorImage)
+Image Image::multiplied(Image const &factorImage) const
 {
     QImage multiplied = toQImage();
     QPainter painter(&multiplied);
     painter.setCompositionMode(QPainter::CompositionMode_Multiply);
     painter.drawImage(0, 0, factorImage.toQImage());
     return multiplied;
+}
+
+Image Image::colorized(Color const &color) const
+{
+    QImage copy = toQImage().convertToFormat(QImage::Format_ARGB32);
+
+    for(duint y = 0; y < height(); ++y)
+    {
+        duint32 *ptr = reinterpret_cast<duint32 *>(copy.bits() + y * copy.bytesPerLine());
+        for(duint x = 0; x < width(); ++x)
+        {
+            duint16 b =  *ptr & 0xff;
+            duint16 g = (*ptr & 0xff00) >> 8;
+            duint16 r = (*ptr & 0xff0000) >> 16;
+            duint16 a = (*ptr & 0xff000000) >> 24;
+
+            QColor rgba(r, g, b, a);
+
+            int value = rgba.value();
+            r = color.x * value >> 8;
+            g = color.y * value >> 8;
+            b = color.z * value >> 8;
+            a = color.w * a >> 8;
+
+            *ptr++ = qRgba(r, g, b, a);
+        }
+    }
+    return copy;
 }
 
 void Image::operator >> (Writer &to) const

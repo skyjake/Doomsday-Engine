@@ -149,7 +149,7 @@ Image ImageFile::image() const
                                   .arg(refPath / d->filterParameter));
             }
 
-            img = img.multiply(factorImg);
+            img = img.multiplied(factorImg);
         }
         return img;
     }
