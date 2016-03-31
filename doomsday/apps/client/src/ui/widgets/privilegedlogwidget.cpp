@@ -48,7 +48,7 @@ DENG_GUI_PIMPL(PrivilegedLogWidget)
 PrivilegedLogWidget::PrivilegedLogWidget()
     : d(new Instance(this))
 {
-    auto const &gap = style().rules().rule("gap");
+    auto const &gap = rule("gap");
 
     hide();
     connect(d->log, SIGNAL(contentHeightIncreased(int)), this, SLOT(showLog()));

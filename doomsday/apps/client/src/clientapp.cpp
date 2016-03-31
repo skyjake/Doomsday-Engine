@@ -138,9 +138,9 @@ DENG2_PIMPL(ClientApp)
     Binder binder;
     QScopedPointer<Updater> updater;
     BusyRunner busyRunner;
-    SettingsRegister audioSettings;
-    SettingsRegister networkSettings;
-    SettingsRegister logSettings;
+    ConfigProfiles audioSettings;
+    ConfigProfiles networkSettings;
+    ConfigProfiles logSettings;
     QMenuBar *menuBar;
     InputSystem *inputSys;
     ::audio::System *audioSys;
@@ -237,10 +237,6 @@ DENG2_PIMPL(ClientApp)
 
     ~Instance()
     {
-        self.audienceForGameChange() -= this;
-        self.audienceForGameUnload() -= this;
-        self.audienceForConsoleRegistration() -= this;
-
         try
         {
             LogBuffer::get().removeSink(logAlarm);
@@ -255,6 +251,10 @@ DENG2_PIMPL(ClientApp)
             qWarning() << "Exception during ~ClientApp:" << er.asText();
             DENG2_ASSERT(!"Unclean shutdown: exception in ~ClientApp");
         }
+
+        self.audienceForGameChange() -= this;
+        self.audienceForGameUnload() -= this;
+        self.audienceForConsoleRegistration() -= this;
 
         updater.reset();
         //delete infineSys;
@@ -361,7 +361,7 @@ DENG2_PIMPL(ClientApp)
         infineSys.deinitBindingContext();
     }
 
-    void currentGameChanged(Game const &)
+    void currentGameChanged(Game const &newGame)
     {
         if(Sys_IsShuttingDown()) return;
 
@@ -377,14 +377,13 @@ DENG2_PIMPL(ClientApp)
          */
         inputSys->clearEvents();
 
-        if(!App_GameLoaded())
+        if(newGame.isNull())
         {
-            ClientWindow::main().taskBar().open();
+            // The mouse is free while in the Home.
+            ClientWindow::main().canvas().trapMouse(false);
         }
-        else
-        {
-            ClientWindow::main().console().zeroLogHeight();
-        }
+
+        ClientWindow::main().console().zeroLogHeight();
     }
 
     /**
@@ -403,7 +402,7 @@ DENG2_PIMPL(ClientApp)
 
     void initSettings()
     {
-        using SReg = SettingsRegister; // convenience
+        using SReg = ConfigProfiles; // convenience
 
         // Log filter and alert settings.
         for(int i = LogEntry::FirstDomainBit; i <= LogEntry::LastDomainBit; ++i)
@@ -654,17 +653,17 @@ Updater &ClientApp::updater()
     return *app().d->updater;
 }
 
-SettingsRegister &ClientApp::logSettings()
+ConfigProfiles &ClientApp::logSettings()
 {
     return app().d->logSettings;
 }
 
-SettingsRegister &ClientApp::networkSettings()
+ConfigProfiles &ClientApp::networkSettings()
 {
     return app().d->networkSettings;
 }
 
-SettingsRegister &ClientApp::audioSettings()
+ConfigProfiles &ClientApp::audioSettings()
 {
     return app().d->audioSettings;
 }
@@ -804,7 +803,7 @@ void ClientApp::unloadGame(Game const &upcomingGame)
     world::Map::initDummies();
 }
 
-void ClientApp::makeGameCurrent(Game &newGame)
+void ClientApp::makeGameCurrent(Game const &newGame)
 {
     DoomsdayApp::makeGameCurrent(newGame);
 

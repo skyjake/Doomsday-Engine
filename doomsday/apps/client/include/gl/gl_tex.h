@@ -27,7 +27,7 @@
 
 #include "color.h"
 
-class ColorPalette;
+#include <doomsday/resource/colorpalette.h>
 
 typedef struct colorpalette_analysis_s {
     colorpaletteid_t paletteId;
@@ -64,8 +64,7 @@ void AmplifyLuma(uint8_t* pixels, int width, int height, dd_bool hasAlpha);
  * @return  If the in buffer wasn't large enough will return a ptr to the
  *      newly allocated buffer which must be freed with free(), else @a buf.
  */
-uint8_t* ApplyColorKeying(uint8_t* pixels, int width, int height,
-    int pixelSize);
+uint8_t* ApplyColorKeying(uint8_t* pixels, int width, int height, int pixelSize);
 
 #if 0 // dj: Doesn't make sense, "darkness" applied to an alpha channel?
 /**
@@ -144,7 +143,7 @@ void EqualizeLuma(uint8_t* pixels, int width, int height,
  * @param color      Determined average color written here.
  */
 void FindAverageColor(const uint8_t* pixels, int width, int height,
-    int pixelSize, ColorRawf* color);
+                      int pixelSize, ColorRawf* color);
 
 /**
  * @param pixels    Index-color image to evaluate.
@@ -155,7 +154,7 @@ void FindAverageColor(const uint8_t* pixels, int width, int height,
  * @param color     Determined average color written here.
  */
 void FindAverageColorIdx(uint8_t const *pixels, int width, int height,
-    ColorPalette const &palette, dd_bool hasAlpha, ColorRawf *color);
+    res::ColorPalette const &palette, dd_bool hasAlpha, ColorRawf *color);
 
 /**
  * @param pixels     RGB(a) image to evaluate.
@@ -178,7 +177,7 @@ void FindAverageLineColor(uint8_t const *pixels, int width, int height,
  * @param color     Determined average color written here.
  */
 void FindAverageLineColorIdx(uint8_t const *pixels, int width, int height,
-    int line, ColorPalette const &palette, dd_bool hasAlpha, ColorRawf *color);
+    int line, res::ColorPalette const &palette, dd_bool hasAlpha, ColorRawf *color);
 
 /**
  * @param pixels     RGB(a) image to evaluate.
@@ -258,18 +257,18 @@ void GL_DownMipmap32(uint8_t* pixels, int width, int height, int pixelSize);
  */
 void GL_DownMipmap8(uint8_t* in, uint8_t* fadedOut, int width, int height, float fade);
 
-dd_bool GL_PalettizeImage(uint8_t *out, int outformat, ColorPalette const *palette,
+dd_bool GL_PalettizeImage(uint8_t *out, int outformat, res::ColorPalette const *palette,
     dd_bool gammaCorrect, uint8_t const *in, int informat, int width, int height);
 
 dd_bool GL_QuantizeImageToPalette(uint8_t *out, int outformat,
-    ColorPalette const *palette, uint8_t const *in, int informat, int width, int height);
+    res::ColorPalette const *palette, uint8_t const *in, int informat, int width, int height);
 
 /**
  * Desaturates the texture in the dest buffer by averaging the colour then
  * looking up the nearest match in the palette. Increases the brightness
  * to maximum.
  */
-void GL_DeSaturatePalettedImage(uint8_t *buffer, ColorPalette const &palette,
+void GL_DeSaturatePalettedImage(uint8_t *buffer, res::ColorPalette const &palette,
     int width, int height);
 
 #endif // DENG_GL_IMAGE_MANIPULATION_H

@@ -105,14 +105,14 @@ DENG2_PIMPL_NOREF(SurfaceDecorator)
                                    , &delta, &axis, &sufDimensions, &decorIndex]
                                    (MaterialDecoration &decor)
         {
-            Vector2i const &matDimensions               = matAnimator.material().dimensions();
+            Vector2ui const &matDimensions              = matAnimator.material().dimensions();
             MaterialAnimator::Decoration const &decorSS = matAnimator.decoration(decorIndex);
 
             // Skip values must be at least one.
             Vector2i skip = Vector2i(decor.patternSkip().x + 1, decor.patternSkip().y + 1)
                                 .max(Vector2i(1, 1));
 
-            Vector2f repeat = matDimensions * skip;
+            Vector2f repeat = skip.toVector2ui() * matDimensions;
             if(repeat == Vector2f(0, 0))
                 return LoopAbort;
 

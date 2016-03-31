@@ -22,14 +22,20 @@
 #define DENG_CONSOLE_CONFIG_H
 
 #include "dd_share.h"
-#include <de/Path>
+
+#include <de/File>
+#include <de/NativePath>
 
 // Flags for Con_ParseCommands:
-#define CPCF_SET_DEFAULT            0x1
+#define CPCF_SILENT                 0x1
 #define CPCF_ALLOW_SAVE_STATE       0x2
 #define CPCF_ALLOW_SAVE_BINDINGS    0x4
 
-bool Con_ParseCommands(de::Path const &fileName, int flags = 0);
+bool Con_ParseCommands(de::NativePath const &nativePath, int flags = 0);
+
+bool Con_ParseCommands(de::File const &file, int flags = 0);
+
+void Con_SetDefaultPath(de::Path const &path);
 
 /**
  * Saves all bindings, aliases and archiveable console variables.

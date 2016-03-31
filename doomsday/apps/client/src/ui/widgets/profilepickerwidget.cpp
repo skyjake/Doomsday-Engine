@@ -31,12 +31,12 @@ static int const MAX_PROFILE_NAME = 100;
 
 DENG_GUI_PIMPL(ProfilePickerWidget)
 {
-    SettingsRegister &settings;
+    ConfigProfiles &settings;
     String description;
     PopupButtonWidget *button;
     bool invertedPopups = false;
 
-    Instance(Public *i, SettingsRegister& reg)
+    Instance(Public *i, ConfigProfiles& reg)
         : Base(i)
         , settings(reg)
         , button(0)
@@ -77,7 +77,7 @@ DENG_GUI_PIMPL(ProfilePickerWidget)
     }
 };
 
-ProfilePickerWidget::ProfilePickerWidget(SettingsRegister &settings, String const &description, String const &name)
+ProfilePickerWidget::ProfilePickerWidget(ConfigProfiles &settings, String const &description, String const &name)
     : ChoiceWidget(name), d(new Instance(this, settings))
 {
     d->description = description;
@@ -112,7 +112,7 @@ void ProfilePickerWidget::updateStyle()
 
 void ProfilePickerWidget::openMenu()
 {
-    SettingsRegister &reg = d->settings;
+    ConfigProfiles &reg = d->settings;
 
     auto *menu = new PopupMenuWidget;
     menu->setAllowDirectionFlip(false);
@@ -134,7 +134,7 @@ void ProfilePickerWidget::openMenu()
 
     // Enable or disable buttons depending on the selected profile.
     String selProf = selectedItem().data().toString();
-    if(reg.isReadOnlyProfile(selProf))
+    if(reg.find(selProf).isReadOnly())
     {
         // Read-only profiles can only be duplicated.
         menu->items().at(0).setLabel("View");
@@ -142,7 +142,7 @@ void ProfilePickerWidget::openMenu()
         org.itemWidget(5)->disable();
         org.itemWidget(6)->disable();
     }
-    if(reg.profileCount() == 1)
+    if(reg.count() == 1)
     {
         // The last profile cannot be deleted.
         org.itemWidget(6)->disable();

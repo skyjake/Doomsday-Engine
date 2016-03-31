@@ -272,6 +272,12 @@ Path::~Path()
     delete d;
 }
 
+Path &Path::operator = (char const *pathUtf8)
+{
+    *this = Path(pathUtf8);
+    return *this;
+}
+
 Path Path::operator + (QString const &str) const
 {
     return Path(d->path + str, d->separator);

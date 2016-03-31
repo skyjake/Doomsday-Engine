@@ -270,6 +270,19 @@ public:
     File *source();
 
     /**
+     * Returns the target of a symbolic link. For most files this is just returns
+     * a reference to the file itself.
+     *
+     * @return Target file.
+     *
+     * @see LinkFile
+     */
+    virtual File &target();
+
+    /// @copydoc target()
+    virtual File const &target() const;
+
+    /**
      * Updates the status of the file.
      *
      * @param status  New status.

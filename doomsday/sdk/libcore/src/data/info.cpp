@@ -465,6 +465,12 @@ DENG2_PIMPL(Info)
         // Move past the opening angle bracket.
         nextToken();
 
+        if(peekToken() == ">")
+        {
+            nextToken();
+            return element.take();
+        }
+
         forever
         {
             element->add(parseValue());

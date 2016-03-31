@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Canvas"
@@ -71,7 +71,7 @@ DENG2_PIMPL(Canvas)
         , parent(parentWindow)
         , readyNotified(false)
         , mouseGrabbed(false)
-    {        
+    {
         wheelDir[0] = wheelDir[1] = 0;
 
 #ifdef WIN32
@@ -384,7 +384,7 @@ void Canvas::updateSize()
 #endif
 
     makeCurrent();
-    d->currentSize = d->pendingSize; 
+    d->currentSize = d->pendingSize;
     d->reconfigureFramebuffer();
 
     DENG2_FOR_AUDIENCE2(GLResize, i) i->canvasGLResized(*this);
@@ -525,6 +525,17 @@ void Canvas::mouseReleaseEvent(QMouseEvent* ev)
     DENG2_FOR_AUDIENCE2(MouseEvent, i)
     {
         i->mouseEvent(MouseEvent(translateButton(ev->button()), MouseEvent::Released,
+                                 d->translatePosition(ev)));
+    }
+}
+
+void Canvas::mouseDoubleClickEvent(QMouseEvent *ev)
+{
+    ev->accept();
+
+    DENG2_FOR_AUDIENCE2(MouseEvent, i)
+    {
+        i->mouseEvent(MouseEvent(translateButton(ev->button()), MouseEvent::DoubleClick,
                                  d->translatePosition(ev)));
     }
 }

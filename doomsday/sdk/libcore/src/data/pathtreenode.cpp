@@ -27,7 +27,7 @@ DENG2_PIMPL_NOREF(PathTree::Node)
     /// PathTree which owns this node.
     PathTree &tree;
 
-    /// Parent node in the user's logical hierarchy.
+    /// Parent node in the user's hierarchy.
     PathTree::Node *parent;
 
     /// @c NULL for leaves, index of children for branches.
@@ -36,7 +36,7 @@ DENG2_PIMPL_NOREF(PathTree::Node)
     /// Unique identifier for the path fragment this node represents,
     /// in the owning PathTree.
     PathTree::SegmentId segmentId;
-    
+
     String const *segmentText = nullptr; // owned by the PathTree
 
     Instance(PathTree &_tree, bool isLeaf, PathTree::SegmentId _segmentId,

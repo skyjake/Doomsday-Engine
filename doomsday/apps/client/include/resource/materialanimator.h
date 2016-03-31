@@ -175,7 +175,7 @@ public:
     /**
      * Returns the current dimension metrics for the animated Material.
      */
-    de::Vector2i const &dimensions() const;
+    de::Vector2ui const &dimensions() const;
 
     /**
      * Returns the current glow strength factor for the animated Material.

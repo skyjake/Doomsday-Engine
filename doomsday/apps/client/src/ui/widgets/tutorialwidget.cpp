@@ -170,7 +170,7 @@ DENG_GUI_PIMPL(TutorialWidget)
         forever
         {
             bool skip = false;
-            if(!App_GameLoaded()) // in Ring Zero
+            if(!App_GameLoaded()) // in Home
             {
                 if(s == RendererAppearance) skip = true;
             }
@@ -347,7 +347,7 @@ DENG_GUI_PIMPL(TutorialWidget)
             }
             dlg->message().setText(msg);
             dlg->setAnchor(win.taskBar().console().commandLine().rule().left() +
-                           style().rules().rule("gap"),
+                           rule("gap"),
                            win.taskBar().rule().top());
             dlg->setOpeningDirection(ui::Up);
             dlg->updateLayout();

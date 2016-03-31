@@ -41,6 +41,16 @@ void FadeToBlackWidget::start()
     setOpacity(0, d->span);
 }
 
+void FadeToBlackWidget::pause()
+{
+    opacityAnimation().pause();
+}
+
+void FadeToBlackWidget::resume()
+{
+    opacityAnimation().resume();
+}
+
 void FadeToBlackWidget::cancel()
 {
     setOpacity(0);

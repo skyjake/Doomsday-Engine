@@ -89,11 +89,12 @@ DENG_GUI_PIMPL(PopupMenuWidget)
         Id _id;
     };
 
-    bool infoStyle = false;
+    ColorTheme colorTheme = Normal;
     ButtonWidget *hover;
     int oldScrollY;
     Rule const *widestItem;
     IndirectRule *maxItemWidth;
+    SafeWidgetPtr<PopupWidget> parentPopup;
 
     Instance(Public *i)
         : Base(i)
@@ -206,8 +207,8 @@ DENG_GUI_PIMPL(PopupMenuWidget)
     void setButtonColors(ButtonWidget &button)
     {
         bool const hovering = (hover == &button);
-        button.setTextColor(!hovering ^ infoStyle? "text" : "inverted.text");
-        button.setHoverTextColor(!hovering ^ infoStyle? "inverted.text" : "text",
+        button.setTextColor(!hovering ^ (colorTheme == Inverted)? "text" : "inverted.text");
+        button.setHoverTextColor(!hovering ^ (colorTheme == Inverted)? "inverted.text" : "text",
                                  ButtonWidget::ReplaceColor);
     }
 
@@ -257,8 +258,8 @@ DENG_GUI_PIMPL(PopupMenuWidget)
     {
         bool const useExtraPadding = hasButtonsWithImages();
 
-        auto const &padding = style().rules().rule("popup.menu.paddedmargin");
-        auto const &none    = style().rules().rule("popup.menu.margin");
+        auto const &padding = rule("popup.menu.paddedmargin");
+        auto const &none    = rule("popup.menu.margin");
 
         foreach(Widget *child, self.menu().childWidgets())
         {
@@ -295,7 +296,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
                         LabelWidget::ContentLayout layout;
                         button->contentLayout(layout);
                         sumInto(padRule, -Const(layout.image.width()) -
-                                style().rules().rule(button->textGap()));
+                                rule(button->textGap()));
                     }
                     widget.margins().setLeft(*padRule);
                     releaseRef(padRule);
@@ -310,7 +311,8 @@ DENG_GUI_PIMPL(PopupMenuWidget)
 
     void updateImageColor(ButtonWidget &button, bool invert = false)
     {
-        button.setImageColor(style().colors().colorf(invert ^ infoStyle? "inverted.text" : "text"));
+        button.setImageColor(style().colors().colorf(invert ^ (colorTheme == Inverted)? "inverted.text"
+                                                                                      : "text"));
     }
 
     void buttonStateChanged(ButtonWidget &button, ButtonWidget::State state)
@@ -350,6 +352,8 @@ DENG_GUI_PIMPL(PopupMenuWidget)
     {
         // The popup menu is closed when an action is triggered.
         self.close();
+
+        if(parentPopup) parentPopup->close();
     }
 
     void updateIfScrolled()
@@ -412,6 +416,12 @@ PopupMenuWidget::PopupMenuWidget(String const &name)
     menu().organizer().audienceForWidgetUpdate() += d;
 }
 
+void PopupMenuWidget::setParentPopup(PopupWidget *parentPopup)
+{
+    // The parent will be closed, too, if the submenu is closed due to activation.
+    d->parentPopup.reset(parentPopup);
+}
+
 MenuWidget &PopupMenuWidget::menu() const
 {
     return static_cast<MenuWidget &>(content());
@@ -419,8 +429,13 @@ MenuWidget &PopupMenuWidget::menu() const
 
 void PopupMenuWidget::useInfoStyle(bool yes)
 {
-    PopupWidget::useInfoStyle(yes);
-    d->infoStyle = yes;
+    setColorTheme(yes? Inverted : Normal);
+}
+
+void PopupMenuWidget::setColorTheme(ColorTheme theme)
+{
+    PopupWidget::setColorTheme(theme);
+    d->colorTheme = theme;
     d->updateButtonColors();
 }
 
@@ -438,8 +453,8 @@ void PopupMenuWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
     {
         verts.makeQuad(d->highlightRect(),
                        d->hover->state() == ButtonWidget::Hover?
-                           style().colors().colorf(!d->infoStyle? "inverted.background" : "background") :
-                           style().colors().colorf(!d->infoStyle? "accent" : "inverted.accent"),
+                           style().colors().colorf(d->colorTheme == Normal? "inverted.background" : "background") :
+                           style().colors().colorf(d->colorTheme == Normal? "accent" : "inverted.accent"),
                        root().atlas().imageRectf(root().solidWhitePixel()).middle());
     }
 }

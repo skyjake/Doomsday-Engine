@@ -308,16 +308,6 @@ void PanelWidget::update()
     GuiWidget::update();
 }
 
-void PanelWidget::preDrawChildren()
-{
-    GLState::push().setNormalizedScissor(normalizedRect());
-}
-
-void PanelWidget::postDrawChildren()
-{
-    GLState::pop();
-}
-
 bool PanelWidget::handleEvent(Event const &event)
 {
     if(event.type() == Event::MouseButton)
@@ -327,7 +317,7 @@ bool PanelWidget::handleEvent(Event const &event)
         // Eat buttons that land on the panel.
         if(hitTest(mouse.pos()))
         {
-            root().setFocus(0);
+            //root().setFocus(0);
             return true;
         }
     }

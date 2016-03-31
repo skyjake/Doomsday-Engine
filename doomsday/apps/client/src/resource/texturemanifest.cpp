@@ -29,7 +29,7 @@ DENG2_OBSERVES(Texture, Deletion)
 {
     int uniqueId;                    ///< Scheme-unique identifier (user defined).
     Uri resourceUri;                 ///< Image resource path, to be loaded.
-    Vector2i logicalDimensions;      ///< Dimensions in map space.
+    Vector2ui logicalDimensions;     ///< Dimensions in map space.
     Vector2i origin;                 ///< Origin offset in map space.
     Texture::Flags flags;            ///< Classification flags.
     QScopedPointer<Texture> texture; ///< Associated resource (if any).
@@ -171,12 +171,12 @@ void TextureManifest::setFlags(Texture::Flags flagsToChange, FlagOp operation)
     applyFlagOperation(d->flags, flagsToChange, operation);
 }
 
-Vector2i const &TextureManifest::logicalDimensions() const
+Vector2ui const &TextureManifest::logicalDimensions() const
 {
     return d->logicalDimensions;
 }
 
-bool TextureManifest::setLogicalDimensions(Vector2i const &newDimensions)
+bool TextureManifest::setLogicalDimensions(Vector2ui const &newDimensions)
 {
     if(d->logicalDimensions == newDimensions) return false;
     d->logicalDimensions = newDimensions;

@@ -21,22 +21,14 @@
 #ifndef __DOOMSDAY_MUS2MIDI_H__
 #define __DOOMSDAY_MUS2MIDI_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <de/Block>
 
 /**
  * Converts DOOM MUS format music into MIDI music. The output is written to a
- * native file.
+ * memory buffer.
  *
- * @param data     The MUS data to convert.
- * @param length   The length of the data in bytes.
- * @param outFile  Name of the file the resulting MIDI data will be written to.
+ * @param musData  The MUS data to convert.
  */
-dd_bool M_Mus2Midi(void* data, size_t length, const char* outFile);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
+de::Block M_Mus2Midi(de::Block const &musData);
 
 #endif

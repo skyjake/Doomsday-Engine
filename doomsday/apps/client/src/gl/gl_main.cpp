@@ -1117,7 +1117,7 @@ duint8 *GL_ConvertBuffer(duint8 const *in, dint width, dint height, dint informa
         exit(1); // Unreachable.
     }
 
-    ColorPalette *palette = (informat <= 2? &resSys().colorPalette(paletteId) : nullptr);
+    res::ColorPalette *palette = (informat <= 2? &resSys().colorPalette(paletteId) : nullptr);
 
     auto *out = (duint8 *) M_Malloc(outformat * width * height);
 
@@ -1162,7 +1162,7 @@ void GL_CalcLuminance(duint8 const *buffer, dint width, dint height, dint pixelS
 
     static duint8 const sizeLimit = 192, brightLimit = 224, colLimit = 192;
 
-    ColorPalette *palette = (pixelSize == 1? &resSys().colorPalette(paletteId) : nullptr);
+    res::ColorPalette *palette = (pixelSize == 1? &resSys().colorPalette(paletteId) : nullptr);
 
     // Apply the defaults.
     // Default to the center of the texture.

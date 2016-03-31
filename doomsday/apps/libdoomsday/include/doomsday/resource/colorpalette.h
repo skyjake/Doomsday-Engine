@@ -17,19 +17,18 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RESOURCE_COLORPALETTE_H
-#define DENG_RESOURCE_COLORPALETTE_H
+#ifndef LIBDOOMSDAY_RESOURCE_COLORPALETTE_H
+#define LIBDOOMSDAY_RESOURCE_COLORPALETTE_H
 
-#include <de/libcore.h>
 #include <de/Error>
 #include <de/Id>
 #include <de/Observers>
 #include <de/String>
 #include <de/Vector>
-#ifdef __CLIENT__
-#include <QColor>
-#endif
+
 #include <QVector>
+
+namespace res {
 
 /**
  * Converts a sequence of bytes, given a color format descriptor, into a table
@@ -119,16 +118,6 @@ public:
      */
     de::Vector3f colorf(int colorIndex) const;
 
-#ifdef __CLIENT__
-    /**
-     * Same as @ref color() except the color is returned as a QColor instance.
-     */
-    inline QColor colorq(int colorIndex, int alpha = 255) const {
-        de::Vector3ub rgb = color(colorIndex);
-        return QColor(rgb.x, rgb.y, rgb.z, alpha);
-    }
-#endif
-
     /**
      * Replace the entire color table. The ColorTableChange audience is notified
      * whenever the color table changes.
@@ -179,4 +168,6 @@ private:
 
 typedef ColorPalette::Translation ColorPaletteTranslation;
 
-#endif // DENG_RESOURCE_COLORPALETTE_H
+} // namespace res
+
+#endif // LIBDOOMSDAY_RESOURCE_COLORPALETTE_H

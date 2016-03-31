@@ -23,6 +23,8 @@
 
 #include <QDir>
 #include <QTextStream>
+#include <cstdio>
+#include <cstdarg>
 
 using namespace de;
 
@@ -462,6 +464,38 @@ void String::skipSpace(String::const_iterator &i, String::const_iterator const &
     while(i != end && (*i).isSpace()) ++i;
 }
 
+String String::format(String format, ...)
+{
+    va_list args;
+    Block buffer;
+    int neededSize = 1024;
+
+    forever
+    {
+        buffer.resize(neededSize);
+
+        va_start(args, format);
+        int count = vsnprintf((char *) buffer.data(), buffer.size(), format.toUtf8(), args);
+        va_end(args);
+
+        if(count >= 0 && count < neededSize)
+        {
+            buffer.resize(count);
+            return fromUtf8(buffer);
+        }
+
+        if(count >= 0)
+        {
+            neededSize = count + 1;
+        }
+        else
+        {
+            neededSize *= 2; // Try bigger.
+        }
+    }
+    return fromUtf8(buffer);
+}
+
 // Seems like an ommission on the part of QChar...
 static inline bool isSign(QChar const &ch)
 {
@@ -489,6 +523,24 @@ dint String::toInt(bool *ok, int base, IntConversionFlags flags) const
     return token.QString::toInt(ok, base);
 }
 
+String String::addLinePrefix(String const &prefix) const
+{
+    String result;
+    for(auto const &str : QString::split(QChar('\n')))
+    {
+        if(!result.isEmpty()) result += "\n";
+        result += prefix + str;
+    }
+    return result;
+}
+
+String String::escaped() const
+{
+    String esc = *this;
+    esc.replace("\\", "\\\\").replace("\"", "\\\"");
+    return esc;
+}
+
 void String::advanceFormat(String::const_iterator &i, String::const_iterator const &end)
 {
     ++i;
@@ -501,6 +553,8 @@ void String::advanceFormat(String::const_iterator &i, String::const_iterator con
 
 String String::join(QList<String> const &stringList, String const &sep)
 {
+    if(stringList.isEmpty()) return "";
+
     String joined;
     QTextStream os(&joined);
     os << stringList.at(0);

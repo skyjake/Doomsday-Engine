@@ -40,6 +40,8 @@ class LIBAPPFW_PUBLIC LineEditWidget : public GuiWidget, public shell::AbstractL
 public:
     LineEditWidget(String const &name = "");
 
+    void setText(String const &lineText) override;
+
     /**
      * Sets the text that will be shown in the editor when it is empty.
      *
@@ -63,12 +65,12 @@ public:
     Rectanglei cursorRect() const;
 
     // Events.
-    void viewResized();
-    void focusGained();
-    void focusLost();
-    void update();
-    void drawContent();
-    bool handleEvent(Event const &event);
+    void viewResized() override;
+    void focusGained() override;
+    void focusLost() override;
+    void update() override;
+    void drawContent() override;
+    bool handleEvent(Event const &event) override;
 
 public:
     static KeyModifiers modifiersFromKeyEvent(KeyEvent::Modifiers const &keyMods);
@@ -78,16 +80,16 @@ signals:
     void editorContentChanged();
 
 protected:
-    void glInit();
-    void glDeinit();
-    void glMakeGeometry(DefaultVertexBuf::Builder &verts);
-    void updateStyle();
+    void glInit() override;
+    void glDeinit() override;
+    void glMakeGeometry(DefaultVertexBuf::Builder &verts) override;
+    void updateStyle() override;
 
-    int maximumWidth() const;
-    void numberOfLinesChanged(int lineCount);
-    void cursorMoved();
-    void contentChanged();
-    void autoCompletionEnded(bool accepted);
+    int maximumWidth() const override;
+    void numberOfLinesChanged(int lineCount) override;
+    void cursorMoved() override;
+    void contentChanged() override;
+    void autoCompletionEnded(bool accepted) override;
 
 private:
     DENG2_PRIVATE(d)

@@ -272,7 +272,7 @@ void DocumentWidget::setText(String const &styledText)
 
         d->progress->show();
 
-        int indSize = style().rules().rule("document.progress").valuei();
+        int indSize = rule("document.progress").valuei();
         setContentSize(Vector2i(indSize, indSize));
 
         d->styledText = styledText;

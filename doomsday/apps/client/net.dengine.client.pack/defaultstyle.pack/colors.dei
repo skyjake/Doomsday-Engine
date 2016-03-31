@@ -6,6 +6,7 @@ script { import gui, Version }
 # THE BASIC COLOR PALETTE
 #
 
+color transparent { rgb <0.0, 0.0, 0.0, 0.0> }
 color text        { rgb <1.0, 1.0, 1.0> }
 color background  { rgb <0.0, 0.0, 0.0, 0.75> }
 color accent      { rgb <1.0, 0.8, 0.4> }
@@ -79,17 +80,17 @@ log {
     color highlight { rgb <1.0, 1.0, 1.0> }
     color dimmed { 
         condition: Version.OS != 'windows'
-        rgb <0.72, 0.72, 0.68> 
+        rgb <0.65, 0.65, 0.62>  
     }
     color dimmed {
         # Apply some extra black because we don't have a Light style
         # font on Windows.
         condition: Version.OS == 'windows'
-        rgb <0.65, 0.65, 0.62> 
+        rgb <0.58, 0.58, 0.55>
     }
     color accent    { rgb $= accent.rgb }
     color altaccent { rgb $= altaccent.rgb }
-    color dimaccent { rgb <0.85, 0.68, 0.34> }
+    color dimaccent { rgb <0.76, 0.61, 0.30> }
 }
 
 document {
@@ -102,4 +103,12 @@ document {
 
 gamefilter {
     color background { rgb <0.5, 0.5, 0.5> }
+}
+
+#
+# HOME COLORS
+#
+
+home {
+    color icon.shadow { rgb $= label.shadow.rgb }
 }

@@ -45,6 +45,8 @@ public:
     Margins &setRight (DotPath const &rightMarginId);
     Margins &setTop   (DotPath const &topMarginId);
     Margins &setBottom(DotPath const &bottomMarginId);
+    Margins &setLeftRight(DotPath const &marginId);
+    Margins &setTopBottom(DotPath const &marginId);
     Margins &set      (ui::Direction dir, DotPath const &marginId);
     Margins &set      (DotPath const &marginId);
 
@@ -55,6 +57,8 @@ public:
     Margins &set      (ui::Direction dir, Rule const &rule);
     Margins &set      (Rule const &rule);
     Margins &setAll   (Margins const &margins);
+
+    Margins &setZero();
 
     Rule const &left() const;
     Rule const &right() const;

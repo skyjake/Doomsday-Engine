@@ -19,7 +19,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/PersistentCanvasWindow"
@@ -80,7 +80,7 @@ static void notifyAboutModeChange()
 DENG2_PIMPL(PersistentCanvasWindow)
 {
     /**
-     * Logical state of a window.
+     * State of a window.
      */
     struct State
     {
@@ -316,7 +316,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
 
         /**
          * Checks all command line options that affect window geometry and
-         * applies them to this logical state.
+         * applies them to this State.
          */
         void modifyAccordingToOptions()
         {
@@ -454,7 +454,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
 
     String id;
 
-    // Logical state.
+    // Window state.
     State state;
     State savedState; // used by saveState(), restoreState()
     bool neverShown;
@@ -550,7 +550,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
         state = widgetState();
 
         // The new modified state.
-        State mod = state;     
+        State mod = state;
         mod.applyAttributes(attribs);
 
         LOGDEV_GL_MSG("windowRect:%s fullSize:%s depth:%i flags:%x")
@@ -571,9 +571,9 @@ DENG2_PIMPL(PersistentCanvasWindow)
     }
 
     /**
-     * Apply a logical state to the concrete widget instance. All properties of
-     * the widget may not be updated instantly during this method. Particularly
-     * a display mode change will cause geometry changes to occur later.
+     * Apply a State to the concrete widget instance. All properties of the widget may
+     * not be updated instantly during this method. Particularly a display mode change
+     * will cause geometry changes to occur later.
      *
      * @param newState  State to apply.
      */
@@ -839,7 +839,7 @@ Rectanglei PersistentCanvasWindow::windowRect() const
     if(d->neverShown)
     {
         // If the window hasn't been shown yet, it doesn't have a valid
-        // normal geometry. Use the one defined in the logical state.
+        // normal geometry. Use the one defined in the State.
         return d->state.windowRect;
     }
 
@@ -950,7 +950,7 @@ void PersistentCanvasWindow::moveEvent(QMoveEvent *)
         {
             // Recenter.
             setGeometry(centeredQRect(size()));
-        }        
+        }
     }
 }
 

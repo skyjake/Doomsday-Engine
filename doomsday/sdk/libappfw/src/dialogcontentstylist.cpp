@@ -125,7 +125,7 @@ void DialogContentStylist::applyStyle(GuiWidget &w)
 
     if(LineEditWidget *ed = w.maybeAs<LineEditWidget>())
     {
-        ed->rule().setInput(Rule::Width, d->containers.first()->style().rules().rule("editor.width"));
+        ed->rule().setInput(Rule::Width, d->containers.first()->rule("editor.width"));
     }
 }
 

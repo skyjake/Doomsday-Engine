@@ -21,6 +21,7 @@
 #include "de/BaseGuiApp"
 #include "de/Style"
 #include "de/BaseWindow"
+#include "de/FocusWidget"
 
 #include <de/CanvasWindow>
 #include <de/TextureBank>
@@ -47,6 +48,7 @@ static DotPath const ID_DOT                = "GuiRootWidget.dot";
 
 DENG2_PIMPL(GuiRootWidget)
 , DENG2_OBSERVES(Widget, ChildAddition)
+, DENG2_OBSERVES(RootWidget, FocusChange)
 {
     /*
      * Built-in runtime-generated images:
@@ -104,6 +106,7 @@ DENG2_PIMPL(GuiRootWidget)
     QScopedPointer<AtlasTexture> atlas; ///< Shared atlas for most UI graphics/text.
     GLUniform uTexAtlas;
     TextureBank texBank; ///< Bank for the atlas contents.
+    FocusWidget *focusIndicator;
     bool noFramesDrawnYet;
 
     Instance(Public *i, CanvasWindow *win)
@@ -114,6 +117,10 @@ DENG2_PIMPL(GuiRootWidget)
         , noFramesDrawnYet(true)
     {
         self.audienceForChildAddition() += this;
+        self.audienceForFocusChange() += this;
+
+        focusIndicator = new FocusWidget;
+        self.add(focusIndicator);
     }
 
     ~Instance()
@@ -167,6 +174,29 @@ DENG2_PIMPL(GuiRootWidget)
         // Make sure newly added children know the view size.
         child.viewResized();
         child.notifyTree(&Widget::viewResized);
+
+        // Keep the focus at the top.
+        self.moveChildToLast(*focusIndicator);
+    }
+
+    void focusedWidgetChanged(Widget *focused)
+    {
+        if(GuiWidget *w = focused->maybeAs<GuiWidget>())
+        {
+            focusIndicator->rule().setRect(w->rule());
+            if(!w->attributes().testFlag(GuiWidget::FocusHidden))
+            {
+                focusIndicator->startFlashing(w);
+            }
+            else
+            {
+                focusIndicator->stopFlashing();
+            }
+        }
+        else
+        {
+            focusIndicator->stopFlashing();
+        }
     }
 };
 
@@ -260,11 +290,9 @@ Matrix4f GuiRootWidget::projMatrix2D() const
 
 void GuiRootWidget::routeMouse(Widget *routeTo)
 {
-    setEventRouting(QList<int>()
-                    << Event::MouseButton
-                    << Event::MouseMotion
-                    << Event::MousePosition
-                    << Event::MouseWheel, routeTo);
+    setEventRouting(QList<int>({ Event::MouseButton,   Event::MouseMotion,
+                                 Event::MousePosition, Event::MouseWheel }),
+                    routeTo);
 }
 
 void GuiRootWidget::dispatchLatestMousePosition()

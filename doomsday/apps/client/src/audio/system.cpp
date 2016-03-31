@@ -56,6 +56,7 @@
 #  include <doomsday/filesys/fs_util.h>
 #endif
 #include <de/App>
+#include <de/NativeFile>
 #include <de/timer.h>
 #include <de/c_wrapper.h>
 #ifdef __CLIENT__
@@ -95,7 +96,7 @@ static duint const SOUND_LOGICAL_PURGEINTERVAL = 2000;  ///< 2 seconds
 static dint const SOUND_CHANNEL_COUNT_DEFAULT  = 16;
 static dint const SOUND_CHANNEL_COUNT_MAX      = 256;
 static dint const SOUND_CHANNEL_2DCOUNT        = 4;
-static char const *MUSIC_BUFFEREDFILE          = (char *)"dd-buffered-song";
+static char const *MUSIC_BUFFEREDFILE          = "/tmp/dd-buffered-song";
 
 static thread_t refreshHandle;
 static volatile bool allowRefresh, refreshing;
@@ -627,7 +628,6 @@ DENG2_PIMPL(System)
             currentBufFile ^= 1;
             musNeedBufFileSwitch = false;
         }
-
         // Compose the name.
         return MUSIC_BUFFEREDFILE + String::number(currentBufFile) + ext;
     }
@@ -690,15 +690,12 @@ DENG2_PIMPL(System)
                 else if(iMusic->PlayFile)
                 {
                     // Write the data to disk and play from there.
-                    String const bufPath = composeMusicBufferFilename();
-
-                    dsize len = hndl->length();
-                    duint8 *buf = (duint8 *)M_Malloc(len);
-                    hndl->read(buf, len);
-                    F_Dump(buf, len, bufPath.toUtf8().constData());
-                    M_Free(buf); buf = nullptr;
-
-                    return iMusic->PlayFile(bufPath.toUtf8().constData(), looped);
+                    File &file = App::rootFolder().replaceFile(composeMusicBufferFilename());
+                    Block buf(hndl->length());
+                    hndl->read(buf.data(), buf.size());
+                    file << buf;
+                    file.flush();
+                    return iMusic->PlayFile(file.as<NativeFile>().nativePath().toUtf8(), looped);
                 }
                 return 0;  // Continue.
             });
@@ -728,22 +725,24 @@ DENG2_PIMPL(System)
             // Lump is in DOOM's MUS format. We must first convert it to MIDI.
             if(!canPlayMUS) return -1;
 
-            String const srcFile = composeMusicBufferFilename(".mid");
+            File &midi = App::rootFolder().replaceFile(composeMusicBufferFilename(".mid"));
 
             // Read the lump, convert to MIDI and output to a temp file in the working directory.
             // Use a filename with the .mid extension so that any player which relies on the it
             // for format recognition works as expected.
-            duint8 *buf = (duint8 *) M_Malloc(lump.size());
-            lump.read(buf, 0, lump.size());
-            M_Mus2Midi((void *)buf, lump.size(), srcFile.toUtf8().constData());
-            M_Free(buf); buf = nullptr;
+            //duint8 *buf = (duint8 *) M_Malloc(lump.size());
+            Block buf(lump.size());
+            lump.read(buf.data(), 0, lump.size());
+            midi << M_Mus2Midi(buf);
+            midi.flush();
+            //M_Free(buf); buf = nullptr;
 
-            return forAllInterfaces(AUDIO_IMUSIC, [&srcFile, &looped] (void *ifs)
+            return forAllInterfaces(AUDIO_IMUSIC, [&midi, &looped] (void *ifs)
             {
                 auto *iMusic = (audiointerface_music_t *) ifs;
                 if(iMusic->PlayFile)
                 {
-                    return iMusic->PlayFile(srcFile.toUtf8().constData(), looped);
+                    return iMusic->PlayFile(midi.as<NativeFile>().nativePath().toUtf8(), looped);
                 }
                 return 0;  // Continue.
             });
@@ -767,15 +766,14 @@ DENG2_PIMPL(System)
             // Does this interface offer playback from a native file?
             else if(iMusic->PlayFile)
             {
-                // Write the data to disk and play from there.
-                String const fileName = composeMusicBufferFilename();
-                if(!F_DumpFile(lump, fileName.toUtf8().constData()))
+                String bufName = composeMusicBufferFilename();
+                if(!F_DumpFile(lump, bufName.toUtf8()))
                 {
                     // Failed to write the lump...
                     return 0;
                 }
-
-                return iMusic->PlayFile(fileName.toUtf8().constData(), looped);
+                return iMusic->PlayFile(App::rootFolder().locate<File const>(bufName)
+                                        .as<NativeFile>().nativePath().toUtf8(), looped);
             }
 
             return 0;  // Continue.

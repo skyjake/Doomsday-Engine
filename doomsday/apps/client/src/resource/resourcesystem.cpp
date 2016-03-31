@@ -51,6 +51,7 @@
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/filesys/fs_util.h>
 #include <doomsday/filesys/lumpindex.h>
+#include <doomsday/resource/patch.h>
 #include <doomsday/SavedSession>
 #include <doomsday/Session>
 
@@ -64,7 +65,6 @@
 #include "dd_def.h"
 
 #include "resource/compositetexture.h"
-#include "resource/patch.h"
 #include "resource/patchname.h"
 
 #ifdef __CLIENT__
@@ -432,16 +432,16 @@ DENG2_PIMPL(ResourceSystem)
 , DENG2_OBSERVES(FontScheme,       ManifestDefined)
 , DENG2_OBSERVES(FontManifest,     Deletion)
 , DENG2_OBSERVES(AbstractFont,     Deletion)
-, DENG2_OBSERVES(ColorPalette,     ColorTableChange)
+, DENG2_OBSERVES(res::ColorPalette, ColorTableChange)
 #endif
 {
     typedef QList<AnimGroup *> AnimGroups;
     AnimGroups animGroups;
 
-    typedef QMap<colorpaletteid_t, ColorPalette *> ColorPalettes;
+    typedef QMap<colorpaletteid_t, res::ColorPalette *> ColorPalettes;
     ColorPalettes colorPalettes;
 
-    typedef QMap<String, ColorPalette *> ColorPaletteNames;
+    typedef QMap<String, res::ColorPalette *> ColorPaletteNames;
     ColorPaletteNames colorPaletteNames;
 
     colorpaletteid_t defaultColorPalette;
@@ -1353,7 +1353,7 @@ DENG2_PIMPL(ResourceSystem)
                  *
                  * @todo Always determine size from the lowres original.
                  */
-                Vector2i dimensions(64, 64);
+                Vector2ui dimensions(64, 64);
                 Vector2i origin(0, 0);
                 int const uniqueId  = lumpNum - (firstFlatMarkerLumpNum + 1);
                 de::Uri resourceUri = composeLumpIndexResourceUrn(lumpNum);
@@ -1421,18 +1421,18 @@ DENG2_PIMPL(ResourceSystem)
                 flags |= Texture::Custom;
             }
 
-            Vector2i dimensions;
+            Vector2ui dimensions;
             Vector2i origin;
 
             if(file.size())
             {
                 // If this is a Patch read the world dimension and origin offset values.
                 ByteRefArray const fileData(file.cache(), file.size());
-                if(Patch::recognize(fileData))
+                if(res::Patch::recognize(fileData))
                 {
                     try
                     {
-                        PatchMetadata info = Patch::loadMetadata(fileData);
+                        auto info = res::Patch::loadMetadata(fileData);
 
                         dimensions = info.logicalDimensions;
                         origin     = -info.origin;
@@ -1700,7 +1700,7 @@ DENG2_PIMPL(ResourceSystem)
         matAnimator.prepare();  // Ensure we have up-to-date info.
 
         Texture const &texture = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture->base();
-        dint off = de::max(0, -texture.origin().y - matAnimator.dimensions().y);
+        dint off = de::max(0, -texture.origin().y - int(matAnimator.dimensions().y));
 
         scaleModel(mf, matAnimator.dimensions().y, off);
     }
@@ -2144,7 +2144,7 @@ DENG2_PIMPL(ResourceSystem)
     }
 
     /// Observes ColorPalette ColorTableChange
-    void colorPaletteColorTableChanged(ColorPalette &colorPalette)
+    void colorPaletteColorTableChanged(res::ColorPalette &colorPalette)
     {
         // Release all GL-textures prepared using @a colorPalette.
         foreach(Texture *texture, textures)
@@ -2348,7 +2348,7 @@ void ResourceSystem::initSystemTextures()
         de::Uri resourceUri("Graphics", Path(def.graphicName));
 
         declareTexture(de::Uri("System", Path(def.path)), Texture::Custom,
-                       Vector2i(), Vector2i(), uniqueId, &resourceUri);
+                       Vector2ui(), Vector2i(), uniqueId, &resourceUri);
     }
 
     // Define any as yet undefined system textures.
@@ -2378,7 +2378,7 @@ Texture *ResourceSystem::texture(String schemeName, de::Uri const &resourceUri)
 }
 
 Texture *ResourceSystem::defineTexture(String schemeName, de::Uri const &resourceUri,
-    Vector2i const &dimensions)
+                                       Vector2ui const &dimensions)
 {
     LOG_AS("ResourceSystem::defineTexture");
 
@@ -2451,16 +2451,16 @@ patchid_t ResourceSystem::declarePatch(String encodedName)
     Texture::Flags flags;
     if(file.container().hasCustom()) flags |= Texture::Custom;
 
-    Vector2i dimensions;
+    Vector2ui dimensions;
     Vector2i origin;
 
     // If this is a Patch (the format) read the world dimension and origin offset values.
     ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
-    if(Patch::recognize(fileData))
+    if(res::Patch::recognize(fileData))
     {
         try
         {
-            Patch::Metadata info = Patch::loadMetadata(fileData);
+            auto info = res::Patch::loadMetadata(fileData);
 
             dimensions = info.logicalDimensions;
             origin     = Vector2i(-info.origin.x, -info.origin.y);
@@ -3604,7 +3604,7 @@ dint ResourceSystem::colorPaletteCount() const
     return d->colorPalettes.count();
 }
 
-ColorPalette &ResourceSystem::colorPalette(colorpaletteid_t id) const
+res::ColorPalette &ResourceSystem::colorPalette(colorpaletteid_t id) const
 {
     // Choose the default palette?
     if(!id)
@@ -3618,7 +3618,7 @@ ColorPalette &ResourceSystem::colorPalette(colorpaletteid_t id) const
     throw MissingResourceError("ResourceSystem::colorPalette", "Invalid id " + String::number(id));
 }
 
-String ResourceSystem::colorPaletteName(ColorPalette &palette) const
+String ResourceSystem::colorPaletteName(res::ColorPalette &palette) const
 {
     QList<String> const names = d->colorPaletteNames.keys(&palette);
     if(!names.isEmpty())
@@ -3633,7 +3633,7 @@ bool ResourceSystem::hasColorPalette(String name) const
     return d->colorPaletteNames.contains(name);
 }
 
-ColorPalette &ResourceSystem::colorPalette(String name) const
+res::ColorPalette &ResourceSystem::colorPalette(String name) const
 {
     auto found = d->colorPaletteNames.find(name);
     if(found != d->colorPaletteNames.end()) return *found.value();
@@ -3641,7 +3641,7 @@ ColorPalette &ResourceSystem::colorPalette(String name) const
     throw MissingResourceError("ResourceSystem::colorPalette", "Unknown name '" + name + "'");
 }
 
-void ResourceSystem::addColorPalette(ColorPalette &newPalette, String const &name)
+void ResourceSystem::addColorPalette(res::ColorPalette &newPalette, String const &name)
 {
     // Do we already own this palette?
     if(d->colorPalettes.contains(newPalette.id()))
@@ -3671,7 +3671,7 @@ colorpaletteid_t ResourceSystem::defaultColorPalette() const
     return d->defaultColorPalette;
 }
 
-void ResourceSystem::setDefaultColorPalette(ColorPalette *newDefaultPalette)
+void ResourceSystem::setDefaultColorPalette(res::ColorPalette *newDefaultPalette)
 {
     d->defaultColorPalette = newDefaultPalette ? newDefaultPalette->id().asUInt32() : 0;
 }

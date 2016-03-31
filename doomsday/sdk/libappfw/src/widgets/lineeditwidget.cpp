@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/LineEditWidget"
@@ -235,10 +235,28 @@ LineEditWidget::LineEditWidget(String const &name)
       AbstractLineEditor(new FontLineWrapping),
       d(new Instance(this))
 {
-    setBehavior(ContentClipping);
+    setBehavior(ContentClipping | Focusable);
+    setAttribute(FocusHidden);
 
     // The widget's height is tied to the number of lines.
     rule().setInput(Rule::Height, *d->height);
+}
+
+void LineEditWidget::setText(String const &lineText)
+{
+    shell::AbstractLineEditor::setText(lineText);
+
+    if(d->hint)
+    {
+        if(d->showingHint())
+        {
+            d->hint->setOpacity(1, .5);
+        }
+        else
+        {
+            d->hint->setOpacity(0);
+        }
+    }
 }
 
 void LineEditWidget::setEmptyContentHint(String const &hintText)

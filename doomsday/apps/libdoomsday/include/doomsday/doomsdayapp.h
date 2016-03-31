@@ -32,8 +32,9 @@
 
 namespace res { class Bundles; }
 
-class Games;
 class Game;
+class Games;
+class GameProfiles;
 
 /**
  * Common application-level state and components.
@@ -98,10 +99,11 @@ public:
      *                   been made current.
      * @param behaviors  Change behavior flags.
      */
-    bool changeGame(Game &newGame, std::function<int (void *)> gameActivationFunc,
+    bool changeGame(Game const &newGame,
+                    std::function<int (void *)> gameActivationFunc,
                     Behaviors behaviors = DefaultBehavior);
 
-    bool isUsingUserDir() const;
+    //bool isUsingUserDir() const;
 
     bool isShuttingDown() const;
     void setShuttingDown(bool shuttingDown);
@@ -111,17 +113,17 @@ public:
 #endif
 
     void setDoomsdayBasePath(de::NativePath const &path);
-    void setDoomsdayRuntimePath(de::NativePath const &path);
+    //void setDoomsdayRuntimePath(de::NativePath const &path);
     std::string const &doomsdayBasePath() const;
-    std::string const &doomsdayRuntimePath() const;
+    //std::string const &doomsdayRuntimePath() const;
 
 public:
     static DoomsdayApp &app();
     static res::Bundles &bundles();
     static Plugins &plugins();
     static Games &games();
+    static GameProfiles &gameProfiles();
     static Players &players();
-    static Game &currentGame();
     static BusyMode &busyMode();
     static de::NativePath steamBasePath();
 
@@ -132,12 +134,14 @@ public:
      * @param game  Game instance. Must not be deleted until another Game is
      *              used as the current one.
      */
-    static void setGame(Game &game);
+    static void setGame(Game const &game);
 
     /**
      * Returns the currently active game.
      */
-    static Game &game();
+    static Game const &game();
+
+    static Game const &currentGame(); // alias, remove?
 
     static bool isGameLoaded();
 
@@ -150,7 +154,7 @@ protected:
      */
     virtual void unloadGame(Game const &upcomingGame);
 
-    virtual void makeGameCurrent(Game &newGame);
+    virtual void makeGameCurrent(Game const &newGame);
 
     /**
      * Clears all allocated resources and subsystems. This is called when

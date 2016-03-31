@@ -27,6 +27,7 @@
 #include <doomsday/resource/resourceclass.h>
 #include <de/Error>
 #include <de/Path>
+#include <de/Date>
 #include <de/String>
 #include <QMultiMap>
 
@@ -61,11 +62,13 @@ public:
      */
     static de::String const DEF_VARIANT_OF;
 
+    static de::String const DEF_FAMILY;       ///< Game family.
     static de::String const DEF_CONFIG_DIR;   ///< Name of the config directory.
     static de::String const DEF_CONFIG_MAIN_PATH; ///< Optional: Path of the main config file.
     static de::String const DEF_CONFIG_BINDINGS_PATH; ///< Optional: Path of the bindings config file.
     static de::String const DEF_TITLE;        ///< Title for the game (intended for humans).
     static de::String const DEF_AUTHOR;       ///< Author of the game (intended for humans).
+    static de::String const DEF_RELEASE_DATE;
     static de::String const DEF_LEGACYSAVEGAME_NAME_EXP;  ///< Regular expression used for matching legacy savegame names.
     static de::String const DEF_LEGACYSAVEGAME_SUBFOLDER; ///< Game-specific subdirectory of /home for legacy savegames.
     static de::String const DEF_MAPINFO_PATH; ///< Base relative path to the main MAPINFO definition data.
@@ -84,6 +87,7 @@ public:
     bool isNull() const;
     de::String id() const;
     de::String variantOf() const;
+    de::String family() const;
 
     /**
      * Sets the packages required for loading the game.
@@ -95,10 +99,6 @@ public:
     void setRequiredPackages(de::StringList const &packageIds);
 
     void addRequiredPackage(de::String const &packageId);
-
-    void setUserFiles(de::StringList const &nativePaths);
-
-    de::StringList const &userFiles() const;
 
     /**
      * Returns the list of required package IDs for loading the game.
@@ -146,6 +146,8 @@ public:
      */
     de::String author() const;
 
+    de::Date releaseDate() const;
+
     /**
      * Returns the name of the main config file for the game.
      */
@@ -190,6 +192,8 @@ public:
 
     bool allStartupFilesFound() const;
 
+    bool isPlayable() const;
+
     /**
      * Provides access to the manifests for efficent traversals.
      */
@@ -207,7 +211,7 @@ public:
      *
      * @return  @c true iff @a file is required by this game.
      */
-    bool isRequiredFile(de::File1 &file);
+    bool isRequiredFile(de::File1 &file) const;
 
     /**
      * Adds a new resource to the list for the identified @a game.
@@ -262,6 +266,8 @@ public:
 
     /// Register the console commands, variables, etc..., of this module.
     static void consoleRegister();
+
+    static de::String logoImageForId(de::String const &id);
 
 private:
     DENG2_PRIVATE(d)

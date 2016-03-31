@@ -26,7 +26,7 @@
 #include <de/Vector>
 #include <de/System>
 #include "DrawLists"
-#include "settingsregister.h"
+#include "ConfigProfiles"
 #include "projectedtexturedata.h"
 #include "vectorlightdata.h"
 #include "projectionlist.h"
@@ -48,8 +48,8 @@ public:
     // System.
     void timeChanged(de::Clock const &);
 
-    SettingsRegister &settings();
-    SettingsRegister &appearanceSettings();
+    ConfigProfiles &settings();
+    ConfigProfiles &appearanceSettings();
 
     void glInit();
     void glDeinit();

@@ -104,7 +104,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
 
             setContent(menu);
             menu->margins().set("");
-            menu->layout().setColumnPadding(owner->style().rules().rule("unit"));
+            menu->layout().setColumnPadding(owner->rule("unit"));
             menu->rule().setInput(Rule::Width,
                                   owner->self.rule().width() -
                                   owner->self.margins().width());
@@ -116,7 +116,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
             // in addition to the selectable sessions.
             noGames = LabelWidget::newWithText(_E(b) + tr("No games"), menu);
             noGames->margins()
-                    .setTop   (style().rules().rule("gap") * 2)
+                    .setTop   (rule("gap") * 2)
                     .setBottom(noGames->margins().top());
             noGames->setFont("heading");
             noGames->setTextColor("text");
@@ -325,7 +325,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
     void updateLayoutForWidth(int width)
     {
         // If the view is too small, we'll want to reduce the number of items in the menu.
-        int const maxWidth = style().rules().rule("gameselection.max.width").valuei();
+        int const maxWidth = rule("gameselection.max.width").valuei();
 
         int const suitable = clamp(1, 4 * width / maxWidth, 3);
         foreach(SubsetWidget *s, subsets)

@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/GuiWidget"
@@ -101,7 +101,7 @@ DENG2_PIMPL(GuiWidget)
     }
 
     ~Instance()
-    {        
+    {
         qDeleteAll(eventHandlers);
 
         // The base class will delete all children, but we need to deinitialize
@@ -397,7 +397,7 @@ GuiRootWidget &GuiWidget::root() const
 {
     return static_cast<GuiRootWidget &>(Widget::root());
 }
-    
+
 Widget::Children GuiWidget::childWidgets() const
 {
     return Widget::children();
@@ -411,6 +411,11 @@ Widget *GuiWidget::parentWidget() const
 Style const &GuiWidget::style() const
 {
     return Style::get();
+}
+
+Rule const &GuiWidget::rule(DotPath const &path) const
+{
+    return style().rules().rule(path);
 }
 
 Font const &GuiWidget::font() const
@@ -520,6 +525,11 @@ static void deleteGuiWidget(void *ptr)
 void GuiWidget::guiDeleteLater()
 {
     Garbage_TrashInstance(this, deleteGuiWidget);
+}
+
+GuiWidget::ColorTheme GuiWidget::invertColorTheme(ColorTheme theme)
+{
+    return theme == Inverted? Normal : Inverted;
 }
 
 void GuiWidget::recycleTrashedWidgets()
@@ -721,7 +731,22 @@ bool GuiWidget::handleEvent(Event const &event)
             return true;
         }
     }
-    return Widget::handleEvent(event);
+
+    if(Widget::handleEvent(event))
+    {
+        return true;
+    }
+
+    if(d->attribs.testFlag(EatAllMouseEvents))
+    {
+        if((event.type() == Event::MouseButton ||
+            event.type() == Event::MousePosition ||
+            event.type() == Event::MouseWheel) && hitTest(event))
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool GuiWidget::hitTest(Vector2i const &pos) const
@@ -935,5 +960,26 @@ bool GuiWidget::hasChangedPlace(Rectanglei &currentPlace)
 
 void GuiWidget::updateStyle()
 {}
+
+Animation &GuiWidget::opacityAnimation()
+{
+    return d->opacity;
+}
+
+void GuiWidget::preDrawChildren()
+{
+    if(behavior().testFlag(ChildVisibilityClipping))
+    {
+        GLState::push().setNormalizedScissor(normalizedRect());
+    }
+}
+
+void GuiWidget::postDrawChildren()
+{
+    if(behavior().testFlag(ChildVisibilityClipping))
+    {
+        GLState::pop();
+    }
+}
 
 } // namespace de

@@ -50,6 +50,7 @@
 #  include "ui/clientwindow.h"
 #endif
 #include <doomsday/filesys/fs_main.h>
+#include <de/App>
 #include <de/str.h>
 #include <de/vector1.h>
 #include <cstdlib>
@@ -435,7 +436,7 @@ DENG_EXTERN_C dd_bool M_WriteFile(const char* name, const char* source, size_t l
     return (count >= length);
 }
 
-void M_WriteCommented(FILE *file, const char* text)
+/*AutoStr *M_WriteCommented(const char* text)
 {
     char *buff = (char *) M_Malloc(strlen(text) + 1), *line;
 
@@ -447,12 +448,12 @@ void M_WriteCommented(FILE *file, const char* text)
         line = strtok(NULL, "\n");
     }
     M_Free(buff);
-}
+}*/
 
-/**
+/*
  * The caller must provide the opening and closing quotes.
  */
-void M_WriteTextEsc(FILE* file, const char* text)
+/*void M_WriteTextEsc(FILE* file, const char* text)
 {
     DENG_ASSERT(file && text);
 
@@ -463,7 +464,7 @@ void M_WriteTextEsc(FILE* file, const char* text)
             fprintf(file, "\\");
         fprintf(file, "%c", text[i]);
     }
-}
+}*/
 
 DENG_EXTERN_C int M_ScreenShot(char const *name, int bits)
 {
@@ -476,48 +477,12 @@ DENG_EXTERN_C int M_ScreenShot(char const *name, int bits)
         fullName += ".png"; // Default format.
     }
 
-    return ClientWindow::main().grabToFile(fullName)? 1 : 0;
+    // By default, place the file in the runtime folder.
+    return ClientWindow::main().grabToFile(App::app().nativeHomePath()/fullName)? 1 : 0;
 #else
     DENG2_UNUSED2(name, bits);
     return false;
 #endif
-}
-
-void M_ReadBits(uint numBits, const uint8_t** src, uint8_t* cb, uint8_t* out)
-{
-    assert(src && cb && out);
-    {
-    int offset = 0, unread = numBits;
-
-    // Read full bytes.
-    if(unread >= 8)
-    {
-        do
-        {
-            out[offset++] = **src, (*src)++;
-        } while((unread -= 8) >= 8);
-    }
-
-    if(unread != 0)
-    {   // Read remaining bits.
-        uint8_t fb = 8 - unread;
-
-        if((*cb) == 0)
-            (*cb) = 8;
-
-        do
-        {
-            (*cb)--;
-            out[offset] <<= 1;
-            out[offset] |= ((**src >> (*cb)) & 0x01);
-        } while(--unread > 0);
-
-        out[offset] <<= fb;
-
-        if((*cb) == 0)
-            (*src)++;
-    }
-    }
 }
 
 dd_bool M_RunTrigger(trigger_t *trigger, timespan_t advanceTime)

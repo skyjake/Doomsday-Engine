@@ -74,7 +74,7 @@ package "com.idsoftware.doom_1.9" {
         title: DOOM Registered
         author: id Software
         license: All rights reserved
-        tags: doom vanilla
+        tags: gamedata doom vanilla
     }
 }
 
@@ -88,7 +88,7 @@ package "com.idsoftware.doom.shareware_1.9" {
         title: DOOM Shareware (Episode 1)
         author: id Software
         license: All rights reserved
-        tags: doom vanilla
+        tags: gamedata doom vanilla
     }
 }
 
@@ -102,7 +102,7 @@ package "com.idsoftware.doom.ultimate_1.9" {
         title: Ultimate DOOM
         author: id Software
         license: All rights reserved
-        tags: doom vanilla
+        tags: gamedata doom vanilla
     }
 }
 
@@ -115,7 +115,7 @@ package "com.idsoftware.doom2_1.6.66" {
         title: DOOM 2: Hell on Earth
         author: id Software
         license: All rights reserved
-        tags: doom vanilla
+        tags: gamedata doom vanilla
     }
 }
 
@@ -129,7 +129,7 @@ package "com.idsoftware.doom2_1.9" {
         title: DOOM 2: Hell on Earth
         author: id Software
         license: All rights reserved
-        tags: doom vanilla
+        tags: gamedata doom vanilla
     }
 }
 
@@ -143,7 +143,7 @@ package "com.idsoftware.finaldoom.plutonia" {
         title: Final DOOM: The Plutonia Experiment
         author: Dario Casali and Milo Casali
         license: All rights reserved
-        tags: doom2 mod
+        tags: gamedata doom2 mod
     }
 }
 
@@ -157,7 +157,7 @@ package "com.idsoftware.finaldoom.tnt" {
         title: Final DOOM: TNT: Evilution
         author: Team TNT
         license: All rights reserved
-        tags: doom2 mod
+        tags: gamedata doom2 mod
     }
 }
 
@@ -169,7 +169,7 @@ package "banjo.hacx" {
         title: HACX - Twitch 'n Kill
         author: Banjo Software
         license: All rights reserved
-        tags: doom2 mod
+        tags: gamedata doom2 mod
     }
 }
 
@@ -181,7 +181,7 @@ package "digitalcafe.chexquest" {
         title: Chex(R) Quest
         author: Digital Cafe
         license: All rights reserved
-        tags: doom2 mod
+        tags: gamedata doom2 mod
     }
 }
 
@@ -195,7 +195,7 @@ package "kaiser.doom64" {
         title: DOOM 64: Absolution
         author: Kaiser et al.
         license: All rights reserved
-        tags: doom64 mod
+        tags: gamedata doom64 mod
     }
 }
 
@@ -209,7 +209,7 @@ package "freedoom.freedm_0.10.1" {
         title: Freedoom Deathmatch
         author: Freedoom Projcet
         license: BSD
-        tags: doom2 mod multiplayer
+        tags: gamedata doom2 mod multiplayer
     }
 }
 
@@ -221,7 +221,7 @@ package "com.ravensoftware.heretic" {
         title: Heretic Registered
         author: Raven Software
         license: All rights reserved
-        tags: heretic vanilla
+        tags: gamedata heretic vanilla
     }    
 }
 
@@ -235,7 +235,7 @@ package "com.ravensoftware.heretic.shareware" {
         title: Heretic Shareware
         author: Raven Software
         license: All rights reserved
-        tags: heretic vanilla    
+        tags: gamedata heretic vanilla    
     }
 }
 
@@ -249,7 +249,7 @@ package "com.ravensoftware.heretic.extended" {
         title: Heretic: Shadow of the Serpent Riders
         author: Raven Software
         license: All rights reserved
-        tags: heretic vanilla expansion
+        tags: gamedata heretic vanilla expansion
     }
 }
 
@@ -263,7 +263,7 @@ package "com.ravensoftware.hexen.deathkings_1.1" {
         title: Hexen: Deathkings of the Dark Citadel (Expansion)
         author: Raven Software
         license: All rights reserved
-        tags: hexen vanilla expansion
+        tags: gamedata hexen vanilla expansion
         required <com.ravensoftware.hexen>
     }
 }
@@ -278,7 +278,7 @@ package "com.ravensoftware.hexen_1.0" {
         title: Hexen
         author: Raven Software
         license: All rights reserved
-        tags: hexen vanilla        
+        tags: gamedata hexen vanilla        
     }
 }
 
@@ -292,7 +292,7 @@ package "com.ravensoftware.hexen_1.1" {
         title: Hexen
         author: Raven Software
         license: All rights reserved
-        tags: hexen vanilla        
+        tags: gamedata hexen vanilla        
     }
 }
 
@@ -306,7 +306,7 @@ package "com.ravensoftware.hexen.beta" {
         title: Hexen (Beta)
         author: Raven Software
         license: All rights reserved
-        tags: hexen vanilla prerelease
+        tags: gamedata hexen vanilla prerelease
     }
 }
 
@@ -320,7 +320,7 @@ package "com.ravensoftware.hexen.demo" {
         title: Hexen (Demo)
         author: Raven Software
         license: All rights reserved
-        tags: hexen vanilla prerelease
+        tags: gamedata hexen vanilla prerelease
     }
 }
 
@@ -333,6 +333,6 @@ package "com.ravensoftware.hexen.macdemo" {
         title: Hexen (Macintosh Demo)
         author: Raven Software
         license: All rights reserved
-        tags: hexen vanilla prerelease
+        tags: gamedata hexen vanilla prerelease
     }
 }

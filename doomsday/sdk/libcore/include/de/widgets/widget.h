@@ -77,6 +77,9 @@ public:
         /// Children of the widget should be clipped when drawing.
         ChildVisibilityClipping = 0x100,
 
+        /// Widget can receive input focus.
+        Focusable = 0x200,
+
         DefaultBehavior = 0
     };
     Q_DECLARE_FLAGS(Behaviors, Behavior)
@@ -259,7 +262,7 @@ public:
     NotifyArgs::Result notifyTree(NotifyArgs const &args);
     NotifyArgs::Result notifySelfAndTree(NotifyArgs const &args);
     void notifyTreeReversed(NotifyArgs const &args);
-    bool dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event const &));
+    virtual bool dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event const &));
 
     // Events.
     virtual void initialize();

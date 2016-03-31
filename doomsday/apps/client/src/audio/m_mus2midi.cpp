@@ -19,14 +19,18 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
 #include "audio/m_mus2midi.h"
 
-#include <doomsday/filesys/fs_util.h>
 #include <de/Log>
 #include <de/NativePath>
-#include <stdio.h>
-#include <string.h>
+#include <de/Block>
+#include <de/ByteRefArray>
+#include <de/Writer>
+
+#include <cstdio>
+#include <cstring>
+
+using namespace de;
 
 // MUS event types.
 enum {
@@ -65,35 +69,35 @@ enum {
 #pragma pack(1)
 struct mus_header {
     char            ID[4]; ///< Identifier "MUS" 0x1A.
-    ushort          scoreLen;
-    ushort          scoreStart;
-    ushort          channels; ///< Number of primary channels.
-    ushort          secondaryChannels; ///< Number of secondary channels.
-    ushort          instrCnt;
-    ushort          padding;
+    duint16         scoreLen;
+    duint16         scoreStart;
+    duint16         channels; ///< Number of primary channels.
+    duint16         secondaryChannels; ///< Number of secondary channels.
+    duint16         instrCnt;
+    duint16         padding;
     // The instrument list begins here.
 };
 #pragma pack()
 
 typedef struct mus_event_s {
-    byte            channel;
-    byte            ev; // event.
-    byte            last;
+    dbyte           channel;
+    dbyte           ev; // event.
+    dbyte           last;
 } mus_event_t;
 
 typedef struct midi_event_s {
-    uint            deltaTime;
-    byte            command;
-    byte            size;
-    byte            parms[2];
+    duint32         deltaTime;
+    dbyte           command;
+    dbyte           size;
+    dbyte           parms[2];
 } midi_event_t;
 
 static int readTime; // In ticks.
-static byte* readPos;
+static dbyte const *readPos;
 
-static byte chanVols[16]; // Last volume for each channel.
+static dbyte chanVols[16]; // Last volume for each channel.
 
-static char ctrlMus2Midi[NUM_MUS_CTRLS] = {
+static dbyte const ctrlMus2Midi[NUM_MUS_CTRLS] = {
      0, ///< Not used.
      0, ///< Bank select.
      1, ///< Modulation.
@@ -113,11 +117,11 @@ static char ctrlMus2Midi[NUM_MUS_CTRLS] = {
     121  ///< Reset all controllers.
 };
 
-static dd_bool getNextEvent(midi_event_t* ev)
+static bool getNextEvent(midi_event_t *ev)
 {
     int i;
     mus_event_t evDesc;
-    byte musEvent;
+    dbyte musEvent;
 
     ev->deltaTime = readTime;
     readTime = 0;
@@ -140,10 +144,14 @@ static dd_bool getNextEvent(midi_event_t* ev)
         ev->parms[0] = *readPos++;
         // Is the volume there, too?
         if(ev->parms[0] & 0x80)
+        {
             chanVols[evDesc.channel] = *readPos++;
+        }
         ev->parms[0] &= 0x7f;
         if((i = chanVols[evDesc.channel]) > 127)
+        {
             i = 127;
+        }
         ev->parms[1] = i;
         break;
 
@@ -203,9 +211,13 @@ static dd_bool getNextEvent(midi_event_t* ev)
     i = evDesc.channel;
     // Redirect MUS channel 16 to MIDI channel 10 (percussion).
     if(i == 15)
+    {
         i = 9;
+    }
     else if(i == 9)
+    {
         i = 15;
+    }
     ev->command |= i;
 
     // Check if this was the last event in a group.
@@ -218,133 +230,101 @@ static dd_bool getNextEvent(midi_event_t* ev)
     {
         i = *readPos++;
         readTime = (readTime << 7) + (i & 0x7f);
-    } while(i & 0x80);
+    }
+    while(i & 0x80);
 
     return true;
 }
 
-dd_bool M_Mus2Midi(void* data, size_t length, const char* outFile)
+Block M_Mus2Midi(Block const &musData)
 {
-    unsigned char buffer[80];
-    int i, trackSizeOffset, trackSize;
-    struct mus_header* header;
-    ddstring_t nativePath;
+    Block buffer;
+    Writer out(buffer, de::bigEndianByteOrder);
+    duint32 trackSizeOffset, trackSize;
+    struct mus_header const *header;
     midi_event_t ev;
-    FILE* file;
 
-    DENG_UNUSED(length);
     LOG_AS("M_Mus2Midi");
 
-    if(!outFile || !outFile[0]) return false;
-
-    Str_Init(&nativePath); Str_Set(&nativePath, outFile);
-    F_ToNativeSlashes(&nativePath, &nativePath);
-
-    /// @todo Reimplement using higher level methods for file IO.
-    file = fopen(Str_Text(&nativePath), "wb");
-    if(!file)
-    {
-        LOG_RES_WARNING("Failed opening output file \"%s\"") << de::NativePath(Str_Text(&nativePath)).pretty();
-        Str_Free(&nativePath);
-        return false;
-    }
-    Str_Free(&nativePath);
-
     // Start with the MIDI header.
-    strcpy((char*)buffer, "MThd");
-    fwrite(buffer, 4, 1, file);
+    out.writeBytes(ByteRefArray::fromCStr("MThd"));
 
     // Header size.
-    memset(buffer, 0, 3);
-    buffer[3] = 6;
-    fwrite(buffer, 4, 1, file);
+    out << duint32(6);
 
     // Format (single track).
-    buffer[0] = 0;
-    buffer[1] = 0;
+    out << duint16(0);
 
     // Number of tracks.
-    buffer[2] = 0;
-    buffer[3] = 1;
+    out << duint16(1);
 
     // Delta ticks per quarter note (140).
-    buffer[4] = 0;
-    buffer[5] = 140;
-
-    fwrite(buffer, 6, 1, file);
+    out << duint16(140);
 
     // Track header.
-    strcpy((char*)buffer, "MTrk");
-    fwrite(buffer, 4, 1, file);
+    out.writeBytes(ByteRefArray::fromCStr("MTrk"));
 
     // Length of the track in bytes.
-    memset(buffer, 0, 4);
-    trackSizeOffset = ftell(file);
-    fwrite(buffer, 4, 1, file); // Updated later.
+    trackSizeOffset = duint32(out.offset());
+    out << duint32(0); // Updated later.
 
     // The first MIDI ev sets the tempo.
-    buffer[0] = 0; // No delta ticks.
-    buffer[1] = 0xff;
-    buffer[2] = 0x51;
-    buffer[3] = 3;
-    buffer[4] = 0xf; // Exactly one second per quarter note.
-    buffer[5] = 0x42;
-    buffer[6] = 0x40;
-    fwrite(buffer, 7, 1, file);
+    out << duint8(0) // No delta ticks.
+        << duint8(0xff)
+        << duint8(0x51)
+        << duint8(3)
+        << duint8(0xf) // Exactly one second per quarter note.
+        << duint8(0x42)
+        << duint8(0x40);
 
-    header = (struct mus_header *) data;
-    readPos = (byte*)data + DD_USHORT(header->scoreStart);
+    header = reinterpret_cast<struct mus_header const *>(musData.dataConst());
+    readPos = musData.dataConst() + littleEndianByteOrder.toNative(header->scoreStart);
     readTime = 0;
+
     // Init channel volumes.
-    for(i = 0; i < 16; ++i)
-        chanVols[i] = 64;
+    for(auto &vol : chanVols) vol = 64;
 
     while(getNextEvent(&ev))
     {
         // Delta time. Split into 7-bit segments.
         if(ev.deltaTime == 0)
         {
-            buffer[0] = 0;
-            fwrite(buffer, 1, 1, file);
+            out << duint8(0);
         }
         else
         {
-            i = -1;
+            duint8 buf[6];
+            int i = -1;
             while(ev.deltaTime > 0)
             {
-                buffer[++i] = ev.deltaTime & 0x7f;
-                if(i > 0) buffer[i] |= 0x80;
+                buf[++i] = ev.deltaTime & 0x7f;
+                if(i > 0) buf[i] |= 0x80;
                 ev.deltaTime >>= 7;
             }
 
             // The bytes are written starting from the MSB.
             for(; i >= 0; --i)
-                fwrite(&buffer[i], 1, 1, file);
+            {
+                out << buf[i];
+            }
         }
 
         // The ev data.
-        fwrite(&ev.command, 1, 1, file);
-        fwrite(&ev.parms, 1, ev.size, file);
+        out << ev.command;
+        out.writeBytes(ByteRefArray(&ev.parms, ev.size));
     }
 
     // End of track.
-    buffer[0] = 0;
-    buffer[1] = 0xff;
-    buffer[2] = 0x2f;
-    buffer[3] = 0;
-    fwrite(buffer, 4, 1, file);
+    out << duint8(0)
+        << duint8(0xff)
+        << duint8(0x2f)
+        << duint8(0);
 
     // All the MIDI data has now been written. Update the track length.
-    trackSize = ftell(file) - trackSizeOffset - 4;
-    fseek(file, trackSizeOffset, SEEK_SET);
+    trackSize = duint32(out.offset()) - trackSizeOffset - 4;
+    out.setOffset(trackSizeOffset);
 
-    buffer[3] = trackSize & 0xff;
-    buffer[2] = (trackSize >> 8) & 0xff;
-    buffer[1] = (trackSize >> 16) & 0xff;
-    buffer[0] = trackSize >> 24;
-    fwrite(buffer, 4, 1, file);
+    out << trackSize;
 
-    fclose(file);
-
-    return true; // Success!
+    return buffer;
 }

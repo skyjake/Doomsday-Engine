@@ -150,7 +150,7 @@ public:
     /**
      * Returns the logical dimensions property of the manifest.
      */
-    Vector2i const &logicalDimensions() const;
+    Vector2ui const &logicalDimensions() const;
 
     /**
      * Change the logical dimensions property of the manifest.
@@ -159,7 +159,7 @@ public:
      * which case their value will be inherited from the pixel dimensions of
      * the image at load time.
      */
-    bool setLogicalDimensions(Vector2i const &newDimensions);
+    bool setLogicalDimensions(Vector2ui const &newDimensions);
 
     /**
      * Returns the world origin offset property of the manifest.

@@ -38,6 +38,10 @@ public:
 
     void start();
 
+    void pause();
+
+    void resume();
+
     void cancel();
 
     bool isDone() const;

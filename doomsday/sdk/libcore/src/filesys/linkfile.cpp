@@ -22,46 +22,12 @@
 namespace de {
 
 DENG2_PIMPL(LinkFile)
-, DENG2_OBSERVES(File, Deletion) // target file deletion
 {
-    File const *target;
+    SafePtr<File const> target;
 
     Instance(Public *i)
         : Base(i)
         , target(i) {}
-
-    ~Instance()
-    {
-        unsetTarget();
-    }
-
-    void fileBeingDeleted(File const &file)
-    {
-        if(target == &file)
-        {
-            // Link target is gone.
-            target = thisPublic;
-        }
-    }
-
-    void unsetTarget()
-    {
-        if(target != thisPublic)
-        {
-            target->audienceForDeletion() -= this;
-        }
-    }
-
-    void setTarget(File const &file)
-    {
-        unsetTarget();
-
-        target = &file;
-        if(target != thisPublic)
-        {
-            target->audienceForDeletion() += this;
-        }
-    }
 };
 
 LinkFile::LinkFile(String const &name)
@@ -81,14 +47,24 @@ LinkFile::~LinkFile()
 
 File const &LinkFile::target() const
 {
-    DENG2_ASSERT(d->target != 0);
-    return *d->target;
+    DENG2_GUARD(this);
+
+    if(d->target)
+    {
+        return *d->target;
+    }
+    return File::target();
 }
 
 File &LinkFile::target()
 {
-    DENG2_ASSERT(d->target != 0);
-    return *const_cast<File *>(d->target);
+    DENG2_GUARD(this);
+
+    if(d->target)
+    {
+        return *const_cast<File *>(d->target.get());
+    }
+    return File::target();
 }
 
 Folder const *LinkFile::targetFolder() const
@@ -105,7 +81,7 @@ void LinkFile::setTarget(File const &file)
 {
     DENG2_GUARD(this);
 
-    d->setTarget(file);
+    d->target.reset(&file);
 }
 
 bool LinkFile::isBroken() const
@@ -131,7 +107,7 @@ filesys::Node const *LinkFile::tryFollowPath(PathRef const &path) const
     {
         return folder->tryFollowPath(path);
     }
-    return 0;
+    return nullptr;
 }
 
 filesys::Node const *LinkFile::tryGetChild(String const &name) const
@@ -140,7 +116,7 @@ filesys::Node const *LinkFile::tryGetChild(String const &name) const
     {
         return folder->tryGetChild(name);
     }
-    return 0;
+    return nullptr;
 }
 
 LinkFile *LinkFile::newLinkToFile(File const &file, String linkName)

@@ -20,12 +20,13 @@
 
 #include "doomsday/game.h"
 #include "doomsday/games.h"
+#include "doomsday/doomsdayapp.h"
+#include "doomsday/GameProfiles"
+#include "doomsday/SavedSession"
 #include "doomsday/console/cmd.h"
 #include "doomsday/filesys/file.h"
 #include "doomsday/resource/manifest.h"
 #include "doomsday/resource/resources.h"
-#include "doomsday/doomsdayapp.h"
-#include "doomsday/SavedSession"
 
 #include <de/App>
 #include <de/Error>
@@ -38,11 +39,13 @@ using namespace de;
 static String const DEF_ID("ID");
 
 String const Game::DEF_VARIANT_OF("variantOf");
+String const Game::DEF_FAMILY("family");
 String const Game::DEF_CONFIG_DIR("configDir");
 String const Game::DEF_CONFIG_MAIN_PATH("mainConfig");
 String const Game::DEF_CONFIG_BINDINGS_PATH("bindingsConfig");
 String const Game::DEF_TITLE("title");
 String const Game::DEF_AUTHOR("author");
+String const Game::DEF_RELEASE_DATE("releaseDate");
 String const Game::DEF_LEGACYSAVEGAME_NAME_EXP("legacySavegame.nameExp");
 String const Game::DEF_LEGACYSAVEGAME_SUBFOLDER("legacySavegame.subfolder");
 String const Game::DEF_MAPINFO_PATH("mapInfoPath");
@@ -52,7 +55,6 @@ DENG2_PIMPL(Game)
     pluginid_t pluginId = 0; ///< Unique identifier of the registering plugin.
     Record params;
     StringList requiredPackages; ///< Packages required for starting the game.
-    StringList userFiles;
 
     Manifests manifests; ///< Required resource files (e.g., doomu.wad).
 
@@ -63,11 +65,11 @@ DENG2_PIMPL(Game)
         // Define the optional parameters if needed.
         if(!params.has(DEF_CONFIG_MAIN_PATH))
         {
-            params.set(DEF_CONFIG_MAIN_PATH, "configs"/params.gets(DEF_CONFIG_DIR)/"game.cfg");
+            params.set(DEF_CONFIG_MAIN_PATH, "/home/configs"/params.gets(DEF_CONFIG_DIR)/"game.cfg");
         }
         if(!params.has(DEF_CONFIG_BINDINGS_PATH))
         {
-            params.set(DEF_CONFIG_BINDINGS_PATH, "configs"/params.gets(DEF_CONFIG_DIR)/"player/bindings.cfg");
+            params.set(DEF_CONFIG_BINDINGS_PATH, "/home/configs"/params.gets(DEF_CONFIG_DIR)/"player/bindings.cfg");
         }
 
         params.set(DEF_CONFIG_DIR, NativePath(params.gets(DEF_CONFIG_DIR)).expand().withSeparators('/'));
@@ -76,6 +78,16 @@ DENG2_PIMPL(Game)
     ~Instance()
     {
         qDeleteAll(manifests);
+    }
+
+    StringList packagesFromProfile() const
+    {
+        auto const *profile = DoomsdayApp::gameProfiles().tryFind(self.title())->maybeAs<GameProfiles::Profile>();
+        if(profile)
+        {
+            return profile->packages();
+        }
+        return StringList();
     }
 };
 
@@ -104,6 +116,19 @@ String Game::variantOf() const
     return d->params.gets(DEF_VARIANT_OF);
 }
 
+String Game::family() const
+{
+    if(d->params.has(DEF_FAMILY))
+    {
+        return d->params.gets(DEF_FAMILY);
+    }
+    // We can make a guess...
+    if(id().contains("doom"))    return "doom";
+    if(id().contains("heretic")) return "heretic";
+    if(id().contains("hexen"))   return "hexen";
+    return "";
+}
+
 void Game::setRequiredPackages(StringList const &packageIds)
 {
     d->requiredPackages = packageIds;
@@ -112,16 +137,6 @@ void Game::setRequiredPackages(StringList const &packageIds)
 void Game::addRequiredPackage(String const &packageId)
 {
     d->requiredPackages.append(packageId);
-}
-
-void Game::setUserFiles(StringList const &nativePaths)
-{
-    d->userFiles = nativePaths;
-}
-
-StringList const &Game::userFiles() const
-{
-    return d->userFiles;
 }
 
 StringList Game::requiredPackages() const
@@ -141,7 +156,7 @@ void Game::addManifest(ResourceManifest &manifest)
 
 bool Game::allStartupFilesFound() const
 {
-    for(String const &pkg : d->requiredPackages)
+    for(String const &pkg : d->requiredPackages + d->packagesFromProfile())
     {
         if(!App::packageLoader().isAvailable(pkg))
             return false;
@@ -155,6 +170,11 @@ bool Game::allStartupFilesFound() const
             return false;
     }
     return true;
+}
+
+bool Game::isPlayable() const
+{
+    return allStartupFilesFound();
 }
 
 Game::Status Game::status() const
@@ -211,15 +231,18 @@ void Game::setPluginId(pluginid_t newId)
 
 String Game::logoImageId() const
 {
-    String idKey = id();
+    return logoImageForId(id());
+}
 
+String Game::logoImageForId(String const &id)
+{
     /// @todo The name of the plugin should be accessible via the plugin loader.
     String plugName;
-    if(idKey.contains("heretic"))
+    if(id.contains("heretic"))
     {
         plugName = "libheretic";
     }
-    else if(idKey.contains("hexen"))
+    else if(id.contains("hexen"))
     {
         plugName = "libhexen";
     }
@@ -282,12 +305,17 @@ String Game::author() const
     return d->params.gets(DEF_AUTHOR);
 }
 
+Date Game::releaseDate() const
+{
+    return Date::fromText(d->params.gets(DEF_RELEASE_DATE, ""));
+}
+
 Game::Manifests const &Game::manifests() const
 {
     return d->manifests;
 }
 
-bool Game::isRequiredFile(File1 &file)
+bool Game::isRequiredFile(File1 &file) const
 {
     // If this resource is from a container we must use the path of the
     // root file container instead.
@@ -352,7 +380,7 @@ void Game::addResource(resourceclassid_t classId, dint rflags,
 
 void Game::loadPackages() const
 {
-    for(String const &id : d->requiredPackages)
+    for(String const &id : d->requiredPackages + d->packagesFromProfile())
     {
         App::packageLoader().load(id);
     }
@@ -360,9 +388,10 @@ void Game::loadPackages() const
 
 void Game::unloadPackages() const
 {
-    for(int i = d->requiredPackages.size() - 1; i >= 0; --i)
+    StringList const allPackages = d->requiredPackages + d->packagesFromProfile();
+    for(int i = allPackages.size() - 1; i >= 0; --i)
     {
-        App::packageLoader().unload(d->requiredPackages.at(i));
+        App::packageLoader().unload(allPackages.at(i));
     }
 }
 
@@ -441,7 +470,7 @@ D_CMD(InspectGame)
 {
     DENG2_UNUSED(src);
 
-    Game *game = 0;
+    Game const *game = 0;
     if(argc < 2)
     {
         // No game identity key was specified - assume the current game.

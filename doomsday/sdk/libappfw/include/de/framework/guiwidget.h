@@ -170,34 +170,49 @@ public:
     enum Attribute
     {
         /**
-         * Enables or disables automatic state serialization for widgets derived from
-         * IPersistent. State serialization occurs when the widget is gl(De)Init'd.
+         * Enables or disables automatic state serialization for widgets
+         * derived from IPersistent. State serialization occurs when the widget
+         * is gl(De)Init'd.
          */
         RetainStatePersistently = 0x1,
 
         AnimateOpacityWhenEnabledOrDisabled = 0x2,
 
         /**
-         * Widget will not automatically change opacity depending on state (e.g., when
-         * disabled).
+         * Widget will not automatically change opacity depending on state
+         * (e.g., when disabled).
          */
         ManualOpacity = 0x10,
 
         /**
-         * Prevents the drawing of the widget contents even if it visible. The texture
-         * containing the blurred background is updated regardless.
+         * Prevents the drawing of the widget contents even if it visible. The
+         * texture containing the blurred background is updated regardless.
          */
         DontDrawContent = 0x4,
 
         /**
-         * Visible opacity determined solely by the widget itself, not affected by
-         * ancestors.
+         * Visible opacity determined solely by the widget itself, not affected
+         * by ancestors.
          */
         IndependentOpacity = 0x8,
+
+        /**
+         * When focused, don't show the normal focus indicator. The assumption
+         * is that the widget will indicate focused state on its own.
+         */
+        FocusHidden = 0x20,
+
+        /**
+         * All received mouse events are eaten. Derived classes may handle the
+         * events beforehand, though.
+         */
+        EatAllMouseEvents = 0x40,
 
         DefaultAttributes = RetainStatePersistently | AnimateOpacityWhenEnabledOrDisabled
     };
     Q_DECLARE_FLAGS(Attributes, Attribute)
+
+    enum ColorTheme { Normal, Inverted };
 
 public:
     GuiWidget(String const &name = "");
@@ -210,8 +225,8 @@ public:
     static void destroy(GuiWidget *widget);
 
     /**
-     * Deletes a widget at a later point in time. However, the widget is immediately
-     * deinitialized.
+     * Deletes a widget at a later point in time. However, the widget is
+     * immediately deinitialized.
      *
      * @param widget  Widget to deinitialize now and destroy layer.
      */
@@ -221,6 +236,13 @@ public:
     Widget::Children childWidgets() const;
     Widget *parentWidget() const;
     Style const &style() const;
+
+    /**
+     * Shortcut for accessing individual rules in the active UI style.
+     * @param path  Identifier of the rule.
+     * @return Rule from the Style.
+     */
+    Rule const &rule(DotPath const &path) const;
 
     /**
      * Returns the rule rectangle that defines the placement of the widget on
@@ -322,12 +344,14 @@ public:
     void restoreState();
 
     // Events.
-    void initialize();
-    void deinitialize();
-    void viewResized();
-    void update();
-    void draw() final;
-    bool handleEvent(Event const &event);
+    void initialize() override;
+    void deinitialize() override;
+    void viewResized() override;
+    void update() override;
+    void draw() override final;
+    void preDrawChildren() override;
+    void postDrawChildren() override;
+    bool handleEvent(Event const &event) override;
 
     /**
      * Determines if the widget occupies on-screen position @a pos.
@@ -419,6 +443,8 @@ public:
                        typename Vector2::ValueType(toDevicePixels(type.y)));
     }
 
+    static ColorTheme invertColorTheme(ColorTheme theme);
+
     /**
      * Immediately deletes all the widgets in the garbage. This is useful to
      * avoid double deletion in case a trashed widget's parent is deleted
@@ -482,6 +508,11 @@ protected:
      * been marked as changed.
      */
     virtual void updateStyle();
+
+    /**
+     * Returns the opacity animation of the widget.
+     */
+    Animation &opacityAnimation();
 
 private:
     DENG2_PRIVATE(d)

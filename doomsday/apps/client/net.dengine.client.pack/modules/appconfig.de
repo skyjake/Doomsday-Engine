@@ -51,6 +51,16 @@ def setDefaults(d)
         autoHide = 3 * 60
     end
     
+    # Home.
+    record d.home
+    record d.home.columns
+    d.home.showUnplayableGames = True
+    d.home.columns.doom = True
+    d.home.columns.heretic = True
+    d.home.columns.hexen = True
+    d.home.columns.otherGames = True
+    d.home.columns.multiplayer = True
+    
     # Input defaults.
     record d.input
     record d.input.mouse

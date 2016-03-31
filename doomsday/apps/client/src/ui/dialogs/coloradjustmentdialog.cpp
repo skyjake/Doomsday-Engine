@@ -43,7 +43,7 @@ DENG_GUI_PIMPL(ColorAdjustmentDialog)
         area.add(contrast = new CVarSliderWidget("vid-contrast"));
         area.add(brightness = new CVarSliderWidget("vid-bright"));
 
-        Rule const &sliderWidth = style().rules().rule("coloradjustment.slider");
+        Rule const &sliderWidth = rule("coloradjustment.slider");
         gamma->rule().setInput(Rule::Width, sliderWidth);
         contrast->rule().setInput(Rule::Width, sliderWidth);
         brightness->rule().setInput(Rule::Width, sliderWidth);

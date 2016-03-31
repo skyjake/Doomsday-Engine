@@ -295,7 +295,7 @@ DENG2_PIMPL(MaterialAnimator)
     {
         bool opaque;
         float glowStrength;
-        Vector2i dimensions;
+        Vector2ui dimensions;
 
         blendmode_t shineBlendMode;
         Vector3f shineMinColor;
@@ -311,7 +311,7 @@ DENG2_PIMPL(MaterialAnimator)
 
         void clear()
         {
-            dimensions     = Vector2i(0, 0);
+            dimensions     = Vector2ui(0, 0);
             shineBlendMode = BM_NORMAL;
             shineMinColor  = Vector3f(0, 0, 0);
             opaque         = true;
@@ -461,7 +461,7 @@ DENG2_PIMPL(MaterialAnimator)
         snapshot->dimensions = material->dimensions();
         snapshot->opaque     = (snapshot->textures[TU_LAYER0] && !snapshot->textures[TU_LAYER0]->isMasked());
 
-        if(snapshot->dimensions == Vector2i(0, 0)) return;
+        if(snapshot->dimensions == Vector2ui()) return;
 
         if(material->isSkyMasked() && !::devRendSkyMode) return;
 
@@ -760,7 +760,7 @@ bool MaterialAnimator::isOpaque() const
     return d->snapshot->opaque;
 }
 
-Vector2i const &MaterialAnimator::dimensions() const
+Vector2ui const &MaterialAnimator::dimensions() const
 {
     d->updateSnapshotIfNeeded();
     return d->snapshot->dimensions;

@@ -250,7 +250,7 @@ public:
      * units. The DimensionsChange audience is notified whenever dimensions
      * are changed.
      */
-    Vector2i const &dimensions() const;
+    Vector2ui const &dimensions() const;
 
     /**
      * Convenient accessor method for returning the X axis size (width) of
@@ -274,7 +274,7 @@ public:
      *
      * @todo Update any Materials (and thus Surfaces) which reference this.
      */
-    void setDimensions(Vector2i const &newDimensions);
+    void setDimensions(Vector2ui const &newDimensions);
 
     /**
      * Change the world width of the texture.
@@ -282,7 +282,7 @@ public:
      *
      * @todo Update any Materials (and thus Surfaces) which reference this.
      */
-    void setWidth(int newWidth);
+    void setWidth(duint newWidth);
 
     /**
      * Change the world height of the texture.
@@ -290,7 +290,7 @@ public:
      *
      * @todo Update any Materials (and thus Surfaces) which reference this.
      */
-    void setHeight(int newHeight);
+    void setHeight(duint newHeight);
 
     /**
      * Returns the world origin offset of texture in map coordinate space units.

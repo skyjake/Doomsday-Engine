@@ -81,7 +81,7 @@ DENG2_PIMPL(DownloadDialog)
         progress->setRange(Rangei(0, 100));
         progress->rule()
                 .setLeftTop(area.contentRule().left(), area.contentRule().top())
-                .setInput(Rule::Width, self.style().rules().rule("dialog.download.width"));
+                .setInput(Rule::Width, self.rule("dialog.download.width"));
 
         area.setContentSize(progress->rule().width(), progress->rule().height());
 

@@ -31,7 +31,7 @@ public:
     /// The game ID of the source data is ambigous. @ingroup errors
     DENG2_SUB_ERROR(ReadError, AmbigousGameIdError);
 
-    /// Logical identifiers for supported save formats.
+    /// Identifiers for supported save formats.
     enum FormatId {
         Doom,
         Heretic,

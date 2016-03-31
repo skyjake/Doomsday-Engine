@@ -25,7 +25,7 @@
 #include <de/Record>
 #include <de/System>
 #include "ddevent.h"
-#include "SettingsRegister"
+#include "ConfigProfiles"
 
 class BindContext;
 class InputDevice;
@@ -63,7 +63,7 @@ class InputSystem : public de::System
 public:
     InputSystem();
 
-    SettingsRegister &settings();
+    ConfigProfiles &settings();
 
     // System.
     void timeChanged(de::Clock const &);

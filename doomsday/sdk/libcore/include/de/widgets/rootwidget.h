@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_ROOTWIDGET_H
@@ -43,6 +43,9 @@ class DENG2_PUBLIC RootWidget : public Widget
 {
 public:
     typedef Vector2ui Size;
+
+    /// Notified when the focused widget changes.
+    DENG2_DEFINE_AUDIENCE2(FocusChange, void focusedWidgetChanged(Widget *))
 
 public:
     RootWidget();

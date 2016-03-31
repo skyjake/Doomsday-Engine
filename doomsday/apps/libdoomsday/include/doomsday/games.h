@@ -86,6 +86,8 @@ public:
      */
     Game &operator [] (de::String const &id) const;
 
+    bool contains(de::String const &id) const;
+
     /**
      * @return  Game associated with unique index @a idx.
      *

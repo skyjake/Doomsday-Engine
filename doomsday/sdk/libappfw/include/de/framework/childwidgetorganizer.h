@@ -138,22 +138,28 @@ public:
 
     ui::Item const *findItemForWidget(GuiWidget const &widget) const;
 
+    /**
+     * Filters all items according to the defined IFilter. Widgets are
+     * created and removed as needed according to the filter.
+     */
+    void refilter();
+
 public:
     /**
      * Notified when the organizer creates a widget for a context item. Allows
      * third parties to customize the widget as needed.
      */
     DENG2_DEFINE_AUDIENCE2(WidgetCreation,
-                          void widgetCreatedForItem(GuiWidget &widget,
-                                                    ui::Item const &item))
+                           void widgetCreatedForItem(GuiWidget &widget,
+                                                     ui::Item const &item))
 
     /**
      * Notified when the organizer updates a widget for a changed context item.
      * Allows third parties to customize the widget as needed.
      */
     DENG2_DEFINE_AUDIENCE2(WidgetUpdate,
-                          void widgetUpdatedForItem(GuiWidget &widget,
-                                                    ui::Item const &item))
+                           void widgetUpdatedForItem(GuiWidget &widget,
+                                                     ui::Item const &item))
 
 private:
     DENG2_PRIVATE(d)

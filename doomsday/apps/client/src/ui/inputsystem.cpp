@@ -310,7 +310,7 @@ DENG2_PIMPL(InputSystem)
 {
     bool ignoreInput = false;
 
-    SettingsRegister settings;
+    ConfigProfiles settings;
     Binder binder;
 
     typedef QList<InputDevice *> Devices;
@@ -324,13 +324,13 @@ DENG2_PIMPL(InputSystem)
     Instance(Public *i) : Base(i)
     {
         // Initialize settings.
-        settings.define(SettingsRegister::ConfigVariable, "input.mouse.syncSensitivity")
-                .define(SettingsRegister::FloatCVar,      "input-mouse-x-scale", 1.f/1000.f)
-                .define(SettingsRegister::FloatCVar,      "input-mouse-y-scale", 1.f/1000.f)
-                .define(SettingsRegister::IntCVar,        "input-mouse-x-flags", 0)
-                .define(SettingsRegister::IntCVar,        "input-mouse-y-flags", 0)
-                .define(SettingsRegister::IntCVar,        "input-joy", 1)
-                .define(SettingsRegister::IntCVar,        "input-sharp", 1);
+        settings.define(ConfigProfiles::ConfigVariable, "input.mouse.syncSensitivity")
+                .define(ConfigProfiles::FloatCVar,      "input-mouse-x-scale", 1.f/1000.f)
+                .define(ConfigProfiles::FloatCVar,      "input-mouse-y-scale", 1.f/1000.f)
+                .define(ConfigProfiles::IntCVar,        "input-mouse-x-flags", 0)
+                .define(ConfigProfiles::IntCVar,        "input-mouse-y-flags", 0)
+                .define(ConfigProfiles::IntCVar,        "input-joy", 1)
+                .define(ConfigProfiles::IntCVar,        "input-sharp", 1);
 
         // Initialize script bindings.
         binder.initNew()
@@ -938,7 +938,7 @@ InputSystem::InputSystem() : d(new Instance(this))
 void InputSystem::timeChanged(Clock const &)
 {}
 
-SettingsRegister &InputSystem::settings()
+ConfigProfiles &InputSystem::settings()
 {
     return d->settings;
 }

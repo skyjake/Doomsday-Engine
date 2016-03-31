@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/RootWidget"
@@ -27,7 +27,7 @@ namespace de {
 DENG2_PIMPL_NOREF(RootWidget)
 {
     RuleRectangle *viewRect;
-    Widget *focus;
+    SafeWidgetPtr<Widget> focus;
 
     Instance() : focus(0)
     {
@@ -46,7 +46,11 @@ DENG2_PIMPL_NOREF(RootWidget)
         return Size(de::max(0, viewRect->width().valuei()),
                     de::max(0, viewRect->height().valuei()));
     }
+
+    DENG2_PIMPL_AUDIENCE(FocusChange)
 };
+
+DENG2_AUDIENCE_METHOD(RootWidget, FocusChange)
 
 RootWidget::RootWidget() : Widget(), d(new Instance)
 {}
@@ -101,12 +105,26 @@ void RootWidget::setViewSize(Size const &size)
 
 void RootWidget::setFocus(Widget *widget)
 {
+    if(widget == d->focus) return; // No change.
+
     Widget *oldFocus = d->focus;
-    d->focus = 0;
+
+    d->focus.reset();
     if(oldFocus) oldFocus->focusLost();
 
-    d->focus = widget;
-    if(d->focus) d->focus->focusGained();
+    if(widget && widget->behavior().testFlag(Focusable))
+    {
+        d->focus.reset(widget);
+        if(d->focus) d->focus->focusGained();
+    }
+
+    if(d->focus != oldFocus)
+    {
+        DENG2_FOR_AUDIENCE2(FocusChange, i)
+        {
+            i->focusedWidgetChanged(widget);
+        }
+    }
 }
 
 Widget *RootWidget::focus() const
@@ -125,7 +143,7 @@ void RootWidget::update()
 }
 
 void RootWidget::draw()
-{   
+{
     NotifyArgs args(&Widget::draw);
     args.conditionFunc  = &Widget::isVisible;
     args.preNotifyFunc  = &Widget::preDrawChildren;
@@ -137,7 +155,8 @@ void RootWidget::draw()
 
 bool RootWidget::processEvent(Event const &event)
 {
-    if(focus() && focus()->handleEvent(event))
+    // Focus is only for the keyboard.
+    if(event.isKey() && focus() && focus()->handleEvent(event))
     {
         // The focused widget ate the event.
         return true;

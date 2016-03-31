@@ -264,7 +264,7 @@ VariableLineEditWidget *VariableGroupEditor::addLineEdit(Variable &var)
     auto *w = new VariableLineEditWidget(var);
     d->content->add(w);
     d->layout << *w;
-    w->rule().setInput(Rule::Width, style().rules().rule("slider.width"));
+    w->rule().setInput(Rule::Width, rule("slider.width"));
     return w;
 }
 

@@ -35,6 +35,7 @@ public:
     InputDialog(String const &name = "");
 
     LineEditWidget &editor();
+    LineEditWidget const &editor() const;
 
 protected:
     void preparePanelForOpening();

@@ -147,21 +147,21 @@ void Style::richStyleFormat(int contentStyle,
         break;
 
     case Font::RichFormat::MinorStyle:
-        sizeFactor = .8f;
+        sizeFactor = 1.f;
         fontWeight = Font::RichFormat::Normal;
         fontStyle  = Font::RichFormat::Regular;
         colorIndex = Font::RichFormat::DimmedColor;
         break;
 
     case Font::RichFormat::MetaStyle:
-        sizeFactor = .9f;
+        sizeFactor = .8f;
         fontWeight = Font::RichFormat::Light;
         fontStyle  = Font::RichFormat::Regular;
         colorIndex = Font::RichFormat::AccentColor;
         break;
 
     case Font::RichFormat::MajorMetaStyle:
-        sizeFactor = .9f;
+        sizeFactor = .8f;
         fontWeight = Font::RichFormat::Bold;
         fontStyle  = Font::RichFormat::Regular;
         colorIndex = Font::RichFormat::AccentColor;

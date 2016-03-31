@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/ChildWidgetOrganizer"
@@ -83,12 +83,15 @@ DENG2_OBSERVES(ui::Item, Change     )
         }
     }
 
-    void addItemWidget(ui::Data::Pos pos, bool alwaysAppend = false)
+    enum AddBehavior { AlwaysAppend = 0x1, IgnoreFilter = 0x2, DefaultBehavior = 0 };
+    Q_DECLARE_FLAGS(AddBehaviors, AddBehavior)
+
+    void addItemWidget(ui::Data::Pos pos, AddBehaviors behavior = DefaultBehavior)
     {
         DENG2_ASSERT_IN_MAIN_THREAD(); // widgets should only be manipulated in UI thread
         DENG2_ASSERT(factory != 0);
 
-        if(filter)
+        if(filter && !behavior.testFlag(IgnoreFilter))
         {
             if(!filter->isItemAccepted(self, *context, pos))
             {
@@ -105,14 +108,21 @@ DENG2_OBSERVES(ui::Item, Change     )
         mapping.insert(&item, w);
         itemChanged(item);
 
-        if(alwaysAppend || pos == context->size() - 1)
+        if(behavior.testFlag(AlwaysAppend) || pos == context->size() - 1)
         {
             // This is the last item.
             container->add(w);
         }
         else
         {
-            container->insertBefore(w, *mapping[&context->at(pos + 1)]);
+            if(GuiWidget *nextWidget = findNextWidget(pos))
+            {
+                container->insertBefore(w, *nextWidget);
+            }
+            else
+            {
+                container->add(w);
+            }
         }
 
         // Others may alter the widget in some way.
@@ -126,6 +136,21 @@ DENG2_OBSERVES(ui::Item, Change     )
         item.audienceForChange() += this;
     }
 
+    GuiWidget *findNextWidget(ui::DataPos afterPos) const
+    {
+        // Some items may not be represented as widgets, so continue looking
+        // until the next widget is found.
+        while(++afterPos < context->size())
+        {
+            auto found = mapping.constFind(&context->at(afterPos));
+            if(found != mapping.constEnd())
+            {
+                return found.value();
+            }
+        }
+        return nullptr;
+    }
+
     void makeWidgets()
     {
         DENG2_ASSERT(context != 0);
@@ -133,7 +158,7 @@ DENG2_OBSERVES(ui::Item, Change     )
 
         for(ui::Data::Pos i = 0; i < context->size(); ++i)
         {
-            addItemWidget(i, true /*always append*/);
+            addItemWidget(i, AlwaysAppend);
         }
     }
 
@@ -253,6 +278,29 @@ DENG2_OBSERVES(ui::Item, Change     )
         return 0;
     }
 
+    void refilter()
+    {
+        if(!filter) return;
+
+        for(ui::DataPos i = 0; i < context->size(); ++i)
+        {
+            bool const accepted = filter->isItemAccepted(self, *context, i);
+            ui::Item const *item = &context->at(i);
+
+            if(!accepted && mapping.contains(item))
+            {
+                // This widget needs to be removed.
+                deleteWidget(mapping[item]);
+                mapping.remove(item);
+            }
+            else if(accepted && !mapping.contains(item))
+            {
+                // This widget may need to be created.
+                addItemWidget(i, IgnoreFilter);
+            }
+        }
+    }
+
     DENG2_PIMPL_AUDIENCE(WidgetCreation)
     DENG2_PIMPL_AUDIENCE(WidgetUpdate)
 };
@@ -314,6 +362,11 @@ GuiWidget *ChildWidgetOrganizer::itemWidget(String const &label) const
 ui::Item const *ChildWidgetOrganizer::findItemForWidget(GuiWidget const &widget) const
 {
     return d->findByWidget(widget);
+}
+
+void ChildWidgetOrganizer::refilter()
+{
+    d->refilter();
 }
 
 GuiWidget *DefaultWidgetFactory::makeItemWidget(ui::Item const &, GuiWidget const *)

@@ -24,17 +24,17 @@ char const *DD_BasePath()
     return DoomsdayApp::app().doomsdayBasePath().c_str();
 }
 
-char const *DD_RuntimePath()
+/*char const *DD_RuntimePath()
 {
     return DoomsdayApp::app().doomsdayRuntimePath().c_str();
-}
+}*/
 
 void DD_SetBasePath(char const *path)
 {
     DoomsdayApp::app().setDoomsdayBasePath(path);
 }
 
-void DD_SetRuntimePath(char const *path)
+/*void DD_SetRuntimePath(char const *path)
 {
     DoomsdayApp::app().setDoomsdayRuntimePath(path);
-}
+}*/

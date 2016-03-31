@@ -92,7 +92,7 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs
     parm.pos[1] = WEAPONTOP + offScaleY * (psp.pos[1] - WEAPONTOP) + texOrigin.y
                 + pspOffset[1] - texSpec.border;
 
-    Vector2i const dimensions = matAnimator.dimensions() + Vector2i(texSpec.border, texSpec.border) * 2;
+    Vector2ui const dimensions = matAnimator.dimensions() + Vector2ui(texSpec.border, texSpec.border) * 2;
     parm.width  = dimensions.x;
     parm.height = dimensions.y;
 

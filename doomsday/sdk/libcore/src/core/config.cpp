@@ -192,6 +192,11 @@ Record const &Config::objectNamespace() const
     return d->config.globals();
 }
 
+Config &Config::get()
+{
+    return App::config();
+}
+
 Version Config::upgradedFromVersion() const
 {
     return d->oldVersion;

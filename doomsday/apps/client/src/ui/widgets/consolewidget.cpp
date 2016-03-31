@@ -78,10 +78,10 @@ DENG_GUI_PIMPL(ConsoleWidget)
     Instance(Public *i) : Base(i)
     {
         horizShift = new ScalarRule(0);
-        width      = new ScalarRule(style().rules().rule("console.width").valuei());
+        width      = new ScalarRule(rule("console.width").valuei());
         height     = new ScalarRule(0);
 
-        grabWidth  = style().rules().rule("gap").valuei();
+        grabWidth  = rule("gap").valuei();
 
         App::config("console.script").audienceForChange() += this;
         DoomsdayApp::app().audienceForGameChange() += this;
@@ -212,7 +212,7 @@ DENG_GUI_PIMPL(ConsoleWidget)
         promptButton->setText(yes? _E(b)_E(F) "$" : ">");
 
         // Bottom of the console must follow the active command line height.
-        self.rule().setInput(Rule::Bottom, next->rule().top() - style().rules().rule("unit"));
+        self.rule().setInput(Rule::Bottom, next->rule().top() - rule("unit"));
 
         if(scriptMode == yes)
         {

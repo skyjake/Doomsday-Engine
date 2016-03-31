@@ -47,7 +47,7 @@ DocumentPopupWidget::DocumentPopupWidget(ButtonWidget *actionButton, String cons
     box->add(actionButton);
     actionButton->setSizePolicy(ui::Expand, ui::Expand);
 
-    Rule const &gap = style().rules().rule("gap");
+    Rule const &gap = rule("gap");
 
     box->rule()
             .setInput(Rule::Width,  d->doc->rule().width())

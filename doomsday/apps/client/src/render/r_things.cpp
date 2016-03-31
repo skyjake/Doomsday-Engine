@@ -241,8 +241,8 @@ void R_ProjectSprite(mobj_t &mob)
     // Ensure we've up to date info about the material.
     matAnimator.prepare();
 
-    Vector2i const &matDimensions = matAnimator.dimensions();
-    TextureVariant *tex           = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
+    Vector2ui const &matDimensions = matAnimator.dimensions();
+    TextureVariant *tex            = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
 
     // A valid sprite texture in the "Sprites" scheme is required.
     if(!tex || tex->base().manifest().schemeName().compareWithoutCase("Sprites"))
@@ -491,8 +491,8 @@ void R_ProjectSprite(mobj_t &mob)
                                                         .getAnimator(Rend_SpriteMaterialSpec(mob.tclass, mob.tmap));
             matAnimator.prepare();
 
-            Vector2i const &matDimensions = matAnimator.dimensions();
-            TextureVariant *tex           = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
+            Vector2ui const &matDimensions = matAnimator.dimensions();
+            TextureVariant *tex            = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
 
             // A valid sprite texture in the "Sprites" scheme is required.
             if(!tex || tex->base().manifest().schemeName().compareWithoutCase("Sprites"))

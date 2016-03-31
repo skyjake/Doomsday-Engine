@@ -193,7 +193,8 @@ bool GameWidget::handleEvent(Event const &event)
 
     ClientWindow &window = root().window().as<ClientWindow>();
 
-    if(event.type() == Event::MouseButton && !root().window().canvas().isMouseTrapped())
+    if(event.type() == Event::MouseButton && !root().window().canvas().isMouseTrapped() &&
+       rule().recti().contains(event.as<MouseEvent>().pos()))
     {
         if(!window.hasSidebar())
         {

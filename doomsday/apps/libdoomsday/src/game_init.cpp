@@ -291,12 +291,13 @@ int loadAddonResourcesBusyWorker(void *context)
 {
     DoomsdayApp::GameChangeParameters &parms = *(DoomsdayApp::GameChangeParameters *) context;
 
+    /*
     // User-selected files specified in the game itself.
     for(String const &path : DoomsdayApp::game().userFiles())
     {
         NativePath const nativePath(path);
         Session::profile().resourceFiles << nativePath.withSeparators('/');
-    }
+    }*/
 
     char const *startupFiles = CVar_String(Con_FindVariable("file-startup"));
 

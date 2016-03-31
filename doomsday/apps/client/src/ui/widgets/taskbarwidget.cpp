@@ -20,6 +20,8 @@
 #include "ui/widgets/consolecommandwidget.h"
 #include "ui/widgets/multiplayermenuwidget.h"
 #include "ui/widgets/tutorialwidget.h"
+#include "ui/widgets/packagessidebarwidget.h"
+#include "ui/home/homewidget.h"
 #include "ui/dialogs/aboutdialog.h"
 #include "ui/dialogs/videosettingsdialog.h"
 #include "ui/dialogs/audiosettingsdialog.h"
@@ -70,15 +72,17 @@ enum MenuItemPositions
     POS_CONNECT           = 3,
     POS_GAMES_SEPARATOR   = 4,
     POS_UNLOAD            = 5,
-    POS_IWAD_FOLDER       = 8,
+    POS_PACKAGES          = 8,
+    POS_IWAD_FOLDER       = 9,
 
     // Config menu:
-    POS_RENDERER_SETTINGS = 0,
-    POS_VR_SETTINGS       = 1,
+    POS_HOME_SETTINGS     = 0,
+    POS_RENDERER_SETTINGS = 1,
+    POS_VR_SETTINGS       = 2,
     POS_CONFIG_SEPARATOR  = 3,
 
     POS_AUDIO_SETTINGS    = 5,
-    POS_INPUT_SETTINGS    = 6
+    POS_INPUT_SETTINGS    = 6,
 };
 
 DENG_GUI_PIMPL(TaskBarWidget)
@@ -155,8 +159,8 @@ DENG_GUI_PIMPL(TaskBarWidget)
 
     void updateStyle()
     {
-        minSpace = style().rules().rule("console.commandline.width.min").valuei();
-        maxSpace = style().rules().rule("console.commandline.width.max").valuei();
+        minSpace = rule("console.commandline.width.min").valuei();
+        maxSpace = rule("console.commandline.width.max").valuei();
     }
 
     void updateLayoutMode()
@@ -267,18 +271,20 @@ DENG_GUI_PIMPL(TaskBarWidget)
 
     void showOrHideMenuItems()
     {
-        Game &game = App_CurrentGame();
+        Game const &game = App_CurrentGame();
 
         itemWidget(mainMenu, POS_GAMES)            .show(!game.isNull());
         itemWidget(mainMenu, POS_UNLOAD)           .show(!game.isNull());
         itemWidget(mainMenu, POS_GAMES_SEPARATOR)  .show(!game.isNull());
+        itemWidget(mainMenu, POS_PACKAGES)         .show(!game.isNull());
         itemWidget(mainMenu, POS_IWAD_FOLDER)      .show(game.isNull());
         itemWidget(mainMenu, POS_MULTIPLAYER)      .show(!game.isNull());
         itemWidget(mainMenu, POS_CONNECT)          .show(game.isNull());
 
+        itemWidget(configMenu, POS_HOME_SETTINGS)    .show(game.isNull());
         itemWidget(configMenu, POS_RENDERER_SETTINGS).show(!game.isNull());
         itemWidget(configMenu, POS_VR_SETTINGS)      .show(!game.isNull());
-        itemWidget(configMenu, POS_CONFIG_SEPARATOR) .show(!game.isNull());
+        //itemWidget(configMenu, POS_CONFIG_SEPARATOR) .show(!game.isNull());
         itemWidget(configMenu, POS_AUDIO_SETTINGS)   .show(!game.isNull());
         itemWidget(configMenu, POS_INPUT_SETTINGS)   .show(!game.isNull());
 
@@ -336,7 +342,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     Background bg(style().colors().colorf("background"));
 #endif
 
-    Rule const &gap = style().rules().rule("gap");
+    Rule const &gap = rule("gap");
 
     d->backBlur = new LabelWidget;
     d->backBlur->rule()
@@ -427,9 +433,9 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
      * depending on whether a game is loaded.
      */
     d->configMenu->items()
+            << new ui::SubwidgetItem(style().images().image("home.icon"), tr("Home"),     ui::Left, HomeWidget::makeSettingsPopup)
             << new ui::SubwidgetItem(style().images().image("renderer"), tr("Renderer"), ui::Left, makePopup<RendererSettingsDialog>)
             << new ui::SubwidgetItem(style().images().image("vr"),       tr("3D & VR"),  ui::Left, makePopup<VRSettingsDialog>)
-            << new ui::SubwidgetItem(style().images().image("package"),  tr("Packages"), ui::Left, makePopup<PackagesDialog>)
             << new ui::Item(ui::Item::Separator)
             << new ui::SubwidgetItem(style().images().image("display"),  tr("Video"),    ui::Left, makePopup<VideoSettingsDialog>)
             << new ui::SubwidgetItem(style().images().image("audio"),    tr("Audio"),    ui::Left, makePopup<AudioSettingsDialog>)
@@ -451,7 +457,8 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << new ui::Item(ui::Item::Separator)
             << unloadMenu                           // hidden with null-game
             << new ui::Item(ui::Item::Separator)
-            << new ui::Item(ui::Item::Separator, tr("Application"))
+            << new ui::Item(ui::Item::Separator, tr("Doomsday"))
+            << new ui::ActionItem(tr("Packages"), new SignalAction(this, SLOT(openPackagesSidebar())))
             << new ui::ActionItem(tr("IWAD Folder..."), new SignalAction(this, SLOT(chooseIWADFolder())))
             << new ui::ActionItem(tr("Check for Updates..."), new CommandAction("updateandnotify"))
             << new ui::ActionItem(tr("About Doomsday"), new SignalAction(this, SLOT(showAbout())))
@@ -534,13 +541,13 @@ bool TaskBarWidget::handleEvent(Event const &event)
         MouseEvent const &mouse = event.as<MouseEvent>();
         if(mouse.state() == MouseEvent::Released && !hitTest(mouse.pos()))
         {
-            if(root().focus())
+            /*if(root().focus())
             {
                 // First click will remove UI focus, allowing GameWidget
                 // to receive events.
                 root().setFocus(0);
                 return true;
-            }
+            }*/
 
             if(App_GameLoaded())
             {
@@ -665,7 +672,7 @@ void TaskBarWidget::close()
 
         // Slide the task bar down.
         d->vertShift->set(rule().height().valuei() +
-                          style().rules().rule("unit").valuei(), OPEN_CLOSE_SPAN);
+                          rule("unit").valuei(), OPEN_CLOSE_SPAN);
         setOpacity(0, OPEN_CLOSE_SPAN);
 
         d->console->closeLog();
@@ -814,6 +821,12 @@ void TaskBarWidget::showTutorial()
     root().addOnTop(tutorial);
     tutorial->rule().setRect(root().viewRule());
     tutorial->start();
+}
+
+void TaskBarWidget::openPackagesSidebar()
+{
+    auto *sidebar = new PackagesSidebarWidget; // ClientWindow gets ownership
+    sidebar->open();
 }
 
 void TaskBarWidget::updateCommandLineLayout()

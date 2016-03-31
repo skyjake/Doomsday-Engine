@@ -578,7 +578,7 @@ uint Texture::Variant::prepare()
         LOG_RES_XVERBOSE("World dimensions for \"%s\" taken from image pixels %s")
             << d->texture.manifest().composeUri() << image.size.asText();
 
-        d->texture.setDimensions(image.size.toVector2i());
+        d->texture.setDimensions(image.size);
     }
 
     // We're done with the image data.

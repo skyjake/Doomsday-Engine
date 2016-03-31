@@ -95,11 +95,9 @@ public:
     void close(TimeDelta delayBeforeClosing);
 
     // Events.
-    void viewResized();
-    void update();
-    void preDrawChildren();
-    void postDrawChildren();
-    bool handleEvent(Event const &event);
+    void viewResized() override;
+    void update() override;
+    bool handleEvent(Event const &event) override;
 
 public slots:
     /**

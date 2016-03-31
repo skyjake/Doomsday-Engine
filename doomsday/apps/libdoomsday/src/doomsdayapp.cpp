@@ -18,6 +18,7 @@
 
 #include "doomsday/doomsdayapp.h"
 #include "doomsday/games.h"
+#include "doomsday/gameprofiles.h"
 #include "doomsday/console/exec.h"
 #include "doomsday/filesys/sys_direc.h"
 #include "doomsday/filesys/fs_util.h"
@@ -43,8 +44,10 @@
 #include <de/strutil.h>
 #include <de/memoryzone.h>
 
-#include <QSettings>
 #include <QDir>
+#include <QSettings>
+#include <QStandardPaths>
+#include <QCoreApplication>
 
 #ifdef WIN32
 #  define WIN32_LEAN_AND_MEAN
@@ -60,29 +63,30 @@ static String const PATH_LOCAL_WADS("/local/wads");
 
 static DoomsdayApp *theDoomsdayApp = nullptr;
 
-DENG2_PIMPL_NOREF(DoomsdayApp)
+DENG2_PIMPL(DoomsdayApp)
 {
     std::string ddBasePath; // Doomsday root directory is at...?
-    std::string ddRuntimePath;
+    //std::string ddRuntimePath;
 
     bool initialized = false;
     bool shuttingDown = false;
     Plugins plugins;
     Games games;
     Game *currentGame = nullptr;
+    GameProfiles gameProfiles;
     BusyMode busyMode;
     Players players;
     res::Bundles dataBundles;
 
-    /// @c true = We are using a custom user dir specified on the command line.
-    bool usingUserDir = false;
+    // @c true = We are using a custom user dir specified on the command line.
+    //bool usingUserDir = false;
 
-#ifdef UNIX
+/*#ifdef UNIX
 # ifndef MACOSX
     /// @c true = We are using the user dir defined in the HOME environment.
     bool usingHomeDir = false;
 # endif
-#endif
+#endif*/
 
 #ifdef WIN32
     HINSTANCE hInstance = NULL;
@@ -105,12 +109,15 @@ DENG2_PIMPL_NOREF(DoomsdayApp)
 
     GameChangeScriptAudience scriptAudienceForGameChange;
 
-    Instance(Players::Constructor playerConstructor)
-        : players(playerConstructor)
+    Instance(Public *i, Players::Constructor playerConstructor)
+        : Base(i)
+        , players(playerConstructor)
     {
         Record &appModule = App::scriptSystem().nativeModule("App");
         appModule.addArray("audienceForGameChange"); // game change observers
         audienceForGameChange += scriptAudienceForGameChange;
+
+        gameProfiles.setGames(games);
 
 #ifdef WIN32
         hInstance = GetModuleHandle(NULL);
@@ -119,6 +126,9 @@ DENG2_PIMPL_NOREF(DoomsdayApp)
 
     ~Instance()
     {
+        // Save any changes to the game profiles.
+        gameProfiles.serialize();
+
         theDoomsdayApp = nullptr;
     }
 
@@ -243,6 +253,7 @@ DENG2_PIMPL_NOREF(DoomsdayApp)
         // By default, make sure the working path is the home folder.
         App::setCurrentWorkPath(App::app().nativeHomePath());
 
+        /*
 # ifndef MACOSX
         if(getenv("HOME"))
         {
@@ -260,7 +271,8 @@ DENG2_PIMPL_NOREF(DoomsdayApp)
             Dir_Delete(temp);
         }
 # endif
-
+        */
+/*
         // The -userdir option sets the working directory.
         if(CommandLine_CheckWith("-userdir", 1))
         {
@@ -294,7 +306,7 @@ DENG2_PIMPL_NOREF(DoomsdayApp)
             directory_t* temp = Dir_NewFromCWD();
             DD_SetRuntimePath(Dir_Path(temp));
             Dir_Delete(temp);
-        }
+        }*/
 
         // libcore has determined the native base path, so let FS1 know about it.
         DD_SetBasePath(DENG2_APP->nativeBasePath().toUtf8());
@@ -304,6 +316,7 @@ DENG2_PIMPL_NOREF(DoomsdayApp)
 #ifdef WIN32
     void determineGlobalPaths()
     {
+        /*
         // Change to a custom working directory?
         if(CommandLine_CheckWith("-userdir", 1))
         {
@@ -316,6 +329,7 @@ DENG2_PIMPL_NOREF(DoomsdayApp)
 
         // The runtime directory is the current working directory.
         DD_SetRuntimePath((NativePath::workPath().withSeparators('/') + '/').toUtf8().constData());
+        */
 
         // Use a custom base directory?
         if(CommandLine_CheckWith("-basedir", 1))
@@ -342,7 +356,7 @@ DENG2_AUDIENCE_METHOD(DoomsdayApp, GameChange)
 DENG2_AUDIENCE_METHOD(DoomsdayApp, ConsoleRegistration)
 
 DoomsdayApp::DoomsdayApp(Players::Constructor playerConstructor)
-    : d(new Instance(playerConstructor))
+    : d(new Instance(this, playerConstructor))
 {
     DENG2_ASSERT(!theDoomsdayApp);
     theDoomsdayApp = this;
@@ -360,13 +374,26 @@ void DoomsdayApp::initialize()
 {
     d->initWadFolders();
 
+    auto &fs = App::fileSystem();
+
+    // Folder for temporary native files.
+    NativePath tmpPath = NativePath(QStandardPaths::writableLocation(QStandardPaths::TempLocation))
+            / ("doomsday-" + QString::number(qApp->applicationPid()));
+    Folder &tmpFolder = fs.makeFolder("/tmp");
+    tmpFolder.attach(new DirectoryFeed(tmpPath,
+                                       DirectoryFeed::AllowWrite |
+                                       DirectoryFeed::CreateIfMissing |
+                                       DirectoryFeed::OnlyThisFolder));
+    tmpFolder.populate(Folder::PopulateOnlyThisFolder);
+
     // "/sys/bundles" has package-like symlinks to files that are not in
     // Doomsday 2 format but can be loaded as packages.
-    App::fileSystem().makeFolder("/sys/bundles", FS::DontInheritFeeds);
+    fs.makeFolder("/sys/bundles", FS::DontInheritFeeds);
 
     d->initialized = true;
 
     d->dataBundles.identify();
+    d->gameProfiles.deserialize();
 }
 
 void DoomsdayApp::initWadFolders()
@@ -406,12 +433,17 @@ Games &DoomsdayApp::games()
     return DoomsdayApp::app().d->games;
 }
 
+GameProfiles &DoomsdayApp::gameProfiles()
+{
+    return DoomsdayApp::app().d->gameProfiles;
+}
+
 Players &DoomsdayApp::players()
 {
     return DoomsdayApp::app().d->players;
 }
 
-Game &DoomsdayApp::currentGame()
+Game const &DoomsdayApp::currentGame()
 {
     return game();
 }
@@ -442,10 +474,10 @@ NativePath DoomsdayApp::steamBasePath()
     return "";
 }
 
-bool DoomsdayApp::isUsingUserDir() const
+/*bool DoomsdayApp::isUsingUserDir() const
 {
     return d->usingUserDir;
-}
+}*/
 
 bool DoomsdayApp::isShuttingDown() const
 {
@@ -478,7 +510,7 @@ void DoomsdayApp::setDoomsdayBasePath(NativePath const &path)
     d->ddBasePath = temp;
 }
 
-std::string const &DoomsdayApp::doomsdayRuntimePath() const
+/*std::string const &DoomsdayApp::doomsdayRuntimePath() const
 {
     return d->ddRuntimePath;
 }
@@ -486,7 +518,7 @@ std::string const &DoomsdayApp::doomsdayRuntimePath() const
 void DoomsdayApp::setDoomsdayRuntimePath(NativePath const &path)
 {
     d->ddRuntimePath = path.toUtf8().constData();
-}
+}*/
 
 #ifdef WIN32
 void *DoomsdayApp::moduleHandle() const
@@ -495,7 +527,7 @@ void *DoomsdayApp::moduleHandle() const
 }
 #endif
 
-Game &DoomsdayApp::game()
+Game const &DoomsdayApp::game()
 {
     DENG2_ASSERT(app().d->currentGame != 0);
     return *app().d->currentGame;
@@ -577,12 +609,12 @@ void DoomsdayApp::reset()
     }
 }
 
-void DoomsdayApp::setGame(Game &game)
+void DoomsdayApp::setGame(Game const &game)
 {
-    app().d->currentGame = &game;
+    app().d->currentGame = const_cast<Game *>(&game);
 }
 
-void DoomsdayApp::makeGameCurrent(Game &newGame)
+void DoomsdayApp::makeGameCurrent(Game const &newGame)
 {
     if(!newGame.isNull())
     {
@@ -593,7 +625,7 @@ void DoomsdayApp::makeGameCurrent(Game &newGame)
 
     if(!isShuttingDown())
     {
-        // Re-initialize subsystems needed even when in ringzero.
+        // Re-initialize subsystems needed even when in Home.
         if(!plugins().exchangeGameEntryPoints(newGame.pluginId()))
         {
             throw Plugins::EntryPointError("DoomsdayApp::makeGameCurrent",
@@ -615,7 +647,7 @@ extern int beginGameChangeBusyWorker(void *context);
 extern int loadGameStartupResourcesBusyWorker(void *context);
 extern int loadAddonResourcesBusyWorker(void *context);
 
-bool DoomsdayApp::changeGame(Game &newGame,
+bool DoomsdayApp::changeGame(Game const &newGame,
                              std::function<int (void *)> gameActivationFunc,
                              Behaviors behaviors)
 {
@@ -646,7 +678,7 @@ bool DoomsdayApp::changeGame(Game &newGame,
 
     /*
      * If we aren't shutting down then we are either loading a game or switching
-     * to ringzero (the current game will have already been unloaded).
+     * to Home (the current game will have already been unloaded).
      */
     if(!isShuttingDown())
     {
@@ -690,7 +722,7 @@ bool DoomsdayApp::changeGame(Game &newGame,
         if(newGame.isNull())
         {
             gameChangeTasks[0].name = "Unloading game...";
-            gameChangeTasks[3].name = "Switching to ringzero...";
+            gameChangeTasks[3].name = "Switching to Home...";
         }
         // kludge end
 

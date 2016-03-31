@@ -42,6 +42,8 @@ DENG2_PIMPL(Games)
     /// Special "null-game" object for this collection.
     NullGame *nullGame;
 
+    QHash<String, Game *> idLookup; // not owned, lower case
+
     /**
      * Delegates game addition notifications to scripts.
      */
@@ -85,16 +87,30 @@ DENG2_PIMPL(Games)
 
         qDeleteAll(games);
         games.clear();
+        idLookup.clear();
     }
 
-    void add(Game &game)
+    void add(Game *game)
     {
-        games.push_back(&game);
+        DENG2_ASSERT(game != nullptr);
+
+        games.push_back(game);
+        idLookup.insert(game->id().toLower(), game);
 
         DENG2_FOR_PUBLIC_AUDIENCE2(Addition, i)
         {
-            i->gameAdded(game);
+            i->gameAdded(*game);
         }
+    }
+
+    Game *findById(String id) const
+    {
+        auto found = idLookup.constFind(id.toLower());
+        if(found != idLookup.constEnd())
+        {
+            return found.value();
+        }
+        return nullptr;
     }
 
     DENG2_PIMPL_AUDIENCE(Addition)
@@ -138,15 +154,18 @@ Game *Games::firstPlayable() const
 
 Game &Games::operator [] (String const &id) const
 {
-    /// @todo Use a hash. -jk
-    foreach(Game *game, d->games)
+    if(auto *game = d->findById(id))
     {
-        if(!game->id().compareWithoutCase(id))
-            return *game;
+        return *game;
     }
 
     /// @throw NotFoundError  The specified @a identityKey string is not associated with a game in the collection.
     throw NotFoundError("Games::operator []", "No game exists with ID '" + id + "'");
+}
+
+bool Games::contains(String const &id) const
+{
+    return d->findById(id) != nullptr;
 }
 
 Game &Games::byIndex(int idx) const
@@ -198,7 +217,7 @@ Game &Games::defineGame(String const &id, Record const &parameters)
     // Add this game to our records.
     Game *game = new Game(id, parameters);
     game->setPluginId(DoomsdayApp::plugins().activePluginId());
-    d->add(*game);
+    d->add(game);
     return *game;
 }
 

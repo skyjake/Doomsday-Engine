@@ -38,13 +38,12 @@ using namespace de;
 using namespace ui;
 
 DENG_GUI_PIMPL(RendererAppearanceEditor),
-DENG2_OBSERVES(SettingsRegister, ProfileChange),
-DENG2_OBSERVES(DoomsdayApp, GameChange),
+DENG2_OBSERVES(ConfigProfiles, ProfileChange),
 public VariableGroupEditor::IOwner
 {
     using Group = VariableGroupEditor;
 
-    SettingsRegister &settings;
+    ConfigProfiles &settings;
     ProfilePickerWidget *profile;
 
     Group *skyGroup;
@@ -63,8 +62,6 @@ public VariableGroupEditor::IOwner
         : Base(i)
         , settings(ClientApp::renderSystem().appearanceSettings())
     {
-        // The editor will close automatically when going to Ring Zero.
-        DoomsdayApp::app().audienceForGameChange() += this;
         settings.audienceForProfileChange += this;
 
         GuiWidget *container = &self.containerWidget();
@@ -375,7 +372,6 @@ public VariableGroupEditor::IOwner
 
     ~Instance()
     {
-        DoomsdayApp::app().audienceForGameChange() -= this;
         settings.audienceForProfileChange -= this;
     }
 
@@ -394,15 +390,6 @@ public VariableGroupEditor::IOwner
         settings.resetSettingToDefaults(settingName);
     }
 
-    void currentGameChanged(Game const &newGame)
-    {
-        if(newGame.isNull())
-        {
-            // Entering Ring Zero -- persistent cvars are not available.
-            self.close();
-        }
-    }
-
     void currentProfileChanged(String const &)
     {
         // Update with values from the new profile.
@@ -411,7 +398,7 @@ public VariableGroupEditor::IOwner
 
     void fetch()
     {
-        bool const isReadOnly = settings.isReadOnlyProfile(settings.currentProfile());
+        bool const isReadOnly = settings.find(settings.currentProfile()).isReadOnly();
 
         foreach(Widget *child, self.containerWidget().childWidgets())
         {

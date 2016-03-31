@@ -227,6 +227,8 @@ public:
      */
     bool executeAndWait(String *output = 0) const;
 
+    static CommandLine &get();
+
 private:
     DENG2_PRIVATE(d)
 };

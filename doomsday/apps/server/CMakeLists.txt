@@ -53,7 +53,6 @@ set (SHARED_WITH_CLIENT
     ${src}/include/network/net_msg.h
     ${src}/include/r_util.h
     ${src}/include/resource/animgroup.h
-    ${src}/include/resource/colorpalette.h
     ${src}/include/resource/compositetexture.h
     ${src}/include/resource/image.h
     ${src}/include/resource/material.h
@@ -63,7 +62,6 @@ set (SHARED_WITH_CLIENT
     ${src}/include/resource/materialscheme.h
     ${src}/include/resource/materialshinelayer.h
     ${src}/include/resource/materialtexturelayer.h
-    ${src}/include/resource/patch.h
     ${src}/include/resource/patchname.h
     ${src}/include/resource/rawtexture.h
     ${src}/include/resource/resourcesystem.h
@@ -140,7 +138,6 @@ set (SHARED_WITH_CLIENT
     ${src}/src/resource/animgroup.cpp
     ${src}/src/resource/api_material.cpp
     ${src}/src/resource/api_resource.cpp
-    ${src}/src/resource/colorpalette.cpp
     ${src}/src/resource/compositetexture.cpp
     ${src}/src/resource/hq2x.cpp
     ${src}/src/resource/image.cpp
@@ -151,7 +148,6 @@ set (SHARED_WITH_CLIENT
     ${src}/src/resource/materialscheme.cpp
     ${src}/src/resource/materialshinelayer.cpp
     ${src}/src/resource/materialtexturelayer.cpp
-    ${src}/src/resource/patch.cpp
     ${src}/src/resource/patchname.cpp
     ${src}/src/resource/pcx.cpp
     ${src}/src/resource/resourcesystem.cpp

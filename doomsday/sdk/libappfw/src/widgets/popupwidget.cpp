@@ -32,31 +32,20 @@
 namespace de {
 
 DENG_GUI_PIMPL(PopupWidget)
-, DENG2_OBSERVES(Widget, Deletion)
 {
     bool flexibleDir = true;
-    bool useInfoStyle = false;
+    ColorTheme colorTheme = Normal;
     bool deleteAfterDismiss = false;
     bool clickToClose = true;
     bool outsideClickOngoing = false;
-    Widget *realParent = nullptr;
-    /*Rule const *anchorTop = nullptr;
-    Rule const *anchorY = nullptr;
-    //Rule const *anchorWidth = nullptr;
-    Rule const *anchorBottom = nullptr;
-    Rule const *anchorOffset = new ConstantRule(0);*/
+    SafeWidgetPtr<Widget> realParent;
     RuleRectangle anchor;
     Rule const *marker;
 
     Instance(Public *i) : Base(i)
     {
         // Style.
-        marker = &style().rules().rule("gap");
-    }
-
-    ~Instance()
-    {
-        if(realParent) realParent->audienceForDeletion() -= this;
+        marker = &rule("gap");
     }
 
     void flipOpeningDirectionIfNeeded()
@@ -204,7 +193,7 @@ DENG_GUI_PIMPL(PopupWidget)
         Style const &st = style();
         bool const opaqueBackground = (self.levelOfNesting() > 0);
 
-        if(useInfoStyle)
+        if(colorTheme == Inverted)
         {
             self.set(self.infoStyleBackground());
         }
@@ -225,15 +214,6 @@ DENG_GUI_PIMPL(PopupWidget)
             self.set(self.background().withSolidFillOpacity(1));
         }
     }
-
-    void widgetBeingDeleted(Widget &widget)
-    {
-        if(&widget == realParent)
-        {
-            // We don't know who the real parent is any more.
-            realParent = nullptr;
-        }
-    }
 };
 
 PopupWidget::PopupWidget(String const &name) : PanelWidget(name), d(new Instance(this))
@@ -245,7 +225,7 @@ PopupWidget::PopupWidget(String const &name) : PanelWidget(name), d(new Instance
 int PopupWidget::levelOfNesting() const
 {
     int nesting = 0;
-    for(Widget const *p = d->realParent? d->realParent : parentWidget(); p; p = p->parent())
+    for(Widget const *p = d->realParent? d->realParent.get() : parentWidget(); p; p = p->parent())
     {
         if(p->is<PopupWidget>())
         {
@@ -258,27 +238,6 @@ int PopupWidget::levelOfNesting() const
 void PopupWidget::setAnchorAndOpeningDirection(RuleRectangle const &rule, ui::Direction dir)
 {
     d->anchor.setRect(rule);
-
-/*    if(dir == ui::NoDirection)
-    {
-        // Anchored to the middle by default.
-        setAnchor(rule.left() + rule.width() / 2,
-                  rule.top() + rule.height() / 2);
-    }
-    else if(dir == ui::Left || dir == ui::Right)
-    {
-        setAnchorY(rule.top() + rule.height() / 2);
-        setAnchorX(dir == ui::Left? rule.left() : rule.right());
-    }
-    else if(dir == ui::Up || dir == ui::Down)
-    {
-        setAnchorX(rule.left() + rule.width() / 2);
-        setAnchorY(dir == ui::Up? rule.top() : rule.bottom());
-    }
-
-    changeRef(d->anchorWidth,  rule.width());
-    changeRef(d->anchorHeight, rule.height());*/
-
     setOpeningDirection(dir);
 }
 
@@ -346,13 +305,18 @@ void PopupWidget::setClickToClose(bool clickCloses)
 
 void PopupWidget::useInfoStyle(bool yes)
 {
-    d->useInfoStyle = yes;
-    d->updateStyle();
+    setColorTheme(yes? Inverted : Normal);
 }
 
 bool PopupWidget::isUsingInfoStyle()
 {
-    return d->useInfoStyle;
+    return d->colorTheme == Inverted;
+}
+
+void PopupWidget::setColorTheme(ColorTheme theme)
+{
+    d->colorTheme = theme;
+    d->updateStyle();
 }
 
 GuiWidget::Background PopupWidget::infoStyleBackground() const
@@ -360,7 +324,7 @@ GuiWidget::Background PopupWidget::infoStyleBackground() const
     return Background(style().colors().colorf("popup.info.background"),
                       Background::BorderGlow,
                       style().colors().colorf("popup.info.glow"),
-                      style().rules().rule("glow").valuei());
+                      rule("glow").valuei());
 }
 
 bool PopupWidget::handleEvent(Event const &event)
@@ -472,9 +436,8 @@ void PopupWidget::preparePanelForOpening()
     }
 
     // Reparent the popup into the root widget, on top of everything else.
-    d->realParent = Widget::parent();
-    DENG2_ASSERT(d->realParent != 0);
-    d->realParent->audienceForDeletion() += d;
+    d->realParent.reset(Widget::parent());
+    DENG2_ASSERT(d->realParent);
     d->realParent->remove(*this);
     d->realParent->root().as<GuiRootWidget>().addOnTop(this);
 
@@ -486,14 +449,11 @@ void PopupWidget::panelDismissed()
     PanelWidget::panelDismissed();
 
     // Move back to the original parent widget.
-    if(d->realParent)
-    {
-        d->realParent->audienceForDeletion() -= d;
-    }
-    else
+    if(!d->realParent)
     {
         // The real parent has been deleted.
-        d->realParent = &root();
+        d->realParent.reset(&root());
+        DENG2_ASSERT(d->realParent);
     }
     parentWidget()->remove(*this);
 
@@ -507,7 +467,7 @@ void PopupWidget::panelDismissed()
         d->realParent->add(this);
     }
 
-    d->realParent = 0;
+    d->realParent.reset();
 }
 
 } // namespace de

@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Date"
@@ -30,6 +30,11 @@ Date::Date(Time const &time) : Time(time)
 Time Date::asTime() const
 {
     return *this;
+}
+
+Date Date::fromText(String const &text)
+{
+    return Time::fromText(text, ISODateOnly);
 }
 
 String Date::asText() const

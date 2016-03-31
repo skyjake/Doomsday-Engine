@@ -191,7 +191,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
         label.setAlignment(ui::AlignLeft);
         label.set(GuiWidget::Background(style().colors().colorf("altaccent") *
                                         Vector4f(1, 1, 1, .2f)));
-        Rule const &maxWidth = style().rules().rule("sidebar.width");
+        Rule const &maxWidth = rule("sidebar.width");
         label.rule().setInput(Rule::Width, maxWidth);
         label.setMaximumTextWidth(maxWidth);
     }

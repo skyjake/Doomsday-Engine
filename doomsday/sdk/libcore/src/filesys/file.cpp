@@ -222,6 +222,16 @@ File *File::source()
     return d->source;
 }
 
+File &File::target()
+{
+    return *this;
+}
+
+File const &File::target() const
+{
+    return *this;
+}
+
 void File::setStatus(Status const &status)
 {
     DENG2_GUARD(this);

@@ -21,6 +21,7 @@
 
 #include <de/Action>
 #include <de/Observers>
+#include <functional>
 
 #include "../LabelWidget"
 
@@ -69,10 +70,11 @@ public:
     };
 
     void useInfoStyle(bool yes = true);
-
     void useNormalStyle() { useInfoStyle(false); }
-
     bool isUsingInfoStyle() const;
+
+    void setColorTheme(ColorTheme theme);
+    ColorTheme colorTheme() const;
 
     /**
      * Text color to use in the Hover state. The default is to use the normal text
@@ -94,6 +96,17 @@ public:
      * @param action  Action instance. Widget holds a reference.
      */
     void setAction(RefArg<Action> action);
+
+    /**
+     * Sets the action of the button using a callback function. It gets called
+     * when the button is pressed.
+     *
+     * @param callback  Callback function.
+     *
+     * @todo Rename back to setAction() when MSVC can understand that Action *
+     * cannot be used to initialize a std::function<void ()>.
+     */
+    void setActionFn(std::function<void ()> callback);
 
     Action const *action() const;
 

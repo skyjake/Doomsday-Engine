@@ -21,6 +21,8 @@
 #include "de_platform.h"
 #include "resource/image.h"
 
+#include <doomsday/resource/patch.h>
+
 #include <de/memory.h>
 #include <de/Log>
 #ifdef __CLIENT__
@@ -35,7 +37,6 @@
 
 #ifdef __CLIENT__
 #  include "resource/compositetexture.h"
-#  include "resource/patch.h"
 #  include "resource/pcx.h"
 #  include "resource/tga.h"
 
@@ -525,10 +526,10 @@ static Source loadExternalTexture(image_t &image, String encodedSearchPath,
  * @todo Optimize: Should be redesigned to composite whole rows -ds
  */
 static void compositePaletted(dbyte *dst, Vector2ui const &dstDimensions,
-    IByteArray const &src, Vector2i const &srcDimensions, Vector2i const &origin)
+    IByteArray const &src, Vector2ui const &srcDimensions, Vector2i const &origin)
 {
     if(dstDimensions == Vector2ui()) return;
-    if(srcDimensions <= Vector2i()) return;
+    if(srcDimensions == Vector2ui()) return;
 
     int const       srcW = srcDimensions.x;
     int const       srcH = srcDimensions.y;
@@ -579,14 +580,14 @@ static String toTranslationId(int tclass, int tmap)
 static Block loadAndTranslatePatch(IByteArray const &data, colorpaletteid_t palId,
     int tclass = 0, int tmap = 0)
 {
-    ColorPalette &palette = App_ResourceSystem().colorPalette(palId);
-    if(ColorPaletteTranslation const *xlat = palette.translation(toTranslationId(tclass, tmap)))
+    res::ColorPalette &palette = App_ResourceSystem().colorPalette(palId);
+    if(res::ColorPaletteTranslation const *xlat = palette.translation(toTranslationId(tclass, tmap)))
     {
-        return Patch::load(data, *xlat, Patch::ClipToLogicalDimensions);
+        return res::Patch::load(data, *xlat, res::Patch::ClipToLogicalDimensions);
     }
     else
     {
-        return Patch::load(data, Patch::ClipToLogicalDimensions);
+        return res::Patch::load(data, res::Patch::ClipToLogicalDimensions);
     }
 }
 

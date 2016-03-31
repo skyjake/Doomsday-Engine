@@ -99,7 +99,7 @@ AboutDialog::AboutDialog() : DialogWidget("about"), d(new Instance(this))
     // Layout.
     RuleRectangle const &cont = area().contentRule();
     SequentialLayout layout(cont.left(), cont.top());
-    layout.setOverrideWidth(style().rules().rule("dialog.about.width"));
+    layout.setOverrideWidth(rule("dialog.about.width"));
     layout << *logo << *title << *info;
 
     // Total size of the dialog's content.

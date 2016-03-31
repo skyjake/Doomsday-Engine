@@ -19,16 +19,15 @@
 #ifndef LIBAPPFW_LABELWIDGET_H
 #define LIBAPPFW_LABELWIDGET_H
 
-#include <de/Image>
-#include <de/GLBuffer>
-#include <de/GLUniform>
-
 #include "../ui/defs.h"
 #include "../GuiWidget"
 #include "../ProceduralImage"
 #include "../ui/Data"
 
 namespace de {
+
+class GLUniform;
+class Image;
 
 /**
  * Widget showing a label text and/or image.
@@ -84,6 +83,8 @@ public:
      * @param procImage  Procedural image. LabelWidget takes ownership.
      */
     void setImage(ProceduralImage *procImage);
+
+    ProceduralImage *image() const;
 
     /**
      * Sets an overlay image that gets drawn over the label contents.

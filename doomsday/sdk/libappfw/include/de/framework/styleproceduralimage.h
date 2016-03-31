@@ -43,6 +43,11 @@ public:
         }
     }
 
+    GuiWidget &owner()
+    {
+        return _owner;
+    }
+
     GuiRootWidget &root()
     {
         return _owner.root();
@@ -57,6 +62,11 @@ public:
     {
         _id = root().styleTexture(_imageId);
         setSize(root().atlas().imageRect(_id).size());
+    }
+
+    Id const &allocId() const
+    {
+        return _id;
     }
 
     void glInit()

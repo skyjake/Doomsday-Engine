@@ -47,7 +47,8 @@
 #include "doomsday/paths.h"
 
 #include <de/Log>
-#include <de/NativePath>
+#include <de/NativeFile>
+#include <de/App>
 #include <de/findfile.h>
 
 using namespace de;
@@ -94,6 +95,18 @@ uint F_GetLastModified(char const *path)
 
 dd_bool F_MakePath(char const *path)
 {
+    try
+    {
+        App::fileSystem().makeFolder(path);
+        return true;
+    }
+    catch(Error const &er)
+    {
+        LOG_WARNING("Failed to create path \"%s\": %s") << path << er.asText();
+        return false;
+    }
+
+    /*
 #if !defined(WIN32) && !defined(UNIX)
 #  error F_MakePath has no implementation for this platform.
 #endif
@@ -129,7 +142,7 @@ dd_bool F_MakePath(char const *path)
             // Path doesn't exist, create it.
 #ifdef WIN32
             mkdir(Str_Text(&buf));
-#elif UNIX
+#elif defined(UNIX)
             mkdir(Str_Text(&buf), 0775);
 #endif
         }
@@ -140,7 +153,7 @@ dd_bool F_MakePath(char const *path)
     result = (0 == access(Str_Text(&full), 0));
     Str_Free(&buf);
     Str_Free(&full);
-    return result;
+    return result;*/
 }
 
 dd_bool F_FixSlashes(ddstring_t* dstStr, const ddstring_t* srcStr)
@@ -460,6 +473,7 @@ const char* F_PrettyPath(const char* path)
 #undef NUM_BUFS
 }
 
+/*
 dd_bool F_Dump(void const *data, size_t size, char const *path)
 {
     DENG2_ASSERT(data != 0 && path != 0);
@@ -481,17 +495,38 @@ dd_bool F_Dump(void const *data, size_t size, char const *path)
     fwrite(data, 1, size, outFile);
     fclose(outFile);
     return true;
-}
+}*/
 
 dd_bool F_DumpFile(File1 &file, char const *outputPath)
 {
-    String dumpPath = ((!outputPath || !outputPath[0])? file.name() : String(outputPath));
-    QByteArray dumpPathUtf8 = dumpPath.toUtf8();
-    bool dumpedOk = F_Dump(file.cache(), file.info().size, dumpPathUtf8.constData());
-    if(dumpedOk)
+    String dumpPath = "/home" / ((!outputPath || !outputPath[0])? file.name() : String(outputPath));
+    try
     {
-        LOG_RES_VERBOSE("%s dumped to \"%s\"") << file.name() << NativePath(dumpPath).pretty();
+        File &out = App::rootFolder().replaceFile(dumpPath);
+        out << Block(file.cache(), file.info().size);
+        out.flush();
+        file.unlock();
+        LOG_RES_VERBOSE("%s dumped to %s") << file.name() << out.description();
+        return true;
     }
-    file.unlock();
-    return dumpedOk;
+    catch(Error const &er)
+    {
+        LOG_RES_ERROR("Failed to write to \"%s\": %s") << dumpPath << er.asText();
+        return false;
+    }
+}
+
+bool F_DumpNativeFile(Block const &data, NativePath const &filePath)
+{
+    try
+    {
+        std::unique_ptr<File> file(NativeFile::newStandalone(filePath));
+        file->setMode(File::Write);
+        *file << data;
+        return true;
+    }
+    catch(Error const &er)
+    {
+        return false;
+    }
 }

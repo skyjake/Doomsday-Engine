@@ -40,7 +40,7 @@ GridPopupWidget::GridPopupWidget(String const &name)
     d->stylist.setContainer(*d->container);
 
     // Initialize the layout.
-    Rule const &gap = style().rules().rule("gap");
+    Rule const &gap = rule("gap");
     d->layout.setLeftTop(d->container->rule().left() + gap,
                          d->container->rule().top()  + gap);
     d->layout.setGridSize(2, 0);
@@ -85,7 +85,7 @@ GridPopupWidget &GridPopupWidget::addSpanning(GuiWidget *widget, int cellSpan)
 
 void GridPopupWidget::commit()
 {
-    Rule const &gap = style().rules().rule("gap");
+    Rule const &gap = rule("gap");
     d->container->rule().setSize(d->layout.width()  + gap * 2,
                                  d->layout.height() + gap * 2);
 }

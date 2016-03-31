@@ -42,10 +42,10 @@ DENG_GUI_PIMPL(CommandWidget)
         // most 400; never extend outside the view, though.
         popup->document().rule().setInput(Rule::Height,
                 OperatorRule::minimum(
-                    OperatorRule::minimum(style().rules().rule("editor.completion.height"),
+                    OperatorRule::minimum(rule("editor.completion.height"),
                                           popup->document().contentRule().height() +
                                           popup->document().margins().height()),
-                    self.rule().top() - style().rules().rule("gap")));
+                    self.rule().top() - rule("gap")));
 
         self.add(popup);
     }
