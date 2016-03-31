@@ -846,7 +846,7 @@ Image Image::fromMaskedIndexedData(Size const &size, IByteArray const &imageAndM
         imageAndMask.get(size.x * y + layerSize, alpha.data(), alpha.size());
 
         auto const *srcColor = color.dataConst();
-        auto const *srcAlpha = color.dataConst();
+        auto const *srcAlpha = alpha.dataConst();
 
         for(duint x = 0; x < size.x; ++x)
         {
