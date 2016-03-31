@@ -71,13 +71,12 @@ MapElement const &MapElement::parent() const
 
 void MapElement::setParent(MapElement *newParent)
 {
-    if(d->parent != newParent)
+    if(newParent == this)
     {
-        d->parent = newParent;
-        return;
+        /// @throw InvalidParentError  Attempted to attribute *this* element as parent of itself.
+        throw InvalidParentError("MapElement::setParent", "Cannot attribute 'this' map element as a parent of itself");
     }
-    /// @throw InvalidParentError  Attempted to attribute *this* element as parent of itself.
-    throw InvalidParentError("MapElement::setParent", "Cannot attribute 'this' map element as a parent of itself");
+    d->parent = newParent;
 }
 
 bool MapElement::hasMap() const
