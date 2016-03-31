@@ -15,8 +15,6 @@ build:
     parallel: true
     verbosity: minimal
     project: c:\projects\doomsday-engine\build-ci\Doomsday.sln
-cache:
-    - c:\projects\doomsday-engine\build-ci
 notifications:
     - provider: Slack
       auth_token:
