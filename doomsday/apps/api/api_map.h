@@ -149,6 +149,7 @@ struct plane_s;
 struct side_s;
 struct sector_s;
 struct vertex_s;
+struct polyobj_s;
 
 typedef struct convexsubspace_s ConvexSubspace;
 typedef struct interceptor_s    Interceptor;
