@@ -51,7 +51,7 @@ DENG_GUI_PIMPL(HeaderWidget)
 HeaderWidget::HeaderWidget()
     : d(new Instance(this))
 {
-    AutoRef<Rule> logoHeight(new ConstantRule(2 * 120));
+    AutoRef<Rule> logoHeight(new ConstantRule(toDevicePixels(120)));
 
     margins().setTop("gap");
 
@@ -140,7 +140,7 @@ PanelWidget &HeaderWidget::infoPanel()
 void HeaderWidget::setLogoImage(const DotPath &imageId)
 {
     d->logo->setImage(new StyleProceduralImage(imageId, *d->logo));
-    d->logo->rule().setInput(Rule::Width, Const(2 * 160));
+    d->logo->rule().setInput(Rule::Width, Const(toDevicePixels(160)));
     d->title->margins().setLeft("gap");
 }
 

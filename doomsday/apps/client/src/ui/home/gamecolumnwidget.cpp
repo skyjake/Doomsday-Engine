@@ -164,7 +164,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
         for(dsize i = 0; i < menu->items().size(); ++i)
         {
             ui::Item const &item = menu->items().at(i);
-            qDebug() << i << item.label();
+            //qDebug() << i << item.label();
             if(!item.semantics().testFlag(ui::Item::Separator))
             {
                 if(item.as<ProfileItem>().profile == &profile) return &item;

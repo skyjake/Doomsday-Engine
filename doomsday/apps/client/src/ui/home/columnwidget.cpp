@@ -114,7 +114,7 @@ ColumnWidget::ColumnWidget(String const &name)
     : GuiWidget(name)
     , d(new Instance(this))
 {
-    changeRef(d->maxContentWidth, Const(800)/*rule().width() - rule("gap") * 2*/);
+    changeRef(d->maxContentWidth, Const(toDevicePixels(400))/*rule().width() - rule("gap") * 2*/);
 
     AutoRef<Rule> contentMargin = (rule().width() - *d->maxContentWidth) / 2;
     d->scrollArea->margins()
