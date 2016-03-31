@@ -350,6 +350,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
             //heading->setTextColor("accent");
             heading->setAlignment(ui::AlignLeft);
             heading->margins().setLeftRight("");
+            heading->setOpacity(.75f);
             return heading;
         }
 

@@ -54,8 +54,8 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         , gameProfile(profile)
         , savedItems(savedItems)
     {
-        self.icon().setImageFit(ui::FitToHeight | ui::OriginalAspectRatio);
         self.icon().setBehavior(ContentClipping);
+        self.icon().setImageFit(ui::FitToSize | ui::CoverArea | ui::OriginalAspectRatio);
 
         packagesButton = new PackagesButtonWidget;
         packagesButton->setDialogTitle(profile.name());

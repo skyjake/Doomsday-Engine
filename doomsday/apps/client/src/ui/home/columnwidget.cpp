@@ -128,6 +128,7 @@ ColumnWidget::ColumnWidget(String const &name)
     add(d->scrollArea);
 
     setBackgroundImage("home.background.column");
+    setBehavior(ChildVisibilityClipping);
 }
 
 void ColumnWidget::setBackgroundImage(DotPath const &imageId)

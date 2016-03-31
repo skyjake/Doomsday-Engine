@@ -329,6 +329,7 @@ DENG_GUI_PIMPL(PackagesWidget)
 
         // Filtered list of packages.
         self.add(menu = new HomeMenuWidget);
+        menu->setBehavior(ChildVisibilityClipping);
         menu->layout().setRowPadding(Const(0));
         menu->rule()
                 .setInput(Rule::Left,  self.rule().left())

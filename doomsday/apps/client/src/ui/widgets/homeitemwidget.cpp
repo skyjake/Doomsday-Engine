@@ -105,7 +105,7 @@ DENG_GUI_PIMPL(HomeItemWidget)
         self.add(icon       = new LabelWidget);
         self.add(label      = new LabelWidget);
 
-        label->setSizePolicy(ui::Fixed, ui::Expand);
+        label->setSizePolicy(ui::Filled, ui::Expand);
         label->setTextLineAlignment(ui::AlignLeft);
         label->setAlignment(ui::AlignLeft);
         label->setBehavior(ChildVisibilityClipping);
