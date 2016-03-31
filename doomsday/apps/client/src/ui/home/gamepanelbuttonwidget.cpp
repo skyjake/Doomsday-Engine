@@ -169,10 +169,14 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
             IdTech1Image img(title.isEmpty()? titlePic : title, playPal);
 
             // Apply VGA aspect correction while downscaling 50%.
-            self.icon().setImage(img.toQImage().scaled(img.width()/2,
-                                                       img.height()/2 * 1.2f,
-                                                       Qt::IgnoreAspectRatio,
-                                                       Qt::SmoothTransformation));
+            Image::Size const finalSize(img.width()/2, img.height()/2 * 1.2f);
+
+            String colorId = "home.icon." + (game().family().isEmpty()? "other" : game().family());
+
+            self.icon().setImage(Image(img.toQImage().scaled(finalSize.x, finalSize.y,
+                                                             Qt::IgnoreAspectRatio,
+                                                             Qt::SmoothTransformation))
+                                 .colorized(Vector4ub(style().colors().color(colorId), 255)));
         }
         catch(Error const &er)
         {
