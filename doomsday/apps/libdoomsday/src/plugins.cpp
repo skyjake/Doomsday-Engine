@@ -235,7 +235,7 @@ void Plugins::loadAll()
 {
     LOG_RES_VERBOSE("Initializing plugins...");
 
-    Library_forAll([this] (LibraryFile &lib)
+    Library_ForAll([this] (LibraryFile &lib)
     {
         return d->loadPlugin(lib);
     });

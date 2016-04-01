@@ -103,7 +103,7 @@ LIBDOOMSDAY_PUBLIC void *Library_Symbol(Library *lib, char const *symbolName);
 
 LIBDOOMSDAY_PUBLIC de::LibraryFile &Library_File(Library *lib);
 
-LIBDOOMSDAY_PUBLIC de::LoopResult Library_forAll(std::function<de::LoopResult (de::LibraryFile &)> func);
+LIBDOOMSDAY_PUBLIC de::LoopResult Library_ForAll(std::function<de::LoopResult (de::LibraryFile &)> func);
 #endif
 
 #endif  // LIBDOOMSDAY_LIBRARY_H

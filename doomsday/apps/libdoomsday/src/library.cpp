@@ -1,4 +1,4 @@
-/** @file library.cpp  Dynamic libraries. 
+/** @file library.cpp  Dynamic libraries.
  * @ingroup base
  *
  * @authors Copyright © 2006-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -179,13 +179,17 @@ char const *Library_LastError()
     return Str_Text(lastError);
 }
 
-de::LoopResult Library_forAll(std::function<de::LoopResult (de::LibraryFile &)> func)
+de::LoopResult Library_ForAll(std::function<de::LoopResult (de::LibraryFile &)> func)
 {
     de::FS::Index const &libs = de::App::fileSystem().indexFor(DENG2_TYPE_NAME(de::LibraryFile));
     DENG2_FOR_EACH_CONST(de::FS::Index, i, libs)
     {
-        if(auto result = func(i->second->as<de::LibraryFile>()))
-            return result;
+        auto &libraryFile = i->second->as<de::LibraryFile>();
+        if(libraryFile.path().beginsWith("/bin/"))
+        {
+            if(auto result = func(libraryFile))
+                return result;
+        }
     }
     return de::LoopContinue;
 }
