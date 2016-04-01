@@ -176,7 +176,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
             self.icon().setImage(Image(img.toQImage().scaled(finalSize.x, finalSize.y,
                                                              Qt::IgnoreAspectRatio,
                                                              Qt::SmoothTransformation))
-                                 .colorized(Vector4ub(style().colors().color(colorId), 255)));
+                                 .colorized(style().colors().color(colorId)));
         }
         catch(Error const &er)
         {
