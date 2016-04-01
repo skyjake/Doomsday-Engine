@@ -657,6 +657,9 @@ Image Image::colorized(Color const &color) const
 {
     QImage copy = toQImage().convertToFormat(QImage::Format_ARGB32);
 
+    QColor targetColor(color.x, color.y, color.z, 255);
+    int targetHue = targetColor.hue();
+
     for(duint y = 0; y < height(); ++y)
     {
         duint32 *ptr = reinterpret_cast<duint32 *>(copy.bits() + y * copy.bytesPerLine());
@@ -669,13 +672,16 @@ Image Image::colorized(Color const &color) const
 
             QColor rgba(r, g, b, a);
 
-            int value = rgba.value();
+            /*int value = rgba.value();
             r = color.x * value >> 8;
             g = color.y * value >> 8;
             b = color.z * value >> 8;
-            a = color.w * a >> 8;
+            a = color.w * a >> 8;*/
 
-            *ptr++ = qRgba(r, g, b, a);
+            QColor colorized;
+            colorized.setHsv(targetHue, rgba.saturation(), rgba.value(), color.w * a >> 8);
+
+            *ptr++ = colorized.rgba();
         }
     }
     return copy;
