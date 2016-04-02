@@ -213,6 +213,7 @@ DENG_GUI_PIMPL(HomeWidget)
         blanker->guiDeleteLater();
 
         updateVisibleColumnsAndTabs();
+        calculateColumnCount();
         updateLayout();
 
         // Restore previous state?
