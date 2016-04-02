@@ -282,7 +282,7 @@ class Event:
     def download_uri(self, fn):
         # Available on SourceForge?
         if self.number() >= 350 and (fn.endswith('.msi') or fn.endswith('.exe') or fn.endswith('.deb') or
-                                     fn.endswith('.dmg') or fn.endswith('.zip')):
+                                     fn.endswith('.dmg') or fn.endswith('.zip') or fn.endswith('.rpm')):
             if self.release_type() == 'stable':
                 return "http://sourceforge.net/projects/deng/files/Doomsday%%20Engine/%s/%s/download" \
                     % (self.version_base(), fn)
