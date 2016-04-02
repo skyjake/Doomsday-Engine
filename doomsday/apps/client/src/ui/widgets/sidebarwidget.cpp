@@ -54,7 +54,7 @@ DENG_GUI_PIMPL(SidebarWidget)
         container->add(close = new ButtonWidget);
 
         close->setImage(style().images().image("close.ringless"));
-        close->setImageColor(style().colors().colorf("altaccent"));
+        close->setImageColor(style().colors().colorf("accent"));
         close->setOverrideImageSize(style().fonts().font("title").height().valuei());
         close->setAction(new SignalAction(thisPublic, SLOT(close())));
     }
