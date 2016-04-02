@@ -240,7 +240,7 @@ bool BiasIllum::hasTracker() const
 
 BiasTracker &BiasIllum::tracker() const
 {
-    if(d->tracker) *d->tracker;
+    if(d->tracker) return *d->tracker;
     /// @throw MissingTrackerError  Attempted with no tracker assigned.
     throw MissingTrackerError("BiasIllum::tracker", "No tracker is assigned");
 }
