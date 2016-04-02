@@ -43,5 +43,3 @@ bool GlobalShortcuts::handleEvent(Event const &event)
     }
     return false;
 }
-
-

@@ -85,6 +85,30 @@ DENG2_PIMPL(MainWindow)
         test->rule().setRect(root.viewRule());
         compositor->add(test);
 
+        // Try different label parameters.
+        LabelWidget *label = new LabelWidget;
+        label->setImage(TestApp::images().image("logo"));
+        label->setSizePolicy(ui::Filled, ui::Filled);
+        label->setImageFit(ui::OriginalAspectRatio | ui::FitToHeight | ui::FitToSize);
+        label->set(GuiWidget::Background(Vector4f(1.f, 1.f, 1.f, .5f)));
+        label->rule()
+                .setInput(Rule::Right,  root.viewRule().midX())
+                .setInput(Rule::Top,    root.viewRule().top())
+                .setInput(Rule::Width,  root.viewRule().width()/3)
+                .setInput(Rule::Height, Const(label->toDevicePixels(300)));
+        compositor->add(label);
+
+        LabelWidget *label2 = new LabelWidget;
+        label2->setImage(TestApp::images().image("logo"));
+        label2->setSizePolicy(ui::Filled, ui::Filled);
+        label2->setImageFit(ui::OriginalAspectRatio | ui::FitToHeight);
+        label2->set(GuiWidget::Background(Vector4f(1.f, .5f, 0.f, .5f)));
+        label2->rule()
+                .setInput(Rule::Left,  label->rule().right())
+                .setInput(Rule::Top,   label->rule().top())
+                .setSize(label->rule().width(), label->rule().height());
+        compositor->add(label2);
+
         // Mouse cursor.
         cursor = new LabelWidget;
         cursor->setBehavior(Widget::Unhittable);
