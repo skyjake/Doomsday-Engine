@@ -279,7 +279,8 @@ void Rend_Draw3DPlayerSprites()
             vispsprite_t lit = spr;
             /// @todo Apply the origin offset here and when rendering.
             lit.light.setupLighting(spr.origin + Vector3d(0, 0, -10), -10, *spr.bspLeaf);
-            ClientApp::renderSystem().modelRenderer().render(lit);
+            ClientApp::renderSystem().modelRenderer()
+                    .render(lit, viewPlayer->publicData().mo);
         }
     }
 }

@@ -83,9 +83,11 @@ public:
     /**
      * Render a GL2 model representing a psprite.
      *
-     * @param pspr  Parameters for the draw operation (as a vispsprite).
+     * @param pspr        Parameters for the draw operation (as a vispsprite).
+     * @param playerMobj  Player object. Light originating from this is ignored on the
+     *                    psprite omdel.
      */
-    void render(vispsprite_t const &pspr);
+    void render(vispsprite_t const &pspr, struct mobj_s const *playerMobj);
 
     /**
      * Looks up the name of a shader based on a GLProgram instance.

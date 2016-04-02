@@ -575,14 +575,21 @@ DENG2_PIMPL(ModelRenderer)
         }
     }
 
-    void setupLighting(VisEntityLighting const &lighting)
+    void setupLighting(VisEntityLighting const &lighting,
+                       mobj_t const *excludeSourceMobj)
     {
         // Ambient color and lighting vectors.
         setAmbientLight(lighting.ambientColor * .6f);
         clearLights();
         ClientApp::renderSystem().forAllVectorLights(lighting.vLightListIdx,
-                                                     [this] (VectorLightData const &vlight)
+                                                     [this, excludeSourceMobj]
+                                                     (VectorLightData const &vlight)
         {
+            if(excludeSourceMobj && vlight.sourceMobj == excludeSourceMobj)
+            {
+                // This source should not be included.
+                return LoopContinue;
+            }
             // Use this when drawing the model.
             addLight(vlight.direction.xzy(), vlight.color);
             return LoopContinue;
@@ -770,7 +777,7 @@ void ModelRenderer::render(vissprite_t const &spr)
                  mobjData? &mobjData->modelTransformation() : nullptr);
 
     // Ambient color and lighting vectors.
-    d->setupLighting(spr.light);
+    d->setupLighting(spr.light, nullptr);
 
     // Draw the model using the current animation state.
     GLState::push().setCull(p.model->cull);
@@ -778,7 +785,7 @@ void ModelRenderer::render(vissprite_t const &spr)
     GLState::pop().apply();
 }
 
-void ModelRenderer::render(vispsprite_t const &pspr)
+void ModelRenderer::render(vispsprite_t const &pspr, mobj_t const *playerMobj)
 {
     auto const &p = pspr.data.model2;
     world::ConvexSubspace const *sub = pspr.bspLeaf ? pspr.bspLeaf->subspacePtr() : nullptr;
@@ -798,7 +805,7 @@ void ModelRenderer::render(vispsprite_t const &pspr)
                  -90 - yaw, pitch,
                  &xform);
 
-    d->setupLighting(pspr.light);
+    d->setupLighting(pspr.light, playerMobj /* player holding weapon is excluded */);
 
     GLState::push().setCull(p.model->cull);
     d->draw(p);
