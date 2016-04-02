@@ -21,6 +21,9 @@
 
 #include <de/ButtonWidget>
 
+class Game;
+namespace res { class LumpCatalog; }
+
 /**
  * Label with action buttons and an icon. The item can be in either selected
  * or non-selected state.
@@ -46,6 +49,17 @@ public:
     void useColorTheme(ColorTheme unselected, ColorTheme selected);
 
     void acquireFocus();
+
+    /**
+     * Prepares a game logo image to be used in items. The image is based on the
+     * game's title screen image in its WAD file(s).
+     *
+     * @param game     Game.
+     * @param catalog  Catalog of selected lumps.
+     *
+     * @return Image.
+     */
+    de::Image makeGameLogo(Game const &game, res::LumpCatalog const &catalog) const;
 
 signals:
     void mouseActivity();

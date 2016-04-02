@@ -112,7 +112,7 @@ gamefilter {
 home {
     color icon.shadow  { rgb $= label.shadow.rgb }
     color icon.doom    { rgb <1.0, 0.7, 0.2> }
-    color icon.heretic { rgb <0.2, 0.7, 0.2> }
+    color icon.heretic { rgb <0.4, 0.7, 0.25> }
     color icon.hexen   { rgb <1.0, 0.25, 0.1> }
     color icon.other   { rgb <1.0, 1.0, 1.0> }
 }

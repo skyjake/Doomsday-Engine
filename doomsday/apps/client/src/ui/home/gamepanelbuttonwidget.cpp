@@ -54,9 +54,6 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         , gameProfile(profile)
         , savedItems(savedItems)
     {
-        self.icon().setBehavior(ContentClipping);
-        self.icon().setImageFit(ui::FitToSize | ui::CoverArea | ui::OriginalAspectRatio);
-
         packagesButton = new PackagesButtonWidget;
         packagesButton->setDialogTitle(profile.name());
         self.addButton(packagesButton);
@@ -151,39 +148,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
 
     void updateGameTitleImage()
     {
-        if(!game().isPlayable())
-        {
-            // Use a generic logo, some files are missing.
-            QImage img(64, 64, QImage::Format_ARGB32);
-            img.fill(Qt::white);
-            self.icon().setImage(img);
-            return;
-        }
-
-        try
-        {
-            Block const playPal  = catalog.read("PLAYPAL");
-            Block const title    = catalog.read("TITLE");
-            Block const titlePic = catalog.read("TITLEPIC");
-
-            IdTech1Image img(title.isEmpty()? titlePic : title, playPal);
-
-            // Apply VGA aspect correction while downscaling 50%.
-            Image::Size const finalSize(img.width()/2, img.height()/2 * 1.2f);
-
-            String colorId = "home.icon." + (game().family().isEmpty()? "other" : game().family());
-
-            self.icon().setImage(Image(img.toQImage().scaled(finalSize.x, finalSize.y,
-                                                             Qt::IgnoreAspectRatio,
-                                                             Qt::SmoothTransformation))
-                                 .colorized(style().colors().color(colorId)));
-        }
-        catch(Error const &er)
-        {
-            LOG_RES_WARNING("Failed to load title picture for game profile \"%s\": %s")
-                    << gameProfile.name()
-                    << er.asText();
-        }
+        self.icon().setImage(self.makeGameLogo(game(), catalog));
     }
 
 //- ChildWidgetOrganizer::IFilter ---------------------------------------------

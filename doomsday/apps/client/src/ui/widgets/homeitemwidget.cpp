@@ -17,7 +17,10 @@
  */
 
 #include "ui/widgets/homeitemwidget.h"
+#include "resource/idtech1image.h"
 
+#include <doomsday/LumpCatalog>
+#include <doomsday/Game>
 #include <de/SequentialLayout>
 #include <QTimer>
 
@@ -104,6 +107,11 @@ DENG_GUI_PIMPL(HomeItemWidget)
         self.add(background = new LabelWidget);
         self.add(icon       = new LabelWidget);
         self.add(label      = new LabelWidget);
+
+        icon->setBehavior(ContentClipping);
+        icon->setImageFit(ui::CoverArea | ui::OriginalAspectRatio);
+        icon->setSizePolicy(ui::Filled, ui::Filled);
+        icon->margins().setZero();
 
         label->setSizePolicy(ui::Filled, ui::Expand);
         label->setTextLineAlignment(ui::AlignLeft);
@@ -278,6 +286,41 @@ void HomeItemWidget::useColorTheme(ColorTheme unselected, ColorTheme selected)
 void HomeItemWidget::acquireFocus()
 {
     root().setFocus(d->background);
+}
+
+Image HomeItemWidget::makeGameLogo(Game const &game, res::LumpCatalog const &catalog) const
+{
+    try
+    {
+        if(game.isPlayable())
+        {
+            Block const playPal  = catalog.read("PLAYPAL");
+            Block const title    = catalog.read("TITLE");
+            Block const titlePic = catalog.read("TITLEPIC");
+
+            IdTech1Image img(title.isEmpty()? titlePic : title, playPal);
+
+            // Apply VGA aspect correction while downscaling 50%.
+            Image::Size const finalSize(img.width()/2, img.height()/2 * 1.2f);
+
+            String colorId = "home.icon." + (game.family().isEmpty()? "other" : game.family());
+
+            return Image(img.toQImage().scaled(finalSize.x, finalSize.y,
+                                               Qt::IgnoreAspectRatio,
+                                               Qt::SmoothTransformation))
+                    .colorized(style().colors().color(colorId));
+        }
+    }
+    catch(Error const &er)
+    {
+        LOG_RES_WARNING("Failed to load title picture for game \"%s\": %s")
+                << game.title()
+                << er.asText();
+    }
+    // Use a generic logo, some files are missing.
+    QImage img(64, 64, QImage::Format_ARGB32);
+    img.fill(Qt::white);
+    return img;
 }
 
 void HomeItemWidget::addButton(ButtonWidget *button)

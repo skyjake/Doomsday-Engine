@@ -127,7 +127,9 @@ DENG_GUI_PIMPL(PackagesWidget)
             , _item(&item)
         {
             icon().set(Background());
+            icon().setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
             icon().setImage(new StyleProceduralImage("package", *this));
+            icon().margins().set("gap");
             Rule const &height = style().fonts().font("default").height();
             icon().setOverrideImageSize(height.value());
             icon().rule().setInput(Rule::Width, height + rule("gap")*2);
@@ -296,7 +298,7 @@ DENG_GUI_PIMPL(PackagesWidget)
         //LabelWidget *_subtitle;
         QList<ButtonWidget *> _tags;
         ButtonWidget *_loadButton;
-        PopupButtonWidget *_infoButton;
+        //PopupButtonWidget *_infoButton;
     };
 
     Instance(Public *i) : Base(i)

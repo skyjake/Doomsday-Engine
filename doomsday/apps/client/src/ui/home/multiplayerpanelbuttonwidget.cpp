@@ -26,6 +26,7 @@
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/games.h>
 #include <doomsday/console/exec.h>
+#include <doomsday/LumpCatalog>
 #include <de/charsymbols.h>
 #include <de/CallbackAction>
 #include <de/PopupButtonWidget>
@@ -43,6 +44,7 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
     LabelWidget *info;
     PopupButtonWidget *extra;
     PopupMenuWidget *extraMenu;
+    res::LumpCatalog catalog;
 
     Instance(Public *i) : Base(i)
     {
@@ -138,13 +140,22 @@ void MultiplayerPanelButtonWidget::updateContent(serverinfo_s const &info)
     String infoText = String(info.map) + " " DENG2_CHAR_MDASH " ";
     if(DoomsdayApp::games().contains(info.gameIdentityKey))
     {
-        infoText += DoomsdayApp::games()[info.gameIdentityKey].title();
+        auto const &game = DoomsdayApp::games()[info.gameIdentityKey];
+        infoText += game.title();
         d->joinButton->enable();
+
+        /// @todo The server info should include the list of packages.
+        if(d->catalog.setPackages(game.requiredPackages()))
+        {
+            icon().setImage(makeGameLogo(game, d->catalog));
+        }
     }
     else
     {
         infoText += tr("Unknown game");
         d->joinButton->disable();
+
+        icon().setImage(nullptr);
     }
     infoText += "\n" _E(C) + String(info.description);
 

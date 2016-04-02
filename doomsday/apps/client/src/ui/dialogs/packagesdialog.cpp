@@ -353,7 +353,7 @@ DENG_GUI_PIMPL(PackagesDialog)
         {
             selectedPackages.removeOne(packageId);
             auto pos = menu->items().findData(packageId);
-            DENG2_ASSERT(pos >= 0);
+            DENG2_ASSERT(pos != ui::Data::InvalidPos);
             menu->items().remove(pos);
         }
 
