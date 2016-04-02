@@ -318,59 +318,41 @@ public Font::RichFormat::IStyle
             Rectanglef const rect = layout.image;
 
             // Fit the image.
-            if(!imageFit.testFlag(FitToWidth))
+            if(!imageFit.testFlag(FitToWidth)  || imageFit.testFlag(OriginalAspectRatio))
             {
                 layout.image.setWidth(imageSize().x);
             }
-            if(!imageFit.testFlag(FitToHeight))
+            if(!imageFit.testFlag(FitToHeight) || imageFit.testFlag(OriginalAspectRatio))
             {
                 layout.image.setHeight(imageSize().y);
             }
 
-            // Should the original aspect ratio be preserved?
-            if(imageFit & OriginalAspectRatio)
-            {
-                if(imageFit & FitToWidth)
-                {
-                    layout.image.setHeight(imageSize().y * layout.image.width() / imageSize().x);
-                }
-                if(imageFit & FitToHeight)
-                {
-                    layout.image.setWidth(imageSize().x * layout.image.height() / imageSize().y);
+            // The width and height of the image have now been set. Now we'll apply
+            // a suitable scaling factor.
+            float const horizScale = rect.width() / layout.image.width();
+            float const vertScale  = rect.height() / layout.image.height();
+            float scale = 1;
 
-                    if(imageFit.testFlag(FitToWidth))
-                    {
-                        float scale = 1;
-                        if(imageFit.testFlag(CoverArea))
-                        {
-                            // Scale to cover the area.
-                            if(layout.image.width() < rect.width())
-                            {
-                                scale = float(rect.width()) / float(layout.image.width());
-                            }
-                            else if(layout.image.height() < rect.height())
-                            {
-                                scale = float(rect.height() / float(layout.image.height()));
-                            }
-                        }
-                        else
-                        {
-                            // Scale to fit in both dimensions.
-                            if(layout.image.width() > rect.width())
-                            {
-                                scale = float(rect.width()) / float(layout.image.width());
-                            }
-                            else if(layout.image.height() > rect.height())
-                            {
-                                scale = float(rect.height()) / float(layout.image.height());
-                            }
-                        }
-                        layout.image.setSize(Vector2f(layout.image.size()) * scale);
-                    }
-                }
+            if(imageFit.testFlag(CoverArea))
+            {
+                scale = de::max(horizScale, vertScale);
+            }
+            else if(imageFit.testFlag(FitToWidth) && imageFit.testFlag(FitToHeight))
+            {
+                scale = de::min(horizScale, vertScale);
+            }
+            else if(imageFit.testFlag(FitToWidth))
+            {
+                scale = horizScale;
+            }
+            else if(imageFit.testFlag(FitToHeight))
+            {
+                scale = vertScale;
             }
 
-            // Apply Filled image scaling now.
+            layout.image.setSize(Vector2f(layout.image.size()) * scale);
+
+            // Apply additional user-provided image scaling factor now.
             if(horizPolicy == Filled)
             {
                 layout.image.setWidth(imageScale * layout.image.width());
