@@ -501,6 +501,8 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
     std::unique_ptr<Lumobj> lum(Rend_MakeLumobj(sprite.def()));
     if(!lum) return;
 
+    lum->setSourceMobj(mo);
+
     // A light definition may override the (auto-calculated) defaults.
     if(ded_light_t *def = lightDefByMobjState(mo->state))
     {
@@ -616,7 +618,7 @@ dfloat Mobj_ShadowStrength(mobj_t const &mob)
         ambientLightLevel = cluster.lightSourceIntensity();
     }
     Rend_ApplyLightAdaptation(ambientLightLevel);
-    
+
     // Sprites have their own shadow strength factor.
     dfloat strength = .65f;  ///< Default.
     if(!::useModels || !Mobj_ModelDef(mob))

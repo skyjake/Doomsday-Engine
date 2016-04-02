@@ -104,6 +104,15 @@ public:
     void setSource(Source const *newSource);
 
     /**
+     * Sets the mobj that is responsible for casting this light.
+     *
+     * @param mo  Thing.
+     */
+    void setSourceMobj(struct mobj_s const *mo);
+
+    struct mobj_s const *sourceMobj() const;
+
+    /**
      * Returns the light color/intensity of the lumobj.
      *
      * @see setColor()

@@ -2344,6 +2344,7 @@ static bool lightWithWorldLight(Vector3d const & /*point*/, Vector3f const &ambi
         vlight.darkSide  = .8f;
         vlight.offset    = .3f;
     }
+    vlight.sourceMobj = nullptr;
     return true;
 }
 
@@ -2370,6 +2371,7 @@ static bool lightWithLumobj(Vector3d const &point, Lumobj const &lum, VectorLigh
     vlight.lightSide         = 1;
     vlight.darkSide          = 0;
     vlight.offset            = 0;
+    vlight.sourceMobj        = lum.sourceMobj();
     return true;
 }
 
@@ -2406,6 +2408,7 @@ static bool lightWithPlaneGlow(Vector3d const &point, SectorCluster const &clust
     vlight.lightSide         = 1;
     vlight.darkSide          = 0;
     vlight.offset            = 0.3f;
+    vlight.sourceMobj        = nullptr;
     return true;
 }
 

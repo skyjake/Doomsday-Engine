@@ -35,6 +35,7 @@ struct VectorLightData
     de::dfloat lightSide;
     de::dfloat darkSide;     ///< Factors for world light.
     bool affectedByAmbient;
+    struct mobj_s const *sourceMobj; ///< Originating mobj, or nullptr.
 };
 
 #endif  // CLIENT_RENDER_VECTORLIGHTDATA_H
