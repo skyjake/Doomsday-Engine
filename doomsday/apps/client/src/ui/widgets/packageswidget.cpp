@@ -36,6 +36,7 @@ using namespace de;
 
 static String const VAR_TITLE("title");
 static String const VAR_TAGS ("tags");
+static String const TAG_HIDDEN("hidden");
 
 struct PackageLoadStatus : public PackagesWidget::IPackageStatus
 {
@@ -83,10 +84,13 @@ DENG_GUI_PIMPL(PackagesWidget)
     LineEditWidget *search;
     ButtonWidget *clearSearch;
     HomeMenuWidget *menu;
-    QStringList filterTerms;
     String buttonLabels[2];
+    QStringList filterTerms;
+    bool showHidden = false;
+
     IPackageStatus const *packageStatus = &isPackageLoaded;
     IButtonHandler       *buttonHandler = &loadOrUnloadPackage;
+
     GuiWidget::ColorTheme unselectedItem       = GuiWidget::Normal;
     GuiWidget::ColorTheme selectedItem         = GuiWidget::Normal;
     GuiWidget::ColorTheme loadedUnselectedItem = GuiWidget::Inverted;
@@ -349,7 +353,6 @@ DENG_GUI_PIMPL(PackagesWidget)
     void populate()
     {
         StringList packages = App::packageLoader().findAllPackages();
-        //qSort(packages);
 
         // Remove from the list those packages that are no longer listed.
         for(ui::DataPos i = 0; i < menu->items().size(); ++i)
@@ -391,8 +394,11 @@ DENG_GUI_PIMPL(PackagesWidget)
     void setFilterTerms(QStringList const &terms)
     {
         filterTerms = terms;
-        menu->organizer().refilter();
         clearSearch->show(!terms.isEmpty());
+        showHidden = filterTerms.contains(TAG_HIDDEN);
+        if(showHidden) filterTerms.removeAll(TAG_HIDDEN);
+
+        menu->organizer().refilter();
     }
 
     void focusFirstListedPackge()
@@ -423,6 +429,12 @@ DENG_GUI_PIMPL(PackagesWidget)
         // - title
         // - identifier
         // - tags
+
+        bool const hidden = Package::tags(item.info->gets(VAR_TAGS)).contains(TAG_HIDDEN);
+        if(showHidden ^ hidden)
+        {
+            return false;
+        }
 
         return filterTerms.isEmpty() ||
                checkTerms(item.data().toString()) || // ID
