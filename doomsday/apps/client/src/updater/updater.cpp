@@ -76,7 +76,11 @@ using namespace de;
 
 /// @todo The platform ID should come from the Builder.
 #if defined(WIN32)
-#  define PLATFORM_ID       "win-x86"
+#  if defined(__64BIT__)
+#    define PLATFORM_ID       "win-x64"
+#  else
+#    define PLATFORM_ID       "win-x86"
+#  endif
 
 #elif defined(MACOSX)
 #  if defined(MACOS_10_7) || defined(MACOSX_NATIVESDK)
@@ -495,10 +499,6 @@ DENG2_PIMPL(Updater)
          * @todo It would be slightly neater to check all these processes at
          * the same time.
          */
-        Updater_AskToStopProcess("snowberry.exe", "Please quit the Doomsday Engine Frontend "
-                                 "before starting the update. Windows cannot update "
-                                 "files that are currently in use.");
-
         Updater_AskToStopProcess("doomsday-shell.exe", "Please quit all Doomsday Shell instances "
                                  "before starting the update. Windows cannot update "
                                  "files that are currently in use.");
@@ -507,8 +507,10 @@ DENG2_PIMPL(Updater)
                                  "before starting the update. Windows cannot update "
                                  "files that are currently in use.");
 
-        // The distribution package is an installer executable, we can just run it.
+        // The distribution package is in .msi format.
         installerCommand = new de::CommandLine;
+        installerCommand->append("msiexec");
+        installerCommand->append("/i");
         installerCommand->append(distribPackagePath);
         atexit(runInstallerCommand);
 
