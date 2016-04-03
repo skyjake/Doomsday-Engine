@@ -113,6 +113,21 @@ if (WIN32)
     set_property (INSTALL "bin/$<TARGET_FILE_NAME:client>"
         PROPERTY CPACK_START_MENU_SHORTCUTS "Doomsday Engine"
     )
+    
+    # Also include OpenSSL support.
+    if (OPENSSL_DIR)
+        find_file (OPENSSL_LIBEAY libeay32.dll 
+            PATHS ${OPENSSL_DIR}
+            PATH_SUFFIXES ${DENG_ARCH})
+        find_file (OPENSSL_SSLEAY ssleay32.dll 
+            PATHS ${OPENSSL_DIR}
+            PATH_SUFFIXES ${DENG_ARCH})
+        if (NOT OPENSSL_LIBEAY OR NOT OPENSSL_SSLEAY)
+            message (FATAL_ERROR "Could not find OpenSSL libraries (libeay32.dll, ssleay32.dll)")
+        endif ()
+        deng_install_library (${OPENSSL_LIBEAY})
+        deng_install_library (${OPENSSL_SSLEAY})
+    endif ()
 endif ()
 
 if (APPLE)
