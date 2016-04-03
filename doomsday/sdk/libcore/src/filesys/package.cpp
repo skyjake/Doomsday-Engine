@@ -31,6 +31,7 @@ String const Package::VAR_PACKAGE("package");
 
 static String const PACKAGE_ORDER("package.__order__");
 static String const PACKAGE_IMPORT_PATH("package.importPath");
+static String const PACKAGE_REQUIRES("package.requires");
 
 static String const VAR_ID("ID");
 static String const VAR_PATH("path");
@@ -328,8 +329,25 @@ Record &Package::initializeMetadata(File &packageFile, String const &id)
 
 QStringList Package::tags(File const &packageFile)
 {
-    return packageFile.objectNamespace().gets("package.tags")
-            .split(' ', QString::SkipEmptyParts);
+    return tags(packageFile.objectNamespace().gets(QStringLiteral("package.tags")));
+}
+
+QStringList Package::tags(String const &tagsString)
+{
+    return tagsString.split(' ', QString::SkipEmptyParts);
+}
+
+StringList Package::requires(File const &packageFile)
+{
+    StringList ids;
+    if(packageFile.objectNamespace().has(PACKAGE_REQUIRES))
+    {
+        for(auto const *value : packageFile.objectNamespace().geta(PACKAGE_REQUIRES).elements())
+        {
+            ids << value->asText();
+        }
+    }
+    return ids;
 }
 
 static String stripAfterFirstUnderscore(String str)

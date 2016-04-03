@@ -168,6 +168,10 @@ public:
 
     static QStringList tags(File const &packageFile);
 
+    static QStringList tags(String const& tagsString);
+
+    static StringList requires(File const &packageFile);
+
     /**
      * Splits a string containing a package identifier and version. The
      * expected format of the string is `{packageId}_{version}`.

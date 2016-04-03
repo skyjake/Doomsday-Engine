@@ -201,6 +201,10 @@ DENG2_PIMPL(PackageLoader)
                                      loaded[packageId]->objectNamespace().gets("path") + "\"");
         }
 
+        // Loads all the packages listed as required for this package. Throws an
+        // exception is any are missing.
+        loadRequirements(source);
+
         Package *pkg = new Package(source);
         loaded.insert(packageId, pkg);
         pkg->setOrder(loadCounter++);
@@ -261,6 +265,17 @@ DENG2_PIMPL(PackageLoader)
 
                 /// @todo Store the errors so that the UI can show a list of
                 /// problematic packages. -jk
+            }
+        }
+    }
+
+    void loadRequirements(File const &packageFile)
+    {
+        for(String const &reqId : Package::requires(packageFile))
+        {
+            if(!self.isLoaded(reqId))
+            {
+                self.load(reqId);
             }
         }
     }
