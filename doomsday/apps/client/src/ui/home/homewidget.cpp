@@ -103,6 +103,7 @@ DENG_GUI_PIMPL(HomeWidget)
 
         // Hint/shortcut button for opening the task bar.
         taskBarHintButton = new ButtonWidget;
+        taskBarHintButton->setBackgroundColor("");
         taskBarHintButton->setSizePolicy(ui::Expand, ui::Expand);
         taskBarHintButton->margins().set("dialog.gap");
         taskBarHintButton->setText(_E(b) "ESC" _E(.) + tr(" Task Bar"));
