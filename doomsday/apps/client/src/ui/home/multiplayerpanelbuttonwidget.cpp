@@ -27,6 +27,7 @@
 #include <doomsday/games.h>
 #include <doomsday/console/exec.h>
 #include <doomsday/LumpCatalog>
+#include <doomsday/Games>
 #include <de/charsymbols.h>
 #include <de/CallbackAction>
 #include <de/PopupButtonWidget>
@@ -37,6 +38,7 @@
 using namespace de;
 
 DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
+, DENG2_OBSERVES(Games, Readiness)
 {
     serverinfo_t serverInfo;
     ButtonWidget *joinButton;
@@ -48,6 +50,8 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
 
     Instance(Public *i) : Base(i)
     {
+        DoomsdayApp::games().audienceForReadiness() += this;
+
         joinButton = new ButtonWidget;
         joinButton->setText(tr("Join"));
         joinButton->useInfoStyle();
@@ -78,6 +82,11 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
         self.panel().open();
     }
 
+    ~Instance()
+    {
+        DoomsdayApp::games().audienceForReadiness() -= this;
+    }
+
     void joinButtonPressed() const
     {
         // Switch locally to the game running on the server.
@@ -101,6 +110,13 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
     bool hasConfig(String const &token) const
     {
         return QRegExp("\\b" + token + "\\b").indexIn(gameConfig) >= 0;
+    }
+
+    void gameReadinessUpdated()
+    {
+        // Let's refresh the icons.
+        catalog.clear();
+        self.updateContent(serverInfo);
     }
 };
 

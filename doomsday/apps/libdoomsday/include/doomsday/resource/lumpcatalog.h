@@ -37,6 +37,8 @@ class LIBDOOMSDAY_PUBLIC LumpCatalog
 public:
     LumpCatalog();
 
+    void clear();
+
     /**
      * Sets the list of packages where data lumps are to be read from. Only data bundle
      * packages of Wad and Lump types are used.

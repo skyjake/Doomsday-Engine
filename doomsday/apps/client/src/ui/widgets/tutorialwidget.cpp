@@ -247,11 +247,12 @@ DENG_GUI_PIMPL(TutorialWidget)
 
         case HomeScreen:
             dlg->title().setText(tr("Home Screen"));
-            dlg->message().setText(tr("This is where you end up if no game gets loaded at startup. "
-                                      "Here you can browse all available games "
-                                      "and configure engine settings. You can unload the current game at "
+            dlg->message().setText(tr("Here you can browse the library of available games "
+                                      "and configure engine settings. You can also join ongoing "
+                                      "multiplayer games and manage your resource packages. "
+                                      "You can unload the current game at "
                                       "any time to get back to the Home Screen."));
-            startHighlight(*root().guiFind("background"));
+            startHighlight(*root().guiFind("home"));
             break;
 
         case Notifications:

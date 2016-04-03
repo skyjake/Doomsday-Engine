@@ -38,6 +38,12 @@ DENG2_PIMPL(LumpCatalog)
 
     Instance(Public *i) : Base(i) {}
 
+    void clear()
+    {
+        packageIds.clear();
+        bundles.clear();
+    }
+
     void updateBundles()
     {
         bundles.clear();
@@ -78,6 +84,11 @@ DENG2_PIMPL(LumpCatalog)
 LumpCatalog::LumpCatalog()
     : d(new Instance(this))
 {}
+
+void LumpCatalog::clear()
+{
+    d->clear();
+}
 
 bool LumpCatalog::setPackages(StringList const &packageIds)
 {
