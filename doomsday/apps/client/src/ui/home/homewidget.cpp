@@ -163,7 +163,7 @@ DENG_GUI_PIMPL(HomeWidget)
         button.audienceForStateChange() += this;
 
         button.rule()
-                .setInput(Rule::Width,  style().fonts().font("default").height() * 1.5f)
+                .setInput(Rule::Width,  style().fonts().font("default").height() * 1.4f)
                 .setInput(Rule::Bottom, self.rule().bottom())
                 .setInput(Rule::Top,    tabs->rule().bottom());
     }
@@ -501,7 +501,9 @@ PopupWidget *HomeWidget::makeSettingsPopup()
 {
     PopupMenuWidget *menu = new PopupMenuWidget;
     menu->items()
-            << new ui::VariableToggleItem(tr("Show Unplayable"), App::config("home.showUnplayableGames"))
+            << new ui::Item(ui::Item::Separator, tr("Library"))
+            << new ui::VariableToggleItem(tr("Show Descriptions"), App::config("home.showColumnDescription"))
+            << new ui::VariableToggleItem(tr("Show Unplayable"),   App::config("home.showUnplayableGames"))
             << new ui::Item(ui::Item::Separator)
             << new ui::Item(ui::Item::Separator, tr("Columns"))
             << new ui::VariableToggleItem(tr("Doom"),            App::config("home.columns.doom"))

@@ -55,6 +55,7 @@ def setDefaults(d)
     record d.home
     record d.home.columns
     d.home.showUnplayableGames = True
+    d.home.showColumnDescription = True
     d.home.columns.doom = True
     d.home.columns.heretic = True
     d.home.columns.hexen = True

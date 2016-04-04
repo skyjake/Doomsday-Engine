@@ -433,7 +433,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
      * depending on whether a game is loaded.
      */
     d->configMenu->items()
-            << new ui::SubwidgetItem(style().images().image("home.icon"), tr("Home"),     ui::Left, HomeWidget::makeSettingsPopup)
+            << new ui::SubwidgetItem(style().images().image("home.icon"), tr("Home"),    ui::Left, HomeWidget::makeSettingsPopup)
             << new ui::SubwidgetItem(style().images().image("renderer"), tr("Renderer"), ui::Left, makePopup<RendererSettingsDialog>)
             << new ui::SubwidgetItem(style().images().image("vr"),       tr("3D & VR"),  ui::Left, makePopup<VRSettingsDialog>)
             << new ui::Item(ui::Item::Separator)

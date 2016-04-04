@@ -18,6 +18,7 @@
 
 #include "ui/home/headerwidget.h"
 
+#include <de/Config>
 #include <de/LabelWidget>
 #include <de/ButtonWidget>
 #include <de/PanelWidget>
@@ -27,6 +28,7 @@
 using namespace de;
 
 DENG_GUI_PIMPL(HeaderWidget)
+, DENG2_OBSERVES(Variable, Change)
 {
     LabelWidget *logo;
     LabelWidget *logoBg; /// @todo Backgrounds should support ProceduralImages. -jk
@@ -41,10 +43,38 @@ DENG_GUI_PIMPL(HeaderWidget)
         self.add(logo      = new LabelWidget);
         self.add(title     = new LabelWidget);
         self.add(infoPanel = new PanelWidget);
+
         info  = new LabelWidget;
         infoPanel->setContent(info);
-        infoPanel->open();
+        if(showDescriptionVar().value().isTrue())
+        {
+            infoPanel->open();
+        }
         self.add(menuButton = new ButtonWidget);
+
+        showDescriptionVar().audienceForChange() += this;
+    }
+
+    ~Instance()
+    {
+        showDescriptionVar().audienceForChange() -= this;
+    }
+
+    void variableValueChanged(Variable &, Value const &newValue)
+    {
+        if(newValue.isTrue())
+        {
+            infoPanel->open();
+        }
+        else
+        {
+            infoPanel->close();
+        }
+    }
+
+    static Variable const &showDescriptionVar()
+    {
+        return Config::get().accessedRecord()["home.showColumnDescription"];
     }
 };
 
