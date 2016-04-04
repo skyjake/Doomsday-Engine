@@ -72,7 +72,7 @@ console {
 }
 
 home {
-    rule column.width { constant $= UNIT * 125 }
+    rule column.width { constant $= UNIT * 113.8 }
 }
 
 gameselection {
