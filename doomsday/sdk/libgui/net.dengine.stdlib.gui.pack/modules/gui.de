@@ -32,6 +32,7 @@ def setDefaults(d)
 
         # Generic user interface settings.
         record d.ui
+        d.ui.scaleFactor = 1.0  # Overall factor (both rules and fonts).
         d.ui.showAnnotations = True
            
         # Window manager defaults.

@@ -106,7 +106,9 @@ Font const &FontBank::font(DotPath const &path) const
 
 void FontBank::setFontSizeFactor(float sizeFactor)
 {
-    d->fontSizeFactor = clamp(.1f, sizeFactor, 20.f);
+    // The overall UI scalefactor affects fonts.
+    d->fontSizeFactor = clamp(.1f, sizeFactor, 20.f) *
+            Config::get().getf("ui.scaleFactor", 1.f);
 }
 
 Bank::ISource *FontBank::newSourceFromInfo(String const &id)

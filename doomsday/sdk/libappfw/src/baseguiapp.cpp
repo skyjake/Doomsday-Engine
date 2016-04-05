@@ -150,6 +150,9 @@ void BaseGuiApp::initSubsystems(SubsystemInitFlags flags)
         d->dpiFactor = dpi.params.at(0).toDouble();
     }
 
+    // Apply the overall UI scale factor.
+    d->dpiFactor = config().getf("ui.scaleFactor", 1.f);
+
     scriptSystem().nativeModule("DisplayMode").set("DPI_FACTOR", d->dpiFactor);
 
     d->uiState.reset(new PersistentState("UIState"));
