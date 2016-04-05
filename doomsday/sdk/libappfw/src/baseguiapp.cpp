@@ -29,6 +29,7 @@
 #include <QFontDatabase>
 
 #ifdef WIN32
+#  define CONST const
 #  include <d2d1.h>
 #endif
 
