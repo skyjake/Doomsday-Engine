@@ -20,12 +20,12 @@
 #include "ui/widgets/packageswidget.h"
 #include "ui/widgets/homeitemwidget.h"
 #include "ui/widgets/homemenuwidget.h"
+#include "ui/widgets/packagepopupwidget.h"
 #include "clientapp.h"
 
 #include <de/CallbackAction>
 #include <de/ChildWidgetOrganizer>
 #include <de/DocumentPopupWidget>
-//#include <de/FileSystem>
 #include <de/MenuWidget>
 #include <de/PackageLoader>
 #include <de/PopupButtonWidget>
@@ -248,24 +248,7 @@ DENG_GUI_PIMPL(PackagesDialog)
 
         PopupWidget *makeInfoPopup() const
         {
-            auto *pop = new DocumentPopupWidget;
-            if(auto const *info = _item->info())
-            {
-                pop->document().setText(QString(_E(1) "%1" _E(.) "\n%2\n"
-                                                _E(l) "Version: " _E(.) "%3\n"
-                                                _E(l) "License: " _E(.)_E(>) "%4" _E(<)
-                                                _E(l) "\nFile: " _E(.)_E(>)_E(C) "%5")
-                                        .arg(info->gets("title"))
-                                        .arg(packageId())
-                                        .arg(info->gets("version"))
-                                        .arg(info->gets("license"))
-                                        .arg(_item->packageFile()->description()));
-            }
-            else
-            {
-                pop->document().setText(packageId());
-            }
-            return pop;
+            return new PackagePopupWidget(_item->packageFile());
         }
 
     private:

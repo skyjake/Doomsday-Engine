@@ -18,8 +18,10 @@
 
 #include "ui/home/packagescolumnwidget.h"
 #include "ui/widgets/packageswidget.h"
+#include "ui/widgets/packagepopupwidget.h"
 
 #include <de/PopupMenuWidget>
+#include <de/ui/SubwidgetItem>
 
 using namespace de;
 
@@ -48,7 +50,10 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
         popMenu->setColorTheme(Inverted);
         popMenu->setAnchorAndOpeningDirection(button.rule(), ui::Down);
         popMenu->items()
-                << new ui::ActionItem(tr("Info"))
+                << new ui::SubwidgetItem(tr("Info"), ui::Down,
+                                         [this, packageId] () -> PopupWidget * {
+                                             return new PackagePopupWidget(packageId);
+                                         })
                 << new ui::Item(ui::Item::Separator)
                 << new ui::ActionItem(style().images().image("close.ring"), tr("Uninstall..."));
         root().addOnTop(popMenu);

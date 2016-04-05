@@ -19,6 +19,7 @@
 #include "ui/widgets/packageswidget.h"
 #include "ui/widgets/homeitemwidget.h"
 #include "ui/widgets/homemenuwidget.h"
+#include "ui/widgets/packagepopupwidget.h"
 #include "clientapp.h"
 
 #include <de/CallbackAction>
@@ -35,8 +36,8 @@
 
 using namespace de;
 
-static String const VAR_TITLE("title");
-static String const VAR_TAGS ("tags");
+static String const VAR_TITLE ("title");
+static String const VAR_TAGS  ("tags");
 static String const TAG_HIDDEN("hidden");
 
 struct PackageLoadStatus : public PackagesWidget::IPackageStatus
@@ -283,17 +284,7 @@ DENG_GUI_PIMPL(PackagesWidget)
 
         PopupWidget *makeInfoPopup() const
         {
-            auto *pop = new DocumentPopupWidget;
-            pop->document().setText(QString(_E(1) "%1" _E(.) "\n%2\n"
-                                            _E(l) "Version: " _E(.) "%3\n"
-                                            _E(l) "License: " _E(.)_E(>) "%4" _E(<)
-                                            _E(l) "\nFile: " _E(.)_E(>)_E(C) "%5")
-                                    .arg(_item->info->gets("title"))
-                                    .arg(packageId())
-                                    .arg(_item->info->gets("version"))
-                                    .arg(_item->info->gets("license"))
-                                    .arg(_item->file->description()));
-            return pop;
+            return new PackagePopupWidget(_item->file);
         }
 
     private:
