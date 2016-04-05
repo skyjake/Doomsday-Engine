@@ -29,6 +29,7 @@
 #include "ui/dialogs/networksettingsdialog.h"
 #include "ui/dialogs/renderersettingsdialog.h"
 #include "ui/dialogs/manualconnectiondialog.h"
+#include "ui/dialogs/uisettingsdialog.h"
 #include "ui/dialogs/vrsettingsdialog.h"
 #include "ui/dialogs/gamesdialog.h"
 #include "ui/dialogs/packagesdialog.h"
@@ -77,13 +78,12 @@ enum MenuItemPositions
     POS_IWAD_FOLDER       = 9,
 
     // Config menu:
-    POS_HOME_SETTINGS     = 0,
-    POS_RENDERER_SETTINGS = 1,
-    POS_VR_SETTINGS       = 2,
-    POS_CONFIG_SEPARATOR  = 3,
-
-    POS_AUDIO_SETTINGS    = 5,
-    POS_INPUT_SETTINGS    = 6,
+    POS_RENDERER_SETTINGS = 0,
+    POS_VR_SETTINGS       = 1,
+    POS_CONFIG_SEPARATOR  = 2,
+    POS_AUDIO_SETTINGS    = 4,
+    POS_INPUT_SETTINGS    = 5,
+    POS_HOME_SETTINGS     = 8,
 };
 
 DENG_GUI_PIMPL(TaskBarWidget)
@@ -282,12 +282,12 @@ DENG_GUI_PIMPL(TaskBarWidget)
         itemWidget(mainMenu, POS_MULTIPLAYER)      .show(!game.isNull());
         itemWidget(mainMenu, POS_CONNECT)          .show(game.isNull());
 
-        itemWidget(configMenu, POS_HOME_SETTINGS)    .show(game.isNull());
         itemWidget(configMenu, POS_RENDERER_SETTINGS).show(!game.isNull());
         itemWidget(configMenu, POS_VR_SETTINGS)      .show(!game.isNull());
-        //itemWidget(configMenu, POS_CONFIG_SEPARATOR) .show(!game.isNull());
+        itemWidget(configMenu, POS_CONFIG_SEPARATOR) .show(!game.isNull());
         itemWidget(configMenu, POS_AUDIO_SETTINGS)   .show(!game.isNull());
         itemWidget(configMenu, POS_INPUT_SETTINGS)   .show(!game.isNull());
+        itemWidget(configMenu, POS_HOME_SETTINGS)    .show(game.isNull());
 
         if(self.hasRoot())
         {
@@ -434,21 +434,20 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
      * depending on whether a game is loaded.
      */
     d->configMenu->items()
-            << new ui::SubwidgetItem(style().images().image("home.icon"), tr("Home"),    ui::Left, HomeWidget::makeSettingsPopup)
-            << new ui::SubwidgetItem(style().images().image("renderer"), tr("Renderer"), ui::Left, makePopup<RendererSettingsDialog>)
-            << new ui::SubwidgetItem(style().images().image("vr"),       tr("3D & VR"),  ui::Left, makePopup<VRSettingsDialog>)
+            << new ui::SubwidgetItem(style().images().image("renderer"),  tr("Renderer"),       ui::Left, makePopup<RendererSettingsDialog>)
+            << new ui::SubwidgetItem(style().images().image("vr"),        tr("3D & VR"),        ui::Left, makePopup<VRSettingsDialog>)
             << new ui::Item(ui::Item::Separator)
-            << new ui::SubwidgetItem(style().images().image("display"),  tr("Video"),    ui::Left, makePopup<VideoSettingsDialog>)
-            << new ui::SubwidgetItem(style().images().image("audio"),    tr("Audio"),    ui::Left, makePopup<AudioSettingsDialog>)
-            << new ui::SubwidgetItem(style().images().image("input"),    tr("Input"),    ui::Left, makePopup<InputSettingsDialog>)
-            << new ui::SubwidgetItem(style().images().image("network"),  tr("Network"),  ui::Left, makePopup<NetworkSettingsDialog>)
-            << new ui::SubwidgetItem(style().images().image("updater"),  tr("Updater"),  ui::Left, makeUpdaterSettings);
+            << new ui::SubwidgetItem(style().images().image("display"),   tr("Video"),          ui::Left, makePopup<VideoSettingsDialog>)
+            << new ui::SubwidgetItem(style().images().image("audio"),     tr("Audio"),          ui::Left, makePopup<AudioSettingsDialog>)
+            << new ui::SubwidgetItem(style().images().image("input"),     tr("Input"),          ui::Left, makePopup<InputSettingsDialog>)
+            << new ui::SubwidgetItem(style().images().image("network"),   tr("Network"),        ui::Left, makePopup<NetworkSettingsDialog>)
+            << new ui::SubwidgetItem(style().images().image("updater"),   tr("Updater"),        ui::Left, makeUpdaterSettings)
+            << new ui::SubwidgetItem(style().images().image("home.icon"), tr("User Interface"), ui::Left, makePopup<UISettingsDialog>);
 
     auto *helpMenu = new ui::SubmenuItem(tr("Help"), ui::Left);
     helpMenu->items()
-            << new ui::ActionItem(tr("Show Tutorial"), new SignalAction(this, SLOT(showTutorial())))
-            << new ui::VariableToggleItem(tr("Menu Annotations"), App::config("ui.showAnnotations"))
-            << new ui::Item(ui::Item::Annotation, tr("Annotations briefly describe menu functions."));
+            << new ui::ActionItem(tr("Show Tutorial"), new SignalAction(this, SLOT(showTutorial())));
+            //<< new ui::VariableToggleItem(tr("Menu Annotations"), App::config("ui.showAnnotations"))
 
     d->mainMenu->items()
             << new ui::Item(ui::Item::Separator, tr("Games"))
