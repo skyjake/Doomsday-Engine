@@ -23,6 +23,7 @@
 #include "jdoom.h"
 
 #include <de/App>
+#include <de/CommandLine>
 #include "d_netsv.h"
 #include "doomv9mapstatereader.h"
 #include "g_defs.h"

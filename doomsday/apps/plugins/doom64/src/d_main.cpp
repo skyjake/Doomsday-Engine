@@ -25,6 +25,7 @@
 
 #include <cstring>
 #include <de/App>
+#include <de/CommandLine>
 #include "d_netsv.h"
 #include "g_defs.h"
 #include "gamesession.h"

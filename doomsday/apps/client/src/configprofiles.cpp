@@ -21,12 +21,13 @@
 #include "ConfigProfiles"
 
 #include <de/App>
-#include <de/Script>
+#include <de/Config>
+#include <de/Info>
+#include <de/NumberValue>
 #include <de/Process>
 #include <de/RecordValue>
-#include <de/NumberValue>
+#include <de/Script>
 #include <de/ZipArchive>
-#include <de/Info>
 
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/Game>

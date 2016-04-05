@@ -27,6 +27,9 @@
 #include "de/DisplayMode"
 #include <de/ArrayValue>
 #include <de/NumberValue>
+#include <de/Config>
+#include <de/CommandLine>
+
 #include <QDesktopWidget>
 #include <QResizeEvent>
 #include <QTimer>

@@ -19,6 +19,8 @@
 #include "alertmask.h"
 #include "clientapp.h"
 
+#include <de/Config>
+
 using namespace de;
 
 DENG2_PIMPL_NOREF(AlertMask)

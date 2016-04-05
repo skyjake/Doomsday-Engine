@@ -27,6 +27,7 @@
 
 #include <de/VariableSliderWidget>
 #include <de/SignalAction>
+#include <de/Config>
 #include "CommandAction"
 
 using namespace de;

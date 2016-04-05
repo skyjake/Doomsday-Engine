@@ -18,17 +18,18 @@
  */
 
 #include "de/NameExpression"
-#include "de/Evaluator"
-#include "de/Process"
-#include "de/TextValue"
-#include "de/RefValue"
-#include "de/ArrayValue"
-#include "de/RecordValue"
-#include "de/ScopeStatement"
-#include "de/Writer"
-#include "de/Reader"
 #include "de/App"
+#include "de/ArrayValue"
+#include "de/Evaluator"
 #include "de/Module"
+#include "de/Process"
+#include "de/Reader"
+#include "de/RecordValue"
+#include "de/RefValue"
+#include "de/ScopeStatement"
+#include "de/ScriptSystem"
+#include "de/TextValue"
+#include "de/Writer"
 
 namespace de {
 

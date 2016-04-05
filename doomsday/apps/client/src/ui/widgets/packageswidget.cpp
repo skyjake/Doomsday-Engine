@@ -21,15 +21,16 @@
 #include "ui/widgets/homemenuwidget.h"
 #include "clientapp.h"
 
-#include <de/FileSystem>
-#include <de/ChildWidgetOrganizer>
-#include <de/SequentialLayout>
-#include <de/MenuWidget>
-#include <de/LineEditWidget>
-#include <de/DocumentPopupWidget>
-#include <de/PopupButtonWidget>
-#include <de/SignalAction>
 #include <de/CallbackAction>
+#include <de/ChildWidgetOrganizer>
+#include <de/DocumentPopupWidget>
+#include <de/FileSystem>
+#include <de/LineEditWidget>
+#include <de/MenuWidget>
+#include <de/PackageLoader>
+#include <de/PopupButtonWidget>
+#include <de/SequentialLayout>
+#include <de/SignalAction>
 #include <de/StyleProceduralImage>
 
 using namespace de;

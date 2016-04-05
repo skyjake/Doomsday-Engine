@@ -20,15 +20,16 @@
 #include "de/HeightMap"
 #include "de/ImageFile"
 
+#include <de/Animation>
 #include <de/App>
 #include <de/ByteArrayFile>
-#include <de/Matrix>
 #include <de/GLBuffer>
 #include <de/GLProgram>
 #include <de/GLState>
 #include <de/GLUniform>
+#include <de/Matrix>
+#include <de/NativePath>
 #include <de/TextureBank>
-#include <de/Animation>
 
 #include <assimp/IOStream.hpp>
 #include <assimp/IOSystem.hpp>

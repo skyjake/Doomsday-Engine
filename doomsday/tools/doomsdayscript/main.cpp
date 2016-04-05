@@ -17,13 +17,14 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <de/TextApp>
-#include <de/LogBuffer>
-#include <de/Script>
-#include <de/NativeFile>
-#include <de/FS>
-#include <de/Process>
+#include <de/CommandLine>
 #include <de/DirectoryFeed>
+#include <de/FS>
+#include <de/LogBuffer>
+#include <de/NativeFile>
+#include <de/Process>
+#include <de/Script>
+#include <de/TextApp>
 #include <QDebug>
 
 using namespace de;
@@ -60,5 +61,5 @@ int main(int argc, char **argv)
     }
 
     qDebug("Exiting main()...");
-    return 0;        
+    return 0;
 }

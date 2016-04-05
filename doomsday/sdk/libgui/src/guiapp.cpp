@@ -20,6 +20,7 @@
 #include "de/graphics/opengl.h"
 #include "de/ImageFile"
 #include <de/Log>
+#include <de/NativePath>
 
 #ifdef DENG2_QT_5_0_OR_NEWER
 #  include <QStandardPaths>

@@ -32,6 +32,7 @@
 #include <de/c_wrapper.h>
 #include <de/ArrayValue>
 #include <de/ByteArrayFile>
+#include <de/CommandLine>
 #include <de/DictionaryValue>
 #include <de/DisplayMode>
 #include <de/Error>
@@ -39,6 +40,7 @@
 #include <de/Log>
 #include <de/LogSink>
 #include <de/NativeFont>
+#include <de/ScriptSystem>
 #include <de/VRConfig>
 
 #include <doomsday/console/exec.h>

@@ -29,6 +29,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <de/App>
+#include <de/CommandLine>
 #include <de/NativePath>
 #include <de/RecordValue>
 #include <doomsday/defs/episode.h>

@@ -23,7 +23,9 @@
 #include <QDebug>
 #include <stdlib.h>
 
+#include <de/CommandLine>
 #include <de/Log>
+#include <de/LogBuffer>
 #include <de/Error>
 #include <de/c_wrapper.h>
 #include <de/Garbage>

@@ -31,6 +31,7 @@
 
 #include <de/concurrency.h>
 #include <de/App>
+#include <de/Config>
 #include <de/DisplayMode>
 #include <de/GLInfo>
 #include <de/GLState>

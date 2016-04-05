@@ -27,6 +27,9 @@
 #include <de/timer.h> // SECONDSPERTIC
 #include <de/Record>
 #include <de/NumberValue>
+#include <de/Function>
+#include <de/Context>
+#include <de/ScriptSystem>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
 #include <doomsday/console/exec.h>

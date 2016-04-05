@@ -26,14 +26,15 @@
 #include <doomsday/Games>
 #include <doomsday/GameProfiles>
 
+#include <de/App>
+#include <de/CallbackAction>
 #include <de/ChildWidgetOrganizer>
+#include <de/Config>
+#include <de/Loop>
 #include <de/MenuWidget>
 #include <de/PersistentState>
-#include <de/CallbackAction>
-#include <de/StyleProceduralImage>
 #include <de/PopupMenuWidget>
-#include <de/Loop>
-#include <de/App>
+#include <de/StyleProceduralImage>
 
 using namespace de;
 

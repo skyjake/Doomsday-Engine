@@ -19,17 +19,17 @@
 
 #include "de/Config"
 #include "de/App"
-#include "de/Package"
 #include "de/Archive"
-#include "de/Refuge"
-#include "de/Log"
+#include "de/ArrayValue"
+#include "de/CommandLine"
 #include "de/Folder"
-#include "de/ArrayValue"
+#include "de/Log"
 #include "de/NumberValue"
-#include "de/ArrayValue"
+#include "de/Package"
 #include "de/Reader"
-#include "de/Writer"
+#include "de/Refuge"
 #include "de/Version"
+#include "de/Writer"
 
 namespace de {
 

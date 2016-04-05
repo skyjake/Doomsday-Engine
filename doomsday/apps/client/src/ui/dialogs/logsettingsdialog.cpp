@@ -19,10 +19,12 @@
 #include "ui/dialogs/logsettingsdialog.h"
 #include "clientapp.h"
 
+#include <de/Config>
+#include <de/FoldPanelWidget>
+#include <de/LogFilter>
+#include <de/SignalAction>
 #include <de/VariableChoiceWidget>
 #include <de/VariableToggleWidget>
-#include <de/FoldPanelWidget>
-#include <de/SignalAction>
 
 using namespace de;
 

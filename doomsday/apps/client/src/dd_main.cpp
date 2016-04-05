@@ -44,8 +44,11 @@
 #include <de/memory.h>
 #include <de/timer.h>
 #include <de/ArrayValue>
+#include <de/CommandLine>
 #include <de/NativeFile>
+#include <de/PackageLoader>
 #include <de/LinkFile>
+#include <de/LogBuffer>
 #include <de/DictionaryValue>
 #include <de/Log>
 #include <de/NativePath>

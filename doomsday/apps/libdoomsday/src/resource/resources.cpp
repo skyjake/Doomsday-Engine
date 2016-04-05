@@ -20,6 +20,8 @@
 #include "doomsday/filesys/fs_main.h"
 
 #include <de/App>
+#include <de/CommandLine>
+#include <de/Config>
 
 using namespace de;
 

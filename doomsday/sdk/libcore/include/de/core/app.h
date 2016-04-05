@@ -21,18 +21,9 @@
 #define LIBDENG2_APP_H
 
 #include "../libcore.h"
-#include "../Clock"
-#include "../CommandLine"
-#include "../NativePath"
-#include "../LogBuffer"
-#include "../LogFilter"
-#include "../System"
-#include "../FileSystem"
-#include "../PackageLoader"
-#include "../ScriptSystem"
-#include "../Module"
-#include "../Config"
-#include "../UnixInfo"
+#include "de/Clock"
+#include "de/FileSystem"
+#include "de/Package"
 
 /**
  * Macro for conveniently accessing the de::App singleton instance.
@@ -44,6 +35,18 @@
 namespace de {
 
 class Archive;
+class CommandLine;
+class Config;
+class Folder;
+class LogBuffer;
+class LogFilter;
+class Module;
+class Path;
+class NativePath;
+class PackageLoader;
+class ScriptSystem;
+class System;
+class UnixInfo;
 
 namespace game { class Game; }
 

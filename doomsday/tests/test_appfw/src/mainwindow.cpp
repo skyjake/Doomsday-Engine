@@ -21,12 +21,13 @@
 #include "approotwidget.h"
 #include "globalshortcuts.h"
 
-#include <de/Garbage>
+#include <de/CommandLine>
+#include <de/CompositorWidget>
 #include <de/GLState>
+#include <de/Garbage>
+#include <de/LabelWidget>
 #include <de/VRConfig>
 #include <de/VRWindowTransform>
-#include <de/CompositorWidget>
-#include <de/LabelWidget>
 
 using namespace de;
 

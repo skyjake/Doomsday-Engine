@@ -30,6 +30,8 @@
 #include <de/findfile.h>
 #include <de/c_wrapper.h>
 #include <de/App>
+#include <de/PackageLoader>
+#include <de/ScriptSystem>
 #include <de/NativePath>
 #include <de/RecordValue>
 #include <doomsday/doomsdayapp.h>

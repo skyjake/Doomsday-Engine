@@ -29,8 +29,10 @@
 #include "doomsday/resource/resources.h"
 
 #include <de/App>
+#include <de/CommandLine>
 #include <de/Error>
 #include <de/Log>
+#include <de/PackageLoader>
 #include <de/charsymbols.h>
 #include <QtAlgorithms>
 

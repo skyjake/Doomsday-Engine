@@ -17,13 +17,14 @@
  */
 
 #include "de/Package"
+#include "de/App"
+#include "de/DotPath"
 #include "de/PackageLoader"
 #include "de/Process"
 #include "de/Script"
+#include "de/ScriptSystem"
 #include "de/ScriptedInfo"
 #include "de/TimeValue"
-#include "de/DotPath"
-#include "de/App"
 
 namespace de {
 

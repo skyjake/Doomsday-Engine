@@ -13,16 +13,19 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/BaseGuiApp"
 #include "de/VRConfig"
 
-#include <de/Function>
 #include <de/ArrayValue>
+#include <de/CommandLine>
+#include <de/Config>
 #include <de/DictionaryValue>
+#include <de/Function>
 #include <de/NativeFont>
+#include <de/ScriptSystem>
 #include <QFontDatabase>
 
 #ifdef WIN32

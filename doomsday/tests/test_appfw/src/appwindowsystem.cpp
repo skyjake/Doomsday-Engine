@@ -18,6 +18,7 @@
 
 #include "appwindowsystem.h"
 #include <de/App>
+#include <de/PackageLoader>
 
 using namespace de;
 

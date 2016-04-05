@@ -60,11 +60,12 @@
 #include "versioninfo.h"
 
 #include <de/App>
-#include <de/Time>
+#include <de/CommandLine>
 #include <de/Date>
 #include <de/Log>
-#include <de/SignalAction>
 #include <de/NotificationAreaWidget>
+#include <de/SignalAction>
+#include <de/Time>
 #include <de/data/json.h>
 #include <doomsday/console/exec.h>
 

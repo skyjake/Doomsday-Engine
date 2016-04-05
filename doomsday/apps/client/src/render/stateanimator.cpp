@@ -24,6 +24,7 @@
 #include <doomsday/world/thinkerdata.h>
 
 #include <de/ScriptedInfo>
+#include <de/ScriptSystem>
 #include <de/RecordValue>
 #include <de/NoneValue>
 #include <de/NativeValue>

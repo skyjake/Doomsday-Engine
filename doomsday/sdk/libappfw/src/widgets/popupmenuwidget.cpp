@@ -23,8 +23,9 @@
 #include "de/ChildWidgetOrganizer"
 #include "de/AtlasProceduralImage"
 #include "de/ui/Item"
-#include "de/App"
 
+#include <de/App>
+#include <de/Config>
 #include <de/IndirectRule>
 #include <de/OperatorRule>
 

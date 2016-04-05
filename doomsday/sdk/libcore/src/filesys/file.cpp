@@ -19,15 +19,16 @@
 
 #include "de/File"
 #include "de/App"
-#include "de/FS"
-#include "de/Folder"
-#include "de/Feed"
 #include "de/Date"
+#include "de/DirectoryFeed"
+#include "de/FS"
+#include "de/Feed"
+#include "de/Folder"
+#include "de/Guard"
+#include "de/LinkFile"
 #include "de/NumberValue"
 #include "de/RecordValue"
-#include "de/Guard"
-#include "de/DirectoryFeed"
-#include "de/LinkFile"
+#include "de/ScriptSystem"
 
 namespace de {
 

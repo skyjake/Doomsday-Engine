@@ -36,10 +36,13 @@
 #include "doomsday/SavedSession"
 
 #include <de/App>
-#include <de/Loop>
-#include <de/Folder>
-#include <de/DirectoryFeed>
+#include <de/Config>
+#include <de/CommandLine>
 #include <de/DictionaryValue>
+#include <de/DirectoryFeed>
+#include <de/Folder>
+#include <de/Loop>
+#include <de/ScriptSystem>
 #include <de/c_wrapper.h>
 #include <de/strutil.h>
 #include <de/memoryzone.h>

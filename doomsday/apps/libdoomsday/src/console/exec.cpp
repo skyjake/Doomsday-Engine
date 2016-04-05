@@ -31,6 +31,7 @@
 #include <cstdlib>
 #include <QFile>
 #include <QTextStream>
+
 #include <de/memory.h>
 #include <de/charsymbols.h>
 #include <de/App>
@@ -38,6 +39,9 @@
 #include <de/Time>
 #include <de/NativeFile>
 #include <de/Log>
+#include <de/Binder>
+#include <de/ScriptSystem>
+
 #include "doomsday/doomsdayapp.h"
 #include "doomsday/game.h"
 #include "doomsday/console/knownword.h"

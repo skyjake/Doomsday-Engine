@@ -33,6 +33,7 @@
 #include <de/DialogContentStylist>
 #include <de/NativeValue>
 #include <de/NumberValue>
+#include <de/PackageLoader>
 #include <de/ScriptedInfo>
 #include <de/SequentialLayout>
 #include <de/SignalAction>

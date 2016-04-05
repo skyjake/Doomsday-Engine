@@ -22,14 +22,15 @@
 #include "ui/widgets/homemenuwidget.h"
 #include "clientapp.h"
 
-#include <de/FileSystem>
-#include <de/MenuWidget>
+#include <de/CallbackAction>
 #include <de/ChildWidgetOrganizer>
-#include <de/SequentialLayout>
 #include <de/DocumentPopupWidget>
+//#include <de/FileSystem>
+#include <de/MenuWidget>
+#include <de/PackageLoader>
 #include <de/PopupButtonWidget>
 #include <de/PopupMenuWidget>
-#include <de/CallbackAction>
+#include <de/SequentialLayout>
 #include <de/SignalAction>
 #include <de/ui/SubwidgetItem>
 

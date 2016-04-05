@@ -21,6 +21,7 @@
 #include "gamesession.h"
 
 #include <de/App>
+#include <de/CommandLine>
 #include <de/ArrayValue>
 #include <de/NumberValue>
 #include <de/RecordValue>

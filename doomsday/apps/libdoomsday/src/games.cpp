@@ -26,6 +26,7 @@
 #include <doomsday/resource/manifest.h>
 
 #include <de/App>
+#include <de/ScriptSystem>
 #include <de/ArrayValue>
 #include <de/DictionaryValue>
 #include <de/Log>

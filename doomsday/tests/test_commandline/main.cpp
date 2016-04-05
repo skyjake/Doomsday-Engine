@@ -17,8 +17,9 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <de/TextApp>
+#include <de/CommandLine>
 #include <de/Log>
+#include <de/TextApp>
 
 #include <QDebug>
 
@@ -53,5 +54,5 @@ int main(int argc, char **argv)
     }
 
     qDebug() << "Exiting main()...";
-    return 0;        
+    return 0;
 }

@@ -19,6 +19,7 @@
 
 #include <de/TextApp>
 #include <de/Log>
+#include <de/LogFilter>
 
 #include <QDebug>
 
@@ -65,5 +66,5 @@ int main(int argc, char **argv)
     }
 
     qDebug() << "Exiting main()...";
-    return 0;        
+    return 0;
 }

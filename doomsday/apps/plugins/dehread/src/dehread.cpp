@@ -24,6 +24,7 @@
 #include <QFile>
 #include <doomsday/filesys/lumpindex.h>
 #include <de/App>
+#include <de/CommandLine>
 #include <de/Block>
 #include <de/Log>
 #include <de/String>

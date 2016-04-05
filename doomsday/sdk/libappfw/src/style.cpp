@@ -19,6 +19,7 @@
 #include "de/Style"
 
 #include <de/App>
+#include <de/CommandLine>
 #include <de/ScriptSystem>
 #include <de/Record>
 #include <de/Variable>

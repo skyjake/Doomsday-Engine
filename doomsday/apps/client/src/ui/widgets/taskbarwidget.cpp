@@ -46,16 +46,17 @@
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/console/exec.h>
 
-#include <de/KeyEvent>
+#include <de/BlurWidget>
+#include <de/ButtonWidget>
+#include <de/Config>
 #include <de/Drawable>
 #include <de/GLBuffer>
+#include <de/KeyEvent>
+#include <de/PopupMenuWidget>
 #include <de/ScalarRule>
+#include <de/SequentialLayout>
 #include <de/SignalAction>
 #include <de/ui/SubwidgetItem>
-#include <de/SequentialLayout>
-#include <de/ButtonWidget>
-#include <de/PopupMenuWidget>
-#include <de/BlurWidget>
 
 #include <QFileDialog>
 

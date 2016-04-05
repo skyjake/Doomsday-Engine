@@ -19,6 +19,7 @@
 #include "de/PackageLoader"
 #include "de/FS"
 #include "de/App"
+#include "de/CommandLine"
 #include "de/Version"
 #include "de/Info"
 #include "de/Log"

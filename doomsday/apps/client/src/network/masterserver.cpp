@@ -21,6 +21,7 @@
  */
 
 #include <QNetworkAccessManager>
+#include <de/Config>
 #include <de/Log>
 #include <de/memory.h>
 #include "de_platform.h"

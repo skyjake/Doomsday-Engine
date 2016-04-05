@@ -21,6 +21,7 @@
 #include "doomsday/filesys/datafolder.h"
 
 #include <de/App>
+#include <de/PackageLoader>
 #include <de/LinkFile>
 #include <de/Loop>
 

@@ -20,6 +20,7 @@
 #include <de/Variable>
 #include <de/Value>
 #include <de/App>
+#include <de/Config>
 
 using namespace de;
 

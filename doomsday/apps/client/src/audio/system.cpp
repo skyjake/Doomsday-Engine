@@ -56,6 +56,7 @@
 #  include <doomsday/filesys/fs_util.h>
 #endif
 #include <de/App>
+#include <de/CommandLine>
 #include <de/NativeFile>
 #include <de/timer.h>
 #include <de/c_wrapper.h>

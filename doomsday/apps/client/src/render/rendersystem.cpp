@@ -22,9 +22,11 @@
 
 #include <de/memory.h>
 #include <de/memoryzone.h>
-#include <de/ScriptedInfo>
 #include <de/Function>
 #include <de/GLUniform>
+#include <de/PackageLoader>
+#include <de/ScriptSystem>
+#include <de/ScriptedInfo>
 #include "clientapp.h"
 #include "render/environ.h"
 #include "render/rend_main.h"

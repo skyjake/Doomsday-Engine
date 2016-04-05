@@ -21,16 +21,16 @@
 #include "ui/clientwindow.h"
 #include "clientapp.h"
 
-#include <de/FIFO>
 #include <de/App>
 #include <de/ChoiceWidget>
-
+#include <de/Config>
 #include <de/DialogContentStylist>
+#include <de/FIFO>
 #include <de/NotificationAreaWidget>
 #include <de/SequentialLayout>
 #include <de/SignalAction>
-#include <de/ui/ListData>
 #include <de/ui/ActionItem>
+#include <de/ui/ListData>
 
 #include <QTimer>
 

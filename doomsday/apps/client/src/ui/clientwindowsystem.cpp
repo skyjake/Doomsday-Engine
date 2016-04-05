@@ -22,6 +22,8 @@
 #include "dd_main.h"
 #include "gl/gl_main.h"
 
+#include <de/PackageLoader>
+
 using namespace de;
 
 DENG2_PIMPL(ClientWindowSystem)

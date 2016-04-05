@@ -23,8 +23,9 @@
 #include <de/memoryblockset.h>
 #include <de/memoryzone.h>
 #include <de/c_wrapper.h>
-#include <de/Log>
 #include <de/App>
+#include <de/Log>
+#include <de/Config>
 #include <QMap>
 
 using namespace de;

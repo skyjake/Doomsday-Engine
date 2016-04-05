@@ -30,11 +30,14 @@
 #include <de/ArrayValue>
 #include <de/ByteRefArray>
 #include <de/DirectoryFeed>
+#include <de/Function>
 #include <de/Log>
 #include <de/Loop>
 #include <de/Module>
 #include <de/NumberValue>
+#include <de/PackageLoader>
 #include <de/Reader>
+#include <de/ScriptSystem>
 #include <de/Task>
 #include <de/TaskPool>
 #include <de/Time>

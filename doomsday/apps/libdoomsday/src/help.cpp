@@ -24,6 +24,7 @@
 #include "doomsday/console/cmd.h"
 
 #include <de/App>
+#include <de/PackageLoader>
 #include <de/Log>
 #include <de/Reader>
 
@@ -160,7 +161,7 @@ void DD_InitHelp()
 {
     LOG_AS("DD_InitHelp");
     try
-    {        
+    {
         Help_ReadStrings(App::packageLoader().package("net.dengine.base")
                          .root().locate<File>("helpstrings.txt"));
     }
