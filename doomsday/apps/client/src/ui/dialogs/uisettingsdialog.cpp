@@ -17,6 +17,7 @@
  */
 
 #include "ui/dialogs/uisettingsdialog.h"
+#include "clientapp.h"
 
 #include <de/GridLayout>
 #include <de/CallbackAction>
@@ -64,7 +65,7 @@ DENG2_PIMPL(UISettingsDialog)
 
     void resetToDefaults()
     {
-
+        ClientApp::uiSettings().resetToDefaults();
     }
 };
 

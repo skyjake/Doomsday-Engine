@@ -70,6 +70,7 @@ public:
     static ConfigProfiles &logSettings();
     static ConfigProfiles &networkSettings();
     static ConfigProfiles &audioSettings();    ///< @todo Belongs in AudioSystem.
+    static ConfigProfiles &uiSettings();
     static ServerLink &serverLink();
     static InFineSystem &infineSystem();
     static InputSystem &inputSystem();

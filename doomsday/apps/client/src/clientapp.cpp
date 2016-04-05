@@ -143,6 +143,7 @@ DENG2_PIMPL(ClientApp)
     ConfigProfiles audioSettings;
     ConfigProfiles networkSettings;
     ConfigProfiles logSettings;
+    ConfigProfiles uiSettings;
     QMenuBar *menuBar;
     InputSystem *inputSys;
     ::audio::System *audioSys;
@@ -222,7 +223,6 @@ DENG2_PIMPL(ClientApp)
         , rendSys    (0)
         , resourceSys(0)
         , winSys     (0)
-        //, infineSys  (0)
         , svLink     (0)
         , world      (0)
     {
@@ -404,35 +404,46 @@ DENG2_PIMPL(ClientApp)
 
     void initSettings()
     {
-        using SReg = ConfigProfiles; // convenience
+        using Prof = ConfigProfiles; // convenience
 
         // Log filter and alert settings.
         for(int i = LogEntry::FirstDomainBit; i <= LogEntry::LastDomainBit; ++i)
         {
             String const name = LogFilter::domainRecordName(LogEntry::Context(1 << i));
             logSettings
-                    .define(SReg::ConfigVariable, String("log.filter.%1.minLevel").arg(name))
-                    .define(SReg::ConfigVariable, String("log.filter.%1.allowDev").arg(name))
-                    .define(SReg::ConfigVariable, String("alert.%1").arg(name));
+                    .define(Prof::ConfigVariable, String("log.filter.%1.minLevel").arg(name))
+                    .define(Prof::ConfigVariable, String("log.filter.%1.allowDev").arg(name))
+                    .define(Prof::ConfigVariable, String("alert.%1").arg(name));
         }
+
+        uiSettings
+                .define(Prof::ConfigVariable, "ui.scaleFactor")
+                .define(Prof::ConfigVariable, "ui.showAnnotations")
+                .define(Prof::ConfigVariable, "home.showColumnDescription")
+                .define(Prof::ConfigVariable, "home.showUnplayableGames")
+                .define(Prof::ConfigVariable, "home.columns.doom")
+                .define(Prof::ConfigVariable, "home.columns.heretic")
+                .define(Prof::ConfigVariable, "home.columns.hexen")
+                .define(Prof::ConfigVariable, "home.columns.otherGames")
+                .define(Prof::ConfigVariable, "home.columns.multiplayer");
 
         /// @todo These belong in their respective subsystems.
 
         networkSettings
-                .define(SReg::ConfigVariable, "masterServer.apiUrl", "www.dengine.net/master.php")
-                .define(SReg::IntCVar,        "net-dev",             0);
+                .define(Prof::ConfigVariable, "masterServer.apiUrl", "www.dengine.net/master.php")
+                .define(Prof::IntCVar,        "net-dev",             0);
 
         audioSettings
-                .define(SReg::IntCVar,    "sound-volume",        255 * 2/3)
-                .define(SReg::IntCVar,    "music-volume",        255 * 2/3)
-                .define(SReg::FloatCVar,  "sound-reverb-volume", 0.5f)
-                .define(SReg::IntCVar,    "sound-info",          0)
-                .define(SReg::IntCVar,    "sound-rate",          11025)
-                .define(SReg::IntCVar,    "sound-16bit",         0)
-                .define(SReg::IntCVar,    "sound-3d",            0)
-                .define(SReg::IntCVar,    "sound-overlap-stop",  0)
-                .define(SReg::IntCVar,    "music-source",        ::audio::System::MUSP_EXT)
-                .define(SReg::StringCVar, "music-soundfont",     "");
+                .define(Prof::IntCVar,    "sound-volume",        255 * 2/3)
+                .define(Prof::IntCVar,    "music-volume",        255 * 2/3)
+                .define(Prof::FloatCVar,  "sound-reverb-volume", 0.5f)
+                .define(Prof::IntCVar,    "sound-info",          0)
+                .define(Prof::IntCVar,    "sound-rate",          11025)
+                .define(Prof::IntCVar,    "sound-16bit",         0)
+                .define(Prof::IntCVar,    "sound-3d",            0)
+                .define(Prof::IntCVar,    "sound-overlap-stop",  0)
+                .define(Prof::IntCVar,    "music-source",        ::audio::System::MUSP_EXT)
+                .define(Prof::StringCVar, "music-soundfont",     "");
     }
 
 #ifdef UNIX
@@ -668,6 +679,11 @@ ConfigProfiles &ClientApp::networkSettings()
 ConfigProfiles &ClientApp::audioSettings()
 {
     return app().d->audioSettings;
+}
+
+ConfigProfiles &ClientApp::uiSettings()
+{
+    return app().d->uiSettings;
 }
 
 ServerLink &ClientApp::serverLink()
