@@ -287,7 +287,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
         itemWidget(configMenu, POS_CONFIG_SEPARATOR) .show(!game.isNull());
         itemWidget(configMenu, POS_AUDIO_SETTINGS)   .show(!game.isNull());
         itemWidget(configMenu, POS_INPUT_SETTINGS)   .show(!game.isNull());
-        itemWidget(configMenu, POS_HOME_SETTINGS)    .show(game.isNull());
+        //itemWidget(configMenu, POS_HOME_SETTINGS)    .show(game.isNull());
 
         if(self.hasRoot())
         {
