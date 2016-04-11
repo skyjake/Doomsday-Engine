@@ -20,3 +20,7 @@ if (NOT AMETHYST_COMMAND)
 else ()
     set (AMETHYST_FOUND YES)
 endif ()
+
+if (AMETHYST_STDLIB_DIR)
+    set (AMETHYST_FLAGS "-i${AMETHYST_STDLIB_DIR}")
+endif ()

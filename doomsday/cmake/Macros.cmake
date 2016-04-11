@@ -765,7 +765,7 @@ function (deng_add_amedoc type file ameSourceDir mainSrc)
         get_filename_component (_name ${file} NAME)
         add_custom_command (
             OUTPUT ${file}
-            COMMAND "${AMETHYST_COMMAND}" -d${type} -d${pfm} ${opts}
+            COMMAND "${AMETHYST_COMMAND}" ${AMETHYST_FLAGS} -d${type} -d${pfm} ${opts}
                 -o${_name} ${ameSourceDir}/${mainSrc}
             DEPENDS ${_ameSrc}
             COMMENT "Compiling ${descText}..."
