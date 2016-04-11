@@ -179,7 +179,7 @@ def mac_release():
 
 
 def win_release():
-    cmake_release('/m', ['*.msi'])
+    cmake_release('/m', ['*.msi', '*.zip'])
 
 
 def linux_release():

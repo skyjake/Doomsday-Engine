@@ -49,9 +49,9 @@ class Event:
         
         if self.num >= 816: # Added Mac OS X 10.8.
             # Platforms:  Name                             File ext          sys_id()
-            self.oses = [('Windows (32-bit)',              ('.exe', '.msi'), 'win32-32bit'),
-                         ('Windows (64-bit)',              'x64.msi',        'win64-64bit'),
-                         ('OS X 10.8+ (x86_64)',           ('.dmg', 'macx8.dmg'), 'macx8-64bit'),
+            self.oses = [('Windows (32-bit)',              ('.exe', '.msi', 'x86.zip'),  'win32-32bit'),
+                         ('Windows (64-bit)',              ('x64.msi', 'x64.zip'),       'win64-64bit'),
+                         ('OS X 10.8+ (x86_64)',           ('.dmg', 'macx8.dmg'),        'macx8-64bit'),
                          ('OS X 10.6+ (x86_64/i386)',      ('mac10_6.dmg', 'macx6.dmg'), 'darwin-64bit'),
                          ('OS X 10.4+ (ppc/i386)',         '32bit.dmg',      'darwin-32bit'),
                          ('Ubuntu (64-bit)',               'amd64.deb',      'linux2-64bit'),
