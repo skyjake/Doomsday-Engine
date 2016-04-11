@@ -121,10 +121,10 @@ end
 
 def dpiScaledImagePath(path)
     # Returns a version of 'path' where "@2x" is appended to the end
-    # if DPI_FACTOR is 2.
+    # if DPI_FACTOR is 2 (approximately).
     import DisplayMode
     p = Text(path)
-    if DisplayMode.DPI_FACTOR == 2
+    if DisplayMode.DPI_FACTOR > 1.5
         return (p.fileNameAndPathWithoutExtension() + "@2x" +
                 p.fileNameExtension())
     end
