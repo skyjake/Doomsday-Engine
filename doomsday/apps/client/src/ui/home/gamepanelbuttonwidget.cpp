@@ -55,6 +55,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         , savedItems(savedItems)
     {
         packagesButton = new PackagesButtonWidget;
+        packagesButton->setGameProfile(gameProfile);
         packagesButton->setDialogTitle(profile.name());
         self.addButton(packagesButton);
 

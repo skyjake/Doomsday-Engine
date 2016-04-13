@@ -118,8 +118,7 @@ DENG_GUI_PIMPL(HomeItemWidget)
         label->setAlignment(ui::AlignLeft);
         label->setBehavior(ChildVisibilityClipping);
 
-        background->setBehavior(Focusable);
-        background->addEventHandler(new ClickHandler(self));
+        //background->setBehavior(Focusable);
 
         buttonHideTimer.setSingleShot(true);
         QObject::connect(&buttonHideTimer, &QTimer::timeout, [this] ()
@@ -181,6 +180,7 @@ HomeItemWidget::HomeItemWidget(String const &name)
     , d(new Instance(this))
 {
     setBehavior(Focusable);
+    addEventHandler(new Instance::ClickHandler(*this));
 
     Rule const &iconSize = d->label->margins().height() +
                            style().fonts().font("default").height() +
@@ -285,10 +285,11 @@ void HomeItemWidget::useColorTheme(ColorTheme unselected, ColorTheme selected)
 
 void HomeItemWidget::acquireFocus()
 {
-    root().setFocus(d->background);
+    root().setFocus(this); // d->background);
 }
 
-Image HomeItemWidget::makeGameLogo(Game const &game, res::LumpCatalog const &catalog) const
+Image HomeItemWidget::makeGameLogo(Game const &game, res::LumpCatalog const &catalog,
+                                   LogoFlags flags)
 {
     try
     {
@@ -300,15 +301,20 @@ Image HomeItemWidget::makeGameLogo(Game const &game, res::LumpCatalog const &cat
 
             IdTech1Image img(title.isEmpty()? titlePic : title, playPal);
 
-            // Apply VGA aspect correction while downscaling 50%.
-            Image::Size const finalSize(img.width()/2, img.height()/2 * 1.2f);
+            float const scaleFactor = flags.testFlag(Downscale50Percent)? .5f : 1.f;
+            Image::Size const finalSize(img.width()  * scaleFactor,
+                                        img.height() * scaleFactor * 1.2f); // VGA aspect
 
-            String colorId = "home.icon." + (game.family().isEmpty()? "other" : game.family());
-
-            return Image(img.toQImage().scaled(finalSize.x, finalSize.y,
-                                               Qt::IgnoreAspectRatio,
-                                               Qt::SmoothTransformation))
-                    .colorized(style().colors().color(colorId));
+            Image logoImage(img.toQImage().scaled(finalSize.x, finalSize.y,
+                                                  Qt::IgnoreAspectRatio,
+                                                  Qt::SmoothTransformation));
+            if(flags.testFlag(ColorizedByFamily))
+            {
+                String const colorId = "home.icon." +
+                        (game.family().isEmpty()? "other" : game.family());
+                return logoImage.colorized(Style::get().colors().color(colorId));
+            }
+            return logoImage;
         }
     }
     catch(Error const &er)

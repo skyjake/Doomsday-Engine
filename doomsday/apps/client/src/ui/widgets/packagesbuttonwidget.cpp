@@ -29,6 +29,7 @@ DENG_GUI_PIMPL(PackagesButtonWidget)
     StringList packages;
     String dialogTitle;
     String noneLabel;
+    GameProfile const *profile = nullptr;
 
     Instance(Public *i) : Base(i)
     {}
@@ -58,6 +59,10 @@ DENG_GUI_PIMPL(PackagesButtonWidget)
         // The Packages dialog allows selecting which packages are loaded, and in
         // which order. One can also browse the available packages.
         auto *dlg = new PackagesDialog(dialogTitle);
+        if(profile)
+        {
+            dlg->setGame(profile->game());
+        }
         dlg->setDeleteAfterDismissed(true);
         dlg->setSelectedPackages(packages);
         dlg->setAcceptanceAction(new CallbackAction([this, dlg] ()
@@ -84,6 +89,11 @@ PackagesButtonWidget::PackagesButtonWidget()
     connect(this, &ButtonWidget::pressed, [this] () { d->pressed(); });
 
     d->updateLabel();
+}
+
+void PackagesButtonWidget::setGameProfile(GameProfile const &profile)
+{
+    d->profile = &profile;
 }
 
 void PackagesButtonWidget::setNoneLabel(String const &noneLabel)

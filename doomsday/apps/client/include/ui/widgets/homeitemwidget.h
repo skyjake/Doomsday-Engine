@@ -50,6 +50,17 @@ public:
 
     void acquireFocus();
 
+public:
+    enum LogoFlag
+    {
+        UnmodifiedAppearance = 0,
+        ColorizedByFamily    = 0x1,
+        Downscale50Percent   = 0x2,
+
+        DefaultLogoFlags     = ColorizedByFamily | Downscale50Percent,
+    };
+    Q_DECLARE_FLAGS(LogoFlags, LogoFlag)
+
     /**
      * Prepares a game logo image to be used in items. The image is based on the
      * game's title screen image in its WAD file(s).
@@ -58,8 +69,11 @@ public:
      * @param catalog  Catalog of selected lumps.
      *
      * @return Image.
+     *
+     * @todo This could be moved to a better location / other class. -jk
      */
-    de::Image makeGameLogo(Game const &game, res::LumpCatalog const &catalog) const;
+    static de::Image makeGameLogo(Game const &game, res::LumpCatalog const &catalog,
+                                  LogoFlags flags = DefaultLogoFlags);
 
 signals:
     void mouseActivity();
@@ -69,5 +83,7 @@ signals:
 private:
     DENG2_PRIVATE(d)
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(HomeItemWidget::LogoFlags)
 
 #endif // DENG_CLIENT_UI_HOME_HOMEITEMWIDGET_H

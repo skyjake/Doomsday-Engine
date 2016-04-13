@@ -31,6 +31,7 @@ class PackagesDialog : public de::DialogWidget
 public:
     PackagesDialog(de::String const &titleText = "");
 
+    void setGame(de::String const &gameId);
     void setSelectedPackages(de::StringList const &packages);
     de::StringList selectedPackages() const;
 

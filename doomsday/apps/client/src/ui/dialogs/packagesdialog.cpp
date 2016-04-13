@@ -23,15 +23,20 @@
 #include "ui/widgets/packagepopupwidget.h"
 #include "clientapp.h"
 
+#include <doomsday/Games>
+#include <doomsday/LumpCatalog>
+
 #include <de/CallbackAction>
 #include <de/ChildWidgetOrganizer>
 #include <de/DocumentPopupWidget>
 #include <de/MenuWidget>
+#include <de/NativeFile>
 #include <de/PackageLoader>
 #include <de/PopupButtonWidget>
 #include <de/PopupMenuWidget>
 #include <de/SequentialLayout>
 #include <de/SignalAction>
+#include <de/StyleProceduralImage>
 #include <de/ui/SubwidgetItem>
 
 using namespace de;
@@ -41,10 +46,14 @@ DENG_GUI_PIMPL(PackagesDialog)
 , public PackagesWidget::IPackageStatus
 , public PackagesWidget::IButtonHandler
 {
+    StringList requiredPackages; // loaded first, cannot be changed
     StringList selectedPackages;
     LabelWidget *nothingSelected;
     HomeMenuWidget *menu;
     PackagesWidget *browser;
+    LabelWidget *gameTitle;
+    Game const *game = nullptr;
+    res::LumpCatalog catalog;
 
     /**
      * Information about a selected package. If the package file is not found, only
@@ -118,6 +127,15 @@ DENG_GUI_PIMPL(PackagesDialog)
             }
             , ui::Down);
             addButton(_infoButton);
+
+            // Package icon.
+            icon().set(Background());
+            icon().setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
+            icon().setImage(new StyleProceduralImage("package", *this));
+            icon().margins().set("dialog.gap");
+            Rule const &height = style().fonts().font("default").height();
+            icon().setOverrideImageSize(height.value());
+            icon().rule().setInput(Rule::Width, height + rule("dialog.gap")*2);
 
             /*
             add(_title = new LabelWidget);
@@ -263,6 +281,7 @@ DENG_GUI_PIMPL(PackagesDialog)
 
     Instance(Public *i) : Base(i)
     {
+        // Indicator that is only visible when no packages have been added to the profile.
         nothingSelected = new LabelWidget;
         nothingSelected->setText(_E(b) + tr("Nothing Selected"));
         nothingSelected->setFont("heading");
@@ -271,11 +290,24 @@ DENG_GUI_PIMPL(PackagesDialog)
         self.leftArea().add(nothingSelected);
 
         // Currently selected packages.
+        self.leftArea().add(gameTitle = new LabelWidget);
+        gameTitle->setSizePolicy(ui::Fixed, ui::Expand);
+        gameTitle->setTextAlignment(ui::AlignRight);
+        gameTitle->setTextLineAlignment(ui::AlignLeft);
+        gameTitle->setImageAlignment(ui::AlignTop);
+        gameTitle->setFont("small");
+        gameTitle->setTextColor("altaccent");
+        int const titleImageWidth = rule("dialog.packages.width").valuei();
+        gameTitle->setOverrideImageSize(Vector2f(titleImageWidth/3, titleImageWidth/4));
+        gameTitle->rule()
+                .setInput(Rule::Left,  self.leftArea().contentRule().left())
+                .setInput(Rule::Top,   self.leftArea().contentRule().top())
+                .setInput(Rule::Width, rule("dialog.packages.width"));
         self.leftArea().add(menu = new HomeMenuWidget);
         menu->layout().setRowPadding(Const(0));
         menu->rule()
                 .setInput(Rule::Left,  self.leftArea().contentRule().left())
-                .setInput(Rule::Top,   self.leftArea().contentRule().top())
+                .setInput(Rule::Top,   gameTitle->rule().bottom())
                 .setInput(Rule::Width, rule("dialog.packages.width"));
         menu->organizer().setWidgetFactory(*this);
         self.leftArea().enableIndicatorDraw(true);
@@ -309,6 +341,33 @@ DENG_GUI_PIMPL(PackagesDialog)
     void updateNothingIndicator()
     {
         nothingSelected->setOpacity(menu->items().isEmpty()? .5f : 0.f, 0.4);
+    }
+
+    void updateGameTitle()
+    {
+        if(game && catalog.setPackages(requiredPackages + selectedPackages))
+        {
+            gameTitle->setImage(HomeItemWidget::makeGameLogo(*game, catalog,
+                                                             HomeItemWidget::UnmodifiedAppearance));
+            // List of the native required files.
+            StringList dataFiles;
+            for(String packageId : requiredPackages)
+            {
+                if(File const *file = App::packageLoader().select(packageId))
+                {
+                    // Only list here the game data files; Doomsday's PK3s are always
+                    // there so listing them is not very helpful.
+                    if(Package::tags(*file).contains(QStringLiteral("gamedata")))
+                    {
+                        // Resolve indirection (symbolic links and interpretations) to
+                        // describe the actual source file of the package.
+                        dataFiles << file->target().source()->description(0);
+                    }
+                }
+            }
+            gameTitle->setText(_E(l) + String::format("Data file%s: ", dataFiles.size() != 1? "s" : "") +
+                               _E(.) + String::join(dataFiles, _E(l) " and " _E(.)));
+        }
     }
 
     GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *)
@@ -364,16 +423,24 @@ PackagesDialog::PackagesDialog(String const &titleText)
                                     new SignalAction(this, SLOT(refreshPackages())));
 
     // The individual menus will be scrolling independently.
-    leftArea() .setContentSize(d->menu->rule().width(),    d->menu->rule().height());
+    leftArea() .setContentSize(d->menu->rule().width(),    d->menu->rule().height() + d->gameTitle->rule().height());
     rightArea().setContentSize(d->browser->rule().width(), d->browser->rule().height());
 
     refreshPackages();
+}
+
+void PackagesDialog::setGame(String const &gameId)
+{
+    d->game = &DoomsdayApp::games()[gameId];
+    d->requiredPackages = d->game->requiredPackages();
+    d->updateGameTitle();
 }
 
 void PackagesDialog::setSelectedPackages(StringList const &packages)
 {
     d->selectedPackages = packages;
     d->browser->populate();
+    d->updateGameTitle();
 }
 
 StringList PackagesDialog::selectedPackages() const
