@@ -210,9 +210,14 @@ public:
      * This attempts to fully describe the file, taking into consideration
      * the file's type and possible source.
      *
+     * @param verbosity  Level of verbosity:
+     *                    - Level 1: include file path
+     *                    - Level 2: include origin feed description
+     *                   Use -1 for autodetection (depends on current log entry level).
+     *
      * @return Full human-friendly description of the file.
      */
-    String description() const;
+    String description(int verbosity = -1) const;
 
     /**
      * Returns a textual description of this file only. Subclasses must

@@ -116,35 +116,37 @@ Folder *File::parent() const
     return Node::parent()->maybeAs<Folder>();
 }
 
-String File::description() const
+String File::description(int verbosity) const
 {
     DENG2_GUARD(this);
 
     // describe() gives the actual description of this file.
     String desc = describe();
 
-    if(!mode().testFlag(Write))
-    {
-        desc = "read-only " + desc;
-    }
-
     // Check for additional contextual information that may be relevant. First
     // determine if this is being called for a log entry.
-    Log &log = Log::threadLog();
-    int verbosity = 0;
-    if(!log.isStaging() || (log.currentEntryMetadata() & LogEntry::Dev))
+    if(verbosity < 0)
     {
-        // For dev entries and everything outside log entries, use a full description.
-        verbosity = 2;
-    }
-    else if((log.currentEntryMetadata() & LogEntry::LevelMask) <= LogEntry::Verbose)
-    {
-        // Verbose entries can contain some additional information.
-        verbosity = 1;
+        Log &log = Log::threadLog();
+        int verbosity = 0;
+        if(!log.isStaging() || (log.currentEntryMetadata() & LogEntry::Dev))
+        {
+            // For dev entries and everything outside log entries, use a full description.
+            verbosity = 2;
+        }
+        else if((log.currentEntryMetadata() & LogEntry::LevelMask) <= LogEntry::Verbose)
+        {
+            // Verbose entries can contain some additional information.
+            verbosity = 1;
+        }
     }
 
-    if(verbosity >= 1)
+    if(verbosity > 0)
     {
+        if(!mode().testFlag(Write))
+        {
+            desc = "read-only " + desc;
+        }
         if(parent())
         {
             desc += " (path \"" + path() + "\")";
@@ -165,7 +167,7 @@ String File::description() const
     // file interpretation is being applied.
     if(source() != this)
     {
-        desc += " (data sourced from " + source()->description() + ")";
+        desc += _E(i) " {data sourced from " + source()->description(verbosity) + "}" _E(.);
     }
 #endif
 
