@@ -247,7 +247,7 @@ String DataBundle::description() const
     }
     return QString("%1 \"%2\"")
             .arg(::internal::formatDescriptions[d->format])
-            .arg(d->source->name().fileNameWithoutExtension());
+            .arg(d->source->name());
 }
 
 File &DataBundle::asFile()
