@@ -393,6 +393,15 @@ bool Widget::isInTree(Widget const &child) const
     return false;
 }
 
+bool Widget::hasAncestor(Widget const &ancestorOrParent) const
+{
+    for(Widget const *iter = parent(); iter; iter = iter->parent())
+    {
+        if(iter == &ancestorOrParent) return true;
+    }
+    return false;
+}
+
 Widget const *Widget::find(String const &name) const
 {
     return const_cast<Widget *>(this)->find(name);

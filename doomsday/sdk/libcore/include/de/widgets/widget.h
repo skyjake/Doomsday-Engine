@@ -223,6 +223,7 @@ public:
     Widget *remove(Widget &child);
     Widget *find(String const &name);
     bool isInTree(Widget const &child) const;
+    bool hasAncestor(Widget const &ancestorOrParent) const;
     Widget const *find(String const &name) const;
     void moveChildBefore(Widget *child, Widget const &otherChild);
     void moveChildToLast(Widget &child);
