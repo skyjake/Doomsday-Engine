@@ -529,6 +529,29 @@ void MenuWidget::update()
 
 bool MenuWidget::handleEvent(Event const &event)
 {
+    // If a menu item has focus, arrow keys can be used to move the focus.
+    if(event.isKeyDown() && root().focus() && root().focus()->parent() == this)
+    {
+        KeyEvent const &key = event.as<KeyEvent>();
+        if(key.ddKey() == DDKEY_UPARROW || key.ddKey() == DDKEY_DOWNARROW)
+        {
+            auto const children = childWidgets();
+
+            for(int ordinal = children.indexOf(root().focus());
+                ordinal >= 0 && ordinal < int(childCount());
+                ordinal += (key.ddKey() == DDKEY_UPARROW? -1 : +1))
+            {
+                auto *child = children.at(ordinal);
+                if(child->hasFocus()) continue;
+                if(child->isVisible() && child->behavior().testFlag(Focusable))
+                {
+                    root().setFocus(child);
+                    return true;
+                }
+            }
+        }
+    }
+
     return ScrollAreaWidget::handleEvent(event);
 }
 
