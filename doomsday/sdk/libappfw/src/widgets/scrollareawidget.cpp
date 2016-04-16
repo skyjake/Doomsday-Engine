@@ -354,6 +354,11 @@ void ScrollAreaWidget::scrollY(int to, TimeDelta span)
     d->restartScrollOpacityFade();
 }
 
+bool ScrollAreaWidget::isScrollable() const
+{
+    return d->scrollingEnabled && maximumScrollY().valuei() > 0;
+}
+
 bool ScrollAreaWidget::isAtBottom() const
 {
     return d->origin == Bottom && d->y->animation().target() == 0;
@@ -483,6 +488,29 @@ void ScrollAreaWidget::scrollToLeft(TimeDelta span)
 void ScrollAreaWidget::scrollToRight(TimeDelta span)
 {
     scrollX(maximumScrollX().valuei(), span);
+}
+
+void ScrollAreaWidget::scrollToWidget(GuiWidget const &widget, TimeDelta span)
+{
+    int off = widget.rule().midY().valuei() - contentRule().top().valuei() -
+            rule().height().valuei()/2;
+    qDebug() << "scroll off:" << off;
+    scrollY(off, span);
+}
+
+ScrollAreaWidget &ScrollAreaWidget::findTopmostScrollable()
+{
+    for(Widget *parent = parentWidget(); parent; parent = parent->parent())
+    {
+        if(ScrollAreaWidget *scroll = parent->maybeAs<ScrollAreaWidget>())
+        {
+            if(scroll->isScrollable())
+            {
+                return *scroll;
+            }
+        }
+    }
+    return *this;
 }
 
 void ScrollAreaWidget::glInit()

@@ -114,6 +114,8 @@ public:
     void scrollX(int to, TimeDelta span = 0);
     void scrollY(int to, TimeDelta span = 0);
 
+    bool isScrollable() const;
+
     /**
      * Determines if the history view is at the bottom, showing the latest entry.
      */
@@ -150,15 +152,31 @@ public:
     bool handleEvent(Event const &event) override;
 
 public slots:
-    void scrollToTop(TimeDelta span = .3f);
+    void scrollToTop(TimeDelta span = 0.3);
 
     /**
      * Moves the scroll offset of the widget to the bottom of the content.
      */
-    void scrollToBottom(TimeDelta span = .3f);
+    void scrollToBottom(TimeDelta span = 0.3);
 
-    void scrollToLeft(TimeDelta span = .3f);
-    void scrollToRight(TimeDelta span = .3f);
+    void scrollToLeft(TimeDelta span = 0.3);
+    void scrollToRight(TimeDelta span = 0.3);
+
+    /**
+     * Moves the scroll offset to center on the given widget.
+     *
+     * @param widget  Widget to center on.
+     * @param span    Animation duration.
+     */
+    void scrollToWidget(GuiWidget const &widget, TimeDelta span = 0.3);
+
+    /**
+     * Finds the topmost scroll area that can be scrolled. May return this widget
+     * if there are no scrollable ancestors.
+     *
+     * @return
+     */
+    ScrollAreaWidget &findTopmostScrollable();
 
 protected:
     void glInit() override;

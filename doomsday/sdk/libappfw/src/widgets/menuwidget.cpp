@@ -546,6 +546,7 @@ bool MenuWidget::handleEvent(Event const &event)
                 if(child->isVisible() && child->behavior().testFlag(Focusable))
                 {
                     root().setFocus(child);
+                    findTopmostScrollable().scrollToWidget(child->as<GuiWidget>());
                     return true;
                 }
             }
