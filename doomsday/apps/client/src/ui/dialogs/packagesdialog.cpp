@@ -292,6 +292,7 @@ DENG_GUI_PIMPL(PackagesDialog)
         // Currently selected packages.
         self.leftArea().add(gameTitle = new LabelWidget);
         gameTitle->setSizePolicy(ui::Fixed, ui::Expand);
+        gameTitle->setAlignment(ui::AlignLeft);
         gameTitle->setTextAlignment(ui::AlignRight);
         gameTitle->setTextLineAlignment(ui::AlignLeft);
         gameTitle->setImageAlignment(ui::AlignTop);
