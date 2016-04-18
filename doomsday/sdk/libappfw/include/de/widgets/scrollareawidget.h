@@ -113,6 +113,7 @@ public:
 
     void scrollX(int to, TimeDelta span = 0);
     void scrollY(int to, TimeDelta span = 0);
+    void scrollY(Rule const &to, TimeDelta span = 0);
 
     bool isScrollable() const;
 

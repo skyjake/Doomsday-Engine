@@ -354,6 +354,12 @@ void ScrollAreaWidget::scrollY(int to, TimeDelta span)
     d->restartScrollOpacityFade();
 }
 
+void ScrollAreaWidget::scrollY(Rule const &to, TimeDelta span)
+{
+    d->y->set(OperatorRule::clamped(to, Const(0), maximumScrollY()), span);
+    d->restartScrollOpacityFade();
+}
+
 bool ScrollAreaWidget::isScrollable() const
 {
     return d->scrollingEnabled && maximumScrollY().valuei() > 0;
@@ -494,7 +500,6 @@ void ScrollAreaWidget::scrollToWidget(GuiWidget const &widget, TimeDelta span)
 {
     int off = widget.rule().midY().valuei() - contentRule().top().valuei() -
             rule().height().valuei()/2;
-    qDebug() << "scroll off:" << off;
     scrollY(off, span);
 }
 

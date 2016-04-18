@@ -542,7 +542,7 @@ bool MenuWidget::handleEvent(Event const &event)
                 ordinal += (key.ddKey() == DDKEY_UPARROW? -1 : +1))
             {
                 auto *child = children.at(ordinal);
-                if(child->hasFocus()) continue;
+                if(child->hasFocus() || child->isDisabled()) continue;
                 if(child->isVisible() && child->behavior().testFlag(Focusable))
                 {
                     root().setFocus(child);
