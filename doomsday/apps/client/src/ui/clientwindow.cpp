@@ -186,16 +186,6 @@ DENG2_PIMPL(ClientWindow)
     {
         Style &style = ClientApp::windowSystem().style();
 
-        // Background for Ring Zero.
-        /*background = new LabelWidget("background");
-        background->setImageColor(Vector4f(0, 0, 0, 1));
-        background->setImage(style.images().image("window.background"));
-        background->setImageFit(ui::OriginalAspectRatio | ui::FitToSize | ui::CoverArea);
-        background->setSizePolicy(ui::Filled, ui::Filled);
-        background->margins().set("");
-        background->rule().setRect(root.viewRule());
-        root.add(background);*/
-
         game = new GameWidget;
         game->rule().setRect(root.viewRule());
         // Initially the widget is disabled. It will be enabled when the window
@@ -217,54 +207,6 @@ DENG2_PIMPL(ClientWindow)
         busy->hide(); // normally hidden
         busy->rule().setRect(root.viewRule());
         root.add(busy);
-
-#if 0
-        // Game selection.
-        gameSelMenu = new GameSelectionWidget;
-        gameSelMenu->enableActionOnSelection(true);
-        gameSelMenu->rule()
-                .setInput(Rule::AnchorX, root.viewRule().midX())
-                .setInput(Rule::Width,   root.viewWidth())
-                .setAnchorPoint(Vector2f(.5f, .5f));
-        AutoRef<Rule> pad(OperatorRule::maximum(style.rules().rule("gap"),
-                                                (root.viewWidth() -
-                                                 style.rules().rule("gameselection.max.width")) / 2));
-        gameSelMenu->margins().setLeft(pad).setRight(pad);
-        //gameSelMenu->filter().useInvertedStyle();
-        gameSelMenu->filter().setOpacity(.9f);
-        gameSelMenu->filter().rule()
-                .setInput(Rule::Left,  gameSelMenu->rule().left() + gameSelMenu->margins().left())
-                .setInput(Rule::Width, gameSelMenu->rule().width() - gameSelMenu->margins().width())
-                .setInput(Rule::Top,   root.viewTop() + style.rules().rule("gap"));
-        container().add(gameSelMenu);
-        gameSelMenu->filter().enableBackground(gameSelMenu->scrollPositionY());
-
-        // As an alternative to game selection, a notice to pick the IWAD folder.
-        ButtonWidget *chooseIwad = nullptr;
-        iwadNotice = new GuiWidget;
-        {
-            LabelWidget *notice = LabelWidget::newWithText(_E(b) + tr("No playable games were found.\n") + _E(.) +
-                                                           tr("Please select the folder where you have one or more game WAD files."),
-                                                           iwadNotice);
-            notice->setTextColor("text");
-            notice->setSizePolicy(ui::Expand, ui::Expand);
-            notice->rule()
-                    .setMidAnchorX(root.viewRule().midX())
-                    .setInput(Rule::Bottom, root.viewRule().midY());
-
-            chooseIwad = new ButtonWidget;
-            chooseIwad->setText(tr("Select IWAD Folder..."));
-            chooseIwad->setSizePolicy(ui::Expand, ui::Expand);
-            chooseIwad->rule()
-                    .setMidAnchorX(root.viewRule().midX())
-                    .setInput(Rule::Top, notice->rule().bottom());
-            iwadNotice->add(chooseIwad);
-
-            iwadNotice->rule().setRect(root.viewRule());
-            iwadNotice->hide();
-            container().add(iwadNotice);
-        }
-#endif
 
         // Common notification area.
         notifications = new NotificationAreaWidget;
@@ -317,9 +259,6 @@ DENG2_PIMPL(ClientWindow)
 
         taskBar->hide();
 
-        // Task bar provides the IWAD selection feature.
-        //chooseIwad->setAction(new SignalAction(taskBar, SLOT(chooseIWADFolder())));
-
         // Mouse cursor is used with transformed content.
         cursor = new LabelWidget;
         cursor->setBehavior(Widget::Unhittable);
@@ -335,8 +274,6 @@ DENG2_PIMPL(ClientWindow)
 
     void appStartupCompleted()
     {
-        // Allow the background image to show.
-        //background->setImageColor(Vector4f(1, 1, 1, 1));
         taskBar->show();
 
         // Show the tutorial if it hasn't been automatically shown yet.
@@ -385,22 +322,6 @@ DENG2_PIMPL(ClientWindow)
 
     void currentGameChanged(Game const &/*newGame*/)
     {
-        /*
-        if(newGame.isNull())
-        {
-            //background->show();
-            showGameSelectionMenu(true);
-
-            gameSelMenu->restoreState();
-        }
-        else
-        {
-            //background->hide();
-            showGameSelectionMenu(false);
-
-            gameSelMenu->saveState();
-        }*/
-
         // Check with Style if blurring is allowed.
         taskBar->console().enableBlur(taskBar->style().isBlurringAllowed());
         self.hideTaskBarBlur(); // update background blur mode
