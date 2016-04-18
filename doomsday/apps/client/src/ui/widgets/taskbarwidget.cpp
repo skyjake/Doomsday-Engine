@@ -474,6 +474,9 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     connect(d->console, SIGNAL(commandModeChanged()), this, SLOT(updateCommandLineLayout()));
     connect(d->console, SIGNAL(commandLineGotFocus()), this, SLOT(closeMainMenu()));
     connect(d->console, SIGNAL(commandLineGotFocus()), this, SLOT(closeConfigMenu()));
+
+    // Initially closed.
+    close();
 }
 
 ConsoleWidget &TaskBarWidget::console()
