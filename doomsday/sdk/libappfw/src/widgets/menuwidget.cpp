@@ -147,6 +147,7 @@ DENG2_PIMPL(MenuWidget)
         ui::SubwidgetItem const &_item;
     };
 
+    AssetGroup assets;
     bool needLayout = false;
     GridLayout layout;
     ListData defaultItems;
@@ -219,18 +220,28 @@ DENG2_PIMPL(MenuWidget)
         needLayout = true;
     }
 
-    void widgetChildAdded(Widget &)
+    void widgetChildAdded(Widget &child)
     {
         // Make sure we redo the layout with the new child. This occurs
         // when filtered items are accepted again as widgets.
         needLayout = true;
+
+        if(IAssetGroup *asset = child.maybeAs<IAssetGroup>())
+        {
+            assets += *asset; // part of the asset group
+        }
     }
 
-    void widgetChildRemoved(Widget &)
+    void widgetChildRemoved(Widget &child)
     {
         // Make sure we redo the layout without this child. This occurs
         // when filtered items are removed from the menu.
         needLayout = true;
+
+        if(IAssetGroup *asset = child.maybeAs<IAssetGroup>())
+        {
+            assets -= *asset; // no longer part of the asset group
+        }
     }
 
     static void setFoldIndicatorForDirection(LabelWidget &label, ui::Direction dir)
@@ -412,6 +423,11 @@ MenuWidget::MenuWidget(String const &name)
     : ScrollAreaWidget(name), d(new Instance(this))
 {
     setBehavior(ChildVisibilityClipping, UnsetFlags);
+}
+
+AssetGroup &MenuWidget::assets()
+{
+    return d->assets;
 }
 
 void MenuWidget::setGridSize(int columns, ui::SizePolicy columnPolicy,

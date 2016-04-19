@@ -33,6 +33,7 @@ public Font::RichFormat::IStyle
 {
     typedef DefaultVertexBuf VertexBuf;
 
+    AssetGroup assets;
     SizePolicy horizPolicy;
     SizePolicy vertPolicy;
     AlignmentMode alignMode;
@@ -108,7 +109,7 @@ public Font::RichFormat::IStyle
         updateStyle();
 
         // The readiness of the LabelWidget depends on glText being ready.
-        self += glText;
+        assets += glText;
     }
 
     ~Instance()
@@ -578,6 +579,11 @@ public Font::RichFormat::IStyle
 LabelWidget::LabelWidget(String const &name) : GuiWidget(name), d(new Instance(this))
 {}
 
+AssetGroup &LabelWidget::assets()
+{
+    return d->assets;
+}
+
 void LabelWidget::setText(String const &text)
 {
     if(text != d->glText.text())
@@ -756,11 +762,11 @@ void LabelWidget::update()
     bool visibleNow = isVisible();
     if(d->wasVisible && !visibleNow)
     {
-        setPolicy(d->glText, Ignore);
+        d->assets.setPolicy(d->glText, AssetGroup::Ignore);
     }
     else if(!d->wasVisible && visibleNow)
     {
-        setPolicy(d->glText, Required);
+        d->assets.setPolicy(d->glText, AssetGroup::Required);
     }
     d->wasVisible = visibleNow;
 

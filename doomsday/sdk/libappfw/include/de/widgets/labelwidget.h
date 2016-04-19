@@ -68,10 +68,12 @@ class Image;
  *
  * @ingroup guiWidgets
  */
-class LIBAPPFW_PUBLIC LabelWidget : public GuiWidget, public AssetGroup
+class LIBAPPFW_PUBLIC LabelWidget : public GuiWidget, public IAssetGroup
 {
 public:
     LabelWidget(String const &name = "");
+
+    AssetGroup &assets() override;
 
     void setText(String const &text);
     void setImage(Image const &image);

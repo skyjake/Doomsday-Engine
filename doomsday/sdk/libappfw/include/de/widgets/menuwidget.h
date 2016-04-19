@@ -29,6 +29,8 @@
 #include "../ButtonWidget"
 #include "../PanelWidget"
 
+#include <de/Asset>
+
 namespace de {
 
 /**
@@ -48,12 +50,14 @@ namespace de {
  *
  * @ingroup guiWidgets
  */
-class LIBAPPFW_PUBLIC MenuWidget : public ScrollAreaWidget
+class LIBAPPFW_PUBLIC MenuWidget : public ScrollAreaWidget, public IAssetGroup
 {
     Q_OBJECT
 
 public:
     MenuWidget(String const &name = "");
+
+    AssetGroup &assets() override;
 
     /**
      * Configures the layout grid.
