@@ -80,7 +80,7 @@ DENG_GUI_PIMPL(ColumnWidget)
         }
     };
 
-    bool highlighted;
+    bool highlighted = false;
     LabelWidget *back;
     ScrollAreaWidget *scrollArea;
     HeaderWidget *header;
@@ -133,9 +133,9 @@ ColumnWidget::ColumnWidget(String const &name)
 
 void ColumnWidget::setBackgroundImage(DotPath const &imageId)
 {
-    d->back->setImage(new Instance::BackgroundImage(imageId, *this));
-    //d->back->setImageFit(ui::FitToSize);
-    //d->back->setSizePolicy(ui::Filled, ui::Filled);
+    auto *img = new Instance::BackgroundImage(imageId, *this);
+    img->setColor(Vector4f(.5f, .5f, .5f, 1.f));
+    d->back->setImage(img);
 }
 
 ScrollAreaWidget &ColumnWidget::scrollArea()
@@ -167,10 +167,13 @@ Variable *ColumnWidget::configVariable() const
 
 void ColumnWidget::setHighlighted(bool highlighted)
 {
-    d->highlighted = highlighted;
+    if(d->highlighted != highlighted)
+    {
+        d->highlighted = highlighted;
 
-    auto &img = d->back->image()->as<Instance::BackgroundImage>();
-    img.setColor(highlighted? Vector4f(1, 1, 1, 1) : Vector4f(.5f, .5f, .5f, 1.f));
+        auto &img = d->back->image()->as<Instance::BackgroundImage>();
+        img.setColor(highlighted? Vector4f(1, 1, 1, 1) : Vector4f(.5f, .5f, .5f, 1.f));
+    }
 }
 
 bool ColumnWidget::isHighlighted() const

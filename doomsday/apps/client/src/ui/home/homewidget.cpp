@@ -375,10 +375,17 @@ DENG_GUI_PIMPL(HomeWidget)
             return;
         }
 
+        // Remove the highlight.
         for(int pos = 0; pos < columns.size(); ++pos)
         {
-            columns[pos]->setHighlighted(tabs->currentItem().data().toInt() == pos);
+            if(columns[pos]->isHighlighted())
+            {
+                columns[pos]->setHighlighted(false);
+            }
         }
+
+        // Set new highlight.
+        columns[tabs->currentItem().data().toInt()]->setHighlighted(true);
     }
 
     int highlightedTab() const

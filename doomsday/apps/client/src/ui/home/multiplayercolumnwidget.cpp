@@ -251,8 +251,13 @@ void MultiplayerColumnWidget::setHighlighted(bool highlighted)
 {
     ColumnWidget::setHighlighted(highlighted);
 
-    if(!highlighted)
+    if(highlighted)
     {
+        d->menu->restorePreviousSelection();
+    }
+    else
+    {
+        root().setFocus(nullptr);
         d->menu->unselectAll();
     }
 }

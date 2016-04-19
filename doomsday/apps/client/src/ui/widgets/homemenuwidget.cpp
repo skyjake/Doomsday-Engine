@@ -23,12 +23,19 @@ using namespace de;
 
 DENG_GUI_PIMPL(HomeMenuWidget)
 , DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
+, DENG2_OBSERVES(Asset, StateChange)
 {
     int selectedIndex = -1;
+    int previousSelectedIndex = 0;
 
     Instance(Public *i) : Base(i)
     {
         self.organizer().audienceForWidgetCreation() += this;
+    }
+
+    ~Instance()
+    {
+        self.assets().audienceForStateChange() -= this;
     }
 
     void widgetCreatedForItem(GuiWidget &widget, ui::Item const &)
@@ -37,6 +44,27 @@ DENG_GUI_PIMPL(HomeMenuWidget)
         {
             QObject::connect(&widget, SIGNAL(mouseActivity()),
                              thisPublic, SLOT(mouseActivityInItem()));
+
+            QObject::connect(&widget, SIGNAL(selected()), thisPublic, SLOT(itemSelectionChanged()));
+            //QObject::connect(&widget, SIGNAL(deselected()), thisPublic, SLOT(itemSelectionChanged()));
+        }
+    }
+
+    void assetStateChanged(Asset &asset)
+    {
+        if(asset.state() == Asset::Ready)
+        {
+            self.assets().audienceForStateChange() -= this; // only scroll once
+            scrollToSelected();
+        }
+    }
+
+    void scrollToSelected()
+    {
+        if(selectedIndex >= 0 && self.hasRoot())
+        {
+            self.findTopmostScrollable().scrollToWidget(
+                        self.childWidgets().at(selectedIndex)->as<GuiWidget>());
         }
     }
 };
@@ -63,10 +91,19 @@ void HomeMenuWidget::unselectAll()
         {
             if(auto *item = w->maybeAs<HomeItemWidget>())
             {
-                item->setSelected(false);
+                // Never deselect the currently focused item.
+                if(root().focus() != item)
+                {
+                    item->setSelected(false);
+                }
             }
         }
     }
+}
+
+void HomeMenuWidget::restorePreviousSelection()
+{
+    setSelectedIndex(d->previousSelectedIndex);
 }
 
 int HomeMenuWidget::selectedIndex() const
@@ -74,24 +111,31 @@ int HomeMenuWidget::selectedIndex() const
     return d->selectedIndex;
 }
 
-void HomeMenuWidget::setSelectedIndex(int index, bool focus)
+void HomeMenuWidget::setSelectedIndex(int index)
 {
     if(index >= 0 && index < childWidgets().size())
     {
-        unselectAll();
-
         if(HomeItemWidget *widget = childWidgets().at(index)->maybeAs<HomeItemWidget>())
         {
-            d->selectedIndex = index;
-            widget->setSelected(true);
-            if(focus) widget->acquireFocus();
+            widget->acquireFocus();
+
+            // Check if we can scroll to the selected widget right away.
+            // If not, we are observing the asset and will scroll when it is ready.
+            if(assets().isReady())
+            {
+                d->scrollToSelected();
+            }
+            else
+            {
+                assets().audienceForStateChange() += d;
+            }
         }
     }
 }
 
 void HomeMenuWidget::mouseActivityInItem()
 {
-    auto *clickedItem = dynamic_cast<HomeItemWidget *>(sender());
+    /*auto *clickedItem = dynamic_cast<HomeItemWidget *>(sender());
 
     // Radio button behavior: other items will be deselected.
     for(int i = 0; i < childWidgets().size(); ++i)
@@ -104,6 +148,26 @@ void HomeMenuWidget::mouseActivityInItem()
             {
                 d->selectedIndex = i;
             }
+        }
+    }*/
+}
+
+void HomeMenuWidget::itemSelectionChanged()
+{
+    if(auto *clickedItem = dynamic_cast<HomeItemWidget *>(sender()))
+    {
+        int const newSelection = childWidgets().indexOf(clickedItem);
+        if(d->selectedIndex != newSelection)
+        {
+            if(d->selectedIndex >= 0)
+            {
+                // Deselect the previous selection.
+                if(auto *item = childWidgets().at(d->selectedIndex)->maybeAs<HomeItemWidget>())
+                {
+                    item->setSelected(false);
+                }
+            }
+            d->selectedIndex = d->previousSelectedIndex = newSelection;
         }
     }
 }

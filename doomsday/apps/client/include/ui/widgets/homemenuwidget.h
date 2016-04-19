@@ -34,6 +34,7 @@ public:
     HomeMenuWidget(de::String const &name = "");
 
     void unselectAll();
+    void restorePreviousSelection();
 
     /**
      * Returns the selected widget's index number in the list of menu children.
@@ -46,10 +47,11 @@ public:
      *
      * @return The highlighted widget, if one was highlighted. Otherwise, returns nullptr.
      */
-    void setSelectedIndex(int index, bool focus = false);
+    void setSelectedIndex(int index);
 
 protected slots:
     void mouseActivityInItem();
+    void itemSelectionChanged();
 
 private:
     DENG2_PRIVATE(d)

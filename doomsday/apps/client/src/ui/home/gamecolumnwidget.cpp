@@ -220,8 +220,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
                 // Highlight the newly added item.
                 auto const *newItem = findProfileItem(prof.as<GameProfile>());
                 DENG2_ASSERT(newItem);
-                menu->setSelectedIndex(menu->items().find(*newItem),
-                                       true /*set focus*/);
+                menu->setSelectedIndex(menu->items().find(*newItem));
             }
         });
     }
@@ -579,8 +578,13 @@ void GameColumnWidget::setHighlighted(bool highlighted)
 {
     ColumnWidget::setHighlighted(highlighted);
 
-    if(!highlighted)
+    if(highlighted)
     {
+        d->menu->restorePreviousSelection();
+    }
+    else
+    {
+        root().setFocus(nullptr);
         d->menu->unselectAll();
     }
     d->showActions(highlighted);

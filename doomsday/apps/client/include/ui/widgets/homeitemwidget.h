@@ -19,21 +19,25 @@
 #ifndef DENG_CLIENT_UI_HOME_HOMEITEMWIDGET_H
 #define DENG_CLIENT_UI_HOME_HOMEITEMWIDGET_H
 
+#include <de/Asset>
 #include <de/ButtonWidget>
 
 class Game;
 namespace res { class LumpCatalog; }
+class HomeMenuWidget;
 
 /**
  * Label with action buttons and an icon. The item can be in either selected
  * or non-selected state.
  */
-class HomeItemWidget : public de::GuiWidget
+class HomeItemWidget : public de::GuiWidget, public de::IAssetGroup
 {
     Q_OBJECT
 
 public:
     HomeItemWidget(de::String const &name = "");
+
+    de::AssetGroup &assets() override;
 
     de::LabelWidget &icon();
     de::LabelWidget &label();
@@ -49,6 +53,12 @@ public:
     void useColorTheme(ColorTheme unselected, ColorTheme selected);
 
     void acquireFocus();
+
+    HomeMenuWidget *parentMenu();
+
+    // Events.
+    void focusGained() override;
+    void focusLost() override;
 
 public:
     enum LogoFlag
@@ -79,6 +89,8 @@ signals:
     void mouseActivity();
     void doubleClicked();
     void openContextMenu();
+    void selected();
+    //void deselected();
 
 private:
     DENG2_PRIVATE(d)

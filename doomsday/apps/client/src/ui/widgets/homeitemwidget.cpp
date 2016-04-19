@@ -17,6 +17,7 @@
  */
 
 #include "ui/widgets/homeitemwidget.h"
+#include "ui/widgets/homemenuwidget.h"
 #include "resource/idtech1image.h"
 
 #include <doomsday/LumpCatalog>
@@ -87,6 +88,7 @@ DENG_GUI_PIMPL(HomeItemWidget)
         }
     };
 
+    AssetGroup assets;
     LabelWidget *background;
     LabelWidget *icon;
     LabelWidget *label;
@@ -107,6 +109,11 @@ DENG_GUI_PIMPL(HomeItemWidget)
         self.add(background = new LabelWidget);
         self.add(icon       = new LabelWidget);
         self.add(label      = new LabelWidget);
+
+        // Observe state of the labels.
+        assets += *background;
+        assets += *icon;
+        assets += *label;
 
         icon->setBehavior(ContentClipping);
         icon->setImageFit(ui::CoverArea | ui::OriginalAspectRatio);
@@ -209,6 +216,11 @@ HomeItemWidget::HomeItemWidget(String const &name)
     rule().setInput(Rule::Height, d->label->rule().height());
 }
 
+AssetGroup &HomeItemWidget::assets()
+{
+    return d->assets;
+}
+
 LabelWidget &HomeItemWidget::icon()
 {
     return *d->icon;
@@ -285,7 +297,24 @@ void HomeItemWidget::useColorTheme(ColorTheme unselected, ColorTheme selected)
 
 void HomeItemWidget::acquireFocus()
 {
-    root().setFocus(this); // d->background);
+    root().setFocus(this);
+}
+
+HomeMenuWidget *HomeItemWidget::parentMenu()
+{
+    return parentWidget()->maybeAs<HomeMenuWidget>();
+}
+
+void HomeItemWidget::focusGained()
+{
+    setSelected(true);
+    emit selected();
+}
+
+void HomeItemWidget::focusLost()
+{
+    //setSelected(false);
+    //emit deselected();
 }
 
 Image HomeItemWidget::makeGameLogo(Game const &game, res::LumpCatalog const &catalog,
