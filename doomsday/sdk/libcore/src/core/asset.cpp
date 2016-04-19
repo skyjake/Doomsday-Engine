@@ -181,4 +181,12 @@ void AssetGroup::assetStateChanged(Asset &)
     d->update(*this);
 }
 
+IAssetGroup::~IAssetGroup()
+{}
+
+IAssetGroup::operator Asset &()
+{
+    return assets();
+}
+
 } // namespace de
