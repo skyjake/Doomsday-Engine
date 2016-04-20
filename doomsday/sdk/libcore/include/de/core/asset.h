@@ -144,12 +144,15 @@ private:
 /**
  * Interface for objects that have an asset group.
  */
-class IAssetGroup
+class DENG2_PUBLIC IAssetGroup
 {
 public:
     virtual ~IAssetGroup();
     virtual AssetGroup &assets() = 0;
 
+    /**
+     * Implicit conversion to an Asset reference, for convenience.
+     */
     operator Asset &();
 };
 
