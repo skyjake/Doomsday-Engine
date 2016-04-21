@@ -58,7 +58,7 @@ DENG2_PIMPL(MenuWidget)
             _widget.reset(w);
 
             // Popups need a parent.
-            d->self.add(_widget);
+            //d->self.add(_widget);
 
             _dir = openingDirection;
         }
@@ -78,7 +78,14 @@ DENG2_PIMPL(MenuWidget)
         void trigger()
         {
             DENG2_ASSERT(bool(_widget));
+            DENG2_ASSERT(d->self.hasRoot());
+
             if(_widget->isOpeningOrClosing()) return;
+
+            if(!_widget->parentWidget())
+            {
+                d->self.root().add(_widget);
+            }
 
             Action::trigger();
 
@@ -113,12 +120,20 @@ DENG2_PIMPL(MenuWidget)
         SubmenuAction(MenuWidget::Instance *inst, ui::SubmenuItem const &parentItem)
             : SubAction(inst, parentItem)
         {
-            PopupMenuWidget *sub = new PopupMenuWidget;
-            setWidget(sub, parentItem.openingDirection());
+            _sub = new PopupMenuWidget;
+            setWidget(_sub, parentItem.openingDirection());
 
             // Use the items from the submenu.
-            sub->menu().setItems(parentItem.items());
+            _sub->menu().setItems(parentItem.items());
         }
+
+        ~SubmenuAction()
+        {
+            GuiWidget::destroy(_sub);
+        }
+
+    private:
+        PopupMenuWidget *_sub; // owned
     };
 
     /**
@@ -136,7 +151,7 @@ DENG2_PIMPL(MenuWidget)
         {
             if(isTriggered()) return; // Already open, cannot retrigger.
 
-            // The widget is created only at this point.
+            // The widget is created only at this point, when the action is triggered.
             setWidget(_item.makeWidget(), _item.openingDirection());
             _widget->setDeleteAfterDismissed(true);
 
@@ -228,7 +243,7 @@ DENG2_PIMPL(MenuWidget)
 
         if(IAssetGroup *asset = child.maybeAs<IAssetGroup>())
         {
-            assets += *asset; // part of the asset group
+            assets += *asset; // part of the asset group (observes for deletion)
         }
     }
 
@@ -246,8 +261,11 @@ DENG2_PIMPL(MenuWidget)
 
     static void setFoldIndicatorForDirection(LabelWidget &label, ui::Direction dir)
     {
-        label.setImage(new StyleProceduralImage("fold", label, dir == ui::Right? -90 : 90));
-        label.setTextAlignment(dir == ui::Right? ui::AlignLeft : ui::AlignRight);
+        if(dir == ui::Right || dir == ui::Left)
+        {
+            label.setImage(new StyleProceduralImage("fold", label, dir == ui::Right? -90 : 90));
+            label.setTextAlignment(dir == ui::Right? ui::AlignLeft : ui::AlignRight);
+        }
     }
 
     /*
