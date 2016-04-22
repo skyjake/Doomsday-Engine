@@ -186,21 +186,23 @@ HomeItemWidget::HomeItemWidget(String const &name)
     : GuiWidget(name)
     , d(new Instance(this))
 {
-    setBehavior(Focusable);
+    setBehavior(Focusable | ContentClipping);
     addEventHandler(new Instance::ClickHandler(*this));
 
     Rule const &iconSize = d->label->margins().height() +
                            style().fonts().font("default").height() +
                            style().fonts().font("default").lineSpacing();
 
+    AutoRef<Rule> smoothHeight(new AnimationRule(d->label->rule().height(), 0.3));
+
     d->background->rule()
             .setInput(Rule::Top,    rule().top())
+            .setInput(Rule::Height, smoothHeight)
             .setInput(Rule::Left,   d->icon->rule().right())
-            .setInput(Rule::Right,  rule().right())
-            .setInput(Rule::Bottom, d->label->rule().bottom());
+            .setInput(Rule::Right,  rule().right());
 
     d->icon->rule()
-            .setSize(iconSize,    d->label->rule().height())
+            .setSize(iconSize,    smoothHeight)
             .setInput(Rule::Left, rule().left())
             .setInput(Rule::Top,  rule().top());
     d->icon->set(Background(Background::BorderGlow,
@@ -210,10 +212,10 @@ HomeItemWidget::HomeItemWidget(String const &name)
             .setInput(Rule::Top,   rule().top())
             .setInput(Rule::Left,  d->icon->rule().right())
             .setInput(Rule::Right, rule().right());
-    d->label->margins().setRight(*d->labelRightMargin +
-                                 rule("gap"));
+    d->label->margins().setRight(*d->labelRightMargin + rule("gap"));
 
-    rule().setInput(Rule::Height, d->label->rule().height());
+    // Use an animated height rule for smoother list layout behavior.
+    rule().setInput(Rule::Height, smoothHeight);
 }
 
 AssetGroup &HomeItemWidget::assets()

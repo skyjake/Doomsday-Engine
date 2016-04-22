@@ -38,11 +38,11 @@ PanelButtonWidget::PanelButtonWidget(String const &name)
     setBehavior(Focusable);
 
     d->drawer->rule()
-            .setInput(Rule::Top,  label().rule().bottom())
+            .setInput(Rule::Top,  icon().rule().bottom())
             .setInput(Rule::Left, rule().left());
 
-    rule().setInput(Rule::Height, label().rule().height() +
-                                  d->drawer->rule().height());
+    rule().setInput(Rule::Height, new AnimationRule(label().rule().height() +
+                                                    d->drawer->rule().height(), 0.3));
 }
 
 PanelWidget &PanelButtonWidget::panel()
