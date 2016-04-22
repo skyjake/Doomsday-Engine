@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/RuleRectangle"
@@ -41,8 +41,8 @@ DENG2_PIMPL(RuleRectangle)
         MAX_OUTPUT_RULES
     };
 
-    ScalarRule *normalizedAnchorX;
-    ScalarRule *normalizedAnchorY;
+    AnimationRule *normalizedAnchorX;
+    AnimationRule *normalizedAnchorY;
     Rule const *inputRules[Rule::MAX_SEMANTICS];
 
     // The output rules.
@@ -52,8 +52,8 @@ DENG2_PIMPL(RuleRectangle)
 
     Instance(Public *i) : Base(i)
     {
-        normalizedAnchorX = new ScalarRule(0);
-        normalizedAnchorY = new ScalarRule(0);
+        normalizedAnchorX = new AnimationRule(0);
+        normalizedAnchorY = new AnimationRule(0);
 
         zap(inputRules);
 
@@ -258,7 +258,7 @@ Rule const &RuleRectangle::midY() const
     return *d->midY;
 }
 
-RuleRectangle &RuleRectangle::setInput(Rule::Semantic inputRule, Rule const &rule)
+RuleRectangle &RuleRectangle::setInput(Rule::Semantic inputRule, RefArg<Rule> rule)
 {
     d->setInputRule(inputRule, rule);
     return *this;

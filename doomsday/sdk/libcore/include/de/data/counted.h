@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_COUNTED_H
@@ -222,6 +222,7 @@ public:
     RefArg(CountedType const &ref) : _ref(const_cast<CountedType *>(&ref)) {}
     operator CountedType const * () const { return _ref; }
     operator CountedType * () { return _ref; }
+    operator CountedType const & () const { return *_ref; }
     CountedType *get() { return _ref; }
     CountedType const &operator *  () const { return *_ref; }
     CountedType &      operator *  ()       { return *_ref; }
@@ -246,13 +247,14 @@ public:
     ~AutoRef() { releaseRef(_ref); }
     void reset(RefArg<CountedType> ref) { changeRef(_ref, ref); }
     CountedType *get() const { return _ref; }
-    CountedType &operator * () const { return *_ref; }
+    CountedType &operator *  () const { return *_ref; }
     CountedType *operator -> () const { return _ref; }
     operator CountedType const * () const { return _ref; }
-    operator CountedType * () { return _ref; }
+    operator CountedType *       ()       { return _ref; }
     operator CountedType const & () const { return *_ref; }
-    operator CountedType & () { return *_ref; }
-    explicit operator bool () const { return _ref != nullptr; }
+    operator CountedType &       ()       { return *_ref; }
+    operator RefArg<CountedType> () const { return RefArg<CountedType>(*_ref); }
+    explicit operator bool       () const { return _ref != nullptr; }
 private:
     CountedType *_ref;
 };

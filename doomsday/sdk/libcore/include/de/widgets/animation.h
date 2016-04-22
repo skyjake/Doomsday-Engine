@@ -115,6 +115,11 @@ public:
     TimeDelta remainingTime() const;
 
     /**
+     * Number of seconds for the entire transition.
+     */
+    TimeDelta transitionTime() const;
+
+    /**
      * Move the current value and the target value by @a valueDelta.
      * Does not influence an ongoing transition.
      */

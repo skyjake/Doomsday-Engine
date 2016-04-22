@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project
  *
- * Copyright © 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2011-2016 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -14,11 +14,11 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG2_SCALARRULE_H
-#define LIBDENG2_SCALARRULE_H
+#ifndef LIBDENG2_ANIMATIONRULE_H
+#define LIBDENG2_ANIMATIONRULE_H
 
 #include "rule.h"
 
@@ -28,13 +28,23 @@
 namespace de {
 
 /**
- * Rule with a scalar value. The value is animated over time.
+ * Rule with an animated value. The value is animated over time using de::Animation.
  * @ingroup widgets
  */
-class DENG2_PUBLIC ScalarRule : public Rule, DENG2_OBSERVES(Clock, TimeChange)
+class DENG2_PUBLIC AnimationRule : public Rule, DENG2_OBSERVES(Clock, TimeChange)
 {
 public:
-    explicit ScalarRule(float initialValue);
+    explicit AnimationRule(float initialValue);
+
+    /**
+     * Constructs an AnimationRule whose value will animate to the specified target
+     * rule. If the animation finishes and the target changes, a new animation begins
+     * using the same transition time.
+     *
+     * @param target      Target value.
+     * @param transition  Transition time to reach the current or future target values.
+     */
+    explicit AnimationRule(Rule const &target, TimeDelta transition);
 
     void set(float target, TimeDelta transition = 0, TimeDelta delay = 0);
 
@@ -48,6 +58,20 @@ public:
     void setStyle(Animation::Style style);
 
     void setStyle(Animation::Style style, float bounceSpring);
+
+    enum Behavior { Singleshot, RestartWhenTargetChanges };
+
+    /**
+     * Sets the behavior for updating the animation target. The default is Singleshot,
+     * which means that if the target rule changes, the animation of the AnimationRule
+     * will adjust its target accordingly without altering the ongoing or finished
+     * animation.
+     *
+     * @param behavior  Target update behavior.
+     */
+    void setBehavior(Behavior behavior);
+
+    Behavior behavior() const;
 
     /**
      * Read-only access to the scalar animation.
@@ -73,7 +97,7 @@ public:
     String description() const;
 
 protected:
-    ~ScalarRule();
+    ~AnimationRule();
     void update();
 
     void timeChanged(Clock const &);
@@ -81,8 +105,9 @@ protected:
 private:
     Animation _animation;
     Rule const *_targetRule;
+    Behavior _behavior;
 };
 
 } // namespace de
 
-#endif // LIBDENG2_SCALARRULE_H
+#endif // LIBDENG2_ANIMAITONRULE_H

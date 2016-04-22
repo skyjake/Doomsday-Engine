@@ -14,26 +14,38 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ScalarRule"
+#include "de/AnimationRule"
 #include "de/Clock"
 #include <QDebug>
 
 namespace de {
 
-ScalarRule::ScalarRule(float initialValue)
-    : Rule(initialValue), _animation(initialValue), _targetRule(0)
+AnimationRule::AnimationRule(float initialValue)
+    : Rule(initialValue)
+    , _animation(initialValue)
+    , _targetRule(0)
+    , _behavior(Singleshot)
 {}
 
-ScalarRule::~ScalarRule()
+AnimationRule::AnimationRule(Rule const &target, TimeDelta transition)
+    : Rule(target.value())
+    , _animation(target.value())
+    , _targetRule(0)
+    , _behavior(RestartWhenTargetChanges)
+{
+    set(target, transition);
+}
+
+AnimationRule::~AnimationRule()
 {
     independentOf(_targetRule);
     _animation.clock().audienceForPriorityTimeChange -= this;
 }
 
-void ScalarRule::set(float target, TimeDelta transition, TimeDelta delay)
+void AnimationRule::set(float target, TimeDelta transition, TimeDelta delay)
 {
     independentOf(_targetRule);
     _targetRule = 0;
@@ -44,7 +56,7 @@ void ScalarRule::set(float target, TimeDelta transition, TimeDelta delay)
     invalidate();
 }
 
-void ScalarRule::set(Rule const &target, TimeDelta transition, TimeDelta delay)
+void AnimationRule::set(Rule const &target, TimeDelta transition, TimeDelta delay)
 {
     set(target.value(), transition, delay);
 
@@ -53,38 +65,48 @@ void ScalarRule::set(Rule const &target, TimeDelta transition, TimeDelta delay)
     dependsOn(_targetRule);
 }
 
-void ScalarRule::setStyle(Animation::Style style)
+void AnimationRule::setStyle(Animation::Style style)
 {
     _animation.setStyle(style);
 }
 
-void ScalarRule::setStyle(Animation::Style style, float bounceSpring)
+void AnimationRule::setStyle(Animation::Style style, float bounceSpring)
 {
     _animation.setStyle(style, bounceSpring);
 }
 
-void ScalarRule::shift(float delta)
+void AnimationRule::setBehavior(Behavior behavior)
+{
+    _behavior = behavior;
+}
+
+AnimationRule::Behavior AnimationRule::behavior() const
+{
+    return _behavior;
+}
+
+void AnimationRule::shift(float delta)
 {
     _animation.shift(delta);
     invalidate();
 }
 
-void ScalarRule::finish()
+void AnimationRule::finish()
 {
     _animation.finish();
 }
 
-void ScalarRule::pause()
+void AnimationRule::pause()
 {
     _animation.pause();
 }
 
-void ScalarRule::resume()
+void AnimationRule::resume()
 {
     _animation.resume();
 }
 
-String ScalarRule::description() const
+String AnimationRule::description() const
 {
     String desc = "Scalar(" + _animation.asText();
     if(_targetRule)
@@ -94,18 +116,32 @@ String ScalarRule::description() const
     return desc + ")";
 }
 
-void ScalarRule::update()
+void AnimationRule::update()
 {
     // When using a rule for the target, keep it updated.
     if(_targetRule)
     {
-        _animation.adjustTarget(_targetRule->value());
+        if(_behavior == Singleshot || !_animation.done() /*||
+           fequal(_animation.target(), 0) || // Don't animate to/from zero.
+           fequal(_targetRule->value(), 0)*/)
+        {
+            _animation.adjustTarget(_targetRule->value());
+        }
+        else
+        {
+            // Start a new animation with the previously used transition time.
+            if(!fequal(_animation.target(), _targetRule->value()))
+            {
+                _animation.setValue(_targetRule->value(), _animation.transitionTime());
+                _animation.clock().audienceForPriorityTimeChange += this;
+            }
+        }
     }
 
     setValue(_animation);
 }
 
-void ScalarRule::timeChanged(Clock const &clock)
+void AnimationRule::timeChanged(Clock const &clock)
 {
     invalidate();
 

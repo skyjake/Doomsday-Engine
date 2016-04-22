@@ -21,5 +21,5 @@
 #include "../ConstantRule"
 #include "../IndirectRule"
 #include "../OperatorRule"
-#include "../ScalarRule"
+#include "../AnimationRule"
 #include "../RuleRectangle"

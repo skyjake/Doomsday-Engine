@@ -28,7 +28,7 @@ namespace de {
  * The value of a constant rule never changes unless manually changed.
  * @ingroup widgets
  *
- * @see ScalarRule
+ * @see AnimationRule
  */
 class DENG2_PUBLIC ConstantRule : public Rule
 {
@@ -49,7 +49,9 @@ public:
          * value. Caller is responsible for making sure a reference is taken
          * to the returned rule.
          */
-        operator Rule const & () const;
+        operator Rule const &() const;
+
+        operator RefArg<Rule>() const;
 
     private:
         NumberType _number;
@@ -75,8 +77,15 @@ private:
 };
 
 template <typename Type>
-ConstantRule::Builder<Type>::operator Rule const & () const {
+ConstantRule::Builder<Type>::operator Rule const &() const
+{
     return *refless(new ConstantRule(_number));
+}
+
+template <typename Type>
+ConstantRule::Builder<Type>::operator RefArg<Rule>() const
+{
+    return RefArg<Rule>(new ConstantRule(_number));
 }
 
 typedef ConstantRule::Builder<int>   Const;
