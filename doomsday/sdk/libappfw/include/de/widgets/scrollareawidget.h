@@ -78,8 +78,8 @@ public:
 
     RuleRectangle const &contentRule() const;
 
-    ScalarRule &scrollPositionX() const;
-    ScalarRule &scrollPositionY() const;
+    AnimationRule &scrollPositionX() const;
+    AnimationRule &scrollPositionY() const;
     Rule const &maximumScrollX() const;
     Rule const &maximumScrollY() const;
 

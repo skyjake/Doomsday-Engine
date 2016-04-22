@@ -37,8 +37,8 @@ DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
      */
     RuleRectangle contentRule;
 
-    ScalarRule *x;
-    ScalarRule *y;
+    AnimationRule *x;
+    AnimationRule *y;
     Rule *maxX;
     Rule *maxY;
 
@@ -75,8 +75,8 @@ DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
 
         updateStyle();
 
-        x = new ScalarRule(0);
-        y = new ScalarRule(0);
+        x = new AnimationRule(0);
+        y = new AnimationRule(0);
 
         maxX = new OperatorRule(OperatorRule::Maximum, Const(0),
                                 contentRule.width() - self.rule().width() + self.margins().width());
@@ -264,12 +264,12 @@ RuleRectangle const &ScrollAreaWidget::contentRule() const
     return d->contentRule;
 }
 
-ScalarRule &ScrollAreaWidget::scrollPositionX() const
+AnimationRule &ScrollAreaWidget::scrollPositionX() const
 {
     return *d->x;
 }
 
-ScalarRule &ScrollAreaWidget::scrollPositionY() const
+AnimationRule &ScrollAreaWidget::scrollPositionY() const
 {
     return *d->y;
 }

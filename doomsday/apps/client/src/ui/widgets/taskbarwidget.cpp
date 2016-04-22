@@ -54,7 +54,7 @@
 #include <de/GLBuffer>
 #include <de/KeyEvent>
 #include <de/PopupMenuWidget>
-#include <de/ScalarRule>
+#include <de/AnimationRule>
 #include <de/SequentialLayout>
 #include <de/SignalAction>
 #include <de/ui/SubwidgetItem>
@@ -112,7 +112,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
     PopupMenuWidget *configMenu;
     MultiplayerMenuWidget *multiMenu;
 
-    ScalarRule *vertShift;
+    AnimationRule *vertShift;
     bool mouseWasTrappedWhenOpening;
     int minSpace;
     int maxSpace;
@@ -140,7 +140,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
         uColor = Vector4f(1, 1, 1, 1);
         self.set(Background(style().colors().colorf("background")));
 
-        vertShift = new ScalarRule(0);
+        vertShift = new AnimationRule(0);
 
         DoomsdayApp::app().audienceForGameChange() += this;
         ClientApp::serverLink().audienceForJoin += this;

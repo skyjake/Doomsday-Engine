@@ -55,7 +55,7 @@ public Font::RichFormat::IStyle
 
     ConstantRule *width;
     ConstantRule *height;
-    ScalarRule *appearSize;
+    AnimationRule *appearSize;
     LabelWidget::AppearanceAnimation appearType;
     TimeDelta appearSpan;
 
@@ -93,7 +93,7 @@ public Font::RichFormat::IStyle
         , imageColor  (1, 1, 1, 1)
         , textGLColor (1, 1, 1, 1)
         , maxTextWidth(0)
-        , appearSize  (new ScalarRule(0))
+        , appearSize  (new AnimationRule(0))
         , appearType  (AppearInstantly)
         , appearSpan  (0.0)
         , gapId       ("label.gap")

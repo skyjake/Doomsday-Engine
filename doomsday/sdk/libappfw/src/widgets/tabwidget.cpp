@@ -20,7 +20,7 @@
 #include "de/ui/ListData"
 #include "de/MenuWidget"
 
-#include <de/ScalarRule>
+#include <de/AnimationRule>
 
 Q_DECLARE_METATYPE(de::ui::Item const *)
 
@@ -37,8 +37,8 @@ DENG_GUI_PIMPL(TabWidget)
     bool needUpdate = false;
     bool invertedStyle = false;
     LabelWidget *selected = nullptr;
-    ScalarRule *selLeft = nullptr;
-    ScalarRule *selWidth = nullptr;
+    AnimationRule *selLeft = nullptr;
+    AnimationRule *selWidth = nullptr;
 
     Instance(Public *i) : Base(i)
     {
@@ -132,8 +132,8 @@ DENG_GUI_PIMPL(TabWidget)
                 {
                     // Initialize the animated rules for positioning the
                     // selection highlight.
-                    selLeft  = new ScalarRule(0);
-                    selWidth = new ScalarRule(0);
+                    selLeft  = new AnimationRule(0);
+                    selWidth = new AnimationRule(0);
                     selected->rule()
                         .setInput(Rule::Width,  *selWidth)
                         .setInput(Rule::Left,   *selLeft);

@@ -34,7 +34,7 @@
 #include <de/PersistentState>
 #include <de/PopupButtonWidget>
 #include <de/PopupMenuWidget>
-#include <de/ScalarRule>
+#include <de/AnimationRule>
 #include <de/ScriptCommandWidget>
 #include <de/SignalAction>
 #include <de/ToggleWidget>
@@ -60,9 +60,9 @@ DENG_GUI_PIMPL(ConsoleWidget)
     ConsoleCommandWidget *cmdLine = nullptr;
     ScriptCommandWidget *scriptCmd = nullptr;
     LogWidget *log = nullptr;
-    ScalarRule *horizShift;
-    ScalarRule *height;
-    ScalarRule *width;
+    AnimationRule *horizShift;
+    AnimationRule *height;
+    AnimationRule *width;
     StyledLogSinkFormatter formatter;
     bool opened = true;
     bool scriptMode = false;
@@ -79,9 +79,9 @@ DENG_GUI_PIMPL(ConsoleWidget)
 
     Instance(Public *i) : Base(i)
     {
-        horizShift = new ScalarRule(0);
-        width      = new ScalarRule(rule("console.width").valuei());
-        height     = new ScalarRule(0);
+        horizShift = new AnimationRule(0);
+        width      = new AnimationRule(rule("console.width").valuei());
+        height     = new AnimationRule(0);
 
         grabWidth  = rule("gap").valuei();
 

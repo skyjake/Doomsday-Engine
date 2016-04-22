@@ -22,7 +22,7 @@
 
 #include <de/Drawable>
 #include <de/Matrix>
-#include <de/ScalarRule>
+#include <de/AnimationRule>
 
 #include <QMap>
 #include <QTimer>
@@ -34,7 +34,7 @@ static TimeDelta const ANIM_SPAN = .5;
 DENG_GUI_PIMPL(NotificationAreaWidget)
 , DENG2_OBSERVES(Widget, Deletion)
 {
-    ScalarRule *shift;
+    AnimationRule *shift;
     QMap<GuiWidget *, RelayWidget *> shown;
 
     QTimer dismissTimer;
@@ -46,7 +46,7 @@ DENG_GUI_PIMPL(NotificationAreaWidget)
         dismissTimer.setInterval(ANIM_SPAN.asMilliSeconds());
         QObject::connect(&dismissTimer, SIGNAL(timeout()), thisPublic, SLOT(dismiss()));
 
-        shift = new ScalarRule(0);
+        shift = new AnimationRule(0);
     }
 
     ~Instance()

@@ -25,7 +25,7 @@
 
 #include <de/KeyEvent>
 #include <de/MouseEvent>
-#include <de/ScalarRule>
+#include <de/AnimationRule>
 #include <de/Drawable>
 
 namespace de {
@@ -40,7 +40,7 @@ DENG_GUI_PIMPL(LineEditWidget)
 {
     typedef GLBufferT<Vertex2TexRgba> VertexBuf;
 
-    ScalarRule *height;
+    AnimationRule *height;
     FontLineWrapping &wraps;
     LabelWidget *hint;
     bool signalOnEnter;
@@ -70,7 +70,7 @@ DENG_GUI_PIMPL(LineEditWidget)
         , uColor      ("uColor",     GLUniform::Vec4)
         , uCursorColor("uColor",     GLUniform::Vec4)
     {
-        height = new ScalarRule(0);
+        height = new AnimationRule(0);
 
         self.setFont("editor.plaintext");
         updateStyle();

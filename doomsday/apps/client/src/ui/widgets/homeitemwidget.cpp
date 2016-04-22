@@ -93,7 +93,7 @@ DENG_GUI_PIMPL(HomeItemWidget)
     LabelWidget *icon;
     LabelWidget *label;
     QList<ButtonWidget *> buttons;
-    ScalarRule *labelRightMargin;
+    AnimationRule *labelRightMargin;
     Rule const *buttonsWidth = nullptr;
     bool selected = false;
     DotPath bgColor           { "transparent" };
@@ -104,7 +104,7 @@ DENG_GUI_PIMPL(HomeItemWidget)
 
     Instance(Public *i) : Base(i)
     {
-        labelRightMargin    = new ScalarRule(0);
+        labelRightMargin    = new AnimationRule(0);
 
         self.add(background = new LabelWidget);
         self.add(icon       = new LabelWidget);

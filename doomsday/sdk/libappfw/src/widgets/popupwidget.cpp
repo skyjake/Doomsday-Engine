@@ -24,7 +24,7 @@
 
 #include <de/Drawable>
 #include <de/MouseEvent>
-#include <de/ScalarRule>
+#include <de/AnimationRule>
 #include <de/Garbage>
 #include <de/math.h>
 #include <QTimer>

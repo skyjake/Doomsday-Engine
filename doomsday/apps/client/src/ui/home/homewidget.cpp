@@ -68,7 +68,7 @@ DENG_GUI_PIMPL(HomeWidget)
     TabWidget *tabs;
     SafeWidgetPtr<FadeToBlackWidget> blanker;
     int currentOffsetTab = 0;
-    ScalarRule *scrollOffset;
+    AnimationRule *scrollOffset;
     ButtonWidget *moveLeft;
     ButtonWidget *moveRight;
     ButtonWidget *taskBarHintButton;
@@ -83,7 +83,7 @@ DENG_GUI_PIMPL(HomeWidget)
         DoomsdayApp::app().audienceForGameUnload() += this;
 
         columnWidth  = new IndirectRule;
-        scrollOffset = new ScalarRule(0);
+        scrollOffset = new AnimationRule(0);
         scrollOffset->setStyle(Animation::EaseOut);
 
         tabs = new TabWidget;

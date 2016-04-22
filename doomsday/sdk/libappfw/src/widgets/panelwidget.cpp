@@ -21,7 +21,7 @@
 
 #include <de/Drawable>
 #include <de/MouseEvent>
-#include <de/ScalarRule>
+#include <de/AnimationRule>
 #include <de/math.h>
 
 #include <QTimer>
@@ -40,7 +40,7 @@ DENG_GUI_PIMPL(PanelWidget)
     ui::Direction dir = ui::Down;
     ui::SizePolicy secondaryPolicy = ui::Expand;
     GuiWidget *content = nullptr;
-    ScalarRule *openingRule;
+    AnimationRule *openingRule;
     QTimer dismissTimer;
 
     QScopedPointer<AssetGroup> pendingShow;
@@ -51,7 +51,7 @@ DENG_GUI_PIMPL(PanelWidget)
 
     Instance(Public *i) : Base(i)
     {
-        openingRule = new ScalarRule(0);
+        openingRule = new AnimationRule(0);
 
         dismissTimer.setSingleShot(true);
         QObject::connect(&dismissTimer, SIGNAL(timeout()), thisPublic, SLOT(dismiss()));
