@@ -530,6 +530,11 @@ Variable &Record::set(String const &name, duint32 value)
     return set(name, Value::Number(value));
 }
 
+Variable &Record::set(String const &name, dsize value)
+{
+    return set(name, Value::Number(value));
+}
+
 Variable &Record::set(String const &name, ArrayValue *value)
 {
     if(hasMember(name))

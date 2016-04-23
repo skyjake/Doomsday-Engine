@@ -87,7 +87,7 @@ void Loop::resume()
     d->timer->start();
 }
 
-void Loop::timer(TimeDelta const &delay, void (*func)(void))
+void Loop::timer(TimeDelta const &delay, std::function<void ()> func)
 {
     // The timer will delete itself after it's triggered.
     internal::CallbackTimer *timer = new internal::CallbackTimer(func, qApp);

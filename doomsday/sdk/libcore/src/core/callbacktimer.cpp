@@ -15,15 +15,15 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "callbacktimer.h"
 
 using namespace de;
 
-internal::CallbackTimer::CallbackTimer(void (*func)(void), QObject *parent) :
-    QTimer(parent), _func(func)
+internal::CallbackTimer::CallbackTimer(std::function<void ()> func, QObject *parent)
+    : QTimer(parent), _func(func)
 {
     setSingleShot(true);
     connect(this, SIGNAL(timeout()), this, SLOT(callbackAndDeleteLater()));

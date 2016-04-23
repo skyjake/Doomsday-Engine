@@ -80,7 +80,7 @@ public:
      * @param delay  Time to wait before calling.
      * @param func   Callback to call.
      */
-    static void timer(TimeDelta const &delay, void (*func)(void));
+    static void timer(TimeDelta const &delay, std::function<void ()> func);
 
     static Loop &get();
 

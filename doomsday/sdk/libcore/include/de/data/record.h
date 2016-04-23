@@ -353,6 +353,9 @@ public:
     /// @copydoc set()
     Variable &set(String const &name, duint32 value);
 
+    /// @copydoc set()
+    Variable &set(String const &name, dsize value);
+
     /**
      * Sets the value of a variable, creating the variable if it doesn't exist.
      *
