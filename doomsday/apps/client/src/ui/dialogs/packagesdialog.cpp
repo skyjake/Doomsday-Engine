@@ -52,6 +52,7 @@ DENG_GUI_PIMPL(PackagesDialog)
     HomeMenuWidget *menu;
     PackagesWidget *browser;
     LabelWidget *gameTitle;
+    LabelWidget *gameDataFiles;
     Game const *game = nullptr;
     res::LumpCatalog catalog;
 
@@ -281,29 +282,35 @@ DENG_GUI_PIMPL(PackagesDialog)
 
     Instance(Public *i) : Base(i)
     {
+        self.leftArea().add(gameTitle = new LabelWidget);
+        gameTitle->add(gameDataFiles = new LabelWidget);
+
         // Indicator that is only visible when no packages have been added to the profile.
         nothingSelected = new LabelWidget;
         nothingSelected->setText(_E(b) + tr("Nothing Selected"));
         nothingSelected->setFont("heading");
         nothingSelected->setOpacity(0.5f);
-        nothingSelected->rule().setRect(self.leftArea().rule());
+        nothingSelected->rule()
+                .setRect(self.leftArea().rule())
+                .setInput(Rule::Top, gameTitle->rule().bottom());
         self.leftArea().add(nothingSelected);
 
         // Currently selected packages.
-        self.leftArea().add(gameTitle = new LabelWidget);
-        gameTitle->setSizePolicy(ui::Fixed, ui::Expand);
-        gameTitle->setAlignment(ui::AlignLeft);
-        gameTitle->setTextAlignment(ui::AlignRight);
-        gameTitle->setTextLineAlignment(ui::AlignLeft);
-        gameTitle->setImageAlignment(ui::AlignTop);
-        gameTitle->setFont("small");
-        gameTitle->setTextColor("altaccent");
-        int const titleImageWidth = rule("dialog.packages.width").valuei();
-        gameTitle->setOverrideImageSize(Vector2f(titleImageWidth/3, titleImageWidth/4));
+        gameTitle->setSizePolicy(ui::Filled, ui::Expand);
+        gameTitle->setImageFit(ui::FitToWidth | ui::OriginalAspectRatio | ui::CoverArea);
+        gameTitle->margins().setZero();
+        gameDataFiles->setFont("small");
+        gameDataFiles->setSizePolicy(ui::Fixed, ui::Expand);
+        gameDataFiles->set(Background(style().colors().colorf("background")));
+        gameDataFiles->setTextLineAlignment(ui::AlignLeft);
+        gameDataFiles->setAlignment(ui::AlignLeft);
         gameTitle->rule()
                 .setInput(Rule::Left,  self.leftArea().contentRule().left())
                 .setInput(Rule::Top,   self.leftArea().contentRule().top())
                 .setInput(Rule::Width, rule("dialog.packages.width"));
+        gameDataFiles->rule()
+                .setRect(gameTitle->rule())
+                .clearInput(Rule::Top);
         self.leftArea().add(menu = new HomeMenuWidget);
         menu->layout().setRowPadding(Const(0));
         menu->rule()
@@ -366,8 +373,8 @@ DENG_GUI_PIMPL(PackagesDialog)
                     }
                 }
             }
-            gameTitle->setText(_E(l) + String::format("Data file%s: ", dataFiles.size() != 1? "s" : "") +
-                               _E(.) + String::join(dataFiles, _E(l) " and " _E(.)));
+            gameDataFiles->setText(_E(l) + String::format("Data file%s: ", dataFiles.size() != 1? "s" : "") +
+                                   _E(.) + String::join(dataFiles, _E(l) " and " _E(.)));
         }
     }
 
