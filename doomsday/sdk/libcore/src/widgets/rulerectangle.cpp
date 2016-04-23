@@ -41,20 +41,18 @@ DENG2_PIMPL(RuleRectangle)
         MAX_OUTPUT_RULES
     };
 
-    AnimationRule *normalizedAnchorX;
-    AnimationRule *normalizedAnchorY;
+    // The input rules.
     Rule const *inputRules[Rule::MAX_SEMANTICS];
+    AnimationRule *_normalizedAnchorX = nullptr;
+    AnimationRule *_normalizedAnchorY = nullptr;
 
     // The output rules.
     IndirectRule *outputRules[MAX_OUTPUT_RULES];
-    Rule *midX;
-    Rule *midY;
+    Rule *_midX = nullptr;
+    Rule *_midY = nullptr;
 
     Instance(Public *i) : Base(i)
     {
-        normalizedAnchorX = new AnimationRule(0);
-        normalizedAnchorY = new AnimationRule(0);
-
         zap(inputRules);
 
         // Create the output rules.
@@ -63,18 +61,15 @@ DENG2_PIMPL(RuleRectangle)
             outputRules[i] = new IndirectRule;
         }
 
-        midX = holdRef(*outputRules[OutLeft] + *outputRules[OutWidth]  / 2);
-        midY = holdRef(*outputRules[OutTop]  + *outputRules[OutHeight] / 2);
-
         debugName = QString("0x%1").arg(dintptr(thisPublic), 0, 16);
     }
 
     ~Instance()
     {
-        releaseRef(midX);
-        releaseRef(midY);
-        releaseRef(normalizedAnchorX);
-        releaseRef(normalizedAnchorY);
+        releaseRef(_midX);
+        releaseRef(_midY);
+        releaseRef(_normalizedAnchorX);
+        releaseRef(_normalizedAnchorY);
 
         for(int i = 0; i < int(Rule::MAX_SEMANTICS); ++i)
         {
@@ -95,16 +90,40 @@ DENG2_PIMPL(RuleRectangle)
         return inputRules[rule];
     }
 
+    AnimationRule *normalizedAnchorX()
+    {
+        if(!_normalizedAnchorX) _normalizedAnchorX = new AnimationRule(0);
+        return _normalizedAnchorX;
+    }
+
+    AnimationRule *normalizedAnchorY()
+    {
+        if(!_normalizedAnchorY) _normalizedAnchorY = new AnimationRule(0);
+        return _normalizedAnchorY;
+    }
+
+    Rule *midX()
+    {
+        if(!_midX) _midX = holdRef(*outputRules[OutLeft] + *outputRules[OutWidth] / 2);
+        return _midX;
+    }
+
+    Rule *midY()
+    {
+        if(!_midY) _midY = holdRef(*outputRules[OutTop] + *outputRules[OutHeight] / 2);
+        return _midY;
+    }
+
     inline Rule const &anchorPos(Rule::Semantic anchorInput)
     {
         if(anchorInput == Rule::AnchorX)
         {
-            return *normalizedAnchorX;
+            return *normalizedAnchorX();
         }
         else
         {
             DENG2_ASSERT(anchorInput == Rule::AnchorY);
-            return *normalizedAnchorY;
+            return *normalizedAnchorY();
         }
     }
 
@@ -140,14 +159,24 @@ DENG2_PIMPL(RuleRectangle)
     {
         if(isHorizontalInput(input))
         {
-            updateDimension(Rule::Left, Rule::Right, Rule::Width, Rule::AnchorX,
-                            OutLeft, OutRight, OutWidth);
+            updateHorizontalOutputs();
         }
         else
         {
-            updateDimension(Rule::Top, Rule::Bottom, Rule::Height, Rule::AnchorY,
-                            OutTop, OutBottom, OutHeight);
+            updateVerticalOutputs();
         }
+    }
+
+    void updateHorizontalOutputs()
+    {
+        updateDimension(Rule::Left, Rule::Right, Rule::Width, Rule::AnchorX,
+                        OutLeft, OutRight, OutWidth);
+    }
+
+    void updateVerticalOutputs()
+    {
+        updateDimension(Rule::Top, Rule::Bottom, Rule::Height, Rule::AnchorY,
+                        OutTop, OutBottom, OutHeight);
     }
 
     void updateDimension(Rule::Semantic minInput, Rule::Semantic maxInput,
@@ -160,8 +189,8 @@ DENG2_PIMPL(RuleRectangle)
         bool deltaDefined = false;
 
         // Forget the previous output rules.
-        outputRules[minOutput]->unsetSource();
-        outputRules[maxOutput]->unsetSource();
+        outputRules[minOutput]  ->unsetSource();
+        outputRules[maxOutput]  ->unsetSource();
         outputRules[deltaOutput]->unsetSource();
 
         if(inputRules[deltaInput])
@@ -185,10 +214,10 @@ DENG2_PIMPL(RuleRectangle)
             maxDefined = true;
         }
 
-        if(inputRules[anchorInput] && deltaDefined)
+        if(inputRules[anchorInput] && inputRules[deltaInput])
         {
             outputRules[minOutput]->setSource(*inputRules[anchorInput] -
-                    anchorPos(anchorInput) * *outputRules[deltaOutput]);
+                    anchorPos(anchorInput) * *inputRules[deltaInput]);
 
             minDefined = true;
         }
@@ -250,12 +279,12 @@ Rule const &RuleRectangle::height() const
 
 Rule const &RuleRectangle::midX() const
 {
-    return *d->midX;
+    return *d->midX();
 }
 
 Rule const &RuleRectangle::midY() const
 {
-    return *d->midY;
+    return *d->midY();
 }
 
 RuleRectangle &RuleRectangle::setInput(Rule::Semantic inputRule, RefArg<Rule> rule)
@@ -313,14 +342,14 @@ RuleRectangle &RuleRectangle::setSize(Rule const &width, Rule const &height)
 RuleRectangle &RuleRectangle::setMidAnchorX(Rule const &middle)
 {
     setInput(Rule::AnchorX, middle);
-    d->normalizedAnchorX->set(.5f);
+    d->normalizedAnchorX()->set(.5f);
     return *this;
 }
 
 RuleRectangle &RuleRectangle::setMidAnchorY(Rule const &middle)
 {
     setInput(Rule::AnchorY, middle);
-    d->normalizedAnchorY->set(.5f);
+    d->normalizedAnchorY()->set(.5f);
     return *this;
 }
 
@@ -338,8 +367,8 @@ Rule const &RuleRectangle::inputRule(Rule::Semantic inputRule)
 
 void RuleRectangle::setAnchorPoint(Vector2f const &normalizedPoint, TimeDelta const &transition)
 {
-    d->normalizedAnchorX->set(normalizedPoint.x, transition);
-    d->normalizedAnchorY->set(normalizedPoint.y, transition);
+    d->normalizedAnchorX()->set(normalizedPoint.x, transition);
+    d->normalizedAnchorY()->set(normalizedPoint.y, transition);
 }
 
 Rectanglef RuleRectangle::rect() const
