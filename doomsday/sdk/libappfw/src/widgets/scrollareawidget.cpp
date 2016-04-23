@@ -499,7 +499,7 @@ void ScrollAreaWidget::scrollToRight(TimeDelta span)
 void ScrollAreaWidget::scrollToWidget(GuiWidget const &widget, TimeDelta span)
 {
     int off = widget.rule().midY().valuei() - contentRule().top().valuei() -
-            rule().height().valuei()/2;
+              rule().height().valuei()/2;
     scrollY(off, span);
 }
 

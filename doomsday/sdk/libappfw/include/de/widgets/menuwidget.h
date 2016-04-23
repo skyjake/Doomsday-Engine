@@ -110,6 +110,16 @@ public:
         return organizer().itemWidget(item)->as<WidgetType>();
     }
 
+    template <typename WidgetType>
+    WidgetType *itemWidget(ui::DataPos itemPos) const {
+        if(itemPos < items().size()) {
+            return organizer().itemWidget(items().at(itemPos))->maybeAs<WidgetType>();
+        }
+        return nullptr;
+    }
+
+    ui::DataPos findItem(GuiWidget const &widget) const;
+
     /**
      * Returns the number of visible items in the menu. Hidden items are not
      * included in this count.

@@ -551,6 +551,15 @@ ChildWidgetOrganizer const &MenuWidget::organizer() const
     return d->organizer;
 }
 
+ui::DataPos MenuWidget::findItem(GuiWidget const &widget) const
+{
+    if(auto const *item = organizer().findItemForWidget(widget))
+    {
+        return items().find(*item);
+    }
+    return ui::Data::InvalidPos;
+}
+
 void MenuWidget::update()
 {
     if(d->needLayout)
